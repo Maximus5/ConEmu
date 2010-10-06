@@ -36,24 +36,25 @@
 !endif
 
 NAME = ConEmuC
+RELEASEDIR=Release
 
 !if defined(AMD64) || "$(CPU)" == "AMD64" || "$(PLATFORM)" == "x64"
 !undef CPU
 AMD64=1
 DIRBIT=64
 RCWIN64=/D_WIN64 /DWIN64
-RELEASEDIR=Release.x64
+OUTNAME=ConEmuC64
 !elseif defined(IA64) || "$(CPU)" == "IA64" || "$(PLATFORM)" == "Itanium"
 !undef CPU
 IA64=1
 DIRBIT=IA64
 RCWIN64=/D_WIN64 /DWIN64
-RELEASEDIR=Release.x64
+OUTNAME=ConEmuC64
 !else
 X86=1
 DIRBIT=32
 RCWIN64=
-RELEASEDIR=
+OUTNAME=ConEmuC
 !endif
 
 !if !defined(VC) && defined(_NMAKE_VER)
@@ -126,7 +127,7 @@ DEFINES=\
 
 # common
 CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHs-c- $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
-LINKFLAGS=/nologo /subsystem:console /def:"$(DEF_FILE)" /out:"$(OUTDIR)\$(NAME).exe" /map:"$(OUTDIR)\$(NAME).map" /pdb:"$(OUTDIR)\$(NAME).pdb" /release /nxcompat
+LINKFLAGS=/nologo /subsystem:console /def:"$(DEF_FILE)" /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /pdb:"$(OUTDIR)\$(OUTNAME).pdb" /release /nxcompat
 ULINKFLAGS=-q -m- -ap -Gz -O- -o- -Gh -Gh-
 RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d $(USEDEBUG)
 
@@ -179,7 +180,7 @@ ALL: AllDirs build clean
 #	$(GAWK) -f .\scripts\mkdep.awk mkdep.list > $(DEPFILE)
 
 .PHONY: build
-build: "$(OUTDIR)\$(NAME).exe"
+build: "$(OUTDIR)\$(OUTNAME).exe"
 
 .PHONY: AllDirs
 AllDirs:
@@ -187,7 +188,7 @@ AllDirs:
 	if not exist "$(INTDIR)\" mkdir "$(INTDIR)"
 	if not exist "$(CODDIR)\" mkdir "$(CODDIR)"
 
-"$(OUTDIR)\$(NAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
+"$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
 	echo linking $@
 !ifndef LINK_ULINK
 	$(LINK) @<<
@@ -196,7 +197,7 @@ AllDirs:
 !else
 	$(ULINK) +- @+<<
 	$(ULINKFLAGS) $(LINK_OBJS)
-	,"$(OUTDIR)\$(NAME).exe","$(OUTDIR)\$(NAME).map"
+	,"$(OUTDIR)\$(OUTNAME).exe","$(OUTDIR)\$(OUTNAME).map"
 	,$(LINK_LIBS)
 	,"$(DEF_FILE)","$(RES_FILE)"
 <<
@@ -272,9 +273,10 @@ $(INTDIR)\WinObjects.obj: ..\common\WinObjects.cpp
 .PHONY: CLEAN
 CLEAN:
 	@echo copying release files
-	@move "$(OUTDIR)\$(NAME).exe" ..\..\$(RELEASEDIR)
-	@move "$(OUTDIR)\$(NAME).pdb" ..\..\$(RELEASEDIR)
-	@move "$(OUTDIR)\$(NAME).map" ..\..\$(RELEASEDIR)
+	@if not exist "..\..\$(RELEASEDIR)\$(NULL)" mkdir "..\..\$(RELEASEDIR)"
+	@move "$(OUTDIR)\$(OUTNAME).exe" ..\..\$(RELEASEDIR)
+	@move "$(OUTDIR)\$(OUTNAME).pdb" ..\..\$(RELEASEDIR)
+	@move "$(OUTDIR)\$(OUTNAME).map" ..\..\$(RELEASEDIR)
 
 #	@echo final cleaning
 #	@del /Q $(CODDIR)\*.*

@@ -64,16 +64,16 @@ DEF_NAME = export
 NEEDENTRY = 1
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
-OUTNAME = ConEmuHk.x64
+OUTNAME = ConEmuHk64
 RCWIN64=/D_WIN64 /DWIN64
 !else
-OUTNAME = ConEmuHk.x86
+OUTNAME = ConEmuHk
 RCWIN64=
 !endif
 
-!ifdef DEBUG
-OUTNAME = ConEmuHk
-!endif
+#!ifdef DEBUG
+#OUTNAME = ConEmuHk
+#!endif
 
 NAME = ConEmuHk
 
@@ -115,15 +115,12 @@ DIRSUFF = W
 !endif
 
 
-RELEASEDIRx86=
-RELEASEDIRx64=/Release.x64
+RELEASEDIR=/Release
 
 !ifdef AMD64
 DIRBIT = 64
-RELEASEDIR = $(RELEASEDIRx64)
 !else
 DIRBIT = 32
-RELEASEDIR = $(RELEASEDIRx86)
 !endif
 WORKDIR = $(DIRNAME).$(DIRBIT)$(DIRSUFF).vc
 !ifndef OUTDIR
@@ -309,9 +306,10 @@ dirs:
 .PHONY: clean
 clean:
 	@echo copying release files
-	@move $(DLLFULLNAME) ..\..$(RELEASEDIR)\$(NAME).dll
-	@move $(PDBNAME) ..\..$(RELEASEDIR)\$(NAME).pdb
-	@move $(MAP) ..\..$(RELEASEDIR)\$(NAME).map
+	@if not exist "$..\..$(RELEASEDIR)\$(NULL)" mkdir "..\..$(RELEASEDIR)"
+	@move $(DLLFULLNAME) ..\..$(RELEASEDIR)\$(OUTNAME).dll
+	@move $(PDBNAME) ..\..$(RELEASEDIR)\$(OUTNAME).pdb
+	@move $(MAP) ..\..$(RELEASEDIR)\$(OUTNAME).map
 
 #	@echo final cleaning
 #	@del /Q $(OBJDIR)\*.*

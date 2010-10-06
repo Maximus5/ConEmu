@@ -294,8 +294,8 @@ protected:
 	LONG nFontHeight, nFontWidth;
 	BYTE nFontCharSet;
 	BYTE nLastNormalBack;
-    bool bExtendFonts, bExtendColors;
-    BYTE nFontNormalColor, nFontBoldColor, nFontItalicColor, nExtendColor;
+    //bool bExtendFonts, bExtendColors;
+    //BYTE nFontNormalColor, nFontBoldColor, nFontItalicColor, nExtendColor;
 	struct _TransparentInfo {
 		INT    nRectCount;
 		POINT *pAllPoints;

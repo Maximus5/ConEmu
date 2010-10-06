@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuChild.h"
 #include "ConEmuPipe.h"
 
-#define DEBUGSTRDRAW(s) //DEBUGSTR(s)
+#define DEBUGSTRDRAW(s) DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
@@ -99,7 +99,7 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #define CONSOLEPROGRESSTIMEOUT 300
 #define CONSOLEPROGRESSWARNTIMEOUT 2000 // поставил 2с, т.к. при минимизации консоль обновляется раз в секунду
 #define CONSOLEINACTIVERGNTIMEOUT 500
-#define SERVERCLOSETIMEOUT 500
+#define SERVERCLOSETIMEOUT 2000
 
 #ifndef INPUTLANGCHANGE_SYSCHARSET
 #define INPUTLANGCHANGE_SYSCHARSET 0x0001
@@ -1804,7 +1804,10 @@ BOOL CRealConsole::StartProcess()
         wcscat(psCurCmd, gConEmu.ms_ConEmuExe);
         pszSlash = wcsrchr(psCurCmd, _T('\\'));
         MCHKHEAP;
-        wcscpy(pszSlash+1, L"ConEmuC.exe\" ");
+		if (IsWindows64())
+			wcscpy(pszSlash+1, L"ConEmuC64.exe\" ");
+		else
+			wcscpy(pszSlash+1, L"ConEmuC.exe\" ");
 
 		if (m_Args.bRunAsAdministrator)
 		{
@@ -2829,17 +2832,26 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 		}
 	}
 
-	if (mh_ConEmuCInput == NULL || mh_ConEmuCInput == INVALID_HANDLE_VALUE) {
+	if (mh_ConEmuCInput == NULL || mh_ConEmuCInput == INVALID_HANDLE_VALUE)
+	{
 		// Не дождались появления пайпа. Возможно, ConEmuC еще не запустился
 		//DEBUGSTRINPUT(L" - mh_ConEmuCInput not found!\n");
+		#ifdef _DEBUG
+		DWORD dwTick1 = GetTickCount();
+		struct ServerClosing sc1 = m_ServerClosing;
+		#endif
 		if (!isConsoleClosing())
 		{
 			#ifdef _DEBUG
+			DWORD dwTick2 = GetTickCount();
+			struct ServerClosing sc2 = m_ServerClosing;
 			if (dwErr == 0x102)
 			{
 				TODO("Иногда трапится. Проверить m_ServerClosing.nServerPID. Может его выставлять при щелчке по крестику?");
-				MyAssertTrap();				
+				MyAssertTrap();
 			}
+			DWORD dwTick3 = GetTickCount();
+			struct ServerClosing sc3 = m_ServerClosing;
 			#endif
 			DisplayLastError(L"mh_ConEmuCInput not found", dwErr);
 		}
@@ -3002,7 +3014,8 @@ LRESULT CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LP
 		bNeedCmd = true;
 
 	#ifdef _DEBUG
-	if (nMsg == WM_INPUTLANGCHANGE || nMsg == WM_INPUTLANGCHANGEREQUEST) {
+	if (nMsg == WM_INPUTLANGCHANGE || nMsg == WM_INPUTLANGCHANGEREQUEST)
+	{
 		wchar_t szDbg[255];
 		const wchar_t* pszMsgID = (nMsg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST";
 		const wchar_t* pszVia = bNeedCmd ? L"CmdExecute" : L"PostThreadMessage";
@@ -3012,9 +3025,12 @@ LRESULT CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LP
 	}
 	#endif
 
-	if (!bNeedCmd) {
+	if (!bNeedCmd)
+	{
 		POSTMESSAGE(hWnd/*hConWnd*/, nMsg, wParam, lParam, FALSE);
-	} else {
+	}
+	else
+	{
 		CESERVER_REQ in;
 		ExecutePrepareCmd(&in, CECMD_POSTCONMSG, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_POSTMSG));
 		// Собственно, аргументы
@@ -3250,6 +3266,7 @@ LRESULT CRealConsole::OnSetScrollPos(WPARAM wParam)
 
 void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars)
 {
+	if (!this) return;
     //LRESULT result = 0;
 	_ASSERTE(pszChars!=NULL);
 
@@ -3261,8 +3278,10 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
     {
         wParam = wParam;
     }
-    if (wParam == VK_CONTROL || wParam == VK_LCONTROL || wParam == VK_RCONTROL || wParam == 'C') {
-        if (messg == WM_KEYDOWN || messg == WM_KEYUP /*|| messg == WM_CHAR*/) {
+    if (wParam == VK_CONTROL || wParam == VK_LCONTROL || wParam == VK_RCONTROL || wParam == 'C')
+	{
+        if (messg == WM_KEYDOWN || messg == WM_KEYUP /*|| messg == WM_CHAR*/)
+		{
 			wchar_t szDbg[128];
             if (messg == WM_KEYDOWN)
                 wsprintf(szDbg, L"WM_KEYDOWN(%i,0x%08X)\n", wParam, lParam);
@@ -3283,14 +3302,17 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
     {
     	if ((wParam == VK_ESCAPE) || (wParam == VK_RETURN))
     	{
-	    	if (wParam == VK_RETURN) {
+	    	if (wParam == VK_RETURN)
+			{
 	    		DoSelectionCopy();
 	    	}
 	    	mn_SelectModeSkipVk = wParam;
 	    	con.m_sel.dwFlags = 0;
 	        //mb_ConsoleSelectMode = false;
 			UpdateSelection(); // обновить на экране
-		} else {
+		}
+		else
+		{
 			COORD cr; GetConsoleCursorPos(&cr);
 			// Поправить
 			cr.Y -= con.nTopVisibleLine;
@@ -3301,23 +3323,29 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			
 			// Теперь - двигаем
 			BOOL bShift = isPressed(VK_SHIFT);
-			if (!bShift) {
+			if (!bShift)
+			{
 				BOOL lbStreamSelection = (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION)) == CONSOLE_TEXT_SELECTION;
 				StartSelection(lbStreamSelection, cr.X,cr.Y);
-			} else {
+			}
+			else
+			{
 				ExpandSelection(cr.X,cr.Y);
 			}
 		}
 		return;
     }
-    if (messg == WM_KEYUP && wParam == mn_SelectModeSkipVk) {
+    if (messg == WM_KEYUP && wParam == mn_SelectModeSkipVk)
+	{
     	mn_SelectModeSkipVk = 0; // игнорируем отпускание, поскольку нажатие было на копирование/отмену
     	return;
     }
-    if (messg == WM_KEYDOWN && mn_SelectModeSkipVk) {
+    if (messg == WM_KEYDOWN && mn_SelectModeSkipVk)
+	{
     	mn_SelectModeSkipVk = 0; // при нажатии любой другой клавиши - сбросить флажок (во избежание)
     }
-    if (con.m_sel.dwFlags) {
+    if (con.m_sel.dwFlags)
+	{
     	return; // В режиме выделения - в консоль ВООБЩЕ клавиатуру не посылать!
     }
     
@@ -3326,12 +3354,15 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
     // Основная обработка 
     {
     
-		if (wParam == VK_MENU && (messg == WM_KEYUP || messg == WM_SYSKEYUP) && gSet.isFixAltOnAltTab) {
+		if (wParam == VK_MENU && (messg == WM_KEYUP || messg == WM_SYSKEYUP) && gSet.isFixAltOnAltTab)
+		{
 			// При быстром нажатии Alt-Tab (переключение в другое окно)
 			// в консоль проваливается {press Alt/release Alt}
 			// В результате, может выполниться макрос, повешенный на Alt.
-			if (GetForegroundWindow()!=ghWnd && GetFarPID()) {
-				if (/*isPressed(VK_MENU) &&*/ !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT)) {
+			if (GetForegroundWindow()!=ghWnd && GetFarPID())
+			{
+				if (/*isPressed(VK_MENU) &&*/ !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
+				{
 					PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
 					//TODO("Вынести в отдельную функцию типа SendKeyPress(VK_TAB,0x22,'\x09')");
 					//INPUT_RECORD r = {KEY_EVENT};
@@ -3396,7 +3427,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
         else if ((messg == WM_SYSKEYDOWN || messg == WM_SYSKEYUP) && wParam == VK_SPACE && lParam & (1<<29) && 
 			!isPressed(VK_SHIFT))
         {   // Нада, или системное меню будет недоступно
-			if (messg == WM_SYSKEYUP) { // Только по UP, чтобы не "булькало"
+			if (messg == WM_SYSKEYUP) // Только по UP, чтобы не "булькало"
+			{
 				gConEmu.ShowSysmenu();
 			}
         }
@@ -3423,7 +3455,9 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
             //gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
             gConEmu.OnAltF9(TRUE);
             
-        } else {
+        }
+		else
+		{
             INPUT_RECORD r = {KEY_EVENT};
 
             WORD nCaps = 1 & (WORD)GetKeyState(VK_CAPITAL);
@@ -3511,7 +3545,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			//RemoveFromCursor();
 
             
-            if (mn_FarPID && mn_FarPID != mn_LastSetForegroundPID) {
+            if (mn_FarPID && mn_FarPID != mn_LastSetForegroundPID)
+			{
                 //DWORD dwFarPID = GetFarPID();
                 //if (dwFarPID)
                 AllowSetForegroundWindow(mn_FarPID);
@@ -3532,7 +3567,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			- hit "^" -> see nothing
 			- hit any other alpha-numeric key, e.g. "k" -> see "^k"
 			*/
-			for (int i = 1; pszChars[i]; i++) {
+			for (int i = 1; pszChars[i]; i++)
+			{
 				r.Event.KeyEvent.uChar.UnicodeChar = pszChars[i];
 				PostConsoleEvent(&r);
 			}
@@ -4991,7 +5027,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
     ConPrc.IsTelnet = lstrcmpi(ConPrc.Name, _T("telnet.exe"))==0;
     
     TODO("Тут главное не промахнуться, и не посчитать корневой conemuc, из которого запущен сам FAR, или который запустил плагин, чтобы GUI прицепился к этой консоли");
-    ConPrc.IsCmd = lstrcmpi(ConPrc.Name, _T("cmd.exe"))==0 || lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0;
+    ConPrc.IsCmd = lstrcmpi(ConPrc.Name, _T("cmd.exe"))==0 || lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0 || lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0;
 
     ConPrc.NameChecked = true;
 }
@@ -7046,8 +7082,10 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
     //COLORREF lcrForegroundColors[0x100], lcrBackgroundColors[0x100];
     //BYTE lnForegroundColors[0x100], lnBackgroundColors[0x100], lnFontByIndex[0x100];
 	TODO("OPTIMIZE: В принципе, это можно делать не всегда, а только при изменениях");
-    for (int nBack = 0; nBack <= 0xF; nBack++) {
-    	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
+    for (int nBack = 0; nBack <= 0xF; nBack++)
+    {
+    	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++)
+    	{
 			memset(&lca, 0, sizeof(lca));
     		lca.nForeIdx = nFore;
     		lca.nBackIdx = nBack;
@@ -7055,13 +7093,17 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 	    	lca.crBackColor = lca.crOrigBackColor = mp_VCon->mp_Colors[lca.nBackIdx];
 	    	lcaTableOrg[nColorIndex] = lca;
 	    	
-			if (bExtendFonts) {
-				if (nBack == nFontBoldColor) { // nFontBoldColor may be -1, тогда мы сюда не попадаем
+			if (bExtendFonts)
+			{
+				if (nBack == nFontBoldColor) // nFontBoldColor may be -1, тогда мы сюда не попадаем
+				{
 					if (nFontNormalColor != 0xFF)
 						lca.nBackIdx = nFontNormalColor;
 					lca.nFontIndex = 1; //  Bold
 					lca.crBackColor = lca.crOrigBackColor = mp_VCon->mp_Colors[lca.nBackIdx];
-				} else if (nBack == nFontItalicColor) { // nFontItalicColor may be -1, тогда мы сюда не попадаем
+				}
+				else if (nBack == nFontItalicColor) // nFontItalicColor may be -1, тогда мы сюда не попадаем
+				{
 					if (nFontNormalColor != 0xFF)
 						lca.nBackIdx = nFontNormalColor;
 					lca.nFontIndex = 2; // Italic
@@ -7086,7 +7128,8 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
     lcaDef = lcaTable[12]; // Red on Black
     #endif
 
-    if (!con.pConChar || !con.pConAttr) {
+    if (!con.pConChar || !con.pConAttr)
+    {
         wmemset(pChar, wSetChar, cwDstBufSize);
         for (DWORD i = 0; i < cwDstBufSize; i++)
         	pAttr[i] = lcaDef;
@@ -7097,7 +7140,9 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
     //    memmove(pChar, con.pConChar, cbDstBufSize);
     //    PRAGMA_ERROR("Это заменить на for");
     //    memmove(pAttr, con.pConAttr, cbDstBufSize);
-    } else {
+    }
+    else
+    {
         TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
         //_ASSERTE(*con.pConChar!=ucBoxDblVert);
 
@@ -7108,7 +7153,8 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
         const AnnotationInfo *pcolSrc = NULL;
         const AnnotationInfo *pcolEnd = NULL;
         BOOL bUseColorData = FALSE;
-        if (gSet.isTrueColorer && m_TrueColorerMap.IsValid() && mp_TrueColorerData) {
+        if (gSet.isTrueColorer && m_TrueColorerMap.IsValid() && mp_TrueColorerData)
+        {
         	pcolSrc = mp_TrueColorerData;
         	pcolEnd = mp_TrueColorerData + m_TrueColorerMap.Ptr()->bufferSize;
         	bUseColorData = TRUE;
@@ -7117,7 +7163,8 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
         DWORD cnSrcLineLen = con.nTextWidth;
         DWORD cbSrcLineSize = cnSrcLineLen * 2;
 		#ifdef _DEBUG
-		if (con.nTextWidth != con.m_sbi.dwSize.X) {
+		if (con.nTextWidth != con.m_sbi.dwSize.X)
+		{
 			_ASSERTE(con.nTextWidth == con.m_sbi.dwSize.X);
 		}
 		#endif
@@ -7128,7 +7175,8 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
         //int nPrevDlgBorder = -1;
 
         // Собственно данные
-        for (nY = 0; nY < nYMax; nY++) {
+        for (nY = 0; nY < nYMax; nY++)
+        {
         	if (nY == 1) lcaTable = lcaTableExt;
         
         	// Текст
@@ -7137,35 +7185,49 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
                 wmemset(pszDst+cnSrcLineLen, wSetChar, nCharsLeft);
 
             // Атрибуты
+            DWORD atr = 0;
             for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
             {
-	            DWORD atr = (*pnSrc) & 0xFF; // интересут только нижний байт - там индексы цветов
+	            atr = (*pnSrc) & 0xFF; // интересут только нижний байт - там индексы цветов
 				TODO("OPTIMIZE: lca = lcaTable[atr];");
 	            lca = lcaTable[atr];
 
 				TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
-			    if (bExtendColors && nY) {
-			        if (lca.nBackIdx == nExtendColor) {
+			    if (bExtendColors && nY)
+			    {
+			        if (lca.nBackIdx == nExtendColor)
+			        {
 			            lca.nBackIdx = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
 			            lca.nForeIdx += 0x10;
 				    	lca.crForeColor = lca.crOrigForeColor = mp_VCon->mp_Colors[lca.nForeIdx];
 				    	lca.crBackColor = lca.crOrigBackColor = mp_VCon->mp_Colors[lca.nBackIdx];
-			        } else {
+			        }
+			        else
+			        {
 			            attrBackLast = lca.nBackIdx; // запомним обычный цвет предыдущей ячейки
 			        }
 			    }
+			    
+			    // Colorer & Far - TrueMod
 				TODO("OPTIMIZE: вынести проверку bUseColorData за циклы");
-			    if (bUseColorData) {
-			    	if (pcolSrc >= pcolEnd) {
+			    if (bUseColorData)
+			    {
+			    	if (pcolSrc >= pcolEnd)
+			    	{
 			    		bUseColorData = FALSE;
-		    		} else {
+		    		}
+		    		else
+		    		{
 						TODO("OPTIMIZE: доступ к битовым полям тяжело идет...");
-				    	if (pcolSrc->fg_valid) {
+				    	if (pcolSrc->fg_valid)
+				    	{
 				    		lca.nFontIndex = 0;
 				    		lca.crForeColor = pcolSrc->fg_color;
 				    		if (pcolSrc->bk_valid)
 				    			lca.crBackColor = pcolSrc->bk_color;
-				    	} else if (pcolSrc->bk_valid) {
+				    	}
+				    	else if (pcolSrc->bk_valid)
+				    	{
 				    		lca.nFontIndex = 0;
 				    		lca.crBackColor = pcolSrc->bk_color;
 			    		}
@@ -7179,8 +7241,18 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 	            pnDst[nX] = lca;
 	            //memmove(pnDst, pnSrc, cbLineSize);
             }
-            for (nX = cnSrcLineLen; nX < nWidth; nX++) {
+            for (nX = cnSrcLineLen; nX < nWidth; nX++)
+            {
             	pnDst[nX] = lcaDef;
+            }
+            
+            // Far2 показывате красный 'A' в правом нижнем углу консоли
+            // Этот ярко красный цвет фона может попасть в Extend Font Colors
+            if (bExtendFonts && ((nY+1) == nYMax) && isFar()
+            	&& (pszDst[nWidth-1] == L'A') && (atr == 0xCF))
+            {
+            	// Вернуть "родной" цвет и шрифт
+            	pnDst[nWidth-1] = lcaTable[atr];
             }
 
             // Next line
@@ -7188,12 +7260,14 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
             pnDst += nWidth; //pnSrc += con.nTextWidth;
         }
         // Если вдруг запросили большую высоту, чем текущая в консоли - почистить низ
-        for (nY = nYMax; nY < nHeight; nY++) {
+        for (nY = nYMax; nY < nHeight; nY++)
+        {
             wmemset(pszDst, wSetChar, nWidth);
             pszDst += nWidth;
 
             //wmemset((wchar_t*)pnDst, wSetAttr, nWidth);
-            for (nX = 0; nX < nWidth; nX++) {
+            for (nX = 0; nX < nWidth; nX++)
+            {
             	pnDst[nX] = lcaDef;
             }
             pnDst += nWidth;
@@ -7205,13 +7279,15 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		// Даже если НЕ (gSet.NeedDialogDetect()) - нужно сбросить количество прямоугольников.
 		PrepareTransparent(pChar, pAttr, nWidth, nHeight);
 
-		if (mn_LastRgnFlags != mp_Rgn->GetFlags()) {
+		if (mn_LastRgnFlags != mp_Rgn->GetFlags())
+		{
 			if (this->isActive())
 				PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
 			mn_LastRgnFlags = mp_Rgn->GetFlags();
 		}
 		
-		if (con.m_sel.dwFlags) {
+		if (con.m_sel.dwFlags)
+		{
 			BOOL lbStreamMode = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
 			SMALL_RECT rc = con.m_sel.srSelection;
 			if (rc.Left<0) rc.Left = 0; else if (rc.Left>=nWidth) rc.Left = nWidth-1;
@@ -7228,17 +7304,22 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 
 			int nX1, nX2;
 			// Block mode
-			for (nY = rc.Top; nY <= rc.Bottom; nY++) {
-				if (!lbStreamMode) {
+			for (nY = rc.Top; nY <= rc.Bottom; nY++)
+			{
+				if (!lbStreamMode)
+				{
 					nX1 = rc.Left; nX2 = rc.Right;
-				} else {
+				}
+				else
+				{
 					nX1 = (nY == rc.Top) ? rc.Left : 0;
 					nX2 = (nY == rc.Bottom) ? rc.Right : (nWidth-1);
 				}
 
 				pnDst = pAttr + nWidth*nY + nX1;
 	            
-				for (nX = nX1; nX <= nX2; nX++, pnDst++) {
+				for (nX = nX1; nX <= nX2; nX++, pnDst++)
+				{
             		//pnDst[nX] = lcaSel; -- чтобы не сбрасывать флаги рамок и диалогов - ставим по полям
 					pnDst->crForeColor = pnDst->crOrigForeColor = crForeColor;
 					pnDst->crBackColor = pnDst->crOrigBackColor = crBackColor;
@@ -7265,7 +7346,8 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		}
     }
     // Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
-	if (ms_ConStatus[0]) {
+	if (ms_ConStatus[0])
+	{
 		int nLen = lstrlen(ms_ConStatus);
 		wmemcpy(pChar, ms_ConStatus, nLen);
 		if (nWidth>nLen)
@@ -7288,16 +7370,19 @@ BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow)
 		return TRUE; // уже все сделано
 
 	BOOL lbRc = apiShowWindow(hWnd, swShow);
-	if (!lbRc) {
+	if (!lbRc)
+	{
 		DWORD dwErr = GetLastError();
-		if (dwErr == 0) {
+		if (dwErr == 0)
+		{
 			if ((IsWindowVisible(hWnd) == FALSE) == (swShow == SW_HIDE))
 				lbRc = TRUE;
 			else
 				dwErr = 5; // попробовать через сервер
 		}
 
-		if (dwErr == 5 /*E_access*/) {
+		if (dwErr == 5 /*E_access*/)
+		{
 			//PostConsoleMessage(hWnd, WM_SHOWWINDOW, SW_SHOWNA, 0);
 			CESERVER_REQ in;
 			ExecutePrepareCmd(&in, CECMD_POSTCONMSG, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_POSTMSG));
@@ -7311,7 +7396,9 @@ BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow)
 			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
 			if (pOut) ExecuteFreeResult(pOut);
 			lbRc = TRUE;
-		} else if (!lbRc) {
+		}
+		else if (!lbRc)
+		{
 			wchar_t szClass[64], szMessage[255];
 			if (!GetClassName(hWnd, szClass, 63)) wsprintf(szClass, L"0x%08X", (DWORD)hWnd); else szClass[63] = 0;
 			wsprintf(szMessage, L"Can't %s %s window!", 
@@ -7326,9 +7413,11 @@ BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow)
 BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
 {
 	BOOL lbRc = SetWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
-	if (!lbRc) {
+	if (!lbRc)
+	{
 		DWORD dwErr = GetLastError();
-		if (dwErr == 5 /*E_access*/) {
+		if (dwErr == 5 /*E_access*/)
+		{
 			CESERVER_REQ in;
 			ExecutePrepareCmd(&in, CECMD_SETWINDOWPOS, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETWINDOWPOS));
 			// Собственно, аргументы
@@ -7343,7 +7432,9 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
 			if (pOut) ExecuteFreeResult(pOut);
 			lbRc = TRUE;
-		} else {
+		}
+		else
+		{
 			wchar_t szClass[64], szMessage[128];
 			if (!GetClassName(hWnd, szClass, 63)) wsprintf(szClass, L"0x%08X", (DWORD)hWnd); else szClass[63] = 0;
 			wsprintf(szMessage, L"SetWindowPos(%s) failed!", szClass);
@@ -7360,11 +7451,14 @@ BOOL CRealConsole::SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOO
 	ExecutePrepareCmd(&in, CECMD_SETWINDOWRGN, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETWINDOWRGN));
 	// Собственно, аргументы
 	in.SetWndRgn.hWnd = hWnd;
-	if (nRects <= 0 || !prcRects) {
+	if (nRects <= 0 || !prcRects)
+	{
 		_ASSERTE(nRects==0 || nRects==-1); // -1 means reset rgn and hide window
 		in.SetWndRgn.nRectCount = nRects;
 		in.SetWndRgn.bRedraw = bRedraw;		
-	} else {
+	}
+	else
+	{
 		in.SetWndRgn.nRectCount = nRects;
 		in.SetWndRgn.bRedraw = bRedraw;
 		memmove(in.SetWndRgn.rcRects, prcRects, nRects*sizeof(RECT));
@@ -7382,26 +7476,35 @@ void CRealConsole::ShowHideViews(BOOL abShow)
 	// т.к. apiShowWindow обломается, если окно создано от имени другого пользователя (или Run as admin)
 	// то скрытие и отображение окна делаем другим способом
 	HWND hPic = isPictureView();
-	if (hPic) {
-		if (abShow) {
+	if (hPic)
+	{
+		if (abShow)
+		{
 			if (mb_PicViewWasHidden && !IsWindowVisible(hPic))
 				ShowOtherWindow(hPic, SW_SHOWNA);
 			mb_PicViewWasHidden = FALSE;
 
-		} else {
+		}
+		else
+		{
 			mb_PicViewWasHidden = TRUE;
 			ShowOtherWindow(hPic, SW_HIDE);
 		}
 	}
 
-	for (int p = 0; p <= 1; p++) {
+	for (int p = 0; p <= 1; p++)
+	{
 		const PanelViewInit* pv = mp_VCon->GetPanelView(p==0);
-		if (pv) {
-			if (abShow) {
+		if (pv)
+		{
+			if (abShow)
+			{
 				if (pv->bVisible && !IsWindowVisible(pv->hWnd))
 					ShowOtherWindow(pv->hWnd, SW_SHOWNA);
 
-			} else {
+			}
+			else
+			{
 				if (IsWindowVisible(pv->hWnd))
 					ShowOtherWindow(pv->hWnd, SW_HIDE);
 			}
@@ -8101,7 +8204,8 @@ void CRealConsole::SetForceRead()
 // Вызывается из TabBar->ConEmu
 void CRealConsole::ChangeBufferHeightMode(BOOL abBufferHeight)
 {
-	if (abBufferHeight && gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1) {
+	if (abBufferHeight && gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1)
+	{
 		// Win7 BUGBUG: Issue 192: падение Conhost при turn bufferheight ON
 		// http://code.google.com/p/conemu-maximus5/issues/detail?id=192
 		return;
@@ -8391,6 +8495,9 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeyboardLay
 		wParam, (unsigned __int64)(DWORD_PTR)dwNewKeyboardLayout);
 	DEBUGSTRLANG(szMsg);
 	#endif
+
+	// Сразу запомнить новое значение, чтобы не циклиться
+	con.dwKeybLayout = dwNewKeyboardLayout;
 
     // В FAR при XLat делается так:
     //PostConsoleMessageW(hFarWnd,WM_INPUTLANGCHANGEREQUEST, INPUTLANGCHANGE_FORWARD, 0);
@@ -9152,7 +9259,8 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
         #pragma warning( push )
         #pragma warning(disable : 6400)
         #endif
-        if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0)
+        if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0
+			|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0)
             szCMD[0] = 0;
         #if !defined(__GNUC__)
         #pragma warning( pop )
@@ -9693,7 +9801,8 @@ BOOL CRealConsole::isMouseButtonDown()
 // Вызывается из CConEmuMain::OnLangChangeConsole в главной нити
 void CRealConsole::OnConsoleLangChange(DWORD_PTR dwNewKeybLayout)
 {
-    if (con.dwKeybLayout != dwNewKeybLayout) {
+    if (con.dwKeybLayout != dwNewKeybLayout)
+	{
         con.dwKeybLayout = dwNewKeybLayout;
 
 		gConEmu.SwitchKeyboardLayout(dwNewKeybLayout);

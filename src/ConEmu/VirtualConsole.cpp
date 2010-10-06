@@ -559,7 +559,10 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
             if (!abNoWndResize)
 			{
                 if (gConEmu.isVisible(this))
+				{
+					MSetter lInConsoleResize(&mb_InConsoleResize);
                     gConEmu.OnSize(-1);
+				}
             }
 
             hBitmap = CreateCompatibleBitmap(hScreenDC, Width, Height);
@@ -1385,13 +1388,13 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 	nFontWidth = gSet.FontWidth();
 	nFontCharSet = gSet.FontCharSet();
 	
-	bExtendColors = gSet.isExtendColors;
-	nExtendColor = gSet.nExtendColor;
+	//bExtendColors = gSet.isExtendColors;
+	//nExtendColor = gSet.nExtendColor;
 	
-    bExtendFonts = gSet.isExtendFonts;
-    nFontNormalColor = gSet.nFontNormalColor;
-    nFontBoldColor = gSet.nFontBoldColor;
-    nFontItalicColor = gSet.nFontItalicColor;
+    //bExtendFonts = gSet.isExtendFonts;
+    //nFontNormalColor = gSet.nFontNormalColor;
+    //nFontBoldColor = gSet.nFontBoldColor;
+    //nFontItalicColor = gSet.nFontItalicColor;
     
     //m_ForegroundColors[0x100], m_BackgroundColors[0x100];
     //TODO("В принципе, это можно делать не всегда, а только при изменениях");

@@ -137,7 +137,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\FAR\ConEmu64\ConEmuC.exe"
+				OutputFile="C:\FAR\ConEmu64\ConEmuC64.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -211,7 +211,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\ConEmuC.exe"
+				OutputFile="..\..\Release\ConEmuC.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
@@ -289,7 +289,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\Release.x64\ConEmuC.exe"
+				OutputFile="..\..\Release\ConEmuC64.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
@@ -439,7 +439,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\FAR\ConEmu64\ConEmuC.exe"
+				OutputFile="C:\FAR\ConEmu64\ConEmuC64.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -591,7 +591,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\Release.x64\ConEmuC.exe"
+				OutputFile="..\..\Release.x64\ConEmuC64.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
@@ -741,7 +741,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\\WIN7X64\FAR\FAR2x86\ConEmuC.exe"
+				OutputFile="\\WIN7X64\FAR\FAR2x86\ConEmuC64.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"

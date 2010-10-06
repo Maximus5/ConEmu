@@ -57,10 +57,9 @@ dirs:
 .PHONY: clean
 clean:
 	@echo final cleaning
-	@copy "$(DLLFULLNAME)" $(RELEASEDIR32)
-	@move "$(DLLFULLNAME)" $(RELEASEDIR64)
-	@copy $(PDBNAME) "$(RELEASEDIR32)\$(DLLNAME).pdb"
-	@move $(PDBNAME) "$(RELEASEDIR64)\$(DLLNAME).pdb"
+	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	@move "$(DLLFULLNAME)" $(RELEASEDIR)
+	@move $(PDBNAME) "$(RELEASEDIR)\$(DLLNAME).pdb"
 	@del /Q $(OBJDIR)\*.*
 	@del /Q $(OUTDIR)\*.*
 	@rd $(OBJDIR)

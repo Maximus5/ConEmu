@@ -59,9 +59,9 @@
 !include ../make_vc_defs
 !endif
 
-SUBMODULES = gdip pe ico
-
 DEF_NAME = export
+
+SUBMODULES = gdip pe ico
 
 NEEDENTRY = 1
 
@@ -100,13 +100,7 @@ IA64=1
 CPU=IA64
 !endif
 
-!ifndef RC_NAME
 RC_NAME=$(NAME)
-!endif
-
-!ifndef DEF_NAME
-DEF_NAME=$(NAME)
-!endif
 
 !ifndef DEBUG
 DIRNAME=final
@@ -119,15 +113,12 @@ DIRSUFF = W
 !endif
 
 
-RELEASEDIRx86=plugins\ConEmu\Thumbs
-RELEASEDIRx64=Release.x64\plugins\ConEmu\Thumbs
+RELEASEDIR=Release\plugins\ConEmu\Thumbs
 
 !ifdef AMD64
 DIRBIT = 64
-RELEASEDIR = $(RELEASEDIRx64)
 !else
 DIRBIT = 32
-RELEASEDIR = $(RELEASEDIRx86)
 !endif
 WORKDIR = $(DIRNAME).$(DIRBIT)$(DIRSUFF).vc
 !ifdef INSTALL
@@ -147,6 +138,7 @@ DLLNAME = $(OUTNAME).$(EXT)
 DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
 DEF = $(DEF_NAME).def
 MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
+PDB = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb
 RES = $(OBJDIR)\$(NAME).res
 
 !ifdef VC8
@@ -154,12 +146,11 @@ COMPAT64=/Wp64
 NOWIN98=/OPT:NOWIN98
 !endif
 
-PDBNAME="$(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb"
 !ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Zi /Fd$(PDBNAME) /DHIDE_TODO 
+CPP_OPT=/DNDEBUG /O1i /Zi /Fd$(PDB) /DHIDE_TODO 
 #/DCRTSTARTUP
 !else
-CPP_OPT=/DDEBUG /Od /Fd$(PDBNAME) 
+CPP_OPT=/DDEBUG /Od /Fd$(PDB) 
 #/DCRTSTARTUP
 !endif
 
@@ -186,8 +177,6 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
 #!ifdef EXCLUDECRT
 #!undef COMMONLIB
 #!endif
-#LIBS = kernel32.lib user32.lib gdi32.lib version.lib shell32.lib Ole32.lib libcmt.lib
-
 LIBS = version.lib libcmt.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib
 
 !ifdef _BIN_PATH_
@@ -204,9 +193,9 @@ _LINK_PATH_=$(_BIN_PATH_)
 
 
 LNK=$(_LINK_PATH_)link.exe
-#LINK_DEBUG=/debug /pdb:$(PDBNAME)
+#LINK_DEBUG=/debug /pdb:$(PDB)
 CPP_DEBUG=/Zi
-LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /release $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /map:"$(MAP)" /out:"$(DLLFULLNAME)"
+LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /release $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /map:"$(MAP)" /pdb:"$(PDB)" /out:"$(DLLFULLNAME)"
 #LINK_FLAGS=/DEBUG /DEF:"export.def" /DLL /DYNAMICBASE /INCREMENTAL:NO /LTCG /MACHINE:X86 /MAP /NODEFAULTLIB /SUBSYSTEM:WINDOWS /OUT:"$(DLLFULLNAME)"
 
 
@@ -245,10 +234,12 @@ ALL: dirs $(INSTALL) $(DLLFULLNAME) clean $(SUBMODULES)
 
 $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !ifndef __MAKE__
+	echo $(LINK_FLAGS)
 	@$(LNK) @<<
 	$(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
 <<
 !else
+	echo $(LINK_FLAGS)
 	@$(LNK) $(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
 !endif
 !ifdef DOCS
@@ -296,9 +287,11 @@ dirs:
 .PHONY: clean
 clean:
 	echo copying release files
-	copy $(DLLFULLNAME) ..\..\$(RELEASEDIRx64)
-	move $(DLLFULLNAME) ..\..\$(RELEASEDIRx86)
-	move $(PDBNAME) ..\..\$(RELEASEDIR)
+	@if not exist "..\..\$(RELEASEDIR)\$(NULL)" mkdir "..\..\$(RELEASEDIR)"
+	move $(DLLFULLNAME) ..\..\$(RELEASEDIR)
+	@cd
+	@echo moving $(PDB) ..\..\$(RELEASEDIR)
+	move $(PDB) ..\..\$(RELEASEDIR)
 	move $(MAP) ..\..\$(RELEASEDIR)
 
 #	echo final cleaning

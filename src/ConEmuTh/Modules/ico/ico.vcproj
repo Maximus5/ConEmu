@@ -218,7 +218,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="..\..\plugins\ConEmu\Thumbs\ico.t32"
+				OutputFile="..\..\Release\plugins\ConEmu\Thumbs\ico.t32"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="ico.def"
@@ -300,7 +300,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="..\..\Release.x64\plugins\ConEmu\Thumbs\ico.t64"
+				OutputFile="..\..\Release\plugins\ConEmu\Thumbs\ico.t64"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="ico.def"

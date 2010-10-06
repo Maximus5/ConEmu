@@ -300,17 +300,23 @@ int ServerInit()
 			
 			_ASSERTE(!srv.bDebuggerActive);
 			
-			if (srv.nProcessCount >= 2 && !srv.bDebuggerActive) {
+			if (srv.nProcessCount >= 2 && !srv.bDebuggerActive)
+			{
 				HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-				if (hSnap != INVALID_HANDLE_VALUE) {
+				if (hSnap != INVALID_HANDLE_VALUE)
+				{
 					PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
-					if (Process32First(hSnap, &prc)) {
-						do {
-							for (UINT i = 0; i < srv.nProcessCount; i++) {
+					if (Process32First(hSnap, &prc))
+					{
+						do
+						{
+							for (UINT i = 0; i < srv.nProcessCount; i++)
+							{
 								if (prc.th32ProcessID != gnSelfPID
 									&& prc.th32ProcessID == srv.pnProcesses[i])
 								{
-									if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0) {
+									if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0 || lstrcmpiW(prc.szExeFile, L"conemuc64.exe")==0)
+									{
 										CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, 0);
 										CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn, ghConWnd);
 										if (pOut) dwServerPID = prc.th32ProcessID;
@@ -319,7 +325,8 @@ int ServerInit()
 										if (dwServerPID)
 											break;
 									}
-									if (!dwFarPID && lstrcmpiW(prc.szExeFile, L"far.exe")==0) {
+									if (!dwFarPID && lstrcmpiW(prc.szExeFile, L"far.exe")==0)
+									{
 										dwFarPID = prc.th32ProcessID;
 									}
 									if (!dwParentPID)
@@ -337,7 +344,8 @@ int ServerInit()
 				}
 			}
 			
-			if (dwServerPID) {
+			if (dwServerPID)
+			{
 				AllowSetForegroundWindow(dwServerPID);
 				PRINT_COMSPEC(L"Server was already started. PID=%i. Exiting...\n", dwServerPID);
 				DisableAutoConfirmExit(); // сервер уже есть?
@@ -346,14 +354,16 @@ int ServerInit()
 				return CERR_RUNNEWCONSOLE;
 			}
 			
-			if (!dwParentPID) {
+			if (!dwParentPID)
+			{
 				_printf ("Attach to GUI was requested, but there is no console processes:\n", 0, GetCommandLineW());
 				return CERR_CARGUMENT;
 			}
 			
 			// Нужно открыть HANDLE корневого процесса
 			srv.hRootProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, dwParentPID);
-			if (!srv.hRootProcess) {
+			if (!srv.hRootProcess)
+			{
 				dwErr = GetLastError();
 				wchar_t* lpMsgBuf = NULL;
 				
@@ -370,12 +380,14 @@ int ServerInit()
 			// Запустить вторую копию ConEmuC НЕМОДАЛЬНО!
 			wchar_t szSelf[MAX_PATH+100];
 			wchar_t* pszSelf = szSelf+1;
-			if (!GetModuleFileName(NULL, pszSelf, MAX_PATH)) {
+			if (!GetModuleFileName(NULL, pszSelf, MAX_PATH))
+			{
 				dwErr = GetLastError();
 				_printf("GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
 				return CERR_CREATEPROCESS;
 			}
-			if (wcschr(pszSelf, L' ')) {
+			if (wcschr(pszSelf, L' '))
+			{
 				*(--pszSelf) = L'"';
 				lstrcatW(pszSelf, L"\"");
 			}
@@ -405,7 +417,9 @@ int ServerInit()
 			//srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
 			return CERR_RUNNEWCONSOLE;
 
-		} else {
+		}
+		else
+		{
 			// Нужно открыть HANDLE корневого процесса
 			DWORD dwFlags = PROCESS_QUERY_INFORMATION|SYNCHRONIZE;
 			if (srv.bDebuggerActive)
@@ -669,6 +683,12 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 
 	if (ghConEmuWnd && IsWindow(ghConEmuWnd))
 	{
+		if (srv.pConsole && srv.pConsoleMap)
+		{
+			srv.pConsole->hdr.nServerInShutdown = GetTickCount();
+			srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
+		}
+
 		_ASSERTE(srv.nProcessCount <= 1);
 		wchar_t szServerPipe[MAX_PATH];
 		wsprintf(szServerPipe, CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
@@ -681,7 +701,8 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	}
 
 	// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется	
-	if (srv.bDebuggerActive) {
+	if (srv.bDebuggerActive)
+	{
 		if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(srv.dwRootProcess);
 		srv.bDebuggerActive = FALSE;
 	}
@@ -693,11 +714,13 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	//	PostThreadMessage(srv.dwInputThreadId, WM_QUIT, 0, 0);
 	// Передернуть пайп серверной нити
 	HANDLE hPipe = CreateFile(srv.szPipename,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
-	if (hPipe == INVALID_HANDLE_VALUE) {
+	if (hPipe == INVALID_HANDLE_VALUE)
+	{
 		DEBUGSTR(L"All pipe instances closed?\n");
 	}
 	// Передернуть нить ввода
-	if (srv.hInputPipe && srv.hInputPipe != INVALID_HANDLE_VALUE) {
+	if (srv.hInputPipe && srv.hInputPipe != INVALID_HANDLE_VALUE)
+	{
 		//DWORD dwSize = 0;
 		//BOOL lbRc = WriteFile(srv.hInputPipe, &dwSize, sizeof(dwSize), &dwSize, NULL);
 		/*BOOL lbRc = DisconnectNamedPipe(srv.hInputPipe);
@@ -715,7 +738,8 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 
 
 	// Закрываем дескрипторы и выходим
-	if (/*srv.dwWinEventThread &&*/ srv.hWinEventThread) {
+	if (/*srv.dwWinEventThread &&*/ srv.hWinEventThread)
+	{
 		// Подождем немножко, пока нить сама завершится
 		if (WaitForSingleObject(srv.hWinEventThread, 500) != WAIT_OBJECT_0) {
 			gbTerminateOnExit = srv.bWinEventTermination = TRUE;
@@ -727,10 +751,12 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		SafeCloseHandle(srv.hWinEventThread);
 		//srv.dwWinEventThread = 0; -- не будем чистить ИД, Для истории
 	}
-	if (srv.hInputThread) {
+	if (srv.hInputThread)
+	{
 		// Подождем немножко, пока нить сама завершится
 		WARNING("Не завершается");
-		if (WaitForSingleObject(srv.hInputThread, 500) != WAIT_OBJECT_0) {
+		if (WaitForSingleObject(srv.hInputThread, 500) != WAIT_OBJECT_0)
+		{
 			gbTerminateOnExit = srv.bInputTermination = TRUE;
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
@@ -740,9 +766,11 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		SafeCloseHandle(srv.hInputThread);
 		//srv.dwInputThread = 0; -- не будем чистить ИД, Для истории
 	}
-	if (srv.hInputPipeThread) {
+	if (srv.hInputPipeThread)
+	{
 		// Подождем немножко, пока нить сама завершится
-		if (WaitForSingleObject(srv.hInputPipeThread, 50) != WAIT_OBJECT_0) {
+		if (WaitForSingleObject(srv.hInputPipeThread, 50) != WAIT_OBJECT_0)
+		{
 			gbTerminateOnExit = srv.bInputPipeTermination = TRUE;
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
@@ -755,7 +783,8 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	SafeCloseHandle(srv.hInputPipe);
 	SafeCloseHandle(srv.hInputEvent);
 
-	if (srv.hGetDataPipeThread) {
+	if (srv.hGetDataPipeThread)
+	{
 		// Подождем немножко, пока нить сама завершится
 		TODO("Сама нить не завершится. Нужно либо делать overlapped, либо что-то пихать в нить");
 		//if (WaitForSingleObject(srv.hGetDataPipeThread, 50) != WAIT_OBJECT_0)
@@ -771,9 +800,11 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	}
 
 
-	if (srv.hServerThread) {
+	if (srv.hServerThread)
+	{
 		// Подождем немножко, пока нить сама завершится
-		if (WaitForSingleObject(srv.hServerThread, 500) != WAIT_OBJECT_0) {
+		if (WaitForSingleObject(srv.hServerThread, 500) != WAIT_OBJECT_0)
+		{
 			gbTerminateOnExit = srv.bServerTermination = TRUE;
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
@@ -783,8 +814,10 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		SafeCloseHandle(srv.hServerThread);
 	}
 	SafeCloseHandle(hPipe);
-	if (srv.hRefreshThread) {
-		if (WaitForSingleObject(srv.hRefreshThread, 100)!=WAIT_OBJECT_0) {
+	if (srv.hRefreshThread)
+	{
+		if (WaitForSingleObject(srv.hRefreshThread, 100)!=WAIT_OBJECT_0)
+		{
 			_ASSERT(FALSE);
 			gbTerminateOnExit = srv.bRefreshTermination = TRUE;
 			#pragma warning( push )
@@ -795,13 +828,16 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		SafeCloseHandle(srv.hRefreshThread);
 	}
 	
-	if (srv.hRefreshEvent) {
+	if (srv.hRefreshEvent)
+	{
 		SafeCloseHandle(srv.hRefreshEvent);
 	}
-	if (srv.hRefreshDoneEvent) {
+	if (srv.hRefreshDoneEvent)
+	{
 		SafeCloseHandle(srv.hRefreshDoneEvent);
 	}
-	if (srv.hDataReadyEvent) {
+	if (srv.hDataReadyEvent)
+	{
 		SafeCloseHandle(srv.hDataReadyEvent);
 	}
 	//if (srv.hChangingSize) {
@@ -1258,6 +1294,7 @@ int CreateMapHeader()
 	srv.pConsole->hdr.nServerPID = GetCurrentProcessId();
 	srv.pConsole->hdr.nGuiPID = srv.dwGuiPID;
 	srv.pConsole->hdr.bConsoleActive = TRUE; // пока - TRUE (это на старте сервера)
+	srv.pConsole->hdr.nServerInShutdown = 0;
 	srv.pConsole->hdr.bThawRefreshThread = TRUE; // пока - TRUE (это на старте сервера)
 	srv.pConsole->hdr.nProtocolVersion = CESERVER_REQ_VER;
 	srv.pConsole->hdr.nFarPID; // PID последнего активного фара

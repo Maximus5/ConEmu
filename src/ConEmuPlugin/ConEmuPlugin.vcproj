@@ -230,7 +230,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="..\..\plugins\ConEmu\conemu.dll"
+				OutputFile="..\..\Release\plugins\ConEmu\conemu.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -312,7 +312,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="..\..\Release.x64\plugins\ConEmu\conemu.x64.dll"
+				OutputFile="..\..\Release\plugins\ConEmu\conemu.x64.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

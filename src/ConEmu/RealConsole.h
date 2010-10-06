@@ -405,7 +405,7 @@ private:
 		BOOL bDebugLocked;
 		#endif
     } con;
-	struct {
+	struct ServerClosing {
 		DWORD  nServerPID;     // PID закрывающегося сервера
 		DWORD  nRecieveTick;   // Tick, когда получено сообщение о закрытии
 		HANDLE hServerProcess; // Handle процесса сервера

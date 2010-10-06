@@ -405,6 +405,7 @@ void CSettings::InitSettings()
 	isCTSColorIndex = 0xE0;
 
     isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
+    isTabsInCaption = false; //cbTabsInCaption
     lstrcpyW(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
 	sTabCloseMacro = sSaveAllMacro = NULL;
 	nToolbarAddSpace = 0;
@@ -1808,6 +1809,12 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isConVisible)
 		CheckDlgButton(hExt, cbVisible, BST_CHECKED);
 	//if (isLockRealConsolePos) CheckDlgButton(hExt, cbLockRealConsolePos, BST_CHECKED);
+	
+#ifdef _DEBUG
+	if (isTabsInCaption) CheckDlgButton(hExt, cbTabsInCaption, BST_CHECKED);
+#else
+	ShowWindow(GetDlgItem(hExt, cbTabsInCaption), SW_HIDE);
+#endif
 
 	RegisterTipsFor(hExt);
 
@@ -2513,6 +2520,14 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		break;
 	case cbDisableAllFlashing:
 		isDisableAllFlashing = IsChecked(hExt, cbDisableAllFlashing);
+		break;
+		
+	case cbTabsInCaption:
+		isTabsInCaption = IsChecked(hExt, cbTabsInCaption);
+		//RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW|RDW_FRAME);
+		//gConEmu.OnNcMessage(ghWnd, WM_NCPAINT, 0,0);
+		SendMessage(ghWnd, WM_NCACTIVATE, 0, 0);
+		SendMessage(ghWnd, WM_NCPAINT, 0, 0);
 		break;
 		
 	case cbAdminShield:
@@ -5114,7 +5129,59 @@ LPCTSTR CSettings::GetCmd()
     if (psCmd && *psCmd)
         return psCmd;
     SafeFree(psCurCmd); // впринципе, эта строка скорее всего не нужна, но на всякий случай...
-    psCurCmd = wcsdup(szDefCmd);
+
+	if (lstrcmpi(szDefCmd, L"far") == 0)
+	{	// Ищем фар. (1) В папке ConEmu, (2) в текущей директории, (2) на уровень вверх от папки ConEmu
+		wchar_t szFar[MAX_PATH*2], *pszSlash;
+		lstrcpy(szFar, gConEmu.ms_ConEmuExeDir); // Теперь szFar содержит путь запуска программы
+		pszSlash = szFar + lstrlen(szFar);
+		_ASSERTE(pszSlash > szFar);
+		
+		BOOL lbFound = FALSE;
+
+		// (1) В папке ConEmu
+		if (!lbFound)
+		{
+			lstrcpy(pszSlash, L"\\far.exe");
+			if (FileExists(szFar))
+				lbFound = TRUE;
+		}
+		// (2) в текущей директории
+		if (!lbFound && lstrcmpi(gConEmu.ms_ConEmuCurDir, gConEmu.ms_ConEmuExeDir))
+		{
+			lstrcpy(szFar, gConEmu.ms_ConEmuCurDir);
+			lstrcpy(pszSlash, L"\\far.exe");
+			if (FileExists(szFar))
+				lbFound = TRUE;
+		}
+		// (3) на уровень вверх
+		if (!lbFound)
+		{
+			lstrcpy(szFar, gConEmu.ms_ConEmuExeDir);
+			pszSlash = szFar + lstrlen(szFar);
+			*pszSlash = 0;
+			pszSlash = wcsrchr(szFar, L'\\');
+			if (pszSlash)
+			{
+				lstrcpy(pszSlash+1, L"far.exe");
+				if (FileExists(szFar))
+					lbFound = TRUE;
+			}
+		}
+		
+		if (!lbFound)
+		{	// Если far.exe не найден рядом с ConEmu - запустить cmd.exe
+			lstrcpy(szFar, L"cmd");
+		}
+
+		// Finally - Result
+		psCurCmd = wcsdup(szFar);
+	}
+	else
+	{	// Simple Copy
+		psCurCmd = wcsdup(szDefCmd);
+	}
+
     return psCurCmd;
 }
 
@@ -5323,23 +5390,31 @@ void CSettings::RegisterFonts()
 	wchar_t szFind[MAX_PATH]; wcscpy(szFind, gConEmu.ms_ConEmuExe);
 	wchar_t *pszSlash = wcsrchr(szFind, L'\\');
 
-	if (!pszSlash) {
+	if (!pszSlash)
+	{
 		MessageBox(NULL, L"ms_ConEmuExe does not contains '\\'", L"ConEmu", MB_OK|MB_ICONSTOP);
-	} else {
+	}
+	else
+	{
 		wcscpy(pszSlash, L"\\*.ttf");
 		HANDLE hFind = FindFirstFile(szFind, &fnd);
-		if (hFind != INVALID_HANDLE_VALUE) {
+		if (hFind != INVALID_HANDLE_VALUE)
+		{
 			do {
-				if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+				if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+				{
 					pszSlash[1] = 0;
-					if ((wcslen(fnd.cFileName)+wcslen(szFind)) >= MAX_PATH) {
+					if ((wcslen(fnd.cFileName)+wcslen(szFind)) >= MAX_PATH)
+					{
 						TCHAR* psz=(TCHAR*)calloc(wcslen(fnd.cFileName)+100,sizeof(TCHAR));
 						lstrcpyW(psz, L"Too long full pathname for font:\n");
 						lstrcatW(psz, fnd.cFileName);
 						int nBtn = MessageBox(NULL, psz, L"ConEmu", MB_OKCANCEL|MB_ICONSTOP);
 						free(psz);
 						if (nBtn == IDCANCEL) break;
-					} else {
+					}
+					else
+					{
 						wcscat(szFind, fnd.cFileName);
 						
 						if (!RegisterFont(szFind, FALSE))
@@ -6602,9 +6677,14 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					sei.lpDirectory = gConEmu.ms_ConEmuCurDir;
 					sei.nShow = SW_SHOWMINIMIZED;
 					BOOL lbRunAsRc = ::ShellExecuteEx(&sei);
-					if (!lbRunAsRc) {
-						DisplayLastError(L"Can't start ConEmuC.exe, console font registration failed!");
-					} else {
+					if (!lbRunAsRc)
+					{
+						DisplayLastError( IsWindows64()
+							? L"Can't start ConEmuC64.exe, console font registration failed!"
+							: L"Can't start ConEmuC.exe, console font registration failed!");
+					}
+					else
+					{
 						DWORD nWait = WaitForSingleObject(sei.hProcess, 30000);
 						CloseHandle(sei.hProcess);
 						if (gSet.CheckConsoleFontRegistry(gSet.ConsoleFont.lfFaceName)) {

@@ -64,14 +64,14 @@ DEF_NAME = export.release
 NEEDENTRY = 1
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
-OUTNAME = conemu.x64
+OUTNAME = ConEmu.x64
 RCWIN64=/D_WIN64 /DWIN64
 !else
-OUTNAME = conemu
+OUTNAME = ConEmu
 RCWIN64=
 !endif                   
 
-NAME = conemu
+NAME = ConEmu
 
 LINK_OBJS = \
 $(OBJDIR)\ConEmuInjects.obj \
@@ -100,13 +100,7 @@ IA64=1
 CPU=IA64
 !endif
 
-!ifndef RC_NAME
 RC_NAME=$(NAME)
-!endif
-
-!ifndef DEF_NAME
-DEF_NAME=$(NAME)
-!endif
 
 !ifndef DEBUG
 DIRNAME=final
@@ -119,15 +113,12 @@ DIRSUFF = W
 !endif
 
 
-RELEASEDIRx86=plugins\ConEmu
-RELEASEDIRx64=Release.x64\plugins\ConEmu
+RELEASEDIR=Release\plugins\ConEmu
 
 !ifdef AMD64
 DIRBIT = 64
-RELEASEDIR = $(RELEASEDIRx64)
 !else
 DIRBIT = 32
-RELEASEDIR = $(RELEASEDIRx86)
 !endif
 WORKDIR = $(DIRNAME).$(DIRBIT)$(DIRSUFF).vc
 !ifdef INSTALL
@@ -147,6 +138,7 @@ DLLNAME = $(OUTNAME).$(EXT)
 DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
 DEF = $(DEF_NAME).def
 MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
+PDB = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb
 RES = $(OBJDIR)\$(NAME).res
 
 !ifdef VC8
@@ -154,21 +146,21 @@ COMPAT64=/Wp64
 NOWIN98=/OPT:NOWIN98
 !endif
 
-PDBNAME="$(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb"
+
 !ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Zi /Fd$(PDBNAME) /DHIDE_TODO /DCRTSTARTUP
+CPP_OPT=/DNDEBUG /O1i /Zi /Fd$(PDB) /DHIDE_TODO /DCRTSTARTUP
 !else
-CPP_OPT=/DDEBUG /Od /Fd$(PDBNAME) /DCRTSTARTUP
+CPP_OPT=/DDEBUG /Od /Fd$(PDB) /DCRTSTARTUP
 !endif
 
 !ifdef AMD64
-COMMONLIB = ../common/libCRT64.lib
 CPP_PROJ_NO=/nologo /c /W3 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+COMMONLIB = ../common/libCRT64.lib
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !elseif defined(IA64)
-COMMONLIB = ../common/libCRTIA64.lib
 CPP_PROJ_NO=/nologo /c /W3 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+COMMONLIB = ../common/libCRTIA64.lib
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !else
@@ -202,29 +194,13 @@ _LINK_PATH_=$(_BIN_PATH_)
 !endif
 
 
-!ifndef ULINK
 LNK=$(_LINK_PATH_)link.exe
-LINK_DEBUG=/debug /pdb:$(PDBNAME)
+#LINK_DEBUG=/debug /pdb:$(PDB)
 CPP_DEBUG=/Zi
-!ifndef NEEDENTRY
-NOENTRY = /noentry
-!endif
-!ifndef NEEDDEFLIB
-NODEFLIB = /nodefaultlib
-!endif
-LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /map:"$(MAP)" /out:"$(DLLFULLNAME)"
-!else
-LINK_DEBUG=-v
-CPP_DEBUG=/Z7
-LNK=$(_ULINK_PATH_)ulink.exe +-
-!ifndef NEEDENTRY
-NOENTRY = -e-
-!endif
-!ifndef NEEDDEFLIB
-NODEFLIB = -n
-!endif
-LINK_FLAGS=-q $(ULOUT) -Gz -m- -Gh -Gh- $(LINK_MACHINE) $(NOENTRY) $(NODEFLIB) /ZD:"$(DEF)" /ZM:"$(MAP)" /ZO:"$(DLLFULLNAME)" $(ENV_LIB_OPT)
-!endif
+LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /release $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /map:"$(MAP)" /pdb:"$(PDB)" /out:"$(DLLFULLNAME)"
+#LINK_FLAGS=/DEBUG /DEF:"export.def" /DLL /DYNAMICBASE /INCREMENTAL:NO /LTCG /MACHINE:X86 /MAP /NODEFAULTLIB /SUBSYSTEM:WINDOWS /OUT:"$(DLLFULLNAME)"
+
+
 
 !ifndef DEBUG
 !undef LINK_DEBUG
@@ -260,10 +236,12 @@ ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
 
 $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !ifndef __MAKE__
+	echo $(LINK_FLAGS)
 	@$(LNK) @<<
 	$(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
 <<
 !else
+	echo $(LINK_FLAGS)
 	@$(LNK) $(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
 !endif
 !ifdef DOCS
@@ -311,9 +289,11 @@ dirs:
 .PHONY: clean
 clean:
 	echo copying release files
-	copy $(DLLFULLNAME) ..\..\$(RELEASEDIRx64)
-	move $(DLLFULLNAME) ..\..\$(RELEASEDIRx86)
-	move $(PDBNAME) ..\..\$(RELEASEDIR)
+	@if not exist "..\..\$(RELEASEDIR)\$(NULL)" mkdir "..\..\$(RELEASEDIR)"
+	move $(DLLFULLNAME) ..\..\$(RELEASEDIR)
+	@cd
+	@echo moving $(PDB) ..\..\$(RELEASEDIR)
+	move $(PDB) ..\..\$(RELEASEDIR)
 	move $(MAP) ..\..\$(RELEASEDIR)
 
 #	echo final cleaning

@@ -1212,12 +1212,16 @@ static BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 
 	//BUGBUG: FAR периодически валится на этой функции
 	//должно быть: lpExecInfo->cbSize==0x03C; lpExecInfo->fMask==0x00800540;
-	if (ph && ph->ExceptCallBack) {
-		if (!OnShellExecuteExW_SEH(F(ShellExecuteExW), lpExecInfo, &lbRc)) {
+	if (ph && ph->ExceptCallBack)
+	{
+		if (!OnShellExecuteExW_SEH(F(ShellExecuteExW), lpExecInfo, &lbRc))
+		{
 			SETARGS1(&lbRc,lpExecInfo);
 			ph->ExceptCallBack(&args);
 		}
-	} else {
+	}
+	else
+	{
 		lbRc = F(ShellExecuteExW)(lpExecInfo);
 	}
 

@@ -84,7 +84,7 @@ BEGIN
             VALUE "FileDescription", "ConEmu console extender" CONEMUPLTFRM "\0"
             VALUE "FileVersion", CONEMUVERS
             VALUE "LegalCopyright", "(C) 2009-2010 Maximus5"
-            VALUE "OriginalFilename", "ConEmuC.exe"
+            VALUE "OriginalFilename", "ConEmuC*.exe"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS
         END

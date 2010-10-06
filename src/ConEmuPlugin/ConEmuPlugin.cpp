@@ -809,7 +809,8 @@ BOOL OnPanelViewCallbacks(HookCallbackArg* pArgs, PanelViewInputCallback pfnLeft
 
 VOID WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs)
 {
-	if (pArgs->bMainThread) {
+	if (pArgs->bMainThread)
+	{
 		ShowMessage(CEShellExecuteException,1);
 	}
 	*((LPBOOL*)pArgs->lpResult) = FALSE;
@@ -861,7 +862,8 @@ VOID WINAPI OnConsolePeekInputPost(HookCallbackArg* pArgs)
 			*pCount, (p->EventType==KEY_EVENT) ? p->Event.KeyEvent.wRepeatCount : 0, nLeft);
 		DEBUGSTRINPUT(szDbg);
 		// Если под дебагом включен ScrollLock - вывести информацию о считанных событиях
-		if (GetKeyState(VK_SCROLL) & 1) {
+		if (GetKeyState(VK_SCROLL) & 1)
+		{
 			PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
 			LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
 			_ASSERTE(*pCount <= pArgs->lArguments[2]);
@@ -4230,25 +4232,31 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
     	}
     }
 	
-	if (nProcessCount >= 2) {
+	if (nProcessCount >= 2)
+	{
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
 		if (hSnap != INVALID_HANDLE_VALUE) {
 			PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
 			DWORD nSelfPID = GetCurrentProcessId();
-			if (Process32First(hSnap, &prc)) {
-				do {
-            		for (UINT i = 0; i < nProcessCount; i++) {
+			if (Process32First(hSnap, &prc))
+			{
+				do
+				{
+            		for (UINT i = 0; i < nProcessCount; i++)
+					{
             			if (prc.th32ProcessID != nSelfPID
             				&& prc.th32ProcessID == nProcesses[i])
         				{
-        					if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0) {
+        					if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0 || lstrcmpiW(prc.szExeFile, L"conemuc64.exe")==0)
+							{
         						CESERVER_REQ* pIn = ExecuteNewCmd(nServerCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
         						pIn->dwData[0] = GetCurrentProcessId();
         						CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn, FarHwnd);
         						if (pOut) dwServerPID = prc.th32ProcessID;
         						ExecuteFreeResult(pIn); ExecuteFreeResult(pOut);
         						// Если команда успешно выполнена - выходим
-        						if (dwServerPID) {
+        						if (dwServerPID)
+								{
         							lbRc = TRUE;
         							break;
     							}
@@ -4302,14 +4310,17 @@ BOOL Attach2Gui()
 		if (pszSlash) pszSlash[1] = 0;
 	}
 	
-	wsprintf(szExe+lstrlenW(szExe), L"ConEmuC.exe\" /ATTACH /PID=%i", dwSelfPID);
+	if (IsWindows64())
+		wsprintf(szExe+lstrlenW(szExe), L"ConEmuC64.exe\" /ATTACH /PID=%i", dwSelfPID);
+	else
+		wsprintf(szExe+lstrlenW(szExe), L"ConEmuC.exe\" /ATTACH /PID=%i", dwSelfPID);
 	
 	
 	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 			NULL, &si, &pi))
 	{
 		// Хорошо бы ошибку показать?
-		ShowMessage(CECantStartServer,1); // "ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
+		ShowMessage(IsWindows64() ? CECantStartServer64 : CECantStartServer, 1); // "ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
 	} else {
 		gdwServerPID = pi.dwProcessId;
 		lbRc = TRUE;
@@ -4352,7 +4363,8 @@ BOOL StartDebugger()
 		if (pszSlash) pszSlash[1] = 0;
 	}
 	
-	wsprintf(szExe+lstrlenW(szExe), L"ConEmuC.exe\" %s /DEBUGPID=%i /BW=80 /BH=25 /BZ=1000", 
+	wsprintf(szExe+lstrlenW(szExe), L"%s\" %s /DEBUGPID=%i /BW=80 /BH=25 /BZ=1000", 
+		IsWindows64() ? L"ConEmuC64.exe" : L"ConEmuC.exe",
 		ConEmuHwnd ? L"/ATTACH" : L"", dwSelfPID);
 	
 	if (ConEmuHwnd) {

@@ -20,6 +20,7 @@ enum {
 	CECantDebugInTerminal,
 	CECantStartDebugger,
 	CECantStartServer,
+	CECantStartServer64,
 	CEInvalidConHwnd,
 	CEShellExecuteException,
 	};

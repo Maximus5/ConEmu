@@ -72,7 +72,7 @@ CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 -D _WIN3
 
 OBJDIR = ../../gcc/conemu
 REOBJDIR = \.\.\/\.\.\/gcc\/conemu
-EXEDIR = ../..
+EXEDIR = ../../Release
 COMMON = ../common
 #COMINC = "C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
 COMINC = $(COMMON)

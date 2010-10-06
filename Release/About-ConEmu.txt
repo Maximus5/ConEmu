@@ -1,0 +1,127 @@
+ConEmu - Windows Console Emulator
+
+
+About ConEmu
+
+    ConEmu-Maximus5 is a Windows console emulator, which represents multiple
+    consoles as one customizable GUI window with various features. Basic
+    application - joint use with Far Manager (FAR in Wikipedia).
+    Far (File and Archive) Manager is a console program for managing files and
+    archives in Windows operating systems.
+
+    This fork grew up from ConEmu by Zoin. 
+
+
+Description
+
+    ConEmu starts a console program in hidden console window and provides an
+    alternative customizable GUI window with various features:
+    * smooth window resizing;
+    * several panels in one window;
+    * tabs for editors, viewers, panels and consoles;
+    * thumbnails and tiles in FAR manager;
+    * normal, maximized and full screen window graphic modes;
+    * window font anti-aliasing: standard, clear type, disabled;
+    * window fonts: family, height, width, bold, italic, etc.; 
+    * using normal/bold/italic fonts for different parts of console simultaneously;
+    * cursor: standard console (horisontal) or GUI (vertical);
+    * for /BufferHeight mode: vertical scrolling using keyboard;
+    * show full output (1K+ lines) of last command in editor/viewer;
+    * drag and drop (explorer style); 
+    * and more, and more... take a look at Settings dialog, WhatsNew and Settings.reg 
+
+    All settings are read from the registry or xml file (multiple
+    configurations are supported) and after that the command line parameters
+    are applied. Parameters /Config and /BufferHeight are only for command
+    line. Most of settings are changed only in the Settings dialog, not from
+    the command line.
+
+
+Requirements
+    Windows 2000 or later.
+
+
+Installation
+    1. Unpack all files (from appropriate "ConEmu.*.7z") to the folder,
+       containing "far.exe".
+       It's strongly recommended to use ConEmu.x64 on 64bit systems.
+       Note, if You are not using FAR manager, You may unpack files to
+       any folder.
+    2. Import to the registry FAR manager macroses, related to ConEmu.
+       Macro *.reg files are located in ConEmu.Addons directory.
+       Each macro file (*.reg) has description in header.
+       Just doubleclick choosen files in Windows Explorer to import them.
+    3. By default (started without command line params), ConEmu runs "far.exe"
+       from it's home folder. Alternatively, You may specify any root command,
+       specifying "/Cmd <App with params>" argument in ConEmu shortcut or
+       command line.
+
+
+Command Line Syntax
+	ConEmu [/CT] [/FS | /MAX] [/Font ..] [/Size ..] [/FontFile ..] [/Config ..]
+	       [/Single] [/BufferHeight ..] [/Multi | /NoMulti] [/Cmd ..]
+
+    Started without params, ConEmu runs "far.exe" from it's home folder.
+
+Parameters
+	/?
+	Shows help screen.
+
+	/CT
+	ClearType anti-aliasing.
+
+	/FS
+	Full screen mode.
+
+	/MAX
+	Maximized window mode.
+
+	/Font <fontname>
+	Specifies the font name.
+
+	/Size <fontsize>
+	Specifies the font size.
+
+	/FontFile <fontfilename> - Loads fonts from file. You may specify more
+	than one font file. First of them (except /Font specified) become main
+	font.
+
+	/Config <configname>
+	Tells to use an existing or create a new configuration with the specified
+	name. Each configuration keeps its own individual data in the registry or
+	xml file (ConEmu.xml).
+
+	/Single
+	New console will be started in new tab of existing ConEmu.
+
+	/BufferHeight <height>
+	Sets console buffer height and tells to use keys CtrlUp, CtrlDn, CtrlPgUp,
+	CtrlPgDn for vertical scrolling. This mode should not be used for programs
+	like FAR where buffer and window height are equal.
+
+	/Multi
+	Turn on MultiConsole feature (several consoles in one ConEmu window,
+	'long console output' feature).
+
+	/Cmd <commandline>
+	/Cmd @<commandfile>
+	This MUST be the LAST switch.
+    The rest (<commandline>) is treated as a command to start and its
+    parameters. By default ConEmu uses a command from saved configuration, if
+    any, otherwise it tries to starts Far in normal mode or Cmd in
+    /BufferHeight mode.
+    You may use @<commandfile> instead of <commandline> to start several
+    consoles simultaneously in one ConEmu instance.
+    Sample startfile.txt:
+      >"C:\Program Files\Far\far.exe"
+      */BufferHeight 400 cmd
+      /BufferHeight 1000 powershell
+
+
+Command Line Examples
+	ConEmu.exe /CT /Font "Lucida Console" /Size 16 /Cmd Far.exe "c:\1 2\"
+	ConEmu.exe /Config ScrollMode /BufferHeight 9999 /Cmd PowerShell.exe
+
+
+Documentation
+    Please, visit: http://code.google.com/p/conemu-maximus5/wiki/ConEmu

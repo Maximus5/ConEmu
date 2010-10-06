@@ -347,18 +347,22 @@ BOOL TabBarClass::GetVConFromTab(int nTabIdx, CVirtualConsole** rpVCon, DWORD* r
     CVirtualConsole *pVCon = NULL;
     DWORD wndIndex = 0;
 
-    if (nTabIdx >= 0 && (UINT)nTabIdx < m_Tab2VCon.size()) {
+    if (nTabIdx >= 0 && (UINT)nTabIdx < m_Tab2VCon.size())
+	{
         pVCon = m_Tab2VCon[nTabIdx].pVCon;
         wndIndex = m_Tab2VCon[nTabIdx].nFarWindowId;
 
-        if (!gConEmu.isValid(pVCon)) {
+        if (!gConEmu.isValid(pVCon))
+		{
 			RequestPostUpdate();
             //if (!mb_PostUpdateCalled)
             //{
             //    mb_PostUpdateCalled = TRUE;
             //    PostMessage(ghWnd, mn_Msg UpdateTabs, 0, 0);
             //}
-        } else {
+        }
+		else
+		{
             lbRc = TRUE;
         }
     }
@@ -687,9 +691,11 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	TODO("Обработка gSet.bHideInactiveConsoleTabs");
 
 	MCHKHEAP
-	if (!gConEmu.mp_TabBar->IsActive() && gSet.isTabs) {
+	if (!gConEmu.mp_TabBar->IsActive() && gSet.isTabs)
+	{
 		int nTabs = 0;
-		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++) {
+		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++)
+		{
 			_ASSERTE(m_Tab2VCon.size()==0);
 			if (!(pVCon = gConEmu.GetVCon(V))) continue;
 			if (gSet.bHideInactiveConsoleTabs) {
@@ -699,24 +705,30 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			nTabs += pVCon->RCon()->GetTabCount();
 			_ASSERTE(m_Tab2VCon.size()==0);
 		}
-		if (nTabs > 1) {
+		if (nTabs > 1)
+		{
 			_ASSERTE(m_Tab2VCon.size()==0);
 			Activate();
 			_ASSERTE(m_Tab2VCon.size()==0);
 		}
-	} else if (gConEmu.mp_TabBar->IsActive() && gSet.isTabs==2) {
+	}
+	else if (gConEmu.mp_TabBar->IsActive() && gSet.isTabs==2)
+	{
 		int nTabs = 0;
-		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++) {
+		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++)
+		{
 			_ASSERTE(m_Tab2VCon.size()==0);
 			if (!(pVCon = gConEmu.GetVCon(V))) continue;
-			if (gSet.bHideInactiveConsoleTabs) {
+			if (gSet.bHideInactiveConsoleTabs)
+			{
 				if (!gConEmu.isActive(pVCon)) continue;
 			}
 			_ASSERTE(m_Tab2VCon.size()==0);
 			nTabs += pVCon->RCon()->GetTabCount();
 			_ASSERTE(m_Tab2VCon.size()==0);
 		}
-		if (nTabs <= 1) {
+		if (nTabs <= 1)
+		{
 			_ASSERTE(m_Tab2VCon.size()==0);
 			Deactivate();
 			_ASSERTE(m_Tab2VCon.size()==0);
@@ -724,7 +736,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 
 	#ifdef _DEBUG
-	if (this != gConEmu.mp_TabBar) {
+	if (this != gConEmu.mp_TabBar)
+	{
 		_ASSERTE(this == gConEmu.mp_TabBar);
 	}
 	#endif
@@ -732,23 +745,28 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	MCHKHEAP
 	_ASSERTE(m_Tab2VCon.size()==0);
 
-    for (V = 0; V < MAX_CONSOLE_COUNT; V++) {
+    for (V = 0; V < MAX_CONSOLE_COUNT; V++)
+	{
         if (!(pVCon = gConEmu.GetVCon(V))) continue;
 		BOOL lbActive = gConEmu.isActive(pVCon);
 
-		if (gSet.bHideInactiveConsoleTabs) {
+		if (gSet.bHideInactiveConsoleTabs)
+		{
 			if (!lbActive) continue;
 		}
 
 		CRealConsole *pRCon = pVCon->RCon();
         
-        for (I = 0; TRUE; I++) {
+        for (I = 0; TRUE; I++)
+		{
 			#ifdef _DEBUG
-			if (!I && !V) {
+			if (!I && !V)
+			{
 				_ASSERTE(m_Tab2VCon.size()==0);
 			}
 
-			if (this != gConEmu.mp_TabBar) {
+			if (this != gConEmu.mp_TabBar)
+			{
 				_ASSERTE(this == gConEmu.mp_TabBar);
 			}
 			MCHKHEAP;
@@ -758,7 +776,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 				break;
 
 			#ifdef _DEBUG
-			if (this != gConEmu.mp_TabBar) {
+			if (this != gConEmu.mp_TabBar)
+			{
 				_ASSERTE(this == gConEmu.mp_TabBar);
 			}
 			MCHKHEAP;
@@ -770,7 +789,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
             vct.nFarWindowId = I;
 
 			#ifdef _DEBUG
-			if (!I && !V) {
+			if (!I && !V)
+			{
 				_ASSERTE(m_Tab2VCon.size()==0);
 			}
 			#endif
@@ -785,7 +805,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
             tabIdx++;
 
 			#ifdef _DEBUG
-			if (this != gConEmu.mp_TabBar) {
+			if (this != gConEmu.mp_TabBar)
+			{
 				_ASSERTE(this == gConEmu.mp_TabBar);
 			}
 			#endif
@@ -819,7 +840,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	wsprintf(szDbg, L"TabBarClass::Update.  ItemCount=%i, PrevItemCount=%i\n", tabIdx, nCurCount);
 	DEBUGSTRTABS(szDbg);
 	#endif
-	for (I = tabIdx; I < nCurCount; I++) {
+	for (I = tabIdx; I < nCurCount; I++)
+	{
 		#ifdef _DEBUG
 		wsprintf(szDbg, L"   Deleting tab=%i\n", I+1);
 		DEBUGSTRTABS(szDbg);
@@ -828,17 +850,25 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 
 	MCHKHEAP
-    if (mb_InKeySwitching) {
+    if (mb_InKeySwitching)
+	{
 	    if (mn_CurSelTab >= nCurCount) // Если выбранный таб вылез за границы
 		    mb_InKeySwitching = FALSE;
     }
         
-    if (!mb_InKeySwitching && nCurTab != -1) {
+    if (!mb_InKeySwitching && nCurTab != -1)
+	{
         SelectTab(nCurTab);
     }
 
+	if (gSet.isTabsInCaption)
+	{
+		SendMessage(ghWnd, WM_NCPAINT, 0, 0);
+	}
+
 	mn_InUpdate --;
-	if (mb_PostUpdateRequested) {
+	if (mb_PostUpdateRequested)
+	{
 		mb_PostUpdateCalled = FALSE;
 		mb_PostUpdateRequested = FALSE;
 		RequestPostUpdate();
@@ -850,7 +880,8 @@ void TabBarClass::AddTab2VCon(VConTabs& vct)
 {
 	#ifdef _DEBUG
 	std::vector<VConTabs>::iterator i = m_Tab2VCon.begin();
-	while (i != m_Tab2VCon.end()) {
+	while (i != m_Tab2VCon.end())
+	{
 		_ASSERTE(i->pVCon!=vct.pVCon || i->nFarWindowId!=vct.nFarWindowId);
 		i++;
 	}
@@ -1226,12 +1257,14 @@ void TabBarClass::OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/)
 
     BOOL bPresent[MAX_CONSOLE_COUNT]; memset(bPresent, 0, sizeof(bPresent));
     MCHKHEAP
-    for (int i=1; i<=MAX_CONSOLE_COUNT; i++) {
+    for (int i=1; i<=MAX_CONSOLE_COUNT; i++)
+	{
         bPresent[i-1] = gConEmu.GetVConTitle(i-1) != NULL;
     }
 
     SendMessage(mh_Toolbar, WM_SETREDRAW, 0, 0);
-    for (int i=1; i<=MAX_CONSOLE_COUNT; i++) {
+    for (int i=1; i<=MAX_CONSOLE_COUNT; i++)
+	{
         SendMessage(mh_Toolbar, TB_HIDEBUTTON, i, !bPresent[i-1]);
     }
 
@@ -1240,9 +1273,12 @@ void TabBarClass::OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/)
 
     //nConNumber = gConEmu.ActiveConNum()+1; -- сюда пришел уже правильный номер!
     
-    if (nConNumber>=1 && nConNumber<=MAX_CONSOLE_COUNT) {
+    if (nConNumber>=1 && nConNumber<=MAX_CONSOLE_COUNT)
+	{
         SendMessage(mh_Toolbar, TB_CHECKBUTTON, nConNumber, 1);
-    } else {
+    }
+	else
+	{
         for (int i=1; i<=MAX_CONSOLE_COUNT; i++)
             SendMessage(mh_Toolbar, TB_CHECKBUTTON, i, 0);
     }
@@ -1282,7 +1318,8 @@ HWND TabBarClass::CreateToolbar()
 	TBBUTTON sep = {0, 100, TBSTATE_ENABLED, TBSTYLE_SEP};
 	int nActiveCon = gConEmu.ActiveConNum()+1;
 	// Console numbers
-	for (int i = 1; i <= 12; i++) {
+	for (int i = 1; i <= 12; i++)
+	{
 	   btn.iBitmap = nFirst + i-1;
 	   btn.idCommand = i;
 	   btn.fsState = TBSTATE_ENABLED
@@ -1344,7 +1381,8 @@ HWND TabBarClass::CreateTabbar()
     if (mh_Tabbar)
         return mh_Tabbar; // Уже создали
         
-    if (!mh_TabIcons) {
+    if (!mh_TabIcons)
+	{
     	mh_TabIcons = ImageList_LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_SHIELD), 14, 1, RGB(128,0,0), IMAGE_BITMAP, LR_CREATEDIBSECTION);
 		mn_AdminIcon = (gConEmu.m_osv.dwMajorVersion >= 6) ? 0 : 1;
     }
@@ -1353,7 +1391,8 @@ HWND TabBarClass::CreateTabbar()
     BOOL bAppThemed = FALSE, bThemeActive = FALSE;
     FAppThemed pfnThemed = NULL;
     HMODULE hUxTheme = LoadLibrary ( L"UxTheme.dll" );
-    if (hUxTheme) {
+    if (hUxTheme)
+	{
     	pfnThemed = (FAppThemed)GetProcAddress( hUxTheme, "IsAppThemed" );
     	if (pfnThemed) bAppThemed = pfnThemed();
     	pfnThemed = (FAppThemed)GetProcAddress( hUxTheme, "IsThemeActive" );
@@ -1386,7 +1425,8 @@ HWND TabBarClass::CreateTabbar()
     
     SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)mh_TabIcons);
 
-    if (!mh_TabTip || !IsWindow(mh_TabTip)) {
+    if (!mh_TabTip || !IsWindow(mh_TabTip))
+	{
         mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
                               WS_POPUP | TTS_ALWAYSTIP /*| TTS_BALLOON*/ | TTS_NOPREFIX,
                               CW_USEDEFAULT, CW_USEDEFAULT,
@@ -1400,7 +1440,8 @@ HWND TabBarClass::CreateTabbar()
         CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gSet.sTabFontFace);
     SendMessage(mh_Tabbar, WM_SETFONT, WPARAM (hFont), TRUE);
     
-	if (!mh_Balloon || !IsWindow(mh_Balloon)) {
+	if (!mh_Balloon || !IsWindow(mh_Balloon))
+	{
 		mh_Balloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
 			WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
 			CW_USEDEFAULT, CW_USEDEFAULT,
@@ -1459,7 +1500,8 @@ void TabBarClass::CreateRebar()
     REBARINFO     rbi={sizeof(REBARINFO)};
     REBARBANDINFO rbBand={80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
 
-    if(!SendMessage(mh_Rebar, RB_SETBARINFO, 0, (LPARAM)&rbi)) {
+    if(!SendMessage(mh_Rebar, RB_SETBARINFO, 0, (LPARAM)&rbi))
+	{
         DisplayLastError(_T("Can't initialize rebar!"));
         DestroyWindow(mh_Rebar);
         mh_Rebar = NULL;
@@ -1480,9 +1522,12 @@ void TabBarClass::CreateRebar()
     CreateToolbar();
 
     SIZE sz = {0,0};
-    if (mh_Toolbar) {
+    if (mh_Toolbar)
+	{
         SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-    } else {
+    }
+	else
+	{
         RECT rcClient;
         GetClientRect(ghWnd, &rcClient); 
         TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
@@ -1499,7 +1544,8 @@ void TabBarClass::CreateRebar()
         rbBand.cx = rbBand.cxIdeal = rcWnd.right - sz.cx - 80;
 		rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = _tabHeight; // sz.cy;
 
-        if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand)) {
+        if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
+		{
             DisplayLastError(_T("Can't initialize rebar (tabbar)"));
         }
     }
@@ -1514,7 +1560,8 @@ void TabBarClass::CreateRebar()
         rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = sz.cy + mn_ThemeHeightDiff;
 
         // Add the band that has the toolbar.
-        if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand)) {
+        if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
+		{
             DisplayLastError(_T("Can't initialize rebar (toolbar)"));
         }
         
@@ -1541,7 +1588,8 @@ void TabBarClass::CreateRebar()
 void TabBarClass::PrepareTab(ConEmuTab* pTab)
 {
 	#ifdef _DEBUG
-	if (this != gConEmu.mp_TabBar) {
+	if (this != gConEmu.mp_TabBar)
+	{
 		_ASSERTE(this == gConEmu.mp_TabBar);
 	}
 	#endif
@@ -1556,7 +1604,8 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
     int nSplit = 0;
     int nMaxLen = 0; //gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
     int origLength = 0; //_tcslen(tFileName);
-    if (pTab->Name[0]==0 || (pTab->Type & 0xFF) == 1/*WTYPE_PANELS*/) {
+    if (pTab->Name[0]==0 || (pTab->Type & 0xFF) == 1/*WTYPE_PANELS*/)
+	{
 	    //_tcscpy(szFormat, _T("%s"));
 	    _tcscpy(szFormat, gSet.szTabConsole);
 	    nMaxLen = gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
@@ -1662,7 +1711,8 @@ int TabBarClass::GetIndexByTab(VConTabs tab)
 {
 	int nIdx = -1;
 	std::vector<VConTabs>::iterator iter = m_Tab2VCon.begin();
-	while (iter != m_Tab2VCon.end()) {
+	while (iter != m_Tab2VCon.end())
+	{
 		nIdx ++;
 		if (*iter == tab)
 			return nIdx;
@@ -1680,7 +1730,8 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 	VConTabs cur = {NULL};
     
 	#ifdef _DEBUG
-	if (nCurCount != m_Tab2VCon.size()) {
+	if (nCurCount != m_Tab2VCon.size())
+	{
 		_ASSERTE(nCurCount == m_Tab2VCon.size());
 	}
 	#endif
@@ -1694,20 +1745,26 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
     int i, nNewSel = -1;
 
     TODO("Добавить возможность переключаться а'ля RecentScreens");
-    if (abForward) {
-    	if (lbRecentMode) {
+    if (abForward)
+	{
+    	if (lbRecentMode)
+		{
         	std::vector<VConTabs>::iterator iter = m_TabStack.begin();
-        	while (iter != m_TabStack.end()) {
+        	while (iter != m_TabStack.end())
+			{
 				VConTabs Item = *iter;
         		// Найти в стеке выделенный таб
-        		if (Item == cur) {
+        		if (Item == cur)
+				{
         			// Определить следующий таб, который мы можем активировать
-        			do {
+        			do
+					{
 	        			iter ++; // Если дошли до конца (сейчас выделен последний таб) вернуть первый
     	    			if (iter == m_TabStack.end()) iter = m_TabStack.begin();
     	    			// Определить индекс в m_Tab2VCon
     	    			i = GetIndexByTab ( *iter );
-    	    			if (CanActivateTab(i)) {
+    	    			if (CanActivateTab(i))
+						{
     	    				return i;
         				}
         			} while (*iter != cur);
@@ -1724,21 +1781,28 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
         for (i = 0; nNewSel == -1 && i < nCurSel; i++)
             if (CanActivateTab(i)) nNewSel = i;
 
-    } else {
+    }
+	else
+	{
     
-    	if (lbRecentMode) {
+    	if (lbRecentMode)
+		{
         	std::vector<VConTabs>::reverse_iterator iter = m_TabStack.rbegin();
-        	while (iter != m_TabStack.rend()) {
+        	while (iter != m_TabStack.rend())
+			{
 				VConTabs Item = *iter;
         		// Найти в стеке выделенный таб
-        		if (Item == cur) {
+        		if (Item == cur)
+				{
         			// Определить следующий таб, который мы можем активировать
-        			do {
+        			do
+					{
 	        			iter ++; // Если дошли до конца (сейчас выделен последний таб) вернуть первый
     	    			if (iter == m_TabStack.rend()) iter = m_TabStack.rbegin();
     	    			// Определить индекс в m_Tab2VCon
     	    			i = GetIndexByTab ( *iter );
-    	    			if (CanActivateTab(i)) {
+    	    			if (CanActivateTab(i))
+						{
     	    				return i;
         				}
         			} while (*iter != cur);
@@ -1773,13 +1837,17 @@ void TabBarClass::Switch(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 {
     int nNewSel = GetNextTab ( abForward, abAltStyle );
     
-    if (nNewSel != -1) {
+    if (nNewSel != -1)
+	{
 		// mh_Tabbar может быть и создан, Но отключен пользователем!
-        if (gSet.isTabLazy && mh_Tabbar && gSet.isTabs) {
+        if (gSet.isTabLazy && mh_Tabbar && gSet.isTabs)
+		{
             mb_InKeySwitching = TRUE;
             // Пока Ctrl не отпущен - только подсвечиваем таб, а не переключаем реально
             SelectTab ( nNewSel );
-        } else {
+        }
+		else
+		{
             FarSendChangeTab ( nNewSel );
 			mb_InKeySwitching = FALSE;
         }
@@ -1803,7 +1871,8 @@ void TabBarClass::SwitchCommit()
 
 void TabBarClass::SwitchRollback()
 {
-	if (mb_InKeySwitching) {
+	if (mb_InKeySwitching)
+	{
 		mb_InKeySwitching = FALSE;
 		Update();
 	}
@@ -1818,10 +1887,13 @@ void TabBarClass::CheckStack()
 	BOOL lbExist = FALSE;
 
 	j = m_TabStack.begin();
-	while (j != m_TabStack.end()) {
+	while (j != m_TabStack.end())
+	{
 		lbExist = FALSE;
-		for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); i++) {
-			if (*i == *j) {
+		for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); i++)
+		{
+			if (*i == *j)
+			{
 				lbExist = TRUE; break;
 			}
 		}
@@ -1831,10 +1903,13 @@ void TabBarClass::CheckStack()
 			j = m_TabStack.erase(j);
 	}
 
-	for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); i++) {
+	for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); i++)
+	{
 		lbExist = FALSE;
-		for (j = m_TabStack.begin(); j != m_TabStack.end(); j++) {
-			if (*i == *j) {
+		for (j = m_TabStack.begin(); j != m_TabStack.end(); j++)
+		{
+			if (*i == *j)
+			{
 				lbExist = TRUE; break;
 			}
 		}
@@ -1849,14 +1924,20 @@ void TabBarClass::AddStack(VConTabs tab)
 	_ASSERTE(gConEmu.isMainThread());
 	
 	BOOL lbExist = FALSE;
-	if (!m_TabStack.empty()) {
+	if (!m_TabStack.empty())
+	{
 		//VConTabs tmp;
 		std::vector<VConTabs>::iterator iter = m_TabStack.begin();
-		while (iter != m_TabStack.end()) {
-			if (*iter == tab) {
-				if (iter == m_TabStack.begin()) {
+		while (iter != m_TabStack.end())
+		{
+			if (*iter == tab)
+			{
+				if (iter == m_TabStack.begin())
+				{
 					lbExist = TRUE;
-				} else {
+				}
+				else
+				{
 					m_TabStack.erase(iter);
 				}
 				break;
@@ -1895,7 +1976,8 @@ BOOL TabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
             SwitchNext(lbAltPressed);
         else
             SwitchPrev(lbAltPressed);
-    } else if (mb_InKeySwitching && messg == WM_KEYDOWN && !lbAltPressed
+    }
+	else if (mb_InKeySwitching && messg == WM_KEYDOWN && !lbAltPressed
         && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT))
     {
     	bool bRecent = gSet.isTabRecent;
@@ -1921,7 +2003,8 @@ void TabBarClass::ShowTabError(LPCTSTR asInfo, int tabIndex)
 		lstrcpyn(ms_TabErrText, asInfo, ARRAYSIZE(ms_TabErrText));
 
 	tiBalloon.lpszText = ms_TabErrText;
-	if (ms_TabErrText[0]) {
+	if (ms_TabErrText[0])
+	{
 		SendMessage(mh_TabTip, TTM_ACTIVATE, FALSE, 0);
 		SendMessage(mh_Balloon, TTM_UPDATETIPTEXT, 0, (LPARAM)&tiBalloon);
 		//RECT rcControl; GetWindowRect(GetDlgItem(hMain, tFontFace), &rcControl);
@@ -1936,4 +2019,75 @@ void TabBarClass::ShowTabError(LPCTSTR asInfo, int tabIndex)
 		SendMessage(mh_Balloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiBalloon);
 		SendMessage(mh_TabTip, TTM_ACTIVATE, TRUE, 0);
 	}
+}
+
+void TabBarClass::PaintHeader(HDC hdc, RECT rcPaint)
+{
+	int nCount = 0, V, R;
+	CVirtualConsole *pVCon = NULL;
+	CRealConsole *pRCon = NULL;
+
+    for (V = 0; V < MAX_CONSOLE_COUNT; V++)
+	{
+        if (!(pVCon = gConEmu.GetVCon(V))) continue;
+		//BOOL lbActive = gConEmu.isActive(pVCon);
+		//if (gSet.bHideInactiveConsoleTabs)
+		//{
+		//	if (!lbActive) continue;
+		//}
+		if (!(pRCon = pVCon->RCon())) continue;
+		nCount += pRCon->GetTabCount();
+	}
+
+	if (nCount < 1) nCount = 1;
+	int nWidth = ((rcPaint.right - rcPaint.left) / nCount);
+
+	HBRUSH hWhite = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	FillRect(hdc, &rcPaint, hWhite);
+
+	HBRUSH hSilver = (HBRUSH)GetStockObject(GRAY_BRUSH);
+	HBRUSH hOldBr = (HBRUSH)SelectObject(hdc, hSilver);
+	HPEN hBlack = CreatePen(PS_SOLID, 1, RGB(80,80,80));
+	HPEN hOldPen = (HPEN)SelectObject(hdc, hBlack);
+
+
+	ConEmuTab tab = {0};
+	RECT rcTab = {rcPaint.left, rcPaint.top, rcPaint.left+nWidth-1, rcPaint.bottom};
+	std::vector<VConTabs>::iterator iter = m_Tab2VCon.begin();
+	int i = 0;
+    for (V = 0; V < MAX_CONSOLE_COUNT && i < nCount; V++)
+	{
+        if (!(pVCon = gConEmu.GetVCon(V))) continue;
+		//BOOL lbActive = gConEmu.isActive(pVCon);
+		//if (gSet.bHideInactiveConsoleTabs)
+		//{
+		//	if (!lbActive) continue;
+		//}
+		if (!(pRCon = pVCon->RCon())) continue;
+
+		int nRCount = pRCon->GetTabCount();
+		for (R = 0; R < nRCount; R++)
+		{
+			if (!pRCon->GetTab(R, &tab))
+				continue;
+
+			i++;
+			if (i > nCount)
+			{
+				_ASSERTE(i <= nCount);
+				break;
+			}
+			
+
+			Rectangle(hdc, rcTab.left, rcTab.top, rcTab.right, rcTab.bottom);
+
+			DrawText(hdc, tab.Name, lstrlenW(tab.Name), &rcTab, DT_LEFT|DT_NOPREFIX|DT_VCENTER|DT_WORD_ELLIPSIS);
+
+			// Next
+			iter ++; rcTab.left += nWidth; rcTab.right += nWidth;
+		}
+	}
+
+	SelectObject(hdc, hOldBr);
+	SelectObject(hdc, hOldPen);
 }

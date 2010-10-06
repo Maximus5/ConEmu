@@ -565,12 +565,15 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 		return false;
 
 	hr = pChild->get_attributes(&pAttrs);
-	if (SUCCEEDED(hr) && pAttrs) {
+	if (SUCCEEDED(hr) && pAttrs)
+	{
 		bsType = GetAttr(pChild, pAttrs, L"type");
 	}
 	
-	if (SUCCEEDED(hr) && bsType) {
-		if (!lstrcmpi(bsType, L"multi")) {
+	if (SUCCEEDED(hr) && bsType)
+	{
+		if (!lstrcmpi(bsType, L"multi"))
+		{
 			// Тут значения хранятся так:
 			//<value name="CmdLineHistory" type="multi">
 			//	<line data="C:\Far\Far.exe"/>

@@ -68,6 +68,7 @@ typedef interface ITaskbarList2 ITaskbarList2;
 
 //typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
 
+typedef HRESULT (WINAPI* FDwmIsCompositionEnabled)(BOOL *pfEnabled);
 
 class CConEmuChild;
 class CConEmuBack;
@@ -116,9 +117,10 @@ public:
 	//HMODULE mh_Psapi;
 	//FGetModuleFileNameEx GetModuleFileNameEx;
 	wchar_t ms_ConEmuExe[MAX_PATH+1];
+	wchar_t ms_ConEmuExeDir[MAX_PATH+1];
 	wchar_t ms_ConEmuXml[MAX_PATH+1];
 	wchar_t ms_ConEmuChm[MAX_PATH+1];
-	wchar_t ms_ConEmuCExe[MAX_PATH+1];
+	wchar_t ms_ConEmuCExe[MAX_PATH+5];
 	wchar_t ms_ConEmuCurDir[MAX_PATH+1];
 	wchar_t ms_ConEmuArgs[MAX_PATH*2];
 private:
@@ -214,6 +216,12 @@ protected:
 	//BYTE m_KeybStates[256];
 	DWORD_PTR m_ActiveKeybLayout;
 	struct {
+		BOOL      bUsed;
+		//wchar_t   klName[KL_NAMELENGTH/*==9*/];
+		DWORD     klName;
+		DWORD_PTR hkl;
+	} m_LayoutNames[20];
+	struct {
 		wchar_t szTranslatedChars[16];
 	} m_TranslatedChars[256];
 	BYTE mn_LastPressedVK;
@@ -225,6 +233,8 @@ protected:
 	HMODULE mh_LLKeyHookDll;
 	void RegisterHotKeys();
 	void UnRegisterHotKeys(BOOL abFinal=FALSE);
+	HMODULE mh_DwmApi;
+	FDwmIsCompositionEnabled DwmIsCompositionEnabled;
 public:
 	void RegisterHoooks();
 	void UnRegisterHoooks(BOOL abFinal=FALSE);
@@ -259,6 +269,7 @@ protected:
 	//UINT mn_MsgSetForeground;
 	UINT mn_MsgFlashWindow;
 	UINT mn_MsgLLKeyHook;
+	//UINT wmInputLangChange;
 	
 	//
 	static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
@@ -323,6 +334,7 @@ public:
 	bool isFar();
 	bool isFilePanel(bool abPluginAllowed=false);
 	bool isFirstInstance();
+	bool IsGlass();
 	bool isIconic();
 	bool isLBDown();
 	bool isMainThread();
@@ -407,6 +419,8 @@ public:
 	LRESULT OnMouse_RBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
 	LRESULT OnMouse_RBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
 	BOOL OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnNcMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnNcPaint(HRGN hRgn);
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSetCursor(WPARAM wParam=-1, LPARAM lParam=-1);
 	LRESULT OnSize(WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);

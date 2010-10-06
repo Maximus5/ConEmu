@@ -202,7 +202,7 @@ public:
     bool isEnhanceGraphics; // Progressbars and scrollbars (pseudographics)
     bool isFadeInactive;
     //DWORD nFadeInactiveMask;
-    char isTabs; bool isTabSelf, isTabRecent, isTabLazy;
+    char isTabs; bool isTabSelf, isTabRecent, isTabLazy, isTabsInCaption;
     wchar_t sTabFontFace[LF_FACESIZE]; DWORD nTabFontCharSet; int nTabFontHeight;
 	wchar_t *sTabCloseMacro;
 	wchar_t *sSaveAllMacro;

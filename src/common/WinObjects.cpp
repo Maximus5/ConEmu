@@ -76,6 +76,25 @@ BOOL apiShowWindowAsync(HWND ahWnd, int anCmdShow)
 }
 
 
+BOOL FileExists(LPCWSTR asFilePath)
+{
+	WIN32_FIND_DATAW fnd = {0};
+	HANDLE hFind = FindFirstFile(asFilePath, &fnd);
+	if (hFind == INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	BOOL lbFound = FALSE;
+	do {
+		if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+		{
+			lbFound = TRUE;
+			break;
+		}
+	} while (FindNextFile(hFind, &fnd));
+	FindClose(hFind);
+
+	return lbFound;
+}
 
 BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t* rsShortName/*name only, MAX_PATH required*/)
 {
@@ -84,8 +103,10 @@ BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t* rsShortName/*name only, MAX_P
 	if (hFind == INVALID_HANDLE_VALUE)
 		return FALSE;
 	FindClose(hFind);
-	if (fnd.cAlternateFileName[0]) {
-		if (lstrlenW(fnd.cAlternateFileName) < lstrlenW(fnd.cFileName)) {
+	if (fnd.cAlternateFileName[0])
+	{
+		if (lstrlenW(fnd.cAlternateFileName) < lstrlenW(fnd.cFileName))
+		{
 			lstrcpyW(rsShortName, fnd.cAlternateFileName);
 			return TRUE;
 		}
@@ -106,10 +127,12 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong)
 	wchar_t  szName[MAX_PATH+1];
 	size_t nLen = 0;
 
-	while (pszCur) {
+	while (pszCur)
+	{
 		*pszCur = 0;
 		{
-			if (GetShortFileName(pszShort, szName)) {
+			if (GetShortFileName(pszShort, szName))
+			{
 				if ((pszSlash = wcsrchr(pszShort, L'\\'))==0)
 					goto wrap;
 				lstrcpyW(pszSlash+1, szName);
@@ -164,6 +187,37 @@ BOOL IsUserAdmin()
 }
 
 
+
+typedef BOOL (WINAPI* IsWow64Process_t)(HANDLE hProcess, PBOOL Wow64Process);
+
+// pbIsWow64Process <- TRUE, если 32битный процесс запущен в 64битной ОС
+BOOL IsWindows64(BOOL *pbIsWow64Process/* = NULL */)
+{
+	BOOL is64bitOs = FALSE, isWow64process = FALSE;
+	#ifdef WIN64
+	is64bitOs = TRUE; isWow64process = FALSE;
+	#else
+	// Проверяем, где мы запущены
+	isWow64process = FALSE;
+	HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
+	if (hKernel)
+	{
+		IsWow64Process_t IsWow64Process_f = (IsWow64Process_t)GetProcAddress(hKernel, "IsWow64Process");
+		if (IsWow64Process_f)
+		{
+			BOOL bWow64 = FALSE;
+			if (IsWow64Process_f(GetCurrentProcess(), &bWow64) && bWow64)
+			{
+				isWow64process = TRUE;
+			}
+		}
+	}
+	is64bitOs = isWow64process;
+	#endif
+	if (pbIsWow64Process)
+		*pbIsWow64Process = isWow64process;
+	return is64bitOs;
+}
 
 
 
@@ -1099,3 +1153,310 @@ void MSetter::Unlock() {
 		if (mdw_DwordVal) *mdw_DwordVal = mdw_OldDwordValue;
 	}
 }
+
+
+
+
+
+MSection::MSection()
+{
+	mn_TID = 0; mn_Locked = 0; mb_Exclusive = FALSE;
+	ZeroStruct(mn_LockedTID); ZeroStruct(mn_LockedCount);
+	InitializeCriticalSection(&m_cs);
+	mh_ReleaseEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	_ASSERTE(mh_ReleaseEvent!=NULL);
+	if (mh_ReleaseEvent) ResetEvent(mh_ReleaseEvent);
+};
+MSection::~MSection()
+{
+	DeleteCriticalSection(&m_cs);
+	if (mh_ReleaseEvent) {
+		CloseHandle(mh_ReleaseEvent); mh_ReleaseEvent = NULL;
+	}
+};
+void MSection::ThreadTerminated(DWORD dwTID) {
+	for (int i=1; i<10; i++) {
+		if (mn_LockedTID[i] == dwTID) {
+			mn_LockedTID[i] = 0;
+			if (mn_LockedCount[i] != 0) {
+				_ASSERTE(mn_LockedCount[i] == 0);
+			}
+			break;
+		}
+	}
+};
+void MSection::AddRef(DWORD dwTID)
+{
+	mn_Locked ++; // увеличиваем счетчик nonexclusive locks
+	_ASSERTE(mn_Locked>0);
+	ResetEvent(mh_ReleaseEvent); // На всякий случай сбросим Event
+	int j = -1; // будет -2, если ++ на существующий, иначе - +1 на пустой
+	for (int i=1; i<10; i++) {
+		if (mn_LockedTID[i] == dwTID) {
+			mn_LockedCount[i] ++; 
+			j = -2; 
+			break;
+		} else if (j == -1 && mn_LockedTID[i] == 0) {
+			mn_LockedTID[i] = dwTID;
+			mn_LockedCount[i] ++; 
+			j = i;
+			break;
+		}
+	}
+	if (j == -1) // Этого быть не должно
+	{
+		_ASSERTE(j != -1);
+	}
+};
+int MSection::ReleaseRef(DWORD dwTID)
+{
+	_ASSERTE(mn_Locked>0);
+	int nInThreadLeft = 0;
+	if (mn_Locked > 0) mn_Locked --;
+	if (mn_Locked == 0)
+		SetEvent(mh_ReleaseEvent); // Больше nonexclusive locks не осталось
+	for (int i=1; i<10; i++)
+	{
+		if (mn_LockedTID[i] == dwTID)
+		{
+			mn_LockedCount[i] --; 
+			if ((nInThreadLeft = mn_LockedCount[i]) == 0)
+				mn_LockedTID[i] = 0; // Иначе при динамически создаваемых нитях - 10 будут в момент использованы
+			break;
+		}
+	}
+	return nInThreadLeft;
+};
+void MSection::WaitUnlocked(DWORD dwTID, DWORD anTimeout)
+{
+	DWORD dwStartTick = GetTickCount();
+	int nSelfCount = 0;
+	for (int i=1; i<10; i++)
+	{
+		if (mn_LockedTID[i] == dwTID) {
+			nSelfCount = mn_LockedCount[i];
+			break;
+		}
+	}
+	while (mn_Locked > nSelfCount)
+	{
+		#ifdef _DEBUG
+		DEBUGSTR(L"!!! Waiting for exclusive access\n");
+
+		DWORD nWait =
+		#endif
+
+		WaitForSingleObject(mh_ReleaseEvent, 10);
+
+		DWORD dwCurTick = GetTickCount();
+		DWORD dwDelta = dwCurTick - dwStartTick;
+
+		if (anTimeout != (DWORD)-1)
+		{
+			if (dwDelta > anTimeout)
+			{
+				#ifndef CSECTION_NON_RAISE
+				_ASSERTE(dwDelta<=anTimeout);
+				#endif
+				break;
+			}
+		}
+		#ifdef _DEBUG
+		else if (dwDelta > 3000)
+		{
+			#ifndef CSECTION_NON_RAISE
+			_ASSERTE(dwDelta <= 3000);
+			#endif
+			break;
+		}
+		#endif
+	}
+};
+bool MSection::MyEnterCriticalSection(DWORD anTimeout)
+{
+	//EnterCriticalSection(&m_cs); 
+	// дождаться пока секцию отпустят
+
+	// НАДА. Т.к. может быть задан nTimeout (для DC)
+	DWORD dwTryLockSectionStart = GetTickCount(), dwCurrentTick;
+
+	if (!TryEnterCriticalSection(&m_cs))
+	{
+		Sleep(10);
+		while (!TryEnterCriticalSection(&m_cs))
+		{
+			Sleep(10);
+			DEBUGSTR(L"TryEnterCriticalSection failed!!!\n");
+
+			dwCurrentTick = GetTickCount();
+			if (anTimeout != (DWORD)-1)
+			{
+				if (((dwCurrentTick - dwTryLockSectionStart) > anTimeout))
+				{
+					#ifndef CSECTION_NON_RAISE
+					_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= anTimeout);
+					#endif
+					return false;
+				}
+			}
+			#ifdef _DEBUG
+			else if ((dwCurrentTick - dwTryLockSectionStart) > 3000)
+			{
+				#ifndef CSECTION_NON_RAISE
+				_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= 3000);
+				#endif
+				dwTryLockSectionStart = GetTickCount();
+			}
+			#endif
+		}
+	}
+
+	return true;
+}
+BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
+{
+	DWORD dwTID = GetCurrentThreadId();
+	
+	// Может эта нить уже полностью заблокирована?
+	if (mb_Exclusive && dwTID == mn_TID)
+	{
+		return FALSE; // Уже, но Unlock делать не нужно!
+	}
+	
+	if (!abExclusive)
+	{
+		// Быстрая блокировка, не запрещающая чтение другим нитям.
+		// Запрещено только изменение (пересоздание буфера например)
+		AddRef(dwTID);
+		
+		// Если другая нить уже захватила exclusive
+		if (mb_Exclusive)
+		{
+			int nLeft = ReleaseRef(dwTID); // Иначе можем попасть на взаимную блокировку
+			if (nLeft > 0)
+			{
+				_ASSERTE(nLeft == 0);
+			}
+
+			DEBUGSTR(L"!!! Failed non exclusive lock, trying to use CriticalSection\n");
+			bool lbEntered = MyEnterCriticalSection(anTimeout); // дождаться пока секцию отпустят
+			_ASSERTE(!mb_Exclusive); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
+
+			AddRef(dwTID); // Возвращаем блокировку
+
+			// Но поскольку нам нужен только nonexclusive lock
+			if (lbEntered)
+				LeaveCriticalSection(&m_cs);
+		}
+	}
+	else
+	{
+		// Требуется Exclusive Lock
+
+		#ifdef _DEBUG
+		if (mb_Exclusive)
+		{
+			// Этого надо стараться избегать
+			DEBUGSTR(L"!!! Exclusive lock found in other thread\n");
+		}
+		#endif
+		
+		// Если есть ExclusiveLock (в другой нити) - дождется сама EnterCriticalSection
+		#ifdef _DEBUG
+		BOOL lbPrev = mb_Exclusive;
+		DWORD nPrevTID = mn_TID;
+		#endif
+		mb_Exclusive = TRUE; // Сразу, чтобы в nonexclusive не нарваться
+		TODO("Need to check, if MyEnterCriticalSection failed on timeout!\n");
+		MyEnterCriticalSection(anTimeout);
+		_ASSERTE(!(lbPrev && mb_Exclusive)); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
+		mb_Exclusive = TRUE; // Флаг могла сбросить другая нить, выполнившая Leave
+		mn_TID = dwTID; // И запомним, в какой нити это произошло
+		_ASSERTE(mn_LockedTID[0] == 0 && mn_LockedCount[0] == 0);
+		mn_LockedTID[0] = dwTID;
+		mn_LockedCount[0] ++;
+
+		/*if (abRelockExclusive) {
+			ReleaseRef(dwTID); // Если до этого был nonexclusive lock
+		}*/
+
+		// B если есть nonexclusive locks - дождаться их завершения
+		if (mn_Locked)
+		{
+			//WARNING: Тут есть шанс наколоться, если сначала был NonExclusive, а потом в этой же нити - Exclusive
+			// В таких случаях нужно вызывать с параметром abRelockExclusive
+			WaitUnlocked(dwTID, anTimeout);
+		}
+	}
+	
+	return TRUE;
+};
+void MSection::Unlock(BOOL abExclusive)
+{
+	DWORD dwTID = GetCurrentThreadId();
+	if (abExclusive)
+	{
+		_ASSERTE(dwTID == dwTID && mb_Exclusive);
+		_ASSERTE(mn_LockedTID[0] == dwTID);
+		mb_Exclusive = FALSE; mn_TID = 0;
+		mn_LockedTID[0] = 0; mn_LockedCount[0] --;
+		LeaveCriticalSection(&m_cs);
+	}
+	else
+	{
+		ReleaseRef(dwTID);
+	}
+};
+
+
+
+MSectionThread::MSectionThread(MSection* apS)
+{
+	mp_S = apS; mn_TID = GetCurrentThreadId();
+};
+MSectionThread::~MSectionThread()
+{
+	if (mp_S && mn_TID)
+		mp_S->ThreadTerminated(mn_TID);
+};
+
+
+
+MSectionLock::MSectionLock()
+{
+	mp_S = NULL; mb_Locked = FALSE; mb_Exclusive = FALSE;
+};
+MSectionLock::~MSectionLock()
+{
+	if (mb_Locked) Unlock();
+};
+BOOL MSectionLock::Lock(MSection* apS, BOOL abExclusive/*=FALSE*/, DWORD anTimeout/*=-1*/)
+{
+	if (mb_Locked && apS == mp_S && (abExclusive == mb_Exclusive || mb_Exclusive))
+		return FALSE; // уже заблокирован
+	_ASSERTE(!mb_Locked);
+	mb_Exclusive = abExclusive;
+	mp_S = apS;
+	mb_Locked = mp_S->Lock(mb_Exclusive, anTimeout);
+	return mb_Locked;
+};
+BOOL MSectionLock::RelockExclusive(DWORD anTimeout/*=-1*/)
+{
+	if (mb_Locked && mb_Exclusive) return FALSE; // уже
+	// Чистый ReLock делать нельзя. Виснут другие нити, которые тоже запросили ReLock
+	Unlock();
+	mb_Exclusive = TRUE;
+	mb_Locked = mp_S->Lock(mb_Exclusive, anTimeout);
+	return mb_Locked;
+};
+void MSectionLock::Unlock()
+{
+	if (mp_S && mb_Locked) {
+		mp_S->Unlock(mb_Exclusive);
+		mb_Locked = FALSE;
+	}
+};
+BOOL MSectionLock::isLocked()
+{
+	return (mp_S!=NULL) && mb_Locked;
+};

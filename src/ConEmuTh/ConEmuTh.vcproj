@@ -231,7 +231,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib libcmt.lib"
-				OutputFile="..\..\plugins\ConEmu\Thumbs\ConEmuTh.dll"
+				OutputFile="..\..\Release\plugins\ConEmu\Thumbs\ConEmuTh.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="export.def"
@@ -315,7 +315,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="..\..\Release.x64\plugins\ConEmu\Thumbs\ConEmuTh.x64.dll"
+				OutputFile="..\..\Release\plugins\ConEmu\Thumbs\ConEmuTh.x64.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

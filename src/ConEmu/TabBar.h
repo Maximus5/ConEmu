@@ -38,7 +38,8 @@ class TabBarClass
 {
 private:
 	// Пока - банально. VCon, номер в FAR
-	typedef struct tag_FAR_WND_ID {
+	typedef struct tag_FAR_WND_ID
+	{
 		CVirtualConsole* pVCon;
 		int nFarWindowId;
 
@@ -159,4 +160,5 @@ public:
 	void SwitchRollback();
 	BOOL OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam);
 	void SetRedraw(BOOL abEnableRedraw);
+	void PaintHeader(HDC hdc, RECT rcPaint);
 };

@@ -116,6 +116,7 @@ extern wchar_t gszDbgModLabel[6];
 	wchar_t* pszName = wcsrchr(szFile, L'\\'); \
 	if (_wcsicmp(pszName, L"\\conemu.exe")==0) lstrcpyW(gszDbgModLabel, L"gui"); \
 	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) lstrcpyW(gszDbgModLabel, L"srv"); \
+	else if (_wcsicmp(pszName, L"\\conemuc64.exe")==0) lstrcpyW(gszDbgModLabel, L"srv"); \
 	else lstrcpyW(gszDbgModLabel, L"dll"); \
 }
 #ifdef SHOWDEBUGSTR

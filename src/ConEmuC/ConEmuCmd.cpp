@@ -133,7 +133,8 @@ int ComspecInit()
 		//if (!pwszCopy) pwszCopy = szComSpec;
 		#pragma warning( push )
 		#pragma warning(disable : 6400)
-		if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0)
+		if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0
+			|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0)
 			szComSpec[0] = 0;
 		#pragma warning( pop )
 		if (szComSpec[0]) {

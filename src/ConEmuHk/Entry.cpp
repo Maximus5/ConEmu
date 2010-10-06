@@ -63,7 +63,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				ghOurModule = (HMODULE)hModule;
 				
 				#ifdef SHOW_STARTED_MSGBOX
-				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuHk.dll loaded", "ConEmu hooks", 0);
+				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuHk*.dll loaded", "ConEmu hooks", 0);
 				#endif
 				
 				gpNullSecurity = NullSecurity();

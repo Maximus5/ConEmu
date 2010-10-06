@@ -246,10 +246,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CECMD_SETWINDOWRGN  33 // CESERVER_REQ_SETWINDOWRGN.
 #define CECMD_SETBACKGROUND 34 // CESERVER_REQ_SETBACKGROUND
 #define CECMD_ACTIVATECON   35 // CESERVER_REQ_ACTIVATECONSOLE
-//#define CECMD_ONSERVERCLOSE 35 // ѕосылаетс€ из ConEmuC.exe перед закрытием в режиме сервера
+//#define CECMD_ONSERVERCLOSE 35 // ѕосылаетс€ из ConEmuC*.exe перед закрытием в режиме сервера
 
 // ¬ерси€ интерфейса
-#define CESERVER_REQ_VER    49
+#define CESERVER_REQ_VER    50
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -630,6 +630,8 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD bThawRefreshThread; // FALSE - увеличивает интервал опроса консоли (GUI тер€ет фокус)
 	//
 	DWORD nFarPID; // PID последнего активного фара
+	//
+	DWORD nServerInShutdown; // GetTickCount() начала закрыти€ сервера
 	//
 	DWORD    bUseInjects; // 0-off, 1-on. ƒалее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	wchar_t  sConEmuDir[MAX_PATH+1];  // здесь будет лежать собственно hive

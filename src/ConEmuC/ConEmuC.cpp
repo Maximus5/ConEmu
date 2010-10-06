@@ -299,11 +299,14 @@ int __cdecl main()
 	// timeout ожидания окончания процесса еще ДО выхода из CreateProcessW
 	if (!gbAttachMode)
 		srv.nProcessStartTick = 0;
-	if (gbNoCreateProcess) {
+	if (gbNoCreateProcess)
+	{
 		lbRc = TRUE; // Процесс уже запущен, просто цепляемся к ConEmu (GUI)
 		pi.hProcess = srv.hRootProcess;
 		pi.dwProcessId = srv.dwRootProcess;
-	} else {
+	}
+	else
+	{
 
 		#ifdef _DEBUG
 		if (ghFarInExecuteEvent && wcsstr(gpszRunCmd,L"far.exe"))
@@ -761,7 +764,8 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
 	}
 
-	if (IsExecutable(szArg)) {
+	if (IsExecutable(szArg))
+	{
 		gbRootIsCmdExe = FALSE; // Для других программ - буфер не включаем
 		return FALSE; // Запускается конкретная консольная программа. cmd.exe не требуется
 	}
@@ -774,16 +778,16 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 	return TRUE;
 }
 
-BOOL FileExists(LPCWSTR asFile)
-{
-	WIN32_FIND_DATA fnd; memset(&fnd, 0, sizeof(fnd));
-	HANDLE h = FindFirstFile(asFile, &fnd);
-	if (h != INVALID_HANDLE_VALUE) {
-		FindClose(h);
-		return (fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
-	}
-	return FALSE;
-}
+//BOOL FileExists(LPCWSTR asFile)
+//{
+//	WIN32_FIND_DATA fnd; memset(&fnd, 0, sizeof(fnd));
+//	HANDLE h = FindFirstFile(asFile, &fnd);
+//	if (h != INVALID_HANDLE_VALUE) {
+//		FindClose(h);
+//		return (fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+//	}
+//	return FALSE;
+//}
 
 void CheckUnicodeMode()
 {
@@ -860,77 +864,98 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		if (szArg[0] != L'/')
 			continue;
 
-		if (wcsncmp(szArg, L"/REGCONFONT=", 12)==0) {
+		if (wcsncmp(szArg, L"/REGCONFONT=", 12)==0)
+		{
 			RegisterConsoleFontHKLM(szArg+12);
 			return CERR_EMPTY_COMSPEC_CMDLINE;
-		} else
-		if (wcscmp(szArg, L"/CONFIRM")==0) {
+		}
+		else if (wcscmp(szArg, L"/CONFIRM")==0) {
 			TODO("уточнить, что нужно в gbAutoDisableConfirmExit");
 			gnConfirmExitParm = 1;
 			gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = TRUE;
-		} else
-		if (wcscmp(szArg, L"/NOCONFIRM")==0) {
+		}
+		else if (wcscmp(szArg, L"/NOCONFIRM")==0)
+		{
 			gnConfirmExitParm = 2;
 			gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
-		} else
+		}
 
-		if (wcscmp(szArg, L"/ATTACH")==0) {
+		else if (wcscmp(szArg, L"/ATTACH")==0)
+		{
 			gbAttachMode = TRUE;
 			gnRunMode = RM_SERVER;
-		} else
+		}
 
-		if (wcscmp(szArg, L"/HIDE")==0) {
+		else if (wcscmp(szArg, L"/HIDE")==0)
+		{
 			gbForceHideConWnd = TRUE;
-		} else
+		}
 
-		if (wcsncmp(szArg, L"/B", 2)==0) {
+		else if (wcsncmp(szArg, L"/B", 2)==0)
+		{
 			wchar_t* pszEnd = NULL;
-			if (wcsncmp(szArg, L"/BW=", 4)==0) {
+			if (wcsncmp(szArg, L"/BW=", 4)==0)
+			{
 				gcrBufferSize.X = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmBufferSize = TRUE;
-			} else if (wcsncmp(szArg, L"/BH=", 4)==0) {
+			}
+			else if (wcsncmp(szArg, L"/BH=", 4)==0)
+			{
 				gcrBufferSize.Y = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmBufferSize = TRUE;
-			} else if (wcsncmp(szArg, L"/BZ=", 4)==0) {
+			}
+			else if (wcsncmp(szArg, L"/BZ=", 4)==0)
+			{
 				gnBufferHeight = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmBufferSize = TRUE;
 			}
-		} else
+		}
 
-		if (wcsncmp(szArg, L"/F", 2)==0) {
+		else if (wcsncmp(szArg, L"/F", 2)==0)
+		{
 			wchar_t* pszEnd = NULL;
-			if (wcsncmp(szArg, L"/FN=", 4)==0) {
+			if (wcsncmp(szArg, L"/FN=", 4)==0)
+			{
 				lstrcpynW(srv.szConsoleFont, szArg+4, 32);
-			} else if (wcsncmp(szArg, L"/FW=", 4)==0) {
+			}
+			else if (wcsncmp(szArg, L"/FW=", 4)==0)
+			{
 				srv.nConFontWidth = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10);
-			} else if (wcsncmp(szArg, L"/FH=", 4)==0) {
+			}
+			else if (wcsncmp(szArg, L"/FH=", 4)==0)
+			{
 				srv.nConFontHeight = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10);
 			//} else if (wcsncmp(szArg, L"/FF=", 4)==0) {
 			//  lstrcpynW(srv.szConsoleFontFile, szArg+4, MAX_PATH);
 			}
-		} else
+		}
 		
-		if (wcsncmp(szArg, L"/LOG",4)==0) {
+		else if (wcsncmp(szArg, L"/LOG",4)==0)
+		{
 			int nLevel = 0;
 			if (szArg[4]==L'1') nLevel = 1; else if (szArg[4]>=L'2') nLevel = 2;
 			CreateLogSizeFile(nLevel);
-		} else
+		}
 		
-		if (wcscmp(szArg, L"/NOCMD")==0) {
+		else if (wcscmp(szArg, L"/NOCMD")==0)
+		{
 			gnRunMode = RM_SERVER;
 			gbNoCreateProcess = TRUE;
-		} else
+		}
 
-		if (wcsncmp(szArg, L"/GID=", 5)==0) {
+		else if (wcsncmp(szArg, L"/GID=", 5)==0)
+		{
 			gnRunMode = RM_SERVER;
 			wchar_t* pszEnd = NULL;
 			srv.dwGuiPID = wcstol(szArg+5, &pszEnd, 10);
-			if (srv.dwGuiPID == 0) {
+			if (srv.dwGuiPID == 0)
+			{
 				_printf ("Invalid GUI PID specified:\n");
 				_wprintf (GetCommandLineW());
 				_printf ("\n");
 				return CERR_CARGUMENT;
 			}
-		} else
+		}
 		
-		if (wcsncmp(szArg, L"/PID=", 5)==0) {
+		else if (wcsncmp(szArg, L"/PID=", 5)==0)
+		{
 			gnRunMode = RM_SERVER;
 			gbNoCreateProcess = TRUE;
 			wchar_t* pszEnd = NULL;
@@ -942,9 +967,10 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				_printf ("\n");
 				return CERR_CARGUMENT;
 			}
-		} else
+		}
 
-		if (wcsncmp(szArg, L"/DEBUGPID=", 10)==0) {
+		else if (wcsncmp(szArg, L"/DEBUGPID=", 10)==0)
+		{
 			gnRunMode = RM_SERVER;
 			gbNoCreateProcess = gbDebugProcess = TRUE;
 			wchar_t* pszEnd = NULL;
@@ -956,24 +982,28 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				_printf ("\n");
 				return CERR_CARGUMENT;
 			}
-		} else
+		}
 		
-		if (wcscmp(szArg, L"/A")==0 || wcscmp(szArg, L"/a")==0) {
+		else if (wcscmp(szArg, L"/A")==0 || wcscmp(szArg, L"/a")==0)
+		{
 			gnCmdUnicodeMode = 1;
-		} else
-		if (wcscmp(szArg, L"/U")==0 || wcscmp(szArg, L"/u")==0) {
+		}
+		else if (wcscmp(szArg, L"/U")==0 || wcscmp(szArg, L"/u")==0)
+		{
 			gnCmdUnicodeMode = 2;
-		} else
+		} 
 		
 		// После этих аргументов - идет то, что передается в CreateProcess!
-		if (wcscmp(szArg, L"/ROOT")==0 || wcscmp(szArg, L"/root")==0) {
+		else if (wcscmp(szArg, L"/ROOT")==0 || wcscmp(szArg, L"/root")==0)
+		{
 			gnRunMode = RM_SERVER; gbNoCreateProcess = FALSE;
 			break; // asCmdLine уже указывает на запускаемую программу
-		} else
+		}
 
 		// После этих аргументов - идет то, что передается в COMSPEC (CreateProcess)!
 		//if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0 || wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0) {
-		if (szArg[0] == L'/' && (((szArg[1] & ~0x20) == L'C') || ((szArg[1] & ~0x20) == L'K'))) {
+		else if (szArg[0] == L'/' && (((szArg[1] & ~0x20) == L'C') || ((szArg[1] & ~0x20) == L'K')))
+		{
 			gbNoCreateProcess = FALSE;
 			if (szArg[2] == 0) // "/c" или "/k"
 				gnRunMode = RM_COMSPEC;
@@ -982,22 +1012,27 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				gnRunMode = RM_SERVER;
 			// Если тип работа до сих пор не определили - считаем что режим ComSpec
 			// и команда начинается сразу после /c (может быть "cmd /cecho xxx")
-			if (gnRunMode == RM_UNDEFINED) {
+			if (gnRunMode == RM_UNDEFINED)
+			{
 				gnRunMode = RM_COMSPEC;
 				// Поддержка дебильной возможности "cmd /cecho xxx"
 				asCmdLine = pszArgStarts + 2;
 				while (*asCmdLine==L' ' || *asCmdLine==L'\t') asCmdLine++;
 			}
-			if (gnRunMode == RM_COMSPEC) {
+			if (gnRunMode == RM_COMSPEC)
+			{
 				cmd.bK = (szArg[1] & ~0x20) == L'K';
 			}
 			break; // asCmdLine уже указывает на запускаемую программу
 		}
 	}
 	
-	if (gnRunMode == RM_SERVER) {
-		if (gbDebugProcess) {
-			if (!DebugActiveProcess(srv.dwRootProcess)) {
+	if (gnRunMode == RM_SERVER)
+	{
+		if (gbDebugProcess)
+		{
+			if (!DebugActiveProcess(srv.dwRootProcess))
+			{
 				DWORD dwErr = GetLastError();
 				_printf("Can't start debugger! ErrCode=0x%08X\n", dwErr);
 				return CERR_CANTSTARTDEBUGGER;
@@ -1008,15 +1043,18 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			srv.bDebuggerActive = TRUE;
 		
 			*psNewCmd = (wchar_t*)Alloc(1,2);
-			if (!*psNewCmd) {
+			if (!*psNewCmd)
+			{
 				_printf ("Can't allocate 1 wchar!\n");
 				return CERR_NOTENOUGHMEM1;
 			}
 			(*psNewCmd)[0] = 0;
 			return 0;
-		} else
-		if (gbNoCreateProcess && gbAttachMode) {
-			if (pfnGetConsoleProcessList==NULL) {
+		}
+		else if (gbNoCreateProcess && gbAttachMode)
+		{
+			if (pfnGetConsoleProcessList==NULL)
+			{
 				_printf ("Attach to GUI was requested, but required WinXP or higher:\n");
 				_wprintf (GetCommandLineW());
 				_printf ("\n");
@@ -1024,17 +1062,20 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			}
 			DWORD nProcesses[10];
 			DWORD nProcCount = pfnGetConsoleProcessList ( nProcesses, 10 );
-			if (nProcCount < 2) {
+			if (nProcCount < 2)
+			{
 				_printf ("Attach to GUI was requested, but there is no console processes:\n");
 				_wprintf (GetCommandLineW());
 				_printf ("\n");
 				return CERR_CARGUMENT;
 			}
 			// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
-			if (nProcCount > 2) {
+			if (nProcCount > 2)
+			{
 				// И ругаться только под отладчиком
 				wchar_t szProc[255] ={0}, szTmp[10]; //wsprintfW(szProc, L"%i, %i, %i", nProcesses[0], nProcesses[1], nProcesses[2]);
-				for (DWORD n=0; n<nProcCount && n<20; n++) {
+				for (DWORD n=0; n<nProcCount && n<20; n++)
+				{
 					if (n) lstrcatW(szProc, L", ");
 					wsprintf(szTmp, L"%i", nProcesses[0]);
 					//lstrcatW(szProc, _ltow(nProcesses[0], szTmp, 10));
@@ -1045,7 +1086,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			}
 
 			*psNewCmd = (wchar_t*)Alloc(1,2);
-			if (!*psNewCmd) {
+			if (!*psNewCmd)
+			{
 				_printf ("Can't allocate 1 wchar!\n");
 				return CERR_NOTENOUGHMEM1;
 			}
@@ -1054,27 +1096,33 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		}
 	}
 
-	if (iRc != 0) {
-		if (iRc == CERR_CMDLINEEMPTY) {
+	if (iRc != 0)
+	{
+		if (iRc == CERR_CMDLINEEMPTY)
+		{
 			Help();
 			_printf ("\n\nParsing command line failed (/C argument not found):\n");
 			_wprintf (GetCommandLineW());
 			_printf ("\n");
-		} else {
+		}
+		else
+		{
 			_printf ("Parsing command line failed:\n");
 			_wprintf (asCmdLine);
 			_printf ("\n");
 		}
 		return iRc;
 	}
-	if (gnRunMode == RM_UNDEFINED) {
+	if (gnRunMode == RM_UNDEFINED)
+	{
 		_printf ("Parsing command line failed (/C argument not found):\n");
 		_wprintf (GetCommandLineW());
 		_printf ("\n");
 		return CERR_CARGUMENT;
 	}
 
-	if (gnRunMode == RM_COMSPEC) {
+	if (gnRunMode == RM_COMSPEC)
+	{
 	
 		// Может просили открыть новую консоль?
 		int nArgLen = lstrlenA(" -new_console");
@@ -1100,7 +1148,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			CESERVER_REQ *pIn = NULL, *pOut = NULL;
 			wchar_t* pszAddNewConArgs = NULL;
 			// 
-			if ((pIn = ExecuteNewCmd(CECMD_GETNEWCONPARM, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD))) != NULL) {
+			if ((pIn = ExecuteNewCmd(CECMD_GETNEWCONPARM, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD))) != NULL)
+			{
 				pIn->dwData[0] = gnSelfPID;
 				pIn->dwData[1] = lbIsNeedCmd;
 				
@@ -1108,11 +1157,15 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 				PRINT_COMSPEC(L"Retrieve new console add args (begin)\n",0);
 				
-				if (pOut) {
+				if (pOut)
+				{
 					pszAddNewConArgs = (wchar_t*)pOut->Data;
-					if (*pszAddNewConArgs == 0) {
+					if (*pszAddNewConArgs == 0)
+					{
 						ExecuteFreeResult(pOut); pOut = NULL; pszAddNewConArgs = NULL;
-					} else {
+					}
+					else
+					{
 						nNewLen += wcslen(pszAddNewConArgs) + 1;
 					}
 				}
@@ -1120,7 +1173,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			}
 			//
 			wchar_t* pszNewCmd = (wchar_t*)Alloc(nNewLen+1,2);
-			if (!pszNewCmd) {
+			if (!pszNewCmd)
+			{
 				_printf ("Can't allocate %i wchars!\n", (DWORD)nNewLen);
 				return CERR_NOTENOUGHMEM1;
 			}
@@ -1137,17 +1191,22 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			if (!gbAlwaysConfirmExit) // Если ключа еще нет в ком.строке - добавим
 				wcscat(pszNewCmd, L" /CONFIRM ");
 
-			if (pszAddNewConArgs) {
+			if (pszAddNewConArgs)
+			{
 				wcscat(pszNewCmd, L" ");
 				wcscat(pszNewCmd, pszAddNewConArgs);
-			} else {
+			}
+			else
+			{
 				
 				// -new_console вызывается в режиме ComSpec. Хорошо бы сейчас открыть мэппинг консоли на чтение, получить GuiPID и добавить в аргументы
 				MFileMapping<CESERVER_REQ_CONINFO_HDR> ConMap;
 				ConMap.InitName(CECONMAPNAME, (DWORD)ghConWnd);
 				const CESERVER_REQ_CONINFO_HDR* pConMap = ConMap.Open();
-				if (pConMap) {
-					if (pConMap->nGuiPID) {
+				if (pConMap)
+				{
+					if (pConMap->nGuiPID)
+					{
 						wsprintf(pszNewCmd+wcslen(pszNewCmd), L" /GID=%i ", pConMap->nGuiPID);
 					}
 					ConMap.CloseMap();
@@ -1158,7 +1217,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				//			 иногда получалось, что требуемый размер (он запрашивается из GUI) 
 				//			 не успевал установиться и в некоторых случаях возникал
 				//			 глюк размера (видимой высоты в GUI) в ReadConsoleData
-				if (MyGetConsoleScreenBufferInfo(ghConOut, &cmd.sbi)) {
+				if (MyGetConsoleScreenBufferInfo(ghConOut, &cmd.sbi))
+				{
 					int nBW = cmd.sbi.dwSize.X;
 					int nBH = cmd.sbi.srWindow.Bottom - cmd.sbi.srWindow.Top + 1;
 					int nBZ = cmd.sbi.dwSize.Y;
@@ -1174,7 +1234,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			// cmd /c "dir c:\"
 			// и пр.
 			// Попытаться определить необходимость cmd
-			if (lbIsNeedCmd) {
+			if (lbIsNeedCmd)
+			{
 				CheckUnicodeMode();
 				if (gnCmdUnicodeMode == 2)
 					wcscat(pszNewCmd, L" /ROOT cmd /U /C ");
@@ -1182,7 +1243,9 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 					wcscat(pszNewCmd, L" /ROOT cmd /A /C ");
 				else
 					wcscat(pszNewCmd, L" /ROOT cmd /C ");
-			} else {
+			}
+			else
+			{
 				wcscat(pszNewCmd, L" /ROOT ");
 			}
 			// убрать из запускаемой команды "-new_console"
@@ -1221,42 +1284,55 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 	//    bViaCmdExe = FALSE; // командным процессором выступает сам ConEmuC (серверный режим)
 	}
 
-	if (gnRunMode == RM_COMSPEC && (!asCmdLine || !*asCmdLine)) {
-		if (cmd.bK) {
+	if (gnRunMode == RM_COMSPEC && (!asCmdLine || !*asCmdLine))
+	{
+		if (cmd.bK)
+		{
 			bViaCmdExe = TRUE;
-		} else {
+		}
+		else
+		{
 			// В фаре могут повесить пустую ассоциацию на маску
 			// *.ini -> "@" - тогда фар как бы ничего не делает при запуске этого файла, но ComSpec зовет...
 			cmd.bNonGuiMode = TRUE;
 			DisableAutoConfirmExit();
 			return CERR_EMPTY_COMSPEC_CMDLINE;
 		}
-	} else {
+	}
+	else
+	{
 		bViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot);
 	}
 	
 	nCmdLine = lstrlenW(asCmdLine);
 
-	if (!bViaCmdExe) {
+	if (!bViaCmdExe)
+	{
 		nCmdLine += 1; // только место под 0
-	} else {
+	}
+	else
+	{
 		// Если определена ComSpecC - значит ConEmuC переопределил стандартный ComSpec
 		if (!GetEnvironmentVariable(L"ComSpecC", szComSpec, MAX_PATH) || szComSpec[0] == 0)
 			if (!GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH) || szComSpec[0] == 0)
 				szComSpec[0] = 0;
-		if (szComSpec[0] != 0) {
+
+		if (szComSpec[0] != 0)
+		{
 			// Только если это (случайно) не conemuc.exe
 			//pwszCopy = wcsrchr(szComSpec, L'\\'); if (!pwszCopy) pwszCopy = szComSpec;
 			pwszCopy = PointToName(szComSpec);
 			#pragma warning( push )
 			#pragma warning(disable : 6400)
-			if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0)
+			if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0
+				|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0)
 				szComSpec[0] = 0;
 			#pragma warning( pop )
 		}
 		
 		// ComSpec/ComSpecC не определен, используем cmd.exe
-		if (szComSpec[0] == 0) {
+		if (szComSpec[0] == 0)
+		{
 			if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, szComSpec, &psFilePart))
 			{
 				_printf ("Can't find cmd.exe!\n");
@@ -1949,7 +2025,8 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 								if (prc.th32ProcessID != gnSelfPID
 									&& prc.th32ProcessID == srv.pnProcesses[i])
 								{
-									if (lstrcmpiW(prc.szExeFile, L"far.exe")==0) {
+									if (lstrcmpiW(prc.szExeFile, L"far.exe")==0)
+									{
 										lbFarExists = TRUE;
 										//if (srv.nProcessCount <= 2) // нужно проверить и ntvdm
 										//	break; // возможно, в консоли еще есть и telnet?
@@ -2768,7 +2845,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		case CECMD_ONACTIVATION:
 		{
-			if (srv.pConsole) {
+			if (srv.pConsole)
+			{
 				srv.pConsole->hdr.bConsoleActive = in.dwData[0];
 				srv.pConsole->hdr.bThawRefreshThread = in.dwData[1];
 				srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
@@ -3328,17 +3406,24 @@ void DisableAutoConfirmExit()
 //	return(b);
 //}
 
-WARNING("BUGBUG: x64 US-Dvorak");
+//WARNING("BUGBUG: x64 US-Dvorak"); - done
 void CheckKeyboardLayout()
 {
-	if (pfnGetConsoleKeyboardLayoutName) {
+	if (pfnGetConsoleKeyboardLayoutName)
+	{
 		wchar_t szCurKeybLayout[32];
+		//#ifdef _DEBUG
+		//wchar_t szDbgKeybLayout[KL_NAMELENGTH/*==9*/];
+		//BOOL lbGetRC = GetKeyboardLayoutName(szDbgKeybLayout); // -- не дает эффекта, поскольку "на процесс", а не на консоль
+		//#endif
 		// Возвращает строку в виде "00000419" -- может тут 16 цифр?
-		if (pfnGetConsoleKeyboardLayoutName(szCurKeybLayout)) {
-			if (lstrcmpW(szCurKeybLayout, srv.szKeybLayout)) {
+		if (pfnGetConsoleKeyboardLayoutName(szCurKeybLayout))
+		{
+			if (lstrcmpW(szCurKeybLayout, srv.szKeybLayout))
+			{
 				#ifdef _DEBUG
 				wchar_t szDbg[128];
-				wsprintfW(szDbg, 
+				wsprintfW(szDbg,
 					L"ConEmuC: InputLayoutChanged (GetConsoleKeyboardLayoutName returns) '%s'\n", 
 					szCurKeybLayout);
 				OutputDebugString(szDbg);
@@ -3347,13 +3432,14 @@ void CheckKeyboardLayout()
 				lstrcpyW(srv.szKeybLayout, szCurKeybLayout);
 				// Отошлем в GUI
 				wchar_t *pszEnd = szCurKeybLayout+8;
-				WARNING("BUGBUG: 16 цифр не вернет");
+				//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифт. Это LayoutNAME, а не string(HKL)
 				// LayoutName: "00000409", "00010409", ...
 				// А HKL от него отличается, так что передаем DWORD
 				// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
 				DWORD dwLayout = wcstol(szCurKeybLayout, &pszEnd, 16);
 				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
-				if (pIn) {
+				if (pIn)
+				{
 					//memmove(pIn->Data, &dwLayout, 4);
 					pIn->dwData[0] = dwLayout;
 

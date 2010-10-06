@@ -358,6 +358,7 @@
 #define tConsoleFontConsoleNote         1732
 #define cbLockRealConsolePos            1733
 #define cbBgAllowPlugin                 1734
+#define cbTabsInCaption                 1735
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -374,7 +375,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        210
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1735
+#define _APS_NEXT_CONTROL_VALUE         1736
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
