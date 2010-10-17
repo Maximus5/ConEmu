@@ -60,6 +60,9 @@ static const wchar_t shell32[]  = L"shell32.dll";
 
 static BOOL gbTemporaryDisabled = FALSE;
 
+//typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
+OnLibraryLoaded_t gfOnLibraryLoaded = NULL;
+
 // Forward declarations of the hooks
 static HMODULE WINAPI OnLoadLibraryW( const WCHAR* lpFileName );
 static HMODULE WINAPI OnLoadLibraryA( const char* lpFileName );
@@ -555,6 +558,12 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 #endif
 
 	ReleaseMutex(ghHookMutex);
+	
+	// Плагин ConEmu может выполнить дополнительные действия
+	if (gfOnLibraryLoaded)
+	{
+		gfOnLibraryLoaded(Module);
+	}
 
     return res;
 }
@@ -578,21 +587,26 @@ bool __stdcall SetAllHooks( HMODULE ahOurDll, const wchar_t** aszExcludedModules
 #endif
 	
 	// Запомнить aszExcludedModules
-	if (aszExcludedModules) {
+	if (aszExcludedModules)
+	{
 		int j;
 		bool skip;
-		for ( int i = 0; aszExcludedModules[i]; i++ ) {
+		for ( int i = 0; aszExcludedModules[i]; i++ )
+		{
 			j = 0; skip = false;
 			while (ExcludedModules[j]) {
-				if (lstrcmpi(ExcludedModules[j], aszExcludedModules[i]) == 0) {
+				if (lstrcmpi(ExcludedModules[j], aszExcludedModules[i]) == 0)
+				{
 					skip = true; break;
 				}
 				j++;
 			}
     		if (skip) continue;
     		
-    		if (j > 0) {
-    			if ((j+1) >= MAX_EXCLUDED_MODULES) {
+    		if (j > 0)
+    		{
+    			if ((j+1) >= MAX_EXCLUDED_MODULES)
+    			{
     				// Превышено допустимое количество
     				_ASSERTE((j+1) < MAX_EXCLUDED_MODULES);
     				continue;
@@ -608,15 +622,19 @@ bool __stdcall SetAllHooks( HMODULE ahOurDll, const wchar_t** aszExcludedModules
     HANDLE snapshot;
 
     // Найти ID основной нити
-    if (!nMainThreadId) {
+    if (!nMainThreadId)
+    {
 		DWORD dwPID = GetCurrentProcessId();
 	    snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
 	    if(snapshot != INVALID_HANDLE_VALUE)
 	    {
 	    	THREADENTRY32 module = {sizeof(THREADENTRY32)};
-			if (Thread32First(snapshot, &module)) {
-				while (!nMainThreadId) {
-					if (module.th32OwnerProcessID == dwPID) {
+			if (Thread32First(snapshot, &module))
+			{
+				while (!nMainThreadId)
+				{
+					if (module.th32OwnerProcessID == dwPID)
+					{
 	    				nMainThreadId = module.th32ThreadID;
 						break;
 					}

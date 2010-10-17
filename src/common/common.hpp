@@ -131,12 +131,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //#ifdef _DEBUG
 //extern wchar_t gszDbgModLabel[6];
-//#define CHEKCDBGMODLABEL if (gszDbgModLabel[0]==0) { \
-//	wchar_t szFile[MAX_PATH]; GetModuleFileName(NULL, szFile, MAX_PATH); \
-//	wchar_t* pszName = wcsrchr(szFile, L'\\'); \
-//	if (_wcsicmp(pszName, L"\\conemu.exe")==0) lstrcpyW(gszDbgModLabel, L"gui"); \
-//	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) lstrcpyW(gszDbgModLabel, L"srv"); \
-//	else lstrcpyW(gszDbgModLabel, L"dll"); \
+//#define CHEKCDBGMODLABEL if (gszDbgModLabel[0]==0) { \ -
+//	wchar_t szFile[MAX_PATH]; GetModuleFileName(NULL, szFile, MAX_PATH); \ -
+//	wchar_t* pszName = wcsrchr(szFile, L'\\'); \ -
+//	if (_wcsicmp(pszName, L"\\conemu.exe")==0) lstrcpyW(gszDbgModLabel, L"gui"); \ -
+//	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) lstrcpyW(gszDbgModLabel, L"srv"); \ -
+//	else lstrcpyW(gszDbgModLabel, L"dll"); \ -
 //}
 //#ifdef SHOWDEBUGSTR
 //	#define DEBUGSTR(s) { MCHKHEAP; CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i(%s.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentThreadId()); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
@@ -297,6 +297,13 @@ typedef struct tag_HWND2 {
 	};
 } HWND2;
 
+struct MSG64
+{
+	UINT  message;
+	HWND2 hwnd;
+	u64   wParam;
+	u64   lParam;
+};
 
 typedef struct tag_ThumbColor {
 	union {
@@ -333,7 +340,19 @@ typedef enum {
 	// следующий режим (если он будет) делать 4! (это bitmask)
 } PanelViewMode;
 
-typedef struct tag_PanelViewSettings {
+/* Основной шрифт в GUI */
+struct ConEmuMainFont
+{
+	wchar_t sFontName[32];
+	DWORD nFontHeight, nFontWidth, nFontCellWidth;
+	DWORD nFontQuality, nFontCharSet;
+	BOOL Bold, Italic;
+	wchar_t sBorderFontName[32];
+    DWORD nBorderFontWidth;
+};
+
+struct PanelViewSettings
+{
 	DWORD cbSize; // Struct size, на всякий случай
 
 	/* Цвета и рамки */
@@ -353,14 +372,7 @@ typedef struct tag_PanelViewSettings {
 	ThumbSizes Tiles;
 
     /* Основной шрифт в GUI */
-    struct {
-    	wchar_t sFontName[32];
-    	DWORD nFontHeight, nFontWidth, nFontCellWidth;
-    	DWORD nFontQuality, nFontCharSet;
-    	BOOL Bold, Italic;
-    	wchar_t sBorderFontName[32];
-        DWORD nBorderFontWidth;
-    } MainFont;
+    struct ConEmuMainFont MainFont;
 	
 	// Прочие параметры загрузки
 	BYTE  bLoadPreviews; // bitmask of PanelViewMode {1=Thumbs, 2=Tiles}
@@ -379,7 +391,7 @@ typedef struct tag_PanelViewSettings {
 	//// Пока не используется
 	//DWORD nCacheFolderType; // юзер/программа/temp/и т.п.
 	//wchar_t sCacheFolder[MAX_PATH];
-} PanelViewSettings;
+};
 
 
 typedef BOOL (WINAPI* PanelViewInputCallback)(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
@@ -394,7 +406,8 @@ typedef union uPanelViewOutputCallback
 	u64 Reserved; // необходимо для выравнивания структур при x64 <--> x86
 	PanelViewOutputCallback f;
 } PanelViewOutputCallback_t;
-typedef struct tag_PanelViewText {
+struct PanelViewText
+{
 	// Флаг используемости, выравнивание текста, и др.
 	#define PVI_TEXT_NOTUSED 0
 	#define PVI_TEXT_LEFT    1
@@ -406,8 +419,9 @@ typedef struct tag_PanelViewText {
 	DWORD bConAttr;
 	// собственно текст
 	wchar_t sText[128];
-} PanelViewText;
-typedef struct tag_PanelViewInit {
+};
+struct PanelViewInit
+{
 	DWORD cbSize;
 	BOOL  bRegister, bVisible;
 	HWND2 hWnd;
@@ -438,14 +452,138 @@ typedef struct tag_PanelViewInit {
 	/* out */
 	//PanelViewSettings ThSet;
 	BOOL bFadeColors;
-} PanelViewInit;
+};
+
+
+
+// События, при которых вызывается функция субплагина для перерисовки фона
+enum BackgroundUpdateEvent
+{
+	bue_Common = 0,              // при изменении размера окна ConEmu/размера шрифта/палитры ConEmu/...
+	//TODO, by request
+	//bue_LeftDirChanged = 1,      // на левой панели изменена текущая папка
+	//bue_RightDirChanged = 2,     // на правой панели изменена текущая папка
+	//bue_FocusChanged = 4,        // фокус переключился между левой/правой панелью
+};
+
+enum BackgroundUpdatePlace
+{
+	bup_Panels = 1,
+	bup_Editor = 2,
+	bup_Viewer = 4,
+	//bup_Cmd = 8,
+};
+
+struct UpdateBackgroundArg
+{
+	DWORD cbSize;
+
+	LPARAM lParam; // указан при вызове RegisterBackground(rbc_Register)
+	enum BackgroundUpdatePlace Place; // панели/редактор/вьювер
+
+	HDC hdc; // DC для отрисовки фона. Изначально (для nLevel==0) DC залит цветом фона crPalette[0]
+	int dcSizeX, dcSizeY; // размер DC в пикселях
+	// Далее идет информация о консоли. Для удобства и исключения
+	// ветвления - координаты приведены к 0x0 (т.е. буфер /w можно игнорировать)
+	int conSizeX, conSizeY; // размер консоли в ячейках (символах), это рабочая часть фара
+	BOOL bLeft, bRight; // Наличие левой/правой панелей
+	LPCWSTR pszLeftCurDir, pszLeftFormat, pszLeftHostFile;
+	LPCWSTR pszRightCurDir, pszRightFormat, pszRightHostFile;
+	RECT rcConLeft, rcConRight; // Консольные кооринаты панелей, приведенные к 0x0
+	RECT rcDcLeft, rcDcRight; // Координаты панелей в DC (base 0x0)
+
+	// Слой, в котором вызван плагин. По сути, это порядковый номер, 0-based
+	// если (nLevel > 0) плагин НЕ ДОЛЖЕН затирать фон целиком.
+	int nLevel;
+
+	DWORD dwEventFlags; // комбинация из enum BackgroundUpdateEvent
+
+	COLORREF crPalette[16]; // Палитра в ConEmu
+	BYTE nFarColors[0x100]; // Массив цветов фара
+
+    /* Основной шрифт в GUI */
+    struct ConEmuMainFont MainFont;
+};
+
+typedef int (WINAPI* UpdateConEmuBackground_t)(struct UpdateBackgroundArg* pBk);
+
+enum RegisterBackgroundCmd
+{
+	rbc_Register = 1,   // Первичная регистрации "фонового" плагина
+	rbc_Unregister = 2, // Убрать плагин из списка "фоновых"
+	rbc_Redraw = 3,     // Если плагину требуется обновить фон - он зовет эту команду
+};
 
 // Аргумент для функции: int WINAPI RegisterBackground(BackgroundInfo *pbk)
 struct BackgroundInfo
 {
 	DWORD cbSize;
-	BOOL  bRegister, bVisible;
+	enum RegisterBackgroundCmd Cmd;
+
+	HMODULE hPlugin; // Instance плагина, содержащего UpdateConEmuBackground
+	// Для дерегистрации всех калбэков достаточно вызвать {sizeof(BackgroundInfo), rbc_Unregister, hPlugin, NULL, NULL}
+
+	// Что вызывать для обновления фона.
+	// Требуется заполнять только для Cmd==rbc_Register,
+	// в остальных случаях команды игнорируются
+	
+	// Плагин может зарегистрировать несколько различных пар {UpdateConEmuBackground,lParam}
+	UpdateConEmuBackground_t UpdateConEmuBackground; // Собственно калбэк
+	LPARAM lParam; // lParam будет передан в UpdateConEmuBackground
+	
+	DWORD  nPlaces; // bitmask of BackgroundUpdatePlace
+
+	// 0 - плагин предпочитает отрисовывать фон первым. Чем больше nSuggestedLevel
+	// тем позднее может быть вызван плагин при обновлении фона
+	int nSuggestedLevel;
 };
+
+typedef int (WINAPI* RegisterBackground_t)(BackgroundInfo *pbk);
+
+typedef void (WINAPI* SyncExecuteCallback_t)(LONG_PTR lParam);
+
+
+struct FarVersion
+{
+	union {
+		DWORD dwVer;
+		struct {
+			WORD dwVerMinor;
+			WORD dwVerMajor;
+		};
+	};
+	DWORD dwBuild;
+};
+
+
+// Аргумент для функции OnConEmuLoaded
+struct ConEmuLoadedArg
+{
+	DWORD cbSize;    // размер структуры в байтах
+	HMODULE hConEmu; // conemu.dll / conemu.x64.dll
+	BOOL bLoaded;    // TRUE - при загрузке conemu.dll, FALSE - при выгрузке
+	BOOL bGuiActive; // TRUE - консоль запущена из-под ConEmu, FALSE - standalone
+
+	// Сервисные функции
+	HWND (WINAPI *GetFarHWND)();
+	HWND (WINAPI *GetFarHWND2)(BOOL abConEmuOnly);
+	void (WINAPI *GetFarVersion)(FarVersion* pfv );
+	BOOL (WINAPI *IsTerminalMode)();
+	BOOL (WINAPI *IsConsoleActive)();
+	int  (WINAPI *RegisterPanelView)(PanelViewInit *ppvi);
+	int  (WINAPI *RegisterBackground)(BackgroundInfo *pbk);
+	int  (WINAPI *ActivateConsole)();
+	int  (WINAPI *SyncExecute)(SyncExecuteCallback_t CallBack, LONG_PTR lParam);
+};
+
+// другие плагины могут экспортировать функцию "OnConEmuLoaded"
+// при активации плагина ConEmu (при запуске фара из-под ConEmu)
+// эта функция ("OnConEmuLoaded") будет вызвана, в ней плагин может
+// зарегистрировать калбэки для обновления Background-ов
+// Внимание!!! Эта же функция вызывается при ВЫГРУЗКЕ conemu.dll, 
+// при выгрузке hConEmu и все функции == NULL
+typedef void (WINAPI* OnConEmuLoaded_t)(struct ConEmuLoadedArg* pConEmuInfo);
+
 
 
 typedef struct tag_ConEmuGuiInfo {
@@ -505,17 +643,6 @@ typedef struct tag_ForwardedPanelInfo {
 		u64 Reserved2;
 	};
 } ForwardedPanelInfo;
-
-typedef struct tag_FarVersion {
-	union {
-		DWORD dwVer;
-		struct {
-			WORD dwVerMinor;
-			WORD dwVerMajor;
-		};
-	};
-	DWORD dwBuild;
-} FarVersion;
 
 typedef struct tag_ForwardedFileInfo {
 	WCHAR Path[MAX_PATH+1];
@@ -916,10 +1043,9 @@ typedef struct tag_CESERVER_REQ {
 
 //#define MAX_INPUT_QUEUE_EMPTY_WAIT 1000
 
-
 int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wchar_t** rsArgStart=NULL);
-BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG* pMsg);
-BOOL UnpackInputRecord(const MSG* piMsg, INPUT_RECORD* pRec);
+BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg);
+BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec);
 SECURITY_ATTRIBUTES* NullSecurity();
 void CommonShutdown();
 

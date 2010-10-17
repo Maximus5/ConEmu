@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "..\common\ConsoleAnnotation.h"
 #include "..\common\WinObjects.h"
 #include "PluginHeader.h"
+#include "PluginBackground.h"
 #include <Tlhelp32.h>
 //#include <vector>
 
@@ -70,7 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CHECK_FARINFO_INTERVAL 2000
 
 #define CMD__EXTERNAL_CALLBACK 0x80001
-typedef void (WINAPI* SyncExecuteCallback_t)(LONG_PTR lParam);
+//typedef void (WINAPI* SyncExecuteCallback_t)(LONG_PTR lParam);
 struct SyncExecuteArg
 {
 	DWORD nCmd;
@@ -157,6 +158,7 @@ wchar_t gsFarLang[64] = {0};
 BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID);
 BOOL gbNeedPostTabSend = FALSE;
 BOOL gbNeedPostEditCheck = FALSE; // проверить, может в активном редакторе изменился статус
+//BOOL gbNeedBgUpdate = FALSE; // требуется перерисовка Background
 int lastModifiedStateW = -1;
 BOOL gbNeedPostReloadFarInfo = FALSE;
 DWORD gnNeedPostTabSendTick = 0;
@@ -195,6 +197,7 @@ HANDLE ghConsoleInputEmpty = NULL, ghConsoleWrite = NULL; //, ghConsoleInputWasP
 // SEE_MASK_NOZONECHECKS
 BOOL gbShellNoZoneCheck = FALSE;
 DWORD GetMainThreadId();
+
 
 
 //std::vector<HANDLE> ghCommandThreads;
@@ -451,6 +454,15 @@ void OnMainThreadActivated()
 	//	}
 	//}
 
+	
+	// Если был запрос на обновление Background
+	if (gbNeedBgActivate)
+	{
+		gbNeedBgActivate = FALSE;
+		if (gpBgPlugin)
+			gpBgPlugin->OnMainThreadActivated();
+	}
+	
 
 	// Проверяем, надо ли "активировать" плагин?
 	if (!gbReqCommandWaiting || gnReqCommand == (DWORD)-1)
@@ -492,7 +504,7 @@ void OnMainThreadActivated()
 		_ASSERTE(gpCmdRet == NULL);
 		gpCmdRet = pCmdRet;
 	}
-	
+
 	// Мы закончили
 	SetEvent(ghReqCommandEvent);
 }
@@ -572,7 +584,7 @@ void OnConsolePeekReadInput(BOOL abPeek)
 	}
 
 
-	if (gbNeedPostReloadFarInfo || gbNeedPostEditCheck || gbRequestUpdateTabs || gbNeedPostTabSend)
+	if (gbNeedPostReloadFarInfo || gbNeedPostEditCheck || gbRequestUpdateTabs || gbNeedPostTabSend || gbNeedBgActivate)
 	{
 		lbNeedSynchro = true;
 	}
@@ -773,6 +785,8 @@ void DebugInputPrint(INPUT_RECORD r)
 	OutputDebugString(szDbg);
 }
 #endif
+
+
 
 
 
@@ -1195,6 +1209,11 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				delete ghCommandThreads;
 				ghCommandThreads = NULL;
 			}
+			if (gpBgPlugin)
+			{
+				delete gpBgPlugin;
+				gpBgPlugin = NULL;
+			}
 			break;
 	}
 	return TRUE;
@@ -1357,9 +1376,31 @@ int WINAPI RegisterPanelView(PanelViewInit *ppvi)
 	return 0;
 }
 
+
+
+//struct BackgroundInfo gpBgPlugin = NULL;
+//int gnBgPluginsCount = 0, gnBgPluginsMax = 0;
+//MSection *csBgPlugins = NULL;
+
 int WINAPI RegisterBackground(BackgroundInfo *pbk)
 {
-	return 0;
+	if (!pbk)
+	{
+		_ASSERTE(pbk != NULL);
+		return -1;
+	}
+	if (!gbBgPluginsAllowed)
+	{
+		_ASSERTE(gbBgPluginsAllowed == TRUE);
+		return -2;
+	}
+	
+	if (gpBgPlugin == NULL)
+	{
+		gpBgPlugin = new CPluginBackground;
+	}
+	
+	return gpBgPlugin->RegisterSubplugin(pbk);
 }
 
 // Возвращает TRUE в случае успешного выполнения 
@@ -2438,6 +2479,10 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			}
 		}
 
+		if (gpBgPlugin)
+		{
+			gpBgPlugin->MonitorBackground();
+		}
 		
 		//if (gpConsoleInfo) {
 		//	if (gpConsoleInfo->nFarPID == 0)
@@ -2594,6 +2639,8 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 		FUNC_X(SetStartupInfoW)(aInfo);
 
 	gbInfoW_OK = TRUE;
+	
+	gbBgPluginsAllowed = TRUE;
 
 	// в FAR2 устарело - Synchro
 	//CheckMacro(TRUE);
@@ -3316,6 +3363,11 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 	UpdateConEmuTabsW(Event+100, loosingFocus, Event == EE_SAVE);
 #endif
 
+	if (gpBgPlugin)
+	{
+		gpBgPlugin->OnMainThreadActivated(Event, -1);
+	}
+
 	return 0;
 }
 
@@ -3360,13 +3412,59 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 	bool loosingFocus = (Event == VE_KILLFOCUS || Event == VE_CLOSE);
 	UpdateConEmuTabsW(Event+200, loosingFocus, false, Param);
 #endif
+
+	if (gpBgPlugin)
+	{
+		gpBgPlugin->OnMainThreadActivated(-1, Event);
+	}
+
 	return 0;
+}
+
+void NotifyConEmuUnloaded()
+{
+	OnConEmuLoaded_t fnOnConEmuLoaded = NULL;
+	BOOL lbSucceded = FALSE;
+
+	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
+	if(snapshot != INVALID_HANDLE_VALUE)
+	{
+		MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
+
+		for(BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
+		{
+			if ((fnOnConEmuLoaded = (OnConEmuLoaded_t)GetProcAddress(module.hModule, "OnConEmuLoaded")) != NULL)
+			{
+				// Наверное, только для плагинов фара
+				if (GetProcAddress(module.hModule, "SetStartupInfoW") || GetProcAddress(module.hModule, "SetStartupInfo"))
+				{
+					struct ConEmuLoadedArg arg = {sizeof(struct ConEmuLoadedArg)};
+					arg.hConEmu = ghPluginModule;
+					arg.bLoaded = FALSE;
+
+					lbSucceded = FALSE;
+					SAFETRY {
+						fnOnConEmuLoaded(&arg);
+						lbSucceded = TRUE;
+					} SAFECATCH {
+						// Failed
+						_ASSERTE(lbSucceded == TRUE);
+					}
+				}
+			}
+		}
+
+		CloseHandle(snapshot);
+	}
 }
 
 void StopThread(void)
 {
 	LPCVOID lpPtrConInfo = gpConsoleInfo; gpConsoleInfo = NULL;
 	//LPVOID lpPtrColorInfo = gpColorerInfo; gpColorerInfo = NULL;
+
+	gbBgPluginsAllowed = FALSE;
+	NotifyConEmuUnloaded();
 
 	CloseTabs();
 
@@ -4278,7 +4376,8 @@ BOOL Attach2Gui()
 {
 	DWORD dwServerPID = 0;
 	
-	if (FindServerCmd(CECMD_ATTACH2GUI, dwServerPID) && dwServerPID != 0) {
+	if (FindServerCmd(CECMD_ATTACH2GUI, dwServerPID) && dwServerPID != 0)
+	{
 		// "Server was already started. PID=%i. Exiting...\n", dwServerPID
 		gdwServerPID = dwServerPID;
 		gbTryOpenMapHeader = (gpConsoleInfo==NULL);
@@ -4303,9 +4402,12 @@ BOOL Attach2Gui()
 	DWORD dwSelfPID = GetCurrentProcessId();
 	
 	szExe[0] = L'"';
-	if ((nLen = GetEnvironmentVariableW(L"ConEmuDir", szExe+1, MAX_PATH)) > 0) {
+	if ((nLen = GetEnvironmentVariableW(L"ConEmuDir", szExe+1, MAX_PATH)) > 0)
+	{
 		if (szExe[nLen] != L'\\') { szExe[nLen+1] = L'\\'; szExe[nLen+2] = 0; }
-	} else if ((nLen=GetModuleFileName(0, szExe+1, MAX_PATH)) > 0) {
+	}
+	else if ((nLen=GetModuleFileName(0, szExe+1, MAX_PATH)) > 0)
+	{
 		wchar_t* pszSlash = wcsrchr ( szExe, L'\\' );
 		if (pszSlash) pszSlash[1] = 0;
 	}
@@ -4321,7 +4423,9 @@ BOOL Attach2Gui()
 	{
 		// Хорошо бы ошибку показать?
 		ShowMessage(IsWindows64() ? CECantStartServer64 : CECantStartServer, 1); // "ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
-	} else {
+	}
+	else
+	{
 		gdwServerPID = pi.dwProcessId;
 		lbRc = TRUE;
 		// Чтобы MonitorThread пытался открыть Mapping
@@ -4536,6 +4640,60 @@ DWORD GetMainThreadId()
 		nThreadID = GetCurrentThreadId();
 	}
 	return nThreadID;
+}
+
+// Определены в SetHook.h
+//typedef void (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
+//extern OnLibraryLoaded_t gfOnLibraryLoaded;
+
+// Вызывается при загрузке dll
+void WINAPI OnLibraryLoaded(HMODULE ahModule)
+{
+#ifdef _DEBUG
+	wchar_t szModulePath[MAX_PATH]; szModulePath[0] = 0;
+	GetModuleFileName(ahModule, szModulePath, MAX_PATH);
+#endif
+
+	//// Если GUI неактивно (запущен standalone FAR) - сразу выйти
+	//if (ConEmuHwnd == NULL)
+	//{
+	//	return;
+	//}
+
+	WARNING("Нужно специально вызвать OnLibraryLoaded при аттаче к GUI");
+
+	// Если определен калбэк инициализации ConEmu
+	OnConEmuLoaded_t fnOnConEmuLoaded = NULL;
+	BOOL lbSucceeded = FALSE;
+	if ((fnOnConEmuLoaded = (OnConEmuLoaded_t)GetProcAddress(ahModule, "OnConEmuLoaded")) != NULL)
+	{
+		// Наверное, только для плагинов фара
+		if (GetProcAddress(ahModule, "SetStartupInfoW") || GetProcAddress(ahModule, "SetStartupInfo"))
+		{
+			struct ConEmuLoadedArg arg = {sizeof(struct ConEmuLoadedArg)};
+			arg.hConEmu = ghPluginModule;
+			arg.bLoaded = TRUE;
+			arg.bGuiActive = (ConEmuHwnd == NULL);
+			// Сервисные функции
+			arg.GetFarHWND = GetFarHWND;
+			arg.GetFarHWND2 = GetFarHWND2;
+			arg.GetFarVersion = GetFarVersion;
+			arg.IsTerminalMode = IsTerminalMode;
+			arg.IsConsoleActive = IsConsoleActive;
+			arg.RegisterPanelView = RegisterPanelView;
+			arg.RegisterBackground = RegisterBackground;
+			arg.ActivateConsole = ActivateConsole;
+			arg.SyncExecute = SyncExecute;
+
+			SAFETRY {
+				fnOnConEmuLoaded(&arg);
+				lbSucceeded = TRUE;
+			} SAFECATCH {
+				// Failed
+				_ASSERTE(lbSucceeded == TRUE);
+			}
+		}
+	}
 }
 
 

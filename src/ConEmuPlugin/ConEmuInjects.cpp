@@ -120,12 +120,15 @@ extern BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs);
 //extern VOID WINAPI OnWasWriteConsoleOutputW(HookCallbackArg* pArgs);
 extern VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs);
 extern VOID WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs);
+extern VOID WINAPI OnLibraryLoaded(HMODULE ahModule);
 
 
 // Эту функцию нужно позвать из DllMain плагина
 BOOL StartupHooks(HMODULE ahOurDll)
 {
 	InitHooks( HooksFarOnly );
+	
+	gfOnLibraryLoaded = OnLibraryLoaded;
 	
 	SetHookCallbacks( "FreeConsole",  kernel32, OnConsoleDetaching, NULL );
 	SetHookCallbacks( "AllocConsole", kernel32, NULL, OnConsoleWasAttached );

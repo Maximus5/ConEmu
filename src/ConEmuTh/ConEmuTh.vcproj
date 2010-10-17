@@ -98,7 +98,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
+				CommandLine="copy &quot;$(ProjectDir)..\..\Release\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -424,7 +424,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy &quot;$(TargetDir)ConEmuTh.*&quot; C:\Utils\FAR170\Plugins\ConEmu\Thumbs\&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(ProjectDir)..\..\Release\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy &quot;$(TargetDir)ConEmuTh.*&quot; C:\Utils\FAR170\Plugins\ConEmu\Thumbs\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -475,7 +475,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\\WIN7X64\FAR\FAR2x64\Plugins\ConEmu\Thumbs\ConEmuTh.x64.dll"
+				OutputFile="C:\FAR\FARx64\Plugins\ConEmu\Thumbs\ConEmuTh.x64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -584,7 +584,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
+				CommandLine="copy &quot;$(ProjectDir)..\..\Release\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -716,7 +716,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="shlwapi.lib version.lib"
-				OutputFile="\\WIN7X64\FAR\FAR2x86\Plugins\ConEmu\Thumbs\ConEmuTh.dll"
+				OutputFile="F:\Program Files\Far2\Plugins\ConEmu\Thumbs\ConEmuTh.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -745,7 +745,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
+				CommandLine="copy &quot;$(ProjectDir)..\..\Release\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
 			/>
 		</Configuration>
 		<Configuration

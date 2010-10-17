@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="gdi+"
-	ProjectGUID="{C6CC0455-8680-4011-928C-D479F8F4C9FA}"
-	RootNamespace="gdi+"
+	Name="ConEmuLn"
+	ProjectGUID="{64DB4963-B19E-43E2-B6A5-C659F632E655}"
+	RootNamespace="ConEmuLn"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -20,7 +20,7 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug_C|Win32"
+			Name="Debug_E|Win32"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
@@ -44,10 +44,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;gdip_EXPORTS"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS;HIDE_TODO"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -64,11 +66,16 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="C:\Utils\Far180\Plugins\ConEmu\Thumbs\gdi+.t32"
+				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\plugins\ConEmu\Lines\ConEmuLn.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="gdip.def"
+				GenerateManifest="true"
+				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
 				SubSystem="2"
+				TurnOffAssemblyGeneration="false"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -91,10 +98,11 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng&quot; &quot;$(TargetDir)&quot;"
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug_C|x64"
+			Name="Debug_E|x64"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
@@ -119,10 +127,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;_USRDLL;"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
+				StructMemberAlignment="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -139,11 +149,16 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="C:\FAR\FARx64\Plugins\ConEmu\Thumbs\gdi+.t64"
+				OutputFile="\\MAXW7\FAR\FAR2.x64\Plugins\ConEmu\Lines\ConEmuLn.x64.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="gdip.def"
+				GenerateManifest="true"
+				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
 				SubSystem="2"
+				TurnOffAssemblyGeneration="false"
+				ImportLibrary=""
 				TargetMachine="17"
 			/>
 			<Tool
@@ -174,7 +189,7 @@
 			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			CharacterSet="1"
-			WholeProgramOptimization="0"
+			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -195,16 +210,14 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				WholeProgramOptimization="false"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;gdip_EXPORTS"
-				ExceptionHandling="1"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS;HIDE_TODO"
 				RuntimeLibrary="0"
-				BufferSecurityCheck="true"
+				StructMemberAlignment="0"
 				EnableFunctionLevelLinking="true"
-				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -217,18 +230,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="..\..\Release\plugins\ConEmu\Thumbs\gdi+.t32"
+				AdditionalDependencies="version.lib libcmt.lib"
+				OutputFile="..\..\Release\plugins\ConEmu\Lines\ConEmuLn.dll"
 				LinkIncremental="1"
-				IgnoreAllDefaultLibraries="false"
-				ModuleDefinitionFile="gdip.def"
+				IgnoreAllDefaultLibraries="true"
+				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				ProfileGuidedDatabase=""
 				EntryPointSymbol=""
-				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -251,6 +263,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
@@ -281,8 +294,10 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;gdip_EXPORTS"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS;HIDE_TODO"
 				RuntimeLibrary="0"
+				StructMemberAlignment="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -300,11 +315,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="..\..\Release\plugins\ConEmu\Thumbs\gdi+.t64"
+				OutputFile="..\..\Release\plugins\ConEmu\Lines\ConEmuLn.x64.dll"
 				LinkIncremental="1"
-				IgnoreAllDefaultLibraries="false"
-				ModuleDefinitionFile="gdip.def"
+				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -330,10 +345,11 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug_E|Win32"
+			Name="Debug_C|Win32"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
@@ -357,10 +373,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;gdip_EXPORTS"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -376,11 +394,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\plugins\ConEmu\Thumbs\gdi+.t32"
+				AdditionalDependencies="shlwapi.lib version.lib"
+				OutputFile="C:\Utils\Far180\Plugins\ConEmu\Lines\ConEmuLn.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="gdip.def"
+				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -404,10 +424,11 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="echo copy &quot;$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;copy &quot;$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;echo if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy &quot;$(TargetDir)ConEmuLn.*&quot; C:\Utils\FAR170\Plugins\ConEmu\Lines\&#x0D;&#x0A;if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy &quot;$(TargetDir)ConEmuLn.*&quot; C:\Utils\FAR170\Plugins\ConEmu\Lines\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug_E|x64"
+			Name="Debug_C|x64"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
@@ -432,10 +453,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;gdip_EXPORTS"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -452,9 +475,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
+				OutputFile="C:\FAR\FARx64\Plugins\ConEmu\Lines\ConEmuLn.x64.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="gdip.def"
+				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
 				SubSystem="2"
 				TargetMachine="17"
 			/>
@@ -478,6 +504,169 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Instrument|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS"
+				RuntimeLibrary="0"
+				StructMemberAlignment="0"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="version.lib"
+				OutputFile="C:\Program Files\FAR\plugins\ConEmu\Lines\ConEmuLn.dll"
+				LinkIncremental="1"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng&quot; &quot;$(TargetDir)&quot;"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Instrument|x64"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS;HIDE_TODO"
+				RuntimeLibrary="0"
+				StructMemberAlignment="0"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="version.lib"
+				OutputFile="..\..\Release.x64\plugins\ConEmu\Lines\ConEmuLn.x64.dll"
+				LinkIncremental="1"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="copy $(TargetPath) $(SolutionDir)..\Plugins\ConEmu\"
 			/>
 		</Configuration>
 		<Configuration
@@ -505,10 +694,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;gdip_EXPORTS"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -524,11 +715,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="F:\Program Files\Far2\Plugins\ConEmu\Thumbs\gdi+.t32"
+				AdditionalDependencies="shlwapi.lib version.lib"
+				OutputFile="F:\Program Files\Far2\Plugins\ConEmu\Lines\ConEmuLn.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="gdip.def"
+				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -552,6 +745,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng&quot; &quot;$(TargetDir)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -580,10 +774,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;_USRDLL;"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
+				StructMemberAlignment="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -600,10 +796,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\\WIN7X64\FAR\FAR2x64\Plugins\ConEmu\Thumbs\gdi+.t64"
+				OutputFile="\\WIN7X64\FAR\FAR2x64\Plugins\ConEmu\Lines\ConEmuLn.x64.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="gdip.def"
+				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
 				SubSystem="2"
 				TargetMachine="17"
 			/>
@@ -634,17 +832,53 @@
 	</References>
 	<Files>
 		<Filter
-			Name="Source Files"
+			Name="0 - Source Files"
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\gdip.cpp"
+				RelativePath=".\ConEmuLn.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\gdip.def"
+				RelativePath=".\ConEmuLn995.cpp"
 				>
+			</File>
+			<File
+				RelativePath=".\ConEmuLnA.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\export.def"
+				>
+				<FileConfiguration
+					Name="Debug_C|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug_C|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug_R|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug_R|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
@@ -653,11 +887,27 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\resource.h"
+				RelativePath="..\common\common.hpp"
 				>
 			</File>
 			<File
-				RelativePath="..\ThumbSDK.h"
+				RelativePath=".\ConEmuLn.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ConEmuLn_Lang.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pluginA.hpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pluginW1007.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\resource.h"
 				>
 			</File>
 		</Filter>
@@ -667,11 +917,114 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\gdip.rc"
+				RelativePath=".\ConEmuLn.rc"
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\Lang.templ"
+			>
+			<FileConfiguration
+				Name="Debug_E|Win32"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuLn_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_E|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuLn_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd&#x0D;&#x0A;"
+					Outputs="ConEmuLn_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd&#x0D;&#x0A;"
+					Outputs="ConEmuLn_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_C|Win32"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuLn_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_C|x64"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuLn_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Instrument|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuLn_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Instrument|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuLn_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_R|Win32"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuLn_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_R|x64"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuLn_Lang.h"
+				/>
+			</FileConfiguration>
+		</File>
 	</Files>
 	<Globals>
+		<Global
+			Name="DevPartner_IsInstrumented"
+			Value="0"
+		/>
 	</Globals>
 </VisualStudioProject>

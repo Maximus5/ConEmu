@@ -173,6 +173,7 @@ CConEmuMain::CConEmuMain()
 	ms_ConEmuArgs[0] = 0;
     ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = 0;
 	ms_ConEmuCExe[0] = 0;
+	ms_ConEmuCExeName[0] = 0;
 
     wchar_t *pszSlash = NULL;
     if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH) || !(pszSlash = wcsrchr(ms_ConEmuExe, L'\\')))
@@ -219,9 +220,20 @@ CConEmuMain::CConEmuMain()
 	pszSlash = wcsrchr(ms_ConEmuCExe, L'\\');
 	if (pszSlash) pszSlash++; else pszSlash = ms_ConEmuCExe;
 	if (IsWindows64())
+	{
 		wcscpy(pszSlash, L"ConEmuC64.exe");
+		if (!FileExists(ms_ConEmuCExe)) // попробовать "ConEmuC.exe"
+		{
+			wcscpy(pszSlash, L"ConEmuC.exe");
+			if (!FileExists(ms_ConEmuCExe)) // вернуть 64 взад, раз 32 не нашли
+				wcscpy(pszSlash, L"ConEmuC64.exe");
+		}
+	}
 	else
+	{
 		wcscpy(pszSlash, L"ConEmuC.exe");
+	}
+	wcscpy(ms_ConEmuCExeName, pszSlash);
     
     // Запомнить текущую папку (на момент запуска)
     DWORD nDirLen = GetCurrentDirectory(MAX_PATH, ms_ConEmuCurDir);
@@ -6127,7 +6139,8 @@ void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 	// Заполнить цвета gSet.ThSet.crPalette[16], gSet.ThSet.crFadePalette[16]
 	COLORREF *pcrNormal = gSet.GetColors(FALSE);
 	COLORREF *pcrFade = gSet.GetColors(TRUE);
-	for (int i=0; i<16; i++) {
+	for (int i=0; i<16; i++)
+	{
 		// через FOR чтобы с BitMask не наколоться
 		gSet.ThSet.crPalette[i] = (pcrNormal[i]) & 0xFFFFFF;
 		gSet.ThSet.crFadePalette[i] = (pcrFade[i]) & 0xFFFFFF;
@@ -6138,9 +6151,11 @@ void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 	// Применить в мэппинг
 	bool lbChanged = gSet.m_ThSetMap.SetFrom(&gSet.ThSet);
 
-	if (abSendChanges && lbChanged) {
+	if (abSendChanges && lbChanged)
+	{
 		// и отослать заинтересованным
-		for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
+		for (int i=0; i<MAX_CONSOLE_COUNT; i++)
+		{
 			if (mp_VCon[i]) {
 				mp_VCon[i]->OnPanelViewSettingsChanged();
 			}

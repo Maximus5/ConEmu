@@ -1123,7 +1123,7 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
     }
     
 
-    MSG msg = {NULL};
+    MSG64 msg = {NULL};
     
     if (PackInputRecord ( piRec, &msg )) {
 		if (m_UseLogs>=2)
@@ -1804,10 +1804,12 @@ BOOL CRealConsole::StartProcess()
         wcscat(psCurCmd, gConEmu.ms_ConEmuExe);
         pszSlash = wcsrchr(psCurCmd, _T('\\'));
         MCHKHEAP;
-		if (IsWindows64())
-			wcscpy(pszSlash+1, L"ConEmuC64.exe\" ");
-		else
-			wcscpy(pszSlash+1, L"ConEmuC.exe\" ");
+		wcscpy(pszSlash+1, gConEmu.ms_ConEmuCExeName);
+		wcscat(pszSlash+1, L"\" ");
+		//if (IsWindows64())
+		//	wcscpy(pszSlash+1, L"ConEmuC64.exe\" ");
+		//else
+		//	wcscpy(pszSlash+1, L"ConEmuC.exe\" ");
 
 		if (m_Args.bRunAsAdministrator)
 		{
@@ -2862,7 +2864,7 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 	return FALSE;
 }
 
-void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
+void CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
 {
     DWORD dwErr = 0, dwMode = 0;
     BOOL fSuccess = FALSE;
@@ -2974,7 +2976,7 @@ void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
 
 	gbInSendConEvent = TRUE;
 
-    DWORD dwSize = sizeof(MSG), dwWritten;
+    DWORD dwSize = sizeof(MSG64), dwWritten;
     fSuccess = WriteFile ( mh_ConEmuCInput, pMsg, dwSize, &dwWritten, NULL);
     if (!fSuccess)
 	{

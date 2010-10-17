@@ -98,6 +98,10 @@ bool __stdcall SetAllHooks( HMODULE ahOurDll, const wchar_t** aszExcludedModules
 void __stdcall UnsetAllHooks( );
 
 
+typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
+extern OnLibraryLoaded_t gfOnLibraryLoaded;
+
+
 #if __GNUC__
 extern "C" {
 	#ifndef GetConsoleAliases

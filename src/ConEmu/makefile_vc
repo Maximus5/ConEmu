@@ -37,7 +37,7 @@
 
 NAME = ConEmu
 
-RELEASEDIR=Release
+RELEASEDIR=Release\ConEmu
 
 !if defined(AMD64) || "$(CPU)" == "AMD64" || "$(PLATFORM)" == "x64"
 !undef CPU

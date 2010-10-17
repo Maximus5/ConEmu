@@ -115,7 +115,7 @@ DIRSUFF = W
 !endif
 
 
-RELEASEDIR=/Release
+RELEASEDIR=\Release\ConEmu
 
 !ifdef AMD64
 DIRBIT = 64
@@ -306,7 +306,7 @@ dirs:
 .PHONY: clean
 clean:
 	@echo copying release files
-	@if not exist "$..\..$(RELEASEDIR)\$(NULL)" mkdir "..\..$(RELEASEDIR)"
+	@if not exist "..\..$(RELEASEDIR)\$(NULL)" mkdir "..\..$(RELEASEDIR)"
 	@move $(DLLFULLNAME) ..\..$(RELEASEDIR)\$(OUTNAME).dll
 	@move $(PDBNAME) ..\..$(RELEASEDIR)\$(OUTNAME).pdb
 	@move $(MAP) ..\..$(RELEASEDIR)\$(OUTNAME).map

@@ -223,7 +223,7 @@ template <class T> LPVOID GetPtrFromRVA( DWORD rva, T* pNTHeader, PBYTE imageBas
 		return 0;
 
 	delta = (INT)(pSectionHdr->VirtualAddress-pSectionHdr->PointerToRawData);
-	_TRACE2("GetPtrFromRVA(rva=0x%08X)=0x%08X (delta=%i)", rva - delta, delta);
+	_TRACE2("GetPtrFromRVA(rva=0x%08X) -> (delta=%i)", (DWORD)(rva - delta), delta);
 	return (PVOID) ( imageBase + rva - delta );
 }
 
@@ -523,7 +523,8 @@ void DumpNEResourceTable(PEData *pData, PIMAGE_DOS_HEADER dosHeader, LPBYTE pRes
 
 	// минимальный размер
 	size_t nReqSize = sizeof(OS2RC_TYPEINFO)+12;
-	if (IsBadReadPtr(pResourceTable, nReqSize)) {
+	//if (IsBadReadPtr(pResourceTable, nReqSize)) {
+	if (!ValidateMemory(pData, pResourceTable, nReqSize)) {
 		//pChild->printf(_T("!!! Can't read memory at offset:  0x%08X\n"),
 		//	(DWORD)(pResourceTable - pImageBase));
 		return;
@@ -544,7 +545,8 @@ void DumpNEResourceTable(PEData *pData, PIMAGE_DOS_HEADER dosHeader, LPBYTE pRes
 
 		// Next resource type
 		pTypeInfo = (OS2RC_TYPEINFO*)(pResName+pTypeInfo->rtResourceCount);
-		if (IsBadReadPtr(pTypeInfo, 2)) {
+		//if (IsBadReadPtr(pTypeInfo, 2)) {
+		if (!ValidateMemory(pData, pTypeInfo, 2)) {
 			//pChild->printf(_T("!!! Can't read memory at offset:  0x%08X\n"),
 			//	(DWORD)(((LPBYTE)pTypeInfo) - pImageBase));
 			return;
@@ -1768,7 +1770,8 @@ template <class T> void DumpCertificates(PEData *pData, PBYTE pImageBase, T* pNT
 	{
 		//LPWIN_CERTIFICATE pCert = MakePtr( LPWIN_CERTIFICATE, pImageBase, certOffset );
 
-		if (!pCert || IsBadReadPtr(pCert, sizeof(*pCert))) {
+		//if (!pCert || IsBadReadPtr(pCert, sizeof(*pCert))) {
+		if (!pCert || !ValidateMemory(pData, pCert, sizeof(*pCert))) {
 			//pChild->printf(_T("\n!!! Failed to read LPWIN_CERTIFICATE at offset: 0x%08X !!!\n"), certOffset);
 			break;
 		}
@@ -1792,7 +1795,8 @@ template <class T> void DumpCertificates(PEData *pData, PBYTE pImageBase, T* pNT
 		
 		//nCertNo++;
 
-		if (IsBadReadPtr(pCert, nAllLen)) {
+		//if (IsBadReadPtr(pCert, nAllLen)) {
+		if (!ValidateMemory(pData, pCert, nAllLen)) {
 			//wsprintf(szCertName, _T("#%i.INVALID_CERTIFICATE"), nCertNo);
 			//MPanelItem* pCertFile = pChild->AddFile(szCertName, pCert->dwLength);
 			//pCertFile->SetData((LPBYTE)pCert, pCert->dwLength);
@@ -1850,7 +1854,8 @@ bool DumpExeFile( PEData *pData, PIMAGE_DOS_HEADER dosHeader )
 	DWORD nSignature = 0;
     // First, verify that the e_lfanew field gave us a reasonable
     // pointer, then verify the PE signature.
-	if ( !IsBadReadPtr( pNTHeader, sizeof(pNTHeader->Signature) ) )
+	//if ( !IsBadReadPtr( pNTHeader, sizeof(pNTHeader->Signature) ) )
+	if (ValidateMemory(pData, pNTHeader, sizeof(pNTHeader->Signature) ) )
 	{
 		nSignature = pNTHeader->Signature;
 		if ( nSignature == IMAGE_NT_SIGNATURE )

@@ -342,7 +342,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="echo copy $(TargetPath) ..\..\plugins\ConEmu\conemu.x64.dll&#x0D;&#x0A;copy $(TargetPath) ..\..\plugins\ConEmu\conemu.x64.dll&#x0D;&#x0A;"
+				CommandLine="echo copy $(TargetPath) ..\..\Release\plugins\ConEmu\conemu.x64.dll&#x0D;&#x0A;copy $(TargetPath) ..\..\Release\plugins\ConEmu\conemu.x64.dll&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -471,7 +471,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\\WIN7X64\FAR\FAR2x64\Plugins\ConEmu\conemu.x64.dll"
+				OutputFile="C:\FAR\FARx64\Plugins\ConEmu\conemu.x64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -712,7 +712,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="shlwapi.lib version.lib"
-				OutputFile="\\WIN7X64\FAR\FAR2x86\Plugins\ConEmu\conemu.dll"
+				OutputFile="F:\Program Files\Far2\Plugins\ConEmu\conemu.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -996,6 +996,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PluginBackground.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\common\SetHook.cpp"
 				>
 			</File>
@@ -1035,6 +1039,10 @@
 			</File>
 			<File
 				RelativePath="..\common\pluginA.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PluginBackground.h"
 				>
 			</File>
 			<File
@@ -1104,7 +1112,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\plugins\ConEmu\ConEmuPlugin_en.lng"
+				RelativePath="..\..\Release\plugins\ConEmu\ConEmuPlugin_en.lng"
 				>
 				<FileConfiguration
 					Name="Debug_E|Win32"
@@ -1188,7 +1196,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\plugins\ConEmu\ConEmuPlugin_ru.lng"
+				RelativePath="..\..\Release\plugins\ConEmu\ConEmuPlugin_ru.lng"
 				>
 				<FileConfiguration
 					Name="Debug_E|Win32"

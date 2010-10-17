@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "..\common\common.hpp"
 #include "..\common\pluginA.hpp"
 #include "PluginHeader.h"
+#include "PluginBackground.h"
 
 //#define SHOW_DEBUG_EVENTS
 
@@ -377,7 +378,7 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	*::FSFA = *aInfo->FSF;
 	::InfoA->FSF = ::FSFA;
 
-	MultiByteToWideChar(CP_ACP,0,InfoA->RootKey,lstrlenA(InfoA->RootKey)+1,gszRootKey,MAX_PATH);
+	MultiByteToWideChar(CP_OEMCP,0,InfoA->RootKey,lstrlenA(InfoA->RootKey)+1,gszRootKey,MAX_PATH);
 	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
 	if (*pszSlash == L'\\') *(pszSlash--) = 0;
 	while (pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
@@ -385,6 +386,8 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 
 	// Устарело. активация через [Read/Peek]ConsoleInput
 	//CheckMacro(TRUE);
+	
+	gbBgPluginsAllowed = TRUE;
 
 	if (gpConsoleInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
 		CheckResources(TRUE);
@@ -527,6 +530,12 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 	bool loosingFocus = (Event == EE_KILLFOCUS) || (Event == EE_CLOSE);
 	UpdateConEmuTabsA(Event+100, loosingFocus, Event == EE_SAVE);
 #endif
+
+	if (gpBgPlugin)
+	{
+		gpBgPlugin->OnMainThreadActivated(Event, -1);
+	}
+
 	return 0;
 }
 
@@ -575,6 +584,12 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 	//	}
 	//}
 #endif
+
+	if (gpBgPlugin)
+	{
+		gpBgPlugin->OnMainThreadActivated(-1, Event);
+	}
+
 	return 0;
 }
 

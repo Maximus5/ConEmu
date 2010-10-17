@@ -59,34 +59,28 @@
 !include ../make_vc_defs
 !endif
 
-DEF_NAME = export.release
+DEF_NAME = export
 
 NEEDENTRY = 1
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
-OUTNAME = ConEmu.x64
+OUTNAME = ConEmuLn.x64
 RCWIN64=/D_WIN64 /DWIN64
 !else
-OUTNAME = ConEmu
+OUTNAME = ConEmuLn
 RCWIN64=
 !endif                   
 
-NAME = ConEmu
+NAME = ConEmuLn
 
 LINK_OBJS = \
-$(OBJDIR)\ConEmuInjects.obj \
-$(OBJDIR)\SetHook.obj \
-$(OBJDIR)\ConEmuPlugin.obj \
-$(OBJDIR)\ConEmuPlugin995.obj \
-$(OBJDIR)\ConEmuPluginA.obj \
-$(OBJDIR)\PluginBackground.obj \
-$(OBJDIR)\Common.obj \
-$(OBJDIR)\ConEmuCheck.obj \
-$(OBJDIR)\WinObjects.obj
+$(OBJDIR)\ConEmuLn.obj \
+$(OBJDIR)\ConEmuLn995.obj \
+$(OBJDIR)\ConEmuLnA.obj
 
 #$(OBJDIR)\LogBrowser.obj
 
-USERLIBS = version.lib wininet.lib
+USERLIBS = version.lib gdi32.lib
 
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
@@ -114,7 +108,7 @@ DIRSUFF = W
 !endif
 
 
-RELEASEDIR=Release\plugins\ConEmu
+RELEASEDIR=Release\plugins\ConEmu\Lines
 
 !ifdef AMD64
 DIRBIT = 64
@@ -303,20 +297,8 @@ clean:
 #	del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
 #	rd $(OUTDIR)$(ADDOUTDIR)
 
-$(OBJDIR)\ConEmuInjects.obj: ConEmuInjects.cpp
+$(OBJDIR)\ConEmuLn.obj: ConEmuLn.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
 
-$(OBJDIR)\ConEmuPlugin.obj: ConEmuPlugin.cpp
+$(OBJDIR)\ConEmuLn995.obj: ConEmuLn995.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
 
-$(OBJDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
-
-$(OBJDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
-
-$(OBJDIR)\PluginBackground.obj: PluginBackground.cpp
-
-$(OBJDIR)\Common.obj: ..\common\Common.cpp
-
-$(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
-
-$(OBJDIR)\SetHook.obj: ..\common\SetHook.cpp
-
-$(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp
+$(OBJDIR)\ConEmuLnA.obj: ConEmuLnA.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h

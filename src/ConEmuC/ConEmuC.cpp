@@ -734,10 +734,27 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 	}
 
 	// Получим первую команду (исполняемый файл?)
-	if (!lbFirstWasGot) {
-		if ((iRc = NextArg(&pwszCopy, szArg)) != 0) {
-			//Parsing command line failed
-			return TRUE;
+	if (!lbFirstWasGot)
+	{
+		szArg[0] = 0;
+		// 17.10.2010 - поддержка переданного исполняемого файла без параметров, но с пробелами в пути
+		LPCWSTR pchEnd = pwszCopy + lstrlenW(pwszCopy);
+		while (pchEnd > pwszCopy && *(pchEnd-1) == L' ') pchEnd--;
+		if ((pchEnd - pwszCopy) < MAX_PATH)
+		{
+			memcpy(szArg, pwszCopy, (pchEnd - pwszCopy)*sizeof(wchar_t));
+			szArg[(pchEnd - pwszCopy)] = 0;
+			if (!FileExists(szArg))
+				szArg[0] = 0;
+		}
+
+		if (szArg[0] == 0)
+		{
+			if ((iRc = NextArg(&pwszCopy, szArg)) != 0)
+			{
+				//Parsing command line failed
+				return TRUE;
+			}
 		}
 	}
 	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;

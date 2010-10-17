@@ -1707,7 +1707,8 @@ DWORD CDragDropData::DragThread(LPVOID lpParameter)
 		SetEvent(pds->hReady);
 		// Чтобы драг жил - запускаем обработку сообщений
 		// Сама обработка (Оконная процедура) происходит в DragProc (ниже)
-		while (GetMessage(&msg, 0,0,0)) {
+		while (GetMessage(&msg, 0,0,0))
+		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}

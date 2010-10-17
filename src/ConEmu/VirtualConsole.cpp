@@ -3572,10 +3572,13 @@ void CVirtualConsole::OnPanelViewSettingsChanged()
 		mn_ConEmuSettingsMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWSETTINGS);
 
 	DWORD nPID = GetCurrentProcessId();
-	if (m_LeftPanelView.hWnd && IsWindow(m_LeftPanelView.hWnd)) {
+	if (m_LeftPanelView.hWnd && IsWindow(m_LeftPanelView.hWnd))
+	{
+		WARNING("Нифига не будет пересылаться, если консоль запущена под админом");
 		PostMessage(m_LeftPanelView.hWnd, mn_ConEmuSettingsMsg, nPID, 0);
 	}
-	if (m_RightPanelView.hWnd && IsWindow(m_RightPanelView.hWnd)) {
+	if (m_RightPanelView.hWnd && IsWindow(m_RightPanelView.hWnd))
+	{
 		PostMessage(m_RightPanelView.hWnd, mn_ConEmuSettingsMsg, nPID, 0);
 	}
 }

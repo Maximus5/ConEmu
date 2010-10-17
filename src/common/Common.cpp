@@ -114,9 +114,10 @@ int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wch
         // До конца строки или до первого пробела
         //pch = wcschr(psCmdLine, L' ');
         // 09.06.2009 Maks - обломался на: cmd /c" echo Y "
-        pch = psCmdLine;
-        while (*pch && *pch!=L' ' && *pch!=L'"') pch++;
-        //if (!pch) pch = psCmdLine + lstrlenW(psCmdLine); // до конца строки
+		pch = psCmdLine;
+		// Ищем обычным образом (до пробела/кавычки)
+		while (*pch && *pch!=L' ' && *pch!=L'"') pch++;
+		//if (!pch) pch = psCmdLine + lstrlenW(psCmdLine); // до конца строки
     }
     
     nArgLen = pch - psCmdLine;
@@ -139,10 +140,10 @@ int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wch
 }
 
 
-BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG* pMsg)
+BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg)
 {
 	_ASSERTE(pMsg!=NULL && piRec!=NULL);
-	memset(pMsg, 0, sizeof(MSG));
+	memset(pMsg, 0, sizeof(MSG64));
 	
     UINT nMsg = 0; WPARAM wParam = 0; LPARAM lParam = 0;
     if (piRec->EventType == KEY_EVENT) {
@@ -210,7 +211,7 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG* pMsg)
     return TRUE;
 }
 
-BOOL UnpackInputRecord(const MSG* piMsg, INPUT_RECORD* pRec)
+BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec)
 {
 	_ASSERTE(piMsg!=NULL && pRec!=NULL);
 	memset(pRec, 0, sizeof(INPUT_RECORD));

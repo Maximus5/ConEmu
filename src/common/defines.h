@@ -106,7 +106,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
-#define countof(a) (ARRAYSIZE(a)) // (sizeof((a))/(sizeof(*(a))))
+#ifdef ARRAYSIZE
+	#define countof(a) (ARRAYSIZE(a)) // (sizeof((a))/(sizeof(*(a))))
+#else
+	#define countof(a) (sizeof((a))/(sizeof(*(a))))
+#endif
 #define ZeroStruct(s) memset(&(s), 0, sizeof(s))
 
 #ifdef _DEBUG

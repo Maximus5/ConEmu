@@ -90,7 +90,7 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	int nLen = lstrlenA(InfoA->RootKey)+16;
 	if (gszRootKey) free(gszRootKey);
 	gszRootKey = (wchar_t*)calloc(nLen,2);
-	MultiByteToWideChar(CP_ACP,0,InfoA->RootKey,-1,gszRootKey,nLen);
+	MultiByteToWideChar(CP_OEMCP,0,InfoA->RootKey,-1,gszRootKey,nLen);
 	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
 	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
 	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
@@ -108,7 +108,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240);
 
 	pi->StructSize = sizeof(struct PluginInfo);
-	pi->Flags = 0; // PF_PRELOAD; //TODO: Поставить Preload, если нужно будет восстанавливать при старте
+	pi->Flags = PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	pi->DiskMenuNumbers = 0;
 	pi->PluginMenuStrings = szMenu;

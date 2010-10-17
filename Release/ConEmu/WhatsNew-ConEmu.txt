@@ -1,3 +1,6 @@
+2010.10.17
+[!] Реструктуризация поставки ConEmu. Исполняемые файлы, WhatsNew, Addons, Settings и пр. перемещены в подпапку "ConEmu". Сделано для удобства распаковки в папку Far Manager (чтобы не мешать файлы). Удалите старые файлы ConEmu!
+[!] Обе версии ConEmu (x86 & x64) теперь поствляются в одном архиве (добавлены файлы ConEmu64.exe, ConEmuC64.exe, ConEmuHk64.dll).
 [%] WinXP. Консоли не переключались по RWin+Number.
 [%] Ошибочное отображения в табе заголовка соседней консоли во время создания новой консоли.
 [%] PanelView. При попытке запуска плагина возникал ошибка "-1" в Far x86 & ConEmu x64.
@@ -5,8 +8,8 @@
 [%] Не всегда правильно работало переключение раскладок и слежение за раскладкой в консоли (Win7x64).
 [*] PanelView. Изменена реакция на PgUp/PgDn в режиме Tiles.
 [+] int WINAPI SyncExecute(SyncExecuteCallback_t CallBack, LONG_PTR lParam);
-
-[?] Если другие плагины Far экспортируют функцию "void CALLBACK OnConEmuStarted(HMODULE hConEmuDll);"
+[*] При запуске без параметров ConEmu пытается искать FAR: a) в папке с ConEmu.exe; b) в текущей директории; c) на уровень вверх от ConEmu.exe. Если Far.exe не найден - запускается cmd.
+[+] Если другие плагины Far экспортируют функцию "void WINAPI OnConEmuLoaded(struct ConEmuLoadedArg* pConEmuInfo);"
     то ConEmu.dll вызовет ее после инициализации плагина ConEmu или после аттача к ConEmu GUI.
 
 

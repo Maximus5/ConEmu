@@ -5133,7 +5133,8 @@ LPCTSTR CSettings::GetCmd()
 	if (lstrcmpi(szDefCmd, L"far") == 0)
 	{	// Ищем фар. (1) В папке ConEmu, (2) в текущей директории, (2) на уровень вверх от папки ConEmu
 		wchar_t szFar[MAX_PATH*2], *pszSlash;
-		lstrcpy(szFar, gConEmu.ms_ConEmuExeDir); // Теперь szFar содержит путь запуска программы
+		szFar[0] = L'"';
+		lstrcpy(szFar+1, gConEmu.ms_ConEmuExeDir); // Теперь szFar содержит путь запуска программы
 		pszSlash = szFar + lstrlen(szFar);
 		_ASSERTE(pszSlash > szFar);
 		
@@ -5143,33 +5144,40 @@ LPCTSTR CSettings::GetCmd()
 		if (!lbFound)
 		{
 			lstrcpy(pszSlash, L"\\far.exe");
-			if (FileExists(szFar))
+			if (FileExists(szFar+1))
 				lbFound = TRUE;
 		}
 		// (2) в текущей директории
 		if (!lbFound && lstrcmpi(gConEmu.ms_ConEmuCurDir, gConEmu.ms_ConEmuExeDir))
 		{
-			lstrcpy(szFar, gConEmu.ms_ConEmuCurDir);
-			lstrcpy(pszSlash, L"\\far.exe");
-			if (FileExists(szFar))
+			szFar[0] = L'"';
+			lstrcpy(szFar+1, gConEmu.ms_ConEmuCurDir);
+			lstrcat(szFar+1, L"\\far.exe");
+			if (FileExists(szFar+1))
 				lbFound = TRUE;
 		}
 		// (3) на уровень вверх
 		if (!lbFound)
 		{
-			lstrcpy(szFar, gConEmu.ms_ConEmuExeDir);
+			szFar[0] = L'"';
+			lstrcpy(szFar+1, gConEmu.ms_ConEmuExeDir);
 			pszSlash = szFar + lstrlen(szFar);
 			*pszSlash = 0;
 			pszSlash = wcsrchr(szFar, L'\\');
 			if (pszSlash)
 			{
 				lstrcpy(pszSlash+1, L"far.exe");
-				if (FileExists(szFar))
+				if (FileExists(szFar+1))
 					lbFound = TRUE;
 			}
 		}
 		
-		if (!lbFound)
+		if (lbFound)
+		{
+			// far чаще всего будет установлен в "Program Files", поэтому для избежания проблем - окавычиваем
+			lstrcat(szFar, L"\"");
+		}
+		else
 		{	// Если far.exe не найден рядом с ConEmu - запустить cmd.exe
 			lstrcpy(szFar, L"cmd");
 		}
@@ -5387,8 +5395,11 @@ void CSettings::RegisterFonts()
 
 	// Регистрация шрифтов в папке ConEmu
 	WIN32_FIND_DATA fnd;
+	TODO("Уже есть gConEmu.ms_ConEmuExeDir");
 	wchar_t szFind[MAX_PATH]; wcscpy(szFind, gConEmu.ms_ConEmuExe);
 	wchar_t *pszSlash = wcsrchr(szFind, L'\\');
+
+	WARNING("TODO: Регистрация шрифтов не только из папки ConEmu, но и из текущей директории");
 
 	if (!pszSlash)
 	{

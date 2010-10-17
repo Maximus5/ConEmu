@@ -48,7 +48,7 @@ extern BOOL gbTerminateOnExit;
 #define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
 #define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
 
-BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r);
+BOOL ProcessInputMessage(MSG64 &msg, INPUT_RECORD &r);
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
 BOOL ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount);
 BOOL WriteInputQueue(const INPUT_RECORD *pr);
@@ -1310,12 +1310,14 @@ int CreateMapHeader()
 
 
 	srv.pConsoleMap = new MFileMapping<CESERVER_REQ_CONINFO_HDR>;
-	if (!srv.pConsoleMap) {
+	if (!srv.pConsoleMap)
+	{
 		_printf("ConEmuC: Alloc(MFileMapping<CESERVER_REQ_CONINFO_HDR>) failed, pConsoleMap is null", 0);
 		goto wrap;
 	}
 	srv.pConsoleMap->InitName(CECONMAPNAME, (DWORD)ghConWnd);
-	if (!srv.pConsoleMap->Create()) {
+	if (!srv.pConsoleMap->Create())
+	{
 		_wprintf(srv.pConsoleMap->GetErrorText());
 		delete srv.pConsoleMap; srv.pConsoleMap = NULL;
 		iRc = CERR_CREATEMAPPINGERR; goto wrap;
@@ -2476,7 +2478,7 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam)
 		{ 
 			//TODO:
 			DWORD cbBytesRead; //, cbWritten;
-			MSG imsg; memset(&imsg,0,sizeof(imsg));
+			MSG64 imsg; memset(&imsg,0,sizeof(imsg));
 			while (!gbQuit && (fSuccess = ReadFile( 
 					srv.hInputPipe,        // handle to pipe 
 					&imsg,        // buffer to receive data 
@@ -2630,7 +2632,7 @@ DWORD WINAPI GetDataThread(LPVOID lpvParam)
 	return 1; 
 } 
 
-BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r)
+BOOL ProcessInputMessage(MSG64 &msg, INPUT_RECORD &r)
 {
 	memset(&r, 0, sizeof(r));
 	BOOL lbOk = FALSE;
