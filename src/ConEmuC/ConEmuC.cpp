@@ -1806,7 +1806,7 @@ void CreateLogSizeFile(int nLevel)
 	}
 	
 	int nLen = lstrlen(szFile);
-	wpszLogSizeFile = /*_wcsdup(szFile);*/(wchar_t*)calloc(nLen+1,2);
+	wpszLogSizeFile = /*_wcsdup(szFile);*/(wchar_t*)Alloc(nLen+1,2);
 	lstrcpy(wpszLogSizeFile, szFile);
 	// OK, лог создали
 	LPCSTR pszCmdLine = GetCommandLineA();

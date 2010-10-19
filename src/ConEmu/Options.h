@@ -67,6 +67,9 @@ public:
 
     wchar_t Config[MAX_PATH], Type[16];
 	wchar_t szFontError[512];
+	
+	bool SingleInstanceArg;
+	void ResetCmdArg();
 
     int DefaultBufferHeight;
 	bool bForceBufferHeight; int nForceBufferHeight;
@@ -183,7 +186,8 @@ public:
     wchar_t *sRClickMacro;
 	bool isSafeFarClose;
 	wchar_t *sSafeFarCloseMacro;
-    bool isSentAltEnter;
+    bool isSendAltEnter;
+	BYTE isSendAltSpace;
     bool isMinToTray;
     //bool isForceMonospace, isProportional;
 	BYTE isMonospace, isMonospaceSelected; // 0 - proportional, 1 - monospace, 2 - forcemonospace

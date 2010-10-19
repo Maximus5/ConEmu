@@ -34,6 +34,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 
+#ifdef _DEBUG
+//	#define SHOW_STARTED_MSGBOX
+#endif
+
 #define DEBUGSTRMOVE(s) //DEBUGSTR(s)
 
 WARNING("Заменить все MBoxAssert, _ASSERT, _ASSERTE на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
@@ -901,6 +905,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     g_hInstance = hInstance;
     gpNullSecurity = NullSecurity();
 
+	#ifdef SHOW_STARTED_MSGBOX
+	wchar_t szTitle[128]; wsprintf(szTitle, L"Conemu started, PID=%i", GetCurrentProcessId());
+	MessageBox(NULL, GetCommandLineW(), szTitle, MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+	#else
     #ifdef _DEBUG
 	if (_tcsstr(GetCommandLine(), L"/debugi")) {
 		if (!IsDebuggerPresent()) _ASSERT(FALSE);
@@ -909,6 +917,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (_tcsstr(GetCommandLine(), L"/debug")) {
 		if (!IsDebuggerPresent()) MBoxA(L"Conemu started");
 	}
+	#endif
 	
 
     //pVCon = NULL;
@@ -924,7 +933,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool AttachPrm = false; LONG AttachVal=0;
 	bool MultiConPrm = false, MultiConValue = false;
 	bool VisPrm = false, VisValue = false;
-	bool SingleInstance = false;
+	//bool SingleInstance = false;
+	gSet.SingleInstanceArg = false;
 
     //gConEmu.cBlinkShift = GetCaretBlinkTime()/15;
 
@@ -1160,7 +1170,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	        }
 	        else if ( !klstricmp(curCommand, _T("/single")) )
 	        {
-	        	SingleInstance = true;
+	        	gSet.SingleInstanceArg = true;
 	        }
             //else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
             //{
@@ -1225,7 +1235,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //    gConEmu.setParent=false; gConEmu.setParent2=false;
     //}
 
-    if (psUnknown) {
+    if (psUnknown)
+    {
 	    TCHAR* psMsg = (TCHAR*)calloc(_tcslen(psUnknown)+100,sizeof(TCHAR));
 	    _tcscpy(psMsg, _T("Unknown command specified:\r\n"));
 	    _tcscat(psMsg, psUnknown);
@@ -1256,22 +1267,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //    _tcscpy(gSet.LogFont.lfFaceName, FontVal);
     //if (SizePrm)
     //    gSet.LogFont.lfHeight = SizeVal;
-    if (BufferHeightPrm) {
+    if (BufferHeightPrm)
+    {
         gSet.SetArgBufferHeight ( BufferHeightVal );
     }
-	if (!WindowPrm) {
+    
+	if (!WindowPrm)
+	{
 		if (nCmdShow == SW_SHOWMAXIMIZED)
 			gConEmu.WindowMode = rMaximized;
-	} else {
+	}
+	else
+	{
 		gConEmu.WindowMode = WindowModeVal;
 	}
+	
 	if (MultiConPrm)
 		gSet.isMulti = MultiConValue;
+		
 	if (VisValue)
 		gSet.isConVisible = VisPrm;
+		
 	// Если запускается conman (нафига?) - принудительно включить флажок "Обновлять handle"
 	TODO("Deprecated: isUpdConHandle использоваться не должен");
-	if (gSet.isMulti || StrStrI(gSet.GetCmd(), L"conman.exe")) {
+	if (gSet.isMulti || StrStrI(gSet.GetCmd(), L"conman.exe"))
+	{
 		gSet.isUpdConHandle = TRUE;
         // сбрость CreateInNewEnvironment для ConMan
         ResetConman();
@@ -1279,13 +1299,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
     // Установка параметров из командной строки
-	if (cmdNew) {
+	if (cmdNew)
+	{
 		MCHKHEAP
 		const wchar_t* pszDefCmd = NULL;
 		wchar_t* pszReady = NULL;
 		
 		int nLen = lstrlen(cmdNew)+1;
-		if (params == (uint)-1) {
+		if (params == (uint)-1)
+		{
 			pszDefCmd = gSet.GetCmd();
 			_ASSERTE(pszDefCmd && *pszDefCmd);
 			nLen += 3 + lstrlen(pszDefCmd);
@@ -1294,11 +1316,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		pszReady = (TCHAR*)malloc(nLen*sizeof(TCHAR));
 		_ASSERTE(pszReady);
 		
-		if (pszDefCmd) {
+		if (pszDefCmd)
+		{
 			lstrcpy(pszReady, pszDefCmd);
 			lstrcat(pszReady, L" ");
 			lstrcat(pszReady, cmdNew);
-		} else {
+		}
+		else
+		{
 			lstrcpy(pszReady, cmdNew);
 		}
 		MCHKHEAP
@@ -1341,12 +1366,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		
 ///////////////////////////////////
 
-	if (SingleInstance) {
+	if (gSet.SingleInstanceArg)
+	{
 		// При запуске серии закладок из cmd файла второму экземпляру лучше чуть-чуть подождать
 		Sleep(1000);
 		// Поехали
 		DWORD dwStart = GetTickCount();
-		while (!gConEmu.isFirstInstance()) {
+		while (!gConEmu.isFirstInstance())
+		{
 			if (gConEmu.RunSingleInstance())
 				return 0; // командная строка успешно запущена в существующем экземпляре
 
@@ -1354,7 +1381,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if ((GetTickCount() - dwStart) > 10*1000)
 				break;
 		}
-	} else {
+	}
+	else
+	{
 		// Иницилизировать событие все-равно нужно
 		gConEmu.isFirstInstance();
 	}
@@ -1365,8 +1394,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 
 	BOOL lbConsoleAllocated = FALSE;
-    if (AttachPrm) {
-	    if (!AttachVal) {
+    if (AttachPrm)
+    {
+	    if (!AttachVal)
+	    {
 		    MBoxA(_T("Invalid <process id> specified in the /Attach argument"));
 		    //delete pVCon;
 		    return 100;
@@ -1380,7 +1411,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 
     // Тут загружаются иконки, и создается кнопка на таскбаре (если надо)
-    if (!CreateAppWindow()) {
+    if (!CreateAppWindow())
+    {
 	    //delete pVCon;
 	    return 100;
     }
@@ -1389,7 +1421,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///| Creating window |////////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
-    if (!gConEmu.CreateMainWindow()) {
+    if (!gConEmu.CreateMainWindow())
+    {
 	    free(cmdLine);
 	    //delete pVCon;
 	    return 100;

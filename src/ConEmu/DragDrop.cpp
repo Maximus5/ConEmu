@@ -182,7 +182,8 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 	
 	//CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
 
-	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragging()) {
+	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragging())
+	{
 		gConEmu.DebugStep(gSet.isDragEnabled
 			? _T("DnD: Already in Drag loop") : _T("DnD: Drag disabled"),
 			gSet.isDragEnabled);
@@ -474,18 +475,39 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 	
 		#ifdef UNLOCKED_DRAG
 		CEDragSource *pds = GetFreeSource();
-		if (pds && pds->hWnd) {
+		if (pds && pds->hWnd)
+		{
 			pds->bInDrag = TRUE;
+			wchar_t szStep[255]; wsprintf(szStep, L"Posting DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)mp_DataObject, (DWORD)pDropSource);
+			gConEmu.DebugStep(szStep);
 			PostMessage(pds->hWnd, MSG_STARTDRAG, dwAllowedEffects, (LPARAM)pDropSource);
 			pDropSource = NULL; // чтобы ниже не от-release-илось
-		} else {
-			if (pds && !pds->hWnd) {
+		}
+		else
+		{
+			if (pds && !pds->hWnd)
+			{
 				MBoxA(L"Drag failed!\nDrag thread was created, but hWnd is NULL");
-			} else {
+			}
+			else
+			{
 		#endif
 		
+				wchar_t szStep[255]; wsprintf(szStep, L"DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)mp_DataObject, (DWORD)pDropSource);
+				gConEmu.DebugStep(szStep);
+				
 				dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
 
+				wsprintf(szStep, L"DoDragDrop finished, Code=0x%08X", dwResult);
+				switch (dwResult)
+				{
+					case S_OK: lstrcat(szStep, L" (S_OK)"); break;
+					case DRAGDROP_S_DROP: lstrcat(szStep, L" (DRAGDROP_S_DROP)"); break;
+					case DRAGDROP_S_CANCEL: lstrcat(szStep, L" (DRAGDROP_S_CANCEL)"); break;
+					//case E_UNSPEC: lstrcat(szStep, L" (E_UNSPEC)"); break;
+				}
+				gConEmu.DebugStep(szStep, (dwResult!=S_OK && dwResult!=DRAGDROP_S_CANCEL && dwResult!=DRAGDROP_S_DROP));
+				
 		#ifdef UNLOCKED_DRAG
 			}
 		}

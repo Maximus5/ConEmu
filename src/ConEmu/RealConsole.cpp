@@ -1189,12 +1189,21 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 {
     CRealConsole* pRCon = (CRealConsole*)lpParameter;
 
-    if (pRCon->mb_NeedStartProcess) {
+    if (pRCon->mb_NeedStartProcess)
+	{
         _ASSERTE(pRCon->mh_ConEmuC==NULL);
         pRCon->mb_NeedStartProcess = FALSE;
-        if (!pRCon->StartProcess()) {
+        if (!pRCon->StartProcess())
+		{
             DEBUGSTRPROC(L"### Can't start process\n");
             return 0;
+        }
+
+        // Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
+        // загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
+        if (gSet.SingleInstanceArg)
+        {
+        	gSet.ResetCmdArg();
         }
     }
     
@@ -3394,7 +3403,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
         if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/
 			&& !isPressed(VK_SHIFT))
         {
-            if (gSet.isSentAltEnter)
+            if (gSet.isSendAltEnter)
             {
 				INPUT_RECORD r = {KEY_EVENT};
 
@@ -3426,8 +3435,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
             }
         }
 		//AltSpace - показать системное меню
-        else if ((messg == WM_SYSKEYDOWN || messg == WM_SYSKEYUP) && wParam == VK_SPACE && lParam & (1<<29) && 
-			!isPressed(VK_SHIFT))
+        else if (!gSet.isSendAltSpace && (messg == WM_SYSKEYDOWN || messg == WM_SYSKEYUP)
+        	&& wParam == VK_SPACE && lParam & (1<<29) && !isPressed(VK_SHIFT))
         {   // Нада, или системное меню будет недоступно
 			if (messg == WM_SYSKEYUP) // Только по UP, чтобы не "булькало"
 			{
@@ -5508,14 +5517,26 @@ void CRealConsole::CreateLogFiles()
     // OK, лог создали
 }
 
+void CRealConsole::LogString(LPCWSTR asText, BOOL abShowTime /*= FALSE*/)
+{
+    if (!this) return;
+    if (!asText || !mh_LogInput) return;
+    char chAnsi[255];
+    WideCharToMultiByte(CP_ACP, 0, asText, -1, chAnsi, 254, 0,0);
+    chAnsi[254] = 0;
+    LogString(chAnsi, abShowTime);
+}
+
 void CRealConsole::LogString(LPCSTR asText, BOOL abShowTime /*= FALSE*/)
 {
     if (!this) return;
     if (!asText) return;
-	if (mh_LogInput) {
+	if (mh_LogInput)
+	{
 		DWORD dwLen;
 
-		if (abShowTime) {
+		if (abShowTime)
+		{
 			SYSTEMTIME st; GetLocalTime(&st);
 			char szTime[32];
 			wsprintfA(szTime, "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
@@ -5529,7 +5550,9 @@ void CRealConsole::LogString(LPCSTR asText, BOOL abShowTime /*= FALSE*/)
 		WriteFile(mh_LogInput, "\r\n", 2, &dwLen, 0);
 
 		FlushFileBuffers(mh_LogInput);
-	} else {
+	}
+	else
+	{
 		#ifdef _DEBUG
 			DEBUGSTRLOG(asText); DEBUGSTRLOG("\n");
 		#endif
@@ -8167,17 +8190,20 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 			// То есть если переключение окна выполняется дольше 2х сек - возвратится предыдущее состояние
 
             DWORD cbBytesRead=0;
-            DWORD tabCount = 0, nInMacro = 0, nTemp = 0, nFromMainThread = 0;
+            //DWORD tabCount = 0, nInMacro = 0, nTemp = 0, nFromMainThread = 0;
             ConEmuTab* tabs = NULL;
-            if (pipe.Read(&tabCount, sizeof(DWORD), &cbBytesRead) &&
-				pipe.Read(&nInMacro, sizeof(DWORD), &nTemp) &&
-				pipe.Read(&nFromMainThread, sizeof(DWORD), &nTemp)
-				)
+			CESERVER_REQ_CONEMUTAB TabHdr;
+			DWORD nHdrSize = sizeof(CESERVER_REQ_CONEMUTAB) - sizeof(TabHdr.tabs);
+			//if (pipe.Read(&tabCount, sizeof(DWORD), &cbBytesRead) &&
+			//	pipe.Read(&nInMacro, sizeof(DWORD), &nTemp) &&
+			//	pipe.Read(&nFromMainThread, sizeof(DWORD), &nTemp)
+			//	)
+			if (pipe.Read(&TabHdr, nHdrSize, &cbBytesRead))
 			{
                 tabs = (ConEmuTab*)pipe.GetPtr(&cbBytesRead);
-                _ASSERTE(cbBytesRead==(tabCount*sizeof(ConEmuTab)));
-                if (cbBytesRead == (tabCount*sizeof(ConEmuTab))) {
-                    SetTabs(tabs, tabCount);
+                _ASSERTE(cbBytesRead==(TabHdr.nTabCount*sizeof(ConEmuTab)));
+                if (cbBytesRead == (TabHdr.nTabCount*sizeof(ConEmuTab))) {
+                    SetTabs(tabs, TabHdr.nTabCount);
                     lbRc = TRUE;
                 }
 				MCHKHEAP;

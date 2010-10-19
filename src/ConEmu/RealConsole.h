@@ -285,6 +285,7 @@ public:
 	void OnServerClosing(DWORD anSrvPID);
     void Paste();
     void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
+    void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
 	bool isActive();
 	bool isFilePanel(bool abPluginAllowed=false);
 	bool isEditor();

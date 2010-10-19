@@ -356,8 +356,9 @@ BEGIN
     CONTROL         "Skip mouse click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,110,117,8
     CONTROL         "Skip mouse in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,121,117,8
     CONTROL         "Send Alt+Enter to console",cbSendAE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,132,117,8
-    CONTROL         "Select text with mouse",cbConsoleTextSelection,"Button",BS_AUTO3STATE | WS_TABSTOP,10,144,101,8
-    PUSHBUTTON      "...",bCTSSettings,114,143,13,11
+    CONTROL         "Send Alt+Space to console",cbSendAltSpace,"Button",BS_AUTO3STATE | WS_TABSTOP,10,144,117,8
+    CONTROL         "Select text with mouse",cbConsoleTextSelection,"Button",BS_AUTO3STATE | WS_TABSTOP,10,156,101,8
+    PUSHBUTTON      "...",bCTSSettings,114,155,13,11
     CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,110,89,8
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,121,89,8
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,132,89,8
@@ -365,7 +366,6 @@ BEGIN
     CONTROL         "Fix Alt on AltTab/AltF9",cbFixAltOnAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,110,91,8
     CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,121,74,8
     PUSHBUTTON      "...",bRealConsoleSettings,306,120,13,11
-    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,156,117,8
     CONTROL         "Write debug log-files",cbLogs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,156,89,8
     GROUPBOX        "Appearence",IDC_STATIC,4,172,319,47
     CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
@@ -380,7 +380,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,182,95,8
     CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,194,95,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,222,206,95,8
-    CONTROL         "Lock real console pos",cbLockRealConsolePos,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,227,132,92,8
+    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,132,91,8
     CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,156,92,8
 END
 
@@ -943,7 +943,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    cbLockRealConsolePos    "Don't move invisible real console.\nThis affects GUI eMenu."
+    cbSendAltSpace          "When is on, You can't pop up system menu\nfrom keyboard (HostKey+Space still works),\nbut You can use 'Alt+Enter' in FAR internally."
     cbBgAllowPlugin         "Enable background Far plugins (i.e. Panel Colorer), 3d state means - don't draw in viewer/editor"
 END
 

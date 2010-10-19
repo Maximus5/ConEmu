@@ -172,6 +172,7 @@ namespace Settings {
 CSettings::CSettings()
 {
     InitSettings();
+    SingleInstanceArg = false;
     mb_StopRegisterFonts = FALSE;
     mb_IgnoreEditChanged = FALSE;
     mb_IgnoreTtfChange = TRUE;
@@ -269,6 +270,7 @@ void CSettings::InitSettings()
     nAffinity = 0; // 0 - don't change default affinity
     //isAdvLangChange = true;
     isSkipFocusEvents = false;
+    isSendAltEnter = false; isSendAltSpace = 0;
     //isLangChangeWsPlugin = false;
 	isMonitorConsoleLang = 3;
     DefaultBufferHeight = 1000; AutoBufferHeight = true;
@@ -660,7 +662,8 @@ void CSettings::LoadSettings()
         
         reg->Load(L"RightClick opens context menu", isRClickSendKey);
         	reg->Load(L"RightClickMacro2", &sRClickMacro);
-        reg->Load(L"AltEnter", isSentAltEnter);
+        reg->Load(L"AltEnter", isSendAltEnter);
+        reg->Load(L"AltSpace", isSendAltSpace); if (isSendAltSpace > 2) isSendAltSpace = 2;
         reg->Load(L"Min2Tray", isMinToTray);
 
 		reg->Load(L"SafeFarClose", isSafeFarClose);
@@ -1140,7 +1143,8 @@ BOOL CSettings::SaveSettings()
 			reg->Save(L"PartBrushBlack", isPartBrushBlack);
             reg->Save(L"RightClick opens context menu", isRClickSendKey);
             	reg->Save(L"RightClickMacro2", sRClickMacro);
-            reg->Save(L"AltEnter", isSentAltEnter);
+            reg->Save(L"AltEnter", isSendAltEnter);
+            reg->Save(L"AltSpace", isSendAltSpace);
             reg->Save(L"Min2Tray", isMinToTray);
 
 			reg->Save(L"SafeFarClose", isSafeFarClose);
@@ -1721,7 +1725,8 @@ LRESULT CSettings::OnInitDialog_Ext()
 		gSet.EnableThemeDialogTextureF(hExt, 6/*ETDT_ENABLETAB*/);
 
 	if (isRClickSendKey) CheckDlgButton(hExt, cbRClick, (isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
-	if (isSentAltEnter) CheckDlgButton(hExt, cbSendAE, BST_CHECKED);
+	if (isSendAltEnter) CheckDlgButton(hExt, cbSendAE, BST_CHECKED);
+	if (isSendAltSpace) CheckDlgButton(hExt, cbSendAltSpace, isSendAltSpace);
 	if (isMinToTray) CheckDlgButton(hExt, cbMinToTray, BST_CHECKED);
 	if (isAutoRegisterFonts) CheckDlgButton(hExt, cbAutoRegFonts, BST_CHECKED);
 	if (isDebugSteps) CheckDlgButton(hExt, cbDebugSteps, BST_CHECKED);
@@ -2272,7 +2277,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		break;
 
     case cbSendAE:
-        isSentAltEnter = IsChecked(hExt, cbSendAE);
+        isSendAltEnter = IsChecked(hExt, cbSendAE);
+        break;
+    case cbSendAltSpace:
+        isSendAltSpace = IsChecked(hExt, cbSendAltSpace);
         break;
 
     case cbMinToTray:
@@ -5120,6 +5128,22 @@ void CSettings::SetArgBufferHeight(int anBufferHeight)
 LPCTSTR CSettings::GetDefaultCmd()
 {
 	return szDefCmd;
+}
+
+void CSettings::ResetCmdArg()
+{
+	SingleInstanceArg = false;
+	
+	// —бросить нужно только psCurCmd, psCmd не мен€етс€ - загружаетс€ только из настройки
+	SafeFree(psCurCmd);
+	
+    //SettingsBase* reg = CreateSettings();
+    //if (reg->OpenKey(Config, KEY_READ))
+    //{
+	//	reg->Load(L"CmdLine", &psCmd);
+    //    reg->CloseKey();
+    //}
+    //delete reg;
 }
 
 LPCTSTR CSettings::GetCmd()

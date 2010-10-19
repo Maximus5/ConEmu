@@ -1394,6 +1394,18 @@ int WINAPI RegisterBackground(BackgroundInfo *pbk)
 		_ASSERTE(gbBgPluginsAllowed == TRUE);
 		return -2;
 	}
+	if (pbk->cbSize != sizeof(*pbk))
+	{
+		_ASSERTE(pbk->cbSize == sizeof(*pbk));
+		return -3;
+	}
+
+#ifdef _DEBUG
+	if (pbk->Cmd == rbc_Register)
+	{
+		_ASSERTE(pbk->nPlaces != 0);
+	}
+#endif
 	
 	if (gpBgPlugin == NULL)
 	{
@@ -3014,7 +3026,8 @@ void InitHWND(HWND ahFarHwnd)
 
 BOOL ReloadFarInfo(BOOL abFull)
 {
-	if (!gpFarInfoMapping) {
+	if (!gpFarInfoMapping)
+	{
 		DWORD dwErr = 0;
 
 		// Создать мэппинг для gpFarInfoMapping
@@ -3026,33 +3039,42 @@ BOOL ReloadFarInfo(BOOL abFull)
 		ghFarInfoMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
 			gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
 
-		if (!ghFarInfoMapping) {
+		if (!ghFarInfoMapping)
+		{
 			dwErr = GetLastError();
 			//TODO("Показать ошибку создания MAP для ghFarInfoMapping");
 			_ASSERTE(ghFarInfoMapping!=NULL);
-		} else {
+		}
+		else
+		{
 			gpFarInfoMapping = (CEFAR_INFO*)MapViewOfFile(ghFarInfoMapping, FILE_MAP_ALL_ACCESS,0,0,0);
-			if (!gpFarInfoMapping) {
+			if (!gpFarInfoMapping)
+			{
 				dwErr = GetLastError();
 				CloseHandle(ghFarInfoMapping); ghFarInfoMapping = NULL;
 				//TODO("Показать ошибку создания MAP для ghFarInfoMapping");
 				_ASSERTE(gpFarInfoMapping!=NULL);
-			} else {
+			}
+			else
+			{
 				gpFarInfoMapping->cbSize = 0;
 			}
 		}
 	}
 
-	if (!ghFarAliveEvent) {
+	if (!ghFarAliveEvent)
+	{
 		wchar_t szEventName[64];
 		wsprintfW(szEventName, CEFARALIVEEVENT, gnSelfPID);
 		ghFarAliveEvent = CreateEvent(gpNullSecurity, FALSE, FALSE, szEventName);				
 	}
 	
-	if (!gpFarInfo) {
+	if (!gpFarInfo)
+	{
 		gpFarInfo = (CEFAR_INFO*)Alloc(sizeof(CEFAR_INFO),1);
 
-		if (!gpFarInfo) {
+		if (!gpFarInfo)
+		{
 			_ASSERTE(gpFarInfo!=NULL);
 			return FALSE;
 		}
@@ -3063,9 +3085,12 @@ BOOL ReloadFarInfo(BOOL abFull)
 		gpFarInfo->nFarPID = gnSelfPID;
 		gpFarInfo->nFarTID = gnMainThreadId;
 		gpFarInfo->nProtocolVersion = CESERVER_REQ_VER;
-		if (gFarVersion.dwVerMajor < 2 || (gFarVersion.dwVerMajor == 2 && gFarVersion.dwBuild < 1564)) {
+		if (gFarVersion.dwVerMajor < 2 || (gFarVersion.dwVerMajor == 2 && gFarVersion.dwBuild < 1564))
+		{
 			gpFarInfo->bBufferSupport = FALSE;
-		} else {
+		}
+		else
+		{
 			// Нужно проверить
 			if (gFarVersion.dwBuild>=FAR_Y_VER)
 				gpFarInfo->bBufferSupport = FUNC_Y(CheckBufferEnabled)();
@@ -3075,13 +3100,15 @@ BOOL ReloadFarInfo(BOOL abFull)
 		
 		// Загрузить из реестра настройки PanelTabs
 		gpFarInfo->PanelTabs.SeparateTabs = gpFarInfo->PanelTabs.ButtonColor = -1;
-		if (*gszRootKey) {
+		if (*gszRootKey)
+		{
 			WCHAR szTabsKey[MAX_PATH*2+32];
 			lstrcpyW(szTabsKey, gszRootKey);
 			int nLen = lstrlenW(szTabsKey);
 			lstrcpyW(szTabsKey+nLen, (szTabsKey[nLen-1] == L'\\') ? L"Plugins\\PanelTabs" : L"\\Plugins\\PanelTabs");
 			HKEY hk;
-			if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, szTabsKey, 0, KEY_READ, &hk)) {
+			if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, szTabsKey, 0, KEY_READ, &hk))
+			{
 				DWORD dwVal, dwSize;
 				if (!RegQueryValueExW(hk, L"SeparateTabs", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
 					gpFarInfo->PanelTabs.SeparateTabs = dwVal ? 1 : 0;
@@ -3101,8 +3128,10 @@ BOOL ReloadFarInfo(BOOL abFull)
 	else
 		lbSucceded = FUNC_X(ReloadFarInfo)();
 	
-	if (lbSucceded) {
-		if (abFull || memcmp(gpFarInfoMapping, gpFarInfo, sizeof(CEFAR_INFO))!=0) {
+	if (lbSucceded)
+	{
+		if (abFull || memcmp(gpFarInfoMapping, gpFarInfo, sizeof(CEFAR_INFO))!=0)
+		{
 			lbChanged = TRUE;
 			gpFarInfo->nFarInfoIdx++;
 			*gpFarInfoMapping = *gpFarInfo;
@@ -3176,7 +3205,8 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
     BOOL lbCh = FALSE;
 	DEBUGSTR(L"--AddTab\n");
 
-	if (Type == WTYPE_PANELS) {
+	if (Type == WTYPE_PANELS)
+	{
 	    lbCh = (gpTabs->Tabs.tabs[0].Current != (Current/*losingFocus*/ ? 1 : 0)) ||
 	           (gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS);
 		gpTabs->Tabs.tabs[0].Current = Current/*losingFocus*/ ? 1 : 0;
@@ -3186,8 +3216,13 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		gpTabs->Tabs.tabs[0].Type = WTYPE_PANELS;
 		gpTabs->Tabs.tabs[0].Modified = 0; // Иначе GUI может ошибочно считать, что есть несохраненные редакторы
 		if (!tabCount) tabCount++;
-	} else
-	if (Type == WTYPE_EDITOR || Type == WTYPE_VIEWER)
+		if (Current)
+		{
+			gpTabs->Tabs.CurrentType = Type;
+			gpTabs->Tabs.CurrentIndex = 0;
+		}
+	}
+	else if (Type == WTYPE_EDITOR || Type == WTYPE_VIEWER)
 	{
 		// Первое окно - должно быть панели. Если нет - значит фар открыт в режиме редактора
 		if (tabCount == 1) {
@@ -3212,6 +3247,9 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		if (gpTabs->Tabs.tabs[tabCount].Current != 0)
 		{
 			lastModifiedStateW = Modified != 0 ? 1 : 0;
+
+			gpTabs->Tabs.CurrentType = Type;
+			gpTabs->Tabs.CurrentIndex = 0;
 		}
 		//else
 		//{
@@ -4672,6 +4710,7 @@ void WINAPI OnLibraryLoaded(HMODULE ahModule)
 		{
 			struct ConEmuLoadedArg arg = {sizeof(struct ConEmuLoadedArg)};
 			arg.hConEmu = ghPluginModule;
+			arg.hPlugin = ahModule;
 			arg.bLoaded = TRUE;
 			arg.bGuiActive = (ConEmuHwnd == NULL);
 			// Сервисные функции

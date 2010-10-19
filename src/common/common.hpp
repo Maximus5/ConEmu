@@ -249,7 +249,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define CECMD_ONSERVERCLOSE 35 // Посылается из ConEmuC*.exe перед закрытием в режиме сервера
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    50
+#define CESERVER_REQ_VER    51
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -483,14 +483,23 @@ struct UpdateBackgroundArg
 
 	HDC hdc; // DC для отрисовки фона. Изначально (для nLevel==0) DC залит цветом фона crPalette[0]
 	int dcSizeX, dcSizeY; // размер DC в пикселях
-	// Далее идет информация о консоли. Для удобства и исключения
-	// ветвления - координаты приведены к 0x0 (т.е. буфер /w можно игнорировать)
-	int conSizeX, conSizeY; // размер консоли в ячейках (символах), это рабочая часть фара
-	BOOL bLeft, bRight; // Наличие левой/правой панелей
-	LPCWSTR pszLeftCurDir, pszLeftFormat, pszLeftHostFile;
-	LPCWSTR pszRightCurDir, pszRightFormat, pszRightHostFile;
-	RECT rcConLeft, rcConRight; // Консольные кооринаты панелей, приведенные к 0x0
 	RECT rcDcLeft, rcDcRight; // Координаты панелей в DC (base 0x0)
+
+	// Далее идет информация о консоли и FAR.
+	BOOL bPanelsAllowed;
+	struct BkPanelInfo {
+		BOOL bVisible; // Наличие панели
+		BOOL bFocused; // В фокусе
+		BOOL bPlugin;  // Плагиновая панель
+		wchar_t szCurDir[32768];    // Текущая папка на панели
+		wchar_t szFormat[MAX_PATH]; // Доступно только в FAR2
+		wchar_t szHostFile[32768];  // Доступно только в FAR2
+		RECT rcPanelRect; // Консольные кооринаты панели. В FAR 2 с ключом /w верх может быть != {0,0}
+	} LeftPanel, RightPanel;
+	RECT rcConWorkspace; // Кооринаты рабоче области FAR. В FAR 2 с ключом /w верх может быть != {0,0}
+	COORD conCursor; // положение курсора, или {-1,-1} если он не видим
+	DWORD nFarInterfaceSettings; // ACTL_GETINTERFACESETTINGS
+	DWORD nFarPanelSettings; // ACTL_GETPANELSETTINGS
 
 	// Слой, в котором вызван плагин. По сути, это порядковый номер, 0-based
 	// если (nLevel > 0) плагин НЕ ДОЛЖЕН затирать фон целиком.
@@ -498,8 +507,8 @@ struct UpdateBackgroundArg
 
 	DWORD dwEventFlags; // комбинация из enum BackgroundUpdateEvent
 
-	COLORREF crPalette[16]; // Палитра в ConEmu
 	BYTE nFarColors[0x100]; // Массив цветов фара
+	COLORREF crPalette[16]; // Палитра в ConEmu
 
     /* Основной шрифт в GUI */
     struct ConEmuMainFont MainFont;
@@ -561,6 +570,7 @@ struct ConEmuLoadedArg
 {
 	DWORD cbSize;    // размер структуры в байтах
 	HMODULE hConEmu; // conemu.dll / conemu.x64.dll
+	HMODULE hPlugin; // для информации - Instance этого плагина, в котором вызывается OnConEmuLoaded
 	BOOL bLoaded;    // TRUE - при загрузке conemu.dll, FALSE - при выгрузке
 	BOOL bGuiActive; // TRUE - консоль запущена из-под ConEmu, FALSE - standalone
 
@@ -620,6 +630,8 @@ typedef struct tag_CESERVER_REQ_CONEMUTAB {
 	DWORD nTabCount;
 	BOOL  bMacroActive;
 	BOOL  bMainThread;
+	int   CurrentType; // WTYPE_PANELS / WTYPE_VIEWER / WTYPE_EDITOR
+	int   CurrentIndex; // для удобства, индекс текущего окна в tabs
 	ConEmuTab tabs[1];
 } CESERVER_REQ_CONEMUTAB;
 
@@ -932,6 +944,7 @@ typedef struct tag_CESERVER_REQ_SETBACKGROUND {
 	RECT  rcReserved5; // Must by 0. reserved for filled rect (plugin may cover only one panel, or part of it)
 	
 	BITMAPFILEHEADER  bmp;
+	BITMAPINFOHEADER  bi;
 } CESERVER_REQ_SETBACKGROUND;
 
 // ConEmu respond for CESERVER_REQ_SETBACKGROUND

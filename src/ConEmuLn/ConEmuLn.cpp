@@ -185,23 +185,29 @@ int WINAPI UpdateConEmuBackground(struct UpdateBackgroundArg* pBk)
 	if (pBk->nLevel == 0)
 	{
 		HBRUSH hBr = CreateSolidBrush(pBk->crPalette[nPanelBackIdx]);
-		if (pBk->bLeft)
+		if (pBk->LeftPanel.bVisible)
 			FillRect(pBk->hdc, &pBk->rcDcLeft, hBr);
-		if (pBk->bRight)
+		if (pBk->RightPanel.bVisible)
 			FillRect(pBk->hdc, &pBk->rcDcRight, hBr);
 		DeleteObject(hBr);
 	}
 
-	if (pBk->bLeft || pBk->bRight)
+	if ((pBk->LeftPanel.bVisible || pBk->RightPanel.bVisible) /*&& pBk->MainFont.nFontHeight>0*/)
 	{
 		HPEN hPen = CreatePen(PS_SOLID, 1, gcrLinesColor);
 		HPEN hOldPen = (HPEN)SelectObject(pBk->hdc, hPen);
 
-		int nY1 = (pBk->bLeft) ? pBk->rcDcLeft.top : pBk->rcDcRight.top;
+		int nCellHeight = 12;
+		if (pBk->LeftPanel.bVisible)
+			nCellHeight = pBk->rcDcLeft.bottom / (pBk->LeftPanel.rcPanelRect.bottom - pBk->LeftPanel.rcPanelRect.top + 1);
+		else
+			nCellHeight = pBk->rcDcRight.bottom / (pBk->RightPanel.rcPanelRect.bottom - pBk->RightPanel.rcPanelRect.top + 1);
+
+		int nY1 = (pBk->LeftPanel.bVisible) ? pBk->rcDcLeft.top : pBk->rcDcRight.top;
 		int nY2 = (pBk->rcDcLeft.bottom >= pBk->rcDcRight.bottom) ? pBk->rcDcLeft.bottom : pBk->rcDcRight.bottom;
-		int nX1 = (pBk->bLeft) ? 0 : pBk->rcDcRight.left;
-		int nX2 = (pBk->bRight) ? pBk->rcDcRight.right : pBk->rcDcLeft.right;
-		for (int Y = nY1; Y < nY2; Y += pBk->MainFont.nFontHeight)
+		int nX1 = (pBk->LeftPanel.bVisible) ? 0 : pBk->rcDcRight.left;
+		int nX2 = (pBk->RightPanel.bVisible) ? pBk->rcDcRight.right : pBk->rcDcLeft.right;
+		for (int Y = nY1; Y < nY2; Y += nCellHeight)
 		{
 			MoveToEx(pBk->hdc, nX1, Y, NULL);
 			LineTo(pBk->hdc, nX2, Y);
@@ -217,6 +223,7 @@ int WINAPI UpdateConEmuBackground(struct UpdateBackgroundArg* pBk)
 void WINAPI OnConEmuLoaded(struct ConEmuLoadedArg* pConEmuInfo)
 {
 	gfRegisterBackground = pConEmuInfo->RegisterBackground;
+	ghPluginModule = pConEmuInfo->hPlugin;
 	if (gfRegisterBackground && gbBackgroundEnabled)
 	{
 		StartPlugin(FALSE);
@@ -250,7 +257,7 @@ void StartPlugin(BOOL bConfigure)
 			}
 			else
 			{
-				BackgroundInfo reg = {sizeof(BackgroundInfo), rbc_Register, ghPluginModule, UpdateConEmuBackground, bup_Panels, NULL, 100};
+				BackgroundInfo reg = {sizeof(BackgroundInfo), rbc_Register, ghPluginModule, UpdateConEmuBackground, NULL, bup_Panels, 100};
 				gfRegisterBackground(&reg);
 			}
 		}

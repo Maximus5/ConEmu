@@ -976,6 +976,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 {
     RECT rc = rFrom; // инициализация, если уж не получится...
     RECT rcShift = MakeRect(0,0);
+	enum ConEmuRect tFromNow = tFrom;
 
 	if (!pVCon)
 		pVCon = gConEmu.mp_VActive;
@@ -1000,6 +1001,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                 rc.bottom = (rFrom.bottom-rFrom.top) - (rcShift.top+rcShift.bottom);
                 rc.left = 0;
                 rc.top = 0; // Получили клиентскую область
+				tFromNow = CER_MAINCLIENT;
             }
             break;
         case CER_MAINCLIENT:
@@ -1022,6 +1024,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                         AddMargins(rc, rcShift, TRUE/*abExpand*/);
                         rcShift = CalcMargins(CEM_FRAME);
                         AddMargins(rc, rcShift, TRUE/*abExpand*/);
+						WARNING("Неправильно получается при DoubleView");
+						tFromNow = CER_MAINCLIENT;
                     } break;
                     case CER_MAINCLIENT:
                     {
@@ -1029,6 +1033,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                         //AddMargins(rc, rcShift, TRUE/*abExpand*/);
                         rcShift = CalcMargins(tTabAction);
                         AddMargins(rc, rcShift, TRUE/*abExpand*/);
+						WARNING("Неправильно получается при DoubleView");
+						tFromNow = CER_MAINCLIENT;
                     } break;
                     case CER_TAB:
                     {
@@ -1036,14 +1042,23 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                         //AddMargins(rc, rcShift, TRUE/*abExpand*/);
                         rcShift = CalcMargins(tTabAction);
                         AddMargins(rc, rcShift, TRUE/*abExpand*/);
+						WARNING("Неправильно получается при DoubleView");
+						tFromNow = CER_MAINCLIENT;
                     } break;
 					case CER_WORKSPACE:
 					{
+						WARNING("CER_WORKSPACE - не сделано вообще");
 					} break;
                     case CER_BACK:
                     {
                         //rcShift = CalcMargins(CEM_BACK);
                         //AddMargins(rc, rcShift, TRUE/*abExpand*/);
+                        rcShift = CalcMargins(tTabAction);
+                        //AddMargins(rc, rcShift, TRUE/*abExpand*/);
+						rc.top += rcShift.top; rc.bottom += rcShift.top;
+						_ASSERTE(rcShift.left == 0 && rcShift.right == 0 && rcShift.bottom == 0);
+						WARNING("Неправильно получается при DoubleView");
+						tFromNow = CER_MAINCLIENT;
                     } break;
                     default:
                         break;
@@ -1066,6 +1081,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                 
                 if (tWhat != CER_DC)
                     rc = CalcRect(tWhat, rc, CER_DC);
+
+				tFromNow = CER_BACK;
             }
             return rc;
         case CER_FULLSCREEN:
@@ -1122,9 +1139,21 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
         case CER_CONSOLE:
 		case CER_CONSOLE_NTVDMOFF:
         {
-			// Учесть высоту закладок (табов)
-            rcShift = CalcMargins(tTabAction);
-            AddMargins(rc, rcShift);
+			if (tFromNow == CER_MAINCLIENT)
+			{
+				// Учесть высоту закладок (табов)
+		        rcShift = CalcMargins(tTabAction);
+	            AddMargins(rc, rcShift);
+			}
+			else if (tFromNow == CER_BACK || tFromNow == CER_WORKSPACE)
+			{
+				TODO("Расчет для DoubleView");
+			}
+			else
+			{
+				// Другие значения - не допускаются
+				_ASSERTE(tFromNow == CER_MAINCLIENT);
+			}
 
 			//// Для корректного деления на размер знакоместа...
 			//         if (gSet.FontWidth()==0 || gSet.FontHeight()==0)
@@ -1165,12 +1194,13 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
             }
                 
             // Если нужен размер консоли в символах сразу делим и выходим
-            if (tWhat == CER_CONSOLE || tWhat == CER_CONSOLE_NTVDMOFF) {
+            if (tWhat == CER_CONSOLE || tWhat == CER_CONSOLE_NTVDMOFF)
+			{
 				//2009-07-09 - ClientToConsole использовать нельзя, т.к. после его
 				//  приближений высота может получиться больше Ideal, а ширина - меньше
-				rc.right = (rc.right - rc.left + 1) / gSet.FontWidth();
-				rc.bottom = (rc.bottom - rc.top) / gSet.FontHeight();
-                rc.left = 0; rc.top = 0;
+				int nW = (rc.right - rc.left + 1) / gSet.FontWidth();
+				int nH = (rc.bottom - rc.top) / gSet.FontHeight();
+                rc.left = 0; rc.top = 0; rc.right = nW; rc.bottom = nH;
 
 				//2010-01-19
 				if (gSet.isFontAutoSize) {
@@ -3011,6 +3041,9 @@ void CConEmuMain::DebugStep(LPCTSTR asMsg, BOOL abErrorSeverity/*=FALSE*/)
 		static bool bWasDbgStep, bWasDbgError;
 		if (asMsg && *asMsg)
 		{
+			// Если ведется ЛОГ - выбросить в него
+			mp_VActive->RCon()->LogString(asMsg);
+			
 			if (gSet.isDebugSteps || abErrorSeverity)
 			{
 				bWasDbgStep = true;
@@ -3296,6 +3329,12 @@ void CConEmuMain::RegisterHoooks()
 
 BOOL CConEmuMain::LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode)
 {
+    if (nVkKeyCode == ' ' && gSet.isSendAltSpace == 2 && gSet.IsHostkeyPressed())
+	{
+    	ShowSysmenu();
+		return TRUE;
+	}
+
 	if (!gSet.isUseWinNumber || !gSet.IsHostkeyPressed())
 		return FALSE;
 
@@ -4761,9 +4800,9 @@ void CConEmuMain::PaintGaps(HDC hDC)
 
 	int
 	#ifdef _DEBUG
-		mn_ColorIdx = 1;
+		mn_ColorIdx = 1; // Blue
 	#else
-		mn_ColorIdx = 0;
+		mn_ColorIdx = 0; // Black
 	#endif
 	HBRUSH hBrush = CreateSolidBrush(gSet.GetColors(isMeForeground())[mn_ColorIdx]);
 
@@ -4771,14 +4810,20 @@ void CConEmuMain::PaintGaps(HDC hDC)
 	RECT rcMargins = CalcMargins(CEM_TAB);
 	AddMargins(rcClient, rcMargins, FALSE);
 
-	RECT offsetRect; GetClientRect(ghWndDC, &offsetRect);
+	// На старте при /max - ghWndDC еще не изменил свое положение
+	//RECT offsetRect; GetClientRect(ghWndDC, &offsetRect);
+	RECT rcWndClient; GetClientRect(ghWnd, &rcWndClient);
+	RECT rcCalcCon = gConEmu.CalcRect(CER_BACK, rcWndClient, CER_MAINCLIENT);
+	RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
+	RECT offsetRect = gConEmu.CalcRect(CER_BACK, rcCon, CER_CONSOLE);
+
 	//WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length = sizeof(wpl);
 	//GetWindowPlacement(ghWndDC, &wpl); // Положение окна, в котором идет отрисовка
 
 	////RECT offsetRect = ConsoleOffsetRect(); // смещение с учетом табов
 	//RECT dcRect; GetClientRect(ghWndDC, &dcRect);
 	//RECT offsetRect = dcRect;
-	MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&offsetRect, 2);
+	//MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&offsetRect, 2); -- 2010-10-19 не требуется, т.к. выше уже CalcRect
 
 
 	// paint gaps between console and window client area with first color
@@ -4861,6 +4906,7 @@ void CConEmuMain::RePaint()
     m_Back->RePaint();
 	HDC hDc = GetDC(ghWnd);
     //mp_VActive->Paint(hDc); // если mp_VActive==NULL - будет просто выполнена заливка фоном.
+	PaintGaps(hDc);
 	PaintCon(hDc);
 	ReleaseDC(ghWnd, hDc);
 }
@@ -4976,7 +5022,8 @@ bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 
 bool CConEmuMain::isFirstInstance()
 {
-	if (!mb_AliveInitialized) {
+	if (!mb_AliveInitialized)
+	{
 		mb_AliveInitialized = TRUE;
 		
 		// создадим событие, чтобы не было проблем с ключем /SINGLE
@@ -4987,7 +5034,8 @@ bool CConEmuMain::isFirstInstance()
 		mh_ConEmuAliveEvent = CreateEvent(NULL, TRUE, TRUE, ms_ConEmuAliveEvent);
 		nSize = GetLastError();
 		// имя пользователя теоретически может содержать символы, которые недопустимы в имени Event
-		if (!mh_ConEmuAliveEvent /* || nSize == ERROR_PATH_NOT_FOUND */) {
+		if (!mh_ConEmuAliveEvent /* || nSize == ERROR_PATH_NOT_FOUND */)
+		{
 			lstrcpy(ms_ConEmuAliveEvent, CEGUI_ALIVE_EVENT);
 			mh_ConEmuAliveEvent = CreateEvent(NULL, TRUE, TRUE, ms_ConEmuAliveEvent);
 			nSize = GetLastError();
@@ -4995,8 +5043,10 @@ bool CConEmuMain::isFirstInstance()
 		mb_ConEmuAliveOwned = mh_ConEmuAliveEvent && (nSize!=ERROR_ALREADY_EXISTS);
 	}
 
-	if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned) {
-		if (WaitForSingleObject(mh_ConEmuAliveEvent,0) == WAIT_TIMEOUT) {
+	if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
+	{
+		if (WaitForSingleObject(mh_ConEmuAliveEvent,0) == WAIT_TIMEOUT)
+		{
 			SetEvent(mh_ConEmuAliveEvent);
 			mb_ConEmuAliveOwned = TRUE;
 		}
@@ -5665,6 +5715,13 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         		if (pszDataW && lbNeedFreeW) free(pszDataW); pszDataW = NULL;
         		if (pszDataA) free(pszDataA); pszDataA = NULL;
 
+				// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
+				// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
+				if (gSet.SingleInstanceArg)
+				{
+        			gSet.ResetCmdArg();
+				}
+
 				lbCreated = TRUE;
         	}
         	
@@ -5680,6 +5737,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
             }
         }
         if (gConEmu.mb_StartDetached) gConEmu.mb_StartDetached = FALSE; // действует только на первую консоль
+        
 
         HRESULT hr = S_OK;
         hr = OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
@@ -6438,6 +6496,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     TODO("gSet.icMultiBuffer - хоткей для включения-отключения режима буфера - AskChangeBufferHeight()");
     //if (gSet.isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipMulticonChar)) {
     if ((sb_SkipMulticonChar && (messg == WM_KEYUP || messg == WM_SYSKEYUP))
+		|| (wParam==' ' && gSet.IsHostkeyPressed()) // показать системное меню
     	|| (gSet.isMulti && wParam
 	        &&
 	    	(wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || wParam==gSet.icMultiRecreate
@@ -6500,7 +6559,12 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         }
 		else if (messg == WM_KEYUP || messg == WM_SYSKEYUP)
 		{
-			if (/*(lbLWin || lbRWin) &&*/ (wParam==VK_F11 || wParam==VK_F12))
+            if (wParam == ' ')
+			{
+            	ShowSysmenu();
+				return 0;
+			}
+			else if (/*(lbLWin || lbRWin) &&*/ (wParam==VK_F11 || wParam==VK_F12))
 			{
 				ConActivate(wParam - VK_F11 + 10);
 				return 0;
@@ -7263,7 +7327,8 @@ LRESULT CConEmuMain::OnMouse_Move(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			if (!lbDiffTest && !isDragging() && !isSizing())
 			{
 				// 2009-06-19 Выполнялось сразу после "if (gSet.isDragEnabled & (mouse.state & (DRAG_L_ALLOWED|DRAG_R_ALLOWED)))"
-				if (mouse.state & MOUSE_R_LOCKED) {
+				if (mouse.state & MOUSE_R_LOCKED)
+				{
 					// чтобы при RightUp не ушел APPS
 					mouse.state &= ~MOUSE_R_LOCKED;
 
@@ -7283,7 +7348,8 @@ LRESULT CConEmuMain::OnMouse_Move(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 				// Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
 				bool bFilePanel = isFilePanel();
-				if (!bFilePanel) {
+				if (!bFilePanel)
+				{
 					DebugStep(_T("DnD: not file panel"));
 					//isLBDown = false; 
 					mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_ALLOWED | DRAG_R_STARTED);
@@ -7314,14 +7380,17 @@ LRESULT CConEmuMain::OnMouse_Move(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 				// Иначе иногда срабатывает FAR'овский D'n'D
 				//SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
-				if (mp_DragDrop) {
+				if (mp_DragDrop)
+				{
 					//COORD crMouse = mp_VActive->ClientToConsole(
 					//	lbLeftDrag ? mouse.LClkDC.X : mouse.RClkDC.X,
 					//	lbLeftDrag ? mouse.LClkDC.Y : mouse.RClkDC.Y);
 					DebugStep(_T("DnD: Drag-n-Drop starting"));
 					mp_DragDrop->Drag(!lbLeftDrag, lbLeftDrag ? mouse.LClkDC : mouse.RClkDC);
 					DebugStep(Title); // вернуть заголовок
-				} else {
+				}
+				else
+				{
 					_ASSERTE(mp_DragDrop); // должно быть обработано выше
 					DebugStep(_T("DnD: Drag-n-Drop is null"));
 				}
@@ -9105,7 +9174,8 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
     #endif
     // Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
     
-    if (pIn->hdr.nCmd == CECMD_NEWCMD) {
+    if (pIn->hdr.nCmd == CECMD_NEWCMD)
+    {
     	// Приходит из другой копии ConEmu.exe, когда она запущена с ключом /single
         DEBUGSTR(L"GUI recieved CECMD_NEWCMD\n");
     
@@ -9119,7 +9189,8 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		RConStartArgs args; args.pszSpecialCmd = pIn->NewCmd.szCommand;
         CVirtualConsole* pCon = CreateCon(&args);
 		args.pszSpecialCmd = NULL;
-        if (pCon) {
+        if (pCon)
+        {
             pIn->Data[0] = TRUE;
         }
         
@@ -9131,20 +9202,26 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
 
-    } else if (pIn->hdr.nCmd == CECMD_TABSCMD) {
+    }
+    else if (pIn->hdr.nCmd == CECMD_TABSCMD)
+    {
         // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
         DEBUGSTR(L"GUI recieved CECMD_TABSCMD\n");
         _ASSERTE(nDataSize>=1);
         DWORD nTabCmd = pIn->Data[0];
         TabCommand(nTabCmd);
 
-	} else if (pIn->hdr.nCmd == CECMD_ATTACH2GUI) {
+	}
+	else if (pIn->hdr.nCmd == CECMD_ATTACH2GUI)
+	{
 		// Получен запрос на Attach из сервера
 		if (AttachRequested(pIn->StartStop.hWnd, pIn->StartStop, &(pIn->StartStopRet))) {
 			fSuccess = WriteFile(hPipe, pIn, pIn->hdr.cbSize, &cbWritten, NULL);
 		}
 
-	} else if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP) {
+	}
+	else if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP)
+	{
 		if (pIn->dwData[0] == 1)
 		{
 			// Запущен процесс сервера
@@ -9194,7 +9271,8 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 	}
 
     // Освободить память
-    if (pIn && (LPVOID)pIn != (LPVOID)&in) {
+    if (pIn && (LPVOID)pIn != (LPVOID)&in)
+    {
         free(pIn); pIn = NULL;
     }
 

@@ -8,12 +8,12 @@
 
 static bool gbInTransparentAssert = false;
 
-#ifdef _DEBUG
-	#undef _ASSERTE
-	#define _ASSERTE(expr) gbInTransparentAssert=true; _ASSERT_EXPR((expr), _CRT_WIDE(#expr)); gbInTransparentAssert=false;
-	#undef _ASSERT
-	#define _ASSERT(expr) gbInTransparentAssert=true; _ASSERT_EXPR((expr), _CRT_WIDE(#expr)); gbInTransparentAssert=false;
-#endif
+//#ifdef _DEBUG
+//	#undef _ASSERTE
+//	#define _ASSERTE(expr) gbInTransparentAssert=true; _ASSERT_EXPR((expr), _CRT_WIDE(#expr)); gbInTransparentAssert=false;
+//	#undef _ASSERT
+//	#define _ASSERT(expr) gbInTransparentAssert=true; _ASSERT_EXPR((expr), _CRT_WIDE(#expr)); gbInTransparentAssert=false;
+//#endif
 
 
 CRgnDetect::CRgnDetect()
@@ -1724,9 +1724,15 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 
 	RECT rLeft = {0}, rRight = {0};
 
-	if (lbLeftVisible) {
+	if (lbLeftVisible)
+	{
 		if (r.right == (nWidth-1))
 			lbFullPanel = true; // значит правой быть не может
+		if (r.right >= nWidth || r.bottom >= nHeight)
+		{
+			if (r.right >= nWidth) r.right = nWidth - 1;
+			if (r.bottom >= nHeight) r.bottom = nHeight - 1;
+		}
 		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, true);
 		
 		//// Для детекта наличия PanelTabs
@@ -1741,18 +1747,27 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 		//}
 	}
 
-	if (!lbFullPanel) {
+	if (!lbFullPanel)
+	{
 		//if (mb_RightPanel) {
-		if (mp_FarInfo->bFarRightPanel) {
+		if (mp_FarInfo->bFarRightPanel)
+		{
 			lbRightVisible = true;
 			r = mp_FarInfo->FarRightPanel.PanelRect; // mr_RightPanelFull;
-		} else
+		}
 		// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
-		if (mp_FarInfo->bFarRightPanel && mp_FarInfo->FarRightPanel.Visible) {
+		else if (mp_FarInfo->bFarRightPanel && mp_FarInfo->FarRightPanel.Visible)
+		{
 			// В "буферном" режиме размер панелей намного больше экрана
 			lbRightVisible = ConsoleRect2ScreenRect(mp_FarInfo->FarRightPanel.PanelRect, &r);
 		}
-		if (lbRightVisible) {
+		if (lbRightVisible)
+		{
+			if (r.right >= nWidth || r.bottom >= nHeight)
+			{
+				if (r.right >= nWidth) r.right = nWidth - 1;
+				if (r.bottom >= nHeight) r.bottom = nHeight - 1;
+			}
 			MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, true);
 			
 			//// Для детекта наличия PanelTabs

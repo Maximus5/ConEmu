@@ -64,7 +64,8 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 {
 	wchar_t szErr[MAX_PATH*2];
 	mh_Pipe = ExecuteOpenPipe(ms_PipeName, szErr, L"ConEmu");
-	if (!mh_Pipe || mh_Pipe == INVALID_HANDLE_VALUE) {
+	if (!mh_Pipe || mh_Pipe == INVALID_HANDLE_VALUE)
+	{
 		MBoxA(szErr);
 		return FALSE;
 	}
@@ -136,7 +137,8 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	WARNING("Если указан mdw_Timeout - создать нить и выполнять команду в ней. Ожидать нить не более и прибить ее, если пришел Timeout");
 
 	MCHKHEAP
-	if (nCmd<0 || nCmd>MAXCMDCOUNT) {
+	if (nCmd<0 || nCmd>MAXCMDCOUNT)
+	{
 		TCHAR szError[128];
 		swprintf(szError, _T("Invalid command id (%i)!"), nCmd);
 		MBoxA(szError);
@@ -152,7 +154,8 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	int nAllSize = sizeof(CESERVER_REQ_HDR)+anDataSize;
 	CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(nAllSize,1);
 	_ASSERTE(pIn!=NULL);
-	if (!pIn) {
+	if (!pIn)
+	{
 		TCHAR szError[128];
 		swprintf(szError, _T("Pipe: Can't allocate memory (%i) bytes, Cmd = %i!"), nAllSize, nCmd);
 		MBoxA(szError);
@@ -161,7 +164,8 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	}
 
 	ExecutePrepareCmd(pIn, nCmd, nAllSize);
-	if (apData && anDataSize) {
+	if (apData && anDataSize)
+	{
 		memmove(pIn->Data, apData, anDataSize);
 	}
 
@@ -180,12 +184,13 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
       NULL);                  // not overlapped 
 	dwErr = GetLastError();
 
-	if (!fSuccess && dwErr == ERROR_BROKEN_PIPE) {
+	if (!fSuccess && dwErr == ERROR_BROKEN_PIPE)
+	{
 		// Плагин не вернул данных, но обработал команду
 		Close();
 		return TRUE;
-	} else
-    if (!fSuccess && (dwErr != ERROR_MORE_DATA)) 
+	}
+	else if (!fSuccess && (dwErr != ERROR_MORE_DATA)) 
     {
 		DEBUGSTR(L" - FAILED!\n");
 		TCHAR szError[128];
@@ -197,7 +202,8 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 
 	// Информационно!
 	pOut = (CESERVER_REQ*)cbReadBuf;
-	if (pOut->hdr.nVersion != CESERVER_REQ_VER) {
+	if (pOut->hdr.nVersion != CESERVER_REQ_VER)
+	{
 		gConEmu.ShowOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion, -1);
 		pOut = NULL;
 		Close();
@@ -206,7 +212,8 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	nAllSize = pOut->hdr.cbSize;
 	pOut = NULL;
     
-    if (nAllSize==0) {
+    if (nAllSize==0)
+    {
        DEBUGSTR(L" - FAILED!\n");
        DisplayLastError(L"Empty data recieved from server", 0);
        Close();
@@ -257,7 +264,8 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 
 LPBYTE CConEmuPipe::GetPtr(DWORD* pdwLeft/*=NULL*/)
 {
-	if (pdwLeft) {
+	if (pdwLeft)
+	{
 		if (!dwMaxDataSize)
 			*pdwLeft = 0;
 		else
@@ -271,7 +279,8 @@ BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 	MCHKHEAP
 	if (nRead) *nRead = 0; // пока сбросим
 
-	if (lpCursor == NULL) {
+	if (lpCursor == NULL)
+	{
 		if (nRead) *nRead=0;
 		return FALSE;
 	}
@@ -283,7 +292,8 @@ BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 		nSize = dwMaxDataSize - (lpCursor-pOut->Data);
 
 	MCHKHEAP
-	if (nSize) {
+	if (nSize)
+	{
 		memmove(pData, lpCursor, nSize);
 		MCHKHEAP
 		lpCursor += nSize;

@@ -10,9 +10,9 @@ protected:
 	DWORD m_LastThSetCheck;
 	PanelViewSettings m_ThSet;
 	struct UpdateBackgroundArg m_Default;
-	// Buffers
-	wchar_t ms_LeftCurDir[32768], ms_LeftFormat[MAX_PATH], ms_LeftHostFile[32768];
-	wchar_t ms_RightCurDir[32768], ms_RightFormat[MAX_PATH], ms_RightHostFile[32768];
+	//// Buffers
+	//wchar_t ms_LeftCurDir[32768], ms_LeftFormat[MAX_PATH], ms_LeftHostFile[32768];
+	//wchar_t ms_RightCurDir[32768], ms_RightFormat[MAX_PATH], ms_RightHostFile[32768];
 	
 	// bitmask values
 	enum RequiredActions {
@@ -24,6 +24,7 @@ protected:
 	
 	void ReallocItems(int nAddCount);
 	BOOL LoadThSet();
+	void SetDcPanelRect(RECT *rcDc, UpdateBackgroundArg::BkPanelInfo *Panel, UpdateBackgroundArg *Arg);
 
 	/* Вызывается только в thread-safe (Synchro) - begin */
 	void CheckPanelFolders();

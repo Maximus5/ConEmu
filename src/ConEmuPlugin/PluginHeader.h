@@ -251,6 +251,10 @@ void ExecuteSynchro(); // если доступен - позовет ACTL_SYNCHRO (FAR2 only)
 BOOL FUNC_Y(ExecuteSynchro)();
 BOOL FUNC_X(ExecuteSynchro)();
 
+void FillUpdateBackgroundA(struct UpdateBackgroundArg* pFar);
+void FUNC_Y(FillUpdateBackground)(struct UpdateBackgroundArg* pFar);
+void FUNC_X(FillUpdateBackground)(struct UpdateBackgroundArg* pFar);
+
 #ifdef _DEBUG
 	#define SHOWDBGINFO(x) OutputDebugStringW(x)
 #else

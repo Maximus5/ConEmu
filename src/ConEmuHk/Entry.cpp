@@ -116,8 +116,10 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 		OutputDebugString(szKH);
 #endif
 
-		if (wParam == WM_KEYDOWN) {
-			if (pKB->vkCode >= (int)'0' && pKB->vkCode <= (int)'9') {
+		if (wParam == WM_KEYDOWN)
+		{
+			if ((pKB->vkCode >= (int)'0' && pKB->vkCode <= (int)'9') || pKB->vkCode == (int)' ')
+			{
 				BOOL lbLeftWin = isPressed(VK_LWIN);
 				BOOL lbRightWin = isPressed(VK_RWIN);
 				if (lbLeftWin || lbRightWin) {
@@ -125,13 +127,15 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 
 					HWND hConEmu = GetForegroundWindow();
 					// По идее, должен быть ConEmu, но необходимо проверить (может хук не снялся?)
-					if (hConEmu) {
+					if (hConEmu)
+					{
 						wchar_t szClass[64];
 						if (GetClassNameW(hConEmu, szClass, 63) && lstrcmpW(szClass, VirtualConsoleClass)==0)
 						{
 							if (!gnMsgLLKeyHook)
 								gnMsgLLKeyHook = RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
-							if (SendMessage(hConEmu, gnMsgLLKeyHook, wParam, pKB->vkCode) == 1) {
+							if (SendMessage(hConEmu, gnMsgLLKeyHook, wParam, pKB->vkCode) == 1)
+							{
 								gnSkipVkModCode = lbLeftWin ? VK_LWIN : VK_RWIN;
 								gnSkipVkKeyCode = pKB->vkCode;
 
@@ -158,16 +162,21 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 			//if (pKB->vkCode == VK_LWIN || pKB->vkCode == VK_RWIN) {
 			//	gnWinPressTick = pKB->time;
 			//}
-			if (gnSkipVkKeyCode && !gnOtherWin) {
+			if (gnSkipVkKeyCode && !gnOtherWin)
+			{
 				// Страховка от залипаний
 				gnSkipVkModCode = 0;
 				gnSkipVkKeyCode = 0;
 			}
 
-		} else if (wParam == WM_KEYUP) {
+		}
+		else if (wParam == WM_KEYUP)
+		{
 
-			if (gnSkipVkModCode && pKB->vkCode == gnSkipVkModCode) {
-				if (gnSkipVkKeyCode) {
+			if (gnSkipVkModCode && pKB->vkCode == gnSkipVkModCode)
+			{
+				if (gnSkipVkKeyCode)
+				{
 					//gnSkipScanModCode = pKB->scanCode;
 					//return 1;
 					#ifdef _DEBUG
@@ -182,7 +191,9 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 					gnOtherWin = (BYTE)VkWinFix;
 					keybd_event(gnOtherWin, gnOtherWin, 0, 0);
 					//keybd_event(OtherWin, OtherWin, KEYEVENTF_KEYUP, 0);
-				} else {
+				}
+				else
+				{
 					gnOtherWin = 0;
 				}
 				gnSkipVkModCode = 0;
@@ -190,9 +201,11 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 				return 0;
 				//return CallNextHookEx(KeyHook, nCode, wParam, lParam);
 			}
-			if (gnSkipVkKeyCode && pKB->vkCode == gnSkipVkKeyCode) {
+			if (gnSkipVkKeyCode && pKB->vkCode == gnSkipVkKeyCode)
+			{
 				gnSkipVkKeyCode = 0;
-				if (gnOtherWin) {
+				if (gnOtherWin)
+				{
 					keybd_event(gnOtherWin, gnOtherWin, KEYEVENTF_KEYUP, 0);
 					gnOtherWin = 0;
 				}

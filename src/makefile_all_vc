@@ -1,4 +1,4 @@
-ALLDIRS = ConEmu ConEmuC ConEmuPlugin ConEmuTh
+ALLDIRS = ConEmu ConEmuC ConEmuPlugin ConEmuTh ConEmuLn
 
 !if defined(AMD64) || "$(CPU)" == "AMD64" || "$(PLATFORM)" == "x64"
 BUILD_SUFFUX=x64

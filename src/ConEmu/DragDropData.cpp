@@ -49,7 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTROVL(s) //DEBUGSTR(s)
 #define DEBUGSTRBACK(s) //DEBUGSTR(s)
 
-#define MSG_STARTDRAG (WM_APP+10)
+//#define MSG_STARTDRAG (WM_APP+10)
 
 WARNING("Заменить GlobalFree на ReleaseStgMedium, проверить, что оно реально освобождает hGlobal и кучу не рушит");
 
@@ -493,7 +493,10 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	
 	// Сразу получим информацию о путях панелей...
 	if (!m_pfpi) // если это уже не сделали
+	{
+		// Ошибки пайпа отображаются через MBoxA
 		RetrieveDragToInfo();
+	}
 	
 	if (LoadDragImageBits(mp_DataObject))
 	{
@@ -834,6 +837,7 @@ void CDragDropData::RetrieveDragToInfo()
 
 	gConEmu.DebugStep(_T("DnD: DragEnter starting"));
 
+	// Ошибки пайпа отображаются через MBoxA
 	if (pipe.Init(_T("CDragDropData::DragEnter")))
 	{
 		if (pipe.Execute(CMD_DRAGTO))
@@ -1657,7 +1661,20 @@ LRESULT CDragDropData::DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			pds->bInDrag = TRUE;
 			pds->pDrag->mb_DragStarting = TRUE;
 
+			wchar_t szStep[255]; wsprintf(szStep, L"DoDragDrop.Thread(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)pds->pDrag->mp_DataObject, (DWORD)pDropSource);
+			gConEmu.DebugStep(szStep);
+			
 			dwResult = DoDragDrop(pds->pDrag->mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
+			
+			wsprintf(szStep, L"DoDragDrop finished, Code=0x%08X", dwResult);
+			switch (dwResult)
+			{
+				case S_OK: lstrcat(szStep, L" (S_OK)"); break;
+				case DRAGDROP_S_DROP: lstrcat(szStep, L" (DRAGDROP_S_DROP)"); break;
+				case DRAGDROP_S_CANCEL: lstrcat(szStep, L" (DRAGDROP_S_CANCEL)"); break;
+				//case E_UNSPEC: lstrcat(szStep, L" (E_UNSPEC)"); break;
+			}
+			gConEmu.DebugStep(szStep, (dwResult!=S_OK && dwResult!=DRAGDROP_S_CANCEL && dwResult!=DRAGDROP_S_DROP));
 
 			MCHKHEAP;
 

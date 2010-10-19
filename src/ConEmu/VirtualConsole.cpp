@@ -179,9 +179,9 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mh_TransparentRgn = NULL;
 
 #ifdef _DEBUG
-    mn_BackColorIdx = 2;
+    mn_BackColorIdx = 2; // Green
 #else
-    mn_BackColorIdx = 0;
+    mn_BackColorIdx = 0; // Black
 #endif
     memset(&Cursor, 0, sizeof(Cursor));
     Cursor.nBlinkTime = GetCaretBlinkTime();
@@ -2812,12 +2812,17 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 	//else if (!mpsz_ConChar || !mpn_ConAttrEx)
 	//	lbSimpleBlack = TRUE;
-    if (lbSimpleBlack) {
+    if (lbSimpleBlack)
+	{
+		RECT rcWndClient; GetClientRect(ghWnd, &rcWndClient);
+		RECT rcCalcCon = gConEmu.CalcRect(CER_BACK, rcWndClient, CER_MAINCLIENT);
+		RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
+		rcClient = gConEmu.CalcRect(CER_BACK, rcCon, CER_CONSOLE);
         // Залить цветом 0
         #ifdef _DEBUG
-            int nBackColorIdx = 2;
+            int nBackColorIdx = 2; // Green
         #else
-            int nBackColorIdx = 0;
+            int nBackColorIdx = 0; // Black
         #endif
 		COLORREF *pColors = gSet.GetColors();
         HBRUSH hBr = CreateSolidBrush(pColors[nBackColorIdx]);

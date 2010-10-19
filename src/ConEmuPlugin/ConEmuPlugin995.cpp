@@ -969,13 +969,16 @@ BOOL CheckBufferEnabled995()
 	
 	// Чтобы проверку выполнять только один раз.
 	// Т.к. буфер может быть реально сброшен, а фар его все-еще умеет.
-	if (siEnabled) {
+	if (siEnabled)
+	{
 		return (siEnabled == 1);
 	}
 
 	SMALL_RECT rcFar = {0};
-	if (InfoW995->AdvControl(InfoW995->ModuleNumber, 32/*ACTL_GETFARRECT*/, &rcFar)) {
-		if (rcFar.Top > 0 && rcFar.Bottom > rcFar.Top) {
+	if (InfoW995->AdvControl(InfoW995->ModuleNumber, 32/*ACTL_GETFARRECT*/, &rcFar))
+	{
+		if (rcFar.Top > 0 && rcFar.Bottom > rcFar.Top)
+		{
 			siEnabled = 1;
 			return TRUE;
 		}
@@ -983,4 +986,93 @@ BOOL CheckBufferEnabled995()
 	siEnabled = -1;
 
 	return FALSE;
+}
+
+static void CopyPanelInfoW(PanelInfo* pInfo, UpdateBackgroundArg::BkPanelInfo* pBk)
+{
+	pBk->bVisible = pInfo->Visible;
+	pBk->bFocused = pInfo->Focus;
+	pBk->bPlugin = pInfo->Plugin;
+	HANDLE hPanel = (pInfo->Focus) ? PANEL_ACTIVE : PANEL_PASSIVE;
+	InfoW995->Control(hPanel, FCTL_GETCURRENTDIRECTORY /* == FCTL_GETPANELDIR == 25*/, countof(pBk->szCurDir), (LONG_PTR)&pBk->szCurDir);
+	if (gFarVersion.dwBuild >= 1657)
+	{
+		InfoW995->Control(hPanel, 32/*FCTL_GETPANELFORMAT*/, countof(pBk->szCurDir), (LONG_PTR)&pBk->szFormat);
+		InfoW995->Control(hPanel, 33/*FCTL_GETPANELHOSTFILE*/, countof(pBk->szCurDir), (LONG_PTR)&pBk->szHostFile);
+	}
+	else
+	{
+		lstrcpyW(pBk->szFormat, pInfo->Plugin ? L"Plugin" : L"");
+		pBk->szHostFile[0] = 0;
+	}
+	pBk->rcPanelRect = pInfo->PanelRect;
+}
+
+void FillUpdateBackground995(struct UpdateBackgroundArg* pFar)
+{
+	if (!InfoW995 || !InfoW995->AdvControl)
+		return;
+
+	INT_PTR nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
+	if (nColorSize <= (INT_PTR)sizeof(pFar->nFarColors))
+	{
+		nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, pFar->nFarColors);
+	}
+	else
+	{
+		_ASSERTE(nColorSize <= sizeof(pFar->nFarColors));
+		BYTE* ptr = (BYTE*)calloc(nColorSize,1);
+		if (!ptr)
+		{
+			memset(pFar->nFarColors, 7, sizeof(pFar->nFarColors));
+		}
+		else
+		{
+			nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, ptr);
+			memmove(pFar->nFarColors, ptr, sizeof(pFar->nFarColors));
+			free(ptr);
+		}
+	}
+	
+	pFar->nFarInterfaceSettings =
+		(DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+	pFar->nFarPanelSettings =
+		(DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+
+	pFar->bPanelsAllowed = (0 != InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0, 0));
+
+	if (pFar->bPanelsAllowed)
+	{
+		PanelInfo pasv = {0}, actv = {0};
+		InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&actv);
+		InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pasv);
+
+		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;
+		PanelInfo* pRight = (actv.Flags & PFLAGS_PANELLEFT) ? &pasv : &actv;
+
+		CopyPanelInfoW(pLeft, &pFar->LeftPanel);
+		CopyPanelInfoW(pRight, &pFar->RightPanel);
+	}
+
+	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO scbi = {sizeof(CONSOLE_SCREEN_BUFFER_INFO)};
+	GetConsoleScreenBufferInfo(hCon, &scbi);
+	if (CheckBufferEnabled995())
+	{
+		InfoW995->AdvControl(InfoW995->ModuleNumber, 32/*ACTL_GETFARRECT*/, &pFar->rcConWorkspace);
+	}
+	else
+	{
+		pFar->rcConWorkspace.left = pFar->rcConWorkspace.top = 0;
+		pFar->rcConWorkspace.right = scbi.dwSize.X - 1;
+		pFar->rcConWorkspace.bottom = scbi.dwSize.Y - 1;
+		//pFar->conSize = scbi.dwSize;
+	}
+	pFar->conCursor = scbi.dwCursorPosition;
+	CONSOLE_CURSOR_INFO crsr = {0};
+	GetConsoleCursorInfo(hCon, &crsr);
+	if (!crsr.bVisible || crsr.dwSize == 0)
+	{
+		pFar->conCursor.X = pFar->conCursor.Y = -1;
+	}
 }

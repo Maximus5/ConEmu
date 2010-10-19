@@ -1,7 +1,7 @@
 
 #define MVV_1 2010
 #define MVV_2 10
-#define MVV_3 17
+#define MVV_3 19
 #define MVV_4 0
 #define MVV_4a ""
 
@@ -15,5 +15,9 @@
 #ifdef _WIN64
 #define CONEMUPLTFRM " (x64)"
 #else
+#ifdef WIN64
+#define CONEMUPLTFRM " (x64)"
+#else
 #define CONEMUPLTFRM " (x86)"
+#endif
 #endif

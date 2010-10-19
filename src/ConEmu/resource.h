@@ -356,7 +356,7 @@
 #define bConFontAdd2HKLM                1730
 #define tConsoleFontHklmNote            1731
 #define tConsoleFontConsoleNote         1732
-#define cbLockRealConsolePos            1733
+#define cbSendAltSpace                  1733
 #define cbBgAllowPlugin                 1734
 #define cbTabsInCaption                 1735
 #define IDM_CLOSE                       40001

@@ -1022,3 +1022,76 @@ void ExecuteQuitFarA()
 {
 	PostMessage(FarHwnd, WM_CLOSE, 0, 0);
 }
+
+static void CopyPanelInfo(PanelInfo* pInfo, UpdateBackgroundArg::BkPanelInfo* pBk)
+{
+	pBk->bVisible = pInfo->Visible;
+	pBk->bFocused = pInfo->Focus;
+	pBk->bPlugin = pInfo->Plugin;
+	MultiByteToWideChar(CP_OEMCP, 0, pInfo->CurDir, -1, pBk->szCurDir, countof(pBk->szCurDir));
+	lstrcpyW(pBk->szFormat, pInfo->Plugin ? L"Plugin" : L"");
+	pBk->szHostFile[0] = 0;
+	pBk->rcPanelRect = pInfo->PanelRect;
+}
+
+void FillUpdateBackgroundA(struct UpdateBackgroundArg* pFar)
+{
+	if (!InfoA || !InfoA->AdvControl)
+		return;
+
+	INT_PTR nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
+	if (nColorSize <= (INT_PTR)sizeof(pFar->nFarColors))
+	{
+		nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, pFar->nFarColors);
+	}
+	else
+	{
+		_ASSERTE(nColorSize <= sizeof(pFar->nFarColors));
+		BYTE* ptr = (BYTE*)calloc(nColorSize,1);
+		if (!ptr)
+		{
+			memset(pFar->nFarColors, 7, sizeof(pFar->nFarColors));
+		}
+		else
+		{
+			nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, ptr);
+			memmove(pFar->nFarColors, ptr, sizeof(pFar->nFarColors));
+			free(ptr);
+		}
+	}
+	
+	pFar->nFarInterfaceSettings =
+		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+	pFar->nFarPanelSettings =
+		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+
+	pFar->bPanelsAllowed = (0 != InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0));
+
+	if (pFar->bPanelsAllowed)
+	{
+		PanelInfo pasv = {0}, actv = {0};
+		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &actv);
+		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &pasv);
+
+		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;
+		PanelInfo* pRight = (actv.Flags & PFLAGS_PANELLEFT) ? &pasv : &actv;
+
+		CopyPanelInfo(pLeft, &pFar->LeftPanel);
+		CopyPanelInfo(pRight, &pFar->RightPanel);
+	}
+
+	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO scbi = {sizeof(CONSOLE_SCREEN_BUFFER_INFO)};
+	GetConsoleScreenBufferInfo(hCon, &scbi);
+	pFar->rcConWorkspace.left = pFar->rcConWorkspace.top = 0;
+	pFar->rcConWorkspace.right = scbi.dwSize.X - 1;
+	pFar->rcConWorkspace.bottom = scbi.dwSize.Y - 1;
+	//pFar->conSize = scbi.dwSize;
+	pFar->conCursor = scbi.dwCursorPosition;
+	CONSOLE_CURSOR_INFO crsr = {0};
+	GetConsoleCursorInfo(hCon, &crsr);
+	if (!crsr.bVisible || crsr.dwSize == 0)
+	{
+		pFar->conCursor.X = pFar->conCursor.Y = -1;
+	}
+}

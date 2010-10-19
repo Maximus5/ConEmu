@@ -401,9 +401,9 @@ CConEmuBack::CConEmuBack()
 	mb_LastTabVisible = false;
 	mb_VTracking = false;
 #ifdef _DEBUG
-	mn_ColorIdx = 1;
+	mn_ColorIdx = 1; // Blue
 #else
-	mn_ColorIdx = 0;
+	mn_ColorIdx = 0; // Black
 #endif
 	//mh_UxTheme = NULL; mh_ThemeData = NULL; mfn_OpenThemeData = NULL; mfn_CloseThemeData = NULL;
 }
@@ -693,6 +693,7 @@ void CConEmuBack::Refresh()
 
 void CConEmuBack::RePaint()
 {
+	WARNING("mh_WndBack invisible, поэтому отрисовка смысла не имеет");
 	if (mh_WndBack && mh_WndBack!=(HWND)-1)
 	{
 		Refresh();
