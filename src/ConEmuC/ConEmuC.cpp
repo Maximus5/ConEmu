@@ -166,7 +166,8 @@ int __cdecl main()
 	
 	HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
 	
-	if (hKernel) {
+	if (hKernel)
+	{
 		pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
 		pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress (hKernel, "GetConsoleProcessList");
 	}
@@ -175,7 +176,8 @@ int __cdecl main()
 	// Хэндл консольного окна
 	ghConWnd = GetConsoleWindow();
 	_ASSERTE(ghConWnd!=NULL);
-	if (!ghConWnd) {
+	if (!ghConWnd)
+	{
 		dwErr = GetLastError();
 		_printf("ghConWnd==NULL, ErrCode=0x%08X\n", dwErr);
 		iRc = CERR_GETCONSOLEWINDOW; goto wrap;
@@ -192,14 +194,16 @@ int __cdecl main()
 
 	
 #if defined(SHOW_STARTED_MSGBOX) || defined(SHOW_COMSPEC_STARTED_MSGBOX)
-	if (!IsDebuggerPresent()) {
+	if (!IsDebuggerPresent())
+	{
 		wchar_t szTitle[100]; wsprintf(szTitle, L"ConEmuC Loaded (PID=%i)", gnSelfPID);
 		const wchar_t* pszCmdLine = GetCommandLineW();
 		MessageBox(NULL,pszCmdLine,szTitle,0);
 	}
 #endif
 #ifdef SHOW_STARTED_ASSERT
-	if (!IsDebuggerPresent()) {
+	if (!IsDebuggerPresent())
+	{
 		_ASSERT(FALSE);
 	}
 #endif
@@ -213,7 +217,8 @@ int __cdecl main()
 	//#endif
 
 #ifdef SHOW_SERVER_STARTED_MSGBOX
-	if ((gnRunMode == RM_SERVER) && !IsDebuggerPresent()) {
+	if ((gnRunMode == RM_SERVER) && !IsDebuggerPresent())
+	{
 		wchar_t szTitle[100]; wsprintf(szTitle, L"ConEmuC [Server] started (PID=%i)", gnSelfPID);
 		const wchar_t* pszCmdLine = GetCommandLineW();
 		MessageBox(NULL,pszCmdLine,szTitle,0);
@@ -227,14 +232,16 @@ int __cdecl main()
 	
 	// Событие используется для всех режимов
 	ghExitQueryEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
-	if (!ghExitQueryEvent) {
+	if (!ghExitQueryEvent)
+	{
 		dwErr = GetLastError();
 		_printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
 		iRc = CERR_EXITEVENT; goto wrap;
 	}
 	ResetEvent(ghExitQueryEvent);
 	ghQuitEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
-	if (!ghQuitEvent) {
+	if (!ghQuitEvent)
+	{
 		dwErr = GetLastError();
 		_printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
 		iRc = CERR_EXITEVENT; goto wrap;
@@ -252,8 +259,10 @@ int __cdecl main()
 	// Дескрипторы
 	//ghConOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 	//            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	if (gnRunMode == RM_SERVER) {
-		if ((HANDLE)ghConOut == INVALID_HANDLE_VALUE) {
+	if (gnRunMode == RM_SERVER)
+	{
+		if ((HANDLE)ghConOut == INVALID_HANDLE_VALUE)
+		{
 			dwErr = GetLastError();
 			_printf("CreateFile(CONOUT$) failed, ErrCode=0x%08X\n", dwErr); 
 			iRc = CERR_CONOUTFAILED; goto wrap;
@@ -279,10 +288,13 @@ int __cdecl main()
 	/* ******************************** */
 	/* *** "Режимная" инициализация *** */
 	/* ******************************** */
-	if (gnRunMode == RM_SERVER) {
+	if (gnRunMode == RM_SERVER)
+	{
 		if ((iRc = ServerInit()) != 0)
 			goto wrap;
-	} else {
+	}
+	else
+	{
 		if ((iRc = ComspecInit()) != 0)
 			goto wrap;
 	}
@@ -320,7 +332,8 @@ int __cdecl main()
 				NULL, NULL, &si, &pi);
 		dwErr = GetLastError();
 		
-		if (lbRc && (gnRunMode == RM_SERVER)) {
+		if (lbRc && (gnRunMode == RM_SERVER))
+		{
 			TODO("Не только в сервере, но и в ComSpec, чтобы дочерние КОНСОЛЬНЫЕ процессы могли пользоваться редиректами");
 
 			//""F:\VCProject\FarPlugin\ConEmu\Bugs\DOS\TURBO.EXE ""
@@ -332,14 +345,16 @@ int __cdecl main()
 			ResumeThread(pi.hThread);
 		}
 
-		if (!lbRc && dwErr == 0x000002E4) {
+		if (!lbRc && dwErr == 0x000002E4)
+		{
 			// Допустимо только в режиме comspec - тогда запустится новая консоль
 			_ASSERTE(gnRunMode != RM_SERVER);
 			PRINT_COMSPEC(L"Vista+: The requested operation requires elevation (ErrCode=0x%08X).\n", dwErr);
 			// Vista: The requested operation requires elevation.
 			LPCWSTR pszCmd = gpszRunCmd;
 			wchar_t szVerb[10], szExec[MAX_PATH+1];
-			if (NextArg(&pszCmd, szExec) == 0) {
+			if (NextArg(&pszCmd, szExec) == 0)
+			{
 				SHELLEXECUTEINFO sei = {sizeof(SHELLEXECUTEINFO)};
 				sei.hwnd = ghConEmuWnd;
 				sei.fMask = SEE_MASK_NO_CONSOLE; //SEE_MASK_NOCLOSEPROCESS; -- смысла ждать завершения нет - процесс запускается в новой консоли
@@ -347,9 +362,12 @@ int __cdecl main()
 				sei.lpFile = szExec;
 				sei.lpParameters = pszCmd;
 				sei.nShow = SW_SHOWNORMAL;
-				if ((lbRc = ShellExecuteEx(&sei)) == FALSE) {
+				if ((lbRc = ShellExecuteEx(&sei)) == FALSE)
+				{
 					dwErr = GetLastError();
-				} else {
+				}
+				else
+				{
 					// OK
 					//pi.hProcess = sei.hProcess;
 					//typedef DWORD (WINAPI* FGetProcessId)(HANDLE);
@@ -378,10 +396,13 @@ int __cdecl main()
 	{
 		wchar_t* lpMsgBuf = NULL;
 		DWORD nFmtRc, nFmtErr = 0;
-		if (dwErr == 5) {
+		if (dwErr == 5)
+		{
 			lpMsgBuf = (wchar_t*)LocalAlloc(LPTR, 255);
 			wcscpy(lpMsgBuf, L"Access is denied.\nThis may be cause of antiviral or file permissions denial.");
-		} else {
+		}
+		else
+		{
 			nFmtRc = FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 
 				NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
 			if (!nFmtRc)
@@ -397,12 +418,15 @@ int __cdecl main()
 		if (lpMsgBuf) LocalFree(lpMsgBuf);
 		iRc = CERR_CREATEPROCESS; goto wrap;
 	}
-	if (gbAttachMode) {
+	if (gbAttachMode)
+	{
 		// мы цепляемся к уже существующему процессу: 
 		// аттач из фар плагина или запуск dos-команды в новой консоли через -new_console
 		// в последнем случае отключение подтверждения закрытия однозначно некорректно
 		// -- DisableAutoConfirmExit(); - низя
-	} else {
+	}
+	else
+	{
 		srv.nProcessStartTick = GetTickCount();
 	}
 	//delete psNewCmd; psNewCmd = NULL;
@@ -414,7 +438,8 @@ int __cdecl main()
 	/* *** Ожидание запуска *** */
 	/* ************************ */
 	
-	if (gnRunMode == RM_SERVER) {
+	if (gnRunMode == RM_SERVER)
+	{
 		srv.hRootProcess  = pi.hProcess; pi.hProcess = NULL; // Required for Win2k
 		srv.hRootThread   = pi.hThread;  pi.hThread  = NULL;
 		srv.dwRootProcess = pi.dwProcessId;
@@ -424,7 +449,8 @@ int __cdecl main()
 		// Скорее всего процесс в консольном списке уже будет
 		CheckProcessCount(TRUE);
 		#ifdef _DEBUG
-		if (srv.nProcessCount && !srv.bDebuggerActive) {
+		if (srv.nProcessCount && !srv.bDebuggerActive)
+		{
 			_ASSERTE(srv.pnProcesses[srv.nProcessCount-1]!=0);
 		}
 		#endif
@@ -432,9 +458,11 @@ int __cdecl main()
 		//if (pi.hProcess) SafeCloseHandle(pi.hProcess); 
 		//if (pi.hThread) SafeCloseHandle(pi.hThread);
 
-		if (srv.hConEmuGuiAttached) {
+		if (srv.hConEmuGuiAttached)
+		{
 			DWORD dwWaitGui = WaitForSingleObject(srv.hConEmuGuiAttached, 1000);
-			if (dwWaitGui == WAIT_OBJECT_0) {
+			if (dwWaitGui == WAIT_OBJECT_0)
+			{
 				// GUI пайп готов
 				wsprintf(srv.szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)ghConWnd); // был gnSelfPID
 			}
@@ -443,17 +471,21 @@ int __cdecl main()
 		// Ждем, пока в консоли не останется процессов (кроме нашего)
 		TODO("Проверить, может ли так получиться, что CreateProcess прошел, а к консоли он не прицепился? Может, если процесс GUI");
 		nWait = WaitForSingleObject(ghExitQueryEvent, CHECK_ANTIVIRUS_TIMEOUT); //Запуск процесса наверное может задержать антивирус
-		if (nWait != WAIT_OBJECT_0) { // Если таймаут
+		if (nWait != WAIT_OBJECT_0) // Если таймаут
+		{
 			iRc = srv.nProcessCount;
 			// И процессов в консоли все еще нет
-			if (iRc == 1 && !srv.bDebuggerActive) {
+			if (iRc == 1 && !srv.bDebuggerActive)
+			{
 				_printf ("Process was not attached to console. Is it GUI?\nCommand to be executed:\n");
 				_wprintf (gpszRunCmd);
 				_printf ("\n");
 				iRc = CERR_PROCESSTIMEOUT; goto wrap;
 			}
 		}
-	} else {
+	}
+	else
+	{
 		// В режиме ComSpec нас интересует завершение ТОЛЬКО дочернего процесса
 
 		//wchar_t szEvtName[128];
@@ -468,30 +500,39 @@ int __cdecl main()
 	/* *** Ожидание завершения *** */
 	/* *************************** */
 wait:
-	if (gnRunMode == RM_SERVER) {
+	if (gnRunMode == RM_SERVER)
+	{
 		// По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
 		nWait = WAIT_TIMEOUT;
-		if (!srv.bDebuggerActive) {
+		if (!srv.bDebuggerActive)
+		{
 			#ifdef _DEBUG
-			while (nWait == WAIT_TIMEOUT) {
+			while (nWait == WAIT_TIMEOUT)
+			{
 				nWait = WaitForSingleObject(ghExitQueryEvent, 100);
 			}
 			#else
 			nWait = WaitForSingleObject(ghExitQueryEvent, INFINITE);
 			#endif
-		} else {
-			while (nWait == WAIT_TIMEOUT) {
+		}
+		else
+		{
+			while (nWait == WAIT_TIMEOUT)
+			{
 				ProcessDebugEvent();
 				nWait = WaitForSingleObject(ghExitQueryEvent, 0);
 			}
 			//gbAlwaysConfirmExit = TRUE;
 		}
 		#ifdef _DEBUG
-		if (nWait == WAIT_OBJECT_0) {
+		if (nWait == WAIT_OBJECT_0)
+		{
 			DEBUGSTR(L"*** FinilizeEvent was set!\n");
 		}
 		#endif
-	} else {
+	}
+	else
+	{
 		//HANDLE hEvents[3];
 		//hEvents[0] = pi.hProcess;
 		//hEvents[1] = ghCtrlCEvent;
@@ -526,7 +567,8 @@ wrap:
 		)
 	{
 		BOOL lbProcessesLeft = FALSE, lbDontShowConsole = FALSE;
-		if (pfnGetConsoleProcessList) {
+		if (pfnGetConsoleProcessList)
+		{
 			DWORD nProcesses[10];
 			DWORD nProcCount = pfnGetConsoleProcessList ( nProcesses, 10 );
 			if (nProcCount > 1)
@@ -534,11 +576,15 @@ wrap:
 		}
 
 		LPCWSTR pszMsg = NULL;
-		if (lbProcessesLeft) {
+		if (lbProcessesLeft)
+		{
 			pszMsg = L"\n\nPress Enter to exit...";
 			lbDontShowConsole = gnRunMode != RM_SERVER;
-		} else {
-			if (gbRootWasFoundInCon == 1) {
+		}
+		else
+		{
+			if (gbRootWasFoundInCon == 1)
+			{
 				if (gbRootAliveLess10sec) // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
 					pszMsg = L"\n\nConEmuC: Root process was alive less than 10 sec.\nPress Enter to close console...";
 				else
@@ -549,9 +595,11 @@ wrap:
 			pszMsg = L"\n\nPress Enter to close console, or wait...";
 
 		ExitWaitForKey(VK_RETURN, pszMsg, TRUE, lbDontShowConsole);
-		if (iRc == CERR_PROCESSTIMEOUT) {
+		if (iRc == CERR_PROCESSTIMEOUT)
+		{
 			int nCount = srv.nProcessCount;
-			if (nCount > 1 || srv.bDebuggerActive) {
+			if (nCount > 1 || srv.bDebuggerActive)
+			{
 				// Процесс таки запустился!
 				goto wait;
 			}
@@ -569,10 +617,13 @@ wrap:
 	/* *** "Режимное" завершение *** */
 	/* ***************************** */
 	
-	if (gnRunMode == RM_SERVER) {
+	if (gnRunMode == RM_SERVER)
+	{
 		ServerDone(iRc, true);
 		//MessageBox(0,L"Server done...",L"ConEmuC",0);
-	} else if (gnRunMode == RM_COMSPEC) {
+	}
+	else if (gnRunMode == RM_COMSPEC)
+	{
 		ComspecDone(iRc);
 		//MessageBox(0,L"Comspec done...",L"ConEmuC",0);
 	}
@@ -582,7 +633,8 @@ wrap:
 	/* *** "Общее" завершение *** */
 	/* ************************** */
 	
-	if (gpszPrevConTitle && ghConWnd) {
+	if (gpszPrevConTitle && ghConWnd)
+	{
 		SetConsoleTitleW(gpszPrevConTitle);
 		Free(gpszPrevConTitle);
 	}
@@ -593,7 +645,8 @@ wrap:
 	ghConOut.Close();
 
 	SafeCloseHandle(ghLogSize);
-	if (wpszLogSizeFile) {
+	if (wpszLogSizeFile)
+	{
 		//DeleteFile(wpszLogSizeFile);
 		Free(wpszLogSizeFile); wpszLogSizeFile = NULL;
 	}
@@ -606,7 +659,8 @@ wrap:
 	
 	CommonShutdown();
 
-	if (ghHeap) {
+	if (ghHeap)
+	{
 		HeapDestroy(ghHeap);
 		ghHeap = NULL;
 	}
@@ -1739,12 +1793,14 @@ void SendStarted()
 			gcrBufferSize.Y = (SHORT)pOut->StartStopRet.nHeight;
 			gbParmBufferSize = TRUE;
 			
-			if (gnRunMode == RM_SERVER) {
+			if (gnRunMode == RM_SERVER)
+			{
 				if (srv.bDebuggerActive && !gnBufferHeight) gnBufferHeight = 1000;
 				SMALL_RECT rcNil = {0};
 				SetConsoleSize(gnBufferHeight, gcrBufferSize, rcNil, "::SendStarted");
 				// Смена раскладки клавиатуры
-				if (pOut->StartStopRet.bNeedLangChange) {
+				if (pOut->StartStopRet.bNeedLangChange)
+				{
 					#ifndef INPUTLANGCHANGE_SYSCHARSET
 					#define INPUTLANGCHANGE_SYSCHARSET 0x0001
 					#endif
@@ -1753,7 +1809,9 @@ void SendStarted()
 					LPARAM lParam = (LPARAM)(DWORD_PTR)pOut->StartStopRet.NewConsoleLang;
 					SendMessage(ghConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, lParam);
 				}
-			} else {
+			}
+			else
+			{
 				// Может так получиться, что один COMSPEC запущен из другого.
 				// 100628 - неактуально. COMSPEC сбрасывается в cmd.exe
 				//if (bAlreadyBufferHeight)
@@ -1845,8 +1903,8 @@ void LogString(LPCSTR asText)
 
 
 	SYSTEMTIME st; GetLocalTime(&st);
-	wsprintfA(szInfo, "%i:%02i:%02i ",
-		st.wHour, st.wMinute, st.wSecond);
+	wsprintfA(szInfo, "%i:%02i:%02i.%03i ",
+		st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 	int nCur = lstrlenA(szInfo);
 	lstrcpynA(szInfo+nCur, asText ? asText : "", 255-nCur-3);
 	lstrcatA(szInfo, "\r\n");
@@ -1899,11 +1957,14 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 	//		srv.pConsoleMap->Ptr()->sbi.srWindow.Bottom-srv.pConsoleMap->Ptr()->sbi.srWindow.Top+1);
 	//}
 	
-	if (pcrSize) {
+	if (pcrSize)
+	{
 		wsprintfA(szInfo, "%i:%02i:%02i.%03i CurSize={%ix%i} ChangeTo={%ix%i} %s %s\r\n",
 			st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
 			lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, pszThread, (pszLabel ? pszLabel : ""));
-	} else {
+	}
+	else
+	{
 		wsprintfA(szInfo, "%i:%02i:%02i.%03i CurSize={%ix%i} %s %s\r\n",
 			st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
 			lsbi.dwSize.X, lsbi.dwSize.Y, pszThread, (pszLabel ? pszLabel : ""));
@@ -2208,7 +2269,8 @@ void ProcessDebugEvent()
 		case RIP_EVENT:
 		{
 			LPCSTR pszName = "Unknown";
-			switch (evt.dwDebugEventCode) {
+			switch (evt.dwDebugEventCode)
+			{
 			case CREATE_PROCESS_DEBUG_EVENT: pszName = "CREATE_PROCESS_DEBUG_EVENT"; break;
 			case CREATE_THREAD_DEBUG_EVENT: pszName = "CREATE_THREAD_DEBUG_EVENT"; break;
 			case EXIT_PROCESS_DEBUG_EVENT: pszName = "EXIT_PROCESS_DEBUG_EVENT"; break;
@@ -2224,7 +2286,8 @@ void ProcessDebugEvent()
 		case LOAD_DLL_DEBUG_EVENT:
 		{
 			LPCSTR pszName = "Unknown";
-			switch (evt.dwDebugEventCode) {
+			switch (evt.dwDebugEventCode)
+			{
 			case LOAD_DLL_DEBUG_EVENT: pszName = "LOAD_DLL_DEBUG_EVENT"; break;
 				//6 Reports a load-dynamic-link-library (DLL) debugging event. The value of u.LoadDll specifies a LOAD_DLL_DEBUG_INFO structure.
 			case UNLOAD_DLL_DEBUG_EVENT: pszName = "UNLOAD_DLL_DEBUG_EVENT"; break;
@@ -2243,7 +2306,8 @@ void ProcessDebugEvent()
 			switch(evt.u.Exception.ExceptionRecord.ExceptionCode)
 			{
 			case EXCEPTION_ACCESS_VIOLATION: // The thread tried to read from or write to a virtual address for which it does not have the appropriate access.
-			if (evt.u.Exception.ExceptionRecord.NumberParameters>=2) {
+			if (evt.u.Exception.ExceptionRecord.NumberParameters>=2)
+			{
 				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s %s of 0x%08X\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
@@ -2253,7 +2317,9 @@ void ProcessDebugEvent()
 					(evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==8) ? "DEP" : "???"),
 					evt.u.Exception.ExceptionRecord.ExceptionInformation[1]
 					);
-			} else {
+			}
+			else
+			{
 				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
@@ -2725,12 +2791,14 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			HWND hSendWnd = (HWND)in.Msg.hWnd;
 
-			#ifdef _DEBUG
-			WPARAM wParam = (WPARAM)in.Msg.wParam;
-			LPARAM lParam = (LPARAM)in.Msg.lParam;
-			
-			if (in.Msg.nMsg == WM_INPUTLANGCHANGE || in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST) {
+			// Info & Log
+			if (in.Msg.nMsg == WM_INPUTLANGCHANGE || in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST)
+			{
+				WPARAM wParam = (WPARAM)in.Msg.wParam;
+				LPARAM lParam = (LPARAM)in.Msg.lParam;
 				unsigned __int64 l = lParam;
+
+				#ifdef _DEBUG
 				wchar_t szDbg[255];
 				wsprintf(szDbg, L"ConEmuC: %s(0x%08X, %s, CP:%i, HKL:0x%08I64X)\n",
 					in.Msg.bPost ? L"PostMessage" : L"SendMessage", (DWORD)hSendWnd,
@@ -2740,10 +2808,23 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 					L"<Other message>",					
 					(DWORD)wParam, l);
 				DEBUGLOGLANG(szDbg);
+				#endif
+				
+				if (ghLogSize)
+				{
+					char szInfo[255];
+					wsprintfA(szInfo, "ConEmuC: %s(0x%08X, %s, CP:%i, HKL:0x%08I64X)",
+						in.Msg.bPost ? "PostMessage" : "SendMessage", (DWORD)hSendWnd,
+						(in.Msg.nMsg == WM_INPUTLANGCHANGE) ? "WM_INPUTLANGCHANGE" :
+						(in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST) ? "WM_INPUTLANGCHANGEREQUEST" :
+						"<Other message>",					
+						(DWORD)wParam, l);
+					LogString(szInfo);
+				}
 			}
-			#endif
 
-			if (in.Msg.nMsg == WM_SHOWWINDOW) {
+			if (in.Msg.nMsg == WM_SHOWWINDOW)
+			{
 				DWORD lRc = 0;
 				if (in.Msg.bPost)
 					lRc = apiShowWindowAsync(hSendWnd, (int)(in.Msg.wParam & 0xFFFF));
@@ -2758,17 +2839,23 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 					(*out)->dwData[1] = dwErr;
 					lbRc = TRUE;
 				}
-			} else
-			if (in.Msg.nMsg == WM_SIZE) {
-			} else
-			if (in.Msg.bPost) {
+			}
+			else if (in.Msg.nMsg == WM_SIZE)
+			{
+				//
+			}
+			else if (in.Msg.bPost)
+			{
 				PostMessage(hSendWnd, in.Msg.nMsg, (WPARAM)in.Msg.wParam, (LPARAM)in.Msg.lParam);
-			} else {
+			}
+			else
+			{
 				LRESULT lRc = SendMessage(hSendWnd, in.Msg.nMsg, (WPARAM)in.Msg.wParam, (LPARAM)in.Msg.lParam);
 				// Возвращаем результат
 				int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(u64);
 				*out = ExecuteNewCmd(CECMD_POSTCONMSG,nOutSize);
-				if (*out != NULL) {
+				if (*out != NULL)
+				{
 					(*out)->qwData[0] = lRc;
 					lbRc = TRUE;
 				}
@@ -3335,7 +3422,8 @@ void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine)
 	char szError[MAX_PATH];
 	wsprintfA(szError, asFormat, dw1, dw2);
 	_printf(szError);
-	if (asAddLine) {
+	if (asAddLine)
+	{
 		_wprintf(asAddLine);
 		_printf("\n");
 	}
@@ -3445,6 +3533,15 @@ void CheckKeyboardLayout()
 					szCurKeybLayout);
 				OutputDebugString(szDbg);
 				#endif
+
+				if (ghLogSize)
+				{
+					char szInfo[128]; wchar_t szWide[128];
+					wsprintfW(szWide, L"ConEmuC: ConsKeybLayout changed from %s to %s", srv.szKeybLayout, szCurKeybLayout);
+					WideCharToMultiByte(CP_ACP,0,szWide,-1,szInfo,128,0,0);
+					LogString(szInfo);
+				}
+
 				// Сменился
 				lstrcpyW(srv.szKeybLayout, szCurKeybLayout);
 				// Отошлем в GUI
@@ -3489,7 +3586,8 @@ LPVOID Alloc(size_t nCount, size_t nSize)
 
 	#ifdef _DEBUG
 	HeapValidate(ghHeap, 0, NULL);
-	if (ptr) {
+	if (ptr)
+	{
 		gnHeapUsed += nWhole;
 		if (gnHeapMax < gnHeapUsed)
 			gnHeapMax = gnHeapUsed;
@@ -3501,7 +3599,8 @@ LPVOID Alloc(size_t nCount, size_t nSize)
 
 void Free(LPVOID ptr)
 {
-	if (ptr && ghHeap) {
+	if (ptr && ghHeap)
+	{
 		#ifdef _DEBUG
 		//HeapValidate(ghHeap, 0, NULL);
 		size_t nMemSize = HeapSize(ghHeap, 0, ptr);

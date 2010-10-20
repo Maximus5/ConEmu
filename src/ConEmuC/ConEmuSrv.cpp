@@ -1951,8 +1951,10 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, 
 			// Не во всех случаях приходит: (idChild == CONSOLE_APPLICATION_16BIT)
 			// Похоже что не приходит тогда, когда 16бит (или DOS) приложение сразу 
 			// закрывается после выдачи на экран ошибки например.
-			if (idChild == CONSOLE_APPLICATION_16BIT) {
-				if (ghLogSize) {
+			if (idChild == CONSOLE_APPLICATION_16BIT)
+			{
+				if (ghLogSize)
+				{
 					char szInfo[64]; wsprintfA(szInfo, "NTVDM started, PID=%i", idObject);
 					LogSize(NULL, szInfo);
 				}
@@ -1992,8 +1994,10 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, 
 
 			#ifndef WIN64
 			_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
-			if (idChild == CONSOLE_APPLICATION_16BIT) {
-				if (ghLogSize) {
+			if (idChild == CONSOLE_APPLICATION_16BIT)
+			{
+				if (ghLogSize)
+				{
 					char szInfo[64]; wsprintfA(szInfo, "NTVDM stopped, PID=%i", idObject);
 					LogSize(NULL, szInfo);
 				}
@@ -2062,17 +2066,20 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		MCHKHEAP;
 
 		// Alwas update con handle, мягкий вариант
-		if ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT) {
+		if ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT)
+		{
 			WARNING("!!! В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!");
 			// В итоге, буфер вывода telnet'а схлопывается!
-			if (srv.bReopenHandleAllowed) {
+			if (srv.bReopenHandleAllowed)
+			{
 				ghConOut.Close();
 				nLastConHandleTick = GetTickCount();
 			}
 		}
 		
 		// Попытка поправить CECMD_SETCONSOLECP
-		if (srv.hLockRefreshBegin) {
+		if (srv.hLockRefreshBegin)
+		{
 			// Если создано событие блокировки обновления - 
 			// нужно дождаться, пока оно (hLockRefreshBegin) будет выставлено
 			SetEvent(srv.hLockRefreshReady);
@@ -2083,7 +2090,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		
 		
 		// Из другой нити поступил запрос на изменение размера консоли
-		if (srv.nRequestChangeSize) {
+		if (srv.nRequestChangeSize)
+		{
 			// AVP гундит... да вроде и не нужно
 			//DWORD dwSusp = 0, dwSuspErr = 0;
 			//if (srv.hRootThread) {
@@ -2117,11 +2125,14 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		
 
 		// Подождать немножко
-		if (srv.nMaxFPS>0) {
+		if (srv.nMaxFPS>0)
+		{
 			dwTimeout = 1000 / srv.nMaxFPS;
 			// Было 50, чтобы не перенапрягать консоль при ее быстром обновлении ("dir /s" и т.п.)
 			if (dwTimeout < 10) dwTimeout = 10;
-		} else {
+		}
+		else
+		{
 			dwTimeout = 100;
 		}
 		// !!! Здесь таймаут должен быть минимальным, ну разве что консоль неактивна
@@ -2140,7 +2151,9 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			nWait = (WAIT_OBJECT_0+1); // требуется перечитать консоль после изменения размера!
 		else
 			nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, dwTimeout/*dwTimeout*/ );
-		if (nWait == WAIT_OBJECT_0) {
+
+		if (nWait == WAIT_OBJECT_0)
+		{
 			break; // затребовано завершение нити
 		}// else if (nWait == WAIT_TIMEOUT && dwConWait == WAIT_OBJECT_0) {
 		//	nWait = (WAIT_OBJECT_0+1);
@@ -2159,7 +2172,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			DWORD nCurTick = GetTickCount();
 			nDelta = nCurTick - nLastReadTick;
 			// #define MAX_FORCEREFRESH_INTERVAL 500
-			if (nDelta <= MAX_FORCEREFRESH_INTERVAL) {
+			if (nDelta <= MAX_FORCEREFRESH_INTERVAL)
+			{
 				// Чтобы не грузить процессор
 				continue;
 			}
@@ -2167,13 +2181,15 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 		
 		#ifdef _DEBUG
-		if (nWait == (WAIT_OBJECT_0+1)) {
+		if (nWait == (WAIT_OBJECT_0+1))
+		{
 			DEBUGSTR(L"*** hRefreshEvent was set, checking console...\n");
 		}
 		#endif
 
 		
-		if (ghConEmuWnd && !IsWindow(ghConEmuWnd)) {
+		if (ghConEmuWnd && !IsWindow(ghConEmuWnd))
+		{
 			ghConEmuWnd = NULL;
 			EmergencyShow();
 		}

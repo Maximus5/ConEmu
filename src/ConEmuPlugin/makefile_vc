@@ -66,9 +66,11 @@ NEEDENTRY = 1
 !if defined(AMD64) || "$(CPU)" == "AMD64"
 OUTNAME = ConEmu.x64
 RCWIN64=/D_WIN64 /DWIN64
+USERCPP=/DWIN64
 !else
 OUTNAME = ConEmu
 RCWIN64=
+USERCPP=
 !endif                   
 
 NAME = ConEmu

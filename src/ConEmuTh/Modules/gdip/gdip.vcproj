@@ -218,7 +218,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="..\..\Release\plugins\ConEmu\Thumbs\gdi+.t32"
+				OutputFile="..\..\..\..\Release\plugins\ConEmu\Thumbs\gdi+.t32"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="gdip.def"
@@ -300,7 +300,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="..\..\Release\plugins\ConEmu\Thumbs\gdi+.t64"
+				OutputFile="..\..\..\..\Release\plugins\ConEmu\Thumbs\gdi+.t64"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="gdip.def"
@@ -525,7 +525,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="F:\Program Files\Far2\Plugins\ConEmu\Thumbs\gdi+.t32"
+				OutputFile="..\..\..\..\Debug\Plugins\ConEmu\Thumbs\gdi+.t32"
 				LinkIncremental="2"
 				ModuleDefinitionFile="gdip.def"
 				GenerateDebugInformation="true"

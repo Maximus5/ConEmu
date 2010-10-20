@@ -8524,6 +8524,14 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeyboardLay
 	DEBUGSTRLANG(szMsg);
 	#endif
 
+    if (gSet.isAdvLogging > 1)
+    {
+	    WCHAR szInfo[255];
+	    wsprintf(szInfo, L"CRealConsole::SwitchKeyboardLayout(CP:%i, HKL:0x%08I64X)",
+			wParam, (unsigned __int64)(DWORD_PTR)dwNewKeyboardLayout);
+    	LogString(szInfo);
+	}
+	
 	// —разу запомнить новое значение, чтобы не циклитьс€
 	con.dwKeybLayout = dwNewKeyboardLayout;
 
@@ -9831,10 +9839,19 @@ void CRealConsole::OnConsoleLangChange(DWORD_PTR dwNewKeybLayout)
 {
     if (con.dwKeybLayout != dwNewKeybLayout)
 	{
+
+	    if (gSet.isAdvLogging > 1)
+	    {
+	    	wchar_t szInfo[255];
+			wsprintf(szInfo, L"CRealConsole::OnConsoleLangChange, Old=0x%08X, New=0x%08X",
+				(DWORD)con.dwKeybLayout, (DWORD)dwNewKeybLayout);
+	    	LogString(szInfo);
+		}
+
         con.dwKeybLayout = dwNewKeybLayout;
 
 		gConEmu.SwitchKeyboardLayout(dwNewKeybLayout);
-
+		
 		#ifdef _DEBUG
 		WCHAR szMsg[255];
 		HKL hkl = GetKeyboardLayout(0);
@@ -9843,6 +9860,16 @@ void CRealConsole::OnConsoleLangChange(DWORD_PTR dwNewKeybLayout)
 		DEBUGSTRLANG(szMsg);
 		//Sleep(2000);
 		#endif
+    }
+    else
+    {
+	    if (gSet.isAdvLogging > 1)
+	    {
+	    	wchar_t szInfo[255];
+			wsprintf(szInfo, L"CRealConsole::OnConsoleLangChange skipped, con.dwKeybLayout already is 0x%08X",
+				(DWORD)dwNewKeybLayout);
+	    	LogString(szInfo);
+		}
     }
 }
 

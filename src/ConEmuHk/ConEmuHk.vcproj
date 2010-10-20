@@ -510,7 +510,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="F:\Program Files\Far2\ConEmu\ConEmuHk.dll"
+				OutputFile="..\..\Debug\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

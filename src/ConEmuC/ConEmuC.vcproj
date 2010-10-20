@@ -667,7 +667,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="F:\Program Files\Far2\ConEmu\ConEmuC.exe"
+				OutputFile="..\..\Debug\ConEmu\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"

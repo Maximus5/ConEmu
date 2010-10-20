@@ -218,7 +218,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="..\..\Release\plugins\ConEmu\Thumbs\pe.t32"
+				OutputFile="..\..\..\..\Release\plugins\ConEmu\Thumbs\pe.t32"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="pe.def"
@@ -300,7 +300,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="..\..\Release\plugins\ConEmu\Thumbs\pe.t64"
+				OutputFile="..\..\..\..\Release\plugins\ConEmu\Thumbs\pe.t64"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="pe.def"
@@ -525,7 +525,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="F:\Program Files\Far2\Plugins\ConEmu\Thumbs\pe.t32"
+				OutputFile="..\..\..\..\Debug\Plugins\ConEmu\Thumbs\pe.t32"
 				LinkIncremental="2"
 				ModuleDefinitionFile="pe.def"
 				GenerateDebugInformation="true"

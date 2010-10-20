@@ -498,11 +498,11 @@ void OnMainThreadActivated()
 	else
 	{
 		// Результата ожидает вызывающая нить, поэтому передаем параметр
-		CESERVER_REQ* pCmdRet = NULL;
-		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData, &pCmdRet);
-		// Но не освобождаем его (pCmdRet) - это сделает ожидающая нить
-		_ASSERTE(gpCmdRet == NULL);
-		gpCmdRet = pCmdRet;
+		//CESERVER_REQ* pCmdRet = NULL;
+		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData, &gpCmdRet);
+		//// Но не освобождаем его (pCmdRet) - это сделает ожидающая нить
+		//_ASSERTE(gpCmdRet == NULL);
+		//gpCmdRet = pCmdRet;
 	}
 
 	// Мы закончили
@@ -1723,7 +1723,8 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			if (lbSucceeded && /*pOldCmdRet !=*/ gpCmdRet)
 			{
 				pCmdRet = gpCmdRet; // запомнить результат!
-				gpCmdRet = NULL;
+				if (ppResult != &gpCmdRet)
+					gpCmdRet = NULL;
 			}
 			ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
 		}
@@ -1780,14 +1781,18 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			if (lbSucceeded && /*pOldCmdRet !=*/ gpCmdRet)
 			{
 				pCmdRet = gpCmdRet; // запомнить результат!
-				gpCmdRet = NULL;
+				if (ppResult != &gpCmdRet)
+					gpCmdRet = NULL;
 			}
 			ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
 		}
 		
 		if (ppResult)
 		{
-			*ppResult = pCmdRet;
+			if (ppResult != &gpCmdRet)
+			{
+				*ppResult = pCmdRet;
+			}
 		}
 		else
 		{

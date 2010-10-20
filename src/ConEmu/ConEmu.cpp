@@ -3329,11 +3329,11 @@ void CConEmuMain::RegisterHoooks()
 
 BOOL CConEmuMain::LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode)
 {
-    if (nVkKeyCode == ' ' && gSet.isSendAltSpace == 2 && gSet.IsHostkeyPressed())
-	{
-    	ShowSysmenu();
-		return TRUE;
-	}
+    //if (nVkKeyCode == ' ' && gSet.isSendAltSpace == 2 && gSet.IsHostkeyPressed())
+	//{
+    //	ShowSysmenu();
+	//	return TRUE;
+	//}
 
 	if (!gSet.isUseWinNumber || !gSet.IsHostkeyPressed())
 		return FALSE;
@@ -5242,7 +5242,11 @@ bool CConEmuMain::isSizing()
 void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 {
     if ((gSet.isMonitorConsoleLang & 1) == 0)
+    {
+	    if (gSet.isAdvLogging > 1)
+	    	mp_VActive->RCon()->LogString(L"CConEmuMain::SwitchKeyboardLayout skipped, cause of isMonitorConsoleLang==0");
         return;
+    }
 
 	#ifdef _DEBUG
 	wchar_t szDbg[128]; wsprintfW(szDbg, L"CConEmuMain::SwitchKeyboardLayout(0x%08I64X)\n", (unsigned __int64)dwNewKeybLayout);
@@ -5277,9 +5281,27 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 		DEBUGSTRLANG(szDbg);
 		#endif
 
+	    if (gSet.isAdvLogging > 1)
+	    {
+	    	wchar_t szInfo[255];
+			wsprintf(szInfo, L"CConEmuMain::SwitchKeyboardLayout, posting WM_INPUTLANGCHANGEREQUEST, WM_INPUTLANGCHANGE for 0x%08X",
+				(DWORD)dwNewKeybLayout);
+	    	mp_VActive->RCon()->LogString(szInfo);
+		}
+		
         // Теперь переключаем раскладку
         PostMessage ( ghWnd, WM_INPUTLANGCHANGEREQUEST, 0, (LPARAM)dwNewKeybLayout );
         PostMessage ( ghWnd, WM_INPUTLANGCHANGE, 0, (LPARAM)dwNewKeybLayout );
+    }
+    else
+    {
+	    if (gSet.isAdvLogging > 1)
+	    {
+	    	wchar_t szInfo[255];
+			wsprintf(szInfo, L"CConEmuMain::SwitchKeyboardLayout skipped, cause of GetActiveKeyboardLayout()==0x%08X",
+				(DWORD)dwNewKeybLayout);
+	    	mp_VActive->RCon()->LogString(szInfo);
+		}
     }
 }
 
@@ -6704,6 +6726,15 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
     DEBUGSTRLANG(szMsg);
     #endif
     
+    if (gSet.isAdvLogging > 1)
+    {
+	    WCHAR szInfo[255];
+	    wsprintf(szInfo, L"CConEmuMain::OnLangChange: %s(CP:%i, HKL:0x%08I64X)",
+	        (messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
+	        (DWORD)wParam, (unsigned __int64)(DWORD_PTR)lParam);
+    	mp_VActive->RCon()->LogString(szInfo);
+	}
+    
 	/*
 	wParam = 204, lParam = 0x04190419 - Russian
 	wParam = 0,   lParam = 0x04090409 - US
@@ -6834,8 +6865,24 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 	
 	if (!isMainThread())
 	{
+	    if (gSet.isAdvLogging > 1)
+	    {
+		    WCHAR szInfo[255];
+		    wsprintf(szInfo, L"CConEmuMain::OnLangChangeConsole (0x%08X), Posting to main thread", dwLayoutName);
+	    	mp_VActive->RCon()->LogString(szInfo);
+		}
+	
 		PostMessage(ghWnd, mn_ConsoleLangChanged, dwLayoutName, (LPARAM)apVCon);
 		return 0;
+	}
+	else
+	{
+	    if (gSet.isAdvLogging > 1)
+	    {
+		    WCHAR szInfo[255];
+		    wsprintf(szInfo, L"CConEmuMain::OnLangChangeConsole (0x%08X), MainThread", dwLayoutName);
+	    	mp_VActive->RCon()->LogString(szInfo);
+		}
 	}
 
 	#ifdef _DEBUG
@@ -6909,7 +6956,23 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 	{
 		wchar_t szLayoutName[9] = {0};
 		wsprintfW(szLayoutName, L"%08X", dwLayoutName);
+		
+	    if (gSet.isAdvLogging > 1)
+	    {
+		    WCHAR szInfo[255];
+		    wsprintf(szInfo, L"CConEmuMain::OnLangChangeConsole -> LoadKeyboardLayout(0x%08X)", dwLayoutName);
+	    	mp_VActive->RCon()->LogString(szInfo);
+		}
+		
 		dwNewKeybLayout = (DWORD_PTR)LoadKeyboardLayout(szLayoutName, 0);
+		
+	    if (gSet.isAdvLogging > 1)
+	    {
+		    WCHAR szInfo[255];
+		    wsprintf(szInfo, L"CConEmuMain::OnLangChangeConsole -> LoadKeyboardLayout()=0x%08X", (DWORD)dwNewKeybLayout);
+	    	mp_VActive->RCon()->LogString(szInfo);
+		}
+		
 		lbFound = TRUE;
 	}
 
