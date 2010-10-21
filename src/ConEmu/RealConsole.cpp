@@ -3400,7 +3400,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
         //        mb_ConsoleSelectMode = true;
 
         static bool isSkipNextAltUp = false;
-        if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & (1<<29)/*Ѕред. это 29-й бит, а не число 29*/
+        if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & (1<<29)
 			&& !isPressed(VK_SHIFT))
         {
             if (gSet.isSendAltEnter)
@@ -3408,6 +3408,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				INPUT_RECORD r = {KEY_EVENT};
 
 				//On Keyboard(hConWnd, WM_KEYDOWN, VK_MENU, 0); -- Alt слать не нужно - он уже послан
+				
+				WARNING("ј надо ли так заморачиватьс€?");
 
 				//On Keyboard(hConWnd, WM_KEYDOWN, VK_RETURN, 0);
 				r.Event.KeyEvent.bKeyDown = TRUE;
@@ -7574,6 +7576,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
     gConEmu.UpdateProcessDisplay(TRUE);
 
+	gSet.NeedBackgroundUpdate();
 
 	ShowHideViews(TRUE);
 	//HWND hPic = isPictureView();
@@ -7589,7 +7592,8 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	if (ghOpWnd && isActive())
 		gSet.UpdateConsoleMode(con.m_dwConsoleMode);
 
-	if (isActive()) {
+	if (isActive())
+	{
 		gConEmu.OnSetCursor(-1,-1);
 		gConEmu.UpdateWindowRgn();
 	}

@@ -88,14 +88,6 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 
 
 BOOL gbInfoW_OK = FALSE;
-HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
-{
-	if (!gbInfoW_OK)
-		return INVALID_HANDLE_VALUE;
-
-
-	return INVALID_HANDLE_VALUE;
-}
 
 
 
@@ -312,4 +304,14 @@ int WINAPI ConfigureW(int ItemNumber)
 		return FUNC_Y(ConfigureW)(ItemNumber);
 	else
 		return FUNC_X(ConfigureW)(ItemNumber);
+}
+
+HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
+{
+	if (!gbInfoW_OK)
+		return INVALID_HANDLE_VALUE;
+
+	ConfigureW(0);
+
+	return INVALID_HANDLE_VALUE;
 }

@@ -107,15 +107,6 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	pi->Reserved = 0;	
 }
 
-HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
-{
-	if (InfoA == NULL)
-		return INVALID_HANDLE_VALUE;
-
-
-	return INVALID_HANDLE_VALUE;
-}
-
 void   WINAPI _export ExitFAR(void)
 {
 	ExitPlugin();
@@ -202,8 +193,8 @@ int WINAPI Configure(int ItemNumber)
     SETTEXT(items[2], GetMsg(CEColorLabel));
 	wsprintfA(szColor, "%06X", (0xFFFFFF & gcrLinesColor));
     SETTEXT(items[3], szColor);
-	SETTEXT(items[4], GetMsg(CEBtnOK));
-	SETTEXT(items[5], GetMsg(CEBtnCancel));
+	SETTEXT(items[5], GetMsg(CEBtnOK));
+	SETTEXT(items[6], GetMsg(CEBtnCancel));
 
     int dialog_res = 0;
 
@@ -229,4 +220,14 @@ int WINAPI Configure(int ItemNumber)
     }
     
     return(true);
+}
+
+HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
+{
+	if (InfoA == NULL)
+		return INVALID_HANDLE_VALUE;
+
+	Configure(0);
+
+	return INVALID_HANDLE_VALUE;
 }

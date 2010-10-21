@@ -943,7 +943,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    cbSendAltSpace          "When is on, You can't pop up system menu\nfrom keyboard (HostKey+Space still works),\nbut You can use 'Alt+Enter' in FAR internally."
+    cbSendAltSpace          "When is on, You can use 'Alt+Space' in FAR internally.\nYou can pop up system menu with Win+Alt+Space"
     cbBgAllowPlugin         "Enable background Far plugins (i.e. Panel Colorer), 3d state means - don't draw in viewer/editor"
 END
 

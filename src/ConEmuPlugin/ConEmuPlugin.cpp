@@ -694,11 +694,13 @@ DWORD DebugCheckKeyboardLayout()
 	if (!pfnGetConsoleKeyboardLayoutName)
 		pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (GetModuleHandleW (L"kernel32.dll"), "GetConsoleKeyboardLayoutNameW");
 
-    if (pfnGetConsoleKeyboardLayoutName) {
+    if (pfnGetConsoleKeyboardLayoutName)
+	{
         wchar_t szCurKeybLayout[KL_NAMELENGTH+1];
-        if (pfnGetConsoleKeyboardLayoutName(szCurKeybLayout)) {
+        if (pfnGetConsoleKeyboardLayoutName(szCurKeybLayout))
+		{
             wchar_t *pszEnd = szCurKeybLayout+8;
-            dwLayout = wcstol(szCurKeybLayout, &pszEnd, 16);
+            dwLayout = wcstoul(szCurKeybLayout, &pszEnd, 16);
         }
     }
 	return dwLayout;

@@ -6299,7 +6299,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				|| (msg.lParam & 0xFF0000) != (lParam & 0xFF0000) /* совпадение скан-кода */)
 				break;
 
-			if (GetMessage(&msg1, 0,0,0)) { // убрать из буфера
+			if (GetMessage(&msg1, 0,0,0)) // убрать из буфера
+			{
 				_ASSERTE(msg1.message == msg.message && msg1.wParam == msg.wParam && msg1.lParam == msg.lParam);
 				if (msg.message != WM_DEADCHAR)
 					szTranslatedChars[nTranslatedChars ++] = (wchar_t)msg1.wParam;
@@ -6313,7 +6314,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		if (lbDeadChar && nTranslatedChars)
 			lbDeadChar = FALSE;
 		memmove(m_TranslatedChars[bVK].szTranslatedChars, szTranslatedChars, sizeof(szTranslatedChars));
-	} else {
+	}
+	else
+	{
 		szTranslatedChars[0] = m_TranslatedChars[bVK].szTranslatedChars[0];
 		szTranslatedChars[1] = 0;
 		nTranslatedChars = (szTranslatedChars[0] == 0) ? 0 : 1;
@@ -6411,38 +6414,49 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 
 
-
-
   
     if (messg == WM_KEYDOWN && !mb_HotKeyRegistered)
     	RegisterHotKeys(); // CtrlWinAltSpace
 
     if (messg == WM_KEYDOWN || messg == WM_KEYUP)
     {
-        if (wParam == VK_PAUSE && !isPressed(VK_CONTROL)) {
-            if (isPictureView() && !IsWindowUnicode(hPictureView)) {
-                if (messg == WM_KEYUP) {
+        if (wParam == VK_PAUSE && !isPressed(VK_CONTROL))
+        {
+            if (isPictureView() && !IsWindowUnicode(hPictureView))
+            {
+                if (messg == WM_KEYUP)
+                {
                     bPicViewSlideShow = !bPicViewSlideShow;
-                    if (bPicViewSlideShow) {
+                    if (bPicViewSlideShow)
+                    {
                         if (gSet.nSlideShowElapse<=500) gSet.nSlideShowElapse=500;
                         dwLastSlideShowTick = GetTickCount() - gSet.nSlideShowElapse;
                     }
                 }
                 return 0;
             }
-        } else if (bPicViewSlideShow) {
+        }
+        else if (bPicViewSlideShow)
+        {
             //KillTimer(hWnd, 3);
-            if (wParam==0xbd/* -_ */ || wParam==0xbb/* =+ */) {
-                if (messg == WM_KEYDOWN) {
+            if (wParam==0xbd/* -_ */ || wParam==0xbb/* =+ */)
+            {
+                if (messg == WM_KEYDOWN)
+                {
                     if (wParam==0xbb)
+                    {
                         gSet.nSlideShowElapse = 1.2 * gSet.nSlideShowElapse;
-                    else {
+                    }
+                    else
+                    {
                         gSet.nSlideShowElapse = gSet.nSlideShowElapse / 1.2;
                         if (gSet.nSlideShowElapse<=500) gSet.nSlideShowElapse=500;
                     }
                 }
                 return 0;
-            } else {
+            }
+            else
+            {
                 bPicViewSlideShow = false; // отмена слайдшоу
             }
         }
@@ -6453,7 +6467,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		&& (messg == WM_KEYDOWN || messg == WM_KEYUP) &&
         (wParam == VK_DOWN || wParam == VK_UP || wParam == VK_NEXT || wParam == VK_PRIOR) &&
         isPressed(VK_CONTROL)
-    ) {
+       )
+    {
         if (messg != WM_KEYDOWN || !mp_VActive)
             return 0;
             
@@ -6518,7 +6533,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     TODO("gSet.icMultiBuffer - хоткей дл€ включени€-отключени€ режима буфера - AskChangeBufferHeight()");
     //if (gSet.isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipMulticonChar)) {
     if ((sb_SkipMulticonChar && (messg == WM_KEYUP || messg == WM_SYSKEYUP))
-		|| (wParam==' ' && gSet.IsHostkeyPressed()) // показать системное меню
+		//|| (wParam==' ' && gSet.IsHostkeyPressed()) // показать системное меню
     	|| (gSet.isMulti && wParam
 	        &&
 	    	(wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || wParam==gSet.icMultiRecreate
@@ -6581,12 +6596,12 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         }
 		else if (messg == WM_KEYUP || messg == WM_SYSKEYUP)
 		{
-            if (wParam == ' ')
-			{
-            	ShowSysmenu();
-				return 0;
-			}
-			else if (/*(lbLWin || lbRWin) &&*/ (wParam==VK_F11 || wParam==VK_F12))
+            //if (wParam == ' ')
+			//{
+            //	ShowSysmenu();
+			//	return 0;
+			//} else
+			if (/*(lbLWin || lbRWin) &&*/ (wParam==VK_F11 || wParam==VK_F12))
 			{
 				ConActivate(wParam - VK_F11 + 10);
 				return 0;
@@ -6640,7 +6655,10 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	}
 
 
-
+	
+	_ASSERTE(messg != WM_CHAR && messg != WM_SYSCHAR);
+	
+	// “еперь обработаем некоторые "общие" хоткеи
 	if (wParam == VK_ESCAPE)
 	{
 		if (mp_DragDrop->InDragDrop())
@@ -6653,7 +6671,34 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		else
 			bEscPressed = false;
 	}
+	
+	if (isPressed(VK_LWIN) || isPressed(VK_RWIN))
+	{
+		if (wParam == ' ' && isPressed(VK_MENU) && !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
+		{
+			if (messg == WM_SYSKEYUP)
+				ShowSysmenu();
+			return 0;
+		}
+		// WinAltEnter зарезервиновано 7-кой под запуск MediaPlayer
+		else if (wParam == VK_RETURN && isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_SHIFT))
+		{
+			if (messg == WM_KEYUP)
+				OnAltEnter();
+			return 0;
+		}
+		else if (wParam == 'P' && isPressed(VK_MENU) && !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
+		{
+			if (messg == WM_SYSKEYUP)
+				OnSysCommand(ghWnd, ID_SETTINGS, 0);
+			return 0;
+		}
+		TODO("ќбработать другие комбинации. WinAltEnter, WinAltF9");
+		TODO("¬озможно WinAltEnter вообще нужно регистрить глобально в системе, чтобы иметь Emergency popup?");
+	}
 
+
+	// “еперь - можно переслать в консоль	
     if (mp_VActive)
 	{
 		//#ifdef _DEBUG
@@ -6758,7 +6803,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	//if (wcscmp(szAfterChange, szBeforeChange)) -- практика показывает, что уже совпадают.
 	//{
 	wchar_t *pszEnd = szAfterChange+8;
-	DWORD dwLayoutAfterChange = wcstol(szAfterChange, &pszEnd, 16);
+	DWORD dwLayoutAfterChange = wcstoul(szAfterChange, &pszEnd, 16);
 	// «апомнить, что получилось в m_LayoutNames
 	int i, iUnused = -1;
 	for (i = 0; i < countof(m_LayoutNames); i++)
@@ -8485,7 +8530,8 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
     case ID_SETTINGS:
-        if (ghOpWnd && IsWindow(ghOpWnd)) {
+        if (ghOpWnd && IsWindow(ghOpWnd))
+        {
             if (!apiShowWindow ( ghOpWnd, SW_SHOWNORMAL ))
                 DisplayLastError(L"Can't show settings window");
             SetFocus ( ghOpWnd );
@@ -8534,10 +8580,12 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     		static HMODULE hhctrl = NULL;
     		if (!hhctrl) hhctrl = GetModuleHandle(L"hhctrl.ocx");
     		if (!hhctrl) hhctrl = LoadLibrary(L"hhctrl.ocx");
-    		if (hhctrl) {
+    		if (hhctrl)
+    		{
     			typedef BOOL (WINAPI* HTMLHelpW_t)(HWND hWnd, LPCWSTR pszFile, INT uCommand, INT dwData);
     			HTMLHelpW_t fHTMLHelpW = (HTMLHelpW_t)GetProcAddress(hhctrl, "HtmlHelpW");
-    			if (fHTMLHelpW) {
+    			if (fHTMLHelpW)
+    			{
     				wchar_t szHelpFile[MAX_PATH*2];
     				lstrcpy(szHelpFile, ms_ConEmuChm);
     				//wchar_t* pszSlash = wcsrchr(szHelpFile, L'\\');
@@ -8588,27 +8636,33 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         {
             HMENU hMenu = GetSystemMenu(ghConWnd, FALSE);
             MENUITEMINFO mii; TCHAR szText[255];
-            for (int i=0; i<15; i++) {
+            for (int i=0; i<15; i++)
+            {
                 memset(&mii, 0, sizeof(mii));
                 mii.cbSize = sizeof(mii); mii.dwTypeData=szText; mii.cch=255;
                 mii.fMask = MIIM_ID|MIIM_STRING|MIIM_SUBMENU;
-                if (GetMenuItemInfo(hMenu, i, TRUE, &mii)) {
+                if (GetMenuItemInfo(hMenu, i, TRUE, &mii))
+                {
                     mii.cbSize = sizeof(mii);
-                    if (mii.hSubMenu) {
+                    if (mii.hSubMenu)
+                    {
                         MENUITEMINFO mic;
                         for (int i=0; i<15; i++) {
                             memset(&mic, 0, sizeof(mic));
                             mic.cbSize = sizeof(mic); mic.dwTypeData=szText; mic.cch=255;
                             mic.fMask = MIIM_ID|MIIM_STRING;
-                            if (GetMenuItemInfo(mii.hSubMenu, i, TRUE, &mic)) {
+                            if (GetMenuItemInfo(mii.hSubMenu, i, TRUE, &mic))
+                            {
                                 mic.cbSize = sizeof(mic);
-                            } else {
+                            }
+                            else
+                            {
                                 break;
                             }
                         }
                     }
                 } else
-                    break;
+				break;
             }
         }
         #endif
@@ -8659,14 +8713,18 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			if (!gConEmu.OnCloseQuery())
 				return 0; // не закрывать
 
-            for (int i=(MAX_CONSOLE_COUNT-1); i>=0; i--) {
-                if (mp_VCon[i] && mp_VCon[i]->RCon()) {
-                    if (mp_VCon[i]->RCon()->isDetached()) {
+            for (int i=(MAX_CONSOLE_COUNT-1); i>=0; i--)
+            {
+                if (mp_VCon[i] && mp_VCon[i]->RCon())
+                {
+                    if (mp_VCon[i]->RCon()->isDetached())
+                    {
                         nDetachedCount ++;
                         continue;
                     }
                     nConCount ++;
-                    if (mp_VCon[i]->RCon()->ConWnd()) {
+                    if (mp_VCon[i]->RCon()->ConWnd())
+                    {
                         mp_VCon[i]->RCon()->CloseConsole();
                     }
                 }
@@ -8674,8 +8732,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 			gSet.SaveSizePosOnExit();
 
-            if (nConCount == 0) {
-                if (nDetachedCount > 0) {
+            if (nConCount == 0)
+            {
+                if (nDetachedCount > 0)
+                {
                     if (MessageBox(ghWnd, L"ConEmu is waiting for console attach.\nIt was started in 'Detached' mode.\nDo You want to cancel waiting?",
                         L"ConEmu", MB_YESNO|MB_ICONQUESTION) != IDYES)
                     return result;
@@ -8687,32 +8747,39 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case SC_MAXIMIZE:
 		DEBUGSTRSYS(L"OnSysCommand(SC_MAXIMIZE)\n");
-        if (!mb_PassSysCommand) {
+        if (!mb_PassSysCommand)
+        {
         	#ifndef _DEBUG
             if (isPictureView())
                 break;
             #endif
             SetWindowMode(rMaximized);
-        } else {
+        }
+        else
+        {
             result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
         }
         break;
     case SC_RESTORE:
 		DEBUGSTRSYS(L"OnSysCommand(SC_RESTORE)\n");
-        if (!mb_PassSysCommand) {
+        if (!mb_PassSysCommand)
+        {
         	#ifndef _DEBUG
             if (!isIconic() && isPictureView())
                 break;
             #endif
             if (!SetWindowMode(isIconic() ? WindowMode : rNormal))
                 result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
-        } else {
+        }
+        else
+        {
             result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
         }
         break;
     case SC_MINIMIZE:
 		DEBUGSTRSYS(L"OnSysCommand(SC_MINIMIZE)\n");
-        if (gSet.isMinToTray) {
+        if (gSet.isMinToTray)
+        {
             Icon.HideWindowToTray();
             break;
         }
@@ -8732,7 +8799,8 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			#endif
             // иначе это приводит к потере фокуса и активации невидимой консоли,
             // перехвате стрелок клавиатуры, и прочей фигни...
-            if (wParam<0xF000) {
+            if (wParam<0xF000)
+            {
                 POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, wParam, lParam, FALSE);
             }
             result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);

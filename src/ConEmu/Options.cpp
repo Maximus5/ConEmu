@@ -4718,8 +4718,10 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 	LOGFONT tmpFont = *inFont;
 	LPOUTLINETEXTMETRIC lpOutl = NULL;
 
-	if (inFont->lfFaceName[0] == L'[' && wcsncmp(inFont->lfFaceName+1, RASTER_FONTS_NAME, nRastNameLen) == 0) {
-		if (isFontAutoSize) {
+	if (inFont->lfFaceName[0] == L'[' && wcsncmp(inFont->lfFaceName+1, RASTER_FONTS_NAME, nRastNameLen) == 0)
+	{
+		if (isFontAutoSize)
+		{
 			isFontAutoSize = false;
 			if (hMain) CheckDlgButton(hMain, cbFontAuto, BST_UNCHECKED);
 			ShowFontErrorTip(szRasterAutoError);
@@ -4728,16 +4730,19 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		wchar_t *pszEnd = NULL;
 		wchar_t *pszSize = inFont->lfFaceName + nRastNameLen + 2;
 		nRastWidth = wcstol(pszSize, &pszEnd, 10);
-		if (nRastWidth && pszEnd && *pszEnd == L'x') {
+		if (nRastWidth && pszEnd && *pszEnd == L'x')
+		{
 			pszSize = pszEnd + 1;
 			nRastHeight = wcstol(pszSize, &pszEnd, 10);
-			if (nRastHeight) {
+			if (nRastHeight)
+			{
 				bRasterFont = true;
 				inFont->lfHeight = nRastHeight;
 				inFont->lfWidth = nRastWidth;
 				FontSizeX = FontSizeX3 = nRastWidth;
 
-				if (ghOpWnd && hMain) {
+				if (ghOpWnd && hMain)
+				{
 					wchar_t temp[32];
 					wsprintf(temp, L"%i", nRastHeight);
 					SelectStringExact(hMain, tFontSizeY, temp);
@@ -4762,7 +4767,8 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 	hScreenDC = NULL;
 	MBoxAssert(hDC);
 
-    if (hFont) {
+    if (hFont)
+	{
 		DWORD dwFontErr = 0;
 		SetLastError(0);
         HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
@@ -4784,7 +4790,8 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		// Теперь - можно и reset сделать
 		ResetFontWidth();
 
-		for (int i=0; i<MAX_FONT_STYLES; i++) {
+		for (int i=0; i<MAX_FONT_STYLES; i++)
+		{
 			if (otm[i]) {free(otm[i]); otm[i] = NULL;}
 		}
 
@@ -4792,21 +4799,28 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		{
 			_ASSERTE(lbTM);
 		}
-		if (bRasterFont) {
+		if (bRasterFont)
+		{
 			tm->tmHeight = nRastHeight;
 			tm->tmAveCharWidth = tm->tmMaxCharWidth = nRastWidth;
 		}
 		lpOutl = LoadOutline(hDC, NULL/*hFont*/); // шрифт УЖЕ выбран в DC
-		if (lpOutl) {
+		if (lpOutl)
+		{
 			otm[0] = lpOutl; lpOutl = NULL;
-		} else {
+		}
+		else
+		{
 			dwFontErr = GetLastError();
 		}
 		
-		if (GetTextFace(hDC, 32, szFontFace)) {
-			if (!bRasterFont) {
+		if (GetTextFace(hDC, 32, szFontFace))
+		{
+			if (!bRasterFont)
+			{
 				szFontFace[31] = 0;
-				if (lstrcmpi(inFont->lfFaceName, szFontFace)) {
+				if (lstrcmpi(inFont->lfFaceName, szFontFace))
+				{
 					wsprintf(szFontError+lstrlen(szFontError),
 						L"Failed to create main font!\nRequested: %s\nCreated: %s\n", inFont->lfFaceName, szFontFace);
 					lstrcpyn(inFont->lfFaceName, szFontFace, 32);
@@ -4855,11 +4869,13 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
         //    inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm->tmAveCharWidth;
 		//}
         inFont->lfHeight = tm->tmHeight; TODO("Здесь нужно обновить реальный размер шрифта в диалоге настройки!");
-		if (lbTM && tm->tmCharSet != DEFAULT_CHARSET) {
+		if (lbTM && tm->tmCharSet != DEFAULT_CHARSET)
+		{
 			inFont->lfCharSet = tm->tmCharSet;
 			for (uint i=0; i < countof(ChSets); i++)
 			{
-				if (chSetsNums[i] == tm->tmCharSet) {
+				if (chSetsNums[i] == tm->tmCharSet)
+				{
 					SendDlgItemMessage(hMain, tFontCharset, CB_SETCURSEL, i, 0);
 					break;
 				}
@@ -4867,13 +4883,15 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		}
 		
 		// если ширина шрифта стала больше ширины FixFarBorders - сбросить его в 0
-		if (FontSizeX2 && (LONG)FontSizeX2 < inFont->lfWidth) {
+		if (FontSizeX2 && (LONG)FontSizeX2 < inFont->lfWidth)
+		{
 			FontSizeX2 = 0;
 			if (ghOpWnd && hMain)
 				SelectStringExact(hMain, tFontSizeX2, L"0");
 		}
 
-		if (ghOpWnd) {
+		if (ghOpWnd)
+		{
 			// устанавливать только при листании шрифта в настройке
 			// при кликах по самому флажку "Monospace" шрифт не пересоздается (CreateFont... не вызывается)
             UpdateTTF ( !bAlmostMonospace ); //(tm->tmMaxCharWidth - tm->tmAveCharWidth)>2
@@ -4886,9 +4904,12 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		{
 			if (mh_Font[s]) { DeleteObject(mh_Font[s]); mh_Font[s] = NULL; }
 
-			if (s & AI_STYLE_BOLD) {
+			if (s & AI_STYLE_BOLD)
+			{
 				tmpFont.lfWeight = (inFont->lfWeight == FW_NORMAL) ? FW_BOLD : FW_NORMAL;
-			} else {
+			}
+			else
+			{
 				tmpFont.lfWeight = inFont->lfWeight;
 			}
 			tmpFont.lfItalic = (s & AI_STYLE_ITALIC) ? !inFont->lfItalic : inFont->lfItalic;
@@ -4899,7 +4920,8 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			lbTM = GetTextMetrics(hDC, tm+s);
 			//_ASSERTE(lbTM);
 			lpOutl = LoadOutline(hDC, mh_Font[s]);
-			if (lpOutl) {
+			if (lpOutl)
+			{
 				if (otm[s]) free(otm[s]);
 				otm[s] = lpOutl; lpOutl = NULL;
 			}
@@ -4918,18 +4940,24 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		mh_Font2 = CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
 			0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, 
 			NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName);
-		if (mh_Font2) {
+		if (mh_Font2)
+		{
 			hOldF = (HFONT)SelectObject(hDC, mh_Font2);
 
-			if (GetTextFace(hDC, 32, szFontFace)) {
+			if (GetTextFace(hDC, 32, szFontFace))
+			{
 				szFontFace[31] = 0;
-				if (lstrcmpi(LogFont2.lfFaceName, szFontFace)) {
+				if (lstrcmpi(LogFont2.lfFaceName, szFontFace))
+				{
 					if (szFontError[0]) lstrcat(szFontError, L"\n");
 					wsprintf(szFontError+lstrlen(szFontError),
 						L"Failed to create border font!\nRequested: %s\nCreated: ", LogFont2.lfFaceName);
-					if (lstrcmpi(LogFont2.lfFaceName, L"Lucida Console") == 0) {
+					if (lstrcmpi(LogFont2.lfFaceName, L"Lucida Console") == 0)
+					{
 						lstrcpyn(LogFont2.lfFaceName, szFontFace, 32);
-					} else {
+					}
+					else
+					{
 						lstrcpy(LogFont2.lfFaceName, L"Lucida Console");
 						SelectObject(hDC, hOldF);
 						DeleteObject(mh_Font2);
@@ -4939,11 +4967,15 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 						hOldF = (HFONT)SelectObject(hDC, mh_Font2);
 
 						wchar_t szFontFace2[32];
-						if (GetTextFace(hDC, 32, szFontFace2)) {
+						if (GetTextFace(hDC, 32, szFontFace2))
+						{
 							szFontFace2[31] = 0;
-							if (lstrcmpi(LogFont2.lfFaceName, szFontFace2) != 0) {
+							if (lstrcmpi(LogFont2.lfFaceName, szFontFace2) != 0)
+							{
 								lstrcat(szFontError, szFontFace2);
-							} else {
+							}
+							else
+							{
 								lstrcat(szFontError, szFontFace);
 								lstrcat(szFontError, L"\nUsing: Lucida Console");
 							}
@@ -4985,13 +5017,18 @@ LPOUTLINETEXTMETRIC CSettings::LoadOutline(HDC hDC, HFONT hFont)
 
 	LPOUTLINETEXTMETRIC pOut = NULL;
 	UINT nSize = GetOutlineTextMetrics(hDC, 0, NULL);
-	if (nSize) {
+	if (nSize)
+	{
 		pOut = (LPOUTLINETEXTMETRIC)calloc(nSize,1);
-		if (pOut) {
+		if (pOut)
+		{
 			pOut->otmSize = nSize;
-			if (!GetOutlineTextMetricsW(hDC, nSize, pOut)) {
+			if (!GetOutlineTextMetricsW(hDC, nSize, pOut))
+			{
 				free(pOut); pOut = NULL;
-			} else {
+			}
+			else
+			{
 				pOut->otmpFamilyName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFamilyName);
 				pOut->otmpFaceName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFaceName);
 				pOut->otmpStyleName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpStyleName);
@@ -5017,7 +5054,12 @@ void CSettings::DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINET
 	wchar_t szFontFace[32], szFontDump[255];
 	TEXTMETRIC ltm;
 
-	if (!hFont) { wsprintf(szFontDump, L"*** gSet.%s: WAS NOT CREATED!\n", szType); } else {
+	if (!hFont)
+	{
+		wsprintf(szFontDump, L"*** gSet.%s: WAS NOT CREATED!\n", szType);
+	}
+	else
+	{
 		SelectObject(hDC, hFont); // вернуть шрифт должна вызывающая функция!
 		GetTextMetrics(hDC, &ltm);
 		GetTextFace(hDC, 32, szFontFace);
@@ -5053,7 +5095,8 @@ int CSettings::GetNumber(HWND hParent, WORD nCtrlId)
 	#endif
 	int nValue = 0;
 	wchar_t szNumber[32] = {0};
-	if (GetDlgItemText(hParent, nCtrlId, szNumber, countof(szNumber))) {
+	if (GetDlgItemText(hParent, nCtrlId, szNumber, countof(szNumber)))
+	{
 		if (!wcscmp(szNumber, L"None"))
 			nValue = 255; // 0xFF для nFontNormalColor, nFontBoldColor, nFontItalicColor;
 		else
@@ -5086,18 +5129,22 @@ int CSettings::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 	_ASSERTE(hChild!=NULL);
 	#endif
 	int nIdx = SendDlgItemMessage(hParent, nCtrlId, CB_FINDSTRINGEXACT, -1, (LPARAM)asText);
-	if (nIdx < 0) {
+	if (nIdx < 0)
+	{
 		int nCount = SendDlgItemMessage(hParent, nCtrlId, CB_GETCOUNT, 0, 0);
 		int nNewVal = _wtol(asText);
 		wchar_t temp[MAX_PATH];
-		for (int i = 0; i < nCount; i++) {
+		for (int i = 0; i < nCount; i++)
+		{
 			if (!SendDlgItemMessage(hParent, nCtrlId, CB_GETLBTEXT, i, (LPARAM)temp)) break;
 			int nCurVal = _wtol(temp);
-			if (nCurVal == nNewVal) {
+			if (nCurVal == nNewVal)
+			{
 				nIdx = i;
 				break;
-			} else
-			if (nCurVal > nNewVal) {
+			}
+			else if (nCurVal > nNewVal)
+			{
 				nIdx = SendDlgItemMessage(hParent, nCtrlId, CB_INSERTSTRING, i, (LPARAM) asText);
 				break;
 			}
@@ -6075,7 +6122,7 @@ bool CSettings::PollBackgroundFile()
 			if (fnd.ftLastWriteTime.dwHighDateTime != ftBgModified.dwHighDateTime
 				|| fnd.ftLastWriteTime.dwLowDateTime != ftBgModified.dwLowDateTime)
 			{
-				//mb_NeedBgUpdate = TRUE; -- поставит LoadBackgroundFile, если у него получится файл открыть
+				//NeedBackgroundUpdate(); -- поставит LoadBackgroundFile, если у него получится файл открыть
 				lbChanged = LoadBackgroundFile(sBgImage, false);
 				nBgModifiedTick = GetTickCount();
 			}
@@ -6109,7 +6156,7 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 		if ((mb_BgLastFade == bIsForeground && gSet.isFadeInactive)
 			|| (!gSet.isFadeInactive && mb_BgLastFade))
 		{
-			mb_NeedBgUpdate = TRUE;
+			NeedBackgroundUpdate();
 		}
 	}
 
@@ -6117,7 +6164,7 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 
 	if (mp_Bg == NULL)
 	{
-		mb_NeedBgUpdate = TRUE;
+		NeedBackgroundUpdate();
 	}
 
 
@@ -6155,9 +6202,11 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 			if (mp_Bg)
 			{
 				if (mp_Bg->bgSize.X != lMaxBgWidth || mp_Bg->bgSize.Y != lMaxBgHeight)
-					mb_NeedBgUpdate = TRUE;
-			} else {
-				mb_NeedBgUpdate = TRUE;
+					NeedBackgroundUpdate();
+			}
+			else
+			{
+				NeedBackgroundUpdate();
 			}
 		}
 	}
@@ -6434,7 +6483,7 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 
 void CSettings::NeedBackgroundUpdate()
 {
-	mb_NeedBgUpdate = true;
+	mb_NeedBgUpdate = TRUE;
 }
 
 //CBackground* CSettings::CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData)

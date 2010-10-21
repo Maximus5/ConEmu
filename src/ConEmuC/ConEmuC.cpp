@@ -1015,7 +1015,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		{
 			gnRunMode = RM_SERVER;
 			wchar_t* pszEnd = NULL;
-			srv.dwGuiPID = wcstol(szArg+5, &pszEnd, 10);
+			srv.dwGuiPID = wcstoul(szArg+5, &pszEnd, 10);
 			if (srv.dwGuiPID == 0)
 			{
 				_printf ("Invalid GUI PID specified:\n");
@@ -1031,7 +1031,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			gbNoCreateProcess = TRUE;
 			wchar_t* pszEnd = NULL;
 			//srv.dwRootProcess = _wtol(szArg+5);
-			srv.dwRootProcess = wcstol(szArg+5, &pszEnd, 10);
+			srv.dwRootProcess = wcstoul(szArg+5, &pszEnd, 10);
 			if (srv.dwRootProcess == 0) {
 				_printf ("Attach to GUI was requested, but invalid PID specified:\n");
 				_wprintf (GetCommandLineW());
@@ -1046,7 +1046,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			gbNoCreateProcess = gbDebugProcess = TRUE;
 			wchar_t* pszEnd = NULL;
 			//srv.dwRootProcess = _wtol(szArg+10);
-			srv.dwRootProcess = wcstol(szArg+10, &pszEnd, 10);
+			srv.dwRootProcess = wcstoul(szArg+10, &pszEnd, 10);
 			if (srv.dwRootProcess == 0) {
 				_printf ("Debug of process was requested, but invalid PID specified:\n");
 				_wprintf (GetCommandLineW());
@@ -3550,7 +3550,7 @@ void CheckKeyboardLayout()
 				// LayoutName: "00000409", "00010409", ...
 				// А HKL от него отличается, так что передаем DWORD
 				// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
-				DWORD dwLayout = wcstol(szCurKeybLayout, &pszEnd, 16);
+				DWORD dwLayout = wcstoul(szCurKeybLayout, &pszEnd, 16);
 				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
 				if (pIn)
 				{
