@@ -288,7 +288,7 @@ CConEmuMain::CConEmuMain()
 	//mn_MsgSetForeground = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
 	mn_MsgFlashWindow = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
 	mn_MsgPostAltF9 = ++nAppMsg;
-	mn_MsgPostSetBackground = ++nAppMsg;
+	//mn_MsgPostSetBackground = ++nAppMsg;
 	mn_MsgInitInactiveDC = ++nAppMsg;
 	mn_MsgLLKeyHook = RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
@@ -1732,6 +1732,8 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 	static bool bWasSetFullscreen = false;
 
     change2WindowMode = inMode;
+	// Сброс флагов ресайза мышкой
+	mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 
 	if (bWasSetFullscreen && inMode != rFullScreen) {
 		if (mp_TaskBar2) {
@@ -6228,6 +6230,18 @@ void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 
 	gSet.ThSet.nFontQuality = gSet.FontQuality();
 
+	// Параметры основного шрифта ConEmu
+	lstrcpy(gSet.ThSet.MainFont.sFontName, gSet.FontFaceName());
+	gSet.ThSet.MainFont.nFontHeight = gSet.FontHeight();
+	gSet.ThSet.MainFont.nFontWidth = gSet.FontWidth();
+	gSet.ThSet.MainFont.nFontCellWidth = gSet.FontSizeX3 ? gSet.FontSizeX3 : gSet.FontWidth();
+	gSet.ThSet.MainFont.nFontQuality = gSet.FontQuality();
+	gSet.ThSet.MainFont.nFontCharSet = gSet.FontCharSet();
+	gSet.ThSet.MainFont.Bold = gSet.FontBold();
+	gSet.ThSet.MainFont.Italic = gSet.FontItalic();
+	lstrcpy(gSet.ThSet.MainFont.sBorderFontName, gSet.BorderFontFaceName());
+    gSet.ThSet.MainFont.nBorderFontWidth = gSet.BorderFontWidth();
+
 	// Применить в мэппинг
 	bool lbChanged = gSet.m_ThSetMap.SetFrom(&gSet.ThSet);
 
@@ -9410,10 +9424,10 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
     return;
 }
 
-void CConEmuMain::PostSetBackground(CVirtualConsole* apVCon, CESERVER_REQ_SETBACKGROUND* apImgData)
-{
-	PostMessage(ghWnd, mn_MsgPostSetBackground, (WPARAM)apVCon, (LPARAM)apImgData);
-}
+//void CConEmuMain::PostSetBackground(CVirtualConsole* apVCon, CESERVER_REQ_SETBACKGROUND* apImgData)
+//{
+//	PostMessage(ghWnd, mn_MsgPostSetBackground, (WPARAM)apVCon, (LPARAM)apImgData);
+//}
 
 LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
@@ -9946,15 +9960,15 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				return gConEmu.LowLevelKeyHook((UINT)wParam, (UINT)lParam);				
 			}
 			return 0;
-		} else if (messg == gConEmu.mn_MsgPostSetBackground) {
-			if (isValid((CVirtualConsole*)wParam))
-			{
-				((CVirtualConsole*)wParam)->SetBackgroundImageData((CESERVER_REQ_SETBACKGROUND*)lParam);
-			} else {
-				// Поскольку консоль уже была закрыта - нужно просто освободить данные
-				CESERVER_REQ_SETBACKGROUND* p = (CESERVER_REQ_SETBACKGROUND*)lParam;
-				free(p);
-			}
+		//} else if (messg == gConEmu.mn_MsgPostSetBackground) {
+		//	if (isValid((CVirtualConsole*)wParam))
+		//	{
+		//		((CVirtualConsole*)wParam)->SetBackgroundImageData((CESERVER_REQ_SETBACKGROUND*)lParam);
+		//	} else {
+		//		// Поскольку консоль уже была закрыта - нужно просто освободить данные
+		//		CESERVER_REQ_SETBACKGROUND* p = (CESERVER_REQ_SETBACKGROUND*)lParam;
+		//		free(p);
+		//	}
 		} else if (messg == gConEmu.mn_MsgInitInactiveDC) {
 			if (isValid((CVirtualConsole*)lParam)
 				&& !isActive((CVirtualConsole*)lParam))

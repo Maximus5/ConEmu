@@ -265,7 +265,7 @@ protected:
 	UINT mn_ConsoleLangChanged;
 	UINT mn_MsgPostOnBufferHeight;
 	UINT mn_MsgPostAltF9;
-	UINT mn_MsgPostSetBackground;
+	//UINT mn_MsgPostSetBackground;
 	UINT mn_MsgInitInactiveDC;
 	//UINT mn_MsgSetForeground;
 	UINT mn_MsgFlashWindow;
@@ -358,7 +358,7 @@ public:
 	void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 	void PostMacro(LPCWSTR asMacro);
 	void PostCreate(BOOL abRecieved=FALSE);
-	void PostSetBackground(CVirtualConsole* apVCon, CESERVER_REQ_SETBACKGROUND* apImgData);
+	//void PostSetBackground(CVirtualConsole* apVCon, CESERVER_REQ_SETBACKGROUND* apImgData);
 	bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 	void Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs = FALSE);
 	HHOOK mh_RecreateDlgKeyHook;

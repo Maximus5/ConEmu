@@ -187,12 +187,14 @@ public:
 	enum SetBackgroundResult SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData); // вызывается при получении нового Background
 	bool HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight);
 protected:
+	MSection *mcs_BkImgData;
+	UINT mn_BkImgDataMax;
 	CESERVER_REQ_SETBACKGROUND* mp_BkImgData; // followed by image data
 	BOOL mb_BkImgChanged; // Данные в mp_BkImgData были изменены плагином, требуется отрисовка
-	BOOL mb_BkImgExist, mb_BkImgDelete;
+	BOOL mb_BkImgExist; //, mb_BkImgDelete;
 	LONG mn_BkImgWidth, mn_BkImgHeight;
-	// Для проверки, что пришедшая в основную нить картинка является актуальной
-	const CESERVER_REQ_SETBACKGROUND* mp_LastImgData;
+	//// Для проверки, что пришедшая в основную нить картинка является актуальной
+	//const CESERVER_REQ_SETBACKGROUND* mp_LastImgData;
 	UINT IsBackgroundValid(CESERVER_REQ_SETBACKGROUND* apImgData) const; // возвращает размер данных, или 0 при ошибке
 //public:
 	//MSection csBkImgData;

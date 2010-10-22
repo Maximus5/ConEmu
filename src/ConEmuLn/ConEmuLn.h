@@ -44,7 +44,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern HMODULE ghPluginModule;
 extern wchar_t* gszRootKey;
 extern FarVersion gFarVersion;
-extern RegisterBackground_t gfRegisterBackground;
+
+//Settings
 extern BOOL gbBackgroundEnabled;
 extern COLORREF gcrLinesColor;
 

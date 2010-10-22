@@ -63,6 +63,7 @@ CPluginBackground::CPluginBackground()
 	mn_BgPluginsMax = 16;
 	mp_BgPlugins = (struct BackgroundInfo*)calloc(mn_BgPluginsMax,sizeof(struct BackgroundInfo));
 	mn_ReqActions = 0;
+	mb_BgWasSent = FALSE;
 	
 	csBgPlugins = new MSection();
 	
@@ -71,6 +72,7 @@ CPluginBackground::CPluginBackground()
 	memset(&m_ThSet, 0, sizeof(m_ThSet));
 	
 	memset(&m_Default, 0, sizeof(m_Default));
+	memset(&m_Last, 0, sizeof(m_Last));
 	//m_Default.pszLeftCurDir    = ms_LeftCurDir; ms_LeftCurDir[0] = 0;
 	//m_Default.pszLeftFormat    = ms_LeftFormat; ms_LeftFormat[0] = 0;
 	//m_Default.pszLeftHostFile  = ms_LeftHostFile; ms_LeftHostFile[0] = 0;
@@ -78,10 +80,13 @@ CPluginBackground::CPluginBackground()
 	//m_Default.pszRightFormat   = ms_RightFormat; ms_RightFormat[0] = 0;
 	//m_Default.pszRightHostFile = ms_RightHostFile; ms_RightHostFile[0] = 0;
 	
+	mb_ThNeedLoad = TRUE;
 	if (ConEmuHwnd && IsWindow(ConEmuHwnd))
 	{
-		LoadThSet();
+		LoadThSet(FALSE);
 	}
+
+	SetForceCheck();
 }
 
 CPluginBackground::~CPluginBackground()
@@ -134,7 +139,7 @@ int CPluginBackground::RegisterSubplugin(BackgroundInfo *pbk)
 		}
 		if (nFound == -1)
 		{
-			if (nFirstEmpty > 0)
+			if (nFirstEmpty >= 0)
 				nFound = nFirstEmpty;
 			else
 				nFound = mn_BgPluginsCount++;
@@ -200,6 +205,10 @@ void CPluginBackground::ReallocItems(int nAddCount)
 
 void CPluginBackground::OnMainThreadActivated(int anEditorEvent /*= -1*/, int anViewerEvent /*= -1*/)
 {
+#ifdef _DEBUG
+	DWORD nCurActions = mn_ReqActions;
+#endif
+
 	if ((mn_ReqActions & ra_CheckPanelFolders))
 	{
 		mn_ReqActions &= ~ra_CheckPanelFolders;
@@ -213,6 +222,65 @@ void CPluginBackground::OnMainThreadActivated(int anEditorEvent /*= -1*/, int an
 	}
 }
 
+void CPluginBackground::SetForceCheck()
+{
+	mn_ReqActions |= (ra_CheckPanelFolders);
+	gbNeedBgActivate = TRUE;
+}
+
+void CPluginBackground::SetForceUpdate()
+{
+	mn_ReqActions |= (ra_UpdateBackground|ra_CheckPanelFolders);
+	gbNeedBgActivate = TRUE;
+}
+
+bool CPluginBackground::IsParmChanged(struct UpdateBackgroundArg* p1, struct UpdateBackgroundArg* p2)
+{
+	if (!p1 || !p2)
+		return false;
+	if (p1->dcSizeX != p2->dcSizeX || p1->dcSizeY != p2->dcSizeY)
+		return true;
+
+	if (memcmp(&p1->rcConWorkspace, &p2->rcConWorkspace, sizeof(p1->rcConWorkspace))
+		|| memcmp(&p1->conCursor, &p2->conCursor, sizeof(p1->conCursor))
+		|| p1->nFarInterfaceSettings != p2->nFarInterfaceSettings
+		|| p1->nFarPanelSettings != p2->nFarPanelSettings)
+		return true;
+
+	if (p1->bPanelsAllowed != p2->bPanelsAllowed)
+		return true;
+	if (p1->LeftPanel.bVisible != p2->LeftPanel.bVisible 
+		|| p1->RightPanel.bVisible != p2->RightPanel.bVisible)
+		return true;
+	if (p1->LeftPanel.bVisible)
+	{
+		if (p1->LeftPanel.bFocused != p2->LeftPanel.bFocused
+			|| p1->LeftPanel.bPlugin != p2->LeftPanel.bPlugin
+			|| memcmp(&p1->LeftPanel.rcPanelRect, &p2->LeftPanel.rcPanelRect, sizeof(p1->LeftPanel.rcPanelRect)))
+			return true;
+		if (lstrcmpW(p1->LeftPanel.szCurDir, p2->LeftPanel.szCurDir)
+			|| lstrcmpW(p1->LeftPanel.szFormat, p2->LeftPanel.szFormat)
+			|| lstrcmpW(p1->LeftPanel.szHostFile, p2->LeftPanel.szHostFile))
+			return true;
+	}
+	if (p1->RightPanel.bVisible)
+	{
+		if (p1->RightPanel.bFocused != p2->RightPanel.bFocused
+			|| p1->RightPanel.bPlugin != p2->RightPanel.bPlugin
+			|| memcmp(&p1->RightPanel.rcPanelRect, &p2->RightPanel.rcPanelRect, sizeof(p1->RightPanel.rcPanelRect)))
+			return true;
+		if (lstrcmpW(p1->RightPanel.szCurDir, p2->RightPanel.szCurDir)
+			|| lstrcmpW(p1->RightPanel.szFormat, p2->RightPanel.szFormat)
+			|| lstrcmpW(p1->RightPanel.szHostFile, p2->RightPanel.szHostFile))
+			return true;
+	}
+
+	if (memcmp(p1->nFarColors, p2->nFarColors, sizeof(p1->nFarColors))
+		|| memcmp(p1->crPalette, p2->crPalette, sizeof(p1->crPalette)))
+		return true;
+
+	return false;
+}
 
 void CPluginBackground::CheckPanelFolders()
 {
@@ -222,6 +290,17 @@ void CPluginBackground::CheckPanelFolders()
 		FUNC_Y(FillUpdateBackground)(&m_Default);
 	else
 		FUNC_X(FillUpdateBackground)(&m_Default);
+
+	if (IsParmChanged(&m_Default, &m_Last))
+	{
+		mn_ReqActions |= ra_UpdateBackground;
+	}
+
+	WARNING("Нужно бы перечитать его, при изменении данных в ConEmu!");
+	if (mb_ThNeedLoad)
+	{
+		LoadThSet(TRUE/*мы уже в главной нити*/);
+	}
 }
 
 void CPluginBackground::SetDcPanelRect(RECT *rcDc, UpdateBackgroundArg::BkPanelInfo *Panel, UpdateBackgroundArg *Arg)
@@ -254,15 +333,33 @@ void CPluginBackground::SetDcPanelRect(RECT *rcDc, UpdateBackgroundArg::BkPanelI
 // Вызывается ТОЛЬКО в главной нити!
 void CPluginBackground::UpdateBackground()
 {
+	if (!mn_BgPluginsCount)
+		return;
 	if (!ConEmuHwnd || !IsWindow(ConEmuHwnd))
 		return;
 
-	RECT rcClient; GetClientRect(ConEmuHwnd, &rcClient);
+	if (mb_ThNeedLoad)
+	{
+		LoadThSet(TRUE/*Мы уже в главной нити*/);
+	}
+
+	//RECT rcClient; GetClientRect(ConEmuHwnd, &rcClient);
 
 	struct UpdateBackgroundArg Arg = m_Default;
 	Arg.cbSize = sizeof(struct UpdateBackgroundArg);
-	m_Default.dcSizeX = Arg.dcSizeX = rcClient.right+1;
-	m_Default.dcSizeY = Arg.dcSizeY = rcClient.bottom+1;
+	//m_Default.dcSizeX = Arg.dcSizeX = rcClient.right+1;
+	//m_Default.dcSizeY = Arg.dcSizeY = rcClient.bottom+1;
+	m_Default.dcSizeX = Arg.dcSizeX = (m_Default.rcConWorkspace.right-m_Default.rcConWorkspace.left+1)*m_Default.MainFont.nFontCellWidth;
+	m_Default.dcSizeY = Arg.dcSizeY = (m_Default.rcConWorkspace.bottom-m_Default.rcConWorkspace.top+1)*m_Default.MainFont.nFontHeight;
+
+	memmove(&m_Last, &m_Default, sizeof(m_Default));
+
+	if (m_Default.dcSizeX < 1 || m_Default.dcSizeY < 1)
+	{
+		_ASSERTE(m_Default.dcSizeX >= 1 && m_Default.dcSizeY >= 1);
+		return;
+	}
+
 	SetDcPanelRect(&Arg.rcDcLeft, &Arg.LeftPanel, &Arg);
 	SetDcPanelRect(&Arg.rcDcRight, &Arg.RightPanel, &Arg);
 	if (gpTabs->Tabs.CurrentType == WTYPE_EDITOR)
@@ -324,6 +421,21 @@ void CPluginBackground::UpdateBackground()
 	{
 		// Ситуация возникает при старте ConEmu, когда панелей "еще нет"
 		//_ASSERTE(nProcessed >= 1);
+
+		if (mb_BgWasSent)
+		{
+			mb_BgWasSent = FALSE;
+			CESERVER_REQ In;
+			ExecutePrepareCmd(&In.hdr, CECMD_SETBACKGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETBACKGROUND));
+			In.Background.nType = 1;
+			In.Background.bEnabled = FALSE;
+			CESERVER_REQ *pOut = ExecuteGuiCmd(FarHwnd, &In, FarHwnd);
+			if (pOut)
+			{
+				ExecuteFreeResult(pOut);
+			}
+		}
+
 	}
 	else
 	{
@@ -350,6 +462,7 @@ void CPluginBackground::UpdateBackground()
 			CESERVER_REQ *pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 			if (pOut)
 			{
+				mb_BgWasSent = TRUE;
 				TODO("Показать ошибку, если есть");
 				ExecuteFreeResult(pOut);
 			}
@@ -362,13 +475,15 @@ void CPluginBackground::UpdateBackground()
 	DeleteDC(hdc);
 }
 
-BOOL CPluginBackground::LoadThSet()
+BOOL CPluginBackground::LoadThSet(BOOL abFromMainThread)
 {
 	if (!ConEmuHwnd || !IsWindow(ConEmuHwnd))
 	{
 		_ASSERTE(ConEmuHwnd!=NULL);
 		return FALSE;
 	}
+
+	mb_ThNeedLoad = FALSE;
 
 	BOOL lbRc = FALSE;
 	MFileMapping<PanelViewSettings> ThSetMap;
@@ -379,9 +494,29 @@ BOOL CPluginBackground::LoadThSet()
 	ThSetMap.InitName(CECONVIEWSETNAME, nGuiPID);
 	if (ThSetMap.Open())
 	{
-		ThSetMap.GetTo(&m_ThSet);
+		lbRc = ThSetMap.GetTo(&m_ThSet) && (m_ThSet.cbSize != 0);
 		ThSetMap.CloseMap();
-		lbRc = TRUE;
+		if (!lbRc)
+		{
+			mb_ThNeedLoad = TRUE; // попробовать перечитать в следующий раз?
+		}
+		else
+		{
+			BOOL lbNeedActivate;
+			// Если изменились визуальные параметры CE - перерисоваться
+			if (memcmp(&m_Default.MainFont, &m_ThSet.MainFont, sizeof(m_ThSet.MainFont)))
+			{
+				mn_ReqActions |= ra_UpdateBackground;
+				m_Default.MainFont = m_ThSet.MainFont;
+			}
+			if (memcmp(m_Default.crPalette, m_ThSet.crPalette, sizeof(m_ThSet.crPalette)))
+			{
+				mn_ReqActions |= ra_UpdateBackground;
+				memmove(m_Default.crPalette, m_ThSet.crPalette, sizeof(m_ThSet.crPalette));
+			}
+			if (mn_ReqActions && !abFromMainThread)
+				gbNeedBgActivate = TRUE;
+		}
 	}
 
 	return lbRc;
@@ -397,40 +532,41 @@ void CPluginBackground::MonitorBackground()
 	DWORD nDelta = (GetTickCount() - m_LastThSetCheck);
 	if (nDelta > THSET_TIMEOUT)
 	{
+		m_LastThSetCheck = GetTickCount();
 		//BYTE nFarColors[0x100]; // Массив цветов фара
 		
-		if (LoadThSet())
-		{
-			// Если изменились визуальные параметры CE - перерисоваться
-			if (memcmp(&m_Default.MainFont, &m_ThSet.MainFont, sizeof(m_ThSet.MainFont)))
-			{
-				lbUpdateRequired = TRUE;
-				m_Default.MainFont = m_ThSet.MainFont;
-			}
-			if (memcmp(m_Default.crPalette, m_ThSet.crPalette, sizeof(m_ThSet.crPalette)))
-			{
-				lbUpdateRequired = TRUE;
-				memmove(m_Default.crPalette, m_ThSet.crPalette, sizeof(m_ThSet.crPalette));
-			}
-		}
+		//if (LoadThSet())
+		//{
+		//	// Если изменились визуальные параметры CE - перерисоваться
+		//	if (memcmp(&m_Default.MainFont, &m_ThSet.MainFont, sizeof(m_ThSet.MainFont)))
+		//	{
+		//		lbUpdateRequired = TRUE;
+		//		m_Default.MainFont = m_ThSet.MainFont;
+		//	}
+		//	if (memcmp(m_Default.crPalette, m_ThSet.crPalette, sizeof(m_ThSet.crPalette)))
+		//	{
+		//		lbUpdateRequired = TRUE;
+		//		memmove(m_Default.crPalette, m_ThSet.crPalette, sizeof(m_ThSet.crPalette));
+		//	}
+		//}
 
-		if (!lbUpdateRequired)
-		{
-			// Проверим, а не изменился ли размер окна?
-			if (IsConsoleActive())
-			{
-				RECT rcClient; GetClientRect(ConEmuHwnd, &rcClient);
-				if ((m_Default.dcSizeX != (rcClient.right+1))
-					|| (m_Default.dcSizeY != (rcClient.bottom+1)))
-				{
-					lbUpdateRequired = TRUE;
-				}
-			}
-			if (!lbUpdateRequired)
-			{
-				TODO("Проверить, не изменился ли размер консольного окна?");
-			}
-		}
+		//if (!lbUpdateRequired)
+		//{
+		//	// Проверим, а не изменился ли размер окна?
+		//	if (IsConsoleActive())
+		//	{
+		//		RECT rcClient; GetClientRect(ConEmuHwnd, &rcClient);
+		//		if ((m_Default.dcSizeX != (rcClient.right+1))
+		//			|| (m_Default.dcSizeY != (rcClient.bottom+1)))
+		//		{
+		//			lbUpdateRequired = TRUE;
+		//		}
+		//	}
+		//	if (!lbUpdateRequired)
+		//	{
+		//		TODO("Проверить, не изменился ли размер консольного окна?");
+		//	}
+		//}
 		
 		if (lbUpdateRequired)
 		{

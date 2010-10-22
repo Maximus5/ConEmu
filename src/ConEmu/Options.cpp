@@ -471,7 +471,9 @@ void CSettings::InitSettings()
 	} else {
 		// Применить в Mapping (там заодно и палитра копируется)
 		//m_ThSetMap.Set(&ThSet);
-		gConEmu.OnPanelViewSettingsChanged(FALSE);
+
+		//!! Это нужно делать после создания основного шрифта
+		//gConEmu.OnPanelViewSettingsChanged(FALSE);
 	}
 }
 
@@ -795,8 +797,10 @@ void CSettings::LoadSettings()
 
 	// Передернуть палитру затенения
 	mb_FadeInitialized = false; GetColors(TRUE);
+
 	// Применить в Mapping (там заодно и палитра копируется)
-	gConEmu.OnPanelViewSettingsChanged(FALSE);
+	//!! Это нужно делать после создания основного шрифта
+	//gConEmu.OnPanelViewSettingsChanged(FALSE);
 
     
     // Проверить необходимость установки хуков
@@ -961,6 +965,9 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
     mh_Font[0] = CreateFontIndirectMy(&LogFont);
 	//2009-06-07 Реальный размер созданного шрифта мог измениться
 	SaveFontSizes(&LogFont, (mn_AutoFontWidth == -1));
+
+	// Применить в Mapping (там заодно и палитра копируется)
+	gConEmu.OnPanelViewSettingsChanged(FALSE);
 
     MCHKHEAP
 }
@@ -5264,6 +5271,11 @@ LPCTSTR CSettings::GetCmd()
     return psCurCmd;
 }
 
+LPCWSTR CSettings::FontFaceName()
+{
+	return LogFont.lfFaceName;
+}
+
 LONG CSettings::FontWidth()
 {
 	if (!LogFont.lfWidth) {
@@ -5284,6 +5296,11 @@ LONG CSettings::FontHeight()
 	return mn_FontHeight;
 }
 
+BOOL CSettings::FontBold()
+{
+	return LogFont.lfWeight>400;
+}
+
 BOOL CSettings::FontItalic()
 {
 	return LogFont.lfItalic!=0;
@@ -5297,6 +5314,11 @@ BOOL CSettings::FontClearType()
 BYTE CSettings::FontQuality()
 {
 	return LogFont.lfQuality;
+}
+
+LPCWSTR CSettings::BorderFontFaceName()
+{
+	return LogFont2.lfFaceName;
 }
 
 LONG CSettings::BorderFontWidth()

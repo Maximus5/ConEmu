@@ -53,7 +53,7 @@ extern "C"{
 HMODULE ghPluginModule = NULL; // ConEmuLn.dll - сам плагин
 wchar_t* gszRootKey = NULL;
 FarVersion gFarVersion = {{0}};
-RegisterBackground_t gfRegisterBackground = NULL;
+static RegisterBackground_t gfRegisterBackground = NULL;
 
 BOOL gbBackgroundEnabled = FALSE;
 COLORREF gcrLinesColor = RGB(0,0,0xA8); // чуть светлее синего
@@ -176,12 +176,28 @@ int WINAPI UpdateConEmuBackground(struct UpdateBackgroundArg* pBk)
 
 	if (pBk->nLevel == 0)
 	{
-		HBRUSH hBr = CreateSolidBrush(pBk->crPalette[nPanelBackIdx]);
 		if (pBk->LeftPanel.bVisible)
+		{
+			COLORREF crPanel = pBk->crPalette[nPanelBackIdx];
+			#ifdef _DEBUG
+			if (pBk->LeftPanel.bPlugin)
+				crPanel = RGB(128,0,0);
+			#endif
+			HBRUSH hBr = CreateSolidBrush(crPanel);
 			FillRect(pBk->hdc, &pBk->rcDcLeft, hBr);
+			DeleteObject(hBr);
+		}
 		if (pBk->RightPanel.bVisible)
+		{
+			COLORREF crPanel = pBk->crPalette[nPanelBackIdx];
+			#ifdef _DEBUG
+			if (pBk->RightPanel.bPlugin)
+				crPanel = RGB(128,0,0);
+			#endif
+			HBRUSH hBr = CreateSolidBrush(crPanel);
 			FillRect(pBk->hdc, &pBk->rcDcRight, hBr);
-		DeleteObject(hBr);
+			DeleteObject(hBr);
+		}
 	}
 
 	if ((pBk->LeftPanel.bVisible || pBk->RightPanel.bVisible) /*&& pBk->MainFont.nFontHeight>0*/)
@@ -218,7 +234,7 @@ void WINAPI OnConEmuLoaded(struct ConEmuLoadedArg* pConEmuInfo)
 	ghPluginModule = pConEmuInfo->hPlugin;
 	if (gfRegisterBackground && gbBackgroundEnabled)
 	{
-		StartPlugin(FALSE);
+		StartPlugin(FALSE/*считать параметры из реестра*/);
 	}
 }
 
@@ -237,12 +253,14 @@ void StartPlugin(BOOL bConfigure)
 			RegCloseKey(hkey);
 		}
 	}
+	
+	static bool bWasRegistered = false;
 
 	if (gfRegisterBackground)
 	{
 		if (gbBackgroundEnabled)
 		{
-			if (bConfigure)
+			if (bConfigure && bWasRegistered)
 			{
 				BackgroundInfo upd = {sizeof(BackgroundInfo), rbc_Redraw};
 				gfRegisterBackground(&upd);
@@ -251,13 +269,19 @@ void StartPlugin(BOOL bConfigure)
 			{
 				BackgroundInfo reg = {sizeof(BackgroundInfo), rbc_Register, ghPluginModule, UpdateConEmuBackground, NULL, bup_Panels, 100};
 				gfRegisterBackground(&reg);
+				bWasRegistered = true;
 			}
 		}
 		else
 		{
 			BackgroundInfo unreg = {sizeof(BackgroundInfo), rbc_Unregister, ghPluginModule};
 			gfRegisterBackground(&unreg);
+			bWasRegistered = false;
 		}
+	}
+	else
+	{
+		bWasRegistered = false;
 	}
 }
 

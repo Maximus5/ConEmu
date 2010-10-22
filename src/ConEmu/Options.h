@@ -77,10 +77,13 @@ public:
 	//bool FarSyncSize;
 	int nCmdOutputCP;
     
+	LPCWSTR FontFaceName();
 	LONG FontWidth();
 	LONG FontHeight();
+	LPCWSTR BorderFontFaceName();
 	LONG BorderFontWidth();
 	BYTE FontCharSet();
+	BOOL FontBold();
 	BOOL FontItalic();
 	BOOL FontClearType();
 	BYTE FontQuality();

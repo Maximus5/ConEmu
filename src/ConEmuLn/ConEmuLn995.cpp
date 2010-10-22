@@ -80,70 +80,97 @@ LPCWSTR GetMsgW995(int aiMsg)
 	return InfoW995->GetMsg(InfoW995->ModuleNumber,aiMsg);
 }
 
-#define _GetCheck(i) (int)InfoW995->SendDlgMessage(hDlg,DM_GETCHECK,i,0)
-#define GetDataPtr(i) ((const wchar_t *)InfoW995->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
-#define SETTEXT(itm,txt) itm.PtrData = txt
+//#define _GetCheck(i) (int)InfoW995->SendDlgMessage(hDlg,DM_GETCHECK,i,0)
+//#define GetDataPtr(i) ((const wchar_t *)InfoW995->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
+//#define SETTEXT(itm,txt) itm.PtrData = txt
+//
+//static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+//{
+//	if (Msg == DN_BTNCLICK)
+//	{
+//		if (Param1 == FPCDVideoExtsReset) {
+//			Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, FPCDVideoExtsData, (LONG_PTR)VIDEO_EXTS);
+//			Info.SendDlgMessage(hDlg, DM_SETFOCUS, FPCDVideoExtsData, 0);
+//			return TRUE;
+//		} else if (Param1 == FPCDAudioExtsReset) {
+//			Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, FPCDAudioExtsData, (LONG_PTR)AUDIO_EXTS);
+//			Info.SendDlgMessage(hDlg, DM_SETFOCUS, FPCDAudioExtsData, 0);
+//			return TRUE;
+//		} else if (Param1 == FPCDPictureExtsReset) {
+//			Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, FPCDPictureExtsData, (LONG_PTR)PICTURE_EXTS);
+//			Info.SendDlgMessage(hDlg, DM_SETFOCUS, FPCDPictureExtsData, 0);
+//			return TRUE;
+//		}
+//	}
+//	return Info.DefDlgProc(hDlg, Msg, Param1, Param2);
+//}
+
+#define FAR_UNICODE
+#include "Configure.h"
 
 int ConfigureW995(int ItemNumber)
 {
 	if (!InfoW995)
 		return false;
 
-    int height = 11;
+	return ConfigureProc(ItemNumber);
 
-	wchar_t szColorMask[16]; lstrcpyW(szColorMask, L"0xXXXXXX");
-	wchar_t szColor[16];
-
-    FarDialogItem items[] = {
-        {DI_DOUBLEBOX,  3,  1,  38, height - 2},        //CEPluginName
-
-		{DI_CHECKBOX,   5,  3,  0,  0,          true},    //CEPluginEnable
-
-        {DI_TEXT,       5,  5,  0,  0,          false},    //CEColorLabel
-		{DI_FIXEDIT,   29, 5,  36,  0,          false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
-
-		{DI_TEXT,       0,  7,  0,  0,          false, {(DWORD_PTR)0}, DIF_SEPARATOR},
-
-        {DI_BUTTON,     0,  8, 0,  0,          true,   {(DWORD_PTR)true},           DIF_CENTERGROUP,    true},     //CEBtnOK
-        {DI_BUTTON,     0,  8, 0,  0,          true,   {(DWORD_PTR)false},          DIF_CENTERGROUP,    false},    //CEBtnCancel
-    };
-    
-    SETTEXT(items[0], GetMsgW995(CEPluginName));
-    SETTEXT(items[1], GetMsgW995(CEPluginEnable));
-	items[1].Selected = gbBackgroundEnabled;
-    SETTEXT(items[2], GetMsgW995(CEColorLabel));
-	wsprintfW(szColor, L"%06X", (0xFFFFFF & gcrLinesColor));
-    SETTEXT(items[3], szColor);
-	SETTEXT(items[5], GetMsgW995(CEBtnOK));
-	SETTEXT(items[6], GetMsgW995(CEBtnCancel));
-
-    int dialog_res = 0;
-
-	HANDLE hDlg = InfoW995->DialogInit ( InfoW995->ModuleNumber, -1, -1, 42, height,
-		NULL/*L"Configure"*/, items, countof(items), 0, 0/*Flags*/, NULL/*ConfigDlgProcW*/, 0/*DlgProcParam*/ );
-
-
-    dialog_res = InfoW995->DialogRun ( hDlg );
-
-    if (dialog_res != -1 && dialog_res != 6)
-    {
-		HKEY hkey = NULL;
-		if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &hkey, NULL))
-		{
-			BYTE cVal; DWORD nVal = gcrLinesColor;
-			gbBackgroundEnabled = cVal = _GetCheck(1);
-			RegSetValueExW(hkey, L"PluginEnabled", 0, REG_BINARY, &cVal, sizeof(cVal));
-			const wchar_t* psz = GetDataPtr(3);
-			wchar_t* endptr = NULL;
-			gcrLinesColor = nVal = wcstol(psz, &endptr, 16);
-			RegSetValueExW(hkey, L"LinesColor", 0, REG_DWORD, (LPBYTE)&nVal, sizeof(nVal));
-			RegCloseKey(hkey);
-
-			StartPlugin(TRUE);
-		}
-    }
-
-	InfoW995->DialogFree ( hDlg );
-    
-    return(true);
+    //int height = 11;
+    //
+	//wchar_t szColorMask[16]; lstrcpyW(szColorMask, L"0xXXXXXX");
+	//wchar_t szColor[16];
+	//
+    //FarDialogItem items[] =
+    //{
+    //    {DI_DOUBLEBOX, 3,  1,  38, height - 2},        //CEPluginName
+    //
+	//	{DI_CHECKBOX,  5,  3,  0,  0, true},    //CEPluginEnable
+	//
+    //    {DI_TEXT,      5,  5,  0,  0, false},    //CEColorLabel
+	//	{DI_FIXEDIT,  29, 5,  36,  0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
+	//
+	//	{DI_TEXT,      0,  7,  0,  0, false, {(DWORD_PTR)0},           DIF_SEPARATOR},
+	//
+    //    {DI_BUTTON,    0,  8,  0,  0, true,  {(DWORD_PTR)true},        DIF_CENTERGROUP, true},  //CEBtnOK
+    //    {DI_BUTTON,    0,  8,  0,  0, true,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //CEBtnCancel
+    //};
+    //
+    //SETTEXT(items[0], GetMsgW995(CEPluginName));
+    //SETTEXT(items[1], GetMsgW995(CEPluginEnable));
+	//items[1].Selected = gbBackgroundEnabled;
+    //SETTEXT(items[2], GetMsgW995(CEColorLabel));
+	//wsprintfW(szColor, L"%06X", (0xFFFFFF & gcrLinesColor));
+    //SETTEXT(items[3], szColor);
+	//SETTEXT(items[5], GetMsgW995(CEBtnOK));
+	//SETTEXT(items[6], GetMsgW995(CEBtnCancel));
+	//
+    //int dialog_res = 0;
+    //
+	//HANDLE hDlg = InfoW995->DialogInit ( InfoW995->ModuleNumber, -1, -1, 42, height,
+	//	NULL/*L"Configure"*/, items, countof(items), 0, 0/*Flags*/, NULL/*ConfigDlgProcW*/, 0/*DlgProcParam*/ );
+	//
+	//
+    //dialog_res = InfoW995->DialogRun ( hDlg );
+    //
+    //if (dialog_res != -1 && dialog_res != 6)
+    //{
+	//	HKEY hkey = NULL;
+	//	if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &hkey, NULL))
+	//	{
+	//		BYTE cVal; DWORD nVal = gcrLinesColor;
+	//		gbBackgroundEnabled = cVal = _GetCheck(1);
+	//		RegSetValueExW(hkey, L"PluginEnabled", 0, REG_BINARY, &cVal, sizeof(cVal));
+	//		const wchar_t* psz = GetDataPtr(3);
+	//		wchar_t* endptr = NULL;
+	//		gcrLinesColor = nVal = wcstol(psz, &endptr, 16);
+	//		RegSetValueExW(hkey, L"LinesColor", 0, REG_DWORD, (LPBYTE)&nVal, sizeof(nVal));
+	//		RegCloseKey(hkey);
+	//
+	//		StartPlugin(TRUE);
+	//	}
+    //}
+    //
+	//InfoW995->DialogFree ( hDlg );
+	//
+    //return(true);
 }

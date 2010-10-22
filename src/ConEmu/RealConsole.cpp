@@ -4528,7 +4528,25 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		CESERVER_REQ Out;
 		ExecutePrepareCmd(&Out, pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETBACKGROUNDRET));
 		// Set background Image
-		Out.BackgroundRet.nResult = mp_VCon->SetBackgroundImageData(&pIn->Background);
+		UINT nCalcSize = pIn->hdr.cbSize - sizeof(pIn->hdr);
+		if (nCalcSize < sizeof(CESERVER_REQ_SETBACKGROUND))
+		{
+			_ASSERTE(nCalcSize >= sizeof(CESERVER_REQ_SETBACKGROUND));
+			Out.BackgroundRet.nResult = esbr_InvalidArg;
+		}
+		else
+		{
+			UINT nCalcBmSize = nCalcSize - (((LPBYTE)&pIn->Background.bmp) - ((LPBYTE)&pIn->Background));
+			if (pIn->Background.bEnabled && nCalcSize < nCalcBmSize)
+			{
+				_ASSERTE(nCalcSize >= nCalcBmSize);
+				Out.BackgroundRet.nResult = esbr_InvalidArg;
+			}
+			else
+			{
+				Out.BackgroundRet.nResult = mp_VCon->SetBackgroundImageData(&pIn->Background);
+			}
+		}
 		//(pIn->Background.bEnabled ? (&pIn->Background.bmp) : NULL);
 		fSuccess = WriteFile(hPipe, &Out, Out.hdr.cbSize, &cbWritten, NULL);
 	}

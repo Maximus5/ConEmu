@@ -159,67 +159,71 @@ static char *GetMsg(int MsgId)
 //    #define _tcsscanf sscanf
 //    #define SETMENUTEXT(itm,txt) lstrcpy(itm.Text, txt);
 //    #define F757NA
-    #define _GetCheck(i) items[i].Selected
-    #define GetDataPtr(i) items[i].Data
-#define SETTEXT(itm,txt) lstrcpyA(itm.Data, txt)
+    //#define _GetCheck(i) items[i].Selected
+    //#define GetDataPtr(i) items[i].Data
+//#define SETTEXT(itm,txt) lstrcpyA(itm.Data, txt)
 //    #define SETTEXTPRINT(itm,fmt,arg) wsprintf(itm.Data, fmt, arg)
 //    #define _tcstoi atoi
 //#endif
 
+#undef FAR_UNICODE
+#include "Configure.h"
+
 int WINAPI Configure(int ItemNumber)
 {
-    int height = 11;
-
-	char szColorMask[16]; lstrcpyA(szColorMask, "0xXXXXXX");
-	char szColor[16];
-
-    FarDialogItem items[] = {
-        {DI_DOUBLEBOX,  3,  1,  38, height - 2},        //CEPluginName
-
-		{DI_CHECKBOX,   5,  3,  0,  0,          true},    //CEPluginEnable
-
-        {DI_TEXT,       5,  5,  0,  0,          false},    //CEColorLabel
-		{DI_FIXEDIT,   29, 5,  36,  0,          false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
-
-		{DI_TEXT,       0,  7,  0,  0,          false, {(DWORD_PTR)0}, DIF_SEPARATOR},
-
-        {DI_BUTTON,     0,  8, 0,  0,          true,   {(DWORD_PTR)true},           DIF_CENTERGROUP,    true},     //CEBtnOK
-        {DI_BUTTON,     0,  8, 0,  0,          true,   {(DWORD_PTR)false},          DIF_CENTERGROUP,    false},    //CEBtnCancel
-    };
-    
-    SETTEXT(items[0], GetMsg(CEPluginName));
-    SETTEXT(items[1], GetMsg(CEPluginEnable));
-	items[1].Selected = gbBackgroundEnabled;
-    SETTEXT(items[2], GetMsg(CEColorLabel));
-	wsprintfA(szColor, "%06X", (0xFFFFFF & gcrLinesColor));
-    SETTEXT(items[3], szColor);
-	SETTEXT(items[5], GetMsg(CEBtnOK));
-	SETTEXT(items[6], GetMsg(CEBtnCancel));
-
-    int dialog_res = 0;
-
-	dialog_res = InfoA->DialogEx(InfoA->ModuleNumber,-1,-1,42,height, NULL/*"Configure"*/, items, countof(items), 0, 0,
-		NULL/*ConfigDlgProcA*/, NULL);
-
-    if (dialog_res != -1 && dialog_res != 6)
-    {
-		HKEY hkey = NULL;
-		if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &hkey, NULL))
-		{
-			BYTE cVal; DWORD nVal = gcrLinesColor;
-			gbBackgroundEnabled = cVal = _GetCheck(1);
-			RegSetValueExW(hkey, L"PluginEnabled", 0, REG_BINARY, &cVal, sizeof(cVal));
-			char* psz = GetDataPtr(3);
-			char* endptr = NULL;
-			gcrLinesColor = nVal = strtol(psz, &endptr, 16);
-			RegSetValueExW(hkey, L"LinesColor", 0, REG_DWORD, (LPBYTE)&nVal, sizeof(nVal));
-			RegCloseKey(hkey);
-
-			StartPlugin(TRUE);
-		}
-    }
-    
-    return(true);
+	return ConfigureProc(ItemNumber);
+    //int height = 11;
+    //
+	//char szColorMask[16]; lstrcpyA(szColorMask, "0xXXXXXX");
+	//char szColor[16];
+	//
+    //FarDialogItem items[] = {
+    //    {DI_DOUBLEBOX,  3,  1,  38, height - 2},        //CEPluginName
+    //
+	//	{DI_CHECKBOX,   5,  3,  0,  0,          true},    //CEPluginEnable
+	//
+    //    {DI_TEXT,       5,  5,  0,  0,          false},    //CEColorLabel
+	//	{DI_FIXEDIT,   29, 5,  36,  0,          false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
+	//
+	//	{DI_TEXT,       0,  7,  0,  0,          false, {(DWORD_PTR)0}, DIF_SEPARATOR},
+	//
+    //    {DI_BUTTON,     0,  8, 0,  0,          true,   {(DWORD_PTR)true},           DIF_CENTERGROUP,    true},     //CEBtnOK
+    //    {DI_BUTTON,     0,  8, 0,  0,          true,   {(DWORD_PTR)false},          DIF_CENTERGROUP,    false},    //CEBtnCancel
+    //};
+    //
+    //SETTEXT(items[0], GetMsg(CEPluginName));
+    //SETTEXT(items[1], GetMsg(CEPluginEnable));
+	//items[1].Selected = gbBackgroundEnabled;
+    //SETTEXT(items[2], GetMsg(CEColorLabel));
+	//wsprintfA(szColor, "%06X", (0xFFFFFF & gcrLinesColor));
+    //SETTEXT(items[3], szColor);
+	//SETTEXT(items[5], GetMsg(CEBtnOK));
+	//SETTEXT(items[6], GetMsg(CEBtnCancel));
+	//
+    //int dialog_res = 0;
+    //
+	//dialog_res = InfoA->DialogEx(InfoA->ModuleNumber,-1,-1,42,height, NULL/*"Configure"*/, items, countof(items), 0, 0,
+	//	NULL/*ConfigDlgProcA*/, NULL);
+	//
+    //if (dialog_res != -1 && dialog_res != 6)
+    //{
+	//	HKEY hkey = NULL;
+	//	if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &hkey, NULL))
+	//	{
+	//		BYTE cVal; DWORD nVal = gcrLinesColor;
+	//		gbBackgroundEnabled = cVal = _GetCheck(1);
+	//		RegSetValueExW(hkey, L"PluginEnabled", 0, REG_BINARY, &cVal, sizeof(cVal));
+	//		char* psz = GetDataPtr(3);
+	//		char* endptr = NULL;
+	//		gcrLinesColor = nVal = strtoul(psz, &endptr, 16);
+	//		RegSetValueExW(hkey, L"LinesColor", 0, REG_DWORD, (LPBYTE)&nVal, sizeof(nVal));
+	//		RegCloseKey(hkey);
+	//
+	//		StartPlugin(TRUE);
+	//	}
+    //}
+    //
+    //return(true);
 }
 
 HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)

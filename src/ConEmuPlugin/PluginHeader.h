@@ -133,8 +133,8 @@ void InitResources();
 void CloseTabs();
 
 HWND AtoH(WCHAR *Str, int Len);
-void UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Param=NULL);
-void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
+void UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param=NULL);
+//void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
 
 BOOL LoadFarVersion();
 

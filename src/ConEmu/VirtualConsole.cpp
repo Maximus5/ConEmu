@@ -141,7 +141,9 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mb_LastFadeFlag = false;
 	mn_LastBitsPixel = 0;
 	
-	mp_BkImgData = NULL; mb_BkImgChanged = FALSE; mb_BkImgExist = mb_BkImgDelete = FALSE;
+	mp_BkImgData = NULL; mb_BkImgChanged = FALSE; mb_BkImgExist = /*mb_BkImgDelete =*/ FALSE;
+	mcs_BkImgData = NULL;
+	mn_BkImgDataMax = 0;
 	mn_BkImgWidth = mn_BkImgHeight = 0;
 
 	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gSet.mh_Font)+sizeof(mh_FontByIndex[0])));
@@ -310,11 +312,21 @@ CVirtualConsole::~CVirtualConsole()
     //	DestroyMenu(mh_PopupMenu); mh_PopupMenu = NULL;
     //}
     
+	MSectionLock SC;
+	if (mcs_BkImgData)
+		SC.Lock(mcs_BkImgData, TRUE);
     if (mp_BkImgData)
     {
     	free(mp_BkImgData);
     	mp_BkImgData = NULL;
+		mn_BkImgDataMax = 0;
     }
+	if (mcs_BkImgData)
+	{
+		SC.Unlock();
+		delete mcs_BkImgData;
+		mcs_BkImgData = NULL;
+	}
 
 	//FreeBackgroundImage();
 }
@@ -4054,12 +4066,12 @@ bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LON
 {
 	if (!this) return NULL;
 	_ASSERTE(gConEmu.isMainThread());
-	if (mb_BkImgDelete && mp_BkImgData)
+	/*if (mb_BkImgDelete && mp_BkImgData)
 	{
 		free(mp_BkImgData); mp_BkImgData = NULL;
 		mb_BkImgExist = FALSE;
 		return false;
-	}
+	}*/
 	if (!mb_BkImgExist)
 		return false;
 	if (!mp_BkImgData)
@@ -4069,6 +4081,9 @@ bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LON
 	if (gSet.isFadeInactive && !gConEmu.isMeForeground(false))
 		lbFade = true;
 	
+	MSectionLock SC;
+	SC.Lock(mcs_BkImgData, FALSE);
+
 	bool lbRc = pBack->FillBackground(&mp_BkImgData->bmp, X, Y, Width, Height, eUpLeft, lbFade);
 
 	mb_BkImgChanged = FALSE;
@@ -4091,18 +4106,20 @@ UINT CVirtualConsole::IsBackgroundValid(CESERVER_REQ_SETBACKGROUND* apImgData) c
 {
 	if (!apImgData)
 		return 0;
-	if (IsBadReadPtr(apImgData, sizeof(CESERVER_REQ_SETBACKGROUND)))
-		return 0;
+	//if (IsBadReadPtr(apImgData, sizeof(CESERVER_REQ_SETBACKGROUND)))
+	//	return 0;
 	if (!apImgData->bEnabled)
 		return (UINT)sizeof(CESERVER_REQ_SETBACKGROUND);
 	
 	if (apImgData->bmp.bfType == 0x4D42/*BM*/ && apImgData->bmp.bfSize)
 	{
+		#ifdef _DEBUG
 		if (IsBadReadPtr(&apImgData->bmp, apImgData->bmp.bfSize))
 		{
 			_ASSERTE(!IsBadReadPtr(&apImgData->bmp, apImgData->bmp.bfSize));
 			return 0;
 		}
+		#endif
 
 		LPBYTE pBuf = (LPBYTE)&apImgData->bmp;
 		if (*(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
@@ -4120,17 +4137,23 @@ enum SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SE
 {
 	if (!this) return esbr_Unexpected;
 	
-	if (!gConEmu.isMainThread())
-	{
+	//if (!gConEmu.isMainThread())
+	//{
+
 		// При вызове из серверной нити (только что пришло из плагина)
 		if (mp_RCon->isConsoleClosing())
 			return esbr_ConEmuInShutdown;
 		UINT nSize = IsBackgroundValid(apImgData);
 		if (!nSize)
+		{
+			_ASSERTE(IsBackgroundValid(apImgData) != 0);
 			return esbr_InvalidArg;
+		}
+
 		if (!apImgData->bEnabled)
 		{
-			mb_BkImgDelete = TRUE;
+			//mb_BkImgDelete = TRUE;
+			mb_BkImgExist = FALSE;
 			gSet.NeedBackgroundUpdate();
 			Update(true/*bForce*/);
 			return gSet.isBgPluginAllowed ? esbr_OK : esbr_PluginForbidden;
@@ -4156,51 +4179,62 @@ enum SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SE
 			}
 		}
 		#endif
-		// Поскольку вызов асинхронный (сразу возвращаем в плагин), то нужно сделать копию данных
-		CESERVER_REQ_SETBACKGROUND* pCopy = (CESERVER_REQ_SETBACKGROUND*)malloc(nSize);
-		if (!pCopy)
-			return esbr_Unexpected;
-		memmove(pCopy, apImgData, nSize);
-		// Запомнить последний актуальный, и послать в главную нить
-		mp_LastImgData = pCopy;
-		mb_BkImgDelete = FALSE;
-		gConEmu.PostSetBackground(this, pCopy);
-		return gSet.isBgPluginAllowed ? esbr_OK : esbr_PluginForbidden;
-	}
+
+	//	// Поскольку вызов асинхронный (сразу возвращаем в плагин), то нужно сделать копию данных
+	//	CESERVER_REQ_SETBACKGROUND* pCopy = (CESERVER_REQ_SETBACKGROUND*)malloc(nSize);
+	//	if (!pCopy)
+	//		return esbr_Unexpected;
+	//	memmove(pCopy, apImgData, nSize);
+	//	// Запомнить последний актуальный, и послать в главную нить
+	//	mp_LastImgData = pCopy;
+	//	mb_BkImgDelete = FALSE;
+	//	gConEmu.PostSetBackground(this, pCopy);
+	//	return gSet.isBgPluginAllowed ? esbr_OK : esbr_PluginForbidden;
+	//}
 	
-	// Если вызов пришел во время закрытия консоли - игнорировать
-	if (mp_RCon->isConsoleClosing()
-	// Этот apImgData уже не актуален. Во время обработки сообщения пришел новый Background.
-		|| (mp_LastImgData && mp_LastImgData != apImgData))
-	{
-		free(apImgData);
-		return esbr_Unexpected;
-	}
+	//// Если вызов пришел во время закрытия консоли - игнорировать
+	//if (mp_RCon->isConsoleClosing())
+	////// Этот apImgData уже не актуален. Во время обработки сообщения пришел новый Background.
+	////	|| (mp_LastImgData && mp_LastImgData != apImgData))
+	//{
+	//	free(apImgData);
+	//	return esbr_Unexpected;
+	//}
 	
 	// Ссылку на актуальный - не сбрасываем. Она просто информационная, и есть возможность наколоться с многопоточностью
 	//mp_LastImgData = NULL;
 	
-	UINT nSize = IsBackgroundValid(apImgData);
-	if (!nSize)
-	{
-		// Не допустимый apImgData. Вроде такого быть не должно - все уже проверено
-		_ASSERTE(IsBackgroundValid(apImgData) != 0);
-		free(apImgData);
-		return esbr_InvalidArg;
-	}
+	//UINT nSize = IsBackgroundValid(apImgData);
+	//if (!nSize)
+	//{
+	//	// Не допустимый apImgData. Вроде такого быть не должно - все уже проверено
+	//	_ASSERTE(IsBackgroundValid(apImgData) != 0);
+	//	//free(apImgData);
+	//	return esbr_InvalidArg;
+	//}
 	
 	//MSectionLock SBK; SBK.Lock(&csBkImgData);
-	_ASSERTE(gConEmu.isMainThread());
+	//_ASSERTE(gConEmu.isMainThread());
 
-	if (mp_BkImgData)
+	if (!mcs_BkImgData)
+		mcs_BkImgData = new MSection();
+
+	MSectionLock SC;
+	SC.Lock(mcs_BkImgData, TRUE);
+
+	if (!mp_BkImgData || mn_BkImgDataMax < nSize)
 	{
-		free(mp_BkImgData); mp_BkImgData = NULL;
-		mb_BkImgChanged = TRUE;
-		mb_BkImgExist = FALSE;
-		mn_BkImgWidth = mn_BkImgHeight = 0;
+		if (mp_BkImgData)
+		{
+			free(mp_BkImgData); mp_BkImgData = NULL;
+			mb_BkImgChanged = TRUE;
+			mb_BkImgExist = FALSE;
+			mn_BkImgWidth = mn_BkImgHeight = 0;
+		}
+		
+		mp_BkImgData = (CESERVER_REQ_SETBACKGROUND*)malloc(nSize);
 	}
-	
-	mp_BkImgData = (CESERVER_REQ_SETBACKGROUND*)malloc(nSize);
+
 	memmove(mp_BkImgData, apImgData, nSize);
 	mb_BkImgChanged = TRUE;
 	mb_BkImgExist = TRUE;
@@ -4209,8 +4243,8 @@ enum SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SE
 	mn_BkImgHeight = pBmp->biHeight;
 	gSet.NeedBackgroundUpdate();
 
-	// Это была копия данных - нужно освободить	
-	free(apImgData); apImgData = NULL;
+	//// Это была копия данных - нужно освободить	
+	//free(apImgData); apImgData = NULL;
 
 	if (gConEmu.isVisible(this) && gSet.isBgPluginAllowed)
 	{
@@ -4224,7 +4258,7 @@ bool CVirtualConsole::HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)
 {
 	if (!this) return false;
 	if (!mp_RCon || !mp_RCon->isFar()) return false;
-	if (!mb_BkImgExist || mb_BkImgDelete) return false;
+	if (!mb_BkImgExist || !mp_BkImgData) return false;
 	
 	// Возвращаем mn_BkImgXXX чтобы не беспокоиться об указателе mp_BkImgData
 	

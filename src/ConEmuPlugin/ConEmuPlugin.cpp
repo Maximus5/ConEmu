@@ -415,10 +415,7 @@ void OnMainThreadActivated()
 	if (gbRequestUpdateTabs && !IsMacroActive())
 	{
 		gbRequestUpdateTabs = gbNeedPostTabSend = FALSE;
-		if (gFarVersion.dwVerMajor==1)
-			UpdateConEmuTabsA(0,false,false);
-		else
-			UpdateConEmuTabsW(0,false,false);
+		UpdateConEmuTabs(0,false,false);
 		if (gbClosingModalViewerEditor)
 		{
 			gbClosingModalViewerEditor = FALSE;
@@ -1681,7 +1678,9 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		}
 		
 		if (nCmd == CMD_FARPOST)
+		{
 			return FALSE; // Ёто просто проверка, что фар отработал цикл
+		}
 			
 		// «апомним, чтобы знать, были ли созданы данные?
 		CESERVER_REQ* pOldCmdRet = gpCmdRet;
@@ -1721,6 +1720,8 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				// ѕлагин завершаетс€
 				return FALSE;
 			}
+			if (nCmd == CMD_REDRAWFAR)
+				gbNeedBgActivate = TRUE;
 			lbSucceeded = ActivatePlugin(nCmd, pCommandData);
 			if (lbSucceeded && /*pOldCmdRet !=*/ gpCmdRet)
 			{
@@ -1778,6 +1779,8 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				// ѕлагин завершаетс€
 				return FALSE;
 			}
+			// ѕередернуть Background плагины
+			if (gpBgPlugin) gpBgPlugin->SetForceUpdate();
 			WARNING("ѕосле перехода на Synchro дл€ FAR2 есть опасение, что следующий вызов может произойти до окончани€ предыдущего цикла обработки Synchro в Far");
 			lbSucceeded = ActivatePlugin(CMD_FARPOST, NULL);
 			if (lbSucceeded && /*pOldCmdRet !=*/ gpCmdRet)
@@ -1798,7 +1801,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		}
 		else
 		{
-			if (pCmdRet)
+			if (pCmdRet && pCmdRet != gpTabs && pCmdRet != gpCmdRet)
 			{
 				Free(pCmdRet);
 			}
@@ -1902,7 +1905,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				}
 
 				gbIgnoreUpdateTabs = FALSE;
-				UpdateConEmuTabsW(0, false, false);
+				UpdateConEmuTabs(0, false, false);
 			}
 			//SendTabs(gnCurTabCount, FALSE); // ќбновить размер передаваемых данных
 			pCmdRet = gpTabs;
@@ -3167,6 +3170,15 @@ void UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Par
 		FUNC_X(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
 
 	SC.Unlock();
+}
+
+extern void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
+void UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+{
+	if (gFarVersion.dwVerMajor==1)
+		UpdateConEmuTabsA(anEvent, losingFocus, editorSave, Param);
+	else
+		UpdateConEmuTabsW(anEvent, losingFocus, editorSave, Param);
 }
 
 BOOL CreateTabs(int windowCount)
