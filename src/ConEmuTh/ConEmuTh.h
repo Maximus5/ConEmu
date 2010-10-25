@@ -76,7 +76,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	DWORD dwBuild;
 //} FarVersion;
 
-typedef struct tag_CEFAR_FIND_DATA
+struct CEFAR_FIND_DATA
 {
 	DWORD    dwFileAttributes;
 	//FILETIME ftCreationTime;
@@ -93,33 +93,32 @@ typedef struct tag_CEFAR_FIND_DATA
 	const wchar_t *lpwszFileNamePart;
 	const wchar_t *lpwszFileExt;
 	//const wchar_t *lpwszAlternateFileName;
-} CEFAR_FIND_DATA;
+};
 
-typedef struct tag_CePluginPanelItem
+struct CePluginPanelItem
 {
 	DWORD			cbSize;
 	CEFAR_FIND_DATA FindData;
 	BOOL            bVirtualItem;
 	DWORD_PTR       UserData;
-	BOOL            bPreviewLoaded; // пытались ли уже загружать превьюшку
+	UINT            PreviewLoaded; // пытались ли уже загружать превьюшку (|1-загрузили Shell, |2-загрузили Preview, |4-Thumbnail был реально загружен, а не только извлечена информаци€)
 	const wchar_t*  pszFullName; // ƒл€ упрощени€ отрисовки - ссылка на временный буфер
 	const wchar_t*  pszDescription; // ссылка на данные в этом CePluginPanelItem
 	DWORD           Flags;
 	DWORD           NumberOfLinks;
 	BOOL            bIsCurrent; // “ќЋ№ ќ »Ќ‘ќ–ћј÷»ќЌЌќ, ориентироватьс€ на это поле нельз€, оно может быть неактуально
+	//BOOL            bItemColorLoaded;
+	//COLORREF        crFore, crBack;
+};
+
+struct CePluginPanelItemColor
+{
 	BOOL            bItemColorLoaded;
 	COLORREF        crFore, crBack;
-	//wchar_t      *Description;
-	//wchar_t      *Owner;
-	//wchar_t     **CustomColumnData;
-	//int           CustomColumnNumber;
-	//DWORD_PTR     UserData;
-	//DWORD         CRC32;
-	//DWORD_PTR     Reserved[2];
-	
-} CePluginPanelItem;
+};
 
-enum CEPANELINFOFLAGS {
+enum CEPANELINFOFLAGS
+{
 	CEPFLAGS_SHOWHIDDEN         = 0x00000001,
 	CEPFLAGS_HIGHLIGHT          = 0x00000002,
 	CEPFLAGS_REVERSESORTORDER   = 0x00000004,

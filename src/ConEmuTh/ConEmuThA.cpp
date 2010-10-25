@@ -330,12 +330,13 @@ BOOL LoadPanelInfoA(BOOL abActive)
 
 
 	// Готовим буфер для информации об элементах
-	if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < pcefpi->ItemsNumber))
-	{
-		if (pcefpi->ppItems) free(pcefpi->ppItems);
-		pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + немножно про запас
-		pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->nMaxItemsNumber, sizeof(LPVOID));
-	}
+	pcefpi->ReallocItems(pcefpi->ItemsNumber);
+	//if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < pcefpi->ItemsNumber))
+	//{
+	//	if (pcefpi->ppItems) free(pcefpi->ppItems);
+	//	pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + немножно про запас
+	//	pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->nMaxItemsNumber, sizeof(LPVOID));
+	//}
 
 	// Копирование элементов панели в нашу внутреннюю структуру
 	wchar_t szName[MAX_PATH+1], szDescription[255];

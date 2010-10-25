@@ -619,16 +619,19 @@ void ExitPlugin(void)
 		dwWait = WaitForSingleObject(ghDisplayThread, 1000);
 	if (dwWait)
 		TerminateThread(ghDisplayThread, 100);
-	if (ghDisplayThread) {
+	if (ghDisplayThread)
+	{
 		CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 	}
 	gnDisplayThreadId = 0;
 	// Освободить память
-	if (gpRgnDetect) {
+	if (gpRgnDetect)
+	{
 		delete gpRgnDetect;
 		gpRgnDetect = NULL;
 	}
-	if (gpImgCache) {
+	if (gpImgCache)
+	{
 		delete gpImgCache;
 		gpImgCache = NULL;
 	}
@@ -636,16 +639,19 @@ void ExitPlugin(void)
 	pviLeft.FinalRelease();
 	pviRight.FinalRelease();
 
-	if (gpLastSynchroArg) {
+	if (gpLastSynchroArg)
+	{
 		LocalFree(gpLastSynchroArg); gpLastSynchroArg = NULL;
 	}
 
-	if (gszRootKey) {
+	if (gszRootKey)
+	{
 		free(gszRootKey); gszRootKey = NULL;
 	}
 
 #ifdef _DEBUG
-	if (gpDbgDlg) {
+	if (gpDbgDlg)
+	{
 		delete gpDbgDlg; gpDbgDlg = NULL;
 	}
 #endif

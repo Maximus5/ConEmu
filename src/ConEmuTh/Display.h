@@ -76,6 +76,7 @@ struct CeFullPanelInfo
 	// ************************
 	int nMaxItemsNumber;
 	CePluginPanelItem** ppItems;
+	CePluginPanelItemColor* pItemColors;
 	MSection* pSection;
 	// ************************
 	int nFarTmpBuf;    // Временный буфер для получения
@@ -99,16 +100,18 @@ struct CeFullPanelInfo
 	static DWORD WINAPI DisplayThread(LPVOID lpvParam);
 	int CalcTopPanelItem(int anCurrentItem, int anTopItem);
 	void Invalidate();
+	static void InvalidateAll();
 	void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc);
-	BOOL PaintItem(HDC hdc, int nIndex, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, BOOL abSelectedItem,
+	BOOL PaintItem(HDC hdc, int nIndex, int x, int y, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor,
+		BOOL abCurrentItem, BOOL abSelectedItem,
 		/*COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,*/
-		BOOL abAllowPreview, HBRUSH hBackBrush, HBRUSH hPanelBrush, COLORREF crPanelColor);
+		/*BOOL abAllowPreview,*/ HBRUSH hBackBrush, HBRUSH hPanelBrush, COLORREF crPanelColor);
 	int DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, CePluginPanelItem* pItem, LPCWSTR pszComments, HBRUSH hBr, BOOL bIgnoreFileDescription);
 	BOOL OnSettingsChanged(BOOL bInvalidate);
 	BOOL GetIndexFromWndCoord(int x, int y, int &rnIndex);
 	BOOL GetConCoordFromIndex(int nIndex, COORD& rCoord);
-	HBRUSH GetItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack);
-	void LoadItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, BOOL abStrictConsole);
+	HBRUSH GetItemColors(int nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack);
+	void LoadItemColors(int nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, BOOL abStrictConsole);
 	// Conversions
 	BOOL FarItem2CeItem(int anIndex,
 		const wchar_t*   asName,

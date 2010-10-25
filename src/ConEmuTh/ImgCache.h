@@ -11,9 +11,9 @@
 
 extern HICON ghUpIcon;
 
-typedef struct tag_CePluginPanelItem CePluginPanelItem;
+struct CePluginPanelItem;
 
-typedef BOOL (WINAPI* AlphaBlend_t)(HDC hdcDest, int xoriginDest, int yoriginDest, int wDest, int hDest, HDC hdcSrc, int xoriginSrc, int yoriginSrc, int wSrc, int hSrc, BLENDFUNCTION ftn);
+//typedef BOOL (WINAPI* AlphaBlend_t)(HDC hdcDest, int xoriginDest, int yoriginDest, int wDest, int hDest, HDC hdcSrc, int xoriginSrc, int yoriginSrc, int wSrc, int hSrc, BLENDFUNCTION ftn);
 
 struct IMAGE_CACHE_INFO
 {
@@ -30,28 +30,29 @@ struct IMAGE_CACHE_INFO
 	wchar_t *lpwszFileName;
 	BOOL bVirtualItem;
 	DWORD_PTR UserData;
-	BOOL bPreviewLoaded; // пытались ли уже загружать превьюшку
-	BOOL bPreviewExists; // и получилось ли ее загрузить реально, или в кеше только ShellIcon?
+	UINT PreviewLoaded;  // пытались ли уже загружать превьюшку (|1-ShellIcon, |2-Thumbnail, |4-Thumbnail был реально загружен, а не только извлечена информация)
+	//BOOL bPreviewExists; // и получилось ли ее загрузить реально, или в кеше только ShellIcon?
 	BOOL bIgnoreFileDescription; // ImpEx показывает в описании размер изображения, получается некрасивое дублирование
 	//int N,X,Y;
-	COORD crSize; // Предпочтительно, должен совпадать с crLoadSize
-	DWORD cbStride; // Bytes per line
-	DWORD nBits; // 32 bit required!
-	// [Out] Next fields MUST be LocalAlloc(LPTR)
-	DWORD ColorModel; // One of CET_CM_xxx
-	LPDWORD Pixels; // Alpha channel (highest byte) allowed.
-	DWORD cbPixelsSize; // size in BYTES
+	struct ImageBits
+	{
+		COORD crSize; // Предпочтительно, должен совпадать с crLoadSize
+		DWORD cbStride; // Bytes per line
+		DWORD nBits; // 32 bit required!
+		// [Out] Next fields MUST be LocalAlloc(LPTR)
+		DWORD ColorModel; // One of CET_CM_xxx
+		LPDWORD Pixels; // Alpha channel (highest byte) allowed.
+		DWORD cbPixelsSize; // size in BYTES
+	} Icon, Preview;
 	wchar_t *pszComments; // This may be "512 x 232 x 32bpp"
 	DWORD wcCommentsSize; // size in WORDS
-	// Module can place here information about original image (dimension, format, etc.)
-	// This must be double zero terminated string
-	wchar_t *pszInfo;
-	DWORD wcInfoSize; // size in WORDS
+	//// Module can place here information about original image (dimension, format, etc.)
+	//// This must be double zero terminated string
+	//wchar_t *pszInfo;
+	//DWORD wcInfoSize; // size in WORDS
 };
 
-class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO>
-{
-};
+class CImgLoader;
 
 class CImgCache
 {
@@ -68,18 +69,18 @@ protected:
 	//int nFieldX, nFieldY; // реальное количество в "строке"/"столбце" (не больше ITEMS_IN_FIELD)
 	//HDC hField[FIELD_MAX_COUNT]; HBITMAP hFieldBmp[FIELD_MAX_COUNT], hOldBmp[FIELD_MAX_COUNT];
 	IMAGE_CACHE_INFO CacheInfo[FIELD_MAX_COUNT];
-	HDC mh_CompDC;
-	HBITMAP mh_OldBmp, mh_DibSection;
-	COORD mcr_DibSize;
-	LPBYTE  mp_DibBytes; DWORD mn_DibBytes;
-	BOOL CheckDibCreated();
-	void UpdateCell(struct IMAGE_CACHE_INFO* pInfo, BOOL abLoadPreview);
-	BOOL LoadThumbnail(struct IMAGE_CACHE_INFO* pItem);
-	BOOL LoadShellIcon(struct IMAGE_CACHE_INFO* pItem);
-	BOOL FindInCache(CePluginPanelItem* pItem, int* pnIndex);
+	HDC mh_LoadDC, mh_DrawDC;
+	HBITMAP mh_OldLoadBmp, mh_OldDrawBmp, mh_LoadDib, mh_DrawDib;
+	COORD mcr_LoadDibSize, mcr_DrawDibSize;
+	LPBYTE  mp_LoadDibBytes; DWORD mn_LoadDibBytes;
+	LPBYTE  mp_DrawDibBytes; DWORD mn_DrawDibBytes;
+	BOOL CheckLoadDibCreated();
+	BOOL CheckDrawDibCreated();
+	//void UpdateCell(struct IMAGE_CACHE_INFO* pInfo, BOOL abLoadPreview);
+	BOOL FindInCache(CePluginPanelItem* pItem, int* pnIndex, BOOL abLoadPreview);
 	void CopyBits(COORD crSrcSize, LPBYTE lpSrc, DWORD nSrcStride, COORD crDstSize, LPBYTE lpDst);
 
-	CImgLoader m_ShellLoader;
+	CImgLoader *mp_ShellLoader;
 
 	#define MAX_MODULES 20
 	struct tag_Module {
@@ -105,7 +106,12 @@ public:
 	void SetCacheLocation(LPCWSTR asCachePath);
 	void Reset();
 	void Init(COLORREF acrBack);
-	BOOL PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem* pItem, BOOL abLoadPreview, LPCWSTR* ppszComments, BOOL* pbIgnoreFileDescription);
+	BOOL RequestItem(CePluginPanelItem* pItem, BOOL abLoadPreview);
+	BOOL PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem* pItem, /*BOOL abLoadPreview,*/ LPCWSTR* ppszComments, BOOL* pbIgnoreFileDescription);
+
+public:
+	BOOL LoadThumbnail(struct IMAGE_CACHE_INFO* pItem);
+	BOOL LoadShellIcon(struct IMAGE_CACHE_INFO* pItem);
 
 protected:
 	BOOL mb_Quit;
@@ -115,3 +121,72 @@ protected:
 };
 
 extern CImgCache *gpImgCache;
+
+class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
+{
+public:
+	// Обработка элемента. Функция должна возвращать:
+	// S_OK    - Элемент успешно обработан, будет установлен статус eItemReady
+	// S_FALSE - ошибка обработки, будет установлен статус eItemFailed
+	// FAILED()- статус eItemFailed И нить обработчика будет ЗАВЕРШЕНА
+	virtual HRESULT ProcessItem(IMAGE_CACHE_INFO*& pItem, LONG_PTR lParam)
+	{
+		if (!gpImgCache)
+		{
+			return S_FALSE;
+		}
+		if (lParam == 1)
+		{
+			return gpImgCache->LoadShellIcon(pItem) ? S_OK : S_FALSE;
+		}
+		if (lParam == 2)
+		{
+			return gpImgCache->LoadThumbnail(pItem) ? S_OK : S_FALSE;
+		}
+		return S_FALSE;
+	};
+
+	//// Вызывается при успешном завершении обработки элемента при асинхронной обработке.
+	//// Если элемент обработан успешно (Status == eItemReady), вызывается OnItemReady
+	//virtual void OnItemReady(IMAGE_CACHE_INFO*& pItem, LONG_PTR lParam)
+	//{
+	//	return;
+	//};
+	//// Иначе (Status == eItemFailed) - OnItemFailed
+	//virtual void OnItemFailed(IMAGE_CACHE_INFO*& pItem, LONG_PTR lParam)
+	//{
+	//	return;
+	//};
+	//// После завершения этих функций ячейка стирается!
+
+	// Если требуется останов всех запросов и выход из нити обрабочика
+	virtual bool IsTerminationRequested()
+	{
+		TODO("Вернуть TRUE при ExitFar");
+		return CQueueProcessor<IMAGE_CACHE_INFO*>::IsTerminationRequested();
+	};
+	// Здесь потомок может выполнить CoInitialize например
+	virtual HRESULT OnThreadStarted()
+	{
+		CoInitialize(NULL);
+		return S_OK;
+	}
+	// Здесь потомок может выполнить CoUninitialize например
+	virtual void OnThreadStopped()
+	{
+		CoUninitialize();
+		return;
+	};
+	// Можно переопределить для изменения логики сравнения (используется при поиске)
+	virtual bool IsEqual(const IMAGE_CACHE_INFO*& pItem1, LONG_PTR lParam1, IMAGE_CACHE_INFO*& pItem2, LONG_PTR lParam2)
+	{
+		return (pItem1 == pItem2) && (lParam1 == lParam2);
+	};
+	// Если элемент потерял актуальность - стал НЕ высокоприоритетным
+	virtual bool CheckHighPriority(const IMAGE_CACHE_INFO*& pItem)
+	{
+		// Перекрыть в потомке и вернуть false, если, например, был запрос
+		// для текущей картинки, но пользователь уже улистал с нее на другую
+		return true;
+	};
+};

@@ -364,12 +364,14 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	
 
 	// Готовим буфер для информации об элементах
-	if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < pcefpi->ItemsNumber))
-	{
-		if (pcefpi->ppItems) free(pcefpi->ppItems);
-		pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + немножно про запас
-		pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->nMaxItemsNumber, sizeof(LPVOID));
-	}
+	pcefpi->ReallocItems(pcefpi->ItemsNumber);
+	//if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < pcefpi->ItemsNumber))
+	//{
+	//	if (pcefpi->ppItems) free(pcefpi->ppItems);
+	//	pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + немножно про запас
+	//	pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->nMaxItemsNumber, sizeof(LPVOID));
+	//}
+
 	// и буфер для загрузки элемента из FAR
 	nSize = sizeof(PluginPanelItem)+6*MAX_PATH;
 	if ((pcefpi->pFarTmpBuf == NULL) || (pcefpi->nFarTmpBuf < nSize))

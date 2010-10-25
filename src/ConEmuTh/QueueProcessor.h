@@ -49,6 +49,7 @@ enum ProcessingPriority
 enum ProcessingStatus
 {
 	eItemEmpty = 0,
+	eItemPassed, // почти то-же что и eItemEmpty, но обработан
 	eItemFailed,
 	eItemRequest,
 	eItemReady,
@@ -81,6 +82,8 @@ private:
 	// Очередь обработки
 	CRITICAL_SECTION mcs_Queue;
 	int mn_Count, mn_MaxCount;
+	int mn_WaitingCount;
+	HANDLE mh_Waiting; // Event для передергивания нити обработчика
 	ProcessingItem** mpp_Queue; // **, чтобы не беспокоиться об активном элементе
 	HANDLE mh_Queue; DWORD mn_QueueId;
 	HANDLE mh_Alive; DWORD mn_AliveTick;
@@ -131,9 +134,9 @@ private:
 			{
 				if (mpp_Queue[i])
 				{					
-					if (mpp_Queue[i]->Status != eItemEmpty)
+					if (mpp_Queue[i]->Status != eItemEmpty && mpp_Queue[i]->Status != eItemPassed)
 					{
-						FreeItem(&mpp_Queue[i]->Item);
+						FreeItem(mpp_Queue[i]->Item);
 					}
 					free(mpp_Queue[i]);
 					mpp_Queue[i] = NULL;
@@ -144,8 +147,23 @@ private:
 		}
 	};
 private:
+	// Warning!!! Должна вызываться ВНУТРИ CriticalSection
+	void CheckWaitingCount()
+	{
+		int nWaiting = 0;
+		for (int i = 0; i < mn_Count; i++)
+		{
+			if (mpp_Queue[i]->Status == eItemRequest)
+				nWaiting ++;
+		}
+		mn_WaitingCount = nWaiting;
+		if (mn_WaitingCount > 0)
+			SetEvent(mh_Waiting);
+		else
+			ResetEvent(mh_Waiting);
+	}
 	// Найти в очереди элемент (если его уже запросили) или добавить в очередь новый
-	ProcessingItem* FindOrCreate(const T* pItem, bool Synch, ProcessingPriority Priority, LONG_PTR lParam)
+	ProcessingItem* FindOrCreate(const T& pItem, LONG_PTR lParam, bool Synch, ProcessingPriority Priority)
 	{
 		if (GetCurrentThreadId() == mn_QueueId)
 		{
@@ -165,21 +183,27 @@ private:
 			// Если такой запрос уже сделан - просто обновить его приоритет/флаги?
 			for (i = 0; i < mn_Count; i++)
 			{
-				if (mpp_Queue[i]->Status != eItemEmpty && mpp_Queue[i]->Status != eItemFailed)
+				//if (mpp_Queue[i]->Status != eItemEmpty
+				//	&& mpp_Queue[i]->Status != eItemPassed
+				//	&& mpp_Queue[i]->Status != eItemFailed)
+				if (mpp_Queue[i]->Status == eItemRequest)
 				{
-					if (IsEqual(pItem, &(mpp_Queue[i]->Item)))
+					if (IsEqual(pItem, lParam, (mpp_Queue[i]->Item), mpp_Queue[i]->lParam))
 					{
 						// Можно чуть подправить параметры
 						mpp_Queue[i]->Priority = Priority;
 						mpp_Queue[i]->lParam = lParam;
 						mpp_Queue[i]->Synch = Synch;
-						ApplyChanges(&(mpp_Queue[i]->Item), pItem);
+						ApplyChanges(mpp_Queue[i]->Item, pItem);
+						//SetEvent(mh_Waiting);
+						CheckWaitingCount();
+						_ASSERTE(mpp_Queue[i]->Status != eItemEmpty);
 						LeaveCriticalSection(&mcs_Queue);
 						//if (mpp_Queue[i]->Status == eItemRequest) -- Теоретически может быть уже выполнен, но здесь - не волнует
 						return mpp_Queue[i];
 					}
 				}
-				else if (!p && mpp_Queue[i]->Status == eItemEmpty)
+				else if (!p && (mpp_Queue[i]->Status == eItemEmpty || mpp_Queue[i]->Status == eItemPassed))
 				{
 					p = mpp_Queue[i]; // пустой элемент, если не нашли "тот же"
 				}
@@ -209,11 +233,15 @@ private:
 			p->Start = 0;
 			p->StopRequested = false;
 			p->Synch = Synch;
-			CopyItem(pItem, &p->Item);
+			CopyItem(&pItem, &p->Item);
 			// Отпускаем
-			_ASSERTE(p->Status = eItemEmpty);
+			_ASSERTE(p->Status == eItemEmpty || p->Status == eItemPassed);
 			p->Status = eItemRequest;
+			mn_WaitingCount ++;
+			SetEvent(mh_Waiting);
+			_ASSERTE(p->Status != eItemEmpty);
 		}
+		CheckWaitingCount();
 		LeaveCriticalSection(&mcs_Queue);
 
 		return p;
@@ -222,7 +250,8 @@ public:
 	CQueueProcessor()
 	{
 		InitializeCriticalSection(&mcs_Queue);
-		mn_Count = mn_MaxCount = 0;
+		mn_Count = mn_MaxCount = mn_WaitingCount = 0;
+		mh_Waiting = NULL;
 		mpp_Queue = NULL;
 		mh_Queue = NULL; mn_QueueId = 0;
 		mp_Active = mp_SynchRequest = NULL;
@@ -242,6 +271,11 @@ public:
 		}
 		DeleteCriticalSection(&mcs_Queue);
 		ClearQueue();
+		if (mh_Waiting)
+		{
+			CloseHandle(mh_Waiting);
+			mh_Waiting = NULL;
+		}
 	};
 
 public:
@@ -249,6 +283,7 @@ public:
 	void RequestTerminate()
 	{
 		mb_TerminateRequested = true;
+		SetEvent(mh_Waiting);
 	};
 
 public:
@@ -299,13 +334,13 @@ public:
 	// Возврат - при (Synch==true) результат ProcessItem(...)
 	//           при (Synch==false) - S_FALSE, если еще в очереди, иначе - результат ProcessItem(...)
 	// !!! При синхронном запросе - результат возвращается через pItem.
-	HRESULT RequestItem(bool Synch, ProcessingPriority Priority, T* pItem, LONG_PTR lParam)
+	HRESULT RequestItem(bool Synch, ProcessingPriority Priority, T pItem, LONG_PTR lParam)
 	{
 		HRESULT hr = CheckThread();
 		if (FAILED(hr))
 			return hr;
 
-		ProcessingItem* p = FindOrCreate(pItem, Synch, Synch ? ePriorityHighest : Priority, lParam);
+		ProcessingItem* p = FindOrCreate(pItem, lParam, Synch, Synch ? ePriorityHighest : Priority);
 		if (!p)
 		{
 			_ASSERTE(p!=NULL);
@@ -316,6 +351,11 @@ public:
 		// Если хотят результат "сейчас"
 		if (Synch)
 		{
+			// Пока - синхронными запросами не озабачиваемся.
+			// Если реально будет нужно - потребуется проверка кода.
+			// p->Status уже может быть eItemPassed
+			_ASSERTE(Synch == false);
+
 			// Установить указатель на "синхронный" запрос
 			mp_SynchRequest = p;
 			// Проверим, есть ли активный элемент?
@@ -341,6 +381,11 @@ public:
 				//	// Нить обработки была завершена
 				//	return E_ABORT;
 				//}
+				if (p->Status == eItemPassed)
+				{
+					// Уже обработан асинхронно
+					return p->Result;
+				}
 				if (/*nWait == WAIT_OBJECT_0 ||*/
 					(p->Status == eItemFailed || p->Status == eItemReady))
 				{
@@ -352,7 +397,7 @@ public:
 					//p->Ready = NULL;
 
 					// Вернуть результат обработки (данные)
-					CopyItem(&p->Item, pItem);
+					CopyItem(&p->Item, &pItem);
 					// И сброс нашей внутренней ячейки
 					memset(&p->Item, 0, sizeof(p->Item));
 					p->Status = eItemEmpty;
@@ -406,7 +451,9 @@ public:
 			{
 				if (mpp_Queue[i])
 				{
-					if (mpp_Queue[i]->Status != eItemEmpty)
+					if (mpp_Queue[i]->Status != eItemEmpty 
+						&& mpp_Queue[i]->Status != eItemPassed
+						&& mpp_Queue[i]->Status != eItemFailed)
 					{
 						int nNew = min(ePriorityLowest, (mpp_Queue[i]->Priority+nSteps));
 						mpp_Queue[i]->Priority = nNew;
@@ -414,6 +461,7 @@ public:
 				}
 			}
 
+			CheckWaitingCount();
 			// Больше не требуется
 			LeaveCriticalSection(&mcs_Queue);
 		}
@@ -439,6 +487,7 @@ public:
 				if (mpp_Queue[i])
 				{
 					if (mpp_Queue[i]->Status != eItemEmpty
+						mpp_Queue[i]->Status != eItemPassed
 						&& mpp_Queue[i]->Status != eItemProcessing
 						&& mpp_Queue[i]->Priority >= priority
 					   )
@@ -449,6 +498,7 @@ public:
 				}
 			}
 
+			CheckWaitingCount();
 			// Больше не требуется
 			LeaveCriticalSection(&mcs_Queue);
 		}
@@ -460,9 +510,9 @@ public:
 	// Эту функцию могут вызывать потомки, для ускорения реакции на
 	// высоко-приоритетные запросы. Удаление активного элемента из
 	// очереди не произойдет - он потом будет обработан повторно.
-	virtual bool IsStopRequested(const T* pItem)
+	virtual bool IsStopRequested(const T& pItem)
 	{
-		_ASSERTE(mp_Active && pItem == &(mp_Active->Item));
+		_ASSERTE(mp_Active && pItem == mp_Active->Item);
 		if (!mp_Active)
 			return false;
 		return mp_Active->StopRequested;
@@ -475,9 +525,9 @@ protected:
 	// S_OK    - Элемент успешно обработан, будет установлен статус eItemReady
 	// S_FALSE - ошибка обработки, будет установлен статус eItemFailed
 	// FAILED()- статус eItemFailed И нить обработчика будет ЗАВЕРШЕНА
-	virtual HRESULT ProcessItem(T* pItem, LONG_PTR lParam)
+	virtual HRESULT ProcessItem(T& pItem, LONG_PTR lParam)
 	{
-		return S_OK;
+		return E_NOINTERFACE;
 	};
 
 protected:
@@ -485,12 +535,12 @@ protected:
 
 	// Вызывается при успешном завершении обработки элемента при асинхронной обработке.
     // Если элемент обработан успешно (Status == eItemReady), вызывается OnItemReady
-	virtual void OnItemReady(T* pItem, LONG_PTR lParam)
+	virtual void OnItemReady(T& pItem, LONG_PTR lParam)
 	{
 		return;
 	};
     // Иначе (Status == eItemFailed) - OnItemFailed
-	virtual void OnItemFailed(T* pItem, LONG_PTR lParam)
+	virtual void OnItemFailed(T& pItem, LONG_PTR lParam)
 	{
 		return;
 	};
@@ -499,7 +549,7 @@ protected:
 protected:
 	/* *** Можно переопределить в потомках *** */
 
-	// Если требуется останов все запросов и выход из нити обрабочика
+	// Если требуется останов всех запросов и выход из нити обрабочика
 	virtual bool IsTerminationRequested()
 	{
 		return mb_TerminateRequested;
@@ -521,23 +571,23 @@ protected:
 			memmove(pDst, pSrc, sizeof(T));
 	};
 	// Если элемент уже был запрошен с другими параметрами, а сейчас пришел новый запрос
-	virtual void ApplyChanges(const T* pSrc, T* pDst)
+	virtual void ApplyChanges(T& pDst, const T& pSrc)
 	{
 		return;
 	}
 	// Можно переопределить для изменения логики сравнения (используется при поиске)
-	virtual bool IsEqual(const T* pItem1, const T* pItem2)
+	virtual bool IsEqual(const T& pItem1, LONG_PTR lParam1, const T& pItem2, LONG_PTR lParam2)
 	{
 		int i = memcmp(pItem1, pItem2, sizeof(T));
-		return (i == 0);
+		return (i == 0) && (lParam1 == lParam2);
 	};
 	// Если в T определены какие-то указатели - освободить их
-	virtual void FreeItem(const T* pItem)
+	virtual void FreeItem(const T& pItem)
 	{
 		return;
 	};
 	// Если элемент потерял актуальность - стал НЕ высокоприоритетным
-	virtual bool CheckHighPriority(const T* pItem)
+	virtual bool CheckHighPriority(const T& pItem)
 	{
 		// Перекрыть в потомке и вернуть false, если, например, был запрос
 		// для текущей картинки, но пользователь уже улистал с нее на другую
@@ -554,6 +604,12 @@ protected:
 		// Кого будем обрабатывать
 		ProcessingItem* p = NULL;
 
+		if (WaitForSingleObject(mh_Waiting, 250) == WAIT_TIMEOUT)
+		{
+			_ASSERTE(mn_WaitingCount==0);
+			return false; // true==Terminate
+		}
+
 		// Для получения следующего элемента - нужно заблокировать секцию
 		EnterCriticalSection(&mcs_Queue);
 
@@ -567,7 +623,7 @@ protected:
 				{
 					if (piority <= ePriorityAboveNormal && mpp_Queue[i]->Priority <= piority)
 					{
-						if (!CheckHighPriority(&mpp_Queue[i]->Item))
+						if (!CheckHighPriority(mpp_Queue[i]->Item))
 						{
 							// элемент перестал быть высокоприоритетным
 							mpp_Queue[i]->Priority = ePriorityNormal;
@@ -605,6 +661,8 @@ protected:
 			p->Status = eItemProcessing;
 		}
 
+		CheckWaitingCount();
+
 		// Секция больше не нужна
 		LeaveCriticalSection(&mcs_Queue);
 
@@ -626,12 +684,13 @@ protected:
 			TRY
 			{
 				// Собственно, обработка. Выполняется в потомке
-				hr = ProcessItem(&p->Item, p->lParam);
+				hr = ProcessItem(p->Item, p->lParam);
 			}
 			CATCH
 			{
 				hr = E_UNEXPECTED;
 			}
+			_ASSERTE(hr!=E_NOINTERFACE);
 			p->Result = hr;
 
 
@@ -643,12 +702,12 @@ protected:
 			{
 				// Вернуть результат обработки (данные)
 				if (hr == S_OK)
-					OnItemReady(&p->Item, p->lParam);
+					OnItemReady(p->Item, p->lParam);
 				else
-					OnItemFailed(&p->Item, p->lParam);
+					OnItemFailed(p->Item, p->lParam);
 				// И сброс нашей внутренней ячейки
-				memset(&p->Item, 0, sizeof(p->Item));
-				p->Status = eItemEmpty;
+				memset(p->Item, 0, sizeof(p->Item));
+				p->Status = eItemPassed;
 			}
 
 
@@ -688,6 +747,11 @@ protected:
 		{
 			mh_Alive = CreateEvent(NULL, FALSE, FALSE, NULL);
 			mn_AliveTick = 0;
+		}
+
+		if (!mh_Waiting)
+		{
+			mh_Waiting = CreateEvent(NULL, TRUE, FALSE, NULL);
 		}
 
 		if (!mh_Queue)
