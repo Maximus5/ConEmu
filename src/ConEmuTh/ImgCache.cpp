@@ -1,7 +1,7 @@
 
 #define SHOWDEBUGSTR
-#define DEBUGSTRLOAD(s) DEBUGSTR(s)
-#define DEBUGSTRLOAD2(s) OutputDebugStringW(s)
+#define DEBUGSTRLOAD(s) if (gpLogLoad) {gpLogLoad->LogString(s);} // DEBUGSTR(s)
+#define DEBUGSTRLOAD2(s) if (gpLogLoad) {gpLogLoad->LogString(s);} // OutputDebugStringW(s)
 
 #include <stdio.h>
 #include <windows.h>
@@ -19,7 +19,7 @@
 HICON ghUpIcon = NULL;
 //ITEMIDLIST DesktopID = {{0}};
 //IShellFolder *gpDesktopFolder = NULL;
-
+extern MFileLog* gpLogLoad;
 
 template <typename T>
 inline void SafeRelease(T *&p)

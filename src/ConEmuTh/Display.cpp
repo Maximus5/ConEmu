@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define MCHKHEAP
 #define DEBUGSTRMENU(s) DEBUGSTR(s)
 #define DEBUGSTRCTRL(s) DEBUGSTR(s)
-#define DEBUGSTRLOAD(s) DEBUGSTR(s)
+#define DEBUGSTRPAINT(s) if (gpLogPaint) {gpLogPaint->LogString(s);} // DEBUGSTR(s)
 
 
 #include <windows.h>
@@ -76,6 +76,8 @@ UINT gnConEmuFadeMsg = 0, gnConEmuSettingsMsg = 0;
 //extern CRgnDetect *gpRgnDetect;
 //extern CEFAR_INFO gFarInfo;
 //extern DWORD gnRgnDetectFlags;
+MFileLog* gpLogLoad = NULL;
+MFileLog* gpLogPaint = NULL;
 
 
 void ResetUngetBuffer();
@@ -89,6 +91,27 @@ HWND CeFullPanelInfo::CreateView()
 {
 	gnCreateViewError = 0;
 	gnWin32Error = 0;
+
+#ifdef _DEBUG
+	if (!gpLogLoad)
+	{
+		gpLogLoad = new MFileLog(L"ConEmuTh_Draw");
+		if (gpLogLoad->CreateLogFile())
+		{
+			delete gpLogLoad;
+			gpLogLoad = NULL;
+		}
+	}
+	if (!gpLogPaint)
+	{
+		gpLogPaint = new MFileLog(L"ConEmuTh_Load");
+		if (gpLogPaint->CreateLogFile())
+		{
+			delete gpLogPaint;
+			gpLogPaint = NULL;
+		}
+	}
+#endif
 
 	HWND lhView = this->hView; // (this->bLeftPanel) ? ghLeftView : ghRightView;
 	if (lhView)
@@ -1131,7 +1154,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 {
 	gbCancelAll = FALSE;
 
-	DEBUGSTRLOAD(L"WM_PAINT\n");
+	DEBUGSTRPAINT(L"WM_PAINT\n");
 
 	HDC hdc = ps.hdc;
 
@@ -1378,7 +1401,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 						{
 							#ifdef _DEBUG
 							lstrcpy(szDbg, L"ReqS: "); lstrcpyn(szDbg+6, pItem->FindData.lpwszFileName, MAX_PATH); lstrcat(szDbg, L"\n");
-							DEBUGSTRLOAD(szDbg);
+							DEBUGSTRPAINT(szDbg);
 							#endif
 							gpImgCache->RequestItem(pItem, FALSE/*только Shell*/);
 						}
@@ -1387,7 +1410,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 						{
 							#ifdef _DEBUG
 							lstrcpy(szDbg, L"ReqT: "); lstrcpyn(szDbg+6, pItem->FindData.lpwszFileName, MAX_PATH); lstrcat(szDbg, L"\n");
-							DEBUGSTRLOAD(szDbg);
+							DEBUGSTRPAINT(szDbg);
 							#endif
 							gpImgCache->RequestItem(pItem, TRUE/*Preview*/);
 						}
@@ -1919,6 +1942,18 @@ void CeFullPanelInfo::FinalRelease()
 	{
 		delete pSection; pSection = NULL;
 	}
+
+	if (gpLogLoad)
+	{
+		MFileLog *p = gpLogLoad; gpLogLoad = NULL;
+		delete p;
+	}
+	if (gpLogPaint)
+	{
+		MFileLog *p = gpLogPaint; gpLogPaint = NULL;
+		delete p;
+	}
+
 }
 
 BOOL CeFullPanelInfo::ReallocItems(int anCount)

@@ -127,20 +127,20 @@ DEFINES=\
 
 # common
 CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHs-c- $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
-LINKFLAGS=/nologo /subsystem:console /def:"$(DEF_FILE)" /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /pdb:"$(OUTDIR)\$(OUTNAME).pdb" /release /nxcompat
+LINKFLAGS=/nologo /subsystem:console /def:"$(DEF_FILE)" /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /DEBUG /RELEASE /pdb:"$(OUTDIR)\$(OUTNAME).pdb" /nxcompat
 ULINKFLAGS=-q -m- -ap -Gz -O- -o- -Gh -Gh-
 RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d $(USEDEBUG)
 
 # config-cpecific
 !ifdef DEBUG
 CPPFLAGS=$(CPPFLAGS) /MTd /Od /Zi
-LINKFLAGS=$(LINKFLAGS) /debug
+LINKFLAGS=$(LINKFLAGS)
 ULINKFLAGS=$(ULINKFLAGS) -v
 !else
 CPPFLAGS=$(CPPFLAGS) /MT /O2 /Oy-
 !ifndef NO_RELEASE_PDB
 CPPFLAGS=$(CPPFLAGS) /Zi
-LINKFLAGS=$(LINKFLAGS) /debug
+LINKFLAGS=$(LINKFLAGS)
 !endif
 LINKFLAGS=$(LINKFLAGS) /incremental:no /OPT:REF /OPT:ICF
 !endif

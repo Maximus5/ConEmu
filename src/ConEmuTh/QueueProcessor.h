@@ -334,7 +334,7 @@ public:
 	// Возврат - при (Synch==true) результат ProcessItem(...)
 	//           при (Synch==false) - S_FALSE, если еще в очереди, иначе - результат ProcessItem(...)
 	// !!! При синхронном запросе - результат возвращается через pItem.
-	HRESULT RequestItem(bool Synch, ProcessingPriority Priority, T pItem, LONG_PTR lParam)
+	HRESULT RequestItem(bool Synch, ProcessingPriority Priority, const T pItem, LONG_PTR lParam)
 	{
 		HRESULT hr = CheckThread();
 		if (FAILED(hr))
@@ -351,10 +351,12 @@ public:
 		// Если хотят результат "сейчас"
 		if (Synch)
 		{
-			// Пока - синхронными запросами не озабачиваемся.
-			// Если реально будет нужно - потребуется проверка кода.
-			// p->Status уже может быть eItemPassed
-			_ASSERTE(Synch == false);
+			// Если уже обработан - сразу вернем результат.
+			if (p->Status == eItemPassed)
+			{
+				// Уже обработан асинхронно
+				return p->Result;
+			}
 
 			// Установить указатель на "синхронный" запрос
 			mp_SynchRequest = p;
@@ -381,12 +383,12 @@ public:
 				//	// Нить обработки была завершена
 				//	return E_ABORT;
 				//}
-				if (p->Status == eItemPassed)
-				{
-					// Уже обработан асинхронно
-					return p->Result;
-				}
-				if (/*nWait == WAIT_OBJECT_0 ||*/
+				//if (p->Status == eItemPassed)
+				//{
+				//	// Уже обработан асинхронно
+				//	return p->Result;
+				//}
+				if (p->Status == eItemPassed ||
 					(p->Status == eItemFailed || p->Status == eItemReady))
 				{
 					if (mp_SynchRequest == p)
@@ -396,11 +398,12 @@ public:
 					//CloseHandle(p->Ready);
 					//p->Ready = NULL;
 
-					// Вернуть результат обработки (данные)
-					CopyItem(&p->Item, &pItem);
-					// И сброс нашей внутренней ячейки
-					memset(&p->Item, 0, sizeof(p->Item));
-					p->Status = eItemEmpty;
+					//// Вернуть результат обработки (данные)
+					//CopyItem(&p->Item, &pItem);
+					//// И сброс нашей внутренней ячейки
+					//memset(&p->Item, 0, sizeof(p->Item));
+					//p->Status = eItemEmpty;
+
 					// Возврат значения
 					return p->Result;
 				}

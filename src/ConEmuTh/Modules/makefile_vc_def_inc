@@ -117,7 +117,7 @@ NOWIN98=/OPT:NOWIN98
 
 PDBNAME="$(OUTDIR)\$(OUTNAME).pdb"
 !ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Zi /Fd$(PDBNAME)
+CPP_OPT=/DNDEBUG /O1i /Fd$(PDBNAME)
 !else
 CPP_OPT=/DDEBUG /Od /Fd$(PDBNAME)
 !endif
@@ -162,36 +162,26 @@ _LINK_PATH_=$(_BIN_PATH_)
 !endif
 
 
-!ifndef ULINK
 LNK=$(_LINK_PATH_)link.exe
-LINK_DEBUG=/debug /pdb:$(PDBNAME)
+!ifndef DEBUG
+LINK_DEBUG=/map:"$(MAP)"
+CPP_DEBUG=
+!else
+LINK_DEBUG=/debug /pdb:$(PDBNAME) /map:"$(MAP)"
 CPP_DEBUG=/Zi
+!endif
+
 !ifndef NEEDENTRY
 NOENTRY = /noentry
 !endif
 !ifndef NEEDDEFLIB
 NODEFLIB = /nodefaultlib
 !endif
-LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /map:"$(MAP)" /out:"$(DLLFULLNAME)"
-!else
-LINK_DEBUG=-v
-CPP_DEBUG=/Z7
-LNK=$(_ULINK_PATH_)ulink.exe +-
-!ifndef NEEDENTRY
-NOENTRY = -e-
-!endif
-!ifndef NEEDDEFLIB
-NODEFLIB = -n
-!endif
-LINK_FLAGS=-q $(ULOUT) -Gz -m- -Gh -Gh- $(LINK_MACHINE) $(NOENTRY) $(NODEFLIB) /ZD:"$(DEF)" /ZM:"$(MAP)" /ZO:"$(DLLFULLNAME)" $(ENV_LIB_OPT)
-!endif
 
-!ifndef DEBUG
-!undef LINK_DEBUG
-!undef CPP_DEBUG
-!endif
+LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
 
-CFLAGS_NO = $(MP) $(CPP_PROJ_NO) $(CPP_DEBUG) $(CPP_OPT)
+
+
 CFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
 
 !ifndef CC

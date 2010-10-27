@@ -1460,3 +1460,122 @@ BOOL MSectionLock::isLocked()
 {
 	return (mp_S!=NULL) && mb_Locked;
 };
+
+
+
+
+
+MFileLog::MFileLog(LPCWSTR asName, LPCWSTR asDir /*= NULL*/, DWORD anPID /*= 0*/)
+{
+	mh_LogFile = NULL;
+	if (!anPID) anPID = GetCurrentProcessId();
+	
+	wchar_t szTemp[MAX_PATH]; szTemp[0] = 0;
+	GetTempPath(MAX_PATH, szTemp);
+	if (!asDir || !*asDir)
+		asDir = szTemp;
+	int nDirLen = lstrlenW(asDir);
+	wchar_t szFile[MAX_PATH];
+	wsprintfW(szFile, L"%s-%u.log", asName ? asName : L"LogFile", anPID);
+	int nFileLen = lstrlenW(szFile);
+	ms_FilePathName = (wchar_t*)calloc((nDirLen+nFileLen+3),2);
+	lstrcpyW(ms_FilePathName, asDir);
+	if (nDirLen > 0 && ms_FilePathName[nDirLen-1] != L'\\')
+		lstrcatW(ms_FilePathName, L"\\");
+	lstrcpyW(ms_FilePathName, szFile);
+}
+MFileLog::~MFileLog()
+{
+	if (mh_LogFile && mh_LogFile != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(mh_LogFile);
+		mh_LogFile = NULL;
+	}
+	if (ms_FilePathName)
+	{
+		free(ms_FilePathName);
+		ms_FilePathName = NULL;
+	}
+}
+// Returns 0 if succeeded, otherwise - GetLastError() code
+HRESULT MFileLog::CreateLogFile()
+{
+	if (!this)
+		return -1;
+	if (mh_LogFile && mh_LogFile != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(mh_LogFile);
+	}
+	if (!ms_FilePathName || !*ms_FilePathName)
+		return -1;
+	
+	mh_LogFile = CreateFileW ( ms_FilePathName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (mh_LogFile == INVALID_HANDLE_VALUE)
+	{
+		mh_LogFile = NULL;
+		DWORD dwErr = GetLastError();
+		return (dwErr ? dwErr : -1);
+	}
+	
+	return 0; // OK
+}
+LPCWSTR MFileLog::GetLogFileName()
+{
+	if (!this)
+		return L"<NULL>";
+	return (ms_FilePathName ? ms_FilePathName : L"<NullFileName>");
+}
+void MFileLog::LogString(LPCSTR asText, BOOL abWriteTime /*= TRUE*/, LPCSTR asThreadName /*= NULL*/)
+{
+	if (!this)
+		return;
+	if (mh_LogFile == INVALID_HANDLE_VALUE || mh_LogFile == NULL)
+		return;
+
+	wchar_t szInfo[460]; szInfo[0] = 0;
+	wchar_t szThread[32]; szThread[0] = 0;
+	
+	if (asText)
+	{
+		MultiByteToWideChar(CP_OEMCP, 0, asText, -1, szInfo, countof(szInfo));
+		szInfo[countof(szInfo)-1] = 0;
+	}
+	if (asThreadName)
+	{
+		MultiByteToWideChar(CP_OEMCP, 0, asThreadName, -1, szThread, countof(szThread));
+		szThread[countof(szThread)-1] = 0;
+	}
+	
+	LogString(szInfo, abWriteTime, szThread);
+}
+void MFileLog::LogString(LPCWSTR asText, BOOL abWriteTime /*= TRUE*/, LPCWSTR asThreadName /*= NULL*/)
+{
+	if (!this)
+		return;
+	if (mh_LogFile == INVALID_HANDLE_VALUE || mh_LogFile == NULL)
+		return;
+
+	wchar_t szInfo[512]; szInfo[0] = 0;
+	SYSTEMTIME st; GetLocalTime(&st);
+	
+	wsprintfW(szInfo, L"%i:%02i:%02i.%03i ",
+		st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+
+	int nCur = lstrlenW(szInfo);
+	if (asThreadName && *asThreadName)
+	{
+		lstrcpynW(szInfo+nCur, asThreadName, 32);
+		nCur += lstrlenW(szInfo+nCur);
+	}
+	if (asText && *asText)
+	{
+		lstrcpynW(szInfo+nCur, asText, 508-nCur);
+		nCur += lstrlenW(szInfo+nCur);
+	}
+	lstrcpyW(szInfo+nCur, L"\r\n");
+	nCur += 2;
+
+	DWORD dwLen = 0;
+	WriteFile(mh_LogFile, szInfo, nCur*2, &dwLen, 0);
+	FlushFileBuffers(mh_LogFile);
+}

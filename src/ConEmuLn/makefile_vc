@@ -143,9 +143,13 @@ NOWIN98=/OPT:NOWIN98
 
 
 !ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Zi /Fd$(PDB) /DHIDE_TODO /DCRTSTARTUP
+CPP_OPT=/DNDEBUG /O1i /Fd$(PDB) /DHIDE_TODO /DCRTSTARTUP
+LINK_DEBUG=/map:"$(MAP)" 
+CPP_DEBUG=
 !else
 CPP_OPT=/DDEBUG /Od /Fd$(PDB) /DCRTSTARTUP
+LINK_DEBUG=/debug /map:"$(MAP)" /pdb:"$(PDB)"
+CPP_DEBUG=/Zi
 !endif
 
 !ifdef AMD64
@@ -190,17 +194,11 @@ _LINK_PATH_=$(_BIN_PATH_)
 
 
 LNK=$(_LINK_PATH_)link.exe
-#LINK_DEBUG=/debug /pdb:$(PDB)
-CPP_DEBUG=/Zi
-LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /release $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /map:"$(MAP)" /pdb:"$(PDB)" /out:"$(DLLFULLNAME)"
+LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
 #LINK_FLAGS=/DEBUG /DEF:"export.def" /DLL /DYNAMICBASE /INCREMENTAL:NO /LTCG /MACHINE:X86 /MAP /NODEFAULTLIB /SUBSYSTEM:WINDOWS /OUT:"$(DLLFULLNAME)"
 
 
 
-!ifndef DEBUG
-!undef LINK_DEBUG
-!undef CPP_DEBUG
-!endif
 
 CFLAGS_NO = $(MP) $(CPP_PROJ_NO) $(CPP_DEBUG) $(CPP_OPT)
 CFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
@@ -233,11 +231,11 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !ifndef __MAKE__
 	echo $(LINK_FLAGS)
 	@$(LNK) @<<
-	$(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
+	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 <<
 !else
 	echo $(LINK_FLAGS)
-	@$(LNK) $(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
+	@$(LNK) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 !endif
 !ifdef DOCS
 !ifndef WIDE
@@ -288,7 +286,11 @@ clean:
 	move $(DLLFULLNAME) ..\..\$(RELEASEDIR)
 	@cd
 	@echo moving $(PDB) ..\..\$(RELEASEDIR)
+!ifdef DEBUG
 	move $(PDB) ..\..\$(RELEASEDIR)
+!else
+    @if exist $(PDB) del $(PDB)
+!endif
 	move $(MAP) ..\..\$(RELEASEDIR)
 
 #	echo final cleaning

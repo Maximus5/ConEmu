@@ -509,3 +509,17 @@ public:
 
 	void Unlock();
 };
+
+class MFileLog
+{
+protected:
+	wchar_t* ms_FilePathName;
+	HANDLE   mh_LogFile;
+public:
+	MFileLog(LPCWSTR asName, LPCWSTR asDir = NULL, DWORD anPID = 0);
+	~MFileLog();
+	HRESULT CreateLogFile(); // Returns 0 if succeeded, otherwise - GetLastError() code
+	LPCWSTR GetLogFileName();
+	void LogString(LPCSTR asText, BOOL abWriteTime = TRUE, LPCSTR asThreadName = NULL);
+	void LogString(LPCWSTR asText, BOOL abWriteTime = TRUE, LPCWSTR asThreadName = NULL);
+};
