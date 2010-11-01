@@ -1406,11 +1406,32 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 		gpRgnDetect->OnWriteConsoleOutput(lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion, gcrCurColors);
 
 		WARNING("ѕеред установкой флагов измененности - сначала хорошо бы проверить, а мен€лась ли сама панель?");
-		if (pviLeft.hView || pviRight.hView)
+		DWORD nChanges = 0;
+		RECT rcTest = {0};
+		RECT rcWrite = {lpWriteRegion->Left,lpWriteRegion->Top,lpWriteRegion->Right+1,lpWriteRegion->Bottom+1};
+		if (pviLeft.hView)
+		{
+			WARNING("ѕроверить в far/w");
+			if (IntersectRect(&rcTest, &pviLeft.WorkRect, &rcWrite))
+			{
+				nChanges |= 1; // 1-left, 2-right.
+			}
+		}
+		if (pviRight.hView)
+		{
+			WARNING("ѕроверить в far/w");
+			if (IntersectRect(&rcTest, &pviRight.WorkRect, &rcWrite))
+			{
+				nChanges |= 2; // 1-left, 2-right.
+			}
+		}
+		//if (pviLeft.hView || pviRight.hView)
+		if (nChanges)
 		{
 			//bool lbNeedSynchro = (gn ConsoleChanges == 0 && gFarVersion.dwVerMajor >= 2);
 			// 1-left, 2-right. Ќо пока - ставим все, т.к. еще не провер€етс€ что собственно изменилось!
-			gnConsoleChanges |= 3;
+			//gnConsoleChanges |= 3;
+			gnConsoleChanges |= nChanges;
 			//if (lbNeedSynchro)
 			//{
 			//	ExecuteInMainThread(SYNCHRO_RELOAD_PANELS);

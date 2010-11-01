@@ -283,7 +283,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef unsigned __int64 u64;
 
-typedef struct tag_HWND2 {
+struct HWND2
+{
 	DWORD u;
 	operator HWND() const {
 		return (HWND)u;
@@ -291,11 +292,11 @@ typedef struct tag_HWND2 {
 	operator DWORD() const {
 		return (DWORD)u;
 	};
-	struct tag_HWND2& operator=(HWND h) {
+	struct HWND2& operator=(HWND h) {
 		u = (DWORD)h;
 		return *this;
 	};
-} HWND2;
+};
 
 struct MSG64
 {
@@ -305,7 +306,8 @@ struct MSG64
 	u64   lParam;
 };
 
-typedef struct tag_ThumbColor {
+struct ThumbColor
+{
 	union {
 		struct {
 			unsigned int   ColorRGB : 24;
@@ -314,9 +316,10 @@ typedef struct tag_ThumbColor {
 		};
 		DWORD RawColor;
 	};
-} ThumbColor;
+};
 
-typedef struct tag_ThumbSizes {
+struct ThumbSizes
+{
 	// сторона превьюшки или иконки
 	int nImgSize; // Thumbs: 96, Tiles: 48
 	// Сдвиг превьюшки/иконки вправо&вниз относительно полного поля файла
@@ -330,15 +333,16 @@ typedef struct tag_ThumbSizes {
 	// Шрифт
 	wchar_t sFontName[36]; // Tahoma
 	int nFontHeight; // 14
-} ThumbSizes;
+};
 
 
-typedef enum {
+enum PanelViewMode
+{
 	pvm_None = 0,
 	pvm_Thumbnails = 1,
 	pvm_Tiles = 2,
 	// следующий режим (если он будет) делать 4! (это bitmask)
-} PanelViewMode;
+};
 
 /* Основной шрифт в GUI */
 struct ConEmuMainFont
@@ -596,7 +600,8 @@ typedef void (WINAPI* OnConEmuLoaded_t)(struct ConEmuLoadedArg* pConEmuInfo);
 
 
 
-typedef struct tag_ConEmuGuiInfo {
+struct ConEmuGuiInfo
+{
 	DWORD    cbSize;
 	HWND2    hGuiWnd; // основное (корневое) окно ConEmu
 	wchar_t  sConEmuDir[MAX_PATH+1];
@@ -611,101 +616,117 @@ typedef struct tag_ConEmuGuiInfo {
 	// которая сможет корректно определить адрес для 64-битного kernel,
 	// а адрес 32-битного kernel сможет вытащить через его экспорты.
 	ULONGLONG ptrLoadLib32, ptrLoadLib64;
-} ConEmuGuiInfo;
+};
 
 
 //TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");
 #define CONEMUTABMAX 0x400
-typedef struct tag_ConEmuTab {
+struct ConEmuTab
+{
 	int  Pos;
 	int  Current;
 	int  Type; // (Panels=1, Viewer=2, Editor=3) | (Elevated=0x100)
 	int  Modified;
+	int  EditViewId;
 	wchar_t Name[CONEMUTABMAX];
 	//  int  Modified;
 	//  int isEditor;
-} ConEmuTab;
+};
 
-typedef struct tag_CESERVER_REQ_CONEMUTAB {
+struct CESERVER_REQ_CONEMUTAB
+{
 	DWORD nTabCount;
 	BOOL  bMacroActive;
 	BOOL  bMainThread;
 	int   CurrentType; // WTYPE_PANELS / WTYPE_VIEWER / WTYPE_EDITOR
 	int   CurrentIndex; // для удобства, индекс текущего окна в tabs
 	ConEmuTab tabs[1];
-} CESERVER_REQ_CONEMUTAB;
+};
 
-typedef struct tag_CESERVER_REQ_CONEMUTAB_RET {
+struct CESERVER_REQ_CONEMUTAB_RET
+{
 	BOOL  bNeedPostTabSend;
 	BOOL  bNeedResize;
 	COORD crNewSize;
-} CESERVER_REQ_CONEMUTAB_RET;
+};
 
-typedef struct tag_ForwardedPanelInfo {
+struct ForwardedPanelInfo
+{
 	RECT ActiveRect;
 	RECT PassiveRect;
 	int ActivePathShift; // сдвиг в этой структуре в байтах
 	int PassivePathShift; // сдвиг в этой структуре в байтах
-	union { //x64 ready
+	union //x64 ready
+	{
 		WCHAR* pszActivePath/*[MAX_PATH+1]*/;
 		u64 Reserved1;
 	};
-	union { //x64 ready
+	union //x64 ready
+	{
 		WCHAR* pszPassivePath/*[MAX_PATH+1]*/;
 		u64 Reserved2;
 	};
-} ForwardedPanelInfo;
+};
 
-typedef struct tag_ForwardedFileInfo {
+struct ForwardedFileInfo
+{
 	WCHAR Path[MAX_PATH+1];
-} ForwardedFileInfo;
+};
 
 
-typedef struct tag_CESERVER_REQ_HDR {
+struct CESERVER_REQ_HDR
+{
 	DWORD   cbSize;
 	DWORD   nCmd;
 	DWORD   nVersion;
 	DWORD   nSrcThreadId;
 	DWORD   nSrcPID;
 	DWORD   nCreateTick;
-} CESERVER_REQ_HDR;
+};
 
 
-typedef struct tag_CESERVER_CHAR_HDR {
+struct CESERVER_CHAR_HDR
+{
 	int   nSize;    // размер структуры динамический. Если 0 - значит прямоугольник is NULL
 	COORD cr1, cr2; // WARNING: Это АБСОЛЮТНЫЕ координаты (без учета прокрутки), а не экранные.
-} CESERVER_CHAR_HDR;
+};
 
-typedef struct tag_CESERVER_CHAR {
+struct CESERVER_CHAR
+{
 	CESERVER_CHAR_HDR hdr; // фиксированная часть
 	WORD  data[2];  // variable(!) length
-} CESERVER_CHAR;
+};
 
-typedef struct tag_CESERVER_CONSAVE_HDR {
+struct CESERVER_CONSAVE_HDR
+{
 	CESERVER_REQ_HDR hdr; // Заполняется только перед отсылкой в плагин
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 	DWORD cbMaxOneBufferSize;
-} CESERVER_CONSAVE_HDR;
+};
 
-typedef struct tag_CESERVER_CONSAVE {
+struct CESERVER_CONSAVE
+{
 	CESERVER_CONSAVE_HDR hdr;
 	wchar_t Data[1];
-} CESERVER_CONSAVE;
+};
 
 
 
-typedef struct tag_CESERVER_REQ_RGNINFO {
+struct CESERVER_REQ_RGNINFO
+{
 	DWORD dwRgnInfoSize;
 	CESERVER_CHAR RgnInfo;
-} CESERVER_REQ_RGNINFO;
+};
 
-typedef struct tag_CESERVER_REQ_FULLCONDATA {
+struct CESERVER_REQ_FULLCONDATA
+{
 	DWORD dwRgnInfoSize_MustBe0; // must be 0
 	DWORD dwOneBufferSize; // may be 0
 	wchar_t Data[300]; // Variable length!!!
-} CESERVER_REQ_FULLCONDATA;
+};
 
-typedef struct tag_CEFAR_SHORT_PANEL_INFO {
+struct CEFAR_SHORT_PANEL_INFO
+{
 	int   PanelType;
 	int   Plugin;
 	RECT  PanelRect;
@@ -719,14 +740,16 @@ typedef struct tag_CEFAR_SHORT_PANEL_INFO {
 	int   ShortNames;
 	int   SortMode;
 	DWORD Flags;
-} CEFAR_SHORT_PANEL_INFO;
+};
 
-typedef struct tag_CEFAR_PANELTABS {
+struct CEFAR_PANELTABS
+{
 	int   SeparateTabs; // если -1 - то умолчание
 	int   ButtonColor;  // если -1 - то умолчание
-} CEFAR_PANELTABS;
+};
 
-typedef struct tag_CEFAR_INFO {
+struct CEFAR_INFO
+{
 	DWORD cbSize;
 	DWORD nFarInfoIdx;
 	FarVersion FarVer;
@@ -752,10 +775,11 @@ typedef struct tag_CEFAR_INFO {
 	wchar_t sLngTemp[64]; // "{Temporary panel"
 	//wchar_t sLngName[64]; // "Name"
 	wchar_t sReserved[MAX_PATH]; // Чтобы случайно GetMsg из допустимого диапазона не вышел
-} CEFAR_INFO;
+};
 
 
-typedef struct tag_CESERVER_REQ_CONINFO_HDR {
+struct CESERVER_REQ_CONINFO_HDR
+{
 	DWORD cbSize;
 	DWORD nLogLevel;
 	COORD crMaxConSize;
@@ -775,9 +799,10 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	wchar_t  sConEmuDir[MAX_PATH+1];  // здесь будет лежать собственно hive
 	wchar_t  sInjectsDir[MAX_PATH+1]; // path to "conemu.dll" & "conemu.x64.dll"
-} CESERVER_REQ_CONINFO_HDR;
+};
 
-typedef struct tag_CESERVER_REQ_CONINFO_INFO {
+struct CESERVER_REQ_CONINFO_INFO
+{
 	CESERVER_REQ_HDR cmd;
 	//DWORD cbSize;
 	HWND2 hConWnd;
@@ -806,7 +831,7 @@ typedef struct tag_CESERVER_REQ_CONINFO_INFO {
 	//// Информация о текущем FAR
 	//DWORD nFarInfoIdx; // выносим из структуры CEFAR_INFO, т.к. ее копия хранится в плагине
 	//CEFAR_INFO FarInfo;
-} CESERVER_REQ_CONINFO_INFO;
+};
 
 //typedef struct tag_CESERVER_REQ_CONINFO_DATA {
 //	CESERVER_REQ_HDR cmd;
@@ -814,7 +839,8 @@ typedef struct tag_CESERVER_REQ_CONINFO_INFO {
 //	CHAR_INFO  Buf[1];
 //} CESERVER_REQ_CONINFO_DATA;
 
-typedef struct tag_CESERVER_REQ_CONINFO_FULL {
+struct CESERVER_REQ_CONINFO_FULL
+{
 	DWORD cbMaxSize;    // размер всего буфера CESERVER_REQ_CONINFO_FULL (скорее всего будет меньше реальных данных)
 	//DWORD cbActiveSize; // размер реальных данных CESERVER_REQ_CONINFO_FULL, а не всего буфера data
 	//BOOL  bChanged;     // флаг того, что данные изменились с последней передачи в GUI
@@ -823,7 +849,7 @@ typedef struct tag_CESERVER_REQ_CONINFO_FULL {
 	CESERVER_REQ_CONINFO_INFO info;
 	//CESERVER_REQ_CONINFO_DATA data;
 	CHAR_INFO  data[1];
-} CESERVER_REQ_CONINFO_FULL;
+};
 
 //typedef struct tag_CESERVER_REQ_CONINFO {
 //	CESERVER_REQ_CONINFO_HDR inf;
@@ -834,30 +860,35 @@ typedef struct tag_CESERVER_REQ_CONINFO_FULL {
 //	};
 //} CESERVER_REQ_CONINFO;
 
-typedef struct tag_CESERVER_REQ_SETSIZE {
+struct CESERVER_REQ_SETSIZE
+{
 	USHORT nBufferHeight; // 0 или высота буфера (режим с прокруткой)
 	COORD  size;
 	SHORT  nSendTopLine;  // -1 или 0based номер строки зафиксированной в GUI (только для режима с прокруткой)
 	SMALL_RECT rcWindow;  // координаты видимой области для режима с прокруткой
 	DWORD  dwFarPID;      // Если передано - сервер должен сам достучаться до FAR'а и обновить его размер через плагин ПЕРЕД возвратом
-} CESERVER_REQ_SETSIZE;
+};
 
-typedef struct tag_CESERVER_REQ_OUTPUTFILE {
+struct CESERVER_REQ_OUTPUTFILE
+{
 	BOOL  bUnicode;
 	WCHAR szFilePathName[MAX_PATH+1];
-} CESERVER_REQ_OUTPUTFILE;
+};
 
-typedef struct tag_CESERVER_REQ_RETSIZE {
+struct CESERVER_REQ_RETSIZE
+{
 	DWORD nNextPacketId;
 	CONSOLE_SCREEN_BUFFER_INFO SetSizeRet;
-} CESERVER_REQ_RETSIZE;
+};
 
-typedef struct tag_CESERVER_REQ_NEWCMD {
+struct CESERVER_REQ_NEWCMD
+{
 	wchar_t szCurDir[MAX_PATH];
 	wchar_t szCommand[MAX_PATH]; // На самом деле - variable_size !!!
-} CESERVER_REQ_NEWCMD;
+};
 
-typedef struct tag_CESERVER_REQ_STARTSTOP {
+struct CESERVER_REQ_STARTSTOP
+{
 	DWORD nStarted; // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
 	HWND2 hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
 	DWORD dwPID; //, dwInputTID;
@@ -870,10 +901,11 @@ typedef struct tag_CESERVER_REQ_STARTSTOP {
 	BOOL  bWasBufferHeight;
 	// Reserved
 	DWORD nReserved0;
-} CESERVER_REQ_STARTSTOP;
+};
 
 // _ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
-typedef struct tag_CESERVER_REQ_STARTSTOPRET {
+struct CESERVER_REQ_STARTSTOPRET
+{
 	BOOL  bWasBufferHeight;
 	HWND2 hWnd; // при возврате в консоль - GUI (главное окно)
 	HWND2 hWndDC;
@@ -882,38 +914,43 @@ typedef struct tag_CESERVER_REQ_STARTSTOPRET {
 	DWORD dwSrvPID;
 	BOOL  bNeedLangChange;
 	u64   NewConsoleLang;
-} CESERVER_REQ_STARTSTOPRET;
+};
 
-typedef struct tag_CESERVER_REQ_POSTMSG {
+struct CESERVER_REQ_POSTMSG
+{
 	BOOL    bPost;
 	HWND2   hWnd;
 	UINT    nMsg;
 	// Заложимся на унификацию x86 & x64
 	u64     wParam, lParam;
-} CESERVER_REQ_POSTMSG;
+};
 
-typedef struct tag_CESERVER_REQ_FLASHWINFO {
+struct CESERVER_REQ_FLASHWINFO
+{
 	BOOL  bSimple;
 	HWND2 hWnd;
 	BOOL  bInvert; // только если bSimple == TRUE
 	DWORD dwFlags; // а это и далее, если bSimple == FALSE
 	UINT  uCount;
 	DWORD dwTimeout;
-} CESERVER_REQ_FLASHWINFO;
+};
 
 // CMD_SETENVVAR - FAR plugin
-typedef struct tag_FAR_REQ_SETENVVAR {
+struct FAR_REQ_SETENVVAR
+{
 	BOOL    bFARuseASCIIsort;
 	BOOL    bShellNoZoneCheck; // Затычка для SEE_MASK_NOZONECHECKS
 	wchar_t szEnv[1]; // Variable length: <Name>\0<Value>\0<Name2>\0<Value2>\0\0
-} FAR_REQ_SETENVVAR;
+};
 
-typedef struct tag_CESERVER_REQ_SETCONCP {
+struct CESERVER_REQ_SETCONCP
+{
 	BOOL    bSetOutputCP; // [IN], [Out]=result
 	DWORD   nCP;          // [IN], [Out]=LastError
-} CESERVER_REQ_SETCONCP;
+};
 
-typedef struct tag_CESERVER_REQ_SETWINDOWPOS {
+struct CESERVER_REQ_SETWINDOWPOS
+{
 	HWND2 hWnd;
 	HWND2 hWndInsertAfter;
 	int X;
@@ -921,18 +958,20 @@ typedef struct tag_CESERVER_REQ_SETWINDOWPOS {
 	int cx;
 	int cy;
 	UINT uFlags;
-} CESERVER_REQ_SETWINDOWPOS;
+};
 
-typedef struct tag_CESERVER_REQ_SETWINDOWRGN {
+struct CESERVER_REQ_SETWINDOWRGN
+{
 	HWND2 hWnd;
 	int   nRectCount;  // если 0 - сбросить WindowRgn, иначе - обсчитать.
 	BOOL  bRedraw;
 	RECT  rcRects[20]; // [0] - основной окна, [
-} CESERVER_REQ_SETWINDOWRGN;
+};
 
 // CECMD_SETBACKGROUND - приходит из плагина "PanelColorer.dll"
 // Warning! Structure has variable length. "bmp" field must be followed by bitmap data (same as in *.bmp files)
-typedef struct tag_CESERVER_REQ_SETBACKGROUND {
+struct CESERVER_REQ_SETBACKGROUND
+{
 	int               nType;    // Reserved for future use. Must be 1
 	BOOL              bEnabled; // TRUE - ConEmu use this image, FALSE - ConEmu use self background settings
 	int               nReserved1; // Must by 0. reserved for alpha
@@ -945,28 +984,33 @@ typedef struct tag_CESERVER_REQ_SETBACKGROUND {
 	
 	BITMAPFILEHEADER  bmp;
 	BITMAPINFOHEADER  bi;
-} CESERVER_REQ_SETBACKGROUND;
+};
 
 // ConEmu respond for CESERVER_REQ_SETBACKGROUND
-enum SetBackgroundResult {
+enum SetBackgroundResult
+{
 	esbr_OK = 0,               // All OK
 	esbr_InvalidArg = 1,       // Invalid CESERVER_REQ_SETBACKGROUND.bmp, or CESERVER_REQ_SETBACKGROUND
 	esbr_PluginForbidden = 2,  // "Allow plugins" unchecked in ConEmu settings ("Main" page)
 	esbr_ConEmuInShutdown = 3, // Console is closing. This is not an error, just information
 	esbr_Unexpected = 4,       // Unexpected error in ConEmu
 };
-typedef struct tag_CESERVER_REQ_SETBACKGROUNDRET {
+struct CESERVER_REQ_SETBACKGROUNDRET
+{
 	int  nResult; // enum SetBackgroundResult
-} CESERVER_REQ_SETBACKGROUNDRET;
+};
 
 // CECMD_ACTIVATECON.
-typedef struct tag_CESERVER_REQ_ACTIVATECONSOLE {
+struct CESERVER_REQ_ACTIVATECONSOLE
+{
 	HWND2 hConWnd;
-} CESERVER_REQ_ACTIVATECONSOLE;
+};
 
-typedef struct tag_CESERVER_REQ {
+struct CESERVER_REQ
+{
     CESERVER_REQ_HDR hdr;
-	union {
+	union
+	{
 		BYTE    Data[1]; // variable(!) length
 		WORD    wData[1];
 		DWORD   dwData[1];
@@ -991,7 +1035,7 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_ACTIVATECONSOLE ActivateCon;
 		PanelViewInit PVI;
 	};
-} CESERVER_REQ;
+};
 
 
 //#pragma pack(pop)

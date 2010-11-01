@@ -412,9 +412,10 @@ void UpdateConEmuTabsW789(int anEvent, bool losingFocus, bool editorSave, void* 
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 			{
 				if (WInfo.Current) lbActiveFound = TRUE;
+				PRAGMA_ERROR("Не возвращается ViewerID");
 				lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 					WInfo.Type, WInfo.Name, editorSave ? ei.FileName : NULL, 
-					WInfo.Current, WInfo.Modified);
+					WInfo.Current, WInfo.Modified, 0);
 				//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
 				//	lastModifiedStateW = WInfo.Modified;
 			}
@@ -427,7 +428,7 @@ void UpdateConEmuTabsW789(int anEvent, bool losingFocus, bool editorSave, void* 
 	{
 		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 			WTYPE_VIEWER, vi.FileName, NULL, 
-			1, 0);
+			1, 0, vi.ViewerID);
 	}
 
 	// Скорее всего это модальный редактор (или вьювер?)
@@ -443,7 +444,7 @@ void UpdateConEmuTabsW789(int anEvent, bool losingFocus, bool editorSave, void* 
 			tabCount = 0;
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WTYPE_EDITOR, ei.FileName, NULL, 
-				1, (ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED);
+				1, (ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED, ei.EditorID);
 			//lastModifiedStateW = ei.CurState == ECSTATE_MODIFIED;
 		}
 	}

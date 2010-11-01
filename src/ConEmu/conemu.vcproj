@@ -793,7 +793,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib Netapi32.lib"
-				OutputFile="\\WIN7X64\FAR\FAR2x86\ConEmu64.exe"
+				OutputFile="\\WIN7X64\FAR\FAR2x64\ConEmu64.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
@@ -949,7 +949,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib Netapi32.lib"
-				OutputFile="\\WIN7X64\FAR\FAR2x86\ConEmu64.exe"
+				OutputFile="F:\Utils\FAR\Far2x86\ConEmu\ConEmu64.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"

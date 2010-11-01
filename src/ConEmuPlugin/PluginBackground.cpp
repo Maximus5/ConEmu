@@ -297,7 +297,7 @@ void CPluginBackground::CheckPanelFolders()
 	}
 
 	WARNING("Ќужно бы перечитать его, при изменении данных в ConEmu!");
-	if (mb_ThNeedLoad)
+	if (mb_ThNeedLoad && ConEmuHwnd)
 	{
 		LoadThSet(TRUE/*мы уже в главной нити*/);
 	}
@@ -362,7 +362,9 @@ void CPluginBackground::UpdateBackground()
 
 	SetDcPanelRect(&Arg.rcDcLeft, &Arg.LeftPanel, &Arg);
 	SetDcPanelRect(&Arg.rcDcRight, &Arg.RightPanel, &Arg);
-	if (gpTabs->Tabs.CurrentType == WTYPE_EDITOR)
+	if (!gpTabs)
+		Arg.Place = bup_Panels;
+	else if (gpTabs->Tabs.CurrentType == WTYPE_EDITOR)
 		Arg.Place = bup_Editor;
 	else if (gpTabs->Tabs.CurrentType == WTYPE_VIEWER)
 		Arg.Place = bup_Viewer;
@@ -502,7 +504,7 @@ BOOL CPluginBackground::LoadThSet(BOOL abFromMainThread)
 		}
 		else
 		{
-			BOOL lbNeedActivate;
+			//BOOL lbNeedActivate;
 			// ≈сли изменились визуальные параметры CE - перерисоватьс€
 			if (memcmp(&m_Default.MainFont, &m_ThSet.MainFont, sizeof(m_ThSet.MainFont)))
 			{

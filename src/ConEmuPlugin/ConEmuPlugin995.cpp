@@ -461,9 +461,10 @@ void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 			{
 				if (WInfo.Current) lbActiveFound = TRUE;
+				TODO("Определение ИД редактора/вьювера");
 				lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 					WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL, 
-					WInfo.Current, WInfo.Modified);
+					WInfo.Current, WInfo.Modified, 0);
 				//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
 				//	lastModifiedStateW = WInfo.Modified;
 			}
@@ -477,7 +478,7 @@ void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 		lbActiveFound = TRUE;
 		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 			WTYPE_VIEWER, vi.FileName, NULL, 
-			1, 0);
+			1, 0, vi.ViewerID);
 	}
 
 
@@ -498,9 +499,10 @@ void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
 			{
 				tabCount = 0;
+				TODO("Определение ИД Редактора/вьювера");
 				lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 					WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL, 
-					WInfo.Current, WInfo.Modified);
+					WInfo.Current, WInfo.Modified, 0);
 			}
 		}
 
@@ -1059,7 +1061,12 @@ void FillUpdateBackground995(struct UpdateBackgroundArg* pFar)
 	GetConsoleScreenBufferInfo(hCon, &scbi);
 	if (CheckBufferEnabled995())
 	{
-		InfoW995->AdvControl(InfoW995->ModuleNumber, 32/*ACTL_GETFARRECT*/, &pFar->rcConWorkspace);
+		SMALL_RECT rc = {0};
+		InfoW995->AdvControl(InfoW995->ModuleNumber, 32/*ACTL_GETFARRECT*/, &rc);
+		pFar->rcConWorkspace.left = rc.Left;
+		pFar->rcConWorkspace.top = rc.Top;
+		pFar->rcConWorkspace.right = rc.Right;
+		pFar->rcConWorkspace.bottom = rc.Bottom;
 	}
 	else
 	{

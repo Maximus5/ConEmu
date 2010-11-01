@@ -59,7 +59,7 @@ typedef struct tag_DragImageBits {
 #define HIDA_GetPIDLFolder(pida) (LPCITEMIDLIST)(((LPBYTE)pida)+(pida)->aoffset[0])
 #define HIDA_GetPIDLItem(pida, i) (LPCITEMIDLIST)(((LPBYTE)pida)+(pida)->aoffset[i+1])
 
-typedef struct tag_ForwardedPanelInfo ForwardedPanelInfo;
+struct ForwardedPanelInfo;
 
 
 class CDragDropData

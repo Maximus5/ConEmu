@@ -655,9 +655,10 @@ void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 				
 				if (WInfo.Current) lbActiveFound = TRUE;
 				MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
+				TODO("Определение ИД редактора/вьювера");
 				lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 					WInfo.Type, pszName, /*editorSave ? pszFileName :*/ NULL, 
-					WInfo.Current, WInfo.Modified);
+					WInfo.Current, WInfo.Modified, 0);
 				//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
 				//	lastModifiedStateW = WInfo.Modified;
 			}
@@ -689,9 +690,10 @@ void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
 			{
 				MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
+				TODO("Определение ИД редактора/вьювера");
 				lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 					WInfo.Type, pszName, /*editorSave ? pszFileName :*/ NULL, 
-					WInfo.Current, WInfo.Modified);
+					WInfo.Current, WInfo.Modified, 0);
 			}
 		}
 

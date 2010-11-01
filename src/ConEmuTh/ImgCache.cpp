@@ -2,6 +2,7 @@
 #define SHOWDEBUGSTR
 #define DEBUGSTRLOAD(s) if (gpLogLoad) {gpLogLoad->LogString(s);} // DEBUGSTR(s)
 #define DEBUGSTRLOAD2(s) if (gpLogLoad) {gpLogLoad->LogString(s);} // OutputDebugStringW(s)
+#define DEBUGSTRPAINT(s) if (gpLogPaint) {gpLogPaint->LogString(s);} // DEBUGSTR(s)
 
 #include <stdio.h>
 #include <windows.h>
@@ -20,6 +21,7 @@ HICON ghUpIcon = NULL;
 //ITEMIDLIST DesktopID = {{0}};
 //IShellFolder *gpDesktopFolder = NULL;
 extern MFileLog* gpLogLoad;
+extern MFileLog* gpLogPaint;
 
 template <typename T>
 inline void SafeRelease(T *&p)
@@ -504,13 +506,17 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, BOOL abLoadP
 		{
 			// Наш.
 			*pnIndex = nIndex = i; lbFound = TRUE;
-			if (CacheInfo[i].nFileSize == pItem->FindData.nFileSize
-				&& CacheInfo[i].ftLastWriteTime.dwHighDateTime == pItem->FindData.ftLastWriteTime.dwHighDateTime
-				&& CacheInfo[i].ftLastWriteTime.dwLowDateTime == pItem->FindData.ftLastWriteTime.dwLowDateTime)
-			{
-				lbReady = TRUE;
-				CacheInfo[i].dwFileAttributes = pItem->FindData.dwFileAttributes;
-			} // иначе потребуется обновление превьюшки (файл изменился)
+			TODO("Пока будем игнорировать изменение размера/даты - сильное мелькание для изменяющихся файлов(.log)");
+			//т.е. если на панели открыта папка, содержащая пишущийся log-файл - иконка
+			//этого файла дико моргает - постоянно сбрасывается и обновляется заново
+			lbReady = TRUE;
+			//if (CacheInfo[i].nFileSize == pItem->FindData.nFileSize
+			//	&& CacheInfo[i].ftLastWriteTime.dwHighDateTime == pItem->FindData.ftLastWriteTime.dwHighDateTime
+			//	&& CacheInfo[i].ftLastWriteTime.dwLowDateTime == pItem->FindData.ftLastWriteTime.dwLowDateTime)
+			//{
+			//	lbReady = TRUE;
+			//	CacheInfo[i].dwFileAttributes = pItem->FindData.dwFileAttributes;
+			//} // иначе потребуется обновление превьюшки (файл изменился)
 			break;
 		}
 
@@ -545,18 +551,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, BOOL abLoadP
 		CacheInfo[i].lpwszFileName = _wcsdup(pszName);
 		lbReady = FALSE;
 	}
-	if (!lbReady)
-	{
-		CacheInfo[i].PreviewLoaded = 0;
-		//CacheInfo[i].bPreviewExists = FALSE;
-		CacheInfo[i].nAccessTick = GetTickCount();
-		CacheInfo[i].dwFileAttributes = pItem->FindData.dwFileAttributes;
-		CacheInfo[i].nFileSize = pItem->FindData.nFileSize;
-		CacheInfo[i].ftLastWriteTime = pItem->FindData.ftLastWriteTime;
-		CacheInfo[i].bVirtualItem = pItem->bVirtualItem;
-		CacheInfo[i].UserData = pItem->UserData;
-	}
-	else
+	if (lbReady)
 	{
 		if (abLoadPreview)
 		{
@@ -568,6 +563,22 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, BOOL abLoadP
 			if (!CacheInfo[i].PreviewLoaded)
 				lbReady = FALSE;
 		}
+	}
+	if (!lbReady)
+	{
+		if (!lbFound)
+		{
+			TODO("Если потребуется обновление превьюшки/иконки - нужно таки сбрасывать соответствующие биты");
+			CacheInfo[i].PreviewLoaded = 0;
+		}
+
+		//CacheInfo[i].bPreviewExists = FALSE;
+		CacheInfo[i].nAccessTick = GetTickCount();
+		CacheInfo[i].dwFileAttributes = pItem->FindData.dwFileAttributes;
+		CacheInfo[i].nFileSize = pItem->FindData.nFileSize;
+		CacheInfo[i].ftLastWriteTime = pItem->FindData.ftLastWriteTime;
+		CacheInfo[i].bVirtualItem = pItem->bVirtualItem;
+		CacheInfo[i].UserData = pItem->UserData;
 	}
 	return lbReady;
 };
@@ -592,6 +603,14 @@ BOOL CImgCache::RequestItem(CePluginPanelItem* pItem, BOOL abLoadPreview)
 		//UpdateCell(CacheInfo+nIndex, abLoadPreview);
 		if (!mp_ShellLoader)
 			mp_ShellLoader = new CImgLoader;
+
+		#ifdef _DEBUG
+		wchar_t szDbg[MAX_PATH+32];
+		lstrcpy(szDbg, abLoadPreview ? L"ReqThumb: " : L"ReqShell: ");
+		lstrcpyn(szDbg+10, pItem->FindData.lpwszFileName, MAX_PATH);
+		DEBUGSTRPAINT(szDbg);
+		#endif
+
 		mp_ShellLoader->RequestItem(false, abLoadPreview ? ePriorityNormal : ePriorityAboveNormal, CacheInfo+nIndex, abLoadPreview ? 2 : 1);
 	}
 
@@ -856,7 +875,7 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem)
 
 	#ifdef _DEBUG
 	wchar_t szDbg[MAX_PATH+32];
-	lstrcpy(szDbg, L"LoadShell: "); lstrcpyn(szDbg+11, pItem->lpwszFileName, MAX_PATH); lstrcat(szDbg, L"...");
+	lstrcpy(szDbg, L"LoadShell: "); lstrcpyn(szDbg+11, pItem->lpwszFileName, MAX_PATH);
 	DEBUGSTRLOAD(szDbg);
 	#endif
 
@@ -990,7 +1009,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 
 	#ifdef _DEBUG
 	wchar_t szDbg[MAX_PATH+32];
-	lstrcpy(szDbg, L"LoadThumb: "); lstrcpyn(szDbg+11, pItem->lpwszFileName, MAX_PATH); lstrcat(szDbg, L"...");
+	lstrcpy(szDbg, L"LoadThumb: "); lstrcpyn(szDbg+11, pItem->lpwszFileName, MAX_PATH);
 	DEBUGSTRLOAD(szDbg);
 	#endif
 

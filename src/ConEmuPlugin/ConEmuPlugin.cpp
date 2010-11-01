@@ -2830,7 +2830,7 @@ void InitHWND(HWND ahFarHwnd)
 		int tabCount = 0;
 		MSectionLock SC; SC.Lock(csTabs);
 		CreateTabs(1);
-		AddTab(tabCount, true, false, WTYPE_PANELS, NULL, NULL, 0, 0);
+		AddTab(tabCount, true, false, WTYPE_PANELS, NULL, NULL, 0, 0, 0);
 		SendTabs(tabCount=1, TRUE);
 		SC.Unlock();
 	}
@@ -3219,7 +3219,7 @@ BOOL CreateTabs(int windowCount)
 	#endif
 
 BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave, 
-			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified)
+			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified, int EditViewId)
 {
     BOOL lbCh = FALSE;
 	DEBUGSTR(L"--AddTab\n");
@@ -3234,7 +3234,9 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		gpTabs->Tabs.tabs[0].Pos = 0;
 		gpTabs->Tabs.tabs[0].Type = WTYPE_PANELS;
 		gpTabs->Tabs.tabs[0].Modified = 0; // Иначе GUI может ошибочно считать, что есть несохраненные редакторы
-		if (!tabCount) tabCount++;
+		gpTabs->Tabs.tabs[0].EditViewId = 0;
+		if (!tabCount)
+			tabCount++;
 		if (Current)
 		{
 			gpTabs->Tabs.CurrentType = Type;
@@ -3244,7 +3246,8 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 	else if (Type == WTYPE_EDITOR || Type == WTYPE_VIEWER)
 	{
 		// Первое окно - должно быть панели. Если нет - значит фар открыт в режиме редактора
-		if (tabCount == 1) {
+		if (tabCount == 1)
+		{
 			// 04.06.2009 Maks - Не, чего-то не то... при открытии редактора из панелей - он заменяет панели
 			//gpTabs->Tabs.tabs[0].Type = Type;
 		}
@@ -3262,6 +3265,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		gpTabs->Tabs.tabs[tabCount].Type = Type;
 		gpTabs->Tabs.tabs[tabCount].Current = (Current/*losingFocus*/ ? 1 : 0)/*losingFocus ? 0 : Current*/;
 		gpTabs->Tabs.tabs[tabCount].Modified = Modified;
+		gpTabs->Tabs.tabs[tabCount].EditViewId = EditViewId;
 
 		if (gpTabs->Tabs.tabs[tabCount].Current != 0)
 		{

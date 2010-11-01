@@ -607,10 +607,11 @@ protected:
 		// Кого будем обрабатывать
 		ProcessingItem* p = NULL;
 
-		if (WaitForSingleObject(mh_Waiting, 250) == WAIT_TIMEOUT)
+		if (WaitForSingleObject(mh_Waiting, 50) == WAIT_TIMEOUT)
 		{
-			_ASSERTE(mn_WaitingCount==0);
-			return false; // true==Terminate
+			//_ASSERTE(mn_WaitingCount==0);
+			if (mn_WaitingCount == 0)
+				return false; // true==Terminate
 		}
 
 		// Для получения следующего элемента - нужно заблокировать секцию

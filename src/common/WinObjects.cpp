@@ -1471,9 +1471,14 @@ MFileLog::MFileLog(LPCWSTR asName, LPCWSTR asDir /*= NULL*/, DWORD anPID /*= 0*/
 	if (!anPID) anPID = GetCurrentProcessId();
 	
 	wchar_t szTemp[MAX_PATH]; szTemp[0] = 0;
-	GetTempPath(MAX_PATH, szTemp);
+	GetTempPath(MAX_PATH-16, szTemp);
 	if (!asDir || !*asDir)
+	{
+		lstrcatW(szTemp, L"ConEmuLog");
+		CreateDirectoryW(szTemp, NULL);
+		lstrcatW(szTemp, L"\\");
 		asDir = szTemp;
+	}
 	int nDirLen = lstrlenW(asDir);
 	wchar_t szFile[MAX_PATH];
 	wsprintfW(szFile, L"%s-%u.log", asName ? asName : L"LogFile", anPID);
@@ -1482,7 +1487,7 @@ MFileLog::MFileLog(LPCWSTR asName, LPCWSTR asDir /*= NULL*/, DWORD anPID /*= 0*/
 	lstrcpyW(ms_FilePathName, asDir);
 	if (nDirLen > 0 && ms_FilePathName[nDirLen-1] != L'\\')
 		lstrcatW(ms_FilePathName, L"\\");
-	lstrcpyW(ms_FilePathName, szFile);
+	lstrcatW(ms_FilePathName, szFile);
 }
 MFileLog::~MFileLog()
 {

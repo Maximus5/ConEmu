@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCTRL(s) DEBUGSTR(s)
 #define DEBUGSTRPAINT(s) if (gpLogPaint) {gpLogPaint->LogString(s);} // DEBUGSTR(s)
 
+#undef USE_DEBUG_LOGS
+//#define USE_DEBUG_LOGS
 
 #include <windows.h>
 #include "ConEmuTh.h"
@@ -95,7 +97,7 @@ HWND CeFullPanelInfo::CreateView()
 #ifdef _DEBUG
 	if (!gpLogLoad)
 	{
-		gpLogLoad = new MFileLog(L"ConEmuTh_Draw");
+		gpLogLoad = new MFileLog(L"ConEmuTh_Load");
 		if (gpLogLoad->CreateLogFile())
 		{
 			delete gpLogLoad;
@@ -104,7 +106,7 @@ HWND CeFullPanelInfo::CreateView()
 	}
 	if (!gpLogPaint)
 	{
-		gpLogPaint = new MFileLog(L"ConEmuTh_Load");
+		gpLogPaint = new MFileLog(L"ConEmuTh_Draw");
 		if (gpLogPaint->CreateLogFile())
 		{
 			delete gpLogPaint;
@@ -1392,26 +1394,26 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 						// На шаге 0 - запросим ShellIcon, на шаге 1 - Thumbnails
 						// чтобы очередь выполнения сначала попыталась загрузить ShellIcon
 						// Отрисовка пойдет с шага 1
-						#ifdef _DEBUG
-						wchar_t szDbg[MAX_PATH+32];
-						lstrcpy(szDbg, L"Req: ");
-						#endif
+						//#ifdef _DEBUG
+						//wchar_t szDbg[MAX_PATH+32];
+						//lstrcpy(szDbg, L"Req: ");
+						//#endif
 
 						if (!pItem->PreviewLoaded)
 						{
-							#ifdef _DEBUG
-							lstrcpy(szDbg, L"ReqS: "); lstrcpyn(szDbg+6, pItem->FindData.lpwszFileName, MAX_PATH); lstrcat(szDbg, L"\n");
-							DEBUGSTRPAINT(szDbg);
-							#endif
+							//#ifdef _DEBUG
+							//lstrcpy(szDbg, L"ReqS: "); lstrcpyn(szDbg+6, pItem->FindData.lpwszFileName, MAX_PATH);
+							//DEBUGSTRPAINT(szDbg);
+							//#endif
 							gpImgCache->RequestItem(pItem, FALSE/*только Shell*/);
 						}
 
 						if ((gThSet.bLoadPreviews & PVM) && !(pItem->PreviewLoaded & 2))
 						{
-							#ifdef _DEBUG
-							lstrcpy(szDbg, L"ReqT: "); lstrcpyn(szDbg+6, pItem->FindData.lpwszFileName, MAX_PATH); lstrcat(szDbg, L"\n");
-							DEBUGSTRPAINT(szDbg);
-							#endif
+							//#ifdef _DEBUG
+							//lstrcpy(szDbg, L"ReqT: "); lstrcpyn(szDbg+6, pItem->FindData.lpwszFileName, MAX_PATH);
+							//DEBUGSTRPAINT(szDbg);
+							//#endif
 							gpImgCache->RequestItem(pItem, TRUE/*Preview*/);
 						}
 					}

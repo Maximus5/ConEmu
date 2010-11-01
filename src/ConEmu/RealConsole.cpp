@@ -388,7 +388,8 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 void CRealConsole::DumpConsole(HANDLE ahFile)
 {
     DWORD dw = 0;
-    if (con.pConChar && con.pConAttr) {
+    if (con.pConChar && con.pConAttr)
+	{
         WriteFile(ahFile, con.pConChar, con.nTextWidth * con.nTextHeight * 2, &dw, NULL);
         WriteFile(ahFile, con.pConAttr, con.nTextWidth * con.nTextHeight * 2, &dw, NULL);
     }
@@ -690,7 +691,8 @@ BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer,
 	BOOL lbRc = FALSE;
 
 	DWORD dwPID = GetFarPID();
-	if (dwPID) {
+	if (dwPID)
+	{
 		// Если это СТАРЫЙ FAR (нет Synchro) - может быть не ресайзить через плагин?
 		// Хотя тут плюс в том, что хоть активация и идет чуть медленнее, но
 		// возврат из ресайза получается строго после обновления консоли
@@ -1268,8 +1270,10 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
         nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, (bIconic || !bActive) ? max(1000,nElapse) : nElapse);
         _ASSERTE(nWait!=(DWORD)-1);
 
-        if (nWait == IDEVENT_TERM || nWait == IDEVENT_CONCLOSED) {
-            if (nWait == IDEVENT_CONCLOSED) {
+        if (nWait == IDEVENT_TERM || nWait == IDEVENT_CONCLOSED)
+		{
+            if (nWait == IDEVENT_CONCLOSED)
+			{
                 DEBUGSTRPROC(L"### ConEmuC.exe was terminated\n");
             }
             break; // требование завершения нити
@@ -1282,13 +1286,15 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		}
 
         // Проверим, что ConEmuC жив
-        if (pRCon->mh_ConEmuC) {
+        if (pRCon->mh_ConEmuC)
+		{
             DWORD dwExitCode = 0;
             #ifdef _DEBUG
             BOOL fSuccess = 
             #endif
             GetExitCodeProcess(pRCon->mh_ConEmuC, &dwExitCode);
-            if (dwExitCode!=STILL_ACTIVE) {
+            if (dwExitCode!=STILL_ACTIVE)
+			{
                 pRCon->StopSignal();
                 return 0;
             }
@@ -1328,8 +1334,16 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             if (pRCon->m_ConsoleMap.IsValid())
             {
 				// Alive?
-				DWORD nCurFarPID = pRCon->GetFarPID();
-				if (!nCurFarPID || nLastFarPID != nCurFarPID)
+				DWORD nCurFarPID = pRCon->GetFarPID(TRUE);
+				if (!nCurFarPID)
+				{
+					if (nLastFarPID)
+					{
+						pRCon->CloseFarMapData();
+						nLastFarPID = 0;
+					}
+				}
+				else if (nLastFarPID != nCurFarPID)
 				{
 					//pRCon->mn_LastFarReadIdx = -1;
 					pRCon->mn_LastFarReadTick = 0;
@@ -2689,7 +2703,9 @@ bool CRealConsole::DoSelectionCopy()
 				*(pch++) = L'\r'; *(pch++) = L'\n';
 			}
 		}
-	} else {
+	}
+	else
+	{
 		int nX1, nX2;
 		//for (nY = rc.Top; nY <= rc.Bottom; nY++) {
 		//	pnDst = pAttr + nWidth*nY;
@@ -2701,7 +2717,8 @@ bool CRealConsole::DoSelectionCopy()
 		//		pnDst[nX] = lcaSel;
 		//	}
 		//}
-		for (int Y = 0; Y <= nSelHeight; Y++) {
+		for (int Y = 0; Y <= nSelHeight; Y++)
+		{
 			nX1 = (Y == 0) ? con.m_sel.srSelection.Left : 0;
 			nX2 = (Y == nSelHeight) ? con.m_sel.srSelection.Right : (con.nTextWidth-1);
 
@@ -2710,7 +2727,8 @@ bool CRealConsole::DoSelectionCopy()
 			for (int X = nX1; X <= nX2; X++)
 				*(pch++) = *(pszCon++);
 			// Добавить перевод строки
-			if (Y < nSelHeight) {
+			if (Y < nSelHeight)
+			{
 				*(pch++) = L'\r'; *(pch++) = L'\n';
 			}
 		}
@@ -3063,7 +3081,8 @@ void CRealConsole::StopSignal()
     if (!this)
         return;
 
-    if (mn_ProcessCount) {
+    if (mn_ProcessCount)
+	{
         MSectionLock SPRC; SPRC.Lock(&csPRC, TRUE);
         m_Processes.clear();
         SPRC.Unlock();
@@ -3072,7 +3091,8 @@ void CRealConsole::StopSignal()
 
     SetEvent(mh_TermEvent);
 
-	if (!mn_InRecreate) {
+	if (!mn_InRecreate)
+	{
 		// Чтобы при закрытии не было попытка активировать 
 		// другую вкладку ЭТОЙ консоли
 		mn_tabsCount = 0; 
@@ -3171,9 +3191,12 @@ void CRealConsole::StopThread(BOOL abRecreating)
     }
     
     
-    if (abRecreating) {
+    if (abRecreating)
+	{
         hConWnd = NULL;
         mn_ConEmuC_PID = 0;
+		mn_FarPID = mn_FarPID_PluginDetected = 0;
+		mn_LastSetForegroundPID = 0;
 		//mn_ConEmuC_Input_TID = 0;
         SafeCloseHandle(mh_ConEmuC);
         SafeCloseHandle(mh_ConEmuCInput);
@@ -3185,6 +3208,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		// Закрыть все мэппинги
 		CloseMapHeader();
 		CloseColorMapping();
+		gConEmu.Invalidate(mp_VCon);;
     }
 #ifdef _DEBUG
     /*
@@ -4251,24 +4275,30 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         DEBUGSTRCMD(L"GUI recieved CECMD_TABSCHANGED\n");
         if (nDataSize == 0) {
             // ФАР закрывается
-			if (pIn->hdr.nSrcPID == mn_FarPID) {
+			if (pIn->hdr.nSrcPID == mn_FarPID)
+			{
 				mn_ProgramStatus &= ~CES_FARACTIVE;
 				mn_FarPID_PluginDetected = mn_FarPID = 0;
 				CloseFarMapData();
 				if (isActive()) gConEmu.UpdateProcessDisplay(FALSE); // обновить PID в окне настройки
 			}
             SetTabs(NULL, 1);
-        } else {
+        }
+		else
+		{
             _ASSERTE(nDataSize>=4);
             _ASSERTE(((pIn->Tabs.nTabCount-1)*sizeof(ConEmuTab))==(nDataSize-sizeof(CESERVER_REQ_CONEMUTAB)));
 			BOOL lbCanUpdate = TRUE;
 			// Если выполняется макрос - изменение размеров окна FAR при авто-табах нежелательно
-			if (pIn->Tabs.bMacroActive) {
-				if (gSet.isTabs == 2) {
+			if (pIn->Tabs.bMacroActive)
+			{
+				if (gSet.isTabs == 2)
+				{
 					lbCanUpdate = FALSE;
 					// Нужно вернуть в плагин информацию, что нужно отложенное обновление
 					CESERVER_REQ *pRet = ExecuteNewCmd(CECMD_TABSCHANGED, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB_RET));
-					if (pRet) {
+					if (pRet)
+					{
 						pRet->TabsRet.bNeedPostTabSend = TRUE;
 						// Отправляем
 						fSuccess = WriteFile( 
@@ -4283,12 +4313,14 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 			}
 			// Если включены автотабы - попытаться изменить размер консоли СРАЗУ (в самом FAR)
 			// Но только если вызов SendTabs был сделан из основной нити фара (чтобы небыло потребности в Synchro)
-			if (pIn->Tabs.bMainThread && lbCanUpdate && gSet.isTabs == 2) {
+			if (pIn->Tabs.bMainThread && lbCanUpdate && gSet.isTabs == 2)
+			{
 				TODO("расчитать новый размер, если сменилась видимость табов");
 				bool lbCurrentActive = gConEmu.mp_TabBar->IsActive();
 				bool lbNewActive = lbCurrentActive;
 				// Если консолей более одной - видимость табов не изменится
-				if (gConEmu.GetVCon(1) == NULL) {
+				if (gConEmu.GetVCon(1) == NULL)
+				{
 					lbNewActive = (pIn->Tabs.nTabCount > 1);
 				}
 
@@ -4449,7 +4481,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             //UpdateFarSettings(mn_FarPID_PluginDetected);
 			wchar_t* pszItems[] = {ms_EditorRus,ms_ViewerRus,ms_TempPanelRus/*,ms_NameTitle*/};
 
-			for (int i = 0; i < countof(pszItems); i++) {
+			for (int i = 0; i < countof(pszItems); i++)
+			{
 				pszNext = pszRes + lstrlen(pszRes)+1;
 				if (lstrlen(pszRes)>=30) pszRes[30] = 0;
 				lstrcpy(pszItems[i], pszRes);
@@ -4592,15 +4625,21 @@ void CRealConsole::OnServerClosing(DWORD anSrvPID)
 
 int CRealConsole::GetProcesses(ConProcess** ppPrc)
 {
-    if (mn_InRecreate) {
+    if (mn_InRecreate)
+	{
         DWORD dwCurTick = GetTickCount();
         DWORD dwDelta = dwCurTick - mn_InRecreate;
-        if (dwDelta > CON_RECREATE_TIMEOUT) {
+        if (dwDelta > CON_RECREATE_TIMEOUT)
+		{
             mn_InRecreate = 0;
-        } else if (ppPrc == NULL) {
-            if (mn_InRecreate && !mb_ProcessRestarted && mh_ConEmuC) {
+        }
+		else if (ppPrc == NULL)
+		{
+            if (mn_InRecreate && !mb_ProcessRestarted && mh_ConEmuC)
+			{
                 DWORD dwExitCode = 0;
-                if (GetExitCodeProcess(mh_ConEmuC, &dwExitCode) && dwExitCode != STILL_ACTIVE) {
+                if (GetExitCodeProcess(mh_ConEmuC, &dwExitCode) && dwExitCode != STILL_ACTIVE)
+				{
                     RecreateProcessStart();
                 }
             }
@@ -4676,7 +4715,15 @@ DWORD CRealConsole::GetFarPID(BOOL abPluginRequired/*=FALSE*/)
     	|| ((mn_ProgramStatus & CES_NTVDM) == CES_NTVDM)) // Если активна 16бит программа - значит фар точно не доступен
         return 0;
 
-    return abPluginRequired ? mn_FarPID_PluginDetected : mn_FarPID;
+	if (abPluginRequired)
+	{
+		if (mn_FarPID_PluginDetected && mn_FarPID_PluginDetected == mn_FarPID)
+			return mn_FarPID_PluginDetected;
+		else
+			return 0;
+	}
+
+    return mn_FarPID;
 }
 
 // Обновить статус запущенных программ
@@ -4685,23 +4732,26 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
     //Warning: Должен вызываться ТОЛЬКО из ProcessAdd/ProcessDelete, т.к. сам секцию не блокирует
 
     bool bIsFar=false, bIsTelnet=false, bIsCmd=false;
-    DWORD dwPID = 0; //, dwInputTID = 0;
+    DWORD dwFarPID = 0; //, dwInputTID = 0;
     
     // Наличие 16bit определяем ТОЛЬКО по WinEvent. Иначе не получится отсечь его завершение,
     // т.к. процесс ntvdm.exe не выгружается, а остается в памяти.
     bool bIsNtvdm = (mn_ProgramStatus & CES_NTVDM) == CES_NTVDM;
 
     std::vector<ConProcess>::reverse_iterator iter = m_Processes.rbegin();
-    while (iter!=m_Processes.rend()) {
+    while (iter!=m_Processes.rend())
+	{
         // Корневой процесс ConEmuC не учитываем!
-        if (iter->ProcessID != mn_ConEmuC_PID) {
+        if (iter->ProcessID != mn_ConEmuC_PID)
+		{
             if (!bIsFar && iter->IsFar) bIsFar = true;
             if (!bIsTelnet && iter->IsTelnet) bIsTelnet = true;
             //if (!bIsNtvdm && iter->IsNtvdm) bIsNtvdm = true;
             if (!bIsFar && !bIsCmd && iter->IsCmd) bIsCmd = true;
             // 
-			if (!dwPID && iter->IsFar) {
-				dwPID = iter->ProcessID;
+			if (!dwFarPID && iter->IsFar)
+			{
+				dwFarPID = iter->ProcessID;
 				//dwInputTID = iter->InputTID;
 			}
         }
@@ -4709,8 +4759,9 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
     }
 
     TODO("Однако, наверное cmd.exe может быть запущен и в 'фоне'? Например из Update");
-    if (bIsCmd && bIsFar) { // Если в консоли запущен cmd.exe - значит (скорее всего?) фар выполняет команду
-        bIsFar = false; dwPID = 0;
+    if (bIsCmd && bIsFar) // Если в консоли запущен cmd.exe - значит (скорее всего?) фар выполняет команду
+	{
+        bIsFar = false; dwFarPID = 0;
     }
         
     DWORD nNewProgramStatus = 0;
@@ -4731,22 +4782,31 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 		mn_ProgramStatus = nNewProgramStatus;
 
     mn_ProcessCount = m_Processes.size();
-    if (mn_FarPID != dwPID)
-        AllowSetForegroundWindow(dwPID);
-    mn_FarPID = dwPID;
+    if (dwFarPID && mn_FarPID != dwFarPID)
+        AllowSetForegroundWindow(dwFarPID);
+    mn_FarPID = dwFarPID;
+
+	//if (!dwFarPID)
+	//	mn_FarPID_PluginDetected = 0;
+
     //TODO("Если сменился FAR - переоткрыть данные для Colorer - CheckColorMapping();");
 	//mn_FarInputTID = dwInputTID;
 
-    if (mn_ProcessCount == 0) {
-        if (mn_InRecreate == 0) {
+    if (mn_ProcessCount == 0)
+	{
+        if (mn_InRecreate == 0)
+		{
             StopSignal();
-        } else if (mn_InRecreate == 1) {
+        }
+		else if (mn_InRecreate == 1)
+		{
             mn_InRecreate = 2;
         }
     }
 
     // Обновить список процессов в окне настроек и закладки
-    if (abProcessChanged) {
+    if (abProcessChanged)
+	{
         gConEmu.UpdateProcessDisplay(abProcessChanged);
         //2009-09-10
         //gConEmu.mp_TabBar->Refresh(mn_ProgramStatus & CES_FARACTIVE);
@@ -4760,7 +4820,8 @@ void CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
     MSectionLock SPRC; SPRC.Lock(&csPRC);
 
     BOOL lbRecreateOk = FALSE;
-    if (mn_InRecreate && mn_ProcessCount == 0) {
+    if (mn_InRecreate && mn_ProcessCount == 0)
+	{
         // Раз сюда что-то пришло, значит мы получили пакет, значит консоль запустилась
         lbRecreateOk = TRUE;
     }
@@ -4779,9 +4840,12 @@ void CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
     
     // Проверяем, какие процессы уже есть в нашем списке
     iter=m_Processes.begin();
-    while (iter!=m_Processes.end()) {
-        for (i = 0; i < anCount; i++) {
-            if (PID[i] && PID[i] == iter->ProcessID) {
+    while (iter!=m_Processes.end())
+	{
+        for (i = 0; i < anCount; i++)
+		{
+            if (PID[i] && PID[i] == iter->ProcessID)
+			{
                 iter->inConsole = true;
                 PID[i] = 0; // Его добавлять уже не нужно, мы о нем знаем
                 break;
@@ -4791,14 +4855,18 @@ void CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
     }
     
     // Проверяем, есть ли изменения
-    for (i = 0; i < anCount; i++) {
-        if (PID[i]) {
+    for (i = 0; i < anCount; i++)
+	{
+        if (PID[i])
+		{
             bProcessNew = TRUE; break;
         }
     }
     iter = m_Processes.begin();
-    while (iter != m_Processes.end()) {
-        if (iter->inConsole == false) {
+    while (iter != m_Processes.end())
+	{
+        if (iter->inConsole == false)
+		{
             bProcessDel = TRUE; break;
         }
         iter ++;
@@ -4813,13 +4881,16 @@ void CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
         ConProcess cp;
         HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
         _ASSERTE(h!=INVALID_HANDLE_VALUE);
-        if (h==INVALID_HANDLE_VALUE) {
+        if (h==INVALID_HANDLE_VALUE)
+		{
             DWORD dwErr = GetLastError();
             wchar_t szError[255];
             wsprintf(szError, L"Can't create process snapshoot, ErrCode=0x%08X", dwErr);
             gConEmu.DebugStep(szError);
             
-        } else {
+        }
+		else
+		{
             //Snapshoot создан, поехали
 
             // Перед добавлением нового - поставить пометочку на все процессы, вдруг кто уже убился 
@@ -4831,9 +4902,12 @@ void CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
             {
                 do {
                     // Если он addPID - добавить в m_Processes
-                    if (bProcessNew) {
-                        for (i = 0; i < anCount; i++) {
-                            if (PID[i] && PID[i] == p.th32ProcessID) {
+                    if (bProcessNew)
+					{
+                        for (i = 0; i < anCount; i++)
+						{
+                            if (PID[i] && PID[i] == p.th32ProcessID)
+							{
                                 if (!bProcessChanged) bProcessChanged = TRUE;
                                 memset(&cp, 0, sizeof(cp));
                                 cp.ProcessID = PID[i]; cp.ParentPID = p.th32ParentProcessID;
@@ -4852,7 +4926,8 @@ void CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
                     iter = m_Processes.begin();
                     while (iter != m_Processes.end())
                     {
-                        if (iter->ProcessID == p.th32ProcessID) {
+                        if (iter->ProcessID == p.th32ProcessID)
+						{
                             iter->Alive = true;
                             if (!iter->NameChecked)
                             {
@@ -4880,12 +4955,15 @@ void CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
     iter = m_Processes.begin();
     while (iter != m_Processes.end())
     {
-        if (!iter->Alive || !iter->inConsole) {
+        if (!iter->Alive || !iter->inConsole)
+		{
             if (!bProcessChanged) bProcessChanged = TRUE;
 
             SPRC.RelockExclusive(300); // Если уже нами заблокирован - просто вернет FALSE  
             iter = m_Processes.erase(iter);
-        } else {
+        }
+		else
+		{
         	//if (mn_Far_PluginInputThreadId && mn_FarPID_PluginDetected
         	//    && iter->ProcessID == mn_FarPID_PluginDetected 
         	//    && iter->InputTID == 0)
@@ -5209,14 +5287,19 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
     if (!GetConWindowSize(con.m_sbi, nNewWidth, nNewHeight))
         return FALSE;
 
-    if (OneBufferSize) {
-        if ((nNewWidth * nNewHeight * sizeof(*con.pConChar)) != OneBufferSize) {
+    if (OneBufferSize)
+	{
+        if ((nNewWidth * nNewHeight * sizeof(*con.pConChar)) != OneBufferSize)
+		{
             //// Это может случиться во время ресайза
             //nNewWidth = nNewWidth;
             _ASSERTE((nNewWidth * nNewHeight * sizeof(*con.pConChar)) == OneBufferSize);
-		} else if (con.nTextWidth == nNewWidth && con.nTextHeight == nNewHeight) {
+		}
+		else if (con.nTextWidth == nNewWidth && con.nTextHeight == nNewHeight)
+		{
 			// Не будем зря передергивать буферы и прочее
-			if (con.pConChar!=NULL && con.pConAttr!=NULL && con.pDataCmp!=NULL) {
+			if (con.pConChar!=NULL && con.pConAttr!=NULL && con.pDataCmp!=NULL)
+			{
 				return TRUE;
 			}
 		}
@@ -5257,7 +5340,9 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
         MCHKHEAP
 
         lbRc = con.pConChar!=NULL && con.pConAttr!=NULL && con.pDataCmp!=NULL;
-    } else if (con.nTextWidth!=nNewWidth || con.nTextHeight!=nNewHeight) {
+    }
+	else if (con.nTextWidth!=nNewWidth || con.nTextHeight!=nNewHeight)
+	{
         MCHKHEAP
         MSectionLock sc; sc.Lock(&csCON);
         memset(con.pConChar, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConChar));
@@ -5268,7 +5353,9 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
         MCHKHEAP
 
         lbRc = TRUE;
-    } else {
+    }
+	else
+	{
         lbRc = TRUE;
     }
     MCHKHEAP
@@ -5693,26 +5780,31 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
         
     _ASSERTE(hConWnd && mh_ConEmuC);
 
-    if (!hConWnd || !mh_ConEmuC) {
+    if (!hConWnd || !mh_ConEmuC)
+	{
         Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
         return false; // консоль пока не создана?
     }
-    if (mn_InRecreate) {
+    if (mn_InRecreate)
+	{
         Box(_T("Console already in recreate..."));
         return false;
     }
     
-    if (args->pszSpecialCmd && *args->pszSpecialCmd) {
+    if (args->pszSpecialCmd && *args->pszSpecialCmd)
+	{
         if (m_Args.pszSpecialCmd) Free(m_Args.pszSpecialCmd);
         int nLen = lstrlenW(args->pszSpecialCmd);
         m_Args.pszSpecialCmd = (wchar_t*)Alloc(nLen+1,2);
-        if (!m_Args.pszSpecialCmd) {
+        if (!m_Args.pszSpecialCmd)
+		{
             Box(_T("Can't allocate memory..."));
             return FALSE;
         }
         lstrcpyW(m_Args.pszSpecialCmd, args->pszSpecialCmd);
     }
-    if (args->pszStartupDir) {
+    if (args->pszStartupDir)
+	{
 		if (m_Args.pszStartupDir) Free(m_Args.pszStartupDir);
         int nLen = lstrlenW(args->pszStartupDir);
         m_Args.pszStartupDir = (wchar_t*)Alloc(nLen+1,2);
@@ -5727,7 +5819,8 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 
     mb_ProcessRestarted = FALSE;
     mn_InRecreate = GetTickCount();
-    if (!mn_InRecreate) {
+    if (!mn_InRecreate)
+	{
         DisplayLastError(L"GetTickCount failed");
         return false;
     }
@@ -5736,6 +5829,11 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 
     // mb_InCloseConsole сбросим после того, как появится новое окно!
     //mb_InCloseConsole = FALSE;
+
+	//if (con.pConChar && con.pConAttr)
+	//{
+	//	wmemset((wchar_t*)con.pConAttr, 7, con.nTextWidth * con.nTextHeight);
+	//}
     
 	SetConStatus(L"Restarting process...");
 
@@ -5746,14 +5844,18 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 BOOL CRealConsole::RecreateProcessStart()
 {
     bool lbRc = false;
-    if (mn_InRecreate && mn_ProcessCount == 0 && !mb_ProcessRestarted) {
+    if (mn_InRecreate && mn_ProcessCount == 0 && !mb_ProcessRestarted)
+	{
         mb_ProcessRestarted = TRUE;
-        if ((mn_ProgramStatus & CES_NTVDM) == CES_NTVDM) {
+        if ((mn_ProgramStatus & CES_NTVDM) == CES_NTVDM)
+		{
         	mn_ProgramStatus = 0; mb_IgnoreCmdStop = FALSE;
         	// При пересоздании сбрасывается 16битный режим, нужно отресайзится
         	if (!PreInit())
         		return FALSE;
-        } else {
+        }
+		else
+		{
         	mn_ProgramStatus = 0; mb_IgnoreCmdStop = FALSE;
         }
         
@@ -5765,11 +5867,14 @@ BOOL CRealConsole::RecreateProcessStart()
         SafeCloseHandle(mh_ServerSemaphore);
         SafeCloseHandle(mh_GuiAttached);
 
-        if (!StartProcess()) {
+        if (!StartProcess())
+		{
             mn_InRecreate = 0;
             mb_ProcessRestarted = FALSE;
             
-        } else {
+        }
+		else
+		{
             ResetEvent(mh_TermEvent);
             lbRc = StartMonitorThread();
         }
@@ -7231,65 +7336,77 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 
             // Атрибуты
             DWORD atr = 0;
-            for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
-            {
-	            atr = (*pnSrc) & 0xFF; // интересут только нижний байт - там индексы цветов
-				TODO("OPTIMIZE: lca = lcaTable[atr];");
-	            lca = lcaTable[atr];
+			if (mn_InRecreate)
+			{
+				lca = lcaTable[7];
+				for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
+				{
+					pnDst[nX] = lca;
+				}
+			}
+			else
+			{
+				for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
+				{
+					atr = (*pnSrc) & 0xFF; // интересут только нижний байт - там индексы цветов
+					TODO("OPTIMIZE: lca = lcaTable[atr];");
+					lca = lcaTable[atr];
 
-				TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
-			    if (bExtendColors && nY)
-			    {
-			        if (lca.nBackIdx == nExtendColor)
-			        {
-			            lca.nBackIdx = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
-			            lca.nForeIdx += 0x10;
-				    	lca.crForeColor = lca.crOrigForeColor = mp_VCon->mp_Colors[lca.nForeIdx];
-				    	lca.crBackColor = lca.crOrigBackColor = mp_VCon->mp_Colors[lca.nBackIdx];
-			        }
-			        else
-			        {
-			            attrBackLast = lca.nBackIdx; // запомним обычный цвет предыдущей ячейки
-			        }
-			    }
-			    
-			    // Colorer & Far - TrueMod
-				TODO("OPTIMIZE: вынести проверку bUseColorData за циклы");
-			    if (bUseColorData)
-			    {
-			    	if (pcolSrc >= pcolEnd)
-			    	{
-			    		bUseColorData = FALSE;
-		    		}
-		    		else
-		    		{
-						TODO("OPTIMIZE: доступ к битовым полям тяжело идет...");
-				    	if (pcolSrc->fg_valid)
-				    	{
-				    		lca.nFontIndex = 0;
-				    		lca.crForeColor = pcolSrc->fg_color;
-				    		if (pcolSrc->bk_valid)
+					TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
+					if (bExtendColors && nY)
+					{
+						if (lca.nBackIdx == nExtendColor)
+						{
+							lca.nBackIdx = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
+							lca.nForeIdx += 0x10;
+				    		lca.crForeColor = lca.crOrigForeColor = mp_VCon->mp_Colors[lca.nForeIdx];
+				    		lca.crBackColor = lca.crOrigBackColor = mp_VCon->mp_Colors[lca.nBackIdx];
+						}
+						else
+						{
+							attrBackLast = lca.nBackIdx; // запомним обычный цвет предыдущей ячейки
+						}
+					}
+				    
+					// Colorer & Far - TrueMod
+					TODO("OPTIMIZE: вынести проверку bUseColorData за циклы");
+					if (bUseColorData)
+					{
+			    		if (pcolSrc >= pcolEnd)
+			    		{
+			    			bUseColorData = FALSE;
+		    			}
+		    			else
+		    			{
+							TODO("OPTIMIZE: доступ к битовым полям тяжело идет...");
+				    		if (pcolSrc->fg_valid)
+				    		{
+				    			lca.nFontIndex = 0;
+				    			lca.crForeColor = pcolSrc->fg_color;
+				    			if (pcolSrc->bk_valid)
+				    				lca.crBackColor = pcolSrc->bk_color;
+				    		}
+				    		else if (pcolSrc->bk_valid)
+				    		{
+				    			lca.nFontIndex = 0;
 				    			lca.crBackColor = pcolSrc->bk_color;
-				    	}
-				    	else if (pcolSrc->bk_valid)
-				    	{
-				    		lca.nFontIndex = 0;
-				    		lca.crBackColor = pcolSrc->bk_color;
-			    		}
-			    		// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic,..., 4 - underline, ...
-			    		if (pcolSrc->style)
-			    			lca.nFontIndex = pcolSrc->style & 7;
-		    		}
-			    }
-	            
-				TODO("OPTIMIZE: lca = lcaTable[atr];");
-	            pnDst[nX] = lca;
-	            //memmove(pnDst, pnSrc, cbLineSize);
-            }
-            for (nX = cnSrcLineLen; nX < nWidth; nX++)
-            {
-            	pnDst[nX] = lcaDef;
-            }
+			    			}
+			    			// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic,..., 4 - underline, ...
+			    			if (pcolSrc->style)
+			    				lca.nFontIndex = pcolSrc->style & 7;
+		    			}
+					}
+		            
+					TODO("OPTIMIZE: lca = lcaTable[atr];");
+					pnDst[nX] = lca;
+					//memmove(pnDst, pnSrc, cbLineSize);
+				}
+			}
+			// Залить остаток (если запрошен больший участок, чем есть консоль
+			for (nX = cnSrcLineLen; nX < nWidth; nX++)
+			{
+        		pnDst[nX] = lcaDef;
+			}
             
             // Far2 показывате красный 'A' в правом нижнем углу консоли
             // Этот ярко красный цвет фона может попасть в Extend Font Colors
@@ -7397,7 +7514,10 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		wmemcpy(pChar, ms_ConStatus, nLen);
 		if (nWidth>nLen)
 			wmemset(pChar+nLen, L' ', nWidth-nLen);
-		wmemset((wchar_t*)pAttr, 7, nWidth);
+		//wmemset((wchar_t*)pAttr, 0x47, nWidth);
+		lca = lcaTableExt[7];
+		for (int i = 0; i < nWidth; i++)
+			pAttr[i] = lca;
 	}
 	
 	//FIN
@@ -7984,7 +8104,8 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
     if (!this)
         return FALSE;
 
-	if (!mp_tabs || tabIdx<0 || tabIdx>=mn_tabsCount) {
+	if (!mp_tabs || tabIdx<0 || tabIdx>=mn_tabsCount)
+	{
 		// На всякий случай, даже если табы не инициализированы, а просят первый -
 		// вернем просто заголовок консоли
 		if (tabIdx == 0) {
@@ -8000,41 +8121,56 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 		return FALSE;
     
     memmove(pTab, mp_tabs+tabIdx, sizeof(ConEmuTab));
-    if (((mn_tabsCount == 1) || (mn_ProgramStatus & CES_FARACTIVE) == 0) && pTab->Type == 1) {
-        if (TitleFull[0]) { // Если панель единственная - точно показываем заголовок консоли
+    if (((mn_tabsCount == 1) || (mn_ProgramStatus & CES_FARACTIVE) == 0) && pTab->Type == 1)
+    {
+        if (TitleFull[0]) // Если панель единственная - точно показываем заголовок консоли
+        {
             int nMaxLen = max(countof(TitleFull) , countof(pTab->Name));
             lstrcpyn(pTab->Name, TitleFull, nMaxLen);
         }
     }
-    if (pTab->Name[0] == 0) {
-        if (ms_PanelTitle[0]) { // скорее всего - это Panels?
+    if (pTab->Name[0] == 0)
+    {
+        if (ms_PanelTitle[0]) // скорее всего - это Panels?
+        {
         	// 03.09.2009 Maks -> min
             int nMaxLen = min(countof(ms_PanelTitle) , countof(pTab->Name));
             lstrcpyn(pTab->Name, ms_PanelTitle, nMaxLen);
-			if (isAdministrator() && (gSet.bAdminShield || gSet.szAdminTitleSuffix[0])) {
-				if (gSet.bAdminShield) {
+			if (isAdministrator() && (gSet.bAdminShield || gSet.szAdminTitleSuffix[0]))
+			{
+				if (gSet.bAdminShield)
+				{
 					pTab->Type |= 0x100;
-				} else {
+				}
+				else
+				{
 					if (lstrlen(ms_PanelTitle) < (int)(countof(pTab->Name) + lstrlen(gSet.szAdminTitleSuffix) + 1))
 						lstrcat(pTab->Name, gSet.szAdminTitleSuffix);
 				}
 			}
-        } else if (mn_tabsCount == 1 && TitleFull[0]) { // Если панель единственная - точно показываем заголовок консоли
+        }
+        else if (mn_tabsCount == 1 && TitleFull[0]) // Если панель единственная - точно показываем заголовок консоли
+        {
         	// 03.09.2009 Maks -> min
             int nMaxLen = min(countof(TitleFull) , countof(pTab->Name));
             lstrcpyn(pTab->Name, TitleFull, nMaxLen);
         }
     }
-	if (tabIdx == 0 && isAdministrator() && gSet.bAdminShield) {
+	if (tabIdx == 0 && isAdministrator() && gSet.bAdminShield)
+	{
 		pTab->Type |= 0x100;
 	}
     wchar_t* pszAmp = pTab->Name;
     int nCurLen = lstrlenW(pTab->Name), nMaxLen = countof(pTab->Name)-1;
-    while ((pszAmp = wcschr(pszAmp, L'&')) != NULL) {
-        if (nCurLen >= (nMaxLen - 2)) {
+    while ((pszAmp = wcschr(pszAmp, L'&')) != NULL)
+    {
+        if (nCurLen >= (nMaxLen - 2))
+        {
             *pszAmp = L'_';
             pszAmp ++;
-        } else {
+        }
+        else
+        {
 			size_t nMove = nCurLen-(pszAmp-pTab->Name);
             wmemmove_s(pszAmp+1, nMove, pszAmp, nMove);
             nCurLen ++;
@@ -8139,23 +8275,30 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
         if (mp_tabs[mn_ActiveTab].Type == 1/*WTYPE_PANELS*/)
         {
             MSectionLock cs; cs.Lock(&csCON);
-            if (con.pConChar) {
-                if (con.pConChar[0] == L'R' || con.pConChar[0] == L'P') {
+            if (con.pConChar)
+			{
+                if (con.pConChar[0] == L'R' || con.pConChar[0] == L'P')
+				{
                     // Запись макроса. Запретим наверное переключаться?
                     lbMenuActive = TRUE;
                 }
-                else if (con.pConChar[0] == L' ' && con.pConChar[con.nTextWidth] == ucBoxDblVert) {
+                else if (con.pConChar[0] == L' ' && con.pConChar[con.nTextWidth] == ucBoxDblVert)
+				{
                     lbMenuActive = TRUE;
-                } else if (con.pConChar[0] == L' ' && (con.pConChar[con.nTextWidth] == ucBoxDblDownRight || 
+                }
+				else if (con.pConChar[0] == L' ' && (con.pConChar[con.nTextWidth] == ucBoxDblDownRight || 
                     (con.pConChar[con.nTextWidth] == '[' 
                      && (con.pConChar[con.nTextWidth+1] >= L'0' && con.pConChar[con.nTextWidth+1] <= L'9'))))
                 {
                     // Строка меню ВСЕГДА видна. Определим, активно ли меню.
-                    for (int x=1; !lbMenuActive && x<con.nTextWidth; x++) {
+                    for (int x=1; !lbMenuActive && x<con.nTextWidth; x++)
+					{
                         if (con.pConAttr[x] != con.pConAttr[0]) // неактивное меню - не подсвечивается
                             lbMenuActive = TRUE;
                     }
-                } else {
+                }
+				else
+				{
                     // Если строка меню ВСЕГДА не видна, а только всплывает
                     wchar_t* pszLine = con.pConChar + con.nTextWidth;
                     for (int x=1; !lbMenuActive && x<(con.nTextWidth-10); x++)
@@ -9511,18 +9654,25 @@ void CRealConsole::FindPanels()
     {
         uint nY = 0;
 		BOOL lbIsMenu = FALSE;
-		if (con.pConChar[0] == L' ') {
+		if (con.pConChar[0] == L' ')
+		{
 			lbIsMenu = TRUE;
-			for (int i=0; i<con.nTextWidth; i++) {
-				if (con.pConChar[i]==ucBoxDblHorz || con.pConChar[i]==ucBoxDblDownRight || con.pConChar[i]==ucBoxDblDownLeft) {
+			for (int i=0; i<con.nTextWidth; i++)
+			{
+				if (con.pConChar[i]==ucBoxDblHorz || con.pConChar[i]==ucBoxDblDownRight || con.pConChar[i]==ucBoxDblDownLeft)
+				{
 					lbIsMenu = FALSE; break;
 				}
 			}
 			if (lbIsMenu)
 				nY ++; // скорее всего, первая строка - меню
-		} else if ((con.pConChar[0] == L'R' || con.pConChar[0] == L'P') && con.pConChar[1] == L' ') {
-			for (int i=1; i<con.nTextWidth; i++) {
-				if (con.pConChar[i]==ucBoxDblHorz || con.pConChar[i]==ucBoxDblDownRight || con.pConChar[i]==ucBoxDblDownLeft) {
+		}
+		else if ((con.pConChar[0] == L'R' || con.pConChar[0] == L'P') && con.pConChar[1] == L' ')
+		{
+			for (int i=1; i<con.nTextWidth; i++)
+			{
+				if (con.pConChar[i]==ucBoxDblHorz || con.pConChar[i]==ucBoxDblDownRight || con.pConChar[i]==ucBoxDblDownLeft)
+				{
 					lbIsMenu = FALSE; break;
 				}
 			}
@@ -9545,7 +9695,8 @@ void CRealConsole::FindPanels()
 				&& (con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == ucBoxSinglDownDblHorz)) // доп.окон нет, только рамка
 			) && con.pConChar[nIdx+con.nTextWidth] == ucBoxDblVert)
 		{
-			for (int i=2; !bLeftPanel && i<con.nTextWidth; i++) {
+			for (int i=2; !bLeftPanel && i<con.nTextWidth; i++)
+			{
 				if (con.pConChar[nIdx+i] == ucBoxDblDownLeft
 					&& (con.pConChar[nIdx+i-1] == ucBoxDblHorz || con.pConChar[nIdx+i-1] == ucBoxSinglDownDblHorz)
 					// МОЖЕТ быть закрыто AltHistory
@@ -9602,14 +9753,16 @@ void CRealConsole::FindPanels()
 					|| con.pConChar[nIdx+con.nTextWidth-1] == ucBoxDblDownLeft) // или рамка
 					&& con.pConChar[nIdx+con.nTextWidth*2-1] == ucBoxDblVert) // ну и правая граница панели
 				{
-					for (int i=con.nTextWidth-3; !bRightPanel && i>2; i--) {
+					for (int i=con.nTextWidth-3; !bRightPanel && i>2; i--)
+					{
 						// ищем левую границу правой панели
 						if (con.pConChar[nIdx+i] == ucBoxDblDownRight
 							&& (con.pConChar[nIdx+i+1] == ucBoxDblHorz || con.pConChar[nIdx+i+1] == ucBoxSinglDownDblHorz)
 							&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert)
 						{
 							uint nBottom = con.nTextHeight - 1;
-							while (nBottom > 4) {
+							while (nBottom > 4)
+							{
 								if (/*con.pConChar[con.nTextWidth*nBottom+i] == ucBoxDblUpRight 
 									&&*/ con.pConChar[con.nTextWidth*(nBottom+1)-1] == ucBoxDblUpLeft)
 								{
@@ -9634,7 +9787,8 @@ void CRealConsole::FindPanels()
     }
 
 #ifdef _DEBUG
-	if (bLeftPanel && !bRightPanel && rLeftPanelFull.right > 120) {
+	if (bLeftPanel && !bRightPanel && rLeftPanelFull.right > 120)
+	{
 		bLeftPanel = bLeftPanel;
 	}
 #endif
@@ -9653,7 +9807,8 @@ void CRealConsole::FindPanels()
     nNewProgress = -1;
 	// mn_ProgramStatus не катит. Хочется подхватывать прогресс из плагина Update, а там как раз CES_FARACTIVE
     //if (!abResetOnly && (mn_ProgramStatus & CES_FARACTIVE) == 0) {
-	if (!bMayBePanels && (mn_FarStatus & CES_NOTPANELFLAGS) == 0) {
+	if (!bMayBePanels && (mn_FarStatus & CES_NOTPANELFLAGS) == 0)
+	{
     	// Обработка прогресса NeroCMD и пр. консольных программ
 		// Если курсор находится в видимой области
 		int nY = con.m_sbi.dwCursorPosition.Y - con.m_sbi.srWindow.Top;
@@ -9696,18 +9851,22 @@ int CRealConsole::CoordInPanel(COORD cr)
 
 BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/)
 {
-	if (!this) {
+	if (!this)
+	{
 		if (prc)
 			*prc = MakeRect(-1,-1);
 		return FALSE;
 	}
 
-	if (abRight) {
+	if (abRight)
+	{
 		if (prc)
 			*prc = abFull ? mr_RightPanelFull : mr_RightPanel;
 		if (mr_RightPanel.right <= mr_RightPanel.left)
 			return FALSE;
-	} else {
+	}
+	else
+	{
 		if (prc)
 			*prc = abFull ? mr_LeftPanelFull : mr_LeftPanel;
 		if (mr_LeftPanel.right <= mr_LeftPanel.left)
@@ -9779,7 +9938,8 @@ bool CRealConsole::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
 	if (!isSelectionAllowed())
 		return false;
 
-	if (sel) {
+	if (sel)
+	{
 		*sel = con.m_sel;
 	}
 	return (con.m_sel.dwFlags != 0);
@@ -9792,7 +9952,8 @@ void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
 	*ci = con.m_ci;
 	// Если сейчас выделяется текст мышкой (ConEmu internal)
 	// то курсор нужно переключить в половину знакоместа!
-	if (isSelectionPresent()) {
+	if (isSelectionPresent())
+	{
 		if (ci->dwSize < 50)
 			ci->dwSize = 50;
 	}
@@ -9803,7 +9964,8 @@ void CRealConsole::GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
 	if (!this) return;
 	*sbi = con.m_sbi;
 	
-	if (con.m_sel.dwFlags) {
+	if (con.m_sel.dwFlags)
+	{
 		// В режиме выделения - положение курсора ставим сами
 		GetConsoleCursorPos(&(sbi->dwCursorPosition));
 		
@@ -9821,7 +9983,8 @@ void CRealConsole::GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
 
 void CRealConsole::GetConsoleCursorPos(COORD *pcr)
 {
-	if (con.m_sel.dwFlags) {
+	if (con.m_sel.dwFlags)
+	{
 		// В режиме выделения - положение курсора ставим сами
 		if (con.m_sel.dwSelectionAnchor.X == con.m_sel.srSelection.Left)
 			pcr->X = con.m_sel.srSelection.Right;
@@ -9833,7 +9996,9 @@ void CRealConsole::GetConsoleCursorPos(COORD *pcr)
 		else
 			pcr->Y = con.m_sel.srSelection.Top + con.nTopVisibleLine;
 
-	} else {
+	}
+	else
+	{
 		*pcr = con.m_sbi.dwCursorPosition;
 	}
 }
@@ -10022,7 +10187,8 @@ BOOL CRealConsole::OpenFarMapData()
 		goto wrap;
 	}
 
-	if (m_FarInfo.Ptr()->nFarPID != nFarPID) {
+	if (m_FarInfo.Ptr()->nFarPID != nFarPID)
+	{
 		_ASSERTE(m_FarInfo.Ptr()->nFarPID != nFarPID);
 		CloseFarMapData();
 		wsprintf (szErr, L"ConEmu: Invalid FAR info format. %s", szMapName);
@@ -10036,10 +10202,12 @@ BOOL CRealConsole::OpenFarMapData()
 	//wsprintf(szMapName, CEFARALIVEEVENT, nFarPID);
 	//mh_FarAliveEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szMapName);
 	//if (!mh_FarAliveEvent) {
-	if (!m_FarAliveEvent.Open()) {
+	if (!m_FarAliveEvent.Open())
+	{
 		dwErr = GetLastError();
 		//if (mp_FarInfo) {
-		if (m_FarInfo.IsValid()) {
+		if (m_FarInfo.IsValid())
+		{
 			_ASSERTE(m_FarAliveEvent.GetHandle()!=NULL);
 		}
 	}
@@ -10549,10 +10717,12 @@ bool CRealConsole::isAlive()
 {
 	if (!this) return false;
 
-	if (GetFarPID()!=0 && mn_LastFarReadTick /*mn_LastFarReadIdx != (DWORD)-1*/) {
+	if (GetFarPID(TRUE)!=0 && mn_LastFarReadTick /*mn_LastFarReadIdx != (DWORD)-1*/)
+	{
 		bool lbAlive = false;
 		DWORD nLastReadTick = mn_LastFarReadTick;
-		if (nLastReadTick) {
+		if (nLastReadTick)
+		{
 			DWORD nCurTick = GetTickCount();
 			DWORD nDelta = nCurTick - nLastReadTick;
 			if (nDelta < FAR_ALIVE_TIMEOUT)
@@ -10572,9 +10742,13 @@ LPCWSTR CRealConsole::GetConStatus()
 void CRealConsole::SetConStatus(LPCWSTR asStatus)
 {
 	lstrcpyn(ms_ConStatus, asStatus ? asStatus : L"", countof(ms_ConStatus));
-	if (isActive()) {
-		if (mp_VCon->Update(false))
-			gConEmu.m_Child->Redraw();
+	if (isActive())
+	{
+		if (mp_VCon->Update(true))
+			gConEmu.Invalidate(mp_VCon);
+		//gConEmu.Update(true);
+		//if (mp_VCon->Update(false))
+		//	gConEmu.m_Child->Redraw();
 	}
 }
 

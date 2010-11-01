@@ -1965,6 +1965,7 @@ void CVirtualConsole::UpdateText()
 
             if (isUnicode || bEnhanceGraphics)
                 isProgress = isCharProgress(c); // ucBox25 / ucBox50 / ucBox75 / ucBox100
+
 			isUnicodeOrProgress = isUnicode || isProgress;
             if (!isUnicodeOrProgress)
                 isSpace = isCharSpace(c);
@@ -2846,14 +2847,16 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
         #endif
 		HFONT hOldF = (HFONT)SelectObject(hPaintDc, gSet.mh_Font[0]);
 		LPCWSTR pszStarting = L"Initializing ConEmu.";
-		if (this) {
+		if (this)
+		{
 			if (mp_RCon)
 				pszStarting = mp_RCon->GetConStatus();
 		}
 		UINT nFlags = ETO_CLIPPED;
 		SetTextColor(hPaintDc, pColors[7]);
 		SetBkColor(hPaintDc, pColors[0]);
-		ExtTextOut(hPaintDc, rcClient.left, rcClient.top, nFlags, &rcClient, pszStarting, wcslen(pszStarting), 0);
+		ExtTextOut(hPaintDc, rcClient.left, rcClient.top, nFlags, &rcClient,
+			pszStarting, wcslen(pszStarting), 0);
 		SelectObject(hPaintDc, hOldF);
         DeleteObject(hBr);
         //EndPaint(ghWndDC, &ps);
@@ -2872,7 +2875,10 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 
 	mb_InPaintCall = TRUE;
-	Update(mb_RequiredForceUpdate);
+	if (gbNoDblBuffer)
+		Update(true, &hPaintDc);
+	else
+		Update(mb_RequiredForceUpdate);
 	mb_InPaintCall = FALSE;
 
     BOOL lbExcept = FALSE;
