@@ -192,6 +192,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mn_SelectModeSkipVk = 0;
     mn_ProcessCount = 0; 
 	mn_FarPID = 0; //mn_FarInputTID = 0;
+	memset(m_FarPlugPIDs, 0, sizeof(m_FarPlugPIDs)); mn_FarPlugPIDsCount = 0;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
     mn_LastSetForegroundPID = 0;
     mh_ServerSemaphore = NULL;
@@ -241,7 +242,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	
     m_UseLogs = gSet.isAdvLogging;
 
-    mb_PluginDetected = FALSE; mn_FarPID_PluginDetected = 0; //mn_Far_PluginInputThreadId = 0;
+    //mb_PluginDetected = FALSE;
+    mn_FarPID_PluginDetected = 0; //mn_Far_PluginInputThreadId = 0;
 
     lstrcpy(ms_Editor, L"edit ");
     MultiByteToWideChar(CP_ACP, 0, "редактирование ", -1, ms_EditorRus, 32);
@@ -690,15 +692,15 @@ BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer,
 
 	BOOL lbRc = FALSE;
 
-	DWORD dwPID = GetFarPID();
-	if (dwPID)
-	{
-		// Если это СТАРЫЙ FAR (нет Synchro) - может быть не ресайзить через плагин?
-		// Хотя тут плюс в том, что хоть активация и идет чуть медленнее, но
-		// возврат из ресайза получается строго после обновления консоли
-		if (!mb_PluginDetected || dwPID != mn_FarPID_PluginDetected)
-			dwPID = 0;
-	}
+	DWORD dwPID = GetFarPID(TRUE);
+	//if (dwPID)
+	//{
+	//	// Если это СТАРЫЙ FAR (нет Synchro) - может быть не ресайзить через плагин?
+	//	// Хотя тут плюс в том, что хоть активация и идет чуть медленнее, но
+	//	// возврат из ресайза получается строго после обновления консоли
+	//	if (!mb_PluginDetected || dwPID != mn_FarPID_PluginDetected)
+	//		dwPID = 0;
+	//}
 	_ASSERTE(sizeY <= 200);
 	/*if (!con.bBufferHeight && dwPID)
 		lbRc = SetConsoleSizePlugin(sizeX, sizeY, sizeBuffer, anCmdID);
@@ -1331,26 +1333,58 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             
 			// Тут и ApplyConsole вызывается
             //if (pRCon->mp_ConsoleInfo)
+            
+            // Если сервер жив - можно проверить наличие фара и его отклик
             if (pRCon->m_ConsoleMap.IsValid())
             {
+            	bool lbFarChanged = false;
 				// Alive?
 				DWORD nCurFarPID = pRCon->GetFarPID(TRUE);
 				if (!nCurFarPID)
 				{
-					if (nLastFarPID)
+					// Возможно, сменился FAR (возврат из cmd.exe, или вложенного фара)
+					DWORD nPID = pRCon->GetFarPID(FALSE);
+					if (nPID)
 					{
-						pRCon->CloseFarMapData();
-						nLastFarPID = 0;
+						for (int i = 0; i < pRCon->mn_FarPlugPIDsCount; i++)
+						{
+							if (pRCon->m_FarPlugPIDs[i] == nPID)
+							{
+								pRCon->mn_FarPID_PluginDetected = nCurFarPID = nPID;
+								break;
+							}
+						}
 					}
 				}
-				else if (nLastFarPID != nCurFarPID)
+				
+				// Если фара (с плагином) нет, а раньше был
+				if (!nCurFarPID && nLastFarPID)
+				{
+					// Закрыть и сбросить PID
+					pRCon->CloseFarMapData();
+					nLastFarPID = 0;
+					lbFarChanged = true;
+				}
+				
+				// Если PID фара (с плагином) сменился
+				if (nCurFarPID && nLastFarPID != nCurFarPID)
 				{
 					//pRCon->mn_LastFarReadIdx = -1;
 					pRCon->mn_LastFarReadTick = 0;
 					nLastFarPID = nCurFarPID;
 					// Переоткрывать мэппинг при смене PID фара
 					// (из одного фара запустили другой, который закрыли и вернулись в первый)
-					pRCon->OpenFarMapData();
+					if (!pRCon->OpenFarMapData())
+					{
+						// Значит его таки еще (или уже) нет?
+						if (pRCon->mn_FarPID_PluginDetected == nCurFarPID)
+						{
+							for (int i = 0; i < pRCon->mn_FarPlugPIDsCount; i++) // сбросить ИД списка плагинов
+								if (pRCon->m_FarPlugPIDs[i] == nCurFarPID) pRCon->m_FarPlugPIDs[i] = 0;
+							pRCon->mn_FarPID_PluginDetected = 0;
+						}
+					}
+					lbFarChanged = true;
 				}
 
 				bool bAlive = false;
@@ -1413,6 +1447,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 						PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
 					}
 					bLastAliveActive = true;
+
+					if (lbFarChanged)	
+						gConEmu.UpdateProcessDisplay(FALSE); // обновить PID в окне настройки
 				}
 				else
 				{
@@ -1420,6 +1457,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				}
 				bLastAlive = bAlive;
 
+				//вроде не надо
+				//UpdateFarSettings(mn_FarPID_PluginDetected);
 
 				// Загрузить изменения из консоли
 				//if ((HWND)pRCon->mp_ConsoleInfo->hConWnd && pRCon->mp_ConsoleInfo->nCurDataMapIdx
@@ -4278,6 +4317,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 			if (pIn->hdr.nSrcPID == mn_FarPID)
 			{
 				mn_ProgramStatus &= ~CES_FARACTIVE;
+				for (int i = 0; i < mn_FarPlugPIDsCount; i++) // сбросить ИД списка плагинов
+					if (m_FarPlugPIDs[i] == mn_FarPID) m_FarPlugPIDs[i] = 0;
 				mn_FarPID_PluginDetected = mn_FarPID = 0;
 				CloseFarMapData();
 				if (isActive()) gConEmu.UpdateProcessDisplay(FALSE); // обновить PID в окне настройки
@@ -4463,9 +4504,34 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
     {
         DEBUGSTRCMD(L"GUI recieved CECMD_RESOURCES\n");
         _ASSERTE(nDataSize>=6);
-        mb_PluginDetected = TRUE; // Запомним, что в фаре есть плагин (хотя фар может быть закрыт)
-        mn_FarPID_PluginDetected = pIn->dwData[0];
-		OpenFarMapData();
+        //mb_PluginDetected = TRUE; // Запомним, что в фаре есть плагин (хотя фар может быть закрыт)
+        DWORD nPID = pIn->dwData[0]; // Запомним, что в фаре есть плагин
+        
+        // Запомнить этот PID в списке фаров
+        bool bAlreadyExist = false; int j = -1;
+        for (int i = 0; i < mn_FarPlugPIDsCount; i++)
+        {
+        	if (m_FarPlugPIDs[i] == nPID)
+        	{
+        		bAlreadyExist = true; break;
+        	}
+        	else if (m_FarPlugPIDs[i] == 0)
+        	{
+        		j = i;
+        	}
+        }
+        if (!bAlreadyExist)
+        {
+        	// Если с списке фаров этого PIDа еще нет - по возможности запомнить
+        	if (j == -1 && mn_FarPlugPIDsCount < countof(m_FarPlugPIDs))
+        		j = mn_FarPlugPIDsCount++;
+        	if (j >= 0)
+        		m_FarPlugPIDs[j] = nPID;
+    	}
+        
+    	// Запомним, что в фаре есть плагин
+        mn_FarPID_PluginDetected = nPID;
+		OpenFarMapData(); // переоткроет мэппинг с информацией о фаре
 
         if (isActive()) gConEmu.UpdateProcessDisplay(FALSE); // обновить PID в окне настройки
         //mn_Far_PluginInputThreadId      = pIn->dwData[1];
@@ -4513,8 +4579,6 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         }
 
 		UpdateFarSettings(mn_FarPID_PluginDetected);
-
-
 	}
 	else if (pIn->hdr.nCmd == CECMD_SETFOREGROUND)
 	{
@@ -4849,7 +4913,7 @@ void CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
                 iter->inConsole = true;
                 PID[i] = 0; // Его добавлять уже не нужно, мы о нем знаем
                 break;
-            }    
+            }
         }
         iter++;
     }
@@ -4873,6 +4937,21 @@ void CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
     }
 
 
+    // Проверить, может какие-то из запомненных в m_FarPlugPIDs процессов отвалились от консоли
+    for (int j = 0; j < mn_FarPlugPIDsCount; j++)
+    {
+    	if (m_FarPlugPIDs[j] == 0) continue;
+    	bool bFound = false;
+    	for (i = 0; i < anCount; i++)
+    	{
+    		if (PID[i] == m_FarPlugPIDs[j])
+    		{
+    			bFound = true; break;
+    		}
+    	}
+    	if (!bFound)
+    		m_FarPlugPIDs[j] = 0;
+    }
     
 
     // Теперь нужно добавить новый процесс
@@ -10214,7 +10293,8 @@ BOOL CRealConsole::OpenFarMapData()
 
 	lbResult = TRUE;
 wrap:
-	if (!lbResult && szErr[0]) {
+	if (!lbResult && szErr[0])
+	{
 		gConEmu.DebugStep(szErr);
 		MBoxA(szErr);
 	}

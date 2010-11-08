@@ -2719,12 +2719,16 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
     // ≈сли курсор (в консоли) видим, и находитс€ в видимой области (при прокрутке)
     if (cinf.bVisible && isCursorValid)
     {
-		if (!gSet.isCursorBlink || !bForeground) {
+		if (!gSet.isCursorBlink || !bForeground)
+		{
             Cursor.isVisible = true; // ¬идим всегда (даже в неактивной консоли), не мигает
-            if (Cursor.isPrevBackground == bForeground) {
+            if (Cursor.isPrevBackground == bForeground)
+            {
             	lRes = true;
             }
-		} else {
+		}
+		else
+		{
             // —мена позиции курсора - его нужно обновить, если окно активно
             if ((Cursor.x != csbi.dwCursorPosition.X) || (Cursor.y != csbi.dwCursorPosition.Y)) 
             {
@@ -2735,23 +2739,34 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
             // Ќастало врем€ мигани€
             if ((GetTickCount() - Cursor.nLastBlink) > Cursor.nBlinkTime)
             {
-            	if (Cursor.isPrevBackground && bForeground) {
+            	if (gConEmu.isRightClickingPaint())
+            	{
+            		// «ажата права€ кнопка мышки, начата отрисовка кружочка
+            		Cursor.isVisible = false;
+            	}
+            	else if (Cursor.isPrevBackground && bForeground)
+            	{
             		// после "неактивного" курсора - сразу рисовать активный, только потом - мигать
             		Cursor.isVisible = true;
             		lRes = true;
-            	} else {
+            	}
+            	else
+            	{
                 	Cursor.isVisible = bConActive && !Cursor.isVisible;
             	}
                 lbUpdateTick = TRUE;
             }
 		}
-    } else {
+    }
+    else
+    {
         // »наче - его нужно спр€тать (курсор скрыт в консоли, или ушел за границы экрана)
         Cursor.isVisible = false;
     }
 
     // —мена видимости палки в ConEmu
-    if (Cursor.isVisible != Cursor.isVisiblePrev) {
+    if (Cursor.isVisible != Cursor.isVisiblePrev && !gConEmu.isRightClickingPaint())
+    {
         lRes = true;
         lbUpdateTick = TRUE;
     }

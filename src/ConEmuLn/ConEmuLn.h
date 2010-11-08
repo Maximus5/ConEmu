@@ -48,6 +48,8 @@ extern FarVersion gFarVersion;
 //Settings
 extern BOOL gbBackgroundEnabled;
 extern COLORREF gcrLinesColor;
+extern BOOL gbHilightPlugins;
+extern COLORREF gcrHilightPlugBack;
 
 BOOL LoadFarVersion();
 int WINAPI UpdateConEmuBackground(struct UpdateBackgroundArg* pBk);

@@ -257,6 +257,7 @@ void CSettings::InitSettings()
     psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
 	psCmdHistory = NULL; nCmdHistorySize = 0;
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A'; 
+    icMinimizeRestore = 'C';
     isMultiNewConfirm = true; isUseWinNumber = true; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
     m_isKeyboardHooks = 0;
     isFARuseASCIIsort = false; isFixAltOnAltTab = false; isShellNoZoneCheck = false;
@@ -561,6 +562,7 @@ void CSettings::LoadSettings()
 			reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);
 			reg->Load(L"Multi.Buffer", icMultiBuffer);
 			reg->Load(L"Multi.UseNumbers", isUseWinNumber);
+			reg->Load(L"MinimizeRestore", icMinimizeRestore);
 		reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 
 		reg->Load(L"FontAutoSize", isFontAutoSize);
@@ -1083,6 +1085,7 @@ BOOL CSettings::SaveSettings()
 				reg->Save(L"Multi.NewConfirm", isMultiNewConfirm);
 				reg->Save(L"Multi.Buffer", icMultiBuffer);
 				reg->Save(L"Multi.UseNumbers", isUseWinNumber);
+				reg->Save(L"MinimizeRestore", icMinimizeRestore);
 			reg->Save(L"KeyboardHooks", m_isKeyboardHooks);
 
             reg->Save(L"FontName", LogFont.lfFaceName);
@@ -1882,6 +1885,7 @@ LRESULT CSettings::OnInitDialog_Tabs()
 	SendDlgItemMessage(hTabs, hkSwitchConsole, HKM_SETHOTKEY, gSet.icMultiNext, 0);
 	SendDlgItemMessage(hTabs, hkCloseConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
 	SendDlgItemMessage(hTabs, hkCloseConsole, HKM_SETHOTKEY, gSet.icMultiRecreate, 0);
+	// SendDlgItemMessage(hTabs, hkMinimizeRestore, HKM_SETHOTKEY, gSet.icMinimizeRestore, 0);
 
 	if (gSet.isUseWinNumber)
 		CheckDlgButton(hTabs, cbUseWinNumber, BST_CHECKED);
@@ -2561,7 +2565,8 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case cbInstallKeybHooks:
-		switch (IsChecked(hTabs,cbInstallKeybHooks)) {
+		switch (IsChecked(hTabs,cbInstallKeybHooks))
+		{
 			case BST_CHECKED: gSet.m_isKeyboardHooks = 1; gConEmu.RegisterHoooks(); break;
 			case BST_UNCHECKED: gSet.m_isKeyboardHooks = 2; gConEmu.UnRegisterHoooks(); break;
 			case BST_INDETERMINATE: gSet.m_isKeyboardHooks = 0; break;
@@ -2572,12 +2577,14 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		if (CB >= cbHostWin && CB <= cbHostRShift)
 		{
 			memset(gSet.mn_HostModOk, 0, sizeof(gSet.mn_HostModOk));
-			for (UINT i = 0; i < countof(HostkeyCtrlIds); i++) {
+			for (UINT i = 0; i < countof(HostkeyCtrlIds); i++)
+			{
 				if (IsChecked(hTabs, HostkeyCtrlIds[i]))
 					gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(HostkeyCtrlIds[i]));
 			}
 			gSet.TrimHostkeys();
-			if (IsChecked(hTabs, CB)) {
+			if (IsChecked(hTabs, CB))
+			{
 				gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(CB));
 				gSet.TrimHostkeys();
 			}
@@ -2811,6 +2818,7 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
 			gSet.icMultiNext = nHotKey;
 		else if (TB == hkCloseConsole)
 			gSet.icMultiRecreate = nHotKey;
+		// SendDlgItemMessage(hTabs, hkMinimizeRestore, HKM_SETHOTKEY, gSet.icMinimizeRestore, 0);
 	}
 	else if (TB == tTabConsole || TB == tTabViewer || TB == tTabEditor || TB == tTabEditorMod)
 	{
@@ -3073,6 +3081,8 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
         if (gSet.isTabs==0) gConEmu.ForceShowTabs(FALSE); else
 			gConEmu.mp_TabBar->Update();
 		gConEmu.OnPanelViewSettingsChanged();
+		
+		gConEmu.RegisterMinRestore(gSet.icMinimizeRestore != 0);
     
         //if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
 		DestroyWindow(hWnd2);
@@ -3653,8 +3663,10 @@ bool CSettings::IsHostkey(WORD vk)
 // Если есть vk - заменить на vkNew
 void CSettings::ReplaceHostkey(BYTE vk, BYTE vkNew)
 {
-	for (int i = 0; i < 15; i++) {
-		if (gSet.mn_HostModOk[i] == vk) {
+	for (int i = 0; i < 15; i++)
+	{
+		if (gSet.mn_HostModOk[i] == vk)
+		{
 			gSet.mn_HostModOk[i] = vkNew;
 			return;
 		}
@@ -3663,10 +3675,12 @@ void CSettings::ReplaceHostkey(BYTE vk, BYTE vkNew)
 
 void CSettings::AddHostkey(BYTE vk)
 {
-	for (int i = 0; i < 15; i++) {
+	for (int i = 0; i < 15; i++)
+	{
 		if (gSet.mn_HostModOk[i] == vk)
 			break; // уже есть
-		if (!gSet.mn_HostModOk[i]) {
+		if (!gSet.mn_HostModOk[i])
+		{
 			gSet.mn_HostModOk[i] = vk; // добавить
 			break;
 		}
@@ -3679,7 +3693,8 @@ BYTE CSettings::CheckHostkeyModifier(BYTE vk)
 	if (!vk)
 		return 0;
 
-	switch (vk) {
+	switch (vk)
+	{
 		case VK_LWIN: case VK_RWIN:
 			if (gSet.IsHostkey(VK_RWIN))
 				ReplaceHostkey(VK_RWIN, VK_LWIN);
@@ -3690,13 +3705,15 @@ BYTE CSettings::CheckHostkeyModifier(BYTE vk)
 			break; // Это - ок
 
 		case VK_LSHIFT:
-			if (gSet.IsHostkey(VK_RSHIFT) || gSet.IsHostkey(VK_SHIFT)) {
+			if (gSet.IsHostkey(VK_RSHIFT) || gSet.IsHostkey(VK_SHIFT))
+			{
 				vk = VK_SHIFT;
 				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
 			}
 			break;
 		case VK_RSHIFT:
-			if (gSet.IsHostkey(VK_LSHIFT) || gSet.IsHostkey(VK_SHIFT)) {
+			if (gSet.IsHostkey(VK_LSHIFT) || gSet.IsHostkey(VK_SHIFT))
+			{
 				vk = VK_SHIFT;
 				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
 			}
@@ -3709,13 +3726,15 @@ BYTE CSettings::CheckHostkeyModifier(BYTE vk)
 			break;
 
 		case VK_LMENU:
-			if (gSet.IsHostkey(VK_RMENU) || gSet.IsHostkey(VK_MENU)) {
+			if (gSet.IsHostkey(VK_RMENU) || gSet.IsHostkey(VK_MENU))
+			{
 				vk = VK_MENU;
 				ReplaceHostkey(VK_RMENU, VK_MENU);
 			}
 			break;
 		case VK_RMENU:
-			if (gSet.IsHostkey(VK_LMENU) || gSet.IsHostkey(VK_MENU)) {
+			if (gSet.IsHostkey(VK_LMENU) || gSet.IsHostkey(VK_MENU))
+			{
 				vk = VK_MENU;
 				ReplaceHostkey(VK_LMENU, VK_MENU);
 			}
@@ -3728,13 +3747,15 @@ BYTE CSettings::CheckHostkeyModifier(BYTE vk)
 			break;
 
 		case VK_LCONTROL:
-			if (gSet.IsHostkey(VK_RCONTROL) || gSet.IsHostkey(VK_CONTROL)) {
+			if (gSet.IsHostkey(VK_RCONTROL) || gSet.IsHostkey(VK_CONTROL))
+			{
 				vk = VK_CONTROL;
 				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
 			}
 			break;
 		case VK_RCONTROL:
-			if (gSet.IsHostkey(VK_LCONTROL) || gSet.IsHostkey(VK_CONTROL)) {
+			if (gSet.IsHostkey(VK_LCONTROL) || gSet.IsHostkey(VK_CONTROL))
+			{
 				vk = VK_CONTROL;
 				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
 			}
@@ -3904,18 +3925,49 @@ bool CSettings::IsHostkeySingle(WORD vk)
 	return false;
 }
 
+// набор флагов MOD_xxx для RegisterHotKey
+UINT CSettings::GetHostKeyMod()
+{
+	UINT nMOD = 0;
+	
+	for (int i=0; i < 15 && mn_HostModOk[i]; i++)
+	{
+		switch (mn_HostModOk[i])
+		{
+			case VK_LWIN: case VK_RWIN:
+				nMOD |= MOD_WIN;
+				break;
+			case VK_CONTROL: case VK_LCONTROL: case VK_RCONTROL:
+				nMOD |= MOD_CONTROL;
+				break;
+			case VK_SHIFT: case VK_LSHIFT: case VK_RSHIFT:
+				nMOD |= MOD_SHIFT;
+				break;
+			case VK_MENU: case VK_LMENU: case VK_RMENU:
+				nMOD |= MOD_ALT;
+				break;
+		}
+	}
+	
+	if (!nMOD)
+		nMOD = MOD_WIN;
+	return nMOD;
+}
+
 WORD CSettings::GetPressedHostkey()
 {
 	_ASSERTE(mn_HostModOk[0]!=0);
 	
-	if (mn_HostModOk[0] == VK_LWIN) {
+	if (mn_HostModOk[0] == VK_LWIN)
+	{
 		if (isPressed(VK_LWIN))
 			return VK_LWIN;
 		if (isPressed(VK_RWIN))
 			return VK_RWIN;
 	}
 	
-	if (!isPressed(mn_HostModOk[0])) {
+	if (!isPressed(mn_HostModOk[0]))
+	{
 		_ASSERT(FALSE);
 		return 0;
 	}
@@ -5335,7 +5387,8 @@ BYTE CSettings::FontCharSet()
 
 void CSettings::RegisterTabs()
 {
-	if (!mb_TabHotKeyRegistered) {
+	if (!mb_TabHotKeyRegistered)
+	{
 		if (RegisterHotKey(ghOpWnd, 0x101, MOD_CONTROL, VK_TAB))
 			mb_TabHotKeyRegistered = TRUE;
 		RegisterHotKey(ghOpWnd, 0x102, MOD_CONTROL|MOD_SHIFT, VK_TAB);
@@ -5344,7 +5397,8 @@ void CSettings::RegisterTabs()
 
 void CSettings::UnregisterTabs()
 {
-	if (mb_TabHotKeyRegistered) {
+	if (mb_TabHotKeyRegistered)
+	{
 		UnregisterHotKey(ghOpWnd, 0x101);
 		UnregisterHotKey(ghOpWnd, 0x102);
 	}
@@ -5361,7 +5415,8 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 	
 	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); iter++)
 	{
-		if (StrCmpI(iter->szFontFile, asFontFile) == 0) {
+		if (StrCmpI(iter->szFontFile, asFontFile) == 0)
+		{
 			// Уже добавлено
 			if (abDefault && iter->bDefault == FALSE) iter->bDefault = TRUE;
 			
@@ -5371,7 +5426,8 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 
 	RegFont rf = {abDefault};
 	
-	if (!GetFontNameFromFile(asFontFile, rf.szFontName)) {
+	if (!GetFontNameFromFile(asFontFile, rf.szFontName))
+	{
 		//DWORD dwErr = GetLastError();
 		TCHAR* psz=(TCHAR*)calloc(wcslen(asFontFile)+100,sizeof(TCHAR));
 		lstrcpyW(psz, L"Can't retrieve font family from file:\n");
@@ -5379,7 +5435,8 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		lstrcatW(psz, L"\nContinue?");
 		int nBtn = MessageBox(NULL, psz, L"ConEmu", MB_OKCANCEL|MB_ICONSTOP);
 		free(psz);
-		if (nBtn == IDCANCEL) {
+		if (nBtn == IDCANCEL)
+		{
 			mb_StopRegisterFonts = TRUE;
 			return FALSE;
 		}
@@ -5391,7 +5448,8 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); iter++)
 	{
 		// Это может быть другой тип шрифта (Liberation Mono Bold, Liberation Mono Regular, ...)
-		if (lstrcmpi(iter->szFontName, rf.szFontName) == 0) {
+		if (lstrcmpi(iter->szFontName, rf.szFontName) == 0)
+		{
 			lbRegistered = iter->bAlreadyInSystem; lbOneOfFam = TRUE; break;
 		}
 	}
@@ -5402,9 +5460,11 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		LF.lfOutPrecision = OUT_TT_PRECIS; LF.lfClipPrecision = CLIP_DEFAULT_PRECIS; LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
 		lstrcpy(LF.lfFaceName, rf.szFontName); LF.lfHeight = 10; LF.lfWeight = FW_NORMAL;
 		HFONT hf = CreateFontIndirect(&LF);
-		if (hf) {
+		if (hf)
+		{
 			LPOUTLINETEXTMETRICW lpOutl = gSet.LoadOutline(NULL, hf);
-			if (lpOutl) {
+			if (lpOutl)
+			{
 				if (lstrcmpi((wchar_t*)lpOutl->otmpFamilyName, rf.szFontName) == 0)
 					lbRegistered = TRUE;
 				free(lpOutl);
@@ -5423,7 +5483,8 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		lstrcatW(psz, L"\nContinue?");
 		int nBtn = MessageBox(NULL, psz, L"ConEmu", MB_OKCANCEL|MB_ICONSTOP);
 		free(psz);
-		if (nBtn == IDCANCEL) {
+		if (nBtn == IDCANCEL)
+		{
 			mb_StopRegisterFonts = TRUE;
 			return FALSE;
 		}
@@ -5436,32 +5497,41 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 	
 	// Определить наличие рамок и "юникодности" шрифта
 	HDC hdc = CreateCompatibleDC(0);
-	if (hdc) {
+	if (hdc)
+	{
 		HFONT hf = CreateFont ( 18, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET,
 							    OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, 
 								NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0,
 								rf.szFontName);
-		if (hf) {
+		if (hf)
+		{
 			HFONT hOldF = (HFONT)SelectObject(hdc, hf);
 			
 			LPGLYPHSET pSets = NULL;
 			DWORD nSize = GetFontUnicodeRanges ( hdc, NULL );
-			if (nSize) {
+			if (nSize)
+			{
 				pSets = (LPGLYPHSET)calloc(nSize,1);
-				if (pSets) {
+				if (pSets)
+				{
 					pSets->cbThis = nSize;
-					if (GetFontUnicodeRanges ( hdc, pSets )) {
+					if (GetFontUnicodeRanges ( hdc, pSets ))
+					{
 						rf.bUnicode = (pSets->flAccel != 1/*GS_8BIT_INDICES*/);
 						// Поиск рамок
-						if (rf.bUnicode) {
-							for (DWORD r = 0; r < pSets->cRanges; r++) {
+						if (rf.bUnicode)
+						{
+							for (DWORD r = 0; r < pSets->cRanges; r++)
+							{
 								if (pSets->ranges[r].wcLow < ucBoxDblDownRight 
 								    && (pSets->ranges[r].wcLow + pSets->ranges[r].cGlyphs - 1) > ucBoxDblDownRight)
 								{
 									rf.bHasBorders = TRUE; break;
 								}
 							}
-						} else {
+						}
+						else
+						{
 							_ASSERTE(rf.bUnicode);
 						}
 					}
@@ -5486,52 +5556,56 @@ void CSettings::RegisterFonts()
 	if (!isAutoRegisterFonts)
 		return; // Если поиск шрифтов не требуется
 
-	// Регистрация шрифтов в папке ConEmu
-	WIN32_FIND_DATA fnd;
-	TODO("Уже есть gConEmu.ms_ConEmuExeDir");
-	wchar_t szFind[MAX_PATH]; wcscpy(szFind, gConEmu.ms_ConEmuExe);
-	wchar_t *pszSlash = wcsrchr(szFind, L'\\');
+	// Сначала - регистрация шрифтов в папке программы
+	RegisterFontsInt(gConEmu.ms_ConEmuExeDir);
 
-	WARNING("TODO: Регистрация шрифтов не только из папки ConEmu, но и из текущей директории");
+	// Если папка запуска отличается от папки программы
+	if (lstrcmpiW(gConEmu.ms_ConEmuExeDir, gConEmu.ms_ConEmuCurDir))
+	{
+		TODO("Если папка запуска - c:\\Windows?");
+		// зарегистрировать шрифты и из папки запуска
+		RegisterFontsInt(gConEmu.ms_ConEmuCurDir);
+	}
 
-	if (!pszSlash)
-	{
-		MessageBox(NULL, L"ms_ConEmuExe does not contains '\\'", L"ConEmu", MB_OK|MB_ICONSTOP);
-	}
-	else
-	{
-		wcscpy(pszSlash, L"\\*.ttf");
-		HANDLE hFind = FindFirstFile(szFind, &fnd);
-		if (hFind != INVALID_HANDLE_VALUE)
-		{
-			do {
-				if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-				{
-					pszSlash[1] = 0;
-					if ((wcslen(fnd.cFileName)+wcslen(szFind)) >= MAX_PATH)
-					{
-						TCHAR* psz=(TCHAR*)calloc(wcslen(fnd.cFileName)+100,sizeof(TCHAR));
-						lstrcpyW(psz, L"Too long full pathname for font:\n");
-						lstrcatW(psz, fnd.cFileName);
-						int nBtn = MessageBox(NULL, psz, L"ConEmu", MB_OKCANCEL|MB_ICONSTOP);
-						free(psz);
-						if (nBtn == IDCANCEL) break;
-					}
-					else
-					{
-						wcscat(szFind, fnd.cFileName);
-						
-						if (!RegisterFont(szFind, FALSE))
-							break;
-					}
-				}
-			} while (FindNextFile(hFind, &fnd));
-			FindClose(hFind);
-		}
-	}
-	
 	// Теперь можно смотреть, зарегистрились ли какие-то шрифты... И выбрать из них подходящие
 	// Это делается в InitFont
+}
+
+void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
+{
+	// Регистрация шрифтов в папке ConEmu
+	WIN32_FIND_DATA fnd;
+	wchar_t szFind[MAX_PATH*2]; lstrcpyW(szFind, asFromDir); // БЕЗ завершающего слеша!
+	wchar_t* pszSlash = szFind + lstrlenW(szFind);
+
+	wcscpy(pszSlash, L"\\*.ttf");
+	HANDLE hFind = FindFirstFile(szFind, &fnd);
+	if (hFind != INVALID_HANDLE_VALUE)
+	{
+		do {
+			if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+			{
+				pszSlash[1] = 0;
+				if ((wcslen(fnd.cFileName)+wcslen(szFind)) >= MAX_PATH)
+				{
+					TCHAR* psz=(TCHAR*)calloc(wcslen(fnd.cFileName)+100,sizeof(TCHAR));
+					lstrcpyW(psz, L"Too long full pathname for font:\n");
+					lstrcatW(psz, fnd.cFileName);
+					int nBtn = MessageBox(NULL, psz, L"ConEmu", MB_OKCANCEL|MB_ICONSTOP);
+					free(psz);
+					if (nBtn == IDCANCEL) break;
+				}
+				else
+				{
+					wcscat(szFind, fnd.cFileName);
+					
+					if (!RegisterFont(szFind, FALSE))
+						break;
+				}
+			}
+		} while (FindNextFile(hFind, &fnd));
+		FindClose(hFind);
+	}
 }
 
 void CSettings::UnregisterFonts()
@@ -5835,15 +5909,18 @@ SettingsBase* CSettings::CreateSettings()
 	BOOL lbXml = FALSE;
 	DWORD dwAttr = -1;
 	
-	if (gConEmu.ms_ConEmuXml[0]) {
+	if (gConEmu.ms_ConEmuXml[0])
+	{
 		dwAttr = GetFileAttributes(gConEmu.ms_ConEmuXml);
     	if (dwAttr != (DWORD)-1 && !(dwAttr & FILE_ATTRIBUTE_DIRECTORY))
     		lbXml = TRUE;
 	}
 
-	if (lbXml) {
+	if (lbXml)
+	{
 		pReg = new SettingsXML();
-		if (!((SettingsXML*)pReg)->IsXmlAllowed()) {
+		if (!((SettingsXML*)pReg)->IsXmlAllowed())
+		{
 			// Если MSXml.DomDocument не зарегистрирован
 			gConEmu.ms_ConEmuXml[0] = 0;
 			lbXml = FALSE;

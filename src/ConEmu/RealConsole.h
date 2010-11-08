@@ -121,7 +121,7 @@ typedef struct _CONSOLE_INFO
 
 struct ConProcess {
     DWORD ProcessID, ParentPID; //, InputTID;
-    bool  IsFar;
+    bool  IsFar, IsFarPlugin;
     bool  IsTelnet; // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
     bool  IsNtvdm;  // 16bit приложения
     bool  IsCmd;    // значит фар выполняет команду
@@ -415,6 +415,8 @@ private:
     MSection csPRC; //DWORD ncsTPRC;
     std::vector<ConProcess> m_Processes;
     int mn_ProcessCount;
+    DWORD m_FarPlugPIDs[128];
+    int mn_FarPlugPIDsCount;
     //
     DWORD mn_FarPID, /*mn_FarInputTID,*/ mn_LastSetForegroundPID;
     //
@@ -513,7 +515,8 @@ private:
 	wchar_t ms_TempPanel[32], ms_TempPanelRus[32];
 	//wchar_t ms_NameTitle[32];
 	//
-	BOOL mb_PluginDetected; DWORD mn_FarPID_PluginDetected; //, mn_Far_PluginInputThreadId;
+	//BOOL mb_PluginDetected;
+	DWORD mn_FarPID_PluginDetected; //, mn_Far_PluginInputThreadId;
 	void CheckFarStates();
 	void OnTitleChanged();
 	DWORD mn_LastInvalidateTick;

@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
 #include "../common/RgnDetect.h"
+#include "../common/TerminalMode.h"
 #include "ConEmuTh.h"
 #include "ImgCache.h"
 
@@ -326,11 +327,12 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				#endif
 				
 			    // Check Terminal mode
-			    TCHAR szVarValue[MAX_PATH];
-			    szVarValue[0] = 0;
-			    if (GetEnvironmentVariable(L"TERM", szVarValue, 63)) {
-				    TerminalMode = TRUE;
-			    }
+			    TerminalMode = isTerminalMode();
+			    //TCHAR szVarValue[MAX_PATH];
+			    //szVarValue[0] = 0;
+			    //if (GetEnvironmentVariable(L"TERM", szVarValue, 63)) {
+				//    TerminalMode = TRUE;
+			    //}
 			}
 			break;
 		case DLL_PROCESS_DETACH:

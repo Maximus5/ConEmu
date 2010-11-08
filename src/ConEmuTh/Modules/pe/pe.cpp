@@ -156,7 +156,7 @@ size_t Max(size_t s1, size_t s2)
 }
 
 bool DumpExeFilePE( PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADERS32 pNTHeader );
-bool DumpExeFileVX( PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_VXD_HEADER pVXDHeader );
+//bool DumpExeFileVX( PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_VXD_HEADER pVXDHeader );
 void DumpResourceDirectory( PEData *pData, PIMAGE_RESOURCE_DIRECTORY pResDir,
 						   PBYTE pResourceBase,
 						   DWORD level,
@@ -1900,32 +1900,32 @@ bool DumpExeFile( PEData *pData, PIMAGE_DOS_HEADER dosHeader )
 		{
 			return DumpExeFileNE( pData, dosHeader, (IMAGE_OS2_HEADER*)pNTHeader );
 		}
-		else if ( (nSignature & 0xFFFF) == IMAGE_VXD_SIGNATURE )
-		{
-			return DumpExeFileVX( pData, dosHeader, (IMAGE_VXD_HEADER*)pNTHeader );
-		}
+		//else if ( (nSignature & 0xFFFF) == IMAGE_VXD_SIGNATURE )
+		//{
+		//	return DumpExeFileVX( pData, dosHeader, (IMAGE_VXD_HEADER*)pNTHeader );
+		//}
 	}
 
     return false;
 }
 
-bool DumpExeFileVX( PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_VXD_HEADER pVXDHeader )
-{
-	//PBYTE pImageBase = (PBYTE)dosHeader;
-	//
-	//MPanelItem* pChild = pRoot->AddFolder(_T("VxD Header"));
-	//pChild->AddText(_T("<VxD Header>\n"));
-	//
-	//pChild->AddText(_T("  Signature:         IMAGE_VXD_SIGNATURE\n"));
-	//
-	//MPanelItem* pDos = pRoot->AddFile(_T("DOS_Header"), sizeof(*dosHeader));
-	//pDos->SetData((const BYTE*)dosHeader, sizeof(*dosHeader));
-	//
-	//MPanelItem* pVXD = pRoot->AddFile(_T("VxD_Header"), sizeof(*pVXDHeader));
-	//pVXD->SetData((const BYTE*)pVXDHeader, sizeof(*pVXDHeader));
-
-	return false;
-}
+//bool DumpExeFileVX( PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_VXD_HEADER pVXDHeader )
+//{
+//	//PBYTE pImageBase = (PBYTE)dosHeader;
+//	//
+//	//MPanelItem* pChild = pRoot->AddFolder(_T("VxD Header"));
+//	//pChild->AddText(_T("<VxD Header>\n"));
+//	//
+//	//pChild->AddText(_T("  Signature:         IMAGE_VXD_SIGNATURE\n"));
+//	//
+//	//MPanelItem* pDos = pRoot->AddFile(_T("DOS_Header"), sizeof(*dosHeader));
+//	//pDos->SetData((const BYTE*)dosHeader, sizeof(*dosHeader));
+//	//
+//	//MPanelItem* pVXD = pRoot->AddFile(_T("VxD_Header"), sizeof(*pVXDHeader));
+//	//pVXD->SetData((const BYTE*)pVXDHeader, sizeof(*pVXDHeader));
+//
+//	return false;
+//}
 
 //
 // Dump the section table from a PE file or an OBJ
@@ -2580,77 +2580,154 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 	if (pszSlash) pszDot = wcsrchr(pszSlash, L'.');
 	if (!pszDot) return FALSE;
 
+	//TODO: Если появится возможность просмотра нескольких байт - хорошо бы это делать один раз на пачку плагинов?
 	if (lstrcmpiW(FilePath+nLen-4, L".exe") && lstrcmpiW(FilePath+nLen-4, L".dll")
 		&& lstrcmpiW(FilePath+nLen-4, L".com") && lstrcmpiW(FilePath+nLen-4, L".pvd")
 		&& lstrcmpiW(FilePath+nLen-4, L".dl_"))
 	{
 		return FALSE;
 	}
+	
+	BOOL lbRc = FALSE;
 
-	HANDLE hFile = CreateFileW(FilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0,0);
-	if (hFile == INVALID_HANDLE_VALUE) {
+	LPCTSTR pszUNCPath = FilePath;
+	//TCHAR* pszBuffer = NULL;
+	//nLen = lstrlen(FilePath);
+	//if (FilePath[0] == L'\\' && FilePath[1] == L'\\')
+	//{
+	//	if (FilePath[2] != L'?' && FilePath[2] != L'.')
+	//	{
+	//		// UNC
+	//		pszBuffer = (wchar_t*)malloc((nLen+10)*2);
+	//		lstrcpy(pszBuffer, L"\\\\?\\UNC");
+	//		lstrcat(pszBuffer, FilePath+1);
+	//		pszUNCPath = pszBuffer;
+	//	}
+	//}
+	//else if (FilePath[1] == L':' && FilePath[2] == L'\\')
+	//{
+	//	// UNC
+	//	pszBuffer = (wchar_t*)malloc((nLen+10)*2);
+	//	lstrcpy(pszBuffer, L"\\\\?\\");
+	//	lstrcat(pszBuffer, FilePath);
+	//	pszUNCPath = pszBuffer;
+	//}
+	
+	HANDLE hFile = CreateFileW(pszUNCPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0,0);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
 		DWORD dwErr = GetLastError();
-		if (dwErr == ERROR_SHARING_VIOLATION) {
-			hFile = CreateFileW(FilePath, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0,0);
+		if (dwErr == ERROR_SHARING_VIOLATION)
+		{
+			hFile = CreateFileW(pszUNCPath, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0,0);
 			//if (hFile == INVALID_HANDLE_VALUE)
 			//	hFile = CreateFileW(FilePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0,0);
 		}
 	}
-	if (hFile == INVALID_HANDLE_VALUE) return FALSE;
-
-	LARGE_INTEGER nSize = {{0}};
-	if (!GetFileSizeEx(hFile, &nSize) || nSize.QuadPart <= 512) {
-		CloseHandle(hFile); return FALSE;
-	}
-
-	HANDLE hFileMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-	if ( hFileMapping == 0 )
+	if (hFile != INVALID_HANDLE_VALUE)
 	{
+		LARGE_INTEGER nSize = {{0}};
+		BYTE Signature[2]; DWORD nRead = 0;
+		
+		HANDLE hFileMapping = NULL;
+		LPBYTE pFileData = NULL;
+		
+		if (GetFileSizeEx(hFile, &nSize) && (nSize.QuadPart > 512) &&
+			ReadFile(hFile, Signature, 2, &nRead, NULL) &&
+			(Signature[0] == 'M' && Signature[1] == 'Z'))
+		{
+			BOOL lbSucceeded = TRUE;
+			LARGE_INTEGER liPos, liTest;
+			IMAGE_DOS_HEADER dosHeader = {0};
+			IMAGE_NT_HEADERS64 NTHeader64 = {0}; // 64-версия больше 32 битной. считываем больший блок данных
+			
+			dosHeader.e_magic = IMAGE_DOS_SIGNATURE;
+			lbSucceeded = ReadFile(hFile, 2+(LPBYTE)&dosHeader, sizeof(dosHeader)-2, &nRead, NULL);
+
+			if (lbSucceeded)
+			{
+				liPos.QuadPart = dosHeader.e_lfanew;
+				lbSucceeded = (liPos.QuadPart > sizeof(dosHeader) && liPos.QuadPart < nSize.QuadPart);
+			}
+			
+			if (lbSucceeded)
+			{				
+				lbSucceeded = SetFilePointerEx(hFile, liPos, &liTest, FILE_BEGIN)
+					&& ReadFile(hFile, &NTHeader64, sizeof(NTHeader64), &nRead, NULL)
+					&& (NTHeader64.Signature == IMAGE_NT_SIGNATURE
+						|| (NTHeader64.Signature & 0xFFFF) == IMAGE_OS2_SIGNATURE
+						|| (NTHeader64.Signature & 0xFFFF) == IMAGE_OS2_SIGNATURE_LE);
+			}
+			
+			if (lbSucceeded)
+			{
+				// Теперь нужно скорректировать размер отображаемого в память файла (отбрасываем аппендикс, вроде SFX архивов)
+				if (NTHeader64.Signature == IMAGE_NT_SIGNATURE)
+				{
+					if (NTHeader64.OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+					{
+						if (NTHeader64.OptionalHeader.SizeOfImage < nSize.QuadPart)
+							nSize.QuadPart = NTHeader64.OptionalHeader.SizeOfImage;
+					}
+					else
+					{
+						PIMAGE_NT_HEADERS32 pNTHeader32 = (PIMAGE_NT_HEADERS32)&NTHeader64;
+						if (pNTHeader32->OptionalHeader.SizeOfImage < nSize.QuadPart)
+							nSize.QuadPart = pNTHeader32->OptionalHeader.SizeOfImage;
+					}
+				}
+				else
+				{
+					// Это скорее всего 16битная exe/dll, или что-то другое, в формате OS2
+				}
+				if (nSize.QuadPart > (256<<20)) // Грузим не больше 256Mb
+					nSize.QuadPart = (256<<20);
+			}
+
+			if (lbSucceeded)
+			{
+				hFileMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+				lbSucceeded = (hFileMapping != NULL);
+			}
+
+			if (lbSucceeded)
+			{
+				pFileData = (PBYTE)MapViewOfFile(hFileMapping,FILE_MAP_READ,0,0,nSize.LowPart);
+				lbSucceeded = (pFileData != NULL);
+			}
+
+			// Можно продолжать?
+			if (lbSucceeded)
+			{
+				PEData Ver;
+				if (pszDot) lstrcpyn(Ver.szExtension, pszDot, ARRAYSIZE(Ver.szExtension));
+				Ver.nFlags |= PE_ICON_EXISTS; // чтобы иконки не пытаться искать. нужна только версия
+
+				BOOL lbDump = DumpFile(&Ver, pFileData, nSize.QuadPart);
+
+				if (lbDump && (Ver.szVersion[0] != 0 || Ver.nBits != 0))
+				{
+					nLen = lstrlen(Ver.szVersion)+10;
+					if (nLen < 2) return FALSE;
+					*CustomData = (wchar_t*)malloc(nLen*2);
+					wsprintfW(*CustomData, L"[%s%s%i]%s%s", 
+						(Ver.nFlags & PE_SIGNED) ? L"s" : ((Ver.Machine!=IMAGE_FILE_MACHINE_IA64) ? L"x" : L""),
+						(Ver.Machine==IMAGE_FILE_MACHINE_IA64) ? L"IA" : L"",
+						Ver.nBits, 
+						Ver.szVersion[0] ? L" " : L"", Ver.szVersion);
+
+					lbRc = TRUE;
+				}
+			}
+			
+			if (pFileData)
+				UnmapViewOfFile(pFileData);
+			if (hFileMapping)
+				CloseHandle(hFileMapping);
+		}
 		CloseHandle(hFile);
-		return FALSE;
 	}
-
-	LPBYTE pFileData = (PBYTE)MapViewOfFile(hFileMapping,FILE_MAP_READ,0,0,0);
-	if ( pFileData == 0 )
-	{
-		CloseHandle(hFileMapping);
-		CloseHandle(hFile);
-		return FALSE;
-	}
-
-	if (pFileData[0] != 'M' || pFileData[1] != 'Z') {
-		UnmapViewOfFile(pFileData);
-		CloseHandle(hFileMapping);
-		CloseHandle(hFile);
-		return FALSE;
-	}
-
-
-
-	PEData Ver;
-	if (pszDot) lstrcpyn(Ver.szExtension, pszDot, ARRAYSIZE(Ver.szExtension));
-	Ver.nFlags |= PE_ICON_EXISTS; // чтобы иконки не пытаться искать. нужна только версия
-
-	BOOL lbDump = DumpFile(&Ver, pFileData, nSize.QuadPart);
-
-	UnmapViewOfFile(pFileData); CloseHandle(hFileMapping); CloseHandle(hFile);
-
-	if (!lbDump || (Ver.szVersion[0] == 0 && Ver.nBits == 0)) {
-		 return FALSE;
-	}
-
-
-	nLen = lstrlen(Ver.szVersion)+10;
-	if (nLen < 2) return FALSE;
-	*CustomData = (wchar_t*)malloc(nLen*2);
-	wsprintfW(*CustomData, L"[%s%s%i]%s%s", 
-		(Ver.nFlags & PE_SIGNED) ? L"s" : ((Ver.Machine!=IMAGE_FILE_MACHINE_IA64) ? L"x" : L""),
-		(Ver.Machine==IMAGE_FILE_MACHINE_IA64) ? L"IA" : L"",
-		Ver.nBits, 
-		Ver.szVersion[0] ? L" " : L"", Ver.szVersion);
-
-
-	return TRUE;
+	return lbRc;
 }
 
 void WINAPI FreeCustomDataW(wchar_t *CustomData)

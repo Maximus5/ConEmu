@@ -222,11 +222,13 @@ public:
     bool isTryToCenter;
     RECT rcTabMargins;
     bool isTabFrame;
+    BYTE icMinimizeRestore;
     bool isMulti; BYTE icMultiNew, icMultiNext, icMultiRecreate, icMultiBuffer;
     bool IsHostkey(WORD vk);
 	bool IsHostkeySingle(WORD vk);
 	bool IsHostkeyPressed();
 	WORD GetPressedHostkey();
+	UINT GetHostKeyMod(); // םאבמנ פכאדמג MOD_xxx הכÿ RegisterHotKey
     bool isMultiNewConfirm, isUseWinNumber;
     bool isFARuseASCIIsort, isFixAltOnAltTab, isShellNoZoneCheck;
 
@@ -324,6 +326,9 @@ public:
 	void InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
 	BOOL RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
 	void RegisterFonts();
+	private:
+	void RegisterFontsInt(LPCWSTR asFromDir);
+	public:
 	void UnregisterFonts();
 	BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, LPTSTR rsFontName);
 	void HistoryCheck();

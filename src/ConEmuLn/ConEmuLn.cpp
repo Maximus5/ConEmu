@@ -57,6 +57,8 @@ static RegisterBackground_t gfRegisterBackground = NULL;
 
 BOOL gbBackgroundEnabled = FALSE;
 COLORREF gcrLinesColor = RGB(0,0,0xA8); // чуть светлее синего
+BOOL gbHilightPlugins = FALSE;
+COLORREF gcrHilightPlugBack = RGB(0xA8,0,0); // чуть светлее красного
 
 
 
@@ -179,10 +181,8 @@ int WINAPI UpdateConEmuBackground(struct UpdateBackgroundArg* pBk)
 		if (pBk->LeftPanel.bVisible)
 		{
 			COLORREF crPanel = pBk->crPalette[nPanelBackIdx];
-			#ifdef _DEBUG
-			if (pBk->LeftPanel.bPlugin)
-				crPanel = RGB(128,0,0);
-			#endif
+			if (pBk->LeftPanel.bPlugin && gbHilightPlugins)
+				crPanel = gcrHilightPlugBack;
 			HBRUSH hBr = CreateSolidBrush(crPanel);
 			FillRect(pBk->hdc, &pBk->rcDcLeft, hBr);
 			DeleteObject(hBr);
@@ -190,10 +190,8 @@ int WINAPI UpdateConEmuBackground(struct UpdateBackgroundArg* pBk)
 		if (pBk->RightPanel.bVisible)
 		{
 			COLORREF crPanel = pBk->crPalette[nPanelBackIdx];
-			#ifdef _DEBUG
-			if (pBk->RightPanel.bPlugin)
-				crPanel = RGB(128,0,0);
-			#endif
+			if (pBk->RightPanel.bPlugin && gbHilightPlugins)
+				crPanel = gcrHilightPlugBack;
 			HBRUSH hBr = CreateSolidBrush(crPanel);
 			FillRect(pBk->hdc, &pBk->rcDcRight, hBr);
 			DeleteObject(hBr);
@@ -250,6 +248,10 @@ void StartPlugin(BOOL bConfigure)
 				gbBackgroundEnabled = (cVal != 0);
 			if (!RegQueryValueExW(hkey, L"LinesColor", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
 				gcrLinesColor = nVal;
+			if (!RegQueryValueExW(hkey, L"HilightPlugins", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
+				gbHilightPlugins = (cVal != 0);
+			if (!RegQueryValueExW(hkey, L"HilightPlugBack", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
+				gcrHilightPlugBack = nVal;
 			RegCloseKey(hkey);
 		}
 	}

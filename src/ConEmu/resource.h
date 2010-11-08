@@ -7,6 +7,7 @@
 #define IDI_ICON3                       3
 #define IDB_MAIN_TOOLBAR                101
 #define IDB_SHIELD                      102
+#define IDB_RIGHTCLICKING               103
 #define IDC_COPY                        120
 #define IDC_LINK                        121
 #define IDC_MOVE                        122
@@ -376,6 +377,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        210
 #define _APS_NEXT_COMMAND_VALUE         40010
 #define _APS_NEXT_CONTROL_VALUE         1736
-#define _APS_NEXT_SYMED_VALUE           101
+#define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

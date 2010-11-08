@@ -1080,43 +1080,55 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     if ((i + 1) < params)
                     {
 	                    TCHAR *nextCommand = curCommand + _tcslen(curCommand) + 1;
-	                    if (*nextCommand != _T('/')) {
+	                    if (*nextCommand != _T('/'))
+	                    {
 		                    curCommand = nextCommand; i++;
 		                    AttachVal = klatoi(curCommand);
 		                }
 	                }
 	                // интеллектуальный аттач - если к текущей консоли уже подцеплена другая копия
-	                if (AttachVal == -1) {
+	                if (AttachVal == -1)
+	                {
 		                HWND hCon = GetForegroundWindow();
-		                if (!hCon) {
+		                if (!hCon)
+		                {
 							// консоли нет
 							return 100;
-						} else {
+						}
+						else
+						{
 			                TCHAR sClass[128];
-			                if (GetClassName(hCon, sClass, 128)) {
-				                if (_tcscmp(sClass, VirtualConsoleClassMain)==0) {
+			                if (GetClassName(hCon, sClass, 128))
+			                {
+				                if (_tcscmp(sClass, VirtualConsoleClassMain)==0)
+				                {
 					                // Сверху УЖЕ другая копия ConEmu
 					                return 1;
 				                }
 								// Если на самом верху НЕ консоль - это может быть панель проводника, 
 								// или другое плавающее окошко... Поищем ВЕРХНЮЮ консоль
-								if (_tcscmp(sClass, _T("ConsoleWindowClass"))!=0) {
+								if (_tcscmp(sClass, _T("ConsoleWindowClass"))!=0)
+								{
 									_tcscpy(sClass, _T("ConsoleWindowClass"));
 									hCon = FindWindow(_T("ConsoleWindowClass"), NULL);
 									if (!hCon)
 										return 100;
 								}
-				                if (_tcscmp(sClass, _T("ConsoleWindowClass"))==0) {
+				                if (_tcscmp(sClass, _T("ConsoleWindowClass"))==0)
+				                {
 					                // перебрать все ConEmu, может кто-то уже подцеплен?
 					                HWND hEmu = NULL;
 					                while ((hEmu = FindWindowEx(NULL, hEmu, VirtualConsoleClassMain, NULL)) != NULL)
 					                {
-						                if (hCon == (HWND)GetWindowLongPtr(hEmu, GWLP_USERDATA)) {
+						                if (hCon == (HWND)GetWindowLongPtr(hEmu, GWLP_USERDATA))
+						                {
 							                // к этой консоли уже подцеплен ConEmu
 							                return 1;
 						                }
 					                }
-								} else {
+								}
+								else
+								{
 									// верхнее окно - НЕ консоль
 									return 100;
 								}

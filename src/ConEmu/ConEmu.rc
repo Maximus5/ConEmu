@@ -693,6 +693,8 @@ IDC_MOVE                CURSOR                  "CursorDragMove.cur"
 
 IDB_MAIN_TOOLBAR        BITMAP                  "toolbar1.bmp"
 IDB_SHIELD              BITMAP                  "Shield.bmp"
+IDB_RIGHTCLICKING       BITMAP                  "hourglass.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //

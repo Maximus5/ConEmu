@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "..\common\pluginW1007.hpp"
 #include "..\common\ConsoleAnnotation.h"
 #include "..\common\WinObjects.h"
+#include "..\common\TerminalMode.h"
 #include "PluginHeader.h"
 #include "PluginBackground.h"
 #include <Tlhelp32.h>
@@ -205,35 +206,46 @@ class CommandThreads {
 public:
 	HANDLE h[20];
 public:
-	CommandThreads() {
+	CommandThreads()
+	{
 		memset(h, 0, sizeof(h));
 	};
-	~CommandThreads() {
+	~CommandThreads()
+	{
 	};
-	void CheckTerminated() {
+	void CheckTerminated()
+	{
 		// ѕроверить, может какие-то командные нити уже завершились
-		for (size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++) {
+		for (size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++)
+		{
 			if (h[i] == NULL) continue;
-			if (WaitForSingleObject(h[i], 0) == WAIT_OBJECT_0) {
+			if (WaitForSingleObject(h[i], 0) == WAIT_OBJECT_0)
+			{
 				CloseHandle ( h[i] );
 				h[i] = NULL;
 			}
 		}
 	};
-	void push_back(HANDLE hThread) {
-		for (size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++) {
-			if (h[i] == NULL) {
+	void push_back(HANDLE hThread)
+	{
+		for (size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++)
+		{
+			if (h[i] == NULL)
+			{
 				h[i] = hThread;
 				return;
 			}
 		}
 		_ASSERT(FALSE);
 	};
-	void KillAllThreads() {
+	void KillAllThreads()
+	{
 		// ѕрибивание всех запущенных нитей
-		for (size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++) {
+		for (size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++)
+		{
 			if (h[i] == NULL) continue;
-			if (WaitForSingleObject(h[i], 100) != WAIT_OBJECT_0) {
+			if (WaitForSingleObject(h[i], 100) != WAIT_OBJECT_0)
+			{
 				TerminateThread(h[i], 100);
 			}
 			CloseHandle ( h[i] );
@@ -1170,11 +1182,12 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				}
 				
 			    // Check Terminal mode
-			    TCHAR szVarValue[MAX_PATH];
-			    szVarValue[0] = 0;
-			    if (GetEnvironmentVariable(L"TERM", szVarValue, 63)) {
-				    TerminalMode = TRUE;
-			    }
+			    TerminalMode = isTerminalMode();
+			    //TCHAR szVarValue[MAX_PATH];
+			    //szVarValue[0] = 0;
+			    //if (GetEnvironmentVariable(L"TERM", szVarValue, 63)) {
+				//    TerminalMode = TRUE;
+			    //}
 
 				//2010-01-29 ConMan давно не поддерживаетс€ - все встроено 
 			    //if (!TerminalMode) {
@@ -4282,29 +4295,38 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 void ShowPluginMenu(int nID /*= -1*/)
 {
 	int nItem = -1;
-	if (!FarHwnd) {
+	if (!FarHwnd)
+	{
 		ShowMessage(CEInvalidConHwnd,1); // "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL\nOK"
 		return;
 	}
 
-	if (IsTerminalMode()) {
+	if (IsTerminalMode())
+	{
 		ShowMessage(CEUnavailableInTerminal,1); // "ConEmu plugin\nConEmu is not available in terminal mode\nCheck TERM environment variable\nOK"
 		return;
 	}
 
-	if (nID != -1) {
+	if (nID != -1)
+	{
 		nItem = nID;
 		if (nItem >= 2) nItem++; //Separator
 		if (nItem >= 7) nItem++; //Separator
 		if (nItem >= 9) nItem++; //Separator
 		SHOWDBGINFO(L"*** ShowPluginMenu used default item\n");
-	} else if (gFarVersion.dwVerMajor==1) {
+	}
+	else if (gFarVersion.dwVerMajor==1)
+	{
 		SHOWDBGINFO(L"*** calling ShowPluginMenuA\n");
 		nItem = ShowPluginMenuA();
-	} else if (gFarVersion.dwBuild>=FAR_Y_VER) {
+	}
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+	{
 		SHOWDBGINFO(L"*** calling ShowPluginMenuWY\n");
 		nItem = FUNC_Y(ShowPluginMenu)();
-	} else {
+	}
+	else
+	{
 		SHOWDBGINFO(L"*** calling ShowPluginMenuWX\n");
 		nItem = FUNC_X(ShowPluginMenu)();
 	}

@@ -56,33 +56,46 @@ enum {
 	cfgShowLines   = 1,
 	cfgColorLabel  = 2,
 	cfgColor       = 3,
-	cfgSeparator   = 4,
-	cfgOk          = 5,
-	cfgCancel      = 6,
+	cfgHilight     = 4,
+	cfgPlugLabel   = 5,
+	cfgPlugBack    = 6,
+	cfgSeparator   = 7,
+	cfgOk          = 8,
+	cfgCancel      = 9,
 };
 
 static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	if (Msg == DN_BTNCLICK)
 	{
-		if (Param1 == cfgShowLines)
+		if ((Param1 == cfgShowLines) || (Param1 == cfgHilight))
 		{
-			gbBackgroundEnabled = (int)Param2;
+			if (Param1 == cfgShowLines)
+				gbBackgroundEnabled = (int)Param2;
+			else if (Param1 == cfgHilight)
+				gbHilightPlugins = (int)Param2;
 			// Обновить или отключить 
 		    StartPlugin(TRUE /*НЕ считывать параметры из реестра*/);
 		}
 	}
 	else if (Msg == DN_EDITCHANGE)
 	{
-		if (Param1 == cfgColor)
+		if ((Param1 == cfgColor) || (Param1 == cfgPlugBack))
 		{
 			FarDialogItem* pItem = (FarDialogItem*)Param2;
 			FAR_CHAR* endptr = NULL;
+			COLORREF clr = 0;
 			#ifdef FAR_UNICODE
-				gcrLinesColor = wcstoul(pItem->PtrData, &endptr, 16);
+				clr = wcstoul(pItem->PtrData, &endptr, 16);
 			#else
-				gcrLinesColor = strtoul(pItem->Data, &endptr, 16);
+				clr = strtoul(pItem->Data, &endptr, 16);
 			#endif
+			
+			if (Param1 == cfgColor)
+				gcrLinesColor = clr;
+			else if (Param1 == cfgPlugBack)
+				gcrHilightPlugBack = clr;
+			
 			// Обновить или отключить 
 		    StartPlugin(TRUE /*НЕ считывать параметры из реестра*/);
 		}
@@ -95,10 +108,10 @@ static int ConfigureProc(int ItemNumber)
 	if (!InfoT)
 		return false;
 
-    int height = 11;
+    int height = 14;
 
 	FAR_CHAR szColorMask[16]; strcpyT(szColorMask, FAR_T("0xXXXXXX"));
-	FAR_CHAR szColor[16];
+	FAR_CHAR szColor[16], szBack[16];
 
     FarDialogItem items[] =
     {
@@ -107,20 +120,32 @@ static int ConfigureProc(int ItemNumber)
 		{DI_CHECKBOX,  5,  3,  0,  0, true},    //cfgShowLines
 
         {DI_TEXT,      5,  5,  0,  0, false},   //cfgColorLabel, cfgColor
-		{DI_FIXEDIT,  29, 5,  36,  0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
+		{DI_FIXEDIT,  29,  5,  36, 0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
 
-		{DI_TEXT,      0,  7,  0,  0, false, {(DWORD_PTR)0},           DIF_SEPARATOR},
+		{DI_CHECKBOX,  5,  7,  0,  0, true},    //cfgHilight
+        {DI_TEXT,      5,  8,  0,  0, false},   //cfgPlugLabel, cfgPlugBack
+		{DI_FIXEDIT,  29,  8,  36, 0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
+		
+		{DI_TEXT,      0, 10,  0,  0, false, {(DWORD_PTR)0},           DIF_SEPARATOR},
 
-        {DI_BUTTON,    0,  8,  0,  0, true,  {(DWORD_PTR)true},        DIF_CENTERGROUP, true},  //cfgOk
-        {DI_BUTTON,    0,  8,  0,  0, true,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //cfgCancel
+        {DI_BUTTON,    0, 11,  0,  0, true,  {(DWORD_PTR)true},        DIF_CENTERGROUP, true},  //cfgOk
+        {DI_BUTTON,    0, 11,  0,  0, true,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //cfgCancel
     };
     
     SETTEXT(items[cfgTitle], GetMsgT(CEPluginName));
+    
     SETTEXT(items[cfgShowLines], GetMsgT(CEPluginEnable));
 	items[cfgShowLines].Selected = gbBackgroundEnabled;
     SETTEXT(items[cfgColorLabel], GetMsgT(CEColorLabel));
 	wsprintfT(szColor, FAR_T("%06X"), (0xFFFFFF & gcrLinesColor));
     SETTEXT(items[cfgColor], szColor);
+
+    SETTEXT(items[cfgHilight], GetMsgT(CEHilightPlugins));
+	items[cfgHilight].Selected = gbHilightPlugins;
+    SETTEXT(items[cfgPlugLabel], GetMsgT(CEPluginColor));
+	wsprintfT(szBack, FAR_T("%06X"), (0xFFFFFF & gcrHilightPlugBack));
+    SETTEXT(items[cfgPlugBack], szBack);
+    
 	SETTEXT(items[cfgOk], GetMsgT(CEBtnOK));
 	SETTEXT(items[cfgCancel], GetMsgT(CEBtnCancel));
 
@@ -129,6 +154,8 @@ static int ConfigureProc(int ItemNumber)
     // Запомнить текущие значения, чтобы восстановить их если Esc нажат
 	BOOL bCurBackgroundEnabled = gbBackgroundEnabled;
 	COLORREF crCurLinesColor = gcrLinesColor;
+	BOOL bCurHilightPlugins = gbHilightPlugins;
+	COLORREF crCurHilightPlugBack = gcrHilightPlugBack;
     
 
     #ifdef FAR_UNICODE
@@ -161,6 +188,19 @@ static int ConfigureProc(int ItemNumber)
 			#endif
 			RegSetValueExW(hkey, L"LinesColor", 0, REG_DWORD, (LPBYTE)&nVal, sizeof(nVal));
 			
+			gbHilightPlugins = cVal = _GetCheck(cfgHilight);
+			RegSetValueExW(hkey, L"HilightPlugins", 0, REG_BINARY, &cVal, sizeof(cVal));
+			
+			endptr = NULL;
+			#ifdef FAR_UNICODE
+				psz = GetDataPtr(cfgPlugBack);
+				gcrHilightPlugBack = nVal = wcstoul(psz, &endptr, 16);
+			#else
+				psz = GetDataPtr(cfgPlugBack);
+				gcrHilightPlugBack = nVal = strtoul(psz, &endptr, 16);
+			#endif
+			RegSetValueExW(hkey, L"HilightPlugBack", 0, REG_DWORD, (LPBYTE)&nVal, sizeof(nVal));
+			
 			RegCloseKey(hkey);
 		}
     }
@@ -168,9 +208,11 @@ static int ConfigureProc(int ItemNumber)
     {
 		gbBackgroundEnabled = bCurBackgroundEnabled;
 		gcrLinesColor = crCurLinesColor;
+		gbHilightPlugins = bCurHilightPlugins;
+		gcrHilightPlugBack = crCurHilightPlugBack;
     }
 
-	// Обновить или отключить 
+	// Обновить или отключить
     StartPlugin(TRUE /*НЕ считывать параметры из реестра*/);
 
     #ifdef FAR_UNICODE

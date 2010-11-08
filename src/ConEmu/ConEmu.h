@@ -62,8 +62,10 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #define GET_X_LPARAM(inPx) ((int)(short)LOWORD(inPx))
 #define GET_Y_LPARAM(inPy) ((int)(short)HIWORD(inPy))
 
-#define RCLICKAPPSTIMEOUT 300
-#define RCLICKAPPSDELTA 3
+//#define RCLICKAPPSTIMEOUT 600
+//#define RCLICKAPPS_START 100 // начало отрисовки кружка вокруг курсора
+//#define RCLICKAPPSTIMEOUT_MAX 10000
+//#define RCLICKAPPSDELTA 3
 #define DRAG_DELTA 5
 
 //typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
@@ -117,12 +119,12 @@ public:
 	//HMODULE mh_Psapi;
 	//FGetModuleFileNameEx GetModuleFileNameEx;
 	wchar_t ms_ConEmuExe[MAX_PATH+1];
-	wchar_t ms_ConEmuExeDir[MAX_PATH+1];
+	wchar_t ms_ConEmuExeDir[MAX_PATH+1]; // БЕЗ завершающего слеша
 	wchar_t ms_ConEmuXml[MAX_PATH+1];
 	wchar_t ms_ConEmuChm[MAX_PATH+1];
 	wchar_t ms_ConEmuCExe[MAX_PATH+5];
 	wchar_t ms_ConEmuCExeName[32];
-	wchar_t ms_ConEmuCurDir[MAX_PATH+1];
+	wchar_t ms_ConEmuCurDir[MAX_PATH+1]; // БЕЗ завершающего слеша
 	wchar_t ms_ConEmuArgs[MAX_PATH*2];
 private:
 	MFileMapping<ConEmuGuiInfo> m_GuiInfoMapping;
@@ -234,9 +236,18 @@ protected:
 	HMODULE mh_LLKeyHookDll;
 	void RegisterHotKeys();
 	void UnRegisterHotKeys(BOOL abFinal=FALSE);
+	int mn_MinRestoreRegistered; UINT mn_MinRestore_VK, mn_MinRestore_MOD;
 	HMODULE mh_DwmApi;
 	FDwmIsCompositionEnabled DwmIsCompositionEnabled;
+	HBITMAP mh_RightClickingBmp; HDC mh_RightClickingDC;
+	POINT m_RightClickingSize; // {384 x 16} 24 фрейма, считаем, что четверть отведенного времени прошла до начала показа
+	int m_RightClickingFrames, m_RightClickingCurrent;
+	BOOL mb_RightClickingPaint;
+	void StartRightClickingPaint();
+	void StopRightClickingPaint();
+	void RightClickingPaint(HDC hdc = NULL);
 public:
+	void RegisterMinRestore(bool abRegister);
 	void RegisterHoooks();
 	void UnRegisterHoooks(BOOL abFinal=FALSE);
 protected:
@@ -270,6 +281,7 @@ protected:
 	//UINT mn_MsgSetForeground;
 	UINT mn_MsgFlashWindow;
 	UINT mn_MsgLLKeyHook;
+	UINT mn_MsgUpdateProcDisplay;
 	//UINT wmInputLangChange;
 	
 	//
@@ -343,6 +355,7 @@ public:
 	bool isMouseOverFrame(bool abReal=false);
 	bool isNtvdm();
 	bool isPictureView();
+	bool isRightClickingPaint();
 	bool isSizing();
 	bool isValid(CRealConsole* apRCon);
 	bool isValid(CVirtualConsole* apVCon);
@@ -394,6 +407,7 @@ public:
 public:
 	void OnAltEnter();
 	void OnAltF9(BOOL abPosted=FALSE);
+	void OnMinimizeRestore();
 	void OnAlwaysOnTop();
 	void OnBufferHeight(); //BOOL abBufferHeight);
 	LRESULT OnClose(HWND hWnd);

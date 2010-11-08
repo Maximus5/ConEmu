@@ -98,6 +98,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TIMER_CONREDRAW_ID 1
 #define TIMER_CAPTION_APPEAR_ID 3
 #define TIMER_CAPTION_DISAPPEAR_ID 4
+#define TIMER_RCLICKPAINT 5
+#define TIMER_RCLICKPAINT_ELAPSE 20
+
+#define RCLICKAPPSTIMEOUT 600
+#define RCLICKAPPS_START 200 // начало отрисовки кружка вокруг курсора
+#define RCLICKAPPSTIMEOUT_MAX 10000
+#define RCLICKAPPSDELTA 3
 
 
 CConEmuMain::CConEmuMain()
@@ -141,9 +148,12 @@ CConEmuMain::CConEmuMain()
 	mb_InRestore = FALSE;
 	mb_MouseCaptured = FALSE;
 	mb_HotKeyRegistered = FALSE;
+	mn_MinRestoreRegistered = 0; mn_MinRestore_VK = mn_MinRestore_MOD = 0;
 	mh_LLKeyHookDll = NULL;
 	mh_LLKeyHook = NULL;
 	mh_DwmApi = NULL;
+	mh_RightClickingBmp = NULL; mh_RightClickingDC = NULL;
+	m_RightClickingSize.x = m_RightClickingSize.y = m_RightClickingFrames = 0; m_RightClickingCurrent = -1;
 	mb_WaitCursor = FALSE;
 	mb_InTrackSysMenu = FALSE;
 	mb_LastRgnWasNull = TRUE;
@@ -291,6 +301,7 @@ CConEmuMain::CConEmuMain()
 	//mn_MsgPostSetBackground = ++nAppMsg;
 	mn_MsgInitInactiveDC = ++nAppMsg;
 	mn_MsgLLKeyHook = RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
+	mn_MsgUpdateProcDisplay = ++nAppMsg;
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 }
@@ -2452,6 +2463,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 	RECT client = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, NULL, &dcSize);
 
+	WARNING("Вынести в CalcRect");
     RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
     if (mp_VActive && mp_VActive->Width && mp_VActive->Height)
     {
@@ -3260,6 +3272,48 @@ bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
     if (nY > (int)D)
         return false;
     return true;
+}
+
+void CConEmuMain::RegisterMinRestore(bool abRegister)
+{
+	if (abRegister)
+	{
+		if (!gSet.icMinimizeRestore)
+			return; // не просили
+
+		UINT nMOD = gSet.GetHostKeyMod();
+		
+		if (mn_MinRestoreRegistered
+			&& (mn_MinRestore_VK != gSet.icMinimizeRestore || nMOD != mn_MinRestore_MOD))
+		{
+			UnregisterHotKey(ghWnd, mn_MinRestoreRegistered);
+			mn_MinRestoreRegistered = 0;
+		}
+		
+		if (!mn_MinRestoreRegistered)
+		{
+			if (RegisterHotKey(ghWnd, 0x1001, nMOD, (UINT)gSet.icMinimizeRestore))
+			{
+				mn_MinRestoreRegistered = 0x1001;
+				mn_MinRestore_VK = gSet.icMinimizeRestore;
+				mn_MinRestore_MOD = nMOD;
+			}
+			else if (isFirstInstance())
+			{
+				wchar_t szErr[128]; DWORD dwErr = GetLastError();
+				wsprintfW(szErr, L"Can't register Minimize/Restore hotkey, ErrCode=0x%08X", dwErr);
+				MBoxA(szErr);
+			}
+		}
+	}
+	else
+	{
+		if (mn_MinRestoreRegistered)
+		{
+			UnregisterHotKey(ghWnd, mn_MinRestoreRegistered);
+			mn_MinRestoreRegistered = 0;
+		}
+	}
 }
 
 void CConEmuMain::RegisterHotKeys()
@@ -4077,6 +4131,12 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
     if (!ghOpWnd)
         return;
 
+    if (!isMainThread())
+    {
+    	PostMessage(ghWnd, mn_MsgUpdateProcDisplay, abForce, 0);
+    	return;
+    }
+
     wchar_t szNo[32];
     DWORD nProgramStatus = mp_VActive->RCon()->GetProgramStatus();
     DWORD nFarStatus = mp_VActive->RCon()->GetFarStatus();
@@ -4753,6 +4813,109 @@ LRESULT CConEmuMain::OnNcPaint(HRGN hRgn)
 	return lMyRc ? lMyRc : lRc;
 }
 
+bool CConEmuMain::isRightClickingPaint()
+{
+	return (bool)mb_RightClickingPaint;
+}
+
+void CConEmuMain::RightClickingPaint(HDC hdc /*= NULL*/)
+{
+	BOOL lbSucceeded = FALSE;
+	
+	if (gSet.isRClickSendKey > 1 && (mouse.state & MOUSE_R_LOCKED)
+		&& m_RightClickingFrames > 0 && mh_RightClickingBmp)
+	{
+		WORD nRDown = GetKeyState(VK_RBUTTON);
+		POINT ptCur; GetCursorPos(&ptCur);
+		ScreenToClient(ghWnd, &ptCur);
+		
+		if ((nRDown & 0x8000))
+			//&& PtDiffTest(Rcursor, ptCur.x, ptCur.y, RCLICKAPPSDELTA))
+		{
+			DWORD dwCurTick = TimeGetTime(); //GetTickCount();
+			DWORD dwDelta = dwCurTick - mouse.RClkTick;
+			if (dwDelta < RCLICKAPPS_START)
+			{
+				// Пока рисовать не начали
+				lbSucceeded = TRUE;
+			}
+			// Если держали дольше 10сек - все назад
+			else if (dwDelta > RCLICKAPPSTIMEOUT_MAX/*10сек*/)
+			{
+				lbSucceeded = FALSE;
+			}
+			else
+			{
+				lbSucceeded = TRUE;
+
+				// Прикинуть индекс фрейма
+				int nIndex = (dwDelta - RCLICKAPPS_START) * m_RightClickingFrames / (RCLICKAPPSTIMEOUT - RCLICKAPPS_START);
+				if (nIndex >= m_RightClickingFrames)
+				{
+					nIndex = (m_RightClickingFrames-1); // рисуем последний фрейм, мышку можно отпускать
+					//-- KillTimer(ghWnd, TIMER_RCLICKPAINT); // таймер понадобится для "скрытия" кружочка после RCLICKAPPSTIMEOUT_MAX
+				}
+
+				if (hdc || (m_RightClickingCurrent != nIndex))
+				{
+					// Рисуем
+					BOOL lbSelfDC = FALSE;
+					if (!hdc)
+					{
+						hdc = GetDC(ghWnd); lbSelfDC = TRUE;
+					}
+					
+					HDC hCompDC = CreateCompatibleDC(hdc);
+					HBITMAP hOld = (HBITMAP)SelectObject(hCompDC, mh_RightClickingBmp);
+					
+					int nHalf = m_RightClickingSize.y>>1;
+					//BitBlt(hdc, Rcursor.x-nHalf, Rcursor.y-nHalf, m_RightClickingSize.y, m_RightClickingSize.y,
+					//	hCompDC, nIndex*m_RightClickingSize.y, 0, SRCCOPY);
+					BLENDFUNCTION bf = {AC_SRC_OVER,0,255,AC_SRC_ALPHA};
+					GdiAlphaBlend(hdc, Rcursor.x-nHalf, Rcursor.y-nHalf, m_RightClickingSize.y, m_RightClickingSize.y,
+						hCompDC, nIndex*m_RightClickingSize.y, 0, m_RightClickingSize.y, m_RightClickingSize.y, bf);
+
+					
+					if (hOld && hCompDC)
+						SelectObject(hCompDC, hOld);
+					
+					if (lbSelfDC && hdc)
+						DeleteDC(hdc);
+				}
+
+				// Запомним фрейм, что рисовали в последний раз
+				m_RightClickingCurrent = nIndex;
+			}
+		}
+	}
+	
+	if (!lbSucceeded)
+	{
+		StopRightClickingPaint();
+	}
+}
+
+void CConEmuMain::StartRightClickingPaint()
+{
+	if (!mb_RightClickingPaint && m_RightClickingFrames > 0 && mh_RightClickingBmp)
+	{
+		m_RightClickingCurrent = -1;
+		mb_RightClickingPaint = TRUE;
+		SetTimer(ghWnd, TIMER_RCLICKPAINT, TIMER_RCLICKPAINT_ELAPSE, NULL);
+	}
+}
+
+void CConEmuMain::StopRightClickingPaint()
+{
+	if (mb_RightClickingPaint)
+	{
+		mb_RightClickingPaint = FALSE;
+		KillTimer(ghWnd, TIMER_RCLICKPAINT);
+		m_RightClickingCurrent = -1;
+		Invalidate(ActiveCon());
+	}
+}
+
 LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = 0;
@@ -4784,6 +4947,12 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 
 	PaintCon(ps.hdc);
 	//PaintCon(hdc);
+	
+	if (mb_RightClickingPaint)
+	{
+		// Нарисует кружочек, или сбросит таймер, если кнопку отпустили
+		RightClickingPaint(ps.hdc);
+	}
 
     EndPaint(ghWnd, &ps);
     //result = DefWindowProc(ghWnd, WM_PAINT, wParam, lParam);
@@ -4809,24 +4978,54 @@ void CConEmuMain::PaintGaps(HDC hDC)
 	HBRUSH hBrush = CreateSolidBrush(gSet.GetColors(isMeForeground())[mn_ColorIdx]);
 
 	RECT rcClient; GetClientRect(ghWnd, &rcClient); // Клиентская часть главного окна
-	RECT rcMargins = CalcMargins(CEM_TAB);
-	AddMargins(rcClient, rcMargins, FALSE);
 
-	// На старте при /max - ghWndDC еще не изменил свое положение
-	//RECT offsetRect; GetClientRect(ghWndDC, &offsetRect);
-	RECT rcWndClient; GetClientRect(ghWnd, &rcWndClient);
-	RECT rcCalcCon = gConEmu.CalcRect(CER_BACK, rcWndClient, CER_MAINCLIENT);
-	RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
-	RECT offsetRect = gConEmu.CalcRect(CER_BACK, rcCon, CER_CONSOLE);
+	//RECT rcMargins = CalcMargins(CEM_TAB); // Откусить площадь, занятую строкой табов
+	//AddMargins(rcClient, rcMargins, FALSE);
+	//// На старте при /max - ghWndDC еще не изменил свое положение
+	////RECT offsetRect; GetClientRect(ghWndDC, &offsetRect);
+	//RECT rcWndClient; GetClientRect(ghWnd, &rcWndClient);
+	//RECT rcCalcCon = gConEmu.CalcRect(CER_BACK, rcWndClient, CER_MAINCLIENT);
+	//RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
+	// -- работает не правильно - не учитывает центрирование в Maximized
+	//RECT offsetRect = gConEmu.CalcRect(CER_BACK, rcCon, CER_CONSOLE);
 
-	//WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length = sizeof(wpl);
-	//GetWindowPlacement(ghWndDC, &wpl); // Положение окна, в котором идет отрисовка
+	/*
+	RECT rcClient = {0};
+	if (ghWndDC) {
+		GetClientRect(ghWndDC, &rcClient);
+		MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&rcClient, 2);
+	}
+	*/
 
-	////RECT offsetRect = ConsoleOffsetRect(); // смещение с учетом табов
-	//RECT dcRect; GetClientRect(ghWndDC, &dcRect);
-	//RECT offsetRect = dcRect;
-	//MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&offsetRect, 2); -- 2010-10-19 не требуется, т.к. выше уже CalcRect
+	RECT dcSize = CalcRect(CER_DC, rcClient, CER_MAINCLIENT);
+	RECT client = CalcRect(CER_DC, rcClient, CER_MAINCLIENT, NULL, &dcSize);
 
+
+	WARNING("Вынести в CalcRect");
+    RECT offsetRect; memset(&offsetRect,0,sizeof(offsetRect));
+    if (mp_VActive && mp_VActive->Width && mp_VActive->Height)
+    {
+        if ((gSet.isTryToCenter && (isZoomed() || gSet.isFullScreen))
+			|| isNtvdm())
+        {
+            offsetRect.left = (client.right+client.left-(int)mp_VActive->Width)/2;
+            offsetRect.top = (client.bottom+client.top-(int)mp_VActive->Height)/2;
+        }
+
+        if (offsetRect.left<client.left) offsetRect.left=client.left;
+        if (offsetRect.top<client.top) offsetRect.top=client.top;
+
+        offsetRect.right = offsetRect.left + mp_VActive->Width;
+        offsetRect.bottom = offsetRect.top + mp_VActive->Height;
+        
+        if (offsetRect.right>client.right) offsetRect.right=client.right;
+        if (offsetRect.bottom>client.bottom) offsetRect.bottom=client.bottom;
+        
+    }
+    else
+    {
+        offsetRect = client;
+    }
 
 	// paint gaps between console and window client area with first color
 
@@ -5051,6 +5250,10 @@ bool CConEmuMain::isFirstInstance()
 		{
 			SetEvent(mh_ConEmuAliveEvent);
 			mb_ConEmuAliveOwned = TRUE;
+			
+			// Этот экземпляр становится "Основным" (другой, ранее бывший основным, был закрыт)
+			if (gSet.icMinimizeRestore)
+				RegisterMinRestore(true);
 		}
 	}
 
@@ -5546,10 +5749,36 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		SetWindowMode(WindowMode);
 
         PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
+        
+        if (!mh_RightClickingBmp)
+        {
+        	mh_RightClickingBmp = (HBITMAP)LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_RIGHTCLICKING),
+        		IMAGE_BITMAP, 0,0, LR_CREATEDIBSECTION);
+        	if (mh_RightClickingBmp)
+        	{
+        		BITMAP bi = {0};
+        		if (GetObject(mh_RightClickingBmp, sizeof(bi), &bi)
+        			&& bi.bmWidth > bi.bmHeight && bi.bmHeight > 0)
+        		{
+        			m_RightClickingSize.x = bi.bmWidth; m_RightClickingSize.y = bi.bmHeight;
+    			}
+    			else
+    			{
+    				m_RightClickingSize.x = 384; m_RightClickingSize.y = 16;
+    			}
+    			_ASSERTE(m_RightClickingSize.y>0);
+    			m_RightClickingFrames = m_RightClickingSize.x / m_RightClickingSize.y;
+    			// по идее, должно быть ровно
+    			_ASSERTE(m_RightClickingSize.x == m_RightClickingFrames * m_RightClickingSize.y);
+        	}
+		}
     }
 	else
 	{
 		
+		if (gSet.icMinimizeRestore)
+			RegisterMinRestore(true);
+	
 		//SetWindowRgn(ghWnd, CreateWindowRgn(), TRUE);
 
 		if (gSet.szFontError[0])
@@ -5822,6 +6051,10 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
 	gSet.SaveSizePosOnExit();
+	
+	// Делать обязательно перед ResetEvent(mh_ConEmuAliveEvent), чтобы у другого
+	// экземпляра не возникло проблем с регистрацией hotkey
+	RegisterMinRestore(false);
 
 	if (mb_ConEmuAliveOwned && mh_ConEmuAliveEvent)
 	{
@@ -5830,12 +6063,14 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 		mb_ConEmuAliveOwned = FALSE;
 	}
 
-	if (mb_MouseCaptured) {
+	if (mb_MouseCaptured)
+	{
 		ReleaseCapture();
 		mb_MouseCaptured = FALSE;
 	}
 
-    if (mh_GuiServerThread) {
+    if (mh_GuiServerThread)
+    {
         SetEvent(mh_GuiServerThreadTerminate);
         
         wchar_t szServerPipe[MAX_PATH];
@@ -5843,9 +6078,12 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
         wsprintf(szServerPipe, CEGUIPIPENAME, L".", (DWORD)ghWnd);
         
         HANDLE hPipe = CreateFile(szServerPipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
-        if (hPipe == INVALID_HANDLE_VALUE) {
+        if (hPipe == INVALID_HANDLE_VALUE)
+        {
             DEBUGSTR(L"All pipe instances closed?\n");
-        } else {
+        }
+        else
+        {
             DEBUGSTR(L"Waiting server pipe thread\n");
             #ifdef _DEBUG
             DWORD dwWait = 
@@ -5856,7 +6094,8 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
             hPipe = INVALID_HANDLE_VALUE;
         }
         // Если нить еще не завершилась - прибить
-        if (WaitForSingleObject(mh_GuiServerThread,0) != WAIT_OBJECT_0) {
+        if (WaitForSingleObject(mh_GuiServerThread,0) != WAIT_OBJECT_0)
+        {
             DEBUGSTR(L"### Terminating mh_ServerThread\n");
             TerminateThread(mh_GuiServerThread,0);
         }
@@ -5864,14 +6103,17 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
         SafeCloseHandle(mh_GuiServerThreadTerminate);
     }
 
-    for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
-        if (mp_VCon[i]) {
+    for (int i=0; i<MAX_CONSOLE_COUNT; i++)
+    {
+        if (mp_VCon[i])
+        {
             delete mp_VCon[i]; mp_VCon[i] = NULL;
         }
     }
 
 
-    if (mh_WinHook) {
+    if (mh_WinHook)
+    {
         UnhookWinEvent(mh_WinHook);
         mh_WinHook = NULL;
     }
@@ -5880,7 +6122,8 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	//	mh_PopupHook = NULL;
 	//}
 
-    if (mp_DragDrop) {
+    if (mp_DragDrop)
+    {
         delete mp_DragDrop;
         mp_DragDrop = NULL;
     }
@@ -5891,11 +6134,13 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 
     Icon.Delete();
     
-	if (mp_TaskBar3) {
+	if (mp_TaskBar3)
+	{
 		mp_TaskBar3->Release();
 		mp_TaskBar3 = NULL;
 	}
-	if (mp_TaskBar2) {
+	if (mp_TaskBar2)
+	{
 		mp_TaskBar2->Release();
 		mp_TaskBar2 = NULL;
 	}
@@ -5912,7 +6157,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
     KillTimer(ghWnd, TIMER_CONREDRAW_ID);
 	KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID);
 	KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
-
+	
     PostQuitMessage(0);
 
     return 0;
@@ -6275,6 +6520,21 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 	}
 
 	gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen/*&&gConEmu.isWndNotFSMaximized*/)) ? rNormal : rMaximized);
+}
+
+void CConEmuMain::OnMinimizeRestore()
+{
+	if (isMeForeground())
+	{
+		PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+	}
+	else
+	{
+		if (isIconic())
+			PostMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+		else
+			PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+	}
 }
 
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -7540,6 +7800,13 @@ LRESULT CConEmuMain::OnMouse_Move(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			//isRBDown=false;
 			mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
 
+			if (mb_RightClickingPaint)
+			{
+				// Если начали рисовать Waiting вокруг курсора
+				StopRightClickingPaint();
+				_ASSERTE(mb_RightClickingPaint==FALSE);
+			}
+
 			char szLog[255];
 			wsprintfA(szLog, "Mouse was moved, MOUSE_R_LOCKED cleared: Rcursor={%i-%i}, Now={%i-%i}, MinDelta=%i",
 				(int)Rcursor.x, (int)Rcursor.y,
@@ -7726,11 +7993,13 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 		&& (bActive = (mp_VActive != NULL))
 		&& (bCoord = mp_VActive->RCon()->CoordInPanel(mouse.RClkCon)))
 	{
-		if (gSet.isDragEnabled & DRAG_R_ALLOWED) {
+		if (gSet.isDragEnabled & DRAG_R_ALLOWED)
+		{
 			//if (!gSet.nRDragKey || isPressed(gSet.nRDragKey)) {
 			// функция проверит нажат ли nRDragKey (допускает nRDragKey==0), а другие - не нажаты
 			// то есть нажат SHIFT(==nRDragKey), а CTRL & ALT - НЕ нажаты
-			if (gSet.isModifierPressed(gSet.nRDragKey)) {
+			if (gSet.isModifierPressed(gSet.nRDragKey))
+			{
 				mouse.state = DRAG_R_ALLOWED;
 				if (gSet.isAdvLogging) mp_VActive->RCon()->LogString("RightClick ignored of gSet.nRDragKey pressed");
 				return 0;
@@ -7749,15 +8018,20 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 			mp_VActive->RCon()->LogString(szLog);
 
 			mouse.RClkTick = TimeGetTime(); //GetTickCount();
+			StartRightClickingPaint();
 			return 0;
-		} else {
+		}
+		else
+		{
 			if (gSet.isAdvLogging)
 				mp_VActive->RCon()->LogString(
 					!gSet.isRClickSendKey ? "RightClick ignored of !gSet.isRClickSendKey" :
 					"RightClick ignored of wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)"
 				);
 		}
-	} else {
+	}
+	else
+	{
 		if (gSet.isAdvLogging)
 			mp_VActive->RCon()->LogString(
 				bSelect ? "RightClick ignored of isConSelectMode" :
@@ -7772,6 +8046,9 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 }
 LRESULT CConEmuMain::OnMouse_RBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
 {
+	// Сразу сбросить, если выставлялся
+	StopRightClickingPaint();
+	
 	if (gSet.isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
 	{
 		//isRBDown=false; // сразу сбросим!
@@ -7785,7 +8062,7 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 			DWORD dwDelta=dwCurTick-mouse.RClkTick;
 			// Если держали дольше .3с, но не слишком долго :)
 			if ((gSet.isRClickSendKey==1) ||
-				(dwDelta>RCLICKAPPSTIMEOUT && dwDelta<10000))
+				(dwDelta>RCLICKAPPSTIMEOUT/*.3сек*/ && dwDelta<RCLICKAPPSTIMEOUT_MAX/*10000*/))
 			{
 				//// Сначала выделить файл под курсором
 				////POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
@@ -8860,7 +9137,8 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
     case TIMER_MAIN_ID: // Период: 500 мс
 	    {
 	        //Maximus5. Hack - если какая-то зараза задизеблила окно
-	        if (!gbDontEnable) {
+	        if (!gbDontEnable)
+	        {
 	            DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	            if (dwStyle & WS_DISABLED)
 	                EnableWindow(ghWnd, TRUE);
@@ -8871,13 +9149,17 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	        CheckProcesses();
 
 	        TODO("Теперь это условие не работает. 1 - раньше это был сам ConEmu.exe");
-	        if (m_ProcCount == 0) {
+	        if (m_ProcCount == 0)
+	        {
 	            // При ошибках запуска консольного приложения хотя бы можно будет увидеть, что оно написало...
-	            if (mb_ProcessCreated) {
+	            if (mb_ProcessCreated)
+	            {
 	                Destroy();
 	                break;
 	            }
-	        } else if (!mb_ProcessCreated && m_ProcCount>=1) {
+	        }
+	        else if (!mb_ProcessCreated && m_ProcCount>=1)
+	        {
 	            if ((GetTickCount() - mn_StartTick)>PROCESS_WAIT_START_TIME)
 	                mb_ProcessCreated = TRUE;
 	        }
@@ -8885,12 +9167,14 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 	        // TODO: поддержку SlideShow повесить на отдельный таймер
 	        BOOL lbIsPicView = isPictureView();
-	        if (bPicViewSlideShow) {
+	        if (bPicViewSlideShow)
+	        {
 	            DWORD dwTicks = GetTickCount();
 	            DWORD dwElapse = dwTicks - dwLastSlideShowTick;
 	            if (dwElapse > gSet.nSlideShowElapse)
 	            {
-	                if (IsWindow(hPictureView)) {
+	                if (IsWindow(hPictureView))
+	                {
 	                    //
 	                    bPicViewSlideShow = false;
 	                    SendMessage(ghConWnd, WM_KEYDOWN, VK_NEXT, 0x01510001);
@@ -8901,7 +9185,9 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	        
 	                    dwLastSlideShowTick = GetTickCount();
 	                    bPicViewSlideShow = true;
-	                } else {
+	                }
+	                else
+	                {
 	                    hPictureView = NULL;
 	                    bPicViewSlideShow = false;
 	                }
@@ -8943,21 +9229,28 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	        }
 
 			// режим полного скрытия заголовка
-			if (gSet.isHideCaptionAlways()) {
-				if (!bForeground) {
-					if (mb_ForceShowFrame) {
+			if (gSet.isHideCaptionAlways())
+			{
+				if (!bForeground)
+				{
+					if (mb_ForceShowFrame)
+					{
 						mb_ForceShowFrame = FALSE;
 						KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID); KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
 						UpdateWindowRgn();
 					}
-				} else {
+				}
+				else
+				{
 					// в Normal режиме при помещении мышки над местом, где должен быть
 					// заголовок или рамка - показать их
-					if (!isIconic() && !isZoomed() && !gSet.isFullScreen) {
+					if (!isIconic() && !isZoomed() && !gSet.isFullScreen)
+					{
 						TODO("Не наколоться бы с предыдущим статусом при ресайзе?");
 						//static bool bPrevForceShow = false;
 						BOOL bCurForceShow = isMouseOverFrame(true);
-						if (bCurForceShow != mb_CaptionWasRestored) {
+						if (bCurForceShow != mb_CaptionWasRestored)
+						{
 							mb_CaptionWasRestored = bCurForceShow;
 							//if (gSet.nHideCaptionAlwaysDelay && bCurForceShow) {
 							KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID); KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
@@ -8975,10 +9268,12 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 				}
 			}
 
-			if (mp_VActive) {
+			if (mp_VActive)
+			{
 				bool bLastFade = mp_VActive->mb_LastFadeFlag;
 				bool bNewFade = (gSet.isFadeInactive && !bForeground && !lbIsPicView);
-				if (bLastFade != bNewFade) {
+				if (bLastFade != bNewFade)
+				{
 					mp_VActive->mb_LastFadeFlag = bNewFade;
 					m_Child->Invalidate();
 				}
@@ -9011,6 +9306,11 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 			KillTimer(ghWnd, wParam);
 			mb_ForceShowFrame = isMouseOverFrame(true);
 			UpdateWindowRgn();
+		} break;
+		
+	case TIMER_RCLICKPAINT:
+		{
+			RightClickingPaint();
 		} break;
     }
 
@@ -9819,8 +10119,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         break; 
 
 	case WM_HOTKEY:
-		if (wParam == 0x201) {
-			CtrlWinAltSpace();
+		if (wParam == 0x201)
+		{
+			gConEmu.CtrlWinAltSpace();
+		}
+		else if (gConEmu.mn_MinRestoreRegistered && wParam == gConEmu.mn_MinRestoreRegistered)
+		{
+			gConEmu.OnMinimizeRestore();
 		}
 		return 0;
 
@@ -9969,13 +10274,19 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		//		CESERVER_REQ_SETBACKGROUND* p = (CESERVER_REQ_SETBACKGROUND*)lParam;
 		//		free(p);
 		//	}
-		} else if (messg == gConEmu.mn_MsgInitInactiveDC) {
+		}
+		else if (messg == gConEmu.mn_MsgInitInactiveDC)
+		{
 			if (isValid((CVirtualConsole*)lParam)
 				&& !isActive((CVirtualConsole*)lParam))
 			{
 				((CVirtualConsole*)lParam)->InitDC(true, true);
 				((CVirtualConsole*)lParam)->LoadConsoleData();
 			}
+		}
+		else if (messg == gConEmu.mn_MsgUpdateProcDisplay)
+		{
+			gConEmu.UpdateProcessDisplay(wParam!=0);
 		}
 
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {
