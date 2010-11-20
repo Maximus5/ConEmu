@@ -2,3 +2,4 @@ EXPORTS
 	LLKeybHook=LLKeybHook@12
 	KeyHook
 	VkWinFix
+	ConEmuWnd

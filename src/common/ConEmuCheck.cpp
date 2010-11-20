@@ -75,8 +75,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
 
     // Try to open a named pipe; wait for it, if necessary. 
     while (1)
-
-    { 
+    {
         hPipe = CreateFile( 
             szPipeName,     // pipe name 
             GENERIC_READ|GENERIC_WRITE, 
@@ -92,40 +91,53 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
         dwErr = GetLastError();
 
         // Сделаем так, чтобы хотя бы пару раз он попробовал повторить
-        if ((nTries <= 0) && (GetTickCount() - dwStartTick) > 100) {
-			if (pszErr) {
+        if ((nTries <= 0) && (GetTickCount() - dwStartTick) > 1000)
+        {
+			if (pszErr)
+			{
 				wsprintf(pszErr, L"%s: CreateFile(%s) failed, code=0x%08X, Timeout", 
 					szModule ? szModule : L"Unknown", szPipeName, dwErr);
 			}
             return NULL;
-        } else {
+        }
+        else
+        {
         	nTries--;
         }
         
         // Может быть пайп еще не создан (в процессе срабатывания семафора)
-        if (dwErr == ERROR_FILE_NOT_FOUND) {
+        if (dwErr == ERROR_FILE_NOT_FOUND)
+        {
         	Sleep(10);
         	continue;
         }
 
         // Exit if an error other than ERROR_PIPE_BUSY occurs. 
-		if (dwErr != ERROR_PIPE_BUSY) {
-			if (pszErr) {
+		if (dwErr != ERROR_PIPE_BUSY)
+		{
+			if (pszErr)
+			{
 				wsprintf(pszErr, L"%s: CreateFile(%s) failed, code=0x%08X", 
 					szModule ? szModule : L"Unknown", szPipeName, dwErr);
 			}
             return NULL;
 		}
 
-        // All pipe instances are busy, so wait for 1000 ms.
-		if (!WaitNamedPipe(szPipeName, 1000) ) {
-			dwErr = GetLastError();
-			if (pszErr) {
-				wsprintf(pszErr, L"%s: WaitNamedPipe(%s) failed, code=0x%08X, WaitNamedPipe", 
-					szModule ? szModule : L"Unknown", szPipeName, dwErr);
-			}
-            return NULL;
-		}
+        // All pipe instances are busy, so wait for 500 ms.
+		WaitNamedPipe(szPipeName, 500);
+		//if (!WaitNamedPipe(szPipeName, 1000) )
+		//{
+		//	dwErr = GetLastError();
+		//	if (pszErr)
+		//	{
+		//		wsprintf(pszErr, L"%s: WaitNamedPipe(%s) failed, code=0x%08X, WaitNamedPipe", 
+		//			szModule ? szModule : L"Unknown", szPipeName, dwErr);
+		//		// Видимо это возникает в момент запуска (обычно для ShiftEnter - новая консоль)
+		//		// не сразу срабатывает GUI и RCon еще не создал Pipe для HWND консоли
+		//		_ASSERTE(dwErr == 0);
+		//	}
+		//    return NULL;
+		//}
     }
 
     // The pipe connected; change to message-read mode. 
@@ -135,10 +147,12 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
         &dwMode,  // new pipe mode 
         NULL,     // don't set maximum bytes 
         NULL);    // don't set maximum time 
-    if (!fSuccess) {
+    if (!fSuccess)
+    {
     	dwErr = GetLastError();
     	_ASSERT(fSuccess);
-		if (pszErr) {
+		if (pszErr)
+		{
 			wsprintf(pszErr, L"%s: SetNamedPipeHandleState(%s) failed, code=0x%08X", 
 				szModule ? szModule : L"Unknown", szPipeName, dwErr);
 		}
@@ -174,10 +188,12 @@ void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, DWORD cbSize)
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
 {
     CESERVER_REQ* pIn = NULL;
-    if (nSize) {
+    if (nSize)
+    {
 		// Обязательно с обнулением выделяемой памяти
         pIn = (CESERVER_REQ*)_calloc(nSize, 1);
-        if (pIn) {
+        if (pIn)
+        {
 			ExecutePrepareCmd(pIn, nCmd, nSize);
         }
     }
@@ -231,7 +247,8 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	BOOL fSuccess = FALSE;
 	DWORD cbRead = 0, /*dwMode = 0,*/ dwErr = 0;
 
-	if (!pIn || !szGuiPipeName) {
+	if (!pIn || !szGuiPipeName)
+	{
 		_ASSERTE(pIn && szGuiPipeName);
 		return NULL;
 	}
@@ -240,10 +257,12 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	_ASSERTE(pIn->hdr.cbSize >= sizeof(pIn->hdr));
 		
 	hPipe = ExecuteOpenPipe(szGuiPipeName, szErr, NULL/*Сюда хорошо бы имя модуля подкрутить*/);
-	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE) {
+	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE)
+	{
 		#ifdef _DEBUG
 		//_ASSERTE(hPipe != NULL && hPipe != INVALID_HANDLE_VALUE);
-		if (hOwner) {
+		if (hOwner)
+		{
 			if (hOwner == GetConsoleWindow())
 				SetConsoleTitle(szErr);
 			else
@@ -327,13 +346,15 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 
 	pOut = (CESERVER_REQ*)cbReadBuf; // temporary
 	
-	if (pOut->hdr.cbSize < cbRead) {
+	if (pOut->hdr.cbSize < cbRead)
+	{
 		CloseHandle(hPipe);
 		OutputDebugString(L"!!! Wrong nSize received from GUI server !!!\n");
 		return NULL;
 	}
 
-	if (pOut->hdr.nVersion != CESERVER_REQ_VER) {
+	if (pOut->hdr.nVersion != CESERVER_REQ_VER)
+	{
 		CloseHandle(hPipe);
 		OutputDebugString(L"!!! Wrong nVersion received from GUI server !!!\n");
 		return NULL;
@@ -342,7 +363,8 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	int nAllSize = pOut->hdr.cbSize;
 	pOut = (CESERVER_REQ*)_malloc(nAllSize);
 	_ASSERTE(pOut);
-	if (!pOut) {
+	if (!pOut)
+	{
 		CloseHandle(hPipe);
 		return NULL;
 	}
@@ -387,9 +409,11 @@ HWND myGetConsoleWindow()
 {
 	HWND hConWnd = NULL;
 	static FGetConsoleWindow fGetConsoleWindow = NULL;
-	if (!fGetConsoleWindow) {
+	if (!fGetConsoleWindow)
+	{
 		HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
-		if (hKernel32) {
+		if (hKernel32)
+		{
 			fGetConsoleWindow = (FGetConsoleWindow)GetProcAddress( hKernel32, "GetConsoleWindow" );
 		}
 	}
@@ -417,7 +441,8 @@ HWND GetConEmuHWND(BOOL abRoot)
 	if (!pOut)
 		return NULL;
 	
-	if (pOut->hdr.cbSize != (sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD)) || pOut->hdr.nCmd != in.hdr.nCmd) {
+	if (pOut->hdr.cbSize != (sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD)) || pOut->hdr.nCmd != in.hdr.nCmd)
+	{
 		ExecuteFreeResult(pOut);
 		return NULL;
 	}
@@ -434,12 +459,15 @@ HWND GetConEmuHWND(BOOL abRoot)
 // hConEmuWnd - HWND с отрисовкой!
 void SetConEmuEnvVar(HWND hConEmuWnd)
 {
-	if (hConEmuWnd) {
+	if (hConEmuWnd)
+	{
         // Установить переменную среды с дескриптором окна
         WCHAR szVar[32];
         wsprintf(szVar, L"0x%08X", hConEmuWnd);
         SetEnvironmentVariable(L"ConEmuHWND", szVar);
-    } else {
+    }
+    else
+    {
     	SetEnvironmentVariable(L"ConEmuHWND", NULL);
     }
 }
@@ -458,9 +486,12 @@ int ConEmuCheck(HWND* ahConEmuWnd)
     // Если хотели узнать хэндл - возвращаем его
     if (ahConEmuWnd) *ahConEmuWnd = ConEmuWnd;
     
-    if (ConEmuWnd == NULL) {
+    if (ConEmuWnd == NULL)
+    {
 	    return 1; // NO ConEmu (simple console mode)
-    } else {
+    }
+    else
+    {
 	    //if (nChk>=3)
 		//    return 2; // ConEmu found, but old version
 		return 0;

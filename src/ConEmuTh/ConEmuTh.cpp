@@ -1410,7 +1410,10 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 		WARNING("ѕеред установкой флагов измененности - сначала хорошо бы проверить, а мен€лась ли сама панель?");
 		DWORD nChanges = 0;
 		RECT rcTest = {0};
-		RECT rcWrite = {lpWriteRegion->Left,lpWriteRegion->Top,lpWriteRegion->Right+1,lpWriteRegion->Bottom+1};
+		RECT rcWrite = {
+			lpWriteRegion->Left-rcFarRect.Left,lpWriteRegion->Top-rcFarRect.Top,
+			lpWriteRegion->Right+1-rcFarRect.Left,lpWriteRegion->Bottom+1-rcFarRect.Top
+		};
 		if (pviLeft.hView)
 		{
 			WARNING("ѕроверить в far/w");
@@ -1852,7 +1855,8 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 
 	CeFullPanelInfo* pi = NULL;
 	
-	if (gpRgnDetect) {
+	if (gpRgnDetect)
+	{
 		DWORD dwFlags = gpRgnDetect->GetFlags();
 		if ((dwFlags & FR_ACTIVEMENUBAR) == FR_ACTIVEMENUBAR)
 			return NULL; // активно меню
@@ -1860,18 +1864,23 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 			return NULL; // есть какой-то диалог
 	}
 
-	if (abFocusRequired) {
+	if (abFocusRequired)
+	{
 		if (pviLeft.hView && pviLeft.Focus && pviLeft.Visible)
 			pi = &pviLeft;
 		else if (pviRight.hView && pviRight.Focus && pviRight.Visible)
 			pi = &pviRight;
 		// ¬идим?
-		if (pi) {
-			if (!pi->hView || !IsWindowVisible(pi->hView)) {
+		if (pi)
+		{
+			if (!pi->hView || !IsWindowVisible(pi->hView))
+			{
 				return NULL; // панель полностью скрыта диалогом или погашена фаровска€ панель
 			}
 		}
-	} else {
+	}
+	else
+	{
 		if (pviLeft.hView && IsWindowVisible(pviLeft.hView))
 			pi = &pviLeft;
 		else if (pviRight.hView && IsWindowVisible(pviRight.hView))
@@ -1879,7 +1888,8 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 	}
 	
 	// ћожет быть PicView/MMView...
-	if (pi) {
+	if (pi)
+	{
 		RECT rc;
 		GetClientRect(pi->hView, &rc);
 		POINT pt = {((rc.left+rc.right)>>1),((rc.top+rc.bottom)>>1)};
@@ -1890,11 +1900,14 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 		MapWindowPoints(ghConEmuRoot, NULL, &pt, 1);
 		hChild[1] = WindowFromPoint(pt);
 
-		for (int i = 0; i <= 1; i++) {
+		for (int i = 0; i <= 1; i++)
+		{
 			// ¬ принципе, может быть и NULL, если координата попала в "прозрачную" часть hView
-			if (hChild[i] && hChild[i] != pi->hView) {
+			if (hChild[i] && hChild[i] != pi->hView)
+			{
 				wchar_t szClass[128];
-				if (GetClassName(hChild[i], szClass, 128)) {
+				if (GetClassName(hChild[i], szClass, 128))
+				{
 					if (lstrcmpi(szClass, L"FarPictureViewControlClass") == 0)
 						return NULL; // активен PicView!
 					if (lstrcmpi(szClass, L"FarMultiViewControlClass") == 0)

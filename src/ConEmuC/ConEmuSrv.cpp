@@ -315,7 +315,8 @@ int ServerInit()
 								if (prc.th32ProcessID != gnSelfPID
 									&& prc.th32ProcessID == srv.pnProcesses[i])
 								{
-									if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0 || lstrcmpiW(prc.szExeFile, L"conemuc64.exe")==0)
+									if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0 
+										/*|| lstrcmpiW(prc.szExeFile, L"conemuc64.exe")==0*/)
 									{
 										CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, 0);
 										CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn, ghConWnd);
@@ -400,9 +401,11 @@ int ServerInit()
 			PRINT_COMSPEC(L"Starting modeless:\n%s\n", pszSelf);
 		
 			// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
+			MWow64Disable wow; wow.Disable();
 			BOOL lbRc = CreateProcessW(NULL, pszSelf, NULL,NULL, TRUE, 
 					NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 			dwErr = GetLastError();
+			wow.Restore();
 			if (!lbRc)
 			{
 				_printf("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, pszSelf);
@@ -1112,9 +1115,11 @@ HWND Attach2Gui(DWORD nTimeout)
 		PRINT_COMSPEC(L"Starting GUI:\n%s\n", pszSelf);
 	
 		// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
+		MWow64Disable wow; wow.Disable();
 		BOOL lbRc = CreateProcessW(NULL, pszSelf, NULL,NULL, TRUE, 
 				NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 		dwErr = GetLastError();
+		wow.Restore();
 		if (!lbRc)
 		{
 			_printf ("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, pszSelf);

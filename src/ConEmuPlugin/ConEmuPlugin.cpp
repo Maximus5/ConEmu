@@ -336,6 +336,7 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 					//MSectionLock SC; SC.Lock(csTabs, TRUE);
 					//SendTabs(gnCurTabCount, TRUE);
 					//SC.Unlock();
+					UpdateConEmuTabs(0,false,false);
 					SetEvent(ghSetWndSendTabsEvent);
 					return INVALID_HANDLE_VALUE;
 				}
@@ -465,7 +466,7 @@ void OnMainThreadActivated()
 
 	
 	// ≈сли был запрос на обновление Background
-	if (gbNeedBgActivate)
+	if (gbNeedBgActivate) // выставл€етс€ в gpBgPlugin->SetForceCheck() или SetForceUpdate()
 	{
 		gbNeedBgActivate = FALSE;
 		if (gpBgPlugin)
@@ -528,35 +529,6 @@ void OnConsolePeekReadInput(BOOL abPeek)
 
 	bool lbNeedSynchro = false;
 
-	//if (gbNeedPostEditCheck)
-	//{
-	//	DWORD currentModifiedState = GetEditorModifiedState();
-	//	if (lastModifiedStateW != (int)currentModifiedState)
-	//	{
-	//		lastModifiedStateW = (int)currentModifiedState;
-	//		gbRequestUpdateTabs = TRUE;
-	//	}
-	//}
-	//if (!gbRequestUpdateTabs && gbNeedPostTabSend)
-	//{
-	//	if (!IsMacroActive())
-	//	{
-	//		gbRequestUpdateTabs = TRUE; gbNeedPostTabSend = FALSE;
-	//	}
-	//}
-	//if (gbRequestUpdateTabs && !IsMacroActive())
-	//{
-	//	gbRequestUpdateTabs = gbNeedPostTabSend = FALSE;
-	//	if (gFarVersion.dwVerMajor==1)
-	//		UpdateConEmuTabsA(0,false,false);
-	//	else
-	//		UpdateConEmuTabsW(0,false,false);
-	//	if (gbClosingModalViewerEditor)
-	//	{
-	//		gbClosingModalViewerEditor = FALSE;
-	//		gbRequestUpdateTabs = TRUE;
-	//	}
-	//}
 
 
 	if (gpConsoleInfo && gpFarInfo && gpFarInfoMapping)
@@ -1039,25 +1011,32 @@ BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs)
 		return TRUE; // обработку делаем только в основной нити
 
 	// ≈сли зарегистрирован callback дл€ графической панели
-	if (gPanelRegLeft.pfnWriteCall || gPanelRegRight.pfnWriteCall) {
+	if (gPanelRegLeft.pfnWriteCall || gPanelRegRight.pfnWriteCall)
+	{
 		HANDLE hOutput = (HANDLE)(pArgs->lArguments[0]);
 		const CHAR_INFO *lpBuffer = (const CHAR_INFO *)(pArgs->lArguments[1]);
 		COORD dwBufferSize = *(COORD*)(pArgs->lArguments[2]);
 		COORD dwBufferCoord = *(COORD*)(pArgs->lArguments[3]);
 		PSMALL_RECT lpWriteRegion = (PSMALL_RECT)(pArgs->lArguments[4]);
 		
-		if (gPanelRegLeft.pfnWriteCall) {
+		if (gPanelRegLeft.pfnWriteCall)
+		{
 			_ASSERTE(gPanelRegLeft.bRegister);
 			gPanelRegLeft.pfnWriteCall(hOutput,lpBuffer,dwBufferSize,dwBufferCoord,lpWriteRegion);
 		}
 		// ≈сли есть только права€ панель, или на правой панели задана друга€ функци€
-		if (gPanelRegRight.pfnWriteCall && gPanelRegRight.pfnWriteCall != gPanelRegLeft.pfnWriteCall) {
+		if (gPanelRegRight.pfnWriteCall && gPanelRegRight.pfnWriteCall != gPanelRegLeft.pfnWriteCall)
+		{
 			_ASSERTE(gPanelRegRight.bRegister);
 			gPanelRegRight.pfnWriteCall(hOutput,lpBuffer,dwBufferSize,dwBufferCoord,lpWriteRegion);
 		}
 	}
 
-	if (gbWaitConsoleWrite) {
+	//if (gpBgPlugin)
+	//	gpBgPlugin->SetForceCheck();
+
+	if (gbWaitConsoleWrite)
+	{
 		gbWaitConsoleWrite = FALSE;
 		SetEvent(ghConsoleWrite);
 	}
@@ -3164,10 +3143,10 @@ BOOL ReloadFarInfo(BOOL abFull)
 	return lbChanged;
 }
 
-void UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+bool UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
 	if (!gbInfoW_OK || gbIgnoreUpdateTabs)
-		return;
+		return false;
 
 	if (gbRequestUpdateTabs)
 		gbRequestUpdateTabs = FALSE;
@@ -3177,26 +3156,66 @@ void UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Par
 
 	MSectionLock SC; SC.Lock(csTabs);
 
+	extern bool FUNC_X(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
+	extern bool FUNC_Y(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
+
+	bool lbCh;
+
 	if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
+		lbCh = FUNC_Y(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
 	else
-		FUNC_X(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
+		lbCh = FUNC_X(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
 
 	SC.Unlock();
+
+	return lbCh;
 }
 
-extern void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
-void UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
+	extern bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
+
+	bool lbCh;
+
+	// Ќа случай, если текущее окно заблокировано диалогом - не получитс€ точно узнать
+	// какое окно фара активно. ѕоэтому вернем последнее известное.
+	int nLastCurrentTab = -1, nLastCurrentType = -1;
+	if (gpTabs && gpTabs->Tabs.nTabCount > 0)
+	{
+		nLastCurrentTab = gpTabs->Tabs.CurrentIndex;
+		nLastCurrentType = gpTabs->Tabs.CurrentType;
+	}
+
+	gpTabs->Tabs.CurrentIndex = -1; // дл€ строгости
+
 	if (gFarVersion.dwVerMajor==1)
-		UpdateConEmuTabsA(anEvent, losingFocus, editorSave, Param);
+		lbCh = UpdateConEmuTabsA(anEvent, losingFocus, editorSave, Param);
 	else
-		UpdateConEmuTabsW(anEvent, losingFocus, editorSave, Param);
+		lbCh = UpdateConEmuTabsW(anEvent, losingFocus, editorSave, Param);
+
+	if (gpTabs->Tabs.CurrentIndex == -1 && nLastCurrentTab != -1 && gpTabs->Tabs.nTabCount > 0)
+	{
+		// јктивное окно определить не удалось
+		if ((UINT)nLastCurrentTab >= gpTabs->Tabs.nTabCount)
+			nLastCurrentTab = (gpTabs->Tabs.nTabCount - 1);
+		gpTabs->Tabs.CurrentIndex = nLastCurrentTab;
+		gpTabs->Tabs.tabs[nLastCurrentTab].Current = TRUE;
+	}
+
+	if (lbCh && gpBgPlugin)
+	{
+		gpBgPlugin->SetForceUpdate();
+		gpBgPlugin->OnMainThreadActivated();
+		gbNeedBgActivate = FALSE;
+	}
+
+	return lbCh;
 }
 
 BOOL CreateTabs(int windowCount)
 {
-	if (gpTabs && maxTabCount > (windowCount + 1)) {
+	if (gpTabs && maxTabCount > (windowCount + 1))
+	{
 		// пересоздавать не нужно, секцию не трогаем. только запомним последнее кол-во окон
 		lastWindowCount = windowCount;
 		return TRUE; 
@@ -3209,7 +3228,8 @@ BOOL CreateTabs(int windowCount)
 		MSectionLock SC; SC.Lock(csTabs, TRUE);
 
 		maxTabCount = windowCount + 20; // с запасом
-		if (gpTabs) {
+		if (gpTabs)
+		{
 			Free(gpTabs); gpTabs = NULL;
 		}
 		
@@ -3285,7 +3305,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 			lastModifiedStateW = Modified != 0 ? 1 : 0;
 
 			gpTabs->Tabs.CurrentType = Type;
-			gpTabs->Tabs.CurrentIndex = 0;
+			gpTabs->Tabs.CurrentIndex = tabCount;
 		}
 		//else
 		//{
@@ -3307,7 +3327,8 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 {
 	MSectionLock SC; SC.Lock(csTabs);
 
-	if (!gpTabs) {
+	if (!gpTabs)
+	{
 		_ASSERTE(gpTabs!=NULL);
 		return;
 	}
@@ -3327,7 +3348,8 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 		gpTabs->Tabs.bMacroActive = IsMacroActive();
 		gpTabs->Tabs.bMainThread = (GetCurrentThreadId() == gnMainThreadId);
 		// ≈сли выполн€етс€ макрос и отложенна€ отсылка (по окончанию) уже запрошена
-		if (gpTabs->Tabs.bMacroActive && gbNeedPostTabSend) {
+		if (gpTabs->Tabs.bMacroActive && gbNeedPostTabSend)
+		{
 			gnNeedPostTabSendTick = GetTickCount(); // ќбновить тик
 			return;
 		}
@@ -3336,15 +3358,20 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 
 		CESERVER_REQ* pOut =
 			ExecuteGuiCmd(FarHwnd, gpTabs, FarHwnd);
-		if (pOut) {
+		if (pOut)
+		{
 			if (pOut->hdr.cbSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB_RET))) {
-				if (gpTabs->Tabs.bMacroActive && pOut->TabsRet.bNeedPostTabSend) {
+				if (gpTabs->Tabs.bMacroActive && pOut->TabsRet.bNeedPostTabSend)
+				{
 					// ќтослать после того, как макрос завершитс€
 					gbNeedPostTabSend = TRUE;
 					gnNeedPostTabSendTick = GetTickCount();
-				} else if (pOut->TabsRet.bNeedResize) {
+				}
+				else if (pOut->TabsRet.bNeedResize)
+				{
 					// ≈сли это отложенна€ отсылка табов после выполнени€ макросов
-					if (GetCurrentThreadId() == gnMainThreadId) {
+					if (GetCurrentThreadId() == gnMainThreadId)
+					{
 						FarSetConsoleSize(pOut->TabsRet.crNewSize.X, pOut->TabsRet.crNewSize.Y);
 					}
 				}
@@ -3373,7 +3400,6 @@ int WINAPI _export ProcessEditorInputW(void* Rec)
 
 int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 {
-#if 1
 	if (!gbRequestUpdateTabs)
 	{
 		if (Event == EE_READ || Event == EE_CLOSE || Event == EE_GOTFOCUS || Event == EE_KILLFOCUS || Event == EE_SAVE)
@@ -3388,56 +3414,8 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 		&& gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
 		gbClosingModalViewerEditor = TRUE;
 
-#else
-	// ƒаже если мы не под эмул€тором - просто запомним текущее состо€ние
-	//if (!ConEmuHwnd) return 0; // ≈сли мы не под эмул€тором - ничего
-	/*if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(ProcessEditorEventW)(Event,Param);
-	else
-		return FUNC_X(ProcessEditorEventW)(Event,Param);*/
-	//static bool sbEditorReading = false;
 
-	if (gbNeedPostTabSend && Event == EE_REDRAW) {
-		if (!IsMacroActive())
-			gbHandleOneRedraw = true;
-	}
-
-	// ¬роде коды событий не различаютс€, да и от ANSI не отличаютс€...
-	switch (Event)
-	{
-	case EE_READ: // в этот момент количество окон еще не изменилось
-		gbHandleOneRedraw = true;
-		//gbHandleOneRedrawCh = false;
-		return 0;
-	case EE_REDRAW:
-		if (!gbHandleOneRedraw)
-			return 0;
-		//if (!gbHandleOneRedrawCh)//2009-08-17 - сбрасываем в UpdateConEmuTabsW т.к. на Input не сразу * по€вл€етс€
-		//	gbHandleOneRedraw = false; //2009-08-17 - сбрасываем в UpdateConEmuTabsW т.к. на Input не сразу * по€вл€етс€
-		gbHandleOneRedraw = false;
-		if (lastModifiedStateW == (int)GetEditorModifiedState())
-			return 0;
-		OUTPUTDEBUGSTRING(L"EE_REDRAW(HandleOneRedraw)\n");
-		break;
-	case EE_CLOSE:
-		OUTPUTDEBUGSTRING(L"EE_CLOSE\n"); break;
-	case EE_GOTFOCUS:
-		OUTPUTDEBUGSTRING(L"EE_GOTFOCUS\n"); break;
-	case EE_KILLFOCUS:
-		OUTPUTDEBUGSTRING(L"EE_KILLFOCUS\n"); break;
-	case EE_SAVE:
-		gbHandleOneRedraw = true;
-		OUTPUTDEBUGSTRING(L"EE_SAVE\n"); break;
-	default:
-		return 0;
-	}
-	// !!! »менно UpdateConEmuTabsW, без версии !!!
-	//2009-06-03 EE_KILLFOCUS при закрытии редактора не приходит. “олько EE_CLOSE
-	bool loosingFocus = (Event == EE_KILLFOCUS) || (Event == EE_CLOSE);
-	UpdateConEmuTabsW(Event+100, loosingFocus, Event == EE_SAVE);
-#endif
-
-	if (gpBgPlugin)
+	if (gpBgPlugin && (Event != EE_REDRAW))
 	{
 		gpBgPlugin->OnMainThreadActivated(Event, -1);
 	}
@@ -3447,7 +3425,6 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 
 int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 {
-#if 1
 	if (!gbRequestUpdateTabs &&
 		(Event == VE_CLOSE || Event == VE_GOTFOCUS || Event == VE_KILLFOCUS || Event == VE_READ))
 	{
@@ -3460,32 +3437,6 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 		gbClosingModalViewerEditor = TRUE;
 	}
 
-#else
-	// ƒаже если мы не под эмул€тором - просто запомним текущее состо€ние
-	//if (!ConEmuHwnd) return 0; // ≈сли мы не под эмул€тором - ничего
-	/*if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(ProcessViewerEventW)(Event,Param);
-	else
-		return FUNC_X(ProcessViewerEventW)(Event,Param);*/
-	// ¬роде коды событий не различаютс€, да и от ANSI не отличаютс€...
-	switch (Event)
-	{
-	case VE_CLOSE:
-		OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
-	//case VE_READ:
-	//	OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
-	case VE_KILLFOCUS:
-		OUTPUTDEBUGSTRING(L"VE_KILLFOCUS"); break;
-	case VE_GOTFOCUS:
-		OUTPUTDEBUGSTRING(L"VE_GOTFOCUS"); break;
-	default:
-		return 0;
-	}
-	// !!! »менно UpdateConEmuTabsW, без версии !!!
-	//2009-06-03 VE_KILLFOCUS при закрытии редактора не приходит. “олько VE_CLOSE
-	bool loosingFocus = (Event == VE_KILLFOCUS || Event == VE_CLOSE);
-	UpdateConEmuTabsW(Event+200, loosingFocus, false, Param);
-#endif
 
 	if (gpBgPlugin)
 	{
@@ -4428,7 +4379,8 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
             			if (prc.th32ProcessID != nSelfPID
             				&& prc.th32ProcessID == nProcesses[i])
         				{
-        					if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0 || lstrcmpiW(prc.szExeFile, L"conemuc64.exe")==0)
+        					if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0 
+        						/*|| lstrcmpiW(prc.szExeFile, L"conemuc64.exe")==0*/)
 							{
         						CESERVER_REQ* pIn = ExecuteNewCmd(nServerCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
         						pIn->dwData[0] = GetCurrentProcessId();
@@ -4495,10 +4447,10 @@ BOOL Attach2Gui()
 		if (pszSlash) pszSlash[1] = 0;
 	}
 	
-	if (IsWindows64())
-		wsprintf(szExe+lstrlenW(szExe), L"ConEmuC64.exe\" /ATTACH /PID=%i", dwSelfPID);
-	else
-		wsprintf(szExe+lstrlenW(szExe), L"ConEmuC.exe\" /ATTACH /PID=%i", dwSelfPID);
+	//if (IsWindows64())
+	//	wsprintf(szExe+lstrlenW(szExe), L"ConEmuC64.exe\" /ATTACH /PID=%i", dwSelfPID);
+	//else
+	wsprintf(szExe+lstrlenW(szExe), L"ConEmuC.exe\" /ATTACH /PID=%i", dwSelfPID);
 	
 	
 	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
@@ -4520,11 +4472,13 @@ BOOL Attach2Gui()
 
 BOOL StartDebugger()
 {
-	if (IsDebuggerPresent()) {
+	if (IsDebuggerPresent())
+	{
 		ShowMessage(CEAlreadyDebuggerPresent,1); // "ConEmu plugin\nDebugger is already attached to current process\nOK"
 		return FALSE; // ”же
 	}
-	if (IsTerminalMode()) {
+	if (IsTerminalMode())
+	{
 		ShowMessage(CECantDebugInTerminal,1); // "ConEmu plugin\nDebugger is not available in terminal mode\nOK"
 		return FALSE; // ”же
 	}
@@ -4543,18 +4497,22 @@ BOOL StartDebugger()
 	DWORD dwSelfPID = GetCurrentProcessId();
 	
 	szExe[0] = L'"';
-	if ((nLen = GetEnvironmentVariableW(L"ConEmuDir", szExe+1, MAX_PATH)) > 0) {
+	if ((nLen = GetEnvironmentVariableW(L"ConEmuDir", szExe+1, MAX_PATH)) > 0)
+	{
 		if (szExe[nLen] != L'\\') { szExe[nLen+1] = L'\\'; szExe[nLen+2] = 0; }
-	} else if ((nLen=GetModuleFileName(0, szExe+1, MAX_PATH)) > 0) {
+	}
+	else if ((nLen=GetModuleFileName(0, szExe+1, MAX_PATH)) > 0)
+	{
 		wchar_t* pszSlash = wcsrchr ( szExe, L'\\' );
 		if (pszSlash) pszSlash[1] = 0;
 	}
 	
 	wsprintf(szExe+lstrlenW(szExe), L"%s\" %s /DEBUGPID=%i /BW=80 /BH=25 /BZ=1000", 
-		IsWindows64() ? L"ConEmuC64.exe" : L"ConEmuC.exe",
+		/*IsWindows64() ? L"ConEmuC64.exe" :*/ L"ConEmuC.exe",
 		ConEmuHwnd ? L"/ATTACH" : L"", dwSelfPID);
 	
-	if (ConEmuHwnd) {
+	if (ConEmuHwnd)
+	{
 		si.dwFlags |= STARTF_USESHOWWINDOW;
 		si.wShowWindow = SW_HIDE;
 	}
@@ -4644,20 +4602,28 @@ bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir)
 	WARNING("ѕосмотреть, как Update в консоль выводит.");
 	wprintf(L"\nCmd: <%s>\nDir: <%s>\n\n", pszCommand, pszCurDir);
 	#endif
-
-	if( CreateProcess( /*strCmd, strArgs,*/ NULL, pszCommand, NULL, NULL, TRUE, 
-		NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE, NULL, pszCurDir, &cif, &pri ) )
+	
+	MWow64Disable wow; wow.Disable();
+	
+	SetLastError(0);
+	BOOL lb = CreateProcess( /*strCmd, strArgs,*/ NULL, pszCommand, NULL, NULL, TRUE, 
+		NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE, NULL, pszCurDir, &cif, &pri );
+	nErr = GetLastError();
+	
+	wow.Restore();
+	
+	if (lb)
 	{
 		WaitForSingleObject( pri.hProcess, INFINITE );
 		GetExitCodeProcess(pri.hProcess, &nExitCode);
 		CloseHandle( pri.hProcess );
 		CloseHandle( pri.hThread );         
-		nErr = GetLastError();
 		#ifdef _DEBUG
 		wprintf(L"\nConEmuC: Process was terminated, ExitCode=%i\n\n", nExitCode);
 		#endif
-	} else {
-		nErr = GetLastError();
+	}
+	else
+	{
 		#ifdef _DEBUG
 		wprintf(L"\nConEmuC: CreateProcess failed, ErrCode=0x%08X\n\n", nErr);
 		#endif

@@ -211,7 +211,7 @@
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -227,7 +227,7 @@
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib Netapi32.lib"
 				OutputFile="..\..\Release\ConEmu.exe"
 				LinkIncremental="1"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				GenerateMapFile="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -1721,6 +1721,10 @@
 						Name="VCCustomBuildTool"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\hourglass.bmp"
+				>
 			</File>
 			<File
 				RelativePath=".\hsplit.cur"

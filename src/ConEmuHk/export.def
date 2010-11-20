@@ -2,3 +2,4 @@ EXPORTS
 	LLKeybHook
 	KeyHook
 	VkWinFix
+	ConEmuWnd

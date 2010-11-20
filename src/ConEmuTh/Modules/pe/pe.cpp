@@ -122,6 +122,7 @@ struct PEData
 	//
 	PBYTE pMappedFileBase;
 	ULARGE_INTEGER FileSize;
+	ULARGE_INTEGER FileFullSize;
 	PIMAGE_NT_HEADERS32 pNTHeader32;
 	PIMAGE_NT_HEADERS64 pNTHeader64;
 	bool bIs64Bit;
@@ -1781,90 +1782,60 @@ template <class T> void DumpCertificates(PEData *pData, PBYTE pImageBase, T* pNT
     DWORD certOffset;
 
     certOffset = GetImgDirEntryRVA(pNTHeader, IMAGE_DIRECTORY_ENTRY_SECURITY );
-    if ( !certOffset )
+    if ( !certOffset || ((certOffset+sizeof(WIN_CERTIFICATE)) > pData->FileFullSize.QuadPart) )
         return;
 	
-	__int64 dwTotalSize = GetImgDirEntrySize( pNTHeader, IMAGE_DIRECTORY_ENTRY_SECURITY );
+	//__int64 dwTotalSize = GetImgDirEntrySize( pNTHeader, IMAGE_DIRECTORY_ENTRY_SECURITY );
 
-	//TCHAR szCertName[MAX_PATH], szCertType[64], szRev[8];
-	//int nCertNo = 0;
-	//MPanelItem* pChild = pRoot->AddFolder(_T("Certificates"));
-	//pChild->printf( "<Certificates>:\n" );
-	//
-	//pChild->SetColumnsTitles(cszCertRevTitle, 6, cszCertTypeTitle, 16);
+	// Скорее всего сертификаты находятся ЗА пределами отображенного в память файла, т.к. они не входят в ImageSize
+	// Поэтому для простоты - считаем что он подписан, без проверки типа подписи
+	pData->nFlags |= PE_SIGNED;
 
-	//LPWIN_CERTIFICATE pCert = (LPWIN_CERTIFICATE)GetPtrFromRVA( certOffset, pNTHeader, pImageBase );
-	LPWIN_CERTIFICATE pCert = MakePtr( LPWIN_CERTIFICATE, pImageBase, certOffset );
 
-	while ( dwTotalSize > 0 )	// As long as there is unprocessed certificate data...
-	{
-		//LPWIN_CERTIFICATE pCert = MakePtr( LPWIN_CERTIFICATE, pImageBase, certOffset );
+	//LPWIN_CERTIFICATE pCert = MakePtr( LPWIN_CERTIFICATE, pImageBase, certOffset );
 
-		//if (!pCert || IsBadReadPtr(pCert, sizeof(*pCert))) {
-		if (!pCert || !ValidateMemory(pData, pCert, sizeof(*pCert))) {
-			//pChild->printf(_T("\n!!! Failed to read LPWIN_CERTIFICATE at offset: 0x%08X !!!\n"), certOffset);
-			break;
-		}
+	//// Скорее всего сертификаты находятся ЗА пределами отображенного в память файла, 
+	//// т.к. они не входят в ImageSize
 
-		if (!pCert->dwLength) {
-			break; // кончились
-		}
+	//while ( dwTotalSize > 0 )	// As long as there is unprocessed certificate data...
+	//{
+	//	//LPWIN_CERTIFICATE pCert = MakePtr( LPWIN_CERTIFICATE, pImageBase, certOffset );
 
-		size_t nAllLen = pCert->dwLength;
+	//	//if (!pCert || IsBadReadPtr(pCert, sizeof(*pCert))) {
+	//	if (!pCert || !ValidateMemory(pData, pCert, sizeof(*pCert)))
+	//	{
+	//		//pChild->printf(_T("\n!!! Failed to read LPWIN_CERTIFICATE at offset: 0x%08X !!!\n"), certOffset);
+	//		break;
+	//	}
 
-		switch( pCert->wCertificateType )
-		{
-		case WIN_CERT_TYPE_X509: //lstrcpy(szCertType, _T("X509")); break;
-		case WIN_CERT_TYPE_PKCS_SIGNED_DATA: //lstrcpy(szCertType, _T("PKCS_SIGNED_DATA")); break;
-		case WIN_CERT_TYPE_TS_STACK_SIGNED: //lstrcpy(szCertType, _T("TS_STACK_SIGNED")); break;
-			// OK, поддерживаемый тип
-			break;
-		default: //wsprintf(szCertType, _T("0x%04X"), pCert->wCertificateType);
-			continue;
-		}
-		
-		//nCertNo++;
+	//	if (!pCert->dwLength) {
+	//		break; // кончились
+	//	}
 
-		//if (IsBadReadPtr(pCert, nAllLen)) {
-		if (!ValidateMemory(pData, pCert, nAllLen)) {
-			//wsprintf(szCertName, _T("#%i.INVALID_CERTIFICATE"), nCertNo);
-			//MPanelItem* pCertFile = pChild->AddFile(szCertName, pCert->dwLength);
-			//pCertFile->SetData((LPBYTE)pCert, pCert->dwLength);
-			//wsprintf(szRev, _T("0x%04X"), pCert->wRevision);
-			//pCertFile->SetColumns(szRev, szCertType);
-			//
-			//pChild->printf(_T("\n!!! Can't access %u bytes of LPWIN_CERTIFICATE at offset: 0x%08X !!!\n"), (DWORD)nAllLen, certOffset);
-			break;
-		}
-		
-		pData->nFlags |= PE_SIGNED;
-		return;
+	//	size_t nAllLen = pCert->dwLength;
 
-		//pChild->printf( "  Certificate #%i\n", nCertNo );
-		//
-		//pChild->printf( "    Length:   %i bytes\n", pCert->dwLength );
-		//pChild->printf( "    Revision: 0x%04X\n", pCert->wRevision );
-		//pChild->printf( "    Type:     0x%04X", pCert->wCertificateType );
-		//
-		//if (szCertType[0] != _T('0'))
-		//	pChild->printf(_T(" (%s)"), szCertType);
-		//
-		//wsprintf(szCertName, _T("#%i.%s"), nCertNo, szCertType);
-		////int nLen = pCert->dwLength - sizeof(WIN_CERTIFICATE) + 1;
-		//MPanelItem* pCertFile = pChild->AddFile(szCertName, pCert->dwLength);
-		//pCertFile->SetData((LPBYTE)pCert, pCert->dwLength);
-		//wsprintf(szRev, _T("0x%04X"), pCert->wRevision);
-		//pCertFile->SetColumns(szRev, szCertType);
-		//
-		//pChild->printf( "\n" );
-		//
-		//dwTotalSize -= nAllLen; //pCert->dwLength;
-		////certOffset += pCert->dwLength;		// Get offset to next certificate
-		//
-		//pCert = (LPWIN_CERTIFICATE)(((LPBYTE)pCert) + nAllLen);
-	}
+	//	switch( pCert->wCertificateType )
+	//	{
+	//	case WIN_CERT_TYPE_X509: //lstrcpy(szCertType, _T("X509")); break;
+	//	case WIN_CERT_TYPE_PKCS_SIGNED_DATA: //lstrcpy(szCertType, _T("PKCS_SIGNED_DATA")); break;
+	//	case WIN_CERT_TYPE_TS_STACK_SIGNED: //lstrcpy(szCertType, _T("TS_STACK_SIGNED")); break;
+	//		// OK, поддерживаемый тип
+	//		break;
+	//	default: //wsprintf(szCertType, _T("0x%04X"), pCert->wCertificateType);
+	//		continue;
+	//	}
+	//	
+	//	//nCertNo++;
 
-	//pChild->printf( "\n" );
+	//	//if (IsBadReadPtr(pCert, nAllLen)) {
+	//	if (!ValidateMemory(pData, pCert, nAllLen))
+	//	{
+	//		break;
+	//	}
+	//	
+	//	pData->nFlags |= PE_SIGNED;
+	//	return;
+	//}
 }
 
 
@@ -2321,7 +2292,7 @@ bool DumpExeFilePE( PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADER
 }
 
 
-bool DumpFile(PEData *pData, LPBYTE pFileData, __int64 nFileSize)
+bool DumpFile(PEData *pData, LPBYTE pFileData, __int64 nFileSize/*mapped*/, __int64 nFullFileSize)
 {
 	bool lbSucceeded = false;
     PIMAGE_DOS_HEADER dosHeader;
@@ -2336,6 +2307,7 @@ bool DumpFile(PEData *pData, LPBYTE pFileData, __int64 nFileSize)
 
 
 	pData->FileSize.QuadPart = nFileSize;
+	pData->FileFullSize.QuadPart = nFullFileSize;
     pData->pMappedFileBase = pFileData;
 
 	dosHeader = (PIMAGE_DOS_HEADER)pData->pMappedFileBase;
@@ -2376,33 +2348,38 @@ VOID WINAPI CET_Done(struct CET_Init* pInit)
 
 BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 {
-	if (!pLoadPreview || *((LPDWORD)pLoadPreview) != sizeof(struct CET_LoadInfo)) {
+	if (!pLoadPreview || *((LPDWORD)pLoadPreview) != sizeof(struct CET_LoadInfo))
+	{
 		_ASSERTE(*((LPDWORD)pLoadPreview) == sizeof(struct CET_LoadInfo));
 		SETERROR(PEE_INVALID_VERSION);
 		return FALSE;
 	}
 	
 	
-	if (pLoadPreview->pContext != (LPVOID)1) {
+	if (pLoadPreview->pContext != (LPVOID)1)
+	{
 		SETERROR(PEE_INVALID_CONTEXT);
 		return FALSE;
 	}
 	
 
-	if (!pLoadPreview->pFileData || pLoadPreview->nFileSize < 512) {
+	if (!pLoadPreview->pFileData || pLoadPreview->nFileSize < 512)
+	{
 		SETERROR(PEE_FILE_NOT_FOUND);
 		return FALSE;
 	}
 	
 	const BYTE  *pb  = (const BYTE*)pLoadPreview->pFileData;
-	if (pb[0] != 'M' || pb[1] != 'Z') {
+	if (pb[0] != 'M' || pb[1] != 'Z')
+	{
 		SETERROR(PEE_UNSUPPORTEDFORMAT);
 		return FALSE;
 	}
 
 	
 	PEData *pData = (PEData*)CALLOC(sizeof(PEData));
-	if (!pData) {
+	if (!pData)
+	{
 		SETERROR(PEE_NOT_ENOUGH_MEMORY);
 		return FALSE;
 	}
@@ -2418,16 +2395,21 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 	
 	BOOL lbRc = FALSE;
 	
-	if (DumpFile(pData, (LPBYTE)pLoadPreview->pFileData, pLoadPreview->nFileSize) && (pData->nFlags || pData->nBits)) {
+	if (DumpFile ( pData, (LPBYTE)pLoadPreview->pFileData, pLoadPreview->nFileSize, pLoadPreview->nFileSize) 
+		&& (pData->nFlags || pData->nBits) )
+	{
 		pData->pMappedFileBase = NULL;
 
 		// [x64/x86] [FAR1/FAR2] [FileVersion]
 		//wchar_t szInfo[512];
 		wchar_t* pszInfo = pData->szInfo;
-		if (pData->Machine == IMAGE_FILE_MACHINE_IA64) {
+		if (pData->Machine == IMAGE_FILE_MACHINE_IA64)
+		{
 			if (pData->nFlags & PE_SIGNED) *(pszInfo++) = L's';
 			*(pszInfo++) = L'I'; *(pszInfo++) = L'A';
-		} else {
+		}
+		else
+		{
 			*(pszInfo++) = (pData->nFlags & PE_SIGNED) ? L's' : L'x';
 		}
 		lstrcpy(pszInfo, (pData->nBits == 64) ? L"64 " : (pData->nBits == 16) ? L"16 " : L"32 ");
@@ -2440,21 +2422,27 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 
 		if ((pData->nFlags & PE_UPX)) lstrcat(pData->szInfo, L"Upx ");
 		if ((pData->nFlags & PE_DOTNET)) lstrcat(pData->szInfo, L".Net ");
-		if (pData->szVersion[0]) {
+		if (pData->szVersion[0])
+		{
 			lstrcat(pData->szInfo, pData->szVersion);
-			if (pData->szVersionN[0]) {
+			if (pData->szVersionN[0])
+			{
 				lstrcat(pData->szInfo, L" [");
 				lstrcat(pData->szInfo, pData->szVersionN);
 				lstrcat(pData->szInfo, L"]");
 			}
-		} else if (pData->szVersionN[0]) {
+		}
+		else if (pData->szVersionN[0])
+		{
 			 lstrcat(pData->szInfo, pData->szVersionN);
 		}
 
 		pLoadPreview->pszComments = pData->szInfo;
 
 		lbRc = TRUE;
-	} else {
+	}
+	else
+	{
 		pLoadPreview->pFileContext = NULL;
 		pData->Close();
 	}
@@ -2583,7 +2571,7 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 	//TODO: Если появится возможность просмотра нескольких байт - хорошо бы это делать один раз на пачку плагинов?
 	if (lstrcmpiW(FilePath+nLen-4, L".exe") && lstrcmpiW(FilePath+nLen-4, L".dll")
 		&& lstrcmpiW(FilePath+nLen-4, L".com") && lstrcmpiW(FilePath+nLen-4, L".pvd")
-		&& lstrcmpiW(FilePath+nLen-4, L".dl_"))
+		&& lstrcmpiW(FilePath+nLen-4, L".dl_") && lstrcmpiW(FilePath+nLen-4, L".mui"))
 	{
 		return FALSE;
 	}
@@ -2624,9 +2612,10 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 			//	hFile = CreateFileW(FilePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0,0);
 		}
 	}
+	LARGE_INTEGER nSize = {{0}};
+	LARGE_INTEGER nFullSize = {{0}};
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
-		LARGE_INTEGER nSize = {{0}};
 		BYTE Signature[2]; DWORD nRead = 0;
 		
 		HANDLE hFileMapping = NULL;
@@ -2640,14 +2629,15 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 			LARGE_INTEGER liPos, liTest;
 			IMAGE_DOS_HEADER dosHeader = {0};
 			IMAGE_NT_HEADERS64 NTHeader64 = {0}; // 64-версия больше 32 битной. считываем больший блок данных
-			
+
+			nFullSize.QuadPart = nSize.QuadPart;
 			dosHeader.e_magic = IMAGE_DOS_SIGNATURE;
 			lbSucceeded = ReadFile(hFile, 2+(LPBYTE)&dosHeader, sizeof(dosHeader)-2, &nRead, NULL);
 
 			if (lbSucceeded)
 			{
 				liPos.QuadPart = dosHeader.e_lfanew;
-				lbSucceeded = (liPos.QuadPart > sizeof(dosHeader) && liPos.QuadPart < nSize.QuadPart);
+				lbSucceeded = (liPos.QuadPart >= sizeof(dosHeader) && liPos.QuadPart < nSize.QuadPart);
 			}
 			
 			if (lbSucceeded)
@@ -2703,7 +2693,7 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 				if (pszDot) lstrcpyn(Ver.szExtension, pszDot, ARRAYSIZE(Ver.szExtension));
 				Ver.nFlags |= PE_ICON_EXISTS; // чтобы иконки не пытаться искать. нужна только версия
 
-				BOOL lbDump = DumpFile(&Ver, pFileData, nSize.QuadPart);
+				BOOL lbDump = DumpFile(&Ver, pFileData, nSize.QuadPart, nFullSize.QuadPart);
 
 				if (lbDump && (Ver.szVersion[0] != 0 || Ver.nBits != 0))
 				{

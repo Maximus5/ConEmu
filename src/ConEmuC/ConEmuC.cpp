@@ -324,13 +324,43 @@ int __cdecl main()
 		if (ghFarInExecuteEvent && wcsstr(gpszRunCmd,L"far.exe"))
 			ResetEvent(ghFarInExecuteEvent);
 		#endif
+
+		LPCWSTR pszCurDir = NULL;
+		wchar_t szSelf[MAX_PATH*2];
 		
 		WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");
+		MWow64Disable wow; wow.Disable();
 		lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
 				NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
 				|((gnRunMode == RM_SERVER) ? CREATE_SUSPENDED : 0), 
-				NULL, NULL, &si, &pi);
+				NULL, pszCurDir, &si, &pi);
 		dwErr = GetLastError();
+		if (!lbRc && (gnRunMode == RM_SERVER) && dwErr == ERROR_FILE_NOT_FOUND)
+		{
+			// Фикс для перемещения ConEmu.exe в подпапку фара. т.е. far.exe находится на одну папку выше
+			if (GetModuleFileNameW(NULL, szSelf, countof(szSelf)))
+			{
+				wchar_t* pszSlash = wcsrchr(szSelf, L'\\');
+				if (pszSlash)
+				{
+					*pszSlash = 0; // получили папку с exe-шником
+					pszSlash = wcsrchr(szSelf, L'\\');
+					if (pszSlash)
+					{
+						*pszSlash = 0; // получили родительскую папку
+						pszCurDir = szSelf;
+						SetCurrentDirectoryW(pszCurDir);
+						// Пробуем еще раз, в родительской директории
+						lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
+								NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
+								|((gnRunMode == RM_SERVER) ? CREATE_SUSPENDED : 0), 
+								NULL, pszCurDir, &si, &pi);
+						dwErr = GetLastError();
+					}
+				}
+			}
+		}
+		wow.Restore();
 		
 		if (lbRc && (gnRunMode == RM_SERVER))
 		{
@@ -361,28 +391,15 @@ int __cdecl main()
 				sei.lpVerb = wcscpy(szVerb, L"open");
 				sei.lpFile = szExec;
 				sei.lpParameters = pszCmd;
+				sei.lpDirectory = pszCurDir;
 				sei.nShow = SW_SHOWNORMAL;
-				if ((lbRc = ShellExecuteEx(&sei)) == FALSE)
-				{
-					dwErr = GetLastError();
-				}
-				else
+				wow.Disable();
+				lbRc = ShellExecuteEx(&sei);
+				dwErr = GetLastError();
+				wow.Restore();
+				if (lbRc)
 				{
 					// OK
-					//pi.hProcess = sei.hProcess;
-					//typedef DWORD (WINAPI* FGetProcessId)(HANDLE);
-					//FGetProcessId fGetProcessId = NULL;
-					//HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-					//if (hKernel)
-					//	fGetProcessId = (FGetProcessId)GetProcAddress(hKernel, "GetProcessId");
-					//if (fGetProcessId) {
-					//	pi.dwProcessId = fGetProcessId(sei.hProcess);
-					//} else {
-					//	// Это конечно неправильно, но произойти ошибка 0x000002E4 может только в Vista,
-					//	// а там есть функция GetProcessId, так что эта ветка активироваться не должна
-					//	_ASSERTE(fGetProcessId!=NULL);
-					//	pi.dwProcessId = GetCurrentProcessId();
-					//}
 					pi.hProcess = NULL; pi.dwProcessId = 0;
 					pi.hThread = NULL; pi.dwThreadId = 0;
 					// т.к. запустилась новая консоль - подтверждение на закрытие этой точно не нужно
@@ -430,7 +447,8 @@ int __cdecl main()
 		srv.nProcessStartTick = GetTickCount();
 	}
 	//delete psNewCmd; psNewCmd = NULL;
-	AllowSetForegroundWindow(pi.dwProcessId);
+	if (pi.dwProcessId)
+		AllowSetForegroundWindow(pi.dwProcessId);
 
 
 	
@@ -1396,7 +1414,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			#pragma warning( push )
 			#pragma warning(disable : 6400)
 			if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0
-				|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0)
+				/*|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0*/)
 				szComSpec[0] = 0;
 			#pragma warning( pop )
 		}
@@ -2997,11 +3015,13 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	if (gnRunMode == RM_SERVER && ghConEmuWnd && IsWindow(ghConEmuWnd)) // ComSpec окно менять НЕ ДОЛЖЕН!
 	{
 		// Если юзер случайно нажал максимизацию, когда консольное окно видимо - ничего хорошего не будет
-		if (IsZoomed(ghConWnd)) {
+		if (IsZoomed(ghConWnd))
+		{
 			SendMessage(ghConWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 
 			DWORD dwStartTick = GetTickCount();
-			do {
+			do
+			{
 				Sleep(20); // подождем чуть, но не больше секунды
 			} while (IsZoomed(ghConWnd) && (GetTickCount()-dwStartTick)<=1000);
 			Sleep(20); // и еще чуть-чуть, чтобы консоль прочухалась
@@ -3016,7 +3036,9 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 			{
 				//specified width and height cannot be less than the width and height of the console screen buffer's window
 				lbRc = SetConsoleScreenBufferSize(ghConOut, gcrBufferSize);
-			} else {
+			}
+			else
+			{
 				// Начался ресайз для BufferHeight
 				COORD crHeight = {gcrBufferSize.X, gnBufferHeight};
 				MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
@@ -3031,7 +3053,8 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {sizeof(CONSOLE_SCREEN_BUFFER_INFO)};
 
 	lbRc = GetConsoleScreenBufferInfo(ahConOut, &csbi);
-	if (GetConsoleDisplayMode(&srv.dwDisplayMode) && srv.dwDisplayMode) {
+	if (GetConsoleDisplayMode(&srv.dwDisplayMode) && srv.dwDisplayMode)
+	{
 		_ASSERTE(!csbi.srWindow.Left && !csbi.srWindow.Top);
 		csbi.dwSize.X = csbi.srWindow.Right+1;
 		csbi.dwSize.Y = csbi.srWindow.Bottom+1;
@@ -3050,33 +3073,54 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		// Если прокрутки быть не должно - по возможности уберем ее, иначе при запуске FAR
 		// запустится только в ВИДИМОЙ области
 
-		// Левая и правая граница
 		BOOL lbNeedCorrect = FALSE;
-		if (csbi.srWindow.Left > 0) {
+		// Левая граница
+		if (csbi.srWindow.Left > 0)
+		{
 			lbNeedCorrect = TRUE; csbi.srWindow.Left = 0;
 		}
-		if ((csbi.srWindow.Right+1) < csbi.dwSize.X) {
+
+		// Максимальный размер консоли
+		if (csbi.dwSize.X > csbi.dwMaximumWindowSize.X)
+		{
+			// Это может случиться, если пользователь резко уменьшил разрешение экрана
+			lbNeedCorrect = TRUE; csbi.dwSize.X = csbi.dwMaximumWindowSize.X; csbi.srWindow.Right = (csbi.dwSize.X - 1);
+		}
+
+		if ((csbi.srWindow.Right+1) < csbi.dwSize.X)
+		{
 			lbNeedCorrect = TRUE; csbi.srWindow.Right = (csbi.dwSize.X - 1);
 		}
 
 		BOOL lbBufferHeight = FALSE;
-		if (csbi.dwSize.Y >= (csbi.dwMaximumWindowSize.Y * 12 / 10))
+		if (csbi.dwSize.Y >= (csbi.dwMaximumWindowSize.Y * 2)) // 2010-11-19 заменил "12 / 10" на "2"
+		{
 			lbBufferHeight = TRUE;
+		}
+		else if (csbi.dwSize.Y > csbi.dwMaximumWindowSize.Y)
+		{
+			// Это может случиться, если пользователь резко уменьшил разрешение экрана
+			lbNeedCorrect = TRUE; csbi.dwSize.Y = csbi.dwMaximumWindowSize.Y;
+		}
 
-		if (!lbBufferHeight) {
+		if (!lbBufferHeight)
+		{
 			_ASSERTE((csbi.srWindow.Bottom-csbi.srWindow.Top)<200);
 
-			if (csbi.srWindow.Top > 0) {
+			if (csbi.srWindow.Top > 0)
+			{
 				lbNeedCorrect = TRUE; csbi.srWindow.Top = 0;
 			}
-			if ((csbi.srWindow.Bottom+1) < csbi.dwSize.Y) {
+			if ((csbi.srWindow.Bottom+1) < csbi.dwSize.Y)
+			{
 				lbNeedCorrect = TRUE; csbi.srWindow.Bottom = (csbi.dwSize.Y - 1);
 			}
 		}
 		WARNING("CorrectVisibleRect пока закомментарен, ибо все равно нифига не делает");
 		//if (CorrectVisibleRect(&csbi))
 		//	lbNeedCorrect = TRUE;
-		if (lbNeedCorrect) {
+		if (lbNeedCorrect)
+		{
 			lbRc = SetConsoleWindowInfo(ghConOut, TRUE, &csbi.srWindow);
 			lbRc = GetConsoleScreenBufferInfo(ahConOut, &csbi);
 		}
@@ -3089,10 +3133,6 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	//CSCS.Unlock();
 
 	#ifdef _DEBUG
-	if ((csbi.srWindow.Bottom - csbi.srWindow.Top)>csbi.dwMaximumWindowSize.Y) {
-		// Теоретически, этого быть не может - сие значит глюк консоли?
-		_ASSERTE((csbi.srWindow.Bottom - csbi.srWindow.Top)<csbi.dwMaximumWindowSize.Y);
-	}
 	#endif
 
 	return lbRc;

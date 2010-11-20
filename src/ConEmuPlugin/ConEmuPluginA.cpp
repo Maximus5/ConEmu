@@ -126,8 +126,6 @@ VOID CALLBACK ConEmuCheckTimerProc(
   DWORD dwTime       // current system time
 );
 
-//void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
-
 void ProcessDragFromA()
 {
 	if (InfoA == NULL)
@@ -457,28 +455,12 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 
 		gbNeedPostEditCheck = TRUE;
 
-		//	gbHandleOneRedraw = true;
-		//{
-		//	DWORD currentModifiedState = GetEditorModifiedStateA();
-		//
-		//	if (lastModifiedStateW != (int)currentModifiedState)
-		//	{
-		//		gbRequestUpdateTabs = TRUE;
-		//		
-		//		//	UpdateConEmuTabsA(0, false, false);
-		//		//	lastModifiedStateW = currentModifiedState;
-		//		//} else {
-		//		//	gbHandleOneRedraw = true;
-		//		//	//gbHandleOneRedrawCh = true;
-		//	}
-		//}
 	}
 	return 0;
 }
 
 int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 {
-#if 1
 	if (!gbRequestUpdateTabs) {
 		if (Event == EE_READ || Event == EE_CLOSE || Event == EE_GOTFOCUS || Event == EE_KILLFOCUS || Event == EE_SAVE) {
 			gbRequestUpdateTabs = TRUE;
@@ -491,47 +473,8 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 		&& gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
 		gbClosingModalViewerEditor = TRUE;
 
-#else
-	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
-		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
-		
-	if (gbNeedPostTabSend && Event == EE_REDRAW) {
-		// Макрос завершился, нужно обновить табы
-		if (!IsMacroActive())
-			gbHandleOneRedraw = true;
-	}
-		
-	switch (Event)
-	{
-	case EE_READ: // в этот момент количество окон еще не изменилось
-		gbHandleOneRedraw = true;
-		//gbHandleOneRedrawCh = false;
-		return 0;
-	case EE_REDRAW:
-		if (!gbHandleOneRedraw)
-			return 0;
-		//if (!gbHandleOneRedrawCh)
-		//	gbHandleOneRedraw = false; //2009-08-17 - сбрасываем в UpdateConEmuTabsW т.к. на Input не сразу * появляется
-		gbHandleOneRedraw = false;
-		if (lastModifiedStateW == (int)GetEditorModifiedState())
-			return 0;
-		OUTPUTDEBUGSTRING(L"EE_REDRAW(HandleOneRedraw)\n");
-		break;
-	case EE_CLOSE:
-	case EE_GOTFOCUS:
-	case EE_KILLFOCUS:
-	case EE_SAVE:
-		gbHandleOneRedraw = true;
-		break;
-	default:
-		return 0;
-	}
-	//2009-06-03 EE_KILLFOCUS при закрытии редактора не приходит. Только EE_CLOSE
-	bool loosingFocus = (Event == EE_KILLFOCUS) || (Event == EE_CLOSE);
-	UpdateConEmuTabsA(Event+100, loosingFocus, Event == EE_SAVE);
-#endif
 
-	if (gpBgPlugin)
+	if (gpBgPlugin && (Event != EE_REDRAW))
 	{
 		gpBgPlugin->OnMainThreadActivated(Event, -1);
 	}
@@ -541,7 +484,6 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 
 int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 {
-#if 1
 	if (!gbRequestUpdateTabs &&
 		(Event == VE_CLOSE || Event == VE_GOTFOCUS || Event == VE_KILLFOCUS))
 		gbRequestUpdateTabs = TRUE;
@@ -550,40 +492,6 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 		&& gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
 		gbClosingModalViewerEditor = TRUE;
 
-#else
-	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
-		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
-
-	switch (Event)
-	{
-	case VE_CLOSE:
-		OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
-	//case VE_READ:
-	//	OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
-	case VE_KILLFOCUS:
-		OUTPUTDEBUGSTRING(L"VE_KILLFOCUS"); break;
-	case VE_GOTFOCUS:
-		OUTPUTDEBUGSTRING(L"VE_GOTFOCUS"); break;
-	default:
-		return 0;
-	}
-	// !!! Именно UpdateConEmuTabsW, без версии !!!
-	//2009-06-03 VE_KILLFOCUS при закрытии редактора не приходит. Только VE_CLOSE
-	bool loosingFocus = (Event == VE_KILLFOCUS || Event == VE_CLOSE);
-	UpdateConEmuTabsA(Event+200, loosingFocus, false, Param);
-	return 0;
-
-	//switch (Event)
-	//{
-	//case VE_CLOSE:
-	////case VE_READ:
-	//case VE_KILLFOCUS:
-	//case VE_GOTFOCUS:
-	//	{
-	//		UpdateConEmuTabsA(Event+200, Event == VE_KILLFOCUS, false, Param);
-	//	}
-	//}
-#endif
 
 	if (gpBgPlugin)
 	{
@@ -595,10 +503,10 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 
 extern MSection *csTabs;
 
-void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param/*=NULL*/)
+bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param/*=NULL*/)
 {
 	if (!InfoA || gbIgnoreUpdateTabs)
-		return;
+		return false;
 
 	if (ConEmuHwnd && FarHwnd)
 		CheckResources(FALSE);
@@ -613,7 +521,7 @@ void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 	lbCh = (lastWindowCount != windowCount);
 	
 	if (!CreateTabs ( windowCount ))
-		return;
+		return false;
 
 	//EditorInfo ei = {0}; BOOL bEditorRetrieved = FALSE;
 	//WCHAR* pszFileName = NULL;
@@ -680,7 +588,8 @@ void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 	//}
 
 	// Скорее всего это модальный редактор (или вьювер?)
-	if (!lbActiveFound && !losingFocus) {
+	if (!lbActiveFound && !losingFocus)
+	{
 		WInfo.Pos = -1;
 		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
@@ -695,6 +604,10 @@ void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 					WInfo.Type, pszName, /*editorSave ? pszFileName :*/ NULL, 
 					WInfo.Current, WInfo.Modified, 0);
 			}
+		}
+		else
+		{
+			gpTabs->Tabs.CurrentType = WInfo.Type;
 		}
 
 		//if (!bEditorRetrieved) { // Если информацию о редакторе еще не получили
@@ -713,6 +626,8 @@ void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 	}
 
 	SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
+
+	return (lbCh != FALSE);
 }
 
 void   WINAPI _export ExitFAR(void)

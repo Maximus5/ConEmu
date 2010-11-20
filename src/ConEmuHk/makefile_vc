@@ -200,20 +200,17 @@ _LINK_PATH_=$(_BIN_PATH_)
 LNK=$(_LINK_PATH_)link.exe
 
 !ifndef DEBUG
-LINK_DEBUG=/pdb:$(PDBNAME)
-CPP_DEBUG=/map:"$(MAP)"
+LINK_DEBUG=/map:"$(MAP)"
+CPP_DEBUG=
 !else
 LINK_DEBUG=/debug /pdb:$(PDBNAME) /map:"$(MAP)"
 CPP_DEBUG=/Zi
 !endif
 
-!ifndef NEEDENTRY
-NOENTRY = /noentry
-!endif
 !ifndef NEEDDEFLIB
 NODEFLIB = /nodefaultlib
 !endif
-LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
 
 
 CFLAGS_NO = $(MP) $(CPP_PROJ_NO) $(CPP_DEBUG) $(CPP_OPT)

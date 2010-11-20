@@ -114,8 +114,6 @@ int FUNC_Y(ProcessViewerEventW)(int Event, void *Param);
 void StopThread(void);
 void FUNC_X(ExitFARW)(void);
 void FUNC_Y(ExitFARW)(void);
-void FUNC_X(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
-void FUNC_Y(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
 void FUNC_X(SetStartupInfoW)(void *aInfo);
 void FUNC_Y(SetStartupInfoW)(void *aInfo);
 void FUNC_X(ProcessDragFrom)();
@@ -133,7 +131,9 @@ void InitResources();
 void CloseTabs();
 
 HWND AtoH(WCHAR *Str, int Len);
-void UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param=NULL);
+bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param=NULL);
+//bool FUNC_X(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
+//bool FUNC_Y(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
 //void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
 
 BOOL LoadFarVersion();

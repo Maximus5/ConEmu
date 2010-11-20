@@ -92,7 +92,8 @@ int ComspecInit()
 	
 	// —юда мы попадаем если был ключик -new_console
 	// ј этом случае нужно завершить Ё“ќ“ экземпл€р и запустить в ConEmu новую вкладку
-	if (cmd.bNewConsole) {
+	if (cmd.bNewConsole)
+	{
 		PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
 		STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
 		si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USECOUNTCHARS;
@@ -103,10 +104,12 @@ int ComspecInit()
 		PRINT_COMSPEC(L"Creating new console for:\n%s\n", gpszRunCmd);
 	
 		// CREATE_NEW_PROCESS_GROUP - низ€, перестает работать Ctrl-C
+		MWow64Disable wow; wow.Disable();
 		BOOL lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
 				NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, 
 				NULL, NULL, &si, &pi);
 		DWORD dwErr = GetLastError();
+		wow.Restore();
 		if (!lbRc)
 		{
 			_printf ("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, gpszRunCmd);
@@ -134,7 +137,7 @@ int ComspecInit()
 		#pragma warning( push )
 		#pragma warning(disable : 6400)
 		if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0
-			|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0)
+			/*|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0*/)
 			szComSpec[0] = 0;
 		#pragma warning( pop )
 		if (szComSpec[0]) {

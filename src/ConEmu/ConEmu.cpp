@@ -180,10 +180,11 @@ CConEmuMain::CConEmuMain()
 	//int nTranslatedChars = ToUnicodeEx(0, 0, m_KeybStates, szTranslatedChars, 15, 0, hkl);
 	mn_LastPressedVK = 0;
 
-	ms_ConEmuArgs[0] = 0;
-    ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = 0;
-	ms_ConEmuCExe[0] = 0;
-	ms_ConEmuCExeName[0] = 0;
+	mpsz_ConEmuArgs = NULL;
+    ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = 0;
+	ms_ConEmuCExe[0] = ms_ConEmuCExeFull[0] = 0;
+	ms_ConEmuXml[0] = ms_ConEmuChm[0] = 0;
+	//ms_ConEmuCExeName[0] = 0;
 
     wchar_t *pszSlash = NULL;
     if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH) || !(pszSlash = wcsrchr(ms_ConEmuExe, L'\\')))
@@ -198,25 +199,67 @@ CConEmuMain::CConEmuMain()
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 	*pszSlash = 0;
 
+	wchar_t szBaseFile[MAX_PATH+12];
+	lstrcpy(szBaseFile, ms_ConEmuExeDir);
+	// Сначала проверяем подпапку
+	pszSlash = szBaseFile + lstrlen(szBaseFile);
+	lstrcat(szBaseFile, L"\\ConEmu\\ConEmuC.exe");
+	if (FileExists(szBaseFile))
+	{
+		lstrcpy(ms_ConEmuBaseDir, ms_ConEmuExeDir);
+		lstrcat(ms_ConEmuBaseDir, L"\\ConEmu");
+	}
+	else
+	{
+		lstrcpy(ms_ConEmuBaseDir, ms_ConEmuExeDir);
+	}
+
+
     // Добавить в окружение переменную с папкой к ConEmu.exe
-    lstrcpy(ms_ConEmuChm, ms_ConEmuExeDir); lstrcat(ms_ConEmuChm, L"\\ConEmu.chm");
-    SetEnvironmentVariable(L"ConEmuDir", ms_ConEmuExeDir);
-    lstrcpy(ms_ConEmuXml, ms_ConEmuExeDir); lstrcat(ms_ConEmuXml, L"\\ConEmu.xml");
+	SetEnvironmentVariable(L"ConEmuDir", ms_ConEmuExeDir);
+	SetEnvironmentVariable(L"ConEmuBaseDir", ms_ConEmuBaseDir);
 
 
-    DWORD dwAttr = GetFileAttributes(ms_ConEmuChm);
-    if (dwAttr == (DWORD)-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
-    	ms_ConEmuChm[0] = 0;
+	// Ищем файл портабельных настроек. Сначала пробуем в BaseDir
+	ConEmuXml();
+	//lstrcpy(ms_ConEmuXml, ms_ConEmuBaseDir); lstrcat(ms_ConEmuXml, L"\\ConEmu.xml");
+	//if (!FileExists(ms_ConEmuXml))
+	//{
+	//	if (lstrcmp(ms_ConEmuBaseDir, ms_ConEmuExeDir))
+	//	{
+	//		lstrcpy(ms_ConEmuXml, ms_ConEmuExeDir); lstrcat(ms_ConEmuXml, L"\\ConEmu.xml");
+	//	}
+	//}
 
+	
+	// Help-файл. Сначала попробуем в BaseDir
+	lstrcpy(ms_ConEmuChm, ms_ConEmuBaseDir); lstrcat(ms_ConEmuChm, L"\\ConEmu.chm");
+	if (!FileExists(ms_ConEmuChm))
+	{
+		if (lstrcmp(ms_ConEmuBaseDir, ms_ConEmuExeDir))
+		{
+			lstrcpy(ms_ConEmuChm, ms_ConEmuExeDir); lstrcat(ms_ConEmuChm, L"\\ConEmu.chm");
+			if (!FileExists(ms_ConEmuChm))
+				ms_ConEmuChm[0] = 0;
+		}
+		else
+		{
+			ms_ConEmuChm[0] = 0;
+		}
+	}
+
+
+	lstrcpy(ms_ConEmuCExeFull, ms_ConEmuBaseDir);
+	lstrcat(ms_ConEmuCExeFull, L"\\ConEmuC.exe");
 	
 	// Если ConEmu.exe запущен с сетевого ресурса -  Сетевые пути не менять
 	if (ms_ConEmuExe[0] == L'\\' /*|| wcschr(ms_ConEmuExe, L' ') == NULL*/)
 	{
-		wcscpy(ms_ConEmuCExe, ms_ConEmuExe);
+		lstrcpy(ms_ConEmuCExe, ms_ConEmuCExeFull);
 	}
 	else
 	{
-		wchar_t* pszShort = GetShortFileNameEx(ms_ConEmuExe);
+		wchar_t* pszShort = GetShortFileNameEx(ms_ConEmuCExeFull);
 		if (pszShort)
 		{
 			wcscpy(ms_ConEmuCExe, pszShort);
@@ -224,26 +267,30 @@ CConEmuMain::CConEmuMain()
 		}
 		else
 		{
-			wcscpy(ms_ConEmuCExe, ms_ConEmuExe);
+			wcscpy(ms_ConEmuCExe, ms_ConEmuCExeFull);
 		}
+		//pszSlash = ms_ConEmuCExe + lstrlen(ms_ConEmuCExe);
+		//if (*(pszSlash-1) != L'\\')
+		//{
+		//	*(pszSlash++) = L'\\'; *pszSlash = 0;
+		//}
 	}
-	pszSlash = wcsrchr(ms_ConEmuCExe, L'\\');
-	if (pszSlash) pszSlash++; else pszSlash = ms_ConEmuCExe;
-	if (IsWindows64())
-	{
-		wcscpy(pszSlash, L"ConEmuC64.exe");
-		if (!FileExists(ms_ConEmuCExe)) // попробовать "ConEmuC.exe"
-		{
-			wcscpy(pszSlash, L"ConEmuC.exe");
-			if (!FileExists(ms_ConEmuCExe)) // вернуть 64 взад, раз 32 не нашли
-				wcscpy(pszSlash, L"ConEmuC64.exe");
-		}
-	}
-	else
-	{
-		wcscpy(pszSlash, L"ConEmuC.exe");
-	}
-	wcscpy(ms_ConEmuCExeName, pszSlash);
+	//WARNING("Убрать ConEmuC64.exe - научиться работать с редиректором");
+	//if (IsWindows64())
+	//{
+	//	wcscpy(pszSlash, L"ConEmuC64.exe");
+	//	if (!FileExists(ms_ConEmuCExe)) // попробовать "ConEmuC.exe"
+	//	{
+	//		wcscpy(pszSlash, L"ConEmuC.exe");
+	//		if (!FileExists(ms_ConEmuCExe)) // вернуть 64 взад, раз 32 не нашли
+	//			wcscpy(pszSlash, L"ConEmuC64.exe");
+	//	}
+	//}
+	//else
+	//{
+	//	wcscpy(pszSlash, L"ConEmuC.exe");
+	//}
+	//wcscpy(ms_ConEmuCExeName, pszSlash);
     
     // Запомнить текущую папку (на момент запуска)
     DWORD nDirLen = GetCurrentDirectory(MAX_PATH, ms_ConEmuCurDir);
@@ -255,14 +302,17 @@ CConEmuMain::CConEmuMain()
 	{
 		ms_ConEmuCurDir[nDirLen-1] = 0; // пусть будет БЕЗ слеша, для однообразия с ms_ConEmuExeDir
 	}
-    	
+
 
     memset(&m_osv,0,sizeof(m_osv));	
     m_osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	GetVersionEx(&m_osv);
-	if (m_osv.dwMajorVersion >= 6) {
+	if (m_osv.dwMajorVersion >= 6)
+	{
 		mb_IsUacAdmin = IsUserAdmin(); // Чтобы знать, может мы уже запущены под UAC админом?
-	} else {
+	}
+	else
+	{
 		mb_IsUacAdmin = FALSE;
 	}
 
@@ -300,10 +350,31 @@ CConEmuMain::CConEmuMain()
 	mn_MsgPostAltF9 = ++nAppMsg;
 	//mn_MsgPostSetBackground = ++nAppMsg;
 	mn_MsgInitInactiveDC = ++nAppMsg;
-	mn_MsgLLKeyHook = RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
+	mn_MsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 	mn_MsgUpdateProcDisplay = ++nAppMsg;
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
+}
+
+LPWSTR CConEmuMain::ConEmuXml()
+{
+	if (ms_ConEmuXml[0])
+	{
+		if (FileExists(ms_ConEmuXml))
+			return ms_ConEmuXml;
+	}
+
+	// Ищем файл портабельных настроек. Сначала пробуем в BaseDir
+    lstrcpy(ms_ConEmuXml, ms_ConEmuBaseDir); lstrcat(ms_ConEmuXml, L"\\ConEmu.xml");
+	if (!FileExists(ms_ConEmuXml))
+	{
+		if (lstrcmp(ms_ConEmuBaseDir, ms_ConEmuExeDir))
+		{
+			lstrcpy(ms_ConEmuXml, ms_ConEmuExeDir); lstrcat(ms_ConEmuXml, L"\\ConEmu.xml");
+		}
+	}
+
+	return ms_ConEmuXml;
 }
 
 BOOL CConEmuMain::Init()
@@ -504,7 +575,8 @@ BOOL CConEmuMain::CreateMainWindow()
 	if (!Init())
 		return FALSE; // Ошибка уже показана
 
-	if (_tcscmp(VirtualConsoleClass,VirtualConsoleClassMain)) {
+	if (_tcscmp(VirtualConsoleClass,VirtualConsoleClassMain))
+	{
 		MBoxA(_T("Error: class names must be equal!"));
 		return FALSE;
 	}
@@ -564,7 +636,8 @@ BOOL CConEmuMain::CreateMainWindow()
 	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
 	ghWnd = CreateWindowEx(styleEx, szClassNameParent, gSet.GetCmd(), style, 
 		gSet.wndX, gSet.wndY, nWidth, nHeight, ghWndApp, NULL, (HINSTANCE)g_hInstance, NULL);
-	if (!ghWnd) {
+	if (!ghWnd)
+	{
 		if (!ghWndDC) MBoxA(_T("Can't create main window!"));
 		return FALSE;
 	}
@@ -584,14 +657,16 @@ BOOL CConEmuMain::CreateMainWindow()
 	*pszSlash = 0;
 	lstrcpy(ceInfo.sConEmuDir, ms_ConEmuExe); // SetEnvironmentVariable(L"ConEmuDir", ceInfo.sConEmuDir);
 	*pszSlash = L'\\';
-	lstrcpy(ceInfo.sConEmuArgs, ms_ConEmuArgs);
+	lstrcpyn(ceInfo.sConEmuArgs, mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(ceInfo.sConEmuArgs)); // Это идет в мэппинг, для информации
 	// sConEmuArgs уже заполнен в PrepareCommandLine
 	m_GuiInfoMapping.InitName(CEGUIINFOMAPNAME, GetCurrentProcessId());
-	if (m_GuiInfoMapping.Create()) {
+	if (m_GuiInfoMapping.Create())
+	{
 		m_GuiInfoMapping.SetFrom(&ceInfo);
 	}
 #ifdef _DEBUG
-	else {
+	else
+	{
 		_ASSERT(FALSE);
 	}
 #endif
@@ -3300,9 +3375,14 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 			}
 			else if (isFirstInstance())
 			{
+				// -- При одновременном запуске двух копий - велики шансы, что они подерутся
+				// -- наверное вообще не будем показывать ошибку
+				// -- кроме того, isFirstInstance() не работает, если копия ConEmu.exe запущена под другим юзером
+				#ifdef _DEBUG
 				wchar_t szErr[128]; DWORD dwErr = GetLastError();
 				wsprintfW(szErr, L"Can't register Minimize/Restore hotkey, ErrCode=0x%08X", dwErr);
-				MBoxA(szErr);
+				//MBoxA(szErr);
+				#endif
 			}
 		}
 	}
@@ -3342,21 +3422,28 @@ void CConEmuMain::RegisterHoooks()
 	}
 //	#endif
 
+	// Если Host-клавиша НЕ Win, или юзер не хочет переключаться Win+Number - хук не нужен
+	if (!gSet.isUseWinNumber || !gSet.IsHostkeySingle(VK_LWIN))
+	{
+		UnRegisterHoooks();
+		return;
+	}
+
 	DWORD dwErr = 0;
 
 	if (!mh_LLKeyHook)
 	{
+		// Проверяет, разрешил ли пользователь установку хуков.
 		if (gSet.isKeyboardHooks())
 		{
 			if (!mh_LLKeyHookDll)
 			{
-				wchar_t szConEmuHkDll[MAX_PATH+5];
-				lstrcpy(szConEmuHkDll, ms_ConEmuExe);
-				wchar_t* pszSlash = wcsrchr(szConEmuHkDll, L'\\'); if (pszSlash) pszSlash++; else pszSlash = szConEmuHkDll;
+				wchar_t szConEmuHkDll[MAX_PATH+32];
+				lstrcpy(szConEmuHkDll, ms_ConEmuBaseDir);
 				#ifdef WIN64
-					lstrcpy(pszSlash, L"ConEmuHk64.dll");
+					lstrcat(szConEmuHkDll, L"\\ConEmuHk64.dll");
 				#else
-					lstrcpy(pszSlash, L"ConEmuHk.dll");
+					lstrcat(szConEmuHkDll, L"\\ConEmuHk.dll");
 				#endif
 				mh_LLKeyHookDll = LoadLibrary(szConEmuHkDll);
 			}
@@ -3364,6 +3451,10 @@ void CConEmuMain::RegisterHoooks()
 			{
 				HOOKPROC pfnLLHK = (HOOKPROC)GetProcAddress(mh_LLKeyHookDll, "LLKeybHook");
 				HHOOK *pKeyHook = (HHOOK*)GetProcAddress(mh_LLKeyHookDll, "KeyHook");
+				HWND *pConEmuWnd = (HWND*)GetProcAddress(mh_LLKeyHookDll, "ConEmuWnd");
+
+				if (pConEmuWnd)
+					*pConEmuWnd = ghWnd;
 
 				if (pfnLLHK)
 				{
@@ -3383,34 +3474,34 @@ void CConEmuMain::RegisterHoooks()
 	}
 }
 
-BOOL CConEmuMain::LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode)
-{
-    //if (nVkKeyCode == ' ' && gSet.isSendAltSpace == 2 && gSet.IsHostkeyPressed())
-	//{
-    //	ShowSysmenu();
-	//	return TRUE;
-	//}
-
-	if (!gSet.isUseWinNumber || !gSet.IsHostkeyPressed())
-		return FALSE;
-
-	// Теперь собственно обработка
-	if (nVkKeyCode >= '0' && nVkKeyCode <= '9')
-	{
-		if (nMsg == WM_KEYDOWN)
-		{
-			if (nVkKeyCode>='1' && nVkKeyCode<='9') // ##1..9
-				ConActivate(nVkKeyCode - '1');
-
-			else if (nVkKeyCode=='0') // #10.
-				ConActivate(9);
-		}
-
-		return TRUE;
-	}
-
-	return FALSE;
-}
+//BOOL CConEmuMain::LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode)
+//{
+//    //if (nVkKeyCode == ' ' && gSet.isSendAltSpace == 2 && gSet.IsHostkeyPressed())
+//	//{
+//    //	ShowSysmenu();
+//	//	return TRUE;
+//	//}
+//
+//	if (!gSet.isUseWinNumber || !gSet.IsHostkeyPressed())
+//		return FALSE;
+//
+//	// Теперь собственно обработка
+//	if (nVkKeyCode >= '0' && nVkKeyCode <= '9')
+//	{
+//		if (nMsg == WM_KEYDOWN)
+//		{
+//			if (nVkKeyCode>='1' && nVkKeyCode<='9') // ##1..9
+//				ConActivate(nVkKeyCode - '1');
+//
+//			else if (nVkKeyCode=='0') // #10.
+//				ConActivate(9);
+//		}
+//
+//		return TRUE;
+//	}
+//
+//	return FALSE;
+//}
 
 void CConEmuMain::UnRegisterHotKeys(BOOL abFinal/*=FALSE*/)
 {
@@ -5232,6 +5323,7 @@ bool CConEmuMain::isFirstInstance()
 		DWORD nSize = MAX_PATH;
 		// Добавим имя текущего юзера. Нам не нужны конфликты при наличии нескольких юзеров.
 		GetUserName(ms_ConEmuAliveEvent+lstrlen(ms_ConEmuAliveEvent), &nSize);
+		WARNING("Event не работает, если conemu.exe запущен под другим пользователем");
 		mh_ConEmuAliveEvent = CreateEvent(NULL, TRUE, TRUE, ms_ConEmuAliveEvent);
 		nSize = GetLastError();
 		// имя пользователя теоретически может содержать символы, которые недопустимы в имени Event
@@ -6226,17 +6318,22 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	LPCWSTR pszMsgName = L"Unknown";
 	HWND hNewFocus = NULL;
 
-	if (messg == WM_SETFOCUS) {
+	if (messg == WM_SETFOCUS)
+	{
         lbSetFocus = TRUE;
 		#ifdef _DEBUG
 		wsprintf(szDbg, L"WM_SETFOCUS(From=0x%08X)\n", (DWORD)wParam);
 		DEBUGSTRFOCUS(szDbg);
 		#endif
 		pszMsgName = L"WM_SETFOCUS";
-	} else if (messg == WM_ACTIVATE) {
+	}
+	else if (messg == WM_ACTIVATE)
+	{
         lbSetFocus = (LOWORD(wParam)==WA_ACTIVE) || (LOWORD(wParam)==WA_CLICKACTIVE);
-		if (!lbSetFocus && gSet.isDesktopMode && mh_ShellWindow) {
-			if (isPressed(VK_LBUTTON) || isPressed(VK_RBUTTON)) {
+		if (!lbSetFocus && gSet.isDesktopMode && mh_ShellWindow)
+		{
+			if (isPressed(VK_LBUTTON) || isPressed(VK_RBUTTON))
+			{
 				// При активации _Десктопа_ мышкой - запомнить, что ставить фокус в себя не нужно
 
 				POINT ptCur; GetCursorPos(&ptCur);
@@ -6246,13 +6343,17 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 				// mh_ShellWindow чисто для информации. Хоть родитель ConEmu и меняется на mh_ShellWindow
 				// но проводник может перекинуть наше окно в другое (WorkerW или Progman)
-				if (hFromPoint) {
+				if (hFromPoint)
+				{
 					bool lbDesktopActive = false;
 					wchar_t szClass[128];
 					// Нужно учесть, что еще могут быть всякие бары, панели, и прочее, лежащие на десктопе
-					while (hFromPoint) {
-						if (GetClassName(hFromPoint, szClass, 127)) {
-							if (!wcscmp(szClass, L"WorkerW") || !wcscmp(szClass, L"Progman")) {
+					while (hFromPoint)
+					{
+						if (GetClassName(hFromPoint, szClass, 127))
+						{
+							if (!wcscmp(szClass, L"WorkerW") || !wcscmp(szClass, L"Progman"))
+							{
 								DWORD dwPID;
 								GetWindowThreadProcessId(hFromPoint, &dwPID);
 								lbDesktopActive = (dwPID == mn_ShellWindowPID);
@@ -6276,7 +6377,9 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		DEBUGSTRFOCUS(szDbg);
 		#endif
 		pszMsgName = L"WM_ACTIVATE";
-	} else if (messg == WM_ACTIVATEAPP) {
+	}
+	else if (messg == WM_ACTIVATEAPP)
+	{
         lbSetFocus = (wParam!=0);
 		#ifdef _DEBUG
 		if (lbSetFocus)
@@ -6286,7 +6389,9 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		DEBUGSTRFOCUS(szDbg);
 		#endif
 		pszMsgName = L"WM_ACTIVATEAPP";
-	} else if (messg == WM_KILLFOCUS) {
+	}
+	else if (messg == WM_KILLFOCUS)
+	{
 		#ifdef _DEBUG
 		wsprintf(szDbg, L"WM_KILLFOCUS(To=0x%08X)\n", (DWORD)wParam);
 		DEBUGSTRFOCUS(szDbg);
@@ -6298,10 +6403,13 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	CheckFocus(pszMsgName);
 
 	// Если фокус "забрало" какое-либо дочернее окно в ConEmu (VideoRenderer - 'ActiveMovie Window')
-	if (hNewFocus && hNewFocus != ghWnd) {
+	if (hNewFocus && hNewFocus != ghWnd)
+	{
 		HWND hParent = hNewFocus;
-		while ((hParent = GetParent(hNewFocus)) != NULL) {
-			if (hParent == ghWnd) {
+		while ((hParent = GetParent(hNewFocus)) != NULL)
+		{
+			if (hParent == ghWnd)
+			{
 				DWORD dwStyle = GetWindowLong(hNewFocus, GWL_STYLE);
 				if ((dwStyle & (WS_POPUP|WS_OVERLAPPEDWINDOW|WS_DLGFRAME)) != 0)
 					break; // Это диалог, не трогаем
@@ -6309,9 +6417,12 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				SetFocus(ghWnd);
 				hNewFocus = GetFocus();
 				#ifdef _DEBUG
-				if (hNewFocus != ghWnd) {
+				if (hNewFocus != ghWnd)
+				{
 					_ASSERTE(hNewFocus == ghWnd);
-				} else {
+				}
+				else
+				{
 					DEBUGSTRFOCUS(L"Focus was returned to ConEmu\n");
 				}
 				#endif
@@ -6323,7 +6434,8 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 
-    if (!lbSetFocus) {
+    if (!lbSetFocus)
+	{
         gConEmu.mp_TabBar->SwitchRollback();
         
         UnRegisterHotKeys();
@@ -6331,11 +6443,13 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	ActiveCon()->RCon()->OnGuiFocused(lbSetFocus);
     
-    if (gSet.isFadeInactive && mp_VActive) {
+    if (gSet.isFadeInactive && mp_VActive)
+	{
     	bool bForeground = lbSetFocus || isMeForeground();
 		bool bLastFade = (mp_VActive!=NULL) ? mp_VActive->mb_LastFadeFlag : false;
 		bool bNewFade = (gSet.isFadeInactive && !bForeground && !isPictureView());
-		if (bLastFade != bNewFade) {
+		if (bLastFade != bNewFade)
+		{
 			if (mp_VActive) mp_VActive->mb_LastFadeFlag = bNewFade;
 			m_Child->Invalidate();
 		}
@@ -10176,37 +10290,52 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	//	} break;
         
     default:
-        if (messg == gConEmu.mn_MsgPostCreate) {
+        if (messg == gConEmu.mn_MsgPostCreate)
+		{
             gConEmu.PostCreate(TRUE);
             return 0;
-        } else 
-        if (messg == gConEmu.mn_MsgPostCopy) {
+        }
+		else if (messg == gConEmu.mn_MsgPostCopy)
+		{
             gConEmu.PostCopy((wchar_t*)lParam, TRUE);
             return 0;
-        } else
-        if (messg == gConEmu.mn_MsgMyDestroy) {
+        }
+		else if (messg == gConEmu.mn_MsgMyDestroy)
+		{
             gConEmu.OnDestroy(hWnd);
             return 0;
-        } else if (messg == gConEmu.mn_MsgUpdateSizes) {
+        }
+		else if (messg == gConEmu.mn_MsgUpdateSizes)
+		{
             gConEmu.UpdateSizes();
             return 0;
-		} else if (messg == gConEmu.mn_MsgUpdateCursorInfo) {
+		}
+		else if (messg == gConEmu.mn_MsgUpdateCursorInfo)
+		{
 			COORD cr; cr.X = LOWORD(wParam); cr.Y = HIWORD(wParam);
 			gConEmu.UpdateCursorInfo(cr);
 			return 0;
-        } else if (messg == gConEmu.mn_MsgSetWindowMode) {
+        }
+		else if (messg == gConEmu.mn_MsgSetWindowMode)
+		{
             gConEmu.SetWindowMode(wParam);
             return 0;
-        } else if (messg == gConEmu.mn_MsgUpdateTitle) {
+        }
+		else if (messg == gConEmu.mn_MsgUpdateTitle)
+		{
             //gConEmu.UpdateTitle(TitleCmp);
             gConEmu.UpdateTitle(/*mp_VActive->RCon()->GetTitle()*/);
             return 0;
         //} else if (messg == gConEmu.mn_MsgAttach) {
         //    return gConEmu.AttachRequested ( (HWND)wParam, (DWORD)lParam );
-		} else if (messg == gConEmu.mn_MsgSrvStarted) {
+		}
+		else if (messg == gConEmu.mn_MsgSrvStarted)
+		{
 			gConEmu.WinEventProc(NULL, EVENT_CONSOLE_START_APPLICATION, (HWND)wParam, lParam, 0, 0, 0);
 			return 0;
-        } else if (messg == gConEmu.mn_MsgVConTerminated) {
+        }
+		else if (messg == gConEmu.mn_MsgVConTerminated)
+		{
 
 			#ifdef _DEBUG
 				wchar_t szDbg[200];
@@ -10226,44 +10355,73 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			#endif
 
             return gConEmu.OnVConTerminated ( (CVirtualConsole*)lParam, TRUE );
-        } else if (messg == gConEmu.mn_MsgUpdateScrollInfo) {
+        }
+		else if (messg == gConEmu.mn_MsgUpdateScrollInfo)
+		{
             return OnUpdateScrollInfo(TRUE);
-        } else if (messg == gConEmu.mn_MsgUpdateTabs) {
+        }
+		else if (messg == gConEmu.mn_MsgUpdateTabs)
+		{
 			DEBUGSTRTABS(L"OnUpdateTabs\n");
             gConEmu.mp_TabBar->Update(TRUE);
             return 0;
-        } else if (messg == gConEmu.mn_MsgOldCmdVer) {
+        }
+		else if (messg == gConEmu.mn_MsgOldCmdVer)
+		{
             gConEmu.ShowOldCmdVersion(wParam & 0xFFFF, lParam, (SHORT)((wParam & 0xFFFF0000)>>16));
             return 0;
-        } else if (messg == gConEmu.mn_MsgTabCommand) {
+        }
+		else if (messg == gConEmu.mn_MsgTabCommand)
+		{
             gConEmu.TabCommand(wParam);
             return 0;
-        } else if (messg == gConEmu.mn_MsgSheelHook) {
+        }
+		else if (messg == gConEmu.mn_MsgSheelHook)
+		{
             gConEmu.OnShellHook(wParam, lParam);
             return 0;
-		} else if (messg == gConEmu.mn_ShellExecuteEx) {
+		}
+		else if (messg == gConEmu.mn_ShellExecuteEx)
+		{
 			return gConEmu.GuiShellExecuteEx((SHELLEXECUTEINFO*)lParam, wParam);
-		} else if (messg == gConEmu.mn_PostConsoleResize) {
+		}
+		else if (messg == gConEmu.mn_PostConsoleResize)
+		{
 			gConEmu.OnConsoleResize(TRUE);
 			return 0;
-		} else if (messg == gConEmu.mn_ConsoleLangChanged) {
+		}
+		else if (messg == gConEmu.mn_ConsoleLangChanged)
+		{
 			gConEmu.OnLangChangeConsole((CVirtualConsole*)lParam, (DWORD)wParam);
 			return 0;
-		} else if (messg == gConEmu.mn_MsgPostOnBufferHeight) {
+		}
+		else if (messg == gConEmu.mn_MsgPostOnBufferHeight)
+		{
 			gConEmu.OnBufferHeight();
 			return 0;
 		//} else if (messg == gConEmu.mn_MsgSetForeground) {
 		//	apiSetForegroundWindow((HWND)lParam);
 		//	return 0;
-		} else if (messg == gConEmu.mn_MsgFlashWindow) {
+		}
+		else if (messg == gConEmu.mn_MsgFlashWindow)
+		{
 			return OnFlashWindow((wParam & 0xFF000000) >> 24, wParam & 0xFFFFFF, (HWND)lParam);
-		} else if (messg == gConEmu.mn_MsgPostAltF9) {
+		}
+		else if (messg == gConEmu.mn_MsgPostAltF9)
+		{
 			OnAltF9(TRUE);
 			return 0;
-		} else if (messg == gConEmu.mn_MsgLLKeyHook) {
-			if (gSet.IsHostkeySingle(VK_LWIN)) {
-				return gConEmu.LowLevelKeyHook((UINT)wParam, (UINT)lParam);				
+		}
+		else if (messg == gConEmu.mn_MsgActivateCon)
+		{
+			if (wParam>=1 && wParam<=MAX_CONSOLE_COUNT)
+			{
+				gConEmu.ConActivate((UINT)wParam-1);
 			}
+			//if (gSet.IsHostkeySingle(VK_LWIN))
+			//{
+			//	return gConEmu.LowLevelKeyHook((UINT)wParam, (UINT)lParam);				
+			//}
 			return 0;
 		//} else if (messg == gConEmu.mn_MsgPostSetBackground) {
 		//	if (isValid((CVirtualConsole*)wParam))

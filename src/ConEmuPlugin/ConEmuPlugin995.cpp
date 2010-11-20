@@ -323,7 +323,6 @@ int ProcessEditorInputW995(LPCVOID aRec)
 	if (!InfoW995)
 		return 0;
 
-#if 1
 	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
 	// only key events with virtual codes > 0 are likely to cause status change (?)
 	if (!gbRequestUpdateTabs && (Rec->EventType & 0xFF) == KEY_EVENT 
@@ -334,86 +333,14 @@ int ProcessEditorInputW995(LPCVOID aRec)
 		gbNeedPostEditCheck = TRUE;
 	}
 
-#else
-	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
-	// only key events with virtual codes > 0 are likely to cause status change (?)
-	if ((Rec->EventType & 0xFF) == KEY_EVENT 
-		&& (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.UnicodeChar)
-		&& Rec->Event.KeyEvent.bKeyDown)
-	{
-		#ifdef SHOW_DEBUG_EVENTS
-			char szDbg[255]; wsprintfA(szDbg, "ProcessEditorInput(E=%i, VK=%i, SC=%i, CH=%i, Down=%i)\n", Rec->EventType, Rec->Event.KeyEvent.wVirtualKeyCode, Rec->Event.KeyEvent.wVirtualScanCode, Rec->Event.KeyEvent.uChar.AsciiChar,Rec->Event.KeyEvent.bKeyDown);
-			OutputDebugStringA(szDbg);
-		#endif
-
-		if (!gbRequestUpdateTabs)
-			gbHandleOneRedraw = true;
-		//{
-		//	DWORD currentModifiedState = GetEditorModifiedState995();
-		//
-		//	if (lastModifiedStateW != (int)currentModifiedState)
-		//	{
-		//		gbRequestUpdateTabs = TRUE;
-		//		
-		//		//	// !!! Именно UpdateConEmuTabsW, без версии !!!
-		//		//	UpdateConEmuTabsW(0, false, false);
-		//		//	lastModifiedStateW = currentModifiedState;
-		//		//} else {
-		//		//	gbHandleOneRedraw = true;
-		//		//	//gbHandleOneRedrawCh = true;
-		//	}
-		//}
-	}
-#endif
 	return 0;
 }
 
-/*int ProcessEditorEventW995(int Event, void *Param)
-{
-	switch (Event)
-	{
-	case EE_CLOSE:
-		OUTPUTDEBUGSTRING(L"EE_CLOSE"); break;
-	case EE_GOTFOCUS:
-		OUTPUTDEBUGSTRING(L"EE_GOTFOCUS"); break;
-	case EE_KILLFOCUS:
-		OUTPUTDEBUGSTRING(L"EE_KILLFOCUS"); break;
-	case EE_SAVE:
-		OUTPUTDEBUGSTRING(L"EE_SAVE"); break;
-	//case EE_READ: -- в этот момент количество окон еще не изменилось
-	default:
-		return 0;
-	}
-	// !!! Именно UpdateConEmuTabsW, без версии !!!
-	UpdateConEmuTabsW(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
-	return 0;
-}*/
 
-/*int ProcessViewerEventW995(int Event, void *Param)
-{
-	switch (Event)
-	{
-	case VE_CLOSE:
-		OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
-	//case VE_READ:
-	//	OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
-	case VE_KILLFOCUS:
-		OUTPUTDEBUGSTRING(L"VE_KILLFOCUS"); break;
-	case VE_GOTFOCUS:
-		OUTPUTDEBUGSTRING(L"VE_GOTFOCUS"); break;
-	default:
-		return 0;
-	}
-	// !!! Именно UpdateConEmuTabsW, без версии !!!
-	UpdateConEmuTabsW(Event, Event == VE_KILLFOCUS, false);
-	return 0;
-}*/
-
-
-void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+bool UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
 	if (!InfoW995 || !InfoW995->AdvControl || gbIgnoreUpdateTabs)
-		return;
+		return false;
 
     BOOL lbCh = FALSE;
 	WindowInfo WInfo = {0};
@@ -425,7 +352,7 @@ void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 	lbCh = (lastWindowCount != windowCount);
 	
 	if (!CreateTabs ( windowCount ))
-		return;
+		return false;
 
 	//EditorInfo ei = {0};
 	//if (editorSave)
@@ -487,22 +414,28 @@ void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 	{
 		WInfo.Pos = -1;
 
-		if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo)
-			&& (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER))
+		if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo))
 		{
-			WInfo.Pos = -1;
-			WInfo.Name = szWNameBuffer;
-			WInfo.NameSize = CONEMUTABMAX;
-
-			InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
-
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
 			{
-				tabCount = 0;
-				TODO("Определение ИД Редактора/вьювера");
-				lbCh |= AddTab(tabCount, losingFocus, editorSave, 
-					WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL, 
-					WInfo.Current, WInfo.Modified, 0);
+				WInfo.Pos = -1;
+				WInfo.Name = szWNameBuffer;
+				WInfo.NameSize = CONEMUTABMAX;
+
+				InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+
+				if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
+				{
+					tabCount = 0;
+					TODO("Определение ИД Редактора/вьювера");
+					lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+						WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL, 
+						WInfo.Current, WInfo.Modified, 0);
+				}
+			}
+			else
+			{
+				gpTabs->Tabs.CurrentType = WInfo.Type;
 			}
 		}
 
@@ -559,6 +492,8 @@ void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 #endif
 
 	SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
+
+	return (lbCh != FALSE);
 }
 
 void ExitFARW995(void)

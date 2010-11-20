@@ -287,7 +287,7 @@ public:
     void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
     void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
 	bool isActive();
-	bool isFilePanel(bool abPluginAllowed=false);
+	bool isFilePanel(bool abPluginAllowed = false, bool abSkipEditViewCheck = false);
 	bool isEditor();
 	bool isEditorModified();
 	bool isViewer();

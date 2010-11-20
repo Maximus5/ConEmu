@@ -310,71 +310,21 @@ int ProcessEditorInputW789(LPCVOID aRec)
 
 	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
 	// only key events with virtual codes > 0 are likely to cause status change (?)
-	if ((Rec->EventType & 0xFF) == KEY_EVENT 
+	if (!gbRequestUpdateTabs && (Rec->EventType & 0xFF) == KEY_EVENT 
 		&& (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.UnicodeChar)
 		&& Rec->Event.KeyEvent.bKeyDown)
 	{
-		DWORD currentModifiedState = GetEditorModifiedState789();
-
-		if (lastModifiedStateW != currentModifiedState)
-		{
-			// !!! Именно UpdateConEmuTabsW, без версии !!!
-			UpdateConEmuTabsW(0, false, false);
-			lastModifiedStateW = currentModifiedState;
-		} else {
-			gbHandleOneRedraw = true;
-			//gbHandleOneRedrawCh = true;
-		}
+		//if (!gbRequestUpdateTabs)
+		gbNeedPostEditCheck = TRUE;
 	}
+
 	return 0;
 }
 
-/*int ProcessEditorEventW789(int Event, void *Param)
-{
-	switch (Event)
-	{
-	case EE_CLOSE:
-		OUTPUTDEBUGSTRING(L"EE_CLOSE"); break;
-	case EE_GOTFOCUS:
-		OUTPUTDEBUGSTRING(L"EE_GOTFOCUS"); break;
-	case EE_KILLFOCUS:
-		OUTPUTDEBUGSTRING(L"EE_KILLFOCUS"); break;
-	case EE_SAVE:
-		OUTPUTDEBUGSTRING(L"EE_SAVE"); break;
-	//case EE_READ: -- в этот момент количество окон еще не изменилось
-	default:
-		return 0;
-	}
-	// !!! Именно UpdateConEmuTabsW, без версии !!!
-	UpdateConEmuTabsW(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
-	return 0;
-}*/
-
-/*int ProcessViewerEventW789(int Event, void *Param)
-{
-	switch (Event)
-	{
-	case VE_CLOSE:
-		OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
-	//case VE_READ:
-	//	OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
-	case VE_KILLFOCUS:
-		OUTPUTDEBUGSTRING(L"VE_KILLFOCUS"); break;
-	case VE_GOTFOCUS:
-		OUTPUTDEBUGSTRING(L"VE_GOTFOCUS"); break;
-	default:
-		return 0;
-	}
-	// !!! Именно UpdateConEmuTabsW, без версии !!!
-	UpdateConEmuTabsW(Event, Event == VE_KILLFOCUS, false);
-	return 0;
-}*/
-
-
-void UpdateConEmuTabsW789(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+bool UpdateConEmuTabsW789(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
 	if (!InfoW789 || !InfoW789->AdvControl)
-		return;
+		return false;
 
     BOOL lbCh = FALSE; // Если были изменения
 	WindowInfo WInfo;
@@ -383,7 +333,7 @@ void UpdateConEmuTabsW789(int anEvent, bool losingFocus, bool editorSave, void* 
 	lbCh = (lastWindowCount != windowCount);
 	
 	if (!CreateTabs ( windowCount ))
-		return;
+		return false;
 
 	EditorInfo ei = {0}; BOOL bEditorRetrieved = FALSE;
 	if (editorSave)
@@ -464,6 +414,8 @@ void UpdateConEmuTabsW789(int anEvent, bool losingFocus, bool editorSave, void* 
 #endif
 
 	SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
+
+	return lbCh;
 }
 
 void ExitFARW789(void)

@@ -196,25 +196,39 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
 	
 	CloseKey(); // на всякий
 	
-	if (!regPath || !*regPath) {
+	if (!regPath || !*regPath)
+	{
 		return false;
 	}
 	
 	HANDLE hFile = NULL;
-	hFile = CreateFile ( gConEmu.ms_ConEmuXml, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+	DWORD dwAccess = GENERIC_READ;
+	if ((access & KEY_WRITE) == KEY_WRITE)
+		dwAccess |= GENERIC_WRITE;
+	LPWSTR pszXmlFile = gConEmu.ConEmuXml();
+	if (!pszXmlFile || !*pszXmlFile)
+	{
+		return false;
+	}
+	hFile = CreateFile ( pszXmlFile, dwAccess, FILE_SHARE_READ|FILE_SHARE_WRITE,
 		NULL, OPEN_EXISTING, 0, 0 );
 	// XML-файл отсутсвует
-	if (hFile == INVALID_HANDLE_VALUE) {
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
 		return false;
-	} else {
+	}
+	else
+	{
 		CloseHandle(hFile); hFile = NULL;
 	}
 	
-	SAFETRY {
+	SAFETRY
+	{
 		hr = CoInitialize(NULL); 
 		hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, 
 		       IID_IXMLDOMDocument, (void**)&mp_File);
-		if (FAILED(hr) || !mp_File) {
+		if (FAILED(hr) || !mp_File)
+		{
 			wsprintf(szErr, L"Can't create IID_IXMLDOMDocument!\nErrCode=0x%08X", (DWORD)hr);
 			goto wrap;
 		}
@@ -223,13 +237,15 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
 		
 		// Загрузить xml-ку
 		bSuccess = VARIANT_FALSE;
-		vt.vt = VT_BSTR; vt.bstrVal = ::SysAllocString(gConEmu.ms_ConEmuXml);
+		vt.vt = VT_BSTR; vt.bstrVal = ::SysAllocString(pszXmlFile);
 		hr = mp_File->load(vt, &bSuccess);
 		VariantClear(&vt);
-		if (FAILED(hr) || !bSuccess) {
+		if (FAILED(hr) || !bSuccess)
+		{
 			wsprintf(szErr, L"Failed to load ConEmu.xml!\nHR=0x%08X\n", (DWORD)hr);
 			hr = mp_File->get_parseError(&pErr);
-			if (pErr) {
+			if (pErr)
+			{
 				long errorCode = 0; // Contains the error code of the last parse error. Read-only.
 				long line = 0; // Specifies the line number that contains the error. Read-only.
 				long linepos  = 0; // Contains the character position within the line where the error occurred. Read-only.
@@ -242,13 +258,15 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
 		}
 		
 		hr = mp_File->QueryInterface(IID_IXMLDOMNode, (void **)&pKey);
-		if (FAILED(hr)) {
+		if (FAILED(hr))
+		{
 			wsprintf(szErr, L"XML: Root node not found!\nErrCode=0x%08X", (DWORD)hr);
 			goto wrap;
 		}
 		
 		mi_Level = 0;
-		while (*regPath) {
+		while (*regPath)
+		{
 			// Получить следующий токен
 			psz = wcschr(regPath, L'\\');
 			if (!psz) psz = regPath + lstrlen(regPath);
@@ -260,19 +278,26 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
 			pKey = pChild; pChild = NULL;
 			mi_Level++;
 			
-			if (!pKey) {
-				if (bAllowCreate) {
+			if (!pKey)
+			{
+				if (bAllowCreate)
+				{
 					wsprintf(szErr, L"XML: Can't create key <%s>!", szName);
-				} else {
+				}
+				else
+				{
 					//wsprintf(szErr, L"XML: key <%s> not found!", szName);
 					szErr[0] = 0; // ошибку не показывать - настройки по умолчанию
 				}
 				goto wrap;
 			}
 			
-			if (*psz == L'\\') {
+			if (*psz == L'\\')
+			{
 				regPath = psz + 1;
-			} else {
+			}
+			else
+			{
 				break;
 			}
 		}
@@ -293,7 +318,8 @@ wrap:
 	if (pChild) { pChild->Release(); pChild = NULL; }
 	if (pKey) { pKey->Release(); pKey = NULL; }
 	
-	if (!lbRc && szErr[0]) {
+	if (!lbRc && szErr[0])
+	{
 		MBoxA(szErr);
 	}
 	return lbRc;
@@ -307,27 +333,36 @@ void SettingsXML::CloseKey()
 
 	mi_Level = 0;
 
-	if (mb_Modified && mp_File) {
-		hFile = CreateFile ( gConEmu.ms_ConEmuXml, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-			NULL, OPEN_EXISTING, 0, 0 );
-		// XML-файл отсутсвует, или ошибка доступа
-		if (hFile == INVALID_HANDLE_VALUE) {
-			DWORD dwErrCode = GetLastError();
-			wchar_t szErr[MAX_PATH*2];
-			wsprintf(szErr, L"Can't open file for writing!\n%s\nErrCode=0x%08X",
-				gConEmu.ms_ConEmuXml, dwErrCode);
-			MBoxA(szErr);
-		} else {
-			CloseHandle(hFile); hFile = NULL;
-			bCanSave = true;
-		}
+	if (mb_Modified && mp_File)
+	{
+		LPWSTR pszXmlFile = gConEmu.ConEmuXml();
+		if (pszXmlFile && pszXmlFile)
+		{
+			hFile = CreateFile ( pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+				NULL, OPEN_EXISTING, 0, 0 );
+			// XML-файл отсутсвует, или ошибка доступа
+			if (hFile == INVALID_HANDLE_VALUE)
+			{
+				DWORD dwErrCode = GetLastError();
+				wchar_t szErr[MAX_PATH*2];
+				wsprintf(szErr, L"Can't open file for writing!\n%s\nErrCode=0x%08X",
+					pszXmlFile, dwErrCode);
+				MBoxA(szErr);
+			}
+			else
+			{
+				CloseHandle(hFile); hFile = NULL;
+				bCanSave = true;
+			}
 
-		if (bCanSave) {
-			VARIANT vt; vt.vt = VT_BSTR; vt.bstrVal = ::SysAllocString(gConEmu.ms_ConEmuXml);
+			if (bCanSave)
+			{
+				VARIANT vt; vt.vt = VT_BSTR; vt.bstrVal = ::SysAllocString(pszXmlFile);
 
-			hr = mp_File->save(vt);
+				hr = mp_File->save(vt);
 
-			VariantClear(&vt);
+				VariantClear(&vt);
+			}
 		}
 	}
 	if (mp_Key) { mp_Key->Release(); mp_Key = NULL; }

@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include <commctrl.h>
+#include <shlobj.h>
 //#include "../common/ConEmuCheck.h"
 #include "Options.h"
 #include "ConEmu.h"
@@ -1446,19 +1447,27 @@ LRESULT CSettings::OnInitDialog()
 	
 	#ifndef __GNUC__
 	HANDLE hFile = NULL;
-	hFile = CreateFile ( gConEmu.ms_ConEmuXml, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
-		NULL, OPEN_EXISTING, 0, 0 );
-	// XML-файл есть
-	if (hFile != INVALID_HANDLE_VALUE) {
-		CloseHandle(hFile); hFile = NULL;
-		pszType = L"[xml]";
-		// Проверим, сможем ли мы в него записать
-		hFile = CreateFile ( gConEmu.ms_ConEmuXml, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+	LPWSTR pszXmlFile = gConEmu.ConEmuXml();
+	if (pszXmlFile && *pszXmlFile)
+	{
+		hFile = CreateFile ( pszXmlFile, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
 			NULL, OPEN_EXISTING, 0, 0 );
-		if (hFile != INVALID_HANDLE_VALUE) {
-			CloseHandle(hFile); hFile = NULL; // OK
-		} else {
-			EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
+		// XML-файл есть
+		if (hFile != INVALID_HANDLE_VALUE)
+		{
+			CloseHandle(hFile); hFile = NULL;
+			pszType = L"[xml]";
+			// Проверим, сможем ли мы в него записать
+			hFile = CreateFile ( pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+				NULL, OPEN_EXISTING, 0, 0 );
+			if (hFile != INVALID_HANDLE_VALUE)
+			{
+				CloseHandle(hFile); hFile = NULL; // OK
+			}
+			else
+			{
+				EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
+			}
 		}
 	}
 	#endif
@@ -1513,9 +1522,11 @@ LRESULT CSettings::OnInitDialog()
 
 		BOOL lbCentered = FALSE;
 		HMONITOR hMon = MonitorFromWindow(ghOpWnd, MONITOR_DEFAULTTONEAREST);
-		if (hMon) {
+		if (hMon)
+		{
 			MONITORINFO mi; mi.cbSize = sizeof(mi);
-			if (GetMonitorInfo(hMon, &mi)) {
+			if (GetMonitorInfo(hMon, &mi))
+			{
 				lbCentered = TRUE;
 				MoveWindow(ghOpWnd, 
 					(mi.rcWork.left+mi.rcWork.right-rect.right+rect.left)/2,
@@ -2567,8 +2578,11 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 	case cbInstallKeybHooks:
 		switch (IsChecked(hTabs,cbInstallKeybHooks))
 		{
+			// Разрешено
 			case BST_CHECKED: gSet.m_isKeyboardHooks = 1; gConEmu.RegisterHoooks(); break;
+			// Запрещено
 			case BST_UNCHECKED: gSet.m_isKeyboardHooks = 2; gConEmu.UnRegisterHoooks(); break;
+			// Запрос при старте
 			case BST_INDETERMINATE: gSet.m_isKeyboardHooks = 0; break;
 		}
 		break;
@@ -2731,7 +2745,8 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
     {
 		wchar_t temp[MAX_PATH];
 		GetDlgItemText(hMain, tBgImage, temp, MAX_PATH);
-		if (wcscmp(temp, sBgImage)) {
+		if (wcscmp(temp, sBgImage))
+		{
 			if( LoadBackgroundFile(temp, true) )
 			{
 				lstrcpy(sBgImage, temp);
@@ -3019,6 +3034,21 @@ void CSettings::Dialog()
 	}
 }
 
+void CSettings::OnClose()
+{
+	if (gSet.isTabs==1) gConEmu.ForceShowTabs(TRUE); else
+		if (gSet.isTabs==0) gConEmu.ForceShowTabs(FALSE); else
+			gConEmu.mp_TabBar->Update();
+	gConEmu.OnPanelViewSettingsChanged();
+
+	gConEmu.RegisterMinRestore(gSet.icMinimizeRestore != 0);
+
+	if (m_isKeyboardHooks = 1)
+		gConEmu.RegisterHoooks();
+	else if (gSet.m_isKeyboardHooks = 2)
+		gConEmu.UnRegisterHoooks();
+}
+
 INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     switch (messg)
@@ -3035,7 +3065,8 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
         break;
 
 	case WM_SYSCOMMAND:
-		if (LOWORD(wParam) == ID_ALWAYSONTOP) {
+		if (LOWORD(wParam) == ID_ALWAYSONTOP)
+		{
 			BOOL lbOnTopNow = GetWindowLong(ghOpWnd, GWL_EXSTYLE) & WS_EX_TOPMOST;
 			SetWindowPos(ghOpWnd, lbOnTopNow ? HWND_NOTOPMOST : HWND_TOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
 			CheckMenuItem(GetSystemMenu(ghOpWnd, FALSE), ID_ALWAYSONTOP, MF_BYCOMMAND |
@@ -3046,10 +3077,13 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		break;
 
     case WM_GETICON:
-        if (wParam==ICON_BIG) {
+        if (wParam==ICON_BIG)
+		{
             /*SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIcon);
             return 1;*/
-        } else {
+        }
+		else
+		{
             SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, (LRESULT)hClassIconSm);
             return 1;
         }
@@ -3076,17 +3110,10 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
                 gSet.OnTab(phdr);
         } break;
     case WM_CLOSE:
-    
-        if (gSet.isTabs==1) gConEmu.ForceShowTabs(TRUE); else
-        if (gSet.isTabs==0) gConEmu.ForceShowTabs(FALSE); else
-			gConEmu.mp_TabBar->Update();
-		gConEmu.OnPanelViewSettingsChanged();
-		
-		gConEmu.RegisterMinRestore(gSet.icMinimizeRestore != 0);
-    
-        //if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
-		DestroyWindow(hWnd2);
-		break;
+		{
+			gSet.OnClose();
+			DestroyWindow(hWnd2);
+		} break;
     case WM_DESTROY:
 		gSet.UnregisterTabs();
         if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
@@ -3624,29 +3651,42 @@ bool CSettings::isKeyboardHooks()
 	}
 //	#endif
 	
-	if (m_isKeyboardHooks == 0) {
+	if (m_isKeyboardHooks == 0)
+	{
 		// Вопрос пользователю еще не задавали (это на старте, окно еще и не создано)
 		int nBtn = MessageBox(NULL, 
 						L"Do You want to use Win-Number combination for \n"
 						L"switching between consoles (Multi Console feature)? \n\n"
 						L"If You choose 'Yes' - ConEmu will install keyboard hook. \n"
 						L"So, You must allow that in antiviral software (such as AVP). \n\n"
-						L"You can change behaviour later via 'KeyboardHooks' \n"
-						L"value in ConEmu settings (registry or xml)."
-						, L"ConEmu", MB_YESNO|MB_ICONQUESTION);
+						L"You can change behavior later via Settings->Features->\n"
+						L"'Install keyboard hooks (Vista && Win7)' check box, or\n"
+						L"'KeyboardHooks' value in ConEmu settings (registry or xml)."
+						, L"ConEmu", MB_YESNOCANCEL|MB_ICONQUESTION);
 		
-		m_isKeyboardHooks = (nBtn == IDYES) ? 1 : 2;
-		
-		SettingsBase* reg = CreateSettings();
-		if (!reg) {
-			_ASSERTE(reg!=NULL);
-		} else {
-		    if (reg->OpenKey(Config, KEY_WRITE)) {
-			    reg->Save(L"KeyboardHooks", m_isKeyboardHooks);
-				reg->CloseKey();
-		    }
-		    delete reg;
-	    }
+		if (nBtn == IDCANCEL)
+		{
+			m_isKeyboardHooks = 2; // NO
+		}
+		else
+		{
+			m_isKeyboardHooks = (nBtn == IDYES) ? 1 : 2;
+			
+			SettingsBase* reg = CreateSettings();
+			if (!reg)
+			{
+				_ASSERTE(reg!=NULL);
+			}
+			else
+			{
+				if (reg->OpenKey(Config, KEY_WRITE))
+				{
+					reg->Save(L"KeyboardHooks", m_isKeyboardHooks);
+					reg->CloseKey();
+				}
+				delete reg;
+			}
+		}
 	}
 
 	return (m_isKeyboardHooks == 1);
@@ -5560,11 +5600,25 @@ void CSettings::RegisterFonts()
 	RegisterFontsInt(gConEmu.ms_ConEmuExeDir);
 
 	// Если папка запуска отличается от папки программы
+	if (lstrcmpW(gConEmu.ms_ConEmuExeDir, gConEmu.ms_ConEmuBaseDir))
+		RegisterFontsInt(gConEmu.ms_ConEmuBaseDir); // зарегистрировать шрифты и из базовой папки
+
+
+	// Если папка запуска отличается от папки программы
 	if (lstrcmpiW(gConEmu.ms_ConEmuExeDir, gConEmu.ms_ConEmuCurDir))
 	{
-		TODO("Если папка запуска - c:\\Windows?");
-		// зарегистрировать шрифты и из папки запуска
-		RegisterFontsInt(gConEmu.ms_ConEmuCurDir);
+		BOOL lbSkipCurDir = FALSE;
+		wchar_t szFontsDir[MAX_PATH+1];
+		if (SHGetSpecialFolderPath(ghWnd, szFontsDir, CSIDL_FONTS, FALSE))
+		{
+			// Oops, папка запуска совпала с системной папкой шрифтов?
+			lbSkipCurDir = (lstrcmpiW(szFontsDir, gConEmu.ms_ConEmuCurDir) == 0);
+		}
+		if (!lbSkipCurDir)
+		{
+			// зарегистрировать шрифты и из папки запуска
+			RegisterFontsInt(gConEmu.ms_ConEmuCurDir);
+		}
 	}
 
 	// Теперь можно смотреть, зарегистрились ли какие-то шрифты... И выбрать из них подходящие
@@ -5909,9 +5963,10 @@ SettingsBase* CSettings::CreateSettings()
 	BOOL lbXml = FALSE;
 	DWORD dwAttr = -1;
 	
-	if (gConEmu.ms_ConEmuXml[0])
+	LPWSTR pszXmlFile = gConEmu.ConEmuXml();
+	if (pszXmlFile && *pszXmlFile)
 	{
-		dwAttr = GetFileAttributes(gConEmu.ms_ConEmuXml);
+		dwAttr = GetFileAttributes(pszXmlFile);
     	if (dwAttr != (DWORD)-1 && !(dwAttr & FILE_ATTRIBUTE_DIRECTORY))
     		lbXml = TRUE;
 	}
@@ -5922,7 +5977,7 @@ SettingsBase* CSettings::CreateSettings()
 		if (!((SettingsXML*)pReg)->IsXmlAllowed())
 		{
 			// Если MSXml.DomDocument не зарегистрирован
-			gConEmu.ms_ConEmuXml[0] = 0;
+			pszXmlFile[0] = 0;
 			lbXml = FALSE;
 		}
 	}
@@ -6202,7 +6257,8 @@ bool CSettings::isModifierPressed(DWORD vk)
 
 void CSettings::OnPanelViewAppeared(BOOL abAppear)
 {
-	if (hViews && IsWindow(hViews)) {
+	if (hViews && IsWindow(hViews))
+	{
 		if (abAppear != IsWindowEnabled(GetDlgItem(hViews,bApplyViewSettings)))
 			EnableWindow(GetDlgItem(hViews,bApplyViewSettings), abAppear);
 	}
@@ -6428,15 +6484,18 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 {
 	//_ASSERTE(gConEmu.isMainThread());
 
-    if (!inPath || _tcslen(inPath)>=MAX_PATH) {
+    if (!inPath || _tcslen(inPath)>=MAX_PATH)
+    {
         if (abShowErrors)
             MBoxA(L"Invalid 'inPath' in CSettings::LoadImageFrom");
         return false;
     }
 
     TCHAR exPath[MAX_PATH + 2];
-    if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH)) {
-        if (abShowErrors) {
+    if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH))
+    {
+        if (abShowErrors)
+        {
             TCHAR szError[MAX_PATH*2];
             DWORD dwErr = GetLastError();
             swprintf(szError, L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
@@ -6848,13 +6907,14 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 				}
 
 				// Если не удалось (нет прав) то попробовать запустить ConEmuC.exe под админом (Vista+)
-				if (!lbFound && gOSVer.dwMajorVersion >= 6) {
+				if (!lbFound && gOSVer.dwMajorVersion >= 6)
+				{
 					wchar_t szCommandLine[MAX_PATH];
 					SHELLEXECUTEINFO sei = {sizeof(SHELLEXECUTEINFO)};
 					sei.hwnd = hWnd2;
 					sei.fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS;
 					sei.lpVerb = L"runas";
-					sei.lpFile = gConEmu.ms_ConEmuCExe;
+					sei.lpFile = gConEmu.ms_ConEmuCExeFull;
 					wsprintf(szCommandLine, L" \"/REGCONFONT=%s\"", szFaceName);
 					sei.lpParameters = szCommandLine;
 					sei.lpDirectory = gConEmu.ms_ConEmuCurDir;
@@ -6862,9 +6922,10 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					BOOL lbRunAsRc = ::ShellExecuteEx(&sei);
 					if (!lbRunAsRc)
 					{
-						DisplayLastError( IsWindows64()
-							? L"Can't start ConEmuC64.exe, console font registration failed!"
-							: L"Can't start ConEmuC.exe, console font registration failed!");
+						//DisplayLastError( IsWindows64()
+						//	? L"Can't start ConEmuC64.exe, console font registration failed!"
+						//	: L"Can't start ConEmuC.exe, console font registration failed!");
+						DisplayLastError(L"Can't start ConEmuC.exe, console font registration failed!");
 					}
 					else
 					{

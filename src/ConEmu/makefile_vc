@@ -37,7 +37,7 @@
 
 NAME = ConEmu
 
-RELEASEDIR=Release\ConEmu
+RELEASEDIR=Release
 
 !if defined(AMD64) || "$(CPU)" == "AMD64" || "$(PLATFORM)" == "x64"
 !undef CPU
@@ -140,7 +140,10 @@ DEFINES=\
 
 # common
 CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHsc $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
-LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /DEBUG /RELEASE /pdb:"$(OUTDIR)\$(OUTNAME).pdb" /nxcompat
+LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat
+!ifndef NO_RELEASE_PDB
+LINKFLAGS=$(LINKFLAGS) /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
+!endif
 ULINKFLAGS=-q -m- -ap -Gz -O- -o- -Gh -Gh-
 #__GNUC__ чтобы манифест включился
 RFLAGS=$(RCWIN64) /D__GNUC__ /l 0x409 /fo"$(RES_FILE)" /d $(USEDEBUG)
@@ -312,8 +315,10 @@ CLEAN:
 	@echo copying release files
 	@if not exist "..\..\$(RELEASEDIR)\$(NULL)" mkdir "..\..\$(RELEASEDIR)"
 	@move "$(OUTDIR)\$(OUTNAME).exe" ..\..\$(RELEASEDIR)
-	@move "$(OUTDIR)\$(OUTNAME).pdb" ..\..\$(RELEASEDIR)
 	@move "$(OUTDIR)\$(OUTNAME).map" ..\..\$(RELEASEDIR)
+!ifndef NO_RELEASE_PDB
+	@move "$(OUTDIR)\$(OUTNAME).pdb" ..\..\$(RELEASEDIR)
+!endif
 
 #	@echo final cleaning
 #	@del /Q $(CODDIR)\*.*

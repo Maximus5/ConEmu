@@ -297,6 +297,7 @@ public:
     HWND hMain, hExt, hTabs, hColors, hViews, hInfo;
 
 	//static void CenterDialog(HWND hWnd2);
+	void OnClose();
     static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);

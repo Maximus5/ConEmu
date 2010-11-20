@@ -795,20 +795,26 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 	
 	wchar_t *pszNext = NULL, *pszStart = NULL, chSave = 0;
 	
-	if (*cmdLine == L' ') {
+	if (*cmdLine == L' ')
+	{
 		// »сполн€емого файла нет - сразу начинаютс€ аргументы
 		pszNext = NULL;
-	} else if (*cmdLine == L'"') {
+	}
+	else if (*cmdLine == L'"')
+	{
 		// »м€ между кавычками
 		pszStart = cmdLine+1;
 		pszNext = wcschr ( pszStart, L'"' );
-		if (!pszNext) {
+		if (!pszNext)
+		{
 			MBoxA(L"Invalid command line: quates are not balanced");
 			return FALSE;
 		}
 		chSave = *pszNext;
 		*pszNext = 0;
-	} else {
+	}
+	else
+	{
 		pszStart = cmdLine;
 		pszNext = wcschr ( pszStart, L' ' );
 		if (!pszNext) pszNext = pszStart + lstrlen(pszStart);
@@ -816,11 +822,13 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 		*pszNext = 0;
 	}
 	
-	if (pszNext) {
+	if (pszNext)
+	{
 		wchar_t* pszFN = wcsrchr(pszStart, L'\\');
 		if (pszFN) pszFN++; else pszFN = pszStart;
 		// ≈сли первый параметр - наш conemu.exe или его путь - нужно его выбросить
-		if (!lstrcmpi(pszFN, pszExeName)) {
+		if (!lstrcmpi(pszFN, pszExeName))
+		{
 			// Ќужно отрезать
 			int nCopy = (nInitLen - (pszNext - cmdLine)) * sizeof(wchar_t);
 			TODO("ѕроверить, чтобы длину корректно посчитать");
@@ -828,7 +836,9 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 				memmove(cmdLine, pszNext+1, nCopy);
 			else
 				*cmdLine = 0;
-		} else {
+		}
+		else
+		{
 			*pszNext = chSave;
 		}
 	}
@@ -838,7 +848,8 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 	pszStart = cmdLine;
 	while (*pszStart == L' ' || *pszStart == L'"') pszStart++; // пропустить пробелы и кавычки
 	
-	if (*pszStart == 0) {
+	if (*pszStart == 0)
+	{
 		params = 0;
 		*cmdLine = 0;
 		cmdNew = NULL;
@@ -847,18 +858,24 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 		// из cmd файла с теми же аргументами (selfupdate)
 		SetEnvironmentVariableW(L"ConEmuArgs", L"");
 		
-	} else {
+	}
+	else
+	{
 		// Ёта переменна€ нужна дл€ того, чтобы conemu можно было перезапустить
 		// из cmd файла с теми же аргументами (selfupdate)
 		SetEnvironmentVariableW(L"ConEmuArgs", cmdLine);
-		lstrcpyn(gConEmu.ms_ConEmuArgs, cmdLine, ARRAYSIZE(gConEmu.ms_ConEmuArgs));
+		//lstrcpyn(gConEmu.ms_ConEmuArgs, cmdLine, ARRAYSIZE(gConEmu.ms_ConEmuArgs));
+		gConEmu.mpsz_ConEmuArgs = _wcsdup(cmdLine);
 		
 		// “еперь провер€ем наличие слеша
-		if (*pszStart != L'/') {
+		if (*pszStart != L'/')
+		{
 			params = (uint)-1;
 			cmdNew = cmdLine;
 			
-		} else {
+		}
+		else
+		{
 			// ≈сли ком.строка содержит "/cmd" - все что после него используетс€ дл€ создани€ нового процесса
 		    cmdNew = wcsstr(cmdLine, L"/cmd");
 		    if (cmdNew)

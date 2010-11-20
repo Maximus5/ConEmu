@@ -63,7 +63,11 @@ CPluginBackground::CPluginBackground()
 	mn_BgPluginsMax = 16;
 	mp_BgPlugins = (struct BackgroundInfo*)calloc(mn_BgPluginsMax,sizeof(struct BackgroundInfo));
 	mn_ReqActions = 0;
-	mb_BgWasSent = FALSE;
+
+	// Инициализируем в TRUE, потому что иначе при запуске второго фара (far/e) 
+	// как внешний редактор, в ConEmu останется фон от предыдущей копии фара.
+	// Пусть запущенная копия всегда очищает при старте, если плагинов нет.
+	mb_BgWasSent = TRUE;
 	
 	csBgPlugins = new MSection();
 	
@@ -208,6 +212,9 @@ void CPluginBackground::OnMainThreadActivated(int anEditorEvent /*= -1*/, int an
 #ifdef _DEBUG
 	DWORD nCurActions = mn_ReqActions;
 #endif
+
+	if (anEditorEvent != -1 || anViewerEvent != -1)
+		mn_ReqActions |= ra_CheckPanelFolders;
 
 	if ((mn_ReqActions & ra_CheckPanelFolders))
 	{

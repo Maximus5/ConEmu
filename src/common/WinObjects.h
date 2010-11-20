@@ -523,3 +523,53 @@ public:
 	void LogString(LPCSTR asText, BOOL abWriteTime = TRUE, LPCSTR asThreadName = NULL);
 	void LogString(LPCWSTR asText, BOOL abWriteTime = TRUE, LPCWSTR asThreadName = NULL);
 };
+
+// Класс отключения редиректора системных библиотек.
+class MWow64Disable
+{
+protected:
+	typedef BOOL (WINAPI* Wow64DisableWow64FsRedirection_t)(PVOID* OldValue);
+	typedef BOOL (WINAPI* Wow64RevertWow64FsRedirection_t)(PVOID OldValue);
+	Wow64DisableWow64FsRedirection_t _Wow64DisableWow64FsRedirection;
+	Wow64RevertWow64FsRedirection_t _Wow64RevertWow64FsRedirection;
+	
+	BOOL mb_Disabled;
+	PVOID m_OldValue;
+public:
+	void Disable()
+	{
+		if (!mb_Disabled && _Wow64DisableWow64FsRedirection)
+		{
+			mb_Disabled = _Wow64DisableWow64FsRedirection(&m_OldValue);
+		}
+	};
+	void Restore()
+	{
+		if (mb_Disabled)
+		{
+			mb_Disabled = FALSE;
+			if (_Wow64RevertWow64FsRedirection)
+				_Wow64RevertWow64FsRedirection (m_OldValue);
+		}
+	};
+public:
+	MWow64Disable()
+	{
+		mb_Disabled = FALSE; m_OldValue = NULL;
+		HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
+		if (hKernel)
+		{
+			_Wow64DisableWow64FsRedirection = (Wow64DisableWow64FsRedirection_t)GetProcAddress(hKernel, "Wow64DisableWow64FsRedirection");
+			_Wow64RevertWow64FsRedirection = (Wow64RevertWow64FsRedirection_t)GetProcAddress(hKernel, "Wow64RevertWow64FsRedirection");
+		}
+		else
+		{
+			_Wow64DisableWow64FsRedirection = NULL;
+			_Wow64RevertWow64FsRedirection = NULL;
+		}
+	};
+	~MWow64Disable()
+	{
+		Restore();
+	};
+};

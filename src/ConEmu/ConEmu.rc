@@ -693,8 +693,7 @@ IDC_MOVE                CURSOR                  "CursorDragMove.cur"
 
 IDB_MAIN_TOOLBAR        BITMAP                  "toolbar1.bmp"
 IDB_SHIELD              BITMAP                  "Shield.bmp"
-IDB_RIGHTCLICKING       BITMAP                  "hourglass.bmp"
-
+IDB_RIGHTCLICKING       BITMAP                  "Circles.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -900,6 +899,8 @@ END
 
 STRINGTABLE 
 BEGIN
+    cbUseWinNumber          "Enables switching of tabs (12 consoles) by their numbers (1,2,...,9.0,F11,F12). «Host-key» is «Win» key, by default."
+    cbInstallKeybHooks      "Allows «Host-key»+Number in Vista, Windows 7, or higher\n3d state - confirm on startup"
     cbSafeFarClose          "Try to close Far Manager softly, instead of closing console window"
     cbIgnoreTelnetCursorSize "Always show normal cursor in telnet"
     tThumbsFontName         "Text labels font name in Thumbnails mode"

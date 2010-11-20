@@ -78,6 +78,7 @@ BOOL apiShowWindowAsync(HWND ahWnd, int anCmdShow)
 
 BOOL FileExists(LPCWSTR asFilePath)
 {
+	WARNING("FindFirstFile использовать нельзя из-за симлинков");
 	WIN32_FIND_DATAW fnd = {0};
 	HANDLE hFind = FindFirstFile(asFilePath, &fnd);
 	if (hFind == INVALID_HANDLE_VALUE)
@@ -98,6 +99,7 @@ BOOL FileExists(LPCWSTR asFilePath)
 
 BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t* rsShortName/*name only, MAX_PATH required*/)
 {
+	WARNING("FindFirstFile использовать нельзя из-за симлинков");
 	WIN32_FIND_DATAW fnd; memset(&fnd, 0, sizeof(fnd));
 	HANDLE hFind = FindFirstFile(asFullPath, &fnd);
 	if (hFind == INVALID_HANDLE_VALUE)
@@ -825,7 +827,8 @@ void MEvent::Close()
 	mn_LastError = 0;
 	ms_EventName[0] = 0;
 
-	if (mh_Event) {
+	if (mh_Event)
+	{
 		CloseHandle(mh_Event);
 		mh_Event = NULL;
 	}
@@ -833,12 +836,9 @@ void MEvent::Close()
 
 void MEvent::InitName(const wchar_t *aszTemplate, DWORD Parm1)
 {
-	//va_list args;
-	//va_start( args, aszTemplate );
-	//vswprintf_s(ms_EventName,countof(ms_EventName),aszTemplate,args);
-	wsprintfW(ms_EventName, aszTemplate, Parm1);
 	if (mh_Event)
 		Close();
+	wsprintfW(ms_EventName, aszTemplate, Parm1);
 	mn_LastError = 0;
 }
 
@@ -847,7 +847,8 @@ HANDLE MEvent::Open()
 	if (mh_Event) // Если уже открыто - сразу вернуть!
 		return mh_Event;
 
-	if (ms_EventName[0] == 0) {
+	if (ms_EventName[0] == 0)
+	{
 		_ASSERTE(ms_EventName[0]!=0);
 		return NULL;
 	}

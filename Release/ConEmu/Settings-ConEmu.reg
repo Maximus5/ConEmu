@@ -120,7 +120,7 @@ REGEDIT4
 ;"Multi.Modifier"=dword:00001110 ; Ctrl-Shift+key
 ;"Multi.Modifier"=dword:00001112 ; Ctrl-Alt+key
 ;"Multi.UseNumbers"=hex:01 ; Use 'Host-key'+Numbers to switch consoles
-;; Register hotkey for minimize/restore of main ConEmu window
+;; Register hotkey for minimize/restore of main ConEmu window. Use "hex:00" for disabling feature.
 ;"MinimizeRestore"=hex:43
 ;; Use Keyboard Hooks for processing (required for Win-Number in Windows 7)
 ;; hex:01 - enabled; hex:02 - disabled (don't use hooks)

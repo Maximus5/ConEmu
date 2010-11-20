@@ -118,14 +118,19 @@ class CConEmuMain
 public:
 	//HMODULE mh_Psapi;
 	//FGetModuleFileNameEx GetModuleFileNameEx;
-	wchar_t ms_ConEmuExe[MAX_PATH+1];
-	wchar_t ms_ConEmuExeDir[MAX_PATH+1]; // БЕЗ завершающего слеша
-	wchar_t ms_ConEmuXml[MAX_PATH+1];
-	wchar_t ms_ConEmuChm[MAX_PATH+1];
-	wchar_t ms_ConEmuCExe[MAX_PATH+5];
-	wchar_t ms_ConEmuCExeName[32];
-	wchar_t ms_ConEmuCurDir[MAX_PATH+1]; // БЕЗ завершающего слеша
-	wchar_t ms_ConEmuArgs[MAX_PATH*2];
+	wchar_t ms_ConEmuExe[MAX_PATH+1];       // полный путь к ConEmu.exe (GUI)
+	wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
+	wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
+private:
+	wchar_t ms_ConEmuXml[MAX_PATH+1];       // полный путь к портабельным настройкам
+public:
+	LPWSTR ConEmuXml();
+	wchar_t ms_ConEmuChm[MAX_PATH+1];       // полный путь к chm-файлу (help)
+	wchar_t ms_ConEmuCExe[MAX_PATH+12];     // полный путь к серверу (ConEmuC.exe) с короткими именами (для ComSpec)
+	wchar_t ms_ConEmuCExeFull[MAX_PATH+12]; // полный путь к серверу (ConEmuC.exe) с длинными именами
+	//wchar_t ms_ConEmuCExeName[32];        // имя сервера (ConEmuC.exe или ConEmuC64.exe) -- на удаление
+	wchar_t ms_ConEmuCurDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
+	wchar_t *mpsz_ConEmuArgs;    // Аргументы
 private:
 	MFileMapping<ConEmuGuiInfo> m_GuiInfoMapping;
 public:
@@ -252,7 +257,7 @@ public:
 	void UnRegisterHoooks(BOOL abFinal=FALSE);
 protected:
 	void CtrlWinAltSpace();
-	BOOL LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode);
+	//BOOL LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode);
 	//DWORD_PTR mn_CurrentKeybLayout;
 	// Registered messages
 	DWORD mn_MainThreadId;
@@ -280,7 +285,7 @@ protected:
 	UINT mn_MsgInitInactiveDC;
 	//UINT mn_MsgSetForeground;
 	UINT mn_MsgFlashWindow;
-	UINT mn_MsgLLKeyHook;
+	UINT mn_MsgActivateCon;
 	UINT mn_MsgUpdateProcDisplay;
 	//UINT wmInputLangChange;
 	
