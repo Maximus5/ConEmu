@@ -59,6 +59,9 @@ class MSection
 protected:
 	CRITICAL_SECTION m_cs;
 	DWORD mn_TID; // устанавливается только после EnterCriticalSection
+#ifdef _DEBUG
+	DWORD mn_UnlockedExclusiveTID;
+#endif
 	int mn_Locked;
 	BOOL mb_Exclusive;
 	HANDLE mh_ReleaseEvent;

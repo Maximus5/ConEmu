@@ -42,6 +42,7 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #endif 	/* __ITaskbarList2_FWD_DEFINED__ */
 
 #define WM_TRAYNOTIFY WM_USER+1
+#define ID_MONITOR_SHELLACTIVITY 0xABC1
 #define ID_CON_COPY 0xABC2
 #define ID_CON_MARKTEXT 0xABC3
 #define ID_CON_MARKBLOCK 0xABC4
@@ -133,6 +134,7 @@ public:
 	wchar_t *mpsz_ConEmuArgs;    // Аргументы
 private:
 	MFileMapping<ConEmuGuiInfo> m_GuiInfoMapping;
+	void UpdateGuiInfoMapping();
 public:
 	CConEmuChild *m_Child;
 	CConEmuBack  *m_Back;
@@ -396,6 +398,10 @@ public:
 	void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer);
 	void ShowSysmenu(HWND Wnd=NULL, int x=-32000, int y=-32000);
 	void StartDebugLogConsole();
+	//void StartLogCreateProcess();
+	//void StopLogCreateProcess();
+	//void UpdateLogCreateProcess();
+	//wchar_t ms_LogCreateProcess[MAX_PATH]; bool mb_CreateProcessLogged;
 	void SyncConsoleToWindow();
 	void SyncNtvdm();
 	void SyncWindowToConsole();

@@ -280,7 +280,8 @@ extern BOOL gbRootIsCmdExe;
 #endif
 
 typedef struct tag_SrvInfo {
-	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime; BOOL bDebuggerActive;
+	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
+	BOOL bDebuggerActive; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
 	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
 	//
 	HANDLE hServerThread;   DWORD dwServerThreadId; BOOL bServerTermination;

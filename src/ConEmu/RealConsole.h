@@ -311,6 +311,10 @@ public:
 	bool GetMaxConSize(COORD* pcrMaxConSize);
 	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf);
 	const CRgnDetect* GetDetector();
+	// Логирование Shell вызовов
+	void LogShellStartStop();
+	bool IsLogShellStarted();
+	wchar_t ms_LogShellActivity[MAX_PATH]; bool mb_ShellActivityLogged;
 
 public:
     // Вызываются из CVirtualConsole

@@ -1047,6 +1047,10 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\ConEmu\version.h"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

@@ -32,31 +32,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 
-//#include <windows.h>
-//#include <wchar.h>
-//#if !defined(__GNUC__)
-//#include <crtdbg.h>
-//#else
-//#define _ASSERTE(f)
-//#endif
-//
-//#include "usetodo.hpp"
-
-//#define CONEMUPIPE      L"\\\\.\\pipe\\ConEmuPipe%u"
-//#define CONEMUEVENTIN   L"ConEmuInEvent%u"
-//#define CONEMUEVENTOUT  L"ConEmuOutEvent%u"
-//#define CONEMUEVENTPIPE L"ConEmuPipeEvent%u"
-
 #define MIN_CON_WIDTH 28
 #define MIN_CON_HEIGHT 7
 #define GUI_ATTACH_TIMEOUT 5000
 
 // with line number
 #if !defined(_MSC_VER)
-
-    //#define TODO(s)
-    //#define WARNING(s)
-    //#define PRAGMA_ERROR(s)
 
     //#define CONSOLE_APPLICATION_16BIT 1
     
@@ -66,96 +47,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         SMALL_RECT srSelection;
     } CONSOLE_SELECTION_INFO, *PCONSOLE_SELECTION_INFO;
 
-    //#ifndef max
-    //#define max(a,b)            (((a) > (b)) ? (a) : (b))
-    //#endif
-
-    //#ifndef min
-    //#define min(a,b)            (((a) < (b)) ? (a) : (b))
-    //#endif
-
-    //#define _ASSERT(f)
-    //#define _ASSERTE(f)
-    
-#else
-
-    //#define STRING2(x) #x
-    //#define STRING(x) STRING2(x)
-    //#define FILE_LINE __FILE__ "(" STRING(__LINE__) "): "
-    //#ifdef HIDE_TODO
-    //#define TODO(s) 
-    //#define WARNING(s) 
-    //#else
-    //#define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
-    //#define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
-    //#endif
-    //#define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
-
-    //#ifdef _DEBUG
-    //#include <crtdbg.h>
-    //#endif
-
 #endif
 
-//#ifdef _WIN64
-//	#ifndef WIN64
-//		WARNING("WIN64 was not defined");
-//		#define WIN64
-//	#endif
-//#endif
-//
-//#ifdef _DEBUG
-//	#define USE_SEH
-//#endif
-//
-//#ifdef USE_SEH
-//	#if defined(_MSC_VER)
-//		#pragma message ("Compiling USING exception handler")
-//	#endif
-//	
-//	#define SAFETRY   __try
-//	#define SAFECATCH __except(EXCEPTION_EXECUTE_HANDLER)
-//#else
-//	#if defined(_MSC_VER)
-//		#pragma message ("Compiling NOT using exception handler")
-//	#endif
-//
-//	#define SAFETRY   if (true)
-//	#define SAFECATCH else
-//#endif	
 
 
-//#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
-//#define countof(a) (sizeof((a))/(sizeof(*(a))))
-//#define ZeroStruct(s) memset(&(s), 0, sizeof(s))
-//
-//#ifdef _DEBUG
-//extern wchar_t gszDbgModLabel[6];
-//#define CHEKCDBGMODLABEL if (gszDbgModLabel[0]==0) { \ -
-//	wchar_t szFile[MAX_PATH]; GetModuleFileName(NULL, szFile, MAX_PATH); \ -
-//	wchar_t* pszName = wcsrchr(szFile, L'\\'); \ -
-//	if (_wcsicmp(pszName, L"\\conemu.exe")==0) lstrcpyW(gszDbgModLabel, L"gui"); \ -
-//	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) lstrcpyW(gszDbgModLabel, L"srv"); \ -
-//	else lstrcpyW(gszDbgModLabel, L"dll"); \ -
-//}
-//#ifdef SHOWDEBUGSTR
-//	#define DEBUGSTR(s) { MCHKHEAP; CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i(%s.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentThreadId()); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
-//#else
-//	#ifndef DEBUGSTR
-//		#define DEBUGSTR(s)
-//	#endif
-//#endif
-//#else
-//	#ifndef DEBUGSTR
-//		#define DEBUGSTR(s)
-//	#endif
-//#endif
-
-
+//#define MAXCONMAPCELLS      (600*400)
 #define CES_NTVDM 0x10
 #define CEC_INITTITLE       L"ConEmu"
 //#define CE_CURSORUPDATE     L"ConEmuCursorUpdate%u" // ConEmuC_PID - изменился курсор (размер или выделение). положение курсора отслеживает GUI
 
+// Pipe name formats
 #define CESERVERPIPENAME    L"\\\\%s\\pipe\\ConEmuSrv%u"      // ConEmuC_PID
 #define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u" // ConEmuC_PID
 #define CESERVERQUERYNAME   L"\\\\%s\\pipe\\ConEmuSrvQuery%u" // ConEmuC_PID
@@ -163,15 +64,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CESERVERREADNAME    L"\\\\%s\\pipe\\ConEmuSrvRead%u"  // ConEmuC_PID
 #define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui%u"      // GetConsoleWindow() // необходимо, чтобы плагин мог общаться с GUI
 #define CEPLUGINPIPENAME    L"\\\\%s\\pipe\\ConEmuPlugin%u"   // Far_PID
-//
-//#define MAXCONMAPCELLS      (600*400)
-#define CEGUIINFOMAPNAME    L"ConEmuGuiInfoMapping.%u"
-#define CECONMAPNAME        L"ConEmuFileMapping.%08X"
-#define CECONMAPNAME_A      "ConEmuFileMapping.%08X"
-#define CEFARMAPNAME        L"ConEmuFarMapping.%08X"
+
+// Mapping name formats
+#define CEGUIINFOMAPNAME    L"ConEmuGuiInfoMapping.%u" // --> ConEmuGuiInfo            ( % == dwGuiProcessId )
+#define CECONMAPNAME        L"ConEmuFileMapping.%08X"  // --> CESERVER_REQ_CONINFO_HDR ( % == (DWORD)ghConWnd )
+#define CECONMAPNAME_A      "ConEmuFileMapping.%08X"   // --> CESERVER_REQ_CONINFO_HDR ( % == (DWORD)ghConWnd ) simplifying ansi
+#define CEFARMAPNAME        L"ConEmuFarMapping.%u"     // --> CEFAR_INFO               ( % == nFarPID )
 #ifdef _DEBUG
-#define CEPANELDLGMAPNAME   L"ConEmuPanelViewDlgsMapping.%u"
+#define CEPANELDLGMAPNAME   L"ConEmuPanelViewDlgsMapping.%u" // -> DetectedDialogs     ( % == nFarPID )
 #endif
+
 #define CEDATAREADYEVENT    L"ConEmuSrvDataReady.%u"
 #define CECONVIEWSETNAME    L"ConEmuViewSetMapping.%u"
 #define CEFARALIVEEVENT     L"ConEmuFarAliveEvent.%u"
@@ -250,7 +152,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define CECMD_ONSERVERCLOSE 35 // Посылается из ConEmuC*.exe перед закрытием в режиме сервера
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    51
+#define CESERVER_REQ_VER    52
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -271,10 +173,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CMD_REDRAWFAR    11
 #define CMD_FARPOST      12
 #define CMD_CHKRESOURCES 13
-#define CMD_QUITFAR      14 // Дернуть завершение консоли (фара?)
+//#define CMD_QUITFAR      14 // Дернуть завершение консоли (фара?)
 #define CMD_CLOSEQSEARCH 15
+#define CMD_LOG_SHELL    16
 // +2
-#define MAXCMDCOUNT      17
+#define MAXCMDCOUNT      18
 #define CMD_EXIT         MAXCMDCOUNT-1
 
 
@@ -608,15 +511,18 @@ struct ConEmuGuiInfo
 	wchar_t  sConEmuDir[MAX_PATH+1];
 	wchar_t  sConEmuArgs[MAX_PATH*2];
 	DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
-	wchar_t  sInjectsDir[MAX_PATH+1]; // path to "conemu.dll" & "conemu.x64.dll"
+	//wchar_t  sInjectsDir[MAX_PATH+1]; // path to "conemu.dll" & "conemu.x64.dll"
 	// Для облегчения Inject-ов наверное можно сразу пути в конкретным файлам заполнить.
-	wchar_t  sInjects32[MAX_PATH+16], sInjects64[MAX_PATH+16];
+	wchar_t  sInjects32[MAX_PATH+16], sInjects64[MAX_PATH+16]; // path to "ConEmuHk.dll" & "ConEmuHk64.dll"
 	// Kernel32 загружается по фиксированному адресу, НО
 	// для 64-битной программы он один, а для 32-битной ест-но другой.
 	// Поэтому в 64-битных системых НЕОБХОДИМО пользоваться 64-битной версией ConEmu.exe
 	// которая сможет корректно определить адрес для 64-битного kernel,
 	// а адрес 32-битного kernel сможет вытащить через его экспорты.
 	ULONGLONG ptrLoadLib32, ptrLoadLib64;
+	//// Логирование CreateProcess, ShellExecute, и прочих запускающих функций
+	//// Если пусто - не логируется
+	//wchar_t  sLogCreateProcess[MAX_PATH];
 };
 
 
@@ -799,7 +705,11 @@ struct CESERVER_REQ_CONINFO_HDR
 	//
 	DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	wchar_t  sConEmuDir[MAX_PATH+1];  // здесь будет лежать собственно hive
-	wchar_t  sInjectsDir[MAX_PATH+1]; // path to "conemu.dll" & "conemu.x64.dll"
+	//wchar_t  sInjectsDir[MAX_PATH+1]; // path to "ConEmuHk.dll" & "ConEmuHk64.dll"
+	
+	//// Логирование CreateProcess, ShellExecute, и прочих запускающих функций
+	//// Если пусто - не логируется
+	//wchar_t  sLogCreateProcess[MAX_PATH];
 };
 
 struct CESERVER_REQ_CONINFO_INFO

@@ -233,10 +233,12 @@ bool FUNC_Y(ProcessCommandLine)(wchar_t* pszCommand);
 bool FUNC_X(ProcessCommandLine)(wchar_t* pszCommand);
 bool ProcessCommandLineA(char* pszCommand);
 
-void ExecuteQuitFar();
-void ExecuteQuitFarA();
-void FUNC_Y(ExecuteQuitFar)();
-void FUNC_X(ExecuteQuitFar)();
+//void ExecuteQuitFar();
+//void ExecuteQuitFarA();
+//void FUNC_Y(ExecuteQuitFar)();
+//void FUNC_X(ExecuteQuitFar)();
+
+void LogCreateProcessCheck(LPCWSTR asLogFileName);
 
 BOOL FUNC_Y(CheckBufferEnabled)();
 BOOL FUNC_X(CheckBufferEnabled)();

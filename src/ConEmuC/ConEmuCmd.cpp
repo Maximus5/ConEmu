@@ -105,6 +105,7 @@ int ComspecInit()
 	
 		// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
 		MWow64Disable wow; wow.Disable();
+		// Запускается новый сервер (новая консоль), сюда хуки ставить не надо.
 		BOOL lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
 				NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, 
 				NULL, NULL, &si, &pi);
@@ -184,26 +185,35 @@ void ComspecDone(int aiRc)
 	//ghConOut.Close();
 
 	// Поддержка алиасов
-	if (cmd.szComSpecName[0] && cmd.szSelfName[0]) {
+	if (cmd.szComSpecName[0] && cmd.szSelfName[0])
+	{
 		// Скопировать алиасы из cmd.exe в conemuc.exe
 		wchar_t *pszPostAliases = NULL;
 		DWORD nPostAliasSize;
 		BOOL lbChanged = (cmd.pszPreAliases == NULL);
 
-		if (!GetAliases(cmd.szComSpecName, &pszPostAliases, &nPostAliasSize)) {
+		if (!GetAliases(cmd.szComSpecName, &pszPostAliases, &nPostAliasSize))
+		{
 			if (pszPostAliases) wprintf(pszPostAliases);
-		} else {
-			if (!lbChanged) {
+		}
+		else
+		{
+			if (!lbChanged)
+			{
 				lbChanged = (cmd.nPreAliasSize!=nPostAliasSize);
 			}
-			if (!lbChanged && cmd.nPreAliasSize && cmd.pszPreAliases && pszPostAliases) {
+			if (!lbChanged && cmd.nPreAliasSize && cmd.pszPreAliases && pszPostAliases)
+			{
 				lbChanged = memcmp(cmd.pszPreAliases,pszPostAliases,cmd.nPreAliasSize)!=0;
 			}
-			if (lbChanged) {
-				if (cmd.dwSrvPID) {
+			if (lbChanged)
+			{
+				if (cmd.dwSrvPID)
+				{
 					MCHKHEAP;
 					CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SAVEALIASES,sizeof(CESERVER_REQ_HDR)+nPostAliasSize);
-					if (pIn) {
+					if (pIn)
+					{
 						MCHKHEAP;
 						memmove(pIn->Data, pszPostAliases, nPostAliasSize);
 						MCHKHEAP;
@@ -216,10 +226,12 @@ void ComspecDone(int aiRc)
 				}
 
 				wchar_t *pszNewName = pszPostAliases, *pszNewTarget, *pszNewLine;
-				while (pszNewName && *pszNewName) {
+				while (pszNewName && *pszNewName)
+				{
 					pszNewLine = pszNewName + lstrlen(pszNewName);
 					pszNewTarget = wcschr(pszNewName, L'=');
-					if (pszNewTarget) {
+					if (pszNewTarget)
+					{
 						*pszNewTarget = 0;
 						pszNewTarget++;
 					}
@@ -243,7 +255,8 @@ void ComspecDone(int aiRc)
 	HWND hWndCon = GetConsoleWindow();
 	#endif
 	// Тут нужна реальная, а не скорректированная информация!
-	if (!cmd.bNonGuiMode) {
+	if (!cmd.bNonGuiMode)
+	{
 		// Если GUI не сможет через сервер вернуть высоту буфера - это нужно сделать нам!
 		lbRc1 = GetConsoleScreenBufferInfo(hOut1 = GetStdHandle(STD_OUTPUT_HANDLE), &sbi1);
 		if (!lbRc1)

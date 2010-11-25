@@ -452,6 +452,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
+				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.64.vc\plugins\ConEmu\Thumbs\gdi+.t64"
 				LinkIncremental="2"
 				ModuleDefinitionFile="gdip.def"
 				GenerateDebugInformation="true"

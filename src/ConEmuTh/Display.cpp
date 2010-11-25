@@ -1241,8 +1241,9 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	int nItemCount = this->ItemsNumber;
 	int nCurrentItem = this->CurrentItem;
 	int nTopItem = this->TopPanelItem;
-	if (nCurrentItem == this->ReqCurrentItem && nTopItem < this->ReqTopPanelItem)
-		nTopItem = this->ReqTopPanelItem;
+	// Issue 321: некорректный скроллинг при выделении элементов панели, поэтому пытаемся фиксировать "наш" Top всегда
+	//if (nCurrentItem == this->ReqCurrentItem && nTopItem < this->ReqTopPanelItem)
+	nTopItem = this->ReqTopPanelItem;
 	nTopItem = CalcTopPanelItem(nCurrentItem, nTopItem);
 	this->OurTopPanelItem = nTopItem;
 	// Если сейчас не идет запрос на новое положение курсора - обновим наше запомненное

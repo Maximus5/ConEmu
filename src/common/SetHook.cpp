@@ -93,6 +93,8 @@ static BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *
 static BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 static BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect);
 static BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint);
+static BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+static BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
 
 
@@ -108,6 +110,9 @@ static HookItem Hooks[MAX_HOOKED_PROCS] = {
     {(void*)OnLoadLibraryExA,		"LoadLibraryExA",		kernel32},
 	{(void*)OnLoadLibraryExW,		"LoadLibraryExW",		kernel32},
 	{(void*)OnGetProcAddress,		"GetProcAddress",		kernel32},
+	/* ************************ */
+	{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
+	{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
 	/* ************************ */
 	{(void*)OnPeekConsoleInputW,	"PeekConsoleInputW",	kernel32},
 	{(void*)OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32},
@@ -221,6 +226,10 @@ public:
 #define SETARGS5(r,a1,a2,a3,a4,a5) SETARGS4(r,a1,a2,a3,a4); args.lArguments[4] = (DWORD_PTR)(a5)
 #define SETARGS6(r,a1,a2,a3,a4,a5,a6) SETARGS5(r,a1,a2,a3,a4,a5); args.lArguments[5] = (DWORD_PTR)(a6)
 #define SETARGS7(r,a1,a2,a3,a4,a5,a6,a7) SETARGS6(r,a1,a2,a3,a4,a5,a6); args.lArguments[6] = (DWORD_PTR)(a7)
+#define SETARGS8(r,a1,a2,a3,a4,a5,a6,a7,a8) SETARGS7(r,a1,a2,a3,a4,a5,a6,a7); args.lArguments[7] = (DWORD_PTR)(a8)
+#define SETARGS9(r,a1,a2,a3,a4,a5,a6,a7,a8,a9) SETARGS8(r,a1,a2,a3,a4,a5,a6,a7,a8); args.lArguments[8] = (DWORD_PTR)(a9)
+#define SETARGS10(r,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) SETARGS9(r,a1,a2,a3,a4,a5,a6,a7,a8,a9); args.lArguments[9] = (DWORD_PTR)(a10)
+// !!! WARNING !!! DWORD_PTR lArguments[10]; - пока максимум - 10 аргументов
 
 extern HANDLE ghHookMutex;
 
@@ -1135,6 +1144,42 @@ static FARPROC WINAPI OnGetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 TODO("по хорошему бы еще и FreeDll хукать нужно, чтобы не позвать случайно неактуальную функцию...");
 
 
+
+typedef BOOL (WINAPI* OnCreateProcessA_t)(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+static BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+{
+	ORIGINALFAST(CreateProcessA);
+
+	BOOL lbRc;
+	
+	lbRc = F(CreateProcessA)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	
+	return lbRc;
+}
+typedef BOOL (WINAPI* OnCreateProcessW_t)(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+static BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+{
+	ORIGINALFAST(CreateProcessW);
+	BOOL bMainThread = FALSE; // поток не важен
+
+	BOOL lbRc = FALSE;
+
+	if (ph && ph->PreCallBack) {
+		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+		// Если функция возвращает FALSE - реальное чтение не будет вызвано
+		if (!ph->PreCallBack(&args))
+			return lbRc;
+	}
+
+	lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	
+    if (ph && ph->PostCallBack) {
+    	SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+    	ph->PostCallBack(&args);
+    }
+
+	return lbRc;
+}
 
 
 typedef BOOL (WINAPI* OnTrackPopupMenu_t)(HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, CONST RECT * prcRect);

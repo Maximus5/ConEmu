@@ -165,6 +165,7 @@ CConEmuMain::CConEmuMain()
 	// g_hInstance еще не инициализирован
 	mh_SplitV = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITV));
 	mh_SplitH = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITH));
+	//ms_LogCreateProcess[0] = 0; mb_CreateProcessLogged = false;
 
     memset(&mouse, 0, sizeof(mouse));
     mouse.lastMMW=-1;
@@ -651,6 +652,15 @@ BOOL CConEmuMain::CreateMainWindow()
 	//if (gConEmu.WindowMode == rFullScreen || gConEmu.WindowMode == rMaximized)
 	//	gConEmu.SetWindowMode(gConEmu.WindowMode);
 
+
+	UpdateGuiInfoMapping();
+	
+
+	return TRUE;
+}
+
+void CConEmuMain::UpdateGuiInfoMapping()
+{
 	ConEmuGuiInfo ceInfo = {sizeof(ConEmuGuiInfo)};
 	ceInfo.hGuiWnd = ghWnd;
 	wchar_t *pszSlash = wcsrchr(ms_ConEmuExe, L'\\');
@@ -658,6 +668,10 @@ BOOL CConEmuMain::CreateMainWindow()
 	lstrcpy(ceInfo.sConEmuDir, ms_ConEmuExe); // SetEnvironmentVariable(L"ConEmuDir", ceInfo.sConEmuDir);
 	*pszSlash = L'\\';
 	lstrcpyn(ceInfo.sConEmuArgs, mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(ceInfo.sConEmuArgs)); // Это идет в мэппинг, для информации
+
+	//if (mb_CreateProcessLogged)
+	//	lstrcpy(ceInfo.sLogCreateProcess, ms_LogCreateProcess);
+
 	// sConEmuArgs уже заполнен в PrepareCommandLine
 	m_GuiInfoMapping.InitName(CEGUIINFOMAPNAME, GetCurrentProcessId());
 	if (m_GuiInfoMapping.Create())
@@ -670,9 +684,6 @@ BOOL CConEmuMain::CreateMainWindow()
 		_ASSERT(FALSE);
 	}
 #endif
-	
-
-	return TRUE;
 }
 
 HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
@@ -4113,6 +4124,23 @@ LRESULT CConEmuMain::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 	{
 		BOOL bSelectionExist = ActiveCon()->RCon()->isSelectionPresent();
     	EnableMenuItem(hMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
+
+    	#ifdef _DEBUG
+		wchar_t szText[128];
+		MENUITEMINFO mi = {sizeof(MENUITEMINFO)};
+		mi.fMask = MIIM_STRING|MIIM_STATE;
+		bool bLogged = false, bAllowed = false;
+		CRealConsole* pRCon = mp_VActive->RCon();
+		if (pRCon)
+		{
+			bLogged = pRCon->IsLogShellStarted();
+			bAllowed = (pRCon->GetFarPID(TRUE) != 0);
+		}
+		lstrcpy(szText, bLogged ? _T("Disable &shell log") : _T("Enable &shell log..."));
+		mi.dwTypeData = szText;
+		mi.fState = bAllowed ? MFS_ENABLED : MFS_GRAYED;
+		SetMenuItemInfo(hMenu, ID_MONITOR_SHELLACTIVITY, FALSE, &mi);
+		#endif
 	}
 	
 	return 0;
@@ -4216,6 +4244,52 @@ void CConEmuMain::StartDebugLogConsole()
 		lbRc = TRUE;
 	}
 }
+
+//void CConEmuMain::StartLogCreateProcess()
+//{
+//    OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+//    ofn.lStructSize=sizeof(ofn);
+//    ofn.hwndOwner = ghWnd;
+//    ofn.lpstrFilter = _T("Log files (*.log)\0*.log\0\0");
+//    ofn.nFilterIndex = 1;
+//    ofn.lpstrFile = ms_LogCreateProcess;
+//    ofn.nMaxFile = MAX_PATH;
+//    ofn.lpstrTitle = L"Log CreateProcess...";
+//    ofn.lpstrDefExt = L"log";
+//    ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+//            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
+//    if (!GetSaveFileName(&ofn))
+//        return;
+//
+//	mb_CreateProcessLogged = true;
+//	UpdateLogCreateProcess();
+//}
+//
+//void CConEmuMain::StopLogCreateProcess()
+//{
+//	mb_CreateProcessLogged = false;
+//	UpdateLogCreateProcess();
+//}
+//
+//void CConEmuMain::UpdateLogCreateProcess()
+//{
+//	UpdateGuiInfoMapping();
+//
+//	for (int i = 0; i < MAX_CONSOLE_COUNT; i++)
+//	{
+//		if (mp_VCon[i] == NULL)
+//			continue;
+//
+//		DWORD nFarPID = mp_VCon[i]->RCon()->GetFarPID(TRUE);
+//		if (nFarPID)
+//		{
+//			// Выполнить в плагине
+//			CConEmuPipe pipe(nFarPID, 300);
+//			if (pipe.Init(L"LogShell", TRUE))
+//    			pipe.Execute(CMD_LOG_SHELL);
+//		}
+//	}
+//}
 
 void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 {
@@ -5790,7 +5864,10 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, _T("&Real console"));
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump..."));
-    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGGUI, _T("Debug &log"));
+    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGGUI, _T("Debug &log (GUI)"));
+    #ifdef _DEBUG
+    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_MONITOR_SHELLACTIVITY, _T("Enable &shell log..."));
+    #endif
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_PASTE, _T("&Paste"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_COPY, _T("Cop&y"));
@@ -8964,7 +9041,8 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     case ID_ALWAYSONTOP:
     	gSet.isAlwaysOnTop = !gSet.isAlwaysOnTop;
     	OnAlwaysOnTop();
-    	if (ghOpWnd && gSet.hExt) {
+    	if (ghOpWnd && gSet.hExt)
+		{
     		CheckDlgButton(gSet.hExt, cbAlwaysOnTop, gSet.isAlwaysOnTop ? BST_CHECKED : BST_UNCHECKED);
     	}
         return 0;
@@ -8975,6 +9053,17 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         //break;
     case ID_DEBUGGUI:
     	StartDebugLogConsole();
+    	return 0;
+    case ID_MONITOR_SHELLACTIVITY:
+    	{
+    		CRealConsole* pRCon = mp_VActive->RCon();
+    		if (pRCon)
+    			pRCon->LogShellStartStop();
+	    	//if (!mb_CreateProcessLogged)
+	    	//	StartLogCreateProcess();
+	    	//else
+	    	//	StopLogCreateProcess();
+		}
     	return 0;
     case ID_CON_TOGGLE_VISIBLE:
         if (mp_VActive)

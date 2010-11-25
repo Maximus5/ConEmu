@@ -198,7 +198,7 @@ HANDLE ghConsoleInputEmpty = NULL, ghConsoleWrite = NULL; //, ghConsoleInputWasP
 // SEE_MASK_NOZONECHECKS
 BOOL gbShellNoZoneCheck = FALSE;
 DWORD GetMainThreadId();
-
+wchar_t gsLogCreateProcess[MAX_PATH+1] = {0};
 
 
 //std::vector<HANDLE> ghCommandThreads;
@@ -1812,15 +1812,30 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 	}*/
 	
 	// Некоторые команды "асинхронные", блокировки не нужны
-	if (nCmd == CMD_QUITFAR)
+	if (nCmd == CMD_LOG_SHELL 
+		|| FALSE)
 	{
-		// Ставим сразу, чтобы GUI не повис в ожидании.
+		if (nCmd == CMD_LOG_SHELL)
+		{
+			TODO("Путь передается аргументом через pipe!");
+			LogCreateProcessCheck((wchar_t*)pCommandData);
+		}
+
+		// Ставим и выходим
 		if (ghReqCommandEvent)
 			SetEvent(ghReqCommandEvent);
-		// т.к. фар может запросить подтверждения...
-		ExecuteQuitFar();
+
 		return TRUE;
 	}
+	//if (nCmd == CMD_QUITFAR)
+	//{
+	//	// Ставим сразу, чтобы GUI не повис в ожидании.
+	//	if (ghReqCommandEvent)
+	//		SetEvent(ghReqCommandEvent);
+	//	// т.к. фар может запросить подтверждения...
+	//	ExecuteQuitFar();
+	//	return TRUE;
+	//}
 
 	//EnterCriticalSection(&csData);
 	MSectionLock CSD; CSD.Lock(csData, TRUE);
@@ -2661,7 +2676,10 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 	// здесь же и ReloadFarInfo() позовется
 	if (gpConsoleInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
+	{
 		CheckResources(TRUE);
+		LogCreateProcessCheck((LPCWSTR)-1);
+	}
 }
 
 //#define CREATEEVENT(fmt,h) 
@@ -3038,6 +3056,7 @@ BOOL ReloadFarInfo(BOOL abFull)
 
 		DWORD nMapSize = sizeof(CEFAR_INFO);
 
+		TODO("Заменить на MFileMapping");
 		ghFarInfoMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
 			gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
 
@@ -3186,14 +3205,15 @@ bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Para
 		nLastCurrentType = gpTabs->Tabs.CurrentType;
 	}
 
-	gpTabs->Tabs.CurrentIndex = -1; // для строгости
+	if (gpTabs)
+		gpTabs->Tabs.CurrentIndex = -1; // для строгости
 
 	if (gFarVersion.dwVerMajor==1)
 		lbCh = UpdateConEmuTabsA(anEvent, losingFocus, editorSave, Param);
 	else
 		lbCh = UpdateConEmuTabsW(anEvent, losingFocus, editorSave, Param);
 
-	if (gpTabs->Tabs.CurrentIndex == -1 && nLastCurrentTab != -1 && gpTabs->Tabs.nTabCount > 0)
+	if (gpTabs && gpTabs->Tabs.CurrentIndex == -1 && nLastCurrentTab != -1 && gpTabs->Tabs.nTabCount > 0)
 	{
 		// Активное окно определить не удалось
 		if ((UINT)nLastCurrentTab >= gpTabs->Tabs.nTabCount)
@@ -3618,7 +3638,8 @@ void CheckResources(BOOL abFromStartup)
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 #endif
 
-	if (gsFarLang[0] && !abFromStartup) {
+	if (gsFarLang[0] && !abFromStartup)
+	{
 		static DWORD dwLastTickCount = GetTickCount();
 		DWORD dwCurTick = GetTickCount();
 		if ((dwCurTick - dwLastTickCount) < CHECK_RESOURCES_INTERVAL)
@@ -3637,7 +3658,8 @@ void CheckResources(BOOL abFromStartup)
 
 	wchar_t szLang[64];
 	GetEnvironmentVariable(L"FARLANG", szLang, 63);
-	if (lstrcmpW(szLang, gsFarLang)) {
+	if (lstrcmpW(szLang, gsFarLang))
+	{
 		wchar_t szTitle[1024] = {0};
 		GetConsoleTitleW(szTitle, 1024);
 		SetConsoleTitleW(L"ConEmuC: CheckResources started");
@@ -4571,15 +4593,15 @@ DWORD GetEditorModifiedState()
 		return FUNC_X(GetEditorModifiedState)();
 }
 
-void ExecuteQuitFar()
-{
-	if (gFarVersion.dwVerMajor==1 || gFarVersion.dwBuild < 1348)
-		ExecuteQuitFarA();
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(ExecuteQuitFar)();
-	else
-		FUNC_X(ExecuteQuitFar)();
-}
+//void ExecuteQuitFar()
+//{
+//	if (gFarVersion.dwVerMajor==1 || gFarVersion.dwBuild < 1348)
+//		ExecuteQuitFarA();
+//	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+//		FUNC_Y(ExecuteQuitFar)();
+//	else
+//		FUNC_X(ExecuteQuitFar)();
+//}
 
 
 bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir)
@@ -4742,6 +4764,54 @@ void WINAPI OnLibraryLoaded(HMODULE ahModule)
 				// Failed
 				_ASSERTE(lbSucceeded == TRUE);
 			}
+		}
+	}
+}
+
+void LogCreateProcessCheck(LPCWSTR asLogFileName)
+{
+	if (asLogFileName == (LPCWSTR)-1)
+	{
+		//TODO: Загрузить из текущих параметров консоли <CESERVER_REQ_CONINFO_HDR>.sLogCreateProcess
+		asLogFileName = NULL; // пока - только через CMD_LOG_SHELL
+	}
+
+	if (!ConEmuHwnd)
+	{
+		gsLogCreateProcess[0] = 0;
+	}
+	else
+	{
+		//DWORD dwGuiThreadId, dwGuiProcessId;
+		//MFileMapping<ConEmuGuiInfo> GuiInfoMapping;
+		//dwGuiThreadId = GetWindowThreadProcessId(ConEmuHwnd, &dwGuiProcessId);
+		//if (!dwGuiThreadId)
+		//{
+		//	_ASSERTE(dwGuiProcessId);
+		//	gsLogCreateProcess[0] = 0;
+		//}
+		//else
+		//{
+		//	GuiInfoMapping.InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
+		//	const ConEmuGuiInfo* pInfo = GuiInfoMapping.Open();
+		//	if (pInfo && pInfo->cbSize == sizeof(ConEmuGuiInfo))
+		//	{
+		//		_ASSERTE(countof(gsLogCreateProcess)==(MAX_PATH+1));
+		//		gsLogCreateProcess[MAX_PATH] = 0;
+		//		lstrcpynW(gsLogCreateProcess, pInfo->sLogCreateProcess, MAX_PATH);
+		//	}
+		//}
+		if (!asLogFileName || !*asLogFileName)
+		{
+			gsLogCreateProcess[0] = 0;
+		}
+		else
+		{
+			_ASSERTE(countof(gsLogCreateProcess)==(MAX_PATH+1));
+			gsLogCreateProcess[MAX_PATH] = 0;
+			lstrcpynW(gsLogCreateProcess, asLogFileName, MAX_PATH);
+
+			TODO("Осталось включить калбэки для шелловских функций");
 		}
 	}
 }

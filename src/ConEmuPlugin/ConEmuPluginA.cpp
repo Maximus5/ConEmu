@@ -388,7 +388,10 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	gbBgPluginsAllowed = TRUE;
 
 	if (gpConsoleInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
+	{
 		CheckResources(TRUE);
+		LogCreateProcessCheck((LPCWSTR)-1);
+	}
 }
 
 //extern WCHAR gcPlugKey; // Для ANSI far он инициализируется как (char)

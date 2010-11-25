@@ -1162,6 +1162,9 @@ void MSetter::Unlock() {
 MSection::MSection()
 {
 	mn_TID = 0; mn_Locked = 0; mb_Exclusive = FALSE;
+#ifdef _DEBUG
+	mn_UnlockedExclusiveTID = 0;
+#endif
 	ZeroStruct(mn_LockedTID); ZeroStruct(mn_LockedCount);
 	InitializeCriticalSection(&m_cs);
 	mh_ReleaseEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -1341,6 +1344,7 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 
 			DEBUGSTR(L"!!! Failed non exclusive lock, trying to use CriticalSection\n");
 			bool lbEntered = MyEnterCriticalSection(anTimeout); // дождаться пока секцию отпустят
+			// mb_Exclusive может быть выставлен, если сейчас другая нить пытается выполнить exclusive lock
 			_ASSERTE(!mb_Exclusive); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
 
 			AddRef(dwTID); // Возвращаем блокировку
@@ -1367,12 +1371,23 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 		BOOL lbPrev = mb_Exclusive;
 		DWORD nPrevTID = mn_TID;
 		#endif
-		mb_Exclusive = TRUE; // Сразу, чтобы в nonexclusive не нарваться
+		
+		// Сразу установим mb_Exclusive, чтобы в других нитях случайно не прошел nonexclusive lock
+		// иначе может получиться, что nonexclusive lock мешает выполнить exclusive lock (ждут друг друга)
+		mb_Exclusive = TRUE;
 		TODO("Need to check, if MyEnterCriticalSection failed on timeout!\n");
-		MyEnterCriticalSection(anTimeout);
+		if (!MyEnterCriticalSection(anTimeout))
+		{
+			// Пока поставил _ASSERTE, чтобы посмотреть, возникают ли Timeout-ы при блокировке
+			_ASSERTE(FALSE);
+			if (mn_TID == 0) // поскольку заблокировать не удалось - сбросим флажок
+				mb_Exclusive = FALSE;
+			return FALSE;
+		}
+
 		_ASSERTE(!(lbPrev && mb_Exclusive)); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
-		mb_Exclusive = TRUE; // Флаг могла сбросить другая нить, выполнившая Leave
 		mn_TID = dwTID; // И запомним, в какой нити это произошло
+		mb_Exclusive = TRUE; // Флаг могла сбросить другая нить, выполнившая Leave
 		_ASSERTE(mn_LockedTID[0] == 0 && mn_LockedCount[0] == 0);
 		mn_LockedTID[0] = dwTID;
 		mn_LockedCount[0] ++;
@@ -1397,8 +1412,11 @@ void MSection::Unlock(BOOL abExclusive)
 	DWORD dwTID = GetCurrentThreadId();
 	if (abExclusive)
 	{
-		_ASSERTE(dwTID == dwTID && mb_Exclusive);
+		_ASSERTE(mn_TID == dwTID && mb_Exclusive);
 		_ASSERTE(mn_LockedTID[0] == dwTID);
+#ifdef _DEBUG
+		mn_UnlockedExclusiveTID = dwTID;
+#endif
 		mb_Exclusive = FALSE; mn_TID = 0;
 		mn_LockedTID[0] = 0; mn_LockedCount[0] --;
 		LeaveCriticalSection(&m_cs);

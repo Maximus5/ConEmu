@@ -149,7 +149,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\\MAXW7\FAR\FAR2.x64\Plugins\ConEmu\Thumbs\ConEmuTh.x64.dll"
+				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.64.vc\plugins\ConEmu\Thumbs\ConEmuTh.x64.dll"
 				LinkIncremental="2"
 				GenerateManifest="true"
 				ModuleDefinitionFile="export.def"

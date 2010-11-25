@@ -437,7 +437,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\FAR\ConEmu64\ConEmuHk64.dll"
+				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
