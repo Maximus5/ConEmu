@@ -14,7 +14,7 @@ are met:
 3. The name of the authors may not be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -667,6 +667,7 @@ typedef struct tag_MyAssertInfo {
 	wchar_t szDebugInfo[4096];
 } MyAssertInfo;
 bool gbInMyAssertTrap = false;
+bool gbAllowAssertThread = false;
 DWORD WINAPI MyAssertThread(LPVOID p)
 {
 	if (gbInMyAssertTrap)
@@ -695,15 +696,26 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest)
 	StringCbPrintfW(a.szTitle, countof(a.szTitle), L"CEAssert PID=%u TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 	StringCbPrintfW(a.szDebugInfo, countof(a.szDebugInfo), L"Assertion\n%s\n\n%s: %i\n\nPress 'Retry' to trap.",
 		pszTest ? pszTest : L"", pszFile, nLine);
-	DWORD dwTID, dwCode = 0;
-	HANDLE hThread = CreateThread(NULL, 0, MyAssertThread, &a, 0, &dwTID);
-	if (hThread == NULL) {
-		return -1;
-	}
 
-	WaitForSingleObject(hThread, INFINITE);
-	GetExitCodeThread(hThread, &dwCode);
-	CloseHandle(hThread);
+	DWORD dwCode = 0;
+
+	if (gbAllowAssertThread)
+	{
+		DWORD dwTID;
+		HANDLE hThread = CreateThread(NULL, 0, MyAssertThread, &a, 0, &dwTID);
+		if (hThread == NULL) {
+			return -1;
+		}
+
+		WaitForSingleObject(hThread, INFINITE);
+		GetExitCodeThread(hThread, &dwCode);
+		CloseHandle(hThread);
+	}
+	else
+	{
+		// ¬ Far попытка запустить MyAssertThread иногда зависает
+		dwCode = MyAssertThread(&a);
+	}
 	
 	return (dwCode == IDRETRY) ? -1 : 1;
 }

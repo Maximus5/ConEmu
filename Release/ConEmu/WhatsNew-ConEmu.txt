@@ -1,3 +1,9 @@
+2010.11.28
+[%] Far2 падал при попытке выгрузки плагина (http://bugs.farmanager.com/view.php?id=1604).
+[*] 'Tray' переименован в 'TSA' (Taskbar Status Area).
+[+] Добавлен флажок 'Always show TSA icon'.
+
+
 2010.11.25
 [%] Issue 298: HG & Araxis (detached comspec).
 [%] Issue 321: PanelView, некорректный скроллинг при выделении элементов панели.

@@ -14,7 +14,7 @@ are met:
 3. The name of the authors may not be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -192,6 +192,7 @@ public:
     bool isSendAltEnter;
 	BYTE isSendAltSpace;
     bool isMinToTray;
+	bool isAlwaysShowTrayIcon;
     //bool isForceMonospace, isProportional;
 	BYTE isMonospace, isMonospaceSelected; // 0 - proportional, 1 - monospace, 2 - forcemonospace
     bool isUpdConHandle;

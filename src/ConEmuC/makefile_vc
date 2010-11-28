@@ -163,7 +163,7 @@ LINKFLAGS=$(LINKFLAGS) /machine:IA64
 CPPFLAGS=$(CPPFLAGS) /Wp64
 LINKFLAGS=$(LINKFLAGS) /opt:nowin98
 !else
-RFLAGS=$(RFLAGS) /nologo
+RFLAGS=$(RFLAGS) 
 !endif
 
 ALL: AllDirs build clean

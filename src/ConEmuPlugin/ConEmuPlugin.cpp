@@ -14,7 +14,7 @@ are met:
 3. The name of the authors may not be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -199,6 +199,9 @@ HANDLE ghConsoleInputEmpty = NULL, ghConsoleWrite = NULL; //, ghConsoleInputWasP
 BOOL gbShellNoZoneCheck = FALSE;
 DWORD GetMainThreadId();
 wchar_t gsLogCreateProcess[MAX_PATH+1] = {0};
+int gnSynchroCount = 0;
+bool gbSynchroProhibited = false;
+bool gbInputSynchroPending = false;
 
 
 //std::vector<HANDLE> ghCommandThreads;
@@ -590,8 +593,9 @@ void OnConsolePeekReadInput(BOOL abPeek)
 	if (IS_SYNCHRO_ALLOWED)
 	{
 		// “ребуетс€ дернуть Synchro, чтобы корректно активироватьс€
-		if (lbNeedSynchro)
+		if (lbNeedSynchro && !gbInputSynchroPending)
 		{
+			gbInputSynchroPending = true;
 			ExecuteSynchro();
 		}
 	}
@@ -1049,7 +1053,24 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 {
 	if (Event == SE_COMMONSYNCHRO)
 	{
-		OnMainThreadActivated();
+		if (gbInputSynchroPending)
+			gbInputSynchroPending = false;
+
+		if (!gbSynchroProhibited)
+		{
+			OnMainThreadActivated();
+		}
+
+		if (gnSynchroCount > 0)
+			gnSynchroCount--;
+
+		if (gbSynchroProhibited && (gnSynchroCount == 0))
+		{
+			if (gFarVersion.dwBuild>=FAR_Y_VER)
+				FUNC_Y(StopWaitEndSynchro)();
+			//else
+			//	FUNC_X(StopWaitEndSynchro)();
+		}
 	}
 	return 0;
 }
@@ -1154,11 +1175,11 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				gnMainThreadId = GetMainThreadId();
 				InitHWND(hConWnd);
 				
-				TODO("перенести инициализацию фаровских callback'ов в SetStartupInfo, т.к. будет грузитьс€ как Inject!");
-				if (!StartupHooks(ghPluginModule)) {
-					_ASSERT(FALSE);
-					OutputDebugString(L"!!! Can't install injects!!!\n");
-				}
+				//TODO("перенести инициализацию фаровских callback'ов в SetStartupInfo, т.к. будет грузитьс€ как Inject!");
+				//if (!StartupHooks(ghPluginModule)) {
+				//	_ASSERT(FALSE);
+				//	OutputDebugString(L"!!! Can't install injects!!!\n");
+				//}
 				
 			    // Check Terminal mode
 			    TerminalMode = isTerminalMode();
@@ -1181,6 +1202,14 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 			}
 			break;
 		case DLL_PROCESS_DETACH:
+			if (gnSynchroCount > 0)
+			{
+				//if (gFarVersion.dwVerMajor == 2 && gFarVersion.dwBuild < 1735) -- в фаре пока не чинили, поэтому всегда ругаемс€, если что...
+				{
+					MessageBox(NULL, L"Syncho events are pending!\nFar may crash after unloading plugin", L"ConEmu plugin", MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+				}
+			}
+			
 			//if (ghFarHintsFix) {
 			//	FreeLibrary(ghFarHintsFix);
 			//	ghFarHintsFix = NULL;
@@ -1561,6 +1590,12 @@ void ExecuteSynchro()
 {
 	if (IS_SYNCHRO_ALLOWED)
 	{
+		if (gbSynchroProhibited)
+		{
+			_ASSERT(gbSynchroProhibited==false);
+			return;
+		}
+
 		//psi.AdvControl(psi.ModuleNumber,ACTL_SYNCHRO,NULL);
 		if (gFarVersion.dwBuild>=FAR_Y_VER)
 			FUNC_Y(ExecuteSynchro)();
@@ -2658,6 +2693,25 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 //	return 0;
 //}
 
+void CommonPluginStartup()
+{
+	gbBgPluginsAllowed = TRUE;
+
+	// здесь же и ReloadFarInfo() позоветс€
+	if (gpConsoleInfo) //2010-03-04 »меет смысл только при запуске из-под ConEmu
+	{
+		CheckResources(TRUE);
+		LogCreateProcessCheck((LPCWSTR)-1);
+	}
+
+	TODO("перенести инициализацию фаровских callback'ов в SetStartupInfo, т.к. будет грузитьс€ как Inject!");
+	if (!StartupHooks(ghPluginModule))
+	{
+		_ASSERT(FALSE);
+		OutputDebugString(L"!!! Can't install injects!!!\n");
+	}
+}
+
 void WINAPI _export SetStartupInfoW(void *aInfo)
 {
 	if (!gFarVersion.dwVerMajor) LoadFarVersion();
@@ -2668,18 +2722,20 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 		FUNC_X(SetStartupInfoW)(aInfo);
 
 	gbInfoW_OK = TRUE;
+
+	CommonPluginStartup();
 	
-	gbBgPluginsAllowed = TRUE;
+	//gbBgPluginsAllowed = TRUE;
 
 	// в FAR2 устарело - Synchro
 	//CheckMacro(TRUE);
 
-	// здесь же и ReloadFarInfo() позоветс€
-	if (gpConsoleInfo) //2010-03-04 »меет смысл только при запуске из-под ConEmu
-	{
-		CheckResources(TRUE);
-		LogCreateProcessCheck((LPCWSTR)-1);
-	}
+	//// здесь же и ReloadFarInfo() позоветс€
+	//if (gpConsoleInfo) //2010-03-04 »меет смысл только при запуске из-под ConEmu
+	//{
+	//	CheckResources(TRUE);
+	//	LogCreateProcessCheck((LPCWSTR)-1);
+	//}
 }
 
 //#define CREATEEVENT(fmt,h) 
@@ -3620,6 +3676,9 @@ void StopThread(void)
 
 void   WINAPI _export ExitFARW(void)
 {
+	// ѕлагин выгружаетс€, ¬ызывать Syncho больше нельз€
+	gbSynchroProhibited = true;
+
 	ShutdownHooks();
 	
 	StopThread();
@@ -4459,27 +4518,34 @@ BOOL Attach2Gui()
 	DWORD dwSelfPID = GetCurrentProcessId();
 	
 	szExe[0] = L'"';
-	if ((nLen = GetEnvironmentVariableW(L"ConEmuDir", szExe+1, MAX_PATH)) > 0)
+	if ((nLen = GetEnvironmentVariableW(L"ConEmuBaseDir", szExe+1, MAX_PATH)) > 0)
 	{
 		if (szExe[nLen] != L'\\') { szExe[nLen+1] = L'\\'; szExe[nLen+2] = 0; }
 	}
 	else if ((nLen=GetModuleFileName(0, szExe+1, MAX_PATH)) > 0)
 	{
 		wchar_t* pszSlash = wcsrchr ( szExe, L'\\' );
-		if (pszSlash) pszSlash[1] = 0;
+		if (pszSlash)
+		{
+			lstrcpyW(pszSlash+1, L"ConEmu\\ConEmuC.exe");
+			if (!FileExists(szExe+1))
+			{
+				lstrcpyW(pszSlash+1, L"ConEmuC.exe");
+			}
+		}
 	}
 	
 	//if (IsWindows64())
 	//	wsprintf(szExe+lstrlenW(szExe), L"ConEmuC64.exe\" /ATTACH /PID=%i", dwSelfPID);
 	//else
-	wsprintf(szExe+lstrlenW(szExe), L"ConEmuC.exe\" /ATTACH /PID=%i", dwSelfPID);
+	wsprintf(szExe+lstrlenW(szExe), L"\" /ATTACH /PID=%i", dwSelfPID);
 	
 	
 	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 			NULL, &si, &pi))
 	{
 		// ’орошо бы ошибку показать?
-		ShowMessage(IsWindows64() ? CECantStartServer64 : CECantStartServer, 1); // "ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
+		ShowMessage(CECantStartServer, 1); // "ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
 	}
 	else
 	{

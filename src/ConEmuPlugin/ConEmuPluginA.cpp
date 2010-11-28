@@ -14,7 +14,7 @@ are met:
 3. The name of the authors may not be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -382,16 +382,18 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	while (pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
 	*pszSlash = 0;
 
-	// Устарело. активация через [Read/Peek]ConsoleInput
-	//CheckMacro(TRUE);
-	
-	gbBgPluginsAllowed = TRUE;
+	CommonPluginStartup();
 
-	if (gpConsoleInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
-	{
-		CheckResources(TRUE);
-		LogCreateProcessCheck((LPCWSTR)-1);
-	}
+	//// Устарело. активация через [Read/Peek]ConsoleInput
+	////CheckMacro(TRUE);
+	//
+	//gbBgPluginsAllowed = TRUE;
+
+	//if (gpConsoleInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
+	//{
+	//	CheckResources(TRUE);
+	//	LogCreateProcessCheck((LPCWSTR)-1);
+	//}
 }
 
 //extern WCHAR gcPlugKey; // Для ANSI far он инициализируется как (char)

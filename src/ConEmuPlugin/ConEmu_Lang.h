@@ -7,6 +7,7 @@ enum {
 	CELngView,
 	CELngTemp,
 	CEConsoleOutput,
+	CEStopSynchroWaiting,
 	CEMenuEditOutput,
 	CEMenuViewOutput,
 	CEMenuShowHideTabs,
@@ -20,7 +21,6 @@ enum {
 	CECantDebugInTerminal,
 	CECantStartDebugger,
 	CECantStartServer,
-	CECantStartServer64,
 	CEInvalidConHwnd,
 	CEShellExecuteException,
 	};

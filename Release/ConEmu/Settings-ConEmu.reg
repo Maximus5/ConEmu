@@ -145,8 +145,10 @@ REGEDIT4
 ;"HideCaptionAlwaysDisappear"=dword:000007d0
 
 
-;; Auto minimize to the Tray
+;; Auto minimize to the Taskbar Status Area (TSA)
 ;"Min2Tray"=hex:01
+;; Always show ConEmu icon in the Taskbar Status Area (TSA)
+;"AlwaysShowTrayIcon"=hex:01
 
 ;; Center console in Fullscreen and Maximized modes
 "TryToCenter"=hex:01

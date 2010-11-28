@@ -14,7 +14,7 @@ are met:
 3. The name of the authors may not be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "header.h"
 #include "TrayIcon.h"
 #include "ConEmu.h"
+#include "Options.h"
 
 TrayIcon Icon;
 
@@ -36,19 +37,66 @@ TrayIcon::TrayIcon()
 {
     memset(&IconData, 0, sizeof(IconData));
     isWindowInTray = false;
+    
+    //mn_SysItemId[0] = SC_MINIMIZE;
+    //mn_SysItemId[1] = SC_MAXIMIZE_SECRET;
+    //mn_SysItemId[2] = SC_RESTORE_SECRET;
+    //mn_SysItemId[3] = SC_SIZE;
+    //mn_SysItemId[4] = SC_MOVE;
+    //memset(mn_SysItemState, 0, sizeof(mn_SysItemState));
 }
 
 TrayIcon::~TrayIcon()
 {
 }
 
-void TrayIcon::HideWindowToTray()
+void TrayIcon::SettingsChanged()
+{
+	if (gSet.isAlwaysShowTrayIcon)
+	{
+		AddTrayIcon(); // добавит или обновит tooltip
+	}
+	else
+	{
+		if (IsWindowVisible(ghWnd))
+			RemoveTrayIcon();
+	}
+
+	//if (ghWnd)
+	//{
+	//	DWORD_PTR nStyleEx = GetWindowLongPtr(ghWnd, GWL_EXSTYLE);
+	//	DWORD_PTR nNewStyleEx = nStyleEx;
+	//	if (gSet.isAlwaysShowTrayIcon == 2)
+	//		nNewStyleEx |= WS_EX_TOOLWINDOW;
+	//	else if (nNewStyleEx & WS_EX_TOOLWINDOW)
+	//		nNewStyleEx &= ~WS_EX_TOOLWINDOW;
+	//	if (nNewStyleEx != nStyleEx)
+	//		SetWindowLongPtr(ghWnd, GWL_EXSTYLE, nNewStyleEx);
+	//}
+}
+
+void TrayIcon::AddTrayIcon()
 {
 	_ASSERTE(IconData.hIcon!=NULL);
-    GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
-    Shell_NotifyIcon(NIM_ADD, &IconData);
-    apiShowWindow(ghWnd, SW_HIDE);
-    isWindowInTray = true;
+	if (!isWindowInTray)
+	{
+	    GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
+	    Shell_NotifyIcon(NIM_ADD, &IconData);
+	    isWindowInTray = true;
+    }
+    else
+    {
+    	UpdateTitle();
+    }
+}
+
+void TrayIcon::RemoveTrayIcon()
+{
+	if (isWindowInTray)
+	{
+	    Shell_NotifyIcon(NIM_DELETE, &IconData);
+    	isWindowInTray = false;
+	}
 }
 
 void TrayIcon::UpdateTitle()
@@ -60,13 +108,42 @@ void TrayIcon::UpdateTitle()
     Shell_NotifyIcon(NIM_MODIFY, &IconData);
 }
 
+void TrayIcon::HideWindowToTray()
+{
+	AddTrayIcon(); // добавит или обновит tooltip
+	
+    apiShowWindow(ghWnd, SW_HIDE);
+    
+    HMENU hMenu = GetSystemMenu(ghWnd, false);
+    SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_RESTORE_NAME);
+    
+    //for (int i = 0; i < countof(mn_SysItemId); i++)
+    //{
+    //	MENUITEMINFO mi = {sizeof(mi)};
+    //	mi.fMask = MIIM_STATE;
+    //	GetMenuItemInfo(hMenu, mn_SysItemId[i], FALSE, &mi);
+    //	mn_SysItemState[i] = (mi.fState & (MFS_DISABLED|MFS_GRAYED|MFS_ENABLED));
+    //	EnableMenuItem(hMenu, mn_SysItemId[i], MF_BYCOMMAND | MF_GRAYED);
+    //}
+}
+
 void TrayIcon::RestoreWindowFromTray()
 {
-    apiShowWindow(ghWnd, SW_SHOW); 
+    apiShowWindow(ghWnd, SW_SHOW);
     apiSetForegroundWindow(ghWnd);
-    Shell_NotifyIcon(NIM_DELETE, &IconData);
-    EnableMenuItem(GetSystemMenu(ghWnd, false), ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
-    isWindowInTray = false;
+    
+    //EnableMenuItem(GetSystemMenu(ghWnd, false), ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
+    
+    HMENU hMenu = GetSystemMenu(ghWnd, false);
+    SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_HIDE_NAME);
+    
+    //for (int i = 0; i < countof(mn_SysItemId); i++)
+    //{
+    //	EnableMenuItem(hMenu, mn_SysItemId[i], MF_BYCOMMAND | mn_SysItemState[i]);
+    //}
+    
+    if (!gSet.isAlwaysShowTrayIcon)
+    	RemoveTrayIcon();
 }
 
 void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
@@ -82,14 +159,15 @@ void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
     //    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 }
 
-void TrayIcon::Delete()
-{
-	// Не посылать в Shell сообщения, если иконки нет
-	if (isWindowInTray) {
-	    Shell_NotifyIcon(NIM_DELETE, &IconData);
-		memset(&IconData, 0, sizeof(IconData));
-	}
-}
+//void TrayIcon::Delete()
+//{
+//	// Не посылать в Shell сообщения, если иконки нет
+//	if (isWindowInTray)
+//	{
+//	    Shell_NotifyIcon(NIM_DELETE, &IconData);
+//		memset(&IconData, 0, sizeof(IconData));
+//	}
+//}
 
 LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
@@ -100,13 +178,23 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         break;
     case WM_RBUTTONUP:
         {
-        POINT mPos;
-        GetCursorPos(&mPos);
-        apiSetForegroundWindow(hWnd);
-        gConEmu.ShowSysmenu(hWnd, mPos.x, mPos.y);
-        PostMessage(hWnd, WM_NULL, 0, 0);
+	        POINT mPos;
+	        GetCursorPos(&mPos);
+	        apiSetForegroundWindow(hWnd);
+	        gConEmu.ShowSysmenu(hWnd, mPos.x, mPos.y);
+	        PostMessage(hWnd, WM_NULL, 0, 0);
         }
         break;
     } 
 	return 0;
+}
+
+void TrayIcon::SetMenuItemText(HMENU hMenu, UINT nID, LPCWSTR pszText)
+{
+	wchar_t szText[128];
+	MENUITEMINFO mi = {sizeof(MENUITEMINFO)};
+	mi.fMask = MIIM_STRING;
+	lstrcpyn(szText, pszText, countof(szText));
+	mi.dwTypeData = szText;
+	SetMenuItemInfo(hMenu, nID, FALSE, &mi);
 }

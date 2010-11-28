@@ -14,7 +14,7 @@ are met:
 3. The name of the authors may not be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -44,7 +44,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "tabbar.h"
-#include "TrayIcon.h"
 #include "ConEmuPipe.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
@@ -4174,12 +4173,17 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, int x, int y)
     if (!systemMenu)
         return;
 
-    EnableMenuItem(systemMenu, SC_RESTORE, MF_BYCOMMAND | (iconic || zoomed ? MF_ENABLED : MF_GRAYED));
-    EnableMenuItem(systemMenu, SC_MOVE, MF_BYCOMMAND | (!(iconic || zoomed) ? MF_ENABLED : MF_GRAYED));
-    EnableMenuItem(systemMenu, SC_SIZE, MF_BYCOMMAND | (!(iconic || zoomed) && (style & WS_SIZEBOX) ? MF_ENABLED : MF_GRAYED));
-    EnableMenuItem(systemMenu, SC_MINIMIZE, MF_BYCOMMAND | (!iconic && (style & WS_MINIMIZEBOX)? MF_ENABLED : MF_GRAYED));
-    EnableMenuItem(systemMenu, SC_MAXIMIZE, MF_BYCOMMAND | (!zoomed && (style & WS_MAXIMIZEBOX) ? MF_ENABLED : MF_GRAYED));
-    EnableMenuItem(systemMenu, ID_TOTRAY, MF_BYCOMMAND | (visible ? MF_ENABLED : MF_GRAYED));
+    EnableMenuItem(systemMenu, SC_RESTORE,
+    	MF_BYCOMMAND | ((visible && (iconic || zoomed)) ? MF_ENABLED : MF_GRAYED));
+    EnableMenuItem(systemMenu, SC_MOVE, 
+    	MF_BYCOMMAND | ((visible && !(iconic || zoomed)) ? MF_ENABLED : MF_GRAYED));
+    EnableMenuItem(systemMenu, SC_SIZE,
+    	MF_BYCOMMAND | ((visible && (!(iconic || zoomed) && (style & WS_SIZEBOX))) ? MF_ENABLED : MF_GRAYED));
+    EnableMenuItem(systemMenu, SC_MINIMIZE,
+    	MF_BYCOMMAND | ((visible && (!iconic && (style & WS_MINIMIZEBOX))) ? MF_ENABLED : MF_GRAYED));
+    EnableMenuItem(systemMenu, SC_MAXIMIZE,
+    	MF_BYCOMMAND | ((visible && (!zoomed && (style & WS_MAXIMIZEBOX))) ? MF_ENABLED : MF_GRAYED));
+    EnableMenuItem(systemMenu, ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
 
     SendMessage(Wnd, WM_INITMENU, (WPARAM)systemMenu, 0);
     SendMessage(Wnd, WM_INITMENUPOPUP, (WPARAM)systemMenu, MAKELPARAM(0, true));
@@ -5854,7 +5858,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 
 
     HMENU hwndMain = GetSystemMenu(ghWnd, FALSE), hDebug = NULL;
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, _T("Hide to &tray"));
+    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
     InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About"));
     if (ms_ConEmuChm[0]) //ѕоказывать пункт только если есть conemu.chm
@@ -6053,7 +6057,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         			
         			if (*pszLine)
 					{
-        				while (pszLine[0] == L'/') {
+        				while (pszLine[0] == L'/')
+        				{
         					if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
         							pszLine, 14, L"/bufferheight ", 14))
 							{
@@ -6160,6 +6165,10 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         }
         if (gConEmu.mb_StartDetached) gConEmu.mb_StartDetached = FALSE; // действует только на первую консоль
         
+
+		// ћожет быть в настройке указано - всегда показывать иконку в TSA
+		Icon.SettingsChanged();
+
 
         HRESULT hr = S_OK;
         hr = OleInitialize (NULL); // как бы попробовать включать Ole только во врем€ драга. кажетс€ что из-за него глючит переключалка €зыка
@@ -6301,7 +6310,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
     //    ProgressBars = NULL;
     //}
 
-    Icon.Delete();
+    Icon.RemoveTrayIcon();
     
 	if (mp_TaskBar3)
 	{
@@ -9122,7 +9131,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         return 0;
         //break;
     case ID_TOTRAY:
-        Icon.HideWindowToTray();
+    	if (IsWindowVisible(ghWnd))
+        	Icon.HideWindowToTray();
+        else
+        	Icon.RestoreWindowFromTray();
         return 0;
         //break;
     case ID_CONPROP:
@@ -10312,7 +10324,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_NCRBUTTONUP:
-		if (wParam == HTCLOSE) {
+		if (wParam == HTCLOSE)
+		{
 			Icon.HideWindowToTray();
 		}
         break;

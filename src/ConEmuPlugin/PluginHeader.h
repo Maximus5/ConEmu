@@ -14,7 +14,7 @@ are met:
 3. The name of the authors may not be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -249,13 +249,19 @@ BOOL FUNC_X(CheckBufferEnabled)();
 		(gFarVersion.dwVerMajor == 2 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006)) \
 	)
 
+extern int gnSynchroCount;
+extern bool gbSynchroProhibited;
 void ExecuteSynchro(); // если доступен - позовет ACTL_SYNCHRO (FAR2 only)
 BOOL FUNC_Y(ExecuteSynchro)();
 BOOL FUNC_X(ExecuteSynchro)();
+void FUNC_Y(WaitEndSynchro)();
+void FUNC_Y(StopWaitEndSynchro)();
 
 void FillUpdateBackgroundA(struct UpdateBackgroundArg* pFar);
 void FUNC_Y(FillUpdateBackground)(struct UpdateBackgroundArg* pFar);
 void FUNC_X(FillUpdateBackground)(struct UpdateBackgroundArg* pFar);
+
+void CommonPluginStartup();
 
 #ifdef _DEBUG
 	#define SHOWDBGINFO(x) OutputDebugStringW(x)

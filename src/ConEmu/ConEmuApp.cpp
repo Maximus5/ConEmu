@@ -14,7 +14,7 @@ are met:
 3. The name of the authors may not be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -907,6 +907,10 @@ void ResetConman()
 	}
 }
 
+#ifdef _DEBUG
+extern bool gbAllowAssertThread;
+#endif
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	/*int nCmp;
@@ -921,6 +925,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     g_hInstance = hInstance;
     gpNullSecurity = NullSecurity();
+    #ifdef _DEBUG
+	gbAllowAssertThread = true;
+	#endif
 
 	#ifdef SHOW_STARTED_MSGBOX
 	wchar_t szTitle[128]; wsprintf(szTitle, L"Conemu started, PID=%i", GetCurrentProcessId());

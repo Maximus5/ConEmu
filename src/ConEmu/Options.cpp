@@ -14,7 +14,7 @@ are met:
 3. The name of the authors may not be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "TabBar.h"
 #include "Background.h"
+#include "TrayIcon.h"
 
 
 #define DEBUGSTRFONT(s) DEBUGSTR(s)
@@ -297,7 +298,7 @@ void CSettings::InitSettings()
     isTabFrame = true;
     //isForceMonospace = false; isProportional = false;
 	isMonospace = 1;
-    isMinToTray = false;
+    isMinToTray = false; isAlwaysShowTrayIcon = false;
 	memset(&rcTabMargins, 0, sizeof(rcTabMargins));
 
 	isFontAutoSize = false; mn_AutoFontWidth = mn_AutoFontHeight = -1;
@@ -670,6 +671,7 @@ void CSettings::LoadSettings()
         reg->Load(L"AltEnter", isSendAltEnter);
         reg->Load(L"AltSpace", isSendAltSpace); if (isSendAltSpace > 2) isSendAltSpace = 2;
         reg->Load(L"Min2Tray", isMinToTray);
+        reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
 
 		reg->Load(L"SafeFarClose", isSafeFarClose);
 			reg->Load(L"SafeFarCloseMacro", &sSafeFarCloseMacro);
@@ -805,43 +807,49 @@ void CSettings::LoadSettings()
 	//!! Это нужно делать после создания основного шрифта
 	//gConEmu.OnPanelViewSettingsChanged(FALSE);
 
-    
     // Проверить необходимость установки хуков
     isKeyboardHooks();
 
     
     // Стили окна
-	if (!gConEmu.WindowMode) {
+	if (!gConEmu.WindowMode)
+	{
 		// Иначе окно вообще не отображается
 		_ASSERTE(gConEmu.WindowMode!=0);
 		gConEmu.WindowMode = rNormal;
 	}
 
-	if (wndCascade) {
+	if (wndCascade)
+	{
 		// Сдвиг при каскаде
 		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
 		// Координаты и размер виртуальной рабочей области
 		RECT rcScreen = MakeRect(800,600);
 		int nMonitors = GetSystemMetrics(SM_CMONITORS);
-		if (nMonitors > 1) {
+		if (nMonitors > 1)
+		{
 			// Размер виртуального экрана по всем мониторам
 			rcScreen.left = GetSystemMetrics(SM_XVIRTUALSCREEN); // may be <0
 			rcScreen.top  = GetSystemMetrics(SM_YVIRTUALSCREEN);
 			rcScreen.right = rcScreen.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
 			rcScreen.bottom = rcScreen.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
 			TODO("Хорошо бы исключить из рассмотрения Taskbar...");
-		} else {
+		}
+		else
+		{
 			SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, 0);
 		}
 
 		HWND hPrev = FindWindow(VirtualConsoleClassMain, NULL);
-		while (hPrev) {
+		while (hPrev)
+		{
 			/*if (Is Iconic(hPrev) || Is Zoomed(hPrev)) {
 				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
 				continue;
 			}*/
 			WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)}; // Workspace coordinates!!!
-			if (!GetWindowPlacement(hPrev, &wpl)) {
+			if (!GetWindowPlacement(hPrev, &wpl))
+			{
 				break;
 			}
 
@@ -867,11 +875,13 @@ void CSettings::LoadSettings()
 	_ASSERTE(!rcTabMargins.bottom && !rcTabMargins.left && !rcTabMargins.right);
 	rcTabMargins.bottom = rcTabMargins.left = rcTabMargins.right = 0;
 
-	if (!psCmdHistory) {
+	if (!psCmdHistory)
+	{
 		psCmdHistory = (wchar_t*)calloc(2,2);
 	}
 
-	for (UINT n = 0; n < countof(icFixFarBorderRanges); n++) {
+	for (UINT n = 0; n < countof(icFixFarBorderRanges); n++)
+	{
 		if (!icFixFarBorderRanges[n].bUsed) break;
 		for (WORD x = (WORD)(icFixFarBorderRanges[n].cBegin); x <= (WORD)(icFixFarBorderRanges[n].cEnd); x++)
 			mpc_FixFarBorderValues[x] = true;
@@ -1157,6 +1167,7 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"AltEnter", isSendAltEnter);
             reg->Save(L"AltSpace", isSendAltSpace);
             reg->Save(L"Min2Tray", isMinToTray);
+            reg->Save(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
 
 			reg->Save(L"SafeFarClose", isSafeFarClose);
 				reg->Save(L"SafeFarCloseMacro", sSafeFarCloseMacro);
@@ -1749,6 +1760,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isSendAltEnter) CheckDlgButton(hExt, cbSendAE, BST_CHECKED);
 	if (isSendAltSpace) CheckDlgButton(hExt, cbSendAltSpace, isSendAltSpace);
 	if (isMinToTray) CheckDlgButton(hExt, cbMinToTray, BST_CHECKED);
+	if (isAlwaysShowTrayIcon) CheckDlgButton(hExt, cbAlwaysShowTrayIcon, BST_CHECKED);
 	if (isAutoRegisterFonts) CheckDlgButton(hExt, cbAutoRegFonts, BST_CHECKED);
 	if (isDebugSteps) CheckDlgButton(hExt, cbDebugSteps, BST_CHECKED);
 	if (isHideCaption) CheckDlgButton(hExt, cbHideCaption, BST_CHECKED);
@@ -2308,6 +2320,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbMinToTray:
         isMinToTray = IsChecked(hExt, cbMinToTray);
         break;
+	case cbAlwaysShowTrayIcon:
+		isAlwaysShowTrayIcon = IsChecked(hExt, cbAlwaysShowTrayIcon);
+		Icon.SettingsChanged();
+		break;
 
 	case cbHideCaption:
 		isHideCaption = IsChecked(hExt, cbHideCaption);

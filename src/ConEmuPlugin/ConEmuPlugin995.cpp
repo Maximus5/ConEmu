@@ -14,7 +14,7 @@ are met:
 3. The name of the authors may not be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -37,6 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct PluginStartupInfo *InfoW995=NULL;
 struct FarStandardFunctions *FSFW995=NULL;
+
+void WaitEndSynchro995();
 
 
 void ProcessDragFrom995()
@@ -498,11 +500,15 @@ bool UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 
 void ExitFARW995(void)
 {
-	if (InfoW995) {
+	WaitEndSynchro995();
+
+	if (InfoW995)
+	{
 		free(InfoW995);
 		InfoW995=NULL;
 	}
-	if (FSFW995) {
+	if (FSFW995)
+	{
 		free(FSFW995);
 		FSFW995=NULL;
 	}
@@ -663,12 +669,51 @@ BOOL ExecuteSynchro995()
 
 	if (IS_SYNCHRO_ALLOWED)
 	{
+		if (gbSynchroProhibited)
+		{
+			_ASSERT(gbSynchroProhibited==false);
+			return FALSE;
+		}
+
+		// получается более 2-х, если фар в данный момент чем-то занят (сканирует каталог?)
+		//_ASSERTE(gnSynchroCount<=3);
+
+		gnSynchroCount++;
 		InfoW995->AdvControl ( InfoW995->ModuleNumber, ACTL_SYNCHRO, NULL);
 		return TRUE;
 	}
 	
 	return FALSE;
 }
+
+static HANDLE ghSyncDlg = NULL;
+
+void WaitEndSynchro995()
+{
+	if ((gnSynchroCount == 0) || !(IS_SYNCHRO_ALLOWED))
+		return;
+
+	FarDialogItem items[] = 
+	{
+        {DI_DOUBLEBOX,  3,  1,  51, 3, false, 0, 0, false, GetMsg995(CEPluginName)},
+
+        {DI_BUTTON,     0,  2,  0,  0, true,  0, DIF_CENTERGROUP, true, GetMsg995(CEStopSynchroWaiting)},
+	};
+
+	ghSyncDlg = InfoW995->DialogInit(InfoW995->ModuleNumber, -1,-1, 55, 5, NULL, items, countof(items), 0, 0, NULL, 0);
+	InfoW995->DialogRun(ghSyncDlg);
+	InfoW995->DialogFree(ghSyncDlg);
+	ghSyncDlg = NULL;
+}
+
+void StopWaitEndSynchro995()
+{
+	if (ghSyncDlg)
+	{
+		InfoW995->SendDlgMessage(ghSyncDlg, DM_CLOSE, -1, 0);
+	}
+}
+
 
 // Param должен быть выделен в куче. Память освобождается в ProcessSynchroEventW.
 //BOOL CallSynchro995(SynchroArg *Param, DWORD nTimeout /*= 10000*/)
