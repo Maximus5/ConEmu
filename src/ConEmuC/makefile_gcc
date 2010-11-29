@@ -7,7 +7,7 @@ SRCS = ConEmuC.cpp \
        ../Common/ConEmuCheck.cpp \
        ../Common/WinObjects.cpp
 
-USERLIBS = -lkernel32
+USERLIBS = -lkernel32 -lComdlg32
 #-lversion
 
 

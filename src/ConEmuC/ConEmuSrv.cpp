@@ -53,7 +53,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
 BOOL ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount);
 BOOL WriteInputQueue(const INPUT_RECORD *pr);
 BOOL IsInputQueueEmpty();
-BOOL WaitConsoleReady(); // Консольный буфер готов принять события ввода
+BOOL WaitConsoleReady(); // Дождаться, пока консольный буфер готов принять события ввода. Возвращает FALSE, если сервер закрывается!
 DWORD WINAPI InputThread(LPVOID lpvParam);
 
 
@@ -2485,7 +2485,8 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 			continue;
 		
 		// Если не готов - все равно запишем
-		WaitConsoleReady();
+		if (!WaitConsoleReady())
+			break;
 
 		// Читаем и пишем
 		DWORD nInputCount = sizeof(ir)/sizeof(ir[0]);
@@ -2844,7 +2845,8 @@ BOOL ProcessInputMessage(MSG64 &msg, INPUT_RECORD &r)
 	return lbOk;
 }
 
-// Консольный буфер готов принять события ввода
+// Дождаться, пока консольный буфер готов принять события ввода
+// Возвращает FALSE, если сервер закрывается!
 BOOL WaitConsoleReady()
 {
 	// Если сейчас идет ресайз - нежелательно помещение в буфер событий
@@ -2855,22 +2857,35 @@ BOOL WaitConsoleReady()
 	//INPUT_RECORD irDummy[2] = {{0},{0}};
 
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
+
+	DWORD nQuitWait = WaitForSingleObject(ghQuitEvent, 0);
+	if (nQuitWait == WAIT_OBJECT_0)
+		return FALSE;
 	
 	// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
 	// 19.02.2010 Maks - замена на GetNumberOfConsoleInputEvents
 	//if (PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
-	if (GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)) && nCurInputCount > 0) {
+	if (GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)) && nCurInputCount > 0)
+	{
 		DWORD dwStartTick = GetTickCount(), dwDelta, dwTick;
 		do {
-			Sleep(5);
+			//Sleep(5);
+			nQuitWait = WaitForSingleObject(ghQuitEvent, 5);
+			if (nQuitWait == WAIT_OBJECT_0)
+				return FALSE;
+
 			//if (!PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)))
 			if (!GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)))
 				nCurInputCount = 0;
 			dwTick = GetTickCount(); dwDelta = dwTick - dwStartTick;
 		} while ((nCurInputCount > 0) && (dwDelta < MAX_INPUT_QUEUE_EMPTY_WAIT));
 	}
+
+	if (WaitForSingleObject(ghQuitEvent, 0) == WAIT_OBJECT_0)
+		return FALSE;
 	
-	return (nCurInputCount == 0);
+	//return (nCurInputCount == 0);
+	return TRUE; // Если готов - всегда TRUE
 }
 
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)

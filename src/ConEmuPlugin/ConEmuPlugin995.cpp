@@ -625,7 +625,10 @@ int ShowPluginMenu995()
 		{MIF_SEPARATOR},
 		{ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuAttach)},
 		{MIF_SEPARATOR},
-		{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuDebug)}
+		#ifdef _DEBUG
+		{0, L"&~. Raise exception"},
+		#endif
+		{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuDebug)},
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
 
@@ -633,6 +636,17 @@ int ShowPluginMenu995()
 		FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
 		InfoW995->GetMsg(InfoW995->ModuleNumber,CEPluginName),
 		NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
+		
+	#ifdef _DEBUG
+	if (nRc == (nCount - 2))
+	{
+		// Вызвать исключение для проверки отладчика
+		LPVOID ptrSrc;
+		wchar_t szDst[MAX_PATH];
+		ptrSrc = NULL;
+		memmove(szDst, ptrSrc, sizeof(szDst));
+	}
+	#endif
 
 	return nRc;
 }
@@ -701,8 +715,17 @@ void WaitEndSynchro995()
 	};
 
 	ghSyncDlg = InfoW995->DialogInit(InfoW995->ModuleNumber, -1,-1, 55, 5, NULL, items, countof(items), 0, 0, NULL, 0);
-	InfoW995->DialogRun(ghSyncDlg);
-	InfoW995->DialogFree(ghSyncDlg);
+	if (ghSyncDlg == INVALID_HANDLE_VALUE)
+	{
+		// Видимо, Фар в состоянии выхода (финальная выгрузка всех плагинов)
+		// В этом случае, по идее, Synchro вызываться более не должно
+		gnSynchroCount = 0; // так что просто сбросим счетчик
+	}
+	else
+	{
+		InfoW995->DialogRun(ghSyncDlg);
+		InfoW995->DialogFree(ghSyncDlg);
+	}
 	ghSyncDlg = NULL;
 }
 

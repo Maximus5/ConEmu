@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmuC.h"
 #include "../ConEmu/version.h"
+#include <Dbghelp.h>
 
 WARNING("Обязательно после запуска сделать apiSetForegroundWindow на GUI окно, если в фокусе консоль");
 WARNING("Обязательно получить код и имя родительского процесса");
@@ -2572,6 +2573,99 @@ void ProcessDebugEvent()
 						(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) 
 							? "(EXCEPTION_NONCONTINUABLE)" : "");
 					_printf(szDbgText);
+				}
+			}
+			
+			if (!lbNonContinuable && (evt.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_BREAKPOINT))
+			{
+				char szConfirm[2048];
+				lstrcpyA(szConfirm, "Non continuable exception\n");
+				lstrcatA(szConfirm, szDbgText);
+				lstrcatA(szConfirm, "\nCreate minidump?");
+				typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
+					PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
+					PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
+				MiniDumpWriteDump_t MiniDumpWriteDump_f = NULL;
+
+				if (MessageBoxA(NULL, szConfirm, "ConEmuC Debuger", MB_YESNO|MB_SYSTEMMODAL) == IDYES)
+				{
+					TODO("Дать юзеру выбрать файл, Открыть HANDLE для hDumpFile, Вызвать MiniDumpWriteDump");
+					HANDLE hDmpFile = NULL;
+					HMODULE hDbghelp = NULL;
+					wchar_t szErrInfo[MAX_PATH*2];
+					wchar_t dmpfile[MAX_PATH]; dmpfile[0] = 0;
+					while (true)
+					{
+						OPENFILENAMEW ofn; memset(&ofn,0,sizeof(ofn));
+						ofn.lStructSize=sizeof(ofn);
+						ofn.hwndOwner = NULL;
+						ofn.lpstrFilter = L"Debug dumps (*.mdmp)\0*.mdmp\0\0";
+						ofn.nFilterIndex = 1;
+						ofn.lpstrFile = dmpfile;
+						ofn.nMaxFile = countof(dmpfile);
+						ofn.lpstrTitle = L"Save debug dump";
+						ofn.lpstrDefExt = L"mdmp";
+						ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+							| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
+						if (!GetSaveFileNameW(&ofn))
+							break;
+						hDmpFile = CreateFileW(dmpfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+						if (hDmpFile == INVALID_HANDLE_VALUE)
+						{
+							DWORD nErr = GetLastError();
+							wsprintfW(szErrInfo, L"Can't create debug dump file\n%s\nErrCode=0x%08X\n\nChoose another name?", dmpfile, nErr);
+							if (MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
+								break;
+							continue; // еще раз выбрать
+						}
+
+						if (!hDbghelp)
+						{
+							hDbghelp = LoadLibraryW(L"Dbghelp.dll");
+							if (hDbghelp == NULL)
+							{
+								DWORD nErr = GetLastError();
+								wsprintfW(szErrInfo, L"Can't load debug library 'Dbghelp.dll'\nErrCode=0x%08X\n\nTry again?", nErr);
+								if (MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
+									break;
+								continue; // еще раз выбрать
+							}
+						}
+
+						if (!MiniDumpWriteDump_f)
+						{
+							MiniDumpWriteDump_f = (MiniDumpWriteDump_t)GetProcAddress(hDbghelp, "MiniDumpWriteDump");
+							DWORD nErr = GetLastError();
+							wsprintfW(szErrInfo, L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll'", nErr);
+							MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_ICONSTOP|MB_SYSTEMMODAL);
+							break;
+						}
+
+						if (MiniDumpWriteDump_f)
+						{
+							MINIDUMP_EXCEPTION_INFORMATION mei = {evt.dwThreadId};
+							mei.ExceptionPointers->ExceptionRecord = &evt.u.Exception.ExceptionRecord;
+							mei.ExceptionPointers->ContextRecord = NULL; // Непонятно, откуда его можно взять
+							mei.ClientPointers = FALSE;
+							BOOL lbDumpRc = MiniDumpWriteDump_f(srv.hRootProcess, srv.dwRootProcess,
+								hDmpFile, MiniDumpWithDataSegs, &mei, NULL, NULL);
+							if (!lbDumpRc)
+							{
+								DWORD nErr = GetLastError();
+								wsprintfW(szErrInfo, L"MiniDumpWriteDump failed.\nErrorCode=0x%08X", nErr);
+								MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_ICONSTOP|MB_SYSTEMMODAL);
+							}
+							break;
+						}
+					}
+					if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != NULL)
+					{
+						CloseHandle(hDmpFile);
+					}
+					if (hDbghelp)
+					{
+						FreeLibrary(hDbghelp);
+					}
 				}
 			}
 		}

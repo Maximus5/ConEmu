@@ -113,7 +113,7 @@ $(INTDIR)\ConEmuCheck.obj \
 $(INTDIR)\WinObjects.obj
 
 
-LINK_LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib
+LINK_LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib Comdlg32.lib
 
 DEFINES=\
 	/DUNICODE \

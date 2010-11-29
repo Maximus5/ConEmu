@@ -4575,7 +4575,8 @@ BOOL StartDebugger()
 	
 	// Create process, with flag /Attach GetCurrentProcessId()
 	// Sleep for sometimes, try InitHWND(hConWnd); several times
-	WCHAR  szExe[0x200] = {0};
+	wchar_t  szExe[MAX_PATH*3] = {0};
+	wchar_t  szConEmuC[MAX_PATH];
 	BOOL lbRc = FALSE;
 	
 	DWORD nLen = 0;
@@ -4584,20 +4585,50 @@ BOOL StartDebugger()
 	si.cb = sizeof(si);
 	DWORD dwSelfPID = GetCurrentProcessId();
 	
-	szExe[0] = L'"';
-	if ((nLen = GetEnvironmentVariableW(L"ConEmuDir", szExe+1, MAX_PATH)) > 0)
+	if ((nLen = GetEnvironmentVariableW(L"ConEmuBaseDir", szConEmuC, MAX_PATH-16)) < 1)
 	{
-		if (szExe[nLen] != L'\\') { szExe[nLen+1] = L'\\'; szExe[nLen+2] = 0; }
+		ShowMessage(CECantDebugNotEnvVar,1); // "ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available\nOK"
+		return FALSE; // Облом
 	}
-	else if ((nLen=GetModuleFileName(0, szExe+1, MAX_PATH)) > 0)
+	lstrcatW(szConEmuC, L"\\ConEmuC.exe");
+	if (!FileExists(szConEmuC))
 	{
-		wchar_t* pszSlash = wcsrchr ( szExe, L'\\' );
-		if (pszSlash) pszSlash[1] = 0;
+		wchar_t* pszSlash = NULL;
+		if (((nLen=GetModuleFileName(0, szConEmuC, MAX_PATH-24)) < 1) || ((pszSlash = wcsrchr ( szConEmuC, L'\\' )) == NULL))
+		{
+			ShowMessage(CECantDebugNotEnvVar,1); // "ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available\nOK"
+			return FALSE; // Облом
+		}
+		lstrcpyW(pszSlash, L"\\ConEmu\\ConEmuC.exe");
+		if (!FileExists(szConEmuC))
+		{
+			lstrcpyW(pszSlash, L"\\ConEmuC.exe");
+			if (!FileExists(szConEmuC))
+			{
+				ShowMessage(CECantDebugNotEnvVar,1); // "ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available\nOK"
+				return FALSE; // Облом
+			}
+		}		
 	}
 	
-	wsprintf(szExe+lstrlenW(szExe), L"%s\" %s /DEBUGPID=%i /BW=80 /BH=25 /BZ=1000", 
-		/*IsWindows64() ? L"ConEmuC64.exe" :*/ L"ConEmuC.exe",
-		ConEmuHwnd ? L"/ATTACH" : L"", dwSelfPID);
+	int w = 80, h = 25;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+	{
+		w = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+		h = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+	}
+	
+	if (ConEmuHwnd)
+	{
+		wsprintf(szExe, L"\"%s\" /ATTACH /ROOT \"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=9999", 
+			szConEmuC, szConEmuC, dwSelfPID, w, h);
+	}
+	else
+	{
+		wsprintf(szExe, L"\"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=9999", 
+			szConEmuC, dwSelfPID, w, h);
+	}
 	
 	if (ConEmuHwnd)
 	{

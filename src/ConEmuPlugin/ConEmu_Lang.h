@@ -19,6 +19,7 @@ enum {
 	CEUnavailableInTerminal,
 	CEAlreadyDebuggerPresent,
 	CECantDebugInTerminal,
+	CECantDebugNotEnvVar,
 	CECantStartDebugger,
 	CECantStartServer,
 	CEInvalidConHwnd,

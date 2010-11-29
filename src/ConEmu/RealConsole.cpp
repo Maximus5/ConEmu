@@ -10347,6 +10347,10 @@ BOOL CRealConsole::OpenFarMapData()
 	//_ASSERTE(mh_FarFileMapping == NULL);
 	//_ASSERTE(mh_FarAliveEvent == NULL);
 
+	// Если сервер (консоль) закрывается - нет смысла переоткрывать FAR Mapping!
+	if (m_ServerClosing.hServerProcess)
+		return FALSE;
+
 	DWORD dwErr = 0;
 	DWORD nFarPID = GetFarPID(TRUE);
 	if (!nFarPID)

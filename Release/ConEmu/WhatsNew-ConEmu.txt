@@ -1,3 +1,8 @@
+2010.11.29
+[%] Issue 327: 'Syncho events are pending!' по F10.
+[%] Issue 324: 'mh_ConEmuCInput not found'.
+
+
 2010.11.28
 [%] Far2 падал при попытке выгрузки плагина (http://bugs.farmanager.com/view.php?id=1604).
 [*] 'Tray' переименован в 'TSA' (Taskbar Status Area).
