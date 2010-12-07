@@ -153,6 +153,9 @@ REGEDIT4
 ;; Center console in Fullscreen and Maximized modes
 "TryToCenter"=hex:01
 
+;; Always show scrollbar on the right edge of window, even if buffermode is off
+;"AlwaysShowScrollbar"=hex:01
+
 ;; Add extra space (in pixels) after last toolbar button
 ;"ToolbarAddSpace"=dword:00000000
 
@@ -355,13 +358,17 @@ REGEDIT4
 
 ;; 'Select text with mouse' options
 ;"ConsoleTextSelection"=hex:02
-;"CTS.ColorIndex"=hex:e0
-;"CTS.MBtnAction"=hex:00
-;"CTS.RBtnAction"=hex:01
 ;"CTS.SelectBlock"=hex:01
-;"CTS.SelectText"=hex:01
 ;"CTS.VkBlock"=hex:00
+;"CTS.SelectText"=hex:01
 ;"CTS.VkText"=hex:a4
+;; Actions for Right & Middle mouse buttons
+;"CTS.ActMode"=hex:02
+;"CTS.VkAct"=hex:a0
+;"CTS.RBtnAction"=hex:01
+;"CTS.MBtnAction"=hex:00
+;; Colors indexes (background & foreground) of selection mark
+;"CTS.ColorIndex"=hex:e0
 
 ;; Panel View settings (ConEmuTh.dll Far Manager plugin)
 ;"PanView.BackColor"=dword:10ffffff

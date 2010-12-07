@@ -121,6 +121,7 @@ extern wchar_t gszDbgModLabel[6];
 #define UPDATECONHANDLE_TIMEOUT 1000
 #define GUIATTACH_TIMEOUT 10000
 #define INPUT_QUEUE_TIMEOUT 100
+#define ATTACH2GUI_TIMEOUT 10000
 
 #define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
@@ -270,6 +271,7 @@ extern BOOL gbNoCreateProcess;
 extern BOOL gbDebugProcess;
 extern int  gnCmdUnicodeMode;
 extern BOOL gbRootIsCmdExe;
+extern BOOL gbAttachFromFar;
 
 #ifdef WIN64
 #pragma message("ComEmuC compiled in X64 mode")

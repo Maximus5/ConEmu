@@ -635,6 +635,11 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 	return (lbCh != FALSE);
 }
 
+int WINAPI _export ProcessDialogEvent(int Event, void *Param)
+{
+	return FALSE; // разрешение обработки фаром/другими плагинами
+}
+
 void   WINAPI _export ExitFAR(void)
 {
 	ShutdownHooks();
@@ -710,6 +715,9 @@ int ShowPluginMenuA()
 		{MIF_SEPARATOR},
 		{MIF_USETEXTPTR|(ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED)},
 		{MIF_SEPARATOR},
+		#ifdef _DEBUG
+		{MIF_USETEXTPTR},
+		#endif
 		{MIF_USETEXTPTR|(IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0)}
 	};
 	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuEditOutput);
@@ -719,7 +727,12 @@ int ShowPluginMenuA()
 	items[5].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuPrevTab);
 	items[6].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuCommitTab);
 	items[8].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuAttach);
+	//#ifdef _DEBUG
+	//items[10].Text.TextPtr = "&~. Raise exception";
+	//items[11].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuDebug);
+	//#else
 	items[10].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuDebug);
+	//#endif
 
 	int nCount = sizeof(items)/sizeof(items[0]);
 
@@ -727,6 +740,17 @@ int ShowPluginMenuA()
 		FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
 		InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName),
 		NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
+
+	#ifdef _DEBUG
+	if (nRc == (nCount - 2))
+	{
+		// Вызвать исключение для проверки отладчика
+		LPVOID ptrSrc;
+		wchar_t szDst[MAX_PATH];
+		ptrSrc = NULL;
+		memmove(szDst, ptrSrc, sizeof(szDst));
+	}
+	#endif
 
 	return nRc;
 }

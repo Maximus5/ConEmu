@@ -113,6 +113,8 @@ BOOL  gbLastColorsOk = FALSE;
 namespace Settings {
     const WCHAR* szKeys[] = {L"<None>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
     const DWORD  nKeys[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
+    const WCHAR* szKeysAct[] = {L"<Always>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
+    const DWORD  nKeysAct[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
     const BYTE   FSizes[] = {0, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
     const BYTE   FSizesSmall[] = {5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32};
 	const WCHAR* szClipAct[] = {L"<None>", L"Copy", L"Paste"};
@@ -295,6 +297,7 @@ void CSettings::InitSettings()
     _tcscpy(LogFont2.lfFaceName, L"Lucida Console");
     mb_Name1Ok = FALSE; mb_Name2Ok = FALSE;
     isTryToCenter = false;
+    isAlwaysShowScrollbar = false;
     isTabFrame = true;
     //isForceMonospace = false; isProportional = false;
 	isMonospace = 1;
@@ -405,6 +408,8 @@ void CSettings::InitSettings()
 	isConsoleTextSelection = 2; // BufferOnly
 	isCTSSelectBlock = true; isCTSVkBlock = 0; // по умолчанию - блок выделяется без модификаторов
 	isCTSSelectText = true; isCTSVkText = VK_LMENU; // а текст - при нажатом LAlt
+	isCTSActMode = 2; // BufferOnly
+	isCTSVkAct = 0; // т.к. по умолчанию - только BufferOnly, то вообще без модификаторов
 	isCTSRBtnAction = 1; // Copy
 	isCTSMBtnAction = 0; // Paste
 	isCTSColorIndex = 0xE0;
@@ -617,6 +622,8 @@ void CSettings::LoadSettings()
 			reg->Load(L"CTS.VkBlock", isCTSVkBlock);
 			reg->Load(L"CTS.SelectText", isCTSSelectText);
 			reg->Load(L"CTS.VkText", isCTSVkText);
+			reg->Load(L"CTS.ActMode", isCTSActMode); if (!isCTSActMode || isCTSActMode>2) isCTSActMode = 2;
+			reg->Load(L"CTS.VkAct", isCTSVkAct);
 			reg->Load(L"CTS.RBtnAction", isCTSRBtnAction); if (isCTSRBtnAction>2) isCTSRBtnAction = 0;
 			reg->Load(L"CTS.MBtnAction", isCTSMBtnAction); if (isCTSMBtnAction>2) isCTSMBtnAction = 0;
 			reg->Load(L"CTS.ColorIndex", isCTSColorIndex); if ((isCTSColorIndex & 0xF) == ((isCTSColorIndex & 0xF0)>>4)) isCTSColorIndex = 0xE0;
@@ -760,6 +767,7 @@ void CSettings::LoadSettings()
         reg->Load(L"AdminShowShield", bAdminShield);
 		reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
         reg->Load(L"TryToCenter", isTryToCenter);
+        reg->Load(L"AlwaysShowScrollbar", isAlwaysShowScrollbar);
         //reg->Load(L"CreateAppWindow", isCreateAppWindow);
         //reg->Load(L"AllowDetach", isAllowDetach);
         
@@ -1150,6 +1158,8 @@ BOOL CSettings::SaveSettings()
 				reg->Save(L"CTS.VkBlock", isCTSVkBlock);
 				reg->Save(L"CTS.SelectText", isCTSSelectText);
 				reg->Save(L"CTS.VkText", isCTSVkText);
+				reg->Save(L"CTS.ActMode", isCTSActMode);
+				reg->Save(L"CTS.VkAct", isCTSVkAct);
 				reg->Save(L"CTS.RBtnAction", isCTSRBtnAction);
 				reg->Save(L"CTS.MBtnAction", isCTSMBtnAction);
 				reg->Save(L"CTS.ColorIndex", isCTSColorIndex);
@@ -1215,6 +1225,7 @@ BOOL CSettings::SaveSettings()
 	        reg->Save(L"AdminShowShield", bAdminShield);
 			reg->Save(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
 	        reg->Save(L"TryToCenter", isTryToCenter);
+	        reg->Save(L"AlwaysShowScrollbar", isAlwaysShowScrollbar);
 
 			reg->Save(L"IconID", nIconID);
             
@@ -1835,6 +1846,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 	//
 	CheckDlgButton(hExt, cbDragPanel, isDragPanel);
 	CheckDlgButton(hExt, cbTryToCenter, isTryToCenter);
+	CheckDlgButton(hExt, cbAlwaysShowScrollbar, isAlwaysShowScrollbar);
 
 	if (isDesktopMode) CheckDlgButton(hExt, cbDesktopMode, BST_CHECKED);
 	if (isAlwaysOnTop)  CheckDlgButton(hExt, cbAlwaysOnTop, BST_CHECKED);
@@ -2368,6 +2380,13 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 	case cbTryToCenter:
 		isTryToCenter = IsChecked(hExt, cbTryToCenter);
 		gConEmu.OnSize(-1);
+		gConEmu.InvalidateAll();
+		break;
+		
+	case cbAlwaysShowScrollbar:
+		isAlwaysShowScrollbar = IsChecked(hExt, cbAlwaysShowScrollbar);
+		gConEmu.OnSize(-1);
+		gConEmu.m_Back->TrackMouse();
 		gConEmu.InvalidateAll();
 		break;
 
@@ -4270,6 +4289,9 @@ INT_PTR CSettings::selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 			FillListBoxByte(hWnd2, lbCTSBlockSelection, Settings::szKeys, Settings::nKeys, gSet.isCTSVkBlock);
 			CheckDlgButton(hWnd2, cbCTSTextSelection, gSet.isCTSSelectText);
 			FillListBoxByte(hWnd2, lbCTSTextSelection, Settings::szKeys, Settings::nKeys, gSet.isCTSVkText);
+			
+			CheckDlgButton(hWnd2, (gSet.isCTSActMode==1)?rbCTSActAlways:rbCTSActBufferOnly, BST_CHECKED);
+			FillListBoxByte(hWnd2, lbCTSActAlways, Settings::szKeysAct, Settings::nKeysAct, gSet.isCTSVkAct);
 			FillListBoxByte(hWnd2, lbCTSRBtnAction, Settings::szClipAct, Settings::nClipAct, gSet.isCTSRBtnAction);
 			FillListBoxByte(hWnd2, lbCTSMBtnAction, Settings::szClipAct, Settings::nClipAct, gSet.isCTSMBtnAction);
 			
@@ -4304,6 +4326,9 @@ INT_PTR CSettings::selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 				gSet.isConsoleTextSelection = (CB==rbCTSAlways) ? 1 : 2;
 				CheckDlgButton(gSet.hExt, cbConsoleTextSelection, gSet.isConsoleTextSelection);
 				break;
+			case rbCTSActAlways: case rbCTSActBufferOnly:
+				gSet.isCTSActMode = (CB==rbCTSActAlways) ? 1 : 2;
+				break;
 			case cbCTSBlockSelection:
 				gSet.isCTSSelectBlock = IsChecked(hWnd2,CB);
 				break;
@@ -4323,6 +4348,10 @@ INT_PTR CSettings::selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 			case lbCTSTextSelection:
 				{
 					GetListBoxByte(hWnd2, lbCTSTextSelection, Settings::szKeys, Settings::nKeys, gSet.isCTSVkText);
+				} break;
+			case lbCTSActAlways:
+				{
+					GetListBoxByte(hWnd2, lbCTSActAlways, Settings::szKeysAct, Settings::nKeysAct, gSet.isCTSVkAct);
 				} break;
 			case lbCTSRBtnAction:
 				{
@@ -6245,24 +6274,37 @@ void CSettings::CenterMoreDlg(HWND hWnd2)
 		rc.right - rc.left, rc.bottom - rc.top, TRUE);
 }
 
+//bool CSettings::isSelectionModifierPressed()
+//{
+//	if (isCTSSelectBlock && isCTSVkBlock && isPressed(isCTSVkBlock))
+//		return true;
+//	if (isCTSSelectText && isCTSVkText && isPressed(isCTSVkText))
+//		return true;
+//	return false;
+//}
+
 bool CSettings::isModifierPressed(DWORD vk)
 {
 	// если НЕ 0 - должен быть нажат
-	if (vk) {
+	if (vk)
+	{
 		if (!isPressed(vk))
 			return false;
 	}
 
 	// но другие модификаторы нажаты быть не должны!
-	if (vk != VK_SHIFT && vk != VK_LSHIFT && vk != VK_RSHIFT) {
+	if (vk != VK_SHIFT && vk != VK_LSHIFT && vk != VK_RSHIFT)
+	{
 		if (isPressed(VK_SHIFT))
 			return false;
 	}
-	if (vk != VK_MENU && vk != VK_LMENU && vk != VK_RMENU) {
+	if (vk != VK_MENU && vk != VK_LMENU && vk != VK_RMENU)
+	{
 		if (isPressed(VK_MENU))
 			return false;
 	}
-	if (vk != VK_CONTROL && vk != VK_LCONTROL && vk != VK_RCONTROL) {
+	if (vk != VK_CONTROL && vk != VK_LCONTROL && vk != VK_RCONTROL)
+	{
 		if (isPressed(VK_CONTROL))
 			return false;
 	}

@@ -313,19 +313,23 @@ void ComspecDone(int aiRc)
 		{
 			lbRc2 = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &sbi2);
 			#ifdef _DEBUG
-			if (sbi2.dwSize.Y > 200) {
+			if (sbi2.dwSize.Y > 200)
+			{
 				wchar_t szTitle[128]; wsprintfW(szTitle, L"ConEmuC (PID=%i)", GetCurrentProcessId());
 				MessageBox(NULL, L"BufferHeight was not turned OFF", szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL);
 			}
 			#endif
-			if (lbRc1 && lbRc2 && sbi2.dwSize.Y == sbi1.dwSize.Y) {
+			if (lbRc1 && lbRc2 && sbi2.dwSize.Y == sbi1.dwSize.Y)
+			{
 				// GUI не смог вернуть высоту буфера... 
 				// Это плохо, т.к. фар высоту буфера не меняет и будет сильно глючить на N сотнях строк...
 				int nNeedHeight = cmd.sbi.dwSize.Y;
-				if (nNeedHeight < 10) {
+				if (nNeedHeight < 10)
+				{
 					nNeedHeight = (sbi2.srWindow.Bottom-sbi2.srWindow.Top+1);
 				}
-				if (sbi2.dwSize.Y != nNeedHeight) {
+				if (sbi2.dwSize.Y != nNeedHeight)
+				{
 					_ASSERTE(sbi2.dwSize.Y == nNeedHeight);
 					PRINT_COMSPEC(L"Error: BufferHeight was not changed from %i\n", sbi2.dwSize.Y);
 					SMALL_RECT rc = {0};

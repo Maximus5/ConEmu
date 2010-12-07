@@ -92,7 +92,7 @@ public:
 	static LRESULT CALLBACK ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 protected:
 	RECT mrc_LastClient;
-	bool mb_LastTabVisible;
+	bool mb_LastTabVisible, mb_LastAlwaysScroll;
 	int mn_ColorIdx;
 	bool mb_VTracking;
 	//WNDPROC mpfn_ScrollProc;

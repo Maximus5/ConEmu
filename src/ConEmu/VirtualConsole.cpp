@@ -562,7 +562,12 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
             // Посчитать новый размер в пикселях
             Width = TextWidth * nFontWidth;
             Height = TextHeight * nFontHeight;
-            _ASSERTE(Height <= 1200);
+			#ifdef _DEBUG
+			if (Height > 1200)
+			{
+				_ASSERTE(Height <= 1200);
+			}
+			#endif
 
             if (ghOpWnd)
                 gConEmu.UpdateSizes();
@@ -3034,49 +3039,51 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
     if (lbPaintLocked)
         mb_PaintLocked = FALSE;
 
-        // Палку курсора теперь рисуем только в окне
-        //UpdateCursor(hPaintDc);
+    // Палку курсора теперь рисуем только в окне
+    //UpdateCursor(hPaintDc);
 
-        if (gbNoDblBuffer) GdiSetBatchLimit(0); // вернуть стандартный режим
+    if (gbNoDblBuffer) GdiSetBatchLimit(0); // вернуть стандартный режим
 
-        
+    
 
-        if (Cursor.isVisible && cinf.bVisible && isCursorValid)
-        {
-			if (mpsz_ConChar && mpsz_ConChar)
+    if (Cursor.isVisible && cinf.bVisible && isCursorValid)
+    {
+		if (mpsz_ConChar && mpsz_ConChar)
+		{
+			HFONT hOldFont = (HFONT)SelectObject(hPaintDc, gSet.mh_Font[0]);
+
+			MSectionLock SCON; SCON.Lock(&csCON);
+
+			if (mpsz_ConChar && mpn_ConAttrEx)
 			{
-				HFONT hOldFont = (HFONT)SelectObject(hPaintDc, gSet.mh_Font[0]);
-
-				MSectionLock SCON; SCON.Lock(&csCON);
-
-				if (mpsz_ConChar && mpn_ConAttrEx)
-				{
-					int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
-					//Cursor.ch[1] = 0;
-					//CVirtualConsole* p = this;
-					//GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.foreColorNum, Cursor.bgColorNum);
-					Cursor.ch = mpsz_ConChar[CurChar];
-					//GetCharAttr(mpn_ConAttr[CurChar], Cursor.foreColorNum, Cursor.bgColorNum, NULL);
-					//Cursor.foreColor = pColors[Cursor.foreColorNum];
-					//Cursor.bgColor = pColors[Cursor.bgColorNum];
-					Cursor.foreColor = mpn_ConAttrEx[CurChar].crForeColor;
-					Cursor.bgColor = mpn_ConAttrEx[CurChar].crBackColor;
-				}
-
-				UpdateCursorDraw(hPaintDc, rcClient, csbi.dwCursorPosition, cinf.dwSize);
-
-				Cursor.isVisiblePrev = Cursor.isVisible;
-
-				SelectObject(hPaintDc, hOldFont);
-
-				SCON.Unlock();
+				int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
+				//Cursor.ch[1] = 0;
+				//CVirtualConsole* p = this;
+				//GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.foreColorNum, Cursor.bgColorNum);
+				Cursor.ch = mpsz_ConChar[CurChar];
+				//GetCharAttr(mpn_ConAttr[CurChar], Cursor.foreColorNum, Cursor.bgColorNum, NULL);
+				//Cursor.foreColor = pColors[Cursor.foreColorNum];
+				//Cursor.bgColor = pColors[Cursor.bgColorNum];
+				Cursor.foreColor = mpn_ConAttrEx[CurChar].crForeColor;
+				Cursor.bgColor = mpn_ConAttrEx[CurChar].crBackColor;
 			}
-        }
 
-#ifdef _DEBUG
-	if (mp_RCon) {
+			UpdateCursorDraw(hPaintDc, rcClient, csbi.dwCursorPosition, cinf.dwSize);
+
+			Cursor.isVisiblePrev = Cursor.isVisible;
+
+			SelectObject(hPaintDc, hOldFont);
+
+			SCON.Unlock();
+		}
+    }
+
+	//#ifdef _DEBUG
+	if (mp_RCon)
+	{
 		#ifdef DEBUGDRAW_RCONPOS
-		if (GetKeyState(DEBUGDRAW_RCONPOS) & 1) {
+		if (GetKeyState(DEBUGDRAW_RCONPOS) & 1)
+		{
 			// Прямоугольник, соответвующий положения окна RealConsole
 			HWND hConWnd = mp_RCon->hConWnd;
 			RECT rcCon; GetWindowRect(hConWnd, &rcCon);
@@ -3087,18 +3094,26 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		}
 		#endif
 
-		#ifdef DEBUGDRAW_DIALOGS
-		if (GetKeyState(DEBUGDRAW_DIALOGS) & 1) {
+		
+		if (gbDebugShowRects
+			#ifdef DEBUGDRAW_DIALOGS
+			|| (GetKeyState(DEBUGDRAW_DIALOGS) & 1)
+			#endif
+			)
+		{
 			// Прямоугольники найденных диалогов
 			//SMALL_RECT rcFound[MAX_DETECTED_DIALOGS]; DWORD nDlgFlags[MAX_DETECTED_DIALOGS];
 			//int nFound = mp_RCon->GetDetectedDialogs(MAX_DETECTED_DIALOGS, rcFound, nDlgFlags);
-			MFileMapping<DetectedDialogs> pvMap;
 			const DetectedDialogs* pDlg = NULL;
 			// Если включены PanelView - попробовать взять диалоги у него
-			if (m_LeftPanelView.bRegister || m_RightPanelView.bRegister) {
+			#ifdef _DEBUG
+			MFileMapping<DetectedDialogs> pvMap;
+			if (m_LeftPanelView.bRegister || m_RightPanelView.bRegister)
+			{
 				pvMap.InitName(CEPANELDLGMAPNAME, mp_RCon->GetFarPID(TRUE));
 				pDlg = pvMap.Open();
 			}
+			#endif
 			if (!pDlg) pDlg = mp_RCon->GetDetector()->GetDetectedDialogsPtr();
 			// Поехали
 			HPEN hFrame = CreatePen(PS_SOLID, 1, RGB(255,0,255));
@@ -3114,10 +3129,11 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			HFONT hOldFont = (HFONT)SelectObject(hPaintDc, hSmall);
 			SetTextColor(hPaintDc, 0xFFFFFF);
 			SetBkColor(hPaintDc, 0);
-			for (int i = 0; i < pDlg->Count; i++) {
+			for (int i = 0; i < pDlg->Count; i++)
+			{
 				int n = 1;
 				DWORD nFlags = pDlg->DlgFlags[i];
-				if (i == (DEBUGDRAW_DIALOGS-1))
+				if (i == (MAX_DETECTED_DIALOGS-1))
 					SelectObject(hPaintDc, hRed);
 				else if ((nFlags & FR_ACTIVEMENUBAR) == FR_ACTIVEMENUBAR)
 					SelectObject(hPaintDc, hActiveMenu);
@@ -3129,7 +3145,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 					SelectObject(hPaintDc, hPanel);
 				else if ((nFlags & FR_HASBORDER))
 					SelectObject(hPaintDc, hFrame);
-				else {
+				else
+				{
 					SelectObject(hPaintDc, hDash);
 					n = 0;
 				}
@@ -3154,9 +3171,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			DeleteObject(hFrame);
 			DeleteObject(hSmall);
 		}
-		#endif
 	}
-#endif
+	//#endif
 
     
     if (lbExcept)

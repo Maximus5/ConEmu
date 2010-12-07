@@ -72,6 +72,7 @@ WARNING("TB_GETIDEALSIZE - awailable on XP only, use insted TB_GETMAXSIZE");
 #define TID_MINIMIZE 15
 #define TID_MAXIMIZE 16
 #define TID_APPCLOSE 17
+#define TID_COPYING 18
 #define TID_MINIMIZE_SEP 110
 
 #define BID_NEWCON_IDX 12
@@ -80,6 +81,7 @@ WARNING("TB_GETIDEALSIZE - awailable on XP only, use insted TB_GETMAXSIZE");
 #define BID_MAXIMIZE_IDX 15
 #define BID_RESTORE_IDX 16
 #define BID_APPCLOSE_IDX 17
+//#define BID_COPYING 18
 
 #define POST_UPDATE_TIMEOUT 2000
 
@@ -1087,6 +1089,10 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
         if (pDisp->iItem == TID_APPCLOSE) {
         	lstrcpyn(pDisp->pszText, _T("Close ALL consoles"), pDisp->cchTextMax);
         }
+        else if (pDisp->iItem == TID_COPYING)
+        {
+        	lstrcpyn(pDisp->pszText, _T("Show copying queue"), pDisp->cchTextMax);
+        }
         return true;
     }
 
@@ -1167,6 +1173,10 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
     } else
     if (wParam == TID_APPCLOSE) {
     	PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+    }
+    else if (wParam == TID_COPYING)
+    {
+    	gConEmu.OnCopyingState();
     }
 }
 
@@ -1312,6 +1322,10 @@ HWND TabBarClass::CreateToolbar()
 	SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(14,14)); 
 	TBADDBITMAP bmp = {g_hInstance,IDB_MAIN_TOOLBAR};
 	int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, TID_BUFFERHEIGHT, (LPARAM)&bmp);
+	bmp.nID = IDB_COPY;
+	int nCopyBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
+	WARNING("Чего-то там глючит. Должен 19 возвращать");
+	if (nCopyBmp < 19) nCopyBmp = 19;
 
 	//buttons
 	TBBUTTON btn = {0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP};
@@ -1336,6 +1350,13 @@ HWND TabBarClass::CreateToolbar()
 
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
 
+#ifdef _DEBUG
+	// Show copying state
+	btn.iBitmap = nCopyBmp; btn.idCommand = TID_COPYING;
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
+#endif
+	
 	// Buffer height mode
 	btn.iBitmap = nFirst + BID_BUFHEIGHT_IDX; btn.idCommand = TID_BUFFERHEIGHT; btn.fsState = TBSTATE_ENABLED;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);

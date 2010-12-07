@@ -69,6 +69,7 @@ CSettings gSet;
 HICON hClassIcon = NULL, hClassIconSm = NULL;
 BOOL gbDontEnable = FALSE;
 BOOL gbDebugLogStarted = FALSE;
+BOOL gbDebugShowRects = FALSE;
 
 
 const TCHAR *const szClassName = VirtualConsoleClass;
@@ -913,6 +914,8 @@ extern bool gbAllowAssertThread;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	//_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
+
 	/*int nCmp;
 	nCmp = StrCmpI(L" ", L"A"); // -1
 	nCmp = StrCmpI(L" ", L"+");

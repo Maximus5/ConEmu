@@ -54,12 +54,12 @@ CRgnDetect::~CRgnDetect()
 	}
 }
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 const DetectedDialogs* CRgnDetect::GetDetectedDialogsPtr() const
 {
 	return &m_DetectedDialogs;
 }
-#endif
+//#endif
 
 int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DWORD anMask/*=-1*/, DWORD anTest/*=-1*/) const
 {
@@ -1470,7 +1470,8 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 	int nTextHeight = TextHeight();
 
 	// Выделить память, при необходимости увеличить
-	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork || (nTextWidth * nTextHeight) > mn_MaxCells) {
+	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork || (nTextWidth * nTextHeight) > mn_MaxCells)
+	{
 		if (mpsz_Chars) free(mpsz_Chars);
 		mn_MaxCells = (nTextWidth * nTextHeight);
 		mpsz_Chars = (wchar_t*)calloc(mn_MaxCells, sizeof(wchar_t));
@@ -1479,24 +1480,29 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 	}
 	mn_CurWidth = nTextWidth;
 	mn_CurHeight = nTextHeight;
-	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork) {
+	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork)
+	{
 		_ASSERTE(mpsz_Chars && mp_Attrs && mp_AttrsWork);
 		return FALSE;
 	}
-	if (!mn_MaxCells) {
+	if (!mn_MaxCells)
+	{
 		_ASSERTE(mn_MaxCells>0);
 		return FALSE;
 	}
 	CHAR_INFO *pCharInfo = (CHAR_INFO*)calloc(mn_MaxCells, sizeof(CHAR_INFO));
-	if (!pCharInfo) {
+	if (!pCharInfo)
+	{
 		_ASSERTE(pCharInfo);
 		return FALSE;
 	}
+	CHAR_INFO *pCharInfoEnd = pCharInfo+mn_MaxCells;
 	BOOL bReadOk = FALSE;
 	COORD bufSize, bufCoord;
 	SMALL_RECT rgn;
 	// Если весь буфер больше 30К - и пытаться не будем
-	if ((mn_MaxCells*sizeof(CHAR_INFO)) < 30000) {
+	if ((mn_MaxCells*sizeof(CHAR_INFO)) < 30000)
+	{
 		bufSize.X = nTextWidth; bufSize.Y = nTextHeight;
 		bufCoord.X = 0; bufCoord.Y = 0;
 		rgn = m_sbi.srWindow;
@@ -1509,11 +1515,17 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 		// Придется читать построчно
 		bufSize.X = nTextWidth; bufSize.Y = 1;
 		bufCoord.X = 0; bufCoord.Y = 0;
-		rgn = m_sbi.srWindow;
+		CONSOLE_SCREEN_BUFFER_INFO sbi = m_sbi;
+		_ASSERTE(sbi.srWindow.Right>sbi.srWindow.Left);
+		_ASSERTE(sbi.srWindow.Bottom>sbi.srWindow.Top);
+		rgn = sbi.srWindow;
 		CHAR_INFO* pLine = pCharInfo;
-		for(int y = 0; y <= (int)m_sbi.srWindow.Bottom; y++, rgn.Top++, pLine+=nTextWidth)
+		SMALL_RECT rcFar = mrc_FarRect;
+		int nFarWidth = rcFar.Right - rcFar.Left + 1;
+		for(SHORT y = sbi.srWindow.Top; y <= sbi.srWindow.Bottom; y++, rgn.Top++, pLine+=nTextWidth)
 		{
 			rgn.Bottom = rgn.Top;
+			rgn.Right = rgn.Left+nTextWidth-1;
 			ReadConsoleOutput(hStd, pLine, bufSize, bufCoord, &rgn);
 		}
 	}

@@ -202,10 +202,12 @@ wchar_t gsLogCreateProcess[MAX_PATH+1] = {0};
 int gnSynchroCount = 0;
 bool gbSynchroProhibited = false;
 bool gbInputSynchroPending = false;
+void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
 
 
 //std::vector<HANDLE> ghCommandThreads;
-class CommandThreads {
+class CommandThreads
+{
 public:
 	HANDLE h[20];
 public:
@@ -1848,12 +1850,21 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 	
 	// Некоторые команды "асинхронные", блокировки не нужны
 	if (nCmd == CMD_LOG_SHELL 
+		|| nCmd == CMD_SET_CON_FONT
 		|| FALSE)
 	{
 		if (nCmd == CMD_LOG_SHELL)
 		{
 			TODO("Путь передается аргументом через pipe!");
 			LogCreateProcessCheck((wchar_t*)pCommandData);
+		}
+		else if (nCmd == CMD_SET_CON_FONT)
+		{
+			CESERVER_REQ_SETFONT* pFont = (CESERVER_REQ_SETFONT*)pCommandData;
+			if (pFont && pFont->cbSize == sizeof(CESERVER_REQ_SETFONT))
+			{
+				SetConsoleFontSizeTo(GetConsoleWindow(), pFont->inSizeY, pFont->inSizeX, pFont->sFontName);
+			}
 		}
 
 		// Ставим и выходим
@@ -2265,30 +2276,37 @@ int CreateColorerHeader()
 	nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
 	lhConWnd = GetConsoleWindow();
 	
-	if (gbHasColorMapping) {
+	if (gbHasColorMapping)
+	{
 		wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
 		
 		// Создаем! т.к. должна вызываться только после Detach!
 		ghColorMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
 			gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
 		
-		if (!ghColorMapping) {
+		if (!ghColorMapping)
+		{
 			#ifdef _DEBUG
 			dwErr = GetLastError();
 			#endif
 			// Функции вызываются в основной нити, вполне можно дергать FAR-API
 			TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
-		} else {
+		}
+		else
+		{
 			// Заголовок мэппинга содержит информацию о размере, нужно заполнить!
 			AnnotationHeader* pHdr = (AnnotationHeader*)MapViewOfFile(ghColorMapping, FILE_MAP_ALL_ACCESS,0,0,0);
-			if (!pHdr) {
+			if (!pHdr)
+			{
 				#ifdef _DEBUG
 				dwErr = GetLastError();
 				#endif
 				CloseHandle(ghColorMapping); ghColorMapping = NULL;
 				// Функции вызываются в основной нити, вполне можно дергать FAR-API
 				TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
-			} else {
+			}
+			else
+			{
 				pHdr->struct_size = sizeof(AnnotationHeader);
 				pHdr->bufferSize = nMapCells;
 				pHdr->locked = 0; pHdr->flushCounter = 0;
@@ -2299,7 +2317,8 @@ int CreateColorerHeader()
 	}
 	
 	#ifdef TRUE_COLORER_OLD_SUPPORT
-	if (gbHasColorMappingOld) {
+	if (gbHasColorMappingOld)
+	{
 		wsprintf(szMapName, L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
 		nMapSize = nMapCells * sizeof(AnnotationInfo);
 		ghColorMappingOld = CreateFileMapping(INVALID_HANDLE_VALUE, 
@@ -2312,12 +2331,14 @@ int CreateColorerHeader()
 
 void CloseColorerHeader()
 {
-	if (ghColorMapping) {
+	if (ghColorMapping)
+	{
 		CloseHandle(ghColorMapping);
 		ghColorMapping = NULL;
 	}
 	#ifdef TRUE_COLORER_OLD_SUPPORT
-	if (ghColorMappingOld) {
+	if (ghColorMappingOld)
+	{
 		CloseHandle(ghColorMappingOld);
 		ghColorMappingOld = NULL;
 	}
@@ -2336,14 +2357,18 @@ BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
 	if (ghMonitorThread)
 		SuspendThread(ghMonitorThread);
 
-	if (gbWasDetached) {
+	if (gbWasDetached)
+	{
 		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 		GetConsoleScreenBufferInfo(hOutput, &gsbiDetached);
 
 		// Нужно уведомить ТЕКУЩИЙ сервер, что закрываться по окончании команды не нужно
-		if (gdwServerPID == 0) {
+		if (gdwServerPID == 0)
+		{
 			_ASSERTE(gdwServerPID != NULL);
-		} else {
+		}
+		else
+		{
 			CESERVER_REQ In, *pOut = NULL;
 			ExecutePrepareCmd(&In, CECMD_SETDONTCLOSE, sizeof(CESERVER_REQ_HDR));
 			pOut = ExecuteSrvCmd(gdwServerPID, &In, FarHwnd);
@@ -2365,7 +2390,8 @@ VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 {
 	FarHwnd = GetConsoleWindow();
 
-	if (gbWasDetached) {
+	if (gbWasDetached)
+	{
 		// Сразу спрятать окошко
 		//apiShowWindow(FarHwnd, SW_HIDE);
 	}
@@ -2373,7 +2399,8 @@ VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 	// Если ранее были созданы мэппинги для цвета - пересоздать
 	CreateColorerHeader();
 	
-	if (gbWasDetached) {
+	if (gbWasDetached)
+	{
 		/*
 		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleScreenBufferSize(hOutput,sbi.dwSize);
@@ -2382,7 +2409,8 @@ VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 		*/
 
 		// сразу переподцепимся к GUI
-		if (!Attach2Gui()) {
+		if (!Attach2Gui())
+		{
 			EmergencyShow();
 		}
 		
@@ -2745,11 +2773,13 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 void CloseMapHeader()
 {
-	if (gpConsoleInfo) {
+	if (gpConsoleInfo)
+	{
 		UnmapViewOfFile(gpConsoleInfo);
 		gpConsoleInfo = NULL;
 	}
-	if (ghFileMapping) {
+	if (ghFileMapping)
+	{
 		CloseHandle(ghFileMapping);
 		ghFileMapping = NULL;
 	}
@@ -2766,22 +2796,29 @@ int OpenMapHeader()
 	
 	CloseMapHeader();
 	
-	if (FarHwnd) {
+	if (FarHwnd)
+	{
 		wsprintf(szMapName, CECONMAPNAME, (DWORD)FarHwnd);
 		ghFileMapping = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
-		if (ghFileMapping) {
+		if (ghFileMapping)
+		{
 			gpConsoleInfo = (const CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(ghFileMapping, FILE_MAP_READ,0,0,0);
-			if (gpConsoleInfo) {
+			if (gpConsoleInfo)
+			{
 				//ReloadFarInfo(); -- смысла нет. SetStartupInfo еще не вызывался
 				iRc = 0;
-			} else {
+			}
+			else
+			{
 				#ifdef _DEBUG
 				dwErr = GetLastError();
 				#endif
 				CloseHandle(ghFileMapping);
 				ghFileMapping = NULL;
 			}
-		} else {
+		}
+		else
+		{
 			#ifdef _DEBUG
 			dwErr = GetLastError();
 			#endif
@@ -3674,6 +3711,13 @@ void StopThread(void)
 	CommonShutdown();
 }
 
+
+int WINAPI _export ProcessDialogEventW(int Event, void *Param)
+{
+	return FALSE; // разрешение обработки фаром/другими плагинами
+}
+
+
 void   WINAPI _export ExitFARW(void)
 {
 	// Плагин выгружается, Вызывать Syncho больше нельзя
@@ -4414,7 +4458,11 @@ void ShowPluginMenu(int nID /*= -1*/)
 			if (ConEmuHwnd && IsWindow(ConEmuHwnd)) break; // Мы и так подключены?
 			Attach2Gui();
 		} break;
+		//#ifdef _DEBUG
+		//case 11: // Start "ConEmuC.exe /DEBUGPID="
+		//#else
 		case 10: // Start "ConEmuC.exe /DEBUGPID="
+		//#endif
 		{
 			if (TerminalMode) break; // низзя
 			StartDebugger();
@@ -4486,8 +4534,6 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
 	return lbRc;
 }
 
-void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
-
 BOOL Attach2Gui()
 {
 	DWORD dwServerPID = 0;
@@ -4503,8 +4549,8 @@ BOOL Attach2Gui()
 	}
 	gdwServerPID = 0;
 
-	TODO("У сервера пока не получается менять шрифт в консоли, которую создал FAR");
-	SetConsoleFontSizeTo(GetConsoleWindow(), 6, 4, L"Lucida Console");
+	//TODO("У сервера пока не получается менять шрифт в консоли, которую создал FAR");
+	//SetConsoleFontSizeTo(GetConsoleWindow(), 6, 4, L"Lucida Console");
 	
 	// Create process, with flag /Attach GetCurrentProcessId()
 	// Sleep for sometimes, try InitHWND(hConWnd); several times
@@ -4538,7 +4584,7 @@ BOOL Attach2Gui()
 	//if (IsWindows64())
 	//	wsprintf(szExe+lstrlenW(szExe), L"ConEmuC64.exe\" /ATTACH /PID=%i", dwSelfPID);
 	//else
-	wsprintf(szExe+lstrlenW(szExe), L"\" /ATTACH /PID=%i", dwSelfPID);
+	wsprintf(szExe+lstrlenW(szExe), L"\" /ATTACH /FARPID=%i", dwSelfPID);
 	
 	
 	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
@@ -4552,7 +4598,7 @@ BOOL Attach2Gui()
 		gdwServerPID = pi.dwProcessId;
 		lbRc = TRUE;
 		// Чтобы MonitorThread пытался открыть Mapping
-		gbTryOpenMapHeader = TRUE;
+		gbTryOpenMapHeader = (gpConsoleInfo==NULL);
 	}
 	
 	return lbRc;
@@ -4842,7 +4888,7 @@ void WINAPI OnLibraryLoaded(HMODULE ahModule)
 			arg.hConEmu = ghPluginModule;
 			arg.hPlugin = ahModule;
 			arg.bLoaded = TRUE;
-			arg.bGuiActive = (ConEmuHwnd == NULL);
+			arg.bGuiActive = (ConEmuHwnd != NULL);
 			// Сервисные функции
 			arg.GetFarHWND = GetFarHWND;
 			arg.GetFarHWND2 = GetFarHWND2;

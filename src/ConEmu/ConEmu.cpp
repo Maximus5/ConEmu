@@ -680,7 +680,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 #ifdef _DEBUG
 	else
 	{
-		_ASSERT(FALSE);
+		_ASSERTE(FALSE);
 	}
 #endif
 }
@@ -712,10 +712,15 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 
 		hRgn = CreateWindowRgn(abTestOnly, false, rcFrame.left, rcFrame.top, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
 
-	} else if (isZoomed() && !mb_InRestore) {
-		if (!hExclusion) {
+	}
+	else if (isZoomed() && !mb_InRestore)
+	{
+		if (!hExclusion)
+		{
 			// Если прозрачных участков в консоли нет - ничего не делаем
-		} else {
+		}
+		else
+		{
 			// с FullScreen не совпадает. Нужно с учетом заголовка
 			// сюда мы попадаем только когда заголовок НЕ скрывается
 			RECT rcScreen = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
@@ -725,10 +730,14 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 			hRgn = CreateWindowRgn(abTestOnly, false, nCX, nCY, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
 		}
 
-	} else {
+	}
+	else
+	{
 		// Normal
-		if (gSet.isHideCaptionAlways()) {
-			if (!isMouseOverFrame()) {
+		if (gSet.isHideCaptionAlways())
+		{
+			if (!isMouseOverFrame())
+			{
 				// Рамка невидима (мышка не над рамкой или заголовком)
 				RECT rcClient; GetClientRect(ghWnd, &rcClient);
 				RECT rcFrame = CalcMargins(CEM_FRAME);
@@ -741,7 +750,8 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 					rcClient.bottom+2*gSet.nHideCaptionAlwaysFrame);
 			}
 		}
-		if (!hRgn && hExclusion) {
+		if (!hRgn && hExclusion)
+		{
 			// Таки нужно создать...
 			bool bTheming = gSet.CheckTheming();
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
@@ -757,15 +767,18 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 {
 	HRGN hRgn = NULL, hExclusion = NULL, hCombine = NULL;
 
-	if (mp_VActive) {
+	if (mp_VActive)
+	{
 		hExclusion = mp_VActive->GetExclusionRgn(abTestOnly);
-		if (abTestOnly && hExclusion) {
+		if (abTestOnly && hExclusion)
+		{
 			_ASSERTE(hExclusion == (HRGN)1);
 			return (HRGN)1;
 		}
 	}
 
-	if (abRoundTitle && anX>0 && anY>0) {
+	if (abRoundTitle && anX>0 && anY>0)
+	{
 		int nPoint = 0;
 		POINT ptPoly[20];
 		ptPoly[nPoint++] = MakePoint(anX, anY+anWndHeight);
@@ -780,7 +793,9 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 		ptPoly[nPoint++] = MakePoint(anX+anWndWidth, anY+anWndHeight);
 
 		hRgn = CreatePolygonRgn(ptPoly, nPoint, WINDING);
-	} else {
+	}
+	else
+	{
 		hRgn = CreateRectRgn (anX, anY, anX+anWndWidth, anY+anWndHeight);
 	}
 
@@ -788,8 +803,10 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 		return (HRGN)1;
 	
 	// Смотреть CombineRgn, OffsetRgn (для перемещения региона отрисовки в пространство окна)
-	if (hExclusion) {
-		if (hRgn) {
+	if (hExclusion)
+	{
+		if (hRgn)
+		{
 			//_ASSERTE(hRgn != NULL);
 			//DeleteObject(hExclusion);
 			//} else {
@@ -965,69 +982,83 @@ void CConEmuMain::AskChangeBufferHeight()
 }
 
 /*!!!static!!*/
-// Функция расчитывает 
-RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg, CVirtualConsole* apVCon)
+// Функция расчитывает смещения (относительные)
+// mg содержит битмаск, например (CEM_FRAME|CEM_TAB|CEM_CLIENT)
+RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* apVCon)
 {
     RECT rc = {0,0,0,0};
     
     // Разница между размером всего окна и клиентской области окна (рамка + заголовок)
-    if (((DWORD)mg) & ((DWORD)CEM_FRAME))
+    if (mg & ((DWORD)CEM_FRAME))
     {
     	// т.к. это первая обработка - можно ставить rc простым приравниванием
     	_ASSERTE(rc.left==0 && rc.top==0 && rc.right==0 && rc.bottom==0);
     	
 		DWORD dwStyle = GetWindowStyle();
 		DWORD dwStyleEx = GetWindowStyleEx();
-		static DWORD dwLastStyle, dwLastStyleEx;
-		static RECT rcLastRect;
-		if (dwLastStyle == dwStyle && dwLastStyleEx == dwStyleEx) {
-			rc = rcLastRect; // чтобы не дергать лишние расчеты
-		} else {
-			RECT rcTest = MakeRect(100,100);
-			if (AdjustWindowRectEx(&rcTest, dwStyle, FALSE, dwStyleEx)) {
-				rc.left = -rcTest.left;
-				rc.top = -rcTest.top;
-				rc.right = rcTest.right - 100;
-				rc.bottom = rcTest.bottom - 100;
+		//static DWORD dwLastStyle, dwLastStyleEx;
+		//static RECT rcLastRect;
+		//if (dwLastStyle == dwStyle && dwLastStyleEx == dwStyleEx)
+		//{
+		//	rc = rcLastRect; // чтобы не дергать лишние расчеты
+		//}
+		//else
+		//{
+		RECT rcTest = MakeRect(100,100);
+		if (AdjustWindowRectEx(&rcTest, dwStyle, FALSE, dwStyleEx))
+		{
+			rc.left = -rcTest.left;
+			rc.top = -rcTest.top;
+			rc.right = rcTest.right - 100;
+			rc.bottom = rcTest.bottom - 100;
 
-				dwLastStyle = dwStyle; dwLastStyleEx = dwStyleEx;
-				rcLastRect = rc;
+			//dwLastStyle = dwStyle; dwLastStyleEx = dwStyleEx;
+			//rcLastRect = rc;
 
-			} else {
-				_ASSERT(FALSE);
-				rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
-				rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
-				rc.top = rc.bottom + GetSystemMetrics(SM_CYCAPTION);
-				//	+ (gSet.isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
-			}
 		}
+		else
+		{
+			_ASSERTE(FALSE);
+			rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
+			rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
+			rc.top = rc.bottom + GetSystemMetrics(SM_CYCAPTION);
+			//	+ (gSet.isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
+		}
+		//}
     }
     
-    // Далее все отступы считаются в клиентской части (дочерние окна)!
     
-    // Отступы от краев таба (если он видим) до окна фона (с прокруткой)
-    if (((DWORD)mg) & ((DWORD)CEM_TAB))
+    // Сколько занимают табы (по идее меняется только rc.top)
+    if (mg & ((DWORD)CEM_TAB))
     {
-        if (ghWnd) {
-			bool lbTabActive = (mg == CEM_TAB) ? gConEmu.mp_TabBar->IsActive() 
-				: ((((DWORD)mg) & ((DWORD)CEM_TABACTIVATE)) == ((DWORD)CEM_TABACTIVATE));
+        if (ghWnd)
+        {
+			bool lbTabActive = ((mg & CEM_TAB_MASK) == CEM_TAB) ? gConEmu.mp_TabBar->IsActive() 
+				: ((mg & ((DWORD)CEM_TABACTIVATE)) == ((DWORD)CEM_TABACTIVATE));
 				
             // Главное окно уже создано, наличие таба определено
-            if (lbTabActive) { //TODO: + IsAllowed()?
+            if (lbTabActive) //TODO: + IsAllowed()?
+            {
                 RECT rcTab = gConEmu.mp_TabBar->GetMargins();
                 AddMargins(rc, rcTab, FALSE);
             }// else { -- раз таба нет - значит дополнительные отступы не нужны
             //    rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
             //}
-        } else {
+        }
+        else
+        {
             // Иначе нужно смотреть по настройкам
-            if (gSet.isTabs == 1) {
+            if (gSet.isTabs == 1)
+            {
                 RECT rcTab = gSet.rcTabMargins; // умолчательные отступы таба
-                if (!gSet.isTabFrame) {
+                if (!gSet.isTabFrame)
+                {
                     // От таба остается только заголовок (закладки)
                     //rc.left=0; rc.right=0; rc.bottom=0;
                     rc.top += rcTab.top;
-                } else {
+                }
+                else
+                {
                 	AddMargins(rc, rcTab, FALSE);
                 }
             }// else { -- раз таба нет - значит дополнительные отступы не нужны
@@ -1047,17 +1078,22 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg, CVirtualConsole* apVCon)
     //    _ASSERTE(mg==CEM_FRAME || mg==CEM_TAB);
     //}
     
-    if (((DWORD)mg) & ((DWORD)CEM_CLIENT))
+    //if (mg & ((DWORD)CEM_CLIENT))
+    //{
+    //	TODO("Переделать на ручной расчет, необходимо для DoubleView. Должен зависеть от apVCon");
+    //	RECT rcDC; GetWindowRect(ghWndDC, &rcDC);
+    //	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+    //	RECT rcFrameTab = CalcMargins(CEM_FRAMETAB);
+    //	// ставим результат
+    //	rc.left += (rcDC.left - rcWnd.left - rcFrameTab.left);
+    //	rc.top += (rcDC.top - rcWnd.top - rcFrameTab.top);
+    //	rc.right -= (rcDC.right - rcWnd.right - rcFrameTab.right);
+    //	rc.bottom -= (rcDC.bottom - rcWnd.bottom - rcFrameTab.bottom);
+    //}
+    
+    if ((mg & ((DWORD)CEM_SCROLL)) && gSet.isAlwaysShowScrollbar)
     {
-    	TODO("Переделать на ручной расчет, необходимо для DoubleView. Должен зависеть от apVCon");
-    	RECT rcDC; GetWindowRect(ghWndDC, &rcDC);
-    	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
-    	RECT rcFrameTab = CalcMargins(CEM_FRAMETAB);
-    	// ставим результат
-    	rc.left += (rcDC.left - rcWnd.left - rcFrameTab.left);
-    	rc.top += (rcDC.top - rcWnd.top - rcFrameTab.top);
-    	rc.right -= (rcDC.right - rcWnd.right - rcFrameTab.right);
-    	rc.bottom -= (rcDC.bottom - rcWnd.bottom - rcFrameTab.bottom);
+    	rc.right += GetSystemMetrics(SM_CXVSCROLL);
     }
     
     return rc;
@@ -1077,10 +1113,14 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 	if (!pVCon)
 		pVCon = gConEmu.mp_VActive;
     
-	if (rFrom.left || rFrom.top) {
-		if (rFrom.left >= rFrom.right || rFrom.top >= rFrom.bottom) {
+	if (rFrom.left || rFrom.top)
+	{
+		if (rFrom.left >= rFrom.right || rFrom.top >= rFrom.bottom)
+		{
 			MBoxAssert(!(rFrom.left || rFrom.top));
-		} else {
+		}
+		else
+		{
 			// Это реально может произойти на втором мониторе.
 			// Т.к. сюда передается Rect монитора, 
 			// полученный из CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
@@ -1089,7 +1129,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 
     switch (tFrom)
     {
-        case CER_MAIN:
+        case CER_MAIN: // switch (tFrom)
             // Нужно отнять отступы рамки и заголовка!
             {
                 rcShift = CalcMargins(CEM_FRAME);
@@ -1100,12 +1140,12 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 				tFromNow = CER_MAINCLIENT;
             }
             break;
-        case CER_MAINCLIENT:
+        case CER_MAINCLIENT: // switch (tFrom)
             {
 				//
             }
             break;
-        case CER_DC:
+        case CER_DC: // switch (tFrom)
             {   // Размер окна отрисовки в пикселах!
                 //MBoxAssert(!(rFrom.left || rFrom.top));
 				TODO("DoubleView");
@@ -1116,10 +1156,10 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                     {
                         //rcShift = CalcMargins(CEM_BACK);
                         //AddMargins(rc, rcShift, TRUE/*abExpand*/);
-                        rcShift = CalcMargins(tTabAction);
+                        rcShift = CalcMargins(tTabAction|CEM_FRAME|CEM_SCROLL);
                         AddMargins(rc, rcShift, TRUE/*abExpand*/);
-                        rcShift = CalcMargins(CEM_FRAME);
-                        AddMargins(rc, rcShift, TRUE/*abExpand*/);
+                        //rcShift = CalcMargins(CEM_FRAME);
+                        //AddMargins(rc, rcShift, TRUE/*abExpand*/);
 						WARNING("Неправильно получается при DoubleView");
 						tFromNow = CER_MAINCLIENT;
                     } break;
@@ -1136,6 +1176,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                     {
                         //rcShift = CalcMargins(CEM_BACK);
                         //AddMargins(rc, rcShift, TRUE/*abExpand*/);
+                        _ASSERTE(tWhat!=CER_TAB); // вроде этого быть не должно?
                         rcShift = CalcMargins(tTabAction);
                         AddMargins(rc, rcShift, TRUE/*abExpand*/);
 						WARNING("Неправильно получается при DoubleView");
@@ -1144,6 +1185,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					case CER_WORKSPACE:
 					{
 						WARNING("CER_WORKSPACE - не сделано вообще");
+						_ASSERTE(tWhat!=CER_WORKSPACE);
 					} break;
                     case CER_BACK:
                     {
@@ -1161,10 +1203,10 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                 }
             }
             return rc;
-        case CER_CONSOLE:
+        case CER_CONSOLE: // switch (tFrom)
 		    {   // Размер консоли в символах!
                 //MBoxAssert(!(rFrom.left || rFrom.top));
-                MBoxAssert(tWhat!=CER_CONSOLE);
+                _ASSERTE(tWhat!=CER_CONSOLE);
                 
                 //if (gSet.FontWidth()==0) {
                 //    MBoxAssert(gConEmu.mp_VActive!=NULL);
@@ -1178,15 +1220,21 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                 if (tWhat != CER_DC)
                     rc = CalcRect(tWhat, rc, CER_DC);
 
-				tFromNow = CER_BACK;
+				// -- tFromNow = CER_BACK; -- менять не требуется, т.к. мы сразу на выход
             }
             return rc;
-        case CER_FULLSCREEN:
-        case CER_MAXIMIZED:
+        case CER_FULLSCREEN: // switch (tFrom)
+        case CER_MAXIMIZED: // switch (tFrom)
+        	_ASSERTE(tFrom!=CER_FULLSCREEN && tFrom!=CER_MAXIMIZED);
             break;
+		case CER_BACK: // switch (tFrom)
+			break;
         default:
+        	_ASSERTE(tFrom==CER_MAINCLIENT); // для отладки, сюда вроде попадать не должны
             break;
     };
+    
+    // Теперь rc должен соответствовать CER_MAINCLIENT
 
     RECT rcAddShift = MakeRect(0,0);
         
@@ -1216,29 +1264,36 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
     
     switch (tWhat)
     {
-        case CER_TAB:
+        case CER_TAB: // switch (tWhat)
         {
             // Отступы ДО таба могут появиться только от корректировки
         } break;
-		case CER_WORKSPACE:
+		case CER_WORKSPACE: // switch (tWhat)
 		{
-			rcShift = CalcMargins(tTabAction);
+			rcShift = CalcMargins(tTabAction|CEM_SCROLL);
 			AddMargins(rc, rcShift);
 		} break;
-        case CER_BACK:
+        case CER_BACK: // switch (tWhat)
         {
 			TODO("DoubleView");
-            rcShift = CalcMargins(tTabAction);
+            rcShift = CalcMargins(tTabAction|CEM_SCROLL);
             AddMargins(rc, rcShift);
         } break;
-        case CER_DC:
-        case CER_CONSOLE:
-		case CER_CONSOLE_NTVDMOFF:
+		case CER_SCROLL: // switch (tWhat)
+		{
+            rcShift = CalcMargins(tTabAction);
+            AddMargins(rc, rcShift);
+			rc.left = rc.right - GetSystemMetrics(SM_CXVSCROLL);
+			return rc; // Иначе внизу еще будет коррекция по DC (rcAddShift)
+		} break;
+        case CER_DC: // switch (tWhat)
+        case CER_CONSOLE: // switch (tWhat)
+		case CER_CONSOLE_NTVDMOFF: // switch (tWhat)
         {
 			if (tFromNow == CER_MAINCLIENT)
 			{
 				// Учесть высоту закладок (табов)
-		        rcShift = CalcMargins(tTabAction);
+		        rcShift = CalcMargins(tTabAction|CEM_SCROLL);
 	            AddMargins(rc, rcShift);
 			}
 			else if (tFromNow == CER_BACK || tFromNow == CER_WORKSPACE)
@@ -1261,7 +1316,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			//if (rcShift.top || rcShift.bottom || )
 			//nShift = (gSet.FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
 
-            if (tWhat != CER_CONSOLE_NTVDMOFF && pVCon->RCon()->isNtvdm()) {
+            if (tWhat != CER_CONSOLE_NTVDMOFF && pVCon->RCon()->isNtvdm())
+            {
                 // NTVDM устанавливает ВЫСОТУ экранного буфера... в 25/28/43/50 строк
                 // путем округления текущей высоты (то есть если до запуска 16bit
                 // было 27 строк, то скорее всего будет установлена высота в 28 строк)
@@ -1271,10 +1327,13 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                 	rc1.bottom = (rc.bottom - rc.top); // Если размер вылез за текущий - обрежем снизу :(
                     
                 int nS = rc.right - rc.left - rc1.right;
-                if (nS>=0) {
+                if (nS>=0)
+                {
                     rcShift.left = nS / 2;
                     rcShift.right = nS - rcShift.left;
-                } else {
+                }
+                else
+                {
                     rcShift.left = 0;
                     rcShift.right = -nS;
                 }
@@ -1299,7 +1358,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                 rc.left = 0; rc.top = 0; rc.right = nW; rc.bottom = nH;
 
 				//2010-01-19
-				if (gSet.isFontAutoSize) {
+				if (gSet.isFontAutoSize)
+				{
 					if (gSet.wndWidth && rc.right > (LONG)gSet.wndWidth)
 						rc.right = gSet.wndWidth;
 					if (gSet.wndHeight && rc.bottom > (LONG)gSet.wndHeight)
@@ -1307,15 +1367,18 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 				}
 
 				#ifdef _DEBUG
-                _ASSERT(rc.bottom>=5);
+                _ASSERTE(rc.bottom>=5);
 				#endif
 				
 				// Возможно, что в RealConsole выставлен большой шрифт, который помешает установке этого размера
-				if (gConEmu.mp_VActive) {
+				if (gConEmu.mp_VActive)
+				{
 					CRealConsole* pRCon = gConEmu.mp_VActive->RCon();
-					if (pRCon) {
+					if (pRCon)
+					{
 						COORD crMaxConSize = {0,0};
-						if (pRCon->GetMaxConSize(&crMaxConSize)) {
+						if (pRCon->GetMaxConSize(&crMaxConSize))
+						{
 							if (rc.right > crMaxConSize.X)
 								rc.right = crMaxConSize.X;
 							if (rc.bottom > crMaxConSize.Y)
@@ -1327,8 +1390,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                 return rc;
             }
         } break;
-        case CER_FULLSCREEN:
-        case CER_MAXIMIZED:
+        case CER_FULLSCREEN: // switch (tWhat)
+        case CER_MAXIMIZED: // switch (tWhat)
         //case CER_CORRECTED:
         {
             HMONITOR hMonitor = NULL;
@@ -1342,7 +1405,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
             //    tFrom = tWhat;
 
             MONITORINFO mi; mi.cbSize = sizeof(mi);
-            if (GetMonitorInfo(hMonitor, &mi)) {
+            if (GetMonitorInfo(hMonitor, &mi))
+            {
                 switch (tFrom)
                 {
                 case CER_FULLSCREEN:
@@ -1373,7 +1437,9 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                 default:
                     _ASSERTE(tFrom==CER_FULLSCREEN || tFrom==CER_MAXIMIZED);
                 }
-            } else {
+            }
+            else
+            {
                 switch (tFrom)
                 {
                 case CER_FULLSCREEN:
@@ -1713,7 +1779,7 @@ void CConEmuMain::SyncWindowToConsole()
         return;
 
     #ifdef _DEBUG
-    _ASSERT(GetCurrentThreadId() == mn_MainThreadId);
+    _ASSERTE(GetCurrentThreadId() == mn_MainThreadId);
 
 	if (mp_VActive->TextWidth == 80) {
 		int nDbg = mp_VActive->TextWidth;
@@ -1723,7 +1789,7 @@ void CConEmuMain::SyncWindowToConsole()
 
 	CRealConsole* pRCon = mp_VActive->RCon();
 	if (pRCon && (mp_VActive->TextWidth != pRCon->TextWidth() || mp_VActive->TextHeight != pRCon->TextHeight())) {
-		_ASSERT(FALSE);
+		_ASSERTE(FALSE);
 		mp_VActive->Update();
 	}
 
@@ -1733,7 +1799,7 @@ void CConEmuMain::SyncWindowToConsole()
         rcDC = MakeRect(mp_VActive->winSize.X, mp_VActive->winSize.Y);
     }*/
 
-    //_ASSERT(rcDC.right>250 && rcDC.bottom>200);
+    //_ASSERTE(rcDC.right>250 && rcDC.bottom>200);
 
     RECT rcWnd = CalcRect(CER_MAIN, rcDC, CER_DC); // размеры окна
     
@@ -1956,7 +2022,8 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
 				AutoSizeFont(rcMax, CER_MAIN);
 				RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAIN);
-				if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right,rcCon.bottom)) {
+				if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right,rcCon.bottom))
+				{
 					if (pRCon) pRCon->LogString("!!!SetConsoleSize FAILED!!!");
 					mb_PassSysCommand = false;
 					goto wrap;
@@ -2011,7 +2078,8 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 					RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
 					AutoSizeFont(rcMax, CER_MAIN);
 					RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAIN);
-					if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right,rcCon.bottom)) {
+					if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right,rcCon.bottom))
+					{
 						if (pRCon) pRCon->LogString("!!!SetConsoleSize FAILED!!!");
 						mb_PassSysCommand = false;
 						goto wrap;
@@ -2103,7 +2171,8 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
             RECT rcMax = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
 			AutoSizeFont(rcMax, CER_MAINCLIENT);
             RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAINCLIENT);
-            if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right,rcCon.bottom)) {
+            if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right,rcCon.bottom))
+            {
 				if (pRCon) pRCon->LogString("!!!SetConsoleSize FAILED!!!");
                 mb_PassSysCommand = false;
                 goto wrap;
@@ -2629,7 +2698,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
     else if (!gSet.isFullScreen && !isZoomed())
     {
         RECT srctWindow;
-        RECT wndSizeRect, restrictRect;
+        RECT wndSizeRect, restrictRect, calcRect;
         RECT *pRect = (RECT*)lParam; // с рамкой
 
 		RECT rcCurrent; GetWindowRect(ghWnd, &rcCurrent);
@@ -2669,12 +2738,12 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 
         //RECT consoleRect = ConsoleOffsetRect();
         //wndSizeRect = WindowSizeFromConsole(srctWindow, true /* rectInWindow */);
-        wndSizeRect = CalcRect(CER_MAIN, srctWindow, CER_CONSOLE);
+        calcRect = CalcRect(CER_MAIN, srctWindow, CER_CONSOLE);
 
-        restrictRect.right = pRect->left + wndSizeRect.right;
-        restrictRect.bottom = pRect->top + wndSizeRect.bottom;
-        restrictRect.left = pRect->right - wndSizeRect.right;
-        restrictRect.top = pRect->bottom - wndSizeRect.bottom;
+        restrictRect.right = pRect->left + calcRect.right;
+        restrictRect.bottom = pRect->top + calcRect.bottom;
+        restrictRect.left = pRect->right - calcRect.right;
+        restrictRect.top = pRect->bottom - calcRect.bottom;
         
 
         switch(wParam)
@@ -3309,6 +3378,11 @@ bool CConEmuMain::LoadVersionInfo(wchar_t* pFullPath)
     delete[] pBuffer;
     
     return true;
+}
+
+void CConEmuMain::OnCopyingState()
+{
+	TODO("CConEmuMain::OnCopyingState()");
 }
 
 void CConEmuMain::PostCopy(wchar_t* apszMacro, BOOL abRecieved/*=FALSE*/)
@@ -4123,6 +4197,8 @@ LRESULT CConEmuMain::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 	{
 		BOOL bSelectionExist = ActiveCon()->RCon()->isSelectionPresent();
     	EnableMenuItem(hMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
+    	
+    	CheckMenuItem(hMenu, ID_DEBUG_SHOWRECTS, MF_BYCOMMAND|(gbDebugShowRects ? MF_CHECKED : MF_UNCHECKED));
 
     	#ifdef _DEBUG
 		wchar_t szText[128];
@@ -5283,8 +5359,10 @@ void CConEmuMain::RePaint()
 
 void CConEmuMain::Update(bool isForce /*= false*/)
 {
-    if (isForce) {
-        for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
+    if (isForce)
+    {
+        for (int i=0; i<MAX_CONSOLE_COUNT; i++)
+        {
             if (mp_VCon[i])
                 mp_VCon[i]->OnFontChanged();
         }
@@ -5292,7 +5370,8 @@ void CConEmuMain::Update(bool isForce /*= false*/)
 
 	CVirtualConsole::ClearPartBrushes();
     
-    if (mp_VActive) {
+    if (mp_VActive)
+    {
         mp_VActive->Update(isForce);
         //InvalidateAll();
     }
@@ -5748,7 +5827,7 @@ LRESULT CConEmuMain::OnClose(HWND hWnd)
 	// Если все-таки вызовется - имитировать SC_CLOSE
 	OnSysCommand(hWnd, SC_CLOSE, 0);
 
-    //_ASSERT(FALSE);
+    //_ASSERTE(FALSE);
     //Icon.Delete(); - перенес в WM_DESTROY
     //mb_InClose = TRUE;
     //if (ghConWnd && IsWindow(ghConWnd)) {
@@ -5872,6 +5951,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     #ifdef _DEBUG
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_MONITOR_SHELLACTIVITY, _T("Enable &shell log..."));
     #endif
+    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_SHOWRECTS, _T("Show debug rec&ts"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_PASTE, _T("&Paste"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_COPY, _T("Cop&y"));
@@ -6325,11 +6405,11 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
     
     UnRegisterHotKeys(TRUE);
 
-	if (mh_DwmApi && mh_DwmApi != INVALID_HANDLE_VALUE)
-	{
-		FreeLibrary(mh_DwmApi); mh_DwmApi = NULL;
-		DwmIsCompositionEnabled = NULL;
-	}
+	//if (mh_DwmApi && mh_DwmApi != INVALID_HANDLE_VALUE)
+	//{
+	//	FreeLibrary(mh_DwmApi); mh_DwmApi = NULL;
+	//	DwmIsCompositionEnabled = NULL;
+	//}
 
     KillTimer(ghWnd, TIMER_MAIN_ID);
     KillTimer(ghWnd, TIMER_CONREDRAW_ID);
@@ -9074,6 +9154,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	    	//	StopLogCreateProcess();
 		}
     	return 0;
+    case ID_DEBUG_SHOWRECTS:
+    	gbDebugShowRects = !gbDebugShowRects;
+    	InvalidateAll();
+    	return 0;
     case ID_CON_TOGGLE_VISIBLE:
         if (mp_VActive)
             mp_VActive->RCon()->ShowConsole(-1); // Toggle visibility
@@ -9772,7 +9856,7 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 
     if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA)) 
     {
-        _ASSERTE("ReadFile(pipe) failed"==NULL);
+        _ASSERTE("ReadFile(pipe) failed"==NULL || (dwErr==ERROR_BROKEN_PIPE && cbRead==0));
         //CloseHandle(hPipe);
         return;
     }
@@ -9875,7 +9959,8 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 	else if (pIn->hdr.nCmd == CECMD_ATTACH2GUI)
 	{
 		// Получен запрос на Attach из сервера
-		if (AttachRequested(pIn->StartStop.hWnd, pIn->StartStop, &(pIn->StartStopRet))) {
+		if (AttachRequested(pIn->StartStop.hWnd, pIn->StartStop, &(pIn->StartStopRet)))
+		{
 			fSuccess = WriteFile(hPipe, pIn, pIn->hdr.cbSize, &cbWritten, NULL);
 		}
 

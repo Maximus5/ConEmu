@@ -42,6 +42,7 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #endif 	/* __ITaskbarList2_FWD_DEFINED__ */
 
 #define WM_TRAYNOTIFY WM_USER+1
+#define ID_DEBUG_SHOWRECTS 0xABC0
 #define ID_MONITOR_SHELLACTIVITY 0xABC1
 #define ID_CON_COPY 0xABC2
 #define ID_CON_MARKTEXT 0xABC3
@@ -78,27 +79,28 @@ class CConEmuBack;
 class TabBarClass;
 
 WARNING("ѕроверить, чтобы DC нормально центрировалось после удалени€ CEM_BACK");
-enum ConEmuMargins {
-	CEM_FRAME = 0x0001, // –азница между размером всего окна и клиентской области окна (рамка + заголовок)
-	// ƒалее все отступы считаютс€ в клиентской части (дочерние окна)!
-	CEM_TAB = 0x0002, // ¬ысота таба (пока только .top)
+enum ConEmuMargins
+{
+	// –азница между размером всего окна и клиентской области окна (рамка + заголовок)
+	CEM_FRAME = 0x0001,
+	// ¬ысота таба (пока только .top)
+	CEM_TAB = 0x0002, 
 	CEM_TABACTIVATE = 0x1002,   // ѕринудительно считать, что таб есть (при включении таба)
 	CEM_TABDEACTIVATE = 0x2002, // ѕринудительно считать, что таба нет (при отключении таба)
-	// ќтступ в клиентской части, за вычетом таба
-	CEM_CLIENT = 0x0004,
-	// ƒл€ удобства вызова - сформируем "пакетные" аргументы
-	CEM_FRAMETAB = 0x0003,
-	CEM_FRAMETABCLIENT = 0x0007,
-	CEM_TABCLIENT = 0x0006,
+	CEM_TAB_MASK = (CEM_TAB|CEM_TABACTIVATE|CEM_TABDEACTIVATE),
+	// ≈сли полоса прокрутки всегда видна - то ее ширины
+	CEM_SCROLL = 0x0004,
 };
 
-enum ConEmuRect {
+enum ConEmuRect
+{
 	CER_MAIN = 0,   // ѕолный размер окна
 	// ƒалее все координаты считаютс€ относительно клиенсткой области {0,0}
 	CER_MAINCLIENT, // клиентска€ область главного окна (Ѕ≈« отрезани€ табом, прокруток, DoubleView и прочего. ÷еликом)
 	CER_TAB,        // положение контрола с закладками (всего)
 	CER_BACK,       // положение окна с фоном
 	CER_WORKSPACE,  // пока - то же что и CER_BACK, но при DoubleView CER_BACK может быть меньше
+	CER_SCROLL,     // положение полосы прокрутки
 	CER_DC,         // положение окна отрисовки
 	CER_CONSOLE,    // !!! _ размер в символах _ !!!
 	CER_CONSOLE_NTVDMOFF, // same as CER_CONSOLE, но во врем€ отключени€ режима 16бит
@@ -321,7 +323,7 @@ public:
 	void AskChangeBufferHeight();
 	BOOL AttachRequested(HWND ahConWnd, CESERVER_REQ_STARTSTOP pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 	void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
-	static RECT CalcMargins(enum ConEmuMargins mg, CVirtualConsole* apVCon=NULL);
+	static RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* apVCon=NULL);
 	static RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 	void CheckFocus(LPCWSTR asFrom);
 	enum DragPanelBorder CheckPanelDrag(COORD crCon);
@@ -425,6 +427,7 @@ public:
 	BOOL OnCloseQuery();
 	//BOOL mb_InConsoleResize;
 	void OnConsoleResize(BOOL abPosted=FALSE);
+	void OnCopyingState();
 	LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);
 	void OnDesktopMode();
 	LRESULT OnDestroy(HWND hWnd);

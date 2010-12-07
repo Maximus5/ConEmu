@@ -48,9 +48,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 WARNING("Обязательно после запуска сделать apiSetForegroundWindow на GUI окно, если в фокусе консоль");
 WARNING("Обязательно получить код и имя родительского процесса");
 
-WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT}");
-//E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmuC.exe /c tools\gawk.exe -f .\scripts\gendate.awk
-
 
 #ifdef _DEBUG
 wchar_t gszDbgModLabel[6] = {0};
@@ -118,6 +115,7 @@ BOOL gbNoCreateProcess = FALSE;
 BOOL gbDebugProcess = FALSE;
 int  gnCmdUnicodeMode = 0;
 BOOL gbRootIsCmdExe = TRUE;
+BOOL gbAttachFromFar = FALSE;
 OSVERSIONINFO gOSVer;
 
 
@@ -593,7 +591,8 @@ wrap:
 	MessageBox(GetConsoleWindow(), L"Finalizing", (gnRunMode == RM_SERVER) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
 	#endif
 	if (!gbInShutdown // только если юзер не нажал крестик в заголовке окна
-		&& ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE) || gbAlwaysConfirmExit)
+		&& ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE)
+			|| gbAlwaysConfirmExit)
 		)
 	{
 		BOOL lbProcessesLeft = FALSE, lbDontShowConsole = FALSE;
@@ -1005,6 +1004,31 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			gnRunMode = RM_SERVER;
 		}
 
+		else if (wcsncmp(szArg, L"/PID=", 5)==0 || wcsncmp(szArg, L"/FARPID=", 8)==0)
+		{
+			gnRunMode = RM_SERVER;
+			gbNoCreateProcess = TRUE;
+			wchar_t* pszEnd = NULL, *pszStart;
+			if (wcsncmp(szArg, L"/FARPID=", 8)==0)
+			{
+				gbAttachFromFar = TRUE;
+				gbRootIsCmdExe = FALSE;
+				pszStart = szArg+8;
+			}
+			else
+			{
+				pszStart = szArg+5;
+			}
+			srv.dwRootProcess = wcstoul(pszStart, &pszEnd, 10);
+			if (srv.dwRootProcess == 0)
+			{
+				_printf ("Attach to GUI was requested, but invalid PID specified:\n");
+				_wprintf (GetCommandLineW());
+				_printf ("\n");
+				return CERR_CARGUMENT;
+			}
+		}
+
 		else if (wcscmp(szArg, L"/HIDE")==0)
 		{
 			gbForceHideConWnd = TRUE;
@@ -1073,21 +1097,6 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			}
 		}
 		
-		else if (wcsncmp(szArg, L"/PID=", 5)==0)
-		{
-			gnRunMode = RM_SERVER;
-			gbNoCreateProcess = TRUE;
-			wchar_t* pszEnd = NULL;
-			//srv.dwRootProcess = _wtol(szArg+5);
-			srv.dwRootProcess = wcstoul(szArg+5, &pszEnd, 10);
-			if (srv.dwRootProcess == 0) {
-				_printf ("Attach to GUI was requested, but invalid PID specified:\n");
-				_wprintf (GetCommandLineW());
-				_printf ("\n");
-				return CERR_CARGUMENT;
-			}
-		}
-
 		else if (wcsncmp(szArg, L"/DEBUGPID=", 10)==0)
 		{
 			gnRunMode = RM_SERVER;
@@ -2516,22 +2525,24 @@ void ProcessDebugEvent()
 				{
 					if (evt.u.Exception.ExceptionRecord.NumberParameters>=2)
 					{
-						wsprintfA(szDbgText,"{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s %s of 0x%08X\n", evt.dwProcessId,evt.dwThreadId,
+						wsprintfA(szDbgText,"{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s %s of 0x%08X FC=%u\n", evt.dwProcessId,evt.dwThreadId,
 							evt.u.Exception.ExceptionRecord.ExceptionAddress,
 							evt.u.Exception.ExceptionRecord.ExceptionFlags,
 							((evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : ""),
 							((evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==0) ? "Read" :
 							(evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==1) ? "Write" :
 							(evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==8) ? "DEP" : "???"),
-							evt.u.Exception.ExceptionRecord.ExceptionInformation[1]
+							evt.u.Exception.ExceptionRecord.ExceptionInformation[1],
+							evt.u.Exception.dwFirstChance
 							);
 					}
 					else
 					{
-						wsprintfA(szDbgText,"{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+						wsprintfA(szDbgText,"{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s FC=%u\n", evt.dwProcessId,evt.dwThreadId,
 							evt.u.Exception.ExceptionRecord.ExceptionAddress,
 							evt.u.Exception.ExceptionRecord.ExceptionFlags,
-							(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+							(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "",
+							evt.u.Exception.dwFirstChance);
 					}
 					_printf(szDbgText);
 				}
@@ -2565,13 +2576,14 @@ void ProcessDebugEvent()
 					default:
 						wsprintfA(szName,"Exception 0x%08X",evt.u.Exception.ExceptionRecord.ExceptionCode);
 					}
-					wsprintfA(szDbgText,"{%i.%i} %s at 0x%08X flags 0x%08X%s\n",
+					wsprintfA(szDbgText,"{%i.%i} %s at 0x%08X flags 0x%08X%s FC=%u\n",
 						evt.dwProcessId,evt.dwThreadId,
 						pszName,
 						evt.u.Exception.ExceptionRecord.ExceptionAddress,
 						evt.u.Exception.ExceptionRecord.ExceptionFlags,
 						(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) 
-							? "(EXCEPTION_NONCONTINUABLE)" : "");
+							? "(EXCEPTION_NONCONTINUABLE)" : "",
+						evt.u.Exception.dwFirstChance);
 					_printf(szDbgText);
 				}
 			}
@@ -2579,7 +2591,7 @@ void ProcessDebugEvent()
 			if (!lbNonContinuable && (evt.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_BREAKPOINT))
 			{
 				char szConfirm[2048];
-				lstrcpyA(szConfirm, "Non continuable exception\n");
+				wsprintfA(szConfirm, "Non continuable exception (FC=%u)\n", evt.u.Exception.dwFirstChance);
 				lstrcatA(szConfirm, szDbgText);
 				lstrcatA(szConfirm, "\nCreate minidump?");
 				typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
@@ -2609,7 +2621,7 @@ void ProcessDebugEvent()
 							| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
 						if (!GetSaveFileNameW(&ofn))
 							break;
-						hDmpFile = CreateFileW(dmpfile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+						hDmpFile = CreateFileW(dmpfile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH, NULL);
 						if (hDmpFile == INVALID_HANDLE_VALUE)
 						{
 							DWORD nErr = GetLastError();
@@ -2635,20 +2647,29 @@ void ProcessDebugEvent()
 						if (!MiniDumpWriteDump_f)
 						{
 							MiniDumpWriteDump_f = (MiniDumpWriteDump_t)GetProcAddress(hDbghelp, "MiniDumpWriteDump");
-							DWORD nErr = GetLastError();
-							wsprintfW(szErrInfo, L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll'", nErr);
-							MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_ICONSTOP|MB_SYSTEMMODAL);
-							break;
+							if (!MiniDumpWriteDump_f)
+							{
+								DWORD nErr = GetLastError();
+								wsprintfW(szErrInfo, L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll'", nErr);
+								MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_ICONSTOP|MB_SYSTEMMODAL);
+								break;
+							}
 						}
 
 						if (MiniDumpWriteDump_f)
 						{
 							MINIDUMP_EXCEPTION_INFORMATION mei = {evt.dwThreadId};
-							mei.ExceptionPointers->ExceptionRecord = &evt.u.Exception.ExceptionRecord;
-							mei.ExceptionPointers->ContextRecord = NULL; // Непонятно, откуда его можно взять
+							EXCEPTION_POINTERS ep = {&evt.u.Exception.ExceptionRecord};
+							ep.ContextRecord = NULL; // Непонятно, откуда его можно взять
+							mei.ExceptionPointers = &ep;
 							mei.ClientPointers = FALSE;
-							BOOL lbDumpRc = MiniDumpWriteDump_f(srv.hRootProcess, srv.dwRootProcess,
-								hDmpFile, MiniDumpWithDataSegs, &mei, NULL, NULL);
+							PMINIDUMP_EXCEPTION_INFORMATION pmei = NULL; // пока
+							BOOL lbDumpRc = MiniDumpWriteDump_f(
+								srv.hRootProcess, srv.dwRootProcess,
+								hDmpFile, 
+								MiniDumpNormal /*MiniDumpWithDataSegs*/,
+								pmei,
+								NULL, NULL);
 							if (!lbDumpRc)
 							{
 								DWORD nErr = GetLastError();
@@ -2936,20 +2957,24 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			*out = ExecuteNewCmd(0,nOutSize);
 			if (*out == NULL) return FALSE;
 			MCHKHEAP;
-			if (in.hdr.cbSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETSIZE))) {
+			if (in.hdr.cbSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETSIZE)))
+			{
 				USHORT nBufferHeight = 0;
 				COORD  crNewSize = {0,0};
 				SMALL_RECT rNewRect = {0};
 				SHORT  nNewTopVisible = -1;
 				//memmove(&nBufferHeight, in.Data, sizeof(USHORT));
 				nBufferHeight = in.SetSize.nBufferHeight;
-				if (nBufferHeight == -1) {
+				if (nBufferHeight == -1)
+				{
 					// Для 'far /w' нужно оставить высоту буфера!
 					if (in.SetSize.size.Y < srv.sbi.dwSize.Y
 						&& srv.sbi.dwSize.Y > (srv.sbi.srWindow.Bottom - srv.sbi.srWindow.Top + 1))
 					{
 						nBufferHeight = srv.sbi.dwSize.Y;
-					} else {
+					}
+					else
+					{
 						nBufferHeight = 0;
 					}
 				}
@@ -2966,14 +2991,17 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				// Все остальные поля заголовка уже заполнены в ExecuteNewCmd
 
 				//#ifdef _DEBUG
-				if (in.hdr.nCmd == CECMD_CMDFINISHED) {
+				if (in.hdr.nCmd == CECMD_CMDFINISHED)
+				{
 					PRINT_COMSPEC(L"CECMD_CMDFINISHED, Set height to: %i\n", crNewSize.Y);
 					DEBUGSTR(L"\n!!! CECMD_CMDFINISHED !!!\n\n");
 					// Вернуть нотификатор
 					TODO("Смена режима рефреша консоли")
 					//if (srv.dwWinEventThread != 0)
 					//	PostThreadMessage(srv.dwWinEventThread, srv.nMsgHookEnableDisable, TRUE, 0);
-				} else if (in.hdr.nCmd == CECMD_CMDSTARTED) {
+				}
+				else if (in.hdr.nCmd == CECMD_CMDSTARTED)
+				{
 					PRINT_COMSPEC(L"CECMD_CMDSTARTED, Set height to: %i\n", nBufferHeight);
 					DEBUGSTR(L"\n!!! CECMD_CMDSTARTED !!!\n\n");
 					// Отключить нотификатор
@@ -2983,7 +3011,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				}
 				//#endif
 
-				if (in.hdr.nCmd == CECMD_CMDFINISHED) {
+				if (in.hdr.nCmd == CECMD_CMDFINISHED)
+				{
 					// Сохранить данные ВСЕЙ консоли
 					PRINT_COMSPEC(L"Storing long output\n", 0);
 					CmdOutputStore();
@@ -2992,7 +3021,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 				MCHKHEAP;
 
-				if (in.hdr.nCmd == CECMD_SETSIZESYNC) {
+				if (in.hdr.nCmd == CECMD_SETSIZESYNC)
+				{
 					ResetEvent(srv.hAllowInputEvent);
 					srv.bInSyncResize = TRUE;
 				}
@@ -3005,7 +3035,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				if (in.hdr.nCmd == CECMD_SETSIZESYNC) {
 					CESERVER_REQ *pPlgIn = NULL, *pPlgOut = NULL;
 					//TODO("Пока закомментарим, чтобы GUI реагировало побыстрее");
-					if (in.SetSize.dwFarPID /*&& !nBufferHeight*/) {
+					if (in.SetSize.dwFarPID /*&& !nBufferHeight*/)
+					{
 						// Во избежание каких-то накладок FAR (по крайней мере с /w)
 						// стал ресайзить панели только после дерганья мышкой над консолью
 						CONSOLE_SCREEN_BUFFER_INFO sc = {{0,0}};
@@ -3038,7 +3069,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 				MCHKHEAP;
 
-				if (in.hdr.nCmd == CECMD_CMDSTARTED) {
+				if (in.hdr.nCmd == CECMD_CMDSTARTED)
+				{
 					// Восстановить текст скрытой (прокрученной вверх) части консоли
 					CmdOutputRestore();
 				}
@@ -3076,8 +3108,10 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		
 		case CECMD_ATTACH2GUI:
 		{
-			HWND hDc = Attach2Gui(1000);
-			if (hDc != NULL) {
+			// Может придти из Attach2Gui() плагина
+			HWND hDc = Attach2Gui(ATTACH2GUI_TIMEOUT);
+			if (hDc != NULL)
+			{
 				int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
 				*out = ExecuteNewCmd(CECMD_ATTACH2GUI,nOutSize);
 				if (*out != NULL) {
@@ -3464,14 +3498,17 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	DWORD dwCurThId = GetCurrentThreadId();
 	DWORD dwWait = 0;
 
-	if (gnRunMode == RM_SERVER) {
+	if (gnRunMode == RM_SERVER)
+	{
 		// Запомним то, что последний раз установил сервер. пригодится
 		srv.nReqSizeBufferHeight = BufferHeight;
 		srv.crReqSizeNewSize = crNewSize;
 		srv.rReqSizeNewRect = rNewRect;
 		srv.sReqSizeLabel = asLabel;
 
-		if (srv.dwRefreshThread && dwCurThId != srv.dwRefreshThread) {
+		// Ресайз выполнять только в нити RefreshThread. Поэтому если нить другая - ждем...
+		if (srv.dwRefreshThread && dwCurThId != srv.dwRefreshThread)
+		{
 			ResetEvent(srv.hReqSizeChanged);
 			srv.nRequestChangeSize++;
 			
@@ -3484,16 +3521,21 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 				nSizeTimeout = INFINITE;
 			#endif
 			dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, nSizeTimeout );
-			if (srv.nRequestChangeSize > 0) {
+			if (srv.nRequestChangeSize > 0)
+			{
 				srv.nRequestChangeSize --;
-			} else {
+			}
+			else
+			{
 				_ASSERTE(srv.nRequestChangeSize>0);
 			}
-			if (dwWait == WAIT_OBJECT_0) {
+			if (dwWait == WAIT_OBJECT_0)
+			{
 				// ghQuitEvent !!
 				return FALSE;
 			}
-			if (dwWait == (WAIT_OBJECT_0+1)) {
+			if (dwWait == (WAIT_OBJECT_0+1))
+			{
 				return TRUE;
 			}
 			// ?? Может быть стоит самим попробовать?
@@ -3519,13 +3561,14 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 
 	BOOL lbNeedChange = TRUE;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
-	if (MyGetConsoleScreenBufferInfo(ghConOut, &csbi)) {
+	if (MyGetConsoleScreenBufferInfo(ghConOut, &csbi))
+	{
+		// Используется только при (gnBufferHeight == 0)
 		lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y);
-#ifdef _DEBUG
-		if (!lbNeedChange) {
+		#ifdef _DEBUG
+		if (!lbNeedChange)
 			BufferHeight = BufferHeight;
-		}
-#endif
+		#endif
 	}
 
 	COORD crMax = GetLargestConsoleWindowSize(ghConOut);
@@ -3540,7 +3583,8 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	gcrBufferSize = crNewSize;
 	_ASSERTE(gcrBufferSize.Y<200);
 
-	if (gnBufferHeight) {
+	if (gnBufferHeight)
+	{
 		// В режиме BufferHeight - высота ДОЛЖНА быть больше допустимого размера окна консоли
 		// иначе мы запутаемся при проверках "буферный ли это режим"...
 		if (gnBufferHeight <= (csbi.dwMaximumWindowSize.Y * 12 / 10))
@@ -3565,7 +3609,8 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	// case: simple mode
 	if (BufferHeight == 0)
 	{
-		if (lbNeedChange) {
+		if (lbNeedChange)
+		{
 			DWORD dwErr = 0;
 			// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
 			//if (crNewSize.X < csbi.dwSize.X || crNewSize.Y < csbi.dwSize.Y)
@@ -3590,34 +3635,41 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 			SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);
 		}
 
-	} else {
+	}
+	else
+	{
 		// Начался ресайз для BufferHeight
 		COORD crHeight = {crNewSize.X, BufferHeight};
+		SMALL_RECT rcTemp = {0};
 
-		/*if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1) {
-			SetConsoleBufferSize(ghConWnd, crNewSize.X, crNewSize.Y, BufferHeight);
-			Sleep(10);
-			CONSOLE_SCREEN_BUFFER_INFO csbi2 = {{0,0}};
-			DWORD dwStart = GetTickCount(), dwWait = 200;
-			do {
-				if (GetConsoleScreenBufferInfo(ghConOut, &csbi2)) {
-					if (csbi2.dwSize.X == crNewSize.X && csbi2.dwSize.Y == BufferHeight) {
-						break;
-					}
-				}
-				Sleep(10);
-			} while ((GetTickCount() - dwStart) < dwWait);
+		if (!rNewRect.Top && !rNewRect.Bottom && !rNewRect.Right)
+			rNewRect = csbi.srWindow;
 
-		} else {*/
+		// Подправим будующую видимую область
+		if (rNewRect.Bottom >= (csbi.dwSize.Y - (csbi.srWindow.Bottom - csbi.srWindow.Top)))
+		{
+			// Считаем, что рабочая область прижата к низу экрана. Нужно подвинуть .Top
+			int nBottomLines = (csbi.dwSize.Y - csbi.srWindow.Bottom - 1); // Сколько строк сейчас снизу от видимой области?
+			SHORT nTop = BufferHeight - crNewSize.Y - nBottomLines;
+			rNewRect.Top = (nTop > 0) ? nTop : 0;
+			// .Bottom подправится ниже, перед последним SetConsoleWindowInfo
+		}
+		else
+		{
+			// Считаем, что верх рабочей области фиксирован, коррекция не требуется
+		}
+
 		// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
-		if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left) || crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
+		if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left)
+			|| crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
 		{
 			//MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-			rNewRect.Left = 0;
-			rNewRect.Top = max(0,(csbi.srWindow.Bottom-crNewSize.Y+1));
-			rNewRect.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
-			rNewRect.Bottom = min((BufferHeight - 1),(rNewRect.Top+crNewSize.Y-1));//(csbi.srWindow.Bottom-csbi.srWindow.Top));
-			if (!SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect))
+			rcTemp.Left = 0;
+			WARNING("А при уменшении высоты, тащим нижнюю границе окна вверх, Top глючить не будет?");
+			rcTemp.Top = max(0,(csbi.srWindow.Bottom-crNewSize.Y+1));
+			rcTemp.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
+			rcTemp.Bottom = min((BufferHeight - 1),(rcTemp.Top+crNewSize.Y-1));//(csbi.srWindow.Bottom-csbi.srWindow.Top));
+			if (!SetConsoleWindowInfo(ghConOut, TRUE, &rcTemp))
 				MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
 		}
 
@@ -3639,6 +3691,9 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		//GetWindowRect(ghConWnd, &rcCurConPos); //X-Y новые, но высота - старая
 		//MoveWindow(ghConWnd, rcCurConPos.left, rcCurConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
 
+		// Последняя коррекция видимой области.
+		// Левую граница - всегда 0 (горизонтальную прокрутку не поддерживаем)
+		// Вертикальное положение - пляшем от rNewRect.Top
 		rNewRect.Left = 0;
 		rNewRect.Right = crHeight.X-1;
 		rNewRect.Bottom = min( (crHeight.Y-1), (rNewRect.Top+gcrBufferSize.Y-1) );
@@ -3650,7 +3705,8 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	//    SetEvent(srv.hChangingSize);
 	//}
 	
-	if (gnRunMode == RM_SERVER) {
+	if (gnRunMode == RM_SERVER)
+	{
 		//srv.bForceFullSend = TRUE;
 		SetEvent(srv.hRefreshEvent);
 	}

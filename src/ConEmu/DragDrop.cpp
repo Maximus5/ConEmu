@@ -872,8 +872,8 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 							//GlobalFree(stgMedium.hGlobal);
 							ReleaseStgMedium(&stgMedium);
 
-							// OK!
-							break;
+							// OK! Могут быть еще файлы!
+							// -- break;
 						}
 						else
 						{

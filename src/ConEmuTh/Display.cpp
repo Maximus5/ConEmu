@@ -1213,8 +1213,14 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 			Spaces.nSpaceY2 = (2*Spaces.nLabelSpacing+nFontHeight);
 		}
 	}
+
 	nWholeW = (Spaces.nImgSize+2*gThSet.nPreviewFrame)  + Spaces.nSpaceX2 + Spaces.nSpaceX1*2;
 	nWholeH = (Spaces.nImgSize+2*gThSet.nPreviewFrame) + Spaces.nSpaceY2 + Spaces.nSpaceY1*2;
+	if (!nWholeW || !nWholeH)
+	{
+		_ASSERTE(nWholeW && nWholeH);
+		return;
+	}
 
 
 	

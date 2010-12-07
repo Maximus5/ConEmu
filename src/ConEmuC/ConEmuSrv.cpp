@@ -61,7 +61,8 @@ DWORD WINAPI InputThread(LPVOID lpvParam);
 void ServerInitFont()
 {
 	// Размер шрифта и Lucida. Обязательно для серверного режима.
-	if (srv.szConsoleFont[0]) {
+	if (srv.szConsoleFont[0])
+	{
 		// Требуется проверить наличие такого шрифта!
 		LOGFONT fnt = {0};
 		lstrcpynW(fnt.lfFaceName, srv.szConsoleFont, LF_FACESIZE);
@@ -70,33 +71,50 @@ void ServerInitFont()
 		EnumFontFamiliesEx(hdc, &fnt, (FONTENUMPROCW) FontEnumProc, (LPARAM)&fnt, 0);
 		DeleteDC(hdc);
 	}
-	if (srv.szConsoleFont[0] == 0) {
+	if (srv.szConsoleFont[0] == 0)
+	{
 		lstrcpyW(srv.szConsoleFont, L"Lucida Console");
 		srv.nConFontWidth = 3; srv.nConFontHeight = 5;
 	}
 	if (srv.nConFontHeight<5) srv.nConFontHeight = 5;
-	if (srv.nConFontWidth==0 && srv.nConFontHeight==0) {
+	if (srv.nConFontWidth==0 && srv.nConFontHeight==0)
+	{
 		srv.nConFontWidth = 3; srv.nConFontHeight = 5;
-	} else if (srv.nConFontWidth==0) {
+	}
+	else if (srv.nConFontWidth==0)
+	{
 		srv.nConFontWidth = srv.nConFontHeight * 2 / 3;
-	} else if (srv.nConFontHeight==0) {
+	}
+	else if (srv.nConFontHeight==0)
+	{
 		srv.nConFontHeight = srv.nConFontWidth * 3 / 2;
 	}
-	if (srv.nConFontHeight<5 || srv.nConFontWidth <3) {
+	if (srv.nConFontHeight<5 || srv.nConFontWidth <3)
+	{
 		srv.nConFontWidth = 3; srv.nConFontHeight = 5;
 	}
 
-	//if (!srv.bDebuggerActive || gbAttachMode) {
 
-	#ifdef _DEBUG
-	//apiShowWindow(ghConWnd, SW_SHOWNORMAL);
-	#endif
-
-	if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
-	SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
-	if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
-
-	//}
+	if (gbAttachMode && gbNoCreateProcess && srv.dwRootProcess)
+	{
+		// Скорее всего это аттач из Far плагина. Попробуем установить шрифт в консоли через плагин.
+		wchar_t szPipeName[128];
+		wsprintf(szPipeName, CEPLUGINPIPENAME, L".", srv.dwRootProcess);
+		CESERVER_REQ In;
+		ExecutePrepareCmd(&In, CMD_SET_CON_FONT, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETFONT));
+		In.Font.cbSize = sizeof(In.Font);
+		In.Font.inSizeX = srv.nConFontWidth;
+		In.Font.inSizeY = srv.nConFontHeight;
+		lstrcpy(In.Font.sFontName, srv.szConsoleFont);
+		CESERVER_REQ *pPlgOut = ExecuteCmd(szPipeName, &In, 500, ghConWnd);
+		if (pPlgOut) ExecuteFreeResult(pPlgOut);
+	}
+	else
+	{
+		if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
+		SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
+		if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+	}
 }
 
 // Создать необходимые события и нити
@@ -121,12 +139,15 @@ int ServerInit()
 	else
 		srv.bReopenHandleAllowed = TRUE;
 
-	if (!gnConfirmExitParm) {
+	if (!gnConfirmExitParm)
+	{
 		gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = TRUE;
 	}
 
 	// Шрифт в консоли нужно менять в самом начале, иначе могут быть проблемы с установкой размера консоли
-	if (!gbNoCreateProcess && !srv.bDebuggerActive)
+	if (!srv.bDebuggerActive && !gbNoCreateProcess)
+		//&& (!gbNoCreateProcess || (gbAttachMode && gbNoCreateProcess && srv.dwRootProcess))
+		//)
 	{
 		ServerInitFont();
 		// -- чтобы на некоторых системах не возникала проблема с позиционированием -> {0,0}
@@ -135,7 +156,8 @@ int ServerInit()
 	}
 
 	// Включить по умолчанию выделение мышью
-	if (!gbNoCreateProcess /*&& !(gbParmBufferSize && gnBufferHeight == 0)*/) {
+	if (!gbNoCreateProcess /*&& !(gbParmBufferSize && gnBufferHeight == 0)*/)
+	{
 		HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
 		DWORD dwFlags = 0;
 		bConRc = GetConsoleMode(h, &dwFlags);
@@ -626,7 +648,17 @@ int ServerInit()
 		// Нить Refresh НЕ должна быть запущена, иначе в мэппинг могут попасть данные из консоли
 		// ДО того, как отработает ресайз (тот размер, который указал установить GUI при аттаче)
 		_ASSERTE(srv.dwRefreshThread==0);
-		HWND hDcWnd = Attach2Gui(5000);
+		HWND hDcWnd = NULL;
+		
+		while (true)
+		{
+			hDcWnd = Attach2Gui(ATTACH2GUI_TIMEOUT);
+			if (hDcWnd)
+				break; // OK
+			if (MessageBox( NULL, L"Available ConEmu GUI window not found!", L"ConEmu",
+							MB_RETRYCANCEL|MB_SYSTEMMODAL|MB_ICONQUESTION ) != IDRETRY)
+				break; // Отказ
+		}
 
 		// 090719 попробуем в сервере это делать всегда. Нужно передать в GUI - TID нити ввода
 		//// Если это НЕ новая консоль (-new_console) и не /ATTACH уже существующей консоли
@@ -635,7 +667,8 @@ int ServerInit()
 
 		if (!hDcWnd)
 		{
-			_printf("Available ConEmu GUI window not found!\n");
+			//_printf("Available ConEmu GUI window not found!\n"); -- не будем гадить в консоль
+			gbAlwaysConfirmExit = TRUE; gbInShutdown = TRUE;
 			iRc = CERR_ATTACHFAILED; goto wrap;
 		}
 	}
@@ -1110,10 +1143,14 @@ HWND Attach2Gui(DWORD nTimeout)
 	//UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
 	BOOL bNeedStartGui = FALSE;
 	DWORD dwErr = 0;
+	DWORD dwStartWaitIdleResult = -1;
 
-	if (!srv.pConsoleMap) {
+	if (!srv.pConsoleMap)
+	{
 		_ASSERTE(srv.pConsoleMap!=NULL);
-	} else {
+	}
+	else
+	{
 		// Чтобы GUI не пытался считать информацию из консоли до завершения аттача (до изменения размеров)
 		srv.pConsoleMap->Ptr()->bDataReady = FALSE;
 	}
@@ -1123,12 +1160,16 @@ HWND Attach2Gui(DWORD nTimeout)
 	{
 		DWORD dwGuiPID = 0;
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-		if (hSnap != INVALID_HANDLE_VALUE) {
+		if (hSnap != INVALID_HANDLE_VALUE)
+		{
 			PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
-			if (Process32First(hSnap, &prc)) {
+			if (Process32First(hSnap, &prc))
+			{
 				do {
-					for (UINT i = 0; i < srv.nProcessCount; i++) {
-						if (lstrcmpiW(prc.szExeFile, L"conemu.exe")==0) {
+					for (UINT i = 0; i < srv.nProcessCount; i++)
+					{
+						if (lstrcmpiW(prc.szExeFile, L"conemu.exe")==0)
+						{
 							dwGuiPID = prc.th32ProcessID;
 							break;
 						}
@@ -1192,10 +1233,10 @@ HWND Attach2Gui(DWORD nTimeout)
 		//delete psNewCmd; psNewCmd = NULL;
 		AllowSetForegroundWindow(pi.dwProcessId);
 		PRINT_COMSPEC(L"Detached GUI was started. PID=%i, Attaching...\n", pi.dwProcessId);
-		WaitForInputIdle(pi.hProcess, nTimeout);
+		dwStartWaitIdleResult = WaitForInputIdle(pi.hProcess, INFINITE); // был nTimeout, видимо часто обламывался
 		SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
 		
-		if (nTimeout > 1000) nTimeout = 1000;
+		//if (nTimeout > 1000) nTimeout = 1000;
 	}
 	
 	
@@ -1208,23 +1249,32 @@ HWND Attach2Gui(DWORD nTimeout)
 	In.StartStop.dwPID = gnSelfPID;
 	//In.StartStop.dwInputTID = srv.dwInputPipeThreadId;
 	In.StartStop.nSubSystem = gnImageSubsystem;
-	In.StartStop.bRootIsCmdExe = gbRootIsCmdExe || (gbAttachMode && !gbNoCreateProcess);
+	if (gbAttachFromFar)
+		In.StartStop.bRootIsCmdExe = FALSE;
+	else
+		In.StartStop.bRootIsCmdExe = gbRootIsCmdExe || (gbAttachMode && !gbNoCreateProcess);
 	In.StartStop.bUserIsAdmin = IsUserAdmin();
 	HANDLE hOut = (HANDLE)ghConOut;
-	if (!GetConsoleScreenBufferInfo(hOut, &In.StartStop.sbi)) {
+	if (!GetConsoleScreenBufferInfo(hOut, &In.StartStop.sbi))
+	{
 		_ASSERTE(FALSE);
-	} else {
+	}
+	else
+	{
 		srv.crReqSizeNewSize = In.StartStop.sbi.dwSize;
 	}
 
+LoopFind:
 	// В обычном "серверном" режиме шрифт уже установлен, а при аттаче
 	// другого процесса - шрифт все-равно поменять не получится
 	//BOOL lbNeedSetFont = TRUE;
 	// Нужно сбросить. Могли уже искать...
 	hGui = NULL;
 	// Если с первого раза не получится (GUI мог еще не загрузиться) пробуем еще
-	while (!hDcWnd && dwDelta <= nTimeout) {
-		while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
+	while (!hDcWnd && dwDelta <= nTimeout)
+	{
+		while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL)
+		{
 			//if (lbNeedSetFont) {
 			//	lbNeedSetFont = FALSE;
 			//	
@@ -1239,9 +1289,12 @@ HWND Attach2Gui(DWORD nTimeout)
 			wchar_t szPipe[64];
 			wsprintf(szPipe, CEGUIPIPENAME, L".", (DWORD)hGui);
 			CESERVER_REQ *pOut = ExecuteCmd(szPipe, &In, GUIATTACH_TIMEOUT, ghConWnd);
-			if (!pOut) {
+			if (!pOut)
+			{
 				_ASSERTE(pOut!=NULL);
-			} else {
+			}
+			else
+			{
 				//ghConEmuWnd = hGui;
 				ghConEmuWnd = pOut->StartStopRet.hWnd;
 				hDcWnd = pOut->StartStopRet.hWndDC;
@@ -1256,9 +1309,19 @@ HWND Attach2Gui(DWORD nTimeout)
 				// Но скорее всего, консоль запущенная под Админом в Win7 будет отображена ошибочно
 				if (gbForceHideConWnd)
 					apiShowWindow(ghConWnd, SW_HIDE);
+				
+				// Установить шрифт в консоли
+				if (pOut->StartStopRet.Font.cbSize == sizeof(CESERVER_REQ_SETFONT))
+				{
+					lstrcpy(srv.szConsoleFont, pOut->StartStopRet.Font.sFontName);
+					srv.nConFontHeight = pOut->StartStopRet.Font.inSizeY;
+					srv.nConFontWidth = pOut->StartStopRet.Font.inSizeX;
+					ServerInitFont();
+				}
 
 				COORD crNewSize = {(SHORT)pOut->StartStopRet.nWidth, (SHORT)pOut->StartStopRet.nHeight};
-				SMALL_RECT rcWnd = {In.StartStop.sbi.srWindow.Top};
+				//SMALL_RECT rcWnd = {0,In.StartStop.sbi.srWindow.Top};
+				SMALL_RECT rcWnd = {0};
 				SetConsoleSize((USHORT)pOut->StartStopRet.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
 				
 				// Установить переменную среды с дескриптором окна
@@ -1278,7 +1341,7 @@ HWND Attach2Gui(DWORD nTimeout)
 		Sleep(500);
 		dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
 	}
-	
+
 	return hDcWnd;
 }
 

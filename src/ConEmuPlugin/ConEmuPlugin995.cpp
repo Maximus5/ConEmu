@@ -625,9 +625,9 @@ int ShowPluginMenu995()
 		{MIF_SEPARATOR},
 		{ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuAttach)},
 		{MIF_SEPARATOR},
-		#ifdef _DEBUG
-		{0, L"&~. Raise exception"},
-		#endif
+		//#ifdef _DEBUG
+		//{0, L"&~. Raise exception"},
+		//#endif
 		{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuDebug)},
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
@@ -637,16 +637,16 @@ int ShowPluginMenu995()
 		InfoW995->GetMsg(InfoW995->ModuleNumber,CEPluginName),
 		NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
 		
-	#ifdef _DEBUG
-	if (nRc == (nCount - 2))
-	{
-		// Вызвать исключение для проверки отладчика
-		LPVOID ptrSrc;
-		wchar_t szDst[MAX_PATH];
-		ptrSrc = NULL;
-		memmove(szDst, ptrSrc, sizeof(szDst));
-	}
-	#endif
+	//#ifdef _DEBUG
+	//if (nRc == (nCount - 2))
+	//{
+	//	// Вызвать исключение для проверки отладчика
+	//	LPVOID ptrSrc;
+	//	wchar_t szDst[MAX_PATH];
+	//	ptrSrc = NULL;
+	//	memmove(szDst, ptrSrc, sizeof(szDst));
+	//}
+	//#endif
 
 	return nRc;
 }

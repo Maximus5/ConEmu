@@ -176,8 +176,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define CMD_QUITFAR      14 // Дернуть завершение консоли (фара?)
 #define CMD_CLOSEQSEARCH 15
 #define CMD_LOG_SHELL    16
+#define CMD_SET_CON_FONT 17 // CESERVER_REQ_SETFONT
 // +2
-#define MAXCMDCOUNT      18
+#define MAXCMDCOUNT      19
 #define CMD_EXIT         MAXCMDCOUNT-1
 
 
@@ -798,6 +799,14 @@ struct CESERVER_REQ_NEWCMD
 	wchar_t szCommand[MAX_PATH]; // На самом деле - variable_size !!!
 };
 
+struct CESERVER_REQ_SETFONT
+{
+	DWORD cbSize; // страховка
+	int inSizeY;
+	int inSizeX;
+	wchar_t sFontName[LF_FACESIZE];
+};
+
 struct CESERVER_REQ_STARTSTOP
 {
 	DWORD nStarted; // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
@@ -811,7 +820,7 @@ struct CESERVER_REQ_STARTSTOP
 	// Только ComSpec
 	BOOL  bWasBufferHeight;
 	// Reserved
-	DWORD nReserved0;
+	DWORD nReserved0[20];
 };
 
 // _ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
@@ -825,6 +834,8 @@ struct CESERVER_REQ_STARTSTOPRET
 	DWORD dwSrvPID;
 	BOOL  bNeedLangChange;
 	u64   NewConsoleLang;
+	// Используется при CECMD_ATTACH2GUI
+	CESERVER_REQ_SETFONT Font;
 };
 
 struct CESERVER_REQ_POSTMSG
@@ -945,6 +956,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_SETBACKGROUNDRET BackgroundRet;
 		CESERVER_REQ_ACTIVATECONSOLE ActivateCon;
 		PanelViewInit PVI;
+		CESERVER_REQ_SETFONT Font;
 	};
 };
 

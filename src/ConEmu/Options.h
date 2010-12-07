@@ -164,9 +164,11 @@ public:
 	BYTE isConsoleTextSelection;
 	bool isCTSSelectBlock, isCTSSelectText;
 	BYTE isCTSVkBlock, isCTSVkText; // модификатор запуска выделения мышкой
+	BYTE isCTSActMode, isCTSVkAct; // режим и модификатор разрешения действий правой и средней кнопки мышки
 	BYTE isCTSRBtnAction, isCTSMBtnAction; // 0-off, 1-copy, 2-paste
 	BYTE isCTSColorIndex;
 	bool isModifierPressed(DWORD vk);
+	//bool isSelectionModifierPressed();
 protected:
 	bool mb_HideCaptionAlways;
 	typedef struct tag_CharRanges {
@@ -221,6 +223,7 @@ public:
     DWORD nSlideShowElapse;
     DWORD nIconID;
     bool isTryToCenter;
+    bool isAlwaysShowScrollbar;
     RECT rcTabMargins;
     bool isTabFrame;
     BYTE icMinimizeRestore;

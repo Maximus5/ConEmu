@@ -32,6 +32,7 @@ protected:
 	/* Вызывается только в thread-safe (Synchro) - begin */
 	void CheckPanelFolders();
 	void UpdateBackground();
+	static void UpdateBackground_Exec(struct BackgroundInfo *pPlugin, struct UpdateBackgroundArg *pArg);
 	/* end- Вызывается только в thread-safe (Synchro)*/
 	
 public:

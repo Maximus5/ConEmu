@@ -8,6 +8,7 @@
 #define IDB_MAIN_TOOLBAR                101
 #define IDB_SHIELD                      102
 #define IDB_RIGHTCLICKING               103
+#define IDB_COPY                        104
 #define IDC_COPY                        120
 #define IDC_LINK                        121
 #define IDC_MOVE                        122
@@ -274,6 +275,7 @@
 #define lbCTSForeIdx                    1636
 #define lbCTSBackIdx                    1637
 #define tTabConsole                     1638
+#define lbCTSActAlways                  1638
 #define tTabEditor                      1639
 #define tTabViewer                      1640
 #define tTabEditorMod                   1641
@@ -361,6 +363,9 @@
 #define cbBgAllowPlugin                 1734
 #define cbTabsInCaption                 1735
 #define cbAlwaysShowTrayIcon            1736
+#define rbCTSActAlways                  1737
+#define rbCTSActBufferOnly              1738
+#define cbAlwaysShowScrollbar           1739
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -377,7 +382,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        210
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1737
+#define _APS_NEXT_CONTROL_VALUE         1740
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

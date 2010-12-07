@@ -56,6 +56,7 @@ extern BOOL gbMessagingStarted, gbDontEnable;
 extern OSVERSIONINFO gOSVer;
 //extern SECURITY_ATTRIBUTES* gpNullSecurity;
 extern BOOL gbDebugLogStarted;
+extern BOOL gbDebugShowRects;
 
 //extern const int TAB_FONT_HEIGTH;
 //extern wchar_t TAB_FONT_FACE[];

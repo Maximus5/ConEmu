@@ -856,9 +856,11 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_RE
 	_ASSERTE(pRet!=NULL);
 
     // Процесс запущен через ShellExecuteEx под другим пользователем (Administrator)
-	if (mp_sei) {
+	if (mp_sei)
+	{
 		// в некоторых случаях (10% на x64) hProcess не успевает заполниться (еще не отработала функция?)
-		if (!mp_sei->hProcess) {
+		if (!mp_sei->hProcess)
+		{
 			DWORD dwStart = GetTickCount();
 			DWORD dwDelay = 2000;
 			do {
@@ -867,7 +869,8 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_RE
 			_ASSERTE(mp_sei->hProcess!=NULL);
 		}
 		// поехали
-		if (mp_sei->hProcess) {
+		if (mp_sei->hProcess)
+		{
 	    	hProcess = mp_sei->hProcess;
 			mp_sei->hProcess = NULL; // более не требуется. хэндл закроется в другом месте
 		}
@@ -875,7 +878,8 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_RE
     // Иначе - отркрываем как обычно
     if (!hProcess)
     	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, anConemuC_PID);
-    if (!hProcess) {
+    if (!hProcess)
+	{
         DisplayLastError(L"Can't open ConEmuC process! Attach is impossible!", dwErr = GetLastError());
         return FALSE;
     }
@@ -886,7 +890,8 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_RE
 	GetConWindowSize(rStartStop.sbi, nCurWidth, nCurHeight, &bCurBufHeight);
 	if (rStartStop.bRootIsCmdExe)
 		bCurBufHeight = TRUE; //2010-06-09
-	if (con.bBufferHeight != bCurBufHeight) {
+	if (con.bBufferHeight != bCurBufHeight)
+	{
 		_ASSERTE(mb_BuferModeChangeLocked==FALSE);
 		SetBufferHeightMode(bCurBufHeight, FALSE);
 	}
@@ -897,10 +902,13 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_RE
 	// Скорректировать sbi на новый, который БУДЕТ установлен после отработки сервером аттача
 	rStartStop.sbi.dwSize.X = rcCon.right;
 	rStartStop.sbi.srWindow.Left = 0; rStartStop.sbi.srWindow.Right = rcCon.right-1;
-	if (bCurBufHeight) {
+	if (bCurBufHeight)
+	{
 		// sbi.dwSize.Y не трогаем
 		rStartStop.sbi.srWindow.Bottom = rStartStop.sbi.srWindow.Top + rcCon.bottom - 1;
-	} else {
+	}
+	else
+	{
 		rStartStop.sbi.dwSize.Y = rcCon.bottom;
 		rStartStop.sbi.srWindow.Top = 0; rStartStop.sbi.srWindow.Bottom = rcCon.bottom - 1;
 	}	
@@ -950,6 +958,11 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_RE
 	pRet->bNeedLangChange = TRUE;
 	TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
 	pRet->NewConsoleLang = gConEmu.GetActiveKeyboardLayout();
+	// Установить шрифт для консоли
+	pRet->Font.cbSize = sizeof(pRet->Font);
+	pRet->Font.inSizeY = gSet.ConsoleFont.lfHeight;
+	pRet->Font.inSizeX = gSet.ConsoleFont.lfWidth;
+	lstrcpy(pRet->Font.sFontName, gSet.ConsoleFont.lfFaceName);
 	
 
     // Передернуть нить MonitorThread
@@ -2271,15 +2284,22 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
     	}
     }
 
-	if (gSet.isCTSRBtnAction == 2 && (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP))
-	{
-		if (messg == WM_RBUTTONUP) Paste();
-		return;
-	}
-	if (gSet.isCTSMBtnAction == 2 && (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONUP))
-	{
-		if (messg == WM_MBUTTONUP) Paste();
-		return;
+    if (isSelectionAllowed())
+    {
+		if (gSet.isCTSRBtnAction == 2 && (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP)
+			&& ((gSet.isCTSActMode == 2 && isBufferHeight() && !isFarBufferSupported())
+				|| (gSet.isCTSActMode == 1 && (!gSet.isCTSVkAct || gSet.isModifierPressed(gSet.isCTSVkAct)))))
+		{
+			if (messg == WM_RBUTTONUP) Paste();
+			return;
+		}
+		if (gSet.isCTSMBtnAction == 2 && (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONUP)
+			&& ((gSet.isCTSActMode == 2 && isBufferHeight() && !isFarBufferSupported())
+				|| (gSet.isCTSActMode == 1 && (!gSet.isCTSVkAct || gSet.isModifierPressed(gSet.isCTSVkAct)))))
+		{
+			if (messg == WM_MBUTTONUP) Paste();
+			return;
+		}
 	}
     
 	BOOL lbFarBufferSupported = isFarBufferSupported();
@@ -4421,7 +4441,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					lbNewActive = (pIn->Tabs.nTabCount > 1);
 				}
 
-				if (lbCurrentActive != lbNewActive) {
+				if (lbCurrentActive != lbNewActive)
+				{
 					enum ConEmuMargins tTabAction = lbNewActive ? CEM_TABACTIVATE : CEM_TABDEACTIVATE;
 					RECT rcConsole = gConEmu.CalcRect(CER_CONSOLE, gConEmu.GetIdealRect(), CER_MAIN, NULL, NULL, tTabAction);
 
@@ -5504,6 +5525,10 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
     }
     MCHKHEAP
 
+#ifdef _DEBUG
+	if (nNewHeight == 158)
+		nNewHeight = 158;
+#endif
     con.nTextWidth = nNewWidth;
     con.nTextHeight = nNewHeight;
 
@@ -8571,10 +8596,15 @@ void CRealConsole::ChangeBufferHeightMode(BOOL abBufferHeight)
 	BOOL lb = mb_BuferModeChangeLocked; mb_BuferModeChangeLocked = TRUE;
 	con.bBufferHeight = abBufferHeight;
 	// Если при запуске было "conemu.exe /bufferheight 0 ..."
-	if (abBufferHeight /*&& !con.nBufferHeight*/) {
+	if (abBufferHeight /*&& !con.nBufferHeight*/)
+	{
 		// Если пользователь меняет высоту буфера в диалоге настроек
 		con.nBufferHeight = gSet.DefaultBufferHeight;
-		if (con.nBufferHeight<300) con.nBufferHeight = max(300,con.nTextHeight*2);
+		if (con.nBufferHeight<300)
+		{
+			_ASSERTE(con.nBufferHeight>=300);
+			con.nBufferHeight = max(300,con.nTextHeight*2);
+		}
 	}
 	USHORT nNewBufHeightSize = abBufferHeight ? con.nBufferHeight : 0;
 	SetConsoleSize(TextWidth(), TextHeight(), nNewBufHeightSize, CECMD_SETSIZESYNC);
@@ -9022,9 +9052,12 @@ uint CRealConsole::TextHeight()
         nRet = con.nChange2TextHeight;
     else
         nRet = con.nTextHeight;
-    if (nRet > 200) {
-        _ASSERTE(nRet<=200);
+	#ifdef _DEBUG
+    if (nRet > 150)
+	{
+        _ASSERTE(nRet<=150);
     }
+	#endif
     return nRet;
 }
 

@@ -103,9 +103,9 @@ public:
 	int TextWidth();
 	int TextHeight();
 
-	#ifdef _DEBUG
+	//#ifdef _DEBUG
 	const DetectedDialogs *GetDetectedDialogsPtr() const;
-	#endif	
+	//#endif	
 	
 protected:
 	// Private methods

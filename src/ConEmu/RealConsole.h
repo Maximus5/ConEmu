@@ -439,7 +439,7 @@ private:
 	DWORD mn_Comspec4Ntvdm;
 	BOOL mb_IgnoreCmdStop; // ѕри запуске 16bit приложени€ не возвращать размер консоли! Ёто сделает OnWinEvent
     BOOL isShowConsole;
-    BOOL mb_FarGrabberActive; // бывший mb_ConsoleSelectMode
+    //BOOL mb_FarGrabberActive; // бывший mb_ConsoleSelectMode
     WORD mn_SelectModeSkipVk; // пропустить "отпускание" клавиши Esc/Enter при выделении текста
     bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
     void UpdateSelection(); // обновить на экране

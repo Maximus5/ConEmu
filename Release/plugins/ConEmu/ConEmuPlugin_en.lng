@@ -18,7 +18,7 @@
 "ConEmu plugin\nConEmu is not available in terminal mode\nOK"
 "ConEmu plugin\nDebugger is already attached to current process\nOK"
 "ConEmu plugin\nDebugger is not available in terminal mode\nOK"
-"ConEmu plugin\nEnvironment variale 'ConEmuBaseDir' not defined\nDebugger is not available\nOK"
+"ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available\nOK"
 "ConEmu plugin\nCan't create debugger process\nOK"
 "ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
 "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL\nOK"

@@ -9,6 +9,7 @@ EXPORTS
 	ExitFARW             @7
 	OpenPluginW          @8
 	ProcessSynchroEventW @10
+	ProcessDialogEventW  @11
 ;  Ansi
 	SetStartupInfo       @21
 	GetPluginInfo        @22
@@ -18,6 +19,7 @@ EXPORTS
 	GetMinFarVersion     @26
 	ExitFAR              @27
 	OpenPlugin           @28
+	ProcessDialogEvent   @29
 ;  ConEmu API (Far independent)
 	GetFarVersion        @98
 	GetFarHWND           @99

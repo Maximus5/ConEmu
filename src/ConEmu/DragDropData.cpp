@@ -1234,38 +1234,64 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 	}
 
 	SIZE_T nInfoSize = GlobalSize(stgMedium.hGlobal);
-	if (!nInfoSize) {
+	if (!nInfoSize)
+	{
 		//GlobalFree(stgMedium.hGlobal);
 		ReleaseStgMedium(&stgMedium);
 		return FALSE; // пусто
 	}
+	if (nInfoSize <= sizeof(DragImageBits))
+	{
+		_ASSERTE(nInfoSize > sizeof(DragImageBits));
+		ReleaseStgMedium(&stgMedium);
+		return FALSE;
+	}
 	DragImageBits* pInfo = (DragImageBits*)GlobalLock(stgMedium.hGlobal);
-	if (!pInfo) {
+	if (!pInfo)
+	{
 		//GlobalFree(stgMedium.hGlobal);
 		ReleaseStgMedium(&stgMedium);
 		return FALSE; // Не удалось получить данные
 	}
 	_ASSERTE(pInfo->nWidth>0 && pInfo->nWidth<=400);
 	_ASSERTE(pInfo->nHeight>0 && pInfo->nHeight<=400);
-	int nReqSize = (sizeof(DragImageBits)+(pInfo->nWidth * pInfo->nHeight - 1)*4);
-	if (nInfoSize != nReqSize /*|| (nInfoSize - nReqSize) > 32*/ ) {
-		_ASSERT(nInfoSize == nReqSize); // Неизвестный формат?
-		//GlobalFree(stgMedium.hGlobal);
-		ReleaseStgMedium(&stgMedium);
-		return FALSE;
+	SIZE_T nReqSize = (sizeof(DragImageBits)+(pInfo->nWidth * pInfo->nHeight - 1)*4);
+	// На Win7x64 + 2*DWORD
+	SIZE_T nReqSize2 = (sizeof(DragImageBits)+(pInfo->nWidth * pInfo->nHeight - 1)*4)+8;
+	int nShift = 0;
+	if (nInfoSize != nReqSize && nInfoSize != nReqSize2 /*|| (nInfoSize - nReqSize) > 32*/ )
+	{
+#ifdef _DEBUG
+		if (!IsDebuggerPresent())
+		{
+			_ASSERT(nInfoSize == nReqSize); // Неизвестный формат?
+			wchar_t szDbg[128]; wsprintf(szDbg, L"DragImageBits unknown format? (nInfoSize=%u) != (nReqSize=%u)", nInfoSize, nReqSize);
+			gConEmu.DebugStep(szDbg, TRUE);
+		}
+#endif
+		if ((nReqSize < 16) || (nInfoSize < nReqSize) || (nInfoSize - nReqSize) > 8)
+		{
+			//GlobalFree(stgMedium.hGlobal);
+			ReleaseStgMedium(&stgMedium);
+			return FALSE;
+		}
 	}
+	if (nInfoSize == nReqSize2)
+		nShift = 8;
 
 	BOOL lbRc = FALSE;
 	//int nCount = pInfo->nWidth * pInfo->nHeight;
 	mp_Bits = (DragImageBits*)calloc(sizeof(DragImageBits)/*+(nCount-1)*4*/,1);
-	if (mp_Bits) {
+	if (mp_Bits)
+	{
 		*mp_Bits = *pInfo;
 		//memmove(mp_Bits->pix, pInfo->pix, nCount*4);
 		MCHKHEAP
 
 		HDC hdc = ::GetDC(ghWnd);
 		mh_BitsDC = CreateCompatibleDC(hdc);
-		if (mh_BitsDC) {
+		if (mh_BitsDC)
+		{
 			SetLayout(mh_BitsDC, LAYOUT_BITMAPORIENTATIONPRESERVED);
 
 			BITMAPINFOHEADER bih = {sizeof(BITMAPINFOHEADER)};
@@ -1280,11 +1306,12 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 			LPBYTE pDst = NULL;
 			mh_BitsBMP_Old = NULL;
 			mh_BitsBMP = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pDst, NULL, 0);
-			if (mh_BitsBMP && pDst) {
+			if (mh_BitsBMP && pDst)
+			{
 				mh_BitsBMP_Old = (HBITMAP)SelectObject(mh_BitsDC, mh_BitsBMP);
 
 				int cbSize = pInfo->nWidth * pInfo->nHeight * 4;
-				memmove(pDst, pInfo->pix, cbSize);
+				memmove(pDst, ((LPBYTE)pInfo->pix)+nShift, cbSize);
 				GdiFlush();
 
 				#ifdef _DEBUG

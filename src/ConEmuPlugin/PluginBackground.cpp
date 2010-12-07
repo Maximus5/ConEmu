@@ -337,6 +337,27 @@ void CPluginBackground::SetDcPanelRect(RECT *rcDc, UpdateBackgroundArg::BkPanelI
 	}
 }
 
+void CPluginBackground::UpdateBackground_Exec(struct BackgroundInfo *pPlugin, struct UpdateBackgroundArg *pArg)
+{
+	if (!pPlugin->UpdateConEmuBackground)
+	{
+		_ASSERTE(pPlugin->UpdateConEmuBackground!=NULL);
+		return;
+	}
+	if (((DWORD_PTR)pPlugin->UpdateConEmuBackground) < ((DWORD_PTR)pPlugin->hPlugin))
+	{
+		_ASSERTE(((DWORD_PTR)pPlugin->UpdateConEmuBackground) >= ((DWORD_PTR)pPlugin->hPlugin));
+		return;
+	}
+#ifdef _DEBUG
+	if (((DWORD_PTR)pPlugin->UpdateConEmuBackground) > ((4<<20) + (DWORD_PTR)pPlugin->hPlugin))
+	{
+		_ASSERTE(((DWORD_PTR)pPlugin->UpdateConEmuBackground) <= ((4<<20) + (DWORD_PTR)pPlugin->hPlugin));
+	}
+#endif
+	pPlugin->UpdateConEmuBackground(pArg);	
+}
+
 // Вызывается ТОЛЬКО в главной нити!
 void CPluginBackground::UpdateBackground()
 {
@@ -420,7 +441,8 @@ void CPluginBackground::UpdateBackground()
 
 		Arg.nLevel = i;
 		Arg.lParam = mp_BgPlugins[i].lParam;
-		mp_BgPlugins[i].UpdateConEmuBackground(&Arg);
+		//mp_BgPlugins[i].UpdateConEmuBackground(&Arg);
+		UpdateBackground_Exec(mp_BgPlugins+i, &Arg);
 		nProcessed++;
 	}
 	SC.Unlock();
