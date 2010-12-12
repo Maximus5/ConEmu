@@ -8020,13 +8020,15 @@ void CRealConsole::UpdateScrollInfo()
     if (!isActive())
         return;
 
-    if (!gConEmu.isMainThread()) {
+    if (!gConEmu.isMainThread())
+	{
         return;
     }
 
 	// Не нужно? само спрячется
-	if (!con.bBufferHeight) {
-		return;
+	if (!con.bBufferHeight)
+	{
+		//return;
 	}
 
     TODO("Как-то кэшировать нужно вызовы что-ли... и SetScrollInfo можно бы перенести в m_Back");
@@ -8047,10 +8049,19 @@ void CRealConsole::UpdateScrollInfo()
     ZeroMemory(&si, sizeof(si));
     si.cbSize = sizeof(si);
     si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE; // | SIF_TRACKPOS;
-	si.nPage = nLastVisible - 1;
-	si.nPos = nLastTop;
 	si.nMin = 0;
-	si.nMax = nLastHeight;
+	if (!con.bBufferHeight)
+	{
+		si.nPos = 0;
+		si.nPage = 1;
+		si.nMax = 1;
+	}
+	else
+	{
+		si.nPos = nLastTop;
+		si.nPage = nLastVisible - 1;
+		si.nMax = nLastHeight;
+	}
 
 	//// Если режим "BufferHeight" включен - получить из консольного окна текущее состояние полосы прокрутки
 	//if (con.bBufferHeight) {
@@ -8061,6 +8072,17 @@ void CRealConsole::UpdateScrollInfo()
 
     TODO("Нужно при необходимости 'всплыть' полосу прокрутки");
     nCurPos = SetScrollInfo(gConEmu.m_Back->mh_WndScroll, SB_VERT, &si, true);
+
+	if (!con.bBufferHeight)
+	{
+		if (IsWindowEnabled(gConEmu.m_Back->mh_WndScroll))
+			EnableWindow(gConEmu.m_Back->mh_WndScroll, FALSE);
+	}
+	else
+	{
+		if (!IsWindowEnabled(gConEmu.m_Back->mh_WndScroll))
+			EnableWindow(gConEmu.m_Back->mh_WndScroll, TRUE);
+	}
 }
 
 // По con.m_sbi проверяет, включена ли прокрутка
@@ -9048,6 +9070,9 @@ uint CRealConsole::TextHeight()
     _ASSERTE(this!=NULL);
     if (!this) return MIN_CON_HEIGHT;
     uint nRet = 0;
+#ifdef _DEBUG
+	struct RConInfo lcon = con;
+#endif
     if (con.nChange2TextHeight!=-1 && con.nChange2TextHeight!=0)
         nRet = con.nChange2TextHeight;
     else

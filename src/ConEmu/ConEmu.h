@@ -336,7 +336,7 @@ public:
 	HRGN CreateWindowRgn(bool abTestOnly=false);
 	HRGN CreateWindowRgn(bool abTestOnly,bool abRoundTitle,int anX, int anY, int anWndWidth, int anWndHeight);
 	void Destroy();
-	void DebugStep(LPCTSTR asMsg, BOOL abErrorSeverity=FALSE);
+	void DebugStep(LPCWSTR asMsg, BOOL abErrorSeverity=FALSE);
 	void ForceShowTabs(BOOL abShow);
 	DWORD_PTR GetActiveKeyboardLayout();
 	RECT GetDefaultRect();

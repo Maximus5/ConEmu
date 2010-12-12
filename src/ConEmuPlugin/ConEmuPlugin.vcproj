@@ -712,7 +712,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="shlwapi.lib version.lib"
-				OutputFile="..\..\Debug\Plugins\ConEmu\conemu.dll"
+				OutputFile="\\MAX2K\FAR\Plugins\ConEmu\ConEmu.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -1880,6 +1880,10 @@
 					Outputs="ConEmu_Lang.h"
 				/>
 			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="..\ConEmu\version.h"
+			>
 		</File>
 	</Files>
 	<Globals>

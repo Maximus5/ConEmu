@@ -52,7 +52,7 @@ extern BOOL gbHilightPlugins;
 extern COLORREF gcrHilightPlugBack;
 
 BOOL LoadFarVersion();
-int WINAPI UpdateConEmuBackground(struct UpdateBackgroundArg* pBk);
+int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk);
 void StartPlugin(BOOL bConfigure);
 void ExitPlugin(void);
 void FUNC_X(ExitFARW)(void);

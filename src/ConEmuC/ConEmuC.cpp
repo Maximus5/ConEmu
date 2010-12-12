@@ -494,16 +494,26 @@ int __cdecl main()
 	
 		// Ждем, пока в консоли не останется процессов (кроме нашего)
 		TODO("Проверить, может ли так получиться, что CreateProcess прошел, а к консоли он не прицепился? Может, если процесс GUI");
-		nWait = WaitForSingleObject(ghExitQueryEvent, CHECK_ANTIVIRUS_TIMEOUT); //Запуск процесса наверное может задержать антивирус
+		// "Подцепление" процесса к консоли наверное может задержать антивирус
+		nWait = WaitForSingleObject(ghExitQueryEvent, CHECK_ANTIVIRUS_TIMEOUT);
 		if (nWait != WAIT_OBJECT_0) // Если таймаут
 		{
 			iRc = srv.nProcessCount;
 			// И процессов в консоли все еще нет
 			if (iRc == 1 && !srv.bDebuggerActive)
 			{
-				_printf ("Process was not attached to console. Is it GUI?\nCommand to be executed:\n");
-				_wprintf (gpszRunCmd);
-				_printf ("\n");
+				if (!gbInShutdown)
+				{
+					_printf ("Process was not attached to console. Is it GUI?\nCommand to be executed:\n");
+					_wprintf (gpszRunCmd);
+					_printf ("\n\nPress Ctrl+Break to stop waiting\n");
+					while (!gbInShutdown && (nWait != WAIT_OBJECT_0))
+					{
+						nWait = WaitForSingleObject(ghExitQueryEvent, 250);
+						if ((nWait != WAIT_OBJECT_0) && (srv.nProcessCount > 1))
+							goto wait; // OK, переходим в основной цикл ожидания завершения
+					}
+				}
 				iRc = CERR_PROCESSTIMEOUT; goto wrap;
 			}
 		}
@@ -590,7 +600,7 @@ wrap:
 	#ifdef SHOW_STARTED_MSGBOX
 	MessageBox(GetConsoleWindow(), L"Finalizing", (gnRunMode == RM_SERVER) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
 	#endif
-	if (!gbInShutdown // только если юзер не нажал крестик в заголовке окна
+	if (!gbInShutdown // только если юзер не нажал крестик в заголовке окна, или не удался /ATTACH (чтобы в консоль не гадить)
 		&& ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE)
 			|| gbAlwaysConfirmExit)
 		)
@@ -1025,6 +1035,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				_printf ("Attach to GUI was requested, but invalid PID specified:\n");
 				_wprintf (GetCommandLineW());
 				_printf ("\n");
+				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
 			}
 		}
@@ -1093,6 +1104,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				_printf ("Invalid GUI PID specified:\n");
 				_wprintf (GetCommandLineW());
 				_printf ("\n");
+				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
 			}
 		}
@@ -1104,10 +1116,12 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			wchar_t* pszEnd = NULL;
 			//srv.dwRootProcess = _wtol(szArg+10);
 			srv.dwRootProcess = wcstoul(szArg+10, &pszEnd, 10);
-			if (srv.dwRootProcess == 0) {
+			if (srv.dwRootProcess == 0)
+			{
 				_printf ("Debug of process was requested, but invalid PID specified:\n");
 				_wprintf (GetCommandLineW());
 				_printf ("\n");
+				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
 			}
 		}
@@ -1214,35 +1228,84 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		}
 		else if (gbNoCreateProcess && gbAttachMode)
 		{
+			HWND hConEmu = GetConEmuHWND(TRUE);
+			if (hConEmu && IsWindow(hConEmu))
+			{
+				// Console already attached
+				// Ругаться наверное вообще не будем
+				gbInShutdown = TRUE;
+				return CERR_CARGUMENT;
+			}
+			BOOL lbArgsFailed = FALSE;
+			wchar_t szFailMsg[512]; szFailMsg[0] = 0;
 			if (pfnGetConsoleProcessList==NULL)
 			{
-				_printf ("Attach to GUI was requested, but required WinXP or higher:\n");
-				_wprintf (GetCommandLineW());
-				_printf ("\n");
-				return CERR_CARGUMENT;
+				lstrcpy(szFailMsg, L"Attach to GUI was requested, but required WinXP or higher!");
+				lbArgsFailed = TRUE;
+				//_wprintf (GetCommandLineW());
+				//_printf ("\n");
+				//_ASSERTE(FALSE);
+				//gbInShutdown = TRUE; // чтобы в консоль не гадить
+				//return CERR_CARGUMENT;
 			}
-			DWORD nProcesses[10];
-			DWORD nProcCount = pfnGetConsoleProcessList ( nProcesses, 10 );
-			if (nProcCount < 2)
+			else
 			{
-				_printf ("Attach to GUI was requested, but there is no console processes:\n");
-				_wprintf (GetCommandLineW());
-				_printf ("\n");
-				return CERR_CARGUMENT;
-			}
-			// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
-			if (nProcCount > 2)
-			{
-				// И ругаться только под отладчиком
-				wchar_t szProc[255] ={0}, szTmp[10]; //wsprintfW(szProc, L"%i, %i, %i", nProcesses[0], nProcesses[1], nProcesses[2]);
-				for (DWORD n=0; n<nProcCount && n<20; n++)
+				DWORD nProcesses[20];
+				DWORD nProcCount = pfnGetConsoleProcessList ( nProcesses, 20 );
+				// 2 процесса, потому что это мы сами и минимум еще один процесс в этой консоли, 
+				// иначе смысла в аттаче нет
+				if (nProcCount < 2)
 				{
-					if (n) lstrcatW(szProc, L", ");
-					wsprintf(szTmp, L"%i", nProcesses[0]);
-					//lstrcatW(szProc, _ltow(nProcesses[0], szTmp, 10));
-					lstrcatW(szProc, szTmp);
+					lstrcpy(szFailMsg, L"Attach to GUI was requested, but there is no console processes!");
+					lbArgsFailed = TRUE;
+					//_wprintf (GetCommandLineW());
+					//_printf ("\n");
+					//_ASSERTE(FALSE);
+					//return CERR_CARGUMENT;
 				}
-				PRINT_COMSPEC(L"Attach to GUI was requested, but there is more then 2 console processes: %s\n", szProc);
+				// не помню, зачем такая проверка была введена, но (nProcCount > 2) мешает аттачу.
+				// в момент запуска сервера (/ATTACH /PID=n) еще жив родительский (/ATTACH /NOCMD)
+				//// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
+				else if ((srv.dwRootProcess != 0) || (nProcCount > 2))
+				{
+					BOOL lbRootExists = (srv.dwRootProcess == 0);
+					// И ругаться только под отладчиком
+					wchar_t szProc[255] ={0}, szTmp[10]; //wsprintfW(szProc, L"%i, %i, %i", nProcesses[0], nProcesses[1], nProcesses[2]);
+					for (DWORD n=0; n<nProcCount && n<20; n++)
+					{
+						if (n) lstrcatW(szProc, L", ");
+						wsprintf(szTmp, L"%i", nProcesses[n]);
+						lstrcatW(szProc, szTmp);
+						if (!lbRootExists && nProcesses[n] == srv.dwRootProcess)
+							lbRootExists = TRUE;
+					}
+					if ((srv.dwRootProcess != 0) && !lbRootExists)
+					{
+						wsprintf(szFailMsg, L"Attach to GUI was requested, but\n" L"root process (%u) does not exists", srv.dwRootProcess);
+						lbArgsFailed = TRUE;
+					}
+					else if ((srv.dwRootProcess == 0) && (nProcCount > 2))
+					{
+						wsprintf(szFailMsg, L"Attach to GUI was requested, but\n" L"there is more then 2 console processes: %s\n", szProc);
+						lbArgsFailed = TRUE;
+					}
+					//PRINT_COMSPEC(L"Attach to GUI was requested, but there is more then 2 console processes: %s\n", szProc);
+					//_ASSERTE(FALSE);
+					//return CERR_CARGUMENT;
+				}
+			}
+			if (lbArgsFailed)
+			{
+				LPCWSTR pszCmdLine = GetCommandLineW(); if (!pszCmdLine) pszCmdLine = L"";
+				int nCmdLen = lstrlen(szFailMsg) + lstrlen(pszCmdLine) + 16;
+				wchar_t* pszMsg = (wchar_t*)malloc(nCmdLen*2);
+				lstrcpy(pszMsg, szFailMsg);
+				lstrcat(pszMsg, L"\n\n");
+				lstrcat(pszMsg, pszCmdLine);
+				wchar_t szTitle[64]; wsprintf(szTitle, L"ConEmuC (PID=%u)", GetCurrentProcessId());
+				MessageBox(NULL, pszMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+				free(pszMsg);
+				gbInShutdown = TRUE;
 				return CERR_CARGUMENT;
 			}
 
@@ -1279,6 +1342,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		_printf ("Parsing command line failed (/C argument not found):\n");
 		_wprintf (GetCommandLineW());
 		_printf ("\n");
+		_ASSERTE(FALSE);
 		return CERR_CARGUMENT;
 	}
 
@@ -3428,7 +3492,11 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		}
 
 		BOOL lbBufferHeight = FALSE;
-		if (csbi.dwSize.Y >= (csbi.dwMaximumWindowSize.Y * 2)) // 2010-11-19 заменил "12 / 10" на "2"
+		SHORT nHeight = (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+		// 2010-11-19 заменил "12 / 10" на "2"
+		// 2010-12-12 заменил (csbi.dwMaximumWindowSize.Y * 2) на (nHeight + 1)
+		WARNING("Проверить, не будет ли глючить MyGetConsoleScreenBufferInfo если резко уменьшить размер экрана");
+		if (csbi.dwSize.Y >= (nHeight + 1)) 
 		{
 			lbBufferHeight = TRUE;
 		}
@@ -3646,7 +3714,12 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 			rNewRect = csbi.srWindow;
 
 		// Подправим будующую видимую область
-		if (rNewRect.Bottom >= (csbi.dwSize.Y - (csbi.srWindow.Bottom - csbi.srWindow.Top)))
+		if (csbi.dwSize.Y == (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
+		{
+			// Прокрутки сейчас нет, оставляем .Top без изменений!
+		}
+		// При изменении высоты буфера (если он уже был включен), нужно скорректировать новую видимую область
+		else if (rNewRect.Bottom >= (csbi.dwSize.Y - (csbi.srWindow.Bottom - csbi.srWindow.Top)))
 		{
 			// Считаем, что рабочая область прижата к низу экрана. Нужно подвинуть .Top
 			int nBottomLines = (csbi.dwSize.Y - csbi.srWindow.Bottom - 1); // Сколько строк сейчас снизу от видимой области?
@@ -3720,12 +3793,14 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
 	//PRINT_COMSPEC(L"HandlerRoutine triggered. Event type=%i\n", dwCtrlType);
-	if (dwCtrlType >= CTRL_CLOSE_EVENT && dwCtrlType <= CTRL_SHUTDOWN_EVENT) {
+	if (dwCtrlType >= CTRL_CLOSE_EVENT && dwCtrlType <= CTRL_SHUTDOWN_EVENT)
+	{
 		PRINT_COMSPEC(L"Console about to be closed\n", 0);
 		gbInShutdown = TRUE;
 		
 		// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется	
-		if (srv.bDebuggerActive) {
+		if (srv.bDebuggerActive)
+		{
 			if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(srv.dwRootProcess);
 			srv.bDebuggerActive = FALSE;
 		}

@@ -172,11 +172,11 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	StartPlugin(FALSE);
 }
 
-int WINAPI UpdateConEmuBackground(struct UpdateBackgroundArg* pBk)
+int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 {
 	DWORD nPanelBackIdx = (pBk->nFarColors[COL_PANELTEXT] & 0xF0) >> 4;
 
-	if (pBk->nLevel == 0)
+	if (pBk->dwLevel == 0)
 	{
 		if (pBk->LeftPanel.bVisible)
 		{
@@ -264,19 +264,22 @@ void StartPlugin(BOOL bConfigure)
 		{
 			if (bConfigure && bWasRegistered)
 			{
-				BackgroundInfo upd = {sizeof(BackgroundInfo), rbc_Redraw};
+				RegisterBackgroundArg upd = {sizeof(RegisterBackgroundArg), rbc_Redraw};
 				gfRegisterBackground(&upd);
 			}
 			else
 			{
-				BackgroundInfo reg = {sizeof(BackgroundInfo), rbc_Register, ghPluginModule, UpdateConEmuBackground, NULL, bup_Panels, 100};
+				RegisterBackgroundArg reg = {sizeof(RegisterBackgroundArg), rbc_Register, ghPluginModule};
+				reg.PaintConEmuBackground = ::PaintConEmuBackground;
+				reg.dwPlaces = pbp_Panels;
+				reg.dwSuggestedLevel = 100;
 				gfRegisterBackground(&reg);
 				bWasRegistered = true;
 			}
 		}
 		else
 		{
-			BackgroundInfo unreg = {sizeof(BackgroundInfo), rbc_Unregister, ghPluginModule};
+			RegisterBackgroundArg unreg = {sizeof(RegisterBackgroundArg), rbc_Unregister, ghPluginModule};
 			gfRegisterBackground(&unreg);
 			bWasRegistered = false;
 		}
@@ -291,7 +294,7 @@ void ExitPlugin(void)
 {
 	if (gfRegisterBackground != NULL)
 	{
-		BackgroundInfo inf = {sizeof(BackgroundInfo), rbc_Unregister, ghPluginModule};
+		RegisterBackgroundArg inf = {sizeof(RegisterBackgroundArg), rbc_Unregister, ghPluginModule};
 		gfRegisterBackground(&inf);
 	}
 	if (gszRootKey)

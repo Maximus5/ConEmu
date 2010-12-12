@@ -969,7 +969,7 @@ void ExecuteQuitFarA()
 	PostMessage(FarHwnd, WM_CLOSE, 0, 0);
 }
 
-static void CopyPanelInfo(PanelInfo* pInfo, UpdateBackgroundArg::BkPanelInfo* pBk)
+static void CopyPanelInfo(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pBk)
 {
 	pBk->bVisible = pInfo->Visible;
 	pBk->bFocused = pInfo->Focus;
@@ -980,7 +980,7 @@ static void CopyPanelInfo(PanelInfo* pInfo, UpdateBackgroundArg::BkPanelInfo* pB
 	pBk->rcPanelRect = pInfo->PanelRect;
 }
 
-void FillUpdateBackgroundA(struct UpdateBackgroundArg* pFar)
+void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar)
 {
 	if (!InfoA || !InfoA->AdvControl)
 		return;

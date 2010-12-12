@@ -366,37 +366,66 @@ struct PanelViewInit
 
 
 // События, при которых вызывается функция субплагина для перерисовки фона
-enum BackgroundUpdateEvent
+enum PaintBackgroundEvents
 {
-	bue_Common = 0,              // при изменении размера окна ConEmu/размера шрифта/палитры ConEmu/...
+	pbe_Common = 0,              // при изменении размера окна ConEmu/размера шрифта/палитры ConEmu/...
+	pbe_PanelDirectory = 1,      // при смене папки
 	//TODO, by request
 	//bue_LeftDirChanged = 1,      // на левой панели изменена текущая папка
 	//bue_RightDirChanged = 2,     // на правой панели изменена текущая папка
 	//bue_FocusChanged = 4,        // фокус переключился между левой/правой панелью
 };
 
-enum BackgroundUpdatePlace
+enum PaintBackgroundPlaces
 {
-	bup_Panels = 1,
-	bup_Editor = 2,
-	bup_Viewer = 4,
-	//bup_Cmd = 8,
+	pbp_Panels = 1,
+	pbp_Editor = 2,
+	pbp_Viewer = 4,
 };
 
-struct UpdateBackgroundArg
+struct PaintBackgroundArg
 {
 	DWORD cbSize;
 
-	LPARAM lParam; // указан при вызове RegisterBackground(rbc_Register)
-	enum BackgroundUpdatePlace Place; // панели/редактор/вьювер
+	// указан при вызове RegisterBackground(rbc_Register)
+	LPARAM lParam;
 
-	HDC hdc; // DC для отрисовки фона. Изначально (для nLevel==0) DC залит цветом фона crPalette[0]
-	int dcSizeX, dcSizeY; // размер DC в пикселях
-	RECT rcDcLeft, rcDcRight; // Координаты панелей в DC (base 0x0)
+	// панели/редактор/вьювер
+	enum PaintBackgroundPlaces Place;
 
-	// Далее идет информация о консоли и FAR.
+	// Слой, в котором вызван плагин. По сути, это порядковый номер, 0-based
+	// если (dwLevel > 0) плагин НЕ ДОЛЖЕН затирать фон целиком.
+	DWORD dwLevel;
+	// [Reserved] комбинация из enum PaintBackgroundEvents
+	DWORD dwEventFlags;
+
+    // Основной шрифт в ConEmu GUI
+    struct ConEmuMainFont MainFont;
+	// Палитра в ConEmu GUI
+	COLORREF crPalette[16];
+	// Reserved
+	DWORD dwReserved[20];
+
+
+	// DC для отрисовки фона. Изначально (для dwLevel==0) DC залит цветом фона crPalette[0]
+	HDC hdc;
+	// размер DC в пикселях
+	int dcSizeX, dcSizeY;
+	// Координаты панелей в DC (base 0x0)
+	RECT rcDcLeft, rcDcRight;
+
+
+    // Для облегчения жизни плагинам - текущие параметры FAR
+	RECT rcConWorkspace; // Кооринаты рабочей области FAR. В FAR 2 с ключом /w верх может быть != {0,0}
+	COORD conCursor; // положение курсора, или {-1,-1} если он не видим
+	DWORD nFarInterfaceSettings; // ACTL_GETINTERFACESETTINGS
+	DWORD nFarPanelSettings; // ACTL_GETPANELSETTINGS
+	BYTE nFarColors[0x100]; // Массив цветов фара
+
+    // Инфорация о панелях
 	BOOL bPanelsAllowed;
-	struct BkPanelInfo {
+	typedef struct tag_BkPanelInfo
+	{
 		BOOL bVisible; // Наличие панели
 		BOOL bFocused; // В фокусе
 		BOOL bPlugin;  // Плагиновая панель
@@ -404,59 +433,54 @@ struct UpdateBackgroundArg
 		wchar_t szFormat[MAX_PATH]; // Доступно только в FAR2
 		wchar_t szHostFile[32768];  // Доступно только в FAR2
 		RECT rcPanelRect; // Консольные кооринаты панели. В FAR 2 с ключом /w верх может быть != {0,0}
-	} LeftPanel, RightPanel;
-	RECT rcConWorkspace; // Кооринаты рабоче области FAR. В FAR 2 с ключом /w верх может быть != {0,0}
-	COORD conCursor; // положение курсора, или {-1,-1} если он не видим
-	DWORD nFarInterfaceSettings; // ACTL_GETINTERFACESETTINGS
-	DWORD nFarPanelSettings; // ACTL_GETPANELSETTINGS
-
-	// Слой, в котором вызван плагин. По сути, это порядковый номер, 0-based
-	// если (nLevel > 0) плагин НЕ ДОЛЖЕН затирать фон целиком.
-	int nLevel;
-
-	DWORD dwEventFlags; // комбинация из enum BackgroundUpdateEvent
-
-	BYTE nFarColors[0x100]; // Массив цветов фара
-	COLORREF crPalette[16]; // Палитра в ConEmu
-
-    /* Основной шрифт в GUI */
-    struct ConEmuMainFont MainFont;
+	} BkPanelInfo;
+	BkPanelInfo LeftPanel;
+	BkPanelInfo RightPanel;
 };
 
-typedef int (WINAPI* UpdateConEmuBackground_t)(struct UpdateBackgroundArg* pBk);
+typedef int (WINAPI* PaintConEmuBackground_t)(struct PaintBackgroundArg* pBk);
+
+// Если функция вернет 0 - обновление фона пока не требуется
+typedef int (WINAPI* BackgroundTimerProc_t)(LPARAM lParam);
 
 enum RegisterBackgroundCmd
 {
-	rbc_Register = 1,   // Первичная регистрации "фонового" плагина
+	rbc_Register   = 1, // Первичная регистрации "фонового" плагина
 	rbc_Unregister = 2, // Убрать плагин из списка "фоновых"
-	rbc_Redraw = 3,     // Если плагину требуется обновить фон - он зовет эту команду
+	rbc_Redraw     = 3, // Если плагину требуется обновить фон - он зовет эту команду
 };
 
-// Аргумент для функции: int WINAPI RegisterBackground(BackgroundInfo *pbk)
-struct BackgroundInfo
+// Аргумент для функции: int WINAPI RegisterBackground(RegisterBackgroundArg *pbk)
+struct RegisterBackgroundArg
 {
 	DWORD cbSize;
-	enum RegisterBackgroundCmd Cmd;
+	enum RegisterBackgroundCmd Cmd; // DWORD
+	HMODULE hPlugin; // Instance плагина, содержащего PaintConEmuBackground
 
-	HMODULE hPlugin; // Instance плагина, содержащего UpdateConEmuBackground
-	// Для дерегистрации всех калбэков достаточно вызвать {sizeof(BackgroundInfo), rbc_Unregister, hPlugin, NULL, NULL}
+	// Для дерегистрации всех калбэков достаточно вызвать {sizeof(RegisterBackgroundArg), rbc_Unregister, hPlugin}
 
 	// Что вызывать для обновления фона.
 	// Требуется заполнять только для Cmd==rbc_Register,
 	// в остальных случаях команды игнорируются
 	
-	// Плагин может зарегистрировать несколько различных пар {UpdateConEmuBackground,lParam}
-	UpdateConEmuBackground_t UpdateConEmuBackground; // Собственно калбэк
-	LPARAM lParam; // lParam будет передан в UpdateConEmuBackground
+	// Плагин может зарегистрировать несколько различных пар {PaintConEmuBackground,lParam}
+	PaintConEmuBackground_t PaintConEmuBackground; // Собственно калбэк
+	LPARAM lParam; // lParam будет передан в PaintConEmuBackground
 	
-	DWORD  nPlaces; // bitmask of BackgroundUpdatePlace
+	DWORD  dwPlaces;     // bitmask of PaintBackgroundPlaces
+	DWORD  dwEventFlags; // bitmask of PaintBackgroundEvents
 
 	// 0 - плагин предпочитает отрисовывать фон первым. Чем больше nSuggestedLevel
 	// тем позднее может быть вызван плагин при обновлении фона
-	int nSuggestedLevel;
+	DWORD  dwSuggestedLevel;
+	
+	// Необязательный калбэк таймера
+	BackgroundTimerProc_t BackgroundTimerProc;
+	// Рекомендованная частота опроса (ms)
+	DWORD nBackgroundTimerElapse;
 };
 
-typedef int (WINAPI* RegisterBackground_t)(BackgroundInfo *pbk);
+typedef int (WINAPI* RegisterBackground_t)(RegisterBackgroundArg *pbk);
 
 typedef void (WINAPI* SyncExecuteCallback_t)(LONG_PTR lParam);
 
@@ -478,21 +502,28 @@ struct FarVersion
 struct ConEmuLoadedArg
 {
 	DWORD cbSize;    // размер структуры в байтах
+	DWORD nBuildNo;  // {Номер сборки ConEmu*10} (i.e. 1012070). Это версия плагина. В принципе, версия GUI может отличаться
 	HMODULE hConEmu; // conemu.dll / conemu.x64.dll
 	HMODULE hPlugin; // для информации - Instance этого плагина, в котором вызывается OnConEmuLoaded
 	BOOL bLoaded;    // TRUE - при загрузке conemu.dll, FALSE - при выгрузке
 	BOOL bGuiActive; // TRUE - консоль запущена из-под ConEmu, FALSE - standalone
 
-	// Сервисные функции
+	/* ***************** */
+	/* Сервисные функции */
+	/* ***************** */
 	HWND (WINAPI *GetFarHWND)();
 	HWND (WINAPI *GetFarHWND2)(BOOL abConEmuOnly);
 	void (WINAPI *GetFarVersion)(FarVersion* pfv );
 	BOOL (WINAPI *IsTerminalMode)();
 	BOOL (WINAPI *IsConsoleActive)();
 	int  (WINAPI *RegisterPanelView)(PanelViewInit *ppvi);
-	int  (WINAPI *RegisterBackground)(BackgroundInfo *pbk);
+	int  (WINAPI *RegisterBackground)(RegisterBackgroundArg *pbk);
+	// Activate console tab in ConEmu
 	int  (WINAPI *ActivateConsole)();
-	int  (WINAPI *SyncExecute)(SyncExecuteCallback_t CallBack, LONG_PTR lParam);
+	// Synchronous execute CallBack in Far main thread (FAR2 use ACTL_SYNCHRO).
+	// SyncExecute does not returns, until CallBack finished.
+	// ahModule must be module handle, wich contains CallBack
+	int  (WINAPI *SyncExecute)(HMODULE ahModule, SyncExecuteCallback_t CallBack, LONG_PTR lParam);
 };
 
 // другие плагины могут экспортировать функцию "OnConEmuLoaded"
@@ -912,10 +943,12 @@ struct CESERVER_REQ_SETBACKGROUND
 enum SetBackgroundResult
 {
 	esbr_OK = 0,               // All OK
-	esbr_InvalidArg = 1,       // Invalid CESERVER_REQ_SETBACKGROUND.bmp, or CESERVER_REQ_SETBACKGROUND
+	esbr_InvalidArg = 1,       // Invalid *RegisterBackgroundArg
 	esbr_PluginForbidden = 2,  // "Allow plugins" unchecked in ConEmu settings ("Main" page)
 	esbr_ConEmuInShutdown = 3, // Console is closing. This is not an error, just information
 	esbr_Unexpected = 4,       // Unexpected error in ConEmu
+	esbr_InvalidArgSize = 5,   // Invalid RegisterBackgroundArg.cbSize
+	esbr_InvalidArgProc = 6,   // Invalid RegisterBackgroundArg.PaintConEmuBackground
 };
 struct CESERVER_REQ_SETBACKGROUNDRET
 {

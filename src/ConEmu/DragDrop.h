@@ -60,7 +60,7 @@ protected:
 	//ITEMIDLIST m_DesktopID;
 	DWORD mn_AllFiles, mn_CurFile; __int64 mn_CurWritten;
 	HANDLE FileStart(LPCWSTR pszFullName);
-	wchar_t* FileCreateName(BOOL abActive, BOOL abWide, LPVOID asFileName);
+	wchar_t* FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LPCWSTR asSubFolder, LPVOID asFileName);
 	HRESULT FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData);
 	//void EnumDragFormats(IDataObject * pDataObject);
 	void ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownError);

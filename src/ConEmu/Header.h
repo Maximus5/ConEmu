@@ -296,13 +296,15 @@ L"/BufferHeight <lines> - may be used with cmd.exe\n" \
 L"/cmd <commandline> - Command line to start. This must be the last used switch.\n" \
 L"\n" \
 L"Command line examples:\n" \
-L"ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd far.exe \"c:\\1 2\\\"\n" \
+L"ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd far.exe /w\n" \
 L"\n" \
 L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\n" \
 L"\x00A9 2009-2010 Maximus5\n" \
+L"\n" \
+L"Contributors\n" \
 L"NightRoman: drawing process optimization, BufferHeight and other fixes\n" \
 L"dolzenko_: windows switching via GUI tabs\n" \
-L"alex_itd: Drag'n'Drop, RightClick, AltEnter and GUI bars\n" \
+L"alex_itd: Drag'n'Drop, RightClick, AltEnter\n" \
 L"Mors: loading font from file."
 
 

@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 extern BOOL gbTerminateOnExit;
+extern OSVERSIONINFO gOSVer;
 
 #define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
 #define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
@@ -95,7 +96,7 @@ void ServerInitFont()
 	}
 
 
-	if (gbAttachMode && gbNoCreateProcess && srv.dwRootProcess)
+	if (gbAttachMode && gbNoCreateProcess && srv.dwRootProcess && gbAttachFromFar)
 	{
 		// Скорее всего это аттач из Far плагина. Попробуем установить шрифт в консоли через плагин.
 		wchar_t szPipeName[128];
@@ -109,7 +110,7 @@ void ServerInitFont()
 		CESERVER_REQ *pPlgOut = ExecuteCmd(szPipeName, &In, 500, ghConWnd);
 		if (pPlgOut) ExecuteFreeResult(pPlgOut);
 	}
-	else
+	else if (!gbAttachMode || gOSVer.dwMajorVersion >= 6)
 	{
 		if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
 		SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
@@ -219,9 +220,10 @@ int ServerInit()
 		iRc = CERR_NOTENOUGHMEM1; goto wrap;
 	}
 	CheckProcessCount(TRUE); // Сначала добавит себя
-	// в принципе, серверный режим может быть вызван из фара, чтобы подцепиться к GUI 
-	// но больше двух процессов в консоли не ожидается!
-	_ASSERTE(srv.bDebuggerActive || srv.nProcessCount<=2); 
+	// в принципе, серверный режим может быть вызван из фара, чтобы подцепиться к GUI.
+	// больше двух процессов в консоли вполне может быть, например, еще не отвалился
+	// предыдущий conemuc.exe, из которого этот запущен немодально.
+	_ASSERTE(srv.bDebuggerActive || (srv.nProcessCount<=2) || ((srv.nProcessCount>2) && gbAttachMode && srv.dwRootProcess));
 
 
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
@@ -387,6 +389,7 @@ int ServerInit()
 			if (!dwParentPID)
 			{
 				_printf ("Attach to GUI was requested, but there is no console processes:\n", 0, GetCommandLineW());
+				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
 			}
 			
@@ -1264,7 +1267,7 @@ HWND Attach2Gui(DWORD nTimeout)
 		srv.crReqSizeNewSize = In.StartStop.sbi.dwSize;
 	}
 
-LoopFind:
+//LoopFind:
 	// В обычном "серверном" режиме шрифт уже установлен, а при аттаче
 	// другого процесса - шрифт все-равно поменять не получится
 	//BOOL lbNeedSetFont = TRUE;
@@ -1385,13 +1388,30 @@ int CreateMapHeader()
 	
 	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD crMax = GetLargestConsoleWindowSize(h);
-	if (crMax.X < 80 || crMax.Y < 25) {
+	if (crMax.X < 80 || crMax.Y < 25)
+	{
 		#ifdef _DEBUG
 		DWORD dwErr = GetLastError();
 		_ASSERTE(crMax.X >= 80 && crMax.Y >= 25);
 		#endif
 		if (crMax.X < 80) crMax.X = 80;
 		if (crMax.Y < 25) crMax.Y = 25;
+	}
+	// Размер шрифта может быть еще не уменьшен? Прикинем размер по максимуму?
+	HMONITOR hMon = MonitorFromWindow(ghConWnd, MONITOR_DEFAULTTOPRIMARY);
+	MONITORINFO mi = {sizeof(MONITORINFO)};
+	if (GetMonitorInfo(hMon, &mi))
+	{
+		int x = (mi.rcWork.right - mi.rcWork.left) / 3;
+		int y = (mi.rcWork.bottom - mi.rcWork.top) / 5;
+		if (crMax.X < x || crMax.Y < y)
+		{
+			//_ASSERTE((crMax.X + 16) >= x && (crMax.Y + 32) >= y);
+			if (crMax.X < x)
+				crMax.X = x;
+			if (crMax.Y < y)
+				crMax.Y = y;
+		}
 	}
 	//TODO("Добавить к nConDataSize размер необходимый для хранения crMax ячеек");
 	DWORD nMaxCells = (crMax.X * crMax.Y);
@@ -1400,7 +1420,8 @@ int CreateMapHeader()
 	int nMaxDataSize = nMaxCells * sizeof(CHAR_INFO); // + nHdrSize;
 	
 	srv.pConsoleDataCopy = (CHAR_INFO*)Alloc(nMaxDataSize,1);
-	if (!srv.pConsoleDataCopy) {
+	if (!srv.pConsoleDataCopy)
+	{
 		_printf("ConEmuC: Alloc(%i) failed, pConsoleDataCopy is null", nMaxDataSize);
 		goto wrap;
 	}
@@ -1408,7 +1429,8 @@ int CreateMapHeader()
 
 	int nTotalSize = sizeof(CESERVER_REQ_CONINFO_FULL) + (nMaxCells * sizeof(CHAR_INFO));
 	srv.pConsole = (CESERVER_REQ_CONINFO_FULL*)Alloc(nTotalSize,1);
-	if (!srv.pConsole) {
+	if (!srv.pConsole)
+	{
 		_printf("ConEmuC: Alloc(%i) failed, pConsole is null", nTotalSize);
 		goto wrap;
 	}
@@ -1828,7 +1850,8 @@ static BOOL ReadConsoleData()
 	{
 		_ASSERTE(srv.pConsole && srv.pConsole->cbMaxSize >= (nCurSize+nHdrSize));
 		TextHeight = (srv.pConsole->info.crMaxSize.X * srv.pConsole->info.crMaxSize.Y) / TextWidth;
-		if (!TextHeight) {
+		if (!TextHeight)
+		{
 			_ASSERTE(TextHeight);
 			goto wrap;
 		}

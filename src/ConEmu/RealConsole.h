@@ -383,7 +383,7 @@ protected:
 private:
     // Эти переменные инициализируются в RetrieveConsoleInfo()
 	MSection csCON; //DWORD ncsT;
-    struct {
+    struct RConInfo {
         CONSOLE_SELECTION_INFO m_sel;
         CONSOLE_CURSOR_INFO m_ci;
         DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;

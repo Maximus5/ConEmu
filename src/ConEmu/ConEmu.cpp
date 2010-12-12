@@ -1225,7 +1225,9 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
             return rc;
         case CER_FULLSCREEN: // switch (tFrom)
         case CER_MAXIMIZED: // switch (tFrom)
-        	_ASSERTE(tFrom!=CER_FULLSCREEN && tFrom!=CER_MAXIMIZED);
+			// Например, таким способом можно получить размер развернутого окна на текущем мониторе
+			// RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
+        	_ASSERTE((tFrom!=CER_FULLSCREEN && tFrom!=CER_MAXIMIZED) || (tFrom==tWhat));
             break;
 		case CER_BACK: // switch (tFrom)
 			break;
@@ -3202,7 +3204,7 @@ void CConEmuMain::UpdateIdealRect(BOOL abAllowUseConSize/*=FALSE*/)
 	}
 }
 
-void CConEmuMain::DebugStep(LPCTSTR asMsg, BOOL abErrorSeverity/*=FALSE*/)
+void CConEmuMain::DebugStep(LPCWSTR asMsg, BOOL abErrorSeverity/*=FALSE*/)
 {
     if (ghWnd)
 	{
@@ -3223,7 +3225,8 @@ void CConEmuMain::DebugStep(LPCTSTR asMsg, BOOL abErrorSeverity/*=FALSE*/)
 		{
 			// Обновит заголовок в соответствии с возможными процентами в неактивной консоли
 			// и выполнит это в главной нити, если необходимо
-			if (bWasDbgStep)
+			// abErrorSeverity проверяем, чтобы можно было насильно "повторить" текущий заголовок
+			if (bWasDbgStep || abErrorSeverity)
 			{
 				bWasDbgStep = false;
 				if (bWasDbgError)

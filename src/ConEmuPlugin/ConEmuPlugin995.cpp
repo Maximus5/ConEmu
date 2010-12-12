@@ -993,7 +993,7 @@ BOOL CheckBufferEnabled995()
 	return FALSE;
 }
 
-static void CopyPanelInfoW(PanelInfo* pInfo, UpdateBackgroundArg::BkPanelInfo* pBk)
+static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pBk)
 {
 	pBk->bVisible = pInfo->Visible;
 	pBk->bFocused = pInfo->Focus;
@@ -1013,7 +1013,7 @@ static void CopyPanelInfoW(PanelInfo* pInfo, UpdateBackgroundArg::BkPanelInfo* p
 	pBk->rcPanelRect = pInfo->PanelRect;
 }
 
-void FillUpdateBackground995(struct UpdateBackgroundArg* pFar)
+void FillUpdateBackground995(struct PaintBackgroundArg* pFar)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;

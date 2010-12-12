@@ -4,15 +4,15 @@
 class CPluginBackground
 {
 protected:
-	struct BackgroundInfo *mp_BgPlugins;
+	struct RegisterBackgroundArg *mp_BgPlugins;
 	int mn_BgPluginsCount, mn_BgPluginsMax;
 	BOOL mb_BgWasSent;
 	MSection *csBgPlugins;
 	DWORD m_LastThSetCheck;
 	BOOL mb_ThNeedLoad;
 	PanelViewSettings m_ThSet;
-	struct UpdateBackgroundArg m_Default, m_Last;
-	bool IsParmChanged(struct UpdateBackgroundArg* p1, struct UpdateBackgroundArg* p2);
+	struct PaintBackgroundArg m_Default, m_Last;
+	bool IsParmChanged(struct PaintBackgroundArg* p1, struct PaintBackgroundArg* p2);
 	//// Buffers
 	//wchar_t ms_LeftCurDir[32768], ms_LeftFormat[MAX_PATH], ms_LeftHostFile[32768];
 	//wchar_t ms_RightCurDir[32768], ms_RightFormat[MAX_PATH], ms_RightHostFile[32768];
@@ -27,12 +27,12 @@ protected:
 	
 	void ReallocItems(int nAddCount);
 	BOOL LoadThSet(BOOL abFromMainThread);
-	void SetDcPanelRect(RECT *rcDc, UpdateBackgroundArg::BkPanelInfo *Panel, UpdateBackgroundArg *Arg);
+	void SetDcPanelRect(RECT *rcDc, PaintBackgroundArg::BkPanelInfo *Panel, PaintBackgroundArg *Arg);
 
 	/* Вызывается только в thread-safe (Synchro) - begin */
 	void CheckPanelFolders();
 	void UpdateBackground();
-	static void UpdateBackground_Exec(struct BackgroundInfo *pPlugin, struct UpdateBackgroundArg *pArg);
+	static void UpdateBackground_Exec(struct RegisterBackgroundArg *pPlugin, struct PaintBackgroundArg *pArg);
 	/* end- Вызывается только в thread-safe (Synchro)*/
 	
 public:
@@ -43,7 +43,7 @@ public:
 	void SetForceUpdate();
 	
 	// Может вызываться в произвольном потоке
-	int RegisterSubplugin(BackgroundInfo *pbk);
+	int RegisterSubplugin(RegisterBackgroundArg *pbk);
 
 	// Вызывается только в thread-safe (Synchro)
 	void OnMainThreadActivated(int anEditorEvent = -1, int anViewerEvent = -1);

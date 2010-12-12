@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "..\common\ConsoleAnnotation.h"
 #include "..\common\WinObjects.h"
 #include "..\common\TerminalMode.h"
+#include "..\ConEmu\version.h"
 #include "PluginHeader.h"
 #include "PluginBackground.h"
 #include <Tlhelp32.h>
@@ -76,6 +77,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct SyncExecuteArg
 {
 	DWORD nCmd;
+	HMODULE hModule;
 	SyncExecuteCallback_t CallBack;
 	LONG_PTR lParam;
 };
@@ -96,9 +98,9 @@ extern "C"{
   BOOL WINAPI IsTerminalMode();
   BOOL WINAPI IsConsoleActive();
   int  WINAPI RegisterPanelView(PanelViewInit *ppvi);
-  int  WINAPI RegisterBackground(BackgroundInfo *pbk);
+  int  WINAPI RegisterBackground(RegisterBackgroundArg *pbk);
   int  WINAPI ActivateConsole();
-  int  WINAPI SyncExecute(SyncExecuteCallback_t CallBack, LONG_PTR lParam);
+  int  WINAPI SyncExecute(HMODULE ahModule, SyncExecuteCallback_t CallBack, LONG_PTR lParam);
 };
 #endif
 
@@ -1400,32 +1402,32 @@ int WINAPI RegisterPanelView(PanelViewInit *ppvi)
 
 
 
-//struct BackgroundInfo gpBgPlugin = NULL;
+//struct RegisterBackgroundArg gpBgPlugin = NULL;
 //int gnBgPluginsCount = 0, gnBgPluginsMax = 0;
 //MSection *csBgPlugins = NULL;
 
-int WINAPI RegisterBackground(BackgroundInfo *pbk)
+int WINAPI RegisterBackground(RegisterBackgroundArg *pbk)
 {
 	if (!pbk)
 	{
 		_ASSERTE(pbk != NULL);
-		return -1;
+		return esbr_InvalidArg;
 	}
 	if (!gbBgPluginsAllowed)
 	{
 		_ASSERTE(gbBgPluginsAllowed == TRUE);
-		return -2;
+		return esbr_PluginForbidden;
 	}
 	if (pbk->cbSize != sizeof(*pbk))
 	{
 		_ASSERTE(pbk->cbSize == sizeof(*pbk));
-		return -3;
+		return esbr_InvalidArgSize;
 	}
 
 #ifdef _DEBUG
 	if (pbk->Cmd == rbc_Register)
 	{
-		_ASSERTE(pbk->nPlaces != 0);
+		_ASSERTE(pbk->dwPlaces != 0);
 	}
 #endif
 	
@@ -1440,10 +1442,10 @@ int WINAPI RegisterBackground(BackgroundInfo *pbk)
 // Возвращает TRUE в случае успешного выполнения 
 // (удалось активировать главную нить и выполнить в ней функцию CallBack)
 // FALSE - в случае ошибки.
-int WINAPI SyncExecute(SyncExecuteCallback_t CallBack, LONG_PTR lParam)
+int WINAPI SyncExecute(HMODULE ahModule, SyncExecuteCallback_t CallBack, LONG_PTR lParam)
 {
 	BOOL bResult = FALSE;
-	SyncExecuteArg args = {CMD__EXTERNAL_CALLBACK, CallBack, lParam};
+	SyncExecuteArg args = {CMD__EXTERNAL_CALLBACK, ahModule, CallBack, lParam};
 	bResult = ProcessCommand(CMD__EXTERNAL_CALLBACK, TRUE/*bReqMainThread*/, &args);
 	return bResult;
 }
@@ -1902,8 +1904,16 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				&& ((SyncExecuteArg*)pCommandData)->CallBack != NULL)
 			{
 				SyncExecuteArg* pExec = (SyncExecuteArg*)pCommandData;
-				pExec->CallBack(pExec->lParam);
-				lbSucceeded = TRUE;
+				BOOL lbCallbackValid = CheckCallbackPtr(pExec->hModule, (FARPROC)pExec->CallBack, FALSE);
+				if (lbCallbackValid)
+				{
+					pExec->CallBack(pExec->lParam);
+					lbSucceeded = TRUE;
+				}
+				else
+				{
+					lbSucceeded = FALSE;
+				}
 			}
 			break;
 		}
@@ -3559,6 +3569,31 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 	return 0;
 }
 
+void FillLoadedParm(struct ConEmuLoadedArg* pArg, HMODULE hSubPlugin, BOOL abLoaded)
+{
+	memset(pArg, 0, sizeof(struct ConEmuLoadedArg));
+	pArg->cbSize = (DWORD)sizeof(struct ConEmuLoadedArg);
+	pArg->nBuildNo = ((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10);
+	pArg->hConEmu = ghPluginModule;
+	pArg->hPlugin = hSubPlugin;
+	pArg->bLoaded = abLoaded;
+	pArg->bGuiActive = abLoaded && (ConEmuHwnd != NULL);
+
+	// Сервисные функции
+	if (abLoaded)
+	{
+		pArg->GetFarHWND = GetFarHWND;
+		pArg->GetFarHWND2 = GetFarHWND2;
+		pArg->GetFarVersion = GetFarVersion;
+		pArg->IsTerminalMode = IsTerminalMode;
+		pArg->IsConsoleActive = IsConsoleActive;
+		pArg->RegisterPanelView = RegisterPanelView;
+		pArg->RegisterBackground = RegisterBackground;
+		pArg->ActivateConsole = ActivateConsole;
+		pArg->SyncExecute = SyncExecute;
+	}
+}
+
 void NotifyConEmuUnloaded()
 {
 	OnConEmuLoaded_t fnOnConEmuLoaded = NULL;
@@ -3577,8 +3612,11 @@ void NotifyConEmuUnloaded()
 				if (GetProcAddress(module.hModule, "SetStartupInfoW") || GetProcAddress(module.hModule, "SetStartupInfo"))
 				{
 					struct ConEmuLoadedArg arg = {sizeof(struct ConEmuLoadedArg)};
-					arg.hConEmu = ghPluginModule;
-					arg.bLoaded = FALSE;
+					FillLoadedParm(&arg, module.hModule, FALSE); // плагин conemu.dll выгружается!
+					//arg.hPlugin = module.hModule;
+					//arg.nBuildNo = ((MVV_1 % 100)*10000) + (MVV_2*100) + (MVV_3);
+					//arg.hConEmu = ghPluginModule;
+					//arg.bLoaded = FALSE;
 
 					lbSucceded = FALSE;
 					SAFETRY {
@@ -4476,29 +4514,67 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
 	DWORD nProcessCount = 0, nProcesses[100] = {0};
 	
 	dwServerPID = 0;
-	
+
 	typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dwProcessCount);
 	FGetConsoleProcessList pfnGetConsoleProcessList = NULL;
-    HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
-    
-    if (hKernel) {
-        pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress (hKernel, "GetConsoleProcessList");
-    }
+	HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
 
-    if (pfnGetConsoleProcessList) {
-    	nProcessCount = pfnGetConsoleProcessList(nProcesses, countof(nProcesses));
-    	if (nProcessCount && nProcessCount > countof(nProcesses)) {
-    		_ASSERTE(nProcessCount <= countof(nProcesses));
-    		nProcessCount = 0;
-    	}
-    }
+	if (hKernel)
+	{
+		pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress (hKernel, "GetConsoleProcessList");
+	}
+
+	
+	BOOL lbWin2kMode = (pfnGetConsoleProcessList == NULL);
+    
+	if (!lbWin2kMode)
+	{
+
+		if (pfnGetConsoleProcessList)
+		{
+    		nProcessCount = pfnGetConsoleProcessList(nProcesses, countof(nProcesses));
+    		if (nProcessCount && nProcessCount > countof(nProcesses)) {
+    			_ASSERTE(nProcessCount <= countof(nProcesses));
+    			nProcessCount = 0;
+    		}
+		}
+	}
+
+	if (lbWin2kMode)
+	{
+		DWORD nSelfPID = GetCurrentProcessId();
+		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+		if (lbWin2kMode)
+		{
+			if (hSnap != INVALID_HANDLE_VALUE)
+			{
+				PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+				if (Process32First(hSnap, &prc))
+				{
+					do
+					{
+						if (prc.th32ProcessID == nSelfPID)
+						{
+							nProcesses[0] = prc.th32ParentProcessID;
+							nProcesses[1] = nSelfPID;
+							nProcessCount = 2;
+							break;
+						}
+					} while (!dwServerPID && Process32Next(hSnap, &prc));
+				}
+				CloseHandle(hSnap);
+			}
+		}
+	}
 	
 	if (nProcessCount >= 2)
 	{
+		DWORD nParentPID = 0;
+		DWORD nSelfPID = GetCurrentProcessId();
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-		if (hSnap != INVALID_HANDLE_VALUE) {
+		if (hSnap != INVALID_HANDLE_VALUE)
+		{
 			PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
-			DWORD nSelfPID = GetCurrentProcessId();
 			if (Process32First(hSnap, &prc))
 			{
 				do
@@ -4506,7 +4582,7 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
             		for (UINT i = 0; i < nProcessCount; i++)
 					{
             			if (prc.th32ProcessID != nSelfPID
-            				&& prc.th32ProcessID == nProcesses[i])
+							&& prc.th32ProcessID == nProcesses[i])
         				{
         					if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0 
         						/*|| lstrcmpiW(prc.szExeFile, L"conemuc64.exe")==0*/)
@@ -4884,21 +4960,23 @@ void WINAPI OnLibraryLoaded(HMODULE ahModule)
 		// Наверное, только для плагинов фара
 		if (GetProcAddress(ahModule, "SetStartupInfoW") || GetProcAddress(ahModule, "SetStartupInfo"))
 		{
-			struct ConEmuLoadedArg arg = {sizeof(struct ConEmuLoadedArg)};
-			arg.hConEmu = ghPluginModule;
-			arg.hPlugin = ahModule;
-			arg.bLoaded = TRUE;
-			arg.bGuiActive = (ConEmuHwnd != NULL);
-			// Сервисные функции
-			arg.GetFarHWND = GetFarHWND;
-			arg.GetFarHWND2 = GetFarHWND2;
-			arg.GetFarVersion = GetFarVersion;
-			arg.IsTerminalMode = IsTerminalMode;
-			arg.IsConsoleActive = IsConsoleActive;
-			arg.RegisterPanelView = RegisterPanelView;
-			arg.RegisterBackground = RegisterBackground;
-			arg.ActivateConsole = ActivateConsole;
-			arg.SyncExecute = SyncExecute;
+			struct ConEmuLoadedArg arg; // = {sizeof(struct ConEmuLoadedArg)};
+			FillLoadedParm(&arg, ahModule, TRUE);
+			//arg.hPlugin = ahModule;
+			//arg.hConEmu = ghPluginModule;
+			//arg.hPlugin = ahModule;
+			//arg.bLoaded = TRUE;
+			//arg.bGuiActive = (ConEmuHwnd != NULL);
+			//// Сервисные функции
+			//arg.GetFarHWND = GetFarHWND;
+			//arg.GetFarHWND2 = GetFarHWND2;
+			//arg.GetFarVersion = GetFarVersion;
+			//arg.IsTerminalMode = IsTerminalMode;
+			//arg.IsConsoleActive = IsConsoleActive;
+			//arg.RegisterPanelView = RegisterPanelView;
+			//arg.RegisterBackground = RegisterBackground;
+			//arg.ActivateConsole = ActivateConsole;
+			//arg.SyncExecute = SyncExecute;
 
 			SAFETRY {
 				fnOnConEmuLoaded(&arg);
@@ -4957,6 +5035,68 @@ void LogCreateProcessCheck(LPCWSTR asLogFileName)
 			TODO("Осталось включить калбэки для шелловских функций");
 		}
 	}
+}
+
+BOOL CheckCallbackPtr(HMODULE hModule, FARPROC CallBack, BOOL abCheckModuleInfo)
+{
+	if (!hModule)
+	{
+		_ASSERTE(hModule!=NULL);
+		return FALSE;
+	}
+
+	DWORD_PTR nModulePtr = (DWORD_PTR)hModule;
+	DWORD_PTR nModuleSize = (4<<20);
+	BOOL lbModuleInformation = FALSE;
+
+	if (abCheckModuleInfo)
+	{
+		static HMODULE hPsApi = NULL;
+		if (hPsApi == NULL)
+		{
+			hPsApi = LoadLibrary(L"Psapi.dll");
+			if (hPsApi == NULL)
+				hPsApi = (HMODULE)-1;
+		}
+		if (hPsApi && hPsApi != (HMODULE)-1)
+		{
+			struct ModInfo {
+			  LPVOID lpBaseOfDll;
+			  DWORD  SizeOfImage;
+			  LPVOID EntryPoint;
+			} mi;
+			typedef BOOL (WINAPI* GetModuleInformation_t)(HANDLE, HMODULE, struct ModInfo*, DWORD);
+			GetModuleInformation_t GetModuleInformation = (GetModuleInformation_t)GetProcAddress(hPsApi, "GetModuleInformation");
+			if (GetModuleInformation)
+			{
+				lbModuleInformation = GetModuleInformation(GetCurrentProcess(), hModule, &mi, sizeof(mi));
+				if (!lbModuleInformation)
+				{
+					_ASSERTE(lbModuleInformation!=FALSE);
+					return FALSE;
+				}
+				nModuleSize = mi.SizeOfImage;
+			}
+		}
+	}
+
+	if (!CallBack)
+	{
+		_ASSERTE(CallBack!=NULL);
+		return FALSE;
+	}
+	if (((DWORD_PTR)CallBack) < nModulePtr)
+	{
+		_ASSERTE(((DWORD_PTR)CallBack) >= nModulePtr);
+		return FALSE;
+	}
+	
+	if (((DWORD_PTR)CallBack) > (nModuleSize + nModulePtr))
+	{
+		_ASSERTE(((DWORD_PTR)CallBack) <= (nModuleSize + nModulePtr));
+		return FALSE;
+	}
+	return TRUE;
 }
 
 

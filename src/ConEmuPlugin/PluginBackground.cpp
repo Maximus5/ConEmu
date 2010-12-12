@@ -61,7 +61,7 @@ CPluginBackground::CPluginBackground()
 {
 	mn_BgPluginsCount = 0;
 	mn_BgPluginsMax = 16;
-	mp_BgPlugins = (struct BackgroundInfo*)calloc(mn_BgPluginsMax,sizeof(struct BackgroundInfo));
+	mp_BgPlugins = (struct RegisterBackgroundArg*)calloc(mn_BgPluginsMax,sizeof(struct RegisterBackgroundArg));
 	mn_ReqActions = 0;
 
 	// Инициализируем в TRUE, потому что иначе при запуске второго фара (far/e) 
@@ -102,17 +102,32 @@ CPluginBackground::~CPluginBackground()
 	}
 }
 
-int CPluginBackground::RegisterSubplugin(BackgroundInfo *pbk)
+int CPluginBackground::RegisterSubplugin(RegisterBackgroundArg *pbk)
 {
 	if (!pbk)
 	{
 		_ASSERTE(pbk != NULL);
-		return -1;
+		return esbr_InvalidArg;
 	}
 	if (!gbBgPluginsAllowed)
 	{
 		_ASSERTE(gbBgPluginsAllowed == TRUE);
-		return -2;
+		return esbr_PluginForbidden;
+	}
+	if (pbk->cbSize != sizeof(*pbk))
+	{
+		_ASSERTE(pbk->cbSize == sizeof(*pbk));
+		return esbr_InvalidArgSize;
+	}
+
+	if (pbk->Cmd == rbc_Register)
+	{
+		BOOL lbCheckCallback = CheckCallbackPtr(pbk->hPlugin, (FARPROC)pbk->PaintConEmuBackground, TRUE);
+		if (!lbCheckCallback)
+		{
+			_ASSERTE(lbCheckCallback==TRUE);
+			return esbr_InvalidArgProc;
+		}
 	}
 	
 	
@@ -123,7 +138,7 @@ int CPluginBackground::RegisterSubplugin(BackgroundInfo *pbk)
 		ReallocItems(16);
 		
 	// go
-	BOOL lbNeedResort = FALSE;
+	//BOOL lbNeedResort = FALSE;
 
 	if (pbk->Cmd == rbc_Register)
 	{
@@ -133,7 +148,7 @@ int CPluginBackground::RegisterSubplugin(BackgroundInfo *pbk)
 		{
 			if (mp_BgPlugins[i].Cmd == rbc_Register &&
 				mp_BgPlugins[i].hPlugin == pbk->hPlugin &&
-				mp_BgPlugins[i].UpdateConEmuBackground == pbk->UpdateConEmuBackground &&
+				mp_BgPlugins[i].PaintConEmuBackground == pbk->PaintConEmuBackground &&
 				mp_BgPlugins[i].lParam == pbk->lParam)
 			{
 				nFound = i; break;
@@ -147,7 +162,7 @@ int CPluginBackground::RegisterSubplugin(BackgroundInfo *pbk)
 				nFound = nFirstEmpty;
 			else
 				nFound = mn_BgPluginsCount++;
-			lbNeedResort = (mn_BgPluginsCount>1);
+			//lbNeedResort = (mn_BgPluginsCount>1);
 		}
 		mp_BgPlugins[nFound] = *pbk;
 	}
@@ -157,12 +172,12 @@ int CPluginBackground::RegisterSubplugin(BackgroundInfo *pbk)
 		{
 			if (mp_BgPlugins[i].Cmd == rbc_Register &&
 				mp_BgPlugins[i].hPlugin == pbk->hPlugin &&
-				((pbk->UpdateConEmuBackground == NULL) ||
-				 (mp_BgPlugins[i].UpdateConEmuBackground == pbk->UpdateConEmuBackground
+				((pbk->PaintConEmuBackground == NULL) ||
+				 (mp_BgPlugins[i].PaintConEmuBackground == pbk->PaintConEmuBackground
 				  && mp_BgPlugins[i].lParam == pbk->lParam)))
 			{
 				memset(mp_BgPlugins+i, 0, sizeof(*mp_BgPlugins));
-				lbNeedResort = TRUE;
+				//lbNeedResort = TRUE;
 			}
 		}
 		WARNING("Если количество зарегистрированных плагинов уменьшилось до 0");
@@ -174,11 +189,13 @@ int CPluginBackground::RegisterSubplugin(BackgroundInfo *pbk)
 		// просто выставить gbNeedBgActivate
 	}
 	
-	//TODO: Сортировка
-	if (lbNeedResort)
-	{
-		WARNING("Сортировка зарегистрированных плагинов - CPluginBackground::RegisterBackground");
-	}
+	////TODO: Сортировка
+	//if (lbNeedResort)
+	//{
+	//	WARNING("Сортировка зарегистрированных плагинов - CPluginBackground::RegisterBackground");
+	//}
+
+	SC.Unlock();
 	
 	// Когда активируется MainThread - обновить background
 	mn_ReqActions |= ra_UpdateBackground;
@@ -188,7 +205,7 @@ int CPluginBackground::RegisterSubplugin(BackgroundInfo *pbk)
 	{
 		ExecuteSynchro();
 	}
-	return 0;
+	return esbr_OK;
 }
 
 void CPluginBackground::ReallocItems(int nAddCount)
@@ -196,11 +213,11 @@ void CPluginBackground::ReallocItems(int nAddCount)
 	_ASSERTE(nAddCount > 0);
 	int nNewMax = mn_BgPluginsMax + nAddCount;
 	_ASSERTE(nNewMax > 0);
-	struct BackgroundInfo *pNew = (struct BackgroundInfo*)calloc(nNewMax,sizeof(struct BackgroundInfo));
+	struct RegisterBackgroundArg *pNew = (struct RegisterBackgroundArg*)calloc(nNewMax,sizeof(struct RegisterBackgroundArg));
 	if (mp_BgPlugins)
 	{
 		if (mn_BgPluginsCount > 0)
-			memmove(pNew, mp_BgPlugins, mn_BgPluginsCount*sizeof(struct BackgroundInfo));
+			memmove(pNew, mp_BgPlugins, mn_BgPluginsCount*sizeof(struct RegisterBackgroundArg));
 		free(mp_BgPlugins);
 	}
 	mp_BgPlugins = pNew;
@@ -241,7 +258,7 @@ void CPluginBackground::SetForceUpdate()
 	gbNeedBgActivate = TRUE;
 }
 
-bool CPluginBackground::IsParmChanged(struct UpdateBackgroundArg* p1, struct UpdateBackgroundArg* p2)
+bool CPluginBackground::IsParmChanged(struct PaintBackgroundArg* p1, struct PaintBackgroundArg* p2)
 {
 	if (!p1 || !p2)
 		return false;
@@ -310,7 +327,7 @@ void CPluginBackground::CheckPanelFolders()
 	}
 }
 
-void CPluginBackground::SetDcPanelRect(RECT *rcDc, UpdateBackgroundArg::BkPanelInfo *Panel, UpdateBackgroundArg *Arg)
+void CPluginBackground::SetDcPanelRect(RECT *rcDc, PaintBackgroundArg::BkPanelInfo *Panel, PaintBackgroundArg *Arg)
 {
 	if (!Panel->bVisible)
 	{
@@ -337,25 +354,29 @@ void CPluginBackground::SetDcPanelRect(RECT *rcDc, UpdateBackgroundArg::BkPanelI
 	}
 }
 
-void CPluginBackground::UpdateBackground_Exec(struct BackgroundInfo *pPlugin, struct UpdateBackgroundArg *pArg)
+void CPluginBackground::UpdateBackground_Exec(struct RegisterBackgroundArg *pPlugin, struct PaintBackgroundArg *pArg)
 {
-	if (!pPlugin->UpdateConEmuBackground)
-	{
-		_ASSERTE(pPlugin->UpdateConEmuBackground!=NULL);
+	if (!CheckCallbackPtr(pPlugin->hPlugin, (FARPROC)pPlugin->PaintConEmuBackground, TRUE))
 		return;
-	}
-	if (((DWORD_PTR)pPlugin->UpdateConEmuBackground) < ((DWORD_PTR)pPlugin->hPlugin))
-	{
-		_ASSERTE(((DWORD_PTR)pPlugin->UpdateConEmuBackground) >= ((DWORD_PTR)pPlugin->hPlugin));
-		return;
-	}
-#ifdef _DEBUG
-	if (((DWORD_PTR)pPlugin->UpdateConEmuBackground) > ((4<<20) + (DWORD_PTR)pPlugin->hPlugin))
-	{
-		_ASSERTE(((DWORD_PTR)pPlugin->UpdateConEmuBackground) <= ((4<<20) + (DWORD_PTR)pPlugin->hPlugin));
-	}
-#endif
-	pPlugin->UpdateConEmuBackground(pArg);	
+
+	pPlugin->PaintConEmuBackground(pArg);
+
+	//if (!pPlugin->PaintConEmuBackground)
+	//{
+	//	_ASSERTE(pPlugin->PaintConEmuBackground!=NULL);
+	//	return;
+	//}
+	//if (((DWORD_PTR)pPlugin->PaintConEmuBackground) < ((DWORD_PTR)pPlugin->hPlugin))
+	//{
+	//	_ASSERTE(((DWORD_PTR)pPlugin->PaintConEmuBackground) >= ((DWORD_PTR)pPlugin->hPlugin));
+	//	return;
+	//}
+	//#ifdef _DEBUG
+	//	if (((DWORD_PTR)pPlugin->PaintConEmuBackground) > ((4<<20) + (DWORD_PTR)pPlugin->hPlugin))
+	//	{
+	//		_ASSERTE(((DWORD_PTR)pPlugin->PaintConEmuBackground) <= ((4<<20) + (DWORD_PTR)pPlugin->hPlugin));
+	//	}
+	//#endif
 }
 
 // Вызывается ТОЛЬКО в главной нити!
@@ -373,8 +394,8 @@ void CPluginBackground::UpdateBackground()
 
 	//RECT rcClient; GetClientRect(ConEmuHwnd, &rcClient);
 
-	struct UpdateBackgroundArg Arg = m_Default;
-	Arg.cbSize = sizeof(struct UpdateBackgroundArg);
+	struct PaintBackgroundArg Arg = m_Default;
+	Arg.cbSize = sizeof(struct PaintBackgroundArg);
 	//m_Default.dcSizeX = Arg.dcSizeX = rcClient.right+1;
 	//m_Default.dcSizeY = Arg.dcSizeY = rcClient.bottom+1;
 	m_Default.dcSizeX = Arg.dcSizeX = (m_Default.rcConWorkspace.right-m_Default.rcConWorkspace.left+1)*m_Default.MainFont.nFontCellWidth;
@@ -391,13 +412,13 @@ void CPluginBackground::UpdateBackground()
 	SetDcPanelRect(&Arg.rcDcLeft, &Arg.LeftPanel, &Arg);
 	SetDcPanelRect(&Arg.rcDcRight, &Arg.RightPanel, &Arg);
 	if (!gpTabs)
-		Arg.Place = bup_Panels;
+		Arg.Place = pbp_Panels;
 	else if (gpTabs->Tabs.CurrentType == WTYPE_EDITOR)
-		Arg.Place = bup_Editor;
+		Arg.Place = pbp_Editor;
 	else if (gpTabs->Tabs.CurrentType == WTYPE_VIEWER)
-		Arg.Place = bup_Viewer;
+		Arg.Place = pbp_Viewer;
 	else if (Arg.LeftPanel.bVisible || Arg.RightPanel.bVisible)
-		Arg.Place = bup_Panels;
+		Arg.Place = pbp_Panels;
 
 	//_ASSERTE(Arg.LeftPanel.bVisible || Arg.RightPanel.bVisible);
 
@@ -432,18 +453,41 @@ void CPluginBackground::UpdateBackground()
 	// Painting!
 	int nProcessed = 0;
 	MSectionLock SC; SC.Lock(csBgPlugins, TRUE);
-	for (int i = 0; i < mn_BgPluginsCount; i++)
+	DWORD nFromLevel = 0, nNextLevel, nSuggested;
+	while (true)
 	{
-		if (mp_BgPlugins[i].Cmd != rbc_Register ||
-			!(mp_BgPlugins[i].nPlaces & Arg.Place) ||
-			!(mp_BgPlugins[i].UpdateConEmuBackground))
-			continue; // пустая, неактивная в данном контексте, или некорректная ячейка
+		nNextLevel = nFromLevel;
+		struct RegisterBackgroundArg *p = mp_BgPlugins;
+		for (int i = 0; i < mn_BgPluginsCount; i++, p++)
+		{
+			if (p->Cmd != rbc_Register ||
+				!(p->dwPlaces & Arg.Place) ||
+				!(p->PaintConEmuBackground))
+				continue; // пустая, неактивная в данном контексте, или некорректная ячейка
+			// Слои
+			nSuggested = p->dwSuggestedLevel;
+			if (nSuggested < nFromLevel)
+			{
+				continue; // Этот слой уже обработан
+			}
+			else if (nSuggested > nFromLevel)
+			{
+				// Этот слой нужно будет обработать в следующий раз
+				if ((nNextLevel == nFromLevel) || (nSuggested < nNextLevel))
+					nNextLevel = nSuggested;
+				continue;
+			}
 
-		Arg.nLevel = i;
-		Arg.lParam = mp_BgPlugins[i].lParam;
-		//mp_BgPlugins[i].UpdateConEmuBackground(&Arg);
-		UpdateBackground_Exec(mp_BgPlugins+i, &Arg);
-		nProcessed++;
+			// На уровне 0 (заливающий фон) должен быть только один плагин
+			Arg.dwLevel = (nProcessed == 0) ? 0 : (nFromLevel == 0 && nProcessed) ? 1 : nFromLevel;
+			Arg.lParam = mp_BgPlugins[i].lParam;
+			//mp_BgPlugins[i].PaintConEmuBackground(&Arg);
+			UpdateBackground_Exec(mp_BgPlugins+i, &Arg);
+			nProcessed++;
+		}
+		if (nNextLevel == nFromLevel)
+			break; // больше слоев нет
+		nFromLevel = nNextLevel;
 	}
 	SC.Unlock();
 	// Sending background to GUI!

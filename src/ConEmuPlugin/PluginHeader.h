@@ -257,11 +257,12 @@ BOOL FUNC_X(ExecuteSynchro)();
 void FUNC_Y(WaitEndSynchro)();
 void FUNC_Y(StopWaitEndSynchro)();
 
-void FillUpdateBackgroundA(struct UpdateBackgroundArg* pFar);
-void FUNC_Y(FillUpdateBackground)(struct UpdateBackgroundArg* pFar);
-void FUNC_X(FillUpdateBackground)(struct UpdateBackgroundArg* pFar);
+void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar);
+void FUNC_Y(FillUpdateBackground)(struct PaintBackgroundArg* pFar);
+void FUNC_X(FillUpdateBackground)(struct PaintBackgroundArg* pFar);
 
 void CommonPluginStartup();
+BOOL CheckCallbackPtr(HMODULE hModule, FARPROC CallBack, BOOL abCheckModuleInfo);
 
 #ifdef _DEBUG
 	#define SHOWDBGINFO(x) OutputDebugStringW(x)
