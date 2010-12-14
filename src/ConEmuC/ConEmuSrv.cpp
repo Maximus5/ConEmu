@@ -300,6 +300,13 @@ int ServerInit()
 		    	dwErr = GetLastError();
 		    	_ASSERTE(lbCallRc);
 	    	}
+			else
+			{
+				ghConEmuWnd = (HWND)Out.dwData[0];
+				ghConEmuWndDC = (HWND)Out.dwData[1];
+				srv.bWasDetached = FALSE;
+				UpdateConsoleMapHeader();
+			}
 		}
 		if (srv.hConEmuGuiAttached) 
 		{
@@ -716,7 +723,8 @@ int ServerInit()
 
 	// Пометить мэппинг, как готовый к отдаче данных
 	srv.pConsole->hdr.bDataReady = TRUE;
-	srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
+	//srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
+	UpdateConsoleMapHeader();
 
 	if (!srv.bDebuggerActive)
 		SendStarted();
@@ -763,7 +771,8 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		if (srv.pConsole && srv.pConsoleMap)
 		{
 			srv.pConsole->hdr.nServerInShutdown = GetTickCount();
-			srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
+			//srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
+			UpdateConsoleMapHeader();
 		}
 
 		_ASSERTE(srv.nProcessCount <= 1);
@@ -1097,6 +1106,15 @@ void CheckConEmuHwnd()
 	if (srv.bDebuggerActive)
 	{
 		ghConEmuWnd = FindConEmuByPID();
+		if (ghConEmuWnd)
+		{
+			// Просто для информации
+			ghConEmuWndDC = FindWindowEx(ghConEmuWnd, NULL, VirtualConsoleClassMain, NULL);
+		}
+		else
+		{
+			ghConEmuWndDC = NULL;
+		}
 		return;
 	}
 
@@ -1115,6 +1133,13 @@ void CheckConEmuHwnd()
 	}
 	if (ghConEmuWnd)
 	{
+		if (!ghConEmuWndDC)
+		{
+			// ghConEmuWndDC по идее уже должен быть получен из GUI через пайпы
+			_ASSERTE(ghConEmuWndDC!=NULL);
+			ghConEmuWndDC = FindWindowEx(ghConEmuWnd, NULL, VirtualConsoleClassMain, NULL);
+		}
+
 		// Установить переменную среды с дескриптором окна
 		SetConEmuEnvVar(ghConEmuWnd);
 
@@ -1147,6 +1172,9 @@ HWND Attach2Gui(DWORD nTimeout)
 	BOOL bNeedStartGui = FALSE;
 	DWORD dwErr = 0;
 	DWORD dwStartWaitIdleResult = -1;
+
+	// Будем подцепляться заново
+	srv.bWasDetached = FALSE;
 
 	if (!srv.pConsoleMap)
 	{
@@ -1256,6 +1284,8 @@ HWND Attach2Gui(DWORD nTimeout)
 		In.StartStop.bRootIsCmdExe = FALSE;
 	else
 		In.StartStop.bRootIsCmdExe = gbRootIsCmdExe || (gbAttachMode && !gbNoCreateProcess);
+	// Если GUI запущен не от имени админа - то он обломается при попытке
+	// открыть дескриптор процесса сервера. Нужно будет ему помочь.
 	In.StartStop.bUserIsAdmin = IsUserAdmin();
 	HANDLE hOut = (HANDLE)ghConOut;
 	if (!GetConsoleScreenBufferInfo(hOut, &In.StartStop.sbi))
@@ -1286,9 +1316,31 @@ HWND Attach2Gui(DWORD nTimeout)
 			//    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
 			//}
 		
-			WARNING("Переделать на команду пайпа!!! AttachRequested");
-			//hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
-			//if (hDcWnd != NULL) {
+
+			// Если GUI запущен не от имени админа - то он обломается при попытке
+			// открыть дескриптор процесса сервера. Нужно будет ему помочь.
+			In.StartStop.hServerProcessHandle = NULL;
+			if (In.StartStop.bUserIsAdmin)
+			{
+				DWORD  nGuiPid = 0;
+				if (GetWindowThreadProcessId(hGui, &nGuiPid) && nGuiPid)
+				{
+					HANDLE hGuiHandle = OpenProcess(PROCESS_DUP_HANDLE, FALSE, nGuiPid);
+					if (hGuiHandle)
+					{
+						HANDLE hDupHandle = NULL;
+						if (DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(),
+								hGuiHandle, &hDupHandle, PROCESS_QUERY_INFORMATION|SYNCHRONIZE,
+								FALSE, 0)
+							&& hDupHandle)
+						{
+							In.StartStop.hServerProcessHandle = (u64)hDupHandle;
+						}
+						CloseHandle(hGuiHandle);
+					}
+				}
+			}
+
 			wchar_t szPipe[64];
 			wsprintf(szPipe, CEGUIPIPENAME, L".", (DWORD)hGui);
 			CESERVER_REQ *pOut = ExecuteCmd(szPipe, &In, GUIATTACH_TIMEOUT, ghConWnd);
@@ -1452,6 +1504,7 @@ int CreateMapHeader()
 	srv.pConsole->hdr.bThawRefreshThread = TRUE; // пока - TRUE (это на старте сервера)
 	srv.pConsole->hdr.nProtocolVersion = CESERVER_REQ_VER;
 	srv.pConsole->hdr.nFarPID; // PID последнего активного фара
+	//srv.pConsole->hdr.hConEmuWnd = ghConEmuWnd; -- обновляет UpdateConsoleMapHeader
 
 	//WARNING! В начале структуры info идет CESERVER_REQ_HDR для унификации общения через пайпы
 	srv.pConsole->info.cmd.cbSize = sizeof(srv.pConsole->info); // Пока тут - только размер заголовка
@@ -1476,11 +1529,27 @@ int CreateMapHeader()
 		delete srv.pConsoleMap; srv.pConsoleMap = NULL;
 		iRc = CERR_CREATEMAPPINGERR; goto wrap;
 	}
-	srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
+	//srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
+	UpdateConsoleMapHeader();
 
 
 wrap:	
 	return iRc;
+}
+
+void UpdateConsoleMapHeader()
+{
+	if (srv.pConsole)
+	{
+		srv.pConsole->hdr.nServerPID = GetCurrentProcessId();
+		srv.pConsole->hdr.nGuiPID = srv.dwGuiPID;
+		srv.pConsole->hdr.hConEmuRoot = ghConEmuWnd;
+		srv.pConsole->hdr.hConEmuWnd = ghConEmuWndDC;
+		if (srv.pConsoleMap)
+		{
+			srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
+		}
+	}
 }
 
 int CreateColorerHeader()
@@ -1931,7 +2000,8 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 
 	// Должен вызываться ТОЛЬКО в главной нити (RefreshThread)
 	// Иначе возможны блокировки
-	if (srv.dwRefreshThread && dwCurThId != srv.dwRefreshThread) {
+	if (srv.dwRefreshThread && dwCurThId != srv.dwRefreshThread)
+	{
 		//ResetEvent(srv.hDataReadyEvent);
 		
 		ResetEvent(srv.hRefreshDoneEvent);
@@ -1954,13 +2024,16 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 	if (ReadConsoleData())
 		lbChanged = lbDataChanged = TRUE;
 
-	if (lbChanged && !srv.pConsole->hdr.bDataReady) {
+	if (lbChanged && !srv.pConsole->hdr.bDataReady)
+	{
 		srv.pConsole->hdr.bDataReady = TRUE;
 	}
 
-	if (memcmp(&(srv.pConsole->hdr), srv.pConsoleMap->Ptr(), srv.pConsole->hdr.cbSize)) {
+	if (memcmp(&(srv.pConsole->hdr), srv.pConsoleMap->Ptr(), srv.pConsole->hdr.cbSize))
+	{
 		lbChanged = TRUE;
-		srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
+		//srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
+		UpdateConsoleMapHeader();
 	}
 
 	if (lbChanged)
@@ -2345,7 +2418,11 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		
 		if (ghConEmuWnd && !IsWindow(ghConEmuWnd))
 		{
+			srv.bWasDetached = TRUE;
 			ghConEmuWnd = NULL;
+			ghConEmuWndDC = NULL;
+			srv.dwGuiPID = 0;
+			UpdateConsoleMapHeader();
 			EmergencyShow();
 		}
 		

@@ -150,9 +150,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CECMD_SETBACKGROUND 34 // CESERVER_REQ_SETBACKGROUND
 #define CECMD_ACTIVATECON   35 // CESERVER_REQ_ACTIVATECONSOLE
 //#define CECMD_ONSERVERCLOSE 35 // Посылается из ConEmuC*.exe перед закрытием в режиме сервера
+#define CECMD_DETACHCON     36
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    52
+#define CESERVER_REQ_VER    53
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -739,6 +740,11 @@ struct CESERVER_REQ_CONINFO_HDR
 	wchar_t  sConEmuDir[MAX_PATH+1];  // здесь будет лежать собственно hive
 	//wchar_t  sInjectsDir[MAX_PATH+1]; // path to "ConEmuHk.dll" & "ConEmuHk64.dll"
 	
+	// Root(!) ConEmu window
+	HWND2 hConEmuRoot;
+	// DC ConEmu window
+	HWND2 hConEmuWnd;
+
 	//// Логирование CreateProcess, ShellExecute, и прочих запускающих функций
 	//// Если пусто - не логируется
 	//wchar_t  sLogCreateProcess[MAX_PATH];
@@ -850,6 +856,8 @@ struct CESERVER_REQ_STARTSTOP
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 	// Только ComSpec
 	BOOL  bWasBufferHeight;
+	// Только при аттаче. Может быть NULL-ом
+	u64   hServerProcessHandle;
 	// Reserved
 	DWORD nReserved0[20];
 };

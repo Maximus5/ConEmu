@@ -78,6 +78,7 @@ extern DWORD   gnSelfPID;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
 extern HWND    ghConWnd;
 extern HWND    ghConEmuWnd; // Root! window
+extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern HANDLE  ghExitQueryEvent; // выставляется когда в консоли не остается процессов
 extern HANDLE  ghQuitEvent;      // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
 extern bool    gbQuit;           // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
@@ -244,6 +245,7 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontSh
 
 int CreateMapHeader();
 void CloseMapHeader();
+void UpdateConsoleMapHeader();
 
 void EmergencyShow();
 
@@ -281,10 +283,12 @@ extern BOOL gbAttachFromFar;
 #define NTVDMACTIVE (srv.bNtvdmActive)
 #endif
 
-typedef struct tag_SrvInfo {
+typedef struct tag_SrvInfo
+{
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
 	BOOL bDebuggerActive; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
 	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
+	BOOL bWasDetached; // Выставляется в TRUE при получении CECMD_DETACHCON
 	//
 	HANDLE hServerThread;   DWORD dwServerThreadId; BOOL bServerTermination;
 	HANDLE hRefreshThread;  DWORD dwRefreshThread;  BOOL bRefreshTermination;

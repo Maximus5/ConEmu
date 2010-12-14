@@ -70,7 +70,7 @@ extern HANDLE hThread;
 //extern HANDLE ghConIn;
 extern BOOL gbNeedPostTabSend, gbNeedPostEditCheck;
 extern HANDLE ghServerTerminateEvent;
-extern const CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
+extern const CESERVER_REQ_CONINFO_HDR *gpConMapInfo;
 extern DWORD gnSelfPID;
 extern BOOL gbIgnoreUpdateTabs;
 extern BOOL gbRequestUpdateTabs;
@@ -152,10 +152,10 @@ int FUNC_Y(ShowMessage)(int aiMsg, int aiButtons);
 //void FUNC_Y(ReloadMacro)();
 extern CEFAR_INFO *gpFarInfo;
 extern HANDLE ghFarAliveEvent;
-BOOL ReloadFarInfoA(BOOL abFull = FALSE);
-BOOL FUNC_X(ReloadFarInfo)(BOOL abFull = FALSE);
+BOOL ReloadFarInfoA(/*BOOL abFull = FALSE*/);
+BOOL FUNC_X(ReloadFarInfo)(/*BOOL abFull = FALSE*/);
 #if (FAR_X_VER!=FAR_Y_VER)
-BOOL FUNC_Y(ReloadFarInfo)(BOOL abFull = FALSE);
+BOOL FUNC_Y(ReloadFarInfo)(/*BOOL abFull = FALSE*/);
 #endif
 void PostMacro(wchar_t* asMacro);
 void PostMacroA(char* asMacro);
@@ -223,6 +223,11 @@ DWORD FUNC_Y(GetEditorModifiedState)();
 DWORD FUNC_X(GetEditorModifiedState)();
 DWORD GetEditorModifiedStateA();
 DWORD GetEditorModifiedState();
+
+int GetActiveWindowType();
+int GetActiveWindowTypeA();
+int FUNC_Y(GetActiveWindowType)();
+int FUNC_X(GetActiveWindowType)();
 
 BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 

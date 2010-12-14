@@ -389,7 +389,7 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	//
 	//gbBgPluginsAllowed = TRUE;
 
-	//if (gpConsoleInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
+	//if (gpConMapInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
 	//{
 	//	CheckResources(TRUE);
 	//	LogCreateProcessCheck((LPCWSTR)-1);
@@ -876,7 +876,7 @@ static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
 	pCE->Flags = pFar->Flags;
 }
 
-BOOL ReloadFarInfoA(BOOL abFull)
+BOOL ReloadFarInfoA(/*BOOL abFull*/)
 {
 	if (!InfoA || !FSFA) return FALSE;
 	
@@ -935,16 +935,16 @@ BOOL ReloadFarInfoA(BOOL abFull)
 
 	// -- пока, во избежание глюков в FAR при неожиданных запросах информации о панелях
 	//if (FALSE == (gpFarInfo->bFarPanelAllowed)) {
-	//	gpConsoleInfo->bFarLeftPanel = FALSE;
-	//	gpConsoleInfo->bFarRightPanel = FALSE;
+	//	gpConMapInfo->bFarLeftPanel = FALSE;
+	//	gpConMapInfo->bFarRightPanel = FALSE;
 	//} else {
 	//	PanelInfo piA = {0}, piP = {0};
 	//	BOOL lbActive  = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &piA);
 	//	BOOL lbPassive = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &piP);
 	//	if (!lbActive && !lbPassive)
 	//	{
-	//		gpConsoleInfo->bFarLeftPanel = FALSE;
-	//		gpConsoleInfo->bFarRightPanel = FALSE;
+	//		gpConMapInfo->bFarLeftPanel = FALSE;
+	//		gpConMapInfo->bFarRightPanel = FALSE;
 	//	} else {
 	//		PanelInfo *ppiL = NULL;
 	//		PanelInfo *ppiR = NULL;
@@ -954,10 +954,10 @@ BOOL ReloadFarInfoA(BOOL abFull)
 	//		if (lbPassive) {
 	//			if (piP.Flags & PFLAGS_PANELLEFT) ppiL = &piP; else ppiR = &piP;
 	//		}
-	//		gpConsoleInfo->bFarLeftPanel = ppiL!=NULL;
-	//		gpConsoleInfo->bFarRightPanel = ppiR!=NULL;
-	//		if (ppiL) FarPanel2CePanel(ppiL, &(gpConsoleInfo->FarLeftPanel));
-	//		if (ppiR) FarPanel2CePanel(ppiR, &(gpConsoleInfo->FarRightPanel));
+	//		gpConMapInfo->bFarLeftPanel = ppiL!=NULL;
+	//		gpConMapInfo->bFarRightPanel = ppiR!=NULL;
+	//		if (ppiL) FarPanel2CePanel(ppiL, &(gpConMapInfo->FarLeftPanel));
+	//		if (ppiR) FarPanel2CePanel(ppiR, &(gpConMapInfo->FarRightPanel));
 	//	}
 	//}
 
@@ -1040,4 +1040,15 @@ void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar)
 	{
 		pFar->conCursor.X = pFar->conCursor.Y = -1;
 	}
+}
+
+int GetActiveWindowTypeA()
+{
+	if (!InfoA || !InfoA->AdvControl)
+		return -1;
+
+	WindowInfo WInfo = {-1};
+	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
+
+	return WInfo.Type;
 }

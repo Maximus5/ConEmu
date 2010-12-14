@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после загрузки плагина показать MessageBox, чтобы прицепиться дебаггером
-//  #define SHOW_STARTED_MSGBOX
+  #define SHOW_STARTED_MSGBOX
 #endif
 
 #define TRUE_COLORER_OLD_SUPPORT
@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PluginHeader.h"
 #include "PluginBackground.h"
 #include <Tlhelp32.h>
+#include <Dbghelp.h>
 //#include <vector>
 
 //WARNING("Перевести ghCommandThreads с vector<> на обычный класс. Это позволит собрать с минимальным размером файла");
@@ -172,20 +173,21 @@ bool gbMonitorEnvVar = false;
 void UpdateEnvVar(const wchar_t* pszList);
 BOOL StartupHooks();
 BOOL gbFARuseASCIIsort = FALSE; // попытаться перехватить строковую сортировку в FAR
-HANDLE ghFileMapping = NULL;
+//HANDLE ghFileMapping = NULL;
 HANDLE ghColorMapping = NULL; // Создается при детаче консоли сразу после AllocConsole
 BOOL gbHasColorMapping = FALSE; // Чтобы знать, что буфер True-Colorer создан
 #ifdef TRUE_COLORER_OLD_SUPPORT
 HANDLE ghColorMappingOld = NULL;
 BOOL gbHasColorMappingOld = FALSE;
 #endif
-const CESERVER_REQ_CONINFO_HDR *gpConsoleInfo = NULL;
+MFileMapping<CESERVER_REQ_CONINFO_HDR> *gpConMap;
+const CESERVER_REQ_CONINFO_HDR *gpConMapInfo = NULL;
 //AnnotationInfo *gpColorerInfo = NULL;
 BOOL gbStartedUnderConsole2 = FALSE;
 void CheckColorerHeader();
 int CreateColorerHeader();
 void CloseColorerHeader();
-BOOL ReloadFarInfo(BOOL abFull);
+BOOL ReloadFarInfo(BOOL abForce);
 DWORD gnSelfPID = 0; //GetCurrentProcessId();
 //BOOL  gbNeedReloadFarInfo = FALSE;
 HANDLE ghFarInfoMapping = NULL;
@@ -297,6 +299,27 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 	pi->Reserved = ConEmu_SysID; // 'CEMU'
 }
 
+void CheckConEmuDetached()
+{
+	if (ConEmuHwnd)
+	{
+		// ConEmu могло подцепиться
+		MFileMapping<CESERVER_REQ_CONINFO_HDR> ConMap;
+		ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd);
+		if (ConMap.Open())
+		{
+			if (ConMap.Ptr()->hConEmuWnd == NULL)
+			{
+				ConEmuHwnd = NULL;
+			}
+			ConMap.CloseMap();
+		}
+		else
+		{
+			ConEmuHwnd = NULL;
+		}
+	}
+}
 
 BOOL gbInfoW_OK = FALSE;
 HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
@@ -304,7 +327,8 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;
 
-	if (OpenFrom == OPEN_COMMANDLINE && Item) {
+	if (OpenFrom == OPEN_COMMANDLINE && Item)
+	{
 		if (gFarVersion.dwBuild>=FAR_Y_VER)
 			FUNC_Y(ProcessCommandLine)((wchar_t*)Item);
 		else
@@ -361,7 +385,7 @@ void TouchReadPeekConsoleInputs(int Peek = -1)
 #ifdef _DEBUG
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 #endif
-	if (!gpFarInfo || !gpFarInfoMapping || !gpConsoleInfo) {
+	if (!gpFarInfo || !gpFarInfoMapping || !gpConMapInfo) {
 		_ASSERTE(gpFarInfo);
 		return;
 	}
@@ -445,7 +469,7 @@ void OnMainThreadActivated()
 
 
 	// !!! Это только чисто в OnConsolePeekReadInput, т.к. FAR Api тут не используется
-	//if (gpConsoleInfo && gpFarInfo && gpFarInfoMapping)
+	//if (gpConMapInfo && gpFarInfo && gpFarInfoMapping)
 	//	TouchReadPeekConsoleInputs(abPeek ? 1 : 0);
 
 	if (gbNeedPostReloadFarInfo)
@@ -538,16 +562,16 @@ void OnConsolePeekReadInput(BOOL abPeek)
 
 
 
-	if (gpConsoleInfo && gpFarInfo && gpFarInfoMapping)
+	if (gpConMapInfo && gpFarInfo && gpFarInfoMapping)
 		TouchReadPeekConsoleInputs(abPeek ? 1 : 0);
 
 	if (/*gbNeedReloadFarInfo &&*/ abPeek == FALSE)
 	{
 		//gbNeedReloadFarInfo = FALSE;
 		bool bNeedReload = false;
-		if (gpConsoleInfo)
+		if (gpConMapInfo)
 		{
-			DWORD nMapPID = gpConsoleInfo->nFarPID;
+			DWORD nMapPID = gpConMapInfo->nFarPID;
 			static DWORD dwLastTickCount = 0;
 			if (nMapPID == 0 || nMapPID != gnSelfPID)
 			{
@@ -826,7 +850,7 @@ VOID WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs)
 // Для определения "живости" фара
 VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs)
 {
-	if (pArgs->bMainThread && gpConsoleInfo && gpFarInfo && gpFarInfoMapping) {
+	if (pArgs->bMainThread && gpConMapInfo && gpFarInfo && gpFarInfoMapping) {
 		TouchReadPeekConsoleInputs(-1);
 	}
 }
@@ -1059,6 +1083,42 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 	{
 		if (gbInputSynchroPending)
 			gbInputSynchroPending = false;
+
+		#ifdef _DEBUG
+		{
+			static int nLastType = -1;
+			int nCurType = GetActiveWindowType();
+			if (nCurType != nLastType)
+			{
+				LPCWSTR pszCurType = NULL;
+				switch (nCurType)
+				{
+					case WTYPE_PANELS: pszCurType = L"WTYPE_PANELS"; break;
+					case WTYPE_VIEWER: pszCurType = L"WTYPE_VIEWER"; break;
+					case WTYPE_EDITOR: pszCurType = L"WTYPE_EDITOR"; break;
+					case WTYPE_DIALOG: pszCurType = L"WTYPE_DIALOG"; break;
+					case WTYPE_VMENU:  pszCurType = L"WTYPE_VMENU"; break;
+					case WTYPE_HELP:   pszCurType = L"WTYPE_HELP"; break;
+					default:           pszCurType = L"Unknown";
+				}
+				LPCWSTR pszLastType = NULL;
+				switch (nLastType)
+				{
+					case WTYPE_PANELS: pszLastType = L"WTYPE_PANELS"; break;
+					case WTYPE_VIEWER: pszLastType = L"WTYPE_VIEWER"; break;
+					case WTYPE_EDITOR: pszLastType = L"WTYPE_EDITOR"; break;
+					case WTYPE_DIALOG: pszLastType = L"WTYPE_DIALOG"; break;
+					case WTYPE_VMENU:  pszLastType = L"WTYPE_VMENU"; break;
+					case WTYPE_HELP:   pszLastType = L"WTYPE_HELP"; break;
+					default:           pszLastType = L"Undefined";
+				}
+				wchar_t szDbg[255];
+				wsprintfW(szDbg, L"FarWindow: %s activated (was %s)\n", pszCurType, pszLastType);
+				OutputDebugStringW(szDbg);
+				nLastType = nCurType;
+			}
+		}
+		#endif
 
 		if (!gbSynchroProhibited)
 		{
@@ -2362,10 +2422,14 @@ CONSOLE_SCREEN_BUFFER_INFO gsbiDetached;
 
 BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
 {
-	gbWasDetached = (ConEmuHwnd!=NULL && IsWindow(ConEmuHwnd));
-
 	if (ghMonitorThread)
+	{
 		SuspendThread(ghMonitorThread);
+		// ResumeThread выполняется в конце OnConsoleWasAttached
+	}
+
+	// Выполним сразу после SuspendThread, чтобы нить не посчитала, что мы подцепились обратно
+	gbWasDetached = (ConEmuHwnd!=NULL && IsWindow(ConEmuHwnd));
 
 	if (gbWasDetached)
 	{
@@ -2437,7 +2501,7 @@ VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 // Отключил пока. пусть только при Peek... считывается
 //void ReloadOnWrite()
 //{
-//	if (gpConsoleInfo)
+//	if (gpConMapInfo)
 //		ReloadFarInfo();
 //}
 //VOID WINAPI OnWasWriteConsoleOutputA(HookCallbackArg* pArgs)
@@ -2518,8 +2582,19 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 		if (!gbWasDetached && !ConEmuHwnd)
 		{
 			// ConEmu могло подцепиться
-			TODO("Переделать функцию на получение HWND из Map");
-			ConEmuHwnd = GetConEmuHWND ( FALSE/*abRoot*/  /*, &nChk*/ );
+			if (gpConMapInfo && gpConMapInfo->hConEmuWnd)
+			{
+				gbWasDetached = FALSE;
+				ConEmuHwnd = (HWND)gpConMapInfo->hConEmuWnd;
+			}
+			//MFileMapping<CESERVER_REQ_CONINFO_HDR> ConMap;
+			//ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd);
+			//if (ConMap.Open())
+			//{
+			//	ConEmuHwnd = (HWND)ConMap.Ptr()->hConEmuWnd;
+			//	ConMap.CloseMap();
+			//}
+
 			if (ConEmuHwnd)
 			{
                 SetConEmuEnvVar(ConEmuHwnd);
@@ -2561,9 +2636,9 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 
 		if (/*ConEmuHwnd &&*/ gbTryOpenMapHeader)
 		{
-			if (gpConsoleInfo)
+			if (gpConMapInfo)
 			{
-				_ASSERTE(gpConsoleInfo == NULL);
+				_ASSERTE(gpConMapInfo == NULL);
 				gbTryOpenMapHeader = FALSE;
 			}
 			else if (OpenMapHeader() == 0)
@@ -2571,7 +2646,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 				// OK, переподцепились
 				gbTryOpenMapHeader = FALSE;
 			}
-			if (gpConsoleInfo)
+			if (gpConMapInfo)
 			{
 				// 04.03.2010 Maks - Если мэппинг открыли - принудительно передернуть ресурсы и информацию
 				//CheckResources(TRUE); -- должен выполняться в основной нити, поэтому - через Activate
@@ -2586,8 +2661,8 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			gpBgPlugin->MonitorBackground();
 		}
 		
-		//if (gpConsoleInfo) {
-		//	if (gpConsoleInfo->nFarPID == 0)
+		//if (gpConMapInfo) {
+		//	if (gpConMapInfo->nFarPID == 0)
 		//		gbNeedReloadFarInfo = TRUE;
 		//}
 	}
@@ -2735,10 +2810,13 @@ void CommonPluginStartup()
 {
 	gbBgPluginsAllowed = TRUE;
 
+	//2010-12-13 информацию (начальную) о фаре грузим всегда, а отсылаем в GUI только если в ConEmu
+	CheckResources(TRUE);
+
 	// здесь же и ReloadFarInfo() позовется
-	if (gpConsoleInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
+	if (gpConMapInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
 	{
-		CheckResources(TRUE);
+		//CheckResources(TRUE);
 		LogCreateProcessCheck((LPCWSTR)-1);
 	}
 
@@ -2769,7 +2847,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	//CheckMacro(TRUE);
 
 	//// здесь же и ReloadFarInfo() позовется
-	//if (gpConsoleInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
+	//if (gpConMapInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
 	//{
 	//	CheckResources(TRUE);
 	//	LogCreateProcessCheck((LPCWSTR)-1);
@@ -2783,22 +2861,29 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 void CloseMapHeader()
 {
-	if (gpConsoleInfo)
-	{
-		UnmapViewOfFile(gpConsoleInfo);
-		gpConsoleInfo = NULL;
-	}
-	if (ghFileMapping)
-	{
-		CloseHandle(ghFileMapping);
-		ghFileMapping = NULL;
-	}
+	if (gpConMap)
+		gpConMap->CloseMap();
+	// delete для gpConMap здесь не делаем, может использоваться в других нитях!
+	gpConMapInfo = NULL;
+
+	//if (gpConMapInfo)
+	//{
+	//	UnmapViewOfFile(gpConMapInfo);
+	//	gpConMapInfo = NULL;
+	//}
+	//if (ghFileMapping)
+	//{
+	//	CloseHandle(ghFileMapping);
+	//	ghFileMapping = NULL;
+	//}
 }
+
+//void InstallTrapHandler();
 
 int OpenMapHeader()
 {
 	int iRc = -1;
-	wchar_t szMapName[64];
+	//wchar_t szMapName[64];
 	#ifdef _DEBUG
 	DWORD dwErr = 0;
 	#endif
@@ -2808,31 +2893,49 @@ int OpenMapHeader()
 	
 	if (FarHwnd)
 	{
-		wsprintf(szMapName, CECONMAPNAME, (DWORD)FarHwnd);
-		ghFileMapping = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
-		if (ghFileMapping)
+		if (!gpConMap)
+			gpConMap = new MFileMapping<CESERVER_REQ_CONINFO_HDR>;
+		gpConMap->InitName(CECONMAPNAME, (DWORD)FarHwnd);
+		if (gpConMap->Open())
 		{
-			gpConsoleInfo = (const CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(ghFileMapping, FILE_MAP_READ,0,0,0);
-			if (gpConsoleInfo)
+			gpConMapInfo = gpConMap->Ptr();
+			if (gpConMapInfo)
 			{
-				//ReloadFarInfo(); -- смысла нет. SetStartupInfo еще не вызывался
+				//if (gpConMapInfo->nLogLevel)
+				//	InstallTrapHandler();
 				iRc = 0;
-			}
-			else
-			{
-				#ifdef _DEBUG
-				dwErr = GetLastError();
-				#endif
-				CloseHandle(ghFileMapping);
-				ghFileMapping = NULL;
 			}
 		}
 		else
 		{
-			#ifdef _DEBUG
-			dwErr = GetLastError();
-			#endif
+			gpConMapInfo = NULL;
 		}
+
+		//wsprintf(szMapName, CECONMAPNAME, (DWORD)FarHwnd);
+		//ghFileMapping = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
+		//if (ghFileMapping)
+		//{
+		//	gpConMapInfo = (const CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(ghFileMapping, FILE_MAP_READ,0,0,0);
+		//	if (gpConMapInfo)
+		//	{
+		//		//ReloadFarInfo(); -- смысла нет. SetStartupInfo еще не вызывался
+		//		iRc = 0;
+		//	}
+		//	else
+		//	{
+		//		#ifdef _DEBUG
+		//		dwErr = GetLastError();
+		//		#endif
+		//		CloseHandle(ghFileMapping);
+		//		ghFileMapping = NULL;
+		//	}
+		//}
+		//else
+		//{
+		//	#ifdef _DEBUG
+		//	dwErr = GetLastError();
+		//	#endif
+		//}
 	}
 
 	return iRc;
@@ -3147,7 +3250,7 @@ void InitHWND(HWND ahFarHwnd)
 //	}
 //}
 
-BOOL ReloadFarInfo(BOOL abFull)
+BOOL ReloadFarInfo(BOOL abForce)
 {
 	if (!gpFarInfoMapping)
 	{
@@ -3246,7 +3349,7 @@ BOOL ReloadFarInfo(BOOL abFull)
 	BOOL lbChanged = FALSE, lbSucceded = FALSE;
 	
 	if (gFarVersion.dwVerMajor==1)
-		lbSucceded = ReloadFarInfoA(abFull);
+		lbSucceded = ReloadFarInfoA(/*abFull*/);
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
 		lbSucceded = FUNC_Y(ReloadFarInfo)();
 	else
@@ -3254,7 +3357,7 @@ BOOL ReloadFarInfo(BOOL abFull)
 	
 	if (lbSucceded)
 	{
-		if (abFull || memcmp(gpFarInfoMapping, gpFarInfo, sizeof(CEFAR_INFO))!=0)
+		if (abForce || memcmp(gpFarInfoMapping, gpFarInfo, sizeof(CEFAR_INFO))!=0)
 		{
 			lbChanged = TRUE;
 			gpFarInfo->nFarInfoIdx++;
@@ -3636,7 +3739,7 @@ void NotifyConEmuUnloaded()
 
 void StopThread(void)
 {
-	LPCVOID lpPtrConInfo = gpConsoleInfo; gpConsoleInfo = NULL;
+	LPCVOID lpPtrConInfo = gpConMapInfo; gpConMapInfo = NULL;
 	//LPVOID lpPtrColorInfo = gpColorerInfo; gpColorerInfo = NULL;
 
 	gbBgPluginsAllowed = FALSE;
@@ -3647,14 +3750,16 @@ void StopThread(void)
 	//if (hEventCmd[CMD_EXIT])
 	//	SetEvent(hEventCmd[CMD_EXIT]); // Завершить нить
 
-	if (ghServerTerminateEvent) {
+	if (ghServerTerminateEvent)
+	{
 		SetEvent(ghServerTerminateEvent);
 	}
 	//if (gnInputThreadId) {
 	//	PostThreadMessage(gnInputThreadId, WM_QUIT, 0, 0);
 	//}
 
-	if (ghPlugServerThread) {
+	if (ghPlugServerThread)
+	{
 		HANDLE hPipe = INVALID_HANDLE_VALUE;
 		DWORD dwWait = 0;
 		// Передернуть пайп, чтобы нить сервера завершилась
@@ -3662,7 +3767,9 @@ void StopThread(void)
 		hPipe = CreateFile(gszPluginServerPipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
 		if (hPipe == INVALID_HANDLE_VALUE) {
 			OutputDebugString(L"Plugin: All pipe instances closed?\n");
-		} else {
+		}
+		else
+		{
 			OutputDebugString(L"Plugin: Waiting server pipe thread\n");
 			dwWait = WaitForSingleObject(ghPlugServerThread, 300); // пытаемся дождаться, пока нить завершится
 			// Просто закроем пайп - его нужно было передернуть
@@ -3670,7 +3777,8 @@ void StopThread(void)
 			hPipe = INVALID_HANDLE_VALUE;
 		}
 		dwWait = WaitForSingleObject(ghPlugServerThread, 0);
-		if (dwWait != WAIT_OBJECT_0) {
+		if (dwWait != WAIT_OBJECT_0)
+		{
 			#if !defined(__GNUC__)
 			#pragma warning (disable : 6258)
 			#endif
@@ -3680,8 +3788,10 @@ void StopThread(void)
 	}
 	SafeCloseHandle(ghPluginSemaphore);
 
-	if (ghMonitorThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидания
-		if (WaitForSingleObject(ghMonitorThread,1000)) {
+	if (ghMonitorThread) // подождем чуть-чуть, или принудительно прибъем нить ожидания
+	{
+		if (WaitForSingleObject(ghMonitorThread,1000))
+		{
 			#if !defined(__GNUC__)
 			#pragma warning (disable : 6258)
 			#endif
@@ -3700,25 +3810,30 @@ void StopThread(void)
 	//	SafeCloseHandle(ghInputThread);
 	//}
 
-    if (gpTabs) {
+    if (gpTabs)
+	{
 	    Free(gpTabs);
 	    gpTabs = NULL;
     }
     
-    if (ghReqCommandEvent) {
+    if (ghReqCommandEvent)
+	{
 	    CloseHandle(ghReqCommandEvent); ghReqCommandEvent = NULL;
     }
 
-	if (gpFarInfo) {
+	if (gpFarInfo)
+	{
 		LPVOID ptr = gpFarInfo; gpFarInfo = NULL;
 		Free(ptr);
 	}
-	if (gpFarInfoMapping) {
+	if (gpFarInfoMapping)
+	{
 		UnmapViewOfFile(gpFarInfoMapping);
 		CloseHandle(ghFarInfoMapping);
 		ghFarInfoMapping = NULL;
 	}
-	if (ghFarAliveEvent) {
+	if (ghFarAliveEvent)
+	{
 		CloseHandle(ghFarAliveEvent);
 		ghFarAliveEvent = NULL;
 	}
@@ -3736,13 +3851,21 @@ void StopThread(void)
 	SafeCloseHandle(ghConsoleInputEmpty);
 	SafeCloseHandle(ghConsoleWrite);
 	
-	if (lpPtrConInfo) {
-		UnmapViewOfFile(lpPtrConInfo);
+	if (gpConMap)
+	{
+		gpConMap->CloseMap();
+		delete gpConMap;
+		gpConMap = NULL;
 	}
-	if (ghFileMapping) {
-		CloseHandle(ghFileMapping);
-		ghFileMapping = NULL;
-	}
+	//if (lpPtrConInfo)
+	//{
+	//	UnmapViewOfFile(lpPtrConInfo);
+	//}
+	//if (ghFileMapping)
+	//{
+	//	CloseHandle(ghFileMapping);
+	//	ghFileMapping = NULL;
+	//}
 	
 	CloseColorerHeader();
 	
@@ -3752,6 +3875,157 @@ void StopThread(void)
 
 int WINAPI _export ProcessDialogEventW(int Event, void *Param)
 {
+#ifdef _DEBUG
+	static struct
+	{ int Evt; LPCWSTR pszName; } sDlgEvents[]
+	=
+	{
+		//{ DM_FIRST,		L"DM_FIRST"},
+		{ DM_CLOSE,		L"DM_CLOSE"},
+		{ DM_ENABLE,		L"DM_ENABLE"},
+		{ DM_ENABLEREDRAW,		L"DM_ENABLEREDRAW"},
+		{ DM_GETDLGDATA,		L"DM_GETDLGDATA"},
+		{ DM_GETDLGITEM,		L"DM_GETDLGITEM"},
+		{ DM_GETDLGRECT,		L"DM_GETDLGRECT"},
+		{ DM_GETTEXT,		L"DM_GETTEXT"},
+		{ DM_GETTEXTLENGTH,		L"DM_GETTEXTLENGTH"},
+		{ DM_KEY,		L"DM_KEY"},
+		{ DM_MOVEDIALOG,		L"DM_MOVEDIALOG"},
+		{ DM_SETDLGDATA,		L"DM_SETDLGDATA"},
+		{ DM_SETDLGITEM,		L"DM_SETDLGITEM"},
+		{ DM_SETFOCUS,		L"DM_SETFOCUS"},
+		{ DM_REDRAW,		L"DM_REDRAW"},
+		{ DM_SETREDRAW,		L"DM_SETREDRAW"},
+		{ DM_SETTEXT,		L"DM_SETTEXT"},
+		{ DM_SETMAXTEXTLENGTH,		L"DM_SETMAXTEXTLENGTH"},
+		{ DM_SETTEXTLENGTH,		L"DM_SETTEXTLENGTH"},
+		{ DM_SHOWDIALOG,		L"DM_SHOWDIALOG"},
+		{ DM_GETFOCUS,		L"DM_GETFOCUS"},
+		{ DM_GETCURSORPOS,		L"DM_GETCURSORPOS"},
+		{ DM_SETCURSORPOS,		L"DM_SETCURSORPOS"},
+		{ DM_GETTEXTPTR,		L"DM_GETTEXTPTR"},
+		{ DM_SETTEXTPTR,		L"DM_SETTEXTPTR"},
+		{ DM_SHOWITEM,		L"DM_SHOWITEM"},
+		{ DM_ADDHISTORY,		L"DM_ADDHISTORY"},
+		{ DM_GETCHECK,		L"DM_GETCHECK"},
+		{ DM_SETCHECK,		L"DM_SETCHECK"},
+		{ DM_SET3STATE,		L"DM_SET3STATE"},
+		{ DM_LISTSORT,		L"DM_LISTSORT"},
+		{ DM_LISTGETITEM,		L"DM_LISTGETITEM"},
+		{ DM_LISTGETCURPOS,		L"DM_LISTGETCURPOS"},
+		{ DM_LISTSETCURPOS,		L"DM_LISTSETCURPOS"},
+		{ DM_LISTDELETE,		L"DM_LISTDELETE"},
+		{ DM_LISTADD,		L"DM_LISTADD"},
+		{ DM_LISTADDSTR,		L"DM_LISTADDSTR"},
+		{ DM_LISTUPDATE,		L"DM_LISTUPDATE"},
+		{ DM_LISTINSERT,		L"DM_LISTINSERT"},
+		{ DM_LISTFINDSTRING,		L"DM_LISTFINDSTRING"},
+		{ DM_LISTINFO,		L"DM_LISTINFO"},
+		{ DM_LISTGETDATA,		L"DM_LISTGETDATA"},
+		{ DM_LISTSETDATA,		L"DM_LISTSETDATA"},
+		{ DM_LISTSETTITLES,		L"DM_LISTSETTITLES"},
+		{ DM_LISTGETTITLES,		L"DM_LISTGETTITLES"},
+		{ DM_RESIZEDIALOG,		L"DM_RESIZEDIALOG"},
+		{ DM_SETITEMPOSITION,		L"DM_SETITEMPOSITION"},
+		{ DM_GETDROPDOWNOPENED,		L"DM_GETDROPDOWNOPENED"},
+		{ DM_SETDROPDOWNOPENED,		L"DM_SETDROPDOWNOPENED"},
+		{ DM_SETHISTORY,		L"DM_SETHISTORY"},
+		{ DM_GETITEMPOSITION,		L"DM_GETITEMPOSITION"},
+		{ DM_SETMOUSEEVENTNOTIFY,		L"DM_SETMOUSEEVENTNOTIFY"},
+		{ DM_EDITUNCHANGEDFLAG,		L"DM_EDITUNCHANGEDFLAG"},
+		{ DM_GETITEMDATA,		L"DM_GETITEMDATA"},
+		{ DM_SETITEMDATA,		L"DM_SETITEMDATA"},
+		{ DM_LISTSET,		L"DM_LISTSET"},
+		{ DM_LISTSETMOUSEREACTION,		L"DM_LISTSETMOUSEREACTION"},
+		{ DM_GETCURSORSIZE,		L"DM_GETCURSORSIZE"},
+		{ DM_SETCURSORSIZE,		L"DM_SETCURSORSIZE"},
+		{ DM_LISTGETDATASIZE,		L"DM_LISTGETDATASIZE"},
+		{ DM_GETSELECTION,		L"DM_GETSELECTION"},
+		{ DM_SETSELECTION,		L"DM_SETSELECTION"},
+		{ DM_GETEDITPOSITION,		L"DM_GETEDITPOSITION"},
+		{ DM_SETEDITPOSITION,		L"DM_SETEDITPOSITION"},
+		{ DM_SETCOMBOBOXEVENT,		L"DM_SETCOMBOBOXEVENT"},
+		{ DM_GETCOMBOBOXEVENT,		L"DM_GETCOMBOBOXEVENT"},
+		{ DM_GETCONSTTEXTPTR,		L"DM_GETCONSTTEXTPTR"},
+		{ DM_GETDLGITEMSHORT,		L"DM_GETDLGITEMSHORT"},
+		{ DM_SETDLGITEMSHORT,		L"DM_SETDLGITEMSHORT"},
+		//{ DM_GETDIALOGINFO,		L"DM_GETDIALOGINFO"},
+		//{ DN_FIRST,		L"DN_FIRST"},
+		{ DN_BTNCLICK,		L"DN_BTNCLICK"},
+		{ DN_CTLCOLORDIALOG,		L"DN_CTLCOLORDIALOG"},
+		{ DN_CTLCOLORDLGITEM,		L"DN_CTLCOLORDLGITEM"},
+		{ DN_CTLCOLORDLGLIST,		L"DN_CTLCOLORDLGLIST"},
+		{ DN_DRAWDIALOG,		L"DN_DRAWDIALOG"},
+		{ DN_DRAWDLGITEM,		L"DN_DRAWDLGITEM"},
+		{ DN_EDITCHANGE,		L"DN_EDITCHANGE"},
+		{ DN_ENTERIDLE,		L"DN_ENTERIDLE"},
+		{ DN_GOTFOCUS,		L"DN_GOTFOCUS"},
+		{ DN_HELP,		L"DN_HELP"},
+		{ DN_HOTKEY,		L"DN_HOTKEY"},
+		{ DN_INITDIALOG,		L"DN_INITDIALOG"},
+		{ DN_KILLFOCUS,		L"DN_KILLFOCUS"},
+		{ DN_LISTCHANGE,		L"DN_LISTCHANGE"},
+		{ DN_MOUSECLICK,		L"DN_MOUSECLICK"},
+		{ DN_DRAGGED,		L"DN_DRAGGED"},
+		{ DN_RESIZECONSOLE,		L"DN_RESIZECONSOLE"},
+		{ DN_MOUSEEVENT,		L"DN_MOUSEEVENT"},
+		{ DN_DRAWDIALOGDONE,		L"DN_DRAWDIALOGDONE"},
+		{ DN_LISTHOTKEY,		L"DN_LISTHOTKEY"},
+		//{ DN_GETDIALOGINFO,		L"DN_GETDIALOGINFO"},
+		{ DN_CLOSE,		L"DN_CLOSE"},
+		{ DN_KEY,		L"DN_KEY"},
+		{ DM_USER,		L"DM_USER"},
+	};
+	
+	if (Event == DE_DLGPROCINIT || Event == DE_DEFDLGPROCINIT || Event == DE_DLGPROCEND)
+	{
+		FarDialogEvent* p = (FarDialogEvent*)Param;
+		if (p->Msg != DN_ENTERIDLE)
+		{
+			wchar_t szDbg[512]; szDbg[0] = 0;
+			LPCWSTR pszName = NULL; wchar_t szEvtTemp[32];
+			for (int i = 0; i < countof(sDlgEvents); i++)
+			{
+				if (sDlgEvents[i].Evt == p->Msg)
+				{
+					pszName = sDlgEvents[i].pszName;
+					break;
+				}
+			}
+			if (!pszName)
+			{
+				if (p->Msg >= DM_USER)
+					wsprintfW(szEvtTemp, L"DM_USER+%u", (p->Msg - DM_USER));
+				else
+					wsprintfW(szEvtTemp, L"(Msg=%u)", p->Msg);
+				pszName = szEvtTemp;
+			}
+			
+			switch (Event)
+			{
+			case DE_DLGPROCINIT:
+				{
+					wsprintfW(szDbg, L"FarDlgEvent->Prc: %s; hDlg=x%08X; P1=%i; P1=0x%08X\n",
+						pszName, (DWORD)p->hDlg, p->Param1, (DWORD)p->Param2);
+				} break;
+			case DE_DEFDLGPROCINIT:
+				{
+					wsprintfW(szDbg, L"FarDlgEvent->Def: %s; hDlg=x%08X; P1=%i; P1=0x%08X\n",
+						pszName, (DWORD)p->hDlg, p->Param1, (DWORD)p->Param2);
+				} break;
+			case DE_DLGPROCEND:
+				{
+					wsprintfW(szDbg, L"FarDlgEvent->Res: %s; hDlg=x%08X; P1=%i; P1=0x%08X; Result=%i\n",
+						pszName, (DWORD)p->hDlg, p->Param1, (DWORD)p->Param2, (int)p->Result);
+				} break;
+			};
+			
+			if (szDbg[0])
+				OutputDebugStringW(szDbg);
+		}
+	}
+
+#endif
 	return FALSE; // разрешение обработки фаром/другими плагинами
 }
 
@@ -3789,29 +4063,33 @@ void CheckResources(BOOL abFromStartup)
 	}
 	
 	//if (abFromStartup) {
-	//	_ASSERTE(gpConsoleInfo!=NULL);
+	//	_ASSERTE(gpConMapInfo!=NULL);
 	//	if (!gpFarInfo)
 	//		gpFarInfo = (CEFAR_INFO*)Alloc(sizeof(CEFAR_INFO),1);
 	//}
-	//if (gpConsoleInfo)
-	// Теперь он отвязан от gpConsoleInfo
+	//if (gpConMapInfo)
+	// Теперь он отвязан от gpConMapInfo
 	ReloadFarInfo(TRUE);
 
-	wchar_t szLang[64];
-	GetEnvironmentVariable(L"FARLANG", szLang, 63);
-	if (lstrcmpW(szLang, gsFarLang))
+
+	if (gpConMapInfo) //2010-12-13 Имеет смысл только при запуске из-под ConEmu
 	{
-		wchar_t szTitle[1024] = {0};
-		GetConsoleTitleW(szTitle, 1024);
-		SetConsoleTitleW(L"ConEmuC: CheckResources started");
+		wchar_t szLang[64];
+		GetEnvironmentVariable(L"FARLANG", szLang, 63);
+		if (lstrcmpW(szLang, gsFarLang))
+		{
+			wchar_t szTitle[1024] = {0};
+			GetConsoleTitleW(szTitle, 1024);
+			SetConsoleTitleW(L"ConEmuC: CheckResources started");
 
-		InitResources();
-		
-		DWORD dwServerPID = 0;
-		FindServerCmd(CECMD_FARLOADED, dwServerPID);
-		gdwServerPID = dwServerPID;
+			InitResources();
+			
+			DWORD dwServerPID = 0;
+			FindServerCmd(CECMD_FARLOADED, dwServerPID);
+			gdwServerPID = dwServerPID;
 
-		SetConsoleTitleW(szTitle);
+			SetConsoleTitleW(szTitle);
+		}
 	}
 }
 
@@ -4421,6 +4699,8 @@ void ShowPluginMenu(int nID /*= -1*/)
 		return;
 	}
 
+	CheckConEmuDetached();
+
 	if (nID != -1)
 	{
 		nItem = nID;
@@ -4618,8 +4898,8 @@ BOOL Attach2Gui()
 	{
 		// "Server was already started. PID=%i. Exiting...\n", dwServerPID
 		gdwServerPID = dwServerPID;
-		gbTryOpenMapHeader = (gpConsoleInfo==NULL);
-		if (gpConsoleInfo) // 04.03.2010 Maks - Если мэппинг уже открыт - принудительно передернуть ресурсы и информацию
+		gbTryOpenMapHeader = (gpConMapInfo==NULL);
+		if (gpConMapInfo) // 04.03.2010 Maks - Если мэппинг уже открыт - принудительно передернуть ресурсы и информацию
 			CheckResources(TRUE);
 		return TRUE;
 	}
@@ -4674,7 +4954,7 @@ BOOL Attach2Gui()
 		gdwServerPID = pi.dwProcessId;
 		lbRc = TRUE;
 		// Чтобы MonitorThread пытался открыть Mapping
-		gbTryOpenMapHeader = (gpConsoleInfo==NULL);
+		gbTryOpenMapHeader = (gpConMapInfo==NULL);
 	}
 	
 	return lbRc;
@@ -4810,6 +5090,16 @@ DWORD GetEditorModifiedState()
 		return FUNC_Y(GetEditorModifiedState)();
 	else
 		return FUNC_X(GetEditorModifiedState)();
+}
+
+int GetActiveWindowType()
+{
+	if (gFarVersion.dwVerMajor==1)
+		return GetActiveWindowTypeA();
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		return FUNC_Y(GetActiveWindowType)();
+	else
+		return FUNC_X(GetActiveWindowType)();
 }
 
 //void ExecuteQuitFar()
@@ -5098,6 +5388,108 @@ BOOL CheckCallbackPtr(HMODULE hModule, FARPROC CallBack, BOOL abCheckModuleInfo)
 	}
 	return TRUE;
 }
+
+//LPTOP_LEVEL_EXCEPTION_FILTER gpPrevExFilter = NULL;
+//// 
+//LONG WINAPI MyExFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
+//{
+//	typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
+//		PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
+//		PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
+//
+//	HMODULE hDbghelp = NULL;
+//	HANDLE hDmpFile = NULL;
+//	MiniDumpWriteDump_t MiniDumpWriteDump_f = NULL;
+//	wchar_t szDumpFile[MAX_PATH*2]; szDumpFile[0] = 0;
+//	wchar_t* pszDumpName = szDumpFile;
+//	if (GetTempPathW(MAX_PATH, szDumpFile))
+//	{
+//		int nLen = lstrlenW(szDumpFile);
+//		if (nLen > 0 && szDumpFile[nLen-1] != L'\\')
+//		{
+//			szDumpFile[nLen++] = L'\\';
+//			szDumpFile[nLen] = 0;
+//			pszDumpName = szDumpFile+nLen;
+//		}
+//	}
+//	wsprintfW(pszDumpName, L"Far-%u.mdmp", GetCurrentProcessId());
+//
+//	wchar_t szErrInfo[MAX_PATH*3], szTitle[128];
+//	wsprintfW(szTitle, L"Far %i.%i build %i Unhandled Exception", gFarVersion.dwVerMajor, gFarVersion.dwVerMinor, gFarVersion.dwBuild);
+//
+//
+//	hDmpFile = CreateFileW(szDumpFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH, NULL);
+//	if (hDmpFile == INVALID_HANDLE_VALUE)
+//	{
+//		DWORD nErr = GetLastError();
+//		wsprintfW(szErrInfo, L"Can't create debug dump file\n%s\nErrCode=0x%08X", szDumpFile, nErr);
+//		MessageBoxW(NULL, szErrInfo, szTitle, MB_SYSTEMMODAL|MB_ICONSTOP);
+//	}
+//	else if ((hDbghelp = LoadLibraryW(L"Dbghelp.dll")) == NULL)
+//	{
+//		DWORD nErr = GetLastError();
+//		wsprintfW(szErrInfo, L"Can't load debug library 'Dbghelp.dll'\nErrCode=0x%08X\n\nTry again?", nErr);
+//		MessageBoxW(NULL, szErrInfo, szTitle, MB_SYSTEMMODAL|MB_ICONSTOP);
+//	}
+//	else
+//	{
+//		MiniDumpWriteDump_f = (MiniDumpWriteDump_t)GetProcAddress(hDbghelp, "MiniDumpWriteDump");
+//		if (!MiniDumpWriteDump_f)
+//		{
+//			DWORD nErr = GetLastError();
+//			wsprintfW(szErrInfo, L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll'", nErr);
+//			MessageBoxW(NULL, szErrInfo, szTitle, MB_SYSTEMMODAL|MB_ICONSTOP);
+//		}
+//		else
+//		{
+//			MINIDUMP_EXCEPTION_INFORMATION mei = {GetCurrentThreadId()};
+//			mei.ExceptionPointers = ExceptionInfo;
+//			mei.ClientPointers = TRUE;
+//			PMINIDUMP_EXCEPTION_INFORMATION pmei = NULL; // пока
+//			BOOL lbDumpRc = MiniDumpWriteDump_f(
+//				GetCurrentProcess(), GetCurrentProcessId(),
+//				hDmpFile, 
+//				MiniDumpNormal /*MiniDumpWithDataSegs*/,
+//				pmei,
+//				NULL, NULL);
+//			if (!lbDumpRc)
+//			{
+//				DWORD nErr = GetLastError();
+//				wsprintfW(szErrInfo, L"MiniDumpWriteDump failed.\nErrorCode=0x%08X", nErr);
+//				MessageBoxW(NULL, szErrInfo, szTitle, MB_SYSTEMMODAL|MB_ICONSTOP);
+//			}
+//			else
+//			{
+//				lstrcpyW(szErrInfo, L"MiniDump was saved\n");
+//				lstrcatW(szErrInfo, szDumpFile);
+//				MessageBoxW(NULL, szErrInfo, szTitle, MB_SYSTEMMODAL|MB_ICONSTOP);
+//			}
+//			CloseHandle(hDmpFile);
+//		}
+//	}
+//
+//	if (gpPrevExFilter)
+//		return gpPrevExFilter(ExceptionInfo);
+//	else
+//		return EXCEPTION_EXECUTE_HANDLER;
+//}
+//
+//
+//void InstallTrapHandler()
+//{
+//	static bool bProcessed = false;
+//	if (bProcessed)
+//		return;
+//	// выполняем только один раз
+//	bProcessed = true;
+//	//if (IsDebuggerPresent())
+//	//	return; // под дебаггером - не нужно
+//
+//	if (gpConMapInfo->nLogLevel > 0)
+//	{
+//		gpPrevExFilter = SetUnhandledExceptionFilter(MyExFilter);
+//	}
+//}
 
 
 /* Используются как extern в ConEmuCheck.cpp */

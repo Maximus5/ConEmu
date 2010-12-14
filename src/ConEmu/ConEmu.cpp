@@ -7649,31 +7649,38 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	//enum DragPanelBorder dpb = DPB_NONE; //CConEmuMain::CheckPanelDrag(COORD crCon)
 
 #ifdef _DEBUG
-	if (messg == WM_MOUSEWHEEL) {
+	if (messg == WM_MOUSEWHEEL)
+	{
 		messg = WM_MOUSEWHEEL;
 	}
 #endif
 
 	//BOOL lbMouseWasCaptured = mb_MouseCaptured;
-	if (!mb_MouseCaptured) {
+	if (!mb_MouseCaptured)
+	{
 		// Если клик
 		if (hChild == NULL &&
 			(isPressed(VK_LBUTTON) || isPressed(VK_RBUTTON) || isPressed(VK_MBUTTON)))
 		{
 			// В клиентской области (области отрисовки)
-			if (PtInRect(&dcRect, ptCur)) {
+			if (PtInRect(&dcRect, ptCur))
+			{
 				mb_MouseCaptured = TRUE;
 				//TODO("После скрытия ViewPort наверное SetCapture нужно будет делать на ghWnd");
 				SetCapture(ghWnd); // 100208 было ghWndDC
 			}
 		}
-	} else {
+	}
+	else
+	{
 		// Все кнопки мышки отпущены - release
-		if (!isPressed(VK_LBUTTON) && !isPressed(VK_RBUTTON) && !isPressed(VK_MBUTTON)) {
+		if (!isPressed(VK_LBUTTON) && !isPressed(VK_RBUTTON) && !isPressed(VK_MBUTTON))
+		{
 			ReleaseCapture();
 			mb_MouseCaptured = FALSE;
 
-			if (mp_VActive->RCon()->isMouseButtonDown()) {
+			if (mp_VActive->RCon()->isMouseButtonDown())
+			{
 				if (ptCur.x < dcRect.left)
 					ptCur.x = dcRect.left;
 				else if (ptCur.x >= dcRect.right)
@@ -7699,13 +7706,15 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 #endif
 
 
-    if ((messg==WM_LBUTTONUP || messg==WM_MOUSEMOVE) && (gConEmu.mouse.state & MOUSE_SIZING_DBLCKL)) {
+    if ((messg==WM_LBUTTONUP || messg==WM_MOUSEMOVE) && (gConEmu.mouse.state & MOUSE_SIZING_DBLCKL))
+    {
         if (messg==WM_LBUTTONUP)
             gConEmu.mouse.state &= ~MOUSE_SIZING_DBLCKL;
         return 0; //2009-04-22 После DblCkl по заголовку в консоль мог проваливаться LBUTTONUP
     }
 
-    if (messg == WM_MOUSEMOVE) {
+    if (messg == WM_MOUSEMOVE)
+    {
         if (m_Back->TrackMouse())
             return 0;
     }
@@ -7728,7 +7737,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         if (gConEmu.mouse.state & MOUSE_SIZING_DBLCKL)
             gConEmu.mouse.state &= ~MOUSE_SIZING_DBLCKL;
 
-        if (!PtInRect(&dcRect, ptCur)) {
+        if (!PtInRect(&dcRect, ptCur))
+        {
             DEBUGLOGFILE("Click outside of DC");
             return 0;
         }
@@ -7742,7 +7752,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     short conX = cr.X; //winX/gSet.Log Font.lfWidth;
     short conY = cr.Y; //winY/gSet.Log Font.lfHeight;
 
-    if ((messg != WM_MOUSEWHEEL && messg != WM_MOUSEHWHEEL) && (conY<0 || conY<0)) {
+    if ((messg != WM_MOUSEWHEEL && messg != WM_MOUSEHWHEEL) && (conY<0 || conY<0))
+    {
 		DEBUGLOGFILE("Mouse outside of upper-left");
         return 0;
     }
@@ -7751,7 +7762,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     //* Если окно ConEmu не в фокусе - не слать к консоль движение мышки,
     //* иначе получается неприятная реакция пунктов меню и т.п.
     //* ****************************
-    if (gSet.isMouseSkipMoving && GetForegroundWindow() != ghWnd) {
+    if (gSet.isMouseSkipMoving && GetForegroundWindow() != ghWnd)
+    {
     	DEBUGLOGFILE("ConEmu is not foreground window, mouse event skipped");
     	return 0;
     }
@@ -7765,16 +7777,19 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         || (gConEmu.mouse.nSkipEvents[1] 
 	        && (gConEmu.mouse.nSkipEvents[1] == messg || messg == WM_MOUSEMOVE)))
     {
-		if (gConEmu.mouse.nSkipEvents[0] == messg) {
+		if (gConEmu.mouse.nSkipEvents[0] == messg)
+		{
 			gConEmu.mouse.nSkipEvents[0] = 0;
 			DEBUGSTRMOUSE(L"Skipping Mouse down\n");
-		} else
-		if (gConEmu.mouse.nSkipEvents[1] == messg) {
+		}
+		else if (gConEmu.mouse.nSkipEvents[1] == messg)
+		{
 			gConEmu.mouse.nSkipEvents[1] = 0;
 			DEBUGSTRMOUSE(L"Skipping Mouse up\n");
 		} 
 		#ifdef _DEBUG
-		else if (messg == WM_MOUSEMOVE) {
+		else if (messg == WM_MOUSEMOVE)
+		{
 			DEBUGSTRMOUSE(L"Skipping Mouse move\n");
 		}
 		#endif
@@ -7788,21 +7803,30 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     //* двойной клик переслать в консоль как одинарный, иначе после активации
     //* мышкой быстрый клик в том же месте будет обработан неправильно
     //* ****************************
-    if (mouse.nReplaceDblClk) {
-		if (!gSet.isMouseSkipActivation) {
+    if (mouse.nReplaceDblClk)
+    {
+		if (!gSet.isMouseSkipActivation)
+		{
 			mouse.nReplaceDblClk = 0;
-		} else {
-    		if (messg == WM_LBUTTONDOWN && mouse.nReplaceDblClk == WM_LBUTTONDBLCLK) {
+		}
+		else
+		{
+    		if (messg == WM_LBUTTONDOWN && mouse.nReplaceDblClk == WM_LBUTTONDBLCLK)
+    		{
     			mouse.nReplaceDblClk = 0;
-    		} else
-    		if (messg == WM_RBUTTONDOWN && mouse.nReplaceDblClk == WM_RBUTTONDBLCLK) {
+    		}
+    		else if (messg == WM_RBUTTONDOWN && mouse.nReplaceDblClk == WM_RBUTTONDBLCLK)
+    		{
     			mouse.nReplaceDblClk = 0;
-    		} else
-    		if (messg == WM_MBUTTONDOWN && mouse.nReplaceDblClk == WM_MBUTTONDBLCLK) {
+    		}
+    		else if (messg == WM_MBUTTONDOWN && mouse.nReplaceDblClk == WM_MBUTTONDBLCLK)
+    		{
     			mouse.nReplaceDblClk = 0;
-    		} else
-     		if (mouse.nReplaceDblClk == messg) {
-        		switch (mouse.nReplaceDblClk) {
+    		}
+    		else if (mouse.nReplaceDblClk == messg)
+    		{
+        		switch (mouse.nReplaceDblClk)
+        		{
         		case WM_LBUTTONDBLCLK:
         			messg = WM_LBUTTONDOWN;
         			break;
@@ -7819,7 +7843,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     }
 
 	// Forwarding сообщений в нить драга
-	if (mp_DragDrop && mp_DragDrop->IsDragStarting()) {
+	if (mp_DragDrop && mp_DragDrop->IsDragStarting())
+	{
 		if (mp_DragDrop->ForwardMessage(hWnd, messg, wParam, lParam))
 			return 0;
 	}
@@ -7845,7 +7870,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     //       MOVEWINDOW(ghConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
     //}
     
-    if (!isFar()) {
+    if (!isFar())
+    {
         if (messg != WM_MOUSEMOVE) { DEBUGLOGFILE("FAR not active, all clicks forced to console"); }
         goto fin;
     }
@@ -7857,10 +7883,13 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		if (!OnMouse_Move(hWnd, WM_MOUSEMOVE, wParam, lParam, ptCur, cr))
 			return 0;
 
-    } else {
+    }
+    else
+    {
         mouse.lastMMW=-1; mouse.lastMML=-1;
 
-		if (messg == WM_LBUTTONDBLCLK) {
+		if (messg == WM_LBUTTONDBLCLK)
+		{
 			if (!OnMouse_LBtnDblClk(hWnd, messg, wParam, lParam, ptCur, cr))
 				return 0;
 
@@ -9662,7 +9691,8 @@ void CConEmuMain::OnTransparent()
 // Вызовем UpdateScrollPos для АКТИВНОЙ консоли
 LRESULT CConEmuMain::OnUpdateScrollInfo(BOOL abPosted/* = FALSE*/)
 {
-    if (!abPosted) {
+    if (!abPosted)
+	{
         PostMessage(ghWnd, mn_MsgUpdateScrollInfo, 0, (LPARAM)mp_VCon);
         return 0;
     }
@@ -9983,7 +10013,8 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 			//	SMTO_BLOCK, 5000, &dwRc);
 			dwRc = SendMessage(ghWnd, gConEmu.mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID);
 
-			pIn->dwData[0] = 1;
+			pIn->dwData[0] = (DWORD)ghWnd;
+			pIn->dwData[1] = (DWORD)ghWndDC;
 			
 			//pIn->dwData[0] = (l == 0) ? 0 : 1;
 		}

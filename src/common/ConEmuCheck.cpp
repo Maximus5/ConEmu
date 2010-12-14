@@ -63,6 +63,34 @@ typedef HWND (APIENTRY *FGetConsoleWindow)();
 //};
 //#endif
 
+LPCWSTR ModuleName(LPCWSTR asDefault)
+{
+	if (asDefault && *asDefault)
+		return asDefault;
+
+	static wchar_t szFile[32];
+	if (szFile[0])
+		return szFile;
+
+	wchar_t szPath[MAX_PATH*2];
+	if (GetModuleFileNameW(NULL, szPath, countof(szPath)))
+	{
+		wchar_t *pszSlash = wcsrchr(szPath, L'\\');
+		if (pszSlash)
+			pszSlash++;
+		else
+			pszSlash = szPath;
+		lstrcpynW(szFile, pszSlash, 32);
+	}
+	
+	if (szFile[0] == 0)
+	{
+		lstrcpyW(szFile, L"Unknown");
+	}
+
+	return szFile;
+}
+
 HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*/, const wchar_t* szModule)
 {
     HANDLE hPipe = NULL;
@@ -95,8 +123,8 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
         {
 			if (pszErr)
 			{
-				wsprintf(pszErr, L"%s: CreateFile(%s) failed, code=0x%08X, Timeout", 
-					szModule ? szModule : L"Unknown", szPipeName, dwErr);
+				wsprintf(pszErr, L"%s.%u: CreateFile(%s) failed, code=0x%08X, Timeout", 
+					ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
 			}
             return NULL;
         }
@@ -117,8 +145,8 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
 		{
 			if (pszErr)
 			{
-				wsprintf(pszErr, L"%s: CreateFile(%s) failed, code=0x%08X", 
-					szModule ? szModule : L"Unknown", szPipeName, dwErr);
+				wsprintf(pszErr, L"%s.%u: CreateFile(%s) failed, code=0x%08X", 
+					ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
 			}
             return NULL;
 		}
@@ -153,8 +181,8 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
     	_ASSERT(fSuccess);
 		if (pszErr)
 		{
-			wsprintf(pszErr, L"%s: SetNamedPipeHandleState(%s) failed, code=0x%08X", 
-				szModule ? szModule : L"Unknown", szPipeName, dwErr);
+			wsprintf(pszErr, L"%s.%u: SetNamedPipeHandleState(%s) failed, code=0x%08X", 
+				ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
 		}
         CloseHandle(hPipe);
         return NULL;

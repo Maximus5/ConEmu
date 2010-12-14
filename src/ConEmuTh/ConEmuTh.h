@@ -353,8 +353,6 @@ typedef HWND (WINAPI *GetFarHWND2_t)(BOOL abConEmuOnly);
 extern RegisterPanelView_t gfRegisterPanelView;
 extern GetFarHWND2_t gfGetFarHWND2;
 BOOL CheckConEmu(BOOL abSilence=FALSE);
-//HWND GetConEmuHWND();
-//BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead);
 BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
 BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
 BOOL WINAPI OnPreReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);

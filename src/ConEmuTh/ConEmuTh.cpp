@@ -466,19 +466,6 @@ BOOL CheckConEmu(BOOL abSilence/*=FALSE*/)
 }
 
 
-//HWND GetConEmuHWND()
-//{
-//	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
-//	if (!CheckConEmu() || !gfGetFarHWND2)
-//		return NULL;
-//
-//	HWND hRoot = NULL;
-//	HWND hConEmu = gfGetFarHWND2(TRUE);
-//	if (hConEmu)
-//		hRoot = GetParent(hConEmu);
-//	
-//	return hRoot;
-//}
 
 
 

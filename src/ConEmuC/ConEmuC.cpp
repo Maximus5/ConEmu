@@ -87,6 +87,7 @@ BOOL    gbTerminateOnExit = FALSE;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
 HWND    ghConWnd = NULL;
 HWND    ghConEmuWnd = NULL; // Root! window
+HWND    ghConEmuWndDC = NULL; // ConEmu DC window
 HANDLE  ghExitQueryEvent = NULL;
 HANDLE  ghQuitEvent = NULL;
 bool    gbQuit = false;
@@ -953,6 +954,108 @@ void RegisterConsoleFontHKLM(LPCWSTR pszFontFace)
 
 DWORD WINAPI DebugThread(LPVOID lpvParam);
 
+int CheckAttachProcess()
+{
+	HWND hConEmu = GetConEmuHWND(TRUE);
+	if (hConEmu && IsWindow(hConEmu))
+	{
+		// Console already attached
+		// Ругаться наверное вообще не будем
+		gbInShutdown = TRUE;
+		return CERR_CARGUMENT;
+	}
+	BOOL lbArgsFailed = FALSE;
+	wchar_t szFailMsg[512]; szFailMsg[0] = 0;
+	if (pfnGetConsoleProcessList==NULL)
+	{
+		lstrcpy(szFailMsg, L"Attach to GUI was requested, but required WinXP or higher!");
+		lbArgsFailed = TRUE;
+		//_wprintf (GetCommandLineW());
+		//_printf ("\n");
+		//_ASSERTE(FALSE);
+		//gbInShutdown = TRUE; // чтобы в консоль не гадить
+		//return CERR_CARGUMENT;
+	}
+	else
+	{
+		DWORD nProcesses[20];
+		DWORD nProcCount = pfnGetConsoleProcessList ( nProcesses, 20 );
+		// 2 процесса, потому что это мы сами и минимум еще один процесс в этой консоли, 
+		// иначе смысла в аттаче нет
+		if (nProcCount < 2)
+		{
+			lstrcpy(szFailMsg, L"Attach to GUI was requested, but there is no console processes!");
+			lbArgsFailed = TRUE;
+			//_wprintf (GetCommandLineW());
+			//_printf ("\n");
+			//_ASSERTE(FALSE);
+			//return CERR_CARGUMENT;
+		}
+		// не помню, зачем такая проверка была введена, но (nProcCount > 2) мешает аттачу.
+		// в момент запуска сервера (/ATTACH /PID=n) еще жив родительский (/ATTACH /NOCMD)
+		//// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
+		else if ((srv.dwRootProcess != 0) || (nProcCount > 2))
+		{
+			BOOL lbRootExists = (srv.dwRootProcess == 0);
+			// И ругаться только под отладчиком
+			wchar_t szProc[255] = {0}, szTmp[10]; //wsprintfW(szProc, L"%i, %i, %i", nProcesses[0], nProcesses[1], nProcesses[2]);
+			DWORD nFindId = 0;
+			for (int n = ((int)nProcCount-1); n >= 0; n--)
+			{
+				if (szProc[0]) lstrcatW(szProc, L", ");
+				wsprintf(szTmp, L"%i", nProcesses[n]);
+				lstrcatW(szProc, szTmp);
+				if (srv.dwRootProcess)
+				{
+					if (!lbRootExists && nProcesses[n] == srv.dwRootProcess)
+						lbRootExists = TRUE;
+				}
+				else if ((nFindId == 0) && (nProcesses[n] != gnSelfPID))
+				{	// Будем считать его корневым.
+					// Собственно, кого считать корневым не важно, т.к.
+					// сервер не закроется до тех пор пока жив хотя бы один процесс
+					nFindId = nProcesses[n];
+				}
+			}
+			if ((srv.dwRootProcess == 0) && (nFindId != 0))
+			{
+				srv.dwRootProcess = nFindId;
+				lbRootExists = TRUE;
+			}
+			if ((srv.dwRootProcess != 0) && !lbRootExists)
+			{
+				wsprintf(szFailMsg, L"Attach to GUI was requested, but\n" L"root process (%u) does not exists", srv.dwRootProcess);
+				lbArgsFailed = TRUE;
+			}
+			else if ((srv.dwRootProcess == 0) && (nProcCount > 2))
+			{
+				wsprintf(szFailMsg, L"Attach to GUI was requested, but\n" L"there is more than 2 console processes: %s\n", szProc);
+				lbArgsFailed = TRUE;
+			}
+			//PRINT_COMSPEC(L"Attach to GUI was requested, but there is more then 2 console processes: %s\n", szProc);
+			//_ASSERTE(FALSE);
+			//return CERR_CARGUMENT;
+		}
+	}
+	
+	if (lbArgsFailed)
+	{
+		LPCWSTR pszCmdLine = GetCommandLineW(); if (!pszCmdLine) pszCmdLine = L"";
+		int nCmdLen = lstrlen(szFailMsg) + lstrlen(pszCmdLine) + 16;
+		wchar_t* pszMsg = (wchar_t*)malloc(nCmdLen*2);
+		lstrcpy(pszMsg, szFailMsg);
+		lstrcat(pszMsg, L"\n\n");
+		lstrcat(pszMsg, pszCmdLine);
+		wchar_t szTitle[64]; wsprintf(szTitle, L"ConEmuC (PID=%u)", GetCurrentProcessId());
+		MessageBox(NULL, pszMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+		free(pszMsg);
+		gbInShutdown = TRUE;
+		return CERR_CARGUMENT;
+	}
+	
+	return 0; // OK
+}
+
 // Разбор параметров командной строки
 int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 {
@@ -1228,86 +1331,11 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		}
 		else if (gbNoCreateProcess && gbAttachMode)
 		{
-			HWND hConEmu = GetConEmuHWND(TRUE);
-			if (hConEmu && IsWindow(hConEmu))
-			{
-				// Console already attached
-				// Ругаться наверное вообще не будем
-				gbInShutdown = TRUE;
-				return CERR_CARGUMENT;
-			}
-			BOOL lbArgsFailed = FALSE;
-			wchar_t szFailMsg[512]; szFailMsg[0] = 0;
-			if (pfnGetConsoleProcessList==NULL)
-			{
-				lstrcpy(szFailMsg, L"Attach to GUI was requested, but required WinXP or higher!");
-				lbArgsFailed = TRUE;
-				//_wprintf (GetCommandLineW());
-				//_printf ("\n");
-				//_ASSERTE(FALSE);
-				//gbInShutdown = TRUE; // чтобы в консоль не гадить
-				//return CERR_CARGUMENT;
-			}
-			else
-			{
-				DWORD nProcesses[20];
-				DWORD nProcCount = pfnGetConsoleProcessList ( nProcesses, 20 );
-				// 2 процесса, потому что это мы сами и минимум еще один процесс в этой консоли, 
-				// иначе смысла в аттаче нет
-				if (nProcCount < 2)
-				{
-					lstrcpy(szFailMsg, L"Attach to GUI was requested, but there is no console processes!");
-					lbArgsFailed = TRUE;
-					//_wprintf (GetCommandLineW());
-					//_printf ("\n");
-					//_ASSERTE(FALSE);
-					//return CERR_CARGUMENT;
-				}
-				// не помню, зачем такая проверка была введена, но (nProcCount > 2) мешает аттачу.
-				// в момент запуска сервера (/ATTACH /PID=n) еще жив родительский (/ATTACH /NOCMD)
-				//// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
-				else if ((srv.dwRootProcess != 0) || (nProcCount > 2))
-				{
-					BOOL lbRootExists = (srv.dwRootProcess == 0);
-					// И ругаться только под отладчиком
-					wchar_t szProc[255] ={0}, szTmp[10]; //wsprintfW(szProc, L"%i, %i, %i", nProcesses[0], nProcesses[1], nProcesses[2]);
-					for (DWORD n=0; n<nProcCount && n<20; n++)
-					{
-						if (n) lstrcatW(szProc, L", ");
-						wsprintf(szTmp, L"%i", nProcesses[n]);
-						lstrcatW(szProc, szTmp);
-						if (!lbRootExists && nProcesses[n] == srv.dwRootProcess)
-							lbRootExists = TRUE;
-					}
-					if ((srv.dwRootProcess != 0) && !lbRootExists)
-					{
-						wsprintf(szFailMsg, L"Attach to GUI was requested, but\n" L"root process (%u) does not exists", srv.dwRootProcess);
-						lbArgsFailed = TRUE;
-					}
-					else if ((srv.dwRootProcess == 0) && (nProcCount > 2))
-					{
-						wsprintf(szFailMsg, L"Attach to GUI was requested, but\n" L"there is more then 2 console processes: %s\n", szProc);
-						lbArgsFailed = TRUE;
-					}
-					//PRINT_COMSPEC(L"Attach to GUI was requested, but there is more then 2 console processes: %s\n", szProc);
-					//_ASSERTE(FALSE);
-					//return CERR_CARGUMENT;
-				}
-			}
-			if (lbArgsFailed)
-			{
-				LPCWSTR pszCmdLine = GetCommandLineW(); if (!pszCmdLine) pszCmdLine = L"";
-				int nCmdLen = lstrlen(szFailMsg) + lstrlen(pszCmdLine) + 16;
-				wchar_t* pszMsg = (wchar_t*)malloc(nCmdLen*2);
-				lstrcpy(pszMsg, szFailMsg);
-				lstrcat(pszMsg, L"\n\n");
-				lstrcat(pszMsg, pszCmdLine);
-				wchar_t szTitle[64]; wsprintf(szTitle, L"ConEmuC (PID=%u)", GetCurrentProcessId());
-				MessageBox(NULL, pszMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
-				free(pszMsg);
-				gbInShutdown = TRUE;
-				return CERR_CARGUMENT;
-			}
+			// Проверить процессы в консоли, подобрать тот, который будем считать "корневым"
+			int nChk = CheckAttachProcess();
+			if (nChk != 0)
+				return nChk;
+			
 
 			*psNewCmd = (wchar_t*)Alloc(1,2);
 			if (!*psNewCmd)
@@ -1737,6 +1765,11 @@ void EmergencyShow()
 			SetWindowPos(ghConWnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
 			apiShowWindowAsync(ghConWnd, SW_SHOWNORMAL);
 		}
+		else
+		{
+			// Снять TOPMOST
+			SetWindowPos(ghConWnd, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+		}
 		if (!IsWindowEnabled(ghConWnd))
 			EnableWindow(ghConWnd, true);
 	}
@@ -1942,6 +1975,7 @@ void SendStarted()
 
 		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd started)\n",(RunMode==RM_SERVER) ? L"Server" : L"ComSpec");
 		
+		// CECMD_CMDSTARTSTOP
 		pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 		// Ждать при ошибке открытия пайпа наверное и не нужно - все что необходимо, сервер
 		// уже передал в ServerInit, а ComSpec - не критично
@@ -1974,6 +2008,9 @@ void SendStarted()
 
 			DWORD nGuiPID = pOut->StartStopRet.dwPID;
 			ghConEmuWnd = pOut->StartStopRet.hWnd;
+			ghConEmuWndDC = pOut->StartStopRet.hWndDC;
+			srv.bWasDetached = FALSE;
+			UpdateConsoleMapHeader();
 
 			if (gnRunMode == RM_COMSPEC)
 			{
@@ -2982,7 +3019,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	MCHKHEAP;
 
-	switch (in.hdr.nCmd) {
+	switch (in.hdr.nCmd)
+	{
 		//case CECMD_GETCONSOLEINFO:
 		//case CECMD_REQUESTCONSOLEINFO:
 		//{
@@ -3370,7 +3408,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			{
 				srv.pConsole->hdr.bConsoleActive = in.dwData[0];
 				srv.pConsole->hdr.bThawRefreshThread = in.dwData[1];
-				srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
+				//srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
+				UpdateConsoleMapHeader();
 			}
 		} break;
 
@@ -3384,6 +3423,16 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_SETWINDOWRGN:
 		{
 			MySetWindowRgn(&in.SetWndRgn);
+		} break;
+
+		case CECMD_DETACHCON:
+		{
+			srv.bWasDetached = TRUE;
+			ghConEmuWnd = NULL;
+			ghConEmuWndDC = NULL;
+			srv.dwGuiPID = 0;
+			UpdateConsoleMapHeader();
+			EmergencyShow();
 		} break;
 	}
 	

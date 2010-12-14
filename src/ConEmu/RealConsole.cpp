@@ -194,6 +194,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mn_ProcessCount = 0; 
 	mn_FarPID = 0; //mn_FarInputTID = 0;
 	memset(m_FarPlugPIDs, 0, sizeof(m_FarPlugPIDs)); mn_FarPlugPIDsCount = 0;
+	mb_SkipFarPidChange = FALSE;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
     mn_LastSetForegroundPID = 0;
     mh_ServerSemaphore = NULL;
@@ -335,14 +336,16 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 {
     mb_NeedStartProcess = FALSE;
 
-    if (args->pszSpecialCmd /*&& !m_Args.pszSpecialCmd*/) {
+    if (args->pszSpecialCmd /*&& !m_Args.pszSpecialCmd*/)
+	{
 		SafeFree(m_Args.pszSpecialCmd);
         _ASSERTE(args->bDetached == FALSE);
         m_Args.pszSpecialCmd = _wcsdup(args->pszSpecialCmd);
         if (!m_Args.pszSpecialCmd)
             return FALSE;
     }
-    if (args->pszStartupDir) {
+    if (args->pszStartupDir)
+	{
 		SafeFree(m_Args.pszStartupDir);
         m_Args.pszStartupDir = _wcsdup(args->pszStartupDir);
         if (!m_Args.pszStartupDir)
@@ -353,7 +356,8 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 	m_Args.bRunAsAdministrator = args->bRunAsAdministrator;
 	SafeFree(m_Args.pszUserName); //SafeFree(m_Args.pszUserPassword);
 	//if (m_Args.hLogonToken) { CloseHandle(m_Args.hLogonToken); m_Args.hLogonToken = NULL; }
-	if (args->pszUserName) {
+	if (args->pszUserName)
+	{
 		m_Args.pszUserName = _wcsdup(args->pszUserName);
 		lstrcpy(m_Args.szUserPassword, args->szUserPassword);
 		SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
@@ -363,24 +367,31 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 			return FALSE;
 	}
 
-    if (args->bDetached) {
+    if (args->bDetached)
+	{
         // Пока ничего не делаем - просто создается серверная нить
-        if (!PreInit()) { //TODO: вообще-то PreInit() уже наверное вызван...
+        if (!PreInit()) //TODO: вообще-то PreInit() уже наверное вызван...
+		{
             return FALSE;
         }
         m_Args.bDetached = TRUE;
-    } else
-    if (gSet.nAttachPID) {
+    }
+	else if (gSet.nAttachPID)
+	{
         // Attach - only once
         DWORD dwPID = gSet.nAttachPID; gSet.nAttachPID = 0;
-        if (!AttachPID(dwPID)) {
+        if (!AttachPID(dwPID))
+		{
             return FALSE;
         }
-    } else {
+    }
+	else
+	{
         mb_NeedStartProcess = TRUE;
     }
 
-    if (!StartMonitorThread()) {
+    if (!StartMonitorThread())
+	{
         return FALSE;
     }
 
@@ -875,6 +886,13 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_RE
 			mp_sei->hProcess = NULL; // более не требуется. хэндл закроется в другом месте
 		}
     }
+	if (rStartStop.hServerProcessHandle)
+	{
+		if (hProcess)
+			CloseHandle((HANDLE)rStartStop.hServerProcessHandle);
+		else if (!hProcess)
+			hProcess = (HANDLE)rStartStop.hServerProcessHandle;
+	}
     // Иначе - отркрываем как обычно
     if (!hProcess)
     	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, anConemuC_PID);
@@ -1246,6 +1264,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 {
     CRealConsole* pRCon = (CRealConsole*)lpParameter;
 
+	pRCon->SetConStatus(L"Initializing RealConsole...");
+
     if (pRCon->mb_NeedStartProcess)
 	{
         _ASSERTE(pRCon->mh_ConEmuC==NULL);
@@ -1366,7 +1386,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				bMonitorVisibility = false;
 			#endif
             if (bMonitorVisibility && IsWindowVisible(pRCon->hConWnd))
-                apiShowWindow(pRCon->hConWnd, SW_HIDE);
+                pRCon->ShowOtherWindow(pRCon->hConWnd, SW_HIDE);
         }
 
         // Размер консоли меняем в том треде, в котором это требуется. Иначе можем заблокироваться при Update (InitDC)
@@ -1388,7 +1408,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             //if (pRCon->mp_ConsoleInfo)
             
             // Если сервер жив - можно проверить наличие фара и его отклик
-            if (pRCon->m_ConsoleMap.IsValid())
+            if ((!pRCon->mb_SkipFarPidChange) && pRCon->m_ConsoleMap.IsValid())
             {
             	bool lbFarChanged = false;
 				// Alive?
@@ -1822,6 +1842,8 @@ BOOL CRealConsole::StartMonitorThread()
 	SetConStatus(L"Initializing ConEmu...");
 
     mh_MonitorThread = CreateThread(NULL, 0, MonitorThread, (LPVOID)this, 0, &mn_MonitorThreadID);
+
+	SetConStatus(L"Initializing ConEmu....");
     
     //mh_InputThread = CreateThread(NULL, 0, InputThread, (LPVOID)this, 0, &mn_InputThreadID);
 
@@ -4105,7 +4127,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
 		pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
         
-        if (nStarted == 0 || nStarted == 2) {
+        if (nStarted == 0 || nStarted == 2)
+		{
             // Сразу заполним результат
             pIn->StartStopRet.bWasBufferHeight = isBufferHeight(); // чтобы comspec знал, что буфер нужно будет отключить
 			
@@ -4145,7 +4168,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 			pIn->StartStopRet.dwSrvPID = mn_ConEmuC_PID;
 			pIn->StartStopRet.bNeedLangChange = FALSE;
 
-			if (nStarted == 0) {
+			if (nStarted == 0)
+			{
 				//_ASSERTE(nInputTID);
 				//_ASSERTE(mn_ConEmuC_Input_TID==0 || mn_ConEmuC_Input_TID==nInputTID);
 				//mn_ConEmuC_Input_TID = nInputTID;
@@ -4154,7 +4178,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					m_Args.bRunAsAdministrator = TRUE;
 
 				// Если один Layout на все консоли
-				if ((gSet.isMonitorConsoleLang & 2) == 2) {
+				if ((gSet.isMonitorConsoleLang & 2) == 2)
+				{
 					// Команду - низя, нити еще не функционируют
 					//	SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gConEmu.GetActiveKeyboardLayout());
 					pIn->StartStopRet.bNeedLangChange = TRUE;
@@ -4174,7 +4199,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             
 			// 100627 - con.m_sbi.dwSize.Y более использовать некорректно ввиду "far/w"
             COORD cr16bit = {80,con.m_sbi.srWindow.Bottom-con.m_sbi.srWindow.Top+1};
-			if (nSubSystem == 255) {
+			if (nSubSystem == 255)
+			{
 				if (gSet.ntvdmHeight && cr16bit.Y >= (int)gSet.ntvdmHeight) cr16bit.Y = gSet.ntvdmHeight;
 				else if (cr16bit.Y>=50) cr16bit.Y = 50;
 				else if (cr16bit.Y>=43) cr16bit.Y = 43;
@@ -4183,9 +4209,11 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 			}
 
             // ComSpec started
-            if (nStarted == 2) {
+            if (nStarted == 2)
+			{
 				// Устанавливается в TRUE если будет запущено 16битное приложение
-				if (nSubSystem == 255) {
+				if (nSubSystem == 255)
+				{
 					DEBUGSTRCMD(L"16 bit application STARTED, aquired from CECMD_CMDSTARTSTOP\n");
 					if (!(mn_ProgramStatus & CES_NTVDM))
 						mn_ProgramStatus |= CES_NTVDM;
@@ -4197,7 +4225,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					pIn->StartStopRet.nBufferHeight = 0;
 					pIn->StartStopRet.nWidth = cr16bit.X;
 					pIn->StartStopRet.nHeight = cr16bit.Y;
-				} else {
+				}
+				else
+				{
 					// но пока его нужно сбросить
 					mb_IgnoreCmdStop = FALSE;
 
@@ -4206,7 +4236,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					pIn->StartStopRet.nWidth = con.m_sbi.dwSize.X;
 					pIn->StartStopRet.nHeight = con.m_sbi.dwSize.Y;
 
-					if (gSet.DefaultBufferHeight && !isBufferHeight()) {
+					if (gSet.DefaultBufferHeight && !isBufferHeight())
+					{
 						WARNING("Тут наверное нужно бы заблокировать прием команды смена размера из сервера ConEmuC");
 						#if 0
 						con.m_sbi.dwSize.Y = gSet.DefaultBufferHeight;
@@ -4223,13 +4254,18 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 						#endif
 					}
 				}
-            } else if (nStarted == 0) {
+            }
+			else if (nStarted == 0)
+			{
             	// Server
-            	if (nSubSystem == 255) {
+            	if (nSubSystem == 255)
+				{
 					pIn->StartStopRet.nBufferHeight = 0;
 					pIn->StartStopRet.nWidth = cr16bit.X;
 					pIn->StartStopRet.nHeight = cr16bit.Y;
-            	} else {
+            	}
+				else
+				{
 					pIn->StartStopRet.nWidth = con.m_sbi.dwSize.X;
 					//0x101 - запуск отладчика
 					if (nSubSystem != 0x100  // 0x100 - Аттач из фар-плагина
@@ -4243,7 +4279,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 						pIn->StartStopRet.nBufferHeight = con.nBufferHeight;
 						_ASSERTE(con.nTextHeight > 5);
 						pIn->StartStopRet.nHeight = con.nTextHeight;
-					} else {
+					}
+					else
+					{
 						_ASSERTE(!con.bBufferHeight);
 						pIn->StartStopRet.nBufferHeight = 0;
 						pIn->StartStopRet.nHeight = con.m_sbi.dwSize.Y;
@@ -4253,7 +4291,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				SetBufferHeightMode((pIn->StartStopRet.nBufferHeight != 0), TRUE);
 				con.nChange2TextWidth = pIn->StartStopRet.nWidth;
 				con.nChange2TextHeight = pIn->StartStopRet.nHeight;
-				if (con.nChange2TextHeight > 200) {
+				if (con.nChange2TextHeight > 200)
+				{
 					_ASSERTE(con.nChange2TextHeight <= 200);
 				}
             }
@@ -4261,12 +4300,15 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             // 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
             //Process Add(nPID);
 
-        } else {
+        }
+		else
+		{
             // 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
             //Process Delete(nPID);
 
 			// ComSpec stopped
-            if (nStarted == 3) {
+            if (nStarted == 3)
+			{
 				BOOL lbNeedResizeWnd = FALSE;
 				BOOL lbNeedResizeGui = FALSE;
 				COORD crNewSize = {TextWidth(),TextHeight()};
@@ -4276,10 +4318,13 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				{
 					pIn->StartStopRet.bWasBufferHeight = FALSE;
 					// В некоторых случаях (comspec без консоли?) GetConsoleScreenBufferInfo обламывается
-					if (pIn->StartStop.sbi.dwSize.X && pIn->StartStop.sbi.dwSize.Y) {
-						if (GetConWindowSize(pIn->StartStop.sbi, nNewWidth, nNewHeight, &bBufferHeight)) {
+					if (pIn->StartStop.sbi.dwSize.X && pIn->StartStop.sbi.dwSize.Y)
+					{
+						if (GetConWindowSize(pIn->StartStop.sbi, nNewWidth, nNewHeight, &bBufferHeight))
+						{
 							lbNeedResizeGui = (crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight);
-							if (bBufferHeight || crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight) {
+							if (bBufferHeight || crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight)
+							{
 								//gConEmu.SyncWindowToConsole(); - его использовать нельзя. во первых это не главная нить, во вторых - размер pVCon может быть еще не изменен
 								lbNeedResizeWnd = TRUE;
 								crNewSize.X = nNewWidth;
@@ -4290,7 +4335,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					}
 				}
 
-				if (mb_IgnoreCmdStop || (mn_ProgramStatus & CES_NTVDM) == CES_NTVDM) {
+				if (mb_IgnoreCmdStop || (mn_ProgramStatus & CES_NTVDM) == CES_NTVDM)
+				{
 					// Ветка активируется только в WinXP и выше
 					// Было запущено 16битное приложение, сейчас запомненный размер консоли скорее всего 80x25
 					// что не соответствует желаемому размеру при выходе из 16бит. Консоль нужно подресайзить
@@ -4301,11 +4347,13 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					
     				DEBUGSTRCMD(L"16 bit application TERMINATED (aquired from CECMD_CMDFINISHED)\n");
                     //mn_ProgramStatus &= ~CES_NTVDM; -- сбросим после синхронизации размера консоли, чтобы не слетел
-					if (lbWasBuffer) {
+					if (lbWasBuffer)
+					{
 						SetBufferHeightMode(TRUE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
 					}
     				SyncConsole2Window(TRUE); // После выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
-					if (mn_Comspec4Ntvdm && mn_Comspec4Ntvdm != nPID) {
+					if (mn_Comspec4Ntvdm && mn_Comspec4Ntvdm != nPID)
+					{
 						_ASSERTE(mn_Comspec4Ntvdm == nPID);
 					}
 					mn_ProgramStatus &= ~CES_NTVDM;
@@ -4316,7 +4364,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				// Восстановить размер через серверный ConEmuC
 				mb_BuferModeChangeLocked = TRUE;
 				con.m_sbi.dwSize.Y = crNewSize.Y;
-				if (!lbWasBuffer) {
+				if (!lbWasBuffer)
+				{
 					SetBufferHeightMode(FALSE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
 				}
 
@@ -4340,7 +4389,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 #endif
 				// может nChange2TextWidth, nChange2TextHeight нужно использовать?
 				
-				if (lbNeedResizeGui) {
+				if (lbNeedResizeGui)
+				{
 					RECT rcCon = MakeRect(nNewWidth, nNewHeight);
 					RECT rcNew = gConEmu.CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
 					RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
@@ -4351,7 +4401,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				}
 				mb_BuferModeChangeLocked = FALSE;
 				//}
-            } else {
+            }
+			else
+			{
             	// сюда мы попадать не должны!
             	_ASSERT(FALSE);
             }
@@ -4583,6 +4635,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         _ASSERTE(nDataSize>=6);
         //mb_PluginDetected = TRUE; // Запомним, что в фаре есть плагин (хотя фар может быть закрыт)
         DWORD nPID = pIn->dwData[0]; // Запомним, что в фаре есть плагин
+
+		mb_SkipFarPidChange = TRUE;
         
         // Запомнить этот PID в списке фаров
         bool bAlreadyExist = false; int j = -1;
@@ -4609,6 +4663,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
     	// Запомним, что в фаре есть плагин
         mn_FarPID_PluginDetected = nPID;
 		OpenFarMapData(); // переоткроет мэппинг с информацией о фаре
+
+		// Разрешить мониторинг PID фара в MonitorThread (оно будет переоткрывать OpenFarMapData)
+		mb_SkipFarPidChange = FALSE;
 
         if (isActive()) gConEmu.UpdateProcessDisplay(FALSE); // обновить PID в окне настройки
         //mn_Far_PluginInputThreadId      = pIn->dwData[1];
@@ -5456,6 +5513,7 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
 	{
         if ((nNewWidth * nNewHeight * sizeof(*con.pConChar)) != OneBufferSize)
 		{
+			// Это может случиться во время пересоздания консоли (когда фар падал)
             //// Это может случиться во время ресайза
             //nNewWidth = nNewWidth;
             _ASSERTE((nNewWidth * nNewHeight * sizeof(*con.pConChar)) == OneBufferSize);
@@ -8022,16 +8080,10 @@ void CRealConsole::UpdateScrollInfo()
 
     if (!gConEmu.isMainThread())
 	{
+		gConEmu.OnUpdateScrollInfo(FALSE/*abPosted*/);
         return;
     }
 
-	// Не нужно? само спрячется
-	if (!con.bBufferHeight)
-	{
-		//return;
-	}
-
-    TODO("Как-то кэшировать нужно вызовы что-ли... и SetScrollInfo можно бы перенести в m_Back");
 	static SHORT nLastHeight = 0, nLastVisible = 0, nLastTop = 0;
 
 	if (nLastHeight == con.m_sbi.dwSize.Y
@@ -8042,47 +8094,49 @@ void CRealConsole::UpdateScrollInfo()
 	nLastHeight = con.m_sbi.dwSize.Y;
 	nLastVisible = (con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1);
 	nLastTop = con.m_sbi.srWindow.Top;
+	
+	gConEmu.m_Back->SetScroll(con.bBufferHeight, nLastTop, nLastVisible, nLastHeight);
 
-    int nCurPos = 0;
-    //BOOL lbScrollRc = FALSE;
-    SCROLLINFO si;
-    ZeroMemory(&si, sizeof(si));
-    si.cbSize = sizeof(si);
-    si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE; // | SIF_TRACKPOS;
-	si.nMin = 0;
-	if (!con.bBufferHeight)
-	{
-		si.nPos = 0;
-		si.nPage = 1;
-		si.nMax = 1;
-	}
-	else
-	{
-		si.nPos = nLastTop;
-		si.nPage = nLastVisible - 1;
-		si.nMax = nLastHeight;
-	}
-
-	//// Если режим "BufferHeight" включен - получить из консольного окна текущее состояние полосы прокрутки
-	//if (con.bBufferHeight) {
-	//    lbScrollRc = GetScrollInfo(hConWnd, SB_VERT, &si);
-	//} else {
-	//    // Сбросываем параметры так, чтобы полоса не отображалась (все на 0)
+    //int nCurPos = 0;
+    ////BOOL lbScrollRc = FALSE;
+    //SCROLLINFO si;
+    //ZeroMemory(&si, sizeof(si));
+    //si.cbSize = sizeof(si);
+    //si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE; // | SIF_TRACKPOS;
+	//si.nMin = 0;
+	//if (!con.bBufferHeight)
+	//{
+	//	si.nPos = 0;
+	//	si.nPage = 1;
+	//	si.nMax = 1;
 	//}
-
-    TODO("Нужно при необходимости 'всплыть' полосу прокрутки");
-    nCurPos = SetScrollInfo(gConEmu.m_Back->mh_WndScroll, SB_VERT, &si, true);
-
-	if (!con.bBufferHeight)
-	{
-		if (IsWindowEnabled(gConEmu.m_Back->mh_WndScroll))
-			EnableWindow(gConEmu.m_Back->mh_WndScroll, FALSE);
-	}
-	else
-	{
-		if (!IsWindowEnabled(gConEmu.m_Back->mh_WndScroll))
-			EnableWindow(gConEmu.m_Back->mh_WndScroll, TRUE);
-	}
+	//else
+	//{
+	//	si.nPos = nLastTop;
+	//	si.nPage = nLastVisible - 1;
+	//	si.nMax = nLastHeight;
+	//}
+	//
+	////// Если режим "BufferHeight" включен - получить из консольного окна текущее состояние полосы прокрутки
+	////if (con.bBufferHeight) {
+	////    lbScrollRc = GetScrollInfo(hConWnd, SB_VERT, &si);
+	////} else {
+	////    // Сбросываем параметры так, чтобы полоса не отображалась (все на 0)
+	////}
+	//
+    //TODO("Нужно при необходимости 'всплыть' полосу прокрутки");
+    //nCurPos = SetScrollInfo(gConEmu.m_Back->mh_WndScroll, SB_VERT, &si, true);
+    //
+	//if (!con.bBufferHeight)
+	//{
+	//	if (IsWindowEnabled(gConEmu.m_Back->mh_WndScroll))
+	//		EnableWindow(gConEmu.m_Back->mh_WndScroll, FALSE);
+	//}
+	//else
+	//{
+	//	if (!IsWindowEnabled(gConEmu.m_Back->mh_WndScroll))
+	//		EnableWindow(gConEmu.m_Back->mh_WndScroll, TRUE);
+	//}
 }
 
 // По con.m_sbi проверяет, включена ли прокрутка
@@ -10797,6 +10851,7 @@ void CRealConsole::ApplyConsoleInfo()
 		//BOOL  lbDataRecv = FALSE;
 		if (/*mp_ConsoleData &&*/ nNewWidth && nNewHeight)
 		{
+			// Это может случиться во время пересоздания консоли (когда фар падал)
 			_ASSERTE(nNewWidth == pInfo->crWindow.X && nNewHeight == pInfo->crWindow.Y);
 			// 10
 			//DWORD MaxBufferSize = pInfo->nCurDataMaxSize;
@@ -10814,6 +10869,7 @@ void CRealConsole::ApplyConsoleInfo()
 				#ifdef _DEBUG
 				if (CharCount != (nNewWidth * nNewHeight))
 				{
+					// Это может случиться во время пересоздания консоли (когда фар падал)
 					_ASSERTE(CharCount == (nNewWidth * nNewHeight));
 				}
 				#endif
@@ -10904,6 +10960,9 @@ void CRealConsole::ApplyConsoleInfo()
 	{
 		mb_DataChanged = TRUE; // Переменная используется внутри класса
 		con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
+
+		if (isActive())
+			UpdateScrollInfo();
 	}
 }
 
@@ -11169,6 +11228,13 @@ void CRealConsole::Detach()
 {
 	if (!this) return;
 	ShowConsole(1);
+
+	// Уведомить сервер, что он больше не наш
+	CESERVER_REQ in;
+	ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR));
+	CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+	if (pOut) ExecuteFreeResult(pOut);
+
 	// Чтобы случайно не закрыть RealConsole?
 	m_Args.bDetached = TRUE;
 }

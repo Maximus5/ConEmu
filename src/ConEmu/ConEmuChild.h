@@ -77,7 +77,7 @@ public:
 	~CConEmuBack();
 
 	HWND mh_WndBack;
-	HWND mh_WndScroll; UINT mn_ScrollWidth; BOOL mb_ScrollVisible;
+	HWND mh_WndScroll; UINT mn_ScrollWidth; BOOL mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollTimerSet;
 	HBRUSH mh_BackBrush;
 	COLORREF mn_LastColor;
 
@@ -87,6 +87,10 @@ public:
 	void Invalidate();
 	void RePaint();
 	BOOL TrackMouse();
+	BOOL CheckMouseOverScroll();
+	void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
+	void ShowScroll(BOOL abImmediate);
+	void HideScroll(BOOL abImmediate);
 
 	static LRESULT CALLBACK BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

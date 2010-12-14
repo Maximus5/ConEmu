@@ -868,7 +868,7 @@ static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
 	pCE->Flags = pFar->Flags;
 }
 
-BOOL ReloadFarInfo995(BOOL abFull)
+BOOL ReloadFarInfo995(/*BOOL abFull*/)
 {
 	if (!InfoW995 || !FSFW995) return FALSE;
 	
@@ -927,16 +927,16 @@ BOOL ReloadFarInfo995(BOOL abFull)
 
 	// -- пока, во избежание глюков в FAR при неожиданных запросах информации о панелях
 	//if (FALSE == (gpFarInfo->bFarPanelAllowed)) {
-	//	gpConsoleInfo->bFarLeftPanel = FALSE;
-	//	gpConsoleInfo->bFarRightPanel = FALSE;
+	//	gpConMapInfo->bFarLeftPanel = FALSE;
+	//	gpConMapInfo->bFarRightPanel = FALSE;
 	//} else {
 	//	PanelInfo piA = {0}, piP = {0};
 	//	BOOL lbActive  = InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&piA);
 	//	BOOL lbPassive = InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&piP);
 	//	if (!lbActive && !lbPassive)
 	//	{
-	//		gpConsoleInfo->bFarLeftPanel = FALSE;
-	//		gpConsoleInfo->bFarRightPanel = FALSE;
+	//		gpConMapInfo->bFarLeftPanel = FALSE;
+	//		gpConMapInfo->bFarRightPanel = FALSE;
 	//	} else {
 	//		PanelInfo *ppiL = NULL;
 	//		PanelInfo *ppiR = NULL;
@@ -946,10 +946,10 @@ BOOL ReloadFarInfo995(BOOL abFull)
 	//		if (lbPassive) {
 	//			if (piP.Flags & PFLAGS_PANELLEFT) ppiL = &piP; else ppiR = &piP;
 	//		}
-	//		gpConsoleInfo->bFarLeftPanel = ppiL!=NULL;
-	//		gpConsoleInfo->bFarRightPanel = ppiR!=NULL;
-	//		if (ppiL) FarPanel2CePanel(ppiL, &(gpConsoleInfo->FarLeftPanel));
-	//		if (ppiR) FarPanel2CePanel(ppiR, &(gpConsoleInfo->FarRightPanel));
+	//		gpConMapInfo->bFarLeftPanel = ppiL!=NULL;
+	//		gpConMapInfo->bFarRightPanel = ppiR!=NULL;
+	//		if (ppiL) FarPanel2CePanel(ppiL, &(gpConMapInfo->FarLeftPanel));
+	//		if (ppiR) FarPanel2CePanel(ppiR, &(gpConMapInfo->FarRightPanel));
 	//	}
 	//}
 
@@ -1085,4 +1085,15 @@ void FillUpdateBackground995(struct PaintBackgroundArg* pFar)
 	{
 		pFar->conCursor.X = pFar->conCursor.Y = -1;
 	}
+}
+
+int GetActiveWindowType995()
+{
+	if (!InfoW995 || !InfoW995->AdvControl)
+		return -1;
+
+	WindowInfo WInfo = {-1};
+	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
+
+	return WInfo.Type;
 }

@@ -421,6 +421,7 @@ private:
     int mn_ProcessCount;
     DWORD m_FarPlugPIDs[128];
     int mn_FarPlugPIDsCount;
+	BOOL mb_SkipFarPidChange;
     //
     DWORD mn_FarPID, /*mn_FarInputTID,*/ mn_LastSetForegroundPID;
     //
