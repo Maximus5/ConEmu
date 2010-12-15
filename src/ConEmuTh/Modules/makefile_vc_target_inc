@@ -59,9 +59,8 @@ clean:
 	@echo final cleaning
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@move "$(DLLFULLNAME)" $(RELEASEDIR)
-!ifdef DEBUG
-	@move $(PDBNAME) "$(RELEASEDIR)\$(DLLNAME).pdb"
-!endif
+	@move "$(PDBNAME)" "$(RELEASEDIR)\$(DLLNAME).pdb"
+	@move "$(MAP)" "$(RELEASEDIR)\$(DLLNAME).map"
 	@del /Q $(OBJDIR)\*.*
 	@del /Q $(OUTDIR)\*.*
 	@rd $(OBJDIR)

@@ -1165,7 +1165,7 @@ HWND Attach2Gui(DWORD nTimeout)
 {
 	// Нить Refresh НЕ должна быть запущена, иначе в мэппинг могут попасть данные из консоли
 	// ДО того, как отработает ресайз (тот размер, который указал установить GUI при аттаче)
-	_ASSERTE(srv.dwRefreshThread==0);
+	_ASSERTE(srv.dwRefreshThread==0 || srv.bWasDetached);
 
 	HWND hGui = NULL, hDcWnd = NULL;
 	//UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
@@ -1231,16 +1231,30 @@ HWND Attach2Gui(DWORD nTimeout)
 			_printf ("Invalid GetModuleFileName, backslash not found!\n", 0, pszSelf);
 			return NULL;
 		}
-		pszSlash++;
+		lstrcpyW(pszSlash+1, L"ConEmu.exe");
+		if (!FileExists(pszSelf))
+		{
+			// Он может быть на уровень выше
+			*pszSlash = 0;
+			pszSlash = wcsrchr(pszSelf, L'\\');
+			lstrcpyW(pszSlash+1, L"ConEmu.exe");
+			if (!FileExists(pszSelf))
+			{
+				_printf ("ConEmu.exe not found!\n");
+				return NULL;
+			}
+		}
+
 		if (wcschr(pszSelf, L' '))
 		{
 			*(--pszSelf) = L'"';
-			lstrcpyW(pszSlash, L"ConEmu.exe\"");
+			//lstrcpyW(pszSlash, L"ConEmu.exe\"");
+			lstrcatW(pszSlash, L"\"");
 		}
-		else
-		{
-			lstrcpyW(pszSlash, L"ConEmu.exe");
-		}
+		//else
+		//{
+		//	lstrcpyW(pszSlash, L"ConEmu.exe");
+		//}
 		
 		lstrcatW(pszSelf, L" /detached");
 		
@@ -1352,7 +1366,7 @@ HWND Attach2Gui(DWORD nTimeout)
 			{
 				//ghConEmuWnd = hGui;
 				ghConEmuWnd = pOut->StartStopRet.hWnd;
-				hDcWnd = pOut->StartStopRet.hWndDC;
+				ghConEmuWndDC = hDcWnd = pOut->StartStopRet.hWndDC;
 				_ASSERTE(srv.pConsoleMap != NULL); // мэппинг уже должен быть создан,
 				_ASSERTE(srv.pConsole != NULL); // и локальная копия тоже
 				//srv.pConsole->info.nGuiPID = pOut->StartStopRet.dwPID;

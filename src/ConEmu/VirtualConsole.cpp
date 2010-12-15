@@ -4161,8 +4161,10 @@ UINT CVirtualConsole::IsBackgroundValid(CESERVER_REQ_SETBACKGROUND* apImgData) c
 		LPBYTE pBuf = (LPBYTE)&apImgData->bmp;
 		if (*(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
 		{
-			UINT nSize = (UINT)sizeof(CESERVER_REQ_SETBACKGROUND) - (UINT)sizeof(apImgData->bmp)
-			           + apImgData->bmp.bfSize;
+			//UINT nSize = (UINT)sizeof(CESERVER_REQ_SETBACKGROUND) - (UINT)sizeof(apImgData->bmp)
+			//           + apImgData->bmp.bfSize;
+			UINT nSize = apImgData->bmp.bfSize
+				+ ( ((LPBYTE)(void*)&(apImgData->bmp)) - ((LPBYTE)apImgData) );
 			return nSize;
 		}
 	}

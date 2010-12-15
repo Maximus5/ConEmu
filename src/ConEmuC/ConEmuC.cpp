@@ -1762,13 +1762,14 @@ void EmergencyShow()
 	{
 		if (!IsWindowVisible(ghConWnd))
 		{
+			SetWindowPos(ghConWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 			SetWindowPos(ghConWnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
 			apiShowWindowAsync(ghConWnd, SW_SHOWNORMAL);
 		}
 		else
 		{
 			// —н€ть TOPMOST
-			SetWindowPos(ghConWnd, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+			SetWindowPos(ghConWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 		}
 		if (!IsWindowEnabled(ghConWnd))
 			EnableWindow(ghConWnd, true);
@@ -2966,7 +2967,8 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 			cbBytesRead += cbNextRead;
 	}
 
-	if (!GetAnswerToRequest(pIn ? *pIn : in, &pOut) || pOut==NULL) {
+	if (!GetAnswerToRequest(pIn ? *pIn : in, &pOut) || pOut==NULL)
+	{
 		// ≈сли результата нет - все равно что-нибудь запишем, иначе TransactNamedPipe может виснуть?
 		CESERVER_REQ_HDR Out={0};
 		ExecutePrepareCmd((CESERVER_REQ*)&Out, in.hdr.nCmd, sizeof(Out));
@@ -3216,7 +3218,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			{
 				int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
 				*out = ExecuteNewCmd(CECMD_ATTACH2GUI,nOutSize);
-				if (*out != NULL) {
+				if (*out != NULL)
+				{
 					// „тобы не отображалась "Press any key to close console"
 					DisableAutoConfirmExit();
 					//
@@ -3228,7 +3231,9 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		case CECMD_FARLOADED:
 		{
-			if (gbAutoDisableConfirmExit && srv.dwRootProcess == in.dwData[0]) {
+			if (gbAutoDisableConfirmExit && srv.dwRootProcess == in.dwData[0])
+			
+			{
 				// FAR нормально запустилс€, считаем что все ок и подтверждени€ закрыти€ консоли не потребуетс€
 				DisableAutoConfirmExit();
 			}

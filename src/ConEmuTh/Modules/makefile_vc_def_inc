@@ -107,7 +107,7 @@ RC_WIDE = /dUNICODE
 DLLNAME = $(OUTNAME).$(EXT)
 DLLFULLNAME = $(OUTDIR)\$(DLLNAME)
 DEF = $(DEF_NAME).def
-MAP = $(OUTDIR)\$(OUTNAME).map
+MAP = $(OUTDIR)\$(OUTNAME).$(EXT).map
 RES = $(OBJDIR)\$(NAME).res
 
 !ifdef VC8
@@ -115,11 +115,11 @@ COMPAT64=/Wp64
 NOWIN98=/OPT:NOWIN98
 !endif
 
-PDBNAME="$(OUTDIR)\$(OUTNAME).pdb"
+PDBNAME=$(OUTDIR)\$(OUTNAME).$(EXT).pdb
 !ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Fd$(PDBNAME)
+CPP_OPT=/DNDEBUG /O1i /Fd"$(PDBNAME)"
 !else
-CPP_OPT=/DDEBUG /Od /Fd$(PDBNAME)
+CPP_OPT=/DDEBUG /Od /Fd"$(PDBNAME)"
 !endif
 
 !ifdef AMD64
@@ -164,10 +164,10 @@ _LINK_PATH_=$(_BIN_PATH_)
 
 LNK=$(_LINK_PATH_)link.exe
 !ifndef DEBUG
-LINK_DEBUG=/map:"$(MAP)"
+LINK_DEBUG=/debug /pdb:"$(PDBNAME)" /map:"$(MAP)"
 CPP_DEBUG=
 !else
-LINK_DEBUG=/debug /pdb:$(PDBNAME) /map:"$(MAP)"
+LINK_DEBUG=/debug /pdb:"$(PDBNAME)" /map:"$(MAP)"
 CPP_DEBUG=/Zi
 !endif
 

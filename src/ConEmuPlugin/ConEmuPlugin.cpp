@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //  –аскомментировать, чтобы сразу после загрузки плагина показать MessageBox, чтобы прицепитьс€ дебаггером
-  #define SHOW_STARTED_MSGBOX
+//  #define SHOW_STARTED_MSGBOX
 #endif
 
 #define TRUE_COLORER_OLD_SUPPORT
@@ -1748,6 +1748,10 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 	
 	if (ppResult) // сначала - сбросить
 		*ppResult = NULL;
+
+	// Ќекоторые команды можно выполн€ть в любой нити
+	if (nCmd == CMD_SET_CON_FONT)
+		bReqMainThread = FALSE;
 
 	//PRAGMA_ERROR("Ёто нужно делать только тогда, когда семафор уже заблокирован!");
 	//if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; }

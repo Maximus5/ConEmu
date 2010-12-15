@@ -748,10 +748,13 @@ struct ICODecoder
 
 		Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 		Gdiplus::Status lRc = GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-		if (lRc != Gdiplus::Ok) {
+		if (lRc != Gdiplus::Ok)
+		{
 			Gdiplus::GdiplusShutdown(gdiplusToken); gbTokenInitialized = false;
 			return FALSE;
-		} else {
+		}
+		else
+		{
 			gbTokenInitialized = true;
 		}
 
@@ -760,12 +763,14 @@ struct ICODecoder
 
 	void Close()
 	{
-		if (gbTokenInitialized) {
+		if (gbTokenInitialized)
+		{
 			Gdiplus::GdiplusShutdown(gdiplusToken);
 			gbTokenInitialized = false;
 		}
 
-		if (gbCoInitialized) {
+		if (gbCoInitialized)
+		{
 			gbCoInitialized = FALSE;
 			CoUninitialize();
 		}
@@ -802,13 +807,16 @@ struct ICOImage
 		LPICONDIR pTest = (LPICONDIR)pBuf;
 		LPBITMAPINFOHEADER pBmp = (LPBITMAPINFOHEADER)pBuf;
 
-		if (!pBuf || !lBuf) {
+		if (!pBuf || !lBuf)
+		{
 			nErrNumber = PIE_BUFFER_NOT_FULL;
 			return FALSE;
 		}
 
-		if (lBuf > sizeof(ICONDIR) && pTest->idReserved==0 && (pTest->idType==1 /* ICON */ || pTest->idType == 2 /* CURSOR */)) {
-			if (lBuf > PVD_MAX_ICON_SIZE) {
+		if (lBuf > sizeof(ICONDIR) && pTest->idReserved==0 && (pTest->idType==1 /* ICON */ || pTest->idType == 2 /* CURSOR */))
+		{
+			if (lBuf > PVD_MAX_ICON_SIZE)
+			{
 				nErrNumber = PIE_TOO_LARGE_FILE;
 				return FALSE;
 			}
