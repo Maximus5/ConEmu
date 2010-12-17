@@ -3552,13 +3552,28 @@ COORD CVirtualConsole::FindOpaqueCell()
 // ptCur - экранные координаты
 void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 {
+	BOOL lbNeedCreate = FALSE;
 	if (!mh_PopupMenu)
+	{
 		mh_PopupMenu = LoadMenu(g_hInstance, MAKEINTRESOURCE(IDR_TABMENU));
+		lbNeedCreate = TRUE;
+	}
 
 	HMENU hPopup = mh_PopupMenu ? GetSubMenu(mh_PopupMenu, 0) : NULL;
-	if (!hPopup) {
+	if (!hPopup)
+	{
 		MBoxAssert(hPopup!=NULL);
 		return;
+	}
+	
+	if (lbNeedCreate)
+	{
+		AppendMenu(hPopup, MF_BYPOSITION, MF_SEPARATOR, 0);
+	    HMENU hDebug = gConEmu.CreateDebugMenuPopup();
+	    AppendMenu(hPopup, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
+	    HMENU hEdit = CreatePopupMenu();
+	    gConEmu.PopulateEditMenuPopup(hEdit);
+	    AppendMenu(hPopup, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hEdit, _T("&Edit"));
 	}
 	
 	// Некузяво. Может вслыть тултип под меню
@@ -3584,7 +3599,8 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 	if (!nCmd)
 		return; // отмена
 	
-	switch (nCmd) {
+	switch (nCmd)
+	 {
 	case IDM_CLOSE:
 		mp_RCon->PostMacro(gSet.sTabCloseMacro ? gSet.sTabCloseMacro : L"F10");
 		break;
@@ -3597,9 +3613,12 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 		break;
 	case IDM_RESTART:
 	case IDM_RESTARTAS:
-		if (gConEmu.isActive(this)) {
+		if (gConEmu.isActive(this))
+		{
 			gConEmu.Recreate(TRUE, FALSE, (nCmd==IDM_RESTARTAS));
-		} else {
+		}
+		else
+		{
 			MBoxAssert(gConEmu.isActive(this));
 		}
 		break;
@@ -3615,6 +3634,12 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 	case IDM_SAVEALL:
 		mp_RCon->PostMacro(gSet.sSaveAllMacro);
 		break;
+	default:
+		if (nCmd >= 0xAB00)
+		{
+			// "Системные" команды, обрабатываемые в CConEmu
+			gConEmu.OnSysCommand(ghWnd, nCmd, 0);
+		}
 	}
 }
 

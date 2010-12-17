@@ -5889,6 +5889,28 @@ BOOL CConEmuMain::OnCloseQuery()
 //  return 0;
 //}
 
+HMENU CConEmuMain::CreateDebugMenuPopup()
+{
+    HMENU hDebug = CreatePopupMenu();
+    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, _T("&Real console"));
+    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
+    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump screen..."));
+    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGGUI, _T("Debug &log (GUI)"));
+    #ifdef _DEBUG
+    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_MONITOR_SHELLACTIVITY, _T("Enable &shell log..."));
+    #endif
+    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_SHOWRECTS, _T("Show debug rec&ts"));
+    return hDebug;
+}
+
+void CConEmuMain::PopulateEditMenuPopup(HMENU hMenu)
+{
+    InsertMenu(hMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_PASTE, _T("&Paste"));
+    InsertMenu(hMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_COPY, _T("Cop&y"));
+	InsertMenu(hMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKTEXT, _T("Mar&k text"));
+    InsertMenu(hMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKBLOCK, _T("Mark &block"));
+}
+
 LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 {
     ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
@@ -5946,20 +5968,9 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     if (ms_ConEmuChm[0]) //Показывать пункт только если есть conemu.chm
     	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-    hDebug = CreatePopupMenu();
-    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, _T("&Real console"));
-    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
-    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump..."));
-    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGGUI, _T("Debug &log (GUI)"));
-    #ifdef _DEBUG
-    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_MONITOR_SHELLACTIVITY, _T("Enable &shell log..."));
-    #endif
-    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUG_SHOWRECTS, _T("Show debug rec&ts"));
+    hDebug = CreateDebugMenuPopup();
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_PASTE, _T("&Paste"));
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_COPY, _T("Cop&y"));
-	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKTEXT, _T("Mar&k text"));
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKBLOCK, _T("Mark &block"));
+    PopulateEditMenuPopup(hwndMain);
     InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gSet.isAlwaysOnTop ? MF_CHECKED : 0),
         ID_ALWAYSONTOP, _T("Al&ways on top"));

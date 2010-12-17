@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <wchar.h>
 #include "..\common\common.hpp"
+#include "..\common\RgnDetect.h"
 #include "..\common\pluginW1007.hpp"
 #include "PluginHeader.h"
 
@@ -170,7 +171,7 @@ void ShowConDump(wchar_t* pszText)
 	//CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}};
 	COORD cr, crSize, crCursor;
 	WCHAR* pszBuffers[3];
-	WORD*  pnBuffers[3];
+	void*  pnBuffers[3];
 	WCHAR* pszDumpTitle, *pszRN, *pszSize, *pszTitle = NULL;
 
 	SetWindowText(FarHwnd, L"ConEmu screen dump");
@@ -198,16 +199,19 @@ void ShowConDump(wchar_t* pszText)
 	if (!pszRN || (*pszRN!=L' ' && *pszRN!=L'\r')) return;
 	pszSize = pszRN;
 	crCursor.X = 0; crCursor.Y = crSize.Y-1;
-	if (*pszSize == L' ') {
+	if (*pszSize == L' ')
+	{
 		while (*pszSize == L' ') pszSize++;
-		if (wcsncmp(pszSize, L"Cursor: ", 8)==0) {
+		if (wcsncmp(pszSize, L"Cursor: ", 8)==0)
+		{
 			pszSize += 8;
 			cr.X = (SHORT)wcstol(pszSize, &pszRN, 10);
 			if (!pszRN || *pszRN!=L'x') return;
 			pszSize = pszRN + 1;
 			cr.Y = (SHORT)wcstol(pszSize, &pszRN, 10);
-			if (cr.X>0 && cr.Y>0) {
-				crCursor.X = cr.X - 1; crCursor.Y = cr.Y - 1;
+			if (cr.X>=0 && cr.Y>=0)
+			{
+				crCursor.X = cr.X; crCursor.Y = cr.Y;
 			}
 		}
 	}
@@ -215,11 +219,12 @@ void ShowConDump(wchar_t* pszText)
 	pszTitle = (WCHAR*)calloc(lstrlenW(pszDumpTitle)+200,2);
 
 	DWORD dwConDataBufSize = crSize.X * crSize.Y;
-	pnBuffers[0] = ((WORD*)(pszBuffers[0])) + dwConDataBufSize;
-	pszBuffers[1] = ((WCHAR*)(pnBuffers[0])) + dwConDataBufSize;
-	pnBuffers[1] = ((WORD*)(pszBuffers[1])) + dwConDataBufSize;
-	pszBuffers[2] = ((WCHAR*)(pnBuffers[1])) + dwConDataBufSize;
-	pnBuffers[2] = ((WORD*)(pszBuffers[2])) + dwConDataBufSize;
+	DWORD dwConDataBufSizeEx = crSize.X * crSize.Y * sizeof(CharAttr);
+	pnBuffers[0] = (void*)(((WORD*)(pszBuffers[0])) + dwConDataBufSize);
+	pszBuffers[1] = (WCHAR*)(((LPBYTE)(pnBuffers[0])) + dwConDataBufSizeEx);
+	pnBuffers[1] = (void*)(((WORD*)(pszBuffers[1])) + dwConDataBufSize);
+	pszBuffers[2] = (WCHAR*)(((LPBYTE)(pnBuffers[1])) + dwConDataBufSizeEx);
+	pnBuffers[2] = (void*)(((WORD*)(pszBuffers[2])) + dwConDataBufSize);
 
 	r->EventType = WINDOW_BUFFER_SIZE_EVENT;
 
@@ -242,11 +247,13 @@ void ShowConDump(wchar_t* pszText)
 		}
 		if (gnPage<0) gnPage = 3; else if (gnPage>3) gnPage = 0;
 
-		if (lbNeedRedraw) {
+		if (lbNeedRedraw)
+		{
 			lbNeedRedraw = FALSE;
 			cr.X = 0; cr.Y = 0;
 			DWORD dw = 0;
-			if (gnPage == 0) {
+			if (gnPage == 0)
+			{
 				FillConsoleOutputAttribute(hO, 7, csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
 				FillConsoleOutputCharacter(hO, L' ', csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
 				cr.X = 0; cr.Y = 0; SetConsoleCursorPosition(hO, cr);
@@ -261,30 +268,62 @@ void ShowConDump(wchar_t* pszText)
 				WriteConsoleOutputCharacter(hO, szSize, lstrlenW(szSize), cr, &dw); cr.Y++;
 				SetConsoleCursorPosition(hO, cr);
 				
-			} else if (gnPage >= 1 && gnPage <= 3) {
+			}
+			else if (gnPage >= 1 && gnPage <= 3)
+			{
 				FillConsoleOutputAttribute(hO, gbShowAttrsOnly ? 0xF : 0x10, csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
 				FillConsoleOutputCharacter(hO, L' ', csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
 
 				int nMaxX = min(crSize.X, csbi.dwSize.X);
 				int nMaxY = min(crSize.Y, csbi.dwSize.Y);
 				wchar_t* pszConData = pszBuffers[gnPage-1];
-				WORD* pnConData = pnBuffers[gnPage-1];
-				if (pszConData && dwConDataBufSize) {
+				void* pnConData = pnBuffers[gnPage-1];
+				LPBYTE pnTemp = (LPBYTE)malloc(nMaxX*2);
+				CharAttr *pSrcEx = (CharAttr*)pnConData;
+				if (pszConData && dwConDataBufSize)
+				{
 					wchar_t* pszSrc = pszConData;
 					wchar_t* pszEnd = pszConData + dwConDataBufSize;
-					WORD* pnSrc = pnConData;
+					LPBYTE pnSrc;
+					DWORD nAttrLineSize;
+					if (gnPage == 3)
+					{
+						pnSrc = (LPBYTE)pnConData;
+						nAttrLineSize = crSize.X * 2;
+					}
+					else
+					{
+						pnSrc = pnTemp;
+						nAttrLineSize = 0;
+					}
 					cr.X = 0; cr.Y = 0;
-					while (cr.Y < nMaxY && pszSrc < pszEnd) {
-						if (!gbShowAttrsOnly) {
+					while (cr.Y < nMaxY && pszSrc < pszEnd)
+					{
+						if (!gbShowAttrsOnly)
+						{
 							WriteConsoleOutputCharacter(hO, pszSrc, nMaxX, cr, &dw);
-							WriteConsoleOutputAttribute(hO, pnSrc, nMaxX, cr, &dw);
-						} else {
+							if (gnPage < 3)
+							{
+								for (int i = 0; i < nMaxX; i++)
+								{
+									((WORD*)pnSrc)[i] = pSrcEx[i].nForeIdx | (pSrcEx[i].nBackIdx << 4);
+								}
+								pSrcEx += crSize.X;
+							}
+							WriteConsoleOutputAttribute(hO, (WORD*)pnSrc, nMaxX, cr, &dw);
+						}
+						else
+						{
 							WriteConsoleOutputCharacter(hO, (wchar_t*)pnSrc, nMaxX, cr, &dw);
 						}
 
-						pszSrc += crSize.X; pnSrc += crSize.X; cr.Y++;
+						pszSrc += crSize.X;
+						if (nAttrLineSize)
+							pnSrc += nAttrLineSize;
+						cr.Y++;
 					}
 				}
+				free(pnTemp);
 				//cr.Y = nMaxY-1;
 				SetConsoleCursorPosition(hO, crCursor);
 			}

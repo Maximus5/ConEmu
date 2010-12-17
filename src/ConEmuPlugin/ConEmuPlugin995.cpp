@@ -999,11 +999,11 @@ static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pB
 	pBk->bFocused = pInfo->Focus;
 	pBk->bPlugin = pInfo->Plugin;
 	HANDLE hPanel = (pInfo->Focus) ? PANEL_ACTIVE : PANEL_PASSIVE;
-	InfoW995->Control(hPanel, FCTL_GETCURRENTDIRECTORY /* == FCTL_GETPANELDIR == 25*/, countof(pBk->szCurDir), (LONG_PTR)&pBk->szCurDir);
+	InfoW995->Control(hPanel, FCTL_GETCURRENTDIRECTORY /* == FCTL_GETPANELDIR == 25*/, BkPanelInfo_CurDirMax, (LONG_PTR)pBk->szCurDir);
 	if (gFarVersion.dwBuild >= 1657)
 	{
-		InfoW995->Control(hPanel, 32/*FCTL_GETPANELFORMAT*/, countof(pBk->szCurDir), (LONG_PTR)&pBk->szFormat);
-		InfoW995->Control(hPanel, 33/*FCTL_GETPANELHOSTFILE*/, countof(pBk->szCurDir), (LONG_PTR)&pBk->szHostFile);
+		InfoW995->Control(hPanel, 32/*FCTL_GETPANELFORMAT*/, BkPanelInfo_FormatMax, (LONG_PTR)pBk->szFormat);
+		InfoW995->Control(hPanel, 33/*FCTL_GETPANELHOSTFILE*/, BkPanelInfo_HostFileMax, (LONG_PTR)pBk->szHostFile);
 	}
 	else
 	{

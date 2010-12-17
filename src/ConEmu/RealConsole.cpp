@@ -401,12 +401,14 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 
 void CRealConsole::DumpConsole(HANDLE ahFile)
 {
+	BOOL lbRc = FALSE;
     DWORD dw = 0;
     if (con.pConChar && con.pConAttr)
 	{
 		MSectionLock sc; sc.Lock(&csCON, FALSE);
-        WriteFile(ahFile, con.pConChar, con.nTextWidth * con.nTextHeight * 2, &dw, NULL);
-        WriteFile(ahFile, con.pConAttr, con.nTextWidth * con.nTextHeight * 2, &dw, NULL);
+		DWORD nSize = con.nTextWidth * con.nTextHeight * 2;
+        lbRc = WriteFile(ahFile, con.pConChar, nSize, &dw, NULL);
+        lbRc = WriteFile(ahFile, con.pConAttr, nSize, &dw, NULL);
     }
 }
 

@@ -42,6 +42,7 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #endif 	/* __ITaskbarList2_FWD_DEFINED__ */
 
 #define WM_TRAYNOTIFY WM_USER+1
+#define ID_DUMPPROCESS 0xABBF
 #define ID_DEBUG_SHOWRECTS 0xABC0
 #define ID_MONITOR_SHELLACTIVITY 0xABC1
 #define ID_CON_COPY 0xABC2
@@ -399,6 +400,8 @@ public:
 	bool SetWindowMode(uint inMode, BOOL abForce = FALSE);
 	void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer);
 	void ShowSysmenu(HWND Wnd=NULL, int x=-32000, int y=-32000);
+	HMENU CreateDebugMenuPopup();
+	void PopulateEditMenuPopup(HMENU hMenu);
 	void StartDebugLogConsole();
 	//void StartLogCreateProcess();
 	//void StopLogCreateProcess();

@@ -471,19 +471,25 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 		if ((gSet.isHideCaptionAlways() || gSet.isFullScreen || (gConEmu.isZoomed() && gSet.isHideCaption))
 			&& gSet.isTabs)
 		{
-			if (TabHitTest()==HTCAPTION) {
+			if (TabHitTest()==HTCAPTION)
+			{
 				POINT ptScr; GetCursorPos(&ptScr);
 				lParam = MAKELONG(ptScr.x,ptScr.y);
 				LRESULT lRc = 0;
-				if (uMsg == WM_LBUTTONDBLCLK) {
+				if (uMsg == WM_LBUTTONDBLCLK)
+				{
 					// Чтобы клик случайно не провалился в консоль
 					gConEmu.mouse.state |= MOUSE_SIZING_DBLCKL;
 					// Аналог AltF9
 					//gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
 					gConEmu.OnAltF9(TRUE);
-				} else if (uMsg == WM_RBUTTONUP) {
+				}
+				else if (uMsg == WM_RBUTTONUP)
+				{
 					gConEmu.ShowSysmenu(ghWnd, ptScr.x, ptScr.y/*-32000*/);
-				} else if (!gSet.isFullScreen && !gConEmu.isZoomed()) {
+				}
+				else if (!gSet.isFullScreen && !gConEmu.isZoomed())
+				{
 					lRc = gConEmu.WndProc(ghWnd, uMsg-(WM_MOUSEMOVE-WM_NCMOUSEMOVE), HTCAPTION, lParam);
 				}
 				return lRc;

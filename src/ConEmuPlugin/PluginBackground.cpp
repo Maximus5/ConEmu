@@ -76,7 +76,19 @@ CPluginBackground::CPluginBackground()
 	memset(&m_ThSet, 0, sizeof(m_ThSet));
 	
 	memset(&m_Default, 0, sizeof(m_Default));
+	m_Default.LeftPanel.szCurDir = (wchar_t*)calloc(BkPanelInfo_CurDirMax,sizeof(wchar_t));
+	m_Default.LeftPanel.szFormat = (wchar_t*)calloc(BkPanelInfo_FormatMax,sizeof(wchar_t));
+	m_Default.LeftPanel.szHostFile = (wchar_t*)calloc(BkPanelInfo_HostFileMax,sizeof(wchar_t));
+	m_Default.RightPanel.szCurDir = (wchar_t*)calloc(BkPanelInfo_CurDirMax,sizeof(wchar_t));
+	m_Default.RightPanel.szFormat = (wchar_t*)calloc(BkPanelInfo_FormatMax,sizeof(wchar_t));
+	m_Default.RightPanel.szHostFile = (wchar_t*)calloc(BkPanelInfo_HostFileMax,sizeof(wchar_t));
 	memset(&m_Last, 0, sizeof(m_Last));
+	m_Last.LeftPanel.szCurDir = (wchar_t*)calloc(BkPanelInfo_CurDirMax,sizeof(wchar_t));
+	m_Last.LeftPanel.szFormat = (wchar_t*)calloc(BkPanelInfo_FormatMax,sizeof(wchar_t));
+	m_Last.LeftPanel.szHostFile = (wchar_t*)calloc(BkPanelInfo_HostFileMax,sizeof(wchar_t));
+	m_Last.RightPanel.szCurDir = (wchar_t*)calloc(BkPanelInfo_CurDirMax,sizeof(wchar_t));
+	m_Last.RightPanel.szFormat = (wchar_t*)calloc(BkPanelInfo_FormatMax,sizeof(wchar_t));
+	m_Last.RightPanel.szHostFile = (wchar_t*)calloc(BkPanelInfo_HostFileMax,sizeof(wchar_t));
 	//m_Default.pszLeftCurDir    = ms_LeftCurDir; ms_LeftCurDir[0] = 0;
 	//m_Default.pszLeftFormat    = ms_LeftFormat; ms_LeftFormat[0] = 0;
 	//m_Default.pszLeftHostFile  = ms_LeftHostFile; ms_LeftHostFile[0] = 0;
@@ -100,6 +112,19 @@ CPluginBackground::~CPluginBackground()
 		delete csBgPlugins;
 		csBgPlugins = NULL;
 	}
+	
+	SafeFree(m_Default.LeftPanel.szCurDir);
+	SafeFree(m_Default.LeftPanel.szFormat);
+	SafeFree(m_Default.LeftPanel.szHostFile);
+	SafeFree(m_Default.RightPanel.szCurDir);
+	SafeFree(m_Default.RightPanel.szFormat);
+	SafeFree(m_Default.RightPanel.szHostFile);
+	SafeFree(m_Last.LeftPanel.szCurDir);
+	SafeFree(m_Last.LeftPanel.szFormat);
+	SafeFree(m_Last.LeftPanel.szHostFile);
+	SafeFree(m_Last.RightPanel.szCurDir);
+	SafeFree(m_Last.RightPanel.szFormat);
+	SafeFree(m_Last.RightPanel.szHostFile);
 }
 
 int CPluginBackground::RegisterSubplugin(RegisterBackgroundArg *pbk)
@@ -401,7 +426,41 @@ void CPluginBackground::UpdateBackground()
 	m_Default.dcSizeX = Arg.dcSizeX = (m_Default.rcConWorkspace.right-m_Default.rcConWorkspace.left+1)*m_Default.MainFont.nFontCellWidth;
 	m_Default.dcSizeY = Arg.dcSizeY = (m_Default.rcConWorkspace.bottom-m_Default.rcConWorkspace.top+1)*m_Default.MainFont.nFontHeight;
 
-	memmove(&m_Last, &m_Default, sizeof(m_Default));
+	// **********************************************************************************
+	// запомнить данные из m_Default в m_Last, но т.к. там есть указатели - move не катит
+	// **********************************************************************************
+	//memmove(&m_Last, &m_Default, sizeof(m_Last));
+    m_Last.MainFont = m_Default.MainFont;
+	memmove(m_Last.crPalette, m_Default.crPalette, sizeof(m_Last.crPalette));
+	m_Last.dcSizeX = m_Default.dcSizeX;
+	m_Last.dcSizeY = m_Default.dcSizeY;
+	m_Last.rcDcLeft = m_Default.rcDcLeft;
+	m_Last.rcDcRight = m_Default.rcDcRight;
+	m_Last.rcConWorkspace = m_Default.rcConWorkspace;
+	m_Last.conCursor = m_Default.conCursor;
+	m_Last.nFarInterfaceSettings = m_Default.nFarInterfaceSettings;
+	m_Last.nFarPanelSettings = m_Default.nFarPanelSettings;
+	memmove(m_Last.nFarColors, m_Default.nFarColors, sizeof(m_Last.nFarColors));
+	m_Last.bPanelsAllowed = m_Default.bPanelsAllowed;
+	// struct tag_BkPanelInfo
+	m_Last.LeftPanel.bVisible = m_Default.LeftPanel.bVisible;
+	m_Last.LeftPanel.bFocused = m_Default.LeftPanel.bFocused;
+	m_Last.LeftPanel.bPlugin = m_Default.LeftPanel.bPlugin;
+	m_Last.LeftPanel.rcPanelRect = m_Default.LeftPanel.rcPanelRect;
+	m_Last.RightPanel.bVisible = m_Default.RightPanel.bVisible;
+	m_Last.RightPanel.bFocused = m_Default.RightPanel.bFocused;
+	m_Last.RightPanel.bPlugin = m_Default.RightPanel.bPlugin;
+	m_Last.RightPanel.rcPanelRect = m_Default.RightPanel.rcPanelRect;
+	// строки
+	lstrcpyW(m_Last.LeftPanel.szCurDir, m_Default.LeftPanel.szCurDir);
+	lstrcpyW(m_Last.LeftPanel.szFormat, m_Default.LeftPanel.szFormat);
+	lstrcpyW(m_Last.LeftPanel.szHostFile, m_Default.LeftPanel.szHostFile);
+	lstrcpyW(m_Last.RightPanel.szCurDir, m_Default.RightPanel.szCurDir);
+	lstrcpyW(m_Last.RightPanel.szFormat, m_Default.RightPanel.szFormat);
+	lstrcpyW(m_Last.RightPanel.szHostFile, m_Default.RightPanel.szHostFile);
+	// **********************************************************************************
+	
+	
 
 	if (m_Default.dcSizeX < 1 || m_Default.dcSizeY < 1)
 	{
@@ -454,6 +513,7 @@ void CPluginBackground::UpdateBackground()
 	int nProcessed = 0;
 	MSectionLock SC; SC.Lock(csBgPlugins, TRUE);
 	DWORD nFromLevel = 0, nNextLevel, nSuggested;
+	DWORD dwDrawnPlaces = Arg.Place;
 	while (true)
 	{
 		nNextLevel = nFromLevel;
@@ -481,8 +541,12 @@ void CPluginBackground::UpdateBackground()
 			// На уровне 0 (заливающий фон) должен быть только один плагин
 			Arg.dwLevel = (nProcessed == 0) ? 0 : (nFromLevel == 0 && nProcessed) ? 1 : nFromLevel;
 			Arg.lParam = mp_BgPlugins[i].lParam;
+			Arg.dwDrawnPlaces = 0;
 			//mp_BgPlugins[i].PaintConEmuBackground(&Arg);
 			UpdateBackground_Exec(mp_BgPlugins+i, &Arg);
+			// Что плагин покрасил (панели/редактор/вьювер считаются покрашенными по умолчанию)
+			dwDrawnPlaces |= Arg.dwDrawnPlaces;
+			//
 			nProcessed++;
 		}
 		if (nNextLevel == nFromLevel)
@@ -504,6 +568,7 @@ void CPluginBackground::UpdateBackground()
 			ExecutePrepareCmd(&In.hdr, CECMD_SETBACKGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETBACKGROUND));
 			In.Background.nType = 1;
 			In.Background.bEnabled = FALSE;
+			In.Background.dwDrawnPlaces = 0;
 			CESERVER_REQ *pOut = ExecuteGuiCmd(FarHwnd, &In, FarHwnd);
 			if (pOut)
 			{
@@ -528,6 +593,7 @@ void CPluginBackground::UpdateBackground()
 		{
 			pIn->Background.nType = 1;
 			pIn->Background.bEnabled = TRUE;
+			pIn->Background.dwDrawnPlaces = dwDrawnPlaces;
 			pIn->Background.bmp.bfType = 0x4D42/*BM*/;
 			pIn->Background.bmp.bfSize = nBitSize+sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER);
 			pIn->Background.bmp.bfOffBits = sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER);

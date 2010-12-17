@@ -379,10 +379,21 @@ enum PaintBackgroundEvents
 
 enum PaintBackgroundPlaces
 {
+	// Используются при регистрации И отрисовке
 	pbp_Panels = 1,
 	pbp_Editor = 2,
 	pbp_Viewer = 4,
+	// Используются ТОЛЬКО как [OUT] при отрисовке // Reserved
+	pbp_UserScreen  = 8,
+	pbp_CommandLine = 16,
+	pbp_KeyBar      = 32,
+	pbp_MenuBar     = 64, // Верхняя строка - падающее меню
+	pbp_StatusLine  = 64, // Статусная строка - редактор/вьювер
 };
+
+#define BkPanelInfo_CurDirMax 32768
+#define BkPanelInfo_FormatMax MAX_PATH
+#define BkPanelInfo_HostFileMax 32768
 
 struct PaintBackgroundArg
 {
@@ -399,7 +410,7 @@ struct PaintBackgroundArg
 	DWORD dwLevel;
 	// [Reserved] комбинация из enum PaintBackgroundEvents
 	DWORD dwEventFlags;
-
+	
     // Основной шрифт в ConEmu GUI
     struct ConEmuMainFont MainFont;
 	// Палитра в ConEmu GUI
@@ -430,13 +441,16 @@ struct PaintBackgroundArg
 		BOOL bVisible; // Наличие панели
 		BOOL bFocused; // В фокусе
 		BOOL bPlugin;  // Плагиновая панель
-		wchar_t szCurDir[32768];    // Текущая папка на панели
-		wchar_t szFormat[MAX_PATH]; // Доступно только в FAR2
-		wchar_t szHostFile[32768];  // Доступно только в FAR2
+		wchar_t *szCurDir/*[32768]*/;    // Текущая папка на панели
+		wchar_t *szFormat/*[MAX_PATH]*/; // Доступно только в FAR2
+		wchar_t *szHostFile/*[32768]*/;  // Доступно только в FAR2
 		RECT rcPanelRect; // Консольные кооринаты панели. В FAR 2 с ключом /w верх может быть != {0,0}
 	} BkPanelInfo;
 	BkPanelInfo LeftPanel;
 	BkPanelInfo RightPanel;
+	
+	// [OUT] Плагин должен указать, какие части консоли он "раскрасил" - enum PaintBackgroundPlaces
+	DWORD dwDrawnPlaces;
 };
 
 typedef int (WINAPI* PaintConEmuBackground_t)(struct PaintBackgroundArg* pBk);
@@ -935,13 +949,16 @@ struct CESERVER_REQ_SETBACKGROUND
 {
 	int               nType;    // Reserved for future use. Must be 1
 	BOOL              bEnabled; // TRUE - ConEmu use this image, FALSE - ConEmu use self background settings
-	int               nReserved1; // Must by 0. reserved for alpha
-	DWORD             nReserved2; // Must by 0. reserved for replaced colors
-	int               nReserved3; // Must by 0. reserved for background op
 	
-	DWORD nReserved4; // Must by 0. reserved for flags (BmpIsTransparent, RectangleSpecified)
-	DWORD nReserved5; // Must by 0. reserved for level (Some plugins may want to draw small parts over common background)
-	RECT  rcReserved5; // Must by 0. reserved for filled rect (plugin may cover only one panel, or part of it)
+	// какие части консоли раскрашены - enum PaintBackgroundPlaces
+	DWORD dwDrawnPlaces;
+	
+	//int               nReserved1; // Must by 0. reserved for alpha
+	//DWORD             nReserved2; // Must by 0. reserved for replaced colors
+	//int               nReserved3; // Must by 0. reserved for background op
+	//DWORD nReserved4; // Must by 0. reserved for flags (BmpIsTransparent, RectangleSpecified)
+	//DWORD nReserved5; // Must by 0. reserved for level (Some plugins may want to draw small parts over common background)
+	//RECT  rcReserved5; // Must by 0. reserved for filled rect (plugin may cover only one panel, or part of it)
 	
 	BITMAPFILEHEADER  bmp;
 	BITMAPINFOHEADER  bi;
