@@ -102,7 +102,7 @@ BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
 //int       gnBufferHeight = 0;
 wchar_t* gpszRunCmd = NULL;
-DWORD   gnImageSubsystem = 0;
+DWORD   gnImageSubsystem = 0, gnImageBits = 32;
 //HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
 HANDLE ghHeap = NULL; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
 #ifdef _DEBUG
@@ -1447,14 +1447,14 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				pszNewCmd[nNewLen] = 0; // !!! wcsncpy не ставит завершающий '\0'
 				// Поправим режимы открытия
 				if (!gbAttachMode) // Если ключа еще нет в ком.строке - добавим
-					wcscat(pszNewCmd, L" /ATTACH ");
+					lstrcatW(pszNewCmd, L" /ATTACH ");
 				if (!gbAlwaysConfirmExit) // Если ключа еще нет в ком.строке - добавим
-					wcscat(pszNewCmd, L" /CONFIRM ");
+					lstrcatW(pszNewCmd, L" /CONFIRM ");
 
 				if (pszAddNewConArgs)
 				{
-					wcscat(pszNewCmd, L" ");
-					wcscat(pszNewCmd, pszAddNewConArgs);
+					lstrcatW(pszNewCmd, L" ");
+					lstrcatW(pszNewCmd, pszAddNewConArgs);
 				}
 				else
 				{
@@ -1485,7 +1485,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 						if (nBZ <= nBH) nBZ = 0;
 						wsprintf(pszNewCmd+wcslen(pszNewCmd), L" /BW=%i /BH=%i /BZ=%i ", nBW, nBH, nBZ);
 					}
-					//wcscat(pszNewCmd, L" </BW=9999 /BH=9999 /BZ=9999> ");
+					//lstrcatW(pszNewCmd, L" </BW=9999 /BH=9999 /BZ=9999> ");
 				}
 
 				// Сформировать новую команду
@@ -1498,15 +1498,15 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				{
 					CheckUnicodeMode();
 					if (gnCmdUnicodeMode == 2)
-						wcscat(pszNewCmd, L" /ROOT cmd /U /C ");
+						lstrcatW(pszNewCmd, L" /ROOT cmd /U /C ");
 					else if (gnCmdUnicodeMode == 1)
-						wcscat(pszNewCmd, L" /ROOT cmd /A /C ");
+						lstrcatW(pszNewCmd, L" /ROOT cmd /A /C ");
 					else
-						wcscat(pszNewCmd, L" /ROOT cmd /C ");
+						lstrcatW(pszNewCmd, L" /ROOT cmd /C ");
 				}
 				else
 				{
-					wcscat(pszNewCmd, L" /ROOT ");
+					lstrcatW(pszNewCmd, L" /ROOT ");
 				}
 				// убрать из запускаемой команды "-new_console"
 				nNewLen = pwszCopy - asCmdLine;
@@ -1957,7 +1957,7 @@ void SendStarted()
 		else if (0 == NextArg(&pszTemp, lsRoot))
 		{
 			PRINT_COMSPEC(L"Starting: <%s>", lsRoot);
-			if (!GetImageSubsystem(lsRoot, gnImageSubsystem))
+			if (!GetImageSubsystem(lsRoot, gnImageSubsystem, gnImageBits))
 				gnImageSubsystem = 0;
 	   		PRINT_COMSPEC(L", Subsystem: <%i>\n", gnImageSubsystem);
 			PRINT_COMSPEC(L"  Args: %s\n", pszTemp);

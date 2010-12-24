@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_MSGBOX
 #endif
 
-#define TRUE_COLORER_OLD_SUPPORT
+//#define TRUE_COLORER_OLD_SUPPORT
 
 #define SHOWDEBUGSTR
 //#define MCHKHEAP
@@ -176,10 +176,10 @@ BOOL gbFARuseASCIIsort = FALSE; // попытаться перехватить строковую сортировку в
 //HANDLE ghFileMapping = NULL;
 HANDLE ghColorMapping = NULL; // Создается при детаче консоли сразу после AllocConsole
 BOOL gbHasColorMapping = FALSE; // Чтобы знать, что буфер True-Colorer создан
-#ifdef TRUE_COLORER_OLD_SUPPORT
-HANDLE ghColorMappingOld = NULL;
-BOOL gbHasColorMappingOld = FALSE;
-#endif
+//#ifdef TRUE_COLORER_OLD_SUPPORT
+//HANDLE ghColorMappingOld = NULL;
+//BOOL gbHasColorMappingOld = FALSE;
+//#endif
 MFileMapping<CESERVER_REQ_CONINFO_HDR> *gpConMap;
 const CESERVER_REQ_CONINFO_HDR *gpConMapInfo = NULL;
 //AnnotationInfo *gpColorerInfo = NULL;
@@ -1698,6 +1698,9 @@ static BOOL ActivatePlugin (
 		ExecuteSynchro();
 	}
 
+	if (nCmd == CMD_REDRAWFAR || nCmd == CMD_FARPOST)
+		nTimeout = min(1000,nTimeout); // чтобы не зависало при попытке ресайза, если фар не отзывается.
+
 	// Подождать активации. Сколько ждать - может указать вызывающая функция
 	nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
 	if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1))
@@ -2316,12 +2319,12 @@ void CheckColorerHeader()
 	gbHasColorMapping = (h!=NULL);
 	if (h) CloseHandle(h);
 		
-	#ifdef TRUE_COLORER_OLD_SUPPORT
-	wsprintf(szMapName, L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
-	h = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
-	gbHasColorMappingOld = (h!=NULL);
-	if (h) CloseHandle(h);
-	#endif
+	//#ifdef TRUE_COLORER_OLD_SUPPORT
+	//wsprintf(szMapName, L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
+	//h = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
+	//gbHasColorMappingOld = (h!=NULL);
+	//if (h) CloseHandle(h);
+	//#endif
 }
 
 // Функции вызываются в основной нити, вполне можно дергать FAR-API
@@ -2336,14 +2339,15 @@ int CreateColorerHeader()
 	DWORD nMapCells = 0, nMapSize = 0;
 	HWND lhConWnd = NULL;
 	
-	if (ghColorMapping) {
+	if (ghColorMapping)
+	{
 		CloseHandle(ghColorMapping); ghColorMapping = NULL;
 	}
-	#ifdef TRUE_COLORER_OLD_SUPPORT
-		if (ghColorMappingOld) {
-			CloseHandle(ghColorMappingOld); ghColorMappingOld = NULL;
-		}
-	#endif
+	//#ifdef TRUE_COLORER_OLD_SUPPORT
+	//	if (ghColorMappingOld) {
+	//		CloseHandle(ghColorMappingOld); ghColorMappingOld = NULL;
+	//	}
+	//#endif
 
 	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
 	nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200);
@@ -2390,15 +2394,15 @@ int CreateColorerHeader()
 		}
 	}
 	
-	#ifdef TRUE_COLORER_OLD_SUPPORT
-	if (gbHasColorMappingOld)
-	{
-		wsprintf(szMapName, L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
-		nMapSize = nMapCells * sizeof(AnnotationInfo);
-		ghColorMappingOld = CreateFileMapping(INVALID_HANDLE_VALUE, 
-			gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
-	}
-	#endif
+	//#ifdef TRUE_COLORER_OLD_SUPPORT
+	//if (gbHasColorMappingOld)
+	//{
+	//	wsprintf(szMapName, L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
+	//	nMapSize = nMapCells * sizeof(AnnotationInfo);
+	//	ghColorMappingOld = CreateFileMapping(INVALID_HANDLE_VALUE, 
+	//		gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+	//}
+	//#endif
 
 	return iRc;
 }
@@ -2410,13 +2414,13 @@ void CloseColorerHeader()
 		CloseHandle(ghColorMapping);
 		ghColorMapping = NULL;
 	}
-	#ifdef TRUE_COLORER_OLD_SUPPORT
-	if (ghColorMappingOld)
-	{
-		CloseHandle(ghColorMappingOld);
-		ghColorMappingOld = NULL;
-	}
-	#endif
+	//#ifdef TRUE_COLORER_OLD_SUPPORT
+	//if (ghColorMappingOld)
+	//{
+	//	CloseHandle(ghColorMappingOld);
+	//	ghColorMappingOld = NULL;
+	//}
+	//#endif
 }
 
 
@@ -2631,7 +2635,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 				else
 				{
 					// Force Send tabs to ConEmu
-					MSectionLock SC; SC.Lock(csTabs, TRUE);
+					MSectionLock SC; SC.Lock(csTabs, TRUE); // блокируем exclusively, чтобы во время пересылки данные не поменялись из другого потока
 					SendTabs(gnCurTabCount, TRUE);
 					SC.Unlock();
 				}
@@ -3402,9 +3406,12 @@ bool UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Par
 
 bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
-	extern bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
+	extern bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param);
 
 	bool lbCh;
+
+	// Блокируем сразу, т.к. ниже по коду gpTabs тоже используется
+	MSectionLock SC; SC.Lock(csTabs);
 
 	// На случай, если текущее окно заблокировано диалогом - не получится точно узнать
 	// какое окно фара активно. Поэтому вернем последнее известное.
@@ -3431,6 +3438,8 @@ bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Para
 		gpTabs->Tabs.CurrentIndex = nLastCurrentTab;
 		gpTabs->Tabs.tabs[nLastCurrentTab].Current = TRUE;
 	}
+
+	SendTabs(gpTabs->Tabs.nTabCount, lbCh && (gnReqCommand==(DWORD)-1));
 
 	if (lbCh && gpBgPlugin)
 	{

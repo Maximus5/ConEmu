@@ -297,7 +297,7 @@ void CSettings::InitSettings()
     _tcscpy(LogFont2.lfFaceName, L"Lucida Console");
     mb_Name1Ok = FALSE; mb_Name2Ok = FALSE;
     isTryToCenter = false;
-    isAlwaysShowScrollbar = false;
+    isAlwaysShowScrollbar = 2;
     isTabFrame = true;
     //isForceMonospace = false; isProportional = false;
 	isMonospace = 1;
@@ -767,7 +767,7 @@ void CSettings::LoadSettings()
         reg->Load(L"AdminShowShield", bAdminShield);
 		reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
         reg->Load(L"TryToCenter", isTryToCenter);
-        reg->Load(L"AlwaysShowScrollbar", isAlwaysShowScrollbar);
+        reg->Load(L"ShowScrollbar", isAlwaysShowScrollbar); if (isAlwaysShowScrollbar > 2) isAlwaysShowScrollbar = 2;
         //reg->Load(L"CreateAppWindow", isCreateAppWindow);
         //reg->Load(L"AllowDetach", isAllowDetach);
         
@@ -1225,7 +1225,7 @@ BOOL CSettings::SaveSettings()
 	        reg->Save(L"AdminShowShield", bAdminShield);
 			reg->Save(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
 	        reg->Save(L"TryToCenter", isTryToCenter);
-	        reg->Save(L"AlwaysShowScrollbar", isAlwaysShowScrollbar);
+	        reg->Save(L"ShowScrollbar", isAlwaysShowScrollbar);
 
 			reg->Save(L"IconID", nIconID);
             

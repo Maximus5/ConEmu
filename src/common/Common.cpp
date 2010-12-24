@@ -348,21 +348,25 @@ HANDLE ghHookMutex = NULL;
 void CommonShutdown()
 {
 	gbInCommonShutdown = TRUE;
-	if (gNullDesc) {
+	if (gNullDesc)
+	{
 		delete gNullDesc;
 		gNullDesc = NULL;
 	}
 
 	// Clean memory
-	if (ghConsoleSection) {
+	if (ghConsoleSection)
+	{
 		CloseHandle(ghConsoleSection);
 		ghConsoleSection = NULL;
 	}
-	if (gpConsoleInfoStr) {
+	if (gpConsoleInfoStr)
+	{
 		LocalFree(gpConsoleInfoStr);
 		gpConsoleInfoStr = NULL;
 	}
-	if (ghHookMutex) {
+	if (ghHookMutex)
+	{
 		CloseHandle(ghHookMutex);
 		ghHookMutex = NULL;
 	}

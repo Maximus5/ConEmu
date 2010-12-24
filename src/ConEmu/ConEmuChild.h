@@ -77,7 +77,9 @@ public:
 	~CConEmuBack();
 
 	HWND mh_WndBack;
-	HWND mh_WndScroll; UINT mn_ScrollWidth; BOOL mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollTimerSet;
+	HWND mh_WndScroll; UINT mn_ScrollWidth;
+	BOOL mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup;
+	CTimer m_TScrollShow, m_TScrollHide, m_TScrollCheck;
 	HBRUSH mh_BackBrush;
 	COLORREF mn_LastColor;
 
@@ -88,6 +90,7 @@ public:
 	void RePaint();
 	BOOL TrackMouse();
 	BOOL CheckMouseOverScroll();
+	BOOL CheckScrollAutoPopup();
 	void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
 	void ShowScroll(BOOL abImmediate);
 	void HideScroll(BOOL abImmediate);

@@ -35,6 +35,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // "файл не является исполняемым".
 // Для DOS-приложений определим еще одно значение флага.
 
+// 17.12.2010 Maks
+// Если GetImageSubsystem вернет true - то имеет смысл проверять следующие значения
+// IMAGE_SUBSYSTEM_WINDOWS_CUI    -- Win Console (32/64)
+// IMAGE_SUBSYSTEM_DOS_EXECUTABLE -- DOS Executable (ImageBits == 16)
+
 #define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
 struct IMAGE_HEADERS
@@ -48,46 +53,52 @@ struct IMAGE_HEADERS
 	};
 };
 
-bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem)
+bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/)
 {
-	bool Result=false;
-	ImageSubsystem=IMAGE_SUBSYSTEM_UNKNOWN;
-	HANDLE hModuleFile=CreateFile(FileName,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
-	if(hModuleFile!=INVALID_HANDLE_VALUE)
+	bool Result = false;
+	ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
+	ImageBits = 32;
+	HANDLE hModuleFile = CreateFile(FileName,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
+	if (hModuleFile != INVALID_HANDLE_VALUE)
 	{
 		IMAGE_DOS_HEADER DOSHeader;
 		DWORD ReadSize;
-		if(ReadFile(hModuleFile,&DOSHeader,sizeof(DOSHeader),&ReadSize,NULL))
+		if (ReadFile(hModuleFile,&DOSHeader,sizeof(DOSHeader),&ReadSize,NULL))
 		{
-			if(DOSHeader.e_magic!=IMAGE_DOS_SIGNATURE)
+			if (DOSHeader.e_magic!=IMAGE_DOS_SIGNATURE)
 			{
 				const wchar_t *pszExt = wcsrchr(FileName, L'.');
-				if (lstrcmpiW(pszExt, L".com") == 0) {
+				if (lstrcmpiW(pszExt, L".com") == 0)
+				{
 					ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
+					ImageBits = 16;
 					Result=true;
 				}
 			}
 			else
 			{
 				ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
-				Result=true;
-				if(SetFilePointer(hModuleFile,DOSHeader.e_lfanew,NULL,FILE_BEGIN))
+				ImageBits = 16;
+				Result = true;
+				if (SetFilePointer(hModuleFile,DOSHeader.e_lfanew,NULL,FILE_BEGIN))
 				{
 					IMAGE_HEADERS PEHeader;
-					if(ReadFile(hModuleFile,&PEHeader,sizeof(PEHeader),&ReadSize,NULL))
+					if (ReadFile(hModuleFile,&PEHeader,sizeof(PEHeader),&ReadSize,NULL))
 					{
-						if(PEHeader.Signature==IMAGE_NT_SIGNATURE)
+						if (PEHeader.Signature == IMAGE_NT_SIGNATURE)
 						{
-							switch(PEHeader.OptionalHeader32.Magic)
+							switch (PEHeader.OptionalHeader32.Magic)
 							{
 							case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
 								{
-									ImageSubsystem=PEHeader.OptionalHeader32.Subsystem;
+									ImageSubsystem = PEHeader.OptionalHeader32.Subsystem;
+									ImageBits = 32;
 								}
 								break;
 							case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
 								{
-									ImageSubsystem=PEHeader.OptionalHeader64.Subsystem;
+									ImageSubsystem = PEHeader.OptionalHeader64.Subsystem;
+									ImageBits = 64;
 								}
 								break;
 							/*default:
@@ -96,8 +107,9 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem)
 								}*/
 							}
 						}
-						else if((WORD)PEHeader.Signature==IMAGE_OS2_SIGNATURE)
+						else if ((WORD)PEHeader.Signature == IMAGE_OS2_SIGNATURE)
 						{
+							ImageBits = 32;
 							/*
 							NE,  хмм...  а как определить что оно ГУЕВОЕ?
 
@@ -106,10 +118,14 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem)
 							AN> (1 байт по смещению 0x36). Если там Windows (значения 2, 4) - подразумеваем
 							AN> GUI, если OS/2 и прочая экзотика (остальные значения) - подразумеваем консоль.
 							*/
-							BYTE ne_exetyp=reinterpret_cast<PIMAGE_OS2_HEADER>(&PEHeader)->ne_exetyp;
-							if(ne_exetyp==2||ne_exetyp==4)
+							BYTE ne_exetyp = reinterpret_cast<PIMAGE_OS2_HEADER>(&PEHeader)->ne_exetyp;
+							if (ne_exetyp==2||ne_exetyp==4)
 							{
-								ImageSubsystem=IMAGE_SUBSYSTEM_WINDOWS_GUI;
+								ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
+							}
+							else
+							{
+								ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
 							}
 						}
 						/*else

@@ -514,7 +514,7 @@ BEGIN
     CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,227,156,92,8
     CONTROL         "Always show scrollbar",cbAlwaysShowScrollbar,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,218,100,8
+                    BS_AUTO3STATE | WS_TABSTOP,10,218,100,8
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 167
@@ -1184,7 +1184,7 @@ BEGIN
     cbSendAltSpace          "When is on, You can use 'Alt+Space' in FAR internally.\nYou can pop up system menu with Win+Alt+Space"
     cbBgAllowPlugin         "Enable background Far plugins (i.e. Panel Colorer), 3d state means - don't draw in viewer/editor"
     cbAlwaysShowTrayIcon    "Always show ConEmu icon in the Taskbar Status Area (TSA)"
-    cbAlwaysShowScrollbar   "Always show scrollbar on the right edge of window"
+    cbAlwaysShowScrollbar   "Always show scrollbar on the right edge of window\n3d state means - autoshow on scroll"
 END
 
 #endif    // English (U.S.) resources

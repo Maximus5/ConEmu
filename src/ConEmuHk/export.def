@@ -1,5 +1,8 @@
 EXPORTS
+; functions
 	LLKeybHook
-	KeyHook
-	VkWinFix
-	ConEmuWnd
+; LLKeyHooks (ConEmu GUI)
+	ghKeyHook
+	gnVkWinFix
+	ghConEmuRoot
+

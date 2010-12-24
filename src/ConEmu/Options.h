@@ -223,7 +223,7 @@ public:
     DWORD nSlideShowElapse;
     DWORD nIconID;
     bool isTryToCenter;
-    bool isAlwaysShowScrollbar;
+    BYTE isAlwaysShowScrollbar;
     RECT rcTabMargins;
     bool isTabFrame;
     BYTE icMinimizeRestore;

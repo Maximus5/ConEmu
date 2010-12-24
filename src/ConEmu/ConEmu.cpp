@@ -1091,7 +1091,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* a
     //	rc.bottom -= (rcDC.bottom - rcWnd.bottom - rcFrameTab.bottom);
     //}
     
-    if ((mg & ((DWORD)CEM_SCROLL)) && gSet.isAlwaysShowScrollbar)
+    if ((mg & ((DWORD)CEM_SCROLL)) && (gSet.isAlwaysShowScrollbar == 1))
     {
     	rc.right += GetSystemMetrics(SM_CXVSCROLL);
     }
@@ -3537,11 +3537,14 @@ void CConEmuMain::RegisterHoooks()
 			if (!mh_LLKeyHook && mh_LLKeyHookDll)
 			{
 				HOOKPROC pfnLLHK = (HOOKPROC)GetProcAddress(mh_LLKeyHookDll, "LLKeybHook");
-				HHOOK *pKeyHook = (HHOOK*)GetProcAddress(mh_LLKeyHookDll, "KeyHook");
-				HWND *pConEmuWnd = (HWND*)GetProcAddress(mh_LLKeyHookDll, "ConEmuWnd");
+				HHOOK *pKeyHook = (HHOOK*)GetProcAddress(mh_LLKeyHookDll, "ghKeyHook");
+				HWND *pConEmuRoot = (HWND*)GetProcAddress(mh_LLKeyHookDll, "ghConEmuRoot");
+				HWND *pConEmuDc = (HWND*)GetProcAddress(mh_LLKeyHookDll, "ghConEmuWnd");
 
-				if (pConEmuWnd)
-					*pConEmuWnd = ghWnd;
+				if (pConEmuRoot)
+					*pConEmuRoot = ghWnd;
+				if (pConEmuDc)
+					*pConEmuDc = ghWndDC;
 
 				if (pfnLLHK)
 				{
@@ -3932,7 +3935,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             else
             {
                 //GCC hack. иначе не собирается
-                SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "Сreate new console");
+                SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "Create new console");
                 SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_QUESTION), 0);
                 POINT pt = {0,0};
                 MapWindowPoints(GetDlgItem(hDlg, IDC_TERMINATE), hDlg, &pt, 1);

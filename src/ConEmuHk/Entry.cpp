@@ -41,9 +41,9 @@ extern "C"{
   BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved );
   LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam);
 #endif
-  __declspec(dllexport) HHOOK KeyHook = 0;
-  __declspec(dllexport) DWORD VkWinFix = 0xF0;
-  __declspec(dllexport) HWND  ConEmuWnd = NULL;
+  __declspec(dllexport) HHOOK ghKeyHook = 0;
+  __declspec(dllexport) DWORD gnVkWinFix = 0xF0;
+  __declspec(dllexport) HWND  ghConEmuRoot = NULL;
 #if defined(__GNUC__)
 };
 #endif
@@ -53,6 +53,7 @@ UINT gnMsgActivateCon = 0; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
+
 
 
 BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
@@ -94,6 +95,18 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 }
 #endif
 
+/* Используются как extern в ConEmuCheck.cpp */
+LPVOID _calloc(size_t nCount,size_t nSize) {
+	return calloc(nCount,nSize);
+}
+LPVOID _malloc(size_t nCount) {
+	return malloc(nCount);
+}
+void   _free(LPVOID ptr) {
+	free(ptr);
+}
+
+
 BYTE gnOtherWin = 0;
 DWORD gnSkipVkModCode = 0;
 //DWORD gnSkipScanModCode = 0;
@@ -121,17 +134,17 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 		OutputDebugString(szKH);
 #endif
 
-		if (wParam == WM_KEYDOWN && ConEmuWnd)
+		if (wParam == WM_KEYDOWN && ghConEmuRoot)
 		{
 			if ((pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9') /*|| pKB->vkCode == (int)' '*/)
 			{
 				BOOL lbLeftWin = isPressed(VK_LWIN);
 				BOOL lbRightWin = isPressed(VK_RWIN);
-				if ((lbLeftWin || lbRightWin) && IsWindow(ConEmuWnd))
+				if ((lbLeftWin || lbRightWin) && IsWindow(ghConEmuRoot))
 				{
 					DWORD nConNumber = (pKB->vkCode == (UINT)'0') ? 10 : (pKB->vkCode - (UINT)'0');
 
-					PostMessage(ConEmuWnd, gnMsgActivateCon, nConNumber, 0);
+					PostMessage(ghConEmuRoot, gnMsgActivateCon, nConNumber, 0);
 
 					gnSkipVkModCode = lbLeftWin ? VK_LWIN : VK_RWIN;
 					gnSkipVkKeyCode = pKB->vkCode;
@@ -191,7 +204,7 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 						OutputDebugString(L"*** Win released before key ***\n");
 					#endif
 					// При быстром нажатии Win+<кнопка> часто получается что сам Win отпускается раньше <кнопки>.
-					gnOtherWin = (BYTE)VkWinFix;
+					gnOtherWin = (BYTE)gnVkWinFix;
 					keybd_event(gnOtherWin, gnOtherWin, 0, 0);
 				}
 				else
@@ -213,5 +226,5 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 			}
 		}
 	}
-	return CallNextHookEx(KeyHook, nCode, wParam, lParam);
+	return CallNextHookEx(ghKeyHook, nCode, wParam, lParam);
 }

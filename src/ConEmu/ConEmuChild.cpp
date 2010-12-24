@@ -388,12 +388,14 @@ WARNING("!!! На время скроллирования необходимо установить AutoScroll в TRUE, а 
 TODO("И вообще, скроллинг нужно передавать через pipe");
 
 //#define SCROLLHIDE_TIMER_ID 1726
-#define TIMER_SCROLL_SHOW        3201
-#define TIMER_SCROLL_SHOW_DELAY  1000
-#define TIMER_SCROLL_HIDE        3202
-#define TIMER_SCROLL_HIDE_DELAY  1000
-#define TIMER_SCROLL_CHECK       3203
-#define TIMER_SCROLL_CHECK_DELAY 250
+#define TIMER_SCROLL_SHOW         3201
+#define TIMER_SCROLL_SHOW_DELAY   1000
+#define TIMER_SCROLL_SHOW_DELAY2  500
+#define TIMER_SCROLL_HIDE         3202
+#define TIMER_SCROLL_HIDE_DELAY   1000
+#define TIMER_SCROLL_CHECK        3203
+#define TIMER_SCROLL_CHECK_DELAY  250
+#define TIMER_SCROLL_CHECK_DELAY2 1000
 
 CConEmuBack::CConEmuBack()
 {
@@ -402,7 +404,8 @@ CConEmuBack::CConEmuBack()
 	mh_BackBrush = NULL;
 	mn_LastColor = -1;
 	mn_ScrollWidth = 0;
-	mb_ScrollVisible = FALSE; mb_Scroll2Visible = FALSE; mb_ScrollTimerSet = FALSE;
+	mb_ScrollVisible = FALSE; mb_Scroll2Visible = FALSE; /*mb_ScrollTimerSet = FALSE;*/ mb_ScrollAutoPopup = FALSE;
+	//m_TScrollShow, m_TScrollHide, m_TScrollCheck
 	memset(&mrc_LastClient, 0, sizeof(mrc_LastClient));
 	mb_LastTabVisible = false; mb_LastAlwaysScroll = false;
 	mb_VTracking = false;
@@ -549,32 +552,6 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 			// -- не должно вызываться вообще
 			_ASSERTE(messg!=WM_VSCROLL);
 	        break;
-		//case WM_TIMER:
-		//	switch (wParam)
-		//	{
-		//		case TIMER_SCROLL_CHECK:
-		//			if (gConEmu.m_Back->mb_Scroll2Visible)
-		//			{
-		//				if (!gConEmu.m_Back->CheckMouseOverScroll())
-		//					gConEmu.m_Back->HideScroll(FALSE/*abImmediate*/);
-		//			}
-		//			break;
-		//		case TIMER_SCROLL_SHOW:
-		//			if (gConEmu.m_Back->CheckMouseOverScroll())
-		//				gConEmu.m_Back->ShowScroll(TRUE/*abImmediate*/);
-		//			else
-		//				gConEmu.m_Back->mb_Scroll2Visible = FALSE;
-		//			KillTimer(gConEmu.m_Back->mh_WndScroll, TIMER_SCROLL_SHOW);
-		//			break;
-		//		case TIMER_SCROLL_HIDE:
-		//			if (!gConEmu.m_Back->CheckMouseOverScroll())
-		//				gConEmu.m_Back->HideScroll(TRUE/*abImmediate*/);
-		//			else
-		//				gConEmu.m_Back->mb_Scroll2Visible = TRUE;
-		//			KillTimer(gConEmu.m_Back->mh_WndScroll, TIMER_SCROLL_SHOW);
-		//			break;
-		//	}
-		//	break;
 		case WM_PAINT:
 			{
 				PAINTSTRUCT ps; memset(&ps, 0, sizeof(ps));
@@ -624,6 +601,9 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 	{
 		case WM_CREATE:
 			gConEmu.m_Back->mh_WndScroll = hWnd;
+			gConEmu.m_Back->m_TScrollShow.Init(hWnd, TIMER_SCROLL_SHOW, TIMER_SCROLL_SHOW_DELAY);
+			gConEmu.m_Back->m_TScrollHide.Init(hWnd, TIMER_SCROLL_HIDE, TIMER_SCROLL_HIDE_DELAY);
+			gConEmu.m_Back->m_TScrollCheck.Init(hWnd, TIMER_SCROLL_CHECK, TIMER_SCROLL_CHECK_DELAY);
 			break;
 		case WM_VSCROLL:
 			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
@@ -645,18 +625,20 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 					}
 					break;
 				case TIMER_SCROLL_SHOW:
-					if (gConEmu.m_Back->CheckMouseOverScroll())
+					if (gConEmu.m_Back->CheckMouseOverScroll() || gConEmu.m_Back->CheckScrollAutoPopup())
 						gConEmu.m_Back->ShowScroll(TRUE/*abImmediate*/);
 					else
 						gConEmu.m_Back->mb_Scroll2Visible = FALSE;
-					KillTimer(gConEmu.m_Back->mh_WndScroll, TIMER_SCROLL_SHOW);
+					if (gConEmu.m_Back->m_TScrollShow.IsStarted())
+						gConEmu.m_Back->m_TScrollShow.Stop();
 					break;
 				case TIMER_SCROLL_HIDE:
 					if (!gConEmu.m_Back->CheckMouseOverScroll())
 						gConEmu.m_Back->HideScroll(TRUE/*abImmediate*/);
 					else
 						gConEmu.m_Back->mb_Scroll2Visible = TRUE;
-					KillTimer(gConEmu.m_Back->mh_WndScroll, TIMER_SCROLL_HIDE);
+					if (gConEmu.m_Back->m_TScrollHide.IsStarted())
+						gConEmu.m_Back->m_TScrollHide.Stop();
 					break;
 			}
 			break;
@@ -686,7 +668,7 @@ void CConEmuBack::Resize()
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
 
 	bool bTabsShown = gConEmu.mp_TabBar->IsShown();
-	if (mb_LastTabVisible == bTabsShown && mb_LastAlwaysScroll == gSet.isAlwaysShowScrollbar)
+	if (mb_LastTabVisible == bTabsShown && mb_LastAlwaysScroll == (gSet.isAlwaysShowScrollbar == 1))
 	{
 		if (memcmp(&rcClient, &mrc_LastClient, sizeof(RECT))==0)
 		{
@@ -703,7 +685,7 @@ void CConEmuBack::Resize()
 	}
 	memmove(&mrc_LastClient, &rcClient, sizeof(RECT)); // сразу запомним
 	mb_LastTabVisible = bTabsShown;
-	mb_LastAlwaysScroll = gSet.isAlwaysShowScrollbar;
+	mb_LastAlwaysScroll = (gSet.isAlwaysShowScrollbar == 1);
 
 	//RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
 
@@ -799,100 +781,28 @@ BOOL CConEmuBack::TrackMouse()
 	
 	BOOL lbOverVScroll = CheckMouseOverScroll();
 	
-	if (lbOverVScroll || gSet.isAlwaysShowScrollbar)
+	if (lbOverVScroll || (gSet.isAlwaysShowScrollbar == 1))
 	{
 		if (!mb_Scroll2Visible)
 		{
 			mb_Scroll2Visible = TRUE;
-			ShowScroll(FALSE/*abImmediate*/); // Если gSet.isAlwaysShowScrollbar - сама разберется
+			ShowScroll(FALSE/*abImmediate*/); // Если gSet.isAlwaysShowScrollbar==1 - сама разберется
 		}
-		else if (mb_ScrollVisible && !gSet.isAlwaysShowScrollbar && !mb_ScrollTimerSet)
+		else if (mb_ScrollVisible && (gSet.isAlwaysShowScrollbar != 1) && !m_TScrollCheck.IsStarted())
 		{
-			SetTimer(mh_WndScroll, TIMER_SCROLL_CHECK, TIMER_SCROLL_CHECK_DELAY, NULL);
-			mb_ScrollTimerSet = TRUE;
+			m_TScrollCheck.Start();
 		}
 	}
 	else if (mb_Scroll2Visible)
 	{
-		_ASSERTE(gSet.isAlwaysShowScrollbar == false);
+		_ASSERTE(gSet.isAlwaysShowScrollbar != 1);
 		mb_Scroll2Visible = FALSE;
-		HideScroll(FALSE/*abImmediate*/); // Если gSet.isAlwaysShowScrollbar - сама разберется
+		HideScroll(FALSE/*abImmediate*/); // Если gSet.isAlwaysShowScrollbar==1 - сама разберется
 	}
 	
 	lbCapture = (lbOverVScroll && mb_ScrollVisible);
 	
 	return lbCapture;
-	
-	//if (lbBufferMode || gSet.isAlwaysShowScrollbar)
-	//{
-	//	// Если мышь в над скроллбаром - показать его
-	//	BOOL lbOverVScroll = FALSE;
-	//	if (mb_VTracking) // устанавливается в true при перетаскивании прокрутки мышкой
-	//	{
-	//		if (!isPressed(VK_LBUTTON))
-	//			mb_VTracking = false;
-	//	}
-	//	if (mb_VTracking) // чтобы полоса не скрылась, когда ее тащат мышкой
-	//	{
-	//		lbOverVScroll = TRUE;
-	//	}
-	//	else
-	//	{
-	//		POINT ptCur; RECT rcScroll;
-	//		GetCursorPos(&ptCur);
-	//		GetWindowRect(mh_WndScroll, &rcScroll);
-	//		if (PtInRect(&rcScroll, ptCur))
-	//		{
-	//			// Если не проверять - не получится начать выделение с правого края окна
-	//			//if (!gSet.isSelectionModifierPressed())
-	//			if (!(isPressed(VK_SHIFT) || isPressed(VK_CONTROL) || isPressed(VK_MENU) || isPressed(VK_LBUTTON)))
-	//				lbOverVScroll = TRUE;
-	//		}
-	//	}
-	//	if (lbOverVScroll || gSet.isAlwaysShowScrollbar)
-	//	{
-	//		if (!mb_ScrollVisible)
-	//		{
-	//			mb_ScrollVisible = TRUE;
-	//			apiShowWindow(mh_WndScroll, SW_SHOWNOACTIVATE);
-	//			SetWindowPos(mh_WndScroll, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
-	//			if (gSet.isAlwaysShowScrollbar)
-	//				KillTimer(mh_WndScroll, SCROLLHIDE_TIMER_ID);
-	//			else
-	//				SetTimer(mh_WndScroll, SCROLLHIDE_TIMER_ID, 500, NULL);
-	//		}
-	//		lbRc = lbOverVScroll;
-	//	}
-	//	else if (mb_ScrollVisible)
-	//	{
-	//		mb_ScrollVisible = FALSE;
-	//		apiShowWindow(mh_WndScroll, SW_HIDE);
-	//		lbHided = TRUE;
-	//	}
-	//}
-	//else if (mb_ScrollVisible && !(lbBufferMode || gSet.isAlwaysShowScrollbar))
-	//{
-	//	mb_ScrollVisible = FALSE;
-	//	apiShowWindow(mh_WndScroll, SW_HIDE);
-	//	lbHided = TRUE;
-	//}
-	//
-	//if (lbHided)
-	//{
-	//	KillTimer(mh_WndScroll, SCROLLHIDE_TIMER_ID);
-	//	RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
-	//	if (IsWindowVisible(ghWndDC))
-	//	{
-	//		MapWindowPoints(NULL, ghWndDC, (LPPOINT)&rcScroll, 2);
-	//		InvalidateRect(ghWndDC, &rcScroll, FALSE);
-	//	}
-	//	else // задел на будущее, когда viewport станет невидимым
-	//	{
-	//		MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcScroll, 2);
-	//		InvalidateRect(ghWnd, &rcScroll, FALSE);
-	//	}
-	//}
-	//return lbRc;
 }
 
 BOOL CConEmuBack::CheckMouseOverScroll()
@@ -900,11 +810,6 @@ BOOL CConEmuBack::CheckMouseOverScroll()
 	BOOL lbOverVScroll = FALSE;
 	BOOL lbBufferMode = gConEmu.ActiveCon()->RCon()->isBufferHeight();
 	
-	//if (gSet.isAlwaysShowScrollbar)
-	//{
-	//	lbOverVScroll = TRUE;
-	//}
-	//else
 	if (lbBufferMode)
 	{
 		// Если прокрутку тащили мышкой и отпустили
@@ -934,6 +839,11 @@ BOOL CConEmuBack::CheckMouseOverScroll()
 	}
 
 	return lbOverVScroll;
+}
+
+BOOL CConEmuBack::CheckScrollAutoPopup()
+{
+	return mb_ScrollAutoPopup;
 }
 
 void CConEmuBack::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight)
@@ -970,12 +880,13 @@ void CConEmuBack::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeig
 
 	if (!abEnabled)
 	{
-		if (IsWindowEnabled(mh_WndScroll))
+		mb_ScrollAutoPopup = FALSE;
+		if ((gSet.isAlwaysShowScrollbar == 1) && IsWindowEnabled(mh_WndScroll))
 		{
 			EnableScrollBar(mh_WndScroll, SB_VERT, ESB_DISABLE_BOTH);
 			EnableWindow(mh_WndScroll, FALSE);
 		}
-		HideScroll(FALSE);
+		HideScroll((gSet.isAlwaysShowScrollbar != 1));
 	}
 	else
 	{
@@ -985,48 +896,66 @@ void CConEmuBack::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeig
 			EnableScrollBar(mh_WndScroll, SB_VERT, ESB_ENABLE_BOTH);
 		}
 		// Показать прокрутку, если например буфер скроллится с клавиатуры
-		ShowScroll(TRUE);
+		if ((si.nPos > 0) && (si.nPos < (si.nMax - si.nPage - 1)) && gSet.isAlwaysShowScrollbar)
+		{
+			mb_ScrollAutoPopup = (gSet.isAlwaysShowScrollbar == 2);
+			if (!mb_Scroll2Visible)
+				ShowScroll((gSet.isAlwaysShowScrollbar == 1));
+		}
+		else
+		{
+			mb_ScrollAutoPopup = FALSE;
+		}
 	}
 }
 
 void CConEmuBack::ShowScroll(BOOL abImmediate)
 {
-	KillTimer(mh_WndScroll, TIMER_SCROLL_CHECK); mb_ScrollTimerSet = FALSE;
-	KillTimer(mh_WndScroll, TIMER_SCROLL_SHOW);
-	KillTimer(mh_WndScroll, TIMER_SCROLL_HIDE);
+	bool bTShow = false, bTCheck = false;
 	
-	if (abImmediate || gSet.isAlwaysShowScrollbar)
+	if (abImmediate || (gSet.isAlwaysShowScrollbar == 1))
 	{
 		mb_ScrollVisible = TRUE; mb_Scroll2Visible = TRUE;
 		if (!IsWindowVisible(mh_WndScroll))
 			apiShowWindow(mh_WndScroll, SW_SHOWNOACTIVATE);
 		SetWindowPos(mh_WndScroll, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
 		
-		if (!gSet.isAlwaysShowScrollbar)
+		if ((gSet.isAlwaysShowScrollbar != 1))
 		{
-			SetTimer(mh_WndScroll, TIMER_SCROLL_CHECK, TIMER_SCROLL_CHECK_DELAY, NULL);
-			mb_ScrollTimerSet = TRUE;
+			bTCheck = true;
 		}
 	}
 	else
 	{
 		mb_Scroll2Visible = TRUE;
-		SetTimer(mh_WndScroll, TIMER_SCROLL_SHOW, TIMER_SCROLL_SHOW_DELAY, NULL);
+		bTShow = true;
 	}
+
+	if (bTCheck)
+		m_TScrollCheck.Start(mb_ScrollAutoPopup ? TIMER_SCROLL_CHECK_DELAY2 : TIMER_SCROLL_CHECK_DELAY);
+	else if (m_TScrollCheck.IsStarted())
+		m_TScrollCheck.Stop();
+	//
+	if (bTShow)
+		m_TScrollShow.Start(mb_ScrollAutoPopup ? TIMER_SCROLL_SHOW_DELAY2 : TIMER_SCROLL_SHOW_DELAY);
+	else if (m_TScrollShow.IsStarted())
+		m_TScrollShow.Stop();
+	//
+	if (m_TScrollHide.IsStarted())
+		m_TScrollHide.Stop();
 }
 
 void CConEmuBack::HideScroll(BOOL abImmediate)
 {
-	KillTimer(mh_WndScroll, TIMER_SCROLL_CHECK); mb_ScrollTimerSet = FALSE;
-	KillTimer(mh_WndScroll, TIMER_SCROLL_SHOW);
-	KillTimer(mh_WndScroll, TIMER_SCROLL_HIDE);
+	bool bTHide = false;
+
+	mb_ScrollAutoPopup = FALSE;
 	
-	if (gSet.isAlwaysShowScrollbar)
+	if (gSet.isAlwaysShowScrollbar == 1)
 	{
-		return; // Прокрутка всегда показывается! Скрывать нельзя!
+		// Прокрутка всегда показывается! Скрывать нельзя!
 	}
-	
-	if (abImmediate)
+	else if (abImmediate)
 	{
 		mb_ScrollVisible = FALSE;
 		mb_Scroll2Visible = FALSE;
@@ -1041,6 +970,18 @@ void CConEmuBack::HideScroll(BOOL abImmediate)
 	else
 	{
 		mb_Scroll2Visible = FALSE;
-		SetTimer(mh_WndScroll, TIMER_SCROLL_HIDE, TIMER_SCROLL_HIDE_DELAY, NULL);
+		bTHide = true;
+		//m_TScrollHide.Start();
 	}
+
+	if (m_TScrollCheck.IsStarted())
+		m_TScrollCheck.Stop();
+	//
+	if (m_TScrollShow.IsStarted())
+		m_TScrollShow.Stop();
+	//
+	if (bTHide)
+		m_TScrollHide.Start();
+	else if (m_TScrollHide.IsStarted())
+		m_TScrollHide.Stop();		
 }

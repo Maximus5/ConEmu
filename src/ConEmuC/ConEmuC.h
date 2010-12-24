@@ -216,7 +216,7 @@ extern FGetConsoleProcessList pfnGetConsoleProcessList;
 BOOL CheckProcessCount(BOOL abForce=FALSE);
 BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot);
 BOOL FileExists(LPCWSTR asFile);
-extern bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem);
+extern bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/);
 void SendStarted();
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
 typedef BOOL (WINAPI *FDebugActiveProcessStop)(DWORD dwProcessId);
