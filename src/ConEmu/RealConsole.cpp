@@ -8425,6 +8425,7 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	}
     wchar_t* pszAmp = pTab->Name;
     int nCurLen = lstrlenW(pTab->Name), nMaxLen = countof(pTab->Name)-1;
+	TODO("После перевода табов на ручную отрисовку - эту часть можно будет убрать");
     while ((pszAmp = wcschr(pszAmp, L'&')) != NULL)
     {
         if (nCurLen >= (nMaxLen - 2))
@@ -8434,7 +8435,7 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
         }
         else
         {
-			size_t nMove = nCurLen-(pszAmp-pTab->Name);
+			size_t nMove = nCurLen-(pszAmp-pTab->Name)+1; // right part of string + \0
             wmemmove_s(pszAmp+1, nMove, pszAmp, nMove);
             nCurLen ++;
             pszAmp += 2;
