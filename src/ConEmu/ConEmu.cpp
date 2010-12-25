@@ -1091,7 +1091,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* a
     //	rc.bottom -= (rcDC.bottom - rcWnd.bottom - rcFrameTab.bottom);
     //}
     
-    if ((mg & ((DWORD)CEM_SCROLL)) && (gSet.isAlwaysShowScrollbar == 1))
+    if ((mg & ((DWORD)CEM_SCROLL)) && gSet.isAlwaysShowScrollbar)
     {
     	rc.right += GetSystemMetrics(SM_CXVSCROLL);
     }
@@ -3538,13 +3538,10 @@ void CConEmuMain::RegisterHoooks()
 			{
 				HOOKPROC pfnLLHK = (HOOKPROC)GetProcAddress(mh_LLKeyHookDll, "LLKeybHook");
 				HHOOK *pKeyHook = (HHOOK*)GetProcAddress(mh_LLKeyHookDll, "ghKeyHook");
-				HWND *pConEmuRoot = (HWND*)GetProcAddress(mh_LLKeyHookDll, "ghConEmuRoot");
-				HWND *pConEmuDc = (HWND*)GetProcAddress(mh_LLKeyHookDll, "ghConEmuWnd");
+				HWND *pConEmuWnd = (HWND*)GetProcAddress(mh_LLKeyHookDll, "ghConEmuWnd");
 
-				if (pConEmuRoot)
-					*pConEmuRoot = ghWnd;
-				if (pConEmuDc)
-					*pConEmuDc = ghWndDC;
+				if (pConEmuWnd)
+					*pConEmuWnd = ghWnd;
 
 				if (pfnLLHK)
 				{

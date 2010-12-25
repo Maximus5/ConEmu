@@ -50,7 +50,7 @@ extern "C"{
 
 HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 UINT gnMsgActivateCon = 0; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
-SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
+//SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
@@ -95,16 +95,16 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 }
 #endif
 
-/* Используются как extern в ConEmuCheck.cpp */
-LPVOID _calloc(size_t nCount,size_t nSize) {
-	return calloc(nCount,nSize);
-}
-LPVOID _malloc(size_t nCount) {
-	return malloc(nCount);
-}
-void   _free(LPVOID ptr) {
-	free(ptr);
-}
+///* Используются как extern в ConEmuCheck.cpp */
+//LPVOID _calloc(size_t nCount,size_t nSize) {
+//	return calloc(nCount,nSize);
+//}
+//LPVOID _malloc(size_t nCount) {
+//	return malloc(nCount);
+//}
+//void   _free(LPVOID ptr) {
+//	free(ptr);
+//}
 
 
 BYTE gnOtherWin = 0;

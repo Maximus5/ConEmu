@@ -2058,7 +2058,8 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 		srv.pConsole->info.nPacketId++;
 		srv.pConsole->info.nSrvUpdateTick = GetTickCount();
 
-		SetEvent(srv.hDataReadyEvent);
+		if (srv.hDataReadyEvent)
+			SetEvent(srv.hDataReadyEvent);
 
 		//if (nPacketID == srv.pConsole->info.nPacketId) {
 		//	srv.pConsole->info.nPacketId++;
@@ -3229,7 +3230,8 @@ int InjectHooks(HANDLE hProcess, DWORD nPID)
 
 	
 
-	if (!GetModuleFileName(NULL, szPluginPath, MAX_PATH)) {
+	if (!GetModuleFileName(NULL, szPluginPath, MAX_PATH))
+	{
 		dwErr = GetLastError();
 		_printf("GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
 		goto wrap;
@@ -3240,7 +3242,8 @@ int InjectHooks(HANDLE hProcess, DWORD nPID)
 	lstrcpy(pszSlash, L"plugins\\ConEmu\\conemu.dll");
 
 	hFile = CreateFile(szPluginPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-	if (hFile == INVALID_HANDLE_VALUE) {
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
 		dwErr = GetLastError();
 		_printf("\".\\plugins\\ConEmu\\conemu.dll\" not found! ErrCode=0x%08X\n", dwErr);
 		goto wrap;
@@ -3252,12 +3255,14 @@ int InjectHooks(HANDLE hProcess, DWORD nPID)
 	TODO("Будет облом на DOS (16бит) приложениях");
 	TODO("Проверить, сможет ли ConEmu.x64 инжектиться в 32битные приложения?");
 	pszPathInProcess = (wchar_t*)VirtualAllocEx(hProcess, 0, size, MEM_COMMIT, PAGE_READWRITE);
-	if (!pszPathInProcess) {
+	if (!pszPathInProcess)
+	{
 		dwErr = GetLastError();
 		_printf("VirtualAllocEx failed! ErrCode=0x%08X\n", dwErr);
 		goto wrap;
 	}
-	if (!WriteProcessMemory(hProcess, pszPathInProcess, szPluginPath, size, &write ) || size != write) {
+	if (!WriteProcessMemory(hProcess, pszPathInProcess, szPluginPath, size, &write ) || size != write)
+	{
 		dwErr = GetLastError();
 		_printf("WriteProcessMemory failed! ErrCode=0x%08X\n", dwErr);
 		goto wrap;
@@ -3265,15 +3270,18 @@ int InjectHooks(HANDLE hProcess, DWORD nPID)
 
 	TODO("Получить адрес LoadLibraryW в адресном пространстве запущенного процесса!");
 	ptrLoadLibrary = (LPTHREAD_START_ROUTINE)::GetProcAddress(::GetModuleHandle(L"Kernel32.dll"), "LoadLibraryW");
-	if (ptrLoadLibrary == NULL) {
+	if (ptrLoadLibrary == NULL)
+	{
 		dwErr = GetLastError();
 		_printf("GetProcAddress(kernel32, LoadLibraryW) failed! ErrCode=0x%08X\n", dwErr);
 		goto wrap;
 	}
 
-	if (ptrLoadLibrary) {
+	if (ptrLoadLibrary)
+	{
 		hThread = CreateRemoteThread(hProcess, NULL, 0, ptrLoadLibrary, pszPathInProcess, 0, &nThreadID);
-		if (!hThread) {
+		if (!hThread)
+		{
 			dwErr = GetLastError();
 			_printf("CreateRemoteThread failed! ErrCode=0x%08X\n", dwErr);
 			goto wrap;

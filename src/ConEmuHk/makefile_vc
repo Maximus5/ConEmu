@@ -289,20 +289,16 @@ dirs:
 	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
 	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
 
-!ifndef DEBUG
 .PHONY: clean
 clean:
 	@echo copying release files
 	@if not exist "..\..$(RELEASEDIR)\$(NULL)" mkdir "..\..$(RELEASEDIR)"
-	@echo move $(DLLFULLNAME) ..\..$(RELEASEDIR)\$(OUTNAME).dll
 	@move $(DLLFULLNAME) ..\..$(RELEASEDIR)\$(OUTNAME).dll
 !ifdef DEBUG
-	@echo move $(PDBNAME) ..\..$(RELEASEDIR)\$(OUTNAME).pdb
 	@move $(PDBNAME) ..\..$(RELEASEDIR)\$(OUTNAME).pdb
 !else
 	@if exist $(PDBNAME) del $(PDBNAME)
 !endif
-	@echo move $(MAP) ..\..$(RELEASEDIR)\$(OUTNAME).map
 	@move $(MAP) ..\..$(RELEASEDIR)\$(OUTNAME).map
 
 #	@echo final cleaning
@@ -311,11 +307,6 @@ clean:
 #	@del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
 #	@rd $(OUTDIR)$(ADDOUTDIR)
 
-!else
-.PHONY: clean
-clean:
-	@echo ConEmuHk done
-!endif
 
 $(OBJDIR)\Entry.obj: Entry.cpp
 

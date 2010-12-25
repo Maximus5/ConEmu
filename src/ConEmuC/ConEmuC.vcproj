@@ -1082,31 +1082,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\common\Common.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\ConEmuC.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuCheck.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuCmd.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuSrv.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\execute.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinObjects.cpp"
 				>
 			</File>
 		</Filter>
@@ -1116,27 +1092,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\common\common.hpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuC.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuCheck.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConsoleAnnotation.h"
-				>
-			</File>
-			<File
 				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinObjects.h"
 				>
 			</File>
 		</Filter>

@@ -402,9 +402,6 @@ bool UpdateConEmuTabsW789(int anEvent, bool losingFocus, bool editorSave, void* 
 	if (bEditorRetrieved) 
 		InfoW789->EditorControl(ECTL_FREEINFO, &ei);
 
-	// 101224 - сразу запомнить количество!
-	gpTabs->Tabs.nTabCount = tabCount;
-
 	//// 2009-08-17
 	//if (gbHandleOneRedraw && /*gbHandleOneRedrawCh &&*/ lbCh) {
 	//	gbHandleOneRedraw = false;
@@ -416,7 +413,7 @@ bool UpdateConEmuTabsW789(int anEvent, bool losingFocus, bool editorSave, void* 
 	//OutputDebugStringW(szDbg);
 #endif
 
-	//SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
+	SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
 
 	return lbCh;
 }

@@ -153,11 +153,8 @@ REGEDIT4
 ;; Center console in Fullscreen and Maximized modes
 "TryToCenter"=hex:01
 
-;; Scrollbar (console buffer mode) on the right edge of window
-;; 0 - scrollbar hidden, appears only on mouse moves over right edge of the window
-;; 1 - scrollbar always shown, even if buffermode is off
-;; 2 - autoshow scrollbar on scrolling position change
-;"ShowScrollbar"=hex:02
+;; Always show scrollbar on the right edge of window, even if buffermode is off
+;"AlwaysShowScrollbar"=hex:01
 
 ;; Add extra space (in pixels) after last toolbar button
 ;"ToolbarAddSpace"=dword:00000000

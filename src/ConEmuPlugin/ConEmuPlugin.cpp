@@ -1698,9 +1698,6 @@ static BOOL ActivatePlugin (
 		ExecuteSynchro();
 	}
 
-	if (nCmd == CMD_REDRAWFAR || nCmd == CMD_FARPOST)
-		nTimeout = min(1000,nTimeout); // чтобы не зависало при попытке ресайза, если фар не отзывается.
-
 	// Подождать активации. Сколько ждать - может указать вызывающая функция
 	nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
 	if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1))
@@ -2635,7 +2632,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 				else
 				{
 					// Force Send tabs to ConEmu
-					MSectionLock SC; SC.Lock(csTabs, TRUE); // блокируем exclusively, чтобы во время пересылки данные не поменялись из другого потока
+					MSectionLock SC; SC.Lock(csTabs, TRUE);
 					SendTabs(gnCurTabCount, TRUE);
 					SC.Unlock();
 				}
@@ -3406,12 +3403,9 @@ bool UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Par
 
 bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
-	extern bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param);
+	extern bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
 
 	bool lbCh;
-
-	// Блокируем сразу, т.к. ниже по коду gpTabs тоже используется
-	MSectionLock SC; SC.Lock(csTabs);
 
 	// На случай, если текущее окно заблокировано диалогом - не получится точно узнать
 	// какое окно фара активно. Поэтому вернем последнее известное.
@@ -3438,8 +3432,6 @@ bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Para
 		gpTabs->Tabs.CurrentIndex = nLastCurrentTab;
 		gpTabs->Tabs.tabs[nLastCurrentTab].Current = TRUE;
 	}
-
-	SendTabs(gpTabs->Tabs.nTabCount, lbCh && (gnReqCommand==(DWORD)-1));
 
 	if (lbCh && gpBgPlugin)
 	{

@@ -3695,7 +3695,7 @@ bool CSettings::isKeyboardHooks()
 						L"If You choose 'Yes' - ConEmu will install keyboard hook. \n"
 						L"So, You must allow that in antiviral software (such as AVP). \n\n"
 						L"You can change behavior later via Settings->Features->\n"
-						L"'Install keyboard hooks (Vista && Win7)' check box, or\n"
+						L"'Install keyboard hooks (Vista & Win7)' check box, or\n"
 						L"'KeyboardHooks' value in ConEmu settings (registry or xml)."
 						, L"ConEmu", MB_YESNOCANCEL|MB_ICONQUESTION);
 		

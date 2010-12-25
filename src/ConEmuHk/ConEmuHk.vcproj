@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuHk"
 	ProjectGUID="{FD4A27E0-7FA2-44C6-82A2-1907CF6B548C}"
 	RootNamespace="ConEmuHk"
@@ -731,7 +731,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="F:\Utils\FAR\Far2x86\ConEmu\ConEmuHk64.dll"
+				OutputFile="F:\Program Files\Far2\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -927,7 +927,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ConEmuC.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\ConEmuCheck.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\Execute.h"
+				>
+			</File>
+			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\SetHook.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\WinObjects.h"
 				>
 			</File>
 		</Filter>
@@ -951,11 +971,47 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ConEmuC.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\ConEmuCheck.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ConEmuCmd.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ConEmuHooks.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ConEmuSrv.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Entry.cpp"
 				>
 			</File>
 			<File
+				RelativePath="..\common\Execute.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\export.def"
+				>
+			</File>
+			<File
+				RelativePath=".\RegHooks.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\SetHook.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\WinObjects.cpp"
 				>
 			</File>
 		</Filter>
