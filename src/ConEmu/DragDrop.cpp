@@ -152,7 +152,7 @@ CDragDrop::~CDragDrop()
 		}
 	} else {
 		// незаконченных нитей нет
-		LeaveCriticalSection(&m_CrThreads);
+		// -- LeaveCriticalSection(&m_CrThreads); -- 101229 секция уже закрыта
 	}
 
 	// Завершение всех нитей драга

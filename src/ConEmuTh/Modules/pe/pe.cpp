@@ -14,7 +14,7 @@ documentation and/or other materials provided with the distribution.
 3. The name of the authors may not be used to endorse or promote products
 derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -115,7 +115,7 @@ struct PEData
 	int   nBits;  // x16/x32/x64
 	UINT  nFlags; // tag_PeStrFlags
 	wchar_t szExtension[32];
-	wchar_t *szVersion, szVersionN[32], szVersionF[128], szVersionP[128];
+	wchar_t szVersion[128], szVersionN[32];
 	wchar_t szProduct[128];
 	wchar_t szCompany[128]; // или company, или copyright?
 	wchar_t szInfo[512]; // полная информация
@@ -131,8 +131,7 @@ struct PEData
 	
 	PEData() {
 		nMagic = ePeStr_Info; nBits = 0; nFlags = 0; bValidateFailed = FALSE; Machine = 0;
-		szInfo[0] = szVersionN[0] = szProduct[0] = szCompany[0] = 0;
-		szVersion = szVersionN;
+		szInfo[0] = szVersion[0] = szVersionN[0] = szProduct[0] = szCompany[0] = 0;
 		pMappedFileBase = NULL; FileSize.QuadPart = 0; pNTHeader32 = NULL; pNTHeader64 = NULL; bIs64Bit = false;
 	};
 	
@@ -825,26 +824,10 @@ typedef struct
 void ParseVersionInfoFixed(PEData *pData,  VS_FIXEDFILEINFO* pVer)
 {
 	_TRACE0("ParseVersionInfoFixed");
-	wchar_t szTest[32];
-	wsprintfW(pData->szVersionN, L"%i.%i.%i.%i",
+	wsprintfW(pData->szVersion, L"%i.%i.%i.%i",
 			HIWORD(pVer->dwFileVersionMS), LOWORD(pVer->dwFileVersionMS),
 			HIWORD(pVer->dwFileVersionLS), LOWORD(pVer->dwFileVersionLS)
 			);
-	if (*pData->szVersionF)
-		pData->szVersion = pData->szVersionF;
-	else if (*pData->szVersionP)
-		pData->szVersion = pData->szVersionP;
-	if (pData->szVersion && *pData->szVersion)
-	{
-		wsprintfW(szTest, L"%i, %i, %i, %i",
-				HIWORD(pVer->dwFileVersionMS), LOWORD(pVer->dwFileVersionMS),
-				HIWORD(pVer->dwFileVersionLS), LOWORD(pVer->dwFileVersionLS)
-				);
-		if (!lstrcmpiW(szTest, pData->szVersion))
-			pData->szVersion = NULL;
-	}
-	if (pData->szVersion == NULL)
-		pData->szVersion = pData->szVersionN;
 	//wchar_t szMask[255], szFlags[255], szOS[255], szFileType[64], szFileSubType[64];
 	//ResourceParseFlags(pVer->dwFileFlagsMask, szMask, VersionInfoFlags);
 	//ResourceParseFlags(pVer->dwFileFlags, szFlags, VersionInfoFlags);
@@ -914,329 +897,294 @@ void ParseVersionInfoFixed(PEData *pData,  VS_FIXEDFILEINFO* pVer)
 
 #define ALIGN_TOKEN(p) p = (LPWORD)( ((((DWORD_PTR)p) + 3) >> 2) << 2 );
 
-
-            //VALUE "FileVersion",       "1.0.5\0"
-            //VALUE "ProductVersion",    "1.0\0"
-
 void ParseVersionInfoVariableString(PEData *pData, LPVOID ptrRes, DWORD &resSize, LPWORD pToken)
 {
 	_TRACE0("ParseVersionInfoVariableString");
-	StringFileInfo *pSFI = (StringFileInfo*)pToken;
-	LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
-	if (pToken < pEnd && *pToken > sizeof(StringFileInfo)) {
-		LPWORD pEnd1 = (LPWORD)(((LPBYTE)pToken)+*pToken);
-		if (pEnd < pEnd1)
-			pEnd1 = pEnd;
-		//wcscat(psz, L"    BLOCK \"");
-		//wcscat(psz, pSFI->szKey);
-		//wcscat(psz, L"\"\n");
-		if (pSFI->wType != 1) {
-			//wcscat(psz, L"    // Warning! Binary data in StringFileInfo\n");
-		}
-		{
-			//wcscat(psz, L"    BEGIN\n");
-			//psz += wcslen(psz);
-			// Padding - Contains as many zero words as necessary to align the Children member on a 32-bit boundary.
-			pToken = (LPWORD)(pSFI->szKey+wcslen(pSFI->szKey)+1);
-			//while (*pToken == 0 && pToken < pEnd1) pToken++;
-			ALIGN_TOKEN(pToken);
-			if ((((LPBYTE)pToken)+sizeof(StringTable)) <= (LPBYTE)pEnd1) {
-				StringTable *pST = (StringTable*)pToken;
-				LPWORD pEnd2 = (LPWORD)(((LPBYTE)pToken)+*pToken);
-				if (pEnd1 < pEnd2)
-					pEnd2 = pEnd1;
-				// Specifies an 8-digit hexadecimal number stored as a Unicode string. 
-				// The four most significant digits represent the language identifier. 
-				// The four least significant digits represent the code page for which 
-				// the data is formatted. Each Microsoft Standard Language identifier contains 
-				// two parts: the low-order 10 bits specify the major language, 
-				// and the high-order 6 bits specify the sublanguage.
-				//wcscat(psz, L"        BLOCK \"");
-				//psz += wcslen(psz);
-				//memmove(psz, pST->szKey, 8*2);
-				//psz += 8; *psz = 0; wcscat(psz, L"\"\n");
-				//wcscat(psz, L"        BEGIN\n");
-				pToken = (LPWORD)(pST->szKey+8);
-				//while (*pToken == 0 && pToken < pEnd2) pToken++;
-				ALIGN_TOKEN(pToken);
-				while ((((LPBYTE)pToken)+sizeof(String)) <= (LPBYTE)pEnd2) {
-					String *pS = (String*)pToken;
-					if (pS->wLength == 0) break; // Invalid?
-					LPWORD pNext = (LPWORD)(((LPBYTE)pToken)+pS->wLength);
-					//wcscat(psz, L"            VALUE \""); psz += wcslen(psz);
-					//wcscat(psz, pS->szKey);
-					//wcscat(psz, L"\", "); psz += wcslen(psz);
-					// Выровнять текст в результирующем .rc
-					//for (int k = lstrlenW(pS->szKey); k < 17; k++) *(psz++) = L' ';
-					//*(psz++) = L'"'; *psz = 0;
-					pToken = (LPWORD)(pS->szKey+wcslen(pS->szKey)+1);
-					//while (*pToken == 0 && pToken < pEnd2) pToken++;
-					ALIGN_TOKEN(pToken);
-					int nLenLeft = pS->wValueLength;
-					wchar_t* psz = NULL; int nDstLeft = 0;
-					if (!lstrcmpW(pS->szKey, L"FileVersion"))
-					{
-						psz = pData->szVersionF; nDstLeft = (int)ARRAYSIZE(pData->szVersionF);
-					}
-					else if (!lstrcmpW(pS->szKey, L"ProductVersion"))
-					{
-						psz = pData->szVersionP; nDstLeft = (int)ARRAYSIZE(pData->szVersionF);
-					}
-					while (pToken < pEnd2 && nLenLeft>0)
-					{
-						if ((--nDstLeft)>0) switch (*pToken)
-						{
-							case 0:
-								/**(psz++) = L'\\'; *(psz++) = L'0';*/ break;
-							case L'\r':
-								//*(psz++) = L'\\'; *(psz++) = L'r'; break;
-							case L'\n':
-								//*(psz++) = L'\\'; *(psz++) = L'n'; break;
-							case L'\t':
-								//*(psz++) = L'\\'; *(psz++) = L't'; break;
-								*(psz++) = L' ';
-							default:
-								*(psz++) = *pToken;
-						}
-						pToken++; nLenLeft--;
-					}
-					if (psz) *psz = 0;
-					//if (pToken < pEnd2 && pS->wValueLength) {
-					//	// Вообще-то тут бы провести замены \r\n\t"
-					//	wcscat(psz, (LPCWSTR)pToken);
-					//}
-					//wcscat(psz, L"\"\n"); psz += wcslen(psz);
+	//StringFileInfo *pSFI = (StringFileInfo*)pToken;
+	//LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
+	//if (pToken < pEnd && *pToken > sizeof(StringFileInfo)) {
+	//	LPWORD pEnd1 = (LPWORD)(((LPBYTE)pToken)+*pToken);
+	//	if (pEnd < pEnd1)
+	//		pEnd1 = pEnd;
+	//	wcscat(psz, L"    BLOCK \"");
+	//	wcscat(psz, pSFI->szKey);
+	//	wcscat(psz, L"\"\n");
+	//	if (pSFI->wType != 1) {
+	//		wcscat(psz, L"    // Warning! Binary data in StringFileInfo\n");
+	//	}
+	//	{
+	//		wcscat(psz, L"    BEGIN\n");
+	//		psz += wcslen(psz);
+	//		// Padding - Contains as many zero words as necessary to align the Children member on a 32-bit boundary.
+	//		pToken = (LPWORD)(pSFI->szKey+wcslen(pSFI->szKey)+1);
+	//		//while (*pToken == 0 && pToken < pEnd1) pToken++;
+	//		ALIGN_TOKEN(pToken);
+	//		if ((((LPBYTE)pToken)+sizeof(StringTable)) <= (LPBYTE)pEnd1) {
+	//			StringTable *pST = (StringTable*)pToken;
+	//			LPWORD pEnd2 = (LPWORD)(((LPBYTE)pToken)+*pToken);
+	//			if (pEnd1 < pEnd2)
+	//				pEnd2 = pEnd1;
+	//			// Specifies an 8-digit hexadecimal number stored as a Unicode string. 
+	//			// The four most significant digits represent the language identifier. 
+	//			// The four least significant digits represent the code page for which 
+	//			// the data is formatted. Each Microsoft Standard Language identifier contains 
+	//			// two parts: the low-order 10 bits specify the major language, 
+	//			// and the high-order 6 bits specify the sublanguage.
+	//			wcscat(psz, L"        BLOCK \"");
+	//			psz += wcslen(psz);
+	//			memmove(psz, pST->szKey, 8*2);
+	//			psz += 8; *psz = 0; wcscat(psz, L"\"\n");
+	//			wcscat(psz, L"        BEGIN\n");
+	//			pToken = (LPWORD)(pST->szKey+8);
+	//			//while (*pToken == 0 && pToken < pEnd2) pToken++;
+	//			ALIGN_TOKEN(pToken);
+	//			while ((((LPBYTE)pToken)+sizeof(String)) <= (LPBYTE)pEnd2) {
+	//				String *pS = (String*)pToken;
+	//				if (pS->wLength == 0) break; // Invalid?
+	//				LPWORD pNext = (LPWORD)(((LPBYTE)pToken)+pS->wLength);
+	//				wcscat(psz, L"            VALUE \""); psz += wcslen(psz);
+	//				wcscat(psz, pS->szKey);
+	//				wcscat(psz, L"\", "); psz += wcslen(psz);
+	//				// Выровнять текст в результирующем .rc
+	//				for (int k = lstrlenW(pS->szKey); k < 17; k++) *(psz++) = L' ';
+	//				*(psz++) = L'"'; *psz = 0;
+	//				pToken = (LPWORD)(pS->szKey+wcslen(pS->szKey)+1);
+	//				//while (*pToken == 0 && pToken < pEnd2) pToken++;
+	//				ALIGN_TOKEN(pToken);
+	//				int nLenLeft = pS->wValueLength;
+	//				while (pToken < pEnd2 && nLenLeft>0) {
+	//					switch (*pToken) {
+	//						case 0:
+	//							*(psz++) = L'\\'; *(psz++) = L'0'; break;
+	//						case L'\r':
+	//							*(psz++) = L'\\'; *(psz++) = L'r'; break;
+	//						case L'\n':
+	//							*(psz++) = L'\\'; *(psz++) = L'n'; break;
+	//						case L'\t':
+	//							*(psz++) = L'\\'; *(psz++) = L't'; break;
+	//						default:
+	//							*(psz++) = *pToken;
+	//					}
+	//					pToken++; nLenLeft--;
+	//				}
+	//				*psz = 0;
+	//				//if (pToken < pEnd2 && pS->wValueLength) {
+	//				//	// Вообще-то тут бы провести замены \r\n\t"
+	//				//	wcscat(psz, (LPCWSTR)pToken);
+	//				//}
+	//				wcscat(psz, L"\"\n"); psz += wcslen(psz);
 
-					// Next value
-					pToken = pNext;
-					if (pToken < pEnd2 && *pToken == 0)
-					{
-						//wcscat(psz, L"            // Zero-length item found\n"); psz += wcslen(psz);
-						while (pToken < pEnd2 && *pToken == 0) pToken ++;
-					}
-				}
-				//wcscat(psz, L"        END\n");
-			}
-			//
-			//wcscat(psz, L"    END\n");
-		}
-	}
+	//				// Next value
+	//				pToken = pNext;
+	//				if (pToken < pEnd2 && *pToken == 0)
+	//				{
+	//					wcscat(psz, L"            // Zero-length item found\n"); psz += wcslen(psz);
+	//					while (pToken < pEnd2 && *pToken == 0) pToken ++;
+	//				}
+	//			}
+	//			wcscat(psz, L"        END\n");
+	//		}
+	//		//
+	//		wcscat(psz, L"    END\n");
+	//	}
+	//}
 }
 void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSize, char* pToken)
 {
 	_TRACE0("ParseVersionInfoVariableStringA");
-	wchar_t szTemp[MAX_PATH*2+1], *pwsz = NULL;
-	StringFileInfoA *pSFI = (StringFileInfoA*)pToken;
-	char* pEnd = (char*)(((LPBYTE)ptrRes)+resSize);
-	if (pToken < pEnd && *pToken > sizeof(StringFileInfoA)) {
-		char* pEnd1 = (char*)(((LPBYTE)pToken)+*((WORD*)pToken));
-		if (pEnd < pEnd1)
-			pEnd1 = pEnd;
-		//wcscat(psz, L"    BLOCK \"");
-		//wcscat(psz, pSFI->szKey);
-		//psz += wcslen(psz);
-		//MultiByteToWideChar(CP_ACP,0,pSFI->szKey,-1,psz,64);
-		//for (int x=0; x<8; x++) {
-		//	*psz++ = pSFI->szKey[x] ? pSFI->szKey[x] : L' ';
-		//}
-		//wcscat(psz, L"\"\n");
-		//if (pSFI->wType != 1) {
-		//	wcscat(psz, L"    // Warning! Binary data in StringFileInfo\n");
-		//}
-		{
-			//wcscat(psz, L"    BEGIN\n");
-			//psz += wcslen(psz);
-			// Padding - Contains as many zero words as necessary to align the Children member on a 32-bit boundary.
-			pToken = (char*)(pSFI->szKey+strlen(pSFI->szKey)+1);
-			//while (*pToken == 0 && pToken < pEnd1) pToken++;
-			//ALIGN_TOKEN(pToken); ???
-			pToken++; // ???
-			if ((((LPBYTE)pToken)+sizeof(StringTableA)) <= (LPBYTE)pEnd1) {
-				StringTableA *pST = (StringTableA*)pToken;
-				char* pEnd2 = (char*)(((LPBYTE)pToken)+*((WORD*)pToken));
-				if (pEnd2 > pEnd1)
-					pEnd2 = pEnd1;
-				// Specifies an 8-digit hexadecimal number stored as a Unicode string. 
-				// The four most significant digits represent the language identifier. 
-				// The four least significant digits represent the code page for which 
-				// the data is formatted. Each Microsoft Standard Language identifier contains 
-				// two parts: the low-order 10 bits specify the major language, 
-				// and the high-order 6 bits specify the sublanguage.
-				//wcscat(psz, L"        BLOCK \"");
-				//psz += wcslen(psz);
-				//wmemmove(psz, pST->szKey, 8); ???
-				//psz[MultiByteToWideChar(CP_ACP,0,pST->szKey,8,psz,64)] = 0;
-				//psz += 8; *psz = 0; wcscat(psz, L"\"\n");
-				//wcscat(psz, L"        BEGIN\n");
-				pToken = (char*)(pST->szKey+8);
-				//while (*pToken == 0 && pToken < pEnd2) pToken++;
-				//ALIGN_TOKEN(pToken); ???
-				pToken += 4; //???
-				while ((((LPBYTE)pToken)+sizeof(StringA)) <= (LPBYTE)pEnd2) {
-					StringA *pS = (StringA*)pToken;
-					if (pS->wLength == 0) break; // Invalid?
-					char* pNext = (char*)(((LPBYTE)pToken)+pS->wLength);
-					if (pNext > pEnd2)
-						pNext = pEnd2;
-					//wcscat(psz, L"            VALUE \""); psz += wcslen(psz);
-					//wcscat(psz, pS->szKey); ???
-					//psz[MultiByteToWideChar(CP_ACP,0,pS->szKey,-1,psz,32)] = 0;
-					//wcscat(psz, L"\", "); psz += wcslen(psz);
-					// Выровнять текст в результирующем .rc
-					//for (int k = lstrlenA(pS->szKey); k < 17; k++) *(psz++) = L' ';
-					//*(psz++) = L'"'; *psz = 0;
-					pToken = (char*)(pS->szKey+strlen(pS->szKey)+1);
-					while (*pToken == 0 && pToken < pNext) pToken++;
-					//ALIGN_TOKEN(pToken); ???
-					int nLenLeft = min(pS->wValueLength,MAX_PATH*2);
-					if (nLenLeft > (pNext-pToken))
-						nLenLeft = (int)(pNext-pToken);
-					szTemp[MultiByteToWideChar(CP_ACP,0,pToken,nLenLeft,szTemp,nLenLeft)] = 0;
-					pwsz = szTemp;
-					wchar_t* psz = NULL; int nDstLeft = 0;
-					if (!lstrcmpA(pS->szKey, "FileVersion"))
-					{
-						psz = pData->szVersionF; nDstLeft = (int)ARRAYSIZE(pData->szVersionF);
-					}
-					else if (!lstrcmpA(pS->szKey, "ProductVersion"))
-					{
-						psz = pData->szVersionP; nDstLeft = (int)ARRAYSIZE(pData->szVersionF);
-					}
-					while (nLenLeft>0)
-					{
-						if ((--nDstLeft)>0) switch (*pwsz)
-						{
-							case 0:
-								/**(psz++) = L'\\'; *(psz++) = L'0';*/ break;
-							case L'\r':
-								//*(psz++) = L'\\'; *(psz++) = L'r'; break;
-							case L'\n':
-								//*(psz++) = L'\\'; *(psz++) = L'n'; break;
-							case L'\t':
-								//*(psz++) = L'\\'; *(psz++) = L't'; break;
-								*(psz++) = L' ';
-							default:
-								*(psz++) = *pwsz;
-						}
-						pwsz++; nLenLeft--;
-					}
-					if (psz) *psz = 0;
-					//if (pToken < pEnd2 && pS->wValueLength) {
-					//	// Вообще-то тут бы провести замены \r\n\t"
-					//	wcscat(psz, (LPCWSTR)pToken);
-					//}
-					//wcscat(psz, L"\"\n"); psz += wcslen(psz);
+	//wchar_t szTemp[MAX_PATH*2+1], *pwsz = NULL;
+	//StringFileInfoA *pSFI = (StringFileInfoA*)pToken;
+	//char* pEnd = (char*)(((LPBYTE)ptrRes)+resSize);
+	//if (pToken < pEnd && *pToken > sizeof(StringFileInfoA)) {
+	//	char* pEnd1 = (char*)(((LPBYTE)pToken)+*((WORD*)pToken));
+	//	if (pEnd < pEnd1)
+	//		pEnd1 = pEnd;
+	//	wcscat(psz, L"    BLOCK \"");
+	//	//wcscat(psz, pSFI->szKey);
+	//	psz += wcslen(psz);
+	//	MultiByteToWideChar(CP_ACP,0,pSFI->szKey,-1,psz,64);
+	//	//for (int x=0; x<8; x++) {
+	//	//	*psz++ = pSFI->szKey[x] ? pSFI->szKey[x] : L' ';
+	//	//}
+	//	wcscat(psz, L"\"\n");
+	//	//if (pSFI->wType != 1) {
+	//	//	wcscat(psz, L"    // Warning! Binary data in StringFileInfo\n");
+	//	//}
+	//	{
+	//		wcscat(psz, L"    BEGIN\n");
+	//		psz += wcslen(psz);
+	//		// Padding - Contains as many zero words as necessary to align the Children member on a 32-bit boundary.
+	//		pToken = (char*)(pSFI->szKey+strlen(pSFI->szKey)+1);
+	//		//while (*pToken == 0 && pToken < pEnd1) pToken++;
+	//		//ALIGN_TOKEN(pToken); ???
+	//		pToken++; // ???
+	//		if ((((LPBYTE)pToken)+sizeof(StringTableA)) <= (LPBYTE)pEnd1) {
+	//			StringTableA *pST = (StringTableA*)pToken;
+	//			char* pEnd2 = (char*)(((LPBYTE)pToken)+*((WORD*)pToken));
+	//			if (pEnd2 > pEnd1)
+	//				pEnd2 = pEnd1;
+	//			// Specifies an 8-digit hexadecimal number stored as a Unicode string. 
+	//			// The four most significant digits represent the language identifier. 
+	//			// The four least significant digits represent the code page for which 
+	//			// the data is formatted. Each Microsoft Standard Language identifier contains 
+	//			// two parts: the low-order 10 bits specify the major language, 
+	//			// and the high-order 6 bits specify the sublanguage.
+	//			wcscat(psz, L"        BLOCK \"");
+	//			psz += wcslen(psz);
+	//			//wmemmove(psz, pST->szKey, 8); ???
+	//			psz[MultiByteToWideChar(CP_ACP,0,pST->szKey,8,psz,64)] = 0;
+	//			psz += 8; *psz = 0; wcscat(psz, L"\"\n");
+	//			wcscat(psz, L"        BEGIN\n");
+	//			pToken = (char*)(pST->szKey+8);
+	//			//while (*pToken == 0 && pToken < pEnd2) pToken++;
+	//			//ALIGN_TOKEN(pToken); ???
+	//			pToken += 4; //???
+	//			while ((((LPBYTE)pToken)+sizeof(StringA)) <= (LPBYTE)pEnd2) {
+	//				StringA *pS = (StringA*)pToken;
+	//				if (pS->wLength == 0) break; // Invalid?
+	//				char* pNext = (char*)(((LPBYTE)pToken)+pS->wLength);
+	//				if (pNext > pEnd2)
+	//					pNext = pEnd2;
+	//				wcscat(psz, L"            VALUE \""); psz += wcslen(psz);
+	//				//wcscat(psz, pS->szKey); ???
+	//				psz[MultiByteToWideChar(CP_ACP,0,pS->szKey,-1,psz,32)] = 0;
+	//				wcscat(psz, L"\", "); psz += wcslen(psz);
+	//				// Выровнять текст в результирующем .rc
+	//				for (int k = lstrlenA(pS->szKey); k < 17; k++) *(psz++) = L' ';
+	//				*(psz++) = L'"'; *psz = 0;
+	//				pToken = (char*)(pS->szKey+strlen(pS->szKey)+1);
+	//				while (*pToken == 0 && pToken < pNext) pToken++;
+	//				//ALIGN_TOKEN(pToken); ???
+	//				int nLenLeft = min(pS->wValueLength,MAX_PATH*2);
+	//				if (nLenLeft > (pNext-pToken))
+	//					nLenLeft = (int)(pNext-pToken);
+	//				szTemp[MultiByteToWideChar(CP_ACP,0,pToken,nLenLeft,szTemp,nLenLeft)] = 0;
+	//				pwsz = szTemp;
+	//				while (nLenLeft>0) {
+	//					switch (*pwsz) {
+	//						case 0:
+	//							*(psz++) = L'\\'; *(psz++) = L'0'; break;
+	//						case L'\r':
+	//							*(psz++) = L'\\'; *(psz++) = L'r'; break;
+	//						case L'\n':
+	//							*(psz++) = L'\\'; *(psz++) = L'n'; break;
+	//						case L'\t':
+	//							*(psz++) = L'\\'; *(psz++) = L't'; break;
+	//						default:
+	//							*(psz++) = *pwsz;
+	//					}
+	//					pwsz++; nLenLeft--;
+	//				}
+	//				*psz = 0;
+	//				//if (pToken < pEnd2 && pS->wValueLength) {
+	//				//	// Вообще-то тут бы провести замены \r\n\t"
+	//				//	wcscat(psz, (LPCWSTR)pToken);
+	//				//}
+	//				wcscat(psz, L"\"\n"); psz += wcslen(psz);
 
-					// Next value
-					pToken = pNext;
-					if (pToken < pEnd2 && *pToken == 0)
-					{
-						//wcscat(psz, L"            // Zero-length item found\n"); psz += wcslen(psz);
-						while (pToken < pEnd2 && *pToken == 0) pToken ++;
-					}
-				}
-				//wcscat(psz, L"        END\n");
-			}
-			//
-			//wcscat(psz, L"    END\n");
-		}
-	}
+	//				// Next value
+	//				pToken = pNext;
+	//				if (pToken < pEnd2 && *pToken == 0)
+	//				{
+	//					wcscat(psz, L"            // Zero-length item found\n"); psz += wcslen(psz);
+	//					while (pToken < pEnd2 && *pToken == 0) pToken ++;
+	//				}
+	//			}
+	//			wcscat(psz, L"        END\n");
+	//		}
+	//		//
+	//		wcscat(psz, L"    END\n");
+	//	}
+	//}
 }
 
 void ParseVersionInfoVariableVar(PEData *pData, LPVOID ptrRes, DWORD &resSize, LPWORD pToken)
 {
 	_TRACE0("ParseVersionInfoVariableVar");
-	VarFileInfo *pSFI = (VarFileInfo*)pToken;
-	LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
-	if (pToken < pEnd && *pToken > sizeof(VarFileInfo))
-	{
-		LPWORD pEnd1 = (LPWORD)(((LPBYTE)pToken)+*pToken);
-		if (pEnd < pEnd1)
-			pEnd1 = pEnd;
-		//wcscat(psz, L"    BLOCK \"");
-		//wcscat(psz, pSFI->szKey);
-		//wcscat(psz, L"\"\n");
-		if (pSFI->wType != 1) {
-			//wcscat(psz, L"    // Warning! Binary data in VarFileInfo\n");
-		}
-		{
-			//wcscat(psz, L"    BEGIN\n");
-			//psz += wcslen(psz);
-			// Padding - Contains as many zero words as necessary to align the Children member on a 32-bit boundary.
-			pToken = (LPWORD)(pSFI->szKey+wcslen(pSFI->szKey)+1);
-			//while (*pToken == 0 && pToken < pEnd1) pToken++;
-			ALIGN_TOKEN(pToken);
-			if ((((LPBYTE)pToken)+sizeof(Var)) <= (LPBYTE)pEnd1) {
-				pToken = (LPWORD)(pSFI->szKey+wcslen(pSFI->szKey)+1);
-				//while (*pToken == 0 && pToken < pEnd1) pToken++;
-				ALIGN_TOKEN(pToken);
-				while ((((LPBYTE)pToken)+sizeof(Var)) <= (LPBYTE)pEnd1) {
-					Var *pS = (Var*)pToken;
-					if (pS->wLength == 0) break; // Invalid?
-					LPWORD pNext = (LPWORD)(((LPBYTE)pToken)+pS->wLength);
-					//wcscat(psz, L"        VALUE \""); psz += wcslen(psz);
-					//wcscat(psz, pS->szKey);
-					//wcscat(psz, L"\""); psz += wcslen(psz);
-					pToken = (LPWORD)(pS->szKey+wcslen(pS->szKey)+1);
-					// Align to 32bit boundary
-					ALIGN_TOKEN(pToken);
-					//pToken++;
-					//while (*pToken == 0 && pToken < pEnd1) pToken++;
+	//VarFileInfo *pSFI = (VarFileInfo*)pToken;
+	//LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
+	//if (pToken < pEnd && *pToken > sizeof(VarFileInfo)) {
+	//	LPWORD pEnd1 = (LPWORD)(((LPBYTE)pToken)+*pToken);
+	//	if (pEnd < pEnd1)
+	//		pEnd1 = pEnd;
+	//	wcscat(psz, L"    BLOCK \"");
+	//	wcscat(psz, pSFI->szKey);
+	//	wcscat(psz, L"\"\n");
+	//	if (pSFI->wType != 1) {
+	//		wcscat(psz, L"    // Warning! Binary data in VarFileInfo\n");
+	//	}
+	//	{
+	//		wcscat(psz, L"    BEGIN\n");
+	//		psz += wcslen(psz);
+	//		// Padding - Contains as many zero words as necessary to align the Children member on a 32-bit boundary.
+	//		pToken = (LPWORD)(pSFI->szKey+wcslen(pSFI->szKey)+1);
+	//		//while (*pToken == 0 && pToken < pEnd1) pToken++;
+	//		ALIGN_TOKEN(pToken);
+	//		if ((((LPBYTE)pToken)+sizeof(Var)) <= (LPBYTE)pEnd1) {
+	//			pToken = (LPWORD)(pSFI->szKey+wcslen(pSFI->szKey)+1);
+	//			//while (*pToken == 0 && pToken < pEnd1) pToken++;
+	//			ALIGN_TOKEN(pToken);
+	//			while ((((LPBYTE)pToken)+sizeof(Var)) <= (LPBYTE)pEnd1) {
+	//				Var *pS = (Var*)pToken;
+	//				if (pS->wLength == 0) break; // Invalid?
+	//				LPWORD pNext = (LPWORD)(((LPBYTE)pToken)+pS->wLength);
+	//				wcscat(psz, L"        VALUE \""); psz += wcslen(psz);
+	//				wcscat(psz, pS->szKey);
+	//				wcscat(psz, L"\""); psz += wcslen(psz);
+	//				pToken = (LPWORD)(pS->szKey+wcslen(pS->szKey)+1);
+	//				// Align to 32bit boundary
+	//				ALIGN_TOKEN(pToken);
+	//				//pToken++;
+	//				//while (*pToken == 0 && pToken < pEnd1) pToken++;
 
-					// The low-order word of each DWORD must contain a Microsoft language identifier, 
-					// and the high-order word must contain the IBM code page number. 
-					// Either high-order or low-order word can be zero, indicating that the file 
-					// is language or code page independent. 
-					while ((pToken+2) <= pEnd1) {
-						//psz += wcslen(psz);
-						//DWORD nLangCP = *((LPDWORD)pToken);
-						//wsprintfW(psz, L", 0x%X, %u", (DWORD)(pToken[0]), (DWORD)(pToken[1]));
-						pToken += 2;
-					}
-					//	// Вообще-то тут бы провести замены \r\n\t"
-					//	wcscat(psz, (LPCWSTR)pToken);
-					//}
-					//wcscat(psz, L"\n"); psz += wcslen(psz);
+	//				// The low-order word of each DWORD must contain a Microsoft language identifier, 
+	//				// and the high-order word must contain the IBM code page number. 
+	//				// Either high-order or low-order word can be zero, indicating that the file 
+	//				// is language or code page independent. 
+	//				while ((pToken+2) <= pEnd1) {
+	//					psz += wcslen(psz);
+	//					//DWORD nLangCP = *((LPDWORD)pToken);
+	//					wsprintfW(psz, L", 0x%X, %u", (DWORD)(pToken[0]), (DWORD)(pToken[1]));
+	//					pToken += 2;
+	//				}
+	//				//	// Вообще-то тут бы провести замены \r\n\t"
+	//				//	wcscat(psz, (LPCWSTR)pToken);
+	//				//}
+	//				wcscat(psz, L"\n"); psz += wcslen(psz);
 
-					// Next value
-					pToken = pNext;
-				}
-			}
-			//wcscat(psz, L"    END\n");
-		}
-	}
+	//				// Next value
+	//				pToken = pNext;
+	//			}
+	//		}
+	//		wcscat(psz, L"    END\n");
+	//	}
+	//}
 }
 
 void ParseVersionInfoVariable(PEData *pData, LPVOID ptrRes, DWORD &resSize, LPWORD pToken)
 {
 	_TRACE0("ParseVersionInfoVariable");
-	StringFileInfo *pSFI = (StringFileInfo*)pToken;
+	//StringFileInfo *pSFI = (StringFileInfo*)pToken;
 
-	if (_wcsicmp(pSFI->szKey, L"StringFileInfo") == 0)
-	{
-		LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
-		if (pToken < pEnd && *pToken > sizeof(StringFileInfo))
-		{
-			ParseVersionInfoVariableString(pData, ptrRes, resSize, /*ptrBuf, bIsCopy,*/ pToken/*, psz*/);
-		}
-	}
-	else if (_wcsicmp(pSFI->szKey, L"VarFileInfo") == 0)
-	{
-		LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
-		if (pToken < pEnd && *pToken > sizeof(VarFileInfo)) {
-			ParseVersionInfoVariableVar(pData, ptrRes, resSize/*, ptrBuf, bIsCopy*/, pToken/*, psz*/);
-		}
-	}
+	//if (_wcsicmp(pSFI->szKey, L"StringFileInfo") == 0) {
+	//	LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
+	//	if (pToken < pEnd && *pToken > sizeof(StringFileInfo)) {
+	//		ParseVersionInfoVariableString(/*fileNameBuffer, pChild,*/ ptrRes, resSize, /*ptrBuf, bIsCopy,*/ pToken/*, psz*/);
+	//	}
+	//} else if (_wcsicmp(pSFI->szKey, L"VarFileInfo") == 0) {
+	//	LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
+	//	if (pToken < pEnd && *pToken > sizeof(VarFileInfo)) {
+	//		ParseVersionInfoVariableVar(/*fileNameBuffer, pChild,*/ ptrRes, resSize/*, ptrBuf, bIsCopy*/, pToken/*, psz*/);
+	//	}
+	//}
 }
 void ParseVersionInfoVariableA(PEData *pData, LPVOID ptrRes, DWORD &resSize, char* pToken)
 {
 	StringFileInfoA *pSFI = (StringFileInfoA*)pToken;
 
-	if (lstrcmpiA(pSFI->szKey, "StringFileInfo") == 0)
-	{
+	if (lstrcmpiA(pSFI->szKey, "StringFileInfo") == 0) {
 		char* pEnd = (char*)(((LPBYTE)ptrRes)+resSize);
-		if (pToken < pEnd && *pToken > sizeof(StringFileInfo))
-		{
+		if (pToken < pEnd && *pToken > sizeof(StringFileInfo)) {
 			ParseVersionInfoVariableStringA(pData, ptrRes, resSize, pToken);
 		}
 	}
@@ -1285,7 +1233,7 @@ void ParseVersionInfo(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 				//WORD nBOM = 0xFEFF; // CP-1200
 				//*psz++ = nBOM;
 				
-				//#ifndef verc0_EXPORTS
+				#ifndef verc0_EXPORTS
 
 				StringFileInfo *pSFI = (StringFileInfo*)(pVer+1);
 				LPWORD pToken = (LPWORD)pSFI;
@@ -1302,13 +1250,12 @@ void ParseVersionInfo(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 					//psz += wcslen(psz);
 				}
 
-				//#endif
+				#endif
 
 				//Msg("ParseVersionInfo","3");
 
 				// VS_FIXEDFILEINFO
 				ParseVersionInfoFixed(pData, pVer);
-				
 
 				//Msg("ParseVersionInfo","4");
 
@@ -1374,7 +1321,7 @@ void ParseVersionInfoA(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 				//WORD nBOM = 0xFEFF; // CP-1200
 				//*psz++ = nBOM;
 
-				//#ifndef verc0_EXPORTS
+				#ifndef verc0_EXPORTS
 
 				StringFileInfoA *pSFI = (StringFileInfoA*)(pVer+1);
 				char* pToken = (char*)pSFI;
@@ -1391,7 +1338,7 @@ void ParseVersionInfoA(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 					//psz += wcslen(psz);
 				}
 
-				//#endif
+				#endif
 
 				// VS_FIXEDFILEINFO
 				ParseVersionInfoFixed(pData, pVer);

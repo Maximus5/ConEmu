@@ -508,7 +508,7 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 
 extern MSection *csTabs;
 
-bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param/*=NULL*/)
+bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param)
 {
 	if (!InfoA || gbIgnoreUpdateTabs)
 		return false;
@@ -630,7 +630,10 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 		//}
 	}
 
-	SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
+	// 101224 - сразу запомнить количество!
+	gpTabs->Tabs.nTabCount = tabCount;
+
+	//SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
 
 	return (lbCh != FALSE);
 }

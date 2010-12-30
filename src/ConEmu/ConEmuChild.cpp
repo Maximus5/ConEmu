@@ -896,7 +896,7 @@ void CConEmuBack::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeig
 			EnableScrollBar(mh_WndScroll, SB_VERT, ESB_ENABLE_BOTH);
 		}
 		// Показать прокрутку, если например буфер скроллится с клавиатуры
-		if ((si.nPos > 0) && (si.nPos < (si.nMax - si.nPage - 1)) && gSet.isAlwaysShowScrollbar)
+		if ((si.nPos > 0) && (si.nPos < (si.nMax - (int)si.nPage - 1)) && gSet.isAlwaysShowScrollbar)
 		{
 			mb_ScrollAutoPopup = (gSet.isAlwaysShowScrollbar == 2);
 			if (!mb_Scroll2Visible)

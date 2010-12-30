@@ -480,6 +480,9 @@ bool UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 
 		//if (pszEditorFileName) free(pszEditorFileName);
 	}
+
+	// 101224 - сразу запомнить количество!
+	gpTabs->Tabs.nTabCount = tabCount;
 	
 	//// 2009-08-17
 	//if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
@@ -493,7 +496,7 @@ bool UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 	//OutputDebugStringW(szDbg);
 #endif
 
-	SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
+	//SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
 
 	return (lbCh != FALSE);
 }

@@ -71,13 +71,13 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
-            VALUE "FileDescription", "ConEmu hooks & console server" CONEMUPLTFRM
+            VALUE "FileDescription", "ConEmu hooks" CONEMUPLTFRM
             VALUE "FileVersion", CONEMUVERS
             VALUE "LegalCopyright", "(C) 2009-2010 Maximus5"
             VALUE "OriginalFilename", "ConEmuHk*.dll"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS
-            VALUE "Comments", "Essential part of ConEmuC"
+            VALUE "Comments", "Required for Win+Number processing in Windows 7"
         END
     END
     BLOCK "VarFileInfo"

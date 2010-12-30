@@ -1,7 +1,7 @@
 
 #define MVV_1 2010
 #define MVV_2 12
-#define MVV_3 25
+#define MVV_3 30
 #define MVV_4 0
 #define MVV_4a ""
 

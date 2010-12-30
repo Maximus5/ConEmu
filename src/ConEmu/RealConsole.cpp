@@ -8425,6 +8425,7 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	}
     wchar_t* pszAmp = pTab->Name;
     int nCurLen = lstrlenW(pTab->Name), nMaxLen = countof(pTab->Name)-1;
+	TODO("После перевода табов на ручную отрисовку - эту часть можно будет убрать");
     while ((pszAmp = wcschr(pszAmp, L'&')) != NULL)
     {
         if (nCurLen >= (nMaxLen - 2))
@@ -8434,7 +8435,7 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
         }
         else
         {
-			size_t nMove = nCurLen-(pszAmp-pTab->Name);
+			size_t nMove = nCurLen-(pszAmp-pTab->Name)+1; // right part of string + \0
             wmemmove_s(pszAmp+1, nMove, pszAmp, nMove);
             nCurLen ++;
             pszAmp += 2;
@@ -9979,15 +9980,24 @@ void CRealConsole::FindPanels()
 			);
 		// из-за глюков индикации FAR2 пока вместо '[' - любой символ
 		//if (( ((bFirstCharOk || con.pConChar[nIdx] == L'[') && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
-		if (( ((bFirstCharOk || con.pConChar[nIdx] != ucBoxDblDownRight) && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
-			|| ((bFirstCharOk || con.pConChar[nIdx] == ucBoxDblDownRight)
-				&& (con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == ucBoxSinglDownDblHorz)) // доп.окон нет, только рамка
-			) && con.pConChar[nIdx+con.nTextWidth] == ucBoxDblVert)
+		if ((
+		    ((bFirstCharOk || con.pConChar[nIdx] != ucBoxDblDownRight)
+		        && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
+			||
+			((bFirstCharOk || con.pConChar[nIdx] == ucBoxDblDownRight)
+				&& (con.pConChar[nIdx+1] == ucBoxDblHorz
+				    || con.pConChar[nIdx+1] == ucBoxSinglDownDblHorz // доп.окон нет, только рамка
+				    || (con.pConChar[nIdx+1] == L'[' && con.pConChar[nIdx+2] == ucLeftScroll) // ScreenGadgets, default
+				   ))
+			)
+			&& con.pConChar[nIdx+con.nTextWidth] == ucBoxDblVert) // двойная рамка продолжается вниз
 		{
 			for (int i=2; !bLeftPanel && i<con.nTextWidth; i++)
 			{
 				if (con.pConChar[nIdx+i] == ucBoxDblDownLeft
-					&& (con.pConChar[nIdx+i-1] == ucBoxDblHorz || con.pConChar[nIdx+i-1] == ucBoxSinglDownDblHorz)
+					&& (con.pConChar[nIdx+i-1] == ucBoxDblHorz
+					    || con.pConChar[nIdx+i-1] == ucBoxSinglDownDblHorz // правый угол панели
+						|| (con.pConChar[nIdx+i-1] == L']' && con.pConChar[nIdx+i-2] == L'\\')) // ScreenGadgets, default
 					// МОЖЕТ быть закрыто AltHistory
 					/*&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert*/)
 				{
@@ -10047,8 +10057,11 @@ void CRealConsole::FindPanels()
 					{
 						// ищем левую границу правой панели
 						if (con.pConChar[nIdx+i] == ucBoxDblDownRight
-							&& (con.pConChar[nIdx+i+1] == ucBoxDblHorz || con.pConChar[nIdx+i+1] == ucBoxSinglDownDblHorz)
-							&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert)
+							&& (con.pConChar[nIdx+i+1] == ucBoxDblHorz
+							    || con.pConChar[nIdx+i+1] == ucBoxSinglDownDblHorz // правый угол панели
+								|| (con.pConChar[nIdx+i-1] == L']' && con.pConChar[nIdx+i-2] == L'\\')) // ScreenGadgets, default
+							// МОЖЕТ быть закрыто AltHistory
+							/*&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert*/)
 						{
 							uint nBottom = con.nTextHeight - 1;
 							while (nBottom > 4)
@@ -10180,9 +10193,16 @@ bool CRealConsole::isFarBufferSupported()
 	if (!this)
 		return false;
 
-	if (!m_FarInfo.IsValid() 
-		|| m_FarInfo.Ptr()->nFarPID != GetFarPID()
-		|| !m_FarInfo.Ptr()->bBufferSupport)
+	if (!m_FarInfo.IsValid())
+		return false;
+
+	const CEFAR_INFO* ptr = m_FarInfo.Ptr();
+	if (!ptr)
+		return false;
+	if (!ptr->bBufferSupport)
+		return false;
+	DWORD nFarPID = GetFarPID();
+	if (ptr->nFarPID != nFarPID)
 		return false;
 
 	return true;

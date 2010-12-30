@@ -69,7 +69,6 @@ typedef struct HookItem
 	void*   ExeOldAddress; // function address from executable module (may be replaced by other libraries)
 	
 	// 'll be called before and after 'real' function
-	HMODULE                  hCallbackModule;
 	HookItemPreCallback_t	 PreCallBack;
 	HookItemPostCallback_t	 PostCallBack;
 	HookItemExceptCallback_t ExceptCallBack;
@@ -80,7 +79,7 @@ typedef struct HookItem
 extern "C"{
 #endif
 
-bool __stdcall SetHookCallbacks( const char* ProcName, const wchar_t* DllName, HMODULE hCallbackModule,
+bool __stdcall SetHookCallbacks( const char* ProcName, const wchar_t* DllName,
 								 HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack,
 								 HookItemExceptCallback_t ExceptCallBack = NULL );
 
@@ -111,60 +110,4 @@ extern "C" {
 		#define GetConsoleAliases  GetConsoleAliasesW
 	#endif
 }
-#endif
-
-
-class CInFuncCall
-{
-public:
-	int *mpn_Counter;
-public:
-	CInFuncCall();	
-	BOOL Inc(int* pnCounter);
-	~CInFuncCall();
-};
-
-
-#ifdef DEFINE_HOOK_MACROS
-	void* __cdecl GetOriginalAddress( void* OurFunction, void* DefaultFunction, BOOL abAllowModified, HookItem** ph );
-
-	#define ORIGINAL(n) \
-		static HookItem *ph = NULL; \
-		BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); \
-		void* f##n = NULL; /* static низя - функции могут различаться по потокам */ \
-		static int nMainThCounter = 0; CInFuncCall CounterLocker; \
-		BOOL bAllowModified = bMainThread; \
-		if (bMainThread) bAllowModified = CounterLocker.Inc(&nMainThCounter); \
-		if (bAllowModified) { \
-			static void* f##n##Mod = NULL; \
-			if ((f##n##Mod)==NULL) f##n##Mod = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , TRUE, &ph); \
-			f##n = f##n##Mod; \
-		} else { \
-			static void* f##n##Org = NULL; \
-			if ((f##n##Org)==NULL) f##n##Org = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , FALSE, &ph); \
-			f##n = f##n##Org; \
-		} \
-		_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
-		
-	#define ORIGINALFAST(n) \
-		static HookItem *ph = NULL; \
-		static void* f##n = NULL; \
-		if ((f##n)==NULL) f##n = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , FALSE, &ph); \
-		_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
-
-	#define F(n) ((On##n##_t)f##n)
-
-
-	#define SETARGS(r) HookCallbackArg args = {bMainThread}; args.lpResult = (LPVOID)(r)
-	#define SETARGS1(r,a1) SETARGS(r); args.lArguments[0] = (DWORD_PTR)(a1)
-	#define SETARGS2(r,a1,a2) SETARGS1(r,a1); args.lArguments[1] = (DWORD_PTR)(a2)
-	#define SETARGS3(r,a1,a2,a3) SETARGS2(r,a1,a2); args.lArguments[2] = (DWORD_PTR)(a3)
-	#define SETARGS4(r,a1,a2,a3,a4) SETARGS3(r,a1,a2,a3); args.lArguments[3] = (DWORD_PTR)(a4)
-	#define SETARGS5(r,a1,a2,a3,a4,a5) SETARGS4(r,a1,a2,a3,a4); args.lArguments[4] = (DWORD_PTR)(a5)
-	#define SETARGS6(r,a1,a2,a3,a4,a5,a6) SETARGS5(r,a1,a2,a3,a4,a5); args.lArguments[5] = (DWORD_PTR)(a6)
-	#define SETARGS7(r,a1,a2,a3,a4,a5,a6,a7) SETARGS6(r,a1,a2,a3,a4,a5,a6); args.lArguments[6] = (DWORD_PTR)(a7)
-	#define SETARGS8(r,a1,a2,a3,a4,a5,a6,a7,a8) SETARGS7(r,a1,a2,a3,a4,a5,a6,a7); args.lArguments[7] = (DWORD_PTR)(a8)
-	#define SETARGS9(r,a1,a2,a3,a4,a5,a6,a7,a8,a9) SETARGS8(r,a1,a2,a3,a4,a5,a6,a7,a8); args.lArguments[8] = (DWORD_PTR)(a9)
-	#define SETARGS10(r,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) SETARGS9(r,a1,a2,a3,a4,a5,a6,a7,a8,a9); args.lArguments[9] = (DWORD_PTR)(a10)
-	// !!! WARNING !!! DWORD_PTR lArguments[10]; - пока максимум - 10 аргументов
 #endif

@@ -45,7 +45,7 @@ private:
 	// RealConsole
 	CRealConsole *mp_RCon;
 public:
-	CRealConsole *RCon() { if (this) return mp_RCon; return NULL; };
+	CRealConsole *RCon() { if (this) return mp_RCon; _ASSERTE(this!=NULL); return NULL; };
 	HWND GetView();
 public:
     WARNING("Сделать protected!");

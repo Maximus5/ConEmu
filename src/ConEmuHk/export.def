@@ -1,17 +1,8 @@
 EXPORTS
 ; functions
 	LLKeybHook
-	SetHookCallbacks
-	SetLoadLibraryCallback
-	ConsoleMain
 ; LLKeyHooks (ConEmu GUI)
 	ghKeyHook
 	gnVkWinFix
 	ghConEmuRoot
-	ghConEmuWnd
-; Options (injects)
-	ghConEmuDC
-	ghConsoleHwnd
-	gbFARuseASCIIsort
-	gdwServerPID
-	gbShellNoZoneCheck
+
