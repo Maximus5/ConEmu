@@ -771,8 +771,10 @@ BOOL IsExecutable(LPCWSTR aszFilePathName)
 	#pragma warning( push )
 	#pragma warning(disable : 6400)
 	LPCWSTR pwszDot = wcsrchr(aszFilePathName, L'.');
-	if (pwszDot) { // Если указан .exe или .com файл
-		if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0) {
+	if (pwszDot) // Если указан .exe или .com файл
+	{
+		if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0)
+		{
 			if (FileExists(aszFilePathName))
 				return TRUE;
 		}
@@ -809,8 +811,10 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 	// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
 	// cmd /c "dir c:\"
 	int nLastChar = lstrlenW(pwszCopy) - 1;
-	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"') {
-		if (pwszCopy[1] == L'"' && pwszCopy[2]) {
+	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"')
+	{
+		if (pwszCopy[1] == L'"' && pwszCopy[2])
+		{
 			pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
 			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
 		} else
@@ -830,12 +834,19 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 			// отбросить первую кавычку в: "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
 			LPCWSTR pwszTemp = pwszCopy + 1;
 			// Получим первую команду (исполняемый файл?)
-			if ((iRc = NextArg(&pwszTemp, szArg)) != 0) {
+			if ((iRc = NextArg(&pwszTemp, szArg)) != 0)
+			{
 				//Parsing command line failed
 				return TRUE;
 			}
+			if (lstrcmpiW(szArg, L"start") == 0)
+			{
+				// Команду start обрабатывает только процессор
+				return TRUE;
+			}
 			LPCWSTR pwszQ = pwszCopy + 1 + wcslen(szArg);
-			if (*pwszQ != L'"' && IsExecutable(szArg)) {
+			if (*pwszQ != L'"' && IsExecutable(szArg))
+			{
 				pwszCopy ++; // отбрасываем
 				lbFirstWasGot = TRUE;
 				if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
@@ -867,6 +878,15 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 			}
 		}
 	}
+
+	// Если szArg не содержит путь к файлу - запускаем через cmd
+	// "start "" C:\Utils\Files\Hiew32\hiew32.exe C:\00\far.exe"
+	if (!IsFilePath(szArg))
+	{
+		gbRootIsCmdExe = TRUE; // запуск через "процессор"
+		return TRUE; // добавить "cmd.exe"
+	}
+
 	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
 	pwszCopy = PointToName(szArg);
 	//2009-08-27

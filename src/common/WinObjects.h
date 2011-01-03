@@ -45,6 +45,7 @@ void getWindowInfo(HWND ahWnd, wchar_t* rsInfo/*[1024]*/);
 // Some WinAPI related functions
 wchar_t* GetShortFileNameEx(LPCWSTR asLong);
 BOOL FileExists(LPCWSTR asFilePath);
+BOOL IsFilePath(LPCWSTR asFilePath);
 BOOL IsUserAdmin();
 BOOL IsWindows64(BOOL *pbIsWow64Process = NULL);
 

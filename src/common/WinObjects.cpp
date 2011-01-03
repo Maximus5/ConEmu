@@ -97,6 +97,36 @@ BOOL FileExists(LPCWSTR asFilePath)
 	return lbFound;
 }
 
+// Первичная проверка, может ли asFilePath быть путем
+BOOL IsFilePath(LPCWSTR asFilePath)
+{
+	// Если в пути встречаются недопустимые символы
+	if (wcschr(asFilePath, L'"') ||
+		wcschr(asFilePath, L'>') || 
+		wcschr(asFilePath, L'<') || 
+		wcschr(asFilePath, L'|')
+		)
+		return FALSE;
+
+	// Пропуск UNC "\\?\"
+	if (asFilePath[0] == L'\\' && asFilePath[1] == L'\\' && asFilePath[2] == L'?' && asFilePath[3] == L'\\')
+		asFilePath += 4;
+
+	// Если asFilePath содержит два (и более) ":\"
+	LPCWSTR pszColon = wcschr(asFilePath, L':');
+	if (pszColon)
+	{
+		// Если есть ":", то это должен быть путь вида "X:\xxx", т.е. ":" - второй символ
+		if (pszColon != (asFilePath+1))
+			return FALSE;
+		if (wcschr(pszColon+1, L':'))
+			return FALSE;
+	}
+
+	// May be file path
+	return TRUE;
+}
+
 BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t* rsShortName/*name only, MAX_PATH required*/)
 {
 	WARNING("FindFirstFile использовать нельзя из-за симлинков");
