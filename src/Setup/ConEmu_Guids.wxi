@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Include>
+<!-- special -->
+<?define Guid.ProductId = "ACEA3882-9C4C-4ACF-B5D3-ED021AF37361" ?>
+<?define Guid.UpgradeCode = "75D2A1D0-92AC-4A7F-B4D0-A33D94E96018" ?>
+<!-- shortcuts -->
+<?define Guid.ConEmuStartShortcut = "F7005487-D8D6-41ED-8B75-FFFB4A218F3A" ?>
+<?define Guid.ConEmuStartShortcut64 = "B7C99F54-D741-4DBA-B487-23A5B475A4A0" ?>
+<?define Guid.ConEmuStartShortcutFolder = "1158F287-0A8E-4281-9628-A3C300D115B4" ?>
+<?define Guid.ConEmuDesktopShortcut = "5063AC12-3EF8-434A-8265-307DAB373AED" ?>
+<?define Guid.ConEmuDesktopShortcut64 = "12ACD7A8-5C3C-483F-A00C-1F48BBE7B556" ?>
+<?define Guid.ConEmuDesktopShortcutFolder = "5EC938AD-0669-4AB8-87AF-A8D0922DDCFF" ?>
+<!-- features -->
+<?define Guid.ConEmuCore = "549CE04A-9CE7-4572-88AA-AA919F4D3F1D" ?>
+<?define Guid.ConEmuCore64 = "80B41CD6-361B-4C9C-8731-CC000FDB3650" ?>
+<?define Guid.ConEmuLicense = "001DA42D-7E22-4BC9-8D7F-4AEEC71C0F6F" ?>
+<?define Guid.ConEmuBaseFiles = "919274D1-52B9-4AFA-808D-D1C14BC5BD79" ?>
+<?define Guid.ConEmuDocs = "79AF0739-4FF9-43E4-B0A5-5E326418B391" ?>
+<?define Guid.ConEmuAddonFiles = "04CC6D6D-E933-46C3-B86B-1EA4544948B0" ?>
+<?define Guid.PFarPluginsConEmu = "29B140A7-1E9B-11E0-B29A-0018F38FF6A1" ?>
+<?define Guid.PFarPluginsConEmuLn = "3DC3A374-1E9B-11E0-B29A-0018F38FF6A1" ?>
+<?define Guid.PFarPluginsConEmuTh = "71479FA8-1E9C-11E0-B29A-0018F38FF6A1" ?>
+</Include>

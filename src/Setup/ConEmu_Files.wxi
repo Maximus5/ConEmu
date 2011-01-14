@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Include>
+
+    <DirectoryRef Id="APPLICATIONFOLDER">
+      <Component Id="ConEmuCore" Guid="$(var.Guid.ConEmuCore)">
+        <File Id="ConEmu.exe" Source="..\..\Release\ConEmu.exe"  KeyPath="yes" />
+      </Component>
+      <Component Id="ConEmuCore64" Guid="$(var.Guid.ConEmuCore64)">
+        <File Id="ConEmu64.exe" Source="..\..\Release\ConEmu64.exe"  KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="CONEMUBASEDIR">
+      <Component Id="ConEmuLicense" Guid="$(var.Guid.ConEmuLicense)">
+        <File Id="License.txt" Source="..\..\Release\ConEmu\License.txt"  KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="CONEMUBASEDIR">
+      <Component Id="ConEmuBaseFiles" Guid="$(var.Guid.ConEmuBaseFiles)">
+        <File Id="ConEmuC.exe"    Source="..\..\Release\ConEmu\ConEmuC.exe"     KeyPath="yes" />
+        <File Id="ConEmuC64.exe"  Source="..\..\Release\ConEmu\ConEmuC64.exe"   />
+        <File Id="ConEmuHk.dll"   Source="..\..\Release\ConEmu\ConEmuHk.dll"    />
+        <File Id="ConEmuHk64.dll" Source="..\..\Release\ConEmu\ConEmuHk64.dll"  />
+      </Component>
+      <Component Id="ConEmuDocs" Guid="$(var.Guid.ConEmuDocs)">
+        <File Id="WhatsNew_ConEmu.txt" Source="..\..\Release\ConEmu\WhatsNew-ConEmu.txt"  KeyPath="yes" />
+        <!--
+        <File Id="Settings_ConEmu.reg" Source="..\..\Release\ConEmu\Settings-ConEmu.reg"  />
+        <File Id="FAQ_ConEmu.txt" Source="..\..\Release\ConEmu\FAQ-ConEmu.txt" />
+        <File Id="ConEmu_Sample.xml" Source="..\..\Release\ConEmu\ConEmu_Sample.xml" />
+        <File Id="Command_Processor.reg" Source="..\..\Release\ConEmu\Command Processor.reg" />
+        <File Id="Command_Processor_Off.reg" Source="..\..\Release\ConEmu\Command Processor Off.reg" />
+        <File Id="About_ConEmu.txt" Source="..\..\Release\ConEmu\About-ConEmu.txt" />
+        <File Id="cmd_autorun.cmd" Source="..\..\Release\ConEmu\cmd_autorun.cmd" />
+        <File Id="Attach.cmd" Source="..\..\Release\ConEmu\Attach.cmd" />
+        -->
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="CONEMUADDONSDIR">
+      <Component Id="ConEmuAddonFiles" Guid="$(var.Guid.ConEmuAddonFiles)">
+        <File Id="CtrlO.reg" Source="..\..\Release\ConEmu\ConEmu.Addons\CtrlO.reg"  KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="FARPLUGINSCONEMU">
+      <Component Id="PFarPluginsConEmu" Guid="$(var.Guid.PFarPluginsConEmu)">
+        <File Id="ConEmu.dll" Source="..\..\Release\Plugins\ConEmu\ConEmu.dll"  KeyPath="yes" />
+        <File Id="ConEmu.map" Source="..\..\Release\Plugins\ConEmu\ConEmu.map" />
+        <File Id="ConEmu.x64.dll" Source="..\..\Release\Plugins\ConEmu\ConEmu.x64.dll"  />
+        <File Id="ConEmu.x64.map" Source="..\..\Release\Plugins\ConEmu\ConEmu.x64.map" />
+        <File Id="ConEmuPlugin_en.lng" Source="..\..\Release\Plugins\ConEmu\ConEmuPlugin_en.lng" />
+        <File Id="ConEmuPlugin_ru.lng" Source="..\..\Release\Plugins\ConEmu\ConEmuPlugin_ru.lng" />
+      </Component>
+
+      <Directory Id="FarPluginsConEmuLn" Name="Lines">
+        <Component Id="PFarPluginsConEmuLn" Guid="$(var.Guid.PFarPluginsConEmuLn)">
+          <File Id="ConEmuLn.dll" Source="..\..\Release\Plugins\ConEmu\Lines\ConEmuLn.dll"  KeyPath="yes" />
+          <File Id="ConEmuLn.map" Source="..\..\Release\Plugins\ConEmu\Lines\ConEmuLn.map" />
+          <File Id="ConEmuLn.x64.dll" Source="..\..\Release\Plugins\ConEmu\Lines\ConEmuLn.x64.dll"  />
+          <File Id="ConEmuLn.x64.map" Source="..\..\Release\Plugins\ConEmu\Lines\ConEmuLn.x64.map"  />
+          <File Id="ConEmuLn_en.lng" Source="..\..\Release\Plugins\ConEmu\Lines\ConEmuLn_en.lng" />
+          <File Id="ConEmuLn_ru.lng" Source="..\..\Release\Plugins\ConEmu\Lines\ConEmuLn_ru.lng" />
+        </Component>
+      </Directory>
+      <Directory Id="FarPluginsConEmuTh" Name="Thumbs">
+        <Component Id="PFarPluginsConEmuTh" Guid="$(var.Guid.PFarPluginsConEmuTh)">
+          <File Id="ConEmuTh.dll" Source="..\..\Release\Plugins\ConEmu\Thumbs\ConEmuTh.dll"  KeyPath="yes" />
+          <File Id="ConEmuTh.map" Source="..\..\Release\Plugins\ConEmu\Thumbs\ConEmuTh.map" />
+          <File Id="ConEmuTh.x64.dll" Source="..\..\Release\Plugins\ConEmu\Thumbs\ConEmuTh.x64.dll"  />
+          <File Id="ConEmuTh.x64.map" Source="..\..\Release\Plugins\ConEmu\Thumbs\ConEmuTh.x64.map" />
+          <File Id="ConEmuTh_en.lng" Source="..\..\Release\Plugins\ConEmu\Thumbs\ConEmuTh_en.lng" />
+          <File Id="ConEmuTh_ru.lng" Source="..\..\Release\Plugins\ConEmu\Thumbs\ConEmuTh_ru.lng" />
+          <File Id="gdi.t32" Source="..\..\Release\Plugins\ConEmu\Thumbs\gdi+.t32"  />
+          <File Id="gdi.t32.map" Source="..\..\Release\Plugins\ConEmu\Thumbs\gdi+.t32.map" />
+          <File Id="gdi.t64" Source="..\..\Release\Plugins\ConEmu\Thumbs\gdi+.t64"  />
+          <File Id="gdi.t64.map" Source="..\..\Release\Plugins\ConEmu\Thumbs\gdi+.t64.map" />
+          <File Id="ico.t32" Source="..\..\Release\Plugins\ConEmu\Thumbs\ico.t32"  />
+          <File Id="ico.t32.map" Source="..\..\Release\Plugins\ConEmu\Thumbs\ico.t32.map" />
+          <File Id="ico.t64" Source="..\..\Release\Plugins\ConEmu\Thumbs\ico.t64"  />
+          <File Id="ico.t64.map" Source="..\..\Release\Plugins\ConEmu\Thumbs\ico.t64.map" />
+          <File Id="pe.t32" Source="..\..\Release\Plugins\ConEmu\Thumbs\pe.t32"  />
+          <File Id="pe.t32.map" Source="..\..\Release\Plugins\ConEmu\Thumbs\pe.t32.map" />
+          <File Id="pe.t64" Source="..\..\Release\Plugins\ConEmu\Thumbs\pe.t64"  />
+          <File Id="pe.t64.map" Source="..\..\Release\Plugins\ConEmu\Thumbs\pe.t64.map" />
+        </Component>
+      </Directory>
+
+    </DirectoryRef>
+
+</Include>

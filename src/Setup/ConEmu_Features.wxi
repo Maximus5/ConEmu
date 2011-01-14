@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Include>
+  <Feature Id="ProductFeature" AllowAdvertise="no" Absent="disallow" Title="ConEmu" 
+           ConfigurableDirectory="APPLICATIONFOLDER"
+           Display="collapse" Level="1" Description="ConEmu-Maximus5 product and features">
+    <ComponentRef Id="ConEmuLicense" />
+    <!-- ConEmu Core Files -->
+    <Feature Id="FConEmuCore32" AllowAdvertise="no" Title="Core files (x86)" Level="1"
+             Description="Core file (ConEmu.exe) x86 version">
+      <ComponentRef Id="ConEmuCore" />
+    </Feature>
+    <Feature Id="FConEmuCore64" AllowAdvertise="no" Title="Core files (x64)" Level="2"
+             Description="Core file (ConEmu.exe) x64 version">
+      <ComponentRef Id="ConEmuCore64" />
+    </Feature>
+    <!-- ConEmu Base Files -->
+    <Feature Id="FConEmuBase" AllowAdvertise="no" Absent="disallow" Title="Base files" Level="1"
+             Description="ConEmuC.exe, ConEmuHk.dll, and other required files">
+      <ComponentRef Id="ConEmuBaseFiles" />
+    </Feature>
+    <Feature Id="FConEmuDocs" AllowAdvertise="no" Title="Documentation" Level="1"
+             Description="WhatsNew-ConEmu.txt, FAQ-ConEmu.txt, ConEmu_Sample.xml, and other information">
+      <ComponentRef Id="ConEmuDocs" />
+    </Feature>
+    <!-- ConEmu AddOns -->
+    <Feature Id="FConEmuAddons" AllowAdvertise="no" Title="Addons" Level="1"
+             Description="Some macros, sample background images, etc.">
+      <ComponentRef Id="ConEmuAddonFiles"/>
+    </Feature>
+  </Feature>
+  <!-- ConEmu Far Plugins -->
+  <Feature Id="FConEmuFarPlugins" AllowAdvertise="no" Title="Far Manager plugins" Level="1"
+           ConfigurableDirectory="FARPLUGINSCONEMU"
+           Description="Far Manager Plugins: ConEmu, PanelViews, Underlines">
+    <ComponentRef Id="PFarPluginsConEmu"/>
+    <ComponentRef Id="PFarPluginsConEmuLn"/>
+    <ComponentRef Id="PFarPluginsConEmuTh"/>
+  </Feature>
+  <!-- Shortcuts -->
+  <Feature Id="FConEmuShortcut" AllowAdvertise="no" Title="Create shortcuts" Level="1" Display="expand"
+           Description="Create ConEmu shortcuts in the Start menu or Desktop">
+    <Feature Id="FConEmuShortcutStart" AllowAdvertise="no" Title="Start menu" Level="1">
+      <ComponentRef Id="ConEmuStartShortcutFolder" />
+    </Feature>
+    <Feature Id="FConEmuShrtctDesktop" AllowAdvertise="no" Title="Desktop" Level="1">
+      <ComponentRef Id="ConEmuDesktopShortcutFolder" />
+    </Feature>
+  </Feature>
+  <Feature Id="FConEmuShortcutStart.FConEmuCore32" AllowAdvertise="no" Display="hidden" Level="2">
+    <ComponentRef Id="ConEmuStartShortcut" />
+  </Feature>
+  <Feature Id="FConEmuShortcutStart.FConEmuCore64" AllowAdvertise="no" Display="hidden" Level="2">
+    <ComponentRef Id="ConEmuStartShortcut64" />
+  </Feature>
+  <Feature Id="FConEmuShrtctDesktop.FConEmuCore32" AllowAdvertise="no" Display="hidden" Level="2">
+    <ComponentRef Id="ConEmuDesktopShortcut" />
+  </Feature>
+  <Feature Id="FConEmuShrtctDesktop.FConEmuCore64" AllowAdvertise="no" Display="hidden" Level="2">
+    <ComponentRef Id="ConEmuDesktopShortcut64" />
+  </Feature>
+</Include>
