@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Include>
 
-  <?define Version = '11.01.14' ?>
+  <?define Version = '11.01.15' ?>
   <!--<?define ConEmuVerN = '11.01.14.0' ?>-->
-  <?define ConEmuVerS = '110114' ?>
+  <?define ConEmuVerS = '110115' ?>
 
 </Include>
