@@ -4240,6 +4240,29 @@ int ShowMessage(int aiMsg, int aiButtons)
 	else
 		return FUNC_X(ShowMessage)(aiMsg, aiButtons);
 }
+int ShowMessageGui(int aiMsg, int aiButtons)
+{
+	wchar_t pwszBuf[MAX_PATH];
+	LPCWSTR pwszMsg = NULL; //GetMsgW(aiMsg);
+	if (gFarVersion.dwVerMajor==1)
+	{
+		GetMsgA(aiMsg, pwszBuf);
+		pwszMsg = pwszBuf;
+	}
+	else
+	{
+		pwszMsg = GetMsgW(aiMsg);
+	}
+	wchar_t szTitle[128];
+	wsprintfW(szTitle, L"ConEmu plugin (PID=%u)", GetCurrentProcessId());
+	if (!pwszMsg || !*pwszMsg)
+	{
+		wsprintfW(pwszBuf, L"<MsgID=%i>", aiMsg);
+		pwszMsg = pwszBuf;
+	}
+	int nRc = MessageBoxW(NULL, pwszMsg, szTitle, aiButtons);
+	return nRc;
+}
 
 LPCWSTR GetMsgW(int aiMsg)
 {
@@ -4569,7 +4592,7 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 				WARNING("Почему для FAR1 не ждем?");
 				DWORD nTimeout = 2000;
 				#ifdef _DEBUG
-				if (IsDebuggerPresent()) nTimeout = INFINITE;
+				if (IsDebuggerPresent()) nTimeout = 120000;
 				#endif
 				WaitForSingleObject(ghSetWndSendTabsEvent, nTimeout);
 			}
@@ -4931,28 +4954,70 @@ BOOL Attach2Gui()
 	STARTUPINFO si; memset(&si, 0, sizeof(si));
 	si.cb = sizeof(si);
 	DWORD dwSelfPID = GetCurrentProcessId();
+	wchar_t* pszSlash = NULL;
 	
 	szExe[0] = L'"';
 	if ((nLen = GetEnvironmentVariableW(L"ConEmuBaseDir", szExe+1, MAX_PATH)) > 0)
 	{
 		if (szExe[nLen] != L'\\') { szExe[nLen+1] = L'\\'; szExe[nLen+2] = 0; }
 	}
-	else if ((nLen=GetModuleFileName(0, szExe+1, MAX_PATH)) > 0)
+	else
 	{
-		wchar_t* pszSlash = wcsrchr ( szExe, L'\\' );
-		if (pszSlash)
+		if (!GetModuleFileName(0, szExe+1, MAX_PATH) || !(pszSlash = wcsrchr ( szExe, L'\\' )))
 		{
-			lstrcpyW(pszSlash+1, L"ConEmu\\ConEmuC.exe");
-			if (!FileExists(szExe+1))
-			{
-				lstrcpyW(pszSlash+1, L"ConEmuC.exe");
-			}
+			ShowMessageGui(CECantStartServer2, MB_ICONSTOP|MB_SYSTEMMODAL);
+			return FALSE;
 		}
+		//if ((nLen=GetModuleFileName(0, szExe+1, MAX_PATH)) > 0)
+		//wchar_t* pszSlash = wcsrchr ( szExe, L'\\' );
+		//if (pszSlash)
+		//{
+		pszSlash[1] = 0;
+		//lstrcpyW(pszSlash+1, L"ConEmu\\ConEmuC.exe");
+		//if (!FileExists(szExe+1))
+		//{
+		//	lstrcpyW(pszSlash+1, L"ConEmuC.exe");
+		//}
+		//}
+	}
+	pszSlash = szExe + lstrlenW(szExe);
+
+	BOOL lbFound = FALSE;
+
+	// Для фанатов 64-битных версий
+	#ifdef WIN64
+	if (!lbFound)
+	{
+		lstrcpyW(pszSlash, L"ConEmu\\ConEmuC64.exe");
+		lbFound = FileExists(szExe+1);
+	}
+	if (!lbFound)
+	{
+		lstrcpyW(pszSlash, L"ConEmuC64.exe");
+		lbFound = FileExists(szExe+1);
+	}
+	#endif
+	if (!lbFound)
+	{
+		lstrcpyW(pszSlash, L"ConEmu\\ConEmuC.exe");
+		lbFound = FileExists(szExe+1);
+	}
+	if (!lbFound)
+	{
+		lstrcpyW(pszSlash, L"ConEmuC.exe");
+		lbFound = FileExists(szExe+1);
+	}
+	if (!lbFound)
+	{
+		TODO("GUI MessageBox! ServerNotFound!");
+		ShowMessageGui(CECantStartServer3, MB_ICONSTOP|MB_SYSTEMMODAL);
+		return FALSE;
 	}
 	
 	//if (IsWindows64())
 	//	wsprintf(szExe+lstrlenW(szExe), L"ConEmuC64.exe\" /ATTACH /PID=%i", dwSelfPID);
 	//else
+
 	wsprintf(szExe+lstrlenW(szExe), L"\" /ATTACH /FARPID=%i", dwSelfPID);
 	
 	
@@ -4960,7 +5025,7 @@ BOOL Attach2Gui()
 			NULL, &si, &pi))
 	{
 		// Хорошо бы ошибку показать?
-		ShowMessage(CECantStartServer, 1); // "ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
+		ShowMessageGui(CECantStartServer, MB_ICONSTOP|MB_SYSTEMMODAL); // "ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
 	}
 	else
 	{

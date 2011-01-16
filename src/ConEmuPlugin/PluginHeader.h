@@ -147,6 +147,7 @@ BOOL OutDataWrite(LPVOID apData, DWORD anSize);
 //BOOL IsKeyChanged(BOOL abAllowReload);
 int ShowMessage(int aiMsg, int aiButtons);
 int ShowMessageA(int aiMsg, int aiButtons);
+int ShowMessageGui(int aiMsg, int aiButtons);
 int FUNC_X(ShowMessage)(int aiMsg, int aiButtons);
 int FUNC_Y(ShowMessage)(int aiMsg, int aiButtons);
 //void ReloadMacroA();

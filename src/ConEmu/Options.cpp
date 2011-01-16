@@ -3695,7 +3695,7 @@ bool CSettings::isKeyboardHooks()
 						L"If You choose 'Yes' - ConEmu will install keyboard hook. \n"
 						L"So, You must allow that in antiviral software (such as AVP). \n\n"
 						L"You can change behavior later via Settings->Features->\n"
-						L"'Install keyboard hooks (Vista && Win7)' check box, or\n"
+						L"'Install keyboard hooks (Vista & Win7)' check box, or\n"
 						L"'KeyboardHooks' value in ConEmu settings (registry or xml)."
 						, L"ConEmu", MB_YESNOCANCEL|MB_ICONQUESTION);
 		
@@ -6983,7 +6983,11 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 						//DisplayLastError( IsWindows64()
 						//	? L"Can't start ConEmuC64.exe, console font registration failed!"
 						//	: L"Can't start ConEmuC.exe, console font registration failed!");
+						#ifdef WIN64
+						DisplayLastError(L"Can't start ConEmuC64.exe, console font registration failed!");
+						#else
 						DisplayLastError(L"Can't start ConEmuC.exe, console font registration failed!");
+						#endif
 					}
 					else
 					{

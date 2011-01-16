@@ -78,11 +78,25 @@ BOOL apiShowWindowAsync(HWND ahWnd, int anCmdShow)
 
 BOOL FileExists(LPCWSTR asFilePath)
 {
-	WARNING("FindFirstFile использовать нельзя из-за симлинков");
 	WIN32_FIND_DATAW fnd = {0};
 	HANDLE hFind = FindFirstFile(asFilePath, &fnd);
 	if (hFind == INVALID_HANDLE_VALUE)
-		return FALSE;
+	{
+		BOOL lbFileFound = FALSE;
+		// FindFirstFile может обломаться из-за симлинков
+		if (GetLastError() == ERROR_ACCESS_DENIED)
+		{
+			hFind = CreateFile(asFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+			if (hFind != NULL)
+			{
+				BY_HANDLE_FILE_INFORMATION fi = {0};
+				if (GetFileInformationByHandle(hFind, &fi) && !(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+					lbFileFound = TRUE;
+			}
+			CloseHandle(hFind);
+		}
+		return lbFileFound;
+	}
 
 	BOOL lbFound = FALSE;
 	do {

@@ -289,7 +289,6 @@ dirs:
 	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
 	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
 
-!ifndef DEBUG
 .PHONY: clean
 clean:
 	@echo copying release files
@@ -311,11 +310,6 @@ clean:
 #	@del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
 #	@rd $(OUTDIR)$(ADDOUTDIR)
 
-!else
-.PHONY: clean
-clean:
-	@echo ConEmuHk done
-!endif
 
 $(OBJDIR)\Entry.obj: Entry.cpp
 

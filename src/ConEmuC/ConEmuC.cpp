@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_COMSPEC_STARTED_MSGBOX
 //  #define SHOW_SERVER_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
+//  #define SHOW_STARTED_PRINT
 #elif defined(__GNUC__)
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
@@ -150,6 +151,29 @@ int __cdecl main()
 	//#ifdef _DEBUG
 	//InitializeCriticalSection(&gcsHeap);
 	//#endif
+
+#ifdef SHOW_STARTED_PRINT
+  BOOL lbDbgWrite; DWORD nDbgWrite; HANDLE hDbg; char szDbgString[255], szHandles[128];
+  sprintf(szDbgString, "ConEmuC: PID=%u", GetCurrentProcessId());
+  MessageBoxA(0, GetCommandLineA(), szDbgString, MB_SYSTEMMODAL);
+
+  hDbg = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+	  0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+
+  sprintf(szHandles, "STD_OUTPUT_HANDLE(0x%08X) STD_ERROR_HANDLE(0x%08X) CONOUT$(0x%08X)",
+	  (DWORD)GetStdHandle(STD_OUTPUT_HANDLE), (DWORD)GetStdHandle(STD_ERROR_HANDLE), (DWORD)hDbg);
+
+  printf("ConEmuC: Printf: %s\n", szHandles);
+  sprintf(szDbgString, "ConEmuC: STD_OUTPUT_HANDLE: %s\n", szHandles);
+  lbDbgWrite = WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), szDbgString, lstrlenA(szDbgString), &nDbgWrite, NULL);
+  sprintf(szDbgString, "ConEmuC: STD_ERROR_HANDLE:  %s\n", szHandles);
+  lbDbgWrite = WriteFile(GetStdHandle(STD_ERROR_HANDLE), szDbgString, lstrlenA(szDbgString), &nDbgWrite, NULL);
+  sprintf(szDbgString, "ConEmuC: CONOUT$: %s", szHandles);
+  lbDbgWrite = WriteFile(hDbg, szDbgString, lstrlenA(szDbgString), &nDbgWrite, NULL);
+  CloseHandle(hDbg);
+  //sprintf(szDbgString, "ConEmuC: PID=%u", GetCurrentProcessId());
+  //MessageBoxA(0, "Press Ok to continue", szDbgString, MB_SYSTEMMODAL);
+#endif
 
 	int iRc = 100;
 	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
@@ -313,6 +337,11 @@ int __cdecl main()
 	/* *** Запуск дочернего процесса *** */
 	/* ********************************* */
 	
+#ifdef SHOW_STARTED_PRINT
+  sprintf(szDbgString, "ConEmuC: PID=%u", GetCurrentProcessId());
+  MessageBoxA(0, "Press Ok to continue", szDbgString, MB_SYSTEMMODAL);
+#endif
+
 	// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
 	// Перед CreateProcessW нужно ставить 0, иначе из-за антивирусов может наступить
 	// timeout ожидания окончания процесса еще ДО выхода из CreateProcessW
@@ -1644,12 +1673,36 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				&& wcschr(pszTitle+1, L'"') == pszEndQ)
 			{
 				*pszEndQ = 0; pszTitle ++;
+				bool lbCont = true;
+				// "F:\Temp\1\ConsoleTest.exe ." - кавычки не нужны, после программы идут параметры
+				if (lbCont && (*pszTitle != L'"') && ((*(pszEndQ-1) == L'.') ||(*(pszEndQ-1) == L' ')))
+				{
+					pwszCopy = pszTitle;
+					wchar_t szTemp[MAX_PATH+1];
+					if (NextArg(&pwszCopy, szTemp) == 0)
+					{
+						// В полученном пути к файлу (исполняемому) не должно быть пробелов?
+						if (!wcschr(szTemp, ' ') && IsFilePath(szTemp) && FileExists(szTemp))
+						{
+							lbCont = false;
+							lbNeedCutStartEndQuot = TRUE;
+						}
+					}
+				}
 				// "C:\Program Files\FAR\far.exe" - кавычки нужны, иначе не запустится
-				DWORD dwFileAttr = GetFileAttributes(pszTitle);
-				if (dwFileAttr != INVALID_FILE_ATTRIBUTES && !(dwFileAttr & FILE_ATTRIBUTE_DIRECTORY))
-					lbNeedCutStartEndQuot = FALSE;
-				else
-					lbNeedCutStartEndQuot = TRUE;
+				if (lbCont)
+				{
+					if (IsFilePath(pszTitle) && FileExists(pszTitle))
+					{
+						lbCont = false;
+						lbNeedCutStartEndQuot = FALSE;
+					}
+					//DWORD dwFileAttr = GetFileAttributes(pszTitle);
+					//if (dwFileAttr != INVALID_FILE_ATTRIBUTES && !(dwFileAttr & FILE_ATTRIBUTE_DIRECTORY))
+					//	lbNeedCutStartEndQuot = FALSE;
+					//else
+					//	lbNeedCutStartEndQuot = TRUE;
+				}
 			} else {
 				pszEndQ = NULL;
 			}

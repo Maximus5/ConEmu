@@ -59,6 +59,7 @@ static const wchar_t user32[]   = L"user32.dll";
 static const wchar_t shell32[]  = L"shell32.dll";
 
 static BOOL gbTemporaryDisabled = FALSE;
+static BOOL gbInShellExecuteEx = FALSE;
 
 //typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
 OnLibraryLoaded_t gfOnLibraryLoaded = NULL;
@@ -1171,6 +1172,22 @@ static BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandL
 			return lbRc;
 	}
 
+	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить
+	//            левый хэндл (hStdOutput = 0x00010001) 
+	//            и недокументированный флаг 0x400 в lpStartupInfo->dwFlags
+	if (gbInShellExecuteEx && lpStartupInfo->dwFlags == 0x401)
+	{
+		OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
+		if (GetVersionEx(&osv) && osv.dwMajorVersion == 5 && osv.dwMinorVersion == 1)
+		{
+			if (lpStartupInfo->hStdOutput == (HANDLE)0x00010001 && !lpStartupInfo->hStdError)
+			{
+				lpStartupInfo->hStdOutput = NULL;
+				lpStartupInfo->dwFlags &= ~0x400;
+			}
+		}
+	}
+
 	lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 	
     if (ph && ph->PostCallBack) {
@@ -1273,6 +1290,9 @@ static BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 	if (gbShellNoZoneCheck)
 		lpExecInfo->fMask |= SEE_MASK_NOZONECHECKS;
 
+	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить левый хэндл
+	gbInShellExecuteEx = TRUE;
+
 	//BUGBUG: FAR периодически валится на этой функции
 	//должно быть: lpExecInfo->cbSize==0x03C; lpExecInfo->fMask==0x00800540;
 	if (ph && ph->ExceptCallBack)
@@ -1287,6 +1307,8 @@ static BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 	{
 		lbRc = F(ShellExecuteExW)(lpExecInfo);
 	}
+
+	gbInShellExecuteEx = FALSE;
 
 	return lbRc;
 }

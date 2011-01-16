@@ -5359,8 +5359,9 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
     ConPrc.IsTelnet = lstrcmpi(ConPrc.Name, _T("telnet.exe"))==0;
     
     TODO("Тут главное не промахнуться, и не посчитать корневой conemuc, из которого запущен сам FAR, или который запустил плагин, чтобы GUI прицепился к этой консоли");
-    ConPrc.IsCmd = lstrcmpi(ConPrc.Name, _T("cmd.exe"))==0 || lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0;
-    //|| lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0;
+    ConPrc.IsCmd = lstrcmpi(ConPrc.Name, _T("cmd.exe"))==0
+                   || lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0
+                   || lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0;
 
     ConPrc.NameChecked = true;
 }
@@ -9747,7 +9748,7 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
         #pragma warning(disable : 6400)
         #endif
         if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0
-			/*|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0*/)
+			|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0)
             szCMD[0] = 0;
         #if !defined(__GNUC__)
         #pragma warning( pop )

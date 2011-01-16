@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "TabBar.h"
 #include "VirtualConsole.h"
+#include "RealConsole.h"
 
 #if defined(__GNUC__)
 #define EXT_GNUC_LOG
@@ -808,32 +809,37 @@ BOOL CConEmuBack::TrackMouse()
 BOOL CConEmuBack::CheckMouseOverScroll()
 {
 	BOOL lbOverVScroll = FALSE;
-	BOOL lbBufferMode = gConEmu.ActiveCon()->RCon()->isBufferHeight();
-	
-	if (lbBufferMode)
+	CVirtualConsole* pVCon = gConEmu.ActiveCon();
+	CRealConsole* pRCon = pVCon ? gConEmu.ActiveCon()->RCon() : NULL;
+	if (pRCon)
 	{
-		// Если прокрутку тащили мышкой и отпустили
-		if (mb_VTracking && !isPressed(VK_LBUTTON))
-		{	// Сбросим флажок
-			mb_VTracking = false;
-		}
+		BOOL lbBufferMode = pRCon->isBufferHeight();
 		
-		// чтобы полоса не скрылась, когда ее тащат мышкой
-		if (mb_VTracking)
+		if (lbBufferMode)
 		{
-			lbOverVScroll = TRUE;
-		}
-		else // Теперь проверим, если мышь в над скроллбаром - показать его
-		{
-			POINT ptCur; RECT rcScroll;
-			GetCursorPos(&ptCur);
-			GetWindowRect(mh_WndScroll, &rcScroll);
-			if (PtInRect(&rcScroll, ptCur))
+			// Если прокрутку тащили мышкой и отпустили
+			if (mb_VTracking && !isPressed(VK_LBUTTON))
+			{	// Сбросим флажок
+				mb_VTracking = false;
+			}
+			
+			// чтобы полоса не скрылась, когда ее тащат мышкой
+			if (mb_VTracking)
 			{
-				// Если не проверять - не получится начать выделение с правого края окна
-				//if (!gSet.isSelectionModifierPressed())
-				if (!(isPressed(VK_SHIFT) || isPressed(VK_CONTROL) || isPressed(VK_MENU) || isPressed(VK_LBUTTON)))
-					lbOverVScroll = TRUE;
+				lbOverVScroll = TRUE;
+			}
+			else // Теперь проверим, если мышь в над скроллбаром - показать его
+			{
+				POINT ptCur; RECT rcScroll;
+				GetCursorPos(&ptCur);
+				GetWindowRect(mh_WndScroll, &rcScroll);
+				if (PtInRect(&rcScroll, ptCur))
+				{
+					// Если не проверять - не получится начать выделение с правого края окна
+					//if (!gSet.isSelectionModifierPressed())
+					if (!(isPressed(VK_SHIFT) || isPressed(VK_CONTROL) || isPressed(VK_MENU) || isPressed(VK_LBUTTON)))
+						lbOverVScroll = TRUE;
+				}
 			}
 		}
 	}

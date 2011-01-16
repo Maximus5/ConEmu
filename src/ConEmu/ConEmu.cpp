@@ -199,17 +199,31 @@ CConEmuMain::CConEmuMain()
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 	*pszSlash = 0;
 
+	bool lbBaseFound = false;
 	wchar_t szBaseFile[MAX_PATH+12];
 	lstrcpy(szBaseFile, ms_ConEmuExeDir);
 	// Сначала проверяем подпапку
 	pszSlash = szBaseFile + lstrlen(szBaseFile);
-	lstrcat(szBaseFile, L"\\ConEmu\\ConEmuC.exe");
+	lstrcpy(pszSlash, L"\\ConEmu\\ConEmuC.exe");
 	if (FileExists(szBaseFile))
 	{
 		lstrcpy(ms_ConEmuBaseDir, ms_ConEmuExeDir);
 		lstrcat(ms_ConEmuBaseDir, L"\\ConEmu");
+		lbBaseFound = true;
 	}
-	else
+	#ifdef WIN64
+	if (!lbBaseFound)
+	{
+		lstrcpy(pszSlash, L"\\ConEmu\\ConEmuC64.exe");
+		if (FileExists(szBaseFile))
+		{
+			lstrcpy(ms_ConEmuBaseDir, ms_ConEmuExeDir);
+			lstrcat(ms_ConEmuBaseDir, L"\\ConEmu");
+			lbBaseFound = true;
+		}
+	}
+	#endif
+	if (!lbBaseFound)
 	{
 		lstrcpy(ms_ConEmuBaseDir, ms_ConEmuExeDir);
 	}
@@ -250,7 +264,14 @@ CConEmuMain::CConEmuMain()
 
 
 	lstrcpy(ms_ConEmuCExeFull, ms_ConEmuBaseDir);
-	lstrcat(ms_ConEmuCExeFull, L"\\ConEmuC.exe");
+	pszSlash = ms_ConEmuCExeFull + lstrlen(ms_ConEmuCExeFull);
+	#ifdef WIN64
+	lstrcpy(pszSlash, L"\\ConEmuC64.exe");
+	if (!FileExists(ms_ConEmuCExeFull))
+	#endif
+	{
+		lstrcpy(pszSlash, L"\\ConEmuC.exe");
+	}
 	
 	// Если ConEmu.exe запущен с сетевого ресурса -  Сетевые пути не менять
 	if (ms_ConEmuExe[0] == L'\\' /*|| wcschr(ms_ConEmuExe, L' ') == NULL*/)

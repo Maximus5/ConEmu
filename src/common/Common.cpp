@@ -89,7 +89,7 @@ const UINT gnConsoleSectionSize = sizeof(CONSOLE_INFO)+1024;
 
 
 
-
+// Возвращает 0, если успешно, иначе - ошибка
 int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wchar_t** rsArgStart/*=NULL*/)
 {
     LPCWSTR psCmdLine = *asCmdLine, pch = NULL;
@@ -100,17 +100,21 @@ int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wch
     if (ch == 0) return CERR_CMDLINEEMPTY;
 
     // аргумент начинается с "
-    if (ch == L'"') {
+    if (ch == L'"')
+	{
         psCmdLine++;
         pch = wcschr(psCmdLine, L'"');
         if (!pch) return CERR_CMDLINE;
-        while (pch[1] == L'"') {
+        while (pch[1] == L'"')
+		{
             pch += 2;
             pch = wcschr(pch, L'"');
             if (!pch) return CERR_CMDLINE;
         }
         // Теперь в pch ссылка на последнюю "
-    } else {
+    }
+	else
+	{
         // До конца строки или до первого пробела
         //pch = wcschr(psCmdLine, L' ');
         // 09.06.2009 Maks - обломался на: cmd /c" echo Y "

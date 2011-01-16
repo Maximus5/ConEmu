@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "ConEmu.h"
 #include "VirtualConsole.h"
+#include "TrayIcon.h"
 
 WARNING("!!! Запустили far, открыли edit, перешли в панель, открыли второй edit, ESC, ни одна вкладка не активна");
 // Более того, если есть еще одна консоль - активной станет первая вкладка следующей НЕАКТИВНОЙ консоли
@@ -595,6 +596,12 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 				}
 				ClientToScreen(hwnd, &pt);
 				pVCon->ShowPopupMenu(pt);
+			}
+			else
+			{
+				LRESULT nCloseIdx = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_APPCLOSE, 0);
+				if (nIdx == nCloseIdx)
+					Icon.HideWindowToTray();
 			}
 			return 0;
 		}

@@ -1,3 +1,12 @@
+2011.01.15
+[%] Issue 350: Click right button on close icon don't work while caption is hidden.
+[%] Issue 351: ¬ Windows XP после обновлени€ Far до версии 2.0 build 1783 перестал работать вывод консольных команд.
+[%] Issue 353: Ќе работал Detach в FAR (CtrlAltTab).
+[%] Issue 354: "mycmd ." точка не передаетс€ команде.
+[*] Issue 349: ѕри желании, в 64-битных ќ— можно использовать 64-битный ConEmuC64.
+[+] “естируем первую версию msi-инсталл€тора.
+
+
 2011.01.03
 [%] Issue 346: не работает запуск с комстроки.
 
