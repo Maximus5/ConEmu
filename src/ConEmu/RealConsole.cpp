@@ -147,7 +147,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	//m_DetectedDialogs.Count = 0;
 	//mn_DetectCallCount = 0;
 
-    wcscpy(Title, L"ConEmu");
+    wcscpy(Title, gConEmu.ms_ConEmuVer);
     wcscpy(TitleFull, Title);
     wcscpy(ms_PanelTitle, Title);
 	mb_ForceTitleChanged = FALSE;
@@ -202,6 +202,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mh_ActiveRConServerThread = NULL;
     memset(mn_RConServerThreadsId, 0, sizeof(mn_RConServerThreadsId));
 
+	mb_ThawRefreshThread = FALSE;
     ZeroStruct(con); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&csCON);
 	con.hInSetSize = CreateEvent(0,TRUE,TRUE,0);
     mb_BuferModeChangeLocked = FALSE;
@@ -2189,7 +2190,7 @@ BOOL CRealConsole::StartProcess()
             }
             MCHKHEAP
             //Box(psz);
-            int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
+            int nBrc = MessageBox(NULL, psz, gConEmu.ms_ConEmuVer, nButtons);
             Free(psz); Free(pszErr);
             if (nBrc!=IDYES)
 			{
@@ -2257,7 +2258,7 @@ void CRealConsole::InitNames()
 
 	MCHKHEAP;
 
-	m_GetDataPipe.InitName(L"ConEmu", CESERVERREADNAME, L".", mn_ConEmuC_PID);
+	m_GetDataPipe.InitName(gConEmu.ms_ConEmuVer, CESERVERREADNAME, L".", mn_ConEmuC_PID);
 }
 
 // Если включена прокрутка - скорректировать индекс ячейки из экранных в буферные
@@ -3361,7 +3362,7 @@ void CRealConsole::Box(LPCTSTR szText)
 #ifdef _DEBUG
     _ASSERT(FALSE);
 #endif
-    MessageBox(NULL, szText, _T("ConEmu"), MB_ICONSTOP);
+    MessageBox(NULL, szText, gConEmu.ms_ConEmuVer, MB_ICONSTOP);
 }
 
 
@@ -8014,40 +8015,48 @@ void CRealConsole::OnGuiFocused(BOOL abFocus)
 	if (!this) return;
 
 	// Если FALSE - сервер увеличивает интервал опроса консоли (GUI теряет фокус)
-	BOOL lbThaw = abFocus || !gSet.isSleepInBackground;
+	mb_ThawRefreshThread = abFocus || !gSet.isSleepInBackground;
 
 	// Разрешит "заморозку" серверной нити и обновит hdr.bConsoleActive в мэппинге
-	UpdateServerActive(lbThaw);
-}
-
-void CRealConsole::UpdateServerActive(BOOL abThaw)
-{
-	if (!this) return;
-
-	BOOL fSuccess = FALSE;
-
 	if (m_ConsoleMap.IsValid() && ms_ConEmuC_Pipe[0])
 	{
 		BOOL lbNeedChange = FALSE;
 		BOOL lbActive = isActive();
 
-		if (m_ConsoleMap.Ptr()->bConsoleActive == lbActive && m_ConsoleMap.Ptr()->bThawRefreshThread == abThaw)
+		if (m_ConsoleMap.Ptr()->bConsoleActive == lbActive 
+			&& m_ConsoleMap.Ptr()->bThawRefreshThread == mb_ThawRefreshThread)
+		{
 			lbNeedChange = FALSE;
+		}
 		else
+		{
 			lbNeedChange = TRUE;
+		}
 
 		if (lbNeedChange)
-		{
-			int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2;
-			DWORD dwRead = 0;
-			CESERVER_REQ lIn = {{nInSize}};
-			lIn.dwData[0] = lbActive;
-			lIn.dwData[1] = abThaw;
-			
-			ExecutePrepareCmd(&lIn, CECMD_ONACTIVATION, lIn.hdr.cbSize);
+			UpdateServerActive(lbActive);
+	}
+}
 
-			fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, &lIn, lIn.hdr.cbSize, &lIn, lIn.hdr.cbSize, &dwRead, 500);
-		}
+// Обновить в сервере флаги Active & ThawRefreshThread,
+// а заодно заставить перечитать содержимое консоли (если abActive == TRUE)
+void CRealConsole::UpdateServerActive(BOOL abActive)
+{
+	if (!this) return;
+
+	BOOL fSuccess = FALSE;
+
+	if (ms_ConEmuC_Pipe[0])
+	{
+		int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2;
+		DWORD dwRead = 0;
+		CESERVER_REQ lIn = {{nInSize}};
+		lIn.dwData[0] = abActive;
+		lIn.dwData[1] = mb_ThawRefreshThread;
+		
+		ExecutePrepareCmd(&lIn, CECMD_ONACTIVATION, lIn.hdr.cbSize);
+
+		fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, &lIn, lIn.hdr.cbSize, &lIn, lIn.hdr.cbSize, &dwRead, 500);
 	}
 }
 
@@ -8281,7 +8290,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
         for (i=1; i<tabsCount; i++) {
             if (tabs[i].Name[0] == 0) {
                 _ASSERTE(tabs[i].Name[0]!=0);
-                //wcscpy(tabs[i].Name, L"ConEmu");
+                //wcscpy(tabs[i].Name, gConEmu.ms_ConEmuVer);
             }
         }
         #endif
@@ -8597,14 +8606,18 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
     
 
     DWORD dwPID = CanActivateFarWindow(anWndIndex);
-	if (!dwPID) {
+	if (!dwPID)
+	{
         return FALSE;
-	} else if (dwPID == (DWORD)-1) {
+	}
+	else if (dwPID == (DWORD)-1)
+	{
         return TRUE; // Нужное окно уже выделено, лучше не дергаться...
 	}
 
 
     BOOL lbRc = FALSE;
+	DWORD nWait = -1;
 
     CConEmuPipe pipe(dwPID, 100);
     if (pipe.Init(_T("CRealConsole::ActivateFarWindow")))
@@ -8632,7 +8645,8 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 			{
                 tabs = (ConEmuTab*)pipe.GetPtr(&cbBytesRead);
                 _ASSERTE(cbBytesRead==(TabHdr.nTabCount*sizeof(ConEmuTab)));
-                if (cbBytesRead == (TabHdr.nTabCount*sizeof(ConEmuTab))) {
+                if (cbBytesRead == (TabHdr.nTabCount*sizeof(ConEmuTab)))
+				{
                     SetTabs(tabs, TabHdr.nTabCount);
                     lbRc = TRUE;
                 }
@@ -8640,6 +8654,14 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
             }
 
             pipe.Close();
+
+			// Теперь нужно передернуть сервер, чтобы он перечитал содержимое консоли
+			UpdateServerActive(TRUE);
+			// И MonitorThread, чтобы он получил новое содержимое
+			ResetEvent(mh_ApplyFinished);
+			mn_LastConsolePacketIdx--;
+			SetEvent(mh_MonitorThreadEvent);
+			nWait = WaitForSingleObject(mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
         }
     }
 
@@ -8731,8 +8753,9 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 
 	ExecutePrepareCmd(&In, CECMD_GETOUTPUT, sizeof(CESERVER_REQ_HDR));
 
-	Pipe.InitName(L"ConEmu", L"%s", ms_ConEmuC_Pipe, 0);
-	if (!Pipe.Transact(&In, In.cbSize, &pOut, &cbRead)) {
+	Pipe.InitName(gConEmu.ms_ConEmuVer, L"%s", ms_ConEmuC_Pipe, 0);
+	if (!Pipe.Transact(&In, In.cbSize, &pOut, &cbRead))
+	{
 		MBoxA(Pipe.GetErrorText());
 		return FALSE;
 	}
@@ -10609,7 +10632,8 @@ BOOL CRealConsole::OpenMapHeader(BOOL abFromAttach)
 
 	lbResult = TRUE;
 wrap:
-	if (!lbResult && szErr[0]) {
+	if (!lbResult && szErr[0])
+	{
 		gConEmu.DebugStep(szErr);
 		MBoxA(szErr);
 	}

@@ -647,7 +647,7 @@ wrap:
 		LPCWSTR pszMsg = NULL;
 		if (lbProcessesLeft)
 		{
-			pszMsg = L"\n\nPress Enter to exit...";
+			pszMsg = L"\n\nPress Enter or Esc to exit...";
 			lbDontShowConsole = gnRunMode != RM_SERVER;
 		}
 		else
@@ -655,15 +655,16 @@ wrap:
 			if (gbRootWasFoundInCon == 1)
 			{
 				if (gbRootAliveLess10sec) // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
-					pszMsg = L"\n\nConEmuC: Root process was alive less than 10 sec.\nPress Enter to close console...";
+					pszMsg = L"\n\nConEmuC: Root process was alive less than 10 sec.\nPress Enter or Esc to close console...";
 				else
-					pszMsg = L"\n\nPress Enter to close console...";
+					pszMsg = L"\n\nPress Enter or Esc to close console...";
 			}
 		}
 		if (!pszMsg) // Иначе - сообщение по умолчанию
-			pszMsg = L"\n\nPress Enter to close console, or wait...";
+			pszMsg = L"\n\nPress Enter or Esc to close console, or wait...";
 
-		ExitWaitForKey(VK_RETURN, pszMsg, TRUE, lbDontShowConsole);
+		WORD vkKeys[3]; vkKeys[0] = VK_RETURN; vkKeys[1] = VK_ESCAPE; vkKeys[2] = 0;
+		ExitWaitForKey(vkKeys, pszMsg, TRUE, lbDontShowConsole);
 		if (iRc == CERR_PROCESSTIMEOUT)
 		{
 			int nCount = srv.nProcessCount;
@@ -1849,7 +1850,7 @@ void EmergencyShow()
 	}
 }
 
-void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole)
+void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole)
 {
 	// Чтобы ошибку было нормально видно
 	if (!abDontShowConsole)
@@ -1927,9 +1928,21 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontSh
 		{
 			if (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount) && dwCount)
 			{
-				if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown 
-				 	&& r.Event.KeyEvent.wVirtualKeyCode == vkKey)
-				break;
+				bool lbMatch = false;
+				if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown)
+				{
+					if (pvkKeys)
+					{
+						for (int i = 0; !lbMatch && pvkKeys[i]; i++)
+					 		lbMatch = (r.Event.KeyEvent.wVirtualKeyCode == pvkKeys[i]);
+					}
+					else
+					{
+						lbMatch = (r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE);
+					}
+				}
+				if (lbMatch)
+					break;
 			}
 		}
 		Sleep(50);
@@ -3209,7 +3222,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				SetConsoleSize(nBufferHeight, crNewSize, rNewRect, ":CECMD_SETSIZESYNC");
 
 				WARNING("!! Не может ли возникнуть конфликт с фаровским фиксом для убирания полос прокрутки?");
-				if (in.hdr.nCmd == CECMD_SETSIZESYNC) {
+				if (in.hdr.nCmd == CECMD_SETSIZESYNC)
+				{
 					CESERVER_REQ *pPlgIn = NULL, *pPlgOut = NULL;
 					//TODO("Пока закомментарим, чтобы GUI реагировало побыстрее");
 					if (in.SetSize.dwFarPID /*&& !nBufferHeight*/)
@@ -3488,6 +3502,9 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				srv.pConsole->hdr.bThawRefreshThread = in.dwData[1];
 				//srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
 				UpdateConsoleMapHeader();
+				// Если консоль активировали - то принудительно перечитать ее содержимое
+				if (srv.pConsole->hdr.bConsoleActive)
+					ReloadFullConsoleInfo(TRUE);
 			}
 		} break;
 

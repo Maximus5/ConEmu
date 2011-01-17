@@ -95,6 +95,7 @@ int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wch
     LPCWSTR psCmdLine = *asCmdLine, pch = NULL;
     wchar_t ch = *psCmdLine;
     size_t nArgLen = 0;
+	bool lbQMode = false;
     
     while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
     if (ch == 0) return CERR_CMDLINEEMPTY;
@@ -102,6 +103,7 @@ int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wch
     // аргумент начинается с "
     if (ch == L'"')
 	{
+		lbQMode = true;
         psCmdLine++;
         pch = wcschr(psCmdLine, L'"');
         if (!pch) return CERR_CMDLINE;
@@ -136,7 +138,7 @@ int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wch
     
     // Finalize
     ch = *psCmdLine; // может указывать на закрывающую кавычку
-    if (ch == L'"') ch = *(++psCmdLine);
+    if (lbQMode && ch == L'"') ch = *(++psCmdLine);
     while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
     *asCmdLine = psCmdLine;
     

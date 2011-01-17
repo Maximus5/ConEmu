@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Tlhelp32.h>
 #include <Shlobj.h>
 #include <lm.h>
+#include <strsafe.h>
 //#include "../common/ConEmuCheck.h"
 #include "VirtualConsole.h"
 #include "options.h"
@@ -45,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "tabbar.h"
 #include "ConEmuPipe.h"
+#include "version.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
@@ -108,6 +110,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CConEmuMain::CConEmuMain()
 {
+	StringCchPrintf(ms_ConEmuVer, countof(ms_ConEmuVer), L"ConEmu %02u%02u%02u", (MVV_1%100),MVV_2,MVV_3);
+	
 	mp_TabBar = NULL;
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
 
@@ -974,7 +978,7 @@ void CConEmuMain::AskChangeBufferHeight()
 	int nBtn = MessageBox(ghWnd, lbBufferHeight ? 
 			L"Do You want to turn bufferheight OFF?" :
 			L"Do You want to turn bufferheight ON?",
-			L"ConEmu", MB_ICONQUESTION|MB_OKCANCEL);
+			ms_ConEmuVer, MB_ICONQUESTION|MB_OKCANCEL);
 	gbDontEnable = b;
 	if (nBtn != IDOK) return;
 
@@ -3290,7 +3294,7 @@ LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL ab
 	{
 		/*if (IsDebuggerPresent()) { -- не требуется. был баг с памятью
 			BOOL b = gbDontEnable; gbDontEnable = TRUE;
-			int nBtn = MessageBox(ghWnd, L"Debugger active!\nShellExecuteEx(runas) my fails, when VC IDE\ncatches Microsoft C++ exceptions.\nContinue?", L"ConEmu", MB_ICONASTERISK|MB_YESNO|MB_DEFBUTTON2);
+			int nBtn = MessageBox(ghWnd, L"Debugger active!\nShellExecuteEx(runas) my fails, when VC IDE\ncatches Microsoft C++ exceptions.\nContinue?", ms_ConEmuVer, MB_ICONASTERISK|MB_YESNO|MB_DEFBUTTON2);
 			gbDontEnable = b;
 			if (nBtn != IDYES)
 				return (FALSE);
@@ -5431,7 +5435,7 @@ DWORD CConEmuMain::GetFarPID()
 LPCTSTR CConEmuMain::GetLastTitle(bool abUseDefault/*=true*/)
 {
     if (!Title[0] && abUseDefault)
-        return _T("ConEmu");
+        return ms_ConEmuVer;
     return Title;
 }
 
@@ -5922,7 +5926,7 @@ BOOL CConEmuMain::OnCloseQuery()
 		if (nProgress) { wsprintf(pszText, L"Incomplete operations: %i\r\n", nProgress); pszText += lstrlen(pszText); }
 		if (nEditors) { wsprintf(pszText, L"Unsaved editor windows: %i\r\n", nEditors); pszText += lstrlen(pszText); }
 		lstrcpy(pszText, L"\r\nProceed with shutdown?");
-		int nBtn = MessageBoxW(ghWnd, szText, L"ConEmu", MB_OKCANCEL|MB_ICONEXCLAMATION);
+		int nBtn = MessageBoxW(ghWnd, szText, ms_ConEmuVer, MB_OKCANCEL|MB_ICONEXCLAMATION);
 		if (nBtn != IDOK)
 			return FALSE; // не закрывать
 	}
@@ -6950,17 +6954,21 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	/* Works, but has problems with dead chars */
 	wchar_t szTranslatedChars[11] = {0};
 	int nTranslatedChars = 0;
-	if (!GetKeyboardState(m_KeybStates)) {
+	if (!GetKeyboardState(m_KeybStates))
+	{
 		#ifdef _DEBUG
 		DWORD dwErr = GetLastError();
 		_ASSERTE(FALSE);
 		#endif
 		static bool sbErrShown = false;
-		if (!sbErrShown) {
+		if (!sbErrShown)
+		{
 			sbErrShown = true;
 			DisplayLastError(L"GetKeyboardState failed!");
 		}
-	} else {
+	}
+	else
+	{
 		HKL hkl = (HKL)GetActiveKeyboardLayout();
 		UINT nVK = wParam & 0xFFFF;
 		UINT nSC = ((DWORD)lParam & 0xFF0000) >> 16;
@@ -6975,13 +6983,15 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	/* Invalid ? */
 	wchar_t szTranslatedChars[16] = {0};
 
-	if (!GetKeyboardState(m_KeybStates)) {
+	if (!GetKeyboardState(m_KeybStates))
+	{
 		#ifdef _DEBUG
 		DWORD dwErr = GetLastError();
 		_ASSERTE(FALSE);
 		#endif
 		static bool sbErrShown = false;
-		if (!sbErrShown) {
+		if (!sbErrShown)
+		{
 			sbErrShown = true;
 			DisplayLastError(L"GetKeyboardState failed!");
 		}
@@ -7006,7 +7016,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 		WARNING("BUGBUG: похоже глючит в x64 на US-Dvorak");
 		int nTranslatedChars = ToUnicodeEx(nVK, nSC, m_KeybStates, szTranslatedChars, 15, 0, hkl);
-		if (nTranslatedChars >= 0) {
+		if (nTranslatedChars >= 0)
+		{
 			// 2 or more
 			// Two or more characters were written to the buffer specified by pwszBuff.
 			// The most common cause for this is that a dead-key character (accent or diacritic)
@@ -7014,7 +7025,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			// to form a single character. However, the buffer may contain more characters than the
 			// return value specifies. When this happens, any extra characters are invalid and should be ignored. 
 			szTranslatedChars[min(15,nTranslatedChars)] = 0;
-		} else if (nTranslatedChars == -1) {
+		}
+		else if (nTranslatedChars == -1)
+		{
 			// The specified virtual key is a dead-key character (accent or diacritic).
 			// This value is returned regardless of the keyboard layout, even if several
 			// characters have been typed and are stored in the keyboard state. If possible,
@@ -7023,7 +7036,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			// function writes the character SPACING ACUTE (0x00B4), 
 			// rather than the character NON_SPACING ACUTE (0x0301).
 			szTranslatedChars[0] = 0;
-		} else {
+		}
+		else
+		{
 			// Invalid
 			szTranslatedChars[0] = 0;
 		}
@@ -7086,7 +7101,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     }
 
     // Прокрутка в "буферном" режиме
-    if (gConEmu.mp_VActive->RCon()->isBufferHeight() && !gConEmu.mp_VActive->RCon()->isFarBufferSupported()
+    if (gConEmu.mp_VActive && gConEmu.mp_VActive->RCon()
+		&& gConEmu.mp_VActive->RCon()->isBufferHeight()
+		&& !gConEmu.mp_VActive->RCon()->isFarBufferSupported()
 		&& (messg == WM_KEYDOWN || messg == WM_KEYUP) &&
         (wParam == VK_DOWN || wParam == VK_UP || wParam == VK_NEXT || wParam == VK_PRIOR) &&
         isPressed(VK_CONTROL)
@@ -9528,7 +9545,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			//	if (nProgress) { wsprintf(pszText, L"Incomplete operations: %i\r\n", nProgress); pszText += lstrlen(pszText); }
 			//	if (nEditors) { wsprintf(pszText, L"Unsaved editor windows: %i\r\n", nEditors); pszText += lstrlen(pszText); }
 			//	lstrcpy(pszText, L"\r\nProceed with shutdown?");
-			//	int nBtn = MessageBoxW(ghWnd, szText, L"ConEmu", MB_OKCANCEL|MB_ICONEXCLAMATION);
+			//	int nBtn = MessageBoxW(ghWnd, szText, ms_ConEmuVer, MB_OKCANCEL|MB_ICONEXCLAMATION);
 			//	if (nBtn != IDOK)
 			//		return 0; // не закрывать
 			//}
@@ -9559,7 +9576,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
                 if (nDetachedCount > 0)
                 {
                     if (MessageBox(ghWnd, L"ConEmu is waiting for console attach.\nIt was started in 'Detached' mode.\nDo You want to cancel waiting?",
-                        L"ConEmu", MB_YESNO|MB_ICONQUESTION) != IDYES)
+                        ms_ConEmuVer, MB_YESNO|MB_ICONQUESTION) != IDYES)
                     return result;
                 }
                 Destroy();

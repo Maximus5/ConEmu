@@ -2017,6 +2017,9 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 	if (srv.dwRefreshThread && dwCurThId != srv.dwRefreshThread)
 	{
 		//ResetEvent(srv.hDataReadyEvent);
+
+		if (abForceSend)
+			srv.bForceConsoleRead = TRUE;
 		
 		ResetEvent(srv.hRefreshDoneEvent);
 		SetEvent(srv.hRefreshEvent);
@@ -2025,6 +2028,9 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 		DWORD nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, RELOAD_INFO_TIMEOUT );
 		lbChanged = (nWait == (WAIT_OBJECT_0+1));
 		
+		if (abForceSend)
+			srv.bForceConsoleRead = FALSE;
+
 		return lbChanged;
 	}
 
@@ -2405,11 +2411,16 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//lbEventualChange = (nWait == (WAIT_OBJECT_0+1))/* || lbProcessChanged*/;
 		//lbForceSend = (nWait == (WAIT_OBJECT_0+1));
 
-		// Чтобы не грузить процессор неактивными консолями
-		//if (!lbForceSend) {
-		if (!lbWasSizeChange
+		// Чтобы не грузить процессор неактивными консолями спим, если
+		// только что не было затребовано изменение размера консоли
+		if (!lbWasSizeChange 
+			// не требуется принудительное перечитывание
+			&& !srv.bForceConsoleRead
+			// Консоль не активна
 			&& (!srv.pConsole->hdr.bConsoleActive 
+				// или активна, но сам ConEmu GUI не в фокусе
 				|| (srv.pConsole->hdr.bConsoleActive && !srv.pConsole->hdr.bThawRefreshThread))
+			// и не дернули событие srv.hRefreshEvent
 			&& (nWait != (WAIT_OBJECT_0+1)))
 		{
 			DWORD nCurTick = GetTickCount();
@@ -2475,7 +2486,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			lbChanged = FALSE;
 
 		// Событие выставим ПОСЛЕ окончания перечитывания консоли
-		if (lbWasSizeChange) {
+		if (lbWasSizeChange)
+		{
 			SetEvent(srv.hReqSizeChanged);
 			lbWasSizeChange = FALSE;
 		}
@@ -2847,11 +2859,13 @@ DWORD WINAPI GetDataThread(LPVOID lpvParam)
 				if (gbQuit)
 					break;
 
-				if (Command.nVersion != CESERVER_REQ_VER) {
+				if (Command.nVersion != CESERVER_REQ_VER)
+				{
 					_ASSERTE(Command.nVersion == CESERVER_REQ_VER);
 					break; // переоткрыть пайп!
 				}
-				if (Command.nCmd != CECMD_CONSOLEDATA) {
+				if (Command.nCmd != CECMD_CONSOLEDATA)
+				{
 					_ASSERTE(Command.nCmd == CECMD_CONSOLEDATA);
 					break; // переоткрыть пайп!
 				}

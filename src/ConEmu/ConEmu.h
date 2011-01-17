@@ -122,6 +122,7 @@ class CConEmuMain
 public:
 	//HMODULE mh_Psapi;
 	//FGetModuleFileNameEx GetModuleFileNameEx;
+	wchar_t ms_ConEmuVer[32];               // Название с версией, например "ConEmu 110117"
 	wchar_t ms_ConEmuExe[MAX_PATH+1];       // полный путь к ConEmu.exe (GUI)
 	wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
 	wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
@@ -467,3 +468,5 @@ public:
 	LRESULT OnUpdateScrollInfo(BOOL abPosted = FALSE);
 	void OnPanelViewSettingsChanged(BOOL abSendChanges=TRUE);
 };
+
+extern CConEmuMain gConEmu;

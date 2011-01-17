@@ -241,7 +241,7 @@ HWND Attach2Gui(DWORD nTimeout);
 
 int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd); // Разбор параметров командной строки
 void Help();
-void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
+void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
 
 int CreateMapHeader();
 void CloseMapHeader();
@@ -283,7 +283,7 @@ extern BOOL gbAttachFromFar;
 #define NTVDMACTIVE (srv.bNtvdmActive)
 #endif
 
-typedef struct tag_SrvInfo
+struct SrvInfo
 {
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
 	BOOL bDebuggerActive; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
@@ -358,6 +358,7 @@ typedef struct tag_SrvInfo
 	HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
 	HANDLE hRefreshDoneEvent; // ServerMode, выставляется после hRefreshEvent
 	HANDLE hDataReadyEvent; // Флаг, что в сервере есть изменения (GUI должен перечитать данные)
+	BOOL bForceConsoleRead; // Пнуть нить опроса консоли RefreshThread чтобы она без задержек перечитала содержимое
 	// Смена размера консоли через RefreshThread
 	int nRequestChangeSize;
 	USHORT nReqSizeBufferHeight;
@@ -401,7 +402,7 @@ typedef struct tag_SrvInfo
 
 	// Console Aliases
 	wchar_t* pszAliases; DWORD nAliasesSize;
-} SrvInfo;
+};
 
 extern SrvInfo srv;
 

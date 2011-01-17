@@ -3233,7 +3233,7 @@ void CVirtualConsole::Box(LPCTSTR szText)
 #ifdef _DEBUG
     _ASSERT(FALSE);
 #endif
-    MessageBox(NULL, szText, _T("ConEmu"), MB_ICONSTOP);
+    MessageBox(NULL, szText, gConEmu.ms_ConEmuVer, MB_ICONSTOP);
 }
 
 RECT CVirtualConsole::GetRect()

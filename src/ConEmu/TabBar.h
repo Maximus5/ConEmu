@@ -148,7 +148,8 @@ public:
 	void OnCaptionHidden();
 	void OnWindowStateChanged();
 	void OnBufferHeight(BOOL abBufferHeight);
-	bool OnNotify(LPNMHDR nmhdr);
+	LRESULT OnNotify(LPNMHDR nmhdr);
+	void OnNewConPopup();
 	void OnCommand(WPARAM wParam, LPARAM lParam);
 	void OnMouse(int message, int x, int y);
 	// Переключение табов

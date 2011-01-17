@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Include>
 
     <DirectoryRef Id="APPLICATIONFOLDER">
@@ -64,6 +64,9 @@
 
     <!-- ConEmu.Addons directory -->
     <DirectoryRef Id="CONEMUADDONSDIR">
+      <!--<Component Id="ConEmu.cer" Guid="$(var.Guid.ConEmu.cer)">
+        <File Id="ConEmu.cer" Source="..\..\Release\ConEmu\ConEmu.Addons\ConEmu.cer"  KeyPath="yes" />
+      </Component>-->
       <Component Id="FarHereInstall.cmd" Guid="$(var.Guid.FarHereInstall.cmd)">
         <File Id="FarHereInstall.cmd" Source="..\..\Release\ConEmu\ConEmu.Addons\FarHereInstall.cmd"  KeyPath="yes" />
       </Component>
@@ -72,6 +75,9 @@
       </Component>
       <Component Id="FarHere.dat" Guid="$(var.Guid.FarHere.dat)">
         <File Id="FarHere.dat" Source="..\..\Release\ConEmu\ConEmu.Addons\FarHere.dat"  KeyPath="yes" />
+      </Component>
+      <Component Id="ConEmu.fml" Guid="$(var.Guid.ConEmu.fml)">
+        <File Id="ConEmu.fml" Source="..\..\Release\ConEmu\ConEmu.Addons\ConEmu.fml"  KeyPath="yes" />
       </Component>
       <Component Id="AltEnter_Exec.reg" Guid="$(var.Guid.AltEnter_Exec.reg)">
         <File Id="AltEnter_Exec.reg" Source="..\..\Release\ConEmu\ConEmu.Addons\AltEnter_Exec.reg"  KeyPath="yes" />
@@ -129,6 +135,18 @@
       </Component>
       <Component Id="Lines18a.bmp" Guid="$(var.Guid.Lines18a.bmp)">
         <File Id="Lines18a.bmp" Source="..\..\Release\ConEmu\ConEmu.Addons\Lines18a.bmp"  KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="KeyEventsDir">
+      <Component Id="KeyEvents.exe" Guid="$(var.Guid.KeyEvents.exe)">
+        <File Id="KeyEvents.exe" Source="..\..\..\KeyEvents.SysLog\KeyEvents.exe"  KeyPath="yes" />
+      </Component>
+      <Component Id="KeyEvents.cpp" Guid="$(var.Guid.KeyEvents.cpp)">
+        <File Id="KeyEvents.cpp" Source="..\..\..\KeyEvents.SysLog\KeyEvents.cpp"  KeyPath="yes" />
+      </Component>
+      <Component Id="KeyEvents.makefile_gcc" Guid="$(var.Guid.KeyEvents.makefile_gcc)">
+        <File Id="KeyEvents.makefile_gcc" Source="..\..\..\KeyEvents.SysLog\makefile_gcc"  KeyPath="yes" />
       </Component>
     </DirectoryRef>
 

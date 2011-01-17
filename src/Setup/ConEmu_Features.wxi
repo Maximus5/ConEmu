@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Include>
   <Feature Id="ProductFeature" AllowAdvertise="no" Absent="disallow"
            Title="ConEmu" 
@@ -59,11 +59,19 @@ Cmd_Autorun.cmd - install or uninstall automatic attach of cmd.exe to ConEmu (an
     <!-- ConEmu.Addons directory -->
     <Feature Id="FConEmuAddons" AllowAdvertise="no" Title="Addons" Level="1" Display="collapse"
              Description="Some macros, sample background images, etc.">
+      <!--<Feature Id="FConEmuCertificate" AllowAdvertise="no" Title="FarHere" Level="1"
+               Description="Certificate">
+        <ComponentRef Id="ConEmu.cer"/>
+      </Feature>-->
       <Feature Id="FConEmuAddonsHere" AllowAdvertise="no" Title="FarHere" Level="1"
                Description="Cmd files for install/uninstall 'Far-in-ConEmu here' explorer popup menu item">
         <ComponentRef Id="FarHereInstall.cmd"/>
         <ComponentRef Id="FarHereUninstall.cmd"/>
         <ComponentRef Id="FarHere.dat"/>
+      </Feature>
+      <Feature Id="FConEmuAddonsMacroFml" AllowAdvertise="no" Title="Sample macros (*.fml)" Level="1"
+               Description="Sample macros (in fml-files), useful with ConEmu">
+        <ComponentRef Id="ConEmu.fml"/>
       </Feature>
       <Feature Id="FConEmuAddonsMacroReg" AllowAdvertise="no" Title="Sample macros (*.reg)" Level="1"
                Description="Sample macros (in reg-files), useful with ConEmu">
@@ -89,6 +97,17 @@ Cmd_Autorun.cmd - install or uninstall automatic attach of cmd.exe to ConEmu (an
         <ComponentRef Id="Lines16a.bmp"/>
         <ComponentRef Id="Lines18.bmp"/>
         <ComponentRef Id="Lines18a.bmp"/>
+      </Feature>
+    </Feature>
+    <!-- Troubleshooting -->
+    <Feature Id="FSupportTools" AllowAdvertise="no" Title="Tools" Level="1" Display="collapse"
+             Description="Troubleshooting utilities">
+      <!-- KeyEvents directory -->
+      <Feature Id="FKeyEvents" AllowAdvertise="no" Title="KeyEvents" Level="2"
+               Description="Keyboard and mouse troubleshooting utility">
+        <ComponentRef Id="KeyEvents.exe"/>
+        <ComponentRef Id="KeyEvents.cpp"/>
+        <ComponentRef Id="KeyEvents.makefile_gcc"/>
       </Feature>
     </Feature>
   </Feature>
@@ -131,23 +150,27 @@ Cmd_Autorun.cmd - install or uninstall automatic attach of cmd.exe to ConEmu (an
   <!-- Shortcuts -->
   <Feature Id="FConEmuShortcut" AllowAdvertise="no" Title="Create shortcuts" Level="1" Display="expand"
            Description="Create ConEmu shortcuts in the Start menu or Desktop">
-    <Feature Id="FConEmuShortcutStart" AllowAdvertise="no" Title="Start menu" Level="1">
+    <Feature Id="FCEShortcutStart" AllowAdvertise="no" Title="Start menu" Level="1">
       <ComponentRef Id="ConEmuStartShortcutFolder" />
+      <ComponentRef Id="UninstallShortcut" />
     </Feature>
-    <Feature Id="FConEmuShrtctDesktop" AllowAdvertise="no" Title="Desktop" Level="1">
+    <Feature Id="FCEShortcutDesktop" AllowAdvertise="no" Title="Desktop" Level="1">
       <ComponentRef Id="ConEmuDesktopShortcutFolder" />
     </Feature>
   </Feature>
-  <Feature Id="FConEmuShortcutStart.FConEmuGui32" AllowAdvertise="no" Display="hidden" Level="2">
+  <Feature Id="FCEShortcutStart.FConEmuGui32" AllowAdvertise="no" Display="hidden" Level="2">
     <ComponentRef Id="ConEmuStartShortcut" />
   </Feature>
-  <Feature Id="FConEmuShortcutStart.FConEmuGui64" AllowAdvertise="no" Display="hidden" Level="2">
+  <Feature Id="FCEShortcutStart.FConEmuGui64" AllowAdvertise="no" Display="hidden" Level="2">
     <ComponentRef Id="ConEmuStartShortcut64" />
   </Feature>
-  <Feature Id="FConEmuShrtctDesktop.FConEmuGui32" AllowAdvertise="no" Display="hidden" Level="2">
+  <Feature Id="FCEShortcutDesktop.FConEmuGui32" AllowAdvertise="no" Display="hidden" Level="2">
     <ComponentRef Id="ConEmuDesktopShortcut" />
   </Feature>
-  <Feature Id="FConEmuShrtctDesktop.FConEmuGui64" AllowAdvertise="no" Display="hidden" Level="2">
+  <Feature Id="FCEShortcutDesktop.FConEmuGui64" AllowAdvertise="no" Display="hidden" Level="2">
     <ComponentRef Id="ConEmuDesktopShortcut64" />
   </Feature>
+  <!--<Feature Id="FCEShortcutStart.FKeyEvents" AllowAdvertise="no" Display="hidden" Level="2">
+    <ComponentRef Id="KeyEventsShortcut" />
+  </Feature>-->
 </Include>

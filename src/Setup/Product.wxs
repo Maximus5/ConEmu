@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
+  <!-- Накрутить этот номер, чтобы заблокировать Downgrade/Upgrade с другой "версией" инсталлятора -->
+  <?define  MajorVersion = '11' ?>
+
   <?include Version.wxi ?>
   <?include ConEmu_Guids.wxi ?>
 
@@ -15,20 +18,16 @@
              InstallerVersion="200" Languages="1033" Manufacturer="ConEmu-Maximus5"
              InstallScope="perMachine"
              Platform="x86" />
-    <Upgrade Id="$(var.Guid.UpgradeCode)">
-      <UpgradeVersion Property="UPGRADE" Minimum="1.0.0" IncludeMinimum="yes" Maximum="$(var.Version)" />
-      <!--<UpgradeVersion Minimum="$(var.Version)" OnlyDetect="yes" Property="NEWERVERSIONDETECTED" />-->
-      <!--<UpgradeVersion Property="UPGRADE" OnlyDetect="yes" Maximum="$(var.Version)" />-->
-      <UpgradeVersion Property="DOWNGRADE" Minimum="$(var.Version)" IncludeMinimum="no" MigrateFeatures="yes" />
-      <!--<UpgradeVersion Property="PREVIOUSVERSIONSINSTALLED" MigrateFeatures="yes" Minimum="0.0.0" />-->
-    </Upgrade>
-    <!--<Condition Message="A later version of ConEmu is already installed. Setup will now exit.">NOT NEWERVERSIONDETECTED OR Installed</Condition>-->
-    <Condition Message="[ProductName] requires Windows 2000 or above.">NOT Version9X AND VersionNT &gt;= 500</Condition>
+
+    <!-- Upgrade and install conditions -->
+    <?include ConEmu_Conditions.wxi ?>
+
+    <!-- Global Installer Properties -->
     <Icon Id="SetupIcon.ico" SourceFile="..\..\src\ConEmu\ConEmu.ico"/>
     <Property Id="ARPPRODUCTICON" Value="SetupIcon.ico" />
-    <Property Id="ARPHELPLINK" Value="http://code.google.com/p/conemu-maximus5/issues" />
-    <Property Id="ARPURLINFOABOUT" Value="http://conemu-maximus5.googlecode.com/" />
-    <Property Id="ARPURLUPDATEINFO" Value="http://conemu-maximus5.googlecode.com/" />
+    <Property Id="ARPHELPLINK" Value="http://conemu-maximus5.googlecode.com/" />
+    <Property Id="ARPURLINFOABOUT" Value="http://code.google.com/p/conemu-maximus5/issues/" />
+    <Property Id="ARPURLUPDATEINFO" Value="http://code.google.com/p/conemu-maximus5/downloads/list/" />
     <Property Id="REINSTALLMODE" Value="amus" />
     <!--<Property Id="ALLUSERS" Value="1" />-->
 
@@ -46,6 +45,15 @@
     <Property Id="FARMANAGERFOLDER">
       <RegistrySearch Id="FarInstallDir" Root="HKLM" Key="Software\Far2" Name="InstallDir" Type="directory" />
     </Property>
+    <Property Id="FARMANAGERFOLDERUSER">
+      <RegistrySearch Id="FarInstallDirUser" Root="HKCU" Key="Software\Far2" Name="InstallDir" Type="directory" />
+    </Property>
+    <Property Id="FARMANAGERFOLDER1">
+      <RegistrySearch Id="FarInstallDir1" Root="HKLM" Key="Software\Far" Name="InstallDir" Type="directory" />
+    </Property>
+    <Property Id="FARMANAGERFOLDERUSER1">
+      <RegistrySearch Id="FarInstallDirUser1" Root="HKCU" Key="Software\Far" Name="InstallDir" Type="directory" />
+    </Property>
     <Property Id="FARPLUGINSCONEMU">
       <RegistrySearch Id="CEFarPluginsDir" Root="HKLM" Key="$(var.RegKey)" Name="$(var.CEFarPluginsDir)" Type="directory" />
     </Property>
@@ -58,8 +66,10 @@
     <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg">1</Publish>
     -->
 
-    <CustomAction Id="SetConEmuInstallDir" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDER]" Execute="firstSequence" />
+    <CustomAction Id="SetConEmuInstallDirFarM" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDER]" Execute="firstSequence" />
+    <CustomAction Id="SetConEmuInstallDirFarU" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDERUSER]" Execute="firstSequence" />
     <!--
+    <CustomAction Id="SetConEmuInstallDir" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDER]" Execute="firstSequence" />
     <CustomAction Id="UpdateFeatureState" BinaryKey="CustomActions.dll" DllEntry="UpdateFeatureState" />
     -->
 
@@ -86,33 +96,7 @@
 
     <Media Id="1" Cabinet="data.cab" EmbedCab="yes" />
 
-    <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFilesFolder">
-        <!-- Папка в "Program Files". TODO: Заменить на Far2? -->
-        <Directory Id="APPLICATIONFOLDER" Name="ConEmu">
-          <Component Id="CEInstallDir" Guid="$(var.Guid.CEInstallDir)">
-            <RegistryValue Root="HKMU" Key="$(var.RegKey)" Name="$(var.CEInstallDir)" Value="[APPLICATIONFOLDER]" Type="string" KeyPath="yes" />
-          </Component>
-          <Directory Id="CONEMUBASEDIR" Name="ConEmu">
-            <Directory Id="CONEMUADDONSDIR" Name="ConEmu.Addons"/>
-          </Directory>
-        </Directory>
-        <Directory Id="FARMANAGERFOLDER" Name="ConEmu">
-          <Directory Id="FarPluginsFolder" Name="Plugins">
-            <Directory Id="FARPLUGINSCONEMU" Name="ConEmu">
-              <Component Id="CEFarPluginsDir" Guid="$(var.Guid.CEFarPluginsDir)">
-                <RegistryValue Root="HKMU" Key="$(var.RegKey)" Name="$(var.CEFarPluginsDir)" Value="[FARPLUGINSCONEMU]" Type="string" KeyPath="yes" />
-              </Component>
-            </Directory>
-          </Directory>
-        </Directory>
-      </Directory>
-      <Directory Id="ProgramMenuFolder"> <!-- ставит ярлык для текущего пользователя! -->
-      <!--<Directory Id="StartMenuFolder">-->
-        <Directory Id="ApplicationProgramsFolder" Name="ConEmu"/>
-      </Directory>
-      <Directory Id="DesktopFolder"/>
-    </Directory>
+    <?include ConEmu_Directories.wxi ?>
 
     <?include ConEmu_Files.wxi ?>
 
@@ -144,12 +128,16 @@
     </UI>
         <InstallExecuteSequence>
             <!-- Эти операции выполняются "под админом" после завершения настройки параметров -->
-            <Custom Action="SetConEmuInstallDir" After="AppSearch">FARMANAGERFOLDER AND NOT INSTALLPATH</Custom>
+            <Custom Action="SetConEmuInstallDirFarM" After="AppSearch">FARMANAGERFOLDER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
+            <Custom Action="SetConEmuInstallDirFarU" After="SetConEmuInstallDirFarM">FARMANAGERFOLDERUSER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
+            <!--<Custom Action="SetConEmuInstallDir" After="SetConEmuInstallDirFarU">FARMANAGERFOLDER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>-->
             <Custom Action="UpdateFeatureState" Before="InstallValidate" />
             <RemoveExistingProducts After="InstallInitialize"/>
         </InstallExecuteSequence>
         <InstallUISequence>
-            <Custom Action="SetConEmuInstallDir" After="AppSearch">FARMANAGERFOLDER AND NOT INSTALLPATH</Custom>
+            <Custom Action="SetConEmuInstallDirFarM" After="AppSearch">FARMANAGERFOLDER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
+            <Custom Action="SetConEmuInstallDirFarU" After="SetConEmuInstallDirFarM">FARMANAGERFOLDERUSER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
+            <!--<Custom Action="SetConEmuInstallDir" After="AppSearch">FARMANAGERFOLDER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>-->
             <!--<Custom Action="UpdateFeatureState" Before="InstallValidate" />-->
             <!-- <Custom Action="UpdateFeatureState" Before="ExecuteAction"/> -->
             <!-- <Custom Action="UpdateFeatureState" After="CustomizeDlg"/> -->

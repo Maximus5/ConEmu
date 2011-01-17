@@ -458,7 +458,7 @@ BOOL CreateAppWindow()
     
     
     // cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
-	ghWndApp = CreateWindowEx(exStyle, szClassNameApp, L"ConEmu", style, nX, nY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+	ghWndApp = CreateWindowEx(exStyle, szClassNameApp, gConEmu.ms_ConEmuVer, style, nX, nY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
 	if (!ghWndApp) {
 		MBoxA(_T("Can't create application window!"));
         return FALSE;
@@ -664,7 +664,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 //				TCHAR* psz=(TCHAR*)calloc(wcslen(fnd.cFileName)+100,sizeof(TCHAR));
 //				lstrcpyW(psz, L"Too long full pathname for font:\n");
 //				lstrcatW(psz, fnd.cFileName);
-//				MessageBox(NULL, psz, L"ConEmu", MB_OK|MB_ICONSTOP);
+//				MessageBox(NULL, psz, gConEmu.ms_ConEmuVer, MB_OK|MB_ICONSTOP);
 //				free(psz);
 //			} else {
 //				wcscat(szFind, fnd.cFileName);
@@ -675,7 +675,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 //				//	TCHAR* psz=(TCHAR*)calloc(wcslen(szFind)+100,sizeof(TCHAR));
 //				//	lstrcpyW(psz, L"Can't register font:\n");
 //				//	lstrcatW(psz, szFind);
-//				//	MessageBox(NULL, psz, L"ConEmu", MB_OK|MB_ICONSTOP);
+//				//	MessageBox(NULL, psz, gConEmu.ms_ConEmuVer, MB_OK|MB_ICONSTOP);
 //				//	free(psz);
 //				//} else
 //				//if (!GetFontResourceInfo(szFind, &dwSize, szTempFontFam, 1)) {
@@ -685,7 +685,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 //					lstrcpyW(psz, L"Can't query font family for file:\n");
 //					lstrcatW(psz, szFind);
 //					wsprintf(psz+wcslen(psz), L"\nErrCode=0x%08X", dwErr);
-//					MessageBox(NULL, psz, L"ConEmu", MB_OK|MB_ICONSTOP);
+//					MessageBox(NULL, psz, gConEmu.ms_ConEmuVer, MB_OK|MB_ICONSTOP);
 //					free(psz);
 //				} else {
 //					lstrcpynW(gSet.FontFile, szFind, countof(gSet.FontFile));
@@ -1377,7 +1377,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//		TCHAR* psz=(TCHAR*)calloc(wcslen(FontFile)+100,sizeof(TCHAR));
 	//		lstrcpyW(psz, L"Can't register font:\n");
 	//		lstrcatW(psz, FontFile);
-	//		MessageBox(NULL, psz, L"ConEmu", MB_OK|MB_ICONSTOP);
+	//		MessageBox(NULL, psz, gConEmu.ms_ConEmuVer, MB_OK|MB_ICONSTOP);
 	//		free(psz);
 	//		return 100;
 	//	}

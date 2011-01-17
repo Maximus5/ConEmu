@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Include>
+
+  <Directory Id="TARGETDIR" Name="SourceDir">
+    <Directory Id="ProgramFilesFolder">
+      <!-- Папка в "Program Files". TODO: Заменить на Far2? -->
+      <Directory Id="APPLICATIONFOLDER" Name="ConEmu">
+        <Component Id="CEInstallDir" Guid="$(var.Guid.CEInstallDir)">
+          <RegistryValue Root="HKMU" Key="$(var.RegKey)" Name="$(var.CEInstallDir)" Value="[APPLICATIONFOLDER]" Type="string" KeyPath="yes" />
+        </Component>
+        <Directory Id="CONEMUBASEDIR" Name="ConEmu">
+          <Directory Id="CONEMUADDONSDIR" Name="ConEmu.Addons"/>
+          <Directory Id="KeyEventsDir" Name="KeyEvents"/>
+        </Directory>
+      </Directory>
+      <Directory Id="FARMANAGERFOLDER" Name="ConEmu">
+        <Directory Id="FarPluginsFolder" Name="Plugins">
+          <Directory Id="FARPLUGINSCONEMU" Name="ConEmu">
+            <Component Id="CEFarPluginsDir" Guid="$(var.Guid.CEFarPluginsDir)">
+              <RegistryValue Root="HKMU" Key="$(var.RegKey)" Name="$(var.CEFarPluginsDir)" Value="[FARPLUGINSCONEMU]" Type="string" KeyPath="yes" />
+            </Component>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+    <Directory Id="ProgramMenuFolder">
+    <!--<Directory Id="StartMenuFolder">-->
+      <Directory Id="ApplicationProgramsFolder" Name="ConEmu"/>
+    </Directory>
+    <Directory Id="DesktopFolder"/>
+  </Directory>
+
+</Include>

@@ -12,6 +12,8 @@
 	<?define Guid.ConEmuDesktopShortcut = "5063AC12-3EF8-434A-8265-307DAB373AED" ?>
 	<?define Guid.ConEmuDesktopShortcut64 = "12ACD7A8-5C3C-483F-A00C-1F48BBE7B556" ?>
 	<?define Guid.ConEmuDesktopShortcutFolder = "5EC938AD-0669-4AB8-87AF-A8D0922DDCFF" ?>
+	<?define Guid.KeyEventsShortcut = "1B59A578-61A9-469D-91C3-5B95DF7C2270" ?>
+	<?define Guid.UninstallShortcut = "4D5CC6F3-9816-4A21-BF74-043FDE3BC1BB" ?>
 <!-- files -->
 	<?define Guid.ConEmuGui32 = "549CE04A-9CE7-4572-88AA-AA919F4D3F1D" ?>
 	<?define Guid.ConEmuGui64 = "80B41CD6-361B-4C9C-8731-CC000FDB3650" ?>
@@ -26,7 +28,6 @@
 	<?define Guid.Cmd_Autorun.cmd = "FFA943E1-0E3A-4B97-A142-1678CFE82935" ?>
 	<?define Guid.Command_Processor.reg = "24F69FDE-C0DD-48C4-AAFF-ECB2146F6E32" ?>
 	<?define Guid.Command_Processor_Off.reg = "DA4661C7-FD43-4A42-8EF0-1A0FC7CC2978" ?>
-
 	<!-- Documentation -->
 	<?define Guid.About_ConEmu.txt = "A94A790E-7698-45BA-9027-B6F55401BC35" ?>
 	<?define Guid.ConEmu_Sample.xml = "7A6EF08A-844C-426B-86D6-B87691213B6D" ?>
@@ -34,9 +35,11 @@
 	<?define Guid.Settings_ConEmu.reg = "75608193-1D79-4E7A-A0A0-3A274B11706E" ?>
 	<?define Guid.WhatsNew_ConEmu.txt = "3C56F1F9-4A06-4D48-906C-F8CE71FDA032" ?>
     <!-- ConEmu.Addons directory -->
+    <!--<?define Guid.ConEmu.cer = "A0DC6F70-B5EA-4D62-9308-F7430FDA820B" ?>-->
 	<?define Guid.FarHereInstall.cmd = "DE37979D-7C4D-4335-9F27-818CA2C9A6ED" ?>
 	<?define Guid.FarHereUninstall.cmd = "427F4EE4-3A79-4F1B-97B1-AD12096CFC69" ?>
 	<?define Guid.FarHere.dat = "6B41458E-63AE-4E53-ABAA-D6144BB8A218" ?>
+	<?define Guid.ConEmu.fml = "DBCD17D0-F5F8-4B20-A58B-38863ADA46A0" ?>
 	<?define Guid.AltEnter_Exec.reg = "71D5341C-EA7D-4B04-B632-C955A38DA5A6" ?>
 	<?define Guid.AltEnter_Props.reg = "F2FD70F5-C7DF-4F95-BFAB-2126D2582C07" ?>
 	<?define Guid.CtrlAltD.reg = "AA387F75-CA68-4A5D-9C6C-C4D1F4677F8C" ?>
@@ -56,6 +59,10 @@
 	<?define Guid.Lines16a.bmp = "F39C280E-401C-403A-976C-9CAA20935136" ?>
 	<?define Guid.Lines18.bmp = "66E7A713-1A94-4C28-BF07-1C4CEE1F0CED" ?>
 	<?define Guid.Lines18a.bmp = "F751406C-5169-4E2D-BBE2-2156053BC353" ?>
+	<!-- KeyEvents -->
+	<?define Guid.KeyEvents.exe = "806D8029-BF3A-40C3-9C00-B143EAD0C4E6" ?>
+	<?define Guid.KeyEvents.cpp = "72CD2120-9A1B-4983-BC0D-7BB2A73A700D" ?>
+	<?define Guid.KeyEvents.makefile_gcc = "43EBBD12-666E-45D6-AADE-364902359E08" ?>
 	<!-- Far Plugins for ConEmu -->
 	<?define Guid.ConEmu.dll = "146BCC2A-8064-4157-8728-207B26089482" ?>
 	<?define Guid.ConEmu.map = "C59D168A-CC07-4D81-B02F-732BA34E5FD5" ?>

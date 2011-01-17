@@ -1,3 +1,10 @@
+2011.01.17
+[%] Issue 347: —транность показа данных на закладках. 
+[%] Ќе выполн€лс€ батник: ver|find "6."
+[*] 'Press Enter to close console' -> 'Press Enter or Esc to close console'.
+[+] —трелка у кнопки '+' на toolbar показывает меню из последних 16 запущенных команд, дл€ быстрого запуска новой консоли.
+
+
 2011.01.15
 [%] Issue 350: Click right button on close icon don't work while caption is hidden.
 [%] Issue 351: ¬ Windows XP после обновлени€ Far до версии 2.0 build 1783 перестал работать вывод консольных команд.

@@ -110,7 +110,8 @@ public:
 
 
 /* Console Handles */
-class MConHandle {
+class MConHandle
+{
 private:
 	wchar_t   ms_Name[10];
 	HANDLE    mh_Handle;
@@ -143,16 +144,20 @@ protected:
 	DWORD mn_LastError;
 	wchar_t ms_Error[MAX_PATH*2];
 public:
-	T* Ptr() {
+	T* Ptr()
+	{
 		return mp_Data;
 	};
-	operator T*() {
+	operator T*()
+	{
 		return mp_Data;
 	};
-	bool IsValid() {
+	bool IsValid()
+	{
 		return (mp_Data!=NULL);
 	};
-	LPCWSTR GetErrorText() {
+	LPCWSTR GetErrorText()
+	{
 		return ms_Error;
 	};
 	bool SetFrom(const T* pSrc, int nSize=-1)
@@ -179,7 +184,8 @@ public:
 	};
 	void ClosePtr()
 	{
-		if (mp_Data) {
+		if (mp_Data)
+		{
 			UnmapViewOfFile(mp_Data);
 			mp_Data = NULL;
 		}
@@ -294,29 +300,35 @@ protected:
 	T_OUT m_Tmp;
 	//DWORD mdw_Timeout;
 public:
-	MPipe() {
+	MPipe()
+	{
 		ms_PipeName[0] = ms_Module[0] = 0;
 		mh_Pipe = NULL; memset(&m_In, 0, sizeof(m_In));
 		mp_Out = NULL; mn_OutSize = mn_MaxOutSize = 0;
 		mh_Heap = GetProcessHeap();
 		_ASSERTE(mh_Heap!=NULL);
 	};
-	void SetTimeout(DWORD anTimeout) {
+	void SetTimeout(DWORD anTimeout)
+	{
 		//TODO: Если anTimeout!=-1 - создавать нить и выполнять команду в ней. Ожидать нить не более и прибить ее, если пришел Timeout
 	}
-	~MPipe() {
-		if (mp_Out && mp_Out != &m_Tmp) {
+	~MPipe()
+	{
+		if (mp_Out && mp_Out != &m_Tmp)
+		{
 			_ASSERTE(mh_Heap!=NULL);
 			HeapFree(mh_Heap, 0, mp_Out);
 			mp_Out = NULL;
 		}
 	};
-	void Close() {
+	void Close()
+	{
 		if (mh_Pipe && mh_Pipe != INVALID_HANDLE_VALUE)
 			CloseHandle(mh_Pipe);
 		mh_Pipe = NULL;
 	};
-	void InitName(const wchar_t* asModule, const wchar_t *aszTemplate, const wchar_t *Parm1, DWORD Parm2) {
+	void InitName(const wchar_t* asModule, const wchar_t *aszTemplate, const wchar_t *Parm1, DWORD Parm2)
+	{
 		//va_list args;
 		//va_start( args, aszTemplate );
 		//vswprintf_s(ms_PipeName, countof(ms_PipeName), aszTemplate, args);
@@ -325,17 +337,20 @@ public:
 		if (mh_Pipe)
 			Close();
 	};
-	BOOL Open() {
+	BOOL Open()
+	{
 		if (mh_Pipe && mh_Pipe != INVALID_HANDLE_VALUE)
 			return TRUE;
 		mh_Pipe = ExecuteOpenPipe(ms_PipeName, ms_Error, ms_Module);
-		if (mh_Pipe == INVALID_HANDLE_VALUE) {
+		if (mh_Pipe == INVALID_HANDLE_VALUE)
+		{
 			_ASSERTE(mh_Pipe != INVALID_HANDLE_VALUE);
 			mh_Pipe = NULL;
 		}
 		return (mh_Pipe!=NULL);
 	};
-	BOOL Transact(const T_IN* apIn, DWORD anInSize, const T_OUT** rpOut, DWORD* rnOutSize) {
+	BOOL Transact(const T_IN* apIn, DWORD anInSize, const T_OUT** rpOut, DWORD* rnOutSize)
+	{
 		ms_Error[0] = 0;
 		_ASSERTE(apIn && rnOutSize);
 
@@ -358,7 +373,8 @@ public:
 		// Send a message to the pipe server and read the response. 
 		cbRead = 0; cbReadBuf = sizeof(m_Tmp);
 		T_OUT* ptrOut = &m_Tmp;
-		if (mp_Out && (mn_MaxOutSize > cbReadBuf)) {
+		if (mp_Out && (mn_MaxOutSize > cbReadBuf))
+		{
 			ptrOut = mp_Out;
 			cbReadBuf = mn_MaxOutSize;
 			*rpOut = mp_Out;
@@ -367,7 +383,8 @@ public:
 		fSuccess = TransactNamedPipe( mh_Pipe, (LPVOID)apIn, anInSize, ptrOut, cbReadBuf, &cbRead, NULL);
 		dwErr = fSuccess ? 0 : GetLastError();
 
-		if (!fSuccess && dwErr == ERROR_BROKEN_PIPE) {
+		if (!fSuccess && dwErr == ERROR_BROKEN_PIPE)
+		{
 			// Сервер не вернул данных, но обработал команду
 			Close(); // Раз пайп закрыт - прибиваем хэндл
 			return TRUE;
@@ -393,7 +410,8 @@ public:
 				ms_Module, cbRead, (DWORD)sizeof(CESERVER_REQ_HDR));
 			return FALSE;
 		}
-		if (((CESERVER_REQ_HDR*)apIn)->nCmd != ((CESERVER_REQ_HDR*)&m_In)->nCmd) {
+		if (((CESERVER_REQ_HDR*)apIn)->nCmd != ((CESERVER_REQ_HDR*)&m_In)->nCmd)
+		{
 			_ASSERTE(((CESERVER_REQ_HDR*)apIn)->nCmd == ((CESERVER_REQ_HDR*)&m_In)->nCmd);
 			wsprintfW(ms_Error,
 				_T("%s: Invalid CmdID=%i recieved, required CmdID=%i!"), 
@@ -421,9 +439,11 @@ public:
 		{
 			int nAllSize = ((CESERVER_REQ_HDR*)ptrOut)->cbSize;
 
-			if (!mp_Out || (int)mn_MaxOutSize < nAllSize) {
+			if (!mp_Out || (int)mn_MaxOutSize < nAllSize)
+			{
 				T_OUT* ptrNew = (T_OUT*)HeapAlloc(mh_Heap, 0, nAllSize);
-				if (!ptrNew) {
+				if (!ptrNew)
+				{
 					_ASSERTE(ptrNew!=NULL);
 					wsprintfW(ms_Error, _T("%s: Can't allocate %u bytes!"), ms_Module, nAllSize);
 					return FALSE;
@@ -434,7 +454,9 @@ public:
 				mn_MaxOutSize = nAllSize;
 				mp_Out = ptrNew;
 
-			} else if (ptrOut == &m_Tmp) {
+			}
+			else if (ptrOut == &m_Tmp)
+			{
 				memmove(mp_Out, &m_Tmp, cbRead);
 			}
 			*rpOut = mp_Out;
@@ -483,25 +505,31 @@ public:
 
 		return TRUE;
 	};
-	LPCWSTR GetErrorText() {
+	LPCWSTR GetErrorText()
+	{
 		return ms_Error;
 	};
 };
 
 
-class MSetter {
+class MSetter
+{
 protected:
-	enum tag_MSETTERTYPE {
+	enum tag_MSETTERTYPE
+	{
 		st_BOOL,
 		st_DWORD,
 	} type;
 
-	union {
-		struct {
+	union
+	{
+		struct
+		{
 			// st_BOOL
 			BOOL *mp_BoolVal;
 		};
-		struct {
+		struct
+		{
 			// st_DWORD
 			DWORD *mdw_DwordVal; DWORD mdw_OldDwordValue, mdw_NewDwordValue;
 		};

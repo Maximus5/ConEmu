@@ -384,7 +384,8 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 
 	ShowTabError(NULL);
 
-    if (!GetVConFromTab(tabIndex, &pVCon, &wndIndex)) {
+    if (!GetVConFromTab(tabIndex, &pVCon, &wndIndex))
+	{
         if (mb_InKeySwitching) Update(); // показать реальное положение дел
         return NULL;
     }
@@ -394,7 +395,8 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
         
 
     bChangeOk = pVCon->RCon()->ActivateFarWindow(wndIndex);
-	if (!bChangeOk) {
+	if (!bChangeOk)
+	{
 		// Всплыть тултип с руганью - не смогли активировать
 		ShowTabError(L"This tab can't be activated now!", tabIndex);
 	}
@@ -402,8 +404,10 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
     // Чтобы лишнее не мелькало - активируем консоль 
     // ТОЛЬКО после смены таба (успешной или неудачной - неважно)
 	TODO("Не срабатывает. Новые данные из консоли получаются с задержкой и мелькает старое содержимое активируемой консоли");
-    if (bNeedActivate) {
-        if (!gConEmu.Activate(pVCon)) {
+    if (bNeedActivate)
+	{
+        if (!gConEmu.Activate(pVCon))
+		{
             if (mb_InKeySwitching) Update(); // показать реальное положение дел
             
             TODO("А текущий таб не слетит, если активировать не удалось?");
@@ -411,7 +415,8 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
         }
     }
     
-    if (!bChangeOk) {
+    if (!bChangeOk)
+	{
         pVCon = NULL;
         if (mb_InKeySwitching) Update(); // показать реальное положение дел
     }
@@ -424,12 +429,14 @@ LRESULT TabBarClass::TabHitTest()
 	if ((gSet.isHideCaptionAlways() || gSet.isFullScreen || (gConEmu.isZoomed() && gSet.isHideCaption))
 		&& gSet.isTabs)
 	{
-		if (gConEmu.mp_TabBar->IsShown()) {
+		if (gConEmu.mp_TabBar->IsShown())
+		{
 			TCHITTESTINFO tch = {{0,0}};
 			HWND hTabBar = gConEmu.mp_TabBar->mh_Tabbar;
 			RECT rcWnd; GetWindowRect(hTabBar, &rcWnd);
 			GetCursorPos(&tch.pt); // Screen coordinates
-			if (PtInRect(&rcWnd, tch.pt)) {
+			if (PtInRect(&rcWnd, tch.pt))
+			{
 				tch.pt.x -= rcWnd.left; tch.pt.y -= rcWnd.top;
 				LRESULT nTest = SendMessage(hTabBar, TCM_HITTEST, 0, (LPARAM)&tch);
 				if (nTest == -1)
@@ -446,7 +453,8 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 	{
 	case WM_WINDOWPOSCHANGING:
 		{
-			if (gConEmu.mp_TabBar->_tabHeight) {
+			if (gConEmu.mp_TabBar->_tabHeight)
+			{
 				LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
 				pos->cy = gConEmu.mp_TabBar->_tabHeight;
 				return 0;
@@ -458,7 +466,8 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 			return 0;
 		}
 	case WM_SETCURSOR:
-		if (gSet.isHideCaptionAlways() && gSet.isTabs && !gSet.isFullScreen && !gConEmu.isZoomed()) {
+		if (gSet.isHideCaptionAlways() && gSet.isTabs && !gSet.isFullScreen && !gConEmu.isZoomed())
+		{
 			if (TabHitTest()==HTCAPTION) {
 				SetCursor(gConEmu.mh_CursorMove);
 				return TRUE;
@@ -507,13 +516,17 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
     {
     case WM_WINDOWPOSCHANGING:
         {
-        	if (gConEmu.mp_TabBar->mh_Rebar) {
+        	if (gConEmu.mp_TabBar->mh_Rebar)
+			{
 	        	LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
 				//if (gConEmu.mp_TabBar->mb_ThemingEnabled) {
-				if (gSet.CheckTheming()) {
+				if (gSet.CheckTheming())
+				{
 		            pos->y = 2; // иначе в Win7 он смещается в {0x0} и снизу видна некрасивая полоса
 					pos->cy = gConEmu.mp_TabBar->_tabHeight -3; // на всякий случай
-				} else {
+				}
+				else
+				{
 					pos->y = 1;
 					pos->cy = gConEmu.mp_TabBar->_tabHeight + 1;
 				}
@@ -533,7 +546,8 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
             return 0;
         }
 	case WM_TIMER:
-		if (wParam == FAILED_TABBAR_TIMERID) {
+		if (wParam == FAILED_TABBAR_TIMERID)
+		{
 			KillTimer(hwnd, wParam);
 			SendMessage(gConEmu.mp_TabBar->mh_Balloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gConEmu.mp_TabBar->tiBalloon);
 			SendMessage(gConEmu.mp_TabBar->mh_TabTip, TTM_ACTIVATE, TRUE, 0);
@@ -1031,7 +1045,7 @@ void TabBarClass::UpdateToolbarPos()
     }
 }
 
-bool TabBarClass::OnNotify(LPNMHDR nmhdr)
+LRESULT TabBarClass::OnNotify(LPNMHDR nmhdr)
 {
 	if (!this)
 		return false;
@@ -1055,12 +1069,14 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
         int lnNewTab = GetCurSel();
         //_tcscpy(_lastTitle, gConEmu.Title);
         
-        if (_prevTab>=0) {
+        if (_prevTab>=0)
+        {
             SelectTab(_prevTab);
             _prevTab = -1;
         }
         
-        if (mb_ChangeAllowed) {
+        if (mb_ChangeAllowed)
+        {
             return FALSE;
         }
         
@@ -1075,31 +1091,40 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
         if (!gSet.isMulti)
             return 0;
         LPNMTBGETINFOTIP pDisp = (LPNMTBGETINFOTIP)nmhdr;
-        if (pDisp->iItem>=1 && pDisp->iItem<=MAX_CONSOLE_COUNT) {
+        if (pDisp->iItem>=1 && pDisp->iItem<=MAX_CONSOLE_COUNT)
+        {
             if (!pDisp->pszText || !pDisp->cchTextMax) return false;
             LPCWSTR pszTitle = gConEmu.GetVCon(pDisp->iItem-1)->RCon()->GetTitle();
-            if (pszTitle) {
+            if (pszTitle)
+            {
                 lstrcpyn(pDisp->pszText, pszTitle, pDisp->cchTextMax);
-            } else {
+            }
+            else
+            {
                 pDisp->pszText[0] = 0;
             }
-        } else
-        if (pDisp->iItem == TID_CREATE_CON) {
+        }
+        else if (pDisp->iItem == TID_CREATE_CON)
+        {
             lstrcpyn(pDisp->pszText, _T("Create new console"), pDisp->cchTextMax);
-        } else
-        if (pDisp->iItem == TID_BUFFERHEIGHT) {
+        }
+        else if (pDisp->iItem == TID_BUFFERHEIGHT)
+        {
 	        BOOL lbPressed = (SendMessage(mh_Toolbar, TB_GETSTATE, pDisp->iItem, 0) & TBSTATE_CHECKED) == TBSTATE_CHECKED;
             lstrcpyn(pDisp->pszText, 
 	            lbPressed ? L"BufferHeight mode is ON" : L"BufferHeight mode is off",
 	            pDisp->cchTextMax);
-        } else
-        if (pDisp->iItem == TID_MINIMIZE) {
+        }
+        else if (pDisp->iItem == TID_MINIMIZE)
+        {
         	lstrcpyn(pDisp->pszText, _T("Minimize window"), pDisp->cchTextMax);
-        } else 
-        if (pDisp->iItem == TID_MAXIMIZE) {
+        }
+        else if (pDisp->iItem == TID_MAXIMIZE)
+        {
 			lstrcpyn(pDisp->pszText, _T("Maximize window"), pDisp->cchTextMax);
-        } else
-        if (pDisp->iItem == TID_APPCLOSE) {
+        }
+        else if (pDisp->iItem == TID_APPCLOSE)
+        {
         	lstrcpyn(pDisp->pszText, _T("Close ALL consoles"), pDisp->cchTextMax);
         }
         else if (pDisp->iItem == TID_COPYING)
@@ -1108,6 +1133,15 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
         }
         return true;
     }
+    
+    
+    if (nmhdr->code == TBN_DROPDOWN
+		&& (mh_Toolbar && (nmhdr->hwndFrom == mh_Toolbar)))
+    {
+		OnNewConPopup();
+    	return TBDDRET_DEFAULT;
+    }
+    
 
     if (nmhdr->code == TTN_GETDISPINFO 
 		&& (mh_Tabbar && (nmhdr->hwndFrom == mh_Tabbar || nmhdr->hwndFrom == mh_TabTip)))
@@ -1126,7 +1160,8 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
         
         int iPage = TabCtrl_HitTest(mh_Tabbar, &htInfo);
         
-        if (iPage >= 0) {
+        if (iPage >= 0)
+        {
             // Если в табе нет "…" - тип не нужен
             if (!wcschr(GetTabText(iPage), L'\x2026' /*"…"*/))
                 return 0;
@@ -1167,24 +1202,32 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	if (!gSet.isMulti)
         return;
 
-    if (wParam>=1 && wParam<=MAX_CONSOLE_COUNT) {
+    if (wParam>=1 && wParam<=MAX_CONSOLE_COUNT)
+    {
         gConEmu.ConActivate(wParam-1);
-    } else if (wParam == TID_CREATE_CON) {
+    }
+    else if (wParam == TID_CREATE_CON)
+    {
         gConEmu.Recreate ( FALSE, gSet.isMultiNewConfirm );
-    } else if (wParam == TID_BUFFERHEIGHT) {
+    }
+    else if (wParam == TID_BUFFERHEIGHT)
+    {
 		SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_BUFFERHEIGHT, gConEmu.ActiveCon()->RCon()->isBufferHeight());
 		gConEmu.AskChangeBufferHeight();
-    } else
-    if (wParam == TID_MINIMIZE) {
+    }
+    else if (wParam == TID_MINIMIZE)
+    {
     	PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
-    } else 
-    if (wParam == TID_MAXIMIZE) {
+    }
+    else if (wParam == TID_MAXIMIZE)
+    {
 		// Чтобы клик случайно не провалился в консоль
 		gConEmu.mouse.state |= MOUSE_SIZING_DBLCKL;
 		// Аналог AltF9
 		gConEmu.OnAltF9(TRUE);
-    } else
-    if (wParam == TID_APPCLOSE) {
+    }
+    else if (wParam == TID_APPCLOSE)
+    {
     	PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
     }
     else if (wParam == TID_COPYING)
@@ -1217,14 +1260,21 @@ void TabBarClass::OnMouse(int message, int x, int y)
 
 			pVCon = FarSendChangeTab(iPage);
 
-			if (pVCon) {
+			if (pVCon)
+			{
 				BOOL lbCtrlPressed = isPressed(VK_CONTROL);
-				if (message == WM_RBUTTONUP && !lbCtrlPressed) {
+				if (message == WM_RBUTTONUP && !lbCtrlPressed)
+				{
 					pVCon->ShowPopupMenu(ptCur);
-				} else {
-					if (pVCon->RCon()->GetFarPID()) {
+				}
+				else
+				{
+					if (pVCon->RCon()->GetFarPID())
+					{
 						pVCon->RCon()->PostMacro(gSet.sTabCloseMacro ? gSet.sTabCloseMacro : L"F10");
-					} else {
+					}
+					else
+					{
 						// Если запущен CMD, PowerShell, и т.п. - показать ДИАЛОГ пересоздания консоли
 						// Там есть кнопки Terminate & Recreate
 						gConEmu.Recreate ( TRUE, TRUE );
@@ -1331,6 +1381,8 @@ HWND TabBarClass::CreateToolbar()
 	_defaultToolProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)ToolProc);
 
 
+	DWORD lExStyle = ((DWORD)SendMessage(mh_Toolbar, TB_GETEXTENDEDSTYLE, 0, 0)) | TBSTYLE_EX_DRAWDDARROWS;
+	SendMessage(mh_Toolbar, TB_SETEXTENDEDSTYLE, 0, lExStyle);
 	SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
 	SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(14,14)); 
 	TBADDBITMAP bmp = {g_hInstance,IDB_MAIN_TOOLBAR};
@@ -1357,9 +1409,10 @@ HWND TabBarClass::CreateToolbar()
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
 
 	// New console
-	btn.fsStyle = BTNS_BUTTON; btn.idCommand = TID_CREATE_CON; btn.fsState = TBSTATE_ENABLED;
+	btn.fsStyle = BTNS_DROPDOWN; btn.idCommand = TID_CREATE_CON; btn.fsState = TBSTATE_ENABLED;
 	btn.iBitmap = nFirst + BID_NEWCON_IDX;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+	btn.fsStyle = BTNS_BUTTON;
 
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
 
@@ -1657,7 +1710,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
             #endif
 			//100930 - нельзя. GetLastTitle() вернет текущую консоль, а pTab может быть из любой консоли!
             // -- _tcscpy(pTab->Name, gConEmu.GetLastTitle()); //isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
-			_tcscpy(pTab->Name, _T("ConEmu"));
+			_tcscpy(pTab->Name, gConEmu.ms_ConEmuVer);
         }
         tFileName = pTab->Name;
         origLength = _tcslen(tFileName);
@@ -2124,4 +2177,60 @@ void TabBarClass::PaintHeader(HDC hdc, RECT rcPaint)
 
 	SelectObject(hdc, hOldBr);
 	SelectObject(hdc, hOldPen);
+}
+
+void TabBarClass::OnNewConPopup()
+{
+	HMENU hPopup = CreatePopupMenu();
+	LPCWSTR pszCurCmd = NULL;
+	if (gConEmu.ActiveCon() && gConEmu.ActiveCon()->RCon())
+		pszCurCmd = gConEmu.ActiveCon()->RCon()->GetCmd();
+	LPCWSTR pszHistory = gSet.psCmdHistory;
+
+	int nLastID = 0;
+	struct CmdHistory
+	{
+		int nCmd;
+		LPCWSTR pszCmd;
+	} History[MAX_CMD_HISTORY+1];
+
+	if (pszHistory)
+	{
+		while (*pszHistory && (nLastID < MAX_CMD_HISTORY_SHOW))
+		{
+			// Текущий - будет первым
+			if (!pszCurCmd || lstrcmp(pszCurCmd, pszHistory))
+			{
+				History[nLastID].nCmd = nLastID+1;
+				History[nLastID].pszCmd = pszHistory;
+				AppendMenu(hPopup, MF_STRING | MF_ENABLED, History[nLastID].nCmd, pszHistory);
+				nLastID++;
+			}
+			pszHistory += lstrlen(pszHistory)+1;
+		}
+	}
+
+	if (pszCurCmd && *pszCurCmd)
+	{
+		History[nLastID].nCmd = nLastID+1;
+		History[nLastID].pszCmd = pszHistory;
+		InsertMenu(hPopup, 0, MF_BYPOSITION|MF_ENABLED|MF_STRING, History[nLastID].nCmd, pszHistory);
+		nLastID++;
+		InsertMenu(hPopup, 1, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
+	}
+
+	RECT rcBtnRect = {0};
+	SendMessage(mh_Toolbar, TB_GETRECT, TID_CREATE_CON, (LPARAM)&rcBtnRect);
+	MapWindowPoints(mh_Toolbar, NULL, (LPPOINT)&rcBtnRect, 2);
+
+	int nId = TrackPopupMenu(hPopup, TPM_RIGHTALIGN|TPM_TOPALIGN|TPM_RETURNCMD|TPM_NONOTIFY,
+		rcBtnRect.right,rcBtnRect.bottom, 0, ghWnd, NULL);
+	if (nId >= 1 && nId <= nLastID)
+	{
+		RConStartArgs con;
+		con.pszSpecialCmd = _tcsdup(History[nId-1].pszCmd);
+		gConEmu.CreateCon(&con);
+	}
+
+	DestroyMenu(hPopup);
 }

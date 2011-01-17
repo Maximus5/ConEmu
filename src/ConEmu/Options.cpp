@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <commctrl.h>
 #include <shlobj.h>
+#include <strsafe.h>
 //#include "../common/ConEmuCheck.h"
 #include "Options.h"
 #include "ConEmu.h"
@@ -43,12 +44,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TabBar.h"
 #include "Background.h"
 #include "TrayIcon.h"
+#include "version.h"
 
 
 #define DEBUGSTRFONT(s) DEBUGSTR(s)
 
 #define COUNTER_REFRESH 5000
-#define MAX_CMD_HISTORY 100
 #define BACKGROUND_FILE_POLL 5000
 
 #define RASTER_FONTS_NAME L"Raster Fonts"
@@ -1495,9 +1496,9 @@ LRESULT CSettings::OnInitDialog()
 	#endif
 	
 	if (nConfLen>(nStdLen+1))
-		wsprintf(szTitle, L"Settings (%s) %s", (Config+nStdLen+1), pszType);
+		StringCchPrintf(szTitle, countof(szTitle), L"ConEmu %02u%02u%02u Settings (%s) %s", (MVV_1%100),MVV_2,MVV_3, (Config+nStdLen+1), pszType);
 	else
-		wsprintf(szTitle, L"Settings %s", pszType);
+		StringCchPrintf(szTitle, countof(szTitle), L"ConEmu %02u%02u%02u Settings %s", (MVV_1%100),MVV_2,MVV_3, pszType);
 	SetWindowText ( ghOpWnd, szTitle );
 
 	MCHKHEAP
@@ -2275,7 +2276,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 				if (MessageBox(ghOpWnd, 
 					    L"Background image will NOT be visible\n"
 						L"while 'Darkening' is 0. Increase it?",
-						L"ConEmu", MB_YESNO|MB_ICONEXCLAMATION)!=IDNO)
+						gConEmu.ms_ConEmuVer, MB_YESNO|MB_ICONEXCLAMATION)!=IDNO)
 				{
 					bgImageDarker = 0x46;
 					SendDlgItemMessage(hMain, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) bgImageDarker);
@@ -3697,7 +3698,7 @@ bool CSettings::isKeyboardHooks()
 						L"You can change behavior later via Settings->Features->\n"
 						L"'Install keyboard hooks (Vista & Win7)' check box, or\n"
 						L"'KeyboardHooks' value in ConEmu settings (registry or xml)."
-						, L"ConEmu", MB_YESNOCANCEL|MB_ICONQUESTION);
+						, gConEmu.ms_ConEmuVer, MB_YESNOCANCEL|MB_ICONQUESTION);
 		
 		if (nBtn == IDCANCEL)
 		{
@@ -5518,7 +5519,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		lstrcpyW(psz, L"Can't retrieve font family from file:\n");
 		lstrcatW(psz, asFontFile);
 		lstrcatW(psz, L"\nContinue?");
-		int nBtn = MessageBox(NULL, psz, L"ConEmu", MB_OKCANCEL|MB_ICONSTOP);
+		int nBtn = MessageBox(NULL, psz, gConEmu.ms_ConEmuVer, MB_OKCANCEL|MB_ICONSTOP);
 		free(psz);
 		if (nBtn == IDCANCEL)
 		{
@@ -5566,7 +5567,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		lstrcpyW(psz, L"Can't register font:\n");
 		lstrcatW(psz, asFontFile);
 		lstrcatW(psz, L"\nContinue?");
-		int nBtn = MessageBox(NULL, psz, L"ConEmu", MB_OKCANCEL|MB_ICONSTOP);
+		int nBtn = MessageBox(NULL, psz, gConEmu.ms_ConEmuVer, MB_OKCANCEL|MB_ICONSTOP);
 		free(psz);
 		if (nBtn == IDCANCEL)
 		{
@@ -5690,7 +5691,7 @@ void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
 					TCHAR* psz=(TCHAR*)calloc(wcslen(fnd.cFileName)+100,sizeof(TCHAR));
 					lstrcpyW(psz, L"Too long full pathname for font:\n");
 					lstrcatW(psz, fnd.cFileName);
-					int nBtn = MessageBox(NULL, psz, L"ConEmu", MB_OKCANCEL|MB_ICONSTOP);
+					int nBtn = MessageBox(NULL, psz, gConEmu.ms_ConEmuVer, MB_OKCANCEL|MB_ICONSTOP);
 					free(psz);
 					if (nBtn == IDCANCEL) break;
 				}
@@ -5858,9 +5859,12 @@ BOOL CSettings::GetFontNameFromFile(LPCTSTR lpszFilePath, LPTSTR rsFontName/* [3
 
 void CSettings::HistoryCheck()
 {
-	if (!psCmdHistory || !*psCmdHistory) {
+	if (!psCmdHistory || !*psCmdHistory)
+	{
 		nCmdHistorySize = 0;
-	} else {
+	}
+	else
+	{
 		const wchar_t* psz = psCmdHistory;
 		while (*psz)
 			psz += lstrlen(psz)+1;
@@ -5894,11 +5898,13 @@ void CSettings::HistoryAdd(LPCWSTR asCmd)
 	lstrcpy(pszNewHistory, asCmd);
 	psz = pszNewHistory + lstrlen(pszNewHistory) + 1;
 	nCount++;
-	if (psCmdHistory) {
+	if (psCmdHistory)
+	{
 		wchar_t* pszOld = psCmdHistory;
 		int nLen;
 		HEAPVAL
-		while (nCount < MAX_CMD_HISTORY && *pszOld /*&& psz < pszEnd*/) {
+		while (nCount < MAX_CMD_HISTORY && *pszOld /*&& psz < pszEnd*/)
+		{
 			const wchar_t *pszCur = pszOld;
 			pszOld += lstrlen(pszOld) + 1;
 
@@ -5922,7 +5928,8 @@ void CSettings::HistoryAdd(LPCWSTR asCmd)
 
 	// И сразу сохранить в настройках
 	SettingsBase* reg = CreateSettings();
-	if (reg->OpenKey(Config, KEY_WRITE)) {
+	if (reg->OpenKey(Config, KEY_WRITE))
+	{
 		HEAPVAL
 		reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
 		HEAPVAL
@@ -5980,11 +5987,11 @@ BOOL CSettings::CheckConIme()
 			RegCloseKey(hk);
 
 			if (dwValue!=0) {
-		        if (IDCANCEL==MessageBox(0,_T("Unwanted value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'.\r\nYou may simply import file 'Disable_ConIme.reg'\r\nlocated in 'ConEmu.Addons' folder."), _T("ConEmu"),MB_OKCANCEL|MB_ICONEXCLAMATION))
+		        if (IDCANCEL==MessageBox(0,_T("Unwanted value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'.\r\nYou may simply import file 'Disable_ConIme.reg'\r\nlocated in 'ConEmu.Addons' folder."), gConEmu.ms_ConEmuVer,MB_OKCANCEL|MB_ICONEXCLAMATION))
 			        lbStopWarning = TRUE;
 		    }
 	    } else {
-		    if (IDCANCEL==MessageBox(0,_T("Can't determine a value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'"), _T("ConEmu"),MB_OKCANCEL|MB_ICONEXCLAMATION))
+		    if (IDCANCEL==MessageBox(0,_T("Can't determine a value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'"), gConEmu.ms_ConEmuVer,MB_OKCANCEL|MB_ICONEXCLAMATION))
 		        lbStopWarning = TRUE;
 	    }
 
@@ -6924,7 +6931,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 				}
 				if (gSet.nConFontError) {
 					_ASSERTE(gSet.nConFontError==0);
-					MessageBox(hWnd2, gSet.sConFontError[0] ? gSet.sConFontError : gSet.CreateConFontError(NULL,NULL), L"ConEmu", MB_OK|MB_ICONSTOP);
+					MessageBox(hWnd2, gSet.sConFontError[0] ? gSet.sConFontError : gSet.CreateConFontError(NULL,NULL), gConEmu.ms_ConEmuVer, MB_OK|MB_ICONSTOP);
 					return 0;
 				}
 				gSet.SaveConsoleFont(); // Сохранить шрифт в настройке

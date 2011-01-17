@@ -108,6 +108,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SC_SCROLL_SECRET 0x0000fff3
 #define SC_FIND_SECRET 0x0000fff4
 
+#define MAX_CMD_HISTORY 100
+#define MAX_CMD_HISTORY_SHOW 16
 
 #define MBox(rt) {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, Title, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION); gbDontEnable = b; }
 #define MBoxA(rt) {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, _T("ConEmu"), /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION); gbDontEnable = b; }
@@ -214,7 +216,8 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 
 
 
-typedef struct tag_RConStartArgs {
+struct RConStartArgs
+{
 	BOOL     bDetached;
 	wchar_t* pszSpecialCmd;
 	wchar_t* pszStartupDir;
@@ -224,13 +227,15 @@ typedef struct tag_RConStartArgs {
 	BOOL     bRecreate; // !!! Информационно !!!
 	//HANDLE   hLogonToken;
 
-	tag_RConStartArgs() {
+	RConStartArgs()
+	{
 		bDetached = bRunAsAdministrator = bRunAsRestricted = bRecreate = FALSE;
 		pszSpecialCmd = pszStartupDir = pszUserName = /*pszUserPassword =*/ NULL;
 		szUserPassword[0] = 0;
 		//hLogonToken = NULL;
 	};
-	~tag_RConStartArgs() {
+	~RConStartArgs()
+	{
 		SafeFree(pszSpecialCmd); // именно SafeFree
 		SafeFree(pszStartupDir); // именно SafeFree
 		SafeFree(pszUserName);
@@ -239,7 +244,8 @@ typedef struct tag_RConStartArgs {
 		//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
 	};
 
-	BOOL CheckUserToken(HWND hPwd) {
+	BOOL CheckUserToken(HWND hPwd)
+	{
 		//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
 		if (!pszUserName || !*pszUserName)
 			return FALSE;
@@ -255,7 +261,8 @@ typedef struct tag_RConStartArgs {
 			LOGON32_PROVIDER_DEFAULT, &hLogonToken);
 		//if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
 
-		if (!lbRc || !hLogonToken) {
+		if (!lbRc || !hLogonToken)
+		{
 			MessageBox(GetParent(hPwd), L"Invalid user name or password specified!", L"ConEmu", MB_OK|MB_ICONSTOP);
 			return FALSE;
 		}
@@ -265,7 +272,7 @@ typedef struct tag_RConStartArgs {
 		//hLogonToken may be used for CreateProcessAsUser 
 		return TRUE;
 	};
-} RConStartArgs;
+};
 
 
 
@@ -293,7 +300,8 @@ L"/size <fontsize> - Specify the font size.\n" \
 L"/fontfile <fontfilename> - Loads fonts from file.\n" \
 L"/BufferHeight <lines> - may be used with cmd.exe\n" \
 /* L"/Attach [PID] - intercept console of specified process\n" */ \
-L"/cmd <commandline> - Command line to start. This must be the last used switch.\n" \
+L"\n" \
+L"/cmd <commandline>|@<commandfile> - Command line to start. This must be the last used switch.\n" \
 L"\n" \
 L"Command line examples:\n" \
 L"ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd far.exe /w\n" \

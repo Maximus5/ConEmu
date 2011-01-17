@@ -268,7 +268,7 @@ public:
     void OnDeactivate(int nNewNum);
 	void ShowHideViews(BOOL abShow);
 	void OnGuiFocused(BOOL abFocus);
-	void UpdateServerActive(BOOL abThaw);
+	void UpdateServerActive(BOOL abActive);
     BOOL CheckBufferSize();
     //LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
     BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
@@ -383,7 +383,8 @@ protected:
 private:
     // Эти переменные инициализируются в RetrieveConsoleInfo()
 	MSection csCON; //DWORD ncsT;
-    struct RConInfo {
+    struct RConInfo
+	{
         CONSOLE_SELECTION_INFO m_sel;
         CONSOLE_CURSOR_INFO m_ci;
         DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
@@ -410,7 +411,9 @@ private:
 		BOOL bDebugLocked;
 		#endif
     } con;
-	struct ServerClosing {
+	BOOL mb_ThawRefreshThread;
+	struct ServerClosing
+	{
 		DWORD  nServerPID;     // PID закрывающегося сервера
 		DWORD  nRecieveTick;   // Tick, когда получено сообщение о закрытии
 		HANDLE hServerProcess; // Handle процесса сервера

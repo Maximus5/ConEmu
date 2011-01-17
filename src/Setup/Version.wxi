@@ -1,8 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Include>
-
-  <?define Version = '11.01.15' ?>
-  <!--<?define ConEmuVerN = '11.01.14.0' ?>-->
-  <?define ConEmuVerS = '110115' ?>
-
+<?xml version="1.0" encoding="utf-8"?>
+<Include>
+
+  <?define Version.Year  = '11' ?>
+  <?define Version.Month = '01' ?>
+  <?define Version.Day   = '17' ?>
+
+  <?define Version = $(var.MajorVersion).$(var.Version.Year).$(var.Version.Month)$(var.Version.Day) ?>
+  <?define ConEmuVerS = $(var.Version.Year)$(var.Version.Month)$(var.Version.Day) ?>
+
 </Include>
