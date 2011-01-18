@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "VirtualConsole.h"
 #include "TrayIcon.h"
+#include "ConEmuChild.h"
 
 WARNING("!!! Запустили far, открыли edit, перешли в панель, открыли второй edit, ESC, ни одна вкладка не активна");
 // Более того, если есть еще одна консоль - активной станет первая вкладка следующей НЕАКТИВНОЙ консоли
@@ -2213,8 +2214,8 @@ void TabBarClass::OnNewConPopup()
 	if (pszCurCmd && *pszCurCmd)
 	{
 		History[nLastID].nCmd = nLastID+1;
-		History[nLastID].pszCmd = pszHistory;
-		InsertMenu(hPopup, 0, MF_BYPOSITION|MF_ENABLED|MF_STRING, History[nLastID].nCmd, pszHistory);
+		History[nLastID].pszCmd = pszCurCmd;
+		InsertMenu(hPopup, 0, MF_BYPOSITION|MF_ENABLED|MF_STRING, History[nLastID].nCmd, pszCurCmd);
 		nLastID++;
 		InsertMenu(hPopup, 1, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
 	}
@@ -2229,6 +2230,15 @@ void TabBarClass::OnNewConPopup()
 	{
 		RConStartArgs con;
 		con.pszSpecialCmd = _tcsdup(History[nId-1].pszCmd);
+
+		if (isPressed(VK_SHIFT))
+		{
+        	int nRc = gConEmu.RecreateDlg((LPARAM)&con);
+            if (nRc != IDC_START)
+                return;
+			gConEmu.m_Child->Redraw();
+        }
+        //Собственно, запуск
 		gConEmu.CreateCon(&con);
 	}
 

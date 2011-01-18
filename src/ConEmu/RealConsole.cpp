@@ -4019,19 +4019,24 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         //CloseHandle(hPipe);
         return;
     }
-    if (in.hdr.nVersion != CESERVER_REQ_VER) {
+    if (in.hdr.nVersion != CESERVER_REQ_VER)
+    {
         gConEmu.ShowOldCmdVersion(in.hdr.nCmd, in.hdr.nVersion, in.hdr.nSrcPID==GetServerPID() ? 1 : 0);
         return;
     }
     _ASSERTE(in.hdr.cbSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
-    if (cbRead < sizeof(CESERVER_REQ_HDR) || /*in.hdr.cbSize < cbRead ||*/ in.hdr.nVersion != CESERVER_REQ_VER) {
+    if (cbRead < sizeof(CESERVER_REQ_HDR) || /*in.hdr.cbSize < cbRead ||*/ in.hdr.nVersion != CESERVER_REQ_VER)
+    {
         //CloseHandle(hPipe);
         return;
     }
 
-    if (in.hdr.cbSize <= cbRead) {
+    if (in.hdr.cbSize <= cbRead)
+    {
         pIn = &in; // выделение пам€ти не требуетс€
-    } else {
+    }
+    else
+    {
         int nAllSize = in.hdr.cbSize;
         pIn = (CESERVER_REQ*)calloc(nAllSize,1);
         _ASSERTE(pIn!=NULL);
@@ -4568,6 +4573,56 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
         free(pRet);
+
+    }
+    else if (pIn->hdr.nCmd == CECMD_FINDWINDOW)
+    {
+    	CRealConsole* pRCon;
+    	CVirtualConsole* pVCon;
+    	ConEmuTab tab;
+    	int iFound = 0;
+    	
+    	for (int i = 0; !iFound && (i < MAX_CONSOLE_COUNT); i++)
+    	{
+    		if (!(pVCon = gConEmu.GetVCon(i)))
+    			break;
+    		if (!(pRCon = pVCon->RCon()) || pRCon == this)
+    			continue;
+			
+			for (int j = 0; !iFound; j++)
+			{
+				if (!pRCon->GetTab(j, &tab))
+					break;
+				if (tab.Type == pIn->FindWnd.nWindowType)
+				{
+					if (lstrcmpi(tab.Name, pIn->FindWnd.sFile) == 0)
+					{
+						if (pRCon->ActivateFarWindow(j))
+						{
+							iFound = i+1;
+							gConEmu.Activate(pVCon);
+						}
+						else
+						{
+							iFound = -1;
+						}
+						break;
+					}
+				}
+			}
+    	}
+    	
+    	CESERVER_REQ Out;
+		ExecutePrepareCmd(&Out, pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+		Out.dwData[0] = iFound;
+
+        // ќтправл€ем ответ
+        fSuccess = WriteFile( 
+            hPipe,        // handle to pipe 
+            &Out,         // buffer to write from 
+            Out.hdr.cbSize,  // number of bytes to write 
+            &cbWritten,   // number of bytes written 
+            NULL);        // not overlapped I/O 
 
     }
     else if (pIn->hdr.nCmd == CECMD_LANGCHANGE)
@@ -8381,7 +8436,8 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	{
 		// Ќа вс€кий случай, даже если табы не инициализированы, а прос€т первый -
 		// вернем просто заголовок консоли
-		if (tabIdx == 0) {
+		if (tabIdx == 0)
+		{
 			pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
             int nMaxLen = max(countof(TitleFull) , countof(pTab->Name));
             lstrcpyn(pTab->Name, TitleFull, nMaxLen);
@@ -8470,7 +8526,8 @@ int CRealConsole::GetModifiedEditors()
 	int nEditors = 0;
 	ConEmuTab tab;
 
-	for (int j = 0; TRUE; j++) {
+	for (int j = 0; TRUE; j++)
+	{
 		if (!GetTab(j, &tab))
 			break;
 		if (tab.Modified)

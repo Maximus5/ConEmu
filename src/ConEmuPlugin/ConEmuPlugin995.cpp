@@ -1094,6 +1094,61 @@ int GetActiveWindowType995()
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return -1;
+		
+	if (gFarVersion.dwBuild >= 1765)
+	{
+		enum FARMACROAREA
+		{
+			MACROAREA_OTHER             = 0,
+			MACROAREA_SHELL             = 1,
+			MACROAREA_VIEWER            = 2,
+			MACROAREA_EDITOR            = 3,
+			MACROAREA_DIALOG            = 4,
+			MACROAREA_SEARCH            = 5,
+			MACROAREA_DISKS             = 6,
+			MACROAREA_MAINMENU          = 7,
+			MACROAREA_MENU              = 8,
+			MACROAREA_HELP              = 9,
+			MACROAREA_INFOPANEL         =10,
+			MACROAREA_QVIEWPANEL        =11,
+			MACROAREA_TREEPANEL         =12,
+			MACROAREA_FINDFOLDER        =13,
+			MACROAREA_USERMENU          =14,
+			MACROAREA_AUTOCOMPLETION    =15,
+		};
+		
+		#define MCMD_GETAREA 6
+		ActlKeyMacro area = {MCMD_GETAREA};
+		INT_PTR nArea = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &area);
+		switch (nArea)
+		{
+			case MACROAREA_SHELL:
+			case MACROAREA_INFOPANEL:
+			case MACROAREA_QVIEWPANEL:
+			case MACROAREA_TREEPANEL:
+				return WTYPE_PANELS;
+			case MACROAREA_VIEWER:
+				return WTYPE_VIEWER;
+			case MACROAREA_EDITOR:
+				return WTYPE_EDITOR;
+			case MACROAREA_DIALOG:
+			case MACROAREA_SEARCH:
+			case MACROAREA_DISKS:
+			case MACROAREA_FINDFOLDER:
+			case MACROAREA_AUTOCOMPLETION:
+				return WTYPE_DIALOG;
+			case MACROAREA_HELP:
+				return WTYPE_HELP;
+			case MACROAREA_MAINMENU:
+			case MACROAREA_MENU:
+			case MACROAREA_USERMENU:
+				return WTYPE_VMENU;
+			case MACROAREA_OTHER: // Grabber
+				return -1;
+			default:
+				return -1;
+		}
+	}
 
 	WindowInfo WInfo = {-1};
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);

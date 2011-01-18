@@ -347,6 +347,56 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 			INT_PTR nID = -1; // выбор из меню
 			if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
 			{
+				if (Item >= 0x4000)
+				{
+					// Хорошо бы, конечно точнее определять, строка это, или нет...
+					LPCWSTR pszCallCmd = (LPCWSTR)Item;
+					wchar_t szCmd[16]; szCmd[0] = 0;
+					bool lbCmdOk = false;
+					for (int i = 0; i < (countof(szCmd)-1); i++)
+					{
+						if (pszCallCmd[i] > L'z') break;
+						szCmd[i] = pszCallCmd[i];
+						if (szCmd[i] == L':')
+						{
+							lbCmdOk = true;
+							szCmd[i+1] = 0;
+							break;
+						}
+					}
+					
+					if (lbCmdOk)
+					{
+						if (!lstrcmpiW(szCmd, L"EditOpen:") || !lstrcmpiW(szCmd, L"ViewOpen:"))
+						{
+							wchar_t szFound[16]; szFound[0] = 0;
+							CESERVER_REQ *pIn = NULL, *pOut = NULL;
+							LPCWSTR pszName = pszCallCmd + 9;
+							int nLen = lstrlenW(pszName)+1;
+							pIn = ExecuteNewCmd(CECMD_FINDWINDOW, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_FINDWINDOW)+2*nLen);
+							pIn->FindWnd.nWindowType = (lstrcmpiW(szCmd, L"EditOpen:") == 0) ? WTYPE_EDITOR : WTYPE_VIEWER;
+							
+							lstrcpyW(pIn->FindWnd.sFile, pszName);
+							
+							pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+							
+							if (pOut)
+							{
+								if (((int)pOut->dwData[0]) == -1)
+									lstrcpyW(szFound, L"Blocked");
+								else if (((int)pOut->dwData[0]) > 0)
+									lstrcpyW(szFound, L"Found");
+								ExecuteFreeResult(pOut);
+							}
+							ExecuteFreeResult(pIn);
+							
+							SetEnvironmentVariable(CEFINDWINDOWENVVAR, szFound[0] ? szFound : NULL);
+						}
+						
+						return INVALID_HANDLE_VALUE;
+					}
+				}
+				
 				if (Item >= 1 && Item <= 8)
 				{
 					nID = Item - 1; // Будет сразу выполнена команда
@@ -4761,7 +4811,8 @@ void ShowPluginMenu(int nID /*= -1*/)
 		nItem = FUNC_X(ShowPluginMenu)();
 	}
 
-	if (nItem < 0) {
+	if (nItem < 0)
+	{
 		SHOWDBGINFO(L"*** ShowPluginMenu cancelled, nItem < 0\n");
 		return;
 	}
@@ -4771,7 +4822,8 @@ void ShowPluginMenu(int nID /*= -1*/)
 	SHOWDBGINFO(szInfo);
 	#endif
 
-	switch (nItem) {
+	switch (nItem)
+	{
 		case 0: case 1:
 		{ // Открыть в редакторе вывод последней консольной программы
 			CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(sizeof(CESERVER_REQ_HDR)+4,1);
