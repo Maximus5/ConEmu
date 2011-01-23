@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include <wchar.h>
+#include <strsafe.h>
 #include "common.hpp"
 
 
@@ -44,7 +45,7 @@ void getWindowInfo(HWND ahWnd, wchar_t* rsInfo/*[1024]*/);
 
 // Some WinAPI related functions
 wchar_t* GetShortFileNameEx(LPCWSTR asLong);
-BOOL FileExists(LPCWSTR asFilePath);
+BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
 BOOL IsFilePath(LPCWSTR asFilePath);
 BOOL IsUserAdmin();
 BOOL IsWindows64(BOOL *pbIsWow64Process = NULL);
@@ -180,7 +181,7 @@ public:
 	void InitName(const wchar_t *aszTemplate,DWORD Parm1=0,DWORD Parm2=0)
 	{
 		if (mh_Mapping) CloseMap();
-		wsprintfW(ms_MapName, aszTemplate, Parm1, Parm2);
+		swprintf_c(ms_MapName, aszTemplate, Parm1, Parm2);
 	};
 	void ClosePtr()
 	{
@@ -213,7 +214,7 @@ protected:
 		if (ms_MapName[0] == 0)
 		{
 			_ASSERTE(ms_MapName[0]!=0);
-			lstrcpyW (ms_Error, L"Internal error. Mapping file name was not specified.");
+			wcscpy_c(ms_Error, L"Internal error. Mapping file name was not specified.");
 			return NULL;
 		}
 		else
@@ -223,7 +224,7 @@ protected:
 			if (abCreate)
 			{
 				mh_Mapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
-					NullSecurity(), PAGE_READWRITE, 0, mn_Size, ms_MapName);
+					LocalSecurity(), PAGE_READWRITE, 0, mn_Size, ms_MapName);
 			}
 			else
 			{
@@ -232,7 +233,7 @@ protected:
 			if (!mh_Mapping)
 			{
 				mn_LastError = GetLastError();
-				wsprintfW (ms_Error, L"Can't %s console data file mapping. ErrCode=0x%08X\n%s", 
+				swprintf_c (ms_Error, L"Can't %s console data file mapping. ErrCode=0x%08X\n%s", 
 						abCreate ? L"create" : L"open", mn_LastError, ms_MapName);
 			}
 			else
@@ -242,7 +243,7 @@ protected:
 				if (!mp_Data)
 				{
 					mn_LastError = GetLastError();
-					wsprintfW (ms_Error, L"Can't map console info (%s). ErrCode=0x%08X\n%s", 
+					swprintf_c (ms_Error, L"Can't map console info (%s). ErrCode=0x%08X\n%s", 
 							mb_WriteAllowed ? L"ReadWrite" : L"Read" ,mn_LastError, ms_MapName);
 				}
 			}
@@ -332,7 +333,7 @@ public:
 		//va_list args;
 		//va_start( args, aszTemplate );
 		//vswprintf_s(ms_PipeName, countof(ms_PipeName), aszTemplate, args);
-		wsprintfW(ms_PipeName, aszTemplate, Parm1, Parm2);
+		swprintf_c(ms_PipeName, aszTemplate, Parm1, Parm2);
 		lstrcpynW(ms_Module, asModule, countof(ms_Module));
 		if (mh_Pipe)
 			Close();
@@ -396,7 +397,7 @@ public:
 			DWORD nCmd = 0;
 			if (anInSize >= sizeof(CESERVER_REQ_HDR))
 				nCmd = ((CESERVER_REQ_HDR*)apIn)->nCmd;
-			wsprintfW(ms_Error, _T("%s: TransactNamedPipe failed, Cmd=%i, ErrCode = 0x%08X!"), ms_Module, nCmd, dwErr);
+			swprintf_c(ms_Error, _T("%s: TransactNamedPipe failed, Cmd=%i, ErrCode = 0x%08X!"), ms_Module, nCmd, dwErr);
 			Close(); // Поскольку произошла неизвестная ошибка - пайп лучше закрыть (чтобы потом переоткрыть)
 			return FALSE;
 		}
@@ -405,7 +406,7 @@ public:
 		if (cbRead < sizeof(CESERVER_REQ_HDR))
 		{
 			_ASSERTE(cbRead >= sizeof(CESERVER_REQ_HDR));
-			wsprintfW(ms_Error,
+			swprintf_c(ms_Error,
 				_T("%s: Only %i bytes recieved, required %i bytes at least!"), 
 				ms_Module, cbRead, (DWORD)sizeof(CESERVER_REQ_HDR));
 			return FALSE;
@@ -413,7 +414,7 @@ public:
 		if (((CESERVER_REQ_HDR*)apIn)->nCmd != ((CESERVER_REQ_HDR*)&m_In)->nCmd)
 		{
 			_ASSERTE(((CESERVER_REQ_HDR*)apIn)->nCmd == ((CESERVER_REQ_HDR*)&m_In)->nCmd);
-			wsprintfW(ms_Error,
+			swprintf_c(ms_Error,
 				_T("%s: Invalid CmdID=%i recieved, required CmdID=%i!"), 
 				ms_Module, ((CESERVER_REQ_HDR*)apIn)->nCmd, ((CESERVER_REQ_HDR*)&m_In)->nCmd);
 			return FALSE;
@@ -421,7 +422,7 @@ public:
 		if (((CESERVER_REQ_HDR*)ptrOut)->nVersion != CESERVER_REQ_VER)
 		{
 			_ASSERTE(((CESERVER_REQ_HDR*)ptrOut)->nVersion == CESERVER_REQ_VER);
-			wsprintfW(ms_Error,
+			swprintf_c(ms_Error,
 				_T("%s: Old version packet recieved (%i), required (%i)!"), 
 				ms_Module, ((CESERVER_REQ_HDR*)ptrOut)->nCmd, CESERVER_REQ_VER);
 			return FALSE;
@@ -429,7 +430,7 @@ public:
 		if (((CESERVER_REQ_HDR*)ptrOut)->cbSize < cbRead)
 		{
 			_ASSERTE(((CESERVER_REQ_HDR*)ptrOut)->cbSize >= cbRead);
-			wsprintfW(ms_Error,
+			swprintf_c(ms_Error,
 				_T("%s: Invalid packet size (%i), must be greater or equal to %i!"), 
 				ms_Module, ((CESERVER_REQ_HDR*)ptrOut)->cbSize, cbRead);
 			return FALSE;
@@ -445,7 +446,7 @@ public:
 				if (!ptrNew)
 				{
 					_ASSERTE(ptrNew!=NULL);
-					wsprintfW(ms_Error, _T("%s: Can't allocate %u bytes!"), ms_Module, nAllSize);
+					swprintf_c(ms_Error, _T("%s: Can't allocate %u bytes!"), ms_Module, nAllSize);
 					return FALSE;
 				}
 				memmove(ptrNew, ptrOut, cbRead);
@@ -482,7 +483,7 @@ public:
 			if (nAllSize > 0)
 			{
 				_ASSERTE(nAllSize==0);
-				wsprintfW(ms_Error, _T("%s: Can't read %u bytes!"), ms_Module, nAllSize);
+				swprintf_c(ms_Error, _T("%s: Can't read %u bytes!"), ms_Module, nAllSize);
 				return FALSE;
 			}
 

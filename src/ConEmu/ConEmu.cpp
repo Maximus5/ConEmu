@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tabbar.h"
 #include "ConEmuPipe.h"
 #include "version.h"
+#include "Macro.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
@@ -110,7 +111,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CConEmuMain::CConEmuMain()
 {
-	StringCchPrintf(ms_ConEmuVer, countof(ms_ConEmuVer), L"ConEmu %02u%02u%02u", (MVV_1%100),MVV_2,MVV_3);
+	StringCchPrintf(ms_ConEmuVer, countof(ms_ConEmuVer), L"ConEmu %02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
 	
 	mp_TabBar = NULL;
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
@@ -408,6 +409,7 @@ BOOL CConEmuMain::Init()
 	mp_TabBar = new TabBarClass();
 	m_Child = new CConEmuChild();
 	m_Back = new CConEmuBack();
+	m_Macro = new CConEmuMacro();
 
     //#pragma message("Win2k: EVENT_CONSOLE_START_APPLICATION, EVENT_CONSOLE_END_APPLICATION")
     //Ќас интересуют только START и END. ¬се остальные событи€ приход€т от ConEmuC через серверный пайп
@@ -864,13 +866,16 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 
 void CConEmuMain::Destroy()
 {
-    for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
-        if (mp_VCon[i]) {
+    for (int i=0; i<MAX_CONSOLE_COUNT; i++)
+    {
+        if (mp_VCon[i])
+        {
             mp_VCon[i]->RCon()->StopSignal();
         }
     }
 
-    if (ghWnd) {
+    if (ghWnd)
+    {
         //HWND hWnd = ghWnd;
         //ghWnd = NULL;
         //DestroyWindow(hWnd); -- может быть вызывано из другой нити
@@ -880,8 +885,10 @@ void CConEmuMain::Destroy()
 
 CConEmuMain::~CConEmuMain()
 {
-    for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
-        if (mp_VCon[i]) {
+    for (int i=0; i<MAX_CONSOLE_COUNT; i++)
+    {
+        if (mp_VCon[i])
+        {
 			CVirtualConsole* p = mp_VCon[i];
 			mp_VCon[i] = NULL;
             delete p;
@@ -891,7 +898,8 @@ CConEmuMain::~CConEmuMain()
 	CVirtualConsole::ClearPartBrushes();
 
 
-    if (mh_WinHook) {
+    if (mh_WinHook)
+    {
         UnhookWinEvent(mh_WinHook);
         mh_WinHook = NULL;
     }
@@ -900,7 +908,8 @@ CConEmuMain::~CConEmuMain()
 	//	mh_PopupHook = NULL;
 	//}
 
-    if (mp_DragDrop) {
+    if (mp_DragDrop)
+    {
         delete mp_DragDrop;
         mp_DragDrop = NULL;
     }
@@ -909,17 +918,25 @@ CConEmuMain::~CConEmuMain()
     //    ProgressBars = NULL;
     //}
     
-	if (mp_TabBar) {
+	if (mp_TabBar)
+	{
 		delete mp_TabBar;
 		mp_TabBar = NULL;
 	}
-	if (m_Child) {
+	if (m_Child)
+	{
 		delete m_Child;
 		m_Child = NULL;
 	}
-	if (m_Back) {
+	if (m_Back)
+	{
 		delete m_Back;
 		m_Back = NULL;
+	}
+	if (m_Macro)
+	{
+		delete m_Macro;
+		m_Macro = NULL;
 	}
 
 	_ASSERTE(mh_LLKeyHookDll==NULL);
@@ -955,7 +972,9 @@ void CConEmuMain::AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand/*=FALSE*/
             rc.right -= rcAddShift.right;
         if (rcAddShift.bottom)
             rc.bottom -= rcAddShift.bottom;
-    } else {
+    }
+    else
+    {
     	// поправить только правую и нижнюю грань
         if (rcAddShift.right || rcAddShift.left)
             rc.right += rcAddShift.right + rcAddShift.left;
@@ -984,9 +1003,11 @@ void CConEmuMain::AskChangeBufferHeight()
 
 #ifdef _DEBUG
 	HANDLE hFarInExecuteEvent = NULL;
-	if (!lbBufferHeight) {
+	if (!lbBufferHeight)
+	{
 		DWORD dwFarPID = pRCon->GetFarPID();
-		if (dwFarPID) {
+		if (dwFarPID)
+		{
 			// Ёто событие дергаетс€ в отладочной (мной поправленной) версии фара
 			wchar_t szEvtName[64]; wsprintf(szEvtName, L"FARconEXEC:%08X", (DWORD)pRCon->ConWnd());
 			hFarInExecuteEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, szEvtName);
@@ -2573,7 +2594,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
     
 	#ifdef _DEBUG
 	RECT rcDbgSize; GetWindowRect(ghWnd, &rcDbgSize);
-	wchar_t szSize[255]; swprintf_s(szSize, L"OnSize(%i, %ix%i) Current window size (X=%i, Y=%i, W=%i, H=%i)\n",
+	wchar_t szSize[255]; swprintf_c(szSize, L"OnSize(%i, %ix%i) Current window size (X=%i, Y=%i, W=%i, H=%i)\n",
 		wParam, (int)(short)newClientWidth, (int)(short)newClientHeight,
 		rcDbgSize.left, rcDbgSize.top, (rcDbgSize.right-rcDbgSize.left), (rcDbgSize.bottom-rcDbgSize.top));
 	DEBUGSTRSIZE(szSize);
@@ -2805,7 +2826,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 			TODO("DoubleView");
 			//ActiveCon()->RCon()->SyncConsole2Window(FALSE, pRect);
 			#ifdef _DEBUG
-			wchar_t szSize[255]; swprintf_s(szSize, L"New window size (X=%i, Y=%i, W=%i, H=%i); Current size (X=%i, Y=%i, W=%i, H=%i)\n",
+			wchar_t szSize[255]; swprintf_c(szSize, L"New window size (X=%i, Y=%i, W=%i, H=%i); Current size (X=%i, Y=%i, W=%i, H=%i)\n",
 				pRect->left, pRect->top, (pRect->right-pRect->left), (pRect->bottom-pRect->top),
 				rcCurrent.left, rcCurrent.top, (rcCurrent.right-rcCurrent.left), (rcCurrent.bottom-rcCurrent.top));
 			DEBUGSTRSIZE(szSize);
@@ -5202,7 +5223,7 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 
 	#ifdef _DEBUG
 	RECT rcDbgSize; GetWindowRect(ghWnd, &rcDbgSize);
-	wchar_t szSize[255]; swprintf_s(szSize, L"WM_PAINT -> Window size (X=%i, Y=%i, W=%i, H=%i)\n",
+	wchar_t szSize[255]; swprintf_c(szSize, L"WM_PAINT -> Window size (X=%i, Y=%i, W=%i, H=%i)\n",
 		rcDbgSize.left, rcDbgSize.top, (rcDbgSize.right-rcDbgSize.left), (rcDbgSize.bottom-rcDbgSize.top));
 	DEBUGSTRSIZE(szSize);
 	static RECT rcDbgSize1;
@@ -10053,7 +10074,7 @@ DWORD CConEmuMain::GuiServerThread(LPVOID lpvParam)
                 PIPEBUFSIZE,              // output buffer size 
                 PIPEBUFSIZE,              // input buffer size 
                 0,                        // client time-out 
-                gpNullSecurity);          // default security attribute 
+                gpLocalSecurity);          // default security attribute 
 
             _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
 

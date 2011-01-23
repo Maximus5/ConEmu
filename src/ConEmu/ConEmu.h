@@ -78,6 +78,7 @@ typedef HRESULT (WINAPI* FDwmIsCompositionEnabled)(BOOL *pfEnabled);
 class CConEmuChild;
 class CConEmuBack;
 class TabBarClass;
+class CConEmuMacro;
 
 WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
 enum ConEmuMargins
@@ -142,6 +143,7 @@ private:
 public:
 	CConEmuChild *m_Child;
 	CConEmuBack  *m_Back;
+	CConEmuMacro *m_Macro;
 	TabBarClass *mp_TabBar;
 	//POINT cwShift; // difference between window size and client area size for main ConEmu window
 	POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode

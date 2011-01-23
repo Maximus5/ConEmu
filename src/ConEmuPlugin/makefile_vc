@@ -83,6 +83,7 @@ $(OBJDIR)\ConEmuPlugin995.obj \
 $(OBJDIR)\ConEmuPluginA.obj \
 $(OBJDIR)\PluginBackground.obj \
 $(OBJDIR)\Common.obj \
+$(OBJDIR)\Execute.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\WinObjects.obj
 
@@ -161,12 +162,12 @@ LINK_DEBUG=/DEBUG /map:"$(MAP)" /pdb:"$(PDB)"
 !endif
 
 !ifdef AMD64
-CPP_PROJ_NO=/nologo /c /W3 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
 COMMONLIB = ../common/libCRT64.lib
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !elseif defined(IA64)
-CPP_PROJ_NO=/nologo /c /W3 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
 COMMONLIB = ../common/libCRTIA64.lib
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
@@ -177,7 +178,7 @@ COMMONLIB = ../common/libCRT.lib
 CPP_ALIGN=/Zp1
 !endif
 # /I"$(COMMON)"
-CPP_PROJ_NO=/nologo /c /W3 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
 ULOUT=-Tpd -Re
 LINK_MACHINE = /MACHINE:X86
 !endif
@@ -202,7 +203,7 @@ _LINK_PATH_=$(_BIN_PATH_)
 
 
 LNK=$(_LINK_PATH_)link.exe
-LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG) /NODEFAULTLIB
 #LINK_FLAGS=/DEBUG /DEF:"export.def" /DLL /DYNAMICBASE /INCREMENTAL:NO /LTCG /MACHINE:X86 /MAP /NODEFAULTLIB /SUBSYSTEM:WINDOWS /OUT:"$(DLLFULLNAME)"
 
 
@@ -234,12 +235,12 @@ ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
 
 $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !ifndef __MAKE__
-	echo $(LINK_FLAGS)
+	@echo (__MAKE__) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 	@$(LNK) @<<
 	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 <<
 !else
-	echo $(LINK_FLAGS)
+	@echo (LNK) $(LINK_FLAGS)
 	@$(LNK) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 !endif
 !ifdef DOCS
@@ -263,11 +264,18 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 	$(CC) @<<
 	$(CFLAGS) $<
 <<
+{../ConEmuC/}.cpp{$(OBJDIR)}.obj::
+	$(CC) @<<
+	$(CFLAGS) $<
+<<
 !else
 .cpp{$(OBJDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
 {../common/}.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+
+{../ConEmuC/}.cpp{$(OBJDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
 !endif
@@ -317,6 +325,8 @@ $(OBJDIR)\PluginBackground.obj: PluginBackground.cpp
 $(OBJDIR)\Common.obj: ..\common\Common.cpp
 
 $(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
+
+$(OBJDIR)\Execute.obj: ..\ConEmuC\execute.cpp
 
 $(OBJDIR)\SetHook.obj: ..\common\SetHook.cpp
 

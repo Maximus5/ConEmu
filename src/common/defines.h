@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include <wchar.h>
+#include <strsafe.h>
 //#if !defined(__GNUC__)
 //#include <crtdbg.h>
 //#else
@@ -113,18 +114,144 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #define ZeroStruct(s) memset(&(s), 0, sizeof(s))
 
+template <size_t size>
+int swprintf_c(wchar_t (&Buffer)[size], const wchar_t *Format, ...)
+{
+	va_list argList;
+	va_start(argList, Format);
+	int nRc;
+#ifdef _DEBUG
+	nRc = StringCchVPrintfW(Buffer, size, Format, argList);
+#else
+	nRc = wvsprintf(Buffer, Format, argList);
+#endif
+	return nRc;
+};
+template <size_t size>
+int swprintf_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t *Format, ...)
+{
+	va_list argList;
+	va_start(argList, Format);
+	size_t SizeLeft = size - (Buffer - BufferStart);
+	if (SizeLeft > size)
+	{
+		_ASSERTE(SizeLeft <= size);
+		return E_POINTER;
+	}	
+	int nRc;
+#ifdef _DEBUG
+	nRc = StringCchVPrintfW(Buffer, SizeLeft, Format, argList);
+#else
+	nRc = wvsprintf(Buffer, Format, argList);
+#endif
+	return nRc;
+};
+template <size_t size>
+int swprintf_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t *Format, ...)
+{
+	va_list argList;
+	va_start(argList, Format);
+	size_t SizeLeft = size - Shift;
+	if (SizeLeft > size)
+	{
+		_ASSERTE(SizeLeft <= size);
+		return E_POINTER;
+	}
+	int nRc;
+#ifdef _DEBUG
+	nRc = StringCchVPrintfW(BufferStart+Shift, SizeLeft, Format, argList);
+#else
+	nRc = wvsprintf(BufferStart+Shift, Format, argList);
+#endif
+	return nRc;
+};
+template <size_t size>
+int wcscpy_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t *Str)
+{
+	size_t SizeLeft = size - (Buffer - BufferStart);
+	if (SizeLeft > size)
+	{
+		_ASSERTE(SizeLeft <= size);
+		return E_POINTER;
+	}	
+	int nRc = StringCchCopyW(Buffer, SizeLeft, Str);
+	return nRc;
+};
+template <size_t size>
+int wcscpy_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t *Str)
+{
+	size_t SizeLeft = size - Shift;
+	if (SizeLeft > size)
+	{
+		_ASSERTE(SizeLeft <= size);
+		return E_POINTER;
+	}	
+	int nRc = StringCchCopyW(BufferStart+Shift, SizeLeft, Str);
+	return nRc;
+};
+template <size_t size>
+int wcscat_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t *Str)
+{
+	size_t SizeLeft = size - (Buffer - BufferStart);
+	if (SizeLeft > size)
+	{
+		_ASSERTE(SizeLeft <= size);
+		return E_POINTER;
+	}	
+	int nRc = StringCchCatW(Buffer, SizeLeft, Str);
+	return nRc;
+};
+template <size_t size>
+int wcscat_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t *Str)
+{
+	size_t SizeLeft = size - Shift;
+	if (SizeLeft > size)
+	{
+		_ASSERTE(SizeLeft <= size);
+		return E_POINTER;
+	}	
+	int nRc = StringCchCatW(BufferStart+Shift, SizeLeft, Str);
+	return nRc;
+};
+template <size_t size>
+int wcscpy_c(wchar_t (&Dst)[size], const wchar_t *Src)
+{
+	int nRc = StringCchCopyW(Dst, size, Src);
+	return nRc;
+}
+template <size_t size>
+int wcscat_c(wchar_t (&Dst)[size], const wchar_t *Src)
+{
+	int nRc = StringCchCatW(Dst, size, Src);
+	return nRc;
+}
+//#undef _wcscpy_c
+//inline errno_t _wcscpy_c(wchar_t *Dst, size_t size, const wchar_t *Src)
+//{
+//	return StringCchCopyW(Dst, size, Src);
+//}
+//#undef _wcscat_c
+//inline errno_t _wcscat_c(wchar_t *Dst, size_t size, const wchar_t *Src)
+//{
+//	return StringCchCatW(Dst, size, Src);
+//}
+#define _wcscpy_c(Dst,Size,Src) StringCchCopyW(Dst, Size, Src)
+#define _wcscat_c(Dst,Size,Src) StringCchCatW(Dst, Size, Src)
+
+
 #ifdef _DEBUG
 extern wchar_t gszDbgModLabel[6];
 #define CHEKCDBGMODLABEL if (gszDbgModLabel[0]==0) { \
 	wchar_t szFile[MAX_PATH]; GetModuleFileName(NULL, szFile, MAX_PATH); \
 	wchar_t* pszName = wcsrchr(szFile, L'\\'); \
-	if (_wcsicmp(pszName, L"\\conemu.exe")==0) lstrcpyW(gszDbgModLabel, L"gui"); \
-	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) lstrcpyW(gszDbgModLabel, L"srv"); \
-	/*else if (_wcsicmp(pszName, L"\\conemuc64.exe")==0) lstrcpyW(gszDbgModLabel, L"srv");*/ \
-	else lstrcpyW(gszDbgModLabel, L"dll"); \
+	if (_wcsicmp(pszName, L"\\conemu.exe")==0) wcscpy_c(gszDbgModLabel, L"gui"); \
+	else if (_wcsicmp(pszName, L"\\conemu64.exe")==0) wcscpy_c(gszDbgModLabel, L"gui"); \
+	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) wcscpy_c(gszDbgModLabel, L"srv"); \
+	else if (_wcsicmp(pszName, L"\\conemuc64.exe")==0) wcscpy_c(gszDbgModLabel, L"srv"); \
+	else wcscpy_c(gszDbgModLabel, L"dll"); \
 }
 #ifdef SHOWDEBUGSTR
-	#define DEBUGSTR(s) { MCHKHEAP; CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i(%s.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentThreadId()); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
+	#define DEBUGSTR(s) { MCHKHEAP; CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; swprintf_c(szDEBUGSTRTime, L"%i:%02i:%02i.%03i(%s.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentThreadId()); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
 #else
 	#ifndef DEBUGSTR
 		#define DEBUGSTR(s)

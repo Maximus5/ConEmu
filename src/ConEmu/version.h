@@ -1,7 +1,7 @@
 
-#define MVV_1 2011
-#define MVV_2 1
-#define MVV_3 18
+#define MVV_1 11
+#define MVV_2 01
+#define MVV_3 23
 #define MVV_4 0
 #define MVV_4a ""
 
@@ -9,8 +9,8 @@
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
 
-#define CONEMUVERS STRING(MVV_1) "." STRING(MVV_2) "." STRING(MVV_3) MVV_4a
-#define CONEMUVERN MVV_1,MVV_2,MVV_3,MVV_4
+#define CONEMUVERS STRING(MVV_1) STRING(MVV_2) STRING(MVV_3) MVV_4a
+#define CONEMUVERN 2000+MVV_1,MVV_2,MVV_3,MVV_4
 
 #ifdef _WIN64
 #define CONEMUPLTFRM " (x64)"

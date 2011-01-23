@@ -42,7 +42,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <tchar.h>
 #include "..\common\common.hpp"
 #include "..\common\SetHook.h"
+#pragma warning( disable : 4995 )
 #include "..\common\pluginW1007.hpp"
+#pragma warning( default : 4995 )
 #include "..\common\ConsoleAnnotation.h"
 #include "..\common\WinObjects.h"
 #include "PluginHeader.h"
@@ -477,7 +479,10 @@ void CPluginBackground::UpdateBackground()
 	else if (gpTabs->Tabs.CurrentType == WTYPE_VIEWER)
 		Arg.Place = pbp_Viewer;
 	else if (Arg.LeftPanel.bVisible || Arg.RightPanel.bVisible)
+	{
+		_ASSERTE(gpTabs->Tabs.CurrentType == WTYPE_PANELS);
 		Arg.Place = pbp_Panels;
+	}
 
 	//_ASSERTE(Arg.LeftPanel.bVisible || Arg.RightPanel.bVisible);
 

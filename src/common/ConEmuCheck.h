@@ -65,4 +65,4 @@ void ExecuteFreeResult(CESERVER_REQ* pOut);
 
 HWND myGetConsoleWindow();
 
-extern SECURITY_ATTRIBUTES* gpNullSecurity;
+extern SECURITY_ATTRIBUTES* gpLocalSecurity;

@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define MCHKHEAP
 #define DEBUGSTRMENU(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
+#define DEBUGSTRDLGEVT(s) //OutputDebugStringW(s)
 
 
 //#include <stdio.h>
@@ -47,7 +48,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <tchar.h>
 #include "..\common\common.hpp"
 #include "..\common\SetHook.h"
+#pragma warning( disable : 4995 )
 #include "..\common\pluginW1007.hpp"
+#pragma warning( default : 4995 )
 #include "..\common\ConsoleAnnotation.h"
 #include "..\common\WinObjects.h"
 #include "..\common\TerminalMode.h"
@@ -351,50 +354,39 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 				{
 					// Хорошо бы, конечно точнее определять, строка это, или нет...
 					LPCWSTR pszCallCmd = (LPCWSTR)Item;
-					wchar_t szCmd[16]; szCmd[0] = 0;
-					bool lbCmdOk = false;
-					for (int i = 0; i < (countof(szCmd)-1); i++)
+					if (!IsBadStringPtrW(pszCallCmd, 255) && *pszCallCmd)
 					{
-						if (pszCallCmd[i] > L'z') break;
-						szCmd[i] = pszCallCmd[i];
-						if (szCmd[i] == L':')
+						if (!ConEmuHwnd)
 						{
-							lbCmdOk = true;
-							szCmd[i+1] = 0;
-							break;
+							SetEnvironmentVariable(CEGUIMACRORETENVVAR, NULL);
 						}
-					}
-					
-					if (lbCmdOk)
-					{
-						if (!lstrcmpiW(szCmd, L"EditOpen:") || !lstrcmpiW(szCmd, L"ViewOpen:"))
+						else
 						{
-							wchar_t szFound[16]; szFound[0] = 0;
-							CESERVER_REQ *pIn = NULL, *pOut = NULL;
-							LPCWSTR pszName = pszCallCmd + 9;
-							int nLen = lstrlenW(pszName)+1;
-							pIn = ExecuteNewCmd(CECMD_FINDWINDOW, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_FINDWINDOW)+2*nLen);
-							pIn->FindWnd.nWindowType = (lstrcmpiW(szCmd, L"EditOpen:") == 0) ? WTYPE_EDITOR : WTYPE_VIEWER;
+							int nLen = lstrlenW(pszCallCmd);
 							
-							lstrcpyW(pIn->FindWnd.sFile, pszName);
+							CESERVER_REQ *pIn = NULL, *pOut = NULL;
+							pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
+							
+							lstrcpyW(pIn->GuiMacro.sMacro, pszCallCmd);
 							
 							pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 							
 							if (pOut)
 							{
-								if (((int)pOut->dwData[0]) == -1)
-									lstrcpyW(szFound, L"Blocked");
-								else if (((int)pOut->dwData[0]) > 0)
-									lstrcpyW(szFound, L"Found");
+								SetEnvironmentVariable(CEGUIMACRORETENVVAR,
+									pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : NULL);
 								ExecuteFreeResult(pOut);
 							}
-							ExecuteFreeResult(pIn);
+							else
+							{
+								SetEnvironmentVariable(CEGUIMACRORETENVVAR, NULL);
+							}
 							
-							SetEnvironmentVariable(CEFINDWINDOWENVVAR, szFound[0] ? szFound : NULL);
+							ExecuteFreeResult(pIn);
 						}
-						
-						return INVALID_HANDLE_VALUE;
 					}
+						
+					return INVALID_HANDLE_VALUE;
 				}
 				
 				if (Item >= 1 && Item <= 8)
@@ -1278,7 +1270,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				//GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
 				//#endif
 				
-				gpNullSecurity = NullSecurity();
+				gpLocalSecurity = LocalSecurity();
 				
 				csTabs = new MSection();
 				csData = new MSection();
@@ -2410,7 +2402,7 @@ int CreateColorerHeader()
 		
 		// Создаем! т.к. должна вызываться только после Detach!
 		ghColorMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
-			gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+			gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
 		
 		if (!ghColorMapping)
 		{
@@ -2450,7 +2442,7 @@ int CreateColorerHeader()
 	//	wsprintf(szMapName, L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
 	//	nMapSize = nMapCells * sizeof(AnnotationInfo);
 	//	ghColorMappingOld = CreateFileMapping(INVALID_HANDLE_VALUE, 
-	//		gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+	//		gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
 	//}
 	//#endif
 
@@ -2868,6 +2860,9 @@ void CommonPluginStartup()
 {
 	gbBgPluginsAllowed = TRUE;
 
+	// Надо табы загрузить
+	UpdateConEmuTabs(0,false,false);
+
 	//2010-12-13 информацию (начальную) о фаре грузим всегда, а отсылаем в GUI только если в ConEmu
 	CheckResources(TRUE);
 
@@ -3104,8 +3099,9 @@ void InitHWND(HWND ahFarHwnd)
 		int tabCount = 0;
 		MSectionLock SC; SC.Lock(csTabs);
 		CreateTabs(1);
-		AddTab(tabCount, true, false, WTYPE_PANELS, NULL, NULL, 0, 0, 0);
-		SendTabs(tabCount=1, TRUE);
+		AddTab(tabCount, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0);
+		// Сейчас отсылать не будем - выполним, когда вызовется SetStartupInfo -> CommonStartup
+		//SendTabs(tabCount=1, TRUE);
 		SC.Unlock();
 	}
 }
@@ -3322,7 +3318,7 @@ BOOL ReloadFarInfo(BOOL abForce)
 
 		TODO("Заменить на MFileMapping");
 		ghFarInfoMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
-			gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+			gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
 
 		if (!ghFarInfoMapping)
 		{
@@ -3351,7 +3347,7 @@ BOOL ReloadFarInfo(BOOL abForce)
 	{
 		wchar_t szEventName[64];
 		wsprintfW(szEventName, CEFARALIVEEVENT, gnSelfPID);
-		ghFarAliveEvent = CreateEvent(gpNullSecurity, FALSE, FALSE, szEventName);				
+		ghFarAliveEvent = CreateEvent(gpLocalSecurity, FALSE, FALSE, szEventName);				
 	}
 	
 	if (!gpFarInfo)
@@ -3480,13 +3476,24 @@ bool UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Para
 	else
 		lbCh = UpdateConEmuTabsW(anEvent, losingFocus, editorSave, Param);
 
-	if (gpTabs && gpTabs->Tabs.CurrentIndex == -1 && nLastCurrentTab != -1 && gpTabs->Tabs.nTabCount > 0)
+	if (gpTabs)
 	{
-		// Активное окно определить не удалось
-		if ((UINT)nLastCurrentTab >= gpTabs->Tabs.nTabCount)
-			nLastCurrentTab = (gpTabs->Tabs.nTabCount - 1);
-		gpTabs->Tabs.CurrentIndex = nLastCurrentTab;
-		gpTabs->Tabs.tabs[nLastCurrentTab].Current = TRUE;
+		if (gpTabs->Tabs.CurrentIndex == -1 && nLastCurrentTab != -1 && gpTabs->Tabs.nTabCount > 0)
+		{
+			// Активное окно определить не удалось
+			if ((UINT)nLastCurrentTab >= gpTabs->Tabs.nTabCount)
+				nLastCurrentTab = (gpTabs->Tabs.nTabCount - 1);
+			gpTabs->Tabs.CurrentIndex = nLastCurrentTab;
+			gpTabs->Tabs.tabs[nLastCurrentTab].Current = TRUE;
+			gpTabs->Tabs.CurrentType = gpTabs->Tabs.tabs[nLastCurrentTab].Type;
+		}
+		if (gpTabs->Tabs.CurrentType == 0)
+		{
+			if (gpTabs->Tabs.CurrentIndex >= 0 && gpTabs->Tabs.CurrentIndex < (int)gpTabs->Tabs.nTabCount)
+				gpTabs->Tabs.CurrentType = gpTabs->Tabs.tabs[nLastCurrentTab].Type;
+			else
+				gpTabs->Tabs.CurrentType = WTYPE_PANELS;
+		}
 	}
 
 	SendTabs(gpTabs->Tabs.nTabCount, lbCh && (gnReqCommand==(DWORD)-1));
@@ -4084,7 +4091,9 @@ int WINAPI _export ProcessDialogEventW(int Event, void *Param)
 			};
 			
 			if (szDbg[0])
-				OutputDebugStringW(szDbg);
+			{
+				DEBUGSTRDLGEVT(szDbg);
+			}
 		}
 	}
 
@@ -4443,7 +4452,7 @@ DWORD WINAPI PlugServerThread(LPVOID lpvParam)
 
             hPipe = CreateNamedPipe( gszPluginServerPipe, PIPE_ACCESS_DUPLEX, 
 				PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
-                PIPEBUFSIZE, PIPEBUFSIZE, 0, gpNullSecurity);
+                PIPEBUFSIZE, PIPEBUFSIZE, 0, gpLocalSecurity);
 
             _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
 
@@ -4791,8 +4800,9 @@ void ShowPluginMenu(int nID /*= -1*/)
 	{
 		nItem = nID;
 		if (nItem >= 2) nItem++; //Separator
-		if (nItem >= 7) nItem++; //Separator
+		if (nItem >= 7) nItem+=3; //Separator + GuiMacro + Separator
 		if (nItem >= 9) nItem++; //Separator
+		if (nItem >= 11) nItem++; //Separator
 		SHOWDBGINFO(L"*** ShowPluginMenu used default item\n");
 	}
 	else if (gFarVersion.dwVerMajor==1)
@@ -4858,7 +4868,17 @@ void ShowPluginMenu(int nID /*= -1*/)
 			pOut = ExecuteGuiCmd(FarHwnd, &in, FarHwnd);
 			if (pOut) ExecuteFreeResult(pOut);
 		} break;
-		case 8: // Attach to GUI (если FAR был CtrlAltTab)
+		case 8: // Execute GUI macro (gialog)
+		{
+			if (gFarVersion.dwVerMajor==1)
+				GuiMacroDlgA();
+			else if (gFarVersion.dwBuild>=FAR_Y_VER)
+				FUNC_Y(GuiMacroDlg)();
+			else
+				FUNC_X(GuiMacroDlg)();
+			
+		} break;
+		case 10: // Attach to GUI (если FAR был CtrlAltTab)
 		{
 			if (TerminalMode) break; // низзя
 			if (ConEmuHwnd && IsWindow(ConEmuHwnd)) break; // Мы и так подключены?
@@ -4867,7 +4887,7 @@ void ShowPluginMenu(int nID /*= -1*/)
 		//#ifdef _DEBUG
 		//case 11: // Start "ConEmuC.exe /DEBUGPID="
 		//#else
-		case 10: // Start "ConEmuC.exe /DEBUGPID="
+		case 12: // Start "ConEmuC.exe /DEBUGPID="
 		//#endif
 		{
 			if (TerminalMode) break; // низзя

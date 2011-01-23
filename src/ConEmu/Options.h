@@ -136,7 +136,7 @@ public:
     LPTSTR psCurCmd;
 	private:
 	/* 'Default' command line (if nor Registry, nor /cmd specified) */
-	WCHAR  szDefCmd[10];
+	WCHAR  szDefCmd[16];
 	public:
     /* "Active" command line */
     LPCTSTR GetCmd();
@@ -335,7 +335,7 @@ public:
 	void RegisterFontsInt(LPCWSTR asFromDir);
 	public:
 	void UnregisterFonts();
-	BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, LPTSTR rsFontName);
+	BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[32]);
 	void HistoryCheck();
 	void HistoryAdd(LPCWSTR asCmd);
 	LPCWSTR HistoryGet();

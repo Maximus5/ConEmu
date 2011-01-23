@@ -96,6 +96,9 @@ static BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect);
 static BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint);
 static BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 static BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+#ifdef _DEBUG
+static HANDLE WINAPI OnCreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,LPSECURITY_ATTRIBUTES lpSecurityAttributes);
+#endif
 
 
 
@@ -128,6 +131,9 @@ static HookItem Hooks[MAX_HOOKED_PROCS] = {
 	{(void*)OnCreateConsoleScreenBuffer,
 									"CreateConsoleScreenBuffer",
 															kernel32},
+	#ifdef _DEBUG
+	{(void*)OnCreateNamedPipeW,		"CreateNamedPipeW",		kernel32},
+	#endif
 	/* ************************ */
 	{(void*)OnTrackPopupMenu,      "TrackPopupMenu",		user32},
 	{(void*)OnTrackPopupMenuEx,    "TrackPopupMenuEx",		user32},
@@ -1278,35 +1284,109 @@ static BOOL OnShellExecuteExW_SEH(OnShellExecuteExW_t f, LPSHELLEXECUTEINFOW lpE
 }
 static BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 {
+	extern bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/);
+#ifdef _DEBUG
+	if (lpExecInfo->lpParameters)
+	{
+		OutputDebugStringW(lpExecInfo->lpParameters);
+		OutputDebugStringW(L"\n");
+	}
+#endif
 	ORIGINAL(ShellExecuteExW);
 
-	if (ConEmuHwnd) {
-		if (!lpExecInfo->hwnd || lpExecInfo->hwnd == GetConsoleWindow())
-			lpExecInfo->hwnd = GetParent(ConEmuHwnd);
+	LPSHELLEXECUTEINFOW lpNew = NULL;
+	wchar_t* pszTempParm = NULL;
+	wchar_t szComSpec[MAX_PATH+1], szConEmuC[MAX_PATH+1]; szComSpec[0] = szConEmuC[0] = 0;
+
+	lpNew = (LPSHELLEXECUTEINFOW)malloc(lpExecInfo->cbSize);
+	memmove(lpNew, lpExecInfo, lpExecInfo->cbSize);
+
+	// ONLY FAR MODE!
+	if (ConEmuHwnd)
+	{
+		if (!lpNew->hwnd || lpNew->hwnd == GetConsoleWindow())
+			lpNew->hwnd = GetParent(ConEmuHwnd);
+
+		if ((lpNew->fMask & (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NO_CONSOLE))
+			== (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NO_CONSOLE)
+			&& (lstrcmpiW(lpNew->lpVerb, L"open") == 0))
+		{
+			int nOldParmLen = lpNew->lpParameters ? lstrlenW(lpNew->lpParameters) : 0;
+			if (!lpNew->lpParameters || !*lpNew->lpParameters)
+			{
+				// Возможно, требуется добавить COMSPEC (conemuc)
+				if (GetEnvironmentVariableW(L"ComSpecC", szComSpec, countof(szComSpec))
+					&& GetEnvironmentVariableW(L"ComSpec", szConEmuC, countof(szConEmuC)))
+					// Переменные именно такие, ибо conemu подменяет собой переменную ComSpec,
+					// а "родной" cmd.exe лежит в ComSpecC
+				{
+					if (lstrcmpiW(szConEmuC, szComSpec) != 0
+						&& lstrcmpiW(lpNew->lpFile, szConEmuC) != 0)
+					{
+						bool lbGuiApp = false;
+						DWORD ImageSubsystem = 0, ImageBits = 0;
+						if (GetImageSubsystem(lpNew->lpFile,ImageSubsystem,ImageBits))
+							lbGuiApp = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
+
+						if (!lbGuiApp)
+						{
+							int nCchSize = lstrlenW(lpNew->lpFile) + nOldParmLen + 32;
+							pszTempParm = (wchar_t*)malloc(nCchSize*sizeof(wchar_t));
+							_wcscpy_c(pszTempParm, nCchSize, L"/C \"");
+							_wcscat_c(pszTempParm, nCchSize, lpNew->lpFile);
+							_wcscat_c(pszTempParm, nCchSize, L"\"");
+							if (nOldParmLen > 0)
+							{
+								_wcscat_c(pszTempParm, nCchSize, L" ");
+								_wcscat_c(pszTempParm, nCchSize, lpNew->lpParameters);
+							}
+							lpNew->lpParameters = pszTempParm;
+							lpNew->lpFile = szConEmuC;
+						}
+					}
+				}
+			}
+		}
 	}
 
 	BOOL lbRc;
 
 	if (gbShellNoZoneCheck)
-		lpExecInfo->fMask |= SEE_MASK_NOZONECHECKS;
+		lpNew->fMask |= SEE_MASK_NOZONECHECKS;
 
 	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить левый хэндл
 	gbInShellExecuteEx = TRUE;
 
 	//BUGBUG: FAR периодически валится на этой функции
-	//должно быть: lpExecInfo->cbSize==0x03C; lpExecInfo->fMask==0x00800540;
+	//должно быть: lpNew->cbSize==0x03C; lpNew->fMask==0x00800540;
 	if (ph && ph->ExceptCallBack)
 	{
-		if (!OnShellExecuteExW_SEH(F(ShellExecuteExW), lpExecInfo, &lbRc))
+		if (!OnShellExecuteExW_SEH(F(ShellExecuteExW), lpNew, &lbRc))
 		{
-			SETARGS1(&lbRc,lpExecInfo);
+			SETARGS1(&lbRc,lpNew);
 			ph->ExceptCallBack(&args);
 		}
 	}
 	else
 	{
-		lbRc = F(ShellExecuteExW)(lpExecInfo);
+		lbRc = F(ShellExecuteExW)(lpNew);
 	}
+
+#ifdef _DEBUG
+	if (lpNew->lpParameters)
+	{
+		OutputDebugStringW(L"After ShellExecuteEx\n");
+		OutputDebugStringW(lpNew->lpParameters);
+		OutputDebugStringW(L"\n");
+	}
+#endif
+
+	lpExecInfo->hProcess = lpNew->hProcess;
+	lpExecInfo->hInstApp = lpNew->hInstApp;
+
+	if (pszTempParm)
+		free(pszTempParm);
+	free(lpNew);
 
 	gbInShellExecuteEx = FALSE;
 
@@ -1797,6 +1877,26 @@ static BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *
 	return lbRc;
 }
 
+#ifdef _DEBUG
+typedef HANDLE (WINAPI* OnCreateNamedPipeW_t)(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,LPSECURITY_ATTRIBUTES lpSecurityAttributes);
+static HANDLE WINAPI OnCreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+	ORIGINALFAST(CreateNamedPipeW);
+#ifdef _DEBUG
+	if (!lpName || !*lpName)
+	{
+		_ASSERTE(lpName && *lpName);
+	}
+	else
+	{
+		OutputDebugStringW(L"CreateNamedPipeW("); OutputDebugStringW(lpName); OutputDebugStringW(L")\n");
+	}
+#endif
+
+	HANDLE hPipe = F(CreateNamedPipeW)(lpName, dwOpenMode, dwPipeMode, nMaxInstances, nOutBufferSize, nInBufferSize, nDefaultTimeOut, lpSecurityAttributes);
+	return hPipe;
+}
+#endif
 
 
 // WinInet.dll

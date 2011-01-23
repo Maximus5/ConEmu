@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "ConEmuChild.h"
 #include "ConEmuPipe.h"
+#include "Macro.h"
 
 #define DEBUGSTRDRAW(s) DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
@@ -2763,9 +2764,11 @@ bool CRealConsole::DoSelectionCopy()
 	BOOL lbStreamMode = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
 	int nSelWidth = con.m_sel.srSelection.Right - con.m_sel.srSelection.Left;
 	int nSelHeight = con.m_sel.srSelection.Bottom - con.m_sel.srSelection.Top;
-	if (nSelWidth<0 || nSelHeight<0)
+	int nTextWidth = con.nTextWidth;
+	//if (nSelWidth<0 || nSelHeight<0)
+	if (con.m_sel.srSelection.Left > (con.m_sel.srSelection.Right+(con.m_sel.srSelection.Bottom-con.m_sel.srSelection.Top)*nTextWidth))
 	{
-		MBoxAssert(nSelWidth>=0 && nSelHeight>=0);
+		MBoxAssert(con.m_sel.srSelection.Left <= (con.m_sel.srSelection.Right+(con.m_sel.srSelection.Bottom-con.m_sel.srSelection.Top)*nTextWidth));
 		return false;
 	}
 	nSelWidth++; nSelHeight++;
@@ -3893,7 +3896,7 @@ DWORD CRealConsole::RConServerThread(LPVOID lpvParam)
 				}
 			}
 
-			_ASSERTE(gpNullSecurity);
+			_ASSERTE(gpLocalSecurity);
             hPipe = CreateNamedPipe( 
                 pRCon->ms_VConServer_Pipe, // pipe name 
                 PIPE_ACCESS_DUPLEX,       // read/write access 
@@ -3904,7 +3907,7 @@ DWORD CRealConsole::RConServerThread(LPVOID lpvParam)
                 PIPEBUFSIZE,              // output buffer size 
                 PIPEBUFSIZE,              // input buffer size 
                 0,                        // client time-out 
-                gpNullSecurity);          // default security attribute 
+                gpLocalSecurity);          // default security attribute 
 
 			MCHKHEAP
             if (hPipe == INVALID_HANDLE_VALUE) 
@@ -4575,54 +4578,34 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         free(pRet);
 
     }
-    else if (pIn->hdr.nCmd == CECMD_FINDWINDOW)
+    else if (pIn->hdr.nCmd == CECMD_GUIMACRO)
     {
-    	CRealConsole* pRCon;
-    	CVirtualConsole* pVCon;
-    	ConEmuTab tab;
-    	int iFound = 0;
+    	LPWSTR pszResult = CConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro);
+    	int nLen = pszResult ? lstrlen(pszResult) : 0;
     	
-    	for (int i = 0; !iFound && (i < MAX_CONSOLE_COUNT); i++)
+    	CESERVER_REQ *pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
+    	if (pszResult)
     	{
-    		if (!(pVCon = gConEmu.GetVCon(i)))
-    			break;
-    		if (!(pRCon = pVCon->RCon()) || pRCon == this)
-    			continue;
-			
-			for (int j = 0; !iFound; j++)
-			{
-				if (!pRCon->GetTab(j, &tab))
-					break;
-				if (tab.Type == pIn->FindWnd.nWindowType)
-				{
-					if (lstrcmpi(tab.Name, pIn->FindWnd.sFile) == 0)
-					{
-						if (pRCon->ActivateFarWindow(j))
-						{
-							iFound = i+1;
-							gConEmu.Activate(pVCon);
-						}
-						else
-						{
-							iFound = -1;
-						}
-						break;
-					}
-				}
-			}
-    	}
-    	
-    	CESERVER_REQ Out;
-		ExecutePrepareCmd(&Out, pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
-		Out.dwData[0] = iFound;
+    		lstrcpy(pOut->GuiMacro.sMacro, pszResult);
+    		pOut->GuiMacro.nSucceeded = 1;
+		}
+    	else
+    	{
+    		pOut->GuiMacro.sMacro[0] = 0;
+    		pOut->GuiMacro.nSucceeded = 0;
+		}
 
         // Отправляем ответ
         fSuccess = WriteFile( 
             hPipe,        // handle to pipe 
-            &Out,         // buffer to write from 
-            Out.hdr.cbSize,  // number of bytes to write 
+            pOut,         // buffer to write from 
+            pOut->hdr.cbSize,  // number of bytes to write 
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
+            
+		ExecuteFreeResult(pOut);
+		if (pszResult)
+			free(pszResult);
 
     }
     else if (pIn->hdr.nCmd == CECMD_LANGCHANGE)
@@ -5408,7 +5391,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
     if (nLen>=63) pszSlash[63]=0;
     lstrcpyW(ConPrc.Name, pszSlash);
 
-    ConPrc.IsFar = lstrcmpi(ConPrc.Name, _T("far.exe"))==0;
+    ConPrc.IsFar = lstrcmpi(ConPrc.Name, _T("Far.exe"))==0;
 
     ConPrc.IsNtvdm = lstrcmpi(ConPrc.Name, _T("ntvdm.exe"))==0;
 
@@ -5817,7 +5800,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
 			//mh_GuiAttached = OpenEvent(EVENT_MODIFY_STATE, FALSE, ms_VConServer_Pipe);
 			//// Вроде, когда используется run as administrator - event открыть не получается?
 			//if (!mh_GuiAttached) {
-    		mh_GuiAttached = CreateEvent(gpNullSecurity, TRUE, FALSE, szEvent);
+    		mh_GuiAttached = CreateEvent(gpLocalSecurity, TRUE, FALSE, szEvent);
     		_ASSERTE(mh_GuiAttached!=NULL);
 			//}
 		}

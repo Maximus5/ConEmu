@@ -292,42 +292,55 @@ class MNullDesc {
 protected:
 	PSECURITY_DESCRIPTOR mp_NullDesc;
 	SECURITY_ATTRIBUTES  m_NullSecurity;
+	PSECURITY_DESCRIPTOR mp_LocalDesc;
+	SECURITY_ATTRIBUTES  m_LocalSecurity;
 public:
 	DWORD mn_LastError;
 public:
-	MNullDesc() {
+	MNullDesc()
+	{
 		memset(&m_NullSecurity, 0, sizeof(m_NullSecurity));
 		mp_NullDesc = NULL;
+		memset(&m_LocalSecurity, 0, sizeof(m_LocalSecurity));
+		mp_LocalDesc = NULL;
 		mn_LastError = 0;
 	};
-	~MNullDesc() {
+	~MNullDesc()
+	{
 		memset(&m_NullSecurity, 0, sizeof(m_NullSecurity));
 		LocalFree(mp_NullDesc); mp_NullDesc = NULL;
+		memset(&m_LocalSecurity, 0, sizeof(m_LocalSecurity));
+		LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
 	};
 public:
-	SECURITY_ATTRIBUTES* NullSecurity() {
+	SECURITY_ATTRIBUTES* NullSecurity()
+	{
 		mn_LastError = 0;
 		
-		if (mp_NullDesc) {
+		if (mp_NullDesc)
+		{
 			_ASSERTE(m_NullSecurity.lpSecurityDescriptor==mp_NullDesc);
 			return (&m_NullSecurity);
 		}
 		mp_NullDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
 		      SECURITY_DESCRIPTOR_MIN_LENGTH); 
 
-		if (mp_NullDesc == NULL) {
+		if (mp_NullDesc == NULL)
+		{
 			mn_LastError = GetLastError();
 			return NULL;
 		}
 
-		if (!InitializeSecurityDescriptor(mp_NullDesc, SECURITY_DESCRIPTOR_REVISION)) {
+		if (!InitializeSecurityDescriptor(mp_NullDesc, SECURITY_DESCRIPTOR_REVISION))
+		{
 			mn_LastError = GetLastError();
 			LocalFree(mp_NullDesc); mp_NullDesc = NULL;
 			return NULL;
 		}
 
 		// Add a null DACL to the security descriptor. 
-		if (!SetSecurityDescriptorDacl(mp_NullDesc, TRUE, (PACL) NULL, FALSE)) {
+		if (!SetSecurityDescriptorDacl(mp_NullDesc, TRUE, (PACL) NULL, FALSE))
+		{
 			mn_LastError = GetLastError();
 			LocalFree(mp_NullDesc); mp_NullDesc = NULL;
 			return NULL;
@@ -339,6 +352,99 @@ public:
 		
 		return (&m_NullSecurity);
 	};
+	SECURITY_ATTRIBUTES* LocalSecurity()
+	{
+		static PACL pACL = NULL;
+		//static PSID pNetworkSid = NULL, pSidWorld = NULL;
+		BYTE NetworkSid[12] = {01,01,00,00,00,00,00,05,02,00,00,00};
+		BYTE SidWorld[12]   = {01,01,00,00,00,00,00,01,00,00,00,00};
+		PSID pNetworkSid = (PSID)NetworkSid;
+		PSID pSidWorld = (PSID)SidWorld;
+		//static DWORD LastError = 0;
+		DWORD dwSize = 0;
+
+		if (mp_LocalDesc)
+		{
+			_ASSERTE(m_LocalSecurity.lpSecurityDescriptor==mp_LocalDesc);
+			return (&m_LocalSecurity);
+		}
+		mp_LocalDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
+			SECURITY_DESCRIPTOR_MIN_LENGTH); 
+
+		if (mp_LocalDesc == NULL)
+		{
+			mn_LastError = GetLastError();
+			return NULL;
+		}
+
+		if (!InitializeSecurityDescriptor(mp_LocalDesc, SECURITY_DESCRIPTOR_REVISION))
+		{
+			mn_LastError = GetLastError();
+			LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
+			return NULL;
+		}
+
+		//// Создать SID для Network & Everyone
+		//dwSize = SECURITY_MAX_SID_SIZE;
+		//pNetworkSid = (PSID)LocalAlloc(LMEM_FIXED, dwSize);
+		//pSidWorld   = (PSID)LocalAlloc(LMEM_FIXED, dwSize);
+		//if (!pNetworkSid || !pSidWorld)
+		//{
+		//	mn_LastError = GetLastError();
+		//	return NULL;
+		//}
+		//dwSize = SECURITY_MAX_SID_SIZE;
+		//// 01 01 00 00 00 00 00 05 02 00 00 00
+		//if (!CreateWellKnownSid(WinNetworkSid, NULL, pNetworkSid, &dwSize))
+		//{
+		//	LastError = GetLastError();
+		//	return NULL;
+		//}
+		//dwSize = SECURITY_MAX_SID_SIZE;
+		//// 01 01 00 00 00 00 00 01 00 00 00 00
+		//if (!CreateWellKnownSid(WinWorldSid, NULL, pSidWorld, &dwSize))
+		//{
+		//	mn_LastError = GetLastError();
+		//	return NULL;
+		//}
+
+		// Создать DACL
+		dwSize = sizeof(ACL) 
+			+ sizeof(ACCESS_DENIED_ACE) + GetLengthSid(pNetworkSid)
+			+ sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(pSidWorld);
+		pACL = (PACL)LocalAlloc(LPTR, dwSize);
+		if (!InitializeAcl(pACL, dwSize, ACL_REVISION))
+		{
+			mn_LastError = GetLastError();
+			return NULL;
+		}
+		// Теперь - собственно права
+		if (!AddAccessDeniedAce(pACL, ACL_REVISION, GENERIC_ALL, pNetworkSid))
+		{
+			mn_LastError = GetLastError();
+			return NULL;
+		}
+		if (!AddAccessAllowedAce(pACL, ACL_REVISION, GENERIC_ALL, pSidWorld))
+		{
+			mn_LastError = GetLastError();
+			return NULL;
+		}
+
+
+		// Add a null DACL to the security descriptor. 
+		if (!SetSecurityDescriptorDacl(mp_LocalDesc, TRUE, pACL, FALSE))
+		{
+			mn_LastError = GetLastError();
+			LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
+			return NULL;
+		}
+
+		m_LocalSecurity.nLength = sizeof(m_LocalSecurity);
+		m_LocalSecurity.lpSecurityDescriptor = mp_LocalDesc;
+		m_LocalSecurity.bInheritHandle = TRUE; 
+
+		return (&m_LocalSecurity);
+	};
 };
 MNullDesc *gNullDesc = NULL;
 
@@ -346,6 +452,11 @@ SECURITY_ATTRIBUTES* NullSecurity()
 {
 	if (!gNullDesc) gNullDesc = new MNullDesc();
 	return gNullDesc->NullSecurity();
+}
+SECURITY_ATTRIBUTES* LocalSecurity()
+{
+	if (!gNullDesc) gNullDesc = new MNullDesc();
+	return gNullDesc->LocalSecurity();
 }
 
 BOOL gbInCommonShutdown = FALSE;
@@ -433,7 +544,8 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	dwConsoleThreadId = GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
 
 	// We'll fail, if console was created by other process
-	if (dwConsoleOwnerPid != dwCurProcId) {
+	if (dwConsoleOwnerPid != dwCurProcId)
+	{
 		_ASSERTE(dwConsoleOwnerPid == dwCurProcId);
 		return FALSE;
 	}
@@ -444,12 +556,14 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	// this section into the owner process so we can write the contents 
 	// of the CONSOLE_INFO buffer into it
 	//
-	if (!ghConsoleSection) {
+	if (!ghConsoleSection)
+	{
 		ghConsoleSection = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, gnConsoleSectionSize, 0);
 
-		if (!ghConsoleSection) {
+		if (!ghConsoleSection)
+		{
 			dwLastError = GetLastError();
-			wsprintf(ErrText, L"Can't CreateFileMapping(ghConsoleSection). ErrCode=%i", dwLastError);
+			swprintf_c(ErrText, L"Can't CreateFileMapping(ghConsoleSection). ErrCode=%i", dwLastError);
 			MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 			return FALSE;
 		}
@@ -460,12 +574,15 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	//	Copy our console structure into the section-object
 	//
 	ptrView = MapViewOfFile(ghConsoleSection, FILE_MAP_WRITE|FILE_MAP_READ, 0, 0, gnConsoleSectionSize);
-	if (!ptrView) {
+	if (!ptrView)
+	{
 		dwLastError = GetLastError();
-		wsprintf(ErrText, L"Can't MapViewOfFile. ErrCode=%i", dwLastError);
+		swprintf_c(ErrText, L"Can't MapViewOfFile. ErrCode=%i", dwLastError);
 		MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 
-	} else {
+	}
+	else
+	{
 		_ASSERTE(pci->Length==sizeof(CONSOLE_INFO));
 
 		//2010-09-19 что-то на XP стало окошко мелькать.

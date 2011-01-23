@@ -172,7 +172,7 @@ int ServerInit()
 		wsprintfW(szTempName, CEGUIRCONSTARTED, (DWORD)ghConWnd);
 		//srv.hConEmuGuiAttached = OpenEvent(EVENT_ALL_ACCESS, FALSE, szTempName);
 		//if (srv.hConEmuGuiAttached == NULL)
-   		srv.hConEmuGuiAttached = CreateEvent(gpNullSecurity, TRUE, FALSE, szTempName);
+   		srv.hConEmuGuiAttached = CreateEvent(gpLocalSecurity, TRUE, FALSE, szTempName);
 		_ASSERTE(srv.hConEmuGuiAttached!=NULL);
 		//if (srv.hConEmuGuiAttached) ResetEvent(srv.hConEmuGuiAttached); -- низя. может уже быть создано/установлено в GUI
 	}
@@ -364,7 +364,7 @@ int ServerInit()
 										if (dwServerPID)
 											break;
 									}
-									if (!dwFarPID && lstrcmpiW(prc.szExeFile, L"far.exe")==0)
+									if (!dwFarPID && lstrcmpiW(prc.szExeFile, L"Far.exe")==0)
 									{
 										dwFarPID = prc.th32ProcessID;
 									}
@@ -634,7 +634,7 @@ int ServerInit()
 		_printf("CreateEvent(hRefreshDoneEvent) failed, ErrCode=0x%08X\n", dwErr); 
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
-	srv.hDataReadyEvent = CreateEvent(gpNullSecurity,FALSE,FALSE,srv.szDataReadyEvent);
+	srv.hDataReadyEvent = CreateEvent(gpLocalSecurity,FALSE,FALSE,srv.szDataReadyEvent);
 	if (!srv.hDataReadyEvent)
 	{
 		dwErr = GetLastError();
@@ -1596,7 +1596,7 @@ int CreateColorerHeader()
 	wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
 	
 	srv.hColorerMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
-		gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+		gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
 	
 	if (!srv.hColorerMapping) {
 		dwErr = GetLastError();
@@ -2735,7 +2735,7 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam)
 			PIPEBUFSIZE,              // output buffer size 
 			PIPEBUFSIZE,              // input buffer size 
 			0,                        // client time-out
-			gpNullSecurity);          // default security attribute 
+			gpLocalSecurity);          // default security attribute 
 
 		if (srv.hInputPipe == INVALID_HANDLE_VALUE) 
 		{
@@ -2827,7 +2827,7 @@ DWORD WINAPI GetDataThread(LPVOID lpvParam)
 			DATAPIPEBUFSIZE,          // output buffer size 
 			PIPEBUFSIZE,              // input buffer size 
 			0,                        // client time-out
-			gpNullSecurity);          // default security attribute 
+			gpLocalSecurity);          // default security attribute 
 
 		if (srv.hGetDataPipe == INVALID_HANDLE_VALUE) 
 		{

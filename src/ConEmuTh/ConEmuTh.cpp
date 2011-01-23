@@ -46,7 +46,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <string.h>
 //#include <tchar.h>
 #include "../common/common.hpp"
+#pragma warning( disable : 4995 )
 #include "../common/pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
+#pragma warning( default : 4995 )
 #include "../common/RgnDetect.h"
 #include "../common/TerminalMode.h"
 #include "ConEmuTh.h"
@@ -95,7 +97,7 @@ bool gbFadeColors = false;
 bool gbFarPanelsReady = false;
 DWORD gnRgnDetectFlags = 0;
 void CheckVarsInitialized();
-SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
+SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 // *** lng resources begin ***
 wchar_t gsFolder[64], gsHardLink[64], gsSymLink[64], gsJunction[64], gsTitleThumbs[64], gsTitleTiles[64];
 // *** lng resources end ***
@@ -317,7 +319,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				gnSelfPID = GetCurrentProcessId();
 				gnMainThreadId = GetMainThreadId();
 
-				gpNullSecurity = NullSecurity();
+				gpLocalSecurity = LocalSecurity();
 				
 				_ASSERTE(FAR_X_VER<=FAR_Y_VER);
 				#ifdef SHOW_STARTED_MSGBOX
@@ -359,17 +361,22 @@ BOOL LoadFarVersion()
 {
 	BOOL lbRc=FALSE;
 	WCHAR FarPath[MAX_PATH+1];
-	if (GetModuleFileName(0,FarPath,MAX_PATH)) {
+	if (GetModuleFileName(0,FarPath,MAX_PATH))
+	{
 		DWORD dwRsrvd = 0;
 		DWORD dwSize = GetFileVersionInfoSize(FarPath, &dwRsrvd);
-		if (dwSize>0) {
+		if (dwSize>0)
+		{
 			void *pVerData = Alloc(dwSize, 1);
-			if (pVerData) {
+			if (pVerData)
+			{
 				VS_FIXEDFILEINFO *lvs = NULL;
 				UINT nLen = sizeof(lvs);
-				if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData)) {
-					TCHAR szSlash[3]; lstrcpyW(szSlash, L"\\");
-					if (VerQueryValue ((void*)pVerData, szSlash, (void**)&lvs, &nLen)) {
+				if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData))
+				{
+					TCHAR szSlash[3]; wcscpy_c(szSlash, L"\\");
+					if (VerQueryValue ((void*)pVerData, szSlash, (void**)&lvs, &nLen))
+					{
 						gFarVersion.dwVer = lvs->dwFileVersionMS;
 						gFarVersion.dwBuild = lvs->dwFileVersionLS;
 						lbRc = TRUE;
@@ -1745,7 +1752,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		
 		#ifdef _DEBUG
 		wchar_t szDbg[512];
-		wsprintfW(szDbg,
+		swprintf_c(szDbg,
 				L"Requesting panel redraw: {Cur:%i, Top:%i}.\n"
 				L"  Current state: {Cur:%i, Top:%i, Count:%i, OurTop:%i}\n"
 				L"  Current request: {%s, Cur:%i, Top=%i}\n",
@@ -1789,11 +1796,13 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 
 int ShowLastError()
 {
-	if (gnCreateViewError) {
+	if (gnCreateViewError)
+	{
 		wchar_t szErrMsg[512];
 		const wchar_t* pszTempl = GetMsgW(gnCreateViewError);
-		if (pszTempl && *pszTempl) {
-			wsprintfW(szErrMsg, pszTempl, gnWin32Error);
+		if (pszTempl && *pszTempl)
+		{
+			swprintf_c(szErrMsg, pszTempl, gnWin32Error);
 			if (gFarVersion.dwBuild>=FAR_Y_VER)
 				return FUNC_Y(ShowMessage)(szErrMsg, 0);
 			else
@@ -1976,14 +1985,17 @@ void CheckVarsInitialized()
 		gFarInfo.bFarPanelAllowed = TRUE;
 		// Загрузить из реестра настройки PanelTabs
 		gFarInfo.PanelTabs.SeparateTabs = gFarInfo.PanelTabs.ButtonColor = -1;
-		if (gszRootKey && *gszRootKey) {
+		if (gszRootKey && *gszRootKey)
+		{
 			int nLen = lstrlenW(gszRootKey);
-			wchar_t* pszTabsKey = (wchar_t*)malloc((nLen+32)*2);
-			lstrcpyW(pszTabsKey, gszRootKey);
+			int cchSize = nLen+32;
+			wchar_t* pszTabsKey = (wchar_t*)malloc(cchSize*2);
+			_wcscpy_c(pszTabsKey, cchSize, gszRootKey);
 			pszTabsKey[nLen-1] = 0;
 			wchar_t* pszSlash = wcsrchr(pszTabsKey, L'\\');
-			if (pszSlash) {
-				lstrcpyW(pszSlash, L"\\Plugins\\PanelTabs");
+			if (pszSlash)
+			{
+				_wcscpy_c(pszSlash, cchSize-(pszSlash-pszTabsKey), L"\\Plugins\\PanelTabs");
 				HKEY hk;
 				if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, pszTabsKey, 0, KEY_READ, &hk)) {
 					DWORD dwVal, dwSize;

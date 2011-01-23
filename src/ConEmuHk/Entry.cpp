@@ -50,7 +50,7 @@ extern "C"{
 
 HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 UINT gnMsgActivateCon = 0; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
-SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
+SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
@@ -68,7 +68,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuHk*.dll loaded", "ConEmu hooks", 0);
 				#endif
 				
-				gpNullSecurity = NullSecurity();
+				gpLocalSecurity = LocalSecurity();
 
 				gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 

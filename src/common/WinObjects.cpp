@@ -75,8 +75,8 @@ BOOL apiShowWindowAsync(HWND ahWnd, int anCmdShow)
 	return lbRc;
 }
 
-
-BOOL FileExists(LPCWSTR asFilePath)
+// pnSize заполн€етс€ только в том случае, если файл найден
+BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 {
 	WIN32_FIND_DATAW fnd = {0};
 	HANDLE hFind = FindFirstFile(asFilePath, &fnd);
@@ -91,7 +91,11 @@ BOOL FileExists(LPCWSTR asFilePath)
 			{
 				BY_HANDLE_FILE_INFORMATION fi = {0};
 				if (GetFileInformationByHandle(hFind, &fi) && !(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				{
 					lbFileFound = TRUE;
+					if (pnSize)
+						*pnSize = fi.nFileSizeHigh ? 0xFFFFFFFF : fi.nFileSizeLow;
+				}
 			}
 			CloseHandle(hFind);
 		}
@@ -103,6 +107,8 @@ BOOL FileExists(LPCWSTR asFilePath)
 		if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
 		{
 			lbFound = TRUE;
+			if (pnSize)
+				*pnSize = fnd.nFileSizeHigh ? 0xFFFFFFFF : fnd.nFileSizeLow;
 			break;
 		}
 	} while (FindNextFile(hFind, &fnd));

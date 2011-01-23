@@ -78,7 +78,7 @@ struct CET_LoadInfo {
 //	// Module must place here information about original file
 //	// This must be double zero terminated string
 //	/* Example:
-//	far.exe
+//	Far.exe
 //	File and archive manager
 //	v2.0 (build 1503) x86
 //	2.85Mb, 15.04.10 13:01

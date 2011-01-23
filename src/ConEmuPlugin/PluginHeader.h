@@ -265,6 +265,10 @@ BOOL FUNC_X(ExecuteSynchro)();
 void FUNC_Y(WaitEndSynchro)();
 void FUNC_Y(StopWaitEndSynchro)();
 
+void GuiMacroDlgA();
+void FUNC_Y(GuiMacroDlg)();
+void FUNC_X(GuiMacroDlg)();
+
 void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar);
 void FUNC_Y(FillUpdateBackground)(struct PaintBackgroundArg* pFar);
 void FUNC_X(FillUpdateBackground)(struct PaintBackgroundArg* pFar);

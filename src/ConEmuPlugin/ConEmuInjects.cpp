@@ -164,7 +164,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	//InitHooks( HooksFarOnly );
 	////InitHooks( HooksWin2k3R2Only );
 	//
-	////  Подменить Импортируемые функции в FAR.exe (пока это только сравнивание строк)
+	////  Подменить Импортируемые функции в Far.exe (пока это только сравнивание строк)
 	//SetHook( HooksFarOnly, NULL, TRUE );
 	//
 	//// Windows Server 2003 R2

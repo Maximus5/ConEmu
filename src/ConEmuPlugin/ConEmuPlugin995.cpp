@@ -28,7 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "..\common\common.hpp"
+#pragma warning( disable : 4995 )
 #include "..\common\pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
+#pragma warning( default : 4995 )
 #include "PluginHeader.h"
 
 #ifdef _DEBUG
@@ -435,7 +437,7 @@ bool UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 						WInfo.Current, WInfo.Modified, 0);
 				}
 			}
-			else
+			else if (WInfo.Type == WTYPE_PANELS)
 			{
 				gpTabs->Tabs.CurrentType = WInfo.Type;
 			}
@@ -625,6 +627,8 @@ int ShowPluginMenu995()
 		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuNextTab)},
 		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuPrevTab)},
 		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuCommitTab)},
+		{MIF_SEPARATOR},
+		{0,                                        InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuGuiMacro)},
 		{MIF_SEPARATOR},
 		{ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuAttach)},
 		{MIF_SEPARATOR},
@@ -1154,4 +1158,11 @@ int GetActiveWindowType995()
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 
 	return WInfo.Type;
+}
+
+#define FAR_UNICODE
+#include "Dialogs.h"
+void GuiMacroDlg995()
+{
+	CallGuiMacroProc();
 }

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
-//  #define SHOW_COMSPEC_STARTED_MSGBOX
+  #define SHOW_COMSPEC_STARTED_MSGBOX
 //  #define SHOW_SERVER_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
@@ -118,6 +118,7 @@ BOOL gbDebugProcess = FALSE;
 int  gnCmdUnicodeMode = 0;
 BOOL gbRootIsCmdExe = TRUE;
 BOOL gbAttachFromFar = FALSE;
+BOOL gbSkipWowChange = FALSE;
 OSVERSIONINFO gOSVer;
 
 
@@ -188,7 +189,7 @@ int __cdecl main()
 	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
 	GetVersionEx(&gOSVer);
 	
-	gpNullSecurity = NullSecurity();
+	gpLocalSecurity = LocalSecurity();
 	
 	HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
 	
@@ -357,7 +358,7 @@ int __cdecl main()
 	{
 
 		#ifdef _DEBUG
-		if (ghFarInExecuteEvent && wcsstr(gpszRunCmd,L"far.exe"))
+		if (ghFarInExecuteEvent && wcsstr(gpszRunCmd,L"Far.exe"))
 			ResetEvent(ghFarInExecuteEvent);
 		#endif
 
@@ -365,7 +366,7 @@ int __cdecl main()
 		wchar_t szSelf[MAX_PATH*2];
 		
 		WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");
-		MWow64Disable wow; wow.Disable();
+		MWow64Disable wow; if (!gbSkipWowChange) wow.Disable();
 		lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
 				NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
 				|((gnRunMode == RM_SERVER) ? CREATE_SUSPENDED : 0), 
@@ -373,7 +374,7 @@ int __cdecl main()
 		dwErr = GetLastError();
 		if (!lbRc && (gnRunMode == RM_SERVER) && dwErr == ERROR_FILE_NOT_FOUND)
 		{
-			// Фикс для перемещения ConEmu.exe в подпапку фара. т.е. far.exe находится на одну папку выше
+			// Фикс для перемещения ConEmu.exe в подпапку фара. т.е. Far.exe находится на одну папку выше
 			if (GetModuleFileNameW(NULL, szSelf, countof(szSelf)))
 			{
 				wchar_t* pszSlash = wcsrchr(szSelf, L'\\');
@@ -781,7 +782,7 @@ void Help()
 	_printf(
 		"This is a console part of ConEmu product.\n"
 		"Usage: ConEmuC [switches] [/U | /A] /C <command line, passed to %COMSPEC%>\n"
-		"   or: ConEmuC [switches] /ROOT <program with arguments, far.exe for example>\n"
+		"   or: ConEmuC [switches] /ROOT <program with arguments, Far.exe for example>\n"
 		"   or: ConEmuC /ATTACH /NOCMD\n"
 		"   or: ConEmuC /?\n"
 		"Switches:\n"
@@ -848,7 +849,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 			pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
 			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
 		} else
-		// глючила на ""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""
+		// глючила на ""F:\VCProject\FarPlugin\#FAR180\Far.exe  -new_console""
 		//if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
 		//	LPCWSTR pwszTemp = pwszCopy;
 		//	// Получим первую команду (исполняемый файл?)
@@ -910,7 +911,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 	}
 
 	// Если szArg не содержит путь к файлу - запускаем через cmd
-	// "start "" C:\Utils\Files\Hiew32\hiew32.exe C:\00\far.exe"
+	// "start "" C:\Utils\Files\Hiew32\hiew32.exe C:\00\Far.exe"
 	if (!IsFilePath(szArg))
 	{
 		gbRootIsCmdExe = TRUE; // запуск через "процессор"
@@ -934,7 +935,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
 	}
 
-	if (lstrcmpiW(pwszCopy, L"far")==0 || lstrcmpiW(pwszCopy, L"far.exe")==0)
+	if (lstrcmpiW(pwszCopy, L"far")==0 || lstrcmpiW(pwszCopy, L"Far.exe")==0)
 	{
 		gbAutoDisableConfirmExit = TRUE;
 		gbRootIsCmdExe = FALSE; // FAR!
@@ -1614,6 +1615,40 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 	{
 		bViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot);
 	}
+
+	#ifndef WIN64
+	// Команды вида: C:\Windows\SysNative\reg.exe Query "HKCU\Software\Far2"|find "Far"
+	// Для них нельзя отключать редиректор (wow.Disable()), иначе SysNative будет недоступен
+	if (IsWindows64(NULL))
+	{
+		LPCWSTR pszTest = asCmdLine;
+		wchar_t szApp[MAX_PATH+1];
+		if (NextArg(&pszTest, szApp) == 0)
+		{
+			wchar_t szSysnative[MAX_PATH+32];
+			int nLen = GetWindowsDirectory(szSysnative, MAX_PATH);
+			if (nLen >= 2 && nLen < MAX_PATH)
+			{
+				if (szSysnative[nLen-1] != L'\\')
+				{
+					szSysnative[nLen++] = L'\\'; szSysnative[nLen] = 0;
+				}
+				lstrcatW(szSysnative, L"Sysnative\\");
+				nLen = lstrlenW(szSysnative);
+
+				int nAppLen = lstrlenW(szApp);
+				if (nAppLen > nLen)
+				{
+					szApp[nLen] = 0;
+					if (lstrcmpiW(szApp, szSysnative) == 0)
+					{
+						gbSkipWowChange = TRUE;
+					}
+				}
+			}
+		}
+	}
+	#endif
 	
 	nCmdLine = lstrlenW(asCmdLine);
 
@@ -1690,7 +1725,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 						}
 					}
 				}
-				// "C:\Program Files\FAR\far.exe" - кавычки нужны, иначе не запустится
+				// "C:\Program Files\FAR\Far.exe" - кавычки нужны, иначе не запустится
 				if (lbCont)
 				{
 					if (IsFilePath(pszTitle) && FileExists(pszTitle))
@@ -2439,7 +2474,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 								if (prc.th32ProcessID != gnSelfPID
 									&& prc.th32ProcessID == srv.pnProcesses[i])
 								{
-									if (lstrcmpiW(prc.szExeFile, L"far.exe")==0)
+									if (lstrcmpiW(prc.szExeFile, L"Far.exe")==0)
 									{
 										lbFarExists = TRUE;
 										//if (srv.nProcessCount <= 2) // нужно проверить и ntvdm
@@ -2953,7 +2988,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
 		  PIPEBUFSIZE,              // output buffer size 
 		  PIPEBUFSIZE,              // input buffer size 
 		  0,                        // client time-out 
-		  gpNullSecurity);          // default security attribute 
+		  gpLocalSecurity);          // default security attribute 
 
 	  _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
 	  

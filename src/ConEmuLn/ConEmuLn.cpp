@@ -36,7 +36,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "../common/common.hpp"
+#pragma warning( disable : 4995 )
 #include "../common/pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
+#pragma warning( default : 4995 )
 #include "ConEmuLn.h"
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
@@ -126,17 +128,22 @@ BOOL LoadFarVersion()
 {
 	BOOL lbRc=FALSE;
 	WCHAR FarPath[MAX_PATH+1];
-	if (GetModuleFileName(0,FarPath,MAX_PATH)) {
+	if (GetModuleFileName(0,FarPath,MAX_PATH))
+	{
 		DWORD dwRsrvd = 0;
 		DWORD dwSize = GetFileVersionInfoSize(FarPath, &dwRsrvd);
-		if (dwSize>0) {
+		if (dwSize>0)
+		{
 			void *pVerData = calloc(dwSize, 1);
-			if (pVerData) {
+			if (pVerData)
+			{
 				VS_FIXEDFILEINFO *lvs = NULL;
 				UINT nLen = sizeof(lvs);
-				if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData)) {
-					TCHAR szSlash[3]; lstrcpyW(szSlash, L"\\");
-					if (VerQueryValue ((void*)pVerData, szSlash, (void**)&lvs, &nLen)) {
+				if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData))
+				{
+					TCHAR szSlash[3]; wcscpy_c(szSlash, L"\\");
+					if (VerQueryValue ((void*)pVerData, szSlash, (void**)&lvs, &nLen))
+					{
 						gFarVersion.dwVer = lvs->dwFileVersionMS;
 						gFarVersion.dwBuild = lvs->dwFileVersionLS;
 						lbRc = TRUE;

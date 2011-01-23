@@ -107,6 +107,7 @@ RES_FILE = "$(INTDIR)\$(NAME).res"
 #PCH_FILE = "$(INTDIR)\headers.pch"
 
 LINK_OBJS = \
+$(INTDIR)\Background.obj \
 $(INTDIR)\BaseDragDrops.obj \
 $(INTDIR)\ConEmu.obj \
 $(INTDIR)\ConEmuApp.obj \
@@ -114,8 +115,8 @@ $(INTDIR)\ConEmuChild.obj \
 $(INTDIR)\ConEmuPipe.obj \
 $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
+$(INTDIR)\Macro.obj \
 $(INTDIR)\Options.obj \
-$(INTDIR)\Background.obj \
 $(INTDIR)\RealConsole.obj \
 $(INTDIR)\Registry.obj \
 $(INTDIR)\ScreenDump.obj \
@@ -141,7 +142,7 @@ DEFINES=\
 	/DUSE_SEH
 
 # common
-CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHsc $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
+CPPFLAGS=/nologo $(MP) /W3 /wd4995 $(FARSYSLOG) /EHsc $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
 LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat
 !ifndef NO_RELEASE_PDB
 LINKFLAGS=$(LINKFLAGS) /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
@@ -274,6 +275,8 @@ MSG=echo generating $@
 #	$(MSG)
 #	$(M4) $@.m4 > $@
 
+$(INTDIR)\Background.obj: Background.cpp Background.h
+
 $(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
 $(INTDIR)\ConEmu.obj: ConEmu.cpp
@@ -288,9 +291,9 @@ $(INTDIR)\DragDrop.obj: DragDrop.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
 $(INTDIR)\DragDropData.obj: DragDropData.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
-$(INTDIR)\Options.obj: Options.cpp Options.h Background.h
+$(INTDIR)\Macro.obj: Macro.cpp Macro.h
 
-$(INTDIR)\Background.obj: Background.cpp Background.h
+$(INTDIR)\Options.obj: Options.cpp Options.h Background.h
 
 $(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h  ..\common\Common.hpp
 

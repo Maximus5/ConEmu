@@ -151,7 +151,7 @@ namespace Settings {
 #define SetThumbColor(s,rgb,idx,us) { (s).RawColor = 0; (s).ColorRGB = rgb; (s).ColorIdx = idx; (s).UseIndex = us; }
 #define SetThumbSize(s,sz,x1,y1,x2,y2,ls,lp,fn,fs) { \
 	(s).nImgSize = sz; (s).nSpaceX1 = x1; (s).nSpaceY1 = y1; (s).nSpaceX2 = x2; (s).nSpaceY2 = y2; \
-	(s).nLabelSpacing = ls; (s).nLabelPadding = lp; lstrcpy((s).sFontName,fn); (s).nFontHeight=fs; }
+	(s).nLabelSpacing = ls; (s).nLabelPadding = lp; wcscpy_c((s).sFontName,fn); (s).nFontHeight=fs; }
 #define ThumbLoadSet(s,n) { \
 	reg->Load(L"PanView." s L".ImgSize", n.nImgSize); \
 	reg->Load(L"PanView." s L".SpaceX1", n.nSpaceX1); \
@@ -253,13 +253,13 @@ void CSettings::InitSettings()
 //------------------------------------------------------------------------
 ///| Moved from CVirtualConsole |/////////////////////////////////////////
 //------------------------------------------------------------------------
-    _tcscpy(Config, L"Software\\ConEmu");
+    wcscpy_c(Config, L"Software\\ConEmu");
     Type[0] = 0;
 
 	//FontFile[0] = 0;
 	isAutoRegisterFonts = true;
     
-    psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
+    psCmd = NULL; psCurCmd = NULL; wcscpy_c(szDefCmd, L"far");
 	psCmdHistory = NULL; nCmdHistorySize = 0;
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A'; 
     icMinimizeRestore = 'C';
@@ -270,7 +270,7 @@ void CSettings::InitSettings()
 	//nFadeInactiveMask = 0xD0D0D0;
     // Logging
     isAdvLogging = 0;
-	//wcscpy(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
+	//wcscpy_c(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
 
     nMainTimerElapse = 10;
     nAffinity = 0; // 0 - don't change default affinity
@@ -294,8 +294,8 @@ void CSettings::InitSettings()
     LogFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
     LogFont.lfQuality = ANTIALIASED_QUALITY;
     LogFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-    _tcscpy(LogFont.lfFaceName, L"Lucida Console");
-    _tcscpy(LogFont2.lfFaceName, L"Lucida Console");
+    wcscpy_c(LogFont.lfFaceName, L"Lucida Console");
+    wcscpy_c(LogFont2.lfFaceName, L"Lucida Console");
     mb_Name1Ok = FALSE; mb_Name2Ok = FALSE;
     isTryToCenter = false;
     isAlwaysShowScrollbar = 2;
@@ -308,7 +308,7 @@ void CSettings::InitSettings()
 	isFontAutoSize = false; mn_AutoFontWidth = mn_AutoFontHeight = -1;
 	ConsoleFont.lfHeight = 5;
 	ConsoleFont.lfWidth = 3;
-	_tcscpy(ConsoleFont.lfFaceName, L"Lucida Console");
+	wcscpy_c(ConsoleFont.lfFaceName, L"Lucida Console");
 
 	{
 	    SettingsRegistry RegConColors, RegConDef;
@@ -356,7 +356,7 @@ void CSettings::InitSettings()
 ///| Default settings |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
 	isShowBgImage = 0;
-    _tcscpy(sBgImage, L"c:\\back.bmp");
+    wcscpy_c(sBgImage, L"c:\\back.bmp");
 	bgImageDarker = 0x46;
 	nBgImageColors = 1|2;
 	bgOperation = eUpLeft;
@@ -372,7 +372,7 @@ void CSettings::InitSettings()
 	isPartBrushBlack = 32;
     isExtendUCharMap = true;
 	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
-	wcscpy(mszCharRanges, L"2013-25C4");
+	wcscpy_c(mszCharRanges, L"2013-25C4");
 	icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
 	mpc_FixFarBorderValues = (bool*)calloc(65536,sizeof(bool));
     
@@ -392,11 +392,11 @@ void CSettings::InitSettings()
     nIconID = IDI_ICON1;
     isRClickSendKey = 2;
     sRClickMacro = NULL;
-    _tcscpy(szTabConsole, L"%s");
-    //pszTabConsole = _tcscpy(szTabPanels+_tcslen(szTabPanels)+1, L"Console");
-    _tcscpy(szTabEditor, L"[%s]");
-    _tcscpy(szTabEditorModified, L"[%s] *");
-    /* */ _tcscpy(szTabViewer, L"{%s}");
+    wcscpy_c(szTabConsole, L"%s");
+    //pszTabConsole = wcscpy_c(szTabPanels+_tcslen(szTabPanels)+1, L"Console");
+    wcscpy_c(szTabEditor, L"[%s]");
+    wcscpy_c(szTabEditorModified, L"[%s] *");
+    /* */ wcscpy_c(szTabViewer, L"{%s}");
     nTabLenMax = 20;
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
@@ -417,7 +417,7 @@ void CSettings::InitSettings()
 
     isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
     isTabsInCaption = false; //cbTabsInCaption
-    lstrcpyW(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
+    wcscpy_c(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
 	sTabCloseMacro = sSaveAllMacro = NULL;
 	nToolbarAddSpace = 0;
     
@@ -429,7 +429,7 @@ void CSettings::InitSettings()
     isCreateAppWindow = false;
     /*isScrollTitle = true;
     ScrollTitleLen = 22;*/
-    lstrcpy(szAdminTitleSuffix, L" (Admin)");
+    wcscpy_c(szAdminTitleSuffix, L" (Admin)");
     bAdminShield = true;
 	bHideInactiveConsoleTabs = false;
     
@@ -491,8 +491,8 @@ void CSettings::LoadSettings()
     MCHKHEAP
     DWORD inSize = LogFont.lfHeight;
     TCHAR inFont[MAX_PATH], inFont2[MAX_PATH];
-    _tcscpy(inFont, LogFont.lfFaceName);
-    _tcscpy(inFont2, LogFont2.lfFaceName);
+    wcscpy_c(inFont, LogFont.lfFaceName);
+    wcscpy_c(inFont2, LogFont2.lfFaceName);
     DWORD Quality = LogFont.lfQuality;
     //gConEmu.WindowMode = rMaximized;
     mn_LoadFontCharSet = LogFont.lfCharSet;
@@ -515,7 +515,7 @@ void CSettings::LoadSettings()
 ///| Loading from registry |//////////////////////////////////////////////
 //------------------------------------------------------------------------
     SettingsBase* reg = CreateSettings();
-    lstrcpy(Type, reg->Type);
+    wcscpy_c(Type, reg->Type);
     if (reg->OpenKey(Config, KEY_READ))
     {
         TCHAR ColorName[] = L"ColorTable00";
@@ -655,7 +655,7 @@ void CSettings::LoadSettings()
 			for ( ; n < nMax; n++)
 				icFixFarBorderRanges[n].bUsed = false;
 		} else {
-			wcscpy(mszCharRanges, L"2013-25C4"); // default
+			wcscpy_c(mszCharRanges, L"2013-25C4"); // default
 		}
 		
 		reg->Load(L"ExtendUCharMap", isExtendUCharMap);
@@ -755,7 +755,7 @@ void CSettings::LoadSettings()
             //if (!pszVert) {
             //    if (wcslen(szTabPanels)>54) szTabPanels[54] = 0;
             //    pszVert = szTabPanels + wcslen(szTabPanels);
-            //    wcscpy(pszVert+1, L"Console");
+            //    wcscpy_c(pszVert+1, L"Console");
             //}
             //*pszVert = 0; pszTabConsole = pszVert+1;
         reg->Load(L"TabEditor", szTabEditor, countof(szTabEditor));
@@ -1052,7 +1052,7 @@ BOOL CSettings::SaveSettings()
     
       if (reg->OpenKey(Config, KEY_WRITE))
         {
-        	lstrcpy(Type, reg->Type);
+        	wcscpy_c(Type, reg->Type);
         	
             TCHAR ColorName[] = L"ColorTable00";
             for (uint i = 0; i<0x20; i++)
@@ -1399,7 +1399,7 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
 
 	// Теперь - загрузить размеры установленных терминальных шрифтов (aka Raster fonts)
-	LOGFONT term = {0}; term.lfCharSet = OEM_CHARSET; lstrcpy(term.lfFaceName, L"Terminal"); 
+	LOGFONT term = {0}; term.lfCharSet = OEM_CHARSET; wcscpy_c(term.lfFaceName, L"Terminal"); 
 	szRasterSizes[0].cx = szRasterSizes[0].cy = 0;
 	EnumFontFamiliesEx(hdc, &term, (FONTENUMPROCW) EnumFontCallBackEx, 0/*LPARAM*/, 0);
 
@@ -1422,8 +1422,9 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 
 	DeleteDC(hdc);
 
-	for (UINT sz=0; sz<countof(szRasterSizes) && szRasterSizes[sz].cy; sz++) {
-		wsprintf(szName, L"[%s %ix%i]", RASTER_FONTS_NAME, szRasterSizes[sz].cx, szRasterSizes[sz].cy);
+	for (UINT sz=0; sz<countof(szRasterSizes) && szRasterSizes[sz].cy; sz++)
+	{
+		swprintf_c(szName, L"[%s %ix%i]", RASTER_FONTS_NAME, szRasterSizes[sz].cx, szRasterSizes[sz].cy);
 		int nIdx = SendDlgItemMessage(gSet.hMain, tFontFace, CB_INSERTSTRING, sz, (LPARAM)szName);
 		SendDlgItemMessage(gSet.hMain, tFontFace, CB_SETITEMDATA, nIdx, 1);
 	}
@@ -1496,9 +1497,9 @@ LRESULT CSettings::OnInitDialog()
 	#endif
 	
 	if (nConfLen>(nStdLen+1))
-		StringCchPrintf(szTitle, countof(szTitle), L"ConEmu %02u%02u%02u Settings (%s) %s", (MVV_1%100),MVV_2,MVV_3, (Config+nStdLen+1), pszType);
+		StringCchPrintf(szTitle, countof(szTitle), L"%s Settings (%s) %s", gConEmu.ms_ConEmuVer, (Config+nStdLen+1), pszType);
 	else
-		StringCchPrintf(szTitle, countof(szTitle), L"ConEmu %02u%02u%02u Settings %s", (MVV_1%100),MVV_2,MVV_3, pszType);
+		StringCchPrintf(szTitle, countof(szTitle), L"%s Settings %s", gConEmu.ms_ConEmuVer, pszType);
 	SetWindowText ( ghOpWnd, szTitle );
 
 	MCHKHEAP
@@ -1508,18 +1509,14 @@ LRESULT CSettings::OnInitDialog()
         HWND _hwndTab = GetDlgItem(ghOpWnd, tabMain);
         tie.mask = TCIF_TEXT;
         tie.iImage = -1; 
-        tie.pszText = wcscpy(szTitle, L"Main");
-        TabCtrl_InsertItem(_hwndTab, 0, &tie);
-        tie.pszText = wcscpy(szTitle, L"Features");
-        TabCtrl_InsertItem(_hwndTab, 1, &tie);
-		tie.pszText = wcscpy(szTitle, L"Tabs");
-		TabCtrl_InsertItem(_hwndTab, 2, &tie);
-        tie.pszText = wcscpy(szTitle, L"Colors");
-        TabCtrl_InsertItem(_hwndTab, 3, &tie);
-		tie.pszText = wcscpy(szTitle, L"Views");
-		TabCtrl_InsertItem(_hwndTab, 4, &tie);
-        tie.pszText = wcscpy(szTitle, L"Info");
-        TabCtrl_InsertItem(_hwndTab, 5, &tie);
+        tie.pszText = szTitle;
+		
+		wcscpy_c(szTitle, L"Main");		TabCtrl_InsertItem(_hwndTab, 0, &tie);
+        wcscpy_c(szTitle, L"Features");	TabCtrl_InsertItem(_hwndTab, 1, &tie);
+		wcscpy_c(szTitle, L"Tabs");		TabCtrl_InsertItem(_hwndTab, 2, &tie);
+        wcscpy_c(szTitle, L"Colors");	TabCtrl_InsertItem(_hwndTab, 3, &tie);
+		wcscpy_c(szTitle, L"Views");	TabCtrl_InsertItem(_hwndTab, 4, &tie);
+        wcscpy_c(szTitle, L"Info");		TabCtrl_InsertItem(_hwndTab, 5, &tie);
         
         HFONT hFont = CreateFont(nTabFontHeight/*TAB_FONT_HEIGTH*/, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, nTabFontCharSet /*ANSI_CHARSET*/, OUT_DEFAULT_PRECIS, 
             CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, /* L"Tahoma" */ sTabFontFace);
@@ -1583,7 +1580,7 @@ LRESULT CSettings::OnInitDialog_Main()
 
 		for (uint i=0; i < countof(Settings::FSizes); i++)
 		{
-			wsprintf(temp, L"%i", Settings::FSizes[i]);
+			swprintf_c(temp, L"%i", Settings::FSizes[i]);
 			if (i > 0)
 				SendDlgItemMessage(hMain, tFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
 			SendDlgItemMessage(hMain, tFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
@@ -1593,32 +1590,32 @@ LRESULT CSettings::OnInitDialog_Main()
 
 		for (uint i=0; i <= 16; i++)
 		{
-			wsprintf(temp, (i==16) ? L"None" : L"%2i", i);
+			swprintf_c(temp, (i==16) ? L"None" : L"%2i", i);
 			SendDlgItemMessage(hMain, lbExtendFontBoldIdx, CB_ADDSTRING, 0, (LPARAM) temp);
 			SendDlgItemMessage(hMain, lbExtendFontItalicIdx, CB_ADDSTRING, 0, (LPARAM) temp);
 			SendDlgItemMessage(hMain, lbExtendFontNormalIdx, CB_ADDSTRING, 0, (LPARAM) temp);
 		}
 		if (isExtendFonts) CheckDlgButton(hMain, cbExtendFonts, BST_CHECKED);
-		wsprintf(temp, (nFontBoldColor<16) ? L"%2i" : L"None", nFontBoldColor);
+		swprintf_c(temp, (nFontBoldColor<16) ? L"%2i" : L"None", nFontBoldColor);
 		SelectStringExact(hMain, lbExtendFontBoldIdx, temp);
-		wsprintf(temp, (nFontItalicColor<16) ? L"%2i" : L"None", nFontItalicColor);
+		swprintf_c(temp, (nFontItalicColor<16) ? L"%2i" : L"None", nFontItalicColor);
 		SelectStringExact(hMain, lbExtendFontItalicIdx, temp);
-		wsprintf(temp, (nFontNormalColor<16) ? L"%2i" : L"None", nFontNormalColor);
+		swprintf_c(temp, (nFontNormalColor<16) ? L"%2i" : L"None", nFontNormalColor);
 		SelectStringExact(hMain, lbExtendFontNormalIdx, temp);
 
 		if (isFontAutoSize) CheckDlgButton(hMain, cbFontAuto, BST_CHECKED);
 
-		wsprintf(temp, L"%i", LogFont.lfHeight);
+		swprintf_c(temp, L"%i", LogFont.lfHeight);
 		//upToFontHeight = LogFont.lfHeight;
 		SelectStringExact(hMain, tFontSizeY, temp);
 
-		wsprintf(temp, L"%i", FontSizeX);
+		swprintf_c(temp, L"%i", FontSizeX);
 		SelectStringExact(hMain, tFontSizeX, temp);
 
-		wsprintf(temp, L"%i", FontSizeX2);
+		swprintf_c(temp, L"%i", FontSizeX2);
 		SelectStringExact(hMain, tFontSizeX2, temp);
 
-		wsprintf(temp, L"%i", FontSizeX3);
+		swprintf_c(temp, L"%i", FontSizeX3);
 		SelectStringExact(hMain, tFontSizeX3, temp);
 	}
 
@@ -1643,11 +1640,13 @@ LRESULT CSettings::OnInitDialog_Main()
 	//CheckDlgButton(hMain, rBgSimple, BST_CHECKED);
 	DWORD nTest = nBgImageColors;
 	wchar_t *pszTemp = tmp; tmp[0] = 0;
-	for (int idx = 0; nTest && idx < 16; idx++) {
-		if (nTest & 1) {
+	for (int idx = 0; nTest && idx < 16; idx++)
+	{
+		if (nTest & 1)
+		{
 			if (pszTemp != tmp)
 				*pszTemp++ = L' ';
-			wsprintf(pszTemp, L"#%i", idx);
+			swprintf_add(pszTemp, tmp, L"#%i", idx);
 			pszTemp += wcslen(pszTemp);
 		}
 		nTest = nTest >> 1;
@@ -1655,7 +1654,7 @@ LRESULT CSettings::OnInitDialog_Main()
 	*pszTemp = 0;
 	SetDlgItemText(hMain, tBgImageColors, tmp);
 
-	wsprintf(tmp, L"%i", bgImageDarker);
+	swprintf_c(tmp, L"%i", bgImageDarker);
 	SendDlgItemMessage(hMain, tDarker, EM_SETLIMITTEXT, 3, 0);
 	SetDlgItemText(hMain, tDarker, tmp);
 
@@ -1717,9 +1716,9 @@ LRESULT CSettings::OnInitDialog_Main()
 	else
 		CheckRadioButton(hMain, rNormal, rFullScreen, rNormal);
 
-	//wsprintf(temp, L"%i", wndWidth);   SetDlgItemText(hMain, tWndWidth, temp);
+	//swprintf_c(temp, L"%i", wndWidth);   SetDlgItemText(hMain, tWndWidth, temp);
 	SendDlgItemMessage(hMain, tWndWidth, EM_SETLIMITTEXT, 3, 0);
-	//wsprintf(temp, L"%i", wndHeight);  SetDlgItemText(hMain, tWndHeight, temp);
+	//swprintf_c(temp, L"%i", wndHeight);  SetDlgItemText(hMain, tWndHeight, temp);
 	SendDlgItemMessage(hMain, tWndHeight, EM_SETLIMITTEXT, 3, 0);
 	UpdateSize(wndWidth, wndHeight);
 
@@ -2011,14 +2010,15 @@ LRESULT CSettings::OnInitDialog_Views()
 	DWORD nVal;
 	wchar_t temp[MAX_PATH];
 
-	for (uint i=0; i < countof(Settings::FSizesSmall); i++) {
-		wsprintf(temp, L"%i", Settings::FSizesSmall[i]);
+	for (uint i=0; i < countof(Settings::FSizesSmall); i++)
+	{
+		swprintf_c(temp, L"%i", Settings::FSizesSmall[i]);
 		SendDlgItemMessage(hViews, tThumbsFontSize, CB_ADDSTRING, 0, (LPARAM) temp);
 		SendDlgItemMessage(hViews, tTilesFontSize, CB_ADDSTRING, 0, (LPARAM) temp);
 	}
-	wsprintf(temp, L"%i", ThSet.Thumbs.nFontHeight);
+	swprintf_c(temp, L"%i", ThSet.Thumbs.nFontHeight);
 	SelectStringExact(hViews, tThumbsFontSize, temp);
-	wsprintf(temp, L"%i", ThSet.Tiles.nFontHeight);
+	swprintf_c(temp, L"%i", ThSet.Tiles.nFontHeight);
 	SelectStringExact(hViews, tTilesFontSize, temp);
 
 	SetDlgItemInt(hViews, tThumbsImgSize, ThSet.Thumbs.nImgSize, FALSE);
@@ -2272,7 +2272,8 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			//EnableWindow(GetDlgItem(hMain, rBgTile), isShowBgImage);
 
 			BOOL lbNeedLoad = (mp_Bg == NULL);
-			if (isShowBgImage && bgImageDarker == 0) {
+			if (isShowBgImage && bgImageDarker == 0)
+			{
 				if (MessageBox(ghOpWnd, 
 					    L"Background image will NOT be visible\n"
 						L"while 'Darkening' is 0. Increase it?",
@@ -2281,7 +2282,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 					bgImageDarker = 0x46;
 					SendDlgItemMessage(hMain, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) bgImageDarker);
 					TCHAR tmp[10];
-					wsprintf(tmp, L"%i", gSet.bgImageDarker);
+					swprintf_c(tmp, L"%i", gSet.bgImageDarker);
 					SetDlgItemText(hMain, tDarker, tmp);
 					lbNeedLoad = TRUE;
 				}
@@ -2535,7 +2536,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			{
 				if( LoadBackgroundFile(temp, true) )
 				{
-					lstrcpy(sBgImage, temp);
+					wcscpy_c(sBgImage, temp);
 					SetDlgItemText(hMain, tBgImage, temp);
 					gConEmu.Update(true);
 				}                
@@ -2785,7 +2786,7 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
 		{
 			if( LoadBackgroundFile(temp, true) )
 			{
-				lstrcpy(sBgImage, temp);
+				wcscpy_c(sBgImage, temp);
 				gConEmu.Update(true);
 			}
         }
@@ -2878,13 +2879,13 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
 			temp[31] = 0; // страховка
 			if (wcsstr(temp, L"%s")) {
 				if (TB == tTabConsole)
-					lstrcpy(gSet.szTabConsole, temp);
+					wcscpy_c(gSet.szTabConsole, temp);
 				else if (TB == tTabViewer)
-					lstrcpy(gSet.szTabViewer, temp);
+					wcscpy_c(gSet.szTabViewer, temp);
 				else if (TB == tTabEditor)
-					lstrcpy(gSet.szTabEditor, temp);
+					wcscpy_c(gSet.szTabEditor, temp);
 				else if (tTabEditorMod)
-					lstrcpy(gSet.szTabEditorModified, temp);
+					wcscpy_c(gSet.szTabEditorModified, temp);
 				gConEmu.mp_TabBar->Update(TRUE);
 			}
 		}				
@@ -2929,7 +2930,7 @@ LRESULT CSettings::OnColorComboBox(WPARAM wParam, LPARAM lParam)
 			for (uint i = 0; i < nCount; i++)
 			{
 				Colors[i] = pdwDefData[i];
-				wsprintf(temp, L"%i %i %i", getR(Colors[i]), getG(Colors[i]), getB(Colors[i]));
+				swprintf_c(temp, L"%i %i %i", getR(Colors[i]), getG(Colors[i]), getB(Colors[i]));
 				SetDlgItemText(hColors, 1100 + i, temp);
 				InvalidateRect(GetDlgItem(hColors, c0+i), 0, 1);
 			}
@@ -3253,13 +3254,14 @@ INT_PTR CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
     case WM_HSCROLL:
         {
-			if (gSet.hMain && (HWND)lParam == GetDlgItem(gSet.hMain, slDarker)) {
+			if (gSet.hMain && (HWND)lParam == GetDlgItem(gSet.hMain, slDarker))
+			{
 				int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
 				if (newV != gSet.bgImageDarker)
 				{
 					gSet.bgImageDarker = newV;
 					TCHAR tmp[10];
-					wsprintf(tmp, L"%i", gSet.bgImageDarker);
+					swprintf_c(tmp, L"%i", gSet.bgImageDarker);
 					SetDlgItemText(hWnd2, tDarker, tmp);
 					// Картинку может установить и плагин
 					if (gSet.isShowBgImage && gSet.sBgImage[0])
@@ -3657,7 +3659,7 @@ INT_PTR CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 				} else {
 					v = (gSet.mn_CounterMax[wParam]/(double)gSet.mn_Freq)*1000;
 				}
-				swprintf(sTemp, L"%.1f", v);
+				swprintf_c(sTemp, L"%.1f", v);
 				SetDlgItemText(gSet.hInfo, wParam+tPerfFPS, sTemp);
 			}
 			return TRUE;
@@ -4396,10 +4398,10 @@ void CSettings::UpdatePos(int x, int y)
     {
         mb_IgnoreEditChanged = TRUE;
 
-        wsprintf(temp, L"%i", gSet.wndX);
+        swprintf_c(temp, L"%i", gSet.wndX);
         SetDlgItemText(hMain, tWndX, temp);
 
-        wsprintf(temp, L"%i", gSet.wndY);
+        swprintf_c(temp, L"%i", gSet.wndY);
         SetDlgItemText(hMain, tWndY, temp);
 
         mb_IgnoreEditChanged = FALSE;
@@ -4417,13 +4419,14 @@ void CSettings::UpdateSize(UINT w, UINT h)
         gSet.wndHeight = h;
     }
 
-    if (ghOpWnd) {
+    if (ghOpWnd)
+	{
         mb_IgnoreEditChanged = TRUE;
 
-        wsprintf(temp, L"%i", gSet.wndWidth);
+        swprintf_c(temp, L"%i", gSet.wndWidth);
         SetDlgItemText(hMain, tWndWidth, temp);
 
-        wsprintf(temp, L"%i", gSet.wndHeight);
+        swprintf_c(temp, L"%i", gSet.wndHeight);
         SetDlgItemText(hMain, tWndHeight, temp);
 
         mb_IgnoreEditChanged = FALSE;
@@ -4443,9 +4446,9 @@ void CSettings::UpdateFontInfo()
 	if (!ghOpWnd || !hInfo) return;
 
 	wchar_t szTemp[32];
-	wsprintf(szTemp, L"%ix%ix%i", LogFont.lfHeight, LogFont.lfWidth, tm->tmAveCharWidth);
+	swprintf_c(szTemp, L"%ix%ix%i", LogFont.lfHeight, LogFont.lfWidth, tm->tmAveCharWidth);
 	SetDlgItemText(hInfo, tRealFontMain, szTemp);
-	wsprintf(szTemp, L"%ix%i", LogFont2.lfHeight, LogFont2.lfWidth);
+	swprintf_c(szTemp, L"%ix%i", LogFont2.lfHeight, LogFont2.lfWidth);
 	SetDlgItemText(hInfo, tRealFontBorders, szTemp);
 }
 
@@ -4461,7 +4464,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
             wchar_t sTemp[128];
             //Нихрена это не мегагерцы. Например на "AMD Athlon 64 X2 1999 MHz" здесь отображается "0.004 GHz"
             //swprintf(sTemp, L"Performance counters (%.3f GHz)", ((double)(mn_Freq/1000)/1000000));
-            swprintf(sTemp, L"Performance counters (%I64i)", ((i64)(mn_Freq/1000)));
+            swprintf_c(sTemp, L"Performance counters (%I64i)", ((i64)(mn_Freq/1000)));
             SetDlgItemText(hInfo, nID, sTemp);
             
             for (nID=tPerfFPS; mn_Freq && nID<=tPerfInterval; nID++) {
@@ -4676,8 +4679,9 @@ void CSettings::RecreateFont(WORD wFromID)
 	FontSizeX3 = GetNumber(hMain, tFontSizeX3);
 	
 
-	if (isAdvLogging) {
-		char szInfo[128]; wsprintfA(szInfo, "AutoRecreateFont(H=%i, W=%i)", LF.lfHeight, LF.lfWidth);
+	if (isAdvLogging)
+	{
+		char szInfo[128]; sprintf_s(szInfo, "AutoRecreateFont(H=%i, W=%i)", LF.lfHeight, LF.lfWidth);
 		gConEmu.ActiveCon()->RCon()->LogString(szInfo);
 	}
 
@@ -4698,9 +4702,10 @@ void CSettings::RecreateFont(WORD wFromID)
 		gConEmu.ReSize();
 	}
 
-	if (wFromID == tFontFace) {
+	if (wFromID == tFontFace)
+	{
 		wchar_t szSize[10];
-		wsprintf(szSize, L"%i", LF.lfHeight);
+		swprintf_c(szSize, L"%i", LF.lfHeight);
 		SetDlgItemText(hMain, tFontSizeY, szSize);
 	}
 
@@ -4770,8 +4775,9 @@ bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 	if (mn_AutoFontWidth == nFontW && mn_AutoFontHeight == nFontH)
 		return false; // ничего не делали
 		
-	if (isAdvLogging) {
-		char szInfo[128]; wsprintfA(szInfo, "AutoRecreateFont(H=%i, W=%i)", nFontH, nFontW);
+	if (isAdvLogging)
+	{
+		char szInfo[128]; sprintf_s(szInfo, "AutoRecreateFont(H=%i, W=%i)", nFontH, nFontW);
 		gConEmu.ActiveCon()->RCon()->LogString(szInfo);
 	}
 
@@ -4844,7 +4850,7 @@ HFONT CSettings::CreateOtherFont(const wchar_t* asFontName)
 	otherLF.lfWeight = FW_NORMAL;
 	otherLF.lfCharSet = DEFAULT_CHARSET;
 	otherLF.lfQuality = LogFont.lfQuality;
-	lstrcpy(otherLF.lfFaceName, asFontName);
+	wcscpy_c(otherLF.lfFaceName, asFontName);
 	HFONT hf = CreateFontIndirect(&otherLF);
 	return hf;
 }
@@ -4889,10 +4895,10 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 				if (ghOpWnd && hMain)
 				{
 					wchar_t temp[32];
-					wsprintf(temp, L"%i", nRastHeight);
+					swprintf_c(temp, L"%i", nRastHeight);
 					SelectStringExact(hMain, tFontSizeY, temp);
 
-					wsprintf(temp, L"%i", nRastWidth);
+					swprintf_c(temp, L"%i", nRastWidth);
 					SelectStringExact(hMain, tFontSizeX, temp);
 					SelectStringExact(hMain, tFontSizeX3, temp);
 				}
@@ -4900,7 +4906,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		}
 		inFont->lfCharSet = OEM_CHARSET;
 		tmpFont = *inFont;
-		lstrcpy(tmpFont.lfFaceName, L"Terminal");
+		wcscpy_c(tmpFont.lfFaceName, L"Terminal");
 	}
 	hFont = CreateFontIndirect(&tmpFont);
 
@@ -4927,8 +4933,12 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			dwFontErr = GetLastError();
 			SelectObject(hDC, hOldF);
 			DeleteDC(hDC);
-			wsprintf(gSet.szFontError, L"GetTextMetrics failed for non Raster font '%s'", inFont->lfFaceName);
-			if (dwFontErr) wsprintf(gSet.szFontError+lstrlen(gSet.szFontError), L"\r\nErrorCode = 0x%08X", dwFontErr);
+			swprintf_c(gSet.szFontError, L"GetTextMetrics failed for non Raster font '%s'", inFont->lfFaceName);
+			if (dwFontErr)
+			{
+				int nLen = lstrlen(gSet.szFontError);
+				StringCchPrintfW(gSet.szFontError+nLen, countof(gSet.szFontError)-nLen, L"\r\nErrorCode = 0x%08X", dwFontErr);
+			}
 			return NULL;
 		}
 
@@ -4966,10 +4976,11 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 				szFontFace[31] = 0;
 				if (lstrcmpi(inFont->lfFaceName, szFontFace))
 				{
-					wsprintf(szFontError+lstrlen(szFontError),
+					int nLen = lstrlen(szFontError);
+					StringCchPrintfW(szFontError+nLen, countof(szFontError)-nLen,
 						L"Failed to create main font!\nRequested: %s\nCreated: %s\n", inFont->lfFaceName, szFontFace);
-					lstrcpyn(inFont->lfFaceName, szFontFace, 32);
-					lstrcpy(tmpFont.lfFaceName, inFont->lfFaceName);
+					wcsncpy_s(inFont->lfFaceName, szFontFace, 32); inFont->lfFaceName[countof(inFont->lfFaceName)-1] = 0;
+					wcscpy_c(tmpFont.lfFaceName, inFont->lfFaceName);
 				}
 			}
 		}
@@ -5094,8 +5105,9 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 				szFontFace[31] = 0;
 				if (lstrcmpi(LogFont2.lfFaceName, szFontFace))
 				{
-					if (szFontError[0]) lstrcat(szFontError, L"\n");
-					wsprintf(szFontError+lstrlen(szFontError),
+					if (szFontError[0]) wcscat_c(szFontError, L"\n");
+					int nLen = lstrlen(szFontError);
+					StringCchPrintfW(szFontError+nLen, countof(szFontError)-nLen,
 						L"Failed to create border font!\nRequested: %s\nCreated: ", LogFont2.lfFaceName);
 					if (lstrcmpi(LogFont2.lfFaceName, L"Lucida Console") == 0)
 					{
@@ -5103,7 +5115,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 					}
 					else
 					{
-						lstrcpy(LogFont2.lfFaceName, L"Lucida Console");
+						wcscpy_c(LogFont2.lfFaceName, L"Lucida Console");
 						SelectObject(hDC, hOldF);
 						DeleteObject(mh_Font2);
 						mh_Font2 = CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
@@ -5117,12 +5129,12 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 							szFontFace2[31] = 0;
 							if (lstrcmpi(LogFont2.lfFaceName, szFontFace2) != 0)
 							{
-								lstrcat(szFontError, szFontFace2);
+								wcscat_c(szFontError, szFontFace2);
 							}
 							else
 							{
-								lstrcat(szFontError, szFontFace);
-								lstrcat(szFontError, L"\nUsing: Lucida Console");
+								wcscat_c(szFontError, szFontFace);
+								wcscat_c(szFontError, L"\nUsing: Lucida Console");
 							}
 						}
 					}
@@ -5201,14 +5213,14 @@ void CSettings::DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINET
 
 	if (!hFont)
 	{
-		wsprintf(szFontDump, L"*** gSet.%s: WAS NOT CREATED!\n", szType);
+		swprintf_c(szFontDump, L"*** gSet.%s: WAS NOT CREATED!\n", szType);
 	}
 	else
 	{
 		SelectObject(hDC, hFont); // вернуть шрифт должна вызывающая функция!
 		GetTextMetrics(hDC, &ltm);
 		GetTextFace(hDC, 32, szFontFace);
-		wsprintf(szFontDump, L"*** gSet.%s: '%s', Height=%i, Ave=%i, Max=%i, Over=%i, Angle*10=%i\n",
+		swprintf_c(szFontDump, L"*** gSet.%s: '%s', Height=%i, Ave=%i, Max=%i, Over=%i, Angle*10=%i\n",
 			szType, szFontFace, ltm.tmHeight, ltm.tmAveCharWidth, ltm.tmMaxCharWidth, ltm.tmOverhang,
 			lpOutl ? lpOutl->otmItalicAngle : 0);
 	}
@@ -5314,7 +5326,7 @@ void CSettings::SetArgBufferHeight(int anBufferHeight)
 	//ForceBufferHeight = (DefaultBufferHeight != 0);
 	bForceBufferHeight = true;
 	nForceBufferHeight = anBufferHeight;
-	wcscpy(szDefCmd, (anBufferHeight==0) ? L"far" : L"cmd");
+	wcscpy_c(szDefCmd, (anBufferHeight==0) ? L"far" : L"cmd");
 }
 
 LPCTSTR CSettings::GetDefaultCmd()
@@ -5346,11 +5358,15 @@ LPCTSTR CSettings::GetCmd()
         return psCmd;
     SafeFree(psCurCmd); // впринципе, эта строка скорее всего не нужна, но на всякий случай...
 
+	// Хорошо бы более корректно определить версию фара, но это не всегда просто
+	// Например x64 файл сложно обработать в x86 ConEmu.
+	DWORD nFarSize = 0;
+
 	if (lstrcmpi(szDefCmd, L"far") == 0)
 	{	// Ищем фар. (1) В папке ConEmu, (2) в текущей директории, (2) на уровень вверх от папки ConEmu
 		wchar_t szFar[MAX_PATH*2], *pszSlash;
 		szFar[0] = L'"';
-		lstrcpy(szFar+1, gConEmu.ms_ConEmuExeDir); // Теперь szFar содержит путь запуска программы
+		wcscpy_add(1, szFar, gConEmu.ms_ConEmuExeDir); // Теперь szFar содержит путь запуска программы
 		pszSlash = szFar + lstrlen(szFar);
 		_ASSERTE(pszSlash > szFar);
 		
@@ -5359,31 +5375,31 @@ LPCTSTR CSettings::GetCmd()
 		// (1) В папке ConEmu
 		if (!lbFound)
 		{
-			lstrcpy(pszSlash, L"\\far.exe");
-			if (FileExists(szFar+1))
+			wcscpy_add(pszSlash, szFar, L"\\Far.exe");
+			if (FileExists(szFar+1, &nFarSize))
 				lbFound = TRUE;
 		}
 		// (2) в текущей директории
 		if (!lbFound && lstrcmpi(gConEmu.ms_ConEmuCurDir, gConEmu.ms_ConEmuExeDir))
 		{
 			szFar[0] = L'"';
-			lstrcpy(szFar+1, gConEmu.ms_ConEmuCurDir);
-			lstrcat(szFar+1, L"\\far.exe");
-			if (FileExists(szFar+1))
+			wcscpy_add(1, szFar, gConEmu.ms_ConEmuCurDir);
+			wcscat_add(1, szFar, L"\\Far.exe");
+			if (FileExists(szFar+1, &nFarSize))
 				lbFound = TRUE;
 		}
 		// (3) на уровень вверх
 		if (!lbFound)
 		{
 			szFar[0] = L'"';
-			lstrcpy(szFar+1, gConEmu.ms_ConEmuExeDir);
+			wcscpy_add(1, szFar, gConEmu.ms_ConEmuExeDir);
 			pszSlash = szFar + lstrlen(szFar);
 			*pszSlash = 0;
 			pszSlash = wcsrchr(szFar, L'\\');
 			if (pszSlash)
 			{
-				lstrcpy(pszSlash+1, L"far.exe");
-				if (FileExists(szFar+1))
+				wcscpy_add(pszSlash, szFar, L"Far.exe");
+				if (FileExists(szFar+1, &nFarSize))
 					lbFound = TRUE;
 			}
 		}
@@ -5391,11 +5407,12 @@ LPCTSTR CSettings::GetCmd()
 		if (lbFound)
 		{
 			// far чаще всего будет установлен в "Program Files", поэтому для избежания проблем - окавычиваем
-			lstrcat(szFar, L"\"");
+			// Пока тупо - если far.exe > 1200K - считаем, что это Far2
+			wcscat_c(szFar, (nFarSize>1228800) ? L"\" /w" : L"\"");
 		}
 		else
-		{	// Если far.exe не найден рядом с ConEmu - запустить cmd.exe
-			lstrcpy(szFar, L"cmd");
+		{	// Если Far.exe не найден рядом с ConEmu - запустить cmd.exe
+			wcscpy_c(szFar, L"cmd");
 		}
 
 		// Finally - Result
@@ -5515,10 +5532,11 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 	if (!GetFontNameFromFile(asFontFile, rf.szFontName))
 	{
 		//DWORD dwErr = GetLastError();
-		TCHAR* psz=(TCHAR*)calloc(wcslen(asFontFile)+100,sizeof(TCHAR));
-		lstrcpyW(psz, L"Can't retrieve font family from file:\n");
-		lstrcatW(psz, asFontFile);
-		lstrcatW(psz, L"\nContinue?");
+		size_t cchLen = wcslen(asFontFile)+100;
+		wchar_t* psz=(wchar_t*)calloc(cchLen,sizeof(wchar_t));
+		_wcscpy_c(psz, cchLen, L"Can't retrieve font family from file:\n");
+		_wcscat_c(psz, cchLen, asFontFile);
+		_wcscat_c(psz, cchLen, L"\nContinue?");
 		int nBtn = MessageBox(NULL, psz, gConEmu.ms_ConEmuVer, MB_OKCANCEL|MB_ICONSTOP);
 		free(psz);
 		if (nBtn == IDCANCEL)
@@ -5544,7 +5562,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		// Проверяем, может в системе уже зарегистрирован такой шрифт?
 		LOGFONT LF = {0};
 		LF.lfOutPrecision = OUT_TT_PRECIS; LF.lfClipPrecision = CLIP_DEFAULT_PRECIS; LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-		lstrcpy(LF.lfFaceName, rf.szFontName); LF.lfHeight = 10; LF.lfWeight = FW_NORMAL;
+		wcscpy_c(LF.lfFaceName, rf.szFontName); LF.lfHeight = 10; LF.lfWeight = FW_NORMAL;
 		HFONT hf = CreateFontIndirect(&LF);
 		if (hf)
 		{
@@ -5563,10 +5581,11 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 
 	if (!AddFontResourceEx(asFontFile, FR_PRIVATE, NULL)) //ADD fontname; by Mors
 	{
-		TCHAR* psz=(TCHAR*)calloc(wcslen(asFontFile)+100,sizeof(TCHAR));
-		lstrcpyW(psz, L"Can't register font:\n");
-		lstrcatW(psz, asFontFile);
-		lstrcatW(psz, L"\nContinue?");
+		size_t cchLen = wcslen(asFontFile)+100;
+		wchar_t* psz=(wchar_t*)calloc(cchLen,sizeof(wchar_t));
+		_wcscpy_c(psz, cchLen, L"Can't register font:\n");
+		_wcscat_c(psz, cchLen, asFontFile);
+		_wcscat_c(psz, cchLen, L"\nContinue?");
 		int nBtn = MessageBox(NULL, psz, gConEmu.ms_ConEmuVer, MB_OKCANCEL|MB_ICONSTOP);
 		free(psz);
 		if (nBtn == IDCANCEL)
@@ -5577,7 +5596,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		return TRUE; // продолжить со следующим файлом
 	}
 	
-	lstrcpy(rf.szFontFile, asFontFile);
+	wcscpy_c(rf.szFontFile, asFontFile);
 	// Теперь его нужно добавить в вектор независимо от успешности определения рамок
 	// будет нужен RemoveFontResourceEx(asFontFile, FR_PRIVATE, NULL);
 	
@@ -5675,10 +5694,10 @@ void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
 {
 	// Регистрация шрифтов в папке ConEmu
 	WIN32_FIND_DATA fnd;
-	wchar_t szFind[MAX_PATH*2]; lstrcpyW(szFind, asFromDir); // БЕЗ завершающего слеша!
+	wchar_t szFind[MAX_PATH*2]; wcscpy_c(szFind, asFromDir); // БЕЗ завершающего слеша!
 	wchar_t* pszSlash = szFind + lstrlenW(szFind);
 
-	wcscpy(pszSlash, L"\\*.ttf");
+	wcscpy_add(pszSlash, szFind, L"\\*.ttf");
 	HANDLE hFind = FindFirstFile(szFind, &fnd);
 	if (hFind != INVALID_HANDLE_VALUE)
 	{
@@ -5688,16 +5707,17 @@ void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
 				pszSlash[1] = 0;
 				if ((wcslen(fnd.cFileName)+wcslen(szFind)) >= MAX_PATH)
 				{
-					TCHAR* psz=(TCHAR*)calloc(wcslen(fnd.cFileName)+100,sizeof(TCHAR));
-					lstrcpyW(psz, L"Too long full pathname for font:\n");
-					lstrcatW(psz, fnd.cFileName);
+					size_t cchLen = wcslen(fnd.cFileName)+100;
+					wchar_t* psz=(wchar_t*)calloc(cchLen,sizeof(wchar_t));
+					_wcscpy_c(psz, cchLen, L"Too long full pathname for font:\n");
+					_wcscat_c(psz, cchLen, fnd.cFileName);
 					int nBtn = MessageBox(NULL, psz, gConEmu.ms_ConEmuVer, MB_OKCANCEL|MB_ICONSTOP);
 					free(psz);
 					if (nBtn == IDCANCEL) break;
 				}
 				else
 				{
-					wcscat(szFind, fnd.cFileName);
+					wcscat_c(szFind, fnd.cFileName);
 					
 					if (!RegisterFont(szFind, FALSE))
 						break;
@@ -5717,7 +5737,7 @@ void CSettings::UnregisterFonts()
 	}
 }
 
-BOOL CSettings::GetFontNameFromFile(LPCTSTR lpszFilePath, LPTSTR rsFontName/* [32] */)
+BOOL CSettings::GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[32])
 {
 	typedef struct _tagTT_OFFSET_TABLE{
 		USHORT	uMajorVersion;
@@ -5853,7 +5873,7 @@ BOOL CSettings::GetFontNameFromFile(LPCTSTR lpszFilePath, LPTSTR rsFontName/* [3
 	}
 	
 	if (lbRc)
-		wcscpy(rsFontName, szRetVal);
+		wcscpy_c(rsFontName, szRetVal);
 	return lbRc;
 }
 
@@ -5890,19 +5910,20 @@ void CSettings::HistoryAdd(LPCWSTR asCmd)
 	wchar_t *pszNewHistory, *psz;
 	int nCount = 0;
 
-	DWORD nNewSize = nCmdHistorySize + (DWORD)((lstrlen(asCmd) + 2)*sizeof(wchar_t));
+	DWORD nCchNewSize = (nCmdHistorySize>>1) + lstrlen(asCmd) + 2;
+	DWORD nNewSize = nCchNewSize*2;
 	pszNewHistory = (wchar_t*)malloc(nNewSize);
 	//wchar_t* pszEnd = pszNewHistory + nNewSize/sizeof(wchar_t);
 	if (!pszNewHistory) return;
 
-	lstrcpy(pszNewHistory, asCmd);
+	_wcscpy_c(pszNewHistory, nCchNewSize, asCmd);
 	psz = pszNewHistory + lstrlen(pszNewHistory) + 1;
 	nCount++;
 	if (psCmdHistory)
 	{
 		wchar_t* pszOld = psCmdHistory;
 		int nLen;
-		HEAPVAL
+		HEAPVAL;
 		while (nCount < MAX_CMD_HISTORY && *pszOld /*&& psz < pszEnd*/)
 		{
 			const wchar_t *pszCur = pszOld;
@@ -5911,28 +5932,28 @@ void CSettings::HistoryAdd(LPCWSTR asCmd)
 			if (lstrcmp(pszCur, asCmd) == 0)
 				continue;
 
-			lstrcpy(psz, pszCur);
+			_wcscpy_c(psz, nCchNewSize-(psz-pszNewHistory), pszCur);
 			psz += (nLen = (lstrlen(psz)+1));
 			nCount ++;
 		}
 	}
 	*psz = 0;
 
-	HEAPVAL
+	HEAPVAL;
 
 	free(psCmdHistory);
 	psCmdHistory = pszNewHistory;
 	nCmdHistorySize = (psz - pszNewHistory + 1)*sizeof(wchar_t);
 
-	HEAPVAL
+	HEAPVAL;
 
 	// И сразу сохранить в настройках
 	SettingsBase* reg = CreateSettings();
 	if (reg->OpenKey(Config, KEY_WRITE))
 	{
-		HEAPVAL
+		HEAPVAL;
 		reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
-		HEAPVAL
+		HEAPVAL;
 		reg->CloseKey();
 	}
 	delete reg;
@@ -5948,9 +5969,10 @@ LPCWSTR CSettings::HistoryGet()
 // Показать в "Инфо" текущий режим консоли
 void CSettings::UpdateConsoleMode(DWORD nMode)
 {
-	if (hInfo && IsWindow(hInfo)) {
+	if (hInfo && IsWindow(hInfo))
+	{
 		wchar_t szInfo[255];
-		wsprintf(szInfo, L"Console states (0x%X)", nMode);
+		swprintf_c(szInfo, L"Console states (0x%X)", nMode);
 		SetDlgItemText(hInfo, IDC_CONSOLE_STATES, szInfo);
 	}
 }
@@ -6082,7 +6104,7 @@ void CSettings::ColorSetEdit(HWND hWnd2, WORD c)
 	COLORREF cr = 0;
 	GetColorById(c, &cr);
 	wchar_t temp[16];
-	wsprintf(temp, L"%i %i %i", getR(cr), getG(cr), getB(cr));
+	swprintf_c(temp, L"%i %i %i", getR(cr), getG(cr), getB(cr));
 	SetDlgItemText(hWnd2, tc, temp);
 }
 
@@ -6098,7 +6120,7 @@ bool CSettings::ColorEditDialog(HWND hWnd2, WORD c)
 	{
 		SetColorById(c, colornew);
 
-		wsprintf(temp, L"%i %i %i", getR(colornew), getG(colornew), getB(colornew));
+		swprintf_c(temp, L"%i %i %i", getR(colornew), getG(colornew), getB(colornew));
 		SetDlgItemText(hWnd2, c + (tc0-c0), temp);
 		InvalidateRect(GetDlgItem(hWnd2, c), 0, 1);
 
@@ -6563,7 +6585,7 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
         {
             TCHAR szError[MAX_PATH*2];
             DWORD dwErr = GetLastError();
-            swprintf(szError, L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
+            swprintf_c(szError, L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
                 inPath, dwErr);
             MBoxA(szError);
         }
@@ -6853,17 +6875,18 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			gSet.hConFontDlg = NULL; // пока не выставим - на смену в контролах не реагировать
 
 			wchar_t temp[10];
-			for (uint i=0; i < countof(Settings::FSizesSmall); i++) {
-				wsprintf(temp, L"%i", Settings::FSizesSmall[i]);
+			for (uint i=0; i < countof(Settings::FSizesSmall); i++)
+			{
+				swprintf_c(temp, L"%i", Settings::FSizesSmall[i]);
 				SendDlgItemMessage(hWnd2, tConsoleFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
-				wsprintf(temp, L"%i", (int)(Settings::FSizesSmall[i]*3/2));
+				swprintf_c(temp, L"%i", (int)(Settings::FSizesSmall[i]*3/2));
 				SendDlgItemMessage(hWnd2, tConsoleFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
 				if (Settings::FSizesSmall[i] >= gSet.LogFont.lfHeight)
 					break; // не допускаются шрифты больше, чем выбрано для основного шрифта!
 			}
-			wsprintf(temp, L"%i", gSet.ConsoleFont.lfHeight);
+			swprintf_c(temp, L"%i", gSet.ConsoleFont.lfHeight);
 			SelectStringExact(hWnd2, tConsoleFontSizeY, temp);
-			wsprintf(temp, L"%i", gSet.ConsoleFont.lfWidth);
+			swprintf_c(temp, L"%i", gSet.ConsoleFont.lfWidth);
 			SelectStringExact(hWnd2, tConsoleFontSizeX, temp);
 
 			// Показать текущий шрифт и проверить его
@@ -6920,29 +6943,37 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			WORD TB = LOWORD(wParam);
 			if (TB == IDOK)
 				return 0;
-			else if (TB == bConFontOK) {
+			else if (TB == bConFontOK)
+			{
 				// На всякий случай, повторно считаем поля диалога
 				GetDlgItemText(hWnd2, tConsoleFontFace, gSet.ConsoleFont.lfFaceName, countof(gSet.ConsoleFont.lfFaceName));
 				gSet.ConsoleFont.lfHeight = GetNumber(hWnd2, tConsoleFontSizeY);
 				gSet.ConsoleFont.lfWidth = GetNumber(hWnd2, tConsoleFontSizeX);
 				// Проверка валидности
-				if (gSet.nConFontError == ConFontErr_NonRegistry && gSet.CheckConsoleFontRegistry(gSet.ConsoleFont.lfFaceName)) {
+				if (gSet.nConFontError == ConFontErr_NonRegistry && gSet.CheckConsoleFontRegistry(gSet.ConsoleFont.lfFaceName))
+				{
 					gSet.nConFontError &= ~(DWORD)ConFontErr_NonRegistry;
 				}
-				if (gSet.nConFontError) {
+				if (gSet.nConFontError)
+				{
 					_ASSERTE(gSet.nConFontError==0);
 					MessageBox(hWnd2, gSet.sConFontError[0] ? gSet.sConFontError : gSet.CreateConFontError(NULL,NULL), gConEmu.ms_ConEmuVer, MB_OK|MB_ICONSTOP);
 					return 0;
 				}
 				gSet.SaveConsoleFont(); // Сохранить шрифт в настройке
 				EndDialog(hWnd2, IDOK);
-			} else if (TB == IDCANCEL || TB == bConFontCancel) {
-				if (!gSet.bConsoleFontChecked) {
-					lstrcpy(gSet.ConsoleFont.lfFaceName, gSet.sDefaultConFontName[0] ? gSet.sDefaultConFontName : L"Lucida Console");
+			}
+			else if (TB == IDCANCEL || TB == bConFontCancel)
+			{
+				if (!gSet.bConsoleFontChecked)
+				{
+					wcscpy_c(gSet.ConsoleFont.lfFaceName, gSet.sDefaultConFontName[0] ? gSet.sDefaultConFontName : L"Lucida Console");
 					gSet.ConsoleFont.lfHeight = 5; gSet.ConsoleFont.lfWidth = 3;
 				}
 				EndDialog(hWnd2, IDCANCEL);
-			} else if (TB == bConFontAdd2HKLM) {
+			}
+			else if (TB == bConFontAdd2HKLM)
+			{
 				// Добавить шрифт в HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
 				gSet.ShowConFontErrorTip(NULL);
 				EnableWindow(GetDlgItem(hWnd2, tConsoleFontHklmNote), TRUE);
@@ -6955,16 +6986,19 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					0, KEY_ALL_ACCESS, &hk))
 				{
 					wchar_t szId[32] = {0}, szFont[255]; DWORD dwLen, dwType;
-					for (DWORD i = 0; i <20; i++) {
+					for (DWORD i = 0; i <20; i++)
+					{
 						szId[i] = L'0'; szId[i+1] = 0; wmemset(szFont, 0, 255);
-						if (RegQueryValueExW(hk, szId, NULL, &dwType, (LPBYTE)szFont, &(dwLen = 255*2))) {
+						if (RegQueryValueExW(hk, szId, NULL, &dwType, (LPBYTE)szFont, &(dwLen = 255*2)))
+						{
 							if (!RegSetValueExW(hk, szId, 0, REG_SZ, (LPBYTE)szFaceName, (lstrlen(szFaceName)+1)*2))
 							{
 								lbFontJustRegistered = lbFound = true; // OK, добавили
 							}
 							break;
 						}
-						if (lstrcmpi(szFont, szFaceName) == 0) {
+						if (lstrcmpi(szFont, szFaceName) == 0)
+						{
 							lbFound = true; break; // он уже добавлен
 						}
 					}
@@ -6980,7 +7014,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					sei.fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS;
 					sei.lpVerb = L"runas";
 					sei.lpFile = gConEmu.ms_ConEmuCExeFull;
-					wsprintf(szCommandLine, L" \"/REGCONFONT=%s\"", szFaceName);
+					swprintf_c(szCommandLine, L" \"/REGCONFONT=%s\"", szFaceName);
 					sei.lpParameters = szCommandLine;
 					sei.lpDirectory = gConEmu.ms_ConEmuCurDir;
 					sei.nShow = SW_SHOWMINIMIZED;
@@ -7006,20 +7040,24 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					}
 				}
 
-				if (lbFound) {
+				if (lbFound)
+				{
 					SetFocus(GetDlgItem(hWnd2, tConsoleFontFace));
 					EnableWindow(GetDlgItem(hWnd2, bConFontAdd2HKLM), FALSE);
 					gSet.nConFontError &= ~(DWORD)ConFontErr_NonRegistry;
 					if (lbFontJustRegistered) {
 						// Если шрифт только что зарегистрировали - его нельзя использовать до перезагрузки компьютера
-						if (lbFontJustRegistered && gSet.sDefaultConFontName[0]) {
-							lstrcpy(gSet.ConsoleFont.lfFaceName, gSet.sDefaultConFontName);
+						if (lbFontJustRegistered && gSet.sDefaultConFontName[0])
+						{
+							wcscpy_c(gSet.ConsoleFont.lfFaceName, gSet.sDefaultConFontName);
 							if (SelectString(hWnd2, tConsoleFontFace, gSet.ConsoleFont.lfFaceName)<0)
 								SetDlgItemText(hWnd2, tConsoleFontFace, gSet.ConsoleFont.lfFaceName);
 							EnableWindow(GetDlgItem(hWnd2, bConFontOK), TRUE);
 							SetFocus(GetDlgItem(hWnd2, bConFontOK));
 						}
-					} else {
+					}
+					else
+					{
 						EnableWindow(GetDlgItem(hWnd2, bConFontOK), TRUE);
 						SetFocus(GetDlgItem(hWnd2, bConFontOK));
 					}
@@ -7057,20 +7095,27 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 				if (!hf) {
 					EnableWindow(GetDlgItem(hWnd2, bConFontOK), FALSE);
 					gSet.nConFontError = ConFontErr_InvalidName;
-				} else {
+				}
+				else
+				{
 					LPOUTLINETEXTMETRICW lpOutl = gSet.LoadOutline(NULL, hf);
-					if (!lpOutl) {
+					if (!lpOutl)
+					{
 						// Ошибка
 						gSet.nConFontError = ConFontErr_InvalidName;
-					} else {
-						lstrcpy(szCreatedFaceName, (wchar_t*)lpOutl->otmpFamilyName);
+					}
+					else
+					{
+						wcscpy_c(szCreatedFaceName, (wchar_t*)lpOutl->otmpFamilyName);
 						wchar_t temp[10];
-						if (TB != tConsoleFontSizeX) {						
-							wsprintf(temp, L"%i", lpOutl->otmTextMetrics.tmAveCharWidth);
+						if (TB != tConsoleFontSizeX)
+						{
+							swprintf_c(temp, L"%i", lpOutl->otmTextMetrics.tmAveCharWidth);
 							SelectStringExact(hWnd2, tConsoleFontSizeX, temp);
 						}
-						if (lpOutl->otmTextMetrics.tmHeight != LF.lfHeight) {
-							wsprintf(temp, L"%i", lpOutl->otmTextMetrics.tmHeight);
+						if (lpOutl->otmTextMetrics.tmHeight != LF.lfHeight)
+						{
+							swprintf_c(temp, L"%i", lpOutl->otmTextMetrics.tmHeight);
 							SelectStringExact(hWnd2, tConsoleFontSizeY, temp);
 						}
 						free(lpOutl); lpOutl = NULL;
@@ -7081,16 +7126,19 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 				}
 			}
 
-			if (gSet.nConFontError == 0) {
+			if (gSet.nConFontError == 0)
+			{
 				// Осталось проверить регистрацию в реестре
-				lstrcpy(gSet.ConsoleFont.lfFaceName, LF.lfFaceName);
+				wcscpy_c(gSet.ConsoleFont.lfFaceName, LF.lfFaceName);
 				gSet.ConsoleFont.lfHeight = LF.lfHeight;
 				gSet.ConsoleFont.lfWidth = LF.lfWidth;
 				bool lbRegChecked = CheckConsoleFontRegistry(gSet.ConsoleFont.lfFaceName);
 				if (!lbRegChecked) gSet.nConFontError |= ConFontErr_NonRegistry;
 				EnableWindow(GetDlgItem(hWnd2, bConFontOK), lbRegChecked);
 				EnableWindow(GetDlgItem(hWnd2, bConFontAdd2HKLM), !lbRegChecked);
-			} else {
+			}
+			else
+			{
 				EnableWindow(GetDlgItem(hWnd2, bConFontOK), FALSE);
 				EnableWindow(GetDlgItem(hWnd2, bConFontAdd2HKLM), FALSE);
 			}
@@ -7140,24 +7188,28 @@ LPCWSTR CSettings::CreateConFontError(LPCWSTR asReqFont/*=NULL*/, LPCWSTR asGotF
 
 	SendMessage(gSet.hwndConFontBalloon, TTM_SETTITLE, TTI_WARNING, (LPARAM)(asReqFont ? asReqFont : ConsoleFont.lfFaceName));
 
-	lstrcpy(sConFontError, L"Console font test failed!\n");
-	//lstrcat(sConFontError, asReqFont ? asReqFont : ConsoleFont.lfFaceName);
-	//lstrcat(sConFontError, L"\n");
+	wcscpy_c(sConFontError, L"Console font test failed!\n");
+	//wcscat_c(sConFontError, asReqFont ? asReqFont : ConsoleFont.lfFaceName);
+	//wcscat_c(sConFontError, L"\n");
 
-	if ((nConFontError & ConFontErr_InvalidName)) {
-		if (asReqFont && asGotFont) {
-			wsprintf(sConFontError+lstrlen(sConFontError),
+	if ((nConFontError & ConFontErr_InvalidName))
+	{
+		if (asReqFont && asGotFont)
+		{
+			swprintf_add(lstrlen(sConFontError), sConFontError,
 				L"Requested: %s\nCreated: %s\n", asReqFont , asGotFont);
-		} else {
-			lstrcat(sConFontError, L"Invalid font face name!\n");
+		}
+		else
+		{
+			wcscat_c(sConFontError, L"Invalid font face name!\n");
 		}
 	}
 
 	if ((nConFontError & ConFontErr_NonSystem))
-		lstrcat(sConFontError, L"Font is non public or non Unicode\n");
+		wcscat_c(sConFontError, L"Font is non public or non Unicode\n");
 
 	if ((nConFontError & ConFontErr_NonRegistry))
-		lstrcat(sConFontError, L"Font is not registered for use in console\n");
+		wcscat_c(sConFontError, L"Font is not registered for use in console\n");
 
 	sConFontError[lstrlen(sConFontError)-1] = 0;
 
@@ -7198,7 +7250,7 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 	LF.lfOutPrecision = OUT_TT_PRECIS;
 	LF.lfClipPrecision = CLIP_DEFAULT_PRECIS;
 	LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-	lstrcpy(LF.lfFaceName, lplf->lfFaceName);
+	wcscpy_c(LF.lfFaceName, lplf->lfFaceName);
 	HFONT hf = CreateFontIndirect(&LF);
 	if (!hf) return TRUE; // не получилось создать
 	LPOUTLINETEXTMETRICW lpOutl = gSet.LoadOutline(NULL, hf);
@@ -7215,16 +7267,19 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 	if (lstrcmpi(LF.lfFaceName, gSet.ConsoleFont.lfFaceName) == 0)
 		gSet.nConFontError &= ~(DWORD)ConFontErr_NonSystem;
 
-	if (hWnd2) {
-		if (SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) LF.lfFaceName)==-1) {
+	if (hWnd2)
+	{
+		if (SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) LF.lfFaceName)==-1)
+		{
 			int nIdx;
 			nIdx = SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM) LF.lfFaceName);
 		}
 	}
 
-	if (gSet.sDefaultConFontName[0] == 0) {
+	if (gSet.sDefaultConFontName[0] == 0)
+	{
 		if (CheckConsoleFontRegistry(LF.lfFaceName))
-			lstrcpy(gSet.sDefaultConFontName, LF.lfFaceName);
+			wcscpy_c(gSet.sDefaultConFontName, LF.lfFaceName);
 	}
 
 	MCHKHEAP

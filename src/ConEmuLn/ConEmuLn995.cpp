@@ -27,7 +27,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <windows.h>
+#pragma warning( disable : 4995 )
 #include "..\common\pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
+#pragma warning( default : 4995 )
 #include "ConEmuLn.h"
 
 #define FCTL_GETPANELDIR FCTL_GETCURRENTDIRECTORY

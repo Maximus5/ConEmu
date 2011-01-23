@@ -151,10 +151,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CECMD_ACTIVATECON   35 // CESERVER_REQ_ACTIVATECONSOLE
 //#define CECMD_ONSERVERCLOSE 35 // Посылается из ConEmuC*.exe перед закрытием в режиме сервера
 #define CECMD_DETACHCON     36
-#define CECMD_FINDWINDOW    37 // CESERVER_REQ_FINDWINDOW. Найти в других консолях редактор/вьювер
+#define CECMD_GUIMACRO      38 // CESERVER_REQ_GUIMACRO. Найти в других консолях редактор/вьювер
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    54
+#define CESERVER_REQ_VER    55
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -987,12 +987,12 @@ struct CESERVER_REQ_ACTIVATECONSOLE
 	HWND2 hConWnd;
 };
 
-// CECMD_FINDWINDOW
-#define CEFINDWINDOWENVVAR L"ConEmuFindWindowRet"
-struct CESERVER_REQ_FINDWINDOW
+// CECMD_GUIMACRO
+#define CEGUIMACRORETENVVAR L"ConEmuMacroResult"
+struct CESERVER_REQ_GUIMACRO
 {
-	DWORD   nWindowType; // WTYPE_EDITOR/WTYPE_VIEWER
-	wchar_t sFile[1];    // Variable length. Full path+filename
+	DWORD   nSucceeded;
+	wchar_t sMacro[1];    // Variable length
 };
 
 struct CESERVER_REQ
@@ -1024,7 +1024,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_ACTIVATECONSOLE ActivateCon;
 		PanelViewInit PVI;
 		CESERVER_REQ_SETFONT Font;
-		CESERVER_REQ_FINDWINDOW FindWnd;
+		CESERVER_REQ_GUIMACRO GuiMacro;
 	};
 };
 
@@ -1095,6 +1095,7 @@ int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wch
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg);
 BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec);
 SECURITY_ATTRIBUTES* NullSecurity();
+SECURITY_ATTRIBUTES* LocalSecurity();
 void CommonShutdown();
 
 

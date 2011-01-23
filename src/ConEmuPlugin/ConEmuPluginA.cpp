@@ -28,7 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "..\common\common.hpp"
+#pragma warning( disable : 4995 )
 #include "..\common\pluginA.hpp"
+#pragma warning( default : 4995 )
 #include "PluginHeader.h"
 #include "PluginBackground.h"
 
@@ -610,7 +612,7 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 					WInfo.Current, WInfo.Modified, 0);
 			}
 		}
-		else
+		else if (WInfo.Type == WTYPE_PANELS)
 		{
 			gpTabs->Tabs.CurrentType = WInfo.Type;
 		}
@@ -716,6 +718,8 @@ int ShowPluginMenuA()
 		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
 		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
 		{MIF_SEPARATOR},
+		{MIF_USETEXTPTR|0},
+		{MIF_SEPARATOR},
 		{MIF_USETEXTPTR|(ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED)},
 		{MIF_SEPARATOR},
 		#ifdef _DEBUG
@@ -729,12 +733,13 @@ int ShowPluginMenuA()
 	items[4].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuNextTab);
 	items[5].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuPrevTab);
 	items[6].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuCommitTab);
-	items[8].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuAttach);
+	items[8].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuGuiMacro);
+	items[10].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuAttach);
 	//#ifdef _DEBUG
 	//items[10].Text.TextPtr = "&~. Raise exception";
 	//items[11].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuDebug);
 	//#else
-	items[10].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuDebug);
+	items[12].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuDebug);
 	//#endif
 
 	int nCount = sizeof(items)/sizeof(items[0]);
@@ -1054,4 +1059,11 @@ int GetActiveWindowTypeA()
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 
 	return WInfo.Type;
+}
+
+#undef FAR_UNICODE
+#include "Dialogs.h"
+void GuiMacroDlgA()
+{
+	CallGuiMacroProc();
 }

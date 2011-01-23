@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _T(s) s
 #include "ConEmuCheck.h"
 
-SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
+SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
 //#ifdef _DEBUG
 //	#include <crtdbg.h>
@@ -99,7 +99,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
     DWORD dwStartTick = GetTickCount();
     int nTries = 2;
 
-	_ASSERTE(gpNullSecurity!=NULL);
+	_ASSERTE(gpLocalSecurity!=NULL);
 
     // Try to open a named pipe; wait for it, if necessary. 
     while (1)
@@ -108,7 +108,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
             szPipeName,     // pipe name 
             GENERIC_READ|GENERIC_WRITE, 
             0,              // no sharing 
-            gpNullSecurity, // default security attributes
+            gpLocalSecurity, // default security attributes
             OPEN_EXISTING,  // opens existing pipe 
             0,              // default attributes 
             NULL);          // no template file 

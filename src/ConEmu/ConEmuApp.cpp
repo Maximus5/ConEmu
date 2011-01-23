@@ -927,7 +927,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	nCmp = StrCmpI(L" ", L"\\");*/
 
     g_hInstance = hInstance;
-    gpNullSecurity = NullSecurity();
+    gpLocalSecurity = LocalSecurity();
     #ifdef _DEBUG
 	gbAllowAssertThread = true;
 	#endif

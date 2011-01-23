@@ -304,7 +304,7 @@ L"\n" \
 L"/cmd <commandline>|@<commandfile> - Command line to start. This must be the last used switch.\n" \
 L"\n" \
 L"Command line examples:\n" \
-L"ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd far.exe /w\n" \
+L"ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd Far.exe /w\n" \
 L"\n" \
 L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\n" \
 L"\x00A9 2009-2010 Maximus5\n" \

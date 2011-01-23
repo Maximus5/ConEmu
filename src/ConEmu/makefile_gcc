@@ -1,13 +1,15 @@
 NAME = ConEmu
-SRCS =  BaseDragDrops.cpp  \
+SRCS =  \
+		Background.cpp     \
+		BaseDragDrops.cpp  \
 		ConEmu.cpp         \
 		ConEmuApp.cpp      \
 		ConEmuChild.cpp    \
 		ConEmuPipe.cpp     \
 		DragDrop.cpp       \
 		DragDropData.cpp   \
+		Macro.cpp          \
 		Options.cpp        \
-		Background.cpp     \
 		RealConsole.cpp    \
 		Registry.cpp       \
 		ScreenDump.cpp     \
