@@ -48,9 +48,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <tchar.h>
 #include "..\common\common.hpp"
 #include "..\common\SetHook.h"
+#ifdef _DEBUG
 #pragma warning( disable : 4995 )
+#endif
 #include "..\common\pluginW1007.hpp"
+#ifdef _DEBUG
 #pragma warning( default : 4995 )
+#endif
 #include "..\common\ConsoleAnnotation.h"
 #include "..\common\WinObjects.h"
 #include "..\common\TerminalMode.h"

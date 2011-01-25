@@ -79,7 +79,7 @@ typedef struct HookItem
 extern "C"{
 #endif
 
-bool __stdcall SetHookCallbacks( const char* ProcName, const wchar_t* DllName,
+bool __stdcall SetHookCallbacks( const char* ProcName, const wchar_t* DllName, HMODULE hCallbackModule,
 								 HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack,
 								 HookItemExceptCallback_t ExceptCallBack = NULL );
 
@@ -99,7 +99,8 @@ void __stdcall UnsetAllHooks( );
 
 
 typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
-extern OnLibraryLoaded_t gfOnLibraryLoaded;
+//extern OnLibraryLoaded_t gfOnLibraryLoaded;
+void __stdcall SetLoadLibraryCallback(HMODULE ahCallbackModule, OnLibraryLoaded_t afOnLibraryLoaded, OnLibraryLoaded_t afOnLibraryUnLoaded);
 
 
 #if __GNUC__

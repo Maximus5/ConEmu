@@ -28,8 +28,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include <TlHelp32.h>
+#include "../common/common.hpp"
 #include "Execute.h"
 #include "WinObjects.h"
+
 
 // Выдранный кусок из будущего GetFileInfo, получаем достоверную информацию о ГУЯХ PE-модуля
 
@@ -95,12 +97,14 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 							case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
 								{
 									ImageSubsystem = PEHeader.OptionalHeader32.Subsystem;
+									_ASSERTE((ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI));
 									ImageBits = 32;
 								}
 								break;
 							case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
 								{
 									ImageSubsystem = PEHeader.OptionalHeader64.Subsystem;
+									_ASSERTE((ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI));
 									ImageBits = 64;
 								}
 								break;

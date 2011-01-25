@@ -227,7 +227,8 @@ public:
     RECT rcTabMargins;
     bool isTabFrame;
     BYTE icMinimizeRestore;
-    bool isMulti; BYTE icMultiNew, icMultiNext, icMultiRecreate, icMultiBuffer;
+    bool isMulti; BYTE icMultiNew, icMultiNext, icMultiRecreate, icMultiBuffer, icMultiClose, icMultiCmd;
+    bool isMultiAutoCreate, isMultiLeaveOnClose, isMultiIterate;
     bool IsHostkey(WORD vk);
 	bool IsHostkeySingle(WORD vk);
 	bool IsHostkeyPressed();

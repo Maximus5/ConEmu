@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "..\common\common.hpp"
 #include "..\common\ConEmuCheck.h"
+#include "..\common\execute.h"
 #include <Tlhelp32.h>
 #include "SetHook.h"
 
@@ -62,7 +63,9 @@ static BOOL gbTemporaryDisabled = FALSE;
 static BOOL gbInShellExecuteEx = FALSE;
 
 //typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
+static HMODULE ghOnLoadLibModule = NULL;
 OnLibraryLoaded_t gfOnLibraryLoaded = NULL;
+OnLibraryLoaded_t gfOnLibraryUnLoaded = NULL;
 
 // Forward declarations of the hooks
 static HMODULE WINAPI OnLoadLibraryW( const WCHAR* lpFileName );
@@ -314,7 +317,14 @@ bool __stdcall InitHooks( HookItem* apHooks )
     return true;
 }
 
-bool __stdcall SetHookCallbacks( const char* ProcName, const wchar_t* DllName,
+void __stdcall SetLoadLibraryCallback(HMODULE ahCallbackModule, OnLibraryLoaded_t afOnLibraryLoaded, OnLibraryLoaded_t afOnLibraryUnLoaded)
+{
+	ghOnLoadLibModule = ahCallbackModule;
+	gfOnLibraryLoaded = afOnLibraryLoaded;
+	gfOnLibraryUnLoaded = afOnLibraryUnLoaded;
+}
+
+bool __stdcall SetHookCallbacks( const char* ProcName, const wchar_t* DllName, HMODULE hCallbackModule,
 								 HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack,
 								 HookItemExceptCallback_t ExceptCallBack )
 {
@@ -1215,7 +1225,8 @@ static BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int 
 		DebugString(szMsg);
 	#endif
 	
-	if (ConEmuHwnd) {
+	if (ConEmuHwnd)
+	{
 		GuiSetForeground(hWnd);
 	}
 	
@@ -1236,7 +1247,8 @@ static BOOL WINAPI OnTrackPopupMenuEx(HMENU hmenu, UINT fuFlags, int x, int y, H
 		DebugString(szMsg);
 	#endif
 	
-	if (ConEmuHwnd) {
+	if (ConEmuHwnd)
+	{
 		GuiSetForeground(hWnd);
 	}
 	
@@ -1256,7 +1268,8 @@ static BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 {
 	ORIGINALFAST(ShellExecuteExA);
 
-	if (ConEmuHwnd) {
+	if (ConEmuHwnd)
+	{
 		if (!lpExecInfo->hwnd || lpExecInfo->hwnd == GetConsoleWindow())
 			lpExecInfo->hwnd = GetParent(ConEmuHwnd);
 	}
@@ -1284,14 +1297,6 @@ static BOOL OnShellExecuteExW_SEH(OnShellExecuteExW_t f, LPSHELLEXECUTEINFOW lpE
 }
 static BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 {
-	extern bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/);
-#ifdef _DEBUG
-	if (lpExecInfo->lpParameters)
-	{
-		OutputDebugStringW(lpExecInfo->lpParameters);
-		OutputDebugStringW(L"\n");
-	}
-#endif
 	ORIGINAL(ShellExecuteExW);
 
 	LPSHELLEXECUTEINFOW lpNew = NULL;

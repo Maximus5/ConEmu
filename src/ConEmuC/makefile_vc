@@ -261,7 +261,7 @@ $(INTDIR)\ConEmuCmd.obj: ConEmuCmd.cpp ConEmuC.h ..\common\Common.hpp
 
 $(INTDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ConEmuC.h ..\common\Common.hpp
 
-$(INTDIR)\execute.obj: execute.cpp
+$(INTDIR)\execute.obj: ..\common\execute.cpp
 
 $(INTDIR)\Common.obj: ..\common\Common.cpp ..\common\Common.hpp
 

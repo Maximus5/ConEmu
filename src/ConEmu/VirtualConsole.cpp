@@ -2866,7 +2866,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
         FillRect(hPaintDc, &rcClient, hBr);
         #endif
 		HFONT hOldF = (HFONT)SelectObject(hPaintDc, gSet.mh_Font[0]);
-		LPCWSTR pszStarting = L"Initializing ConEmu.";
+		LPCWSTR pszStarting = gConEmu.isProcessCreated() ? L"No consoles" : L"Initializing ConEmu.";
 		if (this)
 		{
 			if (mp_RCon)

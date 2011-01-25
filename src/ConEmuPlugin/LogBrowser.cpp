@@ -30,9 +30,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wchar.h>
 #include "..\common\common.hpp"
 #include "..\common\RgnDetect.h"
+#ifdef _DEBUG
 #pragma warning( disable : 4995 )
+#endif
 #include "..\common\pluginW1007.hpp"
+#ifdef _DEBUG
 #pragma warning( default : 4995 )
+#endif
 #include "PluginHeader.h"
 
 // Можно бы добавить обработку Up/Down для перехода между пакетами

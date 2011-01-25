@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define DROP_SETCP_ON_WIN2K3R2
+//#define EXTERNAL_HOOK_LIBRARY
 
 // Иначе не опередяется GetConsoleAliases (хотя он должен быть доступен в Win2k)
 #undef _WIN32_WINNT
@@ -50,6 +51,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#endif
 
 
+extern HMODULE ghPluginModule;
+
+
 static TCHAR kernel32[] = _T("kernel32.dll");
 //static TCHAR user32[]   = _T("user32.dll");
 static TCHAR shell32[]  = _T("shell32.dll");
@@ -63,6 +67,8 @@ static TCHAR wininet[]  = _T("wininet.dll");
 //	{0, 0, 0}
 //};
 
+
+#ifndef EXTERNAL_HOOK_LIBRARY
 extern int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
 //
 extern BOOL WINAPI OnHttpSendRequestA(LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
@@ -77,6 +83,7 @@ static HookItem HooksFarOnly[] = {
 	/* ************************ */
 	{0, 0, 0}
 };
+#endif // EXTERNAL_HOOK_LIBRARY
 
 
 //void UnsetAllHooks()
@@ -122,31 +129,82 @@ extern VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs);
 extern VOID WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs);
 extern VOID WINAPI OnLibraryLoaded(HMODULE ahModule);
 
+#ifdef EXTERNAL_HOOK_LIBRARY
+	HMODULE ghHooksModule = NULL;
+	SetHookCallbacks_t SetHookCallbacks = NULL;
+	SetLoadLibraryCallback_t SetLoadLibraryCallback = NULL;
+#endif
 
 // Эту функцию нужно позвать из DllMain плагина
 BOOL StartupHooks(HMODULE ahOurDll)
 {
-	InitHooks( HooksFarOnly );
+	WARNING("Добавить в аргументы строковый параметр - инфа об ошибке");
 	
-	gfOnLibraryLoaded = OnLibraryLoaded;
+	#ifndef EXTERNAL_HOOK_LIBRARY
+		InitHooks( HooksFarOnly );
+	#else
+		if (ghHooksModule == NULL)
+		{
+			ghHooksModule = GetModuleHandle(
+				#ifdef WIN64
+					L"ConEmuHk64.dll"
+				#else
+					L"ConEmuHk.dll"
+				#endif
+				);
+			
+			if (ghHooksModule == NULL)
+			{
+				TODO("Попробовать выполнить LoadLibrary, в некоторых случаях GetModuleHandle может обламываться");
+				_ASSERTE(ghHooksModule!=NULL);
+				WARNING("Показать ошибку!");
+				MessageBox(NULL, L"ConEmuHk was not loaded!", L"ConEmu plugin", MB_ICONSTOP|MB_SYSTEMMODAL);
+				return FALSE;
+			}
+		}
+		if (!SetHookCallbacks || !SetLoadLibraryCallback)
+		{
+			SetHookCallbacks = (SetHookCallbacks_t)GetProcAddress(ghHooksModule, "SetHookCallbacks");
+			SetLoadLibraryCallback = (SetLoadLibraryCallback_t)GetProcAddress(ghHooksModule, "SetLoadLibraryCallback");
+			if (!SetHookCallbacks || !SetLoadLibraryCallback)
+			{
+				WARNING("Показать ошибку!");
+				MessageBox(NULL, L"ConEmuHk is broken, exports not found!", L"ConEmu plugin", MB_ICONSTOP|MB_SYSTEMMODAL);
+				return FALSE;
+			}
+		}
+	#endif
 	
-	SetHookCallbacks( "FreeConsole",  kernel32, OnConsoleDetaching, NULL );
-	SetHookCallbacks( "AllocConsole", kernel32, NULL, OnConsoleWasAttached );
+	
+	SetLoadLibraryCallback(ghPluginModule, OnLibraryLoaded, NULL/*OnLibraryUnLoaded*/);
+	
+	
+	SetHookCallbacks( "FreeConsole",  kernel32, ghPluginModule, OnConsoleDetaching, NULL, NULL );
+	SetHookCallbacks( "AllocConsole", kernel32, ghPluginModule, NULL, OnConsoleWasAttached, NULL );
 
-	SetHookCallbacks( "PeekConsoleInputA", kernel32, OnConsolePeekInput, OnConsolePeekInputPost );
-	SetHookCallbacks( "PeekConsoleInputW", kernel32, OnConsolePeekInput, OnConsolePeekInputPost );
+	SetHookCallbacks( "PeekConsoleInputA", kernel32, ghPluginModule, OnConsolePeekInput, OnConsolePeekInputPost, NULL );
+	SetHookCallbacks( "PeekConsoleInputW", kernel32, ghPluginModule, OnConsolePeekInput, OnConsolePeekInputPost, NULL );
 	
-	SetHookCallbacks( "ReadConsoleInputA", kernel32, OnConsoleReadInput, OnConsoleReadInputPost );
-	SetHookCallbacks( "ReadConsoleInputW", kernel32, OnConsoleReadInput, OnConsoleReadInputPost );
+	SetHookCallbacks( "ReadConsoleInputA", kernel32, ghPluginModule, OnConsoleReadInput, OnConsoleReadInputPost, NULL );
+	SetHookCallbacks( "ReadConsoleInputW", kernel32, ghPluginModule, OnConsoleReadInput, OnConsoleReadInputPost, NULL );
 
-	SetHookCallbacks( "WriteConsoleOutputA", kernel32, OnWriteConsoleOutput, NULL );
-	SetHookCallbacks( "WriteConsoleOutputW", kernel32, OnWriteConsoleOutput, NULL );
+	SetHookCallbacks( "WriteConsoleOutputA", kernel32, ghPluginModule, OnWriteConsoleOutput, NULL, NULL );
+	SetHookCallbacks( "WriteConsoleOutputW", kernel32, ghPluginModule, OnWriteConsoleOutput, NULL, NULL );
 	
-	SetHookCallbacks( "GetNumberOfConsoleInputEvents", kernel32, NULL, OnGetNumberOfConsoleInputEventsPost );
+	SetHookCallbacks( "GetNumberOfConsoleInputEvents", kernel32, ghPluginModule, NULL, OnGetNumberOfConsoleInputEventsPost, NULL );
 
-	SetHookCallbacks( "ShellExecuteExW", shell32, NULL, NULL, OnShellExecuteExW_Except );
+	SetHookCallbacks( "ShellExecuteExW", shell32, ghPluginModule, NULL, NULL, OnShellExecuteExW_Except );
 	
-	return SetAllHooks(ahOurDll);
+	
+	bool lbRc = false;
+	
+	#ifndef EXTERNAL_HOOK_LIBRARY
+		lbRc = SetAllHooks(ahOurDll);
+	#else
+		lbRc = true;
+	#endif
+	
+	return lbRc;
 
 	//HMODULE hKernel = GetModuleHandle( kernel32 );
 	//HMODULE hUser   = GetModuleHandle( user32 );
@@ -190,5 +248,31 @@ BOOL StartupHooks(HMODULE ahOurDll)
 
 void ShutdownHooks()
 {
+#ifndef EXTERNAL_HOOK_LIBRARY
 	UnsetAllHooks();
+#else
+	if (SetLoadLibraryCallback)
+	{
+		SetLoadLibraryCallback(ghPluginModule, NULL, NULL);
+	}
+	
+	if (SetHookCallbacks)
+	{
+		SetHookCallbacks( "FreeConsole",  kernel32, ghPluginModule, NULL, NULL, NULL );
+		SetHookCallbacks( "AllocConsole", kernel32, ghPluginModule, NULL, NULL, NULL );
+
+		SetHookCallbacks( "PeekConsoleInputA", kernel32, ghPluginModule, NULL, NULL, NULL );
+		SetHookCallbacks( "PeekConsoleInputW", kernel32, ghPluginModule, NULL, NULL, NULL );
+		
+		SetHookCallbacks( "ReadConsoleInputA", kernel32, ghPluginModule, NULL, NULL, NULL );
+		SetHookCallbacks( "ReadConsoleInputW", kernel32, ghPluginModule, NULL, NULL, NULL );
+
+		SetHookCallbacks( "WriteConsoleOutputA", kernel32, ghPluginModule, NULL, NULL, NULL );
+		SetHookCallbacks( "WriteConsoleOutputW", kernel32, ghPluginModule, NULL, NULL, NULL );
+		
+		SetHookCallbacks( "GetNumberOfConsoleInputEvents", kernel32, ghPluginModule, NULL, NULL, NULL );
+
+		SetHookCallbacks( "ShellExecuteExW", shell32, ghPluginModule, NULL, NULL, NULL );
+	}
+#endif
 }

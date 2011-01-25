@@ -38,10 +38,15 @@
 		<value name="Multi.NewConsole" type="hex" data="57"/>
 		<value name="Multi.Next" type="hex" data="51"/>
 		<value name="Multi.Recreate" type="hex" data="c0"/>
+		<value name="Multi.Close" type="hex" data="2e"/>
+		<value name="Multi.CmdKey" type="hex" data="58"/>
 		<value name="Multi.NewConfirm" type="hex" data="01"/>
 		<value name="Multi.Modifier" type="dword" data="0000005b"/>
 		<value name="Multi.Buffer" type="hex" data="41"/>
 		<value name="Multi.UseNumbers" type="hex" data="01"/>
+		<value name="Multi.AutoCreate" type="hex" data="00"/>
+		<value name="Multi.LeaveOnClose" type="hex" data="00"/>
+		<value name="Multi.Iterate" type="hex" data="01"/>
 		<value name="MinimizeRestore" type="hex" data="43"/>
 		<value name="KeyboardHooks" type="hex" data="00"/>
 

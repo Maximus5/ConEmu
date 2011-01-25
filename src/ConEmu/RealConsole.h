@@ -276,6 +276,7 @@ public:
     void SetTabs(ConEmuTab* tabs, int tabsCount);
     BOOL GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
     int GetTabCount();
+	int GetActiveTab();
     int GetModifiedEditors();
     BOOL ActivateFarWindow(int anWndIndex);
     DWORD CanActivateFarWindow(int anWndIndex);

@@ -28,9 +28,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "..\common\common.hpp"
+#ifdef _DEBUG
 #pragma warning( disable : 4995 )
+#endif
 #include "..\common\pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
+#ifdef _DEBUG
 #pragma warning( default : 4995 )
+#endif
 #include "PluginHeader.h"
 
 #ifdef _DEBUG

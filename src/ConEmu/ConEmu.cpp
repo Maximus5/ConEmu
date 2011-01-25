@@ -140,7 +140,7 @@ CConEmuMain::CConEmuMain()
     //mb_InClose = FALSE;
     //memset(m_ProcList, 0, 1000*sizeof(DWORD)); 
     m_ProcCount=0;
-    mb_ProcessCreated = FALSE; mn_StartTick = 0;
+    mb_ProcessCreated = FALSE; mn_StartTick = 0; mb_WorkspaceErasedOnClose = FALSE;
     mb_IgnoreSizeChange = false;
     //mn_CurrentKeybLayout = (DWORD_PTR)GetKeyboardLayout(0);
     mn_GuiServerThreadId = 0; mh_GuiServerThread = NULL; mh_GuiServerThreadTerminate = NULL;
@@ -3157,9 +3157,32 @@ bool CConEmuMain::ConActivate(int nCon)
     {
         CVirtualConsole* pCon = mp_VCon[nCon];
         if (pCon == NULL)
+		{
+			if (gSet.isMultiAutoCreate)
+			{
+				// —оздать новую default-консоль
+				Recreate ( FALSE, FALSE, FALSE );
+				return true; // создана нова€ консоль
+			}
             return false; // консоль с этим номером не была создана!
+		}
         if (pCon == mp_VActive)
+		{
+			// »тераци€ табов
+			int nTabCount;
+			CRealConsole *pRCon;
+			if (gSet.isMultiIterate 
+				&& ((pRCon = mp_VActive->RCon()) != NULL)
+				&& ((nTabCount = pRCon->GetTabCount())>1))
+			{
+				int nActive = pRCon->GetActiveTab()+1;
+				if (nActive >= nTabCount)
+					nActive = 0;
+				if (pRCon->CanActivateFarWindow(nActive))
+					pRCon->ActivateFarWindow(nActive);
+			}
             return true; // уже
+		}
         bool lbSizeOK = true;
         int nOldConNum = ActiveConNum();
 
@@ -4543,7 +4566,8 @@ void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
 	if (!asNewTitle)
 	{
     	//if ((asNewTitle = mp_VActive->RCon()->GetTitle()) == NULL)
-    		return;
+    	//	return;
+		asNewTitle = ms_ConEmuVer;
 	}
     
     wcscpy(Title, asNewTitle);
@@ -4577,11 +4601,14 @@ void CConEmuMain::UpdateProgress(/*BOOL abUpdateTitle*/)
     short nProgress = -1, n;
     BOOL bActiveHasProgress = FALSE;
 	BOOL bWasError = FALSE;
-    if ((nProgress = mp_VActive->RCon()->GetProgress(&bWasError)) >= 0)
+	if (mp_VActive)
 	{
-        mn_Progress = nProgress;
-        bActiveHasProgress = TRUE;
-    }
+		if ((nProgress = mp_VActive->RCon()->GetProgress(&bWasError)) >= 0)
+		{
+			mn_Progress = nProgress;
+			bActiveHasProgress = TRUE;
+		}
+	}
 	// нас интересует возможное наличие ошибки во всех остальных консол€х
     for (UINT i = 0; i < MAX_CONSOLE_COUNT; i++)
 	{
@@ -5766,6 +5793,11 @@ bool CConEmuMain::isPictureView()
     }
 
     return lbRc;
+}
+
+bool CConEmuMain::isProcessCreated()
+{
+	return (mb_ProcessCreated != FALSE);
 }
 
 bool CConEmuMain::isSizing()
@@ -7198,6 +7230,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     	|| (gSet.isMulti && wParam
 	        &&
 	    	(wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || wParam==gSet.icMultiRecreate
+			|| wParam==gSet.icMultiClose || wParam==gSet.icMultiCmd
 	    	|| (gSet.isUseWinNumber && wParam>='0' && wParam<='9') // активировать консоль по номеру
 			|| (gSet.isUseWinNumber && (wParam==VK_F11 || wParam==VK_F12))) // KeyDown дл€ этого не проходит, но на вс€кий случай
 	        &&
@@ -7207,6 +7240,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN /*&& (lbLWin || lbRWin) && (wParam != VK_LWIN && wParam != VK_RWIN)*/)
 		{
             if (wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || wParam==gSet.icMultiRecreate
+				|| wParam==gSet.icMultiClose || wParam==gSet.icMultiCmd
             	|| (gSet.isUseWinNumber && wParam>='0' && wParam<='9')
 				|| (gSet.isUseWinNumber && (wParam==VK_F11 || wParam==VK_F12)) // KeyDown дл€ этого не проходит, но на вс€кий случай
                 )
@@ -7249,6 +7283,19 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                     Recreate ( TRUE, TRUE );
 
                 }
+				else if (wParam == gSet.icMultiClose /* Del */) // Win-Del
+				{
+					if (mp_VActive && mp_VActive->RCon())
+						mp_VActive->RCon()->CloseConsole();
+
+				}
+				else if (wParam == gSet.icMultiCmd /* X */) // Win-X
+				{
+					RConStartArgs args;
+					args.pszSpecialCmd = _wcsdup(L"cmd");
+					CreateCon(&args);
+
+				}
                 return 0;
 			}
         //} else if (messg == WM_CHAR) {
@@ -9726,15 +9773,20 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	            // ѕри ошибках запуска консольного приложени€ хот€ бы можно будет увидеть, что оно написало...
 	            if (mb_ProcessCreated)
 	            {
-	                Destroy();
+					OnAllVConClosed();
 	                break;
 	            }
 	        }
-	        else if (!mb_ProcessCreated && m_ProcCount>=1)
-	        {
-	            if ((GetTickCount() - mn_StartTick)>PROCESS_WAIT_START_TIME)
-	                mb_ProcessCreated = TRUE;
-	        }
+	        else
+			{
+				if (!mb_ProcessCreated && m_ProcCount>=1)
+				{
+					if ((GetTickCount() - mn_StartTick)>PROCESS_WAIT_START_TIME)
+						mb_ProcessCreated = TRUE;
+				}
+				if (!mb_WorkspaceErasedOnClose)
+					mb_WorkspaceErasedOnClose = FALSE;
+			}
 
 
 	        // TODO: поддержку SlideShow повесить на отдельный таймер
@@ -9955,6 +10007,20 @@ void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon)
 {
 	if (!mp_VActive || mb_CreatingActive)
 		mp_VActive = apVCon;
+}
+
+void CConEmuMain::OnAllVConClosed()
+{
+	if (!gSet.isMultiLeaveOnClose)
+	{
+		Destroy();
+	}
+	else if (!mb_WorkspaceErasedOnClose)
+	{
+		mb_WorkspaceErasedOnClose = TRUE;
+		UpdateTitle();
+		InvalidateAll();
+	}
 }
 
 LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*= FALSE*/)

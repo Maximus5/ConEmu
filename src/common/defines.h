@@ -166,6 +166,26 @@ int swprintf_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t *Format,
 	return nRc;
 };
 template <size_t size>
+int swprintf_cat(wchar_t (&BufferStart)[size], const wchar_t *Format, ...)
+{
+	va_list argList;
+	va_start(argList, Format);
+	int Shift = lstrlenW(BufferStart);
+	size_t SizeLeft = size - Shift;
+	if (SizeLeft > size)
+	{
+		_ASSERTE(SizeLeft <= size);
+		return E_POINTER;
+	}
+	int nRc;
+#ifdef _DEBUG
+	nRc = StringCchVPrintfW(BufferStart+Shift, SizeLeft, Format, argList);
+#else
+	nRc = wvsprintf(BufferStart+Shift, Format, argList);
+#endif
+	return nRc;
+};
+template <size_t size>
 int wcscpy_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t *Str)
 {
 	size_t SizeLeft = size - (Buffer - BufferStart);

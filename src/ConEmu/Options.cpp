@@ -263,6 +263,7 @@ void CSettings::InitSettings()
 	psCmdHistory = NULL; nCmdHistorySize = 0;
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A'; 
     icMinimizeRestore = 'C';
+    icMultiClose = VK_DELETE; icMultiCmd = 'X'; isMultiAutoCreate = false; isMultiLeaveOnClose = false; isMultiIterate = true;
     isMultiNewConfirm = true; isUseWinNumber = true; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
     m_isKeyboardHooks = 0;
     isFARuseASCIIsort = false; isFixAltOnAltTab = false; isShellNoZoneCheck = false;
@@ -567,9 +568,14 @@ void CSettings::LoadSettings()
 			reg->Load(L"Multi.NewConsole", icMultiNew);
 			reg->Load(L"Multi.Next", icMultiNext);
 			reg->Load(L"Multi.Recreate", icMultiRecreate);
+			reg->Load(L"Multi.Close", icMultiClose);
+			reg->Load(L"Multi.CmdKey", icMultiCmd);
 			reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);
 			reg->Load(L"Multi.Buffer", icMultiBuffer);
 			reg->Load(L"Multi.UseNumbers", isUseWinNumber);
+			reg->Load(L"Multi.AutoCreate", isMultiAutoCreate);
+			reg->Load(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
+			reg->Load(L"Multi.Iterate", isMultiIterate);
 			reg->Load(L"MinimizeRestore", icMinimizeRestore);
 		reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 
@@ -1102,9 +1108,14 @@ BOOL CSettings::SaveSettings()
 				reg->Save(L"Multi.NewConsole", icMultiNew);
 				reg->Save(L"Multi.Next", icMultiNext);
 				reg->Save(L"Multi.Recreate", icMultiRecreate);
+				reg->Save(L"Multi.Close", icMultiClose);
+				reg->Save(L"Multi.CmdKey", icMultiCmd);
 				reg->Save(L"Multi.NewConfirm", isMultiNewConfirm);
 				reg->Save(L"Multi.Buffer", icMultiBuffer);
 				reg->Save(L"Multi.UseNumbers", isUseWinNumber);
+				reg->Save(L"Multi.AutoCreate", isMultiAutoCreate);
+				reg->Save(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
+				reg->Save(L"Multi.Iterate", isMultiIterate);
 				reg->Save(L"MinimizeRestore", icMinimizeRestore);
 			reg->Save(L"KeyboardHooks", m_isKeyboardHooks);
 
@@ -3636,30 +3647,40 @@ INT_PTR CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
         break;
 
     default:
-		if (messg == gSet.mn_MsgUpdateCounter) {
+		if (messg == gSet.mn_MsgUpdateCounter)
+		{
             wchar_t sTemp[64];
-			if (gSet.mn_Freq!=0) {
-				double v = 0;
-				if (wParam == (tPerfFPS-tPerfFPS) || wParam == (tPerfInterval-tPerfFPS)) {
+			if (gSet.mn_Freq!=0)
+			{
+				i64 v = 0;
+				if (wParam == (tPerfFPS-tPerfFPS) || wParam == (tPerfInterval-tPerfFPS))
+				{
 					i64 *pFPS = NULL;
 					UINT nCount = 0;
-					if (wParam == (tPerfFPS-tPerfFPS)) {
+					if (wParam == (tPerfFPS-tPerfFPS))
+					{
 						pFPS = gSet.mn_FPS; nCount = countof(gSet.mn_FPS);
-					} else {
+					}
+					else
+					{
 						pFPS = gSet.mn_RFPS; nCount = countof(gSet.mn_RFPS);
 					}
 				    i64 tmin = 0, tmax = 0;
 				    tmin = pFPS[0];
-				    for (UINT i = 0; i < nCount; i++) {
+				    for (UINT i = 0; i < nCount; i++)
+				    {
 					    if (pFPS[i] < tmin) tmin = pFPS[i];
 					    if (pFPS[i] > tmax) tmax = pFPS[i];
 				    }
 				    if (tmax > tmin)
-					    v = ((double)20) / (tmax - tmin) * gSet.mn_Freq;
-				} else {
-					v = (gSet.mn_CounterMax[wParam]/(double)gSet.mn_Freq)*1000;
+					    v = ((__int64)200)* gSet.mn_Freq / (tmax - tmin);
 				}
-				swprintf_c(sTemp, L"%.1f", v);
+				else
+				{
+					v = (10000*(__int64)gSet.mn_CounterMax[wParam])/gSet.mn_Freq;
+				}
+				// WinApi не умеет float/double
+				swprintf_c(sTemp, L"%u.%u", (int)(v/10), (int)(v%10));
 				SetDlgItemText(gSet.hInfo, wParam+tPerfFPS, sTemp);
 			}
 			return TRUE;
@@ -4936,8 +4957,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			swprintf_c(gSet.szFontError, L"GetTextMetrics failed for non Raster font '%s'", inFont->lfFaceName);
 			if (dwFontErr)
 			{
-				int nLen = lstrlen(gSet.szFontError);
-				StringCchPrintfW(gSet.szFontError+nLen, countof(gSet.szFontError)-nLen, L"\r\nErrorCode = 0x%08X", dwFontErr);
+				swprintf_cat(gSet.szFontError, L"\r\nErrorCode = 0x%08X", dwFontErr);
 			}
 			return NULL;
 		}
@@ -4976,8 +4996,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 				szFontFace[31] = 0;
 				if (lstrcmpi(inFont->lfFaceName, szFontFace))
 				{
-					int nLen = lstrlen(szFontError);
-					StringCchPrintfW(szFontError+nLen, countof(szFontError)-nLen,
+					swprintf_cat(szFontError,
 						L"Failed to create main font!\nRequested: %s\nCreated: %s\n", inFont->lfFaceName, szFontFace);
 					wcsncpy_s(inFont->lfFaceName, szFontFace, 32); inFont->lfFaceName[countof(inFont->lfFaceName)-1] = 0;
 					wcscpy_c(tmpFont.lfFaceName, inFont->lfFaceName);
@@ -5106,8 +5125,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 				if (lstrcmpi(LogFont2.lfFaceName, szFontFace))
 				{
 					if (szFontError[0]) wcscat_c(szFontError, L"\n");
-					int nLen = lstrlen(szFontError);
-					StringCchPrintfW(szFontError+nLen, countof(szFontError)-nLen,
+					swprintf_cat(szFontError,
 						L"Failed to create border font!\nRequested: %s\nCreated: ", LogFont2.lfFaceName);
 					if (lstrcmpi(LogFont2.lfFaceName, L"Lucida Console") == 0)
 					{
@@ -5406,9 +5424,11 @@ LPCTSTR CSettings::GetCmd()
 		
 		if (lbFound)
 		{
-			// far чаще всего будет установлен в "Program Files", поэтому дл€ избежани€ проблем - окавычиваем
-			// ѕока тупо - если far.exe > 1200K - считаем, что это Far2
-			wcscat_c(szFar, (nFarSize>1228800) ? L"\" /w" : L"\"");
+			// 110124 - нафиг, если пользователю надо - сам или параметр настроит, или реестр
+			//// far чаще всего будет установлен в "Program Files", поэтому дл€ избежани€ проблем - окавычиваем
+			//// ѕока тупо - если far.exe > 1200K - считаем, что это Far2
+			//wcscat_c(szFar, (nFarSize>1228800) ? L"\" /w" : L"\"");
+			wcscat_c(szFar, L"\"");
 		}
 		else
 		{	// ≈сли Far.exe не найден р€дом с ConEmu - запустить cmd.exe
@@ -6009,11 +6029,21 @@ BOOL CSettings::CheckConIme()
 			RegCloseKey(hk);
 
 			if (dwValue!=0) {
-		        if (IDCANCEL==MessageBox(0,_T("Unwanted value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'.\r\nYou may simply import file 'Disable_ConIme.reg'\r\nlocated in 'ConEmu.Addons' folder."), gConEmu.ms_ConEmuVer,MB_OKCANCEL|MB_ICONEXCLAMATION))
+		        if (IDCANCEL==MessageBox(0,
+		        		L"Unwanted value of 'LoadConIme' registry parameter!\r\n"
+		        		L"Press 'Cancel' to stop this message.\r\n"
+		        		L"Take a look at 'FAQ-ConEmu.txt'.\r\n"
+		        		L"You may simply import file 'Disable_ConIme.reg'\r\n"
+		        		L"located in 'ConEmu.Addons' folder.",
+		        		gConEmu.ms_ConEmuVer,MB_OKCANCEL|MB_ICONEXCLAMATION))
 			        lbStopWarning = TRUE;
 		    }
 	    } else {
-		    if (IDCANCEL==MessageBox(0,_T("Can't determine a value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'"), gConEmu.ms_ConEmuVer,MB_OKCANCEL|MB_ICONEXCLAMATION))
+		    if (IDCANCEL==MessageBox(0,
+		    			L"Can't determine a value of 'LoadConIme' registry parameter!\r\n"
+		        		L"Press 'Cancel' to stop this message.\r\n"
+		        		L"Take a look at 'FAQ-ConEmu.txt'",
+		        		gConEmu.ms_ConEmuVer,MB_OKCANCEL|MB_ICONEXCLAMATION))
 		        lbStopWarning = TRUE;
 	    }
 
@@ -7196,7 +7226,7 @@ LPCWSTR CSettings::CreateConFontError(LPCWSTR asReqFont/*=NULL*/, LPCWSTR asGotF
 	{
 		if (asReqFont && asGotFont)
 		{
-			swprintf_add(lstrlen(sConFontError), sConFontError,
+			swprintf_cat(sConFontError,
 				L"Requested: %s\nCreated: %s\n", asReqFont , asGotFont);
 		}
 		else

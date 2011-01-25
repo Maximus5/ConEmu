@@ -113,13 +113,18 @@ REGEDIT4
 ;"Multi.NewConsole"=hex:57 ; "win + w" - Create new console hotkey
 ;"Multi.NewConfirm"=hex:01 ; Confirm new console creation from shortcut
 ;"Multi.Next"=hex:51       ; "win + q" - Switch next console hotkey
-;"Multi.Recreate"=hex:C0    ; "win + ~" - Restart or terminate console hotkey
+;"Multi.Recreate"=hex:C0   ; "win + ~" - Restart or terminate console hotkey
+;"Multi.Close"=hex:2E      ; "win + Del" - Terminate active console hotkey
+;"Multi.CmdKey"=hex:58     ; "win + x' - Create new "cmd.exe" console hotkey
 ;"Multi.Buffer"=hex:41     ; "win + a" - Turn bufferheight mode on/off hotkey. This value does not depend on "Multi"
 ;; Hotkey modifiers ('Win' by default), or...
 ;"Multi.Modifier"=dword:00111210 ; Ctrl-Alt-Shift+key
 ;"Multi.Modifier"=dword:00001110 ; Ctrl-Shift+key
 ;"Multi.Modifier"=dword:00001112 ; Ctrl-Alt+key
-;"Multi.UseNumbers"=hex:01 ; Use 'Host-key'+Numbers to switch consoles
+;"Multi.UseNumbers"=hex:01    ; Use 'Host-key'+Numbers to switch consoles
+;"Multi.AutoCreate"=hex:00    ; 01 - Create new console, when 'Host-key'+Number depressed and console is absent
+;"Multi.Iterate"=hex:01       ; Iterate active console opened tabs with 'Host-key'+Number
+;"Multi.LeaveOnClose"=hex:00  ; 01 - Don't close ConEmu window when last console is closing
 ;; Register hotkey for minimize/restore of main ConEmu window. Use "hex:00" for disabling feature.
 ;"MinimizeRestore"=hex:43
 ;; Use Keyboard Hooks for processing (required for Win-Number in Windows 7)

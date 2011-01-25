@@ -8504,6 +8504,15 @@ int CRealConsole::GetTabCount()
     return max(mn_tabsCount,1);
 }
 
+int CRealConsole::GetActiveTab()
+{
+	if (!this)
+		return 0;
+
+	int nCount = GetTabCount();
+	return (mn_ActiveTab < nCount) ? mn_ActiveTab : 0;
+}
+
 int CRealConsole::GetModifiedEditors()
 {
 	int nEditors = 0;

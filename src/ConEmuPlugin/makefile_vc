@@ -73,11 +73,14 @@ RCWIN64=
 USERCPP=
 !endif                   
 
+!if defined(EXTERNAL_HOOK_LIBRARY)
+USERCPP=$(USERCPP) /DEXTERNAL_HOOK_LIBRARY
+!endif                   
+
 NAME = ConEmu
 
 LINK_OBJS = \
 $(OBJDIR)\ConEmuInjects.obj \
-$(OBJDIR)\SetHook.obj \
 $(OBJDIR)\ConEmuPlugin.obj \
 $(OBJDIR)\ConEmuPlugin995.obj \
 $(OBJDIR)\ConEmuPluginA.obj \
@@ -86,6 +89,10 @@ $(OBJDIR)\Common.obj \
 $(OBJDIR)\Execute.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\WinObjects.obj
+
+!ifndef EXTERNAL_HOOK_LIBRARY
+LINK_OBJS = $(LINK_OBJS) $(OBJDIR)\SetHook.obj
+!endif
 
 #$(OBJDIR)\LogBrowser.obj
 
@@ -326,7 +333,7 @@ $(OBJDIR)\Common.obj: ..\common\Common.cpp
 
 $(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
 
-$(OBJDIR)\Execute.obj: ..\ConEmuC\execute.cpp
+$(OBJDIR)\Execute.obj: ..\common\execute.cpp
 
 $(OBJDIR)\SetHook.obj: ..\common\SetHook.cpp
 

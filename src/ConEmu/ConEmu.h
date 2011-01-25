@@ -210,7 +210,7 @@ protected:
 	short mn_Progress;
 	LPTSTR GetTitleStart();
 	BOOL mb_InTimer;
-	BOOL mb_ProcessCreated; DWORD mn_StartTick;
+	BOOL mb_ProcessCreated, mb_WorkspaceErasedOnClose; DWORD mn_StartTick;
 	HWINEVENTHOOK mh_WinHook; //, mh_PopupHook;
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT];
@@ -368,6 +368,7 @@ public:
 	bool isMouseOverFrame(bool abReal=false);
 	bool isNtvdm();
 	bool isPictureView();
+	bool isProcessCreated();
 	bool isRightClickingPaint();
 	bool isSizing();
 	bool isValid(CRealConsole* apRCon);
@@ -467,6 +468,7 @@ public:
 	void OnTransparent();
 	void OnVConCreated(CVirtualConsole* apVCon);
 	LRESULT OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
+	void OnAllVConClosed();
 	LRESULT OnUpdateScrollInfo(BOOL abPosted = FALSE);
 	void OnPanelViewSettingsChanged(BOOL abSendChanges=TRUE);
 };
