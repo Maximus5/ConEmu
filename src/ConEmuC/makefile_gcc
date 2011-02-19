@@ -1,13 +1,7 @@
 NAME = ConEmuC
-SRCS = ConEmuC.cpp \
-       ConEmuCmd.cpp \
-       ConEmuSrv.cpp \
-       execute.cpp \
-       ../common/Common.cpp \
-       ../Common/ConEmuCheck.cpp \
-       ../Common/WinObjects.cpp
+SRCS = ConEmuC.cpp
 
-USERLIBS = -lkernel32 -lComdlg32
+USERLIBS = -lkernel32 -luser32
 #-lversion
 
 
@@ -144,4 +138,4 @@ $(EXEFULLNAME): $(OBJS) $(DEF)
 clean:
 	@echo final cleaning
 	@$(RM) $(OBJS)
-	@$(RMDIR) $(OBJDIR) ../../gcc/common ../../gcc/conemuc ../../gcc/ConEmuPlugin ../../gcc
+	@$(RMDIR) $(OBJDIR) ../../gcc/conemuc ../../gcc

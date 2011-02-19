@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "../common/common.hpp"
 #pragma warning( disable : 4995 )
-#include "../common/pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
+#include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
 #pragma warning( default : 4995 )
 #include "ConEmuLn.h"
 
@@ -45,10 +45,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #if defined(__GNUC__)
-extern "C"{
-  BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved );
-  void WINAPI SetStartupInfoW(void *aInfo);
-  void WINAPI OnConEmuLoaded(struct ConEmuLoadedArg* pConEmuInfo);
+extern "C" {
+	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
+	void WINAPI SetStartupInfoW(void *aInfo);
+	void WINAPI OnConEmuLoaded(struct ConEmuLoadedArg* pConEmuInfo);
 };
 #endif
 
@@ -71,23 +71,12 @@ int WINAPI _export GetMinFarVersionW(void)
 	return MAKEFARVERSION(2,0,max(1007,FAR_X_VER));
 }
 
-/* COMMON - пока структуры не различаются */
-void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
+void WINAPI _export GetPluginInfoWcmn(void *piv)
 {
-    static WCHAR *szMenu[1], szMenu1[255];
-    szMenu[0]=szMenu1;
-	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
-
-	pi->StructSize = sizeof(struct PluginInfo);
-	pi->Flags = PF_PRELOAD;
-	pi->DiskMenuStrings = NULL;
-	pi->DiskMenuNumbers = 0;
-	pi->PluginMenuStrings = szMenu;
-	pi->PluginMenuStringsNumber = 1;
-	pi->PluginConfigStrings = szMenu;
-	pi->PluginConfigStringsNumber = 1;
-	pi->CommandPrefix = 0;
-	pi->Reserved = 0;
+	if (gFarVersion.dwBuild>=FAR_Y_VER)
+		FUNC_Y(GetPluginInfoW)(piv);
+	else
+		FUNC_X(GetPluginInfoW)(piv);
 }
 
 
@@ -95,29 +84,33 @@ BOOL gbInfoW_OK = FALSE;
 
 
 
-BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
+BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
-	switch (ul_reason_for_call) {
+	switch(ul_reason_for_call)
+	{
 		case DLL_PROCESS_ATTACH:
-			{
-				ghPluginModule = (HMODULE)hModule;
-			}
-			break;
+		{
+			ghPluginModule = (HMODULE)hModule;
+			HeapInitialize();
+		}
+		break;
 		case DLL_PROCESS_DETACH:
+			HeapDeinitialize();
 			break;
 	}
+
 	return TRUE;
 }
 
 #if defined(CRTSTARTUP)
-extern "C"{
-  BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
+extern "C" {
+	BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
 };
 
 BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 {
-  DllMain(hDll, dwReason, lpReserved);
-  return TRUE;
+	DllMain(hDll, dwReason, lpReserved);
+	return TRUE;
 }
 #endif
 
@@ -128,33 +121,40 @@ BOOL LoadFarVersion()
 {
 	BOOL lbRc=FALSE;
 	WCHAR FarPath[MAX_PATH+1];
+
 	if (GetModuleFileName(0,FarPath,MAX_PATH))
 	{
 		DWORD dwRsrvd = 0;
 		DWORD dwSize = GetFileVersionInfoSize(FarPath, &dwRsrvd);
+
 		if (dwSize>0)
 		{
 			void *pVerData = calloc(dwSize, 1);
+
 			if (pVerData)
 			{
 				VS_FIXEDFILEINFO *lvs = NULL;
 				UINT nLen = sizeof(lvs);
+
 				if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData))
 				{
-					TCHAR szSlash[3]; wcscpy_c(szSlash, L"\\");
-					if (VerQueryValue ((void*)pVerData, szSlash, (void**)&lvs, &nLen))
+					wchar_t szSlash[3]; wcscpy_c(szSlash, L"\\");
+
+					if (VerQueryValue((void*)pVerData, szSlash, (void**)&lvs, &nLen))
 					{
 						gFarVersion.dwVer = lvs->dwFileVersionMS;
 						gFarVersion.dwBuild = lvs->dwFileVersionLS;
 						lbRc = TRUE;
 					}
 				}
+
 				free(pVerData);
 			}
 		}
 	}
 
-	if (!lbRc) {
+	if (!lbRc)
+	{
 		gFarVersion.dwVerMajor = 2;
 		gFarVersion.dwVerMinor = 0;
 		gFarVersion.dwBuild = FAR_X_VER;
@@ -173,9 +173,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 		FUNC_X(SetStartupInfoW)(aInfo);
 
 	//_ASSERTE(gszRootKey!=NULL && *gszRootKey!=0);
-
 	gbInfoW_OK = TRUE;
-
 	StartPlugin(FALSE);
 }
 
@@ -188,17 +186,22 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 		if (pBk->LeftPanel.bVisible)
 		{
 			COLORREF crPanel = pBk->crPalette[nPanelBackIdx];
+
 			if (pBk->LeftPanel.bPlugin && gbHilightPlugins)
 				crPanel = gcrHilightPlugBack;
+
 			HBRUSH hBr = CreateSolidBrush(crPanel);
 			FillRect(pBk->hdc, &pBk->rcDcLeft, hBr);
 			DeleteObject(hBr);
 		}
+
 		if (pBk->RightPanel.bVisible)
 		{
 			COLORREF crPanel = pBk->crPalette[nPanelBackIdx];
+
 			if (pBk->RightPanel.bPlugin && gbHilightPlugins)
 				crPanel = gcrHilightPlugBack;
+
 			HBRUSH hBr = CreateSolidBrush(crPanel);
 			FillRect(pBk->hdc, &pBk->rcDcRight, hBr);
 			DeleteObject(hBr);
@@ -209,8 +212,8 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 	{
 		HPEN hPen = CreatePen(PS_SOLID, 1, gcrLinesColor);
 		HPEN hOldPen = (HPEN)SelectObject(pBk->hdc, hPen);
-
 		int nCellHeight = 12;
+
 		if (pBk->LeftPanel.bVisible)
 			nCellHeight = pBk->rcDcLeft.bottom / (pBk->LeftPanel.rcPanelRect.bottom - pBk->LeftPanel.rcPanelRect.top + 1);
 		else
@@ -220,7 +223,8 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 		int nY2 = (pBk->rcDcLeft.bottom >= pBk->rcDcRight.bottom) ? pBk->rcDcLeft.bottom : pBk->rcDcRight.bottom;
 		int nX1 = (pBk->LeftPanel.bVisible) ? 0 : pBk->rcDcRight.left;
 		int nX2 = (pBk->RightPanel.bVisible) ? pBk->rcDcRight.right : pBk->rcDcLeft.right;
-		for (int Y = nY1; Y < nY2; Y += nCellHeight)
+
+		for(int Y = nY1; Y < nY2; Y += nCellHeight)
 		{
 			MoveToEx(pBk->hdc, nX1, Y, NULL);
 			LineTo(pBk->hdc, nX2, Y);
@@ -237,6 +241,7 @@ void WINAPI OnConEmuLoaded(struct ConEmuLoadedArg* pConEmuInfo)
 {
 	gfRegisterBackground = pConEmuInfo->RegisterBackground;
 	ghPluginModule = pConEmuInfo->hPlugin;
+
 	if (gfRegisterBackground && gbBackgroundEnabled)
 	{
 		StartPlugin(FALSE/*считать параметры из реестра*/);
@@ -248,21 +253,27 @@ void StartPlugin(BOOL bConfigure)
 	if (!bConfigure)
 	{
 		HKEY hkey = NULL;
+
 		if (!RegOpenKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, KEY_READ, &hkey))
 		{
 			DWORD nVal, nType, nSize; BYTE cVal;
+
 			if (!RegQueryValueExW(hkey, L"PluginEnabled", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
 				gbBackgroundEnabled = (cVal != 0);
+
 			if (!RegQueryValueExW(hkey, L"LinesColor", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
 				gcrLinesColor = nVal;
+
 			if (!RegQueryValueExW(hkey, L"HilightPlugins", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
 				gbHilightPlugins = (cVal != 0);
+
 			if (!RegQueryValueExW(hkey, L"HilightPlugBack", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
 				gcrHilightPlugBack = nVal;
+
 			RegCloseKey(hkey);
 		}
 	}
-	
+
 	static bool bWasRegistered = false;
 
 	if (gfRegisterBackground)
@@ -304,6 +315,7 @@ void ExitPlugin(void)
 		RegisterBackgroundArg inf = {sizeof(RegisterBackgroundArg), rbc_Unregister, ghPluginModule};
 		gfRegisterBackground(&inf);
 	}
+
 	if (gszRootKey)
 	{
 		free(gszRootKey);
@@ -348,6 +360,5 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 		return INVALID_HANDLE_VALUE;
 
 	ConfigureW(0);
-
 	return INVALID_HANDLE_VALUE;
 }

@@ -33,27 +33,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class TrayIcon
 {
-private:
-    NOTIFYICONDATA IconData;
-    
-    void SetMenuItemText(HMENU hMenu, UINT nID, LPCWSTR pszText);
-    
-    //UINT mn_SysItemId[5];
-    //UINT mn_SysItemState[5];
+	private:
+		NOTIFYICONDATA IconData;
 
-public:
-    bool isWindowInTray;
-    
-    TrayIcon();
-    ~TrayIcon();
+		void SetMenuItemText(HMENU hMenu, UINT nID, LPCWSTR pszText);
 
-    void HideWindowToTray();
-    void RestoreWindowFromTray();
-    void LoadIcon(HWND inWnd, int inIconResource);
-    //void Delete();
-    void UpdateTitle();
-    void SettingsChanged();
-	LRESULT OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	void AddTrayIcon();
-	void RemoveTrayIcon();
+		//UINT mn_SysItemId[5];
+		//UINT mn_SysItemState[5];
+
+	public:
+		bool isWindowInTray;
+
+		TrayIcon();
+		~TrayIcon();
+
+		void HideWindowToTray();
+		void RestoreWindowFromTray();
+		void LoadIcon(HWND inWnd, int inIconResource);
+		//void Delete();
+		void UpdateTitle();
+		void SettingsChanged();
+		LRESULT OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		void AddTrayIcon();
+		void RemoveTrayIcon();
 };

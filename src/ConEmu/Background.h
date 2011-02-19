@@ -5,21 +5,21 @@ typedef BOOL (WINAPI* AlphaBlend_t)(HDC hdcDest, int xoriginDest, int yoriginDes
 
 class CBackground
 {
-public:
-    COORD    bgSize;
-    HDC      hBgDc;
-	
-	CBackground();
-	~CBackground();
-	
-	bool CreateField(int anWidth, int anHeight);
-	bool FillBackground(const BITMAPFILEHEADER* apBkImgData, LONG X, LONG Y, LONG Width, LONG Height, BackgroundOp Operation, bool abFade);
-	
-private:
-	HBITMAP  hBgBitmap, hOldBitmap;
-	void Destroy();
+	public:
+		COORD    bgSize;
+		HDC      hBgDc;
 
-	//// Alpha blending
-	//HMODULE mh_MsImg32;
-	//AlphaBlend_t fAlphaBlend;
+		CBackground();
+		~CBackground();
+
+		bool CreateField(int anWidth, int anHeight);
+		bool FillBackground(const BITMAPFILEHEADER* apBkImgData, LONG X, LONG Y, LONG Width, LONG Height, BackgroundOp Operation, bool abFade);
+
+	private:
+		HBITMAP  hBgBitmap, hOldBitmap;
+		void Destroy();
+
+		//// Alpha blending
+		//HMODULE mh_MsImg32;
+		//AlphaBlend_t fAlphaBlend;
 };

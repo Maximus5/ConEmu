@@ -37,6 +37,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define VirtualConsoleClassBack L"VirtualConsoleClassBack"
 #define VirtualConsoleClassScroll L"VirtualConsoleClassScroll"
 
+#ifdef _DEBUG
+	#define EXECUTE_CMD_WARN_TIMEOUT 500
+#endif
+
 // Service function
 //HWND AtoH(char *Str, int Len);
 
@@ -53,7 +57,7 @@ HWND GetConEmuHWND(BOOL abRoot);
 // hConEmuWnd - HWND с отрисовкой!
 void SetConEmuEnvVar(HWND hConEmuWnd);
 
-HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*/, const wchar_t* szModule);
+HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule);
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize);
 void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, DWORD cbSize);
 void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, DWORD cbSize);

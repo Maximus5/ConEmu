@@ -43,18 +43,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OUTPUTDEBUGSTRING(m)
 #endif
 
-#define SafeFree(p) { if ((p)!=NULL) { LPVOID pp = (p); (p) = NULL; free(pp); } }
+//#define SafeFree(p) { if ((p)!=NULL) { LPVOID pp = (p); (p) = NULL; free(pp); } }
 
 #define ISALPHA(c) ((((c) >= (BYTE)'c') && ((c) <= (BYTE)'z')) || (((c) >= (BYTE)'C') && ((c) <= (BYTE)'Z')))
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
 // X - меньшая, Y - большая
 #define FAR_X_VER 995
-#define FAR_Y_VER 995
+#define FAR_Y_VER 1867
 #define FUNC_X(fn) fn##995
-#define FUNC_Y(fn) fn##995
+#define FUNC_Y(fn) fn##1867
 
 
+extern DWORD gnMainThreadId;
 extern int lastModifiedStateW;
 //extern bool gbHandleOneRedraw; //, gbHandleOneRedrawCh;
 extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX], gszRootKey[MAX_PATH*2];
@@ -72,14 +73,15 @@ extern HANDLE hThread;
 //extern HANDLE ghConIn;
 extern BOOL gbNeedPostTabSend, gbNeedPostEditCheck;
 extern HANDLE ghServerTerminateEvent;
-extern const CESERVER_REQ_CONINFO_HDR *gpConMapInfo;
+extern const CESERVER_CONSOLE_MAPPING_HDR *gpConMapInfo;
 extern DWORD gnSelfPID;
 extern BOOL gbIgnoreUpdateTabs;
 extern BOOL gbRequestUpdateTabs;
 extern BOOL gbClosingModalViewerEditor;
 extern CESERVER_REQ* gpTabs;
 
-typedef struct tag_PanelViewRegInfo {
+typedef struct tag_PanelViewRegInfo
+{
 	BOOL bRegister;
 	PanelViewInputCallback pfnPeekPreCall, pfnPeekPostCall, pfnReadPreCall, pfnReadPostCall;
 	PanelViewOutputCallback pfnWriteCall;
@@ -100,12 +102,33 @@ extern PanelViewRegInfo gPanelRegLeft, gPanelRegRight;
 
 BOOL CreateTabs(int windowCount);
 
-BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave, 
-			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified, int EditViewId);
+BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
+            int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified, int EditViewId);
 
 void SendTabs(int tabCount, BOOL abForceSend=FALSE);
 
 void InitHWND(HWND ahFarHwnd);
+
+#define ConEmu_SysID 0x43454D55 // 'CEMU'
+extern GUID guid_ConEmu;
+extern GUID guid_ConEmuPluginItems;
+extern GUID guid_ConEmuPluginMenu;
+extern GUID guid_ConEmuGuiMacroDlg;
+extern GUID guid_ConEmuWaitEndSynchro;
+
+HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item);
+HANDLE WINAPI OpenPluginW1(int OpenFrom,INT_PTR Item);
+HANDLE WINAPI OpenPluginW2(int OpenFrom,const GUID* Guid,INT_PTR Data);
+#ifdef _DEBUG
+HANDLE WINAPI FUNC_X(OpenFilePluginW)(const wchar_t *Name,const unsigned char *Data,int DataSize,int OpMode);
+HANDLE WINAPI FUNC_Y(OpenFilePluginW)(const wchar_t *Name,const unsigned char *Data,int DataSize,int OpMode);
+#endif
+
+void FUNC_X(GetPluginInfoW)(void *piv);
+void FUNC_Y(GetPluginInfoW)(void *piv);
+
+void ExitFarCmn();
+extern BOOL gbExitFarCalled;
 
 int FUNC_X(ProcessEditorInputW)(LPCVOID Rec);
 int FUNC_Y(ProcessEditorInputW)(LPCVOID Rec);
@@ -153,7 +176,7 @@ int FUNC_Y(ShowMessage)(int aiMsg, int aiButtons);
 //void ReloadMacroA();
 //void FUNC_X(ReloadMacro)();
 //void FUNC_Y(ReloadMacro)();
-extern CEFAR_INFO *gpFarInfo;
+extern CEFAR_INFO_MAPPING *gpFarInfo;
 extern HANDLE ghFarAliveEvent;
 BOOL ReloadFarInfoA(/*BOOL abFull = FALSE*/);
 BOOL FUNC_X(ReloadFarInfo)(/*BOOL abFull = FALSE*/);
@@ -165,7 +188,7 @@ void PostMacroA(char* asMacro);
 void FUNC_X(PostMacro)(wchar_t* asMacro);
 void FUNC_Y(PostMacro)(wchar_t* asMacro);
 LPCWSTR GetMsgW(int aiMsg);
-void GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/);
+void GetMsgA(int aiMsg, wchar_t (&rsMsg)[MAX_PATH]);
 LPCWSTR FUNC_Y(GetMsg)(int aiMsg);
 LPCWSTR FUNC_X(GetMsg)(int aiMsg);
 
@@ -180,9 +203,9 @@ void NotifyChangeKey();
 
 
 #if defined(__GNUC__)
-extern "C"{
+extern "C" {
 #endif
-BOOL WINAPI IsTerminalMode();
+	BOOL WINAPI IsTerminalMode();
 #if defined(__GNUC__)
 }
 #endif
@@ -246,15 +269,15 @@ bool ProcessCommandLineA(char* pszCommand);
 //void FUNC_Y(ExecuteQuitFar)();
 //void FUNC_X(ExecuteQuitFar)();
 
-void LogCreateProcessCheck(LPCWSTR asLogFileName);
+//void LogCreateProcessCheck(LPCWSTR asLogFileName);
 
 BOOL FUNC_Y(CheckBufferEnabled)();
 BOOL FUNC_X(CheckBufferEnabled)();
 
 #define IS_SYNCHRO_ALLOWED \
 	( \
-		gFarVersion.dwVerMajor > 2 || \
-		(gFarVersion.dwVerMajor == 2 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006)) \
+	  gFarVersion.dwVerMajor > 2 || \
+	  (gFarVersion.dwVerMajor == 2 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006)) \
 	)
 
 extern int gnSynchroCount;
@@ -277,7 +300,7 @@ void CommonPluginStartup();
 BOOL CheckCallbackPtr(HMODULE hModule, FARPROC CallBack, BOOL abCheckModuleInfo);
 
 #ifdef _DEBUG
-	#define SHOWDBGINFO(x) OutputDebugStringW(x)
+#define SHOWDBGINFO(x) OutputDebugStringW(x)
 #else
-	#define SHOWDBGINFO(x)
+#define SHOWDBGINFO(x)
 #endif

@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <tchar.h>
 #include "../common/common.hpp"
 #pragma warning( disable : 4995 )
-#include "../common/pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
+#include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
 #pragma warning( default : 4995 )
 #include "../common/RgnDetect.h"
 #include "../common/TerminalMode.h"
@@ -59,20 +59,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
 
-#define ConEmuTh_SysID 0x43455568 // 'CETh'
+//#define ConEmuTh_SysID 0x43455568 // 'CETh'
 
 #ifdef _DEBUG
 wchar_t gszDbgModLabel[6] = {0};
 #endif
 
 #if defined(__GNUC__)
-extern "C"{
-  BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved );
-  void WINAPI SetStartupInfoW(void *aInfo);
+extern "C" {
+	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
+	void WINAPI SetStartupInfoW(void *aInfo);
 };
 #endif
 
-PanelViewSettings gThSet = {0}; // параметры получаются из мэппинга при открытии плага или при перерегистрации
+PanelViewSetMapping gThSet = {0}; // параметры получаются из мэппинга при открытии плага или при перерегистрации
 
 HWND ghConEmuRoot = NULL;
 HMODULE ghPluginModule = NULL; // ConEmuTh.dll - сам плагин
@@ -90,7 +90,7 @@ CeFullPanelInfo pviLeft = {0}, pviRight = {0};
 int ShowLastError();
 CRgnDetect *gpRgnDetect = NULL;
 CImgCache  *gpImgCache = NULL;
-CEFAR_INFO gFarInfo = {0};
+CEFAR_INFO_MAPPING gFarInfo = {0};
 COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors = gThSet.crPalette;
 bool gbFadeColors = false;
 //bool gbLastCheckWindow = false;
@@ -135,37 +135,23 @@ int WINAPI _export GetMinFarVersionW(void)
 	return MAKEFARVERSION(2,0,max(1007,FAR_X_VER));
 }
 
-/* COMMON - пока структуры не различаются */
-void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
+void WINAPI _export GetPluginInfoWcmn(void *piv)
 {
-    static WCHAR *szMenu[1], szMenu1[255];
-    szMenu[0]=szMenu1;
-	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
-
-
-	pi->StructSize = sizeof(struct PluginInfo);
-	pi->Flags = PF_PRELOAD;
-	pi->DiskMenuStrings = NULL;
-	pi->DiskMenuNumbers = 0;
-	pi->PluginMenuStrings = szMenu;
-	pi->PluginMenuStringsNumber = 1;
-	pi->PluginConfigStrings = NULL;
-	pi->PluginConfigStringsNumber = 0;
-	pi->CommandPrefix = 0;
-	pi->Reserved = ConEmuTh_SysID; // 'CETh'
+	if (gFarVersion.dwBuild>=FAR_Y_VER)
+		FUNC_Y(GetPluginInfoW)(piv);
+	else
+		FUNC_X(GetPluginInfoW)(piv);
 }
 
 
 BOOL gbInfoW_OK = FALSE;
-HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
+HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)
 {
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;
 
 	ReloadResourcesW();
-
 	EntryPoint(OpenFrom, Item);
-
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -175,23 +161,24 @@ void EntryPoint(int OpenFrom,INT_PTR Item)
 	if (!CheckConEmu())
 		return;
 
-	if (ghDisplayThread && gnDisplayThreadId == 0) {
+	if (ghDisplayThread && gnDisplayThreadId == 0)
+	{
 		CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 	}
 
 	//gThSet.Load();
 	// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
 	ReloadPanelsInfo();
-
 	// Получить активную
 	CeFullPanelInfo* pi = GetActivePanel();
+
 	if (!pi)
 	{
 		return;
 	}
+
 	pi->OurTopPanelItem = pi->TopPanelItem;
 	HWND lhView = pi->hView; // (pi->bLeftPanel) ? ghLeftView : ghRightView;
-
 	PanelViewMode PVM = pvm_None;
 
 	// В Far2 плагин можно позвать через callplugin(...)
@@ -207,7 +194,7 @@ void EntryPoint(int OpenFrom,INT_PTR Item)
 	// Вызов плагина из меню - нужно выбрать режим
 	if (PVM == pvm_None)
 	{
-		switch (ShowPluginMenu())
+		switch(ShowPluginMenu())
 		{
 			case 0:
 				PVM = pvm_Thumbnails;
@@ -221,7 +208,6 @@ void EntryPoint(int OpenFrom,INT_PTR Item)
 		}
 	}
 
-	
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
 	DWORD dwMode = pvm_None; //PanelViewMode
@@ -229,7 +215,6 @@ void EntryPoint(int OpenFrom,INT_PTR Item)
 	// Если View не создан, или смена режима
 	if ((lhView == NULL) || (PVM != pi->PVM))
 	{
-
 		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
 		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
 		if (!CheckPanelSettings(FALSE))
@@ -239,11 +224,13 @@ void EntryPoint(int OpenFrom,INT_PTR Item)
 
 		pi->PVM = PVM;
 		pi->DisplayReloadPanel();
+
 		if (lhView == NULL)
 		{
 			// Нужно создать View
 			lhView = pi->CreateView();
 		}
+
 		if (lhView == NULL)
 		{
 			// Показать ошибку
@@ -256,6 +243,7 @@ void EntryPoint(int OpenFrom,INT_PTR Item)
 			pi->RegisterPanelView();
 			_ASSERTE(pi->PVM==PVM);
 		}
+
 		if (pi->hView)
 			dwMode = pi->PVM;
 	}
@@ -267,10 +255,11 @@ void EntryPoint(int OpenFrom,INT_PTR Item)
 	}
 
 	HKEY hk = NULL;
+
 	if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL))
 	{
 		RegSetValueEx(hk, pi->bLeftPanel ? L"LeftPanelView" : L"RightPanelView", 0,
-			REG_DWORD, (LPBYTE)&dwMode, sizeof(dwMode));
+		              REG_DWORD, (LPBYTE)&dwMode, sizeof(dwMode));
 		RegCloseKey(hk);
 	}
 
@@ -284,73 +273,102 @@ DWORD GetMainThreadId()
 	DWORD nThreadID = 0;
 	DWORD nProcID = GetCurrentProcessId();
 	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+
 	if (h != INVALID_HANDLE_VALUE)
 	{
 		THREADENTRY32 ti = {sizeof(THREADENTRY32)};
+
 		if (Thread32First(h, &ti))
 		{
-			do {
+			do
+			{
 				// Нужно найти ПЕРВУЮ нить процесса
-				if (ti.th32OwnerProcessID == nProcID) {
+				if (ti.th32OwnerProcessID == nProcID)
+				{
 					nThreadID = ti.th32ThreadID;
 					break;
 				}
-			} while (Thread32Next(h, &ti));
+			}
+			while(Thread32Next(h, &ti));
 		}
+
 		CloseHandle(h);
 	}
 
 	// Нехорошо. Должна быть найдена. Вернем хоть что-то (текущую нить)
-	if (!nThreadID) {
+	if (!nThreadID)
+	{
 		_ASSERTE(nThreadID!=0);
 		nThreadID = GetCurrentThreadId();
 	}
+
 	return nThreadID;
 }
 
-
-
-BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
+#include "../common/SetExport.h"
+ExportFunc Far3Func[] =
 {
-	switch (ul_reason_for_call) {
-		case DLL_PROCESS_ATTACH:
-			{
-				ghPluginModule = (HMODULE)hModule;
-				gnSelfPID = GetCurrentProcessId();
-				gnMainThreadId = GetMainThreadId();
+	{"OpenPluginW", OpenPluginW1, OpenPluginW2},
+	{NULL}
+};
 
-				gpLocalSecurity = LocalSecurity();
-				
-				_ASSERTE(FAR_X_VER<=FAR_Y_VER);
-				#ifdef SHOW_STARTED_MSGBOX
-				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuTh*.dll loaded", "ConEmu Thumbnails", 0);
-				#endif
-				
-			    // Check Terminal mode
-			    TerminalMode = isTerminalMode();
-			    //TCHAR szVarValue[MAX_PATH];
-			    //szVarValue[0] = 0;
-			    //if (GetEnvironmentVariable(L"TERM", szVarValue, 63)) {
-				//    TerminalMode = TRUE;
-			    //}
+
+BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
+{
+	switch(ul_reason_for_call)
+	{
+		case DLL_PROCESS_ATTACH:
+		{
+			ghPluginModule = (HMODULE)hModule;
+			gnSelfPID = GetCurrentProcessId();
+			gnMainThreadId = GetMainThreadId();
+			HeapInitialize();
+			gpLocalSecurity = LocalSecurity();
+			_ASSERTE(FAR_X_VER<=FAR_Y_VER);
+#ifdef SHOW_STARTED_MSGBOX
+
+			if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuTh*.dll loaded", "ConEmu Thumbnails", 0);
+
+#endif
+			// Check Terminal mode
+			TerminalMode = isTerminalMode();
+			//TCHAR szVarValue[MAX_PATH];
+			//szVarValue[0] = 0;
+			//if (GetEnvironmentVariable(L"TERM", szVarValue, 63)) {
+			//    TerminalMode = TRUE;
+			//}
+			bool lbExportsChanged = false;
+			if (LoadFarVersion())
+			{
+				if (gFarVersion.dwVerMajor == 3)
+				{
+					lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
+					if (!lbExportsChanged)
+					{
+						_ASSERTE(lbExportsChanged);
+					}
+				}
 			}
-			break;
+		}
+		break;
 		case DLL_PROCESS_DETACH:
 			CommonShutdown();
+			HeapDeinitialize();
 			break;
 	}
+
 	return TRUE;
 }
 
 #if defined(CRTSTARTUP)
-extern "C"{
-  BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
+extern "C" {
+	BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
 };
 
 BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 {
-  DllMain(hDll, dwReason, lpReserved);
-  return TRUE;
+	DllMain(hDll, dwReason, lpReserved);
+	return TRUE;
 }
 #endif
 
@@ -361,33 +379,40 @@ BOOL LoadFarVersion()
 {
 	BOOL lbRc=FALSE;
 	WCHAR FarPath[MAX_PATH+1];
+
 	if (GetModuleFileName(0,FarPath,MAX_PATH))
 	{
 		DWORD dwRsrvd = 0;
 		DWORD dwSize = GetFileVersionInfoSize(FarPath, &dwRsrvd);
+
 		if (dwSize>0)
 		{
 			void *pVerData = Alloc(dwSize, 1);
+
 			if (pVerData)
 			{
 				VS_FIXEDFILEINFO *lvs = NULL;
 				UINT nLen = sizeof(lvs);
+
 				if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData))
 				{
 					TCHAR szSlash[3]; wcscpy_c(szSlash, L"\\");
-					if (VerQueryValue ((void*)pVerData, szSlash, (void**)&lvs, &nLen))
+
+					if (VerQueryValue((void*)pVerData, szSlash, (void**)&lvs, &nLen))
 					{
 						gFarVersion.dwVer = lvs->dwFileVersionMS;
 						gFarVersion.dwBuild = lvs->dwFileVersionLS;
 						lbRc = TRUE;
 					}
 				}
+
 				Free(pVerData);
 			}
 		}
 	}
 
-	if (!lbRc) {
+	if (!lbRc)
+	{
 		gFarVersion.dwVerMajor = 2;
 		gFarVersion.dwVerMinor = 0;
 		gFarVersion.dwBuild = FAR_X_VER;
@@ -411,43 +436,56 @@ BOOL CheckConEmu(BOOL abSilence/*=FALSE*/)
 	//		return TRUE;
 	//	}
 	//}
-
-	if (TerminalMode) {
+	if (TerminalMode)
+	{
 		if (!abSilence)
 			ShowMessage(CEUnavailableInTerminal, 0);
+
 		return FALSE;
 	}
 
 	//nLastCheckConEmu = GetTickCount();
 	HMODULE hConEmu = GetModuleHandle
-		(
-			#ifdef WIN64
-					L"ConEmu.x64.dll"
-			#else
-					L"ConEmu.dll"
-			#endif
-		);
-	if (!hConEmu) {
+	                  (
+#ifdef WIN64
+	                      L"ConEmu.x64.dll"
+#else
+	                      L"ConEmu.dll"
+#endif
+	                  );
+
+	if (!hConEmu)
+	{
 		gfRegisterPanelView = NULL;
 		gfGetFarHWND2 = NULL;
+
 		if (!abSilence)
 			ShowMessage(CEPluginNotFound, 0);
+
 		return FALSE;
 	}
 
 	gfRegisterPanelView = (RegisterPanelView_t)GetProcAddress(hConEmu, "RegisterPanelView");
 	gfGetFarHWND2 = (GetFarHWND2_t)GetProcAddress(hConEmu, "GetFarHWND2");
-	if (!gfRegisterPanelView || !gfGetFarHWND2) {
+
+	if (!gfRegisterPanelView || !gfGetFarHWND2)
+	{
 		if (!abSilence)
 			ShowMessage(CEOldPluginVersion, 0);
+
 		return FALSE;
 	}
+
 	HWND hWnd = gfGetFarHWND2(TRUE);
 	HWND hRoot = hWnd ? GetParent(hWnd) : NULL;
-	if (hRoot != ghConEmuRoot) {
+
+	if (hRoot != ghConEmuRoot)
+	{
 		ghConEmuRoot = hRoot;
-		if (hRoot) {
-			//MFileMapping<PanelViewSettings> ThSetMap;
+
+		if (hRoot)
+		{
+			//MFileMapping<PanelViewSetMapping> ThSetMap;
 			//DWORD nGuiPID;
 			//GetWindowThreadProcessId(ghConEmuRoot, &nGuiPID);
 			//_ASSERTE(nGuiPID!=0);
@@ -462,11 +500,14 @@ BOOL CheckConEmu(BOOL abSilence/*=FALSE*/)
 		}
 	}
 
-	if (!hRoot) {
+	if (!hRoot)
+	{
 		if (!abSilence)
 			ShowMessage(CEFarNonGuiMode, 0);
+
 		return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -502,11 +543,8 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 		FUNC_X(SetStartupInfoW)(aInfo);
 
 	_ASSERTE(gszRootKey!=NULL && *gszRootKey!=0);
-
 	ReloadResourcesW();
-
 	gbInfoW_OK = TRUE;
-
 	StartPlugin(FALSE);
 }
 
@@ -516,13 +554,13 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 
 
-	#ifndef max
-	#define max(a,b)            (((a) > (b)) ? (a) : (b))
-	#endif
+#ifndef max
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
 
-	#ifndef min
-	#define min(a,b)            (((a) < (b)) ? (a) : (b))
-	#endif
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
 
 
 
@@ -541,15 +579,18 @@ void StartPlugin(BOOL abManual)
 		return;
 
 	HKEY hk = NULL;
+
 	if (!RegOpenKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, KEY_READ, &hk))
 	{
 		DWORD dwModes[2], dwSize = 4;
+
 		if (RegQueryValueEx(hk, L"LeftPanelView", NULL, NULL, (LPBYTE)dwModes, &(dwSize=4)))
 			dwModes[0] = 0;
+
 		if (RegQueryValueEx(hk, L"RightPanelView", NULL, NULL, (LPBYTE)(dwModes+1), &(dwSize=4)))
 			dwModes[1] = 0;
-		RegCloseKey(hk);
 
+		RegCloseKey(hk);
 
 		if (ghDisplayThread && gnDisplayThreadId == 0)
 		{
@@ -569,18 +610,21 @@ void StartPlugin(BOOL abManual)
 
 				// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
 				ReloadPanelsInfo();
-
 				CeFullPanelInfo* pi[2] = {&pviLeft, &pviRight};
-				for (int i = 0; i < 2; i++)
+
+				for(int i = 0; i < 2; i++)
 				{
-					if (!pi[i]->hView && dwModes[i]) {
+					if (!pi[i]->hView && dwModes[i])
+					{
 						pi[i]->PVM = (PanelViewMode)dwModes[i];
 						pi[i]->DisplayReloadPanel();
+
 						if (pi[i]->hView == NULL)
 						{
 							// Нужно создать View
 							pi[i]->hView = pi[i]->CreateView();
 						}
+
 						if (pi[i]->hView == NULL)
 						{
 							// Показать ошибку
@@ -602,33 +646,41 @@ void ExitPlugin(void)
 	//if (ghLeftView)
 	if (pviLeft.hView)
 		pviLeft.UnregisterPanelView();
-		//PostMessage(ghLeftView, WM_CLOSE,0,0);
+
+	//PostMessage(ghLeftView, WM_CLOSE,0,0);
 	//if (ghRightView)
 	if (pviRight.hView)
 		pviRight.UnregisterPanelView();
-		//PostMessage(ghRightView, WM_CLOSE,0,0);
 
+	//PostMessage(ghRightView, WM_CLOSE,0,0);
 	DWORD dwWait = 0;
+
 	if (ghDisplayThread)
 		dwWait = WaitForSingleObject(ghDisplayThread, 1000);
+
 	if (dwWait)
 		TerminateThread(ghDisplayThread, 100);
+
 	if (ghDisplayThread)
 	{
 		CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 	}
+
 	gnDisplayThreadId = 0;
+
 	// Освободить память
 	if (gpRgnDetect)
 	{
 		delete gpRgnDetect;
 		gpRgnDetect = NULL;
 	}
+
 	if (gpImgCache)
 	{
 		delete gpImgCache;
 		gpImgCache = NULL;
 	}
+
 	// Сброс переменных, окон, и т.п.
 	pviLeft.FinalRelease();
 	pviRight.FinalRelease();
@@ -644,10 +696,12 @@ void ExitPlugin(void)
 	}
 
 #ifdef _DEBUG
+
 	if (gpDbgDlg)
 	{
 		delete gpDbgDlg; gpDbgDlg = NULL;
 	}
+
 #endif
 }
 
@@ -690,18 +744,25 @@ void PostMacro(wchar_t* asMacro)
 {
 	if (!asMacro || !*asMacro)
 		return;
-		
-	if (gFarVersion.dwVerMajor==1) {
+
+	if (gFarVersion.dwVerMajor==1)
+	{
 		int nLen = lstrlenW(asMacro);
 		char* pszMacro = (char*)Alloc(nLen+1,1);
-		if (pszMacro) {
+
+		if (pszMacro)
+		{
 			WideCharToMultiByte(CP_OEMCP,0,asMacro,nLen+1,pszMacro,nLen+1,0,0);
 			PostMacroA(pszMacro);
 			Free(pszMacro);
 		}
-	} else if (gFarVersion.dwBuild>=FAR_Y_VER) {
+	}
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+	{
 		FUNC_Y(PostMacro)(asMacro);
-	} else {
+	}
+	else
+	{
 		FUNC_X(PostMacro)(asMacro);
 	}
 
@@ -711,18 +772,21 @@ void PostMacro(wchar_t* asMacro)
 	//  не вызывает отрисовку :(
 	//if (!mcr.Param.PlainText.Flags) {
 	INPUT_RECORD ir[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
+
 	if (isPressed(VK_CAPITAL))
 		ir[0].Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
+
 	if (isPressed(VK_NUMLOCK))
 		ir[0].Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
+
 	if (isPressed(VK_SCROLL))
 		ir[0].Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
+
 	ir[0].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
 	ir[1].Event.MouseEvent.dwControlKeyState = ir[0].Event.MouseEvent.dwControlKeyState;
 	ir[1].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
 	ir[1].Event.MouseEvent.dwMousePosition.X = 1;
 	ir[1].Event.MouseEvent.dwMousePosition.Y = 1;
-
 	//2010-01-29 попробуем STD_OUTPUT
 	//if (!ghConIn) {
 	//	ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
@@ -739,13 +803,12 @@ void PostMacro(wchar_t* asMacro)
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	DWORD cbWritten = 0;
 #ifdef _DEBUG
-	BOOL fSuccess = 
+	BOOL fSuccess =
 #endif
-	WriteConsoleInput(hIn/*ghConIn*/, ir, 1, &cbWritten);
+	    WriteConsoleInput(hIn/*ghConIn*/, ir, 1, &cbWritten);
 	_ASSERTE(fSuccess && cbWritten==1);
 	//}
 	//InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,NULL);
-
 }
 
 
@@ -766,30 +829,32 @@ int ShowPluginMenu()
 	//	if (nItem >= 7) nItem++; //Separator
 	//	if (nItem >= 9) nItem++; //Separator
 	//	SHOWDBGINFO(L"*** ShowPluginMenu used default item\n");
-	//} else 
-	if (gFarVersion.dwVerMajor==1) {
+	//} else
+	if (gFarVersion.dwVerMajor==1)
+	{
 		SHOWDBGINFO(L"*** calling ShowPluginMenuA\n");
 		nItem = ShowPluginMenuA();
-	} else if (gFarVersion.dwBuild>=FAR_Y_VER) {
+	}
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+	{
 		SHOWDBGINFO(L"*** calling ShowPluginMenuWY\n");
 		nItem = FUNC_Y(ShowPluginMenu)();
-	} else {
+	}
+	else
+	{
 		SHOWDBGINFO(L"*** calling ShowPluginMenuWX\n");
 		nItem = FUNC_X(ShowPluginMenu)();
 	}
 
 	return nItem;
-
 	//if (nItem < 0) {
 	//	SHOWDBGINFO(L"*** ShowPluginMenu cancelled, nItem < 0\n");
 	//	return;
 	//}
-
 	//#ifdef _DEBUG
-	//wchar_t szInfo[128]; wsprintf(szInfo, L"*** ShowPluginMenu done, nItem == %i\n", nItem);
+	//wchar_t szInfo[128]; StringCchPrintf(szInfo, countof(szInfo), L"*** ShowPluginMenu done, nItem == %i\n", nItem);
 	//SHOWDBGINFO(szInfo);
 	//#endif
-
 	//switch (nItem) {
 	//	case 0: case 1:
 	//	{ // Открыть в редакторе вывод последней консольной программы
@@ -845,6 +910,7 @@ int ShowPluginMenu()
 BOOL IsMacroActive()
 {
 	BOOL lbActive = FALSE;
+
 	if (gFarVersion.dwVerMajor==1)
 		lbActive = IsMacroActiveA();
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
@@ -885,14 +951,16 @@ CeFullPanelInfo* GetActivePanel()
 {
 	if (pviLeft.Visible && pviLeft.Focus && pviLeft.IsFilePanel)
 		return &pviLeft;
+
 	if (pviRight.Visible && pviRight.Focus && pviRight.IsFilePanel)
 		return &pviRight;
+
 	return NULL;
 }
 //CeFullPanelInfo* LoadPanelInfo(BOOL abActive)
 //{
 //	TODO("Добавить вызов ACTL_GETWINDOW что-ли?");
-//	
+//
 //	CheckVarsInitialized();
 //
 //	CeFullPanelInfo* ppi = NULL;
@@ -920,10 +988,8 @@ CeFullPanelInfo* GetActivePanel()
 void ReloadPanelsInfo()
 {
 	TODO("Добавить вызов ACTL_GETWINDOW что-ли?");
-
-	// Хотя уже и должен быть создан	
+	// Хотя уже и должен быть создан
 	CheckVarsInitialized();
-
 	// Если меняется прямоугольник панели - нужно повторно зарегистрироваться в GUI
 	RECT rcLeft = pviLeft.PanelRect;
 	BOOL bLeftVisible = pviLeft.Visible;
@@ -937,11 +1003,12 @@ void ReloadPanelsInfo()
 	else
 		FUNC_X(ReloadPanelsInfo)();
 
-
 	// Обновить gFarInfo (используется в RgnDetect)
 	CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
 	int n = min(p->nMaxFarColors, countof(gFarInfo.nFarColors));
+
 	if (n && p->nFarColors) memmove(gFarInfo.nFarColors, p->nFarColors, n);
+
 	gFarInfo.nFarInterfaceSettings = p->nFarInterfaceSettings;
 	gFarInfo.nFarPanelSettings = p->nFarPanelSettings;
 	gFarInfo.bFarPanelAllowed = TRUE;
@@ -951,7 +1018,6 @@ void ReloadPanelsInfo()
 	gFarInfo.bFarRightPanel = pviRight.Visible;
 	gFarInfo.FarRightPanel.PanelRect = pviRight.PanelRect;
 
-
 	if (pviLeft.hView)
 	{
 		if (bLeftVisible && pviLeft.Visible)
@@ -960,6 +1026,7 @@ void ReloadPanelsInfo()
 				pviLeft.RegisterPanelView();
 		}
 	}
+
 	if (pviRight.hView)
 	{
 		if (bRightVisible && pviRight.Visible)
@@ -1137,7 +1204,7 @@ void ReloadPanelsInfo()
 //	if (lpOneInput->EventType == KEY_EVENT) {
 //		girUnget[gnUngetCount].Event.KeyEvent.wRepeatCount = nCount;
 //	}
-//	gnUngetCount ++;	
+//	gnUngetCount ++;
 //
 //	return TRUE;
 //}
@@ -1155,25 +1222,25 @@ void OnReadyForPanelsReload()
 {
 	if (!gnConsoleChanges)
 		return;
+
 	gbConsoleChangesSyncho = false;
 	DWORD nCurChanges = gnConsoleChanges; gnConsoleChanges = 0;
-
 	// Сбросим, чтобы RgnDetect попытался сам найти панели и диалоги.
 	// Это нужно чтобы избежать возможных блокировок фара
 	gFarInfo.bFarPanelInfoFilled = gFarInfo.bFarLeftPanel = gFarInfo.bFarRightPanel = FALSE;
 	gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
 	gnRgnDetectFlags = gpRgnDetect->GetFlags();
-
 #ifdef _DEBUG
+
 	if (!gpDbgDlg)
 	{
 		gpDbgDlg = new MFileMapping<DetectedDialogs>();
 		gpDbgDlg->InitName(CEPANELDLGMAPNAME, GetCurrentProcessId());
 		gpDbgDlg->Create();
 	}
-	gpDbgDlg->SetFrom(gpRgnDetect->GetDetectedDialogsPtr());	
-#endif
 
+	gpDbgDlg->SetFrom(gpRgnDetect->GetDetectedDialogsPtr());
+#endif
 	WARNING("Если панели скрыты (активен редактор/вьювер) - не пытаться считывать панели");
 
 	if (!CheckWindows())
@@ -1184,7 +1251,6 @@ void OnReadyForPanelsReload()
 	{
 		//if (pviLeft.hView || pviRight.hView) {
 		//	ReloadPanelsInfo();
-
 		//	/* После реального получения панелей - можно повторно "обнаружить диалоги"? */
 		//	CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
 		//	gFarInfo.bFarPanelInfoFilled = TRUE;
@@ -1192,23 +1258,23 @@ void OnReadyForPanelsReload()
 		//	gFarInfo.FarLeftPanel.PanelRect = pviLeft.PanelRect;
 		//	gFarInfo.bFarRightPanel = (pviRight.Visible!=0);
 		//	gFarInfo.FarRightPanel.PanelRect = pviRight.PanelRect;
-
 		//	gpRgnDetect->PrepareTransparent(&gFarInfo, gcrColors);
 		//}
-		
 		//if (!gbWaitForKeySequenceEnd)
-			//|| girUnget[0].EventType == EVENT_TYPE_REDRAW)
+		//|| girUnget[0].EventType == EVENT_TYPE_REDRAW)
 		{
 			if (pviLeft.hView || pviRight.hView)
 			{
 				ReloadPanelsInfo();
 			}
+
 			if (pviLeft.hView)
 			{
 				pviLeft.DisplayReloadPanel();
 				//Inva lidateRect(pviLeft.hView, NULL, FALSE);
 				pviLeft.Invalidate();
 			}
+
 			if (pviRight.hView)
 			{
 				pviRight.DisplayReloadPanel();
@@ -1220,7 +1286,6 @@ void OnReadyForPanelsReload()
 
 	//WARNING("Проверить список окон FAR и если активное НЕ панели - сразу выйти (и спрятать разрегистрировать)");
 	//WARNING("Проверить и сравнить, если изменился регион панели - обновить PanelView");
-
 	//!. Сначала проверить на какой панели находится фокус!
 	//   Это требуется для того, чтобы НЕактивная панель не перехватывала стрелки
 	//Далее
@@ -1244,7 +1309,7 @@ BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 			}
 			else if (gnConsoleChanges && !gbConsoleChangesSyncho)
 			{
-				gbConsoleChangesSyncho = true;				
+				gbConsoleChangesSyncho = true;
 			}
 			else if (gbConsoleChangesSyncho)
 			{
@@ -1279,7 +1344,6 @@ BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 	//	if (GetBufferInput(FALSE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
 	//		return FALSE; // PeekConsoleInput & OnPostPeekConsole не будет вызван
 	//}
-
 	//// Для FAR1 - эмуляция ACTL_SYNCHRO
 	//if ((gpLastSynchroArg || gbSynchoRedrawPanelRequested) // ожидает команда
 	//	&& nBufSize == 1  // только когда размер буфера == 1 - считается что ФАР готов
@@ -1290,7 +1354,6 @@ BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 	//	if (gpLastSynchroArg)
 	//		ProcessSynchroEventW(SE_COMMONSYNCHRO, gpLastSynchroArg);
 	//}
-
 	return TRUE; // продолжить без изменений
 }
 
@@ -1311,10 +1374,11 @@ BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufS
 			{
 				*pbResult = FALSE;
 			}
+
 			return FALSE; // вернуться в вызывающую функцию
 		}
 	}
-	
+
 	return TRUE; // продолжить без изменений
 }
 
@@ -1332,7 +1396,6 @@ BOOL WINAPI OnPreReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 	//	if (GetBufferInput(TRUE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
 	//		return FALSE; // ReadConsoleInput & OnPostReadConsole не будет вызван
 	//}
-
 	return TRUE; // продолжить без изменений
 }
 
@@ -1353,75 +1416,88 @@ BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufS
 			{
 				*pbResult = FALSE;
 			}
+
 			return FALSE; // вернуться в вызывающую функцию
 		}
 	}
-	
+
 	return TRUE; // продолжить без изменений
 }
 
 
 
 
-//lpBuffer 
-//The data to be written to the console screen buffer. This pointer is treated as the origin of a 
-//two-dimensional array of CHAR_INFO structures whose size is specified by the dwBufferSize parameter. 
+//lpBuffer
+//The data to be written to the console screen buffer. This pointer is treated as the origin of a
+//two-dimensional array of CHAR_INFO structures whose size is specified by the dwBufferSize parameter.
 //The total size of the array must be less than 64K.
 //
-//dwBufferSize 
-//The size of the buffer pointed to by the lpBuffer parameter, in character cells. 
+//dwBufferSize
+//The size of the buffer pointed to by the lpBuffer parameter, in character cells.
 //The X member of the COORD structure is the number of columns; the Y member is the number of rows.
 //
-//dwBufferCoord 
-//The coordinates of the upper-left cell in the buffer pointed to by the lpBuffer parameter. 
+//dwBufferCoord
+//The coordinates of the upper-left cell in the buffer pointed to by the lpBuffer parameter.
 //The X member of the COORD structure is the column, and the Y member is the row.
 //
-//lpWriteRegion 
-//A pointer to a SMALL_RECT structure. On input, the structure members specify the upper-left and lower-right 
-//coordinates of the console screen buffer rectangle to write to. 
+//lpWriteRegion
+//A pointer to a SMALL_RECT structure. On input, the structure members specify the upper-left and lower-right
+//coordinates of the console screen buffer rectangle to write to.
 //On output, the structure members specify the actual rectangle that was used.
 BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
 {
 	WARNING("После повторного отображения view - хорошо бы сначала полностью считать gpRgnDetect из консоли");
+
 	if (gpRgnDetect && lpBuffer && lpWriteRegion)
 	{
 #ifdef SHOW_WRITING_RECTS
+
 		if (IsDebuggerPresent())
 		{
-			wchar_t szDbg[80]; wsprintf(szDbg, L"ConEmuTh.OnPreWriteConsoleOutput( {%ix%i} - {%ix%i} )\n", 
-				lpWriteRegion->Left, lpWriteRegion->Top, lpWriteRegion->Right, lpWriteRegion->Bottom);
+			wchar_t szDbg[80]; StringCchPrintf(szDbg, countof(szDbg), L"ConEmuTh.OnPreWriteConsoleOutput( {%ix%i} - {%ix%i} )\n",
+			                                   lpWriteRegion->Left, lpWriteRegion->Top, lpWriteRegion->Right, lpWriteRegion->Bottom);
 			OutputDebugStringW(szDbg);
 		}
-#endif
 
+#endif
 		SMALL_RECT rcFarRect; GetFarRect(&rcFarRect);
 		gpRgnDetect->SetFarRect(&rcFarRect);
-
 		gpRgnDetect->OnWriteConsoleOutput(lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion, gcrCurColors);
-
 		WARNING("Перед установкой флагов измененности - сначала хорошо бы проверить, а менялась ли сама панель?");
 		DWORD nChanges = 0;
 		RECT rcTest = {0};
-		RECT rcWrite = {
+		RECT rcWrite =
+		{
 			lpWriteRegion->Left-rcFarRect.Left,lpWriteRegion->Top-rcFarRect.Top,
 			lpWriteRegion->Right+1-rcFarRect.Left,lpWriteRegion->Bottom+1-rcFarRect.Top
 		};
+
 		if (pviLeft.hView)
 		{
 			WARNING("Проверить в far/w");
-			if (IntersectRect(&rcTest, &pviLeft.WorkRect, &rcWrite))
+
+			WARNING("IntersectRect не работает, если низ совпадает?");
+			RECT rcPanel = pviLeft.WorkRect;
+			rcPanel.bottom++;
+			if (IntersectRect(&rcTest, &rcPanel, &rcWrite))
 			{
 				nChanges |= 1; // 1-left, 2-right.
 			}
 		}
+
 		if (pviRight.hView)
 		{
 			WARNING("Проверить в far/w");
-			if (IntersectRect(&rcTest, &pviRight.WorkRect, &rcWrite))
+
+			WARNING("IntersectRect не работает, если низ совпадает?");
+			RECT rcPanel = pviRight.WorkRect;
+			rcPanel.bottom++;
+			if (IntersectRect(&rcTest, &rcPanel, &rcWrite))
 			{
 				nChanges |= 2; // 1-left, 2-right.
 			}
 		}
+
 		//if (pviLeft.hView || pviRight.hView)
 		if (nChanges)
 		{
@@ -1444,11 +1520,11 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 //BOOL ProcessKeyPress(CeFullPanelInfo* pi, BOOL abReadMode, PINPUT_RECORD lpBuffer)
 //{
 //	_ASSERTE(lpBuffer->EventType == KEY_EVENT);
-//	
+//
 //	// Перехватываемые клавиши
 //	WORD vk = lpBuffer->Event.KeyEvent.wVirtualKeyCode;
 //	BOOL lbWasUnget = FALSE;
-//	
+//
 //	if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT)
 //	{
 //		if (!lpBuffer->Event.KeyEvent.bKeyDown) {
@@ -1456,7 +1532,7 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 //				case VK_LEFT:  lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_UP;   break;
 //				case VK_RIGHT: lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_DOWN; break;
 //			}
-//		
+//
 //		} else {
 //			// Переработать
 //			int n = 0;
@@ -1474,7 +1550,7 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 //					lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
 //				} break;
 //			}
-//			
+//
 //			lbWasUnget = (n > 1);
 //			while ((n--) > 1) {
 //				UngetBufferInput(lpBuffer);
@@ -1491,6 +1567,7 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead)
 {
 	static bool sbInClearing = false;
+
 	if (sbInClearing)
 	{
 		// Если это наше считывание буфера, чтобы убрать из него обработанные нажатия
@@ -1505,11 +1582,11 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 
 	// Перехват управления курсором
 	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE/*abFocusRequired*/);
+
 	if (!pi)
 	{
 		return FALSE; // панель создана, но она не активна или скрыта диалогом или погашена фаровская панель
 	}
-
 
 	if (!wScanCodeUp)
 	{
@@ -1522,15 +1599,14 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		wScanCodePgDn = MapVirtualKey(VK_NEXT, 0/*MAPVK_VK_TO_VSC*/);
 #endif
 	}
-	
+
 	WARNING("Проверять один из DWORD-ов окна на предмет наличия диалогов");
 	WARNING("Ставить его должен GUI");
 	WARNING("Если есть хотя бы один диалог - значит перехватывать нельзя");
-
 	PanelViewMode PVM = pi->PVM;
-
 	BOOL lbWasChanges = FALSE;
 	int iCurItem, iTopItem, iShift = 0;
+
 	if (pi->bRequestItemSet)
 	{
 		iCurItem = pi->ReqCurrentItem; iTopItem = pi->ReqTopPanelItem;
@@ -1547,26 +1623,30 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 	//while (p != pEnd)
 	{
 		bool bEraseEvent = false;
-		
+
 		if (p->EventType == KEY_EVENT)
 		{
 			int iCurKeyShift = 0;
 			// Перехватываемые клавиши
 			WORD vk = p->Event.KeyEvent.wVirtualKeyCode;
+
 			if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT
-				|| vk == VK_PRIOR || vk == VK_NEXT)
+			        || vk == VK_PRIOR || vk == VK_NEXT)
 			{
-				if (!(p->Event.KeyEvent.dwControlKeyState 
-					& (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)) )
+				if (!(p->Event.KeyEvent.dwControlKeyState
+				        & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)))
 				{
 					// Переработать
 					int n = 1;
-					switch (vk) {
+
+					switch(vk)
+					{
 						case VK_UP:
 						{
 							//if (PVM == pvm_Thumbnails)
 							//	n = min(pi->CurrentItem,pi->nXCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_UP)\n");
+
 							if (PVM == pvm_Thumbnails)
 								iCurKeyShift = -pi->nXCountFull;
 							else
@@ -1577,6 +1657,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							//if (PVM == pvm_Thumbnails)
 							//	n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_DOWN)\n");
+
 							if (PVM == pvm_Thumbnails)
 								iCurKeyShift = pi->nXCountFull;
 							else
@@ -1589,6 +1670,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							//if (PVM != pvm_Thumbnails)
 							//	n = min(pi->CurrentItem,pi->nYCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_LEFT)\n");
+
 							if (PVM != pvm_Thumbnails)
 								iCurKeyShift = -pi->nYCountFull;
 							else
@@ -1601,6 +1683,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							//if (PVM != pvm_Thumbnails)
 							//	n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nYCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_RIGHT)\n");
+
 							if (PVM != pvm_Thumbnails)
 								iCurKeyShift = pi->nYCountFull;
 							else
@@ -1613,11 +1696,12 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							//n = min(pi->CurrentItem,pi->nXCountFull*pi->nYCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_PRIOR)\n");
 							int nRowCol = (PVM == pvm_Thumbnails) ? pi->nXCountFull : pi->nYCountFull;
+
 							if (iCurItem >= (iTopItem + nRowCol))
 							{
 								int nCorrection = (PVM == pvm_Thumbnails)
-										? (iCurItem % nRowCol)
-										: 0;
+								                  ? (iCurItem % nRowCol)
+								                  : 0;
 								// Если PgUp нажат когда текущий элемент НЕ на верхней строке
 								iCurKeyShift = (iTopItem - iCurItem);
 							}
@@ -1634,12 +1718,13 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_NEXT)\n");
 							int nRowCol = (PVM == pvm_Thumbnails) ? pi->nXCountFull : pi->nYCountFull;
 							int nFull = (pi->nXCountFull*pi->nYCountFull);
+
 							if (iCurItem >= iTopItem && iCurItem < (iTopItem + nFull - nRowCol))
 							{
 								// Если PgDn нажат когда текущий элемент НЕ на последней строке
 								int nCorrection = (PVM == pvm_Thumbnails)
-										? (iCurItem % nRowCol)
-										: (nRowCol - 1);
+								                  ? (iCurItem % nRowCol)
+								                  : (nRowCol - 1);
 								iCurKeyShift = (iTopItem + nFull - nRowCol - iCurItem) + nCorrection;
 							}
 							else
@@ -1654,11 +1739,13 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 					{
 						// Это событие из буфера нужно убрать
 						bEraseEvent = true;
+
 						// Плюсовать к общему сдвигу
 						if (p->Event.KeyEvent.bKeyDown)
 						{
 							iShift += iCurKeyShift;
 						}
+
 						//if (abReadMode && n > 1)
 						//{
 						//	pFirstReplace = p+1;
@@ -1667,20 +1754,18 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 					}
 
 					//end: if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT)
-					
 					//PRAGMA_ERROR("!!!");
 					//p++; continue;
 				}
 			}
+
 			//end: if (p->EventType == KEY_EVENT)
 		}
-		
 		// Колесо мышки тоже перехватывать нужно
 		else if (p->EventType == MOUSE_EVENT)
 		{
 			WARNING("Перехвать Wheel, чтобы не сбился TopPanelItem");
 		}
-		
 		// При смене размера окна - нужно передернуть детектор
 		else if (p->EventType == WINDOW_BUFFER_SIZE_EVENT)
 		{
@@ -1694,7 +1779,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		//{
 		//	UngetBufferInput(1,p);
 		//}
-		
+
 		//p++;
 		if (bEraseEvent)
 		{
@@ -1705,10 +1790,10 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 			//	memmove(pReplace, p, pEnd-p);
 			//	pReplace++;
 			//}
-			
 			// Нужно убрать это событие из буфера
 			DWORD nRead = 0;
 			INPUT_RECORD rr[2];
+
 			if (!abReadMode)
 			{
 				sbInClearing = true;
@@ -1718,11 +1803,11 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 				sbInClearing = false;
 			}
 
-			
 			if ((*lpNumberOfEventsRead) >= 1)
 			{
 				*lpNumberOfEventsRead = (*lpNumberOfEventsRead) - 1;
 			}
+
 			bEraseEvent = false;
 		}
 	}
@@ -1745,23 +1830,24 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		_ASSERTE(lbWasChanges); lbWasChanges = TRUE;
 		// Посчитать новые CurItem & TopItem оптимально для PanelViews
 		iCurItem += iShift;
+
 		if (iCurItem >= pi->ItemsNumber) iCurItem = pi->ItemsNumber-1;
+
 		if (iCurItem < 0) iCurItem = 0;
+
 		// Прикинуть идеальный TopItem для текущего направления движения курсора
 		iTopItem = pi->CalcTopPanelItem(iCurItem, iTopItem);
-		
-		#ifdef _DEBUG
+#ifdef _DEBUG
 		wchar_t szDbg[512];
-		swprintf_c(szDbg,
-				L"Requesting panel redraw: {Cur:%i, Top:%i}.\n"
-				L"  Current state: {Cur:%i, Top:%i, Count:%i, OurTop:%i}\n"
-				L"  Current request: {%s, Cur:%i, Top=%i}\n",
-			iCurItem, iTopItem,
-			pi->CurrentItem, pi->TopPanelItem, pi->ItemsNumber, pi->OurTopPanelItem,
-			pi->bRequestItemSet ? L"YES" : L"No", pi->ReqCurrentItem, pi->ReqTopPanelItem);
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg))
+		          L"Requesting panel redraw: {Cur:%i, Top:%i}.\n"
+		          L"  Current state: {Cur:%i, Top:%i, Count:%i, OurTop:%i}\n"
+		          L"  Current request: {%s, Cur:%i, Top=%i}\n",
+		          iCurItem, iTopItem,
+		          pi->CurrentItem, pi->TopPanelItem, pi->ItemsNumber, pi->OurTopPanelItem,
+		          pi->bRequestItemSet ? L"YES" : L"No", pi->ReqCurrentItem, pi->ReqTopPanelItem);
 		DEBUGSTRCTRL(szDbg);
-		#endif
-		
+#endif
 		// Вызвать обновление панели с новой позицией
 		pi->RequestSetPos(iCurItem, iTopItem);
 		//pi->ReqCurrentItem = iCurItem; pi->ReqTopPanelItem = iTopItem;
@@ -1774,7 +1860,6 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		//	gbSynchoRedrawPanelRequested = true;
 		//	ExecuteInMainThread(SYNCHRO_REDRAW_PANEL);
 		//}
-
 		//_ASSERTE(gnUngetCount>0);
 		//INPUT_RECORD r = {EVENT_TYPE_REDRAW};
 		//UngetBufferInput(1,&r);
@@ -1790,7 +1875,6 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 	//	if (GetBufferInput(abReadMode/*abRemove*/, pFirstReplace, nBufSize-(*lpNumberOfEventsRead), &nAdd))
 	//		*lpNumberOfEventsRead += nAdd;
 	//}
-
 	return lbWasChanges;
 }
 
@@ -1800,15 +1884,18 @@ int ShowLastError()
 	{
 		wchar_t szErrMsg[512];
 		const wchar_t* pszTempl = GetMsgW(gnCreateViewError);
+
 		if (pszTempl && *pszTempl)
 		{
-			swprintf_c(szErrMsg, pszTempl, gnWin32Error);
+			_wsprintf(szErrMsg, SKIPLEN(countof(szErrMsg)) pszTempl, gnWin32Error);
+
 			if (gFarVersion.dwBuild>=FAR_Y_VER)
 				return FUNC_Y(ShowMessage)(szErrMsg, 0);
 			else
 				return FUNC_X(ShowMessage)(szErrMsg, 0);
 		}
 	}
+
 	return 0;
 }
 
@@ -1819,7 +1906,7 @@ void UpdateEnvVar(BOOL abForceRedraw)
 	//{
 	//	SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_SCROLL);
 	//}
-	//else 
+	//else
 	if (IsThumbnailsActive(FALSE/*abFocusRequired*/))
 	{
 		SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_ACTIVE);
@@ -1848,12 +1935,14 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 		return NULL;
 
 	CeFullPanelInfo* pi = NULL;
-	
+
 	if (gpRgnDetect)
 	{
 		DWORD dwFlags = gpRgnDetect->GetFlags();
+
 		if ((dwFlags & FR_ACTIVEMENUBAR) == FR_ACTIVEMENUBAR)
 			return NULL; // активно меню
+
 		if ((dwFlags & FR_FREEDLG_MASK) != 0)
 			return NULL; // есть какой-то диалог
 	}
@@ -1864,6 +1953,7 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 			pi = &pviLeft;
 		else if (pviRight.hView && pviRight.Focus && pviRight.Visible)
 			pi = &pviRight;
+
 		// Видим?
 		if (pi)
 		{
@@ -1880,7 +1970,7 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 		else if (pviRight.hView && IsWindowVisible(pviRight.hView))
 			pi = &pviRight;
 	}
-	
+
 	// Может быть PicView/MMView...
 	if (pi)
 	{
@@ -1894,16 +1984,18 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 		MapWindowPoints(ghConEmuRoot, NULL, &pt, 1);
 		hChild[1] = WindowFromPoint(pt);
 
-		for (int i = 0; i <= 1; i++)
+		for(int i = 0; i <= 1; i++)
 		{
 			// В принципе, может быть и NULL, если координата попала в "прозрачную" часть hView
 			if (hChild[i] && hChild[i] != pi->hView)
 			{
 				wchar_t szClass[128];
+
 				if (GetClassName(hChild[i], szClass, 128))
 				{
 					if (lstrcmpi(szClass, L"FarPictureViewControlClass") == 0)
 						return NULL; // активен PicView!
+
 					if (lstrcmpi(szClass, L"FarMultiViewControlClass") == 0)
 						return NULL; // активен MMView!
 				}
@@ -1918,9 +2010,9 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 bool CheckWindows()
 {
 	bool lbRc = false;
-	
 	// Попробуем частично вернуть проверку окон через Far, но только ACTL_GETSHORTWINDOWINFO
 	bool lbFarPanels = false;
+
 	//if (gFarVersion.dwVerMajor==1)
 	//	gbLastCheckWindow = CheckWindowsA();
 	//else if (gFarVersion.dwBuild>=FAR_Y_VER)
@@ -1934,6 +2026,7 @@ bool CheckWindows()
 		lbFarPanels = FUNC_Y(CheckFarPanels)();
 	else
 		lbFarPanels = FUNC_X(CheckFarPanels)();
+
 	// Запомнить активность панелей.
 	if (gbFarPanelsReady != lbFarPanels)
 		gbFarPanelsReady = lbFarPanels;
@@ -1959,17 +2052,19 @@ bool CheckWindows()
 			}
 		}
 	}
+
 	//gbLastCheckWindow = lbRc;
 	return lbRc;
 }
 
 void CheckVarsInitialized()
 {
-	if (!gpRgnDetect) {
+	if (!gpRgnDetect)
+	{
 		gpRgnDetect = new CRgnDetect();
 	}
 
-	// Должно инититься в SetStartupInfo	
+	// Должно инититься в SetStartupInfo
 	_ASSERTE(gpImgCache!=NULL);
 	//if (!gpImgCache) {
 	//	gpImgCache = new CImgCache(ghPluginModule);
@@ -1977,7 +2072,8 @@ void CheckVarsInitialized()
 
 	//CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
 
-	if (gFarInfo.cbSize == 0) {
+	if (gFarInfo.cbSize == 0)
+	{
 		gFarInfo.cbSize = sizeof(gFarInfo);
 		gFarInfo.FarVer = gFarVersion;
 		gFarInfo.nFarPID = GetCurrentProcessId();
@@ -1985,6 +2081,7 @@ void CheckVarsInitialized()
 		gFarInfo.bFarPanelAllowed = TRUE;
 		// Загрузить из реестра настройки PanelTabs
 		gFarInfo.PanelTabs.SeparateTabs = gFarInfo.PanelTabs.ButtonColor = -1;
+
 		if (gszRootKey && *gszRootKey)
 		{
 			int nLen = lstrlenW(gszRootKey);
@@ -1993,27 +2090,37 @@ void CheckVarsInitialized()
 			_wcscpy_c(pszTabsKey, cchSize, gszRootKey);
 			pszTabsKey[nLen-1] = 0;
 			wchar_t* pszSlash = wcsrchr(pszTabsKey, L'\\');
+
 			if (pszSlash)
 			{
 				_wcscpy_c(pszSlash, cchSize-(pszSlash-pszTabsKey), L"\\Plugins\\PanelTabs");
 				HKEY hk;
-				if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, pszTabsKey, 0, KEY_READ, &hk)) {
+
+				if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, pszTabsKey, 0, KEY_READ, &hk))
+				{
 					DWORD dwVal, dwSize;
+
 					if (!RegQueryValueExW(hk, L"SeparateTabs", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
 						gFarInfo.PanelTabs.SeparateTabs = dwVal ? 1 : 0;
+
 					if (!RegQueryValueExW(hk, L"ButtonColor", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
 						gFarInfo.PanelTabs.ButtonColor = dwVal & 0xFF;
+
 					RegCloseKey(hk);
 				}
 			}
+
 			free(pszTabsKey);
 		}
 	}
 
-	if (!pviLeft.pSection) {
+	if (!pviLeft.pSection)
+	{
 		pviLeft.pSection = new MSection();
 	}
-	if (!pviRight.pSection) {
+
+	if (!pviRight.pSection)
+	{
 		pviRight.pSection = new MSection();
 	}
 }
@@ -2024,23 +2131,25 @@ void ExecuteInMainThread(ConEmuThSynchroArg* pCmd)
 
 	if (pCmd != SYNCHRO_REDRAW_PANEL && pCmd != SYNCHRO_RELOAD_PANELS)
 	{
-		if (gpLastSynchroArg && gpLastSynchroArg != pCmd) {
+		if (gpLastSynchroArg && gpLastSynchroArg != pCmd)
+		{
 			LocalFree(gpLastSynchroArg); gpLastSynchroArg = NULL;
 		}
+
 		gpLastSynchroArg = pCmd;
 		_ASSERTE(gpLastSynchroArg->bValid==1 && gpLastSynchroArg->bExpired==0);
 	}
 
 	if (pCmd == SYNCHRO_REDRAW_PANEL)
 		gbSynchoRedrawPanelRequested = true;
-	
+
 	DEBUGSTRCTRL(
-		(pCmd == SYNCHRO_REDRAW_PANEL) ? L"ExecuteInMainThread(SYNCHRO_REDRAW_PANEL)\n" :
-		(pCmd == SYNCHRO_RELOAD_PANELS) ? L"ExecuteInMainThread(SYNCHRO_RELOAD_PANELS)\n" :
-		L"ExecuteInMainThread(...)\n"
-		);
-	
+	    (pCmd == SYNCHRO_REDRAW_PANEL) ? L"ExecuteInMainThread(SYNCHRO_REDRAW_PANEL)\n" :
+	    (pCmd == SYNCHRO_RELOAD_PANELS) ? L"ExecuteInMainThread(SYNCHRO_RELOAD_PANELS)\n" :
+	    L"ExecuteInMainThread(...)\n"
+	);
 	BOOL lbLeftActive = FALSE;
+
 	if (gFarVersion.dwVerMajor == 1)
 	{
 		// в 1.75 такой функции нет, придется хаком
@@ -2062,15 +2171,17 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 	if (Param == SYNCHRO_REDRAW_PANEL)
 	{
 		DEBUGSTRCTRL(L"ProcessSynchroEventW(SYNCHRO_REDRAW_PANEL)\n");
-		
 		gbSynchoRedrawPanelRequested = false;
-		for (int i = 0; i <= 1; i++)
+
+		for(int i = 0; i <= 1; i++)
 		{
 			CeFullPanelInfo* pp = (i==0) ? &pviLeft : &pviRight;
+
 			if (pp->hView && pp->Visible && pp->bRequestItemSet)
 			{
 				// СРАЗУ сбросить флаг, чтобы потом не накалываться
 				pp->bRequestItemSet = false;
+
 				// а теперь - собственно курсор
 				if (gFarVersion.dwVerMajor==1)
 					SetCurrentPanelItemA((i==0), pp->ReqTopPanelItem, pp->ReqCurrentItem);
@@ -2080,12 +2191,12 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 					FUNC_X(SetCurrentPanelItem)((i==0), pp->ReqTopPanelItem, pp->ReqCurrentItem);
 			}
 		}
+
 		// Если отрисовка была отложена до окончания обработки клавиатуры - передернуть
 		if (/*gbWaitForKeySequenceEnd &&*/ !gbConsoleChangesSyncho)
 		{
 			//gbWaitForKeySequenceEnd = false;
 			UpdateEnvVar(FALSE);
-
 			gbConsoleChangesSyncho = true;
 			ExecuteInMainThread(SYNCHRO_RELOAD_PANELS);
 		}
@@ -2093,7 +2204,6 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 	else if (Param == SYNCHRO_RELOAD_PANELS)
 	{
 		DEBUGSTRCTRL(L"ProcessSynchroEventW(SYNCHRO_RELOAD_PANELS)\n");
-		
 		_ASSERTE(gbConsoleChangesSyncho);
 		gbConsoleChangesSyncho = false;
 		OnReadyForPanelsReload();
@@ -2101,13 +2211,16 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 	else if (Param != NULL)
 	{
 		DEBUGSTRCTRL(L"ProcessSynchroEventW(...)\n");
-		
 		ConEmuThSynchroArg* pCmd = (ConEmuThSynchroArg*)Param;
+
 		if (gpLastSynchroArg == pCmd) gpLastSynchroArg = NULL;
 
-		if (pCmd->bValid == 1) {
-			if (pCmd->bExpired == 0) {
-				if (pCmd->nCommand == ConEmuThSynchroArg::eExecuteMacro) {
+		if (pCmd->bValid == 1)
+		{
+			if (pCmd->bExpired == 0)
+			{
+				if (pCmd->nCommand == ConEmuThSynchroArg::eExecuteMacro)
+				{
 					PostMacro((wchar_t*)pCmd->Data);
 				}
 			}
@@ -2123,20 +2236,25 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 BOOL LoadThSet(DWORD anGuiPid/* =-1 */)
 {
 	BOOL lbRc = FALSE;
-	MFileMapping<PanelViewSettings> ThSetMap;
+	MFileMapping<PanelViewSetMapping> ThSetMap;
 	_ASSERTE(ghConEmuRoot!=NULL);
-
 	DWORD nGuiPID;
 	GetWindowThreadProcessId(ghConEmuRoot, &nGuiPID);
-	if (anGuiPid != -1) {
+
+	if (anGuiPid != -1)
+	{
 		_ASSERTE(nGuiPID == anGuiPid);
 		nGuiPID = anGuiPid;
 	}
 
 	ThSetMap.InitName(CECONVIEWSETNAME, nGuiPID);
-	if (!ThSetMap.Open()) {
+
+	if (!ThSetMap.Open())
+	{
 		MessageBox(NULL, ThSetMap.GetErrorText(), L"ConEmuTh", MB_ICONSTOP|MB_SETFOREGROUND|MB_SYSTEMMODAL);
-	} else {
+	}
+	else
+	{
 		ThSetMap.GetTo(&gThSet);
 		ThSetMap.CloseMap();
 		lbRc = TRUE;
@@ -2151,13 +2269,15 @@ BOOL GetFarRect(SMALL_RECT* prcFarRect)
 {
 	BOOL lbFarBuffer = FALSE;
 	prcFarRect->Left = prcFarRect->Right = prcFarRect->Top = prcFarRect->Bottom = 0;
+
 	if (gFarVersion.dwVerMajor>2
-		|| (gFarVersion.dwVerMajor==2 && gFarVersion.dwBuild>=1573/*FAR_Y_VER*/))
+	        || (gFarVersion.dwVerMajor==2 && gFarVersion.dwBuild>=1573/*FAR_Y_VER*/))
 	{
 		//_ASSERTE(1573<=FAR_Y_VER);
 		FUNC_Y(GetFarRect)(prcFarRect);
 		lbFarBuffer = (prcFarRect->Bottom && prcFarRect->Right);
 	}
+
 	return lbFarBuffer;
 }
 

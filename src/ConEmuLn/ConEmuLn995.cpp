@@ -28,13 +28,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #pragma warning( disable : 4995 )
-#include "..\common\pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
+#include "..\common\pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
 #pragma warning( default : 4995 )
 #include "ConEmuLn.h"
 
-#define FCTL_GETPANELDIR FCTL_GETCURRENTDIRECTORY
+//#define FCTL_GETPANELDIR FCTL_GETCURRENTDIRECTORY
 
-#define _ACTL_GETFARRECT 32
+//#define _ACTL_GETFARRECT 32
 
 #ifdef _DEBUG
 #define SHOW_DEBUG_EVENTS
@@ -43,33 +43,60 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct PluginStartupInfo *InfoW995=NULL;
 struct FarStandardFunctions *FSFW995=NULL;
 
+void GetPluginInfoW995(void *piv)
+{
+	PluginInfo* pi = (PluginInfo*)piv;
+	memset(pi, 0, sizeof(PluginInfo));
+
+	pi->StructSize = sizeof(PluginInfo);
+
+	static WCHAR *szMenu[1], szMenu1[255];
+	szMenu[0] = szMenu1;
+	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
+	_ASSERTE(pi->StructSize = sizeof(struct PluginInfo));
+	pi->Flags = PF_PRELOAD;
+	pi->DiskMenuStrings = NULL;
+	//pi->DiskMenuNumbers = 0;
+	pi->PluginMenuStrings = szMenu;
+	pi->PluginMenuStringsNumber = 1;
+	pi->PluginConfigStrings = szMenu;
+	pi->PluginConfigStringsNumber = 1;
+}
 
 void SetStartupInfoW995(void *aInfo)
 {
 	::InfoW995 = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
 	::FSFW995 = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
+
 	if (::InfoW995 == NULL || ::FSFW995 == NULL)
 		return;
+
 	*::InfoW995 = *((struct PluginStartupInfo*)aInfo);
 	*::FSFW995 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW995->FSF = ::FSFW995;
-
 	int nLen = lstrlenW(InfoW995->RootKey)+16;
+
 	if (gszRootKey) free(gszRootKey);
+
 	gszRootKey = (wchar_t*)calloc(nLen,2);
 	lstrcpyW(gszRootKey, InfoW995->RootKey);
 	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
+
 	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
+
 	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
 }
 
 void ExitFARW995(void)
 {
-	if (InfoW995) {
+	if (InfoW995)
+	{
 		free(InfoW995);
 		InfoW995=NULL;
 	}
-	if (FSFW995) {
+
+	if (FSFW995)
+	{
 		free(FSFW995);
 		FSFW995=NULL;
 	}
@@ -79,10 +106,11 @@ LPCWSTR GetMsgW995(int aiMsg)
 {
 	if (!InfoW995 || !InfoW995->GetMsg)
 		return L"";
+
 	return InfoW995->GetMsg(InfoW995->ModuleNumber,aiMsg);
 }
 
-#define FAR_UNICODE
+#define FAR_UNICODE 995
 #include "Configure.h"
 
 int ConfigureW995(int ItemNumber)

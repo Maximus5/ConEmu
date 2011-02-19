@@ -3,6 +3,7 @@
 
 enum {
 	CEPluginName=0,
+	CEPluginMsgTitle,
 	CELngEdit,
 	CELngView,
 	CELngTemp,
@@ -32,4 +33,5 @@ enum {
 	CECantStartServer3,
 	CEInvalidConHwnd,
 	CEShellExecuteException,
+	CEColorMappingCreateError,
 	};

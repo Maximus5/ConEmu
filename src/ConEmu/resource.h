@@ -20,6 +20,7 @@
 #define IDD_SPG_COLORS                  152
 #define IDD_SPG_INFO                    153
 #define IDD_SPG_FEATURE                 154
+#define IDD_SPG_DEBUG                   155
 #define IDD_MORE_HIDE                   200
 #define IDD_DIALOG1                     202
 #define IDD_MORE_FADE                   203
@@ -345,6 +346,7 @@
 #define IDC_BUTTON1                     1717
 #define bApplyViewSettings              1717
 #define bConFontOK                      1717
+#define cbActivityReset                 1717
 #define cbDisableFarFlashing            1718
 #define cbDisableAllFlashing            1719
 #define cbThumbRestoreOnStartup         1720
@@ -366,6 +368,13 @@
 #define rbCTSActAlways                  1737
 #define rbCTSActBufferOnly              1738
 #define cbAlwaysShowScrollbar           1739
+#define cbLogShellActivity              1740
+#define cbLogInputActivity              1741
+#define lbActivityLog                   1742
+#define gbActivityLog                   1744
+#define cbActivitySaveAs                1746
+#define rbActivityDisabled              1747
+#define rbActivityShell                 1748
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -382,7 +391,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        210
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1740
+#define _APS_NEXT_CONTROL_VALUE         1749
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

@@ -34,92 +34,94 @@
  */
 struct AnnotationHeader
 {
-    /**
-     * Size of this header. annotation buffer at offset <struct_size>
-     * contains <AnnotationInfo> structures, one after another
-     */
-    int struct_size;
-    /**
-     * Number of allocated <AnnotationInfo> elements within shared buffer.
-     * Clients should not access buffer outside of this size.
-     */
-    int bufferSize;
-    /**
-     * Real console is in update phase (text and attributes).
-     * Clients must set this field to TRUE before WriteConsoleOutput and
-     * writing to annotation buffer.
-     * When modifications are completes - clients must
-     * increment modifiedCounter and set this field to FALSE.
-     */
-    int locked;
-    /**
-     * Flush counter of annotation buffer.
-     * Clients must increment this value, when it completes buffer modification.
+	/**
+	 * Size of this header. annotation buffer at offset <struct_size>
+	 * contains <AnnotationInfo> structures, one after another
+	 */
+	int struct_size;
+	/**
+	 * Number of allocated <AnnotationInfo> elements within shared buffer.
+	 * Clients should not access buffer outside of this size.
+	 */
+	int bufferSize;
+	/**
+	 * Real console is in update phase (text and attributes).
+	 * Clients must set this field to TRUE before WriteConsoleOutput and
+	 * writing to annotation buffer.
+	 * When modifications are completes - clients must
+	 * increment modifiedCounter and set this field to FALSE.
+	 */
+	int locked;
+	/**
+	 * Flush counter of annotation buffer.
+	 * Clients must increment this value, when it completes buffer modification.
 	 * Host may use it to understand when to update annotation buffer.
-     */
-    unsigned int flushCounter;
+	 */
+	unsigned int flushCounter;
 };
 
 /**
  * Annotation Information for each character on the screen.
- * 
+ *
  */
 struct AnnotationInfo
 {
-    //AnnotationInfo()
-    //{
-    //  for (int i = 0; i < sizeof(raw)/sizeof(raw[0]); i++)
-    //    raw[i] = 0;
-    //}
-    union{
-      struct{
-        /**
-         * Background color
-         */
-        unsigned int bk_color :24;
-        /**
-         * Foreground color
-         */
-        unsigned int fg_color :24;
-        /**
-         * Validity indicators;
-         */
-        int bk_valid :1;
-        int fg_valid :1;
+	//AnnotationInfo()
+	//{
+	//  for (int i = 0; i < sizeof(raw)/sizeof(raw[0]); i++)
+	//    raw[i] = 0;
+	//}
+	union
+	{
+		struct
+		{
+			/**
+			 * Background color
+			 */
+			unsigned int bk_color :24;
+			/**
+			 * Foreground color
+			 */
+			unsigned int fg_color :24;
+			/**
+			 * Validity indicators;
+			 */
+			int bk_valid :1;
+			int fg_valid :1;
 
-        /**
-         * Custom border over the character position.
-         *
-         * bit 0 - left, bit 1 - top, bit 2 - right, bit 3 - bottom
-         */
-        int border_visible :4;
-        /**
-         * When border within character has angles (f.e. left+top),
-         * console server may choose to draw it in some nice way (rounded, etc)
-         * 
-         * 0 - no border, 1 - 1 pixel
-         */
-        unsigned int border_style :8;
-        unsigned int border_color :24;
+			/**
+			 * Custom border over the character position.
+			 *
+			 * bit 0 - left, bit 1 - top, bit 2 - right, bit 3 - bottom
+			 */
+			int border_visible :4;
+			/**
+			 * When border within character has angles (f.e. left+top),
+			 * console server may choose to draw it in some nice way (rounded, etc)
+			 *
+			 * 0 - no border, 1 - 1 pixel
+			 */
+			unsigned int border_style :8;
+			unsigned int border_color :24;
 
-        /**
-         * Extra character style attributes. See AI_STYLE_* defines
-         */
-        unsigned int style :16;
+			/**
+			 * Extra character style attributes. See AI_STYLE_* defines
+			 */
+			unsigned int style :16;
 
-        #define AI_STYLE_BOLD          1
-        #define AI_STYLE_ITALIC        2
-        #define AI_STYLE_UNDERLINE     4
-        #define AI_STYLE_STRIKEOUT     8
-        #define AI_STYLE_SUPERSCRIPT   16
-        #define AI_STYLE_SUBSCRIPT     32
-        #define AI_STYLE_SHADOW        64
-        #define AI_STYLE_SMALL_CAPS    128
-        #define AI_STYLE_ALL_CAPS      256
+#define AI_STYLE_BOLD          1
+#define AI_STYLE_ITALIC        2
+#define AI_STYLE_UNDERLINE     4
+#define AI_STYLE_STRIKEOUT     8
+#define AI_STYLE_SUPERSCRIPT   16
+#define AI_STYLE_SUBSCRIPT     32
+#define AI_STYLE_SHADOW        64
+#define AI_STYLE_SMALL_CAPS    128
+#define AI_STYLE_ALL_CAPS      256
 
-      };
-      int raw[8];
-    };
+		};
+		int raw[8];
+	};
 };
 /*
 Copyright (c) 2010 Igor Russkih

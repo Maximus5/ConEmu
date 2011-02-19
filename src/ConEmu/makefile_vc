@@ -125,6 +125,8 @@ $(INTDIR)\TrayIcon.obj \
 $(INTDIR)\VirtualConsole.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmuCheck.obj \
+$(INTDIR)\MAssert.obj \
+$(INTDIR)\Memory.obj \
 $(INTDIR)\RgnDetect.obj \
 $(INTDIR)\WinObjects.obj
 
@@ -310,6 +312,10 @@ $(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp
 $(INTDIR)\Common.obj: ..\common\Common.cpp ..\common\Common.hpp
 
 $(INTDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
+
+$(INTDIR)\Memory.obj: ..\common\Memory.cpp
+
+$(INTDIR)\MAssert.obj: ..\common\MAssert.cpp
 
 $(INTDIR)\RgnDetect.obj: ..\common\RgnDetect.cpp
 

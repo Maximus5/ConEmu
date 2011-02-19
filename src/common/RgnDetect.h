@@ -6,9 +6,11 @@
 typedef struct tag_CharAttr
 {
 	TODO("OPTIMIZE: Заменить бы битовые поля на один DWORD, в котором хранить некий общий ИД стиля, заполняемый при формировании буфера");
-	union {
+	union
+	{
 		// Собственно цвета/шрифты
-		struct {
+		struct
+		{
 			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
 			unsigned int nFontIndex : 8; // 0=normal, or combination {1=bold,2=italic,4=underline}, or 8=UCharMap
 			unsigned int crBackColor : 32; // Старший байт зарезервируем, вдруг для прозрачности понадобится
@@ -31,16 +33,16 @@ typedef struct tag_CharAttr
 	//
 	//DWORD dwAttrubutes; // может когда понадобятся дополнительные флаги...
 	//
-    ///**
-    // * Used exclusively by ConsoleView to append annotations to each character
-    // */
-    //AnnotationInfo annotationInfo;
+	///**
+	// * Used exclusively by ConsoleView to append annotations to each character
+	// */
+	//AnnotationInfo annotationInfo;
 } CharAttr;
 #include <poppack.h>
 
 inline bool operator==(const CharAttr& s1, const CharAttr& s2)
 {
-    return s1.All == s2.All;
+	return s1.All == s2.All;
 }
 
 
@@ -70,7 +72,8 @@ inline bool operator==(const CharAttr& s1, const CharAttr& s2)
 #define FR_UCHARMAPGLYPH  0x02000000 // Блок символов в "Unicode CharMap"
 
 
-typedef struct tag_DetectedDialog {
+typedef struct tag_DetectedDialog
+{
 	int   Count;
 	DWORD AllFlags;
 	SMALL_RECT Rects[MAX_DETECTED_DIALOGS];
@@ -81,150 +84,150 @@ typedef struct tag_DetectedDialog {
 
 class CRgnDetect
 {
-public:
-	// Initializers
-	CRgnDetect();
-	~CRgnDetect();
-	
-public:
-	// Public methods
-	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DWORD anMask=-1, DWORD anTest=-1) const;
-	DWORD GetDialog(DWORD nDlgID, SMALL_RECT* rc) const;
-	void PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF *apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
-	DWORD GetFlags() const;
-	// Methods for plugins
-	void PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF *apColors);
-	void OnWindowSizeChanged();
-	void OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion, const COLORREF *apColors);
-	BOOL InitializeSBI(const COLORREF *apColors);
-	void SetFarRect(SMALL_RECT *prcFarRect);
-	BOOL GetCharAttr(int x, int y, wchar_t& rc, CharAttr& ra);
-	// Sizes
-	int TextWidth();
-	int TextHeight();
+	public:
+		// Initializers
+		CRgnDetect();
+		~CRgnDetect();
 
-	//#ifdef _DEBUG
-	const DetectedDialogs *GetDetectedDialogsPtr() const;
-	//#endif	
-	
-protected:
-	// Private methods
-	void DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight=NULL, int *pnMostBottom=NULL);
-	bool FindDialog_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
-	bool FindDialog_TopRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
-	bool FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
-	bool FindDialog_Right(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
-	bool FindDialog_Any(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
-	bool FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY);
-	bool FindFrame_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nFrameX, int &nFrameY);
-	bool FindFrameTop_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostTop);
-	bool FindFrameTop_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostTop);
-	bool FindFrameBottom_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom);
-	bool FindFrameBottom_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom);
-	bool FindFrameRight_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight);
-	bool FindFrameRight_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight);
-	bool FindFrameLeft_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
-	bool FindFrameLeft_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
-	// Последний шанс
-	bool FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
-	// Сервисная
-	bool ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom);
-	int  MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder = false, bool bFindExterior = true, DWORD nFlags = -1);
-	bool ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr);
-	
+	public:
+		// Public methods
+		int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DWORD anMask=-1, DWORD anTest=-1) const;
+		DWORD GetDialog(DWORD nDlgID, SMALL_RECT* rc) const;
+		void PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const COLORREF *apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+		DWORD GetFlags() const;
+		// Methods for plugins
+		void PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const COLORREF *apColors);
+		void OnWindowSizeChanged();
+		void OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion, const COLORREF *apColors);
+		BOOL InitializeSBI(const COLORREF *apColors);
+		void SetFarRect(SMALL_RECT *prcFarRect);
+		BOOL GetCharAttr(int x, int y, wchar_t& rc, CharAttr& ra);
+		// Sizes
+		int TextWidth();
+		int TextHeight();
 
-protected:
-	// Members
-	bool    mb_SelfBuffers;
-	const CEFAR_INFO *mp_FarInfo;
-	const COLORREF *mp_Colors;
-	CONSOLE_SCREEN_BUFFER_INFO m_sbi;
-	bool   mb_BufferHeight;
+		//#ifdef _DEBUG
+		const DetectedDialogs *GetDetectedDialogsPtr() const;
+		//#endif
 
-	DWORD   /*mn_AllFlags,*/ mn_NextDlgId;
-	BOOL    mb_NeedPanelDetect;
-	SMALL_RECT mrc_LeftPanel, mrc_RightPanel;
+	protected:
+		// Private methods
+		void DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight=NULL, int *pnMostBottom=NULL);
+		bool FindDialog_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
+		bool FindDialog_TopRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
+		bool FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
+		bool FindDialog_Right(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
+		bool FindDialog_Any(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
+		bool FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY);
+		bool FindFrame_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nFrameX, int &nFrameY);
+		bool FindFrameTop_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostTop);
+		bool FindFrameTop_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostTop);
+		bool FindFrameBottom_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom);
+		bool FindFrameBottom_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom);
+		bool FindFrameRight_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight);
+		bool FindFrameRight_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight);
+		bool FindFrameLeft_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
+		bool FindFrameLeft_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
+		// Последний шанс
+		bool FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
+		// Сервисная
+		bool ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom);
+		int  MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder = false, bool bFindExterior = true, DWORD nFlags = -1);
+		bool ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr);
 
-	int     mn_DetectCallCount;
-	//struct {
-	//	int Count;
-	//	SMALL_RECT Rects[MAX_DETECTED_DIALOGS];
-	//	//bool bWasFrame[MAX_DETECTED_DIALOGS];
-	//	DWORD DlgFlags[MAX_DETECTED_DIALOGS];
-	//} 
-	DetectedDialogs m_DetectedDialogs;
-	DWORD mn_AllFlagsSaved; // чтобы не драться с другими нитями во время детекта
-	
-protected:
-	// Используется для собственноручного формирования буферов
-	wchar_t   *mpsz_Chars;
-	CharAttr  *mp_Attrs;
-	CharAttr  *mp_AttrsWork;
-	SMALL_RECT mrc_FarRect;
-	int mn_CurWidth, mn_CurHeight, mn_MaxCells;
-	bool mb_SBI_Loaded;
-	CharAttr mca_Table[0x100];
-	bool mb_TableCreated;
-	//void GetConsoleData(const CHAR_INFO *pCharInfo, const COLORREF *apColors, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 
-protected:
-	// Доп.переменные
-	int nUserBackIdx;
-	COLORREF crUserBack;
-	int nMenuBackIdx;
-	COLORREF crMenuTitleBack;
-	COLORREF crPanelsBorderBack, crPanelsBorderFore;
-	COLORREF crPanelsNumberBack, crPanelsNumberFore;
-	int nDlgBorderBackIdx, nDlgBorderForeIdx;
-	int nErrBorderBackIdx, nErrBorderForeIdx;
-	// Для детекта наличия PanelTabs (цвет кнопки [+])
-	int nPanelTabsBackIdx;
-	int nPanelTabsForeIdx;
-	BOOL bPanelTabsSeparate;
-	// При bUseColorKey Если панель погашена (или панели) то 
-	// 1. UserScreen под ним заменяется на crColorKey
-	// 2. а текст - на пробелы
-	// Проверять наличие KeyBar по настройкам (Keybar + CmdLine)
-	bool bShowKeyBar;
-	int nBottomLines;
-	// Проверять наличие MenuBar по настройкам
-	// Или может быть меню сейчас показано?
-	// 1 - при видимом сейчас или постоянно меню
-	bool bAlwaysShowMenuBar;
-	int nTopLines;
+	protected:
+		// Members
+		bool    mb_SelfBuffers;
+		const CEFAR_INFO_MAPPING *mp_FarInfo;
+		const COLORREF *mp_Colors;
+		CONSOLE_SCREEN_BUFFER_INFO m_sbi;
+		bool   mb_BufferHeight;
+
+		DWORD   /*mn_AllFlags,*/ mn_NextDlgId;
+		BOOL    mb_NeedPanelDetect;
+		SMALL_RECT mrc_LeftPanel, mrc_RightPanel;
+
+		int     mn_DetectCallCount;
+		//struct {
+		//	int Count;
+		//	SMALL_RECT Rects[MAX_DETECTED_DIALOGS];
+		//	//bool bWasFrame[MAX_DETECTED_DIALOGS];
+		//	DWORD DlgFlags[MAX_DETECTED_DIALOGS];
+		//}
+		DetectedDialogs m_DetectedDialogs;
+		DWORD mn_AllFlagsSaved; // чтобы не драться с другими нитями во время детекта
+
+	protected:
+		// Используется для собственноручного формирования буферов
+		wchar_t   *mpsz_Chars;
+		CharAttr  *mp_Attrs;
+		CharAttr  *mp_AttrsWork;
+		SMALL_RECT mrc_FarRect;
+		int mn_CurWidth, mn_CurHeight, mn_MaxCells;
+		bool mb_SBI_Loaded;
+		CharAttr mca_Table[0x100];
+		bool mb_TableCreated;
+		//void GetConsoleData(const CHAR_INFO *pCharInfo, const COLORREF *apColors, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+
+	protected:
+		// Доп.переменные
+		int nUserBackIdx;
+		COLORREF crUserBack;
+		int nMenuBackIdx;
+		COLORREF crMenuTitleBack;
+		COLORREF crPanelsBorderBack, crPanelsBorderFore;
+		COLORREF crPanelsNumberBack, crPanelsNumberFore;
+		int nDlgBorderBackIdx, nDlgBorderForeIdx;
+		int nErrBorderBackIdx, nErrBorderForeIdx;
+		// Для детекта наличия PanelTabs (цвет кнопки [+])
+		int nPanelTabsBackIdx;
+		int nPanelTabsForeIdx;
+		BOOL bPanelTabsSeparate;
+		// При bUseColorKey Если панель погашена (или панели) то
+		// 1. UserScreen под ним заменяется на crColorKey
+		// 2. а текст - на пробелы
+		// Проверять наличие KeyBar по настройкам (Keybar + CmdLine)
+		bool bShowKeyBar;
+		int nBottomLines;
+		// Проверять наличие MenuBar по настройкам
+		// Или может быть меню сейчас показано?
+		// 1 - при видимом сейчас или постоянно меню
+		bool bAlwaysShowMenuBar;
+		int nTopLines;
 };
 
 //#include <pshpack1.h>
 class CRgnRects
 {
-public:
-	int nRectCount;
-	#define MAX_RGN_RECTS MAX_DETECTED_DIALOGS // 20.
-	RECT  rcRect[MAX_RGN_RECTS]; // rcRect[0] - основной, rcRect[1...] - то что вычитается из rcRect[0]
-	DWORD nRectOper[MAX_RGN_RECTS]; // RGN_AND or RGN_DIFF
-/*	Current region state:
-	#define ERROR               0
-	#define NULLREGION          1
-	#define SIMPLEREGION        2
-	#define COMPLEXREGION       3
-	#define RGN_ERROR ERROR
-*/	int nRgnState;
-	
-	CRgnRects();
-	~CRgnRects();
+	public:
+		int nRectCount;
+#define MAX_RGN_RECTS MAX_DETECTED_DIALOGS // 20.
+		RECT  rcRect[MAX_RGN_RECTS]; // rcRect[0] - основной, rcRect[1...] - то что вычитается из rcRect[0]
+		DWORD nRectOper[MAX_RGN_RECTS]; // RGN_AND or RGN_DIFF
+		/*	Current region state:
+			#define ERROR               0
+			#define NULLREGION          1
+			#define SIMPLEREGION        2
+			#define COMPLEXREGION       3
+			#define RGN_ERROR ERROR
+		*/	int nRgnState;
 
-	// Сброс всего в NULLREGION
-	void Reset();
-	// Сбросить все прямоугольники и установить rcRect[0]
-	void Init(LPRECT prcInit);
-	// Combines the parts of rcRect[..] that are not part of prcAddDiff.
-	int Diff(LPRECT prcAddDiff); // RGN_AND or RGN_DIFF
-	int DiffSmall(SMALL_RECT *prcAddDiff); // RGN_AND or RGN_DIFF
-	// Скопировать ИЗ pRgn, вернуть true - если были отличия
-	bool LoadFrom(CRgnRects* pRgn);
-	
-/*	Service variables for nRgnState tesgins */
-	int nFieldMaxCells, nFieldWidth, nFieldHeight;
-	bool* pFieldCells;
+		CRgnRects();
+		~CRgnRects();
+
+		// Сброс всего в NULLREGION
+		void Reset();
+		// Сбросить все прямоугольники и установить rcRect[0]
+		void Init(LPRECT prcInit);
+		// Combines the parts of rcRect[..] that are not part of prcAddDiff.
+		int Diff(LPRECT prcAddDiff); // RGN_AND or RGN_DIFF
+		int DiffSmall(SMALL_RECT *prcAddDiff); // RGN_AND or RGN_DIFF
+		// Скопировать ИЗ pRgn, вернуть true - если были отличия
+		bool LoadFrom(CRgnRects* pRgn);
+
+		/*	Service variables for nRgnState tesgins */
+		int nFieldMaxCells, nFieldWidth, nFieldHeight;
+		bool* pFieldCells;
 };
 //#include <poppack.h>

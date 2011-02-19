@@ -1,5 +1,5 @@
 EXPORTS
 	LLKeybHook=LLKeybHook@12
-	ghKeyHook
-	gnVkWinFix
-	ghConEmuRoot
+	KeyHook
+	VkWinFix
+	ConEmuWnd

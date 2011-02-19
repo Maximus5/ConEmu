@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #define HEAPVAL //HeapValidate(GetProcessHeap(), 0, NULL);
 #else
-#define HEAPVAL 
+#define HEAPVAL
 #endif
 
 #ifndef __GNU__
@@ -55,22 +55,25 @@ SettingsRegistry::~SettingsRegistry()
 
 
 
-bool SettingsRegistry::OpenKey(HKEY inHKEY, const wchar_t *regPath, uint access)
+bool SettingsRegistry::OpenKey(HKEY inHKEY, const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
 {
 	bool res = false;
+
 	if (access == KEY_READ)
 		res = RegOpenKeyEx(inHKEY, regPath, 0, KEY_READ, &regMy) == ERROR_SUCCESS;
 	else
 		res = RegCreateKeyEx(inHKEY, regPath, 0, NULL, 0, access, 0, &regMy, 0) == ERROR_SUCCESS;
+
 	return res;
 }
-bool SettingsRegistry::OpenKey(const wchar_t *regPath, uint access)
+bool SettingsRegistry::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
 {
 	return OpenKey(HKEY_CURRENT_USER, regPath, access);
 }
 void SettingsRegistry::CloseKey()
 {
-	if (regMy) {
+	if (regMy)
+	{
 		RegCloseKey(regMy);
 		regMy = NULL;
 	}
@@ -81,25 +84,35 @@ void SettingsRegistry::CloseKey()
 bool SettingsRegistry::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 {
 	_ASSERTE(nSize>0);
+
 	if (RegQueryValueEx(regMy, regName, NULL, NULL, (LPBYTE)value, &nSize) == ERROR_SUCCESS)
 		return true;
+
 	return false;
 }
 // После вызова ЭТОЙ функции - про старое значение в *value строго забываем
 bool SettingsRegistry::Load(const wchar_t *regName, wchar_t **value)
 {
 	DWORD len = 0;
+
 	if (*value) {free(*value); *value = NULL;}
-	if (RegQueryValueExW(regMy, regName, NULL, NULL, NULL, &len) == ERROR_SUCCESS && len) {
+
+	if (RegQueryValueExW(regMy, regName, NULL, NULL, NULL, &len) == ERROR_SUCCESS && len)
+	{
 		int nChLen = len/2;
 		*value = (wchar_t*)malloc((nChLen+2)*sizeof(wchar_t));
 		(*value)[nChLen] = 0; (*value)[nChLen+1] = 0;
-		if (RegQueryValueExW(regMy, regName, NULL, NULL, (LPBYTE)(*value), &len) == ERROR_SUCCESS) {
+
+		if (RegQueryValueExW(regMy, regName, NULL, NULL, (LPBYTE)(*value), &len) == ERROR_SUCCESS)
+		{
 			return true;
 		}
-	} else {
+	}
+	else
+	{
 		*value = (wchar_t*)malloc(sizeof(wchar_t)*2);
 	}
+
 	(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
 	return false;
 }
@@ -108,13 +121,18 @@ bool SettingsRegistry::Load(const wchar_t *regName, wchar_t *value, int maxLen)
 {
 	_ASSERTE(maxLen>1);
 	DWORD len = 0, dwType = 0;
-	if (RegQueryValueExW(regMy, regName, NULL, &dwType, NULL, &len) == ERROR_SUCCESS && dwType == REG_SZ) {
+
+	if (RegQueryValueExW(regMy, regName, NULL, &dwType, NULL, &len) == ERROR_SUCCESS && dwType == REG_SZ)
+	{
 		len = maxLen*2; // max size in BYTES
-		if (RegQueryValueExW(regMy, regName, NULL, NULL, (LPBYTE)value, &len) == ERROR_SUCCESS) {
+
+		if (RegQueryValueExW(regMy, regName, NULL, NULL, (LPBYTE)value, &len) == ERROR_SUCCESS)
+		{
 			value[maxLen-1] = 0; // на всякий случай, чтобы ASCIIZ был однозначно
 			return true;
 		}
 	}
+
 	return false;
 }
 
@@ -130,11 +148,12 @@ void SettingsRegistry::Delete(const wchar_t *regName)
 void SettingsRegistry::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize)
 {
 	_ASSERTE(value && nSize);
-	RegSetValueEx(regMy, regName, NULL, nType, (LPBYTE)value, nSize); 
+	RegSetValueEx(regMy, regName, NULL, nType, (LPBYTE)value, nSize);
 }
 void SettingsRegistry::Save(const wchar_t *regName, const wchar_t *value)
 {
-	if (!value) value = _T(""); // сюда мог придти и NULL
+	if (!value) value = _T("");  // сюда мог придти и NULL
+
 	RegSetValueEx(regMy, regName, NULL, REG_SZ, (LPBYTE)value, (lstrlenW(value)+1) * sizeof(wchar_t));
 }
 
@@ -154,6 +173,8 @@ SettingsXML::SettingsXML()
 	lstrcpy(Type, L"[xml]");
 	mb_Modified = false;
 	mi_Level = 0;
+	mb_Empty = false;
+	mb_KeyEmpty = false;
 }
 SettingsXML::~SettingsXML()
 {
@@ -164,22 +185,24 @@ bool SettingsXML::IsXmlAllowed()
 {
 	HRESULT hr;
 	IXMLDOMDocument* pFile = NULL;
-	
-	hr = CoInitialize(NULL); 
-	hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, 
-	       IID_IXMLDOMDocument, (void**)&pFile);
-	if (FAILED(hr) || !pFile) {
+	hr = CoInitialize(NULL);
+	hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER,
+	                      IID_IXMLDOMDocument, (void**)&pFile);
+
+	if (FAILED(hr) || !pFile)
+	{
 		wchar_t szErr[255];
-		wsprintf(szErr, L"XML setting file will be not used.\n\nCan't create IID_IXMLDOMDocument!\nErrCode=0x%08X", (DWORD)hr);
+		_wsprintf(szErr, SKIPLEN(countof(szErr))
+		          L"XML setting file will be not used.\n\nCan't create IID_IXMLDOMDocument!\nErrCode=0x%08X", (DWORD)hr);
 		MBoxA(szErr);
 		return false;
 	}
-	
+
 	pFile->Release();
 	return true;
 }
 
-bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
+bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
 {
 	bool lbRc = false;
 	HRESULT hr = S_OK;
@@ -193,25 +216,29 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
 	IXMLDOMNode* pChild = NULL;
 	VARIANT vt; VariantInit(&vt);
 	bool bAllowCreate = (access & KEY_WRITE) == KEY_WRITE;
-	
 	CloseKey(); // на всякий
-	
+
 	if (!regPath || !*regPath)
 	{
 		return false;
 	}
-	
+
 	HANDLE hFile = NULL;
 	DWORD dwAccess = GENERIC_READ;
+
 	if ((access & KEY_WRITE) == KEY_WRITE)
 		dwAccess |= GENERIC_WRITE;
-	LPWSTR pszXmlFile = gConEmu.ConEmuXml();
+
+	LPWSTR pszXmlFile = gpConEmu->ConEmuXml();
+
 	if (!pszXmlFile || !*pszXmlFile)
 	{
 		return false;
 	}
-	hFile = CreateFile ( pszXmlFile, dwAccess, FILE_SHARE_READ|FILE_SHARE_WRITE,
-		NULL, OPEN_EXISTING, 0, 0 );
+
+	hFile = CreateFile(pszXmlFile, dwAccess, FILE_SHARE_READ|FILE_SHARE_WRITE,
+	                   NULL, OPEN_EXISTING, 0, 0);
+
 	// XML-файл отсутсвует
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
@@ -219,79 +246,111 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
 	}
 	else
 	{
+		BY_HANDLE_FILE_INFORMATION bfi = {0};
+		if (GetFileInformationByHandle(hFile, &bfi))
+			mb_Empty = (bfi.nFileSizeHigh == 0 && bfi.nFileSizeLow == 0);
 		CloseHandle(hFile); hFile = NULL;
+		if (mb_Empty && bAllowCreate)
+		{
+			hFile = CreateFile(pszXmlFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+	                   NULL, OPEN_EXISTING, 0, 0);
+			if (hFile != INVALID_HANDLE_VALUE)
+			{
+				LPCSTR pszDefault = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<key name=\"Software\">\r\n\t<key name=\"ConEmu\">\r\n\t</key>\r\n</key>\r\n";
+				DWORD nLen = lstrlenA(pszDefault);
+				WriteFile(hFile, pszDefault, nLen, &nLen, NULL);
+				CloseHandle(hFile);
+			}
+			hFile = NULL;
+		}
 	}
-	
+
+	if (mb_Empty && !bAllowCreate)
+		return false;
+
 	SAFETRY
 	{
-		hr = CoInitialize(NULL); 
-		hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, 
-		       IID_IXMLDOMDocument, (void**)&mp_File);
+		hr = CoInitialize(NULL);
+		hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER,
+		IID_IXMLDOMDocument, (void**)&mp_File);
+
 		if (FAILED(hr) || !mp_File)
 		{
-			wsprintf(szErr, L"Can't create IID_IXMLDOMDocument!\nErrCode=0x%08X", (DWORD)hr);
+			_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create IID_IXMLDOMDocument!\nErrCode=0x%08X", (DWORD)hr);
 			goto wrap;
 		}
+
 		hr = mp_File->put_preserveWhiteSpace(VARIANT_TRUE);
 		hr = mp_File->put_async(VARIANT_FALSE);
-		
+
 		// Загрузить xml-ку
 		bSuccess = VARIANT_FALSE;
 		vt.vt = VT_BSTR; vt.bstrVal = ::SysAllocString(pszXmlFile);
 		hr = mp_File->load(vt, &bSuccess);
 		VariantClear(&vt);
-		if (FAILED(hr) || !bSuccess)
+
+		if (hr == S_FALSE)
 		{
-			wsprintf(szErr, L"Failed to load ConEmu.xml!\nHR=0x%08X\n", (DWORD)hr);
+			mb_Empty = true; // Файл пуст (может только заголовок?)
+		}
+		else if (FAILED(hr) || !bSuccess)
+		{
+			_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Failed to load ConEmu.xml!\nHR=0x%08X\n", (DWORD)hr);
 			hr = mp_File->get_parseError(&pErr);
+
 			if (pErr)
 			{
 				long errorCode = 0; // Contains the error code of the last parse error. Read-only.
 				long line = 0; // Specifies the line number that contains the error. Read-only.
 				long linepos  = 0; // Contains the character position within the line where the error occurred. Read-only.
- 				hr = pErr->get_errorCode(&errorCode);
- 				hr = pErr->get_line(&line);
- 				hr = pErr->get_linepos(&linepos);
- 				wsprintf(szErr+lstrlen(szErr), L"XmlErrCode=%i, Line=%i, Pos=%i", errorCode, line, linepos);
+				hr = pErr->get_errorCode(&errorCode);
+				hr = pErr->get_line(&line);
+				hr = pErr->get_linepos(&linepos);
+				wsprintf(szErr+lstrlen(szErr), L"XmlErrCode=%i, Line=%i, Pos=%i", errorCode, line, linepos);
 			}
+
 			goto wrap;
 		}
-		
+
 		hr = mp_File->QueryInterface(IID_IXMLDOMNode, (void **)&pKey);
+
 		if (FAILED(hr))
 		{
-			wsprintf(szErr, L"XML: Root node not found!\nErrCode=0x%08X", (DWORD)hr);
+			_wsprintf(szErr, SKIPLEN(countof(szErr)) L"XML: Root node not found!\nErrCode=0x%08X", (DWORD)hr);
 			goto wrap;
 		}
-		
+
 		mi_Level = 0;
-		while (*regPath)
+
+		while(*regPath)
 		{
 			// Получить следующий токен
 			psz = wcschr(regPath, L'\\');
+
 			if (!psz) psz = regPath + lstrlen(regPath);
+
 			lstrcpyn(szName, regPath, psz-regPath+1);
-			
 			// Найти в структуре XML
 			pChild = FindItem(pKey, L"key", szName, bAllowCreate);
 			pKey->Release();
 			pKey = pChild; pChild = NULL;
 			mi_Level++;
-			
+
 			if (!pKey)
 			{
 				if (bAllowCreate)
 				{
-					wsprintf(szErr, L"XML: Can't create key <%s>!", szName);
+					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"XML: Can't create key <%s>!", szName);
 				}
 				else
 				{
-					//wsprintf(szErr, L"XML: key <%s> not found!", szName);
+					//_wsprintf(szErr, SKIPLEN(countof(szErr)) L"XML: key <%s> not found!", szName);
 					szErr[0] = 0; // ошибку не показывать - настройки по умолчанию
 				}
+
 				goto wrap;
 			}
-			
+
 			if (*psz == L'\\')
 			{
 				regPath = psz + 1;
@@ -302,26 +361,38 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
 			}
 		}
 
-		// Нашли, запомнили	
+		// Нашли, запомнили
 		mp_Key = pKey; pKey = NULL;
-		
+
+		if (mp_Key)
+		{
+			SYSTEMTIME st; wchar_t szTime[32];
+			GetLocalTime(&st);
+			_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%04i-%02i-%02i %02i:%02i:%02i",
+				st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+			SetAttr(mp_Key, L"modified", szTime);
+		}
+
 		lbRc = true;
-	
-	} SAFECATCH {
+
+	} SAFECATCH
+	{
 		lstrcpy(szErr, L"Exception in SettingsXML::OpenKey");
 		lbRc = false;
 	}
-
 wrap:
 
 	if (pErr) { pErr->Release(); pErr = NULL; }
+
 	if (pChild) { pChild->Release(); pChild = NULL; }
+
 	if (pKey) { pKey->Release(); pKey = NULL; }
-	
-	if (!lbRc && szErr[0])
+
+	if (!lbRc && szErr[0] && !abSilent)
 	{
 		MBoxA(szErr);
 	}
+
 	return lbRc;
 }
 
@@ -330,23 +401,24 @@ void SettingsXML::CloseKey()
 	HRESULT hr = S_OK;
 	HANDLE hFile = NULL;
 	bool bCanSave = false;
-
 	mi_Level = 0;
 
 	if (mb_Modified && mp_File)
 	{
-		LPWSTR pszXmlFile = gConEmu.ConEmuXml();
+		LPWSTR pszXmlFile = gpConEmu->ConEmuXml();
+
 		if (pszXmlFile && pszXmlFile)
 		{
-			hFile = CreateFile ( pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-				NULL, OPEN_EXISTING, 0, 0 );
+			hFile = CreateFile(pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+			                   NULL, OPEN_EXISTING, 0, 0);
+
 			// XML-файл отсутсвует, или ошибка доступа
 			if (hFile == INVALID_HANDLE_VALUE)
 			{
 				DWORD dwErrCode = GetLastError();
 				wchar_t szErr[MAX_PATH*2];
-				wsprintf(szErr, L"Can't open file for writing!\n%s\nErrCode=0x%08X",
-					pszXmlFile, dwErrCode);
+				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't open file for writing!\n%s\nErrCode=0x%08X",
+				          pszXmlFile, dwErrCode);
 				MBoxA(szErr);
 			}
 			else
@@ -358,16 +430,19 @@ void SettingsXML::CloseKey()
 			if (bCanSave)
 			{
 				VARIANT vt; vt.vt = VT_BSTR; vt.bstrVal = ::SysAllocString(pszXmlFile);
-
 				hr = mp_File->save(vt);
-
 				VariantClear(&vt);
 			}
 		}
 	}
+
 	if (mp_Key) { mp_Key->Release(); mp_Key = NULL; }
+
 	if (mp_File) { mp_File->Release(); mp_File = NULL; }
+
 	mb_Modified = false;
+	mb_Empty = false;
+	mb_KeyEmpty = false;
 }
 
 BSTR SettingsXML::GetAttr(IXMLDOMNode* apNode, const wchar_t* asName)
@@ -375,11 +450,11 @@ BSTR SettingsXML::GetAttr(IXMLDOMNode* apNode, const wchar_t* asName)
 	HRESULT hr = S_OK;
 	BSTR bsValue = NULL;
 	IXMLDOMNamedNodeMap* pAttrs = NULL;
-
 	hr = apNode->get_attributes(&pAttrs);
-	if (SUCCEEDED(hr) && pAttrs) {
-		bsValue = GetAttr(apNode, pAttrs, asName);
 
+	if (SUCCEEDED(hr) && pAttrs)
+	{
+		bsValue = GetAttr(apNode, pAttrs, asName);
 		pAttrs->Release(); pAttrs = NULL;
 	}
 
@@ -391,12 +466,12 @@ BSTR SettingsXML::GetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 	HRESULT hr = S_OK;
 	IXMLDOMNode *pValue = NULL;
 	BSTR bsText = NULL;
-
 	bsText = ::SysAllocString(asName);
 	hr = apAttrs->getNamedItem(bsText, &pValue);
 	::SysFreeString(bsText); bsText = NULL;
 
-	if (SUCCEEDED(hr) && pValue) {
+	if (SUCCEEDED(hr) && pValue)
+	{
 		hr = pValue->get_text(&bsText);
 		pValue->Release(); pValue = NULL;
 	}
@@ -409,11 +484,11 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, const wchar_t* asName, const wcha
 	bool lbRc = false;
 	HRESULT hr = S_OK;
 	IXMLDOMNamedNodeMap* pAttrs = NULL;
-
 	hr = apNode->get_attributes(&pAttrs);
-	if (SUCCEEDED(hr) && pAttrs) {
-		lbRc = SetAttr(apNode, pAttrs, asName, asValue);
 
+	if (SUCCEEDED(hr) && pAttrs)
+	{
+		lbRc = SetAttr(apNode, pAttrs, asName, asValue);
 		pAttrs->Release(); pAttrs = NULL;
 	}
 
@@ -427,37 +502,34 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 	IXMLDOMNode *pValue = NULL;
 	IXMLDOMAttribute *pIXMLDOMAttribute = NULL;
 	BSTR bsText = NULL;
-
 	bsText = ::SysAllocString(asName);
 	hr = apAttrs->getNamedItem(bsText, &pValue);
-	
-	if (FAILED(hr) || !pValue) {
+
+	if (FAILED(hr) || !pValue)
+	{
 		hr = mp_File->createAttribute(bsText, &pIXMLDOMAttribute);
 		::SysFreeString(bsText); bsText = NULL;
 
-		if(SUCCEEDED(hr) && pIXMLDOMAttribute)
+		if (SUCCEEDED(hr) && pIXMLDOMAttribute)
 		{
 			VARIANT vtValue; vtValue.vt = VT_BSTR; vtValue.bstrVal = ::SysAllocString(asValue);
 			hr = pIXMLDOMAttribute->put_nodeValue(vtValue);
 			VariantClear(&vtValue);
-
 			hr = apAttrs->setNamedItem(pIXMLDOMAttribute, &pValue);
 			lbRc = SUCCEEDED(hr);
 		}
-
-	} else
-	if (SUCCEEDED(hr) && pValue) {
+	}
+	else if (SUCCEEDED(hr) && pValue)
+	{
 		::SysFreeString(bsText); bsText = NULL;
-
 		bsText = ::SysAllocString(asValue);
-
 		hr = pValue->put_text(bsText);
 		lbRc = SUCCEEDED(hr);
-
 		::SysFreeString(bsText); bsText = NULL;
 	}
 
 	if (pValue) { pValue->Release(); pValue = NULL; }
+
 	if (pIXMLDOMAttribute) { pIXMLDOMAttribute->Release(); pIXMLDOMAttribute = NULL; }
 
 	return lbRc;
@@ -470,7 +542,9 @@ void SettingsXML::AppendIndent(IXMLDOMNode* apFrom, int nLevel)
 
 	int nMax = min(32,nLevel);
 	wchar_t szIndent[34];
-	for (int i=0; i<nMax; i++) szIndent[i] = L'\t';
+
+	for(int i=0; i<nMax; i++) szIndent[i] = L'\t';
+
 	szIndent[nMax] = 0;
 	BSTR bsText = ::SysAllocString(szIndent);
 	AppendText(apFrom, bsText);
@@ -488,16 +562,21 @@ void SettingsXML::AppendText(IXMLDOMNode* apFrom, BSTR asText)
 {
 	if (!asText || !*asText)
 		return;
+
 	VARIANT vtType;
 	IXMLDOMNode* pChild = NULL;
 	IXMLDOMNode *pIXMLDOMNode = NULL;
 	vtType.vt = VT_I4; vtType.lVal = NODE_TEXT;
 	HRESULT hr = mp_File->createNode(vtType, L"", L"", &pChild);
-	if (SUCCEEDED(hr) && pChild) {
+
+	if (SUCCEEDED(hr) && pChild)
+	{
 		hr = pChild->put_text(asText);
 		hr = apFrom->appendChild(pChild, &pIXMLDOMNode);
 		pChild->Release(); pChild = NULL;
-		if (SUCCEEDED(hr) && pIXMLDOMNode) {
+
+		if (SUCCEEDED(hr) && pIXMLDOMNode)
+		{
 			pIXMLDOMNode->Release(); pIXMLDOMNode = NULL;
 		}
 	}
@@ -513,69 +592,128 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 	IXMLDOMNode *pIXMLDOMNode = NULL;
 	IXMLDOMNode *pName = NULL;
 	BSTR bsText = NULL;
-
+	BOOL lbEmpty = TRUE;
 
 	// Получить все дочерние элементы нужного типа
-	bsText = ::SysAllocString(asType);
-	hr = apFrom->selectNodes(bsText, &pList);
-	::SysFreeString(bsText); bsText = NULL;
+	if (apFrom == NULL)
+	{
+		hr = S_FALSE;
+	}
+	else
+	{
+		bsText = ::SysAllocString(asType);
+		hr = apFrom->selectNodes(bsText, &pList);
+		::SysFreeString(bsText); bsText = NULL;
+	}
 
-	if (SUCCEEDED(hr) && pList) {
+	if (SUCCEEDED(hr) && pList)
+	{
 		hr = pList->reset();
-		while ((hr = pList->nextNode(&pIXMLDOMNode)) == S_OK && pIXMLDOMNode) {
+
+		while((hr = pList->nextNode(&pIXMLDOMNode)) == S_OK && pIXMLDOMNode)
+		{
+			lbEmpty = FALSE;
 			hr = pIXMLDOMNode->get_attributes(&pAttrs);
-			if (SUCCEEDED(hr) && pAttrs) {
+
+			if (SUCCEEDED(hr) && pAttrs)
+			{
 				bsText = GetAttr(pIXMLDOMNode, pAttrs, L"name");
-				
-				if (bsText) {
-					if (lstrcmpi(bsText, asName) == 0) {
+
+				if (bsText)
+				{
+					if (lstrcmpi(bsText, asName) == 0)
+					{
 						::SysFreeString(bsText); bsText = NULL;
 						pChild = pIXMLDOMNode; pIXMLDOMNode = NULL;
 						break;
 					}
+
 					::SysFreeString(bsText); bsText = NULL;
 				}
 			}
-			
+
 			pIXMLDOMNode->Release(); pIXMLDOMNode = NULL;
 		}
-		pList->Release(); pList = NULL;
+
+		pList->Release();
+		//pList = NULL; -- для отладки
 	}
 	
-	
-	if (!pChild && abAllowCreate) {
+	if (lbEmpty && abAllowCreate && (asType[0] == L'k'))
+	{
+		bsText = ::SysAllocString(L"value");
+		hr = apFrom->selectNodes(bsText, &pList);
+		::SysFreeString(bsText); bsText = NULL;
+		if (SUCCEEDED(hr) && pList)
+		{
+			hr = pList->reset();
+			if ((hr = pList->nextNode(&pIXMLDOMNode)) == S_OK && pIXMLDOMNode)
+			{
+				lbEmpty = FALSE;
+				pIXMLDOMNode->Release(); pIXMLDOMNode = NULL;
+			}
+			pList->Release();
+			//pList = NULL; -- для отладки
+		}
+	}
+
+	if (!pChild && abAllowCreate)
+	{
 		VARIANT vtType; vtType.vt = VT_I4;
 		vtType.lVal = NODE_ELEMENT;
 		bsText = ::SysAllocString(asType);
 		hr = mp_File->createNode(vtType, bsText, L"", &pChild);
 		::SysFreeString(bsText); bsText = NULL;
 
-		if (SUCCEEDED(hr) && pChild) {
-			if (SetAttr(pChild, L"name", asName)) {
-				if (asType[0] == L'k') {
+		if (SUCCEEDED(hr) && pChild)
+		{
+			if (SetAttr(pChild, L"name", asName))
+			{
+				if (asType[0] == L'k')
+				{
 					AppendNewLine(pChild);
-					AppendIndent(pChild, mi_Level+1);
+					mb_KeyEmpty = true;
 				}
 
-				AppendIndent(apFrom, 1);
-
+				if (asType[0] == L'k')
+				{
+					//if (mb_KeyEmpty)
+					//AppendIndent(apFrom, lbEmpty ? (mi_Level-1) : mi_Level);
+					AppendIndent(apFrom, (mi_Level-1));
+				}
+				else if (mb_KeyEmpty)
+				{
+					AppendIndent(apFrom, !lbEmpty ? (mi_Level-1) : mi_Level);
+				}
+				else
+				{
+					AppendIndent(apFrom, 1);
+				}
 				hr = apFrom->appendChild(pChild, &pIXMLDOMNode);
 				pChild->Release(); pChild = NULL;
-				if (FAILED(hr)) {
+
+				if (FAILED(hr))
+				{
 					pAttrs->Release(); pAttrs = NULL;
-				} else {
+				}
+				else
+				{
 					pChild = pIXMLDOMNode;
 					pIXMLDOMNode = NULL;
 				}
 
 				AppendNewLine(apFrom);
 				AppendIndent(apFrom, mi_Level-1);
-			} else {
+				if ((asType[0] != L'k') && mb_KeyEmpty)
+					mb_KeyEmpty = false;
+			}
+			else
+			{
 				pChild->Release(); pChild = NULL;
 			}
 		}
 	}
-	
+
 	return pChild;
 }
 
@@ -592,19 +730,22 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 	BSTR bsType = NULL;
 	BSTR bsData = NULL;
 	size_t nLen = 0;
-	
+
 	if (*value) {free(*value); *value = NULL;}
-	
-	pChild = FindItem(mp_Key, L"value", regName, false);
+
+	if (mp_Key)
+		pChild = FindItem(mp_Key, L"value", regName, false);
+
 	if (!pChild)
 		return false;
 
 	hr = pChild->get_attributes(&pAttrs);
+
 	if (SUCCEEDED(hr) && pAttrs)
 	{
 		bsType = GetAttr(pChild, pAttrs, L"type");
 	}
-	
+
 	if (SUCCEEDED(hr) && bsType)
 	{
 		if (!lstrcmpi(bsType, L"multi"))
@@ -614,21 +755,23 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 			//	<line data="C:\Far\Far.exe"/>
 			//	<line data="cmd"/>
 			//</value>
-			
 			wchar_t *pszData = NULL, *pszCur = NULL;
 			size_t nMaxLen = 0, nCurLen = 0;
 			long nCount = 0;
 
 			if (pAttrs) { pAttrs->Release(); pAttrs = NULL; }
-			
+
 			// Получить все дочерние элементы нужного типа
 			bsData = ::SysAllocString(L"line");
 			hr = pChild->selectNodes(bsData, &pList);
 			::SysFreeString(bsData); bsData = NULL;
-			
-			if (SUCCEEDED(hr) && pList) {
+
+			if (SUCCEEDED(hr) && pList)
+			{
 				hr = pList->get_length(&nCount);
-				if (SUCCEEDED(hr) && nCount > 0) {
+
+				if (SUCCEEDED(hr) && nCount > 0)
+				{
 					HEAPVAL;
 					nMaxLen = ((MAX_PATH+1) * nCount) + 1;
 					pszData = (wchar_t*)malloc(nMaxLen * sizeof(wchar_t));
@@ -638,21 +781,29 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 					HEAPVAL;
 				}
 			}
-			
-			if (SUCCEEDED(hr) && pList) {
+
+			if (SUCCEEDED(hr) && pList)
+			{
 				hr = pList->reset();
-				while ((hr = pList->nextNode(&pNode)) == S_OK && pNode) {
+
+				while((hr = pList->nextNode(&pNode)) == S_OK && pNode)
+				{
 					bsData = GetAttr(pNode, L"data");
 					pNode->Release(); pNode = NULL;
-					
-					if (SUCCEEDED(hr) && bsData) {
+
+					if (SUCCEEDED(hr) && bsData)
+					{
 						nLen = lstrlen(bsData) + 1;
-						if ((nCurLen + nLen) > nMaxLen) {
+
+						if ((nCurLen + nLen) > nMaxLen)
+						{
 							// Нужно пересоздать!
 							nMaxLen = nCurLen + nLen + MAX_PATH + 1;
 							wchar_t *psz = (wchar_t*)malloc(nMaxLen * sizeof(wchar_t));
 							_ASSERTE(psz);
-							if (!psz) break; // Не удалось выделить память!
+
+							if (!psz) break;  // Не удалось выделить память!
+
 							wmemmove(psz, pszData, nCurLen);
 							pszCur = psz + (pszCur - pszData);
 							HEAPVAL;
@@ -660,28 +811,32 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 							pszData = psz;
 							HEAPVAL;
 						}
+
 						lstrcpy(pszCur, bsData);
 						pszCur += nLen; // указатель - на место для следующей строки
 						nCurLen += nLen;
 						*pszCur = 0; // ASCIIZZ
 						HEAPVAL;
-
 						::SysFreeString(bsData); bsData = NULL;
 					}
 				}
+
 				pList->Release(); pList = NULL;
 			}
-			
+
 			// значит что-то прочитать удалось
-			if (pszData) {
+			if (pszData)
+			{
 				*value = pszData;
 				lbRc = true;
 			}
-			
-		} else if (!lstrcmpi(bsType, L"string")) {
+		}
+		else if (!lstrcmpi(bsType, L"string"))
+		{
 			bsData = GetAttr(pChild, pAttrs, L"data");
-			
-			if (SUCCEEDED(hr) && bsData) {
+
+			if (SUCCEEDED(hr) && bsData)
+			{
 				nLen = lstrlen(bsData);
 				*value = (wchar_t*)malloc((nLen+2)*sizeof(wchar_t));
 				lstrcpy(*value, bsData);
@@ -690,21 +845,25 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 				lbRc = true;
 			}
 		}
-		
+
 		// Все остальные типы - не интересуют. Нам нужны только строки
 	}
-	
+
 	if (bsType) { ::SysFreeString(bsType); bsType = NULL; }
+
 	if (bsData) { ::SysFreeString(bsData); bsData = NULL; }
+
 	if (pChild) { pChild->Release(); pChild = NULL; }
+
 	if (pAttrs) { pAttrs->Release(); pAttrs = NULL; }
-	
-	if (!lbRc) {
+
+	if (!lbRc)
+	{
 		_ASSERTE(*value == NULL);
 		*value = (wchar_t*)malloc(sizeof(wchar_t)*2);
 		(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
 	}
-		
+
 	return lbRc;
 }
 // А эта функция, если значения нет (или тип некорректный) value НЕ трогает
@@ -713,14 +872,19 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t *value, int maxLen)
 	_ASSERTE(maxLen>1);
 	bool lbRc = false;
 	wchar_t* pszValue = NULL;
-	if (Load(regName, &pszValue)) {
+
+	if (Load(regName, &pszValue))
+	{
 		if (pszValue)
 			lstrcpyn(value, pszValue, maxLen);
 		else
 			value[0] = 0;
+
 		lbRc = true;
 	}
+
 	if (pszValue) free(pszValue);
+
 	return lbRc;
 }
 bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
@@ -733,116 +897,159 @@ bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 	IXMLDOMNode *pNode = NULL;
 	BSTR bsType = NULL;
 	BSTR bsData = NULL;
-	
+
 	if (!value || !nSize)
 		return false;
-	
-	pChild = FindItem(mp_Key, L"value", regName, false);
+
+	if (mp_Key)
+		pChild = FindItem(mp_Key, L"value", regName, false);
+
 	if (!pChild)
 		return false;
 
 	hr = pChild->get_attributes(&pAttrs);
-	if (SUCCEEDED(hr) && pAttrs) {
+
+	if (SUCCEEDED(hr) && pAttrs)
+	{
 		bsType = GetAttr(pChild, pAttrs, L"type");
 	}
-	
-	if (SUCCEEDED(hr) && bsType) {
+
+	if (SUCCEEDED(hr) && bsType)
+	{
 		bsData = GetAttr(pChild, pAttrs, L"data");
 	}
 
-	if (SUCCEEDED(hr) && bsData) {
-		
-		if (!lstrcmpi(bsType, L"string")) {
-			#ifdef _DEBUG
+	if (SUCCEEDED(hr) && bsData)
+	{
+		if (!lstrcmpi(bsType, L"string"))
+		{
+#ifdef _DEBUG
 			DWORD nLen = lstrlen(bsData) + 1;
-			#endif
+#endif
 			DWORD nMaxLen = nSize / 2;
 			lstrcpyn((wchar_t*)value, bsData, nMaxLen);
 			lbRc = true;
-
-		} else if (!lstrcmpi(bsType, L"ulong")) {
+		}
+		else if (!lstrcmpi(bsType, L"ulong"))
+		{
 			wchar_t* pszEnd = NULL;
 			DWORD lVal = wcstoul(bsData, &pszEnd, 10);
+
 			if (nSize > 4) nSize = 4;
-			if (pszEnd && pszEnd != bsData) {
+
+			if (pszEnd && pszEnd != bsData)
+			{
 				memmove(value, &lVal, nSize);
 				lbRc = true;
 			}
-		
-		} else if (!lstrcmpi(bsType, L"long")) {
+		}
+		else if (!lstrcmpi(bsType, L"long"))
+		{
 			wchar_t* pszEnd = NULL;
 			int lVal = wcstol(bsData, &pszEnd, 10);
+
 			if (nSize > 4) nSize = 4;
-			if (pszEnd && pszEnd != bsData) {
+
+			if (pszEnd && pszEnd != bsData)
+			{
 				memmove(value, &lVal, nSize);
 				lbRc = true;
 			}
-
-		} else if (!lstrcmpi(bsType, L"dword")) {
+		}
+		else if (!lstrcmpi(bsType, L"dword"))
+		{
 			wchar_t* pszEnd = NULL;
 			DWORD lVal = wcstoul(bsData, &pszEnd, 16);
+
 			if (nSize > 4) nSize = 4;
-			if (pszEnd && pszEnd != bsData) {
+
+			if (pszEnd && pszEnd != bsData)
+			{
 				memmove(value, &lVal, nSize);
 				lbRc = true;
 			}
-			
-		} else if (!lstrcmpi(bsType, L"hex")) {
+		}
+		else if (!lstrcmpi(bsType, L"hex"))
+		{
 			wchar_t* pszCur = bsData;
 			wchar_t* pszEnd = NULL;
 			LPBYTE pCur = value;
 			wchar_t cHex;
 			DWORD lVal = 0;
-			
 			lbRc = true;
-			while (*pszCur && nSize) {
+
+			while(*pszCur && nSize)
+			{
 				lVal = 0;
-				
 				cHex = *(pszCur++);
-				if (cHex >= L'0' && cHex <= L'9') {
+
+				if (cHex >= L'0' && cHex <= L'9')
+				{
 					lVal = cHex - L'0';
-				} else if (cHex >= L'a' && cHex <= L'f') {
+				}
+				else if (cHex >= L'a' && cHex <= L'f')
+				{
 					lVal = cHex - L'a' + 10;
-				} else if (cHex >= L'A' && cHex <= L'F') {
+				}
+				else if (cHex >= L'A' && cHex <= L'F')
+				{
 					lVal = cHex - L'A' + 10;
-				} else {
+				}
+				else
+				{
 					lbRc = false; break;
 				}
-				
+
 				cHex = *(pszCur++);
-				if (cHex && cHex != L',') {
+
+				if (cHex && cHex != L',')
+				{
 					lVal = lVal << 4;
-					if (cHex >= L'0' && cHex <= L'9') {
+
+					if (cHex >= L'0' && cHex <= L'9')
+					{
 						lVal |= cHex - L'0';
-					} else if (cHex >= L'a' && cHex <= L'f') {
+					}
+					else if (cHex >= L'a' && cHex <= L'f')
+					{
 						lVal |= cHex - L'a' + 10;
-					} else if (cHex >= L'A' && cHex <= L'F') {
+					}
+					else if (cHex >= L'A' && cHex <= L'F')
+					{
 						lVal |= cHex - L'A' + 10;
-					} else {
+					}
+					else
+					{
 						lbRc = false; break;
 					}
+
 					cHex = *(pszCur++);
 				}
-				
+
 				*pCur = (BYTE)lVal;
 				pCur++; nSize--;
-				
-				if (cHex != L',') {
+
+				if (cHex != L',')
+				{
 					break;
 				}
 			}
-			
-			while (nSize--) // очистить хвост
+
+			while(nSize--)  // очистить хвост
 				*(pCur++) = 0;
 		}
 	}
+
 	// Остальные типы (строки) - не интересуют
-	
+
 	if (bsType) { ::SysFreeString(bsType); bsType = NULL; }
+
 	if (bsData) { ::SysFreeString(bsData); bsData = NULL; }
+
 	if (pChild) { pChild->Release(); pChild = NULL; }
+
 	if (pAttrs) { pAttrs->Release(); pAttrs = NULL; }
-	
+
 	return lbRc;
 }
 
@@ -854,7 +1061,8 @@ void SettingsXML::Delete(const wchar_t *regName)
 
 void SettingsXML::Save(const wchar_t *regName, const wchar_t *value)
 {
-	if (!value) value = L""; // сюда мог придти и NULL
+	if (!value) value = L"";  // сюда мог придти и NULL
+
 	Save(regName, (LPCBYTE)value, REG_SZ, (lstrlen(value)+1)*sizeof(wchar_t));
 }
 void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize)
@@ -869,139 +1077,182 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 	BSTR bsValue = NULL;
 	BSTR bsType = NULL;
 	bool bNeedSetType = false;
-	
 	// nType:
 	// REG_DWORD:    сохранение числа в 16-ричном или 10-чном формате, в зависимости от того, что сейчас указано в xml ("dword"/"ulong"/"long")
 	// REG_BINARY:   строго в hex (FF,FF,...)
 	// REG_SZ:       ASCIIZ строка, можно проконтролировать, чтобы nSize/2 не был меньше длины строки
 	// REG_MULTI_SZ: ASCIIZZ. При формировании <list...> нужно убедиться, что мы не вылезли за пределы nSize
-	
 	pChild = FindItem(mp_Key, L"value", regName, true); // создать, если его еще нету
+
 	if (!pChild)
 		goto wrap;
 
 	hr = pChild->get_attributes(&pAttrs);
+
 	if (FAILED(hr) || !pAttrs)
 		goto wrap;
 
 	bsType = GetAttr(pChild, pAttrs, L"type");
-	
-	
-	switch (nType) {
-	case REG_DWORD: {
-		wchar_t szValue[32];
-		if (bsType && (bsType[0] == L'u' || bsType[0] == L'U')) {
-			wsprintf(szValue, L"%u", *(LPDWORD)value);
-		} else if (bsType && (bsType[0] == L'l' || bsType[0] == L'L')) {
-			wsprintf(szValue, L"%i", *(int*)value);
-		} else {
-			wsprintf(szValue, L"%08x", *(LPDWORD)value);
-			if (bsType) ::SysFreeString(bsType);
-			// нужно добавить/установить тип
-			bsType = ::SysAllocString(L"dword"); bNeedSetType = true;
-		}
-		bsValue = ::SysAllocString(szValue);
-	} break;
-	case REG_BINARY: {
-		if (nSize == 1 && bsType && (bsType[0] == L'u' || bsType[0] == L'U')) {
-			wchar_t szValue[4];
-			BYTE bt = *value;
-			wsprintf(szValue, L"%u", (DWORD)bt);
-			bsValue = ::SysAllocString(szValue);
-		} else if (nSize == 1 && bsType && (bsType[0] == L'l' || bsType[0] == L'L')) {
-			wchar_t szValue[4];
-			char bt = *value;
-			wsprintf(szValue, L"%i", (int)bt);
-			bsValue = ::SysAllocString(szValue);
-		} else {
-			DWORD nLen = nSize*2 + (nSize-1); // по 2 символа на байт + ',' между ними
-			bsValue = ::SysAllocStringLen(NULL, nLen);
-			wchar_t* psz = (wchar_t*)bsValue;
-			LPCBYTE  ptr = value;
-			while (nSize) {
-				wsprintf(psz, L"%02x", (DWORD)*ptr);
-				ptr++; nSize--; psz+=2;
-				if (nSize)
-					*(psz++) = L',';
+
+	switch(nType)
+	{
+		case REG_DWORD:
+		{
+			wchar_t szValue[32];
+
+			if (bsType && (bsType[0] == L'u' || bsType[0] == L'U'))
+			{
+				_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%u", *(LPDWORD)value);
 			}
-			if (bsType && lstrcmp(bsType, L"hex")) {
-				// Допустим только "hex"
+			else if (bsType && (bsType[0] == L'l' || bsType[0] == L'L'))
+			{
+				_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%i", *(int*)value);
+			}
+			else
+			{
+				_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%08x", *(LPDWORD)value);
+
+				if (bsType) ::SysFreeString(bsType);
+
+				// нужно добавить/установить тип
+				bsType = ::SysAllocString(L"dword"); bNeedSetType = true;
+			}
+
+			bsValue = ::SysAllocString(szValue);
+		} break;
+		case REG_BINARY:
+		{
+			if (nSize == 1 && bsType && (bsType[0] == L'u' || bsType[0] == L'U'))
+			{
+				wchar_t szValue[4];
+				BYTE bt = *value;
+				_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%u", (DWORD)bt);
+				bsValue = ::SysAllocString(szValue);
+			}
+			else if (nSize == 1 && bsType && (bsType[0] == L'l' || bsType[0] == L'L'))
+			{
+				wchar_t szValue[4];
+				char bt = *value;
+				_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%i", (int)bt);
+				bsValue = ::SysAllocString(szValue);
+			}
+			else
+			{
+				DWORD nLen = nSize*2 + (nSize-1); // по 2 символа на байт + ',' между ними
+				bsValue = ::SysAllocStringLen(NULL, nLen);
+				nLen ++; // Чтобы далее не добавлять WCHAR на '\0'
+				wchar_t* psz = (wchar_t*)bsValue;
+				LPCBYTE  ptr = value;
+
+				while(nSize)
+				{
+					_wsprintf(psz, SKIPLEN(nLen-(psz-bsValue)) L"%02x", (DWORD)*ptr);
+					ptr++; nSize--; psz+=2;
+
+					if (nSize)
+						*(psz++) = L',';
+				}
+
+				if (bsType && lstrcmp(bsType, L"hex"))
+				{
+					// Допустим только "hex"
+					::SysFreeString(bsType); bsType = NULL;
+				}
+
+				if (!bsType)
+				{
+					// нужно добавить/установить тип
+					bsType = ::SysAllocString(L"hex"); bNeedSetType = true;
+				}
+			}
+		} break;
+		case REG_SZ:
+		{
+			wchar_t* psz = (wchar_t*)value;
+			bsValue = ::SysAllocString(psz);
+
+			if (bsType && lstrcmp(bsType, L"string"))
+			{
+				// Допустим только "string"
 				::SysFreeString(bsType); bsType = NULL;
 			}
-			if (!bsType) {
+
+			if (!bsType)
+			{
 				// нужно добавить/установить тип
-				bsType = ::SysAllocString(L"hex"); bNeedSetType = true;
+				bsType = ::SysAllocString(L"string"); bNeedSetType = true;
 			}
-		}
-	} break;
-	case REG_SZ: {
-		wchar_t* psz = (wchar_t*)value;
-		bsValue = ::SysAllocString(psz);
-		if (bsType && lstrcmp(bsType, L"string")) {
-			// Допустим только "string"
-			::SysFreeString(bsType); bsType = NULL;
-		}
-		if (!bsType) {
-			// нужно добавить/установить тип
-			bsType = ::SysAllocString(L"string"); bNeedSetType = true;
-		}
-	} break;
-	case REG_MULTI_SZ: {
-		if (bsType && lstrcmp(bsType, L"multi")) {
-			// Допустим только "multi"
-			::SysFreeString(bsType); bsType = NULL;
-		}
-		if (!bsType) {
-			// нужно добавить/установить тип
-			bsType = ::SysAllocString(L"multi"); bNeedSetType = true;
-		}
-	} break;
-	default:
-		goto wrap; // не поддерживается
+		} break;
+		case REG_MULTI_SZ:
+		{
+			if (bsType && lstrcmp(bsType, L"multi"))
+			{
+				// Допустим только "multi"
+				::SysFreeString(bsType); bsType = NULL;
+			}
+
+			if (!bsType)
+			{
+				// нужно добавить/установить тип
+				bsType = ::SysAllocString(L"multi"); bNeedSetType = true;
+			}
+		} break;
+		default:
+			goto wrap; // не поддерживается
 	}
 
-	if (bNeedSetType) {
+	if (bNeedSetType)
+	{
 		_ASSERTE(bsType!=NULL);
 		SetAttr(pChild, pAttrs, L"type", bsType);
 		::SysFreeString(bsType); bsType = NULL;
 	}
 
 	// Теперь собственно значение
-	if (nType != REG_MULTI_SZ) {
+	if (nType != REG_MULTI_SZ)
+	{
 		_ASSERTE(bsValue != NULL);
 		SetAttr(pChild, pAttrs, L"data", bsValue);
 		::SysFreeString(bsValue); bsValue = NULL;
-		
-	} else { // Тут нужно формировать список элементов <list>
+	}
+	else     // Тут нужно формировать список элементов <list>
+	{
 		VARIANT_BOOL bHasChild = VARIANT_FALSE;
 		DOMNodeType  nodeType = NODE_INVALID;
-
 		// Если ранее был параметр "data" - удалить его из списка атрибутов
 		hr = pAttrs->getNamedItem(L"data", &pNode);
-		if (SUCCEEDED(hr) && pNode) {
+
+		if (SUCCEEDED(hr) && pNode)
+		{
 			hr = pChild->removeChild(pNode, &pNodeRmv);
 			pNode->Release(); pNode = NULL;
+
 			if (pNodeRmv) { pNodeRmv->Release(); pNodeRmv = NULL; }
 		}
 
 		//TODO: может оставить перевод строки?
-
 		// Сначала почистим
-		#ifdef _DEBUG
+#ifdef _DEBUG
 		hr = pChild->get_nodeType(&nodeType);
-		#endif
+#endif
 		hr = pChild->hasChildNodes(&bHasChild);
-		if (bHasChild) {
-			while ((hr = pChild->get_firstChild(&pNode)) == S_OK && pNode) {
+
+		if (bHasChild)
+		{
+			while((hr = pChild->get_firstChild(&pNode)) == S_OK && pNode)
+			{
 				hr = pNode->get_nodeType(&nodeType);
-				#ifdef _DEBUG
+#ifdef _DEBUG
 				BSTR bsDebug = NULL;
 				pNode->get_text(&bsDebug);
-				if (bsDebug) ::SysFreeString(bsDebug); bsDebug = NULL;
-				#endif
 
+				if (bsDebug) ::SysFreeString(bsDebug); bsDebug = NULL;
+
+#endif
 				hr = pChild->removeChild(pNode, &pNodeRmv);
+
 				if (pNodeRmv) { pNodeRmv->Release(); pNodeRmv = NULL; }
+
 				pNode->Release(); pNode = NULL;
 			}
 		}
@@ -1012,16 +1263,22 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 		VARIANT vtType; vtType.vt = VT_I4; vtType.lVal = NODE_ELEMENT;
 		long nAllLen = nSize/2; // длина в wchar_t
 		long nLen = 0;
-		while (psz && *psz && nAllLen > 0) {
+
+		while(psz && *psz && nAllLen > 0)
+		{
 			hr = mp_File->createNode(vtType, bsNodeType, L"", &pNode);
+
 			if (FAILED(hr) || !pNode)
 				break;
+
 			if (!SetAttr(pNode, L"data", psz))
 				break;
 
 			hr = pChild->appendChild(pNode, &pNodeRmv);
 			pNode->Release(); pNode = NULL;
+
 			if (pNodeRmv) { pNodeRmv->Release(); pNodeRmv = NULL; }
+
 			if (FAILED(hr))
 				break;
 
@@ -1029,18 +1286,25 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 			psz += nLen;
 			nAllLen -= nLen;
 		}
+
 		_ASSERTE(nAllLen <= 1);
 	}
-	
+
 	mb_Modified = true;
-	
-	wrap:
+wrap:
+
 	if (pIXMLDOMAttribute) { pIXMLDOMAttribute->Release(); pIXMLDOMAttribute = NULL; }
+
 	if (pNode) { pNode->Release(); pNode = NULL; }
+
 	if (pNodeRmv) { pNodeRmv->Release(); pNodeRmv = NULL; }
+
 	if (pChild) { pChild->Release(); pChild = NULL; }
+
 	if (pAttrs) { pAttrs->Release(); pAttrs = NULL; }
+
 	if (bsValue) { ::SysFreeString(bsValue); bsValue = NULL; }
+
 	if (bsType) { ::SysFreeString(bsType); bsType = NULL; }
 }
 #endif

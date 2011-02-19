@@ -36,16 +36,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // minimal(?) FAR version 1.71 alpha 4 build 2470
 int WINAPI _export GetMinFarVersion(void)
 {
-    // Однако, FAR2 до сборки 748 не понимал две версии плагина в одном файле
-    BOOL bFar2=FALSE;
+	// Однако, FAR2 до сборки 748 не понимал две версии плагина в одном файле
+	BOOL bFar2=FALSE;
+
 	if (!LoadFarVersion())
 		bFar2 = TRUE;
 	else
 		bFar2 = gFarVersion.dwVerMajor>=2;
 
-    if (bFar2) {
-	    return MAKEFARVERSION(2,0,748);
-    }
+	if (bFar2)
+	{
+		return MAKEFARVERSION(2,0,748);
+	}
+
 	return MAKEFARVERSION(1,71,2470);
 }
 
@@ -57,7 +60,7 @@ struct FarStandardFunctions *FSFA=NULL;
 
 #if defined(__GNUC__)
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 	void WINAPI SetStartupInfo(const struct PluginStartupInfo *aInfo);
 #ifdef __cplusplus
@@ -67,7 +70,7 @@ extern "C"{
 
 void ReloadResourcesA()
 {
-	wchar_t szTemp[MAX_PATH];	
+	wchar_t szTemp[MAX_PATH];
 	lstrcpynW(gsFolder, GetMsgA(CEDirFolder, szTemp), countof(gsFolder));
 	lstrcpynW(gsSymLink, GetMsgA(CEDirSymLink, szTemp), countof(gsSymLink));
 	lstrcpynW(gsJunction, GetMsgA(CEDirJunction, szTemp), countof(gsJunction));
@@ -77,37 +80,39 @@ void ReloadResourcesA()
 
 void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 {
-    //LoadFarVersion - уже вызван в GetStartupInfo
-    
+	//LoadFarVersion - уже вызван в GetStartupInfo
 	::InfoA = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
 	::FSFA = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
+
 	if (::InfoA == NULL || ::FSFA == NULL)
 		return;
+
 	*::InfoA = *aInfo;
 	*::FSFA = *aInfo->FSF;
 	::InfoA->FSF = ::FSFA;
-
 	int nLen = lstrlenA(InfoA->RootKey)+16;
+
 	if (gszRootKey) free(gszRootKey);
+
 	gszRootKey = (wchar_t*)calloc(nLen,2);
 	MultiByteToWideChar(CP_OEMCP,0,InfoA->RootKey,-1,gszRootKey,nLen);
 	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
-	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
-	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
 
+	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
+
+	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
 	ReloadResourcesA();
-	
 	StartPlugin(FALSE);
 }
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 {
-    static char *szMenu[1], szMenu1[255];
-	szMenu[0]=szMenu1;
-
-	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240);
-
 	pi->StructSize = sizeof(struct PluginInfo);
+
+	static char *szMenu[1], szMenu1[255];
+	szMenu[0]=szMenu1;
+	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240);
+	_ASSERTE(pi->StructSize = sizeof(struct PluginInfo));
 	pi->Flags = PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	pi->DiskMenuNumbers = 0;
@@ -116,7 +121,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	pi->PluginConfigStrings = NULL;
 	pi->PluginConfigStringsNumber = 0;
 	pi->CommandPrefix = NULL;
-	pi->Reserved = 0;	
+	pi->Reserved = 0;
 }
 
 HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
@@ -125,9 +130,7 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 		return INVALID_HANDLE_VALUE;
 
 	ReloadResourcesA();
-
 	EntryPoint(OpenFrom, Item);
-
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -135,11 +138,14 @@ void   WINAPI _export ExitFAR(void)
 {
 	ExitPlugin();
 
-	if (InfoA) {
+	if (InfoA)
+	{
 		free(InfoA);
 		InfoA=NULL;
 	}
-	if (FSFA) {
+
+	if (FSFA)
+	{
 		free(FSFA);
 		FSFA=NULL;
 	}
@@ -149,16 +155,18 @@ int ShowMessageA(LPCSTR asMsg, int aiButtons)
 {
 	if (!InfoA || !InfoA->Message)
 		return -1;
-	return InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING, NULL, 
-		(const char * const *)asMsg, 0, aiButtons);
+
+	return InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING, NULL,
+	                      (const char * const *)asMsg, 0, aiButtons);
 }
 
 int ShowMessageA(int aiMsg, int aiButtons)
 {
 	if (!InfoA || !InfoA->Message || !InfoA->GetMsg)
 		return -1;
+
 	return ShowMessageA(
-		(LPCSTR)InfoA->GetMsg(InfoA->ModuleNumber,aiMsg), aiButtons);
+	           (LPCSTR)InfoA->GetMsg(InfoA->ModuleNumber,aiMsg), aiButtons);
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
@@ -170,11 +178,13 @@ void PostMacroA(char* asMacro)
 	ActlKeyMacro mcr;
 	mcr.Command = MCMD_POSTMACROSTRING;
 	mcr.Param.PlainText.Flags = 0; // По умолчанию - вывод на экран разрешен
+
 	if (*asMacro == '@' && asMacro[1] && asMacro[1] != ' ')
 	{
 		mcr.Param.PlainText.Flags |= KSFLAGS_DISABLEOUTPUT;
 		asMacro ++;
 	}
+
 	mcr.Param.PlainText.SequenceText = asMacro;
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 }
@@ -184,15 +194,16 @@ int ShowPluginMenuA()
 	if (!InfoA)
 		return -1;
 
-	FarMenuItemEx items[] = {
+	FarMenuItemEx items[] =
+	{
 		{MIF_USETEXTPTR | (ghConEmuRoot ? 0 : MIF_DISABLE)},
 		{MIF_USETEXTPTR | (ghConEmuRoot ? 0 : MIF_DISABLE)},
 	};
 	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuThumbnails);
 	items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuTiles);
 	int nCount = sizeof(items)/sizeof(items[0]);
-
 	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE);
+
 	if (!pi)
 	{
 		items[0].Flags |= MIF_SELECTED;
@@ -213,11 +224,10 @@ int ShowPluginMenuA()
 		}
 	}
 
-	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0, 
-		FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
-		InfoA->GetMsg(InfoA->ModuleNumber,2),
-		NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
-
+	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0,
+	                      FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
+	                      InfoA->GetMsg(InfoA->ModuleNumber,2),
+	                      NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
 	return nRc;
 }
 
@@ -225,15 +235,24 @@ const wchar_t* GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/)
 {
 	if (!rsMsg || !InfoA)
 		return L"";
+
 	LPCSTR pszMsg = InfoA->GetMsg(InfoA->ModuleNumber,aiMsg);
-	if (pszMsg && *pszMsg) {
+
+	if (pszMsg && *pszMsg)
+	{
 		int nLen = (int)lstrlenA(pszMsg);
+
 		if (nLen>=MAX_PATH) nLen = MAX_PATH - 1;
+
 		nLen = MultiByteToWideChar(CP_OEMCP, 0, pszMsg, nLen, rsMsg, MAX_PATH-1);
+
 		if (nLen>=0) rsMsg[nLen] = 0;
-	} else {
+	}
+	else
+	{
 		rsMsg[0] = 0;
 	}
+
 	return rsMsg;
 }
 
@@ -243,8 +262,10 @@ BOOL IsMacroActiveA()
 
 	ActlKeyMacro akm = {MCMD_GETSTATE};
 	INT_PTR liRc = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, &akm);
+
 	if (liRc == MACROSTATE_NOMACRO)
 		return FALSE;
+
 	return TRUE;
 }
 
@@ -258,16 +279,17 @@ BOOL LoadPanelInfoA(BOOL abActive)
 {
 	if (!InfoA) return FALSE;
 
-
 	CeFullPanelInfo* pcefpi = NULL;
 	PanelInfo pi = {0};
 	int nCmd = abActive ? FCTL_GETPANELINFO : FCTL_GETANOTHERPANELINFO;
 	int nRc = InfoA->Control(INVALID_HANDLE_VALUE, nCmd, &pi);
+
 	if (!nRc)
 	{
 		TODO("Показать информацию об ошибке");
 		return FALSE;
 	}
+
 	// Даже если невидима - обновить информацию!
 	//// Проверим, что панель видима. Иначе - сразу выходим.
 	//if (!pi.Visible) {
@@ -275,17 +297,17 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	//	return NULL;
 	//}
 
-
 	if (pi.Flags & PFLAGS_PANELLEFT)
 		pcefpi = &pviLeft;
 	else
 		pcefpi = &pviRight;
+
 	pcefpi->cbSize = sizeof(*pcefpi);
 	//pcefpi->hPanel = hPanel;
 
-
 	// Если элементов на панели стало больше, чем выделено в (pviLeft/pviRight)
-	if (pcefpi->ItemsNumber < pi.ItemsNumber) {
+	if (pcefpi->ItemsNumber < pi.ItemsNumber)
+	{
 		if (!pcefpi->ReallocItems(pi.ItemsNumber))
 			return FALSE;
 	}
@@ -303,32 +325,28 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	pcefpi->Flags = pi.Flags; // CEPANELINFOFLAGS
 	pcefpi->PanelMode = pi.ViewMode;
 	pcefpi->IsFilePanel = (pi.PanelType == PTYPE_FILEPANEL);
-
-
 	// Настройки интерфейса
 	pcefpi->nFarInterfaceSettings = gnFarInterfaceSettings =
-		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+	                                    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
 	pcefpi->nFarPanelSettings = gnFarPanelSettings =
-		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
-
-
+	                                (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
 	// Цвета фара
 	int nColorSize = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
-	if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors)) {
+
+	if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
+	{
 		if (pcefpi->nFarColors) free(pcefpi->nFarColors);
+
 		pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
 		pcefpi->nMaxFarColors = nColorSize;
 	}
+
 	nColorSize = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
-
-
 	// Текущая папка панели
 	int nSize = lstrlenA(pi.CurDir);
 	pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
 	pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
 	MultiByteToWideChar(CP_OEMCP, 0, pi.CurDir, nSize+1, pcefpi->pszPanelDir, nSize + MAX_PATH);
-
-
 	// Готовим буфер для информации об элементах
 	pcefpi->ReallocItems(pcefpi->ItemsNumber);
 	//if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < pcefpi->ItemsNumber))
@@ -337,15 +355,14 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	//	pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + немножно про запас
 	//	pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->nMaxItemsNumber, sizeof(LPVOID));
 	//}
-
 	// Копирование элементов панели в нашу внутреннюю структуру
 	wchar_t szName[MAX_PATH+1], szDescription[255];
 	LARGE_INTEGER liFileSize;
 	PluginPanelItem *ppi = pi.PanelItems;
-	for (int i = 0; i < pi.ItemsNumber; i++, ppi++)
+
+	for(int i = 0; i < pi.ItemsNumber; i++, ppi++)
 	{
 		liFileSize.LowPart = ppi->FindData.nFileSizeLow; liFileSize.HighPart = ppi->FindData.nFileSizeHigh;
-
 		MultiByteToWideChar(CP_OEMCP, 0, ppi->FindData.cFileName, -1, szName, countof(szName));
 
 		if (ppi->Description)
@@ -354,15 +371,15 @@ BOOL LoadPanelInfoA(BOOL abActive)
 			szDescription[0] = 0;
 
 		pcefpi->FarItem2CeItem(i,
-			szName,
-			szDescription[0] ? szDescription : NULL,
-			ppi->FindData.dwFileAttributes,
-			ppi->FindData.ftLastWriteTime,
-			liFileSize.QuadPart,
-			(pcefpi->bPlugin && (pi.Flags & CEPFLAGS_REALNAMES) == 0) /*abVirtualItem*/,
-			ppi->UserData,
-			ppi->Flags,
-			ppi->NumberOfLinks);
+		                       szName,
+		                       szDescription[0] ? szDescription : NULL,
+		                       ppi->FindData.dwFileAttributes,
+		                       ppi->FindData.ftLastWriteTime,
+		                       liFileSize.QuadPart,
+		                       (pcefpi->bPlugin && (pi.Flags & CEPFLAGS_REALNAMES) == 0) /*abVirtualItem*/,
+		                       ppi->UserData,
+		                       ppi->Flags,
+		                       ppi->NumberOfLinks);
 	}
 
 	return TRUE;
@@ -387,6 +404,7 @@ void SetCurrentPanelItemA(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
 	PanelInfo piActive = {0}, piPassive = {0}, *pi = NULL;
 	TODO("Проверять текущую видимость панелей?");
 	InfoA->Control(INVALID_HANDLE_VALUE,  FCTL_GETPANELSHORTINFO, &piActive);
+
 	if ((piActive.Flags & PFLAGS_PANELLEFT) == (abLeftPanel ? PFLAGS_PANELLEFT : 0))
 	{
 		pi = &piActive; nCmd = FCTL_REDRAWPANEL;
@@ -400,12 +418,16 @@ void SetCurrentPanelItemA(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
 	// Проверяем индексы (может фар в процессе обновления панели, и количество элементов изменено?)
 	if (pi->ItemsNumber < 1)
 		return;
+
 	if ((int)anTopItem >= pi->ItemsNumber)
 		anTopItem = pi->ItemsNumber - 1;
+
 	if ((int)anCurItem >= pi->ItemsNumber)
 		anCurItem = pi->ItemsNumber - 1;
+
 	if (anCurItem < anTopItem)
 		anCurItem = anTopItem;
+
 	// Обновляем панель
 	PanelRedrawInfo pri = {anCurItem, anTopItem};
 	InfoA->Control(INVALID_HANDLE_VALUE, nCmd, &pri);
@@ -423,9 +445,9 @@ BOOL CheckPanelSettingsA(BOOL abSilence)
 		return FALSE;
 
 	gnFarPanelSettings =
-		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+	    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
 	gnFarInterfaceSettings =
-		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+	    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
 
 	if (!(gnFarPanelSettings & FPS_SHOWCOLUMNTITLES))
 	{
@@ -433,11 +455,13 @@ BOOL CheckPanelSettingsA(BOOL abSilence)
 		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
 		if (!abSilence)
 		{
-			InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING|FMSG_LEFTALIGN, NULL, 
-				(const char * const *)InfoA->GetMsg(InfoA->ModuleNumber,CEInvalidPanelSettings), 0, 0);
+			InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING|FMSG_LEFTALIGN, NULL,
+			               (const char * const *)InfoA->GetMsg(InfoA->ModuleNumber,CEInvalidPanelSettings), 0, 0);
 		}
+
 		return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -445,13 +469,12 @@ BOOL CheckPanelSettingsA(BOOL abSilence)
 bool CheckFarPanelsA()
 {
 	if (!InfoA || !InfoA->AdvControl) return false;
-	
+
 	WindowInfo wi = {-1};
 	bool lbPanelsActive = false;
-	
+	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 	INT_PTR iRc = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (LPVOID)&wi);
 	lbPanelsActive = (iRc != 0) && (wi.Type == WTYPE_PANELS);
-
 	return lbPanelsActive;
 }
 
@@ -459,7 +482,7 @@ bool CheckFarPanelsA()
 //bool CheckWindowsA()
 //{
 //	if (!InfoA || !InfoA->AdvControl) return false;
-//	
+//
 //	bool lbPanelsActive = false;
 //	int nCount = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
 //	WindowInfo wi = {0};
@@ -468,7 +491,7 @@ bool CheckFarPanelsA()
 //	char szInfo[MAX_PATH*4];
 //
 //	OutputDebugStringW(L"\n\n");
-//	// Pos: Номер окна, о котором нужно узнать информацию. Нумерация идет с 0. Pos = -1 вернет информацию о текущем окне. 
+//	// Pos: Номер окна, о котором нужно узнать информацию. Нумерация идет с 0. Pos = -1 вернет информацию о текущем окне.
 //	for (int i=-1; i <= nCount; i++) {
 //		memset(&wi, 0, sizeof(wi));
 //		wi.Pos = i;
@@ -491,6 +514,6 @@ bool CheckFarPanelsA()
 //		}
 //		OutputDebugStringA(szInfo);
 //	}
-//	
+//
 //	return lbPanelsActive;
 //}

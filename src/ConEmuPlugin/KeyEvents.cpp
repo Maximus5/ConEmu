@@ -42,10 +42,12 @@ static bool IsFullscreen()
 {
 	bool Result=false;
 	DWORD ModeFlags=0;
-	if(GetConsoleDisplayMode(&ModeFlags) && ModeFlags&CONSOLE_FULLSCREEN_HARDWARE)
+
+	if (GetConsoleDisplayMode(&ModeFlags) && ModeFlags&CONSOLE_FULLSCREEN_HARDWARE)
 	{
 		Result=true;
 	}
+
 	return Result;
 }
 
@@ -57,7 +59,7 @@ struct __XXX_Name
 
 static wchar_t* _XXX_ToName(int Val,const wchar_t *Pref,__XXX_Name *arrDef,size_t cntArr,wchar_t* pszName)
 {
-	for (size_t i=0; i<cntArr; i++)
+	for(size_t i=0; i<cntArr; i++)
 	{
 		if (arrDef[i].Val == Val)
 		{
@@ -163,106 +165,106 @@ static wchar_t* __VK_KEY_ToName(int VkKey, wchar_t* pszName)
 void __MOUSE_EVENT_RECORD_Dump(MOUSE_EVENT_RECORD *rec, wchar_t* pszRecord)
 {
 	wsprintfW(pszRecord,
-	    L"MOUSE_EVENT_RECORD: [%d,%d], Btn=0x%08X (%c%c%c%c%c)\n         Ctrl=0x%08X (%c%c%c%c%c - %c%c%c%c), Flgs=0x%08X (%s)",
-	    rec->dwMousePosition.X,
-	    rec->dwMousePosition.Y,
-	    rec->dwButtonState,
-	    (rec->dwButtonState&FROM_LEFT_1ST_BUTTON_PRESSED?L'L':L'l'),
-	    (rec->dwButtonState&RIGHTMOST_BUTTON_PRESSED?L'R':L'r'),
-	    (rec->dwButtonState&FROM_LEFT_2ND_BUTTON_PRESSED?L'2':L' '),
-	    (rec->dwButtonState&FROM_LEFT_3RD_BUTTON_PRESSED?L'3':L' '),
-	    (rec->dwButtonState&FROM_LEFT_4TH_BUTTON_PRESSED?L'4':L' '),
-	    rec->dwControlKeyState,
-	    (rec->dwControlKeyState&LEFT_CTRL_PRESSED?L'C':L'c'),
-	    (rec->dwControlKeyState&LEFT_ALT_PRESSED?L'A':L'a'),
-	    (rec->dwControlKeyState&SHIFT_PRESSED?L'S':L's'),
-	    (rec->dwControlKeyState&RIGHT_ALT_PRESSED?L'A':L'a'),
-	    (rec->dwControlKeyState&RIGHT_CTRL_PRESSED?L'C':L'c'),
-	    (rec->dwControlKeyState&ENHANCED_KEY?L'E':L'e'),
-	    (rec->dwControlKeyState&CAPSLOCK_ON?L'C':L'c'),
-	    (rec->dwControlKeyState&NUMLOCK_ON?L'N':L'n'),
-	    (rec->dwControlKeyState&SCROLLLOCK_ON?L'S':L's'),
-	    rec->dwEventFlags,
-	    (rec->dwEventFlags==DOUBLE_CLICK?L"(DblClick)":
-	     (rec->dwEventFlags==MOUSE_MOVED?L"(Moved)":
-	      (rec->dwEventFlags==MOUSE_WHEELED?L"(Wheel)":
-	       (rec->dwEventFlags==MOUSE_HWHEELED?L"(HWheel)":L""))))
-	);
+	          L"MOUSE_EVENT_RECORD: [%d,%d], Btn=0x%08X (%c%c%c%c%c)\n         Ctrl=0x%08X (%c%c%c%c%c - %c%c%c%c), Flgs=0x%08X (%s)",
+	          rec->dwMousePosition.X,
+	          rec->dwMousePosition.Y,
+	          rec->dwButtonState,
+	          (rec->dwButtonState&FROM_LEFT_1ST_BUTTON_PRESSED?L'L':L'l'),
+	          (rec->dwButtonState&RIGHTMOST_BUTTON_PRESSED?L'R':L'r'),
+	          (rec->dwButtonState&FROM_LEFT_2ND_BUTTON_PRESSED?L'2':L' '),
+	          (rec->dwButtonState&FROM_LEFT_3RD_BUTTON_PRESSED?L'3':L' '),
+	          (rec->dwButtonState&FROM_LEFT_4TH_BUTTON_PRESSED?L'4':L' '),
+	          rec->dwControlKeyState,
+	          (rec->dwControlKeyState&LEFT_CTRL_PRESSED?L'C':L'c'),
+	          (rec->dwControlKeyState&LEFT_ALT_PRESSED?L'A':L'a'),
+	          (rec->dwControlKeyState&SHIFT_PRESSED?L'S':L's'),
+	          (rec->dwControlKeyState&RIGHT_ALT_PRESSED?L'A':L'a'),
+	          (rec->dwControlKeyState&RIGHT_CTRL_PRESSED?L'C':L'c'),
+	          (rec->dwControlKeyState&ENHANCED_KEY?L'E':L'e'),
+	          (rec->dwControlKeyState&CAPSLOCK_ON?L'C':L'c'),
+	          (rec->dwControlKeyState&NUMLOCK_ON?L'N':L'n'),
+	          (rec->dwControlKeyState&SCROLLLOCK_ON?L'S':L's'),
+	          rec->dwEventFlags,
+	          (rec->dwEventFlags==DOUBLE_CLICK?L"(DblClick)":
+	           (rec->dwEventFlags==MOUSE_MOVED?L"(Moved)":
+	            (rec->dwEventFlags==MOUSE_WHEELED?L"(Wheel)":
+	             (rec->dwEventFlags==MOUSE_HWHEELED?L"(HWheel)":L""))))
+	         );
 
 	if (rec->dwEventFlags==MOUSE_WHEELED  || rec->dwEventFlags==MOUSE_HWHEELED)
 	{
 		wsprintfW(pszRecord+wcslen(pszRecord),
-			L" (Delta=%d)",HIWORD(rec->dwButtonState));
+		          L" (Delta=%d)",HIWORD(rec->dwButtonState));
 	}
 }
 
 
 void __INPUT_RECORD_Dump(INPUT_RECORD *rec, wchar_t* pszRecord)
 {
-	switch (rec->EventType)
+	switch(rec->EventType)
 	{
 		case FOCUS_EVENT:
-			wsprintfW(pszRecord, 
-			    L"FOCUS_EVENT_RECORD: %s",
-			    (rec->Event.FocusEvent.bSetFocus?L"TRUE":L"FALSE")
-			);
+			wsprintfW(pszRecord,
+			          L"FOCUS_EVENT_RECORD: %s",
+			          (rec->Event.FocusEvent.bSetFocus?L"TRUE":L"FALSE")
+			         );
 			break;
 		case WINDOW_BUFFER_SIZE_EVENT:
-			wsprintfW(pszRecord, 
-			    L"WINDOW_BUFFER_SIZE_RECORD: Size = [%d, %d]",
-			    rec->Event.WindowBufferSizeEvent.dwSize.X,
-			    rec->Event.WindowBufferSizeEvent.dwSize.Y
-			);
+			wsprintfW(pszRecord,
+			          L"WINDOW_BUFFER_SIZE_RECORD: Size = [%d, %d]",
+			          rec->Event.WindowBufferSizeEvent.dwSize.X,
+			          rec->Event.WindowBufferSizeEvent.dwSize.Y
+			         );
 			break;
 		case MENU_EVENT:
-			wsprintfW(pszRecord, 
-			    L"MENU_EVENT_RECORD: CommandId = %d (0x%X) ",
-			    rec->Event.MenuEvent.dwCommandId,
-			    rec->Event.MenuEvent.dwCommandId
-			);
+			wsprintfW(pszRecord,
+			          L"MENU_EVENT_RECORD: CommandId = %d (0x%X) ",
+			          rec->Event.MenuEvent.dwCommandId,
+			          rec->Event.MenuEvent.dwCommandId
+			         );
 			break;
 		case KEY_EVENT:
 		case 0:
 		{
 			WORD AsciiChar = (WORD)(BYTE)rec->Event.KeyEvent.uChar.AsciiChar;
 			wchar_t szKeyName[255];
-			wsprintfW(pszRecord, 
-			    L"%s: %s, %d, Vk=%s, Scan=0x%04X uChar=[U='%c' (0x%04X): A='%C' (0x%02X)]\n         Ctrl=0x%08X (%c%c%c%c%c - %c%c%c%c)",
-			    (rec->EventType==KEY_EVENT?L"KEY_EVENT_RECORD":L"NULL_EVENT_RECORD"),
-			    (rec->Event.KeyEvent.bKeyDown?L"Dn":L"Up"),
-			    rec->Event.KeyEvent.wRepeatCount,
-			    __VK_KEY_ToName(rec->Event.KeyEvent.wVirtualKeyCode, szKeyName),
-			    rec->Event.KeyEvent.wVirtualScanCode,
-			    (rec->Event.KeyEvent.uChar.UnicodeChar && !(rec->Event.KeyEvent.uChar.UnicodeChar == L'\t' || rec->Event.KeyEvent.uChar.UnicodeChar == L'\r' || rec->Event.KeyEvent.uChar.UnicodeChar == L'\n')?rec->Event.KeyEvent.uChar.UnicodeChar:L' '),
-			    rec->Event.KeyEvent.uChar.UnicodeChar,
-			    (AsciiChar && AsciiChar != '\r' && AsciiChar != '\t' && AsciiChar !='\n' ?AsciiChar:' '),
-			    AsciiChar,
-			    rec->Event.KeyEvent.dwControlKeyState,
-			    (rec->Event.KeyEvent.dwControlKeyState&LEFT_CTRL_PRESSED?L'C':L'c'),
-			    (rec->Event.KeyEvent.dwControlKeyState&LEFT_ALT_PRESSED?L'A':L'a'),
-			    (rec->Event.KeyEvent.dwControlKeyState&SHIFT_PRESSED?L'S':L's'),
-			    (rec->Event.KeyEvent.dwControlKeyState&RIGHT_ALT_PRESSED?L'A':L'a'),
-			    (rec->Event.KeyEvent.dwControlKeyState&RIGHT_CTRL_PRESSED?L'C':L'c'),
-			    (rec->Event.KeyEvent.dwControlKeyState&ENHANCED_KEY?L'E':L'e'),
-			    (rec->Event.KeyEvent.dwControlKeyState&CAPSLOCK_ON?L'C':L'c'),
-			    (rec->Event.KeyEvent.dwControlKeyState&NUMLOCK_ON?L'N':L'n'),
-			    (rec->Event.KeyEvent.dwControlKeyState&SCROLLLOCK_ON?L'S':L's')
-			);
+			wsprintfW(pszRecord,
+			          L"%s: %s, %d, Vk=%s, Scan=0x%04X uChar=[U='%c' (0x%04X): A='%C' (0x%02X)]\n         Ctrl=0x%08X (%c%c%c%c%c - %c%c%c%c)",
+			          (rec->EventType==KEY_EVENT?L"KEY_EVENT_RECORD":L"NULL_EVENT_RECORD"),
+			          (rec->Event.KeyEvent.bKeyDown?L"Dn":L"Up"),
+			          rec->Event.KeyEvent.wRepeatCount,
+			          __VK_KEY_ToName(rec->Event.KeyEvent.wVirtualKeyCode, szKeyName),
+			          rec->Event.KeyEvent.wVirtualScanCode,
+			          (rec->Event.KeyEvent.uChar.UnicodeChar && !(rec->Event.KeyEvent.uChar.UnicodeChar == L'\t' || rec->Event.KeyEvent.uChar.UnicodeChar == L'\r' || rec->Event.KeyEvent.uChar.UnicodeChar == L'\n')?rec->Event.KeyEvent.uChar.UnicodeChar:L' '),
+			          rec->Event.KeyEvent.uChar.UnicodeChar,
+			          (AsciiChar && AsciiChar != '\r' && AsciiChar != '\t' && AsciiChar !='\n' ?AsciiChar:' '),
+			          AsciiChar,
+			          rec->Event.KeyEvent.dwControlKeyState,
+			          (rec->Event.KeyEvent.dwControlKeyState&LEFT_CTRL_PRESSED?L'C':L'c'),
+			          (rec->Event.KeyEvent.dwControlKeyState&LEFT_ALT_PRESSED?L'A':L'a'),
+			          (rec->Event.KeyEvent.dwControlKeyState&SHIFT_PRESSED?L'S':L's'),
+			          (rec->Event.KeyEvent.dwControlKeyState&RIGHT_ALT_PRESSED?L'A':L'a'),
+			          (rec->Event.KeyEvent.dwControlKeyState&RIGHT_CTRL_PRESSED?L'C':L'c'),
+			          (rec->Event.KeyEvent.dwControlKeyState&ENHANCED_KEY?L'E':L'e'),
+			          (rec->Event.KeyEvent.dwControlKeyState&CAPSLOCK_ON?L'C':L'c'),
+			          (rec->Event.KeyEvent.dwControlKeyState&NUMLOCK_ON?L'N':L'n'),
+			          (rec->Event.KeyEvent.dwControlKeyState&SCROLLLOCK_ON?L'S':L's')
+			         );
 			break;
 		}
 		case MOUSE_EVENT:
 			__MOUSE_EVENT_RECORD_Dump(&rec->Event.MouseEvent, pszRecord);
 			break;
 		default:
-			wsprintfW(pszRecord, 
-			    L"??????_EVENT_RECORD: EventType = %d",
-			    rec->EventType
-			);
+			wsprintfW(pszRecord,
+			          L"??????_EVENT_RECORD: EventType = %d",
+			          rec->EventType
+			         );
 			break;
 	}
 
 	wsprintfW(pszRecord+wcslen(pszRecord),
-		L" (%s)",IsFullscreen()?L"Fullscreen":L"Windowed");
+	          L" (%s)",IsFullscreen()?L"Fullscreen":L"Windowed");
 }
 
 

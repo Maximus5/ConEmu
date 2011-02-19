@@ -76,7 +76,10 @@ NAME = ConEmuLn
 LINK_OBJS = \
 $(OBJDIR)\ConEmuLn.obj \
 $(OBJDIR)\ConEmuLn995.obj \
-$(OBJDIR)\ConEmuLnA.obj
+$(OBJDIR)\ConEmuLn1867.obj \
+$(OBJDIR)\ConEmuLnA.obj \
+$(OBJDIR)\MAssert.obj \
+$(OBJDIR)\Memory.obj
 
 #$(OBJDIR)\LogBrowser.obj
 
@@ -303,4 +306,10 @@ $(OBJDIR)\ConEmuLn.obj: ConEmuLn.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_La
 
 $(OBJDIR)\ConEmuLn995.obj: ConEmuLn995.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
 
+$(OBJDIR)\ConEmuLn1867.obj: ConEmuLn1867.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
+
 $(OBJDIR)\ConEmuLnA.obj: ConEmuLnA.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
+
+$(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
+
+$(OBJDIR)\Memory.obj: ../common/Memory.cpp

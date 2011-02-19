@@ -37,76 +37,78 @@ class CDragDrop :
 	public CBaseDropTarget,
 	public CDragDropData
 {
-public:
-	CDragDrop();
-	//BOOL Init(); --> CDragDropData::Register
-	~CDragDrop();
-	virtual HRESULT __stdcall Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
-	virtual HRESULT __stdcall DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
-	virtual HRESULT __stdcall DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
-	virtual HRESULT __stdcall DragLeave(void);
-	void Drag(BOOL abClickNeed, COORD crMouseDC);
-	//IDataObject *mp_DataObject;
-	bool mb_selfdrag;
-	//ForwardedPanelInfo *m_pfpi;
-	HRESULT CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR lpszDesc);
-	//BOOL InDragDrop();
-	//virtual void DragFeedBack(DWORD dwEffect);
-	//BOOL IsDragStarting() {return FALSE;};
-	//BOOL ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) { return FALSE;};
-protected:
-	//BOOL mb_DragDropRegistered;
-	//void RetrieveDragToInfo();
-	//ITEMIDLIST m_DesktopID;
-	DWORD mn_AllFiles, mn_CurFile; __int64 mn_CurWritten;
-	HANDLE FileStart(LPCWSTR pszFullName);
-	wchar_t* FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LPCWSTR asSubFolder, LPVOID asFileName);
-	HRESULT FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData);
-	//void EnumDragFormats(IDataObject * pDataObject);
-	void ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownError);
-	HRESULT DropFromStream(IDataObject * pDataObject, BOOL abActive);
-	HRESULT DropLinks(HDROP hDrop, int iQuantity, BOOL abActive);
-	HRESULT DropNames(HDROP hDrop, int iQuantity, BOOL abActive);
-	typedef struct _ThInfo {
-		HANDLE hThread;
-		DWORD  dwThreadId;
-	} ThInfo;
-	std::vector<ThInfo> m_OpThread;
-	CRITICAL_SECTION m_CrThreads;
-	typedef struct _ShlOpInfo {
-		CDragDrop* pDnD;
-		SHFILEOPSTRUCT fop;
-	} ShlOpInfo;
-	static DWORD WINAPI ShellOpThreadProc(LPVOID lpParameter);
-	//DragImageBits m_BitsInfo;
-	//HWND mh_Overlapped;
-	//HDC mh_BitsDC;
-	//HBITMAP mh_BitsBMP, mh_BitsBMP_Old;
-	//int m_iBPP;
-	//static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	//BOOL CreateDragImageWindow();
-	//void DestroyDragImageWindow();
-	//BOOL LoadDragImageBits(IDataObject * pDataObject);
-	//BOOL CreateDragImageBits(IDataObject * pDataObject);
-	//DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
-	//BOOL DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY );
-	//void DestroyDragImageBits();
-	//void MoveDragWindow(BOOL abVisible=TRUE);
-	//DragImageBits m_ImgInfo;
-	//LPBYTE mp_ImgData;
-	//DragImageBits *mp_Bits;
-	//BOOL mb_DragWithinNow;
-	//
-	//static DWORD WINAPI ExtractIconsThread(LPVOID lpParameter);
-	//DWORD mn_ExtractIconsTID;
-	//HANDLE mh_ExtractIcons;
-	//
-	//typedef struct _DragThreadArg {
-	//	CDragDrop   *pThis;
-	//	IDataObject *pDataObject;
-	//	IDropSource *pDropSource;
-	//	DWORD        dwAllowedEffects;
-	//} DragThreadArg;
-	//static DWORD WINAPI DragOpThreadProc(LPVOID lpParameter);
-	//HANDLE mh_DragThread; DWORD mn_DragThreadId;
+	public:
+		CDragDrop();
+		//BOOL Init(); --> CDragDropData::Register
+		~CDragDrop();
+		virtual HRESULT __stdcall Drop(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
+		virtual HRESULT __stdcall DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
+		virtual HRESULT __stdcall DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
+		virtual HRESULT __stdcall DragLeave(void);
+		void Drag(BOOL abClickNeed, COORD crMouseDC);
+		//IDataObject *mp_DataObject;
+		bool mb_selfdrag;
+		//ForwardedPanelInfo *m_pfpi;
+		HRESULT CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR lpszDesc);
+		//BOOL InDragDrop();
+		//virtual void DragFeedBack(DWORD dwEffect);
+		//BOOL IsDragStarting() {return FALSE;};
+		//BOOL ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) { return FALSE;};
+	protected:
+		//BOOL mb_DragDropRegistered;
+		//void RetrieveDragToInfo();
+		//ITEMIDLIST m_DesktopID;
+		DWORD mn_AllFiles, mn_CurFile; __int64 mn_CurWritten;
+		HANDLE FileStart(LPCWSTR pszFullName);
+		wchar_t* FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LPCWSTR asSubFolder, LPVOID asFileName);
+		HRESULT FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData);
+		//void EnumDragFormats(IDataObject * pDataObject);
+		void ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownError);
+		HRESULT DropFromStream(IDataObject * pDataObject, BOOL abActive);
+		HRESULT DropLinks(HDROP hDrop, int iQuantity, BOOL abActive);
+		HRESULT DropNames(HDROP hDrop, int iQuantity, BOOL abActive);
+		typedef struct _ThInfo
+		{
+			HANDLE hThread;
+			DWORD  dwThreadId;
+		} ThInfo;
+		std::vector<ThInfo> m_OpThread;
+		CRITICAL_SECTION m_CrThreads;
+		typedef struct _ShlOpInfo
+		{
+			CDragDrop* pDnD;
+			SHFILEOPSTRUCT fop;
+		} ShlOpInfo;
+		static DWORD WINAPI ShellOpThreadProc(LPVOID lpParameter);
+		//DragImageBits m_BitsInfo;
+		//HWND mh_Overlapped;
+		//HDC mh_BitsDC;
+		//HBITMAP mh_BitsBMP, mh_BitsBMP_Old;
+		//int m_iBPP;
+		//static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		//BOOL CreateDragImageWindow();
+		//void DestroyDragImageWindow();
+		//BOOL LoadDragImageBits(IDataObject * pDataObject);
+		//BOOL CreateDragImageBits(IDataObject * pDataObject);
+		//DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
+		//BOOL DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY );
+		//void DestroyDragImageBits();
+		//void MoveDragWindow(BOOL abVisible=TRUE);
+		//DragImageBits m_ImgInfo;
+		//LPBYTE mp_ImgData;
+		//DragImageBits *mp_Bits;
+		//BOOL mb_DragWithinNow;
+		//
+		//static DWORD WINAPI ExtractIconsThread(LPVOID lpParameter);
+		//DWORD mn_ExtractIconsTID;
+		//HANDLE mh_ExtractIcons;
+		//
+		//typedef struct _DragThreadArg {
+		//	CDragDrop   *pThis;
+		//	IDataObject *pDataObject;
+		//	IDropSource *pDropSource;
+		//	DWORD        dwAllowedEffects;
+		//} DragThreadArg;
+		//static DWORD WINAPI DragOpThreadProc(LPVOID lpParameter);
+		//HANDLE mh_DragThread; DWORD mn_DragThreadId;
 };

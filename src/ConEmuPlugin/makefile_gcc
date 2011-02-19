@@ -1,6 +1,7 @@
 NAME = ConEmu
 SRCS = ConEmuPlugin.cpp \
        ConEmuPlugin995.cpp \
+       ConEmuPlugin1853.cpp \
        ConEmuPluginA.cpp \
        ConEmuInjects.cpp \
        PluginBackground.cpp \

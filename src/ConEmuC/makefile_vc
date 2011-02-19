@@ -90,30 +90,23 @@ ULINK=ulink.exe
 M4=tools\m4 -P -DFARBIT=$(DIRBIT)
 GAWK=tools\gawk
 
-INTDIR=$(OUTDIR)\obj
+OBJDIR=$(OUTDIR)\obj
 !ifdef FARSYSLOG
-INTDIR=$(INTDIR)log
+OBJDIR=$(OBJDIR)log
 !endif
 
 CODDIR=$(OUTDIR)\cod
 
 DEF_FILE = ".\$(NAME).def"
 
-RES_FILE = "$(INTDIR)\$(NAME).res"
+RES_FILE = "$(OBJDIR)\$(NAME).res"
 
-#PCH_FILE = "$(INTDIR)\headers.pch"
+#PCH_FILE = "$(OBJDIR)\headers.pch"
 
-LINK_OBJS = \
-$(INTDIR)\ConEmuC.obj \
-$(INTDIR)\ConEmuCmd.obj \
-$(INTDIR)\ConEmuSrv.obj \
-$(INTDIR)\execute.obj \
-$(INTDIR)\Common.obj \
-$(INTDIR)\ConEmuCheck.obj \
-$(INTDIR)\WinObjects.obj
+LINK_OBJS = $(OBJDIR)\ConEmuC.obj
 
 
-LINK_LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib Comdlg32.lib
+LINK_LIBS=kernel32.lib user32.lib
 
 DEFINES=\
 	/DUNICODE \
@@ -126,10 +119,10 @@ DEFINES=\
 	/DUSE_SEH
 
 # common
-CPPFLAGS=/nologo $(MP) /W3 /wd4995 $(FARSYSLOG) /EHs-c- $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
-LINKFLAGS=/nologo /subsystem:console /def:"$(DEF_FILE)" /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /DEBUG /RELEASE /pdb:"$(OUTDIR)\$(OUTNAME).pdb" /nxcompat
+CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHs-c- $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(OBJDIR)\\" /Fd"$(OBJDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
+LINKFLAGS=/nologo /subsystem:console /def:"$(DEF_FILE)" /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat /NODEFAULTLIB /ENTRY:main /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
 ULINKFLAGS=-q -m- -ap -Gz -O- -o- -Gh -Gh-
-RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d $(USEDEBUG)
+RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d "SELF_MANIFEST" /d $(USEDEBUG)
 
 # config-cpecific
 !ifdef DEBUG
@@ -185,7 +178,7 @@ build: "$(OUTDIR)\$(OUTNAME).exe"
 .PHONY: AllDirs
 AllDirs:
 	if not exist "$(OUTDIR)\" mkdir "$(OUTDIR)"
-	if not exist "$(INTDIR)\" mkdir "$(INTDIR)"
+	if not exist "$(OBJDIR)\" mkdir "$(OBJDIR)"
 	if not exist "$(CODDIR)\" mkdir "$(CODDIR)"
 
 "$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
@@ -207,32 +200,32 @@ AllDirs:
 #	echo making precompiled headers
 #	$(CPP) $(CPPFLAGS) headers.cpp /Yc /Fp"$(PCH_FILE)"
 
-#.c{$(INTDIR)}.obj::
+#.c{$(OBJDIR)}.obj::
 #	$(CPP) @<<
 #	$(CPPFLAGS) $<
 #<<
 
-.cpp{$(INTDIR)}.obj::
+.cpp{$(OBJDIR)}.obj::
 	$(CPP) @<<
 	$(CPPFLAGS) $<
 <<
 
-{../common/}.cpp{$(INTDIR)}.obj::
+{../common/}.cpp{$(OBJDIR)}.obj::
 	$(CPP) @<<
 	$(CPPFLAGS) $<
 <<
 
-{../ConEmuPlugin/}.cpp{$(INTDIR)}.obj::
+{../ConEmuPlugin/}.cpp{$(OBJDIR)}.obj::
 	$(CPP) @<<
 	$(CPPFLAGS) $<
 <<
 
-#{UCD}.c{$(INTDIR)}.obj::
+#{UCD}.c{$(OBJDIR)}.obj::
 #	$(CPP) @<<
 #	$(CPPFLAGS) $<
 #<<
 
-#{UCD}.cpp{$(INTDIR)}.obj::
+#{UCD}.cpp{$(OBJDIR)}.obj::
 #	$(CPP) @<<
 #	$(CPPFLAGS) $<
 #<<
@@ -255,19 +248,7 @@ MSG=echo generating $@
 #	$(MSG)
 #	$(M4) $@.m4 > $@
 
-$(INTDIR)\ConEmuC.obj: ConEmuC.cpp ConEmuC.h ..\common\Common.hpp
-
-$(INTDIR)\ConEmuCmd.obj: ConEmuCmd.cpp ConEmuC.h ..\common\Common.hpp
-
-$(INTDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ConEmuC.h ..\common\Common.hpp
-
-$(INTDIR)\execute.obj: ..\common\execute.cpp
-
-$(INTDIR)\Common.obj: ..\common\Common.cpp ..\common\Common.hpp
-
-$(INTDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
-
-$(INTDIR)\WinObjects.obj: ..\common\WinObjects.cpp
+$(OBJDIR)\ConEmuC.obj: ConEmuC.cpp
 
 
 .PHONY: CLEAN
@@ -280,8 +261,8 @@ CLEAN:
 
 #	@echo final cleaning
 #	@del /Q $(CODDIR)\*.*
-#	@del /Q $(INTDIR)\*.*
+#	@del /Q $(OBJDIR)\*.*
 #	@del /Q $(OUTDIR)\*.*
 #	@rd $(CODDIR)
-#	@rd $(INTDIR)
+#	@rd $(OBJDIR)
 #	@rd $(OUTDIR)

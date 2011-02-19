@@ -43,7 +43,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <pshpack1.h>
 // This is representation of SHDRAGIMAGE
-typedef struct tag_DragImageBits {
+typedef struct tag_DragImageBits
+{
 	DWORD nWidth, nHeight; // XP max 301x301
 	DWORD nXCursor, nYCursor; // Позиция курсора захвата, относительно драгнутой картинки
 	DWORD nRes1; // HBITMAP hbmpDragImage;
@@ -64,79 +65,80 @@ struct ForwardedPanelInfo;
 
 class CDragDropData
 {
-public:
-	CDragDropData();
-	~CDragDropData();
-	// Регистрация окна ConEmu, как поддерживающего D&D
-	BOOL Register();
-	// Загрузить из фара информацию для Drag
-	BOOL PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAllowedEffects);
-	// Загрузить из фара информацию для Drop
-	void RetrieveDragToInfo();
-	// Callback
-	void DragFeedBack(DWORD dwEffect);
-	// Начат Drag, или создано окно mh_Overlapped
-	BOOL InDragDrop();
-	// Support for background D&D
-	BOOL IsDragStarting();
-	BOOL ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-private:
-	//wchar_t *mpsz_DraggedPath; // ASCIIZZ
-	int RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar_t** ppszDraggedPath, UINT* pnFilesCount);
-	// Добавление в mp_DataObject перетаскиваемых форматов
-	BOOL AddFmt_FileNameW(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
-	BOOL AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
-	BOOL AddFmt_PREFERREDDROPEFFECT(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
-	BOOL AddFmt_InShellDragLoop(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
-	BOOL AddFmt_HDROP(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
-	BOOL AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
-protected:
-	CDataObject *mp_DataObject;
-	ForwardedPanelInfo *m_pfpi;
-	BOOL mb_DragDropRegistered;
-protected:
-	ITEMIDLIST m_DesktopID;
-	void EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile = NULL);
-	//DragImageBits m_BitsInfo;
-	HWND mh_Overlapped;
-	HDC mh_BitsDC;
-	HBITMAP mh_BitsBMP, mh_BitsBMP_Old;
-	//int m_iBPP;
-	static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	BOOL CreateDragImageWindow();
-	void DestroyDragImageWindow();
-	BOOL LoadDragImageBits(IDataObject * pDataObject);
-	BOOL CreateDragImageBits(IDataObject * pDataObject);
-	DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
-	BOOL DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY );
-	void DestroyDragImageBits();
-	void MoveDragWindow(BOOL abVisible=TRUE);
-	//DragImageBits m_ImgInfo;
-	//LPBYTE mp_ImgData;
-	DragImageBits *mp_Bits;
-	BOOL mb_DragWithinNow;
-	//
-	static DWORD WINAPI ExtractIconsThread(LPVOID lpParameter);
-	DWORD mn_ExtractIconsTID;
-	HANDLE mh_ExtractIcons;
-	
-/* Unlocked drag support */
-protected:
-	typedef struct tag_CEDragSource {
-		BOOL    bInDrag;
-		CDragDropData* pDrag;
-		DWORD   nTID;
-		HANDLE  hReady;
-		HANDLE  hThread;
-		HWND    hWnd;
-	} CEDragSource;
-	std::vector<CEDragSource*> m_Sources;
-	BOOL mb_DragStarting;
-	void TerminateDrag();
-	static LRESULT WINAPI DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	static DWORD WINAPI DragThread(LPVOID lpParameter);
-	CEDragSource* InitialCreateSource();
-	CEDragSource* GetFreeSource();
-	wchar_t ms_SourceClass[32];
-	ATOM mh_SourceClass;
+	public:
+		CDragDropData();
+		~CDragDropData();
+		// Регистрация окна ConEmu, как поддерживающего D&D
+		BOOL Register();
+		// Загрузить из фара информацию для Drag
+		BOOL PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAllowedEffects);
+		// Загрузить из фара информацию для Drop
+		void RetrieveDragToInfo();
+		// Callback
+		void DragFeedBack(DWORD dwEffect);
+		// Начат Drag, или создано окно mh_Overlapped
+		BOOL InDragDrop();
+		// Support for background D&D
+		BOOL IsDragStarting();
+		BOOL ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	private:
+		//wchar_t *mpsz_DraggedPath; // ASCIIZZ
+		int RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar_t** ppszDraggedPath, UINT* pnFilesCount);
+		// Добавление в mp_DataObject перетаскиваемых форматов
+		BOOL AddFmt_FileNameW(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
+		BOOL AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
+		BOOL AddFmt_PREFERREDDROPEFFECT(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
+		BOOL AddFmt_InShellDragLoop(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
+		BOOL AddFmt_HDROP(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
+		BOOL AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize);
+	protected:
+		CDataObject *mp_DataObject;
+		ForwardedPanelInfo *m_pfpi;
+		BOOL mb_DragDropRegistered;
+	protected:
+		ITEMIDLIST m_DesktopID;
+		void EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile = NULL);
+		//DragImageBits m_BitsInfo;
+		HWND mh_Overlapped;
+		HDC mh_BitsDC;
+		HBITMAP mh_BitsBMP, mh_BitsBMP_Old;
+		//int m_iBPP;
+		static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		BOOL CreateDragImageWindow();
+		void DestroyDragImageWindow();
+		BOOL LoadDragImageBits(IDataObject * pDataObject);
+		BOOL CreateDragImageBits(IDataObject * pDataObject);
+		DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
+		BOOL DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY);
+		void DestroyDragImageBits();
+		void MoveDragWindow(BOOL abVisible=TRUE);
+		//DragImageBits m_ImgInfo;
+		//LPBYTE mp_ImgData;
+		DragImageBits *mp_Bits;
+		BOOL mb_DragWithinNow;
+		//
+		static DWORD WINAPI ExtractIconsThread(LPVOID lpParameter);
+		DWORD mn_ExtractIconsTID;
+		HANDLE mh_ExtractIcons;
+
+		/* Unlocked drag support */
+	protected:
+		typedef struct tag_CEDragSource
+		{
+			BOOL    bInDrag;
+			CDragDropData* pDrag;
+			DWORD   nTID;
+			HANDLE  hReady;
+			HANDLE  hThread;
+			HWND    hWnd;
+		} CEDragSource;
+		std::vector<CEDragSource*> m_Sources;
+		BOOL mb_DragStarting;
+		void TerminateDrag();
+		static LRESULT WINAPI DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		static DWORD WINAPI DragThread(LPVOID lpParameter);
+		CEDragSource* InitialCreateSource();
+		CEDragSource* GetFreeSource();
+		wchar_t ms_SourceClass[32];
+		ATOM mh_SourceClass;
 };

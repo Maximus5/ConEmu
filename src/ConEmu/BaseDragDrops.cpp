@@ -51,9 +51,9 @@ HRESULT STDMETHODCALLTYPE CBaseDropTarget::DragOver(DWORD grfKeyState,POINTL pt,
 }
 
 
-HRESULT STDMETHODCALLTYPE CBaseDropTarget::Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
+HRESULT STDMETHODCALLTYPE CBaseDropTarget::Drop(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
-	//gConEmu.SetDragCursor(NULL);
+	//gpConEmu->SetDragCursor(NULL);
 	return 0;
 }
 
@@ -62,9 +62,9 @@ HRESULT STDMETHODCALLTYPE CBaseDropTarget::DragLeave(void)
 	return 0;
 }
 
-HRESULT __stdcall CBaseDropTarget::QueryInterface (REFIID iid, void ** ppvObject)
+HRESULT __stdcall CBaseDropTarget::QueryInterface(REFIID iid, void ** ppvObject)
 {
-	if(iid == IID_IDropTarget || iid == IID_IUnknown)
+	if (iid == IID_IDropTarget || iid == IID_IUnknown)
 	{
 		AddRef();
 		*ppvObject = this;
@@ -80,13 +80,13 @@ HRESULT __stdcall CBaseDropTarget::QueryInterface (REFIID iid, void ** ppvObject
 ULONG __stdcall CBaseDropTarget::AddRef(void)
 {
 	return InterlockedIncrement(&m_lRefCount);
-}	
+}
 
 ULONG __stdcall CBaseDropTarget::Release(void)
 {
 	LONG count = InterlockedDecrement(&m_lRefCount);
-		
-	if(count == 0)
+
+	if (count == 0)
 	{
 		delete this;
 		return 0;
@@ -131,8 +131,8 @@ CDropSource::~CDropSource()
 //
 ULONG __stdcall CDropSource::AddRef(void)
 {
-    // increment object reference count
-    return InterlockedIncrement(&m_lRefCount);
+	// increment object reference count
+	return InterlockedIncrement(&m_lRefCount);
 }
 
 //
@@ -140,10 +140,10 @@ ULONG __stdcall CDropSource::AddRef(void)
 //
 ULONG __stdcall CDropSource::Release(void)
 {
-    // decrement object reference count
+	// decrement object reference count
 	LONG count = InterlockedDecrement(&m_lRefCount);
-		
-	if(count == 0)
+
+	if (count == 0)
 	{
 		delete this;
 		return 0;
@@ -159,18 +159,18 @@ ULONG __stdcall CDropSource::Release(void)
 //
 HRESULT __stdcall CDropSource::QueryInterface(REFIID iid, void **ppvObject)
 {
-    // check to see what interface has been requested
-    if(iid == IID_IDropSource || iid == IID_IUnknown)
-    {
-        AddRef();
-        *ppvObject = this;
-        return S_OK;
-    }
-    else
-    {
-        *ppvObject = 0;
-        return E_NOINTERFACE;
-    }
+	// check to see what interface has been requested
+	if (iid == IID_IDropSource || iid == IID_IUnknown)
+	{
+		AddRef();
+		*ppvObject = this;
+		return S_OK;
+	}
+	else
+	{
+		*ppvObject = 0;
+		return E_NOINTERFACE;
+	}
 }
 
 //
@@ -181,26 +181,32 @@ HRESULT __stdcall CDropSource::QueryInterface(REFIID iid, void **ppvObject)
 HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
 {
 	// if the <Escape> key has been pressed since the last call, cancel the drop
-	if(fEscapePressed == TRUE) {
+	if (fEscapePressed == TRUE)
+	{
 		if (mp_Callback)
 			mp_Callback->DragFeedBack((DWORD)-1);
-		return DRAGDROP_S_CANCEL;	
+
+		return DRAGDROP_S_CANCEL;
 	}
 
-	DWORD nDragKey = ((gConEmu.mouse.state & DRAG_L_STARTED) == DRAG_L_STARTED) ? MK_LBUTTON : MK_RBUTTON;
+	DWORD nDragKey = ((gpConEmu->mouse.state & DRAG_L_STARTED) == DRAG_L_STARTED) ? MK_LBUTTON : MK_RBUTTON;
 	DWORD nOtherKey = ((nDragKey & MK_LBUTTON) == MK_LBUTTON) ? (MK_RBUTTON|MK_MBUTTON) : (MK_LBUTTON|MK_MBUTTON);
 
 	// if the <LeftMouse> button has been released, then do the drop!
-	if((grfKeyState & nDragKey) == 0) {
+	if ((grfKeyState & nDragKey) == 0)
+	{
 		if (mp_Callback)
 			mp_Callback->DragFeedBack((DWORD)-1);
+
 		return DRAGDROP_S_DROP;
 	}
 
 	// Если юзер нажимает другую мышиную кнопку
-	if((grfKeyState & nOtherKey) == nOtherKey) {
+	if ((grfKeyState & nOtherKey) == nOtherKey)
+	{
 		if (mp_Callback)
 			mp_Callback->DragFeedBack((DWORD)-1);
+
 		return DRAGDROP_S_CANCEL;
 	}
 
@@ -221,25 +227,31 @@ HRESULT __stdcall CDropSource::GiveFeedback(DWORD dwEffect)
 
 	if (dwEffect != DROPEFFECT_NONE)
 	{
-		if (dwEffect & DROPEFFECT_COPY) {
+		if (dwEffect & DROPEFFECT_COPY)
+		{
 			if (!mh_CurCopy) mh_CurCopy = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_COPY));
+
 			hCur = mh_CurCopy;
-
-		} else if (dwEffect & DROPEFFECT_MOVE) {
-			if (!mh_CurMove) mh_CurMove = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_MOVE));
-			hCur = mh_CurMove;
-
-		} else if (dwEffect & DROPEFFECT_LINK) {
-			if (!mh_CurLink) mh_CurLink = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_LINK));
-			hCur = mh_CurLink;
-
 		}
-	} else {
+		else if (dwEffect & DROPEFFECT_MOVE)
+		{
+			if (!mh_CurMove) mh_CurMove = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_MOVE));
+
+			hCur = mh_CurMove;
+		}
+		else if (dwEffect & DROPEFFECT_LINK)
+		{
+			if (!mh_CurLink) mh_CurLink = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_LINK));
+
+			hCur = mh_CurLink;
+		}
+	}
+	else
+	{
 		hCur = LoadCursor(NULL, IDC_NO);
 	}
-	
-	gConEmu.SetDragCursor(hCur);
 
+	gpConEmu->SetDragCursor(hCur);
 	//if (hCur) {
 	//SetCursor(hCur);
 	hr = S_OK;
@@ -253,16 +265,14 @@ HRESULT __stdcall CDropSource::GiveFeedback(DWORD dwEffect)
 
 //
 //	Helper routine to create an IDropSource object
-//	
+//
 HRESULT CreateDropSource(IDropSource **ppDropSource, CDragDropData* pCallback)
 {
-	if(ppDropSource == 0)
+	if (ppDropSource == 0)
 		return E_INVALIDARG;
 
 	*ppDropSource = new CDropSource(pCallback);
-
 	return (*ppDropSource) ? S_OK : E_OUTOFMEMORY;
-
 }
 
 
@@ -277,12 +287,11 @@ HRESULT CreateDropSource(IDropSource **ppDropSource, CDragDropData* pCallback)
 //
 //	Constructor
 //
-CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count) 
+CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count)
 {
 	m_lRefCount  = 1;
 	m_nMaxNumFormats = 32 + max(32,count);
 	m_nNumFormats = count;
-	
 	m_pFormatEtc  = new FORMATETC[m_nMaxNumFormats];
 	m_pStgMedium  = new STGMEDIUM[m_nMaxNumFormats];
 
@@ -300,13 +309,15 @@ CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count)
 CDataObject::~CDataObject()
 {
 	// Освобождать данные в m_pStgMedium.hGlobal
-	for (int i = 0; i < m_nNumFormats; i++) {
+	for(int i = 0; i < m_nNumFormats; i++)
+	{
 		ReleaseStgMedium(m_pStgMedium+i);
 	}
 
 	// cleanup
-	if(m_pFormatEtc) delete[] m_pFormatEtc;
-	if(m_pStgMedium) delete[] m_pStgMedium;
+	if (m_pFormatEtc) delete[] m_pFormatEtc;
+
+	if (m_pStgMedium) delete[] m_pStgMedium;
 
 	DEBUGSTR(L"oof\n");
 }
@@ -316,8 +327,8 @@ CDataObject::~CDataObject()
 //
 ULONG __stdcall CDataObject::AddRef(void)
 {
-    // increment object reference count
-    return InterlockedIncrement(&m_lRefCount);
+	// increment object reference count
+	return InterlockedIncrement(&m_lRefCount);
 }
 
 //
@@ -325,10 +336,10 @@ ULONG __stdcall CDataObject::AddRef(void)
 //
 ULONG __stdcall CDataObject::Release(void)
 {
-    // decrement object reference count
+	// decrement object reference count
 	LONG count = InterlockedDecrement(&m_lRefCount);
-		
-	if(count == 0)
+
+	if (count == 0)
 	{
 		delete this;
 		return 0;
@@ -344,18 +355,18 @@ ULONG __stdcall CDataObject::Release(void)
 //
 HRESULT __stdcall CDataObject::QueryInterface(REFIID iid, void **ppvObject)
 {
-    // check to see what interface has been requested
-    if(iid == IID_IDataObject || iid == IID_IUnknown)
-    {
-        AddRef();
-        *ppvObject = this;
-        return S_OK;
-    }
-    else
-    {
-        *ppvObject = 0;
-        return E_NOINTERFACE;
-    }
+	// check to see what interface has been requested
+	if (iid == IID_IDataObject || iid == IID_IUnknown)
+	{
+		AddRef();
+		*ppvObject = this;
+		return S_OK;
+	}
+	else
+	{
+		*ppvObject = 0;
+		return E_NOINTERFACE;
+	}
 }
 
 HGLOBAL DupMem(HGLOBAL hMem)
@@ -363,15 +374,11 @@ HGLOBAL DupMem(HGLOBAL hMem)
 	// lock the source memory object
 	SIZE_T  len    = GlobalSize(hMem);
 	PVOID   source = GlobalLock(hMem);
-	
 	// create a fixed "global" block - i.e. just
 	// a regular lump of our process heap
 	PVOID   dest   = GlobalAlloc(GMEM_FIXED, len);
-
 	memcpy(dest, source, len);
-
 	GlobalUnlock(hMem);
-
 	return dest;
 }
 
@@ -379,29 +386,28 @@ int CDataObject::LookupFormatEtc(FORMATETC *pFormatEtc)
 {
 	for(int i = 0; i < m_nNumFormats; i++)
 	{
-		if((pFormatEtc->tymed    &  m_pFormatEtc[i].tymed)   &&
-			pFormatEtc->cfFormat == m_pFormatEtc[i].cfFormat && 
-			pFormatEtc->dwAspect == m_pFormatEtc[i].dwAspect)
+		if ((pFormatEtc->tymed    &  m_pFormatEtc[i].tymed)   &&
+		        pFormatEtc->cfFormat == m_pFormatEtc[i].cfFormat &&
+		        pFormatEtc->dwAspect == m_pFormatEtc[i].dwAspect)
 		{
 			return i;
 		}
 	}
 
 	return -1;
-
 }
 
 //
 //	IDataObject::GetData
 //
-HRESULT __stdcall CDataObject::GetData (FORMATETC *pFormatEtc, STGMEDIUM *pMedium)
+HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium)
 {
 	int idx;
 
 	//
 	// try to match the requested FORMATETC with one of our supported formats
 	//
-	if((idx = LookupFormatEtc(pFormatEtc)) == -1)
+	if ((idx = LookupFormatEtc(pFormatEtc)) == -1)
 	{
 		return DV_E_FORMATETC;
 	}
@@ -411,19 +417,18 @@ HRESULT __stdcall CDataObject::GetData (FORMATETC *pFormatEtc, STGMEDIUM *pMediu
 	//
 	pMedium->tymed			 = m_pFormatEtc[idx].tymed;
 	pMedium->pUnkForRelease  = 0;
-	//pMedium->lpszFileName = 
-	
+	//pMedium->lpszFileName =
+
 	switch(m_pFormatEtc[idx].tymed)
 	{
-	case TYMED_HGLOBAL:
+		case TYMED_HGLOBAL:
 		{
 			pMedium->hGlobal = DupMem(m_pStgMedium[idx].hGlobal);
-		//return S_OK;
+			//return S_OK;
 			break;
 		}
-
-	default:
-		return DV_E_FORMATETC;
+		default:
+			return DV_E_FORMATETC;
 	}
 
 	return S_OK;
@@ -432,12 +437,12 @@ HRESULT __stdcall CDataObject::GetData (FORMATETC *pFormatEtc, STGMEDIUM *pMediu
 //
 //	IDataObject::GetDataHere
 //
-HRESULT __stdcall CDataObject::GetDataHere (FORMATETC *pFormatEtc, STGMEDIUM *pMedium)
+HRESULT __stdcall CDataObject::GetDataHere(FORMATETC *pFormatEtc, STGMEDIUM *pMedium)
 {
 	// GetDataHere is only required for IStream and IStorage mediums
 	// It is an error to call GetDataHere for things like HGLOBAL and other clipboard formats
 	//
-	//	OleFlushClipboard 
+	//	OleFlushClipboard
 	//
 	return DATA_E_FORMATETC;
 }
@@ -447,7 +452,7 @@ HRESULT __stdcall CDataObject::GetDataHere (FORMATETC *pFormatEtc, STGMEDIUM *pM
 //
 //	Called to see if the IDataObject supports the specified format of data
 //
-HRESULT __stdcall CDataObject::QueryGetData (FORMATETC *pFormatEtc)
+HRESULT __stdcall CDataObject::QueryGetData(FORMATETC *pFormatEtc)
 {
 	return (LookupFormatEtc(pFormatEtc) == -1) ? DV_E_FORMATETC : S_OK;
 }
@@ -455,7 +460,7 @@ HRESULT __stdcall CDataObject::QueryGetData (FORMATETC *pFormatEtc)
 //
 //	IDataObject::GetCanonicalFormatEtc
 //
-HRESULT __stdcall CDataObject::GetCanonicalFormatEtc (FORMATETC *pFormatEct, FORMATETC *pFormatEtcOut)
+HRESULT __stdcall CDataObject::GetCanonicalFormatEtc(FORMATETC *pFormatEct, FORMATETC *pFormatEtcOut)
 {
 	// Apparently we have to set this field to NULL even though we don't do anything else
 	pFormatEtcOut->ptd = NULL;
@@ -465,46 +470,56 @@ HRESULT __stdcall CDataObject::GetCanonicalFormatEtc (FORMATETC *pFormatEct, FOR
 //
 //	IDataObject::SetData
 //
-HRESULT __stdcall CDataObject::SetData (FORMATETC *pFormatEtc, STGMEDIUM *pMedium,  BOOL fRelease)
+HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium,  BOOL fRelease)
 {
 	_ASSERTE(fRelease);
 
 	// Если нужно - увеличим размерность массивов
-	if (m_nNumFormats >= m_nMaxNumFormats) {
+	if (m_nNumFormats >= m_nMaxNumFormats)
+	{
 		_ASSERTE(m_nNumFormats == m_nMaxNumFormats);
 		LONG nNewMaxNumFormats = m_nNumFormats + 32;
 		FORMATETC *pNewFormatEtc = new FORMATETC[nNewMaxNumFormats];
 		STGMEDIUM *pNewStgMedium = new STGMEDIUM[nNewMaxNumFormats];
-		if (!pNewFormatEtc || !pNewStgMedium) {
-			if(pNewFormatEtc) delete[] pNewFormatEtc;
-			if(pNewStgMedium) delete[] pNewStgMedium;
+
+		if (!pNewFormatEtc || !pNewStgMedium)
+		{
+			if (pNewFormatEtc) delete[] pNewFormatEtc;
+
+			if (pNewStgMedium) delete[] pNewStgMedium;
+
 			return E_OUTOFMEMORY;
 		}
-		for (LONG i = 0; i < m_nNumFormats; i++) {
+
+		for(LONG i = 0; i < m_nNumFormats; i++)
+		{
 			pNewFormatEtc[i] = m_pFormatEtc[i];
 			pNewStgMedium[i] = m_pStgMedium[i];
 		}
 
 		m_nMaxNumFormats = nNewMaxNumFormats;
-		if(m_pFormatEtc) delete[] m_pFormatEtc;
+
+		if (m_pFormatEtc) delete[] m_pFormatEtc;
+
 		m_pFormatEtc = pNewFormatEtc;
-		if(m_pStgMedium) delete[] m_pStgMedium;
+
+		if (m_pStgMedium) delete[] m_pStgMedium;
+
 		m_pStgMedium = pNewStgMedium;
 	}
 
 	m_pFormatEtc[m_nNumFormats] = *pFormatEtc;
 	m_pStgMedium[m_nNumFormats] = *pMedium;
 	m_nNumFormats++;
-
 	return S_OK;
 }
 
 //
 //	IDataObject::EnumFormatEtc
 //
-HRESULT __stdcall CDataObject::EnumFormatEtc (DWORD dwDirection, IEnumFORMATETC **ppEnumFormatEtc)
+HRESULT __stdcall CDataObject::EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC **ppEnumFormatEtc)
 {
-	if(dwDirection == DATADIR_GET)
+	if (dwDirection == DATADIR_GET)
 	{
 		// for Win2k+ you can use the SHCreateStdEnumFmtEtc API call, however
 		// to support all Windows platforms we need to implement IEnumFormatEtc ourselves.
@@ -520,7 +535,7 @@ HRESULT __stdcall CDataObject::EnumFormatEtc (DWORD dwDirection, IEnumFORMATETC 
 //
 //	IDataObject::DAdvise
 //
-HRESULT __stdcall CDataObject::DAdvise (FORMATETC *pFormatEtc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection)
+HRESULT __stdcall CDataObject::DAdvise(FORMATETC *pFormatEtc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection)
 {
 	return OLE_E_ADVISENOTSUPPORTED;
 }
@@ -528,7 +543,7 @@ HRESULT __stdcall CDataObject::DAdvise (FORMATETC *pFormatEtc, DWORD advf, IAdvi
 //
 //	IDataObject::DUnadvise
 //
-HRESULT __stdcall CDataObject::DUnadvise (DWORD dwConnection)
+HRESULT __stdcall CDataObject::DUnadvise(DWORD dwConnection)
 {
 	return OLE_E_ADVISENOTSUPPORTED;
 }
@@ -536,7 +551,7 @@ HRESULT __stdcall CDataObject::DUnadvise (DWORD dwConnection)
 //
 //	IDataObject::EnumDAdvise
 //
-HRESULT __stdcall CDataObject::EnumDAdvise (IEnumSTATDATA **ppEnumAdvise)
+HRESULT __stdcall CDataObject::EnumDAdvise(IEnumSTATDATA **ppEnumAdvise)
 {
 	return OLE_E_ADVISENOTSUPPORTED;
 }
@@ -544,13 +559,12 @@ HRESULT __stdcall CDataObject::EnumDAdvise (IEnumSTATDATA **ppEnumAdvise)
 //
 //	Helper function
 //
-HRESULT CreateDataObject (FORMATETC *fmtetc, STGMEDIUM *stgmeds, UINT count, CDataObject **ppDataObject)
+HRESULT CreateDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmeds, UINT count, CDataObject **ppDataObject)
 {
-	if(ppDataObject == 0)
+	if (ppDataObject == 0)
 		return E_INVALIDARG;
 
 	*ppDataObject = new CDataObject(fmtetc, stgmeds, count);
-
 	return (*ppDataObject) ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -583,11 +597,10 @@ HRESULT CreateDataObject (FORMATETC *fmtetc, STGMEDIUM *stgmeds, UINT count, CDa
 //
 HRESULT CreateEnumFormatEtc(UINT nNumFormats, FORMATETC *pFormatEtc, IEnumFORMATETC **ppEnumFormatEtc)
 {
-	if(nNumFormats == 0 || pFormatEtc == 0 || ppEnumFormatEtc == 0)
+	if (nNumFormats == 0 || pFormatEtc == 0 || ppEnumFormatEtc == 0)
 		return E_INVALIDARG;
 
 	*ppEnumFormatEtc = new CEnumFormatEtc(pFormatEtc, nNumFormats);
-
 	return (*ppEnumFormatEtc) ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -598,19 +611,18 @@ static void DeepCopyFormatEtc(FORMATETC *dest, FORMATETC *source)
 {
 	// copy the source FORMATETC into dest
 	*dest = *source;
-	
-	if(source->ptd)
+
+	if (source->ptd)
 	{
 		// allocate memory for the DVTARGETDEVICE if necessary
 		dest->ptd = (DVTARGETDEVICE*)CoTaskMemAlloc(sizeof(DVTARGETDEVICE));
-
 		// copy the contents of the source DVTARGETDEVICE into dest->ptd
 		*(dest->ptd) = *(source->ptd);
 	}
 }
 
 //
-//	Constructor 
+//	Constructor
 //
 CEnumFormatEtc::CEnumFormatEtc(FORMATETC *pFormatEtc, int nNumFormats)
 {
@@ -618,10 +630,10 @@ CEnumFormatEtc::CEnumFormatEtc(FORMATETC *pFormatEtc, int nNumFormats)
 	m_nIndex      = 0;
 	m_nNumFormats = nNumFormats;
 	m_pFormatEtc  = new FORMATETC[nNumFormats];
-	
+
 	// copy the FORMATETC structures
 	for(int i = 0; i < nNumFormats; i++)
-	{	
+	{
 		DeepCopyFormatEtc(&m_pFormatEtc[i], &pFormatEtc[i]);
 	}
 }
@@ -631,11 +643,11 @@ CEnumFormatEtc::CEnumFormatEtc(FORMATETC *pFormatEtc, int nNumFormats)
 //
 CEnumFormatEtc::~CEnumFormatEtc()
 {
-	if(m_pFormatEtc)
+	if (m_pFormatEtc)
 	{
 		for(ULONG i = 0; i < m_nNumFormats; i++)
 		{
-			if(m_pFormatEtc[i].ptd)
+			if (m_pFormatEtc[i].ptd)
 				CoTaskMemFree(m_pFormatEtc[i].ptd);
 		}
 
@@ -648,8 +660,8 @@ CEnumFormatEtc::~CEnumFormatEtc()
 //
 ULONG __stdcall CEnumFormatEtc::AddRef(void)
 {
-    // increment object reference count
-    return InterlockedIncrement(&m_lRefCount);
+	// increment object reference count
+	return InterlockedIncrement(&m_lRefCount);
 }
 
 //
@@ -657,10 +669,10 @@ ULONG __stdcall CEnumFormatEtc::AddRef(void)
 //
 ULONG __stdcall CEnumFormatEtc::Release(void)
 {
-    // decrement object reference count
+	// decrement object reference count
 	LONG count = InterlockedDecrement(&m_lRefCount);
-		
-	if(count == 0)
+
+	if (count == 0)
 	{
 		delete this;
 		return 0;
@@ -676,18 +688,18 @@ ULONG __stdcall CEnumFormatEtc::Release(void)
 //
 HRESULT __stdcall CEnumFormatEtc::QueryInterface(REFIID iid, void **ppvObject)
 {
-    // check to see what interface has been requested
-    if(iid == IID_IEnumFORMATETC || iid == IID_IUnknown)
-    {
-        AddRef();
-        *ppvObject = this;
-        return S_OK;
-    }
-    else
-    {
-        *ppvObject = 0;
-        return E_NOINTERFACE;
-    }
+	// check to see what interface has been requested
+	if (iid == IID_IEnumFORMATETC || iid == IID_IUnknown)
+	{
+		AddRef();
+		*ppvObject = this;
+		return S_OK;
+	}
+	else
+	{
+		*ppvObject = 0;
+		return E_NOINTERFACE;
+	}
 }
 
 //
@@ -701,7 +713,7 @@ HRESULT __stdcall CEnumFormatEtc::Next(ULONG celt, FORMATETC *pFormatEtc, ULONG 
 	ULONG copied  = 0;
 
 	// validate arguments
-	if(celt == 0 || pFormatEtc == 0)
+	if (celt == 0 || pFormatEtc == 0)
 		return E_INVALIDARG;
 
 	// copy FORMATETC structures into caller's buffer
@@ -713,7 +725,7 @@ HRESULT __stdcall CEnumFormatEtc::Next(ULONG celt, FORMATETC *pFormatEtc, ULONG 
 	}
 
 	// store result
-	if(pceltFetched != 0) 
+	if (pceltFetched != 0)
 		*pceltFetched = copied;
 
 	// did we copy all that was requested?
@@ -744,11 +756,10 @@ HRESULT __stdcall CEnumFormatEtc::Reset(void)
 HRESULT __stdcall CEnumFormatEtc::Clone(IEnumFORMATETC ** ppEnumFormatEtc)
 {
 	HRESULT hResult;
-
 	// make a duplicate enumerator
 	hResult = CreateEnumFormatEtc(m_nNumFormats, m_pFormatEtc, ppEnumFormatEtc);
 
-	if(hResult == S_OK)
+	if (hResult == S_OK)
 	{
 		// manually set the index state
 		((CEnumFormatEtc *) *ppEnumFormatEtc)->m_nIndex = m_nIndex;
@@ -767,18 +778,16 @@ HRESULT __stdcall CEnumFormatEtc::Clone(IEnumFORMATETC ** ppEnumFormatEtc)
 
 HANDLE StringToHandle(LPCWSTR szText, int nTextLen)
 {
-    void  *ptr;
+	void  *ptr;
 
-    // if text length is -1 then treat as a nul-terminated string
-    if(nTextLen == -1)
-        nTextLen = lstrlen(szText) + 1;
-    
-    // allocate and lock a global memory buffer. Make it fixed
-    // data so we don't have to use GlobalLock
-    ptr = (void *)GlobalAlloc(GMEM_FIXED, nTextLen);
+	// if text length is -1 then treat as a nul-terminated string
+	if (nTextLen == -1)
+		nTextLen = lstrlen(szText) + 1;
 
-    // copy the string into the buffer
-    memcpy(ptr, szText, nTextLen);
-
-    return ptr;
+	// allocate and lock a global memory buffer. Make it fixed
+	// data so we don't have to use GlobalLock
+	ptr = (void *)GlobalAlloc(GMEM_FIXED, nTextLen);
+	// copy the string into the buffer
+	memcpy(ptr, szText, nTextLen);
+	return ptr;
 }

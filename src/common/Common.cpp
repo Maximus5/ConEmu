@@ -90,59 +90,134 @@ const UINT gnConsoleSectionSize = sizeof(CONSOLE_INFO)+1024;
 
 
 // Возвращает 0, если успешно, иначе - ошибка
-int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wchar_t** rsArgStart/*=NULL*/)
+int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar_t** rsArgStart/*=NULL*/)
 {
-    LPCWSTR psCmdLine = *asCmdLine, pch = NULL;
-    wchar_t ch = *psCmdLine;
-    size_t nArgLen = 0;
+	LPCWSTR psCmdLine = *asCmdLine, pch = NULL;
+	wchar_t ch = *psCmdLine;
+	size_t nArgLen = 0;
 	bool lbQMode = false;
-    
-    while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
-    if (ch == 0) return CERR_CMDLINEEMPTY;
 
-    // аргумент начинается с "
-    if (ch == L'"')
+	while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
+
+	if (ch == 0) return CERR_CMDLINEEMPTY;
+
+	// аргумент начинается с "
+	if (ch == L'"')
 	{
 		lbQMode = true;
-        psCmdLine++;
-        pch = wcschr(psCmdLine, L'"');
-        if (!pch) return CERR_CMDLINE;
-        while (pch[1] == L'"')
+		psCmdLine++;
+		pch = wcschr(psCmdLine, L'"');
+
+		if (!pch) return CERR_CMDLINE;
+
+		while (pch[1] == L'"')
 		{
-            pch += 2;
-            pch = wcschr(pch, L'"');
-            if (!pch) return CERR_CMDLINE;
-        }
-        // Теперь в pch ссылка на последнюю "
-    }
+			pch += 2;
+			pch = wcschr(pch, L'"');
+
+			if (!pch) return CERR_CMDLINE;
+		}
+
+		// Теперь в pch ссылка на последнюю "
+	}
 	else
 	{
-        // До конца строки или до первого пробела
-        //pch = wcschr(psCmdLine, L' ');
-        // 09.06.2009 Maks - обломался на: cmd /c" echo Y "
+		// До конца строки или до первого пробела
+		//pch = wcschr(psCmdLine, L' ');
+		// 09.06.2009 Maks - обломался на: cmd /c" echo Y "
 		pch = psCmdLine;
+
 		// Ищем обычным образом (до пробела/кавычки)
 		while (*pch && *pch!=L' ' && *pch!=L'"') pch++;
+
 		//if (!pch) pch = psCmdLine + lstrlenW(psCmdLine); // до конца строки
-    }
-    
-    nArgLen = pch - psCmdLine;
-    if (nArgLen > MAX_PATH) return CERR_CMDLINE;
+	}
 
-    // Вернуть аргумент
-    memcpy(rsArg, psCmdLine, nArgLen*sizeof(wchar_t));
-    if (rsArgStart) *rsArgStart = psCmdLine;
-    rsArg[nArgLen] = 0;
+	nArgLen = pch - psCmdLine;
 
-    psCmdLine = pch;
-    
-    // Finalize
-    ch = *psCmdLine; // может указывать на закрывающую кавычку
-    if (lbQMode && ch == L'"') ch = *(++psCmdLine);
-    while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
-    *asCmdLine = psCmdLine;
-    
-    return 0;
+	if (nArgLen > MAX_PATH) return CERR_CMDLINE;
+
+	// Вернуть аргумент
+	memcpy(rsArg, psCmdLine, nArgLen*sizeof(*rsArg));
+
+	if (rsArgStart) *rsArgStart = psCmdLine;
+
+	rsArg[nArgLen] = 0;
+	psCmdLine = pch;
+	// Finalize
+	ch = *psCmdLine; // может указывать на закрывающую кавычку
+
+	if (lbQMode && ch == L'"') ch = *(++psCmdLine);
+
+	while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
+
+	*asCmdLine = psCmdLine;
+	return 0;
+}
+
+int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsArgStart/*=NULL*/)
+{
+	LPCSTR psCmdLine = *asCmdLine, pch = NULL;
+	char ch = *psCmdLine;
+	size_t nArgLen = 0;
+	bool lbQMode = false;
+
+	while (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n') ch = *(++psCmdLine);
+
+	if (ch == 0) return CERR_CMDLINEEMPTY;
+
+	// аргумент начинается с "
+	if (ch == '"')
+	{
+		lbQMode = true;
+		psCmdLine++;
+		pch = strchr(psCmdLine, '"');
+
+		if (!pch) return CERR_CMDLINE;
+
+		while (pch[1] == '"')
+		{
+			pch += 2;
+			pch = strchr(pch, '"');
+
+			if (!pch) return CERR_CMDLINE;
+		}
+
+		// Теперь в pch ссылка на последнюю "
+	}
+	else
+	{
+		// До конца строки или до первого пробела
+		//pch = wcschr(psCmdLine, ' ');
+		// 09.06.2009 Maks - обломался на: cmd /c" echo Y "
+		pch = psCmdLine;
+
+		// Ищем обычным образом (до пробела/кавычки)
+		while (*pch && *pch!=' ' && *pch!='"') pch++;
+
+		//if (!pch) pch = psCmdLine + lstrlenW(psCmdLine); // до конца строки
+	}
+
+	nArgLen = pch - psCmdLine;
+
+	if (nArgLen > MAX_PATH) return CERR_CMDLINE;
+
+	// Вернуть аргумент
+	memcpy(rsArg, psCmdLine, nArgLen*sizeof(*rsArg));
+
+	if (rsArgStart) *rsArgStart = psCmdLine;
+
+	rsArg[nArgLen] = 0;
+	psCmdLine = pch;
+	// Finalize
+	ch = *psCmdLine; // может указывать на закрывающую кавычку
+
+	if (lbQMode && ch == '"') ch = *(++psCmdLine);
+
+	while(ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n') ch = *(++psCmdLine);
+
+	*asCmdLine = psCmdLine;
+	return 0;
 }
 
 
@@ -150,20 +225,21 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg)
 {
 	_ASSERTE(pMsg!=NULL && piRec!=NULL);
 	memset(pMsg, 0, sizeof(MSG64));
-	
-    UINT nMsg = 0; WPARAM wParam = 0; LPARAM lParam = 0;
-    if (piRec->EventType == KEY_EVENT) {
-    	nMsg = piRec->Event.KeyEvent.bKeyDown ? WM_KEYDOWN : WM_KEYUP;
-    	
+	UINT nMsg = 0; WPARAM wParam = 0; LPARAM lParam = 0;
+
+	if (piRec->EventType == KEY_EVENT)
+	{
+		nMsg = piRec->Event.KeyEvent.bKeyDown ? WM_KEYDOWN : WM_KEYUP;
 		lParam |= (WORD)piRec->Event.KeyEvent.uChar.UnicodeChar;
 		lParam |= ((BYTE)piRec->Event.KeyEvent.wVirtualKeyCode) << 16;
 		lParam |= ((BYTE)piRec->Event.KeyEvent.wVirtualScanCode) << 24;
-		
-        wParam |= (WORD)piRec->Event.KeyEvent.dwControlKeyState;
-        wParam |= ((DWORD)piRec->Event.KeyEvent.wRepeatCount & 0xFF) << 16;
-    
-    } else if (piRec->EventType == MOUSE_EVENT) {
-		switch (piRec->Event.MouseEvent.dwEventFlags) {
+		wParam |= (WORD)piRec->Event.KeyEvent.dwControlKeyState;
+		wParam |= ((DWORD)piRec->Event.KeyEvent.wRepeatCount & 0xFF) << 16;
+	}
+	else if (piRec->EventType == MOUSE_EVENT)
+	{
+		switch(piRec->Event.MouseEvent.dwEventFlags)
+		{
 			case MOUSE_MOVED:
 				nMsg = MOUSE_EVENT_MOVE;
 				break;
@@ -182,39 +258,37 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg)
 			default:
 				_ASSERT(FALSE);
 		}
-		
-    	lParam = ((WORD)piRec->Event.MouseEvent.dwMousePosition.X)
-    	       | (((DWORD)(WORD)piRec->Event.MouseEvent.dwMousePosition.Y) << 16);
-		
+
+		lParam = ((WORD)piRec->Event.MouseEvent.dwMousePosition.X)
+		         | (((DWORD)(WORD)piRec->Event.MouseEvent.dwMousePosition.Y) << 16);
 		// max 0x0010/*FROM_LEFT_4ND_BUTTON_PRESSED*/
 		wParam |= ((DWORD)piRec->Event.MouseEvent.dwButtonState) & 0xFF;
-		
 		// max - ENHANCED_KEY == 0x0100
 		wParam |= (((DWORD)piRec->Event.MouseEvent.dwControlKeyState) & 0xFFFF) << 8;
-		
-		if (nMsg == MOUSE_EVENT_WHEELED || nMsg == MOUSE_EVENT_HWHEELED) {
-    		// HIWORD() - short (direction[1/-1])*count*120
-    		short nWheel = (short)((((DWORD)piRec->Event.MouseEvent.dwButtonState) & 0xFFFF0000) >> 16);
-    		char  nCount = nWheel / 120;
-    		wParam |= ((DWORD)(BYTE)nCount) << 24;
+
+		if (nMsg == MOUSE_EVENT_WHEELED || nMsg == MOUSE_EVENT_HWHEELED)
+		{
+			// HIWORD() - short (direction[1/-1])*count*120
+			short nWheel = (short)((((DWORD)piRec->Event.MouseEvent.dwButtonState) & 0xFFFF0000) >> 16);
+			char  nCount = nWheel / 120;
+			wParam |= ((DWORD)(BYTE)nCount) << 24;
 		}
-		
-    
-    } else if (piRec->EventType == FOCUS_EVENT) {
-    	nMsg = piRec->Event.FocusEvent.bSetFocus ? WM_SETFOCUS : WM_KILLFOCUS;
-    	
-    } else {
-    	_ASSERT(FALSE);
-    	return FALSE;
-    }
-    _ASSERTE(nMsg!=0);
-    
-    
-    pMsg->message = nMsg;
-    pMsg->wParam = wParam;
-    pMsg->lParam = lParam;
-    
-    return TRUE;
+	}
+	else if (piRec->EventType == FOCUS_EVENT)
+	{
+		nMsg = piRec->Event.FocusEvent.bSetFocus ? WM_SETFOCUS : WM_KILLFOCUS;
+	}
+	else
+	{
+		_ASSERT(FALSE);
+		return FALSE;
+	}
+
+	_ASSERTE(nMsg!=0);
+	pMsg->message = nMsg;
+	pMsg->wParam = wParam;
+	pMsg->lParam = lParam;
+	return TRUE;
 }
 
 BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec)
@@ -224,25 +298,25 @@ BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec)
 
 	if (piMsg->message == 0)
 		return FALSE;
-	
-	if (piMsg->message == WM_KEYDOWN || piMsg->message == WM_KEYUP) {
+
+	if (piMsg->message == WM_KEYDOWN || piMsg->message == WM_KEYUP)
+	{
 		pRec->EventType = KEY_EVENT;
-		
 		// lParam
-        pRec->Event.KeyEvent.bKeyDown = (piMsg->message == WM_KEYDOWN);
-        pRec->Event.KeyEvent.uChar.UnicodeChar = (WCHAR)(piMsg->lParam & 0xFFFF);
-        pRec->Event.KeyEvent.wVirtualKeyCode   = (((DWORD)piMsg->lParam) & 0xFF0000) >> 16;
-        pRec->Event.KeyEvent.wVirtualScanCode  = (((DWORD)piMsg->lParam) & 0xFF000000) >> 24;
-        
-        // wParam. Пока что тут может быть max(ENHANCED_KEY==0x0100)
-        pRec->Event.KeyEvent.dwControlKeyState = ((DWORD)piMsg->wParam & 0xFFFF);
-        
-        pRec->Event.KeyEvent.wRepeatCount = ((DWORD)piMsg->wParam & 0xFF0000) >> 16;
-        
-	} else if (piMsg->message >= MOUSE_EVENT_FIRST && piMsg->message <= MOUSE_EVENT_LAST) {
+		pRec->Event.KeyEvent.bKeyDown = (piMsg->message == WM_KEYDOWN);
+		pRec->Event.KeyEvent.uChar.UnicodeChar = (WCHAR)(piMsg->lParam & 0xFFFF);
+		pRec->Event.KeyEvent.wVirtualKeyCode   = (((DWORD)piMsg->lParam) & 0xFF0000) >> 16;
+		pRec->Event.KeyEvent.wVirtualScanCode  = (((DWORD)piMsg->lParam) & 0xFF000000) >> 24;
+		// wParam. Пока что тут может быть max(ENHANCED_KEY==0x0100)
+		pRec->Event.KeyEvent.dwControlKeyState = ((DWORD)piMsg->wParam & 0xFFFF);
+		pRec->Event.KeyEvent.wRepeatCount = ((DWORD)piMsg->wParam & 0xFF0000) >> 16;
+	}
+	else if (piMsg->message >= MOUSE_EVENT_FIRST && piMsg->message <= MOUSE_EVENT_LAST)
+	{
 		pRec->EventType = MOUSE_EVENT;
-		
-		switch (piMsg->message) {
+
+		switch(piMsg->message)
+		{
 			case MOUSE_EVENT_MOVE:
 				pRec->Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
 				break;
@@ -259,212 +333,221 @@ BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec)
 				pRec->Event.MouseEvent.dwEventFlags = /*MOUSE_HWHEELED*/ 0x0008;
 				break;
 		}
-		
+
 		pRec->Event.MouseEvent.dwMousePosition.X = LOWORD(piMsg->lParam);
 		pRec->Event.MouseEvent.dwMousePosition.Y = HIWORD(piMsg->lParam);
-		
 		// max 0x0010/*FROM_LEFT_4ND_BUTTON_PRESSED*/
 		pRec->Event.MouseEvent.dwButtonState = ((DWORD)piMsg->wParam) & 0xFF;
-		
 		// max - ENHANCED_KEY == 0x0100
 		pRec->Event.MouseEvent.dwControlKeyState = (((DWORD)piMsg->wParam) & 0xFFFF00) >> 8;
-		
-		if (piMsg->message == MOUSE_EVENT_WHEELED || piMsg->message == MOUSE_EVENT_HWHEELED) {
-    		// HIWORD() - short (direction[1/-1])*count*120
-    		signed char nDir = (signed char)((((DWORD)piMsg->wParam) & 0xFF000000) >> 24);
-    		WORD wDir = nDir*120;
-    		pRec->Event.MouseEvent.dwButtonState |= wDir << 16;
+
+		if (piMsg->message == MOUSE_EVENT_WHEELED || piMsg->message == MOUSE_EVENT_HWHEELED)
+		{
+			// HIWORD() - short (direction[1/-1])*count*120
+			signed char nDir = (signed char)((((DWORD)piMsg->wParam) & 0xFF000000) >> 24);
+			WORD wDir = nDir*120;
+			pRec->Event.MouseEvent.dwButtonState |= wDir << 16;
 		}
-		
-	} else if (piMsg->message == WM_SETFOCUS || piMsg->message == WM_KILLFOCUS) {
-        pRec->EventType = FOCUS_EVENT;
-        
-        pRec->Event.FocusEvent.bSetFocus = (piMsg->message == WM_SETFOCUS);
-        
-	} else {
+	}
+	else if (piMsg->message == WM_SETFOCUS || piMsg->message == WM_KILLFOCUS)
+	{
+		pRec->EventType = FOCUS_EVENT;
+		pRec->Event.FocusEvent.bSetFocus = (piMsg->message == WM_SETFOCUS);
+	}
+	else
+	{
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
-class MNullDesc {
-protected:
-	PSECURITY_DESCRIPTOR mp_NullDesc;
-	SECURITY_ATTRIBUTES  m_NullSecurity;
-	PSECURITY_DESCRIPTOR mp_LocalDesc;
-	SECURITY_ATTRIBUTES  m_LocalSecurity;
-public:
-	DWORD mn_LastError;
-public:
-	MNullDesc()
-	{
-		memset(&m_NullSecurity, 0, sizeof(m_NullSecurity));
-		mp_NullDesc = NULL;
-		memset(&m_LocalSecurity, 0, sizeof(m_LocalSecurity));
-		mp_LocalDesc = NULL;
-		mn_LastError = 0;
-	};
-	~MNullDesc()
-	{
-		memset(&m_NullSecurity, 0, sizeof(m_NullSecurity));
-		LocalFree(mp_NullDesc); mp_NullDesc = NULL;
-		memset(&m_LocalSecurity, 0, sizeof(m_LocalSecurity));
-		LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
-	};
-public:
-	SECURITY_ATTRIBUTES* NullSecurity()
-	{
-		mn_LastError = 0;
-		
-		if (mp_NullDesc)
+class MNullDesc
+{
+	protected:
+		PSECURITY_DESCRIPTOR mp_NullDesc;
+		SECURITY_ATTRIBUTES  m_NullSecurity;
+		PSECURITY_DESCRIPTOR mp_LocalDesc;
+		SECURITY_ATTRIBUTES  m_LocalSecurity;
+	public:
+		DWORD mn_LastError;
+	public:
+		MNullDesc()
 		{
-			_ASSERTE(m_NullSecurity.lpSecurityDescriptor==mp_NullDesc);
+			memset(&m_NullSecurity, 0, sizeof(m_NullSecurity));
+			mp_NullDesc = NULL;
+			memset(&m_LocalSecurity, 0, sizeof(m_LocalSecurity));
+			mp_LocalDesc = NULL;
+			mn_LastError = 0;
+		};
+		~MNullDesc()
+		{
+			memset(&m_NullSecurity, 0, sizeof(m_NullSecurity));
+			LocalFree(mp_NullDesc); mp_NullDesc = NULL;
+			memset(&m_LocalSecurity, 0, sizeof(m_LocalSecurity));
+			LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
+		};
+	public:
+		SECURITY_ATTRIBUTES* NullSecurity()
+		{
+			mn_LastError = 0;
+
+			if (mp_NullDesc)
+			{
+				_ASSERTE(m_NullSecurity.lpSecurityDescriptor==mp_NullDesc);
+				return (&m_NullSecurity);
+			}
+
+			mp_NullDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
+			              SECURITY_DESCRIPTOR_MIN_LENGTH);
+
+			if (mp_NullDesc == NULL)
+			{
+				mn_LastError = GetLastError();
+				return NULL;
+			}
+
+			if (!InitializeSecurityDescriptor(mp_NullDesc, SECURITY_DESCRIPTOR_REVISION))
+			{
+				mn_LastError = GetLastError();
+				LocalFree(mp_NullDesc); mp_NullDesc = NULL;
+				return NULL;
+			}
+
+			// Add a null DACL to the security descriptor.
+			if (!SetSecurityDescriptorDacl(mp_NullDesc, TRUE, (PACL) NULL, FALSE))
+			{
+				mn_LastError = GetLastError();
+				LocalFree(mp_NullDesc); mp_NullDesc = NULL;
+				return NULL;
+			}
+
+			m_NullSecurity.nLength = sizeof(m_NullSecurity);
+			m_NullSecurity.lpSecurityDescriptor = mp_NullDesc;
+			m_NullSecurity.bInheritHandle = TRUE;
 			return (&m_NullSecurity);
-		}
-		mp_NullDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
-		      SECURITY_DESCRIPTOR_MIN_LENGTH); 
-
-		if (mp_NullDesc == NULL)
+		};
+		SECURITY_ATTRIBUTES* LocalSecurity()
 		{
-			mn_LastError = GetLastError();
-			return NULL;
-		}
+			static PACL pACL = NULL;
+			//static PSID pNetworkSid = NULL, pSidWorld = NULL;
+			BYTE NetworkSid[12] = {01,01,00,00,00,00,00,05,02,00,00,00};
+			BYTE SidWorld[12]   = {01,01,00,00,00,00,00,01,00,00,00,00};
+			PSID pNetworkSid = (PSID)NetworkSid;
+			PSID pSidWorld = (PSID)SidWorld;
+			//static DWORD LastError = 0;
+			DWORD dwSize = 0;
 
-		if (!InitializeSecurityDescriptor(mp_NullDesc, SECURITY_DESCRIPTOR_REVISION))
-		{
-			mn_LastError = GetLastError();
-			LocalFree(mp_NullDesc); mp_NullDesc = NULL;
-			return NULL;
-		}
+			if (mp_LocalDesc)
+			{
+				_ASSERTE(m_LocalSecurity.lpSecurityDescriptor==mp_LocalDesc);
+				return (&m_LocalSecurity);
+			}
 
-		// Add a null DACL to the security descriptor. 
-		if (!SetSecurityDescriptorDacl(mp_NullDesc, TRUE, (PACL) NULL, FALSE))
-		{
-			mn_LastError = GetLastError();
-			LocalFree(mp_NullDesc); mp_NullDesc = NULL;
-			return NULL;
-		}
+			mp_LocalDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
+			               SECURITY_DESCRIPTOR_MIN_LENGTH);
 
-		m_NullSecurity.nLength = sizeof(m_NullSecurity);
-		m_NullSecurity.lpSecurityDescriptor = mp_NullDesc;
-		m_NullSecurity.bInheritHandle = TRUE; 
-		
-		return (&m_NullSecurity);
-	};
-	SECURITY_ATTRIBUTES* LocalSecurity()
-	{
-		static PACL pACL = NULL;
-		//static PSID pNetworkSid = NULL, pSidWorld = NULL;
-		BYTE NetworkSid[12] = {01,01,00,00,00,00,00,05,02,00,00,00};
-		BYTE SidWorld[12]   = {01,01,00,00,00,00,00,01,00,00,00,00};
-		PSID pNetworkSid = (PSID)NetworkSid;
-		PSID pSidWorld = (PSID)SidWorld;
-		//static DWORD LastError = 0;
-		DWORD dwSize = 0;
+			if (mp_LocalDesc == NULL)
+			{
+				mn_LastError = GetLastError();
+				return NULL;
+			}
 
-		if (mp_LocalDesc)
-		{
-			_ASSERTE(m_LocalSecurity.lpSecurityDescriptor==mp_LocalDesc);
+			if (!InitializeSecurityDescriptor(mp_LocalDesc, SECURITY_DESCRIPTOR_REVISION))
+			{
+				mn_LastError = GetLastError();
+				LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
+				return NULL;
+			}
+
+			//// Создать SID для Network & Everyone
+			//dwSize = SECURITY_MAX_SID_SIZE;
+			//pNetworkSid = (PSID)LocalAlloc(LMEM_FIXED, dwSize);
+			//pSidWorld   = (PSID)LocalAlloc(LMEM_FIXED, dwSize);
+			//if (!pNetworkSid || !pSidWorld)
+			//{
+			//	mn_LastError = GetLastError();
+			//	return NULL;
+			//}
+			//dwSize = SECURITY_MAX_SID_SIZE;
+			//// 01 01 00 00 00 00 00 05 02 00 00 00
+			//if (!CreateWellKnownSid(WinNetworkSid, NULL, pNetworkSid, &dwSize))
+			//{
+			//	LastError = GetLastError();
+			//	return NULL;
+			//}
+			//dwSize = SECURITY_MAX_SID_SIZE;
+			//// 01 01 00 00 00 00 00 01 00 00 00 00
+			//if (!CreateWellKnownSid(WinWorldSid, NULL, pSidWorld, &dwSize))
+			//{
+			//	mn_LastError = GetLastError();
+			//	return NULL;
+			//}
+			// Создать DACL
+			dwSize = sizeof(ACL)
+			         + sizeof(ACCESS_DENIED_ACE) + GetLengthSid(pNetworkSid)
+			         + sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(pSidWorld);
+			pACL = (PACL)LocalAlloc(LPTR, dwSize);
+
+			if (!InitializeAcl(pACL, dwSize, ACL_REVISION))
+			{
+				mn_LastError = GetLastError();
+				return NULL;
+			}
+
+			// Теперь - собственно права
+			if (!AddAccessDeniedAce(pACL, ACL_REVISION, GENERIC_ALL, pNetworkSid))
+			{
+				mn_LastError = GetLastError();
+				return NULL;
+			}
+
+			if (!AddAccessAllowedAce(pACL, ACL_REVISION, GENERIC_ALL, pSidWorld))
+			{
+				mn_LastError = GetLastError();
+				return NULL;
+			}
+
+			// Add a null DACL to the security descriptor.
+			if (!SetSecurityDescriptorDacl(mp_LocalDesc, TRUE, pACL, FALSE))
+			{
+				mn_LastError = GetLastError();
+				LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
+				return NULL;
+			}
+
+			m_LocalSecurity.nLength = sizeof(m_LocalSecurity);
+			m_LocalSecurity.lpSecurityDescriptor = mp_LocalDesc;
+			m_LocalSecurity.bInheritHandle = TRUE;
 			return (&m_LocalSecurity);
-		}
-		mp_LocalDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
-			SECURITY_DESCRIPTOR_MIN_LENGTH); 
-
-		if (mp_LocalDesc == NULL)
-		{
-			mn_LastError = GetLastError();
-			return NULL;
-		}
-
-		if (!InitializeSecurityDescriptor(mp_LocalDesc, SECURITY_DESCRIPTOR_REVISION))
-		{
-			mn_LastError = GetLastError();
-			LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
-			return NULL;
-		}
-
-		//// Создать SID для Network & Everyone
-		//dwSize = SECURITY_MAX_SID_SIZE;
-		//pNetworkSid = (PSID)LocalAlloc(LMEM_FIXED, dwSize);
-		//pSidWorld   = (PSID)LocalAlloc(LMEM_FIXED, dwSize);
-		//if (!pNetworkSid || !pSidWorld)
-		//{
-		//	mn_LastError = GetLastError();
-		//	return NULL;
-		//}
-		//dwSize = SECURITY_MAX_SID_SIZE;
-		//// 01 01 00 00 00 00 00 05 02 00 00 00
-		//if (!CreateWellKnownSid(WinNetworkSid, NULL, pNetworkSid, &dwSize))
-		//{
-		//	LastError = GetLastError();
-		//	return NULL;
-		//}
-		//dwSize = SECURITY_MAX_SID_SIZE;
-		//// 01 01 00 00 00 00 00 01 00 00 00 00
-		//if (!CreateWellKnownSid(WinWorldSid, NULL, pSidWorld, &dwSize))
-		//{
-		//	mn_LastError = GetLastError();
-		//	return NULL;
-		//}
-
-		// Создать DACL
-		dwSize = sizeof(ACL) 
-			+ sizeof(ACCESS_DENIED_ACE) + GetLengthSid(pNetworkSid)
-			+ sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(pSidWorld);
-		pACL = (PACL)LocalAlloc(LPTR, dwSize);
-		if (!InitializeAcl(pACL, dwSize, ACL_REVISION))
-		{
-			mn_LastError = GetLastError();
-			return NULL;
-		}
-		// Теперь - собственно права
-		if (!AddAccessDeniedAce(pACL, ACL_REVISION, GENERIC_ALL, pNetworkSid))
-		{
-			mn_LastError = GetLastError();
-			return NULL;
-		}
-		if (!AddAccessAllowedAce(pACL, ACL_REVISION, GENERIC_ALL, pSidWorld))
-		{
-			mn_LastError = GetLastError();
-			return NULL;
-		}
-
-
-		// Add a null DACL to the security descriptor. 
-		if (!SetSecurityDescriptorDacl(mp_LocalDesc, TRUE, pACL, FALSE))
-		{
-			mn_LastError = GetLastError();
-			LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
-			return NULL;
-		}
-
-		m_LocalSecurity.nLength = sizeof(m_LocalSecurity);
-		m_LocalSecurity.lpSecurityDescriptor = mp_LocalDesc;
-		m_LocalSecurity.bInheritHandle = TRUE; 
-
-		return (&m_LocalSecurity);
-	};
+		};
 };
 MNullDesc *gNullDesc = NULL;
 
 SECURITY_ATTRIBUTES* NullSecurity()
 {
 	if (!gNullDesc) gNullDesc = new MNullDesc();
+
 	return gNullDesc->NullSecurity();
 }
 SECURITY_ATTRIBUTES* LocalSecurity()
 {
 	if (!gNullDesc) gNullDesc = new MNullDesc();
+
 	return gNullDesc->LocalSecurity();
 }
 
 BOOL gbInCommonShutdown = FALSE;
 HANDLE ghHookMutex = NULL;
+#ifdef _DEBUG
+extern HANDLE ghInMyAssertTrap;
+extern DWORD gnInMyAssertThread;
+#endif
 
 void CommonShutdown()
 {
 	gbInCommonShutdown = TRUE;
+
 	if (gNullDesc)
 	{
 		delete gNullDesc;
@@ -477,16 +560,22 @@ void CommonShutdown()
 		CloseHandle(ghConsoleSection);
 		ghConsoleSection = NULL;
 	}
+
 	if (gpConsoleInfoStr)
 	{
 		LocalFree(gpConsoleInfoStr);
 		gpConsoleInfoStr = NULL;
 	}
+
 	if (ghHookMutex)
 	{
 		CloseHandle(ghHookMutex);
 		ghHookMutex = NULL;
 	}
+
+#ifdef _DEBUG
+	MyAssertShutdown();
+#endif
 }
 
 
@@ -503,14 +592,19 @@ void CommonShutdown()
 static BOOL CALLBACK MyEnumMonitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
 	LPRECT lprc = (LPRECT)dwData;
+
 	if (lprcMonitor->left < lprc->left)
 		lprc->left = lprcMonitor->left;
+
 	if (lprcMonitor->top < lprc->top)
 		lprc->top = lprcMonitor->top;
+
 	if (lprcMonitor->right > lprc->right)
 		lprc->right = lprcMonitor->right;
+
 	if (lprcMonitor->bottom > lprc->bottom)
 		lprc->bottom = lprcMonitor->bottom;
+
 	return TRUE;
 }
 
@@ -536,10 +630,9 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	PVOID   ptrView = 0;
 	DWORD   dwLastError=0;
 	WCHAR   ErrText[255];
-
 	//
 	//	Retrieve the process which "owns" the console
-	//	
+	//
 	dwCurProcId = GetCurrentProcessId();
 	dwConsoleThreadId = GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
 
@@ -550,10 +643,9 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 		return FALSE;
 	}
 
-
 	//
 	// Create a SECTION object backed by page-file, then map a view of
-	// this section into the owner process so we can write the contents 
+	// this section into the owner process so we can write the contents
 	// of the CONSOLE_INFO buffer into it
 	//
 	if (!ghConsoleSection)
@@ -563,32 +655,31 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 		if (!ghConsoleSection)
 		{
 			dwLastError = GetLastError();
-			swprintf_c(ErrText, L"Can't CreateFileMapping(ghConsoleSection). ErrCode=%i", dwLastError);
+			_wsprintf(ErrText, SKIPLEN(countof(ErrText)) L"Can't CreateFileMapping(ghConsoleSection). ErrCode=%i", dwLastError);
 			MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 			return FALSE;
 		}
 	}
 
-
 	//
 	//	Copy our console structure into the section-object
 	//
 	ptrView = MapViewOfFile(ghConsoleSection, FILE_MAP_WRITE|FILE_MAP_READ, 0, 0, gnConsoleSectionSize);
+
 	if (!ptrView)
 	{
 		dwLastError = GetLastError();
-		swprintf_c(ErrText, L"Can't MapViewOfFile. ErrCode=%i", dwLastError);
+		_wsprintf(ErrText, SKIPLEN(countof(ErrText)) L"Can't MapViewOfFile. ErrCode=%i", dwLastError);
 		MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
-
 	}
 	else
 	{
 		_ASSERTE(pci->Length==sizeof(CONSOLE_INFO));
-
 		//2010-09-19 что-то на XP стало окошко мелькать.
 		// при отсылке WM_SETCONSOLEINFO консоль отображается :(
 		BOOL lbWasVisible = IsWindowVisible(hwndConsole);
 		RECT rcOldPos = {0}, rcAllMonRect = {0};
+
 		if (!lbWasVisible)
 		{
 			GetWindowRect(hwndConsole, &rcOldPos);
@@ -597,17 +688,13 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 			pci->AutoPosition = FALSE;
 			pci->WindowPosX = rcAllMonRect.left - 1280;
 			pci->WindowPosY = rcAllMonRect.top - 1024;
-			
 		}
 
 		memcpy(ptrView, pci, pci->Length);
-
 		UnmapViewOfFile(ptrView);
-
 		//  Send console window the "update" message
 		LRESULT dwConInfoRc = 0;
 		DWORD dwConInfoErr = 0;
-
 		dwConInfoRc = SendMessage(hwndConsole, WM_SETCONSOLEINFO, (WPARAM)ghConsoleSection, 0);
 		dwConInfoErr = GetLastError();
 
@@ -634,19 +721,20 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 void GetConsoleSizeInfo(CONSOLE_INFO *pci)
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
-
 	HANDLE hConsoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
-
 	BOOL lbRc = GetConsoleScreenBufferInfo(hConsoleOut, &csbi);
-	
-	if (lbRc) {
+
+	if (lbRc)
+	{
 		pci->ScreenBufferSize = csbi.dwSize;
 		pci->WindowSize.X	  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
 		pci->WindowSize.Y	  = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 		// Было... а это координаты окна (хотя включается флажок "Autoposition"
 		//pci->WindowPosX	      = csbi.srWindow.Left;
 		//pci->WindowPosY		  = csbi.srWindow.Top;
-	} else {
+	}
+	else
+	{
 		_ASSERTE(lbRc);
 		pci->ScreenBufferSize.X = pci->WindowSize.X = 80;
 		pci->ScreenBufferSize.Y = pci->WindowSize.Y = 25;
@@ -654,7 +742,6 @@ void GetConsoleSizeInfo(CONSOLE_INFO *pci)
 
 	// Поскольку включен флажок "AutoPosition" - то это игнорируется
 	pci->WindowPosX = pci->WindowPosY = 0;
-
 	/*
 	RECT rcWnd = {0}; GetWindowRect(GetConsoleWindow(), &rcWnd);
 	pci->WindowPosX	      = rcWnd.left;
@@ -671,7 +758,8 @@ void GetConsoleSizeInfo(CONSOLE_INFO *pci)
 
 //VISTA support:
 #ifndef ENABLE_AUTO_POSITION
-typedef struct _CONSOLE_FONT_INFOEX {
+typedef struct _CONSOLE_FONT_INFOEX
+{
 	ULONG cbSize;
 	DWORD nFont;
 	COORD dwFontSize;
@@ -688,17 +776,17 @@ typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in 
 
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName)
 {
-
-
 	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+
 	if (!hKernel)
 		return;
-	PGetCurrentConsoleFontEx GetCurrentConsoleFontEx = (PGetCurrentConsoleFontEx)
-		GetProcAddress(hKernel, "GetCurrentConsoleFontEx");
-	PSetCurrentConsoleFontEx SetCurrentConsoleFontEx = (PSetCurrentConsoleFontEx)
-		GetProcAddress(hKernel, "SetCurrentConsoleFontEx");
 
-	if (GetCurrentConsoleFontEx && SetCurrentConsoleFontEx) // We have Vista
+	PGetCurrentConsoleFontEx GetCurrentConsoleFontEx = (PGetCurrentConsoleFontEx)
+	        GetProcAddress(hKernel, "GetCurrentConsoleFontEx");
+	PSetCurrentConsoleFontEx SetCurrentConsoleFontEx = (PSetCurrentConsoleFontEx)
+	        GetProcAddress(hKernel, "SetCurrentConsoleFontEx");
+
+	if (GetCurrentConsoleFontEx && SetCurrentConsoleFontEx)  // We have Vista
 	{
 		CONSOLE_FONT_INFOEX cfi = {sizeof(CONSOLE_FONT_INFOEX)};
 		//GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
@@ -709,34 +797,36 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 	}
 	else // We have other NT
 	{
-		const COLORREF DefaultColors[16] = 
+		const COLORREF DefaultColors[16] =
 		{
 			0x00000000, 0x00800000, 0x00008000, 0x00808000,
-			0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0, 
+			0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
 			0x00808080,	0x00ff0000, 0x0000ff00, 0x00ffff00,
 			0x000000ff, 0x00ff00ff,	0x0000ffff, 0x00ffffff
 		};
 
-		if (!gpConsoleInfoStr) {
+		if (!gpConsoleInfoStr)
+		{
 			gpConsoleInfoStr = (CONSOLE_INFO*)LocalAlloc(LPTR, sizeof(CONSOLE_INFO));
-			if (!gpConsoleInfoStr) {
+
+			if (!gpConsoleInfoStr)
+			{
 				_ASSERTE(gpConsoleInfoStr!=NULL);
 				return; // memory allocation failed
 			}
+
 			gpConsoleInfoStr->Length = sizeof(CONSOLE_INFO);
 		}
-		int i;
 
+		int i;
 		// get current size/position settings rather than using defaults..
 		GetConsoleSizeInfo(gpConsoleInfoStr);
-
 		// set these to zero to keep current settings
 		gpConsoleInfoStr->FontSize.X				= inSizeX;
 		gpConsoleInfoStr->FontSize.Y				= inSizeY;
 		gpConsoleInfoStr->FontFamily				= 0;//0x30;//FF_MODERN|FIXED_PITCH;//0x30;
 		gpConsoleInfoStr->FontWeight				= 0;//0x400;
 		lstrcpynW(gpConsoleInfoStr->FaceName, asFontName ? asFontName : L"Lucida Console", 32);
-
 		gpConsoleInfoStr->CursorSize				= 25;
 		gpConsoleInfoStr->FullScreen				= FALSE;
 		gpConsoleInfoStr->QuickEdit					= FALSE;
@@ -748,7 +838,6 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		gpConsoleInfoStr->InsertMode				= TRUE;
 		gpConsoleInfoStr->ScreenColors				= MAKEWORD(0x7, 0x0);
 		gpConsoleInfoStr->PopupColors				= MAKEWORD(0x5, 0xf);
-
 		gpConsoleInfoStr->HistoryNoDup				= FALSE;
 		gpConsoleInfoStr->HistoryBufferSize			= 50;
 		gpConsoleInfoStr->NumberOfHistoryBuffers	= 4;
@@ -759,10 +848,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 
 		gpConsoleInfoStr->CodePage					= GetConsoleOutputCP();//0;//0x352;
 		gpConsoleInfoStr->Hwnd						= inConWnd;
-
 		gpConsoleInfoStr->ConsoleTitle[0] = 0;
-		
-
 		SetConsoleInfo(inConWnd, gpConsoleInfoStr);
 	}
 }
@@ -787,63 +873,3 @@ void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBuffer
 }
 */
 
-#ifdef _DEBUG
-#include <Strsafe.h>
-typedef struct tag_MyAssertInfo {
-	wchar_t szTitle[255];
-	wchar_t szDebugInfo[4096];
-} MyAssertInfo;
-bool gbInMyAssertTrap = false;
-bool gbAllowAssertThread = false;
-DWORD WINAPI MyAssertThread(LPVOID p)
-{
-	if (gbInMyAssertTrap)
-	{
-		// Если уже в трапе - то повторно не вызывать, иначе может вывалиться серия окон, что затруднит отладку
-		return IDCANCEL;
-	}
-
-	MyAssertInfo* pa = (MyAssertInfo*)p;
-	gbInMyAssertTrap = true;
-	DWORD nRc = MessageBoxW(NULL, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL);
-	gbInMyAssertTrap = false;
-	return nRc;
-}
-void MyAssertTrap()
-{
-#ifdef WIN64
-	_CrtDbgBreak();
-#else
-	_asm int 3;
-#endif
-}
-int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest)
-{
-	MyAssertInfo a;
-	StringCbPrintfW(a.szTitle, countof(a.szTitle), L"CEAssert PID=%u TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-	StringCbPrintfW(a.szDebugInfo, countof(a.szDebugInfo), L"Assertion\n%s\n\n%s: %i\n\nPress 'Retry' to trap.",
-		pszTest ? pszTest : L"", pszFile, nLine);
-
-	DWORD dwCode = 0;
-
-	if (gbAllowAssertThread)
-	{
-		DWORD dwTID;
-		HANDLE hThread = CreateThread(NULL, 0, MyAssertThread, &a, 0, &dwTID);
-		if (hThread == NULL) {
-			return -1;
-		}
-
-		WaitForSingleObject(hThread, INFINITE);
-		GetExitCodeThread(hThread, &dwCode);
-		CloseHandle(hThread);
-	}
-	else
-	{
-		// В Far попытка запустить MyAssertThread иногда зависает
-		dwCode = MyAssertThread(&a);
-	}
-	
-	return (dwCode == IDRETRY) ? -1 : 1;
-}
-#endif

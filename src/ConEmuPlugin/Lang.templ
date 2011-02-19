@@ -48,6 +48,10 @@ l:// Plugin title
 "ConEmu"
 "ConEmu"
 
+CEPluginMsgTitle
+"ConEmu plugin"
+"ConEmu plugin"
+
 # ####################
 #   Some resources,
 #   required by GUI
@@ -103,6 +107,10 @@ CEMenuCommitTab
 "&6. Отобразить закладку"
 "&6. Switch tab commit"
 
+CEMenuGuiMacro
+"&~. Выполнить макрос ConEmu"
+"&~. Execute ConEmu macro"
+
 CEMenuAttach
 "&7. Прицепить к ConEmu"
 "&7. Attach to ConEmu"
@@ -110,6 +118,30 @@ CEMenuAttach
 CEMenuDebug
 "&8. Запустить ConEmu debug"
 "&8. Start ConEmu debug"
+
+# ####################
+#     GuiMacroDlg
+# ####################
+
+CEGuiMacroTitle
+"ConEmu GUI Macro"
+"ConEmu GUI Macro"
+
+CEGuiMacroCommand
+"Текст &макроса:"
+"&Macro text:"
+
+CEGuiMacroResult
+"&Результат:"
+"&Result:"
+
+CEGuiMacroExecute
+"&Выполнить"
+"&Run"
+
+CEGuiMacroCancel
+"Отмена"
+"Cancel"
 
 # ####################
 #    Error messages
@@ -135,13 +167,25 @@ CECantStartDebugger
 "ConEmu plugin\nCan't create debugger process\nOK"
 
 CECantStartServer
-"ConEmu plugin\nНе удалось запустить процесс сервера консоли (ConEmuC.exe)\nOK"
-"ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
+"Не удалось запустить процесс сервера консоли (ConEmuC.exe)"
+"Can't start console server process (ConEmuC.exe)"
+
+CECantStartServer2
+"Не удалось запустить процесс сервера консоли (ConEmuC.exe)\nGetModuleFileName failed"
+"Can't start console server process (ConEmuC.exe)\nGetModuleFileName failed"
+
+CECantStartServer3
+"Не удалось запустить процесс сервера консоли (ConEmuC.exe)\nConEmuC.exe не найден"
+"Can't start console server process (ConEmuC.exe)\nConEmuC.exe not found"
 
 CEInvalidConHwnd
 "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL\nOK"
 "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL\nOK"
 
 CEShellExecuteException
-"ConEmu plugin\nПриозошло исключение в функции ShellExecuteEx.\nРекомендуется перезапустить FAR.\nOK"
+"ConEmu plugin\nПроизошло исключение в функции ShellExecuteEx.\nРекомендуется перезапустить FAR.\nOK"
 "ConEmu plugin\nShellExecuteEx raised exception.\nFAR restart is recommended.\nOK"
+
+CEColorMappingCreateError
+"При попытке создать секцию для AnnotationInfo произошла ошибка.\nФункции TrueMod будут недоступны.\n"
+"Createing AnnotationInfo section failed.\nTrueMod function will be unavailable.\n"

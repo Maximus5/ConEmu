@@ -35,16 +35,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // minimal(?) FAR version 1.71 alpha 4 build 2470
 int WINAPI _export GetMinFarVersion(void)
 {
-    // Однако, FAR2 до сборки 748 не понимал две версии плагина в одном файле
-    BOOL bFar2=FALSE;
+	// Однако, FAR2 до сборки 748 не понимал две версии плагина в одном файле
+	BOOL bFar2=FALSE;
+
 	if (!LoadFarVersion())
 		bFar2 = TRUE;
 	else
 		bFar2 = gFarVersion.dwVerMajor>=2;
 
-    if (bFar2) {
-	    return MAKEFARVERSION(2,0,748);
-    }
+	if (bFar2)
+	{
+		return MAKEFARVERSION(2,0,748);
+	}
+
 	return MAKEFARVERSION(1,71,2470);
 }
 
@@ -56,7 +59,7 @@ struct FarStandardFunctions *FSFA=NULL;
 
 #if defined(__GNUC__)
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 	void WINAPI SetStartupInfo(const struct PluginStartupInfo *aInfo);
 #ifdef __cplusplus
@@ -67,35 +70,38 @@ extern "C"{
 
 void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 {
-    //LoadFarVersion - уже вызван в GetStartupInfo
-    
+	//LoadFarVersion - уже вызван в GetStartupInfo
 	::InfoA = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
 	::FSFA = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
+
 	if (::InfoA == NULL || ::FSFA == NULL)
 		return;
+
 	*::InfoA = *aInfo;
 	*::FSFA = *aInfo->FSF;
 	::InfoA->FSF = ::FSFA;
-
 	int nLen = lstrlenA(InfoA->RootKey)+16;
+
 	if (gszRootKey) free(gszRootKey);
+
 	gszRootKey = (wchar_t*)calloc(nLen,2);
 	MultiByteToWideChar(CP_OEMCP,0,InfoA->RootKey,-1,gszRootKey,nLen);
 	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
-	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
-	lstrcpyW(pszSlash+1, L"ConEmuLn\\");
 
+	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
+
+	lstrcpyW(pszSlash+1, L"ConEmuLn\\");
 	StartPlugin(FALSE);
 }
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 {
-    static char *szMenu[1], szMenu1[255];
-	szMenu[0]=szMenu1;
-
-	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240);
-
 	pi->StructSize = sizeof(struct PluginInfo);
+
+	static char *szMenu[1], szMenu1[255];
+	szMenu[0]=szMenu1;
+	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240);
+	_ASSERTE(pi->StructSize = sizeof(struct PluginInfo));
 	pi->Flags = PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	pi->DiskMenuNumbers = 0;
@@ -104,18 +110,21 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	pi->PluginConfigStrings = szMenu;
 	pi->PluginConfigStringsNumber = 1;
 	pi->CommandPrefix = NULL;
-	pi->Reserved = 0;	
+	pi->Reserved = 0;
 }
 
 void   WINAPI _export ExitFAR(void)
 {
 	ExitPlugin();
 
-	if (InfoA) {
+	if (InfoA)
+	{
 		free(InfoA);
 		InfoA=NULL;
 	}
-	if (FSFA) {
+
+	if (FSFA)
+	{
 		free(FSFA);
 		FSFA=NULL;
 	}
@@ -123,7 +132,7 @@ void   WINAPI _export ExitFAR(void)
 
 static char *GetMsg(int MsgId)
 {
-    return((char*)InfoA->GetMsg(InfoA->ModuleNumber, MsgId));
+	return((char*)InfoA->GetMsg(InfoA->ModuleNumber, MsgId));
 }
 
 
@@ -144,6 +153,5 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 		return INVALID_HANDLE_VALUE;
 
 	Configure(0);
-
 	return INVALID_HANDLE_VALUE;
 }

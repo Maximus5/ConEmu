@@ -39,6 +39,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <crtdbg.h>
 //#endif
 
+#include "../common/Memory.h"
+
 #ifdef __GNUC__
 #define TimeGetTime GetTickCount
 #define wmemmove_s(d,ds,s,ss) wmemmove(d,s,ss)
@@ -114,7 +116,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MBox(rt) {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, Title, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION); gbDontEnable = b; }
 #define MBoxA(rt) {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, _T("ConEmu"), /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION); gbDontEnable = b; }
 
-//#define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; wsprintf(szAMsg, _T("Assertion (%s) at\n%s:%i"), _T(#V), _T(__FILE__), __LINE__); MBoxA(szAMsg); }
+//#define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; StringCchPrintf(szAMsg, countof(szAMsg), _T("Assertion (%s) at\n%s:%i"), _T(#V), _T(__FILE__), __LINE__); MBoxA(szAMsg); }
 #define MBoxAssert(V) _ASSERTE(V)
 //__inline BOOL isMeForeground() {
 //	HWND h = GetForegroundWindow();
@@ -130,7 +132,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define INVALIDATE() InvalidateRect(HDCWND, NULL, FALSE)
 
 #define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
-#define SafeFree(p) { if ((p)!=NULL) { LPVOID pp = (p); (p) = NULL; free(pp); } }
+//#define SafeFree(p) { if ((p)!=NULL) { LPVOID pp = (p); (p) = NULL; free(pp); } }
 
 #ifdef MSGLOGGER
 #define POSTMESSAGE(h,m,w,l,e) {MCHKHEAP; DebugLogMessage(h,m,w,l,TRUE,e); PostMessage(h,m,w,l);}
@@ -239,8 +241,10 @@ struct RConStartArgs
 		SafeFree(pszSpecialCmd); // именно SafeFree
 		SafeFree(pszStartupDir); // именно SafeFree
 		SafeFree(pszUserName);
+
 		//SafeFree(pszUserPassword);
 		if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
+
 		//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
 	};
 
@@ -252,13 +256,13 @@ struct RConStartArgs
 
 		//wchar_t szPwd[MAX_PATH]; szPwd[0] = 0;
 		szUserPassword[0] = 0;
+
 		if (!GetWindowText(hPwd, szUserPassword, MAX_PATH-1))
 			return FALSE;
 
 		HANDLE hLogonToken = NULL;
-
-		BOOL lbRc = LogonUser(pszUserName, NULL, szUserPassword, LOGON32_LOGON_INTERACTIVE, 
-			LOGON32_PROVIDER_DEFAULT, &hLogonToken);
+		BOOL lbRc = LogonUser(pszUserName, NULL, szUserPassword, LOGON32_LOGON_INTERACTIVE,
+		                      LOGON32_PROVIDER_DEFAULT, &hLogonToken);
 		//if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
 
 		if (!lbRc || !hLogonToken)
@@ -268,8 +272,7 @@ struct RConStartArgs
 		}
 
 		CloseHandle(hLogonToken);
-
-		//hLogonToken may be used for CreateProcessAsUser 
+		//hLogonToken may be used for CreateProcessAsUser
 		return TRUE;
 	};
 };
@@ -287,33 +290,34 @@ struct RConStartArgs
 //------------------------------------------------------------------------
 
 #define pHelp \
-L"Console emulation program.\n" \
-L"By default this program launches \"Far.exe\" from the same directory it is in.\n" \
-L"\n" \
-L"Command line switches:\n" \
-L"/? - This help screen.\n" \
-L"/ct - Clear Type anti-aliasing.\n" \
-L"/fs | /max - (Full screen) | (Maximized) mode.\n" \
-L"/multi | /nomulti - enable or disable multiconsole features\n" \
-L"/font <fontname> - Specify the font name.\n" \
-L"/size <fontsize> - Specify the font size.\n" \
-L"/fontfile <fontfilename> - Loads fonts from file.\n" \
-L"/BufferHeight <lines> - may be used with cmd.exe\n" \
-/* L"/Attach [PID] - intercept console of specified process\n" */ \
-L"\n" \
-L"/cmd <commandline>|@<commandfile> - Command line to start. This must be the last used switch.\n" \
-L"\n" \
-L"Command line examples:\n" \
-L"ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd Far.exe /w\n" \
-L"\n" \
-L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\n" \
-L"\x00A9 2009-2010 Maximus5\n" \
-L"\n" \
-L"Contributors\n" \
-L"NightRoman: drawing process optimization, BufferHeight and other fixes\n" \
-L"dolzenko_: windows switching via GUI tabs\n" \
-L"alex_itd: Drag'n'Drop, RightClick, AltEnter\n" \
-L"Mors: loading font from file."
+	L"Console emulation program.\n" \
+	L"By default this program launches \"Far.exe\" from the same directory it is in.\n" \
+	L"\n" \
+	L"Command line switches:\n" \
+	L"/? - This help screen.\n" \
+	L"/config <configname> - Use alternative named configuration\n" \
+	L"/ct - Clear Type anti-aliasing.\n" \
+	L"/fs | /max - (Full screen) | (Maximized) mode.\n" \
+	L"/multi | /nomulti - enable or disable multiconsole features\n" \
+	L"/font <fontname> - Specify the font name.\n" \
+	L"/size <fontsize> - Specify the font size.\n" \
+	L"/fontfile <fontfilename> - Loads fonts from file.\n" \
+	L"/BufferHeight <lines> - may be used with cmd.exe\n" \
+	/* L"/Attach [PID] - intercept console of specified process\n" */ \
+	L"\n" \
+	L"/cmd <commandline>|@<commandfile> - Command line to start. This must be the last used switch.\n" \
+	L"\n" \
+	L"Command line examples:\n" \
+	L"ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd Far.exe /w\n" \
+	L"\n" \
+	L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\n" \
+	L"\x00A9 2009-2011 ConEmu.Maximus5@gmail.com\n" \
+	L"\n" \
+	L"Contributors\n" \
+	L"NightRoman: drawing optimization, BufferHeight and other fixes\n" \
+	L"dolzenko_: windows switching via GUI tabs\n" \
+	L"alex_itd: Drag'n'Drop, RightClick, AltEnter\n" \
+	L"Mors: loading font from file."
 
 
 //#include "VirtualConsole.h"

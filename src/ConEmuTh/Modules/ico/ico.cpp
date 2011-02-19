@@ -31,6 +31,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <vector>
 #include <GdiPlus.h>
 #include <crtdbg.h>
+#include "../../../common/MStrSafe.h"
+#include "../../../common/Defines.h"
+#include "../../../common/Memory.h"
 #include "../ThumbSDK.h"
 #include "MStream.h"
 
@@ -70,8 +73,8 @@ DWORD gnLastWin32Error = 0;
 #define STRING(x) STRING2(x)
 #define FILE_LINE __FILE__ "(" STRING(__LINE__) "): "
 #ifdef HIDE_TODO
-#define TODO(s) 
-#define WARNING(s) 
+#define TODO(s)
+#define WARNING(s)
 #else
 #define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
 #define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
@@ -87,22 +90,22 @@ HMODULE ghModule = NULL;
 
 typedef struct
 {
-    BYTE        bWidth;          // Width, in pixels, of the image
-    BYTE        bHeight;         // Height, in pixels, of the image
-    BYTE        bColorCount;     // Number of colors in image (0 if >=8bpp)
-    BYTE        bReserved;       // Reserved ( must be 0)
-    WORD        wPlanes;         // Color Planes
-    WORD        wBitCount;       // Bits per pixel
-    DWORD       dwBytesInRes;    // How many bytes in this resource?
-    DWORD       dwImageOffset;   // Where in the file is this image?
+	BYTE        bWidth;          // Width, in pixels, of the image
+	BYTE        bHeight;         // Height, in pixels, of the image
+	BYTE        bColorCount;     // Number of colors in image (0 if >=8bpp)
+	BYTE        bReserved;       // Reserved ( must be 0)
+	WORD        wPlanes;         // Color Planes
+	WORD        wBitCount;       // Bits per pixel
+	DWORD       dwBytesInRes;    // How many bytes in this resource?
+	DWORD       dwImageOffset;   // Where in the file is this image?
 } ICONDIRENTRY, *LPICONDIRENTRY;
 
 typedef struct
 {
-    WORD           idReserved;   // Reserved (must be 0)
-    WORD           idType;       // Resource Type (1 for icons, 2 for cursors)
-    WORD           idCount;      // How many images?
-    ICONDIRENTRY   idEntries[1]; // An entry for each image (idCount of 'em)
+	WORD           idReserved;   // Reserved (must be 0)
+	WORD           idType;       // Resource Type (1 for icons, 2 for cursors)
+	WORD           idCount;      // How many images?
+	ICONDIRENTRY   idEntries[1]; // An entry for each image (idCount of 'em)
 } ICONDIR, *LPICONDIR;
 
 typedef struct
@@ -111,7 +114,7 @@ typedef struct
 	ICONDIR        Icon;
 } ICONCONTEXT, *LPICONCONTEXT;
 
-/*typedef struct 
+/*typedef struct
 {
 	MStream *pStrm;
 	Gdiplus::Bitmap *pBmp;
@@ -132,22 +135,22 @@ typedef struct
 // packing in memory matches the packing of the EXE or DLL.
 typedef struct
 {
-   BYTE   bWidth;               // Width, in pixels, of the image
-   BYTE   bHeight;              // Height, in pixels, of the image
-   BYTE   bColorCount;          // Number of colors in image (0 if >=8bpp)
-   BYTE   bReserved;            // Reserved
-   WORD   wPlanes;              // Color Planes
-   WORD   wBitCount;            // Bits per pixel
-   DWORD  dwBytesInRes;         // how many bytes in this resource?
-   WORD   nID;                  // the ID
+	BYTE   bWidth;               // Width, in pixels, of the image
+	BYTE   bHeight;              // Height, in pixels, of the image
+	BYTE   bColorCount;          // Number of colors in image (0 if >=8bpp)
+	BYTE   bReserved;            // Reserved
+	WORD   wPlanes;              // Color Planes
+	WORD   wBitCount;            // Bits per pixel
+	DWORD  dwBytesInRes;         // how many bytes in this resource?
+	WORD   nID;                  // the ID
 } GRPICONDIRENTRY, *LPGRPICONDIRENTRY;
 
-typedef struct 
+typedef struct
 {
-   WORD            idReserved;   // Reserved (must be 0)
-   WORD            idType;       // Resource type (1 for icons, 2 for cursors)
-   WORD            idCount;      // How many images?
-   GRPICONDIRENTRY   idEntries[1]; // The entries for each image
+	WORD            idReserved;   // Reserved (must be 0)
+	WORD            idType;       // Resource type (1 for icons, 2 for cursors)
+	WORD            idCount;      // How many images?
+	GRPICONDIRENTRY   idEntries[1]; // The entries for each image
 } GRPICONDIR, *LPGRPICONDIR;
 #pragma pack( pop )
 
@@ -267,55 +270,74 @@ DWORD LoadPageInfo(LPICONCONTEXT pIcon, int iPage, UINT32& nBPP, UINT32& nWidth,
 	if (iPage >= (int)pIcon->Icon.idCount || iPage < 0)
 		return PIE_INVALID_NUMBER;
 
-
 	nWidth = pIcon->Icon.idEntries[iPage].bWidth;
-		if (nWidth == 0) nWidth = 256;
+
+	if (nWidth == 0) nWidth = 256;
+
 	nHeight = pIcon->Icon.idEntries[iPage].bHeight;
-		if (nHeight == 0) nHeight = 256;
+
+	if (nHeight == 0) nHeight = 256;
 
 	nBPP = 0; nColors = pIcon->Icon.idEntries[iPage].bColorCount;
-	switch (pIcon->Icon.idEntries[iPage].bColorCount)
+
+	switch(pIcon->Icon.idEntries[iPage].bColorCount)
 	{
-	case 1: _ASSERTE(pIcon->Icon.idEntries[iPage].bColorCount!=1); break;
-	case 2: nBPP = 1; break;
-	case 4: nBPP = 2; break;
-	case 8: nBPP = 3; break;
-	case 16: nBPP = 4; break;
-	case 32: nBPP = 5; break;
-	case 64: nBPP = 6; break;
-	case 128: nBPP = 7; break;
-	default:
-		_ASSERTE(pIcon->Icon.idEntries[iPage].bColorCount == 0);
-		nBPP = pIcon->Icon.idEntries[iPage].wBitCount * pIcon->Icon.idEntries[iPage].wPlanes;
-		//if (nBPP == 0)			nBPP = 8;
-		//nColors = 1 << nBPP;
+		case 1: _ASSERTE(pIcon->Icon.idEntries[iPage].bColorCount!=1); break;
+		case 2: nBPP = 1; break;
+		case 4: nBPP = 2; break;
+		case 8: nBPP = 3; break;
+		case 16: nBPP = 4; break;
+		case 32: nBPP = 5; break;
+		case 64: nBPP = 6; break;
+		case 128: nBPP = 7; break;
+		default:
+			_ASSERTE(pIcon->Icon.idEntries[iPage].bColorCount == 0);
+			nBPP = pIcon->Icon.idEntries[iPage].wBitCount * pIcon->Icon.idEntries[iPage].wPlanes;
+			//if (nBPP == 0)			nBPP = 8;
+			//nColors = 1 << nBPP;
 	}
+
 	LPICONDIRENTRY pImage = pIcon->Icon.idEntries + iPage;
 	LPBYTE pDataStart = ((LPBYTE)&(pIcon->Icon));
 	LPBYTE pImageStart = (pDataStart + pImage->dwImageOffset);
-	if (nBPP <= 256) {
-		if (*((DWORD*)pImageStart) == 0x474e5089) {
+
+	if (nBPP <= 256)
+	{
+		if (*((DWORD*)pImageStart) == 0x474e5089)
+		{
 			//PNG Mark
 			//_ASSERTE(nColors == 0);
 			nBPP = 32; nColors = 0;
+
 			if (ppFormat) *ppFormat = L"ICO.PNG";
-		} else if (*((DWORD*)pImageStart) == sizeof(BITMAPINFOHEADER)) {
+		}
+		else if (*((DWORD*)pImageStart) == sizeof(BITMAPINFOHEADER))
+		{
 			BITMAPINFOHEADER *pDIB = (BITMAPINFOHEADER*)pImageStart;
+
 			//if (nBPP == 0) {
-			if (pDIB->biPlanes && pDIB->biBitCount) {
+			if (pDIB->biPlanes && pDIB->biBitCount)
+			{
 				nBPP = pDIB->biPlanes * pDIB->biBitCount;
 			}
+
 			_ASSERTE(nBPP == (pDIB->biPlanes * pDIB->biBitCount));
+
 			if (nBPP <= 8)
 				nColors = 1 << nBPP;
 			else
 				nColors = 0;
+
 			if (ppFormat) *ppFormat = L"ICO.DIB";
-		} else {
+		}
+		else
+		{
 			_ASSERTE(*((DWORD*)pImageStart) == sizeof(BITMAPINFOHEADER));
 		}
 	}
+
 	_ASSERTE(nBPP);
+
 	if (!nBPP)
 		return PIE_INVALID_BPP;
 
@@ -334,7 +356,7 @@ DWORD LoadPageInfo(LPICONCONTEXT pIcon, int iPage, UINT32& nBPP, UINT32& nWidth,
 //	LPICONCONTEXT pIcon = (LPICONCONTEXT)pImageContext;
 //
 //	UINT nColors = 0;
-//	if ((pPageInfo->nErrNumber = LoadPageInfo(pIcon, pPageInfo->iPage, pPageInfo->nBPP, 
+//	if ((pPageInfo->nErrNumber = LoadPageInfo(pIcon, pPageInfo->iPage, pPageInfo->nBPP,
 //		pPageInfo->lWidth, pPageInfo->lHeight, nColors, &pPageInfo->pFormatName)) != NO_ERROR)
 //		return FALSE;
 //
@@ -347,12 +369,9 @@ LPBYTE Decode1BPP(UINT nWidth, UINT nHeight, RGBQUAD* pPAL, LPBYTE pXOR, LPBYTE 
 	UINT lAndStride = lXorStride; //((nWidth + 3) >> 2) << 1;
 	lDstStride = ((nWidth + 3) >> 2) << 4;
 	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Делаем 32битное изображение
-
 	//UINT nPoints = nWidth * nHeight;
 	//UINT nStride = nWidth << 2; // Это приемник - 32бит на точку
-
 	//LPBYTE pXorSrc, pAndSrc, pDst = pData + nStride * (nHeight - 1);
-
 	////for (UINT i = nPoints; i--;) {
 	//UINT i = nPoints - 1, n;
 	//for (UINT Y = 0; Y < nHeight; Y++) {
@@ -361,13 +380,15 @@ LPBYTE Decode1BPP(UINT nWidth, UINT nHeight, RGBQUAD* pPAL, LPBYTE pXOR, LPBYTE 
 	//		n = pAND[i>>1];
 	//		((UINT*)pDst)[X] = ((UINT*)pPAL)[ (i & 1) ? (n & 0x0F) : (n >> 4) ];
 	//	}
-	//}	
-
+	//}
 	LPBYTE pXorSrc = pXOR; LPBYTE pAndSrc = pAND; LPBYTE pDst = pData + (nHeight - 1) * lDstStride;
-	for (UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
+
+	for(UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
 	{
 		_ASSERTE(pDst >= pData);
-		for (UINT i = nWidth; i--;) {
+
+		for(UINT i = nWidth; i--;)
+		{
 			if ((pXorSrc[i/8] >> (7 - ((i) & 7)) & 1) == 0)
 			{
 				if ((pAndSrc[i/8] >> (7 - ((i) & 7)) & 1) != 0)
@@ -375,6 +396,7 @@ LPBYTE Decode1BPP(UINT nWidth, UINT nHeight, RGBQUAD* pPAL, LPBYTE pXOR, LPBYTE 
 				else
 					((UINT*)pDst)[i] = 0xFF000000;
 			}
+
 			//#ifdef _DEBUG
 			//else {
 			//	((UINT*)pDst)[i] = 0xFFFF0000;
@@ -392,12 +414,9 @@ LPBYTE Decode4BPP(UINT nWidth, UINT nHeight, RGBQUAD* pPAL, LPBYTE pXOR, LPBYTE 
 	UINT lAndStride = (((nWidth>>1)+3)>>2)<<2; //((nWidth + 3) >> 2) << 1;
 	lDstStride = ((nWidth + 3) >> 2) << 4;
 	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Делаем 32битное изображение
-
 	//UINT nPoints = nWidth * nHeight;
 	//UINT nStride = nWidth << 2; // Это приемник - 32бит на точку
-
 	//LPBYTE pXorSrc, pAndSrc, pDst = pData + nStride * (nHeight - 1);
-
 	////for (UINT i = nPoints; i--;) {
 	//UINT i = nPoints - 1, n;
 	//for (UINT Y = 0; Y < nHeight; Y++) {
@@ -406,19 +425,22 @@ LPBYTE Decode4BPP(UINT nWidth, UINT nHeight, RGBQUAD* pPAL, LPBYTE pXOR, LPBYTE 
 	//		n = pAND[i>>1];
 	//		((UINT*)pDst)[X] = ((UINT*)pPAL)[ (i & 1) ? (n & 0x0F) : (n >> 4) ];
 	//	}
-	//}	
-
+	//}
 	LPBYTE pXorSrc = pXOR; LPBYTE pAndSrc = pAND; LPBYTE pDst = pData + (nHeight - 1) * lDstStride;
 	UINT n;
-	for (UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
+
+	for(UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
 	{
 		_ASSERTE(pDst >= pData);
-		for (UINT i = nWidth; i--;) {
+
+		for(UINT i = nWidth; i--;)
+		{
 			if ((pXorSrc[i/8] >> (7 - ((i) & 7)) & 1) == 0)
 			{
 				n = pAndSrc[i>>1];
-				((UINT*)pDst)[i] = 0xFF000000 | ((UINT*)pPAL)[ (i & 1) ? (n & 0x0F) : (n >> 4) ];
+				((UINT*)pDst)[i] = 0xFF000000 | ((UINT*)pPAL)[(i & 1) ? (n & 0x0F) : (n >> 4) ];
 			}
+
 			//#ifdef _DEBUG
 			//else {
 			//	((UINT*)pDst)[i] = 0xFFFF0000;
@@ -436,17 +458,20 @@ LPBYTE Decode8BPP(UINT& nWidth, UINT nHeight, RGBQUAD* pPAL, LPBYTE pXOR, LPBYTE
 	UINT lAndStride = (((nWidth<<3)+31)>>5)<<2;
 	lDstStride = (((nWidth<<5)+31)>>5)<<2;
 	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Делаем 32битное изображение
-
 	LPBYTE pXorSrc = pXOR; LPBYTE pAndSrc = pAND; LPBYTE pDst = pData + (nHeight - 1) * lDstStride;
-	for (UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
+
+	for(UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
 	{
 		_ASSERTE(pDst >= pData);
-		for (UINT i = nWidth; i--;) {
+
+		for(UINT i = nWidth; i--;)
+		{
 			if ((pXorSrc[i/8] >> (7 - ((i) & 7)) & 1) == 0)
-			//if (i != j)
+				//if (i != j)
 			{
 				((UINT*)pDst)[i] = 0xFF000000 | ((UINT*)pPAL)[ pAndSrc[i] ];
 			}
+
 			//#ifdef _DEBUG
 			//else {
 			//	((UINT*)pDst)[i] = 0xFFFF0000;
@@ -464,9 +489,9 @@ LPBYTE Decode24BPP(UINT& nWidth, UINT nHeight, LPBYTE pXOR, LPBYTE pAND, DWORD& 
 	UINT lAndStride = (((nWidth*24)+31)>>5)<<2;
 	lDstStride = (((nWidth<<5)+31)>>5)<<2;
 	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Делаем 32битное изображение
-
 	LPBYTE pXorSrc = pXOR; LPBYTE pAndSrc = pAND; LPBYTE pDst = pData + (nHeight - 1) * lDstStride;
-	for (UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
+
+	for(UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
 	{
 		_ASSERTE(pDst >= pData);
 		////memmove(pDst, pAndSrc, lAndStride);
@@ -482,42 +507,55 @@ LPBYTE Decode24BPP(UINT& nWidth, UINT nHeight, LPBYTE pXOR, LPBYTE pAND, DWORD& 
 		//	//}
 		//	//#endif
 		//}
-
 		UINT nStep = 0;
 		DWORD nLeft = 0, nCur = 0;
 		UINT i = 0;
 		DWORD* p = (DWORD*)pAndSrc;
 
-		while (i < nWidth) {
+		while(i < nWidth)
+		{
 			nCur = *p;
-			switch (nStep) {
-			case 0:
-				if ((pXorSrc[i/8] >> (7 - ((i) & 7)) & 1) == 0)
-					((UINT*)pDst)[i] = 0xFF000000 | (nCur & 0xFFFFFF);
-				nLeft = (nCur & 0xFF000000) >> 24;
-				nStep++;
-				break;
-			case 1:
-				if ((pXorSrc[i/8] >> (7 - ((i) & 7)) & 1) == 0)
-					((UINT*)pDst)[i] = 0xFF000000 | nLeft | ((nCur & 0xFFFF) << 8);
-				nLeft = (nCur & 0xFFFF0000) >> 16;
-				nStep++;
-				break;
-			case 2:
-				if ((pXorSrc[i/8] >> (7 - ((i) & 7)) & 1) == 0)
-					((UINT*)pDst)[i] = 0xFF000000 | nLeft | ((nCur & 0xFF) << 16);
-				nLeft = (nCur & 0xFFFFFF00) >> 8;
-				i++;
-				if (i < nWidth) {
+
+			switch(nStep)
+			{
+				case 0:
+
 					if ((pXorSrc[i/8] >> (7 - ((i) & 7)) & 1) == 0)
-						((UINT*)pDst)[i] = 0xFF000000 | nLeft;
-					nLeft = 0;
-				}
-				nStep = 0;
-				break;
+						((UINT*)pDst)[i] = 0xFF000000 | (nCur & 0xFFFFFF);
+
+					nLeft = (nCur & 0xFF000000) >> 24;
+					nStep++;
+					break;
+				case 1:
+
+					if ((pXorSrc[i/8] >> (7 - ((i) & 7)) & 1) == 0)
+						((UINT*)pDst)[i] = 0xFF000000 | nLeft | ((nCur & 0xFFFF) << 8);
+
+					nLeft = (nCur & 0xFFFF0000) >> 16;
+					nStep++;
+					break;
+				case 2:
+
+					if ((pXorSrc[i/8] >> (7 - ((i) & 7)) & 1) == 0)
+						((UINT*)pDst)[i] = 0xFF000000 | nLeft | ((nCur & 0xFF) << 16);
+
+					nLeft = (nCur & 0xFFFFFF00) >> 8;
+					i++;
+
+					if (i < nWidth)
+					{
+						if ((pXorSrc[i/8] >> (7 - ((i) & 7)) & 1) == 0)
+							((UINT*)pDst)[i] = 0xFF000000 | nLeft;
+
+						nLeft = 0;
+					}
+
+					nStep = 0;
+					break;
 			}
+
 			i++; p++;
-		}										
+		}
 	}
 
 	return pData;
@@ -529,18 +567,21 @@ LPBYTE Decode32BPP(UINT& nWidth, UINT nHeight, LPBYTE pXOR, LPBYTE pAND, DWORD& 
 	UINT lAndStride = (((nWidth<<5)+31)>>5)<<2;
 	lDstStride = lAndStride;
 	LPBYTE pData = (LPBYTE)CALLOC(lDstStride*nHeight); // Делаем 32битное изображение
-
 	LPBYTE pXorSrc = pXOR; LPBYTE pAndSrc = pAND; LPBYTE pDst = pData + (nHeight - 1) * lDstStride;
-	for (UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
+
+	for(UINT j = nHeight; j--; pXorSrc += lXorStride, pAndSrc += lAndStride, pDst -= lDstStride)
 	{
 		_ASSERTE(pDst >= pData);
+
 		//memmove(pDst, pAndSrc, lAndStride);
-		for (UINT i = nWidth; i--;) {
+		for(UINT i = nWidth; i--;)
+		{
 			if ((pXorSrc[i/8] >> (7 - ((i) & 7)) & 1) == 0)
-			//if (i != j)
+				//if (i != j)
 			{
 				((UINT*)pDst)[i] = /*0xFF000000 |*/ ((UINT*)pAndSrc)[i];
 			}
+
 			//#ifdef _DEBUG
 			//else {
 			//	((UINT*)pDst)[i] = 0xFFFF0000;
@@ -573,7 +614,7 @@ LPBYTE DecodeDummy(UINT nWidth, UINT nHeight, DWORD& nBPP)
 //
 //	UINT32 nIconBPP = 0, nColors = 0;
 //
-//	if ((nErrNumber = LoadPageInfo(pIcon, pDecodeInfo->iPage, nIconBPP, 
+//	if ((nErrNumber = LoadPageInfo(pIcon, pDecodeInfo->iPage, nIconBPP,
 //		pDecodeInfo->lWidth, pDecodeInfo->lHeight, nColors, NULL)) != NO_ERROR)
 //		return FALSE;
 //
@@ -726,7 +767,8 @@ LPBYTE DecodeDummy(UINT nWidth, UINT nHeight, DWORD& nBPP)
 //}
 
 
-enum tag_IcoStrMagics {
+enum tag_IcoStrMagics
+{
 	eIcoStr_Decoder = 0x1010,
 	eIcoStr_Image = 0x1011,
 };
@@ -742,12 +784,11 @@ struct ICODecoder
 	BOOL Init(struct CET_Init* pInit)
 	{
 		pInit->pContext = this;
-
 		HRESULT hrCoInitialized = CoInitialize(NULL);
 		gbCoInitialized = SUCCEEDED(hrCoInitialized);
-
 		Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 		Gdiplus::Status lRc = GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
 		if (lRc != Gdiplus::Ok)
 		{
 			Gdiplus::GdiplusShutdown(gdiplusToken); gbTokenInitialized = false;
@@ -774,7 +815,7 @@ struct ICODecoder
 			gbCoInitialized = FALSE;
 			CoUninitialize();
 		}
-		
+
 		FREE(this);
 	};
 };
@@ -792,18 +833,16 @@ struct ICOImage
 	Gdiplus::Bitmap *pBmp;
 	BOOL bPNG;
 	wchar_t szComments[128];
-	
+
 	BOOL Open(bool bVirtual, const wchar_t *pFileName, const BYTE *pBuf, DWORD lBuf, COORD crLoadSize)
 	{
 		_ASSERTE(pIcon == NULL);
 		_ASSERTE(decoder != NULL);
 		_ASSERTE(pBuf && lBuf);
-
 		// При открытии ресурсов - pBuf это BITMAPINFOHEADER
 		// Соответственно, при просмотре ресурса - один файл это строго одна иконка,
 		// информацию нужно грузить строго из BITMAPINFOHEADER
 		// Тут может быть и PNG, но это нас уже не интересует. PNG может быть открыт любым декодером...
-
 		LPICONDIR pTest = (LPICONDIR)pBuf;
 		LPBITMAPINFOHEADER pBmp = (LPBITMAPINFOHEADER)pBuf;
 
@@ -820,33 +859,42 @@ struct ICOImage
 				nErrNumber = PIE_TOO_LARGE_FILE;
 				return FALSE;
 			}
-			if (pTest->idCount == 0) {
+
+			if (pTest->idCount == 0)
+			{
 				nErrNumber = PIE_NO_IMAGES;
 				return FALSE;
 			}
 
 			// Делаем копию буфера
 			pIcon = (LPICONCONTEXT)CALLOC((DWORD)lBuf+sizeof(DWORD));
-			if (!pIcon) {
+
+			if (!pIcon)
+			{
 				nErrNumber = PIE_NOT_ENOUGH_MEMORY;
 				return FALSE;
 			}
+
 			pIcon->nDataSize = (DWORD)lBuf;
 			memmove(&(pIcon->Icon), pBuf, (DWORD)lBuf);
-
-		} else {
+		}
+		else
+		{
 			// Test BITMAPINFOHEADER
 			if (lBuf > sizeof(BITMAPINFOHEADER) && pBmp->biSize == sizeof(BITMAPINFOHEADER)
-				&& (pBmp->biWidth && pBmp->biWidth < 256)
-				&& (pBmp->biHeight == (pBmp->biWidth * 2)))
+			        && (pBmp->biWidth && pBmp->biWidth < 256)
+			        && (pBmp->biHeight == (pBmp->biWidth * 2)))
 			{
 				// Делаем копию буфера, но предваряем его заголовком иконки
 				DWORD nSize = lBuf + sizeof(ICONDIR);
 				pIcon = (LPICONCONTEXT)CALLOC(nSize+sizeof(DWORD));
-				if (!pIcon) {
+
+				if (!pIcon)
+				{
 					nErrNumber = PIE_NOT_ENOUGH_MEMORY;
 					return FALSE;
 				}
+
 				pIcon->nDataSize = nSize;
 				pIcon->Icon.idReserved = 0;
 				pIcon->Icon.idType = 1;
@@ -860,19 +908,19 @@ struct ICOImage
 				pIcon->Icon.idEntries[0].dwBytesInRes = (DWORD)lBuf;
 				pIcon->Icon.idEntries[0].dwImageOffset = sizeof(ICONDIR);
 				memmove(&(pIcon->Icon.idEntries[1]), pBuf, lBuf);
-
-			} else {
+			}
+			else
+			{
 				nErrNumber = PIE_NOT_ICO_FILE;
 				return FALSE;
 			}
 		}
 
-
 		WARNING("Хорошо бы возвращать умолчательный индекс отображаемой иконки, если первая НЕ содержит изображения вообще");
 		// file_view_hc.ico - первый фрейм вообще пустой (полностью прозрачный), а второй содержит картинку
 
-
-		if (pIcon->nDataSize < (sizeof(ICONDIR) + (pIcon->Icon.idCount-1)*sizeof(ICONDIRENTRY))) {
+		if (pIcon->nDataSize < (sizeof(ICONDIR) + (pIcon->Icon.idCount-1)*sizeof(ICONDIRENTRY)))
+		{
 			nErrNumber = PIE_JUMP_OUT_OF_FILE;
 			FREE(pIcon);
 			return FALSE;
@@ -894,174 +942,215 @@ struct ICOImage
 		pLoadPreview->nBits = 32;
 		//pDecodeInfo->ColorModel = PVD_CM_BGRA;
 		pLoadPreview->cbStride = (lWidth * pLoadPreview->nBits) >> 3;
-
 		LPICONDIRENTRY pImage = pIcon->Icon.idEntries + iPage;
 		LPBYTE pDataStart = ((LPBYTE)&(pIcon->Icon));
 		LPBYTE pImageStart = (pDataStart + pImage->dwImageOffset);
-		if (*((DWORD*)pImageStart) == 0x474e5089) {
+
+		if (*((DWORD*)pImageStart) == 0x474e5089)
+		{
 			//PNG Mark
 			bPNG = TRUE;
 			BOOL lbPngLoaded = FALSE;
-			
-			if (decoder->gbTokenInitialized) {
+
+			if (decoder->gbTokenInitialized)
+			{
 				MStream strm;
 				strm.SetData(pImageStart, pImage->dwBytesInRes);
 				//Gdiplus::BitmapData data;
 				memset(&data, 0, sizeof(data));
-				pBmp = Gdiplus::Bitmap::FromStream (&strm, FALSE);
-				if (pBmp) {
+				pBmp = Gdiplus::Bitmap::FromStream(&strm, FALSE);
+
+				if (pBmp)
+				{
 					Gdiplus::PixelFormat pf = pBmp->GetPixelFormat();
 					Gdiplus::Rect rc(0,0,lWidth,lHeight);
-					if (!pBmp->LockBits(&rc, Gdiplus::ImageLockModeRead, PixelFormat32bppARGB, &data)) {
+
+					if (!pBmp->LockBits(&rc, Gdiplus::ImageLockModeRead, PixelFormat32bppARGB, &data))
+					{
 						_ASSERTE(data.PixelFormat == PixelFormat32bppARGB);
 						lWidth = data.Width;
 						lHeight = data.Height;
 						//nBPP = 32;
 						_ASSERTE(data.Scan0 && data.Stride);
 						pImageData = (LPBYTE)CALLOC(data.Height*((data.Stride<0) ? (-data.Stride) : data.Stride));
-						if (pImageData) {
-							if (data.Stride < 0) {
+
+						if (pImageData)
+						{
+							if (data.Stride < 0)
+							{
 								pLoadPreview->cbStride = -data.Stride;
 								LPBYTE pSrc = (LPBYTE)data.Scan0;
 								LPBYTE pDst = pImageData;
-								for (UINT i=0; i<data.Height; i++, pDst-=data.Stride, pSrc+=data.Stride)
+
+								for(UINT i=0; i<data.Height; i++, pDst-=data.Stride, pSrc+=data.Stride)
 									memmove(pDst, pSrc, -data.Stride);
-							} else {
+							}
+							else
+							{
 								pLoadPreview->cbStride = data.Stride;
 								memmove(pImageData, data.Scan0, data.Height*data.Stride);
 							}
+
 							//pDecodeInfo->Flags |= PVD_IDF_ALPHA;
 							lbPngLoaded = TRUE;
 						}
+
 						pBmp->UnlockBits(&data);
 					}
+
 					delete pBmp;
 					pBmp = NULL;
 				}
 			}
 
-			if (!lbPngLoaded) // пустой белый квадрат
-				pImageData = DecodeDummy ( lWidth,lHeight,pLoadPreview->nBits );
-
-		} else if (*((DWORD*)pImageStart) == sizeof(BITMAPINFOHEADER)) {
+			if (!lbPngLoaded)  // пустой белый квадрат
+				pImageData = DecodeDummy(lWidth,lHeight,pLoadPreview->nBits);
+		}
+		else if (*((DWORD*)pImageStart) == sizeof(BITMAPINFOHEADER))
+		{
 			BITMAPINFOHEADER *pDIB = (BITMAPINFOHEADER*)pImageStart;
 			// Icons are stored in funky format where height is doubled - account for it
 			_ASSERTE(pDIB->biWidth==lWidth && (lHeight*2)==pDIB->biHeight);
 			_ASSERTE(pDIB->biSize == sizeof(BITMAPINFOHEADER));
 			RGBQUAD *pPAL = (RGBQUAD*)(((LPBYTE)pDIB) + pDIB->biSize);
+
 			if (nColors != pDIB->biClrUsed && pDIB->biClrUsed)
 				nColors = pDIB->biClrUsed;
+
 			LPBYTE   pAND = ((LPBYTE)pPAL) + sizeof(RGBQUAD)*nColors;
 			LPBYTE   pXOR = ((LPBYTE)pAND) + lHeight
-				* ((((lWidth * nIconBPP) + 31 )>>5)<<2);
-
+			                * ((((lWidth * nIconBPP) + 31)>>5)<<2);
 			_ASSERTE(pImage->dwBytesInRes >= (((lWidth * nIconBPP) >> 3) * lHeight));
 
-			if (nIconBPP == 1) {
-				pImageData = Decode1BPP ( lWidth,lHeight,pPAL,pXOR,pAND,pLoadPreview->cbStride );
+			if (nIconBPP == 1)
+			{
+				pImageData = Decode1BPP(lWidth,lHeight,pPAL,pXOR,pAND,pLoadPreview->cbStride);
 				pLoadPreview->nBits = 32;
 				//pDecodeInfo->Flags |= PVD_IDF_ALPHA;
 				//TODO("Хорошо бы в заголовке показать RLE");
-
-			} else if (nIconBPP == 4) {
-				pImageData = Decode4BPP ( lWidth,lHeight,pPAL,pXOR,pAND,pLoadPreview->cbStride );
+			}
+			else if (nIconBPP == 4)
+			{
+				pImageData = Decode4BPP(lWidth,lHeight,pPAL,pXOR,pAND,pLoadPreview->cbStride);
 				pLoadPreview->nBits = 32;
 				//pDecodeInfo->Flags |= PVD_IDF_ALPHA;
 				//TODO("Хорошо бы в заголовке показать RLE");
-
-			} else if (nIconBPP == 8) {
-				pImageData = Decode8BPP ( lWidth,lHeight,pPAL,pXOR,pAND,pLoadPreview->cbStride );
+			}
+			else if (nIconBPP == 8)
+			{
+				pImageData = Decode8BPP(lWidth,lHeight,pPAL,pXOR,pAND,pLoadPreview->cbStride);
 				pLoadPreview->nBits = 32;
 				//pDecodeInfo->Flags |= PVD_IDF_ALPHA;
 				//TODO("Хорошо бы в заголовке показать RLE");
-
-			} else if (nIconBPP == 24) {
+			}
+			else if (nIconBPP == 24)
+			{
 				pImageData = Decode24BPP(lWidth,lHeight,pXOR,pAND,pLoadPreview->cbStride);
 				pLoadPreview->nBits = 32;
 				//pDecodeInfo->Flags |= PVD_IDF_ALPHA;
-
-			} else if (nIconBPP == 32) {
+			}
+			else if (nIconBPP == 32)
+			{
 				pImageData = Decode32BPP(lWidth,lHeight,pXOR,pAND,pLoadPreview->cbStride);
 				pLoadPreview->nBits = 32;
 				//pDecodeInfo->Flags |= PVD_IDF_ALPHA;
-
-			} else {
+			}
+			else
+			{
 				//nErrNumber = PIE_UNSUPPORTED_BPP;
 				//return FALSE;
-				pImageData = DecodeDummy ( lWidth,lHeight,pLoadPreview->nBits );
+				pImageData = DecodeDummy(lWidth,lHeight,pLoadPreview->nBits);
 			}
-		} else {
+		}
+		else
+		{
 			// Unknown image type
-			pImageData = DecodeDummy ( lWidth,lHeight,pLoadPreview->nBits );
+			pImageData = DecodeDummy(lWidth,lHeight,pLoadPreview->nBits);
 		}
 
 		//pDecodeInfo->pPalette = NULL;
 		//pDecodeInfo->nColorsUsed = 0;
 		//pLoadPreview->cbStride = (pDecodeInfo->lWidth * pLoadPreview->nBits) >> 3;
-		
 		pLoadPreview->pFileContext = this;
 		pLoadPreview->ColorModel = CET_CM_BGRA;
 		pLoadPreview->Pixels = (DWORD*)pImageData;
 		pLoadPreview->crSize.X = lWidth;
 		pLoadPreview->crSize.Y = lHeight;
 		pLoadPreview->cbPixelsSize = pLoadPreview->cbStride * lHeight;
-		wsprintf(szComments, L"%i x %i x %ibpp [%i] %s%s", lWidth, lHeight, nIconBPP, pIcon->Icon.idCount,
-			pIcon->Icon.idType!=2 ? L"ICO" : L"CUR", bPNG ? L" [PNG]" : L"");
+		_wsprintf(szComments, SKIPLEN(countof(szComments)) L"%i x %i x %ibpp [%i] %s%s", lWidth, lHeight, nIconBPP, pIcon->Icon.idCount,
+		          pIcon->Icon.idType!=2 ? L"ICO" : L"CUR", bPNG ? L" [PNG]" : L"");
 		pLoadPreview->pszComments = szComments;
-
 		return TRUE;
 	}
-	
+
 	BOOL GetPageBits(struct CET_LoadInfo* pLoadPreview)
 	{
 		UINT32 nBPP, nW, nH, nC;
 		iPage = -1;
+
 		// Подобрать фрейм наиболее подходящий к запросу
-		for (int s = 1; s <= 3; s++)
+		for(int s = 1; s <= 3; s++)
 		{
-			for (int i = 0; i < pIcon->Icon.idCount; i++)
+			for(int i = 0; i < pIcon->Icon.idCount; i++)
 			{
 				if ((nErrNumber = LoadPageInfo(pIcon, i, nBPP, nW, nH, nC, NULL)) == NO_ERROR)
 				{
 					// Сначала пытаемся по максимуму
-					if (s == 1) {
+					if (s == 1)
+					{
 						if (pIcon->Icon.idCount > 1 && (pLoadPreview->crLoadSize.X != nW || pLoadPreview->crLoadSize.Y != nH))
 							continue;
-						if (nBPP > nIconBPP) {
+
+						if (nBPP > nIconBPP)
+						{
 							iPage = i; nIconBPP = nBPP; lWidth = nW; lHeight = nH; nColors = nC;
 						}
-					} else if (s == 2) {
-					// если не удалось - то не более
+					}
+					else if (s == 2)
+					{
+						// если не удалось - то не более
 						if ((int)pLoadPreview->crLoadSize.X < (int)nW || (int)pLoadPreview->crLoadSize.Y < (int)nH)
 							continue;
-						if (nBPP >= nIconBPP && nW >= lWidth && nH >= lHeight) {
+
+						if (nBPP >= nIconBPP && nW >= lWidth && nH >= lHeight)
+						{
 							iPage = i; nIconBPP = nBPP; lWidth = nW; lHeight = nH; nColors = nC;
 						}
-					} else {
-					// не удалось - любой размер
-						if (nBPP >= nIconBPP && nW >= lWidth && nH >= lHeight) {
+					}
+					else
+					{
+						// не удалось - любой размер
+						if (nBPP >= nIconBPP && nW >= lWidth && nH >= lHeight)
+						{
 							iPage = i; nIconBPP = nBPP; lWidth = nW; lHeight = nH; nColors = nC;
 						}
 					}
 				}
 			}
-			if (iPage != -1) {
+
+			if (iPage != -1)
+			{
 				return PageDecode(pLoadPreview);
 			}
 		}
+
 		return FALSE;
 	};
-	
+
 	void Close()
 	{
 		if (pIcon)
 			FREE(pIcon);
+
 		if (pImageData)
 			FREE(pImageData);
-		if (pBmp) {
+
+		if (pBmp)
+		{
 			delete pBmp;
 			pBmp = NULL;
 		}
+
 		FREE(this);
 	};
 };
@@ -1070,21 +1159,28 @@ struct ICOImage
 
 BOOL WINAPI CET_Init(struct CET_Init* pInit)
 {
+	HeapInitialize();
 	_ASSERTE(pInit->cbSize >= sizeof(struct CET_Init));
-	if (pInit->cbSize < sizeof(struct CET_Init)) {
+
+	if (pInit->cbSize < sizeof(struct CET_Init))
+	{
 		pInit->nErrNumber = PIE_OLD_PLUGIN;
 		return FALSE;
 	}
 
 	ghModule = pInit->hModule;
-
 	ICODecoder *pDecoder = (ICODecoder*) CALLOC(sizeof(ICODecoder));
-	if (!pDecoder) {
+
+	if (!pDecoder)
+	{
 		pInit->nErrNumber = PIE_NOT_ENOUGH_MEMORY;
 		return FALSE;
 	}
+
 	pDecoder->nMagic = eIcoStr_Decoder;
-	if (!pDecoder->Init(pInit)) {
+
+	if (!pDecoder->Init(pInit))
+	{
 		pInit->nErrNumber = pDecoder->nErrNumber;
 		pDecoder->Close();
 		//FREE(pDecoder);
@@ -1097,16 +1193,23 @@ BOOL WINAPI CET_Init(struct CET_Init* pInit)
 
 VOID WINAPI CET_Done(struct CET_Init* pInit)
 {
-	if (pInit) {
+	if (pInit)
+	{
 		ICODecoder *pDecoder = (ICODecoder*)pInit->pContext;
-		if (pDecoder) {
+
+		if (pDecoder)
+		{
 			_ASSERTE(pDecoder->nMagic == eIcoStr_Decoder);
-			if (pDecoder->nMagic == eIcoStr_Decoder) {
+
+			if (pDecoder->nMagic == eIcoStr_Decoder)
+			{
 				pDecoder->Close();
 				//FREE(pDecoder);
 			}
 		}
 	}
+
+	HeapDeinitialize();
 }
 
 
@@ -1115,74 +1218,80 @@ VOID WINAPI CET_Done(struct CET_Init* pInit)
 
 BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 {
-	if (!pLoadPreview || *((LPDWORD)pLoadPreview) != sizeof(struct CET_LoadInfo)) {
+	if (!pLoadPreview || *((LPDWORD)pLoadPreview) != sizeof(struct CET_LoadInfo))
+	{
 		_ASSERTE(*((LPDWORD)pLoadPreview) == sizeof(struct CET_LoadInfo));
 		SETERROR(PIE_INVALID_VERSION);
 		return FALSE;
 	}
-	
-	
-	if (!pLoadPreview->pContext) {
+
+	if (!pLoadPreview->pContext)
+	{
 		SETERROR(PIE_INVALID_CONTEXT);
 		return FALSE;
 	}
-	
-	if (pLoadPreview->bVirtualItem && (!pLoadPreview->pFileData || !pLoadPreview->nFileSize)) {
+
+	if (pLoadPreview->bVirtualItem && (!pLoadPreview->pFileData || !pLoadPreview->nFileSize))
+	{
 		SETERROR(PIE_FILE_NOT_FOUND);
 		return FALSE;
 	}
-	
-	if (pLoadPreview->nFileSize < 16 || pLoadPreview->nFileSize > 10485760/*10 MB*/) {
+
+	if (pLoadPreview->nFileSize < 16 || pLoadPreview->nFileSize > 10485760/*10 MB*/)
+	{
 		SETERROR(PIE_UNSUPPORTEDFORMAT);
 		return FALSE;
 	}
-	
+
 	BOOL lbKnown = FALSE;
-	
-	if (pLoadPreview->pFileData) {
+
+	if (pLoadPreview->pFileData)
+	{
 		const BYTE  *pb  = (const BYTE*)pLoadPreview->pFileData;
 		const WORD  *pw  = (const WORD*)pLoadPreview->pFileData;
 		const DWORD *pdw = (const DWORD*)pLoadPreview->pFileData;
-		
-		if (pw[0]==0 && (pw[1]==1/*ICON*/ || pw[1]==2/*CURSOR*/) && (pw[2]>0 && pw[2]<=64/*IMG COUNT*/)) // .ico, .cur
+
+		if (pw[0]==0 && (pw[1]==1/*ICON*/ || pw[1]==2/*CURSOR*/) && (pw[2]>0 && pw[2]<=64/*IMG COUNT*/))  // .ico, .cur
 			lbKnown = TRUE;
 	}
-	if (!lbKnown) {
+
+	if (!lbKnown)
+	{
 		SETERROR(PIE_UNSUPPORTEDFORMAT);
 		return FALSE;
 	}
 
-	
 	ICOImage *pImage = (ICOImage*)CALLOC(sizeof(ICOImage));
-	if (!pImage) {
+
+	if (!pImage)
+	{
 		SETERROR(PIE_NOT_ENOUGH_MEMORY);
 		return FALSE;
 	}
+
 	pImage->nMagic = eIcoStr_Image;
 	pLoadPreview->pFileContext = (void*)pImage;
-
-	
 	pImage->decoder = (ICODecoder*)pLoadPreview->pContext;
 	pImage->decoder->bCancelled = FALSE;
-	
 
 	if (!pImage->Open(
-				(pLoadPreview->bVirtualItem!=FALSE), pLoadPreview->sFileName,
-				pLoadPreview->pFileData, (DWORD)pLoadPreview->nFileSize, pLoadPreview->crLoadSize))
+	            (pLoadPreview->bVirtualItem!=FALSE), pLoadPreview->sFileName,
+	            pLoadPreview->pFileData, (DWORD)pLoadPreview->nFileSize, pLoadPreview->crLoadSize))
 	{
 		SETERROR(pImage->nErrNumber);
 		pImage->Close();
 		pLoadPreview->pFileContext = NULL;
 		return FALSE;
 	}
-	
-	if (!pImage->GetPageBits(pLoadPreview)) {
+
+	if (!pImage->GetPageBits(pLoadPreview))
+	{
 		SETERROR(pImage->nErrNumber);
 		pImage->Close();
 		pLoadPreview->pFileContext = NULL;
 		return FALSE;
 	}
-	
+
 	//if (pLoadPreview->pFileContext == (void*)pImage)
 	//	pLoadPreview->pFileContext = NULL;
 	//
@@ -1192,35 +1301,42 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 
 VOID WINAPI CET_Free(struct CET_LoadInfo* pLoadPreview)
 {
-	if (!pLoadPreview || *((LPDWORD)pLoadPreview) != sizeof(struct CET_LoadInfo)) {
+	if (!pLoadPreview || *((LPDWORD)pLoadPreview) != sizeof(struct CET_LoadInfo))
+	{
 		_ASSERTE(*((LPDWORD)pLoadPreview) == sizeof(struct CET_LoadInfo));
 		SETERROR(PIE_INVALID_VERSION);
 		return;
 	}
-	if (!pLoadPreview->pFileContext) {
+
+	if (!pLoadPreview->pFileContext)
+	{
 		SETERROR(PIE_INVALID_CONTEXT);
 		return;
 	}
 
-	switch (*(LPDWORD)pLoadPreview->pFileContext) {
-		case eIcoStr_Image: {
+	switch(*(LPDWORD)pLoadPreview->pFileContext)
+	{
+		case eIcoStr_Image:
+		{
 			// Сюда мы попадем если был exception в CET_Load
 			ICOImage *pImg = (ICOImage*)pLoadPreview->pFileContext;
 			pImg->Close();
 		} break;
-		
-		#ifdef _DEBUG
+#ifdef _DEBUG
 		default:
 			_ASSERTE(*(LPDWORD)pLoadPreview->pFileContext == eIcoStr_Image);
-		#endif
+#endif
 	}
 }
 
 VOID WINAPI CET_Cancel(LPVOID pContext)
 {
 	if (!pContext) return;
+
 	ICODecoder *pDecoder = (ICODecoder*)pContext;
-	if (pDecoder->nMagic == eIcoStr_Decoder) {
+
+	if (pDecoder->nMagic == eIcoStr_Decoder)
+	{
 		pDecoder->bCancelled = TRUE;
 	}
 }

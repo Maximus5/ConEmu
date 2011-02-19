@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_OVERLAY_WIDTH    300
 #define MAX_OVERLAY_HEIGHT   300
 #define OVERLAY_ALPHA        0xAA
-#define OVERLAY_TEXT_SHIFT   (gSet.isDragShowIcons ? 18 : 0)
+#define OVERLAY_TEXT_SHIFT   (gpSet->isDragShowIcons ? 18 : 0)
 #define OVERLAY_COLUMN_SHIFT 5
 #define OVERLAY_COLOR  RGB(254,0,254)
 
@@ -77,7 +77,7 @@ CDragDropData::~CDragDropData()
 {
 	DestroyDragImageBits();
 	DestroyDragImageWindow();
-	
+
 	if (m_pfpi) free(m_pfpi); m_pfpi=NULL;
 }
 
@@ -85,15 +85,11 @@ BOOL CDragDropData::Register()
 {
 	BOOL lbRc = FALSE;
 	HRESULT hr = S_OK;
-	
-	
-	#ifdef UNLOCKED_DRAG
+#ifdef UNLOCKED_DRAG
 	// Инициалиция для Drag
 	InitialCreateSource();
-
 	// Окно создаем сразу, чтобы фокус никуда не уходил в процессе
 	CreateDragImageWindow();
-
 	//hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
 	//if (pHelper) {
 	//	hr = pHelper->QueryInterface(__uuidof(mp_SourceHelper), (void**)&mp_SourceHelper);
@@ -101,15 +97,17 @@ BOOL CDragDropData::Register()
 	//	pHelper->Release();
 	//	pHelper = NULL;
 	//}
-	#endif
-	
+#endif
+	_ASSERTE(gpConEmu->mp_DragDrop);
+	hr = RegisterDragDrop(ghWnd, gpConEmu->mp_DragDrop);
 
-	_ASSERTE(gConEmu.mp_DragDrop);
-	hr = RegisterDragDrop(ghWnd, gConEmu.mp_DragDrop);
-	if (hr != S_OK) {
+	if (hr != S_OK)
+	{
 		DisplayLastError(L"Can't register Drop target", hr);
 		goto wrap;
-	} else {
+	}
+	else
+	{
 		mb_DragDropRegistered = TRUE;
 	}
 
@@ -126,9 +124,7 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 	UINT nFilesCount = 0;
 	wchar_t *szDraggedPath = NULL;
 	//BOOL lbNeedLBtnUp = !abClickNeed;
-
-	CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
-
+	CConEmuPipe pipe(gpConEmu->GetFarPID(), CONEMUREADYTIMEOUT);
 	MCHKHEAP
 
 	if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
@@ -136,81 +132,90 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 	if (pipe.Init(_T("CDragDropData::Drag")))
 	{
 		//DWORD cbWritten=0;
-		struct {
+		struct
+		{
 			BOOL  bClickNeed;
 			COORD crMouse;
 		} DragArg;
 		DragArg.bClickNeed = abClickNeed;
-		DragArg.crMouse = gConEmu.ActiveCon()->RCon()->ScreenToBuffer(
-				gConEmu.ActiveCon()->ClientToConsole(crMouseDC.X, crMouseDC.Y)
-			);
+		DragArg.crMouse = gpConEmu->ActiveCon()->RCon()->ScreenToBuffer(
+		                      gpConEmu->ActiveCon()->ClientToConsole(crMouseDC.X, crMouseDC.Y)
+		                  );
 
 		if (pipe.Execute(CMD_DRAGFROM, &DragArg, sizeof(DragArg)))
 		{
 			//lbNeedLBtnUp = FALSE; // мышка уже обработана в плагине
-
-			gConEmu.DebugStep(_T("DnD: Recieving data"));
+			gpConEmu->DebugStep(_T("DnD: Recieving data"));
 			DWORD cbBytesRead=0;
 			int nWholeSize=0;
-			pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead); 
-			if (nWholeSize==0) { // защита смены формата
+			pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead);
+
+			if (nWholeSize==0)    // защита смены формата
+			{
 				if (!pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead))
 					nWholeSize = 0;
-			} else {
+			}
+			else
+			{
 				nWholeSize=0;
 			}
 
 			MCHKHEAP
 
-			if (nWholeSize<=0) {
-				gConEmu.DebugStep(_T("DnD: Data is empty"), TRUE);
+			if (nWholeSize<=0)
+			{
+				gpConEmu->DebugStep(_T("DnD: Data is empty"), TRUE);
 			}
 			else
 			{
-				gConEmu.DebugStep(_T("DnD: Recieving data..."));
+				gpConEmu->DebugStep(_T("DnD: Recieving data..."));
 				//mpsz_DraggedPath <-- wchar_t *szDraggedPath=NULL; //ASCIIZZ
-				szDraggedPath = new wchar_t[nWholeSize/*(MAX_PATH+1)*FilesCount*/+1];	
+				szDraggedPath = new wchar_t[nWholeSize/*(MAX_PATH+1)*FilesCount*/+1];
 				ZeroMemory(szDraggedPath, /*((MAX_PATH+1)*FilesCount+1)*/(nWholeSize+1)*sizeof(wchar_t));
 				wchar_t  *curr = szDraggedPath;
 
-				for (;;)
+				for(;;)
 				{
 					int nCurSize=0;
+
 					if (!pipe.Read(&nCurSize, sizeof(nCurSize), &cbBytesRead)) break;
+
 					if (nCurSize==0) break;
 
-					pipe.Read(curr, sizeof(WCHAR)*nCurSize, &cbBytesRead); 
+					pipe.Read(curr, sizeof(WCHAR)*nCurSize, &cbBytesRead);
 					_ASSERTE(*curr);
-
 					curr+=wcslen(curr)+1;
 					nFilesCount ++;
 				}
 
 				int cbStructSize=0;
+
 				if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+
 				if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
 				{
-					if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo)) {
+					if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo))
+					{
 						m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
-
 						pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
-
 						m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
 						//Slash на конце нам не нужен
-						int nPathLen = lstrlenW( m_pfpi->pszActivePath );
+						int nPathLen = lstrlenW(m_pfpi->pszActivePath);
+
 						if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
 							m_pfpi->pszActivePath[nPathLen-1] = 0;
 
 						m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
 						//Slash на конце нам не нужен
-						nPathLen = lstrlenW( m_pfpi->pszPassivePath );
+						nPathLen = lstrlenW(m_pfpi->pszPassivePath);
+
 						if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
 							m_pfpi->pszPassivePath[nPathLen-1] = 0;
 					}
 				}
+
 				// Сразу закроем
 				pipe.Close();
-
 				size=(curr-szDraggedPath)*sizeof(wchar_t)+2;
 			}
 		}
@@ -224,17 +229,16 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 BOOL CDragDropData::AddFmt_FileNameW(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
 {
 	HGLOBAL file_nameW = NULL;
-
 	file_nameW = GlobalAlloc(GPTR, cbSize);
 	memcpy(((WCHAR*)file_nameW), pszDraggedPath, cbSize);
-
-	FORMATETC       fmtetc[] = {
+	FORMATETC       fmtetc[] =
+	{
 		{ RegisterClipboardFormat(L"FileNameW"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }
 	};
-	STGMEDIUM       stgmed[] = {
+	STGMEDIUM       stgmed[] =
+	{
 		{ TYMED_HGLOBAL, { (HBITMAP)file_nameW }, 0 }
 	};
-
 	mp_DataObject->SetData(fmtetc, stgmed, TRUE);
 	return (file_nameW!=NULL);
 }
@@ -247,60 +251,59 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	HRESULT hr = S_OK;
 	UINT nAdded = 0;
 	IShellFolder *pDesktop = NULL;
-
 	//if (nFilesCount !=1 )
 	//	goto wrap;
-
 	// Прикидочно определим, сколько понадобится памяти для хранения всех PIDL
 	nParentSize = ILGetSize(&m_DesktopID); _ASSERTE(nParentSize==2);
 	size_t nMaxSize = cbSize + nFilesCount * 64 + 32;
 	// в nCurSize сразу резервируем размер памяти под заголовок (CIDA с переменным aoffset)
 	size_t nCurSize = sizeof(CIDA)+nFilesCount*sizeof(UINT);
 	file_PIDLs = (CIDA*)GlobalAlloc(GPTR, nMaxSize);
-	if (!file_PIDLs) {
-		gConEmu.DebugStep(_T("DnD: Can't allocate CIDA*"), TRUE);
+
+	if (!file_PIDLs)
+	{
+		gpConEmu->DebugStep(_T("DnD: Can't allocate CIDA*"), TRUE);
 		goto wrap;
 	}
+
 	// First - root folder PIDL (Desktop)
 	file_PIDLs->cidl = 0; // будем инкрементить, когда понадобится
 	file_PIDLs->aoffset[0] = nCurSize;
 	memmove((((LPBYTE)file_PIDLs)+nCurSize), &m_DesktopID, nParentSize);
 	nCurSize += nParentSize;
-
-
-	_try {
+	_try
+	{
 		// Сначала нужно получить Interface для Desktop
 		SFGAOF tmp;
 		LPITEMIDLIST pItem = NULL;
 		DWORD nItemSize = 0;
-		
+
 
 		MCHKHEAP
 
-		hr = SHGetDesktopFolder ( &pDesktop );
+		hr = SHGetDesktopFolder(&pDesktop);
 
-		for (UINT i = 0; pDesktop && i < nFilesCount; i++)
+		for(UINT i = 0; pDesktop && i < nFilesCount; i++)
 		{
 			wchar_t* pszFile = pszDraggedPath;
 			pszDraggedPath += lstrlenW(pszDraggedPath)+1;
 			_ASSERTE(pszFile[0]);
-
 			const wchar_t* pszSlash = wcsrchr(pszFile, L'\\');
+
 			if (!pszSlash)
 				continue;
 
 			// теперь собственно файл/папка...
 			ULONG nEaten=0;
-
 			hr = pDesktop->ParseDisplayName(ghWnd, NULL, pszFile, &nEaten, &pItem, &(tmp=0));
 
 			if (hr == S_OK && pItem /*&& mp_DesktopID*/)
 			{
 				nItemSize = ILGetSize((PCUIDLIST_RELATIVE)pItem);
-				
 				MCHKHEAP;
 
-				if ((nCurSize + nItemSize) > nMaxSize) {
+				if ((nCurSize + nItemSize) > nMaxSize)
+				{
 					nMaxSize += nItemSize;
 					CIDA* pNew = (CIDA*)GlobalAlloc(GPTR, nMaxSize);
 					memmove(pNew, file_PIDLs, nCurSize);
@@ -314,10 +317,11 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 				file_PIDLs->aoffset[nAdded] = nCurSize;
 				memmove((((LPBYTE)file_PIDLs)+nCurSize), pItem, nItemSize);
 				nCurSize += nItemSize;
-
 				MCHKHEAP;
 			}
-			if (pItem) {
+
+			if (pItem)
+			{
 				CoTaskMemFree(pItem); pItem = NULL;
 			}
 		}
@@ -327,50 +331,59 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 		hr = -1;
 	}
 
-	if (hr == -1) {
+	if (hr == -1)
+	{
 		// file_PIDLs освободится после wrap;
-		gConEmu.DebugStep(_T("DnD: Exception in shell"), TRUE);
+		gpConEmu->DebugStep(_T("DnD: Exception in shell"), TRUE);
 		goto wrap;
 	}
 
-	if (file_PIDLs->cidl == 0) {
-		gConEmu.DebugStep(_T("DnD: Failed to create ShellIdList"), TRUE);
+	if (file_PIDLs->cidl == 0)
+	{
+		gpConEmu->DebugStep(_T("DnD: Failed to create ShellIdList"), TRUE);
 		goto wrap;
 	}
 
 	// Добавляем
-	FORMATETC       fmtetc[] = {
+	FORMATETC       fmtetc[] =
+	{
 		{ RegisterClipboardFormat(CFSTR_SHELLIDLIST), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL},
 	};
-	STGMEDIUM       stgmed[] = {
+	STGMEDIUM       stgmed[] =
+	{
 		{ TYMED_HGLOBAL, { (HBITMAP)file_PIDLs }, 0 }
 	};
 	mp_DataObject->SetData(fmtetc, stgmed, TRUE);
 	lbAdded = TRUE;
 	file_PIDLs = NULL;
 wrap:
+
 	if (pDesktop) { pDesktop->Release(); pDesktop = NULL; }
+
 	if (file_PIDLs) { GlobalFree(file_PIDLs); file_PIDLs = NULL; }
+
 	return lbAdded;
 }
 
 BOOL CDragDropData::AddFmt_PREFERREDDROPEFFECT(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
 {
 	HGLOBAL drop_preferredeffect = GlobalAlloc(GPTR, sizeof(DWORD));
-	if (gConEmu.mouse.state & DRAG_R_STARTED)
+
+	if (gpConEmu->mouse.state & DRAG_R_STARTED)
 		*((DWORD*)drop_preferredeffect) = DROPEFFECT_LINK;
-	else if (gSet.isDefCopy)
+	else if (gpSet->isDefCopy)
 		*((DWORD*)drop_preferredeffect) = DROPEFFECT_COPY;
 	else
 		*((DWORD*)drop_preferredeffect) = DROPEFFECT_MOVE;
 
-	FORMATETC       fmtetc[] = {
+	FORMATETC       fmtetc[] =
+	{
 		{ RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
 	};
-	STGMEDIUM       stgmed[] = {
+	STGMEDIUM       stgmed[] =
+	{
 		{ TYMED_HGLOBAL, { (HBITMAP)drop_preferredeffect }, 0 },
 	};
-
 	mp_DataObject->SetData(fmtetc, stgmed, TRUE);
 	return TRUE;
 }
@@ -379,14 +392,14 @@ BOOL CDragDropData::AddFmt_InShellDragLoop(wchar_t* pszDraggedPath, UINT nFilesC
 {
 	HGLOBAL drag_loop = GlobalAlloc(GPTR, sizeof(DWORD));
 	*((DWORD*)drag_loop) = 1;
-
-	FORMATETC       fmtetc[] = {
+	FORMATETC       fmtetc[] =
+	{
 		{ RegisterClipboardFormat(L"InShellDragLoop"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
 	};
-	STGMEDIUM       stgmed[] = {
+	STGMEDIUM       stgmed[] =
+	{
 		{ TYMED_HGLOBAL, { (HBITMAP)drag_loop }, 0 },
 	};
-
 	mp_DataObject->SetData(fmtetc, stgmed, TRUE);
 	return TRUE;
 }
@@ -394,21 +407,23 @@ BOOL CDragDropData::AddFmt_InShellDragLoop(wchar_t* pszDraggedPath, UINT nFilesC
 BOOL CDragDropData::AddFmt_HDROP(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
 {
 	DROPFILES drop_struct = { sizeof(drop_struct), { 0, 0 }, 0, 1 };
-
 	HGLOBAL drop_data = GlobalAlloc(GPTR, cbSize+sizeof(drop_struct));
 	_ASSERTE(drop_data);
-	if (!drop_data) {
-		gConEmu.DebugStep(_T("DnD: Memory allocation failed!"), TRUE);
+
+	if (!drop_data)
+	{
+		gpConEmu->DebugStep(_T("DnD: Memory allocation failed!"), TRUE);
 		goto wrap;
 	}
+
 	memcpy(drop_data, &drop_struct, sizeof(drop_struct));
-
 	memcpy(((byte*)drop_data) + sizeof(drop_struct), pszDraggedPath, cbSize);
-
-	FORMATETC       fmtetc[] = {
+	FORMATETC       fmtetc[] =
+	{
 		{ CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
 	};
-	STGMEDIUM       stgmed[] = {
+	STGMEDIUM       stgmed[] =
+	{
 		{ TYMED_HGLOBAL, { (HBITMAP)drop_data }, 0 },
 	};
 	mp_DataObject->SetData(fmtetc, stgmed, TRUE);
@@ -419,17 +434,19 @@ wrap:
 BOOL CDragDropData::AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
 {
 	// Must be GlobalAlloc'ed
-	DragImageBits *pDragBits = CreateDragImageBits ( pszDraggedPath );
+	DragImageBits *pDragBits = CreateDragImageBits(pszDraggedPath);
+
 	if (!pDragBits)
 		return FALSE;
 
-	FORMATETC       fmtetc[] = {
+	FORMATETC       fmtetc[] =
+	{
 		{ RegisterClipboardFormat(L"DragImageBits"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
 	};
-	STGMEDIUM       stgmed[] = {
+	STGMEDIUM       stgmed[] =
+	{
 		{ TYMED_HGLOBAL, { (HBITMAP)pDragBits }, 0 },
 	};
-
 	mp_DataObject->SetData(fmtetc, stgmed, TRUE);
 	return TRUE;
 }
@@ -442,87 +459,83 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	wchar_t *szDraggedPath = NULL; // ASCIIZZ
 	UINT nFilesCount = 0;
 
-	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragging())
+	if (!gpSet->isDragEnabled /*|| isInDrag */|| gpConEmu->isDragging())
 	{
-		gConEmu.DebugStep(_T("DnD: Drag disabled"), TRUE);
+		gpConEmu->DebugStep(_T("DnD: Drag disabled"), TRUE);
 		goto wrap;
 	}
 
-	_ASSERTE(!gConEmu.isPictureView());
-
-	//gConEmu.isDragProcessed=true; // чтобы не сработало два раза на один драг
-	gConEmu.mouse.state |= (gConEmu.mouse.state & DRAG_R_ALLOWED) ? DRAG_R_STARTED : DRAG_L_STARTED;
-
-
+	_ASSERTE(!gpConEmu->isPictureView());
+	//gpConEmu->isDragProcessed=true; // чтобы не сработало два раза на один драг
+	gpConEmu->mouse.state |= (gpConEmu->mouse.state & DRAG_R_ALLOWED) ? DRAG_R_STARTED : DRAG_L_STARTED;
 	MCHKHEAP;
 	size = RetrieveDragFromInfo(abClickNeed, crMouseDC, &szDraggedPath, &nFilesCount);
 	MCHKHEAP;
+
 	if (size <= 0 || nFilesCount == 0)
 	{
-		wchar_t szInfo[128]; wsprintfW(szInfo, L"DnD: RetrieveDragFromInfo, Code=%i, nFilesCount=%i!", size, nFilesCount);
-		gConEmu.DebugStep(szInfo, TRUE);
+		wchar_t szInfo[128]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DnD: RetrieveDragFromInfo, Code=%i, nFilesCount=%i!", size, nFilesCount);
+		gpConEmu->DebugStep(szInfo, TRUE);
 		goto wrap;
 	}
 
 	*pdwAllowedEffects = DROPEFFECT_COPY|DROPEFFECT_MOVE;
-
 	// Создать IDataObject (пока пустой)
 	CreateDataObject(NULL, NULL, 0, &mp_DataObject) ;
+
 	if (!mp_DataObject)
 	{
-		gConEmu.DebugStep(_T("DnD: CreateDataObject failed!"), TRUE);
+		gpConEmu->DebugStep(_T("DnD: CreateDataObject failed!"), TRUE);
 		goto wrap;
 	}
-	
+
 	// Добавление в mp_DataObject перетаскиваемых форматов
 	AddFmt_HDROP(szDraggedPath, nFilesCount, size);
 	AddFmt_PREFERREDDROPEFFECT(szDraggedPath, nFilesCount, size);
 	AddFmt_InShellDragLoop(szDraggedPath, nFilesCount, size);
 	AddFmt_DragImageBits(szDraggedPath, nFilesCount, size);
+
 	// Эти шли последними
 	if (AddFmt_SHELLIDLIST(szDraggedPath, nFilesCount, size))
 		*pdwAllowedEffects |= DROPEFFECT_LINK;
+
 	AddFmt_FileNameW(szDraggedPath, nFilesCount, size);
-
 	MCHKHEAP
-
 	//Освободить память, больше не нужно
 	delete szDraggedPath; szDraggedPath=NULL;
 
-	//CFSTR_PREFERREDDROPEFFECT, FD_LINKUI 
-	
+	//CFSTR_PREFERREDDROPEFFECT, FD_LINKUI
+
 	// Сразу получим информацию о путях панелей...
-	if (!m_pfpi) // если это уже не сделали
+	if (!m_pfpi)  // если это уже не сделали
 	{
 		// Ошибки пайпа отображаются через MBoxA
 		RetrieveDragToInfo();
 	}
-	
+
 	if (LoadDragImageBits(mp_DataObject))
 	{
 		mb_DragWithinNow = TRUE;
-		#ifdef UNLOCKED_DRAG
+#ifdef UNLOCKED_DRAG
 		// должно быть создано при запуске ConEmu
 		_ASSERTE(mh_Overlapped);
-		#else
+#else
 		CreateDragImageWindow();
-		#endif
+#endif
 	}
 
-	//gConEmu.DebugStep(_T("DnD: Finally, DoDragDrop"));
-	gConEmu.DebugStep(NULL);
-
+	//gpConEmu->DebugStep(_T("DnD: Finally, DoDragDrop"));
+	gpConEmu->DebugStep(NULL);
 	lbSucceeded = TRUE;
-
 wrap:
 	return lbSucceeded;
 }
 
 template <class T> LPITEMIDLIST PidlGetNextItem(
-	__in T pidl
-	)
+    __in T pidl
+)
 {
-	if(pidl)
+	if (pidl)
 	{
 		return (LPITEMIDLIST)(LPBYTE)(((LPBYTE)pidl) + pidl->mkid.cb);
 	}
@@ -530,23 +543,24 @@ template <class T> LPITEMIDLIST PidlGetNextItem(
 		return NULL;
 };
 template <class T> void PidlDump(
-	__in T pidl, HANDLE hDumpFile = NULL
-	)
+    __in T pidl, HANDLE hDumpFile = NULL
+)
 {
 	LPITEMIDLIST p = (LPITEMIDLIST)(pidl);
 	char szDump[512];
 	int nLevel = 0, nLen;
-	while (p && p->mkid.cb)
+
+	while(p && p->mkid.cb)
 	{
-		wsprintfA(szDump, "%i: ", nLevel+1);
+		_wsprintfA(szDump, SKIPLEN(countof(szDump)) "%i: ", nLevel+1);
 		int i = lstrlenA(szDump);
 		//for (int j=0; j < nLevel; j++) { szDump[i++] = ' '; szDump[i++] = ' '; }
 		//szDump[i] = 0;
-
 		nLen = min(255,p->mkid.cb);
-		for (int j = 0; j < nLen; j++)
+
+		for(int j = 0; j < nLen; j++)
 		{
-			switch (p->mkid.abID[j])
+			switch(p->mkid.abID[j])
 			{
 				case 0: szDump[i++] = '.'; break;
 				case '\n': szDump[i++] = '\\'; szDump[i++] = 'n'; break;
@@ -556,8 +570,10 @@ template <class T> void PidlDump(
 				default: szDump[i++] = p->mkid.abID[j];
 			}
 		}
+
 		szDump[i++] = '\n';
 		szDump[i++] = 0;
+
 		if (hDumpFile)
 		{
 			wchar_t szDumpW[512]; DWORD nWritten;
@@ -579,7 +595,6 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 {
 	//BOOL lbDoEnum = FALSE;
 	//if (!lbDoEnum) return;
-
 	HRESULT hr = S_OK;
 	IEnumFORMATETC *pEnum = NULL;
 	FORMATETC fmt[20];
@@ -591,103 +606,109 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 	ULONG nCnt = countof(fmt);
 	UINT i;
 	DWORD nWritten;
+	memset(fmt, 0, sizeof(fmt));
+	memset(stg, 0, sizeof(stg));
+	memset(psz, 0, sizeof(psz));
+	memset(pszData, 0, sizeof(pszData));
 
-		memset(fmt, 0, sizeof(fmt));
-		memset(stg, 0, sizeof(stg));
-		memset(psz, 0, sizeof(psz));
-		memset(pszData, 0, sizeof(pszData));
-		
 	if (hDumpFile) WriteFile(hDumpFile, "\xFF\xFE", 2, &nWritten, NULL);
 
 	hr = pDataObject->EnumFormatEtc(DATADIR_GET,&pEnum);
+
 	if (hr==S_OK)
 	{
 		hr = pEnum->Next(nCnt, fmt, &nCnt);
 		_ASSERTE(nCnt <= countof(fmt));
-		
+
 		if (hDumpFile)
 		{
-			wsprintf(szName[0], L"Drag object contains %i formats\n\n", nCnt);
+			_wsprintf(szName[0], SKIPLEN(countof(szName[0])) L"Drag object contains %i formats\n\n", nCnt);
 			WriteFile(hDumpFile, szName[0], lstrlen(szName[0])*2, &nWritten, NULL);
 		}
 
 		pEnum->Release();
-		
 		CLIPFORMAT cfShlPidl = RegisterClipboardFormat(CFSTR_SHELLIDLIST);
 
 		/*
 		CFSTR_PREFERREDDROPEFFECT ?
 		*/
-		for (i=0; i<nCnt; i++)
+		for(i=0; i<nCnt; i++)
 		{
 			szName[i][0] = 0;
+
 			if (!GetClipboardFormatName(fmt[i].cfFormat, szName[i], MAX_PATH))
 			{
-				switch (fmt[i].cfFormat)
+				switch(fmt[i].cfFormat)
 				{
-				case 1: lstrcpy(szName[i], L"CF_TEXT"); break;
-				case 2: lstrcpy(szName[i], L"CF_BITMAP"); break;
-				case 3: lstrcpy(szName[i], L"CF_METAFILEPICT"); break;
-				case 4: lstrcpy(szName[i], L"CF_SYLK"); break;
-				case 5: lstrcpy(szName[i], L"CF_DIF"); break;
-				case 6: lstrcpy(szName[i], L"CF_TIFF"); break;
-				case 7: lstrcpy(szName[i], L"CF_OEMTEXT"); break;
-				case 8: lstrcpy(szName[i], L"CF_DIB"); break;
-				case 9: lstrcpy(szName[i], L"CF_PALETTE"); break;
-				case 10: lstrcpy(szName[i], L"CF_PENDATA"); break;
-				case 11: lstrcpy(szName[i], L"CF_RIFF"); break;
-				case 12: lstrcpy(szName[i], L"CF_WAVE"); break;
-				case 13: lstrcpy(szName[i], L"CF_UNICODETEXT"); break;
-				case 14: lstrcpy(szName[i], L"CF_ENHMETAFILE"); break;
-				case 15: lstrcpy(szName[i], L"CF_HDROP"); break;
-				case 16: lstrcpy(szName[i], L"CF_LOCALE"); break;
-				case 17: lstrcpy(szName[i], L"CF_DIBV5"); break;
-				case 0x0080: lstrcpy(szName[i], L"CF_OWNERDISPLAY"); break;
-				case 0x0081: lstrcpy(szName[i], L"CF_DSPTEXT"); break;
-				case 0x0082: lstrcpy(szName[i], L"CF_DSPBITMAP"); break;
-				case 0x0083: lstrcpy(szName[i], L"CF_DSPMETAFILEPICT"); break;
-				case 0x008E: lstrcpy(szName[i], L"CF_DSPENHMETAFILE"); break;
-				default: wsprintf(szName[i], L"ClipFormatID=%i", fmt[i].cfFormat);
+					case 1: wcscpy_c(szName[i], L"CF_TEXT"); break;
+					case 2: wcscpy_c(szName[i], L"CF_BITMAP"); break;
+					case 3: wcscpy_c(szName[i], L"CF_METAFILEPICT"); break;
+					case 4: wcscpy_c(szName[i], L"CF_SYLK"); break;
+					case 5: wcscpy_c(szName[i], L"CF_DIF"); break;
+					case 6: wcscpy_c(szName[i], L"CF_TIFF"); break;
+					case 7: wcscpy_c(szName[i], L"CF_OEMTEXT"); break;
+					case 8: wcscpy_c(szName[i], L"CF_DIB"); break;
+					case 9: wcscpy_c(szName[i], L"CF_PALETTE"); break;
+					case 10: wcscpy_c(szName[i], L"CF_PENDATA"); break;
+					case 11: wcscpy_c(szName[i], L"CF_RIFF"); break;
+					case 12: wcscpy_c(szName[i], L"CF_WAVE"); break;
+					case 13: wcscpy_c(szName[i], L"CF_UNICODETEXT"); break;
+					case 14: wcscpy_c(szName[i], L"CF_ENHMETAFILE"); break;
+					case 15: wcscpy_c(szName[i], L"CF_HDROP"); break;
+					case 16: wcscpy_c(szName[i], L"CF_LOCALE"); break;
+					case 17: wcscpy_c(szName[i], L"CF_DIBV5"); break;
+					case 0x0080: wcscpy_c(szName[i], L"CF_OWNERDISPLAY"); break;
+					case 0x0081: wcscpy_c(szName[i], L"CF_DSPTEXT"); break;
+					case 0x0082: wcscpy_c(szName[i], L"CF_DSPBITMAP"); break;
+					case 0x0083: wcscpy_c(szName[i], L"CF_DSPMETAFILEPICT"); break;
+					case 0x008E: wcscpy_c(szName[i], L"CF_DSPENHMETAFILE"); break;
+					default: _wsprintf(szName[i], SKIPLEN(countof(szName[i])) L"ClipFormatID=%i", fmt[i].cfFormat);
 				}
 			}
-			
-			wsprintf(szName[i]+lstrlen(szName[i]), L", tymed=0x%02X", fmt[i].tymed);
-				
+
+			int nCurLen = lstrlen(szName[i]);
+			_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", tymed=0x%02X", fmt[i].tymed);
 			fmt[i].tymed = TYMED_HGLOBAL;
 			stg[i].tymed = 0; //TYMED_HGLOBAL;
-			
 			size_t nDataSize = 0;
-			
 			// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
 			hr = pDataObject->GetData(fmt+i, stg+i);
+
 			if (hr == S_OK && stg[i].hGlobal)
 			{
 				if (stg[i].tymed == TYMED_HGLOBAL)
 				{
 					psz[i] = (LPCWSTR)GlobalLock(stg[i].hGlobal);
+
 					if (psz[i])
 					{
 						memsize[i] = GlobalSize(stg[i].hGlobal);
-						wsprintf(szName[i]+lstrlen(szName[i]), L", DataSize=%i", memsize[i]);
+						nCurLen = lstrlen(szName[i]);
+						_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", DataSize=%i", memsize[i]);
+
 						if (memsize[i] == 1)
 						{
-							wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
+							nCurLen = lstrlen(szName[i]);
+							_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
 						}
 						else if (memsize[i] == 4)
 						{
-							wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
+							nCurLen = lstrlen(szName[i]);
+							_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
 						}
 						else if (memsize[i] == 8)
 						{
-							wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
+							nCurLen = lstrlen(szName[i]);
+							_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
 						}
 						else
 						{
-							lstrcat(szName[i], L", ");
+							wcscat_c(szName[i], L", ");
 							const wchar_t* pwsz = (const wchar_t*)(psz[i]);
 							const char* pasz = (const char*)(psz[i]);
 							nDataSize = (memsize[i]+1)*2;
 							pszData[i] = (wchar_t*)calloc(nDataSize,1);
+
 							// тупая проверка на юникод. первый символ - обычно из English char set
 							if (pasz[0] && pasz[1])
 							{
@@ -705,7 +726,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 							{
 								//if (hDumpFile)
 								//{
-								lstrcpy(pszData[i], pwsz);
+								StringCbCopy(pszData[i], nDataSize, pwsz);
 								nDataSize = ((memsize[i]>>1)+1)<<1; // было больше, с учетом возможного MultiByteToWideChar
 								//} else {
 								//	int nMaxLen = min(200,memsize[i]/2);
@@ -716,55 +737,56 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 					}
 					else
 					{
-						lstrcat(szName[i], L", hGlobal not available");
+						wcscat_c(szName[i], L", hGlobal not available");
 						stg[i].hGlobal = NULL;
 					}
 				}
 				else
 				{
-					lstrcat(szName[i], L", hGlobal not available");
+					wcscat_c(szName[i], L", hGlobal not available");
 					stg[i].hGlobal = NULL;
 				}
 			}
 			else if (stg[i].tymed == TYMED_FILE)
 			{
-				lstrcat(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_FILE");
+				wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_FILE");
 				ReleaseStgMedium(stg+i);
 				stg[i].hGlobal = NULL;
 			}
 			else if (stg[i].tymed == TYMED_ISTREAM)
 			{
-				lstrcat(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTREAM");
+				wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTREAM");
 				ReleaseStgMedium(stg+i);
 				stg[i].hGlobal = NULL;
 			}
 			else if (stg[i].tymed == TYMED_ISTORAGE)
 			{
-				lstrcat(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTORAGE");
+				wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTORAGE");
 				ReleaseStgMedium(stg+i);
 				stg[i].hGlobal = NULL;
 			}
 			else if (stg[i].tymed == TYMED_GDI)
 			{
-				lstrcat(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_GDI");
+				wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_GDI");
 				ReleaseStgMedium(stg+i);
 				stg[i].hGlobal = NULL;
 			}
 			else if (stg[i].tymed == TYMED_MFPICT)
 			{
-				lstrcat(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_MFPICT");
+				wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_MFPICT");
 				ReleaseStgMedium(stg+i);
 				stg[i].hGlobal = NULL;
 			}
 			else if (stg[i].tymed == TYMED_ENHMF)
 			{
-				lstrcat(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ENHMF");
+				wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ENHMF");
 				ReleaseStgMedium(stg+i);
 				stg[i].hGlobal = NULL;
 			}
 			else
 			{
-				wsprintf(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got (%i)", stg[i].tymed);
+				int nCurLen = lstrlen(szName[i]);
+				_wsprintf(szName[i], SKIPLEN(countof(szName[i])-nCurLen) L", Error in source! TYMED_HGLOBAL was requested, but got (%i)", stg[i].tymed);
 				ReleaseStgMedium(stg+i);
 				stg[i].hGlobal = NULL;
 			}
@@ -775,44 +797,47 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 			//	stg[i].tymed = TYMED_HGLOBAL;
 			//}
 			//#endif
+			wcscat_c(szName[i], L"\n");
 
-			lstrcat(szName[i], L"\n");
-			
 			if (hDumpFile)
 			{
 				WriteFile(hDumpFile, szName[i], 2*lstrlen(szName[i]), &nWritten, NULL);
+
 				if (nDataSize && pszData[i])
 				{
 					WriteFile(hDumpFile, pszData[i], nDataSize, &nWritten, NULL);
 					WriteFile(hDumpFile, L"\n", 2, &nWritten, NULL);
 				}
+
 				WriteFile(hDumpFile, L"\n", 2, &nWritten, NULL);
 			}
 			else
 			{
 				// Послать в отладчик
 				OutputDebugStringW(szName[i]);
+
 				if (nDataSize && pszData[i])
 				{
 					OutputDebugStringW(pszData[i]);
 					OutputDebugStringW(L"\n");
 				}
 			}
-			
+
 			if (fmt[i].cfFormat == cfShlPidl && psz[i])
 			{
 				CIDA *pcida = (CIDA*)(psz[i]);
 				LPCITEMIDLIST pidlRoot = HIDA_GetPIDLFolder(pcida);
 				PidlDump(pidlRoot, hDumpFile);
-				for (UINT i = 0; i < pcida->cidl; i++)
+
+				for(UINT i = 0; i < pcida->cidl; i++)
 				{
 					LPCITEMIDLIST pidl = HIDA_GetPIDLItem(pcida, i);
 					PidlDump(pidl, hDumpFile);
 				}
 			}
 		}
-		
-		for (i=0; i<nCnt; i++)
+
+		for(i=0; i<nCnt; i++)
 		{
 			if (psz[i] && stg[i].hGlobal)
 			{
@@ -820,12 +845,14 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 				//GlobalFree(stg[i].hGlobal);
 				ReleaseStgMedium(stg+i);
 			}
+
 			if (pszData[i])
 			{
 				free(pszData[i]);
 			}
 		}
 	}
+
 	hr = S_OK;
 }
 
@@ -833,9 +860,8 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 // Требуется только при Drop из внешних приложений!
 void CDragDropData::RetrieveDragToInfo()
 {
-	CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
-
-	gConEmu.DebugStep(_T("DnD: DragEnter starting"));
+	CConEmuPipe pipe(gpConEmu->GetFarPID(), CONEMUREADYTIMEOUT);
+	gpConEmu->DebugStep(_T("DnD: DragEnter starting"));
 
 	// Ошибки пайпа отображаются через MBoxA
 	if (pipe.Init(_T("CDragDropData::DragEnter")))
@@ -844,31 +870,34 @@ void CDragDropData::RetrieveDragToInfo()
 		{
 			DWORD cbBytesRead=0;
 			int cbStructSize=0;
+
 			if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+
 			if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
 			{
 				if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo))
 				{
 					m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
-
 					pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
-
 					m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
 					//Slash на конце нам не нужен
-					int nPathLen = lstrlenW( m_pfpi->pszActivePath );
+					int nPathLen = lstrlenW(m_pfpi->pszActivePath);
+
 					if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
 						m_pfpi->pszActivePath[nPathLen-1] = 0;
-					
+
 					m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
 					//Slash на конце нам не нужен
-					nPathLen = lstrlenW( m_pfpi->pszPassivePath );
+					nPathLen = lstrlenW(m_pfpi->pszPassivePath);
+
 					if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
 						m_pfpi->pszPassivePath[nPathLen-1] = 0;
 				}
 			}
 		}
 	}
-	gConEmu.DebugStep(NULL);
+
+	gpConEmu->DebugStep(NULL);
 }
 
 BOOL CDragDropData::CreateDragImageBits(IDataObject * pDataObject)
@@ -878,10 +907,13 @@ BOOL CDragDropData::CreateDragImageBits(IDataObject * pDataObject)
 }
 
 #include <pshpack1.h>
-typedef struct tag_MyRgbQuad {
-	union {
+typedef struct tag_MyRgbQuad
+{
+	union
+	{
 		DWORD dwValue;
-		struct {
+		struct
+		{
 			BYTE    rgbBlue;
 			BYTE    rgbGreen;
 			BYTE    rgbRed;
@@ -902,16 +934,13 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 	}
 
 	DestroyDragImageBits();
-	#ifdef PERSIST_OVL
+#ifdef PERSIST_OVL
 	MoveDragWindow(FALSE);
-	#else
+#else
 	DestroyDragImageWindow();
-	#endif
-
+#endif
 	DEBUGSTROVL(L"CreateDragImageBits()\n");
-
 	DragImageBits* pBits = NULL;
-
 	HDC hScreenDC = ::GetDC(0);
 	HDC hDrawDC = CreateCompatibleDC(hScreenDC);
 	HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, MAX_OVERLAY_WIDTH, MAX_OVERLAY_HEIGHT);
@@ -919,31 +948,39 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 	if (hDrawDC && hBitmap)
 	{
 		HFONT hOldF = NULL, hf = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, CP_ACP, 0, 0, 0, 0, L"Tahoma");
-		if (hf) hOldF = (HFONT)SelectObject ( hDrawDC, hf );
+
+		if (hf) hOldF = (HFONT)SelectObject(hDrawDC, hf);
 
 		int nMaxX = 0, nMaxY = 0, nX = 0;
 		// GetTextExtentPoint32 почему-то портит DC, поэтому ширину получим сначала
 		wchar_t *psz = pszFiles; int nFilesCol = 0;
-		while (*psz)
+
+		while(*psz)
 		{
 			SIZE sz = {0};
 			LPCWSTR pszText = wcsrchr(psz, L'\\');
 			if (!pszText) pszText = psz; else psz++;
+
 			GetTextExtentPoint32(hDrawDC, pszText, lstrlen(pszText), &sz);
+
 			if (sz.cx > MAX_OVERLAY_WIDTH)
 				sz.cx = MAX_OVERLAY_WIDTH;
+
 			if (sz.cx > nMaxX)
 				nMaxX = sz.cx;
+
 			psz += lstrlen(psz)+1; // длина полного пути и длина имени файла разные ;)
 			nFilesCol ++;
 		}
-		nMaxX = min((OVERLAY_TEXT_SHIFT + nMaxX),MAX_OVERLAY_WIDTH);
 
+		nMaxX = min((OVERLAY_TEXT_SHIFT + nMaxX),MAX_OVERLAY_WIDTH);
 		// Если тащат много файлов/папок - можно попробовать разместить их в несколько колонок
 		int nColCount = 1;
+
 		if (nFilesCol > 3)
 		{
-			if (nFilesCol > 21 && (nMaxX * 3 + 32) <= MAX_OVERLAY_WIDTH) {
+			if (nFilesCol > 21 && (nMaxX * 3 + 32) <= MAX_OVERLAY_WIDTH)
+			{
 				nFilesCol = (nFilesCol+3) / (nColCount = 4);
 			}
 			else if (nFilesCol > 12 && (nMaxX * 2 + 32) <= MAX_OVERLAY_WIDTH)
@@ -956,70 +993,78 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 			}
 		}
 
-
 		HBITMAP hOldBitmap = (HBITMAP)SelectObject(hDrawDC, hBitmap);
 		SetTextColor(hDrawDC, RGB(0,0,128)); // Темно синий текст
 		//SetTextColor(hDrawDC, RGB(255,255,255)); // Белый текст
 		SetBkColor(hDrawDC, RGB(192,192,192)); // на сером фоне
 		SetBkMode(hDrawDC, OPAQUE);
-
 		// DC может быть испорчен (почему?), поэтому лучше почистим его
 		RECT rcFill = MakeRect(MAX_OVERLAY_WIDTH,MAX_OVERLAY_HEIGHT);
-		#ifdef PERSIST_OVL
-			HBRUSH hBr = CreateSolidBrush(OVERLAY_COLOR);
-			FillRect(hDrawDC, &rcFill, hBr);
-			DeleteObject(hBr);
-		#else
-			#ifdef _DEBUG
-			FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH/*WHITE_BRUSH*/));
-			#else
-			FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH));
-			#endif
-		#endif
+#ifdef PERSIST_OVL
+		HBRUSH hBr = CreateSolidBrush(OVERLAY_COLOR);
+		FillRect(hDrawDC, &rcFill, hBr);
+		DeleteObject(hBr);
+#else
+#ifdef _DEBUG
+		FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH/*WHITE_BRUSH*/));
+#else
+		FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH));
+#endif
+#endif
 		//DumpImage(hDrawDC, MAX_OVERLAY_WIDTH, nMaxY, L"F:\\Dump.bmp");
-		
 		psz = pszFiles;
 		int nFileIdx = 0, nColMaxY = 0, nAllFiles = 0;
 		nMaxX = 0;
 		int nFirstColWidth = 0;
-		while (*psz)
+
+		while(*psz)
 		{
-			if (!DrawImageBits ( hDrawDC, psz, &nMaxX, nX, &nColMaxY ))
+			if (!DrawImageBits(hDrawDC, psz, &nMaxX, nX, &nColMaxY))
 				break; // вышли за пределы MAX_OVERLAY_WIDTH x MAX_OVERLAY_HEIGHT (по высоте)
+
 			psz += lstrlen(psz)+1;
+
 			if (!*psz) break;
+
 			nFileIdx ++; nAllFiles ++;
+
 			if (nFileIdx >= nFilesCol)
 			{
 				if (!nFirstColWidth)
 					nFirstColWidth = nMaxX + OVERLAY_TEXT_SHIFT;
+
 				if ((nX + nMaxX + 32) >= MAX_OVERLAY_WIDTH)
 					break;
+
 				nX += nMaxX + OVERLAY_TEXT_SHIFT + OVERLAY_COLUMN_SHIFT;
+
 				if (nColMaxY > nMaxY) nMaxY = nColMaxY;
+
 				nColMaxY = nMaxX = nFileIdx = 0;
 			}
 		}
+
 		if (nColMaxY > nMaxY) nMaxY = nColMaxY;
+
 		if (!nFirstColWidth) nFirstColWidth = nMaxX + OVERLAY_TEXT_SHIFT;
 
 		int nLineX = ((nX+nMaxX+OVERLAY_TEXT_SHIFT+3)>>2)<<2;
+
 		if (nLineX > MAX_OVERLAY_WIDTH) nLineX = MAX_OVERLAY_WIDTH;
 
-		SelectObject ( hDrawDC, hOldF );
+		SelectObject(hDrawDC, hOldF);
 		GdiFlush();
-
-		#ifdef _DEBUG
+#ifdef _DEBUG
 		DumpImage(hDrawDC, MAX_OVERLAY_WIDTH, nMaxY, L"F:\\Dump.bmp");
-		#endif
+#endif
 
 		if (nLineX>2 && nMaxY>2)
 		{
 			HDC hBitsDC = CreateCompatibleDC(hScreenDC);
+
 			if (hBitsDC && hDrawDC)
 			{
 				SetLayout(hBitsDC, LAYOUT_BITMAPORIENTATIONPRESERVED);
-
 				BITMAPINFOHEADER bih = {sizeof(BITMAPINFOHEADER)};
 				bih.biWidth = nLineX;
 				bih.biHeight = nMaxY;
@@ -1028,66 +1073,69 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 				bih.biCompression = BI_RGB;
 				LPBYTE pSrc = NULL;
 				HBITMAP hBitsBitmap = CreateDIBSection(hScreenDC, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pSrc, NULL, 0);
+
 				if (hBitsBitmap)
 				{
 					HBITMAP hOldBitsBitmap = (HBITMAP)SelectObject(hBitsDC, hBitsBitmap);
-
 					BitBlt(hBitsDC, 0,0,nLineX,nMaxY, hDrawDC,0,0, SRCCOPY);
 					GdiFlush();
-
 					DragImageBits* pDst = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits) + (nLineX*nMaxY - 1)*4);
 
 					if (pDst)
 					{
 						pDst->nWidth = nLineX;
 						pDst->nHeight = nMaxY;
+
 						if (nColCount == 1)
 							pDst->nXCursor = nMaxX / 2;
 						else
 							pDst->nXCursor = nFirstColWidth;
+
 						pDst->nYCursor = 17; // под первой строкой
 						pDst->nRes1 = GetTickCount(); // что-то непонятное. Random?
 						pDst->nRes2 = 0xFFFFFFFF;
-
-						
 						MyRgbQuad *pRGB = (MyRgbQuad*)pDst->pix;
-						
-						#ifdef PERSIST_OVL
+#ifdef PERSIST_OVL
 						u32 nCurBlend = OVERLAY_ALPHA, nAllBlend = OVERLAY_ALPHA;
-						#else
+#else
 						u32 nCurBlend = 0xAA, nAllBlend = 0xAA;
-						#endif
-						
-						for (int y = 0; y < nMaxY; y++)
+#endif
+
+						for(int y = 0; y < nMaxY; y++)
 						{
-							for (int x = 0; x < nLineX; x++)
+							for(int x = 0; x < nLineX; x++)
 							{
 								pRGB->rgbBlue = *(pSrc++);
 								pRGB->rgbGreen = *(pSrc++);
 								pRGB->rgbRed = *(pSrc++);
-								if ( pRGB->dwValue )
+
+								if (pRGB->dwValue)
 								{
-								#ifdef PERSIST_OVL
+#ifdef PERSIST_OVL
+
 									if (pRGB->dwValue == OVERLAY_COLOR)
 									{
 										pRGB->dwValue = 0;
 									}
 									else
 									{
-								#endif
-									pRGB->rgbBlue = klMulDivU32(pRGB->rgbBlue, nCurBlend, 0xFF);
-									pRGB->rgbGreen = klMulDivU32(pRGB->rgbGreen, nCurBlend, 0xFF);
-									pRGB->rgbRed = klMulDivU32(pRGB->rgbRed, nCurBlend, 0xFF);
-									pRGB->rgbAlpha = nAllBlend;
-								#ifdef PERSIST_OVL
+#endif
+										pRGB->rgbBlue = klMulDivU32(pRGB->rgbBlue, nCurBlend, 0xFF);
+										pRGB->rgbGreen = klMulDivU32(pRGB->rgbGreen, nCurBlend, 0xFF);
+										pRGB->rgbRed = klMulDivU32(pRGB->rgbRed, nCurBlend, 0xFF);
+										pRGB->rgbAlpha = nAllBlend;
+#ifdef PERSIST_OVL
 									}
-								#endif
+
+#endif
 								}
+
 								pRGB++;
 							}
 						}
 
 						mp_Bits = (DragImageBits*)calloc(sizeof(DragImageBits)/*+(nCount-1)*4*/,1);
+
 						if (mp_Bits)
 						{
 							*mp_Bits = *pDst;
@@ -1097,9 +1145,8 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 						}
 						else
 						{
-							if (pDst) GlobalFree(pDst); pDst = NULL; // Ошибка
+							if (pDst) GlobalFree(pDst); pDst = NULL;  // Ошибка
 						}
-
 					}
 					else
 					{
@@ -1108,12 +1155,14 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 
 					if (hBitsDC)
 						SelectObject(hBitsDC, hOldBitsBitmap);
+
 					if (hBitsBitmap)
 					{
 						DeleteObject(hBitsBitmap); hBitsBitmap = NULL;
 					}
 				}
 			}
+
 			if (hBitsDC)
 			{
 				DeleteDC(hBitsDC); hBitsDC = NULL;
@@ -1122,14 +1171,17 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 
 		SelectObject(hDrawDC, hOldBitmap);
 	}
+
 	if (hDrawDC)
 	{
 		DeleteDC(hDrawDC); hDrawDC = NULL;
 	}
+
 	if (hBitmap)
 	{
 		DeleteObject(hBitmap); hBitmap = NULL;
 	}
+
 	if (hScreenDC)
 	{
 		::ReleaseDC(0, hScreenDC);
@@ -1139,28 +1191,31 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 	return pBits;
 }
 
-BOOL CDragDropData::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY )
+BOOL CDragDropData::DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY)
 {
-	if ( (*nMaxY + 17) >= MAX_OVERLAY_HEIGHT )
+	if ((*nMaxY + 17) >= MAX_OVERLAY_HEIGHT)
 		return FALSE;
+
 	SHFILEINFO sfi = {0};
 	DWORD nDrawRC = 0;
-
 	wchar_t* pszText = wcsrchr(pszFile, L'\\');
 	if (!pszText) pszText = pszFile; else pszText++;
+
 	SIZE sz = {0};
 	GetTextExtentPoint32(hDrawDC, pszText, lstrlen(pszText), &sz);
+
 	if (sz.cx > MAX_OVERLAY_WIDTH)
 		sz.cx = MAX_OVERLAY_WIDTH;
+
 	if (sz.cx > *nMaxX)
 		*nMaxX = sz.cx;
 
 	// Иконка, если просили
-	if (gSet.isDragShowIcons)
+	if (gpSet->isDragShowIcons)
 	{
 		UINT cbSize = sizeof(sfi);
-		DWORD_PTR shRc = SHGetFileInfo ( pszFile, 0, &sfi, cbSize, 
-			SHGFI_ATTRIBUTES|SHGFI_ICON/*|SHGFI_SELECTED*/|SHGFI_SMALLICON|SHGFI_TYPENAME);
+		DWORD_PTR shRc = SHGetFileInfo(pszFile, 0, &sfi, cbSize,
+		                               SHGFI_ATTRIBUTES|SHGFI_ICON/*|SHGFI_SELECTED*/|SHGFI_SMALLICON|SHGFI_TYPENAME);
 
 		if (shRc)
 		{
@@ -1175,10 +1230,9 @@ BOOL CDragDropData::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, i
 	// А теперь - имя файла/папки
 	RECT rcText = {nX+OVERLAY_TEXT_SHIFT, *nMaxY+1, 0, (*nMaxY + 16)};
 	rcText.right = min(MAX_OVERLAY_WIDTH, (rcText.left + *nMaxX));
-
 	wchar_t szText[MAX_PATH+1]; lstrcpyn(szText, pszText, MAX_PATH); szText[MAX_PATH] = 0;
-	nDrawRC = DrawTextEx(hDrawDC, szText, lstrlen(szText), &rcText, 
-		DT_LEFT|DT_TOP|DT_NOPREFIX|DT_END_ELLIPSIS|DT_SINGLELINE|DT_MODIFYSTRING, NULL);
+	nDrawRC = DrawTextEx(hDrawDC, szText, lstrlen(szText), &rcText,
+	                     DT_LEFT|DT_TOP|DT_NOPREFIX|DT_END_ELLIPSIS|DT_SINGLELINE|DT_MODIFYSTRING, NULL);
 
 	if (*nMaxY < (rcText.bottom+1))
 		*nMaxY = min(rcText.bottom+1,300);
@@ -1187,6 +1241,7 @@ BOOL CDragDropData::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, i
 	{
 		DestroyIcon(sfi.hIcon); sfi.hIcon = NULL;
 	}
+
 	return TRUE;
 }
 
@@ -1196,20 +1251,19 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 		return FALSE; // уже
 
 	DestroyDragImageBits();
-	#ifdef PERSIST_OVL
+#ifdef PERSIST_OVL
 	MoveDragWindow(FALSE);
-	#else
+#else
 	DestroyDragImageWindow();
-	#endif
+#endif
 
-	if (!gSet.isDragOverlay)
+	if (!gpSet->isDragOverlay)
 		return FALSE;
 
 	STGMEDIUM stgMedium = { 0 };
 	FORMATETC fmtetc = { 0, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-
 	// Это пока что-то не работает
-	//if (gSet.isDragOverlay == 1) {
+	//if (gpSet->isDragOverlay == 1) {
 	//	wchar_t* pszFiles = NULL;
 	//	fmtetc.cfFormat = RegisterClipboardFormat(L"FileNameW");
 	//	TODO("А освобождать полученное надо?");
@@ -1222,53 +1276,64 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 	//		}
 	//	}
 	//}
-
 	fmtetc.cfFormat = RegisterClipboardFormat(L"DragImageBits");
-	
-	if (S_OK != pDataObject->QueryGetData(&fmtetc)) {
+
+	if (S_OK != pDataObject->QueryGetData(&fmtetc))
+	{
 		return FALSE; // Формат отсутствует
 	}
+
 	// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
-	if (S_OK != pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == NULL) {
+	if (S_OK != pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == NULL)
+	{
 		return FALSE; // Формат отсутствует
 	}
 
 	SIZE_T nInfoSize = GlobalSize(stgMedium.hGlobal);
+
 	if (!nInfoSize)
 	{
 		//GlobalFree(stgMedium.hGlobal);
 		ReleaseStgMedium(&stgMedium);
 		return FALSE; // пусто
 	}
+
 	if (nInfoSize <= sizeof(DragImageBits))
 	{
 		_ASSERTE(nInfoSize > sizeof(DragImageBits));
 		ReleaseStgMedium(&stgMedium);
 		return FALSE;
 	}
+
 	DragImageBits* pInfo = (DragImageBits*)GlobalLock(stgMedium.hGlobal);
+
 	if (!pInfo)
 	{
 		//GlobalFree(stgMedium.hGlobal);
 		ReleaseStgMedium(&stgMedium);
 		return FALSE; // Не удалось получить данные
 	}
+
 	_ASSERTE(pInfo->nWidth>0 && pInfo->nWidth<=400);
 	_ASSERTE(pInfo->nHeight>0 && pInfo->nHeight<=400);
 	SIZE_T nReqSize = (sizeof(DragImageBits)+(pInfo->nWidth * pInfo->nHeight - 1)*4);
 	// На Win7x64 + 2*DWORD
 	SIZE_T nReqSize2 = (sizeof(DragImageBits)+(pInfo->nWidth * pInfo->nHeight - 1)*4)+8;
 	int nShift = 0;
-	if (nInfoSize != nReqSize && nInfoSize != nReqSize2 /*|| (nInfoSize - nReqSize) > 32*/ )
+
+	if (nInfoSize != nReqSize && nInfoSize != nReqSize2 /*|| (nInfoSize - nReqSize) > 32*/)
 	{
 #ifdef _DEBUG
+
 		if (!IsDebuggerPresent())
 		{
 			_ASSERT(nInfoSize == nReqSize); // Неизвестный формат?
-			wchar_t szDbg[128]; wsprintf(szDbg, L"DragImageBits unknown format? (nInfoSize=%u) != (nReqSize=%u)", nInfoSize, nReqSize);
-			gConEmu.DebugStep(szDbg, TRUE);
+			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"DragImageBits unknown format? (nInfoSize=%u) != (nReqSize=%u)", nInfoSize, nReqSize);
+			gpConEmu->DebugStep(szDbg, TRUE);
 		}
+
 #endif
+
 		if ((nReqSize < 16) || (nInfoSize < nReqSize) || (nInfoSize - nReqSize) > 8)
 		{
 			//GlobalFree(stgMedium.hGlobal);
@@ -1276,24 +1341,25 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 			return FALSE;
 		}
 	}
+
 	if (nInfoSize == nReqSize2)
 		nShift = 8;
 
 	BOOL lbRc = FALSE;
 	//int nCount = pInfo->nWidth * pInfo->nHeight;
 	mp_Bits = (DragImageBits*)calloc(sizeof(DragImageBits)/*+(nCount-1)*4*/,1);
+
 	if (mp_Bits)
 	{
 		*mp_Bits = *pInfo;
 		//memmove(mp_Bits->pix, pInfo->pix, nCount*4);
 		MCHKHEAP
-
 		HDC hdc = ::GetDC(ghWnd);
 		mh_BitsDC = CreateCompatibleDC(hdc);
+
 		if (mh_BitsDC)
 		{
 			SetLayout(mh_BitsDC, LAYOUT_BITMAPORIENTATIONPRESERVED);
-
 			BITMAPINFOHEADER bih = {sizeof(BITMAPINFOHEADER)};
 			bih.biWidth = mp_Bits->nWidth;
 			bih.biHeight = mp_Bits->nHeight;
@@ -1302,26 +1368,24 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 			bih.biCompression = BI_RGB;
 			bih.biXPelsPerMeter = 96;
 			bih.biYPelsPerMeter = 96;
-
 			LPBYTE pDst = NULL;
 			mh_BitsBMP_Old = NULL;
 			mh_BitsBMP = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pDst, NULL, 0);
+
 			if (mh_BitsBMP && pDst)
 			{
 				mh_BitsBMP_Old = (HBITMAP)SelectObject(mh_BitsDC, mh_BitsBMP);
-
 				int cbSize = pInfo->nWidth * pInfo->nHeight * 4;
 				memmove(pDst, ((LPBYTE)pInfo->pix)+nShift, cbSize);
 				GdiFlush();
-
-				#ifdef _DEBUG
+#ifdef _DEBUG
 				int nBits = GetDeviceCaps(mh_BitsDC, BITSPIXEL);
 				//_ASSERTE(nBits == 32);
-				#endif
-
+#endif
 				lbRc = TRUE;
 			}
 		}
+
 		if (hdc) ::ReleaseDC(ghWnd, hdc);
 	}
 
@@ -1341,18 +1405,26 @@ void CDragDropData::DestroyDragImageBits()
 	if (mh_BitsDC || mh_BitsBMP || mp_Bits)
 	{
 		DEBUGSTROVL(L"DestroyDragImageBits()\n");
-		if (mh_BitsDC)  {
-			if (mh_BitsBMP_Old) {
+
+		if (mh_BitsDC)
+		{
+			if (mh_BitsBMP_Old)
+			{
 				SelectObject(mh_BitsDC, mh_BitsBMP_Old); mh_BitsBMP_Old = NULL;
 			}
+
 			DeleteDC(mh_BitsDC);
 			mh_BitsDC = NULL;
 		}
-		if (mh_BitsBMP) {
+
+		if (mh_BitsBMP)
+		{
 			DeleteObject(mh_BitsBMP);
 			mh_BitsBMP = NULL;
 		}
-		if (mp_Bits) {
+
+		if (mp_Bits)
+		{
 			free(mp_Bits);
 			mp_Bits = NULL;
 		}
@@ -1362,130 +1434,137 @@ void CDragDropData::DestroyDragImageBits()
 BOOL CDragDropData::CreateDragImageWindow()
 {
 	DEBUGSTROVL(L"CreateDragImageWindow()\n");
-
-	#define DRAGBITSCLASS L"ConEmuDragBits"
+#define DRAGBITSCLASS L"ConEmuDragBits"
 	static BOOL bClassRegistered = FALSE;
-	if (!bClassRegistered) {
-		#ifdef _DEBUG
+
+	if (!bClassRegistered)
+	{
+#ifdef _DEBUG
 		DWORD dwLastError = 0;
-		#endif
+#endif
 		HBRUSH hBackBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
-		WNDCLASS wc = {0/*CS_OWNDC*/ /*CS_SAVEBITS*/, DragBitsWndProc, 0, 0, 
-				g_hInstance, NULL, NULL/*LoadCursor(NULL, IDC_ARROW)*/,
-				hBackBrush,  NULL, DRAGBITSCLASS};
-		if (!RegisterClass(&wc)) {
-			#ifdef _DEBUG
+		WNDCLASS wc = {0/*CS_OWNDC*/ /*CS_SAVEBITS*/, DragBitsWndProc, 0, 0,
+		               g_hInstance, NULL, NULL/*LoadCursor(NULL, IDC_ARROW)*/,
+		               hBackBrush,  NULL, DRAGBITSCLASS
+		              };
+
+		if (!RegisterClass(&wc))
+		{
+#ifdef _DEBUG
 			dwLastError = GetLastError();
-			#endif
+#endif
 			// Ругаться не будем, чтобы драг не испортить
 			return FALSE;
 		}
+
 		bClassRegistered = TRUE; // регистрировать класс один раз
 	}
-	
 
 	//int nCount = mp_Bits->nWidth * mp_Bits->nHeight;
-
-	_ASSERTE(mh_Overlapped==NULL);	
+	_ASSERTE(mh_Overlapped==NULL);
 	int nWidth = MAX_OVERLAY_WIDTH, nHeight = MAX_OVERLAY_HEIGHT;
 	// |WS_BORDER|WS_SYSMENU - создает проводник. попробуем?
 	//2009-08-20 [+] WS_EX_NOACTIVATE
-	#ifdef PERSIST_OVL
+#ifdef PERSIST_OVL
 	mh_Overlapped = CreateWindowEx(
-		WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_NOACTIVATE,
-		DRAGBITSCLASS, L"Drag", WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|WS_SYSMENU,
-		-32000, -32000, nWidth, nHeight,
-		ghWnd, NULL, g_hInstance, (LPVOID)this);
-	#else
+	                    WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_NOACTIVATE,
+	                    DRAGBITSCLASS, L"Drag", WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|WS_SYSMENU,
+	                    -32000, -32000, nWidth, nHeight,
+	                    ghWnd, NULL, g_hInstance, (LPVOID)this);
+#else
 	mh_Overlapped = CreateWindowEx(
-		WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_NOACTIVATE,
-		DRAGBITSCLASS, L"Drag", WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|WS_SYSMENU,
-		0, 0, mp_Bits->nWidth, mp_Bits->nHeight, ghWnd, NULL, g_hInstance, (LPVOID)this);
-	#endif
-	if (!mh_Overlapped) {
+	                    WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_NOACTIVATE,
+	                    DRAGBITSCLASS, L"Drag", WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|WS_SYSMENU,
+	                    0, 0, mp_Bits->nWidth, mp_Bits->nHeight, ghWnd, NULL, g_hInstance, (LPVOID)this);
+#endif
+
+	if (!mh_Overlapped)
+	{
 		_ASSERTE(mh_Overlapped!=NULL);
-		#ifdef PERSIST_OVL
+#ifdef PERSIST_OVL
 		//DestroyDragImageBits(); -- смысла уже нет, т.к. создается только при старте
-		#else
+#else
 		DestroyDragImageBits();
-		#endif
+#endif
 		return NULL;
 	}
-	
-	#ifdef PERSIST_OVL
-	SetLayeredWindowAttributes(mh_Overlapped, OVERLAY_COLOR, OVERLAY_ALPHA, LWA_COLORKEY|LWA_ALPHA);
-	#endif
 
+#ifdef PERSIST_OVL
+	SetLayeredWindowAttributes(mh_Overlapped, OVERLAY_COLOR, OVERLAY_ALPHA, LWA_COLORKEY|LWA_ALPHA);
+#endif
 	MoveDragWindow(FALSE);
-	
 	return TRUE;
 }
 
 void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 {
-	if (!mh_Overlapped) {
+	if (!mh_Overlapped)
+	{
 		DEBUGSTRBACK(L"MoveDragWindow skipped, Overlay was not created\n");
 		return;
 	}
 
 	DEBUGSTRBACK(L"MoveDragWindow()\n");
-	
-	#ifdef PERSIST_OVL
-	
-		if (abVisible && !mh_BitsDC) {
-			_ASSERTE(mh_BitsDC!=NULL);
-			abVisible = FALSE;
-		}
+#ifdef PERSIST_OVL
 
-		POINT p = {0};
-		if (abVisible) {
-			GetCursorPos(&p);
-			if (mp_Bits) {
-				p.x -= mp_Bits->nXCursor; p.y -= mp_Bits->nYCursor;
-			}
-		} else {
-			p.x = p.y = -32000;
-		}
+	if (abVisible && !mh_BitsDC)
+	{
+		_ASSERTE(mh_BitsDC!=NULL);
+		abVisible = FALSE;
+	}
 
-		POINT p2 = {0, 0};
-		SIZE  sz = {MAX_OVERLAY_WIDTH, MAX_OVERLAY_HEIGHT};
-		if (mp_Bits) {
-			sz.cx = mp_Bits->nWidth; sz.cy = mp_Bits->nHeight;
-		}
+	POINT p = {0};
 
-		static BOOL bLastVisible = FALSE;
-		MoveWindow(mh_Overlapped, p.x, p.y, sz.cx, sz.cy, abVisible && (abVisible != bLastVisible));
-		bLastVisible = abVisible;
-	
-	#else
-	
-		BLENDFUNCTION bf;
-		bf.BlendOp = AC_SRC_OVER;
-		bf.AlphaFormat = AC_SRC_ALPHA;
-		bf.BlendFlags = 0;
-		bf.SourceConstantAlpha = abVisible ? 255 : 0;
-
-		POINT p = {0};
+	if (abVisible)
+	{
 		GetCursorPos(&p);
-		p.x -= mp_Bits->nXCursor; p.y -= mp_Bits->nYCursor;
 
-		POINT p2 = {0, 0};
-		SIZE  sz = {mp_Bits->nWidth,mp_Bits->nHeight};
+		if (mp_Bits)
+		{
+			p.x -= mp_Bits->nXCursor; p.y -= mp_Bits->nYCursor;
+		}
+	}
+	else
+	{
+		p.x = p.y = -32000;
+	}
 
-		#ifdef _DEBUG
-		BOOL bRet = 
-		#endif
-		UpdateLayeredWindow(mh_Overlapped, NULL, &p, &sz, mh_BitsDC, &p2, 0, 
-			&bf, ULW_ALPHA /*ULW_OPAQUE*/);
-		//_ASSERTE(bRet);
-		
-		//apiSetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
-	#endif
+	POINT p2 = {0, 0};
+	SIZE  sz = {MAX_OVERLAY_WIDTH, MAX_OVERLAY_HEIGHT};
+
+	if (mp_Bits)
+	{
+		sz.cx = mp_Bits->nWidth; sz.cy = mp_Bits->nHeight;
+	}
+
+	static BOOL bLastVisible = FALSE;
+	MoveWindow(mh_Overlapped, p.x, p.y, sz.cx, sz.cy, abVisible && (abVisible != bLastVisible));
+	bLastVisible = abVisible;
+#else
+	BLENDFUNCTION bf;
+	bf.BlendOp = AC_SRC_OVER;
+	bf.AlphaFormat = AC_SRC_ALPHA;
+	bf.BlendFlags = 0;
+	bf.SourceConstantAlpha = abVisible ? 255 : 0;
+	POINT p = {0};
+	GetCursorPos(&p);
+	p.x -= mp_Bits->nXCursor; p.y -= mp_Bits->nYCursor;
+	POINT p2 = {0, 0};
+	SIZE  sz = {mp_Bits->nWidth,mp_Bits->nHeight};
+#ifdef _DEBUG
+	BOOL bRet =
+#endif
+	    UpdateLayeredWindow(mh_Overlapped, NULL, &p, &sz, mh_BitsDC, &p2, 0,
+	                        &bf, ULW_ALPHA /*ULW_OPAQUE*/);
+	//_ASSERTE(bRet);
+	//apiSetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
+#endif
 }
 
 void CDragDropData::DestroyDragImageWindow()
 {
-	if (mh_Overlapped) {
+	if (mh_Overlapped)
+	{
 		DEBUGSTROVL(L"DestroyDragImageWindow()\n");
 		DestroyWindow(mh_Overlapped);
 		mh_Overlapped = NULL;
@@ -1494,44 +1573,66 @@ void CDragDropData::DestroyDragImageWindow()
 
 LRESULT CDragDropData::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	if (messg == WM_CREATE) {
-		SetWindowLongPtr(hWnd, GWLP_USERDATA, 
-			(LONG_PTR)((LPCREATESTRUCT)lParam)->lpCreateParams);
-		
-	} else if (messg == WM_SETFOCUS) {
+	if (messg == WM_CREATE)
+	{
+		SetWindowLongPtr(hWnd, GWLP_USERDATA,
+		                 (LONG_PTR)((LPCREATESTRUCT)lParam)->lpCreateParams);
+	}
+	else if (messg == WM_SETFOCUS)
+	{
 		CDragDropData *pDrag = (CDragDropData*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-		if (pDrag && pDrag->mb_DragWithinNow) {
+
+		if (pDrag && pDrag->mb_DragWithinNow)
+		{
 			TODO("Если создавать окно сразу - не понадобится с фокусом играться");
 			DEBUGSTROVL(L"CDragDrop::DragBitsWndProc --> apiSetForegroundWindow");
 			apiSetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
 		}
+
 		return 0;
 	}
-	#ifdef PERSIST_OVL
-	else if (messg == WM_PAINT) {
+
+#ifdef PERSIST_OVL
+	else if (messg == WM_PAINT)
+	{
 		CDragDrop *pDrag = (CDragDrop*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-		if (pDrag) {
+
+		if (pDrag)
+		{
 			PAINTSTRUCT ps = {0};
 			HDC hdc = BeginPaint(hWnd, &ps);
-			if (hdc) {
+
+			if (hdc)
+			{
 				int nWidth = 0, nHeight = 0;
-				if (pDrag->mp_Bits) {
+
+				if (pDrag->mp_Bits)
+				{
 					nWidth = pDrag->mp_Bits->nWidth; nHeight = pDrag->mp_Bits->nHeight;
 					BitBlt(hdc, 0,0,nWidth,nHeight, pDrag->mh_BitsDC,0,0, SRCCOPY);
-				} else {
+				}
+				else
+				{
 					//_ASSERTE(pDrag->mp_Bits!=NULL); -- вполне допустимо, WM_PAINT приходит сразу после создания окна
 				}
-				if (nWidth<MAX_OVERLAY_WIDTH || nHeight<MAX_OVERLAY_HEIGHT) {
+
+				if (nWidth<MAX_OVERLAY_WIDTH || nHeight<MAX_OVERLAY_HEIGHT)
+				{
 					RECT rc;
 					HBRUSH hBr = CreateSolidBrush(OVERLAY_COLOR);
-					if (nWidth<MAX_OVERLAY_WIDTH) {
+
+					if (nWidth<MAX_OVERLAY_WIDTH)
+					{
 						rc.left = nWidth; rc.top = 0; rc.right = MAX_OVERLAY_WIDTH; rc.bottom = MAX_OVERLAY_HEIGHT;
 						FillRect(hdc, &rc, hBr);
 					}
-					if (nWidth && nHeight<MAX_OVERLAY_HEIGHT) {
+
+					if (nWidth && nHeight<MAX_OVERLAY_HEIGHT)
+					{
 						rc.left = 0; rc.top = nHeight; rc.right = MAX_OVERLAY_WIDTH; rc.bottom = MAX_OVERLAY_HEIGHT;
 						FillRect(hdc, &rc, hBr);
 					}
+
 					DeleteObject(hBr);
 				}
 
@@ -1539,48 +1640,58 @@ LRESULT CDragDropData::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPA
 			}
 		}
 	}
-	#endif
-	
+
+#endif
 	return DefWindowProc(hWnd, messg, wParam, lParam);
 }
 
 BOOL CDragDropData::InDragDrop()
 {
-	#ifdef UNLOCKED_DRAG
-		PRAGMA_ERROR("Проверить все нити драга, а не только последний mp_DataObject");
-	#endif
+#ifdef UNLOCKED_DRAG
+	PRAGMA_ERROR("Проверить все нити драга, а не только последний mp_DataObject");
+#endif
+
 	//!!! mh_Overlapped теперь всегда создается!
 	if (mp_DataObject /*|| mh_Overlapped*/)
 		return TRUE;
+
 	return FALSE;
 }
 
 void CDragDropData::DragFeedBack(DWORD dwEffect)
 {
 #ifdef _DEBUG
-	wchar_t szDbg[128]; wsprintf(szDbg, L"DragFeedBack(%i)\n", (int)dwEffect);
+	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"DragFeedBack(%i)\n", (int)dwEffect);
 	DEBUGSTRBACK(szDbg);
 #endif
+
 	// Drop или отмена драга, когда источник - ConEmu
-	if (dwEffect == (DWORD)-1) {
+	if (dwEffect == (DWORD)-1)
+	{
 		mb_DragWithinNow = FALSE;
-		#ifdef PERSIST_OVL
+#ifdef PERSIST_OVL
 		MoveDragWindow(FALSE);
-		#else
+#else
 		DestroyDragImageWindow();
-		#endif
-		gConEmu.SetDragCursor(NULL);
-	} else if (dwEffect == DROPEFFECT_NONE) {
+#endif
+		gpConEmu->SetDragCursor(NULL);
+	}
+	else if (dwEffect == DROPEFFECT_NONE)
+	{
 		MoveDragWindow(FALSE);
-	} else {
-		if (!mh_Overlapped && mp_Bits) {
-			#ifdef PERSIST_OVL
+	}
+	else
+	{
+		if (!mh_Overlapped && mp_Bits)
+		{
+#ifdef PERSIST_OVL
 			//CreateDragImageWindow(); -- должно быть создано при запуске ConEmu
 			_ASSERTE(mh_Overlapped!=NULL);
-			#else
+#else
 			CreateDragImageWindow();
-			#endif
+#endif
 		}
+
 		if (mh_Overlapped)
 			MoveDragWindow();
 	}
@@ -1617,6 +1728,7 @@ BOOL CDragDropData::IsDragStarting()
 {
 	if (!this)
 		return FALSE;
+
 	if (!mb_DragStarting)
 		return FALSE;
 
@@ -1624,9 +1736,12 @@ BOOL CDragDropData::IsDragStarting()
 	std::vector<CEDragSource*>::iterator iter;
 	CEDragSource* pds = NULL;
 
-	for (iter = m_Sources.begin(); iter != m_Sources.end(); iter++) {
+	for(iter = m_Sources.begin(); iter != m_Sources.end(); iter++)
+	{
 		pds = *iter;
-		if (pds->hThread && pds->bInDrag) {
+
+		if (pds->hThread && pds->bInDrag)
+		{
 			lbDragStarting = TRUE;
 			break;
 		}
@@ -1639,6 +1754,7 @@ BOOL CDragDropData::ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 {
 	if (!this)
 		return FALSE;
+
 	if (!mb_DragStarting)
 		return FALSE;
 
@@ -1646,9 +1762,12 @@ BOOL CDragDropData::ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 	std::vector<CEDragSource*>::iterator iter;
 	CEDragSource* pds = NULL;
 
-	for (iter = m_Sources.begin(); iter != m_Sources.end(); iter++) {
+	for(iter = m_Sources.begin(); iter != m_Sources.end(); iter++)
+	{
 		pds = *iter;
-		if (pds->hThread && pds->bInDrag) {
+
+		if (pds->hThread && pds->bInDrag)
+		{
 			PostMessage(pds->hWnd, messg, wParam, lParam);
 			lbDragStarting = TRUE;
 			break;
@@ -1661,8 +1780,10 @@ BOOL CDragDropData::ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 LRESULT CDragDropData::DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lRc = 0;
-	switch (messg) {
-	case WM_CREATE:
+
+	switch(messg)
+	{
+		case WM_CREATE:
 		{
 			LPCREATESTRUCT pc = (LPCREATESTRUCT)lParam;
 			CEDragSource *pds = (CEDragSource*)pc->lpCreateParams;
@@ -1672,7 +1793,7 @@ LRESULT CDragDropData::DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			lRc = 0;
 		}
 		break;
-	case MSG_STARTDRAG:
+		case MSG_STARTDRAG:
 		{
 			CEDragSource* pds = (CEDragSource*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 			_ASSERTE(pds);
@@ -1681,45 +1802,39 @@ LRESULT CDragDropData::DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			DWORD dwAllowedEffects = wParam;
 			IDropSource *pDropSource = (IDropSource*)lParam;
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
-
 			// Чтобы движения мышки "могли" обработаться
 			MoveWindow(hWnd, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
-
 			pds->bInDrag = TRUE;
 			pds->pDrag->mb_DragStarting = TRUE;
-
-			wchar_t szStep[255]; wsprintf(szStep, L"DoDragDrop.Thread(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)pds->pDrag->mp_DataObject, (DWORD)pDropSource);
-			gConEmu.DebugStep(szStep);
-			
+			wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop.Thread(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)pds->pDrag->mp_DataObject, (DWORD)pDropSource);
+			gpConEmu->DebugStep(szStep);
 			dwResult = DoDragDrop(pds->pDrag->mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
-			
-			wsprintf(szStep, L"DoDragDrop finished, Code=0x%08X", dwResult);
-			switch (dwResult)
+			_wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop finished, Code=0x%08X", dwResult);
+
+			switch(dwResult)
 			{
-				case S_OK: lstrcat(szStep, L" (S_OK)"); break;
-				case DRAGDROP_S_DROP: lstrcat(szStep, L" (DRAGDROP_S_DROP)"); break;
-				case DRAGDROP_S_CANCEL: lstrcat(szStep, L" (DRAGDROP_S_CANCEL)"); break;
-				//case E_UNSPEC: lstrcat(szStep, L" (E_UNSPEC)"); break;
+				case S_OK: wcscat_c(szStep, L" (S_OK)"); break;
+				case DRAGDROP_S_DROP: wcscat_c(szStep, L" (DRAGDROP_S_DROP)"); break;
+				case DRAGDROP_S_CANCEL: wcscat_c(szStep, L" (DRAGDROP_S_CANCEL)"); break;
+					//case E_UNSPEC: lstrcat(szStep, L" (E_UNSPEC)"); break;
 			}
-			gConEmu.DebugStep(szStep, (dwResult!=S_OK && dwResult!=DRAGDROP_S_CANCEL && dwResult!=DRAGDROP_S_DROP));
 
+			gpConEmu->DebugStep(szStep, (dwResult!=S_OK && dwResult!=DRAGDROP_S_CANCEL && dwResult!=DRAGDROP_S_DROP));
 			MCHKHEAP;
-
 			pds->pDrag->mp_DataObject->Release();
 			pds->pDrag->mp_DataObject = NULL;
 			pDropSource->Release();
-
 			pds->pDrag->mb_DragStarting = FALSE;
 			pds->bInDrag = FALSE;
 			// может другая нить есть?
 			pds->pDrag->mb_DragStarting = pds->pDrag->IsDragStarting();
-
 			lRc = 0;
 		}
 		break;
-	default:
-		lRc = DefWindowProc(hWnd, messg, wParam, lParam);
+		default:
+			lRc = DefWindowProc(hWnd, messg, wParam, lParam);
 	}
+
 	return lRc;
 }
 
@@ -1727,13 +1842,13 @@ DWORD CDragDropData::DragThread(LPVOID lpParameter)
 {
 	DWORD nResult = 0;
 	CEDragSource* pds = (CEDragSource*)lpParameter;
-
 	//CoInitialize();
 	OleInitialize(NULL);
+	pds->hWnd = CreateWindowEx(WS_EX_TOOLWINDOW, pds->pDrag->ms_SourceClass, L"ConEmu Drag Source",
+	                           WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, (HINSTANCE)g_hInstance, pds);
 
-	pds->hWnd = CreateWindowEx(WS_EX_TOOLWINDOW, pds->pDrag->ms_SourceClass, L"ConEmu Drag Source", 
-		WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, (HINSTANCE)g_hInstance, pds);
-	if (pds->hWnd == NULL) {
+	if (pds->hWnd == NULL)
+	{
 		DisplayLastError(L"Can't create drag source window.");
 		return 100;
 	}
@@ -1747,31 +1862,36 @@ DWORD CDragDropData::DragThread(LPVOID lpParameter)
 	//	pds->hWnd = NULL;
 	//	nResult = 100;
 	//} else {
-		MSG msg;
-		SetEvent(pds->hReady);
-		// Чтобы драг жил - запускаем обработку сообщений
-		// Сама обработка (Оконная процедура) происходит в DragProc (ниже)
-		while (GetMessage(&msg, 0,0,0))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-		ResetEvent(pds->hReady);
-	//}
+	MSG msg;
+	SetEvent(pds->hReady);
 
+	// Чтобы драг жил - запускаем обработку сообщений
+	// Сама обработка (Оконная процедура) происходит в DragProc (ниже)
+	while(GetMessage(&msg, 0,0,0))
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	ResetEvent(pds->hReady);
+	//}
 	return nResult;
 }
 
 CDragDropData::CEDragSource* CDragDropData::InitialCreateSource()
 {
-	if (!mh_SourceClass) {
-		lstrcpy(ms_SourceClass, VirtualConsoleClass);
-		lstrcat(ms_SourceClass, L"DragSource");
-		WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_CLASSDC, DragProc, 0, 0, 
-			g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
-			NULL, NULL, ms_SourceClass, hClassIconSm};// | CS_DROPSHADOW
+	if (!mh_SourceClass)
+	{
+		wcscpy_c(ms_SourceClass, VirtualConsoleClass);
+		wcscat_c(ms_SourceClass, L"DragSource");
+		WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_CLASSDC, DragProc, 0, 0,
+		                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
+		                 NULL, NULL, ms_SourceClass, hClassIconSm
+		                };// | CS_DROPSHADOW
 		mh_SourceClass = RegisterClassEx(&wc);
-		if (!mh_SourceClass) {
+
+		if (!mh_SourceClass)
+		{
 			DisplayLastError(L"Can't register drag class.");
 			return NULL;
 		}
@@ -1780,9 +1900,10 @@ CDragDropData::CEDragSource* CDragDropData::InitialCreateSource()
 	CEDragSource *pds = (CEDragSource*)calloc(sizeof(CEDragSource),1);
 	pds->hReady = CreateEvent(0,TRUE,FALSE,0);
 	pds->pDrag = this;
-
 	pds->hThread = CreateThread(0,0,DragThread,pds,0,&(pds->nTID));
-	if (pds->hThread == NULL) {
+
+	if (pds->hThread == NULL)
+	{
 		DisplayLastError(L"Can't create drag thread");
 		CloseHandle(pds->hReady);
 		free(pds);
@@ -1790,7 +1911,6 @@ CDragDropData::CEDragSource* CDragDropData::InitialCreateSource()
 	}
 
 	m_Sources.push_back(pds);
-
 	return pds;
 }
 
@@ -1799,10 +1919,14 @@ CDragDropData::CEDragSource* CDragDropData::GetFreeSource()
 	std::vector<CEDragSource*>::iterator iter;
 	CEDragSource* pds = NULL;
 
-	for (iter = m_Sources.begin(); iter != m_Sources.end(); iter++) {
+	for(iter = m_Sources.begin(); iter != m_Sources.end(); iter++)
+	{
 		pds = *iter;
-		if (!pds->hThread || pds->bInDrag) continue; // ищем готовый поток
-		if (WaitForSingleObject(pds->hThread,0)!=WAIT_OBJECT_0) {
+
+		if (!pds->hThread || pds->bInDrag) continue;  // ищем готовый поток
+
+		if (WaitForSingleObject(pds->hThread,0)!=WAIT_OBJECT_0)
+		{
 			// OK
 			break;
 		}
@@ -1813,9 +1937,10 @@ CDragDropData::CEDragSource* CDragDropData::GetFreeSource()
 
 	if (pds)
 	{
-		gConEmu.DebugStep(L"Drag: waiting for drag thread initialization");
+		gpConEmu->DebugStep(L"Drag: waiting for drag thread initialization");
 		DWORD nWait = WaitForSingleObject(pds->hReady, 10000);
-		gConEmu.DebugStep(NULL);
+		gpConEmu->DebugStep(NULL);
+
 		if (nWait != WAIT_OBJECT_0)
 		{
 			MBoxA(L"Drag thread initialization failed!");
@@ -1832,22 +1957,31 @@ void CDragDropData::TerminateDrag()
 	CEDragSource* pds = NULL;
 
 	// Сначала во все нити послать QUIT
-	for (iter = m_Sources.begin(); iter != m_Sources.end(); iter++) {
+	for(iter = m_Sources.begin(); iter != m_Sources.end(); iter++)
+	{
 		pds = *iter;
+
 		if (!pds->hThread) continue;
+
 		if (WaitForSingleObject(pds->hThread,0)!=WAIT_OBJECT_0)
 			PostThreadMessage(pds->nTID, WM_QUIT, 0, 0);
 	}
 
 	// После этого попробовать немного подождать, и Terminate...
-	for (iter = m_Sources.begin(); iter != m_Sources.end(); iter = m_Sources.erase(iter)) {
+	for(iter = m_Sources.begin(); iter != m_Sources.end(); iter = m_Sources.erase(iter))
+	{
 		pds = *iter;
-		if (pds->hThread) {
-			if (WaitForSingleObject(pds->hThread,100)!=WAIT_OBJECT_0) {
+
+		if (pds->hThread)
+		{
+			if (WaitForSingleObject(pds->hThread,100)!=WAIT_OBJECT_0)
+			{
 				TerminateThread(pds->hThread, 100);
 			}
+
 			CloseHandle(pds->hThread);
 		}
+
 		CloseHandle(pds->hReady);
 		free(pds);
 	}

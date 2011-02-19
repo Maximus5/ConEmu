@@ -30,22 +30,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #ifdef _DEBUG
-	// Раскомментировать для вывода в консоль информации режима Comspec
-	#define PRINT_COMSPEC(f,a) //wprintf(f,a)
-	//#define DEBUGSTR(s) OutputDebugString(s)
+// Раскомментировать для вывода в консоль информации режима Comspec
+#define PRINT_COMSPEC(f,a) //wprintf(f,a)
+//#define DEBUGSTR(s) OutputDebugString(s)
 #elif defined(__GNUC__)
-	//  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-	//  #define SHOW_STARTED_MSGBOX
-	#define PRINT_COMSPEC(f,a) //wprintf(f,a)
-	//#define DEBUGSTR(s)
-	#define CRTPRINTF
+//  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
+//  #define SHOW_STARTED_MSGBOX
+#define PRINT_COMSPEC(f,a) //wprintf(f,a)
+//#define DEBUGSTR(s)
+#define CRTPRINTF
 #else
-	#define PRINT_COMSPEC(f,a)
-	#define DEBUGSTR(s)
+#define PRINT_COMSPEC(f,a)
+#define DEBUGSTR(s)
+#endif
+
+#ifdef _DEBUG
+#define xf_check() { xf_validate(); xf_dump_chk(); }
+#else
+#define xf_check()
 #endif
 
 #define DEBUGLOG(s) //DEBUGSTR(s)
-#define DEBUGLOGINPUT(s) DEBUGSTR(s)
 #define DEBUGLOGSIZE(s) DEBUGSTR(s)
 #define DEBUGLOGLANG(s) //DEBUGSTR(s) //; Sleep(2000)
 
@@ -79,13 +84,16 @@ extern DWORD   gnSelfPID;
 extern HWND    ghConWnd;
 extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
+extern DWORD   gnServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
 extern HANDLE  ghExitQueryEvent; // выставляется когда в консоли не остается процессов
+extern int nExitQueryPlace, nExitPlaceStep, nExitPlaceThread;
 extern HANDLE  ghQuitEvent;      // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
 extern bool    gbQuit;           // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
 extern int     gnConfirmExitParm;
 extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
 extern int     gbRootWasFoundInCon;
-extern BOOL    gbAttachMode;
+extern BOOL    gbAttachMode; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console)
+extern BOOL    gbAlienMode;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
 extern BOOL    gbForceHideConWnd;
 extern DWORD   gdwMainThreadId;
 //int       gnBufferHeight = 0;
@@ -101,7 +109,8 @@ extern HANDLE ghFarInExecuteEvent;
 //#include <vector>
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
-#include "../Common/WinObjects.h"
+#include "../common/WinObjects.h"
+#include "../common/ConsoleAnnotation.h"
 
 #ifdef _DEBUG
 extern wchar_t gszDbgModLabel[6];
@@ -124,7 +133,7 @@ extern wchar_t gszDbgModLabel[6];
 #define INPUT_QUEUE_TIMEOUT 100
 #define ATTACH2GUI_TIMEOUT 10000
 
-#define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
+//#define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
 #define MAX_INPUT_QUEUE_EMPTY_WAIT 1000
 
@@ -156,26 +165,29 @@ extern wchar_t gszDbgModLabel[6];
 //#endif
 
 #ifndef EVENT_CONSOLE_CARET
-	#define EVENT_CONSOLE_CARET             0x4001
-	#define EVENT_CONSOLE_UPDATE_REGION     0x4002
-	#define EVENT_CONSOLE_UPDATE_SIMPLE     0x4003
-	#define EVENT_CONSOLE_UPDATE_SCROLL     0x4004
-	#define EVENT_CONSOLE_LAYOUT            0x4005
-	#define EVENT_CONSOLE_START_APPLICATION 0x4006
-	#define EVENT_CONSOLE_END_APPLICATION   0x4007
+#define EVENT_CONSOLE_CARET             0x4001
+#define EVENT_CONSOLE_UPDATE_REGION     0x4002
+#define EVENT_CONSOLE_UPDATE_SIMPLE     0x4003
+#define EVENT_CONSOLE_UPDATE_SCROLL     0x4004
+#define EVENT_CONSOLE_LAYOUT            0x4005
+#define EVENT_CONSOLE_START_APPLICATION 0x4006
+#define EVENT_CONSOLE_END_APPLICATION   0x4007
 #endif
 
 #define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 
+#undef USE_WINEVENT_SRV
 
 DWORD WINAPI InstanceThread(LPVOID);
 DWORD WINAPI ServerThread(LPVOID lpvParam);
 //DWORD WINAPI InputThread(LPVOID lpvParam);
 DWORD WINAPI InputPipeThread(LPVOID lpvParam);
 DWORD WINAPI GetDataThread(LPVOID lpvParam);
-BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out); 
+BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out);
+#ifdef USE_WINEVENT_SRV
 DWORD WINAPI WinEventThread(LPVOID lpvParam);
 void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+#endif
 void CheckCursorPos();
 //void SendConsoleChanges(CESERVER_REQ* pOut);
 //CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff);
@@ -202,8 +214,8 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 //void EnlargeRegion(CESERVER_CHAR_HDR& rgn, const COORD crNew);
 void CmdOutputStore();
 void CmdOutputRestore();
-LPVOID Alloc(size_t nCount, size_t nSize);
-void Free(LPVOID ptr);
+//LPVOID Alloc(size_t nCount, size_t nSize);
+//void Free(LPVOID ptr);
 void CheckConEmuHwnd();
 HWND FindConEmuByPID();
 typedef BOOL (__stdcall *FGetConsoleKeyboardLayoutName)(wchar_t*);
@@ -214,10 +226,12 @@ typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dw
 extern FGetConsoleProcessList pfnGetConsoleProcessList;
 //BOOL HookWinEvents(int abEnabled);
 BOOL CheckProcessCount(BOOL abForce=FALSE);
-BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot);
+BOOL IsExecutable(LPCWSTR aszFilePathName);
+BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1]);
 //BOOL FileExists(LPCWSTR asFile);
-extern bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/);
+//extern bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/,DWORD& FileAttrs);
 void SendStarted();
+CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi = NULL);
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
 typedef BOOL (WINAPI *FDebugActiveProcessStop)(DWORD dwProcessId);
 extern FDebugActiveProcessStop pfnDebugActiveProcessStop;
@@ -235,7 +249,6 @@ void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
 #define _printf printf
 //#define _wprintf(s) wprintf(L"%s",s)
 #endif
-const wchar_t* PointToName(const wchar_t* asFullPath);
 HWND Attach2Gui(DWORD nTimeout);
 
 
@@ -249,13 +262,28 @@ void UpdateConsoleMapHeader();
 
 void EmergencyShow();
 
-int CreateColorerHeader();
+//int CreateColorerHeader();
 
 void DisableAutoConfirmExit();
 
 int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn);
 
-int InjectHooks(HANDLE hProcess, DWORD nPID);
+int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui);
+
+#ifdef _DEBUG
+	#undef WAIT_INPUT_READY
+#else
+	#define WAIT_INPUT_READY
+#endif
+//#define USE_INPUT_SEMAPHORE
+#undef USE_INPUT_SEMAPHORE
+#define INSEMTIMEOUT_WRITE 250
+#define INSEMTIMEOUT_READ  500
+#ifdef USE_INPUT_SEMAPHORE
+extern HANDLE ghConInSemaphore;
+#endif
+void InitializeConsoleInputSemaphore();
+void ReleaseConsoleInputSemaphore();
 
 /* Console Handles */
 //extern MConHandle ghConIn;
@@ -263,17 +291,25 @@ extern MConHandle ghConOut;
 
 
 
-typedef enum tag_RunMode {
+typedef enum tag_RunMode
+{
 	RM_UNDEFINED = 0,
 	RM_SERVER,
-	RM_COMSPEC
+	RM_COMSPEC,
+	RM_SETHOOK64,
+	RM_ALTSERVER,
+	RM_APPLICATION,
 } RunMode;
+
+extern RunMode gnRunMode;
 
 extern BOOL gbNoCreateProcess;
 extern BOOL gbDebugProcess;
 extern int  gnCmdUnicodeMode;
 extern BOOL gbRootIsCmdExe;
 extern BOOL gbAttachFromFar;
+extern BOOL gbConsoleModeFlags;
+extern DWORD gnConsoleModeFlags;
 
 #ifdef WIN64
 #pragma message("ComEmuC compiled in X64 mode")
@@ -292,9 +328,11 @@ struct SrvInfo
 	//
 	HANDLE hServerThread;   DWORD dwServerThreadId; BOOL bServerTermination;
 	HANDLE hRefreshThread;  DWORD dwRefreshThread;  BOOL bRefreshTermination;
+	#ifdef USE_WINEVENT_SRV
 	HANDLE hWinEventThread; DWORD dwWinEventThread; BOOL bWinEventTermination;
+	#endif
 	//HANDLE hInputThread;    DWORD dwInputThreadId;
-	HANDLE hInputPipeThread;DWORD dwInputPipeThreadId; BOOL bInputPipeTermination; // Needed in Vista & administrator
+	HANDLE hInputPipeThread; DWORD dwInputPipeThreadId; BOOL bInputPipeTermination; // Needed in Vista & administrator
 	HANDLE hGetDataPipeThread; DWORD dwGetDataPipeThreadId; BOOL bGetDataPipeTermination;
 	//
 	OSVERSIONINFO osv;
@@ -308,7 +346,8 @@ struct SrvInfo
 	// Например, запустили FAR, он запустил Update, FAR перезапущен...
 	//std::vector<DWORD> nProcesses;
 	UINT nProcessCount, nMaxProcesses;
-	DWORD* pnProcesses, *pnProcessesCopy, nProcessStartTick;
+	DWORD *pnProcesses, *pnProcessesGet, *pnProcessesCopy, nProcessStartTick;
+	DWORD dwProcessLastCheckTick;
 #ifndef WIN64
 	BOOL bNtvdmActive; DWORD nNtvdmPID;
 #endif
@@ -319,11 +358,11 @@ struct SrvInfo
 	HANDLE hInputPipe, hQueryPipe, hGetDataPipe;
 	//
 	//HANDLE hFileMapping, hFileMappingData;
-	MFileMapping<CESERVER_REQ_CONINFO_HDR> *pConsoleMap;
-	//CESERVER_REQ_CONINFO_HDR *pConsoleInfo;  // Mapping
+	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *pConsoleMap;
+	//CESERVER_CONSOLE_MAPPING_HDR *pConsoleInfo;  // Mapping
 	//CESERVER_REQ_CONINFO_DATA *pConsoleData; // Mapping
 	CESERVER_REQ_CONINFO_FULL *pConsole;
-	//CESERVER_REQ_CONINFO_HDR *pConsoleInfoCopy;  // Local (Alloc)
+	//CESERVER_CONSOLE_MAPPING_HDR *pConsoleInfoCopy;  // Local (Alloc)
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
 	//DWORD nConsoleDataSize;
 //	DWORD nFarInfoLastIdx;
@@ -335,7 +374,8 @@ struct SrvInfo
 	INPUT_RECORD* pInputQueueRead;
 	INPUT_RECORD* pInputQueueWrite;
 	// TrueColorer buffer
-	HANDLE hColorerMapping;
+	//HANDLE hColorerMapping;
+	MFileMapping<AnnotationHeader>* pColorerMapping; // поддержка Colorer TrueMod
 	//
 	HANDLE hConEmuGuiAttached;
 	HWINEVENTHOOK /*hWinHook,*/ hWinHookStartEnd; //BOOL bWinHookAllow; int nWinHookMode;
@@ -377,7 +417,7 @@ struct SrvInfo
 	//DWORD nLastUpdateTick; // Для FORCE_REDRAW_FIX
 	DWORD nLastPacketID; // ИД пакета для отправки в GUI
 	// Если меняется только один символ... (но перечитаем всю линию)
-	//BOOL bCharChangedSet; 
+	//BOOL bCharChangedSet;
 	//CESERVER_CHAR CharChanged; CRITICAL_SECTION csChar;
 
 	// Буфер для отсылки в консоль
@@ -398,7 +438,7 @@ struct SrvInfo
 	DWORD dwLastUserTick;
 
 	// Если нужно заблокировать нить RefreshThread
-	HANDLE hLockRefreshBegin, hLockRefreshReady;
+	//HANDLE hLockRefreshBegin, hLockRefreshReady;
 
 	// Console Aliases
 	wchar_t* pszAliases; DWORD nAliasesSize;
@@ -415,13 +455,14 @@ extern SrvInfo srv;
 extern CESERVER_CONSAVE* gpStoredOutput;
 #pragma pack(pop)
 
-typedef struct tag_CmdInfo {
-    DWORD dwFarPID;
+typedef struct tag_CmdInfo
+{
+	DWORD dwFarPID;
 	DWORD dwSrvPID;
-    BOOL  bK;
-    BOOL  bNonGuiMode; // Если запущен НЕ в консоли, привязанной к GUI. Может быть из-за того, что работает как COMSPEC
-    CONSOLE_SCREEN_BUFFER_INFO sbi;
-    BOOL  bNewConsole;
+	BOOL  bK;
+	BOOL  bNonGuiMode; // Если запущен НЕ в консоли, привязанной к GUI. Может быть из-за того, что работает как COMSPEC
+	CONSOLE_SCREEN_BUFFER_INFO sbi;
+	BOOL  bNewConsole;
 	DWORD nExitCode;
 	wchar_t szComSpecName[32];
 	wchar_t szSelfName[32];
@@ -443,6 +484,23 @@ extern wchar_t* wpszLogSizeFile;
 
 
 extern BOOL gbInRecreateRoot;
+
+enum CmdOnCreateType
+{
+	eShellExecute = 1,
+	eCreateProcess,
+	eInjectingHooks,
+	eHooksLoaded,
+};
+
+CESERVER_REQ* NewCmdOnCreateA(
+				enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags, 
+				LPCSTR asFile, LPCSTR asParam, int nImageBits, int nImageSubsystem,
+				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr);
+CESERVER_REQ* NewCmdOnCreateW(
+				enum CmdOnCreateType aCmd, LPCWSTR asAction, DWORD anFlags, 
+				LPCWSTR asFile, LPCWSTR asParam, int nImageBits, int nImageSubsystem,
+				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr);
 
 //#define CES_NTVDM 0x10 -- common.hpp
 //DWORD dwActiveFlags = 0;
@@ -472,3 +530,9 @@ extern BOOL gbInRecreateRoot;
 #define CERR_MAPVIEWFILEERR 124
 #define CERR_COLORERMAPPINGERR 125
 #define CERR_EMPTY_COMSPEC_CMDLINE 126
+#define CERR_CONEMUHK_NOTFOUND 127
+#define CERR_CONSOLEMAIN_NOTFOUND 128
+#define CERR_HOOKS_WAS_SET 129
+#define CERR_HOOKS_FAILED 130
+#define CERR_DLLMAIN_SKIPPED 131
+#define CERR_ATTACH_NO_CONWND 132

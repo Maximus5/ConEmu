@@ -1,14 +1,16 @@
 EXPORTS
 ;
-	SetStartupInfoW      @1
-	GetPluginInfoW       @2
-	GetMinFarVersionW    @3
-	ExitFARW             @4
-	OpenPluginW          @5
-	ProcessSynchroEventW @6
+	SetStartupInfoW
+	GetPluginInfoW=GetPluginInfoWcmn
+	GetMinFarVersionW
+	ExitFARW
+	OpenPluginW=OpenPluginW1
+	ProcessSynchroEventW
+;  Far3
+   GetGlobalInfoW
 ;
-	SetStartupInfo       @21
-	GetPluginInfo        @22
-	GetMinFarVersion     @23
-	ExitFAR              @24
-	OpenPlugin           @25
+	SetStartupInfo
+	GetPluginInfo
+	GetMinFarVersion
+	ExitFAR
+	OpenPlugin

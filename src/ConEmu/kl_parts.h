@@ -80,13 +80,14 @@ template <class T>__forceinline const T& klMax(const T &a, const T &b) {return a
 __forceinline u32 __cdecl klMulDivU32(u32 a, u32 b, u32 c)
 {
 #if !defined(__GNUC__) && !defined(WIN64)
-	__asm{
+	__asm
+	{
 		mov	eax, a
-			mul	b
-			div	c
+		mul	b
+		div	c
 	}
 #else
-    return (a*b/c);
+	return (a*b/c);
 #endif
 }
 

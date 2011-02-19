@@ -55,7 +55,7 @@ struct CeFullPanelInfo
 	RECT  PanelRect;
 	RECT  WorkRect; // "рабочий" прямоугольник. где собственно файлы лежат
 	int ItemsNumber;
-	// 
+	//
 	int CurrentItem;
 	int TopPanelItem;
 	// Это мы хотим выставить при следующем Synchro
@@ -64,7 +64,7 @@ struct CeFullPanelInfo
 	int ReqTopPanelItem;
 	//
 	int OurTopPanelItem; // он может НЕ совпадать с фаровским, чтобы CurrentItem был таки видим
-	DWORD Flags; // CEPANELINFOFLAGS
+	unsigned __int64 Flags; // CEPANELINFOFLAGS
 	// ************************
 	int nMaxFarColors;
 	BYTE *nFarColors; // Массив цветов фара
@@ -103,9 +103,9 @@ struct CeFullPanelInfo
 	static void InvalidateAll();
 	void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc);
 	BOOL PaintItem(HDC hdc, int nIndex, int x, int y, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor,
-		BOOL abCurrentItem, BOOL abSelectedItem,
-		/*COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,*/
-		/*BOOL abAllowPreview,*/ HBRUSH hBackBrush, HBRUSH hPanelBrush, COLORREF crPanelColor);
+	               BOOL abCurrentItem, BOOL abSelectedItem,
+	               /*COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,*/
+	               /*BOOL abAllowPreview,*/ HBRUSH hBackBrush, HBRUSH hPanelBrush, COLORREF crPanelColor);
 	int DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, CePluginPanelItem* pItem, LPCWSTR pszComments, HBRUSH hBr, BOOL bIgnoreFileDescription);
 	BOOL OnSettingsChanged(BOOL bInvalidate);
 	BOOL GetIndexFromWndCoord(int x, int y, int &rnIndex);
@@ -114,15 +114,15 @@ struct CeFullPanelInfo
 	void LoadItemColors(int nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, BOOL abStrictConsole);
 	// Conversions
 	BOOL FarItem2CeItem(int anIndex,
-		const wchar_t*   asName,
-		const wchar_t*   asDesc,
-		DWORD            dwFileAttributes,
-		FILETIME         ftLastWriteTime,
-		unsigned __int64 anFileSize,
-		BOOL             abVirtualItem,
-		DWORD_PTR        apUserData,
-		DWORD            anFlags,
-		DWORD            anNumberOfLinks);
+	                    const wchar_t*   asName,
+	                    const wchar_t*   asDesc,
+	                    DWORD            dwFileAttributes,
+	                    FILETIME         ftLastWriteTime,
+	                    unsigned __int64 anFileSize,
+	                    BOOL             abVirtualItem,
+	                    DWORD_PTR        apUserData,
+	                    unsigned __int64 anFlags,
+	                    DWORD            anNumberOfLinks);
 
 	/*{
 	if (ppItems) {

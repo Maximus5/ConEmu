@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #define _T(s) s
 #include "ConEmuCheck.h"
+#include "Memory.h"
 
 SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
@@ -39,15 +40,15 @@ SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 //	#ifndef _ASSERT
 //	#define _ASSERT()
 //	#endif
-//	
+//
 //	#ifndef _ASSERTE
 //	#define _ASSERTE(f)
 //	#endif
 //#endif
 
-extern LPVOID _calloc(size_t,size_t);
-extern LPVOID _malloc(size_t);
-extern void   _free(LPVOID);
+//extern LPVOID _calloc(size_t,size_t);
+//extern LPVOID _malloc(size_t);
+//extern void   _free(LPVOID);
 
 typedef HWND (APIENTRY *FGetConsoleWindow)();
 //typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
@@ -69,96 +70,100 @@ LPCWSTR ModuleName(LPCWSTR asDefault)
 		return asDefault;
 
 	static wchar_t szFile[32];
+
 	if (szFile[0])
 		return szFile;
 
 	wchar_t szPath[MAX_PATH*2];
+
 	if (GetModuleFileNameW(NULL, szPath, countof(szPath)))
 	{
 		wchar_t *pszSlash = wcsrchr(szPath, L'\\');
+
 		if (pszSlash)
 			pszSlash++;
 		else
 			pszSlash = szPath;
+
 		lstrcpynW(szFile, pszSlash, 32);
 	}
-	
+
 	if (szFile[0] == 0)
 	{
-		lstrcpyW(szFile, L"Unknown");
+		wcscpy_c(szFile, L"Unknown");
 	}
 
 	return szFile;
 }
 
-HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*/, const wchar_t* szModule)
+HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule)
 {
-    HANDLE hPipe = NULL;
-    DWORD dwErr = 0, dwMode = 0;
-    BOOL fSuccess = FALSE;
-    DWORD dwStartTick = GetTickCount();
-    int nTries = 2;
-
+	HANDLE hPipe = NULL;
+	DWORD dwErr = 0, dwMode = 0;
+	BOOL fSuccess = FALSE;
+	DWORD dwStartTick = GetTickCount();
+	int nTries = 2;
 	_ASSERTE(gpLocalSecurity!=NULL);
 
-    // Try to open a named pipe; wait for it, if necessary. 
-    while (1)
-    {
-        hPipe = CreateFile( 
-            szPipeName,     // pipe name 
-            GENERIC_READ|GENERIC_WRITE, 
-            0,              // no sharing 
-            gpLocalSecurity, // default security attributes
-            OPEN_EXISTING,  // opens existing pipe 
-            0,              // default attributes 
-            NULL);          // no template file 
+	// Try to open a named pipe; wait for it, if necessary.
+	while(1)
+	{
+		hPipe = CreateFile(
+		            szPipeName,     // pipe name
+		            GENERIC_READ|GENERIC_WRITE,
+		            0,              // no sharing
+		            gpLocalSecurity, // default security attributes
+		            OPEN_EXISTING,  // opens existing pipe
+		            0,              // default attributes
+		            NULL);          // no template file
 
-        // Break if the pipe handle is valid. 
-        if (hPipe != INVALID_HANDLE_VALUE) 
-            break; // OK, открыли
-        dwErr = GetLastError();
+		// Break if the pipe handle is valid.
+		if (hPipe != INVALID_HANDLE_VALUE)
+			break; // OK, открыли
 
-        // Сделаем так, чтобы хотя бы пару раз он попробовал повторить
-        if ((nTries <= 0) && (GetTickCount() - dwStartTick) > 1000)
-        {
-			if (pszErr)
-			{
-				wsprintf(pszErr, L"%s.%u: CreateFile(%s) failed, code=0x%08X, Timeout", 
-					ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
-			}
-            return NULL;
-        }
-        else
-        {
-        	nTries--;
-        }
-        
-        // Может быть пайп еще не создан (в процессе срабатывания семафора)
-        if (dwErr == ERROR_FILE_NOT_FOUND)
-        {
-        	Sleep(10);
-        	continue;
-        }
+		dwErr = GetLastError();
 
-        // Exit if an error other than ERROR_PIPE_BUSY occurs. 
-		if (dwErr != ERROR_PIPE_BUSY)
+		// Сделаем так, чтобы хотя бы пару раз он попробовал повторить
+		if ((nTries <= 0) && (GetTickCount() - dwStartTick) > 1000)
 		{
-			if (pszErr)
+			//if (pszErr)
 			{
-				wsprintf(pszErr, L"%s.%u: CreateFile(%s) failed, code=0x%08X", 
-					ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
+				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s.%u: CreateFile(%s) failed, code=0x%08X, Timeout",
+				          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
 			}
-            return NULL;
+			return NULL;
+		}
+		else
+		{
+			nTries--;
 		}
 
-        // All pipe instances are busy, so wait for 500 ms.
+		// Может быть пайп еще не создан (в процессе срабатывания семафора)
+		if (dwErr == ERROR_FILE_NOT_FOUND)
+		{
+			Sleep(10);
+			continue;
+		}
+
+		// Exit if an error other than ERROR_PIPE_BUSY occurs.
+		if (dwErr != ERROR_PIPE_BUSY)
+		{
+			//if (pszErr)
+			{
+				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s.%u: CreateFile(%s) failed, code=0x%08X",
+				          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
+			}
+			return NULL;
+		}
+
+		// All pipe instances are busy, so wait for 500 ms.
 		WaitNamedPipe(szPipeName, 500);
 		//if (!WaitNamedPipe(szPipeName, 1000) )
 		//{
 		//	dwErr = GetLastError();
 		//	if (pszErr)
 		//	{
-		//		wsprintf(pszErr, L"%s: WaitNamedPipe(%s) failed, code=0x%08X, WaitNamedPipe", 
+		//		StringCchPrintf(pszErr, countof(pszErr), L"%s: WaitNamedPipe(%s) failed, code=0x%08X, WaitNamedPipe",
 		//			szModule ? szModule : L"Unknown", szPipeName, dwErr);
 		//		// Видимо это возникает в момент запуска (обычно для ShiftEnter - новая консоль)
 		//		// не сразу срабатывает GUI и RCon еще не создал Pipe для HWND консоли
@@ -166,29 +171,30 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
 		//	}
 		//    return NULL;
 		//}
-    }
+	}
 
-    // The pipe connected; change to message-read mode. 
-    dwMode = PIPE_READMODE_MESSAGE; 
-    fSuccess = SetNamedPipeHandleState( 
-        hPipe,    // pipe handle 
-        &dwMode,  // new pipe mode 
-        NULL,     // don't set maximum bytes 
-        NULL);    // don't set maximum time 
-    if (!fSuccess)
-    {
-    	dwErr = GetLastError();
-    	_ASSERT(fSuccess);
-		if (pszErr)
+	// The pipe connected; change to message-read mode.
+	dwMode = PIPE_READMODE_MESSAGE;
+	fSuccess = SetNamedPipeHandleState(
+	               hPipe,    // pipe handle
+	               &dwMode,  // new pipe mode
+	               NULL,     // don't set maximum bytes
+	               NULL);    // don't set maximum time
+
+	if (!fSuccess)
+	{
+		dwErr = GetLastError();
+		_ASSERT(fSuccess);
+		//if (pszErr)
 		{
-			wsprintf(pszErr, L"%s.%u: SetNamedPipeHandleState(%s) failed, code=0x%08X", 
-				ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
+			_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s.%u: SetNamedPipeHandleState(%s) failed, code=0x%08X",
+			          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
 		}
-        CloseHandle(hPipe);
-        return NULL;
-    }
-    
-    return hPipe;
+		CloseHandle(hPipe);
+		return NULL;
+	}
+
+	return hPipe;
 }
 
 
@@ -215,17 +221,20 @@ void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, DWORD cbSize)
 
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
 {
-    CESERVER_REQ* pIn = NULL;
-    if (nSize)
-    {
+	CESERVER_REQ* pIn = NULL;
+
+	if (nSize)
+	{
 		// Обязательно с обнулением выделяемой памяти
-        pIn = (CESERVER_REQ*)_calloc(nSize, 1);
-        if (pIn)
-        {
+		pIn = (CESERVER_REQ*)calloc(nSize, 1);
+
+		if (pIn)
+		{
 			ExecutePrepareCmd(pIn, nCmd, nSize);
-        }
-    }
-    return pIn;
+		}
+	}
+
+	return pIn;
 }
 
 // Forward
@@ -235,26 +244,41 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner)
 {
 	wchar_t szGuiPipeName[MAX_PATH];
-	
+
 	if (!hConWnd)
 		return NULL;
 
-	wsprintfW(szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)hConWnd);
-	
-	return ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
+	DWORD nLastErr = GetLastError();
+	_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CEGUIPIPENAME, L".", (DWORD)hConWnd);
+#ifdef _DEBUG
+	DWORD nStartTick = GetTickCount();
+#endif
+	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
+#ifdef _DEBUG
+	DWORD nEndTick = GetTickCount();
+	DWORD nDelta = nEndTick - nStartTick;
+	if (nDelta >= EXECUTE_CMD_WARN_TIMEOUT && !IsDebuggerPresent())
+	{
+		_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT);
+	}
+#endif
+	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
+	return lpRet;
 }
 
 // Выполнить в ConEmuC
 CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner)
 {
 	wchar_t szGuiPipeName[MAX_PATH];
-	
+
 	if (!dwSrvPID)
 		return NULL;
 
-	wsprintfW(szGuiPipeName, CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
-	
-	return ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
+	DWORD nLastErr = GetLastError();
+	_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
+	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
+	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
+	return lpRet;
 }
 
 //Arguments:
@@ -268,8 +292,7 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner
 CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner)
 {
 	CESERVER_REQ* pOut = NULL;
-	
-	HANDLE hPipe = NULL; 
+	HANDLE hPipe = NULL;
 	BYTE cbReadBuf[600]; // чтобы CESERVER_REQ_OUTPUTFILE поместился
 	wchar_t szErr[MAX_PATH*2];
 	BOOL fSuccess = FALSE;
@@ -283,11 +306,12 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 
 	_ASSERTE(pIn->hdr.nSrcPID && pIn->hdr.nSrcThreadId);
 	_ASSERTE(pIn->hdr.cbSize >= sizeof(pIn->hdr));
-		
 	hPipe = ExecuteOpenPipe(szGuiPipeName, szErr, NULL/*Сюда хорошо бы имя модуля подкрутить*/);
+
 	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE)
 	{
-		#ifdef _DEBUG
+#ifdef _DEBUG
+
 		//_ASSERTE(hPipe != NULL && hPipe != INVALID_HANDLE_VALUE);
 		if (hOwner)
 		{
@@ -296,66 +320,64 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 			else
 				SetWindowText(hOwner, szErr);
 		}
-		#endif
+
+#endif
 		return NULL;
 	}
 
-	//// Try to open a named pipe; wait for it, if necessary. 
-	//while (1) 
-	//{ 
-	//	hPipe = CreateFile( 
-	//		szGuiPipeName,  // pipe name 
-	//		GENERIC_READ |  // read and write access 
-	//		GENERIC_WRITE, 
-	//		0,              // no sharing 
+	//// Try to open a named pipe; wait for it, if necessary.
+	//while (1)
+	//{
+	//	hPipe = CreateFile(
+	//		szGuiPipeName,  // pipe name
+	//		GENERIC_READ |  // read and write access
+	//		GENERIC_WRITE,
+	//		0,              // no sharing
 	//		NULL,           // default security attributes
-	//		OPEN_EXISTING,  // opens existing pipe 
-	//		0,              // default attributes 
-	//		NULL);          // no template file 
+	//		OPEN_EXISTING,  // opens existing pipe
+	//		0,              // default attributes
+	//		NULL);          // no template file
 	//
-	//	// Break if the pipe handle is valid. 
-	//	if (hPipe != INVALID_HANDLE_VALUE) 
-	//		break; 
+	//	// Break if the pipe handle is valid.
+	//	if (hPipe != INVALID_HANDLE_VALUE)
+	//		break;
 	//
-	//	// Exit if an error other than ERROR_PIPE_BUSY occurs. 
+	//	// Exit if an error other than ERROR_PIPE_BUSY occurs.
 	//	dwErr = GetLastError();
-	//	if (dwErr != ERROR_PIPE_BUSY) 
+	//	if (dwErr != ERROR_PIPE_BUSY)
 	//	{
 	//		return NULL;
 	//	}
 	//
 	//	// All pipe instances are busy, so wait for 1 second.
-	//	if (!WaitNamedPipe(szGuiPipeName, nWaitPipe) ) 
+	//	if (!WaitNamedPipe(szGuiPipeName, nWaitPipe) )
 	//	{
 	//		return NULL;
 	//	}
-	//} 
+	//}
 	//
-	//// The pipe connected; change to message-read mode. 
-	//dwMode = PIPE_READMODE_MESSAGE; 
-	//fSuccess = SetNamedPipeHandleState( 
-	//	hPipe,    // pipe handle 
-	//	&dwMode,  // new pipe mode 
-	//	NULL,     // don't set maximum bytes 
-	//	NULL);    // don't set maximum time 
-	//if (!fSuccess) 
+	//// The pipe connected; change to message-read mode.
+	//dwMode = PIPE_READMODE_MESSAGE;
+	//fSuccess = SetNamedPipeHandleState(
+	//	hPipe,    // pipe handle
+	//	&dwMode,  // new pipe mode
+	//	NULL,     // don't set maximum bytes
+	//	NULL);    // don't set maximum time
+	//if (!fSuccess)
 	//{
 	//	CloseHandle(hPipe);
 	//	return NULL;
 	//}
-
 	_ASSERTE(pIn->hdr.nSrcThreadId==GetCurrentThreadId());
-
-	// Send a message to the pipe server and read the response. 
-	fSuccess = TransactNamedPipe( 
-		hPipe,                  // pipe handle 
-		(LPVOID)pIn,            // message to server
-		pIn->hdr.cbSize,         // message length 
-		cbReadBuf,              // buffer to receive reply
-		sizeof(cbReadBuf),      // size of read buffer
-		&cbRead,                // bytes read
-		NULL);                  // not overlapped 
-
+	// Send a message to the pipe server and read the response.
+	fSuccess = TransactNamedPipe(
+	               hPipe,                  // pipe handle
+	               (LPVOID)pIn,            // message to server
+	               pIn->hdr.cbSize,         // message length
+	               cbReadBuf,              // buffer to receive reply
+	               sizeof(cbReadBuf),      // size of read buffer
+	               &cbRead,                // bytes read
+	               NULL);                  // not overlapped
 	dwErr = GetLastError();
 	//CloseHandle(hPipe);
 
@@ -373,7 +395,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	}
 
 	pOut = (CESERVER_REQ*)cbReadBuf; // temporary
-	
+
 	if (pOut->hdr.cbSize < cbRead)
 	{
 		CloseHandle(hPipe);
@@ -387,66 +409,81 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 		OutputDebugString(L"!!! Wrong nVersion received from GUI server !!!\n");
 		return NULL;
 	}
-	
+
 	int nAllSize = pOut->hdr.cbSize;
-	pOut = (CESERVER_REQ*)_malloc(nAllSize);
+	pOut = (CESERVER_REQ*)malloc(nAllSize);
 	_ASSERTE(pOut);
+
 	if (!pOut)
 	{
 		CloseHandle(hPipe);
 		return NULL;
 	}
-	memmove(pOut, cbReadBuf, cbRead);
 
+	memmove(pOut, cbReadBuf, cbRead);
 	LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
 	nAllSize -= cbRead;
 
-	while (nAllSize>0)
-	{ 
+	while(nAllSize>0)
+	{
 		// Break if TransactNamedPipe or ReadFile is successful
-		if(fSuccess)
+		if (fSuccess)
 			break;
 
 		// Read from the pipe if there is more data in the message.
-		fSuccess = ReadFile( 
-			hPipe,      // pipe handle 
-			ptrData,    // buffer to receive reply 
-			nAllSize,   // size of buffer 
-			&cbRead,    // number of bytes read 
-			NULL);      // not overlapped 
+		fSuccess = ReadFile(
+		               hPipe,      // pipe handle
+		               ptrData,    // buffer to receive reply
+		               nAllSize,   // size of buffer
+		               &cbRead,    // number of bytes read
+		               NULL);      // not overlapped
 
 		// Exit if an error other than ERROR_MORE_DATA occurs.
-		if( !fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
+		if (!fSuccess && (GetLastError() != ERROR_MORE_DATA))
 			break;
+
 		ptrData += cbRead;
 		nAllSize -= cbRead;
 	}
 
 	CloseHandle(hPipe);
-
+	if (pOut && (pOut->hdr.nCmd != pIn->hdr.nCmd))
+	{
+		_ASSERTE(pOut->hdr.nCmd == pIn->hdr.nCmd);
+		if (pOut->hdr.nCmd == 0)
+		{
+			ExecuteFreeResult(pOut);
+			pOut = NULL;
+		}
+	}
 	return pOut;
 }
 
 void ExecuteFreeResult(CESERVER_REQ* pOut)
 {
 	if (!pOut) return;
-	_free(pOut);
+
+	free(pOut);
 }
 
 HWND myGetConsoleWindow()
 {
 	HWND hConWnd = NULL;
 	static FGetConsoleWindow fGetConsoleWindow = NULL;
+
 	if (!fGetConsoleWindow)
 	{
 		HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+
 		if (hKernel32)
 		{
-			fGetConsoleWindow = (FGetConsoleWindow)GetProcAddress( hKernel32, "GetConsoleWindow" );
+			fGetConsoleWindow = (FGetConsoleWindow)GetProcAddress(hKernel32, "GetConsoleWindow");
 		}
 	}
-	if (fGetConsoleWindow) 
+
+	if (fGetConsoleWindow)
 		hConWnd = fGetConsoleWindow();
+
 	return hConWnd;
 }
 
@@ -454,21 +491,20 @@ HWND myGetConsoleWindow()
 HWND GetConEmuHWND(BOOL abRoot)
 {
 	TODO("Переделать функцию на получение HWND из Map");
-	
 	//BOOL lbRc = FALSE;
 	HWND FarHwnd=NULL, ConEmuHwnd=NULL, ConEmuRoot=NULL;
 	CESERVER_REQ in = {{0}}, *pOut = NULL;
-
 	FarHwnd = myGetConsoleWindow();
-	if ( !FarHwnd )
+
+	if (!FarHwnd)
 		return NULL;
 
 	ExecutePrepareCmd(&in, CECMD_GETGUIHWND, sizeof(CESERVER_REQ_HDR));
-
 	pOut = ExecuteGuiCmd(FarHwnd, &in, NULL);
+
 	if (!pOut)
 		return NULL;
-	
+
 	if (pOut->hdr.cbSize != (sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD)) || pOut->hdr.nCmd != in.hdr.nCmd)
 	{
 		ExecuteFreeResult(pOut);
@@ -477,9 +513,7 @@ HWND GetConEmuHWND(BOOL abRoot)
 
 	ConEmuRoot = (HWND)pOut->dwData[0];
 	ConEmuHwnd = (HWND)pOut->dwData[1];
-
 	ExecuteFreeResult(pOut);
-	
 	return (abRoot) ? ConEmuRoot : ConEmuHwnd;
 }
 
@@ -489,15 +523,15 @@ void SetConEmuEnvVar(HWND hConEmuWnd)
 {
 	if (hConEmuWnd)
 	{
-        // Установить переменную среды с дескриптором окна
-        WCHAR szVar[32];
-        wsprintf(szVar, L"0x%08X", hConEmuWnd);
-        SetEnvironmentVariable(L"ConEmuHWND", szVar);
-    }
-    else
-    {
-    	SetEnvironmentVariable(L"ConEmuHWND", NULL);
-    }
+		// Установить переменную среды с дескриптором окна
+		WCHAR szVar[32];
+		_wsprintf(szVar, SKIPLEN(countof(szVar)) L"0x%08X", hConEmuWnd);
+		SetEnvironmentVariable(L"ConEmuHWND", szVar);
+	}
+	else
+	{
+		SetEnvironmentVariable(L"ConEmuHWND", NULL);
+	}
 }
 
 
@@ -506,24 +540,23 @@ void SetConEmuEnvVar(HWND hConEmuWnd)
 // (obsolete) 2 -- ConEmu found, but old version
 int ConEmuCheck(HWND* ahConEmuWnd)
 {
-    //int nChk = -1;
-    HWND ConEmuWnd = NULL;
-    
-    ConEmuWnd = GetConEmuHWND(FALSE/*abRoot*/  /*, &nChk*/);
+	//int nChk = -1;
+	HWND ConEmuWnd = NULL;
+	ConEmuWnd = GetConEmuHWND(FALSE/*abRoot*/  /*, &nChk*/);
 
-    // Если хотели узнать хэндл - возвращаем его
-    if (ahConEmuWnd) *ahConEmuWnd = ConEmuWnd;
-    
-    if (ConEmuWnd == NULL)
-    {
-	    return 1; // NO ConEmu (simple console mode)
-    }
-    else
-    {
-	    //if (nChk>=3)
+	// Если хотели узнать хэндл - возвращаем его
+	if (ahConEmuWnd) *ahConEmuWnd = ConEmuWnd;
+
+	if (ConEmuWnd == NULL)
+	{
+		return 1; // NO ConEmu (simple console mode)
+	}
+	else
+	{
+		//if (nChk>=3)
 		//    return 2; // ConEmu found, but old version
 		return 0;
-    }
+	}
 }
 
 /*HWND AtoH(char *Str, int Len)

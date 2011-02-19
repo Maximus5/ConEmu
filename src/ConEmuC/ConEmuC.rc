@@ -13,6 +13,8 @@
 // Manifest 4 GCC
 #if defined(__GNUC__)
 1 24 DISCARDABLE "../conemu/conemu.gcc.manifest"
+#elif defined(SELF_MANIFEST)
+1 24 DISCARDABLE "../conemu/conemu.gcc.manifest"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////

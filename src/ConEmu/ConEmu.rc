@@ -517,6 +517,23 @@ BEGIN
                     BS_AUTO3STATE | WS_TABSTOP,10,218,100,8
 END
 
+IDD_SPG_DEBUG DIALOGEX 0, 0, 328, 235
+STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Shell activity",gbActivityLog,4,1,319,230
+    CONTROL         "List1",lbActivityLog,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | 
+                    WS_BORDER | WS_TABSTOP,8,28,311,198
+    PUSHBUTTON      "Reset",cbActivityReset,215,10,50,14
+    PUSHBUTTON      "Save as...",cbActivitySaveAs,269,10,50,14
+    CONTROL         "Disabled",rbActivityDisabled,"Button",
+                    BS_AUTORADIOBUTTON,9,13,43,10
+    CONTROL         "Shell and processes",rbActivityShell,"Button",
+                    BS_AUTORADIOBUTTON,56,13,79,10
+END
+
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 167
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "ConEmu"
@@ -699,7 +716,7 @@ END
 IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "FAR Panel Views",IDC_STATIC,4,1,319,198
     GROUPBOX        "Thumbnails mode",IDC_STATIC,9,12,308,49

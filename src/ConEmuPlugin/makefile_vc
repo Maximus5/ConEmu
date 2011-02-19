@@ -73,7 +73,7 @@ RCWIN64=
 USERCPP=
 !endif                   
 
-!if defined(EXTERNAL_HOOK_LIBRARY)
+!if "$(EXTERNAL_HOOK_LIBRARY)" == "1"
 USERCPP=$(USERCPP) /DEXTERNAL_HOOK_LIBRARY
 !endif                   
 
@@ -83,14 +83,17 @@ LINK_OBJS = \
 $(OBJDIR)\ConEmuInjects.obj \
 $(OBJDIR)\ConEmuPlugin.obj \
 $(OBJDIR)\ConEmuPlugin995.obj \
+$(OBJDIR)\ConEmuPlugin1867.obj \
 $(OBJDIR)\ConEmuPluginA.obj \
 $(OBJDIR)\PluginBackground.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\Execute.obj \
 $(OBJDIR)\ConEmuCheck.obj \
+$(OBJDIR)\MAssert.obj \
+$(OBJDIR)\Memory.obj \
 $(OBJDIR)\WinObjects.obj
 
-!ifndef EXTERNAL_HOOK_LIBRARY
+!if "$(EXTERNAL_HOOK_LIBRARY)" == "0"
 LINK_OBJS = $(LINK_OBJS) $(OBJDIR)\SetHook.obj
 !endif
 
@@ -325,6 +328,8 @@ $(OBJDIR)\ConEmuPlugin.obj: ConEmuPlugin.cpp
 
 $(OBJDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
 
+$(OBJDIR)\ConEmuPlugin1867.obj: ConEmuPlugin1867.cpp
+
 $(OBJDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
 
 $(OBJDIR)\PluginBackground.obj: PluginBackground.cpp
@@ -338,3 +343,7 @@ $(OBJDIR)\Execute.obj: ..\common\execute.cpp
 $(OBJDIR)\SetHook.obj: ..\common\SetHook.cpp
 
 $(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp
+
+$(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
+
+$(OBJDIR)\Memory.obj: ..\common\Memory.cpp

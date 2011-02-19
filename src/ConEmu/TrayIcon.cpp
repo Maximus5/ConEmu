@@ -35,15 +35,14 @@ TrayIcon Icon;
 
 TrayIcon::TrayIcon()
 {
-    memset(&IconData, 0, sizeof(IconData));
-    isWindowInTray = false;
-    
-    //mn_SysItemId[0] = SC_MINIMIZE;
-    //mn_SysItemId[1] = SC_MAXIMIZE_SECRET;
-    //mn_SysItemId[2] = SC_RESTORE_SECRET;
-    //mn_SysItemId[3] = SC_SIZE;
-    //mn_SysItemId[4] = SC_MOVE;
-    //memset(mn_SysItemState, 0, sizeof(mn_SysItemState));
+	memset(&IconData, 0, sizeof(IconData));
+	isWindowInTray = false;
+	//mn_SysItemId[0] = SC_MINIMIZE;
+	//mn_SysItemId[1] = SC_MAXIMIZE_SECRET;
+	//mn_SysItemId[2] = SC_RESTORE_SECRET;
+	//mn_SysItemId[3] = SC_SIZE;
+	//mn_SysItemId[4] = SC_MOVE;
+	//memset(mn_SysItemState, 0, sizeof(mn_SysItemState));
 }
 
 TrayIcon::~TrayIcon()
@@ -52,7 +51,7 @@ TrayIcon::~TrayIcon()
 
 void TrayIcon::SettingsChanged()
 {
-	if (gSet.isAlwaysShowTrayIcon)
+	if (gpSet->isAlwaysShowTrayIcon)
 	{
 		AddTrayIcon(); // добавит или обновит tooltip
 	}
@@ -66,7 +65,7 @@ void TrayIcon::SettingsChanged()
 	//{
 	//	DWORD_PTR nStyleEx = GetWindowLongPtr(ghWnd, GWL_EXSTYLE);
 	//	DWORD_PTR nNewStyleEx = nStyleEx;
-	//	if (gSet.isAlwaysShowTrayIcon == 2)
+	//	if (gpSet->isAlwaysShowTrayIcon == 2)
 	//		nNewStyleEx |= WS_EX_TOOLWINDOW;
 	//	else if (nNewStyleEx & WS_EX_TOOLWINDOW)
 	//		nNewStyleEx &= ~WS_EX_TOOLWINDOW;
@@ -78,24 +77,25 @@ void TrayIcon::SettingsChanged()
 void TrayIcon::AddTrayIcon()
 {
 	_ASSERTE(IconData.hIcon!=NULL);
+
 	if (!isWindowInTray)
 	{
-	    GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
-	    Shell_NotifyIcon(NIM_ADD, &IconData);
-	    isWindowInTray = true;
-    }
-    else
-    {
-    	UpdateTitle();
-    }
+		GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
+		Shell_NotifyIcon(NIM_ADD, &IconData);
+		isWindowInTray = true;
+	}
+	else
+	{
+		UpdateTitle();
+	}
 }
 
 void TrayIcon::RemoveTrayIcon()
 {
 	if (isWindowInTray)
 	{
-	    Shell_NotifyIcon(NIM_DELETE, &IconData);
-    	isWindowInTray = false;
+		Shell_NotifyIcon(NIM_DELETE, &IconData);
+		isWindowInTray = false;
 	}
 }
 
@@ -103,60 +103,55 @@ void TrayIcon::UpdateTitle()
 {
 	if (!isWindowInTray || !IconData.hIcon)
 		return;
-		
-    GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
-    Shell_NotifyIcon(NIM_MODIFY, &IconData);
+
+	GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
+	Shell_NotifyIcon(NIM_MODIFY, &IconData);
 }
 
 void TrayIcon::HideWindowToTray()
 {
 	AddTrayIcon(); // добавит или обновит tooltip
-	
-    apiShowWindow(ghWnd, SW_HIDE);
-    
-    HMENU hMenu = GetSystemMenu(ghWnd, false);
-    SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_RESTORE_NAME);
-    
-    //for (int i = 0; i < countof(mn_SysItemId); i++)
-    //{
-    //	MENUITEMINFO mi = {sizeof(mi)};
-    //	mi.fMask = MIIM_STATE;
-    //	GetMenuItemInfo(hMenu, mn_SysItemId[i], FALSE, &mi);
-    //	mn_SysItemState[i] = (mi.fState & (MFS_DISABLED|MFS_GRAYED|MFS_ENABLED));
-    //	EnableMenuItem(hMenu, mn_SysItemId[i], MF_BYCOMMAND | MF_GRAYED);
-    //}
+	apiShowWindow(ghWnd, SW_HIDE);
+	HMENU hMenu = GetSystemMenu(ghWnd, false);
+	SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_RESTORE_NAME);
+	//for (int i = 0; i < countof(mn_SysItemId); i++)
+	//{
+	//	MENUITEMINFO mi = {sizeof(mi)};
+	//	mi.fMask = MIIM_STATE;
+	//	GetMenuItemInfo(hMenu, mn_SysItemId[i], FALSE, &mi);
+	//	mn_SysItemState[i] = (mi.fState & (MFS_DISABLED|MFS_GRAYED|MFS_ENABLED));
+	//	EnableMenuItem(hMenu, mn_SysItemId[i], MF_BYCOMMAND | MF_GRAYED);
+	//}
 }
 
 void TrayIcon::RestoreWindowFromTray()
 {
-    apiShowWindow(ghWnd, SW_SHOW);
-    apiSetForegroundWindow(ghWnd);
-    
-    //EnableMenuItem(GetSystemMenu(ghWnd, false), ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
-    
-    HMENU hMenu = GetSystemMenu(ghWnd, false);
-    SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_HIDE_NAME);
-    
-    //for (int i = 0; i < countof(mn_SysItemId); i++)
-    //{
-    //	EnableMenuItem(hMenu, mn_SysItemId[i], MF_BYCOMMAND | mn_SysItemState[i]);
-    //}
-    
-    if (!gSet.isAlwaysShowTrayIcon)
-    	RemoveTrayIcon();
+	apiShowWindow(ghWnd, SW_SHOW);
+	apiSetForegroundWindow(ghWnd);
+	//EnableMenuItem(GetSystemMenu(ghWnd, false), ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
+	HMENU hMenu = GetSystemMenu(ghWnd, false);
+	SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_HIDE_NAME);
+
+	//for (int i = 0; i < countof(mn_SysItemId); i++)
+	//{
+	//	EnableMenuItem(hMenu, mn_SysItemId[i], MF_BYCOMMAND | mn_SysItemState[i]);
+	//}
+
+	if (!gpSet->isAlwaysShowTrayIcon)
+		RemoveTrayIcon();
 }
 
 void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
 {
-    IconData.cbSize = sizeof(NOTIFYICONDATA);
-    IconData.uID = 1;
-    IconData.hWnd = inWnd;
-    IconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
-    IconData.uCallbackMessage = WM_TRAYNOTIFY;
-    //!!!ICON
-    IconData.hIcon = hClassIconSm;
-    //(HICON)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(inIconResource), IMAGE_ICON, 
-    //    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+	IconData.cbSize = sizeof(NOTIFYICONDATA);
+	IconData.uID = 1;
+	IconData.hWnd = inWnd;
+	IconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+	IconData.uCallbackMessage = WM_TRAYNOTIFY;
+	//!!!ICON
+	IconData.hIcon = hClassIconSm;
+	//(HICON)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(inIconResource), IMAGE_ICON,
+	//    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 }
 
 //void TrayIcon::Delete()
@@ -171,21 +166,22 @@ void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
 
 LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-    switch(lParam)
-    {
-    case WM_LBUTTONUP:
-        Icon.RestoreWindowFromTray();
-        break;
-    case WM_RBUTTONUP:
-        {
-	        POINT mPos;
-	        GetCursorPos(&mPos);
-	        apiSetForegroundWindow(hWnd);
-	        gConEmu.ShowSysmenu(hWnd, mPos.x, mPos.y);
-	        PostMessage(hWnd, WM_NULL, 0, 0);
-        }
-        break;
-    } 
+	switch(lParam)
+	{
+		case WM_LBUTTONUP:
+			Icon.RestoreWindowFromTray();
+			break;
+		case WM_RBUTTONUP:
+		{
+			POINT mPos;
+			GetCursorPos(&mPos);
+			apiSetForegroundWindow(hWnd);
+			gpConEmu->ShowSysmenu(hWnd, mPos.x, mPos.y);
+			PostMessage(hWnd, WM_NULL, 0, 0);
+		}
+		break;
+	}
+
 	return 0;
 }
 

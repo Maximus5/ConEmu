@@ -47,7 +47,7 @@ class CDragDrop;
 
 //extern CVirtualConsole *pVCon;
 extern HINSTANCE g_hInstance;
-extern CConEmuMain gConEmu;
+extern CConEmuMain *gpConEmu;
 //extern TCHAR Title[0x400];
 //extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
 extern HWND ghWnd, ghConWnd, ghWndDC, ghOpWnd, ghWndApp;
@@ -65,7 +65,7 @@ extern BOOL gbDebugShowRects;
 //extern TCHAR szIconPath[MAX_PATH];
 extern HICON hClassIcon, hClassIconSm;
 
-extern CSettings gSet;
+extern CSettings *gpSet;
 extern TrayIcon Icon;
 //extern TCHAR temp[MAX_PATH];
 
@@ -79,7 +79,7 @@ extern HWND gh_MDEBUG_TRAP_PARENT_WND;
 
 
 #ifdef MSGLOGGER
-	extern BOOL bBlockDebugLog, bSendToDebugger, bSendToFile;
+extern BOOL bBlockDebugLog, bSendToDebugger, bSendToFile;
 #endif
 
 //#ifdef _DEBUG

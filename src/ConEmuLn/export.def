@@ -1,11 +1,13 @@
 EXPORTS
 ;
 	SetStartupInfoW
-	GetPluginInfoW
+	GetPluginInfoW=GetPluginInfoWcmn
 	GetMinFarVersionW
 	ExitFARW
 	OpenPluginW
 	ConfigureW
+;  Far3
+   GetGlobalInfoW
 ;
 	SetStartupInfo
 	GetPluginInfo

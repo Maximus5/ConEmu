@@ -34,75 +34,76 @@ class CRealConsole;
 
 class CConEmuChild
 {
-public:
-	CConEmuChild();
-	~CConEmuChild();
+	public:
+		CConEmuChild();
+		~CConEmuChild();
 
-	LRESULT ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-public:
-	LRESULT OnPaint();
-	LRESULT OnSize(WPARAM wParam, LPARAM lParam);
-	HWND Create();
-	void Invalidate();
-	void Validate();
-	void Redraw();
-	
-	void SetRedraw(BOOL abRedrawEnabled);
+		LRESULT ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	public:
+		LRESULT OnPaint();
+		LRESULT OnSize(WPARAM wParam, LPARAM lParam);
+		HWND Create();
+		void Invalidate();
+		void Validate();
+		void Redraw();
 
-	void CheckPostRedraw();
+		void SetRedraw(BOOL abRedrawEnabled);
 
-protected:
-	UINT mn_MsgTabChanged;
-	UINT mn_MsgPostFullPaint;
-	BOOL mb_PostFullPaint;
-	BOOL mb_DisableRedraw;
+		void CheckPostRedraw();
+
+	protected:
+		UINT mn_MsgTabChanged;
+		UINT mn_MsgPostFullPaint;
+		BOOL mb_PostFullPaint;
+		BOOL mb_DisableRedraw;
 #ifdef _DEBUG
-	friend class CVirtualConsole;
-	friend class CRealConsole;
+		friend class CVirtualConsole;
+		friend class CRealConsole;
 #endif
-    struct tag_Caret {
-    	UINT  X, Y;
-    	UINT  nWidth, nHeight;
-    	BOOL  bVisible;
-    	BOOL  bCreated;
-    } Caret;
-    DWORD mn_LastPostRedrawTick;
-    BOOL  mb_IsPendingRedraw, mb_RedrawPosted;
+		struct tag_Caret
+		{
+			UINT  X, Y;
+			UINT  nWidth, nHeight;
+			BOOL  bVisible;
+			BOOL  bCreated;
+		} Caret;
+		DWORD mn_LastPostRedrawTick;
+		BOOL  mb_IsPendingRedraw, mb_RedrawPosted;
 };
 
 class CConEmuBack
 {
-public:
-	CConEmuBack();
-	~CConEmuBack();
+	public:
+		CConEmuBack();
+		~CConEmuBack();
 
-	HWND mh_WndBack;
-	HWND mh_WndScroll; UINT mn_ScrollWidth;
-	BOOL mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup;
-	CTimer m_TScrollShow, m_TScrollHide, m_TScrollCheck;
-	HBRUSH mh_BackBrush;
-	COLORREF mn_LastColor;
+		HWND mh_WndBack;
+		HWND mh_WndScroll; UINT mn_ScrollWidth;
+		BOOL mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup;
+		CTimer m_TScrollShow, m_TScrollHide, m_TScrollCheck;
+		HBRUSH mh_BackBrush;
+		COLORREF mn_LastColor;
 
-	HWND Create();
-	void Resize();
-	void Refresh();
-	void Invalidate();
-	void RePaint();
-	BOOL TrackMouse();
-	BOOL CheckMouseOverScroll();
-	BOOL CheckScrollAutoPopup();
-	void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
-	void ShowScroll(BOOL abImmediate);
-	void HideScroll(BOOL abImmediate);
+		HWND Create();
+		void Resize();
+		void Refresh();
+		void Invalidate();
+		void RePaint();
+		BOOL TrackMouse();
+		BOOL CheckMouseOverScroll();
+		BOOL CheckScrollAutoPopup();
+		void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
+		void ShowScroll(BOOL abImmediate);
+		void HideScroll(BOOL abImmediate);
 
-	static LRESULT CALLBACK BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-protected:
-	RECT mrc_LastClient;
-	bool mb_LastTabVisible, mb_LastAlwaysScroll;
-	int mn_ColorIdx;
-	bool mb_VTracking;
-	//WNDPROC mpfn_ScrollProc;
+		static LRESULT CALLBACK BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		static LRESULT CALLBACK ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	protected:
+		RECT mrc_LastClient;
+		bool mb_LastTabVisible, mb_LastAlwaysScroll;
+		int mn_ColorIdx;
+		bool mb_VTracking;
+		//WNDPROC mpfn_ScrollProc;
 //protected:
 //	// Theming
 //    typedef HANDLE (WINAPI* FOpenThemeData)(HWND,LPCWSTR);

@@ -29,82 +29,217 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после загрузки модуля показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
+//  #define SHOW_INJECT_MSGBOX
 #endif
+//#define SHOW_INJECT_MSGBOX
+//#define SHOW_STARTED_MSGBOX
 
 #include <windows.h>
+
+#ifndef TESTLINK
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
+#include "../common/execute.h"
+#endif
+
+#include "ConEmuC.h"
 
 
 #if defined(__GNUC__)
-extern "C"{
-  BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved );
-  LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam);
+extern "C" {
+	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
+	LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam);
 #endif
-  __declspec(dllexport) HHOOK ghKeyHook = 0;
-  __declspec(dllexport) DWORD gnVkWinFix = 0xF0;
-  __declspec(dllexport) HWND  ghConEmuRoot = NULL;
+	__declspec(dllexport) HHOOK ghKeyHook = 0;
+	__declspec(dllexport) DWORD gnVkWinFix = 0xF0;
+	__declspec(dllexport) HWND  ghKeyHookConEmuRoot = NULL;
 #if defined(__GNUC__)
 };
 #endif
 
 HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 UINT gnMsgActivateCon = 0; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
-SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
+//SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
+extern HANDLE ghHeap;
+
+BOOL gbSkipInjects = FALSE;
+BOOL gbHooksWasSet = FALSE;
+
+UINT_PTR gfnLoadLibrary = NULL;
+extern BOOL StartupHooks(HMODULE ahOurDll);
+extern void ShutdownHooks();
+//HMODULE ghPsApi = NULL;
 
 
-BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
+BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
-	switch (ul_reason_for_call)
+	switch(ul_reason_for_call)
 	{
 		case DLL_PROCESS_ATTACH:
+		{
+			ghOurModule = (HMODULE)hModule;
+			ghConWnd = GetConsoleWindow();
+			gnSelfPID = GetCurrentProcessId();
+#ifdef SHOW_STARTED_MSGBOX
+
+			if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuHk*.dll loaded", "ConEmu hooks", 0);
+
+#endif
+			//_ASSERTE(ghHeap == NULL);
+			//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
+			HeapInitialize();
+			
+			// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
+			// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
+			gfnLoadLibrary = (UINT_PTR)::GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "LoadLibraryW");
+			
+			//#ifndef TESTLINK
+			gpLocalSecurity = LocalSecurity();
+			gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
+			//#endif
+			wchar_t szSkipEventName[128];
+			_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
+			HANDLE hSkipEvent = OpenEvent(EVENT_ALL_ACCESS , FALSE, szSkipEventName);
+			BOOL lbSkipInjects = FALSE;
+
+			if (hSkipEvent)
 			{
-				ghOurModule = (HMODULE)hModule;
-				
-				#ifdef SHOW_STARTED_MSGBOX
-				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuHk*.dll loaded", "ConEmu hooks", 0);
-				#endif
-				
-				gpLocalSecurity = LocalSecurity();
-
-				gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
-
+				gbSkipInjects = (WaitForSingleObject(hSkipEvent, 0) == WAIT_OBJECT_0);
+				CloseHandle(hSkipEvent);
 			}
-			break;
+			else
+			{
+				gbSkipInjects = FALSE;
+			}
+
+			// Открыть мэппинг консоли и попытаться получить HWND GUI, PID сервера, и пр...
+			if (!gbSkipInjects && ghConWnd)
+			{
+				MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
+				ConInfo.InitName(CECONMAPNAME, (DWORD)ghConWnd);
+				CESERVER_CONSOLE_MAPPING_HDR *pInfo = ConInfo.Open();
+				if (pInfo 
+					&& (pInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
+					//&& (pInfo->nProtocolVersion == CESERVER_REQ_VER)
+					)
+				{
+					if (pInfo->hConEmuRoot && IsWindow(pInfo->hConEmuRoot))
+					{
+						ghConEmuWnd = pInfo->hConEmuRoot;
+						if (pInfo->hConEmuWnd && IsWindow(pInfo->hConEmuWnd))
+							ghConEmuWndDC = pInfo->hConEmuWnd;
+					}
+					if (pInfo->nServerPID && pInfo->nServerPID != gnSelfPID)
+						gnServerPID = pInfo->nServerPID;
+					ConInfo.CloseMap();
+				}
+
+				InitializeConsoleInputSemaphore();
+			}
+			
+			
+			#ifdef _WIN64
+			DWORD nImageBits = 64, nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+			#else
+			DWORD nImageBits = 32, nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+			#endif
+			GetImageSubsystem(nImageSubsystem,nImageBits);
+
+			wchar_t szExeName[MAX_PATH+1];
+			if (!GetModuleFileName(NULL, szExeName, countof(szExeName))) szExeName[0] = 0;
+			CESERVER_REQ* pIn = NewCmdOnCreateW(
+				gbSkipInjects ? eHooksLoaded : eInjectingHooks, L"", 0, 
+				szExeName, GetCommandLineW(), nImageBits, nImageSubsystem,
+				GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
+			if (pIn)
+			{
+				//HWND hConWnd = GetConsoleWindow();
+				CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+				ExecuteFreeResult(pIn);
+				if (pOut) ExecuteFreeResult(pOut);
+			}
+			
+
+			if (!gbSkipInjects)
+			{
+#ifdef SHOW_INJECT_MSGBOX
+				wchar_t szDbgMsg[128], szTitle[128];
+				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
+				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"SetAllHooks, ConEmuHk, PID=%u", GetCurrentProcessId());
+				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+#endif
+				gnRunMode = RM_APPLICATION;
+				_ASSERTE(nImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
+				gbHooksWasSet = StartupHooks(ghOurModule);
+				// Если NULL - значит это "Detached" консольный процесс, посылать "Started" в сервер смысла нет
+				if (ghConWnd != NULL)
+				{
+					SendStarted();
+				}
+			}
+			else
+			{
+				gbHooksWasSet = FALSE;
+			}
+		}
+		break;
 		case DLL_PROCESS_DETACH:
+		{
+			if (!gbSkipInjects && gbHooksWasSet)
 			{
-				CommonShutdown();
+				gbHooksWasSet = FALSE;
+				ShutdownHooks();
 			}
-			break;
+
+			if (gnRunMode == RM_APPLICATION)
+			{
+				SendStopped();
+			}
+
+			//#ifndef TESTLINK
+			CommonShutdown();
+
+			ReleaseConsoleInputSemaphore();
+
+			//#endif
+			//if (ghHeap)
+			//{
+			//	HeapDestroy(ghHeap);
+			//	ghHeap = NULL;
+			//}
+			HeapDeinitialize();
+		}
+		break;
 	}
+
 	return TRUE;
 }
 
 #if defined(CRTSTARTUP)
-extern "C"{
-  BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
+extern "C" {
+	BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
 };
 
 BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 {
-  DllMain(hDll, dwReason, lpReserved);
-  return TRUE;
+	DllMain(hDll, dwReason, lpReserved);
+	return TRUE;
 }
 #endif
 
-/* Используются как extern в ConEmuCheck.cpp */
-LPVOID _calloc(size_t nCount,size_t nSize) {
-	return calloc(nCount,nSize);
-}
-LPVOID _malloc(size_t nCount) {
-	return malloc(nCount);
-}
-void   _free(LPVOID ptr) {
-	free(ptr);
-}
+///* Используются как extern в ConEmuCheck.cpp */
+//LPVOID _calloc(size_t nCount,size_t nSize) {
+//	return calloc(nCount,nSize);
+//}
+//LPVOID _malloc(size_t nCount) {
+//	return malloc(nCount);
+//}
+//void   _free(LPVOID ptr) {
+//	free(ptr);
+//}
 
 
 BYTE gnOtherWin = 0;
@@ -122,39 +257,34 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 #ifdef _DEBUG
 		wchar_t szKH[128];
 		DWORD dwTick = GetTickCount();
-		wsprintf(szKH, L"[hook] %s(vk=%i, flags=0x%08X, time=%i, tick=%i, delta=%i)\n",
-			(wParam==WM_KEYDOWN) ? L"WM_KEYDOWN" :
-			(wParam==WM_KEYUP) ? L"WM_KEYUP" :
-			(wParam==WM_SYSKEYDOWN) ? L"WM_SYSKEYDOWN" :
-			(wParam==WM_SYSKEYUP) ? L"WM_SYSKEYUP" : L"UnknownMessage",
-			pKB->vkCode, pKB->flags, pKB->time, dwTick, (dwTick-pKB->time));
+		_wsprintf(szKH, SKIPLEN(countof(szKH)) L"[hook] %s(vk=%i, flags=0x%08X, time=%i, tick=%i, delta=%i)\n",
+		          (wParam==WM_KEYDOWN) ? L"WM_KEYDOWN" :
+		          (wParam==WM_KEYUP) ? L"WM_KEYUP" :
+		          (wParam==WM_SYSKEYDOWN) ? L"WM_SYSKEYDOWN" :
+		          (wParam==WM_SYSKEYUP) ? L"WM_SYSKEYUP" : L"UnknownMessage",
+		          pKB->vkCode, pKB->flags, pKB->time, dwTick, (dwTick-pKB->time));
 		//if (wParam == WM_KEYUP && gnSkipVkModCode && pKB->vkCode == gnSkipVkModCode) {
 		//	wsprintf(szKH+lstrlen(szKH)-1, L" - WinDelta=%i\n", (pKB->time - gnWinPressTick));
 		//}
 		OutputDebugString(szKH);
 #endif
 
-		if (wParam == WM_KEYDOWN && ghConEmuRoot)
+		if (wParam == WM_KEYDOWN && ghKeyHookConEmuRoot)
 		{
 			if ((pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9') /*|| pKB->vkCode == (int)' '*/)
 			{
 				BOOL lbLeftWin = isPressed(VK_LWIN);
 				BOOL lbRightWin = isPressed(VK_RWIN);
-				if ((lbLeftWin || lbRightWin) && IsWindow(ghConEmuRoot))
+
+				if ((lbLeftWin || lbRightWin) && IsWindow(ghKeyHookConEmuRoot))
 				{
 					DWORD nConNumber = (pKB->vkCode == (UINT)'0') ? 10 : (pKB->vkCode - (UINT)'0');
-
-					PostMessage(ghConEmuRoot, gnMsgActivateCon, nConNumber, 0);
-
+					PostMessage(ghKeyHookConEmuRoot, gnMsgActivateCon, nConNumber, 0);
 					gnSkipVkModCode = lbLeftWin ? VK_LWIN : VK_RWIN;
 					gnSkipVkKeyCode = pKB->vkCode;
-
 					// запрет обработки системой
 					return 1; // Нужно возвращать 1, чтобы нажатие не ушло в Win7 Taskbar
-
-
 					////gnWinPressTick = pKB->time;
-
 					//HWND hConEmu = GetForegroundWindow();
 					//// По идее, должен быть ConEmu, но необходимо проверить (может хук не снялся?)
 					//if (hConEmu)
@@ -164,14 +294,11 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 					//	{
 					//		//if (!gnMsgActivateCon) --> DllMain
 					//		//	gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
-
 					//		WORD nConNumber = (pKB->vkCode == (UINT)'0') ? 10 : (pKB->vkCode - (UINT)'0');
-
 					//		if (SendMessage(hConEmu, gnMsgActivateCon, wParam, pKB->vkCode) == 1)
 					//		{
 					//			gnSkipVkModCode = lbLeftWin ? VK_LWIN : VK_RWIN;
 					//			gnSkipVkKeyCode = pKB->vkCode;
-
 					//			// запрет обработки системой
 					//			return 1; // Нужно возвращать 1, чтобы нажатие не ушло в Win7 Taskbar
 					//		}
@@ -191,18 +318,16 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 				gnSkipVkModCode = 0;
 				gnSkipVkKeyCode = 0;
 			}
-
 		}
 		else if (wParam == WM_KEYUP)
 		{
-
 			if (gnSkipVkModCode && pKB->vkCode == gnSkipVkModCode)
 			{
 				if (gnSkipVkKeyCode)
 				{
-					#ifdef _DEBUG
-						OutputDebugString(L"*** Win released before key ***\n");
-					#endif
+#ifdef _DEBUG
+					OutputDebugString(L"*** Win released before key ***\n");
+#endif
 					// При быстром нажатии Win+<кнопка> часто получается что сам Win отпускается раньше <кнопки>.
 					gnOtherWin = (BYTE)gnVkWinFix;
 					keybd_event(gnOtherWin, gnOtherWin, 0, 0);
@@ -211,20 +336,25 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 				{
 					gnOtherWin = 0;
 				}
+
 				gnSkipVkModCode = 0;
 				return 0; // разрешить обработку системой, но не передавать в другие хуки
 			}
+
 			if (gnSkipVkKeyCode && pKB->vkCode == gnSkipVkKeyCode)
 			{
 				gnSkipVkKeyCode = 0;
+
 				if (gnOtherWin)
 				{
 					keybd_event(gnOtherWin, gnOtherWin, KEYEVENTF_KEYUP, 0);
 					gnOtherWin = 0;
 				}
+
 				return 0; // разрешить обработку системой, но не передавать в другие хуки
 			}
 		}
 	}
+
 	return CallNextHookEx(ghKeyHook, nCode, wParam, lParam);
 }

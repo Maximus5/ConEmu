@@ -78,11 +78,14 @@ NAME = ConEmuTh
 LINK_OBJS = \
 $(OBJDIR)\ConEmuTh.obj \
 $(OBJDIR)\ConEmuTh995.obj \
+$(OBJDIR)\ConEmuTh1867.obj \
 $(OBJDIR)\ConEmuThA.obj \
 $(OBJDIR)\Display.obj \
 $(OBJDIR)\ImgCache.obj \
 $(OBJDIR)\RgnDetect.obj \
 $(OBJDIR)\Common.obj \
+$(OBJDIR)\MAssert.obj \
+$(OBJDIR)\Memory.obj \
 $(OBJDIR)\WinObjects.obj
 
 #$(OBJDIR)\LogBrowser.obj
@@ -306,6 +309,8 @@ $(OBJDIR)\ConEmuTh.obj: ConEmuTh.cpp
 
 $(OBJDIR)\ConEmuTh995.obj: ConEmuTh995.cpp
 
+$(OBJDIR)\ConEmuTh1867.obj: ConEmuTh1867.cpp
+
 $(OBJDIR)\ConEmuThA.obj: ConEmuThA.cpp
 
 $(OBJDIR)\Display.obj: Display.cpp
@@ -317,6 +322,10 @@ $(OBJDIR)\RgnDetect.obj: ..\common\RgnDetect.cpp
 $(OBJDIR)\common.obj: ..\common\common.cpp
 
 $(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp
+
+$(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
+
+$(OBJDIR)\Memory.obj: ..\common\Memory.cpp
 
 
 

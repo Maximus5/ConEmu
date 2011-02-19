@@ -12,7 +12,8 @@
 #define CET_CM_PNG  4
 #define CET_CM_BMP  5
 
-enum {
+enum
+{
 	MODULE_GDIP = 0x6764692B, // gdi+
 	MODULE_PNG  = 0x00706E67, // png
 	MODULE_ICO  = 0x0069366F, // ico
@@ -22,7 +23,8 @@ enum {
 	MODULE_CUSTOM = 0x75736572 // ALL OTHER MODULES (Non standard)
 };
 
-struct CET_Init {
+struct CET_Init
+{
 	// [In]
 	DWORD cbSize; // size of this structure
 	HMODULE hModule; // Module handle of initializing module
@@ -33,7 +35,8 @@ struct CET_Init {
 	LPVOID pContext; // Module may use this value
 };
 
-struct CET_LoadInfo {
+struct CET_LoadInfo
+{
 	// [In]
 	DWORD cbSize; // size of this structure
 	LPVOID pContext; // Module may use this value. It comes from CET_Init
@@ -83,7 +86,7 @@ struct CET_LoadInfo {
 //	v2.0 (build 1503) x86
 //	2.85Mb, 15.04.10 13:01
 //	*/
-//	wchar_t *pszInfo; 
+//	wchar_t *pszInfo;
 //};
 
 // Export name: CET_Init.

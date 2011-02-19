@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static bool isTerminalMode()
 {
 	static bool TerminalMode = false, TerminalChecked = false;
+
 	if (!TerminalChecked)
 	{
 		// -- переменная "TERM" может быть задана пользователем для каких-то специальных целей
@@ -43,9 +44,9 @@ static bool isTerminalMode()
 		//	TerminalMode = true;
 		//}
 		//TerminalChecked = true;
-
 		PROCESSENTRY32  P = {sizeof(PROCESSENTRY32)};
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
 		if (hSnap == INVALID_HANDLE_VALUE)
 		{
 			// будем считать, что не в telnet :)
@@ -56,6 +57,7 @@ static bool isTerminalMode()
 			PROCESSENTRY32 *pProcesses = (PROCESSENTRY32*)calloc(nProcMax, sizeof(PROCESSENTRY32));
 			DWORD nCurPID = GetCurrentProcessId();
 			DWORD nParentPID = nCurPID;
+
 			// Сначала загрузить список всех процессов, чтобы потом по нему выйти не корневой
 			do
 			{
@@ -69,6 +71,7 @@ static bool isTerminalMode()
 				}
 
 				pProcesses[nProcCount] = P;
+
 				if (P.th32ProcessID == nParentPID)
 				{
 					if (P.th32ProcessID != nCurPID)
@@ -79,17 +82,21 @@ static bool isTerminalMode()
 							break;
 						}
 					}
+
 					nParentPID = P.th32ParentProcessID;
 				}
+
 				nProcCount++;
-			} while (Process32Next(hSnap, &P));
+			}
+			while(Process32Next(hSnap, &P));
+
 			// Snapshoot больше не нужен
 			CloseHandle(hSnap);
-
 			int nSteps = 128; // защита от зацикливания
-			while (!TerminalMode && (--nSteps) > 0)
+
+			while(!TerminalMode && (--nSteps) > 0)
 			{
-				for (int i = 0; i < nProcCount; i++)
+				for(int i = 0; i < nProcCount; i++)
 				{
 					if (pProcesses[i].th32ProcessID == nParentPID)
 					{
@@ -101,6 +108,7 @@ static bool isTerminalMode()
 								break;
 							}
 						}
+
 						nParentPID = pProcesses[i].th32ParentProcessID;
 						break;
 					}
@@ -110,6 +118,7 @@ static bool isTerminalMode()
 			free(pProcesses);
 		}
 	}
+
 	// В повторых проверках смысла нет
 	TerminalChecked = true;
 	return TerminalMode;

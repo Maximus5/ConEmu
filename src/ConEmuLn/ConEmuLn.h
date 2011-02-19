@@ -35,9 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // X - меньшая, Y - большая
 #define FAR_X_VER 995
-#define FAR_Y_VER 995
+#define FAR_Y_VER 1867
 #define FUNC_X(fn) fn##995
-#define FUNC_Y(fn) fn##995
+#define FUNC_Y(fn) fn##1867
 
 
 
@@ -50,6 +50,9 @@ extern BOOL gbBackgroundEnabled;
 extern COLORREF gcrLinesColor;
 extern BOOL gbHilightPlugins;
 extern COLORREF gcrHilightPlugBack;
+
+void FUNC_X(GetPluginInfoW)(void *piv);
+void FUNC_Y(GetPluginInfoW)(void *piv);
 
 BOOL LoadFarVersion();
 int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk);

@@ -35,14 +35,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 #ifdef _DEBUG
-	#define OUTPUTDEBUGSTRING(m) OutputDebugString(m)
-	#define SHOWDBGINFO(x) OutputDebugStringW(x)
-	//#include <crtdbg.h>
+#define OUTPUTDEBUGSTRING(m) OutputDebugString(m)
+#define SHOWDBGINFO(x) OutputDebugStringW(x)
+//#include <crtdbg.h>
 #else
-	#define OUTPUTDEBUGSTRING(m)
-	#define SHOWDBGINFO(x)
-	//#define _ASSERT(x)
-	//#define _ASSERTE(x)
+#define OUTPUTDEBUGSTRING(m)
+#define SHOWDBGINFO(x)
+//#define _ASSERT(x)
+//#define _ASSERTE(x)
 #endif
 
 
@@ -52,10 +52,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // X - меньшая, Y - большая
 #define FAR_X_VER 995
-#define FAR_Y_VER 995
+#define FAR_Y_VER 1867
 #define FUNC_X(fn) fn##995
-#define FUNC_Y(fn) fn##995
+#define FUNC_Y(fn) fn##1867
 
+
+#define ConEmuTh_SysID 0x43455568 // 'CETh'
 
 
 //#define EVENT_TYPE_REDRAW 250
@@ -82,8 +84,10 @@ struct CEFAR_FIND_DATA
 	//FILETIME ftCreationTime;
 	//FILETIME ftLastAccessTime;
 	FILETIME ftLastWriteTime;
-	union {
-		struct {
+	union
+	{
+		struct
+		{
 			DWORD nFileSizeHigh;
 			DWORD nFileSizeLow;
 		};
@@ -97,18 +101,18 @@ struct CEFAR_FIND_DATA
 
 struct CePluginPanelItem
 {
-	DWORD			cbSize;
-	CEFAR_FIND_DATA FindData;
-	BOOL            bVirtualItem;
-	DWORD_PTR       UserData;
-	UINT            PreviewLoaded; // пытались ли уже загружать превьюшку (|1-загрузили Shell, |2-загрузили Preview, |4-Thumbnail был реально загружен, а не только извлечена информация)
-	const wchar_t*  pszFullName; // Для упрощения отрисовки - ссылка на временный буфер
-	const wchar_t*  pszDescription; // ссылка на данные в этом CePluginPanelItem
-	DWORD           Flags;
-	DWORD           NumberOfLinks;
-	BOOL            bIsCurrent; // ТОЛЬКО ИНФОРМАЦИОННО, ориентироваться на это поле нельзя, оно может быть неактуально
-	//BOOL            bItemColorLoaded;
-	//COLORREF        crFore, crBack;
+	DWORD			 cbSize;
+	CEFAR_FIND_DATA  FindData;
+	BOOL             bVirtualItem;
+	DWORD_PTR        UserData;
+	UINT             PreviewLoaded; // пытались ли уже загружать превьюшку (|1-загрузили Shell, |2-загрузили Preview, |4-Thumbnail был реально загружен, а не только извлечена информация)
+	const wchar_t*   pszFullName; // Для упрощения отрисовки - ссылка на временный буфер
+	const wchar_t*   pszDescription; // ссылка на данные в этом CePluginPanelItem
+	unsigned __int64 Flags;
+	DWORD            NumberOfLinks;
+	BOOL             bIsCurrent; // ТОЛЬКО ИНФОРМАЦИОННО, ориентироваться на это поле нельзя, оно может быть неактуально
+	//BOOL           bItemColorLoaded;
+	//COLORREF       crFore, crBack;
 };
 
 struct CePluginPanelItemColor
@@ -189,7 +193,7 @@ enum CEPANELINFOFLAGS
 //	};
 //};
 BOOL LoadThSet(DWORD anGuiPid=-1);
-extern PanelViewSettings gThSet;
+extern PanelViewSetMapping gThSet;
 extern BOOL gbCancelAll;
 
 
@@ -199,7 +203,7 @@ extern HMODULE ghPluginModule; // ConEmuTh.dll - сам плагин
 extern DWORD gnSelfPID, gnMainThreadId;
 //extern int lastModifiedStateW;
 //extern bool gbHandleOneRedraw; //, gbHandleOneRedrawCh;
-//extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX], 
+//extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX],
 extern wchar_t* gszRootKey;
 //extern int maxTabCount, lastWindowCount;
 //extern CESERVER_REQ* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
@@ -215,7 +219,7 @@ extern FarVersion gFarVersion;
 ////extern HANDLE ghConIn;
 //extern BOOL gbNeedPostTabSend;
 //extern HANDLE ghServerTerminateEvent;
-//extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
+//extern CESERVER_CONSOLE_MAPPING_HDR *gpConsoleInfo;
 //extern DWORD gnSelfPID;
 extern CeFullPanelInfo pviLeft, pviRight;
 extern HANDLE ghDisplayThread; extern DWORD gnDisplayThreadId;
@@ -236,7 +240,7 @@ extern bool gbFarPanelsReady;
 
 class CRgnDetect;
 extern CRgnDetect *gpRgnDetect;
-extern CEFAR_INFO gFarInfo;
+extern CEFAR_INFO_MAPPING gFarInfo;
 extern DWORD gnRgnDetectFlags;
 
 
@@ -251,6 +255,13 @@ extern DWORD gnRgnDetectFlags;
 //	BOOL Obsolete;
 //	//BOOL Processed;
 //} SynchroArg;
+
+void FUNC_X(GetPluginInfoW)(void* piv);
+void FUNC_Y(GetPluginInfoW)(void* piv);
+
+HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item);
+HANDLE WINAPI OpenPluginW1(int OpenFrom,INT_PTR Item);
+HANDLE WINAPI OpenPluginW2(int OpenFrom,const GUID* Guid,INT_PTR Data);
 
 void EntryPoint(int OpenFrom,INT_PTR Item);
 BOOL LoadFarVersion();
@@ -324,10 +335,12 @@ BOOL FUNC_Y(CheckPanelSettings)(BOOL abSilence);
 BOOL GetFarRect(SMALL_RECT* prcFarRect);
 void FUNC_Y(GetFarRect)(SMALL_RECT* prcFarRect);
 
-typedef struct {
+typedef struct
+{
 	int bValid; // Must be ==1
 	int bExpired; // Must be ==0, if !=0 - просто освободить память
-	enum {
+	enum
+	{
 		eExecuteMacro = 0,
 	} nCommand;
 	WORD Data[1]; // variable array
@@ -374,7 +387,7 @@ struct ImpExPanelItem
 struct PbFarPanelItem
 {
 	DWORD nMagic;			// PBFAR_MAGIC
-	DWORD cbSizeOfStruct;	// 
+	DWORD cbSizeOfStruct;	//
 	DWORD_PTR pPlugin;      // CPBPlugin*
 };
 typedef int (WINAPI* GetPbFarFileData_t)(DWORD_PTR pPlugin, LPCWSTR asFile, LPVOID* ppData, DWORD* pDataSize);
