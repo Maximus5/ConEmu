@@ -364,7 +364,7 @@ bool __stdcall SetHookCallbacks(const char* ProcName, const wchar_t* DllName, HM
 			Hooks[i].PostCallBack = PostCallBack;
 			Hooks[i].ExceptCallBack = ExceptCallBack;
 			bFound = true;
-			break;
+			//break; // перехватов может быть более одного (деление хуков на exe/dll)
 		}
 	}
 
@@ -607,10 +607,11 @@ static bool SetHook(HMODULE Module, BOOL abForceHooks)
 					}
 				}
 
-				WARNING("Это НЕ ORDINAL, это Hint!!!");
-
-				if (Hooks[j].nOrdinal == 0 && ordinalO != (ULONGLONG)-1)
-					Hooks[j].nOrdinal = (DWORD)ordinalO;
+				//#ifdef _DEBUG
+				//// Это НЕ ORDINAL, это Hint!!!
+				//if (Hooks[j].nOrdinal == 0 && ordinalO != (ULONGLONG)-1)
+				//	Hooks[j].nOrdinal = (DWORD)ordinalO;
+				//#endif
 
 				bHooked = true;
 				DWORD old_protect = 0; DWORD dwErr = 0;
@@ -858,6 +859,15 @@ static bool UnsetHook(HMODULE Module)
 		{
 			_ASSERTE(thunk && thunkO);
 			continue;
+		}
+
+		//110220 - something strange. валимся при выходе из некоторых программ (AddFont.exe)
+		//         смысл в том, что thunk указывает на НЕ валидную область памяти.
+		//         Разбор полетов показал, что программа сама порушила таблицу импортов.
+		if (IsBadReadPtr(thunk, sizeof(IMAGE_THUNK_DATA)) || IsBadReadPtr(thunkO, sizeof(IMAGE_THUNK_DATA)))
+		{
+			_ASSERTE(thunk && FALSE);
+			break;
 		}
 
 		int f = 0;

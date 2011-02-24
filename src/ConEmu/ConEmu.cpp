@@ -733,7 +733,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	ceInfo.nProtocolVersion = CESERVER_REQ_VER;
 	ceInfo.hGuiWnd = ghWnd;
 	
-	ceInfo.nLoggingType = (ghOpWnd && gpSet->hDebug) ? glt_Processes : glt_None;
+	ceInfo.nLoggingType = (ghOpWnd && gpSet->hDebug) ? gpSet->m_RealConLoggingType : glt_None;
 	
 	wcscpy_c(ceInfo.sConEmuExe, ms_ConEmuExe);
 	wcscpy_c(ceInfo.sConEmuDir, ms_ConEmuExeDir);
@@ -7252,6 +7252,11 @@ void CConEmuMain::OnHideCaption()
 	//	MOVEWINDOW ( ghWnd, wndR.left, wndR.top, rcWnd.right, rcWnd.bottom, 1);
 	//	GetWindowRect(ghWnd, &mrc_Ideal);
 	//}
+}
+
+void CConEmuMain::OnDebugLogSettingsChanged()
+{
+	gpConEmu->UpdateGuiInfoMapping();
 }
 
 void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)

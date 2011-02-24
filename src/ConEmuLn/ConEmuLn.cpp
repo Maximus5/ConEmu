@@ -53,9 +53,16 @@ extern "C" {
 #endif
 
 HMODULE ghPluginModule = NULL; // ConEmuLn.dll - сам плагин
-wchar_t* gszRootKey = NULL;
+//wchar_t* gszRootKey = NULL;
 FarVersion gFarVersion = {{0}};
 static RegisterBackground_t gfRegisterBackground = NULL;
+ConEmuLnSettings gSettings[] = {
+	{L"PluginEnabled", (LPBYTE)&gbBackgroundEnabled, REG_BINARY, 1},
+	{L"LinesColor", (LPBYTE)&gcrLinesColor, REG_DWORD, 4},
+	{L"HilightPlugins", (LPBYTE)&gbHilightPlugins, REG_BINARY, 1},
+	{L"HilightPlugBack", (LPBYTE)&gcrHilightPlugBack, REG_DWORD, 4},
+	{NULL}
+};
 
 BOOL gbBackgroundEnabled = FALSE;
 COLORREF gcrLinesColor = RGB(0,0,0xA8); // чуть светлее синего
@@ -84,6 +91,13 @@ BOOL gbInfoW_OK = FALSE;
 
 
 
+#include "../common/SetExport.h"
+ExportFunc Far3Func[] =
+{
+	{"OpenPluginW", OpenPluginW1, OpenPluginW2},
+	{NULL}
+};
+
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
 	switch(ul_reason_for_call)
@@ -92,6 +106,19 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		{
 			ghPluginModule = (HMODULE)hModule;
 			HeapInitialize();
+
+			bool lbExportsChanged = false;
+			if (LoadFarVersion())
+			{
+				if (gFarVersion.dwVerMajor == 3)
+				{
+					lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
+					if (!lbExportsChanged)
+					{
+						_ASSERTE(lbExportsChanged);
+					}
+				}
+			}
 		}
 		break;
 		case DLL_PROCESS_DETACH:
@@ -248,30 +275,130 @@ void WINAPI OnConEmuLoaded(struct ConEmuLoadedArg* pConEmuInfo)
 	}
 }
 
+void SettingsLoad()
+{
+	if (gFarVersion.dwVerMajor == 1)
+		SettingsLoadA();
+	else if (gFarVersion.dwBuild >= FAR_Y_VER)
+		FUNC_Y(SettingsLoadW)();
+	else
+		FUNC_X(SettingsLoadW)();
+}
+
+void SettingsLoadReg(LPCWSTR pszRegKey)
+{
+	HKEY hkey = NULL;
+
+	if (!RegOpenKeyExW(HKEY_CURRENT_USER, pszRegKey, 0, KEY_READ, &hkey))
+	{
+		DWORD nVal, nType, nSize; BYTE cVal;
+
+		for (ConEmuLnSettings *p = gSettings; p->pszValueName; p++)
+		{
+			if (p->nValueType == REG_BINARY)
+			{
+				_ASSERTE(p->nValueSize == 1);
+				if (!RegQueryValueExW(hkey, p->pszValueName, 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
+					*((BOOL*)p->pValue) = (cVal != 0);
+			}
+			else if (p->nValueType == REG_DWORD)
+			{
+				_ASSERTE(p->nValueSize == 4);
+				if (!RegQueryValueExW(hkey, p->pszValueName, 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
+					*((DWORD*)p->pValue) = nVal;
+			}
+		}
+
+		//if (!RegQueryValueExW(hkey, L"PluginEnabled", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
+		//	gbBackgroundEnabled = (cVal != 0);
+
+		//if (!RegQueryValueExW(hkey, L"LinesColor", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
+		//	gcrLinesColor = nVal;
+
+		//if (!RegQueryValueExW(hkey, L"HilightPlugins", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
+		//	gbHilightPlugins = (cVal != 0);
+
+		//if (!RegQueryValueExW(hkey, L"HilightPlugBack", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
+		//	gcrHilightPlugBack = nVal;
+
+		RegCloseKey(hkey);
+	}
+}
+
+void SettingsSave()
+{
+	if (gFarVersion.dwVerMajor == 1)
+		SettingsSaveA();
+	else if (gFarVersion.dwBuild >= FAR_Y_VER)
+		FUNC_Y(SettingsSaveW)();
+	else
+		FUNC_X(SettingsSaveW)();
+}
+
+void SettingsSaveReg(LPCWSTR pszRegKey)
+{
+	HKEY hkey = NULL;
+
+	if (!RegCreateKeyExW(HKEY_CURRENT_USER, pszRegKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &hkey, NULL))
+	{
+		BYTE cVal;
+
+		for (ConEmuLnSettings *p = gSettings; p->pszValueName; p++)
+		{
+			if (p->nValueType == REG_BINARY)
+			{
+				_ASSERTE(p->nValueSize == 1);
+				cVal = (BYTE)*(BOOL*)p->pValue;
+				RegSetValueExW(hkey, p->pszValueName, 0, REG_BINARY, &cVal, sizeof(cVal));
+			}
+			else if (p->nValueType == REG_DWORD)
+			{
+				_ASSERTE(p->nValueSize == 4);
+				RegSetValueExW(hkey, p->pszValueName, 0, REG_DWORD, p->pValue, p->nValueSize);
+			}
+		}
+
+		//if (!RegQueryValueExW(hkey, L"PluginEnabled", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
+		//	gbBackgroundEnabled = (cVal != 0);
+
+		//if (!RegQueryValueExW(hkey, L"LinesColor", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
+		//	gcrLinesColor = nVal;
+
+		//if (!RegQueryValueExW(hkey, L"HilightPlugins", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
+		//	gbHilightPlugins = (cVal != 0);
+
+		//if (!RegQueryValueExW(hkey, L"HilightPlugBack", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
+		//	gcrHilightPlugBack = nVal;
+
+		RegCloseKey(hkey);
+	}
+}
+
 void StartPlugin(BOOL bConfigure)
 {
 	if (!bConfigure)
 	{
-		HKEY hkey = NULL;
+		SettingsLoad();
+		//HKEY hkey = NULL;
 
-		if (!RegOpenKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, KEY_READ, &hkey))
-		{
-			DWORD nVal, nType, nSize; BYTE cVal;
+		//if (!RegOpenKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, KEY_READ, &hkey))
+		//{
+		//	DWORD nVal, nType, nSize; BYTE cVal;
 
-			if (!RegQueryValueExW(hkey, L"PluginEnabled", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
-				gbBackgroundEnabled = (cVal != 0);
+		//	if (!RegQueryValueExW(hkey, L"PluginEnabled", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
+		//		gbBackgroundEnabled = (cVal != 0);
 
-			if (!RegQueryValueExW(hkey, L"LinesColor", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
-				gcrLinesColor = nVal;
+		//	if (!RegQueryValueExW(hkey, L"LinesColor", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
+		//		gcrLinesColor = nVal;
 
-			if (!RegQueryValueExW(hkey, L"HilightPlugins", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
-				gbHilightPlugins = (cVal != 0);
+		//	if (!RegQueryValueExW(hkey, L"HilightPlugins", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
+		//		gbHilightPlugins = (cVal != 0);
 
-			if (!RegQueryValueExW(hkey, L"HilightPlugBack", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
-				gcrHilightPlugBack = nVal;
+		//	if (!RegQueryValueExW(hkey, L"HilightPlugBack", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
+		//		gcrHilightPlugBack = nVal;
 
-			RegCloseKey(hkey);
-		}
+		//	RegCloseKey(hkey);
+		//}
 	}
 
 	static bool bWasRegistered = false;
@@ -316,10 +443,10 @@ void ExitPlugin(void)
 		gfRegisterBackground(&inf);
 	}
 
-	if (gszRootKey)
-	{
-		free(gszRootKey);
-	}
+	//if (gszRootKey)
+	//{
+	//	free(gszRootKey);
+	//}
 }
 
 void   WINAPI _export ExitFARW(void)
@@ -354,7 +481,7 @@ int WINAPI ConfigureW(int ItemNumber)
 		return FUNC_X(ConfigureW)(ItemNumber);
 }
 
-HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
+HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)
 {
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;

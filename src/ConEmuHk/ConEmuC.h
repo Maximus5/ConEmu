@@ -485,22 +485,23 @@ extern wchar_t* wpszLogSizeFile;
 
 extern BOOL gbInRecreateRoot;
 
-enum CmdOnCreateType
-{
-	eShellExecute = 1,
-	eCreateProcess,
-	eInjectingHooks,
-	eHooksLoaded,
-};
+//enum CmdOnCreateType
+//{
+//	eShellExecute = 1,
+//	eCreateProcess,
+//	eInjectingHooks,
+//	eHooksLoaded,
+//};
 
-CESERVER_REQ* NewCmdOnCreateA(
-				enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags, 
-				LPCSTR asFile, LPCSTR asParam, int nImageBits, int nImageSubsystem,
-				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr);
-CESERVER_REQ* NewCmdOnCreateW(
-				enum CmdOnCreateType aCmd, LPCWSTR asAction, DWORD anFlags, 
-				LPCWSTR asFile, LPCWSTR asParam, int nImageBits, int nImageSubsystem,
-				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr);
+//CESERVER_REQ* NewCmdOnCreateA(
+//				enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags, 
+//				LPCSTR asFile, LPCSTR asParam, int nImageBits, int nImageSubsystem,
+//				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr);
+//CESERVER_REQ* NewCmdOnCreateW(
+//				enum CmdOnCreateType aCmd, LPCWSTR asAction, DWORD anFlags, 
+//				LPCWSTR asFile, LPCWSTR asParam, int nImageBits, int nImageSubsystem,
+//				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
+//				wchar_t (&szBaseDir)[MAX_PATH+2]);
 
 //#define CES_NTVDM 0x10 -- common.hpp
 //DWORD dwActiveFlags = 0;

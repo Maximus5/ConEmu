@@ -1851,12 +1851,13 @@ void CeFullPanelInfo::Close()
 	DWORD dwMode = pvm_None;
 	HKEY hk = NULL;
 
-	if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL))
-	{
-		RegSetValueEx(hk, bLeftPanel ? L"LeftPanelView" : L"RightPanelView", 0,
-		              REG_DWORD, (LPBYTE)&dwMode, sizeof(dwMode));
-		RegCloseKey(hk);
-	}
+	SettingsSave(bLeftPanel ? L"LeftPanelView" : L"RightPanelView", &dwMode);
+	//if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL))
+	//{
+	//	RegSetValueEx(hk, bLeftPanel ? L"LeftPanelView" : L"RightPanelView", 0,
+	//	              REG_DWORD, (LPBYTE)&dwMode, sizeof(dwMode));
+	//	RegCloseKey(hk);
+	//}
 }
 
 // может вызываться из любой нити

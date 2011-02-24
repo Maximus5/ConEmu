@@ -58,7 +58,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern DWORD gnMainThreadId;
 extern int lastModifiedStateW;
 //extern bool gbHandleOneRedraw; //, gbHandleOneRedrawCh;
-extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX], gszRootKey[MAX_PATH*2];
+extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
+extern WCHAR gszRootKey[MAX_PATH*2];
 extern int maxTabCount, lastWindowCount;
 extern CESERVER_REQ* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 extern CESERVER_REQ* gpCmdRet;
@@ -108,6 +109,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 void SendTabs(int tabCount, BOOL abForceSend=FALSE);
 
 void InitHWND(HWND ahFarHwnd);
+void InitRootKey();
 
 #define ConEmu_SysID 0x43454D55 // 'CEMU'
 extern GUID guid_ConEmu;

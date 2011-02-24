@@ -177,13 +177,13 @@ struct ConProcess
 #define DBGMSG_LOG_SHELL_MAGIC 0xD73A34
 struct DebugLogShellActivity
 {
-	const wchar_t* pszFunction;
-	const wchar_t* pszAction;
-	const wchar_t* pszFile;
-	const wchar_t* pszParam;
+	wchar_t szFunction[32];
+	wchar_t* pszAction;
+	wchar_t* pszFile;
+	wchar_t* pszParam;
 	int     nImageSubsystem;
 	int     nImageBits;
-	DWORD   nFlags;
+	DWORD   nShellFlags, nCreateFlags, nStartFlags, nShowCmd;
 	BOOL    bDos;
 	DWORD   hStdIn, hStdOut, hStdErr;
 };

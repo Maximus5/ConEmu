@@ -55,7 +55,7 @@ int WINAPI _export GetMinFarVersion(void)
 
 struct PluginStartupInfo *InfoA=NULL;
 struct FarStandardFunctions *FSFA=NULL;
-
+static wchar_t* gszRootKeyA = NULL;
 
 
 #if defined(__GNUC__)
@@ -90,17 +90,30 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	*::InfoA = *aInfo;
 	*::FSFA = *aInfo->FSF;
 	::InfoA->FSF = ::FSFA;
+
+	DWORD nFarVer = 0;
+	if (InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARVERSION, &nFarVer))
+	{
+		if (HIBYTE(LOWORD(nFarVer)) == 1)
+		{
+			gFarVersion.dwBuild = HIWORD(nFarVer);
+			gFarVersion.dwVerMajor = (HIBYTE(LOWORD(nFarVer)));
+			gFarVersion.dwVerMinor = (LOBYTE(LOWORD(nFarVer)));
+		}
+		else
+		{
+			_ASSERTE(HIBYTE(HIWORD(nFarVer)) == 1);
+		}
+	}
+
 	int nLen = lstrlenA(InfoA->RootKey)+16;
-
-	if (gszRootKey) free(gszRootKey);
-
-	gszRootKey = (wchar_t*)calloc(nLen,2);
-	MultiByteToWideChar(CP_OEMCP,0,InfoA->RootKey,-1,gszRootKey,nLen);
-	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
-
+	if (gszRootKeyA) free(gszRootKeyA);
+	gszRootKeyA = (wchar_t*)calloc(nLen,2);
+	MultiByteToWideChar(CP_OEMCP,0,InfoA->RootKey,-1,gszRootKeyA,nLen);
+	WCHAR* pszSlash = gszRootKeyA+lstrlenW(gszRootKeyA)-1;
 	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
-
 	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
+
 	ReloadResourcesA();
 	StartPlugin(FALSE);
 }
@@ -148,6 +161,12 @@ void   WINAPI _export ExitFAR(void)
 	{
 		free(FSFA);
 		FSFA=NULL;
+	}
+
+	if (gszRootKeyA)
+	{
+		free(gszRootKeyA);
+		gszRootKeyA = NULL;
 	}
 }
 
@@ -517,3 +536,18 @@ bool CheckFarPanelsA()
 //
 //	return lbPanelsActive;
 //}
+
+BOOL SettingsLoadA(LPCWSTR pszName, DWORD* pValue)
+{
+	_ASSERTE(gszRootKeyA!=NULL);
+	return SettingsLoadReg(gszRootKeyA, pszName, pValue);
+}
+void SettingsSaveA(LPCWSTR pszName, DWORD* pValue)
+{
+	SettingsSaveReg(gszRootKeyA, pszName, pValue);
+}
+
+void SettingsLoadOtherA()
+{
+	SettingsLoadOther(gszRootKeyA);
+}

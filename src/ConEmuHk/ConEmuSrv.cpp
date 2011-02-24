@@ -175,8 +175,9 @@ int ServerInit()
 	SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	srv.osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	GetVersionEx(&srv.osv);
-	TODO("Проверить, а в висте не падает?");
 
+	// Смысла вроде не имеет, без ожидания "очистки" очереди винда "проглатывает мышиные события
+	// Межпроцессный семафор не помогает, оставил пока только в качестве заглушки
 	InitializeConsoleInputSemaphore();
 
 	if (srv.osv.dwMajorVersion == 6 && srv.osv.dwMinorVersion == 1)
@@ -3089,6 +3090,7 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam)
 						//SendConsoleEvent(&r, 1);
 						if (!WriteInputQueue(&r))
 						{
+							_ASSERTE(FALSE);
 							WARNING("Если буфер переполнен - ждать? Хотя если будем ждать здесь - может повиснуть GUI на записи в pipe...");
 						}
 					}
@@ -3734,7 +3736,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui)
 		if (!lbHelper)
 		{
 			nErrCode = GetLastError();
-			WARNING("Показать ошибку");
+			// Ошибки показывает вызывающая функция/процесс
 			iRc = -502;
 			
 			goto wrap;
@@ -3754,7 +3756,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui)
 				goto wrap;
 			}
 
-			WARNING("Показать ошибку");
+			// Ошибки показывает вызывающая функция/процесс
 		}
 		
 		// Уже все ветки должны были быть обработаны!

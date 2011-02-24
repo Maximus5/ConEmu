@@ -118,77 +118,107 @@ typedef struct _CONSOLE_SELECTION_INFO
 
 //#define CESIGNAL_C          L"ConEmuC_C_Signal.%u"
 //#define CESIGNAL_BREAK      L"ConEmuC_Break_Signal.%u"
-//#define CECMD_CONSOLEINFO   1
-#define CECMD_CONSOLEDATA   2
-//#define CECMD_SETSIZE       3
-#define CECMD_CMDSTARTSTOP  4 // CESERVER_REQ_STARTSTOP
-#define CECMD_GETGUIHWND    5
-//#define CECMD_RECREATE      6
-#define CECMD_TABSCHANGED   7
-#define CECMD_CMDSTARTED    8 // == CECMD_SETSIZE + восстановить содержимое консоли (запустился comspec)
-#define CECMD_CMDFINISHED   9 // == CECMD_SETSIZE + сохранить содержимое консоли (завершился comspec)
-#define CECMD_GETOUTPUTFILE 10 // Записать вывод последней консольной программы во временный файл и вернуть его имя
-#define CECMD_GETOUTPUT     11
-#define CECMD_LANGCHANGE    12
-#define CECMD_NEWCMD        13 // Запустить в этом экземпляре новую консоль с переданной командой (используется при SingleInstance)
-#define CECMD_TABSCMD       14 // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
-#define CECMD_RESOURCES     15 // Посылается плагином при инициализации (установка ресурсов)
-#define CECMD_GETNEWCONPARM 16 // Доп.аргументы для создания новой консоли (шрифт, размер,...)
-#define CECMD_SETSIZESYNC   17 // Синхронно, ждет (но недолго), пока FAR обработает изменение размера (то есть отрисуется)
-#define CECMD_ATTACH2GUI    18 // Выполнить подключение видимой (отключенной) консоли к GUI. Без аргументов
-#define CECMD_FARLOADED     19 // Посылается плагином в сервер
-//#define CECMD_SHOWCONSOLE   20 // В Win7 релизе нельзя скрывать окно консоли, запущенной в режиме администратора -- заменено на CECMD_POSTCONMSG & CECMD_SETWINDOWPOS
-#define CECMD_POSTCONMSG    21 // В Win7 релизе нельзя посылать сообщения окну консоли, запущенной в режиме администратора
-//#define CECMD_REQUESTCONSOLEINFO 22 // было CECMD_REQUESTFULLINFO
-#define CECMD_SETFOREGROUND 23
-#define CECMD_FLASHWINDOW   24
-//#define CECMD_SETCONSOLECP  25
-#define CECMD_SAVEALIASES   26
-#define CECMD_GETALIASES    27
-#define CECMD_SETSIZENOSYNC 28 // Почти CECMD_SETSIZE. Вызывается из плагина.
-#define CECMD_SETDONTCLOSE  29
-#define CECMD_REGPANELVIEW  30
-#define CECMD_ONACTIVATION  31 // Для установки флажка ConsoleInfo->bConsoleActive
-#define CECMD_SETWINDOWPOS  32 // CESERVER_REQ_SETWINDOWPOS.
-#define CECMD_SETWINDOWRGN  33 // CESERVER_REQ_SETWINDOWRGN.
-#define CECMD_SETBACKGROUND 34 // CESERVER_REQ_SETBACKGROUND
-#define CECMD_ACTIVATECON   35 // CESERVER_REQ_ACTIVATECONSOLE
-//#define CECMD_ONSERVERCLOSE 35 // Посылается из ConEmuC*.exe перед закрытием в режиме сервера
-#define CECMD_DETACHCON     36
-#define CECMD_GUIMACRO      38 // CESERVER_REQ_GUIMACRO. Найти в других консолях редактор/вьювер
-#define CECMD_ONCREATEPROC  39 // CESERVER_REQ_ONCREATEPROCESS
-#define CECMD_SRVSTARTSTOP  40 // {DWORD(1/101); DWORD(ghConWnd);}
+
+typedef DWORD CECMD;
+const CECMD
+//	CECMD_CONSOLEINFO    = 1,
+	CECMD_CONSOLEDATA    = 2,
+//	CECMD_SETSIZE        = 3,
+	CECMD_CMDSTARTSTOP   = 4, // CESERVER_REQ_STARTSTOP
+	CECMD_GETGUIHWND     = 5,
+//	CECMD_RECREATE       = 6,
+	CECMD_TABSCHANGED    = 7,
+	CECMD_CMDSTARTED     = 8, // == CECMD_SETSIZE + восстановить содержимое консоли (запустился comspec)
+	CECMD_CMDFINISHED    = 9, // == CECMD_SETSIZE + сохранить содержимое консоли (завершился comspec)
+	CECMD_GETOUTPUTFILE  = 10, // Записать вывод последней консольной программы во временный файл и вернуть его имя
+	CECMD_GETOUTPUT      = 11,
+	CECMD_LANGCHANGE     = 12,
+	CECMD_NEWCMD         = 13, // Запустить в этом экземпляре новую консоль с переданной командой (используется при SingleInstance)
+	CECMD_TABSCMD        = 14, // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
+	CECMD_RESOURCES      = 15, // Посылается плагином при инициализации (установка ресурсов)
+	CECMD_GETNEWCONPARM  = 16, // Доп.аргументы для создания новой консоли (шрифт, размер,...)
+	CECMD_SETSIZESYNC    = 17, // Синхронно, ждет (но недолго), пока FAR обработает изменение размера (то есть отрисуется)
+	CECMD_ATTACH2GUI     = 18, // Выполнить подключение видимой (отключенной) консоли к GUI. Без аргументов
+	CECMD_FARLOADED      = 19, // Посылается плагином в сервер
+//	CECMD_SHOWCONSOLE    = 20, // В Win7 релизе нельзя скрывать окно консоли, запущенной в режиме администратора -- заменено на CECMD_POSTCONMSG & CECMD_SETWINDOWPOS
+	CECMD_POSTCONMSG     = 21, // В Win7 релизе нельзя посылать сообщения окну консоли, запущенной в режиме администратора
+//	CECMD_REQUESTCONSOLEINFO  = 22, // было CECMD_REQUESTFULLINFO
+	CECMD_SETFOREGROUND  = 23,
+	CECMD_FLASHWINDOW    = 24,
+//	CECMD_SETCONSOLECP   = 25,
+	CECMD_SAVEALIASES    = 26,
+	CECMD_GETALIASES     = 27,
+	CECMD_SETSIZENOSYNC  = 28, // Почти CECMD_SETSIZE. Вызывается из плагина.
+	CECMD_SETDONTCLOSE   = 29,
+	CECMD_REGPANELVIEW   = 30,
+	CECMD_ONACTIVATION   = 31, // Для установки флажка ConsoleInfo->bConsoleActive
+	CECMD_SETWINDOWPOS   = 32, // CESERVER_REQ_SETWINDOWPOS.
+	CECMD_SETWINDOWRGN   = 33, // CESERVER_REQ_SETWINDOWRGN.
+	CECMD_SETBACKGROUND  = 34, // CESERVER_REQ_SETBACKGROUND
+	CECMD_ACTIVATECON    = 35, // CESERVER_REQ_ACTIVATECONSOLE
+//	CECMD_ONSERVERCLOSE  = 35, // Посылается из ConEmuC*.exe перед закрытием в режиме сервера
+	CECMD_DETACHCON      = 36,
+	CECMD_GUIMACRO       = 38, // CESERVER_REQ_GUIMACRO. Найти в других консолях редактор/вьювер
+	CECMD_ONCREATEPROC   = 39, // CESERVER_REQ_ONCREATEPROCESS
+	CECMD_SRVSTARTSTOP   = 40, // {DWORD(1/101); DWORD(ghConWnd);}
+/** Команды FAR плагина **/
+	CMD_FIRST_FAR_CMD    = 200,
+	CMD_DRAGFROM         = 200,
+	CMD_DRAGTO           = 201,
+	CMD_REQTABS          = 202,
+	CMD_SETWINDOW        = 203,
+	CMD_POSTMACRO        = 204, // Если первый символ макроса '@' и после него НЕ пробел - макрос выполняется в DisabledOutput
+//	CMD_DEFFONT          = 205,
+	CMD_LANGCHANGE       = 206,
+	CMD_FARSETCHANGED    = 207, // Изменились настройки для фара (isFARuseASCIIsort, isShellNoZoneCheck, ...)
+//	CMD_SETSIZE          = 208,
+	CMD_EMENU            = 209,
+	CMD_LEFTCLKSYNC      = 210,
+	CMD_REDRAWFAR        = 211,
+	CMD_FARPOST          = 212,
+	CMD_CHKRESOURCES     = 213,
+//	CMD_QUITFAR          = 214, // Дернуть завершение консоли (фара?)
+	CMD_CLOSEQSEARCH     = 215,
+//	CMD_LOG_SHELL        = 216,
+	CMD_SET_CON_FONT     = 217, // CESERVER_REQ_SETFONT
+	CMD_GUICHANGED       = 218, // CESERVER_REQ_GUICHANGED. изменились настройки GUI (шрифт), размер окна ConEmu, или еще что-то
+	CMD_ACTIVEWNDTYPE    = 219, // ThreadSafe - получить информацию об активном окне (его типе) в Far
+	CMD_LAST_FAR_CMD     = CMD_ACTIVEWNDTYPE;
+
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    58
+#define CESERVER_REQ_VER    60
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
 
 
-// Команды FAR плагина
-#define CMD_DRAGFROM      0
-#define CMD_DRAGTO        1
-#define CMD_REQTABS       2
-#define CMD_SETWINDOW     3
-#define CMD_POSTMACRO     4 // Если первый символ макроса '@' и после него НЕ пробел - макрос выполняется в DisabledOutput
-//#define CMD_DEFFONT     5
-#define CMD_LANGCHANGE    6
-#define CMD_FARSETCHANGED 7 // Изменились настройки для фара (isFARuseASCIIsort, isShellNoZoneCheck, ...)
-//#define CMD_SETSIZE     8
-#define CMD_EMENU         9
-#define CMD_LEFTCLKSYNC   10
-#define CMD_REDRAWFAR     11
-#define CMD_FARPOST       12
-#define CMD_CHKRESOURCES  13
-//#define CMD_QUITFAR     14 // Дернуть завершение консоли (фара?)
-#define CMD_CLOSEQSEARCH  15
-//#define CMD_LOG_SHELL     16
-#define CMD_SET_CON_FONT  17 // CESERVER_REQ_SETFONT
-#define CMD_GUICHANGED    18 // CESERVER_REQ_GUICHANGED. изменились настройки GUI (шрифт), размер окна ConEmu, или еще что-то
-// +2
-#define MAXCMDCOUNT      20
-#define CMD_EXIT         MAXCMDCOUNT-1
+//// Команды FAR плагина
+//typedef DWORD FARCMD;
+//const FARCMD
+//	CMD_DRAGFROM       = 0,
+//	CMD_DRAGTO         = 1,
+//	CMD_REQTABS        = 2,
+//	CMD_SETWINDOW      = 3,
+//	CMD_POSTMACRO      = 4, // Если первый символ макроса '@' и после него НЕ пробел - макрос выполняется в DisabledOutput
+////	CMD_DEFFONT        = 5,
+//	CMD_LANGCHANGE     = 6,
+//	CMD_FARSETCHANGED  = 7, // Изменились настройки для фара (isFARuseASCIIsort, isShellNoZoneCheck, ...)
+////	CMD_SETSIZE        = 8,
+//	CMD_EMENU          = 9,
+//	CMD_LEFTCLKSYNC    = 10,
+//	CMD_REDRAWFAR      = 11,
+//	CMD_FARPOST        = 12,
+//	CMD_CHKRESOURCES   = 13,
+////	CMD_QUITFAR        = 14, // Дернуть завершение консоли (фара?)
+//	CMD_CLOSEQSEARCH   = 15,
+////	CMD_LOG_SHELL      = 16,
+//	CMD_SET_CON_FONT   = 17, // CESERVER_REQ_SETFONT
+//	CMD_GUICHANGED     = 18, // CESERVER_REQ_GUICHANGED. изменились настройки GUI (шрифт), размер окна ConEmu, или еще что-то
+//	CMD_ACTIVEWNDTYPE  = 19; // ThreadSafe - получить информацию об активном окне (его типе) в Far
+//// +2
+//	//MAXCMDCOUNT        = 21;
+//    //CMD_EXIT           = MAXCMDCOUNT-1;
 
 
 
@@ -211,6 +241,24 @@ struct HWND2
 	struct HWND2& operator=(HWND h)
 	{
 		u = (DWORD)h;
+		return *this;
+	};
+};
+
+struct HKEY2
+{
+	DWORD u;
+	operator HKEY() const
+	{
+		return (HKEY)(DWORD_PTR)(LONG)u;
+	};
+	operator DWORD() const
+	{
+		return u;
+	};
+	struct HKEY2& operator=(HKEY h)
+	{
+		u = (DWORD)(LONG)(LONG_PTR)h;
 		return *this;
 	};
 };
@@ -590,7 +638,7 @@ struct ConEmuGuiMapping
 	// Перехват реестра
 	BOOL    bHookRegistry;
 	wchar_t sHiveFileName[MAX_PATH];
-	HKEY    hMountRoot;    // NULL для Vista+, для Win2k&XP здесь хранится корневой ключ (HKEY_USERS), в который загружен hive
+	HKEY2   hMountRoot;    // NULL для Vista+, для Win2k&XP здесь хранится корневой ключ (HKEY_USERS), в который загружен hive
 	wchar_t sMountKey[64]; // Для Win2k&XP здесь хранится имя ключа, в который загружен hive
 	
 	// DosBox
@@ -672,7 +720,7 @@ struct ForwardedFileInfo
 struct CESERVER_REQ_HDR
 {
 	DWORD   cbSize;
-	DWORD   nCmd;
+	CECMD   nCmd;
 	DWORD   nVersion;
 	DWORD   nSrcThreadId;
 	DWORD   nSrcPID;
@@ -804,7 +852,7 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	// Перехват реестра
 	BOOL    bHookRegistry;
 	wchar_t sHiveFileName[MAX_PATH];
-	HKEY    hMountRoot;    // NULL для Vista+, для Win2k&XP здесь хранится корневой ключ (HKEY_USERS), в который загружен hive
+	HKEY2   hMountRoot;    // NULL для Vista+, для Win2k&XP здесь хранится корневой ключ (HKEY_USERS), в который загружен hive
 	wchar_t sMountKey[64]; // Для Win2k&XP здесь хранится имя ключа, в который загружен hive
 
 	//// Логирование CreateProcess, ShellExecute, и прочих запускающих функций
@@ -953,16 +1001,15 @@ struct CESERVER_REQ_ONCREATEPROCESS
 	wchar_t sFunction[32];
 	int     nImageSubsystem;
 	int     nImageBits;
-	DWORD   nFlags;
+	DWORD   nShellFlags; // Флаги ShellExecuteEx
+	DWORD   nCreateFlags, nStartFlags; // Флаги CreateProcess
+	DWORD   nShowCmd;
 	int     nActionLen;
 	int     nFileLen;
 	int     nParamLen;
 	unsigned __int64 hStdIn, hStdOut, hStdErr;
-	//union
-	//{
-		wchar_t wsValue[1];
-	//	char sValue[1];
-	//};
+	// Variable length tail
+	wchar_t wsValue[1];
 };
 struct CESERVER_REQ_ONCREATEPROCESSRET
 {
@@ -971,10 +1018,10 @@ struct CESERVER_REQ_ONCREATEPROCESSRET
 	BOOL  bForceBufferHeight;
 	BOOL  bAllowDosbox;
 	//int   nFileLen;
-	int   nBaseLen;
+	//int   nBaseLen;
 	//union
 	//{
-		wchar_t wsValue[1];
+	//	wchar_t wsValue[1];
 	//	char sValue[1];
 	//};
 };
@@ -1068,8 +1115,8 @@ struct CESERVER_REQ_SETBACKGROUND
 };
 
 // ConEmu respond for CESERVER_REQ_SETBACKGROUND
-enum SetBackgroundResult
-{
+typedef int SetBackgroundResult;
+const SetBackgroundResult
 	esbr_OK = 0,               // All OK
 	esbr_InvalidArg = 1,       // Invalid *RegisterBackgroundArg
 	esbr_PluginForbidden = 2,  // "Allow plugins" unchecked in ConEmu settings ("Main" page)
@@ -1077,10 +1124,11 @@ enum SetBackgroundResult
 	esbr_Unexpected = 4,       // Unexpected error in ConEmu
 	esbr_InvalidArgSize = 5,   // Invalid RegisterBackgroundArg.cbSize
 	esbr_InvalidArgProc = 6,   // Invalid RegisterBackgroundArg.PaintConEmuBackground
-};
+	esbr_LastErrorNo = esbr_InvalidArgProc;
+
 struct CESERVER_REQ_SETBACKGROUNDRET
 {
-	int  nResult; // enum SetBackgroundResult
+	SetBackgroundResult  nResult;
 };
 
 // CECMD_ACTIVATECON.

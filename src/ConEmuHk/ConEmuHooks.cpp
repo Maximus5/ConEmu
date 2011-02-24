@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "..\common\SetHook.h"
 #include "..\common\execute.h"
 #include "ConEmuC.h"
+#include "ShellProcessor.h"
 
 //110131 попробуем просто добвавить ее в ExcludedModules
 //#include <WinInet.h>
@@ -66,7 +67,7 @@ extern HMODULE ghHookOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 extern DWORD   gnHookMainThreadId;
 extern BOOL    gbHooksTemporaryDisabled;
 //__declspec( thread )
-static BOOL    gbInShellExecuteEx = FALSE;
+//static BOOL    gbInShellExecuteEx = FALSE;
 
 #ifdef USE_INPUT_SEMAPHORE
 HANDLE ghConInSemaphore = NULL;
@@ -104,13 +105,13 @@ static HMODULE ghKernel32 = NULL, ghUser32 = NULL, ghShell32 = NULL;
 
 static int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
 //
-static BOOL WINAPI OnHttpSendRequestA(LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
-static BOOL WINAPI OnHttpSendRequestW(LPVOID hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
+//static BOOL WINAPI OnHttpSendRequestA(LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
+//static BOOL WINAPI OnHttpSendRequestW(LPVOID hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
 
 static HookItem HooksFarOnly[] =
 {
 //	{OnlstrcmpiA,      "lstrcmpiA",      kernel32, 0},
-	{(void*)OnCompareStringW, "CompareStringW", kernel32, 0},
+	{(void*)OnCompareStringW, "CompareStringW", kernel32},
 
 	/* ************************ */
 	//110131 попробуем просто добвавить ее в ExcludedModules
@@ -122,7 +123,7 @@ static HookItem HooksFarOnly[] =
 };
 
 // Service functions
-typedef DWORD (WINAPI* GetProcessId_t)(HANDLE Process);
+//typedef DWORD (WINAPI* GetProcessId_t)(HANDLE Process);
 GetProcessId_t gfGetProcessId = NULL;
 
 
@@ -145,12 +146,18 @@ static BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 static BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 static BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 static BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+//static BOOL WINAPI OnPeekConsoleInputAx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+//static BOOL WINAPI OnPeekConsoleInputWx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+//static BOOL WINAPI OnReadConsoleInputAx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+//static BOOL WINAPI OnReadConsoleInputWx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 static HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
 static BOOL WINAPI OnAllocConsole(void);
 static BOOL WINAPI OnFreeConsole(void);
 //static HWND WINAPI OnGetConsoleWindow(void); // в фаре дофига и больше вызовов этой функции
 static BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 static BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+//static BOOL WINAPI OnWriteConsoleOutputAx(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+//static BOOL WINAPI OnWriteConsoleOutputWx(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 static BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect);
 static BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint);
 static BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
@@ -167,16 +174,23 @@ static HookItem HooksCommon[] =
 {
 	/* ***** MOST CALLED ***** */
 //	{(void*)OnGetConsoleWindow,     "GetConsoleWindow",     kernel32}, -- пока смысла нет. инжекты еще не на старте ставятся
-	{(void*)OnWriteConsoleOutputW,  "WriteConsoleOutputW",  kernel32},
-	{(void*)OnWriteConsoleOutputA,  "WriteConsoleOutputA",  kernel32},
+	//{(void*)OnWriteConsoleOutputWx,	"WriteConsoleOutputW",  kernel32},
+	//{(void*)OnWriteConsoleOutputAx,	"WriteConsoleOutputA",  kernel32},
+	{(void*)OnWriteConsoleOutputW,	"WriteConsoleOutputW",  kernel32},
+	{(void*)OnWriteConsoleOutputA,	"WriteConsoleOutputA",  kernel32},
 	/* ************************ */
-	{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
-	{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
-	/* ************************ */
+	//{(void*)OnPeekConsoleInputWx,	"PeekConsoleInputW",	kernel32},
+	//{(void*)OnPeekConsoleInputAx,	"PeekConsoleInputA",	kernel32},
+	//{(void*)OnReadConsoleInputWx,	"ReadConsoleInputW",	kernel32},
+	//{(void*)OnReadConsoleInputAx,	"ReadConsoleInputA",	kernel32},
 	{(void*)OnPeekConsoleInputW,	"PeekConsoleInputW",	kernel32},
 	{(void*)OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32},
 	{(void*)OnReadConsoleInputW,	"ReadConsoleInputW",	kernel32},
 	{(void*)OnReadConsoleInputA,	"ReadConsoleInputA",	kernel32},
+	/* ************************ */
+	{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
+	{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
+	/* ************************ */
 	{(void*)OnGetConsoleAliasesW,	"GetConsoleAliasesW",	kernel32},
 	{(void*)OnAllocConsole,			"AllocConsole",			kernel32},
 	{(void*)OnFreeConsole,			"FreeConsole",			kernel32},
@@ -273,7 +287,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	ghConWnd = GetConsoleWindow();
 	ghConEmuWndDC = GetConEmuHWND(FALSE);
 	ghConEmuWnd = ghConEmuWndDC ? GetParent(ghConEmuWndDC) : NULL;
-	gbInShellExecuteEx = FALSE;
+	//gbInShellExecuteEx = FALSE;
 
 	WARNING("Получить из мэппинга gdwServerPID");
 
@@ -323,16 +337,16 @@ void ShutdownHooks()
 // Forward
 static void GuiSetForeground(HWND hWnd);
 static void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT uCount, DWORD dwTimeout);
-static BOOL PrepareExecuteParmsA(enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags, 
-				LPCSTR asFile, LPCSTR asParam,
-				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
-				LPSTR* psFile, LPSTR* psParam, DWORD& nImageSubsystem, DWORD& nImageBits);
-static BOOL PrepareExecuteParmsW(enum CmdOnCreateType aCmd, LPCWSTR asAction, DWORD anFlags, 
-				LPCWSTR asFile, LPCWSTR asParam,
-				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
-				LPWSTR* psFile, LPWSTR* psParam, DWORD& nImageSubsystem, DWORD& nImageBits);
-static wchar_t* str2wcs(const char* psz, UINT anCP);
-static wchar_t* wcs2str(const char* psz, UINT anCP);
+//static BOOL PrepareExecuteParmsA(enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags, 
+//				LPCSTR asFile, LPCSTR asParam,
+//				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
+//				LPSTR* psFile, LPSTR* psParam, DWORD& nImageSubsystem, DWORD& nImageBits);
+//static BOOL PrepareExecuteParmsW(enum CmdOnCreateType aCmd, LPCWSTR asAction, DWORD anFlags, 
+//				LPCWSTR asFile, LPCWSTR asParam,
+//				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
+//				LPWSTR* psFile, LPWSTR* psParam, DWORD& nImageSubsystem, DWORD& nImageBits);
+//static wchar_t* str2wcs(const char* psz, UINT anCP);
+//static wchar_t* wcs2str(const char* psz, UINT anCP);
 
 typedef BOOL (WINAPI* OnCreateProcessA_t)(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 static BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
@@ -340,10 +354,10 @@ static BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLi
 	ORIGINALFAST(CreateProcessA);
 	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
-	LPSTR pszTempApp = NULL, pszTempCmd = NULL;
-	BOOL lbSuspended = (dwCreationFlags & CREATE_SUSPENDED) == CREATE_SUSPENDED;
-	BOOL lbNeedInjects = TRUE;
+	//LPSTR pszTempApp = NULL, pszTempCmd = NULL;
+	//BOOL lbSuspended = (dwCreationFlags & CREATE_SUSPENDED) == CREATE_SUSPENDED;
 	DWORD dwErr = 0;
+	
 
 	if (ph && ph->PreCallBack)
 	{
@@ -354,112 +368,117 @@ static BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLi
 			return lbRc;
 	}
 
-	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить
-	//            левый хэндл (hStdOutput = 0x00010001)
-	//            и недокументированный флаг 0x400 в lpStartupInfo->dwFlags
-	if (gbInShellExecuteEx && lpStartupInfo->dwFlags == 0x401)
-	{
-		OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
+	CShellProc sp;
+	sp.OnCreateProcessA(&lpApplicationName, (LPCSTR*)&lpCommandLine, &dwCreationFlags, lpStartupInfo);
 
-		if (GetVersionEx(&osv) && osv.dwMajorVersion == 5 && osv.dwMinorVersion == 1)
-		{
-			if (lpStartupInfo->hStdOutput == (HANDLE)0x00010001 && !lpStartupInfo->hStdError)
-			{
-				lpStartupInfo->hStdOutput = NULL;
-				lpStartupInfo->dwFlags &= ~0x400;
-			}
-		}
-	}
+	//// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить
+	////            левый хэндл (hStdOutput = 0x00010001)
+	////            и недокументированный флаг 0x400 в lpStartupInfo->dwFlags
+	//if (gbInShellExecuteEx && lpStartupInfo->dwFlags == 0x401)
+	//{
+	//	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
 
-	// Under ConEmu only!
-	// Тупо PrepareExecuteParmsX нельзя, его уже мог обработать OnShellExecuteXXX, поэтому !gbInShellExecuteEx
-	BOOL lbParamsChanged = FALSE;
-	DWORD nImageSubsystem = 0, nImageBits = 0, nFileAttrs = (DWORD)-1;
-	if (ghConEmuWndDC)
-	{
-		if (!gbInShellExecuteEx)
-		{
-			if (PrepareExecuteParmsA(eCreateProcess, "", dwCreationFlags, lpApplicationName, lpCommandLine,
-					lpStartupInfo->hStdInput, lpStartupInfo->hStdOutput, lpStartupInfo->hStdError,
-					&pszTempApp, &pszTempCmd, nImageSubsystem, nImageBits))
-			{
-				lpApplicationName = pszTempApp;
-				lpCommandLine = pszTempCmd;
-				lbParamsChanged = TRUE;
-			}
-			lbNeedInjects = (nImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_GUI) && !lbParamsChanged;
-		}
-		else
-		{
-			CESERVER_REQ* pIn = NewCmdOnCreateA(eCreateProcess, "", 0, lpApplicationName, lpCommandLine, 
-					0, 0, lpStartupInfo->hStdInput, lpStartupInfo->hStdOutput, lpStartupInfo->hStdError);
-			if (pIn)
-			{
-				HWND hConWnd = GetConsoleWindow();
-				CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
-				ExecuteFreeResult(pIn);
-				if (pOut) ExecuteFreeResult(pOut);
-			}
-		
-			wchar_t szExe[MAX_PATH+1]; szExe[0] = 0;
-			UINT nCP = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
-			if (lpApplicationName)
-			{
-				//_strcpyn_c(szExe, countof(szExe), lpApplicationName, countof(szExe));
-				if (MultiByteToWideChar(nCP, 0, lpApplicationName, -1, szExe, countof(szExe)) <= 0)
-					szExe[0] = 0;
-				else
-					szExe[MAX_PATH] = 0;
-			}
-			else
-			{
-				//LPCSTR pszTemp = lpCommandLine;
-				//if (NextArg(&pszTemp, szExe) != 0)
-				//	szExe[0] = 0;
+	//	if (GetVersionEx(&osv) && osv.dwMajorVersion == 5 && osv.dwMinorVersion == 1)
+	//	{
+	//		if (lpStartupInfo->hStdOutput == (HANDLE)0x00010001 && !lpStartupInfo->hStdError)
+	//		{
+	//			lpStartupInfo->hStdOutput = NULL;
+	//			lpStartupInfo->dwFlags &= ~0x400;
+	//		}
+	//	}
+	//}
 
-				LPWSTR pwszCmdLine = str2wcs(lpCommandLine, nCP);
-				BOOL lbNeedCutStartEndQuot = FALSE;
-				IsNeedCmd(pwszCmdLine, &lbNeedCutStartEndQuot, szExe);
-				free(pwszCmdLine);
-			}
-			if (szExe[0])
-				GetImageSubsystem(szExe, nImageSubsystem, nImageBits, nFileAttrs);
-			lbNeedInjects = (nImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_GUI);
+	//// Under ConEmu only!
+	//// Тупо PrepareExecuteParmsX нельзя, его уже мог обработать OnShellExecuteXXX, поэтому !gbInShellExecuteEx
+	//BOOL lbParamsChanged = FALSE;
+	//DWORD nImageSubsystem = 0, nImageBits = 0, nFileAttrs = (DWORD)-1;
+	//if (ghConEmuWndDC)
+	//{
+	//	if (!gbInShellExecuteEx)
+	//	{
+	//		if (PrepareExecuteParmsA(eCreateProcess, "", dwCreationFlags, lpApplicationName, lpCommandLine,
+	//				lpStartupInfo->hStdInput, lpStartupInfo->hStdOutput, lpStartupInfo->hStdError,
+	//				&pszTempApp, &pszTempCmd, nImageSubsystem, nImageBits))
+	//		{
+	//			lpApplicationName = pszTempApp;
+	//			lpCommandLine = pszTempCmd;
+	//			lbParamsChanged = TRUE;
+	//		}
+	//		lbNeedInjects = (nImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_GUI) && !lbParamsChanged;
+	//	}
+	//	else
+	//	{
+	//		CESERVER_REQ* pIn = NewCmdOnCreateA(eCreateProcess, "", 0, lpApplicationName, lpCommandLine, 
+	//				0, 0, lpStartupInfo->hStdInput, lpStartupInfo->hStdOutput, lpStartupInfo->hStdError);
+	//		if (pIn)
+	//		{
+	//			HWND hConWnd = GetConsoleWindow();
+	//			CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
+	//			ExecuteFreeResult(pIn);
+	//			if (pOut) ExecuteFreeResult(pOut);
+	//		}
+	//	
+	//		wchar_t szExe[MAX_PATH+1]; szExe[0] = 0;
+	//		UINT nCP = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
+	//		if (lpApplicationName)
+	//		{
+	//			//_strcpyn_c(szExe, countof(szExe), lpApplicationName, countof(szExe));
+	//			if (MultiByteToWideChar(nCP, 0, lpApplicationName, -1, szExe, countof(szExe)) <= 0)
+	//				szExe[0] = 0;
+	//			else
+	//				szExe[MAX_PATH] = 0;
+	//		}
+	//		else
+	//		{
+	//			//LPCSTR pszTemp = lpCommandLine;
+	//			//if (NextArg(&pszTemp, szExe) != 0)
+	//			//	szExe[0] = 0;
 
-			LPCWSTR pszName = PointToName(szExe);
-			if (pszName && lbNeedInjects)
-			{
-				if (lstrcmpi(pszName, L"ConEmuC.exe") == 0 || lstrcmpi(pszName, L"ConEmuC64.exe") == 0)
-					lbParamsChanged = TRUE;
-			}
-		}
+	//			LPWSTR pwszCmdLine = str2wcs(lpCommandLine, nCP);
+	//			BOOL lbNeedCutStartEndQuot = FALSE;
+	//			IsNeedCmd(pwszCmdLine, &lbNeedCutStartEndQuot, szExe);
+	//			free(pwszCmdLine);
+	//		}
+	//		if (szExe[0])
+	//			GetImageSubsystem(szExe, nImageSubsystem, nImageBits, nFileAttrs);
+	//		lbNeedInjects = (nImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_GUI);
 
-		if (!lbSuspended && !lbParamsChanged && lbNeedInjects)
-			dwCreationFlags |= CREATE_SUSPENDED;
-	}
+	//		LPCWSTR pszName = PointToName(szExe);
+	//		if (pszName && lbNeedInjects)
+	//		{
+	//			if (lstrcmpi(pszName, L"ConEmuC.exe") == 0 || lstrcmpi(pszName, L"ConEmuC64.exe") == 0)
+	//				lbParamsChanged = TRUE;
+	//		}
+	//	}
+
+	//	if (!lbSuspended && !lbParamsChanged && lbNeedInjects)
+	//		dwCreationFlags |= CREATE_SUSPENDED;
+	//}
 
 	lbRc = F(CreateProcessA)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 	if (!lbRc) dwErr = GetLastError();
 
 	// Если lbParamsChanged == TRUE - об инжектах позаботится ConEmuC.exe
-	if (lbRc && ghConEmuWndDC && !lbParamsChanged && lbNeedInjects)
-	{
-		int iHookRc = InjectHooks(*lpProcessInformation, FALSE);
+	sp.OnCreateProcessFinished(lbRc, lpProcessInformation);
 
-		if (iHookRc != 0)
-		{
-			DWORD nErrCode = GetLastError();
-			_ASSERTE(iHookRc == 0);
-			wchar_t szDbgMsg[255], szTitle[128];
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.W, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), lpProcessInformation->dwProcessId, iHookRc, nErrCode);
-			MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-		}
+	//if (lbRc && ghConEmuWndDC && !lbParamsChanged && lbNeedInjects)
+	//{
+	//	int iHookRc = InjectHooks(*lpProcessInformation, FALSE);
 
-		// Отпустить процесс
-		if (!lbSuspended)
-			ResumeThread(lpProcessInformation->hThread);
-	}
+	//	if (iHookRc != 0)
+	//	{
+	//		DWORD nErrCode = GetLastError();
+	//		_ASSERTE(iHookRc == 0);
+	//		wchar_t szDbgMsg[255], szTitle[128];
+	//		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+	//		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.W, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), lpProcessInformation->dwProcessId, iHookRc, nErrCode);
+	//		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	//	}
+
+	//	// Отпустить процесс
+	//	if (!lbSuspended)
+	//		ResumeThread(lpProcessInformation->hThread);
+	//}
 
 	if (ph && ph->PostCallBack)
 	{
@@ -467,10 +486,10 @@ static BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLi
 		ph->PostCallBack(&args);
 	}
 	
-	if (pszTempApp)
-		free(pszTempApp);
-	if (pszTempCmd)
-		free(pszTempCmd);
+	//if (pszTempApp)
+	//	free(pszTempApp);
+	//if (pszTempCmd)
+	//	free(pszTempCmd);
 
 	return lbRc;
 }
@@ -480,9 +499,9 @@ static BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandL
 	ORIGINALFAST(CreateProcessW);
 	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
-	LPWSTR pszTempApp = NULL, pszTempCmd = NULL;
-	BOOL lbSuspended = (dwCreationFlags & CREATE_SUSPENDED) == CREATE_SUSPENDED;
-	BOOL lbNeedInjects = TRUE;
+	//LPWSTR pszTempApp = NULL, pszTempCmd = NULL;
+	//BOOL lbSuspended = (dwCreationFlags & CREATE_SUSPENDED) == CREATE_SUSPENDED;
+	//BOOL lbNeedInjects = TRUE;
 	DWORD dwErr = 0;
 
 	if (ph && ph->PreCallBack)
@@ -494,107 +513,113 @@ static BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandL
 			return lbRc;
 	}
 
-	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить
-	//            левый хэндл (hStdOutput = 0x00010001)
-	//            и недокументированный флаг 0x400 в lpStartupInfo->dwFlags
-	if (gbInShellExecuteEx && lpStartupInfo->dwFlags == 0x401)
-	{
-		OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
+	CShellProc sp;
+	sp.OnCreateProcessW(&lpApplicationName, (LPCWSTR*)&lpCommandLine, &dwCreationFlags, lpStartupInfo);
 
-		if (GetVersionEx(&osv))
-		{
-			if (osv.dwMajorVersion == 5 && (osv.dwMinorVersion == 1/*WinXP*/ || osv.dwMinorVersion == 2/*Win2k3*/))
-			{
-				if (lpStartupInfo->hStdOutput == (HANDLE)0x00010001 && !lpStartupInfo->hStdError)
-				{
-					lpStartupInfo->hStdOutput = NULL;
-					lpStartupInfo->dwFlags &= ~0x400;
-				}
-			}
-		}
-	}
+	//// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить
+	////            левый хэндл (hStdOutput = 0x00010001)
+	////            и недокументированный флаг 0x400 в lpStartupInfo->dwFlags
+	//if (gbInShellExecuteEx && lpStartupInfo->dwFlags == 0x401)
+	//{
+	//	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
 
-	// Under ConEmu only!
-	// Тупо PrepareExecuteParmsX нельзя, его уже мог обработать OnShellExecuteXXX, поэтому !gbInShellExecuteEx
-	BOOL lbParamsChanged = FALSE;
-	DWORD nImageSubsystem = 0, nImageBits = 0, nFileAttrs = (DWORD)-1;
-	if (ghConEmuWndDC)
-	{
-		if (!gbInShellExecuteEx)
-		{
-			if (PrepareExecuteParmsW(eCreateProcess, L"", dwCreationFlags, lpApplicationName, lpCommandLine, 
-					lpStartupInfo->hStdInput, lpStartupInfo->hStdOutput, lpStartupInfo->hStdError,
-					&pszTempApp, &pszTempCmd, nImageSubsystem, nImageBits))
-			{
-				lpApplicationName = pszTempApp;
-				lpCommandLine = pszTempCmd;
-				lbParamsChanged = TRUE;
-			}
-			lbNeedInjects = (nImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_GUI) && !lbParamsChanged;
-		}
-		else
-		{
-			CESERVER_REQ* pIn = NewCmdOnCreateW(eCreateProcess, L"", 0, lpApplicationName, lpCommandLine, 
-					0, 0, lpStartupInfo->hStdInput, lpStartupInfo->hStdOutput, lpStartupInfo->hStdError);
-			if (pIn)
-			{
-				HWND hConWnd = GetConsoleWindow();
-				CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
-				ExecuteFreeResult(pIn);
-				if (pOut) ExecuteFreeResult(pOut);
-			}
-		
-			wchar_t szExe[MAX_PATH+1];
-			if (lpApplicationName)
-			{
-				_wcscpyn_c(szExe, countof(szExe), lpApplicationName, countof(szExe));
-			}
-			else
-			{
-				//LPCWSTR pszTemp = lpCommandLine;
-				//if (NextArg(&pszTemp, szExe) != 0)
-				szExe[0] = 0;
-				BOOL lbNeedCutStartEndQuot = FALSE;
-				IsNeedCmd(lpCommandLine, &lbNeedCutStartEndQuot, szExe);
-			}
-			if (szExe[0])
-				GetImageSubsystem(szExe, nImageSubsystem, nImageBits, nFileAttrs);
-			lbNeedInjects = (nImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_GUI);
+	//	if (GetVersionEx(&osv))
+	//	{
+	//		if (osv.dwMajorVersion == 5 && (osv.dwMinorVersion == 1/*WinXP*/ || osv.dwMinorVersion == 2/*Win2k3*/))
+	//		{
+	//			if (lpStartupInfo->hStdOutput == (HANDLE)0x00010001 && !lpStartupInfo->hStdError)
+	//			{
+	//				lpStartupInfo->hStdOutput = NULL;
+	//				lpStartupInfo->dwFlags &= ~0x400;
+	//			}
+	//		}
+	//	}
+	//}
 
-			LPCWSTR pszName = PointToName(szExe);
-			if (pszName && lbNeedInjects)
-			{
-				if (lstrcmpiW(pszName, L"ConEmuC.exe") == 0 || lstrcmpiW(pszName, L"ConEmuC64.exe") == 0)
-					lbParamsChanged = TRUE;
-			}
-		}
+	//// Under ConEmu only!
+	//// Тупо PrepareExecuteParmsX нельзя, его уже мог обработать OnShellExecuteXXX, поэтому !gbInShellExecuteEx
+	//BOOL lbParamsChanged = FALSE;
+	//DWORD nImageSubsystem = 0, nImageBits = 0, nFileAttrs = (DWORD)-1;
+	//if (ghConEmuWndDC)
+	//{
+	//	if (!gbInShellExecuteEx)
+	//	{
+	//		if (PrepareExecuteParmsW(eCreateProcess, L"", dwCreationFlags, lpApplicationName, lpCommandLine, 
+	//				lpStartupInfo->hStdInput, lpStartupInfo->hStdOutput, lpStartupInfo->hStdError,
+	//				&pszTempApp, &pszTempCmd, nImageSubsystem, nImageBits))
+	//		{
+	//			lpApplicationName = pszTempApp;
+	//			lpCommandLine = pszTempCmd;
+	//			lbParamsChanged = TRUE;
+	//		}
+	//		lbNeedInjects = (nImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_GUI) && !lbParamsChanged;
+	//	}
+	//	else
+	//	{
+	//		wchar_t szBaseDir[MAX_PATH+2];
+	//		CESERVER_REQ* pIn = NewCmdOnCreateW(eCreateProcess, L"", 0, lpApplicationName, lpCommandLine, 
+	//				0, 0, lpStartupInfo->hStdInput, lpStartupInfo->hStdOutput, lpStartupInfo->hStdError, szBaseDir);
+	//		if (pIn)
+	//		{
+	//			HWND hConWnd = GetConsoleWindow();
+	//			CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
+	//			ExecuteFreeResult(pIn);
+	//			if (pOut) ExecuteFreeResult(pOut);
+	//		}
+	//	
+	//		wchar_t szExe[MAX_PATH+1];
+	//		if (lpApplicationName)
+	//		{
+	//			_wcscpyn_c(szExe, countof(szExe), lpApplicationName, countof(szExe));
+	//		}
+	//		else
+	//		{
+	//			//LPCWSTR pszTemp = lpCommandLine;
+	//			//if (NextArg(&pszTemp, szExe) != 0)
+	//			szExe[0] = 0;
+	//			BOOL lbNeedCutStartEndQuot = FALSE;
+	//			IsNeedCmd(lpCommandLine, &lbNeedCutStartEndQuot, szExe);
+	//		}
+	//		if (szExe[0])
+	//			GetImageSubsystem(szExe, nImageSubsystem, nImageBits, nFileAttrs);
+	//		lbNeedInjects = (nImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_GUI);
 
-		if (!lbSuspended && !lbParamsChanged && lbNeedInjects)
-			dwCreationFlags |= CREATE_SUSPENDED;
-	}
+	//		LPCWSTR pszName = PointToName(szExe);
+	//		if (pszName && lbNeedInjects)
+	//		{
+	//			if (lstrcmpiW(pszName, L"ConEmuC.exe") == 0 || lstrcmpiW(pszName, L"ConEmuC64.exe") == 0)
+	//				lbParamsChanged = TRUE;
+	//		}
+	//	}
+
+	//	if (!lbSuspended && !lbParamsChanged && lbNeedInjects)
+	//		dwCreationFlags |= CREATE_SUSPENDED;
+	//}
 
 	lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 	if (!lbRc) dwErr = GetLastError();
 
 	// Если lbParamsChanged == TRUE - об инжектах позаботится ConEmuC.exe
-	if (lbRc && ghConEmuWndDC && !lbParamsChanged && lbNeedInjects)
-	{
-		int iHookRc = InjectHooks(*lpProcessInformation, FALSE);
+	sp.OnCreateProcessFinished(lbRc, lpProcessInformation);
 
-		if (iHookRc != 0)
-		{
-			DWORD nErrCode = GetLastError();
-			_ASSERTE(iHookRc == 0);
-			wchar_t szDbgMsg[255], szTitle[128];
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.W, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), lpProcessInformation->dwProcessId, iHookRc, nErrCode);
-			MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-		}
+	//if (lbRc && ghConEmuWndDC && !lbParamsChanged && lbNeedInjects)
+	//{
+	//	int iHookRc = InjectHooks(*lpProcessInformation, FALSE);
 
-		// Отпустить процесс
-		if (!lbSuspended)
-			ResumeThread(lpProcessInformation->hThread);
-	}
+	//	if (iHookRc != 0)
+	//	{
+	//		DWORD nErrCode = GetLastError();
+	//		_ASSERTE(iHookRc == 0);
+	//		wchar_t szDbgMsg[255], szTitle[128];
+	//		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+	//		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.W, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), lpProcessInformation->dwProcessId, iHookRc, nErrCode);
+	//		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	//	}
+
+	//	// Отпустить процесс
+	//	if (!lbSuspended)
+	//		ResumeThread(lpProcessInformation->hThread);
+	//}
 
 	if (ph && ph->PostCallBack)
 	{
@@ -602,10 +627,10 @@ static BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandL
 		ph->PostCallBack(&args);
 	}
 	
-	if (pszTempApp)
-		free(pszTempApp);
-	if (pszTempCmd)
-		free(pszTempCmd);
+	//if (pszTempApp)
+	//	free(pszTempApp);
+	//if (pszTempCmd)
+	//	free(pszTempCmd);
 
 	return lbRc;
 }
@@ -660,75 +685,79 @@ static BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 {
 	ORIGINALFAST(ShellExecuteExA);
 
-	LPSHELLEXECUTEINFOA lpNew = NULL;
-	DWORD dwProcessID = 0;
+	//LPSHELLEXECUTEINFOA lpNew = NULL;
+	//DWORD dwProcessID = 0;
 	//wchar_t* pszTempParm = NULL;
 	//wchar_t szComSpec[MAX_PATH+1], szConEmuC[MAX_PATH+1]; szComSpec[0] = szConEmuC[0] = 0;
-	LPSTR pszTempApp = NULL, pszTempArg = NULL;
-	lpNew = (LPSHELLEXECUTEINFOA)malloc(lpExecInfo->cbSize);
-	memmove(lpNew, lpExecInfo, lpExecInfo->cbSize);
+	//LPSTR pszTempApp = NULL, pszTempArg = NULL;
+	//lpNew = (LPSHELLEXECUTEINFOA)malloc(lpExecInfo->cbSize);
+	//memmove(lpNew, lpExecInfo, lpExecInfo->cbSize);
 	
-	// Under ConEmu only!
-	if (ghConEmuWndDC)
-	{
-		if (!lpNew->hwnd || lpNew->hwnd == GetConsoleWindow())
-			lpNew->hwnd = GetParent(ghConEmuWndDC);
+	CShellProc sp;
+	sp.OnShellExecuteExA(&lpExecInfo);
 
-		HANDLE hDummy = NULL;
-		DWORD nImageSubsystem = 0, nImageBits = 0;
-		if (PrepareExecuteParmsA(eShellExecute, lpNew->lpVerb, lpNew->fMask, 
-				lpNew->lpFile, lpNew->lpParameters,
-				hDummy, hDummy, hDummy,
-				&pszTempApp, &pszTempArg, nImageSubsystem, nImageBits))
-		{
-			// Меняем
-			lpNew->lpFile = pszTempApp;
-			lpNew->lpParameters = pszTempArg;
-		}
-	}
+	//// Under ConEmu only!
+	//if (ghConEmuWndDC)
+	//{
+	//	if (!lpNew->hwnd || lpNew->hwnd == GetConsoleWindow())
+	//		lpNew->hwnd = GetParent(ghConEmuWndDC);
+
+	//	HANDLE hDummy = NULL;
+	//	DWORD nImageSubsystem = 0, nImageBits = 0;
+	//	if (PrepareExecuteParmsA(eShellExecute, lpNew->lpVerb, lpNew->fMask, 
+	//			lpNew->lpFile, lpNew->lpParameters,
+	//			hDummy, hDummy, hDummy,
+	//			&pszTempApp, &pszTempArg, nImageSubsystem, nImageBits))
+	//	{
+	//		// Меняем
+	//		lpNew->lpFile = pszTempApp;
+	//		lpNew->lpParameters = pszTempArg;
+	//	}
+	//}
 	
 	BOOL lbRc;
 
-	if (gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
-		lpExecInfo->fMask |= SEE_MASK_NOZONECHECKS;
+	//if (gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
+	//	lpExecInfo->fMask |= SEE_MASK_NOZONECHECKS;
 		
-	gbInShellExecuteEx = TRUE;
+	//gbInShellExecuteEx = TRUE;
 
 	lbRc = F(ShellExecuteExA)(lpExecInfo);
 	
-	if (lbRc && gfGetProcessId && lpNew->hProcess)
-	{
-		dwProcessID = gfGetProcessId(lpNew->hProcess);
-	}
+	//if (lbRc && gfGetProcessId && lpNew->hProcess)
+	//{
+	//	dwProcessID = gfGetProcessId(lpNew->hProcess);
+	//}
 
-#ifdef _DEBUG
-
-	if (lpNew->lpParameters)
-	{
-		OutputDebugStringW(L"After ShellExecuteEx\n");
-		OutputDebugStringA(lpNew->lpParameters);
-		OutputDebugStringW(L"\n");
-	}
-
-	if (lbRc && dwProcessID)
-	{
-		wchar_t szDbgMsg[128]; _wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"Process created: %u\n", dwProcessID);
-		OutputDebugStringW(szDbgMsg);
-	}
-
-#endif
-	lpExecInfo->hProcess = lpNew->hProcess;
-	lpExecInfo->hInstApp = lpNew->hInstApp;
+	//#ifdef _DEBUG
+	//
+	//	if (lpNew->lpParameters)
+	//	{
+	//		OutputDebugStringW(L"After ShellExecuteEx\n");
+	//		OutputDebugStringA(lpNew->lpParameters);
+	//		OutputDebugStringW(L"\n");
+	//	}
+	//
+	//	if (lbRc && dwProcessID)
+	//	{
+	//		wchar_t szDbgMsg[128]; _wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"Process created: %u\n", dwProcessID);
+	//		OutputDebugStringW(szDbgMsg);
+	//	}
+	//
+	//#endif
+	//lpExecInfo->hProcess = lpNew->hProcess;
+	//lpExecInfo->hInstApp = lpNew->hInstApp;
+	sp.OnShellFinished(lbRc, lpExecInfo->hInstApp, lpExecInfo->hProcess);
 
 	//if (pszTempParm)
 	//	free(pszTempParm);
-	if (pszTempApp)
-		free(pszTempApp);
-	if (pszTempArg)
-		free(pszTempArg);
+	//if (pszTempApp)
+	//	free(pszTempApp);
+	//if (pszTempArg)
+	//	free(pszTempArg);
 
-	free(lpNew);
-	gbInShellExecuteEx = FALSE;
+	//free(lpNew);
+	//gbInShellExecuteEx = FALSE;
 	return lbRc;
 }
 typedef BOOL (WINAPI* OnShellExecuteExW_t)(LPSHELLEXECUTEINFOW lpExecInfo);
@@ -748,89 +777,95 @@ static BOOL OnShellExecuteExW_SEH(OnShellExecuteExW_t f, LPSHELLEXECUTEINFOW lpE
 static BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 {
 	ORIGINAL(ShellExecuteExW);
-	LPSHELLEXECUTEINFOW lpNew = NULL;
-	DWORD dwProcessID = 0;
+	//LPSHELLEXECUTEINFOW lpNew = NULL;
+	//DWORD dwProcessID = 0;
 	//wchar_t* pszTempParm = NULL;
 	//wchar_t szComSpec[MAX_PATH+1], szConEmuC[MAX_PATH+1]; szComSpec[0] = szConEmuC[0] = 0;
-	LPWSTR pszTempApp = NULL, pszTempArg = NULL;
-	lpNew = (LPSHELLEXECUTEINFOW)malloc(lpExecInfo->cbSize);
-	memmove(lpNew, lpExecInfo, lpExecInfo->cbSize);
+	//LPWSTR pszTempApp = NULL, pszTempArg = NULL;
+	//lpNew = (LPSHELLEXECUTEINFOW)malloc(lpExecInfo->cbSize);
+	//memmove(lpNew, lpExecInfo, lpExecInfo->cbSize);
 
-	// Under ConEmu only!
-	if (ghConEmuWndDC)
-	{
-		if (!lpNew->hwnd || lpNew->hwnd == GetConsoleWindow())
-			lpNew->hwnd = GetParent(ghConEmuWndDC);
+	//// Under ConEmu only!
+	//if (ghConEmuWndDC)
+	//{
+	//	if (!lpNew->hwnd || lpNew->hwnd == GetConsoleWindow())
+	//		lpNew->hwnd = GetParent(ghConEmuWndDC);
 
-		HANDLE hDummy = NULL;
-		DWORD nImageSubsystem = 0, nImageBits = 0;
-		if (PrepareExecuteParmsW(eShellExecute, lpNew->lpVerb, lpNew->fMask, 
-				lpNew->lpFile, lpNew->lpParameters,
-				hDummy, hDummy, hDummy,
-				&pszTempApp, &pszTempArg, nImageSubsystem, nImageBits))
-		{
-			// Меняем
-			lpNew->lpFile = pszTempApp;
-			lpNew->lpParameters = pszTempArg;
-		}
-	}
+	//	HANDLE hDummy = NULL;
+	//	DWORD nImageSubsystem = 0, nImageBits = 0;
+	//	if (PrepareExecuteParmsW(eShellExecute, lpNew->lpVerb, lpNew->fMask, 
+	//			lpNew->lpFile, lpNew->lpParameters,
+	//			hDummy, hDummy, hDummy,
+	//			&pszTempApp, &pszTempArg, nImageSubsystem, nImageBits))
+	//	{
+	//		// Меняем
+	//		lpNew->lpFile = pszTempApp;
+	//		lpNew->lpParameters = pszTempArg;
+	//	}
+	//}
+
+	CShellProc sp;
+	sp.OnShellExecuteExW(&lpExecInfo);
 
 	BOOL lbRc;
 
-	if (gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
-		lpNew->fMask |= SEE_MASK_NOZONECHECKS;
+	//if (gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
+	//	lpNew->fMask |= SEE_MASK_NOZONECHECKS;
 
-	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить левый хэндл
-	gbInShellExecuteEx = TRUE;
+	//// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить левый хэндл
+	//gbInShellExecuteEx = TRUE;
 
 	//BUGBUG: FAR периодически валится на этой функции
 	//должно быть: lpNew->cbSize==0x03C; lpNew->fMask==0x00800540;
 	if (ph && ph->ExceptCallBack)
 	{
-		if (!OnShellExecuteExW_SEH(F(ShellExecuteExW), lpNew, &lbRc))
+		if (!OnShellExecuteExW_SEH(F(ShellExecuteExW), lpExecInfo, &lbRc))
 		{
-			SETARGS1(&lbRc,lpNew);
+			SETARGS1(&lbRc,lpExecInfo);
 			ph->ExceptCallBack(&args);
 		}
 	}
 	else
 	{
-		lbRc = F(ShellExecuteExW)(lpNew);
+		lbRc = F(ShellExecuteExW)(lpExecInfo);
 	}
 
-	if (lbRc && gfGetProcessId && lpNew->hProcess)
-	{
-		dwProcessID = gfGetProcessId(lpNew->hProcess);
-	}
+	//if (lbRc && gfGetProcessId && lpNew->hProcess)
+	//{
+	//	dwProcessID = gfGetProcessId(lpNew->hProcess);
+	//}
 
-#ifdef _DEBUG
+	//#ifdef _DEBUG
+	//
+	//	if (lpNew->lpParameters)
+	//	{
+	//		OutputDebugStringW(L"After ShellExecuteEx\n");
+	//		OutputDebugStringW(lpNew->lpParameters);
+	//		OutputDebugStringW(L"\n");
+	//	}
+	//
+	//	if (lbRc && dwProcessID)
+	//	{
+	//		wchar_t szDbgMsg[128]; _wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"Process created: %u\n", dwProcessID);
+	//		OutputDebugStringW(szDbgMsg);
+	//	}
+	//
+	//#endif
+	//lpExecInfo->hProcess = lpNew->hProcess;
+	//lpExecInfo->hInstApp = lpNew->hInstApp;
 
-	if (lpNew->lpParameters)
-	{
-		OutputDebugStringW(L"After ShellExecuteEx\n");
-		OutputDebugStringW(lpNew->lpParameters);
-		OutputDebugStringW(L"\n");
-	}
+	sp.OnShellFinished(lbRc, lpExecInfo->hInstApp, lpExecInfo->hProcess);
 
-	if (lbRc && dwProcessID)
-	{
-		wchar_t szDbgMsg[128]; _wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"Process created: %u\n", dwProcessID);
-		OutputDebugStringW(szDbgMsg);
-	}
-
-#endif
-	lpExecInfo->hProcess = lpNew->hProcess;
-	lpExecInfo->hInstApp = lpNew->hInstApp;
 
 	//if (pszTempParm)
 	//	free(pszTempParm);
-	if (pszTempApp)
-		free(pszTempApp);
-	if (pszTempArg)
-		free(pszTempArg);
+	//if (pszTempApp)
+	//	free(pszTempApp);
+	//if (pszTempArg)
+	//	free(pszTempArg);
 
-	free(lpNew);
-	gbInShellExecuteEx = FALSE;
+	//free(lpNew);
+	//gbInShellExecuteEx = FALSE;
 	return lbRc;
 }
 
@@ -845,12 +880,14 @@ static HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lp
 			hwnd = GetParent(ghConEmuWndDC);
 	}
 	
-	gbInShellExecuteEx = TRUE;
+	//gbInShellExecuteEx = TRUE;
+	CShellProc sp;
+	sp.OnShellExecuteA(&lpOperation, &lpFile, &lpParameters, NULL, (DWORD*)&nShowCmd);
 
 	HINSTANCE lhRc;
 	lhRc = F(ShellExecuteA)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
 	
-	gbInShellExecuteEx = FALSE;
+	//gbInShellExecuteEx = FALSE;
 	return lhRc;
 }
 typedef HINSTANCE(WINAPI* OnShellExecuteW_t)(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
@@ -864,12 +901,14 @@ static HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR 
 			hwnd = GetParent(ghConEmuWndDC);
 	}
 	
-	gbInShellExecuteEx = TRUE;
+	//gbInShellExecuteEx = TRUE;
+	CShellProc sp;
+	sp.OnShellExecuteW(&lpOperation, &lpFile, &lpParameters, NULL, (DWORD*)&nShowCmd);
 
 	HINSTANCE lhRc;
 	lhRc = F(ShellExecuteW)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
 	
-	gbInShellExecuteEx = FALSE;
+	//gbInShellExecuteEx = FALSE;
 	return lhRc;
 }
 
@@ -1270,6 +1309,154 @@ static BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD
 	return lbRc;
 }
 
+//typedef BOOL (WINAPI* OnPeekConsoleInputAx_t)(HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
+//static BOOL WINAPI OnPeekConsoleInputAx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
+//{
+//	ORIGINALx(PeekConsoleInputA);
+//	//if (gpFarInfo && bMainThread)
+//	//	TouchReadPeekConsoleInputs(1);
+//	BOOL lbRc = FALSE;
+//
+//	if (ph && ph->PreCallBack)
+//	{
+//		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+//
+//		// Если функция возвращает FALSE - реальное чтение не будет вызвано
+//		if (!ph->PreCallBack(&args))
+//			return lbRc;
+//	}
+//
+//	#ifdef USE_INPUT_SEMAPHORE
+//	DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
+//	_ASSERTE(nSemaphore<=1);
+//	#endif
+//
+//	lbRc = Fx(PeekConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+//
+//	#ifdef USE_INPUT_SEMAPHORE
+//	if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
+//	#endif
+//
+//	if (ph && ph->PostCallBack)
+//	{
+//		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+//		ph->PostCallBack(&args);
+//	}
+//
+//	return lbRc;
+//}
+//
+//typedef BOOL (WINAPI* OnPeekConsoleInputWx_t)(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+//static BOOL WINAPI OnPeekConsoleInputWx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
+//{
+//	ORIGINALx(PeekConsoleInputW);
+//	//if (gpFarInfo && bMainThread)
+//	//	TouchReadPeekConsoleInputs(1);
+//	BOOL lbRc = FALSE;
+//
+//	if (ph && ph->PreCallBack)
+//	{
+//		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+//
+//		// Если функция возвращает FALSE - реальное чтение не будет вызвано
+//		if (!ph->PreCallBack(&args))
+//			return lbRc;
+//	}
+//
+//	#ifdef USE_INPUT_SEMAPHORE
+//	DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
+//	_ASSERTE(nSemaphore<=1);
+//	#endif
+//
+//	lbRc = Fx(PeekConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+//
+//	#ifdef USE_INPUT_SEMAPHORE
+//	if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
+//	#endif
+//
+//	if (ph && ph->PostCallBack)
+//	{
+//		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+//		ph->PostCallBack(&args);
+//	}
+//
+//	return lbRc;
+//}
+//
+//typedef BOOL (WINAPI* OnReadConsoleInputAx_t)(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+//static BOOL WINAPI OnReadConsoleInputAx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
+//{
+//	ORIGINALx(ReadConsoleInputA);
+//	//if (gpFarInfo && bMainThread)
+//	//	TouchReadPeekConsoleInputs(0);
+//	BOOL lbRc = FALSE;
+//
+//	if (ph && ph->PreCallBack)
+//	{
+//		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+//
+//		// Если функция возвращает FALSE - реальное чтение не будет вызвано
+//		if (!ph->PreCallBack(&args))
+//			return lbRc;
+//	}
+//
+//	#ifdef USE_INPUT_SEMAPHORE
+//	DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
+//	_ASSERTE(nSemaphore<=1);
+//	#endif
+//
+//	lbRc = Fx(ReadConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+//
+//	#ifdef USE_INPUT_SEMAPHORE
+//	if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
+//	#endif
+//
+//	if (ph && ph->PostCallBack)
+//	{
+//		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+//		ph->PostCallBack(&args);
+//	}
+//
+//	return lbRc;
+//}
+//
+//typedef BOOL (WINAPI* OnReadConsoleInputWx_t)(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+//static BOOL WINAPI OnReadConsoleInputWx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
+//{
+//	ORIGINALx(ReadConsoleInputW);
+//	//if (gpFarInfo && bMainThread)
+//	//	TouchReadPeekConsoleInputs(0);
+//	BOOL lbRc = FALSE;
+//
+//	if (ph && ph->PreCallBack)
+//	{
+//		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+//
+//		// Если функция возвращает FALSE - реальное чтение не будет вызвано
+//		if (!ph->PreCallBack(&args))
+//			return lbRc;
+//	}
+//
+//	#ifdef USE_INPUT_SEMAPHORE
+//	DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
+//	_ASSERTE(nSemaphore<=1);
+//	#endif
+//
+//	lbRc = Fx(ReadConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+//
+//	#ifdef USE_INPUT_SEMAPHORE
+//	if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
+//	#endif
+//
+//	if (ph && ph->PostCallBack)
+//	{
+//		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+//		ph->PostCallBack(&args);
+//	}
+//
+//	return lbRc;
+//}
+
 typedef BOOL (WINAPI* OnPeekConsoleInputA_t)(HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
 static BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
@@ -1548,6 +1735,52 @@ static BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *
 	return lbRc;
 }
 
+//typedef BOOL (WINAPI* OnWriteConsoleOutputAx_t)(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+//static BOOL WINAPI OnWriteConsoleOutputAx(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
+//{
+//	ORIGINALx(WriteConsoleOutputA);
+//	BOOL lbRc = FALSE;
+//
+//	if (ph && ph->PreCallBack)
+//	{
+//		SETARGS5(&lbRc, hConsoleOutput, lpBuffer, &dwBufferSize, &dwBufferCoord, lpWriteRegion);
+//		ph->PreCallBack(&args);
+//	}
+//
+//	lbRc = Fx(WriteConsoleOutputA)(hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
+//
+//	if (ph && ph->PostCallBack)
+//	{
+//		SETARGS5(&lbRc, hConsoleOutput, lpBuffer, &dwBufferSize, &dwBufferCoord, lpWriteRegion);
+//		ph->PostCallBack(&args);
+//	}
+//
+//	return lbRc;
+//}
+//
+//typedef BOOL (WINAPI* OnWriteConsoleOutputWx_t)(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+//static BOOL WINAPI OnWriteConsoleOutputWx(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
+//{
+//	ORIGINALx(WriteConsoleOutputW);
+//	BOOL lbRc = FALSE;
+//
+//	if (ph && ph->PreCallBack)
+//	{
+//		SETARGS5(&lbRc, hConsoleOutput, lpBuffer, &dwBufferSize, &dwBufferCoord, lpWriteRegion);
+//		ph->PreCallBack(&args);
+//	}
+//
+//	lbRc = Fx(WriteConsoleOutputW)(hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
+//
+//	if (ph && ph->PostCallBack)
+//	{
+//		SETARGS5(&lbRc, hConsoleOutput, lpBuffer, &dwBufferSize, &dwBufferCoord, lpWriteRegion);
+//		ph->PostCallBack(&args);
+//	}
+//
+//	return lbRc;
+//}
+
 #ifdef _DEBUG
 typedef HANDLE(WINAPI* OnCreateNamedPipeW_t)(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 static HANDLE WINAPI OnCreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
@@ -1737,368 +1970,415 @@ static bool IsHandleConsole(HANDLE handle, bool output = true)
 //}
 
 
-static BOOL ChangeExecuteParms(enum CmdOnCreateType aCmd,
-				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asBaseDir,
-				LPCWSTR asExeFile, int ImageBits, int ImageSubsystem,
-				LPWSTR* psFile, LPWSTR* psParam)
-{
-	wchar_t szConEmuC[MAX_PATH+16]; // ConEmuC64.exe
-	wcscpy_c(szConEmuC, asBaseDir);
-	
-	if (ImageBits == 32)
-	{
-		wcscat_c(szConEmuC, L"ConEmuC.exe");
-	}
-	else if (ImageBits == 64)
-	{
-		wcscat_c(szConEmuC, L"ConEmuC64.exe");
-	}
-	else if (ImageBits == 16)
-	{
-		_ASSERTE(ImageBits != 16);
-		return FALSE;
-	}
-	
-	int nCchSize = (asFile ? lstrlenW(asFile) : 0) + (asParam ? lstrlenW(asParam) : 0) + 32;
-	if (aCmd == eShellExecute)
-	{
-		*psFile = lstrdup(szConEmuC);
-	}
-	else
-	{
-		nCchSize += lstrlenW(szConEmuC);
-		*psFile = NULL;
-	}
-	
-	*psParam = (wchar_t*)malloc(nCchSize*sizeof(wchar_t));
-	(*psParam)[0] = 0;
-	if (aCmd == eShellExecute)
-	{
-		_wcscat_c((*psParam), nCchSize, L" /C \"");
-		_wcscat_c((*psParam), nCchSize, asFile ? asFile : L"");
-		_wcscat_c((*psParam), nCchSize, L"\"");
-	}
-	else
-	{
-		(*psParam)[0] = L'"';
-		_wcscpy_c((*psParam)+1, nCchSize-1, szConEmuC);
-		_wcscat_c((*psParam), nCchSize, L"\" /C ");
-		// Это CreateProcess. Исполняемый файл может быть уже указан в asParam
-		BOOL lbNeedExe = TRUE;
-		if (asParam && *asParam)
-		{
-			LPCWSTR pszParam = asParam;
-			while (*pszParam == L'"')
-				pszParam++;
-			int nLen = lstrlenW(asExeFile);
-			wchar_t szTest[MAX_PATH*2];
-			_ASSERTE(nLen <= (MAX_PATH+10)); // размер из IsNeedCmd.
-			_wcscpyn_c(szTest, countof(szTest), asExeFile, nLen+1);
-			if (lstrcmpiW(szTest, asExeFile) == 0)
-				lbNeedExe = FALSE;
-		}
-		if (lbNeedExe)
-		{
-			_wcscat_c((*psParam), nCchSize, L"\"");
-			_ASSERTE(asFile!=NULL);
-			_wcscat_c((*psParam), nCchSize, asFile ? asFile : L"");
-			_wcscat_c((*psParam), nCchSize, L"\"");
-		}
-	}
+//static BOOL ChangeExecuteParms(enum CmdOnCreateType aCmd,
+//				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asBaseDir,
+//				LPCWSTR asExeFile, int ImageBits, int ImageSubsystem,
+//				LPWSTR* psFile, LPWSTR* psParam)
+//{
+//	wchar_t szConEmuC[MAX_PATH+16]; // ConEmuC64.exe
+//	wcscpy_c(szConEmuC, asBaseDir);
+//	
+//	if (ImageBits == 32)
+//	{
+//		wcscat_c(szConEmuC, L"ConEmuC.exe");
+//	}
+//	else if (ImageBits == 64)
+//	{
+//		wcscat_c(szConEmuC, L"ConEmuC64.exe");
+//	}
+//	else if (ImageBits == 16)
+//	{
+//		_ASSERTE(ImageBits != 16);
+//		return FALSE;
+//	}
+//	else
+//	{
+//		_ASSERTE(ImageBits==16||ImageBits==32||ImageBits==64);
+//		wcscat_c(szConEmuC, L"ConEmuC.exe");
+//	}
+//	
+//	int nCchSize = (asFile ? lstrlenW(asFile) : 0) + (asParam ? lstrlenW(asParam) : 0) + 32;
+//	if (aCmd == eShellExecute)
+//	{
+//		*psFile = lstrdup(szConEmuC);
+//	}
+//	else
+//	{
+//		nCchSize += lstrlenW(szConEmuC);
+//		*psFile = NULL;
+//	}
+//	
+//	*psParam = (wchar_t*)malloc(nCchSize*sizeof(wchar_t));
+//	(*psParam)[0] = 0;
+//	if (aCmd == eShellExecute)
+//	{
+//		_wcscat_c((*psParam), nCchSize, L" /C \"");
+//		_wcscat_c((*psParam), nCchSize, asFile ? asFile : L"");
+//		_wcscat_c((*psParam), nCchSize, L"\"");
+//	}
+//	else
+//	{
+//		(*psParam)[0] = L'"';
+//		_wcscpy_c((*psParam)+1, nCchSize-1, szConEmuC);
+//		_wcscat_c((*psParam), nCchSize, L"\" /C ");
+//		// Это CreateProcess. Исполняемый файл может быть уже указан в asParam
+//		BOOL lbNeedExe = TRUE;
+//		if (asParam && *asParam)
+//		{
+//			LPCWSTR pszParam = asParam;
+//			while (*pszParam == L'"')
+//				pszParam++;
+//			int nLen = lstrlenW(asExeFile);
+//			wchar_t szTest[MAX_PATH*2];
+//			_ASSERTE(nLen <= (MAX_PATH+10)); // размер из IsNeedCmd.
+//			_wcscpyn_c(szTest, countof(szTest), asExeFile, nLen+1);
+//			if (lstrcmpiW(szTest, asExeFile) == 0)
+//				lbNeedExe = FALSE;
+//		}
+//		if (lbNeedExe)
+//		{
+//			_wcscat_c((*psParam), nCchSize, L"\"");
+//			_ASSERTE(asFile!=NULL);
+//			_wcscat_c((*psParam), nCchSize, asFile ? asFile : L"");
+//			_wcscat_c((*psParam), nCchSize, L"\"");
+//		}
+//	}
+//
+//	if (asParam && *asParam)
+//	{
+//		_wcscat_c((*psParam), nCchSize, L" ");
+//		_wcscat_c((*psParam), nCchSize, asParam);
+//	}
+//
+//	return TRUE;
+//}
 
-	if (asParam && *asParam)
-	{
-		_wcscat_c((*psParam), nCchSize, L" ");
-		_wcscat_c((*psParam), nCchSize, asParam);
-	}
+//static wchar_t* str2wcs(const char* psz, UINT anCP)
+//{
+//	if (!psz)
+//		return NULL;
+//	int nLen = lstrlenA(psz);
+//	wchar_t* pwsz = (wchar_t*)calloc((nLen+1),sizeof(wchar_t));
+//	if (nLen > 0)
+//	{
+//		MultiByteToWideChar(anCP, 0, psz, nLen+1, pwsz, nLen+1);
+//	}
+//	else
+//	{
+//		pwsz[0] = 0;
+//	}
+//	return pwsz;
+//}
+//static char* wcs2str(const wchar_t* pwsz, UINT anCP)
+//{
+//	int nLen = lstrlenW(pwsz);
+//	char* psz = (char*)calloc((nLen+1),sizeof(char));
+//	if (nLen > 0)
+//	{
+//		WideCharToMultiByte(anCP, 0, pwsz, nLen+1, psz, nLen+1, 0, 0);
+//	}
+//	else
+//	{
+//		psz[0] = 0;
+//	}
+//	return psz;
+//}
 
-	return TRUE;
-}
-
-static wchar_t* str2wcs(const char* psz, UINT anCP)
-{
-	if (!psz)
-		return NULL;
-	int nLen = lstrlenA(psz);
-	wchar_t* pwsz = (wchar_t*)calloc((nLen+1),sizeof(wchar_t));
-	if (nLen > 0)
-	{
-		MultiByteToWideChar(anCP, 0, psz, nLen+1, pwsz, nLen+1);
-	}
-	else
-	{
-		pwsz[0] = 0;
-	}
-	return pwsz;
-}
-static char* wcs2str(const wchar_t* pwsz, UINT anCP)
-{
-	int nLen = lstrlenW(pwsz);
-	char* psz = (char*)calloc((nLen+1),sizeof(char));
-	if (nLen > 0)
-	{
-		WideCharToMultiByte(anCP, 0, pwsz, nLen+1, psz, nLen+1, 0, 0);
-	}
-	else
-	{
-		psz[0] = 0;
-	}
-	return psz;
-}
-
-static BOOL PrepareExecuteParmsA(
-				enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags, 
-				LPCSTR asFile, LPCSTR asParam,
-				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
-				LPSTR* psFile, LPSTR* psParam, DWORD& nImageSubsystem, DWORD& nImageBits)
-{
-	_ASSERTE(*psFile==NULL && *psParam==NULL);
-	if (!ghConEmuWndDC)
-		return FALSE; // Перехватывать только под ConEmu
-
-	UINT nCP = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
-	LPWSTR pwszAction = str2wcs(asAction, nCP);
-	LPWSTR pwszFile = str2wcs(asFile, nCP);
-	LPWSTR pwszParam = str2wcs(asParam, nCP);
-	LPWSTR pwszRetFile = NULL;
-	LPWSTR pwszRetParam = NULL;
-
-	BOOL lbRc = PrepareExecuteParmsW(aCmd, pwszAction, anFlags, pwszFile, pwszParam, 
-			hStdIn, hStdOut, hStdErr, &pwszRetFile, &pwszRetParam, nImageSubsystem, nImageBits);
-
-	if (lbRc)
-	{
-		if (pwszRetFile && *pwszRetFile)
-			*psFile = wcs2str(pwszRetFile, nCP);
-		else
-			*psFile = NULL;
-		*psParam = wcs2str(pwszRetParam, nCP);
-	}
-
-	if (pwszAction) free(pwszAction);
-	if (pwszFile) free(pwszFile);
-	if (pwszParam) free(pwszParam);
-	if (pwszRetFile) free(pwszRetFile);
-	if (pwszRetParam) free(pwszRetParam);
-
-	return lbRc;
-}
+//static BOOL PrepareExecuteParmsA(
+//				enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags, 
+//				LPCSTR asFile, LPCSTR asParam,
+//				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
+//				LPSTR* psFile, LPSTR* psParam, DWORD& nImageSubsystem, DWORD& nImageBits)
+//{
+//	_ASSERTE(*psFile==NULL && *psParam==NULL);
+//	if (!ghConEmuWndDC)
+//		return FALSE; // Перехватывать только под ConEmu
+//
+//	UINT nCP = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
+//	LPWSTR pwszAction = str2wcs(asAction, nCP);
+//	LPWSTR pwszFile = str2wcs(asFile, nCP);
+//	LPWSTR pwszParam = str2wcs(asParam, nCP);
+//	LPWSTR pwszRetFile = NULL;
+//	LPWSTR pwszRetParam = NULL;
+//
+//	BOOL lbRc = PrepareExecuteParmsW(aCmd, pwszAction, anFlags, pwszFile, pwszParam, 
+//			hStdIn, hStdOut, hStdErr, &pwszRetFile, &pwszRetParam, nImageSubsystem, nImageBits);
+//
+//	if (lbRc)
+//	{
+//		if (pwszRetFile && *pwszRetFile)
+//			*psFile = wcs2str(pwszRetFile, nCP);
+//		else
+//			*psFile = NULL;
+//		*psParam = wcs2str(pwszRetParam, nCP);
+//	}
+//
+//	if (pwszAction) free(pwszAction);
+//	if (pwszFile) free(pwszFile);
+//	if (pwszParam) free(pwszParam);
+//	if (pwszRetFile) free(pwszRetFile);
+//	if (pwszRetParam) free(pwszRetParam);
+//
+//	return lbRc;
+//}
 
 //BOOL IsExecutable(LPCWSTR aszFilePathName);
 //BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+10]);
 
-CESERVER_REQ* NewCmdOnCreateA(
-				enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags, 
-				LPCSTR asFile, LPCSTR asParam, int nImageBits, int nImageSubsystem,
-				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr)
-{
-	UINT nCP = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
-	LPWSTR pwszAction = str2wcs(asAction, nCP);
-	LPWSTR pwszFile = str2wcs(asFile, nCP);
-	LPWSTR pwszParam = str2wcs(asParam, nCP);
-	
-	CESERVER_REQ* pIn = NewCmdOnCreateW(aCmd, pwszAction, anFlags, pwszFile, pwszParam, 
-			nImageBits, nImageSubsystem, hStdIn, hStdOut, hStdErr);
+//CESERVER_REQ* NewCmdOnCreateA(
+//				enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags, 
+//				LPCSTR asFile, LPCSTR asParam, int nImageBits, int nImageSubsystem,
+//				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr)
+//{
+//	UINT nCP = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
+//	LPWSTR pwszAction = str2wcs(asAction, nCP);
+//	LPWSTR pwszFile = str2wcs(asFile, nCP);
+//	LPWSTR pwszParam = str2wcs(asParam, nCP);
+//
+//	wchar_t szBaseDir[MAX_PATH+2];
+//	CESERVER_REQ* pIn = NewCmdOnCreateW(aCmd, pwszAction, anFlags, pwszFile, pwszParam, 
+//			nImageBits, nImageSubsystem, hStdIn, hStdOut, hStdErr, szBaseDir);
+//
+//	if (pwszAction) free(pwszAction);
+//	if (pwszFile) free(pwszFile);
+//	if (pwszParam) free(pwszParam);
+//	
+//	return pIn;
+//}
 
-	if (pwszAction) free(pwszAction);
-	if (pwszFile) free(pwszFile);
-	if (pwszParam) free(pwszParam);
-	
-	return pIn;
-}
+//CESERVER_REQ* NewCmdOnCreateW(
+//				enum CmdOnCreateType aCmd, LPCWSTR asAction, DWORD anFlags, 
+//				LPCWSTR asFile, LPCWSTR asParam, int nImageBits, int nImageSubsystem,
+//				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
+//				wchar_t (&szBaseDir)[MAX_PATH+2])
+//{
+//	szBaseDir[0] = 0;
+//
+//	// Проверим, а надо ли?
+//	DWORD dwGuiProcessId = 0;
+//	if (!ghConEmuWnd || !GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId))
+//		return NULL;
+//	MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
+//	GuiInfoMapping.InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
+//	const ConEmuGuiMapping* pInfo = GuiInfoMapping.Open();
+//	if (!pInfo)
+//		return NULL;
+//	else if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
+//		return NULL;
+//	else
+//	{
+//		wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
+//		wcscat_c(szBaseDir, L"\\");
+//		if (pInfo->nLoggingType != glt_Processes)
+//			return NULL;
+//	}
+//	GuiInfoMapping.CloseMap();
+//
+//	
+//	CESERVER_REQ *pIn = NULL;
+//	
+//	int nActionLen = (asAction ? lstrlenW(asAction) : 0)+1;
+//	int nFileLen = (asFile ? lstrlenW(asFile) : 0)+1;
+//	int nParamLen = (asParam ? lstrlenW(asParam) : 0)+1;
+//	
+//	pIn = ExecuteNewCmd(CECMD_ONCREATEPROC, sizeof(CESERVER_REQ_HDR)
+//		+sizeof(CESERVER_REQ_ONCREATEPROCESS)+(nActionLen+nFileLen+nParamLen)*sizeof(wchar_t));
+//	
+//	//pIn->OnCreateProc.bUnicode = TRUE;
+//	pIn->OnCreateProc.nImageSubsystem = nImageSubsystem;
+//	pIn->OnCreateProc.nImageBits = nImageBits;
+//	pIn->OnCreateProc.hStdIn = (unsigned __int64)hStdIn;
+//	pIn->OnCreateProc.hStdOut = (unsigned __int64)hStdOut;
+//	pIn->OnCreateProc.hStdErr = (unsigned __int64)hStdErr;
+//	
+//	if (aCmd == eShellExecute)
+//		wcscpy_c(pIn->OnCreateProc.sFunction, L"Shell");
+//	else if (aCmd == eCreateProcess)
+//		wcscpy_c(pIn->OnCreateProc.sFunction, L"Create");
+//	else if (aCmd == eInjectingHooks)
+//		wcscpy_c(pIn->OnCreateProc.sFunction, L"Hooks");
+//	else if (aCmd == eHooksLoaded)
+//		wcscpy_c(pIn->OnCreateProc.sFunction, L"Loaded");
+//	else
+//		wcscpy_c(pIn->OnCreateProc.sFunction, L"Unknown");
+//	
+//	pIn->OnCreateProc.nFlags = anFlags;
+//	pIn->OnCreateProc.nActionLen = nActionLen;
+//	pIn->OnCreateProc.nFileLen = nFileLen;
+//	pIn->OnCreateProc.nParamLen = nParamLen;
+//	
+//	wchar_t* psz = pIn->OnCreateProc.wsValue;
+//	if (nActionLen > 1)
+//		_wcscpy_c(psz, nActionLen, asAction);
+//	psz += nActionLen;
+//	if (nFileLen > 1)
+//		_wcscpy_c(psz, nFileLen, asFile);
+//	psz += nFileLen;
+//	if (nParamLen > 1)
+//		_wcscpy_c(psz, nParamLen, asParam);
+//	psz += nParamLen;
+//	
+//	return pIn;
+//}
 
-CESERVER_REQ* NewCmdOnCreateW(
-				enum CmdOnCreateType aCmd, LPCWSTR asAction, DWORD anFlags, 
-				LPCWSTR asFile, LPCWSTR asParam, int nImageBits, int nImageSubsystem,
-				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr)
-{
-	CESERVER_REQ *pIn = NULL;
-	
-	int nActionLen = (asAction ? lstrlenW(asAction) : 0)+1;
-	int nFileLen = (asFile ? lstrlenW(asFile) : 0)+1;
-	int nParamLen = (asParam ? lstrlenW(asParam) : 0)+1;
-	
-	pIn = ExecuteNewCmd(CECMD_ONCREATEPROC, sizeof(CESERVER_REQ_HDR)
-		+sizeof(CESERVER_REQ_ONCREATEPROCESS)+(nActionLen+nFileLen+nParamLen)*sizeof(wchar_t));
-	
-	//pIn->OnCreateProc.bUnicode = TRUE;
-	pIn->OnCreateProc.nImageSubsystem = nImageSubsystem;
-	pIn->OnCreateProc.nImageBits = nImageBits;
-	pIn->OnCreateProc.hStdIn = (unsigned __int64)hStdIn;
-	pIn->OnCreateProc.hStdOut = (unsigned __int64)hStdOut;
-	pIn->OnCreateProc.hStdErr = (unsigned __int64)hStdErr;
-	
-	if (aCmd == eShellExecute)
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"Shell");
-	else if (aCmd == eCreateProcess)
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"Create");
-	else if (aCmd == eInjectingHooks)
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"Hooks");
-	else if (aCmd == eHooksLoaded)
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"Loaded");
-	else
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"Unknown");
-	
-	pIn->OnCreateProc.nFlags = anFlags;
-	pIn->OnCreateProc.nActionLen = nActionLen;
-	pIn->OnCreateProc.nFileLen = nFileLen;
-	pIn->OnCreateProc.nParamLen = nParamLen;
-	
-	wchar_t* psz = pIn->OnCreateProc.wsValue;
-	if (nActionLen > 1)
-		_wcscpy_c(psz, nActionLen, asAction);
-	psz += nActionLen;
-	if (nFileLen > 1)
-		_wcscpy_c(psz, nFileLen, asFile);
-	psz += nFileLen;
-	if (nParamLen > 1)
-		_wcscpy_c(psz, nParamLen, asParam);
-	psz += nParamLen;
-	
-	return pIn;
-}
-
-static BOOL PrepareExecuteParmsW(
-				enum CmdOnCreateType aCmd, LPCWSTR asAction, DWORD anFlags, 
-				LPCWSTR asFile, LPCWSTR asParam,
-				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
-				LPWSTR* psFile, LPWSTR* psParam, DWORD& nImageSubsystem, DWORD& nImageBits)
-{
-	_ASSERTE(*psFile==NULL && *psParam==NULL);
-	if (!ghConEmuWndDC)
-		return FALSE; // Перехватывать только под ConEmu
-	
-	wchar_t szTest[MAX_PATH*2], szExe[MAX_PATH+1];
-	DWORD /*nImageSubsystem = 0, nImageBits = 0,*/ nFileAttrs = (DWORD)-1;
-	bool lbGuiApp = false;
-	//int nActionLen = (asAction ? lstrlenW(asAction) : 0)+1;
-	//int nFileLen = (asFile ? lstrlenW(asFile) : 0)+1;
-	//int nParamLen = (asParam ? lstrlenW(asParam) : 0)+1;
-	BOOL lbNeedCutStartEndQuot = FALSE;
-
-	nImageSubsystem = nImageBits = 0;
-	
-	if ((aCmd == eShellExecute) || (asFile && *asFile))
-	{
-		wcscpy_c(szExe, asFile ? asFile : L"");
-	}
-	else
-	{
-		IsNeedCmd(asParam, &lbNeedCutStartEndQuot, szExe);
-	}
-	
-	if (szExe[0])
-	{
-		wchar_t *pszNamePart = NULL;
-		int nLen = lstrlen(szExe);
-		BOOL lbMayBeFile = (nLen > 0) && (szExe[nLen-1] != L'\\') && (szExe[nLen-1] != L'/');
-		if (!lbMayBeFile)
-		{
-			nImageBits = 0;
-			nImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
-		}
-		else if (!GetFullPathName(szExe, countof(szTest), szTest, &pszNamePart))
-		{
-			szTest[0] = 0;
-		}
-		else if (GetImageSubsystem(szTest, nImageSubsystem, nImageBits, nFileAttrs))
-		{
-			lbGuiApp = (nImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
-		}
-		else
-		{
-			nImageBits = 0;
-			nImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
-
-			if ((nFileAttrs != (DWORD)-1) && !(nFileAttrs & FILE_ATTRIBUTE_DIRECTORY))
-			{
-				LPCWSTR pszExt = wcsrchr(szTest, L'.');
-				if (pszExt)
-				{
-					if ((lstrcmpiW(pszExt, L".cmd") == 0) || (lstrcmpiW(pszExt, L".bat") == 0))
-					{
-						#ifdef _WIN64
-						nImageBits = 64;
-						#else
-						nImageBits = 32;
-						#endif
-						nImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
-					}
-				}
-			}
-		}
-	}
-	
-	
-	CESERVER_REQ *pIn = NULL, *pOut = NULL;
-	pIn = NewCmdOnCreateW(aCmd, asAction, anFlags, asFile, asParam, nImageBits, nImageSubsystem, hStdIn, hStdOut, hStdErr);
-	
-	HWND hConWnd = GetConsoleWindow();
-	pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
-	ExecuteFreeResult(pIn); pIn = NULL;
-
-	if (!pOut)
-		return FALSE;
-
-	//wchar_t* pszExecFile = (wchar_t*)pOut->OnCreateProcRet.wsValue;
-	wchar_t* pszBaseDir = (wchar_t*)(pOut->OnCreateProcRet.wsValue); // + pOut->OnCreateProcRet.nFileLen);
-	BOOL lbChanged = FALSE;
-	
-	if (!pOut->OnCreateProcRet.bContinue)
-		goto wrap;
-	
-	if (aCmd == eShellExecute)
-	{
-		WARNING("Уточнить условие для флагов ShellExecute!");
-		if ((anFlags & (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NO_CONSOLE))
-	        != (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NO_CONSOLE))
-			goto wrap; // пока так - это фар выполняет консольную команду
-		if (asAction && (lstrcmpiW(asAction, L"open") != 0))
-			goto wrap; // runas, print, и прочая нас не интересует
-	}
-	else
-	{
-		// Посмотреть, какие еще условия нужно отсеять для CreateProcess?
-		if ((anFlags & (CREATE_NO_WINDOW|DETACHED_PROCESS)) != 0)
-			goto wrap; // запускается по тихому (без консольного окна), пропускаем
-	}
-	
-	//bool lbGuiApp = false;
-	//DWORD ImageSubsystem = 0, ImageBits = 0;
-
-	//if (!pszExecFile || !*pszExecFile)
-	if (szExe[0] == 0)
-	{
-		_ASSERTE(szExe[0] != 0);
-		goto wrap; // ошибка?
-	}
-	//if (GetImageSubsystem(pszExecFile,ImageSubsystem,ImageBits))
-	//lbGuiApp = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
-
-	if (lbGuiApp)
-		goto wrap; // гуй - не перехватывать
-
-	// Подставлять ConEmuC.exe нужно только для того, чтобы в фаре 
-	// включить длинный буфер и запомнить длинный результат в консоли
-	if (gFarMode.bFarHookMode)
-	{
-		lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, pszBaseDir, 
-						szExe, nImageBits, nImageSubsystem, psFile, psParam);
-	}
-	else 
-	if ((nImageBits == 16 ) && (nImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE))
-	{
-		TODO("DosBox?");
-	}
-	else
-	{
-		//lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, pszBaseDir, 
-		//				szExe, nImageBits, nImageSubsystem, psFile, psParam);
-		lbChanged = FALSE;
-	}
-
-wrap:
-	if (pOut)
-		ExecuteFreeResult(pOut);
-	return lbChanged;
-}
+//static BOOL PrepareExecuteParmsW(
+//				enum CmdOnCreateType aCmd, LPCWSTR asAction, DWORD anFlags, 
+//				LPCWSTR asFile, LPCWSTR asParam,
+//				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
+//				LPWSTR* psFile, LPWSTR* psParam, DWORD& nImageSubsystem, DWORD& nImageBits)
+//{
+//	_ASSERTE(*psFile==NULL && *psParam==NULL);
+//	if (!ghConEmuWndDC)
+//		return FALSE; // Перехватывать только под ConEmu
+//	
+//	wchar_t szTest[MAX_PATH*2], szExe[MAX_PATH+1];
+//	DWORD /*nImageSubsystem = 0, nImageBits = 0,*/ nFileAttrs = (DWORD)-1;
+//	bool lbGuiApp = false;
+//	//int nActionLen = (asAction ? lstrlenW(asAction) : 0)+1;
+//	//int nFileLen = (asFile ? lstrlenW(asFile) : 0)+1;
+//	//int nParamLen = (asParam ? lstrlenW(asParam) : 0)+1;
+//	BOOL lbNeedCutStartEndQuot = FALSE;
+//
+//	nImageSubsystem = nImageBits = 0;
+//	
+//	if ((aCmd == eShellExecute) || (asFile && *asFile))
+//	{
+//		wcscpy_c(szExe, asFile ? asFile : L"");
+//	}
+//	else
+//	{
+//		IsNeedCmd(asParam, &lbNeedCutStartEndQuot, szExe);
+//	}
+//	
+//	if (szExe[0])
+//	{
+//		wchar_t *pszNamePart = NULL;
+//		int nLen = lstrlen(szExe);
+//		BOOL lbMayBeFile = (nLen > 0) && (szExe[nLen-1] != L'\\') && (szExe[nLen-1] != L'/');
+//
+//		BOOL lbSubsystemOk = FALSE;
+//		nImageBits = 0;
+//		nImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
+//
+//		if (!lbMayBeFile)
+//		{
+//			nImageBits = 0;
+//			nImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
+//		}
+//		else if (GetFullPathName(szExe, countof(szTest), szTest, &pszNamePart)
+//			&& GetImageSubsystem(szTest, nImageSubsystem, nImageBits, nFileAttrs))
+//		{
+//			lbGuiApp = (nImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
+//			lbSubsystemOk = TRUE;
+//		}
+//		else if (SearchPath(NULL, szExe, NULL, countof(szTest), szTest, &pszNamePart)
+//			&& GetImageSubsystem(szTest, nImageSubsystem, nImageBits, nFileAttrs))
+//		{
+//			lbGuiApp = (nImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
+//			lbSubsystemOk = TRUE;
+//		}
+//		else
+//		{
+//			szTest[0] = 0;
+//		}
+//		
+//
+//		if (!lbSubsystemOk)
+//		{
+//			nImageBits = 0;
+//			nImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
+//
+//			if ((nFileAttrs != (DWORD)-1) && !(nFileAttrs & FILE_ATTRIBUTE_DIRECTORY))
+//			{
+//				LPCWSTR pszExt = wcsrchr(szTest, L'.');
+//				if (pszExt)
+//				{
+//					if ((lstrcmpiW(pszExt, L".cmd") == 0) || (lstrcmpiW(pszExt, L".bat") == 0))
+//					{
+//						#ifdef _WIN64
+//						nImageBits = 64;
+//						#else
+//						nImageBits = 32;
+//						#endif
+//						nImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
+//					}
+//				}
+//			}
+//		}
+//	}
+//	
+//	
+//	BOOL lbChanged = FALSE;
+//	wchar_t szBaseDir[MAX_PATH+2]; szBaseDir[0] = 0;
+//	CESERVER_REQ *pIn = NULL;
+//	pIn = NewCmdOnCreateW(aCmd, asAction, anFlags, asFile, asParam, nImageBits, nImageSubsystem, hStdIn, hStdOut, hStdErr, szBaseDir);
+//	if (pIn)
+//	{
+//		HWND hConWnd = GetConsoleWindow();
+//		CESERVER_REQ *pOut = NULL;
+//		pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
+//		ExecuteFreeResult(pIn); pIn = NULL;
+//		if (!pOut)
+//			return FALSE;
+//		if (!pOut->OnCreateProcRet.bContinue)
+//			goto wrap;
+//		ExecuteFreeResult(pOut);
+//	}
+//
+//	//wchar_t* pszExecFile = (wchar_t*)pOut->OnCreateProcRet.wsValue;
+//	//wchar_t* pszBaseDir = (wchar_t*)(pOut->OnCreateProcRet.wsValue); // + pOut->OnCreateProcRet.nFileLen);
+//	
+//	
+//	if (aCmd == eShellExecute)
+//	{
+//		WARNING("Уточнить условие для флагов ShellExecute!");
+//		if ((anFlags & (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NO_CONSOLE))
+//	        != (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NO_CONSOLE))
+//			goto wrap; // пока так - это фар выполняет консольную команду
+//		if (asAction && (lstrcmpiW(asAction, L"open") != 0))
+//			goto wrap; // runas, print, и прочая нас не интересует
+//	}
+//	else
+//	{
+//		// Посмотреть, какие еще условия нужно отсеять для CreateProcess?
+//		if ((anFlags & (CREATE_NO_WINDOW|DETACHED_PROCESS)) != 0)
+//			goto wrap; // запускается по тихому (без консольного окна), пропускаем
+//	}
+//	
+//	//bool lbGuiApp = false;
+//	//DWORD ImageSubsystem = 0, ImageBits = 0;
+//
+//	//if (!pszExecFile || !*pszExecFile)
+//	if (szExe[0] == 0)
+//	{
+//		_ASSERTE(szExe[0] != 0);
+//		goto wrap; // ошибка?
+//	}
+//	//if (GetImageSubsystem(pszExecFile,ImageSubsystem,ImageBits))
+//	//lbGuiApp = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
+//
+//	if (lbGuiApp)
+//		goto wrap; // гуй - не перехватывать
+//
+//	// Подставлять ConEmuC.exe нужно только для того, чтобы в фаре 
+//	// включить длинный буфер и запомнить длинный результат в консоли
+//	if (gFarMode.bFarHookMode)
+//	{
+//		lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, szBaseDir, 
+//						szExe, nImageBits, nImageSubsystem, psFile, psParam);
+//	}
+//	else 
+//	if ((nImageBits == 16 ) && (nImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE))
+//	{
+//		TODO("DosBox?");
+//	}
+//	else
+//	{
+//		//lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, pszBaseDir, 
+//		//				szExe, nImageBits, nImageSubsystem, psFile, psParam);
+//		lbChanged = FALSE;
+//	}
+//
+//wrap:
+//	return lbChanged;
+//}

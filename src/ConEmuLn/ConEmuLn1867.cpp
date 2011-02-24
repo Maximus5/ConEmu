@@ -41,8 +41,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOW_DEBUG_EVENTS
 #endif
 
-struct PluginStartupInfo *InfoW1867=NULL;
-struct FarStandardFunctions *FSFW1867=NULL;
+struct PluginStartupInfo *InfoW1867 = NULL;
+struct FarStandardFunctions *FSFW1867 = NULL;
 
 GUID guid_ConEmuLn = { /* e71f78e4-585c-4ca7-9508-71d1966f7b1e */
     0xe71f78e4,
@@ -117,17 +117,42 @@ void SetStartupInfoW1867(void *aInfo)
 	*::InfoW1867 = *((struct PluginStartupInfo*)aInfo);
 	*::FSFW1867 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW1867->FSF = ::FSFW1867;
-	int nLen = lstrlenW(InfoW1867->RootKey)+16;
 
-	if (gszRootKey) free(gszRootKey);
+	DWORD nFarVer = 0;
+	if (InfoW1867->AdvControl(&guid_ConEmuLn, ACTL_GETFARVERSION, &nFarVer))
+	{
+		if (HIBYTE(HIWORD(nFarVer)) == 3)
+		{
+			gFarVersion.dwBuild = LOWORD(nFarVer);
+			gFarVersion.dwVerMajor = (HIBYTE(HIWORD(nFarVer)));
+			gFarVersion.dwVerMinor = (LOBYTE(HIWORD(nFarVer)));
+		}
+		else
+		{
+			_ASSERTE(HIBYTE(HIWORD(nFarVer)) == 3);
+		}
+	}
 
-	gszRootKey = (wchar_t*)calloc(nLen,2);
-	lstrcpyW(gszRootKey, InfoW1867->RootKey);
-	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
+	//int nLen = lstrlenW(InfoW1867->RootKey)+16;
 
-	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
+	//if (gszRootKey) free(gszRootKey);
 
-	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
+	//gszRootKey = (wchar_t*)calloc(nLen,2);
+	//lstrcpyW(gszRootKey, InfoW1867->RootKey);
+	//WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
+
+	//if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
+
+	//lstrcpyW(pszSlash+1, L"ConEmuTh\\");
+}
+
+extern BOOL gbInfoW_OK;
+HANDLE WINAPI OpenPluginW2(int OpenFrom,const GUID* Guid,INT_PTR Data)
+{
+	if (!gbInfoW_OK)
+		return INVALID_HANDLE_VALUE;
+
+	return OpenPluginWcmn(OpenFrom, Data);
 }
 
 void ExitFARW1867(void)
@@ -162,4 +187,77 @@ int ConfigureW1867(int ItemNumber)
 		return false;
 
 	return ConfigureProc(ItemNumber);
+}
+
+void SettingsLoadW1867()
+{
+	FarSettingsCreate sc = {sizeof(FarSettingsCreate), guid_ConEmuLn, INVALID_HANDLE_VALUE};
+	FarSettingsItem fsi = {0};
+	if (InfoW1867->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, (INT_PTR)&sc))
+	{
+		BYTE cVal; DWORD nVal;
+
+		for (ConEmuLnSettings *p = gSettings; p->pszValueName; p++)
+		{
+			if (p->nValueType == REG_BINARY)
+			{
+				_ASSERTE(p->nValueSize == 1);
+				cVal = (BYTE)*(BOOL*)p->pValue;
+				fsi.Name = p->pszValueName;
+				fsi.Type = FST_DATA;
+				fsi.Data.Size = 1; 
+				fsi.Data.Data = &cVal;
+				if (InfoW1867->SettingsControl(sc.Handle, SCTL_GET, 0, (INT_PTR)&fsi))
+					*((BOOL*)p->pValue) = (cVal != 0);
+			}
+			else if (p->nValueType == REG_DWORD)
+			{
+				_ASSERTE(p->nValueSize == 4);
+				fsi.Name = p->pszValueName;
+				fsi.Type = FST_DATA;
+				fsi.Data.Size = 4;
+				fsi.Data.Data = &nVal;
+				if (InfoW1867->SettingsControl(sc.Handle, SCTL_GET, 0, (INT_PTR)&fsi))
+					*((DWORD*)p->pValue) = nVal;
+			}
+		}
+
+		InfoW1867->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
+	}
+}
+void SettingsSaveW1867()
+{
+	if (!InfoW1867)
+		return;
+
+	FarSettingsCreate sc = {sizeof(FarSettingsCreate), guid_ConEmuLn, INVALID_HANDLE_VALUE};
+	FarSettingsItem fsi = {0};
+	if (InfoW1867->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, (INT_PTR)&sc))
+	{
+		BYTE cVal;
+		for (ConEmuLnSettings *p = gSettings; p->pszValueName; p++)
+		{
+			if (p->nValueType == REG_BINARY)
+			{
+				_ASSERTE(p->nValueSize == 1);
+				cVal = (BYTE)*(BOOL*)p->pValue;
+				fsi.Name = p->pszValueName;
+				fsi.Type = FST_DATA;
+				fsi.Data.Size = 1; 
+				fsi.Data.Data = &cVal;
+				InfoW1867->SettingsControl(sc.Handle, SCTL_SET, 0, (INT_PTR)&fsi);
+			}
+			else if (p->nValueType == REG_DWORD)
+			{
+				_ASSERTE(p->nValueSize == 4);
+				fsi.Name = p->pszValueName;
+				fsi.Type = FST_DATA;
+				fsi.Data.Size = 4;
+				fsi.Data.Data = p->pValue;
+				InfoW1867->SettingsControl(sc.Handle, SCTL_SET, 0, (INT_PTR)&fsi);
+			}
+		}
+
+		InfoW1867->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
+	}
 }

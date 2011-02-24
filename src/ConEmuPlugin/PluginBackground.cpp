@@ -73,6 +73,7 @@ CPluginBackground::CPluginBackground()
 	// как внешний редактор, в ConEmu останется фон от предыдущей копии фара.
 	// Пусть запущенная копия всегда очищает при старте, если плагинов нет.
 	mb_BgWasSent = TRUE;
+	mb_BgErrorShown = FALSE;
 	csBgPlugins = new MSection();
 	m_LastThSetCheck = 0;
 	memset(&m_ThSet, 0, sizeof(m_ThSet));
@@ -610,7 +611,7 @@ void CPluginBackground::UpdateBackground()
 			}
 		}
 	}
-	else
+	else // есть "отработавшие" плагины, обновить Background!
 	{
 		GdiFlush();
 		DWORD nBitSize = bi.biWidth*bi.biHeight*4;
@@ -633,11 +634,30 @@ void CPluginBackground::UpdateBackground()
 			memmove(((LPBYTE)&pIn->Background.bi)+sizeof(pIn->Background.bi), pBits, bi.biWidth*bi.biHeight*4);
 			CESERVER_REQ *pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 
+			// Вызывается ТОЛЬКО в главной нити
+			_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 			if (pOut)
 			{
 				mb_BgWasSent = TRUE;
-				TODO("Показать ошибку, если есть");
+				// Сбросим флажок "Ошибка уже была показана"
+				if (pOut->BackgroundRet.nResult == esbr_OK)
+				{
+					mb_BgErrorShown = FALSE;
+				}
+				// Показать ошибку, если есть
+				else if ((pOut->BackgroundRet.nResult > esbr_OK) && (pOut->BackgroundRet.nResult <= esbr_LastErrorNo)
+					&& (pOut->BackgroundRet.nResult != esbr_ConEmuInShutdown)
+					&& !mb_BgErrorShown)
+				{
+					mb_BgErrorShown = TRUE;
+					ShowMessage(CEBkError_ExecFailed+pOut->BackgroundRet.nResult, 0);
+				}
 				ExecuteFreeResult(pOut);
+			}
+			else if (!mb_BgErrorShown)
+			{
+				mb_BgErrorShown = TRUE;
+				ShowMessage(CEBkError_ExecFailed, 0);
 			}
 
 			ExecuteFreeResult(pIn);

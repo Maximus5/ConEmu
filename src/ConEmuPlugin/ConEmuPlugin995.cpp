@@ -46,6 +46,13 @@ struct FarStandardFunctions *FSFW995=NULL;
 
 void WaitEndSynchro995();
 
+// minimal(?) FAR version 2.0 alpha build FAR_X_VER
+int WINAPI _export GetMinFarVersionW(void)
+{
+	// svs 19.12.2010 22:52:53 +0300 - build 1765: Новая команда в FARMACROCOMMAND - MCMD_GETAREA
+	return MAKEFARVERSION(2,0,1765);
+}
+
 void GetPluginInfoW995(void *piv)
 {
 	PluginInfo *pi = (PluginInfo*)piv;
@@ -356,14 +363,28 @@ void SetStartupInfoW995(void *aInfo)
 	*::InfoW995 = *((struct PluginStartupInfo*)aInfo);
 	*::FSFW995 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW995->FSF = ::FSFW995;
-	lstrcpynW(gszRootKey, InfoW995->RootKey, MAX_PATH);
+
+	DWORD nFarVer = 0;
+	if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARVERSION, &nFarVer))
+	{
+		if (HIBYTE(LOWORD(nFarVer)) == 2)
+		{
+			gFarVersion.dwBuild = HIWORD(nFarVer);
+			gFarVersion.dwVerMajor = (HIBYTE(LOWORD(nFarVer)));
+			gFarVersion.dwVerMinor = (LOBYTE(LOWORD(nFarVer)));
+		}
+		else
+		{
+			_ASSERTE(HIBYTE(HIWORD(nFarVer)) == 2);
+		}
+	}
+
+	lstrcpynW(gszRootKey, InfoW995->RootKey, countof(gszRootKey));
 	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
-
 	if (*pszSlash == L'\\') *(pszSlash--) = 0;
-
 	while(pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
-
 	*pszSlash = 0;
+
 	/*if (!FarHwnd)
 		InitHWND((HWND)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARHWND, 0));*/
 }
@@ -1186,67 +1207,68 @@ int GetActiveWindowType995()
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return -1;
 
-	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+	//_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 
-	if (gFarVersion.dwBuild >= 1765)
+	//if (gFarVersion.dwBuild >= 1765)
+	//{
+	enum FARMACROAREA
 	{
-		enum FARMACROAREA
-		{
-			MACROAREA_OTHER             = 0,
-			MACROAREA_SHELL             = 1,
-			MACROAREA_VIEWER            = 2,
-			MACROAREA_EDITOR            = 3,
-			MACROAREA_DIALOG            = 4,
-			MACROAREA_SEARCH            = 5,
-			MACROAREA_DISKS             = 6,
-			MACROAREA_MAINMENU          = 7,
-			MACROAREA_MENU              = 8,
-			MACROAREA_HELP              = 9,
-			MACROAREA_INFOPANEL         =10,
-			MACROAREA_QVIEWPANEL        =11,
-			MACROAREA_TREEPANEL         =12,
-			MACROAREA_FINDFOLDER        =13,
-			MACROAREA_USERMENU          =14,
-			MACROAREA_AUTOCOMPLETION    =15,
-		};
+		MACROAREA_OTHER             = 0,
+		MACROAREA_SHELL             = 1,
+		MACROAREA_VIEWER            = 2,
+		MACROAREA_EDITOR            = 3,
+		MACROAREA_DIALOG            = 4,
+		MACROAREA_SEARCH            = 5,
+		MACROAREA_DISKS             = 6,
+		MACROAREA_MAINMENU          = 7,
+		MACROAREA_MENU              = 8,
+		MACROAREA_HELP              = 9,
+		MACROAREA_INFOPANEL         =10,
+		MACROAREA_QVIEWPANEL        =11,
+		MACROAREA_TREEPANEL         =12,
+		MACROAREA_FINDFOLDER        =13,
+		MACROAREA_USERMENU          =14,
+		MACROAREA_AUTOCOMPLETION    =15,
+	};
 #define MCMD_GETAREA 6
-		ActlKeyMacro area = {MCMD_GETAREA};
-		INT_PTR nArea = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &area);
+	ActlKeyMacro area = {MCMD_GETAREA};
+	INT_PTR nArea = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &area);
 
-		switch(nArea)
-		{
-			case MACROAREA_SHELL:
-			case MACROAREA_INFOPANEL:
-			case MACROAREA_QVIEWPANEL:
-			case MACROAREA_TREEPANEL:
-				return WTYPE_PANELS;
-			case MACROAREA_VIEWER:
-				return WTYPE_VIEWER;
-			case MACROAREA_EDITOR:
-				return WTYPE_EDITOR;
-			case MACROAREA_DIALOG:
-			case MACROAREA_SEARCH:
-			case MACROAREA_DISKS:
-			case MACROAREA_FINDFOLDER:
-			case MACROAREA_AUTOCOMPLETION:
-				return WTYPE_DIALOG;
-			case MACROAREA_HELP:
-				return WTYPE_HELP;
-			case MACROAREA_MAINMENU:
-			case MACROAREA_MENU:
-			case MACROAREA_USERMENU:
-				return WTYPE_VMENU;
-			case MACROAREA_OTHER: // Grabber
-				return -1;
-			default:
-				return -1;
-		}
+	switch(nArea)
+	{
+		case MACROAREA_SHELL:
+		case MACROAREA_INFOPANEL:
+		case MACROAREA_QVIEWPANEL:
+		case MACROAREA_TREEPANEL:
+			return WTYPE_PANELS;
+		case MACROAREA_VIEWER:
+			return WTYPE_VIEWER;
+		case MACROAREA_EDITOR:
+			return WTYPE_EDITOR;
+		case MACROAREA_DIALOG:
+		case MACROAREA_SEARCH:
+		case MACROAREA_DISKS:
+		case MACROAREA_FINDFOLDER:
+		case MACROAREA_AUTOCOMPLETION:
+			return WTYPE_DIALOG;
+		case MACROAREA_HELP:
+			return WTYPE_HELP;
+		case MACROAREA_MAINMENU:
+		case MACROAREA_MENU:
+		case MACROAREA_USERMENU:
+			return WTYPE_VMENU;
+		case MACROAREA_OTHER: // Grabber
+			return -1;
+		//default:
+		//	return -1;
 	}
-
-	WindowInfo WInfo = {-1};
-	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
-	return WInfo.Type;
+	//}
+	//
+	//WindowInfo WInfo = {-1};
+	//_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+	//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
+	//return WInfo.Type;
+	return -1;
 }
 
 #define FAR_UNICODE 995

@@ -414,14 +414,29 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	*::InfoA = *aInfo;
 	*::FSFA = *aInfo->FSF;
 	::InfoA->FSF = ::FSFA;
-	MultiByteToWideChar(CP_OEMCP,0,InfoA->RootKey,lstrlenA(InfoA->RootKey)+1,gszRootKey,MAX_PATH);
+
+	DWORD nFarVer = 0;
+	if (InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARVERSION, &nFarVer))
+	{
+		if (HIBYTE(LOWORD(nFarVer)) == 1)
+		{
+			gFarVersion.dwBuild = HIWORD(nFarVer);
+			gFarVersion.dwVerMajor = (HIBYTE(LOWORD(nFarVer)));
+			gFarVersion.dwVerMinor = (LOBYTE(LOWORD(nFarVer)));
+		}
+		else
+		{
+			_ASSERTE(HIBYTE(HIWORD(nFarVer)) == 1);
+		}
+	}
+
+	MultiByteToWideChar(CP_OEMCP,0,InfoA->RootKey,lstrlenA(InfoA->RootKey)+1,gszRootKey,countof(gszRootKey)-1);
+	gszRootKey[countof(gszRootKey)-1] = 0;
 	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
-
 	if (*pszSlash == L'\\') *(pszSlash--) = 0;
-
 	while(pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
-
 	*pszSlash = 0;
+
 	CommonPluginStartup();
 	//// Устарело. активация через [Read/Peek]ConsoleInput
 	////CheckMacro(TRUE);

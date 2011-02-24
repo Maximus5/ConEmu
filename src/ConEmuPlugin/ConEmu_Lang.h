@@ -34,4 +34,11 @@ enum {
 	CEInvalidConHwnd,
 	CEShellExecuteException,
 	CEColorMappingCreateError,
+	CEBkError_ExecFailed,
+	CEBkError_InvalidArg,
+	CEBkError_PluginForbidden,
+	CEBkError_ConEmuInShutdown,
+	CEBkError_Unexpected,
+	CEBkError_InvalidArgSize,
+	CEBkError_InvalidArgProc,
 	};

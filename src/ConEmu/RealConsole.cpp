@@ -4994,32 +4994,39 @@ CESERVER_REQ* CRealConsole::cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UIN
 	CESERVER_REQ* pOut = NULL;
 
 	DEBUGSTRCMD(L"GUI recieved CECMD_ONCREATEPROC\n");	
-	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ONCREATEPROCESSRET)+MAX_PATH*6);
+	pOut = ExecuteNewCmd(pIn->hdr.nCmd, 
+		sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ONCREATEPROCESSRET)
+		/*+MAX_PATH*6*/);
 	
-	DebugLogShellActivity shl;
-	shl.pszFunction = pIn->OnCreateProc.sFunction;
-	shl.pszAction = pIn->OnCreateProc.wsValue;
-	shl.pszFile   = shl.pszAction+pIn->OnCreateProc.nActionLen;
-	shl.pszParam  = shl.pszFile+pIn->OnCreateProc.nFileLen;
-	shl.bDos      = (pIn->OnCreateProc.nImageBits == 16)
-				 && (pIn->OnCreateProc.nImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE);
-	shl.nImageBits = pIn->OnCreateProc.nImageBits;
-	shl.nImageSubsystem = pIn->OnCreateProc.nImageSubsystem;
-	shl.nFlags = pIn->OnCreateProc.nFlags;
-	shl.hStdIn = (DWORD)pIn->OnCreateProc.hStdIn;
-	shl.hStdOut = (DWORD)pIn->OnCreateProc.hStdOut;
-	shl.hStdErr = (DWORD)pIn->OnCreateProc.hStdErr;
+	BOOL lbDos = (pIn->OnCreateProc.nImageBits == 16)
+		&& (pIn->OnCreateProc.nImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE);
 
 	if (ghOpWnd && gpSet->hDebug)
 	{
-		SendMessage(gpSet->hDebug, DBGMSG_LOG_SHELL, DBGMSG_LOG_SHELL_MAGIC, (LPARAM)&shl);
+		DebugLogShellActivity *shl = (DebugLogShellActivity*)calloc(sizeof(DebugLogShellActivity),1);
+		wcscpy_c(shl->szFunction, pIn->OnCreateProc.sFunction);
+		shl->pszAction = lstrdup(pIn->OnCreateProc.wsValue);
+		shl->pszFile   = lstrdup(pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen);
+		shl->pszParam  = lstrdup(pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen+pIn->OnCreateProc.nFileLen);
+		shl->bDos = lbDos;
+		shl->nImageBits = pIn->OnCreateProc.nImageBits;
+		shl->nImageSubsystem = pIn->OnCreateProc.nImageSubsystem;
+		shl->nShellFlags = pIn->OnCreateProc.nShellFlags;
+		shl->nCreateFlags = pIn->OnCreateProc.nCreateFlags;
+		shl->nStartFlags = pIn->OnCreateProc.nStartFlags;
+		shl->nShowCmd = pIn->OnCreateProc.nShowCmd;
+		shl->hStdIn = (DWORD)pIn->OnCreateProc.hStdIn;
+		shl->hStdOut = (DWORD)pIn->OnCreateProc.hStdOut;
+		shl->hStdErr = (DWORD)pIn->OnCreateProc.hStdErr;
+
+		PostMessage(gpSet->hDebug, DBGMSG_LOG_SHELL, DBGMSG_LOG_SHELL_MAGIC, (LPARAM)shl);
 	}
 	
 	if (pIn->OnCreateProc.nImageBits > 0)
 	{
 		TODO("!!! DosBox allowed?");
 		if (gpSet->AutoBufferHeight // LongConsoleOutput
-			|| (shl.bDos && FALSE)) // DosBox!!!
+			|| (lbDos && FALSE)) // DosBox!!!
 		{
 			pOut->OnCreateProcRet.bContinue = TRUE;
 			//pOut->OnCreateProcRet.bUnicode = TRUE;
@@ -5028,11 +5035,11 @@ CESERVER_REQ* CRealConsole::cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UIN
 			TODO("!!! DosBox allowed?");
 			pOut->OnCreateProcRet.bAllowDosbox = FALSE;
 			//pOut->OnCreateProcRet.nFileLen = pIn->OnCreateProc.nFileLen;
-			pOut->OnCreateProcRet.nBaseLen = lstrlen(gpConEmu->ms_ConEmuBaseDir)+2; // +слеш+\0
+			//pOut->OnCreateProcRet.nBaseLen = lstrlen(gpConEmu->ms_ConEmuBaseDir)+2; // +слеш+\0
 			
-			//_wcscpy_c(pOut->OnCreateProcRet.wsValue, MAX_PATH+1, pszFile);
-			_wcscpy_c(pOut->OnCreateProcRet.wsValue, MAX_PATH+1, gpConEmu->ms_ConEmuBaseDir);
-			_wcscat_c(pOut->OnCreateProcRet.wsValue, MAX_PATH+1, L"\\");
+			////_wcscpy_c(pOut->OnCreateProcRet.wsValue, MAX_PATH+1, pszFile);
+			//_wcscpy_c(pOut->OnCreateProcRet.wsValue, MAX_PATH+1, gpConEmu->ms_ConEmuBaseDir);
+			//_wcscat_c(pOut->OnCreateProcRet.wsValue, MAX_PATH+1, L"\\");
 		}
 	}
 	

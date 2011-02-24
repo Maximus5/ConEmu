@@ -467,10 +467,10 @@ int __stdcall ConsoleMain()
 			if (iHookRc != 0)
 			{
 				DWORD nErrCode = GetLastError();
-				_ASSERTE(iHookRc == 0);
+				//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
 				wchar_t szDbgMsg[255], szTitle[128];
 				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
+				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.M, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
 				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 			}
 
@@ -1546,11 +1546,23 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				if (iHookRc == 0)
 					return CERR_HOOKS_WAS_SET;
 
-				_ASSERTE(iHookRc == 0);
+				// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
+				DWORD nErrCode = GetLastError();
+				//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
+				wchar_t szDbgMsg[255], szTitle[128];
+				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
+				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 			}
 			else
 			{
-				_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
+				//_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
+				wchar_t szDbgMsg[512], szTitle[128];
+				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, CmdLine parsing FAILED (%u,%u,%u,%u,%u)!\n%s",
+					GetCurrentProcessId(), pi.hProcess, pi.hThread, pi.dwProcessId, pi.dwThreadId, lbForceGui,
+					szArg);
+				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 				return CERR_HOOKS_FAILED;
 			}
 

@@ -4,7 +4,7 @@ EXPORTS
 	GetPluginInfoW=GetPluginInfoWcmn
 	GetMinFarVersionW
 	ExitFARW
-	OpenPluginW
+	OpenPluginW=OpenPluginW1
 	ConfigureW
 ;  Far3
    GetGlobalInfoW

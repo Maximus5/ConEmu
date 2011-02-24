@@ -136,7 +136,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	WARNING("≈сли указан mdw_Timeout - создать нить и выполн€ть команду в ней. ќжидать нить не более и прибить ее, если пришел Timeout");
 	MCHKHEAP
 
-	if (nCmd<0 || nCmd>MAXCMDCOUNT)
+	if (nCmd<CMD_FIRST_FAR_CMD || nCmd>CMD_LAST_FAR_CMD)
 	{
 		TCHAR szError[128];
 		_wsprintf(szError, SKIPLEN(countof(szError)) _T("Invalid command id (%i)!"), nCmd);

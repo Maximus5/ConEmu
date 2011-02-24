@@ -204,7 +204,7 @@ extern DWORD gnSelfPID, gnMainThreadId;
 //extern int lastModifiedStateW;
 //extern bool gbHandleOneRedraw; //, gbHandleOneRedrawCh;
 //extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX],
-extern wchar_t* gszRootKey;
+//extern wchar_t* gszRootKey;
 //extern int maxTabCount, lastWindowCount;
 //extern CESERVER_REQ* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 //extern CESERVER_REQ* gpCmdRet;
@@ -262,6 +262,21 @@ void FUNC_Y(GetPluginInfoW)(void* piv);
 HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item);
 HANDLE WINAPI OpenPluginW1(int OpenFrom,INT_PTR Item);
 HANDLE WINAPI OpenPluginW2(int OpenFrom,const GUID* Guid,INT_PTR Data);
+
+BOOL SettingsLoad(LPCWSTR pszName, DWORD* pValue);
+BOOL SettingsLoadReg(LPCWSTR pszRegKey, LPCWSTR pszName, DWORD* pValue);
+BOOL SettingsLoadA(LPCWSTR pszName, DWORD* pValue);
+BOOL FUNC_X(SettingsLoadW)(LPCWSTR pszName, DWORD* pValue);
+BOOL FUNC_Y(SettingsLoadW)(LPCWSTR pszName, DWORD* pValue);
+void SettingsLoadOther(LPCWSTR pszRegKey);
+void SettingsLoadOtherA();
+void FUNC_X(SettingsLoadOtherW)();
+void FUNC_Y(SettingsLoadOtherW)();
+void SettingsSave(LPCWSTR pszName, DWORD* pValue);
+void SettingsSaveReg(LPCWSTR pszRegKey, LPCWSTR pszName, DWORD* pValue);
+void SettingsSaveA(LPCWSTR pszName, DWORD* pValue);
+void FUNC_X(SettingsSaveW)(LPCWSTR pszName, DWORD* pValue);
+void FUNC_Y(SettingsSaveW)(LPCWSTR pszName, DWORD* pValue);
 
 void EntryPoint(int OpenFrom,INT_PTR Item);
 BOOL LoadFarVersion();

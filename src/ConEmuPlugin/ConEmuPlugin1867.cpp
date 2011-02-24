@@ -399,14 +399,30 @@ void SetStartupInfoW1867(void *aInfo)
 	*::InfoW1867 = *((struct PluginStartupInfo*)aInfo);
 	*::FSFW1867 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW1867->FSF = ::FSFW1867;
-	lstrcpynW(gszRootKey, InfoW1867->RootKey, MAX_PATH);
-	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
 
-	if (*pszSlash == L'\\') *(pszSlash--) = 0;
+	DWORD nFarVer = 0;
+	if (InfoW1867->AdvControl(&guid_ConEmu, ACTL_GETFARVERSION, &nFarVer))
+	{
+		if (HIBYTE(HIWORD(nFarVer)) == 3)
+		{
+			gFarVersion.dwBuild = LOWORD(nFarVer);
+			gFarVersion.dwVerMajor = (HIBYTE(HIWORD(nFarVer)));
+			gFarVersion.dwVerMinor = (LOBYTE(HIWORD(nFarVer)));
+			InitRootKey();
+		}
+		else
+		{
+			_ASSERTE(HIBYTE(HIWORD(nFarVer)) == 3);
+		}
+	}
+	//lstrcpynW(gszRootKey, InfoW1867->RootKey, MAX_PATH);
+	//WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
 
-	while(pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
+	//if (*pszSlash == L'\\') *(pszSlash--) = 0;
 
-	*pszSlash = 0;
+	//while(pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
+
+	//*pszSlash = 0;
 	/*if (!FarHwnd)
 		InitHWND((HWND)InfoW1867->AdvControl(&guid_ConEmu, ACTL_GETFARHWND, 0));*/
 }

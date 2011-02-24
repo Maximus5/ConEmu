@@ -7,6 +7,7 @@ class CPluginBackground
 		struct RegisterBackgroundArg *mp_BgPlugins;
 		int mn_BgPluginsCount, mn_BgPluginsMax;
 		BOOL mb_BgWasSent;
+		BOOL mb_BgErrorShown;
 		MSection *csBgPlugins;
 		DWORD m_LastThSetCheck;
 		BOOL mb_ThNeedLoad;

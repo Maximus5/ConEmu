@@ -481,6 +481,7 @@ class CConEmuMain
 		void OnAllVConClosed();
 		LRESULT OnUpdateScrollInfo(BOOL abPosted = FALSE);
 		void OnPanelViewSettingsChanged(BOOL abSendChanges=TRUE);
+		void OnDebugLogSettingsChanged();
 };
 
 extern CConEmuMain *gpConEmu;

@@ -40,8 +40,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOW_DEBUG_EVENTS
 #endif
 
-struct PluginStartupInfo *InfoW995=NULL;
-struct FarStandardFunctions *FSFW995=NULL;
+struct PluginStartupInfo *InfoW995 = NULL;
+struct FarStandardFunctions *FSFW995 = NULL;
+static wchar_t* gszRootKeyW995  = NULL;
 
 void GetPluginInfoW995(void *piv)
 {
@@ -74,17 +75,38 @@ void SetStartupInfoW995(void *aInfo)
 	*::InfoW995 = *((struct PluginStartupInfo*)aInfo);
 	*::FSFW995 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW995->FSF = ::FSFW995;
+
+	DWORD nFarVer = 0;
+	if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARVERSION, &nFarVer))
+	{
+		if (HIBYTE(LOWORD(nFarVer)) == 2)
+		{
+			gFarVersion.dwBuild = HIWORD(nFarVer);
+			gFarVersion.dwVerMajor = (HIBYTE(LOWORD(nFarVer)));
+			gFarVersion.dwVerMinor = (LOBYTE(LOWORD(nFarVer)));
+		}
+		else
+		{
+			_ASSERTE(HIBYTE(HIWORD(nFarVer)) == 2);
+		}
+	}
+
 	int nLen = lstrlenW(InfoW995->RootKey)+16;
-
-	if (gszRootKey) free(gszRootKey);
-
-	gszRootKey = (wchar_t*)calloc(nLen,2);
-	lstrcpyW(gszRootKey, InfoW995->RootKey);
-	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
-
+	if (gszRootKeyW995) free(gszRootKeyW995);
+	gszRootKeyW995 = (wchar_t*)calloc(nLen,2);
+	lstrcpyW(gszRootKeyW995, InfoW995->RootKey);
+	WCHAR* pszSlash = gszRootKeyW995+lstrlenW(gszRootKeyW995)-1;
 	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
-
 	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
+}
+
+extern BOOL gbInfoW_OK;
+HANDLE WINAPI _export OpenPluginW1(int OpenFrom,INT_PTR Item)
+{
+	if (!gbInfoW_OK)
+		return INVALID_HANDLE_VALUE;
+
+	return OpenPluginWcmn(OpenFrom, Item);
 }
 
 void ExitFARW995(void)
@@ -99,6 +121,12 @@ void ExitFARW995(void)
 	{
 		free(FSFW995);
 		FSFW995=NULL;
+	}
+
+	if (gszRootKeyW995)
+	{
+		free(gszRootKeyW995);
+		gszRootKeyW995 = NULL;
 	}
 }
 
@@ -119,4 +147,13 @@ int ConfigureW995(int ItemNumber)
 		return false;
 
 	return ConfigureProc(ItemNumber);
+}
+
+void SettingsLoadW995()
+{
+	SettingsLoadReg(gszRootKeyW995);
+}
+void SettingsSaveW995()
+{
+	SettingsSaveReg(gszRootKeyW995);
 }

@@ -89,6 +89,7 @@ $(OBJDIR)\ConEmuHooks.obj \
 $(OBJDIR)\ConEmuSrv.obj \
 $(OBJDIR)\execute.obj \
 $(OBJDIR)\SetHook.obj \
+$(OBJDIR)\ShellProcessor.obj \
 $(OBJDIR)\WinObjects.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\Common.obj \
@@ -345,6 +346,8 @@ $(OBJDIR)\ConEmuSrv.obj: ConEmuSrv.cpp
 $(OBJDIR)\execute.obj: ..\common\execute.cpp ..\common\execute.h
 
 $(OBJDIR)\SetHook.obj: ..\common\SetHook.cpp ..\common\SetHook.h
+
+$(OBJDIR)\ShellProcessor.obj: ShellProcessor.cpp ShellProcessor.h
 
 $(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp ..\common\WinObjects.h
 

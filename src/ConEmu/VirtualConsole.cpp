@@ -4517,7 +4517,7 @@ UINT CVirtualConsole::IsBackgroundValid(CESERVER_REQ_SETBACKGROUND* apImgData) c
 }
 
 // вызывается при получении нового Background
-enum SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData)
+SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData)
 {
 	if (!this) return esbr_Unexpected;
 

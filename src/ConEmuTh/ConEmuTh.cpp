@@ -81,7 +81,7 @@ DWORD gnSelfPID = 0;
 DWORD gnMainThreadId = 0;
 HANDLE ghDisplayThread = NULL; DWORD gnDisplayThreadId = 0;
 //HWND ghLeftView = NULL, ghRightView = NULL;
-wchar_t* gszRootKey = NULL;
+//wchar_t* gszRootKey = NULL;
 FarVersion gFarVersion;
 //HMODULE ghConEmuDll = NULL;
 RegisterPanelView_t gfRegisterPanelView = NULL;
@@ -256,12 +256,13 @@ void EntryPoint(int OpenFrom,INT_PTR Item)
 
 	HKEY hk = NULL;
 
-	if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL))
-	{
-		RegSetValueEx(hk, pi->bLeftPanel ? L"LeftPanelView" : L"RightPanelView", 0,
-		              REG_DWORD, (LPBYTE)&dwMode, sizeof(dwMode));
-		RegCloseKey(hk);
-	}
+	SettingsSave(pi->bLeftPanel ? L"LeftPanelView" : L"RightPanelView", &dwMode);
+	//if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL))
+	//{
+	//	RegSetValueEx(hk, pi->bLeftPanel ? L"LeftPanelView" : L"RightPanelView", 0,
+	//	              REG_DWORD, (LPBYTE)&dwMode, sizeof(dwMode));
+	//	RegCloseKey(hk);
+	//}
 
 	return;
 }
@@ -542,7 +543,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	else
 		FUNC_X(SetStartupInfoW)(aInfo);
 
-	_ASSERTE(gszRootKey!=NULL && *gszRootKey!=0);
+	//_ASSERTE(gszRootKey!=NULL && *gszRootKey!=0);
 	ReloadResourcesW();
 	gbInfoW_OK = TRUE;
 	StartPlugin(FALSE);
@@ -580,17 +581,19 @@ void StartPlugin(BOOL abManual)
 
 	HKEY hk = NULL;
 
-	if (!RegOpenKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, KEY_READ, &hk))
+	//if (!RegOpenKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, KEY_READ, &hk))
 	{
-		DWORD dwModes[2], dwSize = 4;
+		DWORD dwModes[2] = {0,0}; //, dwSize = 4;
+		SettingsLoad(L"LeftPanelView", dwModes);
+		SettingsLoad(L"RightPanelView", dwModes+1);
 
-		if (RegQueryValueEx(hk, L"LeftPanelView", NULL, NULL, (LPBYTE)dwModes, &(dwSize=4)))
-			dwModes[0] = 0;
+		//if (RegQueryValueEx(hk, L"LeftPanelView", NULL, NULL, (LPBYTE)dwModes, &(dwSize=4)))
+		//	dwModes[0] = 0;
 
-		if (RegQueryValueEx(hk, L"RightPanelView", NULL, NULL, (LPBYTE)(dwModes+1), &(dwSize=4)))
-			dwModes[1] = 0;
+		//if (RegQueryValueEx(hk, L"RightPanelView", NULL, NULL, (LPBYTE)(dwModes+1), &(dwSize=4)))
+		//	dwModes[1] = 0;
 
-		RegCloseKey(hk);
+		//RegCloseKey(hk);
 
 		if (ghDisplayThread && gnDisplayThreadId == 0)
 		{
@@ -690,10 +693,10 @@ void ExitPlugin(void)
 		LocalFree(gpLastSynchroArg); gpLastSynchroArg = NULL;
 	}
 
-	if (gszRootKey)
-	{
-		free(gszRootKey); gszRootKey = NULL;
-	}
+	//if (gszRootKey)
+	//{
+	//	free(gszRootKey); gszRootKey = NULL;
+	//}
 
 #ifdef _DEBUG
 
@@ -2082,36 +2085,40 @@ void CheckVarsInitialized()
 		// Загрузить из реестра настройки PanelTabs
 		gFarInfo.PanelTabs.SeparateTabs = gFarInfo.PanelTabs.ButtonColor = -1;
 
-		if (gszRootKey && *gszRootKey)
-		{
-			int nLen = lstrlenW(gszRootKey);
-			int cchSize = nLen+32;
-			wchar_t* pszTabsKey = (wchar_t*)malloc(cchSize*2);
-			_wcscpy_c(pszTabsKey, cchSize, gszRootKey);
-			pszTabsKey[nLen-1] = 0;
-			wchar_t* pszSlash = wcsrchr(pszTabsKey, L'\\');
 
-			if (pszSlash)
-			{
-				_wcscpy_c(pszSlash, cchSize-(pszSlash-pszTabsKey), L"\\Plugins\\PanelTabs");
-				HKEY hk;
+		// Перезагрузить настройки PanelTabs
+		gFarInfo.PanelTabs.SeparateTabs = 1; gFarInfo.PanelTabs.ButtonColor = 0x1B; // умолчания...
+		if (gFarVersion.dwVerMajor == 1)
+			SettingsLoadOtherA();
+		else if (gFarVersion.dwBuild>=FAR_Y_VER)
+			FUNC_Y(SettingsLoadOtherW)();
+		else
+			FUNC_X(SettingsLoadOtherW)();
 
-				if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, pszTabsKey, 0, KEY_READ, &hk))
-				{
-					DWORD dwVal, dwSize;
-
-					if (!RegQueryValueExW(hk, L"SeparateTabs", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
-						gFarInfo.PanelTabs.SeparateTabs = dwVal ? 1 : 0;
-
-					if (!RegQueryValueExW(hk, L"ButtonColor", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
-						gFarInfo.PanelTabs.ButtonColor = dwVal & 0xFF;
-
-					RegCloseKey(hk);
-				}
-			}
-
-			free(pszTabsKey);
-		}
+		//if (gszRootKey && *gszRootKey)
+		//{
+		//	int nLen = lstrlenW(gszRootKey);
+		//	int cchSize = nLen+32;
+		//	wchar_t* pszTabsKey = (wchar_t*)malloc(cchSize*2);
+		//	_wcscpy_c(pszTabsKey, cchSize, gszRootKey);
+		//	pszTabsKey[nLen-1] = 0;
+		//	wchar_t* pszSlash = wcsrchr(pszTabsKey, L'\\');
+		//	if (pszSlash)
+		//	{
+		//		_wcscpy_c(pszSlash, cchSize-(pszSlash-pszTabsKey), L"\\Plugins\\PanelTabs");
+		//		HKEY hk;
+		//		if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, pszTabsKey, 0, KEY_READ, &hk))
+		//		{
+		//			DWORD dwVal, dwSize;
+		//			if (!RegQueryValueExW(hk, L"SeparateTabs", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
+		//				gFarInfo.PanelTabs.SeparateTabs = dwVal ? 1 : 0;
+		//			if (!RegQueryValueExW(hk, L"ButtonColor", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
+		//				gFarInfo.PanelTabs.ButtonColor = dwVal & 0xFF;
+		//			RegCloseKey(hk);
+		//		}
+		//	}
+		//	free(pszTabsKey);
+		//}
 	}
 
 	if (!pviLeft.pSection)
@@ -2281,6 +2288,84 @@ BOOL GetFarRect(SMALL_RECT* prcFarRect)
 	return lbFarBuffer;
 }
 
+BOOL SettingsLoad(LPCWSTR pszName, DWORD* pValue)
+{
+	if (gFarVersion.dwVerMajor == 1)
+		return SettingsLoadA(pszName, pValue);
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		return FUNC_Y(SettingsLoadW)(pszName, pValue);
+	else
+		return FUNC_X(SettingsLoadW)(pszName, pValue);
+}
+BOOL SettingsLoadReg(LPCWSTR pszRegKey, LPCWSTR pszName, DWORD* pValue)
+{
+	BOOL lbValue = FALSE;
+	HKEY hk = NULL;
+	if (!RegOpenKeyExW(HKEY_CURRENT_USER, pszRegKey, 0, KEY_READ, &hk))
+	{
+		DWORD dwValue, dwSize;
+		if (!RegQueryValueEx(hk, pszName, NULL, NULL, (LPBYTE)&dwValue, &(dwSize=4)))
+		{
+			*pValue = dwValue;
+			lbValue = TRUE;
+		}
+		//RegSetValueEx(hk, pi->bLeftPanel ? L"LeftPanelView" : L"RightPanelView", 0,
+		//	REG_DWORD, (LPBYTE)&dwMode, sizeof(dwMode));
+		//if (RegQueryValueEx(hk, L"LeftPanelView", NULL, NULL, (LPBYTE)dwModes, &(dwSize=4)))
+		RegCloseKey(hk);
+	}
+	return lbValue;
+}
+void SettingsSave(LPCWSTR pszName, DWORD* pValue)
+{
+	if (gFarVersion.dwVerMajor == 1)
+		return SettingsSaveA(pszName, pValue);
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		return FUNC_Y(SettingsSaveW)(pszName, pValue);
+	else
+		return FUNC_X(SettingsSaveW)(pszName, pValue);
+}
+void SettingsSaveReg(LPCWSTR pszRegKey, LPCWSTR pszName, DWORD* pValue)
+{
+	HKEY hk = NULL;
+	if (!RegCreateKeyExW(HKEY_CURRENT_USER, pszRegKey, 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL))
+	{
+		RegSetValueEx(hk, pszName, 0, REG_DWORD, (LPBYTE)pValue, sizeof(*pValue));
+		RegCloseKey(hk);
+	}
+}
 
+void SettingsLoadOther(LPCWSTR pszRegKey)
+{
+	_ASSERTE(gFarVersion.dwVerMajor<=2);
+	if (pszRegKey && *pszRegKey)
+	{
+		int nLen = lstrlenW(pszRegKey);
+		int cchSize = nLen+32;
+		wchar_t* pszTabsKey = (wchar_t*)malloc(cchSize*2);
+		_wcscpy_c(pszTabsKey, cchSize, pszRegKey);
+		pszTabsKey[nLen-1] = 0;
+		wchar_t* pszSlash = wcsrchr(pszTabsKey, L'\\');
 
+		if (pszSlash)
+		{
+			_wcscpy_c(pszSlash, cchSize-(pszSlash-pszTabsKey), L"\\Plugins\\PanelTabs");
+			HKEY hk;
 
+			if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, pszTabsKey, 0, KEY_READ, &hk))
+			{
+				DWORD dwVal, dwSize;
+
+				if (!RegQueryValueExW(hk, L"SeparateTabs", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
+					gFarInfo.PanelTabs.SeparateTabs = dwVal ? 1 : 0;
+
+				if (!RegQueryValueExW(hk, L"ButtonColor", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
+					gFarInfo.PanelTabs.ButtonColor = dwVal & 0xFF;
+
+				RegCloseKey(hk);
+			}
+		}
+
+		free(pszTabsKey);
+	}
+}

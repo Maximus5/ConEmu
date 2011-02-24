@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include "ConEmuC.h"
+#include "ShellProcessor.h"
 
 
 #if defined(__GNUC__)
@@ -83,11 +84,15 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ghOurModule = (HMODULE)hModule;
 			ghConWnd = GetConsoleWindow();
 			gnSelfPID = GetCurrentProcessId();
-#ifdef SHOW_STARTED_MSGBOX
 
+			#ifdef SHOW_STARTED_MSGBOX
 			if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuHk*.dll loaded", "ConEmu hooks", 0);
+			#endif
+			#ifdef _DEBUG
+			DWORD dwConMode = -1;
+			GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwConMode);
+			#endif
 
-#endif
 			//_ASSERTE(ghHeap == NULL);
 			//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 			HeapInitialize();
@@ -116,27 +121,34 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			}
 
 			// Открыть мэппинг консоли и попытаться получить HWND GUI, PID сервера, и пр...
-			if (!gbSkipInjects && ghConWnd)
+			if (ghConWnd)
 			{
 				MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
 				ConInfo.InitName(CECONMAPNAME, (DWORD)ghConWnd);
 				CESERVER_CONSOLE_MAPPING_HDR *pInfo = ConInfo.Open();
-				if (pInfo 
-					&& (pInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
-					//&& (pInfo->nProtocolVersion == CESERVER_REQ_VER)
-					)
+				if (pInfo)
 				{
-					if (pInfo->hConEmuRoot && IsWindow(pInfo->hConEmuRoot))
+					if (pInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
 					{
-						ghConEmuWnd = pInfo->hConEmuRoot;
-						if (pInfo->hConEmuWnd && IsWindow(pInfo->hConEmuWnd))
-							ghConEmuWndDC = pInfo->hConEmuWnd;
+						if (pInfo->hConEmuRoot && IsWindow(pInfo->hConEmuRoot))
+						{
+							ghConEmuWnd = pInfo->hConEmuRoot;
+							if (pInfo->hConEmuWnd && IsWindow(pInfo->hConEmuWnd))
+								ghConEmuWndDC = pInfo->hConEmuWnd;
+						}
+						if (pInfo->nServerPID && pInfo->nServerPID != gnSelfPID)
+							gnServerPID = pInfo->nServerPID;
+						ConInfo.CloseMap();
 					}
-					if (pInfo->nServerPID && pInfo->nServerPID != gnSelfPID)
-						gnServerPID = pInfo->nServerPID;
-					ConInfo.CloseMap();
+					else
+					{
+						_ASSERTE(pInfo->cbSize == sizeof(CESERVER_CONSOLE_MAPPING_HDR));
+					}
 				}
+			}
 
+			if (!gbSkipInjects && ghConWnd)
+			{
 				InitializeConsoleInputSemaphore();
 			}
 			
@@ -148,12 +160,15 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			#endif
 			GetImageSubsystem(nImageSubsystem,nImageBits);
 
-			wchar_t szExeName[MAX_PATH+1];
+			wchar_t szExeName[MAX_PATH+1], szBaseDir[MAX_PATH+2];
 			if (!GetModuleFileName(NULL, szExeName, countof(szExeName))) szExeName[0] = 0;
-			CESERVER_REQ* pIn = NewCmdOnCreateW(
-				gbSkipInjects ? eHooksLoaded : eInjectingHooks, L"", 0, 
-				szExeName, GetCommandLineW(), nImageBits, nImageSubsystem,
-				GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
+			CESERVER_REQ* pIn = CShellProc::NewCmdOnCreate(
+				gbSkipInjects ? eHooksLoaded : eInjectingHooks,
+				L"", szExeName, GetCommandLineW(),
+				NULL, NULL, NULL, NULL, // flags
+				nImageBits, nImageSubsystem,
+				GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE),
+				szBaseDir);
 			if (pIn)
 			{
 				//HWND hConWnd = GetConsoleWindow();

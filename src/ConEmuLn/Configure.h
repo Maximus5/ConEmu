@@ -192,7 +192,7 @@ static int ConfigureProc(int ItemNumber)
 	HANDLE hDlg = NULL;
 	#if FAR_UNICODE>=1867
 		hDlg = InfoT->DialogInit(&guid_ConEmuLn, &guid_ConEmuLnCfgDlg,
-								 -1, -1, 76, height,
+								 -1, -1, 42, height,
 								 NULL/*L"Configure"*/, items, countof(items), 
 								 0, 0/*Flags*/, ConfigDlgProc, 0);
 	#else
@@ -207,36 +207,37 @@ static int ConfigureProc(int ItemNumber)
 
 	if (dialog_res != -1 && dialog_res != cfgCancel)
 	{
-		HKEY hkey = NULL;
+		//HKEY hkey = NULL;
 
-		if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &hkey, NULL))
-		{
-			BYTE cVal; DWORD nVal = gcrLinesColor;
-			gbBackgroundEnabled = cVal = _GetCheck(cfgShowLines);
-			RegSetValueExW(hkey, L"PluginEnabled", 0, REG_BINARY, &cVal, sizeof(cVal));
-			const FAR_CHAR* psz;
-			FAR_CHAR* endptr = NULL;
+		//if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &hkey, NULL))
+		//{
+		BYTE cVal; DWORD nVal = gcrLinesColor;
+		gbBackgroundEnabled = cVal = _GetCheck(cfgShowLines);
+		//RegSetValueExW(hkey, L"PluginEnabled", 0, REG_BINARY, &cVal, sizeof(cVal));
+		const FAR_CHAR* psz;
+		FAR_CHAR* endptr = NULL;
 #ifdef FAR_UNICODE
-			psz = GetDataPtr(cfgColor);
-			gcrLinesColor = nVal = wcstoul(psz, &endptr, 16);
+		psz = GetDataPtr(cfgColor);
+		gcrLinesColor = nVal = wcstoul(psz, &endptr, 16);
 #else
-			psz = GetDataPtr(cfgColor);
-			gcrLinesColor = nVal = strtoul(psz, &endptr, 16);
+		psz = GetDataPtr(cfgColor);
+		gcrLinesColor = nVal = strtoul(psz, &endptr, 16);
 #endif
-			RegSetValueExW(hkey, L"LinesColor", 0, REG_DWORD, (LPBYTE)&nVal, sizeof(nVal));
-			gbHilightPlugins = cVal = _GetCheck(cfgHilight);
-			RegSetValueExW(hkey, L"HilightPlugins", 0, REG_BINARY, &cVal, sizeof(cVal));
-			endptr = NULL;
+		//RegSetValueExW(hkey, L"LinesColor", 0, REG_DWORD, (LPBYTE)&nVal, sizeof(nVal));
+		gbHilightPlugins = cVal = _GetCheck(cfgHilight);
+		//RegSetValueExW(hkey, L"HilightPlugins", 0, REG_BINARY, &cVal, sizeof(cVal));
+		endptr = NULL;
 #ifdef FAR_UNICODE
-			psz = GetDataPtr(cfgPlugBack);
-			gcrHilightPlugBack = nVal = wcstoul(psz, &endptr, 16);
+		psz = GetDataPtr(cfgPlugBack);
+		gcrHilightPlugBack = nVal = wcstoul(psz, &endptr, 16);
 #else
-			psz = GetDataPtr(cfgPlugBack);
-			gcrHilightPlugBack = nVal = strtoul(psz, &endptr, 16);
+		psz = GetDataPtr(cfgPlugBack);
+		gcrHilightPlugBack = nVal = strtoul(psz, &endptr, 16);
 #endif
-			RegSetValueExW(hkey, L"HilightPlugBack", 0, REG_DWORD, (LPBYTE)&nVal, sizeof(nVal));
-			RegCloseKey(hkey);
-		}
+		//RegSetValueExW(hkey, L"HilightPlugBack", 0, REG_DWORD, (LPBYTE)&nVal, sizeof(nVal));
+		//RegCloseKey(hkey);
+		//}
+		SettingsSave();
 	}
 	else
 	{

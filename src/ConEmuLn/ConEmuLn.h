@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 extern HMODULE ghPluginModule;
-extern wchar_t* gszRootKey;
+//extern wchar_t* gszRootKey;
 extern FarVersion gFarVersion;
 
 //Settings
@@ -50,9 +50,31 @@ extern BOOL gbBackgroundEnabled;
 extern COLORREF gcrLinesColor;
 extern BOOL gbHilightPlugins;
 extern COLORREF gcrHilightPlugBack;
+struct ConEmuLnSettings
+{
+	LPCWSTR pszValueName;
+	LPBYTE  pValue;
+	DWORD   nValueType;
+	DWORD   nValueSize;
+};
+extern ConEmuLnSettings gSettings[];
+void SettingsLoad();
+void SettingsLoadReg(LPCWSTR pszRegKey);
+void SettingsLoadA();
+void FUNC_X(SettingsLoadW)();
+void FUNC_Y(SettingsLoadW)();
+void SettingsSave();
+void SettingsSaveReg(LPCWSTR pszRegKey);
+void SettingsSaveA();
+void FUNC_X(SettingsSaveW)();
+void FUNC_Y(SettingsSaveW)();
 
 void FUNC_X(GetPluginInfoW)(void *piv);
 void FUNC_Y(GetPluginInfoW)(void *piv);
+
+HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item);
+HANDLE WINAPI OpenPluginW1(int OpenFrom,INT_PTR Item);
+HANDLE WINAPI OpenPluginW2(int OpenFrom,const GUID* Guid,INT_PTR Data);
 
 BOOL LoadFarVersion();
 int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk);

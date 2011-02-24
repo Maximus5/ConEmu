@@ -127,6 +127,7 @@ HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
 HANDLE ghSetWndSendTabsEvent = NULL;
 FarVersion gFarVersion = {0};
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
+// gszRootKey используется ТОЛЬКО для ЧТЕНИЯ настроек PanelTabs (SeparateTabs/ButtonColors)
 WCHAR gszRootKey[MAX_PATH*2]; // НЕ ВКЛЮЧАЯ "\\Plugins"
 int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
 CESERVER_REQ* gpTabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
@@ -281,12 +282,6 @@ class CommandThreads
 
 CommandThreads *ghCommandThreads;
 
-
-// minimal(?) FAR version 2.0 alpha build FAR_X_VER
-int WINAPI _export GetMinFarVersionW(void)
-{
-	return MAKEFARVERSION(2,0,FAR_X_VER);
-}
 
 void WINAPI _export GetPluginInfoWcmn(void *piv)
 {
@@ -958,7 +953,15 @@ VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs)
 // и в вызывающую функцию (ФАРа?) вернется то, что проставлено в pArgs->lpResult & pArgs->lArguments[...]
 BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
 {
-	if (!pArgs->bMainThread) return TRUE;  // обработку делаем только в основной нити
+	if (!pArgs->bMainThread)
+		return TRUE;  // обработку делаем только в основной нити
+		
+	//// Выставить флажок "Жив" можно и при вызове из плагина
+	//if (gpConMapInfo && gpFarInfo && gpFarInfoMapping)
+	//	TouchReadPeekConsoleInputs(1);
+		
+	//if (pArgs->IsExecutable != HEO_Executable)
+	//	return TRUE;  // и только при вызове из far.exe
 
 	if (pArgs->lArguments[2] == 1)
 	{
@@ -1020,7 +1023,15 @@ VOID WINAPI OnConsolePeekInputPost(HookCallbackArg* pArgs)
 // и в вызывающую функцию (ФАРа?) вернется то, что проставлено в pArgs->lpResult & pArgs->lArguments[...]
 BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 {
-	if (!pArgs->bMainThread) return TRUE;  // обработку делаем только в основной нити
+	if (!pArgs->bMainThread)
+		return TRUE;  // обработку делаем только в основной нити
+		
+	//// Выставить флажок "Жив" можно и при вызове из плагина
+	//if (gpConMapInfo && gpFarInfo && gpFarInfoMapping)
+	//	TouchReadPeekConsoleInputs(0);
+	//	
+	//if (pArgs->IsExecutable != HEO_Executable)
+	//	return TRUE;  // и только при вызове из far.exe
 
 	if (pArgs->lArguments[2] == 1)
 	{
@@ -1160,7 +1171,9 @@ VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
 BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs)
 {
 	if (!pArgs->bMainThread)
-		return TRUE; // обработку делаем только в основной нити
+		return TRUE;  // обработку делаем только в основной нити
+	//if (pArgs->IsExecutable != HEO_Executable)
+	//	return TRUE;  // и только при вызове из far.exe
 
 	// Если зарегистрирован callback для графической панели
 	if (gPanelRegLeft.pfnWriteCall || gPanelRegRight.pfnWriteCall)
@@ -1952,7 +1965,9 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 
 	// Некоторые команды можно выполнять в любой нити
 	if (nCmd == CMD_SET_CON_FONT || nCmd == CMD_GUICHANGED)
+	{
 		bReqMainThread = FALSE;
+	}
 
 	//PRAGMA_ERROR("Это нужно делать только тогда, когда семафор уже заблокирован!");
 	//if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; }
@@ -2350,24 +2365,26 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		{
 			COORD *crMouse = (COORD *)pCommandData;
 			const wchar_t *pszUserMacro = (wchar_t*)(crMouse+1);
-			// Чтобы на чистой системе менюшка всплывала под курсором и не выскакивало сообщение ""
-			HKEY hRClkKey = NULL;
-			DWORD disp = 0;
-			WCHAR szEMenuKey[MAX_PATH*2+64];
-			lstrcpyW(szEMenuKey, gszRootKey);
-			lstrcatW(szEMenuKey, L"\\Plugins\\RightClick");
 
-			// Ключа может и не быть, если настройки ни разу не сохранялись
-			if (0 == RegCreateKeyExW(HKEY_CURRENT_USER, szEMenuKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &hRClkKey, &disp))
-			{
-				if (disp == REG_CREATED_NEW_KEY)
-				{
-					RegSetValueExW(hRClkKey, L"WaitToContinue", 0, REG_DWORD, (LPBYTE)&(disp = 0), sizeof(disp));
-					RegSetValueExW(hRClkKey, L"GuiPos", 0, REG_DWORD, (LPBYTE)&(disp = 0), sizeof(disp));
-				}
+			// Т.к. вызов идет через макрос и "rclk_gui:", то настройки emenu трогать нельзя!
+			//// Чтобы на чистой системе менюшка всплывала под курсором и не выскакивало сообщение ""
+			//HKEY hRClkKey = NULL;
+			//DWORD disp = 0;
+			//WCHAR szEMenuKey[MAX_PATH*2+64];
+			//lstrcpyW(szEMenuKey, gszRootKey);
+			//lstrcatW(szEMenuKey, L"\\Plugins\\RightClick");
 
-				RegCloseKey(hRClkKey);
-			}
+			//// Ключа может и не быть, если настройки ни разу не сохранялись
+			//if (0 == RegCreateKeyExW(HKEY_CURRENT_USER, szEMenuKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &hRClkKey, &disp))
+			//{
+			//	if (disp == REG_CREATED_NEW_KEY)
+			//	{
+			//		RegSetValueExW(hRClkKey, L"WaitToContinue", 0, REG_DWORD, (LPBYTE)&(disp = 0), sizeof(disp));
+			//		RegSetValueExW(hRClkKey, L"GuiPos", 0, REG_DWORD, (LPBYTE)&(disp = 0), sizeof(disp));
+			//	}
+
+			//	RegCloseKey(hRClkKey);
+			//}
 
 			// Иначе в некторых случаях (Win7 & FAR2x64) не отрисовывается сменившийся курсор
 			// В FAR 1.7x это приводит к зачернению экрана??? Решается посылкой
@@ -2896,7 +2913,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 		}
 
 		// Теоретически, нить обработки может запуститься и без ConEmuHwnd (под телнетом)
-		if (ConEmuHwnd && FarHwnd && (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT)))
+		if (ConEmuHwnd && FarHwnd && (dwWait == WAIT_TIMEOUT))
 		{
 			// Может быть ConEmu свалилось
 			if (!IsWindow(ConEmuHwnd) && ConEmuHwnd)
@@ -3310,6 +3327,22 @@ int OpenMapHeader()
 }
 
 
+void InitRootKey()
+{
+	// начальная инициализация. в SetStartupInfo поправим
+	_wsprintf(gszRootKey, SKIPLEN(countof(gszRootKey)) L"Software\\%s",
+		(gFarVersion.dwVerMajor==3) ? L"Far Manager" :
+		(gFarVersion.dwVerMajor==2) ? L"FAR2"
+		: L"FAR");
+	// Нужно учесть, что FAR мог запуститься с ключом /u (выбор конфигурации)
+	wchar_t* pszUserSlash = gszRootKey+lstrlenW(gszRootKey);
+	lstrcpyW(pszUserSlash, L"\\Users\\");
+	wchar_t* pszUserAdd = pszUserSlash+lstrlenW(pszUserSlash);
+
+	if (GetEnvironmentVariable(L"FARUSER", pszUserAdd, MAX_PATH) == 0)
+		*pszUserSlash = 0;
+}
+
 void InitHWND(HWND ahFarHwnd)
 {
 	gsFarLang[0] = 0;
@@ -3332,14 +3365,18 @@ void InitHWND(HWND ahFarHwnd)
 	}
 
 	// начальная инициализация. в SetStartupInfo поправим
-	_wsprintf(gszRootKey, SKIPLEN(countof(gszRootKey)) L"Software\\%s", (gFarVersion.dwVerMajor==2) ? L"FAR2" : L"FAR");
-	// Нужно учесть, что FAR мог запуститься с ключом /u (выбор конфигурации)
-	wchar_t* pszUserSlash = gszRootKey+lstrlenW(gszRootKey);
-	lstrcpyW(pszUserSlash, L"\\Users\\");
-	wchar_t* pszUserAdd = pszUserSlash+lstrlenW(pszUserSlash);
+	InitRootKey();
+	//_wsprintf(gszRootKey, SKIPLEN(countof(gszRootKey)) L"Software\\%s",
+	//	(gFarVersion.dwVerMajor==3) ? L"Far Manager"
+	//	(gFarVersion.dwVerMajor==2) ? L"FAR2"
+	//	: L"FAR");
+	//// Нужно учесть, что FAR мог запуститься с ключом /u (выбор конфигурации)
+	//wchar_t* pszUserSlash = gszRootKey+lstrlenW(gszRootKey);
+	//lstrcpyW(pszUserSlash, L"\\Users\\");
+	//wchar_t* pszUserAdd = pszUserSlash+lstrlenW(pszUserSlash);
 
-	if (GetEnvironmentVariable(L"FARUSER", pszUserAdd, MAX_PATH) == 0)
-		*pszUserSlash = 0;
+	//if (GetEnvironmentVariable(L"FARUSER", pszUserAdd, MAX_PATH) == 0)
+	//	*pszUserSlash = 0;
 
 	ConEmuHwnd = NULL;
 	FarHwnd = ahFarHwnd;
@@ -4536,8 +4573,15 @@ void InitResources()
 		}
 	}
 
-	if (!ConEmuHwnd || !FarHwnd || !*gpFarInfo->sLngEdit)
+	if (!ConEmuHwnd || !FarHwnd)
 		return;
+	if (!*gpFarInfo->sLngEdit)
+	{
+		_ASSERTE(*gpFarInfo->sLngEdit);
+		wcscpy_c(gpFarInfo->sLngEdit, L"edit");
+		wcscpy_c(gpFarInfo->sLngView, L"view");
+		wcscpy_c(gpFarInfo->sLngTemp, L"{Temporary panel");
+	}
 
 	// В ConEmu нужно передать следущие ресурсы
 	//
@@ -5166,6 +5210,17 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_EMENU) begin\n");
 		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_EMENU) done\n");
+	}
+	else if (pIn->hdr.nCmd == CMD_ACTIVEWNDTYPE)
+	{
+		CESERVER_REQ Out;
+		ExecutePrepareCmd(&Out, CMD_ACTIVEWNDTYPE, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+		if (gFarVersion.dwVerMajor==1)
+			Out.dwData[0] = -1;
+		else
+			Out.dwData[0] = GetActiveWindowType();
+		fSuccess = WriteFile(hPipe, &Out, Out.hdr.cbSize, &cbWritten, NULL);
+		
 	}
 	else
 	{

@@ -187,7 +187,7 @@ class CVirtualConsole
 		// ѕлагин к фару может установить свою "картинку" дл€ панелей (например, нарисовать в фоне букву диска)
 		bool PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height); // ѕоложить в pBack свою картинку
 		//void FreeBackgroundImage(); // ќсвободить (если создан) HBITMAP дл€ mp_BkImgData
-		enum SetBackgroundResult SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData); // вызываетс€ при получении нового Background
+		SetBackgroundResult SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData); // вызываетс€ при получении нового Background
 		bool HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight);
 	protected:
 		MSection *mcs_BkImgData;

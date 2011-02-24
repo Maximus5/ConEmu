@@ -28,13 +28,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+//enum HookExeOnly
+//{
+//	HEO_Undefined  = 0,
+//	HEO_Executable = 1,
+//	HEO_Module     = 2,
+//};
+
 typedef struct HookCallbackArg
 {
-	BOOL      bMainThread;
+	BOOL         bMainThread;
+	//HookExeOnly  IsExecutable;
 	// pointer to variable with result of original function
-	LPVOID    lpResult;
+	LPVOID       lpResult;
 	// arguments (or pointers to them) of original funciton, casted to DWORD_PTR
-	DWORD_PTR lArguments[10];
+	DWORD_PTR    lArguments[10];
 } HookCallbackArg;
 
 // PreCallBack may returns (FALSE) to skip original function calling,
@@ -45,15 +53,21 @@ typedef VOID (WINAPI* HookItemPostCallback_t)(HookCallbackArg* pArgs);
 // ExceptCallBack can modify pArgs->lResult only
 typedef VOID (WINAPI* HookItemExceptCallback_t)(HookCallbackArg* pArgs);
 
+
 struct HookItem
 {
 	// Calling function must set only this 3 fields
 	// These fields must be valid for lifetime
-	const void*    NewAddress;
-	const char*    Name;
-	const wchar_t* DllName;
-	//
-	DWORD   nOrdinal;      // Ordinal of the procedure // !!! Это не Ordinal, а Hint !
+	const void*     NewAddress;
+	const char*     Name;
+	const wchar_t*  DllName;
+	
+	//HookExeOnly     ExeOnly;    // Some functions must be separated for Far.exe and Plugins
+	//const wchar_t*  ModuleOnly; // others - only for the one module.
+	
+	//#ifdef _DEBUG
+	//DWORD   nOrdinal;      // Ordinal of the procedure // !!! Это не Ordinal, а Hint !
+	//#endif
 
 
 	// Next fields are for internal use only!
@@ -62,7 +76,7 @@ struct HookItem
 #ifdef _DEBUG
 	BOOL    ReplacedInExe; // debug information only
 #endif
-	BOOL    InExeOnly;     // replace only in Exe module (FAR sort functions)
+	//BOOL    InExeOnly;     // replace only in Exe module (FAR sort functions)
 
 	// Stored for internal use in GetOriginalAddress
 	// Some other dll's may modify procaddress (Anamorphosis, etc.)
@@ -181,11 +195,22 @@ void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL 
 	if ((f##n)==NULL) f##n = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , FALSE, &ph); \
 	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
 
+//#define ORIGINALFASTx(n) 
+//	static HookItem *ph = NULL; 
+//	static void* f##n##x = NULL; 
+//	if ((f##n##x)==NULL) f##n##x = (void*)GetOriginalAddress((void*)(On##n##x) , (void*)n , FALSE, &ph); 
+//	_ASSERTE((void*)(On##n##x)!=(void*)(f##n##x) && (void*)(f##n##x)!=NULL);
+
 #define ORIGINAL(n) \
 	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); \
 	ORIGINALFAST(n)
+
+//#define ORIGINALx(n) 
+//	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); 
+//	ORIGINALFASTx(n)
 	
 #define F(n) ((On##n##_t)f##n)
+//#define Fx(n) ((On##n##x_t)f##n##x)
 
 
 #define SETARGS(r) HookCallbackArg args = {bMainThread}; args.lpResult = (LPVOID)(r)
