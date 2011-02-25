@@ -177,6 +177,7 @@ struct ConProcess
 #define DBGMSG_LOG_SHELL_MAGIC 0xD73A34
 struct DebugLogShellActivity
 {
+	DWORD   nParentPID, nParentBits, nChildPID;
 	wchar_t szFunction[32];
 	wchar_t* pszAction;
 	wchar_t* pszFile;

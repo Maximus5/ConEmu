@@ -161,6 +161,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			GetImageSubsystem(nImageSubsystem,nImageBits);
 
 			wchar_t szExeName[MAX_PATH+1], szBaseDir[MAX_PATH+2];
+			BOOL lbDosBoxAllowed = FALSE;
 			if (!GetModuleFileName(NULL, szExeName, countof(szExeName))) szExeName[0] = 0;
 			CESERVER_REQ* pIn = CShellProc::NewCmdOnCreate(
 				gbSkipInjects ? eHooksLoaded : eInjectingHooks,
@@ -168,7 +169,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 				NULL, NULL, NULL, NULL, // flags
 				nImageBits, nImageSubsystem,
 				GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE),
-				szBaseDir);
+				szBaseDir, lbDosBoxAllowed);
 			if (pIn)
 			{
 				//HWND hConWnd = GetConsoleWindow();

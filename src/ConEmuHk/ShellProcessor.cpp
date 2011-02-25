@@ -57,6 +57,7 @@ CShellProc::CShellProc()
 	mb_NeedInjects = FALSE;
 	// int CShellProc::mn_InShellExecuteEx = 0; <-- static
 	mb_InShellExecuteEx = FALSE;
+	mb_DosBoxAllowed = FALSE;
 }
 
 CShellProc::~CShellProc()
@@ -125,7 +126,7 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 				int mn_ImageBits, int mn_ImageSubsystem,
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
-				wchar_t (&szBaseDir)[MAX_PATH+2])
+				wchar_t (&szBaseDir)[MAX_PATH+2], BOOL& bDosBoxAllowed)
 {
 	szBaseDir[0] = 0;
 
@@ -143,6 +144,7 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 		return NULL;
 	else
 	{
+		bDosBoxAllowed = pInfo->bDosBox;
 		wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
 		wcscat_c(szBaseDir, L"\\");
 		if (pInfo->nLoggingType != glt_Processes)
@@ -160,6 +162,11 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 	pIn = ExecuteNewCmd(CECMD_ONCREATEPROC, sizeof(CESERVER_REQ_HDR)
 		+sizeof(CESERVER_REQ_ONCREATEPROCESS)+(nActionLen+nFileLen+nParamLen)*sizeof(wchar_t));
 	
+#ifdef _WIN64
+	pIn->OnCreateProc.nSourceBits = 64;
+#else
+	pIn->OnCreateProc.nSourceBits = 32;
+#endif
 	//pIn->OnCreateProc.bUnicode = TRUE;
 	pIn->OnCreateProc.nImageSubsystem = mn_ImageSubsystem;
 	pIn->OnCreateProc.nImageBits = mn_ImageBits;
@@ -175,6 +182,8 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 		wcscpy_c(pIn->OnCreateProc.sFunction, L"Hooks");
 	else if (aCmd == eHooksLoaded)
 		wcscpy_c(pIn->OnCreateProc.sFunction, L"Loaded");
+	else if (aCmd == eParmsChanged)
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"Changed");
 	else
 		wcscpy_c(pIn->OnCreateProc.sFunction, L"Unknown");
 	
@@ -336,16 +345,17 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 			pszExeExt = PointToExt(szNewExe);
 		}
 	}
-	if (pszExeExt && (!lstrcmpi(pszExeExt, L".cmd") || !lstrcmpi(pszExeExt, L".bat")))
-	{
-		ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
-		// Будем выполнять "батники" в нативной битности
-		#ifdef _WIN64
-		ImageBits = 64;
-		#else
-		ImageBits = 32;
-		#endif
-	}
+	// Пока не будем ничего менять, пусть работает "как в фаре"
+	//if (pszExeExt && (!lstrcmpi(pszExeExt, L".cmd") || !lstrcmpi(pszExeExt, L".bat")))
+	//{
+	//	ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
+	//	// Будем выполнять "батники" в нативной битности
+	//	#ifdef _WIN64
+	//	ImageBits = 64;
+	//	#else
+	//	ImageBits = 32;
+	//	#endif
+	//}
 	
 
 
@@ -360,8 +370,15 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	}
 	else if (ImageBits == 16)
 	{
-		_ASSERTE(ImageBits != 16);
-		return FALSE;
+		if (mb_DosBoxAllowed)
+		{
+			wcscat_c(szConEmuC, L"ConEmuC.exe");
+		}
+		else
+		{
+			_ASSERTE(ImageBits != 16);
+			return FALSE;
+		}
 	}
 	else
 	{
@@ -369,7 +386,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		wcscat_c(szConEmuC, L"ConEmuC.exe");
 	}
 	
-	int nCchSize = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 32;
+	int nCchSize = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 64;
 	if (aCmd == eShellExecute)
 	{
 		*psFile = lstrdup(szConEmuC);
@@ -384,16 +401,22 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	(*psParam)[0] = 0;
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
 	// /C или /K в обоих случаях нужно пихать в psParam
+	BOOL lbDoubleQuote = FALSE;
 	if (aCmd == eShellExecute)
 	{
 		if (asFile && *asFile)
 		{
-			_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K \"" : L" /C \"");
+			lbDoubleQuote = TRUE;
+			if (ImageBits == 16)
+				_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
+			_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K \"\"" : L" /C \"\"");
 			_wcscat_c((*psParam), nCchSize, asFile ? asFile : L"");
 			_wcscat_c((*psParam), nCchSize, L"\"");
 		}
 		else
 		{
+			if (ImageBits == 16)
+				_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
 			_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
 		}
 	}
@@ -401,7 +424,10 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	{
 		(*psParam)[0] = L'"';
 		_wcscpy_c((*psParam)+1, nCchSize-1, szConEmuC);
-		_wcscat_c((*psParam), nCchSize, lbComSpecK ? L"\" /K " : L"\" /C ");
+		_wcscat_c((*psParam), nCchSize, L"\"");
+		if (ImageBits == 16)
+			_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
+		_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
 		// Это CreateProcess. Исполняемый файл может быть уже указан в asParam
 		//BOOL lbNeedExe = (asFile && *asFile);
 		// уже отсечено выше
@@ -434,7 +460,11 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	{
 		_wcscat_c((*psParam), nCchSize, L" ");
 		_wcscat_c((*psParam), nCchSize, asParam);
+		if ((aCmd == eShellExecute) && lbDoubleQuote)
+		_wcscat_c((*psParam), nCchSize, L"\"");
 	}
+	else if ((aCmd == eShellExecute) && lbDoubleQuote)
+		_wcscat_c((*psParam), nCchSize, L" \"");
 
 	return TRUE;
 }
@@ -521,7 +551,7 @@ BOOL CShellProc::PrepareExecuteParms(
 			#ifdef _WIN64
 			mn_ImageBits = 64;
 			#else
-			mn_ImageBits = 32;
+			mn_ImageBits = IsWindows64() ? 64 : 32;
 			#endif
 			lbSubsystemOk = TRUE;
 		}
@@ -558,7 +588,7 @@ BOOL CShellProc::PrepareExecuteParms(
 						#ifdef _WIN64
 						mn_ImageBits = 64;
 						#else
-						mn_ImageBits = 32;
+						mn_ImageBits = IsWindows64() ? 64 : 32;
 						#endif
 						mn_ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
 					}
@@ -575,7 +605,7 @@ BOOL CShellProc::PrepareExecuteParms(
 			asAction, asFile, asParam, 
 			anShellFlags, anCreateFlags, anStartFlags, anShowCmd, 
 			mn_ImageBits, mn_ImageSubsystem, 
-			hIn, hOut, hErr, szBaseDir);
+			hIn, hOut, hErr, szBaseDir, mb_DosBoxAllowed);
 	if (pIn)
 	{
 		HWND hConWnd = GetConsoleWindow();
@@ -610,6 +640,14 @@ BOOL CShellProc::PrepareExecuteParms(
 		DWORD nFlags = anCreateFlags ? *anCreateFlags : 0;
 		if ((nFlags & (CREATE_NO_WINDOW|DETACHED_PROCESS)) != 0)
 			goto wrap; // запускается по тихому (без консольного окна), пропускаем
+
+		// Это УЖЕ может быть ConEmuC.exe
+		const wchar_t* pszExeName = PointToName(szExe);
+		if (pszExeName && (!lstrcmpi(pszExeName, L"ConEmuC.exe") || !lstrcmpi(pszExeName, L"ConEmuC64.exe")))
+		{
+			mb_NeedInjects = FALSE;
+			goto wrap;
+		}
 	}
 	
 	//bool lbGuiApp = false;
@@ -637,7 +675,27 @@ BOOL CShellProc::PrepareExecuteParms(
 		lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, szBaseDir, 
 						szExe, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 		if (!lbChanged)
+		{
 			mb_NeedInjects = TRUE;
+		}
+		else
+		{
+			CESERVER_REQ *pIn = NULL;
+			pIn = NewCmdOnCreate(eParmsChanged, 
+					asAction, *psFile, *psParam, 
+					anShellFlags, anCreateFlags, anStartFlags, anShowCmd, 
+					mn_ImageBits, mn_ImageSubsystem, 
+					hIn, hOut, hErr, szBaseDir, mb_DosBoxAllowed);
+			if (pIn)
+			{
+				HWND hConWnd = GetConsoleWindow();
+				CESERVER_REQ *pOut = NULL;
+				pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
+				ExecuteFreeResult(pIn); pIn = NULL;
+				if (pOut)
+					ExecuteFreeResult(pOut);
+			}
+		}
 	}
 	else 
 	if ((mn_ImageBits == 16 ) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE))

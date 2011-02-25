@@ -187,7 +187,7 @@ const CECMD
 
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    60
+#define CESERVER_REQ_VER    61
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -998,6 +998,7 @@ struct CESERVER_REQ_STARTSTOP
 struct CESERVER_REQ_ONCREATEPROCESS
 {
 	//BOOL    bUnicode;
+	int     nSourceBits;
 	wchar_t sFunction[32];
 	int     nImageSubsystem;
 	int     nImageBits;

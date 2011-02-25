@@ -44,10 +44,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifndef verc0_EXPORTS
-#include "../ThumbSDK.h"
-#include "../../../common/MStrSafe.h"
-#include "../../../common/Defines.h"
-#include "../../../common/Memory.h"
+	#include "../ThumbSDK.h"
+	#include "../../../common/MStrSafe.h"
+	#include "../../../common/Defines.h"
+	#include "../../../common/Memory.h"
+#else
+	#define _wsprintf wsprintfW
+	#define SKIPLEN(x)
 #endif
 
 #ifndef ARRAYSIZE
@@ -308,7 +311,6 @@ bool ValidateMemory(PEData *pData, LPCVOID ptr, size_t nSize)
 		return false;
 
 	bool lbRc = false;
-
 	if (!ptr || (LPBYTE)ptr < (LPBYTE)pData->pMappedFileBase)
 	{
 		//return false;
@@ -316,7 +318,6 @@ bool ValidateMemory(PEData *pData, LPCVOID ptr, size_t nSize)
 	else
 	{
 		ULONGLONG nPos = ((LPBYTE)ptr - (LPBYTE)pData->pMappedFileBase);
-
 		if ((nPos+nSize) > pData->FileSize.QuadPart)
 		{
 			//return false;
@@ -336,7 +337,6 @@ bool ValidateMemory(PEData *pData, LPCVOID ptr, size_t nSize)
 	{
 		_TRACE2("ValidateMemory(R%08x, %i) OK", ((LPBYTE)ptr - pData->pMappedFileBase), nSize);
 	}
-
 	return lbRc;
 }
 
@@ -580,11 +580,12 @@ void DumpNEResourceTable(PEData *pData, PIMAGE_DOS_HEADER dosHeader, LPBYTE pRes
 {
 	_TRACE0("DumpNEResourceTable");
 	PBYTE pImageBase = (PBYTE)dosHeader;
+
 	//MPanelItem* pChild = pRoot->AddFolder(_T("Resource Table"));
 	//pChild->AddText(_T("<Resource Table>\n"));
+
 	// минимальный размер
 	size_t nReqSize = sizeof(OS2RC_TYPEINFO)+12;
-
 	//if (IsBadReadPtr(pResourceTable, nReqSize)) {
 	if (!ValidateMemory(pData, pResourceTable, nReqSize))
 	{
@@ -600,15 +601,16 @@ void DumpNEResourceTable(PEData *pData, PIMAGE_DOS_HEADER dosHeader, LPBYTE pRes
 	//char szResName[256];
 	UINT nResLength = 0, nResOffset = 0;
 	//LPBYTE pNames;
+
 	// Сначала нужно найти начало имен
 	pTypeInfo = (OS2RC_TYPEINFO*)(pResourceTable+2);
 
 	while(pTypeInfo->rtTypeID)
 	{
 		OS2RC_TNAMEINFO* pResName = pTypeInfo->rtNameInfo;
+
 		// Next resource type
 		pTypeInfo = (OS2RC_TYPEINFO*)(pResName+pTypeInfo->rtResourceCount);
-
 		//if (IsBadReadPtr(pTypeInfo, 2)) {
 		if (!ValidateMemory(pData, pTypeInfo, 2))
 		{
@@ -617,8 +619,8 @@ void DumpNEResourceTable(PEData *pData, PIMAGE_DOS_HEADER dosHeader, LPBYTE pRes
 			return;
 		}
 	}
-
 	//pNames = ((LPBYTE)pTypeInfo)+2;
+
 	// Теперь, собственно ресурсы
 	pTypeInfo = (OS2RC_TYPEINFO*)(pResourceTable+2);
 
@@ -626,8 +628,10 @@ void DumpNEResourceTable(PEData *pData, PIMAGE_DOS_HEADER dosHeader, LPBYTE pRes
 	{
 		//szTypeName[0] = 0;
 		//GetOS2ResourceTypeName(pTypeInfo->rtTypeID, szTypeName, sizeof(szTypeName));
+
 		//MPanelItem* pType = pChild->AddFolder(szTypeName);
 		//pType->printf("  <%s>:\n", szTypeName);
+
 		//pType->printf(_T("    Resource count:   %i\n"), pTypeInfo->rtResourceCount);
 		OS2RC_TNAMEINFO* pResName = pTypeInfo->rtNameInfo;
 
@@ -669,7 +673,6 @@ void DumpNEResourceTable(PEData *pData, PIMAGE_DOS_HEADER dosHeader, LPBYTE pRes
 				//} else {
 				//	pRes = pType->AddFile(szResName, nResOffset ? nResLength : 0);
 			}
-
 			//pType->printf("    <%s>\n", szResName);
 			//pType->printf("      Resource Name:    %s\n", szResName);
 			//pType->printf("      Resource ID:      0x%08X\n", pResName->rnID);
@@ -682,6 +685,7 @@ void DumpNEResourceTable(PEData *pData, PIMAGE_DOS_HEADER dosHeader, LPBYTE pRes
 			//}
 		}
 
+
 		// Next resource type
 		pTypeInfo = (OS2RC_TYPEINFO*)pResName;
 	}
@@ -691,6 +695,7 @@ bool DumpExeFileNE(PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_OS2_HEADER
 {
 	_TRACE0("DumpExeFileNE");
 	//PBYTE pImageBase = (PBYTE)dosHeader;
+
 	pData->nBits = 16;
 	//pRoot->Root()->AddFlags(_T("16BIT"));
 
@@ -870,7 +875,6 @@ void ParseVersionInfoFixed(PEData *pData,  VS_FIXEDFILEINFO* pVer)
 		pData->szVersion = pData->szVersionF;
 	else if (*pData->szVersionP)
 		pData->szVersion = pData->szVersionP;
-
 	if (pData->szVersion && *pData->szVersion)
 	{
 		_wsprintf(szTest, SKIPLEN(countof(szTest)) L"%i, %i, %i, %i",
@@ -881,10 +885,8 @@ void ParseVersionInfoFixed(PEData *pData,  VS_FIXEDFILEINFO* pVer)
 		if (!lstrcmpiW(szTest, pData->szVersion))
 			pData->szVersion = NULL;
 	}
-
 	if (pData->szVersion == NULL)
 		pData->szVersion = pData->szVersionN;
-
 	//wchar_t szMask[255], szFlags[255], szOS[255], szFileType[64], szFileSubType[64];
 	//ResourceParseFlags(pVer->dwFileFlagsMask, szMask, VersionInfoFlags);
 	//ResourceParseFlags(pVer->dwFileFlags, szFlags, VersionInfoFlags);
@@ -962,10 +964,8 @@ void ParseVersionInfoVariableString(PEData *pData, LPVOID ptrRes, DWORD &resSize
 	if (pToken < pEnd && *pToken > sizeof(StringFileInfo))
 	{
 		LPWORD pEnd1 = (LPWORD)(((LPBYTE)pToken)+*pToken);
-
 		if (pEnd < pEnd1)
 			pEnd1 = pEnd;
-
 		//wcscat(psz, L"    BLOCK \"");
 		//wcscat(psz, pSFI->szKey);
 		//wcscat(psz, L"\"\n");
@@ -973,7 +973,6 @@ void ParseVersionInfoVariableString(PEData *pData, LPVOID ptrRes, DWORD &resSize
 		{
 			//wcscat(psz, L"    // Warning! Binary data in StringFileInfo\n");
 		}
-
 		{
 			//wcscat(psz, L"    BEGIN\n");
 			//psz += wcslen(psz);
@@ -986,7 +985,6 @@ void ParseVersionInfoVariableString(PEData *pData, LPVOID ptrRes, DWORD &resSize
 			{
 				StringTable *pST = (StringTable*)pToken;
 				LPWORD pEnd2 = (LPWORD)(((LPBYTE)pToken)+*pToken);
-
 				if (pEnd1 < pEnd2)
 					pEnd2 = pEnd1;
 
@@ -1023,7 +1021,6 @@ void ParseVersionInfoVariableString(PEData *pData, LPVOID ptrRes, DWORD &resSize
 					ALIGN_TOKEN(pToken);
 					int nLenLeft = pS->wValueLength;
 					wchar_t* psz = NULL; int nDstLeft = 0;
-
 					if (!lstrcmpW(pS->szKey, L"FileVersion"))
 					{
 						psz = pData->szVersionF; nDstLeft = (int)ARRAYSIZE(pData->szVersionF);
@@ -1051,27 +1048,23 @@ void ParseVersionInfoVariableString(PEData *pData, LPVOID ptrRes, DWORD &resSize
 						}
 						pToken++; nLenLeft--;
 					}
-
 					if (psz) *psz = 0;
-
 					//if (pToken < pEnd2 && pS->wValueLength) {
 					//	// Вообще-то тут бы провести замены \r\n\t"
 					//	wcscat(psz, (LPCWSTR)pToken);
 					//}
 					//wcscat(psz, L"\"\n"); psz += wcslen(psz);
+
 					// Next value
 					pToken = pNext;
-
 					if (pToken < pEnd2 && *pToken == 0)
 					{
 						//wcscat(psz, L"            // Zero-length item found\n"); psz += wcslen(psz);
 						while (pToken < pEnd2 && *pToken == 0) pToken ++;
 					}
 				}
-
 				//wcscat(psz, L"        END\n");
 			}
-
 			//
 			//wcscat(psz, L"    END\n");
 		}
@@ -1087,10 +1080,8 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 	if (pToken < pEnd && *pToken > sizeof(StringFileInfoA))
 	{
 		char* pEnd1 = (char*)(((LPBYTE)pToken)+*((WORD*)pToken));
-
 		if (pEnd < pEnd1)
 			pEnd1 = pEnd;
-
 		//wcscat(psz, L"    BLOCK \"");
 		//wcscat(psz, pSFI->szKey);
 		//psz += wcslen(psz);
@@ -1115,7 +1106,6 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 			{
 				StringTableA *pST = (StringTableA*)pToken;
 				char* pEnd2 = (char*)(((LPBYTE)pToken)+*((WORD*)pToken));
-
 				if (pEnd2 > pEnd1)
 					pEnd2 = pEnd1;
 
@@ -1143,10 +1133,8 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 					if (pS->wLength == 0) break;  // Invalid?
 
 					char* pNext = (char*)(((LPBYTE)pToken)+pS->wLength);
-
 					if (pNext > pEnd2)
 						pNext = pEnd2;
-
 					//wcscat(psz, L"            VALUE \""); psz += wcslen(psz);
 					//wcscat(psz, pS->szKey); ???
 					//psz[MultiByteToWideChar(CP_ACP,0,pS->szKey,-1,psz,32)] = 0;
@@ -1160,14 +1148,11 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 
 					//ALIGN_TOKEN(pToken); ???
 					int nLenLeft = min(pS->wValueLength,MAX_PATH*2);
-
 					if (nLenLeft > (pNext-pToken))
 						nLenLeft = (int)(pNext-pToken);
-
 					szTemp[MultiByteToWideChar(CP_ACP,0,pToken,nLenLeft,szTemp,nLenLeft)] = 0;
 					pwsz = szTemp;
 					wchar_t* psz = NULL; int nDstLeft = 0;
-
 					if (!lstrcmpA(pS->szKey, "FileVersion"))
 					{
 						psz = pData->szVersionF; nDstLeft = (int)ARRAYSIZE(pData->szVersionF);
@@ -1195,27 +1180,23 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 						}
 						pwsz++; nLenLeft--;
 					}
-
 					if (psz) *psz = 0;
-
 					//if (pToken < pEnd2 && pS->wValueLength) {
 					//	// Вообще-то тут бы провести замены \r\n\t"
 					//	wcscat(psz, (LPCWSTR)pToken);
 					//}
 					//wcscat(psz, L"\"\n"); psz += wcslen(psz);
+
 					// Next value
 					pToken = pNext;
-
 					if (pToken < pEnd2 && *pToken == 0)
 					{
 						//wcscat(psz, L"            // Zero-length item found\n"); psz += wcslen(psz);
 						while (pToken < pEnd2 && *pToken == 0) pToken ++;
 					}
 				}
-
 				//wcscat(psz, L"        END\n");
 			}
-
 			//
 			//wcscat(psz, L"    END\n");
 		}
@@ -1227,14 +1208,11 @@ void ParseVersionInfoVariableVar(PEData *pData, LPVOID ptrRes, DWORD &resSize, L
 	_TRACE0("ParseVersionInfoVariableVar");
 	VarFileInfo *pSFI = (VarFileInfo*)pToken;
 	LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
-
 	if (pToken < pEnd && *pToken > sizeof(VarFileInfo))
 	{
 		LPWORD pEnd1 = (LPWORD)(((LPBYTE)pToken)+*pToken);
-
 		if (pEnd < pEnd1)
 			pEnd1 = pEnd;
-
 		//wcscat(psz, L"    BLOCK \"");
 		//wcscat(psz, pSFI->szKey);
 		//wcscat(psz, L"\"\n");
@@ -1242,7 +1220,6 @@ void ParseVersionInfoVariableVar(PEData *pData, LPVOID ptrRes, DWORD &resSize, L
 		{
 			//wcscat(psz, L"    // Warning! Binary data in VarFileInfo\n");
 		}
-
 		{
 			//wcscat(psz, L"    BEGIN\n");
 			//psz += wcslen(psz);
@@ -1284,16 +1261,15 @@ void ParseVersionInfoVariableVar(PEData *pData, LPVOID ptrRes, DWORD &resSize, L
 						//StringCchPrintf(psz, countof(psz), L", 0x%X, %u", (DWORD)(pToken[0]), (DWORD)(pToken[1]));
 						pToken += 2;
 					}
-
 					//	// Вообще-то тут бы провести замены \r\n\t"
 					//	wcscat(psz, (LPCWSTR)pToken);
 					//}
 					//wcscat(psz, L"\n"); psz += wcslen(psz);
+
 					// Next value
 					pToken = pNext;
 				}
 			}
-
 			//wcscat(psz, L"    END\n");
 		}
 	}
@@ -1307,7 +1283,6 @@ void ParseVersionInfoVariable(PEData *pData, LPVOID ptrRes, DWORD &resSize, LPWO
 	if (lstrcmpiW(pSFI->szKey, L"StringFileInfo") == 0)
 	{
 		LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
-
 		if (pToken < pEnd && *pToken > sizeof(StringFileInfo))
 		{
 			ParseVersionInfoVariableString(pData, ptrRes, resSize, /*ptrBuf, bIsCopy,*/ pToken/*, psz*/);
@@ -1330,7 +1305,6 @@ void ParseVersionInfoVariableA(PEData *pData, LPVOID ptrRes, DWORD &resSize, cha
 	if (lstrcmpiA(pSFI->szKey, "StringFileInfo") == 0)
 	{
 		char* pEnd = (char*)(((LPBYTE)ptrRes)+resSize);
-
 		if (pToken < pEnd && *pToken > sizeof(StringFileInfo))
 		{
 			ParseVersionInfoVariableStringA(pData, ptrRes, resSize, pToken);
@@ -1363,7 +1337,6 @@ void ParseVersionInfo(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 	if (nTestSize == resSize && nTestShift < resSize)
 	{
 		VS_FIXEDFILEINFO* pVer = (VS_FIXEDFILEINFO*)(((LPBYTE)ptrRes)+0x28);
-
 		// По идее, должно быть здесь, но если нет - ищем сигнатуру
 		if (pVer->dwSignature != 0xfeef04bd)
 		{
@@ -1378,7 +1351,6 @@ void ParseVersionInfo(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 				}
 			}
 		}
-
 		//Msg("ParseVersionInfo","2");
 		DWORD nNewSize = resSize*2 + 2048;
 
@@ -1458,12 +1430,10 @@ void ParseVersionInfoA(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 
 	_TRACE0("ParseVersionInfoA");
 	WORD nTestSize = ((WORD*)ptrRes)[0];
-
 	//WORD nTestShift = ((WORD*)ptrRes)[1]; // ???
 	if (nTestSize >= sizeof(VS_FIXEDFILEINFO) && nTestSize <= resSize /*&& nTestShift < resSize*/)
 	{
 		VS_FIXEDFILEINFO* pVer = (VS_FIXEDFILEINFO*)(((LPBYTE)ptrRes)+0x28);
-
 		// По идее, должно быть здесь, но если нет - ищем сигнатуру
 		if (pVer->dwSignature != 0xfeef04bd)
 		{
@@ -1479,7 +1449,6 @@ void ParseVersionInfoA(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 				}
 			}
 		}
-
 		DWORD nNewSize = resSize*2 + 2048;
 
 		if (pVer->dwSignature == 0xfeef04bd  // Сигнатура найдена
@@ -1548,6 +1517,7 @@ void /*MPanelItem* */ CreateResource(PEData *pData, DWORD rootType, LPVOID ptrRe
 	//TCHAR szType[32] = {0}, szInfo[64] = {0};
 	//TCHAR szTextInfo[1024];
 	//BOOL bDontSetData = FALSE;
+
 	//if (asID && *asID) {
 	//	strcpy(fileNameBuffer, asID);
 	//} else {
@@ -1619,7 +1589,6 @@ void /*MPanelItem* */ CreateResource(PEData *pData, DWORD rootType, LPVOID ptrRe
 					pEntry++;
 				}
 			}
-
 			return; // pChild;
 		} break;
 		case(WORD)RT_ICON: case 0x8000+(WORD)RT_ICON:
@@ -1642,6 +1611,7 @@ void /*MPanelItem* */ CreateResource(PEData *pData, DWORD rootType, LPVOID ptrRe
 				//StringCchPrintf(szInfo, countof(szInfo), _T("%ix%i (%ibpp)"),
 				//	((BITMAPINFOHEADER*)ptrRes)->biWidth, ((BITMAPINFOHEADER*)ptrRes)->biWidth,
 				//	((BITMAPINFOHEADER*)ptrRes)->biBitCount*((BITMAPINFOHEADER*)ptrRes)->biPlanes);
+
 				//// Делаем копию буфера, но предваряем его заголовком иконки
 				//DWORD nNewSize = resSize + sizeof(ICONDIR);
 				//ptrBuf = (LPBYTE)malloc(nNewSize);
@@ -1662,6 +1632,7 @@ void /*MPanelItem* */ CreateResource(PEData *pData, DWORD rootType, LPVOID ptrRe
 				//	pIcon->idEntries[0].dwBytesInRes = resSize;
 				//	pIcon->idEntries[0].dwImageOffset = sizeof(ICONDIR);
 				//	memmove(&(pIcon->idEntries[1]), ptrRes, resSize);
+
 				//	ptrRes = ptrBuf;
 				//	resSize = nNewSize;
 				//	bIsCopy = TRUE;
@@ -1691,6 +1662,7 @@ void /*MPanelItem* */ CreateResource(PEData *pData, DWORD rootType, LPVOID ptrRe
 	}
 
 	//Msg("CreateResource","3");
+
 	return; // pChild;
 }
 
@@ -1744,6 +1716,7 @@ void DumpResourceEntry(
 		//wsprintfA(szDbg, "GetPtrFromRVA(0x%08X)", (DWORD)pResDataEntry); Msg("DumpResourceEntry", szDbg);
 		//if (!ValidateMemory(pData, pResDataEntry, sizeof(*pResDataEntry)))
 		//	Msg("DumpResourceEntry", "Invalid PTR");
+
 		ptrRes = GetPtrFromRVA(pResDataEntry->OffsetToData, pData->pNTHeader64, pData->pMappedFileBase);
 		//Msg("DumpResourceEntry","2.2");
 	}
@@ -1765,7 +1738,9 @@ void DumpResourceEntry(
 	//  }
 	//Msg("DumpResourceEntry","CreateResource");
 	CreateResource(pData, rootType, ptrRes, pResDataEntry->Size, resourceType/*asID*/, pResDirEntry->Name /*nameBuffer, parentType, pResDirEntry->Name*/);
+
 	//Msg("DumpResourceEntry","3");
+
 	//// Spit out the spacing for the level indentation
 	//for ( i=0; i < level; i++ ) pRoot->printf("    ");
 	//pRoot->printf("Name: %s  DataEntryOffs: %08X\n",
@@ -1813,6 +1788,7 @@ void DumpResourceDirectory(PEData *pData, PIMAGE_RESOURCE_DIRECTORY pResDir,
 	if (level == 1)
 	{
 		rootType = resourceType;
+
 		//if ( resourceType & IMAGE_RESOURCE_NAME_IS_STRING )
 		//{
 		//	GetResourceNameFromId( resourceType, pResourceBase,
@@ -1838,6 +1814,8 @@ void DumpResourceDirectory(PEData *pData, PIMAGE_RESOURCE_DIRECTORY pResDir,
 	//	else
 	//		pChild = pRoot->AddFolder(szType, FALSE);
 	//}
+
+
 	//
 	// The "directory entries" immediately follow the directory in memory
 	//
@@ -1876,6 +1854,7 @@ template <class T> void DumpResourceSection(PEData *pData, PBYTE pImageBase, T *
 		return;
 
 	//bool bIs64Bit = ( pNTHeader->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC );
+
 	resourcesRVA = GetImgDirEntryRVA(pNTHeader, IMAGE_DIRECTORY_ENTRY_RESOURCE);
 	_TRACE1("DumpResourceSection. resourcesRVA = 0x%08X", resourcesRVA);
 
@@ -1927,10 +1906,15 @@ template <class T> void DumpCOR20Header(PEData *pData, PBYTE pImageBase, T* pNTH
 		return;
 
 	pData->nFlags |= PE_DOTNET;
+
 	//PIMAGE_COR20_HEADER pCor20Hdr = (PIMAGE_COR20_HEADER)GetPtrFromRVA( cor20HdrRVA, pNTHeader, pImageBase );
+
 	//pRoot->Root()->AddFlags(_T("NET"));
+
 	//MPanelItem* pChild = pRoot->AddFolder(_T(".NET"));
+
 	//pChild->printf( "<.NET Runtime Header>:\n" );
+
 	//pChild->printf( "  Size:       %u\n", pCor20Hdr->cb );
 	//pChild->printf( "  Version:    %u.%u\n", pCor20Hdr->MajorRuntimeVersion, pCor20Hdr->MinorRuntimeVersion );
 	//pChild->printf( "  Flags:      %X\n", pCor20Hdr->Flags );
@@ -1939,6 +1923,7 @@ template <class T> void DumpCOR20Header(PEData *pData, PBYTE pImageBase, T* pNTH
 	//if ( pCor20Hdr->Flags & COMIMAGE_FLAGS_IL_LIBRARY ) pChild->printf( "    IL_LIBRARY\n" );
 	//if ( pCor20Hdr->Flags & 8 ) pChild->printf( "    STRONGNAMESIGNED\n" );		// At this moment, WINNT.H and CorHdr.H are out of sync...
 	//if ( pCor20Hdr->Flags & COMIMAGE_FLAGS_TRACKDEBUGDATA ) pChild->printf( "    TRACKDEBUGDATA\n" );
+
 	//DisplayDataDirectoryEntry( pChild, "MetaData", pCor20Hdr->MetaData );
 	//DisplayDataDirectoryEntry( pChild, "Resources", pCor20Hdr->Resources );
 	//DisplayDataDirectoryEntry( pChild, "StrongNameSig", pCor20Hdr->StrongNameSignature );
@@ -1946,6 +1931,7 @@ template <class T> void DumpCOR20Header(PEData *pData, PBYTE pImageBase, T* pNTH
 	//DisplayDataDirectoryEntry( pChild, "VTableFixups", pCor20Hdr->VTableFixups );
 	//DisplayDataDirectoryEntry( pChild, "ExprtAddrTblJmps", pCor20Hdr->ExportAddressTableJumps );
 	//DisplayDataDirectoryEntry( pChild, "ManagedNativeHdr", pCor20Hdr->ManagedNativeHeader );
+
 	//pRoot->printf( "\n" );
 }
 
@@ -1960,25 +1946,33 @@ template <class T> void DumpCertificates(PEData *pData, PBYTE pImageBase, T* pNT
 		return;
 
 	//__int64 dwTotalSize = GetImgDirEntrySize( pNTHeader, IMAGE_DIRECTORY_ENTRY_SECURITY );
+
 	// Скорее всего сертификаты находятся ЗА пределами отображенного в память файла, т.к. они не входят в ImageSize
 	// Поэтому для простоты - считаем что он подписан, без проверки типа подписи
 	pData->nFlags |= PE_SIGNED;
+
+
 	//LPWIN_CERTIFICATE pCert = MakePtr( LPWIN_CERTIFICATE, pImageBase, certOffset );
 	//// Скорее всего сертификаты находятся ЗА пределами отображенного в память файла,
 	//// т.к. они не входят в ImageSize
+
 	//while ( dwTotalSize > 0 )	// As long as there is unprocessed certificate data...
 	//{
 	//	//LPWIN_CERTIFICATE pCert = MakePtr( LPWIN_CERTIFICATE, pImageBase, certOffset );
+
 	//	//if (!pCert || IsBadReadPtr(pCert, sizeof(*pCert))) {
 	//	if (!pCert || !ValidateMemory(pData, pCert, sizeof(*pCert)))
 	//	{
 	//		//pChild->printf(_T("\n!!! Failed to read LPWIN_CERTIFICATE at offset: 0x%08X !!!\n"), certOffset);
 	//		break;
 	//	}
+
 	//	if (!pCert->dwLength) {
 	//		break; // кончились
 	//	}
+
 	//	size_t nAllLen = pCert->dwLength;
+
 	//	switch( pCert->wCertificateType )
 	//	{
 	//	case WIN_CERT_TYPE_X509: //lstrcpy(szCertType, _T("X509")); break;
@@ -1991,6 +1985,7 @@ template <class T> void DumpCertificates(PEData *pData, PBYTE pImageBase, T* pNT
 	//	}
 	//
 	//	//nCertNo++;
+
 	//	//if (IsBadReadPtr(pCert, nAllLen)) {
 	//	if (!ValidateMemory(pData, pCert, nAllLen))
 	//	{
@@ -2035,7 +2030,6 @@ bool DumpExeFile(PEData *pData, PIMAGE_DOS_HEADER dosHeader)
 		{
 			return DumpExeFileNE(pData, dosHeader, (IMAGE_OS2_HEADER*)pNTHeader);
 		}
-
 		//else if ( (nSignature & 0xFFFF) == IMAGE_VXD_SIGNATURE )
 		//{
 		//	return DumpExeFileVX( pData, dosHeader, (IMAGE_VXD_HEADER*)pNTHeader );
@@ -2109,6 +2103,7 @@ void DumpSectionTable(PEData *pData, PIMAGE_SECTION_HEADER section,
 		//pSect->printf( "    line # offs:     %08X  line #'s:      %08X\n",
 		//	section->PointerToLinenumbers, section->NumberOfLinenumbers );
 		//pSect->printf( "    characteristics: %08X\n", section->Characteristics);
+
 		//pSect->printf("    ");
 		//TCHAR sChars[32]; TCHAR *pszChars = sChars; *pszChars = 0; TCHAR chCurAbbr = 0;
 		//for ( unsigned j=0; j < NUMBER_SECTION_CHARACTERISTICS; j++ )
@@ -2130,6 +2125,7 @@ void DumpSectionTable(PEData *pData, PIMAGE_SECTION_HEADER section,
 		//TCHAR sRawVirtSize[64];
 		//StringCchPrintf(sRawVirtSize, countof(sRawVirtSize), _T("0x%08X/0x%08X"), section->SizeOfRawData, section->Misc.VirtualSize);
 		//pSect->SetColumns(sChars, sRawVirtSize);
+
 		//unsigned alignment = (section->Characteristics & IMAGE_SCN_ALIGN_MASK);
 		//if ( alignment == 0 )
 		//{
@@ -2141,7 +2137,9 @@ void DumpSectionTable(PEData *pData, PIMAGE_SECTION_HEADER section,
 		//	alignment = alignment >>= 20;
 		//	pSect->printf( "  ALIGN_%uBYTES", 1 << (alignment-1) );
 		//}
+
 		//pSect->printf("\n\n");
+
 		//if (gpNTHeader32 || gpNTHeader64) {
 		//	LPVOID ptrSect = NULL;
 		//	if (g_bIs64Bit)
@@ -2167,7 +2165,6 @@ void DumpSectionTable(PEData *pData, PIMAGE_SECTION_HEADER section,
 template <class T> void DumpExportsSection(PEData *pData, PBYTE pImageBase, T * pNTHeader)	// 'T' = PIMAGE_NT_HEADERS
 {
 	_TRACE("DumpExportsSection");
-
 	// Пока - нас интересуют только экспорты dll-ек (модули фара)
 	if (lstrcmpi(pData->szExtension, L".dll"))
 		return;
@@ -2181,6 +2178,7 @@ template <class T> void DumpExportsSection(PEData *pData, PBYTE pImageBase, T * 
 	PWORD pwOrdinals;
 	DWORD *pszFuncNames;
 	DWORD exportsStartRVA, exportsEndRVA;
+
 	exportsStartRVA = GetImgDirEntryRVA(pNTHeader,IMAGE_DIRECTORY_ENTRY_EXPORT);
 	exportsEndRVA = exportsStartRVA +
 	                GetImgDirEntrySize(pNTHeader, IMAGE_DIRECTORY_ENTRY_EXPORT);
@@ -2197,6 +2195,7 @@ template <class T> void DumpExportsSection(PEData *pData, PBYTE pImageBase, T * 
 	}
 
 	delta = (INT)(header->VirtualAddress - header->PointerToRawData);
+
 	pExportDir = (PIMAGE_EXPORT_DIRECTORY)GetPtrFromRVA(exportsStartRVA, pNTHeader, pImageBase);
 
 	if (!ValidateMemory(pData, pExportDir, sizeof(*pExportDir)))
@@ -2205,11 +2204,13 @@ template <class T> void DumpExportsSection(PEData *pData, PBYTE pImageBase, T * 
 	}
 
 	//pszFilename = (PSTR)GetPtrFromRVA( pExportDir->Name, pNTHeader, pImageBase );
+
 	//MPanelItem *pChild = pRoot->AddFolder(_T("Exports Table"));
 	//pChild->SetColumnsTitles(cszOrdinal,4,cszEntryPoint,8);
 	//pChild->printf("<Exports Table>:\n");
 	//pChild->printf("  Name:            %s\n", pszFilename);
 	//pChild->printf("  Characteristics: %08X\n", pExportDir->Characteristics);
+
 	//__time32_t timeStamp = pExportDir->TimeDateStamp;
 	//pChild->printf("  TimeDateStamp:   %08X -> %s",
 	//	pExportDir->TimeDateStamp, _ctime32(&timeStamp) );
@@ -2232,13 +2233,14 @@ template <class T> void DumpExportsSection(PEData *pData, PBYTE pImageBase, T * 
 		{
 			DWORD entryPointRVA = *pdwFunctions;
 
-			if (entryPointRVA == 0)      // Skip over gaps in exported function
+			if (entryPointRVA == 0)     // Skip over gaps in exported function
 				continue;               // ordinals (the entrypoint is 0 for
+										// these functions).
 
-			// these functions).
 			////pRoot->printf("  %08X  %4u", entryPointRVA, i + pExportDir->Base );
 			//sprintf(szEntryPoint, "%08X", entryPointRVA);
 			//sprintf(szOrdinal, "%4u", i + pExportDir->Base);
+
 			// See if this function has an associated name exported for it.
 			pszFuncName = NULL;
 
@@ -2268,21 +2270,21 @@ template <class T> void DumpExportsSection(PEData *pData, PBYTE pImageBase, T * 
 								//pRoot->AddFlags(_T("FAR2"));
 								pData->nFlags |= PE_Far2;
 							}
-
 							if ((pData->nFlags & (PE_Far1|PE_Far2)) == (PE_Far1|PE_Far2))
 								return;
 						}
 					}
 				}
 			}
-
 			//if (!pszFuncName) {
 			//	sprintf(szNameBuffer, "(Ordinal@%u)", i + pExportDir->Base);
 			//	pszFuncName = szNameBuffer;
 			//}
+
 			//MPanelItem* pFunc = pChild->AddFile(pszFuncName);
 			//pFunc->printf("  %s  %s  %s", szEntryPoint, szOrdinal, pszFuncName);
 			//pFunc->SetColumns(szOrdinal, szEntryPoint);
+
 			//// Is it a forwarder?  If so, the entry point RVA is inside the
 			//// .edata section, and is an RVA to the DllName.EntryPointName
 			//if ( (entryPointRVA >= exportsStartRVA)
@@ -2290,6 +2292,7 @@ template <class T> void DumpExportsSection(PEData *pData, PBYTE pImageBase, T * 
 			//{
 			//	pFunc->printf(" (forwarder -> %s)", GetPtrFromRVA(entryPointRVA, pNTHeader, pImageBase) );
 			//}
+
 			//pFunc->AddText(_T("\n"));
 		}
 
@@ -2302,7 +2305,9 @@ bool DumpExeFilePE(PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADERS
 	_TRACE("DumpExeFilePE");
 	PBYTE pImageBase = (PBYTE)dosHeader;
 	PIMAGE_NT_HEADERS64 pNTHeader64;
+
 	pNTHeader64 = (PIMAGE_NT_HEADERS64)pNTHeader;
+
 	// Тут пока не важно 64/32 - положение одинаковое
 	pData->Machine = pNTHeader->FileHeader.Machine;
 	bool bIs64Bit = (pNTHeader->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC);
@@ -2334,6 +2339,7 @@ bool DumpExeFilePE(PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADERS
 	//    g_pCOFFHeader = 0; // Doesn't really exist!
 	//pRoot->printf("\n");
 	DumpResources(pData, pImageBase, pNTHeader);
+
 	//bIs64Bit
 	//	? DumpTLSDirectory( pRoot, pImageBase, pNTHeader64, (PIMAGE_TLS_DIRECTORY64)0 )	// Passing NULL ptr is a clever hack
 	//	: DumpTLSDirectory( pRoot, pImageBase, pNTHeader, (PIMAGE_TLS_DIRECTORY32)0 );		// See if you can figure it out! :-)
@@ -2350,6 +2356,7 @@ bool DumpExeFilePE(PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADERS
 	//	? DumpBoundImportDescriptors( pRoot, pImageBase, pNTHeader64 )
 	//	: DumpBoundImportDescriptors( pRoot, pImageBase, pNTHeader );
 #ifndef verc0_EXPORTS
+
 	bIs64Bit
 	? DumpExportsSection(pData, pImageBase, pNTHeader64)
 	: DumpExportsSection(pData, pImageBase, pNTHeader);
@@ -2357,9 +2364,11 @@ bool DumpExeFilePE(PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADERS
 	? DumpCOR20Header(pData, pImageBase, pNTHeader64)
 	: DumpCOR20Header(pData, pImageBase, pNTHeader);
 #endif
+
 	//bIs64Bit
 	//	? DumpLoadConfigDirectory( pRoot, pImageBase, pNTHeader64, (PIMAGE_LOAD_CONFIG_DIRECTORY64)0 )	// Passing NULL ptr is a clever hack
 	//	: DumpLoadConfigDirectory( pRoot, pImageBase, pNTHeader, (PIMAGE_LOAD_CONFIG_DIRECTORY32)0 );	// See if you can figure it out! :-)
+
 	bIs64Bit
 	? DumpCertificates(pData, pImageBase, pNTHeader64)
 	: DumpCertificates(pData, pImageBase, pNTHeader);
@@ -2442,6 +2451,7 @@ bool DumpExeFilePE(PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADERS
 	//
 	//if ( g_pCOFFSymbolTable )
 	//	delete g_pCOFFSymbolTable;
+
 	return true;
 }
 
@@ -2453,9 +2463,12 @@ bool DumpFile(PEData *pData, LPBYTE pFileData, __int64 nFileSize/*mapped*/, __in
 	pData->pNTHeader32 = NULL;
 	pData->pNTHeader64 = NULL;
 	pData->bIs64Bit = false;
+
 	//g_pCVHeader = 0;
 	//g_pCOFFHeader = 0;
 	//g_pCOFFSymbolTable = 0;
+
+
 	pData->FileSize.QuadPart = nFileSize;
 	pData->FileFullSize.QuadPart = nFullFileSize;
 	pData->pMappedFileBase = pFileData;
@@ -2485,6 +2498,7 @@ BOOL WINAPI CET_Init(struct CET_Init* pInit)
 	}
 
 	ghModule = pInit->hModule;
+
 	pInit->pContext = (LPVOID)1;
 	return TRUE;
 }
@@ -2520,7 +2534,6 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 	}
 
 	const BYTE  *pb  = (const BYTE*)pLoadPreview->pFileData;
-
 	if (pb[0] != 'M' || pb[1] != 'Z')
 	{
 		SETERROR(PEE_UNSUPPORTEDFORMAT);
@@ -2528,20 +2541,16 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 	}
 
 	PEData *pData = (PEData*)CALLOC(sizeof(PEData));
-
 	if (!pData)
 	{
 		SETERROR(PEE_NOT_ENOUGH_MEMORY);
 		return FALSE;
 	}
-
 	pData->nMagic = ePeStr_Info;
 	pLoadPreview->pFileContext = (void*)pData;
 	LPCWSTR pszSlash, pszDot = NULL;
 	pszSlash = wcsrchr(pLoadPreview->sFileName, L'\\');
-
 	if (pszSlash) pszDot = wcsrchr(pszSlash, L'.');
-
 	if (pszDot) lstrcpyn(pData->szExtension, pszDot, ARRAYSIZE(pData->szExtension));
 
 	TODO("Load version info, and ICON?");
@@ -2552,22 +2561,26 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 	        && (pData->nFlags || pData->nBits))
 	{
 		pData->pMappedFileBase = NULL;
+
 		// [x64/x86] [FAR1/FAR2] [FileVersion]
 		//wchar_t szInfo[512];
 		wchar_t* pszInfo = pData->szInfo;
+		
+		*(pszInfo++) = (pData->nFlags & PE_SIGNED) ? L's' : L'x';
 
 		if (pData->Machine == IMAGE_FILE_MACHINE_IA64)
 		{
-			if (pData->nFlags & PE_SIGNED) *(pszInfo++) = L's';
+			//if (pData->nFlags & PE_SIGNED) *(pszInfo++) = L's';
 
-			*(pszInfo++) = L'I'; *(pszInfo++) = L'A';
+			*(pszInfo++) = L'I'; *(pszInfo++) = L'A'; *(pszInfo++) = L' '; *pszInfo = 0;
 		}
 		else
 		{
-			*(pszInfo++) = (pData->nFlags & PE_SIGNED) ? L's' : L'x';
+			//*(pszInfo++) = (pData->nFlags & PE_SIGNED) ? L's' : L'x';
+			lstrcpy(pszInfo, (pData->nBits == 64) ? L"64 " : (pData->nBits == 16) ? L"16 " : L"32 ");
 		}
 
-		lstrcpy(pszInfo, (pData->nBits == 64) ? L"64 " : (pData->nBits == 16) ? L"16 " : L"32 ");
+		//lstrcpy(pszInfo, (pData->nBits == 64) ? L"64 " : (pData->nBits == 16) ? L"16 " : L"32 ");
 
 		if ((pData->nFlags & (PE_Far1|PE_Far2)) == (PE_Far1|PE_Far2))
 			lstrcat(pData->szInfo, L"Far1&2 ");
@@ -2577,13 +2590,10 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 			lstrcat(pData->szInfo, L"Far2 ");
 
 		if ((pData->nFlags & PE_UPX)) lstrcat(pData->szInfo, L"Upx ");
-
 		if ((pData->nFlags & PE_DOTNET)) lstrcat(pData->szInfo, L".Net ");
-
 		if (pData->szVersion[0])
 		{
 			lstrcat(pData->szInfo, pData->szVersion);
-
 			if (pData->szVersionN[0])
 			{
 				lstrcat(pData->szInfo, L" [");
@@ -2597,6 +2607,7 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 		}
 
 		pLoadPreview->pszComments = pData->szInfo;
+
 		lbRc = TRUE;
 	}
 	else
@@ -2716,7 +2727,6 @@ void cpytag(char* &psz, const char* src, int nMax)
 {
 	for (int i = 0; i < nMax && *src; i++)
 		*(psz++) = *(src++);
-
 	*psz = 0;
 }
 
@@ -2729,9 +2739,7 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 
 	LPCWSTR pszSlash, pszDot = NULL;
 	pszSlash = wcsrchr(FilePath, L'\\');
-
 	if (pszSlash) pszDot = wcsrchr(pszSlash, L'.');
-
 	if (!pszDot) return FALSE;
 
 	BOOL lbDosCom = FALSE;
@@ -2747,6 +2755,7 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 	lbDosCom = (lstrcmpiW(FilePath+nLen-4, L".com") == 0);
 	
 	BOOL lbRc = FALSE;
+
 	LPCTSTR pszUNCPath = FilePath;
 	//TCHAR* pszBuffer = NULL;
 	//nLen = lstrlen(FilePath);
@@ -2771,11 +2780,9 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 	//}
 	
 	HANDLE hFile = CreateFileW(pszUNCPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0,0);
-
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		DWORD dwErr = GetLastError();
-
 		if (dwErr == ERROR_SHARING_VIOLATION)
 		{
 			hFile = CreateFileW(pszUNCPath, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0,0);
@@ -2783,10 +2790,8 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 			//	hFile = CreateFileW(FilePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0,0);
 		}
 	}
-
 	LARGE_INTEGER nSize = {{0}};
 	LARGE_INTEGER nFullSize = {{0}};
-
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
 		BYTE Signature[2]; DWORD nRead = 0;
@@ -2803,6 +2808,7 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 			LARGE_INTEGER liPos, liTest;
 			IMAGE_DOS_HEADER dosHeader = {0};
 			IMAGE_NT_HEADERS64 NTHeader64 = {0}; // 64-версия больше 32 битной. считываем больший блок данных
+
 			nFullSize.QuadPart = nSize.QuadPart;
 			dosHeader.e_magic = IMAGE_DOS_SIGNATURE;
 			lbSucceeded = ReadFile(hFile, 2+(LPBYTE)&dosHeader, sizeof(dosHeader)-2, &nRead, NULL);
@@ -2836,7 +2842,6 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 					else
 					{
 						PIMAGE_NT_HEADERS32 pNTHeader32 = (PIMAGE_NT_HEADERS32)&NTHeader64;
-
 						if (pNTHeader32->OptionalHeader.SizeOfImage < nSize.QuadPart)
 							nSize.QuadPart = pNTHeader32->OptionalHeader.SizeOfImage;
 					}
@@ -2865,7 +2870,6 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 			if (lbSucceeded)
 			{
 				PEData Ver;
-
 				if (pszDot) lstrcpyn(Ver.szExtension, pszDot, ARRAYSIZE(Ver.szExtension));
 
 				Ver.nFlags |= PE_ICON_EXISTS; // чтобы иконки не пытаться искать. нужна только версия
@@ -2874,14 +2878,16 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 				if (lbDump && (Ver.szVersion[0] != 0 || Ver.nBits != 0))
 				{
 					nLen = lstrlen(Ver.szVersion)+10;
-
 					if (nLen < 2) return FALSE;
-
 					*CustomData = (wchar_t*)malloc(nLen*2);
-					wsprintfW(*CustomData, L"[%s%s%i]%s%s",
-					          (Ver.nFlags & PE_SIGNED) ? L"s" : ((Ver.Machine!=IMAGE_FILE_MACHINE_IA64) ? L"x" : L""),
-					          (Ver.Machine==IMAGE_FILE_MACHINE_IA64) ? L"IA" : L"",
-					          Ver.nBits,
+					wchar_t szBits[5];
+					if (Ver.Machine==IMAGE_FILE_MACHINE_IA64)
+						lstrcpyW(szBits, L"IA");
+					else
+						wsprintfW(szBits, L"%i", Ver.nBits);
+					wsprintfW(*CustomData, L"[%s%s]%s%s",
+					          (Ver.nFlags & PE_SIGNED) ? L"s" : L"x",
+					          szBits,
 					          Ver.szVersion[0] ? L" " : L"", Ver.szVersion);
 					lbRc = TRUE;
 				}
@@ -2889,7 +2895,6 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 			
 			if (pFileData)
 				UnmapViewOfFile(pFileData);
-
 			if (hFileMapping)
 				CloseHandle(hFileMapping);
 		}
@@ -2906,7 +2911,6 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 
 		CloseHandle(hFile);
 	}
-
 	return lbRc;
 }
 

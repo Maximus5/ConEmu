@@ -2357,10 +2357,10 @@ LRESULT CSettings::OnInitDialog_Debug()
 	SetWindowPos(hTip, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
 
-	HWND hDetails = GetDlgItem(hDebug, lbActivityDetails);
-	ListView_SetExtendedListViewStyleEx(hDetails,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
-	ListView_SetExtendedListViewStyleEx(hDetails,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
-	wcscpy_c(szTitle, L" ");		ListView_InsertColumn(hDetails, 0, &col);
+	//HWND hDetails = GetDlgItem(hDebug, lbActivityDetails);
+	//ListView_SetExtendedListViewStyleEx(hDetails,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
+	//ListView_SetExtendedListViewStyleEx(hDetails,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
+	//wcscpy_c(szTitle, L" ");		ListView_InsertColumn(hDetails, 0, &col);
 	//col.cx = 60;
 	//wcscpy_c(szTitle, L"Item");		ListView_InsertColumn(hDetails, 0, &col);
 	//col.cx = 380;
@@ -2374,9 +2374,8 @@ LRESULT CSettings::OnInitDialog_Debug()
 	//ListView_InsertItem(hDetails, &lvi); lvi.iItem++;
 	////wcscpy_c(szTime, L"Details");
 	////ListView_InsertItem(hDetails, &lvi);
-	
-	hTip = ListView_GetToolTips(hDetails);
-	SetWindowPos(hTip, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+	//hTip = ListView_GetToolTips(hDetails);
+	//SetWindowPos(hTip, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
 	//ShowWindow(GetDlgItem(hDebug, gbInputActivity), SW_HIDE);
 	//ShowWindow(GetDlgItem(hDebug, lbInputActivity), SW_HIDE);
@@ -4123,6 +4122,22 @@ INT_PTR CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	enum LogProcessColumns
+	{
+		lpc_Time = 0,
+		lpc_PPID,
+		lpc_Func,
+		lpc_Oper,
+		lpc_Bits,
+		lpc_System,
+		lpc_App,
+		lpc_Params,
+		lpc_Flags,
+		lpc_StdIn,
+		lpc_StdOut,
+		lpc_StdErr,
+	};
+
 	static bool bSkipSelChange = false;
 	switch(messg)
 	{
@@ -4137,10 +4152,12 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 			case cbActivityReset:
 				{
 					ListView_DeleteAllItems(GetDlgItem(hWnd2, lbActivityLog));
-					wchar_t szText[2]; szText[0] = 0;
-					HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
-					ListView_SetItemText(hDetails, 0, 1, szText);
-					ListView_SetItemText(hDetails, 1, 1, szText);								
+					//wchar_t szText[2]; szText[0] = 0;
+					//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
+					//ListView_SetItemText(hDetails, 0, 1, szText);
+					//ListView_SetItemText(hDetails, 1, 1, szText);								
+					SetDlgItemText(hWnd2, ebActivityApp, L"");
+					SetDlgItemText(hWnd2, ebActivityParm, L"");
 				} // cbActivityReset
 				break;
 			case cbActivitySaveAs:
@@ -4153,12 +4170,12 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 				{
 					//PRAGMA_ERROR("m_RealConLoggingType");
 					HWND hList = GetDlgItem(hWnd2, lbActivityLog);
-					HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
+					//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
 					gpSet->m_RealConLoggingType = (LOWORD(wParam) == rbActivityShell) ? glt_Processes : glt_None;
 					ListView_DeleteAllItems(hList);
 					for (int c = 0; (c <= 40) && ListView_DeleteColumn(hList, 0); c++);
-					ListView_DeleteAllItems(hDetails);
-					for (int c = 0; (c <= 40) && ListView_DeleteColumn(hDetails, 0); c++);
+					//ListView_DeleteAllItems(hDetails);
+					//for (int c = 0; (c <= 40) && ListView_DeleteColumn(hDetails, 0); c++);
 					
 					if (gpSet->m_RealConLoggingType == glt_Processes)
 					{
@@ -4168,36 +4185,39 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 						ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 						ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 						
-						wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, 0, &col);
+						wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, lpc_Time, &col);
+						col.cx = 55; col.fmt = LVCFMT_RIGHT;
+						wcscpy_c(szTitle, L"PPID");		ListView_InsertColumn(hList, lpc_PPID, &col);
+						col.cx = 60; col.fmt = LVCFMT_LEFT;
+						wcscpy_c(szTitle, L"Func");		ListView_InsertColumn(hList, lpc_Func, &col);
 						col.cx = 50;
-						wcscpy_c(szTitle, L"Func");		ListView_InsertColumn(hList, 1, &col);
-						wcscpy_c(szTitle, L"Oper");		ListView_InsertColumn(hList, 2, &col);
+						wcscpy_c(szTitle, L"Oper");		ListView_InsertColumn(hList, lpc_Oper, &col);
 						col.cx = 40;
-						wcscpy_c(szTitle, L"Bits");		ListView_InsertColumn(hList, 3, &col);
-						wcscpy_c(szTitle, L"Syst");		ListView_InsertColumn(hList, 4, &col);
+						wcscpy_c(szTitle, L"Bits");		ListView_InsertColumn(hList, lpc_Bits, &col);
+						wcscpy_c(szTitle, L"Syst");		ListView_InsertColumn(hList, lpc_System, &col);
 						col.cx = 120;
-						wcscpy_c(szTitle, L"App");		ListView_InsertColumn(hList, 5, &col);
-						wcscpy_c(szTitle, L"Params");	ListView_InsertColumn(hList, 6, &col);
+						wcscpy_c(szTitle, L"App");		ListView_InsertColumn(hList, lpc_App, &col);
+						wcscpy_c(szTitle, L"Params");	ListView_InsertColumn(hList, lpc_Params, &col);
 						//wcscpy_c(szTitle, L"CurDir");	ListView_InsertColumn(hList, 7, &col);
 						col.cx = 120;
-						wcscpy_c(szTitle, L"Flags");	ListView_InsertColumn(hList, 7, &col);
+						wcscpy_c(szTitle, L"Flags");	ListView_InsertColumn(hList, lpc_Flags, &col);
 						col.cx = 80;
-						wcscpy_c(szTitle, L"StdIn");	ListView_InsertColumn(hList, 8, &col);
-						wcscpy_c(szTitle, L"StdOut");	ListView_InsertColumn(hList, 9, &col);
-						wcscpy_c(szTitle, L"StdErr");	ListView_InsertColumn(hList, 10, &col);
+						wcscpy_c(szTitle, L"StdIn");	ListView_InsertColumn(hList, lpc_StdIn, &col);
+						wcscpy_c(szTitle, L"StdOut");	ListView_InsertColumn(hList, lpc_StdOut, &col);
+						wcscpy_c(szTitle, L"StdErr");	ListView_InsertColumn(hList, lpc_StdErr, &col);
 
-						col.cx = 60;
-						wcscpy_c(szTitle, L"Item");		ListView_InsertColumn(hDetails, 0, &col);
-						col.cx = 380;
-						wcscpy_c(szTitle, L"Details");	ListView_InsertColumn(hDetails, 1, &col);
-						LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
-						lvi.state = lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED; lvi.pszText = szTitle;
-						wcscpy_c(szTitle, L"AppName");
-						ListView_InsertItem(hDetails, &lvi); lvi.iItem++;
-						wcscpy_c(szTitle, L"CmdLine");
-						ListView_InsertItem(hDetails, &lvi); lvi.iItem++;
-						//wcscpy_c(szTime, L"Details");
-						//ListView_InsertItem(hDetails, &lvi);
+						//col.cx = 60;
+						//wcscpy_c(szTitle, L"Item");		ListView_InsertColumn(hDetails, 0, &col);
+						//col.cx = 380;
+						//wcscpy_c(szTitle, L"Details");	ListView_InsertColumn(hDetails, 1, &col);
+						//LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
+						//lvi.state = lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED; lvi.pszText = szTitle;
+						//wcscpy_c(szTitle, L"AppName");
+						//ListView_InsertItem(hDetails, &lvi); lvi.iItem++;
+						//wcscpy_c(szTitle, L"CmdLine");
+						//ListView_InsertItem(hDetails, &lvi); lvi.iItem++;
+						////wcscpy_c(szTime, L"Details");
+						////ListView_InsertItem(hDetails, &lvi);
 
 					}
 					else
@@ -4205,7 +4225,7 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 						LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
 						wchar_t szTitle[4]; col.pszText = szTitle;
 						wcscpy_c(szTitle, L" ");		ListView_InsertColumn(hList, 0, &col);
-						ListView_InsertColumn(hDetails, 0, &col);
+						//ListView_InsertColumn(hDetails, 0, &col);
 					}
 					ListView_DeleteAllItems(GetDlgItem(hWnd2, lbActivityLog));
 					
@@ -4226,12 +4246,14 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 							if ((p->uNewState & LVIS_SELECTED) && (p->iItem >= 0))
 							{
 								HWND hList = GetDlgItem(hWnd2, lbActivityLog);
-								HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
+								//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
 								wchar_t szText[65535]; szText[0] = 0;
-								ListView_GetItemText(hList, p->iItem, 5, szText, countof(szText));
-								ListView_SetItemText(hDetails, 0, 1, szText);
-								ListView_GetItemText(hList, p->iItem, 6, szText, countof(szText));
-								ListView_SetItemText(hDetails, 1, 1, szText);								
+								ListView_GetItemText(hList, p->iItem, lpc_App, szText, countof(szText));
+								SetDlgItemText(hWnd2, ebActivityApp, szText);
+								//ListView_SetItemText(hDetails, 0, 1, szText);
+								ListView_GetItemText(hList, p->iItem, lpc_Params, szText, countof(szText));
+								SetDlgItemText(hWnd2, ebActivityParm, szText);
+								//ListView_SetItemText(hDetails, 1, 1, szText);
 							}
 						} //LVN_ODSTATECHANGED
 						break;
@@ -4248,31 +4270,35 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 				SYSTEMTIME st; GetLocalTime(&st);
 				wchar_t szTime[128]; _wsprintf(szTime, SKIPLEN(countof(szTime)) L"%02i:%02i:%02i", st.wHour, st.wMinute, st.wSecond);
 				HWND hList = GetDlgItem(hWnd2, lbActivityLog);
-				HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
+				//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
 				LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
 				lvi.state = lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
 				lvi.pszText = szTime;
 				int nItem = ListView_InsertItem(hList, &lvi);
 				//
-				ListView_SetItemText(hList, nItem, 1, (wchar_t*)pShl->szFunction);
+				ListView_SetItemText(hList, nItem, lpc_Func, (wchar_t*)pShl->szFunction);
+				_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u:%u", pShl->nParentPID, pShl->nParentBits);
+				ListView_SetItemText(hList, nItem, lpc_PPID, szTime);
 				if (pShl->pszAction)
-					ListView_SetItemText(hList, nItem, 2, (wchar_t*)pShl->pszAction);
+					ListView_SetItemText(hList, nItem, lpc_Oper, (wchar_t*)pShl->pszAction);
 				if (pShl->nImageBits)
 				{
 					_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", pShl->nImageBits);
-					ListView_SetItemText(hList, nItem, 3, szTime);
+					ListView_SetItemText(hList, nItem, lpc_Bits, szTime);
 				}
 				if (pShl->nImageSubsystem)
 				{
 					_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", pShl->nImageSubsystem);
-					ListView_SetItemText(hList, nItem, 4, szTime);
+					ListView_SetItemText(hList, nItem, lpc_System, szTime);
 				}
 				if (pShl->pszFile)
-					ListView_SetItemText(hList, nItem, 5, (wchar_t*)pShl->pszFile);
-				ListView_SetItemText(hDetails, 0, 1, (wchar_t*)(pShl->pszFile ? pShl->pszFile : L""));
+					ListView_SetItemText(hList, nItem, lpc_App, (wchar_t*)pShl->pszFile);
+				SetDlgItemText(hWnd2, ebActivityApp, (wchar_t*)(pShl->pszFile ? pShl->pszFile : L""));
+				//ListView_SetItemText(hDetails, 0, 1, (wchar_t*)(pShl->pszFile ? pShl->pszFile : L""));
 				if (pShl->pszParam)
-					ListView_SetItemText(hList, nItem, 6, (wchar_t*)pShl->pszParam);
-				ListView_SetItemText(hDetails, 1, 1, (wchar_t*)(pShl->pszParam ? pShl->pszParam : L""));
+					ListView_SetItemText(hList, nItem, lpc_Params, (wchar_t*)pShl->pszParam);
+				SetDlgItemText(hWnd2, ebActivityParm, (wchar_t*)(pShl->pszParam ? pShl->pszParam : L""));
+				//ListView_SetItemText(hDetails, 1, 1, (wchar_t*)(pShl->pszParam ? pShl->pszParam : L""));
 				//TODO: CurDir?
 
 				szTime[0] = 0;
@@ -4284,22 +4310,22 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 					_wsprintf(szTime+lstrlen(szTime), SKIPLEN(32) L"St:0x%04X ", pShl->nStartFlags);
 				if (pShl->nShowCmd)
 					_wsprintf(szTime+lstrlen(szTime), SKIPLEN(32) L"Sw:%u ", pShl->nShowCmd);
-				ListView_SetItemText(hList, nItem, 7, szTime);
+				ListView_SetItemText(hList, nItem, lpc_Flags, szTime);
 
 				if (pShl->hStdIn)
 				{
 					_wsprintf(szTime, SKIPLEN(countof(szTime)) L"0x%08X", pShl->hStdIn);
-					ListView_SetItemText(hList, nItem, 8, szTime);
+					ListView_SetItemText(hList, nItem, lpc_StdIn, szTime);
 				}
 				if (pShl->hStdOut)
 				{
 					_wsprintf(szTime, SKIPLEN(countof(szTime)) L"0x%08X", pShl->hStdOut);
-					ListView_SetItemText(hList, nItem, 9, szTime);
+					ListView_SetItemText(hList, nItem, lpc_StdOut, szTime);
 				}
 				if (pShl->hStdErr)
 				{
 					_wsprintf(szTime, SKIPLEN(countof(szTime)) L"0x%08X", pShl->hStdErr);
-					ListView_SetItemText(hList, nItem, 10, szTime);
+					ListView_SetItemText(hList, nItem, lpc_StdErr, szTime);
 				}
 				if (pShl->pszAction)
 					free(pShl->pszAction);

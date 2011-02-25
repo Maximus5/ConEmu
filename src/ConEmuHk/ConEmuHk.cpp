@@ -125,6 +125,7 @@ RunMode gnRunMode = RM_UNDEFINED;
 BOOL  gbNoCreateProcess = FALSE;
 BOOL  gbDebugProcess = FALSE;
 int   gnCmdUnicodeMode = 0;
+BOOL  gbUseDosBox = FALSE;
 BOOL  gbRootIsCmdExe = TRUE;
 BOOL  gbAttachFromFar = FALSE;
 BOOL  gbSkipWowChange = FALSE;
@@ -741,7 +742,11 @@ wait:
 	iRc = 0;
 wrap:
 #ifdef _DEBUG
+	// Проверка кучи
 	xf_validate(NULL);
+	// Отлов изменения высоты буфера
+	if (gnRunMode == RM_SERVER)
+		Sleep(1000);
 #endif
 	// К сожалению, HandlerRoutine может быть еще не вызван, поэтому
 	// в самой процедуре ExitWaitForKey вставлена проверка флага gbInShutdown
@@ -752,6 +757,10 @@ wrap:
 #ifdef _DEBUG
 	xf_validate(NULL);
 #endif
+
+	if (iRc == CERR_GUIMACRO_SUCCEEDED)
+		iRc = 0;
+
 
 	if (!gbInShutdown  // только если юзер не нажал крестик в заголовке окна, или не удался /ATTACH (чтобы в консоль не гадить)
 	        && ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE)
@@ -929,6 +938,7 @@ void Help()
 	    "Usage: ConEmuC [switches] [/U | /A] /C <command line, passed to %%COMSPEC%%>\n"
 	    "   or: ConEmuC [switches] /ROOT <program with arguments, far.exe for example>\n"
 	    "   or: ConEmuC /ATTACH /NOCMD\n"
+	    "   or: ConEmuC /GUIMACRO <ConEmu GUI macro command>\n"
 	    "   or: ConEmuC /?\n"
 	    "Switches:\n"
 	    "     /[NO]CONFIRM - [don't] confirm closing console on program termination\n"
@@ -1567,6 +1577,35 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			}
 
 			return CERR_HOOKS_FAILED;
+		}
+		else if (lstrcmpi(szArg, L"/GUIMACRO")==0)
+		{
+			// Все что в asCmdLine - выполнить в Gui
+			int iRc = CERR_GUIMACRO_FAILED;
+			int nLen = lstrlen(asCmdLine);
+			//SetEnvironmentVariable(CEGUIMACRORETENVVAR, NULL);
+			CESERVER_REQ *pIn = NULL, *pOut = NULL;
+			pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
+			lstrcpyW(pIn->GuiMacro.sMacro, asCmdLine);
+			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+			if (pOut)
+			{
+				if (pOut->GuiMacro.nSucceeded)
+				{
+					// Смысла нет, переменная в родительский процесс все-равно не попадет
+					//SetEnvironmentVariable(CEGUIMACRORETENVVAR,
+					//	pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : NULL);
+					_wprintf(pOut->GuiMacro.sMacro);
+					iRc = CERR_GUIMACRO_SUCCEEDED;
+				}
+				ExecuteFreeResult(pOut);
+			}
+			ExecuteFreeResult(pIn);
+			return iRc;
+		}
+		else if (lstrcmpi(szArg, L"/DOSBOX")==0)
+		{
+			gbUseDosBox = TRUE;
 		}
 		// После этих аргументов - идет то, что передается в COMSPEC (CreateProcess)!
 		//if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0 || wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0) {

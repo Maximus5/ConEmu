@@ -34,6 +34,7 @@ enum CmdOnCreateType
 	eCreateProcess,
 	eInjectingHooks,
 	eHooksLoaded,
+	eParmsChanged,
 };
 
 class CShellProc
@@ -60,6 +61,7 @@ private:
 	wchar_t ms_Executable[MAX_PATH+1];
 	BOOL mb_WasSuspended; // Если TRUE - значит при вызове CreateProcessXXX уже был флаг CREATE_SUSPENDED
 	BOOL mb_NeedInjects;
+	BOOL mb_DosBoxAllowed;
 	
 	static int mn_InShellExecuteEx;
 	BOOL mb_InShellExecuteEx;
@@ -83,7 +85,7 @@ public:
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 				int nImageBits, int nImageSubsystem,
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
-				wchar_t (&szBaseDir)[MAX_PATH+2]);
+				wchar_t (&szBaseDir)[MAX_PATH+2], BOOL& bDosBoxAllowed);
 public:
 	CShellProc();
 	~CShellProc();

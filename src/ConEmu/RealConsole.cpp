@@ -5004,6 +5004,8 @@ CESERVER_REQ* CRealConsole::cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UIN
 	if (ghOpWnd && gpSet->hDebug)
 	{
 		DebugLogShellActivity *shl = (DebugLogShellActivity*)calloc(sizeof(DebugLogShellActivity),1);
+		shl->nParentPID = pIn->hdr.nSrcPID;
+		shl->nParentBits = pIn->OnCreateProc.nSourceBits;
 		wcscpy_c(shl->szFunction, pIn->OnCreateProc.sFunction);
 		shl->pszAction = lstrdup(pIn->OnCreateProc.wsValue);
 		shl->pszFile   = lstrdup(pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen);

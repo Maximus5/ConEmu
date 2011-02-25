@@ -306,6 +306,7 @@ extern RunMode gnRunMode;
 extern BOOL gbNoCreateProcess;
 extern BOOL gbDebugProcess;
 extern int  gnCmdUnicodeMode;
+extern BOOL gbUseDosBox;
 extern BOOL gbRootIsCmdExe;
 extern BOOL gbAttachFromFar;
 extern BOOL gbConsoleModeFlags;
@@ -537,3 +538,5 @@ extern BOOL gbInRecreateRoot;
 #define CERR_HOOKS_FAILED 130
 #define CERR_DLLMAIN_SKIPPED 131
 #define CERR_ATTACH_NO_CONWND 132
+#define CERR_GUIMACRO_SUCCEEDED 133
+#define CERR_GUIMACRO_FAILED 134
