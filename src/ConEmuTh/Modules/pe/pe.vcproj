@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="pe"
 	ProjectGUID="{D179531C-0F06-473A-A301-7FE8976046EC}"
 	RootNamespace="pe"
@@ -988,7 +988,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far3x86\Plugins\ConEmu\Thumbs\pe.t32"
+				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\Plugins\ConEmu\Thumbs\pe.t32"
 				LinkIncremental="2"
 				ModuleDefinitionFile="pe.def"
 				GenerateDebugInformation="true"
@@ -1063,7 +1063,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="F:\Utils\FAR\Far2x64\Plugins\ConEmu\Thumbs\pe.t64"
+				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\Plugins\ConEmu\Thumbs\pe.t64"
 				LinkIncremental="2"
 				ModuleDefinitionFile="pe.def"
 				GenerateDebugInformation="true"

@@ -104,7 +104,7 @@ void SetStartupInfoW995(void *aInfo)
 }
 
 extern BOOL gbInfoW_OK;
-HANDLE WINAPI _export OpenPluginW1(int OpenFrom,INT_PTR Item)
+HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 {
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;

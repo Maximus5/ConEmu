@@ -107,7 +107,7 @@ wchar_t* CShellProc::str2wcs(const char* psz, UINT anCP)
 }
 char* CShellProc::wcs2str(const wchar_t* pwsz, UINT anCP)
 {
-	int nLen = lstrlenW(pwsz);
+	int nLen = lstrlen(pwsz);
 	char* psz = (char*)calloc((nLen+1),sizeof(char));
 	if (nLen > 0)
 	{
@@ -153,9 +153,9 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 	
 	CESERVER_REQ *pIn = NULL;
 	
-	int nActionLen = (asAction ? lstrlenW(asAction) : 0)+1;
-	int nFileLen = (asFile ? lstrlenW(asFile) : 0)+1;
-	int nParamLen = (asParam ? lstrlenW(asParam) : 0)+1;
+	int nActionLen = (asAction ? lstrlen(asAction) : 0)+1;
+	int nFileLen = (asFile ? lstrlen(asFile) : 0)+1;
+	int nParamLen = (asParam ? lstrlen(asParam) : 0)+1;
 	
 	pIn = ExecuteNewCmd(CECMD_ONCREATEPROC, sizeof(CESERVER_REQ_HDR)
 		+sizeof(CESERVER_REQ_ONCREATEPROCESS)+(nActionLen+nFileLen+nParamLen)*sizeof(wchar_t));
@@ -202,12 +202,154 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 
 BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asBaseDir,
-				LPCWSTR asExeFile, int ImageBits, int ImageSubsystem,
+				LPCWSTR asExeFile, DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam)
 {
 	wchar_t szConEmuC[MAX_PATH+16]; // ConEmuC64.exe
 	wcscpy_c(szConEmuC, asBaseDir);
 	
+	_ASSERTE(aCmd==eShellExecute || aCmd==eCreateProcess);
+
+	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
+
+	if (aCmd == eCreateProcess)
+	{
+		// ƒл€ простоты - сразу откинем asFile если он совпадает с первым аргументом в asParam
+		if (asFile && !*asFile) asFile = NULL;
+		if (asFile && *asFile && asParam && *asParam)
+		{
+			LPCWSTR pszParam = SkipNonPrintable(asParam);
+			while (*pszParam == L'"') pszParam++;
+			int nLen = lstrlen(asFile)+1;
+			wchar_t* pszTest = (wchar_t*)malloc(nLen*sizeof(wchar_t));
+			_ASSERTE(pszTest);
+			if (pszTest)
+			{
+				_wcscpyn_c(pszTest, nLen, pszParam, nLen);
+				pszTest[nLen-1] = 0;
+				// —равнить asFile с первым аргументом в asParam
+				if (lstrcmpi(pszTest, asFile) == 0)
+				{
+					// exe-шник уже указан в asParam, добавл€ть дополнительно Ќ≈ нужно
+					asFile = NULL;
+				}
+				free(pszTest);
+			}
+		}
+	}
+
+	wchar_t szComspec[MAX_PATH+20]; szComspec[0] = 0;
+	if (GetEnvironmentVariable(L"ComSpec", szComspec, countof(szComspec)))
+	{
+		// Ќе должен быть (даже случайно) ConEmuC.exe
+		const wchar_t* pszName = PointToName(szComspec);
+		if (!pszName || !lstrcmpi(pszName, L"ConEmuC.exe") || !lstrcmpi(pszName, L"ConEmuC64.exe"))
+			szComspec[0] = 0;
+	}
+	// ≈сли не удалось определить через переменную окружени€ - пробуем обычный "cmd.exe" из System32
+	if (szComspec[0] == 0)
+	{
+		int n = GetWindowsDirectory(szComspec, MAX_PATH);
+		if (n > 0 && n < MAX_PATH)
+		{
+			// ƒобавить \System32\cmd.exe
+			wcscat_c(szComspec, (szComspec[n-1] == L'\\') ? L"System32\\cmd.exe" : L"\\System32\\cmd.exe");
+		}
+	}
+
+	// ≈сли удалось определить "ComSpec"
+	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасываетс€
+	if (asParam)
+	{
+		const wchar_t* psz = SkipNonPrintable(asParam);
+		// ≈сли запускают cmd.exe без параметров - не отбрасывать его!
+		if (szComspec[0] && *psz)
+		{
+			// asFile может быть и дл€ ShellExecute и дл€ CreateProcess, проверим в одном месте
+			if (asFile && (lstrcmpi(szComspec, asFile) == 0))
+			{
+				if (psz[0] == L'/' && wcschr(L"CcKk", psz[1]))
+				{
+					// не добавл€ть в измененную команду asFile (это отбрасываемый cmd.exe)
+					lbComSpecK = (psz[1] == L'K' || psz[1] == L'k');
+					asFile = NULL;
+					asParam = psz+2; // /C или /K добавл€етс€ к ConEmuC.exe
+					lbComSpec = TRUE;
+				}
+			}
+			else if ((aCmd == eCreateProcess) && !asFile)
+			{
+				// “еперь обработка дл€ CreateProcess.
+				// asFile уже сброшен в NULL, если он совпадает с первым аргументом в asParam
+				// ¬озможны два варианта asParam (как минимум)
+				// "c:\windows\system32\cmd.exe" /c dir
+				// "c:\windows\system32\cmd.exe /c dir"
+				// ¬торой - пока проигнорируем, как маловеро€тный
+				int nLen = lstrlen(szComspec)+1;
+				wchar_t* pszTest = (wchar_t*)malloc(nLen*sizeof(wchar_t));
+				_ASSERTE(pszTest);
+				if (pszTest)
+				{
+					_wcscpyn_c(pszTest, nLen, (*psz == L'"') ? (psz+1) : psz, nLen);
+					pszTest[nLen-1] = 0;
+					// —равнить первый аргумент в asParam с %COMSPEC%
+					const wchar_t* pszCmdLeft = NULL;
+					if (lstrcmpi(pszTest, szComspec) == 0)
+					{
+						if (*psz == L'"')
+						{
+							WARNING("!!! ѕроверить ветку !!!");
+							if (psz[nLen+1] == L'"')
+							{
+								pszCmdLeft = psz+nLen+2;
+							}
+						}
+						else
+						{
+							pszCmdLeft = psz+nLen-1;
+						}
+						// “еперь нужно проверить, что там в хвосте команды (если команды нет - оставить cmd.exe)
+						pszCmdLeft = SkipNonPrintable(pszCmdLeft);
+						if (pszCmdLeft[0] == L'/' && wcschr(L"CcKk", pszCmdLeft[1]))
+						{
+							// не добавл€ть в измененную команду asFile (это отбрасываемый cmd.exe)
+							lbComSpecK = (psz[1] == L'K' || psz[1] == L'k');
+							_ASSERTE(asFile == NULL); // уже должен быть NULL
+							asParam = pszCmdLeft+2; // /C или /K добавл€етс€ к ConEmuC.exe
+							lbComSpec = TRUE;
+						}
+					}
+					free(pszTest);
+				}
+			}
+		}
+	}
+
+	wchar_t szNewExe[MAX_PATH+1];
+	const wchar_t* pszExeExt = NULL;
+	// ѕроверить, может запускаетс€ батник?
+	if (/*lbComSpec &&*/ !asFile && asParam)
+	{
+		const wchar_t* pszTemp = asParam;
+		if (0 == NextArg(&pszTemp, szNewExe))
+		{
+			pszExeExt = PointToExt(szNewExe);
+		}
+	}
+	if (pszExeExt && (!lstrcmpi(pszExeExt, L".cmd") || !lstrcmpi(pszExeExt, L".bat")))
+	{
+		ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
+		// Ѕудем выполн€ть "батники" в нативной битности
+		#ifdef _WIN64
+		ImageBits = 64;
+		#else
+		ImageBits = 32;
+		#endif
+	}
+	
+
+
+
 	if (ImageBits == 32)
 	{
 		wcscat_c(szConEmuC, L"ConEmuC.exe");
@@ -227,72 +369,63 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		wcscat_c(szConEmuC, L"ConEmuC.exe");
 	}
 	
-	int nCchSize = (asFile ? lstrlenW(asFile) : 0) + (asParam ? lstrlenW(asParam) : 0) + 32;
+	int nCchSize = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 32;
 	if (aCmd == eShellExecute)
 	{
 		*psFile = lstrdup(szConEmuC);
 	}
 	else
 	{
-		nCchSize += lstrlenW(szConEmuC);
+		nCchSize += lstrlen(szConEmuC);
 		*psFile = NULL;
 	}
 	
 	*psParam = (wchar_t*)malloc(nCchSize*sizeof(wchar_t));
 	(*psParam)[0] = 0;
+	// ¬ ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а дл€ CreatePocess - в psParam
+	// /C или /K в обоих случа€х нужно пихать в psParam
 	if (aCmd == eShellExecute)
 	{
-		BOOL lbSkipComspec = FALSE;
-		wchar_t szComspec[MAX_PATH+1];
-		if (GetEnvironmentVariable(L"ComSpec", szComspec, countof(szComspec)))
+		if (asFile && *asFile)
 		{
-			if (lstrcmpi(szComspec, asFile) == 0)
-			{
-				if (asParam)
-				{
-					const wchar_t* psz = asParam;
-					while (*psz == L' ' || *psz == L'\t' || *psz == L'\r' || *psz == L'\n') psz++;
-					if (psz[0] == L'/' && (psz[1] == L'C' || psz[1] == L'c'))
-						lbSkipComspec = TRUE;
-				}
-			}
-		}
-
-		if (!lbSkipComspec)
-		{
-			_wcscat_c((*psParam), nCchSize, L" /C \"");
+			_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K \"" : L" /C \"");
 			_wcscat_c((*psParam), nCchSize, asFile ? asFile : L"");
 			_wcscat_c((*psParam), nCchSize, L"\"");
 		}
 		else
 		{
-			_wcscat_c((*psParam), nCchSize, L" ");
+			_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
 		}
 	}
 	else
 	{
 		(*psParam)[0] = L'"';
 		_wcscpy_c((*psParam)+1, nCchSize-1, szConEmuC);
-		_wcscat_c((*psParam), nCchSize, L"\" /C ");
+		_wcscat_c((*psParam), nCchSize, lbComSpecK ? L"\" /K " : L"\" /C ");
 		// Ёто CreateProcess. »сполн€емый файл может быть уже указан в asParam
-		BOOL lbNeedExe = TRUE;
-		if (asParam && *asParam)
-		{
-			LPCWSTR pszParam = asParam;
-			while (*pszParam == L'"')
-				pszParam++;
-			int nLen = lstrlenW(asExeFile);
-			wchar_t szTest[MAX_PATH*2];
-			_ASSERTE(nLen <= (MAX_PATH+10)); // размер из IsNeedCmd.
-			_wcscpyn_c(szTest, countof(szTest), asExeFile, nLen+1);
-			if (lstrcmpiW(szTest, asExeFile) == 0)
-				lbNeedExe = FALSE;
-		}
-		if (lbNeedExe)
+		//BOOL lbNeedExe = (asFile && *asFile);
+		// уже отсечено выше
+		//if (lbNeedExe && asParam && *asParam)
+		//{
+		//	LPCWSTR pszParam = asParam;
+		//	while (*pszParam == L'"') pszParam++;
+		//	int nLen = lstrlen(asExeFile);
+		//	wchar_t szTest[MAX_PATH*2];
+		//	_ASSERTE(nLen <= (MAX_PATH+10)); // размер из IsNeedCmd.
+		//	_wcscpyn_c(szTest, countof(szTest), pszParam, nLen+1);
+		//	// —равнить asFile с первым аргументом в asParam
+		//	if (lstrcmpiW(szTest, asExeFile) == 0)
+		//	{
+		//		// exe-шник уже указан в asParam, добавл€ть дополнительно Ќ≈ нужно
+		//		lbNeedExe = FALSE;
+		//	}
+		//}
+		//if (lbNeedExe)
+		if (asFile && *asFile)
 		{
 			_wcscat_c((*psParam), nCchSize, L"\"");
 			_ASSERTE(asFile!=NULL);
-			_wcscat_c((*psParam), nCchSize, asFile ? asFile : L"");
+			_wcscat_c((*psParam), nCchSize, asFile);
 			_wcscat_c((*psParam), nCchSize, L"\"");
 		}
 	}
@@ -349,14 +482,14 @@ BOOL CShellProc::PrepareExecuteParms(
 	wchar_t szTest[MAX_PATH*2], szExe[MAX_PATH+1];
 	DWORD /*mn_ImageSubsystem = 0, mn_ImageBits = 0,*/ nFileAttrs = (DWORD)-1;
 	bool lbGuiApp = false;
-	//int nActionLen = (asAction ? lstrlenW(asAction) : 0)+1;
-	//int nFileLen = (asFile ? lstrlenW(asFile) : 0)+1;
-	//int nParamLen = (asParam ? lstrlenW(asParam) : 0)+1;
+	//int nActionLen = (asAction ? lstrlen(asAction) : 0)+1;
+	//int nFileLen = (asFile ? lstrlen(asFile) : 0)+1;
+	//int nParamLen = (asParam ? lstrlen(asParam) : 0)+1;
 	BOOL lbNeedCutStartEndQuot = FALSE;
 
 	mn_ImageSubsystem = mn_ImageBits = 0;
 	
-	if ((aCmd == eShellExecute) || (asFile && *asFile))
+	if (/*(aCmd == eShellExecute) &&*/ (asFile && *asFile))
 	{
 		wcscpy_c(szExe, asFile ? asFile : L"");
 	}
@@ -370,6 +503,7 @@ BOOL CShellProc::PrepareExecuteParms(
 		wchar_t *pszNamePart = NULL;
 		int nLen = lstrlen(szExe);
 		BOOL lbMayBeFile = (nLen > 0) && (szExe[nLen-1] != L'\\') && (szExe[nLen-1] != L'/');
+		const wchar_t* pszExt = PointToExt(szExe);
 
 		BOOL lbSubsystemOk = FALSE;
 		mn_ImageBits = 0;
@@ -379,6 +513,17 @@ BOOL CShellProc::PrepareExecuteParms(
 		{
 			mn_ImageBits = 0;
 			mn_ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
+		}
+		else if (pszExt && (!lstrcmpi(pszExt, L".cmd") || !lstrcmpi(pszExt, L".bat")))
+		{
+			lbGuiApp = FALSE;
+			mn_ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
+			#ifdef _WIN64
+			mn_ImageBits = 64;
+			#else
+			mn_ImageBits = 32;
+			#endif
+			lbSubsystemOk = TRUE;
 		}
 		else if (GetFullPathName(szExe, countof(szTest), szTest, &pszNamePart)
 			&& GetImageSubsystem(szTest, mn_ImageSubsystem, mn_ImageBits, nFileAttrs))
@@ -632,7 +777,7 @@ BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, DWORD* anCr
 	DWORD nShowCmd = lpSI->wShowWindow;
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
 
-	BOOL lbRc = PrepareExecuteParms(eShellExecute,
+	BOOL lbRc = PrepareExecuteParms(eCreateProcess,
 					NULL, mpwsz_TempFile, mpwsz_TempParam,
 					NULL, anCreationFlags, &lpSI->dwFlags, &nShowCmd,
 					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,
@@ -673,7 +818,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, DWORD* an
 	DWORD nShowCmd = lpSI->wShowWindow;
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
 
-	BOOL lbRc = PrepareExecuteParms(eShellExecute,
+	BOOL lbRc = PrepareExecuteParms(eCreateProcess,
 					NULL, *asFile, *asCmdLine,
 					NULL, anCreationFlags, &lpSI->dwFlags, &nShowCmd,
 					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,

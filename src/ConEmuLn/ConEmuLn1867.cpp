@@ -147,7 +147,7 @@ void SetStartupInfoW1867(void *aInfo)
 }
 
 extern BOOL gbInfoW_OK;
-HANDLE WINAPI OpenPluginW2(int OpenFrom,const GUID* Guid,INT_PTR Data)
+HANDLE WINAPI OpenPanelW(int OpenFrom,const GUID* Guid,INT_PTR Data)
 {
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;

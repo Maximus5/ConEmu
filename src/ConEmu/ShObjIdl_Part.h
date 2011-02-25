@@ -664,6 +664,242 @@ interface ITaskbarList3
 #endif 	/* __ITaskbarList3_INTERFACE_DEFINED__ */
 
 
+#ifndef __ITaskbarList4_INTERFACE_DEFINED__
+#define __ITaskbarList4_INTERFACE_DEFINED__
+
+/* interface ITaskbarList4 */
+/* [object][uuid] */ 
+
+typedef /* [v1_enum] */ 
+enum STPFLAG
+    {	STPF_NONE	= 0,
+	STPF_USEAPPTHUMBNAILALWAYS	= 0x1,
+	STPF_USEAPPTHUMBNAILWHENACTIVE	= 0x2,
+	STPF_USEAPPPEEKALWAYS	= 0x4,
+	STPF_USEAPPPEEKWHENACTIVE	= 0x8
+    } 	STPFLAG;
+
+DEFINE_ENUM_FLAG_OPERATORS(STPFLAG)
+
+EXTERN_C const IID IID_ITaskbarList4;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("c43dc798-95d1-4bea-9030-bb99e2983a1a")
+    ITaskbarList4 : public ITaskbarList3
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE SetTabProperties( 
+            /* [in] */ __RPC__in HWND hwndTab,
+            /* [in] */ STPFLAG stpFlags) = 0;
+        
+    };
+    
+#else 	/* C style interface */
+
+    typedef struct ITaskbarList4Vtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            __RPC__deref_out  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            __RPC__in ITaskbarList4 * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            __RPC__in ITaskbarList4 * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *HrInit )( 
+            __RPC__in ITaskbarList4 * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *AddTab )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd);
+        
+        HRESULT ( STDMETHODCALLTYPE *DeleteTab )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd);
+        
+        HRESULT ( STDMETHODCALLTYPE *ActivateTab )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd);
+        
+        HRESULT ( STDMETHODCALLTYPE *SetActiveAlt )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd);
+        
+        HRESULT ( STDMETHODCALLTYPE *MarkFullscreenWindow )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd,
+            /* [in] */ BOOL fFullscreen);
+        
+        HRESULT ( STDMETHODCALLTYPE *SetProgressValue )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd,
+            /* [in] */ ULONGLONG ullCompleted,
+            /* [in] */ ULONGLONG ullTotal);
+        
+        HRESULT ( STDMETHODCALLTYPE *SetProgressState )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd,
+            /* [in] */ TBPFLAG tbpFlags);
+        
+        HRESULT ( STDMETHODCALLTYPE *RegisterTab )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwndTab,
+            /* [in] */ __RPC__in HWND hwndMDI);
+        
+        HRESULT ( STDMETHODCALLTYPE *UnregisterTab )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwndTab);
+        
+        HRESULT ( STDMETHODCALLTYPE *SetTabOrder )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwndTab,
+            /* [in] */ __RPC__in HWND hwndInsertBefore);
+        
+        HRESULT ( STDMETHODCALLTYPE *SetTabActive )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwndTab,
+            /* [in] */ __RPC__in HWND hwndMDI,
+            /* [in] */ DWORD dwReserved);
+        
+        HRESULT ( STDMETHODCALLTYPE *ThumbBarAddButtons )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd,
+            /* [in] */ UINT cButtons,
+            /* [size_is][in] */ __RPC__in_ecount_full(cButtons) LPTHUMBBUTTON pButton);
+        
+        HRESULT ( STDMETHODCALLTYPE *ThumbBarUpdateButtons )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd,
+            /* [in] */ UINT cButtons,
+            /* [size_is][in] */ __RPC__in_ecount_full(cButtons) LPTHUMBBUTTON pButton);
+        
+        HRESULT ( STDMETHODCALLTYPE *ThumbBarSetImageList )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd,
+            /* [in] */ __RPC__in_opt HIMAGELIST himl);
+        
+        HRESULT ( STDMETHODCALLTYPE *SetOverlayIcon )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd,
+            /* [in] */ __RPC__in HICON hIcon,
+            /* [string][unique][in] */ __RPC__in_opt_string LPCWSTR pszDescription);
+        
+        HRESULT ( STDMETHODCALLTYPE *SetThumbnailTooltip )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd,
+            /* [string][unique][in] */ __RPC__in_opt_string LPCWSTR pszTip);
+        
+        HRESULT ( STDMETHODCALLTYPE *SetThumbnailClip )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwnd,
+            /* [in] */ __RPC__in RECT *prcClip);
+        
+        HRESULT ( STDMETHODCALLTYPE *SetTabProperties )( 
+            __RPC__in ITaskbarList4 * This,
+            /* [in] */ __RPC__in HWND hwndTab,
+            /* [in] */ STPFLAG stpFlags);
+        
+        END_INTERFACE
+    } ITaskbarList4Vtbl;
+
+    interface ITaskbarList4
+    {
+        CONST_VTBL struct ITaskbarList4Vtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define ITaskbarList4_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define ITaskbarList4_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define ITaskbarList4_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define ITaskbarList4_HrInit(This)	\
+    ( (This)->lpVtbl -> HrInit(This) ) 
+
+#define ITaskbarList4_AddTab(This,hwnd)	\
+    ( (This)->lpVtbl -> AddTab(This,hwnd) ) 
+
+#define ITaskbarList4_DeleteTab(This,hwnd)	\
+    ( (This)->lpVtbl -> DeleteTab(This,hwnd) ) 
+
+#define ITaskbarList4_ActivateTab(This,hwnd)	\
+    ( (This)->lpVtbl -> ActivateTab(This,hwnd) ) 
+
+#define ITaskbarList4_SetActiveAlt(This,hwnd)	\
+    ( (This)->lpVtbl -> SetActiveAlt(This,hwnd) ) 
+
+
+#define ITaskbarList4_MarkFullscreenWindow(This,hwnd,fFullscreen)	\
+    ( (This)->lpVtbl -> MarkFullscreenWindow(This,hwnd,fFullscreen) ) 
+
+
+#define ITaskbarList4_SetProgressValue(This,hwnd,ullCompleted,ullTotal)	\
+    ( (This)->lpVtbl -> SetProgressValue(This,hwnd,ullCompleted,ullTotal) ) 
+
+#define ITaskbarList4_SetProgressState(This,hwnd,tbpFlags)	\
+    ( (This)->lpVtbl -> SetProgressState(This,hwnd,tbpFlags) ) 
+
+#define ITaskbarList4_RegisterTab(This,hwndTab,hwndMDI)	\
+    ( (This)->lpVtbl -> RegisterTab(This,hwndTab,hwndMDI) ) 
+
+#define ITaskbarList4_UnregisterTab(This,hwndTab)	\
+    ( (This)->lpVtbl -> UnregisterTab(This,hwndTab) ) 
+
+#define ITaskbarList4_SetTabOrder(This,hwndTab,hwndInsertBefore)	\
+    ( (This)->lpVtbl -> SetTabOrder(This,hwndTab,hwndInsertBefore) ) 
+
+#define ITaskbarList4_SetTabActive(This,hwndTab,hwndMDI,dwReserved)	\
+    ( (This)->lpVtbl -> SetTabActive(This,hwndTab,hwndMDI,dwReserved) ) 
+
+#define ITaskbarList4_ThumbBarAddButtons(This,hwnd,cButtons,pButton)	\
+    ( (This)->lpVtbl -> ThumbBarAddButtons(This,hwnd,cButtons,pButton) ) 
+
+#define ITaskbarList4_ThumbBarUpdateButtons(This,hwnd,cButtons,pButton)	\
+    ( (This)->lpVtbl -> ThumbBarUpdateButtons(This,hwnd,cButtons,pButton) ) 
+
+#define ITaskbarList4_ThumbBarSetImageList(This,hwnd,himl)	\
+    ( (This)->lpVtbl -> ThumbBarSetImageList(This,hwnd,himl) ) 
+
+#define ITaskbarList4_SetOverlayIcon(This,hwnd,hIcon,pszDescription)	\
+    ( (This)->lpVtbl -> SetOverlayIcon(This,hwnd,hIcon,pszDescription) ) 
+
+#define ITaskbarList4_SetThumbnailTooltip(This,hwnd,pszTip)	\
+    ( (This)->lpVtbl -> SetThumbnailTooltip(This,hwnd,pszTip) ) 
+
+#define ITaskbarList4_SetThumbnailClip(This,hwnd,prcClip)	\
+    ( (This)->lpVtbl -> SetThumbnailClip(This,hwnd,prcClip) ) 
+
+
+#define ITaskbarList4_SetTabProperties(This,hwndTab,stpFlags)	\
+    ( (This)->lpVtbl -> SetTabProperties(This,hwndTab,stpFlags) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __ITaskbarList4_INTERFACE_DEFINED__ */
+
+
 EXTERN_C const CLSID CLSID_TaskbarList;
 
 #ifdef __cplusplus

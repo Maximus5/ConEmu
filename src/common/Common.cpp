@@ -220,6 +220,15 @@ int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsAr
 	return 0;
 }
 
+const wchar_t* SkipNonPrintable(const wchar_t* asParams)
+{
+	if (!asParams)
+		return NULL;
+	const wchar_t* psz = asParams;
+	while (*psz == L' ' || *psz == L'\t' || *psz == L'\r' || *psz == L'\n') psz++;
+	return psz;
+}
+
 
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg)
 {

@@ -75,7 +75,7 @@ private:
 				LPWSTR* psFile, LPWSTR* psParam);
 	BOOL ChangeExecuteParms(enum CmdOnCreateType aCmd,
 				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asBaseDir,
-				LPCWSTR asExeFile, int ImageBits, int ImageSubsystem,
+				LPCWSTR asExeFile, DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam);
 public:
 	static CESERVER_REQ* NewCmdOnCreate(enum CmdOnCreateType aCmd,

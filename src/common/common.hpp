@@ -1245,6 +1245,7 @@ struct CESERVER_REQ
 
 int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar_t** rsArgStart=NULL);
 int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsArgStart=NULL);
+const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg);
 BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec);
 SECURITY_ATTRIBUTES* NullSecurity();

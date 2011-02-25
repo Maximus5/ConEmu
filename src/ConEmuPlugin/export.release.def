@@ -7,11 +7,12 @@ EXPORTS
 	ProcessViewerEventW
 	GetMinFarVersionW
 	ExitFARW
-	OpenPluginW=OpenPluginW1
+	OpenPluginW
 	ProcessSynchroEventW
 	ProcessDialogEventW
 ;  Far3
    GetGlobalInfoW
+   OpenPanelW
 ;  Ansi
 	SetStartupInfo
 	GetPluginInfo

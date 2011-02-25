@@ -306,12 +306,12 @@ DWORD GetMainThreadId()
 	return nThreadID;
 }
 
-#include "../common/SetExport.h"
-ExportFunc Far3Func[] =
-{
-	{"OpenPluginW", OpenPluginW1, OpenPluginW2},
-	{NULL}
-};
+//#include "../common/SetExport.h"
+//ExportFunc Far3Func[] =
+//{
+//	{"OpenPluginW", OpenPluginW1, OpenPluginW2},
+//	{NULL}
+//};
 
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
@@ -338,18 +338,18 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			//if (GetEnvironmentVariable(L"TERM", szVarValue, 63)) {
 			//    TerminalMode = TRUE;
 			//}
-			bool lbExportsChanged = false;
-			if (LoadFarVersion())
-			{
-				if (gFarVersion.dwVerMajor == 3)
-				{
-					lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
-					if (!lbExportsChanged)
-					{
-						_ASSERTE(lbExportsChanged);
-					}
-				}
-			}
+			//bool lbExportsChanged = false;
+			//if (LoadFarVersion())
+			//{
+			//	if (gFarVersion.dwVerMajor == 3)
+			//	{
+			//		lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
+			//		if (!lbExportsChanged)
+			//		{
+			//			_ASSERTE(lbExportsChanged);
+			//		}
+			//	}
+			//}
 		}
 		break;
 		case DLL_PROCESS_DETACH:

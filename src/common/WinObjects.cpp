@@ -504,6 +504,16 @@ const wchar_t* PointToName(const wchar_t* asFileOrPath)
 	return pszFile;
 }
 
+// Возвращает ".ext" или NULL в случае ошибки
+const wchar_t* PointToExt(const wchar_t* asFullPath)
+{
+	const wchar_t* pszName = PointToName(asFullPath);
+	if (!pszName)
+		return NULL; // _ASSERTE уже был
+	const wchar_t* pszExt = wcsrchr(pszName, L'.');
+	return pszExt;
+}
+
 
 
 //// Undocumented console message

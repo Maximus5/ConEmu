@@ -433,7 +433,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)
 	return INVALID_HANDLE_VALUE;
 }
 
-HANDLE WINAPI OpenPluginW1(int OpenFrom,INT_PTR Item)
+HANDLE WINAPI OpenPluginW(int OpenFrom,INT_PTR Item)
 {
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;
@@ -1352,12 +1352,12 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 //#endif
 //extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
-#include "../common/SetExport.h"
-ExportFunc Far3Func[] =
-{
-	{"OpenPluginW", OpenPluginW1, OpenPluginW2},
-	{NULL}
-};
+//#include "../common/SetExport.h"
+//ExportFunc Far3Func[] =
+//{
+//	{"OpenPluginW", OpenPluginW1, OpenPluginW2},
+//	{NULL}
+//};
 
 BOOL gbExitFarCalled = FALSE;
 void ExitFarCmn();
@@ -3354,14 +3354,14 @@ void InitHWND(HWND ahFarHwnd)
 	{
 		LoadFarVersion();  // пригодится уже здесь!
 		
-		if (gFarVersion.dwVerMajor == 3)
-		{
-			lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
-			if (!lbExportsChanged)
-			{
-				_ASSERTE(lbExportsChanged);
-			}
-		}
+		//if (gFarVersion.dwVerMajor == 3)
+		//{
+		//	lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
+		//	if (!lbExportsChanged)
+		//	{
+		//		_ASSERTE(lbExportsChanged);
+		//	}
+		//}
 	}
 
 	// начальная инициализация. в SetStartupInfo поправим

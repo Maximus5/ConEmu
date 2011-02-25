@@ -4,10 +4,11 @@ EXPORTS
 	GetPluginInfoW=GetPluginInfoWcmn
 	GetMinFarVersionW
 	ExitFARW
-	OpenPluginW=OpenPluginW1
+	OpenPluginW
 	ProcessSynchroEventW
 ;  Far3
    GetGlobalInfoW
+   OpenPanelW
 ;
 	SetStartupInfo
 	GetPluginInfo

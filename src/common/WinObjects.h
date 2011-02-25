@@ -54,6 +54,7 @@ BOOL IsUserAdmin();
 BOOL IsWindows64(BOOL *pbIsWow64Process = NULL);
 void RemoveOldComSpecC();
 const wchar_t* PointToName(const wchar_t* asFullPath);
+const wchar_t* PointToExt(const wchar_t* asFullPath);
 
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////
