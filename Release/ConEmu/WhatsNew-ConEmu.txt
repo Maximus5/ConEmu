@@ -1487,7 +1487,7 @@ Maximus5 - 2009.02.11
 * При нажатии Alt+кнопка раздавался писк.
 * Врапперу PictureView опять не нужен ConEmu.dll.
 * Табы теперь отображаются с рамкой. Если хотите как раньше - только заголовки:
-  [HKEY_CURRENT_USER\Software\ConEmu]
+  [HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
   "TabFrame"=hex:00
 
 Maximus5 - 2009.02.10
@@ -1509,7 +1509,7 @@ Maximus5 - 2009.02.07
 * Отрисовка теперь идет в дочернем окне ConEmu (возможны глюки).
 * Изменена логика ресайза окна.
 * Возможность центрирования содержимого окна в полноэкранном и развернутом режимах.
-  [HKEY_CURRENT_USER\Software\ConEmu]
+  [HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
   "TryToCenter"=hex:01
 * 'Интеллектуальное' появление/исчезновение табов.
 * При использовании BufferHeight после запуска FAR отключается режим консоли 'QuickEdit' при выходе из FAR - возвращается обратно.
@@ -1562,7 +1562,7 @@ Maximus5 - 2009.01.26
 
 * Если рядом с ConEmu.exe лежит одноименная иконка - грузится именно она.
   Если файла иконки нет - загружаем встроенную в ConEmu, номер иконки (1,2,3) можно указать в реестре. Пример:
-  [HKEY_CURRENT_USER\Software\ConEmu]
+  [HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
   "IconID"=dword:00000003
 * При бросании файла в корень диска (Vista) возникала ошибка.
 * При Drag'n'Drop между панелями внутри одного FAR'а открывается встроенный диалог копирования/перемещения (Ctrl пока не учитывается).
@@ -1585,7 +1585,7 @@ Maximus5 - 2009.01.24
 * При листании картинок в PictureView на экране могли появляться глюки.
 * Добавлен режим SlideShow для PictureView. Включается кнопкой Pause. Задержку можно увеличивать/уменьшать кнопками -/= (между '0' и BackSpace на основной клавиатуре). Отключется режим нажатием любой другой кнопки, или Pause.
   Задержка задается в реестре в миллисекундах, пример:
-  [HKEY_CURRENT_USER\Software\ConEmu]
+  [HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
   "SlideShowElapse"=dword:00001000
 
 Maximus5 - 2009.01.23
@@ -1771,7 +1771,7 @@ ConEmu более универсальным способом (от hoopoe, см. форум по ConEmu).
 
 ТЕХИНФО: АЛЬТЕРНАТИВНЫЙ ШРИФТ РАМОК
 
-[HKEY_CURRENT_USER\Software\ConEmu]
+[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
 "FontName2"="Courier New"
 "FontSizeX2"=hex:0b,00,00,00
 
@@ -1812,7 +1812,7 @@ FontName2 задает альтернативный шрифт рамок, 'Lucida Console' по умолчанию.
 
 ТЕХИНФО: АЛЬТЕРНАТИВНЫЙ ШРИФТ ДЛЯ ИСПРАВЛЕНИЯ РАМОК
 
-[HKEY_CURRENT_USER\Software\ConEmu]
+[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
 "FontName2"="courier new"
 
 Задает альтернативный шрифт для исправления рамок; по умолчанию используется

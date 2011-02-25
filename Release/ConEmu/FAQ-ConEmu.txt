@@ -57,13 +57,13 @@ A. Плагин conemu.dll установлен?
 Q. Почему щелчок правой кнопкой мышки по табу закрывает редактор/вьювер/фар?
 A. 'Правый щелчок' активирует вкладку и сразу посылает в фар кнопку F10.
    Вы можете переопредлить макрос закрытия владки в реестре:
-   [HKEY_CURRENT_USER\Software\ConEmu]
+   [HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
    "TabCloseMacro"="F10"
 
 Q. Двоятся окна FAR manager.
 A. Это просто консольное окно не спряталось. Проверьте флажок 'Visible'
    на вкладке настроек 'Features' или значение в реестре:
-   [HKEY_CURRENT_USER\Software\ConEmu]
+   [HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
    "ConVisible"=hex:00
 
 Q. В Windows Vista не срабатывает комбинация CtrlWinAltSpace для показа RealConsole.
@@ -138,7 +138,7 @@ A. По какой-то причине ConEmu не обнаружил 'панели' в Far.
 
 Q. По щелчку правой кнопкой мышки появляется графическое меню, а хочу текстовое.
 A. Соответствующий макрос можно указать в реестре (или xml), например:
-   [HKEY_CURRENT_USER\Software\ConEmu]
+   [HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
    "RightClickMacro2"="F11 e Enter 2"
    Предполагается, что для EMenu назначен hotkey 'e'.
 
@@ -186,7 +186,7 @@ A. Опция 'Block inactive cursor'. Альтернативная индикация, что фокус не в консо
 Q. В табах отображаются квадратики (вместо иероглифов).
 A. По умолчанию, текст закладок отображается шрифтом "Tahoma". Выберите другой шрифт,
    содержащий требуемые вам символы (например "Arial Unicode MS"), внеся в реестр:
-   [HKEY_CURRENT_USER\Software\ConEmu]
+   [HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
    "TabFontFace"="Arial Unicode MS"
 
 Q. Для чего нужен сертификат ConEmu.cer (digital certificate)?
