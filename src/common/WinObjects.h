@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wchar.h>
 #include <CommCtrl.h>
 #include "common.hpp"
+#include "ConEmuCheck.h"
 
 #ifdef _DEBUG
 	#define TRANSACT_WARN_TIMEOUT 500
@@ -55,6 +56,7 @@ BOOL IsWindows64(BOOL *pbIsWow64Process = NULL);
 void RemoveOldComSpecC();
 const wchar_t* PointToName(const wchar_t* asFullPath);
 const wchar_t* PointToExt(const wchar_t* asFullPath);
+const wchar_t* Unquote(wchar_t* asPath);
 
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////
@@ -430,7 +432,7 @@ class MPipe
 				if (anInSize >= sizeof(CESERVER_REQ_HDR))
 					nCmd = ((CESERVER_REQ_HDR*)apIn)->nCmd;
 
-				_wsprintf(ms_Error, SKIPLEN(countof(ms_Error)) _T("%s: TransactNamedPipe failed, Cmd=%i, ErrCode = 0x%08X!"), ms_Module, nCmd, dwErr);
+				_wsprintf(ms_Error, SKIPLEN(countof(ms_Error)) L"%s: TransactNamedPipe failed, Cmd=%i, ErrCode = 0x%08X!", ms_Module, nCmd, dwErr);
 				Close(); // Поскольку произошла неизвестная ошибка - пайп лучше закрыть (чтобы потом переоткрыть)
 				return FALSE;
 			}
@@ -440,7 +442,7 @@ class MPipe
 			{
 				_ASSERTE(cbRead >= sizeof(CESERVER_REQ_HDR));
 				_wsprintf(ms_Error, SKIPLEN(countof(ms_Error))
-				          _T("%s: Only %i bytes recieved, required %i bytes at least!"),
+				          L"%s: Only %i bytes recieved, required %i bytes at least!",
 				          ms_Module, cbRead, (DWORD)sizeof(CESERVER_REQ_HDR));
 				return FALSE;
 			}
@@ -449,7 +451,7 @@ class MPipe
 			{
 				_ASSERTE(((CESERVER_REQ_HDR*)apIn)->nCmd == ((CESERVER_REQ_HDR*)&m_In)->nCmd);
 				_wsprintf(ms_Error, SKIPLEN(countof(ms_Error))
-				          _T("%s: Invalid CmdID=%i recieved, required CmdID=%i!"),
+				          L"%s: Invalid CmdID=%i recieved, required CmdID=%i!",
 				          ms_Module, ((CESERVER_REQ_HDR*)apIn)->nCmd, ((CESERVER_REQ_HDR*)&m_In)->nCmd);
 				return FALSE;
 			}
@@ -458,7 +460,7 @@ class MPipe
 			{
 				_ASSERTE(((CESERVER_REQ_HDR*)ptrOut)->nVersion == CESERVER_REQ_VER);
 				_wsprintf(ms_Error, SKIPLEN(countof(ms_Error))
-				          _T("%s: Old version packet recieved (%i), required (%i)!"),
+				          L"%s: Old version packet recieved (%i), required (%i)!",
 				          ms_Module, ((CESERVER_REQ_HDR*)ptrOut)->nCmd, CESERVER_REQ_VER);
 				return FALSE;
 			}
@@ -467,7 +469,7 @@ class MPipe
 			{
 				_ASSERTE(((CESERVER_REQ_HDR*)ptrOut)->cbSize >= cbRead);
 				_wsprintf(ms_Error, SKIPLEN(countof(ms_Error))
-				          _T("%s: Invalid packet size (%i), must be greater or equal to %i!"),
+				          L"%s: Invalid packet size (%i), must be greater or equal to %i!",
 				          ms_Module, ((CESERVER_REQ_HDR*)ptrOut)->cbSize, cbRead);
 				return FALSE;
 			}

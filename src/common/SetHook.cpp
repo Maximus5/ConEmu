@@ -203,28 +203,28 @@ CInFuncCall::~CInFuncCall()
 	if (mpn_Counter && (*mpn_Counter)>0)(*mpn_Counter)--;
 }
 
-//#define ORIGINAL(n) \
-//	static HookItem *ph = NULL; \
-//	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); \
-//	void* f##n = NULL; /* static низя - функции могут различаться по потокам */ \
-//	static int nMainThCounter = 0; CInFuncCall CounterLocker; \
-//	BOOL bAllowModified = bMainThread; \
-//	if (bMainThread) bAllowModified = CounterLocker.Inc(&nMainThCounter); \
-//	if (bAllowModified) { \
-//		static void* f##n##Mod = NULL; \
-//		if ((f##n##Mod)==NULL) f##n##Mod = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , TRUE, &ph); \
-//		f##n = f##n##Mod; \
-//	} else { \
-//		static void* f##n##Org = NULL; \
-//		if ((f##n##Org)==NULL) f##n##Org = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , FALSE, &ph); \
-//		f##n = f##n##Org; \
-//	} \
-//	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
+//#define ORIGINAL(n) \.
+//	static HookItem *ph = NULL; \.
+//	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); \.
+//	void* f##n = NULL; /* static низя - функции могут различаться по потокам */ \.
+//	static int nMainThCounter = 0; CInFuncCall CounterLocker; \.
+//	BOOL bAllowModified = bMainThread; \.
+//	if (bMainThread) bAllowModified = CounterLocker.Inc(&nMainThCounter); \.
+//	if (bAllowModified) { \.
+//		static void* f##n##Mod = NULL; \.
+//		if ((f##n##Mod)==NULL) f##n##Mod = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , TRUE, &ph); \.
+//		f##n = f##n##Mod; \.
+//	} else { \.
+//		static void* f##n##Org = NULL; \.
+//		if ((f##n##Org)==NULL) f##n##Org = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , FALSE, &ph); \.
+//		f##n = f##n##Org; \.
+//	} \.
+//	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);.
 //
-//#define ORIGINALFAST(n) \
-//	static HookItem *ph = NULL; \
-//	static void* f##n = NULL; \
-//	if ((f##n)==NULL) f##n = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , FALSE, &ph); \
+//#define ORIGINALFAST(n) \.
+//	static HookItem *ph = NULL; \.
+//	static void* f##n = NULL; \.
+//	if ((f##n)==NULL) f##n = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , FALSE, &ph); \.
 //	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
 //
 //#define F(n) ((On##n##_t)f##n)
@@ -731,7 +731,9 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 	}
 
 	// Для исполняемого файла могут быть заданы дополнительные inject-ы (сравнение в FAR)
+	#ifdef _DEBUG
 	HMODULE hExecutable = GetModuleHandle(0);
+	#endif
 	HANDLE snapshot;
 
 	// Найти ID основной нити
@@ -959,7 +961,9 @@ static bool UnsetHook(HMODULE Module)
 
 void __stdcall UnsetAllHooks()
 {
+	#ifdef _DEBUG
 	HMODULE hExecutable = GetModuleHandle(0);
+	#endif
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
 
 	if (snapshot != INVALID_HANDLE_VALUE)
@@ -1241,7 +1245,7 @@ static HMODULE WINAPI OnLoadLibraryExW(const wchar_t* lpFileName, HANDLE hFile, 
 typedef FARPROC(WINAPI* OnGetProcAddress_t)(HMODULE hModule, LPCSTR lpProcName);
 static FARPROC WINAPI OnGetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 {
-	ORIGINAL(GetProcAddress);
+	ORIGINALFAST(GetProcAddress);
 	FARPROC lpfn = NULL;
 
 	if (gbHooksTemporaryDisabled)

@@ -1,9 +1,22 @@
 NAME = ConEmuHk
 SRCS = Entry.cpp \
-       ../common/Common.cpp
+       ConEmuCmd.cpp \
+       ConEmuHk.cpp \
+       ConEmuHooks.cpp \
+       ConEmuSrv.cpp \
+       Entry.cpp \
+       RegHooks.cpp \
+       ShellProcessor.cpp \
+       ../common/Common.cpp \
+       ../common/ConEmuCheck.cpp \
+       ../common/Execute.cpp \
+       ../common/MAssert.cpp \
+       ../common/Memory.cpp \
+       ../common/SetHook.cpp \
+       ../common/WinObjects.cpp
 
 
-USERLIBS = -lversion
+USERLIBS = -lversion -lgdi32
 
 
 

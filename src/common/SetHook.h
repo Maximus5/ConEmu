@@ -171,23 +171,23 @@ class CInFuncCall
 void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL abAllowModified, HookItem** ph);
 
 //110202 поскольку хуки теперь ставятся при старте процесса, не будем морочиться с зацикливанием
-//#define ORIGINAL(n) \
-//	static HookItem *ph = NULL; \
-//	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); \
-//	void* f##n = NULL; /* static низя - функции могут различаться по потокам */ \
-//	static int nMainThCounter = 0; CInFuncCall CounterLocker; \
-//	BOOL bAllowModified = bMainThread; \
-//	if (bMainThread) bAllowModified = CounterLocker.Inc(&nMainThCounter); \
-//	if (bAllowModified) { \
-//		static void* f##n##Mod = NULL; \
-//		if ((f##n##Mod)==NULL) f##n##Mod = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , TRUE, &ph); \
-//		f##n = f##n##Mod; \
-//	} else { \
-//		static void* f##n##Org = NULL; \
-//		if ((f##n##Org)==NULL) f##n##Org = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , FALSE, &ph); \
-//		f##n = f##n##Org; \
-//	} \
-//	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
+//#define ORIGINAL(n) \.
+//	static HookItem *ph = NULL; \.
+//	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); \.
+//	void* f##n = NULL; /* static низя - функции могут различаться по потокам */ \.
+//	static int nMainThCounter = 0; CInFuncCall CounterLocker; \.
+//	BOOL bAllowModified = bMainThread; \.
+//	if (bMainThread) bAllowModified = CounterLocker.Inc(&nMainThCounter); \.
+//	if (bAllowModified) { \.
+//		static void* f##n##Mod = NULL; \.
+//		if ((f##n##Mod)==NULL) f##n##Mod = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , TRUE, &ph); \.
+//		f##n = f##n##Mod; \.
+//	} else { \.
+//		static void* f##n##Org = NULL; \.
+//		if ((f##n##Org)==NULL) f##n##Org = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , FALSE, &ph); \.
+//		f##n = f##n##Org; \.
+//	} \.
+//	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);.
 
 #define ORIGINALFAST(n) \
 	static HookItem *ph = NULL; \

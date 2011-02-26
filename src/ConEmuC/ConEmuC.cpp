@@ -41,10 +41,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#pragma warning( disable : 4995 )
 #include "../common/common.hpp"
 
-#ifdef _DEBUG
-#include "../common/execute.cpp"
-#endif
-
 PHANDLER_ROUTINE gfHandlerRoutine = NULL;
 
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
@@ -86,11 +82,6 @@ int main(
 
 #endif
 	
-#ifdef _DEBUG
-	DWORD ImageSubsystem, ImageBits;
-	GetImageSubsystem(ImageSubsystem,ImageBits);
-#endif
-
 	wchar_t szSkipEventName[128];
 	_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
 	HANDLE hSkipEvent = CreateEvent(NULL, TRUE, TRUE, szSkipEventName);

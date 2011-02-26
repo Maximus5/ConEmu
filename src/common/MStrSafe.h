@@ -5,7 +5,20 @@
 
 //#define MSTRSAFE_NO_DEPRECATE
 
-#include <strsafe.h>
+#ifdef __GNUC__
+	#define StringCchCopyA(d,n,s) lstrcpyA(d,s)
+	#define StringCchCopyW(d,n,s) lstrcpyW(d,s)
+	#define StringCchCatA(d,n,s) lstrcatA(d,s)
+	#define StringCchCatW(d,n,s) lstrcatW(d,s)
+	#define StringCchCopyNA(d,n,s,l) lstrcpynA(d,s,l)
+	#define StringCchCopyNW(d,n,s,l) lstrcpynW(d,s,l)
+	#ifndef _ASSERTE
+		#define _ASSERTE(x) // {bool b = (x);}
+	#endif
+#else
+	#include <strsafe.h>
+#endif
+
 
 
 #ifndef STRSAFE_NO_DEPRECATE
@@ -254,6 +267,41 @@ inline int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...)
 //#endif
 //	return nRc;
 //};
+
+#ifdef __GNUC__
+inline int wcscpy_add(wchar_t* Buffer, wchar_t* /*BufferStart*/, const wchar_t *Str)
+{
+	lstrcpyW(Buffer, Str);
+	return S_OK;
+};
+inline int wcscpy_add(int Shift, wchar_t* BufferStart, const wchar_t *Str)
+{
+	lstrcpyW(BufferStart+Shift, Str);
+	return S_OK;
+};
+inline int wcscat_add(wchar_t* Buffer, wchar_t* /*BufferStart*/, const wchar_t *Str)
+{
+	lstrcatW(Buffer, Str);
+	return S_OK;
+};
+inline int wcscat_add(int Shift, wchar_t* BufferStart, const wchar_t* Str)
+{
+	lstrcatW(BufferStart+Shift, Str);
+	return S_OK;
+};
+inline int wcscpy_c(wchar_t* Dst, const wchar_t *Src)
+{
+	lstrcpyW(Dst, Src);
+	return S_OK;
+}
+inline int wcscat_c(wchar_t* Dst, const wchar_t *Src)
+{
+	lstrcatW(Dst, Src);
+	return S_OK;
+}
+
+#else
+
 template <size_t size>
 int wcscpy_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t *Str)
 {
@@ -269,7 +317,7 @@ int wcscpy_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t *Str
 	return nRc;
 };
 template <size_t size>
-int wcscpy_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t *Str)
+int wcscpy_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t* Str)
 {
 	size_t SizeLeft = size - Shift;
 
@@ -283,7 +331,7 @@ int wcscpy_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t *Str)
 	return nRc;
 };
 template <size_t size>
-int wcscat_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t *Str)
+int wcscat_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t* Str)
 {
 	size_t SizeLeft = size - (Buffer - BufferStart);
 
@@ -322,6 +370,7 @@ int wcscat_c(wchar_t (&Dst)[size], const wchar_t *Src)
 	int nRc = StringCchCatW(Dst, size, Src);
 	return nRc;
 }
+#endif
 //#undef _wcscpy_c
 //inline errno_t _wcscpy_c(wchar_t *Dst, size_t size, const wchar_t *Src)
 //{
@@ -332,6 +381,7 @@ int wcscat_c(wchar_t (&Dst)[size], const wchar_t *Src)
 //{
 //	return StringCchCatW(Dst, size, Src);
 //}
+
 #define _wcscpy_c(Dst,cchDest,Src) StringCchCopyW(Dst, cchDest, Src)
 #define _wcscpyn_c(Dst,cchDest,Src,cchSrc) { _ASSERTE(((INT_PTR)cchDest)>=((INT_PTR)cchSrc)); StringCchCopyNW(Dst, cchDest, Src, cchSrc); }
 #define _wcscat_c(Dst,cchDest,Src) StringCchCatW(Dst, cchDest, Src)

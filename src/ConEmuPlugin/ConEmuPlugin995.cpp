@@ -41,6 +41,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define SHOW_DEBUG_EVENTS
 #endif
 
+WARNING("Far colorer TrueMod - последняя сборка была 1721");
+#define FORCE_FAR_1721
+
 struct PluginStartupInfo *InfoW995=NULL;
 struct FarStandardFunctions *FSFW995=NULL;
 
@@ -49,8 +52,13 @@ void WaitEndSynchro995();
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
 int WINAPI _export GetMinFarVersionW(void)
 {
+#ifdef FORCE_FAR_1721
+	// FarColorer TrueMod?
+	return MAKEFARVERSION(2,0,1721);
+#else
 	// svs 19.12.2010 22:52:53 +0300 - build 1765: Новая команда в FARMACROCOMMAND - MCMD_GETAREA
 	return MAKEFARVERSION(2,0,1765);
+#endif
 }
 
 void GetPluginInfoW995(void *piv)
@@ -1209,65 +1217,70 @@ int GetActiveWindowType995()
 
 	//_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 
-	//if (gFarVersion.dwBuild >= 1765)
-	//{
-	enum FARMACROAREA
+	
+#ifdef FORCE_FAR_1721
+	if (gFarVersion.dwBuild >= 1765)
 	{
-		MACROAREA_OTHER             = 0,
-		MACROAREA_SHELL             = 1,
-		MACROAREA_VIEWER            = 2,
-		MACROAREA_EDITOR            = 3,
-		MACROAREA_DIALOG            = 4,
-		MACROAREA_SEARCH            = 5,
-		MACROAREA_DISKS             = 6,
-		MACROAREA_MAINMENU          = 7,
-		MACROAREA_MENU              = 8,
-		MACROAREA_HELP              = 9,
-		MACROAREA_INFOPANEL         =10,
-		MACROAREA_QVIEWPANEL        =11,
-		MACROAREA_TREEPANEL         =12,
-		MACROAREA_FINDFOLDER        =13,
-		MACROAREA_USERMENU          =14,
-		MACROAREA_AUTOCOMPLETION    =15,
-	};
-#define MCMD_GETAREA 6
-	ActlKeyMacro area = {MCMD_GETAREA};
-	INT_PTR nArea = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &area);
+#endif
+		enum FARMACROAREA
+		{
+			MACROAREA_OTHER             = 0,
+			MACROAREA_SHELL             = 1,
+			MACROAREA_VIEWER            = 2,
+			MACROAREA_EDITOR            = 3,
+			MACROAREA_DIALOG            = 4,
+			MACROAREA_SEARCH            = 5,
+			MACROAREA_DISKS             = 6,
+			MACROAREA_MAINMENU          = 7,
+			MACROAREA_MENU              = 8,
+			MACROAREA_HELP              = 9,
+			MACROAREA_INFOPANEL         =10,
+			MACROAREA_QVIEWPANEL        =11,
+			MACROAREA_TREEPANEL         =12,
+			MACROAREA_FINDFOLDER        =13,
+			MACROAREA_USERMENU          =14,
+			MACROAREA_AUTOCOMPLETION    =15,
+		};
+		#define MCMD_GETAREA 6
+		ActlKeyMacro area = {MCMD_GETAREA};
+		INT_PTR nArea = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &area);
 
-	switch(nArea)
-	{
-		case MACROAREA_SHELL:
-		case MACROAREA_INFOPANEL:
-		case MACROAREA_QVIEWPANEL:
-		case MACROAREA_TREEPANEL:
-			return WTYPE_PANELS;
-		case MACROAREA_VIEWER:
-			return WTYPE_VIEWER;
-		case MACROAREA_EDITOR:
-			return WTYPE_EDITOR;
-		case MACROAREA_DIALOG:
-		case MACROAREA_SEARCH:
-		case MACROAREA_DISKS:
-		case MACROAREA_FINDFOLDER:
-		case MACROAREA_AUTOCOMPLETION:
-			return WTYPE_DIALOG;
-		case MACROAREA_HELP:
-			return WTYPE_HELP;
-		case MACROAREA_MAINMENU:
-		case MACROAREA_MENU:
-		case MACROAREA_USERMENU:
-			return WTYPE_VMENU;
-		case MACROAREA_OTHER: // Grabber
-			return -1;
-		//default:
-		//	return -1;
+		switch(nArea)
+		{
+			case MACROAREA_SHELL:
+			case MACROAREA_INFOPANEL:
+			case MACROAREA_QVIEWPANEL:
+			case MACROAREA_TREEPANEL:
+				return WTYPE_PANELS;
+			case MACROAREA_VIEWER:
+				return WTYPE_VIEWER;
+			case MACROAREA_EDITOR:
+				return WTYPE_EDITOR;
+			case MACROAREA_DIALOG:
+			case MACROAREA_SEARCH:
+			case MACROAREA_DISKS:
+			case MACROAREA_FINDFOLDER:
+			case MACROAREA_AUTOCOMPLETION:
+				return WTYPE_DIALOG;
+			case MACROAREA_HELP:
+				return WTYPE_HELP;
+			case MACROAREA_MAINMENU:
+			case MACROAREA_MENU:
+			case MACROAREA_USERMENU:
+				return WTYPE_VMENU;
+			case MACROAREA_OTHER: // Grabber
+				return -1;
+			//default:
+			//	return -1;
+		}
+#ifdef FORCE_FAR_1721
 	}
-	//}
-	//
-	//WindowInfo WInfo = {-1};
-	//_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-	//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
-	//return WInfo.Type;
+	
+	WindowInfo WInfo = {-1};
+	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
+	return WInfo.Type;
+#endif
 	return -1;
 }
 

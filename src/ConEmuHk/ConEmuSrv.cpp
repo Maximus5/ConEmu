@@ -959,10 +959,14 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 				// Проверить, не вылезло ли Assert-ов в других потоках
 				MyAssertShutdown();
 			#endif
+#ifndef __GNUC__
 #pragma warning( push )
 #pragma warning( disable : 6258 )
+#endif
 			TerminateThread(srv.hWinEventThread, 100);    // раз корректно не хочет...
+#ifndef __GNUC__
 #pragma warning( pop )
+#endif
 		}
 
 		SafeCloseHandle(srv.hWinEventThread);
@@ -982,10 +986,14 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 				// Проверить, не вылезло ли Assert-ов в других потоках
 				MyAssertShutdown();
 			#endif
+#ifndef __GNUC__
 #pragma warning( push )
 #pragma warning( disable : 6258 )
+#endif
 			TerminateThread(srv.hInputThread, 100);    // раз корректно не хочет...
+#ifndef __GNUC__
 #pragma warning( pop )
+#endif
 		}
 
 		SafeCloseHandle(srv.hInputThread);
@@ -1002,10 +1010,14 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 				// Проверить, не вылезло ли Assert-ов в других потоках
 				MyAssertShutdown();
 			#endif
+#ifndef __GNUC__
 #pragma warning( push )
 #pragma warning( disable : 6258 )
+#endif
 			TerminateThread(srv.hInputPipeThread, 100);    // раз корректно не хочет...
+#ifndef __GNUC__
 #pragma warning( pop )
+#endif
 		}
 
 		SafeCloseHandle(srv.hInputPipeThread);
@@ -1026,10 +1038,14 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 				// Проверить, не вылезло ли Assert-ов в других потоках
 				MyAssertShutdown();
 			#endif
+#ifndef __GNUC__
 #pragma warning( push )
 #pragma warning( disable : 6258 )
+#endif
 			TerminateThread(srv.hGetDataPipeThread, 100);    // раз корректно не хочет...
+#ifndef __GNUC__
 #pragma warning( pop )
+#endif
 		}
 		SafeCloseHandle(srv.hGetDataPipeThread);
 		srv.dwGetDataPipeThreadId = 0;
@@ -1045,10 +1061,14 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 				// Проверить, не вылезло ли Assert-ов в других потоках
 				MyAssertShutdown();
 			#endif
+#ifndef __GNUC__
 #pragma warning( push )
 #pragma warning( disable : 6258 )
+#endif
 			TerminateThread(srv.hServerThread, 100);    // раз корректно не хочет...
+#ifndef __GNUC__
 #pragma warning( pop )
+#endif
 		}
 
 		SafeCloseHandle(srv.hServerThread);
@@ -1066,10 +1086,14 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 				// Проверить, не вылезло ли Assert-ов в других потоках
 				MyAssertShutdown();
 			#endif
+#ifndef __GNUC__
 #pragma warning( push )
 #pragma warning( disable : 6258 )
+#endif
 			TerminateThread(srv.hRefreshThread, 100);
+#ifndef __GNUC__
 #pragma warning( pop )
+#endif
 		}
 
 		SafeCloseHandle(srv.hRefreshThread);
@@ -1702,6 +1726,7 @@ int CreateMapHeader()
 	}
 
 	//TODO("Добавить к nConDataSize размер необходимый для хранения crMax ячеек");
+	int nTotalSize = 0;
 	DWORD nMaxCells = (crMax.X * crMax.Y);
 	//DWORD nHdrSize = ((LPBYTE)srv.pConsoleDataCopy->Buf) - ((LPBYTE)srv.pConsoleDataCopy);
 	//_ASSERTE(sizeof(CESERVER_REQ_CONINFO_DATA) == (sizeof(COORD)+sizeof(CHAR_INFO)));
@@ -1715,7 +1740,7 @@ int CreateMapHeader()
 	}
 
 	//srv.pConsoleDataCopy->crMaxSize = crMax;
-	int nTotalSize = sizeof(CESERVER_REQ_CONINFO_FULL) + (nMaxCells * sizeof(CHAR_INFO));
+	nTotalSize = sizeof(CESERVER_REQ_CONINFO_FULL) + (nMaxCells * sizeof(CHAR_INFO));
 	srv.pConsole = (CESERVER_REQ_CONINFO_FULL*)calloc(nTotalSize,1);
 
 	if (!srv.pConsole)
@@ -1738,7 +1763,7 @@ int CreateMapHeader()
 	srv.pConsole->hdr.nServerInShutdown = 0;
 	srv.pConsole->hdr.bThawRefreshThread = TRUE; // пока - TRUE (это на старте сервера)
 	srv.pConsole->hdr.nProtocolVersion = CESERVER_REQ_VER;
-	srv.pConsole->hdr.nFarPID; // PID последнего активного фара
+	srv.pConsole->hdr.nFarPID = srv.nActiveFarPID; // PID последнего активного фара
 	//srv.pConsole->hdr.hConEmuWnd = ghConEmuWnd; -- обновляет UpdateConsoleMapHeader
 	//WARNING! В начале структуры info идет CESERVER_REQ_HDR для унификации общения через пайпы
 	srv.pConsole->info.cmd.cbSize = sizeof(srv.pConsole->info); // Пока тут - только размер заголовка
@@ -2579,7 +2604,7 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, 
 
 DWORD WINAPI RefreshThread(LPVOID lpvParam)
 {
-	DWORD nWait = 0, dwConWait = 0;
+	DWORD nWait = 0; //, dwConWait = 0;
 	HANDLE hEvents[2] = {ghQuitEvent, srv.hRefreshEvent};
 	DWORD nDelta = 0;
 	DWORD nLastReadTick = 0; //GetTickCount();
@@ -3364,7 +3389,7 @@ BOOL WaitConsoleReady(BOOL abReqEmpty)
 		_ASSERTE(FALSE);
 		#endif
 
-		DWORD nCurInputCount = 0, cbWritten = 0;
+		DWORD nCurInputCount = 0; //, cbWritten = 0;
 		//INPUT_RECORD irDummy[2] = {{0},{0}};
 		HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
 
@@ -3623,14 +3648,34 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui)
 #ifndef CONEMUHK_EXPORTS
 	_ASSERTE(FALSE)
 #endif
-	DWORD dwErr = 0, dwWait = 0;
+	DWORD dwErr = 0; //, dwWait = 0;
 	wchar_t szPluginPath[MAX_PATH*2], *pszSlash;
-	HANDLE hFile = NULL;
-	wchar_t* pszPathInProcess = NULL;
-	SIZE_T write = 0;
-	HANDLE hThread = NULL; DWORD nThreadID = 0;
-	LPTHREAD_START_ROUTINE ptrLoadLibrary = NULL;
+	//HANDLE hFile = NULL;
+	//wchar_t* pszPathInProcess = NULL;
+	//SIZE_T write = 0;
+	//HANDLE hThread = NULL; DWORD nThreadID = 0;
+	//LPTHREAD_START_ROUTINE ptrLoadLibrary = NULL;
 	_ASSERTE(ghOurModule!=NULL);
+	BOOL is64bitOs = FALSE, isWow64process = FALSE;
+	int  ImageBits = 32;
+	//DWORD ImageSubsystem = 0;
+	isWow64process = FALSE;
+#ifdef WIN64
+	is64bitOs = TRUE;
+#endif
+	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+	int iFindAddress = 0;
+	//bool lbInj = false;
+	//UINT_PTR fnLoadLibrary = NULL;
+	//DWORD fLoadLibrary = 0;
+	DWORD nErrCode = 0;
+	int SelfImageBits;
+#ifdef WIN64
+	SelfImageBits = 64;
+#else
+	SelfImageBits = 32;
+#endif
+
 
 	if (!GetModuleFileName(ghOurModule, szPluginPath, MAX_PATH))
 	{
@@ -3658,14 +3703,14 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui)
 	//	goto wrap;
 	//}
 	//CloseHandle(hFile); hFile = NULL;
-	BOOL is64bitOs = FALSE, isWow64process = FALSE;
-	int  ImageBits = 32;
-	DWORD ImageSubsystem = 0;
-	isWow64process = FALSE;
-#ifdef WIN64
-	is64bitOs = TRUE;
-#endif
-	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+	//BOOL is64bitOs = FALSE, isWow64process = FALSE;
+	//int  ImageBits = 32;
+	//DWORD ImageSubsystem = 0;
+	//isWow64process = FALSE;
+	//#ifdef WIN64
+	//is64bitOs = TRUE;
+	//#endif
+	//HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 
 	if (hKernel)
 	{
@@ -3692,17 +3737,17 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui)
 		}
 	}
 
-	int iFindAddress = 0;
-	bool lbInj = false;
-	//UINT_PTR fnLoadLibrary = NULL;
-	//DWORD fLoadLibrary = 0;
-	DWORD nErrCode = 0;
-	int SelfImageBits;
-#ifdef WIN64
-	SelfImageBits = 64;
-#else
-	SelfImageBits = 32;
-#endif
+	//int iFindAddress = 0;
+	//bool lbInj = false;
+	////UINT_PTR fnLoadLibrary = NULL;
+	////DWORD fLoadLibrary = 0;
+	//DWORD nErrCode = 0;
+	//int SelfImageBits;
+	//#ifdef WIN64
+	//SelfImageBits = 64;
+	//#else
+	//SelfImageBits = 32;
+	//#endif
 
 	//#ifdef WIN64
 	//	fnLoadLibrary = (UINT_PTR)::GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "LoadLibraryW");

@@ -302,7 +302,7 @@ void ComspecDone(int aiRc)
 
 	xf_dump_chk();
 	//TODO("Уведомить плагин через пайп (если родитель - FAR) что процесс завершен. Плагин должен считать и запомнить содержимое консоли и только потом вернуть управление в ConEmuC!");
-	DWORD dwErr1 = 0, dwErr2 = 0;
+	DWORD dwErr1 = 0; //, dwErr2 = 0;
 	HANDLE hOut1 = NULL, hOut2 = NULL;
 	BOOL lbRc1 = FALSE, lbRc2 = FALSE;
 	CONSOLE_SCREEN_BUFFER_INFO sbi1 = {{0,0}}, sbi2 = {{0,0}};

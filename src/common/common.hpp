@@ -161,6 +161,7 @@ const CECMD
 	CECMD_GUIMACRO       = 38, // CESERVER_REQ_GUIMACRO. Найти в других консолях редактор/вьювер
 	CECMD_ONCREATEPROC   = 39, // CESERVER_REQ_ONCREATEPROCESS
 	CECMD_SRVSTARTSTOP   = 40, // {DWORD(1/101); DWORD(ghConWnd);}
+	CECMD_SETFARPID      = 41, // Посылается в сервер, чтобы он сменил (CESERVER_CONSOLE_MAPPING_HDR.nFarPID)
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -187,7 +188,7 @@ const CECMD
 
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    61
+#define CESERVER_REQ_VER    62
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000

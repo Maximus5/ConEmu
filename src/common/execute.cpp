@@ -32,6 +32,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Execute.h"
 #include "WinObjects.h"
 
+#ifndef KEY_WOW64_32KEY
+#define KEY_WOW64_32KEY 0x0200
+#endif
+#ifndef KEY_WOW64_64KEY
+#define KEY_WOW64_64KEY 0x0100
+#endif
+
+
+
 
 // Выдранный кусок из будущего GetFileInfo, получаем достоверную информацию о ГУЯХ PE-модуля
 
@@ -64,6 +73,7 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 	ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
 	ImageBits = 32;
 	FileAttrs = (DWORD)-1;
+	// Пытаться в UNC? Хотя сам CreateProcess UNC не поддерживает, так что смысла пока нет
 	HANDLE hModuleFile = CreateFile(FileName,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
 
 	if (hModuleFile != INVALID_HANDLE_VALUE)
@@ -75,12 +85,22 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 		if (GetFileInformationByHandle(hModuleFile, &bfi))
 			FileAttrs = bfi.dwFileAttributes;
 
+		// Это это батник - сразу вернуть IMAGE_SUBSYSTEM_BATCH_FILE
+		LPCWSTR pszExt = PointToExt(FileName);
+		if (pszExt && (!lstrcmpi(pszExt, L".cmd") || !lstrcmpiW(pszExt, L".bat")))
+		{
+			CloseHandle(hModuleFile);
+			ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
+			ImageBits = IsWindows64() ? 64 : 32;
+			return true;
+		}
+
 		if (ReadFile(hModuleFile,&DOSHeader,sizeof(DOSHeader),&ReadSize,NULL))
 		{
 			_ASSERTE(IMAGE_DOS_SIGNATURE==0x5A4D);
 			if (DOSHeader.e_magic != IMAGE_DOS_SIGNATURE)
 			{
-				const wchar_t *pszExt = wcsrchr(FileName, L'.');
+				//const wchar_t *pszExt = wcsrchr(FileName, L'.');
 
 				if (lstrcmpiW(pszExt, L".com") == 0)
 				{
@@ -343,6 +363,7 @@ struct IMAGE_MAPPING
 	LPBYTE ptrEnd;
 	IMAGE_HEADERS* pHdr;
 };
+#ifdef _DEBUG
 static bool ValidateMemory(LPVOID ptr, DWORD_PTR nSize, IMAGE_MAPPING* pImg)
 {
 	if ((ptr == NULL) || (((LPBYTE)ptr) < pImg->ptrBegin))
@@ -353,6 +374,7 @@ static bool ValidateMemory(LPVOID ptr, DWORD_PTR nSize, IMAGE_MAPPING* pImg)
 
 	return true;
 }
+#endif
 
 //================================================================================
 //
@@ -402,297 +424,506 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 	return (LPVOID)(pImg->ptrBegin + rva - delta);
 }
 
-int ParseExportsSection(IMAGE_MAPPING* pImg)
+//int ParseExportsSection(IMAGE_MAPPING* pImg)
+//{
+//	PIMAGE_EXPORT_DIRECTORY pExportDir;
+//	//PIMAGE_SECTION_HEADER header;
+//	//INT delta;
+//	//PSTR pszFilename;
+//	DWORD i;
+//	PDWORD pdwFunctions;
+//	PWORD pwOrdinals;
+//	DWORD *pszFuncNames;
+//	DWORD exportsStartRVA; //, exportsEndRVA;
+//	LPCSTR pszFuncName;
+//
+//	//exportsStartRVA = GetImgDirEntryRVA(pNTHeader,IMAGE_DIRECTORY_ENTRY_EXPORT);
+//	//exportsEndRVA = exportsStartRVA +
+//	//	GetImgDirEntrySize(pNTHeader, IMAGE_DIRECTORY_ENTRY_EXPORT);
+//	if (pImg->pHdr->OptionalHeader64.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+//	{
+//		exportsStartRVA = pImg->pHdr->OptionalHeader64.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+//		//exportDirSize = hdr.OptionalHeader64.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
+//		//pExportDirAddr = GetPtrFromRVA(exportsStartRVA, (PIMAGE_NT_HEADERS64)&hdr, mi.modBaseAddr);
+//	}
+//	else
+//	{
+//		exportsStartRVA = pImg->pHdr->OptionalHeader32.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+//		//exportDirSize = hdr.OptionalHeader32.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
+//		//pExportDirAddr = GetPtrFromRVA(exportsStartRVA, (PIMAGE_NT_HEADERS32)&hdr, mi.modBaseAddr);
+//	}
+//
+//	// Get the IMAGE_SECTION_HEADER that contains the exports.  This is
+//	// usually the .edata section, but doesn't have to be.
+//	//header = GetEnclosingSectionHeader( exportsStartRVA, pNTHeader );
+//	//if ( !header )
+//	//	return -201;
+//	//delta = (INT)(header->VirtualAddress - header->PointerToRawData);
+//	pExportDir = (PIMAGE_EXPORT_DIRECTORY)GetPtrFromRVA(exportsStartRVA, pImg);
+//
+//	if (!pExportDir || !ValidateMemory(pExportDir, sizeof(IMAGE_EXPORT_DIRECTORY), pImg))
+//		return -201;
+//
+//	//pszFilename = (PSTR)GetPtrFromRVA( pExportDir->Name, pNTHeader, pImageBase );
+//	pdwFunctions =	(PDWORD)GetPtrFromRVA(pExportDir->AddressOfFunctions, pImg);
+//	pwOrdinals =	(PWORD) GetPtrFromRVA(pExportDir->AddressOfNameOrdinals, pImg);
+//	pszFuncNames =	(DWORD*)GetPtrFromRVA(pExportDir->AddressOfNames, pImg);
+//
+//	if (!pdwFunctions || !pwOrdinals || !pszFuncNames)
+//		return -202;
+//
+//	for(i=0; i < pExportDir->NumberOfFunctions; i++, pdwFunctions++)
+//	{
+//		DWORD entryPointRVA = *pdwFunctions;
+//
+//		if (entryPointRVA == 0)      // Skip over gaps in exported function
+//			continue;               // ordinals (the entrypoint is 0 for
+//
+//		// these functions).
+//
+//		// See if this function has an associated name exported for it.
+//		for(unsigned j=0; j < pExportDir->NumberOfNames; j++)
+//		{
+//			if (pwOrdinals[j] == i)
+//			{
+//				pszFuncName = (LPCSTR)GetPtrFromRVA(pszFuncNames[j], pImg);
+//
+//				if (pszFuncName)
+//				{
+//					if (strcmp(pszFuncName, "LoadLibraryW"))
+//					{
+//						// Нашли
+//						return entryPointRVA;
+//					}
+//				}
+//			}
+//		}
+//	}
+//
+//	return -203;
+//}
+
+//static int FindLoadLibrary(LPCWSTR asKernel32)
+//{
+//	int nLoadLibraryOffset = 0;
+//	MWow64Disable wow; wow.Disable(); // Требуется в Win64 системах. Если не нужно - ничего не делает.
+//	HANDLE hMapping = NULL, hKernel = NULL;
+//	LPBYTE ptrMapping = NULL;
+//	LARGE_INTEGER nFileSize;
+//	hKernel = CreateFile(asKernel32, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+//
+//	if (!hKernel || (hKernel == INVALID_HANDLE_VALUE))
+//		nLoadLibraryOffset = -101;
+//	else if (!GetFileSizeEx(hKernel, &nFileSize) || nFileSize.HighPart)
+//		nLoadLibraryOffset = -102;
+//	else if (nFileSize.LowPart < (sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_HEADERS)))
+//		nLoadLibraryOffset = -103;
+//	else if (!(hMapping = CreateFileMapping(hKernel, NULL, PAGE_READONLY, 0,0, NULL)) || (hMapping == INVALID_HANDLE_VALUE))
+//		nLoadLibraryOffset = -104;
+//	else if (!(ptrMapping = (LPBYTE)MapViewOfFile(hMapping, FILE_MAP_READ, 0,0,0)))
+//		nLoadLibraryOffset = -105;
+//	else // Поехали
+//	{
+//		IMAGE_MAPPING img;
+//		img.pDos = (PIMAGE_DOS_HEADER)ptrMapping;
+//		img.pHdr = (IMAGE_HEADERS*)(ptrMapping + img.pDos->e_lfanew);
+//		img.ptrEnd = (ptrMapping + nFileSize.LowPart);
+//
+//		if (img.pDos->e_magic != IMAGE_DOS_SIGNATURE)
+//			nLoadLibraryOffset = -110; // некорректная сигнатура - должно быть 'MZ'
+//		else if (!ValidateMemory(img.pHdr, sizeof(*img.pHdr), &img))
+//			nLoadLibraryOffset = -111;
+//		else if (img.pHdr->Signature != IMAGE_NT_SIGNATURE)
+//			nLoadLibraryOffset = -112;
+//		else if (img.pHdr->OptionalHeader32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC
+//		        &&  img.pHdr->OptionalHeader64.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+//			nLoadLibraryOffset = -113;
+//		else // OK, файл первичную валидацию прошел
+//		{
+//			nLoadLibraryOffset = ParseExportsSection(&img);
+//		}
+//	}
+//
+//	// Закрываем дескрипторы
+//	if (ptrMapping)
+//		UnmapViewOfFile(ptrMapping);
+//
+//	if (hMapping && (hMapping != INVALID_HANDLE_VALUE))
+//		CloseHandle(hMapping);
+//
+//	if (hKernel && (hKernel != INVALID_HANDLE_VALUE))
+//		CloseHandle(hKernel);
+//
+//	// Found result
+//	return nLoadLibraryOffset;
+//}
+
+//// Определить адрес процедуры LoadLibraryW для запущенного процесса
+//int FindKernelAddress(HANDLE ahProcess, DWORD anPID, DWORD* pLoadLibrary)
+//{
+//	int iRc = -100;
+//	*pLoadLibrary = NULL;
+//	int nBits = 0;
+//	SIZE_T hdrReadSize;
+//	IMAGE_DOS_HEADER dos;
+//	IMAGE_HEADERS hdr;
+//	MODULEENTRY32 mi = {sizeof(MODULEENTRY32)};
+//	// Must be TH32CS_SNAPMODULE32 for spy 32bit from 64bit process
+//	// Сначала пробуем как Native, если процесс окажется другой битности - переоткроем snapshoot
+//	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, anPID);
+//
+//	if (!hSnap || hSnap == INVALID_HANDLE_VALUE)
+//		iRc = -1;
+//	else
+//	{
+//		WARNING("По всей видимости, 32-битный процесс не может получить информацию о 64-битном!");
+//
+//		// Теперь нужно определить битность процесса
+//		if (!Module32First(hSnap, &mi))
+//			iRc = -2;
+//		else if (!ReadProcessMemory(ahProcess, mi.modBaseAddr, &dos, sizeof(dos), &hdrReadSize))
+//			iRc = -3;
+//		else if (dos.e_magic != IMAGE_DOS_SIGNATURE)
+//			iRc = -4; // некорректная сигнатура - должно быть 'MZ'
+//		else if (!ReadProcessMemory(ahProcess, mi.modBaseAddr+dos.e_lfanew, &hdr, sizeof(hdr), &hdrReadSize))
+//			iRc = -5;
+//		else if (hdr.Signature != IMAGE_NT_SIGNATURE)
+//			iRc = -6;
+//		else if (hdr.OptionalHeader32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC
+//		        &&  hdr.OptionalHeader64.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+//			iRc = -7;
+//		else
+//		{
+//			TODO("Потенциально, еще можно попробовать обработать IMAGE_OS2_SIGNATURE?");
+//			nBits = (hdr.OptionalHeader32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC) ? 32 : 64;
+//#ifdef WIN64
+//
+//			// Если ahProcess - 64 бита, но нужно переоткрыть snapshoot с флагом TH32CS_SNAPMODULE32
+//			// В принципе, мы сюда попадать не должны, т.к. ConEmuC.exe - 32битный.
+//			if (nBits == 32)
+//			{
+//				CloseHandle(hSnap);
+//				hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE32, anPID);
+//
+//				if (!hSnap || hSnap == INVALID_HANDLE_VALUE)
+//				{
+//					iRc = -8;
+//					hSnap = NULL;
+//				}
+//				else if (!Module32First(hSnap, &mi))
+//				{
+//					iRc = -9;
+//					CloseHandle(hSnap);
+//					hSnap = NULL;
+//				}
+//			}
+//
+//#endif
+//
+//			if (hSnap != NULL)
+//			{
+//				iRc = (hdr.OptionalHeader32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC) ? -20 : -21;
+//
+//				do
+//				{
+//					if (lstrcmpi(mi.szModule, L"kernel32.dll") == 0)
+//					{
+//						//if (!ReadProcessMemory(ahProcess, mi.modBaseAddr, &dos, sizeof(dos), &hdrReadSize))
+//						//	iRc = -23;
+//						//else if (dos.e_magic != IMAGE_DOS_SIGNATURE)
+//						//	iRc = -24; // некорректная сигнатура - должно быть 'MZ'
+//						//else if (!ReadProcessMemory(ahProcess, mi.modBaseAddr+dos.e_lfanew, &hdr, sizeof(hdr), &hdrReadSize))
+//						//	iRc = -25;
+//						//else if (hdr.Signature != IMAGE_NT_SIGNATURE)
+//						//	iRc = -26;
+//						//else if (hdr.OptionalHeader32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC
+//						//	&&  hdr.OptionalHeader64.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+//						//	iRc = -27;
+//						//else
+//						iRc = 0;
+//						break;
+//					}
+//				}
+//				while(Module32Next(hSnap, &mi));
+//			}
+//		}
+//
+//		if (hSnap)
+//			CloseHandle(hSnap);
+//	}
+//
+//	// Если kernel32.dll нашли в обрабатываемом процессе
+//	if (iRc == 0 && nBits)
+//	{
+//		BOOL lbNeedLoad = FALSE;
+//		static DWORD nLoadLibraryW32 = 0;
+//		static DWORD nLoadLibraryW64 = 0;
+//		DWORD_PTR ptr = 0;
+//		lbNeedLoad = (nBits == 64) ? (nLoadLibraryW32 == 0) : (nLoadLibraryW64 == 0);
+//
+//		if (lbNeedLoad)
+//		{
+//			iRc = FindLoadLibrary(mi.szExePath);
+//
+//			if (iRc > 0)
+//			{
+//				if (nBits == 64)
+//					nLoadLibraryW64 = iRc;
+//				else
+//					nLoadLibraryW32 = iRc;
+//
+//				lbNeedLoad = FALSE; // OK
+//			}
+//
+//			//LPVOID pExportDirAddr;
+//			//DWORD exportsStartRVA;
+//			//DWORD exportDirSize;
+//			//if (nBits == 64)
+//			//{
+//			//	exportsStartRVA = hdr.OptionalHeader64.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+//			//	exportDirSize = hdr.OptionalHeader64.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
+//			//	pExportDirAddr = GetPtrFromRVA(exportsStartRVA, (PIMAGE_NT_HEADERS64)&hdr, mi.modBaseAddr);
+//			//}
+//			//else
+//			//{
+//			//	exportsStartRVA = hdr.OptionalHeader32.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+//			//	exportDirSize = hdr.OptionalHeader32.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
+//			//	pExportDirAddr = GetPtrFromRVA(exportsStartRVA, (PIMAGE_NT_HEADERS32)&hdr, mi.modBaseAddr);
+//			//}
+//			//if (!pExportDirAddr)
+//			//	iRc = -30;
+//			//else if (!ReadProcessMemory(ahProcess, pExportDirAddr,
+//		}
+//
+//		if (lbNeedLoad)
+//		{
+//			// Не удалось
+//			if (iRc == 0)
+//				iRc = -40;
+//		}
+//		else
+//		{
+//			ptr = ((DWORD_PTR)mi.modBaseAddr) + ((nBits == 64) ? nLoadLibraryW64 : nLoadLibraryW32);
+//
+//			if (ptr != (DWORD)ptr)
+//			{
+//				// BaseAddress даже для 64-битного Kernel32 мал, и доступен в 32-битных процессах,
+//				// но тем не менее проверяем, и если он "ушел" - то возвращаем ошибку.
+//				iRc = -41;
+//			}
+//			else
+//				*pLoadLibrary = (DWORD)ptr;
+//		}
+//	}
+//
+//	return iRc;
+//}
+
+bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD &ImageSubsystem, DWORD &ImageBits, DWORD& FileAttrs)
 {
-	PIMAGE_EXPORT_DIRECTORY pExportDir;
-	//PIMAGE_SECTION_HEADER header;
-	//INT delta;
-	//PSTR pszFilename;
-	DWORD i;
-	PDWORD pdwFunctions;
-	PWORD pwOrdinals;
-	DWORD *pszFuncNames;
-	DWORD exportsStartRVA; //, exportsEndRVA;
-	LPCSTR pszFuncName;
+	if (!Module || !*Module)
+		return false;
 
-	//exportsStartRVA = GetImgDirEntryRVA(pNTHeader,IMAGE_DIRECTORY_ENTRY_EXPORT);
-	//exportsEndRVA = exportsStartRVA +
-	//	GetImgDirEntrySize(pNTHeader, IMAGE_DIRECTORY_ENTRY_EXPORT);
-	if (pImg->pHdr->OptionalHeader64.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+	//bool Result = false;
+	//ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
+
+	// Исключения нас не интересуют - команда уже сформирована и отдана в CreateProcess!
+	//// нулевой проход - смотрим исключения
+	//// Берем "исключения" из реестра, которые должны исполняться директом,
+	//// например, некоторые внутренние команды ком. процессора.
+	//string strExcludeCmds;
+	//GetRegKey(strSystemExecutor,L"ExcludeCmds",strExcludeCmds,L"");
+	//UserDefinedList ExcludeCmdsList;
+	//ExcludeCmdsList.Set(strExcludeCmds);
+	//while (!ExcludeCmdsList.IsEmpty())
+	//{
+	//	if (!StrCmpI(Module,ExcludeCmdsList.GetNext()))
+	//	{
+	//		ImageSubsystem=IMAGE_SUBSYSTEM_WINDOWS_CUI;
+	//		Result=true;
+	//		break;
+	//	}
+	//}
+
+	//string strFullName=Module;
+	LPCWSTR ModuleExt = PointToExt(Module);
+	wchar_t strPathExt[32768]; strPathExt[0] = 0; //(L".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WSH");
+	DWORD nPathExtLen = GetEnvironmentVariable(L"PATHEXT", strPathExt, countof(strPathExt)-2);
+	if (!nPathExtLen)
 	{
-		exportsStartRVA = pImg->pHdr->OptionalHeader64.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
-		//exportDirSize = hdr.OptionalHeader64.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
-		//pExportDirAddr = GetPtrFromRVA(exportsStartRVA, (PIMAGE_NT_HEADERS64)&hdr, mi.modBaseAddr);
+		wcscpy_c(strPathExt, L".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WSH");
+		nPathExtLen = lstrlen(strPathExt);
 	}
-	else
+	LPCWSTR pszPathExtEnd = strPathExt+nPathExtLen;
+	// Разбить на токены
+	strPathExt[nPathExtLen] = strPathExt[nPathExtLen+1] = 0;
+	LPWSTR Ext = wcschr(strPathExt, L';');
+	while (Ext)
 	{
-		exportsStartRVA = pImg->pHdr->OptionalHeader32.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
-		//exportDirSize = hdr.OptionalHeader32.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
-		//pExportDirAddr = GetPtrFromRVA(exportsStartRVA, (PIMAGE_NT_HEADERS32)&hdr, mi.modBaseAddr);
+		*Ext = 0;
+		Ext = wcschr(Ext+1, L';');
 	}
 
-	// Get the IMAGE_SECTION_HEADER that contains the exports.  This is
-	// usually the .edata section, but doesn't have to be.
-	//header = GetEnclosingSectionHeader( exportsStartRVA, pNTHeader );
-	//if ( !header )
-	//	return -201;
-	//delta = (INT)(header->VirtualAddress - header->PointerToRawData);
-	pExportDir = (PIMAGE_EXPORT_DIRECTORY)GetPtrFromRVA(exportsStartRVA, pImg);
+	TODO("Проверить на превышение длин строк");
+	wchar_t strTmpName[32767], *pszFilePart;
 
-	if (!pExportDir || !ValidateMemory(pExportDir, sizeof(IMAGE_EXPORT_DIRECTORY), pImg))
-		return -201;
-
-	//pszFilename = (PSTR)GetPtrFromRVA( pExportDir->Name, pNTHeader, pImageBase );
-	pdwFunctions =	(PDWORD)GetPtrFromRVA(pExportDir->AddressOfFunctions, pImg);
-	pwOrdinals =	(PWORD) GetPtrFromRVA(pExportDir->AddressOfNameOrdinals, pImg);
-	pszFuncNames =	(DWORD*)GetPtrFromRVA(pExportDir->AddressOfNames, pImg);
-
-	if (!pdwFunctions || !pwOrdinals || !pszFuncNames)
-		return -202;
-
-	for(i=0; i < pExportDir->NumberOfFunctions; i++, pdwFunctions++)
+	// первый проход - в текущем каталоге
+	LPWSTR pszExtCur = strPathExt;
+	while (pszExtCur < pszPathExtEnd)
 	{
-		DWORD entryPointRVA = *pdwFunctions;
+		Ext = pszExtCur;
+		pszExtCur = pszExtCur + lstrlen(pszExtCur)+1;
 
-		if (entryPointRVA == 0)      // Skip over gaps in exported function
-			continue;               // ordinals (the entrypoint is 0 for
+		_wcscpyn_c(strTmpName, countof(strTmpName), Module, countof(strTmpName));
 
-		// these functions).
-
-		// See if this function has an associated name exported for it.
-		for(unsigned j=0; j < pExportDir->NumberOfNames; j++)
+		if (!ModuleExt)
 		{
-			if (pwOrdinals[j] == i)
-			{
-				pszFuncName = (LPCSTR)GetPtrFromRVA(pszFuncNames[j], pImg);
+			if (!*Ext)
+				continue;
+			_wcscatn_c(strTmpName, countof(strTmpName), Ext, countof(strTmpName));
+		}
 
-				if (pszFuncName)
-				{
-					if (strcmp(pszFuncName, "LoadLibraryW"))
-					{
-						// Нашли
-						return entryPointRVA;
-					}
-				}
-			}
+		if (GetImageSubsystem(strTmpName, ImageSubsystem, ImageBits/*16/32/64*/, FileAttrs))
+		{
+			return true;
+		}
+
+		if (ModuleExt)
+		{
+			break;
 		}
 	}
 
-	return -203;
-}
+	// второй проход - по правилам SearchPath
+	wchar_t strPathEnv[32767], strExpand[32767];
 
-static int FindLoadLibrary(LPCWSTR asKernel32)
-{
-	int nLoadLibraryOffset = 0;
-	MWow64Disable wow; wow.Disable(); // Требуется в Win64 системах. Если не нужно - ничего не делает.
-	HANDLE hMapping = NULL, hKernel = NULL;
-	LPBYTE ptrMapping = NULL;
-	LARGE_INTEGER nFileSize;
-	hKernel = CreateFile(asKernel32, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-
-	if (!hKernel || (hKernel == INVALID_HANDLE_VALUE))
-		nLoadLibraryOffset = -101;
-	else if (!GetFileSizeEx(hKernel, &nFileSize) || nFileSize.HighPart)
-		nLoadLibraryOffset = -102;
-	else if (nFileSize.LowPart < (sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_HEADERS)))
-		nLoadLibraryOffset = -103;
-	else if (!(hMapping = CreateFileMapping(hKernel, NULL, PAGE_READONLY, 0,0, NULL)) || (hMapping == INVALID_HANDLE_VALUE))
-		nLoadLibraryOffset = -104;
-	else if (!(ptrMapping = (LPBYTE)MapViewOfFile(hMapping, FILE_MAP_READ, 0,0,0)))
-		nLoadLibraryOffset = -105;
-	else // Поехали
+	// поиск по переменной PATH
+	if (GetEnvironmentVariable(L"PATH", strPathEnv, countof(strPathEnv)))
 	{
-		IMAGE_MAPPING img;
-		img.pDos = (PIMAGE_DOS_HEADER)ptrMapping;
-		img.pHdr = (IMAGE_HEADERS*)(ptrMapping + img.pDos->e_lfanew);
-		img.ptrEnd = (ptrMapping + nFileSize.LowPart);
+		LPWSTR pszPathEnvEnd = strPathEnv + lstrlen(strPathEnv);
 
-		if (img.pDos->e_magic != IMAGE_DOS_SIGNATURE)
-			nLoadLibraryOffset = -110; // некорректная сигнатура - должно быть 'MZ'
-		else if (!ValidateMemory(img.pHdr, sizeof(*img.pHdr), &img))
-			nLoadLibraryOffset = -111;
-		else if (img.pHdr->Signature != IMAGE_NT_SIGNATURE)
-			nLoadLibraryOffset = -112;
-		else if (img.pHdr->OptionalHeader32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC
-		        &&  img.pHdr->OptionalHeader64.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-			nLoadLibraryOffset = -113;
-		else // OK, файл первичную валидацию прошел
+		LPWSTR pszPathCur = strPathEnv;
+		while (pszPathCur && (pszPathCur < pszPathEnvEnd))
 		{
-			nLoadLibraryOffset = ParseExportsSection(&img);
-		}
-	}
-
-	// Закрываем дескрипторы
-	if (ptrMapping)
-		UnmapViewOfFile(ptrMapping);
-
-	if (hMapping && (hMapping != INVALID_HANDLE_VALUE))
-		CloseHandle(hMapping);
-
-	if (hKernel && (hKernel != INVALID_HANDLE_VALUE))
-		CloseHandle(hKernel);
-
-	// Found result
-	return nLoadLibraryOffset;
-}
-
-// Определить адрес процедуры LoadLibraryW для запущенного процесса
-int FindKernelAddress(HANDLE ahProcess, DWORD anPID, DWORD* pLoadLibrary)
-{
-	int iRc = -100;
-	*pLoadLibrary = NULL;
-	int nBits = 0;
-	SIZE_T hdrReadSize;
-	IMAGE_DOS_HEADER dos;
-	IMAGE_HEADERS hdr;
-	MODULEENTRY32 mi = {sizeof(MODULEENTRY32)};
-	// Must be TH32CS_SNAPMODULE32 for spy 32bit from 64bit process
-	// Сначала пробуем как Native, если процесс окажется другой битности - переоткроем snapshoot
-	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, anPID);
-
-	if (!hSnap || hSnap == INVALID_HANDLE_VALUE)
-		iRc = -1;
-	else
-	{
-		WARNING("По всей видимости, 32-битный процесс не может получить информацию о 64-битном!");
-
-		// Теперь нужно определить битность процесса
-		if (!Module32First(hSnap, &mi))
-			iRc = -2;
-		else if (!ReadProcessMemory(ahProcess, mi.modBaseAddr, &dos, sizeof(dos), &hdrReadSize))
-			iRc = -3;
-		else if (dos.e_magic != IMAGE_DOS_SIGNATURE)
-			iRc = -4; // некорректная сигнатура - должно быть 'MZ'
-		else if (!ReadProcessMemory(ahProcess, mi.modBaseAddr+dos.e_lfanew, &hdr, sizeof(hdr), &hdrReadSize))
-			iRc = -5;
-		else if (hdr.Signature != IMAGE_NT_SIGNATURE)
-			iRc = -6;
-		else if (hdr.OptionalHeader32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC
-		        &&  hdr.OptionalHeader64.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-			iRc = -7;
-		else
-		{
-			TODO("Потенциально, еще можно попробовать обработать IMAGE_OS2_SIGNATURE?");
-			nBits = (hdr.OptionalHeader32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC) ? 32 : 64;
-#ifdef WIN64
-
-			// Если ahProcess - 64 бита, но нужно переоткрыть snapshoot с флагом TH32CS_SNAPMODULE32
-			// В принципе, мы сюда попадать не должны, т.к. ConEmuC.exe - 32битный.
-			if (nBits == 32)
+			LPWSTR Path = pszPathCur;
+			LPWSTR pszPathNext = wcschr(pszPathCur, L';');
+			if (pszPathNext)
 			{
-				CloseHandle(hSnap);
-				hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE32, anPID);
-
-				if (!hSnap || hSnap == INVALID_HANDLE_VALUE)
-				{
-					iRc = -8;
-					hSnap = NULL;
-				}
-				else if (!Module32First(hSnap, &mi))
-				{
-					iRc = -9;
-					CloseHandle(hSnap);
-					hSnap = NULL;
-				}
-			}
-
-#endif
-
-			if (hSnap != NULL)
-			{
-				iRc = (hdr.OptionalHeader32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC) ? -20 : -21;
-
-				do
-				{
-					if (lstrcmpi(mi.szModule, L"kernel32.dll") == 0)
-					{
-						//if (!ReadProcessMemory(ahProcess, mi.modBaseAddr, &dos, sizeof(dos), &hdrReadSize))
-						//	iRc = -23;
-						//else if (dos.e_magic != IMAGE_DOS_SIGNATURE)
-						//	iRc = -24; // некорректная сигнатура - должно быть 'MZ'
-						//else if (!ReadProcessMemory(ahProcess, mi.modBaseAddr+dos.e_lfanew, &hdr, sizeof(hdr), &hdrReadSize))
-						//	iRc = -25;
-						//else if (hdr.Signature != IMAGE_NT_SIGNATURE)
-						//	iRc = -26;
-						//else if (hdr.OptionalHeader32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC
-						//	&&  hdr.OptionalHeader64.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-						//	iRc = -27;
-						//else
-						iRc = 0;
-						break;
-					}
-				}
-				while(Module32Next(hSnap, &mi));
-			}
-		}
-
-		if (hSnap)
-			CloseHandle(hSnap);
-	}
-
-	// Если kernel32.dll нашли в обрабатываемом процессе
-	if (iRc == 0 && nBits)
-	{
-		BOOL lbNeedLoad = FALSE;
-		static DWORD nLoadLibraryW32 = 0;
-		static DWORD nLoadLibraryW64 = 0;
-		DWORD_PTR ptr = 0;
-		lbNeedLoad = (nBits == 64) ? (nLoadLibraryW32 == 0) : (nLoadLibraryW64 == 0);
-
-		if (lbNeedLoad)
-		{
-			iRc = FindLoadLibrary(mi.szExePath);
-
-			if (iRc > 0)
-			{
-				if (nBits == 64)
-					nLoadLibraryW64 = iRc;
-				else
-					nLoadLibraryW32 = iRc;
-
-				lbNeedLoad = FALSE; // OK
-			}
-
-			//LPVOID pExportDirAddr;
-			//DWORD exportsStartRVA;
-			//DWORD exportDirSize;
-			//if (nBits == 64)
-			//{
-			//	exportsStartRVA = hdr.OptionalHeader64.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
-			//	exportDirSize = hdr.OptionalHeader64.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
-			//	pExportDirAddr = GetPtrFromRVA(exportsStartRVA, (PIMAGE_NT_HEADERS64)&hdr, mi.modBaseAddr);
-			//}
-			//else
-			//{
-			//	exportsStartRVA = hdr.OptionalHeader32.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
-			//	exportDirSize = hdr.OptionalHeader32.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
-			//	pExportDirAddr = GetPtrFromRVA(exportsStartRVA, (PIMAGE_NT_HEADERS32)&hdr, mi.modBaseAddr);
-			//}
-			//if (!pExportDirAddr)
-			//	iRc = -30;
-			//else if (!ReadProcessMemory(ahProcess, pExportDirAddr,
-		}
-
-		if (lbNeedLoad)
-		{
-			// Не удалось
-			if (iRc == 0)
-				iRc = -40;
-		}
-		else
-		{
-			ptr = ((DWORD_PTR)mi.modBaseAddr) + ((nBits == 64) ? nLoadLibraryW64 : nLoadLibraryW32);
-
-			if (ptr != (DWORD)ptr)
-			{
-				// BaseAddress даже для 64-битного Kernel32 мал, и доступен в 32-битных процессах,
-				// но тем не менее проверяем, и если он "ушел" - то возвращаем ошибку.
-				iRc = -41;
+				*pszPathNext = 0;
+				pszPathCur = pszPathNext+1;
 			}
 			else
-				*pLoadLibrary = (DWORD)ptr;
+			{
+				pszPathCur = pszPathEnvEnd;
+			}
+			if (!*Path)
+				continue;
+
+			pszExtCur = strPathExt;
+			while (pszExtCur < pszPathExtEnd)
+			{
+				Ext = pszExtCur;
+				pszExtCur = pszExtCur + lstrlen(pszExtCur)+1;
+				if (!*Ext)
+					continue;
+
+				if (SearchPath(Path, Module, Ext, countof(strTmpName), strTmpName, &pszFilePart))
+				{
+					if (GetImageSubsystem(strTmpName, ImageSubsystem, ImageBits, FileAttrs))
+						return true;
+				}
+			}
 		}
 	}
 
-	return iRc;
+	pszExtCur = strPathExt;
+	while (pszExtCur < pszPathExtEnd)
+	{
+		Ext = pszExtCur;
+		pszExtCur = pszExtCur + lstrlen(pszExtCur)+1;
+		if (!*Ext)
+			continue;
+
+		if (SearchPath(NULL, Module, Ext, countof(strTmpName), strTmpName, &pszFilePart))
+		{
+			if (GetImageSubsystem(strTmpName, ImageSubsystem, ImageBits, FileAttrs))
+				return true;
+		}
+	}
+
+	// третий проход - лезем в реестр в "App Paths"
+	if (!wcschr(Module, L'\\'))
+	{
+		static const WCHAR RegPath[] = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
+		// В строке Module заменить исполняемый модуль на полный путь, который
+		// берется из SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths
+		// Сначала смотрим в HKCU, затем - в HKLM
+		HKEY RootFindKey[] = {HKEY_CURRENT_USER,HKEY_LOCAL_MACHINE,HKEY_LOCAL_MACHINE};
+
+		BOOL lbAddExt = FALSE;
+		pszExtCur = strPathExt;
+		while (pszExtCur < pszPathExtEnd)
+		{
+			if (!lbAddExt)
+			{
+				Ext = NULL;
+				lbAddExt = TRUE;
+			}
+			else
+			{
+				Ext = pszExtCur;
+				pszExtCur = pszExtCur + lstrlen(pszExtCur)+1;
+				if (!*Ext)
+					continue;
+			}
+
+			wcscpy_c(strTmpName, RegPath);
+			_wcscatn_c(strTmpName, countof(strTmpName), Module, countof(strTmpName));
+			if (Ext)
+				_wcscatn_c(strTmpName, countof(strTmpName), Ext, countof(strTmpName));
+
+			DWORD samDesired = KEY_QUERY_VALUE;
+			DWORD RedirectionFlag = 0;
+			// App Paths key is shared in Windows 7 and above
+			OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
+			GetVersionEx(&osv);
+			if (osv.dwMajorVersion < 6 || (osv.dwMajorVersion == 6 && osv.dwMinorVersion < 1))
+			{
+				#ifdef _WIN64
+				RedirectionFlag = KEY_WOW64_32KEY;
+				#else
+				RedirectionFlag = IsWindows64() ? KEY_WOW64_64KEY : 0;
+				#endif
+			}
+			for (size_t i = 0; i < countof(RootFindKey); i++)
+			{
+				if (i == (countof(RootFindKey)-1))
+				{
+					if (RedirectionFlag)
+						samDesired |= RedirectionFlag;
+					else
+						break;
+				}
+				HKEY hKey;
+				if (RegOpenKeyEx(RootFindKey[i], strTmpName, 0, samDesired, &hKey) == ERROR_SUCCESS)
+				{
+					DWORD nType = 0, nSize = sizeof(strTmpName)-2;
+					int RegResult = RegQueryValueEx(hKey, L"", NULL, &nType, (LPBYTE)strTmpName, &nSize);
+					RegCloseKey(hKey);
+
+					if ((RegResult == ERROR_SUCCESS) && (nType == REG_SZ || nType == REG_EXPAND_SZ || nType == REG_MULTI_SZ))
+					{
+						strTmpName[(nSize >> 1)+1] = 0;
+						if (!ExpandEnvironmentStrings(strTmpName, strExpand, countof(strExpand)))
+							wcscpy_c(strExpand, strTmpName);
+						if (GetImageSubsystem(Unquote(strExpand), ImageSubsystem, ImageBits, FileAttrs))
+							return true;
+					}
+				}
+			}
+		}
+	}
+
+	// Не нашли
+	return false;
 }

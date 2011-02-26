@@ -40,6 +40,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SEE_MASK_NOZONECHECKS
 #define SEE_MASK_NOZONECHECKS 0x800000
 #endif
+#ifndef SEE_MASK_NOASYNC
+#define SEE_MASK_NOASYNC 0x00000100
+#endif
+
 
 int CShellProc::mn_InShellExecuteEx = 0;
 
@@ -532,6 +536,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	{
 		wchar_t *pszNamePart = NULL;
 		int nLen = lstrlen(szExe);
+		// Длина больше 0 и не заканчивается слешом
 		BOOL lbMayBeFile = (nLen > 0) && (szExe[nLen-1] != L'\\') && (szExe[nLen-1] != L'/');
 		const wchar_t* pszExt = PointToExt(szExe);
 
@@ -544,29 +549,30 @@ BOOL CShellProc::PrepareExecuteParms(
 			mn_ImageBits = 0;
 			mn_ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
 		}
-		else if (pszExt && (!lstrcmpi(pszExt, L".cmd") || !lstrcmpi(pszExt, L".bat")))
-		{
-			lbGuiApp = FALSE;
-			mn_ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
-			#ifdef _WIN64
-			mn_ImageBits = 64;
-			#else
-			mn_ImageBits = IsWindows64() ? 64 : 32;
-			#endif
-			lbSubsystemOk = TRUE;
-		}
-		else if (GetFullPathName(szExe, countof(szTest), szTest, &pszNamePart)
-			&& GetImageSubsystem(szTest, mn_ImageSubsystem, mn_ImageBits, nFileAttrs))
+		//else if (pszExt && (!lstrcmpi(pszExt, L".cmd") || !lstrcmpi(pszExt, L".bat")))
+		//{
+		//	lbGuiApp = FALSE;
+		//	mn_ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
+		//	mn_ImageBits = IsWindows64() ? 64 : 32;
+		//	lbSubsystemOk = TRUE;
+		//}
+		else if (FindImageSubsystem(szExe, mn_ImageSubsystem, mn_ImageBits, nFileAttrs))
 		{
 			lbGuiApp = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
 			lbSubsystemOk = TRUE;
 		}
-		else if (SearchPath(NULL, szExe, NULL, countof(szTest), szTest, &pszNamePart)
-			&& GetImageSubsystem(szTest, mn_ImageSubsystem, mn_ImageBits, nFileAttrs))
-		{
-			lbGuiApp = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
-			lbSubsystemOk = TRUE;
-		}
+		//else if (GetFullPathName(szExe, countof(szTest), szTest, &pszNamePart)
+		//	&& GetImageSubsystem(szTest, mn_ImageSubsystem, mn_ImageBits, nFileAttrs))
+		//{
+		//	lbGuiApp = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
+		//	lbSubsystemOk = TRUE;
+		//}
+		//else if (SearchPath(NULL, szExe, NULL, countof(szTest), szTest, &pszNamePart)
+		//	&& GetImageSubsystem(szTest, mn_ImageSubsystem, mn_ImageBits, nFileAttrs))
+		//{
+		//	lbGuiApp = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
+		//	lbSubsystemOk = TRUE;
+		//}
 		else
 		{
 			szTest[0] = 0;
@@ -707,7 +713,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	{
 		//lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, pszBaseDir, 
 		//				szExe, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
-		mb_NeedInjects = FALSE;
+		mb_NeedInjects = TRUE;
 	}
 
 wrap:

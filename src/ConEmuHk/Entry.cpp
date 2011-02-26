@@ -58,6 +58,14 @@ extern "C" {
 };
 #endif
 
+//__declspec(dllexport) HHOOK ghKeyHook = 0;
+//__declspec(dllexport) DWORD gnVkWinFix = 0xF0;
+//__declspec(dllexport) HWND  ghKeyHookConEmuRoot = NULL;
+
+//HHOOK ghKeyHook = 0;
+//DWORD gnVkWinFix = 0xF0;
+//HWND  ghKeyHookConEmuRoot = NULL;
+
 HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 UINT gnMsgActivateCon = 0; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 //SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
@@ -108,7 +116,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			wchar_t szSkipEventName[128];
 			_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
 			HANDLE hSkipEvent = OpenEvent(EVENT_ALL_ACCESS , FALSE, szSkipEventName);
-			BOOL lbSkipInjects = FALSE;
+			//BOOL lbSkipInjects = FALSE;
 
 			if (hSkipEvent)
 			{

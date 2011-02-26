@@ -209,8 +209,8 @@ static HookItem HooksCommon[] =
 #endif
 	// Microsoft bug?
 	// http://code.google.com/p/conemu-maximus5/issues/detail?id=60
-	{OnSetConsoleCP,				"SetConsoleCP",			kernel32},
-	{OnSetConsoleOutputCP,			"SetConsoleOutputCP",	kernel32},
+	{(void*)OnSetConsoleCP,			"SetConsoleCP",			kernel32},
+	{(void*)OnSetConsoleOutputCP,	"SetConsoleOutputCP",	kernel32},
 	/* ************************ */
 	{(void*)OnTrackPopupMenu,		"TrackPopupMenu",		user32},
 	{(void*)OnTrackPopupMenuEx,		"TrackPopupMenuEx",		user32},
@@ -1901,6 +1901,7 @@ static void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags,
 	}
 }
 
+#ifdef _DEBUG
 static bool IsHandleConsole(HANDLE handle, bool output = true)
 {
 	// Консоль?
@@ -1920,6 +1921,7 @@ static bool IsHandleConsole(HANDLE handle, bool output = true)
 	else
 		return true;
 }
+#endif
 
 
 //static BOOL SrvSetConsoleCP(BOOL bSetOutputCP, DWORD nCP)

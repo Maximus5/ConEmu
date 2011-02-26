@@ -31,6 +31,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #include "WinObjects.h"
 
+#ifndef TTS_BALLOON
+#define TTS_BALLOON             0x40
+#define TTF_TRACK               0x0020
+#define TTF_ABSOLUTE            0x0080
+#define TTM_SETMAXTIPWIDTH      (WM_USER + 24)
+#define TTM_TRACKPOSITION       (WM_USER + 18)  // lParam = dwPos
+#define TTM_TRACKACTIVATE       (WM_USER + 17)  // wParam = TRUE/FALSE start end  lparam = LPTOOLINFO
+#endif
+
 
 #ifdef _DEBUG
 void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
@@ -442,8 +451,10 @@ void RemoveOldComSpecC()
 		if (!GetEnvironmentVariable(L"ComSpec", szComSpec, countof(szComSpec)))
 			szComSpec[0] = 0;
 
+		#ifndef __GNUC__
 		#pragma warning( push )
 		#pragma warning(disable : 6400)
+		#endif
 
 		LPCWSTR pwszName = PointToName(szComSpec);
 
@@ -455,7 +466,9 @@ void RemoveOldComSpecC()
 				wcscpy_c(szRealComSpec, szComSpecC);
 			}
 		}
+		#ifndef __GNUC__
 		#pragma warning( pop )
+		#endif
 
 		if (szRealComSpec[0] == 0)
 		{
@@ -514,6 +527,22 @@ const wchar_t* PointToExt(const wchar_t* asFullPath)
 	return pszExt;
 }
 
+// !!! Μενÿες asPath !!!
+const wchar_t* Unquote(wchar_t* asPath)
+{
+	if (!asPath)
+		return NULL;
+	if (*asPath != L'"')
+		return asPath;
+	wchar_t* pszEndQ = wcsrchr(asPath, L'"');
+	if (!pszEndQ || (pszEndQ == asPath))
+	{
+		*asPath = 0;
+		return asPath;
+	}
+	*pszEndQ = 0;
+	return (asPath+1);
+}
 
 
 //// Undocumented console message

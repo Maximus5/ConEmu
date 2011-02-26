@@ -658,6 +658,11 @@ void OnConsolePeekReadInput(BOOL abPeek)
 			{
 				bNeedReload = true;
 				dwLastTickCount = GetTickCount();
+				CESERVER_REQ_HDR in;
+				ExecutePrepareCmd(&in, CECMD_SETFARPID, sizeof(CESERVER_REQ_HDR));
+				CESERVER_REQ *pOut = ExecuteSrvCmd(gpConMapInfo->nServerPID, (CESERVER_REQ*)&in, FarHwnd);
+				if (pOut)
+					ExecuteFreeResult(pOut);
 			}
 			else
 			{

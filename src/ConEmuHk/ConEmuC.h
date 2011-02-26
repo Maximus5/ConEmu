@@ -313,10 +313,14 @@ extern BOOL gbConsoleModeFlags;
 extern DWORD gnConsoleModeFlags;
 
 #ifdef WIN64
+#ifndef __GNUC__
 #pragma message("ComEmuC compiled in X64 mode")
+#endif
 #define NTVDMACTIVE FALSE
 #else
+#ifndef __GNUC__
 #pragma message("ComEmuC compiled in X86 mode")
+#endif
 #define NTVDMACTIVE (srv.bNtvdmActive)
 #endif
 
@@ -325,6 +329,7 @@ struct SrvInfo
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
 	BOOL bDebuggerActive; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
 	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
+	DWORD nActiveFarPID; // PID последнего активного Far
 	BOOL bWasDetached; // Выставляется в TRUE при получении CECMD_DETACHCON
 	//
 	HANDLE hServerThread;   DWORD dwServerThreadId; BOOL bServerTermination;

@@ -48,7 +48,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "../ConEmu/version.h"
 #include "../common/execute.h"
-#include <Dbghelp.h>
+
+#ifdef __GNUC__
+	#include "../common/DbgHlpGcc.h"
+#else
+	#include <Dbghelp.h>
+#endif
 
 extern HMODULE ghOurModule;
 
@@ -950,12 +955,16 @@ void Help()
 	);
 }
 
+#ifndef __GNUC__
 #pragma warning( push )
 #pragma warning(disable : 6400)
+#endif
 BOOL IsExecutable(LPCWSTR aszFilePathName)
 {
+#ifndef __GNUC__
 #pragma warning( push )
 #pragma warning(disable : 6400)
+#endif
 	LPCWSTR pwszDot = wcsrchr(aszFilePathName, L'.');
 
 	if (pwszDot)  // ≈сли указан .exe или .com файл
@@ -969,7 +978,9 @@ BOOL IsExecutable(LPCWSTR aszFilePathName)
 
 	return FALSE;
 }
+#ifndef __GNUC__
 #pragma warning( pop )
+#endif
 
 BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1])
 {
@@ -1095,8 +1106,10 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 	while((*pwszEndSpace == L' ') && (pwszEndSpace > szExe))
 		*(pwszEndSpace--) = 0;
 
+#ifndef __GNUC__
 #pragma warning( push )
 #pragma warning(disable : 6400)
+#endif
 
 	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0)
 	{
@@ -1134,7 +1147,9 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 	//ћожно еще ƒоделать поиски с: SearchPath, GetFullPathName, добавив расширени€ .exe & .com
 	//хот€ фар сам формирует полные пути к командам, так что можно не заморачиватьс€
 	gbRootIsCmdExe = TRUE;
+#ifndef __GNUC__
 #pragma warning( pop )
+#endif
 	return TRUE;
 }
 
@@ -1837,7 +1852,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 
 				nNewLen = pszC - pwszStartCmdLine;
 				_ASSERTE(nNewLen>0);
-				wcsncpy_s(pszNewCmd, nCchNew, pwszStartCmdLine, nNewLen);
+				_wcscpyn_c(pszNewCmd, nCchNew, pwszStartCmdLine, nNewLen);
 				pszNewCmd[nNewLen] = 0; // !!! wcsncpy не ставит завершающий '\0'
 				xf_check();
 
@@ -1929,7 +1944,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				int nCurLen = lstrlen(pszNewCmd);
 				psFilePart = pszNewCmd + nCurLen;
 				xf_check();
-				wcsncpy_s(psFilePart, nCchNew-nCurLen, asCmdLine, nNewLen);
+				_wcscpyn_c(psFilePart, nCchNew-nCurLen, asCmdLine, nNewLen);
 				xf_check();
 				psFilePart[nNewLen] = 0; // !!! wcsncpy не ставит завершающий '\0'
 				psFilePart += nNewLen;
@@ -1938,7 +1953,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 
 				// добавить в команду запуска собственно программу с аргументами
 				if (*pwszCopy)
-					wcscpy_s(psFilePart, nCchNew-(psFilePart-pszNewCmd), pwszCopy);
+					_wcscpy_c(psFilePart, nCchNew-(psFilePart-pszNewCmd), pwszCopy);
 
 				xf_check();
 				//MessageBox(NULL, pszNewCmd, L"CmdLine", 0);
@@ -2046,14 +2061,18 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			// “олько если это (случайно) не conemuc.exe
 			//pwszCopy = wcsrchr(szComSpec, L'\\'); if (!pwszCopy) pwszCopy = szComSpec;
 			pwszCopy = PointToName(szComSpec);
+#ifndef __GNUC__
 #pragma warning( push )
 #pragma warning(disable : 6400)
+#endif
 
 			if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0
 			        /*|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0*/)
 				szComSpec[0] = 0;
 
+#ifndef __GNUC__
 #pragma warning( pop )
+#endif
 		}
 
 		// ComSpec/ComSpecC не определен, используем cmd.exe
@@ -2498,7 +2517,9 @@ void SendStarted()
 	{
 		if (!GetModuleFileName(NULL, pIn->StartStop.sModuleName, countof(pIn->StartStop.sModuleName)))
 			pIn->StartStop.sModuleName[0] = 0;
+		#ifdef _DEBUG
 		LPCWSTR pszFileName = PointToName(pIn->StartStop.sModuleName);
+		#endif
 
 		// Cmd/Srv режим начат
 		switch (gnRunMode)
@@ -3283,7 +3304,9 @@ void ProcessDebugEvent()
 	BOOL lbNonContinuable = FALSE;
 	DEBUG_EVENT evt = {0};
 	BOOL lbEvent = WaitForDebugEvent(&evt,10);
+	#ifdef _DEBUG
 	DWORD dwErr = GetLastError();
+	#endif
 	HMODULE hCOMDLG32 = NULL;
 	typedef BOOL (WINAPI* GetSaveFileName_t)(LPOPENFILENAMEW lpofn);
 	GetSaveFileName_t _GetSaveFileName = NULL;
@@ -3691,7 +3714,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
 
 DWORD WINAPI InstanceThread(LPVOID lpvParam)
 {
-	CESERVER_REQ in= {0}, *pIn=NULL, *pOut=NULL;
+	CESERVER_REQ in= {{0}}, *pIn=NULL, *pOut=NULL;
 	DWORD cbBytesRead, cbWritten, dwErr = 0;
 	BOOL fSuccess;
 	HANDLE hPipe;
@@ -4281,6 +4304,15 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_SetFarPID(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = FALSE;
+
+	srv.nActiveFarPID = in.hdr.nSrcPID;
+
+	return lbRc;
+}
+
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -4374,6 +4406,10 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			lbRc = cmd_CmdStartStop(in, out);
 		} break;
+		case CECMD_SETFARPID:
+		{
+			lbRc = cmd_SetFarPID(in, out);
+		} break;
 	}
 
 	if (gbInRecreateRoot) gbInRecreateRoot = FALSE;
@@ -4440,7 +4476,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		}
 	}
 
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {sizeof(CONSOLE_SCREEN_BUFFER_INFO)};
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
 	lbRc = GetConsoleScreenBufferInfo(ahConOut, &csbi);
 
 	if (GetConsoleDisplayMode(&srv.dwDisplayMode) && srv.dwDisplayMode)
