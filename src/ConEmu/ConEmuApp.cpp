@@ -1424,11 +1424,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpSet->isConVisible = VisPrm;
 
 	// Если запускается conman (нафига?) - принудительно включить флажок "Обновлять handle"
-	TODO("Deprecated: isUpdConHandle использоваться не должен");
+	//TODO("Deprecated: isUpdConHandle использоваться не должен");
 
 	if (gpSet->isMulti || StrStrI(gpSet->GetCmd(), L"conman.exe"))
 	{
-		gpSet->isUpdConHandle = TRUE;
+		//gpSet->isUpdConHandle = TRUE;
+
 		// сбрость CreateInNewEnvironment для ConMan
 		ResetConman();
 	}

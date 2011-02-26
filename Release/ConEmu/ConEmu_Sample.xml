@@ -110,7 +110,6 @@
 			<value name="FontBold" type="hex" data="00"/>
 			<value name="FontItalic" type="hex" data="00"/>
 			<value name="Monospace" type="hex" data="01"/>
-			<value name="Update Console handle" type="hex" data="01"/>
 			<value name="ConWnd Width" type="ulong" data="98"/>
 			<value name="ConWnd Height" type="ulong" data="35"/>
 			<value name="16bit Height" type="ulong" data="0"/>

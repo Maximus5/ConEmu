@@ -829,7 +829,7 @@ void CSettings::LoadSettings()
 		if (isMonospace > 2) isMonospace = 2;
 
 		isMonospaceSelected = isMonospace ? isMonospace : 1; // запомнить, чтобы выбирать то что нужно при смене шрифта
-		reg->Load(L"Update Console handle", isUpdConHandle);
+		//reg->Load(L"Update Console handle", isUpdConHandle);
 		reg->Load(L"RSelectionFix", isRSelFix);
 		reg->Load(L"MouseSkipActivation", isMouseSkipActivation);
 		reg->Load(L"MouseSkipMoving", isMouseSkipMoving);
@@ -1397,7 +1397,7 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		//reg->Save(L"ForceMonospace", isForceMonospace);
 		//reg->Save(L"Proportional", isProportional);
 		reg->Save(L"Monospace", isMonospace);
-		reg->Save(L"Update Console handle", isUpdConHandle);
+		//reg->Save(L"Update Console handle", isUpdConHandle);
 		reg->Save(L"ConWnd Width", wndWidth);
 		reg->Save(L"ConWnd Height", wndHeight);
 		reg->Save(L"16bit Height", ntvdmHeight);
@@ -1754,8 +1754,8 @@ LRESULT CSettings::OnInitDialog_Main()
 	if (gpSet->EnableThemeDialogTextureF)
 		gpSet->EnableThemeDialogTextureF(hMain, 6/*ETDT_ENABLETAB*/);
 
-	if (isUpdConHandle)
-		CheckDlgButton(ghOpWnd, cbAutoConHandle, BST_CHECKED);
+	//if (isUpdConHandle)
+	//	CheckDlgButton(ghOpWnd, cbAutoConHandle, BST_CHECKED);
 
 	SetDlgItemText(hMain, tFontFace, LogFont.lfFaceName);
 	SetDlgItemText(hMain, tFontFace2, LogFont2.lfFaceName);
@@ -2740,10 +2740,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			isExtendFonts = IsChecked(hMain, cbExtendFonts);
 			gpConEmu->Update(true);
 		} break;
-		case cbAutoConHandle:
-			isUpdConHandle = !isUpdConHandle;
-			gpConEmu->Update(true);
-			break;
+		//case cbAutoConHandle:
+		//	isUpdConHandle = !isUpdConHandle;
+		//	gpConEmu->Update(true);
+		//	break;
 		case rCursorH:
 		case rCursorV:
 

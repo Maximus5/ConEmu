@@ -88,7 +88,6 @@
 #define lbExtendIdx                     1067
 #define lbExtendFontItalicIdx           1068
 #define lbExtendFontNormalIdx           1069
-#define cbAutoConHandle                 1074
 #define rCascade                        1075
 #define rFixed                          1076
 #define cbsTelnetActive                 1079

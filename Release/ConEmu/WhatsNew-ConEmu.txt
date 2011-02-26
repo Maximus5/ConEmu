@@ -1,3 +1,7 @@
+2011.02.??
+[!] Documentation (http://code.google.com/p/conemu-maximus5/wiki/ConEmu) updated. Anybody read it?
+
+
 2011.02.25
 [%] Правки в запускаторе.
 [+] "ConEmuC.exe /GUIMACRO <macro command>". Возвращает errorlevel==0 и %ConEmuMacroResult% в случае успеха.

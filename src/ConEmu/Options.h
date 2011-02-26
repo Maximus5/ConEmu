@@ -208,7 +208,7 @@ class CSettings
 		bool isAlwaysShowTrayIcon;
 		//bool isForceMonospace, isProportional;
 		BYTE isMonospace, isMonospaceSelected; // 0 - proportional, 1 - monospace, 2 - forcemonospace
-		bool isUpdConHandle;
+		//bool isUpdConHandle;
 		bool isRSelFix;
 		//Drag
 		BYTE isDragEnabled;
