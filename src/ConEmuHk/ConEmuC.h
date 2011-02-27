@@ -226,8 +226,8 @@ typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dw
 extern FGetConsoleProcessList pfnGetConsoleProcessList;
 //BOOL HookWinEvents(int abEnabled);
 BOOL CheckProcessCount(BOOL abForce=FALSE);
-BOOL IsExecutable(LPCWSTR aszFilePathName);
-BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1]);
+//BOOL IsExecutable(LPCWSTR aszFilePathName);
+//BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1]);
 //BOOL FileExists(LPCWSTR asFile);
 //extern bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/,DWORD& FileAttrs);
 void SendStarted();
@@ -367,6 +367,7 @@ struct SrvInfo
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *pConsoleMap;
 	//CESERVER_CONSOLE_MAPPING_HDR *pConsoleInfo;  // Mapping
 	//CESERVER_REQ_CONINFO_DATA *pConsoleData; // Mapping
+	ConEmuGuiMapping guiSettings;
 	CESERVER_REQ_CONINFO_FULL *pConsole;
 	//CESERVER_CONSOLE_MAPPING_HDR *pConsoleInfoCopy;  // Local (Alloc)
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)

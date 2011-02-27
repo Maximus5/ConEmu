@@ -443,6 +443,12 @@ void CSettings::InitSettings()
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
 	wndX = 0; wndY = 0; wndCascade = true; isAutoSaveSizePos = false;
 	isConVisible = false; //isLockRealConsolePos = false;
+#ifdef _DEBUG
+	isUseInjects = TRUE;
+#else
+	WARNING("isUseInjects отключен принудительно");
+	isUseInjects = FALSE;
+#endif
 	nConInMode = (DWORD)-1; // по умолчанию, включится (ENABLE_QUICK_EDIT_MODE|ENABLE_EXTENDED_FLAGS|ENABLE_INSERT_MODE)
 	nSlideShowElapse = 2500;
 	nIconID = IDI_ICON1;
@@ -614,6 +620,7 @@ void CSettings::LoadSettings()
 		// Debugging
 		reg->Load(L"ConVisible", isConVisible);
 		reg->Load(L"ConInMode", nConInMode);
+		reg->Load(L"UseInjects", isUseInjects);
 		// Don't move invisible real console. This affects GUI eMenu.
 		//reg->Load(L"LockRealConsolePos", isLockRealConsolePos);
 		//reg->Load(L"DumpPackets", szDumpPackets);
@@ -1253,6 +1260,10 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		}*/
 		reg->Save(L"ConVisible", isConVisible);
 		reg->Save(L"ConInMode", nConInMode);
+		
+		WARNING("Сохранение isUseInjects отключено принудительно");
+		//reg->Save(L"UseInjects", isUseInjects);
+		
 		//reg->Save(L"LockRealConsolePos", isLockRealConsolePos);
 		reg->Save(L"CmdLine", psCmd);
 
@@ -2080,6 +2091,15 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isConVisible)
 		CheckDlgButton(hExt, cbVisible, BST_CHECKED);
 
+	#ifndef _DEBUG
+	WARNING("isUseInjects отключен принудительно");
+	if (!isUseInjects)
+		EnableWindow(GetDlgItem(hExt, cbUseInjects), FALSE); // Сохранение запрещено
+	#endif
+	if (isUseInjects)
+		CheckDlgButton(hExt, cbUseInjects, BST_CHECKED);
+
+
 	//if (isLockRealConsolePos) CheckDlgButton(hExt, cbLockRealConsolePos, BST_CHECKED);
 #ifdef _DEBUG
 
@@ -2808,6 +2828,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			//case cbLockRealConsolePos:
 			//	isLockRealConsolePos = IsChecked(hExt, cbLockRealConsolePos);
 			//	break;
+		case cbUseInjects:
+			isUseInjects = IsChecked(hExt, cbUseInjects);
+			gpConEmu->OnGlobalSettingsChanged();
+			break;
 		case bRealConsoleSettings:
 			EditConsoleFont(ghOpWnd);
 			break;
@@ -4229,7 +4253,7 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 					}
 					ListView_DeleteAllItems(GetDlgItem(hWnd2, lbActivityLog));
 					
-					gpConEmu->OnDebugLogSettingsChanged();
+					gpConEmu->OnGlobalSettingsChanged();
 				}; // rbActivityShell
 				break;
 			} // WM_COMMAND

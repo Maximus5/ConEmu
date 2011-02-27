@@ -188,7 +188,7 @@ const CECMD
 
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    62
+#define CESERVER_REQ_VER    63
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -633,6 +633,8 @@ struct ConEmuGuiMapping
 	wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 	wchar_t  sConEmuArgs[MAX_PATH*2];
 
+	DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
+
 	/* Основной шрифт в GUI */
 	struct ConEmuMainFont MainFont;
 	
@@ -840,7 +842,10 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	//
 	DWORD nServerInShutdown; // GetTickCount() начала закрытия сервера
 	//
-	//DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
+	wchar_t  sConEmuExe[MAX_PATH+1]; // полный путь к ConEmu.exe (GUI)
+	wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
+	//
+	//DWORD bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	//wchar_t  sConEmuDir[MAX_PATH+1];  // здесь будет лежать собственно hive
 	//wchar_t  sInjectsDir[MAX_PATH+1]; // path to "ConEmuHk.dll" & "ConEmuHk64.dll"
 	DWORD nAltServerPID;  //

@@ -160,13 +160,51 @@ BOOL LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
 	return lbRc;
 }
 
+BOOL ReloadGuiSettings()
+{
+	srv.guiSettings.cbSize = sizeof(ConEmuGuiMapping);
+	BOOL lbRc = LoadGuiSettings(srv.guiSettings);
+	if (lbRc)
+	{
+		SetEnvironmentVariableW(L"ConEmuDir", srv.guiSettings.sConEmuDir);
+		SetEnvironmentVariableW(L"ConEmuBaseDir", srv.guiSettings.sConEmuBaseDir);
+
+		// Ќе будем ставить сами, эту переменную заполн€ет Gui при своем запуске
+		// соответственно, переменна€ наследуетс€ серверами
+		//SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
+
+		wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", srv.guiSettings.hGuiWnd.u);
+		SetEnvironmentVariableW(L"ConEmuHWND", szHWND);
+
+		if (srv.pConsole)
+		{
+			// ќбновить пути к ConEmu
+			wcscpy_c(srv.pConsole->hdr.sConEmuExe, srv.guiSettings.sConEmuExe);
+			wcscpy_c(srv.pConsole->hdr.sConEmuBaseDir, srv.guiSettings.sConEmuBaseDir);
+
+			// ѕроверить, нужно ли реестр хукать
+			srv.pConsole->hdr.bHookRegistry = srv.guiSettings.bHookRegistry;
+			wcscpy_c(srv.pConsole->hdr.sHiveFileName, srv.guiSettings.sHiveFileName);
+			srv.pConsole->hdr.hMountRoot = srv.guiSettings.hMountRoot;
+			wcscpy_c(srv.pConsole->hdr.sMountKey, srv.guiSettings.sMountKey);
+
+			UpdateConsoleMapHeader();
+		}
+		else
+		{
+			lbRc = FALSE;
+		}
+	}
+	return lbRc;
+}
+
 // —оздать необходимые событи€ и нити
 int ServerInit()
 {
 	int iRc = 0;
 	BOOL bConRc = FALSE;
 	DWORD dwErr = 0;
-	ConEmuGuiMapping guiSettings = {sizeof(ConEmuGuiMapping)};
+	//ConEmuGuiMapping guiSettings = {sizeof(ConEmuGuiMapping)};
 	//wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+3];
 	//wchar_t* pszSelf = szSelf+1;
 	//HWND hDcWnd = NULL;
@@ -831,29 +869,7 @@ int ServerInit()
 	CheckConEmuHwnd();
 	
 	// ќбновить переменные окружени€ (через ConEmuGuiMapping)
-	if (LoadGuiSettings(/*&*/guiSettings))
-	{
-		SetEnvironmentVariableW(L"ConEmuDir", guiSettings.sConEmuDir);
-		SetEnvironmentVariableW(L"ConEmuBaseDir", guiSettings.sConEmuBaseDir);
-		
-		// Ќе будем ставить сами, эту переменную заполн€ет Gui при своем запуске
-		// соответственно, переменна€ наследуетс€ серверами
-		//SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
-
-		wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", guiSettings.hGuiWnd.u);
-		SetEnvironmentVariableW(L"ConEmuHWND", szHWND);
-
-		// ѕроверить, нужно ли реестр хукать
-		if (srv.pConsole)
-		{
-			srv.pConsole->hdr.bHookRegistry = guiSettings.bHookRegistry;
-			wcscpy_c(srv.pConsole->hdr.sHiveFileName, guiSettings.sHiveFileName);
-			srv.pConsole->hdr.hMountRoot = guiSettings.hMountRoot;
-			wcscpy_c(srv.pConsole->hdr.sMountKey, guiSettings.sMountKey);
-			
-			UpdateConsoleMapHeader();
-		}
-	}
+	ReloadGuiSettings();
 wrap:
 	return iRc;
 }
@@ -1764,6 +1780,18 @@ int CreateMapHeader()
 	srv.pConsole->hdr.bThawRefreshThread = TRUE; // пока - TRUE (это на старте сервера)
 	srv.pConsole->hdr.nProtocolVersion = CESERVER_REQ_VER;
 	srv.pConsole->hdr.nFarPID = srv.nActiveFarPID; // PID последнего активного фара
+
+	// ¬ момент Create GuiSettings скорее всего еще не загружены, потом обнов€тс€ в ReloadGuiSettings()
+	if (srv.guiSettings.cbSize)
+	{
+		wcscpy_c(srv.pConsole->hdr.sConEmuExe, srv.guiSettings.sConEmuExe);
+		wcscpy_c(srv.pConsole->hdr.sConEmuBaseDir, srv.guiSettings.sConEmuBaseDir);
+	}
+	else
+	{
+		srv.pConsole->hdr.sConEmuExe[0] = srv.pConsole->hdr.sConEmuBaseDir[0] = 0;
+	}
+
 	//srv.pConsole->hdr.hConEmuWnd = ghConEmuWnd; -- обновл€ет UpdateConsoleMapHeader
 	//WARNING! ¬ начале структуры info идет CESERVER_REQ_HDR дл€ унификации общени€ через пайпы
 	srv.pConsole->info.cmd.cbSize = sizeof(srv.pConsole->info); // ѕока тут - только размер заголовка
@@ -3798,6 +3826,11 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui)
 			if (nErrCode == CERR_HOOKS_WAS_SET)
 			{
 				iRc = 0;
+				goto wrap;
+			}
+			else if (nErrCode == CERR_HOOKS_FAILED)
+			{
+				iRc = -505;
 				goto wrap;
 			}
 

@@ -80,4 +80,4 @@ bool __cdecl xf_validate(void * _Memory = NULL);
 char* lstrdup(const char* asText);
 wchar_t* lstrdup(const wchar_t* asText);
 
-const char* PointToName(const char* asFileOrPath);
+//const char* PointToName(const char* asFileOrPath);

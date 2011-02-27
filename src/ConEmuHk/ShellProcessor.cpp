@@ -45,6 +45,56 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
+#ifdef _DEBUG
+void TestShellProcessor()
+{
+	for (int i = 0; i < 10; i++)
+	{
+		CShellProc sp;
+		LPCWSTR pszFile = NULL, pszParam = NULL;
+		DWORD nCreateFlags = 0, nShowCmd = 0;
+		SHELLEXECUTEINFOW sei = {sizeof(SHELLEXECUTEINFOW)};
+		STARTUPINFOW si = {sizeof(STARTUPINFOW)};
+		switch (i)
+		{
+		case 0:
+			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
+			pszParam = L"mingw32-make \"1.cpp\" ";
+			sp.OnCreateProcessW(&pszFile, &pszParam, &nCreateFlags, &si);
+			break;
+		case 1:
+			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
+			pszParam = L"\"mingw32-make.exe\" \"1.cpp\" ";
+			sp.OnCreateProcessW(&pszFile, &pszParam, &nCreateFlags, &si);
+			break;
+		case 2:
+			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
+			pszParam = L"\"C:\\GCC\\mingw\\bin\\mingw32-make.exe\" \"1.cpp\" ";
+			sp.OnCreateProcessW(&pszFile, &pszParam, &nCreateFlags, &si);
+			break;
+		case 3:
+			pszFile = L"F:\\VCProject\\FarPlugin\\ConEmu\\Bugs\\DOS\\Prince\\PRINCE.EXE";
+			pszParam = L"prince megahit";
+			sp.OnCreateProcessW(&pszFile, &pszParam, &nCreateFlags, &si);
+			break;
+		case 4:
+			pszFile = NULL;
+			pszParam = L" \"F:\\VCProject\\FarPlugin\\ConEmu\\Bugs\\DOS\\Prince\\PRINCE.EXE\"";
+			sp.OnCreateProcessW(&pszFile, &pszParam, &nCreateFlags, &si);
+			break;
+		case 5:
+			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
+			pszParam = L" \"1.cpp\" ";
+			sp.OnShellExecuteW(NULL, &pszFile, &pszParam, &nCreateFlags, &nShowCmd);
+			break;
+		default:
+			break;
+		}
+	}
+}
+#endif
+
+
 int CShellProc::mn_InShellExecuteEx = 0;
 
 extern struct HookModeFar gFarMode;
@@ -61,7 +111,8 @@ CShellProc::CShellProc()
 	mb_NeedInjects = FALSE;
 	// int CShellProc::mn_InShellExecuteEx = 0; <-- static
 	mb_InShellExecuteEx = FALSE;
-	mb_DosBoxAllowed = FALSE;
+	//mb_DosBoxAllowed = FALSE;
+	m_GuiMapping.cbSize = 0;
 }
 
 CShellProc::~CShellProc()
@@ -125,36 +176,76 @@ char* CShellProc::wcs2str(const wchar_t* pwsz, UINT anCP)
 	return psz;
 }
 
-CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
-				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
-				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
-				int mn_ImageBits, int mn_ImageSubsystem,
-				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
-				wchar_t (&szBaseDir)[MAX_PATH+2], BOOL& bDosBoxAllowed)
+BOOL CShellProc::LoadGuiMapping()
 {
-	szBaseDir[0] = 0;
+	if (m_GuiMapping.cbSize)
+		return TRUE;
 
-	// Проверим, а надо ли?
+	// Проверим, а можно ли?
 	DWORD dwGuiProcessId = 0;
 	if (!ghConEmuWnd || !GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId))
-		return NULL;
+		return FALSE;
 
 	MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
 	GuiInfoMapping.InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
 	const ConEmuGuiMapping* pInfo = GuiInfoMapping.Open();
 	if (!pInfo)
-		return NULL;
+		return FALSE;
 	else if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
-		return NULL;
+		return FALSE;
 	else
 	{
-		bDosBoxAllowed = pInfo->bDosBox;
+		memmove(&m_GuiMapping, pInfo, min(pInfo->cbSize, sizeof(m_GuiMapping)));
+		/*bDosBoxAllowed = pInfo->bDosBox;
 		wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
 		wcscat_c(szBaseDir, L"\\");
 		if (pInfo->nLoggingType != glt_Processes)
-			return NULL;
+			return NULL;*/
 	}
 	GuiInfoMapping.CloseMap();
+
+	return (m_GuiMapping.cbSize != 0);
+}
+
+CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
+				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
+				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
+				int mn_ImageBits, int mn_ImageSubsystem,
+				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr
+				/*wchar_t (&szBaseDir)[MAX_PATH+2], BOOL& bDosBoxAllowed*/)
+{
+	//szBaseDir[0] = 0;
+
+	// Проверим, а надо ли?
+	if (!LoadGuiMapping())
+		return NULL;
+
+	//	bDosBoxAllowed = pInfo->bDosBox;
+	//	wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
+	//	wcscat_c(szBaseDir, L"\\");
+	if (m_GuiMapping.nLoggingType != glt_Processes)
+		return NULL;
+
+	//DWORD dwGuiProcessId = 0;
+	//if (!ghConEmuWnd || !GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId))
+	//	return NULL;
+
+	//MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
+	//GuiInfoMapping.InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
+	//const ConEmuGuiMapping* pInfo = GuiInfoMapping.Open();
+	//if (!pInfo)
+	//	return NULL;
+	//else if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
+	//	return NULL;
+	//else
+	//{
+	//	bDosBoxAllowed = pInfo->bDosBox;
+	//	wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
+	//	wcscat_c(szBaseDir, L"\\");
+	//	if (pInfo->nLoggingType != glt_Processes)
+	//		return NULL;
+	//}
+	//GuiInfoMapping.CloseMap();
 
 	
 	CESERVER_REQ *pIn = NULL;
@@ -188,6 +279,10 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 		wcscpy_c(pIn->OnCreateProc.sFunction, L"Loaded");
 	else if (aCmd == eParmsChanged)
 		wcscpy_c(pIn->OnCreateProc.sFunction, L"Changed");
+	else if (aCmd == eLoadLibrary)
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"LdLib");
+	else if (aCmd == eFreeLibrary)
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"FrLib");
 	else
 		wcscpy_c(pIn->OnCreateProc.sFunction, L"Unknown");
 	
@@ -214,12 +309,16 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 }
 
 BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
-				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asBaseDir,
+				LPCWSTR asFile, LPCWSTR asParam, /*LPCWSTR asBaseDir,*/
 				LPCWSTR asExeFile, DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam)
 {
+	if (!LoadGuiMapping())
+		return FALSE;
+
 	wchar_t szConEmuC[MAX_PATH+16]; // ConEmuC64.exe
-	wcscpy_c(szConEmuC, asBaseDir);
+	wcscpy_c(szConEmuC, m_GuiMapping.sConEmuBaseDir);
+	wcscat_c(szConEmuC, L"\\");
 	
 	_ASSERTE(aCmd==eShellExecute || aCmd==eCreateProcess);
 
@@ -232,21 +331,79 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		if (asFile && *asFile && asParam && *asParam)
 		{
 			LPCWSTR pszParam = SkipNonPrintable(asParam);
-			while (*pszParam == L'"') pszParam++;
-			int nLen = lstrlen(asFile)+1;
-			wchar_t* pszTest = (wchar_t*)malloc(nLen*sizeof(wchar_t));
-			_ASSERTE(pszTest);
-			if (pszTest)
+			if (pszParam && ((*pszParam != L'"') || (pszParam[0] == L'"' && pszParam[1] != L'"')))
 			{
-				_wcscpyn_c(pszTest, nLen, pszParam, nLen);
-				pszTest[nLen-1] = 0;
-				// Сравнить asFile с первым аргументом в asParam
-				if (lstrcmpi(pszTest, asFile) == 0)
+				BOOL lbSkipEndQuote = FALSE;
+				if (*pszParam == L'"')
 				{
-					// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
-					asFile = NULL;
+					pszParam++;
+					lbSkipEndQuote = TRUE;
 				}
-				free(pszTest);
+				int nLen = lstrlen(asFile)+1;
+				int cchMax = max(nLen,(MAX_PATH+1));
+				wchar_t* pszTest = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
+				_ASSERTE(pszTest);
+				if (pszTest)
+				{
+					// Сначала пробуем на полное соответствие
+					if (asFile)
+					{
+						_wcscpyn_c(pszTest, nLen, pszParam, nLen);
+						pszTest[nLen-1] = 0;
+						// Сравнить asFile с первым аргументом в asParam
+						if (lstrcmpi(pszTest, asFile) == 0)
+						{
+							// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
+							asFile = NULL;
+						}
+					}
+					// Если не сошлось - в asParam может быть только имя запускаемого файла
+					// например CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"mingw32-make.exe makefile",...)
+					// или      CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"mingw32-make makefile",...)
+					if (asFile)
+					{
+						LPCWSTR pszFileOnly = PointToName(asFile);
+						if (pszFileOnly && (pszFileOnly != asFile))
+						{
+							// Пробуем с откидыванием пути
+							nLen = lstrlen(pszFileOnly)+1;
+							_wcscpyn_c(pszTest, nLen, pszParam, nLen);
+							pszTest[nLen-1] = 0;
+							// Сравнить asFile с первым аргументом в asParam
+							if (lstrcmpi(pszTest, pszFileOnly) == 0)
+							{
+								// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
+								// -- asFile = NULL; -- трогать нельзя, только он содержит полный путь!
+								asParam = pszParam+nLen-(lbSkipEndQuote?0:1);
+								pszFileOnly = NULL;
+							}
+						}
+						if (pszFileOnly)
+						{
+							// а теперь, с откидыванием расширения
+							wchar_t szTmpFileOnly[MAX_PATH+1]; szTmpFileOnly[0] = 0;
+							_wcscpyn_c(szTmpFileOnly, countof(szTmpFileOnly), pszFileOnly, countof(szTmpFileOnly));
+							wchar_t* pszExt = wcsrchr(szTmpFileOnly, L'.');
+							if (pszExt)
+							{
+								*pszExt = 0;
+								nLen = lstrlen(szTmpFileOnly)+1;
+								_wcscpyn_c(pszTest, nLen, pszParam, nLen);
+								pszTest[nLen-1] = 0;
+								// Сравнить asFile с первым аргументом в asParam
+								if (lstrcmpi(pszTest, szTmpFileOnly) == 0)
+								{
+									// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
+									// -- asFile = NULL; -- трогать нельзя, только он содержит полный путь!
+									asParam = pszParam+nLen-(lbSkipEndQuote?0:1);
+									pszFileOnly =  NULL;
+								}
+							}
+						}
+					}
+
+					free(pszTest);
+				}
 			}
 		}
 	}
@@ -276,7 +433,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	{
 		const wchar_t* psz = SkipNonPrintable(asParam);
 		// Если запускают cmd.exe без параметров - не отбрасывать его!
-		if (szComspec[0] && *psz)
+		if (psz && *psz && szComspec[0])
 		{
 			// asFile может быть и для ShellExecute и для CreateProcess, проверим в одном месте
 			if (asFile && (lstrcmpi(szComspec, asFile) == 0))
@@ -311,19 +468,19 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 					{
 						if (*psz == L'"')
 						{
-							WARNING("!!! Проверить ветку !!!");
-							if (psz[nLen+1] == L'"')
+							if (psz[nLen] == L'"')
 							{
-								pszCmdLeft = psz+nLen+2;
+								pszCmdLeft = psz+nLen+1;
 							}
 						}
 						else
 						{
 							pszCmdLeft = psz+nLen-1;
 						}
+
 						// Теперь нужно проверить, что там в хвосте команды (если команды нет - оставить cmd.exe)
 						pszCmdLeft = SkipNonPrintable(pszCmdLeft);
-						if (pszCmdLeft[0] == L'/' && wcschr(L"CcKk", pszCmdLeft[1]))
+						if (pszCmdLeft && pszCmdLeft[0] == L'/' && wcschr(L"CcKk", pszCmdLeft[1]))
 						{
 							// не добавлять в измененную команду asFile (это отбрасываемый cmd.exe)
 							lbComSpecK = (psz[1] == L'K' || psz[1] == L'k');
@@ -338,17 +495,17 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		}
 	}
 
-	wchar_t szNewExe[MAX_PATH+1];
-	const wchar_t* pszExeExt = NULL;
-	// Проверить, может запускается батник?
-	if (/*lbComSpec &&*/ !asFile && asParam)
-	{
-		const wchar_t* pszTemp = asParam;
-		if (0 == NextArg(&pszTemp, szNewExe))
-		{
-			pszExeExt = PointToExt(szNewExe);
-		}
-	}
+	//wchar_t szNewExe[MAX_PATH+1];
+	//const wchar_t* pszExeExt = NULL;
+	//// Проверить, может запускается батник?
+	//if (/*lbComSpec &&*/ !asFile && asParam)
+	//{
+	//	const wchar_t* pszTemp = asParam;
+	//	if (0 == NextArg(&pszTemp, szNewExe))
+	//	{
+	//		pszExeExt = PointToExt(szNewExe);
+	//	}
+	//}
 	// Пока не будем ничего менять, пусть работает "как в фаре"
 	//if (pszExeExt && (!lstrcmpi(pszExeExt, L".cmd") || !lstrcmpi(pszExeExt, L".bat")))
 	//{
@@ -364,6 +521,9 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 
 
 
+	BOOL lbUseDosBox = FALSE;
+	wchar_t szDosBoxExe[MAX_PATH+16], szDosBoxCfg[MAX_PATH+16]; szDosBoxExe[0] = szDosBoxCfg[0] = 0;
+
 	if (ImageBits == 32)
 	{
 		wcscat_c(szConEmuC, L"ConEmuC.exe");
@@ -374,9 +534,21 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	}
 	else if (ImageBits == 16)
 	{
-		if (mb_DosBoxAllowed)
+		if (m_GuiMapping.cbSize && m_GuiMapping.bDosBox)
 		{
+			wcscpy_c(szDosBoxExe, m_GuiMapping.sConEmuBaseDir);
+			wcscat_c(szDosBoxExe, L"\\DosBox\\DosBox.exe");
+			wcscpy_c(szDosBoxCfg, m_GuiMapping.sConEmuBaseDir);
+			wcscat_c(szDosBoxCfg, L"\\DosBox\\DosBox.conf");
+
+			if (!FileExists(szDosBoxExe) || !FileExists(szDosBoxCfg))
+			{
+				// DoxBox не установлен!
+				return FALSE;
+			}
+
 			wcscat_c(szConEmuC, L"ConEmuC.exe");
+			lbUseDosBox = TRUE;
 		}
 		else
 		{
@@ -391,84 +563,152 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	}
 	
 	int nCchSize = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 64;
+	if (lbUseDosBox)
+	{
+		// Может быть нужно экранирование кавычек или еще чего, зарезервируем буфер
+		// ну и сами параметры для DosBox
+		nCchSize = (nCchSize*2) + lstrlen(szDosBoxExe) + lstrlen(szDosBoxCfg) + 128;
+	}
+
 	if (aCmd == eShellExecute)
 	{
 		*psFile = lstrdup(szConEmuC);
 	}
 	else
 	{
-		nCchSize += lstrlen(szConEmuC);
+		nCchSize += lstrlen(szConEmuC)+1;
 		*psFile = NULL;
 	}
 	
-	*psParam = (wchar_t*)malloc(nCchSize*sizeof(wchar_t));
-	(*psParam)[0] = 0;
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
 	// /C или /K в обоих случаях нужно пихать в psParam
-	BOOL lbDoubleQuote = FALSE;
-	if (aCmd == eShellExecute)
-	{
-		if (asFile && *asFile)
-		{
-			lbDoubleQuote = TRUE;
-			if (ImageBits == 16)
-				_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
-			_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K \"\"" : L" /C \"\"");
-			_wcscat_c((*psParam), nCchSize, asFile ? asFile : L"");
-			_wcscat_c((*psParam), nCchSize, L"\"");
-		}
-		else
-		{
-			if (ImageBits == 16)
-				_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
-			_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
-		}
-	}
-	else
+	BOOL lbEndQuote = FALSE;
+	*psParam = (wchar_t*)malloc(nCchSize*sizeof(wchar_t));
+	(*psParam)[0] = 0;
+	if (aCmd == eCreateProcess)
 	{
 		(*psParam)[0] = L'"';
 		_wcscpy_c((*psParam)+1, nCchSize-1, szConEmuC);
 		_wcscat_c((*psParam), nCchSize, L"\"");
-		if (ImageBits == 16)
-			_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
-		_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
-		// Это CreateProcess. Исполняемый файл может быть уже указан в asParam
-		//BOOL lbNeedExe = (asFile && *asFile);
-		// уже отсечено выше
-		//if (lbNeedExe && asParam && *asParam)
-		//{
-		//	LPCWSTR pszParam = asParam;
-		//	while (*pszParam == L'"') pszParam++;
-		//	int nLen = lstrlen(asExeFile);
-		//	wchar_t szTest[MAX_PATH*2];
-		//	_ASSERTE(nLen <= (MAX_PATH+10)); // размер из IsNeedCmd.
-		//	_wcscpyn_c(szTest, countof(szTest), pszParam, nLen+1);
-		//	// Сравнить asFile с первым аргументом в asParam
-		//	if (lstrcmpiW(szTest, asExeFile) == 0)
-		//	{
-		//		// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
-		//		lbNeedExe = FALSE;
-		//	}
-		//}
-		//if (lbNeedExe)
+	}
+
+
+	if ((aCmd == eShellExecute) && (asFile && *asFile))
+	{
+		// C:\Windows\system32\cmd.exe /C ""F:\Batches\!!Save&SetNewCFG.cmd" "
+		lbEndQuote = TRUE; // иначе некоторые имена обрабатываются некорректно
+	}
+
+	if (lbUseDosBox)
+		_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
+
+	_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
+	if (asParam && *asParam == L' ')
+		asParam++;
+
+	if (lbUseDosBox)
+	{
+		lbEndQuote = TRUE;
+		_wcscat_c((*psParam), nCchSize, L"\"");
+		_wcscat_c((*psParam), nCchSize, szDosBoxExe);
+		_wcscat_c((*psParam), nCchSize, L" -noconsole -conf \"");
+		_wcscat_c((*psParam), nCchSize, szDosBoxCfg);
+		_wcscat_c((*psParam), nCchSize, L" -c \"");
+		// исполняемый файл (если есть, может быть только в asParam)
+		if (asFile && *asFile)
+		{
+			wchar_t* pszShort = GetShortFileNameEx(asFile);
+			if (pszShort)
+			{
+				_wcscat_c((*psParam), nCchSize, pszShort);
+				free(pszShort);
+			}
+			else
+			{
+				_wcscat_c((*psParam), nCchSize, asFile);
+			}
+			_wcscat_c((*psParam), nCchSize, L" ");
+		}
+		// параметры, кавычки нужно экранировать!
+		if (asParam && *asParam)
+		{
+			wchar_t* pszDst = (*psParam)+lstrlen((*psParam));
+			const wchar_t* pszSrc = SkipNonPrintable(asParam);
+			while (pszSrc && *pszSrc)
+			{
+				if (*pszSrc == L'"')
+					*(pszDst++) = L'\\';
+				*(pszDst++) = *(pszSrc++);
+			}
+			*pszDst = 0;
+		}
+	}
+	else //NOT lbUseDosBox
+	{
+		if (lbEndQuote)
+			_wcscat_c((*psParam), nCchSize, L"\"");
+
 		if (asFile && *asFile)
 		{
 			_wcscat_c((*psParam), nCchSize, L"\"");
-			_ASSERTE(asFile!=NULL);
 			_wcscat_c((*psParam), nCchSize, asFile);
 			_wcscat_c((*psParam), nCchSize, L"\"");
+			if (asParam && *asParam)
+				_wcscat_c((*psParam), nCchSize, L" ");
 		}
+
+		if (asParam && *asParam)
+			_wcscat_c((*psParam), nCchSize, asParam);
 	}
 
-	if (asParam && *asParam)
-	{
-		_wcscat_c((*psParam), nCchSize, L" ");
-		_wcscat_c((*psParam), nCchSize, asParam);
-		if ((aCmd == eShellExecute) && lbDoubleQuote)
-		_wcscat_c((*psParam), nCchSize, L"\"");
-	}
-	else if ((aCmd == eShellExecute) && lbDoubleQuote)
+	if (lbEndQuote)
 		_wcscat_c((*psParam), nCchSize, L" \"");
+
+
+	//if (aCmd == eShellExecute)
+	//{
+	//	if (asFile && *asFile)
+	//	{
+	//		lbEndQuote = TRUE;
+	//		if (lbUseDosBox)
+	//			_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
+	//		_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
+	//		_wcscat_c((*psParam), nCchSize, L"\"\"");
+	//		_wcscat_c((*psParam), nCchSize, asFile ? asFile : L"");
+	//		_wcscat_c((*psParam), nCchSize, L"\"");
+	//	}
+	//	else
+	//	{
+	//		if (lbUseDosBox)
+	//			_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
+	//		_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
+	//	}
+	//}
+	//else
+	//{
+	//	//(*psParam)[0] = L'"';
+	//	//_wcscpy_c((*psParam)+1, nCchSize-1, szConEmuC);
+	//	//_wcscat_c((*psParam), nCchSize, L"\"");
+
+	//	if (lbUseDosBox)
+	//		_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
+	//	_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
+	//	// Это CreateProcess. Исполняемый файл может быть уже указан в asParam
+	//	if (asFile && *asFile)
+	//	{
+	//		_wcscat_c((*psParam), nCchSize, L"\"");
+	//		_ASSERTE(asFile!=NULL);
+	//		_wcscat_c((*psParam), nCchSize, asFile);
+	//		_wcscat_c((*psParam), nCchSize, L"\"");
+	//	}
+	//}
+	//if (asParam && *asParam)
+	//{
+	//	_wcscat_c((*psParam), nCchSize, L" ");
+	//	_wcscat_c((*psParam), nCchSize, asParam);
+	//}
+	//if (lbEndQuote)
+	//	_wcscat_c((*psParam), nCchSize, L" \"");
 
 	return TRUE;
 }
@@ -511,7 +751,15 @@ BOOL CShellProc::PrepareExecuteParms(
 			}
 		}
 	}
-		
+	
+	// Настройка в ConEmu ConEmuGuiMapping.bUseInjects, или gFarMode.bFarHookMode. Иначе - сразу выходим
+	if (!gFarMode.bFarHookMode)
+	{
+		// Проверяем настройку ConEmuGuiMapping.bUseInjects
+		if (!LoadGuiMapping() || !(m_GuiMapping.bUseInjects & 1))
+			return FALSE;
+	}
+
 		
 	wchar_t szTest[MAX_PATH*2], szExe[MAX_PATH+1];
 	DWORD /*mn_ImageSubsystem = 0, mn_ImageBits = 0,*/ nFileAttrs = (DWORD)-1;
@@ -529,7 +777,8 @@ BOOL CShellProc::PrepareExecuteParms(
 	}
 	else
 	{
-		IsNeedCmd(asParam, &lbNeedCutStartEndQuot, szExe);
+		BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
+		IsNeedCmd(asParam, &lbNeedCutStartEndQuot, szExe, lbRootIsCmdExe, lbAlwaysConfirmExit, lbAutoDisableConfirmExit);
 	}
 	
 	if (szExe[0])
@@ -605,13 +854,13 @@ BOOL CShellProc::PrepareExecuteParms(
 	
 	BOOL lbChanged = FALSE;
 	mb_NeedInjects = FALSE;
-	wchar_t szBaseDir[MAX_PATH+2]; szBaseDir[0] = 0;
+	//wchar_t szBaseDir[MAX_PATH+2]; szBaseDir[0] = 0;
 	CESERVER_REQ *pIn = NULL;
 	pIn = NewCmdOnCreate(aCmd, 
 			asAction, asFile, asParam, 
 			anShellFlags, anCreateFlags, anStartFlags, anShowCmd, 
 			mn_ImageBits, mn_ImageSubsystem, 
-			hIn, hOut, hErr, szBaseDir, mb_DosBoxAllowed);
+			hIn, hOut, hErr/*, szBaseDir, mb_DosBoxAllowed*/);
 	if (pIn)
 	{
 		HWND hConWnd = GetConsoleWindow();
@@ -676,9 +925,12 @@ BOOL CShellProc::PrepareExecuteParms(
 	// 110223 - заменять нужно и ShellExecute в любом случае, т.к. не факт,
 	//          что этот ShellExecute вызовет CreateProcess из kernel32.
 	//          В Win7 это может быть вызов других системных модулей (App-.....dll)
-	if (gFarMode.bFarHookMode || (aCmd == eShellExecute))
+	if ((gFarMode.bFarHookMode)
+		|| ((mn_ImageBits != 16) && (m_GuiMapping.bUseInjects & 1)) /* (aCmd == eShellExecute)? */
+		|| ((mn_ImageBits == 16) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
+		    && m_GuiMapping.cbSize && m_GuiMapping.bDosBox))
 	{
-		lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, szBaseDir, 
+		lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, /*szBaseDir, */
 						szExe, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 		if (!lbChanged)
 		{
@@ -691,7 +943,7 @@ BOOL CShellProc::PrepareExecuteParms(
 					asAction, *psFile, *psParam, 
 					anShellFlags, anCreateFlags, anStartFlags, anShowCmd, 
 					mn_ImageBits, mn_ImageSubsystem, 
-					hIn, hOut, hErr, szBaseDir, mb_DosBoxAllowed);
+					hIn, hOut, hErr/*, szBaseDir, mb_DosBoxAllowed*/);
 			if (pIn)
 			{
 				HWND hConWnd = GetConsoleWindow();
@@ -703,17 +955,11 @@ BOOL CShellProc::PrepareExecuteParms(
 			}
 		}
 	}
-	else 
-	if ((mn_ImageBits == 16 ) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE))
-	{
-		TODO("DosBox?");
-		mb_NeedInjects = FALSE; // пока?
-	}
 	else
 	{
 		//lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, pszBaseDir, 
 		//				szExe, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
-		mb_NeedInjects = TRUE;
+		mb_NeedInjects = (aCmd == eCreateProcess);
 	}
 
 wrap:
@@ -763,7 +1009,9 @@ BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* as
 	mn_InShellExecuteEx ++;
 
 	BOOL lbRc = PrepareExecuteParms(eShellExecute,
-					*asAction, *asFile, *asParam,
+					asAction ? *asAction : NULL,
+					asFile ? *asFile : NULL,
+					asParam ? *asParam : NULL,
 					anFlags, NULL, NULL, anShowCmd,
 					NULL, NULL, NULL, // *StdHandles
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam);
@@ -771,6 +1019,36 @@ BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* as
 	{
 		*asFile = mpwsz_TempRetFile;
 		*asParam = mpwsz_TempRetParam;
+	}
+
+	return lbRc;
+}
+BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd)
+{
+	BOOL lbRc = FALSE;
+
+	// Включить флажок, чтобы Shell не задавал глупого вопроса "Хотите ли вы запустить этот файл"...
+	if (!(afMask & SEE_MASK_NOZONECHECKS) && gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
+	{
+		OSVERSIONINFOEX osv = {sizeof(OSVERSIONINFOEX)};
+		if (GetVersionEx((LPOSVERSIONINFO)&osv))
+		{
+			if ((osv.dwMajorVersion >= 6)
+				|| (osv.dwMajorVersion == 5 
+				&& (osv.dwMinorVersion > 1 
+				|| (osv.dwMinorVersion == 1 && osv.wServicePackMajor >= 1))))
+			{
+				(*pfMask) |= SEE_MASK_NOZONECHECKS;
+				lbRc = TRUE;
+			}
+		}
+	}
+
+	// Чтобы запросы UAC или еще какие GUI диалоги всплывали там где надо, а не ПОД ConEmu
+	if (ahWnd && (ahWnd == ghConWnd) && ghConEmuWnd)
+	{
+		*phWnd = ghConEmuWnd;
+		lbRc = TRUE;
 	}
 
 	return lbRc;
@@ -789,22 +1067,14 @@ BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 	}
 	memmove(mlp_ExecInfoA, (*lpExecInfo), (*lpExecInfo)->cbSize);
 	
-	if (gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
-	{
-		OSVERSIONINFOEX osv = {sizeof(OSVERSIONINFOEX)};
-		if (GetVersionEx((LPOSVERSIONINFO)&osv))
-		{
-			if ((osv.dwMajorVersion >= 6)
-				|| (osv.dwMajorVersion == 5 
-					&& (osv.dwMinorVersion > 1 
-						|| (osv.dwMinorVersion == 1 && osv.wServicePackMajor >= 1))))
-			{
-				mlp_ExecInfoA->fMask |= SEE_MASK_NOZONECHECKS;
-			}
-		}
-	}
+	BOOL lbRc = FALSE;
 
-	BOOL lbRc = OnShellExecuteA(&mlp_ExecInfoA->lpVerb, &mlp_ExecInfoA->lpFile, &mlp_ExecInfoA->lpParameters, &mlp_ExecInfoA->fMask, (DWORD*)&mlp_ExecInfoA->nShow);
+	if (FixShellArgs((*lpExecInfo)->fMask, (*lpExecInfo)->hwnd, &(mlp_ExecInfoA->fMask), &(mlp_ExecInfoA->hwnd)))
+		lbRc = TRUE;
+
+	if (OnShellExecuteA(&mlp_ExecInfoA->lpVerb, &mlp_ExecInfoA->lpFile, &mlp_ExecInfoA->lpParameters, &mlp_ExecInfoA->fMask, (DWORD*)&mlp_ExecInfoA->nShow))
+		lbRc = TRUE;
+
 	if (lbRc)
 		*lpExecInfo = mlp_ExecInfoA;
 	return lbRc;
@@ -823,10 +1093,14 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 	}
 	memmove(mlp_ExecInfoW, (*lpExecInfo), (*lpExecInfo)->cbSize);
 	
-	if (gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
-		mlp_ExecInfoW->fMask |= SEE_MASK_NOZONECHECKS;
+	BOOL lbRc = FALSE;
 
-	BOOL lbRc = OnShellExecuteW(&mlp_ExecInfoW->lpVerb, &mlp_ExecInfoW->lpFile, &mlp_ExecInfoW->lpParameters, &mlp_ExecInfoW->fMask, (DWORD*)&mlp_ExecInfoW->nShow);
+	if (FixShellArgs((*lpExecInfo)->fMask, (*lpExecInfo)->hwnd, &(mlp_ExecInfoW->fMask), &(mlp_ExecInfoW->hwnd)))
+		lbRc = TRUE;
+
+	if (OnShellExecuteW(&mlp_ExecInfoW->lpVerb, &mlp_ExecInfoW->lpFile, &mlp_ExecInfoW->lpParameters, &mlp_ExecInfoW->fMask, (DWORD*)&mlp_ExecInfoW->nShow))
+		lbRc = TRUE;
+
 	if (lbRc)
 		*lpExecInfo = mlp_ExecInfoW;
 	return lbRc;
@@ -883,7 +1157,9 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, DWORD* an
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
 
 	BOOL lbRc = PrepareExecuteParms(eCreateProcess,
-					NULL, *asFile, *asCmdLine,
+					NULL,
+					asFile ? *asFile : NULL,
+					asCmdLine ? *asCmdLine : NULL,
 					NULL, anCreationFlags, &lpSI->dwFlags, &nShowCmd,
 					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam);

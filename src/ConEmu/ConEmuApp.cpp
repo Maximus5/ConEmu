@@ -967,6 +967,16 @@ void ResetConman()
 
 #ifdef _DEBUG
 extern bool gbAllowAssertThread;
+//// Для отладки ShellProcessor
+//#include "../ConEmuHk/ShellProcessor.cpp"
+//HWND ghConEmuWnd = NULL;
+//HookModeFar gFarMode = {sizeof(HookModeFar)};
+//HWND ghConEmuWndDC = NULL;
+//int InjectHooks(struct _PROCESS_INFORMATION,int)
+//{
+//	return -1;
+//}
+//DWORD (__stdcall* gfGetProcessId)(void *) = NULL;
 #endif
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -994,6 +1004,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #ifdef _DEBUG
 	DWORD ImageSubsystem, ImageBits;
 	GetImageSubsystem(ImageSubsystem,ImageBits);
+
+	wchar_t szConEmuBaseDir[MAX_PATH+1], szConEmuExe[MAX_PATH+1];
+	BOOL lbDbgFind = FindConEmuBaseDir(szConEmuBaseDir, szConEmuExe);
 #endif
 
 #ifdef SHOW_STARTED_MSGBOX

@@ -48,15 +48,23 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024]);
 #endif
 
 // Some WinAPI related functions
-//wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
+wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
 BOOL IsFilePath(LPCWSTR asFilePath);
 BOOL IsUserAdmin();
 BOOL IsWindows64(BOOL *pbIsWow64Process = NULL);
 void RemoveOldComSpecC();
 const wchar_t* PointToName(const wchar_t* asFullPath);
+const char* PointToName(const char* asFileOrPath);
 const wchar_t* PointToExt(const wchar_t* asFullPath);
 const wchar_t* Unquote(wchar_t* asPath);
+
+BOOL IsExecutable(LPCWSTR aszFilePathName);
+BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1],
+			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit);
+
+
+//BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1]);
 
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////

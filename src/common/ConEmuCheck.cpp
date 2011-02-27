@@ -28,9 +28,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <windows.h>
-#define _T(s) s
-#include "ConEmuCheck.h"
+#include "MAssert.h"
+#include "common.hpp"
 #include "Memory.h"
+#include "ConEmuCheck.h"
+#include "WinObjects.h"
 
 SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
@@ -490,30 +492,47 @@ HWND myGetConsoleWindow()
 // Returns HWND of Gui console DC window
 HWND GetConEmuHWND(BOOL abRoot)
 {
-	TODO("Переделать функцию на получение HWND из Map");
-	//BOOL lbRc = FALSE;
-	HWND FarHwnd=NULL, ConEmuHwnd=NULL, ConEmuRoot=NULL;
-	CESERVER_REQ in = {{0}}, *pOut = NULL;
+	HWND FarHwnd = NULL, ConEmuHwnd = NULL, ConEmuRoot = NULL;
 	FarHwnd = myGetConsoleWindow();
-
 	if (!FarHwnd)
 		return NULL;
 
-	ExecutePrepareCmd(&in, CECMD_GETGUIHWND, sizeof(CESERVER_REQ_HDR));
-	pOut = ExecuteGuiCmd(FarHwnd, &in, NULL);
-
-	if (!pOut)
-		return NULL;
-
-	if (pOut->hdr.cbSize != (sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD)) || pOut->hdr.nCmd != in.hdr.nCmd)
+	// Сначала пробуем Mapping консоли (вдруг есть?)
+	if (!ConEmuRoot)
 	{
-		ExecuteFreeResult(pOut);
-		return NULL;
+		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
+		ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd);
+		CESERVER_CONSOLE_MAPPING_HDR* p = ConMap.Open();
+		if (p && p->hConEmuRoot && IsWindow(p->hConEmuRoot))
+		{
+			// Успешно
+			ConEmuRoot = p->hConEmuRoot;
+			ConEmuHwnd = p->hConEmuWnd;
+		}
 	}
 
-	ConEmuRoot = (HWND)pOut->dwData[0];
-	ConEmuHwnd = (HWND)pOut->dwData[1];
-	ExecuteFreeResult(pOut);
+	if (!ConEmuRoot)
+	{
+		//BOOL lbRc = FALSE;
+		CESERVER_REQ in = {{0}}, *pOut = NULL;
+
+		ExecutePrepareCmd(&in, CECMD_GETGUIHWND, sizeof(CESERVER_REQ_HDR));
+		pOut = ExecuteGuiCmd(FarHwnd, &in, NULL);
+
+		if (!pOut)
+			return NULL;
+
+		if (pOut->hdr.cbSize != (sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD)) || pOut->hdr.nCmd != in.hdr.nCmd)
+		{
+			ExecuteFreeResult(pOut);
+			return NULL;
+		}
+
+		ConEmuRoot = (HWND)pOut->dwData[0];
+		ConEmuHwnd = (HWND)pOut->dwData[1];
+		ExecuteFreeResult(pOut);
+	}
+
 	return (abRoot) ? ConEmuRoot : ConEmuHwnd;
 }
 
@@ -573,3 +592,136 @@ int ConEmuCheck(HWND* ahConEmuWnd)
   }
   return (HWND)Ret;
 }*/
+
+// Вернуть путь к папке, содержащей ConEmuC.exe
+BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1])
+{
+	// Сначала пробуем Mapping консоли (вдруг есть?)
+	{
+		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
+		ConMap.InitName(CECONMAPNAME, (DWORD)myGetConsoleWindow());
+		CESERVER_CONSOLE_MAPPING_HDR* p = ConMap.Open();
+		if (p && p->sConEmuBaseDir[0])
+		{
+			// Успешно
+			wcscpy_c(rsConEmuBaseDir, p->sConEmuBaseDir);
+			wcscpy_c(rsConEmuExe, p->sConEmuExe);
+			return TRUE;
+		}
+	}
+
+	// Теперь - пробуем найти существующее окно ConEmu
+	HWND hConEmu = FindWindow(VirtualConsoleClassMain, NULL);
+	DWORD dwGuiPID = 0;
+	if (hConEmu)
+	{
+		if (GetWindowThreadProcessId(hConEmu, &dwGuiPID) && dwGuiPID)
+		{
+			MFileMapping<ConEmuGuiMapping> GuiMap;
+			GuiMap.InitName(CEGUIINFOMAPNAME, dwGuiPID);
+			ConEmuGuiMapping* p = GuiMap.Open();
+			if (p && p->sConEmuBaseDir[0])
+			{
+				wcscpy_c(rsConEmuBaseDir, p->sConEmuBaseDir);
+				wcscpy_c(rsConEmuExe, p->sConEmuExe);
+				return TRUE;
+			}
+		}
+	}
+
+
+	wchar_t szExePath[MAX_PATH+1];
+	HKEY hkRoot[] = {NULL,HKEY_CURRENT_USER,HKEY_LOCAL_MACHINE,HKEY_LOCAL_MACHINE};
+	DWORD samDesired = KEY_QUERY_VALUE;
+	DWORD RedirectionFlag = 0;
+	BOOL isWin64 = FALSE;
+#ifdef _WIN64
+	isWin64 = TRUE;
+	RedirectionFlag = KEY_WOW64_32KEY;
+#else
+	isWin64 = IsWindows64();
+	RedirectionFlag = isWin64 ? KEY_WOW64_64KEY : 0;
+#endif
+	for (size_t i = 0; i < countof(hkRoot); i++)
+	{
+		szExePath[0] = 0;
+
+		if (i == 0)
+		{
+			// Запущенного ConEmu.exe нет, можно поискать в каталоге текущего приложения
+
+			if (!GetModuleFileName(NULL, szExePath, countof(szExePath)-20))
+				continue;
+			wchar_t* pszName = wcsrchr(szExePath, L'\\');
+			if (!pszName)
+				continue;
+			*(pszName+1) = 0;
+		}
+		else
+		{
+			// Остался последний шанс - если ConEmu установлен через MSI, то путь указан в реестре
+			// [HKEY_LOCAL_MACHINE\SOFTWARE\ConEmu]
+			// "InstallDir"="C:\\Utils\\Far180\\"
+
+			if (i == (countof(hkRoot)-1))
+			{
+				if (RedirectionFlag)
+					samDesired |= RedirectionFlag;
+				else
+					break;
+			}
+
+			HKEY hKey;
+			if (RegOpenKeyEx(hkRoot[i], L"Software\\ConEmu", 0, samDesired, &hKey) != ERROR_SUCCESS)
+				continue;
+			memset(szExePath, 0, countof(szExePath));
+			DWORD nType = 0, nSize = sizeof(szExePath)-20*sizeof(wchar_t);
+			int RegResult = RegQueryValueEx(hKey, L"", NULL, &nType, (LPBYTE)szExePath, &nSize);
+			RegCloseKey(hKey);
+			if (RegResult != ERROR_SUCCESS)
+				continue;
+		}
+
+		if (szExePath[0])
+		{
+			// Хоть и задано в реестре - файлов может не быть. Проверяем
+			if (szExePath[lstrlen(szExePath)-1] != L'\\')
+				wcscat_c(szExePath, L"\\");
+			wcscpy_c(rsConEmuExe, szExePath);
+			BOOL lbExeFound = FALSE;
+			wchar_t* pszName = rsConEmuExe+lstrlen(rsConEmuExe);
+			LPCWSTR szGuiExe[2] = {L"ConEmu64.exe", L"ConEmu.exe"};
+			for (int i = 0; !lbExeFound && (i < countof(szGuiExe)); i++)
+			{
+				if (!i && !isWin64) continue;
+				wcscpy_add(pszName, rsConEmuExe, szGuiExe[i]);
+				lbExeFound = FileExists(rsConEmuExe);
+			}
+
+			// Если GUI-exe найден - ищем "base"
+			if (lbExeFound)
+			{
+				wchar_t* pszName = szExePath+lstrlen(szExePath);
+				LPCWSTR szSrvExe[4] = {L"ConEmuC64.exe", L"ConEmu\\ConEmuC64.exe", L"ConEmuC.exe", L"ConEmu\\ConEmuC.exe"};
+				for (int i = 0; (i < countof(szSrvExe)); i++)
+				{
+					if ((i <=1) && !isWin64) continue;
+					wcscpy_add(pszName, szExePath, szSrvExe[i]);
+					if (FileExists(szExePath))
+					{
+						pszName = wcsrchr(szExePath, L'\\');
+						if (pszName)
+						{
+							*pszName = 0; // БЕЗ слеша на конце!
+							wcscpy_c(rsConEmuBaseDir, szExePath);
+							return TRUE;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Не удалось
+	return FALSE;
+}

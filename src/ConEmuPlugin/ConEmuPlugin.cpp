@@ -135,6 +135,9 @@ BOOL gbIgnoreUpdateTabs = FALSE; // выставляется на время CMD_SETWINDOW
 BOOL gbRequestUpdateTabs = FALSE; // выставляется при получении события FOCUS/KILLFOCUS
 BOOL gbClosingModalViewerEditor = FALSE; // выставляется при закрытии модального редактора/вьювера
 
+extern HMODULE ghHooksModule;
+extern BOOL gbHooksModuleLoaded; // TRUE, если был вызов LoadLibrary("ConEmuHk.dll"), тогда его нужно FreeLibrary при выходе
+
 
 //CRITICAL_SECTION csData;
 MSection *csData = NULL;
@@ -2591,6 +2594,7 @@ void EmergencyShow()
 }
 
 static BOOL gbTryOpenMapHeader = FALSE;
+static BOOL gbStartupHooksAfterMap = FALSE;
 int OpenMapHeader();
 void CloseMapHeader();
 //void ResetExeHooks();
@@ -3019,6 +3023,12 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 				//ActivatePlugin(CMD_CHKRESOURCES, NULL);
 				ProcessCommand(CMD_CHKRESOURCES, TRUE/*bReqMainThread*/, NULL);
 			}
+		}
+
+		if (gbStartupHooksAfterMap && gpConMapInfo && ConEmuHwnd && IsWindow(ConEmuHwnd))
+		{
+			gbStartupHooksAfterMap = FALSE;
+			StartupHooks(ghPluginModule);
 		}
 
 		if (gpBgPlugin)
@@ -5502,7 +5512,43 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
 
 BOOL Attach2Gui()
 {
+	BOOL lbRc = FALSE;
 	DWORD dwServerPID = 0;
+	BOOL lbFound = FALSE;
+	WCHAR  szCmdLine[0x200] = {0};
+	wchar_t szConEmuBase[MAX_PATH+1], szConEmuGui[MAX_PATH+1];
+	DWORD nLen = 0;
+	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+	STARTUPINFO si = {sizeof(si)};
+	DWORD dwSelfPID = GetCurrentProcessId();
+	wchar_t* pszSlash = NULL;
+
+	if (!FindConEmuBaseDir(szConEmuBase, szConEmuGui))
+	{
+		ShowMessageGui(CECantStartServer2, MB_ICONSTOP|MB_SYSTEMMODAL);
+		lbRc = FALSE;
+		goto wrap;
+	}
+
+	// Нужно загрузить ConEmuHk.dll и выполнить инициализацию хуков. Учесть, что ConEmuHk.dll уже мог быть загружен
+	if (!ghHooksModule)
+	{
+		wchar_t szHookLib[MAX_PATH+16];
+		wcscpy_c(szHookLib, szConEmuBase);
+		#ifdef _WIN64
+			wcscat_c(szHookLib, L"\\ConEmuHk64.dll");
+		#else
+			wcscat_c(szHookLib, L"\\ConEmuHk.dll");
+		#endif
+		ghHooksModule = LoadLibrary(szHookLib);
+		if (ghHooksModule)
+		{
+			gbHooksModuleLoaded = TRUE;
+			// После подцепляния к GUI нужно выполнить StartupHooks!
+			gbStartupHooksAfterMap = TRUE;
+		}
+	}
+
 
 	if (FindServerCmd(CECMD_ATTACH2GUI, dwServerPID) && dwServerPID != 0)
 	{
@@ -5513,7 +5559,8 @@ BOOL Attach2Gui()
 		if (gpConMapInfo)  // 04.03.2010 Maks - Если мэппинг уже открыт - принудительно передернуть ресурсы и информацию
 			CheckResources(TRUE);
 
-		return TRUE;
+		lbRc = TRUE;
+		goto wrap;
 	}
 
 	gdwServerPID = 0;
@@ -5521,85 +5568,69 @@ BOOL Attach2Gui()
 	//SetConsoleFontSizeTo(GetConsoleWindow(), 6, 4, L"Lucida Console");
 	// Create process, with flag /Attach GetCurrentProcessId()
 	// Sleep for sometimes, try InitHWND(hConWnd); several times
-	WCHAR  szExe[0x200] = {0};
-	BOOL lbRc = FALSE;
-	DWORD nLen = 0;
-	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
-	STARTUPINFO si; memset(&si, 0, sizeof(si));
-	si.cb = sizeof(si);
-	DWORD dwSelfPID = GetCurrentProcessId();
-	wchar_t* pszSlash = NULL;
-	szExe[0] = L'"';
 
-	if ((nLen = GetEnvironmentVariableW(L"ConEmuBaseDir", szExe+1, MAX_PATH)) > 0)
-	{
-		if (szExe[nLen] != L'\\') { szExe[nLen+1] = L'\\'; szExe[nLen+2] = 0; }
-	}
-	else
-	{
-		if (!GetModuleFileName(0, szExe+1, MAX_PATH) || !(pszSlash = wcsrchr(szExe, L'\\')))
-		{
-			ShowMessageGui(CECantStartServer2, MB_ICONSTOP|MB_SYSTEMMODAL);
-			return FALSE;
-		}
+	szCmdLine[0] = L'"';
+	wcscat_c(szCmdLine, szConEmuBase);
+	wcscat_c(szCmdLine, L"\\");
+	//if ((nLen = GetEnvironmentVariableW(L"ConEmuBaseDir", szCmdLine+1, MAX_PATH)) > 0)
+	//{
+	//	if (szCmdLine[nLen] != L'\\') { szCmdLine[nLen+1] = L'\\'; szCmdLine[nLen+2] = 0; }
+	//}
+	//else
+	//{
+	//	if (!GetModuleFileName(0, szCmdLine+1, MAX_PATH) || !(pszSlash = wcsrchr(szCmdLine, L'\\')))
+	//	{
+	//		ShowMessageGui(CECantStartServer2, MB_ICONSTOP|MB_SYSTEMMODAL);
+	//		lbRc = FALSE;
+	//		goto wrap;
+	//	}
+	//	pszSlash[1] = 0;
+	//}
 
-		//if ((nLen=GetModuleFileName(0, szExe+1, MAX_PATH)) > 0)
-		//wchar_t* pszSlash = wcsrchr ( szExe, L'\\' );
-		//if (pszSlash)
-		//{
-		pszSlash[1] = 0;
-		//lstrcpyW(pszSlash+1, L"ConEmu\\ConEmuC.exe");
-		//if (!FileExists(szExe+1))
-		//{
-		//	lstrcpyW(pszSlash+1, L"ConEmuC.exe");
-		//}
-		//}
-	}
-
-	pszSlash = szExe + lstrlenW(szExe);
-	BOOL lbFound = FALSE;
+	pszSlash = szCmdLine + lstrlenW(szCmdLine);
+	//BOOL lbFound = FALSE;
 	// Для фанатов 64-битных версий
 #ifdef WIN64
 
-	if (!lbFound)
-	{
-		lstrcpyW(pszSlash, L"ConEmu\\ConEmuC64.exe");
-		lbFound = FileExists(szExe+1);
-	}
+	//if (!lbFound) -- точная папка уже найдена
+	//{
+	//	lstrcpyW(pszSlash, L"ConEmu\\ConEmuC64.exe");
+	//	lbFound = FileExists(szCmdLine+1);
+	//}
 
 	if (!lbFound)
 	{
 		lstrcpyW(pszSlash, L"ConEmuC64.exe");
-		lbFound = FileExists(szExe+1);
+		lbFound = FileExists(szCmdLine+1);
 	}
 
 #endif
 
-	if (!lbFound)
-	{
-		lstrcpyW(pszSlash, L"ConEmu\\ConEmuC.exe");
-		lbFound = FileExists(szExe+1);
-	}
+	//if (!lbFound) -- точная папка уже найдена
+	//{
+	//	lstrcpyW(pszSlash, L"ConEmu\\ConEmuC.exe");
+	//	lbFound = FileExists(szCmdLine+1);
+	//}
 
 	if (!lbFound)
 	{
 		lstrcpyW(pszSlash, L"ConEmuC.exe");
-		lbFound = FileExists(szExe+1);
+		lbFound = FileExists(szCmdLine+1);
 	}
 
 	if (!lbFound)
 	{
-		TODO("GUI MessageBox! ServerNotFound!");
 		ShowMessageGui(CECantStartServer3, MB_ICONSTOP|MB_SYSTEMMODAL);
-		return FALSE;
+		lbRc = FALSE;
+		goto wrap;
 	}
 
 	//if (IsWindows64())
-	//	wsprintf(szExe+lstrlenW(szExe), L"ConEmuC64.exe\" /ATTACH /PID=%i", dwSelfPID);
+	//	wsprintf(szCmdLine+lstrlenW(szCmdLine), L"ConEmuC64.exe\" /ATTACH /PID=%i", dwSelfPID);
 	//else
-	wsprintf(szExe+lstrlenW(szExe), L"\" /ATTACH /FARPID=%i", dwSelfPID);
+	wsprintf(szCmdLine+lstrlenW(szCmdLine), L"\" /ATTACH /FARPID=%i", dwSelfPID);
 
-	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+	if (!CreateProcess(NULL, szCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 	                  NULL, &si, &pi))
 	{
 		// Хорошо бы ошибку показать?
@@ -5613,6 +5644,7 @@ BOOL Attach2Gui()
 		gbTryOpenMapHeader = (gpConMapInfo==NULL);
 	}
 
+wrap:
 	return lbRc;
 }
 

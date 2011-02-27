@@ -136,6 +136,7 @@ extern VOID WINAPI OnLibraryLoaded(HMODULE ahModule);
 
 #ifdef EXTERNAL_HOOK_LIBRARY
 HMODULE ghHooksModule = NULL;
+BOOL gbHooksModuleLoaded = FALSE; // TRUE, если был вызов LoadLibrary("ConEmuHk.dll"), тогда его нужно FreeLibrary при выходе
 SetHookCallbacks_t SetHookCallbacks = NULL;
 SetLoadLibraryCallback_t SetLoadLibraryCallback = NULL;
 SetFarHookMode_t SetFarHookMode = NULL;
@@ -151,23 +152,33 @@ BOOL StartupHooks(HMODULE ahOurDll)
 
 	if (ghHooksModule == NULL)
 	{
-		ghHooksModule = GetModuleHandle(
-#ifdef WIN64
-		                    L"ConEmuHk64.dll"
-#else
-		                    L"ConEmuHk.dll"
-#endif
-		                );
+		wchar_t szHkModule[64];
+		#ifdef WIN64
+			wcscpy_c(szHkModule, L"ConEmuHk64.dll");
+		#else
+			wcscpy_c(szHkModule, L"ConEmuHk.dll");
+		#endif
+		ghHooksModule = GetModuleHandle(szHkModule);
+
+		if ((ghHooksModule == NULL) && (ConEmuHwnd != NULL))
+		{
+			// Попробовать выполнить LoadLibrary? в некоторых случаях GetModuleHandle может обламываться
+			ghHooksModule = LoadLibrary(szHkModule);
+			if (ghHooksModule)
+				gbHooksModuleLoaded = TRUE;
+		}
 
 		if (ghHooksModule == NULL)
 		{
-			TODO("Попробовать выполнить LoadLibrary, в некоторых случаях GetModuleHandle может обламываться");
-
 			if (ConEmuHwnd != NULL)
 			{
 				_ASSERTE(ghHooksModule!=NULL);
-				WARNING("Показать ошибку!");
-				MessageBox(NULL, L"ConEmuHk was not loaded!", L"ConEmu plugin", MB_ICONSTOP|MB_SYSTEMMODAL);
+				wchar_t szErrMsg[128];
+				DWORD nErrCode = GetLastError();
+				_wsprintf(szErrMsg, SKIPLEN(countof(szErrMsg))
+					L"ConEmuHk was not loaded, but ConEmu found!\nFar PID=%u, ErrCode=0x%08X",
+					GetCurrentProcessId(), nErrCode);
+				MessageBox(NULL, szErrMsg, L"ConEmu plugin", MB_ICONSTOP|MB_SYSTEMMODAL);
 			}
 
 			return FALSE;
@@ -278,6 +289,17 @@ void ShutdownHooks()
 		SetHookCallbacks("WriteConsoleOutputW", kernel32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks("GetNumberOfConsoleInputEvents", kernel32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks("ShellExecuteExW", shell32, ghPluginModule, NULL, NULL, NULL);
+	}
+
+	// Если gbHooksModuleLoaded - нужно выполнить FreeLibrary
+	if (gbHooksModuleLoaded)
+	{
+		if (ghHooksModule)
+		{
+			FreeLibrary(ghHooksModule);
+			ghHooksModule = NULL;
+		}
+		gbHooksModuleLoaded = FALSE;
 	}
 
 #endif

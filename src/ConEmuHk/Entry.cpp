@@ -81,6 +81,9 @@ UINT_PTR gfnLoadLibrary = NULL;
 extern BOOL StartupHooks(HMODULE ahOurDll);
 extern void ShutdownHooks();
 //HMODULE ghPsApi = NULL;
+#ifdef _DEBUG
+extern bool gbAllowAssertThread;
+#endif
 
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
@@ -92,6 +95,10 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ghOurModule = (HMODULE)hModule;
 			ghConWnd = GetConsoleWindow();
 			gnSelfPID = GetCurrentProcessId();
+
+			#ifdef _DEBUG
+			gbAllowAssertThread = true;
+			#endif
 
 			#ifdef SHOW_STARTED_MSGBOX
 			if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuHk*.dll loaded", "ConEmu hooks", 0);
@@ -168,31 +175,35 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			#endif
 			GetImageSubsystem(nImageSubsystem,nImageBits);
 
-			wchar_t szExeName[MAX_PATH+1], szBaseDir[MAX_PATH+2];
-			BOOL lbDosBoxAllowed = FALSE;
-			if (!GetModuleFileName(NULL, szExeName, countof(szExeName))) szExeName[0] = 0;
-			CESERVER_REQ* pIn = CShellProc::NewCmdOnCreate(
-				gbSkipInjects ? eHooksLoaded : eInjectingHooks,
-				L"", szExeName, GetCommandLineW(),
-				NULL, NULL, NULL, NULL, // flags
-				nImageBits, nImageSubsystem,
-				GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE),
-				szBaseDir, lbDosBoxAllowed);
-			if (pIn)
+			CShellProc sp;
+			if (sp.LoadGuiMapping())
 			{
-				//HWND hConWnd = GetConsoleWindow();
-				CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-				ExecuteFreeResult(pIn);
-				if (pOut) ExecuteFreeResult(pOut);
+				wchar_t szExeName[MAX_PATH+1]; //, szBaseDir[MAX_PATH+2];
+				//BOOL lbDosBoxAllowed = FALSE;
+				if (!GetModuleFileName(NULL, szExeName, countof(szExeName))) szExeName[0] = 0;
+				CESERVER_REQ* pIn = sp.NewCmdOnCreate(
+					gbSkipInjects ? eHooksLoaded : eInjectingHooks,
+					L"", szExeName, GetCommandLineW(),
+					NULL, NULL, NULL, NULL, // flags
+					nImageBits, nImageSubsystem,
+					GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
+				if (pIn)
+				{
+					//HWND hConWnd = GetConsoleWindow();
+					CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+					ExecuteFreeResult(pIn);
+					if (pOut) ExecuteFreeResult(pOut);
+				}
 			}
-			
 
 			if (!gbSkipInjects)
 			{
 #ifdef SHOW_INJECT_MSGBOX
-				wchar_t szDbgMsg[128], szTitle[128];
+				wchar_t szDbgMsg[1024], szTitle[128], szModule[MAX_PATH];
+				if (!GetModuleFileName(NULL, szModule, countof(szModule)))
+					wcscpy_c(szModule, L"GetModuleFileName failed");
 				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
-				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"SetAllHooks, ConEmuHk, PID=%u", GetCurrentProcessId());
+				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"SetAllHooks, ConEmuHk, PID=%u\n%s", GetCurrentProcessId(), szModule);
 				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 #endif
 				gnRunMode = RM_APPLICATION;
@@ -202,6 +213,9 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 				if (ghConWnd != NULL)
 				{
 					SendStarted();
+					#ifdef _DEBUG
+					TestShellProcessor();
+					#endif
 				}
 			}
 			else

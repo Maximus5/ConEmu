@@ -275,6 +275,8 @@ class CSettings
 
 		DWORD nAffinity;
 
+		BOOL isUseInjects;
+
 		// Debugging - "c:\\temp\\ConEmuVCon-%i-%i.dat"
 		BYTE isAdvLogging;
 		//wchar_t szDumpPackets[MAX_PATH];

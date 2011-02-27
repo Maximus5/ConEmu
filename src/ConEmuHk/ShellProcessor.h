@@ -35,6 +35,8 @@ enum CmdOnCreateType
 	eInjectingHooks,
 	eHooksLoaded,
 	eParmsChanged,
+	eLoadLibrary,
+	eFreeLibrary,
 };
 
 class CShellProc
@@ -61,10 +63,12 @@ private:
 	wchar_t ms_Executable[MAX_PATH+1];
 	BOOL mb_WasSuspended; // Если TRUE - значит при вызове CreateProcessXXX уже был флаг CREATE_SUSPENDED
 	BOOL mb_NeedInjects;
-	BOOL mb_DosBoxAllowed;
+	//BOOL mb_DosBoxAllowed;
 	
 	static int mn_InShellExecuteEx;
 	BOOL mb_InShellExecuteEx;
+
+	ConEmuGuiMapping m_GuiMapping;
 
 private:
 	wchar_t* str2wcs(const char* psz, UINT anCP);
@@ -76,16 +80,18 @@ private:
 				HANDLE* lphStdIn, HANDLE* lphStdOut, HANDLE* lphStdErr,
 				LPWSTR* psFile, LPWSTR* psParam);
 	BOOL ChangeExecuteParms(enum CmdOnCreateType aCmd,
-				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asBaseDir,
+				LPCWSTR asFile, LPCWSTR asParam, /*LPCWSTR asBaseDir,*/
 				LPCWSTR asExeFile, DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam);
+	BOOL FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd);
 public:
-	static CESERVER_REQ* NewCmdOnCreate(enum CmdOnCreateType aCmd,
+	CESERVER_REQ* NewCmdOnCreate(enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 				int nImageBits, int nImageSubsystem,
-				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
-				wchar_t (&szBaseDir)[MAX_PATH+2], BOOL& bDosBoxAllowed);
+				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr
+				/*wchar_t (&szBaseDir)[MAX_PATH+2], BOOL& bDosBoxAllowed*/);
+	BOOL LoadGuiMapping();
 public:
 	CShellProc();
 	~CShellProc();
@@ -105,3 +111,7 @@ public:
 // Service functions
 typedef DWORD (WINAPI* GetProcessId_t)(HANDLE Process);
 extern GetProcessId_t gfGetProcessId;
+
+#ifdef _DEBUG
+void TestShellProcessor();
+#endif

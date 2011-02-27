@@ -1,5 +1,8 @@
-2011.02.??
-[!] Documentation (http://code.google.com/p/conemu-maximus5/wiki/ConEmu) updated. Anybody read it?
+2011.02.27
+[*] Documentation (http://code.google.com/p/conemu-maximus5/wiki/ConEmu) updated. Anybody read it?
+[%] Правки в запускаторе.
+[*] Добавлена опция 'Use ConEmuHk injects'. В release сборке пока отключена.
+[*] При включении лога 'Shell and processes' (вкладка Debug) отображаются LoadLibrary & FreeLibrary.
 
 
 2011.02.25

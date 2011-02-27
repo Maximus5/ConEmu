@@ -734,6 +734,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	ceInfo.hGuiWnd = ghWnd;
 	
 	ceInfo.nLoggingType = (ghOpWnd && gpSet->hDebug) ? gpSet->m_RealConLoggingType : glt_None;
+	ceInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0);
 	
 	wcscpy_c(ceInfo.sConEmuExe, ms_ConEmuExe);
 	wcscpy_c(ceInfo.sConEmuDir, ms_ConEmuExeDir);
@@ -7254,7 +7255,7 @@ void CConEmuMain::OnHideCaption()
 	//}
 }
 
-void CConEmuMain::OnDebugLogSettingsChanged()
+void CConEmuMain::OnGlobalSettingsChanged()
 {
 	gpConEmu->UpdateGuiInfoMapping();
 }

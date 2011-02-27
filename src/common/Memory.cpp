@@ -13,6 +13,22 @@ HANDLE ghHeap = NULL;
 #endif
 #endif
 
+static const char* PointToName(const char* asFileOrPath)
+{
+	if (!asFileOrPath)
+	{
+		_ASSERTE(asFileOrPath!=NULL);
+		return NULL;
+	}
+
+	const char* pszSlash = strrchr(asFileOrPath, '\\');
+
+	if (pszSlash)
+		return pszSlash+1;
+
+	return asFileOrPath;
+}
+
 bool HeapInitialize()
 {
 	if (ghHeap == NULL)
@@ -36,21 +52,21 @@ void HeapDeinitialize()
 	}
 }
 
-const char* PointToName(const char* asFileOrPath)
-{
-	if (!asFileOrPath)
-	{
-		_ASSERTE(asFileOrPath!=NULL);
-		return NULL;
-	}
-
-	const char* pszSlash = strrchr(asFileOrPath, L'\\');
-
-	if (pszSlash)
-		return pszSlash+1;
-
-	return asFileOrPath;
-}
+//const char* PointToName(const char* asFileOrPath)
+//{
+//	if (!asFileOrPath)
+//	{
+//		_ASSERTE(asFileOrPath!=NULL);
+//		return NULL;
+//	}
+//
+//	const char* pszSlash = strrchr(asFileOrPath, L'\\');
+//
+//	if (pszSlash)
+//		return pszSlash+1;
+//
+//	return asFileOrPath;
+//}
 
 void * __cdecl xf_malloc
 (

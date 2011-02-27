@@ -955,203 +955,203 @@ void Help()
 	);
 }
 
-#ifndef __GNUC__
-#pragma warning( push )
-#pragma warning(disable : 6400)
-#endif
-BOOL IsExecutable(LPCWSTR aszFilePathName)
-{
-#ifndef __GNUC__
-#pragma warning( push )
-#pragma warning(disable : 6400)
-#endif
-	LPCWSTR pwszDot = wcsrchr(aszFilePathName, L'.');
-
-	if (pwszDot)  // Если указан .exe или .com файл
-	{
-		if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0)
-		{
-			if (FileExists(aszFilePathName))
-				return TRUE;
-		}
-	}
-
-	return FALSE;
-}
-#ifndef __GNUC__
-#pragma warning( pop )
-#endif
-
-BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1])
-{
-	_ASSERTE(asCmdLine && *asCmdLine);
-	gbRootIsCmdExe = TRUE;
-	
-	memset(szExe, 0, sizeof(szExe));
-
-	if (!asCmdLine || *asCmdLine == 0)
-		return TRUE;
-
-	//110202 перенес вниз, т.к. это уже может быть cmd.exe, и тогда у него сносит крышу
-	//// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
-	//if (wcschr(asCmdLine, L'&') ||
-	//        wcschr(asCmdLine, L'>') ||
-	//        wcschr(asCmdLine, L'<') ||
-	//        wcschr(asCmdLine, L'|') ||
-	//        wcschr(asCmdLine, L'^') // или экранирования
-	//  )
-	//{
-	//	return TRUE;
-	//}
-
-	//wchar_t szArg[MAX_PATH+10] = {0};
-	int iRc = 0;
-	BOOL lbFirstWasGot = FALSE;
-	LPCWSTR pwszCopy = asCmdLine;
-	// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
-	// cmd /c "dir c:\"
-	int nLastChar = lstrlenW(pwszCopy) - 1;
-
-	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"')
-	{
-		if (pwszCopy[1] == L'"' && pwszCopy[2])
-		{
-			pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
-
-			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
-		}
-		else
-			// глючила на ""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""
-			//if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
-			//	LPCWSTR pwszTemp = pwszCopy;
-			//	// Получим первую команду (исполняемый файл?)
-			//	if ((iRc = NextArg(&pwszTemp, szArg)) != 0) {
-			//		//Parsing command line failed
-			//		return TRUE;
-			//	}
-			//	pwszCopy ++; // Отбросить первую кавычку в командах типа: "c:\arc\7z.exe -?"
-			//	lbFirstWasGot = TRUE;
-			//	if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
-			//} else
-		{
-			// отбросить первую кавычку в: "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
-			LPCWSTR pwszTemp = pwszCopy + 1;
-
-			// Получим первую команду (исполняемый файл?)
-			if ((iRc = NextArg(&pwszTemp, szExe)) != 0)
-			{
-				//Parsing command line failed
-				return TRUE;
-			}
-
-			if (lstrcmpiW(szExe, L"start") == 0)
-			{
-				// Команду start обрабатывает только процессор
-				return TRUE;
-			}
-
-			LPCWSTR pwszQ = pwszCopy + 1 + wcslen(szExe);
-
-			if (*pwszQ != L'"' && IsExecutable(szExe))
-			{
-				pwszCopy ++; // отбрасываем
-				lbFirstWasGot = TRUE;
-
-				if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
-			}
-		}
-	}
-
-	// Получим первую команду (исполняемый файл?)
-	if (!lbFirstWasGot)
-	{
-		szExe[0] = 0;
-		// 17.10.2010 - поддержка переданного исполняемого файла без параметров, но с пробелами в пути
-		LPCWSTR pchEnd = pwszCopy + lstrlenW(pwszCopy);
-
-		while(pchEnd > pwszCopy && *(pchEnd-1) == L' ') pchEnd--;
-
-		if ((pchEnd - pwszCopy) < MAX_PATH)
-		{
-			memcpy(szExe, pwszCopy, (pchEnd - pwszCopy)*sizeof(wchar_t));
-			szExe[(pchEnd - pwszCopy)] = 0;
-
-			if (!FileExists(szExe))
-				szExe[0] = 0;
-		}
-
-		if (szExe[0] == 0)
-		{
-			if ((iRc = NextArg(&pwszCopy, szExe)) != 0)
-			{
-				//Parsing command line failed
-				return TRUE;
-			}
-		}
-	}
-
-	// Если szExe не содержит путь к файлу - запускаем через cmd
-	// "start "" C:\Utils\Files\Hiew32\hiew32.exe C:\00\Far.exe"
-	if (!IsFilePath(szExe))
-	{
-		gbRootIsCmdExe = TRUE; // запуск через "процессор"
-		return TRUE; // добавить "cmd.exe"
-	}
-
-	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
-	pwszCopy = PointToName(szExe);
-	//2009-08-27
-	wchar_t *pwszEndSpace = szExe + lstrlenW(szExe) - 1;
-
-	while((*pwszEndSpace == L' ') && (pwszEndSpace > szExe))
-		*(pwszEndSpace--) = 0;
-
-#ifndef __GNUC__
-#pragma warning( push )
-#pragma warning(disable : 6400)
-#endif
-
-	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0)
-	{
-		gbRootIsCmdExe = TRUE; // уже должен быть выставлен, но проверим
-		gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = FALSE;
-		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
-	}
-
-
-	// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
-	if (wcschr(asCmdLine, L'&') ||
-	        wcschr(asCmdLine, L'>') ||
-	        wcschr(asCmdLine, L'<') ||
-	        wcschr(asCmdLine, L'|') ||
-	        wcschr(asCmdLine, L'^') // или экранирования
-	  )
-	{
-		return TRUE;
-	}
-
-
-	if (lstrcmpiW(pwszCopy, L"far")==0 || lstrcmpiW(pwszCopy, L"far.exe")==0)
-	{
-		gbAutoDisableConfirmExit = TRUE;
-		gbRootIsCmdExe = FALSE; // FAR!
-		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
-	}
-
-	if (IsExecutable(szExe))
-	{
-		gbRootIsCmdExe = FALSE; // Для других программ - буфер не включаем
-		return FALSE; // Запускается конкретная консольная программа. cmd.exe не требуется
-	}
-
-	//Можно еще Доделать поиски с: SearchPath, GetFullPathName, добавив расширения .exe & .com
-	//хотя фар сам формирует полные пути к командам, так что можно не заморачиваться
-	gbRootIsCmdExe = TRUE;
-#ifndef __GNUC__
-#pragma warning( pop )
-#endif
-	return TRUE;
-}
+//#ifndef __GNUC__
+//#pragma warning( push )
+//#pragma warning(disable : 6400)
+//#endif
+//BOOL IsExecutable(LPCWSTR aszFilePathName)
+//{
+//#ifndef __GNUC__
+//#pragma warning( push )
+//#pragma warning(disable : 6400)
+//#endif
+//	LPCWSTR pwszDot = wcsrchr(aszFilePathName, L'.');
+//
+//	if (pwszDot)  // Если указан .exe или .com файл
+//	{
+//		if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0)
+//		{
+//			if (FileExists(aszFilePathName))
+//				return TRUE;
+//		}
+//	}
+//
+//	return FALSE;
+//}
+//#ifndef __GNUC__
+//#pragma warning( pop )
+//#endif
+//
+//BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1])
+//{
+//	_ASSERTE(asCmdLine && *asCmdLine);
+//	gbRootIsCmdExe = TRUE;
+//	
+//	memset(szExe, 0, sizeof(szExe));
+//
+//	if (!asCmdLine || *asCmdLine == 0)
+//		return TRUE;
+//
+//	//110202 перенес вниз, т.к. это уже может быть cmd.exe, и тогда у него сносит крышу
+//	//// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
+//	//if (wcschr(asCmdLine, L'&') ||
+//	//        wcschr(asCmdLine, L'>') ||
+//	//        wcschr(asCmdLine, L'<') ||
+//	//        wcschr(asCmdLine, L'|') ||
+//	//        wcschr(asCmdLine, L'^') // или экранирования
+//	//  )
+//	//{
+//	//	return TRUE;
+//	//}
+//
+//	//wchar_t szArg[MAX_PATH+10] = {0};
+//	int iRc = 0;
+//	BOOL lbFirstWasGot = FALSE;
+//	LPCWSTR pwszCopy = asCmdLine;
+//	// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
+//	// cmd /c "dir c:\"
+//	int nLastChar = lstrlenW(pwszCopy) - 1;
+//
+//	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"')
+//	{
+//		if (pwszCopy[1] == L'"' && pwszCopy[2])
+//		{
+//			pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
+//
+//			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
+//		}
+//		else
+//			// глючила на ""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""
+//			//if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
+//			//	LPCWSTR pwszTemp = pwszCopy;
+//			//	// Получим первую команду (исполняемый файл?)
+//			//	if ((iRc = NextArg(&pwszTemp, szArg)) != 0) {
+//			//		//Parsing command line failed
+//			//		return TRUE;
+//			//	}
+//			//	pwszCopy ++; // Отбросить первую кавычку в командах типа: "c:\arc\7z.exe -?"
+//			//	lbFirstWasGot = TRUE;
+//			//	if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
+//			//} else
+//		{
+//			// отбросить первую кавычку в: "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
+//			LPCWSTR pwszTemp = pwszCopy + 1;
+//
+//			// Получим первую команду (исполняемый файл?)
+//			if ((iRc = NextArg(&pwszTemp, szExe)) != 0)
+//			{
+//				//Parsing command line failed
+//				return TRUE;
+//			}
+//
+//			if (lstrcmpiW(szExe, L"start") == 0)
+//			{
+//				// Команду start обрабатывает только процессор
+//				return TRUE;
+//			}
+//
+//			LPCWSTR pwszQ = pwszCopy + 1 + wcslen(szExe);
+//
+//			if (*pwszQ != L'"' && IsExecutable(szExe))
+//			{
+//				pwszCopy ++; // отбрасываем
+//				lbFirstWasGot = TRUE;
+//
+//				if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
+//			}
+//		}
+//	}
+//
+//	// Получим первую команду (исполняемый файл?)
+//	if (!lbFirstWasGot)
+//	{
+//		szExe[0] = 0;
+//		// 17.10.2010 - поддержка переданного исполняемого файла без параметров, но с пробелами в пути
+//		LPCWSTR pchEnd = pwszCopy + lstrlenW(pwszCopy);
+//
+//		while(pchEnd > pwszCopy && *(pchEnd-1) == L' ') pchEnd--;
+//
+//		if ((pchEnd - pwszCopy) < MAX_PATH)
+//		{
+//			memcpy(szExe, pwszCopy, (pchEnd - pwszCopy)*sizeof(wchar_t));
+//			szExe[(pchEnd - pwszCopy)] = 0;
+//
+//			if (!FileExists(szExe))
+//				szExe[0] = 0;
+//		}
+//
+//		if (szExe[0] == 0)
+//		{
+//			if ((iRc = NextArg(&pwszCopy, szExe)) != 0)
+//			{
+//				//Parsing command line failed
+//				return TRUE;
+//			}
+//		}
+//	}
+//
+//	// Если szExe не содержит путь к файлу - запускаем через cmd
+//	// "start "" C:\Utils\Files\Hiew32\hiew32.exe C:\00\Far.exe"
+//	if (!IsFilePath(szExe))
+//	{
+//		gbRootIsCmdExe = TRUE; // запуск через "процессор"
+//		return TRUE; // добавить "cmd.exe"
+//	}
+//
+//	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
+//	pwszCopy = PointToName(szExe);
+//	//2009-08-27
+//	wchar_t *pwszEndSpace = szExe + lstrlenW(szExe) - 1;
+//
+//	while((*pwszEndSpace == L' ') && (pwszEndSpace > szExe))
+//		*(pwszEndSpace--) = 0;
+//
+//#ifndef __GNUC__
+//#pragma warning( push )
+//#pragma warning(disable : 6400)
+//#endif
+//
+//	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0)
+//	{
+//		gbRootIsCmdExe = TRUE; // уже должен быть выставлен, но проверим
+//		gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = FALSE;
+//		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
+//	}
+//
+//
+//	// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
+//	if (wcschr(asCmdLine, L'&') ||
+//	        wcschr(asCmdLine, L'>') ||
+//	        wcschr(asCmdLine, L'<') ||
+//	        wcschr(asCmdLine, L'|') ||
+//	        wcschr(asCmdLine, L'^') // или экранирования
+//	  )
+//	{
+//		return TRUE;
+//	}
+//
+//
+//	if (lstrcmpiW(pwszCopy, L"far")==0 || lstrcmpiW(pwszCopy, L"far.exe")==0)
+//	{
+//		gbAutoDisableConfirmExit = TRUE;
+//		gbRootIsCmdExe = FALSE; // FAR!
+//		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
+//	}
+//
+//	if (IsExecutable(szExe))
+//	{
+//		gbRootIsCmdExe = FALSE; // Для других программ - буфер не включаем
+//		return FALSE; // Запускается конкретная консольная программа. cmd.exe не требуется
+//	}
+//
+//	//Можно еще Доделать поиски с: SearchPath, GetFullPathName, добавив расширения .exe & .com
+//	//хотя фар сам формирует полные пути к командам, так что можно не заморачиваться
+//	gbRootIsCmdExe = TRUE;
+//#ifndef __GNUC__
+//#pragma warning( pop )
+//#endif
+//	return TRUE;
+//}
 
 //BOOL FileExists(LPCWSTR asFile)
 //{
@@ -1794,7 +1794,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				//
 				size_t nNewLen = wcslen(pwszStartCmdLine) + 200;
 				//
-				BOOL lbIsNeedCmd = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot, szExeTest);
+				BOOL lbIsNeedCmd = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot, szExeTest, gbRootIsCmdExe, gbAlwaysConfirmExit, gbAutoDisableConfirmExit);
 				xf_check();
 				//Warning. ParseCommandLine вызывается ДО ComSpecInit, в котором зовется
 				//         CECMD_CMDSTARTSTOP, поэтому высота буфера еще не была установлена.
@@ -2001,7 +2001,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 	}
 	else
 	{
-		bViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot, szExeTest);
+		bViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot, szExeTest, gbRootIsCmdExe, gbAlwaysConfirmExit, gbAutoDisableConfirmExit);
 	}
 
 #ifndef WIN64

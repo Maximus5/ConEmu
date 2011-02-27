@@ -35,8 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEFINE_HOOK_MACROS
 
 #include <windows.h>
-#include "..\common\common.hpp"
-#include "..\common\ConEmuCheck.h"
+#include "common.hpp"
+#include "ConEmuCheck.h"
+#include "..\ConEmuHk\ShellProcessor.h"
 #include <Tlhelp32.h>
 #include "SetHook.h"
 
@@ -159,9 +160,16 @@ static const wchar_t* ExcludedModules[MAX_EXCLUDED_MODULES] =
 {
 	L"kernel32.dll",
 	L"wininet.dll", // какой-то криминал с этой библиотекой?
+//#ifndef _DEBUG
+	L"mssign32.dll",
+	L"crypt32.dll",
+//#endif
 	// а user32.dll не нужно?
 	0
 };
+
+BOOL gbLogLibraries = FALSE;
+DWORD gnLastLogSetChange = 0;
 
 
 // »спользуетс€ в том случае, если требуетс€ выполнить оригинальную функцию, без нашей обертки
@@ -1149,10 +1157,48 @@ void __stdcall UnsetAllHooks()
 //   что вызовет некорректные смещени€ функций,
 // а в Win64 смещени€ вообще должны быть 64битными, а структура модул€ хранит только 32битные смещени€
 
-static void PrepareNewModule(HMODULE module)
+static void PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW)
 {
 	if (!module || IsModuleExcluded(module))
 		return;
+
+	CShellProc sp;
+	if (!gnLastLogSetChange || ((GetTickCount() - gnLastLogSetChange) > 2000))
+	{
+		gnLastLogSetChange = GetTickCount();
+		gbLogLibraries = sp.LoadGuiMapping();
+	}
+
+	if (gbLogLibraries)
+	{
+		CESERVER_REQ* pIn = NULL, *pOunt = NULL;
+		wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
+		if (!asModuleA && !asModuleW)
+		{
+			wcscpy_c(szModule, L"<NULL>");
+			asModuleW = szModule;
+		}
+		else if (asModuleA)
+		{
+			MultiByteToWideChar(AreFileApisANSI() ? CP_ACP : CP_OEMCP, 0, asModuleA, -1, szModule, countof(szModule));
+			szModule[countof(szModule)-1] = 0;
+			asModuleW = szModule;
+		}
+		pIn = sp.NewCmdOnCreate(eLoadLibrary, NULL, asModuleW, NULL, NULL, NULL, NULL, NULL,
+			#ifdef _WIN64
+			64
+			#else
+			32
+			#endif
+			, 0, NULL, NULL, NULL);
+		if (pIn)
+		{
+			HWND hConWnd = GetConsoleWindow();
+			CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
+			ExecuteFreeResult(pIn);
+			if (pOut) ExecuteFreeResult(pOut);
+		}
+	}
 
 	// Ќекоторые перехватываемые библиотеки могли быть
 	// не загружены во врем€ первичной инициализации
@@ -1171,7 +1217,7 @@ static HMODULE WINAPI OnLoadLibraryA(const char* lpFileName)
 	if (gbHooksTemporaryDisabled)
 		return module;
 
-	PrepareNewModule(module);
+	PrepareNewModule(module, lpFileName, NULL);
 
 	if (ph && ph->PostCallBack)
 	{
@@ -1191,7 +1237,7 @@ static HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
 	if (gbHooksTemporaryDisabled)
 		return module;
 
-	PrepareNewModule(module);
+	PrepareNewModule(module, NULL, lpFileName);
 
 	if (ph && ph->PostCallBack)
 	{
@@ -1211,7 +1257,7 @@ static HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWO
 	if (gbHooksTemporaryDisabled)
 		return module;
 
-	PrepareNewModule(module);
+	PrepareNewModule(module, lpFileName, NULL);
 
 	if (ph && ph->PostCallBack)
 	{
@@ -1231,7 +1277,7 @@ static HMODULE WINAPI OnLoadLibraryExW(const wchar_t* lpFileName, HANDLE hFile, 
 	if (gbHooksTemporaryDisabled)
 		return module;
 
-	PrepareNewModule(module);
+	PrepareNewModule(module, NULL, lpFileName);
 
 	if (ph && ph->PostCallBack)
 	{
@@ -1282,6 +1328,32 @@ typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
 BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 {
 	ORIGINALFAST(FreeLibrary);
+
+	if (gbLogLibraries)
+	{
+		CShellProc sp;
+		if (sp.LoadGuiMapping())
+		{
+			CESERVER_REQ* pIn = NULL, *pOunt = NULL;
+			wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
+			if (!GetModuleFileName(hModule, szModule, countof(szModule)))
+				_wsprintf(szModule, SKIPLEN(countof(szModule)) L"<HMODULE=0x%08X>", (DWORD)hModule);
+			pIn = sp.NewCmdOnCreate(eFreeLibrary, NULL, szModule, NULL, NULL, NULL, NULL, NULL,
+				#ifdef _WIN64
+				64
+				#else
+				32
+				#endif
+				, 0, NULL, NULL, NULL);
+			if (pIn)
+			{
+				HWND hConWnd = GetConsoleWindow();
+				CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
+				ExecuteFreeResult(pIn);
+				if (pOut) ExecuteFreeResult(pOut);
+			}
+		}
+	}
 
 	if (ghOnLoadLibModule == hModule)
 	{

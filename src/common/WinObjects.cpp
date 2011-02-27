@@ -180,144 +180,144 @@ BOOL IsFilePath(LPCWSTR asFilePath)
 	return TRUE;
 }
 
-//BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t (&rsShortName)[MAX_PATH+1]/*name only*/, BOOL abFavorLength=FALSE)
-//{
-//	WARNING("FindFirstFile использовать нельзя из-за симлинков");
-//	WIN32_FIND_DATAW fnd; memset(&fnd, 0, sizeof(fnd));
-//	HANDLE hFind = FindFirstFile(asFullPath, &fnd);
-//
-//	if (hFind == INVALID_HANDLE_VALUE)
-//		return FALSE;
-//
-//	FindClose(hFind);
-//
-//	if (fnd.cAlternateFileName[0])
-//	{
-//		if ((abFavorLength && (lstrlenW(fnd.cAlternateFileName) < lstrlenW(fnd.cFileName)))
-//		        || (wcschr(fnd.cFileName, L' ') != NULL))
-//		{
-//			wcscpy_c(rsShortName, fnd.cAlternateFileName);
-//			return TRUE;
-//		}
-//	}
-//	else if (wcschr(fnd.cFileName, L' ') != NULL)
-//	{
-//		return FALSE;
-//	}
-//	
-//	wcscpy_c(rsShortName, fnd.cFileName);
-//	return TRUE;
-//}
-//
-//wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
-//{
-//	if (!asLong) return NULL;
-//	
-//	int nSrcLen = lstrlenW(asLong);
-//	wchar_t* pszLong = lstrdup(asLong);
-//	
-//	int nMaxLen = nSrcLen + MAX_PATH; // "короткое" имя может более MAX_PATH
-//	wchar_t* pszShort = (wchar_t*)calloc(nMaxLen, sizeof(wchar_t));
-//	
-//	wchar_t* pszSrc = pszLong;
-//	//wchar_t* pszDst = pszShort;
-//	wchar_t* pszSlash;
-//	wchar_t  szName[MAX_PATH+1];
-//	bool     lbNetwork = false;
-//	int      nLen, nCurLen = 0;
-//	
-//	// Если путь сетевой (или UNC?) пропустить префиксы/серверы
-//	if (pszSrc[0] == L'\\' && pszSrc[1] == '\\')
-//	{
-//		// пропуск первых двух слешей
-//		pszSrc += 2;
-//		// формат "диска" не поддерживаем \\.\Drive\...
-//		if (pszSrc[0] == L'.' && pszSrc[1] == L'\\')
-//			goto wrap;
-//		// UNC
-//		if (pszSrc[0] == L'?' && pszSrc[1] == L'\\')
-//		{
-//			pszSrc += 2;
-//			if (pszSrc[0] == L'U' && pszSrc[1] == L'N' && pszSrc[2] == L'C' && pszSrc[3] == L'\\')
-//			{
-//				// UNC\Server\share\...
-//				pszSrc += 4;
-//				lbNetwork = true;
-//			}
-//			// иначе - ожидается диск
-//		}
-//		// Network (\\Server\\Share\...)
-//		else
-//		{
-//			lbNetwork = true;
-//		}
-//	}
-//	
-//	if (pszSrc[0] == 0)
-//		goto wrap;
-//	
-//	if (lbNetwork)
-//	{
-//		pszSlash = wcschr(pszSrc, L'\\');
-//		if (!pszSlash)
-//			goto wrap;
-//		pszSlash = wcschr(pszSlash+1, L'\\');
-//		if (!pszSlash)
-//			goto wrap;
-//		pszShort[0] = L'\\'; pszShort[1] = L'\\'; pszShort[2] = 0;
-//		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // память выделяется calloc!
-//	}
-//	else
-//	{
-//		// <Drive>:\path...
-//		if (pszSrc[1] != L':')
-//			goto wrap;
-//		if (pszSrc[2] != L'\\' && pszSrc[2] != 0)
-//			goto wrap;
-//		pszSlash = pszSrc + 2;
-//		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // память выделяется calloc!
-//	}
-//	
-//	nCurLen = lstrlenW(pszShort);
-//	
-//	while (pszSlash && (*pszSlash == L'\\'))
-//	{
-//		pszSrc = pszSlash;
-//		pszSlash = wcschr(pszSrc+1, L'\\');
-//		if (pszSlash)
-//			*pszSlash = 0;
-//		
-//		if (!GetShortFileName(pszLong, szName, abFavorLength))
-//			goto wrap;
-//		nLen = lstrlenW(szName);
-//		if ((nLen + nCurLen) >= nMaxLen)
-//			goto wrap;
-//		_wcscpyn_c(pszShort+nCurLen, nMaxLen-nCurLen, szName, nLen);
-//		nCurLen += nLen;
-//
-//		if (pszSlash)
-//		{
-//			*pszSlash = L'\\';
-//			pszShort[nCurLen++] = L'\\'; // память выделяется calloc!
-//		}
-//	}
-//	
-//	nLen = lstrlenW(pszShort);
-//
-//	if ((nLen > 0) && (pszShort[nLen-1] == L'\\'))
-//		pszShort[--nLen] = 0;
-//
-//	if (nLen <= MAX_PATH)
-//	{
-//		free(pszLong);
-//		return pszShort;
-//	}
-//
-//wrap:
-//	free(pszShort);
-//	free(pszLong);
-//	return NULL;
-//}
+BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t (&rsShortName)[MAX_PATH+1]/*name only*/, BOOL abFavorLength=FALSE)
+{
+	WARNING("FindFirstFile использовать нельзя из-за симлинков");
+	WIN32_FIND_DATAW fnd; memset(&fnd, 0, sizeof(fnd));
+	HANDLE hFind = FindFirstFile(asFullPath, &fnd);
+
+	if (hFind == INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	FindClose(hFind);
+
+	if (fnd.cAlternateFileName[0])
+	{
+		if ((abFavorLength && (lstrlenW(fnd.cAlternateFileName) < lstrlenW(fnd.cFileName)))
+		        || (wcschr(fnd.cFileName, L' ') != NULL))
+		{
+			wcscpy_c(rsShortName, fnd.cAlternateFileName);
+			return TRUE;
+		}
+	}
+	else if (wcschr(fnd.cFileName, L' ') != NULL)
+	{
+		return FALSE;
+	}
+	
+	wcscpy_c(rsShortName, fnd.cFileName);
+	return TRUE;
+}
+
+wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
+{
+	if (!asLong) return NULL;
+	
+	int nSrcLen = lstrlenW(asLong);
+	wchar_t* pszLong = lstrdup(asLong);
+	
+	int nMaxLen = nSrcLen + MAX_PATH; // "короткое" имя может более MAX_PATH
+	wchar_t* pszShort = (wchar_t*)calloc(nMaxLen, sizeof(wchar_t));
+	
+	wchar_t* pszSrc = pszLong;
+	//wchar_t* pszDst = pszShort;
+	wchar_t* pszSlash;
+	wchar_t  szName[MAX_PATH+1];
+	bool     lbNetwork = false;
+	int      nLen, nCurLen = 0;
+	
+	// Если путь сетевой (или UNC?) пропустить префиксы/серверы
+	if (pszSrc[0] == L'\\' && pszSrc[1] == '\\')
+	{
+		// пропуск первых двух слешей
+		pszSrc += 2;
+		// формат "диска" не поддерживаем \\.\Drive\...
+		if (pszSrc[0] == L'.' && pszSrc[1] == L'\\')
+			goto wrap;
+		// UNC
+		if (pszSrc[0] == L'?' && pszSrc[1] == L'\\')
+		{
+			pszSrc += 2;
+			if (pszSrc[0] == L'U' && pszSrc[1] == L'N' && pszSrc[2] == L'C' && pszSrc[3] == L'\\')
+			{
+				// UNC\Server\share\...
+				pszSrc += 4;
+				lbNetwork = true;
+			}
+			// иначе - ожидается диск
+		}
+		// Network (\\Server\\Share\...)
+		else
+		{
+			lbNetwork = true;
+		}
+	}
+	
+	if (pszSrc[0] == 0)
+		goto wrap;
+	
+	if (lbNetwork)
+	{
+		pszSlash = wcschr(pszSrc, L'\\');
+		if (!pszSlash)
+			goto wrap;
+		pszSlash = wcschr(pszSlash+1, L'\\');
+		if (!pszSlash)
+			goto wrap;
+		pszShort[0] = L'\\'; pszShort[1] = L'\\'; pszShort[2] = 0;
+		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // память выделяется calloc!
+	}
+	else
+	{
+		// <Drive>:\path...
+		if (pszSrc[1] != L':')
+			goto wrap;
+		if (pszSrc[2] != L'\\' && pszSrc[2] != 0)
+			goto wrap;
+		pszSlash = pszSrc + 2;
+		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // память выделяется calloc!
+	}
+	
+	nCurLen = lstrlenW(pszShort);
+	
+	while (pszSlash && (*pszSlash == L'\\'))
+	{
+		pszSrc = pszSlash;
+		pszSlash = wcschr(pszSrc+1, L'\\');
+		if (pszSlash)
+			*pszSlash = 0;
+		
+		if (!GetShortFileName(pszLong, szName, abFavorLength))
+			goto wrap;
+		nLen = lstrlenW(szName);
+		if ((nLen + nCurLen) >= nMaxLen)
+			goto wrap;
+		_wcscpyn_c(pszShort+nCurLen, nMaxLen-nCurLen, szName, nLen);
+		nCurLen += nLen;
+
+		if (pszSlash)
+		{
+			*pszSlash = L'\\';
+			pszShort[nCurLen++] = L'\\'; // память выделяется calloc!
+		}
+	}
+	
+	nLen = lstrlenW(pszShort);
+
+	if ((nLen > 0) && (pszShort[nLen-1] == L'\\'))
+		pszShort[--nLen] = 0;
+
+	if (nLen <= MAX_PATH)
+	{
+		free(pszLong);
+		return pszShort;
+	}
+
+wrap:
+	free(pszShort);
+	free(pszLong);
+	return NULL;
+}
 
 //wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=FALSE)
 //{
@@ -517,6 +517,22 @@ const wchar_t* PointToName(const wchar_t* asFileOrPath)
 	return pszFile;
 }
 
+const char* PointToName(const char* asFileOrPath)
+{
+	if (!asFileOrPath)
+	{
+		_ASSERTE(asFileOrPath!=NULL);
+		return NULL;
+	}
+
+	const char* pszSlash = strrchr(asFileOrPath, '\\');
+
+	if (pszSlash)
+		return pszSlash+1;
+
+	return asFileOrPath;
+}
+
 // Возвращает ".ext" или NULL в случае ошибки
 const wchar_t* PointToExt(const wchar_t* asFullPath)
 {
@@ -544,6 +560,348 @@ const wchar_t* Unquote(wchar_t* asPath)
 	return (asPath+1);
 }
 
+
+#ifndef __GNUC__
+#pragma warning( push )
+#pragma warning(disable : 6400)
+#endif
+BOOL IsExecutable(LPCWSTR aszFilePathName)
+{
+#ifndef __GNUC__
+#pragma warning( push )
+#pragma warning(disable : 6400)
+#endif
+	LPCWSTR pwszDot = wcsrchr(aszFilePathName, L'.');
+
+	if (pwszDot)  // Если указан .exe или .com файл
+	{
+		if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0)
+		{
+			if (FileExists(aszFilePathName))
+				return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+#ifndef __GNUC__
+#pragma warning( pop )
+#endif
+
+BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1],
+			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit)
+{
+	_ASSERTE(asCmdLine && *asCmdLine);
+	rbRootIsCmdExe = TRUE;
+
+	memset(szExe, 0, sizeof(szExe));
+
+	if (!asCmdLine || *asCmdLine == 0)
+		return TRUE;
+
+	//110202 перенес вниз, т.к. это уже может быть cmd.exe, и тогда у него сносит крышу
+	//// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
+	//if (wcschr(asCmdLine, L'&') ||
+	//        wcschr(asCmdLine, L'>') ||
+	//        wcschr(asCmdLine, L'<') ||
+	//        wcschr(asCmdLine, L'|') ||
+	//        wcschr(asCmdLine, L'^') // или экранирования
+	//  )
+	//{
+	//	return TRUE;
+	//}
+
+	//wchar_t szArg[MAX_PATH+10] = {0};
+	int iRc = 0;
+	BOOL lbFirstWasGot = FALSE;
+	LPCWSTR pwszCopy = asCmdLine;
+	// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
+	// cmd /c "dir c:\"
+	int nLastChar = lstrlenW(pwszCopy) - 1;
+
+	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"')
+	{
+		if (pwszCopy[1] == L'"' && pwszCopy[2])
+		{
+			pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
+
+			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
+		}
+		else
+			// глючила на ""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""
+			//if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
+			//	LPCWSTR pwszTemp = pwszCopy;
+			//	// Получим первую команду (исполняемый файл?)
+			//	if ((iRc = NextArg(&pwszTemp, szArg)) != 0) {
+			//		//Parsing command line failed
+			//		return TRUE;
+			//	}
+			//	pwszCopy ++; // Отбросить первую кавычку в командах типа: "c:\arc\7z.exe -?"
+			//	lbFirstWasGot = TRUE;
+			//	if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
+			//} else
+		{
+			// отбросить первую кавычку в: "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
+			LPCWSTR pwszTemp = pwszCopy + 1;
+
+			// Получим первую команду (исполняемый файл?)
+			if ((iRc = NextArg(&pwszTemp, szExe)) != 0)
+			{
+				//Parsing command line failed
+				return TRUE;
+			}
+
+			if (lstrcmpiW(szExe, L"start") == 0)
+			{
+				// Команду start обрабатывает только процессор
+				return TRUE;
+			}
+
+			LPCWSTR pwszQ = pwszCopy + 1 + wcslen(szExe);
+
+			if (*pwszQ != L'"' && IsExecutable(szExe))
+			{
+				pwszCopy ++; // отбрасываем
+				lbFirstWasGot = TRUE;
+
+				if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
+			}
+		}
+	}
+
+	// Получим первую команду (исполняемый файл?)
+	if (!lbFirstWasGot)
+	{
+		szExe[0] = 0;
+		// 17.10.2010 - поддержка переданного исполняемого файла без параметров, но с пробелами в пути
+		LPCWSTR pchEnd = pwszCopy + lstrlenW(pwszCopy);
+
+		while(pchEnd > pwszCopy && *(pchEnd-1) == L' ') pchEnd--;
+
+		if ((pchEnd - pwszCopy) < MAX_PATH)
+		{
+			memcpy(szExe, pwszCopy, (pchEnd - pwszCopy)*sizeof(wchar_t));
+			szExe[(pchEnd - pwszCopy)] = 0;
+
+			if (!FileExists(szExe))
+				szExe[0] = 0;
+		}
+
+		if (szExe[0] == 0)
+		{
+			if ((iRc = NextArg(&pwszCopy, szExe)) != 0)
+			{
+				//Parsing command line failed
+				return TRUE;
+			}
+		}
+	}
+
+	// Если szExe не содержит путь к файлу - запускаем через cmd
+	// "start "" C:\Utils\Files\Hiew32\hiew32.exe C:\00\Far.exe"
+	if (!IsFilePath(szExe))
+	{
+		rbRootIsCmdExe = TRUE; // запуск через "процессор"
+		return TRUE; // добавить "cmd.exe"
+	}
+
+	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
+	pwszCopy = PointToName(szExe);
+	//2009-08-27
+	wchar_t *pwszEndSpace = szExe + lstrlenW(szExe) - 1;
+
+	while((*pwszEndSpace == L' ') && (pwszEndSpace > szExe))
+		*(pwszEndSpace--) = 0;
+
+#ifndef __GNUC__
+#pragma warning( push )
+#pragma warning(disable : 6400)
+#endif
+
+	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0)
+	{
+		rbRootIsCmdExe = TRUE; // уже должен быть выставлен, но проверим
+		rbAlwaysConfirmExit = TRUE; rbAutoDisableConfirmExit = FALSE;
+		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
+	}
+
+
+	// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
+	if (wcschr(asCmdLine, L'&') ||
+		wcschr(asCmdLine, L'>') ||
+		wcschr(asCmdLine, L'<') ||
+		wcschr(asCmdLine, L'|') ||
+		wcschr(asCmdLine, L'^') // или экранирования
+		)
+	{
+		return TRUE;
+	}
+
+
+	if (lstrcmpiW(pwszCopy, L"far")==0 || lstrcmpiW(pwszCopy, L"far.exe")==0)
+	{
+		rbAutoDisableConfirmExit = TRUE;
+		rbRootIsCmdExe = FALSE; // FAR!
+		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
+	}
+
+	if (IsExecutable(szExe))
+	{
+		rbRootIsCmdExe = FALSE; // Для других программ - буфер не включаем
+		return FALSE; // Запускается конкретная консольная программа. cmd.exe не требуется
+	}
+
+	//Можно еще Доделать поиски с: SearchPath, GetFullPathName, добавив расширения .exe & .com
+	//хотя фар сам формирует полные пути к командам, так что можно не заморачиваться
+	rbRootIsCmdExe = TRUE;
+#ifndef __GNUC__
+#pragma warning( pop )
+#endif
+	return TRUE;
+}
+
+const wchar_t* SkipNonPrintable(const wchar_t* asParams)
+{
+	if (!asParams)
+		return NULL;
+	const wchar_t* psz = asParams;
+	while (*psz == L' ' || *psz == L'\t' || *psz == L'\r' || *psz == L'\n') psz++;
+	return psz;
+}
+
+
+//// Вернуть путь к папке, содержащей ConEmuC.exe
+//BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1])
+//{
+//	// Сначала пробуем Mapping консоли (вдруг есть?)
+//	{
+//		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
+//		ConMap.InitName(CECONMAPNAME, (DWORD)GetConsoleWindow());
+//		CESERVER_CONSOLE_MAPPING_HDR* p = ConMap.Open();
+//		if (p && p->sConEmuBaseDir[0])
+//		{
+//			// Успешно
+//			wcscpy_c(rsConEmuBaseDir, p->sConEmuBaseDir);
+//			wcscpy_c(rsConEmuExe, p->sConEmuExe);
+//			return TRUE;
+//		}
+//	}
+//
+//	// Теперь - пробуем найти существующее окно ConEmu
+//	HWND hConEmu = FindWindow(VirtualConsoleClassMain, NULL);
+//	DWORD dwGuiPID = 0;
+//	if (hConEmu)
+//	{
+//		if (GetWindowThreadProcessId(hConEmu, &dwGuiPID) && dwGuiPID)
+//		{
+//			MFileMapping<ConEmuGuiMapping> GuiMap;
+//			GuiMap.InitName(CEGUIINFOMAPNAME, dwGuiPID);
+//			ConEmuGuiMapping* p = GuiMap.Open();
+//			if (p && p->sConEmuBaseDir[0])
+//			{
+//				wcscpy_c(rsConEmuBaseDir, p->sConEmuBaseDir);
+//				wcscpy_c(rsConEmuExe, p->sConEmuExe);
+//				return TRUE;
+//			}
+//		}
+//	}
+//
+//	
+//	wchar_t szExePath[MAX_PATH+1];
+//	HKEY hkRoot[] = {NULL,HKEY_CURRENT_USER,HKEY_LOCAL_MACHINE,HKEY_LOCAL_MACHINE};
+//	DWORD samDesired = KEY_QUERY_VALUE;
+//	DWORD RedirectionFlag = 0;
+//	BOOL isWin64 = FALSE;
+//	#ifdef _WIN64
+//	isWin64 = TRUE;
+//	RedirectionFlag = KEY_WOW64_32KEY;
+//	#else
+//	isWin64 = IsWindows64();
+//	RedirectionFlag = isWin64 ? KEY_WOW64_64KEY : 0;
+//	#endif
+//	for (size_t i = 0; i < countof(hkRoot); i++)
+//	{
+//		szExePath[0] = 0;
+//
+//		if (i == 0)
+//		{
+//			// Запущенного ConEmu.exe нет, можно поискать в каталоге текущего приложения
+//
+//			if (!GetModuleFileName(NULL, szExePath, countof(szExePath)-20))
+//				continue;
+//			wchar_t* pszName = wcsrchr(szExePath, L'\\');
+//			if (!pszName)
+//				continue;
+//			*(pszName+1) = 0;
+//		}
+//		else
+//		{
+//			// Остался последний шанс - если ConEmu установлен через MSI, то путь указан в реестре
+//			// [HKEY_LOCAL_MACHINE\SOFTWARE\ConEmu]
+//			// "InstallDir"="C:\\Utils\\Far180\\"
+//
+//			if (i == (countof(hkRoot)-1))
+//			{
+//				if (RedirectionFlag)
+//					samDesired |= RedirectionFlag;
+//				else
+//					break;
+//			}
+//
+//			HKEY hKey;
+//			if (RegOpenKeyEx(hkRoot[i], L"Software\\ConEmu", 0, samDesired, &hKey) != ERROR_SUCCESS)
+//				continue;
+//			memset(szExePath, 0, countof(szExePath));
+//			DWORD nType = 0, nSize = sizeof(szExePath)-20*sizeof(wchar_t);
+//			int RegResult = RegQueryValueEx(hKey, L"", NULL, &nType, (LPBYTE)szExePath, &nSize);
+//			RegCloseKey(hKey);
+//			if (RegResult != ERROR_SUCCESS)
+//				continue;
+//		}
+//
+//		if (szExePath[0])
+//		{
+//			// Хоть и задано в реестре - файлов может не быть. Проверяем
+//			if (szExePath[lstrlen(szExePath)-1] != L'\\')
+//				wcscat_c(szExePath, L"\\");
+//			wcscpy_c(rsConEmuExe, szExePath);
+//			BOOL lbExeFound = FALSE;
+//			wchar_t* pszName = rsConEmuExe+lstrlen(rsConEmuExe);
+//			LPCWSTR szGuiExe[2] = {L"ConEmu64.exe", L"ConEmu.exe"};
+//			for (int i = 0; !lbExeFound && (i < countof(szGuiExe)); i++)
+//			{
+//				if (!i && !isWin64) continue;
+//				wcscpy_add(pszName, rsConEmuExe, szGuiExe[i]);
+//				lbExeFound = FileExists(rsConEmuExe);
+//			}
+//
+//			// Если GUI-exe найден - ищем "base"
+//			if (lbExeFound)
+//			{
+//				wchar_t* pszName = szExePath+lstrlen(szExePath);
+//				LPCWSTR szSrvExe[4] = {L"ConEmuC64.exe", L"ConEmu\\ConEmuC64.exe", L"ConEmuC.exe", L"ConEmu\\ConEmuC.exe"};
+//				for (int i = 0; (i < countof(szSrvExe)); i++)
+//				{
+//					if ((i <=1) && !isWin64) continue;
+//					wcscpy_add(pszName, szExePath, szSrvExe[i]);
+//					if (FileExists(szExePath))
+//					{
+//						pszName = wcsrchr(szExePath, L'\\');
+//						if (pszName)
+//						{
+//							*pszName = 0; // БЕЗ слеша на конце!
+//							wcscpy_c(rsConEmuBaseDir, szExePath);
+//							return TRUE;
+//						}
+//					}
+//				}
+//			}
+//		}
+//	}
+//
+//	// Не удалось
+//	return FALSE;
+//}
 
 //// Undocumented console message
 //#define WM_SETCONSOLEINFO			(WM_USER+201)
