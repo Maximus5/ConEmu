@@ -9,6 +9,14 @@
 #ifdef _DEBUG
 	#include <crtdbg.h>
 
+	enum CEAssertMode
+	{
+		am_Default = 0,
+		am_Thread = 1,
+		am_Pipe = 2
+	};
+	extern CEAssertMode gAllowAssertThread;
+
 	int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest);
 	void MyAssertTrap();
 	void MyAssertShutdown();

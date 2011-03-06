@@ -850,12 +850,12 @@ typedef struct
 //				while ((pszFlags - pszStart) < 8) {
 //					*(pszFlags++) = L' '; *pszFlags = 0;
 //				}
-//				wcscpy(pszFlags, L" // "); pszFlags += wcslen(pszFlags);
+//				wcscpy(pszFlags, L" // "); pszFlags += lstrlen(pszFlags);
 //			} else {
 //				*(pszFlags++) = L'|';
 //			}
 //			wcscpy(pszFlags, pFlags->name);
-//			pszFlags += wcslen(pszFlags);
+//			pszFlags += lstrlen(pszFlags);
 //		}
 //		pFlags++;
 //	}
@@ -950,7 +950,7 @@ void ParseVersionInfoFixed(PEData *pData,  VS_FIXEDFILEINFO* pVer)
 	//	pVer->dwFileType, szFileType,
 	//	szFileSubType
 	//	);
-	//psz += wcslen(psz);
+	//psz += lstrlen(psz);
 }
 
 #define ALIGN_TOKEN(p) p = (LPWORD)( ((( ((DWORD_PTR)p) - ((DWORD_PTR)ptrRes) + 3) >> 2) << 2 ) + ((DWORD_PTR)ptrRes))
@@ -975,9 +975,9 @@ void ParseVersionInfoVariableString(PEData *pData, LPVOID ptrRes, DWORD &resSize
 		}
 		{
 			//wcscat(psz, L"    BEGIN\n");
-			//psz += wcslen(psz);
+			//psz += lstrlen(psz);
 			// Padding - Contains as many zero words as necessary to align the Children member on a 32-bit boundary.
-			pToken = (LPWORD)(pSFI->szKey+wcslen(pSFI->szKey)+1);
+			pToken = (LPWORD)(pSFI->szKey+lstrlen(pSFI->szKey)+1);
 			//while (*pToken == 0 && pToken < pEnd1) pToken++;
 			ALIGN_TOKEN(pToken);
 
@@ -995,7 +995,7 @@ void ParseVersionInfoVariableString(PEData *pData, LPVOID ptrRes, DWORD &resSize
 				// two parts: the low-order 10 bits specify the major language,
 				// and the high-order 6 bits specify the sublanguage.
 				//wcscat(psz, L"        BLOCK \"");
-				//psz += wcslen(psz);
+				//psz += lstrlen(psz);
 				//memmove(psz, pST->szKey, 8*2);
 				//psz += 8; *psz = 0; wcscat(psz, L"\"\n");
 				//wcscat(psz, L"        BEGIN\n");
@@ -1010,13 +1010,13 @@ void ParseVersionInfoVariableString(PEData *pData, LPVOID ptrRes, DWORD &resSize
 					if (pS->wLength == 0) break;  // Invalid?
 
 					LPWORD pNext = (LPWORD)(((LPBYTE)pToken)+pS->wLength);
-					//wcscat(psz, L"            VALUE \""); psz += wcslen(psz);
+					//wcscat(psz, L"            VALUE \""); psz += lstrlen(psz);
 					//wcscat(psz, pS->szKey);
-					//wcscat(psz, L"\", "); psz += wcslen(psz);
+					//wcscat(psz, L"\", "); psz += lstrlen(psz);
 					// Выровнять текст в результирующем .rc
 					//for (int k = lstrlenW(pS->szKey); k < 17; k++) *(psz++) = L' ';
 					//*(psz++) = L'"'; *psz = 0;
-					pToken = (LPWORD)(pS->szKey+wcslen(pS->szKey)+1);
+					pToken = (LPWORD)(pS->szKey+lstrlen(pS->szKey)+1);
 					//while (*pToken == 0 && pToken < pEnd2) pToken++;
 					ALIGN_TOKEN(pToken);
 					int nLenLeft = pS->wValueLength;
@@ -1053,13 +1053,13 @@ void ParseVersionInfoVariableString(PEData *pData, LPVOID ptrRes, DWORD &resSize
 					//	// Вообще-то тут бы провести замены \r\n\t"
 					//	wcscat(psz, (LPCWSTR)pToken);
 					//}
-					//wcscat(psz, L"\"\n"); psz += wcslen(psz);
+					//wcscat(psz, L"\"\n"); psz += lstrlen(psz);
 
 					// Next value
 					pToken = pNext;
 					if (pToken < pEnd2 && *pToken == 0)
 					{
-						//wcscat(psz, L"            // Zero-length item found\n"); psz += wcslen(psz);
+						//wcscat(psz, L"            // Zero-length item found\n"); psz += lstrlen(psz);
 						while (pToken < pEnd2 && *pToken == 0) pToken ++;
 					}
 				}
@@ -1084,7 +1084,7 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 			pEnd1 = pEnd;
 		//wcscat(psz, L"    BLOCK \"");
 		//wcscat(psz, pSFI->szKey);
-		//psz += wcslen(psz);
+		//psz += lstrlen(psz);
 		//MultiByteToWideChar(CP_ACP,0,pSFI->szKey,-1,psz,64);
 		//for (int x=0; x<8; x++) {
 		//	*psz++ = pSFI->szKey[x] ? pSFI->szKey[x] : L' ';
@@ -1095,7 +1095,7 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 		//}
 		{
 			//wcscat(psz, L"    BEGIN\n");
-			//psz += wcslen(psz);
+			//psz += lstrlen(psz);
 			// Padding - Contains as many zero words as necessary to align the Children member on a 32-bit boundary.
 			pToken = (char*)(pSFI->szKey+strlen(pSFI->szKey)+1);
 			//while (*pToken == 0 && pToken < pEnd1) pToken++;
@@ -1116,7 +1116,7 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 				// two parts: the low-order 10 bits specify the major language,
 				// and the high-order 6 bits specify the sublanguage.
 				//wcscat(psz, L"        BLOCK \"");
-				//psz += wcslen(psz);
+				//psz += lstrlen(psz);
 				//wmemmove(psz, pST->szKey, 8); ???
 				//psz[MultiByteToWideChar(CP_ACP,0,pST->szKey,8,psz,64)] = 0;
 				//psz += 8; *psz = 0; wcscat(psz, L"\"\n");
@@ -1135,10 +1135,10 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 					char* pNext = (char*)(((LPBYTE)pToken)+pS->wLength);
 					if (pNext > pEnd2)
 						pNext = pEnd2;
-					//wcscat(psz, L"            VALUE \""); psz += wcslen(psz);
+					//wcscat(psz, L"            VALUE \""); psz += lstrlen(psz);
 					//wcscat(psz, pS->szKey); ???
 					//psz[MultiByteToWideChar(CP_ACP,0,pS->szKey,-1,psz,32)] = 0;
-					//wcscat(psz, L"\", "); psz += wcslen(psz);
+					//wcscat(psz, L"\", "); psz += lstrlen(psz);
 					// Выровнять текст в результирующем .rc
 					//for (int k = lstrlenA(pS->szKey); k < 17; k++) *(psz++) = L' ';
 					//*(psz++) = L'"'; *psz = 0;
@@ -1185,13 +1185,13 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 					//	// Вообще-то тут бы провести замены \r\n\t"
 					//	wcscat(psz, (LPCWSTR)pToken);
 					//}
-					//wcscat(psz, L"\"\n"); psz += wcslen(psz);
+					//wcscat(psz, L"\"\n"); psz += lstrlen(psz);
 
 					// Next value
 					pToken = pNext;
 					if (pToken < pEnd2 && *pToken == 0)
 					{
-						//wcscat(psz, L"            // Zero-length item found\n"); psz += wcslen(psz);
+						//wcscat(psz, L"            // Zero-length item found\n"); psz += lstrlen(psz);
 						while (pToken < pEnd2 && *pToken == 0) pToken ++;
 					}
 				}
@@ -1222,15 +1222,15 @@ void ParseVersionInfoVariableVar(PEData *pData, LPVOID ptrRes, DWORD &resSize, L
 		}
 		{
 			//wcscat(psz, L"    BEGIN\n");
-			//psz += wcslen(psz);
+			//psz += lstrlen(psz);
 			// Padding - Contains as many zero words as necessary to align the Children member on a 32-bit boundary.
-			pToken = (LPWORD)(pSFI->szKey+wcslen(pSFI->szKey)+1);
+			pToken = (LPWORD)(pSFI->szKey+lstrlen(pSFI->szKey)+1);
 			//while (*pToken == 0 && pToken < pEnd1) pToken++;
 			ALIGN_TOKEN(pToken);
 
 			if ((((LPBYTE)pToken)+sizeof(Var)) <= (LPBYTE)pEnd1)
 			{
-				pToken = (LPWORD)(pSFI->szKey+wcslen(pSFI->szKey)+1);
+				pToken = (LPWORD)(pSFI->szKey+lstrlen(pSFI->szKey)+1);
 				//while (*pToken == 0 && pToken < pEnd1) pToken++;
 				ALIGN_TOKEN(pToken);
 
@@ -1241,10 +1241,10 @@ void ParseVersionInfoVariableVar(PEData *pData, LPVOID ptrRes, DWORD &resSize, L
 					if (pS->wLength == 0) break;  // Invalid?
 
 					LPWORD pNext = (LPWORD)(((LPBYTE)pToken)+pS->wLength);
-					//wcscat(psz, L"        VALUE \""); psz += wcslen(psz);
+					//wcscat(psz, L"        VALUE \""); psz += lstrlen(psz);
 					//wcscat(psz, pS->szKey);
-					//wcscat(psz, L"\""); psz += wcslen(psz);
-					pToken = (LPWORD)(pS->szKey+wcslen(pS->szKey)+1);
+					//wcscat(psz, L"\""); psz += lstrlen(psz);
+					pToken = (LPWORD)(pS->szKey+lstrlen(pS->szKey)+1);
 					// Align to 32bit boundary
 					ALIGN_TOKEN(pToken);
 					//pToken++;
@@ -1256,7 +1256,7 @@ void ParseVersionInfoVariableVar(PEData *pData, LPVOID ptrRes, DWORD &resSize, L
 					// is language or code page independent.
 					while((pToken+2) <= pEnd1)
 					{
-						//psz += wcslen(psz);
+						//psz += lstrlen(psz);
 						//DWORD nLangCP = *((LPDWORD)pToken);
 						//StringCchPrintf(psz, countof(psz), L", 0x%X, %u", (DWORD)(pToken[0]), (DWORD)(pToken[1]));
 						pToken += 2;
@@ -1264,7 +1264,7 @@ void ParseVersionInfoVariableVar(PEData *pData, LPVOID ptrRes, DWORD &resSize, L
 					//	// Вообще-то тут бы провести замены \r\n\t"
 					//	wcscat(psz, (LPCWSTR)pToken);
 					//}
-					//wcscat(psz, L"\n"); psz += wcslen(psz);
+					//wcscat(psz, L"\n"); psz += lstrlen(psz);
 
 					// Next value
 					pToken = pNext;
@@ -1379,7 +1379,7 @@ void ParseVersionInfo(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 					pToken = (LPWORD)(((LPBYTE)pSFI)+pSFI->wLength);
 					while (pToken < pEnd && *pToken == 0)
 						pToken ++;
-					//psz += wcslen(psz);
+					//psz += lstrlen(psz);
 				}
 
 				//#endif
@@ -1477,7 +1477,7 @@ void ParseVersionInfoA(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 					pToken = (char*)(((LPBYTE)pSFI)+pSFI->wLength);
 					while (pToken < pEnd && *pToken == 0)
 						pToken ++;
-					//psz += wcslen(psz);
+					//psz += lstrlen(psz);
 				}
 
 				//#endif

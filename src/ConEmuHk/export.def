@@ -2,17 +2,17 @@ LIBRARY
 
 EXPORTS
 ; functions
-	LLKeybHook
+;	LLKeybHook
 	SetHookCallbacks
 	SetLoadLibraryCallback
-	ConsoleMain
-	HandlerRoutine
+;	ConsoleMain
+;	HandlerRoutine
 	SetFarHookMode
 
 ; LLKeyHooks (ConEmu GUI)
-	ghKeyHook
-	gnVkWinFix
-	ghKeyHookConEmuRoot
+;	ghKeyHook
+;	gnVkWinFix
+;	ghKeyHookConEmuRoot
 ;	ghConEmuWnd
 
 ; Options (injects)

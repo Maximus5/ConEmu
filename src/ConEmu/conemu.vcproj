@@ -696,7 +696,7 @@
 				Optimization="0"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MSGLOGGER;HIDE_TODO"
 				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
+				BasicRuntimeChecks="0"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -713,8 +713,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib Netapi32.lib"
-				OutputFile="\\WIN2K3\FAR\Far175\ConEmu.exe"
+				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib Netapi32.lib Imm32.lib"
+				OutputFile="\\WINXP\FAR\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
@@ -1520,6 +1520,10 @@
 			</File>
 			<File
 				RelativePath="..\common\Memory.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\MStrSafe.cpp"
 				>
 			</File>
 			<File

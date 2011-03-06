@@ -77,8 +77,9 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 
 	Info->StructSize = sizeof(GlobalInfo);
 	Info->MinFarVersion = FARMANAGERVERSION;
-#define D(N) (1##N-100)
-	Info->Version = (MVV_1%100)*10000 + D(MVV_2)*100 + D(MVV_3);
+	//#define D(N) (1##N-100)
+	// YYMMDDX (YY - две цифры года, MM - месяц, DD - день, X - 0 и выше-номер подсборки)
+	Info->Version = ((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10);
 	Info->Guid = guid_ConEmuTh;
 	Info->Title = L"ConEmu Panel Views";
 	Info->Description = L"Thumbnails and Tiles in ConEmu window";
@@ -323,8 +324,8 @@ void LoadPanelItemInfo1867(CeFullPanelInfo* pi, int nItem)
 	// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
 	//// Необходимый размер буфера для хранения элемента
 	//nSize = sizeof(CePluginPanelItem)
-	//	+(wcslen(ppi->FileName)+1)*2
-	//	+((ppi->Description ? wcslen(ppi->Description) : 0)+1)*2;
+	//	+(lstrlen(ppi->FileName)+1)*2
+	//	+((ppi->Description ? lstrlen(ppi->Description) : 0)+1)*2;
 	//
 	//// Уже может быть выделено достаточно памяти под этот элемент
 	//if ((pi->ppItems[nItem] == NULL) || (pi->ppItems[nItem]->cbSize < (DWORD_PTR)nSize)) {
@@ -359,7 +360,7 @@ void LoadPanelItemInfo1867(CeFullPanelInfo* pi, int nItem)
 	//	pi->ppItems[nItem]->FileNamePart = psz;
 	//pi->ppItems[nItem]->FileExt = wcsrchr(pi->ppItems[nItem]->FileNamePart, L'.');
 	//// Description
-	//psz += wcslen(psz)+1;
+	//psz += lstrlen(psz)+1;
 	//if (ppi->Description)
 	//	lstrcpy(psz, ppi->Description);
 	//else

@@ -68,9 +68,11 @@ NEEDENTRY = 1
 !if defined(AMD64) || "$(CPU)" == "AMD64"
 OUTNAME = ConEmuTh.x64
 RCWIN64=/D_WIN64 /DWIN64
+BUILD_SUFFUX=x64
 !else
 OUTNAME = ConEmuTh
 RCWIN64=
+BUILD_SUFFUX=x86
 !endif                   
 
 NAME = ConEmuTh
@@ -86,6 +88,7 @@ $(OBJDIR)\RgnDetect.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\Memory.obj \
+$(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\WinObjects.obj
 
 #$(OBJDIR)\LogBrowser.obj
@@ -326,6 +329,8 @@ $(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp
 $(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
 
 $(OBJDIR)\Memory.obj: ..\common\Memory.cpp
+
+$(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
 
 

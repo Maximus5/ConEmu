@@ -64,6 +64,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CESERVERWRITENAME   L"\\\\%s\\pipe\\ConEmuSrvWrite%u" // ConEmuC_PID
 #define CESERVERREADNAME    L"\\\\%s\\pipe\\ConEmuSrvRead%u"  // ConEmuC_PID
 #define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui%u"      // GetConsoleWindow() // необходимо, чтобы плагин мог общаться с GUI
+															  // ghConEmuWndRoot --> CConEmuMain::GuiServerThreadCommand
 #define CEPLUGINPIPENAME    L"\\\\%s\\pipe\\ConEmuPlugin%u"   // Far_PID
 
 #define CEINPUTSEMAPHORE    L"ConEmuInputSemaphore.%08X"      // GetConsoleWindow()
@@ -89,6 +90,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEHOOKLOCKMUTEX     L"ConEmuHookMutex.%u"
 #define CEHOOKDISABLEEVENT  L"ConEmuSkipHooks.%u"
 
+#define CESECURITYNAME       "ConEmuLocalData"
 
 //#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID
 //WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
@@ -162,6 +164,8 @@ const CECMD
 	CECMD_ONCREATEPROC   = 39, // CESERVER_REQ_ONCREATEPROCESS
 	CECMD_SRVSTARTSTOP   = 40, // {DWORD(1/101); DWORD(ghConWnd);}
 	CECMD_SETFARPID      = 41, // Посылается в сервер, чтобы он сменил (CESERVER_CONSOLE_MAPPING_HDR.nFarPID)
+	CECMD_ASSERT         = 42, // Отобразить Assert в ConEmu. In=wchar_t[], Out=DWORD.
+	CECMD_GUICHANGED     = 43, // посылается в сервер, чтобы он обновил у себя ConEmuGuiMapping->CESERVER_CONSOLE_MAPPING_HDR
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -188,7 +192,7 @@ const CECMD
 
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    63
+#define CESERVER_REQ_VER    64
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -582,6 +586,7 @@ struct ConEmuLoadedArg
 {
 	DWORD cbSize;    // размер структуры в байтах
 	DWORD nBuildNo;  // {Номер сборки ConEmu*10} (i.e. 1012070). Это версия плагина. В принципе, версия GUI может отличаться
+	                 // YYMMDDX (YY - две цифры года, MM - месяц, DD - день, X - 0 и выше-номер подсборки)
 	HMODULE hConEmu; // conemu.dll / conemu.x64.dll
 	HMODULE hPlugin; // для информации - Instance этого плагина, в котором вызывается OnConEmuLoaded
 	BOOL bLoaded;    // TRUE - при загрузке conemu.dll, FALSE - при выгрузке
@@ -646,8 +651,8 @@ struct ConEmuGuiMapping
 	
 	// DosBox
 	BOOL     bDosBox; // наличие DosBox
-	wchar_t  sDosBoxExe[MAX_PATH+1]; // полный путь к DosBox.exe
-	wchar_t  sDosBoxEnv[8192]; // команды загрузки (mount, и пр.)
+	//wchar_t  sDosBoxExe[MAX_PATH+1]; // полный путь к DosBox.exe
+	//wchar_t  sDosBoxEnv[8192]; // команды загрузки (mount, и пр.)
 
 	//DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	//wchar_t  sInjectsDir[MAX_PATH+1]; // path to "conemu.dll" & "conemu.x64.dll"
@@ -824,6 +829,7 @@ struct CEFAR_INFO_MAPPING
 };
 
 
+// CECONMAPNAME
 struct CESERVER_CONSOLE_MAPPING_HDR
 {
 	DWORD cbSize;
@@ -838,7 +844,7 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	DWORD nProtocolVersion; // == CESERVER_REQ_VER
 	DWORD bThawRefreshThread; // FALSE - увеличивает интервал опроса консоли (GUI теряет фокус)
 	//
-	DWORD nFarPID; // PID последнего активного фара
+	DWORD nActiveFarPID; // PID последнего активного фара
 	//
 	DWORD nServerInShutdown; // GetTickCount() начала закрытия сервера
 	//
@@ -854,6 +860,10 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	HWND2 hConEmuRoot;
 	// DC ConEmu window
 	HWND2 hConEmuWnd;
+
+	DWORD nLoggingType; // enum GuiLoggingType
+	BOOL  bDosBox; // DosBox установлен, можно пользоваться
+	DWORD bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	
 	// Перехват реестра
 	BOOL    bHookRegistry;
@@ -1152,6 +1162,13 @@ struct CESERVER_REQ_GUIMACRO
 	wchar_t sMacro[1];    // Variable length
 };
 
+struct MyAssertInfo
+{
+	int nBtns;
+	wchar_t szTitle[255];
+	wchar_t szDebugInfo[4096];
+};
+
 struct CESERVER_REQ
 {
 	CESERVER_REQ_HDR hdr;
@@ -1161,6 +1178,7 @@ struct CESERVER_REQ
 		WORD    wData[1];
 		DWORD   dwData[1];
 		u64     qwData[1];
+		ConEmuGuiMapping GuiInfo;
 		CESERVER_CONSOLE_MAPPING_HDR ConInfo;
 		CESERVER_REQ_SETSIZE SetSize;
 		CESERVER_REQ_RETSIZE SetSizeRet;
@@ -1184,6 +1202,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_GUIMACRO GuiMacro;
 		CESERVER_REQ_ONCREATEPROCESS OnCreateProc;
 		CESERVER_REQ_ONCREATEPROCESSRET OnCreateProcRet;
+		MyAssertInfo AssertInfo;
 	};
 };
 

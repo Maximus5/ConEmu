@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9,00"
 	Name="ConEmuHk"
-	ProjectGUID="{FD4A27E0-7FA2-44C6-82A2-1907CF6B548C}"
+	ProjectGUID="{525F3223-BC12-479E-8487-5FA4406461F4}"
 	RootNamespace="ConEmuHk"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -63,12 +63,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="C:\Utils\Far180\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -119,7 +122,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;_CRT_SECURE_NO_WARNINGS"
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -138,12 +141,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="C:\Utils\Far180\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -170,7 +176,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			CharacterSet="1"
@@ -195,7 +201,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -213,14 +219,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="..\..\Release\ConEmu\ConEmuHk.dll"
 				LinkIncremental="1"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -247,8 +256,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
-			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -273,7 +282,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -291,14 +300,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="..\..\Release\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="1"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -348,7 +360,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -367,12 +379,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -423,7 +438,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -442,12 +457,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -497,7 +515,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -516,12 +534,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
-				OutputFile="\\WIN2K3\FAR\Far175\ConEmu\ConEmuHk.dll"
+				OutputFile="\\WIN7x86\FAR\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -573,7 +594,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -592,12 +613,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="\\WIN7X64\FAR\FAR2x86\ConEmuHk64.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -647,7 +671,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;FORCE_HEAP_CHECK"
+				PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL;FORCE_HEAP_CHECK"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -666,12 +690,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -723,7 +750,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -742,12 +769,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -800,7 +830,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -818,14 +848,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="..\..\Release.PDB\ConEmu\ConEmuHk.dll"
 				LinkIncremental="1"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -878,7 +911,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -896,14 +929,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="..\..\Release.PDB\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="1"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -955,7 +991,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -973,14 +1009,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ConEmuHk.dll"
 				LinkIncremental="1"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="1"
 				Profile="true"
 			/>
@@ -1034,7 +1073,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -1052,14 +1091,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="..\..\Release\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="1"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -1109,7 +1151,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;FORCE_HEAP_CHECK"
+				PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL;FORCE_HEAP_CHECK"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -1128,12 +1170,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far3x86\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -1185,7 +1230,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -1204,12 +1249,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far3x86\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -1259,10 +1307,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;FORCE_HEAP_CHECK"
+				PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL;FORCE_HEAP_CHECK"
 				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
+				ExceptionHandling="0"
+				BasicRuntimeChecks="0"
 				RuntimeLibrary="1"
+				BufferSecurityCheck="false"
+				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -1278,12 +1329,16 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				EntryPointSymbol="DllMain"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -1335,10 +1390,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS"
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
 				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
+				ExceptionHandling="0"
+				BasicRuntimeChecks="0"
 				RuntimeLibrary="1"
+				BufferSecurityCheck="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -1354,12 +1411,16 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				EntryPointSymbol="DllMain"
+				BaseAddress="0x6F110000"
+				RandomizedBaseAddress="1"
+				FixedBaseAddress="1"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -1398,11 +1459,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ConEmuC.h"
+				RelativePath="..\common\ConEmuCheck.h"
 				>
 			</File>
 			<File
-				RelativePath="..\common\ConEmuCheck.h"
+				RelativePath=".\ConEmuHooks.h"
 				>
 			</File>
 			<File
@@ -1418,6 +1479,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Injects.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\Memory.h"
 				>
 			</File>
@@ -1430,7 +1495,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\common\SetHook.h"
+				RelativePath="SetHook.h"
 				>
 			</File>
 			<File
@@ -1466,19 +1531,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ConEmuCmd.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuHk.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\ConEmuHooks.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuSrv.cpp"
 				>
 			</File>
 			<File
@@ -1494,6 +1547,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Injects.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\common\MAssert.cpp"
 				>
 			</File>
@@ -1502,11 +1559,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\RegHooks.cpp"
+				RelativePath="..\common\MStrSafe.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\common\SetHook.cpp"
+				RelativePath="SetHook.cpp"
 				>
 			</File>
 			<File

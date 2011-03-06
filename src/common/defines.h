@@ -117,7 +117,9 @@ WARNING("WIN64 was not defined");
 #endif
 #define ZeroStruct(s) memset(&(s), 0, sizeof(s))
 
-
+#ifdef CONEMU_MINIMAL
+#undef SHOWDEBUGSTR
+#endif
 
 #ifdef _DEBUG
 extern wchar_t gszDbgModLabel[6];

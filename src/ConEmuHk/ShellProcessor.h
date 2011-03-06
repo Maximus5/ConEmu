@@ -28,16 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-enum CmdOnCreateType
-{
-	eShellExecute = 1,
-	eCreateProcess,
-	eInjectingHooks,
-	eHooksLoaded,
-	eParmsChanged,
-	eLoadLibrary,
-	eFreeLibrary,
-};
 
 class CShellProc
 {
@@ -60,15 +50,15 @@ private:
 	
 	// Информация о запускаемом процессе
 	DWORD mn_ImageSubsystem, mn_ImageBits;
-	wchar_t ms_Executable[MAX_PATH+1];
+	wchar_t ms_ExeTmp[MAX_PATH+1];
 	BOOL mb_WasSuspended; // Если TRUE - значит при вызове CreateProcessXXX уже был флаг CREATE_SUSPENDED
 	BOOL mb_NeedInjects;
 	//BOOL mb_DosBoxAllowed;
 	
-	static int mn_InShellExecuteEx;
+	//static int mn_InShellExecuteEx;
 	BOOL mb_InShellExecuteEx;
 
-	ConEmuGuiMapping m_GuiMapping;
+	CESERVER_CONSOLE_MAPPING_HDR m_SrvMapping;
 
 private:
 	wchar_t* str2wcs(const char* psz, UINT anCP);
@@ -101,8 +91,8 @@ public:
 	BOOL OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asParam, DWORD* anFlags, DWORD* anShowCmd);
 	BOOL OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo);
 	BOOL OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo);
-	BOOL OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, DWORD* anCreationFlags, LPSTARTUPINFOA lpSI);
-	BOOL OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, DWORD* anCreationFlags, LPSTARTUPINFOW lpSI);
+	void OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, DWORD* anCreationFlags, LPSTARTUPINFOA lpSI);
+	void OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, DWORD* anCreationFlags, LPSTARTUPINFOW lpSI);
 	// Вызывается после успешного создания процесса
 	void OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI);
 	void OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess);
@@ -113,5 +103,7 @@ typedef DWORD (WINAPI* GetProcessId_t)(HANDLE Process);
 extern GetProcessId_t gfGetProcessId;
 
 #ifdef _DEBUG
+#ifndef CONEMU_MINIMAL
 void TestShellProcessor();
+#endif
 #endif

@@ -44,11 +44,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 {
+#ifdef CONEMU_MINIMAL
+	rsInfo[0] = 0;
+#else
 	if (!ahWnd)
 	{
 		wcscpy_c(rsInfo, L"<NULL>");
 	}
-	else if (!IsWindow(ahWnd))
+	else if (!isWindow(ahWnd))
 	{
 		_wsprintf(rsInfo, SKIPLEN(countof(rsInfo)) L"0x%08X: Invalid window handle", (DWORD)ahWnd);
 	}
@@ -61,9 +64,11 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 
 		_wsprintf(rsInfo, SKIPLEN(countof(rsInfo)) L"0x%08X: %s - '%s'", (DWORD)ahWnd, szClass, szTitle);
 	}
+#endif
 }
 #endif
 
+#ifndef CONEMU_MINIMAL
 BOOL apiSetForegroundWindow(HWND ahWnd)
 {
 #ifdef _DEBUG
@@ -73,7 +78,9 @@ BOOL apiSetForegroundWindow(HWND ahWnd)
 	BOOL lbRc = ::SetForegroundWindow(ahWnd);
 	return lbRc;
 }
+#endif
 
+#ifndef CONEMU_MINIMAL
 BOOL apiShowWindow(HWND ahWnd, int anCmdShow)
 {
 #ifdef _DEBUG
@@ -83,7 +90,9 @@ BOOL apiShowWindow(HWND ahWnd, int anCmdShow)
 	BOOL lbRc = ::ShowWindow(ahWnd, anCmdShow);
 	return lbRc;
 }
+#endif
 
+#ifndef CONEMU_MINIMAL
 BOOL apiShowWindowAsync(HWND ahWnd, int anCmdShow)
 {
 #ifdef _DEBUG
@@ -92,6 +101,24 @@ BOOL apiShowWindowAsync(HWND ahWnd, int anCmdShow)
 #endif
 	BOOL lbRc = ::ShowWindowAsync(ahWnd, anCmdShow);
 	return lbRc;
+}
+#endif
+
+
+IsWindow_t Is_Window = NULL;
+BOOL isWindow(HWND hWnd)
+{
+	if (!hWnd)
+		return FALSE;
+	if (!Is_Window)
+	{
+		HMODULE hUser = GetModuleHandle(L"User32.dll");
+		if (hUser)
+			Is_Window = (IsWindow_t)GetProcAddress(hUser, "IsWindow");
+	}
+	if (Is_Window)
+		return Is_Window(hWnd);
+	return TRUE;
 }
 
 // pnSize заполняется только в том случае, если файл найден
@@ -180,7 +207,7 @@ BOOL IsFilePath(LPCWSTR asFilePath)
 	return TRUE;
 }
 
-BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t (&rsShortName)[MAX_PATH+1]/*name only*/, BOOL abFavorLength=FALSE)
+BOOL GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortName/*[MAX_PATH+1]-name only*/, BOOL abFavorLength=FALSE)
 {
 	WARNING("FindFirstFile использовать нельзя из-за симлинков");
 	WIN32_FIND_DATAW fnd; memset(&fnd, 0, sizeof(fnd));
@@ -196,7 +223,9 @@ BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t (&rsShortName)[MAX_PATH+1]/*na
 		if ((abFavorLength && (lstrlenW(fnd.cAlternateFileName) < lstrlenW(fnd.cFileName)))
 		        || (wcschr(fnd.cFileName, L' ') != NULL))
 		{
-			wcscpy_c(rsShortName, fnd.cAlternateFileName);
+			if (lstrlen(fnd.cAlternateFileName) >= cchShortNameMax)
+				return FALSE;
+			_wcscpy_c(rsShortName, cchShortNameMax, fnd.cAlternateFileName);
 			return TRUE;
 		}
 	}
@@ -205,13 +234,16 @@ BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t (&rsShortName)[MAX_PATH+1]/*na
 		return FALSE;
 	}
 	
-	wcscpy_c(rsShortName, fnd.cFileName);
+	if (lstrlen(fnd.cFileName) >= cchShortNameMax)
+		return FALSE;
+	_wcscpy_c(rsShortName, cchShortNameMax, fnd.cFileName);
 	return TRUE;
 }
 
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 {
-	if (!asLong) return NULL;
+	if (!asLong)
+		return NULL;
 	
 	int nSrcLen = lstrlenW(asLong);
 	wchar_t* pszLong = lstrdup(asLong);
@@ -219,10 +251,11 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 	int nMaxLen = nSrcLen + MAX_PATH; // "короткое" имя может более MAX_PATH
 	wchar_t* pszShort = (wchar_t*)calloc(nMaxLen, sizeof(wchar_t));
 	
+	wchar_t* pszResult = NULL;
 	wchar_t* pszSrc = pszLong;
 	//wchar_t* pszDst = pszShort;
 	wchar_t* pszSlash;
-	wchar_t  szName[MAX_PATH+1];
+	wchar_t* szName = (wchar_t*)malloc((MAX_PATH+1)*sizeof(wchar_t));
 	bool     lbNetwork = false;
 	int      nLen, nCurLen = 0;
 	
@@ -287,11 +320,12 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 		if (pszSlash)
 			*pszSlash = 0;
 		
-		if (!GetShortFileName(pszLong, szName, abFavorLength))
+		if (!GetShortFileName(pszLong, MAX_PATH+1, szName, abFavorLength))
 			goto wrap;
 		nLen = lstrlenW(szName);
 		if ((nLen + nCurLen) >= nMaxLen)
 			goto wrap;
+		//pszShort[nCurLen++] = L'\\'; pszShort[nCurLen] = 0;
 		_wcscpyn_c(pszShort+nCurLen, nMaxLen-nCurLen, szName, nLen);
 		nCurLen += nLen;
 
@@ -309,14 +343,19 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 
 	if (nLen <= MAX_PATH)
 	{
-		free(pszLong);
-		return pszShort;
+		pszResult = pszShort;
+		pszShort = NULL;
+		goto wrap;
 	}
 
 wrap:
-	free(pszShort);
-	free(pszLong);
-	return NULL;
+	if (szName)
+		free(szName);
+	if (pszShort)
+		free(pszShort);
+	if (pszLong)
+		free(pszLong);
+	return pszResult;
 }
 
 //wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=FALSE)
@@ -365,7 +404,7 @@ wrap:
 //	return NULL;
 //}
 
-
+#ifndef CONEMU_MINIMAL
 BOOL IsUserAdmin()
 {
 	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
@@ -398,6 +437,7 @@ BOOL IsUserAdmin()
 
 	return(b);
 }
+#endif
 
 
 
@@ -438,7 +478,7 @@ BOOL IsWindows64(BOOL *pbIsWow64Process/* = NULL */)
 	return is64bitOs;
 }
 
-
+#ifndef CONEMU_MINIMAL
 void RemoveOldComSpecC()
 {
 	wchar_t szComSpec[MAX_PATH], szComSpecC[MAX_PATH], szRealComSpec[MAX_PATH];
@@ -503,6 +543,7 @@ void RemoveOldComSpecC()
 		//}
 
 }
+#endif
 
 const wchar_t* PointToName(const wchar_t* asFileOrPath)
 {
@@ -657,7 +698,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 				return TRUE;
 			}
 
-			LPCWSTR pwszQ = pwszCopy + 1 + wcslen(szExe);
+			LPCWSTR pwszQ = pwszCopy + 1 + lstrlen(szExe);
 
 			if (*pwszQ != L'"' && IsExecutable(szExe))
 			{
@@ -1316,6 +1357,7 @@ const wchar_t* SkipNonPrintable(const wchar_t* asParams)
 //
 
 
+#ifndef CONEMU_MINIMAL
 MConHandle::MConHandle(LPCWSTR asName)
 {
 	mn_StdMode = 0;
@@ -1505,11 +1547,11 @@ void MConHandle::Close()
 		}
 	}
 };
+#endif
 
 
 
-
-
+#ifndef CONEMU_MINIMAL
 MEvent::MEvent()
 {
 	ms_EventName[0] = 0;
@@ -1583,6 +1625,7 @@ HANDLE MEvent::GetHandle()
 {
 	return mh_Event;
 }
+#endif
 
 
 
@@ -1598,8 +1641,7 @@ HANDLE MEvent::GetHandle()
 
 
 
-
-
+#ifndef CONEMU_MINIMAL
 MSetter::MSetter(BOOL* st) :
 	mp_BoolVal(NULL), mdw_DwordVal(NULL)
 {
@@ -1629,11 +1671,11 @@ void MSetter::Unlock()
 		if (mdw_DwordVal) *mdw_DwordVal = mdw_OldDwordValue;
 	}
 }
+#endif
 
 
 
-
-
+#ifndef CONEMU_MINIMAL
 MSection::MSection()
 {
 	mn_TID = 0; mn_Locked = 0; mb_Exclusive = FALSE;
@@ -1953,6 +1995,8 @@ MSectionLock::~MSectionLock()
 };
 BOOL MSectionLock::Lock(MSection* apS, BOOL abExclusive/*=FALSE*/, DWORD anTimeout/*=-1*/)
 {
+	if (!apS)
+		return FALSE;
 	if (mb_Locked && apS == mp_S && (abExclusive == mb_Exclusive || mb_Exclusive))
 		return FALSE; // уже заблокирован
 
@@ -1964,7 +2008,10 @@ BOOL MSectionLock::Lock(MSection* apS, BOOL abExclusive/*=FALSE*/, DWORD anTimeo
 };
 BOOL MSectionLock::RelockExclusive(DWORD anTimeout/*=-1*/)
 {
-	if (mb_Locked && mb_Exclusive) return FALSE;  // уже
+	if (!mp_S)
+		return FALSE;
+	if (mb_Locked && mb_Exclusive)
+		return FALSE;  // уже
 
 	// Чистый ReLock делать нельзя. Виснут другие нити, которые тоже запросили ReLock
 	Unlock();
@@ -1984,11 +2031,11 @@ BOOL MSectionLock::isLocked()
 {
 	return (mp_S!=NULL) && mb_Locked;
 };
+#endif
 
 
 
-
-
+#ifndef CONEMU_MINIMAL
 MFileLog::MFileLog(LPCWSTR asName, LPCWSTR asDir /*= NULL*/, DWORD anPID /*= 0*/)
 {
 	mh_LogFile = NULL;
@@ -2122,8 +2169,10 @@ void MFileLog::LogString(LPCWSTR asText, BOOL abWriteTime /*= TRUE*/, LPCWSTR as
 	WriteFile(mh_LogFile, szInfo, nCur*2, &dwLen, 0);
 	FlushFileBuffers(mh_LogFile);
 }
+#endif
 
 
+#ifndef CONEMU_MINIMAL
 /* *********************************** */
 CToolTip::CToolTip()
 {
@@ -2244,3 +2293,4 @@ void CToolTip::HideTip()
 	if (hTip)
 		SendMessage(hTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)pti);
 }
+#endif

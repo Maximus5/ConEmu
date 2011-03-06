@@ -33,6 +33,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../Common/RgnDetect.h"
 //#include "../Common/WinObjects.h"
 
+#define DEFINE_EXIT_DESC
+#include "../ConEmuCD/ExitCodes.h"
+
 #define CES_CMDACTIVE 0x01
 #define CES_TELNETACTIVE 0x02
 #define CES_FARACTIVE 0x04
@@ -76,6 +79,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define CONSOLE_BLOCK_SELECTION 0x0100 // selecting text (standard mode)
 #define CONSOLE_TEXT_SELECTION 0x0200 // selecting text (stream mode)
+
+#define PROCESS_WAIT_START_TIME 1000
 
 /*#pragma pack(push, 1)
 
@@ -241,6 +246,7 @@ class CRealConsole
 		void PostMacro(LPCWSTR asMacro);
 		//BOOL FlushInputQueue(DWORD nTimeout = 500);
 		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
+		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnMouse(UINT messg, WPARAM wParam, int x, int y);
 		void OnFocus(BOOL abFocused);
 
@@ -316,6 +322,7 @@ class CRealConsole
 		LPCWSTR GetDir();
 		BOOL GetUserPwd(const wchar_t** ppszUser, /*const wchar_t** ppszPwd,*/ BOOL* pbRestricted);
 		short GetProgress(BOOL* rpbError);
+		void UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo);
 		void UpdateFarSettings(DWORD anFarPID=0);
 		int CoordInPanel(COORD cr);
 		BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE);
@@ -342,6 +349,7 @@ class CRealConsole
 		void SetForceRead();
 		//DWORD WaitEndUpdate(DWORD dwTimeout=1000);
 		LPCWSTR GetConStatus();
+		static wchar_t ms_LastRConStatus[80];
 		void UpdateCursorInfo();
 		void Detach();
 		void AdminDuplicate();
@@ -489,6 +497,7 @@ class CRealConsole
 		CESERVER_REQ* cmdActivateCon(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdGetNewConParm(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
+		//CESERVER_REQ* cmdAssert(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		
 		//void ApplyConsoleInfo(CESERVER_REQ* pInfo);
 		void SetHwnd(HWND ahConWnd, BOOL abForceApprove = FALSE);
@@ -525,6 +534,7 @@ class CRealConsole
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> m_ConsoleMap;
 		//const CEFAR_INFO_MAPPING *mp_FarInfo;
 		MFileMapping<const CEFAR_INFO_MAPPING> m_FarInfo;
+		MSection ms_FarInfoCS;
 		// Colorer Mapping
 		//HANDLE mh_ColorMapping;
 		//AnnotationHeader *mp_ColorHdr;

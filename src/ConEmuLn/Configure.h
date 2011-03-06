@@ -154,19 +154,19 @@ static int ConfigureProc(int ItemNumber)
 		{DI_CHECKBOX,  5,  7,  0,  0},    //cfgHilight
 		{DI_TEXT,      5,  8,  0,  0, false},   //cfgPlugLabel, cfgPlugBack
 		#if FAR_UNICODE>=1867
-		{DI_FIXEDIT,  29,  8,  36, 0, {(DWORD_PTR)0}, NULL, szColorMask, DIF_MASKEDIT},
-		#else
-		{DI_FIXEDIT,  29,  8,  36, 0, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
-		#endif
-
+		{DI_FIXEDIT,  29,  8,  36, 0, {0}, NULL, szColorMask, DIF_MASKEDIT},
 		{DI_TEXT,      0, 10,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_SEPARATOR},
+		#else
+		{DI_FIXEDIT,  29,  8,  36, 0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
+		{DI_TEXT,      0, 10,  0,  0, false, {(DWORD_PTR)0}, DIF_SEPARATOR},
+		#endif
 
 		#if FAR_UNICODE>=1867
 		{DI_BUTTON,    0, 11,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP|DIF_DEFAULTBUTTON},  //cfgOk
 		{DI_BUTTON,    0, 11,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP}, //cfgCancel
 		#else
-		{DI_BUTTON,    0, 11,  0,  0, true,  {(DWORD_PTR)true},        DIF_CENTERGROUP, true},  //cfgOk
-		{DI_BUTTON,    0, 11,  0,  0, true,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //cfgCancel
+		{DI_BUTTON,    0, 11,  0,  0, false,  {(DWORD_PTR)true},        DIF_CENTERGROUP, true},  //cfgOk
+		{DI_BUTTON,    0, 11,  0,  0, false,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //cfgCancel
 		#endif
 	};
 	SETTEXT(items[cfgTitle], GetMsgT(CEPluginName));

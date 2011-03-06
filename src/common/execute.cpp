@@ -71,7 +71,7 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 {
 	bool Result = false;
 	ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
-	ImageBits = 32;
+	ImageBits = 0;
 	FileAttrs = (DWORD)-1;
 	// Пытаться в UNC? Хотя сам CreateProcess UNC не поддерживает, так что смысла пока нет
 	HANDLE hModuleFile = CreateFile(FileName,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
@@ -719,12 +719,12 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //	return iRc;
 //}
 
-bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD &ImageSubsystem, DWORD &ImageBits, DWORD& FileAttrs)
+bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& ImageSubsystem, DWORD& ImageBits, DWORD& FileAttrs)
 {
 	if (!Module || !*Module)
 		return false;
 
-	//bool Result = false;
+	bool Result = false;
 	//ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
 
 	// Исключения нас не интересуют - команда уже сформирована и отдана в CreateProcess!
@@ -747,17 +747,44 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD &Ima
 
 	//string strFullName=Module;
 	LPCWSTR ModuleExt = PointToExt(Module);
-	wchar_t strPathExt[32768]; strPathExt[0] = 0; //(L".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WSH");
-	DWORD nPathExtLen = GetEnvironmentVariable(L"PATHEXT", strPathExt, countof(strPathExt)-2);
+	wchar_t *strPathExt/*[32767]*/ = NULL; //(L".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WSH");
+	wchar_t *strPathEnv/*[32767]*/ = NULL;
+	wchar_t *strExpand/*[32767]*/ = NULL;
+	wchar_t *strTmpName/*[32767]*/ = NULL;
+	wchar_t *pszFilePart = NULL;
+	DWORD nPathExtLen = 0;
+	LPCWSTR pszPathExtEnd = NULL;
+	LPWSTR Ext = NULL;
+
+	typedef LONG (WINAPI *RegOpenKeyExW_t)(HKEY hKey, LPCTSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
+	RegOpenKeyExW_t _RegOpenKeyEx = NULL;
+	typedef LONG (WINAPI *RegQueryValueExW_t)(HKEY hKey, LPCTSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+	RegQueryValueExW_t _RegQueryValueEx = NULL;
+	typedef LONG (WINAPI *RegCloseKey_t)(HKEY hKey);
+	RegCloseKey_t _RegCloseKey = NULL;
+	HMODULE hAdvApi = NULL;
+	
+	
+
+	int cchstrPathExt = 32767;
+	strPathExt = (wchar_t*)malloc(cchstrPathExt*sizeof(wchar_t)); *strPathExt = 0;
+	int cchstrPathEnv = 32767;
+	strPathEnv = (wchar_t*)malloc(cchstrPathEnv*sizeof(wchar_t)); *strPathEnv = 0;
+	int cchstrExpand = 32767;
+	strExpand = (wchar_t*)malloc(cchstrExpand*sizeof(wchar_t)); *strExpand = 0;
+	int cchstrTmpName = 32767;
+	strTmpName = (wchar_t*)malloc(cchstrTmpName*sizeof(wchar_t)); *strTmpName = 0;
+		
+	nPathExtLen = GetEnvironmentVariable(L"PATHEXT", strPathExt, cchstrPathExt-2);
 	if (!nPathExtLen)
 	{
-		wcscpy_c(strPathExt, L".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WSH");
+		_wcscpy_c(strPathExt, cchstrPathExt, L".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WSH");
 		nPathExtLen = lstrlen(strPathExt);
 	}
-	LPCWSTR pszPathExtEnd = strPathExt+nPathExtLen;
+	pszPathExtEnd = strPathExt+nPathExtLen;
 	// Разбить на токены
 	strPathExt[nPathExtLen] = strPathExt[nPathExtLen+1] = 0;
-	LPWSTR Ext = wcschr(strPathExt, L';');
+	Ext = wcschr(strPathExt, L';');
 	while (Ext)
 	{
 		*Ext = 0;
@@ -765,7 +792,6 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD &Ima
 	}
 
 	TODO("Проверить на превышение длин строк");
-	wchar_t strTmpName[32767], *pszFilePart;
 
 	// первый проход - в текущем каталоге
 	LPWSTR pszExtCur = strPathExt;
@@ -774,18 +800,19 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD &Ima
 		Ext = pszExtCur;
 		pszExtCur = pszExtCur + lstrlen(pszExtCur)+1;
 
-		_wcscpyn_c(strTmpName, countof(strTmpName), Module, countof(strTmpName));
+		_wcscpyn_c(strTmpName, cchstrTmpName, Module, cchstrTmpName);
 
 		if (!ModuleExt)
 		{
 			if (!*Ext)
 				continue;
-			_wcscatn_c(strTmpName, countof(strTmpName), Ext, countof(strTmpName));
+			_wcscatn_c(strTmpName, cchstrTmpName, Ext, cchstrTmpName);
 		}
 
 		if (GetImageSubsystem(strTmpName, ImageSubsystem, ImageBits/*16/32/64*/, FileAttrs))
 		{
-			return true;
+			Result = true;
+			goto wrap;
 		}
 
 		if (ModuleExt)
@@ -795,10 +822,9 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD &Ima
 	}
 
 	// второй проход - по правилам SearchPath
-	wchar_t strPathEnv[32767], strExpand[32767];
 
 	// поиск по переменной PATH
-	if (GetEnvironmentVariable(L"PATH", strPathEnv, countof(strPathEnv)))
+	if (GetEnvironmentVariable(L"PATH", strPathEnv, cchstrPathEnv))
 	{
 		LPWSTR pszPathEnvEnd = strPathEnv + lstrlen(strPathEnv);
 
@@ -827,10 +853,13 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD &Ima
 				if (!*Ext)
 					continue;
 
-				if (SearchPath(Path, Module, Ext, countof(strTmpName), strTmpName, &pszFilePart))
+				if (SearchPath(Path, Module, Ext, cchstrTmpName, strTmpName, &pszFilePart))
 				{
 					if (GetImageSubsystem(strTmpName, ImageSubsystem, ImageBits, FileAttrs))
-						return true;
+					{
+						Result = true;
+						goto wrap;
+					}
 				}
 			}
 		}
@@ -844,17 +873,29 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD &Ima
 		if (!*Ext)
 			continue;
 
-		if (SearchPath(NULL, Module, Ext, countof(strTmpName), strTmpName, &pszFilePart))
+		if (SearchPath(NULL, Module, Ext, cchstrTmpName, strTmpName, &pszFilePart))
 		{
 			if (GetImageSubsystem(strTmpName, ImageSubsystem, ImageBits, FileAttrs))
-				return true;
+			{
+				Result = true;
+				goto wrap;
+			}
 		}
 	}
 
 	// третий проход - лезем в реестр в "App Paths"
 	if (!wcschr(Module, L'\\'))
 	{
-		static const WCHAR RegPath[] = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
+		hAdvApi = LoadLibrary(L"AdvApi32.dll");
+		if (!hAdvApi)
+			goto wrap;
+		_RegOpenKeyEx = (RegOpenKeyExW_t)GetProcAddress(hAdvApi, "RegOpenKeyExW");
+		_RegQueryValueEx = (RegQueryValueExW_t)GetProcAddress(hAdvApi, "RegQueryValueExW");
+		_RegCloseKey = (RegCloseKey_t)GetProcAddress(hAdvApi, "RegCloseKey");
+		if (!_RegOpenKeyEx || !_RegQueryValueEx || !_RegCloseKey)
+			goto wrap;
+
+		LPCWSTR RegPath = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
 		// В строке Module заменить исполняемый модуль на полный путь, который
 		// берется из SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths
 		// Сначала смотрим в HKCU, затем - в HKLM
@@ -877,10 +918,10 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD &Ima
 					continue;
 			}
 
-			wcscpy_c(strTmpName, RegPath);
-			_wcscatn_c(strTmpName, countof(strTmpName), Module, countof(strTmpName));
+			_wcscpy_c(strTmpName, cchstrTmpName, RegPath);
+			_wcscatn_c(strTmpName, cchstrTmpName, Module, cchstrTmpName);
 			if (Ext)
-				_wcscatn_c(strTmpName, countof(strTmpName), Ext, countof(strTmpName));
+				_wcscatn_c(strTmpName, cchstrTmpName, Ext, cchstrTmpName);
 
 			DWORD samDesired = KEY_QUERY_VALUE;
 			DWORD RedirectionFlag = 0;
@@ -905,25 +946,38 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD &Ima
 						break;
 				}
 				HKEY hKey;
-				if (RegOpenKeyEx(RootFindKey[i], strTmpName, 0, samDesired, &hKey) == ERROR_SUCCESS)
+				if (_RegOpenKeyEx(RootFindKey[i], strTmpName, 0, samDesired, &hKey) == ERROR_SUCCESS)
 				{
 					DWORD nType = 0, nSize = sizeof(strTmpName)-2;
-					int RegResult = RegQueryValueEx(hKey, L"", NULL, &nType, (LPBYTE)strTmpName, &nSize);
-					RegCloseKey(hKey);
+					int RegResult = _RegQueryValueEx(hKey, L"", NULL, &nType, (LPBYTE)strTmpName, &nSize);
+					_RegCloseKey(hKey);
 
 					if ((RegResult == ERROR_SUCCESS) && (nType == REG_SZ || nType == REG_EXPAND_SZ || nType == REG_MULTI_SZ))
 					{
 						strTmpName[(nSize >> 1)+1] = 0;
-						if (!ExpandEnvironmentStrings(strTmpName, strExpand, countof(strExpand)))
-							wcscpy_c(strExpand, strTmpName);
+						if (!ExpandEnvironmentStrings(strTmpName, strExpand, cchstrExpand))
+							_wcscpy_c(strExpand, cchstrExpand, strTmpName);
 						if (GetImageSubsystem(Unquote(strExpand), ImageSubsystem, ImageBits, FileAttrs))
-							return true;
+						{
+							Result = true;
+							goto wrap;
+						}
 					}
 				}
 			}
 		}
 	}
 
-	// Не нашли
-	return false;
+wrap:
+	if (strPathExt)
+		free(strPathExt);
+	if (strPathEnv)
+		free(strPathEnv);
+	if (strExpand)
+		free(strExpand);
+	if (strTmpName)
+		free(strTmpName);
+	if (hAdvApi)
+		FreeLibrary(hAdvApi);
+	return Result;
 }

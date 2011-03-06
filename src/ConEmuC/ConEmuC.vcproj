@@ -669,7 +669,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\\WIN2K3\FAR\Far175\ConEmu\ConEmuC.exe"
+				OutputFile="\\WINXP\FAR\ConEmu\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -1384,6 +1384,10 @@
 			</File>
 			<File
 				RelativePath="..\common\MAssert.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\MStrSafe.cpp"
 				>
 			</File>
 		</Filter>

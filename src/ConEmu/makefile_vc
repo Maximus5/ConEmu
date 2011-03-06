@@ -127,6 +127,7 @@ $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmuCheck.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
+$(INTDIR)\MStrSafe.obj \
 $(INTDIR)\RgnDetect.obj \
 $(INTDIR)\WinObjects.obj
 
@@ -316,6 +317,8 @@ $(INTDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
 $(INTDIR)\Memory.obj: ..\common\Memory.cpp
 
 $(INTDIR)\MAssert.obj: ..\common\MAssert.cpp
+
+$(INTDIR)\MStrSafe.obj: ..\common\MStrSafe.cpp
 
 $(INTDIR)\RgnDetect.obj: ..\common\RgnDetect.cpp
 

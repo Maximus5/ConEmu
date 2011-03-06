@@ -508,7 +508,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 	wchar_t* lpMsgBuf = NULL;
 	MCHKHEAP
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
-	int nLen = _tcslen(asLabel)+64+(lpMsgBuf ? wcslen(lpMsgBuf) : 0);
+	int nLen = _tcslen(asLabel)+64+(lpMsgBuf ? lstrlen(lpMsgBuf) : 0);
 	wchar_t *out = new wchar_t[nLen];
 	_wsprintf(out, SKIPLEN(nLen) _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
 
@@ -694,8 +694,8 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 //		if (lbRc) {
 //			lbRc = FALSE;
 //			pszSlash[1] = 0;
-//			if ((wcslen(fnd.cFileName)+wcslen(szFind)) >= MAX_PATH) {
-//				TCHAR* psz=(TCHAR*)calloc(wcslen(fnd.cFileName)+100,sizeof(TCHAR));
+//			if ((lstrlen(fnd.cFileName)+lstrlen(szFind)) >= MAX_PATH) {
+//				TCHAR* psz=(TCHAR*)calloc(lstrlen(fnd.cFileName)+100,sizeof(TCHAR));
 //				lstrcpyW(psz, L"Too long full pathname for font:\n");
 //				lstrcatW(psz, fnd.cFileName);
 //				MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);
@@ -706,7 +706,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 //				DWORD dwSize = MAX_PATH;
 //				//if (!AddFontResourceEx(szFind, FR_PRIVATE, NULL)) //ADD fontname; by Mors
 //				//{
-//				//	TCHAR* psz=(TCHAR*)calloc(wcslen(szFind)+100,sizeof(TCHAR));
+//				//	TCHAR* psz=(TCHAR*)calloc(lstrlen(szFind)+100,sizeof(TCHAR));
 //				//	lstrcpyW(psz, L"Can't register font:\n");
 //				//	lstrcatW(psz, szFind);
 //				//	MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);
@@ -715,10 +715,10 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 //				//if (!GetFontResourceInfo(szFind, &dwSize, szTempFontFam, 1)) {
 //				if (!gpSet->GetFontNameFromFile(szFind, szTempFontFam)) {
 //					DWORD dwErr = GetLastError();
-//					TCHAR* psz=(TCHAR*)calloc(wcslen(szFind)+100,sizeof(TCHAR));
+//					TCHAR* psz=(TCHAR*)calloc(lstrlen(szFind)+100,sizeof(TCHAR));
 //					lstrcpyW(psz, L"Can't query font family for file:\n");
 //					lstrcatW(psz, szFind);
-//					wsprintf(psz+wcslen(psz), L"\nErrCode=0x%08X", dwErr);
+//					wsprintf(psz+lstrlen(psz), L"\nErrCode=0x%08X", dwErr);
 //					MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);
 //					free(psz);
 //				} else {
@@ -965,19 +965,6 @@ void ResetConman()
 	}
 }
 
-#ifdef _DEBUG
-extern bool gbAllowAssertThread;
-//// Для отладки ShellProcessor
-//#include "../ConEmuHk/ShellProcessor.cpp"
-//HWND ghConEmuWnd = NULL;
-//HookModeFar gFarMode = {sizeof(HookModeFar)};
-//HWND ghConEmuWndDC = NULL;
-//int InjectHooks(struct _PROCESS_INFORMATION,int)
-//{
-//	return -1;
-//}
-//DWORD (__stdcall* gfGetProcessId)(void *) = NULL;
-#endif
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -998,15 +985,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	g_hInstance = hInstance;
 	gpLocalSecurity = LocalSecurity();
 #ifdef _DEBUG
-	gbAllowAssertThread = true;
+	gAllowAssertThread = am_Thread;
 #endif
 
 #ifdef _DEBUG
+	wchar_t* pszShort = GetShortFileNameEx(L"T:\\VCProject\\FarPlugin\\ConEmu\\Maximus5\\Debug\\Far2x86\\ConEmu\\ConEmu.exe");
+	if (pszShort) free(pszShort);
+	pszShort = GetShortFileNameEx(L"\\\\MAX\\X-change\\GoogleDesktopEnterprise\\AdminGuide.pdf");
+	if (pszShort) free(pszShort);
+	
+
 	DWORD ImageSubsystem, ImageBits;
 	GetImageSubsystem(ImageSubsystem,ImageBits);
 
 	wchar_t szConEmuBaseDir[MAX_PATH+1], szConEmuExe[MAX_PATH+1];
 	BOOL lbDbgFind = FindConEmuBaseDir(szConEmuBaseDir, szConEmuExe);
+
+	wchar_t szDebug[1024] = {};
+	msprintf(szDebug, countof(szDebug), L"Test %u %i %s 0x%X %c 0x%08X*",
+		987654321, -1234, L"abcdef", 0xAB1298, L'Z', 0xAB1298);
 #endif
 
 #ifdef SHOW_STARTED_MSGBOX
@@ -1484,7 +1481,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//if (FontFilePrm) {
 	//	if (!AddFontResourceEx(FontFile, FR_PRIVATE, NULL)) //ADD fontname; by Mors
 	//	{
-	//		TCHAR* psz=(TCHAR*)calloc(wcslen(FontFile)+100,sizeof(TCHAR));
+	//		TCHAR* psz=(TCHAR*)calloc(lstrlen(FontFile)+100,sizeof(TCHAR));
 	//		lstrcpyW(psz, L"Can't register font:\n");
 	//		lstrcatW(psz, FontFile);
 	//		MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);

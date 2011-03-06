@@ -47,6 +47,10 @@ BOOL apiShowWindowAsync(HWND ahWnd, int anCmdShow);
 void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024]);
 #endif
 
+typedef BOOL (WINAPI* IsWindow_t)(HWND hWnd);
+extern IsWindow_t Is_Window;
+BOOL isWindow(HWND hWnd);
+
 // Some WinAPI related functions
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
@@ -63,12 +67,12 @@ BOOL IsExecutable(LPCWSTR aszFilePathName);
 BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1],
 			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit);
 
-
 //BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1]);
 
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------
+#ifndef CONEMU_MINIMAL
 class MSectionLock;
 
 class MSection
@@ -123,8 +127,10 @@ class MSectionLock
 		MSectionLock();
 		~MSectionLock();
 };
+#endif
 
 
+#ifndef CONEMU_MINIMAL
 /* Console Handles */
 class MConHandle
 {
@@ -146,6 +152,7 @@ class MConHandle
 		MConHandle(LPCWSTR asName);
 		~MConHandle();
 };
+#endif
 
 
 template <class T>
@@ -156,9 +163,11 @@ class MFileMapping
 		BOOL mb_WriteAllowed;
 		int mn_Size;
 		T* mp_Data; //WARNING!!! Доступ может быть только на чтение!
-		wchar_t ms_MapName[MAX_PATH];
+		wchar_t ms_MapName[128];
 		DWORD mn_LastError;
+		#ifndef CONEMU_MINIMAL
 		wchar_t ms_Error[MAX_PATH*2];
+		#endif
 	public:
 		T* Ptr()
 		{
@@ -172,15 +181,20 @@ class MFileMapping
 		{
 			return (mp_Data!=NULL);
 		};
+		#ifndef CONEMU_MINIMAL
 		LPCWSTR GetErrorText()
 		{
 			return ms_Error;
 		};
 		bool SetFrom(const T* pSrc, int nSize=-1)
 		{
-			if (!IsValid() || !nSize) return false;
+			if (!IsValid() || !nSize)
+				return false;
 
-			if (nSize<0) nSize = sizeof(T);
+			if (nSize == -1)
+				nSize = sizeof(T);
+			if (nSize < 0)
+				return false;
 
 			bool lbChanged = (memcmp(mp_Data, pSrc, nSize)!=0);
 			memmove(mp_Data, pSrc, nSize);
@@ -196,12 +210,18 @@ class MFileMapping
 			memmove((void*)pDst, mp_Data, nSize);
 			return true;
 		}
+		#endif
 	public:
 		void InitName(const wchar_t *aszTemplate,DWORD Parm1=0,DWORD Parm2=0)
 		{
 			if (mh_Mapping) CloseMap();
 
-			_wsprintf(ms_MapName, SKIPLEN(countof(ms_MapName)) aszTemplate, Parm1, Parm2);
+			//#ifdef CONEMU_MINIMAL
+			//			_ASSERTE(Parm2==0);
+			msprintf(ms_MapName, countof(ms_MapName), aszTemplate, Parm1, Parm2);
+			//#else
+			//			_wsprintf(ms_MapName, SKIPLEN(countof(ms_MapName)) aszTemplate, Parm1, Parm2);
+			//#endif
 		};
 		void ClosePtr()
 		{
@@ -230,14 +250,19 @@ class MFileMapping
 		{
 			if (mh_Mapping) CloseMap();
 
-			mn_LastError = 0; ms_Error[0] = 0;
+			mn_LastError = 0;
+			#ifndef CONEMU_MINIMAL
+			ms_Error[0] = 0;
+			#endif
 			_ASSERTE(mh_Mapping==NULL && mp_Data==NULL);
 			_ASSERTE(nSize==-1 || nSize>=sizeof(T));
 
 			if (ms_MapName[0] == 0)
 			{
 				_ASSERTE(ms_MapName[0]!=0);
+				#ifndef CONEMU_MINIMAL
 				wcscpy_c(ms_Error, L"Internal error. Mapping file name was not specified.");
+				#endif
 				return NULL;
 			}
 			else
@@ -258,8 +283,10 @@ class MFileMapping
 				if (!mh_Mapping)
 				{
 					mn_LastError = GetLastError();
+					#ifndef CONEMU_MINIMAL
 					_wsprintf(ms_Error, SKIPLEN(countof(ms_Error)) L"Can't %s console data file mapping. ErrCode=0x%08X\n%s",
 					          abCreate ? L"create" : L"open", mn_LastError, ms_MapName);
+					#endif
 				}
 				else
 				{
@@ -269,8 +296,10 @@ class MFileMapping
 					if (!mp_Data)
 					{
 						mn_LastError = GetLastError();
+						#ifndef CONEMU_MINIMAL
 						_wsprintf(ms_Error, SKIPLEN(countof(ms_Error)) L"Can't map console info (%s). ErrCode=0x%08X\n%s",
 						          mb_WriteAllowed ? L"ReadWrite" : L"Read" ,mn_LastError, ms_MapName);
+						#endif
 					}
 				}
 			}
@@ -278,11 +307,13 @@ class MFileMapping
 			return mp_Data;
 		};
 	public:
+		#ifndef CONEMU_MINIMAL
 		T* Create(int nSize=-1)
 		{
 			_ASSERTE(nSize==-1 || nSize>=sizeof(T));
 			return InternalOpenCreate(TRUE/*abCreate*/,TRUE/*abReadWrite*/,nSize);
 		};
+		#endif
 		T* Open(BOOL abReadWrite=FALSE/*FALSE - только Read*/,int nSize=-1)
 		{
 			_ASSERTE(nSize==-1 || nSize>=sizeof(T));
@@ -292,7 +323,11 @@ class MFileMapping
 		MFileMapping()
 		{
 			mh_Mapping = NULL; mb_WriteAllowed = FALSE; mp_Data = NULL;
-			mn_Size = -1; ms_MapName[0] = ms_Error[0] = 0; mn_LastError = 0;
+			mn_Size = -1; ms_MapName[0] = 0;
+			#ifndef CONEMU_MINIMAL
+			ms_Error[0] = 0;
+			#endif
+			mn_LastError = 0;
 		};
 		~MFileMapping()
 		{
@@ -300,6 +335,7 @@ class MFileMapping
 		};
 };
 
+#ifndef CONEMU_MINIMAL
 class MEvent
 {
 	protected:
@@ -316,6 +352,7 @@ class MEvent
 		DWORD  Wait(DWORD dwMilliseconds, BOOL abAutoOpen=TRUE);
 		HANDLE GetHandle();
 };
+#endif
 
 template <class T_IN, class T_OUT>
 class MPipe
@@ -563,6 +600,7 @@ class MPipe
 };
 
 
+#ifndef CONEMU_MINIMAL
 class MSetter
 {
 	protected:
@@ -592,7 +630,9 @@ class MSetter
 
 		void Unlock();
 };
+#endif
 
+#ifndef CONEMU_MINIMAL
 class MFileLog
 {
 	protected:
@@ -606,7 +646,9 @@ class MFileLog
 		void LogString(LPCSTR asText, BOOL abWriteTime = TRUE, LPCSTR asThreadName = NULL);
 		void LogString(LPCWSTR asText, BOOL abWriteTime = TRUE, LPCWSTR asThreadName = NULL);
 };
+#endif
 
+#ifndef CONEMU_MINIMAL
 // Класс отключения редиректора системных библиотек.
 class MWow64Disable
 {
@@ -658,7 +700,9 @@ class MWow64Disable
 			Restore();
 		};
 };
+#endif
 
+#ifndef CONEMU_MINIMAL
 // Обертка для таймера
 class CTimer
 {
@@ -712,7 +756,9 @@ class CTimer
 			mh_Wnd = ahWnd; mn_TimerId = anTimerID; mn_Elapse = anElapse;
 		};
 };
+#endif
 
+#ifndef CONEMU_MINIMAL
 class CToolTip
 {
 public:
@@ -729,3 +775,4 @@ private:
 	TOOLINFO mti_Tip, mti_Ball;
 	int mb_LastTipBalloon;
 };
+#endif

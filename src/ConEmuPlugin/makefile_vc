@@ -91,6 +91,7 @@ $(OBJDIR)\Execute.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\Memory.obj \
+$(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\WinObjects.obj
 
 !if "$(EXTERNAL_HOOK_LIBRARY)" == "0"
@@ -340,10 +341,10 @@ $(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
 
 $(OBJDIR)\Execute.obj: ..\common\execute.cpp
 
-$(OBJDIR)\SetHook.obj: ..\common\SetHook.cpp
-
 $(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp
 
 $(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
 
 $(OBJDIR)\Memory.obj: ..\common\Memory.cpp
+
+$(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp

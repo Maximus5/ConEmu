@@ -184,7 +184,7 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 
 					pipe.Read(curr, sizeof(WCHAR)*nCurSize, &cbBytesRead);
 					_ASSERTE(*curr);
-					curr+=wcslen(curr)+1;
+					curr+=lstrlen(curr)+1;
 					nFilesCount ++;
 				}
 

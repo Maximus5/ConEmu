@@ -129,7 +129,9 @@ class CConEmuMain
 		wchar_t ms_ConEmuExe[MAX_PATH+1];       // полный путь к ConEmu.exe (GUI)
 		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
 		wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
+		BOOL mb_DosBoxExists;
 	private:
+		BOOL CheckDosBoxExists();
 		wchar_t ms_ConEmuXml[MAX_PATH+1];       // полный путь к портабельным настройкам
 	public:
 		LPWSTR ConEmuXml();
@@ -140,6 +142,7 @@ class CConEmuMain
 		wchar_t ms_ConEmuCurDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
 		wchar_t *mpsz_ConEmuArgs;    // Аргументы
 	private:
+		ConEmuGuiMapping m_GuiInfo;
 		MFileMapping<ConEmuGuiMapping> m_GuiInfoMapping;
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
@@ -214,7 +217,7 @@ class CConEmuMain
 		short mn_Progress;
 		LPTSTR GetTitleStart();
 		BOOL mb_InTimer;
-		BOOL mb_ProcessCreated, mb_WorkspaceErasedOnClose; DWORD mn_StartTick;
+		BOOL mb_ProcessCreated, mb_WorkspaceErasedOnClose; //DWORD mn_StartTick;
 		HWINEVENTHOOK mh_WinHook; //, mh_PopupHook;
 		static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 		CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT];
@@ -247,6 +250,7 @@ class CConEmuMain
 			wchar_t szTranslatedChars[16];
 		} m_TranslatedChars[256];
 		BYTE mn_LastPressedVK;
+		bool mb_InImeComposition, mb_ImeMethodChanged;
 		wchar_t ms_ConEmuAliveEvent[MAX_PATH+64];
 		HANDLE mh_ConEmuAliveEvent; BOOL mb_ConEmuAliveOwned, mb_AliveInitialized;
 		//
@@ -370,6 +374,7 @@ class CConEmuMain
 		bool isFirstInstance();
 		bool IsGlass();
 		bool isIconic();
+		bool isInImeComposition();
 		bool isLBDown();
 		bool isMainThread();
 		bool isMeForeground(bool abRealAlso=false);
@@ -454,6 +459,7 @@ class CConEmuMain
 		void OnHideCaption();
 		LRESULT OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam);
 		LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		LRESULT OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayoutName);
 		LRESULT OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -479,6 +485,7 @@ class CConEmuMain
 		void OnVConCreated(CVirtualConsole* apVCon);
 		LRESULT OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 		void OnAllVConClosed();
+		void OnRConStartedSuccess(CRealConsole* apRCon);
 		LRESULT OnUpdateScrollInfo(BOOL abPosted = FALSE);
 		void OnPanelViewSettingsChanged(BOOL abSendChanges=TRUE);
 		void OnGlobalSettingsChanged();

@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCheck.h"
 #include "WinObjects.h"
 
+// !!! Использовать только через функцию: LocalSecurity() !!!
 SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
 //#ifdef _DEBUG
@@ -65,6 +66,86 @@ typedef HWND (APIENTRY *FGetConsoleWindow)();
 //#if defined(__GNUC__)
 //};
 //#endif
+
+//// Это для CONEMU_MINIMAL, чтобы wsprintf не был нужен
+//LPCWSTR CreatePipeName(wchar_t (&szGuiPipeName)[128], LPCWSTR asFormat, DWORD anValue)
+//{
+//	return msprintf(szGuiPipeName, countof(szGuiPipeName), asFormat, L".", anValue);
+//	//szGuiPipeName[0] = 0;
+//
+//	//const wchar_t* pszSrc = asFormat;
+//	//wchar_t* pszDst = szGuiPipeName;
+//
+//	//while (*pszSrc)
+//	//{
+//	//	if (*pszSrc == L'%')
+//	//	{
+//	//		pszSrc++;
+//	//		switch (*pszSrc)
+//	//		{
+//	//		case L's':
+//	//			pszSrc++;
+//	//			*(pszDst++) = L'.';
+//	//			continue;
+//	//		case L'u':
+//	//			{
+//	//				pszSrc++;
+//	//				wchar_t szValueDec[16] = {};
+//	//				DWORD nValue = anValue, i = 0;
+//	//				wchar_t* pszValue = szValueDec;
+//	//				while (nValue)
+//	//				{
+//	//					WORD n = (WORD)(nValue % 10);
+//	//					*(pszValue++) = (wchar_t)(L'0' + n);
+//	//					nValue = (nValue - n) / 10;
+//	//				}
+//	//				if (pszValue == szValueDec)
+//	//					*(pszValue++) = L'0';
+//	//				// Теперь перекинуть в szGuiPipeName
+//	//				while (pszValue > szValueDec)
+//	//				{
+//	//					*(pszDst++) = *(pszValue--);
+//	//				}
+//	//				continue;
+//	//			}
+//	//		case L'0':
+//	//			if (pszSrc[1] == L'8' && pszSrc[2] == L'X')
+//	//			{
+//	//				pszSrc += 3;
+//	//				wchar_t szValueHex[16] = L"00000000";
+//	//				DWORD nValue = anValue, i = 0;
+//	//				wchar_t* pszValue = szValueHex;
+//	//				while (nValue)
+//	//				{
+//	//					WORD n = (WORD)(nValue & 0xF);
+//	//					if (n <= 9)
+//	//						*(pszValue++) = (wchar_t)(L'0' + n);
+//	//					else
+//	//						*(pszValue++) = (wchar_t)(L'A' + n - 10);
+//	//					nValue = nValue >> 4;
+//	//				}
+//	//				// Теперь перекинуть в szGuiPipeName
+//	//				for (pszValue = (szValueHex+7); pszValue >= szValueHex; pszValue--)
+//	//				{
+//	//					*(pszDst++) = *pszValue;
+//	//				}
+//	//				continue;
+//	//			}
+//	//		default:
+//	//			_ASSERTE(*pszSrc == L'u' || *pszSrc == L's');
+//	//		}
+//	//	}
+//	//	else
+//	//	{
+//	//		*(pszDst++) = *(pszSrc++);
+//	//	}
+//	//}
+//	//*pszDst = 0;
+//
+//	//_ASSERTE(lstrlen(szGuiPipeName) < countof(szGuiPipeName));
+//
+//	//return szGuiPipeName;
+//}
 
 LPCWSTR ModuleName(LPCWSTR asDefault)
 {
@@ -105,7 +186,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 	BOOL fSuccess = FALSE;
 	DWORD dwStartTick = GetTickCount();
 	int nTries = 2;
-	_ASSERTE(gpLocalSecurity!=NULL);
+	_ASSERTE(LocalSecurity()!=NULL);
 
 	// Try to open a named pipe; wait for it, if necessary.
 	while(1)
@@ -114,7 +195,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		            szPipeName,     // pipe name
 		            GENERIC_READ|GENERIC_WRITE,
 		            0,              // no sharing
-		            gpLocalSecurity, // default security attributes
+		            LocalSecurity(), // default security attributes
 		            OPEN_EXISTING,  // opens existing pipe
 		            0,              // default attributes
 		            NULL);          // no template file
@@ -130,7 +211,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		{
 			//if (pszErr)
 			{
-				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s.%u: CreateFile(%s) failed, code=0x%08X, Timeout",
+				msprintf(szErr, countof(szErr), L"%s.%u: CreateFile(%s) failed, code=0x%08X, Timeout",
 				          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
 			}
 			return NULL;
@@ -152,7 +233,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		{
 			//if (pszErr)
 			{
-				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s.%u: CreateFile(%s) failed, code=0x%08X",
+				msprintf(szErr, countof(szErr), L"%s.%u: CreateFile(%s) failed, code=0x%08X",
 				          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
 			}
 			return NULL;
@@ -189,7 +270,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		_ASSERT(fSuccess);
 		//if (pszErr)
 		{
-			_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s.%u: SetNamedPipeHandleState(%s) failed, code=0x%08X",
+			msprintf(szErr, countof(szErr), L"%s.%u: SetNamedPipeHandleState(%s) failed, code=0x%08X",
 			          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
 		}
 		CloseHandle(hPipe);
@@ -239,19 +320,192 @@ CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
 	return pIn;
 }
 
+BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping)
+{
+	if (!hConWnd)
+		return FALSE;
+
+	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> SrvInfoMapping;
+	SrvInfoMapping.InitName(CECONMAPNAME, (DWORD)hConWnd);
+	const CESERVER_CONSOLE_MAPPING_HDR* pInfo = SrvInfoMapping.Open();
+	if (!pInfo)
+		return FALSE;
+	else if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
+		return FALSE;
+	else
+	{
+		memmove(&SrvMapping, pInfo, min(pInfo->cbSize, sizeof(SrvMapping)));
+		/*bDosBoxAllowed = pInfo->bDosBox;
+		wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
+		wcscat_c(szBaseDir, L"\\");
+		if (pInfo->nLoggingType != glt_Processes)
+			return NULL;*/
+	}
+	SrvInfoMapping.CloseMap();
+
+	return (SrvMapping.cbSize != 0);
+}
+
+#ifndef CONEMU_MINIMAL
+BOOL LoadGuiMapping(HWND hConEmuWnd, ConEmuGuiMapping& GuiMapping)
+{
+	//if (m_GuiMapping.cbSize)
+	//	return TRUE;
+
+	// Проверим, а можно ли?
+	DWORD dwGuiProcessId = 0;
+	if (!hConEmuWnd || !GetWindowThreadProcessId(hConEmuWnd, &dwGuiProcessId))
+		return FALSE;
+
+	return LoadGuiMapping(dwGuiProcessId, GuiMapping);
+}
+
+BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping)
+{
+	if (!nConEmuPID)
+		return FALSE;
+
+	MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
+	GuiInfoMapping.InitName(CEGUIINFOMAPNAME, nConEmuPID);
+	const ConEmuGuiMapping* pInfo = GuiInfoMapping.Open();
+	if (!pInfo)
+		return FALSE;
+	else if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
+		return FALSE;
+	else
+	{
+		memmove(&GuiMapping, pInfo, min(pInfo->cbSize, sizeof(GuiMapping)));
+		/*bDosBoxAllowed = pInfo->bDosBox;
+		wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
+		wcscat_c(szBaseDir, L"\\");
+		if (pInfo->nLoggingType != glt_Processes)
+			return NULL;*/
+	}
+	GuiInfoMapping.CloseMap();
+
+	return (GuiMapping.cbSize != 0);
+}
+#endif
+
+CESERVER_REQ* ExecuteNewCmdOnCreate(enum CmdOnCreateType aCmd,
+				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
+				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
+				int mn_ImageBits, int mn_ImageSubsystem,
+				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr)
+{
+	//szBaseDir[0] = 0;
+
+	//// Проверим, а надо ли?
+	//MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
+	//ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd);
+	//CESERVER_CONSOLE_MAPPING_HDR* p = ConMap.Open();
+	//if (p && p->hConEmuRoot && isWindow(p->hConEmuRoot))
+	//{
+
+	////	bDosBoxAllowed = pInfo->bDosBox;
+	////	wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
+	////	wcscat_c(szBaseDir, L"\\");
+	//if (p->nLoggingType != glt_Processes)
+	//	return NULL;
+
+	//DWORD dwGuiProcessId = 0;
+	//if (!ghConEmuWnd || !GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId))
+	//	return NULL;
+
+	//MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
+	//GuiInfoMapping.InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
+	//const ConEmuGuiMapping* pInfo = GuiInfoMapping.Open();
+	//if (!pInfo)
+	//	return NULL;
+	//else if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
+	//	return NULL;
+	//else
+	//{
+	//	bDosBoxAllowed = pInfo->bDosBox;
+	//	wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
+	//	wcscat_c(szBaseDir, L"\\");
+	//	if (pInfo->nLoggingType != glt_Processes)
+	//		return NULL;
+	//}
+	//GuiInfoMapping.CloseMap();
+
+	
+	CESERVER_REQ *pIn = NULL;
+	
+	int nActionLen = (asAction ? lstrlen(asAction) : 0)+1;
+	int nFileLen = (asFile ? lstrlen(asFile) : 0)+1;
+	int nParamLen = (asParam ? lstrlen(asParam) : 0)+1;
+	
+	pIn = ExecuteNewCmd(CECMD_ONCREATEPROC, sizeof(CESERVER_REQ_HDR)
+		+sizeof(CESERVER_REQ_ONCREATEPROCESS)+(nActionLen+nFileLen+nParamLen)*sizeof(wchar_t));
+	
+#ifdef _WIN64
+	pIn->OnCreateProc.nSourceBits = 64;
+#else
+	pIn->OnCreateProc.nSourceBits = 32;
+#endif
+	//pIn->OnCreateProc.bUnicode = TRUE;
+	pIn->OnCreateProc.nImageSubsystem = mn_ImageSubsystem;
+	pIn->OnCreateProc.nImageBits = mn_ImageBits;
+	pIn->OnCreateProc.hStdIn = (unsigned __int64)hStdIn;
+	pIn->OnCreateProc.hStdOut = (unsigned __int64)hStdOut;
+	pIn->OnCreateProc.hStdErr = (unsigned __int64)hStdErr;
+	
+	if (aCmd == eShellExecute)
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"Shell");
+	else if (aCmd == eCreateProcess)
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"Create");
+	else if (aCmd == eInjectingHooks)
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"Inject");
+	else if (aCmd == eHooksLoaded)
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"HkLoad");
+	else if (aCmd == eSrvLoaded)
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"SrLoad");
+	else if (aCmd == eParmsChanged)
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"Changed");
+	else if (aCmd == eLoadLibrary)
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"LdLib");
+	else if (aCmd == eFreeLibrary)
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"FrLib");
+	else
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"Unknown");
+	
+	pIn->OnCreateProc.nShellFlags = anShellFlags ? *anShellFlags : 0;
+	pIn->OnCreateProc.nCreateFlags = anCreateFlags ? *anCreateFlags : 0;
+	pIn->OnCreateProc.nStartFlags = anStartFlags ? *anStartFlags : 0;
+	pIn->OnCreateProc.nShowCmd = anShowCmd ? *anShowCmd : 0;
+	pIn->OnCreateProc.nActionLen = nActionLen;
+	pIn->OnCreateProc.nFileLen = nFileLen;
+	pIn->OnCreateProc.nParamLen = nParamLen;
+	
+	wchar_t* psz = pIn->OnCreateProc.wsValue;
+	if (nActionLen > 1)
+		_wcscpy_c(psz, nActionLen, asAction);
+	psz += nActionLen;
+	if (nFileLen > 1)
+		_wcscpy_c(psz, nFileLen, asFile);
+	psz += nFileLen;
+	if (nParamLen > 1)
+		_wcscpy_c(psz, nParamLen, asParam);
+	psz += nParamLen;
+	
+	return pIn;
+}
+
 // Forward
 CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner);
 
 // Выполнить в GUI (в CRealConsole)
 CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner)
 {
-	wchar_t szGuiPipeName[MAX_PATH];
+	wchar_t szGuiPipeName[128];
 
 	if (!hConWnd)
 		return NULL;
 
 	DWORD nLastErr = GetLastError();
-	_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CEGUIPIPENAME, L".", (DWORD)hConWnd);
+	//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CEGUIPIPENAME, L".", (DWORD)hConWnd);
+	msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)hConWnd);
 #ifdef _DEBUG
 	DWORD nStartTick = GetTickCount();
 #endif
@@ -261,7 +515,14 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner)
 	DWORD nDelta = nEndTick - nStartTick;
 	if (nDelta >= EXECUTE_CMD_WARN_TIMEOUT && !IsDebuggerPresent())
 	{
-		_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT);
+		if (lpRet)
+		{
+			_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT);
+		}
+		else
+		{
+			_ASSERTE(nDelta <= EXECUTE_CMD_TIMEOUT_SRV_ABSENT);
+		}
 	}
 #endif
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
@@ -271,13 +532,14 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner)
 // Выполнить в ConEmuC
 CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner)
 {
-	wchar_t szGuiPipeName[MAX_PATH];
+	wchar_t szGuiPipeName[128];
 
 	if (!dwSrvPID)
 		return NULL;
 
 	DWORD nLastErr = GetLastError();
-	_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
+	//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
+	msprintf(szGuiPipeName, countof(szGuiPipeName), CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
 	return lpRet;
@@ -315,6 +577,9 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 #ifdef _DEBUG
 
 		//_ASSERTE(hPipe != NULL && hPipe != INVALID_HANDLE_VALUE);
+#ifdef CONEMU_MINIMAL
+		SetConsoleTitle(szErr);
+#else
 		if (hOwner)
 		{
 			if (hOwner == GetConsoleWindow())
@@ -322,6 +587,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 			else
 				SetWindowText(hOwner, szErr);
 		}
+#endif
 
 #endif
 		return NULL;
@@ -492,10 +758,15 @@ HWND myGetConsoleWindow()
 // Returns HWND of Gui console DC window
 HWND GetConEmuHWND(BOOL abRoot)
 {
+	DWORD nLastErr = GetLastError();
 	HWND FarHwnd = NULL, ConEmuHwnd = NULL, ConEmuRoot = NULL;
 	FarHwnd = myGetConsoleWindow();
 	if (!FarHwnd)
-		return NULL;
+	{
+		goto wrap;
+		//SetLastError(nLastErr);
+		//return NULL;
+	}
 
 	// Сначала пробуем Mapping консоли (вдруг есть?)
 	if (!ConEmuRoot)
@@ -503,7 +774,7 @@ HWND GetConEmuHWND(BOOL abRoot)
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
 		ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd);
 		CESERVER_CONSOLE_MAPPING_HDR* p = ConMap.Open();
-		if (p && p->hConEmuRoot && IsWindow(p->hConEmuRoot))
+		if (p && p->hConEmuRoot && isWindow(p->hConEmuRoot))
 		{
 			// Успешно
 			ConEmuRoot = p->hConEmuRoot;
@@ -511,28 +782,39 @@ HWND GetConEmuHWND(BOOL abRoot)
 		}
 	}
 
+#ifdef _DEBUG
+	// Сервер не мог подцепиться БЕЗ создания мэппинга, поэтому CECMD_GETGUIHWND можно не делать
 	if (!ConEmuRoot)
 	{
 		//BOOL lbRc = FALSE;
 		CESERVER_REQ in = {{0}}, *pOut = NULL;
+		wchar_t szGuiPipeName[128];
 
 		ExecutePrepareCmd(&in, CECMD_GETGUIHWND, sizeof(CESERVER_REQ_HDR));
-		pOut = ExecuteGuiCmd(FarHwnd, &in, NULL);
+		//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CEGUIPIPENAME, L".", (DWORD)FarHwnd);
+		msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)FarHwnd);
+		// Таймаут уменьшим, т.к. на результат не надеемся
+		pOut = ExecuteCmd(szGuiPipeName, &in, 250, FarHwnd);
 
 		if (!pOut)
-			return NULL;
+			goto wrap;
 
 		if (pOut->hdr.cbSize != (sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD)) || pOut->hdr.nCmd != in.hdr.nCmd)
 		{
 			ExecuteFreeResult(pOut);
-			return NULL;
+			goto wrap;
 		}
 
 		ConEmuRoot = (HWND)pOut->dwData[0];
 		ConEmuHwnd = (HWND)pOut->dwData[1];
+		// Сервер не мог подцепиться БЕЗ создания мэппинга, поэтому CECMD_GETGUIHWND не должен был пройти успешно
+		_ASSERTE(ConEmuRoot == NULL);
 		ExecuteFreeResult(pOut);
 	}
+#endif
 
+wrap:
+	SetLastError(nLastErr);
 	return (abRoot) ? ConEmuRoot : ConEmuHwnd;
 }
 
@@ -543,8 +825,8 @@ void SetConEmuEnvVar(HWND hConEmuWnd)
 	if (hConEmuWnd)
 	{
 		// Установить переменную среды с дескриптором окна
-		WCHAR szVar[32];
-		_wsprintf(szVar, SKIPLEN(countof(szVar)) L"0x%08X", hConEmuWnd);
+		wchar_t szVar[16];
+		msprintf(szVar, countof(szVar), L"0x%08X", (DWORD)hConEmuWnd);
 		SetEnvironmentVariable(L"ConEmuHWND", szVar);
 	}
 	else
@@ -594,6 +876,7 @@ int ConEmuCheck(HWND* ahConEmuWnd)
 }*/
 
 // Вернуть путь к папке, содержащей ConEmuC.exe
+#ifndef CONEMU_MINIMAL
 BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1])
 {
 	// Сначала пробуем Mapping консоли (вдруг есть?)
@@ -724,4 +1007,36 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 
 	// Не удалось
 	return FALSE;
+}
+#endif
+
+int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBtns)
+{
+	int nResult = 0;
+	
+	if (hConEmuWndRoot)
+	{
+		HWND hConWnd = GetConsoleWindow();
+		CESERVER_REQ In;
+		ExecutePrepareCmd(&In, CECMD_ASSERT, sizeof(CESERVER_REQ_HDR)+sizeof(MyAssertInfo));
+		In.AssertInfo.nBtns = anBtns;
+		_wcscpyn_c(In.AssertInfo.szTitle, countof(In.AssertInfo.szTitle), asTitle, countof(In.AssertInfo.szTitle));
+		_wcscpyn_c(In.AssertInfo.szDebugInfo, countof(In.AssertInfo.szDebugInfo), asText, countof(In.AssertInfo.szDebugInfo));
+
+		wchar_t szGuiPipeName[128];
+		msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)hConEmuWndRoot);
+
+		CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, &In, 1000, hConWnd);
+
+		if (pOut)
+		{
+			if (pOut->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
+			{
+				nResult = pOut->dwData[0];
+			}
+			ExecuteFreeResult(pOut);
+		}
+	}
+
+	return nResult;
 }

@@ -85,7 +85,11 @@ void * __cdecl xf_malloc
 	xf_mem_block* p = (xf_mem_block*)HeapAlloc(ghHeap, 0, _Size+sizeof(xf_mem_block)+8);
 	p->bBlockUsed = TRUE;
 	p->nBlockSize = _Size;
+#ifdef CONEMU_MINIMAL
+	lstrcpynA(p->sCreatedFrom, PointToName(lpszFileName), sizeof(p->sCreatedFrom)/sizeof(p->sCreatedFrom[0]));
+#else
 	wsprintfA(p->sCreatedFrom, "%s:%i", PointToName(lpszFileName), nLine);
+#endif
 #ifdef _DEBUG
 
 	if (_Size > 0) memset(p+1, 0xFD, _Size);
@@ -115,7 +119,11 @@ void * __cdecl xf_calloc
 	xf_mem_block* p = (xf_mem_block*)HeapAlloc(ghHeap, HEAP_ZERO_MEMORY, _Count*_Size+sizeof(xf_mem_block)+8);
 	p->bBlockUsed = TRUE;
 	p->nBlockSize = _Count*_Size;
+#ifdef CONEMU_MINIMAL
+	lstrcpynA(p->sCreatedFrom, PointToName(lpszFileName), sizeof(p->sCreatedFrom)/sizeof(p->sCreatedFrom[0]));
+#else
 	wsprintfA(p->sCreatedFrom, "%s:%i", PointToName(lpszFileName), nLine);
+#endif
 	memset(((LPBYTE)(p+1))+_Count*_Size, 0xCC, 8);
 	return p?(p+1):p;
 #else
@@ -147,7 +155,11 @@ void __cdecl xf_free
 	}
 
 	p->bBlockUsed = FALSE;
+#ifdef CONEMU_MINIMAL
+	lstrcpynA(p->sCreatedFrom, PointToName(lpszFileName), sizeof(p->sCreatedFrom)/sizeof(p->sCreatedFrom[0]));
+#else
 	wsprintfA(p->sCreatedFrom, "-- %s:%i", PointToName(lpszFileName), nLine);
+#endif
 	_Memory = (void*)p;
 #endif
 #ifdef _DEBUG
@@ -169,6 +181,7 @@ void __cdecl xf_free
 #ifdef FORCE_HEAP_CHECK
 void __cdecl xf_dump_chk()
 {
+#ifndef CONEMU_MINIMAL
 	PROCESS_HEAP_ENTRY ent = {NULL};
 	HeapLock(ghHeap);
 	//HeapCompact(ghHeap,0);
@@ -195,10 +208,12 @@ void __cdecl xf_dump_chk()
 	}
 
 	HeapUnlock(ghHeap);
+#endif
 }
 #endif
 void __cdecl xf_dump()
 {
+#ifndef CONEMU_MINIMAL
 	PROCESS_HEAP_ENTRY ent = {NULL};
 	HeapLock(ghHeap);
 	//HeapCompact(ghHeap,0);
@@ -254,6 +269,7 @@ void __cdecl xf_dump()
 	}
 
 	HeapUnlock(ghHeap);
+#endif
 }
 #endif
 bool __cdecl xf_validate(void * _Memory /*= NULL*/)

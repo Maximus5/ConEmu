@@ -41,8 +41,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define SHOW_DEBUG_EVENTS
 #endif
 
-WARNING("Far colorer TrueMod - последн€€ сборка была 1721");
-#define FORCE_FAR_1721
+//WARNING("Far colorer TrueMod - последн€€ сборка была 1721");
+//#define FORCE_FAR_1721
+#undef FORCE_FAR_1721
 
 struct PluginStartupInfo *InfoW995=NULL;
 struct FarStandardFunctions *FSFW995=NULL;

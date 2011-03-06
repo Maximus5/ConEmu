@@ -362,29 +362,31 @@ BEGIN
     CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,110,89,8
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,121,89,8
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,132,89,8
-    CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,144,89,8
-    CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,156,89,8
+    CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,206,89,8
+    CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,218,89,8
     CONTROL         "Fix Alt on AltTab/AltF9",cbFixAltOnAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,110,91,8
     CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,121,74,8
     PUSHBUTTON      "...",bRealConsoleSettings,306,120,13,11
     GROUPBOX        "Appearence",IDC_STATIC,4,172,319,59
-    CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,182,134,8
+    CONTROL         "Enhance progress- and scrollbars",cbEnhanceGraphics,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,182,119,8
     CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,194,117,8
     CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,206,100,8
     PUSHBUTTON      "...",bHideCaptionSettings,114,205,13,11
-    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,182,70,8
-    CONTROL         "Center console",cbTryToCenter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,194,70,8
-    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,206,70,8
+    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,182,89,8
+    CONTROL         "Center console",cbTryToCenter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,194,89,8
+    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,206,89,8
     CONTROL         "Ignore telnet cursor size",cbIgnoreTelnetCursorSize,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,182,95,8
-    CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,194,95,8
-    CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,222,206,95,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,182,91,8
+    CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,156,91,8
+    CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,227,194,91,8
     CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,132,91,8
     CONTROL         "Write debug log-files",cbLogs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,144,89,8
-    CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,221,218,92,8
+    CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,218,91,8
     CONTROL         "Always show scrollbar",cbAlwaysShowScrollbar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,218,100,8
-    CONTROL         "Use ConEmuHk injects",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,156,89,8
+    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,144,89,8
+    CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,156,76,8
+    PUSHBUTTON      "...",bDosBoxSettings,210,155,13,11
 END
 
 IDD_SPG_DEBUG DIALOGEX 0, 0, 328, 235
@@ -394,10 +396,10 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Shell activity",gbActivityLog,4,1,319,230
     CONTROL         "List1",lbActivityLog,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,28,311,124
-    PUSHBUTTON      "Reset",cbActivityReset,215,10,50,14
-    PUSHBUTTON      "Save as...",cbActivitySaveAs,269,10,50,14
-    CONTROL         "Disabled",rbActivityDisabled,"Button",BS_AUTORADIOBUTTON,9,13,43,10
-    CONTROL         "Shell and processes",rbActivityShell,"Button",BS_AUTORADIOBUTTON,56,13,79,10
+    PUSHBUTTON      "&Reset",cbActivityReset,215,10,50,14
+    PUSHBUTTON      "Save &as...",cbActivitySaveAs,269,10,50,14
+    CONTROL         "&Disabled",rbActivityDisabled,"Button",BS_AUTORADIOBUTTON,9,13,43,10
+    CONTROL         "Sh&ell and processes",rbActivityShell,"Button",BS_AUTORADIOBUTTON,56,13,79,10
     EDITTEXT        ebActivityApp,8,157,311,14,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        ebActivityParm,8,174,311,52,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL
 END
@@ -644,6 +646,23 @@ BEGIN
     LTEXT           "NOTE!!! You must restart computer to apply registry changes",tConsoleFontHklmNote,12,120,213,8,WS_DISABLED
 END
 
+IDD_MORE_DOSBOX DIALOGEX 0, 0, 210, 150
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "DosBox settings"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    LTEXT           "DosBox installation path:",IDC_STATIC,4,4,186,8
+    EDITTEXT        ebDosBoxPath,4,14,186,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",bDosBoxPath,193,15,13,11
+    CONTROL         "Force using config file",cbDosBoxForceConfig,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,4,30,202,10
+    EDITTEXT        ebDosBoxForceConfig,4,41,186,12,ES_AUTOHSCROLL | WS_DISABLED
+    PUSHBUTTON      "...",bDosBoxForceConfig,193,42,13,11,WS_DISABLED
+    LTEXT           "Mount DosBox drives, example: C=C:\\Dos;D=D:\\ -t cdrom;",IDC_STATIC,4,58,202,8
+    EDITTEXT        ebDosBoxDrives,4,67,202,12,ES_AUTOHSCROLL
+    LTEXT           "Autoexec commands:",IDC_STATIC,4,83,202,8
+    EDITTEXT        ebDosBoxAutoexec,4,93,202,53,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_VSCROLL | WS_HSCROLL
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -693,6 +712,14 @@ BEGIN
         RIGHTMARGIN, 232
         TOPMARGIN, 4
         BOTTOMMARGIN, 152
+    END
+
+    IDD_MORE_DOSBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 206
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 146
     END
 END
 #endif    // APSTUDIO_INVOKED

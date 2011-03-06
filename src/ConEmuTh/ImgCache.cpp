@@ -1259,7 +1259,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 
 			if (PV.pszComments && !lbIgnoreComments)
 			{
-				DWORD nLen = (DWORD)max(255,wcslen(PV.pszComments));
+				DWORD nLen = (DWORD)max(255,lstrlen(PV.pszComments));
 
 				if (pItem->pszComments && pItem->wcCommentsSize <= nLen)
 				{
@@ -1378,7 +1378,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 	////// Подготовить путь к шелловскому кешу превьюшек
 	////lstrcpy(wsPathBuffer, pFileName);
 	////if (abFolder) {
-	////	pszThumbs = wsPathBuffer+wcslen(wsPathBuffer)-1;
+	////	pszThumbs = wsPathBuffer+lstrlen(wsPathBuffer)-1;
 	////	if (*pszThumbs != L'\\') {
 	////		pszThumbs++;
 	////		pszThumbs[0] = L'\\';

@@ -275,7 +275,7 @@ class CSettings
 
 		DWORD nAffinity;
 
-		BOOL isUseInjects;
+		bool isUseInjects;
 
 		// Debugging - "c:\\temp\\ConEmuVCon-%i-%i.dat"
 		BYTE isAdvLogging;

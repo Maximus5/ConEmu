@@ -39,7 +39,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 	#define EXECUTE_CMD_WARN_TIMEOUT 500
+	#define EXECUTE_CMD_TIMEOUT_SRV_ABSENT 500
 #endif
+
+enum CmdOnCreateType
+{
+	eShellExecute = 1,
+	eCreateProcess,
+	eInjectingHooks,
+	eHooksLoaded,
+	eParmsChanged,
+	eLoadLibrary,
+	eFreeLibrary,
+	eSrvLoaded,
+};
 
 // Service function
 //HWND AtoH(char *Str, int Len);
@@ -57,6 +70,9 @@ HWND GetConEmuHWND(BOOL abRoot);
 // hConEmuWnd - HWND с отрисовкой!
 void SetConEmuEnvVar(HWND hConEmuWnd);
 
+//LPCWSTR CreatePipeName(wchar_t (&szGuiPipeName)[128], LPCWSTR asFormat, DWORD anValue);
+int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBtns);
+
 HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule);
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize);
 void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, DWORD cbSize);
@@ -65,6 +81,17 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner);
 CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner);
 CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner);
 void ExecuteFreeResult(CESERVER_REQ* pOut);
+
+BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping);
+#ifndef CONEMU_MINIMAL
+BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping);
+BOOL LoadGuiMapping(HWND hConEmuWnd, ConEmuGuiMapping& GuiMapping);
+#endif
+CESERVER_REQ* ExecuteNewCmdOnCreate(enum CmdOnCreateType aCmd,
+				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
+				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
+				int mn_ImageBits, int mn_ImageSubsystem,
+				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr);
 
 BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1]);
 

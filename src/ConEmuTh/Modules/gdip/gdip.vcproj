@@ -526,7 +526,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\\WIN2K3\FAR\Far175\Plugins\ConEmu\Thumbs\gdi+.t32"
+				OutputFile="\\WIN7x86\FAR\Plugins\ConEmu\Thumbs\gdi+.t32"
 				LinkIncremental="2"
 				ModuleDefinitionFile="gdip.def"
 				GenerateDebugInformation="true"
@@ -1430,6 +1430,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\common\Memory.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\common\MStrSafe.cpp"
 				>
 			</File>
 		</Filter>

@@ -61,8 +61,10 @@
 
 DEF_NAME = export
 
-NEEDENTRY = 1
+NEEDENTRY=1
+#!undef NEEDDEFLIB
 NEEDDEFLIB = 1
+USE_PDB = 1
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
 OUTNAME = ConEmuHk64
@@ -75,18 +77,21 @@ RCWIN64=
 # !!! WindowsXP для ConsoleAlias !!!
 CPPWINVER=/D_WIN32_WINNT=0x0501
 
+BASEADDRESS=/DYNAMICBASE:NO /BASE:0x6F110000 /FIXED:NO
+#BASEADDRESS=/DYNAMICBASE:NO /BASE:0x7EB00000 /FIXED:NO
+#/BASE:0x6F780000 
+
 #!ifdef DEBUG
 #OUTNAME = ConEmuHk
 #!endif
 
 NAME = ConEmuHk
+RC_NAME = ConEmuHk
 
 LINK_OBJS = \
 $(OBJDIR)\Entry.obj \
-$(OBJDIR)\ConEmuHk.obj \
-$(OBJDIR)\ConEmuCmd.obj \
+$(OBJDIR)\Injects.obj \
 $(OBJDIR)\ConEmuHooks.obj \
-$(OBJDIR)\ConEmuSrv.obj \
 $(OBJDIR)\execute.obj \
 $(OBJDIR)\SetHook.obj \
 $(OBJDIR)\ShellProcessor.obj \
@@ -94,6 +99,7 @@ $(OBJDIR)\WinObjects.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\MAssert.obj \
+$(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\Memory.obj
 
 USERLIBS = 
@@ -157,7 +163,7 @@ DLLNAME = $(OUTNAME).$(EXT)
 DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
 DEF = $(DEF_NAME).def
 MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
-RES = $(OBJDIR)\$(NAME).res
+RES = $(OBJDIR)\$(RC_NAME).res
 
 !ifdef VC8
 COMPAT64=/Wp64
@@ -165,32 +171,36 @@ NOWIN98=/OPT:NOWIN98
 !endif
 
 PDBNAME="$(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb"
+
 !ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Fd$(PDBNAME) /DHIDE_TODO /DCRTPRINTF
+CPP_OPT=/DNDEBUG /O1i /Fd$(PDBNAME) /DHIDE_TODO /DCRTPRINTF /DCONEMU_MINIMAL
 #/DCRTSTARTUP
 !else
-CPP_OPT=/DDEBUG /Od /Zi /Fd$(PDBNAME) /DCRTPRINTF
+CPP_OPT=/DDEBUG /Od /Fd$(PDBNAME) /DCRTPRINTF /DCONEMU_MINIMAL
 #/DCRTSTARTUP
 !endif
 
 !ifdef AMD64
-COMMONLIB = ../common/libCRT64.lib
+COMMONLIB = ../common/libCRT64.lib 
+#../common/chkstk64.obj
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !elseif defined(IA64)
-COMMONLIB = ../common/libCRTIA64.lib
+COMMONLIB = ../common/libCRTIA64.lib 
+#../common/chkstkIA64.obj
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !else
-COMMONLIB = ../common/libCRT.lib
+COMMONLIB = ../common/libCRT.lib 
+#../common/chkstk.obj
 #../pvdCRT.lib
 !ifdef CPP_UNALIGN
 CPP_ALIGN=/Zp1
 !endif
 # /I"$(COMMON)"
-CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(CPPWINVER) $(USERCPP)
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c-a- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(CPPWINVER) $(USERCPP)
 ULOUT=-Tpd -Re
 LINK_MACHINE = /MACHINE:X86
 !endif
@@ -200,7 +210,8 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
 #!undef COMMONLIB
 #!endif
 #Wininet.lib
-LIBS = $(COMMONLIB) chkstk.obj kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib Comdlg32.lib $(USERLIBS)
+LIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib version.lib $(USERLIBS)
+LIBS = $(COMMONLIB) chkstk.obj $(LIBS)
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_
@@ -217,9 +228,13 @@ _LINK_PATH_=$(_BIN_PATH_)
 
 LNK=$(_LINK_PATH_)link.exe
 
-!ifndef DEBUG
-LINK_DEBUG=/map:"$(MAP)" /debug /pdb:$(PDBNAME)
-CPP_DEBUG=/Zi
+#!ifdef DEBUG
+#USE_PDB = 1
+#!endif
+
+!ifndef USE_PDB
+LINK_DEBUG=/map:"$(MAP)" /pdb:$(PDBNAME)
+CPP_DEBUG=
 !else
 LINK_DEBUG=/map:"$(MAP)" /debug /pdb:$(PDBNAME)
 CPP_DEBUG=/Zi
@@ -231,7 +246,7 @@ NODEFLIB = /nodefaultlib
 
 #/merge:.rdata=.text /SUBSYSTEM:WINDOWS
 #/ENTRY:_DllMainCRTStartup
-LINK_FLAGS=/nologo /DLL /RELEASE /BASE:0x6F780000 $(LINK_MACHINE) $(NOWIN98) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /DLL /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
 
 
 CFLAGS_NO = $(MP) $(CPP_PROJ_NO) $(CPP_DEBUG) $(CPP_OPT)
@@ -333,6 +348,8 @@ clean:
 
 $(OBJDIR)\Entry.obj: Entry.cpp
 
+$(OBJDIR)\Injects.obj: Injects.cpp Conole2.h
+
 $(OBJDIR)\Common.obj: ..\common\Common.cpp
 
 $(OBJDIR)\ConEmuHk.obj: ConEmuHk.cpp
@@ -345,7 +362,7 @@ $(OBJDIR)\ConEmuSrv.obj: ConEmuSrv.cpp
 
 $(OBJDIR)\execute.obj: ..\common\execute.cpp ..\common\execute.h
 
-$(OBJDIR)\SetHook.obj: ..\common\SetHook.cpp ..\common\SetHook.h
+$(OBJDIR)\SetHook.obj: SetHook.cpp SetHook.h
 
 $(OBJDIR)\ShellProcessor.obj: ShellProcessor.cpp ShellProcessor.h
 
@@ -354,5 +371,7 @@ $(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp ..\common\WinObjects.h
 $(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp ..\common\ConEmuCheck.h
 
 $(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
+
+$(OBJDIR)\MStrSafe.obj: ..\common\MStrSafe.cpp
 
 $(OBJDIR)\Memory.obj: ..\common\Memory.cpp

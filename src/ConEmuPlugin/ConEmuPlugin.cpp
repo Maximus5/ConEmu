@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <string.h>
 //#include <tchar.h>
 #include "..\common\common.hpp"
-#include "..\common\SetHook.h"
+#include "..\ConEmuHk\SetHook.h"
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif
@@ -654,7 +654,7 @@ void OnConsolePeekReadInput(BOOL abPeek)
 
 		if (gpConMapInfo)
 		{
-			DWORD nMapPID = gpConMapInfo->nFarPID;
+			DWORD nMapPID = gpConMapInfo->nActiveFarPID;
 			static DWORD dwLastTickCount = 0;
 
 			if (nMapPID == 0 || nMapPID != gnSelfPID)
@@ -882,7 +882,7 @@ void DebugInputPrint(INPUT_RECORD r)
 	//			if (nuRc>0) szBuff[nuRc] = 0; else szBuff[0] = 0;
 	//			wchar_t szTemp[256] = {0};
 	//			for (int i=0; i<nuRc; i++)
-	//				wsprintf(szTemp+wcslen(szTemp), L"\\x%04X", (WORD)szBuff[i]);
+	//				wsprintf(szTemp+lstrlen(szTemp), L"\\x%04X", (WORD)szBuff[i]);
 	//			wsprintf(szDbg+lstrlen(szDbg), L"         -- GKS=%i; TUE=%i; <%s>\n", lbkRc, nuRc, szTemp);
 	//		}
 	//	} break;
@@ -4125,8 +4125,9 @@ void FillLoadedParm(struct ConEmuLoadedArg* pArg, HMODULE hSubPlugin, BOOL abLoa
 {
 	memset(pArg, 0, sizeof(struct ConEmuLoadedArg));
 	pArg->cbSize = (DWORD)sizeof(struct ConEmuLoadedArg);
-	#define D(N) (1##N-100)
-	pArg->nBuildNo = ((MVV_1 % 100)*100000) + (D(MVV_2)*1000) + (D(MVV_3)*10) + (MVV_4 % 10);
+	//#define D(N) (1##N-100)
+	// nBuildNo в формате YYMMDDX (YY - две цифры года, MM - мес€ц, DD - день, X - 0 и выше-номер подсборки)
+	pArg->nBuildNo = ((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10);
 	pArg->hConEmu = ghPluginModule;
 	pArg->hPlugin = hSubPlugin;
 	pArg->bLoaded = abLoaded;

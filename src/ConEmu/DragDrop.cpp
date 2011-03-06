@@ -251,7 +251,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 	//						if (nCurSize==0) break;
 	//						pipe.Read(curr, sizeof(WCHAR)*nCurSize, &cbBytesRead);
 	//						_ASSERTE(*curr);
-	//						curr+=wcslen(curr)+1;
+	//						curr+=lstrlen(curr)+1;
 	//						nFilesCount ++;
 	//					}
 	//					int cbStructSize=0;
@@ -555,8 +555,8 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LP
 	char* pszNameA = (char*)asFileName;
 	int nSize = 0;
 	LPCWSTR pszPanelPath = abActive ? m_pfpi->pszActivePath : m_pfpi->pszPassivePath;
-	int nPathLen = wcslen(pszPanelPath) + 1;
-	int nSubFolderLen = (asSubFolder && *asSubFolder) ? wcslen(asSubFolder) : 0;
+	int nPathLen = lstrlen(pszPanelPath) + 1;
+	int nSubFolderLen = (asSubFolder && *asSubFolder) ? lstrlen(asSubFolder) : 0;
 	nSize = nPathLen + nSubFolderLen + 16;
 
 	if (abWide)
@@ -567,7 +567,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LP
 		{
 			if (!abFolder)
 			{
-				_ASSERTE(abFolder || (pszSlash == NULL) || wcsncmp(pszNameW, asSubFolder, wcslen(asSubFolder))==0);
+				_ASSERTE(abFolder || (pszSlash == NULL) || wcsncmp(pszNameW, asSubFolder, lstrlen(asSubFolder))==0);
 				pszNameW = pszSlash+1;
 			}
 		}
@@ -578,7 +578,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LP
 			return NULL;
 		}
 
-		nSize += wcslen(pszNameW)+1;
+		nSize += lstrlen(pszNameW)+1;
 	}
 	else
 	{
@@ -635,7 +635,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LP
 			wcscpy(pszFullName+4, pszPanelPath);
 		}
 
-		nPathLen = wcslen(pszFullName) + 1;
+		nPathLen = lstrlen(pszFullName) + 1;
 	}
 	else
 	{
@@ -878,7 +878,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 				if (lbFolder)
 				{
 					// Запомнить текущий путь в SubFolder
-					int nFolderLen = lbWide ? (wcslen((LPCWSTR)ptrFileName)) : (strlen((LPCSTR)ptrFileName));
+					int nFolderLen = lbWide ? (lstrlen((LPCWSTR)ptrFileName)) : (strlen((LPCSTR)ptrFileName));
 
 					if ((nFolderLen + 1) >= countof(szSubFolder))
 					{
@@ -1079,7 +1079,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 	{
 		wcscpy(szMacro, L"$Text ");
 		wcscpy(szData,  L"         ");
-		pszText = szData + wcslen(szData);
+		pszText = szData + lstrlen(szData);
 		int nLen = DragQueryFile(hDrop,i,pszText,MAX_DROP_PATH);
 
 		if (nLen <= 0 || nLen >= MAX_DROP_PATH) continue;
@@ -1089,7 +1089,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		//while ((psz = wcschr(psz, L'"')) != NULL) {
 		//	*psz = L'\'';
 		//}
-		nLen = wcslen(psz);
+		nLen = lstrlen(psz);
 
 		while(nLen>0 && *psz)
 		{
@@ -1338,7 +1338,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		for(int i = 0 ; i < iQuantity; i++)
 		{
 			DragQueryFile(hDrop,i,curr,MAX_DROP_PATH);
-			curr+=wcslen(curr)+1;
+			curr+=lstrlen(curr)+1;
 
 			if (lbMultiDest)
 			{

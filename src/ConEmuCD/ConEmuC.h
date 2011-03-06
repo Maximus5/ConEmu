@@ -85,6 +85,9 @@ extern HWND    ghConWnd;
 extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
+extern BOOL    gbLogProcess; // (pInfo->nLoggingType == glt_Processes)
+extern BOOL    gbWasBufferHeight;
+extern BOOL    gbNonGuiMode;
 extern HANDLE  ghExitQueryEvent; // выставляется когда в консоли не остается процессов
 extern int nExitQueryPlace, nExitPlaceStep, nExitPlaceThread;
 extern HANDLE  ghQuitEvent;      // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
@@ -225,7 +228,8 @@ int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD 
 typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dwProcessCount);
 extern FGetConsoleProcessList pfnGetConsoleProcessList;
 //BOOL HookWinEvents(int abEnabled);
-BOOL CheckProcessCount(BOOL abForce=FALSE);
+BOOL CheckProcessCount(BOOL abForce = FALSE);
+BOOL ProcessAdd(DWORD nPID, MSectionLock *pCS = NULL);
 //BOOL IsExecutable(LPCWSTR aszFilePathName);
 //BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1]);
 //BOOL FileExists(LPCWSTR asFile);
@@ -254,11 +258,13 @@ HWND Attach2Gui(DWORD nTimeout);
 
 int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd); // Разбор параметров командной строки
 void Help();
+void DosBoxHelp();
 void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
 
 int CreateMapHeader();
 void CloseMapHeader();
 void UpdateConsoleMapHeader();
+BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd);
 
 void EmergencyShow();
 
@@ -268,22 +274,22 @@ void DisableAutoConfirmExit();
 
 int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn);
 
-int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui);
+//int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui);
 
 #ifdef _DEBUG
 	#undef WAIT_INPUT_READY
 #else
 	#define WAIT_INPUT_READY
 #endif
-//#define USE_INPUT_SEMAPHORE
-#undef USE_INPUT_SEMAPHORE
-#define INSEMTIMEOUT_WRITE 250
-#define INSEMTIMEOUT_READ  500
-#ifdef USE_INPUT_SEMAPHORE
-extern HANDLE ghConInSemaphore;
-#endif
-void InitializeConsoleInputSemaphore();
-void ReleaseConsoleInputSemaphore();
+////#define USE_INPUT_SEMAPHORE
+//#undef USE_INPUT_SEMAPHORE
+//#define INSEMTIMEOUT_WRITE 250
+//#define INSEMTIMEOUT_READ  500
+//#ifdef USE_INPUT_SEMAPHORE
+//extern HANDLE ghConInSemaphore;
+//#endif
+//void InitializeConsoleInputSemaphore();
+//void ReleaseConsoleInputSemaphore();
 
 /* Console Handles */
 //extern MConHandle ghConIn;
@@ -321,7 +327,7 @@ extern DWORD gnConsoleModeFlags;
 #ifndef __GNUC__
 #pragma message("ComEmuC compiled in X86 mode")
 #endif
-#define NTVDMACTIVE (srv.bNtvdmActive)
+#define NTVDMACTIVE (gpSrv->bNtvdmActive)
 #endif
 
 struct SrvInfo
@@ -449,37 +455,45 @@ struct SrvInfo
 
 	// Console Aliases
 	wchar_t* pszAliases; DWORD nAliasesSize;
+
+	// ComSpec mode
+	BOOL  bK;
+	BOOL  bNewConsole;
+	wchar_t szComSpecName[32];
+	wchar_t szSelfName[32];
+	wchar_t *pszPreAliases;
+	DWORD nPreAliasSize;
 };
 
-extern SrvInfo srv;
+extern SrvInfo *gpSrv;
 
 #define USER_IDLE_TIMEOUT ((DWORD)1000)
 #define CHECK_IDLE_TIMEOUT 250 /* 1000 / 4 */
-#define USER_ACTIVITY ((gnBufferHeight == 0) || ((GetTickCount() - srv.dwLastUserTick) <= USER_IDLE_TIMEOUT))
+#define USER_ACTIVITY ((gnBufferHeight == 0) || ((GetTickCount() - gpSrv->dwLastUserTick) <= USER_IDLE_TIMEOUT))
 
 
 #pragma pack(push, 1)
 extern CESERVER_CONSAVE* gpStoredOutput;
 #pragma pack(pop)
 
-typedef struct tag_CmdInfo
-{
-	DWORD dwFarPID;
-	DWORD dwSrvPID;
-	BOOL  bK;
-	BOOL  bNonGuiMode; // Если запущен НЕ в консоли, привязанной к GUI. Может быть из-за того, что работает как COMSPEC
-	CONSOLE_SCREEN_BUFFER_INFO sbi;
-	BOOL  bNewConsole;
-	DWORD nExitCode;
-	wchar_t szComSpecName[32];
-	wchar_t szSelfName[32];
-	wchar_t *pszPreAliases;
-	DWORD nPreAliasSize;
-	// По завершении ComSpec не отключать буфер
-	BOOL  bWasBufferHeight;
-} CmdInfo;
-
-extern CmdInfo cmd;
+//typedef struct tag_CmdInfo
+//{
+//	DWORD dwFarPID;
+//	//DWORD dwSrvPID;
+//	BOOL  bK;
+//	//BOOL  bNonGuiMode; // Если запущен НЕ в консоли, привязанной к GUI. Может быть из-за того, что работает как COMSPEC
+//	CONSOLE_SCREEN_BUFFER_INFO sbi;
+//	BOOL  bNewConsole;
+//	//DWORD nExitCode;
+//	wchar_t szComSpecName[32];
+//	wchar_t szSelfName[32];
+//	wchar_t *pszPreAliases;
+//	DWORD nPreAliasSize;
+//	// По завершении ComSpec не отключать буфер
+//	//BOOL  bWasBufferHeight;
+//} CmdInfo;
+//
+//extern CmdInfo* gpSrv;
 
 extern COORD gcrBufferSize;
 extern BOOL  gbParmBufferSize;
@@ -513,36 +527,39 @@ extern BOOL gbInRecreateRoot;
 //#define CES_NTVDM 0x10 -- common.hpp
 //DWORD dwActiveFlags = 0;
 
-#define CERR_GETCOMMANDLINE 100
-#define CERR_CARGUMENT 101
-#define CERR_CMDEXENOTFOUND 102
-#define CERR_NOTENOUGHMEM1 103
-#define CERR_CREATESERVERTHREAD 104
-#define CERR_CREATEPROCESS 105
-#define CERR_WINEVENTTHREAD 106
-#define CERR_CONINFAILED 107
-#define CERR_GETCONSOLEWINDOW 108
-#define CERR_EXITEVENT 109
-#define CERR_GLOBALUPDATE 110
-#define CERR_WINHOOKNOTCREATED 111
-#define CERR_CREATEINPUTTHREAD 112
-#define CERR_CONOUTFAILED 113
-#define CERR_PROCESSTIMEOUT 114
-#define CERR_REFRESHEVENT 115
-#define CERR_CREATEREFRESHTHREAD 116
-#define CERR_HELPREQUESTED 118
-#define CERR_ATTACHFAILED 119
-#define CERR_RUNNEWCONSOLE 121
-#define CERR_CANTSTARTDEBUGGER 122
-#define CERR_CREATEMAPPINGERR 123
-#define CERR_MAPVIEWFILEERR 124
-#define CERR_COLORERMAPPINGERR 125
-#define CERR_EMPTY_COMSPEC_CMDLINE 126
-#define CERR_CONEMUHK_NOTFOUND 127
-#define CERR_CONSOLEMAIN_NOTFOUND 128
-#define CERR_HOOKS_WAS_SET 129
-#define CERR_HOOKS_FAILED 130
-#define CERR_DLLMAIN_SKIPPED 131
-#define CERR_ATTACH_NO_CONWND 132
-#define CERR_GUIMACRO_SUCCEEDED 133
-#define CERR_GUIMACRO_FAILED 134
+
+//#define CERR_GETCOMMANDLINE 100
+//#define CERR_CARGUMENT 101
+//#define CERR_CMDEXENOTFOUND 102
+//#define CERR_NOTENOUGHMEM1 103
+//#define CERR_CREATESERVERTHREAD 104
+//#define CERR_CREATEPROCESS 105
+//#define CERR_WINEVENTTHREAD 106
+//#define CERR_CONINFAILED 107
+//#define CERR_GETCONSOLEWINDOW 108
+//#define CERR_EXITEVENT 109
+//#define CERR_GLOBALUPDATE 110
+//#define CERR_WINHOOKNOTCREATED 111
+//#define CERR_CREATEINPUTTHREAD 112
+//#define CERR_CONOUTFAILED 113
+//#define CERR_PROCESSTIMEOUT 114
+//#define CERR_REFRESHEVENT 115
+//#define CERR_CREATEREFRESHTHREAD 116
+//#define CERR_HELPREQUESTED 118
+//#define CERR_ATTACHFAILED 119
+//#define CERR_RUNNEWCONSOLE 121
+//#define CERR_CANTSTARTDEBUGGER 122
+//#define CERR_CREATEMAPPINGERR 123
+//#define CERR_MAPVIEWFILEERR 124
+//#define CERR_COLORERMAPPINGERR 125
+//#define CERR_EMPTY_COMSPEC_CMDLINE 126
+//#define CERR_CONEMUHK_NOTFOUND 127
+//#define CERR_CONSOLEMAIN_NOTFOUND 128
+//#define CERR_HOOKS_WAS_SET 129
+//#define CERR_HOOKS_FAILED 130
+//#define CERR_DLLMAIN_SKIPPED 131
+//#define CERR_ATTACH_NO_CONWND 132
+//#define CERR_GUIMACRO_SUCCEEDED 133
+//#define CERR_GUIMACRO_FAILED 134
+#include "ExitCodes.h"
+

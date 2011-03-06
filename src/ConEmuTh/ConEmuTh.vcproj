@@ -716,7 +716,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="shlwapi.lib version.lib"
-				OutputFile="\\WIN2K3\FAR\Far175\Plugins\ConEmu\Thumbs\ConEmuTh.dll"
+				OutputFile="\\WIN7x86\FAR\Plugins\ConEmu\Thumbs\ConEmuTh.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -1583,6 +1583,10 @@
 			</File>
 			<File
 				RelativePath="..\common\Memory.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\MStrSafe.cpp"
 				>
 			</File>
 			<File

@@ -193,7 +193,7 @@ void __MOUSE_EVENT_RECORD_Dump(MOUSE_EVENT_RECORD *rec, wchar_t* pszRecord)
 
 	if (rec->dwEventFlags==MOUSE_WHEELED  || rec->dwEventFlags==MOUSE_HWHEELED)
 	{
-		wsprintfW(pszRecord+wcslen(pszRecord),
+		wsprintfW(pszRecord+lstrlen(pszRecord),
 		          L" (Delta=%d)",HIWORD(rec->dwButtonState));
 	}
 }
@@ -263,7 +263,7 @@ void __INPUT_RECORD_Dump(INPUT_RECORD *rec, wchar_t* pszRecord)
 			break;
 	}
 
-	wsprintfW(pszRecord+wcslen(pszRecord),
+	wsprintfW(pszRecord+lstrlen(pszRecord),
 	          L" (%s)",IsFullscreen()?L"Fullscreen":L"Windowed");
 }
 

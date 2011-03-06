@@ -443,12 +443,12 @@ void CSettings::InitSettings()
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
 	wndX = 0; wndY = 0; wndCascade = true; isAutoSaveSizePos = false;
 	isConVisible = false; //isLockRealConsolePos = false;
-#ifdef _DEBUG
-	isUseInjects = TRUE;
-#else
-	WARNING("isUseInjects отключен принудительно");
-	isUseInjects = FALSE;
-#endif
+	//WARNING("isUseInjects в релизе по умолчанию отключен");
+	//#ifdef _DEBUG
+	isUseInjects = true;
+	//#else
+	//isUseInjects = false;
+	//#endif
 	nConInMode = (DWORD)-1; // по умолчанию, включится (ENABLE_QUICK_EDIT_MODE|ENABLE_EXTENDED_FLAGS|ENABLE_INSERT_MODE)
 	nSlideShowElapse = 2500;
 	nIconID = IDI_ICON1;
@@ -882,8 +882,8 @@ void CSettings::LoadSettings()
 		reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
 		//WCHAR* pszVert = wcschr(szTabPanels, L'|');
 		//if (!pszVert) {
-		//    if (wcslen(szTabPanels)>54) szTabPanels[54] = 0;
-		//    pszVert = szTabPanels + wcslen(szTabPanels);
+		//    if (lstrlen(szTabPanels)>54) szTabPanels[54] = 0;
+		//    pszVert = szTabPanels + lstrlen(szTabPanels);
 		//    wcscpy_c(pszVert+1, L"Console");
 		//}
 		//*pszVert = 0; pszTabConsole = pszVert+1;
@@ -1261,8 +1261,8 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ConVisible", isConVisible);
 		reg->Save(L"ConInMode", nConInMode);
 		
-		WARNING("Сохранение isUseInjects отключено принудительно");
-		//reg->Save(L"UseInjects", isUseInjects);
+		//WARNING("Сохранение isUseInjects отключено принудительно");
+		reg->Save(L"UseInjects", isUseInjects);
 		
 		//reg->Save(L"LockRealConsolePos", isLockRealConsolePos);
 		reg->Save(L"CmdLine", psCmd);
@@ -1750,7 +1750,7 @@ void CSettings::FillBgImageColors()
 			}
 
 			_wsprintf(pszTemp, SKIPLEN(countof(tmp)-(pszTemp-tmp)) L"#%i", idx);
-			pszTemp += wcslen(pszTemp);
+			pszTemp += lstrlen(pszTemp);
 		}
 
 		nTest = nTest >> 1;
@@ -1852,7 +1852,7 @@ LRESULT CSettings::OnInitDialog_Main()
 	//		}
 
 	//		_wsprintf(pszTemp, SKIPLEN(countof(tmp)-(pszTemp-tmp)) L"#%i", idx);
-	//		pszTemp += wcslen(pszTemp);
+	//		pszTemp += lstrlen(pszTemp);
 	//	}
 
 	//	nTest = nTest >> 1;
@@ -2091,13 +2091,18 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isConVisible)
 		CheckDlgButton(hExt, cbVisible, BST_CHECKED);
 
-	#ifndef _DEBUG
-	WARNING("isUseInjects отключен принудительно");
-	if (!isUseInjects)
-		EnableWindow(GetDlgItem(hExt, cbUseInjects), FALSE); // Сохранение запрещено
-	#endif
+	//#ifndef _DEBUG
+	//WARNING("isUseInjects отключен принудительно");
+	//if (!isUseInjects)
+	//	EnableWindow(GetDlgItem(hExt, cbUseInjects), FALSE); // Сохранение запрещено
+	//#endif
 	if (isUseInjects)
 		CheckDlgButton(hExt, cbUseInjects, BST_CHECKED);
+
+	if (gpConEmu->mb_DosBoxExists)
+		CheckDlgButton(hExt, cbDosBox, BST_CHECKED);
+	EnableWindow(GetDlgItem(hExt, cbDosBox), FALSE); // изменение пока запрещено
+	EnableWindow(GetDlgItem(hExt, bDosBoxSettings), FALSE); // изменение пока запрещено
 
 
 	//if (isLockRealConsolePos) CheckDlgButton(hExt, cbLockRealConsolePos, BST_CHECKED);
@@ -3638,7 +3643,7 @@ INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 		                         ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH,
 		                         L"MS Sans Serif");
 		HFONT hOldF = (HFONT)SelectObject(pItem->hDC, hFont);
-		DrawText(pItem->hDC, szText, wcslen(szText), &rc, DT_LEFT|DT_VCENTER|DT_NOPREFIX);
+		DrawText(pItem->hDC, szText, lstrlen(szText), &rc, DT_LEFT|DT_VCENTER|DT_NOPREFIX);
 		SelectObject(pItem->hDC, hOldF);
 		DeleteObject(hFont);
 	}
@@ -4200,6 +4205,8 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 					for (int c = 0; (c <= 40) && ListView_DeleteColumn(hList, 0); c++);
 					//ListView_DeleteAllItems(hDetails);
 					//for (int c = 0; (c <= 40) && ListView_DeleteColumn(hDetails, 0); c++);
+					SetDlgItemText(hWnd2, ebActivityApp, L"");
+					SetDlgItemText(hWnd2, ebActivityParm, L"");
 					
 					if (gpSet->m_RealConLoggingType == glt_Processes)
 					{
@@ -6551,7 +6558,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 	if (!GetFontNameFromFile(asFontFile, rf.szFontName))
 	{
 		//DWORD dwErr = GetLastError();
-		size_t cchLen = wcslen(asFontFile)+100;
+		size_t cchLen = lstrlen(asFontFile)+100;
 		wchar_t* psz=(wchar_t*)calloc(cchLen,sizeof(wchar_t));
 		_wcscpy_c(psz, cchLen, L"Can't retrieve font family from file:\n");
 		_wcscat_c(psz, cchLen, asFontFile);
@@ -6609,7 +6616,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 
 	if (!AddFontResourceEx(asFontFile, FR_PRIVATE, NULL))  //ADD fontname; by Mors
 	{
-		size_t cchLen = wcslen(asFontFile)+100;
+		size_t cchLen = lstrlen(asFontFile)+100;
 		wchar_t* psz=(wchar_t*)calloc(cchLen,sizeof(wchar_t));
 		_wcscpy_c(psz, cchLen, L"Can't register font:\n");
 		_wcscat_c(psz, cchLen, asFontFile);
@@ -6743,9 +6750,9 @@ void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
 			{
 				pszSlash[1] = 0;
 
-				if ((wcslen(fnd.cFileName)+wcslen(szFind)) >= MAX_PATH)
+				if ((lstrlen(fnd.cFileName)+lstrlen(szFind)) >= MAX_PATH)
 				{
-					size_t cchLen = wcslen(fnd.cFileName)+100;
+					size_t cchLen = lstrlen(fnd.cFileName)+100;
 					wchar_t* psz=(wchar_t*)calloc(cchLen,sizeof(wchar_t));
 					_wcscpy_c(psz, cchLen, L"Too long full pathname for font:\n");
 					_wcscat_c(psz, cchLen, fnd.cFileName);

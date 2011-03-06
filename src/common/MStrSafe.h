@@ -3,15 +3,26 @@
 
 #define STRSAFE_NO_DEPRECATE
 
+// ¬ некоторых случа€х использовать StringCch и прочие нельз€
+#undef  STRSAFE_DISABLE
+#ifdef CONEMU_MINIMAL
+	#define STRSAFE_DISABLE
+#endif
+#ifdef __GNUC__
+	#define STRSAFE_DISABLE
+#endif
+
+
+
 //#define MSTRSAFE_NO_DEPRECATE
 
-#ifdef __GNUC__
+#ifdef STRSAFE_DISABLE
 	#define StringCchCopyA(d,n,s) lstrcpyA(d,s)
 	#define StringCchCopyW(d,n,s) lstrcpyW(d,s)
 	#define StringCchCatA(d,n,s) lstrcatA(d,s)
 	#define StringCchCatW(d,n,s) lstrcatW(d,s)
-	#define StringCchCopyNA(d,n,s,l) lstrcpynA(d,s,l)
-	#define StringCchCopyNW(d,n,s,l) lstrcpynW(d,s,l)
+	#define StringCchCopyNA(d,n,s,l) lstrcpynA(d,s,min(((int)((l)+1)),((int)(n))))
+	#define StringCchCopyNW(d,n,s,l) lstrcpynW(d,s,min(((int)((l)+1)),((int)(n))))
 	#ifndef _ASSERTE
 		#define _ASSERTE(x) // {bool b = (x);}
 	#endif
@@ -159,14 +170,10 @@
 #endif
 
 
-#ifdef _DEBUG
-#define SKIPLEN(l) (l),
-#else
-#define SKIPLEN(l)
-#endif
 
-#ifdef _DEBUG
+#if defined(_DEBUG) && !defined(STRSAFE_DISABLE)
 // “олько под дебагом, т.к. StringCchVPrintf вызывает vsprintf, который не линкуетс€ в релизе статиком.
+#define SKIPLEN(l) (l),
 inline int swprintf_c(wchar_t* Buffer, INT_PTR size, const wchar_t *Format, ...)
 {
 	if (size < 0)
@@ -191,6 +198,7 @@ inline int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...)
 #define _wsprintf  swprintf_c
 #define _wsprintfA sprintf_c
 #else
+#define SKIPLEN(l)
 #define _wsprintf  wsprintfW
 #define _wsprintfA wsprintfA
 #endif
@@ -268,7 +276,7 @@ inline int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...)
 //	return nRc;
 //};
 
-#ifdef __GNUC__
+#ifdef STRSAFE_DISABLE
 inline int wcscpy_add(wchar_t* Buffer, wchar_t* /*BufferStart*/, const wchar_t *Str)
 {
 	lstrcpyW(Buffer, Str);
@@ -382,12 +390,14 @@ int wcscat_c(wchar_t (&Dst)[size], const wchar_t *Src)
 //	return StringCchCatW(Dst, size, Src);
 //}
 
+LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...);
+
 #define _wcscpy_c(Dst,cchDest,Src) StringCchCopyW(Dst, cchDest, Src)
 #define _wcscpyn_c(Dst,cchDest,Src,cchSrc) { _ASSERTE(((INT_PTR)cchDest)>=((INT_PTR)cchSrc)); StringCchCopyNW(Dst, cchDest, Src, cchSrc); }
 #define _wcscat_c(Dst,cchDest,Src) StringCchCatW(Dst, cchDest, Src)
 #define _wcscatn_c(Dst,cchDest,Src,cchSrc) { \
-			_ASSERTE(((INT_PTR)cchDest)>=((INT_PTR)cchSrc)); size_t nDestLen = wcslen(Dst); \
-			if (((INT_PTR)(nDestLen+1)) >= ((INT_PTR)cchDest)) DebugBreak(); else StringCchCopyNW(Dst+nDestLen,cchDest-nDestLen,Src,cchSrc); \
+			_ASSERTE(((INT_PTR)cchDest)>=((INT_PTR)cchSrc)); size_t nDestLen = lstrlen(Dst); \
+			if (((INT_PTR)(nDestLen+1)) >= ((INT_PTR)cchDest) || (cchSrc<0)) DebugBreak(); else StringCchCopyNW(Dst+nDestLen,cchDest-nDestLen,Src,(int)cchSrc); \
 		}
 #define _strcpy_c(Dst,cchDest,Src) StringCchCopyA(Dst, cchDest, Src)
 #define _strcat_c(Dst,cchDest,Src) StringCchCatA(Dst, cchDest, Src)

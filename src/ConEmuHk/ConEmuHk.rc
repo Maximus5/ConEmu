@@ -71,9 +71,9 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
-            VALUE "FileDescription", "ConEmu hooks & console server" CONEMUPLTFRM
+            VALUE "FileDescription", "ConEmu injects" CONEMUPLTFRM
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "(C) 2009-2010 Maximus5"
+            VALUE "LegalCopyright", "(C) 2009-2011 Maximus5"
             VALUE "OriginalFilename", "ConEmuHk*.dll"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS

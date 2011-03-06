@@ -29,6 +29,7 @@
 #define IDD_SPG_TABS                    206
 #define IDD_SPG_VIEWS                   208
 #define IDD_MORE_CONFONT                209
+#define IDD_MORE_DOSBOX                 210
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -346,6 +347,7 @@
 #define bApplyViewSettings              1717
 #define bConFontOK                      1717
 #define cbActivityReset                 1717
+#define bDosBoxSettings                 1717
 #define cbDisableFarFlashing            1718
 #define cbDisableAllFlashing            1719
 #define cbThumbRestoreOnStartup         1720
@@ -378,6 +380,15 @@
 #define ebActivityParm                  1751
 #define IDC_CHECK1                      1752
 #define cbUseInjects                    1752
+#define cbDosBoxForceConfig             1752
+#define cbDosBox                        1753
+#define ebDosBoxPath                    1754
+#define bDosBoxPath                     1755
+#define ebDosBoxForceConfig             1756
+#define bDosBoxForceConfig              1757
+#define ebDosBoxDrives                  1758
+#define IDC_EDIT3                       1759
+#define ebDosBoxAutoexec                1759
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -392,9 +403,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        210
+#define _APS_NEXT_RESOURCE_VALUE        211
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1753
+#define _APS_NEXT_CONTROL_VALUE         1760
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

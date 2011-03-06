@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <windows.h>
+
 #include "../common/common.hpp"
 #pragma warning( disable : 4995 )
 #include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi

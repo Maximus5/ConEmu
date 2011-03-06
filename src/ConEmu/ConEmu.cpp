@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRKEY(s) DEBUGSTR(s)
+#define DEBUGSTRIME(s) DEBUGSTR(s)
 #define DEBUGSTRCHAR(s) //DEBUGSTR(s)
 #define DEBUGSTRSETCURSOR(s) //DEBUGSTR(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
@@ -68,7 +69,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
 
-#define PROCESS_WAIT_START_TIME 1000
+//#define PROCESS_WAIT_START_TIME 1000
 
 #define PTDIFFTEST(C,D) PtDiffTest(C, LOWORD(lParam), HIWORD(lParam), D)
 //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
@@ -112,8 +113,8 @@ CConEmuMain::CConEmuMain()
 {
 	gpConEmu = this; // сразу!
 	//HeapInitialize();
-	#define D(N) (1##N-100)
-	_wsprintf(ms_ConEmuVer, SKIPLEN(countof(ms_ConEmuVer)) L"ConEmu %02u%02u%02u%s", (MVV_1%100),D(MVV_2),D(MVV_3),_T(MVV_4a));
+	//#define D(N) (1##N-100)
+	_wsprintf(ms_ConEmuVer, SKIPLEN(countof(ms_ConEmuVer)) L"ConEmu %02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
 	mp_TabBar = NULL;
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
 	mn_MainThreadId = GetCurrentThreadId();
@@ -140,11 +141,12 @@ CConEmuMain::CConEmuMain()
 	//mb_InClose = FALSE;
 	//memset(m_ProcList, 0, 1000*sizeof(DWORD));
 	m_ProcCount=0;
-	mb_ProcessCreated = FALSE; mn_StartTick = 0; mb_WorkspaceErasedOnClose = FALSE;
+	mb_ProcessCreated = FALSE; /*mn_StartTick = 0;*/ mb_WorkspaceErasedOnClose = FALSE;
 	mb_IgnoreSizeChange = false;
 	//mn_CurrentKeybLayout = (DWORD_PTR)GetKeyboardLayout(0);
 	mn_GuiServerThreadId = 0; mh_GuiServerThread = NULL; mh_GuiServerThreadTerminate = NULL;
 	//mpsz_RecreateCmd = NULL;
+	mb_InImeComposition = false; mb_ImeMethodChanged = false;
 	mh_RecreateDlgKeyHook = NULL; mb_SkipAppsInRecreate = FALSE;
 	ZeroStruct(mrc_Ideal);
 	mn_InResize = 0;
@@ -182,6 +184,10 @@ CConEmuMain::CConEmuMain()
 	//HKL hkl = (HKL)GetActiveKeyboardLayout();
 	//int nTranslatedChars = ToUnicodeEx(0, 0, m_KeybStates, szTranslatedChars, 15, 0, hkl);
 	mn_LastPressedVK = 0;
+	memset(&m_GuiInfo, 0, sizeof(m_GuiInfo));
+	m_GuiInfo.cbSize = sizeof(m_GuiInfo);
+
+
 	mpsz_ConEmuArgs = NULL;
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = 0;
 	//ms_ConEmuCExe[0] = 
@@ -334,6 +340,8 @@ CConEmuMain::CConEmuMain()
 	{
 		ms_ConEmuCurDir[nDirLen-1] = 0; // пусть будет БЕЗ слеша, для однообразия с ms_ConEmuExeDir
 	}
+
+	mb_DosBoxExists = CheckDosBoxExists();
 
 	memset(&m_osv,0,sizeof(m_osv));
 	m_osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -727,21 +735,40 @@ void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 	pFont->nBorderFontWidth = gpSet->BorderFontWidth();
 }
 
+BOOL CConEmuMain::CheckDosBoxExists()
+{
+	BOOL lbExists = FALSE;
+	wchar_t szDosBoxPath[MAX_PATH+32];
+	wcscpy_c(szDosBoxPath, ms_ConEmuBaseDir);
+	wchar_t* pszName = szDosBoxPath+lstrlen(szDosBoxPath);
+
+	wcscpy_add(pszName, szDosBoxPath, L"\\DosBox\\DosBox.exe");
+	if (FileExists(szDosBoxPath))
+	{
+		wcscpy_add(pszName, szDosBoxPath, L"\\DosBox\\DosBox.conf");
+		lbExists = FileExists(szDosBoxPath);
+	}
+
+	return lbExists;
+}
+
 void CConEmuMain::UpdateGuiInfoMapping()
 {
-	ConEmuGuiMapping ceInfo = {sizeof(ConEmuGuiMapping)};
-	ceInfo.nProtocolVersion = CESERVER_REQ_VER;
-	ceInfo.hGuiWnd = ghWnd;
+	m_GuiInfo.nProtocolVersion = CESERVER_REQ_VER;
+	m_GuiInfo.hGuiWnd = ghWnd;
 	
-	ceInfo.nLoggingType = (ghOpWnd && gpSet->hDebug) ? gpSet->m_RealConLoggingType : glt_None;
-	ceInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0);
+	m_GuiInfo.nLoggingType = (ghOpWnd && gpSet->hDebug) ? gpSet->m_RealConLoggingType : glt_None;
+	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0);
+
+	mb_DosBoxExists = CheckDosBoxExists();
+	m_GuiInfo.bDosBox = mb_DosBoxExists;
 	
-	wcscpy_c(ceInfo.sConEmuExe, ms_ConEmuExe);
-	wcscpy_c(ceInfo.sConEmuDir, ms_ConEmuExeDir);
-	wcscpy_c(ceInfo.sConEmuBaseDir, ms_ConEmuBaseDir);
-	_wcscpyn_c(ceInfo.sConEmuArgs, countof(ceInfo.sConEmuArgs), mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(ceInfo.sConEmuArgs));
+	wcscpy_c(m_GuiInfo.sConEmuExe, ms_ConEmuExe);
+	wcscpy_c(m_GuiInfo.sConEmuDir, ms_ConEmuExeDir);
+	wcscpy_c(m_GuiInfo.sConEmuBaseDir, ms_ConEmuBaseDir);
+	_wcscpyn_c(m_GuiInfo.sConEmuArgs, countof(m_GuiInfo.sConEmuArgs), mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(m_GuiInfo.sConEmuArgs));
 	
-	FillConEmuMainFont(&ceInfo.MainFont);
+	FillConEmuMainFont(&m_GuiInfo.MainFont);
 	
 	TODO("DosBox");
 	//BOOL     bDosBox; // наличие DosBox
@@ -749,7 +776,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	//wchar_t  sDosBoxEnv[8192]; // команды загрузки (mount, и пр.)
 
 	//if (mb_CreateProcessLogged)
-	//	lstrcpy(ceInfo.sLogCreateProcess, ms_LogCreateProcess);
+	//	lstrcpy(m_GuiInfo.sLogCreateProcess, ms_LogCreateProcess);
 	// sConEmuArgs уже заполнен в PrepareCommandLine
 	
 	BOOL lbMapIsValid = m_GuiInfoMapping.IsValid();
@@ -764,7 +791,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	
 	if (lbMapIsValid)
 	{
-		m_GuiInfoMapping.SetFrom(&ceInfo);
+		m_GuiInfoMapping.SetFrom(&m_GuiInfo);
 	}
 	#ifdef _DEBUG
 	else
@@ -3678,7 +3705,7 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
 	//{
 	//    //DWORD cbWritten=0;
 	//    DebugStep(_T("Macro: Waiting for result (10 sec)"));
-	//    pipe.Execute(CMD_POSTMACRO, asMacro, (wcslen(asMacro)+1)*2);
+	//    pipe.Execute(CMD_POSTMACRO, asMacro, (lstrlen(asMacro)+1)*2);
 	//    DebugStep(NULL);
 	//}
 }
@@ -3803,17 +3830,17 @@ void CConEmuMain::RegisterHoooks()
 		{
 			if (!mh_LLKeyHookDll)
 			{
-				wchar_t szConEmuHkDll[MAX_PATH+32];
-				lstrcpy(szConEmuHkDll, ms_ConEmuBaseDir);
+				wchar_t szConEmuDll[MAX_PATH+32];
+				lstrcpy(szConEmuDll, ms_ConEmuBaseDir);
 #ifdef WIN64
-				lstrcat(szConEmuHkDll, L"\\ConEmuHk64.dll");
+				lstrcat(szConEmuDll, L"\\ConEmuCD64.dll");
 #else
-				lstrcat(szConEmuHkDll, L"\\ConEmuHk.dll");
+				lstrcat(szConEmuDll, L"\\ConEmuCD.dll");
 #endif
 				wchar_t szSkipEventName[128];
 				_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
 				HANDLE hSkipEvent = CreateEvent(NULL, TRUE, TRUE, szSkipEventName);
-				mh_LLKeyHookDll = LoadLibrary(szConEmuHkDll);
+				mh_LLKeyHookDll = LoadLibrary(szConEmuDll);
 				CloseHandle(hSkipEvent);
 			}
 
@@ -6393,7 +6420,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	if (!m_Child->Create())
 		return -1;
 
-	mn_StartTick = GetTickCount();
+	//mn_StartTick = GetTickCount();
 	//if (gpSet->isGUIpb && !ProgressBars) {
 	//	ProgressBars = new CProgressBars(ghWnd, g_hInstance);
 	//}
@@ -7258,6 +7285,15 @@ void CConEmuMain::OnHideCaption()
 void CConEmuMain::OnGlobalSettingsChanged()
 {
 	gpConEmu->UpdateGuiInfoMapping();
+
+	// и отослать в серверы
+	for(int i=0; i<MAX_CONSOLE_COUNT; i++)
+	{
+		if (mp_VCon[i] && mp_VCon[i]->RCon())
+		{
+			mp_VCon[i]->RCon()->UpdateGuiInfoMapping(&m_GuiInfo);
+		}
+	}
 }
 
 void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
@@ -7351,6 +7387,20 @@ void CConEmuMain::OnMinimizeRestore()
 
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	if (mb_ImeMethodChanged)
+	{
+		if (messg == WM_SYSKEYDOWN || messg == WM_SYSKEYUP)
+		{
+			if (messg == WM_SYSKEYUP)
+				mb_ImeMethodChanged = false;
+			return 0;
+		}
+		else
+		{
+			mb_ImeMethodChanged = false;
+		}
+	}
+
 	WORD bVK = (WORD)(wParam & 0xFF);
 #ifdef _DEBUG
 	wchar_t szDebug[255];
@@ -7839,6 +7889,140 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	}
 
 	return 0;
+}
+
+bool CConEmuMain::isInImeComposition()
+{
+	return mb_InImeComposition;
+}
+
+LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 0;
+	bool lbProcessed = false;
+	wchar_t szDbgMsg[255];
+	switch (messg)
+	{
+		case WM_IME_CHAR:
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_CHAR: char=%c, wParam=%u, lParam=0x%08X\n", (wchar_t)wParam, wParam, lParam);
+			DEBUGSTRIME(szDbgMsg);
+			if (mp_VActive)
+			{
+				mp_VActive->RCon()->OnKeyboardIme(hWnd, messg, wParam, lParam);
+			}
+			break;
+		case WM_IME_COMPOSITION:
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_COMPOSITION: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			DEBUGSTRIME(szDbgMsg);
+			//if (lParam & GCS_RESULTSTR) 
+			//{
+			//	HIMC hIMC = ImmGetContext(hWnd);
+			//	if (hIMC)
+			//	{
+			//		DWORD dwSize;
+			//		wchar_t* lpstr;
+			//		// Get the size of the result string. 
+			//		dwSize = ImmGetCompositionString(hIMC, GCS_RESULTSTR, NULL, 0);
+			//		// increase buffer size for terminating null character,  
+			//		dwSize += sizeof(wchar_t);
+			//		lpstr = (wchar_t*)calloc(dwSize,1);
+			//		if (lpstr)
+			//		{
+			//			// Get the result strings that is generated by IME into lpstr. 
+			//			ImmGetCompositionString(hIMC, GCS_RESULTSTR, lpstr, dwSize);
+			//			DEBUGSTRIME(L"GCS_RESULTSTR: ");
+			//			DEBUGSTRIME(lpstr);
+			//			// add this string into text buffer of application 
+			//			free(lpstr);
+			//		}
+			//		ImmReleaseContext(hWnd, hIMC);
+			//	}
+			//}
+			break;
+		case WM_IME_COMPOSITIONFULL:
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_COMPOSITIONFULL: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			DEBUGSTRIME(szDbgMsg);
+			break;
+		case WM_IME_CONTROL:
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_CONTROL: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			DEBUGSTRIME(szDbgMsg);
+			break;
+		case WM_IME_ENDCOMPOSITION:
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_ENDCOMPOSITION: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			DEBUGSTRIME(szDbgMsg);
+			// IME закончен. Обычные нажатия опять можно посылать в консоль
+			mb_InImeComposition = false;
+			break;
+		case WM_IME_KEYDOWN:
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_KEYDOWN: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			DEBUGSTRIME(szDbgMsg);
+			break;
+		case WM_IME_KEYUP:
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_KEYUP: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			DEBUGSTRIME(szDbgMsg);
+			break;
+		case WM_IME_NOTIFY:
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_NOTIFY: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			DEBUGSTRIME(szDbgMsg);
+			switch (wParam)
+			{
+				case IMN_SETOPENSTATUS:
+					// Как-то странно, нажатие Alt` (в японской раскладке) посылает в консоль артефактный символ
+					// (пересылает нажатие в консоль)
+					mb_ImeMethodChanged = (wParam == IMN_SETOPENSTATUS) && isPressed(VK_MENU);
+					break;
+				//case 0xF:
+				//	{
+				//		wchar_t szInfo[1024];
+				//		getWindowInfo((HWND)lParam, szInfo);
+				//	}
+				//	break;
+			}
+			break;
+		case WM_IME_REQUEST:
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_REQUEST: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			DEBUGSTRIME(szDbgMsg);
+			//if (wParam == IMR_QUERYCHARPOSITION)
+			//{
+			//	IMECHARPOSITION* p = (IMECHARPOSITION*)lParam;
+			//	GetWindowRect(ghWndDC, &p->rcDocument);
+			//	p->cLineHeight = gpSet->FontHeight();
+			//	if (mp_VActive && mp_VActive->RCon())
+			//	{
+			//		COORD crCur = {};
+			//		mp_VActive->RCon()->GetConsoleCursorPos(&crCur);
+			//		p->pt = mp_VActive->ConsoleToClient(crCur.X, crCur.Y);
+			//	}
+			//	lbProcessed = true;
+			//	result = TRUE;
+			//}
+			break;
+		case WM_IME_SELECT:
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_SELECT: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			DEBUGSTRIME(szDbgMsg);
+			break;
+		case WM_IME_SETCONTEXT:
+			// If the application draws the composition window, 
+			// the default IME window does not have to show its composition window.
+			// In this case, the application must clear the ISC_SHOWUICOMPOSITIONWINDOW
+			// value from the lParam parameter before passing the message to DefWindowProc
+			// or ImmIsUIMessage. To display a certain user interface window, an application
+			// should remove the corresponding value so that the IME will not display it.
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_SETCONTEXT: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			DEBUGSTRIME(szDbgMsg);
+			break;
+		case WM_IME_STARTCOMPOSITION:
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_STARTCOMPOSITION: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			DEBUGSTRIME(szDbgMsg);
+			// Начало IME. Теперь нужно игнорировать обычные нажатия (не посылать в консоль)
+			mb_InImeComposition = true;
+			break;
+		default:
+			_ASSERTE(messg==0);
+	}
+	if (!lbProcessed)
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
+	return result;
 }
 
 LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
@@ -10227,7 +10411,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	if (hFocus != shFocus)
 	{
 		_wsprintf(szWndInfo, SKIPLEN(countof(szWndInfo)) L"(Fore=0x%08X) Focus was changed to ", (DWORD)hFore);
-		getWindowInfo(hFocus, szWndInfo+wcslen(szWndInfo));
+		getWindowInfo(hFocus, szWndInfo+lstrlen(szWndInfo));
 		wcscat(szWndInfo, L"\n");
 		DEBUGSHOWFOCUS(szWndInfo);
 		shFocus = hFocus;
@@ -10238,7 +10422,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		if (hFore != hFocus)
 		{
 			wcscpy(szWndInfo, L"Foreground window was changed to ");
-			getWindowInfo(hFore, szWndInfo+wcslen(szWndInfo));
+			getWindowInfo(hFore, szWndInfo+lstrlen(szWndInfo));
 			wcscat(szWndInfo, L"\n");
 			DEBUGSHOWFOCUS(szWndInfo);
 		}
@@ -10276,11 +10460,11 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 			}
 			else
 			{
-				if (!mb_ProcessCreated && m_ProcCount>=1)
-				{
-					if ((GetTickCount() - mn_StartTick)>PROCESS_WAIT_START_TIME)
-						mb_ProcessCreated = TRUE;
-				}
+				//if (!mb_ProcessCreated && m_ProcCount>=1) --> OnRConStartedSuccess
+				//{
+				//	if ((GetTickCount() - mn_StartTick)>PROCESS_WAIT_START_TIME)
+				//		mb_ProcessCreated = TRUE;
+				//}
 
 				if (!mb_WorkspaceErasedOnClose)
 					mb_WorkspaceErasedOnClose = FALSE;
@@ -10518,6 +10702,11 @@ void CConEmuMain::OnAllVConClosed()
 		UpdateTitle();
 		InvalidateAll();
 	}
+}
+
+void CConEmuMain::OnRConStartedSuccess(CRealConsole* apRCon)
+{
+	mb_ProcessCreated = TRUE;
 }
 
 LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*= FALSE*/)
@@ -10865,6 +11054,20 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		               &cbWritten,   // number of bytes written
 		               NULL);        // not overlapped I/O
 	}
+	else if (pIn->hdr.nCmd == CECMD_ASSERT)
+	{
+		DWORD nBtn = MessageBox(NULL, pIn->AssertInfo.szDebugInfo, pIn->AssertInfo.szTitle, pIn->AssertInfo.nBtns);
+		pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+		pIn->dwData[0] = nBtn;
+		// Отправляем
+		fSuccess = WriteFile(
+		               hPipe,        // handle to pipe
+		               pIn,         // buffer to write from
+		               pIn->hdr.cbSize,  // number of bytes to write
+		               &cbWritten,   // number of bytes written
+		               NULL);        // not overlapped I/O
+	}
+	
 
 	// Освободить память
 	if (pIn && (LPVOID)pIn != (LPVOID)&in)
@@ -11309,7 +11512,19 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_DESTROY:
 			result = gpConEmu->OnDestroy(hWnd);
 			break;
+		case WM_IME_CHAR:
+		case WM_IME_COMPOSITION:
+		case WM_IME_COMPOSITIONFULL:
+		case WM_IME_CONTROL:
+		case WM_IME_ENDCOMPOSITION:
+		case WM_IME_KEYDOWN:
+		case WM_IME_KEYUP:
 		case WM_IME_NOTIFY:
+		case WM_IME_REQUEST:
+		case WM_IME_SELECT:
+		case WM_IME_SETCONTEXT:
+		case WM_IME_STARTCOMPOSITION:
+			result = gpConEmu->OnKeyboardIme(hWnd, messg, wParam, lParam);
 			break;
 		case WM_INPUTLANGCHANGE:
 		case WM_INPUTLANGCHANGEREQUEST:

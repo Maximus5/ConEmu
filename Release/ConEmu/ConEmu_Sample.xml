@@ -37,6 +37,8 @@
 			<!-- Check or UnCheck "QuickEdit Mode" and "Insert mode" in real console window properties -->
 			<!-- FFFFFFFF - Check, 00300000 - Uncheck -->
 			<value name="ConInMode" type="dword" data="FFFFFFFF"/>
+
+			<value name="UseInjects" type="hex" data="01"/>
 			
 			<value name="CmdLine" type="string" data=""/>
 

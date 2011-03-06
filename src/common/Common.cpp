@@ -361,174 +361,307 @@ BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec)
 	return TRUE;
 }
 
+//#ifdef CONEMU_MINIMAL
+//#include "base64.h"
+//#endif
+
 class MNullDesc
 {
-	protected:
-		PSECURITY_DESCRIPTOR mp_NullDesc;
-		SECURITY_ATTRIBUTES  m_NullSecurity;
-		PSECURITY_DESCRIPTOR mp_LocalDesc;
-		SECURITY_ATTRIBUTES  m_LocalSecurity;
-	public:
-		DWORD mn_LastError;
-	public:
-		MNullDesc()
+protected:
+	PACL mp_ACL;
+	#ifndef CONEMU_MINIMAL
+	PSECURITY_DESCRIPTOR mp_NullDesc;
+	SECURITY_ATTRIBUTES  m_NullSecurity;
+	#endif
+	PSECURITY_DESCRIPTOR mp_LocalDesc;
+	SECURITY_ATTRIBUTES  m_LocalSecurity;
+	HMODULE mh_AdvApi;
+
+	typedef BOOL (WINAPI *AddAccessAllowedAce_t)(PACL pAcl, DWORD dwAceRevision, DWORD AccessMask, PSID pSid);
+	AddAccessAllowedAce_t AddAccessAllowedAce;
+	typedef BOOL (WINAPI *AddAccessDeniedAce_t)(PACL pAcl, DWORD dwAceRevision, DWORD AccessMask, PSID pSid);
+	AddAccessDeniedAce_t AddAccessDeniedAce;
+	typedef BOOL (WINAPI *AllocateAndInitializeSid_t)(PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount, DWORD dwSubAuthority0, DWORD dwSubAuthority1, DWORD dwSubAuthority2, DWORD dwSubAuthority3, DWORD dwSubAuthority4, DWORD dwSubAuthority5, DWORD dwSubAuthority6, DWORD dwSubAuthority7, PSID *pSid);
+	AllocateAndInitializeSid_t AllocateAndInitializeSid;
+	typedef DWORD (WINAPI *GetLengthSid_t)(PSID pSid);
+	GetLengthSid_t GetLengthSid;
+	typedef BOOL (WINAPI *InitializeAcl_t)(PACL pAcl, DWORD nAclLength, DWORD dwAclRevision);
+	InitializeAcl_t InitializeAcl;
+	typedef BOOL (WINAPI *InitializeSecurityDescriptor_t)(PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD dwRevision);
+	InitializeSecurityDescriptor_t InitializeSecurityDescriptor;
+	typedef BOOL (WINAPI *SetSecurityDescriptorDacl_t)(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bDaclPresent, PACL pDacl, BOOL bDaclDefaulted);
+	SetSecurityDescriptorDacl_t SetSecurityDescriptorDacl;
+
+	BOOL LoadAdvApi()
+	{
+		if (mh_AdvApi)
 		{
-			memset(&m_NullSecurity, 0, sizeof(m_NullSecurity));
-			mp_NullDesc = NULL;
-			memset(&m_LocalSecurity, 0, sizeof(m_LocalSecurity));
-			mp_LocalDesc = NULL;
-			mn_LastError = 0;
-		};
-		~MNullDesc()
+			return TRUE;
+		}
+
+		for (int i = 0; i <= 1; i++)
 		{
-			memset(&m_NullSecurity, 0, sizeof(m_NullSecurity));
-			LocalFree(mp_NullDesc); mp_NullDesc = NULL;
-			memset(&m_LocalSecurity, 0, sizeof(m_LocalSecurity));
-			LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
-		};
-	public:
-		SECURITY_ATTRIBUTES* NullSecurity()
+			if (i == 0)
+			{
+				OSVERSIONINFOW osv = {sizeof(OSVERSIONINFOW)};
+				GetVersionExW(&osv);
+				if ((osv.dwMajorVersion < 6)
+					|| ((osv.dwMajorVersion == 6) && (osv.dwMinorVersion == 0)))
+					continue; // в Vista и ниже "KernelBase.dll" еще не было
+				mh_AdvApi = LoadLibrary(L"KernelBase.dll");
+			}
+			else
+			{
+				mh_AdvApi = LoadLibrary(L"Advapi32.dll");
+			}
+			if (!mh_AdvApi)
+			{
+				#ifdef _DEBUG
+				mn_LastError = GetLastError();
+				#endif
+				return FALSE;
+			}
+
+			AddAccessAllowedAce = (AddAccessAllowedAce_t)GetProcAddress(mh_AdvApi, "AddAccessAllowedAce");
+			AddAccessDeniedAce = (AddAccessDeniedAce_t)GetProcAddress(mh_AdvApi, "AddAccessDeniedAce");
+			AllocateAndInitializeSid = (AllocateAndInitializeSid_t)GetProcAddress(mh_AdvApi, "AllocateAndInitializeSid");
+			GetLengthSid = (GetLengthSid_t)GetProcAddress(mh_AdvApi, "GetLengthSid");
+			InitializeAcl = (InitializeAcl_t)GetProcAddress(mh_AdvApi, "InitializeAcl");
+			InitializeSecurityDescriptor = (InitializeSecurityDescriptor_t)GetProcAddress(mh_AdvApi, "InitializeSecurityDescriptor");
+			SetSecurityDescriptorDacl = (SetSecurityDescriptorDacl_t)GetProcAddress(mh_AdvApi, "SetSecurityDescriptorDacl");
+
+			if (AddAccessAllowedAce && AddAccessDeniedAce && AllocateAndInitializeSid &&
+				GetLengthSid && InitializeAcl && InitializeSecurityDescriptor && SetSecurityDescriptorDacl)
+			{
+				return TRUE;
+			}
+
+	    	UnloadAdvApi();
+	    	return FALSE;
+	    }
+		return FALSE;
+	}
+	void UnloadAdvApi()
+	{
+		if (mh_AdvApi)
 		{
-			mn_LastError = 0;
-
-			if (mp_NullDesc)
-			{
-				_ASSERTE(m_NullSecurity.lpSecurityDescriptor==mp_NullDesc);
-				return (&m_NullSecurity);
-			}
-
-			mp_NullDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
-			              SECURITY_DESCRIPTOR_MIN_LENGTH);
-
-			if (mp_NullDesc == NULL)
-			{
-				mn_LastError = GetLastError();
-				return NULL;
-			}
-
-			if (!InitializeSecurityDescriptor(mp_NullDesc, SECURITY_DESCRIPTOR_REVISION))
-			{
-				mn_LastError = GetLastError();
-				LocalFree(mp_NullDesc); mp_NullDesc = NULL;
-				return NULL;
-			}
-
-			// Add a null DACL to the security descriptor.
-			if (!SetSecurityDescriptorDacl(mp_NullDesc, TRUE, (PACL) NULL, FALSE))
-			{
-				mn_LastError = GetLastError();
-				LocalFree(mp_NullDesc); mp_NullDesc = NULL;
-				return NULL;
-			}
-
-			m_NullSecurity.nLength = sizeof(m_NullSecurity);
-			m_NullSecurity.lpSecurityDescriptor = mp_NullDesc;
-			m_NullSecurity.bInheritHandle = TRUE;
+			FreeLibrary(mh_AdvApi);
+			mh_AdvApi = NULL;
+		}
+	}
+	
+public:
+	#ifdef _DEBUG
+	DWORD mn_LastError;
+	#endif
+public:
+	MNullDesc()
+	{
+		#ifndef CONEMU_MINIMAL
+		memset(&m_NullSecurity, 0, sizeof(m_NullSecurity));
+		mp_NullDesc = NULL;
+		#endif
+		memset(&m_LocalSecurity, 0, sizeof(m_LocalSecurity));
+		mp_LocalDesc = NULL;
+		mp_ACL = NULL;
+		#ifdef _DEBUG
+		mn_LastError = 0;
+		#endif
+		mh_AdvApi = NULL;
+	};
+	~MNullDesc()
+	{
+		#ifndef CONEMU_MINIMAL
+		memset(&m_NullSecurity, 0, sizeof(m_NullSecurity));
+		LocalFree(mp_NullDesc); mp_NullDesc = NULL;
+		#endif
+		memset(&m_LocalSecurity, 0, sizeof(m_LocalSecurity));
+		LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
+	};
+public:
+	#ifndef CONEMU_MINIMAL
+	SECURITY_ATTRIBUTES* NullSecurity()
+	{
+		if (mp_NullDesc)
+		{
+			_ASSERTE(m_NullSecurity.lpSecurityDescriptor==mp_NullDesc);
 			return (&m_NullSecurity);
-		};
-		SECURITY_ATTRIBUTES* LocalSecurity()
+		}
+
+		#ifdef _DEBUG
+		mn_LastError = 0;
+		#endif
+		
+		if (!LoadAdvApi())
+			goto wrap;
+
+		SECURITY_ATTRIBUTES* lpSec = NULL;
+
+		mp_NullDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
+		              SECURITY_DESCRIPTOR_MIN_LENGTH);
+
+		if (mp_NullDesc == NULL)
 		{
-			static PACL pACL = NULL;
-			//static PSID pNetworkSid = NULL, pSidWorld = NULL;
-			BYTE NetworkSid[12] = {01,01,00,00,00,00,00,05,02,00,00,00};
-			BYTE SidWorld[12]   = {01,01,00,00,00,00,00,01,00,00,00,00};
-			PSID pNetworkSid = (PSID)NetworkSid;
-			PSID pSidWorld = (PSID)SidWorld;
-			//static DWORD LastError = 0;
-			DWORD dwSize = 0;
+			#ifdef _DEBUG
+			mn_LastError = GetLastError();
+			#endif
+			goto wrap;
+		}
 
-			if (mp_LocalDesc)
-			{
-				_ASSERTE(m_LocalSecurity.lpSecurityDescriptor==mp_LocalDesc);
-				return (&m_LocalSecurity);
-			}
+		if (!InitializeSecurityDescriptor(mp_NullDesc, SECURITY_DESCRIPTOR_REVISION))
+		{
+			#ifdef _DEBUG
+			mn_LastError = GetLastError();
+			#endif
+			LocalFree(mp_NullDesc); mp_NullDesc = NULL;
+			goto wrap;
+		}
 
-			mp_LocalDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
-			               SECURITY_DESCRIPTOR_MIN_LENGTH);
+		// Add a null DACL to the security descriptor.
+		if (!SetSecurityDescriptorDacl(mp_NullDesc, TRUE, (PACL) NULL, FALSE))
+		{
+			#ifdef _DEBUG
+			mn_LastError = GetLastError();
+			#endif
+			LocalFree(mp_NullDesc); mp_NullDesc = NULL;
+			goto wrap;
+		}
 
-			if (mp_LocalDesc == NULL)
-			{
-				mn_LastError = GetLastError();
-				return NULL;
-			}
-
-			if (!InitializeSecurityDescriptor(mp_LocalDesc, SECURITY_DESCRIPTOR_REVISION))
-			{
-				mn_LastError = GetLastError();
-				LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
-				return NULL;
-			}
-
-			//// Создать SID для Network & Everyone
-			//dwSize = SECURITY_MAX_SID_SIZE;
-			//pNetworkSid = (PSID)LocalAlloc(LMEM_FIXED, dwSize);
-			//pSidWorld   = (PSID)LocalAlloc(LMEM_FIXED, dwSize);
-			//if (!pNetworkSid || !pSidWorld)
-			//{
-			//	mn_LastError = GetLastError();
-			//	return NULL;
-			//}
-			//dwSize = SECURITY_MAX_SID_SIZE;
-			//// 01 01 00 00 00 00 00 05 02 00 00 00
-			//if (!CreateWellKnownSid(WinNetworkSid, NULL, pNetworkSid, &dwSize))
-			//{
-			//	LastError = GetLastError();
-			//	return NULL;
-			//}
-			//dwSize = SECURITY_MAX_SID_SIZE;
-			//// 01 01 00 00 00 00 00 01 00 00 00 00
-			//if (!CreateWellKnownSid(WinWorldSid, NULL, pSidWorld, &dwSize))
-			//{
-			//	mn_LastError = GetLastError();
-			//	return NULL;
-			//}
-			// Создать DACL
-			dwSize = sizeof(ACL)
-			         + sizeof(ACCESS_DENIED_ACE) + GetLengthSid(pNetworkSid)
-			         + sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(pSidWorld);
-			pACL = (PACL)LocalAlloc(LPTR, dwSize);
-
-			if (!InitializeAcl(pACL, dwSize, ACL_REVISION))
-			{
-				mn_LastError = GetLastError();
-				return NULL;
-			}
-
-			// Теперь - собственно права
-			if (!AddAccessDeniedAce(pACL, ACL_REVISION, GENERIC_ALL, pNetworkSid))
-			{
-				mn_LastError = GetLastError();
-				return NULL;
-			}
-
-			if (!AddAccessAllowedAce(pACL, ACL_REVISION, GENERIC_ALL, pSidWorld))
-			{
-				mn_LastError = GetLastError();
-				return NULL;
-			}
-
-			// Add a null DACL to the security descriptor.
-			if (!SetSecurityDescriptorDacl(mp_LocalDesc, TRUE, pACL, FALSE))
-			{
-				mn_LastError = GetLastError();
-				LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
-				return NULL;
-			}
-
-			m_LocalSecurity.nLength = sizeof(m_LocalSecurity);
-			m_LocalSecurity.lpSecurityDescriptor = mp_LocalDesc;
-			m_LocalSecurity.bInheritHandle = TRUE;
+		m_NullSecurity.nLength = sizeof(m_NullSecurity);
+		m_NullSecurity.lpSecurityDescriptor = mp_NullDesc;
+		m_NullSecurity.bInheritHandle = TRUE;
+		lpSec = &m_NullSecurity;
+	wrap:
+		UnloadAdvApi();
+		return lpSec;
+	};
+	#endif // CONEMU_MINIMAL
+	SECURITY_ATTRIBUTES* LocalSecurity()
+	{
+		if (mp_LocalDesc)
+		{
+			_ASSERTE(m_LocalSecurity.lpSecurityDescriptor==mp_LocalDesc);
 			return (&m_LocalSecurity);
-		};
+		}
+
+		#ifdef _DEBUG
+		mn_LastError = 0;
+		#endif
+
+		//#ifdef CONEMU_MINIMAL
+		//		// Возможно, есть переменная окружения CESECURITYNAME?
+		//		int nLen = 1024;
+		//		char* pszEncoded = (char*)calloc(1024,1);
+		//		if (!pszEncoded)
+		//			goto DoLoad;
+		//		nLen = GetEnvironmentVariableA(CESECURITYNAME, pszEncoded, 1024);
+		//		if (nLen > 0)
+		//		{
+		//			if (nLen > 1024)
+		//			{
+		//				nLen ++;
+		//				free(pszEncoded);
+		//				pszEncoded = (char*)calloc(nLen,1);
+		//				nLen = GetEnvironmentVariableA(CESECURITYNAME, pszEncoded, 1024);
+		//				if (!nLen)
+		//				{
+		//					free(pszEncoded);
+		//					goto DoLoad;
+		//				}
+		//			}
+		//		}
+		//		free(pszEncoded);
+		//		DoLoad:
+		//#endif
+		
+		if (!LoadAdvApi())
+			goto wrap;
+
+		SECURITY_ATTRIBUTES* lpSec = NULL;
+		BYTE NetworkSid[12] = {01,01,00,00,00,00,00,05,02,00,00,00};
+		BYTE SidWorld[12]   = {01,01,00,00,00,00,00,01,00,00,00,00};
+		PSID pNetworkSid = (PSID)NetworkSid;
+		PSID pSidWorld = (PSID)SidWorld;
+		DWORD dwSize = 0;
+
+		mp_LocalDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
+		               SECURITY_DESCRIPTOR_MIN_LENGTH);
+
+		if (mp_LocalDesc == NULL)
+		{
+			#ifdef _DEBUG
+			mn_LastError = GetLastError();
+			#endif
+			goto wrap;
+		}
+
+		if (!InitializeSecurityDescriptor(mp_LocalDesc, SECURITY_DESCRIPTOR_REVISION))
+		{
+			#ifdef _DEBUG
+			mn_LastError = GetLastError();
+			#endif
+			LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
+			goto wrap;
+		}
+
+		dwSize = sizeof(ACL)
+		         + sizeof(ACCESS_DENIED_ACE) + GetLengthSid(pNetworkSid)
+		         + sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(pSidWorld);
+		mp_ACL = (PACL)LocalAlloc(LPTR, dwSize);
+
+		if (!InitializeAcl(mp_ACL, dwSize, ACL_REVISION))
+		{
+			#ifdef _DEBUG
+			mn_LastError = GetLastError();
+			#endif
+			goto wrap;
+		}
+
+		if (!AddAccessDeniedAce(mp_ACL, ACL_REVISION, GENERIC_ALL, pNetworkSid))
+		{
+			#ifdef _DEBUG
+			mn_LastError = GetLastError();
+			#endif
+			goto wrap;
+		}
+
+		if (!AddAccessAllowedAce(mp_ACL, ACL_REVISION, GENERIC_ALL, pSidWorld))
+		{
+			#ifdef _DEBUG
+			mn_LastError = GetLastError();
+			#endif
+			goto wrap;
+		}
+
+		if (!SetSecurityDescriptorDacl(mp_LocalDesc, TRUE, mp_ACL, FALSE))
+		{
+			#ifdef _DEBUG
+			mn_LastError = GetLastError();
+			#endif
+			LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
+			goto wrap;
+		}
+
+	//SetLocal:
+		m_LocalSecurity.nLength = sizeof(m_LocalSecurity);
+		m_LocalSecurity.lpSecurityDescriptor = mp_LocalDesc;
+		m_LocalSecurity.bInheritHandle = TRUE;
+		lpSec = &m_LocalSecurity;
+	wrap:
+		UnloadAdvApi();
+		return lpSec;
+	};
 };
 MNullDesc *gNullDesc = NULL;
 
+#ifndef CONEMU_MINIMAL
 SECURITY_ATTRIBUTES* NullSecurity()
 {
 	if (!gNullDesc) gNullDesc = new MNullDesc();
 
 	return gNullDesc->NullSecurity();
 }
+#endif
 SECURITY_ATTRIBUTES* LocalSecurity()
 {
 	if (!gNullDesc) gNullDesc = new MNullDesc();
@@ -618,6 +751,7 @@ static BOOL CALLBACK MyEnumMonitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lp
 //	www.catch22.net
 //
 
+#ifndef CONEMU_MINIMAL
 //
 //	Wrapper around WM_SETCONSOLEINFO. We need to create the
 //  necessary section (file-mapping) object in the context of the
@@ -712,7 +846,9 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 
 	return TRUE;
 }
+#endif
 
+#ifndef CONEMU_MINIMAL
 //
 //	Fill the CONSOLE_INFO structure with information
 //  about the current console window
@@ -747,6 +883,7 @@ void GetConsoleSizeInfo(CONSOLE_INFO *pci)
 	pci->WindowPosY		  = rcWnd.top;
 	*/
 }
+#endif
 
 
 #if defined(__GNUC__)
@@ -769,9 +906,9 @@ typedef struct _CONSOLE_FONT_INFOEX
 #endif
 
 
+#ifndef CONEMU_MINIMAL
 typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in BOOL bMaximumWindow,__out PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
 typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in BOOL bMaximumWindow,__out PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
-
 
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName)
 {
@@ -851,6 +988,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		SetConsoleInfo(inConWnd, gpConsoleInfoStr);
 	}
 }
+#endif
 /*
 -- пробовал в Win7 это не работает
 void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBufferHeight)

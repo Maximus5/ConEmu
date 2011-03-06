@@ -20,9 +20,9 @@
 #include <shlwapi.h>
 #include "..\common\common.hpp"
 #include "..\common\ConEmuCheck.h"
-#include "..\common\SetHook.h"
+#include "SetHook.h"
 #include "..\common\execute.h"
-#include "ConEmuC.h"
+#include "ConEmuHooks.h"
 
 
 static LONG WINAPI OnRegCreateKeyA(HKEY hKey, LPCSTR lpSubKey, PHKEY phkResult);

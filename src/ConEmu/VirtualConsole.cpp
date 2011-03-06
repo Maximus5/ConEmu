@@ -231,7 +231,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 		*pszDot = 0;
 		mpsz_LogScreen = (wchar_t*)calloc(pszDot - szFile + 64, 2);
 		wcscpy(mpsz_LogScreen, szFile);
-		wcscpy(mpsz_LogScreen+wcslen(mpsz_LogScreen), L"\\ConEmu-VCon-%i-%i.con"/*, RCon()->GetServerPID()*/);
+		wcscpy(mpsz_LogScreen+lstrlen(mpsz_LogScreen), L"\\ConEmu-VCon-%i-%i.con"/*, RCon()->GetServerPID()*/);
 	}
 
 	// InitDC звать бессмысленно - консоль еще не создана
@@ -1933,9 +1933,9 @@ void CVirtualConsole::UpdateText()
 	mh_FontByIndex[MAX_FONT_STYLES] = mh_UCharMapFont ? mh_UCharMapFont : mh_FontByIndex[0];
 	SelectFont(mh_FontByIndex[0]);
 	// pointers
-	wchar_t* ConCharLine;
-	CharAttr* ConAttrLine;
-	DWORD* ConCharXLine;
+	wchar_t* ConCharLine = NULL;
+	CharAttr* ConAttrLine = NULL;
+	DWORD* ConCharXLine = NULL;
 	// counters
 	int pos, row;
 	{
@@ -1949,12 +1949,19 @@ void CVirtualConsole::UpdateText()
 	}
 	int nMaxPos = Height - nFontHeight;
 
+	if (!ConCharLine || !ConAttrLine || !ConCharXLine)
+	{
+		MBoxAssert(ConCharLine && ConAttrLine && ConCharXLine);
+		return;
+	}
+
+
 	if (/*gpSet->isForceMonospace ||*/ !drawImage)
 		SetBkMode(hDC, OPAQUE);
 	else
 		SetBkMode(hDC, TRANSPARENT);
 
-	int nDX[500];
+	int *nDX = (int*)malloc((TextWidth+1)*sizeof(int));
 	// rows
 	// зачем в isForceMonospace принудительно перерисовывать все?
 	// const bool skipNotChanged = !isForce /*&& !gpSet->isForceMonospace*/;
@@ -2581,6 +2588,8 @@ void CVirtualConsole::UpdateText()
 		}
 	}
 
+	free(nDX);
+
 	return;
 }
 
@@ -3014,7 +3023,16 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		FillRect(hPaintDc, &rcClient, hBr);
 #endif
 		HFONT hOldF = (HFONT)SelectObject(hPaintDc, gpSet->mh_Font[0]);
-		LPCWSTR pszStarting = gpConEmu->isProcessCreated() ? L"No consoles" : L"Initializing ConEmu.";
+		LPCWSTR pszStarting = L"Initializing ConEmu.";
+		
+		if (gpConEmu->isProcessCreated())
+		{
+			pszStarting = L"No consoles";
+		}
+		else if (CRealConsole::ms_LastRConStatus[0])
+		{
+			pszStarting = CRealConsole::ms_LastRConStatus;
+		}
 
 		if (this)
 		{
@@ -3026,7 +3044,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		SetTextColor(hPaintDc, pColors[7]);
 		SetBkColor(hPaintDc, pColors[0]);
 		ExtTextOut(hPaintDc, rcClient.left, rcClient.top, nFlags, &rcClient,
-		           pszStarting, wcslen(pszStarting), 0);
+		           pszStarting, lstrlen(pszStarting), 0);
 		SelectObject(hPaintDc, hOldF);
 		DeleteObject(hBr);
 		//EndPaint(ghWndDC, &ps);
@@ -3331,7 +3349,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 				MapWindowPoints(ghWndDC, ghWnd, pt, 2);
 				Rectangle(hPaintDc, pt[0].x+n, pt[0].y+n, pt[1].x-n, pt[1].y-n);
 				wchar_t szCoord[32]; _wsprintf(szCoord, SKIPLEN(countof(szCoord)) L"%ix%i", pDlg->Rects[i].Left, pDlg->Rects[i].Top);
-				TextOut(hPaintDc, pt[0].x+1, pt[0].y+1, szCoord, wcslen(szCoord));
+				TextOut(hPaintDc, pt[0].x+1, pt[0].y+1, szCoord, lstrlen(szCoord));
 			}
 
 			SelectObject(hPaintDc, hOldBr);

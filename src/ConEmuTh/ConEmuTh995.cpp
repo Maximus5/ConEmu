@@ -293,8 +293,8 @@ void LoadPanelItemInfo995(CeFullPanelInfo* pi, int nItem)
 	// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
 	//// Необходимый размер буфера для хранения элемента
 	//nSize = sizeof(CePluginPanelItem)
-	//	+(wcslen(ppi->FindData.lpwszFileName)+1)*2
-	//	+((ppi->Description ? wcslen(ppi->Description) : 0)+1)*2;
+	//	+(lstrlen(ppi->FindData.lpwszFileName)+1)*2
+	//	+((ppi->Description ? lstrlen(ppi->Description) : 0)+1)*2;
 	//
 	//// Уже может быть выделено достаточно памяти под этот элемент
 	//if ((pi->ppItems[nItem] == NULL) || (pi->ppItems[nItem]->cbSize < (DWORD_PTR)nSize)) {
@@ -329,7 +329,7 @@ void LoadPanelItemInfo995(CeFullPanelInfo* pi, int nItem)
 	//	pi->ppItems[nItem]->FindData.lpwszFileNamePart = psz;
 	//pi->ppItems[nItem]->FindData.lpwszFileExt = wcsrchr(pi->ppItems[nItem]->FindData.lpwszFileNamePart, L'.');
 	//// Description
-	//psz += wcslen(psz)+1;
+	//psz += lstrlen(psz)+1;
 	//if (ppi->Description)
 	//	lstrcpy(psz, ppi->Description);
 	//else

@@ -2100,8 +2100,8 @@ BOOL CeFullPanelInfo::FarItem2CeItem(int anIndex,
 	_ASSERTE(pItemColors && ppItems);
 	// Необходимый размер буфера для хранения элемента
 	size_t nSize = sizeof(CePluginPanelItem)
-	               +(wcslen(asName)+1)*2
-	               +((asDesc ? wcslen(asDesc) : 0)+1)*2;
+	               +(lstrlen(asName)+1)*2
+	               +((asDesc ? lstrlen(asDesc) : 0)+1)*2;
 
 	// Уже может быть выделено достаточно памяти под этот элемент
 	if ((ppItems[anIndex] == NULL) || (ppItems[anIndex]->cbSize < (DWORD_PTR)nSize))
@@ -2158,7 +2158,7 @@ BOOL CeFullPanelInfo::FarItem2CeItem(int anIndex,
 
 	ppItems[anIndex]->FindData.lpwszFileExt = wcsrchr(ppItems[anIndex]->FindData.lpwszFileNamePart, L'.');
 	// Description
-	psz += wcslen(psz)+1;
+	psz += lstrlen(psz)+1;
 
 	if (asDesc)
 		lstrcpy(psz, asDesc);

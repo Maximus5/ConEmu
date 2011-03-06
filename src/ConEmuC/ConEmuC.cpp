@@ -38,10 +38,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include <windows.h>
+
 //#pragma warning( disable : 4995 )
 #include "../common/common.hpp"
 
+#include "../ConEmuCD/ExitCodes.h"
+
 PHANDLER_ROUTINE gfHandlerRoutine = NULL;
+
 
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
@@ -86,9 +90,9 @@ int main(
 	_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
 	HANDLE hSkipEvent = CreateEvent(NULL, TRUE, TRUE, szSkipEventName);
 #ifdef WIN64
-	hConEmu = LoadLibrary(L"ConEmuHk64.dll");
+	hConEmu = LoadLibrary(L"ConEmuCD64.dll");
 #else
-	hConEmu = LoadLibrary(L"ConEmuHk.dll");
+	hConEmu = LoadLibrary(L"ConEmuCD.dll");
 #endif
 	dwErr = GetLastError();
 	CloseHandle(hSkipEvent); hSkipEvent = NULL;
@@ -98,13 +102,13 @@ int main(
 		_wsprintfA(szErrInfo, SKIPLEN(countof(szErrInfo))
 		           "Can't load library \"%s\", ErrorCode=0x%08X\n",
 #ifdef WIN64
-		           "ConEmuHk64.dll",
+		           "ConEmuCD64.dll",
 #else
-		           "ConEmuHk.dll",
+		           "ConEmuCD.dll",
 #endif
 		           dwErr);
-		WriteFile(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
-		return 127/*CERR_CONEMUHK_NOTFOUND*/;
+		WriteConsole(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
+		return CERR_CONEMUHK_NOTFOUND;
 	}
 
 	// Загрузить функи из ConEmuHk
@@ -123,9 +127,9 @@ int main(
 		           "ConEmuHk.dll"
 #endif
 		          );
-		WriteFile(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
+		WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
 		FreeLibrary(hConEmu);
-		return 128/*CERR_CONSOLEMAIN_NOTFOUND*/;
+		return CERR_CONSOLEMAIN_NOTFOUND;
 	}
 
 	// Main dll entry point for Server & ComSpec

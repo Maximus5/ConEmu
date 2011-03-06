@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <shlwapi.h>
 #include "..\common\common.hpp"
 #include "..\common\ConEmuCheck.h"
-#include "..\common\SetHook.h"
+#include "..\ConEmuHk\SetHook.h"
 #include "PluginHeader.h"
 
 //#ifdef _DEBUG
@@ -57,10 +57,13 @@ extern HMODULE ghPluginModule;
 extern struct HookModeFar gFarMode;
 
 
-static TCHAR kernel32[] = _T("kernel32.dll");
-//static TCHAR user32[]   = _T("user32.dll");
-static TCHAR shell32[]  = _T("shell32.dll");
-static TCHAR wininet[]  = _T("wininet.dll");
+//const wchar_t* kernel32 = L"kernel32.dll";
+//const wchar_t* user32   = L"user32.dll";
+//const wchar_t* shell32  = L"shell32.dll";
+//static TCHAR wininet[]  = _T("wininet.dll");
+#define kernel32 L"kernel32.dll"
+#define user32   L"user32.dll"
+#define shell32  L"shell32.dll"
 
 //static BOOL bHooksWin2k3R2Only = FALSE;
 //static HookItem HooksWin2k3R2Only[] = {

@@ -1325,8 +1325,9 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	
 	Info->StructSize = sizeof(GlobalInfo);
 	Info->MinFarVersion = FARMANAGERVERSION;
-	#define D(N) (1##N-100)
-	Info->Version = (MVV_1%100)*10000 + D(MVV_2)*100 + D(MVV_3);
+	//#define D(N) (1##N-100)
+	// YYMMDDX (YY - две цифры года, MM - мес€ц, DD - день, X - 0 и выше-номер подсборки)
+	Info->Version = ((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10);
 	Info->Guid = guid_ConEmu;
 	Info->Title = L"ConEmu";
 	Info->Description = L"ConEmu support for Far Manager";

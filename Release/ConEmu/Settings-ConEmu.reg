@@ -235,6 +235,9 @@ REGEDIT4
 ;; FFFFFFFF - Check, 00300000 - Uncheck
 "ConInMode"=dword:FFFFFFFF
 
+;; Allow injects of ConEmuHk.dll in every process of ConEmu console window
+"UseInjects"=hex:01
+
 ;; Drag'n'Drop
 ;; 0 - Drag disabled, 1 - LDrag, 2 - RDrag, 3 - LDrag&RDrag
 "Dnd"=hex:03
