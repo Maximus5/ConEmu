@@ -1,27 +1,28 @@
 EXPORTS
-;  Unicode
-	SetStartupInfoW
+;  Unicode (common)
 	GetPluginInfoW=GetPluginInfoWcmn
+	SetStartupInfoW
+	ExitFARW
 	ProcessEditorInputW
 	ProcessEditorEventW
 	ProcessViewerEventW
-	GetMinFarVersionW
-	ExitFARW
-	OpenPluginW
-	OpenFilePluginW
 	ProcessSynchroEventW
 	ProcessDialogEventW
-;  Far3
+; Far2 (only)
+	GetMinFarVersionW
+	OpenPluginW
+	OpenFilePluginW
+;  Far3 (only)
    GetGlobalInfoW
-   OpenPanelW
+   OpenW
 ;  Ansi
-	SetStartupInfo
 	GetPluginInfo
+	SetStartupInfo
+	ExitFAR
 	ProcessEditorInput
 	ProcessEditorEvent
 	ProcessViewerEvent
 	GetMinFarVersion
-	ExitFAR
 	OpenPlugin
 	ProcessDialogEvent
 ;  ConEmu API (Far independent)

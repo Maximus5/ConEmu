@@ -140,6 +140,8 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 		pszResult = MsgBox(asMacro, apRCon);
 	else if (!lstrcmpi(szFunction, L"FontSetSize"))
 		pszResult = FontSetSize(asMacro, apRCon);
+	else if (!lstrcmpi(szFunction, L"FontSetName"))
+		pszResult = FontSetName(asMacro, apRCon);
 	else if (!lstrcmpi(szFunction, L"IsRealVisible"))
 		pszResult = IsRealVisible(asMacro, apRCon);
 	else if (!lstrcmpi(szFunction, L"IsConsoleActive"))
@@ -519,5 +521,24 @@ LPWSTR CConEmuMacro::FontSetSize(LPWSTR asArgs, CRealConsole* apRCon)
 	//int cchSize = 32;
 	//LPWSTR pszResult = (LPWSTR)malloc(2*cchSize);
 	//_wsprintf(pszResult, cchSize, L"%i", gpSet->FontHeight());
+	return lstrdup(L"InvalidArg");
+}
+
+// Изменить имя основного шрифта. string
+LPWSTR CConEmuMacro::FontSetName(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	LPWSTR pszFontName = NULL;
+	int nHeight = 0, nWidth = 0;
+
+	if (GetNextString(asArgs, pszFontName))
+	{
+		if (!GetNextInt(asArgs, nHeight))
+			nHeight = 0;
+		else if (!GetNextInt(asArgs, nWidth))
+			nWidth = 0;
+		gpConEmu->PostSetFontNameSize(pszFontName, nHeight, nWidth, FALSE);
+		return lstrdup(L"OK");
+	}
+
 	return lstrdup(L"InvalidArg");
 }

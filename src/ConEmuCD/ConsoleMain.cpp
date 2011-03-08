@@ -5072,7 +5072,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 
 			if (dwWait == (WAIT_OBJECT_0+1))
 			{
-				return TRUE;
+				return gpSrv->bRequestChangeSizeResult;
 			}
 
 			// ?? Может быть стоит самим попробовать?
@@ -5112,13 +5112,24 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 #endif
 	}
 
+
+	BOOL lbRc = TRUE;
+	RECT rcConPos = {0};
 	COORD crMax = GetLargestConsoleWindowSize(ghConOut);
 
-	if (crMax.X && crNewSize.X > crMax.X)
-		crNewSize.X = crMax.X;
-
-	if (crMax.Y && crNewSize.Y > crMax.Y)
-		crNewSize.Y = crMax.Y;
+	// Если размер превышает допустимый - лучше ничего не делать,
+	// иначе получается неприятный эффект при попытке AltEnter:
+	// размер окна становится сильно больше чем был, но FullScreen НЕ включается
+	//if (crMax.X && crNewSize.X > crMax.X)
+	//	crNewSize.X = crMax.X;
+	//if (crMax.Y && crNewSize.Y > crMax.Y)
+	//	crNewSize.Y = crMax.Y;
+	if ((crMax.X && crNewSize.X > crMax.X)
+		|| (crMax.Y && crNewSize.Y > crMax.Y))
+	{
+		lbRc = FALSE;
+		goto wrap;
+	}
 
 	// Делаем это ПОСЛЕ MyGetConsoleScreenBufferInfo, т.к. некоторые коррекции размера окна
 	// она делает ориентируясь на gnBufferHeight
@@ -5137,9 +5148,9 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		gpSrv->dwLastUserTick = GetTickCount() - USER_IDLE_TIMEOUT - 1;
 	}
 
-	RECT rcConPos = {0};
+	//RECT rcConPos = {0};
 	GetWindowRect(ghConWnd, &rcConPos);
-	BOOL lbRc = TRUE;
+	//BOOL lbRc = TRUE;
 	//DWORD nWait = 0;
 
 	//if (gpSrv->hChangingSize) {
@@ -5252,6 +5263,9 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	//if (gpSrv->hChangingSize) { // во время запуска ConEmuC
 	//    SetEvent(gpSrv->hChangingSize);
 	//}
+
+wrap:
+	gpSrv->bRequestChangeSizeResult = lbRc;
 
 	if ((gnRunMode == RM_SERVER) && gpSrv->hRefreshEvent)
 	{

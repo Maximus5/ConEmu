@@ -50,9 +50,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // X - меньшая, Y - большая
 #define FAR_X_VER 995
-#define FAR_Y_VER 1867
+#define FAR_Y_VER 1900
 #define FUNC_X(fn) fn##995
-#define FUNC_Y(fn) fn##1867
+#define FUNC_Y(fn) fn##1900
 
 
 extern DWORD gnMainThreadId;
@@ -143,15 +143,15 @@ void FUNC_X(ExitFARW)(void);
 void FUNC_Y(ExitFARW)(void);
 void FUNC_X(SetStartupInfoW)(void *aInfo);
 void FUNC_Y(SetStartupInfoW)(void *aInfo);
-void FUNC_X(ProcessDragFrom)();
-void FUNC_Y(ProcessDragFrom)();
+void FUNC_X(ProcessDragFromW)();
+void FUNC_Y(ProcessDragFromW)();
 void ProcessDragFromA();
-void FUNC_X(ProcessDragTo)();
-void FUNC_Y(ProcessDragTo)();
+void FUNC_X(ProcessDragToW)();
+void FUNC_Y(ProcessDragToW)();
 void ProcessDragToA();
 void SetWindowA(int nTab);
-void FUNC_X(SetWindow)(int nTab);
-void FUNC_Y(SetWindow)(int nTab);
+void FUNC_X(SetWindowW)(int nTab);
+void FUNC_Y(SetWindowW)(int nTab);
 
 void CheckResources(BOOL abFromStartup);
 void InitResources();
@@ -173,26 +173,24 @@ BOOL OutDataWrite(LPVOID apData, DWORD anSize);
 int ShowMessage(int aiMsg, int aiButtons);
 int ShowMessageA(int aiMsg, int aiButtons);
 int ShowMessageGui(int aiMsg, int aiButtons);
-int FUNC_X(ShowMessage)(int aiMsg, int aiButtons);
-int FUNC_Y(ShowMessage)(int aiMsg, int aiButtons);
+int FUNC_X(ShowMessageW)(int aiMsg, int aiButtons);
+int FUNC_Y(ShowMessageW)(int aiMsg, int aiButtons);
 //void ReloadMacroA();
 //void FUNC_X(ReloadMacro)();
 //void FUNC_Y(ReloadMacro)();
 extern CEFAR_INFO_MAPPING *gpFarInfo;
 extern HANDLE ghFarAliveEvent;
 BOOL ReloadFarInfoA(/*BOOL abFull = FALSE*/);
-BOOL FUNC_X(ReloadFarInfo)(/*BOOL abFull = FALSE*/);
-#if (FAR_X_VER!=FAR_Y_VER)
-BOOL FUNC_Y(ReloadFarInfo)(/*BOOL abFull = FALSE*/);
-#endif
+BOOL FUNC_X(ReloadFarInfoW)(/*BOOL abFull = FALSE*/);
+BOOL FUNC_Y(ReloadFarInfoW)(/*BOOL abFull = FALSE*/);
 void PostMacro(wchar_t* asMacro);
 void PostMacroA(char* asMacro);
-void FUNC_X(PostMacro)(wchar_t* asMacro);
-void FUNC_Y(PostMacro)(wchar_t* asMacro);
+void FUNC_X(PostMacroW)(wchar_t* asMacro);
+void FUNC_Y(PostMacroW)(wchar_t* asMacro);
 LPCWSTR GetMsgW(int aiMsg);
 void GetMsgA(int aiMsg, wchar_t (&rsMsg)[MAX_PATH]);
-LPCWSTR FUNC_Y(GetMsg)(int aiMsg);
-LPCWSTR FUNC_X(GetMsg)(int aiMsg);
+LPCWSTR FUNC_Y(GetMsgW)(int aiMsg);
+LPCWSTR FUNC_X(GetMsgW)(int aiMsg);
 
 extern DWORD gnReqCommand;
 extern int gnPluginOpenFrom;
@@ -218,12 +216,12 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe);
 
 void ShowPluginMenu(int nID = -1);
 int ShowPluginMenuA();
-int FUNC_Y(ShowPluginMenu)();
-int FUNC_X(ShowPluginMenu)();
+int FUNC_Y(ShowPluginMenuW)();
+int FUNC_X(ShowPluginMenuW)();
 
 BOOL EditOutputA(LPCWSTR asFileName, BOOL abView);
-BOOL FUNC_Y(EditOutput)(LPCWSTR asFileName, BOOL abView);
-BOOL FUNC_X(EditOutput)(LPCWSTR asFileName, BOOL abView);
+BOOL FUNC_Y(EditOutputW)(LPCWSTR asFileName, BOOL abView);
+BOOL FUNC_X(EditOutputW)(LPCWSTR asFileName, BOOL abView);
 
 BOOL Attach2Gui();
 BOOL StartDebugger();
@@ -234,36 +232,36 @@ BOOL StartDebugger();
 
 BOOL IsMacroActive();
 BOOL IsMacroActiveA();
-BOOL FUNC_X(IsMacroActive)();
-BOOL FUNC_Y(IsMacroActive)();
+BOOL FUNC_X(IsMacroActiveW)();
+BOOL FUNC_Y(IsMacroActiveW)();
 
 //BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
 
 void RedrawAll();
 void RedrawAllA();
-void FUNC_Y(RedrawAll)();
-void FUNC_X(RedrawAll)();
+void FUNC_Y(RedrawAllW)();
+void FUNC_X(RedrawAllW)();
 
-bool FUNC_Y(LoadPlugin)(wchar_t* pszPluginPath);
-bool FUNC_X(LoadPlugin)(wchar_t* pszPluginPath);
+bool FUNC_Y(LoadPluginW)(wchar_t* pszPluginPath);
+bool FUNC_X(LoadPluginW)(wchar_t* pszPluginPath);
 
-DWORD FUNC_Y(GetEditorModifiedState)();
-DWORD FUNC_X(GetEditorModifiedState)();
+DWORD FUNC_Y(GetEditorModifiedStateW)();
+DWORD FUNC_X(GetEditorModifiedStateW)();
 DWORD GetEditorModifiedStateA();
 DWORD GetEditorModifiedState();
 
 int GetActiveWindowType();
 int GetActiveWindowTypeA();
-int FUNC_Y(GetActiveWindowType)();
-int FUNC_X(GetActiveWindowType)();
+int FUNC_Y(GetActiveWindowTypeW)();
+int FUNC_X(GetActiveWindowTypeW)();
 
 BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 
 BOOL StartupHooks(HMODULE ahOurDll);
 void ShutdownHooks();
 
-bool FUNC_Y(ProcessCommandLine)(wchar_t* pszCommand);
-bool FUNC_X(ProcessCommandLine)(wchar_t* pszCommand);
+bool FUNC_Y(ProcessCommandLineW)(wchar_t* pszCommand);
+bool FUNC_X(ProcessCommandLineW)(wchar_t* pszCommand);
 bool ProcessCommandLineA(char* pszCommand);
 
 //void ExecuteQuitFar();
@@ -273,8 +271,8 @@ bool ProcessCommandLineA(char* pszCommand);
 
 //void LogCreateProcessCheck(LPCWSTR asLogFileName);
 
-BOOL FUNC_Y(CheckBufferEnabled)();
-BOOL FUNC_X(CheckBufferEnabled)();
+BOOL FUNC_Y(CheckBufferEnabledW)();
+BOOL FUNC_X(CheckBufferEnabledW)();
 
 #define IS_SYNCHRO_ALLOWED \
 	( \
@@ -285,18 +283,20 @@ BOOL FUNC_X(CheckBufferEnabled)();
 extern int gnSynchroCount;
 extern bool gbSynchroProhibited;
 void ExecuteSynchro(); // если доступен - позовет ACTL_SYNCHRO (FAR2 only)
-BOOL FUNC_Y(ExecuteSynchro)();
-BOOL FUNC_X(ExecuteSynchro)();
-void FUNC_Y(WaitEndSynchro)();
-void FUNC_Y(StopWaitEndSynchro)();
+BOOL FUNC_Y(ExecuteSynchroW)();
+BOOL FUNC_X(ExecuteSynchroW)();
+void FUNC_X(WaitEndSynchroW)();
+void FUNC_Y(WaitEndSynchroW)();
+void FUNC_X(StopWaitEndSynchroW)();
+void FUNC_Y(StopWaitEndSynchroW)();
 
 void GuiMacroDlgA();
-void FUNC_Y(GuiMacroDlg)();
-void FUNC_X(GuiMacroDlg)();
+void FUNC_Y(GuiMacroDlgW)();
+void FUNC_X(GuiMacroDlgW)();
 
 void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar);
-void FUNC_Y(FillUpdateBackground)(struct PaintBackgroundArg* pFar);
-void FUNC_X(FillUpdateBackground)(struct PaintBackgroundArg* pFar);
+void FUNC_Y(FillUpdateBackgroundW)(struct PaintBackgroundArg* pFar);
+void FUNC_X(FillUpdateBackgroundW)(struct PaintBackgroundArg* pFar);
 
 void CommonPluginStartup();
 BOOL CheckCallbackPtr(HMODULE hModule, FARPROC CallBack, BOOL abCheckModuleInfo);

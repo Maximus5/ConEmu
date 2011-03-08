@@ -68,4 +68,6 @@ class CConEmuMacro
 		static LPWSTR MsgBox(LPWSTR asArgs, CRealConsole* apRCon);
 		// Изменить размер шрифта. int nRelative, int N
 		static LPWSTR FontSetSize(LPWSTR asArgs, CRealConsole* apRCon);
+		// Изменить имя основного шрифта. string
+		static LPWSTR FontSetName(LPWSTR asArgs, CRealConsole* apRCon);
 };

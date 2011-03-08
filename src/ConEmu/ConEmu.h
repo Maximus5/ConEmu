@@ -109,6 +109,7 @@ enum ConEmuRect
 	CER_CONSOLE_NTVDMOFF, // same as CER_CONSOLE, но во время отключения режима 16бит
 	CER_FULLSCREEN, // полный размер в pix текущего монитора (содержащего ghWnd)
 	CER_MAXIMIZED,  // размер максимизированного окна на текущем мониторе (содержащего ghWnd)
+	CER_RESTORE,    // размер "восстановленного" окна после максимизации (коррекция по размеру монитора?)
 //	CER_CORRECTED   // скорректированное положение (чтобы окно было видно на текущем мониторе)
 };
 
@@ -233,6 +234,8 @@ class CConEmuMain
 		typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
 		RECT mrc_Ideal;
 		BOOL mn_InResize;
+		RECT mrc_StoredNormalRect;
+		void StoreNormalRect(RECT* prcWnd);
 		BOOL mb_MaximizedHideCaption; // в режиме HideCaption
 		BOOL mb_InRestore; // во время восстановления из Maximized
 		BOOL mb_MouseCaptured;
@@ -308,6 +311,7 @@ class CConEmuMain
 		//UINT wmInputLangChange;
 		UINT mn_MsgAutoSizeFont;
 		UINT mn_MsgDisplayRConError;
+		UINT mn_MsgSetFontName;
 
 		//
 		static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
@@ -399,6 +403,7 @@ class CConEmuMain
 		void PostMacro(LPCWSTR asMacro);
 		void PostCreate(BOOL abRecieved=FALSE);
 		void PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
+		void PostSetFontNameSize(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted);
 		void PostDisplayRConError(CRealConsole* mp_VCon, wchar_t* pszErrMsg);
 		//void PostSetBackground(CVirtualConsole* apVCon, CESERVER_REQ_SETBACKGROUND* apImgData);
 		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))

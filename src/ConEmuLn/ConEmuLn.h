@@ -35,9 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // X - меньшая, Y - большая
 #define FAR_X_VER 995
-#define FAR_Y_VER 1867
+#define FAR_Y_VER 1900
 #define FUNC_X(fn) fn##995
-#define FUNC_Y(fn) fn##1867
+#define FUNC_Y(fn) fn##1900
 
 
 

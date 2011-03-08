@@ -32,10 +32,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef FAR_UNICODE
 	#if FAR_UNICODE>=1867
-		#define InfoT InfoW1867
-		#define _GetCheck(i) (int)InfoW1867->SendDlgMessage(hDlg,DM_GETCHECK,i,0)
-		#define GetDataPtr(i) ((const wchar_t *)InfoW1867->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
-		#define GetTextPtr(i) ((const wchar_t *)InfoW1867->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
+		#define InfoT InfoW1900
+		#define _GetCheck(i) (int)InfoW1900->SendDlgMessage(hDlg,DM_GETCHECK,i,0)
+		#define GetDataPtr(i) ((const wchar_t *)InfoW1900->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
+		#define GetTextPtr(i) ((const wchar_t *)InfoW1900->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
 		#define SETTEXT(itm,txt) itm.PtrData = txt
 		#define wsprintfT wsprintfW
 		#define GetMsgT GetMsgW
@@ -174,9 +174,9 @@ static void CallGuiMacroProc()
 
 		{DI_TEXT,      5,  2,  0,  0, false},   //guiMacroLabel, guiMacroText
 		#if FAR_UNICODE>=1867
-		{DI_EDIT,      5,  3,  70, 0, true, FAR_T("ConEmuGuiMacro")},
+		{DI_EDIT,      5,  3,  70, 0, true, FAR_T("ConEmuGuiMacro"), NULL, DIF_HISTORY},
 		#else
-		{DI_EDIT,      5,  3,  70, 0, true, {(DWORD_PTR)FAR_T("ConEmuGuiMacro")}},
+		{DI_EDIT,      5,  3,  70, 0, true, {(DWORD_PTR)FAR_T("ConEmuGuiMacro")}, DIF_HISTORY},
 		#endif
 
 		{DI_TEXT,      5,  4,  0,  0, false},   //guiResultLabel, guiResultText

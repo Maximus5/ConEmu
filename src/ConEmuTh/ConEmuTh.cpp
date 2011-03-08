@@ -728,9 +728,9 @@ int ShowMessage(int aiMsg, int aiButtons)
 	if (gFarVersion.dwVerMajor==1)
 		return ShowMessageA(aiMsg, aiButtons);
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(ShowMessage)(aiMsg, aiButtons);
+		return FUNC_Y(ShowMessageW)(aiMsg, aiButtons);
 	else
-		return FUNC_X(ShowMessage)(aiMsg, aiButtons);
+		return FUNC_X(ShowMessageW)(aiMsg, aiButtons);
 }
 
 LPCWSTR GetMsgW(int aiMsg)
@@ -738,9 +738,9 @@ LPCWSTR GetMsgW(int aiMsg)
 	if (gFarVersion.dwVerMajor==1)
 		return L"";
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(GetMsg)(aiMsg);
+		return FUNC_Y(GetMsgW)(aiMsg);
 	else
-		return FUNC_X(GetMsg)(aiMsg);
+		return FUNC_X(GetMsgW)(aiMsg);
 }
 
 void PostMacro(wchar_t* asMacro)
@@ -762,11 +762,11 @@ void PostMacro(wchar_t* asMacro)
 	}
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
 	{
-		FUNC_Y(PostMacro)(asMacro);
+		FUNC_Y(PostMacroW)(asMacro);
 	}
 	else
 	{
-		FUNC_X(PostMacro)(asMacro);
+		FUNC_X(PostMacroW)(asMacro);
 	}
 
 	//FAR BUGBUG: ћакрос не запускаетс€ на исполнение, пока мышкой не дернем :(
@@ -841,12 +841,12 @@ int ShowPluginMenu()
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
 	{
 		SHOWDBGINFO(L"*** calling ShowPluginMenuWY\n");
-		nItem = FUNC_Y(ShowPluginMenu)();
+		nItem = FUNC_Y(ShowPluginMenuW)();
 	}
 	else
 	{
 		SHOWDBGINFO(L"*** calling ShowPluginMenuWX\n");
-		nItem = FUNC_X(ShowPluginMenu)();
+		nItem = FUNC_X(ShowPluginMenuW)();
 	}
 
 	return nItem;
@@ -917,9 +917,9 @@ BOOL IsMacroActive()
 	if (gFarVersion.dwVerMajor==1)
 		lbActive = IsMacroActiveA();
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		lbActive = FUNC_Y(IsMacroActive)();
+		lbActive = FUNC_Y(IsMacroActiveW)();
 	else
-		lbActive = FUNC_X(IsMacroActive)();
+		lbActive = FUNC_X(IsMacroActiveW)();
 
 	return lbActive;
 }
@@ -931,9 +931,9 @@ BOOL CheckPanelSettings(BOOL abSilence)
 	if (gFarVersion.dwVerMajor==1)
 		lbOk = CheckPanelSettingsA(abSilence);
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		lbOk = FUNC_Y(CheckPanelSettings)(abSilence);
+		lbOk = FUNC_Y(CheckPanelSettingsW)(abSilence);
 	else
-		lbOk = FUNC_X(CheckPanelSettings)(abSilence);
+		lbOk = FUNC_X(CheckPanelSettingsW)(abSilence);
 
 	return lbOk;
 }
@@ -943,9 +943,9 @@ void LoadPanelItemInfo(CeFullPanelInfo* pi, int nItem)
 	if (gFarVersion.dwVerMajor==1)
 		LoadPanelItemInfoA(pi, nItem);
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(LoadPanelItemInfo)(pi, nItem);
+		FUNC_Y(LoadPanelItemInfoW)(pi, nItem);
 	else
-		FUNC_X(LoadPanelItemInfo)(pi, nItem);
+		FUNC_X(LoadPanelItemInfoW)(pi, nItem);
 }
 
 
@@ -1002,9 +1002,9 @@ void ReloadPanelsInfo()
 	if (gFarVersion.dwVerMajor==1)
 		ReloadPanelsInfoA();
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(ReloadPanelsInfo)();
+		FUNC_Y(ReloadPanelsInfoW)();
 	else
-		FUNC_X(ReloadPanelsInfo)();
+		FUNC_X(ReloadPanelsInfoW)();
 
 	// ќбновить gFarInfo (используетс€ в RgnDetect)
 	CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
@@ -1893,9 +1893,9 @@ int ShowLastError()
 			_wsprintf(szErrMsg, SKIPLEN(countof(szErrMsg)) pszTempl, gnWin32Error);
 
 			if (gFarVersion.dwBuild>=FAR_Y_VER)
-				return FUNC_Y(ShowMessage)(szErrMsg, 0);
+				return FUNC_Y(ShowMessageW)(szErrMsg, 0);
 			else
-				return FUNC_X(ShowMessage)(szErrMsg, 0);
+				return FUNC_X(ShowMessageW)(szErrMsg, 0);
 		}
 	}
 
@@ -2026,9 +2026,9 @@ bool CheckWindows()
 	if (gFarVersion.dwVerMajor==1)
 		lbFarPanels = CheckFarPanelsA();
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		lbFarPanels = FUNC_Y(CheckFarPanels)();
+		lbFarPanels = FUNC_Y(CheckFarPanelsW)();
 	else
-		lbFarPanels = FUNC_X(CheckFarPanels)();
+		lbFarPanels = FUNC_X(CheckFarPanelsW)();
 
 	// «апомнить активность панелей.
 	if (gbFarPanelsReady != lbFarPanels)
@@ -2163,11 +2163,11 @@ void ExecuteInMainThread(ConEmuThSynchroArg* pCmd)
 	}
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
 	{
-		FUNC_Y(ExecuteInMainThread)(pCmd);
+		FUNC_Y(ExecuteInMainThreadW)(pCmd);
 	}
 	else
 	{
-		FUNC_X(ExecuteInMainThread)(pCmd);
+		FUNC_X(ExecuteInMainThreadW)(pCmd);
 	}
 }
 
@@ -2193,9 +2193,9 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 				if (gFarVersion.dwVerMajor==1)
 					SetCurrentPanelItemA((i==0), pp->ReqTopPanelItem, pp->ReqCurrentItem);
 				else if (gFarVersion.dwBuild>=FAR_Y_VER)
-					FUNC_Y(SetCurrentPanelItem)((i==0), pp->ReqTopPanelItem, pp->ReqCurrentItem);
+					FUNC_Y(SetCurrentPanelItemW)((i==0), pp->ReqTopPanelItem, pp->ReqCurrentItem);
 				else
-					FUNC_X(SetCurrentPanelItem)((i==0), pp->ReqTopPanelItem, pp->ReqCurrentItem);
+					FUNC_X(SetCurrentPanelItemW)((i==0), pp->ReqTopPanelItem, pp->ReqCurrentItem);
 			}
 		}
 
@@ -2278,10 +2278,12 @@ BOOL GetFarRect(SMALL_RECT* prcFarRect)
 	prcFarRect->Left = prcFarRect->Right = prcFarRect->Top = prcFarRect->Bottom = 0;
 
 	if (gFarVersion.dwVerMajor>2
-	        || (gFarVersion.dwVerMajor==2 && gFarVersion.dwBuild>=1573/*FAR_Y_VER*/))
+	        || (gFarVersion.dwVerMajor==2 && gFarVersion.dwBuild>=1573))
 	{
-		//_ASSERTE(1573<=FAR_Y_VER);
-		FUNC_Y(GetFarRect)(prcFarRect);
+		if (gFarVersion.dwBuild>=FAR_Y_VER)
+			FUNC_Y(GetFarRectW)(prcFarRect);
+		else
+			FUNC_X(GetFarRectW)(prcFarRect);
 		lbFarBuffer = (prcFarRect->Bottom && prcFarRect->Right);
 	}
 

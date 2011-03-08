@@ -76,7 +76,7 @@ NAME = ConEmuLn
 LINK_OBJS = \
 $(OBJDIR)\ConEmuLn.obj \
 $(OBJDIR)\ConEmuLn995.obj \
-$(OBJDIR)\ConEmuLn1867.obj \
+$(OBJDIR)\ConEmuLn1900.obj \
 $(OBJDIR)\ConEmuLnA.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\Memory.obj \
@@ -307,7 +307,7 @@ $(OBJDIR)\ConEmuLn.obj: ConEmuLn.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_La
 
 $(OBJDIR)\ConEmuLn995.obj: ConEmuLn995.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
 
-$(OBJDIR)\ConEmuLn1867.obj: ConEmuLn1867.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
+$(OBJDIR)\ConEmuLn1900.obj: ConEmuLn1900.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
 
 $(OBJDIR)\ConEmuLnA.obj: ConEmuLnA.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
 

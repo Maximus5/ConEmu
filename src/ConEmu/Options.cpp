@@ -1938,12 +1938,12 @@ LRESULT CSettings::OnInitDialog_Main()
 
 	if (!isFullScreen && !gpConEmu->isZoomed())
 	{
-		EnableWindow(GetDlgItem(hMain, tWndWidth), true);
-		EnableWindow(GetDlgItem(hMain, tWndHeight), true);
-		EnableWindow(GetDlgItem(hMain, tWndX), true);
-		EnableWindow(GetDlgItem(hMain, tWndY), true);
-		EnableWindow(GetDlgItem(hMain, rFixed), true);
-		EnableWindow(GetDlgItem(hMain, rCascade), true);
+		//EnableWindow(GetDlgItem(hMain, tWndWidth), true);
+		//EnableWindow(GetDlgItem(hMain, tWndHeight), true);
+		//EnableWindow(GetDlgItem(hMain, tWndX), true);
+		//EnableWindow(GetDlgItem(hMain, tWndY), true);
+		//EnableWindow(GetDlgItem(hMain, rFixed), true);
+		//EnableWindow(GetDlgItem(hMain, rCascade), true);
 
 		if (!gpConEmu->isIconic())
 		{
@@ -1951,15 +1951,15 @@ LRESULT CSettings::OnInitDialog_Main()
 			wndX = rc.left; wndY = rc.top;
 		}
 	}
-	else
-	{
-		EnableWindow(GetDlgItem(hMain, tWndWidth), false);
-		EnableWindow(GetDlgItem(hMain, tWndHeight), false);
-		EnableWindow(GetDlgItem(hMain, tWndX), false);
-		EnableWindow(GetDlgItem(hMain, tWndY), false);
-		EnableWindow(GetDlgItem(hMain, rFixed), false);
-		EnableWindow(GetDlgItem(hMain, rCascade), false);
-	}
+	//else
+	//{
+	//	EnableWindow(GetDlgItem(hMain, tWndWidth), false);
+	//	EnableWindow(GetDlgItem(hMain, tWndHeight), false);
+	//	EnableWindow(GetDlgItem(hMain, tWndX), false);
+	//	EnableWindow(GetDlgItem(hMain, tWndY), false);
+	//	EnableWindow(GetDlgItem(hMain, rFixed), false);
+	//	EnableWindow(GetDlgItem(hMain, rCascade), false);
+	//}
 
 	UpdatePos(wndX, wndY);
 	CheckDlgButton(hMain, wndCascade ? rCascade : rFixed, BST_CHECKED);
@@ -2452,12 +2452,12 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		case rMaximized:
 			//gpConEmu->SetWindowMode(wParam);
 			EnableWindow(GetDlgItem(hMain, cbApplyPos), TRUE);
-			EnableWindow(GetDlgItem(hMain, tWndWidth), CB == rNormal);
-			EnableWindow(GetDlgItem(hMain, tWndHeight), CB == rNormal);
-			EnableWindow(GetDlgItem(hMain, tWndX), CB == rNormal);
-			EnableWindow(GetDlgItem(hMain, tWndY), CB == rNormal);
-			EnableWindow(GetDlgItem(hMain, rFixed), CB == rNormal);
-			EnableWindow(GetDlgItem(hMain, rCascade), CB == rNormal);
+			//EnableWindow(GetDlgItem(hMain, tWndWidth), CB == rNormal);
+			//EnableWindow(GetDlgItem(hMain, tWndHeight), CB == rNormal);
+			//EnableWindow(GetDlgItem(hMain, tWndX), CB == rNormal);
+			//EnableWindow(GetDlgItem(hMain, tWndY), CB == rNormal);
+			//EnableWindow(GetDlgItem(hMain, rFixed), CB == rNormal);
+			//EnableWindow(GetDlgItem(hMain, rCascade), CB == rNormal);
 			break;
 		case cbApplyPos:
 
@@ -5488,6 +5488,59 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 	}
 }
 
+void CSettings::RecreateFont(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/)
+{
+	LOGFONT LF = LogFont;
+	if (pszFontName && *pszFontName)
+		wcscpy_c(LF.lfFaceName, pszFontName);
+	if (anHeight)
+	{
+		LF.lfHeight = anHeight;
+		LF.lfWidth = anWidth;
+	}
+	else
+	{
+		LF.lfWidth = 0;
+	}
+
+	if (isAdvLogging)
+	{
+		char szInfo[128]; sprintf_s(szInfo, "RecreateFont('%s', H=%i, W=%i)", LF.lfFaceName, LF.lfHeight, LF.lfWidth);
+		gpConEmu->ActiveCon()->RCon()->LogString(szInfo);
+	}
+
+	HFONT hf = CreateFontIndirectMy(&LF);
+
+	if (hf)
+	{
+		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
+		HFONT hOldF = mh_Font[0];
+		LogFont = LF;
+		mh_Font[0] = hf;
+		DeleteObject(hOldF);
+		SaveFontSizes(&LF, (mn_AutoFontWidth == -1), true);
+		gpConEmu->Update(true);
+
+		if (!isFullScreen && !gpConEmu->isZoomed())
+			gpConEmu->SyncWindowToConsole();
+		else
+			gpConEmu->SyncConsoleToWindow();
+
+		gpConEmu->ReSize();
+	}
+
+	if (ghOpWnd)
+	{
+		wchar_t szSize[10];
+		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", LF.lfHeight);
+		SetDlgItemText(hMain, tFontSizeY, szSize);
+		UpdateFontInfo();
+		ShowFontErrorTip(gpSet->szFontError);
+	}
+
+	gpConEmu->OnPanelViewSettingsChanged(TRUE);
+}
+
 void CSettings::RecreateFont(WORD wFromID)
 {
 	if (wFromID == tFontFace
@@ -5589,11 +5642,11 @@ void CSettings::RecreateFont(WORD wFromID)
 		//}
 	}
 
-	if (wFromID == rNoneAA || wFromID == rStandardAA || wFromID == rCTAA)
-	{
-		gpConEmu->OnPanelViewSettingsChanged(TRUE);
-		//gpConEmu->UpdateGuiInfoMapping();
-	}
+	//if (wFromID == rNoneAA || wFromID == rStandardAA || wFromID == rCTAA)
+	//{
+	gpConEmu->OnPanelViewSettingsChanged(TRUE);
+	//	//gpConEmu->UpdateGuiInfoMapping();
+	//}
 
 	mb_IgnoreTtfChange = TRUE;
 }

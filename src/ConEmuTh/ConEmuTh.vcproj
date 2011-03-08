@@ -1484,7 +1484,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ConEmuTh1867.cpp"
+				RelativePath=".\ConEmuTh1900.cpp"
 				>
 			</File>
 			<File
@@ -1632,14 +1632,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\common\pluginA.hpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\pluginW1007.hpp"
-				>
-			</File>
-			<File
 				RelativePath=".\QueueProcessor.h"
 				>
 			</File>
@@ -1671,6 +1663,22 @@
 			</File>
 			<File
 				RelativePath=".\icon1.ico"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Far-Api"
+			>
+			<File
+				RelativePath="..\common\pluginA.hpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pluginW1761.hpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pluginW1900.hpp"
 				>
 			</File>
 		</Filter>

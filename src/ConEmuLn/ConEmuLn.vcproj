@@ -1480,7 +1480,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ConEmuLn1867.cpp"
+				RelativePath=".\ConEmuLn1900.cpp"
 				>
 			</File>
 			<File
@@ -1604,14 +1604,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\common\pluginA.hpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\pluginW1007.hpp"
-				>
-			</File>
-			<File
 				RelativePath=".\resource.h"
 				>
 			</File>
@@ -1623,6 +1615,22 @@
 			>
 			<File
 				RelativePath=".\ConEmuLn.rc"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Far-Api"
+			>
+			<File
+				RelativePath="..\common\pluginA.hpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pluginW1761.hpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pluginW1900.hpp"
 				>
 			</File>
 		</Filter>

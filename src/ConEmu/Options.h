@@ -350,6 +350,7 @@ class CSettings
 		void InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
 		BOOL RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
 		void RegisterFonts();
+		void RecreateFont(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
 	private:
 		void RegisterFontsInt(LPCWSTR asFromDir);
 	public:

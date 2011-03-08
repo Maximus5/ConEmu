@@ -347,9 +347,9 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)
 	if (OpenFrom == OPEN_COMMANDLINE && Item)
 	{
 		if (gFarVersion.dwBuild>=FAR_Y_VER)
-			FUNC_Y(ProcessCommandLine)((wchar_t*)Item);
+			FUNC_Y(ProcessCommandLineW)((wchar_t*)Item);
 		else
-			FUNC_X(ProcessCommandLine)((wchar_t*)Item);
+			FUNC_X(ProcessCommandLineW)((wchar_t*)Item);
 
 		return INVALID_HANDLE_VALUE;
 	}
@@ -1278,10 +1278,9 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 		if (gbSynchroProhibited && (gnSynchroCount == 0))
 		{
 			if (gFarVersion.dwBuild>=FAR_Y_VER)
-				FUNC_Y(StopWaitEndSynchro)();
-
-			//else
-			//	FUNC_X(StopWaitEndSynchro)();
+				FUNC_Y(StopWaitEndSynchroW)();
+			else
+				FUNC_X(StopWaitEndSynchroW)();
 		}
 	}
 
@@ -1884,9 +1883,9 @@ void ExecuteSynchro()
 
 		//psi.AdvControl(psi.ModuleNumber,ACTL_SYNCHRO,NULL);
 		if (gFarVersion.dwBuild>=FAR_Y_VER)
-			FUNC_Y(ExecuteSynchro)();
+			FUNC_Y(ExecuteSynchroW)();
 		else
-			FUNC_X(ExecuteSynchro)();
+			FUNC_X(ExecuteSynchroW)();
 	}
 }
 
@@ -2268,13 +2267,13 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			}
 			else if (gFarVersion.dwBuild>=FAR_Y_VER)
 			{
-				FUNC_Y(ProcessDragFrom)();
-				FUNC_Y(ProcessDragTo)();
+				FUNC_Y(ProcessDragFromW)();
+				FUNC_Y(ProcessDragToW)();
 			}
 			else
 			{
-				FUNC_X(ProcessDragFrom)();
-				FUNC_X(ProcessDragTo)();
+				FUNC_X(ProcessDragFromW)();
+				FUNC_X(ProcessDragToW)();
 			}
 
 			break;
@@ -2284,9 +2283,9 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			if (gFarVersion.dwVerMajor==1)
 				ProcessDragToA();
 			else if (gFarVersion.dwBuild>=FAR_Y_VER)
-				FUNC_Y(ProcessDragTo)();
+				FUNC_Y(ProcessDragToW)();
 			else
-				FUNC_X(ProcessDragTo)();
+				FUNC_X(ProcessDragToW)();
 
 			break;
 		}
@@ -2313,9 +2312,9 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				else
 				{
 					if (gFarVersion.dwBuild>=FAR_Y_VER)
-						FUNC_Y(SetWindow)(nTab);
+						FUNC_Y(SetWindowW)(nTab);
 					else
-						FUNC_X(SetWindow)(nTab);
+						FUNC_X(SetWindowW)(nTab);
 				}
 
 				gbIgnoreUpdateTabs = FALSE;
@@ -3754,9 +3753,9 @@ BOOL ReloadFarInfo(BOOL abForce)
 		{
 			// Нужно проверить
 			if (gFarVersion.dwBuild>=FAR_Y_VER)
-				gpFarInfo->bBufferSupport = FUNC_Y(CheckBufferEnabled)();
+				gpFarInfo->bBufferSupport = FUNC_Y(CheckBufferEnabledW)();
 			else
-				gpFarInfo->bBufferSupport = FUNC_X(CheckBufferEnabled)();
+				gpFarInfo->bBufferSupport = FUNC_X(CheckBufferEnabledW)();
 		}
 
 		// Загрузить из реестра настройки PanelTabs
@@ -3790,9 +3789,9 @@ BOOL ReloadFarInfo(BOOL abForce)
 	if (gFarVersion.dwVerMajor==1)
 		lbSucceded = ReloadFarInfoA(/*abFull*/);
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		lbSucceded = FUNC_Y(ReloadFarInfo)();
+		lbSucceded = FUNC_Y(ReloadFarInfoW)();
 	else
-		lbSucceded = FUNC_X(ReloadFarInfo)();
+		lbSucceded = FUNC_X(ReloadFarInfoW)();
 
 	if (lbSucceded)
 	{
@@ -4736,9 +4735,9 @@ int ShowMessage(int aiMsg, int aiButtons)
 	if (gFarVersion.dwVerMajor==1)
 		return ShowMessageA(aiMsg, aiButtons);
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(ShowMessage)(aiMsg, aiButtons);
+		return FUNC_Y(ShowMessageW)(aiMsg, aiButtons);
 	else
-		return FUNC_X(ShowMessage)(aiMsg, aiButtons);
+		return FUNC_X(ShowMessageW)(aiMsg, aiButtons);
 }
 int ShowMessageGui(int aiMsg, int aiButtons)
 {
@@ -4773,9 +4772,9 @@ LPCWSTR GetMsgW(int aiMsg)
 	if (gFarVersion.dwVerMajor==1)
 		return L"";
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(GetMsg)(aiMsg);
+		return FUNC_Y(GetMsgW)(aiMsg);
 	else
-		return FUNC_X(GetMsg)(aiMsg);
+		return FUNC_X(GetMsgW)(aiMsg);
 }
 
 void PostMacro(wchar_t* asMacro)
@@ -4797,11 +4796,11 @@ void PostMacro(wchar_t* asMacro)
 	}
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
 	{
-		FUNC_Y(PostMacro)(asMacro);
+		FUNC_Y(PostMacroW)(asMacro);
 	}
 	else
 	{
-		FUNC_X(PostMacro)(asMacro);
+		FUNC_X(PostMacroW)(asMacro);
 	}
 
 	//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
@@ -5303,12 +5302,12 @@ void ShowPluginMenu(int nID /*= -1*/)
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
 	{
 		SHOWDBGINFO(L"*** calling ShowPluginMenuWY\n");
-		nItem = FUNC_Y(ShowPluginMenu)();
+		nItem = FUNC_Y(ShowPluginMenuW)();
 	}
 	else
 	{
 		SHOWDBGINFO(L"*** calling ShowPluginMenuWX\n");
-		nItem = FUNC_X(ShowPluginMenu)();
+		nItem = FUNC_X(ShowPluginMenuW)();
 	}
 
 	if (nItem < 0)
@@ -5345,9 +5344,9 @@ void ShowPluginMenu(int nID /*= -1*/)
 					if (gFarVersion.dwVerMajor==1)
 						lbRc = EditOutputA(pOut->OutputFile.szFilePathName, (nItem==1));
 					else if (gFarVersion.dwBuild>=FAR_Y_VER)
-						lbRc = FUNC_Y(EditOutput)(pOut->OutputFile.szFilePathName, (nItem==1));
+						lbRc = FUNC_Y(EditOutputW)(pOut->OutputFile.szFilePathName, (nItem==1));
 					else
-						lbRc = FUNC_X(EditOutput)(pOut->OutputFile.szFilePathName, (nItem==1));
+						lbRc = FUNC_X(EditOutputW)(pOut->OutputFile.szFilePathName, (nItem==1));
 
 					if (!lbRc)
 					{
@@ -5375,9 +5374,9 @@ void ShowPluginMenu(int nID /*= -1*/)
 			if (gFarVersion.dwVerMajor==1)
 				GuiMacroDlgA();
 			else if (gFarVersion.dwBuild>=FAR_Y_VER)
-				FUNC_Y(GuiMacroDlg)();
+				FUNC_Y(GuiMacroDlgW)();
 			else
-				FUNC_X(GuiMacroDlg)();
+				FUNC_X(GuiMacroDlgW)();
 		} break;
 		case 10: // Attach to GUI (если FAR был CtrlAltTab)
 		{
@@ -5760,9 +5759,9 @@ BOOL IsMacroActive()
 	if (gFarVersion.dwVerMajor==1)
 		lbActive = IsMacroActiveA();
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		lbActive = FUNC_Y(IsMacroActive)();
+		lbActive = FUNC_Y(IsMacroActiveW)();
 	else
-		lbActive = FUNC_X(IsMacroActive)();
+		lbActive = FUNC_X(IsMacroActiveW)();
 
 	return lbActive;
 }
@@ -5775,9 +5774,9 @@ void RedrawAll()
 	if (gFarVersion.dwVerMajor==1)
 		RedrawAllA();
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(RedrawAll)();
+		FUNC_Y(RedrawAllW)();
 	else
-		FUNC_X(RedrawAll)();
+		FUNC_X(RedrawAllW)();
 }
 
 DWORD GetEditorModifiedState()
@@ -5785,9 +5784,9 @@ DWORD GetEditorModifiedState()
 	if (gFarVersion.dwVerMajor==1)
 		return GetEditorModifiedStateA();
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(GetEditorModifiedState)();
+		return FUNC_Y(GetEditorModifiedStateW)();
 	else
-		return FUNC_X(GetEditorModifiedState)();
+		return FUNC_X(GetEditorModifiedStateW)();
 }
 
 int GetActiveWindowType()
@@ -5795,9 +5794,9 @@ int GetActiveWindowType()
 	if (gFarVersion.dwVerMajor==1)
 		return GetActiveWindowTypeA();
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		return FUNC_Y(GetActiveWindowType)();
+		return FUNC_Y(GetActiveWindowTypeW)();
 	else
-		return FUNC_X(GetActiveWindowType)();
+		return FUNC_X(GetActiveWindowTypeW)();
 }
 
 //void ExecuteQuitFar()

@@ -108,6 +108,11 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ghPluginModule = (HMODULE)hModule;
 			HeapInitialize();
 
+#ifdef SHOW_STARTED_MSGBOX
+			if (!IsDebuggerPresent())
+				MessageBoxA(NULL, "ConEmuLn*.dll loaded", "ConEmuLn plugin", 0);
+#endif
+
 			//bool lbExportsChanged = false;
 			//if (LoadFarVersion())
 			//{

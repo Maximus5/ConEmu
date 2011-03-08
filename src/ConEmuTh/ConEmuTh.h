@@ -52,9 +52,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // X - меньшая, Y - большая
 #define FAR_X_VER 995
-#define FAR_Y_VER 1867
+#define FAR_Y_VER 1900
 #define FUNC_X(fn) fn##995
-#define FUNC_Y(fn) fn##1867
+#define FUNC_Y(fn) fn##1900
 
 
 #define ConEmuTh_SysID 0x43455568 // 'CETh'
@@ -288,51 +288,51 @@ void FUNC_X(SetStartupInfoW)(void *aInfo);
 void FUNC_Y(SetStartupInfoW)(void *aInfo);
 int ShowMessage(int aiMsg, int aiButtons);
 int ShowMessageA(int aiMsg, int aiButtons);
-int FUNC_X(ShowMessage)(int aiMsg, int aiButtons);
-int FUNC_Y(ShowMessage)(int aiMsg, int aiButtons);
+int FUNC_X(ShowMessageW)(int aiMsg, int aiButtons);
+int FUNC_Y(ShowMessageW)(int aiMsg, int aiButtons);
 int ShowMessageA(LPCSTR asMsg, int aiButtons);
-int FUNC_X(ShowMessage)(LPCWSTR asMsg, int aiButtons);
-int FUNC_Y(ShowMessage)(LPCWSTR asMsg, int aiButtons);
+int FUNC_X(ShowMessageW)(LPCWSTR asMsg, int aiButtons);
+int FUNC_Y(ShowMessageW)(LPCWSTR asMsg, int aiButtons);
 void PostMacro(wchar_t* asMacro);
 void PostMacroA(char* asMacro);
-void FUNC_X(PostMacro)(wchar_t* asMacro);
-void FUNC_Y(PostMacro)(wchar_t* asMacro);
+void FUNC_X(PostMacroW)(wchar_t* asMacro);
+void FUNC_Y(PostMacroW)(wchar_t* asMacro);
 LPCWSTR GetMsgW(int aiMsg);
 const wchar_t* GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/);
-LPCWSTR FUNC_Y(GetMsg)(int aiMsg);
-LPCWSTR FUNC_X(GetMsg)(int aiMsg);
+LPCWSTR FUNC_Y(GetMsgW)(int aiMsg);
+LPCWSTR FUNC_X(GetMsgW)(int aiMsg);
 int ShowPluginMenu();
 int ShowPluginMenuA();
-int FUNC_Y(ShowPluginMenu)();
-int FUNC_X(ShowPluginMenu)();
+int FUNC_Y(ShowPluginMenuW)();
+int FUNC_X(ShowPluginMenuW)();
 BOOL IsMacroActive();
 BOOL IsMacroActiveA();
-BOOL FUNC_X(IsMacroActive)();
-BOOL FUNC_Y(IsMacroActive)();
+BOOL FUNC_X(IsMacroActiveW)();
+BOOL FUNC_Y(IsMacroActiveW)();
 //CeFullPanelInfo* LoadPanelInfo(BOOL abActive);
 CeFullPanelInfo* GetActivePanel();
 BOOL LoadPanelInfoA(BOOL abActive);
-BOOL FUNC_X(LoadPanelInfo)(BOOL abActive);
-BOOL FUNC_Y(LoadPanelInfo)(BOOL abActive);
+BOOL FUNC_X(LoadPanelInfoW)(BOOL abActive);
+BOOL FUNC_Y(LoadPanelInfoW)(BOOL abActive);
 void ReloadPanelsInfo();
 void ReloadPanelsInfoA();
-void FUNC_X(ReloadPanelsInfo)();
-void FUNC_Y(ReloadPanelsInfo)();
+void FUNC_X(ReloadPanelsInfoW)();
+void FUNC_Y(ReloadPanelsInfoW)();
 //BOOL IsLeftPanelActive();
 //BOOL IsLeftPanelActiveA();
 //BOOL FUNC_X(IsLeftPanelActive)();
 //BOOL FUNC_Y(IsLeftPanelActive)();
 void LoadPanelItemInfo(CeFullPanelInfo* pi, int nItem);
 void LoadPanelItemInfoA(CeFullPanelInfo* pi, int nItem);
-void FUNC_X(LoadPanelItemInfo)(CeFullPanelInfo* pi, int nItem);
-void FUNC_Y(LoadPanelItemInfo)(CeFullPanelInfo* pi, int nItem);
+void FUNC_X(LoadPanelItemInfoW)(CeFullPanelInfo* pi, int nItem);
+void FUNC_Y(LoadPanelItemInfoW)(CeFullPanelInfo* pi, int nItem);
 bool CheckWindows();
 //bool CheckWindowsA();
 //bool FUNC_X(CheckWindows)();
 //bool FUNC_Y(CheckWindows)();
 bool CheckFarPanelsA();
-bool FUNC_X(CheckFarPanels)();
-bool FUNC_Y(CheckFarPanels)();
+bool FUNC_X(CheckFarPanelsW)();
+bool FUNC_Y(CheckFarPanelsW)();
 
 // Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
 //void DisplayReloadPanel(CeFullPanelInfo* pi);
@@ -344,11 +344,12 @@ void UpdateEnvVar(BOOL abForceRedraw);
 CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired);
 BOOL CheckPanelSettings(BOOL abSilence);
 BOOL CheckPanelSettingsA(BOOL abSilence);
-BOOL FUNC_X(CheckPanelSettings)(BOOL abSilence);
-BOOL FUNC_Y(CheckPanelSettings)(BOOL abSilence);
+BOOL FUNC_X(CheckPanelSettingsW)(BOOL abSilence);
+BOOL FUNC_Y(CheckPanelSettingsW)(BOOL abSilence);
 
 BOOL GetFarRect(SMALL_RECT* prcFarRect);
-void FUNC_Y(GetFarRect)(SMALL_RECT* prcFarRect);
+void FUNC_X(GetFarRectW)(SMALL_RECT* prcFarRect);
+void FUNC_Y(GetFarRectW)(SMALL_RECT* prcFarRect);
 
 typedef struct
 {
@@ -363,14 +364,14 @@ typedef struct
 extern bool gbSynchoRedrawPanelRequested;
 extern ConEmuThSynchroArg* gpLastSynchroArg;
 void ExecuteInMainThread(ConEmuThSynchroArg* pCmd);
-void FUNC_X(ExecuteInMainThread)(ConEmuThSynchroArg* pCmd);
-void FUNC_Y(ExecuteInMainThread)(ConEmuThSynchroArg* pCmd);
+void FUNC_X(ExecuteInMainThreadW)(ConEmuThSynchroArg* pCmd);
+void FUNC_Y(ExecuteInMainThreadW)(ConEmuThSynchroArg* pCmd);
 int WINAPI ProcessSynchroEventW(int Event, void *Param);
 
 #define SYNCHRO_REDRAW_PANEL ((ConEmuThSynchroArg*)1)
 void SetCurrentPanelItemA(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem);
-void FUNC_X(SetCurrentPanelItem)(BOOL bLeftPanel, UINT anTopItem, UINT anCurItem);
-void FUNC_Y(SetCurrentPanelItem)(BOOL bLeftPanel, UINT anTopItem, UINT anCurItem);
+void FUNC_X(SetCurrentPanelItemW)(BOOL bLeftPanel, UINT anTopItem, UINT anCurItem);
+void FUNC_Y(SetCurrentPanelItemW)(BOOL bLeftPanel, UINT anTopItem, UINT anCurItem);
 
 #define SYNCHRO_RELOAD_PANELS ((ConEmuThSynchroArg*)2)
 

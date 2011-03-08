@@ -1484,7 +1484,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ConEmuPlugin1867.cpp"
+				RelativePath=".\ConEmuPlugin1900.cpp"
 				>
 				<FileConfiguration
 					Name="Debug_F|Win32"
@@ -1598,6 +1598,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\export.release.def"
+				>
+			</File>
+			<File
 				RelativePath=".\KeyEvents.cpp"
 				>
 				<FileConfiguration
@@ -1701,10 +1705,6 @@
 			</File>
 			<File
 				RelativePath="..\common\MStrSafe.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\pluginA.hpp"
 				>
 			</File>
 			<File
@@ -2100,6 +2100,22 @@
 						Name="VCCustomBuildTool"
 					/>
 				</FileConfiguration>
+			</File>
+		</Filter>
+		<Filter
+			Name="Far-Api"
+			>
+			<File
+				RelativePath="..\common\pluginA.hpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pluginW1761.hpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pluginW1900.hpp"
+				>
 			</File>
 		</Filter>
 		<File

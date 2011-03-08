@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct PluginStartupInfo *InfoW995=NULL;
 struct FarStandardFunctions *FSFW995=NULL;
 
-void WaitEndSynchro995();
+void WaitEndSynchroW995();
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
 int WINAPI _export GetMinFarVersionW(void)
@@ -91,7 +91,7 @@ void GetPluginInfoW995(void *piv)
 }
 
 
-void ProcessDragFrom995()
+void ProcessDragFromW995()
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -261,7 +261,7 @@ void ProcessDragFrom995()
 	//free(szCurDir);
 }
 
-void ProcessDragTo995()
+void ProcessDragToW995()
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -398,7 +398,7 @@ void SetStartupInfoW995(void *aInfo)
 		InitHWND((HWND)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARHWND, 0));*/
 }
 
-DWORD GetEditorModifiedState995()
+DWORD GetEditorModifiedStateW995()
 {
 	EditorInfo ei;
 	InfoW995->EditorControl(ECTL_GETINFO, &ei);
@@ -590,7 +590,7 @@ bool UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 
 void ExitFARW995(void)
 {
-	WaitEndSynchro995();
+	WaitEndSynchroW995();
 
 	if (InfoW995)
 	{
@@ -605,7 +605,7 @@ void ExitFARW995(void)
 	}
 }
 
-int ShowMessage995(int aiMsg, int aiButtons)
+int ShowMessageW995(int aiMsg, int aiButtons)
 {
 	if (!InfoW995 || !InfoW995->Message || !InfoW995->GetMsg)
 		return -1;
@@ -614,7 +614,7 @@ int ShowMessage995(int aiMsg, int aiButtons)
 	                         (const wchar_t * const *)InfoW995->GetMsg(InfoW995->ModuleNumber,aiMsg), 0, aiButtons);
 }
 
-LPCWSTR GetMsg995(int aiMsg)
+LPCWSTR GetMsgW995(int aiMsg)
 {
 	if (!InfoW995 || !InfoW995->GetMsg)
 		return L"";
@@ -632,7 +632,7 @@ LPCWSTR GetMsg995(int aiMsg)
 //	InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_KEYMACRO,&command);
 //}
 
-void SetWindow995(int nTab)
+void SetWindowW995(int nTab)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -642,7 +642,7 @@ void SetWindow995(int nTab)
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void PostMacro995(wchar_t* asMacro)
+void PostMacroW995(wchar_t* asMacro)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -702,7 +702,7 @@ void PostMacro995(wchar_t* asMacro)
 	////InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,NULL);
 }
 
-int ShowPluginMenu995()
+int ShowPluginMenuW995()
 {
 	if (!InfoW995)
 		return -1;
@@ -744,7 +744,7 @@ int ShowPluginMenu995()
 	return nRc;
 }
 
-BOOL EditOutput995(LPCWSTR asFileName, BOOL abView)
+BOOL EditOutputW995(LPCWSTR asFileName, BOOL abView)
 {
 	if (!InfoW995)
 		return FALSE;
@@ -773,7 +773,7 @@ BOOL EditOutput995(LPCWSTR asFileName, BOOL abView)
 	return lbRc;
 }
 
-BOOL ExecuteSynchro995()
+BOOL ExecuteSynchroW995()
 {
 	if (!InfoW995)
 		return FALSE;
@@ -798,16 +798,16 @@ BOOL ExecuteSynchro995()
 
 static HANDLE ghSyncDlg = NULL;
 
-void WaitEndSynchro995()
+void WaitEndSynchroW995()
 {
 	if ((gnSynchroCount == 0) || !(IS_SYNCHRO_ALLOWED))
 		return;
 
 	FarDialogItem items[] =
 	{
-		{DI_DOUBLEBOX,  3,  1,  51, 3, false, 0, 0, false, GetMsg995(CEPluginName)},
+		{DI_DOUBLEBOX,  3,  1,  51, 3, false, 0, 0, false, GetMsgW995(CEPluginName)},
 
-		{DI_BUTTON,     0,  2,  0,  0, true,  0, DIF_CENTERGROUP, true, GetMsg995(CEStopSynchroWaiting)},
+		{DI_BUTTON,     0,  2,  0,  0, true,  0, DIF_CENTERGROUP, true, GetMsgW995(CEStopSynchroWaiting)},
 	};
 	ghSyncDlg = InfoW995->DialogInit(InfoW995->ModuleNumber, -1,-1, 55, 5, NULL, items, countof(items), 0, 0, NULL, 0);
 
@@ -826,7 +826,7 @@ void WaitEndSynchro995()
 	ghSyncDlg = NULL;
 }
 
-void StopWaitEndSynchro995()
+void StopWaitEndSynchroW995()
 {
 	if (ghSyncDlg)
 	{
@@ -870,7 +870,7 @@ void StopWaitEndSynchro995()
 //	return FALSE;
 //}
 
-BOOL IsMacroActive995()
+BOOL IsMacroActiveW995()
 {
 	if (!InfoW995) return FALSE;
 
@@ -884,14 +884,14 @@ BOOL IsMacroActive995()
 }
 
 
-void RedrawAll995()
+void RedrawAllW995()
 {
 	if (!InfoW995) return;
 
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_REDRAWALL, NULL);
 }
 
-bool LoadPlugin995(wchar_t* pszPluginPath)
+bool LoadPluginW995(wchar_t* pszPluginPath)
 {
 	if (!InfoW995) return false;
 
@@ -901,7 +901,7 @@ bool LoadPlugin995(wchar_t* pszPluginPath)
 
 bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
 
-bool RunExternalProgram995(wchar_t* pszCommand)
+bool RunExternalProgramW995(wchar_t* pszCommand)
 {
 	wchar_t strTemp[MAX_PATH+1];
 
@@ -945,13 +945,13 @@ bool RunExternalProgram995(wchar_t* pszCommand)
 }
 
 
-bool ProcessCommandLine995(wchar_t* pszCommand)
+bool ProcessCommandLineW995(wchar_t* pszCommand)
 {
 	if (!InfoW995 || !FSFW995) return false;
 
 	if (FSFW995->LStrnicmp(pszCommand, L"run:", 4)==0)
 	{
-		RunExternalProgram995(pszCommand+4);
+		RunExternalProgramW995(pszCommand+4);
 		return true;
 	}
 
@@ -975,7 +975,7 @@ static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
 	pCE->Flags = pFar->Flags;
 }
 
-BOOL ReloadFarInfo995(/*BOOL abFull*/)
+BOOL ReloadFarInfoW995(/*BOOL abFull*/)
 {
 	if (!InfoW995 || !FSFW995) return FALSE;
 
@@ -1082,7 +1082,7 @@ void ExecuteQuitFar995()
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_QUIT, NULL);
 }
 
-BOOL CheckBufferEnabled995()
+BOOL CheckBufferEnabledW995()
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return FALSE;
@@ -1134,7 +1134,7 @@ static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pB
 	pBk->rcPanelRect = pInfo->PanelRect;
 }
 
-void FillUpdateBackground995(struct PaintBackgroundArg* pFar)
+void FillUpdateBackgroundW995(struct PaintBackgroundArg* pFar)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -1183,7 +1183,7 @@ void FillUpdateBackground995(struct PaintBackgroundArg* pFar)
 	CONSOLE_SCREEN_BUFFER_INFO scbi = {sizeof(CONSOLE_SCREEN_BUFFER_INFO)};
 	GetConsoleScreenBufferInfo(hCon, &scbi);
 
-	if (CheckBufferEnabled995())
+	if (CheckBufferEnabledW995())
 	{
 		SMALL_RECT rc = {0};
 		_ASSERTE(ACTL_GETFARRECT==32);
@@ -1211,7 +1211,7 @@ void FillUpdateBackground995(struct PaintBackgroundArg* pFar)
 	}
 }
 
-int GetActiveWindowType995()
+int GetActiveWindowTypeW995()
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return -1;
@@ -1287,7 +1287,7 @@ int GetActiveWindowType995()
 
 #define FAR_UNICODE 995
 #include "Dialogs.h"
-void GuiMacroDlg995()
+void GuiMacroDlgW995()
 {
 	CallGuiMacroProc();
 }

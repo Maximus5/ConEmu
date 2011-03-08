@@ -97,7 +97,7 @@ void SetStartupInfoW995(void *aInfo)
 	lstrcpyW(gszRootKeyW995, InfoW995->RootKey);
 	WCHAR* pszSlash = gszRootKeyW995+lstrlenW(gszRootKeyW995)-1;
 	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
-	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
+	lstrcpyW(pszSlash+1, L"ConEmuLn\\");
 }
 
 extern BOOL gbInfoW_OK;

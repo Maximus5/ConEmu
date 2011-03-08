@@ -83,7 +83,7 @@ LINK_OBJS = \
 $(OBJDIR)\ConEmuInjects.obj \
 $(OBJDIR)\ConEmuPlugin.obj \
 $(OBJDIR)\ConEmuPlugin995.obj \
-$(OBJDIR)\ConEmuPlugin1867.obj \
+$(OBJDIR)\ConEmuPlugin1900.obj \
 $(OBJDIR)\ConEmuPluginA.obj \
 $(OBJDIR)\PluginBackground.obj \
 $(OBJDIR)\Common.obj \
@@ -329,7 +329,7 @@ $(OBJDIR)\ConEmuPlugin.obj: ConEmuPlugin.cpp
 
 $(OBJDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
 
-$(OBJDIR)\ConEmuPlugin1867.obj: ConEmuPlugin1867.cpp
+$(OBJDIR)\ConEmuPlugin1900.obj: ConEmuPlugin1900.cpp
 
 $(OBJDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
 

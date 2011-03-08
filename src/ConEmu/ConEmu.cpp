@@ -120,6 +120,7 @@ CConEmuMain::CConEmuMain()
 	mn_MainThreadId = GetCurrentThreadId();
 	wcscpy_c(szConEmuVersion, L"?.?.?.?");
 	WindowMode=rNormal; mb_PassSysCommand = false; change2WindowMode = -1;
+	memset(&mrc_StoredNormalRect, 0, sizeof(mrc_StoredNormalRect));
 	isWndNotFSMaximized = false;
 	mb_StartDetached = FALSE;
 	mb_SkipSyncSize = false;
@@ -391,6 +392,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgUpdateProcDisplay = ++nAppMsg;
 	mn_MsgAutoSizeFont = ++nAppMsg;
 	mn_MsgDisplayRConError = ++nAppMsg;
+	mn_MsgSetFontName = ++nAppMsg;
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 }
@@ -1380,9 +1382,10 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		return rc;
 		case CER_FULLSCREEN: // switch (tFrom)
 		case CER_MAXIMIZED: // switch (tFrom)
+		case CER_RESTORE:
 			// Например, таким способом можно получить размер развернутого окна на текущем мониторе
 			// RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
-			_ASSERTE((tFrom!=CER_FULLSCREEN && tFrom!=CER_MAXIMIZED) || (tFrom==tWhat));
+			_ASSERTE((tFrom!=CER_FULLSCREEN && tFrom!=CER_MAXIMIZED && tFrom!=CER_RESTORE) || (tFrom==tWhat));
 			break;
 		case CER_BACK: // switch (tFrom)
 			break;
@@ -1562,6 +1565,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		} break;
 		case CER_FULLSCREEN: // switch (tWhat)
 		case CER_MAXIMIZED: // switch (tWhat)
+		case CER_RESTORE: // switch (tWhat)
 			//case CER_CORRECTED:
 		{
 			HMONITOR hMonitor = NULL;
@@ -1580,8 +1584,9 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 				switch(tFrom)
 				{
 					case CER_FULLSCREEN:
+					{
 						rc = mi.rcMonitor;
-						break;
+					} break;
 					case CER_MAXIMIZED:
 					{
 						rc = mi.rcWork;
@@ -1603,8 +1608,37 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 						//rc.right += GetSystemMetrics(SM_CXSIZEFRAME);
 						//rc.top -= GetSystemMetrics(SM_CYSIZEFRAME);
 						//rc.bottom += GetSystemMetrics(SM_CYSIZEFRAME);
-					}
-					break;
+						
+					} break;
+					case CER_RESTORE:
+					{
+						RECT rcNormal = {0};
+						if (gpConEmu)
+							rcNormal = gpConEmu->mrc_StoredNormalRect;
+						int w = rcNormal.right - rcNormal.left;
+						int h = rcNormal.bottom - rcNormal.top;
+						if ((w > 0) && (h > 0))
+						{
+							rc = rcNormal;
+
+							// Если после последней максимизации была изменена 
+							// конфигурация мониторов - нужно поправить видимую область
+							if (((rc.right + 30) <= mi.rcWork.left)
+								|| ((rc.left + 30) >= mi.rcWork.right))
+							{
+								rc.left = mi.rcWork.left; rc.right = rc.left + w;
+							}
+							if (((rc.bottom + 30) <= mi.rcWork.top)
+								|| ((rc.top + 30) >= mi.rcWork.bottom))
+							{
+								rc.top = mi.rcWork.top; rc.bottom = rc.top + h;
+							}
+						}
+						else
+						{
+							rc = mi.rcWork;
+						}
+					} break;
 					default:
 						_ASSERTE(tFrom==CER_FULLSCREEN || tFrom==CER_MAXIMIZED);
 				}
@@ -1614,15 +1648,52 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 				switch(tFrom)
 				{
 					case CER_FULLSCREEN:
+					{
 						rc = MakeRect(GetSystemMetrics(SM_CXFULLSCREEN),GetSystemMetrics(SM_CYFULLSCREEN));
-						break;
+					} break;
 					case CER_MAXIMIZED:
+					{
 						rc = MakeRect(GetSystemMetrics(SM_CXMAXIMIZED),GetSystemMetrics(SM_CYMAXIMIZED));
 
 						if (gpSet->isHideCaption && gpConEmu->mb_MaximizedHideCaption && !gpSet->isHideCaptionAlways())
 							rc.top -= GetSystemMetrics(SM_CYCAPTION);
 
-						break;
+					} break;
+					case CER_RESTORE:
+					{
+						RECT work;
+						SystemParametersInfo(SPI_GETWORKAREA, 0, &work, 0);
+						RECT rcNormal = {0};
+						if (gpConEmu)
+							rcNormal = gpConEmu->mrc_StoredNormalRect;
+						int w = rcNormal.right - rcNormal.left;
+						int h = rcNormal.bottom - rcNormal.top;
+						if ((w > 0) && (h > 0))
+						{
+							rc = rcNormal;
+
+							// Если после последней максимизации была изменена 
+							// конфигурация мониторов - нужно поправить видимую область
+							if (((rc.right + 30) <= work.left)
+								|| ((rc.left + 30) >= work.right))
+							{
+								rc.left = work.left; rc.right = rc.left + w;
+							}
+							if (((rc.bottom + 30) <= work.top)
+								|| ((rc.top + 30) >= work.bottom))
+							{
+								rc.top = work.top; rc.bottom = rc.top + h;
+							}
+						}
+						else
+						{
+							WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)};
+							if (ghWnd && GetWindowPlacement(ghWnd, &wpl))
+								rc = wpl.rcNormalPosition;
+							else
+								rc = work;
+						}
+					} break;
 					default:
 						_ASSERTE(tFrom==CER_FULLSCREEN || tFrom==CER_MAXIMIZED);
 				}
@@ -2039,6 +2110,23 @@ void CConEmuMain::AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom)
 	}
 }
 
+void CConEmuMain::StoreNormalRect(RECT* prcWnd)
+{
+	// Обновить коордианты в gpSet, если требуется
+	if (!gpSet->isFullScreen && !isZoomed() && !isIconic())
+	{
+		if (prcWnd)
+			mrc_StoredNormalRect = *prcWnd;
+		else
+			GetWindowRect(ghWnd, &mrc_StoredNormalRect);
+
+		gpSet->UpdatePos(mrc_StoredNormalRect.left, mrc_StoredNormalRect.top);
+
+		if (mp_VActive)
+			gpSet->UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
+	}
+}
+
 bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 {
 	if (inMode != rNormal && inMode != rMaximized && inMode != rFullScreen)
@@ -2051,7 +2139,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 	}
 
 	if (inMode == rFullScreen && gpSet->isDesktopMode)
-		inMode = gpSet->isFullScreen ? rNormal : rMaximized; // FullScreen на Desktop-е невозможен
+		inMode = (gpSet->isFullScreen || isZoomed()) ? rNormal : rMaximized; // FullScreen на Desktop-е невозможен
 
 #ifdef _DEBUG
 	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
@@ -2123,7 +2211,18 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				//apiShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
 				mb_IgnoreSizeChange = TRUE;
 
-				if (IsWindowVisible(ghWnd))
+				if (gpSet->isDesktopMode)
+				{
+					RECT rcNormal = CalcRect(CER_RESTORE, MakeRect(0,0), CER_RESTORE);
+					DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+					if (dwStyle & WS_MAXIMIZE)
+						SetWindowLong(ghWnd, GWL_STYLE, (dwStyle&~WS_MAXIMIZE));
+					SetWindowPos(ghWnd, HWND_TOP, 
+						rcNormal.left, rcNormal.top, 
+						rcNormal.right-rcNormal.left, rcNormal.bottom-rcNormal.top,
+						SWP_NOCOPYBITS|SWP_SHOWWINDOW);
+				}
+				else if (IsWindowVisible(ghWnd))
 				{
 					if (pRCon && gpSet->isAdvLogging) pRCon->LogString("WM_SYSCOMMAND(SC_RESTORE)");
 
@@ -2209,12 +2308,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 
 			// Обновить коордианты в gpSet, если требуется
 			if (!gpSet->isFullScreen && !isZoomed() && !isIconic())
-			{
-				gpSet->UpdatePos(rcWnd.left, rcWnd.top);
-
-				if (mp_VActive)
-					gpSet->UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
-			}
+				StoreNormalRect(&rcWnd);
 
 			if (!gpSet->isHideCaption && !gpSet->isHideCaptionAlways())
 			{
@@ -2234,14 +2328,26 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				{
 					mb_IgnoreSizeChange = TRUE;
 					InvalidateAll();
-					apiShowWindow(ghWnd, SW_SHOWMAXIMIZED);
-					/*WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)};
-					GetWindowPlacement(ghWnd, &wpl);
-					wpl.flags = 0;
-					wpl.showCmd = SW_SHOWMAXIMIZED;
-					wpl.ptMaxPosition.x = rcMax.left;
-					wpl.ptMaxPosition.y = rcMax.top;
-					SetWindowPlacement(ghWnd, &wpl);*/
+					if (!gpSet->isDesktopMode)
+					{
+						apiShowWindow(ghWnd, SW_SHOWMAXIMIZED);
+					}
+					else
+					{
+						/*WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)};
+						GetWindowPlacement(ghWnd, &wpl);
+						wpl.flags = 0;
+						wpl.showCmd = SW_SHOWMAXIMIZED;
+						wpl.ptMaxPosition.x = rcMax.left;
+						wpl.ptMaxPosition.y = rcMax.top;
+						SetWindowPlacement(ghWnd, &wpl);*/
+						DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+						SetWindowLong(ghWnd, GWL_STYLE, (dwStyle|WS_MAXIMIZE));
+						SetWindowPos(ghWnd, HWND_TOP, 
+							rcMax.left, rcMax.top, 
+							rcMax.right-rcMax.left, rcMax.bottom-rcMax.top,
+							SWP_NOCOPYBITS|SWP_SHOWWINDOW);
+					}
 					mb_IgnoreSizeChange = FALSE;
 					RePaint();
 
@@ -2273,15 +2379,6 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				// (gpSet->isHideCaption)
 				if (!isZoomed() || (gpSet->isFullScreen || isIconic()) || abForce)
 				{
-					// Обновить коордианты в gpSet, если требуется
-					if (!gpSet->isFullScreen && !isZoomed() && !isIconic())
-					{
-						gpSet->UpdatePos(rcWnd.left, rcWnd.top);
-
-						if (mp_VActive)
-							gpSet->UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
-					}
-
 					mb_MaximizedHideCaption = TRUE;
 					RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
 					AutoSizeFont(rcMax, CER_MAIN);
@@ -2382,17 +2479,12 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 		case rFullScreen:
 			DEBUGLOGFILE("SetWindowMode(rFullScreen)\n");
 
+			// Обновить коордианты в gpSet, если требуется
+			if (!gpSet->isFullScreen && !isZoomed() && !isIconic())
+				StoreNormalRect(&rcWnd);
+
 			if (!gpSet->isFullScreen || (isZoomed() || isIconic()))
 			{
-				// Обновить коордианты в gpSet, если требуется
-				if (!gpSet->isFullScreen && !isZoomed() && !isIconic())
-				{
-					gpSet->UpdatePos(rcWnd.left, rcWnd.top);
-
-					if (mp_VActive)
-						gpSet->UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
-				}
-
 				RECT rcMax = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
 				AutoSizeFont(rcMax, CER_MAINCLIENT);
 				RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAINCLIENT);
@@ -3713,6 +3805,22 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
 void CConEmuMain::PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/)
 {
 	PostMessage(ghWnd, mn_MsgAutoSizeFont, (WPARAM)nRelative, (LPARAM)nValue);
+}
+
+void CConEmuMain::PostSetFontNameSize(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted)
+{
+	if (!abPosted)
+	{
+		wchar_t* pszDup = lstrdup(pszFontName);
+		WPARAM wParam = (((DWORD)anHeight) << 16) | (anWidth);
+		PostMessage(ghWnd, mn_MsgSetFontName, wParam, (LPARAM)pszDup);
+	}
+	else
+	{
+		if (gpSet)
+			gpSet->RecreateFont(pszFontName, anHeight, anWidth);
+		free(pszFontName);
+	}
 }
 
 void CConEmuMain::PostDisplayRConError(CRealConsole* mp_RCon, wchar_t* pszErrMsg)
@@ -11309,7 +11417,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				if (!gpConEmu->mb_IgnoreSizeChange && !gpSet->isFullScreen && !isZoomed() && !isIconic())
 				{
 					RECT rc; GetWindowRect(ghWnd, &rc);
-					gpSet->UpdatePos(rc.left, rc.top);
+					//gpSet->UpdatePos(rc.left, rc.top);
+					StoreNormalRect(&rc);
 
 					if (hPictureView)
 					{
@@ -11726,6 +11835,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			else if (messg == gpConEmu->mn_MsgAutoSizeFont)
 			{
 				gpSet->AutoSizeFont((int)wParam, (int)lParam);
+				return 0;
+			}
+			else if (messg == gpConEmu->mn_MsgSetFontName)
+			{
+				gpConEmu->PostSetFontNameSize((wchar_t*)lParam, (WORD)(((DWORD)wParam & 0xFFFF0000)>>16), (WORD)(wParam & 0xFFFF), TRUE);
 				return 0;
 			}
 			else if (messg == gpConEmu->mn_MsgDisplayRConError)

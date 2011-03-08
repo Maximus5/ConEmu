@@ -8,7 +8,7 @@ EXPORTS
 	ProcessSynchroEventW
 ;  Far3
    GetGlobalInfoW
-   OpenPanelW
+   OpenW
 ;
 	SetStartupInfo
 	GetPluginInfo
