@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include "ConEmuHooks.h"
+#include "RegHooks.h"
 #include "ShellProcessor.h"
 
 
@@ -100,10 +101,14 @@ BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
 DWORD   gnImageSubsystem = 0, gnImageBits = 32;
 
+
 #ifdef _DEBUG
 LPTOP_LEVEL_EXCEPTION_FILTER gfnPrevFilter = NULL;
 LONG WINAPI HkExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo);
 #endif
+
+void SendStarted();
+void SendStopped();
 
 /*
 void __stdcall _chkstk()
@@ -117,6 +122,52 @@ HANDLE ghStartThread = NULL;
 DWORD  gnStartThreadID = 0;
 #endif
 
+
+MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap = NULL;
+CESERVER_CONSOLE_MAPPING_HDR* gpConInfo = NULL;
+
+CESERVER_CONSOLE_MAPPING_HDR* GetConMap()
+{
+	if (gpConInfo)
+		return gpConInfo;
+	
+	if (!gpConMap)
+	{
+		gpConMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
+		gpConMap->InitName(CECONMAPNAME, (DWORD)ghConWnd);
+	}
+	
+	if (!gpConInfo)
+	{
+		gpConInfo = gpConMap->Open();
+	}
+	
+	if (gpConInfo)
+	{
+		if (gpConInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
+		{
+			gnGuiPID = gpConInfo->nGuiPID;
+			ghConEmuWnd = gpConInfo->hConEmuRoot;
+			ghConEmuWndDC = gpConInfo->hConEmuWnd;
+			gnServerPID = gpConInfo->nServerPID;
+		}
+		else
+		{
+			_ASSERTE(gpConInfo->cbSize == sizeof(CESERVER_CONSOLE_MAPPING_HDR));
+			gpConMap->CloseMap();
+			gpConInfo = NULL;
+			delete gpConMap;
+			gpConMap = NULL;
+		}
+	}
+	else
+	{
+		delete gpConMap;
+		gpConMap = NULL;
+	}
+	
+	return gpConInfo;
+}
 
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
@@ -166,7 +217,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 	//#endif
 	//wchar_t szSkipEventName[128];
-	//_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
+	//msprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
 	//HANDLE hSkipEvent = OpenEvent(EVENT_ALL_ACCESS , FALSE, szSkipEventName);
 	////BOOL lbSkipInjects = FALSE;
 
@@ -183,31 +234,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	WARNING("Попробовать не ломиться в мэппинг, а взять все из переменной ConEmuData");
 	// Открыть мэппинг консоли и попытаться получить HWND GUI, PID сервера, и пр...
 	if (ghConWnd)
-	{
-		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
-		ConInfo.InitName(CECONMAPNAME, (DWORD)ghConWnd);
-		CESERVER_CONSOLE_MAPPING_HDR *pInfo = ConInfo.Open();
-		if (pInfo)
-		{
-			if (pInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
-			{
-				//if (pInfo->hConEmuRoot /*&& IsWindow(pInfo->hConEmuRoot)*/)
-				//{
-				gnGuiPID = pInfo->nGuiPID;
-				ghConEmuWnd = pInfo->hConEmuRoot;
-				//if (pInfo->hConEmuWnd && IsWindow(pInfo->hConEmuWnd))
-				ghConEmuWndDC = pInfo->hConEmuWnd;
-				//}
-				//if (pInfo->nServerPID && pInfo->nServerPID != gnSelfPID)
-				gnServerPID = pInfo->nServerPID;
-				ConInfo.CloseMap();
-			}
-			else
-			{
-				_ASSERTE(pInfo->cbSize == sizeof(CESERVER_CONSOLE_MAPPING_HDR));
-			}
-		}
-	}
+		GetConMap();
 
 	if (ghConEmuWnd)
 	{
@@ -312,7 +339,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	
 	#ifdef _DEBUG
 	if (!lstrcmpi(pszName, L"mingw32-make.exe"))
-		GuiMessageBox(NULL, L"mingw32-make.exe DllMain finished", L"ConEmuHk", MB_SYSTEMMODAL);
+		GuiMessageBox(ghConEmuWnd, L"mingw32-make.exe DllMain finished", L"ConEmuHk", MB_SYSTEMMODAL);
 	free(szModule);
 	#endif
 	
@@ -351,7 +378,7 @@ void DllStop()
 		_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
 	const wchar_t* pszName = PointToName(szModule);
 	if (!lstrcmpi(pszName, L"mingw32-make.exe"))
-		GuiMessageBox(NULL, L"mingw32-make.exe terminating", L"ConEmuHk", MB_SYSTEMMODAL);
+		GuiMessageBox(ghConEmuWnd, L"mingw32-make.exe terminating", L"ConEmuHk", MB_SYSTEMMODAL);
 	free(szModule);
 	#endif
 
@@ -366,6 +393,14 @@ void DllStop()
 	SendStopped();
 	//}
 
+	if (gpConMap)
+	{
+		gpConMap->CloseMap();
+		gpConInfo = NULL;
+		delete gpConMap;
+		gpConMap = NULL;
+	}
+	
 	//#ifndef TESTLINK
 	CommonShutdown();
 
@@ -392,7 +427,9 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 	{
 		case DLL_PROCESS_ATTACH:
 		{
+			#ifdef _DEBUG
 			HANDLE hProcHeap = GetProcessHeap();
+			#endif
 			HeapInitialize();
 			
 			ghOurModule = (HMODULE)hModule;
@@ -408,7 +445,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			#endif
 
 			#ifdef SHOW_STARTED_MSGBOX
-			if (!IsDebuggerPresent()) GuiMessageBox(NULL, L"ConEmuHk*.dll loaded", L"ConEmu hooks", 0);
+			if (!IsDebuggerPresent()) GuiMessageBox(ghConEmuWnd, L"ConEmuHk*.dll loaded", L"ConEmu hooks", 0);
 			#endif
 			#ifdef _DEBUG
 			DWORD dwConMode = -1;
@@ -430,7 +467,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 				msprintf(szMsg, countof(szMsg),
 					L"Failed to start DllStart thread!\nErrCode=0x%08X\nPID=%u",
 					nErrCode, GetCurrentProcessId());
-				GuiMessageBox(NULL, szMsg, L"ConEmu hooks", 0);
+				GuiMessageBox(ghConEmuWnd, szMsg, L"ConEmu hooks", 0);
 			}
 			else
 			{
@@ -444,6 +481,20 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			#endif
 		}
 		break;
+		
+		case DLL_THREAD_ATTACH:
+		{
+			if (gbHooksWasSet)
+				InitHooksRegThread();
+		}
+		break;
+		case DLL_THREAD_DETACH:
+		{
+			if (gbHooksWasSet)
+				DoneHooksRegThread();
+		}
+		break;
+		
 		case DLL_PROCESS_DETACH:
 		{
 			DllStop();
@@ -493,7 +544,7 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 //#ifdef _DEBUG
 //		wchar_t szKH[128];
 //		DWORD dwTick = GetTickCount();
-//		_wsprintf(szKH, SKIPLEN(countof(szKH)) L"[hook] %s(vk=%i, flags=0x%08X, time=%i, tick=%i, delta=%i)\n",
+//		msprintf(szKH, SKIPLEN(countof(szKH)) L"[hook] %s(vk=%i, flags=0x%08X, time=%i, tick=%i, delta=%i)\n",
 //		          (wParam==WM_KEYDOWN) ? L"WM_KEYDOWN" :
 //		          (wParam==WM_KEYUP) ? L"WM_KEYUP" :
 //		          (wParam==WM_SYSKEYDOWN) ? L"WM_SYSKEYDOWN" :
@@ -857,10 +908,10 @@ void SendStarted()
 	}
 }
 
-CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
+void SendStopped()
 {
-	if (gbNonGuiMode)
-		return NULL;
+	if (gbNonGuiMode || !gnServerPID)
+		return;
 	
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
 	int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
@@ -868,17 +919,7 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 
 	if (pIn)
 	{
-		//// По идее, sst_ServerStop не посылается
-		//_ASSERTE(gnRunMode != RM_SERVER);
-		//switch (gnRunMode)
-		//{
-		//case RM_SERVER:
-		//	pIn->StartStop.nStarted = sst_ServerStop; break;
-		//case RM_COMSPEC:
-		//	pIn->StartStop.nStarted = sst_ComspecStop; break;
-		//default:
 		pIn->StartStop.nStarted = sst_AppStop;
-		//}
 
 		if (!GetModuleFileName(NULL, pIn->StartStop.sModuleName, countof(pIn->StartStop.sModuleName)))
 			pIn->StartStop.sModuleName[0] = 0;
@@ -888,31 +929,20 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 		pIn->StartStop.nSubSystem = gnImageSubsystem;
 		pIn->StartStop.bWasBufferHeight = gbWasBufferHeight;
 
-		if (psbi != NULL)
-		{
-			pIn->StartStop.sbi = *psbi;
-		}
-		else
-		{
-			// НЕ MyGet..., а то можем заблокироваться...
-			// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
-			GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &pIn->StartStop.sbi);
-		}
+		// НЕ MyGet..., а то можем заблокироваться...
+		// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
+		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &pIn->StartStop.sbi);
 
-		//PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd started)\n",0);
-		//if (gnRunMode == RM_APPLICATION)
-		//{
-			if (gnServerPID != 0)
-				pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
-		//}
-		//else
-		//	pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-		//PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd finished)\n",0);
+		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
 
 		ExecuteFreeResult(pIn); pIn = NULL;
+		
+		if (pOut)
+		{
+			ExecuteFreeResult(pOut);
+			pOut = NULL;
+		}
 	}
-
-	return pOut;
 }
 
 #ifdef _DEBUG
@@ -921,7 +951,7 @@ LONG WINAPI HkExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
 	wchar_t szTitle[128], szText[MAX_PATH*2]; szText[0] = 0;
 	msprintf(szTitle, countof(szTitle), L"Exception, PID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 	GetModuleFileName(NULL, szText, countof(szText));
-	int nBtn = GuiMessageBox(NULL, szText, szTitle, MB_RETRYCANCEL|MB_SYSTEMMODAL);
+	int nBtn = GuiMessageBox(ghConEmuWnd, szText, szTitle, MB_RETRYCANCEL|MB_SYSTEMMODAL);
 	return (nBtn == IDRETRY) ? EXCEPTION_CONTINUE_SEARCH : EXCEPTION_EXECUTE_HANDLER;
 }
 

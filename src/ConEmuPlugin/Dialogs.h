@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2010 Maximus5
+Copyright (c) 2010-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -36,13 +36,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		#define _GetCheck(i) (int)InfoW1900->SendDlgMessage(hDlg,DM_GETCHECK,i,0)
 		#define GetDataPtr(i) ((const wchar_t *)InfoW1900->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
 		#define GetTextPtr(i) ((const wchar_t *)InfoW1900->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
-		#define SETTEXT(itm,txt) itm.PtrData = txt
+		#define SETTEXT(itm,txt) itm.Data = txt
 		#define wsprintfT wsprintfW
 		#define GetMsgT GetMsgW
 		#define FAR_T(s) L ## s
 		#define FAR_CHAR wchar_t
 		#define strcpyT lstrcpyW
 		#define strlenT lstrlenW
+		#define FAR_PTR void*
 	#else
 		#define InfoT InfoW995
 		#define _GetCheck(i) (int)InfoW995->SendDlgMessage(hDlg,DM_GETCHECK,i,0)
@@ -55,19 +56,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		#define FAR_CHAR wchar_t
 		#define strcpyT lstrcpyW
 		#define strlenT lstrlenW
+		#define FAR_PTR LONG_PTR
 	#endif
 #else
-#define InfoT InfoA
-#define _GetCheck(i) items[i].Selected
-#define GetDataPtr(i) items[i].Data
-//#define GetTextPtr(i) ((const char *)InfoA->SendDlgMessage(hDlg,DM_GETTEXTPTR,i,0))
-#define SETTEXT(itm,txt) lstrcpyA(itm.Data, txt)
-#define wsprintfT wsprintfA
-#define GetMsgT(n) InfoT->GetMsg(InfoT->ModuleNumber,n)
-#define FAR_T(s) s
-#define FAR_CHAR char
-#define strcpyT lstrcpyA
-#define strlenT lstrlenA
+	#define InfoT InfoA
+	#define _GetCheck(i) items[i].Selected
+	#define GetDataPtr(i) items[i].Data
+	//#define GetTextPtr(i) ((const char *)InfoA->SendDlgMessage(hDlg,DM_GETTEXTPTR,i,0))
+	#define SETTEXT(itm,txt) lstrcpyA(itm.Data, txt)
+	#define wsprintfT wsprintfA
+	#define GetMsgT(n) InfoT->GetMsg(InfoT->ModuleNumber,n)
+	#define FAR_T(s) s
+	#define FAR_CHAR char
+	#define strcpyT lstrcpyA
+	#define strlenT lstrlenA
+	#define FAR_PTR LONG_PTR
 #endif
 
 
@@ -83,7 +86,7 @@ enum
 };
 
 #if FAR_UNICODE>=1867
-static INT_PTR WINAPI CallGuiMacroDlg(HANDLE hDlg, int Msg, int Param1, INT_PTR Param2)
+static INT_PTR WINAPI CallGuiMacroDlg(HANDLE hDlg, int Msg, int Param1, FAR_PTR Param2)
 #else
 static LONG_PTR WINAPI CallGuiMacroDlg(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 #endif
@@ -100,7 +103,7 @@ static LONG_PTR WINAPI CallGuiMacroDlg(HANDLE hDlg, int Msg, int Param1, LONG_PT
 	  )
 	{
 		EditorSelect es = {0};
-		InfoT->SendDlgMessage(hDlg, DM_GETSELECTION, guiMacroText, (LONG_PTR)&es);
+		InfoT->SendDlgMessage(hDlg, DM_GETSELECTION, guiMacroText, (FAR_PTR)&es);
 		FAR_CHAR *pszResult = NULL;
 		FAR_CHAR *pszBuff = NULL;
 		#ifdef FAR_UNICODE
@@ -108,7 +111,7 @@ static LONG_PTR WINAPI CallGuiMacroDlg(HANDLE hDlg, int Msg, int Param1, LONG_PT
 		#else
 		LONG_PTR nMacroLen = InfoA->SendDlgMessage(hDlg,DM_GETTEXTPTR,guiMacroText,0);
 		FAR_CHAR *pszMacro = (FAR_CHAR*)calloc(nMacroLen+1,sizeof(FAR_CHAR));
-		InfoA->SendDlgMessage(hDlg,DM_GETTEXTPTR,guiMacroText,(LONG_PTR)pszMacro);
+		InfoA->SendDlgMessage(hDlg,DM_GETTEXTPTR,guiMacroText,(FAR_PTR)pszMacro);
 		#endif
 		CESERVER_REQ *pIn = NULL, *pOut = NULL;
 
@@ -142,13 +145,16 @@ static LONG_PTR WINAPI CallGuiMacroDlg(HANDLE hDlg, int Msg, int Param1, LONG_PT
 			ExecuteFreeResult(pIn);
 		}
 
-		#ifndef FAR_UNICODE
-		free(pszMacro);
-		#endif
+		if (pszResult)
+			InfoT->SendDlgMessage(hDlg, DM_ADDHISTORY, guiMacroText, (FAR_PTR)pszMacro);
 
-		InfoT->SendDlgMessage(hDlg, DM_SETTEXTPTR, guiResultText, (LONG_PTR)(pszResult ? pszResult : FAR_T("")));
+#ifndef FAR_UNICODE
+		free(pszMacro);
+#endif
+
+		InfoT->SendDlgMessage(hDlg, DM_SETTEXTPTR, guiResultText, (FAR_PTR)(pszResult ? pszResult : FAR_T("")));
 		InfoT->SendDlgMessage(hDlg, DM_SETFOCUS, guiMacroText, 0);
-		InfoT->SendDlgMessage(hDlg, DM_SETSELECTION, guiMacroText, (LONG_PTR)&es);
+		InfoT->SendDlgMessage(hDlg, DM_SETSELECTION, guiMacroText, (FAR_PTR)&es);
 
 		if (pOut)
 			ExecuteFreeResult(pOut);
@@ -172,22 +178,22 @@ static void CallGuiMacroProc()
 	{
 		{DI_DOUBLEBOX, 3,  1,  72, height - 2}, //guiTitle
 
-		{DI_TEXT,      5,  2,  0,  0, false},   //guiMacroLabel, guiMacroText
+		{DI_TEXT,      5,  2,  0,  0},   //guiMacroLabel, guiMacroText
 		#if FAR_UNICODE>=1867
-		{DI_EDIT,      5,  3,  70, 0, true, FAR_T("ConEmuGuiMacro"), NULL, DIF_HISTORY},
+		{DI_EDIT,      5,  3,  70, 0, {0}, FAR_T("ConEmuGuiMacro"), NULL, DIF_HISTORY|DIF_FOCUS},
 		#else
 		{DI_EDIT,      5,  3,  70, 0, true, {(DWORD_PTR)FAR_T("ConEmuGuiMacro")}, DIF_HISTORY},
 		#endif
 
-		{DI_TEXT,      5,  4,  0,  0, false},   //guiResultLabel, guiResultText
-		{DI_EDIT,      5,  5,  70, 0, true},
+		{DI_TEXT,      5,  4,  0,  0},   //guiResultLabel, guiResultText
+		{DI_EDIT,      5,  5,  70, 0},
 
 		#if FAR_UNICODE>=1867
-		{DI_BUTTON,    0,  7,  0,  0, true,  0,0,       DIF_CENTERGROUP, true},  //guiOk
-		{DI_BUTTON,    0,  7,  0,  0, true,  0,0,       DIF_CENTERGROUP, false}, //guiCancel
+		{DI_BUTTON,    0,  7,  0,  0, {0},  0,0,       DIF_CENTERGROUP|DIF_DEFAULTBUTTON},  //guiOk
+		{DI_BUTTON,    0,  7,  0,  0, {0},  0,0,       DIF_CENTERGROUP}, //guiCancel
 		#else
-		{DI_BUTTON,    0,  7,  0,  0, true,  {(DWORD_PTR)false},       DIF_CENTERGROUP, true},  //guiOk
-		{DI_BUTTON,    0,  7,  0,  0, true,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //guiCancel
+		{DI_BUTTON,    0,  7,  0,  0, false,  {(DWORD_PTR)false},       DIF_CENTERGROUP, true},  //guiOk
+		{DI_BUTTON,    0,  7,  0,  0, false,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //guiCancel
 		#endif
 	};
 	SETTEXT(items[guiTitle], GetMsgT(CEGuiMacroTitle));

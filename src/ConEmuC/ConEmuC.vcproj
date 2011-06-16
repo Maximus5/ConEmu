@@ -669,7 +669,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\\WINXP\FAR\ConEmu\ConEmuC.exe"
+				OutputFile="Z:\ConEmu\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -1119,7 +1119,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far3x86\ConEmu\ConEmuC.exe"
+				OutputFile="\Far3\ConEmu\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -1193,7 +1193,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far3x86\ConEmu\ConEmuC64.exe"
+				OutputFile="\Far3\ConEmu\ConEmuC64.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"

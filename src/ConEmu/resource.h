@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
+// Microsoft Developer Studio generated include file.
 // Used by ConEmu.rc
 //
 #define IDI_ICON1                       1
@@ -91,13 +91,7 @@
 #define lbExtendFontNormalIdx           1069
 #define rCascade                        1075
 #define rFixed                          1076
-#define cbsTelnetActive                 1079
-#define cbsFarActive                    1080
-#define cbsFilePanel                    1081
-#define cbsEditor                       1083
-#define cbsViewer                       1084
 #define lbProcesses                     1085
-#define cbsNtvdmActive                  1086
 #define tc0                             1100
 #define tc1                             1101
 #define tc2                             1102
@@ -188,7 +182,6 @@
 #define cbSkipFocusEvents               1538
 #define hkNewConsole                    1539
 #define hkSwitchConsole                 1540
-#define cbsProgressError                1541
 #define cbSkipActivation                1542
 #define cbSkipMove                      1543
 #define gbStandardColors                1544
@@ -209,7 +202,6 @@
 #define slTransparent                   1564
 #define cbHideCaption                   1565
 #define cbFontAuto                      1566
-#define cbLogs                          1567
 #define cbDragPanel                     1568
 #define cbHideCaptionAlways             1569
 #define cbTryToCenter                   1570
@@ -242,7 +234,6 @@
 #define tPanelRight                     1601
 #define IDC_CHOOSE_DIR                  1602
 #define IDC_STARTUP_DIR                 1603
-#define cbsProgress                     1604
 #define hkCloseConsole                  1605
 #define bFarHourglass                   1606
 #define bRClick                         1607
@@ -259,7 +250,7 @@
 #define cbHostRShift                    1618
 #define cbHandleFarDetach               1619
 #define cbConsoleTextSelection          1620
-#define cbHookFarRegistry               1621
+#define cbPortableRegistry              1621
 #define tCursorPos                      1622
 #define tFadeLow                        1624
 #define tFadeHigh                       1625
@@ -343,7 +334,6 @@
 #define tTilesY2                        1712
 #define tTilesSpacing                   1713
 #define tTilesPadding                   1714
-#define IDC_BUTTON1                     1717
 #define bApplyViewSettings              1717
 #define bConFontOK                      1717
 #define cbActivityReset                 1717
@@ -378,7 +368,6 @@
 #define rbActivityShell                 1748
 #define ebActivityApp                   1750
 #define ebActivityParm                  1751
-#define IDC_CHECK1                      1752
 #define cbUseInjects                    1752
 #define cbDosBoxForceConfig             1752
 #define cbDosBox                        1753
@@ -389,6 +378,9 @@
 #define ebDosBoxDrives                  1758
 #define IDC_EDIT3                       1759
 #define ebDosBoxAutoexec                1759
+#define tsRConFlags                     1760
+#define bPortableRegistrySettings       1761
+#define rbActivityInput                 1762
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -405,7 +397,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        211
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1760
+#define _APS_NEXT_CONTROL_VALUE         1763
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

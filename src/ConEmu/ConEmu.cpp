@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #define CHILD_DESK_MODE
+#define REGPREPARE_EXTERNAL
 
 #include "Header.h"
 #include <Tlhelp32.h>
@@ -47,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuPipe.h"
 #include "version.h"
 #include "Macro.h"
+#include "../ConEmuCD/RegPrepare.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
@@ -54,8 +56,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
-#define DEBUGSTRKEY(s) DEBUGSTR(s)
-#define DEBUGSTRIME(s) DEBUGSTR(s)
+#define DEBUGSTRKEY(s) //DEBUGSTR(s)
+#define DEBUGSTRIME(s) //DEBUGSTR(s)
 #define DEBUGSTRCHAR(s) //DEBUGSTR(s)
 #define DEBUGSTRSETCURSOR(s) //DEBUGSTR(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
@@ -112,7 +114,12 @@ const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x
 CConEmuMain::CConEmuMain()
 {
 	gpConEmu = this; // сразу!
-	//HeapInitialize();
+
+	memset(&m_osv,0,sizeof(m_osv));
+	m_osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	GetVersionEx(&m_osv);
+
+	//HeapInitialize(); - уже
 	//#define D(N) (1##N-100)
 	_wsprintf(ms_ConEmuVer, SKIPLEN(countof(ms_ConEmuVer)) L"ConEmu %02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
 	mp_TabBar = NULL;
@@ -187,6 +194,7 @@ CConEmuMain::CConEmuMain()
 	mn_LastPressedVK = 0;
 	memset(&m_GuiInfo, 0, sizeof(m_GuiInfo));
 	m_GuiInfo.cbSize = sizeof(m_GuiInfo);
+	//mh_RecreatePasswFont = NULL;
 
 
 	mpsz_ConEmuArgs = NULL;
@@ -342,11 +350,18 @@ CConEmuMain::CConEmuMain()
 		ms_ConEmuCurDir[nDirLen-1] = 0; // пусть будет БЕЗ слеша, для однообразия с ms_ConEmuExeDir
 	}
 
+	
+	// DosBox (единственный способ запуска Dos-приложений в 64-битных OS)
 	mb_DosBoxExists = CheckDosBoxExists();
-
-	memset(&m_osv,0,sizeof(m_osv));
-	m_osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&m_osv);
+	
+	// Портабельный реестр для фара?
+	mb_PortableRegExist = FALSE;
+	ms_PortableReg[0] = ms_PortableRegHive[0] = ms_PortableMountKey[0] = 0;
+	mb_PortableKeyMounted = FALSE;
+	ms_PortableTempDir[0] = 0;
+	mh_PortableMountRoot = mh_PortableRoot = NULL;
+	CheckPortableReg();
+	
 
 	if (m_osv.dwMajorVersion >= 6)
 	{
@@ -754,6 +769,347 @@ BOOL CConEmuMain::CheckDosBoxExists()
 	return lbExists;
 }
 
+void CConEmuMain::CheckPortableReg()
+{
+#ifdef USEPORTABLEREGISTRY
+	BOOL lbExists = FALSE;
+	wchar_t szPath[MAX_PATH*2], szName[MAX_PATH];
+	
+	wcscpy_c(szPath, ms_ConEmuBaseDir);
+	wcscat_c(szPath, L"\\Portable\\Portable.reg");
+	if (lstrlen(szPath) >= countof(ms_PortableReg))
+	{
+		MBoxAssert(lstrlen(szPath) < countof(ms_PortableReg))
+		return; // превышение длины
+	}
+	if (FileExists(szPath))
+	{
+		wcscpy_c(ms_PortableReg, szPath);
+		mb_PortableRegExist = TRUE;
+	}
+	else
+	{
+		// Раз "Portable.reg" отсутствует - то и hive создавать/проверять не нужно
+		return;
+	}
+	
+	wchar_t* pszSID = NULL;
+	wcscpy_c(szPath, ms_ConEmuBaseDir);
+	wcscat_c(szPath, L"\\Portable\\");
+	wcscpy_c(szName, L"Portable.");
+	LPCWSTR pszSIDPtr = szName+lstrlen(szName);
+	if (GetLogonSID (NULL, &pszSID))
+	{
+		if (lstrlen(pszSID) > 128)
+			pszSID[127] = 0;
+		wcscat_c(szName, pszSID);
+		LocalFree(pszSID); pszSID = NULL;
+	}
+	else
+	{
+		wcscat_c(szName, L"S-Unknown");
+	}
+	
+	if (m_osv.dwMajorVersion <= 5)
+	{
+		_wsprintf(ms_PortableMountKey, SKIPLEN(countof(ms_PortableMountKey))
+			L"%s.%s.%u", VIRTUAL_REGISTRY_GUID, pszSIDPtr, GetCurrentProcessId());
+		mh_PortableMountRoot = HKEY_USERS;
+	}
+	else
+	{
+		ms_PortableMountKey[0] = 0;
+		mh_PortableMountRoot = NULL;
+	}
+	
+	wcscat_c(szPath, szName);
+	wcscpy_c(ms_PortableRegHiveOrg, szPath);
+
+	BOOL lbNeedTemp = FALSE;
+	if ((lstrlen(szPath)+lstrlen(szName)) >= countof(ms_PortableRegHive))
+		lbNeedTemp = TRUE;
+	BOOL lbHiveExist = FileExists(szPath);
+	
+	// С сетевых и removable дисков монтировать не будем
+	if (szPath[0] == L'\\' && szPath[1] == L'\\')
+	{
+		lbNeedTemp = TRUE;
+	}
+	else
+	{
+		wchar_t szDrive[MAX_PATH] = {0}, *pszSlash = wcschr(szPath, L'\\');
+		if (pszSlash == NULL)
+		{
+			_ASSERTE(pszSlash!=NULL);
+			lbNeedTemp = TRUE;
+		}
+		else
+		{
+			_wcscpyn_c(szDrive, MAX_PATH-1, szPath, (pszSlash-szPath)+1);
+			DWORD nType = GetDriveType(szDrive);
+			if (!nType || (nType & (DRIVE_CDROM|DRIVE_REMOTE|DRIVE_REMOVABLE)))
+				lbNeedTemp = TRUE;
+		}
+	}
+
+	// Если к файлу нельзя получить доступ на запись - тоже temp
+	if (!lbNeedTemp)
+	{
+		HANDLE hFile = CreateFile(szPath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+		if (hFile == INVALID_HANDLE_VALUE)
+		{
+			lbNeedTemp = TRUE;
+		}
+		else
+		{
+			CloseHandle(hFile);
+			if (lbHiveExist && !lbNeedTemp)
+				wcscpy_c(ms_PortableRegHive, szPath);
+		}
+	}
+	else
+	{
+		wcscpy_c(ms_PortableRegHive, szPath);
+	}
+	if (lbNeedTemp)
+	{
+		wchar_t szTemp[MAX_PATH], szTempFile[MAX_PATH+1];
+		int nLen = lstrlen(szName)+16;
+		if (!GetTempPath(MAX_PATH-nLen, szTemp))
+		{
+			mb_PortableRegExist = FALSE;
+			DisplayLastError(L"GetTempPath failed");
+			return;
+		}
+		if (!GetTempFileName(szTemp, L"CEH", 0, szTempFile))
+		{
+			mb_PortableRegExist = FALSE;
+			DisplayLastError(L"GetTempFileName failed");
+			return;
+		}
+		// System create temp file, we needs directory
+		DeleteFile(szTempFile);
+		if (!CreateDirectory(szTempFile, NULL))
+		{
+			mb_PortableRegExist = FALSE;
+			DisplayLastError(L"Create temp hive directory failed");
+			return;
+		}
+		wcscat_c(szTempFile, L"\\");
+		wcscpy_c(ms_PortableTempDir, szTempFile);
+		wcscat_c(szTempFile, szName);
+		if (lbHiveExist)
+		{
+			if (!CopyFile(szPath, szTempFile, FALSE))
+			{
+				mb_PortableRegExist = FALSE;
+				DisplayLastError(L"Copy temp hive file failed");
+				return;
+			}
+		}
+		else
+		{
+			HANDLE hFile = CreateFile(szTempFile, GENERIC_WRITE, FILE_SHARE_READ, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+			if (hFile == INVALID_HANDLE_VALUE)
+			{
+				mb_PortableRegExist = FALSE;
+				DisplayLastError(L"Create temp hive file failed");
+				return;
+			}
+			else
+			{
+				CloseHandle(hFile);
+			}
+		}
+		
+		wcscpy_c(ms_PortableRegHive, szTempFile);
+	}
+#endif
+}
+
+bool CConEmuMain::PreparePortableReg()
+{
+#ifdef USEPORTABLEREGISTRY
+	if (!mb_PortableRegExist)
+		return false;
+	if (mh_PortableRoot)
+		return true; // уже
+	
+	bool lbRc = false;
+	wchar_t szFullInfo[512];
+	//typedef int (WINAPI* MountVirtualHive_t)(LPCWSTR asHive, PHKEY phKey, LPCWSTR asXPMountName, wchar_t* pszErrInfo, int cchErrInfoMax);
+	MountVirtualHive_t MountVirtualHive = NULL;
+	HMODULE hDll = LoadConEmuCD();
+	if (!hDll)
+	{
+		DWORD dwErrCode = GetLastError();
+		_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo))
+			L"Portable registry will be NOT available\n\nLoadLibrary('%s') failed, ErrCode=0x%08X",
+			#ifdef _WIN64
+				L"ConEmuCD64.dll",
+			#else
+				L"ConEmuCD.dll",
+			#endif
+			dwErrCode);
+	}
+	else
+	{
+		MountVirtualHive = (MountVirtualHive_t)GetProcAddress(hDll, "MountVirtualHive");
+		if (!MountVirtualHive)
+		{
+			_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo))
+				L"Portable registry will be NOT available\n\nMountVirtualHive not found in '%s'",
+				#ifdef _WIN64
+					L"ConEmuCD64.dll"
+				#else
+					L"ConEmuCD.dll"
+				#endif
+				);
+		}
+		else
+		{
+			szFullInfo[0] = 0;
+			_ASSERTE(ms_PortableMountKey[0]!=0 || (m_osv.dwMajorVersion>=6));
+			wchar_t szErrInfo[255]; szErrInfo[0] = 0;
+			int lRc = MountVirtualHive(ms_PortableRegHive, &mh_PortableRoot,
+					ms_PortableMountKey, szErrInfo, countof(szErrInfo), &mb_PortableKeyMounted);
+			if (lRc != 0)
+			{
+				_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo))
+					L"Portable registry will be NOT available\n\n%s\nMountVirtualHive result=%i",
+					szErrInfo, lRc);
+				ms_PortableMountKey[0] = 0;
+			}
+			else
+			{
+				lbRc = true;
+			}
+		}
+	}
+	
+	if (!lbRc)
+	{
+		mb_PortableRegExist = FALSE;
+	}
+
+	// Обновить мэппинг
+	OnGlobalSettingsChanged();
+		
+	if (!lbRc)
+	{
+		mb_PortableRegExist = FALSE; // сразу сбросим, раз не доступно
+
+		wchar_t szFullMsg[1024];
+		wcscpy_c(szFullMsg, szFullInfo);
+		wcscat_c(szFullMsg, L"\n\nDo You want to continue without portable registry?");
+		int nBtn = MessageBox(NULL, szFullMsg, ms_ConEmuVer,
+			MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
+		if (nBtn != IDYES)
+			return false;
+	}
+	
+	return true;
+#else
+	_ASSERTE(mb_PortableRegExist==FALSE);
+	return true;
+#endif
+}
+
+void CConEmuMain::FinalizePortableReg()
+{
+#ifdef USEPORTABLEREGISTRY
+	TODO("Скопировать измененный куст - в папку Portable");
+	// Portable.reg не трогаем - это как бы "шаблон" для куста
+
+	// Сначала - закрыть хэндл, а то не получится демонтировать
+	if (mh_PortableRoot)
+	{
+		RegCloseKey(mh_PortableRoot);
+		mh_PortableRoot = NULL;
+	}
+
+	if (ms_PortableMountKey[0] && mb_PortableKeyMounted)
+	{
+		wchar_t szErrInfo[255];
+		typedef int (WINAPI* UnMountVirtualHive_t)(LPCWSTR asXPMountName, wchar_t* pszErrInfo, int cchErrInfoMax);
+		UnMountVirtualHive_t UnMountVirtualHive = NULL;
+		HMODULE hDll = LoadConEmuCD();
+		if (!hDll)
+		{
+			DWORD dwErrCode = GetLastError();
+			_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
+				L"Can't release portable key: 'HKU\\%s'\n\nLoadLibrary('%s') failed, ErrCode=0x%08X",
+					ms_PortableMountKey,
+				#ifdef _WIN64
+					L"ConEmuCD64.dll",
+				#else
+					L"ConEmuCD.dll",
+				#endif
+				dwErrCode);
+			MBoxA(szErrInfo);
+		}
+		else
+		{
+			UnMountVirtualHive = (UnMountVirtualHive_t)GetProcAddress(hDll, "UnMountVirtualHive");
+			if (!UnMountVirtualHive)
+			{
+				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
+					L"Can't release portable key: 'HKU\\%s'\n\nUnMountVirtualHive not found in '%s'",
+						ms_PortableMountKey,
+					#ifdef _WIN64
+						L"ConEmuCD64.dll"
+					#else
+						L"ConEmuCD.dll"
+					#endif
+					);
+				MessageBox(NULL, szErrInfo, ms_ConEmuVer, MB_ICONSTOP|MB_SYSTEMMODAL);
+			}
+			else
+			{
+				szErrInfo[0] = 0;
+				int lRc = UnMountVirtualHive(ms_PortableMountKey, szErrInfo, countof(szErrInfo));
+				if (lRc != 0)
+				{
+					wchar_t szFullInfo[512];
+					_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo))
+						L"Can't release portable key: 'HKU\\%s'\n\n%s\nRc=%i",
+						ms_PortableMountKey, szErrInfo, lRc);
+					ms_PortableMountKey[0] = 0; // не пытаться повторно
+					MessageBox(NULL, szFullInfo, ms_ConEmuVer, MB_ICONSTOP|MB_SYSTEMMODAL);
+				}
+			}
+		}
+	}
+	ms_PortableMountKey[0] = 0; mb_PortableKeyMounted = FALSE; // или успешно, или не пытаться повторно
+
+	if (ms_PortableTempDir[0])
+	{
+		wchar_t szTemp[MAX_PATH*2], *pszSlash;
+		wcscpy_c(szTemp, ms_PortableTempDir);
+		pszSlash = szTemp + lstrlen(szTemp) - 1;
+		_ASSERTE(*pszSlash == L'\\');
+		_wcscpy_c(pszSlash+1, MAX_PATH, _T("*.*"));
+		WIN32_FIND_DATA fnd;
+		HANDLE hFind = FindFirstFile(szTemp, &fnd);
+		if (hFind && hFind != INVALID_HANDLE_VALUE)
+		{
+			do {
+				if (!(fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				{
+					_wcscpy_c(pszSlash+1, MAX_PATH, fnd.cFileName);
+					DeleteFile(szTemp);
+				}
+			} while (FindNextFile(hFind, &fnd));
+			
+			FindClose(hFind);
+		}
+		*pszSlash = 0;
+		RemoveDirectory(szTemp);
+		ms_PortableTempDir[0] = 0; // один раз
+	}
+#endif
+}
+
 void CConEmuMain::UpdateGuiInfoMapping()
 {
 	m_GuiInfo.nProtocolVersion = CESERVER_REQ_VER;
@@ -764,6 +1120,11 @@ void CConEmuMain::UpdateGuiInfoMapping()
 
 	mb_DosBoxExists = CheckDosBoxExists();
 	m_GuiInfo.bDosBox = mb_DosBoxExists;
+	
+	m_GuiInfo.isHookRegistry = (mb_PortableRegExist ? (gpSet->isPortableReg ? 3 : 1) : 0);
+	wcscpy_c(m_GuiInfo.sHiveFileName, ms_PortableRegHive);
+	m_GuiInfo.hMountRoot = mh_PortableMountRoot;
+	wcscpy_c(m_GuiInfo.sMountKey, ms_PortableMountKey);
 	
 	wcscpy_c(m_GuiInfo.sConEmuExe, ms_ConEmuExe);
 	wcscpy_c(m_GuiInfo.sConEmuDir, ms_ConEmuExeDir);
@@ -1037,6 +1398,15 @@ CConEmuMain::~CConEmuMain()
 		delete m_Macro;
 		m_Macro = NULL;
 	}
+
+	//if (mh_RecreatePasswFont)
+	//{
+	//	DeleteObject(mh_RecreatePasswFont);
+	//	mh_RecreatePasswFont = NULL;
+	//}
+	
+	// По идее, уже должен был быть вызван в OnDestroy
+	FinalizePortableReg();
 
 	_ASSERTE(mh_LLKeyHookDll==NULL);
 	CommonShutdown();
@@ -3911,6 +4281,27 @@ void CConEmuMain::RegisterHotKeys()
 	}
 }
 
+HMODULE CConEmuMain::LoadConEmuCD()
+{
+	if (!mh_LLKeyHookDll)
+	{
+		wchar_t szConEmuDll[MAX_PATH+32];
+		lstrcpy(szConEmuDll, ms_ConEmuBaseDir);
+#ifdef WIN64
+		lstrcat(szConEmuDll, L"\\ConEmuCD64.dll");
+#else
+		lstrcat(szConEmuDll, L"\\ConEmuCD.dll");
+#endif
+		//wchar_t szSkipEventName[128];
+		//_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
+		//HANDLE hSkipEvent = CreateEvent(NULL, TRUE, TRUE, szSkipEventName);
+		mh_LLKeyHookDll = LoadLibrary(szConEmuDll);
+		//CloseHandle(hSkipEvent);
+	}
+	
+	return mh_LLKeyHookDll;
+}
+
 void CConEmuMain::RegisterHoooks()
 {
 //	#ifndef _DEBUG
@@ -3937,20 +4328,22 @@ void CConEmuMain::RegisterHoooks()
 		if (gpSet->isKeyboardHooks())
 		{
 			if (!mh_LLKeyHookDll)
-			{
-				wchar_t szConEmuDll[MAX_PATH+32];
-				lstrcpy(szConEmuDll, ms_ConEmuBaseDir);
-#ifdef WIN64
-				lstrcat(szConEmuDll, L"\\ConEmuCD64.dll");
-#else
-				lstrcat(szConEmuDll, L"\\ConEmuCD.dll");
-#endif
-				wchar_t szSkipEventName[128];
-				_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
-				HANDLE hSkipEvent = CreateEvent(NULL, TRUE, TRUE, szSkipEventName);
-				mh_LLKeyHookDll = LoadLibrary(szConEmuDll);
-				CloseHandle(hSkipEvent);
-			}
+				LoadConEmuCD();
+			//{
+			//	wchar_t szConEmuDll[MAX_PATH+32];
+			//	lstrcpy(szConEmuDll, ms_ConEmuBaseDir);
+			//#ifdef WIN64
+			//	lstrcat(szConEmuDll, L"\\ConEmuCD64.dll");
+			//#else
+			//	lstrcat(szConEmuDll, L"\\ConEmuCD.dll");
+			//#endif
+			//	wchar_t szSkipEventName[128];
+			//	_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
+			//	HANDLE hSkipEvent = CreateEvent(NULL, TRUE, TRUE, szSkipEventName);
+			//	mh_LLKeyHookDll = LoadLibrary(szConEmuDll);
+			//	CloseHandle(hSkipEvent);
+			//}
+			
 
 			if (!mh_LLKeyHook && mh_LLKeyHookDll)
 			{
@@ -4143,7 +4536,7 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
 				//gbDontEnable = b;
 				if (nRc == IDC_TERMINATE)
 				{
-					mp_VActive->RCon()->CloseConsole();
+					mp_VActive->RCon()->CloseConsole(TRUE);
 					return;
 				}
 
@@ -4175,7 +4568,19 @@ int CConEmuMain::RecreateDlg(LPARAM lParam)
 		mh_RecreateDlgKeyHook = SetWindowsHookEx(WH_GETMESSAGE, RecreateDlgKeyHook, NULL, GetCurrentThreadId());
 	}
 
+	//if (!gpConEmu->mh_RecreatePasswFont)
+	//{
+	//	gpConEmu->mh_RecreatePasswFont = CreateFont(
+
+	//}
+
 	int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, lParam);
+
+	//if (gpConEmu->mh_RecreatePasswFont)
+	//{
+	//	DeleteObject(gpConEmu->mh_RecreatePasswFont);
+	//	gpConEmu->mh_RecreatePasswFont = NULL;
+	//}
 
 	if (mh_RecreateDlgKeyHook)
 	{
@@ -4278,6 +4683,8 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
 
+			SendDlgItemMessage(hDlg, tRunAsPassword, WM_SETFONT, (LPARAM)(HFONT)GetStockObject(DEFAULT_GUI_FONT), 0);
+
 			//#ifdef _DEBUG
 			//SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 			//#endif
@@ -4321,9 +4728,9 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 			//#ifndef _DEBUG
 			//EnableWindow(GetDlgItem(hDlg, IDC_CHOOSE_DIR), FALSE);
 			//#endif
-			const wchar_t *pszUser/*, *pszPwd*/; BOOL bResticted;
+			const wchar_t *pszUser, *pszDomain; BOOL bResticted;
 			int nChecked = rbCurrentUser;
-			wchar_t szCurUser[MAX_PATH]; DWORD nUserNameLen = countof(szCurUser);
+			wchar_t szCurUser[MAX_PATH*2+1]; DWORD nUserNameLen = countof(szCurUser);
 
 			if (!GetUserName(szCurUser, &nUserNameLen)) szCurUser[0] = 0;
 
@@ -4331,7 +4738,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 			lstrcpy(szRbCaption, L"Run as current &user: "); lstrcat(szRbCaption, szCurUser);
 			SetDlgItemText(hDlg, rbCurrentUser, szRbCaption);
 
-			if (gpConEmu->ActiveCon()->RCon()->GetUserPwd(&pszUser, /*&pszPwd,*/ &bResticted))
+			if (gpConEmu->ActiveCon()->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted))
 			{
 				nChecked = rbAnotherUser;
 
@@ -4341,7 +4748,29 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 				}
 				else
 				{
-					lstrcpyn(szCurUser, pszUser, MAX_PATH);
+					if (pszDomain)
+					{
+						if (wcschr(pszDomain, L'.'))
+						{
+							// Если в имени домена есть точка - используем нотацию user@domain
+							// По идее, мы сюда не попадаем, т.к. при вводе имени в таком формате
+							// pszDomain не заполняется, и "UPN format" остается в pszUser
+							lstrcpyn(szCurUser, pszUser, MAX_PATH);
+							wcscat_c(szCurUser, L"@");
+							lstrcpyn(szCurUser+lstrlen(szCurUser), pszDomain, MAX_PATH);
+						}
+						else
+						{
+							// "Старая" нотация domain\user
+							lstrcpyn(szCurUser, pszDomain, MAX_PATH);
+							wcscat_c(szCurUser, L"\\");
+							lstrcpyn(szCurUser+lstrlen(szCurUser), pszUser, MAX_PATH);
+						}
+					}
+					else
+					{
+						lstrcpyn(szCurUser, pszUser, countof(szCurUser));
+					}
 					SetDlgItemText(hDlg, tRunAsPassword, L"");
 				}
 			}
@@ -4377,11 +4806,14 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 			//}
 			SetClassLongPtr(hDlg, GCLP_HICON, (LONG)hClassIcon);
 
+			RECT rcBtnBox = {0};
 			if (pArgs->bRecreate)
 			{
 				//GCC hack. иначе не собирается
 				SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "About to recreate console");
 				SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
+				// Выровнять флажок по кнопке
+				GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
 				lbRc = TRUE;
 			}
 			else
@@ -4396,11 +4828,18 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 				SetDlgItemText(hDlg, IDC_START, L"&Start");
 				DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
 				// Выровнять флажок по кнопке
-				RECT rcBtn; GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtn);
+				GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
+				SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
+			}
+
+			if (rcBtnBox.left)
+			{
+				// Выровнять флажок по кнопке
+				MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtnBox, 2);
 				RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
-				pt.x = pt.x - (rcBox.right - rcBox.left) - 5;
-				//MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBox, 1);
-				pt.y += ((rcBtn.bottom-rcBtn.top) - (rcBox.bottom-rcBox.top))/2;
+				POINT pt;
+				pt.x = rcBtnBox.left - (rcBox.right - rcBox.left) - 5;
+				pt.y = rcBtnBox.top + ((rcBtnBox.bottom-rcBtnBox.top) - (rcBox.bottom-rcBox.top))/2;
 				SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 				SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
 			}
@@ -4576,6 +5015,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 						RConStartArgs* pArgs = (RConStartArgs*)GetWindowLongPtr(hDlg, DWLP_USER);
 						_ASSERTE(pArgs);
 						SafeFree(pArgs->pszUserName);
+						SafeFree(pArgs->pszDomain);
 
 						//SafeFree(pArgs->pszUserPassword);
 						if (SendDlgItemMessage(hDlg, rbAnotherUser, BM_GETCHECK, 0, 0))
@@ -4853,19 +5293,28 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 		return;
 	}
 
-	wchar_t szNo[32];
+	wchar_t szNo[32], szFlags[255]; szNo[0] = szFlags[0] = 0;
 	DWORD nProgramStatus = mp_VActive->RCon()->GetProgramStatus();
 	DWORD nFarStatus = mp_VActive->RCon()->GetFarStatus();
-	CheckDlgButton(gpSet->hInfo, cbsTelnetActive, (nProgramStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(gpSet->hInfo, cbsNtvdmActive, (nProgramStatus&CES_NTVDM) ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(gpSet->hInfo, cbsFarActive, (nProgramStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(gpSet->hInfo, cbsFilePanel, (nFarStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(gpSet->hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(gpSet->hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
+	if (nProgramStatus&CES_TELNETACTIVE) wcscat_c(szFlags, L"Telnet ");
+	//CheckDlgButton(gpSet->hInfo, cbsTelnetActive, (nProgramStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+	if (nProgramStatus&CES_NTVDM) wcscat_c(szFlags, L"16bit ");
+	//CheckDlgButton(gpSet->hInfo, cbsNtvdmActive, (nProgramStatus&CES_NTVDM) ? BST_CHECKED : BST_UNCHECKED);
+	if (nProgramStatus&CES_FARACTIVE) wcscat_c(szFlags, L"Far ");
+	//CheckDlgButton(gpSet->hInfo, cbsFarActive, (nProgramStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+	if (nFarStatus&CES_FILEPANEL) wcscat_c(szFlags, L"Panels ");
+	//CheckDlgButton(gpSet->hInfo, cbsFilePanel, (nFarStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
+	if (nFarStatus&CES_EDITOR) wcscat_c(szFlags, L"Editor ");
+	//CheckDlgButton(gpSet->hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
+	if (nFarStatus&CES_VIEWER) wcscat_c(szFlags, L"Viewer ");
+	//CheckDlgButton(gpSet->hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
+	if (nFarStatus&CES_WASPROGRESS) wcscat_c(szFlags, L"%%Progress ");
+	//CheckDlgButton(gpSet->hInfo, cbsProgress, ((nFarStatus&CES_WASPROGRESS) /*|| mp_VActive->RCon()->GetProgress(NULL)>=0*/) ? BST_CHECKED : BST_UNCHECKED);
+	if (nFarStatus&CES_OPER_ERROR) wcscat_c(szFlags, L"%%Error ");
+	//CheckDlgButton(gpSet->hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
 	_wsprintf(szNo, SKIPLEN(countof(szNo)) L"%i/%i", mp_VActive->RCon()->GetFarPID(), mp_VActive->RCon()->GetFarPID(TRUE));
 	SetDlgItemText(gpSet->hInfo, tsTopPID, szNo);
-	CheckDlgButton(gpSet->hInfo, cbsProgress, ((nFarStatus&CES_WASPROGRESS) /*|| mp_VActive->RCon()->GetProgress(NULL)>=0*/) ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(gpSet->hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
+	SetDlgItemText(gpSet->hInfo, tsRConFlags, szFlags);
 
 	if (!abForce)
 		return;
@@ -5902,12 +6351,12 @@ void CConEmuMain::Update(bool isForce /*= false*/)
 }
 #endif
 
-DWORD CConEmuMain::GetFarPID()
+DWORD CConEmuMain::GetFarPID(BOOL abPluginRequired/*=FALSE*/)
 {
 	DWORD dwPID = 0;
 
 	if (mp_VActive && mp_VActive->RCon())
-		dwPID = mp_VActive->RCon()->GetFarPID();
+		dwPID = mp_VActive->RCon()->GetFarPID(abPluginRequired);
 
 	return dwPID;
 }
@@ -6136,11 +6585,24 @@ bool CConEmuMain::isMouseOverFrame(bool abReal)
 	return bCurForceShow;
 }
 
-bool CConEmuMain::isNtvdm()
+bool CConEmuMain::isNtvdm(BOOL abCheckAllConsoles/*=FALSE*/)
 {
-	if (!mp_VActive) return false;
+	if (mp_VActive && mp_VActive->RCon())
+	{
+		if (mp_VActive->RCon()->isNtvdm())
+			return true;
+	}
 
-	return mp_VActive->RCon()->isNtvdm();
+	for(int i=0; i<MAX_CONSOLE_COUNT; i++)
+	{
+		if (mp_VCon[i] && mp_VCon[i] != mp_VActive && mp_VCon[i]->RCon())
+		{
+			if (mp_VCon[i]->RCon()->isNtvdm())
+				return true;
+		}
+	}
+
+	return false;
 }
 
 bool CConEmuMain::isValid(CRealConsole* apRCon)
@@ -6647,6 +7109,18 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 		if (mp_VActive == NULL || !gpConEmu->mb_StartDetached)  // Консоль уже может быть создана, если пришел Attach из ConEmuC
 		{
+			// Если надо - подготовить портабельный реестр
+			if (mb_PortableRegExist)
+			{
+				// Если реестр обломался, или юзер сказал "не продолжать"
+				if (!gpConEmu->PreparePortableReg())
+				{
+					Destroy();
+					return;
+				}
+			}
+
+
 			BOOL lbCreated = FALSE;
 			LPCWSTR pszCmd = gpSet->GetCmd();
 
@@ -6937,6 +7411,8 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	// Делать обязательно перед ResetEvent(mh_ConEmuAliveEvent), чтобы у другого
 	// экземпляра не возникло проблем с регистрацией hotkey
 	RegisterMinRestore(false);
+	
+	FinalizePortableReg();
 
 	if (mb_ConEmuAliveOwned && mh_ConEmuAliveEvent)
 	{
@@ -7402,6 +7878,9 @@ void CConEmuMain::OnGlobalSettingsChanged()
 			mp_VCon[i]->RCon()->UpdateGuiInfoMapping(&m_GuiInfo);
 		}
 	}
+	
+	// И фары тоже уведомить
+	gpConEmu->UpdateFarSettings();
 }
 
 void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
@@ -7719,30 +8198,31 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	}
 
 	// Прокрутка в "буферном" режиме
-	if (gpConEmu->mp_VActive && gpConEmu->mp_VActive->RCon()
-	        && gpConEmu->mp_VActive->RCon()->isBufferHeight()
-	        && !gpConEmu->mp_VActive->RCon()->isFarBufferSupported()
-	        && (messg == WM_KEYDOWN || messg == WM_KEYUP) &&
-	        (wParam == VK_DOWN || wParam == VK_UP || wParam == VK_NEXT || wParam == VK_PRIOR) &&
-	        isPressed(VK_CONTROL)
-	  )
+	if ((messg == WM_KEYDOWN || messg == WM_KEYUP) &&
+	    (wParam == VK_DOWN || wParam == VK_UP || wParam == VK_NEXT || wParam == VK_PRIOR) &&
+	    (isPressed(VK_CONTROL)))
 	{
-		if (messg != WM_KEYDOWN || !mp_VActive)
-			return 0;
-
-		switch(wParam)
+		if (gpConEmu->mp_VActive && gpConEmu->mp_VActive->RCon()
+				&& gpConEmu->mp_VActive->RCon()->isBufferHeight()
+				&& !gpConEmu->mp_VActive->RCon()->isFarBufferSupported())
 		{
-			case VK_DOWN:
-				return mp_VActive->RCon()->OnScroll(SB_LINEDOWN);
-			case VK_UP:
-				return mp_VActive->RCon()->OnScroll(SB_LINEUP);
-			case VK_NEXT:
-				return mp_VActive->RCon()->OnScroll(SB_PAGEDOWN);
-			case VK_PRIOR:
-				return mp_VActive->RCon()->OnScroll(SB_PAGEUP);
-		}
+			if (messg != WM_KEYDOWN || !mp_VActive)
+				return 0;
 
-		return 0;
+			switch(wParam)
+			{
+				case VK_DOWN:
+					return mp_VActive->RCon()->OnScroll(SB_LINEDOWN);
+				case VK_UP:
+					return mp_VActive->RCon()->OnScroll(SB_LINEUP);
+				case VK_NEXT:
+					return mp_VActive->RCon()->OnScroll(SB_PAGEDOWN);
+				case VK_PRIOR:
+					return mp_VActive->RCon()->OnScroll(SB_PAGEUP);
+			}
+
+			return 0;
+		}
 	}
 
 	//CtrlWinAltSpace
@@ -9731,6 +10211,11 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 	// Теперь - можно проверить
 	enum DragPanelBorder dpb = DPB_NONE;
 	RECT rcPanel;
+	
+	TODO("Сделаем все-таки драг влево-вправо хватанием за «промежуток» между рамками");
+	int nSplitWidth = gpSet->BorderFontWidth()/5;
+	if (nSplitWidth < 1) nSplitWidth = 1;
+	
 
 	if (mp_VActive->RCon()->GetPanelRect(TRUE, &rcPanel, TRUE))
 	{

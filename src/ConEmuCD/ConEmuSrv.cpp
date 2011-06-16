@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -179,11 +179,6 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 
 	if (lbRc)
 	{
-		// !!! Warning !!! Изменил здесь, поменяй и CreateMapHeader() !!!
-		gpSrv->pConsole->hdr.nLoggingType = gpSrv->guiSettings.nLoggingType;
-		gpSrv->pConsole->hdr.bDosBox = gpSrv->guiSettings.bDosBox;
-		gpSrv->pConsole->hdr.bUseInjects = gpSrv->guiSettings.bUseInjects;
-		// !!! Warning !!! Изменил здесь, поменяй и CreateMapHeader() !!!
 		gbLogProcess = (gpSrv->guiSettings.nLoggingType == glt_Processes);
 
 		SetEnvironmentVariableW(L"ConEmuDir", gpSrv->guiSettings.sConEmuDir);
@@ -198,16 +193,24 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 
 		if (gpSrv->pConsole)
 		{
+			// !!! Warning !!! Изменил здесь, поменяй и CreateMapHeader() !!!
+			
+			gpSrv->pConsole->hdr.nLoggingType = gpSrv->guiSettings.nLoggingType;
+			gpSrv->pConsole->hdr.bDosBox = gpSrv->guiSettings.bDosBox;
+			gpSrv->pConsole->hdr.bUseInjects = gpSrv->guiSettings.bUseInjects;
+		
 			// Обновить пути к ConEmu
 			wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
 			wcscpy_c(gpSrv->pConsole->hdr.sConEmuBaseDir, gpSrv->guiSettings.sConEmuBaseDir);
 
 			// Проверить, нужно ли реестр хукать
-			gpSrv->pConsole->hdr.bHookRegistry = gpSrv->guiSettings.bHookRegistry;
+			gpSrv->pConsole->hdr.isHookRegistry = gpSrv->guiSettings.isHookRegistry;
 			wcscpy_c(gpSrv->pConsole->hdr.sHiveFileName, gpSrv->guiSettings.sHiveFileName);
 			gpSrv->pConsole->hdr.hMountRoot = gpSrv->guiSettings.hMountRoot;
 			wcscpy_c(gpSrv->pConsole->hdr.sMountKey, gpSrv->guiSettings.sMountKey);
 
+			// !!! Warning !!! Изменил здесь, поменяй и CreateMapHeader() !!!
+			
 			UpdateConsoleMapHeader();
 		}
 		else
@@ -888,7 +891,8 @@ int ServerInit()
 
 	CheckConEmuHwnd();
 	
-	// Обновить переменные окружения (через ConEmuGuiMapping)
+	// Обновить переменные окружения и мэппинг консоли (по ConEmuGuiMapping)
+	// т.к. в момент CreateMapHeader ghConEmu еще был неизвестен
 	ReloadGuiSettings(NULL);
 wrap:
 	return iRc;
@@ -1801,22 +1805,34 @@ int CreateMapHeader()
 	gpSrv->pConsole->hdr.bThawRefreshThread = TRUE; // пока - TRUE (это на старте сервера)
 	gpSrv->pConsole->hdr.nProtocolVersion = CESERVER_REQ_VER;
 	gpSrv->pConsole->hdr.nActiveFarPID = gpSrv->nActiveFarPID; // PID последнего активного фара
-	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings() !!!
-	gpSrv->pConsole->hdr.nLoggingType = gpSrv->guiSettings.nLoggingType;
-	gpSrv->pConsole->hdr.bDosBox = gpSrv->guiSettings.bDosBox;
-	gpSrv->pConsole->hdr.bUseInjects = gpSrv->guiSettings.bUseInjects;
-	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings() !!!
 
-	// В момент Create GuiSettings скорее всего еще не загружены, потом обновятся в ReloadGuiSettings()
-	if (gpSrv->guiSettings.cbSize)
-	{
-		wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
-		wcscpy_c(gpSrv->pConsole->hdr.sConEmuBaseDir, gpSrv->guiSettings.sConEmuBaseDir);
-	}
-	else
-	{
-		gpSrv->pConsole->hdr.sConEmuExe[0] = gpSrv->pConsole->hdr.sConEmuBaseDir[0] = 0;
-	}
+	// Обновить переменные окружения (через ConEmuGuiMapping)
+	if (ghConEmuWnd) // если уже известен - тогда можно
+		ReloadGuiSettings(NULL);
+
+	//// В момент Create GuiSettings скорее всего еще не загружены, потом обновятся в ReloadGuiSettings()
+	//if (gpSrv->guiSettings.cbSize)
+	//{
+	//	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings() !!!
+	//	gpSrv->pConsole->hdr.nLoggingType = gpSrv->guiSettings.nLoggingType;
+	//	gpSrv->pConsole->hdr.bDosBox = gpSrv->guiSettings.bDosBox;
+	//	gpSrv->pConsole->hdr.bUseInjects = gpSrv->guiSettings.bUseInjects;
+
+	//	gpSrv->pConsole->hdr.bHookRegistry = gpSrv->guiSettings.bHookRegistry;
+	//	wcscpy_c(gpSrv->pConsole->hdr.sHiveFileName, gpSrv->guiSettings.sHiveFileName);
+	//	//gpSrv->pConsole->hdr.hMountRoot = gpSrv->guiSettings.hMountRoot;
+	//	wcscpy_c(gpSrv->pConsole->hdr.sMountKey, gpSrv->guiSettings.sMountKey);
+	//
+	//	wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
+	//	wcscpy_c(gpSrv->pConsole->hdr.sConEmuBaseDir, gpSrv->guiSettings.sConEmuBaseDir);
+	//	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings() !!!
+	//}
+	//else
+	//{
+	//	_ASSERTE(gpSrv->guiSettings.cbSize!=0);
+	//	// -- calloc, не требуется
+	//	//gpSrv->pConsole->hdr.sConEmuExe[0] = gpSrv->pConsole->hdr.sConEmuBaseDir[0] = 0;
+	//}
 
 	//gpSrv->pConsole->hdr.hConEmuWnd = ghConEmuWnd; -- обновляет UpdateConsoleMapHeader
 	//WARNING! В начале структуры info идет CESERVER_REQ_HDR для унификации общения через пайпы
@@ -3536,7 +3552,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 				// в буфер возвращает ОК, но считывающее приложение получает 0-событий.
 				// В итоге, получаем пропуск некоторых событий, что очень неприятно 
 				// при выделении кучи файлов правой кнопкой мыши (проводкой с зажатой кнопкой)
-				if (pr[n].Event.MouseEvent.dwButtonState == RIGHTMOST_BUTTON_PRESSED)
+				if (pr[n].Event.MouseEvent.dwButtonState /*== RIGHTMOST_BUTTON_PRESSED*/)
 					lbReqEmpty = TRUE;
 			}
 		}
@@ -3613,6 +3629,27 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 				L"*** ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n",
 				pr[i].Event.MouseEvent.dwMousePosition.X, pr[i].Event.MouseEvent.dwMousePosition.Y, pr[i].Event.MouseEvent.dwButtonState, (pr[i].Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
 			DEBUGSTRINPUTWRITE(szDbg);
+			
+			#ifdef _DEBUG
+			{
+				static int LastMsButton;
+				if ((LastMsButton & 1) && (pr[i].Event.MouseEvent.dwButtonState == 0))
+				{
+					// LButton was Down, now - Up
+					LastMsButton = pr[i].Event.MouseEvent.dwButtonState;
+				}
+				else if (!LastMsButton && (pr[i].Event.MouseEvent.dwButtonState & 1))
+				{
+					// LButton was Up, now - Down
+					LastMsButton = pr[i].Event.MouseEvent.dwButtonState;
+				}
+				else
+				{
+					LastMsButton = pr[i].Event.MouseEvent.dwButtonState;
+				}
+			}
+			#endif
+			
 		}
 	}
 #endif

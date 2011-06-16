@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -134,6 +134,9 @@ CESERVER_REQ* gpTabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab)
 BOOL gbIgnoreUpdateTabs = FALSE; // выставляется на время CMD_SETWINDOW
 BOOL gbRequestUpdateTabs = FALSE; // выставляется при получении события FOCUS/KILLFOCUS
 BOOL gbClosingModalViewerEditor = FALSE; // выставляется при закрытии модального редактора/вьювера
+MOUSE_EVENT_RECORD gLastMouseReadEvent = {{0,0}};
+BOOL gbPostDummyMouseEvent = FALSE;
+BOOL gbAllowDummyMouseEvent = FALSE;
 
 extern HMODULE ghHooksModule;
 extern BOOL gbHooksModuleLoaded; // TRUE, если был вызов LoadLibrary("ConEmuHk.dll"), тогда его нужно FreeLibrary при выходе
@@ -957,12 +960,78 @@ VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs)
 	}
 }
 
+BOOL PostDummyMouseEvent(HookCallbackArg* pArgs)
+{
+	if (!(pArgs->lArguments[1] && pArgs->lArguments[2] && pArgs->lArguments[3]))
+	{
+		_ASSERTE(pArgs->lArguments[1] && pArgs->lArguments[2] && pArgs->lArguments[3]);
+	}
+	else if ((gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)))
+	{
+		// Такой финт нужен только в одном случае:
+		// в редакторе идет скролл мышкой (скролл - зажатой кнопкой на заголовке/кейбаре)
+		// нужно заставить фар остановить скролл, иначе активация Synchro невозможна
+		if (!gbAllowDummyMouseEvent)
+		{
+			_ASSERTE(gbAllowDummyMouseEvent);
+			gbPostDummyMouseEvent = FALSE;
+			return FALSE;
+		}
+
+		// Сообщить в GUI что мы "пустое" сообщение фару кидаем
+		if (gFarMode.bFarHookMode && gFarMode.bMonitorConsoleInput)
+		{
+			CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_PEEKREADINFO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PEEKREADINFO));
+			if (pIn)
+			{
+				pIn->PeekReadInfo.nCount = (WORD)1;
+				pIn->PeekReadInfo.cPeekRead = '*';
+				pIn->PeekReadInfo.cUnicode = 'U';
+				pIn->PeekReadInfo.h = (HANDLE)pArgs->lArguments[1];
+				pIn->PeekReadInfo.nTID = GetCurrentThreadId();
+				pIn->PeekReadInfo.nPID = GetCurrentProcessId();
+				pIn->PeekReadInfo.bMainThread = (pIn->PeekReadInfo.nTID == gnMainThreadId);
+
+				pIn->PeekReadInfo.Buffer->EventType = MOUSE_EVENT;
+				pIn->PeekReadInfo.Buffer->Event.MouseEvent = gLastMouseReadEvent;
+				pIn->PeekReadInfo.Buffer->Event.MouseEvent.dwButtonState = 0;
+				pIn->PeekReadInfo.Buffer->Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+			
+				CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+				if (pOut) ExecuteFreeResult(pOut);
+				ExecuteFreeResult(pIn);
+			}
+		}
+
+		PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+		LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+		*pCount = 1;
+		p->EventType = MOUSE_EVENT;
+		p->Event.MouseEvent = gLastMouseReadEvent;
+		p->Event.MouseEvent.dwButtonState = 0;
+		p->Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+		*((LPBOOL)pArgs->lpResult) = TRUE;
+		return TRUE;
+	}
+	else
+	{
+		gbPostDummyMouseEvent = FALSE; // Не требуется, фар сам кнопку "отпустил"
+	}
+	return FALSE;
+}
+
 // Если функция возвращает FALSE - реальный ReadConsoleInput вызван не будет,
 // и в вызывающую функцию (ФАРа?) вернется то, что проставлено в pArgs->lpResult & pArgs->lArguments[...]
 BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
 {
 	if (!pArgs->bMainThread)
 		return TRUE;  // обработку делаем только в основной нити
+
+	if (gbPostDummyMouseEvent)
+	{
+		if (PostDummyMouseEvent(pArgs))
+			return FALSE; // реальный ReadConsoleInput вызван не будет
+	}
 		
 	//// Выставить флажок "Жив" можно и при вызове из плагина
 	//if (gpConMapInfo && gpFarInfo && gpFarInfoMapping)
@@ -1033,7 +1102,18 @@ BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 {
 	if (!pArgs->bMainThread)
 		return TRUE;  // обработку делаем только в основной нити
-		
+
+	if (gbPostDummyMouseEvent)
+	{
+		if (PostDummyMouseEvent(pArgs))
+		{
+			gbPostDummyMouseEvent = FALSE;
+			gLastMouseReadEvent.dwButtonState = 0; // будем считать, что "мышиную блокировку" успешно сняли
+			return FALSE; // реальный ReadConsoleInput вызван не будет
+		}
+		_ASSERTE(gbPostDummyMouseEvent == FALSE);
+	}
+
 	//// Выставить флажок "Жив" можно и при вызове из плагина
 	//if (gpConMapInfo && gpFarInfo && gpFarInfoMapping)
 	//	TouchReadPeekConsoleInputs(0);
@@ -1125,6 +1205,26 @@ VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
 	}
 #endif
 
+	HANDLE h = (HANDLE)(pArgs->lArguments[0]);
+	PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+	LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+
+	//Чтобы не было зависаний при попытке активации плагина во время прокрутки
+	//редактора, в плагине мониторить нажатие мыши. Если последнее МЫШИНОЕ событие
+	//было с нажатой кнопкой - сначала пульнуть в консоль команду "отпускания" кнопки,
+	//и только после этого - пытаться активироваться.
+	if (pCount && *pCount)
+	{
+		for (int i = (*pCount) - 1; i >= 0; i--)
+		{
+			if (p[i].EventType == MOUSE_EVENT)
+			{
+				gLastMouseReadEvent = p[i].Event.MouseEvent;
+				break;
+			}
+		}
+	}
+
 	// Если зарегистрирован callback для графической панели
 	if (gPanelRegLeft.pfnReadPostCall || gPanelRegRight.pfnReadPostCall)
 	{
@@ -1135,10 +1235,6 @@ VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
 
 	// Чтобы ФАР сразу прекратил ходить по каталогам при отпускании Enter
 	{
-		HANDLE h = (HANDLE)(pArgs->lArguments[0]);
-		PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
-		LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
-
 		if (*pCount == 1 && p->EventType == KEY_EVENT && p->Event.KeyEvent.bKeyDown
 		        && (p->Event.KeyEvent.wVirtualKeyCode == VK_RETURN
 		            || p->Event.KeyEvent.wVirtualKeyCode == VK_NEXT
@@ -1359,12 +1455,15 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 //#endif
 //extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
-//#include "../common/SetExport.h"
-//ExportFunc Far3Func[] =
-//{
-//	{"OpenPluginW", OpenPluginW1, OpenPluginW2},
-//	{NULL}
-//};
+void WINAPI _export ExitFARW(void);
+void WINAPI _export ExitFARW3(void*);
+
+#include "../common/SetExport.h"
+ExportFunc Far3Func[] =
+{
+	{"ExitFARW", ExitFARW, ExitFARW3},
+	{NULL}
+};
 
 BOOL gbExitFarCalled = FALSE;
 void ExitFarCmn();
@@ -1431,6 +1530,11 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			if (gnSynchroCount > 0)
 			{
 				//if (gFarVersion.dwVerMajor == 2 && gFarVersion.dwBuild < 1735) -- в фаре пока не чинили, поэтому всегда ругаемся, если что...
+				BOOL lbSynchroSafe = FALSE;
+				if (gFarVersion.dwVerMajor == 2 && gFarVersion.dwVerMinor >= 1)
+					lbSynchroSafe = TRUE;
+				TODO("lbSynchroSafe - может и в Far3 починят. http://bugs.farmanager.com/view.php?id=1604");
+				if (!lbSynchroSafe)
 				{
 					MessageBox(NULL, L"Syncho events are pending!\nFar may crash after unloading plugin", L"ConEmu plugin", MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
 				}
@@ -1881,6 +1985,22 @@ void ExecuteSynchro()
 			return;
 		}
 
+		//Чтобы не было зависаний при попытке активации плагина во время прокрутки
+		//редактора, в плагине мониторить нажатие мыши. Если последнее МЫШИНОЕ событие
+		//было с нажатой кнопкой - сначала пульнуть в консоль команду "отпускания" кнопки,
+		//и только после этого - пытаться активироваться.
+		if (gbAllowDummyMouseEvent && (gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)))
+		{
+			//_ASSERTE(!(gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)));
+			int nWindowType = GetActiveWindowType();
+			// "Зависания" возможны (вроде) только при прокрутке зажатой кнопкой мышки
+			// редактора или вьювера. Так что в других областях - не дергаться.
+			if (nWindowType == WTYPE_EDITOR || nWindowType == WTYPE_VIEWER)
+			{
+				gbPostDummyMouseEvent = TRUE;
+			}
+		}
+
 		//psi.AdvControl(psi.ModuleNumber,ACTL_SYNCHRO,NULL);
 		if (gFarVersion.dwBuild>=FAR_Y_VER)
 			FUNC_Y(ExecuteSynchroW)();
@@ -1907,19 +2027,48 @@ static BOOL ActivatePlugin(
 	int nCount = countof(hEvents);
 	DEBUGSTRMENU(L"*** Waiting for plugin activation\n");
 
-	// Если есть ACTL_SYNCHRO - позвать его, иначе - "активация" в главной нити
-	// выполняется тогда, когда фар зовет ReadConsoleInput(1).
-	//if (gFarVersion.dwVerMajor = 2 && gFarVersion.dwBuild >= 1006)
-	if (IS_SYNCHRO_ALLOWED)
-	{
-		ExecuteSynchro();
-	}
-
 	if (nCmd == CMD_REDRAWFAR || nCmd == CMD_FARPOST)
 		nTimeout = min(1000,nTimeout); // чтобы не зависало при попытке ресайза, если фар не отзывается.
 
-	// Подождать активации. Сколько ждать - может указать вызывающая функция
-	nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
+	if (gbSynchroProhibited)
+	{
+		nWait = WAIT_TIMEOUT;
+	}
+	// Если есть ACTL_SYNCHRO - позвать его, иначе - "активация" в главной нити
+	// выполняется тогда, когда фар зовет ReadConsoleInput(1).
+	//if (gFarVersion.dwVerMajor = 2 && gFarVersion.dwBuild >= 1006)
+	else if (IS_SYNCHRO_ALLOWED)
+	{
+		gbAllowDummyMouseEvent = TRUE;
+		ExecuteSynchro();
+
+		if (!gbPostDummyMouseEvent && gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED))
+		{
+			// Страховка от зависаний
+			nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, min(1000,max(250,nTimeout)));
+			if (nWait == WAIT_TIMEOUT)
+			{
+				if (!gbPostDummyMouseEvent && gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED))
+				{
+					gbPostDummyMouseEvent = TRUE;
+					// попытаться еще раз
+					nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
+				}
+			}
+		}
+		else
+		{
+			// Подождать активации. Сколько ждать - может указать вызывающая функция
+			nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
+		}
+	}
+	else
+	{
+		// Подождать активации. Сколько ждать - может указать вызывающая функция
+		nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
+	}
+
+	gbAllowDummyMouseEvent = FALSE;
 
 	if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1))
 	{
@@ -3368,14 +3517,14 @@ void InitHWND(HWND ahFarHwnd)
 	{
 		LoadFarVersion();  // пригодится уже здесь!
 		
-		//if (gFarVersion.dwVerMajor == 3)
-		//{
-		//	lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
-		//	if (!lbExportsChanged)
-		//	{
-		//		_ASSERTE(lbExportsChanged);
-		//	}
-		//}
+		if (gFarVersion.dwVerMajor == 3)
+		{
+			lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
+			if (!lbExportsChanged)
+			{
+				_ASSERTE(lbExportsChanged);
+			}
+		}
 	}
 
 	// начальная инициализация. в SetStartupInfo поправим
@@ -4517,6 +4666,21 @@ void   WINAPI _export ExitFARW(void)
 	gbExitFarCalled = TRUE;
 }
 
+void WINAPI _export ExitFARW3(void*)
+{
+	ExitFarCmn();
+
+	if (gbInfoW_OK)
+	{
+		if (gFarVersion.dwBuild>=FAR_Y_VER)
+			FUNC_Y(ExitFARW)();
+		else
+			FUNC_X(ExitFARW)();
+	}
+
+	gbExitFarCalled = TRUE;
+}
+
 // Вызывается при инициализации из SetStartupInfo[W] и при обновлении табов UpdateConEmuTabs[???]
 // То есть по идее, это происходит только когда фар явно вызывает плагин (legal api calls)
 void CheckResources(BOOL abFromStartup)
@@ -5145,6 +5309,7 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 		//wchar_t *pszName = pSetEnvVar->szEnv;
 		gFarMode.bFARuseASCIIsort = pFarSet->bFARuseASCIIsort;
 		gFarMode.bShellNoZoneCheck = pFarSet->bShellNoZoneCheck;
+		gFarMode.bMonitorConsoleInput = pFarSet->bMonitorConsoleInput;
 
 		if (SetFarHookMode)
 		{

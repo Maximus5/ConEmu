@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2010 Maximus5
+Copyright (c) 2010-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -34,13 +34,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		#define _GetCheck(i) (int)InfoW1900->SendDlgMessage(hDlg,DM_GETCHECK,i,0)
 		#define GetDataPtr(i) ((const wchar_t *)InfoW1900->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
 		#define GetTextPtr(i) ((const wchar_t *)InfoW1900->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
-		#define SETTEXT(itm,txt) itm.PtrData = txt
+		#define SETTEXT(itm,txt) itm.Data = txt
 		#define wsprintfT wsprintfW
 		#define GetMsgT GetMsgW
 		#define FAR_T(s) L ## s
 		#define FAR_CHAR wchar_t
 		#define strcpyT lstrcpyW
 		#define strlenT lstrlenW
+		#define FAR_PTR void*
 	#else
 		#define InfoT InfoW995
 		#define _GetCheck(i) (int)InfoW995->SendDlgMessage(hDlg,DM_GETCHECK,i,0)
@@ -53,17 +54,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		#define FAR_CHAR wchar_t
 		#define strcpyT lstrcpyW
 		#define strlenT lstrlenW
+		#define FAR_PTR LONG_PTR
 	#endif
 #else
-#define InfoT InfoA
-#define _GetCheck(i) items[i].Selected
-#define GetDataPtr(i) items[i].Data
-#define SETTEXT(itm,txt) lstrcpyA(itm.Data, txt)
-#define wsprintfT wsprintfA
-#define GetMsgT GetMsg
-#define FAR_T(s) s
-#define FAR_CHAR char
-#define strcpyT lstrcpyA
+	#define InfoT InfoA
+	#define _GetCheck(i) items[i].Selected
+	#define GetDataPtr(i) items[i].Data
+	#define SETTEXT(itm,txt) lstrcpyA(itm.Data, txt)
+	#define wsprintfT wsprintfA
+	#define GetMsgT GetMsg
+	#define FAR_T(s) s
+	#define FAR_CHAR char
+	#define strcpyT lstrcpyA
+	#define FAR_PTR LONG_PTR
 #endif
 
 
@@ -82,7 +85,7 @@ enum
 };
 
 #if FAR_UNICODE>=1867
-static INT_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, INT_PTR Param2)
+static INT_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, FAR_PTR Param2)
 #else
 static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 #endif
@@ -108,7 +111,11 @@ static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			FAR_CHAR* endptr = NULL;
 			COLORREF clr = 0;
 #ifdef FAR_UNICODE
+	#if FAR_UNICODE>=1867
+			clr = wcstoul(pItem->Data, &endptr, 16);
+	#else
 			clr = wcstoul(pItem->PtrData, &endptr, 16);
+	#endif
 #else
 			clr = strtoul(pItem->Data, &endptr, 16);
 #endif

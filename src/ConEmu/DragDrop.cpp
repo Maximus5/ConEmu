@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "ConEmu.h"
 #include "VirtualConsole.h"
+#include "RealConsole.h"
 
 //#define MAX_OVERLAY_WIDTH    300
 //#define MAX_OVERLAY_HEIGHT   300
@@ -1075,12 +1076,19 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 	BOOL lbAddEdit = isPressed(VK_CONTROL);
 	BOOL lbAddView = isPressed(VK_SHIFT);
 
+	CVirtualConsole* pVCon = gpConEmu->ActiveCon();
+	if (!pVCon)
+		return S_FALSE;
+	CRealConsole* pRCon = pVCon->RCon();
+	if (!pRCon)
+		return S_FALSE;
+
 	for(int i = 0 ; i < iQuantity; i++)
 	{
 		wcscpy(szMacro, L"$Text ");
 		wcscpy(szData,  L"         ");
 		pszText = szData + lstrlen(szData);
-		int nLen = DragQueryFile(hDrop,i,pszText,MAX_DROP_PATH);
+		int nLen = DragQueryFile(hDrop, i, pszText, MAX_DROP_PATH);
 
 		if (nLen <= 0 || nLen >= MAX_DROP_PATH) continue;
 
@@ -1091,31 +1099,45 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		//}
 		nLen = lstrlen(psz);
 
-		while(nLen>0 && *psz)
+		if (!m_pfpi->NoFarConsole)
 		{
-			if (*psz == L'"' || *psz == L'\\')
+
+			while(nLen>0 && *psz)
 			{
-				wmemmove_s(psz+1, nLen+1, psz, nLen+1);
+				if (*psz == L'"' || *psz == L'\\')
+				{
+					size_t cch = nLen+1-(psz - pszText);
+					wmemmove_s(psz+1, cch, psz, cch);
 
-				if (*psz == L'"') *psz = L'\\';
+					if (*psz == L'"') *psz = L'\\';
 
-				psz++;
+					psz++;
+				}
+
+				psz++; nLen--;
 			}
-
-			psz++; nLen--;
 		}
 
 		if ((psz = wcschr(pszText, L' ')) != NULL)
 		{
 			// Имя нужно окавычить
-			*(--pszText) = L'\"';
-			*(--pszText) = L'\\';
-			wcscat(pszText, L"\\\"");
+			if (!m_pfpi->NoFarConsole)
+			{
+				*(--pszText) = L'\"';
+				*(--pszText) = L'\\';
+				wcscat(pszText, L"\\\"");
+			}
+			else
+			{
+				*(--pszText) = L'\"';
+				wcscat(pszText, L"\"");
+			}
 		}
 
-		wcscat(szMacro, L"\"");
+		if (!m_pfpi->NoFarConsole)
+			wcscat(szMacro, L"\"");
 
-		if (lbAddGoto || lbAddEdit || lbAddView)
+		if (!m_pfpi->NoFarConsole && (lbAddGoto || lbAddEdit || lbAddView))
 		{
 			if (lbAddGoto)
 				wcscat(szMacro, L"goto:");
@@ -1129,9 +1151,32 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 			lbAddGoto = FALSE; lbAddEdit = FALSE; lbAddView = FALSE;
 		}
 
-		wcscat(szMacro, pszText);
-		wcscat(szMacro, L" \"");
-		gpConEmu->PostMacro(szMacro);
+		if (!m_pfpi->NoFarConsole)
+		{
+			wcscat(szMacro, pszText);
+			wcscat(szMacro, L" \"");
+			gpConEmu->PostMacro(szMacro);
+		}
+		else
+		{
+			psz = pszText;
+			INPUT_RECORD r = {KEY_EVENT};
+			while (*psz)
+			{
+				r.Event.KeyEvent.bKeyDown = TRUE;
+				r.Event.KeyEvent.wRepeatCount = 1;
+				r.Event.KeyEvent.uChar.UnicodeChar = *(psz++);
+				pRCon->PostConsoleEvent(&r);
+				r.Event.KeyEvent.bKeyDown = FALSE;
+				pRCon->PostConsoleEvent(&r);
+			}
+			r.Event.KeyEvent.bKeyDown = TRUE;
+			r.Event.KeyEvent.wRepeatCount = 1;
+			r.Event.KeyEvent.uChar.UnicodeChar = L' ';
+			pRCon->PostConsoleEvent(&r);
+			r.Event.KeyEvent.bKeyDown = FALSE;
+			pRCon->PostConsoleEvent(&r);
+		}
 
 		if (((i + 1) < iQuantity)
 		        && (GetTickCount() - dwStartTick) >= OPER_TIMEOUT)
@@ -1224,7 +1269,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	// Бросок в командную строку (или в редактор, потом...)
 	BOOL lbDropFileNamesOnly = FALSE;
 
-	if ((m_pfpi->ActiveRect.bottom && pt.y > m_pfpi->ActiveRect.bottom) ||
+	if (m_pfpi->NoFarConsole ||
+		(m_pfpi->ActiveRect.bottom && pt.y > m_pfpi->ActiveRect.bottom) ||
 	        (m_pfpi->PassiveRect.bottom && pt.y > m_pfpi->PassiveRect.bottom))
 	{
 		lbDropFileNamesOnly = TRUE;
@@ -1515,8 +1561,15 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 			    || (grfKeyState & MK_ALT) // или нажат Alt
 			    || (grfKeyState == MK_RBUTTON); // или тащат правой кнопкой без модификаторов
 
-			if (((lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt)) && m_pfpi->pszActivePath[0] && lbAllowToActive) ||
-			        ((lbPassive = PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt)) && (m_pfpi->pszPassivePath[0] || mb_selfdrag)))
+			if (m_pfpi->NoFarConsole)
+			{
+				*pdwEffect = DROPEFFECT_COPY; // Drop в консоль с cmd.exe
+			}
+			else if (
+				((lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt))
+					&& m_pfpi->pszActivePath && m_pfpi->pszActivePath[0] && lbAllowToActive) ||
+			    ((lbPassive = PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt)) 
+					&& m_pfpi->pszPassivePath && (m_pfpi->pszPassivePath[0] || mb_selfdrag)))
 			{
 				if (grfKeyState & MK_CONTROL)
 					*pdwEffect = DROPEFFECT_COPY;

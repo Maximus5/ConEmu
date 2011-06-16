@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 	}
 	else if (!isWindow(ahWnd))
 	{
-		_wsprintf(rsInfo, SKIPLEN(countof(rsInfo)) L"0x%08X: Invalid window handle", (DWORD)ahWnd);
+		msprintf(rsInfo, countof(rsInfo), L"0x%08X: Invalid window handle", (DWORD)ahWnd);
 	}
 	else
 	{
@@ -62,7 +62,7 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 
 		wchar_t szTitle[512]; if (!GetWindowText(ahWnd, szTitle, 512)) szTitle[0] = 0;
 
-		_wsprintf(rsInfo, SKIPLEN(countof(rsInfo)) L"0x%08X: %s - '%s'", (DWORD)ahWnd, szClass, szTitle);
+		msprintf(rsInfo, countof(rsInfo), L"0x%08X: %s - '%s'", (DWORD)ahWnd, szClass, szTitle);
 	}
 #endif
 }
@@ -436,6 +436,73 @@ BOOL IsUserAdmin()
 	}
 
 	return(b);
+}
+
+
+#include <Sddl.h> // ConvertSidToStringSid
+// *ppszSID - must be LocalFree'd
+BOOL GetLogonSID (HANDLE hToken, wchar_t **ppszSID)
+{
+	BOOL bSuccess = FALSE;
+	//DWORD dwIndex;
+	DWORD dwLength = 0;
+	TOKEN_USER user;
+	PTOKEN_USER ptu = &user;
+	BOOL bFreeToken = FALSE;
+
+	// Verify the parameter passed in is not NULL.
+	if (NULL == ppszSID)
+		goto Cleanup;
+	*ppszSID = NULL;
+		
+	if (!hToken)
+		bFreeToken = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken);
+
+	// Get required buffer size and allocate the TOKEN_GROUPS buffer.
+	if (!GetTokenInformation(
+		hToken,         // handle to the access token
+		TokenUser,      // get information about the token's user account
+		(LPVOID) ptu,   // pointer to TOKEN_USER buffer
+		0,              // size of buffer
+		&dwLength       // receives required buffer size
+	)) 
+	{
+		if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) 
+			goto Cleanup;
+
+		ptu = (PTOKEN_USER)calloc(dwLength,1);
+
+		if (ptu == NULL)
+			goto Cleanup;
+	}
+
+	// Get the token group information from the access token.
+
+	if (!GetTokenInformation(
+		hToken,         // handle to the access token
+		TokenUser,      // get information about the token's user account
+		(LPVOID) ptu,   // pointer to TOKEN_USER buffer
+		dwLength,       // size of buffer
+		&dwLength       // receives required buffer size
+	)) 
+	{
+		goto Cleanup;
+	}
+
+	if (!ConvertSidToStringSid(ptu->User.Sid, ppszSID) || (*ppszSID == NULL))
+		goto Cleanup;
+
+	bSuccess = TRUE;
+
+Cleanup: 
+
+	// Free the buffer for the token groups.
+	if ((ptu != NULL) && (ptu != &user))
+		free(ptu);
+	if (bFreeToken && hToken)
+		CloseHandle(hToken);
+	
+	return bSuccess;
 }
 #endif
 
@@ -1675,7 +1742,6 @@ void MSetter::Unlock()
 
 
 
-#ifndef CONEMU_MINIMAL
 MSection::MSection()
 {
 	mn_TID = 0; mn_Locked = 0; mb_Exclusive = FALSE;
@@ -1972,7 +2038,7 @@ void MSection::Unlock(BOOL abExclusive)
 };
 
 
-
+#ifndef CONEMU_MINIMAL
 MSectionThread::MSectionThread(MSection* apS)
 {
 	mp_S = apS; mn_TID = GetCurrentThreadId();
@@ -1982,6 +2048,7 @@ MSectionThread::~MSectionThread()
 	if (mp_S && mn_TID)
 		mp_S->ThreadTerminated(mn_TID);
 };
+#endif
 
 
 
@@ -2031,7 +2098,6 @@ BOOL MSectionLock::isLocked()
 {
 	return (mp_S!=NULL) && mb_Locked;
 };
-#endif
 
 
 

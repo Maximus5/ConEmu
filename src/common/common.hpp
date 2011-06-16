@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -88,7 +88,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEKEYEVENT_CTRL     L"ConEmuCtrlPressed.%u"
 #define CEKEYEVENT_SHIFT    L"ConEmuShiftPressed.%u"
 #define CEHOOKLOCKMUTEX     L"ConEmuHookMutex.%u"
-#define CEHOOKDISABLEEVENT  L"ConEmuSkipHooks.%u"
+//#define CEHOOKDISABLEEVENT  L"ConEmuSkipHooks.%u"
 
 #define CESECURITYNAME       "ConEmuLocalData"
 
@@ -117,6 +117,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 //#define CONEMUREADY      L"ConEmuReady%u"
 #define CONEMUTABCHANGED L"ConEmuTabsChanged"
 
+#define VIRTUAL_REGISTRY_GUID   L"{16B56CA5-F8D2-4EEA-93DC-32403C7355E1}"
+#define VIRTUAL_REGISTRY_GUID_A  "{16B56CA5-F8D2-4EEA-93DC-32403C7355E1}"
+#define VIRTUAL_REGISTRY_ROOT   L"Software\\ConEmu Virtual Registry"
 
 //#define CESIGNAL_C          L"ConEmuC_C_Signal.%u"
 //#define CESIGNAL_BREAK      L"ConEmuC_Break_Signal.%u"
@@ -166,6 +169,7 @@ const CECMD
 	CECMD_SETFARPID      = 41, // Посылается в сервер, чтобы он сменил (CESERVER_CONSOLE_MAPPING_HDR.nFarPID)
 	CECMD_ASSERT         = 42, // Отобразить Assert в ConEmu. In=wchar_t[], Out=DWORD.
 	CECMD_GUICHANGED     = 43, // посылается в сервер, чтобы он обновил у себя ConEmuGuiMapping->CESERVER_CONSOLE_MAPPING_HDR
+	CECMD_PEEKREADINFO   = 44, // CESERVER_REQ_PEEKREADINFO: посылается в GUI на вкладку Debug
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -192,7 +196,7 @@ const CECMD
 
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    64
+#define CESERVER_REQ_VER    66
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -250,6 +254,8 @@ struct HWND2
 	};
 };
 
+// Для унификации x86/x64. Хранить здесь реальный HKEY нельзя.
+// Используется только для "предопределенных" ключей типа HKEY_USERS
 struct HKEY2
 {
 	DWORD u;
@@ -263,7 +269,26 @@ struct HKEY2
 	};
 	struct HKEY2& operator=(HKEY h)
 	{
+		//_ASSERTE(((DWORD_PTR)h) < 0x100000000LL);
 		u = (DWORD)(LONG)(LONG_PTR)h;
+		return *this;
+	};
+};
+
+struct HANDLE2
+{
+	u64 u;
+	operator HANDLE() const
+	{
+		return (HANDLE)(DWORD_PTR)u;
+	};
+	operator DWORD_PTR() const
+	{
+		return (DWORD_PTR)u;
+	};
+	struct HANDLE2& operator=(HANDLE h)
+	{
+		u = (DWORD_PTR)h;
 		return *this;
 	};
 };
@@ -622,6 +647,7 @@ enum GuiLoggingType
 {
 	glt_None = 0,
 	glt_Processes = 1,
+	glt_Input = 2,
 	// glt_Keyboard, glt_Files, ...
 };
 
@@ -644,10 +670,10 @@ struct ConEmuGuiMapping
 	struct ConEmuMainFont MainFont;
 	
 	// Перехват реестра
-	BOOL    bHookRegistry;
+	DWORD   isHookRegistry; // bitmask. 1 - supported, 2 - current
 	wchar_t sHiveFileName[MAX_PATH];
-	HKEY2   hMountRoot;    // NULL для Vista+, для Win2k&XP здесь хранится корневой ключ (HKEY_USERS), в который загружен hive
-	wchar_t sMountKey[64]; // Для Win2k&XP здесь хранится имя ключа, в который загружен hive
+	HKEY2   hMountRoot;  // NULL для Vista+, для Win2k&XP здесь хранится корневой ключ (HKEY_USERS), в который загружен hive
+	wchar_t sMountKey[MAX_PATH]; // Для Win2k&XP здесь хранится имя ключа, в который загружен hive
 	
 	// DosBox
 	BOOL     bDosBox; // наличие DosBox
@@ -707,6 +733,7 @@ struct ForwardedPanelInfo
 	RECT PassiveRect;
 	int ActivePathShift; // сдвиг в этой структуре в байтах
 	int PassivePathShift; // сдвиг в этой структуре в байтах
+	BOOL NoFarConsole;
 	union //x64 ready
 	{
 		WCHAR* pszActivePath/*[MAX_PATH+1]*/;
@@ -866,10 +893,10 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	DWORD bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	
 	// Перехват реестра
-	BOOL    bHookRegistry;
+	DWORD   isHookRegistry; // bitmask. 1 - supported, 2 - current
 	wchar_t sHiveFileName[MAX_PATH];
-	HKEY2   hMountRoot;    // NULL для Vista+, для Win2k&XP здесь хранится корневой ключ (HKEY_USERS), в который загружен hive
-	wchar_t sMountKey[64]; // Для Win2k&XP здесь хранится имя ключа, в который загружен hive
+	HKEY2   hMountRoot;  // NULL для Vista+, для Win2k&XP здесь хранится корневой ключ (HKEY_USERS), в который загружен hive
+	wchar_t sMountKey[MAX_PATH]; // Для Win2k&XP здесь хранится имя ключа, в который загружен hive
 
 	//// Логирование CreateProcess, ShellExecute, и прочих запускающих функций
 	//// Если пусто - не логируется
@@ -1082,6 +1109,7 @@ struct FAR_REQ_FARSETCHANGED
 {
 	BOOL    bFARuseASCIIsort;
 	BOOL    bShellNoZoneCheck; // Затычка для SEE_MASK_NOZONECHECKS
+	BOOL    bMonitorConsoleInput; // при (Read/Peek)ConsoleInput(A/W) послать инфу в GUI/Settings/Debug
 	//wchar_t szEnv[1]; // Variable length: <Name>\0<Value>\0<Name2>\0<Value2>\0\0
 };
 
@@ -1162,6 +1190,20 @@ struct CESERVER_REQ_GUIMACRO
 	wchar_t sMacro[1];    // Variable length
 };
 
+// CECMD_PEEKREADINFO: посылается в GUI на вкладку Debug
+struct CESERVER_REQ_PEEKREADINFO
+{
+	WORD         nCount;
+	BYTE         bMainThread;
+	BYTE         bReserved;
+	wchar_t      cPeekRead/*'P'/'R' или 'W' в GUI*/;
+	wchar_t      cUnicode/*'A'/'W'*/;
+	HANDLE2      h;
+	DWORD        nPID;
+	DWORD        nTID;
+	INPUT_RECORD Buffer[1];
+};
+
 struct MyAssertInfo
 {
 	int nBtns;
@@ -1202,6 +1244,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_GUIMACRO GuiMacro;
 		CESERVER_REQ_ONCREATEPROCESS OnCreateProc;
 		CESERVER_REQ_ONCREATEPROCESSRET OnCreateProcRet;
+		CESERVER_REQ_PEEKREADINFO PeekReadInfo;
 		MyAssertInfo AssertInfo;
 	};
 };

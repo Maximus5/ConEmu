@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -306,12 +306,15 @@ DWORD GetMainThreadId()
 	return nThreadID;
 }
 
-//#include "../common/SetExport.h"
-//ExportFunc Far3Func[] =
-//{
-//	{"OpenPluginW", OpenPluginW1, OpenPluginW2},
-//	{NULL}
-//};
+void WINAPI _export ExitFARW(void);
+void WINAPI _export ExitFARW3(void*);
+
+#include "../common/SetExport.h"
+ExportFunc Far3Func[] =
+{
+	{"ExitFARW", ExitFARW, ExitFARW3},
+	{NULL}
+};
 
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
@@ -338,18 +341,18 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			//if (GetEnvironmentVariable(L"TERM", szVarValue, 63)) {
 			//    TerminalMode = TRUE;
 			//}
-			//bool lbExportsChanged = false;
-			//if (LoadFarVersion())
-			//{
-			//	if (gFarVersion.dwVerMajor == 3)
-			//	{
-			//		lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
-			//		if (!lbExportsChanged)
-			//		{
-			//			_ASSERTE(lbExportsChanged);
-			//		}
-			//	}
-			//}
+			bool lbExportsChanged = false;
+			if (LoadFarVersion())
+			{
+				if (gFarVersion.dwVerMajor == 3)
+				{
+					lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
+					if (!lbExportsChanged)
+					{
+						_ASSERTE(lbExportsChanged);
+					}
+				}
+			}
 		}
 		break;
 		case DLL_PROCESS_DETACH:
@@ -709,6 +712,16 @@ void ExitPlugin(void)
 }
 
 void   WINAPI _export ExitFARW(void)
+{
+	ExitPlugin();
+
+	if (gFarVersion.dwBuild>=FAR_Y_VER)
+		FUNC_Y(ExitFARW)();
+	else
+		FUNC_X(ExitFARW)();
+}
+
+void WINAPI _export ExitFARW3(void*)
 {
 	ExitPlugin();
 

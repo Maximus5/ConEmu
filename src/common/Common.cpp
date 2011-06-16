@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -491,11 +491,11 @@ public:
 		#ifdef _DEBUG
 		mn_LastError = 0;
 		#endif
+
+		SECURITY_ATTRIBUTES* lpSec = NULL;
 		
 		if (!LoadAdvApi())
 			goto wrap;
-
-		SECURITY_ATTRIBUTES* lpSec = NULL;
 
 		mp_NullDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
 		              SECURITY_DESCRIPTOR_MIN_LENGTH);
@@ -574,9 +574,6 @@ public:
 		//		DoLoad:
 		//#endif
 		
-		if (!LoadAdvApi())
-			goto wrap;
-
 		SECURITY_ATTRIBUTES* lpSec = NULL;
 		BYTE NetworkSid[12] = {01,01,00,00,00,00,00,05,02,00,00,00};
 		BYTE SidWorld[12]   = {01,01,00,00,00,00,00,01,00,00,00,00};
@@ -584,6 +581,9 @@ public:
 		PSID pSidWorld = (PSID)SidWorld;
 		DWORD dwSize = 0;
 
+		if (!LoadAdvApi())
+			goto wrap;
+		
 		mp_LocalDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
 		               SECURITY_DESCRIPTOR_MIN_LENGTH);
 
@@ -721,6 +721,7 @@ void CommonShutdown()
 
 
 
+#ifndef CONEMU_MINIMAL
 static BOOL CALLBACK MyEnumMonitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
 	LPRECT lprc = (LPRECT)dwData;
@@ -739,6 +740,7 @@ static BOOL CALLBACK MyEnumMonitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lp
 
 	return TRUE;
 }
+#endif
 
 
 //

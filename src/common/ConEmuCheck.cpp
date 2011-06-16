@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -974,7 +974,7 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 			BOOL lbExeFound = FALSE;
 			wchar_t* pszName = rsConEmuExe+lstrlen(rsConEmuExe);
 			LPCWSTR szGuiExe[2] = {L"ConEmu64.exe", L"ConEmu.exe"};
-			for (int i = 0; !lbExeFound && (i < countof(szGuiExe)); i++)
+			for (UINT i = 0; !lbExeFound && (i < countof(szGuiExe)); i++)
 			{
 				if (!i && !isWin64) continue;
 				wcscpy_add(pszName, rsConEmuExe, szGuiExe[i]);
@@ -986,7 +986,7 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 			{
 				wchar_t* pszName = szExePath+lstrlen(szExePath);
 				LPCWSTR szSrvExe[4] = {L"ConEmuC64.exe", L"ConEmu\\ConEmuC64.exe", L"ConEmuC.exe", L"ConEmu\\ConEmuC.exe"};
-				for (int i = 0; (i < countof(szSrvExe)); i++)
+				for (UINT i = 0; (i < countof(szSrvExe)); i++)
 				{
 					if ((i <=1) && !isWin64) continue;
 					wcscpy_add(pszName, szExePath, szSrvExe[i]);

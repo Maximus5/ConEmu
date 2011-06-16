@@ -534,7 +534,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\\WIN7x86\FAR\ConEmu\ConEmuHk.dll"
+				OutputFile="Z:\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -1170,7 +1170,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far3x86\ConEmu\ConEmuHk.dll"
+				OutputFile="\Far3\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -1249,7 +1249,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far3x86\ConEmu\ConEmuHk64.dll"
+				OutputFile="\Far3\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -1491,6 +1491,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\RegHooks.h"
+				>
+			</File>
+			<File
 				RelativePath=".\resource.h"
 				>
 			</File>
@@ -1560,6 +1564,10 @@
 			</File>
 			<File
 				RelativePath="..\common\MStrSafe.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RegHooks.cpp"
 				>
 			</File>
 			<File

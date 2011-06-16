@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2010 Maximus5
+Copyright (c) 2010-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -91,13 +91,15 @@ void WINAPI _export GetPluginInfoWcmn(void *piv)
 BOOL gbInfoW_OK = FALSE;
 
 
+void WINAPI _export ExitFARW(void);
+void WINAPI _export ExitFARW3(void*);
 
-//#include "../common/SetExport.h"
-//ExportFunc Far3Func[] =
-//{
-//	{"OpenPluginW", OpenPluginW1, OpenPluginW2},
-//	{NULL}
-//};
+#include "../common/SetExport.h"
+ExportFunc Far3Func[] =
+{
+	{"ExitFARW", ExitFARW, ExitFARW3},
+	{NULL}
+};
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
@@ -113,18 +115,18 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 				MessageBoxA(NULL, "ConEmuLn*.dll loaded", "ConEmuLn plugin", 0);
 #endif
 
-			//bool lbExportsChanged = false;
-			//if (LoadFarVersion())
-			//{
-			//	if (gFarVersion.dwVerMajor == 3)
-			//	{
-			//		lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
-			//		if (!lbExportsChanged)
-			//		{
-			//			_ASSERTE(lbExportsChanged);
-			//		}
-			//	}
-			//}
+			bool lbExportsChanged = false;
+			if (LoadFarVersion())
+			{
+				if (gFarVersion.dwVerMajor == 3)
+				{
+					lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
+					if (!lbExportsChanged)
+					{
+						_ASSERTE(lbExportsChanged);
+					}
+				}
+			}
 		}
 		break;
 		case DLL_PROCESS_DETACH:
@@ -464,6 +466,17 @@ void   WINAPI _export ExitFARW(void)
 	else
 		FUNC_X(ExitFARW)();
 }
+
+void WINAPI _export ExitFARW3(void*)
+{
+	ExitPlugin();
+
+	if (gFarVersion.dwBuild>=FAR_Y_VER)
+		FUNC_Y(ExitFARW)();
+	else
+		FUNC_X(ExitFARW)();
+}
+
 
 
 LPCWSTR GetMsgW(int aiMsg)

@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -86,16 +86,16 @@ int main(
 
 #endif
 	
-	wchar_t szSkipEventName[128];
-	_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
-	HANDLE hSkipEvent = CreateEvent(NULL, TRUE, TRUE, szSkipEventName);
+	//wchar_t szSkipEventName[128];
+	//_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
+	//HANDLE hSkipEvent = CreateEvent(NULL, TRUE, TRUE, szSkipEventName);
 #ifdef WIN64
 	hConEmu = LoadLibrary(L"ConEmuCD64.dll");
 #else
 	hConEmu = LoadLibrary(L"ConEmuCD.dll");
 #endif
 	dwErr = GetLastError();
-	CloseHandle(hSkipEvent); hSkipEvent = NULL;
+	//CloseHandle(hSkipEvent); hSkipEvent = NULL;
 
 	if (!hConEmu)
 	{

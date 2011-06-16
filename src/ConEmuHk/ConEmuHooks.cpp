@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetHook.h"
 #include "..\common\execute.h"
 #include "ConEmuHooks.h"
+#include "RegHooks.h"
 #include "ShellProcessor.h"
 
 //110131 попробуем просто добвавить ее в ExcludedModules
@@ -87,11 +88,11 @@ extern HWND    ghConWnd;
 /* ************ Globals for Far Hooks ************ */
 struct HookModeFar gFarMode = {sizeof(HookModeFar)};
 
-// -- нельзя, если хочется Entry=DllMain указывать
-const wchar_t *kernel32 = L"kernel32.dll";
-const wchar_t *user32   = L"user32.dll";
-const wchar_t *shell32  = L"shell32.dll";
-HMODULE ghKernel32 = NULL, ghUser32 = NULL, ghShell32 = NULL;
+//const wchar_t *kernel32 = L"kernel32.dll";
+//const wchar_t *user32   = L"user32.dll";
+//const wchar_t *shell32  = L"shell32.dll";
+//const wchar_t *advapi32 = L"Advapi32.dll";
+//HMODULE ghKernel32 = NULL, ghUser32 = NULL, ghShell32 = NULL, ghAdvapi32 = NULL;
 
 //static TCHAR kernel32[] = _T("kernel32.dll");
 //static TCHAR user32[]   = _T("user32.dll");
@@ -376,8 +377,8 @@ void __stdcall SetFarHookMode(struct HookModeFar *apFarMode)
 		/*
 		gFarMode.bFarHookMode = FALSE;
 		wchar_t szTitle[64], szText[255];
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
-		_wsprintf(szText, SKIPLEN(countof(szText)) L"SetFarHookMode recieved invalid sizeof = %u\nRequired = %u", apFarMode->cbSize, (DWORD)sizeof(HookModeFar));
+		msprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
+		msprintf(szText, SKIPLEN(countof(szText)) L"SetFarHookMode recieved invalid sizeof = %u\nRequired = %u", apFarMode->cbSize, (DWORD)sizeof(HookModeFar));
 		Message BoxW(NULL, szText, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 		*/
 	}
@@ -402,7 +403,7 @@ void __stdcall SetFarHookMode(struct HookModeFar *apFarMode)
 //	}
 //	if (hConWnd != NULL)
 //	{
-//		_wsprintf(szName, SKIPLEN(countof(szName)) CEINPUTSEMAPHORE, (DWORD)hConWnd);
+//		msprintf(szName, SKIPLEN(countof(szName)) CEINPUTSEMAPHORE, (DWORD)hConWnd);
 //		ghConInSemaphore = CreateSemaphore(LocalSecurity(), 1, 1, szName);
 //		_ASSERTE(ghConInSemaphore != NULL);
 //	}
@@ -434,19 +435,27 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	// Зовем LoadLibrary. Kernel-то должен был сразу загрузится (static link) в любой
 	// windows приложении, но вот shell32 - не обязательно, а нам нужно хуки проинициализировать
 	ghKernel32 = LoadLibrary(kernel32);
-	// user32 тянет за собой много других библиотек, НЕ загружаем
+	// user32/shell32/advapi32 тянут за собой много других библиотек, НЕ загружаем, если они еще не подлинкованы
 	ghUser32 = GetModuleHandle(user32);
+	if (ghUser32) ghUser32 = LoadLibrary(user32); // если подлинкован - увеличить счетчик
 	ghShell32 = GetModuleHandle(shell32);
+	if (ghShell32) ghShell32 = LoadLibrary(shell32); // если подлинкован - увеличить счетчик
+	ghAdvapi32 = GetModuleHandle(advapi32);
+	if (ghAdvapi32) ghAdvapi32 = LoadLibrary(advapi32); // если подлинкован - увеличить счетчик
 
 	if (ghKernel32)
 		gfGetProcessId = (GetProcessId_t)GetProcAddress(ghKernel32, "GetProcessId");
 
+	// Общие
 	InitHooksCommon();
-	
+
+	// Far only functions
 	InitHooksFar();
 
 	// Реестр
-	TODO("Hook registry");
+	InitHooksReg();
+	
+	// Теперь можно обработать модули
 	return SetAllHooks(ahOurDll, NULL, TRUE);
 }
 
@@ -454,6 +463,9 @@ BOOL StartupHooks(HMODULE ahOurDll)
 void ShutdownHooks()
 {
 	UnsetAllHooks();
+	
+	// Завершить работу с реестром
+	DoneHooksReg();
 
 	// Уменьшение счетчиков загрузок
 	if (ghKernel32)
@@ -470,6 +482,11 @@ void ShutdownHooks()
 	{
 		FreeLibrary(ghShell32);
 		ghShell32 = NULL;
+	}
+	if (ghAdvapi32)
+	{
+		FreeLibrary(ghAdvapi32);
+		ghAdvapi32 = NULL;
 	}
 }
 
@@ -576,7 +593,7 @@ BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int nReserv
 {
 	ORIGINALFASTEX(TrackPopupMenu,NULL);
 #ifndef CONEMU_MINIMAL
-	WCHAR szMsg[128]; _wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"TrackPopupMenu(hwnd=0x%08X)\n", (DWORD)hWnd);
+	WCHAR szMsg[128]; msprintf(szMsg, SKIPLEN(countof(szMsg)) L"TrackPopupMenu(hwnd=0x%08X)\n", (DWORD)hWnd);
 	DebugString(szMsg);
 #endif
 
@@ -597,7 +614,7 @@ BOOL WINAPI OnTrackPopupMenuEx(HMENU hmenu, UINT fuFlags, int x, int y, HWND hWn
 {
 	ORIGINALFASTEX(TrackPopupMenuEx,NULL);
 #ifndef CONEMU_MINIMAL
-	WCHAR szMsg[128]; _wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"TrackPopupMenuEx(hwnd=0x%08X)\n", (DWORD)hWnd);
+	WCHAR szMsg[128]; msprintf(szMsg, SKIPLEN(countof(szMsg)) L"TrackPopupMenuEx(hwnd=0x%08X)\n", (DWORD)hWnd);
 	DebugString(szMsg);
 #endif
 
@@ -682,7 +699,7 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 	//
 	//	if (lbRc && dwProcessID)
 	//	{
-	//		wchar_t szDbgMsg[128]; _wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"Process created: %u\n", dwProcessID);
+	//		wchar_t szDbgMsg[128]; msprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"Process created: %u\n", dwProcessID);
 	//		OutputDebugStringW(szDbgMsg);
 	//	}
 	//
@@ -725,97 +742,20 @@ BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 		SetLastError(ERROR_INVALID_FUNCTION);
 		return FALSE;
 	}
+	#ifdef _DEBUG
 	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
-	//LPSHELLEXECUTEINFOW lpNew = NULL;
-	//DWORD dwProcessID = 0;
-	//wchar_t* pszTempParm = NULL;
-	//wchar_t szComSpec[MAX_PATH+1], szConEmuC[MAX_PATH+1]; szComSpec[0] = szConEmuC[0] = 0;
-	//LPWSTR pszTempApp = NULL, pszTempArg = NULL;
-	//lpNew = (LPSHELLEXECUTEINFOW)malloc(lpExecInfo->cbSize);
-	//memmove(lpNew, lpExecInfo, lpExecInfo->cbSize);
-
-	//// Under ConEmu only!
-	//if (ghConEmuWndDC)
-	//{
-	//	if (!lpNew->hwnd || lpNew->hwnd == GetConsoleWindow())
-	//		lpNew->hwnd = ghConEmuWnd;
-
-	//	HANDLE hDummy = NULL;
-	//	DWORD nImageSubsystem = 0, nImageBits = 0;
-	//	if (PrepareExecuteParmsW(eShellExecute, lpNew->lpVerb, lpNew->fMask, 
-	//			lpNew->lpFile, lpNew->lpParameters,
-	//			hDummy, hDummy, hDummy,
-	//			&pszTempApp, &pszTempArg, nImageSubsystem, nImageBits))
-	//	{
-	//		// Меняем
-	//		lpNew->lpFile = pszTempApp;
-	//		lpNew->lpParameters = pszTempArg;
-	//	}
-	//}
+	#endif
 
 	CShellProc* sp = new CShellProc();
 	sp->OnShellExecuteExW(&lpExecInfo);
 
 	BOOL lbRc = FALSE;
 
-	//if (gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
-	//	lpNew->fMask |= SEE_MASK_NOZONECHECKS;
-
-	//// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить левый хэндл
-	//gbInShellExecuteEx = TRUE;
-
-	//BUGBUG: FAR периодически валится на этой функции
-	//должно быть: lpNew->cbSize==0x03C; lpNew->fMask==0x00800540;
-	//if (ph && ph->ExceptCallBack)
-	//{
-	//	if (!OnShellExecuteExW_SEH(F(ShellExecuteExW), lpExecInfo, &lbRc))
-	//	{
-	//		SETARGS1(&lbRc,lpExecInfo);
-	//		ph->ExceptCallBack(&args);
-	//	}
-	//}
-	//else
-	//{
 	lbRc = F(ShellExecuteExW)(lpExecInfo);
-	//}
-
-	//if (lbRc && gfGetProcessId && lpNew->hProcess)
-	//{
-	//	dwProcessID = gfGetProcessId(lpNew->hProcess);
-	//}
-
-	//#ifdef _DEBUG
-	//
-	//	if (lpNew->lpParameters)
-	//	{
-	//		OutputDebugStringW(L"After ShellExecuteEx\n");
-	//		OutputDebugStringW(lpNew->lpParameters);
-	//		OutputDebugStringW(L"\n");
-	//	}
-	//
-	//	if (lbRc && dwProcessID)
-	//	{
-	//		wchar_t szDbgMsg[128]; _wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"Process created: %u\n", dwProcessID);
-	//		OutputDebugStringW(szDbgMsg);
-	//	}
-	//
-	//#endif
-	//lpExecInfo->hProcess = lpNew->hProcess;
-	//lpExecInfo->hInstApp = lpNew->hInstApp;
 
 	sp->OnShellFinished(lbRc, lpExecInfo->hInstApp, lpExecInfo->hProcess);
 	delete sp;
 
-
-	//if (pszTempParm)
-	//	free(pszTempParm);
-	//if (pszTempApp)
-	//	free(pszTempApp);
-	//if (pszTempArg)
-	//	free(pszTempArg);
-
-	//free(lpNew);
-	//gbInShellExecuteEx = FALSE;
 	return lbRc;
 }
 
@@ -1119,9 +1059,12 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 	DWORD nTID = 0, nWait = -1, nErr;
 	/*
 	wchar_t szErrText[255], szTitle[64];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+	msprintf(szTitle, SKIPLEN(countof(szTitle)) L"PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 	*/
-	DWORD nPrevCP = GetConsoleCP(), nCurCP = 0;
+	#ifdef _DEBUG
+	DWORD nPrevCP = GetConsoleCP();
+	#endif
+	DWORD nCurCP = 0;
 	HANDLE hThread = CreateThread(NULL,0,SetConsoleCPThread,&sco,0,&nTID);
 
 	if (!hThread)
@@ -1129,7 +1072,7 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 		nErr = GetLastError();
 		_ASSERTE(hThread!=NULL);
 		/*
-		_wsprintf(szErrText, SKIPLEN(countof(szErrText)) L"chcp failed, ErrCode=0x%08X\nConEmuHooks.cpp:OnSetConsoleCP", nErr);
+		msprintf(szErrText, SKIPLEN(countof(szErrText)) L"chcp failed, ErrCode=0x%08X\nConEmuHooks.cpp:OnSetConsoleCP", nErr);
 		Message BoxW(NULL, szErrText, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 		lbRc = FALSE;
 		*/
@@ -1158,7 +1101,7 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 			{
 				_ASSERTE(nCurCP == wCodePageID);
 				/*
-				_wsprintf(szErrText, SKIPLEN(countof(szErrText))
+				msprintf(szErrText, SKIPLEN(countof(szErrText))
 				          L"chcp hung detected\n"
 				          L"ConEmuHooks.cpp:OnSetConsoleCP\n"
 				          L"ReqCP=%u, PrevCP=%u, CurCP=%u\n"
@@ -1192,9 +1135,12 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 	DWORD nTID = 0, nWait = -1, nErr;
 	/*
 	wchar_t szErrText[255], szTitle[64];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+	msprintf(szTitle, SKIPLEN(countof(szTitle)) L"PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 	*/
-	DWORD nPrevCP = GetConsoleOutputCP(), nCurCP = 0;
+	#ifdef _DEBUG
+	DWORD nPrevCP = GetConsoleOutputCP();
+	#endif
+	DWORD nCurCP = 0;
 	HANDLE hThread = CreateThread(NULL,0,SetConsoleCPThread,&sco,0,&nTID);
 
 	if (!hThread)
@@ -1202,7 +1148,7 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 		nErr = GetLastError();
 		_ASSERTE(hThread!=NULL);
 		/*
-		_wsprintf(szErrText, SKIPLEN(countof(szErrText)) L"chcp(out) failed, ErrCode=0x%08X\nConEmuHooks.cpp:OnSetConsoleOutputCP", nErr);
+		msprintf(szErrText, SKIPLEN(countof(szErrText)) L"chcp(out) failed, ErrCode=0x%08X\nConEmuHooks.cpp:OnSetConsoleOutputCP", nErr);
 		Message BoxW(NULL, szErrText, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 		lbRc = FALSE;
 		*/
@@ -1231,7 +1177,7 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 			{
 				_ASSERTE(nCurCP == wCodePageID);
 				/*
-				_wsprintf(szErrText, SKIPLEN(countof(szErrText))
+				msprintf(szErrText, SKIPLEN(countof(szErrText))
 				          L"chcp(out) hung detected\n"
 				          L"ConEmuHooks.cpp:OnSetConsoleOutputCP\n"
 				          L"ReqOutCP=%u, PrevOutCP=%u, CurOutCP=%u\n"
@@ -1433,6 +1379,35 @@ BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNum
 //	return lbRc;
 //}
 
+// Для нотификации вкладки Debug в ConEmu
+void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*/, HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nRead)
+{	
+	if (!gFarMode.bFarHookMode || !gFarMode.bMonitorConsoleInput || !nRead || !lpBuffer)
+		return;
+		
+	//// Пока - только Read. Peek игнорируем
+	//if (acPeekRead != 'R')
+	//	return;
+	
+	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_PEEKREADINFO, sizeof(CESERVER_REQ_HDR)
+		+sizeof(CESERVER_REQ_PEEKREADINFO)+(nRead-1)*sizeof(INPUT_RECORD));
+	if (pIn)
+	{
+		pIn->PeekReadInfo.nCount = (WORD)nRead;
+		pIn->PeekReadInfo.cPeekRead = acPeekRead;
+		pIn->PeekReadInfo.cUnicode = acUnicode;
+		pIn->PeekReadInfo.h = hConsoleInput;
+		pIn->PeekReadInfo.nTID = GetCurrentThreadId();
+		pIn->PeekReadInfo.nPID = GetCurrentProcessId();
+		pIn->PeekReadInfo.bMainThread = (pIn->PeekReadInfo.nTID == gnHookMainThreadId);
+		memmove(pIn->PeekReadInfo.Buffer, lpBuffer, nRead*sizeof(INPUT_RECORD));
+	
+		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+		if (pOut) ExecuteFreeResult(pOut);
+		ExecuteFreeResult(pIn);
+	}
+}
+
 typedef BOOL (WINAPI* OnPeekConsoleInputA_t)(HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
 BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
@@ -1460,12 +1435,15 @@ BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	//#ifdef USE_INPUT_SEMAPHORE
 	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
 	//#endif
-
+	
 	if (ph && ph->PostCallBack)
 	{
 		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
 		ph->PostCallBack(&args);
 	}
+	
+	if (lbRc && lpNumberOfEventsRead && *lpNumberOfEventsRead && lpBuffer)
+		OnPeekReadConsoleInput('P', 'A', hConsoleInput, lpBuffer, *lpNumberOfEventsRead);
 
 	return lbRc;
 }
@@ -1504,6 +1482,18 @@ BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 		ph->PostCallBack(&args);
 	}
 
+	if (lbRc && lpNumberOfEventsRead && *lpNumberOfEventsRead && lpBuffer)
+		OnPeekReadConsoleInput('P', 'W', hConsoleInput, lpBuffer, *lpNumberOfEventsRead);
+//#ifdef _DEBUG
+//	wchar_t szDbg[128];
+//	if (lbRc && lpNumberOfEventsRead && *lpNumberOfEventsRead && lpBuffer && lpBuffer->EventType == MOUSE_EVENT)
+//		wsprintfW(szDbg, L"ConEmuHk.OnPeekConsoleInputW(x%04X,x%04X) %u\n",
+//			lpBuffer->Event.MouseEvent.dwButtonState, lpBuffer->Event.MouseEvent.dwControlKeyState, *lpNumberOfEventsRead);
+//	else
+//		lstrcpyW(szDbg, L"ConEmuHk.OnPeekConsoleInputW(Non mouse event)\n");
+//	OutputDebugStringW(szDbg);
+//#endif
+
 	return lbRc;
 }
 
@@ -1541,6 +1531,9 @@ BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 		ph->PostCallBack(&args);
 	}
 
+	if (lbRc && lpNumberOfEventsRead && *lpNumberOfEventsRead && lpBuffer)
+		OnPeekReadConsoleInput('R', 'A', hConsoleInput, lpBuffer, *lpNumberOfEventsRead);
+
 	return lbRc;
 }
 
@@ -1577,6 +1570,9 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
 		ph->PostCallBack(&args);
 	}
+
+	if (lbRc && lpNumberOfEventsRead && *lpNumberOfEventsRead && lpBuffer)
+		OnPeekReadConsoleInput('R', 'W', hConsoleInput, lpBuffer, *lpNumberOfEventsRead);
 
 	return lbRc;
 }
@@ -1791,8 +1787,8 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 		_ASSERTE(lpResult != NULL);
 		/*
 		wchar_t szText[MAX_PATH*2], szTitle[64];
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-		_wsprintf(szText, SKIPLEN(countof(szText)) L"VirtualAlloc failed (0x%08X..0x%08X)\nErrorCode=0x%08X\n\nWarning! This will be an error in Release!\n\n",
+		msprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+		msprintf(szText, SKIPLEN(countof(szText)) L"VirtualAlloc failed (0x%08X..0x%08X)\nErrorCode=0x%08X\n\nWarning! This will be an error in Release!\n\n",
 			(DWORD)lpAddress, (DWORD)((LPBYTE)lpAddress+dwSize));
 		GetModuleFileName(NULL, szText+lstrlen(szText), MAX_PATH);
 		Message BoxW(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OK|MB_ICONSTOP);

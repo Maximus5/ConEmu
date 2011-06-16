@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #include "DbgHooks.h"
 #endif
+
+extern const wchar_t *kernel32;// = L"kernel32.dll";
+extern const wchar_t *user32  ;// = L"user32.dll";
+extern const wchar_t *shell32 ;// = L"shell32.dll";
+extern const wchar_t *advapi32;// = L"Advapi32.dll";
+extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32;
+
+typedef LONG (WINAPI* RegCloseKey_t)(HKEY hKey);
+extern RegCloseKey_t RegCloseKey_f;
+typedef LONG (WINAPI* RegOpenKeyEx_t)(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
+extern RegOpenKeyEx_t RegOpenKeyEx_f;
+typedef LONG (WINAPI* RegCreateKeyEx_t)(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition);
+extern RegCreateKeyEx_t RegCreateKeyEx_f;
+
 
 typedef struct HookCallbackArg
 {
@@ -109,6 +123,7 @@ struct HookModeFar
 	BOOL  bFarHookMode;      // устанавливается в TRUE из плагина ConEmu.dll
 	BOOL  bFARuseASCIIsort;  // -> OnCompareStringW
 	BOOL  bShellNoZoneCheck; // -> OnShellExecuteXXX
+	BOOL  bMonitorConsoleInput; // при (Read/Peek)ConsoleInput(A/W) послать инфу в GUI/Settings/Debug
 };
 
 #if defined(EXTERNAL_HOOK_LIBRARY) && !defined(DEFINE_HOOK_MACROS)
@@ -154,7 +169,13 @@ void __stdcall UnsetAllHooks();
 
 //typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
 //extern OnLibraryLoaded_t gfOnLibraryLoaded;
-void __stdcall SetLoadLibraryCallback(HMODULE ahCallbackModule, OnLibraryLoaded_t afOnLibraryLoaded, OnLibraryLoaded_t afOnLibraryUnLoaded);
+#if defined(__GNUC__)
+extern "C" {
+#endif
+	void __stdcall SetLoadLibraryCallback(HMODULE ahCallbackModule, OnLibraryLoaded_t afOnLibraryLoaded, OnLibraryLoaded_t afOnLibraryUnLoaded);
+#if defined(__GNUC__)
+};
+#endif
 
 
 #if __GNUC__

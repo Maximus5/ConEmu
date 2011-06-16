@@ -83,6 +83,7 @@ NAME = ConEmuCD
 LINK_OBJS = \
 $(OBJDIR)\ConsoleMain.obj \
 $(OBJDIR)\GuiHooks.obj \
+$(OBJDIR)\RegPrepare.obj \
 $(OBJDIR)\ConEmuCmd.obj \
 $(OBJDIR)\ConEmuSrv.obj \
 $(OBJDIR)\Injects.obj \
@@ -339,6 +340,8 @@ clean:
 $(OBJDIR)\ConsoleMain.obj: ConsoleMain.cpp
 
 $(OBJDIR)\GuiHooks.obj: GuiHooks.cpp
+
+$(OBJDIR)\RegPrepare.obj: RegPrepare.cpp
 
 $(OBJDIR)\Common.obj: ..\common\Common.cpp
 

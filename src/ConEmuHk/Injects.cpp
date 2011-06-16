@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
+#include "../ConEmuCD/ExitCodes.h"
 #include "ConEmuHooks.h"
 
 #include "Conole2.h"
@@ -201,12 +202,12 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 
 			CloseHandle(pi64.hProcess); CloseHandle(pi64.hThread);
 
-			if (nErrCode == CERR_HOOKS_WAS_SET)
+			if ((int)nErrCode == CERR_HOOKS_WAS_SET)
 			{
 				iRc = 0;
 				goto wrap;
 			}
-			else if (nErrCode == CERR_HOOKS_FAILED)
+			else if ((int)nErrCode == CERR_HOOKS_FAILED)
 			{
 				iRc = -505;
 				goto wrap;

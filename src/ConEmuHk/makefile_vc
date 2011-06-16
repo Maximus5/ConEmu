@@ -92,6 +92,7 @@ LINK_OBJS = \
 $(OBJDIR)\Entry.obj \
 $(OBJDIR)\Injects.obj \
 $(OBJDIR)\ConEmuHooks.obj \
+$(OBJDIR)\RegHooks.obj \
 $(OBJDIR)\execute.obj \
 $(OBJDIR)\SetHook.obj \
 $(OBJDIR)\ShellProcessor.obj \
@@ -357,6 +358,8 @@ $(OBJDIR)\ConEmuHk.obj: ConEmuHk.cpp
 $(OBJDIR)\ConEmuCmd.obj: ConEmuCmd.cpp
 
 $(OBJDIR)\ConEmuHooks.obj: ConEmuHooks.cpp
+
+$(OBJDIR)\RegHooks.obj: RegHooks.cpp
 
 $(OBJDIR)\ConEmuSrv.obj: ConEmuSrv.cpp
 

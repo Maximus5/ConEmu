@@ -1,22 +1,20 @@
-NAME = ConEmuHk
-SRCS = Entry.cpp \
+NAME = ConEmuCD
+SRCS = ConsoleMain.cpp \
        ConEmuCmd.cpp \
-       ConsoleMain.cpp \
-       ConEmuHooks.cpp \
        ConEmuSrv.cpp \
-       Entry.cpp \
-       RegHooks.cpp \
-       ShellProcessor.cpp \
+       GuiHooks.cpp \
+       RegPrepare.cpp \
+       ../ConEmuHk/Injects.cpp \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp \
        ../common/Execute.cpp \
        ../common/MAssert.cpp \
+       ../common/MStrSafe.cpp \
        ../common/Memory.cpp \
-       ../common/SetHook.cpp \
        ../common/WinObjects.cpp
 
 
-USERLIBS = -lversion -lgdi32
+USERLIBS = 
 
 
 
@@ -62,7 +60,7 @@ CCWIDE = -D UNICODE -D _UNICODE -D
 WINVER = _WIN32_WINNT=0x0500 -D WINVER=0x0500
 
 TMPDIR = ../../gcc
-OBJDIR = $(TMPDIR)/conemuhk
+OBJDIR = $(TMPDIR)/conemucd
 COMDIR = $(TMPDIR)/common
 #REOBJDIR = \.\.\/\.\.\/gcc\/conemuhk
 DLLDIR = ../../Release/ConEmu

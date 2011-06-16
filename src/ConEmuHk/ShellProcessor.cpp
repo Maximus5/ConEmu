@@ -629,15 +629,24 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		}
 		else
 		{
-			WARNING("###: “ут наверное в любом разе нужно запускать через ConEmuC.exe, чтобы GUI мог точно знать, когда 16бит приложение завершитс€");
-			_ASSERTE(ImageBits != 16);
-			return FALSE;
+			// в любом разе нужно запускать через ConEmuC.exe, чтобы GUI мог точно знать, когда 16бит приложение завершитс€
+			// Ќо вот в 64битных OS - ntvdm отсутствует, так что (если DosBox-а нет), дергатьс€ не нужно
+			if (IsWindows64())
+			{
+				return FALSE;
+			}
+			else
+			{
+				wcscat_c(szConEmuC, L"ConEmuC.exe");
+			}
 		}
 	}
 	else
 	{
+		// ≈сли не смогли определить что это и как запускаетс€ - лучше не трогать
 		_ASSERTE(ImageBits==16||ImageBits==32||ImageBits==64);
-		wcscat_c(szConEmuC, L"ConEmuC.exe");
+		//wcscat_c(szConEmuC, L"ConEmuC.exe");
+		return FALSE;
 	}
 	
 	int nCchSize = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 64;
@@ -671,10 +680,16 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	}
 
 
-	if ((aCmd == eShellExecute) && (asFile && *asFile))
+	if (aCmd == eShellExecute)
 	{
 		// C:\Windows\system32\cmd.exe /C ""F:\Batches\!!Save&SetNewCFG.cmd" "
-		lbEndQuote = TRUE; // иначе некоторые имена обрабатываютс€ некорректно
+		lbEndQuote = (asFile && *asFile); // иначе некоторые имена обрабатываютс€ некорректно
+	}
+	else if (aCmd == eCreateProcess)
+	{
+		// as_Param: "C:\test.cmd" "c:\my documents\test.txt"
+		// ≈сли это не окавычить - cmd.exe отрежет первую и последнюю, и обломаетс€
+		lbEndQuote = (asFile && *asFile == L'"') || (!asFile && asParam && *asParam == L'"');
 	}
 
 	if (lbUseDosBox)
@@ -910,7 +925,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	HANDLE hErr = lphStdErr ? *lphStdErr : NULL;
 		
 	// Issue 351: ѕосле перехода исполн€тел€ фара на ShellExecuteEx почему-то сюда стал приходить
-	//            левый хэндл (hStdOutput = 0x00010001)
+	//            левый хэндл (hStdOutput = 0x00010001), иногда получаетс€ 0x00060265
 	//            и недокументированный флаг 0x400 в lpStartupInfo->dwFlags
 	if ((aCmd == eCreateProcess) && (gnInShellExecuteEx > 0)
 		&& lphStdOut && lphStdErr && anStartFlags && (*anStartFlags) == 0x401)
@@ -921,7 +936,9 @@ BOOL CShellProc::PrepareExecuteParms(
 		{
 			if (osv.dwMajorVersion == 5 && (osv.dwMinorVersion == 1/*WinXP*/ || osv.dwMinorVersion == 2/*Win2k3*/))
 			{
-				if ((*lphStdOut == (HANDLE)0x00010001) && (*lphStdErr == NULL))
+				if (//(*lphStdOut == (HANDLE)0x00010001)
+					(((DWORD_PTR)*lphStdOut) >= 0x00010000)
+					&& (*lphStdErr == NULL))
 				{
 					*lphStdOut = NULL;
 					*anStartFlags &= ~0x400;
@@ -964,11 +981,11 @@ BOOL CShellProc::PrepareExecuteParms(
 	
 	if (ms_ExeTmp[0])
 	{
-		wchar_t *pszNamePart = NULL;
+		//wchar_t *pszNamePart = NULL;
 		int nLen = lstrlen(ms_ExeTmp);
 		// ƒлина больше 0 и не заканчиваетс€ слешом
 		BOOL lbMayBeFile = (nLen > 0) && (ms_ExeTmp[nLen-1] != L'\\') && (ms_ExeTmp[nLen-1] != L'/');
-		const wchar_t* pszExt = PointToExt(ms_ExeTmp);
+		//const wchar_t* pszExt = PointToExt(ms_ExeTmp);
 
 		BOOL lbSubsystemOk = FALSE;
 		mn_ImageBits = 0;
@@ -1156,8 +1173,8 @@ BOOL CShellProc::PrepareExecuteParms(
 						ms_ExeTmp, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 		if (!lbChanged)
 		{
-			WARNING("###: ’уки нельз€ ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!");
-			mb_NeedInjects = TRUE;
+			// ’уки нельз€ ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
+			mb_NeedInjects = (mn_ImageBits != 16);
 		}
 		else
 		{
@@ -1182,7 +1199,8 @@ BOOL CShellProc::PrepareExecuteParms(
 	{
 		//lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, pszBaseDir, 
 		//				ms_ExeTmp, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
-		mb_NeedInjects = (aCmd == eCreateProcess);
+		// ’уки нельз€ ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
+		mb_NeedInjects = (aCmd == eCreateProcess) && (mn_ImageBits != 16);
 	}
 
 wrap:

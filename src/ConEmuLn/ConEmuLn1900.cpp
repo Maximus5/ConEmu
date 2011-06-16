@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2010 Maximus5
+Copyright (c) 2010-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -78,9 +78,10 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 
 	Info->StructSize = sizeof(GlobalInfo);
 	Info->MinFarVersion = FARMANAGERVERSION;
-	//#define D(N) (1##N-100)
-	// YYMMDDX (YY - две цифры года, MM - мес€ц, DD - день, X - 0 и выше-номер подсборки)
-	Info->Version = ((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10);
+
+	// Build: YYMMDDX (YY - две цифры года, MM - мес€ц, DD - день, X - 0 и выше-номер подсборки)
+	Info->Version = MAKEFARVERSION(MVV_1,MVV_2,MVV_3,((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10),VS_RELEASE);
+	
 	Info->Guid = guid_ConEmuLn;
 	Info->Title = L"ConEmu Underlines";
 	Info->Description = L"Paint underlined background in the ConEmu window";
@@ -119,21 +120,22 @@ void SetStartupInfoW1900(void *aInfo)
 	*::FSFW1900 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW1900->FSF = ::FSFW1900;
 
-	DWORD nFarVer = 0;
-	if (InfoW1900->AdvControl(&guid_ConEmuLn, ACTL_GETFARVERSION, &nFarVer))
+	VersionInfo FarVer = {0};
+	if (InfoW1900->AdvControl(&guid_ConEmuLn, ACTL_GETFARMANAGERVERSION, 0, &FarVer))
 	{
-		if (HIBYTE(HIWORD(nFarVer)) == 3)
+		if (FarVer.Major == 3)
 		{
-			gFarVersion.dwBuild = LOWORD(nFarVer);
-			gFarVersion.dwVerMajor = (HIBYTE(HIWORD(nFarVer)));
-			gFarVersion.dwVerMinor = (LOBYTE(HIWORD(nFarVer)));
+			gFarVersion.dwBuild = FarVer.Build;
+			_ASSERTE(FarVer.Major<=0xFFFF && FarVer.Minor<=0xFFFF)
+			gFarVersion.dwVerMajor = (WORD)FarVer.Major;
+			gFarVersion.dwVerMinor = (WORD)FarVer.Minor;
 		}
 		else
 		{
-			_ASSERTE(HIBYTE(HIWORD(nFarVer)) == 3);
+			_ASSERTE(FarVer.Major == 3);
 		}
 	}
-
+	
 	//int nLen = lstrlenW(InfoW1900->RootKey)+16;
 
 	//if (gszRootKey) free(gszRootKey);
@@ -194,7 +196,7 @@ void SettingsLoadW1900()
 {
 	FarSettingsCreate sc = {sizeof(FarSettingsCreate), guid_ConEmuLn, INVALID_HANDLE_VALUE};
 	FarSettingsItem fsi = {0};
-	if (InfoW1900->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, (INT_PTR)&sc))
+	if (InfoW1900->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
 	{
 		//BYTE cVal; DWORD nVal;
 
@@ -208,7 +210,7 @@ void SettingsLoadW1900()
 				fsi.Type = FST_DATA;
 				//fsi.Data.Size = 1; 
 				//fsi.Data.Data = &cVal;
-				if (InfoW1900->SettingsControl(sc.Handle, SCTL_GET, 0, (INT_PTR)&fsi) && (fsi.Data.Size == sizeof(BYTE)))
+				if (InfoW1900->SettingsControl(sc.Handle, SCTL_GET, 0, &fsi) && (fsi.Data.Size == sizeof(BYTE)))
 					*((BOOL*)p->pValue) = (*((BYTE*)fsi.Data.Data) != 0);
 			}
 			else if (p->nValueType == REG_DWORD)
@@ -218,7 +220,7 @@ void SettingsLoadW1900()
 				fsi.Type = FST_DATA;
 				//fsi.Data.Size = 4;
 				//fsi.Data.Data = &nVal;
-				if (InfoW1900->SettingsControl(sc.Handle, SCTL_GET, 0, (INT_PTR)&fsi) && (fsi.Data.Size == sizeof(DWORD)))
+				if (InfoW1900->SettingsControl(sc.Handle, SCTL_GET, 0, &fsi) && (fsi.Data.Size == sizeof(DWORD)))
 					*((DWORD*)p->pValue) = *((DWORD*)fsi.Data.Data);
 			}
 		}
@@ -233,7 +235,7 @@ void SettingsSaveW1900()
 
 	FarSettingsCreate sc = {sizeof(FarSettingsCreate), guid_ConEmuLn, INVALID_HANDLE_VALUE};
 	FarSettingsItem fsi = {0};
-	if (InfoW1900->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, (INT_PTR)&sc))
+	if (InfoW1900->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
 	{
 		BYTE cVal;
 		for (ConEmuLnSettings *p = gSettings; p->pszValueName; p++)
@@ -246,7 +248,7 @@ void SettingsSaveW1900()
 				fsi.Type = FST_DATA;
 				fsi.Data.Size = 1; 
 				fsi.Data.Data = &cVal;
-				InfoW1900->SettingsControl(sc.Handle, SCTL_SET, 0, (INT_PTR)&fsi);
+				InfoW1900->SettingsControl(sc.Handle, SCTL_SET, 0, &fsi);
 			}
 			else if (p->nValueType == REG_DWORD)
 			{
@@ -255,7 +257,7 @@ void SettingsSaveW1900()
 				fsi.Type = FST_DATA;
 				fsi.Data.Size = 4;
 				fsi.Data.Data = p->pValue;
-				InfoW1900->SettingsControl(sc.Handle, SCTL_SET, 0, (INT_PTR)&fsi);
+				InfoW1900->SettingsControl(sc.Handle, SCTL_SET, 0, &fsi);
 			}
 		}
 

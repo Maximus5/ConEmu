@@ -13,6 +13,7 @@ HANDLE ghHeap = NULL;
 #endif
 #endif
 
+#ifdef TRACK_MEMORY_ALLOCATIONS
 static const char* PointToName(const char* asFileOrPath)
 {
 	if (!asFileOrPath)
@@ -28,6 +29,7 @@ static const char* PointToName(const char* asFileOrPath)
 
 	return asFileOrPath;
 }
+#endif
 
 bool HeapInitialize()
 {

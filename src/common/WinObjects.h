@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define TRANSACT_WARN_TIMEOUT 500
 #endif
 
+// GCC fixes
+#ifndef KEY_WOW64_32KEY
+#define KEY_WOW64_32KEY 0x0200
+#endif
+#ifndef KEY_WOW64_64KEY
+#define KEY_WOW64_64KEY 0x0100
+#endif
+
 // WinAPI wrappers
 BOOL apiSetForegroundWindow(HWND ahWnd);
 BOOL apiShowWindow(HWND ahWnd, int anCmdShow);
@@ -56,6 +64,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
 BOOL IsFilePath(LPCWSTR asFilePath);
 BOOL IsUserAdmin();
+BOOL GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
 BOOL IsWindows64(BOOL *pbIsWow64Process = NULL);
 void RemoveOldComSpecC();
 const wchar_t* PointToName(const wchar_t* asFullPath);
@@ -72,7 +81,6 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------
-#ifndef CONEMU_MINIMAL
 class MSectionLock;
 
 class MSection
@@ -103,6 +111,7 @@ class MSection
 		void Unlock(BOOL abExclusive);
 };
 
+#ifndef CONEMU_MINIMAL
 class MSectionThread
 {
 	protected:
@@ -112,6 +121,7 @@ class MSectionThread
 		MSectionThread(MSection* apS);
 		~MSectionThread();
 };
+#endif
 
 class MSectionLock
 {
@@ -127,7 +137,6 @@ class MSectionLock
 		MSectionLock();
 		~MSectionLock();
 };
-#endif
 
 
 #ifndef CONEMU_MINIMAL
@@ -165,9 +174,7 @@ class MFileMapping
 		T* mp_Data; //WARNING!!! Доступ может быть только на чтение!
 		wchar_t ms_MapName[128];
 		DWORD mn_LastError;
-		#ifndef CONEMU_MINIMAL
 		wchar_t ms_Error[MAX_PATH*2];
-		#endif
 	public:
 		T* Ptr()
 		{
@@ -181,11 +188,11 @@ class MFileMapping
 		{
 			return (mp_Data!=NULL);
 		};
-		#ifndef CONEMU_MINIMAL
 		LPCWSTR GetErrorText()
 		{
 			return ms_Error;
 		};
+		#ifndef CONEMU_MINIMAL
 		bool SetFrom(const T* pSrc, int nSize=-1)
 		{
 			if (!IsValid() || !nSize)
@@ -220,7 +227,7 @@ class MFileMapping
 			//			_ASSERTE(Parm2==0);
 			msprintf(ms_MapName, countof(ms_MapName), aszTemplate, Parm1, Parm2);
 			//#else
-			//			_wsprintf(ms_MapName, SKIPLEN(countof(ms_MapName)) aszTemplate, Parm1, Parm2);
+			//			msprintf(ms_MapName, SKIPLEN(countof(ms_MapName)) aszTemplate, Parm1, Parm2);
 			//#endif
 		};
 		void ClosePtr()
@@ -251,18 +258,14 @@ class MFileMapping
 			if (mh_Mapping) CloseMap();
 
 			mn_LastError = 0;
-			#ifndef CONEMU_MINIMAL
 			ms_Error[0] = 0;
-			#endif
 			_ASSERTE(mh_Mapping==NULL && mp_Data==NULL);
 			_ASSERTE(nSize==-1 || nSize>=sizeof(T));
 
 			if (ms_MapName[0] == 0)
 			{
 				_ASSERTE(ms_MapName[0]!=0);
-				#ifndef CONEMU_MINIMAL
 				wcscpy_c(ms_Error, L"Internal error. Mapping file name was not specified.");
-				#endif
 				return NULL;
 			}
 			else
@@ -283,10 +286,8 @@ class MFileMapping
 				if (!mh_Mapping)
 				{
 					mn_LastError = GetLastError();
-					#ifndef CONEMU_MINIMAL
-					_wsprintf(ms_Error, SKIPLEN(countof(ms_Error)) L"Can't %s console data file mapping. ErrCode=0x%08X\n%s",
+					msprintf(ms_Error, countof(ms_Error), L"Can't %s console data file mapping. ErrCode=0x%08X\n%s",
 					          abCreate ? L"create" : L"open", mn_LastError, ms_MapName);
-					#endif
 				}
 				else
 				{
@@ -296,10 +297,8 @@ class MFileMapping
 					if (!mp_Data)
 					{
 						mn_LastError = GetLastError();
-						#ifndef CONEMU_MINIMAL
-						_wsprintf(ms_Error, SKIPLEN(countof(ms_Error)) L"Can't map console info (%s). ErrCode=0x%08X\n%s",
+						msprintf(ms_Error, countof(ms_Error), L"Can't map console info (%s). ErrCode=0x%08X\n%s",
 						          mb_WriteAllowed ? L"ReadWrite" : L"Read" ,mn_LastError, ms_MapName);
-						#endif
 					}
 				}
 			}
@@ -324,9 +323,7 @@ class MFileMapping
 		{
 			mh_Mapping = NULL; mb_WriteAllowed = FALSE; mp_Data = NULL;
 			mn_Size = -1; ms_MapName[0] = 0;
-			#ifndef CONEMU_MINIMAL
 			ms_Error[0] = 0;
-			#endif
 			mn_LastError = 0;
 		};
 		~MFileMapping()
@@ -398,7 +395,7 @@ class MPipe
 			//va_list args;
 			//va_start( args, aszTemplate );
 			//vswprintf_s(ms_PipeName, countof(ms_PipeName), aszTemplate, args);
-			_wsprintf(ms_PipeName, SKIPLEN(countof(ms_PipeName)) aszTemplate, Parm1, Parm2);
+			msprintf(ms_PipeName, countof(ms_PipeName), aszTemplate, Parm1, Parm2);
 			lstrcpynW(ms_Module, asModule, countof(ms_Module));
 
 			if (mh_Pipe)
@@ -477,7 +474,7 @@ class MPipe
 				if (anInSize >= sizeof(CESERVER_REQ_HDR))
 					nCmd = ((CESERVER_REQ_HDR*)apIn)->nCmd;
 
-				_wsprintf(ms_Error, SKIPLEN(countof(ms_Error)) L"%s: TransactNamedPipe failed, Cmd=%i, ErrCode = 0x%08X!", ms_Module, nCmd, dwErr);
+				msprintf(ms_Error, countof(ms_Error), L"%s: TransactNamedPipe failed, Cmd=%i, ErrCode = 0x%08X!", ms_Module, nCmd, dwErr);
 				Close(); // Поскольку произошла неизвестная ошибка - пайп лучше закрыть (чтобы потом переоткрыть)
 				return FALSE;
 			}
@@ -486,7 +483,7 @@ class MPipe
 			if (cbRead < sizeof(CESERVER_REQ_HDR))
 			{
 				_ASSERTE(cbRead >= sizeof(CESERVER_REQ_HDR));
-				_wsprintf(ms_Error, SKIPLEN(countof(ms_Error))
+				msprintf(ms_Error, countof(ms_Error),
 				          L"%s: Only %i bytes recieved, required %i bytes at least!",
 				          ms_Module, cbRead, (DWORD)sizeof(CESERVER_REQ_HDR));
 				return FALSE;
@@ -495,7 +492,7 @@ class MPipe
 			if (((CESERVER_REQ_HDR*)apIn)->nCmd != ((CESERVER_REQ_HDR*)&m_In)->nCmd)
 			{
 				_ASSERTE(((CESERVER_REQ_HDR*)apIn)->nCmd == ((CESERVER_REQ_HDR*)&m_In)->nCmd);
-				_wsprintf(ms_Error, SKIPLEN(countof(ms_Error))
+				msprintf(ms_Error, countof(ms_Error),
 				          L"%s: Invalid CmdID=%i recieved, required CmdID=%i!",
 				          ms_Module, ((CESERVER_REQ_HDR*)apIn)->nCmd, ((CESERVER_REQ_HDR*)&m_In)->nCmd);
 				return FALSE;
@@ -504,7 +501,7 @@ class MPipe
 			if (((CESERVER_REQ_HDR*)ptrOut)->nVersion != CESERVER_REQ_VER)
 			{
 				_ASSERTE(((CESERVER_REQ_HDR*)ptrOut)->nVersion == CESERVER_REQ_VER);
-				_wsprintf(ms_Error, SKIPLEN(countof(ms_Error))
+				msprintf(ms_Error, countof(ms_Error),
 				          L"%s: Old version packet recieved (%i), required (%i)!",
 				          ms_Module, ((CESERVER_REQ_HDR*)ptrOut)->nCmd, CESERVER_REQ_VER);
 				return FALSE;
@@ -513,7 +510,7 @@ class MPipe
 			if (((CESERVER_REQ_HDR*)ptrOut)->cbSize < cbRead)
 			{
 				_ASSERTE(((CESERVER_REQ_HDR*)ptrOut)->cbSize >= cbRead);
-				_wsprintf(ms_Error, SKIPLEN(countof(ms_Error))
+				msprintf(ms_Error, countof(ms_Error),
 				          L"%s: Invalid packet size (%i), must be greater or equal to %i!",
 				          ms_Module, ((CESERVER_REQ_HDR*)ptrOut)->cbSize, cbRead);
 				return FALSE;
@@ -530,7 +527,7 @@ class MPipe
 					if (!ptrNew)
 					{
 						_ASSERTE(ptrNew!=NULL);
-						_wsprintf(ms_Error, SKIPLEN(countof(ms_Error)) L"%s: Can't allocate %u bytes!", ms_Module, nAllSize);
+						msprintf(ms_Error, countof(ms_Error), L"%s: Can't allocate %u bytes!", ms_Module, nAllSize);
 						return FALSE;
 					}
 
@@ -570,7 +567,7 @@ class MPipe
 				if (nAllSize > 0)
 				{
 					_ASSERTE(nAllSize==0);
-					_wsprintf(ms_Error, SKIPLEN(countof(ms_Error)) L"%s: Can't read %u bytes!", ms_Module, nAllSize);
+					msprintf(ms_Error, countof(ms_Error), L"%s: Can't read %u bytes!", ms_Module, nAllSize);
 					return FALSE;
 				}
 

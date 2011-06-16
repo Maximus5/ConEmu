@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -449,6 +449,11 @@ void CSettings::InitSettings()
 	//#else
 	//isUseInjects = false;
 	//#endif
+	#ifdef USEPORTABLEREGISTRY
+	isPortableReg = true; // включено по умолчанию
+	#else
+	isPortableReg = false;
+	#endif
 	nConInMode = (DWORD)-1; // по умолчанию, включится (ENABLE_QUICK_EDIT_MODE|ENABLE_EXTENDED_FLAGS|ENABLE_INSERT_MODE)
 	nSlideShowElapse = 2500;
 	nIconID = IDI_ICON1;
@@ -621,6 +626,9 @@ void CSettings::LoadSettings()
 		reg->Load(L"ConVisible", isConVisible);
 		reg->Load(L"ConInMode", nConInMode);
 		reg->Load(L"UseInjects", isUseInjects);
+		#ifdef USEPORTABLEREGISTRY
+		reg->Load(L"PortableReg", isPortableReg);
+		#endif
 		// Don't move invisible real console. This affects GUI eMenu.
 		//reg->Load(L"LockRealConsolePos", isLockRealConsolePos);
 		//reg->Load(L"DumpPackets", szDumpPackets);
@@ -1263,6 +1271,9 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		
 		//WARNING("Сохранение isUseInjects отключено принудительно");
 		reg->Save(L"UseInjects", isUseInjects);
+		#ifdef USEPORTABLEREGISTRY
+		reg->Save(L"PortableReg", isPortableReg);
+		#endif
 		
 		//reg->Save(L"LockRealConsolePos", isLockRealConsolePos);
 		reg->Save(L"CmdLine", psCmd);
@@ -1989,7 +2000,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isAutoRegisterFonts) CheckDlgButton(hExt, cbAutoRegFonts, BST_CHECKED);
 
 	if (isDebugSteps) CheckDlgButton(hExt, cbDebugSteps, BST_CHECKED);
-
+	
 	if (isHideCaption) CheckDlgButton(hExt, cbHideCaption, BST_CHECKED);
 
 	if (isHideCaptionAlways()) CheckDlgButton(hExt, cbHideCaptionAlways, BST_CHECKED);
@@ -2104,6 +2115,20 @@ LRESULT CSettings::OnInitDialog_Ext()
 	EnableWindow(GetDlgItem(hExt, cbDosBox), FALSE); // изменение пока запрещено
 	EnableWindow(GetDlgItem(hExt, bDosBoxSettings), FALSE); // изменение пока запрещено
 
+	#ifdef USEPORTABLEREGISTRY
+	if (gpConEmu->mb_PortableRegExist)
+	{
+		if (isPortableReg)
+			CheckDlgButton(hExt, cbPortableRegistry, BST_CHECKED);
+		EnableWindow(GetDlgItem(hExt, bPortableRegistrySettings), FALSE); // изменение пока запрещено
+	}
+	else
+	#endif
+	{
+		EnableWindow(GetDlgItem(hExt, cbPortableRegistry), FALSE); // изменение пока запрещено
+		EnableWindow(GetDlgItem(hExt, bPortableRegistrySettings), FALSE); // изменение пока запрещено
+	}
+	
 
 	//if (isLockRealConsolePos) CheckDlgButton(hExt, cbLockRealConsolePos, BST_CHECKED);
 #ifdef _DEBUG
@@ -2365,6 +2390,8 @@ LRESULT CSettings::OnInitDialog_Debug()
 	if (gpSet->EnableThemeDialogTextureF)
 		gpSet->EnableThemeDialogTextureF(hDebug, 6/*ETDT_ENABLETAB*/);
 
+	//if (isDebugSteps) CheckDlgButton(hExt, cbDebugSteps, BST_CHECKED);
+		
 	//LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
 	//wchar_t szTitle[64]; col.pszText = szTitle;
 
@@ -2836,6 +2863,21 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		case cbUseInjects:
 			isUseInjects = IsChecked(hExt, cbUseInjects);
 			gpConEmu->OnGlobalSettingsChanged();
+			break;
+		case cbPortableRegistry:
+			#ifdef USEPORTABLEREGISTRY
+			isPortableReg = IsChecked(hExt, cbPortableRegistry);
+			// Проверить, готов ли к использованию
+			if (!gpConEmu->PreparePortableReg())
+			{
+				isPortableReg = false;
+				CheckDlgButton(hExt, cbPortableRegistry, BST_UNCHECKED);
+			}
+			else
+			{
+				gpConEmu->OnGlobalSettingsChanged();
+			}
+			#endif
 			break;
 		case bRealConsoleSettings:
 			EditConsoleFont(ghOpWnd);
@@ -3442,9 +3484,9 @@ void CSettings::OnClose()
 	//gpConEmu->UpdateGuiInfoMapping();
 	gpConEmu->RegisterMinRestore(gpSet->icMinimizeRestore != 0);
 
-	if (m_isKeyboardHooks = 1)
+	if (m_isKeyboardHooks == 1)
 		gpConEmu->RegisterHoooks();
-	else if (gpSet->m_isKeyboardHooks = 2)
+	else if (gpSet->m_isKeyboardHooks == 2)
 		gpConEmu->UnRegisterHoooks();
 }
 
@@ -4166,6 +4208,13 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 		lpc_StdOut,
 		lpc_StdErr,
 	};
+	enum LogInputColumns
+	{
+		lic_Time = 0,
+		lic_Type,
+		lic_Dup,
+		lic_Event,
+	};
 
 	static bool bSkipSelChange = false;
 	switch(messg)
@@ -4196,11 +4245,15 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 				break;
 			case rbActivityDisabled:
 			case rbActivityShell:
+			case rbActivityInput:
 				{
 					//PRAGMA_ERROR("m_RealConLoggingType");
 					HWND hList = GetDlgItem(hWnd2, lbActivityLog);
 					//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
-					gpSet->m_RealConLoggingType = (LOWORD(wParam) == rbActivityShell) ? glt_Processes : glt_None;
+					gpSet->m_RealConLoggingType =
+						(LOWORD(wParam) == rbActivityShell) ? glt_Processes :
+						(LOWORD(wParam) == rbActivityInput) ? glt_Input :
+						glt_None;
 					ListView_DeleteAllItems(hList);
 					for (int c = 0; (c <= 40) && ListView_DeleteColumn(hList, 0); c++);
 					//ListView_DeleteAllItems(hDetails);
@@ -4251,6 +4304,23 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 						////ListView_InsertItem(hDetails, &lvi);
 
 					}
+					else if (gpSet->m_RealConLoggingType == glt_Input)
+					{
+						LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+						wchar_t szTitle[64]; col.pszText = szTitle;
+
+						ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
+						ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
+						
+						wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, lic_Time, &col);
+						col.cx = 50;
+						wcscpy_c(szTitle, L"Type");		ListView_InsertColumn(hList, lic_Type, &col);
+						col.cx = 50;
+						wcscpy_c(szTitle, L"##");		ListView_InsertColumn(hList, lic_Dup, &col);
+						col.cx = 300;
+						wcscpy_c(szTitle, L"Event");	ListView_InsertColumn(hList, lic_Event, &col);
+
+					}
 					else
 					{
 						LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
@@ -4279,12 +4349,28 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 								HWND hList = GetDlgItem(hWnd2, lbActivityLog);
 								//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
 								wchar_t szText[65535]; szText[0] = 0;
-								ListView_GetItemText(hList, p->iItem, lpc_App, szText, countof(szText));
-								SetDlgItemText(hWnd2, ebActivityApp, szText);
-								//ListView_SetItemText(hDetails, 0, 1, szText);
-								ListView_GetItemText(hList, p->iItem, lpc_Params, szText, countof(szText));
-								SetDlgItemText(hWnd2, ebActivityParm, szText);
-								//ListView_SetItemText(hDetails, 1, 1, szText);
+								if (gpSet->m_RealConLoggingType == glt_Processes)
+								{
+									ListView_GetItemText(hList, p->iItem, lpc_App, szText, countof(szText));
+									SetDlgItemText(hWnd2, ebActivityApp, szText);
+									ListView_GetItemText(hList, p->iItem, lpc_Params, szText, countof(szText));
+									SetDlgItemText(hWnd2, ebActivityParm, szText);
+								}
+								else if (gpSet->m_RealConLoggingType == glt_Input)
+								{
+									ListView_GetItemText(hList, p->iItem, lic_Type, szText, countof(szText));
+									wcscat_c(szText, L" - ");
+									int nLen = lstrlen(szText);
+									ListView_GetItemText(hList, p->iItem, lic_Dup, szText+nLen, countof(szText)-nLen);
+									SetDlgItemText(hWnd2, ebActivityApp, szText);
+									ListView_GetItemText(hList, p->iItem, lic_Event, szText, countof(szText));
+									SetDlgItemText(hWnd2, ebActivityParm, szText);
+								}
+								else
+								{
+									SetDlgItemText(hWnd2, ebActivityApp, L"");
+									SetDlgItemText(hWnd2, ebActivityParm, L"");
+								}
 							}
 						} //LVN_ODSTATECHANGED
 						break;
@@ -4293,7 +4379,7 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 				return 0;
 			} // WM_NOTIFY
 			break;
-		case DBGMSG_LOG_SHELL:
+		case DBGMSG_LOG_ID:
 			if (wParam == DBGMSG_LOG_SHELL_MAGIC)
 			{
 				bSkipSelChange = true;
@@ -4366,8 +4452,135 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 					free(pShl->pszParam);
 				free(pShl);
 				bSkipSelChange = false;
-			} // DBGMSG_LOG_SHELL
-			break;
+			} // DBGMSG_LOG_SHELL_MAGIC
+			else if (wParam == DBGMSG_LOG_INPUT_MAGIC)
+			{
+				bSkipSelChange = true;
+				CESERVER_REQ_PEEKREADINFO* pInfo = (CESERVER_REQ_PEEKREADINFO*)lParam;
+				for (UINT nIdx = 0; nIdx < pInfo->nCount; nIdx++)
+				{
+					const INPUT_RECORD *pr = pInfo->Buffer+nIdx;
+					SYSTEMTIME st; GetLocalTime(&st);
+					wchar_t szTime[255]; _wsprintf(szTime, SKIPLEN(countof(szTime)) L"%02i:%02i:%02i", st.wHour, st.wMinute, st.wSecond);
+					HWND hList = GetDlgItem(hWnd2, lbActivityLog);
+					LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
+					lvi.state = lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
+					lvi.pszText = szTime;
+					static INPUT_RECORD LastLogEvent1; static char LastLogEventType1; static UINT LastLogEventDup1;
+					static INPUT_RECORD LastLogEvent2; static char LastLogEventType2; static UINT LastLogEventDup2;
+					if (LastLogEventType1 == pInfo->cPeekRead &&
+						memcmp(&LastLogEvent1, pr, sizeof(LastLogEvent1)) == 0)
+					{
+						LastLogEventDup1 ++;
+						_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", LastLogEventDup1);
+						ListView_SetItemText(hList, 0, lic_Dup, szTime); // верхний
+						//free(pr);
+						continue; // дубли - не показывать? только если прошло время?
+					}
+					if (LastLogEventType2 == pInfo->cPeekRead &&
+						memcmp(&LastLogEvent2, pr, sizeof(LastLogEvent2)) == 0)
+					{
+						LastLogEventDup2 ++;
+						_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", LastLogEventDup2);
+						ListView_SetItemText(hList, 1, lic_Dup, szTime); // верхний
+						//free(pr);
+						continue; // дубли - не показывать? только если прошло время?
+					}
+					int nItem = ListView_InsertItem(hList, &lvi);
+					if (LastLogEventType1 && LastLogEventType1 != pInfo->cPeekRead)
+					{
+						LastLogEvent2 = LastLogEvent1; LastLogEventType2 = LastLogEventType1; LastLogEventDup2 = LastLogEventDup1;
+					}
+					LastLogEventType1 = pInfo->cPeekRead;
+					memmove(&LastLogEvent1, pr, sizeof(LastLogEvent1));
+					LastLogEventDup1 = 1;
+					ListView_SetItemText(hList, nItem, lic_Dup, L"1");
+					//
+					szTime[0] = (wchar_t)pInfo->cPeekRead; szTime[1] = L'.'; szTime[2] = 0;
+					if (pr->EventType == MOUSE_EVENT)
+					{
+						wcscat_c(szTime, L"Mouse");
+						ListView_SetItemText(hList, nItem, lic_Type, szTime);
+						const MOUSE_EVENT_RECORD *rec = &pr->Event.MouseEvent;
+						_wsprintf(szTime, SKIPLEN(countof(szTime))
+						    L"[%d,%d], Btn=0x%08X (%c%c%c%c%c), Ctrl=0x%08X (%c%c%c%c%c - %c%c%c%c), Flgs=0x%08X (%s)",
+						    rec->dwMousePosition.X,
+						    rec->dwMousePosition.Y,
+						    rec->dwButtonState,
+						    (rec->dwButtonState&FROM_LEFT_1ST_BUTTON_PRESSED?L'L':L'l'),
+						    (rec->dwButtonState&RIGHTMOST_BUTTON_PRESSED?L'R':L'r'),
+						    (rec->dwButtonState&FROM_LEFT_2ND_BUTTON_PRESSED?L'2':L' '),
+						    (rec->dwButtonState&FROM_LEFT_3RD_BUTTON_PRESSED?L'3':L' '),
+						    (rec->dwButtonState&FROM_LEFT_4TH_BUTTON_PRESSED?L'4':L' '),
+						    rec->dwControlKeyState,
+						    (rec->dwControlKeyState&LEFT_CTRL_PRESSED?L'C':L'c'),
+						    (rec->dwControlKeyState&LEFT_ALT_PRESSED?L'A':L'a'),
+						    (rec->dwControlKeyState&SHIFT_PRESSED?L'S':L's'),
+						    (rec->dwControlKeyState&RIGHT_ALT_PRESSED?L'A':L'a'),
+						    (rec->dwControlKeyState&RIGHT_CTRL_PRESSED?L'C':L'c'),
+						    (rec->dwControlKeyState&ENHANCED_KEY?L'E':L'e'),
+						    (rec->dwControlKeyState&CAPSLOCK_ON?L'C':L'c'),
+						    (rec->dwControlKeyState&NUMLOCK_ON?L'N':L'n'),
+						    (rec->dwControlKeyState&SCROLLLOCK_ON?L'S':L's'),
+						    rec->dwEventFlags,
+							(rec->dwEventFlags==0?L"(Click)":
+						     (rec->dwEventFlags==DOUBLE_CLICK?L"(DblClick)":
+						      (rec->dwEventFlags==MOUSE_MOVED?L"(Moved)":
+						       (rec->dwEventFlags==MOUSE_WHEELED?L"(Wheel)":
+						        (rec->dwEventFlags==0x0008/*MOUSE_HWHEELED*/?L"(HWheel)":L"")))))
+						);
+						if (rec->dwEventFlags==MOUSE_WHEELED  || rec->dwEventFlags==0x0008/*MOUSE_HWHEELED*/)
+						{
+							int nLen = lstrlen(szTime);
+							_wsprintf(szTime+nLen, SKIPLEN(countof(szTime)-nLen)
+								L" (Delta=%d)",HIWORD(rec->dwButtonState));
+						}
+						ListView_SetItemText(hList, nItem, lic_Event, szTime);
+					}
+					else if (pr->EventType == KEY_EVENT)
+					{
+						wcscat_c(szTime, L"Key");
+						ListView_SetItemText(hList, nItem, lic_Type, szTime);
+						_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%c(%i) VK=%i, SC=%i, U=%c(x%04X), ST=x%08X",
+							pr->Event.KeyEvent.bKeyDown ? L'D' : L'U',
+							pr->Event.KeyEvent.wRepeatCount,
+							pr->Event.KeyEvent.wVirtualKeyCode, pr->Event.KeyEvent.wVirtualScanCode,
+							pr->Event.KeyEvent.uChar.UnicodeChar ? pr->Event.KeyEvent.uChar.UnicodeChar : L' ',
+							pr->Event.KeyEvent.uChar.UnicodeChar,
+							pr->Event.KeyEvent.dwControlKeyState);
+						ListView_SetItemText(hList, nItem, lic_Event, szTime);
+					}
+					else if (pr->EventType == FOCUS_EVENT)
+					{
+						wcscat_c(szTime, L"Focus");
+						ListView_SetItemText(hList, nItem, lic_Type, szTime);
+						_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", (DWORD)pr->Event.FocusEvent.bSetFocus);
+						ListView_SetItemText(hList, nItem, lic_Event, szTime);
+					}
+					else if (pr->EventType == WINDOW_BUFFER_SIZE_EVENT)
+					{
+						wcscat_c(szTime, L"Buffer");
+						ListView_SetItemText(hList, nItem, lic_Type, szTime);
+						_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%ix%i", (int)pr->Event.WindowBufferSizeEvent.dwSize.X, (int)pr->Event.WindowBufferSizeEvent.dwSize.Y);
+						ListView_SetItemText(hList, nItem, lic_Event, szTime);
+					}
+					else if (pr->EventType == MENU_EVENT)
+					{
+						wcscat_c(szTime, L"Menu");
+						ListView_SetItemText(hList, nItem, lic_Type, szTime);
+						_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", (DWORD)pr->Event.MenuEvent.dwCommandId);
+						ListView_SetItemText(hList, nItem, lic_Event, szTime);
+					}
+					else
+					{
+						_wsprintf(szTime+2, SKIPLEN(countof(szTime)-2) L"%u", (DWORD)pr->EventType);
+						ListView_SetItemText(hList, nItem, lic_Type, szTime);
+					}
+				}
+				free(pInfo);
+				bSkipSelChange = false;
+			}
+			break; // DBGMSG_LOG_ID
 
 		default:
 			return 0;
@@ -8298,7 +8511,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 						wchar_t szCommandLine[MAX_PATH];
 						SHELLEXECUTEINFO sei = {sizeof(SHELLEXECUTEINFO)};
 						sei.hwnd = hWnd2;
-						sei.fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS;
+						sei.fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NOASYNC;
 						sei.lpVerb = L"runas";
 						sei.lpFile = gpConEmu->ms_ConEmuCExeFull;
 						_wsprintf(szCommandLine, SKIPLEN(countof(szCommandLine)) L" \"/REGCONFONT=%s\"", szFaceName);

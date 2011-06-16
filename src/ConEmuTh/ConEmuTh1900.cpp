@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -77,9 +77,10 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 
 	Info->StructSize = sizeof(GlobalInfo);
 	Info->MinFarVersion = FARMANAGERVERSION;
-	//#define D(N) (1##N-100)
-	// YYMMDDX (YY - две цифры года, MM - месяц, DD - день, X - 0 и выше-номер подсборки)
-	Info->Version = ((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10);
+
+	// Build: YYMMDDX (YY - две цифры года, MM - месяц, DD - день, X - 0 и выше-номер подсборки)
+	Info->Version = MAKEFARVERSION(MVV_1,MVV_2,MVV_3,((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10),VS_RELEASE);
+
 	Info->Guid = guid_ConEmuTh;
 	Info->Title = L"ConEmu Panel Views";
 	Info->Description = L"Thumbnails and Tiles in ConEmu window";
@@ -116,18 +117,19 @@ void SetStartupInfoW1900(void *aInfo)
 	*::FSFW1900 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW1900->FSF = ::FSFW1900;
 
-	DWORD nFarVer = 0;
-	if (InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETFARVERSION, &nFarVer))
+	VersionInfo FarVer = {0};
+	if (InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETFARMANAGERVERSION, 0, &FarVer))
 	{
-		if (HIBYTE(HIWORD(nFarVer)) == 3)
+		if (FarVer.Major == 3)
 		{
-			gFarVersion.dwBuild = LOWORD(nFarVer);
-			gFarVersion.dwVerMajor = (HIBYTE(HIWORD(nFarVer)));
-			gFarVersion.dwVerMinor = (LOBYTE(HIWORD(nFarVer)));
+			gFarVersion.dwBuild = FarVer.Build;
+			_ASSERTE(FarVer.Major<=0xFFFF && FarVer.Minor<=0xFFFF)
+			gFarVersion.dwVerMajor = (WORD)FarVer.Major;
+			gFarVersion.dwVerMinor = (WORD)FarVer.Minor;
 		}
 		else
 		{
-			_ASSERTE(HIBYTE(HIWORD(nFarVer)) == 3);
+			_ASSERTE(FarVer.Major == 3);
 		}
 	}
 
@@ -208,7 +210,7 @@ void PostMacroW1900(wchar_t* asMacro)
 	}
 
 	mcr.SequenceText = asMacro;
-	InfoW1900->MacroControl(INVALID_HANDLE_VALUE, MCTL_SENDSTRING, 0, (INT_PTR)&mcr);
+	InfoW1900->MacroControl(INVALID_HANDLE_VALUE, MCTL_SENDSTRING, 0, &mcr);
 }
 
 int ShowPluginMenuW1900()
@@ -268,7 +270,7 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, int nItem)
 {
 	//HANDLE hPanel = pi->hPanel;
 	HANDLE hPanel = pi->Focus ? PANEL_ACTIVE : PANEL_PASSIVE;
-	INT_PTR nSize = InfoW1900->Control(hPanel, FCTL_GETPANELITEM, nItem, NULL);
+	INT_PTR nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELITEM, nItem, NULL);
 	//PluginPanelItem *ppi = (PluginPanelItem*)malloc(nMaxSize);
 	//if (!ppi)
 	//	return;
@@ -285,7 +287,8 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, int nItem)
 
 	if (ppi)
 	{
-		nSize = InfoW1900->Control(hPanel, FCTL_GETPANELITEM, nItem, (LONG_PTR)ppi);
+		FarGetPluginPanelItem gppi = {nSize, ppi};
+		nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELITEM, nItem, &gppi);
 	}
 	else
 	{
@@ -377,7 +380,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	CeFullPanelInfo* pcefpi = NULL;
 	PanelInfo pi = {0};
 	HANDLE hPanel = abActive ? PANEL_ACTIVE : PANEL_PASSIVE;
-	int nRc = InfoW1900->Control(hPanel, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
+	int nRc = InfoW1900->PanelControl(hPanel, FCTL_GETPANELINFO, 0, &pi);
 
 	if (!nRc)
 	{
@@ -422,11 +425,11 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	pcefpi->IsFilePanel = (pi.PanelType == PTYPE_FILEPANEL);
 	// Настройки интерфейса
 	pcefpi->nFarInterfaceSettings = gnFarInterfaceSettings =
-	                                    (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETINTERFACESETTINGS, 0);
+	                                    (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETINTERFACESETTINGS, 0, 0);
 	pcefpi->nFarPanelSettings = gnFarPanelSettings =
-	                                (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETPANELSETTINGS, 0);
+	                                (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETPANELSETTINGS, 0, 0);
 	// Цвета фара
-	int nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, NULL);
+	int nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, NULL);
 
 	if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
 	{
@@ -436,9 +439,9 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 		pcefpi->nMaxFarColors = nColorSize;
 	}
 
-	nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
+	nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, pcefpi->nFarColors);
 	// Текущая папка панели
-	int nSize = (int)InfoW1900->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
+	int nSize = (int)InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR, 0, 0);
 
 	if (nSize)
 	{
@@ -448,7 +451,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 			pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
 		}
 
-		nSize = InfoW1900->Control(hPanel, FCTL_GETPANELDIR, nSize, (LONG_PTR)pcefpi->pszPanelDir);
+		nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR, nSize, pcefpi->pszPanelDir);
 
 		if (!nSize)
 		{
@@ -500,7 +503,7 @@ void SetCurrentPanelItemW1900(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
 	HANDLE hPanel = NULL;
 	PanelInfo piActive = {0}, piPassive = {0}, *pi = NULL;
 	TODO("Проверять текущую видимость панелей?");
-	InfoW1900->Control(PANEL_ACTIVE,  FCTL_GETPANELINFO, 0, (LONG_PTR)&piActive);
+	InfoW1900->PanelControl(PANEL_ACTIVE,  FCTL_GETPANELINFO, 0, &piActive);
 
 	if ((piActive.Flags & PFLAGS_PANELLEFT) == (abLeftPanel ? PFLAGS_PANELLEFT : 0))
 	{
@@ -508,7 +511,7 @@ void SetCurrentPanelItemW1900(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
 	}
 	else
 	{
-		InfoW1900->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&piPassive);
+		InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &piPassive);
 		pi = &piPassive; hPanel = PANEL_PASSIVE;
 	}
 
@@ -527,7 +530,7 @@ void SetCurrentPanelItemW1900(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
 
 	// Обновляем панель
 	PanelRedrawInfo pri = {anCurItem, anTopItem};
-	InfoW1900->Control(hPanel, FCTL_REDRAWPANEL, 0, (LONG_PTR)&pri);
+	InfoW1900->PanelControl(hPanel, FCTL_REDRAWPANEL, 0, &pri);
 }
 
 //BOOL IsLeftPanelActiveW1900()
@@ -542,9 +545,9 @@ BOOL CheckPanelSettingsW1900(BOOL abSilence)
 		return FALSE;
 
 	gnFarPanelSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETPANELSETTINGS, 0);
+	    (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETPANELSETTINGS, 0, 0);
 	gnFarInterfaceSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETINTERFACESETTINGS, 0);
+	    (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETINTERFACESETTINGS, 0, 0);
 
 	if (!(gnFarPanelSettings & FPS_SHOWCOLUMNTITLES))
 	{
@@ -566,7 +569,7 @@ void ExecuteInMainThreadW1900(ConEmuThSynchroArg* pCmd)
 {
 	if (!InfoW1900) return;
 
-	InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_SYNCHRO, pCmd);
+	InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_SYNCHRO, 0, pCmd);
 }
 
 void GetFarRectW1900(SMALL_RECT* prcFarRect)
@@ -574,7 +577,7 @@ void GetFarRectW1900(SMALL_RECT* prcFarRect)
 	if (!InfoW1900) return;
 
 	_ASSERTE(ACTL_GETFARRECT!=32);
-	if (!InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETFARRECT, prcFarRect))
+	if (!InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETFARRECT, 0, prcFarRect))
 	{
 		prcFarRect->Left = prcFarRect->Right = prcFarRect->Top = prcFarRect->Bottom = 0;
 	}
@@ -588,7 +591,7 @@ bool CheckFarPanelsW1900()
 	WindowType wt = {sizeof(WindowType)};
 	bool lbPanelsActive = false;
 	//_ASSERTE(GetCurrentThreadId() == gnMainThreadId); -- ACTL_GETWINDOWTYPE - thread safe
-	INT_PTR iRc = InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETWINDOWTYPE, (LPVOID)&wt);
+	INT_PTR iRc = InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETWINDOWTYPE, 0, &wt);
 	lbPanelsActive = (iRc != 0) && (wt.Type == WTYPE_PANELS);
 	return lbPanelsActive;
 }
@@ -645,14 +648,14 @@ BOOL SettingsLoadW1900(LPCWSTR pszName, DWORD* pValue)
 	BOOL lbValue = FALSE;
 	FarSettingsCreate sc = {sizeof(FarSettingsCreate), guid_ConEmuTh, INVALID_HANDLE_VALUE};
 	FarSettingsItem fsi = {0};
-	if (InfoW1900->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, (INT_PTR)&sc))
+	if (InfoW1900->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
 	{
 		//DWORD nValue = *pValue;
 		fsi.Name = pszName;
 		fsi.Type = FST_DATA;
 		//fsi.Data.Size = sizeof(nValue); 
 		//fsi.Data.Data = &nValue;
-		if (InfoW1900->SettingsControl(sc.Handle, SCTL_GET, 0, (INT_PTR)&fsi) && (fsi.Data.Size == sizeof(DWORD)))
+		if (InfoW1900->SettingsControl(sc.Handle, SCTL_GET, 0, &fsi) && (fsi.Data.Size == sizeof(DWORD)))
 		{
 			*pValue = *((DWORD*)fsi.Data.Data);
 		}
@@ -668,14 +671,14 @@ void SettingsSaveW1900(LPCWSTR pszName, DWORD* pValue)
 
 	FarSettingsCreate sc = {sizeof(FarSettingsCreate), guid_ConEmuTh, INVALID_HANDLE_VALUE};
 	FarSettingsItem fsi = {0};
-	if (InfoW1900->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, (INT_PTR)&sc))
+	if (InfoW1900->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
 	{
 		DWORD nValue = *pValue;
 		fsi.Name = pszName;
 		fsi.Type = FST_DATA;
 		fsi.Data.Size = sizeof(nValue); 
 		fsi.Data.Data = &nValue;
-		InfoW1900->SettingsControl(sc.Handle, SCTL_SET, 0, (INT_PTR)&fsi);
+		InfoW1900->SettingsControl(sc.Handle, SCTL_SET, 0, &fsi);
 
 		InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
 	}

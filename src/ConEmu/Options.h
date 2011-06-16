@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -276,6 +276,7 @@ class CSettings
 		DWORD nAffinity;
 
 		bool isUseInjects;
+		bool isPortableReg;
 
 		// Debugging - "c:\\temp\\ConEmuVCon-%i-%i.dat"
 		BYTE isAdvLogging;

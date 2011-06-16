@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -131,8 +131,21 @@ class CConEmuMain
 		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
 		wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 		BOOL mb_DosBoxExists;
+		// Portable Far Registry
+		BOOL mb_PortableRegExist;
+		wchar_t ms_PortableRegHive[MAX_PATH]; // полный путь к "Portable.S-x-x-..."
+		wchar_t ms_PortableRegHiveOrg[MAX_PATH]; // путь к "Portable.S-x-x-..." (в ConEmu). этот файл мог быть скопирован в ms_PortableRegHive
+		wchar_t ms_PortableReg[MAX_PATH]; // "Portable.reg"
+		HKEY mh_PortableMountRoot; // Это HKEY_CURRENT_USER или HKEY_USERS
+		wchar_t ms_PortableMountKey[MAX_PATH];
+		BOOL mb_PortableKeyMounted;
+		wchar_t ms_PortableTempDir[MAX_PATH];
+		HKEY mh_PortableRoot; // Это открытый ключ
+		bool PreparePortableReg();
 	private:
 		BOOL CheckDosBoxExists();
+		void CheckPortableReg();
+		void FinalizePortableReg();
 		wchar_t ms_ConEmuXml[MAX_PATH+1];       // полный путь к портабельным настройкам
 	public:
 		LPWSTR ConEmuXml();
@@ -260,6 +273,7 @@ class CConEmuMain
 		BOOL mb_HotKeyRegistered;
 		HHOOK mh_LLKeyHook;
 		HMODULE mh_LLKeyHookDll;
+		HMODULE LoadConEmuCD();
 		void RegisterHotKeys();
 		void UnRegisterHotKeys(BOOL abFinal=FALSE);
 		int mn_MinRestoreRegistered; UINT mn_MinRestore_VK, mn_MinRestore_MOD;
@@ -320,7 +334,7 @@ class CConEmuMain
 
 	public:
 		DWORD CheckProcesses();
-		DWORD GetFarPID();
+		DWORD GetFarPID(BOOL abPluginRequired=FALSE);
 
 	public:
 		LPCTSTR GetLastTitle(bool abUseDefault=true);
@@ -383,7 +397,7 @@ class CConEmuMain
 		bool isMainThread();
 		bool isMeForeground(bool abRealAlso=false);
 		bool isMouseOverFrame(bool abReal=false);
-		bool isNtvdm();
+		bool isNtvdm(BOOL abCheckAllConsoles=FALSE);
 		bool isPictureView();
 		bool isProcessCreated();
 		bool isRightClickingPaint();

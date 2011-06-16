@@ -32,6 +32,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NEWRUNSTYLE
 //#undef NEWRUNSTYLE
 
+//#define USEPORTABLEREGISTRY
+#undef USEPORTABLEREGISTRY
+
 #include <windows.h>
 #include <Shlwapi.h>
 #include <vector>
@@ -224,7 +227,7 @@ struct RConStartArgs
 	wchar_t* pszSpecialCmd;
 	wchar_t* pszStartupDir;
 	BOOL     bRunAsAdministrator, bRunAsRestricted;
-	wchar_t* pszUserName, szUserPassword[MAX_PATH];
+	wchar_t* pszUserName, *pszDomain, szUserPassword[MAX_PATH];
 	//wchar_t* pszUserPassword;
 	BOOL     bRecreate; // !!! Информационно !!!
 	//HANDLE   hLogonToken;
@@ -232,7 +235,7 @@ struct RConStartArgs
 	RConStartArgs()
 	{
 		bDetached = bRunAsAdministrator = bRunAsRestricted = bRecreate = FALSE;
-		pszSpecialCmd = pszStartupDir = pszUserName = /*pszUserPassword =*/ NULL;
+		pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = /*pszUserPassword =*/ NULL;
 		szUserPassword[0] = 0;
 		//hLogonToken = NULL;
 	};
@@ -241,6 +244,7 @@ struct RConStartArgs
 		SafeFree(pszSpecialCmd); // именно SafeFree
 		SafeFree(pszStartupDir); // именно SafeFree
 		SafeFree(pszUserName);
+		SafeFree(pszDomain);
 
 		//SafeFree(pszUserPassword);
 		if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
@@ -260,8 +264,17 @@ struct RConStartArgs
 		if (!GetWindowText(hPwd, szUserPassword, MAX_PATH-1))
 			return FALSE;
 
+		SafeFree(pszDomain);
+		wchar_t* pszSlash = wcschr(pszUserName, L'\\');
+		if (pszSlash)
+		{
+			pszDomain = pszUserName;
+			*pszSlash = 0;
+			pszUserName = lstrdup(pszSlash+1);
+		}
+
 		HANDLE hLogonToken = NULL;
-		BOOL lbRc = LogonUser(pszUserName, NULL, szUserPassword, LOGON32_LOGON_INTERACTIVE,
+		BOOL lbRc = LogonUser(pszUserName, pszDomain, szUserPassword, LOGON32_LOGON_INTERACTIVE,
 		                      LOGON32_PROVIDER_DEFAULT, &hLogonToken);
 		//if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
 

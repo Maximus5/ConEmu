@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -208,7 +208,14 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 void CreateLogSizeFile(int nLevel);
 void LogSize(COORD* pcrSize, LPCSTR pszLabel);
 void LogString(LPCSTR asText);
-BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
+
+
+#if defined(__GNUC__)
+extern "C" {
+	BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
+};
+#endif
+
 int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount);
 SHORT CorrectTopVisible(int nY);
 BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi);

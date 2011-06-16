@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -178,8 +178,9 @@ struct ConProcess
 //}
 //
 
-#define DBGMSG_LOG_SHELL (WM_APP+100)
+#define DBGMSG_LOG_ID (WM_APP+100)
 #define DBGMSG_LOG_SHELL_MAGIC 0xD73A34
+#define DBGMSG_LOG_INPUT_MAGIC 0xD73A35
 struct DebugLogShellActivity
 {
 	DWORD   nParentPID, nParentBits, nChildPID;
@@ -304,7 +305,7 @@ class CRealConsole
 		BOOL ActivateFarWindow(int anWndIndex);
 		DWORD CanActivateFarWindow(int anWndIndex);
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
-		void CloseConsole();
+		void CloseConsole(BOOL abForceTerminate = FALSE);
 		bool isConsoleClosing();
 		void OnServerClosing(DWORD anSrvPID);
 		void Paste();
@@ -320,7 +321,7 @@ class CRealConsole
 		//bool isPackets();
 		LPCWSTR GetCmd();
 		LPCWSTR GetDir();
-		BOOL GetUserPwd(const wchar_t** ppszUser, /*const wchar_t** ppszPwd,*/ BOOL* pbRestricted);
+		BOOL GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, BOOL* pbRestricted);
 		short GetProgress(BOOL* rpbError);
 		void UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo);
 		void UpdateFarSettings(DWORD anFarPID=0);
@@ -452,6 +453,7 @@ class CRealConsole
 		DWORD m_FarPlugPIDs[128];
 		int mn_FarPlugPIDsCount;
 		BOOL mb_SkipFarPidChange;
+		DWORD m_TerminatedPIDs[128]; int mn_TerminatedIdx;
 		//
 		DWORD mn_FarPID, /*mn_FarInputTID,*/ mn_LastSetForegroundPID;
 		//
@@ -463,8 +465,8 @@ class CRealConsole
 		//
 		//void ProcessAdd(DWORD addPID);
 		//void ProcessDelete(DWORD addPID);
-		void ProcessUpdate(const DWORD *apPID, UINT anCount);
-		void ProcessUpdateFlags(BOOL abProcessChanged);
+		BOOL ProcessUpdate(const DWORD *apPID, UINT anCount);
+		BOOL ProcessUpdateFlags(BOOL abProcessChanged);
 		void ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFileName);
 		DWORD mn_ProgramStatus, mn_FarStatus;
 		DWORD mn_Comspec4Ntvdm;
@@ -497,6 +499,7 @@ class CRealConsole
 		CESERVER_REQ* cmdActivateCon(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdGetNewConParm(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdOnPeekReadInput(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		//CESERVER_REQ* cmdAssert(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		
 		//void ApplyConsoleInfo(CESERVER_REQ* pInfo);
@@ -533,7 +536,8 @@ class CRealConsole
 		//const CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> m_ConsoleMap;
 		//const CEFAR_INFO_MAPPING *mp_FarInfo;
-		MFileMapping<const CEFAR_INFO_MAPPING> m_FarInfo;
+		CEFAR_INFO_MAPPING m_FarInfo;
+		MFileMapping<const CEFAR_INFO_MAPPING> m__FarInfo; // в коде напрямую не использовать, только через секцию!
 		MSection ms_FarInfoCS;
 		// Colorer Mapping
 		//HANDLE mh_ColorMapping;
@@ -553,7 +557,7 @@ class CRealConsole
 		//void CloseMapData();
 		//BOOL ReopenMapData();
 		void CloseMapHeader();
-		void ApplyConsoleInfo();
+		BOOL ApplyConsoleInfo();
 		BOOL mb_DataChanged;
 		void OnServerStarted();
 		//

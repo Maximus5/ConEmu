@@ -1,10 +1,14 @@
+LIBRARY
+
 EXPORTS
+; functions
 	LLKeybHook=LLKeybHook@12
-	SetHookCallbacks=SetHookCallbacks@24
-	SetLoadLibraryCallback=SetLoadLibraryCallback@12
 	ConsoleMain=ConsoleMain@0
 	HandlerRoutine=HandlerRoutine@4
-	SetFarHookMode=@4
+	MountVirtualHive=MountVirtualHive@24
+	UnMountVirtualHive=UnMountVirtualHive@12
+
+; LLKeyHooks (ConEmu GUI)
 	ghKeyHook
 	gnVkWinFix
 	ghKeyHookConEmuRoot

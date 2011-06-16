@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1004,6 +1004,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	wchar_t szDebug[1024] = {};
 	msprintf(szDebug, countof(szDebug), L"Test %u %i %s 0x%X %c 0x%08X*",
 		987654321, -1234, L"abcdef", 0xAB1298, L'Z', 0xAB1298);
+	msprintf(szDebug, countof(szDebug), L"<%c%c>%u.%s",
+		'ÿ', (wchar_t)0x44F, 0x44F, L"End");
 #endif
 
 #ifdef SHOW_STARTED_MSGBOX

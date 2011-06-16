@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -62,10 +62,25 @@ DWORD   gnHookMainThreadId = 0;
 //const wchar_t user32[]   = L"user32.dll";
 //const wchar_t shell32[]  = L"shell32.dll";
 //HMODULE ghKernel32 = NULL, ghUser32 = NULL, ghShell32 = NULL;
-extern const wchar_t *kernel32;// = L"kernel32.dll";
-extern const wchar_t *user32  ;// = L"user32.dll";
-extern const wchar_t *shell32 ;// = L"shell32.dll";
-extern HMODULE ghKernel32, ghUser32, ghShell32;
+//extern const wchar_t *kernel32;// = L"kernel32.dll";
+//extern const wchar_t *user32  ;// = L"user32.dll";
+//extern const wchar_t *shell32 ;// = L"shell32.dll";
+//extern const wchar_t *advapi32;// = L"Advapi32.dll";
+//extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32;
+
+const wchar_t *kernel32 = L"kernel32.dll";
+const wchar_t *user32   = L"user32.dll";
+const wchar_t *shell32  = L"shell32.dll";
+const wchar_t *advapi32 = L"Advapi32.dll";
+HMODULE ghKernel32 = NULL, ghUser32 = NULL, ghShell32 = NULL, ghAdvapi32 = NULL;
+
+//typedef LONG (WINAPI* RegCloseKey_t)(HKEY hKey);
+RegCloseKey_t RegCloseKey_f = NULL;
+//typedef LONG (WINAPI* RegOpenKeyEx_t)(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
+RegOpenKeyEx_t RegOpenKeyEx_f = NULL;
+//typedef LONG (WINAPI* RegCreateKeyEx_t(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition);
+RegCreateKeyEx_t RegCreateKeyEx_f = NULL;
+
 
 BOOL gbHooksTemporaryDisabled = FALSE;
 //BOOL gbInShellExecuteEx = FALSE;
@@ -129,7 +144,8 @@ const wchar_t* ExcludedModules[MAX_EXCLUDED_MODULES] =
 	L"kernelbase.dll",
 	L"kernel32.dll",
 	L"user32.dll",
-//	L"shell32.dll", -- shell нужно обрабатывать обязательно. по крайней мере в WinXP/Win2k3 (
+	L"advapi32.dll",
+//	L"shell32.dll", -- shell нужно обрабатывать обязательно. по крайней мере в WinXP/Win2k3 (ShellExecute должен звать наш CreateProcess)
 	L"wininet.dll", // какой-то криминал с этой библиотекой?
 //#ifndef _DEBUG
 	L"mssign32.dll",
@@ -280,7 +296,7 @@ bool __stdcall InitHooks(HookItem* apHooks)
 
 			if (mod == NULL)
 			{
-				_ASSERTE(mod != NULL || (gpHooks[i].DllName == shell32 || gpHooks[i].DllName == user32));
+				_ASSERTE(mod != NULL || (gpHooks[i].DllName == shell32 || gpHooks[i].DllName == user32 || gpHooks[i].DllName == advapi32));
 			}
 			else
 			{
@@ -379,6 +395,9 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 	//#ifdef NDEBUG
 	//	PRAGMA_ERROR("Один модуль обрабатывать ОДИН раз");
 	//#endif
+	
+	if (!Module || (Module == INVALID_HANDLE_VALUE))
+		return false;
 
 	BOOL bExecutable = (Module == hExecutable);
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
@@ -404,7 +423,7 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 		return false;
 
 	// if wrong module or no import table
-	if (Module == INVALID_HANDLE_VALUE || !Import)
+	if (!Import)
 		return false;
 
 #ifdef _DEBUG
@@ -1016,7 +1035,7 @@ void LoadModuleFailed(LPCSTR asModuleA, LPCWSTR asModuleW)
 		return;
 
 
-	CESERVER_REQ* pIn = NULL, *pOunt = NULL;
+	CESERVER_REQ* pIn = NULL;
 	wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
 	wchar_t szErrCode[64]; szErrCode[0] = 0;
 	msprintf(szErrCode, countof(szErrCode), L"ErrCode=0x%08X", dwErrCode);
@@ -1063,7 +1082,7 @@ void PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW)
 
 	if (!ghUser32)
 	{
-		// Если на старте exe-шника shell32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
+		// Если на старте exe-шника user32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
 		if ((asModuleA && (!lstrcmpiA(asModuleA, "user32.dll") || !lstrcmpiA(asModuleA, "user32"))) ||
 			(asModuleW && (!lstrcmpiW(asModuleW, L"user32.dll") || !lstrcmpiW(asModuleW, L"user32"))))
 		{
@@ -1078,6 +1097,22 @@ void PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW)
 			(asModuleW && (!lstrcmpiW(asModuleW, L"shell32.dll") || !lstrcmpiW(asModuleW, L"shell32"))))
 		{
 			ghShell32 = LoadLibraryW(shell32);
+			InitHooks(NULL);
+		}
+	}
+	if (!ghAdvapi32)
+	{
+		// Если на старте exe-шника advapi32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
+		if ((asModuleA && (!lstrcmpiA(asModuleA, "advapi32.dll") || !lstrcmpiA(asModuleA, "advapi32"))) ||
+			(asModuleW && (!lstrcmpiW(asModuleW, L"advapi32.dll") || !lstrcmpiW(asModuleW, L"advapi32"))))
+		{
+			ghAdvapi32 = LoadLibraryW(advapi32);
+			if (ghAdvapi32)
+			{
+				RegOpenKeyEx_f = (RegOpenKeyEx_t)GetProcAddress(ghAdvapi32, "RegOpenKeyExW");
+				RegCreateKeyEx_f = (RegCreateKeyEx_t)GetProcAddress(ghAdvapi32, "RegCreateKeyExW");
+				RegCloseKey_f = (RegCloseKey_t)GetProcAddress(ghAdvapi32, "RegCloseKey");
+			}
 			InitHooks(NULL);
 		}
 	}
@@ -1096,7 +1131,7 @@ void PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW)
 
 	if (gbLogLibraries)
 	{
-		CESERVER_REQ* pIn = NULL, *pOunt = NULL;
+		CESERVER_REQ* pIn = NULL;
 		wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
 		if (!asModuleA && !asModuleW)
 		{
@@ -1272,7 +1307,7 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 		CShellProc* sp = new CShellProc();
 		if (sp->LoadGuiMapping())
 		{
-			CESERVER_REQ* pIn = NULL, *pOunt = NULL;
+			CESERVER_REQ* pIn = NULL;
 			wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
 			if (!GetModuleFileName(hModule, szModule, countof(szModule)))
 				msprintf(szModule, countof(szModule), L"<HMODULE=0x%08X>", (DWORD)hModule);
@@ -1292,11 +1327,6 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 			}
 		}
 		delete sp;
-	}
-
-	if (ghUser32 && (hModule == ghUser32))
-	{
-		Is_Window = NULL;
 	}
 
 	if (ghOnLoadLibModule == hModule)
@@ -1327,6 +1357,23 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 
 	BOOL lbRc = FALSE;
 	lbRc = F(FreeLibrary)(hModule);
+
+	if (ghUser32 && (hModule == ghUser32))
+	{
+		if (GetModuleHandle(user32) == NULL)
+			Is_Window = NULL;
+	}
+
+	if (ghAdvapi32 && (hModule == ghAdvapi32))
+	{
+		if (GetModuleHandle(advapi32) == NULL)
+		{
+			RegOpenKeyEx_f = NULL;
+			RegCreateKeyEx_f = NULL;
+			RegCloseKey_f = NULL;
+		}
+	}
+
 	return lbRc;
 }
 

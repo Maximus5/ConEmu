@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2010 Maximus5
+Copyright (c) 2010-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -106,13 +106,14 @@ enum tag_PeStrMagics
 
 enum tag_PeStrFlags
 {
-	PE_Far1         = 0x001,
-	PE_Far2         = 0x002,
-	PE_DOTNET       = 0x004,
-	PE_UPX          = 0x008,
-	PE_VER_EXISTS   = 0x010,
-	PE_ICON_EXISTS  = 0x020,
-	PE_SIGNED       = 0x040,
+	PE_Far1         = 0x0001,
+	PE_Far2         = 0x0002,
+	PE_Far3         = 0x0004,
+	PE_DOTNET       = 0x0100,
+	PE_UPX          = 0x0200,
+	PE_VER_EXISTS   = 0x0400,
+	PE_ICON_EXISTS  = 0x0800,
+	PE_SIGNED       = 0x1000,
 };
 
 
@@ -2224,6 +2225,7 @@ template <class T> void DumpExportsSection(PEData *pData, PBYTE pImageBase, T * 
 	pszFuncNames =	(DWORD *)GetPtrFromRVA(pExportDir->AddressOfNames, pNTHeader, pImageBase);
 	LPCSTR pszFuncName = NULL;
 	//char szNameBuffer[MAX_PATH+1]; //, szEntryPoint[32], szOrdinal[16];
+	bool lbOpenPluginW = false;
 
 	//pChild->printf("\n  Entry Pt  Ordn  Name\n");
 	if (pdwFunctions)
@@ -2270,8 +2272,17 @@ template <class T> void DumpExportsSection(PEData *pData, PBYTE pImageBase, T * 
 								//pRoot->AddFlags(_T("FAR2"));
 								pData->nFlags |= PE_Far2;
 							}
-							if ((pData->nFlags & (PE_Far1|PE_Far2)) == (PE_Far1|PE_Far2))
-								return;
+							else if (!strcmp(pszFuncName, "GetGlobalInfoW"))
+							{
+								//pRoot->AddFlags(_T("FAR3"));
+								pData->nFlags |= PE_Far3;
+							}
+							else if (!strcmp(pszFuncName, "OpenPluginW") || !strcmp(pszFuncName, "OpenFilePluginW"))
+							{
+								lbOpenPluginW = true;
+							}
+							//if ((pData->nFlags & (PE_Far1|PE_Far2)) == (PE_Far1|PE_Far2))
+							//	return;
 						}
 					}
 				}
@@ -2295,6 +2306,9 @@ template <class T> void DumpExportsSection(PEData *pData, PBYTE pImageBase, T * 
 
 			//pFunc->AddText(_T("\n"));
 		}
+
+	if ((pData->nFlags & PE_Far2) && (pData->nFlags & PE_Far3) && !lbOpenPluginW)
+		pData->nFlags &= ~PE_Far2;
 
 	//pChild->printf( "\n" );
 }
@@ -2582,12 +2596,33 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 
 		//lstrcpy(pszInfo, (pData->nBits == 64) ? L"64 " : (pData->nBits == 16) ? L"16 " : L"32 ");
 
-		if ((pData->nFlags & (PE_Far1|PE_Far2)) == (PE_Far1|PE_Far2))
-			lstrcat(pData->szInfo, L"Far1&2 ");
-		else if ((pData->nFlags & PE_Far1))
-			lstrcat(pData->szInfo, L"Far1 ");
-		else if ((pData->nFlags & PE_Far2))
-			lstrcat(pData->szInfo, L"Far2 ");
+		if ((pData->nFlags & (PE_Far1|PE_Far2|PE_Far3)))
+		{
+			lstrcat(pData->szInfo, L"Far");
+			bool lbFirst = true;
+			if (pData->nFlags & PE_Far1)
+			{
+				if (lbFirst) lbFirst = false; else lstrcat(pData->szInfo, L"&");
+				lstrcat(pData->szInfo, L"1");
+			}
+			if (pData->nFlags & PE_Far2)
+			{
+				if (lbFirst) lbFirst = false; else lstrcat(pData->szInfo, L"&");
+				lstrcat(pData->szInfo, L"2");
+			}
+			if (pData->nFlags & PE_Far3)
+			{
+				if (lbFirst) lbFirst = false; else lstrcat(pData->szInfo, L"&");
+				lstrcat(pData->szInfo, L"3");
+			}
+			lstrcat(pData->szInfo, L" ");
+		}
+		//if ((pData->nFlags & (PE_Far1|PE_Far2)) == (PE_Far1|PE_Far2))
+		//	lstrcat(pData->szInfo, L"Far1&2 ");
+		//else if ((pData->nFlags & PE_Far1))
+		//	lstrcat(pData->szInfo, L"Far1 ");
+		//else if ((pData->nFlags & PE_Far2))
+		//	lstrcat(pData->szInfo, L"Far2 ");
 
 		if ((pData->nFlags & PE_UPX)) lstrcat(pData->szInfo, L"Upx ");
 		if ((pData->nFlags & PE_DOTNET)) lstrcat(pData->szInfo, L".Net ");

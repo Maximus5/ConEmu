@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -93,6 +93,11 @@ FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit = NULL;
 //MConHandle ghConIn ( L"CONIN$" );
 MConHandle ghConOut(L"CONOUT$");
 
+// Время ожидания завершения консольных процессов, когда юзер нажал крестик в КОНСОЛЬНОМ окне
+// The system also displays this dialog box if the process does not respond within a certain time-out period 
+// (5 seconds for CTRL_CLOSE_EVENT, and 20 seconds for CTRL_LOGOFF_EVENT or CTRL_SHUTDOWN_EVENT).
+// Поэтому ждать пытаемся - не больше 4 сек
+#define CLOSE_CONSOLE_TIMEOUT 4000
 
 /*  Global  */
 HMODULE ghOurModule = NULL; // ConEmuCD.dll
@@ -186,9 +191,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ghConWnd = GetConsoleWindow();
 			gnSelfPID = GetCurrentProcessId();
 
-			HANDLE hProcHeap = GetProcessHeap();
-
 			#ifdef _DEBUG
+			HANDLE hProcHeap = GetProcessHeap();
 			gAllowAssertThread = am_Pipe;
 			#endif
 
@@ -417,6 +421,12 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 //#endif
 
 
+
+#if defined(__GNUC__)
+extern "C" {
+	int __stdcall ConsoleMain();
+};
+#endif
 
 // Main entry point for ConEmuC.exe
 int __stdcall ConsoleMain()
@@ -755,7 +765,17 @@ int __stdcall ConsoleMain()
 			//#ifdef _DEBUG
 			//gbLogProcess = TRUE;
 			//#endif
-			int iHookRc = InjectHooks(pi, FALSE, gbLogProcess);
+			int iHookRc = -1;
+			if (((gnImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE) || (gnImageBits == 16))
+				&& !gbUseDosBox)
+			{
+				// Если запускается ntvdm.exe - все-равно хук поставить не даст
+				iHookRc = 0;
+			}
+			else
+			{
+				iHookRc = InjectHooks(pi, FALSE, gbLogProcess);
+			}
 
 			if (iHookRc != 0)
 			{
@@ -2908,6 +2928,11 @@ void SendStarted()
 		}
 
 		pIn->StartStop.nSubSystem = gnImageSubsystem;
+		if ((gnImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE) || (gbUseDosBox))
+			pIn->StartStop.nImageBits = 16;
+		else if (gnImageBits)
+			pIn->StartStop.nImageBits = gnImageBits;
+
 		pIn->StartStop.bRootIsCmdExe = gbRootIsCmdExe; //2009-09-14
 		// НЕ MyGet..., а то можем заблокироваться...
 		HANDLE hOut = NULL;
@@ -3051,6 +3076,18 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 		pIn->StartStop.hWnd = ghConWnd;
 		pIn->StartStop.dwPID = gnSelfPID;
 		pIn->StartStop.nSubSystem = gnImageSubsystem;
+		if ((gnImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE) || (gbUseDosBox))
+			pIn->StartStop.nImageBits = 16;
+		else if (gnImageBits)
+			pIn->StartStop.nImageBits = gnImageBits;
+		else
+		{
+			#ifdef _WIN64
+			pIn->StartStop.nImageBits = 64;
+			#else
+			pIn->StartStop.nImageBits = 32;
+			#endif
+		}
 		pIn->StartStop.bWasBufferHeight = gbWasBufferHeight;
 
 		if (psbi != NULL)
@@ -5278,6 +5315,12 @@ wrap:
 	return lbRc;
 }
 
+#if defined(__GNUC__)
+extern "C" {
+	BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
+};
+#endif
+
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
 	//PRINT_COMSPEC(L"HandlerRoutine triggered. Event type=%i\n", dwCtrlType);
@@ -5286,14 +5329,39 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 		|| (dwCtrlType == CTRL_SHUTDOWN_EVENT))
 	{
 		PRINT_COMSPEC(L"Console about to be closed\n", 0);
+		WARNING("Тут бы подождать немного, пока другие консольные процессы завершатся... а то таб закрывается раньше времени");
 		gbInShutdown = TRUE;
-
+		
 		// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется
 		if (gpSrv->bDebuggerActive)
 		{
 			if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(gpSrv->dwRootProcess);
 
 			gpSrv->bDebuggerActive = FALSE;
+		}
+		else
+		{
+			// trick to let ConsoleMain() finish correctly
+			ExitThread(1);
+			//return TRUE;
+		
+			//#ifdef _DEBUG
+			//wchar_t szTitle[128]; wsprintf(szTitle, L"ConEmuC, PID=%u", GetCurrentProcessId());
+			////MessageBox(NULL, L"CTRL_CLOSE_EVENT in ConEmuC", szTitle, MB_SYSTEMMODAL);
+			//#endif
+			//DWORD nWait = WaitForSingleObject(ghExitQueryEvent, CLOSE_CONSOLE_TIMEOUT);
+			//if (nWait == WAIT_OBJECT_0)
+			//{
+			//	#ifdef _DEBUG
+			//	OutputDebugString(L"All console processes was terminated\n");
+			//	#endif
+			//}
+			//else
+			//{
+			//	// Поскольку мы (сервер) сейчас свалимся, то нужно показать
+			//	// консольное окно, раз в нем остались какие-то процессы
+			//	EmergencyShow();
+			//}
 		}
 	}
 	else if (gbTerminateOnCtrlBreak

@@ -1,9 +1,9 @@
 
 #define MVV_1 11
-#define MVV_2 3
-#define MVV_3 8
-#define MVV_4 1
-#define MVV_4a "a"
+#define MVV_2 6
+#define MVV_3 16
+#define MVV_4 0
+#define MVV_4a ""
 
 
 #define STRING2(x) #x
@@ -20,14 +20,18 @@
   #define MVV_3s STRING(MVV_3)
 #endif
 #if (MVV_4>0)
-  #define D(N) (10##N)
-  #define MVV_4n D(MVV_4)
+  #define MVV_3n MVV_4##MVV_3
 #else
-  #define MVV_4n 0
+  #define MVV_3n MVV_3
 #endif
 
 #define CONEMUVERS STRING(MVV_1) MVV_2s MVV_3s MVV_4a
-#define CONEMUVERN 2000+MVV_1,MVV_2,MVV_4n+MVV_3,MVV_4
+
+#ifdef __GNUC__
+#define CONEMUVERN MVV_1,MVV_2,MVV_3,MVV_4
+#else
+#define CONEMUVERN 20##MVV_1,MVV_2,MVV_3n,MVV_4
+#endif
 
 #ifdef _WIN64
 #define CONEMUPLTFRM " (x64)"

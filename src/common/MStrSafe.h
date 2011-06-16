@@ -21,8 +21,8 @@
 	#define StringCchCopyW(d,n,s) lstrcpyW(d,s)
 	#define StringCchCatA(d,n,s) lstrcatA(d,s)
 	#define StringCchCatW(d,n,s) lstrcatW(d,s)
-	#define StringCchCopyNA(d,n,s,l) lstrcpynA(d,s,min(((int)((l)+1)),((int)(n))))
-	#define StringCchCopyNW(d,n,s,l) lstrcpynW(d,s,min(((int)((l)+1)),((int)(n))))
+	#define StringCchCopyNA(d,n,s,l) lstrcpynA(d,s,(int)( ((INT_PTR)(l)<(INT_PTR)(n)) ? ((l)+1) : (n) ))
+	#define StringCchCopyNW(d,n,s,l) lstrcpynW(d,s,(int)( ((INT_PTR)(l)<(INT_PTR)(n)) ? ((l)+1) : (n) ))
 	#ifndef _ASSERTE
 		#define _ASSERTE(x) // {bool b = (x);}
 	#endif

@@ -3,21 +3,12 @@ LIBRARY
 EXPORTS
 ; functions
 	LLKeybHook
-;	SetHookCallbacks
-;	SetLoadLibraryCallback
 	ConsoleMain
 	HandlerRoutine
-;	SetFarHookMode
+	MountVirtualHive
+	UnMountVirtualHive
 
 ; LLKeyHooks (ConEmu GUI)
 	ghKeyHook
 	gnVkWinFix
 	ghKeyHookConEmuRoot
-;	ghConEmuWnd
-
-; Options (injects)
-;	ghConEmuDC
-;	ghConsoleHwnd
-;	gbFARuseASCIIsort
-;	gdwServerPID
-;	gbShellNoZoneCheck

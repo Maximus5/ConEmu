@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuPipe.h"
 #include "VirtualConsole.h"
+#include "RealConsole.h"
 //#include "../common/ConEmuCheck.h"
 
 #define MAX_OVERLAY_WIDTH    300
@@ -860,44 +861,70 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 // Требуется только при Drop из внешних приложений!
 void CDragDropData::RetrieveDragToInfo()
 {
-	CConEmuPipe pipe(gpConEmu->GetFarPID(), CONEMUREADYTIMEOUT);
-	gpConEmu->DebugStep(_T("DnD: DragEnter starting"));
+	if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 
-	// Ошибки пайпа отображаются через MBoxA
-	if (pipe.Init(_T("CDragDropData::DragEnter")))
+	CVirtualConsole* pVCon = gpConEmu->ActiveCon();
+	if (!pVCon)
+		return;
+	CRealConsole* pRCon = pVCon->RCon();
+	if (!pRCon)
+		return;
+
+	DWORD nFarPID = pRCon->GetFarPID(TRUE);
+	if (nFarPID == 0)
 	{
-		if (pipe.Execute(CMD_DRAGTO))
+		// 
+		m_pfpi = (ForwardedPanelInfo*)calloc(sizeof(ForwardedPanelInfo)+sizeof(WCHAR)*2, 1);
+		m_pfpi->ActiveRect.right = pRCon->TextWidth() - 1;
+		m_pfpi->ActiveRect.bottom = pRCon->TextHeight() - 1;
+		m_pfpi->NoFarConsole = TRUE;
+		m_pfpi->ActivePathShift = sizeof(ForwardedPanelInfo);
+		m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
+		m_pfpi->PassivePathShift = sizeof(ForwardedPanelInfo)+sizeof(wchar_t);
+		m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
+		m_pfpi->pszActivePath[0] = L'*';
+	}
+	else
+	{
+		CConEmuPipe pipe(nFarPID, CONEMUREADYTIMEOUT);
+		gpConEmu->DebugStep(_T("DnD: DragEnter starting"));
+
+		// Ошибки пайпа отображаются через MBoxA
+		if (pipe.Init(_T("CDragDropData::DragEnter")))
 		{
-			DWORD cbBytesRead=0;
-			int cbStructSize=0;
-
-			if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
-
-			if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
+			if (pipe.Execute(CMD_DRAGTO))
 			{
-				if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo))
+				DWORD cbBytesRead=0;
+				int cbStructSize=0;
+
+				if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+
+				if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
 				{
-					m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
-					pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
-					m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
-					//Slash на конце нам не нужен
-					int nPathLen = lstrlenW(m_pfpi->pszActivePath);
+					if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo))
+					{
+						m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
+						pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
+						m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
+						//Slash на конце нам не нужен
+						int nPathLen = lstrlenW(m_pfpi->pszActivePath);
 
-					if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
-						m_pfpi->pszActivePath[nPathLen-1] = 0;
+						if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
+							m_pfpi->pszActivePath[nPathLen-1] = 0;
 
-					m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
-					//Slash на конце нам не нужен
-					nPathLen = lstrlenW(m_pfpi->pszPassivePath);
+						m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
+						//Slash на конце нам не нужен
+						nPathLen = lstrlenW(m_pfpi->pszPassivePath);
 
-					if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
-						m_pfpi->pszPassivePath[nPathLen-1] = 0;
+						if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
+							m_pfpi->pszPassivePath[nPathLen-1] = 0;
+					}
 				}
 			}
 		}
-	}
 
-	gpConEmu->DebugStep(NULL);
+		gpConEmu->DebugStep(NULL);
+	}
 }
 
 BOOL CDragDropData::CreateDragImageBits(IDataObject * pDataObject)

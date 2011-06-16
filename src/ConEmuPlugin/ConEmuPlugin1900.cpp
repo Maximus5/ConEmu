@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -121,7 +121,7 @@ void ProcessDragFromW1900()
 	WindowInfo WInfo = {sizeof(WindowInfo)};
 	WInfo.Pos = 0;
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-	InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, (void*)&WInfo);
+	InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
 
 	if (!(WInfo.Flags & WIF_CURRENT))
 	{
@@ -134,12 +134,12 @@ void ProcessDragFromW1900()
 
 	PanelInfo PInfo;
 	WCHAR *szCurDir=gszDir1; szCurDir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
-	InfoW1900->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, (LONG_PTR)&PInfo);
+	InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, &PInfo);
 
 	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL) 
 		&& (PInfo.Flags & PFLAGS_VISIBLE))
 	{
-		InfoW1900->Control(PANEL_ACTIVE, FCTL_GETPANELDIR, 0x400, (LONG_PTR)szCurDir);
+		InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELDIR, 0x400, szCurDir);
 		int nDirLen=0, nDirNoSlash=0;
 
 		if (szCurDir[0])
@@ -188,15 +188,23 @@ void ProcessDragFromW1900()
 			// сначала посчитать максимальную длину буфера
 			for(i=0; i<ItemsCount; i++)
 			{
-				size_t sz = InfoW1900->Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, NULL);
+				size_t sz = InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, NULL);
 
 				if (!sz)
 					continue;
 
 				pi[i] = (PluginPanelItem*)calloc(sz, 1); // размер возвращается в байтах
 
-				if (!InfoW1900->Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)(pi[i])))
+				FarGetPluginPanelItem gppi = {sz, pi[i]};
+				if (!InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, &gppi))
 				{
+					free(pi[i]); pi[i] = NULL;
+					continue;
+				}
+
+				if (!pi[i]->FileName)
+				{
+					_ASSERTE(pi[i]->FileName!=NULL);
 					free(pi[i]); pi[i] = NULL;
 					continue;
 				}
@@ -292,11 +300,11 @@ void ProcessDragToW1900()
 	WindowInfo WInfo = {sizeof(WindowInfo)};
 	WInfo.Pos = 0;
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-	InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, (void*)&WInfo);
+	InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
 
 	if (!(WInfo.Flags & WIF_CURRENT))
 	{
-		//InfoW1900->AdvControl(&guid_ConEmu, ACTL_FREEWINDOWINFO, (void*)&WInfo);
+		//InfoW1900->AdvControl(&guid_ConEmu, ACTL_FREEWINDOWINFO, 0, &WInfo);
 		int ItemsCount=0;
 
 		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);
@@ -307,7 +315,7 @@ void ProcessDragToW1900()
 		return;
 	}
 
-	//InfoW1900->AdvControl(&guid_ConEmu, ACTL_FREEWINDOWINFO, (void*)&WInfo);
+	//InfoW1900->AdvControl(&guid_ConEmu, ACTL_FREEWINDOWINFO, 0, &WInfo);
 	PanelInfo PAInfo, PPInfo;
 	ForwardedPanelInfo *pfpi=NULL;
 	int nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
@@ -315,15 +323,15 @@ void ProcessDragToW1900()
 	BOOL lbAOK=FALSE, lbPOK=FALSE;
 	WCHAR *szPDir=gszDir1; szPDir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
 	WCHAR *szADir=gszDir2; szADir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
-	//if (!(lbAOK=InfoW1900->Control(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
-	lbAOK=InfoW1900->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PAInfo) &&
-	      InfoW1900->Control(PANEL_ACTIVE, FCTL_GETPANELDIR, 0x400, (LONG_PTR)szADir);
+	//if (!(lbAOK=InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
+	lbAOK=InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, &PAInfo) &&
+	      InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELDIR, 0x400, szADir);
 
 	if (lbAOK && szADir)
 		nStructSize += (lstrlen(szADir))*sizeof(WCHAR);
 
-	lbPOK=InfoW1900->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PPInfo) &&
-	      InfoW1900->Control(PANEL_PASSIVE, FCTL_GETPANELDIR, 0x400, (LONG_PTR)szPDir);
+	lbPOK=InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &PPInfo) &&
+	      InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELDIR, 0x400, szPDir);
 
 	if (lbPOK && szPDir)
 		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
@@ -400,19 +408,20 @@ void SetStartupInfoW1900(void *aInfo)
 	*::FSFW1900 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW1900->FSF = ::FSFW1900;
 
-	DWORD nFarVer = 0;
-	if (InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETFARVERSION, &nFarVer))
+	VersionInfo FarVer = {0};
+	if (InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETFARMANAGERVERSION, 0, &FarVer))
 	{
-		if (HIBYTE(HIWORD(nFarVer)) == 3)
+		if (FarVer.Major == 3)
 		{
-			gFarVersion.dwBuild = LOWORD(nFarVer);
-			gFarVersion.dwVerMajor = (HIBYTE(HIWORD(nFarVer)));
-			gFarVersion.dwVerMinor = (LOBYTE(HIWORD(nFarVer)));
+			gFarVersion.dwBuild = FarVer.Build;
+			_ASSERTE(FarVer.Major<=0xFFFF && FarVer.Minor<=0xFFFF)
+			gFarVersion.dwVerMajor = (WORD)FarVer.Major;
+			gFarVersion.dwVerMinor = (WORD)FarVer.Minor;
 			InitRootKey();
 		}
 		else
 		{
-			_ASSERTE(HIBYTE(HIWORD(nFarVer)) == 3);
+			_ASSERTE(FarVer.Major == 3);
 		}
 	}
 	//lstrcpynW(gszRootKey, InfoW1900->RootKey, MAX_PATH);
@@ -430,7 +439,7 @@ void SetStartupInfoW1900(void *aInfo)
 DWORD GetEditorModifiedStateW1900()
 {
 	EditorInfo ei;
-	InfoW1900->EditorControl(-1/*Active editor*/, ECTL_GETINFO, 0, (INT_PTR)&ei);
+	InfoW1900->EditorControl(-1/*Active editor*/, ECTL_GETINFO, 0, &ei);
 #ifdef SHOW_DEBUG_EVENTS
 	char szDbg[255];
 	wsprintfA(szDbg, "Editor:State=%i\n", ei.CurState);
@@ -449,12 +458,12 @@ int ProcessEditorInputW1900(LPCVOID aRec)
 	if (!InfoW1900)
 		return 0;
 
-	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
+	const ProcessEditorInputInfo *apInfo = (const ProcessEditorInputInfo*)aRec;
 
 	// only key events with virtual codes > 0 are likely to cause status change (?)
-	if (!gbRequestUpdateTabs && (Rec->EventType & 0xFF) == KEY_EVENT
-	        && (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.UnicodeChar)
-	        && Rec->Event.KeyEvent.bKeyDown)
+	if (!gbRequestUpdateTabs && (apInfo->Rec.EventType & 0xFF) == KEY_EVENT
+	        && (apInfo->Rec.Event.KeyEvent.wVirtualKeyCode || apInfo->Rec.Event.KeyEvent.wVirtualScanCode || apInfo->Rec.Event.KeyEvent.uChar.UnicodeChar)
+	        && apInfo->Rec.Event.KeyEvent.bKeyDown)
 	{
 		//if (!gbRequestUpdateTabs)
 		gbNeedPostEditCheck = TRUE;
@@ -474,7 +483,7 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 	wchar_t szWNameBuffer[CONEMUTABMAX];
 	//WInfo.Name = szWNameBuffer;
 	//WInfo.NameSize = CONEMUTABMAX;
-	int windowCount = (int)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWCOUNT, NULL);
+	int windowCount = (int)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWCOUNT, 0, NULL);
 	lbCh = (lastWindowCount != windowCount);
 
 	if (!CreateTabs(windowCount))
@@ -492,7 +501,7 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 		if (Param)
 			vi.ViewerID = *(int*)Param;
 
-		InfoW1900->ViewerControl(-1/*Active viewer*/, VCTL_GETINFO, 0, (INT_PTR)&vi);
+		InfoW1900->ViewerControl(-1/*Active viewer*/, VCTL_GETINFO, 0, &vi);
 	}
 
 	int tabCount = 0;
@@ -502,14 +511,14 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 	{
 		WInfo.Pos = i;
 		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-		InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, (void*)&WInfo);
+		InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
 
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 		{
 			WInfo.Pos = i;
 			WInfo.Name = szWNameBuffer;
 			WInfo.NameSize = CONEMUTABMAX;
-			InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, (void*)&WInfo);
+			InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
 			WARNING("Для получения имени нужно пользовать ECTL_GETFILENAME");
 
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
@@ -543,14 +552,14 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 		WInfo.Pos = -1;
 
 		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-		if (InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, (void*)&WInfo))
+		if (InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo))
 		{
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
 			{
 				WInfo.Pos = -1;
 				WInfo.Name = szWNameBuffer;
 				WInfo.NameSize = CONEMUTABMAX;
-				InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, (void*)&WInfo);
+				InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
 
 				if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
 				{
@@ -666,8 +675,8 @@ void SetWindowW1900(int nTab)
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return;
 
-	if (InfoW1900->AdvControl(&guid_ConEmu, ACTL_SETCURRENTWINDOW, (void*)nTab))
-		InfoW1900->AdvControl(&guid_ConEmu, ACTL_COMMIT, 0);
+	if (InfoW1900->AdvControl(&guid_ConEmu, ACTL_SETCURRENTWINDOW, nTab, NULL))
+		InfoW1900->AdvControl(&guid_ConEmu, ACTL_COMMIT, 0, 0);
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
@@ -686,7 +695,7 @@ void PostMacroW1900(wchar_t* asMacro)
 	}
 
 	mcr.SequenceText = asMacro;
-	InfoW1900->MacroControl(INVALID_HANDLE_VALUE, MCTL_SENDSTRING, 0, (INT_PTR)&mcr);
+	InfoW1900->MacroControl(INVALID_HANDLE_VALUE, MCTL_SENDSTRING, 0, &mcr);
 	//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
 	//  Это чаще всего проявляется при вызове меню по RClick
 	//  Если курсор на другой панели, то RClick сразу по пассивной
@@ -817,7 +826,7 @@ BOOL ExecuteSynchroW1900()
 		// получается более 2-х, если фар в данный момент чем-то занят (сканирует каталог?)
 		//_ASSERTE(gnSynchroCount<=3);
 		gnSynchroCount++;
-		InfoW1900->AdvControl(&guid_ConEmu, ACTL_SYNCHRO, NULL);
+		InfoW1900->AdvControl(&guid_ConEmu, ACTL_SYNCHRO, 0, NULL);
 		return TRUE;
 	}
 
@@ -833,9 +842,9 @@ void WaitEndSynchroW1900()
 
 	FarDialogItem items[] =
 	{
-		{DI_DOUBLEBOX,  3,  1,  51, 3, false, 0, 0, 0, 0, GetMsgW1900(CEPluginName)},
+		{DI_DOUBLEBOX,  3,  1,  51, 3, {0}, 0, 0, 0, GetMsgW1900(CEPluginName)},
 
-		{DI_BUTTON,     0,  2,  0,  0, true,  0, 0, DIF_CENTERGROUP|DIF_DEFAULTBUTTON, 0, GetMsgW1900(CEStopSynchroWaiting)},
+		{DI_BUTTON,     0,  2,  0,  0, {0},  0, 0, DIF_FOCUS|DIF_CENTERGROUP|DIF_DEFAULTBUTTON, GetMsgW1900(CEStopSynchroWaiting)},
 	};
 	
 	GUID ConEmuWaitEndSynchro = { /* d0f369dc-2800-4833-a858-43dd1c115370 */
@@ -924,14 +933,14 @@ void RedrawAllW1900()
 {
 	if (!InfoW1900) return;
 
-	InfoW1900->AdvControl(&guid_ConEmu, ACTL_REDRAWALL, NULL);
+	InfoW1900->AdvControl(&guid_ConEmu, ACTL_REDRAWALL, 0, NULL);
 }
 
 bool LoadPluginW1900(wchar_t* pszPluginPath)
 {
 	if (!InfoW1900) return false;
 
-	InfoW1900->PluginsControl(INVALID_HANDLE_VALUE,PCTL_LOADPLUGIN,PLT_PATH,(LONG_PTR)pszPluginPath);
+	InfoW1900->PluginsControl(INVALID_HANDLE_VALUE,PCTL_LOADPLUGIN,PLT_PATH,pszPluginPath);
 	return true;
 }
 
@@ -955,11 +964,11 @@ bool RunExternalProgramW1900(wchar_t* pszCommand)
 	wchar_t *pszCurDir = NULL;
 	size_t len;
 
-	if ((len = InfoW1900->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELDIR, 0, 0)) != 0)
+	if ((len = InfoW1900->PanelControl(INVALID_HANDLE_VALUE, FCTL_GETPANELDIR, 0, 0)) != 0)
 	{
 		if ((pszCurDir = (wchar_t*)malloc(len*2)) != NULL)
 		{
-			if (!InfoW1900->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELDIR, (int)len, (LONG_PTR)pszCurDir))
+			if (!InfoW1900->PanelControl(INVALID_HANDLE_VALUE, FCTL_GETPANELDIR, (int)len, pszCurDir))
 			{
 				free(pszCurDir); pszCurDir = NULL;
 			}
@@ -972,10 +981,10 @@ bool RunExternalProgramW1900(wchar_t* pszCommand)
 		lstrcpy(pszCurDir, L"C:\\");
 	}
 
-	InfoW1900->Control(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
+	InfoW1900->PanelControl(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
 	RunExternalProgramW(pszCommand, pszCurDir);
-	InfoW1900->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
-	InfoW1900->AdvControl(&guid_ConEmu,ACTL_REDRAWALL,0);
+	InfoW1900->PanelControl(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
+	InfoW1900->AdvControl(&guid_ConEmu,ACTL_REDRAWALL,0, 0);
 	free(pszCurDir); pszCurDir = NULL;
 	return TRUE;
 }
@@ -1044,11 +1053,11 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 
 #endif
 	gpFarInfo->nFarConsoleMode = ldwConsoleMode;
-	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, NULL);
+	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, NULL);
 
 	if (nColorSize <= (INT_PTR)sizeof(gpFarInfo->nFarColors))
 	{
-		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, gpFarInfo->nFarColors);
+		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, gpFarInfo->nFarColors);
 	}
 	else
 	{
@@ -1061,19 +1070,19 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 		}
 		else
 		{
-			nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, ptr);
+			nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, ptr);
 			memmove(gpFarInfo->nFarColors, ptr, sizeof(gpFarInfo->nFarColors));
 			free(ptr);
 		}
 	}
 
 	gpFarInfo->nFarInterfaceSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0);
+	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0, 0);
 	gpFarInfo->nFarPanelSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETPANELSETTINGS, 0);
+	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETPANELSETTINGS, 0, 0);
 	gpFarInfo->nFarConfirmationSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETCONFIRMATIONS, 0);
-	gpFarInfo->bFarPanelAllowed = InfoW1900->Control(PANEL_NONE, FCTL_CHECKPANELSEXIST, 0, 0);
+	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETCONFIRMATIONS, 0, 0);
+	gpFarInfo->bFarPanelAllowed = InfoW1900->PanelControl(PANEL_NONE, FCTL_CHECKPANELSEXIST, 0, 0);
 	gpFarInfo->bFarPanelInfoFilled = FALSE;
 	gpFarInfo->bFarLeftPanel = FALSE;
 	gpFarInfo->bFarRightPanel = FALSE;
@@ -1083,8 +1092,8 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 	//	gpConMapInfo->bFarRightPanel = FALSE;
 	//} else {
 	//	PanelInfo piA = {0}, piP = {0};
-	//	BOOL lbActive  = InfoW1900->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&piA);
-	//	BOOL lbPassive = InfoW1900->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&piP);
+	//	BOOL lbActive  = InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, &piA);
+	//	BOOL lbPassive = InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &piP);
 	//	if (!lbActive && !lbPassive)
 	//	{
 	//		gpConMapInfo->bFarLeftPanel = FALSE;
@@ -1115,7 +1124,7 @@ void ExecuteQuitFarW1900()
 		return;
 	}
 
-	InfoW1900->AdvControl(&guid_ConEmu, ACTL_QUIT, NULL);
+	InfoW1900->AdvControl(&guid_ConEmu, ACTL_QUIT, 0, NULL);
 }
 
 BOOL CheckBufferEnabledW1900()
@@ -1134,7 +1143,7 @@ BOOL CheckBufferEnabledW1900()
 
 	SMALL_RECT rcFar = {0};
 
-	if (InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETFARRECT, &rcFar))
+	if (InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETFARRECT, 0, &rcFar))
 	{
 		if (rcFar.Top > 0 && rcFar.Bottom > rcFar.Top)
 		{
@@ -1153,12 +1162,12 @@ static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pB
 	pBk->bFocused = ((pInfo->Flags & PFLAGS_FOCUS) == PFLAGS_FOCUS);
 	pBk->bPlugin = ((pInfo->Flags & PFLAGS_PLUGIN) == PFLAGS_PLUGIN);
 	HANDLE hPanel = (pBk->bFocused) ? PANEL_ACTIVE : PANEL_PASSIVE;
-	InfoW1900->Control(hPanel, FCTL_GETPANELDIR /* == FCTL_GETPANELDIR == 25*/, BkPanelInfo_CurDirMax, (LONG_PTR)pBk->szCurDir);
+	InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR /* == FCTL_GETPANELDIR == 25*/, BkPanelInfo_CurDirMax, pBk->szCurDir);
 
 	if (gFarVersion.dwBuild >= 1657)
 	{
-		InfoW1900->Control(hPanel, FCTL_GETPANELFORMAT, BkPanelInfo_FormatMax, (LONG_PTR)pBk->szFormat);
-		InfoW1900->Control(hPanel, FCTL_GETPANELHOSTFILE, BkPanelInfo_HostFileMax, (LONG_PTR)pBk->szHostFile);
+		InfoW1900->PanelControl(hPanel, FCTL_GETPANELFORMAT, BkPanelInfo_FormatMax, pBk->szFormat);
+		InfoW1900->PanelControl(hPanel, FCTL_GETPANELHOSTFILE, BkPanelInfo_HostFileMax, pBk->szHostFile);
 	}
 	else
 	{
@@ -1174,11 +1183,11 @@ void FillUpdateBackgroundW1900(struct PaintBackgroundArg* pFar)
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return;
 
-	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, NULL);
+	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, NULL);
 
 	if (nColorSize <= (INT_PTR)sizeof(pFar->nFarColors))
 	{
-		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, pFar->nFarColors);
+		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, pFar->nFarColors);
 	}
 	else
 	{
@@ -1191,23 +1200,23 @@ void FillUpdateBackgroundW1900(struct PaintBackgroundArg* pFar)
 		}
 		else
 		{
-			nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, ptr);
+			nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, ptr);
 			memmove(pFar->nFarColors, ptr, sizeof(pFar->nFarColors));
 			free(ptr);
 		}
 	}
 
 	pFar->nFarInterfaceSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0);
+	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0, 0);
 	pFar->nFarPanelSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETPANELSETTINGS, 0);
-	pFar->bPanelsAllowed = (0 != InfoW1900->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0, 0));
+	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETPANELSETTINGS, 0, 0);
+	pFar->bPanelsAllowed = (0 != InfoW1900->PanelControl(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0, 0));
 
 	if (pFar->bPanelsAllowed)
 	{
 		PanelInfo pasv = {0}, actv = {0};
-		InfoW1900->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&actv);
-		InfoW1900->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pasv);
+		InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, &actv);
+		InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &pasv);
 		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;
 		PanelInfo* pRight = (actv.Flags & PFLAGS_PANELLEFT) ? &pasv : &actv;
 		CopyPanelInfoW(pLeft, &pFar->LeftPanel);
@@ -1221,7 +1230,7 @@ void FillUpdateBackgroundW1900(struct PaintBackgroundArg* pFar)
 	if (CheckBufferEnabledW1900())
 	{
 		SMALL_RECT rc = {0};
-		InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETFARRECT, &rc);
+		InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETFARRECT, 0, &rc);
 		pFar->rcConWorkspace.left = rc.Left;
 		pFar->rcConWorkspace.top = rc.Top;
 		pFar->rcConWorkspace.right = rc.Right;
@@ -1250,7 +1259,7 @@ int GetActiveWindowTypeW1900()
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return -1;
 
-	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+	//_ASSERTE(GetCurrentThreadId() == gnMainThreadId); -- это - ThreadSafe
 
 	INT_PTR nArea = InfoW1900->MacroControl(INVALID_HANDLE_VALUE, MCTL_GETAREA, 0, 0);
 
@@ -1325,9 +1334,10 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	
 	Info->StructSize = sizeof(GlobalInfo);
 	Info->MinFarVersion = FARMANAGERVERSION;
-	//#define D(N) (1##N-100)
-	// YYMMDDX (YY - две цифры года, MM - месяц, DD - день, X - 0 и выше-номер подсборки)
-	Info->Version = ((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10);
+
+	// Build: YYMMDDX (YY - две цифры года, MM - месяц, DD - день, X - 0 и выше-номер подсборки)
+	Info->Version = MAKEFARVERSION(MVV_1,MVV_2,MVV_3,((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10),VS_RELEASE);
+	
 	Info->Guid = guid_ConEmu;
 	Info->Title = L"ConEmu";
 	Info->Description = L"ConEmu support for Far Manager";
@@ -1421,8 +1431,8 @@ HANDLE WINAPI OpenFilePluginW1900(const wchar_t *Name,const unsigned char *Data,
 	InfoW1900->RestoreScreen(NULL);
 	InfoW1900->RestoreScreen(h);
 	InfoW1900->Text(0,0,0,0);
-	//InfoW1900->Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
-	//InfoW1900->Control(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0);
+	//InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
+	//InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0);
 	//INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
 	//r.Event.WindowBufferSizeEvent.dwSize = csbi.dwSize;
 	//WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwSizeLow);

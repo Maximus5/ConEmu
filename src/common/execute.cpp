@@ -32,12 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Execute.h"
 #include "WinObjects.h"
 
-#ifndef KEY_WOW64_32KEY
-#define KEY_WOW64_32KEY 0x0200
-#endif
-#ifndef KEY_WOW64_64KEY
-#define KEY_WOW64_64KEY 0x0100
-#endif
 
 
 

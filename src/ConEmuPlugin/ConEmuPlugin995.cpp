@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2010 Maximus5
+Copyright (c) 2009-2011 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -174,6 +174,13 @@ void ProcessDragFromW995()
 
 				if (!InfoW995->Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)(pi[i])))
 				{
+					free(pi[i]); pi[i] = NULL;
+					continue;
+				}
+
+				if (!pi[i]->FindData.lpwszFileName)
+				{
+					_ASSERTE(pi[i]->FindData.lpwszFileName!=NULL);
 					free(pi[i]); pi[i] = NULL;
 					continue;
 				}
