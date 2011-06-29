@@ -102,7 +102,7 @@ extern "C" {
 	void WINAPI GetFarVersion(FarVersion* pfv);
 	int  WINAPI ProcessEditorInputW(void* Rec);
 	void WINAPI SetStartupInfoW(void *aInfo);
-	int  WINAPI ProcessSynchroEventW(int Event,void *Param);
+	//int  WINAPI ProcessSynchroEventW(int Event,void *Param);
 	BOOL WINAPI IsTerminalMode();
 	BOOL WINAPI IsConsoleActive();
 	int  WINAPI RegisterPanelView(PanelViewInit *ppvi);
@@ -289,7 +289,7 @@ class CommandThreads
 CommandThreads *ghCommandThreads;
 
 
-void WINAPI _export GetPluginInfoWcmn(void *piv)
+void WINAPI GetPluginInfoWcmn(void *piv)
 {
 	if (gFarVersion.dwBuild>=FAR_Y_VER)
 		FUNC_Y(GetPluginInfoW)(piv);
@@ -1315,7 +1315,7 @@ BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs)
 }
 
 
-int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
+int WINAPI ProcessSynchroEventW(int Event,void *Param)
 {
 	if (Event == SE_COMMONSYNCHRO)
 	{
@@ -1455,13 +1455,25 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 //#endif
 //extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
-void WINAPI _export ExitFARW(void);
-void WINAPI _export ExitFARW3(void*);
+void WINAPI ExitFARW(void);
+void WINAPI ExitFARW3(void*);
+int WINAPI ProcessEditorEventW(int Event, void *Param);
+int WINAPI ProcessEditorEventW3(void*);
+int WINAPI ProcessViewerEventW(int Event, void *Param);
+int WINAPI ProcessViewerEventW3(void*);
+int WINAPI ProcessDialogEventW(int Event, void *Param);
+int WINAPI ProcessDialogEventW3(void*);
+int WINAPI ProcessSynchroEventW(int Event,void *Param);
+int WINAPI ProcessSynchroEventW3(void*);
 
 #include "../common/SetExport.h"
 ExportFunc Far3Func[] =
 {
 	{"ExitFARW", ExitFARW, ExitFARW3},
+	{"ProcessEditorEventW", ProcessEditorEventW, ProcessEditorEventW3},
+	{"ProcessViewerEventW", ProcessViewerEventW, ProcessViewerEventW3},
+	{"ProcessDialogEventW", ProcessDialogEventW, ProcessDialogEventW3},
+	{"ProcessSynchroEventW", ProcessSynchroEventW, ProcessSynchroEventW3},
 	{NULL}
 };
 
@@ -1625,7 +1637,7 @@ HWND WINAPI GetFarHWND2(BOOL abConEmuOnly)
 	return FarHwnd;
 }
 
-HWND WINAPI _export GetFarHWND()
+HWND WINAPI GetFarHWND()
 {
 	return GetFarHWND2(FALSE);
 }
@@ -1635,7 +1647,7 @@ BOOL WINAPI IsTerminalMode()
 	return TerminalMode;
 }
 
-void WINAPI _export GetFarVersion(FarVersion* pfv)
+void WINAPI GetFarVersion(FarVersion* pfv)
 {
 	if (!pfv)
 		return;
@@ -3362,6 +3374,7 @@ void CommonPluginStartup()
 }
 
 #ifdef _DEBUG
+// Far2 only
 HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int DataSize,int OpMode)
 {
 	HANDLE hPlugin = INVALID_HANDLE_VALUE;
@@ -3373,7 +3386,7 @@ HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int 
 }
 #endif
 
-void WINAPI _export SetStartupInfoW(void *aInfo)
+void WINAPI SetStartupInfoW(void *aInfo)
 {
 	if (!gFarVersion.dwVerMajor) LoadFarVersion();
 
@@ -4213,7 +4226,7 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 //int lastModifiedStateW = -1;
 //bool gbHandleOneRedraw = false; //, gbHandleOneRedrawCh = false;
 
-int WINAPI _export ProcessEditorInputW(void* Rec)
+int WINAPI ProcessEditorInputW(void* Rec)
 {
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
 	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
@@ -4223,7 +4236,7 @@ int WINAPI _export ProcessEditorInputW(void* Rec)
 		return FUNC_X(ProcessEditorInputW)((LPCVOID)Rec);
 }
 
-int WINAPI _export ProcessEditorEventW(int Event, void *Param)
+int WINAPI ProcessEditorEventW(int Event, void *Param)
 {
 	if (!gbRequestUpdateTabs)
 	{
@@ -4247,7 +4260,7 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 	return 0;
 }
 
-int WINAPI _export ProcessViewerEventW(int Event, void *Param)
+int WINAPI ProcessViewerEventW(int Event, void *Param)
 {
 	if (!gbRequestUpdateTabs &&
 	        (Event == VE_CLOSE || Event == VE_GOTFOCUS || Event == VE_KILLFOCUS || Event == VE_READ))
@@ -4481,7 +4494,7 @@ void StopThread(void)
 }
 
 
-int WINAPI _export ProcessDialogEventW(int Event, void *Param)
+int WINAPI ProcessDialogEventW(int Event, void *Param)
 {
 #ifdef _DEBUG
 	static struct
@@ -4651,7 +4664,7 @@ void ExitFarCmn()
 	StopThread();
 }
 
-void   WINAPI _export ExitFARW(void)
+void   WINAPI ExitFARW(void)
 {
 	ExitFarCmn();
 
@@ -4666,7 +4679,7 @@ void   WINAPI _export ExitFARW(void)
 	gbExitFarCalled = TRUE;
 }
 
-void WINAPI _export ExitFARW3(void*)
+void WINAPI ExitFARW3(void*)
 {
 	ExitFarCmn();
 

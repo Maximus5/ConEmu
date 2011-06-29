@@ -27,9 +27,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <windows.h>
+#include "..\common\MAssert.h"
 #pragma warning( disable : 4995 )
 #include "..\common\pluginW1900.hpp" // Far3
 #pragma warning( default : 4995 )
+#include "..\common\far3color.h"
 #include "ConEmuTh.h"
 #include "../ConEmu/version.h" // Far3
 
@@ -149,6 +151,25 @@ HANDLE WINAPI OpenW(const struct OpenInfo *Info)
 		return INVALID_HANDLE_VALUE;
 
 	return OpenPluginWcmn(Info->OpenFrom, Info->Data);
+}
+
+// Common
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+int WINAPI ProcessSynchroEventW(int Event,void *Param);
+
+#ifdef __cplusplus
+};
+#endif
+
+// Far3 export
+int WINAPI ProcessSynchroEventW3(void* p)
+{
+	const ProcessSynchroEventInfo *Info = (const ProcessSynchroEventInfo*)p;
+	return ProcessSynchroEventW(Info->Event, Info->Param);
 }
 
 void ExitFARW1900(void)
@@ -428,6 +449,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	                                    (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETINTERFACESETTINGS, 0, 0);
 	pcefpi->nFarPanelSettings = gnFarPanelSettings =
 	                                (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETPANELSETTINGS, 0, 0);
+
 	// Цвета фара
 	int nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, NULL);
 
@@ -439,7 +461,24 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 		pcefpi->nMaxFarColors = nColorSize;
 	}
 
-	nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, pcefpi->nFarColors);
+	//nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, pcefpi->nFarColors);
+	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
+	
+	if (pColors)
+		nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, pColors);
+	
+	WARNING("Поддержка более 4бит цветов");
+	if (pColors && nColorSize > 0)
+	{
+		for (int i = 0; i < nColorSize; i++)
+			pcefpi->nFarColors[i] = FarColor_3_2(pColors[i]);
+	}
+	else
+	{
+		memset(pcefpi->nFarColors, 7, pcefpi->nMaxFarColors*sizeof(*pcefpi->nFarColors));
+	}
+	SafeFree(pColors);
+	
 	// Текущая папка панели
 	int nSize = (int)InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR, 0, 0);
 

@@ -807,6 +807,10 @@ static HANDLE ghSyncDlg = NULL;
 
 void WaitEndSynchroW995()
 {
+	if (gFarVersion.dwVerMajor == 2 && gFarVersion.dwVerMinor >= 1)
+		return;
+	TODO("lbSynchroSafe - может и в Far3 починят. http://bugs.farmanager.com/view.php?id=1604");
+
 	if ((gnSynchroCount == 0) || !(IS_SYNCHRO_ALLOWED))
 		return;
 
@@ -1028,7 +1032,7 @@ BOOL ReloadFarInfoW995(/*BOOL abFull*/)
 
 		if (!ptr)
 		{
-			memset(gpFarInfo->nFarColors, 7, sizeof(gpFarInfo->nFarColors));
+			memset(gpFarInfo->nFarColors, 7, countof(gpFarInfo->nFarColors)*sizeof(*gpFarInfo->nFarColors));
 		}
 		else
 		{
@@ -1159,7 +1163,7 @@ void FillUpdateBackgroundW995(struct PaintBackgroundArg* pFar)
 
 		if (!ptr)
 		{
-			memset(pFar->nFarColors, 7, sizeof(pFar->nFarColors));
+			memset(pFar->nFarColors, 7, countof(pFar->nFarColors)*sizeof(*pFar->nFarColors));
 		}
 		else
 		{

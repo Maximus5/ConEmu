@@ -93,11 +93,14 @@ BOOL gbInfoW_OK = FALSE;
 
 void WINAPI _export ExitFARW(void);
 void WINAPI _export ExitFARW3(void*);
+int WINAPI ConfigureW(int ItemNumber);
+int WINAPI ConfigureW3(void*);
 
 #include "../common/SetExport.h"
 ExportFunc Far3Func[] =
 {
 	{"ExitFARW", ExitFARW, ExitFARW3},
+	{"ConfigureW", ConfigureW, ConfigureW3},
 	{NULL}
 };
 
@@ -498,6 +501,16 @@ int WINAPI ConfigureW(int ItemNumber)
 		return FUNC_Y(ConfigureW)(ItemNumber);
 	else
 		return FUNC_X(ConfigureW)(ItemNumber);
+}
+
+int WINAPI ConfigureW3(void*)
+{
+	if (gFarVersion.dwVerMajor==1)
+		return false;
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		return FUNC_Y(ConfigureW)(0);
+	else
+		return FUNC_X(ConfigureW)(0);
 }
 
 HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)

@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif
+#include "..\common\far3color.h"
 #include "PluginHeader.h"
 #include "..\ConEmu\version.h"
 
@@ -451,6 +452,45 @@ DWORD GetEditorModifiedStateW1900()
 }
 
 //extern int lastModifiedStateW;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+int WINAPI ProcessEditorEventW(int Event, void *Param);
+int WINAPI ProcessViewerEventW(int Event, void *Param);
+int WINAPI ProcessDialogEventW(int Event, void *Param);
+int WINAPI ProcessSynchroEventW(int Event,void *Param);
+
+#ifdef __cplusplus
+};
+#endif
+
+
+int WINAPI ProcessEditorEventW3(void* p)
+{
+	const ProcessEditorEventInfo* Info = (const ProcessEditorEventInfo*)p;
+	return ProcessEditorEventW(Info->Event, Info->Param);
+}
+
+int WINAPI ProcessViewerEventW3(void* p)
+{
+	const ProcessViewerEventInfo* Info = (const ProcessViewerEventInfo*)p;
+	return ProcessViewerEventW(Info->Event, Info->Param);
+}
+
+int WINAPI ProcessDialogEventW3(void* p)
+{
+	const ProcessDialogEventInfo* Info = (const ProcessDialogEventInfo*)p;
+	return ProcessDialogEventW(Info->Event, Info->Param);
+}
+
+int WINAPI ProcessSynchroEventW3(void* p)
+{
+	const ProcessSynchroEventInfo* Info = (const ProcessSynchroEventInfo*)p;
+	return ProcessSynchroEventW(Info->Event, Info->Param);
+}
 
 // watch non-modified -> modified editor status change
 int ProcessEditorInputW1900(LPCVOID aRec)
@@ -1054,27 +1094,25 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 #endif
 	gpFarInfo->nFarConsoleMode = ldwConsoleMode;
 	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, NULL);
-
-	if (nColorSize <= (INT_PTR)sizeof(gpFarInfo->nFarColors))
+	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
+	
+	if (pColors)
+		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, pColors);
+	
+	WARNING("Поддержка более 4бит цветов");
+	if (pColors && nColorSize > 0)
 	{
-		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, gpFarInfo->nFarColors);
+		_ASSERTE(nColorSize <= countof(gpFarInfo->nFarColors));
+		if (nColorSize > countof(gpFarInfo->nFarColors))
+			nColorSize = countof(gpFarInfo->nFarColors);
+		for (int i = 0; i < nColorSize; i++)
+			gpFarInfo->nFarColors[i] = FarColor_3_2(pColors[i]);
 	}
 	else
 	{
-		_ASSERTE(nColorSize <= sizeof(gpFarInfo->nFarColors));
-		BYTE* ptr = (BYTE*)calloc(nColorSize,1);
-
-		if (!ptr)
-		{
-			memset(gpFarInfo->nFarColors, 7, sizeof(gpFarInfo->nFarColors));
-		}
-		else
-		{
-			nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, ptr);
-			memmove(gpFarInfo->nFarColors, ptr, sizeof(gpFarInfo->nFarColors));
-			free(ptr);
-		}
+		memset(gpFarInfo->nFarColors, 7, countof(gpFarInfo->nFarColors)*sizeof(*gpFarInfo->nFarColors));
 	}
+	SafeFree(pColors);
 
 	gpFarInfo->nFarInterfaceSettings =
 	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0, 0);
@@ -1184,27 +1222,25 @@ void FillUpdateBackgroundW1900(struct PaintBackgroundArg* pFar)
 		return;
 
 	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, NULL);
-
-	if (nColorSize <= (INT_PTR)sizeof(pFar->nFarColors))
+	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
+	
+	if (pColors)
+		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, pColors);
+	
+	WARNING("Поддержка более 4бит цветов");
+	if (pColors && nColorSize > 0)
 	{
-		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, pFar->nFarColors);
+		_ASSERTE(nColorSize <= countof(pFar->nFarColors));
+		if (nColorSize > countof(pFar->nFarColors))
+			nColorSize = countof(pFar->nFarColors);
+		for (int i = 0; i < nColorSize; i++)
+			pFar->nFarColors[i] = FarColor_3_2(pColors[i]);
 	}
 	else
 	{
-		_ASSERTE(nColorSize <= sizeof(pFar->nFarColors));
-		BYTE* ptr = (BYTE*)calloc(nColorSize,1);
-
-		if (!ptr)
-		{
-			memset(pFar->nFarColors, 7, sizeof(pFar->nFarColors));
-		}
-		else
-		{
-			nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, ptr);
-			memmove(pFar->nFarColors, ptr, sizeof(pFar->nFarColors));
-			free(ptr);
-		}
+		memset(pFar->nFarColors, 7, countof(pFar->nFarColors)*sizeof(*pFar->nFarColors));
 	}
+	SafeFree(pColors);
 
 	pFar->nFarInterfaceSettings =
 	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0, 0);

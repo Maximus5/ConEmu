@@ -999,7 +999,7 @@ BOOL ReloadFarInfoA(/*BOOL abFull*/)
 
 		if (!ptr)
 		{
-			memset(gpFarInfo->nFarColors, 7, sizeof(gpFarInfo->nFarColors));
+			memset(gpFarInfo->nFarColors, 7, countof(gpFarInfo->nFarColors)*sizeof(*gpFarInfo->nFarColors));
 		}
 		else
 		{
@@ -1083,7 +1083,7 @@ void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar)
 
 		if (!ptr)
 		{
-			memset(pFar->nFarColors, 7, sizeof(pFar->nFarColors));
+			memset(pFar->nFarColors, 7, countof(pFar->nFarColors)*sizeof(*pFar->nFarColors));
 		}
 		else
 		{

@@ -48,6 +48,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "ConEmuTh.h"
 #include "../common/farcolor.hpp"
+/*
+COL_PANELTEXT
+COL_PANELSELECTEDCURSOR
+COL_PANELSELECTEDTEXT
+COL_PANELCURSOR
+COL_PANELCOLUMNTITLE
+*/
 #include "../common/RgnDetect.h"
 #include "resource.h"
 #include "ImgCache.h"

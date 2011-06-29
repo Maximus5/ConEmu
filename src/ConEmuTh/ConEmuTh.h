@@ -366,7 +366,7 @@ extern ConEmuThSynchroArg* gpLastSynchroArg;
 void ExecuteInMainThread(ConEmuThSynchroArg* pCmd);
 void FUNC_X(ExecuteInMainThreadW)(ConEmuThSynchroArg* pCmd);
 void FUNC_Y(ExecuteInMainThreadW)(ConEmuThSynchroArg* pCmd);
-int WINAPI ProcessSynchroEventW(int Event, void *Param);
+//int WINAPI ProcessSynchroEventW(int Event, void *Param);
 
 #define SYNCHRO_REDRAW_PANEL ((ConEmuThSynchroArg*)1)
 void SetCurrentPanelItemA(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem);

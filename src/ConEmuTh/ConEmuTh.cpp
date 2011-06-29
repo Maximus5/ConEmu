@@ -308,11 +308,14 @@ DWORD GetMainThreadId()
 
 void WINAPI _export ExitFARW(void);
 void WINAPI _export ExitFARW3(void*);
+int WINAPI ProcessSynchroEventW(int Event, void *Param);
+int WINAPI ProcessSynchroEventW3(void*);
 
 #include "../common/SetExport.h"
 ExportFunc Far3Func[] =
 {
 	{"ExitFARW", ExitFARW, ExitFARW3},
+	{"ProcessSynchroEventW", ProcessSynchroEventW, ProcessSynchroEventW3},
 	{NULL}
 };
 
