@@ -7563,8 +7563,7 @@ INT_PTR CSettings::ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem)
 
 					if (pfi && pfi->cbSize>=sizeof(CEFAR_INFO_MAPPING))
 					{
-						//COL_PANELTEXT == 10
-						cr = Colors[(pfi->nFarColors[10] & 0xF0)>>4];
+						cr = Colors[(pfi->nFarColors[col_PanelText] & 0xF0)>>4];
 					}
 					else
 					{

@@ -31,13 +31,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif
-#include "..\common\pluginW1900.hpp" // Far3
+#include "../common/pluginW1900.hpp" // Far3
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif
-#include "..\common\far3color.h"
 #include "PluginHeader.h"
-#include "..\ConEmu\version.h"
+#include "../ConEmu/version.h"
+#include "../common/farcolor3.hpp"
+#include "../common/ConEmuColors3.h"
 
 #ifdef _DEBUG
 //#define SHOW_DEBUG_EVENTS
@@ -1043,21 +1044,55 @@ bool ProcessCommandLineW1900(wchar_t* pszCommand)
 	return false;
 }
 
-static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
+//static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
+//{
+//	pCE->PanelType = pFar->PanelType;
+//	pCE->Plugin = ((pFar->Flags & PFLAGS_PLUGIN) == PFLAGS_PLUGIN);
+//	pCE->PanelRect = pFar->PanelRect;
+//	pCE->ItemsNumber = pFar->ItemsNumber;
+//	pCE->SelectedItemsNumber = pFar->SelectedItemsNumber;
+//	pCE->CurrentItem = pFar->CurrentItem;
+//	pCE->TopPanelItem = pFar->TopPanelItem;
+//	pCE->Visible = ((pFar->Flags & PFLAGS_VISIBLE) == PFLAGS_VISIBLE);
+//	pCE->Focus = ((pFar->Flags & PFLAGS_FOCUS) == PFLAGS_FOCUS);
+//	pCE->ViewMode = pFar->ViewMode;
+//	pCE->ShortNames = ((pFar->Flags & PFLAGS_ALTERNATIVENAMES) == PFLAGS_ALTERNATIVENAMES);
+//	pCE->SortMode = pFar->SortMode;
+//	pCE->Flags = pFar->Flags;
+//}
+
+void LoadFarColorsW1900(BYTE (&nFarColors)[col_LastIndex])
 {
-	pCE->PanelType = pFar->PanelType;
-	pCE->Plugin = ((pFar->Flags & PFLAGS_PLUGIN) == PFLAGS_PLUGIN);
-	pCE->PanelRect = pFar->PanelRect;
-	pCE->ItemsNumber = pFar->ItemsNumber;
-	pCE->SelectedItemsNumber = pFar->SelectedItemsNumber;
-	pCE->CurrentItem = pFar->CurrentItem;
-	pCE->TopPanelItem = pFar->TopPanelItem;
-	pCE->Visible = ((pFar->Flags & PFLAGS_VISIBLE) == PFLAGS_VISIBLE);
-	pCE->Focus = ((pFar->Flags & PFLAGS_FOCUS) == PFLAGS_FOCUS);
-	pCE->ViewMode = pFar->ViewMode;
-	pCE->ShortNames = ((pFar->Flags & PFLAGS_ALTERNATIVENAMES) == PFLAGS_ALTERNATIVENAMES);
-	pCE->SortMode = pFar->SortMode;
-	pCE->Flags = pFar->Flags;
+	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, NULL);
+	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
+	if (pColors)
+		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, nColorSize, pColors);
+	WARNING("Поддержка более 4бит цветов");
+	if (pColors && nColorSize > 0)
+	{
+#ifdef _DEBUG
+		INT_PTR nDefColorSize = COL_LASTPALETTECOLOR;
+		_ASSERTE(nColorSize==nDefColorSize);
+#endif
+		nFarColors[col_PanelText] = FarColor_3_2(pColors[COL_PANELTEXT]);
+		nFarColors[col_PanelSelectedCursor] = FarColor_3_2(pColors[COL_PANELSELECTEDCURSOR]);
+		nFarColors[col_PanelSelectedText] = FarColor_3_2(pColors[COL_PANELSELECTEDTEXT]);
+		nFarColors[col_PanelCursor] = FarColor_3_2(pColors[COL_PANELCURSOR]);
+		nFarColors[col_PanelColumnTitle] = FarColor_3_2(pColors[COL_PANELCOLUMNTITLE]);
+		nFarColors[col_PanelBox] = FarColor_3_2(pColors[COL_PANELBOX]);
+		nFarColors[col_HMenuText] = FarColor_3_2(pColors[COL_HMENUTEXT]);
+		nFarColors[col_WarnDialogBox] = FarColor_3_2(pColors[COL_WARNDIALOGBOX]);
+		nFarColors[col_DialogBox] = FarColor_3_2(pColors[COL_DIALOGBOX]);
+		nFarColors[col_CommandLineUserScreen] = FarColor_3_2(pColors[COL_COMMANDLINEUSERSCREEN]);
+		nFarColors[col_PanelScreensNumber] = FarColor_3_2(pColors[COL_PANELSCREENSNUMBER]);
+		nFarColors[col_KeyBarNum] = FarColor_3_2(pColors[COL_KEYBARNUM]);
+	}
+	else
+	{
+		_ASSERTE(pColors && nColorSize > 0);
+		memset(nFarColors, 7, countof(nFarColors)*sizeof(*nFarColors));
+	}
+	SafeFree(pColors);
 }
 
 BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
@@ -1093,27 +1128,10 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 
 #endif
 	gpFarInfo->nFarConsoleMode = ldwConsoleMode;
-	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, NULL);
-	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
-	
-	if (pColors)
-		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, pColors);
-	
-	WARNING("Поддержка более 4бит цветов");
-	if (pColors && nColorSize > 0)
-	{
-		_ASSERTE(nColorSize <= countof(gpFarInfo->nFarColors));
-		if (nColorSize > countof(gpFarInfo->nFarColors))
-			nColorSize = countof(gpFarInfo->nFarColors);
-		for (int i = 0; i < nColorSize; i++)
-			gpFarInfo->nFarColors[i] = FarColor_3_2(pColors[i]);
-	}
-	else
-	{
-		memset(gpFarInfo->nFarColors, 7, countof(gpFarInfo->nFarColors)*sizeof(*gpFarInfo->nFarColors));
-	}
-	SafeFree(pColors);
 
+	LoadFarColorsW1900(gpFarInfo->nFarColors);
+
+	_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40);
 	gpFarInfo->nFarInterfaceSettings =
 	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0, 0);
 	gpFarInfo->nFarPanelSettings =
@@ -1221,26 +1239,7 @@ void FillUpdateBackgroundW1900(struct PaintBackgroundArg* pFar)
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return;
 
-	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, NULL);
-	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
-	
-	if (pColors)
-		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, pColors);
-	
-	WARNING("Поддержка более 4бит цветов");
-	if (pColors && nColorSize > 0)
-	{
-		_ASSERTE(nColorSize <= countof(pFar->nFarColors));
-		if (nColorSize > countof(pFar->nFarColors))
-			nColorSize = countof(pFar->nFarColors);
-		for (int i = 0; i < nColorSize; i++)
-			pFar->nFarColors[i] = FarColor_3_2(pColors[i]);
-	}
-	else
-	{
-		memset(pFar->nFarColors, 7, countof(pFar->nFarColors)*sizeof(*pFar->nFarColors));
-	}
-	SafeFree(pColors);
+	LoadFarColorsW1900(pFar->nFarColors);
 
 	pFar->nFarInterfaceSettings =
 	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0, 0);

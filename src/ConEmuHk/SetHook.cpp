@@ -622,6 +622,8 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 				bHooked = true;
 				DWORD old_protect = 0; DWORD dwErr = 0;
 
+				_ASSERTE(sizeof(thunk->u1.Function)==sizeof(DWORD_PTR));
+				
 				if (!VirtualProtect(&thunk->u1.Function, sizeof(thunk->u1.Function),
 				                   PAGE_READWRITE, &old_protect))
 				{
@@ -640,7 +642,7 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 						thunk->u1.Function = (DWORD_PTR)gpHooks[j].NewAddress;
 					}
 
-					VirtualProtect(&thunk->u1.Function, sizeof(DWORD), old_protect, &old_protect);
+					VirtualProtect(&thunk->u1.Function, sizeof(thunk->u1.Function), old_protect, &old_protect);
 #ifdef _DEBUG
 
 					if (bExecutable)

@@ -36,7 +36,8 @@ TrayIcon Icon;
 TrayIcon::TrayIcon()
 {
 	memset(&IconData, 0, sizeof(IconData));
-	isWindowInTray = false;
+	mb_WindowInTray = false;
+	mb_InHidingToTray = false;
 	//mn_SysItemId[0] = SC_MINIMIZE;
 	//mn_SysItemId[1] = SC_MAXIMIZE_SECRET;
 	//mn_SysItemId[2] = SC_RESTORE_SECRET;
@@ -78,11 +79,11 @@ void TrayIcon::AddTrayIcon()
 {
 	_ASSERTE(IconData.hIcon!=NULL);
 
-	if (!isWindowInTray)
+	if (!mb_WindowInTray)
 	{
 		GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
 		Shell_NotifyIcon(NIM_ADD, &IconData);
-		isWindowInTray = true;
+		mb_WindowInTray = true;
 	}
 	else
 	{
@@ -92,28 +93,45 @@ void TrayIcon::AddTrayIcon()
 
 void TrayIcon::RemoveTrayIcon()
 {
-	if (isWindowInTray)
+	if (mb_WindowInTray)
 	{
 		Shell_NotifyIcon(NIM_DELETE, &IconData);
-		isWindowInTray = false;
+		mb_WindowInTray = false;
 	}
 }
 
 void TrayIcon::UpdateTitle()
 {
-	if (!isWindowInTray || !IconData.hIcon)
+	if (!mb_WindowInTray || !IconData.hIcon)
 		return;
 
 	GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
 	Shell_NotifyIcon(NIM_MODIFY, &IconData);
 }
 
-void TrayIcon::HideWindowToTray()
+void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
 {
+	mb_InHidingToTray = true;
+	if (asInfoTip && *asInfoTip)
+	{
+		IconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_INFO | NIF_TIP;
+		lstrcpyn(IconData.szInfoTitle, gpConEmu->ms_ConEmuVer, countof(IconData.szInfoTitle));
+		lstrcpyn(IconData.szInfo, asInfoTip, countof(IconData.szInfo));
+	}
+	else
+	{
+		IconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+		IconData.szInfo[0] = 0;
+		IconData.szInfoTitle[0] = 0;
+	}
 	AddTrayIcon(); // добавит или обновит tooltip
-	apiShowWindow(ghWnd, SW_HIDE);
+	if (IsWindowVisible(ghWnd))
+	{
+		apiShowWindow(ghWnd, SW_HIDE);
+	}
 	HMENU hMenu = GetSystemMenu(ghWnd, false);
 	SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_RESTORE_NAME);
+	mb_InHidingToTray = false;
 	//for (int i = 0; i < countof(mn_SysItemId); i++)
 	//{
 	//	MENUITEMINFO mi = {sizeof(mi)};
@@ -146,8 +164,10 @@ void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
 	IconData.cbSize = sizeof(NOTIFYICONDATA);
 	IconData.uID = 1;
 	IconData.hWnd = inWnd;
-	IconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+	IconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_INFO | NIF_TIP;
 	IconData.uCallbackMessage = WM_TRAYNOTIFY;
+	//lstrcpyn(IconData.szInfoTitle, gpConEmu->ms_ConEmuVer, countof(IconData.szInfoTitle));
+	IconData.uTimeout = 10000;
 	//!!!ICON
 	IconData.hIcon = hClassIconSm;
 	//(HICON)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(inIconResource), IMAGE_ICON,
@@ -157,7 +177,7 @@ void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
 //void TrayIcon::Delete()
 //{
 //	// Не посылать в Shell сообщения, если иконки нет
-//	if (isWindowInTray)
+//	if (mb_WindowInTray)
 //	{
 //	    Shell_NotifyIcon(NIM_DELETE, &IconData);
 //		memset(&IconData, 0, sizeof(IconData));

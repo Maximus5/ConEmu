@@ -5074,28 +5074,96 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 	return 0;
 }
 
-void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer)
+void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits)
 {
 	if (!isMainThread())
 	{
 		if (mb_InShowOldCmdVersion)
 			return; // уже послано
-
 		mb_InShowOldCmdVersion = TRUE;
-		PostMessage(ghWnd, mn_MsgOldCmdVer, (nCmd & 0xFFFF) | (((DWORD)(unsigned short)bFromServer) << 16), nVersion);
+		
+		static CESERVER_REQ_HDR info = {};
+		info.cbSize = sizeof(info);
+		info.nCmd = nCmd;
+		info.nVersion = nVersion;
+		info.nSrcPID = nFromProcess;
+		info.hModule = hFromModule;
+		info.nBits = nBits;
+		PostMessage(ghWnd, mn_MsgOldCmdVer, bFromServer, (LPARAM)&info);
+		
 		return;
 	}
 
+	// Один раз за сессию?
 	static bool lbErrorShowed = false;
-
 	if (lbErrorShowed) return;
+	
+	// Попытаемся получить информацию по процессу и модулю
+	HANDLE h = NULL;
+	PROCESSENTRY32 pi = {sizeof(pi)};
+	MODULEENTRY32  mi = {sizeof(mi)};
+	LPCTSTR pszCallPath = NULL;
+	#ifdef _WIN64
+	if (nBits == 64)
+		h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nFromProcess);
+	else
+		h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE|TH32CS_SNAPMODULE32, nFromProcess);
+	#else
+	h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nFromProcess);
+	#endif
+	if (h && h != INVALID_HANDLE_VALUE)
+	{
+		LPCTSTR pszExePath = NULL;
+		if (Module32First(h, &mi))
+		{
+			do {
+				if (mi.th32ProcessID == nFromProcess)
+				{
+					if (!pszExePath)
+						pszExePath = mi.szExePath[0] ? mi.szExePath : mi.szModule;
+
+					if ((!hFromModule || (mi.hModule == (HMODULE)hFromModule)))
+					{
+						pszCallPath = mi.szExePath[0] ? mi.szExePath : mi.szModule;
+						break;
+					}
+				}
+			} while (Module32Next(h, &mi));
+			if (!pszCallPath && pszExePath)
+				pszCallPath = pszExePath;
+		}
+		CloseHandle(h);
+	}
+	if (!pszCallPath)
+	{
+		h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (h && h != INVALID_HANDLE_VALUE)
+		{
+			if (Process32First(h, &pi))
+			{
+				do {
+					if (pi.th32ProcessID == nFromProcess)
+					{
+						pszCallPath = pi.szExeFile;
+						break;
+					}
+				} while (Process32Next(h, &pi));
+			}
+			CloseHandle(h);
+		}
+		pszCallPath = _T("");
+	}
 
 	lbErrorShowed = true;
-	wchar_t szMsg[255];
-	_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"ConEmu received old version packet!\nCommandID: %i, Version: %i, ReqVersion: %i\nPlease check %s",
-	          nCmd, nVersion, CESERVER_REQ_VER,
-	          (bFromServer==1) ? L"ConEmuC*.exe" : (bFromServer==0) ? L"ConEmu*.dll" : L"ConEmuC*.exe and ConEmu*.dll");
-	MBox(szMsg);
+	int nMaxLen = 255+lstrlen(pszCallPath);
+	wchar_t *pszMsg = (wchar_t*)calloc(nMaxLen,sizeof(wchar_t));
+	_wsprintf(pszMsg, SKIPLEN(nMaxLen)
+		L"ConEmu received old version packet!\nCommandID: %i, Version: %i, ReqVersion: %i, PID: %u\nPlease check %s\n%s",
+		nCmd, nVersion, CESERVER_REQ_VER, nFromProcess,
+		(bFromServer==1) ? L"ConEmuC*.exe" : (bFromServer==0) ? L"ConEmu*.dll and Far plugins" : L"ConEmuC*.exe and ConEmu*.dll",
+		pszCallPath);
+	MBox(pszMsg);
+	free(pszMsg);
 	mb_InShowOldCmdVersion = FALSE; // теперь можно показать еще одно...
 }
 
@@ -5187,7 +5255,7 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, int x, int y)
 	int command = TrackPopupMenu(systemMenu, TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, x, y, 0, Wnd, NULL);
 	mb_InTrackSysMenu = FALSE;
 
-	if (Icon.isWindowInTray)
+	if (Icon.isWindowInTray())
 		switch(command)
 		{
 			case SC_RESTORE:
@@ -6391,6 +6459,20 @@ CVirtualConsole* CConEmuMain::GetVCon(int nIdx)
 	return mp_VCon[nIdx];
 }
 
+// 0 - такой консоли нет
+// 1..12 - "номер" консоли (1 based)
+int CConEmuMain::IsVConValid(CVirtualConsole* apVCon)
+{
+	if (!apVCon)
+		return 0;
+	for (int i = 0; i < countof(mp_VCon); i++)
+	{
+		if (mp_VCon[i] == apVCon)
+			return (i+1);
+	}
+	return 0;
+}
+
 CVirtualConsole* CConEmuMain::GetVConFromPoint(POINT ptScreen)
 {
 	TODO("Доработать для DoubleView");
@@ -6442,7 +6524,8 @@ bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 {
 	if (!mp_VActive) return false;
 
-	return mp_VActive->RCon()->isFilePanel(abPluginAllowed);
+	bool lbIsPanels = mp_VActive->RCon()->isFilePanel(abPluginAllowed);
+	return lbIsPanels;
 }
 
 bool CConEmuMain::isFirstInstance()
@@ -7960,7 +8043,7 @@ void CConEmuMain::OnMinimizeRestore()
 	{
 		if (isIconic())
 		{
-			if (Icon.isWindowInTray || !IsWindowVisible(ghWnd))
+			if (Icon.isWindowInTray() || !IsWindowVisible(ghWnd))
 				Icon.RestoreWindowFromTray();
 			else
 				PostMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
@@ -11488,7 +11571,7 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 
 	if (in.hdr.nVersion != CESERVER_REQ_VER)
 	{
-		gpConEmu->ShowOldCmdVersion(in.hdr.nCmd, in.hdr.nVersion, -1);
+		gpConEmu->ShowOldCmdVersion(in.hdr.nCmd, in.hdr.nVersion, -1, in.hdr.nSrcPID, in.hdr.hModule, in.hdr.nBits);
 		return;
 	}
 
@@ -11773,14 +11856,22 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			if (!isIconic())
 				result = gpConEmu->OnSizing(wParam, lParam);
 		} break;
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		case WM_SHOWWINDOW:
 		{
 			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SHOWWINDOW (Show=%i, Status=%i)\n", wParam, lParam);
 			DEBUGSTRSIZE(szDbg);
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			if (wParam == FALSE)
+			{
+				if (!Icon.isWindowInTray() && !Icon.isHidingToTray())
+				{
+					//_ASSERTE(Icon.isHidingToTray());
+					Icon.HideWindowToTray(_T("ConEmu was hidden from some program"));
+				}
+			}
 		} break;
-#endif
+//#endif
 		case WM_SIZE:
 		{
 #ifdef _DEBUG
@@ -12235,7 +12326,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgOldCmdVer)
 			{
-				gpConEmu->ShowOldCmdVersion(wParam & 0xFFFF, lParam, (SHORT)((wParam & 0xFFFF0000)>>16));
+				CESERVER_REQ_HDR* p = (CESERVER_REQ_HDR*)lParam;
+				_ASSERTE(p->cbSize == sizeof(CESERVER_REQ_HDR));
+				gpConEmu->ShowOldCmdVersion(p->nCmd, p->nVersion, (int)wParam, p->nSrcPID, p->hModule, p->nBits);
 				return 0;
 			}
 			else if (messg == gpConEmu->mn_MsgTabCommand)

@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 	#define EXECUTE_CMD_WARN_TIMEOUT 500
+	#define EXECUTE_CMD_WARN_TIMEOUT2 10000
 	#define EXECUTE_CMD_TIMEOUT_SRV_ABSENT 500
 #endif
 
@@ -98,3 +99,4 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 HWND myGetConsoleWindow();
 
 extern SECURITY_ATTRIBUTES* gpLocalSecurity;
+extern u64 ghWorkingModule;

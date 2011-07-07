@@ -728,7 +728,7 @@ void CPluginBackground::MonitorBackground()
 	if (nDelta > THSET_TIMEOUT)
 	{
 		m_LastThSetCheck = GetTickCount();
-		//BYTE nFarColors[0x100]; // Массив цветов фара
+		//BYTE nFarColors[col_LastIndex]; // Массив цветов фара
 
 		//if (LoadThSet())
 		//{

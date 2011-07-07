@@ -3,7 +3,6 @@
 #include "common.hpp"
 #include "RgnDetect.h"
 #include "UnicodeChars.h"
-#include "farcolor.hpp"
 
 
 static bool gbInTransparentAssert = false;
@@ -1247,8 +1246,8 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		{
 			DlgFlags |= FR_MENUBAR;
 			// Попытаться подхватить флаг FR_ACTIVEMENUBAR даже когда меню всегда видно
-			BYTE btMenuInactiveFore = (mp_FarInfo->nFarColors[COL_HMENUTEXT] & 0xF);
-			BYTE btMenuInactiveBack = (mp_FarInfo->nFarColors[COL_HMENUTEXT] & 0xF0) >> 4;
+			BYTE btMenuInactiveFore = (mp_FarInfo->nFarColors[col_HMenuText] & 0xF);
+			BYTE btMenuInactiveBack = (mp_FarInfo->nFarColors[col_HMenuText] & 0xF0) >> 4;
 			int nShift = nY1 * nWidth + nX1;
 
 			for(int nX = nX1; nX <= nX2; nX++, nShift++)
@@ -1295,8 +1294,8 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			{
 				// Нужно чтобы хотя бы в одном углу этого прямоугольника были цвета рамки панелей!
 				// Иначе - считаем что вся панель перекрыта диалогами и не видима
-				BYTE btPanelFore = (mp_FarInfo->nFarColors[COL_PANELBOX] & 0xF);
-				BYTE btPanelBack = (mp_FarInfo->nFarColors[COL_PANELBOX] & 0xF0) >> 4;
+				BYTE btPanelFore = (mp_FarInfo->nFarColors[col_PanelBox] & 0xF);
+				BYTE btPanelBack = (mp_FarInfo->nFarColors[col_PanelBox] & 0xF0) >> 4;
 				int nShift = 0;
 
 				for(int i = 0; i < 4; i++)
@@ -1390,11 +1389,11 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		mn_NextDlgId++;
 		DlgFlags |= mn_NextDlgId<<8;
 		// "Красненький" диалог?
-		BYTE btWarnBack = (mp_FarInfo->nFarColors[COL_WARNDIALOGBOX] & 0xF0) >> 4;
+		BYTE btWarnBack = (mp_FarInfo->nFarColors[col_WarnDialogBox] & 0xF0) >> 4;
 
 		if (pAttr[nY1 * nWidth + nX1].nBackIdx == btWarnBack)
 		{
-			BYTE btNormBack = (mp_FarInfo->nFarColors[COL_DIALOGBOX] & 0xF0) >> 4;
+			BYTE btNormBack = (mp_FarInfo->nFarColors[col_DialogBox] & 0xF0) >> 4;
 
 			if (btNormBack != btWarnBack)
 				DlgFlags |= FR_ERRORCOLOR;
@@ -1889,25 +1888,25 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	WARNING("Учитывать возможность наличия номеров окон, символа записи 'R', и по хорошему, ч/б режима");
 	//COLORREF crColorKey = gSet.ColorKey;
 	// реальный цвет, заданный в фаре
-	nUserBackIdx = (mp_FarInfo->nFarColors[COL_COMMANDLINEUSERSCREEN] & 0xF0) >> 4;
+	nUserBackIdx = (mp_FarInfo->nFarColors[col_CommandLineUserScreen] & 0xF0) >> 4;
 	crUserBack = mp_Colors[nUserBackIdx];
-	nMenuBackIdx = (mp_FarInfo->nFarColors[COL_HMENUTEXT] & 0xF0) >> 4;
+	nMenuBackIdx = (mp_FarInfo->nFarColors[col_HMenuText] & 0xF0) >> 4;
 	crMenuTitleBack = mp_Colors[nMenuBackIdx];
 	// COL_PANELBOX
-	int nPanelBox = (mp_FarInfo->nFarColors[COL_PANELBOX] & 0xF0) >> 4;
+	int nPanelBox = (mp_FarInfo->nFarColors[col_PanelBox] & 0xF0) >> 4;
 	crPanelsBorderBack = mp_Colors[nPanelBox];
-	nPanelBox = (mp_FarInfo->nFarColors[COL_PANELBOX] & 0xF);
+	nPanelBox = (mp_FarInfo->nFarColors[col_PanelBox] & 0xF);
 	crPanelsBorderFore = mp_Colors[nPanelBox];
 	// COL_PANELSCREENSNUMBER
-	int nPanelNum = (mp_FarInfo->nFarColors[COL_PANELSCREENSNUMBER] & 0xF0) >> 4;
+	int nPanelNum = (mp_FarInfo->nFarColors[col_PanelScreensNumber] & 0xF0) >> 4;
 	crPanelsNumberBack = mp_Colors[nPanelNum];
-	nPanelNum = (mp_FarInfo->nFarColors[COL_PANELSCREENSNUMBER] & 0xF);
+	nPanelNum = (mp_FarInfo->nFarColors[col_PanelScreensNumber] & 0xF);
 	crPanelsNumberFore = mp_Colors[nPanelNum];
 	// Цвета диалогов
-	nDlgBorderBackIdx = (mp_FarInfo->nFarColors[COL_DIALOGBOX] & 0xF0) >> 4;
-	nDlgBorderForeIdx = (mp_FarInfo->nFarColors[COL_DIALOGBOX] & 0xF);
-	nErrBorderBackIdx = (mp_FarInfo->nFarColors[COL_WARNDIALOGBOX] & 0xF0) >> 4;
-	nErrBorderForeIdx = (mp_FarInfo->nFarColors[COL_WARNDIALOGBOX] & 0xF);
+	nDlgBorderBackIdx = (mp_FarInfo->nFarColors[col_DialogBox] & 0xF0) >> 4;
+	nDlgBorderForeIdx = (mp_FarInfo->nFarColors[col_DialogBox] & 0xF);
+	nErrBorderBackIdx = (mp_FarInfo->nFarColors[col_WarnDialogBox] & 0xF0) >> 4;
+	nErrBorderForeIdx = (mp_FarInfo->nFarColors[col_WarnDialogBox] & 0xF);
 	// Для детекта наличия PanelTabs
 	bPanelTabsSeparate = (mp_FarInfo->PanelTabs.SeparateTabs != 0);
 
@@ -1918,8 +1917,8 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	}
 	else
 	{
-		nPanelTabsBackIdx = (mp_FarInfo->nFarColors[COL_PANELTEXT] & 0xF0) >> 4;
-		nPanelTabsForeIdx = mp_FarInfo->nFarColors[COL_PANELTEXT] & 0xF;
+		nPanelTabsBackIdx = (mp_FarInfo->nFarColors[col_PanelText] & 0xF0) >> 4;
+		nPanelTabsForeIdx = mp_FarInfo->nFarColors[col_PanelText] & 0xF;
 	}
 
 	// При bUseColorKey Если панель погашена (или панели) то
@@ -1944,7 +1943,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	//	if (pChar[nWidth*(nHeight-1)] != L'1')
 	//		goto wrap;
 	//	// соответствующего цвета
-	//	BYTE KeyBarNoColor = mp_FarInfo->nFarColors[COL_KEYBARNUM];
+	//	BYTE KeyBarNoColor = mp_FarInfo->nFarColors[col_KeyBarNum];
 	//	if (pAttr[nWidth*(nHeight-1)].nBackIdx != ((KeyBarNoColor & 0xF0)>>4))
 	//		goto wrap;
 	//	if (pAttr[nWidth*(nHeight-1)].nForeIdx != (KeyBarNoColor & 0xF))

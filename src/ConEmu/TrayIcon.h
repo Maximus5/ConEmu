@@ -41,13 +41,18 @@ class TrayIcon
 		//UINT mn_SysItemId[5];
 		//UINT mn_SysItemState[5];
 
+		bool mb_InHidingToTray;
+		bool mb_WindowInTray;
+
 	public:
-		bool isWindowInTray;
+		bool isWindowInTray() { return mb_WindowInTray; }
+		bool isHidingToTray() { return mb_InHidingToTray; }
+		
 
 		TrayIcon();
 		~TrayIcon();
 
-		void HideWindowToTray();
+		void HideWindowToTray(LPCTSTR asInfoTip = NULL);
 		void RestoreWindowFromTray();
 		void LoadIcon(HWND inWnd, int inIconResource);
 		//void Delete();

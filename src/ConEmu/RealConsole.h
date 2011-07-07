@@ -268,6 +268,7 @@ class CRealConsole
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
 		int  GetProcesses(ConProcess** ppPrc);
 		DWORD GetFarPID(BOOL abPluginRequired=FALSE);
+		DWORD GetActivePID();
 		DWORD GetProgramStatus();
 		DWORD GetFarStatus();
 		DWORD GetServerPID();
@@ -455,7 +456,9 @@ class CRealConsole
 		BOOL mb_SkipFarPidChange;
 		DWORD m_TerminatedPIDs[128]; int mn_TerminatedIdx;
 		//
-		DWORD mn_FarPID, /*mn_FarInputTID,*/ mn_LastSetForegroundPID;
+		DWORD mn_FarPID;
+		DWORD mn_ActivePID;
+		DWORD mn_LastSetForegroundPID; // PID процесса, которому в последний раз было разрешено AllowSetForegroundWindow
 		//
 		ConEmuTab* mp_tabs;
 		MSection   msc_Tabs;

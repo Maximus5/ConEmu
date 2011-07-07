@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <Tlhelp32.h>
 #include "../common/ConEmuCheck.h"
-#include "../common/farcolor.hpp"
 #include "../common/RgnDetect.h"
 #include "../common/Execute.h"
 #include "RealConsole.h"
@@ -180,7 +179,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	//mb_ConsoleSelectMode = false;
 	mn_SelectModeSkipVk = 0;
 	mn_ProcessCount = 0;
-	mn_FarPID = 0; //mn_FarInputTID = 0;
+	mn_FarPID = mn_ActivePID = 0; //mn_FarInputTID = 0;
 	memset(m_FarPlugPIDs, 0, sizeof(m_FarPlugPIDs)); mn_FarPlugPIDsCount = 0;
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
 	mb_SkipFarPidChange = FALSE;
@@ -3569,7 +3568,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 	{
 		hConWnd = NULL;
 		mn_ConEmuC_PID = 0;
-		mn_FarPID = mn_FarPID_PluginDetected = 0;
+		mn_FarPID = mn_ActivePID = mn_FarPID_PluginDetected = 0;
 		mn_LastSetForegroundPID = 0;
 		//mn_ConEmuC_Input_TID = 0;
 		SafeCloseHandle(mh_ConEmuC);
@@ -5357,7 +5356,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
 	if (in.hdr.nVersion != CESERVER_REQ_VER)
 	{
-		gpConEmu->ShowOldCmdVersion(in.hdr.nCmd, in.hdr.nVersion, in.hdr.nSrcPID==GetServerPID() ? 1 : 0);
+		gpConEmu->ShowOldCmdVersion(in.hdr.nCmd, in.hdr.nVersion, in.hdr.nSrcPID==GetServerPID() ? 1 : 0, in.hdr.nSrcPID, in.hdr.hModule, in.hdr.nBits);
 		return;
 	}
 
@@ -5646,6 +5645,18 @@ DWORD CRealConsole::GetFarPID(BOOL abPluginRequired/*=FALSE*/)
 	return mn_FarPID;
 }
 
+// Вернуть PID "условно активного" процесса в консоли
+DWORD CRealConsole::GetActivePID()
+{
+	if (!this)
+		return 0;
+
+	DWORD nPID = GetFarPID();
+	if (nPID)
+		return nPID;
+	return mn_ActivePID;
+}
+
 // Обновить статус запущенных программ
 // Возвращает TRUE если сменился статус (Far/не Far)
 BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
@@ -5653,7 +5664,7 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	BOOL lbChanged = FALSE;
 	//Warning: Должен вызываться ТОЛЬКО из ProcessAdd/ProcessDelete, т.к. сам секцию не блокирует
 	bool bIsFar = false, bIsTelnet = false, bIsCmd = false;
-	DWORD dwFarPID = 0; //, dwInputTID = 0;
+	DWORD dwFarPID = 0, dwActivePID = 0;
 	// Наличие 16bit определяем ТОЛЬКО по WinEvent. Иначе не получится отсечь его завершение,
 	// т.к. процесс ntvdm.exe не выгружается, а остается в памяти.
 	bool bIsNtvdm = (mn_ProgramStatus & CES_NTVDM) == CES_NTVDM;
@@ -5687,6 +5698,12 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 				dwFarPID = cp.ProcessID;
 				//dwInputTID = cp.InputTID;
 			}
+			
+			// "условно активный процесс"
+			if (!dwActivePID)
+				dwActivePID = cp.ProcessID;
+			else if (dwActivePID == cp.ParentPID)
+				dwActivePID = cp.ProcessID;
 		}
 
 		iter++;
@@ -5735,6 +5752,9 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 		lbChanged = TRUE;
 	}
 	mn_FarPID = dwFarPID;
+	
+	if (mn_ActivePID != dwActivePID)
+		mn_ActivePID = dwActivePID;
 
 	//if (!dwFarPID)
 	//	mn_FarPID_PluginDetected = 0;
@@ -10803,6 +10823,14 @@ void CRealConsole::FindPanels()
 	// функция проверяет (mn_ProgramStatus & CES_FARACTIVE) и т.п.
 	if (isFar())
 	{
+		if (isFar(TRUE) && m_FarInfo.cbSize)
+		{
+			if (m__FarInfo.Ptr() && m__FarInfo.Ptr()->nFarInfoIdx != m_FarInfo.nFarInfoIdx)
+			{
+				m__FarInfo.GetTo(&m_FarInfo, sizeof(m_FarInfo));
+			}
+		}
+
 		// Если активен редактор или вьювер (или диалоги, копирование, и т.п.) - искать бессмысленно
 		if ((mn_FarStatus & CES_NOTPANELFLAGS) == 0)
 			bMayBePanels = TRUE; // только если нет
@@ -10851,6 +10879,7 @@ void CRealConsole::FindPanels()
 		                    );
 
 		BOOL bFarShowColNames = TRUE;
+		BOOL bFarShowStatus = TRUE;
 		const CEFAR_INFO_MAPPING *pFar = NULL;
 		if (m_FarInfo.cbSize)
 		{
@@ -10859,6 +10888,8 @@ void CRealConsole::FindPanels()
 			{
 				if ((pFar->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) == 0)
 					bFarShowColNames = FALSE;
+				if ((pFar->nFarPanelSettings & 0x40/*FPS_SHOWSTATUSLINE*/) == 0)
+					bFarShowStatus = FALSE;
 			}
 		}
 
@@ -10879,6 +10910,7 @@ void CRealConsole::FindPanels()
 		{
 			for(int i=2; !bLeftPanel && i<con.nTextWidth; i++)
 			{
+				// Найти правый край левой панели
 				if (con.pConChar[nIdx+i] == ucBoxDblDownLeft
 				        && ((con.pConChar[nIdx+i-1] == ucBoxDblHorz)
 				            || con.pConChar[nIdx+i-1] == ucBoxSinglDownDblHorz // правый угол панели
@@ -10895,9 +10927,23 @@ void CRealConsole::FindPanels()
 						        /*&& con.pConChar[con.nTextWidth*nBottom+i] == ucBoxDblUpLeft*/)
 						{
 							rLeftPanel.left = 1;
-							rLeftPanel.top = nY + 2;
+							rLeftPanel.top = nY + (bFarShowColNames ? 2 : 1);
 							rLeftPanel.right = i-1;
-							rLeftPanel.bottom = nBottom - 3;
+							if (bFarShowStatus)
+							{
+								rLeftPanel.bottom = nBottom - 3;
+								for (int j = (nBottom - 3); j > (int)(nBottom - 13) && j > rLeftPanel.top; j--)
+								{
+									if (con.pConChar[con.nTextWidth*j] == ucBoxDblVertSinglRight)
+									{
+										rLeftPanel.bottom = j; break;
+									}
+								}
+							}
+							else
+							{
+								rLeftPanel.bottom = nBottom - 1;
+							}
 							rLeftPanelFull.left = 0;
 							rLeftPanelFull.top = nY;
 							rLeftPanelFull.right = i;
@@ -10963,9 +11009,24 @@ void CRealConsole::FindPanels()
 									&&*/ con.pConChar[con.nTextWidth*(nBottom+1)-1] == ucBoxDblUpLeft)
 								{
 									rRightPanel.left = i+1;
-									rRightPanel.top = nY + 2;
+									rRightPanel.top = nY + (bFarShowColNames ? 2 : 1);
 									rRightPanel.right = con.nTextWidth-2;
-									rRightPanel.bottom = nBottom - 3;
+									//rRightPanel.bottom = nBottom - 3;
+									if (bFarShowStatus)
+									{
+										rRightPanel.bottom = nBottom - 3;
+										for (int j = (nBottom - 3); j > (int)(nBottom - 13) && j > rRightPanel.top; j--)
+										{
+											if (con.pConChar[con.nTextWidth*j+i] == ucBoxDblVertSinglRight)
+											{
+												rRightPanel.bottom = j; break;
+											}
+										}
+									}
+									else
+									{
+										rRightPanel.bottom = nBottom - 1;
+									}
 									rRightPanelFull.left = i;
 									rRightPanelFull.top = nY;
 									rRightPanelFull.right = con.nTextWidth-1;

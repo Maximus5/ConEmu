@@ -31,8 +31,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning( disable : 4995 )
 #include "..\common\pluginW1900.hpp" // Far3
 #pragma warning( default : 4995 )
-#include "..\common\far3color.h"
 #include "ConEmuTh.h"
+#include "../common/farcolor3.hpp"
+#include "../common/ConEmuColors3.h"
 #include "../ConEmu/version.h" // Far3
 
 //#define FCTL_GETPANELDIR FCTL_GETCURRENTDIRECTORY
@@ -425,7 +426,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	//pcefpi->hPanel = hPanel;
 
 	// Если элементов на панели стало больше, чем выделено в (pviLeft/pviRight)
-	if (pcefpi->ItemsNumber < pi.ItemsNumber)
+	if (pcefpi->ItemsNumber < (INT_PTR)pi.ItemsNumber)
 	{
 		if (!pcefpi->ReallocItems(pi.ItemsNumber))
 			return FALSE;
@@ -452,32 +453,59 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 
 	// Цвета фара
 	int nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, NULL);
-
-	if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
-	{
-		if (pcefpi->nFarColors) free(pcefpi->nFarColors);
-
-		pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
-		pcefpi->nMaxFarColors = nColorSize;
-	}
-
-	//nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, pcefpi->nFarColors);
+#ifdef _DEBUG
+	INT_PTR nDefColorSize = COL_LASTPALETTECOLOR;
+	_ASSERTE(nColorSize==nDefColorSize);
+#endif
 	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
-	
 	if (pColors)
-		nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, pColors);
-	
+		nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, nColorSize, pColors);
 	WARNING("Поддержка более 4бит цветов");
 	if (pColors && nColorSize > 0)
 	{
-		for (int i = 0; i < nColorSize; i++)
-			pcefpi->nFarColors[i] = FarColor_3_2(pColors[i]);
+		pcefpi->nFarColors[col_PanelText] = FarColor_3_2(pColors[COL_PANELTEXT]);
+		pcefpi->nFarColors[col_PanelSelectedCursor] = FarColor_3_2(pColors[COL_PANELSELECTEDCURSOR]);
+		pcefpi->nFarColors[col_PanelSelectedText] = FarColor_3_2(pColors[COL_PANELSELECTEDTEXT]);
+		pcefpi->nFarColors[col_PanelCursor] = FarColor_3_2(pColors[COL_PANELCURSOR]);
+		pcefpi->nFarColors[col_PanelColumnTitle] = FarColor_3_2(pColors[COL_PANELCOLUMNTITLE]);
+		pcefpi->nFarColors[col_PanelBox] = FarColor_3_2(pColors[COL_PANELBOX]);
+		pcefpi->nFarColors[col_HMenuText] = FarColor_3_2(pColors[COL_HMENUTEXT]);
+		pcefpi->nFarColors[col_WarnDialogBox] = FarColor_3_2(pColors[COL_WARNDIALOGBOX]);
+		pcefpi->nFarColors[col_DialogBox] = FarColor_3_2(pColors[COL_DIALOGBOX]);
+		pcefpi->nFarColors[col_CommandLineUserScreen] = FarColor_3_2(pColors[COL_COMMANDLINEUSERSCREEN]);
+		pcefpi->nFarColors[col_PanelScreensNumber] = FarColor_3_2(pColors[COL_PANELSCREENSNUMBER]);
+		pcefpi->nFarColors[col_KeyBarNum] = FarColor_3_2(pColors[COL_KEYBARNUM]);
 	}
 	else
 	{
-		memset(pcefpi->nFarColors, 7, pcefpi->nMaxFarColors*sizeof(*pcefpi->nFarColors));
+		_ASSERTE(pColors!=NULL && nColorSize>0);
+		memset(pcefpi->nFarColors, 7, countof(pcefpi->nFarColors)*sizeof(*pcefpi->nFarColors));
 	}
 	SafeFree(pColors);
+	//int nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, NULL);
+	//if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
+	//{
+	//	if (pcefpi->nFarColors) free(pcefpi->nFarColors);
+	//	pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
+	//	pcefpi->nMaxFarColors = nColorSize;
+	//}
+	////nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, pcefpi->nFarColors);
+	//FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
+	//
+	//if (pColors)
+	//	nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, nColorSize, pColors);
+	//
+	//WARNING("Поддержка более 4бит цветов");
+	//if (pColors && nColorSize > 0)
+	//{
+	//	for (int i = 0; i < nColorSize; i++)
+	//		pcefpi->nFarColors[i] = FarColor_3_2(pColors[i]);
+	//}
+	//else
+	//{
+	//	memset(pcefpi->nFarColors, 7, pcefpi->nMaxFarColors*sizeof(*pcefpi->nFarColors));
+	//}
+	//SafeFree(pColors);
 	
 	// Текущая папка панели
 	int nSize = (int)InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR, 0, 0);

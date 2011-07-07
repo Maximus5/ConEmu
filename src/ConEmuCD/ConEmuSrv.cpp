@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "..\common\ConsoleAnnotation.h"
 #include "..\common\Execute.h"
+#include "TokenHelper.h"
 
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s) // ConEmuC: Recieved key... / ConEmuC: Recieved input
 #define DEBUGSTRINPUTEVENT(s) //DEBUGSTR(s) // SetEvent(gpSrv->hInputEvent)
@@ -607,7 +608,14 @@ int ServerInit()
 			if (gpSrv->bDebuggerActive)
 				dwFlags |= PROCESS_VM_READ;
 
-			gpSrv->hRootProcess = OpenProcess(dwFlags, FALSE, gpSrv->dwRootProcess);
+			CAdjustProcessToken token;
+			token.Enable(1, SE_DEBUG_NAME);
+
+			gpSrv->hRootProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, gpSrv->dwRootProcess);
+			if (!gpSrv->hRootProcess)
+				gpSrv->hRootProcess = OpenProcess(dwFlags, FALSE, gpSrv->dwRootProcess);
+
+			token.Release();
 
 			if (!gpSrv->hRootProcess)
 			{
@@ -625,7 +633,7 @@ int ServerInit()
 			if (gpSrv->bDebuggerActive)
 			{
 				wchar_t szTitle[64];
-				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Debug PID=%i", gpSrv->dwRootProcess);
+				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Debugging PID=%u, Debugger PID=%u", gpSrv->dwRootProcess, GetCurrentProcessId());
 				SetConsoleTitleW(szTitle);
 			}
 		}
@@ -3656,9 +3664,10 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
 	fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
 #ifdef _DEBUG
+	DWORD dwErr = GetLastError();
 	if (!fSuccess || (nCount != cbWritten))
 	{
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"### WriteConsoleInput(Write=%i, Written=%i, Left=%i)\n", nCount, cbWritten, GetNumberOfBufferEvents());
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"### WriteConsoleInput(Write=%i, Written=%i, Left=%i, Err=x%X)\n", nCount, cbWritten, GetNumberOfBufferEvents(), dwErr);
 		DEBUGSTRINPUTWRITEFAIL(szDbg);
 	}
 	else

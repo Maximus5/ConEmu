@@ -35,7 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <Tlhelp32.h>
 #include "ScreenDump.h"
-#include "../common/farcolor.hpp"
 #include "VirtualConsole.h"
 #include "RealConsole.h"
 #include "ConEmu.h"
@@ -4363,8 +4362,8 @@ void CVirtualConsole::PolishPanelViews()
 		}
 
 		// Цвета фара
-		BYTE btNamesColor = pFarInfo->nFarColors[COL_PANELCOLUMNTITLE];
-		BYTE btPanelColor = pFarInfo->nFarColors[COL_PANELBOX];
+		BYTE btNamesColor = pFarInfo->nFarColors[col_PanelColumnTitle];
+		BYTE btPanelColor = pFarInfo->nFarColors[col_PanelBox];
 		// 1. Заголовок панели
 		int x;
 		wchar_t *pszLine = mpsz_ConChar;

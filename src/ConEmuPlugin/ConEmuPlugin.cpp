@@ -1488,6 +1488,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		case DLL_PROCESS_ATTACH:
 		{
 			ghPluginModule = (HMODULE)hModule;
+			ghWorkingModule = (u64)hModule;
 			gnSelfPID = GetCurrentProcessId();
 			HeapInitialize();
 			_ASSERTE(FAR_X_VER<=FAR_Y_VER);
@@ -5895,11 +5896,14 @@ BOOL StartDebugger()
 
 	if (ConEmuHwnd)
 	{
+		// Откроем дебаггер в новой вкладке ConEmu. При желании юзеру проще сделать Detach
+		// "/DEBUGPID=" обязательно должен быть первым аргументом
 		_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /ROOT \"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=9999",
 		          szConEmuC, szConEmuC, dwSelfPID, w, h);
 	}
 	else
 	{
+		// Запустить дебаггер в новом видимом консольном окне
 		_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=9999",
 		          szConEmuC, dwSelfPID, w, h);
 	}

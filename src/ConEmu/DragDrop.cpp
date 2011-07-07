@@ -1106,8 +1106,10 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 			{
 				if (*psz == L'"' || *psz == L'\\')
 				{
-					size_t cch = nLen+1-(psz - pszText);
-					wmemmove_s(psz+1, cch, psz, cch);
+					INT_PTR cch = nLen+1;
+					INT_PTR cchMax = countof(szData) - ((psz+1) - szData);
+					_ASSERTE(cch > 0 && cch <= cchMax && cchMax > 0 && cchMax < countof(szData));
+					wmemmove_s(psz+1, cchMax, psz, cch);
 
 					if (*psz == L'"') *psz = L'\\';
 
@@ -1116,6 +1118,10 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 
 				psz++; nLen--;
 			}
+		}
+		else
+		{
+			_ASSERTE(m_pfpi->NoFarConsole);
 		}
 
 		if ((psz = wcschr(pszText, L' ')) != NULL)

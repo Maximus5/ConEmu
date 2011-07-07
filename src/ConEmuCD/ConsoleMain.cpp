@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../common/execute.h"
 #include "../ConEmuHk/Injects.h"
+#include "TokenHelper.h"
 
 #ifdef __GNUC__
 	#include "../common/DbgHlpGcc.h"
@@ -190,6 +191,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ghOurModule = (HMODULE)hModule;
 			ghConWnd = GetConsoleWindow();
 			gnSelfPID = GetCurrentProcessId();
+			ghWorkingModule = (u64)hModule;
 
 			#ifdef _DEBUG
 			HANDLE hProcHeap = GetProcessHeap();
@@ -1696,6 +1698,11 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		return CERR_GETCOMMANDLINE;
 	}
 
+	#ifdef _DEBUG
+	// Для отлова запуска дебаггера
+	//_ASSERTE(wcsstr(asCmdLine, L"/DEBUGPID=")==0);
+	#endif
+
 	gnRunMode = RM_UNDEFINED;
 
 	while((iRc = NextArg(&asCmdLine, szArg, &pszArgStarts)) == 0)
@@ -2007,11 +2014,26 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 	}
 
 	// Issue 364, например, идет билд в VS, запускается CustomStep, в этот момент автоаттач нафиг не нужен
+	// Теоретически, в Студии не должно бы быть запуска ConEmuC.exe, но он может оказаться в "COMSPEC", так что проверим.
 	if (gbAttachMode && (gnRunMode == RM_SERVER) && (gpSrv->dwGuiPID == 0))
 	{
-		if (!ghConWnd || !IsWindowVisible(ghConWnd))
+		BOOL lbIsWindowVisible = FALSE;
+		if (!ghConWnd || !(lbIsWindowVisible = IsWindowVisible(ghConWnd)))
 		{
-			return CERR_ATTACH_NO_CONWND;
+			// Но это может быть все-таки наше окошко. Как проверить...
+			// Найдем первый параметр
+			LPCWSTR pszSlash = asCmdLine ? wcschr(asCmdLine, L'/') : NULL;
+			if (pszSlash)
+			{
+				// И сравним с используемыми у нас. Возможно потом еще что-то добавить придется
+				if (wmemcmp(pszSlash, L"/DEBUGPID=", 10) != 0)
+					pszSlash = NULL;
+			}
+			if (pszSlash == NULL)
+			{
+				// Не наше окошко, выходим
+				return CERR_ATTACH_NO_CONWND;
+			}
 		}
 	}
 
@@ -3261,10 +3283,12 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 }
 
 
-void ProcessCountChanged(BOOL abChanged, UINT anPrevCount)
+void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 {
 	// Заблокировать, если этого еще не сделали
-	MSectionLock CS; CS.Lock(gpSrv->csProc);
+	MSectionLock CS;
+	if (!pCS)
+		CS.Lock(gpSrv->csProc);
 
 	if (abChanged)
 	{
@@ -3436,7 +3460,10 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount)
 		}
 		else
 		{
-			CS.Unlock();
+			if (pCS)
+				pCS->Unlock();
+			else
+				CS.Unlock();
 
 			//2010-03-06 это не нужно, проверки делаются по другому
 			//if (!gbAlwaysConfirmExit && (gpSrv->dwProcessLastCheckTick - gpSrv->nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT) {
@@ -3670,7 +3697,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 
 	gpSrv->dwProcessLastCheckTick = GetTickCount();
 
-	ProcessCountChanged(lbChanged, nPrevCount);
+	ProcessCountChanged(lbChanged, nPrevCount, &CS);
 
 
 	return lbChanged;
@@ -3728,6 +3755,159 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	return 0;
 }
 
+void WriteMiniDump(DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR asConfirmText = NULL)
+{
+	MINIDUMP_TYPE dumpType = MiniDumpNormal;
+	
+	char szTitleA[64];
+	_wsprintfA(szTitleA, SKIPLEN(countof(szTitleA)) "ConEmuC Debugging PID=%u, Debugger PID=%u", gpSrv->dwRootProcess, GetCurrentProcessId());
+	wchar_t szTitle[64];
+	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC Debugging PID=%u, Debugger PID=%u", gpSrv->dwRootProcess, GetCurrentProcessId());
+
+	int nBtn = 	MessageBoxA(NULL, asConfirmText, szTitleA, MB_YESNOCANCEL|MB_SYSTEMMODAL);
+	switch (nBtn)
+	{
+	case IDYES:
+		break;
+	case IDNO:
+		dumpType = MiniDumpWithFullMemory;
+		break;
+	default:
+		return;
+	}
+
+	HANDLE hDmpFile = NULL;
+	HMODULE hDbghelp = NULL;
+	wchar_t szErrInfo[MAX_PATH*2];
+	wchar_t dmpfile[MAX_PATH]; dmpfile[0] = 0;
+	HMODULE hCOMDLG32 = NULL;
+	typedef BOOL (WINAPI* GetSaveFileName_t)(LPOPENFILENAMEW lpofn);
+	GetSaveFileName_t _GetSaveFileName = NULL;
+	typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
+	        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
+	        PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
+	MiniDumpWriteDump_t MiniDumpWriteDump_f = NULL;
+	
+	if (!hCOMDLG32)
+		hCOMDLG32 = LoadLibraryW(L"COMDLG32.dll");
+	if (hCOMDLG32 && !_GetSaveFileName)
+		_GetSaveFileName = (GetSaveFileName_t)GetProcAddress(hCOMDLG32, "GetSaveFileNameW");
+
+	while (_GetSaveFileName)
+	{
+		OPENFILENAMEW ofn; memset(&ofn,0,sizeof(ofn));
+		ofn.lStructSize=sizeof(ofn);
+		ofn.hwndOwner = NULL;
+		ofn.lpstrFilter = L"Debug dumps (*.mdmp)\0*.mdmp\0\0";
+		ofn.nFilterIndex = 1;
+		ofn.lpstrFile = dmpfile;
+		ofn.nMaxFile = countof(dmpfile);
+		ofn.lpstrTitle = L"Save debug dump";
+		ofn.lpstrDefExt = L"mdmp";
+		ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+		            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
+
+		if (!_GetSaveFileName(&ofn))
+			break;
+
+		if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != NULL)
+		{
+			CloseHandle(hDmpFile); hDmpFile = NULL;
+		}
+		
+		hDmpFile = CreateFileW(dmpfile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH, NULL);
+
+		if (hDmpFile == INVALID_HANDLE_VALUE)
+		{
+			DWORD nErr = GetLastError();
+			_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't create debug dump file\n%s\nErrCode=0x%08X\n\nChoose another name?", dmpfile, nErr);
+
+			if (MessageBoxW(NULL, szErrInfo, szTitle, MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
+				break;
+
+			continue; // еще раз выбрать
+		}
+
+		if (!hDbghelp)
+		{
+			hDbghelp = LoadLibraryW(L"Dbghelp.dll");
+
+			if (hDbghelp == NULL)
+			{
+				DWORD nErr = GetLastError();
+				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't load debug library 'Dbghelp.dll'\nErrCode=0x%08X\n\nTry again?", nErr);
+
+				if (MessageBoxW(NULL, szErrInfo, szTitle, MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
+					break;
+
+				continue; // еще раз выбрать
+			}
+		}
+
+		if (!MiniDumpWriteDump_f)
+		{
+			MiniDumpWriteDump_f = (MiniDumpWriteDump_t)GetProcAddress(hDbghelp, "MiniDumpWriteDump");
+
+			if (!MiniDumpWriteDump_f)
+			{
+				DWORD nErr = GetLastError();
+				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll'", nErr);
+				MessageBoxW(NULL, szErrInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+				break;
+			}
+		}
+
+		if (MiniDumpWriteDump_f)
+		{
+			MINIDUMP_EXCEPTION_INFORMATION mei = {dwThreadId};
+			EXCEPTION_POINTERS ep = {pExceptionRecord};
+			ep.ContextRecord = NULL; // Непонятно, откуда его можно взять
+			mei.ExceptionPointers = &ep;
+			mei.ClientPointers = FALSE;
+			PMINIDUMP_EXCEPTION_INFORMATION pmei = NULL; // пока
+			_printf("Creating minidump: ");
+			_wprintf(dmpfile);
+			_printf("...");
+			BOOL lbDumpRc = MiniDumpWriteDump_f(
+			                    gpSrv->hRootProcess, gpSrv->dwRootProcess,
+			                    hDmpFile,
+			                    MiniDumpNormal /*MiniDumpWithDataSegs*/,
+			                    pmei,
+			                    NULL, NULL);
+
+			if (!lbDumpRc)
+			{
+				DWORD nErr = GetLastError();
+				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"MiniDumpWriteDump failed.\nErrorCode=0x%08X", nErr);
+				_printf("\nFailed, ErrorCode=0x%08X\n", nErr);
+				MessageBoxW(NULL, szErrInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+			}
+			else
+			{
+				_printf("\nMiniDumpWriteDump succeeded\n");
+			}
+
+			break;
+		}
+
+	}
+
+	if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != NULL)
+	{
+		CloseHandle(hDmpFile);
+	}
+
+	if (hDbghelp)
+	{
+		FreeLibrary(hDbghelp);
+	}
+
+	if (hCOMDLG32)
+	{
+		FreeLibrary(hCOMDLG32);
+	}
+}
+
 void ProcessDebugEvent()
 {
 	static wchar_t wszDbgText[1024];
@@ -3738,9 +3918,10 @@ void ProcessDebugEvent()
 	#ifdef _DEBUG
 	DWORD dwErr = GetLastError();
 	#endif
-	HMODULE hCOMDLG32 = NULL;
-	typedef BOOL (WINAPI* GetSaveFileName_t)(LPOPENFILENAMEW lpofn);
-	GetSaveFileName_t _GetSaveFileName = NULL;
+	static bool bFirstExitThreadEvent = false; // Чтобы вывести на экран подсказку по возможностям "дебаггера"
+	//HMODULE hCOMDLG32 = NULL;
+	//typedef BOOL (WINAPI* GetSaveFileName_t)(LPOPENFILENAMEW lpofn);
+	//GetSaveFileName_t _GetSaveFileName = NULL;
 
 	if (lbEvent)
 	{
@@ -3767,6 +3948,11 @@ void ProcessDebugEvent()
 
 				_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText)) "{%i.%i} %s\n", evt.dwProcessId,evt.dwThreadId, pszName);
 				_printf(szDbgText);
+				if (!bFirstExitThreadEvent && evt.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT)
+				{
+					bFirstExitThreadEvent = true;
+					_printf("ConEmuC: Press Ctrl-Break to create minidump of debugging process\n");
+				}
 				break;
 			}
 			case LOAD_DLL_DEBUG_EVENT:
@@ -3885,124 +4071,129 @@ void ProcessDebugEvent()
 						}
 				}
 
-				if (!lbNonContinuable && (evt.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_BREAKPOINT))
+				if (gpSrv->bDebuggerRequestDump ||
+					(!lbNonContinuable && (evt.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_BREAKPOINT)))
 				{
+					gpSrv->bDebuggerRequestDump = FALSE; // один раз
+
 					char szConfirm[2048];
 					_wsprintfA(szConfirm, SKIPLEN(countof(szConfirm)) "Non continuable exception (FC=%u)\n", evt.u.Exception.dwFirstChance);
 					StringCchCatA(szConfirm, countof(szConfirm), szDbgText);
-					StringCchCatA(szConfirm, countof(szConfirm), "\nCreate minidump?");
-					typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
-					        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
-					        PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
-					MiniDumpWriteDump_t MiniDumpWriteDump_f = NULL;
+					StringCchCatA(szConfirm, countof(szConfirm), "\nCreate minidump (<No> - fulldump)?");
+					//typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
+					//        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
+					//        PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
+					//MiniDumpWriteDump_t MiniDumpWriteDump_f = NULL;
 
-					if (MessageBoxA(NULL, szConfirm, "ConEmuC Debuger", MB_YESNO|MB_SYSTEMMODAL) == IDYES)
+					//if (MessageBoxA(NULL, szConfirm, "ConEmuC Debuger", MB_YESNO|MB_SYSTEMMODAL) == IDYES)
 					{
-						TODO("Дать юзеру выбрать файл, Открыть HANDLE для hDumpFile, Вызвать MiniDumpWriteDump");
-						HANDLE hDmpFile = NULL;
-						HMODULE hDbghelp = NULL;
-						wchar_t szErrInfo[MAX_PATH*2];
-						wchar_t dmpfile[MAX_PATH]; dmpfile[0] = 0;
-						
-						if (!hCOMDLG32)
-							hCOMDLG32 = LoadLibraryW(L"COMDLG32.dll");
-						if (hCOMDLG32 && !_GetSaveFileName)
-							_GetSaveFileName = (GetSaveFileName_t)GetProcAddress(hCOMDLG32, "GetSaveFileNameW");
+						WriteMiniDump(evt.dwThreadId, &evt.u.Exception.ExceptionRecord, szConfirm);
 
-						while (_GetSaveFileName)
-						{
-							OPENFILENAMEW ofn; memset(&ofn,0,sizeof(ofn));
-							ofn.lStructSize=sizeof(ofn);
-							ofn.hwndOwner = NULL;
-							ofn.lpstrFilter = L"Debug dumps (*.mdmp)\0*.mdmp\0\0";
-							ofn.nFilterIndex = 1;
-							ofn.lpstrFile = dmpfile;
-							ofn.nMaxFile = countof(dmpfile);
-							ofn.lpstrTitle = L"Save debug dump";
-							ofn.lpstrDefExt = L"mdmp";
-							ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-							            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
+						//TODO("Дать юзеру выбрать файл, Открыть HANDLE для hDumpFile, Вызвать MiniDumpWriteDump");
+						//HANDLE hDmpFile = NULL;
+						//HMODULE hDbghelp = NULL;
+						//wchar_t szErrInfo[MAX_PATH*2];
+						//wchar_t dmpfile[MAX_PATH]; dmpfile[0] = 0;
+						//
+						//if (!hCOMDLG32)
+						//	hCOMDLG32 = LoadLibraryW(L"COMDLG32.dll");
+						//if (hCOMDLG32 && !_GetSaveFileName)
+						//	_GetSaveFileName = (GetSaveFileName_t)GetProcAddress(hCOMDLG32, "GetSaveFileNameW");
 
-							if (!_GetSaveFileName(&ofn))
-								break;
+						//while (_GetSaveFileName)
+						//{
+						//	OPENFILENAMEW ofn; memset(&ofn,0,sizeof(ofn));
+						//	ofn.lStructSize=sizeof(ofn);
+						//	ofn.hwndOwner = NULL;
+						//	ofn.lpstrFilter = L"Debug dumps (*.mdmp)\0*.mdmp\0\0";
+						//	ofn.nFilterIndex = 1;
+						//	ofn.lpstrFile = dmpfile;
+						//	ofn.nMaxFile = countof(dmpfile);
+						//	ofn.lpstrTitle = L"Save debug dump";
+						//	ofn.lpstrDefExt = L"mdmp";
+						//	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+						//	            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
 
-							hDmpFile = CreateFileW(dmpfile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH, NULL);
+						//	if (!_GetSaveFileName(&ofn))
+						//		break;
 
-							if (hDmpFile == INVALID_HANDLE_VALUE)
-							{
-								DWORD nErr = GetLastError();
-								_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't create debug dump file\n%s\nErrCode=0x%08X\n\nChoose another name?", dmpfile, nErr);
+						//	hDmpFile = CreateFileW(dmpfile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH, NULL);
 
-								if (MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
-									break;
+						//	if (hDmpFile == INVALID_HANDLE_VALUE)
+						//	{
+						//		DWORD nErr = GetLastError();
+						//		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't create debug dump file\n%s\nErrCode=0x%08X\n\nChoose another name?", dmpfile, nErr);
 
-								continue; // еще раз выбрать
-							}
+						//		if (MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
+						//			break;
 
-							if (!hDbghelp)
-							{
-								hDbghelp = LoadLibraryW(L"Dbghelp.dll");
+						//		continue; // еще раз выбрать
+						//	}
 
-								if (hDbghelp == NULL)
-								{
-									DWORD nErr = GetLastError();
-									_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't load debug library 'Dbghelp.dll'\nErrCode=0x%08X\n\nTry again?", nErr);
+						//	if (!hDbghelp)
+						//	{
+						//		hDbghelp = LoadLibraryW(L"Dbghelp.dll");
 
-									if (MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
-										break;
+						//		if (hDbghelp == NULL)
+						//		{
+						//			DWORD nErr = GetLastError();
+						//			_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't load debug library 'Dbghelp.dll'\nErrCode=0x%08X\n\nTry again?", nErr);
 
-									continue; // еще раз выбрать
-								}
-							}
+						//			if (MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
+						//				break;
 
-							if (!MiniDumpWriteDump_f)
-							{
-								MiniDumpWriteDump_f = (MiniDumpWriteDump_t)GetProcAddress(hDbghelp, "MiniDumpWriteDump");
+						//			continue; // еще раз выбрать
+						//		}
+						//	}
 
-								if (!MiniDumpWriteDump_f)
-								{
-									DWORD nErr = GetLastError();
-									_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll'", nErr);
-									MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_ICONSTOP|MB_SYSTEMMODAL);
-									break;
-								}
-							}
+						//	if (!MiniDumpWriteDump_f)
+						//	{
+						//		MiniDumpWriteDump_f = (MiniDumpWriteDump_t)GetProcAddress(hDbghelp, "MiniDumpWriteDump");
 
-							if (MiniDumpWriteDump_f)
-							{
-								MINIDUMP_EXCEPTION_INFORMATION mei = {evt.dwThreadId};
-								EXCEPTION_POINTERS ep = {&evt.u.Exception.ExceptionRecord};
-								ep.ContextRecord = NULL; // Непонятно, откуда его можно взять
-								mei.ExceptionPointers = &ep;
-								mei.ClientPointers = FALSE;
-								PMINIDUMP_EXCEPTION_INFORMATION pmei = NULL; // пока
-								BOOL lbDumpRc = MiniDumpWriteDump_f(
-								                    gpSrv->hRootProcess, gpSrv->dwRootProcess,
-								                    hDmpFile,
-								                    MiniDumpNormal /*MiniDumpWithDataSegs*/,
-								                    pmei,
-								                    NULL, NULL);
+						//		if (!MiniDumpWriteDump_f)
+						//		{
+						//			DWORD nErr = GetLastError();
+						//			_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll'", nErr);
+						//			MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_ICONSTOP|MB_SYSTEMMODAL);
+						//			break;
+						//		}
+						//	}
 
-								if (!lbDumpRc)
-								{
-									DWORD nErr = GetLastError();
-									_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"MiniDumpWriteDump failed.\nErrorCode=0x%08X", nErr);
-									MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_ICONSTOP|MB_SYSTEMMODAL);
-								}
+						//	if (MiniDumpWriteDump_f)
+						//	{
+						//		MINIDUMP_EXCEPTION_INFORMATION mei = {evt.dwThreadId};
+						//		EXCEPTION_POINTERS ep = {&evt.u.Exception.ExceptionRecord};
+						//		ep.ContextRecord = NULL; // Непонятно, откуда его можно взять
+						//		mei.ExceptionPointers = &ep;
+						//		mei.ClientPointers = FALSE;
+						//		PMINIDUMP_EXCEPTION_INFORMATION pmei = NULL; // пока
+						//		BOOL lbDumpRc = MiniDumpWriteDump_f(
+						//		                    gpSrv->hRootProcess, gpSrv->dwRootProcess,
+						//		                    hDmpFile,
+						//		                    MiniDumpNormal /*MiniDumpWithDataSegs*/,
+						//		                    pmei,
+						//		                    NULL, NULL);
 
-								break;
-							}
-						}
+						//		if (!lbDumpRc)
+						//		{
+						//			DWORD nErr = GetLastError();
+						//			_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"MiniDumpWriteDump failed.\nErrorCode=0x%08X", nErr);
+						//			MessageBoxW(NULL, szErrInfo, L"ConEmuC Debuger", MB_ICONSTOP|MB_SYSTEMMODAL);
+						//		}
 
-						if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != NULL)
-						{
-							CloseHandle(hDmpFile);
-						}
+						//		break;
+						//	}
+						//}
 
-						if (hDbghelp)
-						{
-							FreeLibrary(hDbghelp);
-						}
+						//if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != NULL)
+						//{
+						//	CloseHandle(hDmpFile);
+						//}
+
+						//if (hDbghelp)
+						//{
+						//	FreeLibrary(hDbghelp);
+						//}
 					}
 				}
 			}
@@ -4055,8 +4246,8 @@ void ProcessDebugEvent()
 		ContinueDebugEvent(evt.dwProcessId, evt.dwThreadId, DBG_EXCEPTION_NOT_HANDLED);
 	}
 	
-	if (hCOMDLG32)
-		FreeLibrary(hCOMDLG32);
+	//if (hCOMDLG32)
+	//	FreeLibrary(hCOMDLG32);
 }
 
 
@@ -4709,12 +4900,11 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		_ASSERTE(in.StartStop.nStarted==sst_AppStart || in.StartStop.nStarted==sst_AppStop);
 	}
 	
+	// ***
 	if (lbChanged)
-	{
-		ProcessCountChanged(TRUE, nPrevCount);
-	}
-	
+		ProcessCountChanged(TRUE, nPrevCount, &CS);
 	CS.Unlock();
+	// ***
 
 	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
 	*out = ExecuteNewCmd(CECMD_CMDSTARTSTOP,nOutSize);
@@ -5364,11 +5554,27 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 			//}
 		}
 	}
-	else if (gbTerminateOnCtrlBreak
-		&& ((dwCtrlType == CTRL_C_EVENT) || (dwCtrlType == CTRL_BREAK_EVENT)))
+	else if ((dwCtrlType == CTRL_C_EVENT) || (dwCtrlType == CTRL_BREAK_EVENT))
 	{
-		PRINT_COMSPEC(L"Ctrl+Break recieved, server will be terminated\n", 0);
-		gbInShutdown = TRUE;
+		if (gbTerminateOnCtrlBreak)
+		{
+			PRINT_COMSPEC(L"Ctrl+Break recieved, server will be terminated\n", 0);
+			gbInShutdown = TRUE;
+		}
+		else if (gbDebugProcess)
+		{
+			_printf("ConEmuC: Sending DebugBreak event to process\n");
+			gpSrv->bDebuggerRequestDump = TRUE;
+			DWORD dwErr = 0;
+			if (!DebugBreakProcess(gpSrv->hRootProcess))
+			{
+				dwErr = GetLastError();
+				//_ASSERTE(FALSE && dwErr==0);
+				_printf("ConEmuC: Sending DebugBreak event failed, Code=x%X, WriteMiniDump on the fly\n", dwErr);
+				gpSrv->bDebuggerRequestDump = FALSE;
+				WriteMiniDump(gpSrv->dwRootThread, NULL);
+			}
+		}
 	}
 
 	/*SafeCloseHandle(ghLogSize);

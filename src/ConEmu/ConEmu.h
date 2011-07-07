@@ -340,6 +340,7 @@ class CConEmuMain
 		LPCTSTR GetLastTitle(bool abUseDefault=true);
 		LPCTSTR GetVConTitle(int nIdx);
 		CVirtualConsole* GetVCon(int nIdx);
+		int IsVConValid(CVirtualConsole* apVCon);
 		CVirtualConsole* GetVConFromPoint(POINT ptScreen);
 		void UpdateCursorInfo(COORD crCursor, CONSOLE_CURSOR_INFO cInfo);
 		void UpdateProcessDisplay(BOOL abForce);
@@ -436,7 +437,7 @@ class CConEmuMain
 		void SetDragCursor(HCURSOR hCur);
 		void SetWaitCursor(BOOL abWait);
 		bool SetWindowMode(uint inMode, BOOL abForce = FALSE);
-		void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer);
+		void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
 		void ShowSysmenu(HWND Wnd=NULL, int x=-32000, int y=-32000);
 		HMENU CreateDebugMenuPopup();
 		void PopulateEditMenuPopup(HMENU hMenu);

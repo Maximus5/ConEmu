@@ -30,7 +30,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/common.hpp"
-#include "../common/farcolor.hpp"
 #include "ConEmuLn_Lang.h"
 
 // X - меньшая, Y - большая

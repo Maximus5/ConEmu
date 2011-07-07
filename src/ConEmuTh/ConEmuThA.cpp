@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "..\common\pluginA.hpp"
 #include "ConEmuTh.h"
+#include "..\common\farcolor2.hpp"
 #include "ImgCache.h"
 
 //#define SHOW_DEBUG_EVENTS
@@ -350,17 +351,33 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	pcefpi->nFarPanelSettings = gnFarPanelSettings =
 	                                (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
 	// Цвета фара
-	int nColorSize = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
-
-	if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
-	{
-		if (pcefpi->nFarColors) free(pcefpi->nFarColors);
-
-		pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
-		pcefpi->nMaxFarColors = nColorSize;
-	}
-
-	nColorSize = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
+	BYTE FarConsoleColors[0x100];
+	INT_PTR nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, FarConsoleColors);
+#ifdef _DEBUG
+	INT_PTR nDefColorSize = COL_LASTPALETTECOLOR;
+	_ASSERTE(nColorSize==nDefColorSize);
+#endif
+	pcefpi->nFarColors[col_PanelText] = FarConsoleColors[COL_PANELTEXT];
+	pcefpi->nFarColors[col_PanelSelectedCursor] = FarConsoleColors[COL_PANELSELECTEDCURSOR];
+	pcefpi->nFarColors[col_PanelSelectedText] = FarConsoleColors[COL_PANELSELECTEDTEXT];
+	pcefpi->nFarColors[col_PanelCursor] = FarConsoleColors[COL_PANELCURSOR];
+	pcefpi->nFarColors[col_PanelColumnTitle] = FarConsoleColors[COL_PANELCOLUMNTITLE];
+	pcefpi->nFarColors[col_PanelBox] = FarConsoleColors[COL_PANELBOX];
+	pcefpi->nFarColors[col_HMenuText] = FarConsoleColors[COL_HMENUTEXT];
+	pcefpi->nFarColors[col_WarnDialogBox] = FarConsoleColors[COL_WARNDIALOGBOX];
+	pcefpi->nFarColors[col_DialogBox] = FarConsoleColors[COL_DIALOGBOX];
+	pcefpi->nFarColors[col_CommandLineUserScreen] = FarConsoleColors[COL_COMMANDLINEUSERSCREEN];
+	pcefpi->nFarColors[col_PanelScreensNumber] = FarConsoleColors[COL_PANELSCREENSNUMBER];
+	pcefpi->nFarColors[col_KeyBarNum] = FarConsoleColors[COL_KEYBARNUM];
+	//int nColorSize = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
+	//if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
+	//{
+	//	if (pcefpi->nFarColors) free(pcefpi->nFarColors);
+	//	pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
+	//	pcefpi->nMaxFarColors = nColorSize;
+	//}
+	//nColorSize = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
+	
 	// Текущая папка панели
 	int nSize = lstrlenA(pi.CurDir);
 	pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее

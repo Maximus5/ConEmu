@@ -77,7 +77,7 @@ class TabBarClass : public CToolTip
 		CVirtualConsole* FarSendChangeTab(int tabIndex);
 		LONG mn_LastToolbarWidth;
 		void UpdateToolbarPos();
-		void PrepareTab(ConEmuTab* pTab);
+		void PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon);
 		BOOL GetVConFromTab(int nTabIdx, CVirtualConsole** rpVCon, DWORD* rpWndIndex);
 		ConEmuTab m_Tab4Tip;
 		WCHAR  ms_TmpTabText[MAX_PATH];

@@ -66,8 +66,8 @@ struct CeFullPanelInfo
 	int OurTopPanelItem; // он может НЕ совпадать с фаровским, чтобы CurrentItem был таки видим
 	unsigned __int64 Flags; // CEPANELINFOFLAGS
 	// ************************
-	int nMaxFarColors;
-	BYTE *nFarColors; // Массив цветов фара
+	//int nMaxFarColors;
+	BYTE nFarColors[col_LastIndex]; // Массив цветов фара
 	COLORREF crLastBackBrush;
 	HBRUSH hLastBackBrush;
 	// ************************

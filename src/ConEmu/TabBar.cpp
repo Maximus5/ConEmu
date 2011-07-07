@@ -888,7 +888,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 			MCHKHEAP;
 #endif
-			PrepareTab(&tab);
+			PrepareTab(&tab, pVCon);
 			vct.pVCon = pVCon;
 			vct.nFarWindowId = I;
 #ifdef _DEBUG
@@ -922,7 +922,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 	if (tabIdx == 0)  // хотя бы "Console" покажем
 	{
-		PrepareTab(&tab);
+		PrepareTab(&tab, NULL);
 		vct.pVCon = NULL;
 		vct.nFarWindowId = 0;
 		AddTab2VCon(vct); //2009-06-14. Не было!
@@ -1774,7 +1774,7 @@ void TabBarClass::CreateRebar()
 	//_hwndTab = mh_Rebar; // пока...
 }
 
-void TabBarClass::PrepareTab(ConEmuTab* pTab)
+void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 {
 #ifdef _DEBUG
 
@@ -1787,10 +1787,10 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 	MCHKHEAP
 	// get file name
 	TCHAR dummy[MAX_PATH*2];
-	TCHAR fileName[MAX_PATH+4];
+	TCHAR fileName[MAX_PATH+4]; fileName[0] = 0;
 	TCHAR szFormat[32];
 	TCHAR szEllip[MAX_PATH+1];
-	wchar_t *tFileName=NULL, *pszNo=NULL, *pszTitle=NULL; //--Maximus
+	wchar_t /**tFileName=NULL,*/ *pszNo=NULL, *pszTitle=NULL; //--Maximus
 	int nSplit = 0;
 	int nMaxLen = 0; //gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
 	int origLength = 0; //_tcslen(tFileName);
@@ -1798,7 +1798,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 	if (pTab->Name[0]==0 || (pTab->Type & 0xFF) == 1/*WTYPE_PANELS*/)
 	{
 		//_tcscpy(szFormat, _T("%s"));
-		_tcscpy(szFormat, gpSet->szTabConsole);
+		lstrcpyn(szFormat, gpSet->szTabConsole, ARRAYSIZE(szFormat));
 		nMaxLen = gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
 
 		if (pTab->Name[0] == 0)
@@ -1819,8 +1819,8 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 			_tcscpy(pTab->Name, gpConEmu->ms_ConEmuVer);
 		}
 
-		tFileName = pTab->Name;
-		origLength = _tcslen(tFileName);
+		lstrcpyn(fileName, pTab->Name, countof(fileName));
+		origLength = _tcslen(fileName);
 		//if (origLength>6) {
 		//    // Чтобы в заголовке было что-то вроде "{C:\Program Fil...- Far"
 		//    //                              вместо "{C:\Program F...} - Far"
@@ -1831,28 +1831,31 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 	}
 	else
 	{
-		GetFullPathName(pTab->Name, MAX_PATH*2, dummy, &tFileName);
-
-		if (!tFileName)
-			tFileName = pTab->Name;
+		LPTSTR tFileName = NULL;
+		if (!GetFullPathName(pTab->Name, countof(dummy), dummy, &tFileName) || !tFileName)
+			lstrcpyn(fileName, tFileName, countof(fileName));
+		else
+			lstrcpyn(fileName, pTab->Name, countof(fileName));
 
 		if ((pTab->Type & 0xFF) == 3/*WTYPE_EDITOR*/)
 		{
 			if (pTab->Modified)
-				_tcscpy(szFormat, gpSet->szTabEditorModified);
+				lstrcpyn(szFormat, gpSet->szTabEditorModified, ARRAYSIZE(szFormat));
 			else
-				_tcscpy(szFormat, gpSet->szTabEditor);
+				lstrcpyn(szFormat, gpSet->szTabEditor, ARRAYSIZE(szFormat));
 		}
 		else if ((pTab->Type & 0xFF) == 2/*WTYPE_VIEWER*/)
-			_tcscpy(szFormat, gpSet->szTabViewer);
+			lstrcpyn(szFormat, gpSet->szTabViewer, ARRAYSIZE(szFormat));
+		else
+			lstrcpyn(szFormat, gpSet->szTabConsole, ARRAYSIZE(szFormat));
 	}
 
 	// restrict length
 	if (!nMaxLen)
-		nMaxLen = gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
+		nMaxLen = gpSet->nTabLenMax - lstrlen(szFormat) + 2/* %s */;
 
 	if (!origLength)
-		origLength = _tcslen(tFileName);
+		origLength = _tcslen(fileName);
 	if (nMaxLen<15) nMaxLen=15; else if (nMaxLen>=MAX_PATH) nMaxLen=MAX_PATH-1;
 
 	if (origLength > nMaxLen)
@@ -1874,27 +1877,92 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 		// "{C:\Program Files} - Far 2.1283 Administrator x64"
 		// После добавления суффиков к заголовку фара - оно уже влезать не будет в любом случае... Так что если панели - '...' строго ставить в конце
 		nSplit = nMaxLen;
-		_tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
+		_tcsncpy(szEllip, fileName, nSplit); szEllip[nSplit]=0;
 		szEllip[nSplit] = L'\x2026' /*"…"*/;
 		szEllip[nSplit+1] = 0;
 		//_tcscat(szEllip, L"\x2026" /*"…"*/);
 		//_tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
-		tFileName = szEllip;
+		//tFileName = szEllip;
+		lstrcpyn(fileName, szEllip, countof(fileName));
 	}
 
 	// szFormat различается для Panel/Viewer(*)/Editor(*)
 	// Пример: "%i-[%s] *"
-	pszNo = wcsstr(szFormat, L"%i");
-	pszTitle = wcsstr(szFormat, L"%s");
-
-	if (pszNo == NULL)
-		_wsprintf(fileName, SKIPLEN(countof(fileName)) szFormat, tFileName);
-	else if (pszNo < pszTitle || pszTitle == NULL)
-		_wsprintf(fileName, SKIPLEN(countof(fileName)) szFormat, pTab->Pos, tFileName);
-	else
-		_wsprintf(fileName, SKIPLEN(countof(fileName)) szFormat, tFileName, pTab->Pos);
-
-	wcscpy(pTab->Name, fileName);
+	////pszNo = wcsstr(szFormat, L"%i");
+	////pszTitle = wcsstr(szFormat, L"%s");
+	////if (pszNo == NULL)
+	////	_wsprintf(fileName, SKIPLEN(countof(fileName)) szFormat, tFileName);
+	////else if (pszNo < pszTitle || pszTitle == NULL)
+	////	_wsprintf(fileName, SKIPLEN(countof(fileName)) szFormat, pTab->Pos, tFileName);
+	////else
+	////	_wsprintf(fileName, SKIPLEN(countof(fileName)) szFormat, tFileName, pTab->Pos);
+	//wcscpy(pTab->Name, fileName);
+	TCHAR* pszFmt = szFormat;
+	TCHAR* pszDst = pTab->Name;
+	TCHAR* pszEnd = pTab->Name + ARRAYSIZE(pTab->Name) - 1; // в конце еще нужно зарезервировать место для '\0'
+	
+	if (!pszFmt || !*pszFmt)
+		pszFmt = _T("%s");
+	*pszDst = 0;
+	
+	TCHAR szTmp[16];
+	
+	while (*pszFmt && pszDst < pszEnd)
+	{
+		if (*pszFmt == _T('%'))
+		{
+			pszFmt++;
+			LPCTSTR pszText = NULL;
+			switch (*pszFmt)
+			{
+				case _T('s'): case _T('S'):
+					pszText = fileName;
+					break;
+				case _T('i'): case _T('I'):
+					_wsprintf(szTmp, SKIPLEN(ARRAYSIZE(szTmp)) _T("%i"), pTab->Pos);
+					pszText = szTmp;
+					break;
+				case _T('p'): case _T('P'):
+					if (!apVCon || !apVCon->RCon())
+					{
+						wcscpy_c(szTmp, _T("?"));
+					}
+					else
+					{
+						_wsprintf(szTmp, SKIPLEN(ARRAYSIZE(szTmp)) _T("%u"), apVCon->RCon()->GetActivePID());
+					}
+					pszText = szTmp;
+					break;
+				case _T('c'): case _T('C'):
+					{
+						int iCon = gpConEmu->IsVConValid(apVCon);
+						if (iCon > 0)
+							_wsprintf(szTmp, SKIPLEN(ARRAYSIZE(szTmp)) _T("%u"), iCon);
+						else
+							wcscpy_c(szTmp, _T("?"));
+						pszText = szTmp;
+					}
+					break;
+				case 0:
+					pszFmt--;
+					break;
+			}
+			pszFmt++;
+			if (pszText)
+			{
+				while (*pszText && pszDst < pszEnd)
+				{
+					*(pszDst++) = *(pszText++);
+				}
+			}
+		}
+		else
+		{
+			*(pszDst++) = *(pszFmt++);
+		}
+	}
+	*pszDst = 0;
+	
 	MCHKHEAP
 }
 

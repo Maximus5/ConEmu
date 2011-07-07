@@ -435,6 +435,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ghOurModule = (HMODULE)hModule;
 			ghConWnd = GetConsoleWindow();
 			gnSelfPID = GetCurrentProcessId();
+			ghWorkingModule = (u64)hModule;
 
 			#ifdef _DEBUG
 			gAllowAssertThread = am_Pipe;

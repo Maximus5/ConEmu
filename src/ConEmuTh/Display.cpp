@@ -47,14 +47,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "ConEmuTh.h"
-#include "../common/farcolor.hpp"
-/*
-COL_PANELTEXT
-COL_PANELSELECTEDCURSOR
-COL_PANELSELECTEDTEXT
-COL_PANELCURSOR
-COL_PANELCOLUMNTITLE
-*/
 #include "../common/RgnDetect.h"
 #include "resource.h"
 #include "ImgCache.h"
@@ -290,7 +282,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			CeFullPanelInfo* pi = (CeFullPanelInfo*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
-			//BYTE nPanelColorIdx = pi->nFarColors[COL_PANELTEXT];
+			//BYTE nPanelColorIdx = pi->nFarColors[col_PanelText];
 			//COLORREF nBackColor = GetWindowLong(hwnd, 4*((nPanelColorIdx & 0xF0)>>4));
 			//#ifdef _DEBUG
 			//COLORREF nForeColor = GetWindowLong(hwnd, 4*(nPanelColorIdx & 0xF));
@@ -312,7 +304,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			CeFullPanelInfo* pi = (CeFullPanelInfo*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
-			BYTE nPanelColorIdx = pi->nFarColors[COL_PANELTEXT];
+			BYTE nPanelColorIdx = pi->nFarColors[col_PanelText];
 			COLORREF nBackColor = gcrCurColors[((nPanelColorIdx & 0xF0)>>4)]; //GetWindowLong(hwnd, 4*((nPanelColorIdx & 0xF0)>>4));
 			RECT rc; GetClientRect(hwnd, &rc);
 			HBRUSH hbr = CreateSolidBrush(nBackColor);
@@ -1063,8 +1055,8 @@ void CeFullPanelInfo::LoadItemColors(int nIndex, CePluginPanelItem* pItem, CePlu
 		{
 			// Если не удалось - берем по умолчанию (без расцетки групп)
 			int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ?
-			            ((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELSELECTEDCURSOR : COL_PANELSELECTEDTEXT) :
-				            ((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELCURSOR : COL_PANELTEXT));
+			            ((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelSelectedCursor : col_PanelSelectedText) :
+				            ((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelCursor : col_PanelText));
 			pItemColor->crBack = gcrCurColors[((nFarColors[nIdx] & 0xF0)>>4)];
 			pItemColor->crFore = gcrCurColors[(nFarColors[nIdx] & 0xF)];
 		}
@@ -1104,8 +1096,8 @@ HBRUSH CeFullPanelInfo::GetItemColors(int nIndex, CePluginPanelItem* pItem, CePl
 	//} else {
 	//	// Если не удалось - берем по умолчанию (без расцетки групп)
 	//	int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ?
-	//		((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELSELECTEDCURSOR : COL_PANELSELECTEDTEXT) :
-	//		((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELCURSOR : COL_PANELTEXT));
+	//		((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelSelectedCursor : col_PanelSelectedText) :
+	//		((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelCursor : col_PanelText));
 	//
 	//	crBack = gcrCurColors[((nFarColors[nIdx] & 0xF0)>>4)];
 	//	crFore = gcrCurColors[(nFarColors[nIdx] & 0xF)];
@@ -1245,10 +1237,10 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	//for (int i=0; i<16; i++)
 	//	gcrColors[i] = GetWindowLong(hwnd, 4*i);
 	//BYTE nIndexes[4] = {
-	//	this->nFarColors[COL_PANELTEXT],
-	//	this->nFarColors[COL_PANELSELECTEDTEXT],
-	//	this->nFarColors[COL_PANELCURSOR],
-	//	this->nFarColors[COL_PANELSELECTEDCURSOR]
+	//	this->nFarColors[col_PanelText],
+	//	this->nFarColors[col_PanelSelectedText],
+	//	this->nFarColors[col_PanelCursor],
+	//	this->nFarColors[col_PanelSelectedCursor]
 	//};
 	//COLORREF nBackColor[4], nForeColor[4];
 	//HBRUSH hBack[4];
@@ -1259,7 +1251,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	//	hBack[i] = CreateSolidBrush(nBackColor[i]);
 	//}
 	COLORREF crGray = gcrCurColors[8];
-	COLORREF crPanel = gcrCurColors[((nFarColors[COL_PANELTEXT] & 0xF0)>>4)]; //nBackColor[0]; //gcrColors[15];
+	COLORREF crPanel = gcrCurColors[((nFarColors[col_PanelText] & 0xF0)>>4)]; //nBackColor[0]; //gcrColors[15];
 	COLORREF crBack = crPanel;
 
 	if (gThSet.crBackground.UseIndex)
@@ -1721,7 +1713,7 @@ int CeFullPanelInfo::RegisterPanelView()
 	pvi.bLeftPanel = this->bLeftPanel;
 	pvi.bVisible = TRUE;
 	pvi.nCoverFlags = PVI_COVER_NORMAL;
-	pvi.tColumnTitle.bConAttr = this->nFarColors[COL_PANELCOLUMNTITLE];
+	pvi.tColumnTitle.bConAttr = this->nFarColors[col_PanelColumnTitle];
 	pvi.tColumnTitle.nFlags = PVI_TEXT_CENTER|PVI_TEXT_SKIPSORTMODE;
 	lstrcpyW(pvi.tColumnTitle.sText, (PVM==pvm_Thumbnails) ? gsTitleThumbs : gsTitleTiles);
 	pvi.nFarInterfaceSettings = this->nFarInterfaceSettings;
@@ -1996,13 +1988,12 @@ void CeFullPanelInfo::FinalRelease()
 
 	nMaxPanelDir = 0;
 
-	if (nFarColors)
-	{
-		free(nFarColors);
-		nFarColors = NULL;
-	}
-
-	nMaxFarColors = 0;
+	//if (nFarColors)
+	//{
+	//	free(nFarColors);
+	//	nFarColors = NULL;
+	//}
+	//nMaxFarColors = 0;
 
 	if (pFarTmpBuf)
 	{

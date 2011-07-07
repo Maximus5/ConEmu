@@ -1948,6 +1948,8 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 
 			if (nLeft > 0)
 			{
+				// Ќужно избегать этого. «начит выше по стеку в этой нити
+				// более одного раза был выполнен non exclusive lock
 				_ASSERTE(nLeft == 0);
 			}
 

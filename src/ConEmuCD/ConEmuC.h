@@ -340,7 +340,7 @@ extern DWORD gnConsoleModeFlags;
 struct SrvInfo
 {
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
-	BOOL bDebuggerActive; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
+	BOOL bDebuggerActive, bDebuggerRequestDump; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
 	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
 	DWORD nActiveFarPID; // PID последнего активного Far
 	BOOL bWasDetached; // Выставляется в TRUE при получении CECMD_DETACHCON

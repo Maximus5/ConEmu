@@ -30,7 +30,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _COMMON_HEADER_HPP_
 #define _COMMON_HEADER_HPP_
 
+// Версия интерфейса
+#define CESERVER_REQ_VER    67
+
 #include "defines.h"
+#include "ConEmuColors.h"
 
 #define MIN_CON_WIDTH 28
 #define MIN_CON_HEIGHT 7
@@ -194,9 +198,6 @@ const CECMD
 	CMD_ACTIVEWNDTYPE    = 219, // ThreadSafe - получить информацию об активном окне (его типе) в Far
 	CMD_LAST_FAR_CMD     = CMD_ACTIVEWNDTYPE;
 
-
-// Версия интерфейса
-#define CESERVER_REQ_VER    66
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -523,7 +524,7 @@ struct PaintBackgroundArg
 	COORD conCursor; // положение курсора, или {-1,-1} если он не видим
 	DWORD nFarInterfaceSettings; // ACTL_GETINTERFACESETTINGS
 	DWORD nFarPanelSettings; // ACTL_GETPANELSETTINGS
-	BYTE nFarColors[0x100]; // Массив цветов фара
+	BYTE nFarColors[col_LastIndex]; // Массив цветов фара
 
 	// Инфорация о панелях
 	BOOL bPanelsAllowed;
@@ -760,6 +761,9 @@ struct CESERVER_REQ_HDR
 	DWORD   nSrcThreadId;
 	DWORD   nSrcPID;
 	DWORD   nCreateTick;
+	DWORD   nBits;     // битность вызывающего процесса
+	DWORD   nReserved; // для выравнивания
+	u64     hModule;
 };
 
 
@@ -817,6 +821,7 @@ struct CEFAR_SHORT_PANEL_INFO
 	int   ViewMode;
 	int   ShortNames;
 	int   SortMode;
+	int   StatusLines;
 	unsigned __int64 Flags;
 };
 
@@ -833,7 +838,7 @@ struct CEFAR_INFO_MAPPING
 	FarVersion FarVer;
 	DWORD nProtocolVersion; // == CESERVER_REQ_VER
 	DWORD nFarPID, nFarTID;
-	BYTE nFarColors[0x100]; // Массив цветов фара
+	BYTE nFarColors[col_LastIndex]; // Массив цветов фара
 	DWORD nFarInterfaceSettings;
 	DWORD nFarPanelSettings;
 	DWORD nFarConfirmationSettings;

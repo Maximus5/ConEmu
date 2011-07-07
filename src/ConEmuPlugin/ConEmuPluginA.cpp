@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "PluginHeader.h"
 #include "PluginBackground.h"
+#include "..\common\farcolor2.hpp"
 
 //#define SHOW_DEBUG_EVENTS
 
@@ -936,21 +937,43 @@ bool ProcessCommandLineA(char* pszCommand)
 }
 
 
-static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
+//static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
+//{
+//	pCE->PanelType = pFar->PanelType;
+//	pCE->Plugin = pFar->Plugin;
+//	pCE->PanelRect = pFar->PanelRect;
+//	pCE->ItemsNumber = pFar->ItemsNumber;
+//	pCE->SelectedItemsNumber = pFar->SelectedItemsNumber;
+//	pCE->CurrentItem = pFar->CurrentItem;
+//	pCE->TopPanelItem = pFar->TopPanelItem;
+//	pCE->Visible = pFar->Visible;
+//	pCE->Focus = pFar->Focus;
+//	pCE->ViewMode = pFar->ViewMode;
+//	pCE->ShortNames = pFar->ShortNames;
+//	pCE->SortMode = pFar->SortMode;
+//	pCE->Flags = pFar->Flags;
+//}
+
+void LoadFarColorsA(BYTE (&nFarColors)[col_LastIndex])
 {
-	pCE->PanelType = pFar->PanelType;
-	pCE->Plugin = pFar->Plugin;
-	pCE->PanelRect = pFar->PanelRect;
-	pCE->ItemsNumber = pFar->ItemsNumber;
-	pCE->SelectedItemsNumber = pFar->SelectedItemsNumber;
-	pCE->CurrentItem = pFar->CurrentItem;
-	pCE->TopPanelItem = pFar->TopPanelItem;
-	pCE->Visible = pFar->Visible;
-	pCE->Focus = pFar->Focus;
-	pCE->ViewMode = pFar->ViewMode;
-	pCE->ShortNames = pFar->ShortNames;
-	pCE->SortMode = pFar->SortMode;
-	pCE->Flags = pFar->Flags;
+	BYTE FarConsoleColors[0x100];
+	INT_PTR nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, FarConsoleColors);
+#ifdef _DEBUG
+	INT_PTR nDefColorSize = COL_LASTPALETTECOLOR;
+	_ASSERTE(nColorSize==nDefColorSize);
+#endif
+	nFarColors[col_PanelText] = FarConsoleColors[COL_PANELTEXT];
+	nFarColors[col_PanelSelectedCursor] = FarConsoleColors[COL_PANELSELECTEDCURSOR];
+	nFarColors[col_PanelSelectedText] = FarConsoleColors[COL_PANELSELECTEDTEXT];
+	nFarColors[col_PanelCursor] = FarConsoleColors[COL_PANELCURSOR];
+	nFarColors[col_PanelColumnTitle] = FarConsoleColors[COL_PANELCOLUMNTITLE];
+	nFarColors[col_PanelBox] = FarConsoleColors[COL_PANELBOX];
+	nFarColors[col_HMenuText] = FarConsoleColors[COL_HMENUTEXT];
+	nFarColors[col_WarnDialogBox] = FarConsoleColors[COL_WARNDIALOGBOX];
+	nFarColors[col_DialogBox] = FarConsoleColors[COL_DIALOGBOX];
+	nFarColors[col_CommandLineUserScreen] = FarConsoleColors[COL_COMMANDLINEUSERSCREEN];
+	nFarColors[col_PanelScreensNumber] = FarConsoleColors[COL_PANELSCREENSNUMBER];
+	nFarColors[col_KeyBarNum] = FarConsoleColors[COL_KEYBARNUM];
 }
 
 BOOL ReloadFarInfoA(/*BOOL abFull*/)
@@ -964,7 +987,7 @@ BOOL ReloadFarInfoA(/*BOOL abFull*/)
 	}
 
 	// Заполнить gpFarInfo->
-	//BYTE nFarColors[0x100]; // Массив цветов фара
+	//BYTE nFarColors[col_LastIndex]; // Массив цветов фара
 	//DWORD nFarInterfaceSettings;
 	//DWORD nFarPanelSettings;
 	//DWORD nFarConfirmationSettings;
@@ -986,29 +1009,10 @@ BOOL ReloadFarInfoA(/*BOOL abFull*/)
 
 #endif
 	gpFarInfo->nFarConsoleMode = ldwConsoleMode;
-	INT_PTR nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
+	
+	LoadFarColorsA(gpFarInfo->nFarColors);
 
-	if (nColorSize <= (INT_PTR)sizeof(gpFarInfo->nFarColors))
-	{
-		nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, gpFarInfo->nFarColors);
-	}
-	else
-	{
-		_ASSERTE(nColorSize <= sizeof(gpFarInfo->nFarColors));
-		BYTE* ptr = (BYTE*)calloc(nColorSize,1);
-
-		if (!ptr)
-		{
-			memset(gpFarInfo->nFarColors, 7, countof(gpFarInfo->nFarColors)*sizeof(*gpFarInfo->nFarColors));
-		}
-		else
-		{
-			nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, ptr);
-			memmove(gpFarInfo->nFarColors, ptr, sizeof(gpFarInfo->nFarColors));
-			free(ptr);
-		}
-	}
-
+	_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40);
 	gpFarInfo->nFarInterfaceSettings =
 	    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
 	gpFarInfo->nFarPanelSettings =
@@ -1070,28 +1074,7 @@ void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar)
 	if (!InfoA || !InfoA->AdvControl)
 		return;
 
-	INT_PTR nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
-
-	if (nColorSize <= (INT_PTR)sizeof(pFar->nFarColors))
-	{
-		nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, pFar->nFarColors);
-	}
-	else
-	{
-		_ASSERTE(nColorSize <= sizeof(pFar->nFarColors));
-		BYTE* ptr = (BYTE*)calloc(nColorSize,1);
-
-		if (!ptr)
-		{
-			memset(pFar->nFarColors, 7, countof(pFar->nFarColors)*sizeof(*pFar->nFarColors));
-		}
-		else
-		{
-			nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, ptr);
-			memmove(pFar->nFarColors, ptr, sizeof(pFar->nFarColors));
-			free(ptr);
-		}
-	}
+	LoadFarColorsA(pFar->nFarColors);
 
 	pFar->nFarInterfaceSettings =
 	    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);

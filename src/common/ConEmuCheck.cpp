@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // !!! Использовать только через функцию: LocalSecurity() !!!
 SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
+u64 ghWorkingModule = 0;
 
 //#ifdef _DEBUG
 //	#include <crtdbg.h>
@@ -300,6 +301,14 @@ void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, DWORD cbSize)
 	pHdr->cbSize = cbSize;
 	pHdr->nVersion = CESERVER_REQ_VER;
 	pHdr->nCreateTick = GetTickCount();
+	_ASSERTE(ghWorkingModule!=0);
+	pHdr->hModule = ghWorkingModule;
+#ifdef _WIN64
+	pHdr->nBits = 64;
+#else
+	pHdr->nBits = 32;
+#endif
+	pHdr->nReserved = 0;
 }
 
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
@@ -517,7 +526,7 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner)
 	{
 		if (lpRet)
 		{
-			_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT);
+			_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT || (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP && nDelta <= EXECUTE_CMD_WARN_TIMEOUT2));
 		}
 		else
 		{

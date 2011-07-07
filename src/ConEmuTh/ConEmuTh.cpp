@@ -327,6 +327,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		case DLL_PROCESS_ATTACH:
 		{
 			ghPluginModule = (HMODULE)hModule;
+			//ghWorkingModule = (u64)hModule;
 			gnSelfPID = GetCurrentProcessId();
 			gnMainThreadId = GetMainThreadId();
 			HeapInitialize();
@@ -1024,9 +1025,8 @@ void ReloadPanelsInfo()
 
 	// Обновить gFarInfo (используется в RgnDetect)
 	CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
-	int n = min(p->nMaxFarColors, countof(gFarInfo.nFarColors));
-
-	if (n && p->nFarColors) memmove(gFarInfo.nFarColors, p->nFarColors, n);
+	_ASSERTE(countof(p->nFarColors)==countof(gFarInfo.nFarColors) && sizeof(*p->nFarColors) == sizeof(*gFarInfo.nFarColors));
+	memmove(gFarInfo.nFarColors, p->nFarColors, sizeof(gFarInfo.nFarColors));
 
 	gFarInfo.nFarInterfaceSettings = p->nFarInterfaceSettings;
 	gFarInfo.nFarPanelSettings = p->nFarPanelSettings;

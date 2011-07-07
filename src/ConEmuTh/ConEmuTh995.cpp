@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "..\common\pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
 #pragma warning( default : 4995 )
 #include "ConEmuTh.h"
+#include "..\common\farcolor2.hpp"
 
 //#define FCTL_GETPANELDIR FCTL_GETCURRENTDIRECTORY
 
@@ -395,17 +396,33 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	pcefpi->nFarPanelSettings = gnFarPanelSettings =
 	                                (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
 	// Цвета фара
-	int nColorSize = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
-
-	if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
-	{
-		if (pcefpi->nFarColors) free(pcefpi->nFarColors);
-
-		pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
-		pcefpi->nMaxFarColors = nColorSize;
-	}
-
-	nColorSize = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
+	BYTE FarConsoleColors[0x100];
+	INT_PTR nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, FarConsoleColors);
+#ifdef _DEBUG
+	INT_PTR nDefColorSize = COL_LASTPALETTECOLOR;
+	_ASSERTE(nColorSize==nDefColorSize);
+#endif
+	pcefpi->nFarColors[col_PanelText] = FarConsoleColors[COL_PANELTEXT];
+	pcefpi->nFarColors[col_PanelSelectedCursor] = FarConsoleColors[COL_PANELSELECTEDCURSOR];
+	pcefpi->nFarColors[col_PanelSelectedText] = FarConsoleColors[COL_PANELSELECTEDTEXT];
+	pcefpi->nFarColors[col_PanelCursor] = FarConsoleColors[COL_PANELCURSOR];
+	pcefpi->nFarColors[col_PanelColumnTitle] = FarConsoleColors[COL_PANELCOLUMNTITLE];
+	pcefpi->nFarColors[col_PanelBox] = FarConsoleColors[COL_PANELBOX];
+	pcefpi->nFarColors[col_HMenuText] = FarConsoleColors[COL_HMENUTEXT];
+	pcefpi->nFarColors[col_WarnDialogBox] = FarConsoleColors[COL_WARNDIALOGBOX];
+	pcefpi->nFarColors[col_DialogBox] = FarConsoleColors[COL_DIALOGBOX];
+	pcefpi->nFarColors[col_CommandLineUserScreen] = FarConsoleColors[COL_COMMANDLINEUSERSCREEN];
+	pcefpi->nFarColors[col_PanelScreensNumber] = FarConsoleColors[COL_PANELSCREENSNUMBER];
+	pcefpi->nFarColors[col_KeyBarNum] = FarConsoleColors[COL_KEYBARNUM];
+	//int nColorSize = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
+	//if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
+	//{
+	//	if (pcefpi->nFarColors) free(pcefpi->nFarColors);
+	//	pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
+	//	pcefpi->nMaxFarColors = nColorSize;
+	//}
+	//nColorSize = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
+	
 	// Текущая папка панели
 	int nSize = (int)InfoW995->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
 

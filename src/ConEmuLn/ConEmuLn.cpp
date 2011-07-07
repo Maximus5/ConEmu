@@ -111,6 +111,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		case DLL_PROCESS_ATTACH:
 		{
 			ghPluginModule = (HMODULE)hModule;
+			//ghWorkingModule = (u64)hModule;
 			HeapInitialize();
 
 #ifdef SHOW_STARTED_MSGBOX
@@ -217,7 +218,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 {
-	DWORD nPanelBackIdx = (pBk->nFarColors[COL_PANELTEXT] & 0xF0) >> 4;
+	DWORD nPanelBackIdx = (pBk->nFarColors[col_PanelText] & 0xF0) >> 4;
 
 	if (pBk->dwLevel == 0)
 	{

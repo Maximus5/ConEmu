@@ -203,7 +203,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 
 	if (pOut->hdr.nVersion != CESERVER_REQ_VER)
 	{
-		gpConEmu->ShowOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion, -1);
+		gpConEmu->ShowOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion, -1, pOut->hdr.nSrcPID, pOut->hdr.hModule, pOut->hdr.nBits);
 		pOut = NULL;
 		Close();
 		return FALSE;

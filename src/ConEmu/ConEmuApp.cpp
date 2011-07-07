@@ -983,6 +983,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	nCmp = lstrcmpi(L" ", L"-");
 	nCmp = StrCmpI(L" ", L"\\");*/
 	g_hInstance = hInstance;
+	ghWorkingModule = (u64)hInstance;
 	gpLocalSecurity = LocalSecurity();
 #ifdef _DEBUG
 	gAllowAssertThread = am_Thread;
