@@ -7080,6 +7080,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	// Установить переменную среды с дескриптором окна
 	SetConEmuEnvVar(ghWndDC);
 	HMENU hwndMain = GetSystemMenu(ghWnd, FALSE), hDebug = NULL;
+	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
 	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
 	InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
 	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About"));
@@ -10275,14 +10276,15 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 	if (!pRCon)
 		return DPB_NONE;
 
-	if (!pRCon->isFar() || !pRCon->isFilePanel(true))
+	// Должен быть "Фар", "Панели", "Активен" (нет смысла пытаться дергать панели, если фар "висит")
+	if (!pRCon->isFar() || !pRCon->isFilePanel(true) || !pRCon->isAlive())
 		return DPB_NONE;
 
 	// Если активен наш или ФАРовский граббер
 	if (pRCon->isConSelectMode())
 		return DPB_NONE;
 
-	// Если удерживается модификатор запуска драга
+	// Если удерживается модификатор запуска граббера
 	if ((gpSet->isCTSSelectBlock && gpSet->isCTSVkBlock && gpSet->isModifierPressed(gpSet->isCTSVkBlock))
 	        || (gpSet->isCTSSelectText && gpSet->isCTSVkText && gpSet->isModifierPressed(gpSet->isCTSVkText)))
 		return DPB_NONE;
@@ -10858,8 +10860,20 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		}
 		return 0;
 		//break;
-		case ID_TOTRAY:
 
+		case ID_TOMONITOR:
+			{
+				if (!IsWindowVisible(ghWnd))
+					Icon.RestoreWindowFromTray();
+				POINT ptCur = {}; GetCursorPos(&ptCur);
+				HMONITOR hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTOPRIMARY);
+				MONITORINFO mi = {sizeof(mi)};
+				GetMonitorInfo(hMon, &mi);
+				SetWindowPos(ghWnd, HWND_TOP, mi.rcWork.left, mi.rcWork.top, 0,0, SWP_NOSIZE);
+			}
+			return 0;
+
+		case ID_TOTRAY:
 			if (IsWindowVisible(ghWnd))
 				Icon.HideWindowToTray();
 			else

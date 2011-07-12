@@ -1832,7 +1832,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	else
 	{
 		LPTSTR tFileName = NULL;
-		if (!GetFullPathName(pTab->Name, countof(dummy), dummy, &tFileName) || !tFileName)
+		if (GetFullPathName(pTab->Name, countof(dummy), dummy, &tFileName) && tFileName && *tFileName)
 			lstrcpyn(fileName, tFileName, countof(fileName));
 		else
 			lstrcpyn(fileName, pTab->Name, countof(fileName));

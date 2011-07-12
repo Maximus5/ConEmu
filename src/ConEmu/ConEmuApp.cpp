@@ -196,6 +196,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
 						WP1(ID_HELP);
 						WP1(ID_ABOUT);
 						WP1(ID_TOTRAY);
+						WP1(ID_TOMONITOR);
 						WP1(ID_CONPROP);
 				}
 

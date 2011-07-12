@@ -2444,10 +2444,18 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 			if (OnMouseSelection(messg, wParam, x, y))
 				return;
 		}
-	}
 
-	if (isSelectionAllowed())
-	{
+		// Если выделение еще не начато, но удерживается модификатор - игнорировать WM_MOUSEMOVE
+		if (messg == WM_MOUSEMOVE && !con.m_sel.dwFlags)
+		{
+			if ((gpSet->isCTSSelectBlock && gpSet->isCTSVkBlock && gpSet->isModifierPressed(gpSet->isCTSVkBlock))
+				|| (gpSet->isCTSSelectText && gpSet->isCTSVkText && gpSet->isModifierPressed(gpSet->isCTSVkText)))
+			{
+				// Пропустить, пользователь собирается начать выделение, не посылать движение мыши в консоль
+				return;
+			}
+		}
+
 		if (gpSet->isCTSRBtnAction == 2 && (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP)
 		        && ((gpSet->isCTSActMode == 2 && isBufferHeight() && !isFarBufferSupported())
 		            || (gpSet->isCTSActMode == 1 && (!gpSet->isCTSVkAct || gpSet->isModifierPressed(gpSet->isCTSVkAct)))))
@@ -2754,6 +2762,7 @@ bool CRealConsole::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			}
 		}
 
+		// Если дошли сюда - значит или модификатор нажат, или из меню выделение запустили
 		StartSelection(lbStreamSelection, cr.X, cr.Y, TRUE);
 
 		if (vkMod)

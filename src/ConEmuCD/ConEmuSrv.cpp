@@ -1126,7 +1126,7 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 
 	if (gpSrv->hRefreshThread)
 	{
-		if (WaitForSingleObject(gpSrv->hRefreshThread, 100)!=WAIT_OBJECT_0)
+		if (WaitForSingleObject(gpSrv->hRefreshThread, 250)!=WAIT_OBJECT_0)
 		{
 			_ASSERT(FALSE);
 			gbTerminateOnExit = gpSrv->bRefreshTermination = TRUE;

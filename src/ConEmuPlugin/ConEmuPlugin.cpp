@@ -2085,7 +2085,9 @@ static BOOL ActivatePlugin(
 
 	if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1))
 	{
-		_ASSERTE(nWait==WAIT_OBJECT_0);
+		//110712 - если CMD_REDRAWFAR, то показывать Assert смысла мало, фар может быть занят
+		//  например чтением панелей?
+		_ASSERTE(nWait==WAIT_OBJECT_0 || (nCmd==CMD_REDRAWFAR));
 
 		if (nWait == (WAIT_OBJECT_0+1))
 		{
