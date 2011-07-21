@@ -47,6 +47,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DebugString(x) // OutputDebugString(x)
 
+#define LDR_IS_DATAFILE(hm)      ((((ULONG_PTR)(hm)) & (ULONG_PTR)1) == (ULONG_PTR)1)
+#define LDR_IS_IMAGEMAPPING(hm)  ((((ULONG_PTR)(hm)) & (ULONG_PTR)2) == (ULONG_PTR)2)
+#define LDR_IS_RESOURCE(hm)      (LDR_IS_IMAGEMAPPING(hm) || LDR_IS_DATAFILE(hm))
+
 HMODULE ghHookOurModule = NULL; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 DWORD   gnHookMainThreadId = 0;
 
@@ -122,6 +126,7 @@ bool InitHooksLibrary()
 		{(void*)OnLoadLibraryW,			"LoadLibraryW",			kernel32},
 		{(void*)OnLoadLibraryExA,		"LoadLibraryExA",		kernel32},
 		{(void*)OnLoadLibraryExW,		"LoadLibraryExW",		kernel32},
+		{(void*)OnFreeLibrary,			"FreeLibrary",			kernel32}, // OnFreeLibrary тоже нужен!
 		#ifndef HOOKS_SKIP_GETPROCADDRESS
 		{(void*)OnGetProcAddress,		"GetProcAddress",		kernel32},
 		#endif
@@ -347,6 +352,10 @@ bool __stdcall SetHookCallbacks(const char* ProcName, const wchar_t* DllName, HM
 bool IsModuleExcluded(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW)
 {
 	if (module == ghHookOurModule)
+		return true;
+
+	BOOL lbResource = LDR_IS_RESOURCE(module);
+	if (lbResource)
 		return true;
 
 	// Возможно, имеет смысл игнорировать системные библиотеки вида
@@ -1069,117 +1078,196 @@ void LoadModuleFailed(LPCSTR asModuleA, LPCWSTR asModuleW)
 	SetLastError(dwErrCode);
 }
 
+// В процессе загрузки модуля (module) могли подгрузиться
+// (статически или динамически) и другие библиотеки!
+void CheckProcessModules(HMODULE hFromModule);
+
 // Заменить в модуле Module ЭКСпортируемые функции на подменяемые плагином нихрена
 // НЕ получится, т.к. в Win32 библиотека shell32 может быть загружена ПОСЛЕ conemu.dll
 //   что вызовет некорректные смещения функций,
 // а в Win64 смещения вообще должны быть 64битными, а структура модуля хранит только 32битные смещения
 
-void PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW)
+void PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE)
 {
 	if (!module)
 	{
 		LoadModuleFailed(asModuleA, asModuleW);
+
+		// В процессе загрузки модуля (module) могли подгрузиться
+		// (статически или динамически) и другие библиотеки!
+		CheckProcessModules(module);
 		return;
 	}
 
-	if (!ghUser32)
-	{
-		// Если на старте exe-шника user32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
-		if ((asModuleA && (!lstrcmpiA(asModuleA, "user32.dll") || !lstrcmpiA(asModuleA, "user32"))) ||
-			(asModuleW && (!lstrcmpiW(asModuleW, L"user32.dll") || !lstrcmpiW(asModuleW, L"user32"))))
-		{
-			ghUser32 = LoadLibraryW(user32);
-			InitHooks(NULL);
-		}
-	}
-	if (!ghShell32)
-	{
-		// Если на старте exe-шника shell32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
-		if ((asModuleA && (!lstrcmpiA(asModuleA, "shell32.dll") || !lstrcmpiA(asModuleA, "shell32"))) ||
-			(asModuleW && (!lstrcmpiW(asModuleW, L"shell32.dll") || !lstrcmpiW(asModuleW, L"shell32"))))
-		{
-			ghShell32 = LoadLibraryW(shell32);
-			InitHooks(NULL);
-		}
-	}
-	if (!ghAdvapi32)
-	{
-		// Если на старте exe-шника advapi32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
-		if ((asModuleA && (!lstrcmpiA(asModuleA, "advapi32.dll") || !lstrcmpiA(asModuleA, "advapi32"))) ||
-			(asModuleW && (!lstrcmpiW(asModuleW, L"advapi32.dll") || !lstrcmpiW(asModuleW, L"advapi32"))))
-		{
-			ghAdvapi32 = LoadLibraryW(advapi32);
-			if (ghAdvapi32)
-			{
-				RegOpenKeyEx_f = (RegOpenKeyEx_t)GetProcAddress(ghAdvapi32, "RegOpenKeyExW");
-				RegCreateKeyEx_f = (RegCreateKeyEx_t)GetProcAddress(ghAdvapi32, "RegCreateKeyExW");
-				RegCloseKey_f = (RegCloseKey_t)GetProcAddress(ghAdvapi32, "RegCloseKey");
-			}
-			InitHooks(NULL);
-		}
-	}
-
-	if (!module || IsModuleExcluded(module, asModuleA, asModuleW))
-		return;
+	BOOL lbResource = LDR_IS_RESOURCE(module);
 
 	CShellProc* sp = new CShellProc();
-	if (!sp)
-		return;
-	if (!gnLastLogSetChange || ((GetTickCount() - gnLastLogSetChange) > 2000))
+	if (sp != NULL)
 	{
-		gnLastLogSetChange = GetTickCount();
-		gbLogLibraries = sp->LoadGuiMapping();
-	}
+		if (!gnLastLogSetChange || ((GetTickCount() - gnLastLogSetChange) > 2000))
+		{
+			gnLastLogSetChange = GetTickCount();
+			gbLogLibraries = sp->LoadGuiMapping();
+		}
 
-	if (gbLogLibraries)
-	{
-		CESERVER_REQ* pIn = NULL;
-		wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
-		if (!asModuleA && !asModuleW)
+		if (gbLogLibraries)
 		{
-			wcscpy_c(szModule, L"<NULL>");
-			asModuleW = szModule;
-		}
-		else if (asModuleA)
-		{
-			MultiByteToWideChar(AreFileApisANSI() ? CP_ACP : CP_OEMCP, 0, asModuleA, -1, szModule, countof(szModule));
-			szModule[countof(szModule)-1] = 0;
-			asModuleW = szModule;
-		}
-		wchar_t szInfo[64]; szInfo[0] = 0;
-		#ifdef _WIN64
-		if ((DWORD)((DWORD_PTR)module >> 32))
-			msprintf(szInfo, countof(szInfo), L"Module=0x%08X%08X",
-				(DWORD)((DWORD_PTR)module >> 32), (DWORD)((DWORD_PTR)module & 0xFFFFFFFF));
-		else
-			msprintf(szInfo, countof(szInfo), L"Module=0x%08X",
-				(DWORD)((DWORD_PTR)module & 0xFFFFFFFF));
-		#else
-		msprintf(szInfo, countof(szInfo), L"Module=0x%08X", (DWORD)module);
-		#endif
-		pIn = sp->NewCmdOnCreate(eLoadLibrary, NULL, asModuleW, szInfo, NULL, NULL, NULL, NULL,
+			CESERVER_REQ* pIn = NULL;
+			wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
+			if (!asModuleA && !asModuleW)
+			{
+				wcscpy_c(szModule, L"<NULL>");
+				asModuleW = szModule;
+			}
+			else if (asModuleA)
+			{
+				MultiByteToWideChar(AreFileApisANSI() ? CP_ACP : CP_OEMCP, 0, asModuleA, -1, szModule, countof(szModule));
+				szModule[countof(szModule)-1] = 0;
+				asModuleW = szModule;
+			}
+			wchar_t szInfo[64]; szInfo[0] = 0;
 			#ifdef _WIN64
-			64
+			if ((DWORD)((DWORD_PTR)module >> 32))
+				msprintf(szInfo, countof(szInfo), L"Module=0x%08X%08X",
+					(DWORD)((DWORD_PTR)module >> 32), (DWORD)((DWORD_PTR)module & 0xFFFFFFFF));
+			else
+				msprintf(szInfo, countof(szInfo), L"Module=0x%08X",
+					(DWORD)((DWORD_PTR)module & 0xFFFFFFFF));
 			#else
-			32
+			msprintf(szInfo, countof(szInfo), L"Module=0x%08X", (DWORD)module);
 			#endif
-			, 0, NULL, NULL, NULL);
-		if (pIn)
-		{
-			HWND hConWnd = GetConsoleWindow();
-			CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
-			ExecuteFreeResult(pIn);
-			if (pOut) ExecuteFreeResult(pOut);
+			pIn = sp->NewCmdOnCreate(eLoadLibrary, NULL, asModuleW, szInfo, NULL, NULL, NULL, NULL,
+				#ifdef _WIN64
+				64
+				#else
+				32
+				#endif
+				, 0, NULL, NULL, NULL);
+			if (pIn)
+			{
+				HWND hConWnd = GetConsoleWindow();
+				CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
+				ExecuteFreeResult(pIn);
+				if (pOut) ExecuteFreeResult(pOut);
+			}
 		}
+
+		delete sp;
+		sp = NULL;
 	}
 
-	delete sp;
+	if (!abNoSnapshoot && !lbResource)
+	{
+		// В процессе загрузки модуля (module) могли подгрузиться
+		// (статически или динамически) и другие библиотеки!
+		CheckProcessModules(module);
+	}
+
+	//if (!ghUser32)
+	//{
+	//	// Если на старте exe-шника user32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
+	//	if ((asModuleA && (!lstrcmpiA(asModuleA, "user32.dll") || !lstrcmpiA(asModuleA, "user32"))) ||
+	//		(asModuleW && (!lstrcmpiW(asModuleW, L"user32.dll") || !lstrcmpiW(asModuleW, L"user32"))))
+	//	{
+	//		ghUser32 = LoadLibraryW(user32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
+	//		//InitHooks(NULL); -- ниже и так будет выполнено
+	//	}
+	//}
+	//if (!ghShell32)
+	//{
+	//	// Если на старте exe-шника shell32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
+	//	if ((asModuleA && (!lstrcmpiA(asModuleA, "shell32.dll") || !lstrcmpiA(asModuleA, "shell32"))) ||
+	//		(asModuleW && (!lstrcmpiW(asModuleW, L"shell32.dll") || !lstrcmpiW(asModuleW, L"shell32"))))
+	//	{
+	//		ghShell32 = LoadLibraryW(shell32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
+	//		//InitHooks(NULL); -- ниже и так будет выполнено
+	//	}
+	//}
+	//if (!ghAdvapi32)
+	//{
+	//	// Если на старте exe-шника advapi32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
+	//	if ((asModuleA && (!lstrcmpiA(asModuleA, "advapi32.dll") || !lstrcmpiA(asModuleA, "advapi32"))) ||
+	//		(asModuleW && (!lstrcmpiW(asModuleW, L"advapi32.dll") || !lstrcmpiW(asModuleW, L"advapi32"))))
+	//	{
+	//		ghAdvapi32 = LoadLibraryW(advapi32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
+	//		if (ghAdvapi32)
+	//		{
+	//			RegOpenKeyEx_f = (RegOpenKeyEx_t)GetProcAddress(ghAdvapi32, "RegOpenKeyExW");
+	//			RegCreateKeyEx_f = (RegCreateKeyEx_t)GetProcAddress(ghAdvapi32, "RegCreateKeyExW");
+	//			RegCloseKey_f = (RegCloseKey_t)GetProcAddress(ghAdvapi32, "RegCloseKey");
+	//		}
+	//		//InitHooks(NULL); -- ниже и так будет выполнено
+	//	}
+	//}
 
 	// Некоторые перехватываемые библиотеки могли быть
 	// не загружены во время первичной инициализации
+	// Соответственно для них (если они появились) нужно
+	// получить "оригинальные" адреса процедур
 	InitHooks(NULL);
-	// Подмена импортируемых функций в module
-	SetHook(module/*, FALSE*/, FALSE);
+
+	if (!IsModuleExcluded(module, asModuleA, asModuleW))
+	{
+		// Подмена импортируемых функций в module
+		SetHook(module/*, FALSE*/, FALSE);
+	}
+}
+
+// В процессе загрузки модуля (module) могли подгрузиться
+// (статически или динамически) и другие библиотеки!
+void CheckProcessModules(HMODULE hFromModule)
+{
+	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
+	MODULEENTRY32 mi = {sizeof(mi)};
+	if (h && h != INVALID_HANDLE_VALUE && Module32First(h, &mi))
+	{
+		BOOL lbAddMod = FALSE;
+		do {
+			if (!ghUser32)
+			{
+				// Если на старте exe-шника user32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
+				if (*mi.szModule && (!lstrcmpiW(mi.szModule, L"user32.dll") || !lstrcmpiW(mi.szModule, L"user32")))
+				{
+					ghUser32 = LoadLibraryW(user32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
+					//InitHooks(NULL); -- ниже и так будет выполнено
+				}
+			}
+			if (!ghShell32)
+			{
+				// Если на старте exe-шника shell32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
+				if (*mi.szModule && (!lstrcmpiW(mi.szModule, L"shell32.dll") || !lstrcmpiW(mi.szModule, L"shell32")))
+				{
+					ghShell32 = LoadLibraryW(shell32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
+					//InitHooks(NULL); -- ниже и так будет выполнено
+				}
+			}
+			if (!ghAdvapi32)
+			{
+				// Если на старте exe-шника advapi32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
+				if (*mi.szModule && (!lstrcmpiW(mi.szModule, L"advapi32.dll") || !lstrcmpiW(mi.szModule, L"advapi32")))
+				{
+					ghAdvapi32 = LoadLibraryW(advapi32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
+					if (ghAdvapi32)
+					{
+						RegOpenKeyEx_f = (RegOpenKeyEx_t)GetProcAddress(ghAdvapi32, "RegOpenKeyExW");
+						RegCreateKeyEx_f = (RegCreateKeyEx_t)GetProcAddress(ghAdvapi32, "RegCreateKeyExW");
+						RegCloseKey_f = (RegCloseKey_t)GetProcAddress(ghAdvapi32, "RegCloseKey");
+					}
+					//InitHooks(NULL); -- ниже и так будет выполнено
+				}
+			}
+
+			if (lbAddMod)
+			{
+				PrepareNewModule(mi.hModule, NULL, mi.szModule, TRUE);
+			}
+			else if (mi.hModule == hFromModule)
+			{
+				lbAddMod = TRUE;
+			}
+		} while (Module32Next(h, &mi));
+		CloseHandle(h);
+	}
 }
 
 
@@ -1303,6 +1391,11 @@ typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
 BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 {
 	ORIGINALFAST(FreeLibrary);
+	BOOL lbRc = FALSE;
+	BOOL lbResource = LDR_IS_RESOURCE(hModule);
+	// lbResource получается TRUE например при вызовах из version.dll
+	BOOL lbProcess = !lbResource;
+	wchar_t szModule[MAX_PATH*2]; szModule[0] = 0;
 
 	if (gbLogLibraries)
 	{
@@ -1310,9 +1403,19 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 		if (sp->LoadGuiMapping())
 		{
 			CESERVER_REQ* pIn = NULL;
-			wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
-			if (!GetModuleFileName(hModule, szModule, countof(szModule)))
-				msprintf(szModule, countof(szModule), L"<HMODULE=0x%08X>", (DWORD)hModule);
+			szModule[0] = 0;
+			wchar_t szHandle[32];
+			#ifdef _WIN64
+				msprintf(szModule, countof(szModule), L", <HMODULE=0x%08X%08X>",
+					(DWORD)((((u64)hModule) & 0xFFFFFFFF00000000) >> 32),
+					(DWORD)(((u64)hModule) & 0xFFFFFFFF));
+			#else
+				msprintf(szModule, countof(szModule), L", <HMODULE=0x%08X>", (DWORD)hModule);
+			#endif
+			if (GetModuleFileName(hModule, szModule, countof(szModule)-32))
+				wcscat_c(szModule, szHandle);
+			else
+				wcscpy_c(szModule, szHandle+2);
 			pIn = sp->NewCmdOnCreate(eFreeLibrary, NULL, szModule, NULL, NULL, NULL, NULL, NULL,
 				#ifdef _WIN64
 				64
@@ -1331,48 +1434,62 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 		delete sp;
 	}
 
-	if (ghOnLoadLibModule == hModule)
-	{
-		ghOnLoadLibModule = NULL;
-		gfOnLibraryLoaded = NULL;
-		gfOnLibraryUnLoaded = NULL;
-	}
+#ifdef _DEBUG
+	BOOL lbModulePre = GetModuleFileName(hModule, szModule, countof(szModule));
+#endif
 
-	if (gpHooks)
-	{
-		for(int i = 0; i<MAX_HOOKED_PROCS && gpHooks[i].NewAddress; i++)
-		{
-			if (gpHooks[i].hCallbackModule == hModule)
-			{
-				gpHooks[i].hCallbackModule = NULL;
-				gpHooks[i].PreCallBack = NULL;
-				gpHooks[i].PostCallBack = NULL;
-				gpHooks[i].ExceptCallBack = NULL;
-			}
-		}
-	}
-
-	if (gfOnLibraryUnLoaded)
-	{
-		gfOnLibraryUnLoaded(hModule);
-	}
-
-	BOOL lbRc = FALSE;
 	lbRc = F(FreeLibrary)(hModule);
 
-	if (ghUser32 && (hModule == ghUser32))
+	// Далее только если !LDR_IS_RESOURCE
+	if (lbRc && !lbResource)
 	{
-		if (GetModuleHandle(user32) == NULL)
-			Is_Window = NULL;
-	}
+		// Попробуем определить, действительно ли модуль выгружен, или только счетчик уменьшился
+		BOOL lbModulePost = GetModuleFileName(hModule, szModule, countof(szModule));
+		DWORD dwErr = lbModulePost ? 0 : GetLastError();
 
-	if (ghAdvapi32 && (hModule == ghAdvapi32))
-	{
-		if (GetModuleHandle(advapi32) == NULL)
+		if (!lbModulePost)
 		{
-			RegOpenKeyEx_f = NULL;
-			RegCreateKeyEx_f = NULL;
-			RegCloseKey_f = NULL;
+			if (ghOnLoadLibModule == hModule)
+			{
+				ghOnLoadLibModule = NULL;
+				gfOnLibraryLoaded = NULL;
+				gfOnLibraryUnLoaded = NULL;
+			}
+
+			if (gpHooks)
+			{
+				for(int i = 0; i<MAX_HOOKED_PROCS && gpHooks[i].NewAddress; i++)
+				{
+					if (gpHooks[i].hCallbackModule == hModule)
+					{
+						gpHooks[i].hCallbackModule = NULL;
+						gpHooks[i].PreCallBack = NULL;
+						gpHooks[i].PostCallBack = NULL;
+						gpHooks[i].ExceptCallBack = NULL;
+					}
+				}
+			}
+
+			if (gfOnLibraryUnLoaded)
+			{
+				gfOnLibraryUnLoaded(hModule);
+			}
+
+			if (ghUser32 && (hModule == ghUser32))
+			{
+				if (GetModuleHandle(user32) == NULL)
+					Is_Window = NULL;
+			}
+
+			if (ghAdvapi32 && (hModule == ghAdvapi32))
+			{
+				if (GetModuleHandle(advapi32) == NULL)
+				{
+					RegOpenKeyEx_f = NULL;
+					RegCreateKeyEx_f = NULL;
+					RegCloseKey_f = NULL;
+				}
+			}
 		}
 	}
 

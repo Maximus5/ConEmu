@@ -4273,7 +4273,13 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister/*=FALS
 	// Подготовить размеры
 	POINT pt[2];
 	int nTopShift = 1 + ((pp->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) ? 1 : 0);
-	int nBottomShift = ((pp->nFarPanelSettings & 0x40/*FPS_SHOWSTATUSLINE*/) ? 2 : 0);
+	int nBottomShift = 0;
+	if (mp_RCon && (pp->nFarPanelSettings & 0x40/*FPS_SHOWSTATUSLINE*/))
+	{
+		nBottomShift = mp_RCon->GetStatusLineCount(pp->PanelRect.left) + 1;
+		if (nBottomShift < 2)
+			nBottomShift = 2;
+	}
 	pp->WorkRect = MakeRect(
 	                   pp->PanelRect.left+1, pp->PanelRect.top+nTopShift,
 	                   pp->PanelRect.right, pp->PanelRect.bottom-nBottomShift);
@@ -4433,8 +4439,9 @@ void CVirtualConsole::PolishPanelViews()
 		}
 
 		// 3. Разделитель
-		pszLine = mpsz_ConChar+TextWidth*(rc.bottom-2);
-		pAttrs = mpn_ConAttrEx+TextWidth*(rc.bottom-2);
+		rc = pp->WorkRect;
+		pszLine = mpsz_ConChar+TextWidth*(rc.bottom);
+		pAttrs = mpn_ConAttrEx+TextWidth*(rc.bottom);
 
 		if ((pp->nFarPanelSettings & 0x40/*FPS_SHOWSTATUSLINE*/))
 		{

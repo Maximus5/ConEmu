@@ -34,15 +34,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuTh_Lang.h"
 
 #define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
+
 #ifdef _DEBUG
-#define OUTPUTDEBUGSTRING(m) OutputDebugString(m)
-#define SHOWDBGINFO(x) OutputDebugStringW(x)
-//#include <crtdbg.h>
+	#define OUTPUTDEBUGSTRING(m) OutputDebugString(m)
+	#define SHOWDBGINFO(x) OutputDebugStringW(x)
+
+	//#define CONEMU_LOG_FILES
+	#undef CONEMU_LOG_FILES
 #else
-#define OUTPUTDEBUGSTRING(m)
-#define SHOWDBGINFO(x)
-//#define _ASSERT(x)
-//#define _ASSERTE(x)
+	#define OUTPUTDEBUGSTRING(m)
+	#define SHOWDBGINFO(x)
+
+	//#define CONEMU_LOG_FILES
+	#undef CONEMU_LOG_FILES
 #endif
 
 

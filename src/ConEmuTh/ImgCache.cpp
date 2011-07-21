@@ -1,8 +1,5 @@
 
 #define SHOWDEBUGSTR
-#define DEBUGSTRLOAD(s) if (gpLogLoad) {gpLogLoad->LogString(s);} // DEBUGSTR(s)
-#define DEBUGSTRLOAD2(s) if (gpLogLoad) {gpLogLoad->LogString(s);} // OutputDebugStringW(s)
-#define DEBUGSTRPAINT(s) if (gpLogPaint) {gpLogPaint->LogString(s);} // DEBUGSTR(s)
 
 #include <stdio.h>
 #include <windows.h>
@@ -13,6 +10,16 @@
 #include "resource.h"
 
 #include "ImgCache.h"
+
+#ifdef CONEMU_LOG_FILES
+	#define DEBUGSTRLOAD(s) if (gpLogLoad) {gpLogLoad->LogString(s);} // DEBUGSTR(s)
+	#define DEBUGSTRLOAD2(s) if (gpLogLoad) {gpLogLoad->LogString(s);} // OutputDebugStringW(s)
+	#define DEBUGSTRPAINT(s) if (gpLogPaint) {gpLogPaint->LogString(s);} // DEBUGSTR(s)
+#else
+	#define DEBUGSTRLOAD(s)
+	#define DEBUGSTRLOAD2(s)
+	#define DEBUGSTRPAINT(s)
+#endif
 
 //#pragma comment( lib, "ole32.lib" )
 

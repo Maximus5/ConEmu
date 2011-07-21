@@ -40,7 +40,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define MCHKHEAP
 #define DEBUGSTRMENU(s) DEBUGSTR(s)
 #define DEBUGSTRCTRL(s) DEBUGSTR(s)
-#define DEBUGSTRPAINT(s) if (gpLogPaint) {gpLogPaint->LogString(s);} // DEBUGSTR(s)
 
 #undef USE_DEBUG_LOGS
 //#define USE_DEBUG_LOGS
@@ -50,6 +49,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RgnDetect.h"
 #include "resource.h"
 #include "ImgCache.h"
+
+#ifdef CONEMU_LOG_FILES
+	#define DEBUGSTRPAINT(s) if (gpLogPaint) {gpLogPaint->LogString(s);} // DEBUGSTR(s)
+#else
+	#define DEBUGSTRPAINT(s)
+#endif
 
 #ifdef _DEBUG
 #undef _ASSERTE
@@ -77,8 +82,11 @@ UINT gnConEmuFadeMsg = 0, gnConEmuSettingsMsg = 0;
 //extern CRgnDetect *gpRgnDetect;
 //extern CEFAR_INFO_MAPPING gFarInfo;
 //extern DWORD gnRgnDetectFlags;
+
+#ifdef CONEMU_LOG_FILES
 MFileLog* gpLogLoad = NULL;
 MFileLog* gpLogPaint = NULL;
+#endif
 
 
 void ResetUngetBuffer();
@@ -92,7 +100,8 @@ HWND CeFullPanelInfo::CreateView()
 {
 	gnCreateViewError = 0;
 	gnWin32Error = 0;
-#ifdef _DEBUG
+
+#ifdef CONEMU_LOG_FILES
 
 	if (!gpLogLoad)
 	{
@@ -116,7 +125,8 @@ HWND CeFullPanelInfo::CreateView()
 		}
 	}
 
-#endif
+#endif // #ifdef CONEMU_LOG_FILES
+
 	HWND lhView = this->hView; // (this->bLeftPanel) ? ghLeftView : ghRightView;
 
 	if (lhView)
@@ -2015,6 +2025,7 @@ void CeFullPanelInfo::FinalRelease()
 		delete pSection; pSection = NULL;
 	}
 
+#ifdef CONEMU_LOG_FILES
 	if (gpLogLoad)
 	{
 		MFileLog *p = gpLogLoad; gpLogLoad = NULL;
@@ -2026,6 +2037,7 @@ void CeFullPanelInfo::FinalRelease()
 		MFileLog *p = gpLogPaint; gpLogPaint = NULL;
 		delete p;
 	}
+#endif
 }
 
 BOOL CeFullPanelInfo::ReallocItems(int anCount)

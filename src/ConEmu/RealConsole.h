@@ -342,6 +342,7 @@ class CRealConsole
 		//void LogShellStartStop();
 		bool IsLogShellStarted();
 		wchar_t ms_LogShellActivity[MAX_PATH]; bool mb_ShellActivityLogged;
+		int GetStatusLineCount(int nLeftPanelEdge);
 
 	public:
 		// Вызываются из CVirtualConsole

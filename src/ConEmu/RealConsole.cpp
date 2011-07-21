@@ -10797,6 +10797,38 @@ HWND CRealConsole::ConWnd()
 	return hConWnd;
 }
 
+int CRealConsole::GetStatusLineCount(int nLeftPanelEdge)
+{
+	if (!this)
+		return 0;
+	if (!isFar() || !con.pConChar || !con.nTextWidth)
+		return 0;
+	
+	int nBottom, nLeft;
+	if (nLeftPanelEdge > mr_LeftPanelFull.left)
+	{
+		nBottom = mr_RightPanelFull.bottom;
+		nLeft = mr_RightPanelFull.left;
+	}
+	else
+	{
+		nBottom = mr_LeftPanelFull.bottom;
+		nLeft = mr_LeftPanelFull.left;
+	}
+	if (nBottom < 5)
+		return 0; // минимальна€ высота панели
+
+	for (int i = 2; i <= 11 && i < nBottom; i++)
+	{
+		if (con.pConChar[con.nTextWidth*(nBottom-i)+nLeft] == ucBoxDblVertSinglRight)
+		{
+			return (i - 1);
+		}
+	}
+	
+	return 0;
+}
+
 // Ќайти панели, обновить mn_ConsoleProgress
 void CRealConsole::FindPanels()
 {
