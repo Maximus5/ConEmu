@@ -1404,13 +1404,13 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 		{
 			CESERVER_REQ* pIn = NULL;
 			szModule[0] = 0;
-			wchar_t szHandle[32];
+			wchar_t szHandle[32] = {};
 			#ifdef _WIN64
-				msprintf(szModule, countof(szModule), L", <HMODULE=0x%08X%08X>",
+				msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X%08X>",
 					(DWORD)((((u64)hModule) & 0xFFFFFFFF00000000) >> 32),
 					(DWORD)(((u64)hModule) & 0xFFFFFFFF));
 			#else
-				msprintf(szModule, countof(szModule), L", <HMODULE=0x%08X>", (DWORD)hModule);
+				msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X>", (DWORD)hModule);
 			#endif
 			if (GetModuleFileName(hModule, szModule, countof(szModule)-32))
 				wcscat_c(szModule, szHandle);
