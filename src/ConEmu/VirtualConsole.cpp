@@ -335,6 +335,50 @@ CVirtualConsole::~CVirtualConsole()
 	//FreeBackgroundImage();
 }
 
+int CVirtualConsole::GetTabCount()
+{
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return 0;
+	}
+	if (!mp_RCon)
+	{
+		return 1;
+	}
+	return mp_RCon->GetTabCount();
+}
+
+int CVirtualConsole::GetActiveTab()
+{
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return 0;
+	}
+	if (!mp_RCon)
+	{
+		return 0;
+	}
+	return mp_RCon->GetActiveTab();
+}
+
+BOOL CVirtualConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
+{
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return FALSE;
+	}
+	if (!mp_RCon)
+	{
+		pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
+		lstrcpyn(pTab->Name, gpConEmu->ms_ConEmuVer, countof(pTab->Name));
+		return TRUE;
+	}
+	return mp_RCon->GetTab(tabIdx, pTab);
+}
+
 HWND CVirtualConsole::GetView()
 {
 	TODO("Доработать для DoubleView");
@@ -3839,10 +3883,11 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 
 	// Некузяво. Может вслыть тултип под меню
 	//ptCur.x++; ptCur.y++; // чтобы меню можно было сразу закрыть левым кликом.
-	bool lbIsFar = mp_RCon->isFar(TRUE/* abPluginRequired */);
-	bool lbIsPanels = lbIsFar && mp_RCon->isFilePanel(false/* abPluginAllowed */);
-	bool lbIsEditorModified = lbIsFar && mp_RCon->isEditorModified();
-	bool lbHaveModified = lbIsFar && mp_RCon->GetModifiedEditors();
+	bool lbIsFar = mp_RCon->isFar(TRUE/* abPluginRequired */)!=FALSE;
+	bool lbIsPanels = lbIsFar && mp_RCon->isFilePanel(false/* abPluginAllowed */)!=FALSE;
+	bool lbIsEditorModified = lbIsFar && mp_RCon->isEditorModified()!=FALSE;
+	bool lbHaveModified = lbIsFar && mp_RCon->GetModifiedEditors()!=FALSE;
+	bool lbCanCloseTab = mp_RCon->CanCloseTab();
 
 	if (lbHaveModified)
 	{
@@ -3850,7 +3895,7 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 			lbHaveModified = false;
 	}
 
-	EnableMenuItem(hPopup, IDM_CLOSE, MF_BYCOMMAND | (lbIsFar ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hPopup, IDM_CLOSE, MF_BYCOMMAND | (lbCanCloseTab ? MF_ENABLED : MF_GRAYED));
 	EnableMenuItem(hPopup, IDM_ADMIN_DUPLICATE, MF_BYCOMMAND | (lbIsPanels ? MF_ENABLED : MF_GRAYED));
 	EnableMenuItem(hPopup, IDM_SAVE, MF_BYCOMMAND | (lbIsEditorModified ? MF_ENABLED : MF_GRAYED));
 	EnableMenuItem(hPopup, IDM_SAVEALL, MF_BYCOMMAND | (lbHaveModified ? MF_ENABLED : MF_GRAYED));
@@ -3864,7 +3909,8 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 	switch(nCmd)
 	{
 		case IDM_CLOSE:
-			mp_RCon->PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
+			//mp_RCon->PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
+			mp_RCon->CloseTab();
 			break;
 		case IDM_DETACH:
 			mp_RCon->Detach();

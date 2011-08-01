@@ -199,6 +199,7 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 			gpSrv->pConsole->hdr.nLoggingType = gpSrv->guiSettings.nLoggingType;
 			gpSrv->pConsole->hdr.bDosBox = gpSrv->guiSettings.bDosBox;
 			gpSrv->pConsole->hdr.bUseInjects = gpSrv->guiSettings.bUseInjects;
+			gpSrv->pConsole->hdr.bUseTrueColor = gpSrv->guiSettings.bUseTrueColor;
 		
 			// Обновить пути к ConEmu
 			wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
@@ -1961,9 +1962,11 @@ int CreateColorerHeader()
 		pHdr->struct_size = sizeof(AnnotationHeader);
 		pHdr->bufferSize = nMapCells;
 		pHdr->locked = 0; pHdr->flushCounter = 0;
-		// В сервере - данные не нужны
-		//UnmapViewOfFile(pHdr);
-		gpSrv->pColorerMapping->ClosePtr();
+		gpSrv->ColorerHdr = *pHdr;
+		//// В сервере - данные не нужны
+		////UnmapViewOfFile(pHdr);
+		//gpSrv->pColorerMapping->ClosePtr();
+
 		// OK
 		iRc = 0;
 	}
@@ -2384,6 +2387,22 @@ static BOOL ReadConsoleData()
 		lbChanged = TRUE;
 	}
 
+
+	if (!lbChanged && gpSrv->pColorerMapping)
+	{
+		AnnotationHeader ahdr;
+		if (gpSrv->pColorerMapping->GetTo(&ahdr, sizeof(ahdr)))
+		{
+			if (gpSrv->ColorerHdr.flushCounter != ahdr.flushCounter && !ahdr.locked)
+			{
+				gpSrv->ColorerHdr = ahdr;
+				gpSrv->pConsole->bDataChanged = TRUE; // TRUE уже может быть с прошлого раза, не сбросывать в FALSE
+				lbChanged = TRUE;
+			}
+		}
+	}
+
+
 	// низя - он уже установлен в максимальное значение
 	//gpSrv->pConsoleData->crBufSize = gpSrv->pConsoleDataCopy->crBufSize;
 wrap:
@@ -2403,7 +2422,7 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 	BOOL lbDataChanged = abForceSend;
 	DWORD dwCurThId = GetCurrentThreadId();
 
-	// Должен вызываться ТОЛЬКО в главной нити (RefreshThread)
+	// Должен вызываться ТОЛЬКО в нити (RefreshThread)
 	// Иначе возможны блокировки
 	if (gpSrv->dwRefreshThread && dwCurThId != gpSrv->dwRefreshThread)
 	{

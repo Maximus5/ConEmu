@@ -340,6 +340,7 @@ class CConEmuMain
 	public:
 		LPCTSTR GetLastTitle(bool abUseDefault=true);
 		LPCTSTR GetVConTitle(int nIdx);
+		int GetActiveVCon();
 		CVirtualConsole* GetVCon(int nIdx);
 		int IsVConValid(CVirtualConsole* apVCon);
 		CVirtualConsole* GetVConFromPoint(POINT ptScreen);

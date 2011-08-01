@@ -72,10 +72,10 @@ NEEDDEFLIB = 1
 USE_PDB = 1
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
-OUTNAME = ConEmuDw64
+OUTNAME = Console64
 RCWIN64=/D_WIN64 /DWIN64
 !else
-OUTNAME = ConEmuDw
+OUTNAME = Console
 RCWIN64=
 !endif
 

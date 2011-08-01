@@ -1,6 +1,9 @@
 
 #pragma once
 
+#ifndef MEMORY_HEADER_DEFINED
+#define MEMORY_HEADER_DEFINED
+
 extern HANDLE ghHeap;
 
 #ifdef _DEBUG
@@ -81,3 +84,5 @@ char* lstrdup(const char* asText);
 wchar_t* lstrdup(const wchar_t* asText);
 
 //const char* PointToName(const char* asFileOrPath);
+
+#endif // #ifndef MEMORY_HEADER_DEFINED

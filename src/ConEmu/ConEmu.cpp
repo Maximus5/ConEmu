@@ -1117,6 +1117,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	
 	m_GuiInfo.nLoggingType = (ghOpWnd && gpSet->hDebug) ? gpSet->m_RealConLoggingType : glt_None;
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0);
+	m_GuiInfo.bUseTrueColor = gpSet->isTrueColorer;
 
 	mb_DosBoxExists = CheckDosBoxExists();
 	m_GuiInfo.bDosBox = mb_DosBoxExists;
@@ -6446,6 +6447,20 @@ LPCTSTR CConEmuMain::GetVConTitle(int nIdx)
 		return NULL;
 
 	return mp_VCon[nIdx]->RCon()->GetTitle();
+}
+
+// ¬озвращает индекс (0-based) активной консоли
+int CConEmuMain::GetActiveVCon()
+{
+	if (mp_VActive)
+	{
+		for (int i = 0; i < MAX_CONSOLE_COUNT; i++)
+		{
+			if (mp_VCon[i] == mp_VActive)
+				return i;
+		}
+	}
+	return -1;
 }
 
 CVirtualConsole* CConEmuMain::GetVCon(int nIdx)

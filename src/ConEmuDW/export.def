@@ -4,7 +4,8 @@ EXPORTS
 ; functions
 	GetTextAttributes
 	SetTextAttributes
+	ClearExtraRegions
 	ReadOutput
 	WriteOutput
-	CommitOutput
+	Commit
 	GetColorDialog

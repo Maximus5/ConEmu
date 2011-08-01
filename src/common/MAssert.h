@@ -1,6 +1,9 @@
 
 #pragma once
 
+#ifndef MASSERT_HEADER_DEFINED
+#define MASSERT_HEADER_DEFINED
+
 #ifndef _CRT_WIDE
 #define __CRT_WIDE(_String) L ## _String
 #define _CRT_WIDE(_String) __CRT_WIDE(_String)
@@ -47,3 +50,5 @@
 #define _ASSERT ASSERT
 #undef _ASSERTE
 #define _ASSERTE ASSERTE
+
+#endif // #ifndef MASSERT_HEADER_DEFINED

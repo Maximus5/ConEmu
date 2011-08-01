@@ -221,6 +221,10 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mn_LastColorFarID = 0;
 	//ms_ConEmuC_DataReady[0] = 0; mh_ConEmuC_DataReady = NULL;
 	m_UseLogs = gpSet->isAdvLogging;
+
+	mp_TrueColorerData = NULL;
+	memset(&m_TrueColorerHeader, 0, sizeof(m_TrueColorerHeader));
+
 	//mb_PluginDetected = FALSE;
 	mn_FarPID_PluginDetected = 0; //mn_Far_PluginInputThreadId = 0;
 	memset(&m_FarInfo, 0, sizeof(m_FarInfo));
@@ -9029,6 +9033,29 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 	}
 }
 
+int CRealConsole::GetTabCount()
+{
+	if (!this)
+		return 0;
+
+	#ifdef HT_CONEMUTAB
+	PRAGMA_ERROR("После перехода на «свои» табы отдавать и те, которые сейчас недоступны");
+	#endif
+	if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
+		return 1; // На время выполнения команд - ТОЛЬКО одна закладка
+
+	return max(mn_tabsCount,1);
+}
+
+int CRealConsole::GetActiveTab()
+{
+	if (!this)
+		return 0;
+
+	int nCount = GetTabCount();
+	return (mn_ActiveTab < nCount) ? mn_ActiveTab : 0;
+}
+
 // Если такого таба нет - pTab НЕ ОБНУЛЯТЬ!!!
 BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 {
@@ -9101,7 +9128,10 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 
 	wchar_t* pszAmp = pTab->Name;
 	int nCurLen = lstrlen(pTab->Name), nMaxLen = countof(pTab->Name)-1;
-	TODO("После перевода табов на ручную отрисовку - эту часть можно будет убрать");
+	
+	#ifdef HT_CONEMUTAB
+	PRAGMA_ERROR("После перевода табов на ручную отрисовку - эту часть с амперсандами можно будет убрать");
+	#endif
 
 	while((pszAmp = wcschr(pszAmp, L'&')) != NULL)
 	{
@@ -9120,26 +9150,6 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	}
 
 	return TRUE;
-}
-
-int CRealConsole::GetTabCount()
-{
-	if (!this)
-		return 0;
-
-	if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
-		return 1; // На время выполнения команд - ТОЛЬКО одна закладка
-
-	return max(mn_tabsCount,1);
-}
-
-int CRealConsole::GetActiveTab()
-{
-	if (!this)
-		return 0;
-
-	int nCount = GetTabCount();
-	return (mn_ActiveTab < nCount) ? mn_ActiveTab : 0;
 }
 
 int CRealConsole::GetModifiedEditors()
@@ -9891,6 +9901,22 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 		if (mp_VCon)
 			gpConEmu->OnVConTerminated(mp_VCon);
 	}
+}
+
+// Разрешено только в фаре
+BOOL CRealConsole::CanCloseTab()
+{
+	if (!isFar(TRUE/* abPluginRequired */))
+		return FALSE;
+	return TRUE;
+}
+
+// Доступно только для фара. Мягко (с подтверждением) закрыть текущий таб.
+void CRealConsole::CloseTab()
+{
+	if (!CanCloseTab())
+		return;
+	PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
 }
 
 uint CRealConsole::TextWidth()
@@ -11962,6 +11988,17 @@ BOOL CRealConsole::ApplyConsoleInfo()
 		//_ASSERTE(lbDataValid);
 		MCHKHEAP;
 #endif
+
+		// Проверка буфера TrueColor
+		AnnotationHeader aHdr;
+		if (!lbChanged && gpSet->isTrueColorer && mp_TrueColorerData && m_TrueColorerMap.GetTo(&aHdr, sizeof(aHdr)))
+		{
+			if (m_TrueColorerHeader.flushCounter != aHdr.flushCounter)
+			{
+				m_TrueColorerHeader = aHdr;
+				lbChanged = TRUE;
+			}
+		}
 
 		if (lbChanged)
 		{

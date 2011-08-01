@@ -396,6 +396,7 @@ struct SrvInfo
 	// TrueColorer buffer
 	//HANDLE hColorerMapping;
 	MFileMapping<AnnotationHeader>* pColorerMapping; // поддержка Colorer TrueMod
+	AnnotationHeader ColorerHdr; // для сравнения индексов
 	//
 	HANDLE hConEmuGuiAttached;
 	HWINEVENTHOOK /*hWinHook,*/ hWinHookStartEnd; //BOOL bWinHookAllow; int nWinHookMode;

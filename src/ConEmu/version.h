@@ -1,7 +1,7 @@
 
 #define MVV_1 11
 #define MVV_2 7
-#define MVV_3 21
+#define MVV_3 31
 #define MVV_4 0
 #define MVV_4a ""
 
@@ -30,7 +30,8 @@
 #ifdef __GNUC__
 #define CONEMUVERN MVV_1,MVV_2,MVV_3,MVV_4
 #else
-#define CONEMUVERN 20##MVV_1,MVV_2,MVV_3n,MVV_4
+//#define CONEMUVERN 20##MVV_1,MVV_2,MVV_3n,MVV_4
+#define CONEMUVERN MVV_1,MVV_2,MVV_3n,MVV_4
 #endif
 
 #ifdef _WIN64

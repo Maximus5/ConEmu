@@ -10,8 +10,23 @@
 #include "../common/pluginW1900.hpp"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/common.hpp"
+#include "../ConEmu/version.h"
 #include "ConEmuDw.h"
 #include "resource.h"
+
+#define MSG_TITLE "ConEmu writer"
+#define MSG_INVALID_CONEMU_VER "Unsupported ConEmu version detected!\nRequired version: " CONEMUVERS "\nConsole writer'll works in 4bit mode"
+#define MSG_TRUEMOD_DISABLED   "«Colorer TrueMod support» is not checked in the ConEmu settings\nConsole writer'll works in 4bit mode"
+#define MSG_NO_TRUEMOD_BUFFER  "TrueMod support not enabled in the ConEmu settings\nConsole writer'll works in 4bit mode"
+
+//TODO: RGB32???
+#if 0
+	#define IsTransparent(C) (((C) & 0xFF000000) != 0)
+	#define SetTransparent(T) ((T) ? 0xFF000000 : 0)
+#else
+	#define IsTransparent(C) (((C) & 0xFF000000) == 0)
+	#define SetTransparent(T) ((T) ? 0 : 0xFF000000)
+#endif
 
 #define MAX_READ_BUF 16384
 
@@ -134,28 +149,49 @@ __inline int Max(int i1, int i2)
 
 WORD Color2FgIndex(COLORREF Color)
 {
+	static int LastColor, LastIndex;
+	if (LastColor == Color)
+		return LastIndex;
+	
 	int B = (Color & 0xFF0000) >> 16;
 	int G = (Color & 0xFF00) >> 8;
 	int R = (Color & 0xFF);
 	int nMax = Max(B,Max(R,G));
-	return
+	
+	int Index =
 		(((B+32) > nMax) ? 1 : 0) |
 		(((G+32) > nMax) ? 2 : 0) |
 		(((R+32) > nMax) ? 4 : 0);
+	LastColor = Color;
+	LastIndex = Index;
+	return Index;
 }
 
 WORD Color2BgIndex(COLORREF Color)
 {
+	static int LastColor, LastIndex;
+	if (LastColor == Color)
+		return LastIndex;
+	
 	int B = (Color & 0xFF0000) >> 16;
 	int G = (Color & 0xFF00) >> 8;
 	int R = (Color & 0xFF);
 	int nMax = Max(B,Max(R,G));
-	return
+
+	int Index =
 		(((B+32) > nMax) ? 16 : 0) |
 		(((G+32) > nMax) ? 32 : 0) |
 		(((R+32) > nMax) ? 64 : 0);
+	LastColor = Color;
+	LastIndex = Index;
+	return Index;
 }
 
+//TODO: Юзкейс понят неправильно.
+//TODO: Это не "всего видимого экрана", это "цвет по умолчанию". То, что соответствует 
+//TODO: "Screen Text" и "Screen Background" в свойствах консоли. То, что задаётся командой
+//TODO: color в cmd.exe. То, что будет использовано если в консоль просто писать 
+//TODO: по printf/std::cout/WriteConsole, без явного указания цвета.
 BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 {
 	BOOL lbTrueColor = CheckBuffers();
@@ -164,88 +200,100 @@ BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (!GetConsoleScreenBufferInfo(h, &csbi))
 		return FALSE;
+
+	//TODO: Вообще-то нужно бы возвращать то, что задано в SetTextAttributes?
+	Attributes->Flags = FCF_FG_4BIT|FCF_BG_4BIT;
+	Attributes->ForegroundColor = (csbi.wAttributes & 0xF);
+	Attributes->BackgroundColor = (csbi.wAttributes & 0xF0) >> 4;
 	
-	WORD nDefReadBuf[1024];
-	WORD *pnReadAttr = NULL;
-	int nBufWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-	int nBufHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-	int nBufCount  = nBufWidth*nBufHeight;
-	if (nBufWidth <= ARRAYSIZE(nDefReadBuf))
-		pnReadAttr = nDefReadBuf;
-	else
-		pnReadAttr = (WORD*)calloc(nBufCount,sizeof(*pnReadAttr));
-	if (!pnReadAttr)
-	{
-		SetLastError(E_OUTOFMEMORY);
-		return FALSE;
-	}
+	return TRUE;
 	
-	BOOL lbRc = TRUE;
-	COORD cr = {csbi.srWindow.Left, csbi.srWindow.Top};
-	DWORD nRead;
-
-	AnnotationInfo* pTrueColor = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
-	AnnotationInfo* pTrueColorEnd = pTrueColor ? (pTrueColor + gpTrueColor->bufferSize) : NULL;
-
-	for (;cr.Y <= csbi.srWindow.Bottom;cr.Y++)
-	{
-		BOOL lbRead = ReadConsoleOutputAttribute(h, pnReadAttr, nBufWidth, cr, &nRead) && (nRead == nBufWidth);
-
-		FarColor clr = {};
-		WORD* pn = pnReadAttr;
-		for (int X = 0; X < nBufWidth; X++, pn++)
-		{
-			clr.Flags = 0;
-
-			if (pTrueColor && pTrueColor >= pTrueColorEnd)
-			{
-				_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd);
-				pTrueColor = NULL; // Выделенный буфер оказался недостаточным
-			}
-			
-			if (pTrueColor)
-			{
-				DWORD Style = pTrueColor->style;
-				if (Style & AI_STYLE_BOLD)
-					clr.Flags |= FCF_FG_BOLD;
-				if (Style & AI_STYLE_ITALIC)
-					clr.Flags |= FCF_FG_ITALIC;
-				if (Style & AI_STYLE_UNDERLINE)
-					clr.Flags |= FCF_FG_UNDERLINE;
-			}
-
-			if (pTrueColor && pTrueColor->fg_valid)
-			{
-				clr.ForegroundColor = pTrueColor->fg_color;
-			}
-			else
-			{
-				clr.Flags |= FCF_FG_4BIT;
-				clr.ForegroundColor = lbRead ? ((*pn) & 0xF) : 7;
-			}
-
-			if (pTrueColor && pTrueColor->bk_valid)
-			{
-				clr.BackgroundColor = pTrueColor->bk_color;
-			}
-			else
-			{
-				clr.Flags |= FCF_BG_4BIT;
-				clr.BackgroundColor = lbRead ? (((*pn) & 0xF0) >> 4) : 0;
-			}
-
-			*(Attributes++) = clr;
-			if (pTrueColor)
-				pTrueColor++;
-		}
-	}
+	//WORD nDefReadBuf[1024];
+	//WORD *pnReadAttr = NULL;
+	//int nBufWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+	//int nBufHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+	//int nBufCount  = nBufWidth*nBufHeight;
+	//if (nBufWidth <= ARRAYSIZE(nDefReadBuf))
+	//	pnReadAttr = nDefReadBuf;
+	//else
+	//	pnReadAttr = (WORD*)calloc(nBufCount,sizeof(*pnReadAttr));
+	//if (!pnReadAttr)
+	//{
+	//	SetLastError(E_OUTOFMEMORY);
+	//	return FALSE;
+	//}
+	//
+	//BOOL lbRc = TRUE;
+	//COORD cr = {csbi.srWindow.Left, csbi.srWindow.Top};
+	//DWORD nRead;
+//
+	//AnnotationInfo* pTrueColor = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
+	//AnnotationInfo* pTrueColorEnd = pTrueColor ? (pTrueColor + gpTrueColor->bufferSize) : NULL;
+//
+	//for (;cr.Y <= csbi.srWindow.Bottom;cr.Y++)
+	//{
+	//	BOOL lbRead = ReadConsoleOutputAttribute(h, pnReadAttr, nBufWidth, cr, &nRead) && (nRead == nBufWidth);
+//
+	//	FarColor clr = {};
+	//	WORD* pn = pnReadAttr;
+	//	for (int X = 0; X < nBufWidth; X++, pn++)
+	//	{
+	//		clr.Flags = 0;
+//
+	//		if (pTrueColor && pTrueColor >= pTrueColorEnd)
+	//		{
+	//			_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd);
+	//			pTrueColor = NULL; // Выделенный буфер оказался недостаточным
+	//		}
+	//		
+	//		if (pTrueColor)
+	//		{
+	//			DWORD Style = pTrueColor->style;
+	//			if (Style & AI_STYLE_BOLD)
+	//				clr.Flags |= FCF_FG_BOLD;
+	//			if (Style & AI_STYLE_ITALIC)
+	//				clr.Flags |= FCF_FG_ITALIC;
+	//			if (Style & AI_STYLE_UNDERLINE)
+	//				clr.Flags |= FCF_FG_UNDERLINE;
+	//		}
+//
+	//		if (pTrueColor && pTrueColor->fg_valid)
+	//		{
+	//			clr.ForegroundColor = pTrueColor->fg_color;
+	//		}
+	//		else
+	//		{
+	//			clr.Flags |= FCF_FG_4BIT;
+	//			clr.ForegroundColor = lbRead ? ((*pn) & 0xF) : 7;
+	//		}
+//
+	//		if (pTrueColor && pTrueColor->bk_valid)
+	//		{
+	//			clr.BackgroundColor = pTrueColor->bk_color;
+	//		}
+	//		else
+	//		{
+	//			clr.Flags |= FCF_BG_4BIT;
+	//			clr.BackgroundColor = lbRead ? (((*pn) & 0xF0) >> 4) : 0;
+	//		}
+//
+	//		//*(Attributes++) = clr; -- <G|S>etTextAttributes должны ожидать указатель на ОДИН FarColor.
+	//		if (pTrueColor)
+	//			pTrueColor++;
+	//	}
+	//}
+	//
+	//if (pnReadAttr != nDefReadBuf)
+	//	free(pnReadAttr);
 	
-	if (pnReadAttr != nDefReadBuf)
-		free(pnReadAttr);
-	
-	return lbRc;
+	//return lbRc;
 }
 
+//TODO: Юзкейс понят неправильно.
+//TODO: Это не "всего видимого экрана", это "цвет по умолчанию". То, что соответствует 
+//TODO: "Screen Text" и "Screen Background" в свойствах консоли. То, что задаётся командой
+//TODO: color в cmd.exe. То, что будет использовано если в консоль просто писать 
+//TODO: по printf/std::cout/WriteConsole, без явного указания цвета.
 BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 {
 	BOOL lbTrueColor = CheckBuffers();
@@ -276,82 +324,84 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 	
 	AnnotationInfo* pTrueColor = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
 	AnnotationInfo* pTrueColorEnd = pTrueColor ? (pTrueColor + gpTrueColor->bufferSize) : NULL;
-	
+
+	// <G|S>etTextAttributes должны ожидать указатель на ОДИН FarColor.
+	AnnotationInfo t = {};
+	WORD n = 0, f = 0;
+	unsigned __int64 Flags = Attributes->Flags;
+
+	if (Flags & FCF_FG_BOLD)
+		f |= AI_STYLE_BOLD;
+	if (Flags & FCF_FG_ITALIC)
+		f |= AI_STYLE_ITALIC;
+	if (Flags & FCF_FG_UNDERLINE)
+		f |= AI_STYLE_UNDERLINE;
+	t.style = f;
+
+	if (Flags & FCF_FG_4BIT)
+	{
+		n |= (WORD)(Attributes->ForegroundColor & 0xF);
+		t.fg_valid = FALSE;
+	}
+	else
+	{
+		//n |= 0x07;
+		n |= Color2FgIndex(Attributes->ForegroundColor & 0x00FFFFFF);
+		t.fg_color = Attributes->ForegroundColor & 0x00FFFFFF;
+		t.fg_valid = TRUE;
+	}
+
+	if (Flags & FCF_BG_4BIT)
+	{
+		n |= (WORD)(Attributes->BackgroundColor & 0xF)<<4;
+		t.bk_valid = FALSE;
+	}
+	else
+	{
+		n |= Color2BgIndex(Attributes->BackgroundColor & 0x00FFFFFF);
+		t.bk_color = Attributes->BackgroundColor & 0x00FFFFFF;
+		t.bk_valid = TRUE;
+	}
+
+
 	for (;cr.Y <= csbi.srWindow.Bottom;cr.Y++)
 	{
-		WORD* pn = pnWriteAttr, n, f;
-		for (int X = 0; X < nBufWidth; X++, pn++, Attributes++)
+		WORD* pn = pnWriteAttr;
+		for (int X = 0; X < nBufWidth; X++, pn++)
 		{
-			n = 0; f = 0;
 			if (pTrueColor && pTrueColor >= pTrueColorEnd)
 			{
 				_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd);
 				pTrueColor = NULL; // Выделенный буфер оказался недостаточным
 			}
 
-			unsigned __int64 Flags = Attributes->Flags;
-			
-			if (pTrueColor)
-			{
-				if (Flags & FCF_FG_BOLD)
-					f |= AI_STYLE_BOLD;
-				if (Flags & FCF_FG_ITALIC)
-					f |= AI_STYLE_ITALIC;
-				if (Flags & FCF_FG_UNDERLINE)
-					f |= AI_STYLE_UNDERLINE;
-				pTrueColor->style = f;
-			}
-			
-			if (Flags & FCF_FG_4BIT)
-			{
-				n |= (WORD)(Attributes->ForegroundColor & 0xF);
-				if (pTrueColor)
-				{
-					pTrueColor->fg_valid = FALSE;
-				}
-			}
-			else
-			{
-				//n |= 0x07;
-				n |= Color2FgIndex(Attributes->ForegroundColor & 0x00FFFFFF);
-				if (pTrueColor)
-				{
-					pTrueColor->fg_color = Attributes->ForegroundColor & 0x00FFFFFF;
-					pTrueColor->fg_valid = TRUE;
-				}
-			}
-				
-			if (Flags & FCF_BG_4BIT)
-			{
-				n |= (WORD)(Attributes->BackgroundColor & 0xF)<<4;
-				if (pTrueColor)
-				{
-					pTrueColor->bk_valid = FALSE;
-				}
-			}
-			else
-			{
-				n |= Color2BgIndex(Attributes->BackgroundColor & 0x00FFFFFF);
-				if (pTrueColor)
-				{
-					pTrueColor->bk_color = Attributes->BackgroundColor & 0x00FFFFFF;
-					pTrueColor->bk_valid = TRUE;
-				}
-			}
-			
+			// цвет в RealConsole
 			*pn = n;
+
+			// цвет в ConEmu (GUI)
 			if (pTrueColor)
-				pTrueColor++;
+			{
+				*(pTrueColor++) = t;
+			}
 		}
 	
 		if (!WriteConsoleOutputAttribute(h, pnWriteAttr, nBufWidth, cr, &nWritten) || (nWritten != nBufWidth))
 			lbRc = FALSE;
 	}
 	
+	SetConsoleTextAttribute(h, n);
+	
 	if (pnWriteAttr != nDefWriteBuf)
 		free(pnWriteAttr);
 	
 	return lbRc;
+}
+
+BOOL WINAPI ClearExtraRegions(const FarColor* Color)
+{
+	//TODO: Пока работаем через старый Annotation buffer (переделать нужно)
+	//TODO: который по определению соответствует видимой области экрана
+	return SetTextAttributes(Color);
 }
 
 BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* ReadRegion)
@@ -403,6 +453,8 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL;
 	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (ReadRegion->Top - csbi.srWindow.Top)) : NULL);
 
+	FAR_CHAR_INFO* pFarEnd = Buffer + BufferSize.X*BufferSize.Y;
+
 	SMALL_RECT rcRead = *ReadRegion;
 	COORD MyBufferSize = {BufferSize.X, 1};
 	COORD MyBufferCoord = {BufferCoord.X, 0};
@@ -413,10 +465,16 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 
 		CHAR_INFO* pc = pcReadBuf + BufferCoord.X;
 		FAR_CHAR_INFO* pFar = Buffer + (rcRead.Top - ReadRegion->Top + BufferCoord.Y)*BufferSize.X + BufferCoord.X;
-		AnnotationInfo* pTrueColor = (pTrueColorLine && (pTrueColorLine > pTrueColorStart)) ? (pTrueColorLine + ReadRegion->Left) : NULL;
+		AnnotationInfo* pTrueColor = (pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? (pTrueColorLine + ReadRegion->Left) : NULL;
 
 		for (int X = rcRead.Left; X <= rcRead.Right; X++, pc++, pFar++)
 		{
+			if (pFar >= pFarEnd)
+			{
+				_ASSERTE(pFar < pFarEnd);
+				break;
+			}
+
 			FAR_CHAR_INFO chr = {lbRead ? pc->Char.UnicodeChar : L' '};
 
 			if (pTrueColor && pTrueColor >= pTrueColorEnd)
@@ -530,7 +588,7 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 
 		CHAR_INFO* pc = pcWriteBuf + BufferCoord.X;
 		const FAR_CHAR_INFO* pFar = Buffer + (rcWrite.Top - WriteRegion->Top + BufferCoord.Y)*BufferSize.X + BufferCoord.X;
-		AnnotationInfo* pTrueColor = (pTrueColorLine && (pTrueColorLine > pTrueColorStart)) ? (pTrueColorLine + WriteRegion->Left) : NULL;
+		AnnotationInfo* pTrueColor = (pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? (pTrueColorLine + WriteRegion->Left) : NULL;
 
 		for (int X = rcWrite.Left; X <= rcWrite.Right; X++, pc++, pFar++)
 		{
@@ -616,7 +674,7 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 	return lbRc;
 }
 
-void WINAPI CommitOutput()
+BOOL WINAPI Commit()
 {
 	// Если буфер не был создан - то и передергивать нечего
 	if (gpTrueColor != NULL)
@@ -627,6 +685,7 @@ void WINAPI CommitOutput()
 			gpTrueColor->locked = FALSE;
 		}
 	}
+	return TRUE; //TODO: А чего возвращать-то?
 }
 
 struct ColorParam
@@ -658,7 +717,7 @@ struct ColorParam
 		*cr = 0; *Transparent = FALSE;
 		if (Foreground)
 		{
-			*Transparent = (p->ForegroundColor & 0xFF000000) != 0;
+			*Transparent = IsTransparent(p->ForegroundColor);
 			UINT nClr = (p->ForegroundColor & 0x00FFFFFF);
 			if (p->Flags & FCF_FG_4BIT)
 			{
@@ -677,7 +736,7 @@ struct ColorParam
 		}
 		else // Background
 		{
-			*Transparent = (p->BackgroundColor & 0xFF000000) != 0;
+			*Transparent = IsTransparent(p->BackgroundColor);
 			UINT nClr = (p->BackgroundColor & 0x00FFFFFF);
 			if (p->Flags & FCF_BG_4BIT)
 			{
@@ -716,11 +775,8 @@ struct ColorParam
 				p->Flags |= FCF_FG_4BIT;
 			else
 				p->Flags &= ~FCF_FG_4BIT; //TODO: Остальные флаги?
-			p->ForegroundColor = Color;
-			if (Transparent)
-			{
-				p->ForegroundColor |= 0xFF000000;
-			}
+			p->ForegroundColor = Color | SetTransparent(Transparent);
+
 			if (bBold)
 				p->Flags |= FCF_FG_BOLD;
 			else
@@ -740,11 +796,7 @@ struct ColorParam
 				p->Flags |= FCF_BG_4BIT;
 			else
 				p->Flags &= ~FCF_BG_4BIT; //TODO: Остальные флаги?
-			p->BackgroundColor = Color;
-			if (Transparent)
-			{
-				p->BackgroundColor |= 0xFF000000;
-			}
+			p->BackgroundColor = Color | SetTransparent(Transparent);
 		}
 	};
 };
@@ -942,8 +994,15 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 		{0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
 		0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff},
 	};
-	Parm.Far2Ref(Color, TRUE, &Parm.crForeColor, &Parm.bForeTransparent);
-	Parm.Far2Ref(Color, FALSE, &Parm.crBackColor, &Parm.bBackTransparent);
+	////TODO: BUGBUG. При настройке НОВОГО цвета фар передает Color заполненный 0-ми
+	//if (!Parm.Color.Flags && !Parm.Color.ForegroundColor && !Parm.Color.BackgroundColor && !Parm.Color.Reserved)
+	//{
+	//	Parm.Color.Flags = FCF_FG_4BIT|FCF_BG_4BIT;
+	//	Parm.Color.ForegroundColor = 7 | SetTransparent(FALSE);
+	//	Parm.Color.BackgroundColor = SetTransparent(FALSE);
+	//}
+	Parm.Far2Ref(&Parm.Color, TRUE, &Parm.crForeColor, &Parm.bForeTransparent);
+	Parm.Far2Ref(&Parm.Color, FALSE, &Parm.crBackColor, &Parm.bBackTransparent);
 	if (!AddTransparent)
 	{
 		Parm.bForeTransparent = Parm.bBackTransparent = FALSE;
@@ -961,12 +1020,31 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 		CESERVER_CONSOLE_MAPPING_HDR *pHdr = (CESERVER_CONSOLE_MAPPING_HDR*)MapViewOfFile(hMap, FILE_MAP_READ,0,0,0);
 		if (pHdr)
 		{
-			if ((pHdr->cbSize >= sizeof(*pHdr))
-				&& (pHdr->nProtocolVersion == CESERVER_REQ_VER)
-				&& IsWindow(pHdr->hConEmuRoot))
+			if ((pHdr->cbSize < sizeof(*pHdr))
+				|| (pHdr->nProtocolVersion != CESERVER_REQ_VER) 
+				|| !IsWindow(pHdr->hConEmuRoot))
+			{
+				if ((pHdr->cbSize >= sizeof(*pHdr)) 
+					&& pHdr->hConEmuRoot && IsWindow(pHdr->hConEmuRoot)
+					&& IsWindowVisible(pHdr->hConEmuRoot))
+				{
+					// Это все-таки может быть окно ConEmu
+					Parm.hGUI = pHdr->hConEmuRoot; //TODO: Заменить на DC?
+				}
+				MessageBoxA(NULL, MSG_INVALID_CONEMU_VER, MSG_TITLE, MB_ICONSTOP|MB_SYSTEMMODAL);
+			}
+			else
 			{
 				Parm.hGUI = pHdr->hConEmuRoot; //TODO: Заменить на DC?
-				if (CheckBuffers())
+				if (!pHdr->bUseTrueColor)
+				{
+					MessageBoxA(NULL, MSG_TRUEMOD_DISABLED, MSG_TITLE, MB_ICONSTOP|MB_SYSTEMMODAL);
+				}
+				else if (!CheckBuffers())
+				{
+					MessageBoxA(NULL, MSG_NO_TRUEMOD_BUFFER, MSG_TITLE, MB_ICONSTOP|MB_SYSTEMMODAL);
+				}
+				else
 				{
 					Parm.b4bitmode = FALSE;
 				}
@@ -976,8 +1054,15 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 		CloseHandle(hMap);
 	}
 	
-	GetClientRect(Parm.hGUI ? Parm.hGUI : Parm.hConsole, &Parm.rcParent);
-	MapWindowPoints(Parm.hGUI ? Parm.hGUI : Parm.hConsole, NULL, (POINT*)&Parm.rcParent, 2);
+	if (!Parm.hGUI && !IsWindowVisible(Parm.hConsole))
+	{
+		SystemParametersInfo(SPI_GETWORKAREA, 0, &Parm.rcParent, 0);
+	}
+	else
+	{
+		GetClientRect(Parm.hGUI ? Parm.hGUI : Parm.hConsole, &Parm.rcParent);
+		MapWindowPoints(Parm.hGUI ? Parm.hGUI : Parm.hConsole, NULL, (POINT*)&Parm.rcParent, 2);
+	}
 	
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);

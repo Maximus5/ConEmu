@@ -867,10 +867,14 @@ void ParseVersionInfoFixed(PEData *pData,  VS_FIXEDFILEINFO* pVer)
 {
 	_TRACE0("ParseVersionInfoFixed");
 	wchar_t szTest[32];
-	wsprintfW(pData->szVersionN, L"%i.%i.%i.%i",
-	          HIWORD(pVer->dwFileVersionMS), LOWORD(pVer->dwFileVersionMS),
-	          HIWORD(pVer->dwFileVersionLS), LOWORD(pVer->dwFileVersionLS)
-	         );
+	UINT
+		nV1 = HIWORD(pVer->dwFileVersionMS),
+		nV2 = LOWORD(pVer->dwFileVersionMS),
+		nV3 = HIWORD(pVer->dwFileVersionLS),
+		nV4 = LOWORD(pVer->dwFileVersionLS);
+	wsprintfW(pData->szVersionN,
+		nV4 ? L"%i.%i.%i.%i" : nV3 ? L"%i.%i.%i" : L"%i.%i",
+	    nV1, nV2, nV3, nV4);
 
 	if (*pData->szVersionF)
 		pData->szVersion = pData->szVersionF;
@@ -878,13 +882,34 @@ void ParseVersionInfoFixed(PEData *pData,  VS_FIXEDFILEINFO* pVer)
 		pData->szVersion = pData->szVersionP;
 	if (pData->szVersion && *pData->szVersion)
 	{
-		_wsprintf(szTest, SKIPLEN(countof(szTest)) L"%i, %i, %i, %i",
-		          HIWORD(pVer->dwFileVersionMS), LOWORD(pVer->dwFileVersionMS),
-		          HIWORD(pVer->dwFileVersionLS), LOWORD(pVer->dwFileVersionLS)
-		         );
-
+		// Чтобы сравнить версию с той, что лежит в строковой части VersionInfo
+		// В таком формате, например, формирует ее VisualC
+		_wsprintf(szTest, SKIPLEN(countof(szTest)) L"%i, %i, %i, %i", nV1, nV2, nV3, nV4);
 		if (!lstrcmpiW(szTest, pData->szVersion))
 			pData->szVersion = NULL;
+		// А в таком - можно сэкономить место, отрезав замыкающие нули
+		_wsprintf(szTest, SKIPLEN(countof(szTest)) L"%i.%i.%i.%i", nV1, nV2, nV3, nV4);
+		if (!lstrcmpiW(szTest, pData->szVersion))
+			pData->szVersion = NULL;
+		
+		if (pData->szVersion != NULL)
+		{
+			// Если в строковой части таки нет информации о версии?
+			// Некоторые дурные rc файлы содержат не строки, а "рожицы" :)
+			if (!wcschr(pData->szVersion, L'.') && !wcschr(pData->szVersion, L',')
+				&& (nV2 || nV3 || nV4))
+			{
+				_ASSERTE(ARRAYSIZE(pData->szVersionF)==ARRAYSIZE(pData->szVersionP));
+				int nCurLen = lstrlen(pData->szVersion);
+				if ((nCurLen+lstrlen(pData->szVersionN)+4) < ARRAYSIZE(pData->szVersionF))
+				{
+					wchar_t* psz = pData->szVersion+nCurLen;
+					*(psz++) = L' '; *(psz++) = L'(';
+					lstrcpy(psz, pData->szVersionN);
+					lstrcat(psz, L")");
+				}
+			}
+		}
 	}
 	if (pData->szVersion == NULL)
 		pData->szVersion = pData->szVersionN;
@@ -2369,15 +2394,16 @@ bool DumpExeFilePE(PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADERS
 	//bIs64Bit
 	//	? DumpBoundImportDescriptors( pRoot, pImageBase, pNTHeader64 )
 	//	: DumpBoundImportDescriptors( pRoot, pImageBase, pNTHeader );
-#ifndef verc0_EXPORTS
 
+#ifndef verc0_EXPORTS
 	bIs64Bit
 	? DumpExportsSection(pData, pImageBase, pNTHeader64)
 	: DumpExportsSection(pData, pImageBase, pNTHeader);
+#endif
+
 	bIs64Bit
 	? DumpCOR20Header(pData, pImageBase, pNTHeader64)
 	: DumpCOR20Header(pData, pImageBase, pNTHeader);
-#endif
 
 	//bIs64Bit
 	//	? DumpLoadConfigDirectory( pRoot, pImageBase, pNTHeader64, (PIMAGE_LOAD_CONFIG_DIRECTORY64)0 )	// Passing NULL ptr is a clever hack
@@ -2770,24 +2796,25 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 	*CustomData = NULL;
 	int nLen = lstrlenW(FilePath);
 
-	if (nLen < 5) return FALSE;
-
+	// Путь должен быть, просто имя файла (без пути) - пропускаем
 	LPCWSTR pszSlash, pszDot = NULL;
 	pszSlash = wcsrchr(FilePath, L'\\');
 	if (pszSlash) pszDot = wcsrchr(pszSlash, L'.');
-	if (!pszDot) return FALSE;
+	if (!pszDot || !pszDot[0]) return FALSE;
 
 	BOOL lbDosCom = FALSE;
 	//TODO: Если появится возможность просмотра нескольких байт - хорошо бы это делать один раз на пачку плагинов?
-	if (lstrcmpiW(FilePath+nLen-4, L".exe") && lstrcmpiW(FilePath+nLen-4, L".dll")
-		&& lstrcmpiW(FilePath+nLen-4, L".com") && lstrcmpiW(FilePath+nLen-4, L".pvd")
-		&& lstrcmpiW(FilePath+nLen-4, L".dl_") && lstrcmpiW(FilePath+nLen-4, L".mui")
-		&& lstrcmpiW(FilePath+nLen-4, L".arx")
+	if (lstrcmpiW(pszDot, L".exe") && lstrcmpiW(pszDot, L".com")
+		&& lstrcmpiW(pszDot, L".dll") && lstrcmpiW(pszDot, L".dl_") && lstrcmpiW(pszDot, L".dl")
+		&& lstrcmpiW(pszDot, L".pvd") && lstrcmpiW(pszDot, L".so") && lstrcmpiW(pszDot, L".fmt")
+		&& lstrcmpiW(pszDot, L".module") && lstrcmpiW(pszDot, L".fll") && lstrcmpiW(pszDot, L".ahp")
+		&& lstrcmpiW(pszDot, L".mui") && lstrcmpiW(pszDot, L".arx") && lstrcmpiW(pszDot, L".sfx") 
+		&& lstrcmpiW(pszDot, L".t32") && lstrcmpiW(pszDot, L".t64")
 		)
 	{
 		return FALSE;
 	}
-	lbDosCom = (lstrcmpiW(FilePath+nLen-4, L".com") == 0);
+	lbDosCom = (lstrcmpiW(pszDot, L".com") == 0);
 	
 	BOOL lbRc = FALSE;
 
@@ -2915,13 +2942,14 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 					nLen = lstrlen(Ver.szVersion)+10;
 					if (nLen < 2) return FALSE;
 					*CustomData = (wchar_t*)malloc(nLen*2);
-					wchar_t szBits[5];
-					if (Ver.Machine==IMAGE_FILE_MACHINE_IA64)
-						lstrcpyW(szBits, L"IA");
+					wchar_t szBits[6];
+					if (Ver.nFlags & PE_DOTNET)
+						wsprintfW(szBits, L"%sDN", (Ver.nFlags & PE_SIGNED) ? L"s" : L"x");
+					else if (Ver.Machine==IMAGE_FILE_MACHINE_IA64)
+						wsprintfW(szBits, L"%sIA", (Ver.nFlags & PE_SIGNED) ? L"s" : L"x");
 					else
-						wsprintfW(szBits, L"%i", Ver.nBits);
-					wsprintfW(*CustomData, L"[%s%s]%s%s",
-					          (Ver.nFlags & PE_SIGNED) ? L"s" : L"x",
+						wsprintfW(szBits, L"%s%i", (Ver.nFlags & PE_SIGNED) ? L"s" : L"x", Ver.nBits);
+					wsprintfW(*CustomData, L"[%s]%s%s",
 					          szBits,
 					          Ver.szVersion[0] ? L" " : L"", Ver.szVersion);
 					lbRc = TRUE;

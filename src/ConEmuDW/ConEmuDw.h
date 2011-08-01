@@ -1,9 +1,24 @@
 
 #pragma once
 
-BOOL WINAPI GetTextAttributes(FarColor* Attributes);
-BOOL WINAPI SetTextAttributes(const FarColor* Attributes);
-BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* ReadRegion);
-BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion);
-void WINAPI CommitOutput();
-int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent);
+#ifdef DEFINE_CONSOLE_EXPORTS
+
+	typedef int (WINAPI* GetColorDialog_t)(FarColor* Color, BOOL Centered, BOOL AddTransparent);
+	typedef BOOL (WINAPI* GetTextAttributes_t)(FarColor* Attributes);
+	typedef BOOL (WINAPI* SetTextAttributes_t)(const FarColor* Attributes);
+	typedef BOOL (WINAPI* ClearExtraRegions_t)(const FarColor* Attributes);
+	typedef BOOL (WINAPI* ReadOutput_t)(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* ReadRegion);
+	typedef BOOL (WINAPI* WriteOutput_t)(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion);
+	typedef void (WINAPI* Commit_t)();
+
+#else
+
+	BOOL WINAPI GetTextAttributes(FarColor* Attributes);
+	BOOL WINAPI SetTextAttributes(const FarColor* Attributes);
+	BOOL WINAPI ClearExtraRegions(const FarColor* Color);
+	BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* ReadRegion);
+	BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion);
+	BOOL WINAPI Commit();
+	int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent);
+
+#endif

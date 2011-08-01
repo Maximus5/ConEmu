@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    67
+#define CESERVER_REQ_VER    68
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -666,6 +666,7 @@ struct ConEmuGuiMapping
 	wchar_t  sConEmuArgs[MAX_PATH*2];
 
 	DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
+	BOOL     bUseTrueColor; // включен флажок "TrueMod support"
 
 	/* Основной шрифт в GUI */
 	struct ConEmuMainFont MainFont;
@@ -896,6 +897,7 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	DWORD nLoggingType; // enum GuiLoggingType
 	BOOL  bDosBox; // DosBox установлен, можно пользоваться
 	DWORD bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
+	BOOL  bUseTrueColor; // включен флажок "TrueMod support"
 	
 	// Перехват реестра
 	DWORD   isHookRegistry; // bitmask. 1 - supported, 2 - current

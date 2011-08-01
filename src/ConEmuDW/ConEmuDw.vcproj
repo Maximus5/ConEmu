@@ -63,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile=".\Test\ConEmuDw.dll"
+				OutputFile=".\Test\Console.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -141,7 +141,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Utils\Far180\ConEmuDw64.dll"
+				OutputFile="C:\Utils\Far180\Console64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -222,7 +222,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="../common/libCRT.lib chkstk.obj kernel32.lib user32.lib gdi32.lib"
-				OutputFile=".\Test\ConEmuDw.dll"
+				OutputFile=".\Test\Console.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="export.def"
@@ -303,7 +303,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\Release\ConEmuDw64.dll"
+				OutputFile="..\..\Release\Console64.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -382,7 +382,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmuDw.dll"
+				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\Console.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -460,7 +460,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmuDw64.dll"
+				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\Console64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -537,7 +537,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="Z:\ConEmuDw.dll"
+				OutputFile="Z:\Console.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -616,7 +616,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\\WIN7X64\FAR\FAR2x86\ConEmuDw64.dll"
+				OutputFile="\\WIN7X64\FAR\FAR2x86\Console64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -693,7 +693,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\ConEmuDw.dll"
+				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\Console.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -772,7 +772,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\ConEmuDw64.dll"
+				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\Console64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -851,7 +851,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\Release.PDB\ConEmuDw.dll"
+				OutputFile="..\..\Release.PDB\Console.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -932,7 +932,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\Release.PDB\ConEmuDw64.dll"
+				OutputFile="..\..\Release.PDB\Console64.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -1012,7 +1012,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmuDw.dll"
+				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\Console.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -1094,7 +1094,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\Release\ConEmuDw64.dll"
+				OutputFile="..\..\Release\Console64.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -1173,7 +1173,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\Far3\ConEmuDw.dll"
+				OutputFile="\Far3\Console.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -1252,7 +1252,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\Far3\ConEmuDw64.dll"
+				OutputFile="\Far3\Console64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -1332,7 +1332,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmuDw.dll"
+				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\Console.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -1414,7 +1414,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmuDw64.dll"
+				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\Console64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"

@@ -299,14 +299,16 @@ class CRealConsole
 		BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 		void UpdateScrollInfo();
 		void SetTabs(ConEmuTab* tabs, int tabsCount);
-		BOOL GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
 		int GetTabCount();
 		int GetActiveTab();
+		BOOL GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
 		int GetModifiedEditors();
 		BOOL ActivateFarWindow(int anWndIndex);
 		DWORD CanActivateFarWindow(int anWndIndex);
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
 		void CloseConsole(BOOL abForceTerminate = FALSE);
+		BOOL CanCloseTab(); // Разрешено только в фаре
+		void CloseTab(); // Доступно только для фара
 		bool isConsoleClosing();
 		void OnServerClosing(DWORD anSrvPID);
 		void Paste();
@@ -547,6 +549,7 @@ class CRealConsole
 		//HANDLE mh_ColorMapping;
 		//AnnotationHeader *mp_ColorHdr;
 		MFileMapping<const AnnotationHeader> m_TrueColorerMap;
+		AnnotationHeader m_TrueColorerHeader;
 		const AnnotationInfo *mp_TrueColorerData;
 		DWORD mn_LastColorFarID;
 		void OpenColorMapping(); // Открыть мэппинг колорера (по HWND)

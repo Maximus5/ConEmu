@@ -2983,6 +2983,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 			break;
 		case cbTrueColorer:
 			isTrueColorer = IsChecked(hColors, cbTrueColorer);
+			gpConEmu->UpdateFarSettings();
 			gpConEmu->Update(true);
 			break;
 		case cbFadeInactive:
@@ -4636,13 +4637,13 @@ void CSettings::OnSaveActivityLogFile(HWND hListView)
 		if (nLen)
 			WriteFile(hFile, pszText, nLen, &nWritten, NULL);
 	}
+	WriteFile(hFile, L"\r\n", 4, &nWritten, NULL);
 
 	if (nColumnCount > 0)
 	{
 		INT_PTR nItems = ListView_GetItemCount(hListView);
 		for (INT_PTR i = 0; i < nItems; i++)
 		{
-			WriteFile(hFile, L"\r\n", 4, &nWritten, NULL);
 			for (int c = 0; c < nColumnCount; c++)
 			{
 				if (c)
@@ -4653,6 +4654,7 @@ void CSettings::OnSaveActivityLogFile(HWND hListView)
 				if (nLen)
 					WriteFile(hFile, pszText, nLen, &nWritten, NULL);
 			}
+			WriteFile(hFile, L"\r\n", 4, &nWritten, NULL);
 		}
 	}
 

@@ -47,6 +47,9 @@ class CVirtualConsole
 	public:
 		CRealConsole *RCon() { if (this) return mp_RCon; _ASSERTE(this!=NULL); return NULL; };
 		HWND GetView();
+		int GetTabCount();
+		int GetActiveTab();
+		BOOL GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
 	public:
 		WARNING("Сделать protected!");
 		uint TextWidth, TextHeight; // размер в символах
