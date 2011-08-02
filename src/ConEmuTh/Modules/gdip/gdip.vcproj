@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="gdi+"
 	ProjectGUID="{C6CC0455-8680-4011-928C-D479F8F4C9FA}"
 	RootNamespace="gdi+"
@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\Plugins\ConEmu\Thumbs\gdi+.t32"
+				OutputFile="Far3.2110\Plugins\ConEmu\Thumbs\gdi+.t32"
 				LinkIncremental="2"
 				ModuleDefinitionFile="gdip.def"
 				GenerateDebugInformation="true"
@@ -995,7 +995,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\plugins\ConEmu\Thumbs\gdi+.t32"
+				OutputFile="Far3.2110\plugins\ConEmu\Thumbs\gdi+.t32"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="gdip.def"
@@ -1303,7 +1303,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\Plugins\ConEmu\Thumbs\gdi+.t32"
+				OutputFile="\Far3.2110\Plugins\ConEmu\Thumbs\gdi+.t32"
 				LinkIncremental="2"
 				ModuleDefinitionFile="gdip.def"
 				GenerateDebugInformation="true"

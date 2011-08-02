@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ico"
 	ProjectGUID="{A66F6175-6D1A-4092-A669-64E9C8C0B7D7}"
 	RootNamespace="ico"
@@ -995,7 +995,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\plugins\ConEmu\Thumbs\ico.t32"
+				OutputFile="Far3.2110\plugins\ConEmu\Thumbs\ico.t32"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="ico.def"
@@ -1303,7 +1303,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\Plugins\ConEmu\Thumbs\ico.t32"
+				OutputFile="\Far3.2110\Plugins\ConEmu\Thumbs\ico.t32"
 				LinkIncremental="2"
 				ModuleDefinitionFile="ico.def"
 				GenerateDebugInformation="true"

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmuLn"
 	ProjectGUID="{64DB4963-B19E-43E2-B6A5-C659F632E655}"
 	RootNamespace="ConEmuLn"
@@ -554,7 +554,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\plugins\ConEmu\Lines\ConEmuLn.dll"
+				OutputFile="Far3.2110\plugins\ConEmu\Lines\ConEmuLn.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -1355,7 +1355,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="shlwapi.lib version.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\Plugins\ConEmu\Lines\ConEmuLn.dll"
+				OutputFile="\Far3.2110\Plugins\ConEmu\Lines\ConEmuLn.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

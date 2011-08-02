@@ -549,7 +549,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib Netapi32.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ConEmu.exe"
+				OutputFile="Far3.2110\ConEmu\ConEmu.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
@@ -1350,7 +1350,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib Netapi32.lib"
-				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ConEmu.exe"
+				OutputFile="\Far3.2110\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"

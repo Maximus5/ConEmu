@@ -6,7 +6,7 @@ You can choose any method:
    Example: nmake /F makefile_all_vc
    ! This method requires libCRT.lib (libCRT64.lib),
    ! placed in 'common' subfolder.
-   ! Theese files must be compiled from FAR 2 sources.
+   ! Theese files must be compiled from Far 3 sources.
 
 3. Use GnuC (MinGW) and makefile_all_gcc.
    Example: mingw32-make -f makefile_all_gcc WIDE=1
