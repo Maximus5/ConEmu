@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmuDw"
 	ProjectGUID="{0F3AA494-98BA-425A-941D-AC18C29EFC15}"
 	RootNamespace="ConEmuDw"
@@ -141,7 +141,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Utils\Far180\Console64.dll"
+				OutputFile=".\Test\Console64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -303,7 +303,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\Release\Console64.dll"
+				OutputFile=".\Test\Console64.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"

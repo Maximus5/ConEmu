@@ -192,8 +192,15 @@ int ShowMessageW1900(LPCWSTR asMsg, int aiButtons)
 {
 	if (!InfoW1900 || !InfoW1900->Message)
 		return -1;
+	
+	GUID lguid_ShowMsg = { /* d24045b3-93e2-4310-931d-717c0894d741 */
+	    0xd24045b3,
+	    0x93e2,
+	    0x4310,
+	    {0x93, 0x1d, 0x71, 0x7c, 0x08, 0x94, 0xd7, 0x41}
+	};
 
-	return InfoW1900->Message(&guid_ConEmuTh, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING, NULL,
+	return InfoW1900->Message(&guid_ConEmuTh, &lguid_ShowMsg, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING, NULL,
 	                         (const wchar_t * const *)asMsg, 0, aiButtons);
 }
 
@@ -267,8 +274,15 @@ int ShowPluginMenuW1900()
 			items[0].Flags |= MIF_SELECTED;
 		}
 	}
+	
+	GUID lguid_TypeMenu = { /* f3e4df2c-7ecc-42db-ba2e-6f43f7cd9415 */
+	    0xf3e4df2c,
+	    0x7ecc,
+	    0x42db,
+	    {0xba, 0x2e, 0x6f, 0x43, 0xf7, 0xcd, 0x94, 0x15}
+	};
 
-	int nRc = InfoW1900->Menu(&guid_ConEmuTh, -1,-1, 0,
+	int nRc = InfoW1900->Menu(&guid_ConEmuTh, &lguid_TypeMenu, -1,-1, 0,
 	                         FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
 	                         InfoW1900->GetMsg(&guid_ConEmuTh,2),
 	                         NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
@@ -622,7 +636,13 @@ BOOL CheckPanelSettingsW1900(BOOL abSilence)
 		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
 		if (!abSilence)
 		{
-			InfoW1900->Message(&guid_ConEmuTh, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING|FMSG_LEFTALIGN1900, NULL,
+			GUID lguid_PanelErr = { /* ba9380d3-af0b-4d9f-ad12-d8d548bf7519 */
+			    0xba9380d3,
+			    0xaf0b,
+			    0x4d9f,
+			    {0xad, 0x12, 0xd8, 0xd5, 0x48, 0xbf, 0x75, 0x19}
+			};
+			InfoW1900->Message(&guid_ConEmuTh, &lguid_PanelErr, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING|FMSG_LEFTALIGN1900, NULL,
 			                  (const wchar_t * const *)InfoW1900->GetMsg(&guid_ConEmuTh,CEInvalidPanelSettings), 0, 0);
 		}
 

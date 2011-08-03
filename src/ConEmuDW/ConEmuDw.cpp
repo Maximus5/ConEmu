@@ -810,7 +810,7 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	if (uMsg == WM_INITDIALOG)
 	{
 		P = (ColorParam*)lParam;
-		SetWindowLong(hwndDlg, GWLP_USERDATA, lParam);
+		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 		// Transparent
 		CheckDlgButton(hwndDlg, IDC_FORE_TRANS, P->bForeTransparent ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwndDlg, IDC_BACK_TRANS, P->bBackTransparent ? BST_CHECKED : BST_UNCHECKED);
@@ -868,7 +868,7 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		return FALSE;
 	}
 
-	P = (ColorParam*)GetWindowLong(hwndDlg, GWLP_USERDATA);
+	P = (ColorParam*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 	if (!P)
 	{
 		// WM_SETFONT, например, может придти перед WM_INITDIALOG O_O
@@ -980,7 +980,7 @@ DWORD WINAPI ColorDialogThread(LPVOID lpParameter)
 	if (P->hbrBackground)
 		DeleteObject(P->hbrBackground);
 
-	return lRc;
+	return (DWORD)lRc;
 }
 
 int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)

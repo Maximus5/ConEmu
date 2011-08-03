@@ -689,7 +689,13 @@ int ShowMessageW1900(int aiMsg, int aiButtons)
 	if (!InfoW1900 || !InfoW1900->Message || !InfoW1900->GetMsg)
 		return -1;
 
-	return InfoW1900->Message(&guid_ConEmu, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING, NULL,
+	GUID lguid_Msg = { /* aba0df6c-163f-4950-9029-a3f595c1c351 */
+	    0xaba0df6c,
+	    0x163f,
+	    0x4950,
+	    {0x90, 0x29, 0xa3, 0xf5, 0x95, 0xc1, 0xc3, 0x51}
+	};
+	return InfoW1900->Message(&guid_ConEmu, &lguid_Msg, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING, NULL,
 	                         (const wchar_t * const *)InfoW1900->GetMsg(&guid_ConEmu,aiMsg), 0, aiButtons);
 }
 
@@ -805,7 +811,13 @@ int ShowPluginMenuW1900()
 		{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW1900->GetMsg(&guid_ConEmu,CEMenuDebug)},
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
-	int nRc = InfoW1900->Menu(&guid_ConEmu, -1,-1, 0,
+	GUID lguid_Menu = { /* 2dc6b821-fd8e-4165-adcf-a4eda7b44e8e */
+	    0x2dc6b821,
+	    0xfd8e,
+	    0x4165,
+	    {0xad, 0xcf, 0xa4, 0xed, 0xa7, 0xb4, 0x4e, 0x8e}
+	};
+	int nRc = InfoW1900->Menu(&guid_ConEmu, &lguid_Menu, -1,-1, 0,
 	                         FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
 	                         InfoW1900->GetMsg(&guid_ConEmu,CEPluginName),
 	                         NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
@@ -994,8 +1006,13 @@ bool RunExternalProgramW1900(wchar_t* pszCommand)
 	if (!pszCommand || !*pszCommand)
 	{
 		lstrcpy(strTemp, L"cmd");
-
-		if (!InfoW1900->InputBox(&guid_ConEmu, L"ConEmu", L"Start console program", L"ConEmu.CreateProcess",
+		GUID lguid_Input = { /* 78ba0189-7dd7-4cb9-aff8-c70bca9f9cb6 */
+		    0x78ba0189,
+		    0x7dd7,
+		    0x4cb9,
+		    {0xaf, 0xf8, 0xc7, 0x0b, 0xca, 0x9f, 0x9c, 0xb6}
+		};
+		if (!InfoW1900->InputBox(&guid_ConEmu, &lguid_Input, L"ConEmu", L"Start console program", L"ConEmu.CreateProcess",
 		                       strTemp, strTemp, MAX_PATH, NULL, FIB_BUTTONS))
 			return false;
 
@@ -1413,7 +1430,13 @@ HANDLE WINAPI OpenFilePluginW1900(const wchar_t *Name,const unsigned char *Data,
 
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
-		InfoW1900->Message(&guid_ConEmu, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING,
+		GUID lguid_Msg = { /* e7df3ff6-f56a-44ac-a18c-12b0cfb416be */
+		    0xe7df3ff6,
+		    0xf56a,
+		    0x44ac,
+		    {0xa1, 0x8c, 0x12, 0xb0, 0xcf, 0xb4, 0x16, 0xbe}
+		};
+		InfoW1900->Message(&guid_ConEmu, &lguid_Msg, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING,
 			NULL, (const wchar_t* const*)L"ConEmu plugin\nCan't open file!", 0,0);
 		return INVALID_HANDLE_VALUE;
 	}
@@ -1423,7 +1446,13 @@ HANDLE WINAPI OpenFilePluginW1900(const wchar_t *Name,const unsigned char *Data,
 
 	if (dwSizeHigh)
 	{
-		InfoW1900->Message(&guid_ConEmu, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING,
+		GUID lguid_Msg = { /* 41f1e45e-4714-48f4-9876-dd60ee5b264f */
+		    0x41f1e45e,
+		    0x4714,
+		    0x48f4,
+		    {0x98, 0x76, 0xdd, 0x60, 0xee, 0x5b, 0x26, 0x4f}
+		};
+		InfoW1900->Message(&guid_ConEmu, &lguid_Msg, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING,
 			NULL, (const wchar_t* const*)L"ConEmu plugin\nFile too large!", 0,0);
 		CloseHandle(hFile);
 		return INVALID_HANDLE_VALUE;
@@ -1435,7 +1464,13 @@ HANDLE WINAPI OpenFilePluginW1900(const wchar_t *Name,const unsigned char *Data,
 
 	if (!ReadFile(hFile, pszData, dwSizeLow, &dwSizeHigh, 0) || dwSizeHigh != dwSizeLow)
 	{
-		InfoW1900->Message(&guid_ConEmu, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING,
+		GUID lguid_Msg = { /* 54b9afc2-7fce-4948-8214-c7c6191f30db */
+		    0x54b9afc2,
+		    0x7fce,
+		    0x4948,
+		    {0x82, 0x14, 0xc7, 0xc6, 0x19, 0x1f, 0x30, 0xdb}
+		};
+		InfoW1900->Message(&guid_ConEmu, &lguid_Msg, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING,
 			NULL, (const wchar_t* const*)L"ConEmu plugin\nCan't read file!", 0,0);
 		return INVALID_HANDLE_VALUE;
 	}
@@ -1450,7 +1485,13 @@ HANDLE WINAPI OpenFilePluginW1900(const wchar_t *Name,const unsigned char *Data,
 	{
 		if (pReq->hdr.nVersion != CESERVER_REQ_VER && pReq->hdr.nVersion < 40)
 		{
-			InfoW1900->Message(&guid_ConEmu, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING,
+			GUID lguid_Msg = { /* b49be0c6-1a51-4af3-ac74-bb7478666166 */
+			    0xb49be0c6,
+			    0x1a51,
+			    0x4af3,
+			    {0xac, 0x74, 0xbb, 0x74, 0x78, 0x66, 0x61, 0x66}
+			};
+			InfoW1900->Message(&guid_ConEmu, &lguid_Msg, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING,
 				NULL, (const wchar_t* const*)L"ConEmu plugin\nUnknown version of packet", 0,0);
 		}
 		else

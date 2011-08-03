@@ -1300,6 +1300,22 @@ HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
 	if (gbHooksTemporaryDisabled)
 		return module;
 
+#if 0
+	#ifdef _WIN64
+	DWORD dwErrCode = 0;	
+	if (!module)
+	{
+		dwErrCode = GetLastError();
+		//TODO: Проверка кодов ошибок
+		if (lpFileName && (lstrcmpiW(lpFileName, L"console.dll") == 0))
+		{
+			_ASSERTE(module!=NULL);
+			module = F(LoadLibraryW)(L"Console64.dll");
+		}
+	}
+	#endif
+#endif
+
 	PrepareNewModule(module, NULL, lpFileName);
 
 	if (ph && ph->PostCallBack)
