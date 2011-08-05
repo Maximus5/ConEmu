@@ -440,7 +440,7 @@ int ServerInit()
 
 	if (gbNoCreateProcess && (gbAttachMode || gpSrv->bDebuggerActive))
 	{
-		if (!gpSrv->bDebuggerActive && !IsWindowVisible(ghConWnd))
+		if (!gpSrv->bDebuggerActive && !IsWindowVisible(ghConWnd) && !(gpSrv->dwGuiPID || gbAttachFromFar))
 		{
 			PRINT_COMSPEC(L"Console windows is not visible. Attach is unavailable. Exiting...\n", 0);
 			DisableAutoConfirmExit();

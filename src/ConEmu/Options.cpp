@@ -427,6 +427,7 @@ void CSettings::InitSettings()
 	isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
 	isPartBrushBlack = 32;
 	isExtendUCharMap = true;
+	isDownShowHiddenMessage = false;
 	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
 	wcscpy_c(mszCharRanges, L"2013-25C4");
 	icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
@@ -687,6 +688,8 @@ void CSettings::LoadSettings()
 		reg->Load(L"HideCaptionAlwaysDisappear", nHideCaptionAlwaysDisappear);
 
 		if (nHideCaptionAlwaysDisappear > 30000) nHideCaptionAlwaysDisappear = 30000;
+
+		reg->Load(L"DownShowHiddenMessage", isDownShowHiddenMessage);
 
 		reg->Load(L"ConWnd X", wndX); /*if (wndX<-10) wndX = 0;*/
 		reg->Load(L"ConWnd Y", wndY); /*if (wndY<-10) wndY = 0;*/
@@ -1337,6 +1340,7 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
 		reg->Save(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
 		reg->Save(L"HideCaptionAlwaysDisappear", nHideCaptionAlwaysDisappear);
+		reg->Save(L"DownShowHiddenMessage", isDownShowHiddenMessage);
 		reg->Save(L"ConsoleFontName", ConsoleFont.lfFaceName);
 		reg->Save(L"ConsoleFontWidth", ConsoleFont.lfWidth);
 		reg->Save(L"ConsoleFontHeight", ConsoleFont.lfHeight);

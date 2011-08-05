@@ -51,7 +51,8 @@ extern const wchar_t *kernel32;// = L"kernel32.dll";
 extern const wchar_t *user32  ;// = L"user32.dll";
 extern const wchar_t *shell32 ;// = L"shell32.dll";
 extern const wchar_t *advapi32;// = L"Advapi32.dll";
-extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32;
+extern const wchar_t *comdlg32;// = L"comdlg32.dll";
+extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32, ghComdlg32;
 
 typedef LONG (WINAPI* RegCloseKey_t)(HKEY hKey);
 extern RegCloseKey_t RegCloseKey_f;
@@ -60,6 +61,10 @@ extern RegOpenKeyEx_t RegOpenKeyEx_f;
 typedef LONG (WINAPI* RegCreateKeyEx_t)(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition);
 extern RegCreateKeyEx_t RegCreateKeyEx_f;
 
+typedef BOOL (WINAPI* OnChooseColorA_t)(LPCHOOSECOLORA lpcc);
+extern OnChooseColorA_t ChooseColorA_f;
+typedef BOOL (WINAPI* OnChooseColorW_t)(LPCHOOSECOLORW lpcc);
+extern OnChooseColorW_t ChooseColorW_f;
 
 typedef struct HookCallbackArg
 {

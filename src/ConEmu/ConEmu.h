@@ -171,6 +171,7 @@ class CConEmuMain
 		//DWORD gnLastProcessCount;
 		//uint cBlinkNext;
 		DWORD WindowMode, change2WindowMode;
+		BOOL mb_ExternalHidden;
 		//HANDLE hPipe;
 		//HANDLE hPipeEvent;
 		bool isWndNotFSMaximized;
@@ -378,6 +379,7 @@ class CConEmuMain
 		DWORD_PTR GetActiveKeyboardLayout();
 		RECT GetDefaultRect();
 		RECT GetIdealRect() { return mrc_Ideal; };
+		HMENU GetSystemMenu(BOOL abInitial = FALSE);
 		RECT GetVirtualScreenRect(BOOL abFullScreen);
 		static DWORD GetWindowStyle();
 		static DWORD GetWindowStyleEx();
@@ -440,7 +442,7 @@ class CConEmuMain
 		void SetWaitCursor(BOOL abWait);
 		bool SetWindowMode(uint inMode, BOOL abForce = FALSE);
 		void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
-		void ShowSysmenu(HWND Wnd=NULL, int x=-32000, int y=-32000);
+		void ShowSysmenu(int x=-32000, int y=-32000);
 		HMENU CreateDebugMenuPopup();
 		void PopulateEditMenuPopup(HMENU hMenu);
 		void StartDebugLogConsole();

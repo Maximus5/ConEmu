@@ -534,7 +534,7 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 					}
 					else if (uMsg == WM_RBUTTONUP)
 					{
-						gpConEmu->ShowSysmenu(ghWnd, ptScr.x, ptScr.y/*-32000*/);
+						gpConEmu->ShowSysmenu(ptScr.x, ptScr.y/*-32000*/);
 					}
 					else if (!gpSet->isFullScreen && !gpConEmu->isZoomed())
 					{

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    68
+#define CESERVER_REQ_VER    69
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -480,7 +480,7 @@ enum PaintBackgroundPlaces
 	pbp_CommandLine = 16,
 	pbp_KeyBar      = 32,
 	pbp_MenuBar     = 64, // Верхняя строка - падающее меню
-	pbp_StatusLine  = 64, // Статусная строка - редактор/вьювер
+	pbp_StatusLine  = 128, // Статусная строка - редактор/вьювер
 };
 
 #define BkPanelInfo_CurDirMax 32768
@@ -813,15 +813,16 @@ struct CEFAR_SHORT_PANEL_INFO
 	int   PanelType;
 	int   Plugin;
 	RECT  PanelRect;
-	int   ItemsNumber;
-	int   SelectedItemsNumber;
-	int   CurrentItem;
-	int   TopPanelItem;
+	//int   ItemsNumber;
+	//int   SelectedItemsNumber;
+	//int   CurrentItem;
+	//int   TopPanelItem;
 	int   Visible;
 	int   Focus;
-	int   ViewMode;
-	int   ShortNames;
-	int   SortMode;
+	//int   ViewMode;
+	//int   ShortNames;
+	//int   SortMode;
+	int   ColumnNames;
 	int   StatusLines;
 	unsigned __int64 Flags;
 };
@@ -832,6 +833,17 @@ struct CEFAR_PANELTABS
 	int   ButtonColor;  // если -1 - то умолчание
 };
 
+typedef unsigned int CEFAR_MACRO_AREA;
+static const CEFAR_MACRO_AREA
+	fma_Unknown  = 0x00000000,
+	fma_Panels   = 0x00000001,
+	fma_Viewer   = 0x00000002,
+	fma_Editor   = 0x00000003,
+	fma_Dialog   = 0x00000004
+	;
+
+
+WARNING("CEFAR_INFO_MAPPING.nFarColors - subject to change!!!");
 struct CEFAR_INFO_MAPPING
 {
 	DWORD cbSize;
@@ -844,6 +856,9 @@ struct CEFAR_INFO_MAPPING
 	DWORD nFarPanelSettings;
 	DWORD nFarConfirmationSettings;
 	BOOL  bFarPanelAllowed; // FCTL_CHECKPANELSEXIST
+	// Текущая область в фаре
+	CEFAR_MACRO_AREA nMacroArea;
+	BOOL bMacroActive;
 	// Информация собственно о панелях присутствовать не обязана
 	BOOL bFarPanelInfoFilled;
 	BOOL bFarLeftPanel, bFarRightPanel;

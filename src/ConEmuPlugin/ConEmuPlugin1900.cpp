@@ -1155,6 +1155,37 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETPANELSETTINGS, 0, 0);
 	gpFarInfo->nFarConfirmationSettings =
 	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETCONFIRMATIONS, 0, 0);
+
+	gpFarInfo->bMacroActive = IsMacroActiveW1900();
+	INT_PTR nArea = InfoW1900->MacroControl(INVALID_HANDLE_VALUE, MCTL_GETAREA, 0, 0);
+	switch(nArea)
+	{
+		case MACROAREA_SHELL:
+		case MACROAREA_INFOPANEL:
+		case MACROAREA_QVIEWPANEL:
+		case MACROAREA_TREEPANEL:
+		case MACROAREA_SEARCH:
+			gpFarInfo->nMacroArea = fma_Panels;
+			break;
+		case MACROAREA_VIEWER:
+			gpFarInfo->nMacroArea = fma_Viewer;
+			break;
+		case MACROAREA_EDITOR:
+			gpFarInfo->nMacroArea = fma_Editor;
+			break;
+		case MACROAREA_DIALOG:
+		case MACROAREA_DISKS:
+		case MACROAREA_FINDFOLDER:
+		case MACROAREA_AUTOCOMPLETION:
+		case MACROAREA_MAINMENU:
+		case MACROAREA_MENU:
+		case MACROAREA_USERMENU:
+			gpFarInfo->nMacroArea = fma_Dialog;
+			break;
+		default:
+			gpFarInfo->nMacroArea = fma_Unknown;
+	}
+	    
 	gpFarInfo->bFarPanelAllowed = InfoW1900->PanelControl(PANEL_NONE, FCTL_CHECKPANELSEXIST, 0, 0);
 	gpFarInfo->bFarPanelInfoFilled = FALSE;
 	gpFarInfo->bFarLeftPanel = FALSE;

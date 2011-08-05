@@ -115,6 +115,7 @@ extern "C" {
 
 HMODULE ghPluginModule = NULL; // ConEmu.dll - сам плагин
 HWND ConEmuHwnd = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
+DWORD gdwPreDetachGuiPID = 0;
 DWORD gdwServerPID = 0;
 BOOL TerminalMode = FALSE;
 HWND FarHwnd = NULL;
@@ -2959,6 +2960,13 @@ BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
 	// Выполним сразу после SuspendThread, чтобы нить не посчитала, что мы подцепились обратно
 	gbWasDetached = (ConEmuHwnd!=NULL && IsWindow(ConEmuHwnd));
 
+	if (ConEmuHwnd)
+	{
+		// Запомним, для удобства аттача
+		if (!GetWindowThreadProcessId(ConEmuHwnd, &gdwPreDetachGuiPID))
+			gdwPreDetachGuiPID = 0;
+	}
+
 	if (gbWasDetached)
 	{
 		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -5696,7 +5704,7 @@ BOOL Attach2Gui()
 	BOOL lbRc = FALSE;
 	DWORD dwServerPID = 0;
 	BOOL lbFound = FALSE;
-	WCHAR  szCmdLine[0x200] = {0};
+	WCHAR  szCmdLine[MAX_PATH+0x100] = {0};
 	wchar_t szConEmuBase[MAX_PATH+1], szConEmuGui[MAX_PATH+1];
 	DWORD nLen = 0;
 	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
@@ -5810,6 +5818,8 @@ BOOL Attach2Gui()
 	//	wsprintf(szCmdLine+lstrlenW(szCmdLine), L"ConEmuC64.exe\" /ATTACH /PID=%i", dwSelfPID);
 	//else
 	wsprintf(szCmdLine+lstrlenW(szCmdLine), L"\" /ATTACH /FARPID=%i", dwSelfPID);
+	if (gdwPreDetachGuiPID)
+		wsprintf(szCmdLine+lstrlenW(szCmdLine), L" /GID=%i", gdwPreDetachGuiPID);
 
 	if (!CreateProcess(NULL, szCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 	                  NULL, &si, &pi))
@@ -5820,6 +5830,8 @@ BOOL Attach2Gui()
 	else
 	{
 		gdwServerPID = pi.dwProcessId;
+		SafeCloseHandle(pi.hProcess);
+		SafeCloseHandle(pi.hThread);
 		lbRc = TRUE;
 		// Чтобы MonitorThread пытался открыть Mapping
 		gbTryOpenMapHeader = (gpConMapInfo==NULL);

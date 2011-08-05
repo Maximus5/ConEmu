@@ -1019,6 +1019,10 @@ BOOL ReloadFarInfoA(/*BOOL abFull*/)
 	    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
 	gpFarInfo->nFarConfirmationSettings =
 	    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
+	
+	gpFarInfo->bMacroActive = IsMacroActiveW995();
+	gpFarInfo->nMacroArea = fma_Unknown; // в Far 1.7x не поддерживается
+	
 	gpFarInfo->bFarPanelAllowed = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0);
 	gpFarInfo->bFarPanelInfoFilled = FALSE;
 	gpFarInfo->bFarLeftPanel = FALSE;

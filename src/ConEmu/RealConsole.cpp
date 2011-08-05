@@ -8161,13 +8161,33 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		WORD     *pnSrc = con.pConAttr;
 		const AnnotationInfo *pcolSrc = NULL;
 		const AnnotationInfo *pcolEnd = NULL;
-		BOOL bUseColorData = FALSE;
+		BOOL bUseColorData = FALSE, bStartUseColorData = FALSE;
 
 		if (gpSet->isTrueColorer && m_TrueColorerMap.IsValid() && mp_TrueColorerData)
 		{
 			pcolSrc = mp_TrueColorerData;
 			pcolEnd = mp_TrueColorerData + m_TrueColorerMap.Ptr()->bufferSize;
 			bUseColorData = TRUE;
+			WARNING("Если far/w - pcolSrc нужно поднять вверх, bStartUseColorData=TRUE, bUseColorData=FALSE");
+			if (con.bBufferHeight)
+			{
+				if (!isFarBufferSupported())
+				{
+					bUseColorData = FALSE;
+				}
+				else
+				{
+					int nShiftRows = (con.m_sbi.dwSize.Y - nHeight) - con.m_sbi.srWindow.Top;
+					_ASSERTE(nShiftRows>=0);
+					if (nShiftRows > 0)
+					{
+						_ASSERTE(con.nTextWidth == (con.m_sbi.srWindow.Right - con.m_sbi.srWindow.Left + 1));
+						pcolSrc -= nShiftRows*con.nTextWidth;
+						bUseColorData = FALSE;
+						bStartUseColorData = TRUE;
+					}
+				}
+			}
 		}
 
 		DWORD cbDstLineSize = nWidth * 2;
@@ -8237,6 +8257,14 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 					// Colorer & Far - TrueMod
 					TODO("OPTIMIZE: вынести проверку bUseColorData за циклы");
 
+					if (bStartUseColorData)
+					{
+						// В случае "far /w" буфер цвета может начаться НИЖЕ верхней видимой границы,
+						// если буфер немного прокручен вверх
+						if (pcolSrc >= mp_TrueColorerData)
+							bUseColorData = TRUE;
+					}
+					
 					if (bUseColorData)
 					{
 						if (pcolSrc >= pcolEnd)

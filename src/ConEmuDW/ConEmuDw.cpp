@@ -9,6 +9,7 @@
 
 #include "../common/pluginW1900.hpp"
 #include "../common/ConsoleAnnotation.h"
+#include "../common/ConEmuColors3.h"
 #include "../common/common.hpp"
 #include "../ConEmu/version.h"
 #include "ConEmuDw.h"
@@ -19,14 +20,11 @@
 #define MSG_TRUEMOD_DISABLED   "«Colorer TrueMod support» is not checked in the ConEmu settings\nConsole writer'll works in 4bit mode"
 #define MSG_NO_TRUEMOD_BUFFER  "TrueMod support not enabled in the ConEmu settings\nConsole writer'll works in 4bit mode"
 
-//TODO: RGB32???
-#if 0
-	#define IsTransparent(C) (((C) & 0xFF000000) != 0)
-	#define SetTransparent(T) ((T) ? 0xFF000000 : 0)
-#else
-	#define IsTransparent(C) (((C) & 0xFF000000) == 0)
-	#define SetTransparent(T) ((T) ? 0 : 0xFF000000)
-#endif
+// "Прозрачность" в фаре хранится в старшем байте,
+// используется (пока) только при обработке раскраски файлов
+#define IsTransparent(C) (((C) & 0xFF000000) == 0)
+#define SetTransparent(T) ((T) ? 0 : 0xFF000000)
+
 
 #define MAX_READ_BUF 16384
 
@@ -142,50 +140,100 @@ void CloseBuffers()
 	}
 }
 
-__inline int Max(int i1, int i2)
-{
-	return (i1 > i2) ? i1 : i2;
-}
-
-WORD Color2FgIndex(COLORREF Color)
-{
-	static int LastColor, LastIndex;
-	if (LastColor == Color)
-		return LastIndex;
-	
-	int B = (Color & 0xFF0000) >> 16;
-	int G = (Color & 0xFF00) >> 8;
-	int R = (Color & 0xFF);
-	int nMax = Max(B,Max(R,G));
-	
-	int Index =
-		(((B+32) > nMax) ? 1 : 0) |
-		(((G+32) > nMax) ? 2 : 0) |
-		(((R+32) > nMax) ? 4 : 0);
-	LastColor = Color;
-	LastIndex = Index;
-	return Index;
-}
-
-WORD Color2BgIndex(COLORREF Color)
-{
-	static int LastColor, LastIndex;
-	if (LastColor == Color)
-		return LastIndex;
-	
-	int B = (Color & 0xFF0000) >> 16;
-	int G = (Color & 0xFF00) >> 8;
-	int R = (Color & 0xFF);
-	int nMax = Max(B,Max(R,G));
-
-	int Index =
-		(((B+32) > nMax) ? 16 : 0) |
-		(((G+32) > nMax) ? 32 : 0) |
-		(((R+32) > nMax) ? 64 : 0);
-	LastColor = Color;
-	LastIndex = Index;
-	return Index;
-}
+//__inline int Max(int i1, int i2)
+//{
+//	return (i1 > i2) ? i1 : i2;
+//}
+//
+//void Color2FgIndex(COLORREF Color, WORD& Con)
+//{
+//	int Index;
+//	static int LastColor, LastIndex;
+//	if (LastColor == Color)
+//	{
+//		Index = LastIndex;
+//	}
+//	else
+//	{
+//		int B = (Color & 0xFF0000) >> 16;
+//		int G = (Color & 0xFF00) >> 8;
+//		int R = (Color & 0xFF);
+//		int nMax = Max(B,Max(R,G));
+//		
+//		Index =
+//			(((B+32) > nMax) ? 1 : 0) |
+//			(((G+32) > nMax) ? 2 : 0) |
+//			(((R+32) > nMax) ? 4 : 0);
+//
+//		if (Index == 7)
+//		{
+//			if (nMax < 32)
+//				Index = 0;
+//			else if (nMax < 160)
+//				Index = 8;
+//			else if (nMax > 200)
+//				Index = 15;
+//		}
+//		else if (nMax > 220)
+//		{
+//			Index |= 8;
+//		}
+//
+//		LastColor = Color;
+//		LastIndex = Index;
+//	}
+//
+//	Con |= Index;
+//}
+//
+//void Color2BgIndex(COLORREF Color, BOOL Equal, WORD& Con)
+//{
+//	int Index;
+//	static int LastColor, LastIndex;
+//	if (LastColor == Color)
+//	{
+//		Index = LastIndex;
+//	}
+//	else
+//	{
+//		int B = (Color & 0xFF0000) >> 16;
+//		int G = (Color & 0xFF00) >> 8;
+//		int R = (Color & 0xFF);
+//		int nMax = Max(B,Max(R,G));
+//
+//		Index =
+//			(((B+32) > nMax) ? 1 : 0) |
+//			(((G+32) > nMax) ? 2 : 0) |
+//			(((R+32) > nMax) ? 4 : 0);
+//
+//		if (Index == 7)
+//		{
+//			if (nMax < 32)
+//				Index = 0;
+//			else if (nMax < 160)
+//				Index = 8;
+//			else if (nMax > 200)
+//				Index = 15;
+//		}
+//		else if (nMax > 220)
+//		{
+//			Index |= 8;
+//		}
+//
+//		LastColor = Color;
+//		LastIndex = Index;
+//	}
+//
+//	if (Index == Con)
+//	{
+//		if (Con & 8)
+//			Index ^= 8;
+//		else
+//			Con |= 8;
+//	}
+//	
+//	Con |= (Index<<4);
+//}
 
 //TODO: Юзкейс понят неправильно.
 //TODO: Это не "всего видимого экрана", это "цвет по умолчанию". То, что соответствует 
@@ -320,7 +368,7 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 	
 	BOOL lbRc = TRUE;
 	COORD cr = {csbi.srWindow.Left, csbi.srWindow.Top};
-	DWORD nWritten;
+	//DWORD nWritten;
 	
 	AnnotationInfo* pTrueColor = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
 	AnnotationInfo* pTrueColorEnd = pTrueColor ? (pTrueColor + gpTrueColor->bufferSize) : NULL;
@@ -338,16 +386,19 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 		f |= AI_STYLE_UNDERLINE;
 	t.style = f;
 
+	DWORD nForeColor, nBackColor;
 	if (Flags & FCF_FG_4BIT)
 	{
+		nForeColor = -1;
 		n |= (WORD)(Attributes->ForegroundColor & 0xF);
 		t.fg_valid = FALSE;
 	}
 	else
 	{
 		//n |= 0x07;
-		n |= Color2FgIndex(Attributes->ForegroundColor & 0x00FFFFFF);
-		t.fg_color = Attributes->ForegroundColor & 0x00FFFFFF;
+		nForeColor = Attributes->ForegroundColor & 0x00FFFFFF;
+		Far3Color::Color2FgIndex(nForeColor, n);
+		t.fg_color = nForeColor;
 		t.fg_valid = TRUE;
 	}
 
@@ -358,36 +409,37 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 	}
 	else
 	{
-		n |= Color2BgIndex(Attributes->BackgroundColor & 0x00FFFFFF);
-		t.bk_color = Attributes->BackgroundColor & 0x00FFFFFF;
+		nBackColor = Attributes->BackgroundColor & 0x00FFFFFF;
+		Far3Color::Color2BgIndex(nBackColor, nBackColor==nForeColor, n);
+		t.bk_color = nBackColor;
 		t.bk_valid = TRUE;
 	}
 
 
-	for (;cr.Y <= csbi.srWindow.Bottom;cr.Y++)
-	{
-		WORD* pn = pnWriteAttr;
-		for (int X = 0; X < nBufWidth; X++, pn++)
-		{
-			if (pTrueColor && pTrueColor >= pTrueColorEnd)
-			{
-				_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd);
-				pTrueColor = NULL; // Выделенный буфер оказался недостаточным
-			}
+	//for (;cr.Y <= csbi.srWindow.Bottom;cr.Y++)
+	//{
+	//	WORD* pn = pnWriteAttr;
+	//	for (int X = 0; X < nBufWidth; X++, pn++)
+	//	{
+	//		if (pTrueColor && pTrueColor >= pTrueColorEnd)
+	//		{
+	//			_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd);
+	//			pTrueColor = NULL; // Выделенный буфер оказался недостаточным
+	//		}
 
-			// цвет в RealConsole
-			*pn = n;
+	//		// цвет в RealConsole
+	//		*pn = n;
 
-			// цвет в ConEmu (GUI)
-			if (pTrueColor)
-			{
-				*(pTrueColor++) = t;
-			}
-		}
-	
-		if (!WriteConsoleOutputAttribute(h, pnWriteAttr, nBufWidth, cr, &nWritten) || (nWritten != nBufWidth))
-			lbRc = FALSE;
-	}
+	//		// цвет в ConEmu (GUI)
+	//		if (pTrueColor)
+	//		{
+	//			*(pTrueColor++) = t;
+	//		}
+	//	}
+	//
+	//	if (!WriteConsoleOutputAttribute(h, pnWriteAttr, nBufWidth, cr, &nWritten) || (nWritten != nBufWidth))
+	//		lbRc = FALSE;
+	//}
 	
 	SetConsoleTextAttribute(h, n);
 	
@@ -451,20 +503,24 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL;
-	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (ReadRegion->Top - csbi.srWindow.Top)) : NULL);
+	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (ReadRegion->Top /*- csbi.srWindow.Top*/)) : NULL);
 
 	FAR_CHAR_INFO* pFarEnd = Buffer + BufferSize.X*BufferSize.Y;
 
 	SMALL_RECT rcRead = *ReadRegion;
 	COORD MyBufferSize = {BufferSize.X, 1};
 	COORD MyBufferCoord = {BufferCoord.X, 0};
-	for (rcRead.Top = ReadRegion->Top; rcRead.Top <= ReadRegion->Bottom; rcRead.Top++)
+	SHORT YShift = csbi.dwSize.Y - (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+	SHORT Y1 = ReadRegion->Top + YShift;
+	SHORT Y2 = ReadRegion->Bottom + YShift;
+	SHORT BufferShift = ReadRegion->Top + YShift;
+	for (rcRead.Top = Y1; rcRead.Top <= Y2; rcRead.Top++)
 	{
 		rcRead.Bottom = rcRead.Top;
 		BOOL lbRead = ReadConsoleOutputW(h, pcReadBuf, MyBufferSize, MyBufferCoord, &rcRead);
 
 		CHAR_INFO* pc = pcReadBuf + BufferCoord.X;
-		FAR_CHAR_INFO* pFar = Buffer + (rcRead.Top - ReadRegion->Top + BufferCoord.Y)*BufferSize.X + BufferCoord.X;
+		FAR_CHAR_INFO* pFar = Buffer + (rcRead.Top - BufferShift + BufferCoord.Y)*BufferSize.X + BufferCoord.X;
 		AnnotationInfo* pTrueColor = (pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? (pTrueColorLine + ReadRegion->Left) : NULL;
 
 		for (int X = rcRead.Left; X <= rcRead.Right; X++, pc++, pFar++)
@@ -511,7 +567,7 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 			else
 			{
 				chr.Attributes.Flags |= FCF_BG_4BIT;
-				chr.Attributes.BackgroundColor = lbRead ? (pc->Attributes & 0xF) : 0;
+				chr.Attributes.BackgroundColor = lbRead ? ((pc->Attributes & 0xF0)>>4) : 0;
 			}
 
 			*pFar = chr;
@@ -577,17 +633,21 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL;
-	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (WriteRegion->Top - csbi.srWindow.Top)) : NULL);
+	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (WriteRegion->Top /*- csbi.srWindow.Top*/)) : NULL);
 
 	SMALL_RECT rcWrite = *WriteRegion;
 	COORD MyBufferSize = {BufferSize.X, 1};
 	COORD MyBufferCoord = {BufferCoord.X, 0};
-	for (rcWrite.Top = WriteRegion->Top; rcWrite.Top <= WriteRegion->Bottom; rcWrite.Top++)
+	SHORT YShift = csbi.dwSize.Y - (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+	SHORT Y1 = WriteRegion->Top + YShift;
+	SHORT Y2 = WriteRegion->Bottom + YShift;
+	SHORT BufferShift = WriteRegion->Top + YShift;
+	for (rcWrite.Top = Y1; rcWrite.Top <= Y2; rcWrite.Top++)
 	{
 		rcWrite.Bottom = rcWrite.Top;
 
 		CHAR_INFO* pc = pcWriteBuf + BufferCoord.X;
-		const FAR_CHAR_INFO* pFar = Buffer + (rcWrite.Top - WriteRegion->Top + BufferCoord.Y)*BufferSize.X + BufferCoord.X;
+		const FAR_CHAR_INFO* pFar = Buffer + (rcWrite.Top - BufferShift + BufferCoord.Y)*BufferSize.X + BufferCoord.X;
 		AnnotationInfo* pTrueColor = (pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? (pTrueColorLine + WriteRegion->Left) : NULL;
 
 		for (int X = rcWrite.Left; X <= rcWrite.Right; X++, pc++, pFar++)
@@ -614,8 +674,10 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 				pTrueColor->style = f;
 			}
 
+			DWORD nForeColor, nBackColor;
 			if (Flags & FCF_FG_4BIT)
 			{
+				nForeColor = -1;
 				n |= (WORD)(pFar->Attributes.ForegroundColor & 0xF);
 				if (pTrueColor)
 				{
@@ -625,16 +687,18 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 			else
 			{
 				//n |= 0x07;
-				n |= Color2FgIndex(pFar->Attributes.ForegroundColor & 0x00FFFFFF);
+				nForeColor = pFar->Attributes.ForegroundColor & 0x00FFFFFF;
+				Far3Color::Color2FgIndex(nForeColor, n);
 				if (pTrueColor)
 				{
-					pTrueColor->fg_color = pFar->Attributes.ForegroundColor & 0x00FFFFFF;
+					pTrueColor->fg_color = nForeColor;
 					pTrueColor->fg_valid = TRUE;
 				}
 			}
 				
 			if (Flags & FCF_BG_4BIT)
 			{
+				nBackColor = -1;
 				n |= (WORD)(pFar->Attributes.BackgroundColor & 0xF)<<4;
 				if (pTrueColor)
 				{
@@ -643,10 +707,11 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 			}
 			else
 			{
-				n |= Color2BgIndex(pFar->Attributes.BackgroundColor & 0x00FFFFFF);
+				nBackColor = pFar->Attributes.BackgroundColor & 0x00FFFFFF;
+				Far3Color::Color2BgIndex(nBackColor, nForeColor==nBackColor, n);
 				if (pTrueColor)
 				{
-					pTrueColor->bk_color = pFar->Attributes.BackgroundColor & 0x00FFFFFF;
+					pTrueColor->bk_color = nBackColor;
 					pTrueColor->bk_valid = TRUE;
 				}
 			}
@@ -691,7 +756,9 @@ BOOL WINAPI Commit()
 struct ColorParam
 {
 	FarColor Color;
-	BOOL b4bitmode;
+	BOOL bTrueColorEnabled;
+	BOOL b4bitfore;
+	BOOL b4bitback;
 	BOOL bCentered;
 	BOOL bAddTransparent;
 	COLORREF crCustom[16];
@@ -755,9 +822,9 @@ struct ColorParam
 	{
 		int Color = (cr & 0x00FFFFFF);
 		
-		if (b4bitmode)
+		if (Foreground ? b4bitfore : b4bitback)
 		{
-			int Change = Foreground ? 7 : 0;
+			int Change = -1;
 			for (int i = 0; i < ARRAYSIZE(crCustom); i++)
 			{
 				if (crCustom[i] == Color)
@@ -766,12 +833,24 @@ struct ColorParam
 					break;
 				}
 			}
-			Color = Change;
+			if (Change == -1)
+			{
+				WORD nIndex = 0;
+				// Используем "Fg" и для Background, т.к. Color2BgIndex делает
+				// дополнительную корректцию, чтобы "текст был читаем", а это
+				// здесь не нужно
+				Far3Color::Color2FgIndex(cr, nIndex);
+				Color = nIndex;
+			}
+			else
+			{
+				Color = Change;
+			}
 		}
 		
 		if (Foreground)
 		{
-			if (b4bitmode)
+			if (Foreground ? b4bitfore : b4bitback)
 				p->Flags |= FCF_FG_4BIT;
 			else
 				p->Flags &= ~FCF_FG_4BIT; //TODO: Остальные флаги?
@@ -792,7 +871,7 @@ struct ColorParam
 		}
 		else // Background
 		{
-			if (b4bitmode)
+			if (Foreground ? b4bitfore : b4bitback)
 				p->Flags |= FCF_BG_4BIT;
 			else
 				p->Flags &= ~FCF_BG_4BIT; //TODO: Остальные флаги?
@@ -811,9 +890,12 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 		P = (ColorParam*)lParam;
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
+		// 4bit
+		CheckDlgButton(hwndDlg, IDC_FORE_4BIT, P->b4bitfore ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hwndDlg, IDC_BACK_4BIT, P->b4bitback ? BST_CHECKED : BST_UNCHECKED);
 		// Transparent
-		CheckDlgButton(hwndDlg, IDC_FORE_TRANS, P->bForeTransparent ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_BACK_TRANS, P->bBackTransparent ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hwndDlg, IDC_FORE_TRANS, (P->bForeTransparent && P->bAddTransparent) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hwndDlg, IDC_BACK_TRANS, (P->bBackTransparent && P->bAddTransparent) ? BST_CHECKED : BST_UNCHECKED);
 		// Bold/Italic/Underline
 		CheckDlgButton(hwndDlg, IDC_BOLD, P->bBold ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwndDlg, IDC_ITALIC, P->bItalic ? BST_CHECKED : BST_UNCHECKED);
@@ -823,13 +905,15 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 
 		if (!P->bAddTransparent)
 		{
-			ShowWindow(GetDlgItem(hwndDlg, IDC_FORE_TRANS), SW_HIDE);
-			ShowWindow(GetDlgItem(hwndDlg, IDC_BACK_TRANS), SW_HIDE);
-			RECT rcText, rcCheck;
-			GetWindowRect(GetDlgItem(hwndDlg, IDC_TEXT), &rcText);
-			GetWindowRect(GetDlgItem(hwndDlg, IDC_FORE_TRANS), &rcCheck);
-			SetWindowPos(GetDlgItem(hwndDlg, IDC_TEXT), 0, 0,0,
-				rcText.right-rcText.left, rcCheck.bottom-rcText.top-10, SWP_NOMOVE|SWP_NOZORDER);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_FORE_TRANS), FALSE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BACK_TRANS), FALSE);
+			//ShowWindow(GetDlgItem(hwndDlg, IDC_FORE_TRANS), SW_HIDE);
+			//ShowWindow(GetDlgItem(hwndDlg, IDC_BACK_TRANS), SW_HIDE);
+			//RECT rcText, rcCheck;
+			//GetWindowRect(GetDlgItem(hwndDlg, IDC_TEXT), &rcText);
+			//GetWindowRect(GetDlgItem(hwndDlg, IDC_FORE_TRANS), &rcCheck);
+			//SetWindowPos(GetDlgItem(hwndDlg, IDC_TEXT), 0, 0,0,
+			//	rcText.right-rcText.left, rcCheck.bottom-rcText.top-10, SWP_NOMOVE|SWP_NOZORDER);
 		}
 		
 
@@ -859,7 +943,7 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			int yShift = (P->rcParent.bottom - P->rcParent.top + 1) / (P->rcBuffer.Bottom - P->rcBuffer.Top + 1) * y;
 			if ((yShift + (rcDlg.bottom-rcDlg.top)) > P->rcParent.bottom)
 				yShift = max(P->rcParent.top, (P->rcParent.bottom - (rcDlg.bottom-rcDlg.top)));
-			yShift += 32; //TODO: Табы, пока так
+			//yShift += 32; //TODO: Табы, пока так
 			SetWindowPos(hwndDlg, hTop,
 				P->rcParent.left+xShift, P->rcParent.top+yShift,
 				0, 0, SWP_NOSIZE|SWP_SHOWWINDOW);
@@ -901,7 +985,8 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					hwndDlg, NULL,
 					(wParam == IDC_FORE) ? P->crForeColor : P->crBackColor,
 					P->crCustom,
-					/*CC_FULLOPEN|*/CC_RGBINIT|CC_SOLIDCOLOR, //TODO: Флаги
+					((P->bTrueColorEnabled || !(wParam==IDC_FORE?P->b4bitfore:P->b4bitback)) ? (CC_FULLOPEN|CC_ANYCOLOR) : CC_SOLIDCOLOR)
+					|CC_RGBINIT,
 				};
 				if (ChooseColor(&clr))
 				{
@@ -909,6 +994,11 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					{
 						//P->bForeTransparent = FALSE; -- надо/нет?
 						//CheckDlgButton(hwndDlg, IDC_FORE_TRANS, BST_UNCHECKED);
+						if (P->crForeColor != clr.rgbResult && P->bTrueColorEnabled)
+						{
+							P->b4bitfore = FALSE;
+							CheckDlgButton(hwndDlg, IDC_FORE_4BIT, BST_UNCHECKED);
+						}
 						P->crForeColor = clr.rgbResult;
 					}
 					else
@@ -917,6 +1007,11 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 						//CheckDlgButton(hwndDlg, IDC_BACK_TRANS, BST_UNCHECKED);
 						if (P->crBackColor != clr.rgbResult)
 						{
+							if (P->bTrueColorEnabled)
+							{
+								P->b4bitback = FALSE;
+								CheckDlgButton(hwndDlg, IDC_BACK_4BIT, BST_UNCHECKED);
+							}
 							P->crBackColor = clr.rgbResult;
 							P->CreateBrush();
 						}
@@ -925,34 +1020,44 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				}
 			}
 			break;
+		case IDC_FORE_4BIT:
+			{
+				P->b4bitfore = IsDlgButtonChecked(hwndDlg, (int)wParam)!=BST_UNCHECKED;
+			}
+			break;
+		case IDC_BACK_4BIT:
+			{
+				P->b4bitback = IsDlgButtonChecked(hwndDlg, (int)wParam)!=BST_UNCHECKED;
+			}
+			break;
 		case IDC_FORE_TRANS:
 			{
-				P->bForeTransparent = IsDlgButtonChecked(hwndDlg, IDC_FORE_TRANS)!=BST_UNCHECKED;
+				P->bForeTransparent = IsDlgButtonChecked(hwndDlg, (int)wParam)!=BST_UNCHECKED;
 				InvalidateRect(GetDlgItem(hwndDlg, IDC_TEXT), NULL, TRUE);
 			}
 			break;
 		case IDC_BACK_TRANS:
 			{
-				P->bBackTransparent = IsDlgButtonChecked(hwndDlg, IDC_BACK_TRANS)!=BST_UNCHECKED;
+				P->bBackTransparent = IsDlgButtonChecked(hwndDlg, (int)wParam)!=BST_UNCHECKED;
 				P->CreateBrush();
 				InvalidateRect(GetDlgItem(hwndDlg, IDC_TEXT), NULL, TRUE);
 			}
 			break;
 		case IDC_BOLD:
 			{
-				P->bBold = IsDlgButtonChecked(hwndDlg, IDC_BOLD)!=BST_UNCHECKED;
+				P->bBold = IsDlgButtonChecked(hwndDlg, (int)wParam)!=BST_UNCHECKED;
 				//TODO: Сменить шрифт отрисовки
 			}
 			break;
 		case IDC_ITALIC:
 			{
-				P->bItalic = IsDlgButtonChecked(hwndDlg, IDC_ITALIC)!=BST_UNCHECKED;
+				P->bItalic = IsDlgButtonChecked(hwndDlg, (int)wParam)!=BST_UNCHECKED;
 				//TODO: Сменить шрифт отрисовки
 			}
 			break;
 		case IDC_UNDERLINE:
 			{
-				P->bUnderline = IsDlgButtonChecked(hwndDlg, IDC_UNDERLINE)!=BST_UNCHECKED;
+				P->bUnderline = IsDlgButtonChecked(hwndDlg, (int)wParam)!=BST_UNCHECKED;
 				//TODO: Сменить шрифт отрисовки
 			}
 			break;
@@ -990,7 +1095,11 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 	//TODO: + два (опциональных) флажка "Transparent" (и для фона и для текста)
 	//TODO: ChooseColor дергать по кнопкам "&Background color" "&Text color"
 
-	ColorParam Parm = {*Color, TRUE/*b4bitmode*/, Centered, AddTransparent,
+	ColorParam Parm = {*Color, 
+		FALSE/*bTrueColorEnabled*/,
+		(Color->Flags & FCF_FG_4BIT)==FCF_FG_4BIT/*b4bitfore*/,
+		(Color->Flags & FCF_BG_4BIT)==FCF_BG_4BIT/*b4bitback*/,
+		Centered, AddTransparent,
 		{0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
 		0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff},
 	};
@@ -1020,22 +1129,37 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 		CESERVER_CONSOLE_MAPPING_HDR *pHdr = (CESERVER_CONSOLE_MAPPING_HDR*)MapViewOfFile(hMap, FILE_MAP_READ,0,0,0);
 		if (pHdr)
 		{
+#if 1 // затычка для 110721
+			if (pHdr->cbSize == 2164 && pHdr->nProtocolVersion == 67 && IsWindow(pHdr->hConEmuWnd))
+			{
+				Parm.hGUI = pHdr->hConEmuWnd; // DC
+				if (!CheckBuffers())
+				{
+					MessageBoxA(NULL, MSG_NO_TRUEMOD_BUFFER, MSG_TITLE, MB_ICONSTOP|MB_SYSTEMMODAL);
+				}
+				else
+				{
+					Parm.bTrueColorEnabled = TRUE;
+				}
+			}
+			else
+#endif
 			if ((pHdr->cbSize < sizeof(*pHdr))
 				|| (pHdr->nProtocolVersion != CESERVER_REQ_VER) 
-				|| !IsWindow(pHdr->hConEmuRoot))
+				|| !IsWindow(pHdr->hConEmuWnd))
 			{
 				if ((pHdr->cbSize >= sizeof(*pHdr)) 
-					&& pHdr->hConEmuRoot && IsWindow(pHdr->hConEmuRoot)
-					&& IsWindowVisible(pHdr->hConEmuRoot))
+					&& pHdr->hConEmuWnd && IsWindow(pHdr->hConEmuWnd)
+					&& IsWindowVisible(pHdr->hConEmuWnd))
 				{
 					// Это все-таки может быть окно ConEmu
-					Parm.hGUI = pHdr->hConEmuRoot; //TODO: Заменить на DC?
+					Parm.hGUI = pHdr->hConEmuWnd; // DC
 				}
 				MessageBoxA(NULL, MSG_INVALID_CONEMU_VER, MSG_TITLE, MB_ICONSTOP|MB_SYSTEMMODAL);
 			}
 			else
 			{
-				Parm.hGUI = pHdr->hConEmuRoot; //TODO: Заменить на DC?
+				Parm.hGUI = pHdr->hConEmuWnd; // DC
 				if (!pHdr->bUseTrueColor)
 				{
 					MessageBoxA(NULL, MSG_TRUEMOD_DISABLED, MSG_TITLE, MB_ICONSTOP|MB_SYSTEMMODAL);
@@ -1046,7 +1170,7 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 				}
 				else
 				{
-					Parm.b4bitmode = FALSE;
+					Parm.bTrueColorEnabled = TRUE;
 				}
 			}
 			UnmapViewOfFile(pHdr);

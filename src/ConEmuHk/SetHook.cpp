@@ -72,11 +72,12 @@ DWORD   gnHookMainThreadId = 0;
 //extern const wchar_t *advapi32;// = L"Advapi32.dll";
 //extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32;
 
-const wchar_t *kernel32 = L"kernel32.dll";
-const wchar_t *user32   = L"user32.dll";
-const wchar_t *shell32  = L"shell32.dll";
-const wchar_t *advapi32 = L"Advapi32.dll";
-HMODULE ghKernel32 = NULL, ghUser32 = NULL, ghShell32 = NULL, ghAdvapi32 = NULL;
+const wchar_t *kernel32 = L"kernel32.dll",	*kernel32_noext = L"kernel32";
+const wchar_t *user32   = L"user32.dll",	*user32_noext   = L"user32";
+const wchar_t *shell32  = L"shell32.dll",	*shell32_noext  = L"shell32";
+const wchar_t *advapi32 = L"advapi32.dll",	*advapi32_noext = L"advapi32";
+const wchar_t *comdlg32 = L"comdlg32.dll",	*comdlg32_noext = L"comdlg32";
+HMODULE ghKernel32 = NULL, ghUser32 = NULL, ghShell32 = NULL, ghAdvapi32 = NULL, ghComdlg32 = NULL;
 
 //typedef LONG (WINAPI* RegCloseKey_t)(HKEY hKey);
 RegCloseKey_t RegCloseKey_f = NULL;
@@ -85,6 +86,58 @@ RegOpenKeyEx_t RegOpenKeyEx_f = NULL;
 //typedef LONG (WINAPI* RegCreateKeyEx_t(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition);
 RegCreateKeyEx_t RegCreateKeyEx_f = NULL;
 
+//typedef BOOL (WINAPI* OnChooseColorA_t)(LPCHOOSECOLORA lpcc);
+OnChooseColorA_t ChooseColorA_f = NULL;
+//typedef BOOL (WINAPI* OnChooseColorW_t)(LPCHOOSECOLORW lpcc);
+OnChooseColorW_t ChooseColorW_f = NULL;
+
+void CheckLoadedModule(LPCWSTR asModule)
+{
+	if (!asModule || !*asModule)
+		return;
+
+	struct PreloadFuncs {
+		LPCSTR	sFuncName;
+		void**	pFuncPtr;
+	};
+	struct {
+		LPCWSTR      sModule, sModuleNoExt;
+		HMODULE     *pModulePtr;
+		PreloadFuncs Funcs[5];
+	} Checks[] = {
+		{user32,	user32_noext,	&ghUser32},
+		{shell32,	shell32_noext,	&ghShell32},
+		{advapi32,	advapi32_noext,	&ghAdvapi32,
+			{{"RegOpenKeyExW", (void**)&RegOpenKeyEx_f},
+			 {"RegCreateKeyExW", (void**)&RegCreateKeyEx_f},
+			 {"RegCloseKey", (void**)&RegCloseKey_f}}
+		},
+		{comdlg32,	comdlg32_noext,	&ghComdlg32,
+			{{"ChooseColorA", (void**)&ChooseColorA_f},
+			 {"ChooseColorW", (void**)&ChooseColorW_f}}
+		},
+	};
+
+	for (int m = 0; m < countof(Checks); m++)
+	{
+		if ((*Checks[m].pModulePtr) != NULL)
+			continue;
+
+		if (!lstrcmpiW(asModule, Checks[m].sModule) || !lstrcmpiW(asModule, Checks[m].sModuleNoExt))
+		{
+			*Checks[m].pModulePtr = LoadLibraryW(Checks[m].sModule); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
+			if ((*Checks[m].pModulePtr) != NULL)
+			{
+				for (int f = 0; f < countof(Checks[m].Funcs); f++)
+				{
+					if (!Checks[m].Funcs[f].sFuncName)
+						break;
+					*Checks[m].Funcs[f].pFuncPtr = GetProcAddress(*Checks[m].pModulePtr, Checks[m].Funcs[f].sFuncName);
+				}
+			}
+		}
+	}
+}
 
 BOOL gbHooksTemporaryDisabled = FALSE;
 //BOOL gbInShellExecuteEx = FALSE;
@@ -301,7 +354,13 @@ bool __stdcall InitHooks(HookItem* apHooks)
 
 			if (mod == NULL)
 			{
-				_ASSERTE(mod != NULL || (gpHooks[i].DllName == shell32 || gpHooks[i].DllName == user32 || gpHooks[i].DllName == advapi32));
+				_ASSERTE(mod != NULL 
+					// Библиотеки, которые могут быть НЕ подлинкованы на старте
+					|| (gpHooks[i].DllName == shell32 
+						|| gpHooks[i].DllName == user32 
+						|| gpHooks[i].DllName == advapi32
+						|| gpHooks[i].DllName == comdlg32 
+						));
 			}
 			else
 			{
@@ -1163,42 +1222,6 @@ void PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		CheckProcessModules(module);
 	}
 
-	//if (!ghUser32)
-	//{
-	//	// Если на старте exe-шника user32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
-	//	if ((asModuleA && (!lstrcmpiA(asModuleA, "user32.dll") || !lstrcmpiA(asModuleA, "user32"))) ||
-	//		(asModuleW && (!lstrcmpiW(asModuleW, L"user32.dll") || !lstrcmpiW(asModuleW, L"user32"))))
-	//	{
-	//		ghUser32 = LoadLibraryW(user32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
-	//		//InitHooks(NULL); -- ниже и так будет выполнено
-	//	}
-	//}
-	//if (!ghShell32)
-	//{
-	//	// Если на старте exe-шника shell32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
-	//	if ((asModuleA && (!lstrcmpiA(asModuleA, "shell32.dll") || !lstrcmpiA(asModuleA, "shell32"))) ||
-	//		(asModuleW && (!lstrcmpiW(asModuleW, L"shell32.dll") || !lstrcmpiW(asModuleW, L"shell32"))))
-	//	{
-	//		ghShell32 = LoadLibraryW(shell32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
-	//		//InitHooks(NULL); -- ниже и так будет выполнено
-	//	}
-	//}
-	//if (!ghAdvapi32)
-	//{
-	//	// Если на старте exe-шника advapi32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
-	//	if ((asModuleA && (!lstrcmpiA(asModuleA, "advapi32.dll") || !lstrcmpiA(asModuleA, "advapi32"))) ||
-	//		(asModuleW && (!lstrcmpiW(asModuleW, L"advapi32.dll") || !lstrcmpiW(asModuleW, L"advapi32"))))
-	//	{
-	//		ghAdvapi32 = LoadLibraryW(advapi32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
-	//		if (ghAdvapi32)
-	//		{
-	//			RegOpenKeyEx_f = (RegOpenKeyEx_t)GetProcAddress(ghAdvapi32, "RegOpenKeyExW");
-	//			RegCreateKeyEx_f = (RegCreateKeyEx_t)GetProcAddress(ghAdvapi32, "RegCreateKeyExW");
-	//			RegCloseKey_f = (RegCloseKey_t)GetProcAddress(ghAdvapi32, "RegCloseKey");
-	//		}
-	//		//InitHooks(NULL); -- ниже и так будет выполнено
-	//	}
-	//}
 
 	// Некоторые перехватываемые библиотеки могли быть
 	// не загружены во время первичной инициализации
@@ -1223,39 +1246,40 @@ void CheckProcessModules(HMODULE hFromModule)
 	{
 		BOOL lbAddMod = FALSE;
 		do {
-			if (!ghUser32)
-			{
-				// Если на старте exe-шника user32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
-				if (*mi.szModule && (!lstrcmpiW(mi.szModule, L"user32.dll") || !lstrcmpiW(mi.szModule, L"user32")))
-				{
-					ghUser32 = LoadLibraryW(user32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
-					//InitHooks(NULL); -- ниже и так будет выполнено
-				}
-			}
-			if (!ghShell32)
-			{
-				// Если на старте exe-шника shell32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
-				if (*mi.szModule && (!lstrcmpiW(mi.szModule, L"shell32.dll") || !lstrcmpiW(mi.szModule, L"shell32")))
-				{
-					ghShell32 = LoadLibraryW(shell32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
-					//InitHooks(NULL); -- ниже и так будет выполнено
-				}
-			}
-			if (!ghAdvapi32)
-			{
-				// Если на старте exe-шника advapi32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
-				if (*mi.szModule && (!lstrcmpiW(mi.szModule, L"advapi32.dll") || !lstrcmpiW(mi.szModule, L"advapi32")))
-				{
-					ghAdvapi32 = LoadLibraryW(advapi32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
-					if (ghAdvapi32)
-					{
-						RegOpenKeyEx_f = (RegOpenKeyEx_t)GetProcAddress(ghAdvapi32, "RegOpenKeyExW");
-						RegCreateKeyEx_f = (RegCreateKeyEx_t)GetProcAddress(ghAdvapi32, "RegCreateKeyExW");
-						RegCloseKey_f = (RegCloseKey_t)GetProcAddress(ghAdvapi32, "RegCloseKey");
-					}
-					//InitHooks(NULL); -- ниже и так будет выполнено
-				}
-			}
+			CheckLoadedModule(mi.szModule);
+			//if (!ghUser32)
+			//{
+			//	// Если на старте exe-шника user32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
+			//	if (*mi.szModule && (!lstrcmpiW(mi.szModule, L"user32.dll") || !lstrcmpiW(mi.szModule, L"user32")))
+			//	{
+			//		ghUser32 = LoadLibraryW(user32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
+			//		//InitHooks(NULL); -- ниже и так будет выполнено
+			//	}
+			//}
+			//if (!ghShell32)
+			//{
+			//	// Если на старте exe-шника shell32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
+			//	if (*mi.szModule && (!lstrcmpiW(mi.szModule, L"shell32.dll") || !lstrcmpiW(mi.szModule, L"shell32")))
+			//	{
+			//		ghShell32 = LoadLibraryW(shell32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
+			//		//InitHooks(NULL); -- ниже и так будет выполнено
+			//	}
+			//}
+			//if (!ghAdvapi32)
+			//{
+			//	// Если на старте exe-шника advapi32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
+			//	if (*mi.szModule && (!lstrcmpiW(mi.szModule, L"advapi32.dll") || !lstrcmpiW(mi.szModule, L"advapi32")))
+			//	{
+			//		ghAdvapi32 = LoadLibraryW(advapi32); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
+			//		if (ghAdvapi32)
+			//		{
+			//			RegOpenKeyEx_f = (RegOpenKeyEx_t)GetProcAddress(ghAdvapi32, "RegOpenKeyExW");
+			//			RegCreateKeyEx_f = (RegCreateKeyEx_t)GetProcAddress(ghAdvapi32, "RegCreateKeyExW");
+			//			RegCloseKey_f = (RegCloseKey_t)GetProcAddress(ghAdvapi32, "RegCloseKey");
+			//		}
+			//		//InitHooks(NULL); -- ниже и так будет выполнено
+			//	}
+			//}
 
 			if (lbAddMod)
 			{
@@ -1300,17 +1324,17 @@ HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
 	if (gbHooksTemporaryDisabled)
 		return module;
 
-#if 0
+#if 1
 	#ifdef _WIN64
 	DWORD dwErrCode = 0;	
 	if (!module)
 	{
 		dwErrCode = GetLastError();
 		//TODO: Проверка кодов ошибок
-		if (lpFileName && (lstrcmpiW(lpFileName, L"console.dll") == 0))
+		if (lpFileName && (lstrcmpiW(lpFileName, L"extendedconsole.dll") == 0))
 		{
-			_ASSERTE(module!=NULL);
-			module = F(LoadLibraryW)(L"Console64.dll");
+			_ASSERTE(module!=NULL); // под отладчиком проверить 2 кода (отсутствует и неверная битность)
+			module = F(LoadLibraryW)(L"ExtendedConsole64.dll");
 		}
 	}
 	#endif
@@ -1485,6 +1509,8 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 					}
 				}
 			}
+			
+			TODO("Тоже на цикл переделать, как в CheckLoadedModule");
 
 			if (gfOnLibraryUnLoaded)
 			{
@@ -1504,6 +1530,15 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 					RegOpenKeyEx_f = NULL;
 					RegCreateKeyEx_f = NULL;
 					RegCloseKey_f = NULL;
+				}
+			}
+			
+			if (ghComdlg32 && (hModule == ghComdlg32))
+			{
+				if (GetModuleHandle(comdlg32) == NULL)
+				{
+					ChooseColorA_f = NULL;
+					ChooseColorW_f = NULL;
 				}
 			}
 		}

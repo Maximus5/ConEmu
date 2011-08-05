@@ -137,6 +137,8 @@ int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, in
 //typedef DWORD (WINAPI* GetProcessId_t)(HANDLE Process);
 GetProcessId_t gfGetProcessId = NULL;
 
+//BOOL gbShowOnSetForeground = FALSE;
+
 
 
 // Forward declarations of the hooks
@@ -181,7 +183,8 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID);
 #ifdef _DEBUG
 LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
 #endif
-
+BOOL WINAPI OnChooseColorA(LPCHOOSECOLORA lpcc);
+BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc);
 
 bool InitHooksCommon()
 {
@@ -256,6 +259,9 @@ bool InitHooksCommon()
 		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
 		{(void*)OnShellExecuteA,		"ShellExecuteA",		shell32},
 		{(void*)OnShellExecuteW,		"ShellExecuteW",		shell32},
+		/* ************************ */
+		{(void*)OnChooseColorA,			"ChooseColorA",			comdlg32},
+		{(void*)OnChooseColorW,			"ChooseColorW",			comdlg32},
 		/* ************************ */
 		{0}
 	};
@@ -442,6 +448,8 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	if (ghShell32) ghShell32 = LoadLibrary(shell32); // если подлинкован - увеличить счетчик
 	ghAdvapi32 = GetModuleHandle(advapi32);
 	if (ghAdvapi32) ghAdvapi32 = LoadLibrary(advapi32); // если подлинкован - увеличить счетчик
+	ghComdlg32 = GetModuleHandle(comdlg32);
+	if (ghComdlg32) ghComdlg32 = LoadLibrary(comdlg32); // если подлинкован - увеличить счетчик
 
 	if (ghKernel32)
 		gfGetProcessId = (GetProcessId_t)GetProcAddress(ghKernel32, "GetProcessId");
@@ -487,6 +495,11 @@ void ShutdownHooks()
 	{
 		FreeLibrary(ghAdvapi32);
 		ghAdvapi32 = NULL;
+	}
+	if (ghComdlg32)
+	{
+		FreeLibrary(ghComdlg32);
+		ghComdlg32 = NULL;
 	}
 }
 
@@ -863,7 +876,15 @@ BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
 
 	BOOL lbRc = FALSE;
 	if (F(SetForegroundWindow) != NULL)
+	{
 		lbRc = F(SetForegroundWindow)(hWnd);
+
+		//if (gbShowOnSetForeground && lbRc)
+		//{
+		//	if (IsWindow(hWnd) && !IsWindowVisible(hWnd))
+		//		ShowWindow(hWnd, SW_SHOW);
+		//}
+	}
 	return lbRc;
 }
 
@@ -1704,6 +1725,142 @@ BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffe
 		ph->PostCallBack(&args);
 	}
 
+	return lbRc;
+}
+
+typedef BOOL (WINAPI* SimpleApiFunction_t)(void*);
+struct SimpleApiFunctionArg
+{
+	enum SimpleApiFunctionType
+	{
+		sft_ChooseColorA = 1,
+		sft_ChooseColorW = 2,
+	} funcType;
+	SimpleApiFunction_t funcPtr;
+	void  *pArg;
+	BOOL   bResult;
+	DWORD  nLastError;
+};
+
+INT_PTR CALLBACK SimpleApiDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	SimpleApiFunctionArg* P = NULL;
+
+	typedef LONG_PTR (WINAPI* SetWindowLongPtr_t)(HWND,int,LONG_PTR);
+	SetWindowLongPtr_t SetWindowLongPtr_f = (SetWindowLongPtr_t)GetProcAddress(ghUser32,
+		#ifdef _WIN64
+		"SetWindowLongPtrW"
+		#else
+		"SetWindowLongW"
+		#endif
+		);
+	
+	if (uMsg == WM_INITDIALOG)
+	{
+		P = (SimpleApiFunctionArg*)lParam;
+		SetWindowLongPtr_f(hwndDlg, GWLP_USERDATA, lParam);
+		
+		typedef BOOL (WINAPI* GetWindowRect_t)(HWND,LPRECT);
+		GetWindowRect_t GetWindowRect_f = (GetWindowRect_t)GetProcAddress(ghUser32, "GetWindowRect");
+		typedef BOOL (WINAPI* SystemParametersInfo_t)(UINT,UINT,PVOID,UINT);
+		SystemParametersInfo_t SystemParametersInfo_f = (SystemParametersInfo_t)GetProcAddress(ghUser32, "SystemParametersInfoW");
+
+
+		int x = 0, y = 0;
+		RECT rcDC = {};
+		if (!GetWindowRect_f(ghConEmuWndDC, &rcDC))
+			SystemParametersInfo_f(SPI_GETWORKAREA, 0, &rcDC, 0);
+		if (rcDC.right > rcDC.left && rcDC.bottom > rcDC.top)
+		{
+			x = max(rcDC.left, ((rcDC.right+rcDC.left-300)>>1));
+			y = max(rcDC.top, ((rcDC.bottom+rcDC.top-200)>>1));
+		}
+		
+		typedef BOOL (WINAPI* SetWindowText_t)(HWND,LPCWSTR);
+		SetWindowText_t SetWindowText_f = (SetWindowText_t)GetProcAddress(ghUser32, "SetWindowTextW");
+
+		
+		switch (P->funcType)
+		{
+			case SimpleApiFunctionArg::sft_ChooseColorA:
+				((LPCHOOSECOLORA)P->pArg)->hwndOwner = hwndDlg;
+				SetWindowText_f(hwndDlg, L"ConEmu ColorPicker");
+				break;
+			case SimpleApiFunctionArg::sft_ChooseColorW:
+				((LPCHOOSECOLORW)P->pArg)->hwndOwner = hwndDlg;
+				SetWindowText_f(hwndDlg, L"ConEmu ColorPicker");
+				break;
+		}
+		
+		typedef BOOL (WINAPI* SetWindowPos_t)(HWND,HWND,int,int,int,int,UINT);
+		SetWindowPos_t SetWindowPos_f = (SetWindowPos_t)GetProcAddress(ghUser32, "SetWindowPos");
+		
+		SetWindowPos_f(hwndDlg, HWND_TOP, x, y, 0, 0, SWP_SHOWWINDOW);
+		
+		P->bResult = P->funcPtr(P->pArg);
+		P->nLastError = GetLastError();
+		
+		typedef BOOL (WINAPI* EndDialog_t)(HWND,INT_PTR);
+		EndDialog_t EndDialog_f = (EndDialog_t)GetProcAddress(ghUser32, "EndDialog");
+		EndDialog_f(hwndDlg, 1);
+		
+		return FALSE;
+	}
+
+	switch (uMsg)
+	{
+	case WM_GETMINMAXINFO:
+		{
+			MINMAXINFO* p = (MINMAXINFO*)lParam;
+			p->ptMinTrackSize.x = p->ptMinTrackSize.y = 0;
+			SetWindowLongPtr_f(hwndDlg, DWLP_MSGRESULT, 0);
+		}
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+BOOL MyChooseColor(SimpleApiFunction_t funcPtr, void* lpcc, BOOL abUnicode)
+{
+	BOOL lbRc = FALSE;
+	
+	DLGTEMPLATE* pTempl = (DLGTEMPLATE*)GlobalAlloc(GPTR, sizeof(DLGTEMPLATE)+3*sizeof(WORD));
+	pTempl->style = WS_POPUP|/*DS_MODALFRAME|DS_CENTER|*/DS_SETFOREGROUND;
+	
+	SimpleApiFunctionArg Arg =
+	{
+		abUnicode?SimpleApiFunctionArg::sft_ChooseColorW:SimpleApiFunctionArg::sft_ChooseColorA,
+		funcPtr, lpcc
+	};
+	
+	typedef INT_PTR (WINAPI* DialogBoxIndirectParam_t)(HINSTANCE,LPCDLGTEMPLATE,HWND,DLGPROC,LPARAM);
+	DialogBoxIndirectParam_t DialogBoxIndirectParam_f = (DialogBoxIndirectParam_t)GetProcAddress(ghUser32, "DialogBoxIndirectParamW");
+	
+	if (DialogBoxIndirectParam_f)
+	{
+		INT_PTR iRc = DialogBoxIndirectParam_f(ghHookOurModule, pTempl, NULL, SimpleApiDialogProc, (LPARAM)&Arg);
+		if (iRc == 1)
+		{
+			lbRc = Arg.bResult;
+			SetLastError(Arg.nLastError);
+		}
+	}
+	
+	return lbRc;
+}
+
+BOOL WINAPI OnChooseColorA(LPCHOOSECOLORA lpcc)
+{
+	ORIGINALFASTEX(ChooseColorA,ChooseColorA_f);
+	BOOL lbRc = MyChooseColor((SimpleApiFunction_t)F(ChooseColorA), lpcc, FALSE);
+	return lbRc;
+}
+
+BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc)
+{
+	ORIGINALFASTEX(ChooseColorW,ChooseColorW_f);
+	BOOL lbRc = MyChooseColor((SimpleApiFunction_t)F(ChooseColorW), lpcc, TRUE);
 	return lbRc;
 }
 

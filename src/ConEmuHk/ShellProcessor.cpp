@@ -657,6 +657,15 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		nCchSize = (nCchSize*2) + lstrlen(szDosBoxExe) + lstrlen(szDosBoxCfg) + 128 + MAX_PATH*2/*на cd и прочую фигню*/;
 	}
 
+	if (!FileExists(szConEmuC))
+	{
+		wchar_t szInfo[MAX_PATH+128], szTitle[64];
+		wcscpy_c(szInfo, L"ConEmu executable not found!\n");
+		wcscat_c(szInfo, szConEmuC);
+		msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%i", GetCurrentProcessId());
+		GuiMessageBox(ghConEmuWnd, szInfo, szTitle, MB_ICONSTOP);
+	}
+
 	if (aCmd == eShellExecute)
 	{
 		*psFile = lstrdup(szConEmuC);

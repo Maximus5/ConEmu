@@ -53,7 +53,7 @@ class TrayIcon
 		~TrayIcon();
 
 		void HideWindowToTray(LPCTSTR asInfoTip = NULL);
-		void RestoreWindowFromTray();
+		void RestoreWindowFromTray(BOOL abIconOnly = FALSE);
 		void LoadIcon(HWND inWnd, int inIconResource);
 		//void Delete();
 		void UpdateTitle();

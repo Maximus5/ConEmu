@@ -129,7 +129,7 @@ void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
 	{
 		apiShowWindow(ghWnd, SW_HIDE);
 	}
-	HMENU hMenu = GetSystemMenu(ghWnd, false);
+	HMENU hMenu = gpConEmu->GetSystemMenu(/*ghWnd, false*/);
 	SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_RESTORE_NAME);
 	mb_InHidingToTray = false;
 	//for (int i = 0; i < countof(mn_SysItemId); i++)
@@ -142,12 +142,15 @@ void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
 	//}
 }
 
-void TrayIcon::RestoreWindowFromTray()
+void TrayIcon::RestoreWindowFromTray(BOOL abIconOnly /*= FALSE*/)
 {
-	apiShowWindow(ghWnd, SW_SHOW);
-	apiSetForegroundWindow(ghWnd);
+	if (!abIconOnly)
+	{
+		apiShowWindow(ghWnd, SW_SHOW);
+		apiSetForegroundWindow(ghWnd);
+	}
 	//EnableMenuItem(GetSystemMenu(ghWnd, false), ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
-	HMENU hMenu = GetSystemMenu(ghWnd, false);
+	HMENU hMenu = gpConEmu->GetSystemMenu(/*ghWnd, false*/);
 	SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_HIDE_NAME);
 
 	//for (int i = 0; i < countof(mn_SysItemId); i++)
@@ -195,8 +198,8 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		{
 			POINT mPos;
 			GetCursorPos(&mPos);
-			apiSetForegroundWindow(hWnd);
-			gpConEmu->ShowSysmenu(hWnd, mPos.x, mPos.y);
+			apiSetForegroundWindow(ghWnd);
+			gpConEmu->ShowSysmenu(mPos.x, mPos.y);
 			PostMessage(hWnd, WM_NULL, 0, 0);
 		}
 		break;

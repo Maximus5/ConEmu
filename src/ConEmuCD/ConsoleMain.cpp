@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
 //  #define SHOW_INJECT_MSGBOX
+//	#define SHOW_ATTACH_MSGBOX
 #elif defined(__GNUC__)
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
@@ -199,7 +200,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			#endif
 
 			#ifdef SHOW_STARTED_MSGBOX
-			if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuHk*.dll loaded", "ConEmu hooks", 0);
+			if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuCD*.dll loaded", "ConEmu server", 0);
 			#endif
 			#ifdef _DEBUG
 			DWORD dwConMode = -1;
@@ -580,7 +581,7 @@ int __stdcall ConsoleMain()
 		_printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr);
 		iRc = CERR_EXITEVENT; goto wrap;
 	}
-
+ 
 	ResetEvent(ghExitQueryEvent);
 	ghQuitEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
 
@@ -1739,6 +1740,15 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		}
 		else if (wcscmp(szArg, L"/ATTACH")==0)
 		{
+			#if defined(SHOW_ATTACH_MSGBOX)
+			if (!IsDebuggerPresent())
+			{
+				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC Loaded (PID=%i)", gnSelfPID);
+				const wchar_t* pszCmdLine = GetCommandLineW();
+				MessageBox(NULL,pszCmdLine,szTitle,0);
+			}
+			#endif
+
 			gbAttachMode = TRUE;
 			gnRunMode = RM_SERVER;
 		}

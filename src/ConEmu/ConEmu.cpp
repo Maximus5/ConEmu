@@ -122,11 +122,12 @@ CConEmuMain::CConEmuMain()
 	//HeapInitialize(); - уже
 	//#define D(N) (1##N-100)
 	_wsprintf(ms_ConEmuVer, SKIPLEN(countof(ms_ConEmuVer)) L"ConEmu %02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
-	mp_TabBar = NULL;
+	mp_TabBar = NULL; m_Child = NULL; m_Back = NULL; m_Macro = NULL;
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
 	mn_MainThreadId = GetCurrentThreadId();
 	wcscpy_c(szConEmuVersion, L"?.?.?.?");
 	WindowMode=rNormal; mb_PassSysCommand = false; change2WindowMode = -1;
+	mb_ExternalHidden = FALSE;
 	memset(&mrc_StoredNormalRect, 0, sizeof(mrc_StoredNormalRect));
 	isWndNotFSMaximized = false;
 	mb_StartDetached = FALSE;
@@ -165,8 +166,8 @@ CConEmuMain::CConEmuMain()
 	mn_MinRestoreRegistered = 0; mn_MinRestore_VK = mn_MinRestore_MOD = 0;
 	mh_LLKeyHookDll = NULL;
 	mh_LLKeyHook = NULL;
-	mh_DwmApi = NULL;
-	mh_RightClickingBmp = NULL; mh_RightClickingDC = NULL;
+	mh_DwmApi = NULL; DwmIsCompositionEnabled = NULL;
+	mh_RightClickingBmp = NULL; mh_RightClickingDC = NULL; mb_RightClickingPaint = FALSE;
 	m_RightClickingSize.x = m_RightClickingSize.y = m_RightClickingFrames = 0; m_RightClickingCurrent = -1;
 	mb_WaitCursor = FALSE;
 	mb_InTrackSysMenu = FALSE;
@@ -175,6 +176,7 @@ CConEmuMain::CConEmuMain()
 	mh_CursorWait = LoadCursor(NULL, IDC_WAIT);
 	mh_CursorArrow = LoadCursor(NULL, IDC_ARROW);
 	mh_CursorMove = LoadCursor(NULL, IDC_SIZEALL);
+	mh_DragCursor = NULL;
 	mh_CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
 	// g_hInstance еще не инициализирован
 	mh_SplitV = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITV));
@@ -356,7 +358,7 @@ CConEmuMain::CConEmuMain()
 	
 	// Портабельный реестр для фара?
 	mb_PortableRegExist = FALSE;
-	ms_PortableReg[0] = ms_PortableRegHive[0] = ms_PortableMountKey[0] = 0;
+	ms_PortableReg[0] = ms_PortableRegHive[0] = ms_PortableRegHiveOrg[0] = ms_PortableMountKey[0] = 0;
 	mb_PortableKeyMounted = FALSE;
 	ms_PortableTempDir[0] = 0;
 	mh_PortableMountRoot = mh_PortableRoot = NULL;
@@ -608,6 +610,41 @@ RECT CConEmuMain::GetVirtualScreenRect(BOOL abFullScreen)
 	}
 
 	return rcScreen;
+}
+
+HMENU CConEmuMain::GetSystemMenu(BOOL abInitial /*= FALSE*/)
+{
+	HMENU hwndMain = ::GetSystemMenu(ghWnd, FALSE), hDebug = NULL;
+	MENUITEMINFO mi = {sizeof(mi), MIIM_DATA};
+	wchar_t szText[255];
+	mi.dwTypeData = szText;
+	mi.cch = countof(szText);
+
+	// В результате работы некоторых недобросовествных программ может сбиваться настроенное системное меню
+	if (!GetMenuItemInfo(hwndMain, ID_NEWCONSOLE, FALSE, &mi))
+	{
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
+		InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About"));
+
+		if (ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
+			InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
+
+		InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+		hDebug = CreateDebugMenuPopup();
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
+		PopulateEditMenuPopup(hwndMain);
+		InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
+			ID_ALWAYSONTOP, _T("Al&ways on top"));
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->AutoScroll ? MF_CHECKED : 0),
+			ID_AUTOSCROLL, _T("Auto scro&ll"));
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_NEWCONSOLE, _T("&New console..."));
+	}
+
+	return hwndMain;
 }
 
 // Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE
@@ -5204,10 +5241,10 @@ LRESULT CConEmuMain::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 	return 0;
 }
 
-void CConEmuMain::ShowSysmenu(HWND Wnd, int x, int y)
+void CConEmuMain::ShowSysmenu(int x, int y)
 {
-	if (!Wnd)
-		Wnd = ghWnd;
+	//if (!Wnd)
+	//	Wnd = ghWnd;
 
 	if ((x == -32000) || (y == -32000))
 	{
@@ -5228,9 +5265,9 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, int x, int y)
 
 	bool iconic = isIconic();
 	bool zoomed = isZoomed();
-	bool visible = IsWindowVisible(Wnd);
-	int style = GetWindowLong(Wnd, GWL_STYLE);
-	HMENU systemMenu = GetSystemMenu(Wnd, false);
+	bool visible = IsWindowVisible(ghWnd);
+	int style = GetWindowLong(ghWnd, GWL_STYLE);
+	HMENU systemMenu = GetSystemMenu();
 
 	if (!systemMenu)
 		return;
@@ -5246,14 +5283,14 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, int x, int y)
 	EnableMenuItem(systemMenu, SC_MAXIMIZE,
 	               MF_BYCOMMAND | ((visible && (!zoomed && (style & WS_MAXIMIZEBOX))) ? MF_ENABLED : MF_GRAYED));
 	EnableMenuItem(systemMenu, ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
-	SendMessage(Wnd, WM_INITMENU, (WPARAM)systemMenu, 0);
-	SendMessage(Wnd, WM_INITMENUPOPUP, (WPARAM)systemMenu, MAKELPARAM(0, true));
+	SendMessage(ghWnd, WM_INITMENU, (WPARAM)systemMenu, 0);
+	SendMessage(ghWnd, WM_INITMENUPOPUP, (WPARAM)systemMenu, MAKELPARAM(0, true));
 	// Переехало в OnMenuPopup
 	//BOOL bSelectionExist = ActiveCon()->RCon()->isSelectionPresent();
 	//EnableMenuItem(systemMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
-	SetActiveWindow(Wnd);
+	SetActiveWindow(ghWnd);
 	mb_InTrackSysMenu = TRUE;
-	int command = TrackPopupMenu(systemMenu, TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, x, y, 0, Wnd, NULL);
+	int command = TrackPopupMenu(systemMenu, TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, x, y, 0, ghWnd, NULL);
 	mb_InTrackSysMenu = FALSE;
 
 	if (Icon.isWindowInTray())
@@ -5264,12 +5301,12 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, int x, int y)
 			case SC_SIZE:
 			case SC_MINIMIZE:
 			case SC_MAXIMIZE:
-				SendMessage(Wnd, WM_TRAYNOTIFY, 0, WM_LBUTTONDOWN);
+				SendMessage(ghWnd, WM_TRAYNOTIFY, 0, WM_LBUTTONDOWN);
 				break;
 		}
 
 	if (command)
-		PostMessage(Wnd, WM_SYSCOMMAND, (WPARAM)command, 0);
+		PostMessage(ghWnd, WM_SYSCOMMAND, (WPARAM)command, 0);
 }
 
 void CConEmuMain::StartDebugLogConsole()
@@ -6011,6 +6048,8 @@ LRESULT CConEmuMain::OnNcMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 				break;
 			}
 			default:
+				if (messg == WM_NCLBUTTONDOWN && wParam == HTSYSMENU)
+					GetSystemMenu(); // Проверить корректность системного меню
 				lRc = DefWindowProc(hWnd, messg, wParam, lParam);
 		}
 	}
@@ -7094,26 +7133,30 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//}
 	// Установить переменную среды с дескриптором окна
 	SetConEmuEnvVar(ghWndDC);
-	HMENU hwndMain = GetSystemMenu(ghWnd, FALSE), hDebug = NULL;
-	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
-	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
-	InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About"));
 
-	if (ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
-		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
+	// Сформировать или обновить системное меню
+	GetSystemMenu(TRUE);
 
-	InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-	hDebug = CreateDebugMenuPopup();
-	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
-	PopulateEditMenuPopup(hwndMain);
-	InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
-	           ID_ALWAYSONTOP, _T("Al&ways on top"));
-	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->AutoScroll ? MF_CHECKED : 0),
-	           ID_AUTOSCROLL, _T("Auto scro&ll"));
-	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
-	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_NEWCONSOLE, _T("&New console..."));
+	//HMENU hwndMain = GetSystemMenu(ghWnd, FALSE), hDebug = NULL;
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About"));
+
+	//if (ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
+	//	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
+
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+	//hDebug = CreateDebugMenuPopup();
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
+	//PopulateEditMenuPopup(hwndMain);
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
+	//           ID_ALWAYSONTOP, _T("Al&ways on top"));
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->AutoScroll ? MF_CHECKED : 0),
+	//           ID_AUTOSCROLL, _T("Auto scro&ll"));
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_NEWCONSOLE, _T("&New console..."));
 #ifdef _DEBUG
 	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 #endif
@@ -10597,7 +10640,7 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::OnAlwaysOnTop()
 {
-	CheckMenuItem(GetSystemMenu(ghWnd, FALSE), ID_ALWAYSONTOP, MF_BYCOMMAND |
+	CheckMenuItem(gpConEmu->GetSystemMenu(), ID_ALWAYSONTOP, MF_BYCOMMAND |
 	              (gpSet->isAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
 	SetWindowPos(ghWnd, (gpSet->isAlwaysOnTop || gpSet->isDesktopMode) ? HWND_TOPMOST : HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
@@ -10775,7 +10818,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			return 0;
 		case ID_AUTOSCROLL:
 			gpSet->AutoScroll = !gpSet->AutoScroll;
-			CheckMenuItem(GetSystemMenu(ghWnd, FALSE), ID_AUTOSCROLL, MF_BYCOMMAND |
+			CheckMenuItem(gpConEmu->GetSystemMenu(), ID_AUTOSCROLL, MF_BYCOMMAND |
 			              (gpSet->AutoScroll ? MF_CHECKED : MF_UNCHECKED));
 			return 0;
 		case ID_ALWAYSONTOP:
@@ -10899,7 +10942,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		case ID_CONPROP:
 #ifdef MSGLOGGER
 			{
-				HMENU hMenu = GetSystemMenu(ghConWnd, FALSE);
+				HMENU hMenu = ::GetSystemMenu(ghConWnd, FALSE);
 				MENUITEMINFO mii; TCHAR szText[255];
 
 				for(int i=0; i<15; i++)
@@ -11896,8 +11939,15 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				if (!Icon.isWindowInTray() && !Icon.isHidingToTray())
 				{
 					//_ASSERTE(Icon.isHidingToTray());
-					Icon.HideWindowToTray(_T("ConEmu was hidden from some program"));
+					Icon.HideWindowToTray(gpSet->isDownShowHiddenMessage ? NULL : _T("ConEmu was hidden from some program"));
+					gpConEmu->mb_ExternalHidden = TRUE;
 				}
+			}
+			else
+			{
+				if (gpConEmu->mb_ExternalHidden)
+					Icon.RestoreWindowFromTray(TRUE);
+				gpConEmu->mb_ExternalHidden = FALSE;
 			}
 		} break;
 //#endif

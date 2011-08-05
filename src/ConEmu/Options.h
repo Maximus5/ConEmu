@@ -164,6 +164,7 @@ class CSettings
 		bool isHideCaptionAlways();
 		BYTE nHideCaptionAlwaysFrame;
 		DWORD nHideCaptionAlwaysDelay, nHideCaptionAlwaysDisappear;
+		bool isDownShowHiddenMessage;
 		bool isAlwaysOnTop, isDesktopMode;
 		BYTE isFixFarBorders;
 		bool isExtendUCharMap;

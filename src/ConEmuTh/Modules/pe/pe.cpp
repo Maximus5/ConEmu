@@ -2805,7 +2805,7 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 	BOOL lbDosCom = FALSE;
 	//TODO: Если появится возможность просмотра нескольких байт - хорошо бы это делать один раз на пачку плагинов?
 	if (lstrcmpiW(pszDot, L".exe") && lstrcmpiW(pszDot, L".com")
-		&& lstrcmpiW(pszDot, L".dll") && lstrcmpiW(pszDot, L".dl_") && lstrcmpiW(pszDot, L".dl")
+		&& lstrcmpiW(pszDot, L".dll") && lstrcmpiW(pszDot, L".sys") && lstrcmpiW(pszDot, L".dl_") && lstrcmpiW(pszDot, L".dl")
 		&& lstrcmpiW(pszDot, L".pvd") && lstrcmpiW(pszDot, L".so") && lstrcmpiW(pszDot, L".fmt")
 		&& lstrcmpiW(pszDot, L".module") && lstrcmpiW(pszDot, L".fll") && lstrcmpiW(pszDot, L".ahp")
 		&& lstrcmpiW(pszDot, L".mui") && lstrcmpiW(pszDot, L".arx") && lstrcmpiW(pszDot, L".sfx") 

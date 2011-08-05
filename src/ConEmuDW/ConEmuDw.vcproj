@@ -63,15 +63,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile=".\Test\Console.dll"
+				OutputFile="\Far3.2110\ExtendedConsole.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -147,9 +149,11 @@
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="17"
 			/>
 			<Tool
@@ -222,7 +226,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="../common/libCRT.lib chkstk.obj kernel32.lib user32.lib gdi32.lib"
-				OutputFile=".\Test\Console.dll"
+				OutputFile="..\..\Release\ExtendedConsole.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="export.def"
@@ -230,9 +234,11 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -303,7 +309,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile=".\Test\Console64.dll"
+				OutputFile="..\..\Release\ExtendedConsole64.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -311,9 +317,11 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="17"
 			/>
 			<Tool
@@ -388,9 +396,11 @@
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -466,9 +476,11 @@
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="17"
 			/>
 			<Tool
@@ -543,9 +555,11 @@
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -622,9 +636,11 @@
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="17"
 			/>
 			<Tool
@@ -699,9 +715,11 @@
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -778,9 +796,11 @@
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="17"
 			/>
 			<Tool
@@ -859,9 +879,11 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -940,9 +962,11 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="17"
 			/>
 			<Tool
@@ -1020,9 +1044,11 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="1"
 				Profile="true"
 			/>
@@ -1102,9 +1128,11 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="17"
 			/>
 			<Tool
@@ -1179,9 +1207,11 @@
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -1258,9 +1288,11 @@
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="17"
 			/>
 			<Tool
@@ -1332,16 +1364,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="Far3.2110\Console.dll"
+				OutputFile="\Far3.2110\ExtendedConsole.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				EntryPointSymbol="DllMain"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -1414,16 +1447,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="Far3.2110\Console64.dll"
+				OutputFile="\Far3.2110\ExtendedConsole64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				EntryPointSymbol="DllMain"
-				BaseAddress="0x6F110000"
-				RandomizedBaseAddress="1"
-				FixedBaseAddress="1"
+				EntryPointSymbol=""
+				BaseAddress=""
+				RandomizedBaseAddress="2"
+				FixedBaseAddress="0"
+				ImportLibrary=""
 				TargetMachine="17"
 			/>
 			<Tool
@@ -1457,6 +1491,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath="..\common\ConEmuColors3.h"
+				>
+			</File>
 			<File
 				RelativePath=".\ConEmuDw.h"
 				>
