@@ -409,7 +409,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)
 
 			if (Item >= 1 && Item <= 8)
 			{
-				nID = Item - 1; // Будет сразу выполнена команда
+				nID = Item; // Будет сразу выполнена команда
 			}
 			else if (Item >= SETWND_CALLPLUGIN_BASE)
 			{
@@ -5455,6 +5455,22 @@ void ShowPluginMenu(int nID /*= -1*/)
 {
 	int nItem = -1;
 
+	enum {
+		menu_EditConsoleOutput = 0,
+		menu_ViewConsoleOutput,
+		menu_Separator1,
+		menu_SwitchTabVisible,
+		menu_SwitchTabNext,
+		menu_SwitchTabPrev,
+		menu_SwitchTabCommit,
+		menu_Separator2,
+		menu_ConEmuMacro, // должен вызываться "по настоящему", а не через callplugin
+		menu_Separator3,
+		menu_AttachToConEmu,
+		menu_Separator4,
+		menu_StartDebug,
+	};
+
 	if (!FarHwnd)
 	{
 		ShowMessage(CEInvalidConHwnd,1); // "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL\nOK"
@@ -5471,15 +5487,29 @@ void ShowPluginMenu(int nID /*= -1*/)
 
 	if (nID != -1)
 	{
-		nItem = nID;
-
-		if (nItem >= 2) nItem++;  //Separator
-
-		if (nItem >= 7) nItem+=3;  //Separator + GuiMacro + Separator
-
-		if (nItem >= 9) nItem++;  //Separator
-
-		if (nItem >= 11) nItem++;  //Separator
+		// Команды CallPlugin
+		switch (nID)
+		{
+		case 1:
+			nItem = menu_EditConsoleOutput; break;
+		case 2:
+			nItem = menu_ViewConsoleOutput; break;
+		case 3:
+			nItem = menu_SwitchTabVisible; break;
+		case 4:
+			nItem = menu_SwitchTabNext; break;
+		case 5:
+			nItem = menu_SwitchTabPrev; break;
+		case 6:
+			nItem = menu_SwitchTabCommit; break;
+		case 7:
+			nItem = menu_AttachToConEmu; break;
+		case 8:
+			nItem = menu_StartDebug; break;
+		default:
+			_ASSERTE(nID>=1 && nID<=8);
+			break;
+		}
 
 		SHOWDBGINFO(L"*** ShowPluginMenu used default item\n");
 	}
@@ -5512,7 +5542,8 @@ void ShowPluginMenu(int nID /*= -1*/)
 
 	switch(nItem)
 	{
-		case 0: case 1:
+		case menu_EditConsoleOutput:
+		case menu_ViewConsoleOutput:
 		{
 			// Открыть в редакторе вывод последней консольной программы
 			CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(sizeof(CESERVER_REQ_HDR)+4,1);
@@ -5548,17 +5579,19 @@ void ShowPluginMenu(int nID /*= -1*/)
 
 			free(pIn);
 		} break;
-		case 3: // Показать/спрятать табы
-		case 4: case 5: case 6:
+		case menu_SwitchTabVisible: // Показать/спрятать табы
+		case menu_SwitchTabNext:
+		case menu_SwitchTabPrev:
+		case menu_SwitchTabCommit:
 		{
 			CESERVER_REQ in, *pOut = NULL;
 			ExecutePrepareCmd(&in, CECMD_TABSCMD, sizeof(CESERVER_REQ_HDR)+1);
-			in.Data[0] = nItem - 3;
+			in.Data[0] = nItem - menu_SwitchTabVisible;
 			pOut = ExecuteGuiCmd(FarHwnd, &in, FarHwnd);
 
 			if (pOut) ExecuteFreeResult(pOut);
 		} break;
-		case 8: // Execute GUI macro (gialog)
+		case menu_ConEmuMacro: // Execute GUI macro (gialog)
 		{
 			if (gFarVersion.dwVerMajor==1)
 				GuiMacroDlgA();
@@ -5567,7 +5600,7 @@ void ShowPluginMenu(int nID /*= -1*/)
 			else
 				FUNC_X(GuiMacroDlgW)();
 		} break;
-		case 10: // Attach to GUI (если FAR был CtrlAltTab)
+		case menu_AttachToConEmu: // Attach to GUI (если FAR был CtrlAltTab)
 		{
 			if (TerminalMode) break;  // низзя
 
@@ -5578,13 +5611,13 @@ void ShowPluginMenu(int nID /*= -1*/)
 		//#ifdef _DEBUG
 		//case 11: // Start "ConEmuC.exe /DEBUGPID="
 		//#else
-		case 12: // Start "ConEmuC.exe /DEBUGPID="
+		case menu_StartDebug: // Start "ConEmuC.exe /DEBUGPID="
 			//#endif
 		{
 			if (TerminalMode) break;  // низзя
 
 			StartDebugger();
-		}
+		} break;
 	}
 }
 

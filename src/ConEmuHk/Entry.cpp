@@ -423,6 +423,8 @@ void DllStop()
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
+	BOOL lbAllow = TRUE;
+
 	switch(ul_reason_for_call)
 	{
 		case DLL_PROCESS_ATTACH:
@@ -498,12 +500,14 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		
 		case DLL_PROCESS_DETACH:
 		{
+			if (gbHooksWasSet)
+				lbAllow = FALSE; // Иначе свалимся, т.к. FreeLibrary перехвачена
 			DllStop();
 		}
 		break;
 	}
 
-	return TRUE;
+	return lbAllow;
 }
 
 #if defined(CRTSTARTUP)

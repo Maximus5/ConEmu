@@ -1853,14 +1853,22 @@ BOOL MyChooseColor(SimpleApiFunction_t funcPtr, void* lpcc, BOOL abUnicode)
 BOOL WINAPI OnChooseColorA(LPCHOOSECOLORA lpcc)
 {
 	ORIGINALFASTEX(ChooseColorA,ChooseColorA_f);
-	BOOL lbRc = MyChooseColor((SimpleApiFunction_t)F(ChooseColorA), lpcc, FALSE);
+	BOOL lbRc;
+	if (lpcc->hwndOwner == NULL || lpcc->hwndOwner == GetConsoleWindow())
+		lbRc = MyChooseColor((SimpleApiFunction_t)F(ChooseColorA), lpcc, FALSE);
+	else
+		lbRc = F(ChooseColorA)(lpcc);
 	return lbRc;
 }
 
 BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc)
 {
 	ORIGINALFASTEX(ChooseColorW,ChooseColorW_f);
-	BOOL lbRc = MyChooseColor((SimpleApiFunction_t)F(ChooseColorW), lpcc, TRUE);
+	BOOL lbRc;
+ 	if (lpcc->hwndOwner == NULL || lpcc->hwndOwner == GetConsoleWindow())
+		lbRc = MyChooseColor((SimpleApiFunction_t)F(ChooseColorW), lpcc, TRUE);
+	else
+		lbRc = F(ChooseColorW)(lpcc);
 	return lbRc;
 }
 

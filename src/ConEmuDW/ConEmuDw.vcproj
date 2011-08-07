@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuDw"
 	ProjectGUID="{0F3AA494-98BA-425A-941D-AC18C29EFC15}"
 	RootNamespace="ConEmuDw"
@@ -291,8 +291,9 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;CONEMU_MINIMAL"
+				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;CONEMU_MINIMAL;CRTSTARTUP"
 				RuntimeLibrary="0"
+				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -309,9 +310,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="../common/libCRT64.lib chkstk.obj kernel32.lib user32.lib gdi32.lib"
 				OutputFile="..\..\Release\ExtendedConsole64.dll"
 				LinkIncremental="1"
-				IgnoreAllDefaultLibraries="false"
+				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"

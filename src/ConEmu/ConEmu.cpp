@@ -5324,11 +5324,51 @@ void CConEmuMain::StartDebugLogConsole()
 	si.cb = sizeof(si);
 	DWORD dwSelfPID = GetCurrentProcessId();
 	// "/ATTACH" - низя, а то заблокируемся при попытке подключения к "отлаживаемому" GUI
-	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%i /BW=80 /BH=25 /BZ=1000",
+	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%i /BW=80 /BH=25 /BZ=9999",
 	          ms_ConEmuCExeFull, dwSelfPID);
 
 	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL,
 	                  NULL, &si, &pi))
+	{
+		// Хорошо бы ошибку показать?
+		DWORD dwErr = GetLastError();
+		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create debugger console! ErrCode=0x%08X", dwErr);
+		MBoxA(szErr);
+	}
+	else
+	{
+		gbDebugLogStarted = TRUE;
+		lbRc = TRUE;
+	}
+}
+
+void CConEmuMain::StartDebugActiveProcess()
+{
+	CRealConsole* pRCon = ActiveCon()->RCon();
+	if (!pRCon)
+		return;
+	DWORD dwPID = pRCon->GetActivePID();
+	if (!dwPID)
+		return;
+
+	// Create process, with flag /Attach GetCurrentProcessId()
+	// Sleep for sometimes, try InitHWND(hConWnd); several times
+	WCHAR  szExe[0x400] = {0};
+	BOOL lbRc = FALSE;
+	//DWORD nLen = 0;
+	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+	STARTUPINFO si = {sizeof(si)};
+	WARNING("Наверное лучше переделать на CreateCon...");
+	si.dwFlags |= STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_HIDE;
+	DWORD dwSelfPID = GetCurrentProcessId();
+	int W = pRCon->TextWidth();
+	int H = pRCon->TextHeight();
+	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%i /BW=%i /BH=%i /BZ=9999 /ROOT \"%s\" /DEBUGPID=%i ",
+		ms_ConEmuCExeFull, dwSelfPID, W, H, ms_ConEmuCExeFull, dwPID);
+
+	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL,
+		NULL, &si, &pi))
 	{
 		// Хорошо бы ошибку показать?
 		DWORD dwErr = GetLastError();
@@ -7077,6 +7117,7 @@ HMENU CConEmuMain::CreateDebugMenuPopup()
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump screen..."));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGGUI, _T("Debug &log (GUI)"));
+	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGCON, _T("Debug &active process"));
 //#ifdef _DEBUG
 //	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_MONITOR_SHELLACTIVITY, _T("Enable &shell log..."));
 //#endif
@@ -10840,6 +10881,9 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			//break;
 		case ID_DEBUGGUI:
 			StartDebugLogConsole();
+			return 0;
+		case ID_DEBUGCON:
+			StartDebugActiveProcess();
 			return 0;
 		//case ID_MONITOR_SHELLACTIVITY:
 		//{

@@ -118,6 +118,7 @@ HANDLE  ghExitQueryEvent = NULL; int nExitQueryPlace = 0, nExitPlaceStep = 0, nE
 HANDLE  ghQuitEvent = NULL;
 bool    gbQuit = false;
 BOOL	gbInShutdown = FALSE;
+BOOL    gbCtrlBreakStopWaitingShown = FALSE;
 BOOL	gbTerminateOnCtrlBreak = FALSE;
 int     gnConfirmExitParm = 0; // 1 - CONFIRM, 2 - NOCONFIRM
 BOOL    gbAlwaysConfirmExit = FALSE;
@@ -942,6 +943,7 @@ int __stdcall ConsoleMain()
 				if (!gbInShutdown)
 				{
 					gbTerminateOnCtrlBreak = TRUE;
+					gbCtrlBreakStopWaitingShown = TRUE;
 					_printf("Process was not attached to console. Is it GUI?\nCommand to be executed:\n");
 					_wprintf(gpszRunCmd);
 					_printf("\n\nPress Ctrl+Break to stop waiting\n");
@@ -958,6 +960,8 @@ int __stdcall ConsoleMain()
 					}
 				}
 
+				// Что-то при загрузке компа иногда все-таки не дожидается, когда процесс в консоли появится
+				_ASSERTE(FALSE && gbTerminateOnCtrlBreak && gbInShutdown);
 				iRc = CERR_PROCESSTIMEOUT; goto wrap;
 			}
 		}
@@ -994,10 +998,13 @@ wait:
 			while(nWait == WAIT_TIMEOUT)
 			{
 				nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, 100);
+				// Что-то при загрузке компа иногда все-таки не дожидается, когда процесс в консоли появится
+				_ASSERTE(!(gbCtrlBreakStopWaitingShown && (nWait != WAIT_TIMEOUT)));
 			}
 
 #else
 			nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, INFINITE);
+			_ASSERTE(!(gbCtrlBreakStopWaitingShown && (nWait != WAIT_TIMEOUT)));
 #endif
 		}
 		else
@@ -3730,7 +3737,27 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	if (!DebugActiveProcess(gpSrv->dwRootProcess))
 	{
 		DWORD dwErr = GetLastError();
-		_printf("Can't start debugger! ErrCode=0x%08X\n", dwErr);
+		wchar_t szInfo[1024];
+		wchar_t szProc[64]; szProc[0] = 0;
+		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+		if (hSnap != INVALID_HANDLE_VALUE)
+		{
+			PROCESSENTRY32 pi = {sizeof(pi)};
+			if (Process32First(hSnap, &pi))
+			{
+				while (pi.th32ProcessID != gpSrv->dwRootProcess)
+				{
+					if (!Process32Next(hSnap, &pi))
+						break;
+				}
+				if (pi.th32ProcessID == gpSrv->dwRootProcess)
+					_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
+			}
+			CloseHandle(hSnap);
+		}
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't attach debugger to '%s' PID=%i. ErrCode=0x%08X\n",
+			szProc[0] ? szProc : L"not found", gpSrv->dwRootProcess, dwErr);
+		_wprintf(szInfo);
 		return CERR_CANTSTARTDEBUGGER;
 	}
 

@@ -1667,7 +1667,8 @@ HWND Attach2Gui(DWORD nTimeout)
 
 				// В принципе, консоль может действительно запуститься видимой. В этом случае ее скрывать не нужно
 				// Но скорее всего, консоль запущенная под Админом в Win7 будет отображена ошибочно
-				if (gbForceHideConWnd)
+				// 110807 - Если gbAttachMode, тоже консоль нужно спрятать
+				if (gbForceHideConWnd || gbAttachMode)
 					apiShowWindow(ghConWnd, SW_HIDE);
 
 				// Установить шрифт в консоли
@@ -2223,10 +2224,9 @@ static BOOL ReadConsoleInfo()
 		if (gpSrv->sbi.dwSize.Y > (max(gcrBufferSize.Y,nWndHeight)+200)
 		        || (gpSrv->nRequestChangeSize && gpSrv->nReqSizeBufferHeight))
 		{
-			// Приложение изменило размер буфера
-			gnBufferHeight = gpSrv->nReqSizeBufferHeight;
+			// Приложение изменило размер буфера!
 
-			if (!gnBufferHeight)
+			if (!gpSrv->nReqSizeBufferHeight)
 			{
 				#ifdef _DEBUG
 				EmergencyShow();
@@ -2234,7 +2234,10 @@ static BOOL ReadConsoleInfo()
 				WARNING("###: Приложение изменило вертикальный размер буфера");
 				_ASSERTE(gpSrv->sbi.dwSize.Y <= 200);
 				DEBUGLOGSIZE(L"!!! gpSrv->sbi.dwSize.Y > 200 !!! in ConEmuC.ReloadConsoleInfo\n");
+				gpSrv->nReqSizeBufferHeight = gpSrv->sbi.dwSize.Y;
 			}
+
+			gnBufferHeight = gpSrv->nReqSizeBufferHeight;
 		}
 
 		//	Sleep(10);

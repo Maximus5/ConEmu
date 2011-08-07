@@ -278,6 +278,7 @@ void ShutdownHooks()
 	if (SetLoadLibraryCallback)
 	{
 		SetLoadLibraryCallback(ghPluginModule, NULL, NULL);
+		SetLoadLibraryCallback = NULL;
 	}
 
 	if (SetHookCallbacks)
@@ -292,17 +293,25 @@ void ShutdownHooks()
 		SetHookCallbacks("WriteConsoleOutputW", kernel32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks("GetNumberOfConsoleInputEvents", kernel32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks("ShellExecuteExW", shell32, ghPluginModule, NULL, NULL, NULL);
+		SetHookCallbacks = NULL;
 	}
 
 	// Если gbHooksModuleLoaded - нужно выполнить FreeLibrary
 	if (gbHooksModuleLoaded)
 	{
+		gbHooksModuleLoaded = FALSE;
 		if (ghHooksModule)
 		{
-			FreeLibrary(ghHooksModule);
+			//DWORD dwErr = 0;
+			//if (!FreeLibrary(ghHooksModule))
+			//{
+			//	dwErr = GetLastError();
+			//	// Т.к. FreeLibrary перехватывается в ghHooksModule, то первый проход фиктивный
+			//	if (dwErr)
+			//		FreeLibrary(ghHooksModule);
+			//}
 			ghHooksModule = NULL;
 		}
-		gbHooksModuleLoaded = FALSE;
 	}
 
 #endif

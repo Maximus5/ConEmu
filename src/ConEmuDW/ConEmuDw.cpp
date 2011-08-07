@@ -11,6 +11,7 @@
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConEmuColors3.h"
 #include "../common/common.hpp"
+#include "../common/UnicodeChars.h"
 #include "../ConEmu/version.h"
 #include "ConEmuDw.h"
 #include "resource.h"
@@ -762,7 +763,7 @@ struct ColorParam
 	BOOL bCentered;
 	BOOL bAddTransparent;
 	COLORREF crCustom[16];
-	HWND hConsole, hGUI;
+	HWND hConsole, hGUI, hGUIRoot;
 	RECT rcParent;
 	SMALL_RECT rcBuffer; // видимый буфер в консоли
 	HWND hDialog;
@@ -923,7 +924,7 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		//TODO: Пока тестируем с консолью...
 		//TODO: Обработка P->Center
 		HWND hTop = HWND_TOP;
-		if (GetWindowLong(P->hConsole, GWL_EXSTYLE) & WS_EX_TOPMOST)
+		if (GetWindowLong(P->hGUIRoot ? P->hGUIRoot : P->hConsole, GWL_EXSTYLE) & WS_EX_TOPMOST)
 			hTop = HWND_TOPMOST;
 		if (P->bCentered)
 		{
@@ -1088,6 +1089,19 @@ DWORD WINAPI ColorDialogThread(LPVOID lpParameter)
 	return (DWORD)lRc;
 }
 
+void CopyShaded(FAR_CHAR_INFO* Src, FAR_CHAR_INFO* Dst)
+{
+	*Dst = *Src;
+	WORD Con = 0;
+	if (Src->Attributes.Flags & FCF_FG_4BIT)
+		Con = Dst->Attributes.ForegroundColor;
+	else
+		Far3Color::Color2FgIndex(Dst->Attributes.ForegroundColor, Con);
+	Dst->Attributes.Flags |= FCF_BG_4BIT|FCF_FG_4BIT;
+	Dst->Attributes.BackgroundColor = 0;
+	Dst->Attributes.ForegroundColor = Con ? (Con & 7) : 8;
+}
+
 int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 {
 	//TODO: Показать диалог (свой) в котором должно быть поле с текстом,
@@ -1133,6 +1147,7 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 			if (pHdr->cbSize == 2164 && pHdr->nProtocolVersion == 67 && IsWindow(pHdr->hConEmuWnd))
 			{
 				Parm.hGUI = pHdr->hConEmuWnd; // DC
+				Parm.hGUIRoot = pHdr->hConEmuRoot; // Main window
 				if (!CheckBuffers())
 				{
 					MessageBoxA(NULL, MSG_NO_TRUEMOD_BUFFER, MSG_TITLE, MB_ICONSTOP|MB_SYSTEMMODAL);
@@ -1154,12 +1169,15 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 				{
 					// Это все-таки может быть окно ConEmu
 					Parm.hGUI = pHdr->hConEmuWnd; // DC
+					if (IsWindow(pHdr->hConEmuRoot) && IsWindowVisible(pHdr->hConEmuRoot))
+						Parm.hGUIRoot = pHdr->hConEmuRoot; // Main window
 				}
 				MessageBoxA(NULL, MSG_INVALID_CONEMU_VER, MSG_TITLE, MB_ICONSTOP|MB_SYSTEMMODAL);
 			}
 			else
 			{
 				Parm.hGUI = pHdr->hConEmuWnd; // DC
+				Parm.hGUIRoot = pHdr->hConEmuRoot; // Main window
 				if (!pHdr->bUseTrueColor)
 				{
 					MessageBoxA(NULL, MSG_TRUEMOD_DISABLED, MSG_TITLE, MB_ICONSTOP|MB_SYSTEMMODAL);
@@ -1193,33 +1211,127 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 	GetConsoleScreenBufferInfo(h, &csbi);
 	Parm.rcBuffer = csbi.srWindow;
 
+	int nRc = 0;
+
+	LPCWSTR pszTitle = L"ConEmu Colors";
+	LPCWSTR pszText = L"Executing GUI dialog";
+	int nWidth = Far3Color::Max(lstrlen(pszText),lstrlen(pszTitle))+10;
+	int nHeight = 6;
+	int nX = (csbi.srWindow.Right + csbi.srWindow.Left - nWidth) >> 1;
+	int nY = (csbi.srWindow.Bottom + csbi.srWindow.Top - nHeight) >> 1;
+	SMALL_RECT Region = {nX, nY, nX+nWidth-1, nY+nHeight-1};
+	COORD BufSize = {nWidth,nHeight};
+	COORD BufCoord = {0,0};
+
+	FAR_CHAR_INFO* SaveBuffer = (FAR_CHAR_INFO*)calloc(nWidth*nHeight, sizeof(*SaveBuffer));
+	FAR_CHAR_INFO* WriteBuffer = (FAR_CHAR_INFO*)calloc(nWidth*nHeight, sizeof(*WriteBuffer));
+
+	ReadOutput(SaveBuffer, BufSize, BufCoord, &Region);
+	FAR_CHAR_INFO* Src = SaveBuffer;
+	FAR_CHAR_INFO* Dst = WriteBuffer;
+	FAR_CHAR_INFO chr = {L' ', {FCF_FG_4BIT|FCF_BG_4BIT, 0, 7}};
+	int x;
+	// Первая строка - просто фон диалога
+	for (x = 0; x < (nWidth-2); x++, Src++, Dst++)
+		*Dst = chr;
+	*(Dst++) = *(Src++); *(Dst++) = *(Src++); // содержимое консоли (правой верхний угол)
+	// 2-я строка - заголовок диалога
+	*(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон перед рамкой
+	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblDownRight; // угол рамки
+	chr.Char = ucBoxDblHorz;
+	int Ln = lstrlen(pszTitle);
+	int X1 = 4+((nWidth - 12 - Ln)>>1);
+	int X2 = X1 + Ln + 1;
+	for (x = 3; x < (nWidth-5); x++, Src++, Dst++)
+	{
+		*Dst = chr;
+		if (x == X1)
+			Dst->Char = L' ';
+		else if (x == X2)
+			Dst->Char = L' ';
+		else if (x > X1 && x < X2)
+			Dst->Char = *(pszTitle++);
+	}
+	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblDownLeft; // угол рамки
+	chr.Char = L' '; *(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон после рамки
+	CopyShaded(Src++, Dst++); CopyShaded(Src++, Dst++);
+	// 3-я строка - текст
+	*(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон перед рамкой
+	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblVert; // рамка
+	chr.Char = L' ';
+	Ln = lstrlen(pszText);
+	X1 = 4+((nWidth - 12 - Ln)>>1);
+	X2 = X1 + Ln + 1;
+	for (x = 3; x < (nWidth-5); x++, Src++, Dst++)
+	{
+		*Dst = chr;
+		if (x == X1)
+			Dst->Char = L' ';
+		else if (x == X2)
+			Dst->Char = L' ';
+		else if (x > X1 && x < X2)
+			Dst->Char = *(pszText++);
+	}
+	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblVert; // рамка
+	chr.Char = L' '; *(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон после рамки
+	CopyShaded(Src++, Dst++); CopyShaded(Src++, Dst++);
+	// 4-я строка - низ рамки
+	*(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон перед рамкой
+	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblUpRight; // угол рамки
+	chr.Char = ucBoxDblHorz;
+	for (x = 3; x < (nWidth-5); x++, Src++, Dst++)
+		*Dst = chr;
+	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblUpLeft; // угол рамки
+	chr.Char = L' '; *(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон после рамки
+	CopyShaded(Src++, Dst++); CopyShaded(Src++, Dst++);
+	// 5-я строка - фон внизу диалога
+	for (x = 0; x < (nWidth-2); x++, Src++, Dst++)
+		*Dst = chr;
+	CopyShaded(Src++, Dst++); CopyShaded(Src++, Dst++);
+	// 6-я строка - тень под диалогом
+	*(Dst++) = *(Src++); *(Dst++) = *(Src++); // содержимое консоли (нижний левый угол)
+	for (x = 0; x < (nWidth-2); x++, Src++, Dst++)
+		CopyShaded(Src, Dst);
+
+	// Вывалить в консоль "диалог"
+	WriteOutput(WriteBuffer, BufSize, BufCoord, &Region);
+
 	// Запускаем нить, чтобы 1) не драться с консолью; 2) не иметь проблем с обработчиком сообщений и дескрипторами GDI
 	DWORD dwThreadID = 0;
 	HANDLE hThread = CreateThread(NULL, 0, ColorDialogThread, &Parm, 0, &dwThreadID);
 	if (!hThread)
-		return -1;
-
-	while (WaitForSingleObject(hThread, 100) == WAIT_TIMEOUT)
 	{
-		if (Parm.hDialog)
+		nRc = -1;
+	}
+	else
+	{
+		while (WaitForSingleObject(hThread, 100) == WAIT_TIMEOUT)
 		{
-			SetForegroundWindow(Parm.hDialog);
-			break;
+			if (Parm.hDialog)
+			{
+				SetForegroundWindow(Parm.hDialog);
+				break;
+			}
+		}
+
+		//TODO: Возможно здесь стоит вставить какой-то обработчик, 
+		//TODO: чтобы из консоли можно было остановить GUI диалог
+		WaitForSingleObject(hThread, INFINITE);
+		
+		
+		GetExitCodeThread(hThread, (LPDWORD)&nRc);
+		
+		if (nRc == 1)
+		{
+			Parm.Ref2Far(Parm.bForeTransparent, Parm.crForeColor, TRUE, Color);
+			Parm.Ref2Far(Parm.bBackTransparent, Parm.crBackColor, FALSE, Color);
 		}
 	}
 
-	//TODO: Возможно здесь стоит вставить какой-то обработчик, 
-	//TODO: чтобы из консоли можно было остановить GUI диалог
-	WaitForSingleObject(hThread, INFINITE);
-	
-	DWORD nRc = 0;
-	GetExitCodeThread(hThread, &nRc);
-	
-	if (nRc == 1)
-	{
-		Parm.Ref2Far(Parm.bForeTransparent, Parm.crForeColor, TRUE, Color);
-		Parm.Ref2Far(Parm.bBackTransparent, Parm.crBackColor, FALSE, Color);
-	}
-	
+	WriteOutput(SaveBuffer, BufSize, BufCoord, &Region);
+
+	free(SaveBuffer);
+	free(WriteBuffer);
+
 	return (nRc == 1);
 }

@@ -42,6 +42,7 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #endif 	/* __ITaskbarList2_FWD_DEFINED__ */
 
 #define WM_TRAYNOTIFY WM_USER+1
+#define ID_DEBUGCON 0xABBC
 #define ID_TOMONITOR 0xABBD
 #define ID_NEWCONSOLE 0xABBE
 #define ID_DUMPPROCESS 0xABBF
@@ -446,6 +447,7 @@ class CConEmuMain
 		HMENU CreateDebugMenuPopup();
 		void PopulateEditMenuPopup(HMENU hMenu);
 		void StartDebugLogConsole();
+		void StartDebugActiveProcess();
 		//void StartLogCreateProcess();
 		//void StopLogCreateProcess();
 		//void UpdateLogCreateProcess();

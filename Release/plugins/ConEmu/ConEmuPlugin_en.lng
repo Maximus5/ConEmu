@@ -28,7 +28,7 @@
 "ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available\nOK"
 "ConEmu plugin\nCan't create debugger process\nOK"
 "Can't start console server process (ConEmuC.exe)"
-"Can't start console server process (ConEmuC.exe)\nGetModuleFileName failed"
+"Can't find console server file (ConEmuC.exe)"
 "Can't start console server process (ConEmuC.exe)\nConEmuC.exe not found"
 "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL\nOK"
 "ConEmu plugin\nShellExecuteEx raised exception.\nFAR restart is recommended.\nOK"

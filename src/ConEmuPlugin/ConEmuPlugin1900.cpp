@@ -1083,7 +1083,7 @@ void LoadFarColorsW1900(BYTE (&nFarColors)[col_LastIndex])
 	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, NULL);
 	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
 	if (pColors)
-		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, nColorSize, pColors);
+		nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, (int)nColorSize, pColors);
 	WARNING("Поддержка более 4бит цветов");
 	if (pColors && nColorSize > 0)
 	{
@@ -1186,7 +1186,7 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 			gpFarInfo->nMacroArea = fma_Unknown;
 	}
 	    
-	gpFarInfo->bFarPanelAllowed = InfoW1900->PanelControl(PANEL_NONE, FCTL_CHECKPANELSEXIST, 0, 0);
+	gpFarInfo->bFarPanelAllowed = InfoW1900->PanelControl(PANEL_NONE, FCTL_CHECKPANELSEXIST, 0, 0)!=0;
 	gpFarInfo->bFarPanelInfoFilled = FALSE;
 	gpFarInfo->bFarLeftPanel = FALSE;
 	gpFarInfo->bFarRightPanel = FALSE;
