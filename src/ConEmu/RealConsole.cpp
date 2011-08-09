@@ -8078,6 +8078,7 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 	BYTE nFontNormalColor = gpSet->nFontNormalColor;
 	BYTE nFontBoldColor = gpSet->nFontBoldColor;
 	BYTE nFontItalicColor = gpSet->nFontItalicColor;
+	bool lbFade = mp_VCon->isFade;
 	//BOOL bUseColorKey = gpSet->isColorKey  // Должен быть включен в настройке
 	//	&& isFar(TRUE/*abPluginRequired*/) // в фаре загружен плагин (чтобы с цветами не проколоться)
 	//	&& (mp_tabs && mn_tabsCount>0 && mp_tabs->Current) // Текущее окно - панели
@@ -8277,16 +8278,16 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 
 							if (pcolSrc->fg_valid)
 							{
-								lca.nFontIndex = 0;
-								lca.crForeColor = pcolSrc->fg_color;
+								lca.nFontIndex = 0; //bold/italic/underline, выставляется ниже
+								lca.crForeColor = lbFade ? gpSet->GetFadeColor(pcolSrc->fg_color) : pcolSrc->fg_color;
 
 								if (pcolSrc->bk_valid)
-									lca.crBackColor = pcolSrc->bk_color;
+									lca.crBackColor = lbFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;
 							}
 							else if (pcolSrc->bk_valid)
 							{
-								lca.nFontIndex = 0;
-								lca.crBackColor = pcolSrc->bk_color;
+								lca.nFontIndex = 0; //bold/italic/underline, выставляется ниже
+								lca.crBackColor = lbFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;
 							}
 
 							// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic,..., 4 - underline, ...
@@ -11031,7 +11032,7 @@ void CRealConsole::FindPanels()
 								{
 									if (con.pConChar[con.nTextWidth*j] == ucBoxDblVertSinglRight)
 									{
-										rLeftPanel.bottom = j; break;
+										rLeftPanel.bottom = j - 1; break;
 									}
 								}
 							}
@@ -11054,20 +11055,20 @@ void CRealConsole::FindPanels()
 		}
 
 		// (Если есть левая панель и она не FullScreen) или левой панели нет вообще
-		if ((bLeftPanel && (rLeftPanel.right+1) < con.nTextWidth) || !bLeftPanel)
+		if ((bLeftPanel && rLeftPanelFull.right < con.nTextWidth) || !bLeftPanel)
 		{
 			if (bLeftPanel)
 			{
 				// Положение известно, нужно только проверить наличие
-				if (con.pConChar[nIdx+rLeftPanel.right+2] == ucBoxDblDownRight
-				        /*&& con.pConChar[nIdx+rLeftPanel.right+2+con.nTextWidth] == ucBoxDblVert*/
+				if (con.pConChar[nIdx+rLeftPanelFull.right+1] == ucBoxDblDownRight
+				        /*&& con.pConChar[nIdx+rLeftPanelFull.right+1+con.nTextWidth] == ucBoxDblVert*/
 				        /*&& con.pConChar[nIdx+con.nTextWidth*2] == ucBoxDblVert*/
-				        /*&& con.pConChar[(rLeftPanel.bottom+3)*con.nTextWidth+rLeftPanel.right+2] == ucBoxDblUpRight*/
-				        && con.pConChar[(rLeftPanel.bottom+4)*con.nTextWidth-1] == ucBoxDblUpLeft
+				        /*&& con.pConChar[(rLeftPanelFull.bottom+3)*con.nTextWidth+rLeftPanelFull.right+1] == ucBoxDblUpRight*/
+				        && con.pConChar[(rLeftPanelFull.bottom+1)*con.nTextWidth-1] == ucBoxDblUpLeft
 				  )
 				{
 					rRightPanel = rLeftPanel; // bottom & top берем из rLeftPanel
-					rRightPanel.left = rLeftPanel.right+3;
+					rRightPanel.left = rLeftPanelFull.right+2;
 					rRightPanel.right = con.nTextWidth-2;
 					rRightPanelFull = rLeftPanelFull;
 					rRightPanelFull.left = rLeftPanelFull.right+1;
@@ -11077,14 +11078,19 @@ void CRealConsole::FindPanels()
 			}
 
 			// Начиная с FAR2 build 1295 панели могут быть разной высоты
+			// или левой панели нет
+			// или активная панель в FullScreen режиме
 			if (!bRightPanel)
 			{
 				// нужно определить положение панели
 				if (((con.pConChar[nIdx+con.nTextWidth-1]>=L'0' && con.pConChar[nIdx+con.nTextWidth-1]<=L'9')  // справа часы
 				        || con.pConChar[nIdx+con.nTextWidth-1] == ucBoxDblDownLeft) // или рамка
-				        && con.pConChar[nIdx+con.nTextWidth*2-1] == ucBoxDblVert) // ну и правая граница панели
+				        && (con.pConChar[nIdx+con.nTextWidth*2-1] == ucBoxDblVert // ну и правая граница панели
+							|| con.pConChar[nIdx+con.nTextWidth*2-1] == ucUpScroll) // или стрелка скроллбара
+						)
 				{
-					for(int i=con.nTextWidth-3; !bRightPanel && i>2; i--)
+					int iMinFindX = bLeftPanel ? (rLeftPanelFull.right+1) : 0;
+					for(int i=con.nTextWidth-3; !bRightPanel && i>=iMinFindX; i--)
 					{
 						// ищем левую границу правой панели
 						if (con.pConChar[nIdx+i] == ucBoxDblDownRight
@@ -11114,7 +11120,7 @@ void CRealConsole::FindPanels()
 										{
 											if (con.pConChar[con.nTextWidth*j+i] == ucBoxDblVertSinglRight)
 											{
-												rRightPanel.bottom = j; break;
+												rRightPanel.bottom = j - 1; break;
 											}
 										}
 									}

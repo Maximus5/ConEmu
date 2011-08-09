@@ -260,7 +260,8 @@ CInFuncCall::~CInFuncCall()
 }
 
 
-extern HANDLE ghHookMutex;
+//extern HANDLE ghHookMutex;
+extern MSection* gpHookCS;
 
 // Заполнить поле HookItem.OldAddress (реальные процедуры из внешних библиотек)
 // apHooks->Name && apHooks->DllName MUST be for a lifetime
@@ -269,13 +270,17 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	int i, j;
 	bool skip;
 
-	if (!ghHookMutex)
+	//if (!ghHookMutex)
+	//{
+	//	wchar_t* szMutexName = (wchar_t*)malloc(MAX_PATH*2);
+	//	msprintf(szMutexName, MAX_PATH, CEHOOKLOCKMUTEX, GetCurrentProcessId());
+	//	ghHookMutex = CreateMutexW(NULL, FALSE, szMutexName);
+	//	_ASSERTE(ghHookMutex != NULL);
+	//	free(szMutexName);
+	//}
+	if (!gpHookCS)
 	{
-		wchar_t* szMutexName = (wchar_t*)malloc(MAX_PATH*2);
-		msprintf(szMutexName, MAX_PATH, CEHOOKLOCKMUTEX, GetCurrentProcessId());
-		ghHookMutex = CreateMutexW(NULL, FALSE, szMutexName);
-		_ASSERTE(ghHookMutex != NULL);
-		free(szMutexName);
+		gpHookCS = new MSection;
 	}
 
 	if (gpHooks == NULL)
@@ -408,6 +413,72 @@ bool __stdcall SetHookCallbacks(const char* ProcName, const wchar_t* DllName, HM
 	return bFound;
 }
 
+// Проверить, валиден ли модуль?
+bool IsModuleValid(HMODULE module)
+{
+	if ((module == NULL) || (module == INVALID_HANDLE_VALUE))
+		return false;
+	if (LDR_IS_RESOURCE(module))
+		return false;
+
+	if (IsBadReadPtr((void*)module, sizeof(IMAGE_DOS_HEADER)))
+		return false;
+
+	if (((IMAGE_DOS_HEADER*)module)->e_magic != IMAGE_DOS_SIGNATURE /*'ZM'*/)
+		return false;
+
+	IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)module + ((IMAGE_DOS_HEADER*)module)->e_lfanew);
+	if (IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)))
+		return false;
+
+	if (nt_header->Signature != 0x004550)
+		return false;
+
+	return true;
+}
+
+bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, int cchNameMax)
+{
+	bool lbFound = false;
+	if (pszName && cchNameMax)
+	{
+		//*pszName = 0;
+#ifdef _WIN64
+		msprintf(pszName, cchNameMax, L", <HMODULE=0x%08X%08X>",
+			(DWORD)((((u64)ahModule) & 0xFFFFFFFF00000000) >> 32),
+			(DWORD)(((u64)ahModule) & 0xFFFFFFFF));
+#else
+		msprintf(pszName, cchNameMax, L", <HMODULE=0x%08X>", (DWORD)ahModule);
+#endif
+	}
+
+	//TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary.
+	lbFound = true;
+#if 0
+	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
+
+	if (snapshot != INVALID_HANDLE_VALUE)
+	{
+		MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
+
+		for(BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
+		{
+			if (module.hModule == ahModule)
+			{
+				if (pszName)
+					_wcscpyn_c(pszName, cchNameMax, module.szModule, cchNameMax);
+				lbFound = true;
+				break;
+			}
+		}
+
+		CloseHandle(snapshot);
+	}
+#endif
+
+	return lbFound;
+}
+
 bool IsModuleExcluded(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW)
 {
 	if (module == ghHookOurModule)
@@ -432,9 +503,26 @@ bool IsModuleExcluded(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW)
 			return true;
 	}
 
+#if 1
 	for(int i = 0; ExcludedModules[i]; i++)
 		if (module == GetModuleHandle(ExcludedModules[i]))
 			return true;
+#else
+	wchar_t szModule[MAX_PATH*2]; szModule[0] = 0;
+	DWORD nLen = GetModuleFileNameW(module, szModule, countof(szModule));
+	if ((nLen == 0) || (nLen >= countof(szModule)))
+	{
+		//_ASSERTE(nLen>0 && nLen<countof(szModule));
+		return true; // Что-то с модулем не то...
+	}
+	LPCWSTR pszName = wcsrchr(szModule, L'\\');
+	if (pszName) pszName++; else pszName = szModule;
+	for (int i = 0; ExcludedModules[i]; i++)
+	{
+		if (lstrcmpi(ExcludedModules[i], pszName) == 0)
+			return true; // указан в исключениях
+	}
+#endif
 
 	return false;
 }
@@ -443,6 +531,55 @@ bool IsModuleExcluded(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW)
 #define GetPtrFromRVA(rva,pNTHeader,imageBase) (PVOID)((imageBase)+(rva))
 
 extern BOOL gbInCommonShutdown;
+
+bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
+{
+	//while(nHookMutexWait != WAIT_OBJECT_0)
+	BOOL lbLockHooksSection = FALSE;
+	while (!(lbLockHooksSection = apCS->Lock(gpHookCS, TRUE, 10000)))
+	{
+#ifdef _DEBUG
+
+		if (!IsDebuggerPresent())
+		{
+			_ASSERTE(lbLockHooksSection);
+		}
+
+#endif
+
+		if (gbInCommonShutdown)
+			return false;
+
+		wchar_t* szTrapMsg = (wchar_t*)calloc(1024,2);
+		wchar_t* szName = (wchar_t*)calloc((MAX_PATH+1),2);
+
+		if (!FindModuleFileName(Module, szName, MAX_PATH+1)) szName[0] = 0;
+
+		DWORD nTID = GetCurrentThreadId(); DWORD nPID = GetCurrentProcessId();
+		msprintf(szTrapMsg, 1024, 
+			L"Can't %s hooks in module '%s'\nCurrent PID=%u, TID=%i\nCan't lock hook mutex\nPress 'Retry' to repeat locking",
+			asAction, szName, nPID, nTID);
+
+		int nBtn = 
+#ifdef CONEMU_MINIMAL
+			GuiMessageBox
+#else
+			MessageBoxW
+#endif
+			(GetConEmuHWND(TRUE), szTrapMsg, L"ConEmu", MB_RETRYCANCEL|MB_ICONSTOP|MB_SYSTEMMODAL);
+
+		free(szTrapMsg);
+		free(szName);
+
+		if (nBtn != IDRETRY)
+			return false;
+
+		//nHookMutexWait = WaitForSingleObject(ghHookMutex, 10000);
+		//continue;
+	}
+
+	return true;
+}
 
 // Подменить Импортируемые функции в модуле (Module)
 //	если (abForceHooks == FALSE) то хуки не ставятся, если
@@ -464,7 +601,7 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 	//	PRAGMA_ERROR("Один модуль обрабатывать ОДИН раз");
 	//#endif
 	
-	if (!Module || (Module == INVALID_HANDLE_VALUE))
+	if (!IsModuleValid(Module))
 		return false;
 
 	BOOL bExecutable = (Module == hExecutable);
@@ -507,48 +644,53 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 #else
 #define TOP_SHIFT 28
 #endif
-	DWORD nHookMutexWait = WaitForSingleObject(ghHookMutex, 10000);
+	//DWORD nHookMutexWait = WaitForSingleObject(ghHookMutex, 10000);
 
-	while(nHookMutexWait != WAIT_OBJECT_0)
-	{
-#ifdef _DEBUG
+	MSectionLock CS;
+	if (!LockHooks(Module, L"install", &CS))
+		return false;
 
-		if (!IsDebuggerPresent())
-		{
-			_ASSERTE(nHookMutexWait == WAIT_OBJECT_0);
-		}
-
-#endif
-
-		if (gbInCommonShutdown)
-			return false;
-
-		wchar_t* szTrapMsg = (wchar_t*)calloc(1024,2);
-		wchar_t* szName = (wchar_t*)calloc((MAX_PATH+1),2);
-
-		if (!GetModuleFileNameW(Module, szName, MAX_PATH+1)) szName[0] = 0;
-
-		DWORD nTID = GetCurrentThreadId(); DWORD nPID = GetCurrentProcessId();
-		msprintf(szTrapMsg, 1024, L"Can't install hooks in module '%s'\nCurrent PID=%u, TID=%i\nCan't lock hook mutex\nPress 'Retry' to repeat locking",
-		          szName, nPID, nTID);
-
-		int nBtn = 
-			#ifdef CONEMU_MINIMAL
-				GuiMessageBox
-			#else
-				MessageBoxW
-			#endif
-			(NULL, szTrapMsg, L"ConEmu", MB_RETRYCANCEL|MB_ICONSTOP|MB_SYSTEMMODAL);
-		
-		free(szTrapMsg);
-		free(szName);
-		
-		if (nBtn != IDRETRY)
-			return false;
-
-		nHookMutexWait = WaitForSingleObject(ghHookMutex, 10000);
-		continue;
-	}
+//	//while(nHookMutexWait != WAIT_OBJECT_0)
+//	while (!CS.Lock(gpHookCS, TRUE, 10000))
+//	{
+//#ifdef _DEBUG
+//
+//		if (!IsDebuggerPresent())
+//		{
+//			_ASSERTE(nHookMutexWait == WAIT_OBJECT_0);
+//		}
+//
+//#endif
+//
+//		if (gbInCommonShutdown)
+//			return false;
+//
+//		wchar_t* szTrapMsg = (wchar_t*)calloc(1024,2);
+//		wchar_t* szName = (wchar_t*)calloc((MAX_PATH+1),2);
+//
+//		if (!GetModuleFileNameW(Module, szName, MAX_PATH+1)) szName[0] = 0;
+//
+//		DWORD nTID = GetCurrentThreadId(); DWORD nPID = GetCurrentProcessId();
+//		msprintf(szTrapMsg, 1024, L"Can't install hooks in module '%s'\nCurrent PID=%u, TID=%i\nCan't lock hook mutex\nPress 'Retry' to repeat locking",
+//		          szName, nPID, nTID);
+//
+//		int nBtn = 
+//			#ifdef CONEMU_MINIMAL
+//				GuiMessageBox
+//			#else
+//				MessageBoxW
+//			#endif
+//			(GetConEmuHWND(TRUE), szTrapMsg, L"ConEmu", MB_RETRYCANCEL|MB_ICONSTOP|MB_SYSTEMMODAL);
+//		
+//		free(szTrapMsg);
+//		free(szName);
+//		
+//		if (nBtn != IDRETRY)
+//			return false;
+//
+//		//nHookMutexWait = WaitForSingleObject(ghHookMutex, 10000);
+//		//continue;
+//	}
 
 	TODO("!!! Сохранять ORDINAL процедур !!!");
 	bool res = false, bHooked = false;
@@ -732,7 +874,7 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 	{
 		wchar_t* szDbg = (wchar_t*)calloc(MAX_PATH*3, 2);
 		wchar_t* szModPath = (wchar_t*)calloc(MAX_PATH*2, 2);
-		GetModuleFileName(Module, szModPath, MAX_PATH*2);
+		FindModuleFileName(Module, szModPath, MAX_PATH*2);
 		_wcscpy_c(szDbg, MAX_PATH*3, L"  ## Hooks was set by conemu: ");
 		_wcscat_c(szDbg, MAX_PATH*3, szModPath);
 		_wcscat_c(szDbg, MAX_PATH*3, L"\n");
@@ -742,7 +884,8 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 	}
 
 #endif
-	ReleaseMutex(ghHookMutex);
+	//ReleaseMutex(ghHookMutex);
+	CS.Unlock();
 
 	// Плагин ConEmu может выполнить дополнительные действия
 	if (gfOnLibraryLoaded)
@@ -876,6 +1019,13 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 bool UnsetHook(HMODULE Module)
 {
 	if (!gpHooks)
+		return false;
+
+	if (!IsModuleValid(Module))
+		return false;
+
+	MSectionLock CS;
+	if (!LockHooks(Module, L"uninstall", &CS))
 		return false;
 
 	IMAGE_IMPORT_DESCRIPTOR* Import = 0;
@@ -1033,7 +1183,7 @@ bool UnsetHook(HMODULE Module)
 	{
 		wchar_t* szDbg = (wchar_t*)calloc(MAX_PATH*3, 2);
 		wchar_t* szModPath = (wchar_t*)calloc(MAX_PATH*2, 2);
-		GetModuleFileName(Module, szModPath, MAX_PATH*2);
+		FindModuleFileName(Module, szModPath, MAX_PATH*2);
 		lstrcpy(szDbg, L"  ## Hooks was UNset by conemu: ");
 		lstrcat(szDbg, szModPath);
 		lstrcat(szDbg, L"\n");
@@ -1051,6 +1201,7 @@ void __stdcall UnsetAllHooks()
 	#ifdef _DEBUG
 	HMODULE hExecutable = GetModuleHandle(0);
 	#endif
+	//Warning: TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary.
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
 
 	if (snapshot != INVALID_HANDLE_VALUE)
@@ -1146,7 +1297,7 @@ void CheckProcessModules(HMODULE hFromModule);
 //   что вызовет некорректные смещения функций,
 // а в Win64 смещения вообще должны быть 64битными, а структура модуля хранит только 32битные смещения
 
-void PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE)
+bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE)
 {
 	if (!module)
 	{
@@ -1155,8 +1306,10 @@ void PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		// В процессе загрузки модуля (module) могли подгрузиться
 		// (статически или динамически) и другие библиотеки!
 		CheckProcessModules(module);
-		return;
+		return false;
 	}
+
+	bool lbModuleOk = false;
 
 	BOOL lbResource = LDR_IS_RESOURCE(module);
 
@@ -1215,6 +1368,13 @@ void PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		sp = NULL;
 	}
 
+	// Некоторые перехватываемые библиотеки могли быть
+	// не загружены во время первичной инициализации
+	// Соответственно для них (если они появились) нужно
+	// получить "оригинальные" адреса процедур
+	InitHooks(NULL);
+
+
 	if (!abNoSnapshoot && !lbResource)
 	{
 		// В процессе загрузки модуля (module) могли подгрузиться
@@ -1223,30 +1383,30 @@ void PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 	}
 
 
-	// Некоторые перехватываемые библиотеки могли быть
-	// не загружены во время первичной инициализации
-	// Соответственно для них (если они появились) нужно
-	// получить "оригинальные" адреса процедур
-	InitHooks(NULL);
-
 	if (!IsModuleExcluded(module, asModuleA, asModuleW))
 	{
+		lbModuleOk = true;
 		// Подмена импортируемых функций в module
 		SetHook(module/*, FALSE*/, FALSE);
 	}
+
+	return lbModuleOk;
 }
 
 // В процессе загрузки модуля (module) могли подгрузиться
 // (статически или динамически) и другие библиотеки!
 void CheckProcessModules(HMODULE hFromModule)
 {
+	WARNING("TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary!!!");
+	// Может, имеет смысл запустить фоновую нить, в которой проверить все загруженные модули?
+
 	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
 	MODULEENTRY32 mi = {sizeof(mi)};
 	if (h && h != INVALID_HANDLE_VALUE && Module32First(h, &mi))
 	{
 		BOOL lbAddMod = FALSE;
 		do {
-			CheckLoadedModule(mi.szModule);
+			//CheckLoadedModule(mi.szModule);
 			//if (!ghUser32)
 			//{
 			//	// Если на старте exe-шника user32 НЕ подлинковался - нужно загрузить из него требуемые процедуры!
@@ -1283,7 +1443,8 @@ void CheckProcessModules(HMODULE hFromModule)
 
 			if (lbAddMod)
 			{
-				PrepareNewModule(mi.hModule, NULL, mi.szModule, TRUE);
+				if (PrepareNewModule(mi.hModule, NULL, mi.szModule, TRUE/*не звать CheckProcessModules*/))
+					CheckLoadedModule(mi.szModule);
 			}
 			else if (mi.hModule == hFromModule)
 			{
@@ -1330,10 +1491,12 @@ HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
 	if (!module)
 	{
 		dwErrCode = GetLastError();
-		//TODO: Проверка кодов ошибок
-		if (lpFileName && (lstrcmpiW(lpFileName, L"extendedconsole.dll") == 0))
+		//0x7E - module not found
+		//0xC1 - module не является приложением Win32.
+		if ((dwErrCode == ERROR_MOD_NOT_FOUND || dwErrCode == ERROR_BAD_EXE_FORMAT)
+			&& lpFileName && (lstrcmpiW(lpFileName, L"extendedconsole.dll") == 0))
 		{
-			_ASSERTE(module!=NULL); // под отладчиком проверить 2 кода (отсутствует и неверная битность)
+			//_ASSERTE(module!=NULL); // под отладчиком проверить 2 кода (отсутствует и неверная битность)
 			module = F(LoadLibraryW)(L"ExtendedConsole64.dll");
 		}
 	}
@@ -1452,10 +1615,13 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 			#else
 				msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X>", (DWORD)hModule);
 			#endif
-			if (GetModuleFileName(hModule, szModule, countof(szModule)-32))
+			
+			TODO("GetModuleFileName в некоторых случаях зависает O_O. Можно бы запоминать с локальном массиве имя загруженного ранее модуля");
+			if (FindModuleFileName(hModule, szModule, countof(szModule)-32))
 				wcscat_c(szModule, szHandle);
 			else
 				wcscpy_c(szModule, szHandle+2);
+
 			pIn = sp->NewCmdOnCreate(eFreeLibrary, NULL, szModule, NULL, NULL, NULL, NULL, NULL,
 				#ifdef _WIN64
 				64
@@ -1475,7 +1641,7 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 	}
 
 #ifdef _DEBUG
-	BOOL lbModulePre = GetModuleFileName(hModule, szModule, countof(szModule));
+	BOOL lbModulePre = IsModuleValid(hModule); // GetModuleFileName(hModule, szModule, countof(szModule));
 #endif
 
 	lbRc = F(FreeLibrary)(hModule);
@@ -1484,7 +1650,7 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 	if (lbRc && !lbResource)
 	{
 		// Попробуем определить, действительно ли модуль выгружен, или только счетчик уменьшился
-		BOOL lbModulePost = GetModuleFileName(hModule, szModule, countof(szModule));
+		BOOL lbModulePost = IsModuleValid(hModule); // GetModuleFileName(hModule, szModule, countof(szModule));
 		DWORD dwErr = lbModulePost ? 0 : GetLastError();
 
 		if (!lbModulePost)

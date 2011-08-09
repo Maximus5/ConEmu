@@ -72,10 +72,10 @@ NEEDDEFLIB = 1
 USE_PDB = 1
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
-OUTNAME = Console64
+OUTNAME = ExtendedConsole64
 RCWIN64=/D_WIN64 /DWIN64
 !else
-OUTNAME = Console
+OUTNAME = ExtendedConsole
 RCWIN64=
 !endif
 
@@ -197,7 +197,7 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
 #!undef COMMONLIB
 #!endif
 #Wininet.lib
-LIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib version.lib $(USERLIBS)
+LIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib version.lib Comdlg32.lib $(USERLIBS)
 LIBS = $(COMMONLIB) chkstk.obj $(LIBS)
 
 !ifdef _BIN_PATH_

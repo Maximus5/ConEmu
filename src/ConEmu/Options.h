@@ -246,7 +246,7 @@ class CSettings
 		bool IsHostkeyPressed();
 		WORD GetPressedHostkey();
 		UINT GetHostKeyMod(); // набор флагов MOD_xxx для RegisterHotKey
-		bool isMultiNewConfirm, isUseWinNumber;
+		bool isMultiNewConfirm, isUseWinNumber, isUseWinTab;
 		bool isFARuseASCIIsort, isFixAltOnAltTab, isShellNoZoneCheck;
 
 		// Заголовки табов
@@ -472,6 +472,7 @@ class CSettings
 		bool mb_FadeInitialized;
 		BYTE mn_FadeLow, mn_FadeHigh;
 		DWORD mn_FadeMul;
+		COLORREF mn_LastFadeSrc, mn_LastFadeDst;
 		COLORREF ColorsFade[0x20];
 		BOOL GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
 		inline BYTE GetFadeColorItem(BYTE c);

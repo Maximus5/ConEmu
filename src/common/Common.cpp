@@ -670,7 +670,8 @@ SECURITY_ATTRIBUTES* LocalSecurity()
 }
 
 BOOL gbInCommonShutdown = FALSE;
-HANDLE ghHookMutex = NULL;
+//HANDLE ghHookMutex = NULL;
+//MSection* gpHookCS = NULL;
 #ifdef _DEBUG
 extern HANDLE ghInMyAssertTrap;
 extern DWORD gnInMyAssertThread;
@@ -699,11 +700,17 @@ void CommonShutdown()
 		gpConsoleInfoStr = NULL;
 	}
 
-	if (ghHookMutex)
-	{
-		CloseHandle(ghHookMutex);
-		ghHookMutex = NULL;
-	}
+	//if (ghHookMutex)
+	//{
+	//	CloseHandle(ghHookMutex);
+	//	ghHookMutex = NULL;
+	//}
+	//if (gpHookCS)
+	//{
+	//	MSection *p = gpHookCS;
+	//	gpHookCS = NULL;
+	//	delete p;
+	//}
 
 #ifdef _DEBUG
 	MyAssertShutdown();

@@ -11,4 +11,5 @@ EXPORTS
 ; LLKeyHooks (ConEmu GUI)
 	ghKeyHook
 	gnVkWinFix
+	gbWinTabHook
 	ghKeyHookConEmuRoot

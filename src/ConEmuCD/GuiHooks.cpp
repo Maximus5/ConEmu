@@ -45,6 +45,7 @@ extern "C" {
 #endif
 	__declspec(dllexport) HHOOK ghKeyHook = 0;
 	__declspec(dllexport) DWORD gnVkWinFix = 0xF0;
+	__declspec(dllexport) BOOL  gbWinTabHook = FALSE;
 	__declspec(dllexport) HWND  ghKeyHookConEmuRoot = NULL;
 #if defined(__GNUC__)
 };
@@ -60,6 +61,7 @@ extern "C" {
 
 //HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 extern UINT gnMsgActivateCon; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
+extern UINT gnMsgSwitchCon;
 //SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
@@ -347,15 +349,24 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 
 		if (wParam == WM_KEYDOWN && ghKeyHookConEmuRoot)
 		{
-			if ((pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9') /*|| pKB->vkCode == (int)' '*/)
+			if ((pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9') /*|| pKB->vkCode == (int)' '*/
+				|| (gbWinTabHook && pKB->vkCode == VK_TAB))
 			{
 				BOOL lbLeftWin = isPressed(VK_LWIN);
 				BOOL lbRightWin = isPressed(VK_RWIN);
+				BOOL lbShiftPressed = isPressed(VK_SHIFT);
 
 				if ((lbLeftWin || lbRightWin) && IsWindow(ghKeyHookConEmuRoot))
 				{
-					DWORD nConNumber = (pKB->vkCode == (UINT)'0') ? 10 : (pKB->vkCode - (UINT)'0');
-					PostMessage(ghKeyHookConEmuRoot, gnMsgActivateCon, nConNumber, 0);
+					if (pKB->vkCode == VK_TAB)
+					{
+						PostMessage(ghKeyHookConEmuRoot, gnMsgSwitchCon, lbShiftPressed, 0);
+					}
+					else
+					{
+						DWORD nConNumber = (pKB->vkCode == (UINT)'0') ? 10 : (pKB->vkCode - (UINT)'0');
+						PostMessage(ghKeyHookConEmuRoot, gnMsgActivateCon, nConNumber, 0);
+					}
 					gnSkipVkModCode = lbLeftWin ? VK_LWIN : VK_RWIN;
 					gnSkipVkKeyCode = pKB->vkCode;
 					// запрет обработки системой

@@ -5586,6 +5586,7 @@ void ShowPluginMenu(int nID /*= -1*/)
 		{
 			CESERVER_REQ in, *pOut = NULL;
 			ExecutePrepareCmd(&in, CECMD_TABSCMD, sizeof(CESERVER_REQ_HDR)+1);
+			// Data[0] <== enum ConEmuTabCommand
 			in.Data[0] = nItem - menu_SwitchTabVisible;
 			pOut = ExecuteGuiCmd(FarHwnd, &in, FarHwnd);
 

@@ -183,6 +183,7 @@ extern "C" {
 
 UINT_PTR gfnLoadLibrary = NULL;
 UINT gnMsgActivateCon = 0;
+UINT gnMsgSwitchCon = 0;
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
@@ -219,6 +220,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			//#ifndef TESTLINK
 			gpLocalSecurity = LocalSecurity();
 			gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
+			gnMsgSwitchCon = RegisterWindowMessage(CONEMUMSG_SWITCHCON);
 			//#endif
 			//wchar_t szSkipEventName[128];
 			//_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
@@ -3801,7 +3803,7 @@ void WriteMiniDump(DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR 
 	wchar_t szTitle[64];
 	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC Debugging PID=%u, Debugger PID=%u", gpSrv->dwRootProcess, GetCurrentProcessId());
 
-	int nBtn = 	MessageBoxA(NULL, asConfirmText, szTitleA, MB_YESNOCANCEL|MB_SYSTEMMODAL);
+	int nBtn = 	MessageBoxA(NULL, asConfirmText ? asConfirmText : "Create minidump (<No> - fulldump)?", szTitleA, MB_YESNOCANCEL|MB_SYSTEMMODAL);
 	switch (nBtn)
 	{
 	case IDYES:
@@ -5600,16 +5602,27 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 		}
 		else if (gbDebugProcess)
 		{
-			_printf("ConEmuC: Sending DebugBreak event to process\n");
-			gpSrv->bDebuggerRequestDump = TRUE;
-			DWORD dwErr = 0;
-			if (!DebugBreakProcess(gpSrv->hRootProcess))
+			if (WaitForSingleObject(gpSrv->hRootProcess, 0) == WAIT_OBJECT_0)
 			{
-				dwErr = GetLastError();
-				//_ASSERTE(FALSE && dwErr==0);
-				_printf("ConEmuC: Sending DebugBreak event failed, Code=x%X, WriteMiniDump on the fly\n", dwErr);
-				gpSrv->bDebuggerRequestDump = FALSE;
-				WriteMiniDump(gpSrv->dwRootThread, NULL);
+				PRINT_COMSPEC(L"Ctrl+Break recieved, debgger will be stopped\n", 0);
+				//if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(gpSrv->dwRootProcess);
+				//gpSrv->bDebuggerActive = FALSE;
+				//gbInShutdown = TRUE;
+				SetEvent(ghExitQueryEvent);
+			}
+			else
+			{
+				_printf("ConEmuC: Sending DebugBreak event to process\n");
+				gpSrv->bDebuggerRequestDump = TRUE;
+				DWORD dwErr = 0;
+				if (!DebugBreakProcess(gpSrv->hRootProcess))
+				{
+					dwErr = GetLastError();
+					//_ASSERTE(FALSE && dwErr==0);
+					_printf("ConEmuC: Sending DebugBreak event failed, Code=x%X, WriteMiniDump on the fly\n", dwErr);
+					gpSrv->bDebuggerRequestDump = FALSE;
+					WriteMiniDump(gpSrv->dwRootThread, NULL);
+				}
 			}
 		}
 	}

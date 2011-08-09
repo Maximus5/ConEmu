@@ -167,7 +167,7 @@ CConEmuMain::CConEmuMain()
 	mh_LLKeyHookDll = NULL;
 	mh_LLKeyHook = NULL;
 	mh_DwmApi = NULL; DwmIsCompositionEnabled = NULL;
-	mh_RightClickingBmp = NULL; mh_RightClickingDC = NULL; mb_RightClickingPaint = FALSE;
+	mh_RightClickingBmp = NULL; mh_RightClickingDC = NULL; mb_RightClickingPaint = mb_RightClickingLSent = FALSE;
 	m_RightClickingSize.x = m_RightClickingSize.y = m_RightClickingFrames = 0; m_RightClickingCurrent = -1;
 	mb_WaitCursor = FALSE;
 	mb_InTrackSysMenu = FALSE;
@@ -395,6 +395,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 	mn_MsgOldCmdVer = ++nAppMsg; mb_InShowOldCmdVersion = FALSE;
 	mn_MsgTabCommand = ++nAppMsg;
+	mn_MsgTabSwitchFromHook = RegisterWindowMessage(CONEMUMSG_SWITCHCON); mb_InWinTabSwitch = FALSE;
 	mn_MsgSheelHook = RegisterWindowMessage(L"SHELLHOOK");
 	mn_ShellExecuteEx = ++nAppMsg;
 	mn_PostConsoleResize = ++nAppMsg;
@@ -4340,6 +4341,17 @@ HMODULE CConEmuMain::LoadConEmuCD()
 	return mh_LLKeyHookDll;
 }
 
+void CConEmuMain::UpdateWinHookSettings()
+{
+	if (mh_LLKeyHookDll)
+	{
+		BOOL *pbWinTabHook = (BOOL*)GetProcAddress(mh_LLKeyHookDll, "gbWinTabHook");
+
+		if (pbWinTabHook)
+			*pbWinTabHook = gpSet->isUseWinTab;
+	}
+}
+
 void CConEmuMain::RegisterHoooks()
 {
 //	#ifndef _DEBUG
@@ -4388,10 +4400,13 @@ void CConEmuMain::RegisterHoooks()
 				HOOKPROC pfnLLHK = (HOOKPROC)GetProcAddress(mh_LLKeyHookDll, "LLKeybHook");
 				HHOOK *pKeyHook = (HHOOK*)GetProcAddress(mh_LLKeyHookDll, "ghKeyHook");
 				HWND *pConEmuRoot = (HWND*)GetProcAddress(mh_LLKeyHookDll, "ghKeyHookConEmuRoot");
+				//BOOL *pbWinTabHook = (BOOL*)GetProcAddress(mh_LLKeyHookDll, "gbWinTabHook");
 				//HWND *pConEmuDc = (HWND*)GetProcAddress(mh_LLKeyHookDll, "ghConEmuWnd");
 
 				if (pConEmuRoot)
 					*pConEmuRoot = ghWnd;
+
+				UpdateWinHookSettings();
 
 				//if (pConEmuDc)
 				//	*pConEmuDc = ghWndDC;
@@ -6207,6 +6222,16 @@ void CConEmuMain::RightClickingPaint(HDC hdc /*= NULL*/)
 			else
 			{
 				lbSucceeded = TRUE;
+
+				if (!mb_RightClickingLSent)
+				{
+					mb_RightClickingLSent = TRUE;
+					// Чтобы установить курсор в панелях точно под кликом
+					// иначе получается некрасиво, что курсор прыгает только перед
+					// появлением EMenu, а до этого (пока крутится "кружок") курсор не двигается.
+					mp_VActive->RCon()->PostMacro(L"MsLClick");
+				}
+
 				// Прикинуть индекс фрейма
 				int nIndex = (dwDelta - RCLICKAPPS_START) * m_RightClickingFrames / (RCLICKAPPSTIMEOUT - RCLICKAPPS_START);
 
@@ -6260,6 +6285,7 @@ void CConEmuMain::StartRightClickingPaint()
 	{
 		m_RightClickingCurrent = -1;
 		mb_RightClickingPaint = TRUE;
+		mb_RightClickingLSent = FALSE;
 		SetTimer(ghWnd, TIMER_RCLICKPAINT, TIMER_RCLICKPAINT_ELAPSE, NULL);
 	}
 }
@@ -6269,6 +6295,7 @@ void CConEmuMain::StopRightClickingPaint()
 	if (mb_RightClickingPaint)
 	{
 		mb_RightClickingPaint = FALSE;
+		mb_RightClickingLSent = FALSE;
 		KillTimer(ghWnd, TIMER_RCLICKPAINT);
 		m_RightClickingCurrent = -1;
 		Invalidate(ActiveCon());
@@ -6979,7 +7006,7 @@ void CConEmuMain::TabCommand(UINT nTabCmd)
 
 	switch(nTabCmd)
 	{
-		case 0:
+		case ctc_ShowHide:
 		{
 			if (gpConEmu->mp_TabBar->IsShown())
 				gpSet->isTabs = 0;
@@ -6988,15 +7015,15 @@ void CConEmuMain::TabCommand(UINT nTabCmd)
 
 			gpConEmu->ForceShowTabs(gpSet->isTabs == 1);
 		} break;
-		case 1:
+		case ctc_SwitchNext:
 		{
 			gpConEmu->mp_TabBar->SwitchNext();
 		} break;
-		case 2:
+		case ctc_SwitchPrev:
 		{
 			gpConEmu->mp_TabBar->SwitchPrev();
 		} break;
-		case 3:
+		case ctc_SwitchCommit:
 		{
 			gpConEmu->mp_TabBar->SwitchCommit();
 		} break;
@@ -8333,6 +8360,12 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 	if (messg == WM_KEYDOWN || messg == WM_KEYUP)
 	{
+		if ((wParam == VK_RWIN || wParam == VK_LWIN) && mb_InWinTabSwitch && gpSet->isUseWinTab)
+		{
+			mb_InWinTabSwitch = FALSE;
+			TabCommand(ctc_SwitchCommit);
+		}
+
 		if (wParam == VK_PAUSE && !isPressed(VK_CONTROL))
 		{
 			if (isPictureView() && !IsWindowUnicode(hPictureView))
@@ -12457,6 +12490,20 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			else if (messg == gpConEmu->mn_MsgTabCommand)
 			{
 				gpConEmu->TabCommand(wParam);
+				return 0;
+			}
+			else if (messg == gpConEmu->mn_MsgTabSwitchFromHook)
+			{
+				gpConEmu->TabCommand(wParam ? ctc_SwitchPrev : ctc_SwitchNext);
+				if (!gpSet->isTabLazy)
+				{
+					mb_InWinTabSwitch = FALSE;
+					gpConEmu->TabCommand(ctc_SwitchCommit);
+				}
+				else
+				{
+					mb_InWinTabSwitch = TRUE;
+				}
 				return 0;
 			}
 			else if (messg == gpConEmu->mn_MsgSheelHook)

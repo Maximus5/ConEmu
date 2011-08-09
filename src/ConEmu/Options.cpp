@@ -225,6 +225,7 @@ CSettings::CSettings()
 	nConFontError = 0;
 	memset(&tiBalloon, 0, sizeof(tiBalloon));
 	mn_FadeMul = mn_FadeHigh - mn_FadeLow;
+	mn_LastFadeSrc = mn_LastFadeDst = -1;
 
 	try
 	{
@@ -317,10 +318,11 @@ void CSettings::InitSettings()
 	isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A';
 	icMinimizeRestore = 'C';
 	icMultiClose = 0/*VK_DELETE*/; icMultiCmd = 'X'; isMultiAutoCreate = false; isMultiLeaveOnClose = false; isMultiIterate = true;
-	isMultiNewConfirm = true; isUseWinNumber = true; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
+	isMultiNewConfirm = true; isUseWinNumber = true; isUseWinTab = false; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
 	m_isKeyboardHooks = 0;
 	isFARuseASCIIsort = false; isFixAltOnAltTab = false; isShellNoZoneCheck = false;
 	isFadeInactive = true; mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; mb_FadeInitialized = false;
+	mn_LastFadeSrc = mn_LastFadeDst = -1;
 	//nFadeInactiveMask = 0xD0D0D0;
 	// Logging
 	isAdvLogging = 0;
@@ -609,6 +611,7 @@ void CSettings::LoadSettings()
 		reg->Load(L"FadeInactiveHigh", mn_FadeHigh);
 
 		if (mn_FadeHigh <= mn_FadeLow) { mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; }
+		mn_LastFadeSrc = mn_LastFadeDst = -1;
 
 		reg->Load(L"ExtendFonts", isExtendFonts);
 		reg->Load(L"ExtendFontNormalIdx", nFontNormalColor);
@@ -656,6 +659,7 @@ void CSettings::LoadSettings()
 		reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);
 		reg->Load(L"Multi.Buffer", icMultiBuffer);
 		reg->Load(L"Multi.UseNumbers", isUseWinNumber);
+		reg->Load(L"Multi.UseWinTab", isUseWinTab);
 		reg->Load(L"Multi.AutoCreate", isMultiAutoCreate);
 		reg->Load(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
 		reg->Load(L"Multi.Iterate", isMultiIterate);
@@ -1294,6 +1298,7 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"Multi.NewConfirm", isMultiNewConfirm);
 		reg->Save(L"Multi.Buffer", icMultiBuffer);
 		reg->Save(L"Multi.UseNumbers", isUseWinNumber);
+		reg->Save(L"Multi.UseWinTab", isUseWinTab);
 		reg->Save(L"Multi.AutoCreate", isMultiAutoCreate);
 		reg->Save(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
 		reg->Save(L"Multi.Iterate", isMultiIterate);
@@ -2205,6 +2210,8 @@ LRESULT CSettings::OnInitDialog_Tabs()
 
 	if (gpSet->isUseWinNumber)
 		CheckDlgButton(hTabs, cbUseWinNumber, BST_CHECKED);
+	if (gpSet->isUseWinTab)
+		CheckDlgButton(hTabs, cbUseWinTab, BST_CHECKED);
 
 	CheckDlgButton(hTabs, cbInstallKeybHooks,
 	               (m_isKeyboardHooks == 1) ? BST_CHECKED :
@@ -2923,6 +2930,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		case cbUseWinNumber:
 			gpSet->isUseWinNumber = IsChecked(hTabs, cbUseWinNumber);
 			break;
+		case cbUseWinTab:
+			gpSet->isUseWinTab = IsChecked(hTabs, cbUseWinTab);
+			gpConEmu->UpdateWinHookSettings();
+			break;
 		case cbInstallKeybHooks:
 
 			switch(IsChecked(hTabs,cbInstallKeybHooks))
@@ -3104,6 +3115,7 @@ LRESULT CSettings::OnColorEditChanged(WPARAM wParam, LPARAM lParam)
 				mn_FadeHigh = nVal;
 
 			mb_FadeInitialized = false;
+			mn_LastFadeSrc = mn_LastFadeDst = -1;
 		}
 	}
 
@@ -7641,6 +7653,7 @@ COLORREF* CSettings::GetColors(BOOL abFade)
 
 	if (!mb_FadeInitialized)
 	{
+		mn_LastFadeSrc = mn_LastFadeDst = -1;
 		if (((int)mn_FadeHigh - (int)mn_FadeLow) < 64)
 		{
 			mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH;
@@ -7662,6 +7675,9 @@ COLORREF CSettings::GetFadeColor(COLORREF cr)
 {
 	if (!isFadeInactive)
 		return cr;
+		
+	if (cr == mn_LastFadeSrc)
+		return mn_LastFadeDst;
 
 	MYCOLORREF mcr, mcrFade = {0}; mcr.color = cr;
 
@@ -7673,6 +7689,10 @@ COLORREF CSettings::GetFadeColor(COLORREF cr)
 	mcrFade.rgbRed = GetFadeColorItem(mcr.rgbRed);
 	mcrFade.rgbGreen = GetFadeColorItem(mcr.rgbGreen);
 	mcrFade.rgbBlue = GetFadeColorItem(mcr.rgbBlue);
+
+	mn_LastFadeSrc = cr;
+	mn_LastFadeDst = mcrFade.color;
+	
 	return mcrFade.color;
 }
 

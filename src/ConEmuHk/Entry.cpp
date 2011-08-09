@@ -101,6 +101,8 @@ BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
 DWORD   gnImageSubsystem = 0, gnImageBits = 32;
 
+MSection *gpHookCS = NULL;
+
 
 #ifdef _DEBUG
 LPTOP_LEVEL_EXCEPTION_FILTER gfnPrevFilter = NULL;
@@ -403,6 +405,13 @@ void DllStop()
 	
 	//#ifndef TESTLINK
 	CommonShutdown();
+
+	if (gpHookCS)
+	{
+		MSection *p = gpHookCS;
+		gpHookCS = NULL;
+		delete p;
+	}
 
 	//ReleaseConsoleInputSemaphore();
 

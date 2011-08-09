@@ -1571,37 +1571,42 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 			{
 				*pdwEffect = DROPEFFECT_COPY; // Drop в консоль с cmd.exe
 			}
-			else if (
-				((lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt))
-					&& m_pfpi->pszActivePath && m_pfpi->pszActivePath[0] && lbAllowToActive) ||
-			    ((lbPassive = PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt)) 
-					&& m_pfpi->pszPassivePath && (m_pfpi->pszPassivePath[0] || mb_selfdrag)))
-			{
-				if (grfKeyState & MK_CONTROL)
-					*pdwEffect = DROPEFFECT_COPY;
-				else if (grfKeyState & MK_SHIFT)
-					*pdwEffect = DROPEFFECT_MOVE;
-				else if (grfKeyState & (MK_ALT | MK_RBUTTON))
-					*pdwEffect = DROPEFFECT_LINK;
-				else if (gpConEmu->mouse.state & DRAG_R_STARTED)
-					*pdwEffect = DROPEFFECT_LINK; // при Drop - правая кнопка уже отпущена
-				else
-				{
-					// Смотрим на допустимые эфеекты, определенные источником (иначе драг из корзины не работает)
-					*pdwEffect = (gpSet->isDefCopy && (dwAllowed&DROPEFFECT_COPY)==DROPEFFECT_COPY) ? DROPEFFECT_COPY : DROPEFFECT_MOVE;
-				}
-
-				if (*pdwEffect == DROPEFFECT_LINK && lbPassive && m_pfpi->pszPassivePath[0] == 0)
-					*pdwEffect = DROPEFFECT_NONE;
-			}
-			else if ((m_pfpi->ActiveRect.bottom && pt.y > m_pfpi->ActiveRect.bottom) ||
-			        (m_pfpi->PassiveRect.bottom && pt.y > m_pfpi->PassiveRect.bottom))
-			{
-				*pdwEffect = DROPEFFECT_COPY;
-			}
 			else
 			{
-				*pdwEffect = DROPEFFECT_NONE;
+				lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt);
+				// пассивная панель может быть FullScreen и частично ПОД активной
+				lbPassive = !lbActive && PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt);
+
+				// Проверяем, можно ли
+				if ((lbActive && m_pfpi->pszActivePath && m_pfpi->pszActivePath[0] && lbAllowToActive) ||
+					(lbPassive && m_pfpi->pszPassivePath && (m_pfpi->pszPassivePath[0] || mb_selfdrag)))
+				{
+					if (grfKeyState & MK_CONTROL)
+						*pdwEffect = DROPEFFECT_COPY;
+					else if (grfKeyState & MK_SHIFT)
+						*pdwEffect = DROPEFFECT_MOVE;
+					else if (grfKeyState & (MK_ALT | MK_RBUTTON))
+						*pdwEffect = DROPEFFECT_LINK;
+					else if (gpConEmu->mouse.state & DRAG_R_STARTED)
+						*pdwEffect = DROPEFFECT_LINK; // при Drop - правая кнопка уже отпущена
+					else
+					{
+						// Смотрим на допустимые эфеекты, определенные источником (иначе драг из корзины не работает)
+						*pdwEffect = (gpSet->isDefCopy && (dwAllowed&DROPEFFECT_COPY)==DROPEFFECT_COPY) ? DROPEFFECT_COPY : DROPEFFECT_MOVE;
+					}
+
+					if (*pdwEffect == DROPEFFECT_LINK && lbPassive && m_pfpi->pszPassivePath[0] == 0)
+						*pdwEffect = DROPEFFECT_NONE;
+				}
+				else if ((lbActive && m_pfpi->ActiveRect.bottom && pt.y > m_pfpi->ActiveRect.bottom) ||
+						(lbPassive && m_pfpi->PassiveRect.bottom && pt.y > m_pfpi->PassiveRect.bottom))
+				{
+					*pdwEffect = DROPEFFECT_COPY;
+				}
+				else
+				{
+					*pdwEffect = DROPEFFECT_NONE;
+				}
 			}
 		}
 	}

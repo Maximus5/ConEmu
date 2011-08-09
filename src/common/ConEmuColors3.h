@@ -22,6 +22,16 @@ public:
 		return -1;
 	}
 
+	static COLORREF GetStdColor(int Index)
+	{
+		COLORREF StdPalette[16] = 
+			{0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
+			0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
+		if (Index >= 0 && Index < 16)
+			return StdPalette[Index];
+		return 0;
+	}
+	
 	static void Color2FgIndex(COLORREF Color, WORD& Con)
 	{
 		int Index = - 1;

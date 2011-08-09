@@ -285,7 +285,7 @@ class CConEmuMain
 		HBITMAP mh_RightClickingBmp; HDC mh_RightClickingDC;
 		POINT m_RightClickingSize; // {384 x 16} 24 фрейма, считаем, что четверть отведенного времени прошла до начала показа
 		int m_RightClickingFrames, m_RightClickingCurrent;
-		BOOL mb_RightClickingPaint;
+		BOOL mb_RightClickingPaint, mb_RightClickingLSent;
 		void StartRightClickingPaint();
 		void StopRightClickingPaint();
 		void RightClickingPaint(HDC hdc = NULL);
@@ -293,6 +293,7 @@ class CConEmuMain
 		void RegisterMinRestore(bool abRegister);
 		void RegisterHoooks();
 		void UnRegisterHoooks(BOOL abFinal=FALSE);
+		void UpdateWinHookSettings();
 	protected:
 		void CtrlWinAltSpace();
 		//BOOL LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode);
@@ -310,9 +311,10 @@ class CConEmuMain
 		UINT mn_MsgSrvStarted;
 		UINT mn_MsgVConTerminated;
 		UINT mn_MsgUpdateScrollInfo;
-		UINT mn_MsgUpdateTabs;
+		UINT mn_MsgUpdateTabs; // = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 		UINT mn_MsgOldCmdVer; BOOL mb_InShowOldCmdVersion;
 		UINT mn_MsgTabCommand;
+		UINT mn_MsgTabSwitchFromHook; BOOL mb_InWinTabSwitch; // = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 		UINT mn_MsgSheelHook;
 		UINT mn_ShellExecuteEx;
 		UINT mn_PostConsoleResize;
@@ -322,8 +324,8 @@ class CConEmuMain
 		//UINT mn_MsgPostSetBackground;
 		UINT mn_MsgInitInactiveDC;
 		//UINT mn_MsgSetForeground;
-		UINT mn_MsgFlashWindow;
-		UINT mn_MsgActivateCon;
+		UINT mn_MsgFlashWindow; // = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
+		UINT mn_MsgActivateCon; // = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 		UINT mn_MsgUpdateProcDisplay;
 		//UINT wmInputLangChange;
 		UINT mn_MsgAutoSizeFont;

@@ -105,8 +105,18 @@ typedef struct _CONSOLE_SELECTION_INFO
 //#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 //#define CONEMUMSG_LLKEYHOOK L"ConEmuMain::LLKeyHook"    // wParam == hConWnd, lParam == ConEmuC_PID
 #define CONEMUMSG_ACTIVATECON L"ConEmuMain::ActivateCon"  // wParam == ConNumber (1..12)
+#define CONEMUMSG_SWITCHCON L"ConEmuMain::SwitchCon"
 #define CONEMUMSG_PNLVIEWFADE L"ConEmuTh::Fade"
 #define CONEMUMSG_PNLVIEWSETTINGS L"ConEmuTh::Settings"
+
+enum ConEmuTabCommand
+{
+	// 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
+	ctc_ShowHide = 0,
+	ctc_SwitchNext = 1,
+	ctc_SwitchPrev = 2,
+	ctc_SwitchCommit = 3,
+};
 
 //#define CONEMUMAPPING    L"ConEmuPluginData%u"
 //#define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
@@ -143,7 +153,7 @@ const CECMD
 	CECMD_GETOUTPUT      = 11,
 	CECMD_LANGCHANGE     = 12,
 	CECMD_NEWCMD         = 13, // Запустить в этом экземпляре новую консоль с переданной командой (используется при SingleInstance)
-	CECMD_TABSCMD        = 14, // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
+	CECMD_TABSCMD        = 14, // enum ConEmuTabCommand: 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
 	CECMD_RESOURCES      = 15, // Посылается плагином при инициализации (установка ресурсов)
 	CECMD_GETNEWCONPARM  = 16, // Доп.аргументы для создания новой консоли (шрифт, размер,...)
 	CECMD_SETSIZESYNC    = 17, // Синхронно, ждет (но недолго), пока FAR обработает изменение размера (то есть отрисуется)

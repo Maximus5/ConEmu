@@ -754,6 +754,15 @@ BOOL WINAPI Commit()
 	return TRUE; //TODO: А чего возвращать-то?
 }
 
+// Изначально - здесь будет консольная палитра,
+// но юзеру дать возможность ее менять, для удобства
+// назначения одинаковых расширенных цветов
+// в разных местах (в одном сеансе)
+COLORREF gcrCustomColors[16] = {
+	0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
+	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
+	};
+
 struct ColorParam
 {
 	FarColor Color;
@@ -762,7 +771,7 @@ struct ColorParam
 	BOOL b4bitback;
 	BOOL bCentered;
 	BOOL bAddTransparent;
-	COLORREF crCustom[16];
+	//COLORREF crCustom[16];
 	HWND hConsole, hGUI, hGUIRoot;
 	RECT rcParent;
 	SMALL_RECT rcBuffer; // видимый буфер в консоли
@@ -773,11 +782,26 @@ struct ColorParam
 	COLORREF crBackColor, crForeColor;
 	HBRUSH hbrBackground;
 	
+	LOGFONT lf;
+	HFONT hFont;
+	
 	void CreateBrush()
 	{
 		if (hbrBackground)
 			DeleteObject(hbrBackground);
-		hbrBackground = CreateSolidBrush(bBackTransparent ? GetSysColor(COLOR_BTNFACE) : crBackColor);
+		//hbrBackground = CreateSolidBrush(bBackTransparent ? GetSysColor(COLOR_BTNFACE) : crBackColor);
+		hbrBackground = CreateSolidBrush(crBackColor);
+	}
+	
+	void RecreateFont(HWND hStatic)
+	{
+		if (hFont)
+			DeleteObject(hFont);
+		lf.lfWeight = bBold ? FW_BOLD : FW_NORMAL;
+		lf.lfItalic = bItalic;
+		lf.lfUnderline = bUnderline;
+		hFont = ::CreateFontIndirect(&lf);
+		SendMessage(hStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
 	}
 
 	void Far2Ref(const FarColor* p, BOOL Foreground, COLORREF* cr, BOOL* Transparent)
@@ -791,10 +815,10 @@ struct ColorParam
 			{
 				if (nClr < 16)
 				{
-					*cr = crCustom[nClr];
+					*cr = Far3Color::GetStdColor(nClr);
 				}
 			}
-			else //TODO: Остальные флаги?
+			else
 			{
 				*cr = nClr;
 			}
@@ -810,10 +834,10 @@ struct ColorParam
 			{
 				if (nClr < 16)
 				{
-					*cr = crCustom[nClr];
+					*cr = Far3Color::GetStdColor(nClr);
 				}
 			}
-			else //TODO: Остальные флаги?
+			else
 			{
 				*cr = nClr;
 			}
@@ -825,16 +849,16 @@ struct ColorParam
 		
 		if (Foreground ? b4bitfore : b4bitback)
 		{
-			int Change = -1;
-			for (int i = 0; i < ARRAYSIZE(crCustom); i++)
-			{
-				if (crCustom[i] == Color)
-				{
-					Change = i;
-					break;
-				}
-			}
-			if (Change == -1)
+			//int Change = -1;
+			//for (int i = 0; i < ARRAYSIZE(crCustom); i++)
+			//{
+			//	if (crCustom[i] == Color)
+			//	{
+			//		Change = i;
+			//		break;
+			//	}
+			//}
+			//if (Change == -1)
 			{
 				WORD nIndex = 0;
 				// Используем "Fg" и для Background, т.к. Color2BgIndex делает
@@ -843,10 +867,10 @@ struct ColorParam
 				Far3Color::Color2FgIndex(cr, nIndex);
 				Color = nIndex;
 			}
-			else
-			{
-				Color = Change;
-			}
+			//else
+			//{
+			//	Color = Change;
+			//}
 		}
 		
 		if (Foreground)
@@ -903,6 +927,15 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		CheckDlgButton(hwndDlg, IDC_UNDERLINE, P->bUnderline ? BST_CHECKED : BST_UNCHECKED);
 		// Заполнить поле буковками
 		SetDlgItemText(hwndDlg, IDC_TEXT, L"Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text");
+		
+		NONCLIENTMETRICS ncm = {sizeof(ncm)};
+		SystemParametersInfo(SPI_GETNONCLIENTMETRICS, (UINT)sizeof(NONCLIENTMETRICS), &ncm, 0);
+		//P->lf = ncm.lfMessageFont;
+		P->lf.lfHeight = ncm.lfMessageFont.lfHeight; // (ncm.lfMessageFont.lfHeight<0) ? (ncm.lfMessageFont.lfHeight-1) : (ncm.lfMessageFont.lfHeight+1);
+		P->lf.lfWeight = FW_NORMAL;
+		P->lf.lfCharSet = 1;
+		lstrcpy(P->lf.lfFaceName, L"Lucida Console");
+		P->RecreateFont(GetDlgItem(hwndDlg, IDC_TEXT));
 
 		if (!P->bAddTransparent)
 		{
@@ -965,7 +998,8 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	case WM_CTLCOLORSTATIC:
 		if (GetDlgCtrlID((HWND)lParam) == IDC_TEXT)
 		{
-			SetTextColor((HDC)wParam, P->bForeTransparent ? GetSysColor(COLOR_BTNFACE) : P->crForeColor);
+			//SetTextColor((HDC)wParam, P->bForeTransparent ? GetSysColor(COLOR_BTNFACE) : P->crForeColor);
+			SetTextColor((HDC)wParam, P->crForeColor);
 			SetBkMode((HDC)wParam, TRANSPARENT);
 			return (INT_PTR)P->hbrBackground;
 		}
@@ -985,7 +1019,7 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				CHOOSECOLOR clr = {sizeof(clr),
 					hwndDlg, NULL,
 					(wParam == IDC_FORE) ? P->crForeColor : P->crBackColor,
-					P->crCustom,
+					gcrCustomColors,
 					((P->bTrueColorEnabled || !(wParam==IDC_FORE?P->b4bitfore:P->b4bitback)) ? (CC_FULLOPEN|CC_ANYCOLOR) : CC_SOLIDCOLOR)
 					|CC_RGBINIT,
 				};
@@ -1024,11 +1058,41 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		case IDC_FORE_4BIT:
 			{
 				P->b4bitfore = IsDlgButtonChecked(hwndDlg, (int)wParam)!=BST_UNCHECKED;
+				if (P->b4bitfore)
+				{
+					WORD nIndex = 0;
+					Far3Color::Color2FgIndex(P->crForeColor, nIndex);
+					if (nIndex >= 0 && nIndex < 16)
+					{
+						P->crForeColor = Far3Color::GetStdColor(nIndex);
+						InvalidateRect(GetDlgItem(hwndDlg, IDC_TEXT), NULL, TRUE);
+					}
+					else
+					{
+						_ASSERTE(nIndex >= 0 && nIndex < 16);
+					}
+				}
 			}
 			break;
 		case IDC_BACK_4BIT:
 			{
 				P->b4bitback = IsDlgButtonChecked(hwndDlg, (int)wParam)!=BST_UNCHECKED;
+				if (P->b4bitback)
+				{
+					WORD nIndex = 0;
+					// Используем Fg, т.к. он дает "чистый" цвет, без коррекции на "читаемость"
+					Far3Color::Color2FgIndex(P->crBackColor, nIndex);
+					if (nIndex >= 0 && nIndex < 16)
+					{
+						P->crBackColor = Far3Color::GetStdColor(nIndex);
+						P->CreateBrush();
+						InvalidateRect(GetDlgItem(hwndDlg, IDC_TEXT), NULL, TRUE);
+					}
+					else
+					{
+						_ASSERTE(nIndex >= 0 && nIndex < 16);
+					}
+				}
 			}
 			break;
 		case IDC_FORE_TRANS:
@@ -1047,19 +1111,19 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		case IDC_BOLD:
 			{
 				P->bBold = IsDlgButtonChecked(hwndDlg, (int)wParam)!=BST_UNCHECKED;
-				//TODO: Сменить шрифт отрисовки
+				P->RecreateFont(GetDlgItem(hwndDlg, IDC_TEXT));
 			}
 			break;
 		case IDC_ITALIC:
 			{
 				P->bItalic = IsDlgButtonChecked(hwndDlg, (int)wParam)!=BST_UNCHECKED;
-				//TODO: Сменить шрифт отрисовки
+				P->RecreateFont(GetDlgItem(hwndDlg, IDC_TEXT));
 			}
 			break;
 		case IDC_UNDERLINE:
 			{
 				P->bUnderline = IsDlgButtonChecked(hwndDlg, (int)wParam)!=BST_UNCHECKED;
-				//TODO: Сменить шрифт отрисовки
+				P->RecreateFont(GetDlgItem(hwndDlg, IDC_TEXT));
 			}
 			break;
 		}
@@ -1085,6 +1149,8 @@ DWORD WINAPI ColorDialogThread(LPVOID lpParameter)
 
 	if (P->hbrBackground)
 		DeleteObject(P->hbrBackground);
+	if (P->hFont)
+		DeleteObject(P->hFont);
 
 	return (DWORD)lRc;
 }
@@ -1114,8 +1180,8 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 		(Color->Flags & FCF_FG_4BIT)==FCF_FG_4BIT/*b4bitfore*/,
 		(Color->Flags & FCF_BG_4BIT)==FCF_BG_4BIT/*b4bitback*/,
 		Centered, AddTransparent,
-		{0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
-		0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff},
+		//{0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
+		//0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff},
 	};
 	////TODO: BUGBUG. При настройке НОВОГО цвета фар передает Color заполненный 0-ми
 	//if (!Parm.Color.Flags && !Parm.Color.ForegroundColor && !Parm.Color.BackgroundColor && !Parm.Color.Reserved)
