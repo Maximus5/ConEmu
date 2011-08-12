@@ -234,6 +234,8 @@ class CVirtualConsole
 		static bool isCharBorderVertical(wchar_t inChar);
 		static bool isCharProgress(wchar_t inChar);
 		static bool isCharScroll(wchar_t inChar);
+		inline bool isCharNonSpacing(wchar_t inChar);
+		inline bool isCharSpace(wchar_t inChar);
 		void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);

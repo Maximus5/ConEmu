@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/WinObjects.h"
+#include "../common/MArray.h"
 #include "ShellProcessor.h"
 #include "SetHook.h"
 
@@ -138,6 +139,21 @@ void CheckLoadedModule(LPCWSTR asModule)
 		}
 	}
 }
+
+
+// Использовать GetModuleFileName или CreateToolhelp32Snapshot во время загрузки библиотек нельзя
+// Однако, хранить список модулей нужно
+// 1. для того, чтобы знать, в каких модулях хуки уже ставились
+// 2. для информации, чтобы передать в ConEmu если пользователь включил "Shell and processes log"
+struct HkModuleInfo
+{
+	BOOL    bUsed;   // ячейка занята
+	BOOL    bHooked; // модуль обрабатывался (хуки установлены)
+	HMODULE hModule; // хэндл
+	wchar_t sModuleName[128]; // Только информационно, в обработке не участвует
+};
+MArray<HkModuleInfo> *gpHookedModules = NULL;
+
 
 BOOL gbHooksTemporaryDisabled = FALSE;
 //BOOL gbInShellExecuteEx = FALSE;
@@ -261,7 +277,7 @@ CInFuncCall::~CInFuncCall()
 
 
 //extern HANDLE ghHookMutex;
-extern MSection* gpHookCS;
+MSection* gpHookCS = NULL;
 
 // Заполнить поле HookItem.OldAddress (реальные процедуры из внешних библиотек)
 // apHooks->Name && apHooks->DllName MUST be for a lifetime
@@ -282,6 +298,13 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	{
 		gpHookCS = new MSection;
 	}
+
+#if 0
+	if (!gpHookedModules)
+	{
+		gpHookedModules = new MArray<HkModuleInfo>;
+	}
+#endif
 
 	if (gpHooks == NULL)
 	{
@@ -377,6 +400,55 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	}
 
 	return true;
+}
+
+void ShutdownHooks()
+{
+	UnsetAllHooks();
+	
+	//// Завершить работу с реестром
+	//DoneHooksReg();
+
+	// Уменьшение счетчиков загрузок
+	if (ghKernel32)
+	{
+		FreeLibrary(ghKernel32);
+		ghKernel32 = NULL;
+	}
+	if (ghUser32)
+	{
+		FreeLibrary(ghUser32);
+		ghUser32 = NULL;
+	}
+	if (ghShell32)
+	{
+		FreeLibrary(ghShell32);
+		ghShell32 = NULL;
+	}
+	if (ghAdvapi32)
+	{
+		FreeLibrary(ghAdvapi32);
+		ghAdvapi32 = NULL;
+	}
+	if (ghComdlg32)
+	{
+		FreeLibrary(ghComdlg32);
+		ghComdlg32 = NULL;
+	}
+	
+	if (gpHookCS)
+	{
+		MSection *p = gpHookCS;
+		gpHookCS = NULL;
+		delete p;
+	}
+
+	if (gpHookedModules)
+	{
+		MArray<HkModuleInfo> *p = gpHookedModules;
+		gpHookedModules = NULL;
+		delete p;
+	}	
 }
 
 void __stdcall SetLoadLibraryCallback(HMODULE ahCallbackModule, OnLibraryLoaded_t afOnLibraryLoaded, OnLibraryLoaded_t afOnLibraryUnLoaded)
@@ -1400,6 +1472,7 @@ void CheckProcessModules(HMODULE hFromModule)
 	WARNING("TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary!!!");
 	// Может, имеет смысл запустить фоновую нить, в которой проверить все загруженные модули?
 
+	//Warning: TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary.
 	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
 	MODULEENTRY32 mi = {sizeof(mi)};
 	if (h && h != INVALID_HANDLE_VALUE && Module32First(h, &mi))

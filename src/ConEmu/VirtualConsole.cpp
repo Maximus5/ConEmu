@@ -27,6 +27,36 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+/*
+
+Spacing chars
+0020	SPACE
+	* sometimes considered a control code
+	* other space characters: 2000-200A
+	x (no-break space - 00A0)
+	x (zero width space - 200B)
+	x (word joiner - 2060)
+	x (ideographic space - 3000)
+	x (zero width no-break space - FEFF)
+
+200C    ZERO WIDTH NON-JOINER
+200C    ZERO WIDTH NON-JOINER
+200E    LEFT-TO-RIGHT MARK
+2060    WORD JOINER
+FEFF    ZERO WIDTH NO-BREAK SPACE
+
+
+*/
+
+
+/*
+200E    LEFT-TO-RIGHT MARK    
+    * commonly abbreviated LRM
+200F    RIGHT-TO-LEFT MARK    
+    * commonly abbreviated RLM
+*/
+
+
 #define SHOWDEBUGSTR
 #ifdef _DEBUG
 #define SHOWDEBUGSTEPS
@@ -100,7 +130,20 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #define DUMPDC(f)
 #endif
 
-#define isCharSpace(c) (c == ucSpace || c == ucNoBreakSpace || c == 0)
+//#define isCharSpace(c) (c == ucSpace || c == ucNoBreakSpace || c == 0 || (c>=0x2000 && c<=0x200F) || c == 0x2060 || c == 0x3000 || c == 0xFEFF)
+//TODO("Всякие там acute и прочие композиты");
+//#define isCharNonSpacing(c) (c == 0xFEFF || (c>=0x2000 && c<=0x200F) || c == 0x2060 || c == 0x3000)
+//bool __inline isCharSpace(wchar_t c)
+//{
+//	switch (c)
+//	{
+//	case ucSpace:
+//	case ucNoBreakSpace:
+//	case 0x2000: case 0x2001: case 0x2002: case 0x2003: case 0x2004: case 0x2005:
+//	case 0x2006: case 0x2007: case 0x2008: case 0x2009: case 0x200A:
+//	200A
+//	}
+//}
 
 
 
@@ -743,6 +786,39 @@ bool CVirtualConsole::isCharScroll(wchar_t inChar)
 	bool isScrollbar = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100
 	                    || inChar == ucUpScroll || inChar == ucDnScroll);
 	return isScrollbar;
+}
+
+bool CVirtualConsole::isCharNonSpacing(wchar_t inChar)
+{
+	// Здесь возвращаем те символы, которые нельзя рисовать вместе с обычными буквами.
+	// Например, 0xFEFF на некоторых шрифтах вообще переключает GDI на какой-то левый шрифт O_O
+	// Да и то, что они "не занимают места" в консоли некорректно. Даже если апостроф, по идее,
+	// должен располагаться НАД буквой, рисовать его надо бы СЛЕВА от нее, т.к. он занимает
+	// знакоместо в консоли!
+	bool isNonSpacing = (inChar == 0xFEFF || (inChar>=0x2000 && inChar<=0x200F) || inChar == 0x2060 || inChar == 0x3000
+		|| (inChar>=0x202A && inChar<=0x202E)
+		|| (inChar>=0x0300 && inChar<=0x036F) // Combining/Accent/Acute/NonSpacing
+		|| (inChar>=0x0483 && inChar<=0x0489)
+		|| (inChar>=0x07EB && inChar<=0x07F3)
+		|| (inChar>=0x1B6B && inChar<=0x1B73)
+		|| (inChar>=0x1DC0 && inChar<=0x1DFF)
+		|| (inChar>=0x20D0 && inChar<=0x20F0)
+		|| (inChar>=0x2DE0 && inChar<=0x2DFF)
+		|| (inChar>=0xFE20 && inChar<=0xFE26)
+		|| inChar==0x135F || inChar==0x3099 || inChar==0x309A || inChar==0xA66F
+		|| inChar==0xA670 || inChar==0xA671 || inChar==0xA672 || inChar==0xA67C
+		|| inChar==0xA67D
+		);
+	return isNonSpacing;
+}
+
+bool CVirtualConsole::isCharSpace(wchar_t inChar)
+{
+	// Сюда пихаем все символы, которые можно отрисовать пустым фоном (как обычный пробел)
+	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0 
+		/*|| (inChar>=0x2000 && inChar<=0x200F)
+		|| inChar == 0x2060 || inChar == 0x3000 || inChar == 0xFEFF*/);
+	return isSpace;
 }
 
 void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight)
@@ -2063,7 +2139,7 @@ void CVirtualConsole::UpdateText()
 			//BYTE attrForeIdx, attrBackIdx;
 			//COLORREF attrForeClr, attrBackClr;
 			bool isUnicode = gpSet->isFixFarBorders && isCharBorder(c/*ConCharLine[j]*/);
-			bool isProgress = false, isSpace = false, isUnicodeOrProgress = false;
+			bool isProgress = false, isSpace = false, isUnicodeOrProgress = false, isNonSpacing = false;
 			bool lbS1 = false, lbS2 = false;
 			int nS11 = 0, nS12 = 0, nS21 = 0, nS22 = 0;
 			//GetCharAttr(c, attr, c, attrFore, attrBack);
@@ -2078,7 +2154,10 @@ void CVirtualConsole::UpdateText()
 			isUnicodeOrProgress = isUnicode || isProgress;
 
 			if (!isUnicodeOrProgress)
+			{ 
+				isNonSpacing = isCharNonSpacing(c);
 				isSpace = isCharSpace(c);
+			}
 
 			TODO("При позиционировании (наверное в DistrubuteSpaces) пытаться ориентироваться по координатам предыдущей строки");
 			// Иначе окантовка диалогов съезжает на пропорциональных шрифтах
@@ -2381,6 +2460,20 @@ void CVirtualConsole::UpdateText()
 
 					DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
 				}
+				else if (isNonSpacing)
+				{
+					j2 = j + 1; HEAPVAL
+					wchar_t ch;
+					int nLastNonSpace = -1;
+					while(j2 < end && ConAttrLine[j2] == attr
+					        && isCharNonSpacing(ch = ConCharLine[j2]))
+					{
+						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
+						j2++;
+					}
+					SelectFont(hFont);
+					HEAPVAL
+				}
 				else if (!isUnicodeOrProgress)
 				{
 					j2 = j + 1; HEAPVAL
@@ -2391,8 +2484,9 @@ void CVirtualConsole::UpdateText()
 					WARNING("*** сомнение в следующей строчке: (!gpSet->isProportional || !isFilePanel || (ch != L'}' && ch!=L' '))");
 					TODO("при поиске по строке - обновлять nLastNonSpace");
 
-					while(j2 < end && ConAttrLine[j2] == attr &&
-					        !isCharBorder(ch = ConCharLine[j2])
+					while(j2 < end && ConAttrLine[j2] == attr
+					        && !isCharBorder(ch = ConCharLine[j2])
+							&& !isCharNonSpacing(ch)
 					        && (!bProportional || !isFilePanel || (ch != L'}' && ch!=L' '))) // корректировка имен в колонках
 					{
 						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);

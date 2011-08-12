@@ -101,7 +101,7 @@ BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
 DWORD   gnImageSubsystem = 0, gnImageBits = 32;
 
-MSection *gpHookCS = NULL;
+//MSection *gpHookCS = NULL;
 
 
 #ifdef _DEBUG
@@ -387,6 +387,9 @@ void DllStop()
 	if (/*!gbSkipInjects &&*/ gbHooksWasSet)
 	{
 		gbHooksWasSet = FALSE;
+		// Завершить работу с реестром
+		DoneHooksReg();
+		// "Закрыть" хуки
 		ShutdownHooks();
 	}
 
@@ -406,12 +409,12 @@ void DllStop()
 	//#ifndef TESTLINK
 	CommonShutdown();
 
-	if (gpHookCS)
-	{
-		MSection *p = gpHookCS;
-		gpHookCS = NULL;
-		delete p;
-	}
+	//if (gpHookCS)
+	//{
+	//	MSection *p = gpHookCS;
+	//	gpHookCS = NULL;
+	//	delete p;
+	//}
 
 	//ReleaseConsoleInputSemaphore();
 

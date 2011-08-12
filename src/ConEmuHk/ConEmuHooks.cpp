@@ -468,40 +468,40 @@ BOOL StartupHooks(HMODULE ahOurDll)
 }
 
 
-void ShutdownHooks()
-{
-	UnsetAllHooks();
-	
-	// Завершить работу с реестром
-	DoneHooksReg();
-
-	// Уменьшение счетчиков загрузок
-	if (ghKernel32)
-	{
-		FreeLibrary(ghKernel32);
-		ghKernel32 = NULL;
-	}
-	if (ghUser32)
-	{
-		FreeLibrary(ghUser32);
-		ghUser32 = NULL;
-	}
-	if (ghShell32)
-	{
-		FreeLibrary(ghShell32);
-		ghShell32 = NULL;
-	}
-	if (ghAdvapi32)
-	{
-		FreeLibrary(ghAdvapi32);
-		ghAdvapi32 = NULL;
-	}
-	if (ghComdlg32)
-	{
-		FreeLibrary(ghComdlg32);
-		ghComdlg32 = NULL;
-	}
-}
+//void ShutdownHooks()
+//{
+//	UnsetAllHooks();
+//	
+//	//// Завершить работу с реестром
+//	//DoneHooksReg();
+//
+//	// Уменьшение счетчиков загрузок
+//	if (ghKernel32)
+//	{
+//		FreeLibrary(ghKernel32);
+//		ghKernel32 = NULL;
+//	}
+//	if (ghUser32)
+//	{
+//		FreeLibrary(ghUser32);
+//		ghUser32 = NULL;
+//	}
+//	if (ghShell32)
+//	{
+//		FreeLibrary(ghShell32);
+//		ghShell32 = NULL;
+//	}
+//	if (ghAdvapi32)
+//	{
+//		FreeLibrary(ghAdvapi32);
+//		ghAdvapi32 = NULL;
+//	}
+//	if (ghComdlg32)
+//	{
+//		FreeLibrary(ghComdlg32);
+//		ghComdlg32 = NULL;
+//	}
+//}
 
 
 
@@ -2063,8 +2063,11 @@ void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT u
 }
 
 #ifdef _DEBUG
+// IsConsoleHandle
 bool IsHandleConsole(HANDLE handle, bool output = true)
 {
+	// MSDN рекомендует пользовать GetConsoleMode (оно и Input и Output умеет)
+
 	// Консоль?
 	if (((DWORD)handle & 0x10000003) != 3)
 		return false;
