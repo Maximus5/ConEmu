@@ -2506,6 +2506,10 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		}
 		case(CMD_LEFTCLKSYNC):
 		{
+			WARNING("«аменить бы его на макрос в Far3");
+			// —начала в консоль дослать просто WM_MOUSEMOVE без кнопок, а потом дернуть макрос "MsLClick"
+			// ƒл€ Far3 - координаты вроде можно сразу в макрос кинуть
+			
 			//COORD *crMouse = (COORD *)pCommandData;
 			BOOL  *pbClickNeed = (BOOL*)pCommandData;
 			COORD *crMouse = (COORD *)(pbClickNeed+1);

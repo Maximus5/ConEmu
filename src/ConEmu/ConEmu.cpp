@@ -6196,8 +6196,9 @@ void CConEmuMain::RightClickingPaint(HDC hdc /*= NULL*/)
 {
 	BOOL lbSucceeded = FALSE;
 
-	if (gpSet->isRClickSendKey > 1 && (mouse.state & MOUSE_R_LOCKED)
-	        && m_RightClickingFrames > 0 && mh_RightClickingBmp)
+	if (!gpSet->isDisableMouse
+		&& gpSet->isRClickSendKey > 1 && (mouse.state & MOUSE_R_LOCKED)
+		&& m_RightClickingFrames > 0 && mh_RightClickingBmp)
 	{
 		WORD nRDown = GetKeyState(VK_RBUTTON);
 		POINT ptCur; GetCursorPos(&ptCur);
@@ -6229,7 +6230,10 @@ void CConEmuMain::RightClickingPaint(HDC hdc /*= NULL*/)
 					// Чтобы установить курсор в панелях точно под кликом
 					// иначе получается некрасиво, что курсор прыгает только перед
 					// появлением EMenu, а до этого (пока крутится "кружок") курсор не двигается.
+					mp_VActive->RCon()->OnMouse(WM_MOUSEMOVE, 0, mouse.RClkDC.X, mouse.RClkDC.Y, true);
+					WARNING("По хорошему, нужно дождаться пока мышь обработается");
 					mp_VActive->RCon()->PostMacro(L"MsLClick");
+					PRAGMA_ERROR("Заменить на CMD_LEFTCLKSYNC?");
 				}
 
 				// Прикинуть индекс фрейма
@@ -9653,7 +9657,7 @@ LRESULT CConEmuMain::OnMouse_Move(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			}
 		}
 	}
-	else if (gpSet->isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
+	else if (!gpSet->isDisableMouse && gpSet->isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
 	{
 		//Если двинули мышкой, а была включена опция RClick - не вызывать
 		//контекстное меню - просто послать правый клик
@@ -9893,7 +9897,7 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 		}
 
 		// Если ничего лишнего не нажато!
-		if (gpSet->isRClickSendKey && !(wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)))
+		if (!gpSet->isDisableMouse && gpSet->isRClickSendKey && !(wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)))
 		{
 			//заведем таймер на .3
 			//если больше - пошлем apps
@@ -9909,6 +9913,7 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 		{
 			if (gpSet->isAdvLogging)
 				mp_VActive->RCon()->LogString(
+					gpSet->isDisableMouse ? "RightClick ignored of gpSet->isDisableMouse" :
 				    !gpSet->isRClickSendKey ? "RightClick ignored of !gpSet->isRClickSendKey" :
 				    "RightClick ignored of wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)"
 				);
@@ -9933,7 +9938,7 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 	// Сразу сбросить, если выставлялся
 	StopRightClickingPaint();
 
-	if (gpSet->isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
+	if (!gpSet->isDisableMouse && gpSet->isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
 	{
 		//isRBDown=false; // сразу сбросим!
 		mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
@@ -10111,6 +10116,10 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 		//wsprintfA(szLog, "RightClicked, but condition failed (RCSK:%i, State:%u)", (int)gpSet->isRClickSendKey, (DWORD)mouse.state);
 		lstrcpyA(szLog, "RightClicked, but condition failed: ");
 
+		if (gpSet->isDisableMouse)
+		{
+			wsprintfA(szLog+lstrlenA(szLog), "((isDisableMouse=%i)==0)", (UINT)gpSet->isDisableMouse);
+		}
 		if (gpSet->isRClickSendKey==0)
 		{
 			wsprintfA(szLog+lstrlenA(szLog), "((isRClickSendKey=%i)==0)", (UINT)gpSet->isRClickSendKey);

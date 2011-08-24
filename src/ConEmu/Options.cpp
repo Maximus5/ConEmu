@@ -497,6 +497,7 @@ void CSettings::InitSettings()
 	wcscpy_c(szAdminTitleSuffix, L" (Admin)");
 	bAdminShield = true;
 	bHideInactiveConsoleTabs = false;
+	isDisableMouse = false;
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
 	isFarHourglass = true; nFarHourglassDelay = 500;
 	isDisableFarFlashing = false; isDisableAllFlashing = false;
@@ -852,6 +853,7 @@ void CSettings::LoadSettings()
 
 		isMonospaceSelected = isMonospace ? isMonospace : 1; // запомнить, чтобы выбирать то что нужно при смене шрифта
 		//reg->Load(L"Update Console handle", isUpdConHandle);
+		reg->Load(L"DisableMouse", isDisableMouse);
 		reg->Load(L"RSelectionFix", isRSelFix);
 		reg->Load(L"MouseSkipActivation", isMouseSkipActivation);
 		reg->Load(L"MouseSkipMoving", isMouseSkipMoving);
@@ -1385,6 +1387,7 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"FARuseASCIIsort", isFARuseASCIIsort);
 		reg->Save(L"ShellNoZoneCheck", isShellNoZoneCheck);
 		reg->Save(L"FixAltOnAltTab", isFixAltOnAltTab);
+		reg->Save(L"DisableMouse", isDisableMouse);
 		reg->Save(L"RSelectionFix", isRSelFix);
 		reg->Save(L"MouseSkipActivation", isMouseSkipActivation);
 		reg->Save(L"MouseSkipMoving", isMouseSkipMoving);

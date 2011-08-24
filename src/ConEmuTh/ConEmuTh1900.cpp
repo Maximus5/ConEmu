@@ -72,6 +72,8 @@ GUID guid_ConEmuThPluginMenu = { /* 128414a5-68a2-44d2-b092-c9c5225324e1 */
 //    {0xb6, 0x6a, 0xce, 0x54, 0xdf, 0xae, 0x7e, 0xfc}
 //  };
 
+#define MCTLARG0 ((gFarVersion.dwBuild>=2159) ? ((HANDLE)&guid_ConEmuTh) : INVALID_HANDLE_VALUE)
+
 void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 {
 	//static wchar_t szTitle[16]; _wcscpy_c(szTitle, L"ConEmu");
@@ -239,7 +241,7 @@ void PostMacroW1900(wchar_t* asMacro)
 	}
 
 	mcr.SequenceText = asMacro;
-	InfoW1900->MacroControl(INVALID_HANDLE_VALUE, MCTL_SENDSTRING, 0, &mcr);
+	InfoW1900->MacroControl(MCTLARG0, MCTL_SENDSTRING, 0, &mcr);
 }
 
 int ShowPluginMenuW1900()
@@ -293,7 +295,7 @@ BOOL IsMacroActiveW1900()
 {
 	if (!InfoW1900) return FALSE;
 
-	INT_PTR liRc = InfoW1900->MacroControl(INVALID_HANDLE_VALUE, MCTL_GETSTATE, 0, 0);
+	INT_PTR liRc = InfoW1900->MacroControl(MCTLARG0, MCTL_GETSTATE, 0, 0);
 
 	if (liRc == MACROSTATE_NOMACRO)
 		return FALSE;

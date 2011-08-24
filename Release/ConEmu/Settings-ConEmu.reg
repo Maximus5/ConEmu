@@ -261,8 +261,11 @@ REGEDIT4
 ;; hex:02 - Resize on button release by macroses
 "DragPanel"=hex:01
 
-;; 1- Отображать в заголовке окна процесс общения с плагином FAR; 0 - не отображать
+;; 1 - Show some debug information in ConEmu title, i.e. plugin communication steps; 0 - don't show
 "DebugSteps"=hex:01
+
+;; 1 - don't send mouse events to console; 0 - allow mouse (defalt)
+"DisableMouse"=hex:00
 
 ;; Fix dashed selection with right mouse drag
 "RSelectionFix"=hex:01

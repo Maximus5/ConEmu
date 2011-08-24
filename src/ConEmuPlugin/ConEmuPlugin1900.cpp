@@ -75,6 +75,7 @@ GUID guid_ConEmuWaitEndSynchro = { /* e93fba92-d7de-4651-9be1-c9b064254f65 */
 	{0x9b, 0xe1, 0xc9, 0xb0, 0x64, 0x25, 0x4f, 0x65}
 };
 
+#define MCTLARG0 ((gFarVersion.dwBuild>=2159) ? ((HANDLE)&guid_ConEmu) : INVALID_HANDLE_VALUE)
 
 struct PluginStartupInfo *InfoW1900=NULL;
 struct FarStandardFunctions *FSFW1900=NULL;
@@ -742,7 +743,8 @@ void PostMacroW1900(wchar_t* asMacro)
 	}
 
 	mcr.SequenceText = asMacro;
-	InfoW1900->MacroControl(INVALID_HANDLE_VALUE, MCTL_SENDSTRING, 0, &mcr);
+	//gFarVersion.dwBuild
+	InfoW1900->MacroControl(MCTLARG0, MCTL_SENDSTRING, 0, &mcr);
 	//FAR BUGBUG: ћакрос не запускаетс€ на исполнение, пока мышкой не дернем :(
 	//  Ёто чаще всего про€вл€етс€ при вызове меню по RClick
 	//  ≈сли курсор на другой панели, то RClick сразу по пассивной
@@ -973,7 +975,7 @@ BOOL IsMacroActiveW1900()
 {
 	if (!InfoW1900) return FALSE;
 
-	INT_PTR liRc = InfoW1900->MacroControl(INVALID_HANDLE_VALUE, MCTL_GETSTATE, 0, 0);
+	INT_PTR liRc = InfoW1900->MacroControl(MCTLARG0, MCTL_GETSTATE, 0, 0);
 
 	if (liRc == MACROSTATE_NOMACRO)
 		return FALSE;
@@ -1157,7 +1159,7 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETCONFIRMATIONS, 0, 0);
 
 	gpFarInfo->bMacroActive = IsMacroActiveW1900();
-	INT_PTR nArea = InfoW1900->MacroControl(INVALID_HANDLE_VALUE, MCTL_GETAREA, 0, 0);
+	INT_PTR nArea = InfoW1900->MacroControl(MCTLARG0, MCTL_GETAREA, 0, 0);
 	switch(nArea)
 	{
 		case MACROAREA_SHELL:
@@ -1344,7 +1346,7 @@ int GetActiveWindowTypeW1900()
 
 	//_ASSERTE(GetCurrentThreadId() == gnMainThreadId); -- это - ThreadSafe
 
-	INT_PTR nArea = InfoW1900->MacroControl(INVALID_HANDLE_VALUE, MCTL_GETAREA, 0, 0);
+	INT_PTR nArea = InfoW1900->MacroControl(MCTLARG0, MCTL_GETAREA, 0, 0);
 
 	switch(nArea)
 	{

@@ -168,6 +168,7 @@ class CSettings
 		bool isAlwaysOnTop, isDesktopMode;
 		BYTE isFixFarBorders;
 		bool isExtendUCharMap;
+		bool isDisableMouse;
 		bool isMouseSkipActivation, isMouseSkipMoving;
 		bool isFarHourglass; DWORD nFarHourglassDelay;
 		BYTE isDisableFarFlashing, isDisableAllFlashing;

@@ -2419,7 +2419,8 @@ COORD CRealConsole::ScreenToBuffer(COORD crMouse)
 
 
 // x,y - экранные координаты
-void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
+// ≈сли abForceSend==true - не провер€ть на "повторность" событи€, и не провер€ть "isPressed(VK_?BUTTON)"
+void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend /*= false*/)
 {
 #ifndef WM_MOUSEHWHEEL
 #define WM_MOUSEHWHEEL                  0x020E
@@ -2511,6 +2512,10 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 		OnMouseSelection(messg, wParam, x, y);
 		return;
 	}
+	
+	// ≈сли юзер запретил посылку мышиных событий в консоль
+	if (gpSet->isDisableMouse)
+		return;
 
 	// ≈сли консоль в режиме с прокруткой - не посылать мышь в консоль
 	// »наче получаютс€ казусы. ≈сли во врем€ выполнени€ команды (например "dir c: /s")
@@ -2535,13 +2540,13 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 	r.EventType = MOUSE_EVENT;
 
 	// Mouse Buttons
-	if (messg != WM_LBUTTONUP && (messg == WM_LBUTTONDOWN || messg == WM_LBUTTONDBLCLK || isPressed(VK_LBUTTON)))
+	if (messg != WM_LBUTTONUP && (messg == WM_LBUTTONDOWN || messg == WM_LBUTTONDBLCLK || (!abForceSend && isPressed(VK_LBUTTON))))
 		r.Event.MouseEvent.dwButtonState |= FROM_LEFT_1ST_BUTTON_PRESSED;
 
-	if (messg != WM_RBUTTONUP && (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONDBLCLK || isPressed(VK_RBUTTON)))
+	if (messg != WM_RBUTTONUP && (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONDBLCLK || (!abForceSend && isPressed(VK_RBUTTON))))
 		r.Event.MouseEvent.dwButtonState |= RIGHTMOST_BUTTON_PRESSED;
 
-	if (messg != WM_MBUTTONUP && (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONDBLCLK || isPressed(VK_MBUTTON)))
+	if (messg != WM_MBUTTONUP && (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONDBLCLK || (!abForceSend && isPressed(VK_MBUTTON))))
 		r.Event.MouseEvent.dwButtonState |= FROM_LEFT_2ND_BUTTON_PRESSED;
 
 	if (messg != WM_XBUTTONUP && (messg == WM_XBUTTONDOWN || messg == WM_XBUTTONDBLCLK))
@@ -2651,6 +2656,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 		        && m_LastMouse.dwControlKeyState == r.Event.MouseEvent.dwControlKeyState
 		        //&& (nDeltaX <= 1 && nDeltaY <= 1) // был 1 пиксел
 		        && !nDeltaX && !nDeltaY // стал 1 символ
+		        && !abForceSend // и если не просили точно послать
 		        )
 			return; // не посылать в консоль MouseMove на том же месте
 
