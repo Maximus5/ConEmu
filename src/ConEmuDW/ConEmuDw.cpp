@@ -1160,7 +1160,7 @@ void CopyShaded(FAR_CHAR_INFO* Src, FAR_CHAR_INFO* Dst)
 	*Dst = *Src;
 	WORD Con = 0;
 	if (Src->Attributes.Flags & FCF_FG_4BIT)
-		Con = Dst->Attributes.ForegroundColor;
+		Con = (WORD)(Dst->Attributes.ForegroundColor & 0xFF);
 	else
 		Far3Color::Color2FgIndex(Dst->Attributes.ForegroundColor, Con);
 	Dst->Attributes.Flags |= FCF_BG_4BIT|FCF_FG_4BIT;

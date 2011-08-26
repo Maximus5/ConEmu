@@ -6233,7 +6233,7 @@ void CConEmuMain::RightClickingPaint(HDC hdc /*= NULL*/)
 					mp_VActive->RCon()->OnMouse(WM_MOUSEMOVE, 0, mouse.RClkDC.X, mouse.RClkDC.Y, true);
 					WARNING("По хорошему, нужно дождаться пока мышь обработается");
 					mp_VActive->RCon()->PostMacro(L"MsLClick");
-					PRAGMA_ERROR("Заменить на CMD_LEFTCLKSYNC?");
+					WARNING("!!! Заменить на CMD_LEFTCLKSYNC?");
 				}
 
 				// Прикинуть индекс фрейма
