@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 extern BOOL gbTerminateOnExit;
+extern BOOL gbTerminateOnCtrlBreak;
 extern OSVERSIONINFO gOSVer;
 
 #define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
@@ -921,6 +922,7 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	// На всякий случай - выставим событие
 	if (ghExitQueryEvent)
 	{
+		_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
 		if (!nExitQueryPlace) nExitQueryPlace = 10+(nExitPlaceStep+nExitPlaceThread);
 
 		SetEvent(ghExitQueryEvent);

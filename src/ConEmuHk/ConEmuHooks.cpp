@@ -169,6 +169,7 @@ BOOL WINAPI OnFreeConsole(void);
 //HWND WINAPI OnGetConsoleWindow(void); // в фаре дофига и больше вызовов этой функции
 BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes);
 //BOOL WINAPI OnWriteConsoleOutputAx(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 //BOOL WINAPI OnWriteConsoleOutputWx(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect);
@@ -207,6 +208,7 @@ bool InitHooksCommon()
 		{(void*)OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32},
 		{(void*)OnReadConsoleInputW,	"ReadConsoleInputW",	kernel32},
 		{(void*)OnReadConsoleInputA,	"ReadConsoleInputA",	kernel32},
+		{(void*)OnSetConsoleTextAttribute, "SetConsoleTextAttribute", kernel32},
 		#endif
 		/* ************************ */
 		{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
@@ -1722,6 +1724,44 @@ BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffe
 	if (ph && ph->PostCallBack)
 	{
 		SETARGS5(&lbRc, hConsoleOutput, lpBuffer, &dwBufferSize, &dwBufferCoord, lpWriteRegion);
+		ph->PostCallBack(&args);
+	}
+
+	return lbRc;
+}
+
+
+// Sets the attributes of characters written to the console screen buffer by
+// the WriteFile or WriteConsole function, or echoed by the ReadFile or ReadConsole function.
+// This function affects text written after the function call.
+typedef BOOL (WINAPI* OnSetConsoleTextAttribute_t)(HANDLE hConsoleOutput, WORD wAttributes);
+BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes)
+{
+	ORIGINALFAST(SetConsoleTextAttribute);
+
+	BOOL lbRc = FALSE;
+
+	if (ph && ph->PreCallBack)
+	{
+		BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
+		SETARGS2(&lbRc, hConsoleOutput, wAttributes);
+		ph->PreCallBack(&args);
+	}
+	
+	#ifdef _DEBUG
+	if (wAttributes != 7)
+	{
+		// Что-то в некоторых случаях сбивается цвет вывода для printf
+		_ASSERTE("SetConsoleTextAttribute" && (wAttributes==0x07));
+	}
+	#endif
+
+	lbRc = F(SetConsoleTextAttribute)(hConsoleOutput, wAttributes);
+
+	if (ph && ph->PostCallBack)
+	{
+		BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
+		SETARGS2(&lbRc, hConsoleOutput, wAttributes);
 		ph->PostCallBack(&args);
 	}
 

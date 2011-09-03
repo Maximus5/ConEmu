@@ -46,7 +46,7 @@ REGEDIT4
 "Monospace"=hex:01
 ;; Width of the cell for 'Monospace' mode, default is 0
 ;"FontSizeX3"=dword:0000000c
-;; Anti-aliasing. 3 - Disabled, 4 - Standard, 5 - ClearType
+;; Anti-aliasing. 3 - Disabled, 4 - Standard, 6 - ClearType
 "Anti-aliasing"=hex:04
 
 

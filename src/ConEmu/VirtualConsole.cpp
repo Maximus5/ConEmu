@@ -795,21 +795,55 @@ bool CVirtualConsole::isCharNonSpacing(wchar_t inChar)
 	// Да и то, что они "не занимают места" в консоли некорректно. Даже если апостроф, по идее,
 	// должен располагаться НАД буквой, рисовать его надо бы СЛЕВА от нее, т.к. он занимает
 	// знакоместо в консоли!
-	bool isNonSpacing = (inChar == 0xFEFF || (inChar>=0x2000 && inChar<=0x200F) || inChar == 0x2060 || inChar == 0x3000
-		|| (inChar>=0x202A && inChar<=0x202E)
-		|| (inChar>=0x0300 && inChar<=0x036F) // Combining/Accent/Acute/NonSpacing
-		|| (inChar>=0x0483 && inChar<=0x0489)
-		|| (inChar>=0x07EB && inChar<=0x07F3)
-		|| (inChar>=0x1B6B && inChar<=0x1B73)
-		|| (inChar>=0x1DC0 && inChar<=0x1DFF)
-		|| (inChar>=0x20D0 && inChar<=0x20F0)
-		|| (inChar>=0x2DE0 && inChar<=0x2DFF)
-		|| (inChar>=0xFE20 && inChar<=0xFE26)
-		|| inChar==0x135F || inChar==0x3099 || inChar==0x309A || inChar==0xA66F
-		|| inChar==0xA670 || inChar==0xA671 || inChar==0xA672 || inChar==0xA67C
-		|| inChar==0xA67D
-		);
-	return isNonSpacing;
+	switch (inChar)
+	{
+		case 0x135F:
+		case 0x2060:
+		case 0x3000:
+		case 0x3099:
+		case 0x309A:
+		case 0xA66F:
+		case 0xA670:
+		case 0xA671:
+		case 0xA672:
+		case 0xA67C:
+		case 0xA67D:
+		case 0xFEFF:
+			return true;
+
+		default:
+			if (inChar>=0x0300)
+			{
+				if (inChar<=0x2DFF)
+				{
+					if ((inChar<=0x036F) // Combining/Accent/Acute/NonSpacing
+						|| (inChar>=0x2000 && inChar<=0x200F)
+						|| (inChar>=0x202A && inChar<=0x202E)
+						|| (inChar>=0x0483 && inChar<=0x0489)
+						|| (inChar>=0x07EB && inChar<=0x07F3)
+						|| (inChar>=0x1B6B && inChar<=0x1B73)
+						|| (inChar>=0x1DC0 && inChar<=0x1DFF)
+						|| (inChar>=0x20D0 && inChar<=0x20F0)
+						|| (inChar>=0x2DE0))
+					{
+						return true;
+					}
+				}
+				else if (inChar>=0xFE20 && inChar<=0xFE26)
+				{
+					return true;
+				}
+			}
+	}
+	return false;
+	
+	/*
+	wchar_t CharList[] = {0x135F, 0xFEFF, 0};
+	__asm {
+		MOV  ECX, ARRAYSIZE(CharList)
+		REPZ SCAS CharList
+	}
+	*/
 }
 
 bool CVirtualConsole::isCharSpace(wchar_t inChar)

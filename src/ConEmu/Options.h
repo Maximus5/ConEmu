@@ -33,7 +33,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <commctrl.h>
 
 #define MIN_ALPHA_VALUE 40
-#define MAX_FONT_STYLES 8 //normal/bold|italic|underline
+#define MAX_FONT_STYLES 8  //normal/(bold|italic|underline)
+#define MAX_FONT_GROUPS 20 // Main, Borders, Japan, Cyrillic, ...
 
 #define CONEMU_ROOT_KEY L"Software\\ConEmu"
 
@@ -98,6 +99,22 @@ class CSettings
 		BYTE FontQuality();
 		HFONT CreateOtherFont(const wchar_t* asFontName);
 	private:
+		struct CEFontRange
+		{
+			bool    bUsed;              // Для быстрого включения/отключения
+			wchar_t sTitle[64];         // "Title"="Borders and scrollbars"
+			wchar_t sRange[1024];       // "CharRange"="2013-25C4;"
+			wchar_t sFace[LF_FACESIZE]; // "FontFace"="Andale Mono"
+			LONG    nHeight;            // "Height"=dword:00000012
+			LONG    nWidth;             // "Width"=dword:00000000
+			BYTE    nCharset;           // "Charset"=hex:00
+			bool    bBold;              // "Bold"=hex:00
+			bool    bItalic;            // "Italic"=hex:00
+			BYTE    nQuality;           // "Anti-aliasing"=hex:03
+			/*    */
+			LOGFONT lf;
+			/*    */
+		};
 		LOGFONT LogFont, LogFont2;
 		LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
 		LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth; // реальные размеры шрифтов
@@ -183,14 +200,16 @@ class CSettings
 		//bool isSelectionModifierPressed();
 	protected:
 		bool mb_HideCaptionAlways;
-		typedef struct tag_CharRanges
-		{
-			bool bUsed;
-			wchar_t cBegin, cEnd;
-		} CharRanges;
-		wchar_t mszCharRanges[120];
-		CharRanges icFixFarBorderRanges[10];
-		bool *mpc_FixFarBorderValues;
+		//typedef struct tag_CharRanges
+		//{
+		//	bool bUsed;
+		//	wchar_t cBegin, cEnd;
+		//} CharRanges;
+		//wchar_t mszCharRanges[120];
+		//CharRanges icFixFarBorderRanges[10];
+		int ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue = TRUE); // например, L"2013-25C3,25C4"
+		wchar_t* CreateCharRanges(BYTE (&Chars)[0x10000]); // caller must free(result)
+		BYTE mpc_FixFarBorderValues[0x10000];
 		BYTE m_isKeyboardHooks;
 	public:
 		bool isKeyboardHooks();

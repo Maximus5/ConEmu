@@ -250,6 +250,9 @@ BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 	if (!GetConsoleScreenBufferInfo(h, &csbi))
 		return FALSE;
 
+	// Что-то в некоторых случаях сбивается цвет вывода для printf
+	_ASSERTE("GetTextAttributes" && ((csbi.wAttributes & 0xFF) == 0x07));
+		
 	//TODO: Вообще-то нужно бы возвращать то, что задано в SetTextAttributes?
 	Attributes->Flags = FCF_FG_4BIT|FCF_BG_4BIT;
 	Attributes->ForegroundColor = (csbi.wAttributes & 0xF);

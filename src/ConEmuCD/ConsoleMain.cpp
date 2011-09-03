@@ -1160,6 +1160,7 @@ wrap:
 	// На всякий случай - выставим событие
 	if (ghExitQueryEvent)
 	{
+		_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
 		if (!nExitQueryPlace) nExitQueryPlace = 11+(nExitPlaceStep+nExitPlaceThread);
 
 		SetEvent(ghExitQueryEvent);
@@ -3479,6 +3480,8 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 		}
 		else
 		{
+			_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
+
 			if (pCS)
 				pCS->Unlock();
 			else
@@ -3611,6 +3614,8 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 
 		if (nCurCount == 0)
 		{
+			_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
+
 			// Это значит в Win7 свалился conhost.exe
 			#ifdef _DEBUG
 			DWORD dwErr = GetLastError();
@@ -3787,6 +3792,8 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	gbRootAliveLess10sec = FALSE;
 	gbInShutdown = TRUE;
 	gbAlwaysConfirmExit = FALSE;
+
+	_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
 
 	if (!nExitQueryPlace) nExitQueryPlace = 3+(nExitPlaceStep+nExitPlaceThread);
 
@@ -5602,8 +5609,11 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 		}
 		else if (gbDebugProcess)
 		{
-			if (WaitForSingleObject(gpSrv->hRootProcess, 0) == WAIT_OBJECT_0)
+			DWORD nWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
+			DWORD nErr = GetLastError();
+			if (nWait == WAIT_OBJECT_0)
 			{
+				_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
 				PRINT_COMSPEC(L"Ctrl+Break recieved, debgger will be stopped\n", 0);
 				//if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(gpSrv->dwRootProcess);
 				//gpSrv->bDebuggerActive = FALSE;

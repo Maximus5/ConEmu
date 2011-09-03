@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2174
+  Plugin API for Far Manager 3.0 build 2184
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2174
+#define FARMANAGERVERSION_BUILD 2184
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -472,7 +472,7 @@ struct FarDialogItem
 	FARDIALOGITEMFLAGS Flags;
 	const wchar_t *Data;
 	size_t MaxLength; // terminate 0 not included (if == 0 string size is unlimited)
-	void* UserData;
+	DWORD_PTR UserData;
 };
 
 struct FarDialogItemData
@@ -664,8 +664,8 @@ struct PluginPanelItem
 	const wchar_t *Owner;
 	const wchar_t * const *CustomColumnData;
 	size_t CustomColumnNumber;
-	DWORD_PTR UserData;
 	PLUGINPANELITEMFLAGS Flags;
+	DWORD_PTR UserData;
 	DWORD FileAttributes;
 	DWORD NumberOfLinks;
 	DWORD CRC32;
@@ -728,17 +728,17 @@ enum OPENPANELINFO_SORTMODES
 struct PanelInfo
 {
 	size_t StructSize;
-	GUID OwnerGuid;
 	HANDLE PluginHandle;
-	enum PANELINFOTYPE PanelType;
-	RECT PanelRect;
+	GUID OwnerGuid;
+	PANELINFOFLAGS Flags;
 	size_t ItemsNumber;
 	size_t SelectedItemsNumber;
+	RECT PanelRect;
 	int CurrentItem;
 	int TopPanelItem;
 	int ViewMode;
+	enum PANELINFOTYPE PanelType;
 	enum OPENPANELINFO_SORTMODES SortMode;
-	PANELINFOFLAGS Flags;
 	DWORD_PTR Reserved;
 };
 
@@ -1139,11 +1139,11 @@ typedef int (WINAPI *FARMACROCALLBACK)(void* Id,FARADDKEYMACROFLAGS Flags);
 struct MacroAddMacro
 {
 	size_t StructSize;
+	void* Id;
 	FARKEYMACROFLAGS Flags;
 	INPUT_RECORD AKey;
 	const wchar_t *SequenceText;
 	const wchar_t *Description;
-	void* Id;
 	FARMACROCALLBACK Callback;
 };
 
@@ -1288,16 +1288,16 @@ struct ViewerMode
 struct ViewerInfo
 {
 	size_t StructSize;
+	int ViewerID;
+	int TabSize;
+	const wchar_t *FileName;
 	struct ViewerMode CurMode;
 	__int64 FileSize;
 	__int64 FilePos;
 	__int64 LeftPos;
 	VIEWER_OPTIONS Options;
-	const wchar_t *FileName;
-	int ViewerID;
 	int WindowSizeX;
 	int WindowSizeY;
-	int TabSize;
 };
 
 enum VIEWER_EVENTS
@@ -1360,7 +1360,7 @@ enum EDITOR_CONTROL_COMMANDS
 	ECTL_SAVEFILE                   = 18,
 	ECTL_QUIT                       = 19,
 	ECTL_SETKEYBAR                  = 20,
-	ECTL_PROCESSKEY                 = 21,
+
 	ECTL_SETPARAM                   = 22,
 	ECTL_GETBOOKMARKS               = 23,
 	ECTL_TURNOFFMARKINGBLOCK        = 24,
@@ -1555,10 +1555,10 @@ struct EditorColor
 	int ColorItem;
 	int StartPos;
 	int EndPos;
+	unsigned Priority;
 	EDITORCOLORFLAGS Flags;
 	struct FarColor Color;
 	GUID Owner;
-	unsigned Priority;
 };
 
 struct EditorDeleteColor
@@ -2222,8 +2222,8 @@ struct SetDirectoryInfo
 	size_t StructSize;
 	HANDLE hPanel;
 	const wchar_t *Dir;
+	DWORD_PTR UserData;
 	OPERATION_MODES OpMode;
-	INT_PTR UserData;
 };
 
 struct SetFindListInfo
@@ -2418,15 +2418,19 @@ extern "C"
 	int    WINAPI GetVirtualFindDataW(struct GetVirtualFindDataInfo *Info);
 	int    WINAPI MakeDirectoryW(struct MakeDirectoryInfo *Info);
 	HANDLE WINAPI OpenW(const struct OpenInfo *Info);
-	//int    WINAPI ProcessDialogEventW(const struct ProcessDialogEventInfo *Info);
-	//int    WINAPI ProcessEditorEventW(const struct ProcessEditorEventInfo *Info);
+	/*
+	int    WINAPI ProcessDialogEventW(const struct ProcessDialogEventInfo *Info);
+	int    WINAPI ProcessEditorEventW(const struct ProcessEditorEventInfo *Info);
+	*/
 	int    WINAPI ProcessEditorInputW(const struct ProcessEditorInputInfo *Info);
 	int    WINAPI ProcessPanelEventW(const struct ProcessPanelEventInfo *Info);
 	int    WINAPI ProcessHostFileW(const struct ProcessHostFileInfo *Info);
 	int    WINAPI ProcessPanelInputW(const struct ProcessPanelInputInfo *Info);
 	int    WINAPI ProcessConsoleInputW(struct ProcessConsoleInputInfo *Info);
-	//int    WINAPI ProcessSynchroEventW(const struct ProcessSynchroEventInfo *Info);
-	//int    WINAPI ProcessViewerEventW(const struct ProcessViewerEventInfo *Info);
+	/*
+	int    WINAPI ProcessSynchroEventW(const struct ProcessSynchroEventInfo *Info);
+	int    WINAPI ProcessViewerEventW(const struct ProcessViewerEventInfo *Info);
+	*/
 	int    WINAPI PutFilesW(const struct PutFilesInfo *Info);
 	int    WINAPI SetDirectoryW(const struct SetDirectoryInfo *Info);
 	int    WINAPI SetFindListW(const struct SetFindListInfo *Info);

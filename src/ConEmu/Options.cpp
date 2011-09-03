@@ -430,10 +430,11 @@ void CSettings::InitSettings()
 	isPartBrushBlack = 32;
 	isExtendUCharMap = true;
 	isDownShowHiddenMessage = false;
-	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
-	wcscpy_c(mszCharRanges, L"2013-25C4");
-	icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
-	mpc_FixFarBorderValues = (bool*)calloc(65536,sizeof(bool));
+	//memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
+	//wcscpy_c(mszCharRanges, L"2013-25C4");
+	//icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
+	//mpc_FixFarBorderValues = (bool*)calloc(65536,sizeof(bool));
+	ParseCharRanges(L"2013-25C4", mpc_FixFarBorderValues);
 	wndHeight = 25;
 	ntvdmHeight = 0; // Подбирать автоматически
 	wndWidth = 80;
@@ -742,43 +743,46 @@ void CSettings::LoadSettings()
 		if (!reg->Load(L"FixFarBorders", isFixFarBorders))
 			reg->Load(L"Experimental", isFixFarBorders);
 
-		mszCharRanges[0] = 0;
+		//mszCharRanges[0] = 0;
 
-		// max 10 ranges x 10 chars + a little ;)
-		if (reg->Load(L"FixFarBordersRanges", mszCharRanges, countof(mszCharRanges)))
+		TODO("Это вообще нужно будет расширить, определяя произвольное количество групп шрифтов");
+		// max 100 ranges x 10 chars + a little ;)
+		wchar_t szCharRanges[1024] = {};
+		if (!reg->Load(L"FixFarBordersRanges", szCharRanges, countof(szCharRanges)))
+		//{
+		//	int n = 0, nMax = countof(icFixFarBorderRanges);
+		//	wchar_t *pszRange = mszCharRanges, *pszNext = NULL;
+		//	wchar_t cBegin, cEnd;
+		//
+		//	while(*pszRange && n < nMax)
+		//	{
+		//		cBegin = (wchar_t)wcstol(pszRange, &pszNext, 16);
+		//
+		//		if (!cBegin || cBegin == 0xFFFF || *pszNext != L'-') break;
+		//
+		//		pszRange = pszNext + 1;
+		//		cEnd = (wchar_t)wcstol(pszRange, &pszNext, 16);
+		//
+		//		if (!cEnd || cEnd == 0xFFFF) break;
+		//
+		//		icFixFarBorderRanges[n].bUsed = true;
+		//		icFixFarBorderRanges[n].cBegin = cBegin;
+		//		icFixFarBorderRanges[n].cEnd = cEnd;
+		//		n ++;
+		//
+		//		if (*pszNext != L';') break;
+		//
+		//		pszRange = pszNext + 1;
+		//	}
+		//
+		//	for(; n < nMax; n++)
+		//		icFixFarBorderRanges[n].bUsed = false;
+		//}
+		//else
 		{
-			int n = 0, nMax = countof(icFixFarBorderRanges);
-			wchar_t *pszRange = mszCharRanges, *pszNext = NULL;
-			wchar_t cBegin, cEnd;
-
-			while(*pszRange && n < nMax)
-			{
-				cBegin = (wchar_t)wcstol(pszRange, &pszNext, 16);
-
-				if (!cBegin || cBegin == 0xFFFF || *pszNext != L'-') break;
-
-				pszRange = pszNext + 1;
-				cEnd = (wchar_t)wcstol(pszRange, &pszNext, 16);
-
-				if (!cEnd || cEnd == 0xFFFF) break;
-
-				icFixFarBorderRanges[n].bUsed = true;
-				icFixFarBorderRanges[n].cBegin = cBegin;
-				icFixFarBorderRanges[n].cEnd = cEnd;
-				n ++;
-
-				if (*pszNext != L';') break;
-
-				pszRange = pszNext + 1;
-			}
-
-			for(; n < nMax; n++)
-				icFixFarBorderRanges[n].bUsed = false;
+			wcscpy_c(szCharRanges, L"2013-25C4"); // default
 		}
-		else
-		{
-			wcscpy_c(mszCharRanges, L"2013-25C4"); // default
-		}
+		ParseCharRanges(szCharRanges, mpc_FixFarBorderValues);
 
 		reg->Load(L"ExtendUCharMap", isExtendUCharMap);
 		reg->Load(L"PartBrush75", isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
@@ -1058,13 +1062,13 @@ void CSettings::LoadSettings()
 		psCmdHistory = (wchar_t*)calloc(2,2);
 	}
 
-	for(UINT n = 0; n < countof(icFixFarBorderRanges); n++)
-	{
-		if (!icFixFarBorderRanges[n].bUsed) break;
-
-		for(WORD x = (WORD)(icFixFarBorderRanges[n].cBegin); x <= (WORD)(icFixFarBorderRanges[n].cEnd); x++)
-			mpc_FixFarBorderValues[x] = true;
-	}
+	//for(UINT n = 0; n < countof(icFixFarBorderRanges); n++)
+	//{
+	//	if (!icFixFarBorderRanges[n].bUsed) break;
+	//
+	//	for(WORD x = (WORD)(icFixFarBorderRanges[n].cBegin); x <= (WORD)(icFixFarBorderRanges[n].cEnd); x++)
+	//		mpc_FixFarBorderValues[x] = true;
+	//}
 
 	/*if (wndWidth)
 	    pVCon->TextWidth = wndWidth;
@@ -1369,7 +1373,11 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"CTS.MBtnAction", isCTSMBtnAction);
 		reg->Save(L"CTS.ColorIndex", isCTSColorIndex);
 		reg->Save(L"FixFarBorders", isFixFarBorders);
-		reg->Save(L"FixFarBordersRanges", mszCharRanges);
+		{
+		wchar_t* pszCharRanges = CreateCharRanges(mpc_FixFarBorderValues);
+		reg->Save(L"FixFarBordersRanges", pszCharRanges ? pszCharRanges : L"2013-25C4");
+		if (pszCharRanges) free(pszCharRanges);
+		}
 		reg->Save(L"ExtendUCharMap", isExtendUCharMap);
 		reg->Save(L"EnhanceGraphics", isEnhanceGraphics);
 		reg->Save(L"PartBrush75", isPartBrush75);
@@ -7330,6 +7338,129 @@ void CSettings::UpdateConsoleMode(DWORD nMode)
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Console states (0x%X)", nMode);
 		SetDlgItemText(hInfo, IDC_CONSOLE_STATES, szInfo);
 	}
+}
+
+// например, L"2013-25C3,25C4"
+// Возвращает 0 - в случае успеха,
+// при ошибке - индекс (1-based) ошибочного символа в asRanges
+// -1 - ошибка выделения памяти
+int CSettings::ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue /*= TRUE*/)
+{
+	if (!asRanges)
+	{
+		_ASSERTE(asRanges!=NULL);
+		return -1;
+	}
+	
+	int iRc = 0;
+	int n = 0, nMax = lstrlen(asRanges);
+	wchar_t *pszCopy = lstrdup(asRanges);
+	if (!pszCopy)
+	{
+		_ASSERTE(pszCopy!=NULL);
+		return -1;
+	}
+	wchar_t *pszRange = pszCopy;
+	wchar_t *pszNext = NULL;
+	UINT cBegin, cEnd;
+	
+	memset(Chars, 0, sizeof(Chars));
+
+	while(*pszRange && n < nMax)
+	{
+		cBegin = (UINT)wcstol(pszRange, &pszNext, 16);
+		if (!cBegin || (cBegin > 0xFFFF))
+		{
+			iRc = (int)(pszRange - asRanges);
+			goto wrap;
+		}
+			
+		switch (*pszNext)
+		{
+		case L';':
+		case 0:
+			cEnd = cBegin;
+			break;
+		case L'-':
+		case L' ':
+			pszRange = pszNext + 1;
+			cEnd = (UINT)wcstol(pszRange, &pszNext, 16);
+			if ((cEnd < cBegin) || (cEnd > 0xFFFF))
+			{
+				iRc = (int)(pszRange - asRanges);
+				goto wrap;
+			}
+			break;
+		default:
+			iRc = (int)(pszNext - asRanges);
+			goto wrap;
+		}
+
+		for (UINT i = cBegin; i <= cEnd; i++)
+			Chars[i] = abValue;
+		
+		if (*pszNext != L';') break;
+		pszRange = pszNext + 1;
+	}
+	
+	iRc = 0; // ok
+wrap:
+	if (pszCopy)
+		free(pszCopy);
+	return iRc;
+}
+
+// caller must free(result)
+wchar_t* CSettings::CreateCharRanges(BYTE (&Chars)[0x10000])
+{
+	size_t nMax = 1024;
+	wchar_t* pszRanges = (wchar_t*)calloc(nMax,sizeof(*pszRanges));
+	if (!pszRanges)
+	{
+		_ASSERTE(pszRanges!=NULL);
+		return NULL;
+	}
+	
+	wchar_t* psz = pszRanges;
+	wchar_t* pszEnd = pszRanges + nMax;
+	UINT c = 0;
+	_ASSERTE((countof(Chars)-1) == 0xFFFF);
+	while (c < countof(Chars))
+	{
+		if (Chars[c])
+		{
+			if ((psz + 10) >= pszEnd)
+			{
+				// Слишком длинный блок
+				_ASSERTE((psz + 10) < pszEnd);
+				break;
+			}
+			
+			UINT cBegin = (c++);
+			UINT cEnd = cBegin;
+			
+			while (c < countof(Chars) && Chars[c])
+			{
+				cEnd = (c++);
+			}
+			
+			if (cBegin == cEnd)
+			{
+				wsprintf(psz, L"%04X;", cBegin);
+			}
+			else
+			{
+				wsprintf(psz, L"%04X-%04X;", cBegin, cEnd);
+			}
+			psz += lstrlen(psz);
+		}
+		else
+		{
+			c++;
+		}
+	}
+	
+	return pszRanges;
 }
 
 bool CSettings::isCharBorder(wchar_t inChar)
