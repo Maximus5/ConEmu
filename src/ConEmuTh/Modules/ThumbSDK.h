@@ -26,7 +26,7 @@ enum
 struct CET_Init
 {
 	// [In]
-	DWORD cbSize; // size of this structure
+	size_t cbSize; // size of this structure
 	HMODULE hModule; // Module handle of initializing module
 	// [Out]
 	DWORD nModuleID; // gdi+ / png / ico / pe / pic2
@@ -38,7 +38,7 @@ struct CET_Init
 struct CET_LoadInfo
 {
 	// [In]
-	DWORD cbSize; // size of this structure
+	size_t cbSize; // size of this structure
 	LPVOID pContext; // Module may use this value. It comes from CET_Init
 	LPCWSTR sFileName; // Full file path name
 	FILETIME ftModified; // Date of last file modification

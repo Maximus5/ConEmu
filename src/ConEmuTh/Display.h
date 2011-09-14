@@ -54,16 +54,16 @@ struct CeFullPanelInfo
 	BOOL Focus;
 	RECT  PanelRect;
 	RECT  WorkRect; // "рабочий" прямоугольник. где собственно файлы лежат
-	int ItemsNumber;
+	INT_PTR ItemsNumber;
 	//
-	int CurrentItem;
-	int TopPanelItem;
+	INT_PTR CurrentItem;
+	INT_PTR TopPanelItem;
 	// Это мы хотим выставить при следующем Synchro
 	bool bRequestItemSet;
-	int ReqCurrentItem;
-	int ReqTopPanelItem;
+	INT_PTR ReqCurrentItem;
+	INT_PTR ReqTopPanelItem;
 	//
-	int OurTopPanelItem; // он может НЕ совпадать с фаровским, чтобы CurrentItem был таки видим
+	INT_PTR OurTopPanelItem; // он может НЕ совпадать с фаровским, чтобы CurrentItem был таки видим
 	unsigned __int64 Flags; // CEPANELINFOFLAGS
 	// ************************
 	//int nMaxFarColors;
@@ -71,15 +71,15 @@ struct CeFullPanelInfo
 	COLORREF crLastBackBrush;
 	HBRUSH hLastBackBrush;
 	// ************************
-	int nMaxPanelDir;
+	size_t nMaxPanelDir;
 	wchar_t* pszPanelDir;
 	// ************************
-	int nMaxItemsNumber;
+	INT_PTR nMaxItemsNumber;
 	CePluginPanelItem** ppItems;
 	CePluginPanelItemColor* pItemColors;
 	MSection* pSection;
 	// ************************
-	int nFarTmpBuf;    // Временный буфер для получения
+	size_t nFarTmpBuf;    // Временный буфер для получения
 	LPVOID pFarTmpBuf; // информации об элементе панели
 
 
@@ -87,33 +87,33 @@ struct CeFullPanelInfo
 	int UnregisterPanelView();
 	void Close();
 	HWND CreateView();
-	BOOL ReallocItems(int anCount);
+	BOOL ReallocItems(INT_PTR anCount);
 	void FinalRelease();
 
 	// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
 	void DisplayReloadPanel();
 
 	// Эта функция Safe-thread - ее можно дергать из любой нити
-	void RequestSetPos(int anCurrentItem, int anTopItem, BOOL abSetFocus = FALSE);
+	void RequestSetPos(INT_PTR anCurrentItem, INT_PTR anTopItem, BOOL abSetFocus = FALSE);
 
 	static LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static DWORD WINAPI DisplayThread(LPVOID lpvParam);
-	int CalcTopPanelItem(int anCurrentItem, int anTopItem);
+	INT_PTR CalcTopPanelItem(INT_PTR anCurrentItem, INT_PTR anTopItem);
 	void Invalidate();
 	static void InvalidateAll();
 	void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc);
-	BOOL PaintItem(HDC hdc, int nIndex, int x, int y, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor,
+	BOOL PaintItem(HDC hdc, INT_PTR nIndex, int x, int y, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor,
 	               BOOL abCurrentItem, BOOL abSelectedItem,
 	               /*COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,*/
 	               /*BOOL abAllowPreview,*/ HBRUSH hBackBrush, HBRUSH hPanelBrush, COLORREF crPanelColor);
 	int DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, CePluginPanelItem* pItem, LPCWSTR pszComments, HBRUSH hBr, BOOL bIgnoreFileDescription);
 	BOOL OnSettingsChanged(BOOL bInvalidate);
-	BOOL GetIndexFromWndCoord(int x, int y, int &rnIndex);
-	BOOL GetConCoordFromIndex(int nIndex, COORD& rCoord);
-	HBRUSH GetItemColors(int nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack);
-	void LoadItemColors(int nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, BOOL abStrictConsole);
+	BOOL GetIndexFromWndCoord(int x, int y, INT_PTR &rnIndex);
+	BOOL GetConCoordFromIndex(INT_PTR nIndex, COORD& rCoord);
+	HBRUSH GetItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack);
+	void LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, BOOL abStrictConsole);
 	// Conversions
-	BOOL FarItem2CeItem(int anIndex,
+	BOOL FarItem2CeItem(INT_PTR anIndex,
 	                    const wchar_t*   asName,
 	                    const wchar_t*   asDesc,
 	                    DWORD            dwFileAttributes,

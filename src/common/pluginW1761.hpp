@@ -396,11 +396,11 @@ enum LISTITEMFLAGS
 	LIF_DISABLE            = 0x00080000UL,
 	LIF_GRAYED             = 0x00100000UL,
 	LIF_HIDDEN             = 0x00200000UL,
-	LIF_DELETEUSERDATA     = 0x80000000UL,
+	LIF_DELETEUSERDATA     = 0x80000000UL, //-V112
 };
 
 struct FarListItem
-{
+{ //-V802
 	DWORD Flags;
 	const wchar_t *Text;
 	DWORD Reserved[3];
@@ -484,7 +484,7 @@ struct FarList
 };
 
 struct FarListTitles
-{
+{ //-V802
 	int   TitleLen;
 	const wchar_t *Title;
 	int   BottomLen;
@@ -506,13 +506,13 @@ struct FarDialogItem
 	int Focus;
 	union
 	{
-		DWORD_PTR Reserved;
+		DWORD_PTR Reserved; //-V117
 		int Selected;
-		const wchar_t *History;
-		const wchar_t *Mask;
-		struct FarList *ListItems;
+		const wchar_t *History; //-V117
+		const wchar_t *Mask; //-V117
+		struct FarList *ListItems; //-V117
 		int  ListPos;
-		CHAR_INFO *VBuf;
+		CHAR_INFO *VBuf; //-V117
 	}
 #ifdef _FAR_NO_NAMELESS_UNIONS
 	Param
@@ -694,7 +694,7 @@ typedef int (WINAPI *FARAPIMENU)(
 
 enum PLUGINPANELITEMFLAGS
 {
-	PPIF_PROCESSDESCR           = 0x80000000,
+	PPIF_PROCESSDESCR           = 0x80000000, //-V112
 	PPIF_SELECTED               = 0x40000000,
 	PPIF_USERDATA               = 0x20000000,
 };
@@ -930,7 +930,7 @@ typedef const wchar_t*(WINAPI *FARAPIGETMSG)(
 
 enum FarHelpFlags
 {
-	FHELP_NOSHOWERROR = 0x80000000,
+	FHELP_NOSHOWERROR = 0x80000000, //-V112
 	FHELP_SELFHELP    = 0x00000000,
 	FHELP_FARHELP     = 0x00000001,
 	FHELP_CUSTOMFILE  = 0x00000002,
@@ -1163,7 +1163,7 @@ struct ActlKeyMacro
 		#if USE_FARMANAGERVERSION_BUILD>=1761
 		struct MacroParseResult MacroResult;
 		#endif
-		DWORD_PTR Reserved[3];
+		DWORD_PTR Reserved[3]; //-V117
 	} Param;
 };
 
@@ -1192,7 +1192,7 @@ enum WINDOWINFO_TYPE
 };
 
 struct WindowInfo
-{
+{ //-V802
 	int  Pos;
 	int  Type;
 	int  Modified;
@@ -1262,7 +1262,7 @@ struct ViewerSetMode
 	union
 	{
 		int iParam;
-		wchar_t *wszParam;
+		wchar_t *wszParam; //-V117
 	} Param;
 	DWORD Flags;
 	DWORD Reserved;
@@ -1419,7 +1419,7 @@ struct EditorSetParameter
 	union
 	{
 		int iParam;
-		wchar_t *wszParam;
+		wchar_t *wszParam; //-V117
 		DWORD Reserved1;
 	} Param;
 	DWORD Flags;
@@ -1443,7 +1443,7 @@ struct EditorUndoRedo
 };
 
 struct EditorGetString
-{
+{ //-V802
 	int StringNumber;
 	const wchar_t *StringText;
 	const wchar_t *StringEOL;
@@ -1454,7 +1454,7 @@ struct EditorGetString
 
 
 struct EditorSetString
-{
+{ //-V802
 	int StringNumber;
 	const wchar_t *StringText;
 	const wchar_t *StringEOL;

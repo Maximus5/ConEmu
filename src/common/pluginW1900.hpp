@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2184
+  Plugin API for Far Manager 3.0 build 2194
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2184
+#define FARMANAGERVERSION_BUILD 2194
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -612,7 +612,7 @@ struct FarMenuItem
 {
 	MENUITEMFLAGS Flags;
 	const wchar_t *Text;
-	DWORD AccelKey;
+	struct FarKey AccelKey;
 	DWORD_PTR Reserved;
 	DWORD_PTR UserData;
 };
@@ -1546,7 +1546,8 @@ struct EditorConvertPos
 
 typedef unsigned __int64 EDITORCOLORFLAGS;
 static const EDITORCOLORFLAGS
-	ECF_TAB1 = 0x0000000000000001ULL;
+	ECF_TABMARKFIRST   = 0x0000000000000001ULL,
+	ECF_TABMARKCURRENT = 0x0000000000000002ULL;
 
 struct EditorColor
 {

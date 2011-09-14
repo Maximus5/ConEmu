@@ -173,7 +173,7 @@ void ProcessDragFromA()
 		}
 
 		// Это только предполагаемый размер, при необходимости он будет увеличен
-		OutDataAlloc(sizeof(int)+PInfo.SelectedItemsNumber*((MAX_PATH+2)+sizeof(int)));
+		OutDataAlloc(sizeof(int)+PInfo.SelectedItemsNumber*((MAX_PATH+2)+sizeof(int))); //-V119 //-V107
 		//Maximus5 - новый формат передачи
 		int nNull=0;
 		//WriteFile(hPipe, &nNull/*ItemsCount*/, sizeof(int), &cout, NULL);
@@ -192,9 +192,9 @@ void ProcessDragFromA()
 				WCHAR *szCurDir = new WCHAR[nDirLen];
 				MultiByteToWideChar(CP_OEMCP, 0, PInfo.CurDir, nDirLen, szCurDir, nDirLen);
 				int nWholeLen = nDirLen + 1;
-				OutDataWrite(&nWholeLen, sizeof(int));
-				OutDataWrite(&nDirLen, sizeof(int));
-				OutDataWrite(szCurDir, sizeof(WCHAR)*nDirLen);
+				OutDataWrite(&nWholeLen, (DWORD)sizeof(int));
+				OutDataWrite(&nDirLen, (DWORD)sizeof(int));
+				OutDataWrite(szCurDir, (DWORD)sizeof(WCHAR)*nDirLen);
 				delete [] szCurDir; szCurDir=NULL;
 			}
 
@@ -208,15 +208,15 @@ void ProcessDragFromA()
 			int nMaxLen=MAX_PATH+1, nWholeLen=1;
 
 			// сначала посчитать максимальную длину буфера
-			for(i=0; i<ItemsCount; i++)
+			for (i=0; i<ItemsCount; i++)
 			{
 				int nLen=nDirLen+nDirNoSlash;
 
-				if ((PInfo.SelectedItems[i].FindData.cFileName[0] == '\\' && PInfo.SelectedItems[i].FindData.cFileName[1] == '\\') ||
-				        (ISALPHA(PInfo.SelectedItems[i].FindData.cFileName[0]) && PInfo.SelectedItems[i].FindData.cFileName[1] == ':' && PInfo.SelectedItems[i].FindData.cFileName[2] == '\\'))
-					{ nLen = 0; bIsFull[i] = TRUE; } // это уже полный путь!
+				if ((PInfo.SelectedItems[i].FindData.cFileName[0] == '\\' && PInfo.SelectedItems[i].FindData.cFileName[1] == '\\') || //-V108
+				        (ISALPHA(PInfo.SelectedItems[i].FindData.cFileName[0]) && PInfo.SelectedItems[i].FindData.cFileName[1] == ':' && PInfo.SelectedItems[i].FindData.cFileName[2] == '\\')) //-V108
+					{ nLen = 0; bIsFull[i] = TRUE; } // это уже полный путь! //-V108
 
-				nLen += lstrlenA(PInfo.SelectedItems[i].FindData.cFileName);
+				nLen += lstrlenA(PInfo.SelectedItems[i].FindData.cFileName); //-V108
 
 				if (nLen>nMaxLen)
 					nMaxLen = nLen;
@@ -266,9 +266,9 @@ void ProcessDragFromA()
 				//end
 				nLen++;
 				//WriteFile(hPipe, &nLen, sizeof(int), &cout, NULL);
-				OutDataWrite(&nLen, sizeof(int));
+				OutDataWrite(&nLen, (DWORD)sizeof(int));
 				//WriteFile(hPipe, Path, sizeof(WCHAR)*nLen, &cout, NULL);
-				OutDataWrite(Path, sizeof(WCHAR)*nLen);
+				OutDataWrite(Path, (DWORD)sizeof(WCHAR)*nLen);
 			}
 
 			free(bIsFull);
@@ -737,7 +737,7 @@ void SetWindowA(int nTab)
 	if (!InfoA || !InfoA->AdvControl)
 		return;
 
-	if (InfoA->AdvControl(InfoA->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab))
+	if (InfoA->AdvControl(InfoA->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab)) //-V204
 		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_COMMIT, 0);
 }
 

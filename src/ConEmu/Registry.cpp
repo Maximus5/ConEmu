@@ -186,7 +186,7 @@ bool SettingsXML::IsXmlAllowed()
 	HRESULT hr;
 	IXMLDOMDocument* pFile = NULL;
 	hr = CoInitialize(NULL);
-	hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER,
+	hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, //-V519
 	                      IID_IXMLDOMDocument, (void**)&pFile);
 
 	if (FAILED(hr) || !pFile)
@@ -306,7 +306,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 				hr = pErr->get_errorCode(&errorCode);
 				hr = pErr->get_line(&line);
 				hr = pErr->get_linepos(&linepos);
-				wsprintf(szErr+lstrlen(szErr), L"XmlErrCode=%i, Line=%i, Pos=%i", errorCode, line, linepos);
+				wsprintf(szErr+_tcslen(szErr), L"XmlErrCode=%i, Line=%i, Pos=%i", errorCode, line, linepos);
 			}
 
 			goto wrap;
@@ -327,7 +327,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 			// ѕолучить следующий токен
 			psz = wcschr(regPath, L'\\');
 
-			if (!psz) psz = regPath + lstrlen(regPath);
+			if (!psz) psz = regPath + _tcslen(regPath);
 
 			lstrcpyn(szName, regPath, psz-regPath+1);
 			// Ќайти в структуре XML
@@ -407,7 +407,7 @@ void SettingsXML::CloseKey()
 	{
 		LPWSTR pszXmlFile = gpConEmu->ConEmuXml();
 
-		if (pszXmlFile && pszXmlFile)
+		if (pszXmlFile)
 		{
 			hFile = CreateFile(pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
 			                   NULL, OPEN_EXISTING, 0, 0);
@@ -515,7 +515,7 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 			VARIANT vtValue; vtValue.vt = VT_BSTR; vtValue.bstrVal = ::SysAllocString(asValue);
 			hr = pIXMLDOMAttribute->put_nodeValue(vtValue);
 			VariantClear(&vtValue);
-			hr = apAttrs->setNamedItem(pIXMLDOMAttribute, &pValue);
+			hr = apAttrs->setNamedItem(pIXMLDOMAttribute, &pValue); //-V519
 			lbRc = SUCCEEDED(hr);
 		}
 	}
@@ -572,7 +572,7 @@ void SettingsXML::AppendText(IXMLDOMNode* apFrom, BSTR asText)
 	if (SUCCEEDED(hr) && pChild)
 	{
 		hr = pChild->put_text(asText);
-		hr = apFrom->appendChild(pChild, &pIXMLDOMNode);
+		hr = apFrom->appendChild(pChild, &pIXMLDOMNode); //-V519
 		pChild->Release(); pChild = NULL;
 
 		if (SUCCEEDED(hr) && pIXMLDOMNode)
@@ -793,7 +793,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 
 					if (SUCCEEDED(hr) && bsData)
 					{
-						nLen = lstrlen(bsData) + 1;
+						nLen = _tcslen(bsData) + 1;
 
 						if ((nCurLen + nLen) > nMaxLen)
 						{
@@ -837,7 +837,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 
 			if (SUCCEEDED(hr) && bsData)
 			{
-				nLen = lstrlen(bsData);
+				nLen = _tcslen(bsData);
 				*value = (wchar_t*)malloc((nLen+2)*sizeof(wchar_t));
 				lstrcpy(*value, bsData);
 				(*value)[nLen] = 0; // уже должен быть после lstrcpy
@@ -924,7 +924,7 @@ bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 		if (!lstrcmpi(bsType, L"string"))
 		{
 #ifdef _DEBUG
-			DWORD nLen = lstrlen(bsData) + 1;
+			DWORD nLen = _tcslen(bsData) + 1;
 #endif
 			DWORD nMaxLen = nSize / 2;
 			lstrcpyn((wchar_t*)value, bsData, nMaxLen);
@@ -1063,7 +1063,7 @@ void SettingsXML::Save(const wchar_t *regName, const wchar_t *value)
 {
 	if (!value) value = L"";  // сюда мог придти и NULL
 
-	Save(regName, (LPCBYTE)value, REG_SZ, (lstrlen(value)+1)*sizeof(wchar_t));
+	Save(regName, (LPCBYTE)value, REG_SZ, (_tcslen(value)+1)*sizeof(wchar_t));
 }
 void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize)
 {
@@ -1282,7 +1282,7 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 			if (FAILED(hr))
 				break;
 
-			nLen = lstrlen(psz)+1;
+			nLen = _tcslen(psz)+1;
 			psz += nLen;
 			nAllLen -= nLen;
 		}

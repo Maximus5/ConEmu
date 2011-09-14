@@ -143,7 +143,7 @@ const CECMD
 //	CECMD_CONSOLEINFO    = 1,
 	CECMD_CONSOLEDATA    = 2,
 //	CECMD_SETSIZE        = 3,
-	CECMD_CMDSTARTSTOP   = 4, // CESERVER_REQ_STARTSTOP
+	CECMD_CMDSTARTSTOP   = 4, // CESERVER_REQ_STARTSTOP //-V112
 	CECMD_GETGUIHWND     = 5,
 //	CECMD_RECREATE       = 6,
 	CECMD_TABSCHANGED    = 7,
@@ -171,7 +171,7 @@ const CECMD
 	CECMD_SETDONTCLOSE   = 29,
 	CECMD_REGPANELVIEW   = 30,
 	CECMD_ONACTIVATION   = 31, // Для установки флажка ConsoleInfo->bConsoleActive
-	CECMD_SETWINDOWPOS   = 32, // CESERVER_REQ_SETWINDOWPOS.
+	CECMD_SETWINDOWPOS   = 32, // CESERVER_REQ_SETWINDOWPOS. //-V112
 	CECMD_SETWINDOWRGN   = 33, // CESERVER_REQ_SETWINDOWRGN.
 	CECMD_SETBACKGROUND  = 34, // CESERVER_REQ_SETBACKGROUND
 	CECMD_ACTIVATECON    = 35, // CESERVER_REQ_ACTIVATECONSOLE
@@ -252,7 +252,7 @@ struct HWND2
 	DWORD u;
 	operator HWND() const
 	{
-		return (HWND)u;
+		return (HWND)u; //-V204
 	};
 	operator DWORD() const
 	{
@@ -260,7 +260,7 @@ struct HWND2
 	};
 	struct HWND2& operator=(HWND h)
 	{
-		u = (DWORD)h;
+		u = (DWORD)h; //-V205
 		return *this;
 	};
 };
@@ -410,13 +410,13 @@ typedef BOOL (WINAPI* PanelViewInputCallback)(HANDLE hInput, PINPUT_RECORD lpBuf
 typedef union uPanelViewInputCallback
 {
 	u64 Reserved; // необходимо для выравнивания структур при x64 <--> x86
-	PanelViewInputCallback f;
+	PanelViewInputCallback f; //-V117
 } PanelViewInputCallback_t;
 typedef BOOL (WINAPI* PanelViewOutputCallback)(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 typedef union uPanelViewOutputCallback
 {
 	u64 Reserved; // необходимо для выравнивания структур при x64 <--> x86
-	PanelViewOutputCallback f;
+	PanelViewOutputCallback f; //-V117
 } PanelViewOutputCallback_t;
 struct PanelViewText
 {
@@ -569,7 +569,7 @@ enum RegisterBackgroundCmd
 
 // Аргумент для функции: int WINAPI RegisterBackground(RegisterBackgroundArg *pbk)
 struct RegisterBackgroundArg
-{
+{ //-V802
 	DWORD cbSize;
 	enum RegisterBackgroundCmd Cmd; // DWORD
 	HMODULE hPlugin; // Instance плагина, содержащего PaintConEmuBackground
@@ -748,12 +748,12 @@ struct ForwardedPanelInfo
 	BOOL NoFarConsole;
 	union //x64 ready
 	{
-		WCHAR* pszActivePath/*[MAX_PATH+1]*/;
+		WCHAR* pszActivePath/*[MAX_PATH+1]*/; //-V117
 		u64 Reserved1;
 	};
 	union //x64 ready
 	{
-		WCHAR* pszPassivePath/*[MAX_PATH+1]*/;
+		WCHAR* pszPassivePath/*[MAX_PATH+1]*/; //-V117
 		u64 Reserved2;
 	};
 };
@@ -849,7 +849,7 @@ static const CEFAR_MACRO_AREA
 	fma_Panels   = 0x00000001,
 	fma_Viewer   = 0x00000002,
 	fma_Editor   = 0x00000003,
-	fma_Dialog   = 0x00000004
+	fma_Dialog   = 0x00000004 //-V112
 	;
 
 
@@ -1198,7 +1198,7 @@ const SetBackgroundResult
 	esbr_InvalidArg = 1,       // Invalid *RegisterBackgroundArg
 	esbr_PluginForbidden = 2,  // "Allow plugins" unchecked in ConEmu settings ("Main" page)
 	esbr_ConEmuInShutdown = 3, // Console is closing. This is not an error, just information
-	esbr_Unexpected = 4,       // Unexpected error in ConEmu
+	esbr_Unexpected = 4,       // Unexpected error in ConEmu //-V112
 	esbr_InvalidArgSize = 5,   // Invalid RegisterBackgroundArg.cbSize
 	esbr_InvalidArgProc = 6,   // Invalid RegisterBackgroundArg.PaintConEmuBackground
 	esbr_LastErrorNo = esbr_InvalidArgProc;

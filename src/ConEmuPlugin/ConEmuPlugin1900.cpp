@@ -183,7 +183,7 @@ void ProcessDragFromW1900()
 		{
 			PluginPanelItem **pi = (PluginPanelItem**)calloc(PInfo.SelectedItemsNumber, sizeof(PluginPanelItem*));
 			bool *bIsFull = (bool*)calloc(PInfo.SelectedItemsNumber, sizeof(bool));
-			int ItemsCount=PInfo.SelectedItemsNumber, i;
+			INT_PTR ItemsCount=PInfo.SelectedItemsNumber, i;
 			int nMaxLen=MAX_PATH+1, nWholeLen=1;
 
 			// сначала посчитать максимальную длину буфера

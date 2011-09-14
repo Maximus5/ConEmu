@@ -88,6 +88,7 @@ MFileLog* gpLogLoad = NULL;
 MFileLog* gpLogPaint = NULL;
 #endif
 
+#define WINDOW_LONG_FADE (16*sizeof(DWORD))
 
 void ResetUngetBuffer();
 int ShowLastError();
@@ -154,7 +155,7 @@ HWND CeFullPanelInfo::CreateView()
 
 		// Сначала нужно запустить нить (ее еще не создавали)
 		HANDLE hReady = CreateEvent(NULL,FALSE,FALSE,NULL);
-		ghDisplayThread = CreateThread(NULL,0,DisplayThread,(LPVOID)hReady,0,&gnDisplayThreadId);
+		ghDisplayThread = CreateThread(NULL,0,DisplayThread,(LPVOID)hReady,0,&gnDisplayThreadId); //-V513
 
 		if (!ghDisplayThread)
 		{
@@ -283,13 +284,14 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			CeFullPanelInfo* pi = (CeFullPanelInfo*)pcr->lpCreateParams;
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
-			SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pi);
-			SetWindowLong(hwnd, 16*4, 1); // Fade == false
+			SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pi); //-V107
+			TODO("Вроде WINDOW_LONG_FADE не используется нигде?");
+			SetWindowLong(hwnd, WINDOW_LONG_FADE, 1); // Fade == false
 			return 0; //continue creation
 		}
 		case WM_PAINT:
 		{
-			CeFullPanelInfo* pi = (CeFullPanelInfo*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+			CeFullPanelInfo* pi = (CeFullPanelInfo*)GetWindowLongPtr(hwnd, GWLP_USERDATA); //-V204
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
 			//BYTE nPanelColorIdx = pi->nFarColors[col_PanelText];
@@ -311,7 +313,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 		}
 		case WM_ERASEBKGND:
 		{
-			CeFullPanelInfo* pi = (CeFullPanelInfo*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+			CeFullPanelInfo* pi = (CeFullPanelInfo*)GetWindowLongPtr(hwnd, GWLP_USERDATA); //-V204
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
 			BYTE nPanelColorIdx = pi->nFarColors[col_PanelText];
@@ -350,10 +352,10 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 				return 0;
 			}
 
-			CeFullPanelInfo* pi = (CeFullPanelInfo*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+			CeFullPanelInfo* pi = (CeFullPanelInfo*)GetWindowLongPtr(hwnd, GWLP_USERDATA); //-V204
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
-			int nIndex; COORD crCon;
+			INT_PTR nIndex; COORD crCon;
 
 			if (!pi->GetIndexFromWndCoord(LOWORD(lParam), HIWORD(lParam), nIndex))
 			{
@@ -449,7 +451,8 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 
 			if (uMsg == gnConEmuFadeMsg)
 			{
-				SetWindowLong(hwnd, 16*4, (DWORD)lParam);
+				TODO("Вроде WINDOW_LONG_FADE не используется нигде?");
+				SetWindowLong(hwnd, WINDOW_LONG_FADE, (DWORD)lParam);
 
 				if (gbFadeColors != (lParam == 2))
 				{
@@ -563,7 +566,7 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 // abCurrentItem  - может быть TRUE только в активной панели
 // abSelectedItem - реально выделенный элемент
 BOOL CeFullPanelInfo::PaintItem(
-    HDC hdc, int nIndex, int x, int y,
+    HDC hdc, INT_PTR nIndex, int x, int y,
     CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor,
     BOOL abCurrentItem, BOOL abSelectedItem,
     /*COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,*/
@@ -937,7 +940,7 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 		}
 
 		// теперь - рисуем
-		iRc = DrawText(hdc, szFullInfo, nLen, &rcClip, nFlags);
+		iRc = DrawText(hdc, szFullInfo, nLen, &rcClip, nFlags); //-V519
 
 		// Вернуть расширенный прямоугольник
 		if (rcClip.top < prcText->top) prcText->top = rcClip.top;
@@ -948,7 +951,7 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 	return iRc;
 }
 
-BOOL CeFullPanelInfo::GetIndexFromWndCoord(int x, int y, int &rnIndex)
+BOOL CeFullPanelInfo::GetIndexFromWndCoord(int x, int y, INT_PTR &rnIndex)
 {
 	if (!nWholeW || !nWholeH)
 		return FALSE;
@@ -979,10 +982,10 @@ BOOL CeFullPanelInfo::GetIndexFromWndCoord(int x, int y, int &rnIndex)
 	return TRUE;
 }
 
-BOOL CeFullPanelInfo::GetConCoordFromIndex(int nIndex, COORD& rCoord)
+BOOL CeFullPanelInfo::GetConCoordFromIndex(INT_PTR nIndex, COORD& rCoord)
 {
 	BOOL lbRc = FALSE;
-	int nCol0Index = nIndex - TopPanelItem;
+	INT_PTR nCol0Index = nIndex - TopPanelItem;
 
 	if (nCol0Index >= 0 && nCol0Index <= (WorkRect.bottom - WorkRect.top))
 	{
@@ -993,7 +996,7 @@ BOOL CeFullPanelInfo::GetConCoordFromIndex(int nIndex, COORD& rCoord)
 	return lbRc;
 }
 
-void CeFullPanelInfo::LoadItemColors(int nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, BOOL abStrictConsole)
+void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, BOOL abStrictConsole)
 {
 	// Только если активны "Панели". Над элементом может висеть диалог, и цвет будет "левым".
 	if (gbFarPanelsReady)
@@ -1034,7 +1037,7 @@ void CeFullPanelInfo::LoadItemColors(int nIndex, CePluginPanelItem* pItem, CePlu
 		{
 			DWORD nMask = nMasks[m];
 
-			for(int j = this->TopPanelItem; !bFound && j < this->ItemsNumber; j++)
+			for(INT_PTR j = this->TopPanelItem; !bFound && j < this->ItemsNumber; j++)
 			{
 				CePluginPanelItem* pCmp = this->ppItems[j];
 				CePluginPanelItemColor* pCmpColor = this->pItemColors+j;
@@ -1081,7 +1084,7 @@ void CeFullPanelInfo::LoadItemColors(int nIndex, CePluginPanelItem* pItem, CePlu
 	}
 }
 
-HBRUSH CeFullPanelInfo::GetItemColors(int nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack)
+HBRUSH CeFullPanelInfo::GetItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack)
 {
 	//COORD crItem;
 	//if (GetConCoordFromIndex(nIndex, crItem))
@@ -1133,11 +1136,11 @@ HBRUSH CeFullPanelInfo::GetItemColors(int nIndex, CePluginPanelItem* pItem, CePl
 	return hLastBackBrush;
 }
 
-int CeFullPanelInfo::CalcTopPanelItem(int anCurrentItem, int anTopItem)
+INT_PTR CeFullPanelInfo::CalcTopPanelItem(INT_PTR anCurrentItem, INT_PTR anTopItem)
 {
-	int nTopItem = anTopItem;
-	int nItemCount = this->ItemsNumber;
-	int nCurrentItem = anCurrentItem;
+	INT_PTR nTopItem = anTopItem;
+	INT_PTR nItemCount = this->ItemsNumber;
+	INT_PTR nCurrentItem = anCurrentItem;
 	//CePluginPanelItem** ppItems = this->ppItems;
 
 	if ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem)
@@ -1148,8 +1151,8 @@ int CeFullPanelInfo::CalcTopPanelItem(int anCurrentItem, int anTopItem)
 		//
 		if (PVM == pvm_Thumbnails)
 		{
-			int n = (nTopItem + (nXCount-1)) / nXCount;
-			int nNewTop = n * nXCount;
+			INT_PTR n = (nTopItem + (nXCount-1)) / nXCount;
+			INT_PTR nNewTop = n * nXCount;
 			nTopItem = min(nNewTop, (nItemCount-1));
 			//int nMod = nTopItem % nXCount;
 			//if (nMod) {
@@ -1160,8 +1163,8 @@ int CeFullPanelInfo::CalcTopPanelItem(int anCurrentItem, int anTopItem)
 		}
 		else
 		{
-			int n = (nTopItem + (nYCountFull-1)) / nYCountFull;
-			int nNewTop = n * nYCountFull;
+			INT_PTR n = (nTopItem + (nYCountFull-1)) / nYCountFull;
+			INT_PTR nNewTop = n * nYCountFull;
 			nTopItem = min(nNewTop, (nItemCount-1));
 			//if (nTopItem > nCurrentItem)
 			//	nTopItem = max(0,min((nTopItem-nYCountFull),nCurrentItem
@@ -1175,7 +1178,7 @@ int CeFullPanelInfo::CalcTopPanelItem(int anCurrentItem, int anTopItem)
 		//
 		if (PVM == pvm_Thumbnails)
 		{
-			int nMod = nTopItem % nXCount;
+			INT_PTR nMod = nTopItem % nXCount;
 
 			if (nMod)
 			{
@@ -1189,7 +1192,7 @@ int CeFullPanelInfo::CalcTopPanelItem(int anCurrentItem, int anTopItem)
 		}
 		else
 		{
-			int nMod = nTopItem % nYCountFull;
+			INT_PTR nMod = nTopItem % nYCountFull;
 
 			if (nMod)
 			{
@@ -1333,9 +1336,9 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 
 	//this->nXCount = nXCount; this->nYCountFull = nYCountFull; this->nYCount = nYCount;
 	//int nTopItem = this->TopPanelItem;
-	int nItemCount = this->ItemsNumber;
-	int nCurrentItem = this->CurrentItem;
-	int nTopItem = this->TopPanelItem;
+	INT_PTR nItemCount = this->ItemsNumber;
+	INT_PTR nCurrentItem = this->CurrentItem;
+	INT_PTR nTopItem = this->TopPanelItem;
 	// Issue 321: некорректный скроллинг при выделении элементов панели, поэтому пытаемся фиксировать "наш" Top всегда
 	//if (nCurrentItem == this->ReqCurrentItem && nTopItem < this->ReqTopPanelItem)
 	nTopItem = this->ReqTopPanelItem;
@@ -1411,13 +1414,13 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 			//		continue; // для этого режима превьюшки не просили
 			//}
 			_ASSERTE(nTopItem>=0 && nTopItem<nItemCount && nItemCount>=0);
-			int nItem = nTopItem;
+			INT_PTR nItem = nTopItem;
 			int nYCoord = 0, nXCoord = 0;
 			int X = -1, Y = -1;
 			int iCount = (PVM == pvm_Thumbnails) ? nYCount : nXCount;
 			int jCount = (PVM == pvm_Thumbnails) ? nXCount : nYCount;
 
-			for(int i = 0; !gbCancelAll && i < iCount && nItem < nItemCount; i++)
+			for(INT_PTR i = 0; !gbCancelAll && i < iCount && nItem < nItemCount; i++)
 			{
 				if (PVM == pvm_Thumbnails)
 				{
@@ -1430,7 +1433,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 					//nXCoord = X * nWholeW;
 				}
 
-				for(int j = 0; !gbCancelAll && j < jCount && nItem < nItemCount; j++, nItem++)
+				for(INT_PTR j = 0; !gbCancelAll && j < jCount && nItem < nItemCount; j++, nItem++)
 				{
 					if (PVM == pvm_Thumbnails)
 					{
@@ -1699,7 +1702,7 @@ void CeFullPanelInfo::DisplayReloadPanel()
 	_ASSERTE(GetCurrentThreadId()==gnMainThreadId);
 	TODO("Определить повторно какие элементы видимы, и перечитать только их");
 
-	for(int nItem = 0; nItem < this->ItemsNumber; nItem++)
+	for(INT_PTR nItem = 0; nItem < this->ItemsNumber; nItem++)
 	{
 		// Обновить информацию об элементе (имя, веделенность, и т.п.)
 		LoadPanelItemInfo(this, nItem);
@@ -1765,7 +1768,8 @@ int CeFullPanelInfo::RegisterPanelView()
 		gbFadeColors = (pvi.bFadeColors!=FALSE);
 		//gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
 		gcrCurColors = gbFadeColors ? gThSet.crFadePalette : gThSet.crPalette;
-		SetWindowLong(this->hView, 16*4, gbFadeColors ? 2 : 1);
+		TODO("Вроде WINDOW_LONG_FADE не используется нигде?");
+		SetWindowLong(this->hView, WINDOW_LONG_FADE, gbFadeColors ? 2 : 1);
 		// Подготовить детектор диалогов
 		_ASSERTE(gpRgnDetect!=NULL);
 		SMALL_RECT rcFarRect; GetFarRect(&rcFarRect);
@@ -1939,7 +1943,7 @@ BOOL CeFullPanelInfo::OnSettingsChanged(BOOL bInvalidate)
 	return lbRc;
 }
 
-void CeFullPanelInfo::RequestSetPos(int anCurrentItem, int anTopItem, BOOL abSetFocus /*= FALSE*/)
+void CeFullPanelInfo::RequestSetPos(INT_PTR anCurrentItem, INT_PTR anTopItem, BOOL abSetFocus /*= FALSE*/)
 {
 	if (!this)
 		return;
@@ -2040,7 +2044,7 @@ void CeFullPanelInfo::FinalRelease()
 #endif
 }
 
-BOOL CeFullPanelInfo::ReallocItems(int anCount)
+BOOL CeFullPanelInfo::ReallocItems(INT_PTR anCount)
 {
 	CePluginPanelItem** ppNew = NULL;
 	CePluginPanelItemColor* pNewColors = NULL;
@@ -2052,7 +2056,7 @@ BOOL CeFullPanelInfo::ReallocItems(int anCount)
 		if (!CS.Lock(pSection, TRUE, 5000))
 			return FALSE;
 
-		int nNewMax = anCount+255; // + немножно про запас
+		INT_PTR nNewMax = anCount+255; // + немножно про запас
 		ppNew = (CePluginPanelItem**)calloc(nNewMax, sizeof(LPVOID));
 		pNewColors = (CePluginPanelItemColor*)calloc(nNewMax, sizeof(CePluginPanelItemColor));
 
@@ -2096,7 +2100,7 @@ BOOL CeFullPanelInfo::ReallocItems(int anCount)
 	return TRUE;
 }
 
-BOOL CeFullPanelInfo::FarItem2CeItem(int anIndex,
+BOOL CeFullPanelInfo::FarItem2CeItem(INT_PTR anIndex,
                                      const wchar_t*   asName,
                                      const wchar_t*   asDesc,
                                      DWORD            dwFileAttributes,
@@ -2168,7 +2172,7 @@ BOOL CeFullPanelInfo::FarItem2CeItem(int anIndex,
 
 	ppItems[anIndex]->FindData.lpwszFileExt = wcsrchr(ppItems[anIndex]->FindData.lpwszFileNamePart, L'.');
 	// Description
-	psz += lstrlen(psz)+1;
+	psz += lstrlen(psz)+1; //-V102
 
 	if (asDesc)
 		lstrcpy(psz, asDesc);

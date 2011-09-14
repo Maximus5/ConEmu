@@ -1009,7 +1009,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="Far3.2110\ConEmu\ConEmuHk.dll"
+				OutputFile="\Far3\ConEmu\ConEmuHk.dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -1329,9 +1329,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\Far3.2110\ConEmu\ConEmuHk.dll"
+				AdditionalDependencies="../common/libCRT.lib kernel32.lib"
+				OutputFile="\Far3\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
-				IgnoreAllDefaultLibraries="false"
+				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -1411,9 +1412,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\Far3.2110\ConEmu\ConEmuHk64.dll"
+				AdditionalDependencies="../common/libCRT64.lib kernel32.lib"
+				OutputFile="\Far3\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
-				IgnoreAllDefaultLibraries="false"
+				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"

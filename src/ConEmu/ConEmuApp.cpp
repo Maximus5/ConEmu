@@ -509,7 +509,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 	wchar_t* lpMsgBuf = NULL;
 	MCHKHEAP
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
-	int nLen = _tcslen(asLabel)+64+(lpMsgBuf ? lstrlen(lpMsgBuf) : 0);
+	INT_PTR nLen = _tcslen(asLabel)+64+(lpMsgBuf ? _tcslen(lpMsgBuf) : 0);
 	wchar_t *out = new wchar_t[nLen];
 	_wsprintf(out, SKIPLEN(nLen) _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
 
@@ -695,8 +695,8 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 //		if (lbRc) {
 //			lbRc = FALSE;
 //			pszSlash[1] = 0;
-//			if ((lstrlen(fnd.cFileName)+lstrlen(szFind)) >= MAX_PATH) {
-//				TCHAR* psz=(TCHAR*)calloc(lstrlen(fnd.cFileName)+100,sizeof(TCHAR));
+//			if ((_tcslen(fnd.cFileName)+_tcslen(szFind)) >= MAX_PATH) {
+//				TCHAR* psz=(TCHAR*)calloc(_tcslen(fnd.cFileName)+100,sizeof(TCHAR));
 //				lstrcpyW(psz, L"Too long full pathname for font:\n");
 //				lstrcatW(psz, fnd.cFileName);
 //				MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);
@@ -707,7 +707,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 //				DWORD dwSize = MAX_PATH;
 //				//if (!AddFontResourceEx(szFind, FR_PRIVATE, NULL)) //ADD fontname; by Mors
 //				//{
-//				//	TCHAR* psz=(TCHAR*)calloc(lstrlen(szFind)+100,sizeof(TCHAR));
+//				//	TCHAR* psz=(TCHAR*)calloc(_tcslen(szFind)+100,sizeof(TCHAR));
 //				//	lstrcpyW(psz, L"Can't register font:\n");
 //				//	lstrcatW(psz, szFind);
 //				//	MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);
@@ -716,10 +716,10 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 //				//if (!GetFontResourceInfo(szFind, &dwSize, szTempFontFam, 1)) {
 //				if (!gpSet->GetFontNameFromFile(szFind, szTempFontFam)) {
 //					DWORD dwErr = GetLastError();
-//					TCHAR* psz=(TCHAR*)calloc(lstrlen(szFind)+100,sizeof(TCHAR));
+//					TCHAR* psz=(TCHAR*)calloc(_tcslen(szFind)+100,sizeof(TCHAR));
 //					lstrcpyW(psz, L"Can't query font family for file:\n");
 //					lstrcatW(psz, szFind);
-//					wsprintf(psz+lstrlen(psz), L"\nErrCode=0x%08X", dwErr);
+//					wsprintf(psz+_tcslen(psz), L"\nErrCode=0x%08X", dwErr);
 //					MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);
 //					free(psz);
 //				} else {
@@ -839,7 +839,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 	params = 0;
 	cmdNew = NULL;
 	LPCWSTR pszCmdLine = GetCommandLine();
-	int nInitLen = lstrlen(pszCmdLine);
+	int nInitLen = _tcslen(pszCmdLine);
 	cmdLine = lstrdup(pszCmdLine);
 	// Имя исполняемого файла (conemu.exe)
 	const wchar_t* pszExeName = wcsrchr(gpConEmu->ms_ConEmuExe, L'\\');
@@ -872,7 +872,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 		pszStart = cmdLine;
 		pszNext = wcschr(pszStart, L' ');
 
-		if (!pszNext) pszNext = pszStart + lstrlen(pszStart);
+		if (!pszNext) pszNext = pszStart + _tcslen(pszStart);
 
 		chSave = *pszNext;
 		*pszNext = 0;
@@ -887,7 +887,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 		if (!lstrcmpi(pszFN, pszExeName))
 		{
 			// Нужно отрезать
-			int nCopy = (nInitLen - (pszNext - cmdLine)) * sizeof(wchar_t);
+			INT_PTR nCopy = (nInitLen - (pszNext - cmdLine)) * sizeof(wchar_t);
 			TODO("Проверить, чтобы длину корректно посчитать");
 
 			if (nCopy > 0)
@@ -961,7 +961,7 @@ void ResetConman()
 	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"), 0, KEY_ALL_ACCESS, &hk))
 	{
 		RegSetValueEx(hk, _T("CreateInNewEnvironment"), NULL, REG_DWORD,
-		              (LPBYTE)&(dw=0), 4);
+		              (LPBYTE)&(dw=0), sizeof(dw));
 		RegCloseKey(hk);
 	}
 }
@@ -1127,7 +1127,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 
 					if (0==RegSetValueEx(hk, _T("AutoRun"), NULL, REG_SZ, (LPBYTE)curCommand,
-					                    sizeof(TCHAR)*(_tcslen(curCommand)+1)))
+					                    (DWORD)sizeof(TCHAR)*(_tcslen(curCommand)+1))) //-V220
 						nSetupRc = 1;
 
 					if (bNeedFree)
@@ -1270,13 +1270,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				//if (!FontFilePrm)
 				{
 					//FontFilePrm = true;
-					int nLen = _tcslen(curCommand);
+					INT_PTR nLen = _tcslen(curCommand);
 
 					if (nLen >= MAX_PATH)
 					{
-						int nCchSize = nLen+100;
+						INT_PTR nCchSize = nLen+100;
 						wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
-						_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /FontFile name (%i chars).\r\n", nLen);
+						_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /FontFile name (%I64i chars).\r\n", nLen);
 						_wcscat_c(psz, nCchSize, curCommand);
 						MBoxA(psz);
 						free(psz); free(cmdLine);
@@ -1454,13 +1454,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		MCHKHEAP
 		const wchar_t* pszDefCmd = NULL;
 		wchar_t* pszReady = NULL;
-		int nLen = lstrlen(cmdNew)+1;
+		int nLen = _tcslen(cmdNew)+1;
 
 		if (params == (uint)-1)
 		{
 			pszDefCmd = gpSet->GetCmd();
 			_ASSERTE(pszDefCmd && *pszDefCmd);
-			nLen += 3 + lstrlen(pszDefCmd);
+			nLen += 3 + _tcslen(pszDefCmd);
 		}
 
 		pszReady = (TCHAR*)malloc(nLen*sizeof(TCHAR));
@@ -1485,7 +1485,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//if (FontFilePrm) {
 	//	if (!AddFontResourceEx(FontFile, FR_PRIVATE, NULL)) //ADD fontname; by Mors
 	//	{
-	//		TCHAR* psz=(TCHAR*)calloc(lstrlen(FontFile)+100,sizeof(TCHAR));
+	//		TCHAR* psz=(TCHAR*)calloc(_tcslen(FontFile)+100,sizeof(TCHAR));
 	//		lstrcpyW(psz, L"Can't register font:\n");
 	//		lstrcatW(psz, FontFile);
 	//		MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);

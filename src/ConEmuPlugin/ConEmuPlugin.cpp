@@ -324,7 +324,7 @@ void CheckConEmuDetached()
 	{
 		// ConEmu могло подцепиться
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
-		ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd);
+		ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd); //-V205
 
 		if (ConMap.Open())
 		{
@@ -360,7 +360,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)
 
 	if (gnReqCommand != (DWORD)-1)
 	{
-		gnPluginOpenFrom = (OpenFrom && 0xFFFF);
+		gnPluginOpenFrom = (OpenFrom & 0xFFFF);
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	}
 	else
@@ -1991,6 +1991,9 @@ int WINAPI ActivateConsole()
 // ProcessSynchroEventW зовется потом в главной нити (где-то при чтении буфера консоли)
 void ExecuteSynchro()
 {
+	WARNING("Нет способа определить, будет ли фар вызывать наш ProcessSynchroEventW и в какой момент");
+	// Например, если в фаре выставлен ProcessException - то никакие плагины больше не зовутся
+
 	if (IS_SYNCHRO_ALLOWED)
 	{
 		if (gbSynchroProhibited)
@@ -2331,7 +2334,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 	if (//nCmd == CMD_LOG_SHELL
 	        nCmd == CMD_SET_CON_FONT
 	        || nCmd == CMD_GUICHANGED
-	        || FALSE)
+	        )
 	{
 		//if (nCmd == CMD_LOG_SHELL)
 		//{
@@ -2780,7 +2783,7 @@ void CheckColorerHeader()
 
 	if (gpColorMapping == NULL)
 		gpColorMapping = new MFileMapping<AnnotationHeader>;
-	gpColorMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd);
+	gpColorMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd); //-V205
 
 	// Заголовок мэппинга содержит информацию о размере, нужно запомнить!
 	AnnotationHeader* pHdr = gpColorMapping->Open();
@@ -2855,7 +2858,7 @@ int CreateColorerHeader()
 
 	if (gpColorMapping)
 	{
-		gpColorMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd);
+		gpColorMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd); //-V205
 		//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
 
 		// Создаем! т.к. должна вызываться только после Detach!
@@ -3469,7 +3472,7 @@ int OpenMapHeader()
 		if (!gpConMap)
 			gpConMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
 
-		gpConMap->InitName(CECONMAPNAME, (DWORD)FarHwnd);
+		gpConMap->InitName(CECONMAPNAME, (DWORD)FarHwnd); //-V205
 
 		if (gpConMap->Open())
 		{
@@ -6267,7 +6270,7 @@ void WINAPI OnLibraryLoaded(HMODULE ahModule)
 
 BOOL CheckCallbackPtr(HMODULE hModule, FARPROC CallBack, BOOL abCheckModuleInfo)
 {
-	if (!hModule)
+	if (!hModule || (hModule == INVALID_HANDLE_VALUE))
 	{
 		_ASSERTE(hModule!=NULL);
 		return FALSE;
@@ -6277,8 +6280,47 @@ BOOL CheckCallbackPtr(HMODULE hModule, FARPROC CallBack, BOOL abCheckModuleInfo)
 	DWORD_PTR nModuleSize = (4<<20);
 	BOOL lbModuleInformation = FALSE;
 
+	// Если разрешили - попробовать определить размер модуля, чтобы CallBack не выпал из его тела
 	if (abCheckModuleInfo)
 	{
+		#define LDR_IS_DATAFILE(hm)      ((((ULONG_PTR)(hm)) & (ULONG_PTR)1) == (ULONG_PTR)1)
+		#define LDR_IS_IMAGEMAPPING(hm)  ((((ULONG_PTR)(hm)) & (ULONG_PTR)2) == (ULONG_PTR)2)
+		#define LDR_IS_RESOURCE(hm)      (LDR_IS_IMAGEMAPPING(hm) || LDR_IS_DATAFILE(hm))
+	
+		if (LDR_IS_RESOURCE(hModule))
+		{
+			_ASSERTE(!LDR_IS_RESOURCE(hModule));
+			return FALSE;
+		}
+
+		if (IsBadReadPtr((void*)hModule, sizeof(IMAGE_DOS_HEADER)))
+		{
+			_ASSERTE(!IsBadReadPtr((void*)hModule, sizeof(IMAGE_DOS_HEADER)));
+			return FALSE;
+		}
+
+		if (((IMAGE_DOS_HEADER*)hModule)->e_magic != IMAGE_DOS_SIGNATURE /*'ZM'*/)
+		{
+			_ASSERTE(((IMAGE_DOS_HEADER*)hModule)->e_magic == IMAGE_DOS_SIGNATURE);
+			return FALSE;
+		}
+
+		IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)hModule + ((IMAGE_DOS_HEADER*)hModule)->e_lfanew);
+		if (IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)))
+		{
+			_ASSERTE(!IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)));
+			return FALSE;
+		}
+
+		if (nt_header->Signature != 0x004550)
+		{
+			_ASSERTE(nt_header->Signature == 0x004550);
+			return FALSE;
+		}
+		// Получить размер модуля из OptionalHeader
+		nModuleSize = nt_header->OptionalHeader.SizeOfImage;
+	
+		/*
 		static HMODULE hPsApi = NULL;
 
 		if (hPsApi == NULL)
@@ -6313,6 +6355,7 @@ BOOL CheckCallbackPtr(HMODULE hModule, FARPROC CallBack, BOOL abCheckModuleInfo)
 				nModuleSize = mi.SizeOfImage;
 			}
 		}
+		*/
 	}
 
 	if (!CallBack)

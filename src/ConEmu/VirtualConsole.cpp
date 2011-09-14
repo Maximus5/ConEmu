@@ -186,7 +186,8 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mn_BkImgDataMax = 0;
 	mn_BkImgWidth = mn_BkImgHeight = 0;
 	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gpSet->mh_Font)+sizeof(mh_FontByIndex[0])));
-	memmove(mh_FontByIndex, gpSet->mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0]));
+	// mh_FontByIndex[MAX_FONT_STYLES] // зарезервировано для 'Unicode CharMap'
+	memmove(mh_FontByIndex, gpSet->mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0])); //-V512
 	mh_UCharMapFont = NULL; ms_LastUCharMapFont[0] = 0;
 	mh_FontByIndex[MAX_FONT_STYLES] = NULL; // зарезервировано для 'Unicode CharMap'
 	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
@@ -273,7 +274,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 		*pszDot = 0;
 		mpsz_LogScreen = (wchar_t*)calloc(pszDot - szFile + 64, 2);
 		wcscpy(mpsz_LogScreen, szFile);
-		wcscpy(mpsz_LogScreen+lstrlen(mpsz_LogScreen), L"\\ConEmu-VCon-%i-%i.con"/*, RCon()->GetServerPID()*/);
+		wcscpy(mpsz_LogScreen+_tcslen(mpsz_LogScreen), L"\\ConEmu-VCon-%i-%i.con"/*, RCon()->GetServerPID()*/);
 	}
 
 	// InitDC звать бессмысленно - консоль еще не создана
@@ -3215,7 +3216,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		SetTextColor(hPaintDc, pColors[7]);
 		SetBkColor(hPaintDc, pColors[0]);
 		ExtTextOut(hPaintDc, rcClient.left, rcClient.top, nFlags, &rcClient,
-		           pszStarting, lstrlen(pszStarting), 0);
+		           pszStarting, _tcslen(pszStarting), 0);
 		SelectObject(hPaintDc, hOldF);
 		DeleteObject(hBr);
 		//EndPaint(ghWndDC, &ps);
@@ -3407,24 +3408,21 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 	if (Cursor.isVisible && cinf.bVisible && isCursorValid)
 	{
-		if (mpsz_ConChar && mpsz_ConChar)
+		if (mpsz_ConChar && mpn_ConAttrEx)
 		{
 			HFONT hOldFont = (HFONT)SelectObject(hPaintDc, gpSet->mh_Font[0]);
 			MSectionLock SCON; SCON.Lock(&csCON);
 
-			if (mpsz_ConChar && mpn_ConAttrEx)
-			{
-				int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
-				//Cursor.ch[1] = 0;
-				//CVirtualConsole* p = this;
-				//GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.foreColorNum, Cursor.bgColorNum);
-				Cursor.ch = mpsz_ConChar[CurChar];
-				//GetCharAttr(mpn_ConAttr[CurChar], Cursor.foreColorNum, Cursor.bgColorNum, NULL);
-				//Cursor.foreColor = pColors[Cursor.foreColorNum];
-				//Cursor.bgColor = pColors[Cursor.bgColorNum];
-				Cursor.foreColor = mpn_ConAttrEx[CurChar].crForeColor;
-				Cursor.bgColor = mpn_ConAttrEx[CurChar].crBackColor;
-			}
+			int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
+			//Cursor.ch[1] = 0;
+			//CVirtualConsole* p = this;
+			//GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.foreColorNum, Cursor.bgColorNum);
+			Cursor.ch = mpsz_ConChar[CurChar];
+			//GetCharAttr(mpn_ConAttr[CurChar], Cursor.foreColorNum, Cursor.bgColorNum, NULL);
+			//Cursor.foreColor = pColors[Cursor.foreColorNum];
+			//Cursor.bgColor = pColors[Cursor.bgColorNum];
+			Cursor.foreColor = mpn_ConAttrEx[CurChar].crForeColor;
+			Cursor.bgColor = mpn_ConAttrEx[CurChar].crBackColor;
 
 			UpdateCursorDraw(hPaintDc, rcClient, csbi.dwCursorPosition, cinf.dwSize);
 			Cursor.isVisiblePrev = Cursor.isVisible;
@@ -3520,7 +3518,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 				MapWindowPoints(ghWndDC, ghWnd, pt, 2);
 				Rectangle(hPaintDc, pt[0].x+n, pt[0].y+n, pt[1].x-n, pt[1].y-n);
 				wchar_t szCoord[32]; _wsprintf(szCoord, SKIPLEN(countof(szCoord)) L"%ix%i", pDlg->Rects[i].Left, pDlg->Rects[i].Top);
-				TextOut(hPaintDc, pt[0].x+1, pt[0].y+1, szCoord, lstrlen(szCoord));
+				TextOut(hPaintDc, pt[0].x+1, pt[0].y+1, szCoord, _tcslen(szCoord));
 			}
 
 			SelectObject(hPaintDc, hOldBr);
@@ -4573,7 +4571,7 @@ void CVirtualConsole::PolishPanelViews()
 		{
 			LPCWSTR pszNameTitle = pp->tColumnTitle.sText;
 			CharAttr ca; CharAttrFromConAttr(pp->tColumnTitle.bConAttr, &ca);
-			int nNameLen = lstrlen(pszNameTitle);
+			int nNameLen = _tcslen(pszNameTitle);
 			int nX1 = rc.left + 1;
 
 			if ((pp->tColumnTitle.nFlags & PVI_TEXT_SKIPSORTMODE)

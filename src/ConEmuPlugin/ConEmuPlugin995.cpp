@@ -329,13 +329,13 @@ void ProcessDragToW995()
 	      InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELDIR, 0x400, (LONG_PTR)szADir);
 
 	if (lbAOK && szADir)
-		nStructSize += (lstrlen(szADir))*sizeof(WCHAR);
+		nStructSize += (lstrlen(szADir))*sizeof(WCHAR); //-V103
 
 	lbPOK=InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PPInfo) &&
 	      InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELDIR, 0x400, (LONG_PTR)szPDir);
 
 	if (lbPOK && szPDir)
-		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
+		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR //-V103
 
 	pfpi = (ForwardedPanelInfo*)calloc(nStructSize,1);
 
@@ -669,7 +669,7 @@ void SetWindowW995(int nTab)
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
 
-	if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab))
+	if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab)) //-V204
 		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_COMMIT, 0);
 }
 
@@ -1333,7 +1333,7 @@ HANDLE WINAPI OpenFilePluginW995(const wchar_t *Name,const unsigned char *Data,i
 
 	if (!pszDot) return INVALID_HANDLE_VALUE;
 
-	if (lstrcmpi(pszDot, L".con")) return INVALID_HANDLE_VALUE;
+	if (lstrcmpi(pszDot, L".con")!=0) return INVALID_HANDLE_VALUE;
 
 	if (DataSize < sizeof(CESERVER_REQ_HDR)) return INVALID_HANDLE_VALUE;
 

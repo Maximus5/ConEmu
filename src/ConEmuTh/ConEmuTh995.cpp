@@ -54,7 +54,7 @@ void GetPluginInfoW995(void *piv)
 
 	static WCHAR *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1;
-	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
+	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240); //-V303
 	_ASSERTE(pi->StructSize = sizeof(struct PluginInfo));
 	pi->Flags = PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
@@ -95,11 +95,11 @@ void SetStartupInfoW995(void *aInfo)
 		}
 	}
 
-	int nLen = lstrlenW(InfoW995->RootKey)+16;
+	size_t nLen = lstrlenW(InfoW995->RootKey)+16; //-V303
 	if (gszRootKeyW995) free(gszRootKeyW995);
-	gszRootKeyW995 = (wchar_t*)calloc(nLen,2);
+	gszRootKeyW995 = (wchar_t*)calloc(nLen,sizeof(wchar_t));
 	lstrcpyW(gszRootKeyW995, InfoW995->RootKey);
-	WCHAR* pszSlash = gszRootKeyW995+lstrlenW(gszRootKeyW995)-1;
+	WCHAR* pszSlash = gszRootKeyW995+lstrlenW(gszRootKeyW995)-1; //-V303
 	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
 	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
 }
@@ -234,11 +234,11 @@ BOOL IsMacroActiveW995()
 }
 
 
-void LoadPanelItemInfoW995(CeFullPanelInfo* pi, int nItem)
+void LoadPanelItemInfoW995(CeFullPanelInfo* pi, INT_PTR nItem)
 {
 	//HANDLE hPanel = pi->hPanel;
 	HANDLE hPanel = pi->Focus ? PANEL_ACTIVE : PANEL_PASSIVE;
-	INT_PTR nSize = InfoW995->Control(hPanel, FCTL_GETPANELITEM, nItem, NULL);
+	size_t nSize = InfoW995->Control(hPanel, FCTL_GETPANELITEM, (int)nItem, NULL); //-V107
 	//PluginPanelItem *ppi = (PluginPanelItem*)malloc(nMaxSize);
 	//if (!ppi)
 	//	return;
@@ -247,7 +247,7 @@ void LoadPanelItemInfoW995(CeFullPanelInfo* pi, int nItem)
 	{
 		if (pi->pFarTmpBuf) free(pi->pFarTmpBuf);
 
-		pi->nFarTmpBuf = (int)(nSize+MAX_PATH); // + про запас немножко
+		pi->nFarTmpBuf = nSize+MAX_PATH; // + про запас немножко
 		pi->pFarTmpBuf = malloc(pi->nFarTmpBuf);
 	}
 
@@ -255,7 +255,7 @@ void LoadPanelItemInfoW995(CeFullPanelInfo* pi, int nItem)
 
 	if (ppi)
 	{
-		nSize = InfoW995->Control(hPanel, FCTL_GETPANELITEM, nItem, (LONG_PTR)ppi);
+		nSize = InfoW995->Control(hPanel, FCTL_GETPANELITEM, (int)nItem, (LONG_PTR)ppi);
 	}
 	else
 	{
@@ -414,17 +414,17 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	pcefpi->nFarColors[col_CommandLineUserScreen] = FarConsoleColors[COL_COMMANDLINEUSERSCREEN];
 	pcefpi->nFarColors[col_PanelScreensNumber] = FarConsoleColors[COL_PANELSCREENSNUMBER];
 	pcefpi->nFarColors[col_KeyBarNum] = FarConsoleColors[COL_KEYBARNUM];
-	//int nColorSize = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
+	//int nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
 	//if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
 	//{
 	//	if (pcefpi->nFarColors) free(pcefpi->nFarColors);
 	//	pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
 	//	pcefpi->nMaxFarColors = nColorSize;
 	//}
-	//nColorSize = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
+	//nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
 	
 	// Текущая папка панели
-	int nSize = (int)InfoW995->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
+	size_t nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
 
 	if (nSize)
 	{
@@ -434,7 +434,7 @@ BOOL LoadPanelInfo995(BOOL abActive)
 			pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
 		}
 
-		nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, nSize, (LONG_PTR)pcefpi->pszPanelDir);
+		nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, (int)nSize, (LONG_PTR)pcefpi->pszPanelDir);
 
 		if (!nSize)
 		{
@@ -462,7 +462,7 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	{
 		if (pcefpi->pFarTmpBuf) free(pcefpi->pFarTmpBuf);
 
-		pcefpi->nFarTmpBuf = nSize;
+		pcefpi->nFarTmpBuf = nSize; //-V101
 		pcefpi->pFarTmpBuf = malloc(pcefpi->nFarTmpBuf);
 	}
 
@@ -478,7 +478,7 @@ void ReloadPanelsInfoW995()
 	LoadPanelInfo995(FALSE);
 }
 
-void SetCurrentPanelItemW995(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
+void SetCurrentPanelItemW995(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem)
 {
 	if (!InfoW995) return;
 
@@ -503,16 +503,16 @@ void SetCurrentPanelItemW995(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
 		return;
 
 	if ((int)anTopItem >= pi->ItemsNumber)
-		anTopItem = pi->ItemsNumber - 1;
+		anTopItem = pi->ItemsNumber - 1; //-V101
 
 	if ((int)anCurItem >= pi->ItemsNumber)
-		anCurItem = pi->ItemsNumber - 1;
+		anCurItem = pi->ItemsNumber - 1; //-V101
 
 	if (anCurItem < anTopItem)
 		anCurItem = anTopItem;
 
 	// Обновляем панель
-	PanelRedrawInfo pri = {anCurItem, anTopItem};
+	PanelRedrawInfo pri = {(int)anCurItem, (int)anTopItem};
 	InfoW995->Control(hPanel, FCTL_REDRAWPANEL, 0, (LONG_PTR)&pri);
 }
 
@@ -646,7 +646,7 @@ bool CheckFarPanelsW995()
 //	if (!InfoW995 || !InfoW995->AdvControl) return false;
 //
 //	bool lbPanelsActive = false;
-//	int nCount = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
+//	int nCount = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
 //	WindowInfo wi = {0};
 //
 //	wi.Pos = -1;

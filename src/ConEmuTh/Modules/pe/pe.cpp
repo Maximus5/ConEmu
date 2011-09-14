@@ -226,7 +226,7 @@ static char szTrace[1024];
 template <class T> PIMAGE_SECTION_HEADER GetEnclosingSectionHeader(DWORD rva, T* pNTHeader)	// 'T' == PIMAGE_NT_HEADERS
 {
 	_TRACE1("GetEnclosingSectionHeader(rva=0x%08X)", rva);
-	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pNTHeader);
+	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pNTHeader); //-V220
 	unsigned i;
 
 	for ( i=0; i < pNTHeader->FileHeader.NumberOfSections; i++, section++ )
@@ -1719,7 +1719,7 @@ void DumpResourceEntry(
 	if (pResDirEntry->OffsetToData & IMAGE_RESOURCE_DATA_IS_DIRECTORY)
 	{
 		DumpResourceDirectory(pData, (PIMAGE_RESOURCE_DIRECTORY)
-		                      ((pResDirEntry->OffsetToData & 0x7FFFFFFF) + pResourceBase),
+		                      ((pResDirEntry->OffsetToData & 0x7FFFFFFF) + pResourceBase), //-V112
 		                      pResourceBase, level, pResDirEntry->Name, rootType);
 		return;
 	}

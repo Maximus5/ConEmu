@@ -285,14 +285,14 @@ int ServerInit()
 			dwFlags |= (nOr | ENABLE_EXTENDED_FLAGS);
 		}
 
-		bConRc = SetConsoleMode(h, dwFlags);
+		bConRc = SetConsoleMode(h, dwFlags); //-V519
 	}
 
 	//2009-08-27 Перенес снизу
 	if (!gpSrv->hConEmuGuiAttached)
 	{
 		wchar_t szTempName[MAX_PATH];
-		_wsprintf(szTempName, SKIPLEN(countof(szTempName)) CEGUIRCONSTARTED, (DWORD)ghConWnd);
+		_wsprintf(szTempName, SKIPLEN(countof(szTempName)) CEGUIRCONSTARTED, (DWORD)ghConWnd); //-V205
 		//gpSrv->hConEmuGuiAttached = OpenEvent(EVENT_ALL_ACCESS, FALSE, szTempName);
 		//if (gpSrv->hConEmuGuiAttached == NULL)
 		gpSrv->hConEmuGuiAttached = CreateEvent(gpLocalSecurity, TRUE, FALSE, szTempName);
@@ -410,11 +410,11 @@ int ServerInit()
 			//	SMTO_BLOCK, 500, &nRc);
 			_ASSERTE(ghConWnd!=NULL);
 			wchar_t szServerPipe[MAX_PATH];
-			_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)hConEmuWnd);
+			_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)hConEmuWnd); //-V205
 			CESERVER_REQ In, Out;
 			ExecutePrepareCmd(&In, CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2);
 			In.dwData[0] = 1; // запущен сервер
-			In.dwData[1] = (DWORD)ghConWnd;
+			In.dwData[1] = (DWORD)ghConWnd; //-V205
 			lbCallRc = CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, 1000);
 
 			if (!lbCallRc)
@@ -946,11 +946,11 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		_ASSERTE(nCurProcCount <= 1);
 #endif
 		wchar_t szServerPipe[MAX_PATH];
-		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
+		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd); //-V205
 		CESERVER_REQ In, Out; DWORD dwRead = 0;
 		ExecutePrepareCmd(&In, CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2);
 		In.dwData[0] = 101;
-		In.dwData[1] = (DWORD)ghConWnd;
+		In.dwData[1] = (DWORD)ghConWnd; //-V205
 		// Послать в GUI уведомление, что сервер закрывается
 		CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, 1000);
 	}
@@ -1648,7 +1648,7 @@ HWND Attach2Gui(DWORD nTimeout)
 			}
 
 			wchar_t szPipe[64];
-			_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEGUIPIPENAME, L".", (DWORD)hGui);
+			_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEGUIPIPENAME, L".", (DWORD)hGui); //-V205
 			CESERVER_REQ *pOut = ExecuteCmd(szPipe, &In, GUIATTACH_TIMEOUT, ghConWnd);
 
 			if (!pOut)
@@ -1866,7 +1866,7 @@ int CreateMapHeader()
 		goto wrap;
 	}
 
-	gpSrv->pConsoleMap->InitName(CECONMAPNAME, (DWORD)ghConWnd);
+	gpSrv->pConsoleMap->InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
 
 	if (!gpSrv->pConsoleMap->Create())
 	{
@@ -1931,7 +1931,7 @@ int CreateColorerHeader()
 		gpSrv->pColorerMapping = new MFileMapping<AnnotationHeader>;
 	}
 	// Задать имя для mapping, если надо - сам сделает CloseMap();
-	gpSrv->pColorerMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd);
+	gpSrv->pColorerMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd); //-V205
 
 	//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
 	//gpSrv->hColorerMapping = CreateFileMapping(INVALID_HANDLE_VALUE,
@@ -2036,7 +2036,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 	{
 		// А для 'буферного' режима позиция может быть заблокирована
 		nTop = gpSrv->nTopVisibleLine;
-		nBottom = min((pSbi->dwSize.Y-1), (gpSrv->nTopVisibleLine+gcrBufferSize.Y-1));
+		nBottom = min((pSbi->dwSize.Y-1), (gpSrv->nTopVisibleLine+gcrBufferSize.Y-1)); //-V592
 	}
 	else
 	{
@@ -3676,7 +3676,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 					LastMsButton = pr[i].Event.MouseEvent.dwButtonState;
 				}
 				else
-				{
+				{ //-V523
 					LastMsButton = pr[i].Event.MouseEvent.dwButtonState;
 				}
 			}

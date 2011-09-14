@@ -54,9 +54,9 @@ class SettingsBase
 		bool Load(const wchar_t *regName, char &value) { return Load(regName, (LPBYTE)&value, 1); }
 		bool Load(const wchar_t *regName, bool &value) { return Load(regName, (LPBYTE)&value, 1); }
 		bool Load(const wchar_t *regName, BYTE &value) { return Load(regName, (LPBYTE)&value, 1); }
-		bool Load(const wchar_t *regName, DWORD &value) { return Load(regName, (LPBYTE)&value, 4); }
-		bool Load(const wchar_t *regName, LONG &value) { return Load(regName, (LPBYTE)&value, 4); }
-		bool Load(const wchar_t *regName, int &value) { return Load(regName, (LPBYTE)&value, 4); }
+		bool Load(const wchar_t *regName, DWORD &value) { return Load(regName, (LPBYTE)&value, sizeof(DWORD)); }
+		bool Load(const wchar_t *regName, LONG &value) { return Load(regName, (LPBYTE)&value, sizeof(DWORD)); }
+		bool Load(const wchar_t *regName, int &value) { return Load(regName, (LPBYTE)&value, sizeof(DWORD)); }
 		bool Load(const wchar_t *regName, RECT &value) { return Load(regName, (LPBYTE)&value, sizeof(value)); }
 
 		virtual void Delete(const wchar_t *regName) = 0;
@@ -80,7 +80,7 @@ class SettingsBase
 		template <class T> void Save(const wchar_t *regName, T value)
 		{
 			DWORD len = sizeof(T);
-			Save(regName, (LPBYTE)(&value), (len == 4) ? REG_DWORD : REG_BINARY, len);
+			Save(regName, (LPBYTE)(&value), (len == sizeof(DWORD)) ? REG_DWORD : REG_BINARY, len);
 		}
 
 	public:

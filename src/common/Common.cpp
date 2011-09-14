@@ -222,18 +222,23 @@ int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsAr
 
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg)
 {
-	_ASSERTE(pMsg!=NULL && piRec!=NULL);
+	if (!pMsg || !piRec)
+	{
+		_ASSERTE(pMsg!=NULL && piRec!=NULL);
+		return FALSE;
+	}
+
 	memset(pMsg, 0, sizeof(MSG64));
 	UINT nMsg = 0; WPARAM wParam = 0; LPARAM lParam = 0;
 
 	if (piRec->EventType == KEY_EVENT)
 	{
 		nMsg = piRec->Event.KeyEvent.bKeyDown ? WM_KEYDOWN : WM_KEYUP;
-		lParam |= (WORD)piRec->Event.KeyEvent.uChar.UnicodeChar;
-		lParam |= ((BYTE)piRec->Event.KeyEvent.wVirtualKeyCode) << 16;
-		lParam |= ((BYTE)piRec->Event.KeyEvent.wVirtualScanCode) << 24;
-		wParam |= (WORD)piRec->Event.KeyEvent.dwControlKeyState;
-		wParam |= ((DWORD)piRec->Event.KeyEvent.wRepeatCount & 0xFF) << 16;
+		lParam |= (DWORD_PTR)(WORD)piRec->Event.KeyEvent.uChar.UnicodeChar;
+		lParam |= ((DWORD_PTR)piRec->Event.KeyEvent.wVirtualKeyCode & 0xFF) << 16;
+		lParam |= ((DWORD_PTR)piRec->Event.KeyEvent.wVirtualScanCode & 0xFF) << 24;
+		wParam |= (DWORD_PTR)piRec->Event.KeyEvent.dwControlKeyState & 0xFFFF;
+		wParam |= ((DWORD_PTR)piRec->Event.KeyEvent.wRepeatCount & 0xFF) << 16;
 	}
 	else if (piRec->EventType == MOUSE_EVENT)
 	{
@@ -258,19 +263,19 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg)
 				_ASSERT(FALSE);
 		}
 
-		lParam = ((WORD)piRec->Event.MouseEvent.dwMousePosition.X)
-		         | (((DWORD)(WORD)piRec->Event.MouseEvent.dwMousePosition.Y) << 16);
+		lParam = ((DWORD_PTR)(WORD)piRec->Event.MouseEvent.dwMousePosition.X)
+		         | (((DWORD_PTR)(WORD)piRec->Event.MouseEvent.dwMousePosition.Y) << 16);
 		// max 0x0010/*FROM_LEFT_4ND_BUTTON_PRESSED*/
-		wParam |= ((DWORD)piRec->Event.MouseEvent.dwButtonState) & 0xFF;
+		wParam |= ((DWORD_PTR)piRec->Event.MouseEvent.dwButtonState) & 0xFF;
 		// max - ENHANCED_KEY == 0x0100
-		wParam |= (((DWORD)piRec->Event.MouseEvent.dwControlKeyState) & 0xFFFF) << 8;
+		wParam |= (((DWORD_PTR)piRec->Event.MouseEvent.dwControlKeyState) & 0xFFFF) << 8;
 
 		if (nMsg == MOUSE_EVENT_WHEELED || nMsg == MOUSE_EVENT_HWHEELED)
 		{
 			// HIWORD() - short (direction[1/-1])*count*120
 			short nWheel = (short)((((DWORD)piRec->Event.MouseEvent.dwButtonState) & 0xFFFF0000) >> 16);
 			char  nCount = nWheel / 120;
-			wParam |= ((DWORD)(BYTE)nCount) << 24;
+			wParam |= ((DWORD_PTR)(BYTE)nCount) << 24;
 		}
 	}
 	else if (piRec->EventType == FOCUS_EVENT)
@@ -292,7 +297,12 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg)
 
 BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec)
 {
-	_ASSERTE(piMsg!=NULL && pRec!=NULL);
+	if (!piMsg || !pRec)
+	{
+		_ASSERTE(piMsg!=NULL && pRec!=NULL);
+		return FALSE;
+	}
+
 	memset(pRec, 0, sizeof(INPUT_RECORD));
 
 	if (piMsg->message == 0)
@@ -604,10 +614,10 @@ public:
 			goto wrap;
 		}
 
-		dwSize = sizeof(ACL)
+		dwSize = sizeof(ACL) //-V104 //-V119 //-V103
 		         + sizeof(ACCESS_DENIED_ACE) + GetLengthSid(pNetworkSid)
 		         + sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(pSidWorld);
-		mp_ACL = (PACL)LocalAlloc(LPTR, dwSize);
+		mp_ACL = (PACL)LocalAlloc(LPTR, dwSize); //-V106
 
 		if (!InitializeAcl(mp_ACL, dwSize, ACL_REVISION))
 		{
@@ -832,7 +842,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 			pci->WindowPosY = rcAllMonRect.top - 1024;
 		}
 
-		memcpy(ptrView, pci, pci->Length);
+		memcpy(ptrView, pci, pci->Length); //-V106
 		UnmapViewOfFile(ptrView);
 		//  Send console window the "update" message
 		LRESULT dwConInfoRc = 0;
@@ -937,7 +947,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		//GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 		cfi.dwFontSize.X = inSizeX;
 		cfi.dwFontSize.Y = inSizeY;
-		lstrcpynW(cfi.FaceName, asFontName ? asFontName : L"Lucida Console", LF_FACESIZE);
+		lstrcpynW(cfi.FaceName, asFontName ? asFontName : L"Lucida Console", LF_FACESIZE); //-V303
 		SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 	}
 	else // We have other NT
@@ -971,7 +981,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		gpConsoleInfoStr->FontSize.Y				= inSizeY;
 		gpConsoleInfoStr->FontFamily				= 0;//0x30;//FF_MODERN|FIXED_PITCH;//0x30;
 		gpConsoleInfoStr->FontWeight				= 0;//0x400;
-		lstrcpynW(gpConsoleInfoStr->FaceName, asFontName ? asFontName : L"Lucida Console", 32);
+		lstrcpynW(gpConsoleInfoStr->FaceName, asFontName ? asFontName : L"Lucida Console", countof(gpConsoleInfoStr->FaceName)); //-V303
 		gpConsoleInfoStr->CursorSize				= 25;
 		gpConsoleInfoStr->FullScreen				= FALSE;
 		gpConsoleInfoStr->QuickEdit					= FALSE;
@@ -985,7 +995,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		gpConsoleInfoStr->PopupColors				= MAKEWORD(0x5, 0xf);
 		gpConsoleInfoStr->HistoryNoDup				= FALSE;
 		gpConsoleInfoStr->HistoryBufferSize			= 50;
-		gpConsoleInfoStr->NumberOfHistoryBuffers	= 4;
+		gpConsoleInfoStr->NumberOfHistoryBuffers	= 4; //-V112
 
 		// color table
 		for(i = 0; i < 16; i++)

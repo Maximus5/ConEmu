@@ -145,7 +145,7 @@ BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 					lbFileFound = TRUE;
 
 					if (pnSize)
-						*pnSize = fi.nFileSizeHigh ? 0xFFFFFFFF : fi.nFileSizeLow;
+						*pnSize = fi.nFileSizeHigh ? 0xFFFFFFFF : fi.nFileSizeLow; //-V112
 				}
 			}
 
@@ -164,7 +164,7 @@ BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 			lbFound = TRUE;
 
 			if (pnSize)
-				*pnSize = fnd.nFileSizeHigh ? 0xFFFFFFFF : fnd.nFileSizeLow;
+				*pnSize = fnd.nFileSizeHigh ? 0xFFFFFFFF : fnd.nFileSizeLow; //-V112
 
 			break;
 		}
@@ -188,7 +188,7 @@ BOOL IsFilePath(LPCWSTR asFilePath)
 
 	// Пропуск UNC "\\?\"
 	if (asFilePath[0] == L'\\' && asFilePath[1] == L'\\' && asFilePath[2] == L'?' && asFilePath[3] == L'\\')
-		asFilePath += 4;
+		asFilePath += 4; //-V112
 
 	// Если asFilePath содержит два (и более) ":\"
 	LPCWSTR pszColon = wcschr(asFilePath, L':');
@@ -220,12 +220,12 @@ BOOL GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortN
 
 	if (fnd.cAlternateFileName[0])
 	{
-		if ((abFavorLength && (lstrlenW(fnd.cAlternateFileName) < lstrlenW(fnd.cFileName)))
+		if ((abFavorLength && (lstrlenW(fnd.cAlternateFileName) < lstrlenW(fnd.cFileName))) //-V303
 		        || (wcschr(fnd.cFileName, L' ') != NULL))
 		{
-			if (lstrlen(fnd.cAlternateFileName) >= cchShortNameMax)
+			if (lstrlen(fnd.cAlternateFileName) >= cchShortNameMax) //-V303
 				return FALSE;
-			_wcscpy_c(rsShortName, cchShortNameMax, fnd.cAlternateFileName);
+			_wcscpy_c(rsShortName, cchShortNameMax, fnd.cAlternateFileName); //-V106
 			return TRUE;
 		}
 	}
@@ -234,9 +234,9 @@ BOOL GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortN
 		return FALSE;
 	}
 	
-	if (lstrlen(fnd.cFileName) >= cchShortNameMax)
+	if (lstrlen(fnd.cFileName) >= cchShortNameMax) //-V303
 		return FALSE;
-	_wcscpy_c(rsShortName, cchShortNameMax, fnd.cFileName);
+	_wcscpy_c(rsShortName, cchShortNameMax, fnd.cFileName); //-V106
 	return TRUE;
 }
 
@@ -245,11 +245,11 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 	if (!asLong)
 		return NULL;
 	
-	int nSrcLen = lstrlenW(asLong);
+	int nSrcLen = lstrlenW(asLong); //-V303
 	wchar_t* pszLong = lstrdup(asLong);
 	
 	int nMaxLen = nSrcLen + MAX_PATH; // "короткое" имя может более MAX_PATH
-	wchar_t* pszShort = (wchar_t*)calloc(nMaxLen, sizeof(wchar_t));
+	wchar_t* pszShort = (wchar_t*)calloc(nMaxLen, sizeof(wchar_t)); //-V106
 	
 	wchar_t* pszResult = NULL;
 	wchar_t* pszSrc = pszLong;
@@ -274,7 +274,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 			if (pszSrc[0] == L'U' && pszSrc[1] == L'N' && pszSrc[2] == L'C' && pszSrc[3] == L'\\')
 			{
 				// UNC\Server\share\...
-				pszSrc += 4;
+				pszSrc += 4; //-V112
 				lbNetwork = true;
 			}
 			// иначе - ожидается диск
@@ -298,7 +298,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 		if (!pszSlash)
 			goto wrap;
 		pszShort[0] = L'\\'; pszShort[1] = L'\\'; pszShort[2] = 0;
-		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // память выделяется calloc!
+		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // память выделяется calloc! //-V303 //-V104
 	}
 	else
 	{
@@ -2221,7 +2221,7 @@ void MFileLog::LogString(LPCWSTR asText, BOOL abWriteTime /*= TRUE*/, LPCWSTR as
 
 	if (asThreadName && *asThreadName)
 	{
-		lstrcpynW(szInfo+nCur, asThreadName, 32);
+		lstrcpynW(szInfo+nCur, asThreadName, 32); //-V112
 		nCur += lstrlenW(szInfo+nCur);
 	}
 

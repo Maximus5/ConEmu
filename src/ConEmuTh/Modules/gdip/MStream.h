@@ -103,7 +103,7 @@ class MStream : public IStream
 
 			if (mp_Data)
 			{
-				dwRead = min(cb, max(0,(mn_DataLen-mn_DataPos)));
+				dwRead = min(cb, (mn_DataLen>mn_DataPos)?(mn_DataLen-mn_DataPos):0);
 
 				if (dwRead>0)
 				{

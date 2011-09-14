@@ -252,7 +252,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 	//						if (nCurSize==0) break;
 	//						pipe.Read(curr, sizeof(WCHAR)*nCurSize, &cbBytesRead);
 	//						_ASSERTE(*curr);
-	//						curr+=lstrlen(curr)+1;
+	//						curr+=_tcslen(curr)+1;
 	//						nFilesCount ++;
 	//					}
 	//					int cbStructSize=0;
@@ -469,7 +469,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 			else
 			{
 #endif
-				wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)mp_DataObject, (DWORD)pDropSource);
+				wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)mp_DataObject, (DWORD)pDropSource); //-V205
 				gpConEmu->DebugStep(szStep);
 				dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
 				_wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop finished, Code=0x%08X", dwResult);
@@ -554,10 +554,10 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LP
 	wchar_t *pszFullName = NULL;
 	wchar_t* pszNameW = (wchar_t*)asFileName;
 	char* pszNameA = (char*)asFileName;
-	int nSize = 0;
+	INT_PTR nSize = 0;
 	LPCWSTR pszPanelPath = abActive ? m_pfpi->pszActivePath : m_pfpi->pszPassivePath;
-	int nPathLen = lstrlen(pszPanelPath) + 1;
-	int nSubFolderLen = (asSubFolder && *asSubFolder) ? lstrlen(asSubFolder) : 0;
+	INT_PTR nPathLen = _tcslen(pszPanelPath) + 1;
+	INT_PTR nSubFolderLen = (asSubFolder && *asSubFolder) ? _tcslen(asSubFolder) : 0;
 	nSize = nPathLen + nSubFolderLen + 16;
 
 	if (abWide)
@@ -568,7 +568,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LP
 		{
 			if (!abFolder)
 			{
-				_ASSERTE(abFolder || (pszSlash == NULL) || wcsncmp(pszNameW, asSubFolder, lstrlen(asSubFolder))==0);
+				_ASSERTE(abFolder || (pszSlash == NULL) || wcsncmp(pszNameW, asSubFolder, _tcslen(asSubFolder))==0);
 				pszNameW = pszSlash+1;
 			}
 		}
@@ -579,7 +579,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LP
 			return NULL;
 		}
 
-		nSize += lstrlen(pszNameW)+1;
+		nSize += _tcslen(pszNameW)+1;
 	}
 	else
 	{
@@ -628,15 +628,15 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LP
 
 		if (pszPanelPath[0] == L'\\' && pszPanelPath[1] == L'\\')
 		{
-			wcscpy(pszFullName+4, L"UNC");
+			wcscpy(pszFullName+4, L"UNC"); //-V112
 			wcscpy(pszFullName+7, pszPanelPath+1);
 		}
 		else
 		{
-			wcscpy(pszFullName+4, pszPanelPath);
+			wcscpy(pszFullName+4, pszPanelPath); //-V112
 		}
 
-		nPathLen = lstrlen(pszFullName) + 1;
+		nPathLen = _tcslen(pszFullName) + 1;
 	}
 	else
 	{
@@ -747,7 +747,7 @@ HANDLE CDragDrop::FileStart(LPCWSTR pszFullName)
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		DWORD dwErr = GetLastError();
-		int nSize = lstrlen(pszFullName);
+		INT_PTR nSize = _tcslen(pszFullName);
 		wchar_t* pszMsg = (wchar_t*)calloc(nSize + 100,2);
 		wcscpy(pszMsg, L"Can't create file!\n");
 		wcscat(pszMsg, pszFullName);
@@ -879,7 +879,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 				if (lbFolder)
 				{
 					// Запомнить текущий путь в SubFolder
-					int nFolderLen = lbWide ? (lstrlen((LPCWSTR)ptrFileName)) : (strlen((LPCSTR)ptrFileName));
+					INT_PTR nFolderLen = lbWide ? (_tcslen((LPCWSTR)ptrFileName)) : (strlen((LPCSTR)ptrFileName));
 
 					if ((nFolderLen + 1) >= countof(szSubFolder))
 					{
@@ -904,7 +904,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 
 						if (nErr != ERROR_ALREADY_EXISTS)
 						{
-							int nLen = lstrlen(pszNewFileName) + 128;
+							INT_PTR nLen = _tcslen(pszNewFileName) + 128;
 							wchar_t* pszErr = (wchar_t*)malloc(nLen*2);
 							_wsprintf(pszErr, SKIPLEN(nLen) L"Can't create directory for drag item #%i!\n%s\nError code=0x%08X", mn_CurFile+1, pszNewFileName, nErr);
 							MessageBox(NULL, pszErr, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP|MB_SYSTEMMODAL);
@@ -1003,14 +1003,14 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 
 								while(nFileSize > 0)
 								{
-									dwRead = min(nFileSize,65536);
+									dwRead = min(nFileSize,65536); //-V103
 									TODO("Сюда прогресс с градусником прицепить можно");
 
 									if (FileWrite(hFile, dwRead, ptrCur) != S_OK)
 										break;
 
-									ptrCur += dwRead;
-									nFileSize -= dwRead;
+									ptrCur += dwRead; //-V102
+									nFileSize -= dwRead; //-V101
 								}
 							}
 
@@ -1083,26 +1083,26 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 	if (!pRCon)
 		return S_FALSE;
 
-	for(int i = 0 ; i < iQuantity; i++)
+	for (int i = 0 ; i < iQuantity; i++)
 	{
 		wcscpy(szMacro, L"$Text ");
 		wcscpy(szData,  L"         ");
-		pszText = szData + lstrlen(szData);
-		int nLen = DragQueryFile(hDrop, i, pszText, MAX_DROP_PATH);
+		pszText = szData + _tcslen(szData);
+		UINT lQueryRc = DragQueryFile(hDrop, i, pszText, MAX_DROP_PATH);
 
-		if (nLen <= 0 || nLen >= MAX_DROP_PATH) continue;
+		if (lQueryRc >= MAX_DROP_PATH) continue;
 
 		wchar_t* psz = pszText;
 		// обработка кавычек и слэшей
 		//while ((psz = wcschr(psz, L'"')) != NULL) {
 		//	*psz = L'\'';
 		//}
-		nLen = lstrlen(psz);
+		INT_PTR nLen = _tcslen(psz);
 
 		if (!m_pfpi->NoFarConsole)
 		{
 
-			while(nLen>0 && *psz)
+			while (nLen>0 && *psz)
 			{
 				if (*psz == L'"' || *psz == L'\\')
 				{
@@ -1205,7 +1205,7 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 {
 	TCHAR curr[MAX_DROP_PATH];
 	LPCTSTR pszTo = abActive ? m_pfpi->pszActivePath : m_pfpi->pszPassivePath;
-	int nToLen = _tcslen(pszTo);
+	INT_PTR nToLen = _tcslen(pszTo);
 	HRESULT hr = S_OK;
 
 	for(int i = 0 ; i < iQuantity; i++)
@@ -1217,11 +1217,11 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 		LPCTSTR pszTitle = wcsrchr(curr, '\\');
 		if (pszTitle) pszTitle++; else pszTitle = curr;
 
-		nLen = nToLen+2+_tcslen(pszTitle)+4;
+		nLen = nToLen+2+_tcslen(pszTitle)+4; //-V112
 		TCHAR *szLnkPath = new TCHAR[nLen];
 		_wcscpy_c(szLnkPath, nLen, pszTo);
 
-		if (szLnkPath[lstrlen(szLnkPath)-1] != L'\\')
+		if (szLnkPath[_tcslen(szLnkPath)-1] != L'\\')
 			_wcscat_c(szLnkPath, nLen, L"\\");
 
 		_wcscat_c(szLnkPath, nLen, pszTitle);
@@ -1324,7 +1324,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	STGMEDIUM stgMediumMap = { 0 };
 	FORMATETC fmtetcMap = { RegisterClipboardFormat(CFSTR_FILENAMEMAPW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 	hDrop = (HDROP)stgMedium.hGlobal;
-	int iQuantity = DragQueryFile(hDrop,0xFFFFFFFF,NULL,NULL);
+	int iQuantity = DragQueryFile(hDrop,(UINT)-1,NULL,NULL);
 
 	if (iQuantity < 1)
 	{
@@ -1364,9 +1364,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		if (!pszFileMap) lbMultiDest = FALSE;
 
 		LPCWSTR pszDropPath = lbActive ? m_pfpi->pszActivePath : m_pfpi->pszPassivePath;
-		int nCount = MAX_DROP_PATH*iQuantity+iQuantity+1;
-		int nDstCount = 0;
-		int nDstFolderLen = 0;
+		INT_PTR nCount = MAX_DROP_PATH*iQuantity+iQuantity+1;
+		INT_PTR nDstCount = 0;
+		INT_PTR nDstFolderLen = 0;
 
 		if (!lbMultiDest)
 		{
@@ -1390,7 +1390,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		for(int i = 0 ; i < iQuantity; i++)
 		{
 			DragQueryFile(hDrop,i,curr,MAX_DROP_PATH);
-			curr+=lstrlen(curr)+1;
+			curr+=_tcslen(curr)+1;
 
 			if (lbMultiDest)
 			{
@@ -1404,10 +1404,10 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 
 				if (pszFileMap && *pszFileMap)
 				{
-					int nNameLen = lstrlen(pszFileMap);
+					INT_PTR nNameLen = _tcslen(pszFileMap);
 					lstrcpyn(dst, pszFileMap, MAX_PATH);
 					pszFileMap += nNameLen+1;
-					dst += lstrlen(dst)+1;
+					dst += _tcslen(dst)+1;
 					MCHKHEAP;
 				}
 			}
@@ -1503,7 +1503,7 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 	EnterCriticalSection(&pDragDrop->m_CrThreads);
 	std::vector<ThInfo>::iterator iter = pDragDrop->m_OpThread.begin();
 
-	while(iter != pDragDrop->m_OpThread.end())
+	while (iter != pDragDrop->m_OpThread.end())
 	{
 		if (dwThreadId == iter->dwThreadId)
 		{
@@ -1512,7 +1512,7 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 			break;
 		}
 
-		iter++;
+		++iter;
 	}
 
 	LeaveCriticalSection(&pDragDrop->m_CrThreads);
@@ -1706,25 +1706,25 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 //				psz[i] = (LPCWSTR)GlobalLock(stg[i].hGlobal);
 //				if (psz[i]) {
 //					memsize[i] = GlobalSize(stg[i].hGlobal);
-//					wsprintf(szName[i]+lstrlen(szName[i]), L", DataSize=%i", memsize[i]);
+//					wsprintf(szName[i]+_tcslen(szName[i]), L", DataSize=%i", memsize[i]);
 //					if (memsize[i] == 1) {
-//						wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
+//						wsprintf(szName[i]+_tcslen(szName[i]), L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
 //					} if (memsize[i] == 4) {
-//						wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
+//						wsprintf(szName[i]+_tcslen(szName[i]), L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
 //					} else if (memsize[i] == 8) {
-//						wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
+//						wsprintf(szName[i]+_tcslen(szName[i]), L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
 //					} else {
 //						lstrcat(szName[i], L", ");
 //						const wchar_t* pwsz = (const wchar_t*)(psz[i]);
 //						const char* pasz = (const char*)(psz[i]);
 //						if (pasz[0] && pasz[1]) {
 //							int nMaxLen = min(200,memsize[i]);
-//							wchar_t* pwszDst = szName[i]+lstrlen(szName[i]);
+//							wchar_t* pwszDst = szName[i]+_tcslen(szName[i]);
 //							MultiByteToWideChar(CP_ACP, 0, pasz, nMaxLen, pwszDst, nMaxLen);
 //							pwszDst[nMaxLen] = 0;
 //						} else {
 //							int nMaxLen = min(200,memsize[i]/2);
-//							lstrcpyn(szName[i]+lstrlen(szName[i]), pwsz, nMaxLen);
+//							lstrcpyn(szName[i]+_tcslen(szName[i]), pwsz, nMaxLen);
 //						}
 //					}
 //				} else {
@@ -1947,12 +1947,12 @@ HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR
 //			SIZE sz = {0};
 //			LPCWSTR pszText = wcsrchr(psz, L'\\');
 //			if (!pszText) pszText = psz; else psz++;
-//			GetTextExtentPoint32(hDrawDC, pszText, lstrlen(pszText), &sz);
+//			GetTextExtentPoint32(hDrawDC, pszText, _tcslen(pszText), &sz);
 //			if (sz.cx > MAX_OVERLAY_WIDTH)
 //				sz.cx = MAX_OVERLAY_WIDTH;
 //			if (sz.cx > nMaxX)
 //				nMaxX = sz.cx;
-//			psz += lstrlen(psz)+1; // длина полного пути и длина имени файла разные ;)
+//			psz += _tcslen(psz)+1; // длина полного пути и длина имени файла разные ;)
 //			nFilesCol ++;
 //		}
 //		nMaxX = min((OVERLAY_TEXT_SHIFT + nMaxX),MAX_OVERLAY_WIDTH);
@@ -1992,7 +1992,7 @@ HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR
 //		while (*psz) {
 //			if (!DrawImageBits ( hDrawDC, psz, &nMaxX, nX, &nColMaxY ))
 //				break; // вышли за пределы MAX_OVERLAY_WIDTH x MAX_OVERLAY_HEIGHT (по высоте)
-//			psz += lstrlen(psz)+1;
+//			psz += _tcslen(psz)+1;
 //			if (!*psz) break;
 //			nFileIdx ++; nAllFiles ++;
 //			if (nFileIdx >= nFilesCol) {
@@ -2120,7 +2120,7 @@ HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR
 //	wchar_t* pszText = wcsrchr(pszFile, L'\\');
 //	if (!pszText) pszText = pszFile; else pszText++;
 //	SIZE sz = {0};
-//	GetTextExtentPoint32(hDrawDC, pszText, lstrlen(pszText), &sz);
+//	GetTextExtentPoint32(hDrawDC, pszText, _tcslen(pszText), &sz);
 //	if (sz.cx > MAX_OVERLAY_WIDTH)
 //		sz.cx = MAX_OVERLAY_WIDTH;
 //	if (sz.cx > *nMaxX)
@@ -2145,7 +2145,7 @@ HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR
 //	rcText.right = min(MAX_OVERLAY_WIDTH, (rcText.left + *nMaxX));
 //
 //	wchar_t szText[MAX_PATH+1]; lstrcpyn(szText, pszText, MAX_PATH); szText[MAX_PATH] = 0;
-//	nDrawRC = DrawTextEx(hDrawDC, szText, lstrlen(szText), &rcText,
+//	nDrawRC = DrawTextEx(hDrawDC, szText, _tcslen(szText), &rcText,
 //		DT_LEFT|DT_TOP|DT_NOPREFIX|DT_END_ELLIPSIS|DT_SINGLELINE|DT_MODIFYSTRING, NULL);
 //
 //	if (*nMaxY < (rcText.bottom+1))
@@ -2431,7 +2431,7 @@ HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR
 void CDragDrop::ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownError)
 {
 	HANDLE hFile = NULL;
-	size_t nLen = lstrlen(sUnknownError);
+	size_t nLen = _tcslen(sUnknownError);
 	wchar_t* pszMsg = (wchar_t*)calloc((nLen+256),sizeof(wchar_t));
 	lstrcpy(pszMsg, sUnknownError);
 	lstrcpy(pszMsg+nLen, L"\n\nPress 'Retry' to create report for developer");

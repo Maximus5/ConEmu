@@ -642,7 +642,7 @@ struct GDIPlusImage
 			if (lWidth >= (UINT)nCanvasWidth)
 			{
 				nShowWidth = nCanvasWidth;
-				nShowHeight = (int)((((i64)lHeight) * nCanvasWidth) / lWidth);
+				nShowHeight = (int)((((i64)lHeight) * nCanvasWidth) / lWidth); //-V537
 
 				if (!nShowHeight || nShowHeight < (nShowWidth/8))
 				{
@@ -661,7 +661,7 @@ struct GDIPlusImage
 		{
 			if (lHeight >= (UINT)nCanvasHeight)
 			{
-				nShowWidth = (int)((((i64)lWidth) * nCanvasHeight) / lHeight);
+				nShowWidth = (int)((((i64)lWidth) * nCanvasHeight) / lHeight); //-V537
 				nShowHeight = nCanvasHeight;
 
 				if (!nShowWidth || nShowWidth < (nShowHeight/8))
@@ -759,7 +759,7 @@ struct GDIPlusImage
 					if (!lRc)
 					{
 						lRc = gdi->GdipGetImageWidth(img, &lWidth);
-						lRc = gdi->GdipGetImageHeight(img, &lHeight);
+						lRc = gdi->GdipGetImageHeight(img, &lHeight); //-V519
 						nCanvasWidth  = pDecodeInfo->crLoadSize.X;
 						nCanvasHeight = pDecodeInfo->crLoadSize.Y;
 						CalculateShowSize(nCanvasWidth, nCanvasHeight, nShowWidth, nShowHeight, lbAllowThumb);

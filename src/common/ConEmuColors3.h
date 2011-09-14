@@ -80,13 +80,13 @@ public:
 			int nMax = Max(B,Max(R,G));
 			
 			Index =
-				(((B+32) > nMax) ? 1 : 0) |
-				(((G+32) > nMax) ? 2 : 0) |
-				(((R+32) > nMax) ? 4 : 0);
+				(((B+32) > nMax) ? 1 : 0) | //-V112
+				(((G+32) > nMax) ? 2 : 0) | //-V112
+				(((R+32) > nMax) ? 4 : 0); //-V112
 
 			if (Index == 7)
 			{
-				if (nMax < 32)
+				if (nMax < 32) //-V112
 					Index = 0;
 				else if (nMax < 160)
 					Index = 8;
@@ -126,13 +126,13 @@ public:
 			int nMax = Max(B,Max(R,G));
 
 			Index =
-				(((B+32) > nMax) ? 1 : 0) |
-				(((G+32) > nMax) ? 2 : 0) |
-				(((R+32) > nMax) ? 4 : 0);
+				(((B+32) > nMax) ? 1 : 0) | //-V112
+				(((G+32) > nMax) ? 2 : 0) | //-V112
+				(((R+32) > nMax) ? 4 : 0); //-V112
 
 			if (Index == 7)
 			{
-				if (nMax < 32)
+				if (nMax < 32) //-V112
 					Index = 0;
 				else if (nMax < 160)
 					Index = 8;

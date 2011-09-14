@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/WinObjects.h"
-#include "../common/MArray.h"
+//#include "../common/MArray.h"
 #include "ShellProcessor.h"
 #include "SetHook.h"
 
@@ -152,7 +152,162 @@ struct HkModuleInfo
 	HMODULE hModule; // хэндл
 	wchar_t sModuleName[128]; // Только информационно, в обработке не участвует
 };
-MArray<HkModuleInfo> *gpHookedModules = NULL;
+HkModuleInfo *gpHookedModules = NULL;
+size_t gnHookedModules = 0;
+CRITICAL_SECTION *gpHookedModulesSection = NULL;
+void InitializeHookedModules()
+{
+	_ASSERTE(gpHookedModules==NULL && gpHookedModulesSection==NULL);
+	if (!gpHookedModulesSection)
+	{
+		//MessageBox(NULL, L"InitializeHookedModules", L"Hooks", MB_SYSTEMMODAL);
+
+		gpHookedModulesSection = (CRITICAL_SECTION*)calloc(1,sizeof(*gpHookedModulesSection));
+		InitializeCriticalSection(gpHookedModulesSection);
+
+		//WARNING: "new" вызывать из DllStart нельзя! DllStart вызывается НЕ из главной нити,
+		//WARNING: причем, когда главная нить еще не была запущена. В итоге, если это 
+		//WARNING: попытаться сделать мы получим:
+		//WARNING: runtime error R6030  - CRT not initialized
+		//gpHookedModules = new MArray<HkModuleInfo>;
+		// -- поэтому тупо через массив
+		#ifdef _DEBUG
+		gnHookedModules = 16;
+		#else
+		gnHookedModules = 256;
+		#endif
+		gpHookedModules = (HkModuleInfo*)calloc(gnHookedModules,sizeof(*gpHookedModules));
+	}
+}
+void FinalizeHookedModules()
+{
+	if (gpHookedModules)
+	{
+		if (gpHookedModulesSection)
+			EnterCriticalSection(gpHookedModulesSection);
+
+		HkModuleInfo *p = gpHookedModules;
+		gpHookedModules = NULL;
+		free(p);
+
+		if (gpHookedModulesSection)
+			LeaveCriticalSection(gpHookedModulesSection);
+	}
+	if (gpHookedModulesSection)
+	{
+		DeleteCriticalSection(gpHookedModulesSection);
+		free(gpHookedModulesSection);
+		gpHookedModulesSection = NULL;
+	}
+}
+bool IsHookedModule(HMODULE hModule, bool bSection = true, LPWSTR pszName = NULL, size_t cchNameMax = 0)
+{
+	if (!gpHookedModulesSection)
+		InitializeHookedModules();
+
+	if (!gpHookedModules)
+	{
+		_ASSERTE(gpHookedModules!=NULL);
+		return false;
+	}
+
+	bool lbHooked = false;
+
+	_ASSERTE(gpHookedModules && gpHookedModulesSection);
+	if (bSection)
+		EnterCriticalSection(gpHookedModulesSection);
+
+	for (size_t i = 0; i < gnHookedModules; i++)
+	{
+		if (gpHookedModules[i].bUsed && (gpHookedModules[i].hModule == hModule))
+		{
+			_ASSERTE(gpHookedModules[i].bHooked == TRUE);
+			lbHooked = true;
+			if (pszName && (cchNameMax > 0))
+				lstrcpyn(pszName, gpHookedModules[i].sModuleName, (int)cchNameMax);
+		}
+	}
+
+	if (bSection)
+		LeaveCriticalSection(gpHookedModulesSection);
+
+	return lbHooked;
+}
+void AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
+{
+	if (!gpHookedModulesSection)
+		InitializeHookedModules();
+
+	_ASSERTE(gpHookedModules && gpHookedModulesSection);
+	if (!gpHookedModules)
+	{
+		_ASSERTE(gpHookedModules!=NULL);
+		return;
+	}
+
+	EnterCriticalSection(gpHookedModulesSection);
+
+	if (!IsHookedModule(hModule, false))
+	{
+		for (size_t i = 0; i < gnHookedModules; i++)
+		{
+			if (!gpHookedModules[i].bUsed)
+			{
+				gpHookedModules[i].bUsed = TRUE;
+				gpHookedModules[i].bHooked = TRUE;
+				gpHookedModules[i].hModule = hModule;
+				lstrcpyn(gpHookedModules[i].sModuleName, sModuleName?sModuleName:L"", countof(gpHookedModules[i].sModuleName));
+				goto done;
+			}
+		}
+		HkModuleInfo hk = {TRUE, TRUE, hModule};
+		lstrcpyn(hk.sModuleName, sModuleName?sModuleName:L"", countof(hk.sModuleName));
+		size_t nNewSize = gnHookedModules+256;
+		HkModuleInfo* ptrNew = (HkModuleInfo*)calloc(nNewSize, sizeof(*ptrNew));
+		if (!ptrNew)
+		{
+			_ASSERTE(ptrNew!=NULL);
+		}
+		else
+		{
+			memmove(ptrNew, gpHookedModules, gnHookedModules*sizeof(*gpHookedModules));
+			ptrNew[gnHookedModules] = hk;
+			free(gpHookedModules);
+			gpHookedModules = ptrNew;
+			gnHookedModules = nNewSize;
+		}
+	}
+
+done:
+	LeaveCriticalSection(gpHookedModulesSection);
+}
+void RemoveHookedModule(HMODULE hModule)
+{
+	if (!gpHookedModulesSection)
+		InitializeHookedModules();
+
+	_ASSERTE(gpHookedModules && gpHookedModulesSection);
+	if (!gpHookedModules)
+	{
+		_ASSERTE(gpHookedModules!=NULL);
+		return;
+	}
+
+	EnterCriticalSection(gpHookedModulesSection);
+
+	for (size_t i = 0; i < gnHookedModules; i++)
+	{
+		if (gpHookedModules[i].bUsed && (gpHookedModules[i].hModule == hModule))
+		{
+			_ASSERTE(gpHookedModules[i].bHooked == TRUE);
+			gpHookedModules[i].bUsed = FALSE;
+			gpHookedModules[i].bHooked = FALSE;
+		}
+	}
+
+	LeaveCriticalSection(gpHookedModulesSection);
+}
+
 
 
 BOOL gbHooksTemporaryDisabled = FALSE;
@@ -174,6 +329,13 @@ FARPROC WINAPI OnGetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 #define MAX_HOOKED_PROCS 255
 HookItem *gpHooks = NULL;
 
+const char *szLoadLibraryA = "LoadLibraryA";
+const char *szLoadLibraryW = "LoadLibraryW";
+const char *szLoadLibraryExA = "LoadLibraryExA";
+const char *szLoadLibraryExW = "LoadLibraryExW";
+const char *szFreeLibrary = "FreeLibrary";
+const char *szGetProcAddress = "GetProcAddress";
+
 bool InitHooksLibrary()
 {
 #ifndef HOOKS_SKIP_LIBRARY
@@ -188,22 +350,47 @@ bool InitHooksLibrary()
 		return false;
 	}
 
-	HookItem LibHooks[MAX_HOOKED_PROCS] =
-	{
-		/* ************************ */
-		{(void*)OnLoadLibraryA,			"LoadLibraryA",			kernel32},
-		{(void*)OnLoadLibraryW,			"LoadLibraryW",			kernel32},
-		{(void*)OnLoadLibraryExA,		"LoadLibraryExA",		kernel32},
-		{(void*)OnLoadLibraryExW,		"LoadLibraryExW",		kernel32},
-		{(void*)OnFreeLibrary,			"FreeLibrary",			kernel32}, // OnFreeLibrary тоже нужен!
-		#ifndef HOOKS_SKIP_GETPROCADDRESS
-		{(void*)OnGetProcAddress,		"GetProcAddress",		kernel32},
-		#endif
-		/* ************************ */
-		{0}
-	};
-	
-	memmove(gpHooks, LibHooks, sizeof(LibHooks));
+	//HookItemLt LibHooks[MAX_HOOKED_PROCS] =
+	//{
+	//	/* ************************ */
+	//	{(void*)OnLoadLibraryA,			"LoadLibraryA",			kernel32},
+	//	{(void*)OnLoadLibraryW,			"LoadLibraryW",			kernel32},
+	//	{(void*)OnLoadLibraryExA,		"LoadLibraryExA",		kernel32},
+	//	{(void*)OnLoadLibraryExW,		"LoadLibraryExW",		kernel32},
+	//	{(void*)OnFreeLibrary,			"FreeLibrary",			kernel32}, // OnFreeLibrary тоже нужен!
+	//	#ifndef HOOKS_SKIP_GETPROCADDRESS
+	//	{(void*)OnGetProcAddress,		"GetProcAddress",		kernel32},
+	//	#endif
+	//	/* ************************ */
+	//	{0}
+	//};
+	//
+	////memmove(gpHooks, LibHooks, sizeof(LibHooks));
+	//for (size_t i = 0; i < countof(LibHooks) && LibHooks[i].NewAddress; i++)
+	//{
+	//	gpHooks[i].NewAddress = LibHooks[i].NewAddress;
+	//	gpHooks[i].Name = LibHooks[i].Name;
+	//	gpHooks[i].DllName = LibHooks[i].DllName;
+	//}
+
+	size_t i = 0;
+	#define ADDFUNC(pProc,szName,szDll) \
+		gpHooks[i].NewAddress = pProc; \
+		gpHooks[i].Name = szName; \
+		gpHooks[i].DllName = szDll; \
+		i++;
+	/* ************************ */
+	ADDFUNC((void*)OnLoadLibraryA,			szLoadLibraryA,			kernel32);
+	ADDFUNC((void*)OnLoadLibraryW,			szLoadLibraryW,			kernel32);
+	ADDFUNC((void*)OnLoadLibraryExA,		szLoadLibraryExA,		kernel32);
+	ADDFUNC((void*)OnLoadLibraryExW,		szLoadLibraryExW,		kernel32);
+	ADDFUNC((void*)OnFreeLibrary,			szFreeLibrary,			kernel32); // OnFreeLibrary тоже нужен!
+	#ifndef HOOKS_SKIP_GETPROCADDRESS
+	ADDFUNC((void*)OnGetProcAddress,		szGetProcAddress,		kernel32);
+	#endif
+	ADDFUNC(NULL,NULL,NULL);
+	/* ************************ */
+
 #endif
 	return true;
 }
@@ -299,12 +486,13 @@ bool __stdcall InitHooks(HookItem* apHooks)
 		gpHookCS = new MSection;
 	}
 
-#if 0
-	if (!gpHookedModules)
-	{
-		gpHookedModules = new MArray<HkModuleInfo>;
-	}
-#endif
+	//_ASSERTE(gpHookedModules!=NULL && gpHookedModulesSection!=NULL);
+	//PRAGMA_ERROR("Доделать gpHookedModules");
+	//if (!gpHookedModules)
+	//{
+	//	gpHookedModulesSection = (CRITICAL_SECTION*)calloc(1,sizeof(*gpHookedModulesSection));
+	//	gpHookedModules = new MArray<HkModuleInfo>;
+	//}
 
 	if (gpHooks == NULL)
 	{
@@ -443,12 +631,7 @@ void ShutdownHooks()
 		delete p;
 	}
 
-	if (gpHookedModules)
-	{
-		MArray<HkModuleInfo> *p = gpHookedModules;
-		gpHookedModules = NULL;
-		delete p;
-	}	
+	FinalizeHookedModules();
 }
 
 void __stdcall SetLoadLibraryCallback(HMODULE ahCallbackModule, OnLibraryLoaded_t afOnLibraryLoaded, OnLibraryLoaded_t afOnLibraryUnLoaded)
@@ -462,8 +645,13 @@ bool __stdcall SetHookCallbacks(const char* ProcName, const wchar_t* DllName, HM
                                 HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack,
                                 HookItemExceptCallback_t ExceptCallBack)
 {
-	_ASSERTE(ProcName!=NULL && DllName!=NULL);
+	if (!ProcName|| !DllName)
+	{
+		_ASSERTE(ProcName!=NULL && DllName!=NULL);
+		return false;
+	}
 	_ASSERTE(ProcName[0]!=0 && DllName[0]!=0);
+
 	bool bFound = false;
 
 	if (gpHooks)
@@ -509,24 +697,30 @@ bool IsModuleValid(HMODULE module)
 	return true;
 }
 
-bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, int cchNameMax)
+bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, size_t cchNameMax)
 {
 	bool lbFound = false;
 	if (pszName && cchNameMax)
 	{
 		//*pszName = 0;
 #ifdef _WIN64
-		msprintf(pszName, cchNameMax, L", <HMODULE=0x%08X%08X>",
-			(DWORD)((((u64)ahModule) & 0xFFFFFFFF00000000) >> 32),
-			(DWORD)(((u64)ahModule) & 0xFFFFFFFF));
+		msprintf(pszName, cchNameMax, L"<HMODULE=0x%08X%08X> ",
+			(DWORD)((((u64)ahModule) & 0xFFFFFFFF00000000) >> 32), //-V112
+			(DWORD)(((u64)ahModule) & 0xFFFFFFFF)); //-V112
 #else
-		msprintf(pszName, cchNameMax, L", <HMODULE=0x%08X>", (DWORD)ahModule);
+		msprintf(pszName, cchNameMax, L"<HMODULE=0x%08X> ", (DWORD)ahModule);
 #endif
+
+		INT_PTR nLen = lstrlen(pszName);
+		pszName += nLen;
+		cchNameMax -= nLen;
+		_ASSERTE(cchNameMax>0);
 	}
 
 	//TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary.
-	lbFound = true;
-#if 0
+	lbFound = IsHookedModule(ahModule, true, pszName, cchNameMax);
+
+/*
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
 
 	if (snapshot != INVALID_HANDLE_VALUE)
@@ -546,7 +740,7 @@ bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, int cchNameMax)
 
 		CloseHandle(snapshot);
 	}
-#endif
+*/
 
 	return lbFound;
 }
@@ -704,7 +898,7 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 		return false;
 
 #ifdef _DEBUG
-	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(nt_header);
+	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(nt_header); //-V220
 #endif
 #ifdef _WIN64
 	_ASSERTE(sizeof(DWORD_PTR)==8);
@@ -766,8 +960,8 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 
 	TODO("!!! Сохранять ORDINAL процедур !!!");
 	bool res = false, bHooked = false;
-	int i;
-	int nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
+	INT_PTR i;
+	INT_PTR nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
 
 	//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
 	for(i = 0; i < nCount; i++)
@@ -780,7 +974,7 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 		char* mod_name = (char*)Module + Import[i].Name;
 #endif
 		DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
-		DWORD_PTR rvaIAT = Import[i].FirstThunk;
+		DWORD_PTR rvaIAT = Import[i].FirstThunk; //-V101
 
 		if (rvaINT == 0)      // No Characteristics field?
 		{
@@ -992,10 +1186,10 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 	// Запомнить aszExcludedModules
 	if (aszExcludedModules)
 	{
-		int j;
+		INT_PTR j;
 		bool skip;
 
-		for(int i = 0; aszExcludedModules[i]; i++)
+		for(INT_PTR i = 0; aszExcludedModules[i]; i++)
 		{
 			j = 0; skip = false;
 
@@ -1101,7 +1295,7 @@ bool UnsetHook(HMODULE Module)
 		return false;
 
 	IMAGE_IMPORT_DESCRIPTOR* Import = 0;
-	DWORD Size = 0;
+	size_t Size = 0;
 	_ASSERTE(Module!=NULL);
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
 
@@ -1129,8 +1323,8 @@ bool UnsetHook(HMODULE Module)
 		return false;
 
 	bool res = false, bUnhooked = false;
-	int i;
-	int nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
+	size_t i;
+	size_t nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
 
 	//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
 	for(i = 0; i < nCount; i++)
@@ -1142,7 +1336,7 @@ bool UnsetHook(HMODULE Module)
 		char* mod_name = (char*)Module + Import[i].Name;
 #endif
 		DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
-		DWORD_PTR rvaIAT = Import[i].FirstThunk;
+		DWORD_PTR rvaIAT = Import[i].FirstThunk; //-V101
 
 		if (rvaINT == 0)      // No Characteristics field?
 		{
@@ -1381,6 +1575,13 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		return false;
 	}
 
+	// Проверить по gpHookedModules а не был ли модуль уже обработан?
+	if (IsHookedModule(module))
+	{
+		// Этот модуль уже обработан!
+		return false;
+	}
+
 	bool lbModuleOk = false;
 
 	BOOL lbResource = LDR_IS_RESOURCE(module);
@@ -1397,30 +1598,31 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		if (gbLogLibraries)
 		{
 			CESERVER_REQ* pIn = NULL;
+			LPCWSTR pszModuleW = asModuleW;
 			wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
 			if (!asModuleA && !asModuleW)
 			{
 				wcscpy_c(szModule, L"<NULL>");
-				asModuleW = szModule;
+				pszModuleW = szModule;
 			}
 			else if (asModuleA)
 			{
 				MultiByteToWideChar(AreFileApisANSI() ? CP_ACP : CP_OEMCP, 0, asModuleA, -1, szModule, countof(szModule));
 				szModule[countof(szModule)-1] = 0;
-				asModuleW = szModule;
+				pszModuleW = szModule;
 			}
 			wchar_t szInfo[64]; szInfo[0] = 0;
 			#ifdef _WIN64
 			if ((DWORD)((DWORD_PTR)module >> 32))
 				msprintf(szInfo, countof(szInfo), L"Module=0x%08X%08X",
-					(DWORD)((DWORD_PTR)module >> 32), (DWORD)((DWORD_PTR)module & 0xFFFFFFFF));
+					(DWORD)((DWORD_PTR)module >> 32), (DWORD)((DWORD_PTR)module & 0xFFFFFFFF)); //-V112
 			else
 				msprintf(szInfo, countof(szInfo), L"Module=0x%08X",
-					(DWORD)((DWORD_PTR)module & 0xFFFFFFFF));
+					(DWORD)((DWORD_PTR)module & 0xFFFFFFFF)); //-V112
 			#else
 			msprintf(szInfo, countof(szInfo), L"Module=0x%08X", (DWORD)module);
 			#endif
-			pIn = sp->NewCmdOnCreate(eLoadLibrary, NULL, asModuleW, szInfo, NULL, NULL, NULL, NULL,
+			pIn = sp->NewCmdOnCreate(eLoadLibrary, NULL, pszModuleW, szInfo, NULL, NULL, NULL, NULL,
 				#ifdef _WIN64
 				64
 				#else
@@ -1440,26 +1642,44 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		sp = NULL;
 	}
 
-	// Некоторые перехватываемые библиотеки могли быть
-	// не загружены во время первичной инициализации
-	// Соответственно для них (если они появились) нужно
-	// получить "оригинальные" адреса процедур
-	InitHooks(NULL);
 
-
-	if (!abNoSnapshoot && !lbResource)
+	if (!lbResource)
 	{
-		// В процессе загрузки модуля (module) могли подгрузиться
-		// (статически или динамически) и другие библиотеки!
-		CheckProcessModules(module);
-	}
+		if (!abNoSnapshoot /*&& !lbResource*/)
+		{
+			// Некоторые перехватываемые библиотеки могли быть
+			// не загружены во время первичной инициализации
+			// Соответственно для них (если они появились) нужно
+			// получить "оригинальные" адреса процедур
+			InitHooks(NULL);
+
+			// В процессе загрузки модуля (module) могли подгрузиться
+			// (статически или динамически) и другие библиотеки!
+			CheckProcessModules(module);
+		}
 
 
-	if (!IsModuleExcluded(module, asModuleA, asModuleW))
-	{
-		lbModuleOk = true;
-		// Подмена импортируемых функций в module
-		SetHook(module/*, FALSE*/, FALSE);
+		if (!IsModuleExcluded(module, asModuleA, asModuleW))
+		{
+			wchar_t szModule[128] = {};
+			if (asModuleA)
+			{
+				LPCSTR pszNameA = strrchr(asModuleA, '\\');
+				if (!pszNameA) pszNameA = asModuleA; else pszNameA++;
+				MultiByteToWideChar(CP_ACP, 0, pszNameA, -1, szModule, countof(szModule)-1);				
+			}
+			else if (asModuleW)
+			{
+				LPCWSTR pszNameW = wcsrchr(asModuleW, L'\\');
+				if (!pszNameW) pszNameW = asModuleW; else pszNameW++;
+				lstrcpyn(szModule, pszNameW, countof(szModule));
+			}
+			AddHookedModule(module, szModule);
+
+			lbModuleOk = true;
+			// Подмена импортируемых функций в module
+			SetHook(module/*, FALSE*/, FALSE);
+		}
 	}
 
 	return lbModuleOk;
@@ -1538,12 +1758,13 @@ HMODULE WINAPI OnLoadLibraryA(const char* lpFileName)
 	if (gbHooksTemporaryDisabled)
 		return module;
 
-	PrepareNewModule(module, lpFileName, NULL);
-
-	if (ph && ph->PostCallBack)
+	if (PrepareNewModule(module, lpFileName, NULL))
 	{
-		SETARGS1(&module,lpFileName);
-		ph->PostCallBack(&args);
+		if (ph && ph->PostCallBack)
+		{
+			SETARGS1(&module,lpFileName);
+			ph->PostCallBack(&args);
+		}
 	}
 
 	return module;
@@ -1576,12 +1797,13 @@ HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
 	#endif
 #endif
 
-	PrepareNewModule(module, NULL, lpFileName);
-
-	if (ph && ph->PostCallBack)
+	if (PrepareNewModule(module, NULL, lpFileName))
 	{
-		SETARGS1(&module,lpFileName);
-		ph->PostCallBack(&args);
+		if (ph && ph->PostCallBack)
+		{
+			SETARGS1(&module,lpFileName);
+			ph->PostCallBack(&args);
+		}
 	}
 
 	return module;
@@ -1596,12 +1818,13 @@ HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFl
 	if (gbHooksTemporaryDisabled)
 		return module;
 
-	PrepareNewModule(module, lpFileName, NULL);
-
-	if (ph && ph->PostCallBack)
+	if (PrepareNewModule(module, lpFileName, NULL))
 	{
-		SETARGS3(&module,lpFileName,hFile,dwFlags);
-		ph->PostCallBack(&args);
+		if (ph && ph->PostCallBack)
+		{
+			SETARGS3(&module,lpFileName,hFile,dwFlags);
+			ph->PostCallBack(&args);
+		}
 	}
 
 	return module;
@@ -1616,12 +1839,13 @@ HMODULE WINAPI OnLoadLibraryExW(const wchar_t* lpFileName, HANDLE hFile, DWORD d
 	if (gbHooksTemporaryDisabled)
 		return module;
 
-	PrepareNewModule(module, NULL, lpFileName);
-
-	if (ph && ph->PostCallBack)
+	if (PrepareNewModule(module, NULL, lpFileName))
 	{
-		SETARGS3(&module,lpFileName,hFile,dwFlags);
-		ph->PostCallBack(&args);
+		if (ph && ph->PostCallBack)
+		{
+			SETARGS3(&module,lpFileName,hFile,dwFlags);
+			ph->PostCallBack(&args);
+		}
 	}
 
 	return module;
@@ -1683,14 +1907,14 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 			wchar_t szHandle[32] = {};
 			#ifdef _WIN64
 				msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X%08X>",
-					(DWORD)((((u64)hModule) & 0xFFFFFFFF00000000) >> 32),
-					(DWORD)(((u64)hModule) & 0xFFFFFFFF));
+					(DWORD)((((u64)hModule) & 0xFFFFFFFF00000000) >> 32), //-V112
+					(DWORD)(((u64)hModule) & 0xFFFFFFFF)); //-V112
 			#else
 				msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X>", (DWORD)hModule);
 			#endif
 			
-			TODO("GetModuleFileName в некоторых случаях зависает O_O. Можно бы запоминать с локальном массиве имя загруженного ранее модуля");
-			if (FindModuleFileName(hModule, szModule, countof(szModule)-32))
+			// GetModuleFileName в некоторых случаях зависает O_O. Поэтому, запоминаем в локальном массиве имя загруженного ранее модуля
+			if (FindModuleFileName(hModule, szModule, countof(szModule)-lstrlen(szModule)-1))
 				wcscat_c(szModule, szHandle);
 			else
 				wcscpy_c(szModule, szHandle+2);
@@ -1728,6 +1952,8 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 
 		if (!lbModulePost)
 		{
+			RemoveHookedModule(hModule);
+
 			if (ghOnLoadLibModule == hModule)
 			{
 				ghOnLoadLibModule = NULL;

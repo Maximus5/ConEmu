@@ -372,7 +372,7 @@ void ShowConDump(wchar_t* pszText)
 						pszSrc += crSize.X;
 
 						if (nAttrLineSize)
-							pnSrc += nAttrLineSize;
+							pnSrc += nAttrLineSize; //-V102
 
 						cr.Y++;
 					}

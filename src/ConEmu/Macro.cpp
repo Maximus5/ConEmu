@@ -179,7 +179,7 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString)
 		if (!pszFind)
 		{
 			// До конца строки.
-			rsArguments = rsArguments + lstrlen(rsArguments);
+			rsArguments = rsArguments + _tcslen(rsArguments);
 		}
 		else
 		{
@@ -200,7 +200,7 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString)
 		// Если были удвоенные кавычки - их нужно вырезать
 		if (lbRemoveDup)
 		{
-			int nLen = lstrlen(rsString);
+			size_t nLen = _tcslen(rsString);
 			LPWSTR pszSrc = rsString;
 			LPWSTR pszDst = rsString;
 			LPWSTR pszFind = wcschr(rsString, L'"');
@@ -233,7 +233,7 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString)
 				pszFind = pszNext;
 			}
 
-			int nLeft = lstrlen(pszSrc);
+			size_t nLeft = _tcslen(pszSrc);
 
 			if (nLeft > 0)
 				pszDst += nLeft;
@@ -246,7 +246,7 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString)
 	else
 	{
 		rsString = rsArguments;
-		rsArguments = rsArguments + lstrlen(rsArguments);
+		rsArguments = rsArguments + _tcslen(rsArguments);
 	}
 
 	// Тут уже NULL-а не будет, допускаются пустые строки ("")
@@ -440,7 +440,7 @@ LPWSTR CConEmuMacro::FindFarWindowHelper(
 		}
 	}
 
-	int cchSize = 32;
+	int cchSize = 32; //-V112
 	LPWSTR pszResult = (LPWSTR)malloc(2*cchSize);
 
 	if (iFound > 0)
@@ -524,7 +524,8 @@ LPWSTR CConEmuMacro::FontSetSize(LPWSTR asArgs, CRealConsole* apRCon)
 	return lstrdup(L"InvalidArg");
 }
 
-// Изменить имя основного шрифта. string
+// Изменить имя основного шрифта. string. Как бонус - можно сразу поменять и размер
+// <FontName>[,<Height>[,<Width>]]
 LPWSTR CConEmuMacro::FontSetName(LPWSTR asArgs, CRealConsole* apRCon)
 {
 	LPWSTR pszFontName = NULL;
@@ -536,7 +537,7 @@ LPWSTR CConEmuMacro::FontSetName(LPWSTR asArgs, CRealConsole* apRCon)
 			nHeight = 0;
 		else if (!GetNextInt(asArgs, nWidth))
 			nWidth = 0;
-		gpConEmu->PostSetFontNameSize(pszFontName, nHeight, nWidth, FALSE);
+		gpConEmu->PostMacroFontSetName(pszFontName, nHeight, nWidth, FALSE);
 		return lstrdup(L"OK");
 	}
 

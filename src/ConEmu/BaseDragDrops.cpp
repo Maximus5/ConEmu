@@ -290,7 +290,7 @@ HRESULT CreateDropSource(IDropSource **ppDropSource, CDragDropData* pCallback)
 CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count)
 {
 	m_lRefCount  = 1;
-	m_nMaxNumFormats = 32 + max(32,count);
+	m_nMaxNumFormats = 32 + max(32,count); //-V112
 	m_nNumFormats = count;
 	m_pFormatEtc  = new FORMATETC[m_nMaxNumFormats];
 	m_pStgMedium  = new STGMEDIUM[m_nMaxNumFormats];
@@ -478,7 +478,7 @@ HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 	if (m_nNumFormats >= m_nMaxNumFormats)
 	{
 		_ASSERTE(m_nNumFormats == m_nMaxNumFormats);
-		LONG nNewMaxNumFormats = m_nNumFormats + 32;
+		LONG nNewMaxNumFormats = m_nNumFormats + 32; //-V112
 		FORMATETC *pNewFormatEtc = new FORMATETC[nNewMaxNumFormats];
 		STGMEDIUM *pNewStgMedium = new STGMEDIUM[nNewMaxNumFormats];
 
@@ -782,7 +782,7 @@ HANDLE StringToHandle(LPCWSTR szText, int nTextLen)
 
 	// if text length is -1 then treat as a nul-terminated string
 	if (nTextLen == -1)
-		nTextLen = lstrlen(szText) + 1;
+		nTextLen = _tcslen(szText) + 1;
 
 	// allocate and lock a global memory buffer. Make it fixed
 	// data so we don't have to use GlobalLock

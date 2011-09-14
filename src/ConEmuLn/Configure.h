@@ -95,9 +95,9 @@ static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 		if ((Param1 == cfgShowLines) || (Param1 == cfgHilight))
 		{
 			if (Param1 == cfgShowLines)
-				gbBackgroundEnabled = (int)Param2;
+				gbBackgroundEnabled = (int)Param2; //-V205
 			else if (Param1 == cfgHilight)
-				gbHilightPlugins = (int)Param2;
+				gbHilightPlugins = (int)Param2; //-V205
 
 			// Обновить или отключить
 			StartPlugin(TRUE /*НЕ считывать параметры из реестра*/);

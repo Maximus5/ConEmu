@@ -53,7 +53,7 @@ static bool isTerminalMode()
 		}
 		else if (Process32First(hSnap, &P))
 		{
-			int nProcCount = 0, nProcMax = 1024;
+			size_t nProcCount = 0, nProcMax = 1024;
 			PROCESSENTRY32 *pProcesses = (PROCESSENTRY32*)calloc(nProcMax, sizeof(PROCESSENTRY32));
 			DWORD nCurPID = GetCurrentProcessId();
 			DWORD nParentPID = nCurPID;
@@ -65,7 +65,7 @@ static bool isTerminalMode()
 				{
 					nProcMax += 1024;
 					PROCESSENTRY32 *p = (PROCESSENTRY32*)calloc(nProcMax, sizeof(PROCESSENTRY32));
-					memmove(pProcesses, p, nProcCount*sizeof(PROCESSENTRY32));
+					memmove(pProcesses, p, nProcCount*sizeof(PROCESSENTRY32)); //-V104
 					free(pProcesses);
 					pProcesses = p;
 				}
@@ -96,7 +96,7 @@ static bool isTerminalMode()
 
 			while(!TerminalMode && (--nSteps) > 0)
 			{
-				for(int i = 0; i < nProcCount; i++)
+				for(size_t i = 0; i < nProcCount; i++)
 				{
 					if (pProcesses[i].th32ProcessID == nParentPID)
 					{

@@ -80,8 +80,8 @@ HKEY ghNewHKCU = NULL, ghNewHKLM32 = NULL, ghNewHKLM64 = NULL;
 HKEY ghNewHKCUSoftware = NULL, ghNewHKLM32Software = NULL, ghNewHKLM64Software = NULL;
 struct RegKeyHook;
 RegKeyHook* gpRegKeyHooks = NULL;
-class CRegKeyStore;
-CRegKeyStore* gpRegKeyStore = NULL;
+struct RegKeyStore;
+RegKeyStore* gpRegKeyStore = NULL;
 BOOL gbRegHookedNow = FALSE;
 
 
@@ -113,7 +113,7 @@ const RegKeyType
 	RKT_HKCU = 1,
 	RKT_HKLM32 = 2,
 	RKT_HKLM64 = 3,
-	RKT_HKCU_Software = 4,
+	RKT_HKCU_Software = 4, //-V112
 	RKT_HKLM32_Software = 5,
 	RKT_HKLM64_Software = 6
 	;
@@ -140,7 +140,7 @@ struct RegKeyBlock
 // Класс для хранения списка открытых HKEY (RegKeyInfo) пока хранятся только "Software",
 // для корректной обработки RegEnumKey[Ex]
 // И собственно открытия дочерних ключей без полного пути
-class CRegKeyStore
+struct RegKeyStore
 {
 protected:
 	int mn_StoreMaxCount, mn_StoreCurrent;
@@ -154,7 +154,7 @@ protected:
 	RegKeyInfo* mp_LastKey;
 	BOOL mb_IsWindows64;
 public:
-	CRegKeyStore()
+	void Init()
 	{
 		mb_IsWindows64 = IsWindows64();
 		memset(&m_Store, 0, sizeof(m_Store));
@@ -177,7 +177,7 @@ public:
 		m_HKLM32.hKey = HKEY_LOCAL_MACHINE; m_HKLM32.rkt = RKT_HKLM32;
 		m_HKLM64.hKey = HKEY_LOCAL_MACHINE; m_HKLM64.rkt = mb_IsWindows64 ? RKT_HKLM64 : RKT_HKLM32;
 	};
-	~CRegKeyStore()
+	void Free()
 	{
 		RegKeyBlock *pFrom = m_Store.pNextBlock;
 		while (pFrom)
@@ -399,7 +399,8 @@ void DoneHooksReg()
 	CloseRootKeys();
 	if (gpRegKeyStore)
 	{
-		delete gpRegKeyStore;
+		gpRegKeyStore->Free();
+		free(gpRegKeyStore);
 		gpRegKeyStore = NULL;
 	}
 	OutputDebugString(L"ConEmuHk: Registry virtualization deinitialized!\n");
@@ -436,12 +437,14 @@ void PrepareHookedKeyList()
 
 	if (!gpRegKeyStore)
 	{
-		gpRegKeyStore = new CRegKeyStore;
+		WARNING("");
+		gpRegKeyStore = (RegKeyStore*)calloc(1,sizeof(*gpRegKeyStore));
 		if (!gpRegKeyStore)
 		{
 			_ASSERTE(gpRegKeyStore!=NULL);
 			return;
 		}
+		gpRegKeyStore->Init();
 	}
 	
 	if (!gpRegKeyHooks)
@@ -450,7 +453,7 @@ void PrepareHookedKeyList()
 		//char sGhost[42] = ".{16B56CA5-F8D2-4EEA-93DC-32403C7355E1}";
 		
 		{
-			RegKeyHook RegKeyHooks[] =
+			struct { HKEY hKey; LPCWSTR pszKey; } RegKeyHooks[] =
 			{
 				// Поддерживаются только ПОДКЛЮЧИ в "Software\\"
 				{HKEY_LOCAL_MACHINE, L"Far"},
@@ -466,31 +469,19 @@ void PrepareHookedKeyList()
 			if (!gpRegKeyHooks)
 			{
 				_ASSERTE(gpRegKeyHooks!=NULL);
-				delete gpRegKeyStore;
+				gpRegKeyStore->Free();
+				free(gpRegKeyStore);
 				gpRegKeyStore = NULL;
 				return;
 			}
-			memmove(gpRegKeyHooks, RegKeyHooks, sizeof(RegKeyHooks));
+			//memmove(gpRegKeyHooks, RegKeyHooks, sizeof(RegKeyHooks));
+			for (size_t i = 0; i < countof(RegKeyHooks) && RegKeyHooks[i].hKey; i++)
+			{
+				gpRegKeyHooks[i].hkRoot = RegKeyHooks[i].hKey;
+				lstrcpyn(gpRegKeyHooks[i].wsHooked, RegKeyHooks[i].pszKey, countof(gpRegKeyHooks[i].wsHooked));
+			}
 		}
 		
-		//UUID Ghost = {0};
-		//typedef long (__stdcall* UuidCreate_t)(UUID *Uuid);
-		//UuidCreate_t UuidCreate = NULL;
-		//HMODULE hRpcrt4 = LoadLibrary(L"Rpcrt4.dll");
-		//if (hRpcrt4)
-		//{
-		//	if ((UuidCreate = (UuidCreate_t)GetProcAddress(hRpcrt4, "UuidCreate")) != NULL)
-		//		UuidCreate(&Ghost);
-		//	FreeLibrary(hRpcrt4);
-		//	msprintf(wsGhost, SKIPLEN(countof(wsGhost)) L".{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-		//		Ghost.Data1, (DWORD)(WORD)Ghost.Data2, (DWORD)(WORD)Ghost.Data3,
-		//		(DWORD)(BYTE)Ghost.Data4[0], (DWORD)(BYTE)Ghost.Data4[1], (DWORD)(BYTE)Ghost.Data4[2], (DWORD)(BYTE)Ghost.Data4[3],
-		//		(DWORD)(BYTE)Ghost.Data4[4], (DWORD)(BYTE)Ghost.Data4[5], (DWORD)(BYTE)Ghost.Data4[6], (DWORD)(BYTE)Ghost.Data4[7]);
-		//	msprintfA(sGhost, SKIPLEN(countof(sGhost)) ".{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-		//		Ghost.Data1, (DWORD)(WORD)Ghost.Data2, (DWORD)(WORD)Ghost.Data3,
-		//		(DWORD)(BYTE)Ghost.Data4[0], (DWORD)(BYTE)Ghost.Data4[1], (DWORD)(BYTE)Ghost.Data4[2], (DWORD)(BYTE)Ghost.Data4[3],
-		//		(DWORD)(BYTE)Ghost.Data4[4], (DWORD)(BYTE)Ghost.Data4[5], (DWORD)(BYTE)Ghost.Data4[6], (DWORD)(BYTE)Ghost.Data4[7]);
-		//}
 						
 		// Подготовить структуру gpRegKeyHooks к использованию
 		for (UINT i = 0; gpRegKeyHooks[i].hkRoot; i++)
@@ -500,26 +491,13 @@ void PrepareHookedKeyList()
 			WideCharToMultiByte(CP_ACP, 0, gpRegKeyHooks[i].wsHooked, gpRegKeyHooks[i].nHookedLen+1,
 				gpRegKeyHooks[i].sHooked, gpRegKeyHooks[i].nHookedLen+1, 0,0);
 
-			//// Для удобства сравнения в uppercase
-			//wcscpy_c(gpRegKeyHooks[i].wsHookedU, gpRegKeyHooks[i].wsHooked);
-			//CharUpperBuffW(gpRegKeyHooks[i].wsHookedU, gpRegKeyHooks[i].nHookedLen);
-			//_strcpy_c(gpRegKeyHooks[i].sHookedU, countof(gpRegKeyHooks[i].sHookedU), gpRegKeyHooks[i].sHooked);
-			//CharUpperBuffA(gpRegKeyHooks[i].sHookedU, gpRegKeyHooks[i].nHookedLen);
-
 			// Что показываем в RegEnumKey, вместо реальных ключей
 			wcscpy_c(gpRegKeyHooks[i].wsGhost, PointToName(gpRegKeyHooks[i].wsHooked));
 			wcscat_c(gpRegKeyHooks[i].wsGhost, wsGhost);
 			gpRegKeyHooks[i].nGhostLen = lstrlen(gpRegKeyHooks[i].wsGhost);
 			WideCharToMultiByte(CP_ACP, 0, gpRegKeyHooks[i].wsGhost, -1, gpRegKeyHooks[i].sGhost, countof(gpRegKeyHooks[i].sGhost), 0,0);
-			//_strcpy_c(gpRegKeyHooks[i].sGhost, countof(gpRegKeyHooks[i].sGhost), gpRegKeyHooks[i].sHooked);
-			//_strcat_c(gpRegKeyHooks[i].sGhost, countof(gpRegKeyHooks[i].sGhost), sGhost);
-			//wcscpy_c(gpRegKeyHooks[i].wsGhostU, gpRegKeyHooks[i].wsGhost);
-			//CharUpperBuffW(gpRegKeyHooks[i].wsGhostU, gpRegKeyHooks[i].nGhostLen);
-			//_strcpy_c(gpRegKeyHooks[i].sGhostU, countof(gpRegKeyHooks[i].sGhostU), gpRegKeyHooks[i].sGhost);
-			//CharUpperBuffA(gpRegKeyHooks[i].sGhostU, gpRegKeyHooks[i].nGhostLen);
-			
+
 			// Для упрощения обработки - переопределенные пути
-			//gpRegKeyHooks[i].hkNewKey = ghNewKeyRoot;
 			msprintf(gpRegKeyHooks[i].wsNewPath, countof(gpRegKeyHooks[i].wsNewPath), L"%s\\Software\\%s",
 				(gpRegKeyHooks[i].hkRoot == HKEY_LOCAL_MACHINE) ? L"HKLM" : L"HKCU", gpRegKeyHooks[i].wsHooked);
 			WideCharToMultiByte(CP_ACP, 0, gpRegKeyHooks[i].wsNewPath, -1, gpRegKeyHooks[i].sNewPath, countof(gpRegKeyHooks[i].sNewPath), 0, 0);
@@ -920,7 +898,7 @@ bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rk
 	// Теперь - проверяем точно
 	LPCSTR pszDot = NULL;
 	if (   (lpSubKeyTmp[3] == 0 || lpSubKeyTmp[3] == '\\' || *(pszDot = lpSubKeyTmp+3) == '.') // Far1
-		|| (lpSubKeyTmp[3] == '2' && (lpSubKeyTmp[4] == 0 || lpSubKeyTmp[4] == '\\' || *(pszDot = lpSubKeyTmp+4) == '.')) // Far2
+		|| (lpSubKeyTmp[3] == '2' && (lpSubKeyTmp[4] == 0 || lpSubKeyTmp[4] == '\\' || *(pszDot = lpSubKeyTmp+4) == '.')) // Far2 //-V112
 		|| (lpSubKeyTmp[3] == ' '
 		&& (lpSubKeyTmp[4] == 'M' || lpSubKeyTmp[4] == 'm')
 		&& (lpSubKeyTmp[5] == 'A' || lpSubKeyTmp[5] == 'a')
@@ -1148,7 +1126,7 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 	// Теперь - проверяем точно
 	LPCWSTR pszDot = NULL;
 	if (   (lpSubKeyTmp[3] == 0 || lpSubKeyTmp[3] == '\\' || *(pszDot = lpSubKeyTmp+3) == '.') // Far1
-		|| (lpSubKeyTmp[3] == '2' && (lpSubKeyTmp[4] == 0 || lpSubKeyTmp[4] == '\\' || *(pszDot = lpSubKeyTmp+4) == '.')) // Far2
+		|| (lpSubKeyTmp[3] == '2' && (lpSubKeyTmp[4] == 0 || lpSubKeyTmp[4] == '\\' || *(pszDot = lpSubKeyTmp+4) == '.')) // Far2 //-V112
 		|| (lpSubKeyTmp[3] == ' '
 			&& (lpSubKeyTmp[4] == 'M' || lpSubKeyTmp[4] == 'm')
 			&& (lpSubKeyTmp[5] == 'A' || lpSubKeyTmp[5] == 'a')
@@ -1367,8 +1345,14 @@ LONG WINAPI OnRegOpenKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM
 	if (hkDbg)
 	{
 		wchar_t szKey1[128], szKey2[128]; DWORD n;
-		LONG l1 = RegEnumKeyExW(hkDbg, 0, szKey1, &(n=countof(szKey1)), 0,0,0,0);
-		LONG l2 = RegEnumKeyExW(hkDbg, 1, szKey2, &(n=countof(szKey2)), 0,0,0,0);
+		typedef LSTATUS (APIENTRY* RegEnumKeyExW_t)(HKEY hKey,DWORD dwIndex,LPWSTR lpName,LPDWORD lpcchName,LPDWORD lpReserved,LPWSTR lpClass,LPDWORD lpcchClass,PFILETIME lpftLastWriteTime);
+		RegEnumKeyExW_t fEnum = (RegEnumKeyExW_t)GetProcAddress(ghAdvapi32, "RegEnumKeyExW");
+		LONG l1, l2;
+		if (fEnum)
+		{
+			l1 = fEnum(hkDbg, 0, szKey1, &(n=countof(szKey1)), 0,0,0,0);
+			l2 = fEnum(hkDbg, 1, szKey2, &(n=countof(szKey2)), 0,0,0,0);
+		}
 		n = 0;
 	}
 #endif

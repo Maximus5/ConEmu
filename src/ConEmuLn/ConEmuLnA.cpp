@@ -32,6 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define SHOW_DEBUG_EVENTS
 
+extern bool gbSetStartupInfoOk;
+
 // minimal(?) FAR version 1.71 alpha 4 build 2470
 int WINAPI _export GetMinFarVersion(void)
 {
@@ -70,6 +72,8 @@ extern "C" {
 
 void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 {
+	gbSetStartupInfoOk = true;
+
 	//LoadFarVersion - уже вызван в GetStartupInfo
 	::InfoA = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
 	::FSFA = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);

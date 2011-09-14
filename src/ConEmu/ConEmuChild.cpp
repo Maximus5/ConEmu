@@ -757,7 +757,7 @@ void CConEmuBack::Refresh()
 
 	mn_LastColor = pcr[mn_ColorIdx];
 	HBRUSH hNewBrush = CreateSolidBrush(mn_LastColor);
-	SetClassLongPtr(mh_WndBack, GCLP_HBRBACKGROUND, (LONG)hNewBrush);
+	SetClassLongPtr(mh_WndBack, GCLP_HBRBACKGROUND, (LONG_PTR)hNewBrush);
 	DeleteObject(mh_BackBrush);
 	mh_BackBrush = hNewBrush;
 	//RECT rc; GetClientRect(mh_Wnd, &rc);

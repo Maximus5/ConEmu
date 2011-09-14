@@ -334,9 +334,26 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	if (!LoadGuiMapping())
 		return FALSE;
 
-	wchar_t szConEmuC[MAX_PATH+16]; // ConEmuC64.exe
-	wcscpy_c(szConEmuC, m_SrvMapping.sConEmuBaseDir);
-	wcscat_c(szConEmuC, L"\\");
+	BOOL lbRc = FALSE;
+	size_t cchComspec = MAX_PATH+20;
+	wchar_t *szComspec = NULL;
+	size_t cchConEmuC = MAX_PATH+16;
+	wchar_t *szConEmuC = NULL; // ConEmuC64.exe
+	BOOL lbUseDosBox = FALSE;
+	size_t cchDosBoxExe = MAX_PATH+16, cchDosBoxCfg = MAX_PATH+16;
+	wchar_t *szDosBoxExe = NULL, *szDosBoxCfg = NULL;
+	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
+	int nCchSize = 0;
+	BOOL lbEndQuote = FALSE;
+
+	szConEmuC = (wchar_t*)malloc(cchConEmuC*sizeof(*szConEmuC)); // ConEmuC64.exe
+	if (!szConEmuC)
+	{
+		_ASSERTE(szConEmuC!=NULL);
+		goto wrap;
+	}
+	_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.sConEmuBaseDir);
+	_wcscat_c(szConEmuC, cchConEmuC, L"\\");
 	
 	_ASSERTE(aCmd==eShellExecute || aCmd==eCreateProcess);
 
@@ -366,7 +383,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 					// Сначала пробуем на полное соответствие
 					if (asFile)
 					{
-						_wcscpyn_c(pszTest, nLen, pszParam, nLen);
+						_wcscpyn_c(pszTest, nLen, pszParam, nLen); //-V501
 						pszTest[nLen-1] = 0;
 						// Сравнить asFile с первым аргументом в asParam
 						if (lstrcmpi(pszTest, asFile) == 0)
@@ -385,7 +402,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 						{
 							// Пробуем с откидыванием пути
 							nLen = lstrlen(pszFileOnly)+1;
-							_wcscpyn_c(pszTest, nLen, pszParam, nLen);
+							_wcscpyn_c(pszTest, nLen, pszParam, nLen); //-V501
 							pszTest[nLen-1] = 0;
 							// Сравнить asFile с первым аргументом в asParam
 							if (lstrcmpi(pszTest, pszFileOnly) == 0)
@@ -400,13 +417,13 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 						{
 							// а теперь, с откидыванием расширения
 							wchar_t szTmpFileOnly[MAX_PATH+1]; szTmpFileOnly[0] = 0;
-							_wcscpyn_c(szTmpFileOnly, countof(szTmpFileOnly), pszFileOnly, countof(szTmpFileOnly));
+							_wcscpyn_c(szTmpFileOnly, countof(szTmpFileOnly), pszFileOnly, countof(szTmpFileOnly)); //-V501
 							wchar_t* pszExt = wcsrchr(szTmpFileOnly, L'.');
 							if (pszExt)
 							{
 								*pszExt = 0;
 								nLen = lstrlen(szTmpFileOnly)+1;
-								_wcscpyn_c(pszTest, nLen, pszParam, nLen);
+								_wcscpyn_c(pszTest, nLen, pszParam, nLen); //-V501
 								pszTest[nLen-1] = 0;
 								// Сравнить asFile с первым аргументом в asParam
 								if (lstrcmpi(pszTest, szTmpFileOnly) == 0)
@@ -426,8 +443,13 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		}
 	}
 
-	wchar_t szComspec[MAX_PATH+20]; szComspec[0] = 0;
-	if (GetEnvironmentVariable(L"ComSpec", szComspec, countof(szComspec)))
+	szComspec = (wchar_t*)calloc(cchComspec,sizeof(*szComspec));
+	if (!szComspec)
+	{
+		_ASSERTE(szComspec);
+		goto wrap;
+	}
+	if (GetEnvironmentVariable(L"ComSpec", szComspec, (DWORD)cchComspec))
 	{
 		// Не должен быть (даже случайно) ConEmuC.exe
 		const wchar_t* pszName = PointToName(szComspec);
@@ -446,7 +468,6 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	}
 
 	// Если удалось определить "ComSpec"
-	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
 	if (asParam)
 	{
 		BOOL lbNewCmdCheck = NULL;
@@ -496,12 +517,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 				// "c:\windows\system32\cmd.exe" /c dir
 				// "c:\windows\system32\cmd.exe /c dir"
 				// Второй - пока проигнорируем, как маловероятный
-				int nLen = lstrlen(szComspec)+1;
+				INT_PTR nLen = lstrlen(szComspec)+1;
 				wchar_t* pszTest = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 				_ASSERTE(pszTest);
 				if (pszTest)
 				{
-					_wcscpyn_c(pszTest, nLen, (*psz == L'"') ? (psz+1) : psz, nLen);
+					_wcscpyn_c(pszTest, nLen, (*psz == L'"') ? (psz+1) : psz, nLen); //-V501
 					pszTest[nLen-1] = 0;
 					// Сравнить первый аргумент в asParam с %COMSPEC%
 					const wchar_t* pszCmdLeft = NULL;
@@ -598,10 +619,16 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 
 
 
-	BOOL lbUseDosBox = FALSE;
-	wchar_t szDosBoxExe[MAX_PATH+16], szDosBoxCfg[MAX_PATH+16]; szDosBoxExe[0] = szDosBoxCfg[0] = 0;
+	lbUseDosBox = FALSE;
+	szDosBoxExe = (wchar_t*)calloc(cchDosBoxExe, sizeof(*szDosBoxExe));
+	szDosBoxCfg = (wchar_t*)calloc(cchDosBoxCfg, sizeof(*szDosBoxCfg));
+	if (!szDosBoxExe || !szDosBoxCfg)
+	{
+		_ASSERTE(szDosBoxExe && szDosBoxCfg);
+		goto wrap;
+	}
 
-	if (ImageBits == 32)
+	if (ImageBits == 32) //-V112
 	{
 		wcscat_c(szConEmuC, L"ConEmuC.exe");
 	}
@@ -621,7 +648,9 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 			if (!FileExists(szDosBoxExe) || !FileExists(szDosBoxCfg))
 			{
 				// DoxBox не установлен!
-				return FALSE;
+				lbRc = FALSE;
+				//return FALSE;
+				goto wrap;
 			}
 
 			wcscat_c(szConEmuC, L"ConEmuC.exe");
@@ -633,7 +662,9 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 			// Но вот в 64битных OS - ntvdm отсутствует, так что (если DosBox-а нет), дергаться не нужно
 			if (IsWindows64())
 			{
-				return FALSE;
+				lbRc = FALSE;
+				//return FALSE;
+				goto wrap;
 			}
 			else
 			{
@@ -646,10 +677,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		// Если не смогли определить что это и как запускается - лучше не трогать
 		_ASSERTE(ImageBits==16||ImageBits==32||ImageBits==64);
 		//wcscat_c(szConEmuC, L"ConEmuC.exe");
-		return FALSE;
+		lbRc = FALSE;
+		//return FALSE;
+		goto wrap;
 	}
 	
-	int nCchSize = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 64;
+	nCchSize = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 64;
 	if (lbUseDosBox)
 	{
 		// Может быть нужно экранирование кавычек или еще чего, зарезервируем буфер
@@ -678,7 +711,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
 	// /C или /K в обоих случаях нужно пихать в psParam
-	BOOL lbEndQuote = FALSE;
+	lbEndQuote = FALSE;
 	*psParam = (wchar_t*)malloc(nCchSize*sizeof(wchar_t));
 	(*psParam)[0] = 0;
 	if (aCmd == eCreateProcess)
@@ -712,9 +745,9 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	if (lbUseDosBox)
 	{
 		lbEndQuote = TRUE;
-		_wcscat_c((*psParam), nCchSize, L"\"");
+		_wcscat_c((*psParam), nCchSize, L"\"\"");
 		_wcscat_c((*psParam), nCchSize, szDosBoxExe);
-		_wcscat_c((*psParam), nCchSize, L" -noconsole ");
+		_wcscat_c((*psParam), nCchSize, L"\" -noconsole ");
 		_wcscat_c((*psParam), nCchSize, L" -conf \"");
 		_wcscat_c((*psParam), nCchSize, szDosBoxCfg);
 		_wcscat_c((*psParam), nCchSize, L"\" ");
@@ -775,7 +808,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 					if (pszQuot && *pszQuot)
 					{
 						pszParam = lstrdup(pszQuot);
-						int nLen = lstrlen(pszParam);
+						INT_PTR nLen = lstrlen(pszParam);
 						if (pszParam[nLen-1] == L'"')
 							pszParam[nLen-1] = 0;
 					}
@@ -912,6 +945,16 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	//if (lbEndQuote)
 	//	_wcscat_c((*psParam), nCchSize, L" \"");
 
+	lbRc = TRUE;
+wrap:
+	if (szComspec)
+		free(szComspec);
+	if (szConEmuC)
+		free(szConEmuC);
+	if (szDosBoxExe)
+		free(szDosBoxExe);
+	if (szDosBoxCfg)
+		free(szDosBoxCfg);
 	return TRUE;
 }
 
@@ -978,7 +1021,7 @@ BOOL CShellProc::PrepareExecuteParms(
 
 	mn_ImageSubsystem = mn_ImageBits = 0;
 	
-	if (/*(aCmd == eShellExecute) &&*/ (asFile && *asFile))
+	if (/*(aCmd == eShellExecute) &&*/ asFile && *asFile)
 	{
 		wcscpy_c(ms_ExeTmp, asFile ? asFile : L"");
 	}
@@ -1187,7 +1230,6 @@ BOOL CShellProc::PrepareExecuteParms(
 		}
 		else
 		{
-			CESERVER_REQ *pIn = NULL;
 			pIn = NewCmdOnCreate(eParmsChanged, 
 					asAction, *psFile, *psParam, 
 					anShellFlags, anCreateFlags, anStartFlags, anShowCmd, 
@@ -1462,8 +1504,8 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 	{
 		if (mb_NeedInjects)
 		{
+			wchar_t szDbgMsg[255];
 			#ifdef _DEBUG
-			wchar_t szDbgMsg[128];
 			msprintf(szDbgMsg, countof(szDbgMsg), L"InjectHooks(x%u), ParentPID=%u, ChildPID=%u\n",
 					#ifdef _WIN64
 						64
@@ -1482,7 +1524,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				// Хуки не получится установить для некоторых системных процессов типа ntvdm.exe,
 				// но при запуске dos приложений мы сюда дойти не должны
 				_ASSERTE(iHookRc == 0);
-				wchar_t szDbgMsg[255], szTitle[128];
+				wchar_t szTitle[128];
 				msprintf(szTitle, countof(szTitle), L"ConEmuC, PID=%u", GetCurrentProcessId());
 				msprintf(szDbgMsg, countof(szDbgMsg), L"ConEmuC.W, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X",
 					GetCurrentProcessId(), lpPI->dwProcessId, iHookRc, nErrCode);

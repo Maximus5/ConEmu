@@ -105,7 +105,7 @@ BOOL CheckBuffers()
 		
 		//TODO: Пока работаем "по-старому", через буфер TrueColor. Переделать, он не оптимален
 		wchar_t szMapName[128];
-		wsprintf(szMapName, AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)hCon);
+		wsprintf(szMapName, AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)hCon); //-V205
 		ghTrueColor = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName);
 		if (!ghTrueColor)
 		{
@@ -509,7 +509,7 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL;
 	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (ReadRegion->Top /*- csbi.srWindow.Top*/)) : NULL);
 
-	FAR_CHAR_INFO* pFarEnd = Buffer + BufferSize.X*BufferSize.Y;
+	FAR_CHAR_INFO* pFarEnd = Buffer + BufferSize.X*BufferSize.Y; //-V104
 
 	SMALL_RECT rcRead = *ReadRegion;
 	COORD MyBufferSize = {BufferSize.X, 1};
@@ -524,7 +524,7 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 		BOOL lbRead = ReadConsoleOutputW(h, pcReadBuf, MyBufferSize, MyBufferCoord, &rcRead);
 
 		CHAR_INFO* pc = pcReadBuf + BufferCoord.X;
-		FAR_CHAR_INFO* pFar = Buffer + (rcRead.Top - BufferShift + BufferCoord.Y)*BufferSize.X + BufferCoord.X;
+		FAR_CHAR_INFO* pFar = Buffer + (rcRead.Top - BufferShift + BufferCoord.Y)*BufferSize.X + BufferCoord.X; //-V104
 		AnnotationInfo* pTrueColor = (pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? (pTrueColorLine + ReadRegion->Left) : NULL;
 
 		for (int X = rcRead.Left; X <= rcRead.Right; X++, pc++, pFar++)
@@ -581,7 +581,7 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 		}
 
 		if (pTrueColorLine)
-			pTrueColorLine += nWindowWidth;
+			pTrueColorLine += nWindowWidth; //-V102
 	}
 
 	if (pcReadBuf != cDefReadBuf)
@@ -635,9 +635,9 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 
 	BOOL lbRc = TRUE;
 
-	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
-	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL;
-	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (WriteRegion->Top /*- csbi.srWindow.Top*/)) : NULL);
+	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
+	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
+	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (WriteRegion->Top /*- csbi.srWindow.Top*/)) : NULL); //-V104
 
 	SMALL_RECT rcWrite = *WriteRegion;
 	COORD MyBufferSize = {BufferSize.X, 1};
@@ -651,7 +651,7 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 		rcWrite.Bottom = rcWrite.Top;
 
 		CHAR_INFO* pc = pcWriteBuf + BufferCoord.X;
-		const FAR_CHAR_INFO* pFar = Buffer + (rcWrite.Top - BufferShift + BufferCoord.Y)*BufferSize.X + BufferCoord.X;
+		const FAR_CHAR_INFO* pFar = Buffer + (rcWrite.Top - BufferShift + BufferCoord.Y)*BufferSize.X + BufferCoord.X; //-V104
 		AnnotationInfo* pTrueColor = (pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? (pTrueColorLine + WriteRegion->Left) : NULL;
 
 		for (int X = rcWrite.Left; X <= rcWrite.Right; X++, pc++, pFar++)
@@ -703,7 +703,17 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 			if (Flags & FCF_BG_4BIT)
 			{
 				nBackColor = -1;
-				n |= (WORD)(pFar->Attributes.BackgroundColor & 0xF)<<4;
+				WORD bk = (WORD)(pFar->Attributes.BackgroundColor & 0xF);
+				// Коррекция яркости, если подобранные индексы совпали
+				if (n == bk)
+				{
+					if (n & 8)
+						bk ^= 8;
+					else
+						n |= 8;
+				}
+				n |= bk<<4;
+
 				if (pTrueColor)
 				{
 					pTrueColor->bk_valid = FALSE;
@@ -734,7 +744,7 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 		}
 
 		if (pTrueColorLine)
-			pTrueColorLine += nWindowWidth;
+			pTrueColorLine += nWindowWidth; //-V102
 	}
 
 	if (pcWriteBuf != cDefWriteBuf)
@@ -917,7 +927,7 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	if (uMsg == WM_INITDIALOG)
 	{
 		P = (ColorParam*)lParam;
-		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
+		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam); //-V107
 		// 4bit
 		CheckDlgButton(hwndDlg, IDC_FORE_4BIT, P->b4bitfore ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwndDlg, IDC_BACK_4BIT, P->b4bitback ? BST_CHECKED : BST_UNCHECKED);
@@ -1065,14 +1075,14 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				{
 					WORD nIndex = 0;
 					Far3Color::Color2FgIndex(P->crForeColor, nIndex);
-					if (nIndex >= 0 && nIndex < 16)
+					if (/*nIndex >= 0 &&*/ nIndex < 16)
 					{
 						P->crForeColor = Far3Color::GetStdColor(nIndex);
 						InvalidateRect(GetDlgItem(hwndDlg, IDC_TEXT), NULL, TRUE);
 					}
 					else
 					{
-						_ASSERTE(nIndex >= 0 && nIndex < 16);
+						_ASSERTE(/*nIndex >= 0 &&*/ nIndex < 16);
 					}
 				}
 			}
@@ -1085,7 +1095,7 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					WORD nIndex = 0;
 					// Используем Fg, т.к. он дает "чистый" цвет, без коррекции на "читаемость"
 					Far3Color::Color2FgIndex(P->crBackColor, nIndex);
-					if (nIndex >= 0 && nIndex < 16)
+					if (/*nIndex >= 0 &&*/ nIndex < 16)
 					{
 						P->crBackColor = Far3Color::GetStdColor(nIndex);
 						P->CreateBrush();
@@ -1093,7 +1103,7 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					}
 					else
 					{
-						_ASSERTE(nIndex >= 0 && nIndex < 16);
+						_ASSERTE(/*nIndex >= 0 &&*/ nIndex < 16);
 					}
 				}
 			}
@@ -1205,7 +1215,7 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 	
 	// Найти HWND GUI
 	wchar_t szMapName[128];
-	wsprintf(szMapName, CECONMAPNAME, (DWORD)Parm.hConsole);
+	wsprintf(szMapName, CECONMAPNAME, (DWORD)Parm.hConsole); //-V205
 	HANDLE hMap = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
 	if (hMap != NULL)
 	{
@@ -1292,8 +1302,8 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 	COORD BufSize = {nWidth,nHeight};
 	COORD BufCoord = {0,0};
 
-	FAR_CHAR_INFO* SaveBuffer = (FAR_CHAR_INFO*)calloc(nWidth*nHeight, sizeof(*SaveBuffer));
-	FAR_CHAR_INFO* WriteBuffer = (FAR_CHAR_INFO*)calloc(nWidth*nHeight, sizeof(*WriteBuffer));
+	FAR_CHAR_INFO* SaveBuffer = (FAR_CHAR_INFO*)calloc(nWidth*nHeight, sizeof(*SaveBuffer)); //-V106
+	FAR_CHAR_INFO* WriteBuffer = (FAR_CHAR_INFO*)calloc(nWidth*nHeight, sizeof(*WriteBuffer)); //-V106
 
 	ReadOutput(SaveBuffer, BufSize, BufCoord, &Region);
 	FAR_CHAR_INFO* Src = SaveBuffer;
@@ -1309,7 +1319,7 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblDownRight; // угол рамки
 	chr.Char = ucBoxDblHorz;
 	int Ln = lstrlen(pszTitle);
-	int X1 = 4+((nWidth - 12 - Ln)>>1);
+	int X1 = 4+((nWidth - 12 - Ln)>>1); //-V112
 	int X2 = X1 + Ln + 1;
 	for (x = 3; x < (nWidth-5); x++, Src++, Dst++)
 	{
@@ -1329,7 +1339,7 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblVert; // рамка
 	chr.Char = L' ';
 	Ln = lstrlen(pszText);
-	X1 = 4+((nWidth - 12 - Ln)>>1);
+	X1 = 4+((nWidth - 12 - Ln)>>1); //-V112
 	X2 = X1 + Ln + 1;
 	for (x = 3; x < (nWidth-5); x++, Src++, Dst++)
 	{

@@ -101,26 +101,76 @@ class CSettings
 	private:
 		struct CEFontRange
 		{
+		public:
 			bool    bUsed;              // Для быстрого включения/отключения
 			wchar_t sTitle[64];         // "Title"="Borders and scrollbars"
 			wchar_t sRange[1024];       // "CharRange"="2013-25C4;"
 			wchar_t sFace[LF_FACESIZE]; // "FontFace"="Andale Mono"
 			LONG    nHeight;            // "Height"=dword:00000012
 			LONG    nWidth;             // "Width"=dword:00000000
+			LONG    nLoadHeight;        // Для корректного вычисления относительных размеров шрифта при
+			LONG    nLoadWidth;         // ресайзе GUI, или изменения из макроса - запомнить исходные
 			BYTE    nCharset;           // "Charset"=hex:00
 			bool    bBold;              // "Bold"=hex:00
 			bool    bItalic;            // "Italic"=hex:00
 			BYTE    nQuality;           // "Anti-aliasing"=hex:03
 			/*    */
-			LOGFONT lf;
+		private:
+			LOGFONT LF;
+		public:
+			LOGFONT& LogFont()
+			{
+				LF.lfHeight = nHeight;
+				LF.lfWidth = nWidth;
+				LF.lfEscapement = 0;
+				LF.lfOrientation = 0;
+				LF.lfWeight = bBold?FW_BOLD:FW_NORMAL;
+				LF.lfItalic = bItalic ? 1 : 0;
+				LF.lfUnderline = 0;
+				LF.lfStrikeOut = 0;
+				LF.lfQuality = nQuality;
+				LF.lfCharSet = nCharset;
+				LF.lfOutPrecision = OUT_TT_PRECIS;
+				LF.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+				LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+				lstrcpyn(LF.lfFaceName, sFace, countof(LF.lfFaceName));
+				return LF;
+			};
+			void Scale(LONG anMainHeight, LONG anMainLoadHeight)
+			{
+				// Высота
+				if (nLoadHeight == 0 || !anMainLoadHeight)
+				{
+					nHeight = anMainHeight; // Высота равна высоте в Main
+				}
+				else
+				{
+					nHeight = nLoadHeight * anMainHeight / anMainLoadHeight;
+				}
+				// Ширина
+				if (nLoadWidth == 0 || !anMainLoadHeight)
+				{
+					nWidth = 0;
+				}
+				else
+				{
+					nWidth = nLoadWidth * anMainHeight / anMainLoadHeight;
+				}
+			};
 			/*    */
+			HFONT hFonts[MAX_FONT_STYLES]; //normal/(bold|italic|underline)
+			/*    */
+			BYTE RangeData[0x10000];
 		};
+		CEFontRange m_Fonts[MAX_FONT_GROUPS]; // 0-Main, 1-Borders, 2 и более - user defined
+		BOOL FontRangeLoad(SettingsBase* reg, int Idx);
+		BOOL FontRangeSave(SettingsBase* reg, int Idx);
 		LOGFONT LogFont, LogFont2;
 		LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
 		LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth; // реальные размеры шрифтов
 		BYTE mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр)
-		TEXTMETRIC tm[MAX_FONT_STYLES];
-		LPOUTLINETEXTMETRIC otm[MAX_FONT_STYLES];
+		TEXTMETRIC m_tm[MAX_FONT_STYLES];
+		LPOUTLINETEXTMETRIC m_otm[MAX_FONT_STYLES];
 		BOOL mb_Name1Ok, mb_Name2Ok;
 		void ResetFontWidth();
 		void SaveFontSizes(LOGFONT *pCreated, bool bAuto, bool bSendChanges);
@@ -372,12 +422,13 @@ class CSettings
 		void InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
 		BOOL RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
 		void RegisterFonts();
-		void RecreateFont(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
 	private:
 		void RegisterFontsInt(LPCWSTR asFromDir);
 	public:
 		void UnregisterFonts();
 		BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[32]);
+		BOOL GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[32]);
+		BOOL GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[32]);
 		void HistoryCheck();
 		void HistoryAdd(LPCWSTR asCmd);
 		LPCWSTR HistoryGet();
@@ -386,7 +437,8 @@ class CSettings
 		void CheckConsoleSettings();
 		SettingsBase* CreateSettings();
 		bool AutoRecreateFont(int nFontW, int nFontH);
-		bool AutoSizeFont(int nRelative/*0/1*/, int nValue/*1,2,...*/);
+		bool MacroFontSetSize(int nRelative/*0/1*/, int nValue/*1,2,...*/);
+		void MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
 		bool CheckTheming();
 		void OnPanelViewAppeared(BOOL abAppear);
 		bool EditConsoleFont(HWND hParent);

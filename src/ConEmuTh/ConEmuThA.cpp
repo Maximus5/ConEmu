@@ -72,11 +72,11 @@ extern "C" {
 void ReloadResourcesA()
 {
 	wchar_t szTemp[MAX_PATH];
-	lstrcpynW(gsFolder, GetMsgA(CEDirFolder, szTemp), countof(gsFolder));
-	lstrcpynW(gsSymLink, GetMsgA(CEDirSymLink, szTemp), countof(gsSymLink));
-	lstrcpynW(gsJunction, GetMsgA(CEDirJunction, szTemp), countof(gsJunction));
-	lstrcpynW(gsTitleThumbs, GetMsgA(CEColTitleThumbnails, szTemp), countof(gsTitleThumbs));
-	lstrcpynW(gsTitleTiles, GetMsgA(CEColTitleTiles, szTemp), countof(gsTitleTiles));
+	lstrcpynW(gsFolder, GetMsgA(CEDirFolder, szTemp), countof(gsFolder)); //-V303
+	lstrcpynW(gsSymLink, GetMsgA(CEDirSymLink, szTemp), countof(gsSymLink)); //-V303
+	lstrcpynW(gsJunction, GetMsgA(CEDirJunction, szTemp), countof(gsJunction)); //-V303
+	lstrcpynW(gsTitleThumbs, GetMsgA(CEColTitleThumbnails, szTemp), countof(gsTitleThumbs)); //-V303
+	lstrcpynW(gsTitleTiles, GetMsgA(CEColTitleTiles, szTemp), countof(gsTitleTiles)); //-V303
 }
 
 void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
@@ -107,11 +107,11 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 		}
 	}
 
-	int nLen = lstrlenA(InfoA->RootKey)+16;
+	int nLen = lstrlenA(InfoA->RootKey)+16; //-V303
 	if (gszRootKeyA) free(gszRootKeyA);
-	gszRootKeyA = (wchar_t*)calloc(nLen,2);
+	gszRootKeyA = (wchar_t*)calloc(nLen,2); //-V106
 	MultiByteToWideChar(CP_OEMCP,0,InfoA->RootKey,-1,gszRootKeyA,nLen);
-	WCHAR* pszSlash = gszRootKeyA+lstrlenW(gszRootKeyA)-1;
+	WCHAR* pszSlash = gszRootKeyA+lstrlenW(gszRootKeyA)-1; //-V303
 	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
 	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
 
@@ -125,7 +125,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 
 	static char *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1;
-	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240);
+	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240); //-V303
 	_ASSERTE(pi->StructSize = sizeof(struct PluginInfo));
 	pi->Flags = PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
@@ -260,13 +260,13 @@ const wchar_t* GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/)
 
 	if (pszMsg && *pszMsg)
 	{
-		int nLen = (int)lstrlenA(pszMsg);
+		int nLen = lstrlenA(pszMsg); //-V303
 
 		if (nLen>=MAX_PATH) nLen = MAX_PATH - 1;
 
 		nLen = MultiByteToWideChar(CP_OEMCP, 0, pszMsg, nLen, rsMsg, MAX_PATH-1);
 
-		if (nLen>=0) rsMsg[nLen] = 0;
+		if (nLen>=0) rsMsg[nLen] = 0; //-V108
 	}
 	else
 	{
@@ -289,7 +289,7 @@ BOOL IsMacroActiveA()
 	return TRUE;
 }
 
-void LoadPanelItemInfoA(CeFullPanelInfo* pi, int nItem)
+void LoadPanelItemInfoA(CeFullPanelInfo* pi, INT_PTR nItem)
 {
 	// Вся информация считывается целиком по панели!
 	return;
@@ -326,7 +326,7 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	//pcefpi->hPanel = hPanel;
 
 	// Если элементов на панели стало больше, чем выделено в (pviLeft/pviRight)
-	if (pcefpi->ItemsNumber < pi.ItemsNumber)
+	if (pcefpi->ItemsNumber < pi.ItemsNumber) //-V104
 	{
 		if (!pcefpi->ReallocItems(pi.ItemsNumber))
 			return FALSE;
@@ -336,9 +336,9 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	pcefpi->bLeftPanel = (pi.Flags & PFLAGS_PANELLEFT) == PFLAGS_PANELLEFT;
 	pcefpi->bPlugin = pi.Plugin;
 	pcefpi->PanelRect = pi.PanelRect;
-	pcefpi->ItemsNumber = pi.ItemsNumber;
-	pcefpi->CurrentItem = pi.CurrentItem;
-	pcefpi->TopPanelItem = pi.TopPanelItem;
+	pcefpi->ItemsNumber = pi.ItemsNumber; //-V101
+	pcefpi->CurrentItem = pi.CurrentItem; //-V101
+	pcefpi->TopPanelItem = pi.TopPanelItem; //-V101
 	pcefpi->Visible = pi.Visible;
 	pcefpi->ShortNames = pi.ShortNames;
 	pcefpi->Focus = pi.Focus;
@@ -369,19 +369,19 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	pcefpi->nFarColors[col_CommandLineUserScreen] = FarConsoleColors[COL_COMMANDLINEUSERSCREEN];
 	pcefpi->nFarColors[col_PanelScreensNumber] = FarConsoleColors[COL_PANELSCREENSNUMBER];
 	pcefpi->nFarColors[col_KeyBarNum] = FarConsoleColors[COL_KEYBARNUM];
-	//int nColorSize = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
+	//int nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
 	//if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
 	//{
 	//	if (pcefpi->nFarColors) free(pcefpi->nFarColors);
 	//	pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
 	//	pcefpi->nMaxFarColors = nColorSize;
 	//}
-	//nColorSize = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
+	//nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
 	
 	// Текущая папка панели
-	int nSize = lstrlenA(pi.CurDir);
+	int nSize = lstrlenA(pi.CurDir); //-V303
 	pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
-	pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
+	pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2); //-V106
 	MultiByteToWideChar(CP_OEMCP, 0, pi.CurDir, nSize+1, pcefpi->pszPanelDir, nSize + MAX_PATH);
 	// Готовим буфер для информации об элементах
 	pcefpi->ReallocItems(pcefpi->ItemsNumber);
@@ -430,7 +430,7 @@ void ReloadPanelsInfoA()
 	LoadPanelInfoA(FALSE);
 }
 
-void SetCurrentPanelItemA(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
+void SetCurrentPanelItemA(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem)
 {
 	if (!InfoA) return;
 
@@ -456,16 +456,16 @@ void SetCurrentPanelItemA(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
 		return;
 
 	if ((int)anTopItem >= pi->ItemsNumber)
-		anTopItem = pi->ItemsNumber - 1;
+		anTopItem = pi->ItemsNumber - 1; //-V101
 
 	if ((int)anCurItem >= pi->ItemsNumber)
-		anCurItem = pi->ItemsNumber - 1;
+		anCurItem = pi->ItemsNumber - 1; //-V101
 
 	if (anCurItem < anTopItem)
 		anCurItem = anTopItem;
 
 	// Обновляем панель
-	PanelRedrawInfo pri = {anCurItem, anTopItem};
+	PanelRedrawInfo pri = {(int)anCurItem, (int)anTopItem};
 	InfoA->Control(INVALID_HANDLE_VALUE, nCmd, &pri);
 }
 
@@ -520,7 +520,7 @@ bool CheckFarPanelsA()
 //	if (!InfoA || !InfoA->AdvControl) return false;
 //
 //	bool lbPanelsActive = false;
-//	int nCount = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
+//	int nCount = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
 //	WindowInfo wi = {0};
 //	char szTypeName[64];
 //	char szName[MAX_PATH*2];

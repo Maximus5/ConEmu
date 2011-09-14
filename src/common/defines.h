@@ -117,6 +117,19 @@ WARNING("WIN64 was not defined");
 #endif
 #define ZeroStruct(s) memset(&(s), 0, sizeof(s))
 
+// Для облегчения кодинга - возвращает значение для соответствующей платформы
+#ifdef _WIN64
+	#define WIN3264TEST(v32,v64) v64
+#else
+	#define WIN3264TEST(v32,v64) v32
+#endif
+// Чтобы можно было пользовать 64битные значения в wsprintf
+#ifdef _WIN64
+	#define WIN3264WSPRINT(ptr) (DWORD)(((DWORD_PTR)ptr)>>32), (DWORD)(((DWORD_PTR)ptr) & ((DWORD)-1))
+#else
+	#define WIN3264WSPRINT(ptr) (DWORD)(ptr)
+#endif
+
 #ifdef CONEMU_MINIMAL
 #undef SHOWDEBUGSTR
 #endif

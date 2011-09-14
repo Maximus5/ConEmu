@@ -223,7 +223,7 @@ CConEmuMain::CConEmuMain()
 	wchar_t szBaseFile[MAX_PATH+12];
 	wcscpy_c(szBaseFile, ms_ConEmuExeDir);
 	// Сначала проверяем подпапку
-	pszSlash = szBaseFile + lstrlen(szBaseFile);
+	pszSlash = szBaseFile + _tcslen(szBaseFile);
 	lstrcpy(pszSlash, L"\\ConEmu\\ConEmuC.exe");
 
 	if (FileExists(szBaseFile))
@@ -288,7 +288,7 @@ CConEmuMain::CConEmuMain()
 	}
 
 	wcscpy_c(ms_ConEmuCExeFull, ms_ConEmuBaseDir);
-	pszSlash = ms_ConEmuCExeFull + lstrlen(ms_ConEmuCExeFull);
+	pszSlash = ms_ConEmuCExeFull + _tcslen(ms_ConEmuCExeFull);
 #ifdef WIN64
 	lstrcpy(pszSlash, L"\\ConEmuC64.exe");
 
@@ -317,7 +317,7 @@ CConEmuMain::CConEmuMain()
 	//		wcscpy_c(ms_ConEmuCExe, ms_ConEmuCExeFull);
 	//	}
 
-	//	//pszSlash = ms_ConEmuCExe + lstrlen(ms_ConEmuCExe);
+	//	//pszSlash = ms_ConEmuCExe + _tcslen(ms_ConEmuCExe);
 	//	//if (*(pszSlash-1) != L'\\')
 	//	//{
 	//	//	*(pszSlash++) = L'\\'; *pszSlash = 0;
@@ -410,7 +410,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgUpdateProcDisplay = ++nAppMsg;
 	mn_MsgAutoSizeFont = ++nAppMsg;
 	mn_MsgDisplayRConError = ++nAppMsg;
-	mn_MsgSetFontName = ++nAppMsg;
+	mn_MsgMacroFontSetName = ++nAppMsg;
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 }
@@ -649,9 +649,9 @@ HMENU CConEmuMain::GetSystemMenu(BOOL abInitial /*= FALSE*/)
 }
 
 // Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE
-DWORD CConEmuMain::GetWindowStyle()
+DWORD_PTR CConEmuMain::GetWindowStyle()
 {
-	DWORD style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+	DWORD_PTR style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
 	//if (gpSet->isShowOnTaskBar) // ghWndApp
 	//	style |= WS_POPUPWINDOW | WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 	//else
@@ -672,7 +672,7 @@ DWORD CConEmuMain::GetWindowStyle()
 }
 
 // Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE_EX
-DWORD CConEmuMain::GetWindowStyleEx()
+DWORD_PTR CConEmuMain::GetWindowStyleEx()
 {
 	DWORD_PTR styleEx = 0;
 
@@ -696,7 +696,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	if (!Init())
 		return FALSE; // Ошибка уже показана
 
-	if (_tcscmp(VirtualConsoleClass,VirtualConsoleClassMain))
+	if (_tcscmp(VirtualConsoleClass,VirtualConsoleClassMain)) //-V549
 	{
 		MBoxA(_T("Error: class names must be equal!"));
 		return FALSE;
@@ -795,7 +795,7 @@ BOOL CConEmuMain::CheckDosBoxExists()
 	BOOL lbExists = FALSE;
 	wchar_t szDosBoxPath[MAX_PATH+32];
 	wcscpy_c(szDosBoxPath, ms_ConEmuBaseDir);
-	wchar_t* pszName = szDosBoxPath+lstrlen(szDosBoxPath);
+	wchar_t* pszName = szDosBoxPath+_tcslen(szDosBoxPath);
 
 	wcscpy_add(pszName, szDosBoxPath, L"\\DosBox\\DosBox.exe");
 	if (FileExists(szDosBoxPath))
@@ -815,9 +815,9 @@ void CConEmuMain::CheckPortableReg()
 	
 	wcscpy_c(szPath, ms_ConEmuBaseDir);
 	wcscat_c(szPath, L"\\Portable\\Portable.reg");
-	if (lstrlen(szPath) >= countof(ms_PortableReg))
+	if (_tcslen(szPath) >= countof(ms_PortableReg))
 	{
-		MBoxAssert(lstrlen(szPath) < countof(ms_PortableReg))
+		MBoxAssert(_tcslen(szPath) < countof(ms_PortableReg))
 		return; // превышение длины
 	}
 	if (FileExists(szPath))
@@ -835,10 +835,10 @@ void CConEmuMain::CheckPortableReg()
 	wcscpy_c(szPath, ms_ConEmuBaseDir);
 	wcscat_c(szPath, L"\\Portable\\");
 	wcscpy_c(szName, L"Portable.");
-	LPCWSTR pszSIDPtr = szName+lstrlen(szName);
+	LPCWSTR pszSIDPtr = szName+_tcslen(szName);
 	if (GetLogonSID (NULL, &pszSID))
 	{
-		if (lstrlen(pszSID) > 128)
+		if (_tcslen(pszSID) > 128)
 			pszSID[127] = 0;
 		wcscat_c(szName, pszSID);
 		LocalFree(pszSID); pszSID = NULL;
@@ -864,7 +864,7 @@ void CConEmuMain::CheckPortableReg()
 	wcscpy_c(ms_PortableRegHiveOrg, szPath);
 
 	BOOL lbNeedTemp = FALSE;
-	if ((lstrlen(szPath)+lstrlen(szName)) >= countof(ms_PortableRegHive))
+	if ((_tcslen(szPath)+_tcslen(szName)) >= countof(ms_PortableRegHive))
 		lbNeedTemp = TRUE;
 	BOOL lbHiveExist = FileExists(szPath);
 	
@@ -912,7 +912,7 @@ void CConEmuMain::CheckPortableReg()
 	if (lbNeedTemp)
 	{
 		wchar_t szTemp[MAX_PATH], szTempFile[MAX_PATH+1];
-		int nLen = lstrlen(szName)+16;
+		int nLen = _tcslen(szName)+16;
 		if (!GetTempPath(MAX_PATH-nLen, szTemp))
 		{
 			mb_PortableRegExist = FALSE;
@@ -1124,7 +1124,7 @@ void CConEmuMain::FinalizePortableReg()
 	{
 		wchar_t szTemp[MAX_PATH*2], *pszSlash;
 		wcscpy_c(szTemp, ms_PortableTempDir);
-		pszSlash = szTemp + lstrlen(szTemp) - 1;
+		pszSlash = szTemp + _tcslen(szTemp) - 1;
 		_ASSERTE(*pszSlash == L'\\');
 		_wcscpy_c(pszSlash+1, MAX_PATH, _T("*.*"));
 		WIN32_FIND_DATA fnd;
@@ -1307,7 +1307,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 		ptPoly[nPoint++] = MakePoint(anX+5, anY);
 		ptPoly[nPoint++] = MakePoint(anX+anWndWidth-5, anY);
 		ptPoly[nPoint++] = MakePoint(anX+anWndWidth-3, anY+1);
-		ptPoly[nPoint++] = MakePoint(anX+anWndWidth-1, anY+4);
+		ptPoly[nPoint++] = MakePoint(anX+anWndWidth-1, anY+4); //-V112
 		ptPoly[nPoint++] = MakePoint(anX+anWndWidth, anY+6);
 		ptPoly[nPoint++] = MakePoint(anX+anWndWidth, anY+anWndHeight);
 		hRgn = CreatePolygonRgn(ptPoly, nPoint, WINDING);
@@ -4206,7 +4206,7 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
 	//{
 	//    //DWORD cbWritten=0;
 	//    DebugStep(_T("Macro: Waiting for result (10 sec)"));
-	//    pipe.Execute(CMD_POSTMACRO, asMacro, (lstrlen(asMacro)+1)*2);
+	//    pipe.Execute(CMD_POSTMACRO, asMacro, (_tcslen(asMacro)+1)*2);
 	//    DebugStep(NULL);
 	//}
 }
@@ -4216,18 +4216,18 @@ void CConEmuMain::PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelati
 	PostMessage(ghWnd, mn_MsgAutoSizeFont, (WPARAM)nRelative, (LPARAM)nValue);
 }
 
-void CConEmuMain::PostSetFontNameSize(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted)
+void CConEmuMain::PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted)
 {
 	if (!abPosted)
 	{
 		wchar_t* pszDup = lstrdup(pszFontName);
 		WPARAM wParam = (((DWORD)anHeight) << 16) | (anWidth);
-		PostMessage(ghWnd, mn_MsgSetFontName, wParam, (LPARAM)pszDup);
+		PostMessage(ghWnd, mn_MsgMacroFontSetName, wParam, (LPARAM)pszDup);
 	}
 	else
 	{
 		if (gpSet)
-			gpSet->RecreateFont(pszFontName, anHeight, anWidth);
+			gpSet->MacroFontSetName(pszFontName, anHeight, anWidth);
 		free(pszFontName);
 	}
 }
@@ -4731,7 +4731,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 	{
 		case WM_INITDIALOG:
 		{
-			BOOL lbRc = FALSE;
+			LRESULT lbRc = FALSE;
 
 			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
@@ -4771,7 +4771,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 
 					if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pszSystem);
 
-					pszSystem += lstrlen(pszSystem)+1;
+					pszSystem += _tcslen(pszSystem)+1;
 				}
 			}
 
@@ -4810,14 +4810,14 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 							// pszDomain не заполняется, и "UPN format" остается в pszUser
 							lstrcpyn(szCurUser, pszUser, MAX_PATH);
 							wcscat_c(szCurUser, L"@");
-							lstrcpyn(szCurUser+lstrlen(szCurUser), pszDomain, MAX_PATH);
+							lstrcpyn(szCurUser+_tcslen(szCurUser), pszDomain, MAX_PATH);
 						}
 						else
 						{
 							// "Старая" нотация domain\user
 							lstrcpyn(szCurUser, pszDomain, MAX_PATH);
 							wcscat_c(szCurUser, L"\\");
-							lstrcpyn(szCurUser+lstrlen(szCurUser), pszUser, MAX_PATH);
+							lstrcpyn(szCurUser+_tcslen(szCurUser), pszUser, MAX_PATH);
 						}
 					}
 					else
@@ -4857,7 +4857,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 			}
 
 			//}
-			SetClassLongPtr(hDlg, GCLP_HICON, (LONG)hClassIcon);
+			SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
 
 			RECT rcBtnBox = {0};
 			if (pArgs->bRecreate)
@@ -4914,7 +4914,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 				SetTextColor((HDC)wParam, 255);
 				HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
 				SetBkMode((HDC)wParam, TRANSPARENT);
-				return (BOOL)hBrush;
+				return (INT_PTR)hBrush;
 			}
 
 			break;
@@ -5175,7 +5175,7 @@ void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer,
 					if (!pszExePath)
 						pszExePath = mi.szExePath[0] ? mi.szExePath : mi.szModule;
 
-					if ((!hFromModule || (mi.hModule == (HMODULE)hFromModule)))
+					if (!hFromModule || (mi.hModule == (HMODULE)hFromModule))
 					{
 						pszCallPath = mi.szExePath[0] ? mi.szExePath : mi.szModule;
 						break;
@@ -5208,7 +5208,7 @@ void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer,
 	}
 
 	lbErrorShowed = true;
-	int nMaxLen = 255+lstrlen(pszCallPath);
+	int nMaxLen = 255+_tcslen(pszCallPath);
 	wchar_t *pszMsg = (wchar_t*)calloc(nMaxLen,sizeof(wchar_t));
 	_wsprintf(pszMsg, SKIPLEN(nMaxLen)
 		L"ConEmu received old version packet!\nCommandID: %i, Version: %i, ReqVersion: %i, PID: %u\nPlease check %s\n%s",
@@ -5342,6 +5342,11 @@ void CConEmuMain::StartDebugLogConsole()
 	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%i /BW=80 /BH=25 /BZ=9999",
 	          ms_ConEmuCExeFull, dwSelfPID);
 
+	#ifdef _DEBUG
+	if (MessageBox(NULL, szExe, L"StartDebugLogConsole", MB_OKCANCEL|MB_SYSTEMMODAL) != IDOK)
+		return;
+	#endif
+	          
 	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL,
 	                  NULL, &si, &pi))
 	{
@@ -5382,6 +5387,11 @@ void CConEmuMain::StartDebugActiveProcess()
 	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%i /BW=%i /BH=%i /BZ=9999 /ROOT \"%s\" /DEBUGPID=%i ",
 		ms_ConEmuCExeFull, dwSelfPID, W, H, ms_ConEmuCExeFull, dwPID);
 
+	#ifdef _DEBUG
+	if (MessageBox(NULL, szExe, L"StartDebugLogConsole", MB_OKCANCEL|MB_SYSTEMMODAL) != IDOK)
+		return;
+	#endif
+		
 	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL,
 		NULL, &si, &pi))
 	{
@@ -5674,7 +5684,7 @@ void CConEmuMain::UpdateProgress(/*BOOL abUpdateTitle*/)
 	if (mn_Progress >= 0 && !bActiveHasProgress)
 	{
 		psTitle = MultiTitle;
-		wsprintf(MultiTitle+lstrlen(MultiTitle), L"{*%i%%} ", mn_Progress);
+		wsprintf(MultiTitle+_tcslen(MultiTitle), L"{*%i%%} ", mn_Progress);
 	}
 
 	if (gpSet->isMulti && !gpConEmu->mp_TabBar->IsShown())
@@ -5695,7 +5705,7 @@ void CConEmuMain::UpdateProgress(/*BOOL abUpdateTitle*/)
 		if (nCount > 1)
 		{
 			psTitle = MultiTitle;
-			wsprintf(MultiTitle+lstrlen(MultiTitle), L"[%i/%i] ", nCur, nCount);
+			wsprintf(MultiTitle+_tcslen(MultiTitle), L"[%i/%i] ", nCur, nCount);
 		}
 	}
 
@@ -6662,7 +6672,7 @@ bool CConEmuMain::isFirstInstance()
 		lstrcpy(ms_ConEmuAliveEvent, CEGUI_ALIVE_EVENT);
 		DWORD nSize = MAX_PATH;
 		// Добавим имя текущего юзера. Нам не нужны конфликты при наличии нескольких юзеров.
-		GetUserName(ms_ConEmuAliveEvent+lstrlen(ms_ConEmuAliveEvent), &nSize);
+		GetUserName(ms_ConEmuAliveEvent+_tcslen(ms_ConEmuAliveEvent), &nSize);
 		WARNING("Event не работает, если conemu.exe запущен под другим пользователем");
 		mh_ConEmuAliveEvent = CreateEvent(NULL, TRUE, TRUE, ms_ConEmuAliveEvent);
 		nSize = GetLastError();
@@ -7106,11 +7116,11 @@ BOOL CConEmuMain::OnCloseQuery()
 	if (nProgress || nEditors)
 	{
 		wchar_t szText[255], *pszText;
-		wcscpy_c(szText, L"Close confirmation.\r\n\r\n"); pszText = szText+lstrlen(szText);
+		wcscpy_c(szText, L"Close confirmation.\r\n\r\n"); pszText = szText+_tcslen(szText);
 
-		if (nProgress) { _wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", nProgress); pszText += lstrlen(pszText); }
+		if (nProgress) { _wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", nProgress); pszText += _tcslen(pszText); }
 
-		if (nEditors) { _wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", nEditors); pszText += lstrlen(pszText); }
+		if (nEditors) { _wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", nEditors); pszText += _tcslen(pszText); }
 
 		lstrcpy(pszText, L"\r\nProceed with shutdown?");
 		int nBtn = MessageBoxW(ghWnd, szText, ms_ConEmuVer, MB_OKCANCEL|MB_ICONEXCLAMATION);
@@ -7346,7 +7356,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 				if (!hFile)
 				{
 					DWORD dwErr = GetLastError();
-					wchar_t* pszErrMsg = (wchar_t*)calloc(lstrlen(pszCmd)+100,2);
+					wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(pszCmd)+100,2);
 					lstrcpy(pszErrMsg, L"Can't open console batch file:\n\xAB"/*«*/); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"\xBB"/*»*/);
 					DisplayLastError(pszErrMsg, dwErr);
 					free(pszErrMsg);
@@ -7360,7 +7370,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 				{
 					DWORD dwErr = GetLastError();
 					CloseHandle(hFile);
-					wchar_t* pszErrMsg = (wchar_t*)calloc(lstrlen(pszCmd)+100,2);
+					wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(pszCmd)+100,2);
 					lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n\xAB"/*«*/); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"\xBB"/*»*/);
 					DisplayLastError(pszErrMsg, dwErr);
 					free(pszErrMsg);
@@ -7368,7 +7378,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 					return;
 				}
 
-				char* pszDataA = (char*)calloc(nSize+4,1);
+				char* pszDataA = (char*)calloc(nSize+4,1); //-V112
 				_ASSERTE(pszDataA);
 				DWORD nRead = 0;
 				BOOL lbRead = ReadFile(hFile, pszDataA, nSize, &nRead, 0);
@@ -7378,7 +7388,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 				if (!lbRead || nRead != nSize)
 				{
 					free(pszDataA);
-					wchar_t* pszErrMsg = (wchar_t*)calloc(lstrlen(pszCmd)+100,2);
+					wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(pszCmd)+100,2);
 					lstrcpy(pszErrMsg, L"Reading console batch file failed:\n\xAB"/*«*/); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"\xBB"/*»*/);
 					DisplayLastError(pszErrMsg, dwErr);
 					free(pszErrMsg);
@@ -7389,14 +7399,14 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 				// Опредлить код.страницу файла
 				wchar_t* pszDataW = NULL; BOOL lbNeedFreeW = FALSE;
 
-				if (pszDataA[0] == 0xEF && pszDataA[1] == 0xBB && pszDataA[2] == 0xBF)
+				if (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF')
 				{
 					// UTF-8 BOM
 					pszDataW = (wchar_t*)calloc(nSize+2,2); lbNeedFreeW = TRUE;
 					_ASSERTE(pszDataW);
 					MultiByteToWideChar(CP_UTF8, 0, pszDataA+3, -1, pszDataW, nSize);
 				}
-				else if (pszDataA[0] == 0xFF && pszDataA[1] == 0xFE)
+				else if (pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE')
 				{
 					// CP-1200 BOM
 					pszDataW = (wchar_t*)(pszDataA+2);
@@ -7646,7 +7656,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 		SetEvent(mh_GuiServerThreadTerminate);
 		wchar_t szServerPipe[MAX_PATH];
 		_ASSERTE(ghWnd!=NULL);
-		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghWnd);
+		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghWnd); //-V205
 		HANDLE hPipe = CreateFile(szServerPipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
 
 		if (hPipe == INVALID_HANDLE_VALUE)
@@ -7755,7 +7765,7 @@ LRESULT CConEmuMain::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
 			lbFlashSimple = true;
 	}
 
-	BOOL lbRc = FALSE;
+	LRESULT lbRc = FALSE;
 
 	for(int i = 0; i<MAX_CONSOLE_COUNT; i++)
 	{
@@ -8712,7 +8722,7 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 	switch (messg)
 	{
 		case WM_IME_CHAR:
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_CHAR: char=%c, wParam=%u, lParam=0x%08X\n", (wchar_t)wParam, wParam, lParam);
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_CHAR: char=%c, wParam=%u, lParam=0x%08X\n", (wchar_t)wParam, (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			if (mp_VActive)
 			{
@@ -8720,7 +8730,7 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			}
 			break;
 		case WM_IME_COMPOSITION:
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_COMPOSITION: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_COMPOSITION: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			//if (lParam & GCS_RESULTSTR) 
 			//{
@@ -8748,29 +8758,29 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			//}
 			break;
 		case WM_IME_COMPOSITIONFULL:
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_COMPOSITIONFULL: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_COMPOSITIONFULL: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			break;
 		case WM_IME_CONTROL:
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_CONTROL: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_CONTROL: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			break;
 		case WM_IME_ENDCOMPOSITION:
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_ENDCOMPOSITION: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_ENDCOMPOSITION: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			// IME закончен. Обычные нажатия опять можно посылать в консоль
 			mb_InImeComposition = false;
 			break;
 		case WM_IME_KEYDOWN:
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_KEYDOWN: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_KEYDOWN: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			break;
 		case WM_IME_KEYUP:
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_KEYUP: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_KEYUP: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			break;
 		case WM_IME_NOTIFY:
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_NOTIFY: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_NOTIFY: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			switch (wParam)
 			{
@@ -8788,7 +8798,7 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			}
 			break;
 		case WM_IME_REQUEST:
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_REQUEST: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_REQUEST: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			//if (wParam == IMR_QUERYCHARPOSITION)
 			//{
@@ -8806,7 +8816,7 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			//}
 			break;
 		case WM_IME_SELECT:
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_SELECT: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_SELECT: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			break;
 		case WM_IME_SETCONTEXT:
@@ -8816,11 +8826,11 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			// value from the lParam parameter before passing the message to DefWindowProc
 			// or ImmIsUIMessage. To display a certain user interface window, an application
 			// should remove the corresponding value so that the IME will not display it.
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_SETCONTEXT: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_SETCONTEXT: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			break;
 		case WM_IME_STARTCOMPOSITION:
-			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_STARTCOMPOSITION: wParam=0x%08X, lParam=0x%08X\n", wParam, lParam);
+			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_IME_STARTCOMPOSITION: wParam=0x%08X, lParam=0x%08X\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRIME(szDbgMsg);
 			// Начало IME. Теперь нужно игнорировать обычные нажатия (не посылать в консоль)
 			mb_InImeComposition = true;
@@ -9293,7 +9303,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	short conX = cr.X; //winX/gpSet->Log Font.lfWidth;
 	short conY = cr.Y; //winY/gpSet->Log Font.lfHeight;
 
-	if ((messg != WM_MOUSEWHEEL && messg != WM_MOUSEHWHEEL) && (conY<0 || conY<0))
+	if ((messg != WM_MOUSEWHEEL && messg != WM_MOUSEHWHEEL) && (conX<0 || conY<0))
 	{
 		DEBUGLOGFILE("Mouse outside of upper-left");
 		return 0;
@@ -9998,7 +10008,7 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 
 						if (gpSet->sRClickMacro && *gpSet->sRClickMacro)
 						{
-							nLen = lstrlen(gpSet->sRClickMacro);
+							nLen = _tcslen(gpSet->sRClickMacro);
 							nSize += nLen*2;
 							// -- заменено на перехват функции ScreenToClient
 							//mp_VActive->RCon()->RemoveFromCursor();
@@ -11106,9 +11116,9 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			//}
 			//if (nProgress || nEditors) {
 			//	wchar_t szText[255], *pszText;
-			//	lstrcpy(szText, L"Close confirmation.\r\n\r\n"); pszText = szText+lstrlen(szText);
-			//	if (nProgress) { _wsprintf(pszText, SKIPLEN(countof(pszText)) L"Incomplete operations: %i\r\n", nProgress); pszText += lstrlen(pszText); }
-			//	if (nEditors) { _wsprintf(pszText, SKIPLEN(countof(pszText)) L"Unsaved editor windows: %i\r\n", nEditors); pszText += lstrlen(pszText); }
+			//	lstrcpy(szText, L"Close confirmation.\r\n\r\n"); pszText = szText+_tcslen(szText);
+			//	if (nProgress) { _wsprintf(pszText, SKIPLEN(countof(pszText)) L"Incomplete operations: %i\r\n", nProgress); pszText += _tcslen(pszText); }
+			//	if (nEditors) { _wsprintf(pszText, SKIPLEN(countof(pszText)) L"Unsaved editor windows: %i\r\n", nEditors); pszText += _tcslen(pszText); }
 			//	lstrcpy(pszText, L"\r\nProceed with shutdown?");
 			//	int nBtn = MessageBoxW(ghWnd, szText, ms_ConEmuVer, MB_OKCANCEL|MB_ICONEXCLAMATION);
 			//	if (nBtn != IDOK)
@@ -11245,7 +11255,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	if (hFocus != shFocus)
 	{
 		_wsprintf(szWndInfo, SKIPLEN(countof(szWndInfo)) L"(Fore=0x%08X) Focus was changed to ", (DWORD)hFore);
-		getWindowInfo(hFocus, szWndInfo+lstrlen(szWndInfo));
+		getWindowInfo(hFocus, szWndInfo+_tcslen(szWndInfo));
 		wcscat(szWndInfo, L"\n");
 		DEBUGSHOWFOCUS(szWndInfo);
 		shFocus = hFocus;
@@ -11256,7 +11266,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		if (hFore != hFocus)
 		{
 			wcscpy(szWndInfo, L"Foreground window was changed to ");
-			getWindowInfo(hFore, szWndInfo+lstrlen(szWndInfo));
+			getWindowInfo(hFore, szWndInfo+_tcslen(szWndInfo));
 			wcscat(szWndInfo, L"\n");
 			DEBUGSHOWFOCUS(szWndInfo);
 		}
@@ -11639,7 +11649,7 @@ DWORD CConEmuMain::GuiServerThread(LPVOID lpvParam)
 	wchar_t szServerPipe[MAX_PATH];
 	MCHKHEAP;
 	_ASSERTE(ghWnd!=NULL);
-	_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghWnd);
+	_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghWnd); //-V205
 	// The main loop creates an instance of the named pipe and
 	// then waits for a client to connect to it. When the client
 	// connects, a thread is created to handle communications
@@ -11851,8 +11861,8 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 			//l = SendMessageTimeout(ghWnd, gpConEmu->mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID,
 			//	SMTO_BLOCK, 5000, &dwRc);
 			dwRc = SendMessage(ghWnd, gpConEmu->mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID);
-			pIn->dwData[0] = (DWORD)ghWnd;
-			pIn->dwData[1] = (DWORD)ghWndDC;
+			pIn->dwData[0] = (DWORD)ghWnd; //-V205
+			pIn->dwData[1] = (DWORD)ghWndDC; //-V205
 			//pIn->dwData[0] = (l == 0) ? 0 : 1;
 		}
 		else if (pIn->dwData[0] == 101)
@@ -12008,7 +12018,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_SIZING:
 		{
 			RECT* pRc = (RECT*)lParam;
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SIZING (Edge%i, {%i-%i}-{%i-%i})\n", wParam, pRc->left, pRc->top, pRc->right, pRc->bottom);
+			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SIZING (Edge%i, {%i-%i}-{%i-%i})\n", (DWORD)wParam, pRc->left, pRc->top, pRc->right, pRc->bottom);
 			DEBUGSTRSIZE(szDbg);
 
 			if (!isIconic())
@@ -12017,7 +12027,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 //#ifdef _DEBUG
 		case WM_SHOWWINDOW:
 		{
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SHOWWINDOW (Show=%i, Status=%i)\n", wParam, lParam);
+			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SHOWWINDOW (Show=%i, Status=%i)\n", (DWORD)wParam, (DWORD)lParam);
 			DEBUGSTRSIZE(szDbg);
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			if (wParam == FALSE)
@@ -12242,7 +12252,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 #endif
 		case WM_SETFOCUS:
 			result = gpConEmu->OnFocus(hWnd, messg, wParam, lParam);
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			result = DefWindowProc(hWnd, messg, wParam, lParam); //-V519
 			break;
 		case WM_MOUSEACTIVATE:
 			//return MA_ACTIVATEANDEAT; -- ест все подряд, а LBUTTONUP пропускает :(
@@ -12469,7 +12479,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 						ConEmuTab tab = {0};
 						pCon->RCon()->GetTab(0, &tab);
 						tab.Name[128] = 0; // чтобы не вылезло из szDbg
-						wsprintf(szDbg+lstrlen(szDbg), L": #%i: %s", i+1, tab.Name);
+						wsprintf(szDbg+_tcslen(szDbg), L": #%i: %s", i+1, tab.Name);
 						break;
 					}
 				}
@@ -12591,12 +12601,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgAutoSizeFont)
 			{
-				gpSet->AutoSizeFont((int)wParam, (int)lParam);
+				gpSet->MacroFontSetSize((int)wParam, (int)lParam);
 				return 0;
 			}
-			else if (messg == gpConEmu->mn_MsgSetFontName)
+			else if (messg == gpConEmu->mn_MsgMacroFontSetName)
 			{
-				gpConEmu->PostSetFontNameSize((wchar_t*)lParam, (WORD)(((DWORD)wParam & 0xFFFF0000)>>16), (WORD)(wParam & 0xFFFF), TRUE);
+				gpConEmu->PostMacroFontSetName((wchar_t*)lParam, (WORD)(((DWORD)wParam & 0xFFFF0000)>>16), (WORD)(wParam & 0xFFFF), TRUE);
 				return 0;
 			}
 			else if (messg == gpConEmu->mn_MsgDisplayRConError)

@@ -395,7 +395,7 @@ BOOL LoadFarVersion()
 
 		if (dwSize>0)
 		{
-			void *pVerData = Alloc(dwSize, 1);
+			void *pVerData = Alloc(dwSize, 1); //-V106
 
 			if (pVerData)
 			{
@@ -533,12 +533,12 @@ BOOL CheckConEmu(BOOL abSilence/*=FALSE*/)
 
 void ReloadResourcesW()
 {
-	lstrcpynW(gsFolder, GetMsgW(CEDirFolder), countof(gsFolder));
+	lstrcpynW(gsFolder, GetMsgW(CEDirFolder), countof(gsFolder)); //-V303
 	//lstrcpynW(gsHardLink, GetMsgW(CEDirHardLink), countof(gsHardLink));
-	lstrcpynW(gsSymLink, GetMsgW(CEDirSymLink), countof(gsSymLink));
-	lstrcpynW(gsJunction, GetMsgW(CEDirJunction), countof(gsJunction));
-	lstrcpynW(gsTitleThumbs, GetMsgW(CEColTitleThumbnails), countof(gsTitleThumbs));
-	lstrcpynW(gsTitleTiles, GetMsgW(CEColTitleTiles), countof(gsTitleTiles));
+	lstrcpynW(gsSymLink, GetMsgW(CEDirSymLink), countof(gsSymLink)); //-V303
+	lstrcpynW(gsJunction, GetMsgW(CEDirJunction), countof(gsJunction)); //-V303
+	lstrcpynW(gsTitleThumbs, GetMsgW(CEColTitleThumbnails), countof(gsTitleThumbs)); //-V303
+	lstrcpynW(gsTitleTiles, GetMsgW(CEColTitleTiles), countof(gsTitleTiles)); //-V303
 }
 
 void WINAPI _export SetStartupInfoW(void *aInfo)
@@ -767,8 +767,8 @@ void PostMacro(wchar_t* asMacro)
 
 	if (gFarVersion.dwVerMajor==1)
 	{
-		int nLen = lstrlenW(asMacro);
-		char* pszMacro = (char*)Alloc(nLen+1,1);
+		int nLen = lstrlenW(asMacro); //-V303
+		char* pszMacro = (char*)Alloc(nLen+1,1); //-V106
 
 		if (pszMacro)
 		{
@@ -955,7 +955,7 @@ BOOL CheckPanelSettings(BOOL abSilence)
 	return lbOk;
 }
 
-void LoadPanelItemInfo(CeFullPanelInfo* pi, int nItem)
+void LoadPanelItemInfo(CeFullPanelInfo* pi, INT_PTR nItem)
 {
 	if (gFarVersion.dwVerMajor==1)
 		LoadPanelItemInfoA(pi, nItem);
@@ -1624,7 +1624,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 	WARNING("Если есть хотя бы один диалог - значит перехватывать нельзя");
 	PanelViewMode PVM = pi->PVM;
 	BOOL lbWasChanges = FALSE;
-	int iCurItem, iTopItem, iShift = 0;
+	INT_PTR iCurItem, iTopItem, iShift = 0;
 
 	if (pi->bRequestItemSet)
 	{
@@ -1645,7 +1645,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 
 		if (p->EventType == KEY_EVENT)
 		{
-			int iCurKeyShift = 0;
+			INT_PTR iCurKeyShift = 0;
 			// Перехватываемые клавиши
 			WORD vk = p->Event.KeyEvent.wVirtualKeyCode;
 
@@ -1667,7 +1667,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_UP)\n");
 
 							if (PVM == pvm_Thumbnails)
-								iCurKeyShift = -pi->nXCountFull;
+								iCurKeyShift = -pi->nXCountFull; //-V101
 							else
 								iCurKeyShift = -1;
 						} break;
@@ -1678,7 +1678,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_DOWN)\n");
 
 							if (PVM == pvm_Thumbnails)
-								iCurKeyShift = pi->nXCountFull;
+								iCurKeyShift = pi->nXCountFull; //-V101
 							else
 								iCurKeyShift = 1;
 						} break;
@@ -1691,7 +1691,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_LEFT)\n");
 
 							if (PVM != pvm_Thumbnails)
-								iCurKeyShift = -pi->nYCountFull;
+								iCurKeyShift = -pi->nYCountFull; //-V101
 							else
 								iCurKeyShift = -1;
 						} break;
@@ -1704,7 +1704,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_RIGHT)\n");
 
 							if (PVM != pvm_Thumbnails)
-								iCurKeyShift = pi->nYCountFull;
+								iCurKeyShift = pi->nYCountFull; //-V101
 							else
 								iCurKeyShift = 1;
 						} break;
@@ -1716,17 +1716,17 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_PRIOR)\n");
 							int nRowCol = (PVM == pvm_Thumbnails) ? pi->nXCountFull : pi->nYCountFull;
 
-							if (iCurItem >= (iTopItem + nRowCol))
+							if (iCurItem >= (iTopItem + nRowCol)) //-V104
 							{
-								int nCorrection = (PVM == pvm_Thumbnails)
-								                  ? (iCurItem % nRowCol)
+								int nCorrection = (PVM == pvm_Thumbnails) //-V103
+								                  ? (iCurItem % nRowCol) //-V104
 								                  : 0;
 								// Если PgUp нажат когда текущий элемент НЕ на верхней строке
 								iCurKeyShift = (iTopItem - iCurItem);
 							}
 							else
 							{
-								iCurKeyShift = -(pi->nXCountFull*pi->nYCountFull);
+								iCurKeyShift = -(pi->nXCountFull*pi->nYCountFull); //-V101
 							}
 						} break;
 						case VK_NEXT:
@@ -1738,17 +1738,17 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							int nRowCol = (PVM == pvm_Thumbnails) ? pi->nXCountFull : pi->nYCountFull;
 							int nFull = (pi->nXCountFull*pi->nYCountFull);
 
-							if (iCurItem >= iTopItem && iCurItem < (iTopItem + nFull - nRowCol))
+							if (iCurItem >= iTopItem && iCurItem < (iTopItem + nFull - nRowCol)) //-V104
 							{
 								// Если PgDn нажат когда текущий элемент НЕ на последней строке
-								int nCorrection = (PVM == pvm_Thumbnails)
-								                  ? (iCurItem % nRowCol)
+								INT_PTR nCorrection = (PVM == pvm_Thumbnails) //-V105
+								                  ? (iCurItem % nRowCol) //-V104 //-V105
 								                  : (nRowCol - 1);
-								iCurKeyShift = (iTopItem + nFull - nRowCol - iCurItem) + nCorrection;
+								iCurKeyShift = (iTopItem + nFull - nRowCol - iCurItem) + nCorrection; //-V104
 							}
 							else
 							{
-								iCurKeyShift = nFull;
+								iCurKeyShift = nFull; //-V101
 							}
 						} break;
 					}
@@ -2098,10 +2098,9 @@ void CheckVarsInitialized()
 		gFarInfo.nFarPID = GetCurrentProcessId();
 		gFarInfo.nFarTID = GetCurrentThreadId();
 		gFarInfo.bFarPanelAllowed = TRUE;
+
 		// Загрузить из реестра настройки PanelTabs
-		gFarInfo.PanelTabs.SeparateTabs = gFarInfo.PanelTabs.ButtonColor = -1;
-
-
+		// -- gFarInfo.PanelTabs.SeparateTabs = gFarInfo.PanelTabs.ButtonColor = -1;
 		// Перезагрузить настройки PanelTabs
 		gFarInfo.PanelTabs.SeparateTabs = 1; gFarInfo.PanelTabs.ButtonColor = 0x1B; // умолчания...
 		if (gFarVersion.dwVerMajor == 1)
@@ -2322,7 +2321,7 @@ BOOL SettingsLoadReg(LPCWSTR pszRegKey, LPCWSTR pszName, DWORD* pValue)
 	if (!RegOpenKeyExW(HKEY_CURRENT_USER, pszRegKey, 0, KEY_READ, &hk))
 	{
 		DWORD dwValue, dwSize;
-		if (!RegQueryValueEx(hk, pszName, NULL, NULL, (LPBYTE)&dwValue, &(dwSize=4)))
+		if (!RegQueryValueEx(hk, pszName, NULL, NULL, (LPBYTE)&dwValue, &(dwSize=sizeof(dwValue))))
 		{
 			*pValue = dwValue;
 			lbValue = TRUE;
@@ -2358,12 +2357,14 @@ void SettingsLoadOther(LPCWSTR pszRegKey)
 	_ASSERTE(gFarVersion.dwVerMajor<=2);
 	if (pszRegKey && *pszRegKey)
 	{
-		int nLen = lstrlenW(pszRegKey);
-		int cchSize = nLen+32;
-		wchar_t* pszTabsKey = (wchar_t*)malloc(cchSize*2);
-		_wcscpy_c(pszTabsKey, cchSize, pszRegKey);
+		int nLen = lstrlenW(pszRegKey); //-V303
+		int cchSize = nLen+32; //-V112
+		wchar_t* pszTabsKey = (wchar_t*)malloc(cchSize*sizeof(*pszTabsKey));
+		_wcscpy_c(pszTabsKey, cchSize, pszRegKey); //-V106
 		pszTabsKey[nLen-1] = 0;
 		wchar_t* pszSlash = wcsrchr(pszTabsKey, L'\\');
+
+		WARNING("Переделать на Far3 api, когда соответствующие плагины будут переписаны");
 
 		if (pszSlash)
 		{
@@ -2374,10 +2375,10 @@ void SettingsLoadOther(LPCWSTR pszRegKey)
 			{
 				DWORD dwVal, dwSize;
 
-				if (!RegQueryValueExW(hk, L"SeparateTabs", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
+				if (!RegQueryValueExW(hk, L"SeparateTabs", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = sizeof(dwVal))))
 					gFarInfo.PanelTabs.SeparateTabs = dwVal ? 1 : 0;
 
-				if (!RegQueryValueExW(hk, L"ButtonColor", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
+				if (!RegQueryValueExW(hk, L"ButtonColor", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = sizeof(dwVal))))
 					gFarInfo.PanelTabs.ButtonColor = dwVal & 0xFF;
 
 				RegCloseKey(hk);

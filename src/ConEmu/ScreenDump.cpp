@@ -62,7 +62,6 @@ BOOL LoadScreen(HDC hScreen, int anWidth, int anHeight, LPBYTE* pScreen, DWORD *
 	bih->biXPelsPerMeter = 96;
 	bih->biYPelsPerMeter = 96;
 	bih->biClrImportant = 0;
-	bih->biClrImportant = 0;
 	char * pData = (char*)calloc(iMemSize,1);
 	//char * pDataEnd = pData + iMemSize;
 

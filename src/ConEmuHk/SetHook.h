@@ -85,6 +85,15 @@ typedef VOID (WINAPI* HookItemPostCallback_t)(HookCallbackArg* pArgs);
 typedef VOID (WINAPI* HookItemExceptCallback_t)(HookCallbackArg* pArgs);
 
 
+//struct HookItemLt
+//{
+//	// Calling function must set only this 3 fields
+//	// These fields must be valid for lifetime
+//	const void*     NewAddress;
+//	const char*     Name;
+//	const wchar_t*  DllName;
+//};
+
 struct HookItem
 {
 	// Calling function must set only this 3 fields

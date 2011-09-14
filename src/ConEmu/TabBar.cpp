@@ -1852,7 +1852,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 
 	// restrict length
 	if (!nMaxLen)
-		nMaxLen = gpSet->nTabLenMax - lstrlen(szFormat) + 2/* %s */;
+		nMaxLen = gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
 
 	if (!origLength)
 		origLength = _tcslen(fileName);
@@ -1982,7 +1982,7 @@ int TabBarClass::GetIndexByTab(VConTabs tab)
 		if (*iter == tab)
 			return nIdx;
 
-		iter ++;
+		++iter;
 	}
 
 	return -1;
@@ -2029,7 +2029,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 					// ќпределить следующий таб, который мы можем активировать
 					do
 					{
-						iter ++; // ≈сли дошли до конца (сейчас выделен последний таб) вернуть первый
+						++iter; // ≈сли дошли до конца (сейчас выделен последний таб) вернуть первый
 
 						if (iter == m_TabStack.end()) iter = m_TabStack.begin();
 
@@ -2046,7 +2046,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 					break;
 				}
 
-				iter ++;
+				++iter;
 			}
 		} // ≈сли не смогли в стиле Recent - идем простым путем
 
@@ -2072,7 +2072,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 					// ќпределить следующий таб, который мы можем активировать
 					do
 					{
-						iter ++; // ≈сли дошли до конца (сейчас выделен последний таб) вернуть первый
+						++iter; // ≈сли дошли до конца (сейчас выделен последний таб) вернуть первый
 
 						if (iter == m_TabStack.rend()) iter = m_TabStack.rbegin();
 
@@ -2089,7 +2089,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 					break;
 				}
 
-				iter++;
+				++iter;
 			}
 		} // ≈сли не смогли в стиле Recent - идем простым путем
 
@@ -2165,11 +2165,11 @@ void TabBarClass::CheckStack()
 	BOOL lbExist = FALSE;
 	j = m_TabStack.begin();
 
-	while(j != m_TabStack.end())
+	while (j != m_TabStack.end())
 	{
 		lbExist = FALSE;
 
-		for(i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); i++)
+		for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); ++i)
 		{
 			if (*i == *j)
 			{
@@ -2178,16 +2178,16 @@ void TabBarClass::CheckStack()
 		}
 
 		if (lbExist)
-			j++;
+			++j;
 		else
 			j = m_TabStack.erase(j);
 	}
 
-	for(i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); i++)
+	for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); ++i)
 	{
 		lbExist = FALSE;
 
-		for(j = m_TabStack.begin(); j != m_TabStack.end(); j++)
+		for (j = m_TabStack.begin(); j != m_TabStack.end(); ++j)
 		{
 			if (*i == *j)
 			{
@@ -2227,7 +2227,7 @@ void TabBarClass::AddStack(VConTabs tab)
 				break;
 			}
 
-			iter ++;
+			++iter;
 		}
 	}
 
@@ -2373,7 +2373,7 @@ void TabBarClass::PaintHeader(HDC hdc, RECT rcPaint)
 			Rectangle(hdc, rcTab.left, rcTab.top, rcTab.right, rcTab.bottom);
 			DrawText(hdc, tab.Name, lstrlenW(tab.Name), &rcTab, DT_LEFT|DT_NOPREFIX|DT_VCENTER|DT_WORD_ELLIPSIS);
 			// Next
-			iter ++; rcTab.left += nWidth; rcTab.right += nWidth;
+			++iter; rcTab.left += nWidth; rcTab.right += nWidth;
 		}
 	}
 
@@ -2408,7 +2408,7 @@ void TabBarClass::OnNewConPopup()
 			{
 				History[nLastID].nCmd = nLastID+1;
 				History[nLastID].pszCmd = pszHistory;
-				int nLen = lstrlen(pszHistory);
+				int nLen = _tcslen(pszHistory);
 				int nMaxShort = countof(History[nLastID].szShort);
 				if (nLen >= nMaxShort)
 				{
@@ -2424,7 +2424,7 @@ void TabBarClass::OnNewConPopup()
 				nLastID++;
 			}
 
-			pszHistory += lstrlen(pszHistory)+1;
+			pszHistory += _tcslen(pszHistory)+1;
 		}
 	}
 
@@ -2432,7 +2432,7 @@ void TabBarClass::OnNewConPopup()
 	{
 		History[nLastID].nCmd = nLastID+1;
 		History[nLastID].pszCmd = pszCurCmd;
-		int nLen = lstrlen(pszCurCmd);
+		int nLen = _tcslen(pszCurCmd);
 		int nMaxShort = countof(History[nLastID].szShort);
 		if (nLen >= nMaxShort)
 		{

@@ -42,7 +42,6 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #endif 	/* __ITaskbarList2_FWD_DEFINED__ */
 
 #define WM_TRAYNOTIFY WM_USER+1
-#define ID_DEBUGCON 0xABBC
 #define ID_TOMONITOR 0xABBD
 #define ID_NEWCONSOLE 0xABBE
 #define ID_DUMPPROCESS 0xABBF
@@ -62,6 +61,7 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #define ID_SETTINGS 0xABCD
 #define ID_ABOUT 0xABCE
 #define ID_TOTRAY 0xABCF
+#define ID_DEBUGCON 0xABD0 // есть подозрение, что 0xABBC Win7 сама юзает...
 
 #define IID_IShellLink IID_IShellLinkW
 
@@ -330,7 +330,7 @@ class CConEmuMain
 		//UINT wmInputLangChange;
 		UINT mn_MsgAutoSizeFont;
 		UINT mn_MsgDisplayRConError;
-		UINT mn_MsgSetFontName;
+		UINT mn_MsgMacroFontSetName;
 
 		//
 		static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
@@ -384,8 +384,8 @@ class CConEmuMain
 		RECT GetIdealRect() { return mrc_Ideal; };
 		HMENU GetSystemMenu(BOOL abInitial = FALSE);
 		RECT GetVirtualScreenRect(BOOL abFullScreen);
-		static DWORD GetWindowStyle();
-		static DWORD GetWindowStyleEx();
+		static DWORD_PTR GetWindowStyle();
+		static DWORD_PTR GetWindowStyleEx();
 		LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync);
 		BOOL Init();
 		void InitInactiveDC(CVirtualConsole* apVCon);
@@ -425,7 +425,7 @@ class CConEmuMain
 		void PostMacro(LPCWSTR asMacro);
 		void PostCreate(BOOL abRecieved=FALSE);
 		void PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
-		void PostSetFontNameSize(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted);
+		void PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted);
 		void PostDisplayRConError(CRealConsole* mp_VCon, wchar_t* pszErrMsg);
 		//void PostSetBackground(CVirtualConsole* apVCon, CESERVER_REQ_SETBACKGROUND* apImgData);
 		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))

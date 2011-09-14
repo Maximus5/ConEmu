@@ -2,12 +2,12 @@
 #pragma once
 
 class CAdjustProcessToken
-{
+{ //-V802
 protected:
 	HANDLE hToken;
-	BOOL   bEnabled;
 	TOKEN_PRIVILEGES *tp; DWORD tp_size;
 	TOKEN_PRIVILEGES *tp_prev; DWORD prev_size;
+	BOOL   bEnabled;
 	DWORD  dwErr;
 public:
 	CAdjustProcessToken()

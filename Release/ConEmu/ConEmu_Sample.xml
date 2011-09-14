@@ -135,7 +135,7 @@
 			<value name="CTS.VkText" type="hex" data="a4"/>
 			<value name="CTS.ActMode" type="hex" data="02"/>
 			<value name="CTS.VkAct" type="hex" data="a0"/>
-			<value name="CTS.RBtnAction" type="hex" data="01"/>
+			<value name="CTS.RBtnAction" type="hex" data="03"/>
 			<value name="CTS.MBtnAction" type="hex" data="00"/>
 			<value name="CTS.ColorIndex" type="hex" data="e0"/>
 			<value name="FixFarBordersRanges" type="string" data="2013-25C4"/>

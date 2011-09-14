@@ -96,7 +96,7 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 			{
 				//const wchar_t *pszExt = wcsrchr(FileName, L'.');
 
-				if (lstrcmpiW(pszExt, L".com") == 0)
+				if (pszExt && lstrcmpiW(pszExt, L".com") == 0)
 				{
 					ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
 					ImageBits = 16;
@@ -351,8 +351,8 @@ struct IMAGE_MAPPING
 {
 	union
 	{
-		LPBYTE ptrBegin;
-		PIMAGE_DOS_HEADER pDos;
+		LPBYTE ptrBegin; //-V117
+		PIMAGE_DOS_HEADER pDos; //-V117
 	};
 	LPBYTE ptrEnd;
 	IMAGE_HEADERS* pHdr;
@@ -378,7 +378,7 @@ static bool ValidateMemory(LPVOID ptr, DWORD_PTR nSize, IMAGE_MAPPING* pImg)
 PIMAGE_SECTION_HEADER GetEnclosingSectionHeader(DWORD rva, IMAGE_MAPPING* pImg)
 {
 	// IMAGE_FIRST_SECTION doesn't need 32/64 versions since the file header is the same either way.
-	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pImg->pHdr);
+	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pImg->pHdr); //-V220
 	unsigned i;
 
 	for(i = 0; i < pImg->pHdr->FileHeader.NumberOfSections; i++, section++)
@@ -794,7 +794,7 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 		Ext = pszExtCur;
 		pszExtCur = pszExtCur + lstrlen(pszExtCur)+1;
 
-		_wcscpyn_c(strTmpName, cchstrTmpName, Module, cchstrTmpName);
+		_wcscpyn_c(strTmpName, cchstrTmpName, Module, cchstrTmpName); //-V501
 
 		if (!ModuleExt)
 		{

@@ -55,7 +55,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	//LPTHREAD_START_ROUTINE ptrLoadLibrary = NULL;
 	_ASSERTE(ghOurModule!=NULL);
 	BOOL is64bitOs = FALSE, isWow64process = FALSE;
-	int  ImageBits = 32;
+	int  ImageBits = 32; //-V112
 	//DWORD ImageSubsystem = 0;
 	isWow64process = FALSE;
 #ifdef WIN64
@@ -68,12 +68,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	//UINT_PTR fnLoadLibrary = NULL;
 	//DWORD fLoadLibrary = 0;
 	DWORD nErrCode = 0, nWait = 0;
-	int SelfImageBits;
-#ifdef WIN64
-	SelfImageBits = 64;
-#else
-	SelfImageBits = 32;
-#endif
+	int SelfImageBits = WIN3264TEST(32,64);
 
 	// Процесс не был стартован, или уже завершился
 	nWait = WaitForSingleObject(pi.hProcess, 0);
@@ -92,6 +87,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	}
 
 	pszSlash = wcsrchr(szPluginPath, L'\\');
+
 
 	//if (pszSlash) pszSlash++; else pszSlash = szPluginPath;
 	if (!pszSlash)
@@ -165,13 +161,26 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	// Если битность не совпадает - нужен helper
 	if (ImageBits != SelfImageBits)
 	{
-		iFindAddress = WaitForSingleObject(pi.hProcess, 0);
+		DWORD dwPidWait = WaitForSingleObject(pi.hProcess, 0);
+		if (dwPidWait == WAIT_OBJECT_0)
+		{
+			_ASSERTE(dwPidWait != WAIT_OBJECT_0);
+		}
 		// Требуется 64битный(32битный?) comspec для установки хука
 		iFindAddress = -1;
 		HANDLE hProcess = NULL, hThread = NULL;
 		DuplicateHandle(GetCurrentProcess(), pi.hProcess, GetCurrentProcess(), &hProcess, 0, TRUE, DUPLICATE_SAME_ACCESS);
 		DuplicateHandle(GetCurrentProcess(), pi.hThread, GetCurrentProcess(), &hThread, 0, TRUE, DUPLICATE_SAME_ACCESS);
 		_ASSERTE(hProcess && hThread);
+		#ifdef _WIN64
+		// Если превышение DWORD в Handle - то запускаемый 32битный обломится. Но вызывается ли он вообще?
+		if (((DWORD)hProcess != (DWORD_PTR)hProcess) || ((DWORD)hThread != (DWORD_PTR)hThread))
+		{
+			_ASSERTE(((DWORD)hProcess == (DWORD_PTR)hProcess) && ((DWORD)hThread == (DWORD_PTR)hThread));
+			iRc = -509;
+			goto wrap;
+		}
+		#endif
 		wchar_t sz64helper[MAX_PATH*2];
 		msprintf(sz64helper, countof(sz64helper),
 		          L"\"%s\\ConEmuC%s.exe\" /SETHOOKS=%X,%u,%X,%u",
@@ -183,14 +192,13 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 
 		BOOL lbHelper = CreateProcessW(NULL, sz64helper, lpSec, lpSec, TRUE, HIGH_PRIORITY_CLASS, NULL, NULL, &si, &pi64);
 
-		CloseHandle(hProcess); CloseHandle(hThread);
-
 		if (!lbHelper)
 		{
 			nErrCode = GetLastError();
 			// Ошибки показывает вызывающая функция/процесс
 			iRc = -502;
 			
+			CloseHandle(hProcess); CloseHandle(hThread);
 			goto wrap;
 		}
 		else
@@ -201,6 +209,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 				nErrCode = -1;
 
 			CloseHandle(pi64.hProcess); CloseHandle(pi64.hThread);
+			CloseHandle(hProcess); CloseHandle(hThread);
 
 			if ((int)nErrCode == CERR_HOOKS_WAS_SET)
 			{
@@ -249,7 +258,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 
 			if (abLogProcess || (iRc !=0 ))
 			{
-				int ImageBits = 0, ImageSystem = 0;
+				int ImageSystem = 0;
 				wchar_t szInfo[128];
 				if (iRc != 0)
 				{
@@ -257,22 +266,22 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 					msprintf(szInfo, countof(szInfo), L"InjectHookDLL failed, code=%i:0x%08X", iRc, nErr);
 				}
 				#ifdef _WIN64
-				ImageBits = 64;
+				_ASSERTE(SelfImageBits == 64);
 				if (iRc == 0)
 				{
-					if ((DWORD)(ptrAllocated >> 32))
+					if ((DWORD)(ptrAllocated >> 32)) //-V112
 					{
 						msprintf(szInfo, countof(szInfo), L"Alloc: 0x%08X%08X, Size: %u",
-							(DWORD)(ptrAllocated >> 32), (DWORD)(ptrAllocated & 0xFFFFFFFF), nAllocated);
+							(DWORD)(ptrAllocated >> 32), (DWORD)(ptrAllocated & 0xFFFFFFFF), nAllocated); //-V112
 					}
 					else
 					{
 						msprintf(szInfo, countof(szInfo), L"Alloc: 0x%08X, Size: %u",
-							(DWORD)(ptrAllocated & 0xFFFFFFFF), nAllocated);
+							(DWORD)(ptrAllocated & 0xFFFFFFFF), nAllocated); //-V112
 					}
 				}
 				#else
-				ImageBits = 32;
+				_ASSERTE(SelfImageBits == 32);
 				if (iRc == 0)
 				{
 					msprintf(szInfo, countof(szInfo), L"Alloc: 0x%08X, Size: %u", ptrAllocated, nAllocated);
@@ -281,7 +290,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 				
 				CESERVER_REQ* pIn = ExecuteNewCmdOnCreate(eSrvLoaded,
 					L"", szInfo, L"", NULL, NULL, NULL, NULL, 
-					ImageBits, ImageSystem, NULL, NULL, NULL);
+					SelfImageBits, ImageSystem, NULL, NULL, NULL);
 				if (pIn)
 				{
 					CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);

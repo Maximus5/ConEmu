@@ -752,12 +752,12 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 		{
 			_ASSERTE(lWidth >= (int)nCanvasWidth);
 			nShowWidth = nCanvasWidth;
-			nShowHeight = (int)((((__int64)lHeight) * nCanvasWidth) / lWidth);
+			nShowHeight = (int)((((__int64)lHeight) * nCanvasWidth) / lWidth); //-V537
 		}
 		else
 		{
 			_ASSERTE(lHeight >= (int)nCanvasHeight);
-			nShowWidth = (int)((((__int64)lWidth) * nCanvasHeight) / lHeight);
+			nShowWidth = (int)((((__int64)lWidth) * nCanvasHeight) / lHeight); //-V537
 			nShowHeight = nCanvasHeight;
 		}
 
@@ -870,8 +870,8 @@ void CImgCache::CopyBits(COORD crSrcSize, LPBYTE lpSrc, DWORD nSrcStride, COORD 
 	for(int y = 0; y < nMaxY; y++)
 	{
 		memmove(lpDst, lpSrc, nStride);
-		lpSrc += nSrcStride;
-		lpDst += nDstStride;
+		lpSrc += nSrcStride; //-V102
+		lpDst += nDstStride; //-V102
 	}
 }
 //void CImgCache::UpdateCell(struct IMAGE_CACHE_INFO* pInfo, BOOL abLoadPreview)

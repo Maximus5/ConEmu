@@ -235,7 +235,7 @@ void __INPUT_RECORD_Dump(INPUT_RECORD *rec, wchar_t* pszRecord)
 			          rec->Event.KeyEvent.wRepeatCount,
 			          __VK_KEY_ToName(rec->Event.KeyEvent.wVirtualKeyCode, szKeyName),
 			          rec->Event.KeyEvent.wVirtualScanCode,
-			          (rec->Event.KeyEvent.uChar.UnicodeChar && !(rec->Event.KeyEvent.uChar.UnicodeChar == L'\t' || rec->Event.KeyEvent.uChar.UnicodeChar == L'\r' || rec->Event.KeyEvent.uChar.UnicodeChar == L'\n')?rec->Event.KeyEvent.uChar.UnicodeChar:L' '),
+			          ((rec->Event.KeyEvent.uChar.UnicodeChar && !(rec->Event.KeyEvent.uChar.UnicodeChar == L'\t' || rec->Event.KeyEvent.uChar.UnicodeChar == L'\r' || rec->Event.KeyEvent.uChar.UnicodeChar == L'\n'))?rec->Event.KeyEvent.uChar.UnicodeChar:L' '),
 			          rec->Event.KeyEvent.uChar.UnicodeChar,
 			          (AsciiChar && AsciiChar != '\r' && AsciiChar != '\t' && AsciiChar !='\n' ?AsciiChar:' '),
 			          AsciiChar,

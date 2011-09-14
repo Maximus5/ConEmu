@@ -797,7 +797,7 @@ HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, L
 	HINSTANCE lhRc;
 	lhRc = F(ShellExecuteA)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
 	
-	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, NULL);
+	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, NULL); //-V112
 	delete sp;
 
 	//gbInShellExecuteEx = FALSE;
@@ -826,7 +826,7 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 	HINSTANCE lhRc;
 	lhRc = F(ShellExecuteW)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
 	
-	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, NULL);
+	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, NULL); //-V112
 	delete sp;
 
 	//gbInShellExecuteEx = FALSE;
@@ -967,9 +967,9 @@ int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, in
 				}
 				else if (ch1<0x80 && ch2<0x80)
 				{
-					if (ch1>=L'A' && ch1<=L'Z') ch1 |= 0x20;
+					if (ch1>=L'A' && ch1<=L'Z') ch1 |= 0x20; //-V112
 
-					if (ch2>=L'A' && ch2<=L'Z') ch2 |= 0x20;
+					if (ch2>=L'A' && ch2<=L'Z') ch2 |= 0x20; //-V112
 
 					n = (ch1==ch2) ? 0 : (ch1<ch2) ? -1 : 1;
 				}
@@ -1012,7 +1012,7 @@ DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, L
 			HWND hConWnd = GetConsoleWindow();
 			_ASSERTE(hConWnd == ghConWnd);
 			MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
-			ConInfo.InitName(CECONMAPNAME, (DWORD)hConWnd);
+			ConInfo.InitName(CECONMAPNAME, (DWORD)hConWnd); //-V205
 			CESERVER_CONSOLE_MAPPING_HDR *pInfo = ConInfo.Open();
 			if (pInfo 
 				&& (pInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
@@ -1031,7 +1031,7 @@ DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, L
 
 				if (pOut)
 				{
-					DWORD nData = min(AliasBufferLength,(pOut->hdr.cbSize-sizeof(pOut->hdr)));
+					size_t nData = min(AliasBufferLength,(pOut->hdr.cbSize-sizeof(pOut->hdr)));
 
 					if (nData)
 					{
@@ -1114,6 +1114,7 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 		}
 		else
 		{
+			//BUGBUG: Ќа некоторых системых (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
 			TerminateThread(hThread,100);
 			nCurCP = GetConsoleCP();
 			if (nCurCP == wCodePageID)
@@ -1190,6 +1191,7 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 		}
 		else
 		{
+			//BUGBUG: Ќа некоторых системых (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
 			TerminateThread(hThread,100);
 			nCurCP = GetConsoleOutputCP();
 			if (nCurCP == wCodePageID)
@@ -1412,7 +1414,7 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 	//if (acPeekRead != 'R')
 	//	return;
 	
-	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_PEEKREADINFO, sizeof(CESERVER_REQ_HDR)
+	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_PEEKREADINFO, sizeof(CESERVER_REQ_HDR) //-V119
 		+sizeof(CESERVER_REQ_PEEKREADINFO)+(nRead-1)*sizeof(INPUT_RECORD));
 	if (pIn)
 	{
@@ -1864,15 +1866,23 @@ INT_PTR CALLBACK SimpleApiDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 BOOL MyChooseColor(SimpleApiFunction_t funcPtr, void* lpcc, BOOL abUnicode)
 {
 	BOOL lbRc = FALSE;
-	
-	DLGTEMPLATE* pTempl = (DLGTEMPLATE*)GlobalAlloc(GPTR, sizeof(DLGTEMPLATE)+3*sizeof(WORD));
-	pTempl->style = WS_POPUP|/*DS_MODALFRAME|DS_CENTER|*/DS_SETFOREGROUND;
-	
+
 	SimpleApiFunctionArg Arg =
 	{
 		abUnicode?SimpleApiFunctionArg::sft_ChooseColorW:SimpleApiFunctionArg::sft_ChooseColorA,
 		funcPtr, lpcc
 	};
+
+	DLGTEMPLATE* pTempl = (DLGTEMPLATE*)GlobalAlloc(GPTR, sizeof(DLGTEMPLATE)+3*sizeof(WORD)); //-V119
+	if (!pTempl)
+	{
+		_ASSERTE(pTempl!=NULL);
+		Arg.bResult = Arg.funcPtr(Arg.pArg);
+		Arg.nLastError = GetLastError();
+		return Arg.bResult;
+	}
+	pTempl->style = WS_POPUP|/*DS_MODALFRAME|DS_CENTER|*/DS_SETFOREGROUND;
+	
 	
 	typedef INT_PTR (WINAPI* DialogBoxIndirectParam_t)(HINSTANCE,LPCDLGTEMPLATE,HWND,DLGPROC,LPARAM);
 	DialogBoxIndirectParam_t DialogBoxIndirectParam_f = (DialogBoxIndirectParam_t)GetProcAddress(ghUser32, "DialogBoxIndirectParamW");
@@ -2073,13 +2083,17 @@ void GuiSetForeground(HWND hWnd)
 {
 	if (ghConEmuWndDC)
 	{
-		CESERVER_REQ In, *pOut;
-		ExecutePrepareCmd(&In, CECMD_SETFOREGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(u64));
-		In.qwData[0] = (u64)hWnd;
-		HWND hConWnd = GetConsoleWindow();
-		pOut = ExecuteGuiCmd(hConWnd, &In, hConWnd);
+		CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(sizeof(*pIn)), *pOut;
+		if (pIn)
+		{
+			ExecutePrepareCmd(pIn, CECMD_SETFOREGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(u64)); //-V119
+			pIn->qwData[0] = (u64)hWnd;
+			HWND hConWnd = GetConsoleWindow();
+			pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
 
-		if (pOut) ExecuteFreeResult(pOut);
+			if (pOut) ExecuteFreeResult(pOut);
+			free(pIn);
+		}
 	}
 }
 
@@ -2087,18 +2101,22 @@ void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT u
 {
 	if (ghConEmuWndDC)
 	{
-		CESERVER_REQ In, *pOut;
-		ExecutePrepareCmd(&In, CECMD_FLASHWINDOW, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_FLASHWINFO));
-		In.Flash.bSimple = bSimple;
-		In.Flash.hWnd = hWnd;
-		In.Flash.bInvert = bInvert;
-		In.Flash.dwFlags = dwFlags;
-		In.Flash.uCount = uCount;
-		In.Flash.dwTimeout = dwTimeout;
-		HWND hConWnd = GetConsoleWindow();
-		pOut = ExecuteGuiCmd(hConWnd, &In, hConWnd);
+		CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(sizeof(*pIn)), *pOut;
+		if (pIn)
+		{
+			ExecutePrepareCmd(pIn, CECMD_FLASHWINDOW, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_FLASHWINFO)); //-V119
+			pIn->Flash.bSimple = bSimple;
+			pIn->Flash.hWnd = hWnd;
+			pIn->Flash.bInvert = bInvert;
+			pIn->Flash.dwFlags = dwFlags;
+			pIn->Flash.uCount = uCount;
+			pIn->Flash.dwTimeout = dwTimeout;
+			HWND hConWnd = GetConsoleWindow();
+			pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
 
-		if (pOut) ExecuteFreeResult(pOut);
+			if (pOut) ExecuteFreeResult(pOut);
+			free(pIn);
+		}
 	}
 }
 

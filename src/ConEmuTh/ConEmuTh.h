@@ -84,7 +84,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct CEFAR_FIND_DATA
 {
-	DWORD    dwFileAttributes;
 	//FILETIME ftCreationTime;
 	//FILETIME ftLastAccessTime;
 	FILETIME ftLastWriteTime;
@@ -101,6 +100,7 @@ struct CEFAR_FIND_DATA
 	const wchar_t *lpwszFileNamePart;
 	const wchar_t *lpwszFileExt;
 	//const wchar_t *lpwszAlternateFileName;
+	DWORD    dwFileAttributes; // Decrease 32bit structure size by rearrange
 };
 
 struct CePluginPanelItem
@@ -326,10 +326,10 @@ void FUNC_Y(ReloadPanelsInfoW)();
 //BOOL IsLeftPanelActiveA();
 //BOOL FUNC_X(IsLeftPanelActive)();
 //BOOL FUNC_Y(IsLeftPanelActive)();
-void LoadPanelItemInfo(CeFullPanelInfo* pi, int nItem);
-void LoadPanelItemInfoA(CeFullPanelInfo* pi, int nItem);
-void FUNC_X(LoadPanelItemInfoW)(CeFullPanelInfo* pi, int nItem);
-void FUNC_Y(LoadPanelItemInfoW)(CeFullPanelInfo* pi, int nItem);
+void LoadPanelItemInfo(CeFullPanelInfo* pi, INT_PTR nItem);
+void LoadPanelItemInfoA(CeFullPanelInfo* pi, INT_PTR nItem);
+void FUNC_X(LoadPanelItemInfoW)(CeFullPanelInfo* pi, INT_PTR nItem);
+void FUNC_Y(LoadPanelItemInfoW)(CeFullPanelInfo* pi, INT_PTR nItem);
 bool CheckWindows();
 //bool CheckWindowsA();
 //bool FUNC_X(CheckWindows)();
@@ -373,9 +373,9 @@ void FUNC_Y(ExecuteInMainThreadW)(ConEmuThSynchroArg* pCmd);
 //int WINAPI ProcessSynchroEventW(int Event, void *Param);
 
 #define SYNCHRO_REDRAW_PANEL ((ConEmuThSynchroArg*)1)
-void SetCurrentPanelItemA(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem);
-void FUNC_X(SetCurrentPanelItemW)(BOOL bLeftPanel, UINT anTopItem, UINT anCurItem);
-void FUNC_Y(SetCurrentPanelItemW)(BOOL bLeftPanel, UINT anTopItem, UINT anCurItem);
+void SetCurrentPanelItemA(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem);
+void FUNC_X(SetCurrentPanelItemW)(BOOL bLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem);
+void FUNC_Y(SetCurrentPanelItemW)(BOOL bLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem);
 
 #define SYNCHRO_RELOAD_PANELS ((ConEmuThSynchroArg*)2)
 

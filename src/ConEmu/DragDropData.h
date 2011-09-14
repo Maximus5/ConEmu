@@ -126,8 +126,8 @@ class CDragDropData
 		typedef struct tag_CEDragSource
 		{
 			BOOL    bInDrag;
-			CDragDropData* pDrag;
 			DWORD   nTID;
+			CDragDropData* pDrag;
 			HANDLE  hReady;
 			HANDLE  hThread;
 			HWND    hWnd;

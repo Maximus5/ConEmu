@@ -169,9 +169,9 @@ class MFileMapping
 {
 	protected:
 		HANDLE mh_Mapping;
-		BOOL mb_WriteAllowed;
-		int mn_Size;
 		T* mp_Data; //WARNING!!! ƒоступ может быть только на чтение!
+		BOOL mb_WriteAllowed;
+		DWORD mn_Size;
 		wchar_t ms_MapName[128];
 		DWORD mn_LastError;
 		wchar_t ms_Error[MAX_PATH*2];
@@ -203,8 +203,8 @@ class MFileMapping
 			if (nSize < 0)
 				return false;
 
-			bool lbChanged = (memcmp(mp_Data, pSrc, nSize)!=0);
-			memmove(mp_Data, pSrc, nSize);
+			bool lbChanged = (memcmp(mp_Data, pSrc, nSize)!=0); //-V106
+			memmove(mp_Data, pSrc, nSize); //-V106
 			return lbChanged;
 		}
 		bool GetTo(T* pDst, int nSize=-1)
@@ -214,7 +214,7 @@ class MFileMapping
 			if (nSize<0) nSize = sizeof(T);
 
 			//потому, что T может быть описан как const - (void*)
-			memmove((void*)pDst, mp_Data, nSize);
+			memmove((void*)pDst, mp_Data, nSize); //-V106
 			return true;
 		}
 		#endif
@@ -270,7 +270,7 @@ class MFileMapping
 			}
 			else
 			{
-				mn_Size = (nSize<=0) ? sizeof(T) : nSize;
+				mn_Size = (nSize<=0) ? sizeof(T) : nSize; //-V105 //-V103
 				mb_WriteAllowed = abCreate || abReadWrite;
 
 				if (abCreate)
@@ -396,7 +396,7 @@ class MPipe
 			//va_start( args, aszTemplate );
 			//vswprintf_s(ms_PipeName, countof(ms_PipeName), aszTemplate, args);
 			msprintf(ms_PipeName, countof(ms_PipeName), aszTemplate, Parm1, Parm2);
-			lstrcpynW(ms_Module, asModule, countof(ms_Module));
+			lstrcpynW(ms_Module, asModule, countof(ms_Module)); //-V303
 
 			if (mh_Pipe)
 				Close();
@@ -431,8 +431,8 @@ class MPipe
 			BOOL fSuccess = FALSE;
 			DWORD cbRead, dwErr, cbReadBuf;
 			// ƒл€ справки, информаци€ о последнем запросе
-			cbReadBuf = min(anInSize, sizeof(m_In));
-			memmove(&m_In, apIn, cbReadBuf);
+			cbReadBuf = min(anInSize, sizeof(m_In)); //-V105 //-V103
+			memmove(&m_In, apIn, cbReadBuf); //-V106
 			// Send a message to the pipe server and read the response.
 			cbRead = 0; cbReadBuf = sizeof(m_Tmp);
 			T_OUT* ptrOut = &m_Tmp;
@@ -522,7 +522,7 @@ class MPipe
 
 				if (!mp_Out || (int)mn_MaxOutSize < nAllSize)
 				{
-					T_OUT* ptrNew = (T_OUT*)HeapAlloc(mh_Heap, 0, nAllSize);
+					T_OUT* ptrNew = (T_OUT*)HeapAlloc(mh_Heap, 0, nAllSize); //-V106
 
 					if (!ptrNew)
 					{
@@ -531,7 +531,7 @@ class MPipe
 						return FALSE;
 					}
 
-					memmove(ptrNew, ptrOut, cbRead);
+					memmove(ptrNew, ptrOut, cbRead); //-V106
 
 					if (mp_Out) HeapFree(mh_Heap, 0, mp_Out);
 
@@ -540,11 +540,11 @@ class MPipe
 				}
 				else if (ptrOut == &m_Tmp)
 				{
-					memmove(mp_Out, &m_Tmp, cbRead);
+					memmove(mp_Out, &m_Tmp, cbRead); //-V106
 				}
 
 				*rpOut = mp_Out;
-				LPBYTE ptrData = ((LPBYTE)mp_Out)+cbRead;
+				LPBYTE ptrData = ((LPBYTE)mp_Out)+cbRead; //-V104
 				nAllSize -= cbRead;
 
 				while(nAllSize>0)
@@ -558,7 +558,7 @@ class MPipe
 					if (!fSuccess && (dwErr != ERROR_MORE_DATA))
 						break;
 
-					ptrData += cbRead;
+					ptrData += cbRead; //-V102
 					nAllSize -= cbRead;
 				}
 
@@ -705,7 +705,7 @@ class CTimer
 {
 	protected:
 		HWND mh_Wnd;
-		UINT mn_TimerId;
+		UINT_PTR mn_TimerId;
 		UINT mn_Elapse;
 		bool mb_Started;
 	public:
@@ -747,7 +747,7 @@ class CTimer
 		{
 			Stop();
 		};
-		void Init(HWND ahWnd, UINT anTimerID, UINT anElapse)
+		void Init(HWND ahWnd, UINT_PTR anTimerID, UINT anElapse)
 		{
 			Stop();
 			mh_Wnd = ahWnd; mn_TimerId = anTimerID; mn_Elapse = anElapse;

@@ -424,7 +424,7 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...);
 #define _wcscat_c(Dst,cchDest,Src) StringCchCatW(Dst, cchDest, Src)
 #define _wcscatn_c(Dst,cchDest,Src,cchSrc) { \
 			_ASSERTE(((INT_PTR)cchDest)>=((INT_PTR)cchSrc)); size_t nDestLen = lstrlen(Dst); \
-			if (((INT_PTR)(nDestLen+1)) >= ((INT_PTR)cchDest) || (cchSrc<0)) DebugBreak(); else StringCchCopyNW(Dst+nDestLen,cchDest-nDestLen,Src,(int)cchSrc); \
+			if (((INT_PTR)(nDestLen+1)) >= ((INT_PTR)cchDest) || (cchSrc<0)) DebugBreak(); else StringCchCopyNW(Dst+nDestLen,cchDest-nDestLen,Src,cchSrc); \
 		}
 #define _strcpy_c(Dst,cchDest,Src) StringCchCopyA(Dst, cchDest, Src)
 #define _strcat_c(Dst,cchDest,Src) StringCchCatA(Dst, cchDest, Src)

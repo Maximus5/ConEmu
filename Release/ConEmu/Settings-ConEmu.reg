@@ -379,7 +379,7 @@ REGEDIT4
 ;; Actions for Right & Middle mouse buttons
 ;"CTS.ActMode"=hex:02
 ;"CTS.VkAct"=hex:a0
-;"CTS.RBtnAction"=hex:01
+;"CTS.RBtnAction"=hex:03
 ;"CTS.MBtnAction"=hex:00
 ;; Colors indexes (background & foreground) of selection mark
 ;"CTS.ColorIndex"=hex:e0

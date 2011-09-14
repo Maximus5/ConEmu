@@ -615,7 +615,7 @@ void CPluginBackground::UpdateBackground()
 	{
 		GdiFlush();
 		DWORD nBitSize = bi.biWidth*bi.biHeight*4;
-		DWORD nWholeSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETBACKGROUND)+nBitSize;
+		DWORD nWholeSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETBACKGROUND)+nBitSize; //-V103 //-V119
 		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETBACKGROUND, nWholeSize);
 
 		if (!pIn)
@@ -628,8 +628,8 @@ void CPluginBackground::UpdateBackground()
 			pIn->Background.bEnabled = TRUE;
 			pIn->Background.dwDrawnPlaces = dwDrawnPlaces;
 			pIn->Background.bmp.bfType = 0x4D42/*BM*/;
-			pIn->Background.bmp.bfSize = nBitSize+sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER);
-			pIn->Background.bmp.bfOffBits = sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER);
+			pIn->Background.bmp.bfSize = nBitSize+sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER); //-V119
+			pIn->Background.bmp.bfOffBits = sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER); //-V119
 			pIn->Background.bi = bi;
 			memmove(((LPBYTE)&pIn->Background.bi)+sizeof(pIn->Background.bi), pBits, bi.biWidth*bi.biHeight*4);
 			CESERVER_REQ *pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);

@@ -392,7 +392,7 @@ LPBYTE Decode1BPP(UINT nWidth, UINT nHeight, RGBQUAD* pPAL, LPBYTE pXOR, LPBYTE 
 			if ((pXorSrc[i/8] >> (7 - ((i) & 7)) & 1) == 0)
 			{
 				if ((pAndSrc[i/8] >> (7 - ((i) & 7)) & 1) != 0)
-					((UINT*)pDst)[i] = 0xFFFFFFFF;
+					((UINT*)pDst)[i] = 0xFFFFFFFF; //-V112
 				else
 					((UINT*)pDst)[i] = 0xFF000000;
 			}
@@ -900,7 +900,7 @@ struct ICOImage
 				pIcon->Icon.idType = 1;
 				pIcon->Icon.idCount = 1;
 				pIcon->Icon.idEntries[0].bWidth = (BYTE)pBmp->biWidth;
-				pIcon->Icon.idEntries[0].bHeight = (BYTE)pBmp->biWidth;
+				pIcon->Icon.idEntries[0].bHeight = (BYTE)pBmp->biWidth; //-V537 //помним, что (pBmp->biHeight == (pBmp->biWidth * 2))
 				pIcon->Icon.idEntries[0].bColorCount = (pBmp->biBitCount >= 8) ? 0 : (1 << pBmp->biBitCount);
 				pIcon->Icon.idEntries[0].bReserved = 0;
 				pIcon->Icon.idEntries[0].wPlanes = pBmp->biPlanes;

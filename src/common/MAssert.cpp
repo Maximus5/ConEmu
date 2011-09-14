@@ -61,7 +61,8 @@ DWORD WINAPI MyAssertThread(LPVOID p)
 	}
 
 	gnInMyAssertThread = GetCurrentThreadId();
-	ResetEvent(ghInMyAssertTrap);
+	if (ghInMyAssertTrap)
+		ResetEvent(ghInMyAssertTrap);
 	gbInMyAssertTrap = true;
 	
 	DWORD nRc = 
@@ -73,7 +74,8 @@ DWORD WINAPI MyAssertThread(LPVOID p)
 			
 
 	gbInMyAssertTrap = false;
-	SetEvent(ghInMyAssertTrap);
+	if (ghInMyAssertTrap)
+		SetEvent(ghInMyAssertTrap);
 	gnInMyAssertThread = 0;
 	return nRc;
 }

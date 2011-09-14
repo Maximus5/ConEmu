@@ -554,7 +554,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="Far3.2110\plugins\ConEmu\Thumbs\ConEmuTh.dll"
+				OutputFile="\Far3\plugins\ConEmu\Thumbs\ConEmuTh.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -1355,7 +1355,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="shlwapi.lib version.lib"
-				OutputFile="\Far3.2110\Plugins\ConEmu\Thumbs\ConEmuTh.dll"
+				OutputFile="\Far3\Plugins\ConEmu\Thumbs\ConEmuTh.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

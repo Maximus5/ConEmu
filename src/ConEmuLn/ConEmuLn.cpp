@@ -57,6 +57,8 @@ HMODULE ghPluginModule = NULL; // ConEmuLn.dll - сам плагин
 //wchar_t* gszRootKey = NULL;
 FarVersion gFarVersion = {{0}};
 static RegisterBackground_t gfRegisterBackground = NULL;
+bool gbInStartPlugin = false;
+bool gbSetStartupInfoOk = false;
 ConEmuLnSettings gSettings[] = {
 	{L"PluginEnabled", (LPBYTE)&gbBackgroundEnabled, REG_BINARY, 1},
 	{L"LinesColor", (LPBYTE)&gcrLinesColor, REG_DWORD, 4},
@@ -204,6 +206,8 @@ BOOL LoadFarVersion()
 
 void WINAPI _export SetStartupInfoW(void *aInfo)
 {
+	gbSetStartupInfoOk = true;
+
 	if (!gFarVersion.dwVerMajor) LoadFarVersion();
 
 	if (gFarVersion.dwBuild>=FAR_Y_VER)
@@ -289,6 +293,12 @@ void WINAPI OnConEmuLoaded(struct ConEmuLoadedArg* pConEmuInfo)
 
 void SettingsLoad()
 {
+	if (!gbSetStartupInfoOk)
+	{
+		_ASSERTE(gbSetStartupInfoOk);
+		return;
+	}
+
 	if (gFarVersion.dwVerMajor == 1)
 		SettingsLoadA();
 	else if (gFarVersion.dwBuild >= FAR_Y_VER)
@@ -388,29 +398,18 @@ void SettingsSaveReg(LPCWSTR pszRegKey)
 
 void StartPlugin(BOOL bConfigure)
 {
+	if (gbInStartPlugin)
+	{
+		// Вложенных вызовов быть не должно
+		_ASSERTE(gbInStartPlugin==false);
+		return;
+	}
+
+	gbInStartPlugin = true;
+
 	if (!bConfigure)
 	{
 		SettingsLoad();
-		//HKEY hkey = NULL;
-
-		//if (!RegOpenKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, KEY_READ, &hkey))
-		//{
-		//	DWORD nVal, nType, nSize; BYTE cVal;
-
-		//	if (!RegQueryValueExW(hkey, L"PluginEnabled", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
-		//		gbBackgroundEnabled = (cVal != 0);
-
-		//	if (!RegQueryValueExW(hkey, L"LinesColor", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
-		//		gcrLinesColor = nVal;
-
-		//	if (!RegQueryValueExW(hkey, L"HilightPlugins", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
-		//		gbHilightPlugins = (cVal != 0);
-
-		//	if (!RegQueryValueExW(hkey, L"HilightPlugBack", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
-		//		gcrHilightPlugBack = nVal;
-
-		//	RegCloseKey(hkey);
-		//}
 	}
 
 	static bool bWasRegistered = false;
@@ -445,6 +444,9 @@ void StartPlugin(BOOL bConfigure)
 	{
 		bWasRegistered = false;
 	}
+
+	// Вернуть флаг обратно
+	gbInStartPlugin = false;
 }
 
 void ExitPlugin(void)
@@ -454,6 +456,8 @@ void ExitPlugin(void)
 		RegisterBackgroundArg inf = {sizeof(RegisterBackgroundArg), rbc_Unregister, ghPluginModule};
 		gfRegisterBackground(&inf);
 	}
+
+	gbSetStartupInfoOk = false;
 
 	//if (gszRootKey)
 	//{

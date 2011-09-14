@@ -27,6 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <windows.h>
+#include "defines.h"
 #include "Memory.h"
 #include "MStrSafe.h"
 
@@ -273,23 +274,13 @@ void __cdecl xf_dump()
 
 			if (p->bBlockUsed==TRUE && p->nBlockSize==ent.cbData)
 			{
-#ifndef _WIN64
-				wsprintfA(sBlockInfo, "!!! Lost memory block at 0x%08X, size %u\n    Allocated from: %s\n", ent.lpData, ent.cbData,
+				wsprintfA(sBlockInfo, "!!! Lost memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n", WIN3264WSPRINT(ent.lpData), ent.cbData,
 				          p->sCreatedFrom);
-#else
-				wsprintfA(sBlockInfo, "!!! Lost memory block at 0x%I64X, size %u\n    Allocated from: %s\n", ent.lpData, ent.cbData,
-				          p->sCreatedFrom);
-#endif
 			}
 			else
 			{
-#ifndef _WIN64
-				wsprintfA(sBlockInfo, "!!! Lost memory block at 0x%08X, size %u\n    Allocated from: %s\n", ent.lpData, ent.cbData,
+				wsprintfA(sBlockInfo, "!!! Lost memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n", WIN3264WSPRINT(ent.lpData), ent.cbData,
 				          "<Header information broken!>");
-#else
-				wsprintfA(sBlockInfo, "!!! Lost memory block at 0x%I64X, size %u\n    Allocated from: %s\n", ent.lpData, ent.cbData,
-				          "<Header information broken!>");
-#endif
 			}
 
 			pLast = ent.lpData;

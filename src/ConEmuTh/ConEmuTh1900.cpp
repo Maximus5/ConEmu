@@ -99,7 +99,7 @@ void GetPluginInfoW1900(void *piv)
 
 	static wchar_t *szMenu[1], szMenu1[255];
 	szMenu[0] = szMenu1;
-	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
+	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240); //-V303
 
 	pi->Flags = PF_PRELOAD;
 	pi->PluginMenu.Guids = &guid_ConEmuThPluginMenu;
@@ -252,7 +252,7 @@ int ShowPluginMenuW1900()
 		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW1900->GetMsg(&guid_ConEmuTh,CEMenuThumbnails)},
 		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW1900->GetMsg(&guid_ConEmuTh,CEMenuTiles)},
 	};
-	int nCount = sizeof(items)/sizeof(items[0]);
+	size_t nCount = countof(items);
 	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE);
 
 	if (!pi)
@@ -302,11 +302,11 @@ BOOL IsMacroActiveW1900()
 }
 
 
-void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, int nItem)
+void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, INT_PTR nItem)
 {
 	//HANDLE hPanel = pi->hPanel;
 	HANDLE hPanel = pi->Focus ? PANEL_ACTIVE : PANEL_PASSIVE;
-	INT_PTR nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELITEM, nItem, NULL);
+	size_t nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELITEM, (int)nItem, NULL);
 	//PluginPanelItem *ppi = (PluginPanelItem*)malloc(nMaxSize);
 	//if (!ppi)
 	//	return;
@@ -315,7 +315,7 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, int nItem)
 	{
 		if (pi->pFarTmpBuf) free(pi->pFarTmpBuf);
 
-		pi->nFarTmpBuf = (int)(nSize+MAX_PATH); // + про запас немножко
+		pi->nFarTmpBuf = nSize+MAX_PATH; // + про запас немножко //-V101
 		pi->pFarTmpBuf = malloc(pi->nFarTmpBuf);
 	}
 
@@ -324,7 +324,7 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, int nItem)
 	if (ppi)
 	{
 		FarGetPluginPanelItem gppi = {nSize, ppi};
-		nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELITEM, nItem, &gppi);
+		nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELITEM, (int)nItem, &gppi);
 	}
 	else
 	{
@@ -416,7 +416,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	CeFullPanelInfo* pcefpi = NULL;
 	PanelInfo pi = {0};
 	HANDLE hPanel = abActive ? PANEL_ACTIVE : PANEL_PASSIVE;
-	int nRc = InfoW1900->PanelControl(hPanel, FCTL_GETPANELINFO, 0, &pi);
+	INT_PTR nRc = InfoW1900->PanelControl(hPanel, FCTL_GETPANELINFO, 0, &pi);
 
 	if (!nRc)
 	{
@@ -466,14 +466,14 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	                                (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETPANELSETTINGS, 0, 0);
 
 	// Цвета фара
-	int nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, NULL);
+	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, NULL);
 #ifdef _DEBUG
 	INT_PTR nDefColorSize = COL_LASTPALETTECOLOR;
 	_ASSERTE(nColorSize==nDefColorSize);
 #endif
 	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
 	if (pColors)
-		nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, nColorSize, pColors);
+		nColorSize = InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, (int)nColorSize, pColors);
 	WARNING("Поддержка более 4бит цветов");
 	if (pColors && nColorSize > 0)
 	{
@@ -496,18 +496,18 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 		memset(pcefpi->nFarColors, 7, countof(pcefpi->nFarColors)*sizeof(*pcefpi->nFarColors));
 	}
 	SafeFree(pColors);
-	//int nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, NULL);
+	//int nColorSize = InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, NULL);
 	//if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
 	//{
 	//	if (pcefpi->nFarColors) free(pcefpi->nFarColors);
 	//	pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
 	//	pcefpi->nMaxFarColors = nColorSize;
 	//}
-	////nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, pcefpi->nFarColors);
+	////nColorSize = InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, pcefpi->nFarColors);
 	//FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
 	//
 	//if (pColors)
-	//	nColorSize = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, nColorSize, pColors);
+	//	nColorSize = InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, nColorSize, pColors);
 	//
 	//WARNING("Поддержка более 4бит цветов");
 	//if (pColors && nColorSize > 0)
@@ -522,7 +522,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	//SafeFree(pColors);
 	
 	// Текущая папка панели
-	int nSize = (int)InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR, 0, 0);
+	size_t nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR, 0, 0);
 
 	if (nSize)
 	{
@@ -532,7 +532,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 			pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
 		}
 
-		nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR, nSize, pcefpi->pszPanelDir);
+		nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR, (int)nSize, pcefpi->pszPanelDir);
 
 		if (!nSize)
 		{
@@ -576,7 +576,7 @@ void ReloadPanelsInfoW1900()
 	LoadPanelInfoW1900(FALSE);
 }
 
-void SetCurrentPanelItemW1900(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
+void SetCurrentPanelItemW1900(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem)
 {
 	if (!InfoW1900) return;
 
@@ -600,17 +600,19 @@ void SetCurrentPanelItemW1900(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
 	if (pi->ItemsNumber < 1)
 		return;
 
-	if ((int)anTopItem >= pi->ItemsNumber)
+	if (anTopItem >= (INT_PTR)pi->ItemsNumber)
 		anTopItem = pi->ItemsNumber - 1;
 
-	if ((int)anCurItem >= pi->ItemsNumber)
+	if (anCurItem >= (INT_PTR)pi->ItemsNumber)
 		anCurItem = pi->ItemsNumber - 1;
 
 	if (anCurItem < anTopItem)
 		anCurItem = anTopItem;
 
 	// Обновляем панель
+	#pragma warning(disable: 4244)
 	PanelRedrawInfo pri = {anCurItem, anTopItem};
+	#pragma warning(default: 4244)
 	InfoW1900->PanelControl(hPanel, FCTL_REDRAWPANEL, 0, &pri);
 }
 
@@ -689,7 +691,7 @@ bool CheckFarPanelsW1900()
 //	if (!InfoW1900 || !InfoW1900->AdvControl) return false;
 //
 //	bool lbPanelsActive = false;
-//	int nCount = (int)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETWINDOWCOUNT, NULL);
+//	int nCount = InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETWINDOWCOUNT, NULL);
 //	WindowInfo wi = {0};
 //
 //	wi.Pos = -1;

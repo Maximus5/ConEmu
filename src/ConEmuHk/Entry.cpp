@@ -86,6 +86,8 @@ BOOL gbHooksWasSet = FALSE;
 UINT_PTR gfnLoadLibrary = NULL;
 extern BOOL StartupHooks(HMODULE ahOurDll);
 extern void ShutdownHooks();
+extern void InitializeHookedModules();
+extern void FinalizeHookedModules();
 //HMODULE ghPsApi = NULL;
 #ifdef _DEBUG
 //extern bool gbAllowAssertThread;
@@ -99,7 +101,8 @@ HWND    ghConEmuWnd = NULL; // Root! window
 HWND    ghConEmuWndDC = NULL; // ConEmu DC window
 BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
-DWORD   gnImageSubsystem = 0, gnImageBits = 32;
+DWORD   gnImageSubsystem = 0;
+DWORD   gnImageBits = WIN3264TEST(32,64); //-V112
 
 //MSection *gpHookCS = NULL;
 
@@ -136,7 +139,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap()
 	if (!gpConMap)
 	{
 		gpConMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
-		gpConMap->InitName(CECONMAPNAME, (DWORD)ghConWnd);
+		gpConMap->InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
 	}
 	
 	if (!gpConInfo)
@@ -173,6 +176,8 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap()
 
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
+	InitializeHookedModules();
+
 	//HANDLE hStartedEvent = (HANDLE)apParm;
 	#ifdef _DEBUG
 	wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
@@ -415,6 +420,8 @@ void DllStop()
 	//	gpHookCS = NULL;
 	//	delete p;
 	//}
+
+	FinalizeHookedModules();
 
 	//ReleaseConsoleInputSemaphore();
 
@@ -736,7 +743,7 @@ void SendStarted()
 	}
 
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
-	int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
+	size_t nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP); //-V119
 	pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP, nSize);
 
 	if (pIn)
@@ -799,8 +806,9 @@ void SendStarted()
 		//}
 		//else
 		//{
+
+		// Необходимо определить битность и тип (CUI/GUI) процесса, в который нас загрузили
 		GetImageSubsystem(gnImageSubsystem, gnImageBits);
-		//}
 
 		pIn->StartStop.nSubSystem = gnImageSubsystem;
 		//pIn->StartStop.bRootIsCmdExe = gbRootIsCmdExe; //2009-09-14
@@ -931,7 +939,7 @@ void SendStopped()
 		return;
 	
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
-	int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
+	size_t nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
 	pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP,nSize);
 
 	if (pIn)

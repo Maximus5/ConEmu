@@ -52,7 +52,7 @@ static bool ChangeExports( const ExportFunc* Funcs, HMODULE Module )
     IMAGE_NT_HEADERS* nt_header = 0;
     if( dos_header->e_magic == 'ZM' )
     {
-        nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
+        nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew); //-V104
         if( nt_header->Signature != 0x004550 )
             return false;
         else
@@ -63,7 +63,7 @@ static bool ChangeExports( const ExportFunc* Funcs, HMODULE Module )
     if (!ExportDir)
         return false;
 
-    IMAGE_SECTION_HEADER* section = (IMAGE_SECTION_HEADER*)IMAGE_FIRST_SECTION (nt_header);
+    IMAGE_SECTION_HEADER* section = (IMAGE_SECTION_HEADER*)IMAGE_FIRST_SECTION (nt_header); //-V220 //-V104
 
     int s = 0;
     for(s = 0; s < nt_header->FileHeader.NumberOfSections; s++)
@@ -73,17 +73,17 @@ static bool ChangeExports( const ExportFunc* Funcs, HMODULE Module )
            (section[s].Misc.VirtualSize + section[s].VirtualAddress > ExportDir)))
         {
             int nDiff = 0;//section[s].VirtualAddress - section[s].PointerToRawData;
-            IMAGE_EXPORT_DIRECTORY* Export = (IMAGE_EXPORT_DIRECTORY*)((char*)Module + (ExportDir-nDiff));
-            DWORD* Name = (DWORD*)((char*)Module + Export->AddressOfNames);
-            DWORD* Ptr  = (DWORD*)((char*)Module + Export->AddressOfFunctions);
+            IMAGE_EXPORT_DIRECTORY* Export = (IMAGE_EXPORT_DIRECTORY*)((char*)Module + (ExportDir-nDiff)); //-V104
+            DWORD* Name = (DWORD*)((char*)Module + Export->AddressOfNames); //-V104
+            DWORD* Ptr  = (DWORD*)((char*)Module + Export->AddressOfFunctions); //-V104
 
             DWORD old_protect;
-            if (!VirtualProtect( Ptr, Export->NumberOfFunctions * sizeof( DWORD ), PAGE_READWRITE, &old_protect ))
+            if (!VirtualProtect( Ptr, Export->NumberOfFunctions * sizeof( DWORD ), PAGE_READWRITE, &old_protect )) //-V104
                 return false;
 
-            for (DWORD i = 0; i < Export->NumberOfNames; i++)
+            for (size_t i = 0; i < Export->NumberOfNames; i++) //-V104
             {
-                for (int j = 0; Funcs[j].Name; j++)
+                for (size_t j = 0; Funcs[j].Name; j++)
 				{
 					DWORD PtrFunc = (DWORD)((DWORD_PTR)(Funcs[j].OldAddress) - (DWORD_PTR)Module);
                     if (Funcs[j].NewAddress 
@@ -100,7 +100,7 @@ static bool ChangeExports( const ExportFunc* Funcs, HMODULE Module )
             }
 
             //DebugString(_T("done..."));
-            VirtualProtect( Ptr, Export->NumberOfFunctions * sizeof( DWORD ), old_protect, &old_protect );
+            VirtualProtect( Ptr, Export->NumberOfFunctions * sizeof( DWORD ), old_protect, &old_protect ); //-V104
         }
     }
     return true;

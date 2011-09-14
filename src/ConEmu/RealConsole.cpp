@@ -406,7 +406,7 @@ void CRealConsole::DumpConsole(HANDLE ahFile)
 		MSectionLock sc; sc.Lock(&csCON, FALSE);
 		DWORD nSize = con.nTextWidth * con.nTextHeight * 2;
 		lbRc = WriteFile(ahFile, con.pConChar, nSize, &dw, NULL);
-		lbRc = WriteFile(ahFile, con.pConAttr, nSize, &dw, NULL);
+		lbRc = WriteFile(ahFile, con.pConAttr, nSize, &dw, NULL); //-V519
 	}
 }
 
@@ -848,7 +848,7 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 
 		if (newCon.right == 80)
 		{
-			newCon.right = newCon.right;
+			int nDbg = newCon.right;
 		}
 
 #endif
@@ -984,7 +984,6 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_RE
 	pRet->nWidth = rcCon.right;
 	pRet->nHeight = rcCon.bottom;
 	pRet->dwSrvPID = anConemuC_PID;
-	pRet->bNeedLangChange = rcCon.bottom;
 	pRet->bNeedLangChange = TRUE;
 	TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
 	pRet->NewConsoleLang = gpConEmu->GetActiveKeyboardLayout();
@@ -1298,7 +1297,10 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 {
 	BOOL lbChildProcessCreated = FALSE;
 	CRealConsole* pRCon = (CRealConsole*)lpParameter;
-	pRCon->SetConStatus(L"Initializing RealConsole...");
+
+	BOOL bDetached = pRCon->m_Args.bDetached;
+
+	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...");
 
 	if (pRCon->mb_NeedStartProcess)
 	{
@@ -1325,7 +1327,6 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	//_ASSERTE(pRCon->mh_ConChanged!=NULL);
 	// Пока нить запускалась - произошел "аттач" так что все нормально...
 	//_ASSERTE(pRCon->mb_Detached || pRCon->mh_ConEmuC!=NULL);
-	BOOL bDetached = pRCon->m_Args.bDetached;
 	//TODO: а тут мы будем читать консоль...
 #define IDEVENT_TERM  0
 #define IDEVENV_MONITORTHREADEVENT 1
@@ -2061,8 +2062,8 @@ BOOL CRealConsole::StartProcess()
 			lpszCmd = gpSet->GetCmd();
 
 		int nCurLen = 0;
-		int nLen = lstrlen(lpszCmd);
-		nLen += lstrlen(gpConEmu->ms_ConEmuExe) + 300 + MAX_PATH;
+		int nLen = _tcslen(lpszCmd);
+		nLen += _tcslen(gpConEmu->ms_ConEmuExe) + 300 + MAX_PATH;
 		MCHKHEAP;
 		psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 		_ASSERTE(psCurCmd);
@@ -2080,14 +2081,14 @@ BOOL CRealConsole::StartProcess()
 
 		if (gpSet->nConInMode != (DWORD)-1)
 		{
-			nCurLen = lstrlen(psCurCmd);
+			nCurLen = _tcslen(psCurCmd);
 			_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen) L" /CINMODE=%X ", gpSet->nConInMode);
 		}
 
 		int nWndWidth = con.m_sbi.dwSize.X;
 		int nWndHeight = con.m_sbi.dwSize.Y;
 		GetConWindowSize(con.m_sbi, nWndWidth, nWndHeight);
-		nCurLen = lstrlen(psCurCmd);
+		nCurLen = _tcslen(psCurCmd);
 		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen)
 		          L"/GID=%i /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i",
 		          GetCurrentProcessId(), nWndWidth, nWndHeight, con.DefaultBufferHeight,
@@ -2238,9 +2239,9 @@ BOOL CRealConsole::StartProcess()
 				int nWholeSize = sizeof(SHELLEXECUTEINFO)
 				                 + sizeof(wchar_t) *
 				                 (10  /* Verb */
-				                  + lstrlen(szExec)+2
-				                  + ((pszCmd == NULL) ? 0 : (lstrlen(pszCmd)+2))
-				                  + lstrlen(szCurrentDirectory) + 2
+				                  + _tcslen(szExec)+2
+				                  + ((pszCmd == NULL) ? 0 : (_tcslen(pszCmd)+2))
+				                  + _tcslen(szCurrentDirectory) + 2
 				                 );
 				mp_sei = (SHELLEXECUTEINFO*)GlobalAlloc(GPTR, nWholeSize);
 				mp_sei->hwnd = ghWnd;
@@ -2249,9 +2250,9 @@ BOOL CRealConsole::StartProcess()
 				mp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NOASYNC;
 				mp_sei->lpVerb = (wchar_t*)(mp_sei+1);
 				wcscpy((wchar_t*)mp_sei->lpVerb, L"runas");
-				mp_sei->lpFile = mp_sei->lpVerb + lstrlen(mp_sei->lpVerb) + 2;
+				mp_sei->lpFile = mp_sei->lpVerb + _tcslen(mp_sei->lpVerb) + 2;
 				wcscpy((wchar_t*)mp_sei->lpFile, szExec);
-				mp_sei->lpParameters = mp_sei->lpFile + lstrlen(mp_sei->lpFile) + 2;
+				mp_sei->lpParameters = mp_sei->lpFile + _tcslen(mp_sei->lpFile) + 2;
 
 				if (pszCmd)
 				{
@@ -2259,7 +2260,7 @@ BOOL CRealConsole::StartProcess()
 					wcscpy((wchar_t*)(mp_sei->lpParameters+1), pszCmd);
 				}
 
-				mp_sei->lpDirectory = mp_sei->lpParameters + lstrlen(mp_sei->lpParameters) + 2;
+				mp_sei->lpDirectory = mp_sei->lpParameters + _tcslen(mp_sei->lpParameters) + 2;
 
 				if (szCurrentDirectory[0])
 					wcscpy((wchar_t*)mp_sei->lpDirectory, szCurrentDirectory);
@@ -2299,7 +2300,7 @@ BOOL CRealConsole::StartProcess()
 			//Box("Cannot execute the command.");
 			//DWORD dwLastError = GetLastError();
 			DEBUGSTRPROC(L"CreateProcess failed\n");
-			int nLen = lstrlen(psCurCmd)+100;
+			int nLen = _tcslen(psCurCmd)+100;
 			TCHAR* pszErr = (TCHAR*)Alloc(nLen,sizeof(TCHAR));
 
 			if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -2309,7 +2310,7 @@ BOOL CRealConsole::StartProcess()
 				_wsprintf(pszErr, SKIPLEN(nLen) L"Unknown system error: 0x%x", dwLastError);
 			}
 
-			nLen += lstrlen(pszErr);
+			nLen += _tcslen(pszErr);
 			TCHAR* psz = (TCHAR*)Alloc(nLen+100,sizeof(TCHAR));
 			int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
 			_wcscpy_c(psz, nLen, _T("Cannot execute the command.\r\n"));
@@ -2318,7 +2319,7 @@ BOOL CRealConsole::StartProcess()
 
 			if (m_Args.pszSpecialCmd == NULL)
 			{
-				if (psz[lstrlen(psz)-1]!=_T('\n')) _wcscat_c(psz, nLen, _T("\r\n"));
+				if (psz[_tcslen(psz)-1]!=_T('\n')) _wcscat_c(psz, nLen, _T("\r\n"));
 
 				if (!gpSet->psCurCmd && StrStrI(gpSet->GetCmd(), gpSet->GetDefaultCmd())==NULL)
 				{
@@ -2461,7 +2462,8 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 			}
 		}
 
-		if (gpSet->isCTSRBtnAction == 2 && (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP)
+		if (((gpSet->isCTSRBtnAction == 2) || ((gpSet->isCTSRBtnAction == 3) && !isSelectionPresent()))
+				&& (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP)
 		        && ((gpSet->isCTSActMode == 2 && isBufferHeight() && !isFarBufferSupported())
 		            || (gpSet->isCTSActMode == 1 && (!gpSet->isCTSVkAct || gpSet->isModifierPressed(gpSet->isCTSVkAct)))))
 		{
@@ -2470,7 +2472,8 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 			return;
 		}
 
-		if (gpSet->isCTSMBtnAction == 2 && (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONUP)
+		if (((gpSet->isCTSMBtnAction == 2) || ((gpSet->isCTSMBtnAction == 3) && !isSelectionPresent()))
+				&& (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONUP)
 		        && ((gpSet->isCTSActMode == 2 && isBufferHeight() && !isFarBufferSupported())
 		            || (gpSet->isCTSActMode == 1 && (!gpSet->isCTSVkAct || gpSet->isModifierPressed(gpSet->isCTSVkAct)))))
 		{
@@ -2593,7 +2596,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	{
 		if (m_UseLogs>=2)
 		{
-			char szDbgMsg[128]; _wsprintfA(szDbgMsg, SKIPLEN(countof(szDbgMsg)) "WM_MOUSEWHEEL(wParam=0x%08X, x=%i, y=%i)", wParam, x, y);
+			char szDbgMsg[128]; _wsprintfA(szDbgMsg, SKIPLEN(countof(szDbgMsg)) "WM_MOUSEWHEEL(wParam=0x%08X, x=%i, y=%i)", (DWORD)wParam, x, y);
 			LogString(szDbgMsg);
 		}
 
@@ -2615,7 +2618,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	{
 		if (m_UseLogs>=2)
 		{
-			char szDbgMsg[128]; _wsprintfA(szDbgMsg, SKIPLEN(countof(szDbgMsg)) "WM_MOUSEHWHEEL(wParam=0x%08X, x=%i, y=%i)", wParam, x, y);
+			char szDbgMsg[128]; _wsprintfA(szDbgMsg, SKIPLEN(countof(szDbgMsg)) "WM_MOUSEHWHEEL(wParam=0x%08X, x=%i, y=%i)", (DWORD)wParam, x, y);
 			LogString(szDbgMsg);
 		}
 
@@ -2839,9 +2842,9 @@ bool CRealConsole::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	}
 	else if (con.m_sel.dwFlags && (messg == WM_RBUTTONUP || messg == WM_MBUTTONUP))
 	{
-		BYTE bAction = (messg == WM_RBUTTONUP) ? 1/*gpSet->isCTSRBtnAction*/ : gpSet->isCTSMBtnAction;
+		BYTE bAction = (messg == WM_RBUTTONUP) ? gpSet->isCTSRBtnAction : gpSet->isCTSMBtnAction;
 
-		if (bAction == 1)
+		if ((bAction == 1) || ((bAction == 3) && isSelectionPresent()))
 			DoSelectionCopy();
 		//else if (bAction == 2) -- ТОЛЬКО Copy. Делать Paste при наличии выделения - глупо
 		//	Paste();
@@ -3238,7 +3241,7 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 			DWORD dwTick3 = GetTickCount();
 			struct ServerClosing sc3 = m_ServerClosing;
 #endif
-			int nLen = lstrlen(ms_ConEmuCInput_Pipe) + 128;
+			int nLen = _tcslen(ms_ConEmuCInput_Pipe) + 128;
 			wchar_t* pszErrMsg = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 			_wsprintf(pszErrMsg, SKIPLEN(nLen) L"ConEmuCInput not found, ErrCode=0x%08X\n%s", dwErr, ms_ConEmuCInput_Pipe);
 			//DisplayLastError(L"mh_ConEmuCInput not found", dwErr);
@@ -3490,20 +3493,13 @@ void CRealConsole::StopThread(BOOL abRecreating)
 	_ASSERT(abRecreating==mb_ProcessRestarted);
 	DEBUGSTRPROC(L"Entering StopThread\n");
 
-	// Сначала выставить флаги закрытия
+	// выставление флагов и завершение потока
 	if (mh_MonitorThread)
 	{
-		// выставление флагов и завершение нити
+		// Сначала выставить флаги закрытия
 		StopSignal(); //SetEvent(mh_TermEvent);
-	}
 
-	//if (mh_InputThread) {
-	//	PostThreadMessage(mn_InputThreadID, WM_QUIT, 0, 0);
-	//}
-
-	// А теперь можно ждать завершения
-	if (mh_MonitorThread)
-	{
+		// А теперь можно ждать завершения
 		if (WaitForSingleObject(mh_MonitorThread, 300) != WAIT_OBJECT_0)
 		{
 			DEBUGSTRPROC(L"### Main Thread wating timeout, terminating...\n");
@@ -4775,8 +4771,8 @@ CESERVER_REQ* CRealConsole::cmdGetGuiHwnd(HANDLE hPipe, CESERVER_REQ* pIn, UINT 
 	
 	DEBUGSTRCMD(L"GUI recieved CECMD_GETGUIHWND\n");
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD));
-	pOut->dwData[0] = (DWORD)ghWnd;
-	pOut->dwData[1] = (DWORD)ghWndDC;
+	pOut->dwData[0] = (DWORD)ghWnd; //-V205
+	pOut->dwData[1] = (DWORD)ghWndDC; //-V205
 	return pOut;
 }
 
@@ -4943,7 +4939,7 @@ CESERVER_REQ* CRealConsole::cmdGuiMacro(HANDLE hPipe, CESERVER_REQ* pIn, UINT nD
 
 	DEBUGSTRCMD(L"GUI recieved CECMD_GUIMACRO\n");	
 	LPWSTR pszResult = CConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, this);
-	int nLen = pszResult ? lstrlen(pszResult) : 0;
+	int nLen = pszResult ? _tcslen(pszResult) : 0;
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
 
 	if (pszResult)
@@ -5088,9 +5084,9 @@ CESERVER_REQ* CRealConsole::cmdResources(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 
 		for(int i = 0; i < countof(pszItems); i++)
 		{
-			pszNext = pszRes + lstrlen(pszRes)+1;
+			pszNext = pszRes + _tcslen(pszRes)+1;
 
-			if (lstrlen(pszRes)>=30) pszRes[30] = 0;
+			if (_tcslen(pszRes)>=30) pszRes[30] = 0;
 
 			lstrcpy(pszItems[i], pszRes);
 
@@ -5102,18 +5098,18 @@ CESERVER_REQ* CRealConsole::cmdResources(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 				break;
 		}
 
-		//pszNext = pszRes + lstrlen(pszRes)+1;
-		//if (lstrlen(pszRes)>=30) pszRes[30] = 0;
+		//pszNext = pszRes + _tcslen(pszRes)+1;
+		//if (_tcslen(pszRes)>=30) pszRes[30] = 0;
 		//lstrcpy(ms_EditorRus, pszRes); lstrcat(ms_EditorRus, L" ");
 		//pszRes = pszNext;
 		//if (*pszRes) {
-		//    pszNext = pszRes + lstrlen(pszRes)+1;
-		//    if (lstrlen(pszRes)>=30) pszRes[30] = 0;
+		//    pszNext = pszRes + _tcslen(pszRes)+1;
+		//    if (_tcslen(pszRes)>=30) pszRes[30] = 0;
 		//    lstrcpy(ms_ViewerRus, pszRes); lstrcat(ms_ViewerRus, L" ");
 		//    pszRes = pszNext;
 		//    if (*pszRes) {
-		//        pszNext = pszRes + lstrlen(pszRes)+1;
-		//        if (lstrlen(pszRes)>=31) pszRes[31] = 0;
+		//        pszNext = pszRes + _tcslen(pszRes)+1;
+		//        if (_tcslen(pszRes)>=31) pszRes[31] = 0;
 		//        lstrcpy(ms_TempPanelRus, pszRes);
 		//        pszRes = pszNext;
 		//    }
@@ -5269,6 +5265,8 @@ CESERVER_REQ* CRealConsole::cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UIN
 	if (pIn->OnCreateProc.nImageBits > 0)
 	{
 		TODO("!!! DosBox allowed?");
+		_ASSERTE(lbDos==FALSE); //PRAGMA_ERROR("Зачем (lbDos && FALSE)?");
+		
 		if (gpSet->AutoBufferHeight // LongConsoleOutput
 			|| (lbDos && FALSE)) // DosBox!!!
 		{
@@ -5279,7 +5277,7 @@ CESERVER_REQ* CRealConsole::cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UIN
 			TODO("!!! DosBox allowed?");
 			pOut->OnCreateProcRet.bAllowDosbox = FALSE;
 			//pOut->OnCreateProcRet.nFileLen = pIn->OnCreateProc.nFileLen;
-			//pOut->OnCreateProcRet.nBaseLen = lstrlen(gpConEmu->ms_ConEmuBaseDir)+2; // +слеш+\0
+			//pOut->OnCreateProcRet.nBaseLen = _tcslen(gpConEmu->ms_ConEmuBaseDir)+2; // +слеш+\0
 			
 			////_wcscpy_c(pOut->OnCreateProcRet.wsValue, MAX_PATH+1, pszFile);
 			//_wcscpy_c(pOut->OnCreateProcRet.wsValue, MAX_PATH+1, gpConEmu->ms_ConEmuBaseDir);
@@ -5725,7 +5723,7 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 				dwActivePID = cp.ProcessID;
 		}
 
-		iter++;
+		++iter;
 	}
 
 	TODO("Однако, наверное cmd.exe может быть запущен и в 'фоне'? Например из Update");
@@ -5864,7 +5862,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 	// поставить пометочку на все процессы, вдруг кто уже убился
 	iter = m_Processes.begin();
 
-	while(iter != m_Processes.end()) { iter->inConsole = false; iter ++; }
+	while (iter != m_Processes.end()) { iter->inConsole = false; ++iter; }
 
 	// Проверяем, какие процессы уже есть в нашем списке
 	iter=m_Processes.begin();
@@ -5881,7 +5879,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 			}
 		}
 
-		iter++;
+		++iter;
 	}
 
 	// Проверяем, есть ли изменения
@@ -5895,14 +5893,14 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 
 	iter = m_Processes.begin();
 
-	while(iter != m_Processes.end())
+	while (iter != m_Processes.end())
 	{
 		if (iter->inConsole == false)
 		{
 			bProcessDel = TRUE; break;
 		}
 
-		iter ++;
+		++iter;
 	}
 
 	// Теперь нужно добавить новый процесс
@@ -5925,7 +5923,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 			// Перед добавлением нового - поставить пометочку на все процессы, вдруг кто уже убился
 			iter = m_Processes.begin();
 
-			while(iter != m_Processes.end()) { iter->Alive = false; iter ++; }
+			while (iter != m_Processes.end()) { iter->Alive = false; ++iter; }
 
 			PROCESSENTRY32 p; memset(&p, 0, sizeof(p)); p.dwSize = sizeof(p);
 			BOOL TerminatedPIDsExist[128] = {};
@@ -5994,7 +5992,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 							}
 						}
 
-						iter ++;
+						++iter;
 					}
 
 					// Следущий процесс
@@ -6032,7 +6030,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 			//    && iter->ProcessID == mn_FarPID_PluginDetected
 			//    && iter->InputTID == 0)
 			//    iter->InputTID = mn_Far_PluginInputThreadId;
-			iter ++;
+			++iter;
 		}
 	}
 
@@ -6192,7 +6190,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 	wchar_t* pszSlash = _tcsrchr(asFullFileName, _T('\\'));
 	if (pszSlash) pszSlash++; else pszSlash=asFullFileName;
 
-	int nLen = lstrlen(pszSlash);
+	int nLen = _tcslen(pszSlash);
 
 	if (nLen>=63) pszSlash[63]=0;
 
@@ -6608,7 +6606,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 
 		if (!mh_GuiAttached)
 		{
-			_wsprintf(szEvent, SKIPLEN(countof(szEvent)) CEGUIRCONSTARTED, (DWORD)hConWnd);
+			_wsprintf(szEvent, SKIPLEN(countof(szEvent)) CEGUIRCONSTARTED, (DWORD)hConWnd); //-V205
 			//// Скорее всего событие в сервере еще не создано
 			//mh_GuiAttached = OpenEvent(EVENT_MODIFY_STATE, FALSE, ms_VConServer_Pipe);
 			//// Вроде, когда используется run as administrator - event открыть не получается?
@@ -6619,7 +6617,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 		}
 
 		// Запустить серверный пайп
-		_wsprintf(ms_VConServer_Pipe, SKIPLEN(countof(ms_VConServer_Pipe)) CEGUIPIPENAME, L".", (DWORD)hConWnd); //был mn_ConEmuC_PID
+		_wsprintf(ms_VConServer_Pipe, SKIPLEN(countof(ms_VConServer_Pipe)) CEGUIPIPENAME, L".", (DWORD)hConWnd); //был mn_ConEmuC_PID //-V205
 
 		if (!mh_ServerSemaphore)
 			mh_ServerSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
@@ -6921,7 +6919,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	{
 		if (m_Args.pszSpecialCmd) Free(m_Args.pszSpecialCmd);
 
-		int nLen = lstrlen(args->pszSpecialCmd);
+		int nLen = _tcslen(args->pszSpecialCmd);
 		m_Args.pszSpecialCmd = (wchar_t*)Alloc(nLen+1,2);
 
 		if (!m_Args.pszSpecialCmd)
@@ -6937,7 +6935,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	{
 		if (m_Args.pszStartupDir) Free(m_Args.pszStartupDir);
 
-		int nLen = lstrlen(args->pszStartupDir);
+		int nLen = _tcslen(args->pszStartupDir);
 		m_Args.pszStartupDir = (wchar_t*)Alloc(nLen+1,2);
 
 		if (!m_Args.pszStartupDir)
@@ -8422,7 +8420,7 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 	// Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
 	if (ms_ConStatus[0])
 	{
-		int nLen = lstrlen(ms_ConStatus);
+		int nLen = _tcslen(ms_ConStatus);
 		wmemcpy(pChar, ms_ConStatus, nLen);
 
 		if (nWidth>nLen)
@@ -8533,7 +8531,7 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 			wchar_t szClass[64], szMessage[128];
 
 			if (!GetClassName(hWnd, szClass, 63))
-				_wsprintf(szClass, SKIPLEN(countof(szClass)) L"0x%08X", (DWORD)hWnd); else szClass[63] = 0;
+				_wsprintf(szClass, SKIPLEN(countof(szClass)) L"0x%08X", (DWORD)hWnd); else szClass[63] = 0; //-V205
 
 			_wsprintf(szMessage, SKIPLEN(countof(szMessage)) L"SetWindowPos(%s) failed!", szClass);
 			DisplayLastError(szMessage, dwErr);
@@ -8931,7 +8929,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 	DEBUGSTRTABS(szDbg);
 #endif
 	ConEmuTab* lpTmpTabs = NULL;
-	const int nMaxTabName = countof(tabs->Name);
+	const size_t nMaxTabName = countof(tabs->Name);
 	// Табы нужно проверить и подготовить
 	int nActiveTab = 0, i;
 
@@ -9002,14 +9000,14 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 		else
 		{
 			// Иначе - суффиксом (если он задан)
-			int nAddLen = lstrlen(gpSet->szAdminTitleSuffix) + 1;
+			size_t nAddLen = _tcslen(gpSet->szAdminTitleSuffix) + 1;
 
 			for(i=0; i<tabsCount; i++)
 			{
 				if (tabs[i].Name[0])
 				{
 					// Если есть место
-					if (lstrlen(tabs[i].Name) < (int)(nMaxTabName + nAddLen))
+					if (_tcslen(tabs[i].Name) < (nMaxTabName + nAddLen))
 						lstrcat(tabs[i].Name, gpSet->szAdminTitleSuffix);
 				}
 			}
@@ -9143,7 +9141,7 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 				}
 				else
 				{
-					if (lstrlen(ms_PanelTitle) < (int)(countof(pTab->Name) + lstrlen(gpSet->szAdminTitleSuffix) + 1))
+					if ((INT_PTR)_tcslen(ms_PanelTitle) < (INT_PTR)(countof(pTab->Name) + _tcslen(gpSet->szAdminTitleSuffix) + 1))
 						lstrcat(pTab->Name, gpSet->szAdminTitleSuffix);
 				}
 			}
@@ -9162,7 +9160,7 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	}
 
 	wchar_t* pszAmp = pTab->Name;
-	int nCurLen = lstrlen(pTab->Name), nMaxLen = countof(pTab->Name)-1;
+	int nCurLen = _tcslen(pTab->Name), nMaxLen = countof(pTab->Name)-1;
 	
 	#ifdef HT_CONEMUTAB
 	PRAGMA_ERROR("После перевода табов на ручную отрисовку - эту часть с амперсандами можно будет убрать");
@@ -9761,7 +9759,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeyboardLay
 	{
 		WCHAR szInfo[255];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CRealConsole::SwitchKeyboardLayout(CP:%i, HKL:0x%08I64X)",
-		          wParam, (unsigned __int64)(DWORD_PTR)dwNewKeyboardLayout);
+		          (DWORD)wParam, (unsigned __int64)(DWORD_PTR)dwNewKeyboardLayout);
 		LogString(szInfo);
 	}
 
@@ -9810,7 +9808,7 @@ void CRealConsole::Paste()
 	}
 
 	// Теперь сформируем пакет
-	size_t nLen = lstrlen(lptstr);
+	size_t nLen = _tcslen(lptstr);
 
 	if (nLen>0)
 	{
@@ -9917,7 +9915,7 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 						pszMacro = L"@$while (Dialog||Editor||Viewer||Menu||Disks||MainMenu||UserMenu||Other||Help) $if (Editor) ShiftF10 $else Esc $end $end  Esc  $if (Shell) F10 $if (Dialog) Enter $end $Exit $end  F10";
 					}
 
-					lbExecuted = pipe.Execute(CMD_POSTMACRO, pszMacro, (lstrlen(pszMacro)+1)*2);
+					lbExecuted = pipe.Execute(CMD_POSTMACRO, pszMacro, (_tcslen(pszMacro)+1)*2);
 					gpConEmu->DebugStep(NULL);
 				}
 
@@ -10081,9 +10079,9 @@ void CRealConsole::CheckFarStates()
 		if ((nNewState & CES_FARFLAGS) == 0)
 		{
 			// пытаемся определить "viewer/editor" по заголовку окна консоли
-			if (wcsncmp(Title, ms_Editor, lstrlen(ms_Editor))==0 || wcsncmp(Title, ms_EditorRus, lstrlen(ms_EditorRus))==0)
+			if (wcsncmp(Title, ms_Editor, _tcslen(ms_Editor))==0 || wcsncmp(Title, ms_EditorRus, _tcslen(ms_EditorRus))==0)
 				nNewState |= CES_EDITOR;
-			else if (wcsncmp(Title, ms_Viewer, lstrlen(ms_Viewer))==0 || wcsncmp(Title, ms_ViewerRus, lstrlen(ms_ViewerRus))==0)
+			else if (wcsncmp(Title, ms_Viewer, _tcslen(ms_Viewer))==0 || wcsncmp(Title, ms_ViewerRus, _tcslen(ms_ViewerRus))==0)
 				nNewState |= CES_VIEWER;
 			else if (isFilePanel(true, true))
 				nNewState |= CES_FILEPANEL;
@@ -10203,10 +10201,10 @@ short CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
 		if (!szComplRus[0])
 		{
 			MultiByteToWideChar(CP_ACP,0,"Завершено:",-1,szComplRus,countof(szComplRus));
-			nRusLen = lstrlen(szComplRus);
+			nRusLen = _tcslen(szComplRus);
 		}
 
-		static int nEngLen = lstrlen(L"Completed:");
+		static int nEngLen = _tcslen(L"Completed:");
 
 		if (!wcsncmp(pszCurLine, szComplRus, nRusLen))
 		{
@@ -10470,7 +10468,7 @@ bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditVi
 		return false;
 
 	// нужно для DragDrop
-	if (_tcsncmp(Title, ms_TempPanel, lstrlen(ms_TempPanel)) == 0 || _tcsncmp(Title, ms_TempPanelRus, lstrlen(ms_TempPanelRus)) == 0)
+	if (_tcsncmp(Title, ms_TempPanel, _tcslen(ms_TempPanel)) == 0 || _tcsncmp(Title, ms_TempPanelRus, _tcslen(ms_TempPanelRus)) == 0)
 		return true;
 
 	if ((abPluginAllowed && Title[0]==_T('{')) ||
@@ -10662,7 +10660,7 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 
 	if (!dwFarPID) return;
 
-	////int nLen = /*ComSpec\0*/ 8 + /*ComSpecC\0*/ 9 + 20 +  2*lstrlen(gpConEmu->ms_ConEmuExe);
+	////int nLen = /*ComSpec\0*/ 8 + /*ComSpecC\0*/ 9 + 20 +  2*_tcslen(gpConEmu->ms_ConEmuExe);
 	//wchar_t szCMD[MAX_PATH+1];
 	////wchar_t szData[MAX_PATH*4+64];
 	//
@@ -10714,7 +10712,7 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 	//BOOL lbNeedQuot = (wcschr(gpConEmu->ms_ConEmuCExeFull, L' ') != NULL);
 	//wchar_t* pszName = szData;
 	//lstrcpy(pszName, L"ComSpec");
-	//wchar_t* pszValue = pszName + lstrlen(pszName) + 1;
+	//wchar_t* pszValue = pszName + _tcslen(pszName) + 1;
 
 	//if (gpSet->AutoBufferHeight)
 	//{
@@ -10725,9 +10723,9 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 	//	if (lbNeedQuot) lstrcat(pszValue, L"\"");
 
 	//	lbNeedQuot = (szCMD[0] != L'"') && (wcschr(szCMD, L' ') != NULL);
-	//	pszName = pszValue + lstrlen(pszValue) + 1;
+	//	pszName = pszValue + _tcslen(pszValue) + 1;
 	//	lstrcpy(pszName, L"ComSpecC");
-	//	pszValue = pszName + lstrlen(pszName) + 1;
+	//	pszValue = pszName + _tcslen(pszName) + 1;
 	//}
 
 	//if (lbNeedQuot) *(pszValue++) = L'"';
@@ -10736,12 +10734,12 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 
 	//if (lbNeedQuot) lstrcat(pszValue, L"\"");
 
-	//pszName = pszValue + lstrlen(pszValue) + 1;
+	//pszName = pszValue + _tcslen(pszValue) + 1;
 	//lstrcpy(pszName, L"ConEmuOutput");
-	//pszName = pszName + lstrlen(pszName) + 1;
+	//pszName = pszName + _tcslen(pszName) + 1;
 	//lstrcpy(pszName, !gpSet->nCmdOutputCP ? L"" : ((gpSet->nCmdOutputCP == 1) ? L"AUTO"
 	//        : (((gpSet->nCmdOutputCP == 2) ? L"UNICODE" : L"ANSI"))));
-	//pszName = pszName + lstrlen(pszName) + 1;
+	//pszName = pszName + _tcslen(pszName) + 1;
 	//*(pszName++) = 0;
 	//*(pszName++) = 0;
 
@@ -11487,7 +11485,7 @@ void CRealConsole::OpenColorMapping()
 	//wchar_t szMapName[512]; szErr[0] = 0;
 	const AnnotationHeader *pHdr = NULL;
 	_ASSERTE(hConWnd!=NULL);
-	m_TrueColorerMap.InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)hConWnd);
+	m_TrueColorerMap.InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)hConWnd); //-V205
 
 	if (!m_TrueColorerMap.Open())
 	{
@@ -11621,7 +11619,7 @@ BOOL CRealConsole::OpenMapHeader(BOOL abFromAttach)
 
 	//_ASSERTE(mh_FileMapping == NULL);
 	//CloseMapData();
-	m_ConsoleMap.InitName(CECONMAPNAME, (DWORD)hConWnd);
+	m_ConsoleMap.InitName(CECONMAPNAME, (DWORD)hConWnd); //-V205
 
 	if (!m_ConsoleMap.Open())
 	{
@@ -12339,7 +12337,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro)
 	{
 		//DWORD cbWritten=0;
 		gpConEmu->DebugStep(_T("Macro: Waiting for result (10 sec)"));
-		pipe.Execute(CMD_POSTMACRO, asMacro, (lstrlen(asMacro)+1)*2);
+		pipe.Execute(CMD_POSTMACRO, asMacro, (_tcslen(asMacro)+1)*2);
 		gpConEmu->DebugStep(NULL);
 	}
 }
@@ -12399,7 +12397,7 @@ void CRealConsole::ShowPropertiesDialog()
 	// то при закрытии одного из двух (!) открытых диалогов - ConHost падает!
 	// Поэтому, сначала попытаемся найти диалог настроек, и только если нет - посылаем msg
 	HWND hConProp = NULL;
-	wchar_t szTitle[255]; int nDefLen = lstrlen(CEC_INITTITLE);
+	wchar_t szTitle[255]; int nDefLen = _tcslen(CEC_INITTITLE);
 	// К сожалению, так не получится найти окно свойств, если консоль была
 	// создана НЕ через ConEmu (например, был запущен Far, а потом сделан Attach).
 	while ((hConProp = FindWindowEx(NULL, hConProp, (LPCWSTR)32770, NULL)) != NULL)
@@ -12435,7 +12433,7 @@ void CRealConsole::ShowPropertiesDialog()
 //		if (ms_LogShellActivity[0] == 0)
 //		{
 //			lstrcpyn(ms_LogShellActivity, gpConEmu->ms_ConEmuCurDir, MAX_PATH-32);
-//			int nCurLen = lstrlen(ms_LogShellActivity);
+//			int nCurLen = _tcslen(ms_LogShellActivity);
 //			_wsprintf(ms_LogShellActivity+nCurLen, SKIPLEN(countof(ms_LogShellActivity)-nCurLen)
 //			          L"\\ShellLog-%u.log", nFarPID);
 //		}
@@ -12469,7 +12467,7 @@ void CRealConsole::ShowPropertiesDialog()
 //		if (mb_ShellActivityLogged && ms_LogShellActivity[0])
 //		{
 //			pData = ms_LogShellActivity;
-//			nDataSize = (lstrlen(ms_LogShellActivity)+1)*2;
+//			nDataSize = (_tcslen(ms_LogShellActivity)+1)*2;
 //		}
 //		else
 //		{

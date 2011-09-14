@@ -241,7 +241,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			if (ghConWnd)
 			{
 				MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
-				ConInfo.InitName(CECONMAPNAME, (DWORD)ghConWnd);
+				ConInfo.InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
 				CESERVER_CONSOLE_MAPPING_HDR *pInfo = ConInfo.Open();
 				if (pInfo)
 				{
@@ -925,7 +925,7 @@ int __stdcall ConsoleMain()
 			if (dwWaitGui == WAIT_OBJECT_0)
 			{
 				// GUI пайп готов
-				_wsprintf(gpSrv->szGuiPipeName, SKIPLEN(countof(gpSrv->szGuiPipeName)) CEGUIPIPENAME, L".", (DWORD)ghConWnd); // был gnSelfPID
+				_wsprintf(gpSrv->szGuiPipeName, SKIPLEN(countof(gpSrv->szGuiPipeName)) CEGUIPIPENAME, L".", (DWORD)ghConWnd); // был gnSelfPID //-V205
 			}
 		}
 
@@ -1962,8 +1962,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				//_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
 				wchar_t szDbgMsg[512], szTitle[128];
 				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, CmdLine parsing FAILED (%u,%u,%u,%u,%u)!\n%s",
-					GetCurrentProcessId(), pi.hProcess, pi.hThread, pi.dwProcessId, pi.dwThreadId, lbForceGui,
+				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, CmdLine parsing FAILED (%u,%u,%u,%u,%u,%u)!\n%s",
+					GetCurrentProcessId(), (DWORD)pi.hProcess, (DWORD)pi.hThread, pi.dwProcessId, pi.dwThreadId, lbForceGui, //-V205
 					szArg);
 				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 				return CERR_HOOKS_FAILED;
@@ -2868,7 +2868,7 @@ void SendStarted()
 	if (gnRunMode /*== RM_COMSPEC*/ > RM_SERVER)
 	{
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConsoleMap;
-		ConsoleMap.InitName(CECONMAPNAME, (DWORD)hConWnd);
+		ConsoleMap.InitName(CECONMAPNAME, (DWORD)hConWnd); //-V205
 		const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo = ConsoleMap.Open();
 
 		//WCHAR sHeaderMapName[64];
@@ -3897,7 +3897,7 @@ void WriteMiniDump(DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR 
 			if (!MiniDumpWriteDump_f)
 			{
 				DWORD nErr = GetLastError();
-				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll'", nErr);
+				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll', ErrCode=%u", nErr);
 				MessageBoxW(NULL, szErrInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 				break;
 			}
@@ -4049,22 +4049,22 @@ void ProcessDebugEvent()
 						if (evt.u.Exception.ExceptionRecord.NumberParameters>=2)
 						{
 							_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText))
-							           "{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s %s of 0x%08X FC=%u\n", evt.dwProcessId,evt.dwThreadId,
-							           evt.u.Exception.ExceptionRecord.ExceptionAddress,
+							           "{%i.%i} EXCEPTION_ACCESS_VIOLATION at " WIN3264TEST("0x%08X","0x%08X%08X") " flags 0x%08X%s %s of " WIN3264TEST("0x%08X","0x%08X%08X") " FC=%u\n", evt.dwProcessId,evt.dwThreadId,
+							           WIN3264WSPRINT((DWORD_PTR)evt.u.Exception.ExceptionRecord.ExceptionAddress),
 							           evt.u.Exception.ExceptionRecord.ExceptionFlags,
 							           ((evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : ""),
 							           ((evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==0) ? "Read" :
 							            (evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==1) ? "Write" :
 							            (evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==8) ? "DEP" : "???"),
-							           evt.u.Exception.ExceptionRecord.ExceptionInformation[1],
+							           WIN3264WSPRINT(evt.u.Exception.ExceptionRecord.ExceptionInformation[1]),
 							           evt.u.Exception.dwFirstChance
 							          );
 						}
 						else
 						{
 							_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText))
-							           "{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s FC=%u\n", evt.dwProcessId,evt.dwThreadId,
-							           evt.u.Exception.ExceptionRecord.ExceptionAddress,
+							           "{%i.%i} EXCEPTION_ACCESS_VIOLATION at " WIN3264TEST("0x%08X","0x%08X%08X") " flags 0x%08X%s FC=%u\n", evt.dwProcessId,evt.dwThreadId,
+							           WIN3264WSPRINT((DWORD_PTR)evt.u.Exception.ExceptionRecord.ExceptionAddress),
 							           evt.u.Exception.ExceptionRecord.ExceptionFlags,
 							           (evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "",
 							           evt.u.Exception.dwFirstChance);
@@ -4105,10 +4105,10 @@ void ProcessDebugEvent()
 							}
 
 							_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText))
-							           "{%i.%i} %s at 0x%08X flags 0x%08X%s FC=%u\n",
+							           "{%i.%i} %s at " WIN3264TEST("0x%08X","0x%08X%08X") " flags 0x%08X%s FC=%u\n",
 							           evt.dwProcessId,evt.dwThreadId,
 							           pszName,
-							           evt.u.Exception.ExceptionRecord.ExceptionAddress,
+							           WIN3264WSPRINT((DWORD_PTR)evt.u.Exception.ExceptionRecord.ExceptionAddress),
 							           evt.u.Exception.ExceptionRecord.ExceptionFlags,
 							           (evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE)
 							           ? "(EXCEPTION_NONCONTINUABLE)" : "",
@@ -4656,7 +4656,7 @@ BOOL cmd_Attach2Gui(CESERVER_REQ& in, CESERVER_REQ** out)
 			// Чтобы не отображалась "Press any key to close console"
 			DisableAutoConfirmExit();
 			//
-			(*out)->dwData[0] = (DWORD)hDc;
+			(*out)->dwData[0] = (DWORD)hDc; //-V205 // Дескриптор окна
 			lbRc = TRUE;
 		}
 	}
@@ -4706,7 +4706,7 @@ BOOL cmd_PostConMsg(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			char szInfo[255];
 			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: %s(0x%08X, %s, CP:%i, HKL:0x%08I64X)",
-			           in.Msg.bPost ? "PostMessage" : "SendMessage", (DWORD)hSendWnd,
+			           in.Msg.bPost ? "PostMessage" : "SendMessage", (DWORD)hSendWnd, //-V205
 			           (in.Msg.nMsg == WM_INPUTLANGCHANGE) ? "WM_INPUTLANGCHANGE" :
 			           (in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST) ? "WM_INPUTLANGCHANGEREQUEST" :
 			           "<Other message>",
@@ -5120,7 +5120,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 //    а если не обнаружен "буферный режим" - то и вертикальную.
 BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc)
 {
-	BOOL lbRc = FALSE;
+	BOOL lbRc = FALSE, lbSetRc = TRUE;
 
 	//CSection cs(NULL,NULL);
 	//MSectionLock CSCS;
@@ -5264,7 +5264,8 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		//	lbNeedCorrect = TRUE;
 		if (lbNeedCorrect)
 		{
-			lbRc = SetConsoleWindowInfo(ghConOut, TRUE, &csbi.srWindow);
+			lbSetRc = SetConsoleWindowInfo(ghConOut, TRUE, &csbi.srWindow);
+			_ASSERTE(lbSetRc);
 			lbRc = GetConsoleScreenBufferInfo(ahConOut, &csbi);
 		}
 	}
@@ -5503,7 +5504,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 			WARNING("А при уменшении высоты, тащим нижнюю границе окна вверх, Top глючить не будет?");
 			rcTemp.Top = max(0,(csbi.srWindow.Bottom-crNewSize.Y+1));
 			rcTemp.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
-			rcTemp.Bottom = min((BufferHeight - 1),(rcTemp.Top+crNewSize.Y-1));//(csbi.srWindow.Bottom-csbi.srWindow.Top));
+			rcTemp.Bottom = min((BufferHeight - 1),(rcTemp.Top+crNewSize.Y-1));//(csbi.srWindow.Bottom-csbi.srWindow.Top)); //-V592
 
 			if (!SetConsoleWindowInfo(ghConOut, TRUE, &rcTemp))
 				MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
@@ -5528,7 +5529,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		// Вертикальное положение - пляшем от rNewRect.Top
 		rNewRect.Left = 0;
 		rNewRect.Right = crHeight.X-1;
-		rNewRect.Bottom = min((crHeight.Y-1), (rNewRect.Top+gcrBufferSize.Y-1));
+		rNewRect.Bottom = min((crHeight.Y-1), (rNewRect.Top+gcrBufferSize.Y-1)); //-V592
 		_ASSERTE((rNewRect.Bottom-rNewRect.Top)<200);
 		SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);
 	}
@@ -5674,7 +5675,7 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 		rpdwPID[0] = gnSelfPID;
 
 		for(int i1=0, i2=(nMaxCount-1); i1<(int)nSize && i2>0; i1++, i2--)
-			rpdwPID[i2] = gpSrv->pnProcesses[i1];
+			rpdwPID[i2] = gpSrv->pnProcesses[i1]; //-V108
 
 		nSize = nMaxCount;
 	}
@@ -5683,7 +5684,7 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 		memmove(rpdwPID, gpSrv->pnProcesses, sizeof(DWORD)*nSize);
 
 		for(UINT i=nSize; i<nMaxCount; i++)
-			rpdwPID[i] = 0;
+			rpdwPID[i] = 0; //-V108
 	}
 
 	_ASSERTE(rpdwPID[0]);
@@ -5865,7 +5866,7 @@ void CheckKeyboardLayout()
 				// А HKL от него отличается, так что передаем DWORD
 				// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
 				DWORD dwLayout = wcstoul(szCurKeybLayout, &pszEnd, 16);
-				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)); //-V119
 
 				if (pIn)
 				{

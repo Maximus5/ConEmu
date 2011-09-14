@@ -95,7 +95,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 	msprintf(strHookDllPath, countof(strHookDllPath),
 		L"GetThreadContext(x64) for PID=%u: ContextFlags=0x%08X, Rip=0x%08X%08X\n",
 		pi.dwProcessId,
-		(DWORD)context.ContextFlags, (DWORD)(context.Rip>>32), (DWORD)(context.Rip & 0xFFFFFFFF));
+		(DWORD)context.ContextFlags, (DWORD)(context.Rip>>32), (DWORD)(context.Rip & 0xFFFFFFFF)); //-V112
 	#else
 	msprintf(strHookDllPath, countof(strHookDllPath),
 		L"GetThreadContext(x86) for PID=%u: ContextFlags=0x%08X, Eip=0x%08X\n",
@@ -128,7 +128,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 	msprintf(strHookDllPath, countof(strHookDllPath),
 		L"VirtualAllocEx(x64) for PID=%u: 0x%08X%08X\n",
 		pi.dwProcessId,
-		(DWORD)(((DWORD_PTR)mem)>>32), (DWORD)(((DWORD_PTR)mem) & 0xFFFFFFFF));
+		(DWORD)(((DWORD_PTR)mem)>>32), (DWORD)(((DWORD_PTR)mem) & 0xFFFFFFFF)); //-V112
 	#else
 	msprintf(strHookDllPath, countof(strHookDllPath),
 		L"VirtualAllocEx(x86) for PID=%u: 0x%08X\n",
@@ -140,9 +140,9 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 
 	union
 	{
-		PBYTE  pB;
-		PINT   pI;
-		PULONGLONG pL;
+		PBYTE  pB; //-V117
+		PINT   pI; //-V117
+		PULONGLONG pL; //-V117
 	} ip;
 	ip.pB = code;
 #ifdef _WIN64
@@ -261,7 +261,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 	msprintf(strHookDllPath, countof(strHookDllPath),
 		L"SetThreadContext(x64) for PID=%u: ContextFlags=0x%08X, Rip=0x%08X%08X\n",
 		pi.dwProcessId,
-		(DWORD)context.ContextFlags, (DWORD)(context.Rip>>32), (DWORD)(context.Rip & 0xFFFFFFFF));
+		(DWORD)context.ContextFlags, (DWORD)(context.Rip>>32), (DWORD)(context.Rip & 0xFFFFFFFF)); //-V112
 	#else
 	msprintf(strHookDllPath, countof(strHookDllPath),
 		L"SetThreadContext(x86) for PID=%u: ContextFlags=0x%08X, Eip=0x%08X\n",

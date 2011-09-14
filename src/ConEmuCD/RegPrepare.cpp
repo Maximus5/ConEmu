@@ -29,7 +29,7 @@ int WINAPI MountVirtualHive(LPCWSTR asHive, PHKEY phKey, LPCWSTR asXPMountName, 
 		L"HKLM64",
 		L"HKLM64\\Software"
 	};
-	UINT nRootKeys = IsWindows64() ? countof(ppszKeys) : (countof(ppszKeys) - 2);
+	size_t nRootKeys = IsWindows64() ? countof(ppszKeys) : (countof(ppszKeys) - 2);
 
 	if (!hAdvapi32)
 	{
@@ -62,7 +62,7 @@ int WINAPI MountVirtualHive(LPCWSTR asHive, PHKEY phKey, LPCWSTR asXPMountName, 
 					if (pszErrInfo && cchErrInfoMax)
 						msprintf(pszErrInfo, cchErrInfoMax,
 							L"RegLoadAppKey failed, code=0x%08X!", (DWORD)lRc);
-					lRc = -4;
+					lRc = -4; //-V112
 					goto wrap;
 				}
 			}

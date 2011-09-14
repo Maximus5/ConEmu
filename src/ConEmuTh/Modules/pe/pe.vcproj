@@ -1308,7 +1308,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="Far3.2110\plugins\ConEmu\Thumbs\pe.t32"
+				OutputFile="\Far3\plugins\ConEmu\Thumbs\pe.t32"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="pe.def"
@@ -1616,7 +1616,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\Far3.2110\Plugins\ConEmu\Thumbs\pe.t32"
+				OutputFile="\Far3\Plugins\ConEmu\Thumbs\pe.t32"
 				LinkIncremental="2"
 				ModuleDefinitionFile="pe.def"
 				GenerateDebugInformation="true"
