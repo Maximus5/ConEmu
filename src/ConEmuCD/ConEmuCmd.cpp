@@ -127,7 +127,7 @@ int ComspecInit()
 
 		if (!lbRc)
 		{
-			_printf("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, gpszRunCmd);
+			_printf("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, gpszRunCmd); //-V576
 			return CERR_CREATEPROCESS;
 		}
 

@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "PluginHeader.h"
 #include "PluginBackground.h"
-#include "..\common\farcolor2.hpp"
+#include "..\common\farcolor1.hpp"
 
 //#define SHOW_DEBUG_EVENTS
 
@@ -463,7 +463,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	//IsKeyChanged(TRUE);
 	//if (gcPlugKey) szMenu1[0]=0; else lstrcpyA(szMenu1, "[&\xDC] "); // а тут действительно OEM
 	lstrcpynA(szMenu1/*+lstrlenA(szMenu1)*/, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240);
-	_ASSERTE(pi->StructSize = sizeof(struct PluginInfo));
+	_ASSERTE(pi->StructSize == sizeof(struct PluginInfo));
 	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	pi->DiskMenuNumbers = 0;
@@ -927,9 +927,9 @@ bool ProcessCommandLineA(char* pszCommand)
 {
 	if (!InfoA || !FSFA) return false;
 
-	if (FSFA->LStrnicmp(pszCommand, "run:", 4)==0)
+	if (FSFA->LStrnicmp(pszCommand, "run:", 4)==0) //-V112
 	{
-		RunExternalProgramA(pszCommand+4);
+		RunExternalProgramA(pszCommand+4); //-V112
 		return true;
 	}
 
@@ -1012,7 +1012,7 @@ BOOL ReloadFarInfoA(/*BOOL abFull*/)
 	
 	LoadFarColorsA(gpFarInfo->nFarColors);
 
-	_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40);
+	_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
 	gpFarInfo->nFarInterfaceSettings =
 	    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
 	gpFarInfo->nFarPanelSettings =

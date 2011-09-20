@@ -390,7 +390,7 @@ void ProcessDragToW1900()
 	//WriteFile(hPipe, &nStructSize, sizeof(nStructSize), &cout, NULL);
 	//WriteFile(hPipe, pfpi, nStructSize, &cout, NULL);
 	if (gpCmdRet==NULL)
-		OutDataAlloc(nStructSize+4);
+		OutDataAlloc(nStructSize+sizeof(nStructSize));
 
 	OutDataWrite(&nStructSize, sizeof(nStructSize));
 	OutDataWrite(pfpi, nStructSize);
@@ -1054,7 +1054,7 @@ bool ProcessCommandLineW1900(wchar_t* pszCommand)
 
 	if (FSFW1900->LStrnicmp(pszCommand, L"run:", 4)==0)
 	{
-		RunExternalProgramW1900(pszCommand+4);
+		RunExternalProgramW1900(pszCommand+4); //-V112
 		return true;
 	}
 
@@ -1148,7 +1148,7 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 
 	LoadFarColorsW1900(gpFarInfo->nFarColors);
 
-	_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40);
+	_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
 	gpFarInfo->nFarInterfaceSettings =
 	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0, 0);
 	gpFarInfo->nFarPanelSettings =

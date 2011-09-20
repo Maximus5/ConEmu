@@ -118,7 +118,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	static char *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1;
 	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240);
-	_ASSERTE(pi->StructSize = sizeof(struct PluginInfo));
+	_ASSERTE(pi->StructSize == sizeof(struct PluginInfo));
 	pi->Flags = PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	pi->DiskMenuNumbers = 0;

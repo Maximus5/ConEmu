@@ -540,7 +540,7 @@ void SettingsXML::AppendIndent(IXMLDOMNode* apFrom, int nLevel)
 {
 	if (nLevel<=0) return;
 
-	int nMax = min(32,nLevel);
+	int nMax = min(32,nLevel); //-V112
 	wchar_t szIndent[34];
 
 	for(int i=0; i<nMax; i++) szIndent[i] = L'\t';

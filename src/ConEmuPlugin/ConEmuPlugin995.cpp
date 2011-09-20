@@ -103,7 +103,7 @@ void GetPluginInfoW995(void *piv)
 	//if (gcPlugKey) szMenu1[0]=0; else lstrcpyW(szMenu1, L"[&\x2584] ");
 	//lstrcpynW(szMenu1+lstrlenW(szMenu1), GetMsgW(2), 240);
 	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
-	_ASSERTE(pi->StructSize = sizeof(struct PluginInfo));
+	_ASSERTE(pi->StructSize == sizeof(struct PluginInfo));
 	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	//pi->DiskMenuNumbers = 0;
@@ -987,7 +987,7 @@ bool ProcessCommandLineW995(wchar_t* pszCommand)
 
 	if (FSFW995->LStrnicmp(pszCommand, L"run:", 4)==0)
 	{
-		RunExternalProgramW995(pszCommand+4);
+		RunExternalProgramW995(pszCommand+4); //-V112
 		return true;
 	}
 
@@ -1069,7 +1069,7 @@ BOOL ReloadFarInfoW995(/*BOOL abFull*/)
 	
 	LoadFarColorsW995(gpFarInfo->nFarColors);
 
-	_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40);
+	_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
 	gpFarInfo->nFarInterfaceSettings =
 	    (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
 	gpFarInfo->nFarPanelSettings =
@@ -1169,7 +1169,7 @@ BOOL CheckBufferEnabledW995()
 
 	SMALL_RECT rcFar = {0};
 
-	_ASSERTE(ACTL_GETFARRECT==32);
+	_ASSERTE(ACTL_GETFARRECT==32); //-V112
 	if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARRECT, &rcFar))
 	{
 		if (rcFar.Top > 0 && rcFar.Bottom > rcFar.Top)
@@ -1236,7 +1236,7 @@ void FillUpdateBackgroundW995(struct PaintBackgroundArg* pFar)
 	if (CheckBufferEnabledW995())
 	{
 		SMALL_RECT rc = {0};
-		_ASSERTE(ACTL_GETFARRECT==32);
+		_ASSERTE(ACTL_GETFARRECT==32); //-V112
 		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARRECT, &rc);
 		pFar->rcConWorkspace.left = rc.Left;
 		pFar->rcConWorkspace.top = rc.Top;

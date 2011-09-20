@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "..\common\pluginA.hpp"
 #include "ConEmuTh.h"
-#include "..\common\farcolor2.hpp"
+#include "..\common\farcolor1.hpp"
 #include "ImgCache.h"
 
 //#define SHOW_DEBUG_EVENTS
@@ -126,7 +126,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	static char *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1;
 	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240); //-V303
-	_ASSERTE(pi->StructSize = sizeof(struct PluginInfo));
+	_ASSERTE(pi->StructSize == sizeof(struct PluginInfo));
 	pi->Flags = PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	pi->DiskMenuNumbers = 0;

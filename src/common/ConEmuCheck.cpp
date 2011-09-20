@@ -304,11 +304,7 @@ void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, size_t cbSize)
 	pHdr->nCreateTick = GetTickCount();
 	_ASSERTE(ghWorkingModule!=0);
 	pHdr->hModule = ghWorkingModule;
-#ifdef _WIN64
-	pHdr->nBits = 64;
-#else
-	pHdr->nBits = 32;
-#endif
+	pHdr->nBits = WIN3264TEST(32,64);
 	pHdr->nReserved = 0;
 }
 
@@ -449,11 +445,7 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(enum CmdOnCreateType aCmd,
 	pIn = ExecuteNewCmd(CECMD_ONCREATEPROC, sizeof(CESERVER_REQ_HDR)
 		+sizeof(CESERVER_REQ_ONCREATEPROCESS)+(nActionLen+nFileLen+nParamLen)*sizeof(wchar_t));
 	
-#ifdef _WIN64
-	pIn->OnCreateProc.nSourceBits = 64;
-#else
-	pIn->OnCreateProc.nSourceBits = 32;
-#endif
+	pIn->OnCreateProc.nSourceBits = WIN3264TEST(32,64); //-V112
 	//pIn->OnCreateProc.bUnicode = TRUE;
 	pIn->OnCreateProc.nImageSubsystem = mn_ImageSubsystem;
 	pIn->OnCreateProc.nImageBits = mn_ImageBits;

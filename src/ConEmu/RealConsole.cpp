@@ -138,7 +138,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mb_LeftPanel = mb_RightPanel = FALSE;
 	mb_MouseButtonDown = FALSE;
 	mb_BtnClicked = FALSE; mrc_BtnClickPos = MakeCoord(-1,-1);
-	mcr_LastMouseEventPos = MakeCoord(-1,-1);
+	mcr_LastMouseEventPos = mcr_LastMousePos = MakeCoord(-1,-1);
 	//m_DetectedDialogs.Count = 0;
 	//mn_DetectCallCount = 0;
 	wcscpy(Title, gpConEmu->ms_ConEmuVer);
@@ -150,6 +150,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mn_LastConProgrTick = mn_LastWarnCheckTick = 0;
 	hPictureView = NULL; mb_PicViewWasHidden = FALSE;
 	mh_MonitorThread = NULL; mn_MonitorThreadID = 0;
+	mh_PostMacroThread = NULL; mn_PostMacroThreadID = 0;
 	//mh_InputThread = NULL; mn_InputThreadID = 0;
 	mp_sei = NULL;
 	mn_ConEmuC_PID = 0; //mn_ConEmuC_Input_TID = 0;
@@ -229,11 +230,11 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mn_FarPID_PluginDetected = 0; //mn_Far_PluginInputThreadId = 0;
 	memset(&m_FarInfo, 0, sizeof(m_FarInfo));
 	lstrcpy(ms_Editor, L"edit ");
-	MultiByteToWideChar(CP_ACP, 0, "редактирование ", -1, ms_EditorRus, 32);
+	MultiByteToWideChar(CP_ACP, 0, "редактирование ", -1, ms_EditorRus, countof(ms_EditorRus));
 	lstrcpy(ms_Viewer, L"view ");
-	MultiByteToWideChar(CP_ACP, 0, "просмотр ", -1, ms_ViewerRus, 32);
+	MultiByteToWideChar(CP_ACP, 0, "просмотр ", -1, ms_ViewerRus, countof(ms_ViewerRus));
 	lstrcpy(ms_TempPanel, L"{Temporary panel");
-	MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, 32);
+	MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, countof(ms_TempPanelRus));
 	//lstrcpy(ms_NameTitle, L"Name");
 	SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
 	PreInit(FALSE); // просто инициализировать переменные размеров...
@@ -2418,6 +2419,110 @@ COORD CRealConsole::ScreenToBuffer(COORD crMouse)
 	return crMouse;
 }
 
+bool CRealConsole::ProcessFarHyperlink(UINT messg, COORD crFrom)
+{
+	bool lbProcessed = false;
+
+	if (IsFarHyperlinkAllowed())
+	{
+		//if (messg == WM_MOUSEMOVE || messg == WM_LBUTTONDOWN || messg == WM_LBUTTONUP || messg == WM_LBUTTONDBLCLK)
+		//{
+		COORD crStart = crFrom, crEnd = crFrom;
+		wchar_t szText[MAX_PATH+10];
+		ExpandTextRangeType rc = ExpandTextRange(crStart, crEnd, etr_FileAndLine, szText, countof(szText));
+		if (memcmp(&crStart, &con.mcr_FileLineStart, sizeof(crStart)) != 0
+			|| memcmp(&crEnd, &con.mcr_FileLineEnd, sizeof(crStart)) != 0)
+		{
+			con.mcr_FileLineStart = crStart;
+			con.mcr_FileLineEnd = crEnd;
+			// WM_USER передается если вызов идет из GetConsoleData для коррекции отдаваемых координат
+			if (messg != WM_USER)
+			{
+				UpdateSelection(); // обновить на экране
+			}
+		}
+		
+		if (rc == etr_FileAndLine)
+		{
+			if ((messg == WM_LBUTTONDOWN) && *szText)
+			{
+				// Найти номер строки
+				CESERVER_REQ_FAREDITOR cmd = {sizeof(cmd)};
+				int nLen = lstrlen(szText)-1;
+				if (szText[nLen] == L')')
+				{
+					szText[nLen] = 0;
+					nLen--;
+				}
+				while ((nLen > 0) && (szText[nLen-1] >= L'0') && (szText[nLen-1] <= L'9'))
+					nLen--;
+				if (nLen < 3)
+				{
+					_ASSERTE(nLen >= 3);
+				}
+				else
+				{ // 1.c:3: 
+					wchar_t* pszEnd;
+					cmd.nLine = wcstol(szText+nLen, &pszEnd, 10);
+					szText[nLen-1] = 0;
+					while ((pszEnd = wcschr(szText, L'/')) != NULL)
+						*pszEnd = L'\\'; // заменить прямые слеши на обратные
+					lstrcpyn(cmd.szFile, szText, countof(cmd.szFile));
+					
+					// Проверить, может уже открыт таб с этим файлом?
+					LPCWSTR pszFileName = wcsrchr(cmd.szFile, L'\\');
+					if (!pszFileName) pszFileName = cmd.szFile; else pszFileName++;
+					CVirtualConsole* pVCon = NULL;
+					int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(3/*Редактор*/, pszFileName, &pVCon);
+					
+					if (liActivated == -2)
+					{
+						// Нашли, но активировать нельзя
+						_ASSERTE(FALSE);
+					}
+					else if (liActivated >= 0)
+					{
+						// Нашли, активировали, нужно только на строку перейти
+						if (cmd.nLine > 0)
+						{
+							wchar_t szMacro[96];
+							if (m_FarInfo.FarVer.dwVerMajor == 1)
+								_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i\" Enter $end", cmd.nLine);
+							else
+								_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 print(\"%i\") Enter $end", cmd.nLine);
+							_ASSERTE(pVCon!=NULL);
+
+							// -- Послать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
+							//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
+
+							// Ок, переход на строку (макрос)
+							PostMacro(szMacro, TRUE);
+						}
+					}
+					else
+					{
+						// -- Послать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
+						//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
+
+						// Prepared, можно звать плагин
+						PostCommand(CMD_OPENEDITORLINE, sizeof(cmd), &cmd);
+						//CConEmuPipe pipe(GetFarPID(TRUE), CONEMUREADYTIMEOUT);
+						//if (pipe.Init(_T("CRealConsole::ProcessFarHyperlink"), TRUE))
+						//{
+						//	gpConEmu->DebugStep(_T("ProcessFarHyperlink: Waiting for result (10 sec)"));
+						//	pipe.Execute(CMD_OPENEDITORLINE, &cmd, sizeof(cmd));
+						//	gpConEmu->DebugStep(NULL);
+						//}
+					}
+				}
+			}
+			lbProcessed = true;
+		}
+		//}
+	}
+
+	return lbProcessed;
+}
 
 // x,y - экранные координаты
 // Если abForceSend==true - не проверять на "повторность" события, и не проверять "isPressed(VK_?BUTTON)"
@@ -2438,6 +2543,10 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	{
 		mcr_LastMouseEventPos.X = mcr_LastMouseEventPos.Y = -1;
 	}
+
+	// Получить известные координаты символов
+	COORD crMouse = ScreenToBuffer(mp_VCon->ClientToConsole(x,y));
+	mcr_LastMousePos = crMouse;
 
 	//BOOL lbStdMode = FALSE;
 	//if (!con.bBufferHeight)
@@ -2515,7 +2624,22 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 		OnMouseSelection(messg, wParam, x, y);
 		return;
 	}
-	
+
+	// Поиск и подсветка файлов с ошибками типа
+	// .\realconsole.cpp(8104) : error ...
+	if (IsFarHyperlinkAllowed())
+	{
+		if (messg == WM_MOUSEMOVE || messg == WM_LBUTTONDOWN || messg == WM_LBUTTONUP || messg == WM_LBUTTONDBLCLK)
+		{
+			if (ProcessFarHyperlink(messg, crMouse))
+			{
+				// Пускать или нет событие мыши в консоль?
+				// Лучше наверное не пускать, а то вьювер может заклинить на прокрутке, например
+				return;
+			}
+		}
+	}
+
 	// Если юзер запретил посылку мышиных событий в консоль
 	if (gpSet->isDisableMouse)
 		return;
@@ -2526,8 +2650,6 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	if (isBufferHeight() && !lbFarBufferSupported)
 		return;
 
-	// Получить известные координаты символов
-	COORD crMouse = ScreenToBuffer(mp_VCon->ClientToConsole(x,y));
 	//if (isBufferHeight()) {
 	//	crMouse.X += con.m_sbi.srWindow.Left;
 	//	crMouse.Y += con.m_sbi.srWindow.Top;
@@ -2539,6 +2661,17 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	//		return; // не посылать в консоль MouseMove на том же месте
 	//	mcr_LastMouseEventPos.X = crMouse.X; mcr_LastMouseEventPos.Y = crMouse.Y;
 	//}
+
+	PostMouseEvent(messg, wParam, crMouse, abForceSend);
+
+	if (messg == WM_MOUSEMOVE)
+	{
+		m_LastMouseGuiPos.x = x; m_LastMouseGuiPos.y = y;
+	}
+}
+
+void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend /*= false*/)
+{
 	INPUT_RECORD r; memset(&r, 0, sizeof(r));
 	r.EventType = MOUSE_EVENT;
 
@@ -2596,7 +2729,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	{
 		if (m_UseLogs>=2)
 		{
-			char szDbgMsg[128]; _wsprintfA(szDbgMsg, SKIPLEN(countof(szDbgMsg)) "WM_MOUSEWHEEL(wParam=0x%08X, x=%i, y=%i)", (DWORD)wParam, x, y);
+			char szDbgMsg[128]; _wsprintfA(szDbgMsg, SKIPLEN(countof(szDbgMsg)) "WM_MOUSEWHEEL(wParam=0x%08X, x=%i, y=%i)", (DWORD)wParam, crMouse.X, crMouse.Y);
 			LogString(szDbgMsg);
 		}
 
@@ -2618,7 +2751,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	{
 		if (m_UseLogs>=2)
 		{
-			char szDbgMsg[128]; _wsprintfA(szDbgMsg, SKIPLEN(countof(szDbgMsg)) "WM_MOUSEHWHEEL(wParam=0x%08X, x=%i, y=%i)", (DWORD)wParam, x, y);
+			char szDbgMsg[128]; _wsprintfA(szDbgMsg, SKIPLEN(countof(szDbgMsg)) "WM_MOUSEHWHEEL(wParam=0x%08X, x=%i, y=%i)", (DWORD)wParam, crMouse.X, crMouse.Y);
 			LogString(szDbgMsg);
 		}
 
@@ -2675,7 +2808,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 			mb_BtnClicked = FALSE;
 		}
 
-		m_LastMouseGuiPos.x = x; m_LastMouseGuiPos.y = y;
+		//m_LastMouseGuiPos.x = x; m_LastMouseGuiPos.y = y;
 		mcr_LastMouseEventPos.X = crMouse.X; mcr_LastMouseEventPos.Y = crMouse.Y;
 	}
 
@@ -2775,9 +2908,14 @@ bool CRealConsole::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			}
 		}
 
+		con.m_sel.dwFlags &= ~CONSOLE_KEYMOD_MASK;
+		con.m_sel.dwFlags |= ((DWORD)vkMod) << 24;
+
 		// Если дошли сюда - значит или модификатор нажат, или из меню выделение запустили
 		StartSelection(lbStreamSelection, cr.X, cr.Y, TRUE);
 
+		/*
+		-- Это нужно делать после окончания выделения, иначе фар сбрасывает UserScreen из редактора
 		if (vkMod)
 		{
 			// Но чтобы ФАР не запустил макрос (если есть макро на RAlt например...)
@@ -2791,6 +2929,7 @@ bool CRealConsole::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			// "Отпустить" в консоли модификатор
 			PostKeyUp(vkMod, 0, 0);
 		}
+		*/
 
 		//con.m_sel.dwFlags = CONSOLE_SELECTION_IN_PROGRESS|CONSOLE_MOUSE_SELECTION;
 		//
@@ -2799,6 +2938,22 @@ bool CRealConsole::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		//con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
 		//
 		//UpdateSelection();
+		return true;
+	}
+	else if (messg == WM_LBUTTONDBLCLK)
+	{
+		// Выделить слово под курсором (как в обычной консоли)
+		BOOL lbStreamSelection = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
+		
+		// Нужно получить координаты слова
+		COORD crFrom = cr, crTo = cr;
+		ExpandTextRange(crFrom/*[In/Out]*/, crTo/*[Out]*/, etr_Word);
+		
+		// Выполнить выделение
+		StartSelection(lbStreamSelection, crFrom.X, crFrom.Y, TRUE);
+		if (crTo.X != crFrom.X)
+			ExpandSelection(crTo.X, crTo.Y);
+		con.m_sel.dwFlags |= CONSOLE_DBLCLICK_SELECTION;
 		return true;
 	}
 	else if ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) && (messg == WM_MOUSEMOVE || messg == WM_LBUTTONUP))
@@ -2812,25 +2967,14 @@ bool CRealConsole::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			return false; // Ошибка в координатах
 		}
 
-		////con.m_sel.dwSelectionAnchor = cr;
-		//if (cr.X < con.m_sel.dwSelectionAnchor.X) {
-		//	con.m_sel.srSelection.Left = cr.X;
-		//	con.m_sel.srSelection.Right = con.m_sel.dwSelectionAnchor.X;
-		//} else {
-		//	con.m_sel.srSelection.Left = con.m_sel.dwSelectionAnchor.X;
-		//	con.m_sel.srSelection.Right = cr.X;
-		//}
-		//
-		//if (cr.Y < con.m_sel.dwSelectionAnchor.Y) {
-		//	con.m_sel.srSelection.Top = cr.Y;
-		//	con.m_sel.srSelection.Bottom = con.m_sel.dwSelectionAnchor.Y;
-		//} else {
-		//	con.m_sel.srSelection.Top = con.m_sel.dwSelectionAnchor.Y;
-		//	con.m_sel.srSelection.Bottom = cr.Y;
-		//}
-		//
-		//UpdateSelection();
-		ExpandSelection(cr.X, cr.Y);
+		if (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)
+		{
+			con.m_sel.dwFlags &= ~CONSOLE_DBLCLICK_SELECTION;
+		}
+		else
+		{
+			ExpandSelection(cr.X, cr.Y);
+		}
 
 		if (messg == WM_LBUTTONUP)
 		{
@@ -2872,9 +3016,16 @@ void CRealConsole::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*
 		return; // Ошибка в координатах
 	}
 
+	DWORD vkMod = con.m_sel.dwFlags & CONSOLE_KEYMOD_MASK;
+	if (vkMod && !abByMouse)
+	{
+		DoSelectionStop(); // Чтобы Фар не думал, что все еще нажат модификатор
+	}
+
 	con.m_sel.dwFlags = CONSOLE_SELECTION_IN_PROGRESS
 	                    | (abByMouse ? CONSOLE_MOUSE_SELECTION : 0)
-	                    | (abTextMode ? CONSOLE_TEXT_SELECTION : CONSOLE_BLOCK_SELECTION);
+	                    | (abTextMode ? CONSOLE_TEXT_SELECTION : CONSOLE_BLOCK_SELECTION)
+						| (abByMouse ? vkMod : 0);
 	con.m_sel.dwSelectionAnchor = cr;
 	con.m_sel.srSelection.Left = con.m_sel.srSelection.Right = cr.X;
 	con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
@@ -2935,6 +3086,27 @@ void CRealConsole::ExpandSelection(SHORT anX/*=-1*/, SHORT anY/*=-1*/)
 	}
 
 	UpdateSelection();
+}
+
+void CRealConsole::DoSelectionStop()
+{
+	BYTE vkMod = HIBYTE(HIWORD(con.m_sel.dwFlags));
+
+	if (vkMod)
+	{
+		// Но чтобы ФАР не запустил макрос (если есть макро на RAlt например...)
+		if (vkMod == VK_CONTROL || vkMod == VK_LCONTROL || vkMod == VK_RCONTROL)
+			PostKeyPress(VK_SHIFT, LEFT_CTRL_PRESSED, 0);
+		else if (vkMod == VK_MENU || vkMod == VK_LMENU || vkMod == VK_RMENU)
+			PostKeyPress(VK_SHIFT, LEFT_ALT_PRESSED, 0);
+		else
+			PostKeyPress(VK_CONTROL, SHIFT_PRESSED, 0);
+
+		// "Отпустить" в консоли модификатор
+		PostKeyUp(vkMod, 0, 0);
+	}
+
+	con.m_sel.dwFlags = 0;
 }
 
 bool CRealConsole::DoSelectionCopy()
@@ -3109,7 +3281,7 @@ bool CRealConsole::DoSelectionCopy()
 	// Fin, Сбрасываем
 	if (Result)
 	{
-		con.m_sel.dwFlags = 0;
+		DoSelectionStop(); // con.m_sel.dwFlags = 0;
 		UpdateSelection(); // обновить на экране
 	}
 
@@ -3513,6 +3685,24 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		SafeCloseHandle(mh_MonitorThread);
 	}
 
+	if (mh_PostMacroThread != NULL)
+	{
+		DWORD nWait = WaitForSingleObject(mh_PostMacroThread, 0);
+		if (nWait == WAIT_OBJECT_0)
+		{
+			CloseHandle(mh_PostMacroThread);
+			mh_PostMacroThread = NULL;
+		}
+		else
+		{
+			// Должен быть NULL, если нет - значит завис предыдующий макрос
+			_ASSERTE(mh_PostMacroThread==NULL);
+			TerminateThread(mh_PostMacroThread, 100);
+			CloseHandle(mh_PostMacroThread);
+		}
+	}
+
+
 	// Завершение серверных нитей этой консоли
 	DEBUGSTRPROC(L"About to terminate main server thread (MonitorThread)\n");
 
@@ -3718,9 +3908,9 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			wchar_t szDbg[128];
 
 			if (messg == WM_KEYDOWN)
-				_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_KEYDOWN(%i,0x%08X)\n", wParam, lParam);
+				_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_KEYDOWN(%i,0x%08X)\n", (DWORD)wParam, (DWORD)lParam);
 			else //if (messg == WM_KEYUP)
-				_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_KEYUP(%i,0x%08X)\n", wParam, lParam);
+				_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_KEYUP(%i,0x%08X)\n", (DWORD)wParam, (DWORD)lParam);
 
 			//else
 			//    _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_CHAR(%i,0x%08X)\n", wParam, lParam);
@@ -3745,7 +3935,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			}
 
 			mn_SelectModeSkipVk = wParam;
-			con.m_sel.dwFlags = 0;
+			DoSelectionStop(); // con.m_sel.dwFlags = 0;
 			//mb_ConsoleSelectMode = false;
 			UpdateSelection(); // обновить на экране
 		}
@@ -3842,12 +4032,12 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				r.Event.KeyEvent.bKeyDown = TRUE;
 				r.Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
 				r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_RETURN, 0/*MAPVK_VK_TO_VSC*/);
-				r.Event.KeyEvent.dwControlKeyState = 0x22;
+				r.Event.KeyEvent.dwControlKeyState = NUMLOCK_ON|LEFT_ALT_PRESSED /*0x22*/;
 				r.Event.KeyEvent.uChar.UnicodeChar = pszChars[0];
 				PostConsoleEvent(&r);
 				//On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
 				r.Event.KeyEvent.bKeyDown = FALSE;
-				r.Event.KeyEvent.dwControlKeyState = 0x20;
+				r.Event.KeyEvent.dwControlKeyState = NUMLOCK_ON;
 				PostConsoleEvent(&r);
 				//On Keyboard(hConWnd, WM_KEYUP, VK_MENU, 0); -- Alt слать не нужно - он будет послан сам позже
 			}
@@ -4808,7 +4998,7 @@ CESERVER_REQ* CRealConsole::cmdTabsChanged(HANDLE hPipe, CESERVER_REQ* pIn, UINT
 	}
 	else
 	{
-		_ASSERTE(nDataSize>=4);
+		_ASSERTE(nDataSize>=4); //-V112
 		_ASSERTE(((pIn->Tabs.nTabCount-1)*sizeof(ConEmuTab))==(nDataSize-sizeof(CESERVER_REQ_CONEMUTAB)));
 		BOOL lbCanUpdate = TRUE;
 
@@ -4919,7 +5109,7 @@ CESERVER_REQ* CRealConsole::cmdGetOutputFile(HANDLE hPipe, CESERVER_REQ* pIn, UI
 	CESERVER_REQ* pOut = NULL;
 	
 	DEBUGSTRCMD(L"GUI recieved CECMD_GETOUTPUTFILE\n");
-	_ASSERTE(nDataSize>=4);
+	_ASSERTE(nDataSize>=4); //-V112
 	BOOL lbUnicode = pIn->OutputFile.bUnicode;
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_OUTPUTFILE));
 	pOut->OutputFile.bUnicode = lbUnicode;
@@ -4962,7 +5152,7 @@ CESERVER_REQ* CRealConsole::cmdLangChange(HANDLE hPipe, CESERVER_REQ* pIn, UINT 
 	CESERVER_REQ* pOut = NULL;
 	
 	DEBUGSTRLANG(L"GUI recieved CECMD_LANGCHANGE\n");
-	_ASSERTE(nDataSize>=4);
+	_ASSERTE(nDataSize>=4); //-V112
 	// LayoutName: "00000409", "00010409", ...
 	// А HKL от него отличается, так что передаем DWORD
 	// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
@@ -6812,7 +7002,7 @@ void CRealConsole::LogInput(INPUT_RECORD* pRec)
 
 				if (pRec->Event.MouseEvent.dwEventFlags & 0x02) strcat(pszAdd, "|DOUBLE_CLICK");
 
-				if (pRec->Event.MouseEvent.dwEventFlags & 0x04) strcat(pszAdd, "|MOUSE_WHEELED");
+				if (pRec->Event.MouseEvent.dwEventFlags & 0x04) strcat(pszAdd, "|MOUSE_WHEELED"); //-V112
 
 				if (pRec->Event.MouseEvent.dwEventFlags & 0x08) strcat(pszAdd, "|MOUSE_HWHEELED");
 
@@ -8053,6 +8243,159 @@ BOOL CRealConsole::IsConsoleDataChanged()
 	return con.bConsoleDataChanged;
 }
 
+bool CRealConsole::IsFarHyperlinkAllowed()
+{
+	if (!isFar(TRUE))
+		return false;
+	if (!gpSet->isFarGotoEditor)
+		return false;
+	if (gpSet->isFarGotoEditorVk && !isPressed(gpSet->isFarGotoEditorVk))
+		return false;
+	return true;
+}
+
+CRealConsole::ExpandTextRangeType CRealConsole::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, CRealConsole::ExpandTextRangeType etr, wchar_t* pszText /*= NULL*/, size_t cchTextMax /*= 0*/)
+{
+	CRealConsole::ExpandTextRangeType result = etr_None;
+	
+	crTo = crFrom; // Initialize
+	
+	// Нужно получить строку
+	MSectionLock csData; csData.Lock(&csCON);
+	wchar_t* pChar = NULL;
+	int nLen = 0;
+	
+	if (mp_VCon && GetConsoleLine(crFrom.Y, &pChar, /*NULL,*/ &nLen, &csData) && pChar)
+	{
+		TODO("Проверить на ошибки после добавления горизонтальной прокрутки");
+		if (etr == etr_Word)
+		{
+			while ((crFrom.X) > 0 && !(mp_VCon->isCharSpace(pChar[crFrom.X-1]) || mp_VCon->isCharNonSpacing(pChar[crFrom.X-1])))
+				crFrom.X--;
+			while (((crTo.X+1) < nLen) && !(mp_VCon->isCharSpace(pChar[crTo.X]) || mp_VCon->isCharNonSpacing(pChar[crTo.X])))
+				crTo.X++;
+			result = etr; // OK
+		}
+		else if (etr == etr_FileAndLine)
+		{
+			// В именах файлов недопустимы: "/\:|*?<>~t~r~n
+			const wchar_t* pszBreak = L"\"|*?<>\t\r\n";
+			const wchar_t* pszSpacing = L" \t\xB7\x2192"; //B7 - режим "Show white spaces", 2192 - символ табуляции там же
+			// Курсор над комментарием?
+			// Попробуем найти начало имени файла
+			while ((crFrom.X) > 0 && !wcschr(pszBreak, pChar[crFrom.X-1]))
+			{
+				if ((pChar[crFrom.X] == L'/') && (crFrom.X > 1) && (pChar[crFrom.X-1] == L'/'))
+				{	
+					crFrom.X++;
+					break; // Комментарий в строке?
+				}
+				crFrom.X--;
+				if (pChar[crFrom.X] == L':' && pChar[crFrom.X+1] != L'\\' && pChar[crFrom.X+1] != L'/')
+				{
+					goto wrap; // Не оно
+				}
+			}
+			if (crFrom.X > crTo.X)
+			{
+				goto wrap; // Fail?
+			}
+			// Теперь - найти конец. Считаем, что конец это двоеточие, после которого идет описание ошибки
+			// -- VC 9.0
+			// 1>t:\vcproject\conemu\realconsole.cpp(8104) : error C2065: 'qqq' : undeclared identifier
+			// -- GCC
+			// ConEmuC.cpp:49: error: 'qqq' does not name a type
+			// { // 1.c:3: 
+			while (((crTo.X+1) < nLen)
+				&& ((pChar[crTo.X] != L':') || (pChar[crTo.X] == L':' && wcschr(L"0123456789", pChar[crTo.X+1]))))
+			{
+				if ((pChar[crTo.X] == L'/') && ((crTo.X+1) < nLen) && (pChar[crTo.X+1] == L'/'))
+				{
+					goto wrap; // Не оно (комментарий в строке)
+				}
+				crTo.X++;
+				if (wcschr(pszBreak, pChar[crTo.X]))
+				{
+					goto wrap; // Не оно
+				}
+			}
+			if (pChar[crTo.X] != L':')
+			{
+				goto wrap;
+			}
+			crTo.X--;
+			// Откатить ненужные пробелы
+			while ((crFrom.X < crTo.X) && wcschr(pszSpacing, pChar[crFrom.X]))
+				crFrom.X++;
+			while ((crTo.X > crFrom.X) && wcschr(pszSpacing, pChar[crTo.X]))
+				crTo.X--;
+			if ((crFrom.X + 4) > crTo.X) // 1.c:1: //-V112
+			{
+				// Слишком коротко, считаем что не оно
+				goto wrap;
+			}
+			// Проверить, чтобы был в наличии номер строки
+			if (!(pChar[crTo.X] >= L'0' && pChar[crTo.X] <= L'9') // ConEmuC.cpp:49:
+				&& !(pChar[crTo.X] == L')' && (pChar[crTo.X-1] >= L'0' && pChar[crTo.X-1] <= L'9'))) // ConEmuC.cpp(49) :
+			{
+				goto wrap; // Номера строки нет
+			}
+			// Ok
+			if (pszText && cchTextMax)
+			{
+				if ((crTo.X - crFrom.X + 1) >= (INT_PTR)cchTextMax)
+					goto wrap; // Недостаточно места под текст
+				memmove(pszText, pChar+crFrom.X, (crTo.X - crFrom.X + 1)*sizeof(*pszText));
+				pszText[crTo.X - crFrom.X + 1] = 0;
+				#ifdef _DEBUG
+				if (wcsstr(pszText, L"//")!=NULL)
+				{
+					_ASSERTE(FALSE);
+				}
+				#endif
+			}
+			result = etr;
+		}
+	}
+wrap:
+	// Fail?
+	if (result == etr_None)
+	{
+		crFrom = crTo = MakeCoord(0,0);
+	}
+	return result;
+}
+
+BOOL CRealConsole::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData)
+{
+	// Может быть уже заблокировано
+	MSectionLock csData;
+	if (pcsData)
+	{
+		if (!pcsData->isLocked())
+			pcsData->Lock(&csCON);
+	}
+	else
+	{
+		csData.Lock(&csCON);
+	}
+	
+	// Вернуть данные
+	if (!con.pConChar || !con.pConAttr)
+		return FALSE;
+	if (nLine < 0 || nLine >= con.nTextHeight)
+		return FALSE;
+	
+	if (pChar)
+		*pChar = con.pConChar + (nLine * con.nTextWidth);
+	//if (pAttr)
+	//	*pAttr = con.pConAttr + (nLine * con.nTextWidth);
+	if (pLen)
+		*pLen = con.nTextWidth;
+	
+	return TRUE;
+}
+
 // nWidth и nHeight это размеры, которые хочет получить VCon (оно могло еще не среагировать на изменения?
 void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
 {
@@ -8076,6 +8419,7 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 	//TODO("В принципе, это можно делать не всегда, а только при изменениях");
 	int  nColorIndex = 0;
 	bool lbIsFar = (GetFarPID() != 0);
+	bool lbAllowHilightFileLine = IsFarHyperlinkAllowed();
 	bool bExtendColors = lbIsFar && gpSet->isExtendColors;
 	BYTE nExtendColor = gpSet->nExtendColor;
 	bool bExtendFonts = lbIsFar && gpSet->isExtendFonts;
@@ -8168,6 +8512,18 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		const AnnotationInfo *pcolEnd = NULL;
 		BOOL bUseColorData = FALSE, bStartUseColorData = FALSE;
 
+		if (lbAllowHilightFileLine)
+		{
+			// Если мышь сместиласть - нужно посчитать
+			// Даже если мышь не двигалась - текст мог измениться.
+			/*if ((con.mcr_FileLineStart.X == con.mcr_FileLineEnd.X)
+				|| (con.mcr_FileLineStart.Y != mcr_LastMousePos.Y)
+				|| (con.mcr_FileLineStart.X > mcr_LastMousePos.X || con.mcr_FileLineEnd.X < mcr_LastMousePos.X))*/
+			{
+				ProcessFarHyperlink(WM_USER, mcr_LastMousePos);
+			}
+		}
+
 		if (gpSet->isTrueColorer && m_TrueColorerMap.IsValid() && mp_TrueColorerData)
 		{
 			pcolSrc = mp_TrueColorerData;
@@ -8237,6 +8593,10 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 			}
 			else
 			{
+				bool lbHilightFileLine = lbAllowHilightFileLine 
+						&& (con.m_sel.dwFlags == 0)
+						&& (nY == con.mcr_FileLineStart.Y)
+						&& (con.mcr_FileLineStart.X < con.mcr_FileLineEnd.X);
 				for(nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
 				{
 					atr = (*pnSrc) & 0xFF; // интересут только нижний байт - там индексы цветов
@@ -8299,6 +8659,9 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 								lca.nFontIndex = pcolSrc->style & 7;
 						}
 					}
+
+					if (lbHilightFileLine && (nX >= con.mcr_FileLineStart.X) && (nX <= con.mcr_FileLineEnd.X))
+						lca.nFontIndex |= 4; // Отрисовать его как Underline
 
 					TODO("OPTIMIZE: lca = lcaTable[atr];");
 					pnDst[nX] = lca;
@@ -9714,7 +10077,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 						if (nCurLen>0)
 							WriteFile(hFile, pwszCur, nCurLen*2, &dwWritten, 0);
 
-						WriteFile(hFile, L"\r\n", 4, &dwWritten, 0);
+						WriteFile(hFile, L"\r\n", 2*sizeof(wchar_t), &dwWritten, 0); //-V112
 					}
 					else
 					{
@@ -9750,8 +10113,8 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeyboardLay
 
 #ifdef _DEBUG
 	WCHAR szMsg[255];
-	_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"CRealConsole::SwitchKeyboardLayout(CP:%i, HKL:0x%08I64X)\n",
-	          wParam, (unsigned __int64)(DWORD_PTR)dwNewKeyboardLayout);
+	_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"CRealConsole::SwitchKeyboardLayout(CP:%i, HKL:0x" WIN3264TEST(L"%08X",L"%X%08X") L")\n",
+	          (DWORD)wParam, WIN3264WSPRINT(dwNewKeyboardLayout));
 	DEBUGSTRLANG(szMsg);
 #endif
 
@@ -9902,7 +10265,7 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 			{
 				CConEmuPipe pipe(nFarPID, CONEMUREADYTIMEOUT);
 
-				if (pipe.Init(_T("CRealConsole::CloseConsole"), TRUE))
+				//if (pipe.Init(_T("CRealConsole::CloseConsole"), TRUE))
 				{
 					mb_InCloseConsole = TRUE;
 					//DWORD cbWritten=0;
@@ -9915,7 +10278,11 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 						pszMacro = L"@$while (Dialog||Editor||Viewer||Menu||Disks||MainMenu||UserMenu||Other||Help) $if (Editor) ShiftF10 $else Esc $end $end  Esc  $if (Shell) F10 $if (Dialog) Enter $end $Exit $end  F10";
 					}
 
-					lbExecuted = pipe.Execute(CMD_POSTMACRO, pszMacro, (_tcslen(pszMacro)+1)*2);
+					// Async, иначе ConEmu зависнуть может
+					PostMacro(pszMacro, TRUE);
+					//lbExecuted = pipe.Execute(CMD_POSTMACRO, pszMacro, (_tcslen(pszMacro)+1)*2);
+					lbExecuted = TRUE;
+
 					gpConEmu->DebugStep(NULL);
 				}
 
@@ -10986,7 +11353,7 @@ void CRealConsole::FindPanels()
 			pFar = &m_FarInfo;
 			if (pFar)
 			{
-				if ((pFar->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) == 0)
+				if ((pFar->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) == 0) //-V112
 					bFarShowColNames = FALSE;
 				if ((pFar->nFarPanelSettings & 0x40/*FPS_SHOWSTATUSLINE*/) == 0)
 					bFarShowStatus = FALSE;
@@ -11021,7 +11388,7 @@ void CRealConsole::FindPanels()
 				{
 					uint nBottom = con.nTextHeight - 1;
 
-					while(nBottom > 4)
+					while(nBottom > 4) //-V112
 					{
 						if (con.pConChar[con.nTextWidth*nBottom] == ucBoxDblUpRight
 						        /*&& con.pConChar[con.nTextWidth*nBottom+i] == ucBoxDblUpLeft*/)
@@ -11108,7 +11475,7 @@ void CRealConsole::FindPanels()
 						{
 							uint nBottom = con.nTextHeight - 1;
 
-							while(nBottom > 4)
+							while(nBottom > 4) //-V112
 							{
 								if (/*con.pConChar[con.nTextWidth*nBottom+i] == ucBoxDblUpRight
 									&&*/ con.pConChar[con.nTextWidth*(nBottom+1)-1] == ucBoxDblUpLeft)
@@ -12318,7 +12685,65 @@ bool CRealConsole::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 	return lbRectOK;
 }
 
-void CRealConsole::PostMacro(LPCWSTR asMacro)
+DWORD CRealConsole::PostMacroThread(LPVOID lpParameter)
+{
+	PostMacroAnyncArg* pArg = (PostMacroAnyncArg*)lpParameter;
+	if (pArg->bPipeCommand)
+	{
+		CConEmuPipe pipe(pArg->pRCon->GetFarPID(TRUE), CONEMUREADYTIMEOUT);
+		if (pipe.Init(_T("CRealConsole::PostMacroThread"), TRUE))
+		{
+			gpConEmu->DebugStep(_T("ProcessFarHyperlink: Waiting for result (10 sec)"));
+			pipe.Execute(pArg->nCmdID, pArg->Data, pArg->nCmdSize);
+			gpConEmu->DebugStep(NULL);
+		}
+	}
+	else
+	{
+		pArg->pRCon->PostMacro(pArg->szMacro, FALSE/*теперь - точно Sync*/);
+	}
+	free(pArg);
+	return 0;
+}
+
+void CRealConsole::PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData)
+{
+	if (mh_PostMacroThread != NULL)
+	{
+		DWORD nWait = WaitForSingleObject(mh_PostMacroThread, 0);
+		if (nWait == WAIT_OBJECT_0)
+		{
+			CloseHandle(mh_PostMacroThread);
+			mh_PostMacroThread = NULL;
+		}
+		else
+		{
+			// Должен быть NULL, если нет - значит завис предыдующий макрос
+			_ASSERTE(mh_PostMacroThread==NULL);
+			TerminateThread(mh_PostMacroThread, 100);
+			CloseHandle(mh_PostMacroThread);
+		}
+	}
+
+	size_t nArgSize = sizeof(PostMacroAnyncArg) + anCmdSize;
+	PostMacroAnyncArg* pArg = (PostMacroAnyncArg*)calloc(1,nArgSize);
+	pArg->pRCon = this;
+	pArg->bPipeCommand = TRUE;
+	pArg->nCmdID = anCmdID;
+	pArg->nCmdSize = anCmdSize;
+	if (ptrData && anCmdSize)
+		memmove(pArg->Data, ptrData, anCmdSize);
+	mh_PostMacroThread = CreateThread(NULL, 0, PostMacroThread, pArg, 0, &mn_PostMacroThreadID);	
+	if (mh_PostMacroThread == NULL)
+	{
+		// Если не удалось запустить нить
+		MBoxAssert(mh_PostMacroThread!=NULL);
+		free(pArg);
+	}
+	return;
+}
+
+void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 {
 	if (!this || !asMacro || !*asMacro)
 		return;
@@ -12327,6 +12752,41 @@ void CRealConsole::PostMacro(LPCWSTR asMacro)
 
 	if (!nPID)
 		return;
+
+	if (abAsync)
+	{
+		if (mh_PostMacroThread != NULL)
+		{
+			DWORD nWait = WaitForSingleObject(mh_PostMacroThread, 0);
+			if (nWait == WAIT_OBJECT_0)
+			{
+				CloseHandle(mh_PostMacroThread);
+				mh_PostMacroThread = NULL;
+			}
+			else
+			{
+				// Должен быть NULL, если нет - значит завис предыдующий макрос
+				_ASSERTE(mh_PostMacroThread==NULL);
+				TerminateThread(mh_PostMacroThread, 100);
+				CloseHandle(mh_PostMacroThread);
+			}
+		}
+
+		size_t nLen = _tcslen(asMacro);
+		size_t nArgSize = sizeof(PostMacroAnyncArg) + nLen*sizeof(*asMacro);
+		PostMacroAnyncArg* pArg = (PostMacroAnyncArg*)calloc(1,nArgSize);
+		pArg->pRCon = this;
+		pArg->bPipeCommand = FALSE;
+		_wcscpy_c(pArg->szMacro, nLen+1, asMacro);
+		mh_PostMacroThread = CreateThread(NULL, 0, PostMacroThread, pArg, 0, &mn_PostMacroThreadID);	
+		if (mh_PostMacroThread == NULL)
+		{
+			// Если не удалось запустить нить
+			MBoxAssert(mh_PostMacroThread!=NULL);
+			free(pArg);
+		}
+		return;
+	}
 
 #ifdef _DEBUG
 	DEBUGSTRMACRO(asMacro); OutputDebugStringW(L"\n");

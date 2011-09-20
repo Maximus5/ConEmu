@@ -253,11 +253,11 @@ void CImgCache::SetCacheLocation(LPCWSTR asCachePath)
 	// Prepare root storage file pathname
 	if (asCachePath)
 	{
-		lstrcpyn(ms_CachePath, asCachePath, MAX_PATH-32);
+		lstrcpyn(ms_CachePath, asCachePath, MAX_PATH-32); //-V112
 	}
 	else
 	{
-		GetTempPath(MAX_PATH-32, ms_CachePath);
+		GetTempPath(MAX_PATH-32, ms_CachePath); //-V112
 	}
 
 	// add end slash
@@ -316,7 +316,7 @@ BOOL CImgCache::CheckLoadDibCreated()
 	bmi.biWidth = nPreviewSize;
 	bmi.biHeight = -nPreviewSize; // Top-Down DIB
 	bmi.biPlanes = 1;
-	bmi.biBitCount = 32;
+	bmi.biBitCount = 32; //-V112
 	bmi.biCompression = BI_RGB;
 	mcr_LoadDibSize.X = mcr_LoadDibSize.Y = nPreviewSize;
 	_ASSERTE(mp_LoadDibBytes==NULL);
@@ -333,7 +333,7 @@ BOOL CImgCache::CheckLoadDibCreated()
 	}
 
 	_ASSERTE(mp_LoadDibBytes);
-	mn_LoadDibBytes = bmi.biWidth * 4 * bmi.biHeight;
+	mn_LoadDibBytes = bmi.biWidth * bmi.biHeight * sizeof(COLORREF);
 	//	OK
 	mh_OldLoadBmp = (HBITMAP)SelectObject(mh_LoadDC, mh_LoadDib);
 	return TRUE;
@@ -367,7 +367,7 @@ BOOL CImgCache::CheckDrawDibCreated()
 	bmi.biWidth = nPreviewSize;
 	bmi.biHeight = -nPreviewSize; // Top-Down DIB
 	bmi.biPlanes = 1;
-	bmi.biBitCount = 32;
+	bmi.biBitCount = 32; //-V112
 	bmi.biCompression = BI_RGB;
 	mcr_DrawDibSize.X = mcr_DrawDibSize.Y = nPreviewSize;
 	_ASSERTE(mp_DrawDibBytes==NULL);
@@ -384,7 +384,7 @@ BOOL CImgCache::CheckDrawDibCreated()
 	}
 
 	_ASSERTE(mp_DrawDibBytes);
-	mn_DrawDibBytes = bmi.biWidth * 4 * bmi.biHeight;
+	mn_DrawDibBytes = bmi.biWidth * bmi.biHeight * sizeof(COLORREF);
 	//	OK
 	mh_OldDrawBmp = (HBITMAP)SelectObject(mh_DrawDC, mh_DrawDib);
 	return TRUE;
@@ -1032,7 +1032,7 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem)
 	GdiFlush();
 	pItem->Icon.crSize.X = (SHORT)rc.right; pItem->Icon.crSize.Y = (SHORT)rc.bottom;
 	pItem->Icon.cbStride = ((SHORT)rc.right)*4;
-	pItem->Icon.nBits = 32;
+	pItem->Icon.nBits = 32; //-V112
 	pItem->Icon.ColorModel = CET_CM_BGR;
 	pItem->Icon.cbPixelsSize = pItem->Icon.cbStride * pItem->Icon.crSize.Y;
 	pItem->Icon.Pixels = (LPDWORD)malloc(pItem->Icon.cbPixelsSize);
@@ -1122,7 +1122,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 			ImpExPanelItem *pImpEx = (ImpExPanelItem*)pItem->UserData;
 
 			if (pImpEx->nMagic == IMPEX_MAGIC && pImpEx->cbSizeOfStruct >= 1024
-			        && pImpEx->nBinarySize > 16 && pImpEx->nBinarySize <= 32*1024*1024
+			        && pImpEx->nBinarySize > 16 && pImpEx->nBinarySize <= 32*1024*1024 //-V112
 			        && pImpEx->pBinaryData)
 			{
 				if (!IsBadReadPtr(pImpEx->pBinaryData, pImpEx->nBinarySize))
@@ -1259,7 +1259,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 				pItem->Preview.nBits = PV.nBits; // 32 bit required!
 				pItem->Preview.ColorModel = PV.ColorModel; // One of CET_CM_xxx
 				// Запомнить, что превьюшка действительно есть
-				pItem->PreviewLoaded |= 4;
+				pItem->PreviewLoaded |= 4; //-V112
 			}
 
 			//pItem->bPreviewExists = (PV.Pixels!=NULL);
@@ -1307,7 +1307,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 	// Поставим флаг того, что превьюшку загружать ПЫТАЛИСЬ
 	pItem->PreviewLoaded |= 2;
 #ifdef _DEBUG
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"result=%s, preview=%s\n", lbThumbRc ? L"OK" : L"FAILED", (pItem->PreviewLoaded & 4) ? L"Loaded" : L"NOT loaded");
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"result=%s, preview=%s\n", lbThumbRc ? L"OK" : L"FAILED", (pItem->PreviewLoaded & 4) ? L"Loaded" : L"NOT loaded"); //-V112
 	DEBUGSTRLOAD2(szDbg);
 #endif
 

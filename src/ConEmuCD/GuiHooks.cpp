@@ -46,6 +46,7 @@ extern "C" {
 	__declspec(dllexport) HHOOK ghKeyHook = 0;
 	__declspec(dllexport) DWORD gnVkWinFix = 0xF0;
 	__declspec(dllexport) BOOL  gbWinTabHook = FALSE;
+	__declspec(dllexport) DWORD gnHookedKeys[64] = {};
 	__declspec(dllexport) HWND  ghKeyHookConEmuRoot = NULL;
 #if defined(__GNUC__)
 };
@@ -62,6 +63,7 @@ extern "C" {
 //HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 extern UINT gnMsgActivateCon; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 extern UINT gnMsgSwitchCon;
+extern UINT gnMsgHookedKey;
 //SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
@@ -349,8 +351,24 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 
 		if (wParam == WM_KEYDOWN && ghKeyHookConEmuRoot)
 		{
-			if ((pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9') /*|| pKB->vkCode == (int)' '*/
-				|| (gbWinTabHook && pKB->vkCode == VK_TAB))
+			BOOL lbHooked = FALSE;
+			if (pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9') /*|| pKB->vkCode == (int)' '*/
+				lbHooked = TRUE;
+			else if (gbWinTabHook && pKB->vkCode == VK_TAB)
+				lbHooked = TRUE;
+			else
+			{
+				for (size_t i = 0; i < countof(gnHookedKeys); i++)
+				{
+					if (gnHookedKeys[i] == pKB->vkCode)
+					{
+						lbHooked = TRUE;
+						break;
+					}
+				}
+			}
+
+			if (lbHooked)
 			{
 				BOOL lbLeftWin = isPressed(VK_LWIN);
 				BOOL lbRightWin = isPressed(VK_RWIN);
@@ -362,10 +380,14 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 					{
 						PostMessage(ghKeyHookConEmuRoot, gnMsgSwitchCon, lbShiftPressed, 0);
 					}
-					else
+					else if (pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9')
 					{
 						DWORD nConNumber = (pKB->vkCode == (UINT)'0') ? 10 : (pKB->vkCode - (UINT)'0');
 						PostMessage(ghKeyHookConEmuRoot, gnMsgActivateCon, nConNumber, 0);
+					}
+					else
+					{
+						PostMessage(ghKeyHookConEmuRoot, gnMsgHookedKey, pKB->vkCode, lbShiftPressed);
 					}
 					gnSkipVkModCode = lbLeftWin ? VK_LWIN : VK_RWIN;
 					gnSkipVkKeyCode = pKB->vkCode;

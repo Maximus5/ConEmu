@@ -2650,6 +2650,53 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			lbSucceeded = TRUE;
 			break;
 		}
+		case CMD_OPENEDITORLINE:
+		{
+			lbSucceeded = TRUE;
+			// Может потом на API переделать?
+			CESERVER_REQ_FAREDITOR *pCmd = (CESERVER_REQ_FAREDITOR*)pCommandData;
+			INT_PTR cchMax = MAX_PATH*4; //-V112
+			wchar_t* pszMacro = (wchar_t*)malloc(cchMax*sizeof(*pszMacro));
+			if (!pszMacro)
+			{
+				_ASSERTE(pszMacro!=NULL)
+			}
+			else
+			{
+				if (gFarVersion.dwVerMajor==1)
+					_wcscpy_c(pszMacro, cchMax, L"@$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 \"");
+				else
+					_wcscpy_c(pszMacro, cchMax, L"@$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 print(\"");
+				wchar_t* pDst = pszMacro + lstrlen(pszMacro);
+				LPCWSTR  pSrc = pCmd->szFile;
+				while (*pSrc)
+				{
+					*(pDst++) = *pSrc;
+					if (*pSrc == L'\\')
+						*(pDst++) = L'\\';
+					pSrc++;
+				}
+				*pDst = 0;
+				if (gFarVersion.dwVerMajor==1)
+					_wcscat_c(pszMacro, cchMax, L"\" Enter ");
+				else
+					_wcscat_c(pszMacro, cchMax, L"\") Enter ");
+
+				if (pCmd->nLine > 0)
+				{
+					int nCurLen = lstrlen(pszMacro);
+					if (gFarVersion.dwVerMajor==1)
+						_wsprintf(pszMacro+nCurLen, SKIPLEN(cchMax-nCurLen) L" $if(Editor) AltF8 \"%i\" Enter $end", pCmd->nLine);
+					else
+						_wsprintf(pszMacro+nCurLen, SKIPLEN(cchMax-nCurLen) L" $if(Editor) AltF8 print(\"%i\") Enter $end", pCmd->nLine);
+				}
+
+				_wcscat_c(pszMacro, cchMax, L" $end");
+				PostMacro(pszMacro);
+				free(pszMacro);
+			}
+			break;
+		}
 		default:
 			// Неизвестная команда!
 			_ASSERTE(nCmd == 1);
@@ -3953,10 +4000,10 @@ BOOL ReloadFarInfo(BOOL abForce)
 			{
 				DWORD dwVal, dwSize;
 
-				if (!RegQueryValueExW(hk, L"SeparateTabs", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
+				if (!RegQueryValueExW(hk, L"SeparateTabs", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = sizeof(dwVal))))
 					gpFarInfo->PanelTabs.SeparateTabs = dwVal ? 1 : 0;
 
-				if (!RegQueryValueExW(hk, L"ButtonColor", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
+				if (!RegQueryValueExW(hk, L"ButtonColor", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = sizeof(dwVal))))
 					gpFarInfo->PanelTabs.ButtonColor = dwVal & 0xFF;
 
 				RegCloseKey(hk);
@@ -4977,7 +5024,7 @@ void PostMacro(wchar_t* asMacro)
 	if (!asMacro || !*asMacro)
 		return;
 
-	if (gFarVersion.dwVerMajor==1)
+	if (gFarVersion.dwVerMajor == 1)
 	{
 		int nLen = lstrlenW(asMacro);
 		char* pszMacro = (char*)Alloc(nLen+1,1);
@@ -5266,7 +5313,7 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 
 	if (pIn->hdr.nCmd == CMD_LANGCHANGE)
 	{
-		_ASSERTE(nDataSize>=4);
+		_ASSERTE(nDataSize>=4); //-V112
 		// LayoutName: "00000409", "00010409", ...
 		// А HKL от него отличается, так что передаем DWORD
 		// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
@@ -5553,12 +5600,12 @@ void ShowPluginMenu(int nID /*= -1*/)
 		case menu_ViewConsoleOutput:
 		{
 			// Открыть в редакторе вывод последней консольной программы
-			CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(sizeof(CESERVER_REQ_HDR)+4,1);
+			CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(sizeof(CESERVER_REQ_HDR)+sizeof(DWORD),1);
 
 			if (!pIn) return;
 
 			CESERVER_REQ* pOut = NULL;
-			ExecutePrepareCmd(pIn, CECMD_GETOUTPUTFILE, sizeof(CESERVER_REQ_HDR)+4);
+			ExecutePrepareCmd(pIn, CECMD_GETOUTPUTFILE, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
 			pIn->OutputFile.bUnicode = (gFarVersion.dwVerMajor>=2);
 			pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 

@@ -517,7 +517,7 @@ void CPluginBackground::UpdateBackground()
 	bi.biWidth = Arg.dcSizeX;
 	bi.biHeight = Arg.dcSizeY;
 	bi.biPlanes = 1;
-	bi.biBitCount = 32;
+	bi.biBitCount = 32; //-V112
 	bi.biCompression = BI_RGB;
 	COLORREF* pBits = NULL;
 	HBITMAP hDib = CreateDIBSection(hScreen, (BITMAPINFO*)&bi, DIB_RGB_COLORS, (void**)&pBits, NULL, 0);
@@ -532,7 +532,7 @@ void CPluginBackground::UpdateBackground()
 	HBITMAP hOld = (HBITMAP)SelectObject(hdc, hDib);
 	// Залить черным - по умолчанию
 #ifdef _DEBUG
-	memset(pBits, 128, bi.biWidth*bi.biHeight*4);
+	memset(pBits, 128, bi.biWidth*bi.biHeight*4); //-V112
 #else
 	memset(pBits, 0, bi.biWidth*bi.biHeight*4);
 #endif
@@ -614,7 +614,7 @@ void CPluginBackground::UpdateBackground()
 	else // есть "отработавшие" плагины, обновить Background!
 	{
 		GdiFlush();
-		DWORD nBitSize = bi.biWidth*bi.biHeight*4;
+		DWORD nBitSize = bi.biWidth*bi.biHeight*sizeof(COLORREF);
 		DWORD nWholeSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETBACKGROUND)+nBitSize; //-V103 //-V119
 		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETBACKGROUND, nWholeSize);
 
@@ -631,7 +631,7 @@ void CPluginBackground::UpdateBackground()
 			pIn->Background.bmp.bfSize = nBitSize+sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER); //-V119
 			pIn->Background.bmp.bfOffBits = sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER); //-V119
 			pIn->Background.bi = bi;
-			memmove(((LPBYTE)&pIn->Background.bi)+sizeof(pIn->Background.bi), pBits, bi.biWidth*bi.biHeight*4);
+			memmove(((LPBYTE)&pIn->Background.bi)+sizeof(pIn->Background.bi), pBits, bi.biWidth*bi.biHeight*sizeof(COLORREF));
 			CESERVER_REQ *pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 
 			// Вызывается ТОЛЬКО в главной нити

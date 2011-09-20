@@ -152,6 +152,7 @@ CConEmuMain::CConEmuMain()
 	m_ProcCount=0;
 	mb_ProcessCreated = FALSE; /*mn_StartTick = 0;*/ mb_WorkspaceErasedOnClose = FALSE;
 	mb_IgnoreSizeChange = false;
+	//mb_IgnoreStoreNormalRect = false;
 	//mn_CurrentKeybLayout = (DWORD_PTR)GetKeyboardLayout(0);
 	mn_GuiServerThreadId = 0; mh_GuiServerThread = NULL; mh_GuiServerThreadTerminate = NULL;
 	//mpsz_RecreateCmd = NULL;
@@ -396,6 +397,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgOldCmdVer = ++nAppMsg; mb_InShowOldCmdVersion = FALSE;
 	mn_MsgTabCommand = ++nAppMsg;
 	mn_MsgTabSwitchFromHook = RegisterWindowMessage(CONEMUMSG_SWITCHCON); mb_InWinTabSwitch = FALSE;
+	mn_MsgWinKeyFromHook = RegisterWindowMessage(CONEMUMSG_HOOKEDKEY);
 	mn_MsgSheelHook = RegisterWindowMessage(L"SHELLHOOK");
 	mn_ShellExecuteEx = ++nAppMsg;
 	mn_PostConsoleResize = ++nAppMsg;
@@ -2522,7 +2524,8 @@ void CConEmuMain::AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom)
 void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 {
 	// Обновить коордианты в gpSet, если требуется
-	if (!gpSet->isFullScreen && !isZoomed() && !isIconic())
+	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
+	if ((change2WindowMode == -1) && !gpSet->isFullScreen && !isZoomed() && !isIconic())
 	{
 		if (prcWnd)
 			mrc_StoredNormalRect = *prcWnd;
@@ -3284,7 +3287,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 #ifdef _DEBUG
 	RECT rcDbgSize; GetWindowRect(ghWnd, &rcDbgSize);
 	wchar_t szSize[255]; _wsprintf(szSize, SKIPLEN(countof(szSize)) L"OnSize(%i, %ix%i) Current window size (X=%i, Y=%i, W=%i, H=%i)\n",
-	                               wParam, (int)(short)newClientWidth, (int)(short)newClientHeight,
+	                               (DWORD)wParam, (int)(short)newClientWidth, (int)(short)newClientHeight,
 	                               rcDbgSize.left, rcDbgSize.top, (rcDbgSize.right-rcDbgSize.left), (rcDbgSize.bottom-rcDbgSize.top));
 	DEBUGSTRSIZE(szSize);
 #endif
@@ -4349,6 +4352,28 @@ void CConEmuMain::UpdateWinHookSettings()
 
 		if (pbWinTabHook)
 			*pbWinTabHook = gpSet->isUseWinTab;
+
+		// __declspec(dllexport) DWORD gnHookedKeys[64] = {};
+		DWORD *pnHookedKeys = (DWORD*)GetProcAddress(mh_LLKeyHookDll, "gnHookedKeys");
+		if (pnHookedKeys)
+		{
+			if (gpSet->isMulti)
+			{
+				if (gpSet->icMultiNew)
+					*(pnHookedKeys++) = gpSet->icMultiNew;
+				if (gpSet->icMultiNext)
+					*(pnHookedKeys++) = gpSet->icMultiNext;
+				if (gpSet->icMultiRecreate)
+					*(pnHookedKeys++) = gpSet->icMultiRecreate;
+				if (gpSet->icMultiBuffer)
+					*(pnHookedKeys++) = gpSet->icMultiBuffer;
+				if (gpSet->icMultiClose)
+					*(pnHookedKeys++) = gpSet->icMultiClose;
+				if (gpSet->icMultiCmd)
+					*(pnHookedKeys++) = gpSet->icMultiCmd;
+			}
+			*pnHookedKeys = 0;
+		}
 	}
 }
 
@@ -5799,7 +5824,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			}
 
 #ifdef _DEBUG
-			WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_START_APPLICATION(HWND=0x%08X, PID=%i%s)\n", hwnd, idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
+			WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_START_APPLICATION(HWND=0x%08X, PID=%i%s)\n", (DWORD)hwnd, idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
 			DEBUGSTRCONEVENT(szDbg);
 #endif
 			break;
@@ -5814,7 +5839,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			}
 
 #ifdef _DEBUG
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_END_APPLICATION(HWND=0x%08X, PID=%i%s)\n", hwnd, idObject,
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_END_APPLICATION(HWND=0x%08X, PID=%i%s)\n", (DWORD)hwnd, idObject,
 			          (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
 			DEBUGSTRCONEVENT(szDbg);
 #endif
@@ -8531,6 +8556,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				// И в консоль не слать модификатор
 				sb_SkipSingleHostkey = false;
 
+				LRESULT lKeyRc = OnKeyboardHook(LOWORD(wParam), isPressed(VK_SHIFT));
+
+				#if 0
 				// Теперь собственно обработка
 				if (wParam>='1' && wParam<='9')  // ##1..9
 					ConActivate(wParam - '1');
@@ -8572,8 +8600,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 					args.pszSpecialCmd = lstrdup(L"cmd");
 					CreateCon(&args);
 				}
+				#endif
 
-				return 0;
+				return lKeyRc;
 			}
 
 			//} else if (messg == WM_CHAR) {
@@ -8704,6 +8733,50 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		//}
 		//#endif
 		mp_VActive->RCon()->OnKeyboard(hWnd, messg, wParam, lParam, szTranslatedChars);
+	}
+
+	return 0;
+}
+
+LRESULT CConEmuMain::OnKeyboardHook(WORD vk, BOOL abReverse)
+{
+	// Теперь собственно обработка
+	if (vk>='1' && vk<='9')  // ##1..9
+		ConActivate(vk - '1');
+	else if (vk=='0')  // #10.
+		ConActivate(9);
+	else if (vk == gpSet->icMultiNext /* L'Q' */)  // Win-Q
+	{
+		if (abReverse)
+		{
+			if (gpSet->IsHostkey(VK_SHIFT))
+				abReverse = false;
+
+			//else if (!isPressed(VK_LSHIFT) || !isPressed(VK_RSHIFT)) -- не помню что хотел сказать, но это сбрасывало lbReverse
+			//	lbReverse = false;
+		}
+
+		ConActivateNext(abReverse ? FALSE : TRUE);
+	}
+	else if (vk == gpSet->icMultiNew /* L'W' */)  // Win-W
+	{
+		// Создать новую консоль
+		Recreate(FALSE, gpSet->isMultiNewConfirm);
+	}
+	else if (vk == gpSet->icMultiRecreate /* L'~' */)  // Win-~
+	{
+		Recreate(TRUE, TRUE);
+	}
+	else if (vk == gpSet->icMultiClose /* Del */)  // Win-Del
+	{
+		if (mp_VActive && mp_VActive->RCon())
+			mp_VActive->RCon()->CloseConsole();
+	}
+	else if (vk == gpSet->icMultiCmd /* X */)  // Win-X
+	{
+		RConStartArgs args;
+		args.pszSpecialCmd = lstrdup(L"cmd");
+		CreateCon(&args);
 	}
 
 	return 0;
@@ -10873,7 +10946,7 @@ void CConEmuMain::OnDesktopMode()
 LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
 #ifdef _DEBUG
-	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand (%i(0x%X), %i)\n", wParam, wParam, lParam);
+	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand (%i(0x%X), %i)\n", (DWORD)wParam, (DWORD)wParam, (DWORD)lParam);
 	DEBUGSTRSIZE(szDbg);
 #endif
 	LRESULT result = 0;
@@ -11221,7 +11294,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			if (wParam != 0xF100)
 			{
 #ifdef _DEBUG
-				wchar_t szDbg[64]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand(%i)\n", wParam);
+				wchar_t szDbg[64]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand(%i)\n", (DWORD)wParam);
 				DEBUGSTRSYS(szDbg);
 #endif
 
@@ -11954,7 +12027,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	LRESULT result = 0;
 	//MCHKHEAP
 #ifdef _DEBUG
-	wchar_t szDbg[127]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WndProc(%i{x%03X},%i,%i)\n", messg, messg, wParam, lParam);
+	wchar_t szDbg[127]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WndProc(%i{x%03X},%i,%i)\n", messg, messg, (DWORD)wParam, (DWORD)lParam);
 	//OutputDebugStringW(szDbg);
 #endif
 
@@ -12050,8 +12123,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_SIZE:
 		{
 #ifdef _DEBUG
-			DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SIZE (Type:%i, {%i-%i}) style=0x%08X\n", wParam, LOWORD(lParam), HIWORD(lParam), dwStyle);
+			DWORD_PTR dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SIZE (Type:%i, {%i-%i}) style=0x%08X\n", (DWORD)wParam, LOWORD(lParam), HIWORD(lParam), (DWORD)dwStyle);
 			DEBUGSTRSIZE(szDbg);
 #endif
 
@@ -12227,7 +12300,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%s(%i='%c', Scan=%i, lParam=0x%08X)\n",
 			                              (messg == WM_CHAR) ? L"WM_CHAR" : (messg == WM_SYSCHAR) ? L"WM_SYSCHAR" : L"WM_DEADCHAR",
-			                              wParam, (wchar_t)wParam, ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
+			                              (DWORD)wParam, (wchar_t)wParam, ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
 			DEBUGSTRCHAR(szDbg);
 		}
 		break;
@@ -12462,7 +12535,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgSrvStarted)
 			{
-				gpConEmu->WinEventProc(NULL, EVENT_CONSOLE_START_APPLICATION, (HWND)wParam, lParam, 0, 0, 0);
+				gpConEmu->WinEventProc(NULL, EVENT_CONSOLE_START_APPLICATION, (HWND)wParam, (LONG)lParam, 0, 0, 0);
 				return 0;
 			}
 			else if (messg == gpConEmu->mn_MsgVConTerminated)
@@ -12525,6 +12598,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				}
 				return 0;
 			}
+			else if (messg == gpConEmu->mn_MsgWinKeyFromHook)
+			{
+				WORD vk = LOWORD(wParam);
+				BOOL lbShift = (lParam!=0);
+				OnKeyboardHook(vk, lbShift);
+				return 0;
+			}
 			else if (messg == gpConEmu->mn_MsgSheelHook)
 			{
 				gpConEmu->OnShellHook(wParam, lParam);
@@ -12532,7 +12612,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_ShellExecuteEx)
 			{
-				return gpConEmu->GuiShellExecuteEx((SHELLEXECUTEINFO*)lParam, wParam);
+				return gpConEmu->GuiShellExecuteEx((SHELLEXECUTEINFO*)lParam, wParam!=0);
 			}
 			else if (messg == gpConEmu->mn_PostConsoleResize)
 			{
@@ -12554,7 +12634,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgFlashWindow)
 			{
-				return OnFlashWindow((wParam & 0xFF000000) >> 24, wParam & 0xFFFFFF, (HWND)lParam);
+				return OnFlashWindow((DWORD)(wParam & 0xFF000000) >> 24, (DWORD)wParam & 0xFFFFFF, (HWND)lParam);
 			}
 			else if (messg == gpConEmu->mn_MsgPostAltF9)
 			{

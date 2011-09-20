@@ -993,7 +993,7 @@ void TabBarClass::AddTab2VCon(VConTabs& vct)
 	while(i != m_Tab2VCon.end())
 	{
 		_ASSERTE(i->pVCon!=vct.pVCon || i->nFarWindowId!=vct.nFarWindowId);
-		i++;
+		++i;
 	}
 
 #endif
@@ -2504,4 +2504,68 @@ bool TabBarClass::OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags)
 		return true;
 	}
 	return false;
+}
+
+int TabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon)
+{
+	int nTab = -1;
+	CVirtualConsole *pVCon = NULL;
+	if (ppVCon)
+		*ppVCon = NULL;
+	
+	TODO("TabBarClass::ActiveTabByName - найти таб по имени");
+
+	INT_PTR V, I;
+	int tabIdx = 0;
+	ConEmuTab tab = {0};
+	for(V = 0; V < MAX_CONSOLE_COUNT && nTab == -1; V++)
+	{
+		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
+
+		BOOL lbActive = gpConEmu->isActive(pVCon);
+
+		if (gpSet->bHideInactiveConsoleTabs)
+		{
+			if (!lbActive) continue;
+		}
+
+		CRealConsole *pRCon = pVCon->RCon();
+
+		for(I = 0; TRUE; I++)
+		{
+			if (!pRCon->GetTab(I, &tab))
+				break;
+			if (tab.Type == anType)
+			{
+				LPCWSTR pszName = PointToName(tab.Name);
+				if (pszName && lstrcmpi(pszName, asName) == 0)
+				{
+					nTab = tabIdx;
+					break;
+				}
+			}
+
+			tabIdx++;
+		}
+	}
+
+	
+	if (nTab >= 0)
+	{
+		if (!CanActivateTab(nTab))
+		{
+			nTab = -2;
+		}
+		else
+		{
+			pVCon = FarSendChangeTab(nTab);
+			if (!pVCon)
+				nTab = -2;
+		}
+	}
+	
+	if (ppVCon)
+		*ppVCon = pVCon;
+	
+	return nTab;
 }

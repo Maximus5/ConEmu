@@ -1355,7 +1355,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 #ifdef _DEBUG
 	wchar_t szDbg[512];
 	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CeFullPanelInfo::Paint(%s, Items=%i, Top=%i, Current=%i)\n",
-	          this->bLeftPanel ? L"Left" : L"Right", ItemsNumber, OurTopPanelItem, CurrentItem);
+	          this->bLeftPanel ? L"Left" : L"Right", (int)ItemsNumber, (int)OurTopPanelItem, (int)CurrentItem);
 	DEBUGSTRCTRL(szDbg);
 #ifdef DEBUG_PAINT
 	FillRect(hdc, &rc, (HBRUSH)GetStockObject(GRAY_BRUSH));
@@ -2122,7 +2122,7 @@ BOOL CeFullPanelInfo::FarItem2CeItem(INT_PTR anIndex,
 	{
 		if (ppItems[anIndex]) free(ppItems[anIndex]);
 
-		nSize += 32;
+		nSize += 32; //-V112
 		ppItems[anIndex] = (CePluginPanelItem*)calloc(nSize, 1);
 
 		if (ppItems[anIndex] == NULL)

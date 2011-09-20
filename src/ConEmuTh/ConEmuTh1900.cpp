@@ -665,7 +665,7 @@ void GetFarRectW1900(SMALL_RECT* prcFarRect)
 {
 	if (!InfoW1900) return;
 
-	_ASSERTE(ACTL_GETFARRECT!=32);
+	_ASSERTE(ACTL_GETFARRECT!=32); //-V112
 	if (!InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETFARRECT, 0, prcFarRect))
 	{
 		prcFarRect->Left = prcFarRect->Right = prcFarRect->Top = prcFarRect->Bottom = 0;

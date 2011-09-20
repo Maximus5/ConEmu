@@ -1325,7 +1325,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 				BYTE btPanelBack = (mp_FarInfo->nFarColors[col_PanelBox] & 0xF0) >> 4;
 				int nShift = 0;
 
-				for(int i = 0; i < 4; i++)
+				for(int i = 0; i < 4; i++) //-V112
 				{
 					switch(i)
 					{

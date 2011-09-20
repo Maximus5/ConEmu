@@ -286,7 +286,7 @@ DWORD LoadPageInfo(LPICONCONTEXT pIcon, int iPage, UINT32& nBPP, UINT32& nWidth,
 		case 2: nBPP = 1; break;
 		case 4: nBPP = 2; break;
 		case 8: nBPP = 3; break;
-		case 16: nBPP = 4; break;
+		case 16: nBPP = 4; break; //-V112
 		case 32: nBPP = 5; break;
 		case 64: nBPP = 6; break;
 		case 128: nBPP = 7; break;
@@ -332,7 +332,7 @@ DWORD LoadPageInfo(LPICONCONTEXT pIcon, int iPage, UINT32& nBPP, UINT32& nWidth,
 		}
 		else
 		{
-			_ASSERTE(*((DWORD*)pImageStart) == sizeof(BITMAPINFOHEADER));
+			_ASSERTE(*(DWORD*)pImageStart == sizeof(BITMAPINFOHEADER));
 		}
 	}
 
@@ -1029,7 +1029,7 @@ struct ICOImage
 				//pDecodeInfo->Flags |= PVD_IDF_ALPHA;
 				//TODO("Хорошо бы в заголовке показать RLE");
 			}
-			else if (nIconBPP == 4)
+			else if (nIconBPP == 4) //-V112
 			{
 				pImageData = Decode4BPP(lWidth,lHeight,pPAL,pXOR,pAND,pLoadPreview->cbStride);
 				pLoadPreview->nBits = 32;
@@ -1218,9 +1218,9 @@ VOID WINAPI CET_Done(struct CET_Init* pInit)
 
 BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 {
-	if (!pLoadPreview || *((LPDWORD)pLoadPreview) != sizeof(struct CET_LoadInfo))
+	if (!pLoadPreview || (*(LPDWORD)pLoadPreview != sizeof(struct CET_LoadInfo)))
 	{
-		_ASSERTE(*((LPDWORD)pLoadPreview) == sizeof(struct CET_LoadInfo));
+		_ASSERTE(*(LPDWORD)pLoadPreview == sizeof(struct CET_LoadInfo));
 		SETERROR(PIE_INVALID_VERSION);
 		return FALSE;
 	}
@@ -1303,7 +1303,7 @@ VOID WINAPI CET_Free(struct CET_LoadInfo* pLoadPreview)
 {
 	if (!pLoadPreview || *((LPDWORD)pLoadPreview) != sizeof(struct CET_LoadInfo))
 	{
-		_ASSERTE(*((LPDWORD)pLoadPreview) == sizeof(struct CET_LoadInfo));
+		_ASSERTE(*(LPDWORD)pLoadPreview == sizeof(struct CET_LoadInfo));
 		SETERROR(PIE_INVALID_VERSION);
 		return;
 	}

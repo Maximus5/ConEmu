@@ -284,7 +284,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 				_ASSERTE(SelfImageBits == 32);
 				if (iRc == 0)
 				{
-					msprintf(szInfo, countof(szInfo), L"Alloc: 0x%08X, Size: %u", ptrAllocated, nAllocated);
+					msprintf(szInfo, countof(szInfo), L"Alloc: 0x" WIN3264TEST(L"%08X",L"%X%08X") L", Size: %u", WIN3264WSPRINT(ptrAllocated), nAllocated);
 				}
 				#endif
 				

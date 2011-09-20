@@ -1624,7 +1624,7 @@ void /*MPanelItem* */ CreateResource(PEData *pData, DWORD rootType, LPVOID ptrRe
 			{
 				//pRoot->SetErrorPtr(ptrRes, resSize);
 			}
-			else if (resSize>4 && *((DWORD*)ptrRes) == 0x474e5089/* %PNG */)
+			else if (resSize>4 && *((DWORD*)ptrRes) == 0x474e5089/* %PNG */) //-V112
 			{
 				//strcat(fileNameBuffer, ".png");
 				//_tcscpy(szInfo, _T("PNG format"));
@@ -2556,7 +2556,7 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 {
 	if (!pLoadPreview || *((LPDWORD)pLoadPreview) != sizeof(struct CET_LoadInfo))
 	{
-		_ASSERTE(*((LPDWORD)pLoadPreview) == sizeof(struct CET_LoadInfo));
+		_ASSERTE(*(LPDWORD)pLoadPreview == sizeof(struct CET_LoadInfo));
 		SETERROR(PEE_INVALID_VERSION);
 		return FALSE;
 	}
@@ -2686,7 +2686,7 @@ VOID WINAPI CET_Free(struct CET_LoadInfo* pLoadPreview)
 {
 	if (!pLoadPreview || *((LPDWORD)pLoadPreview) != sizeof(struct CET_LoadInfo))
 	{
-		_ASSERTE(*((LPDWORD)pLoadPreview) == sizeof(struct CET_LoadInfo));
+		_ASSERTE(*(LPDWORD)pLoadPreview == sizeof(struct CET_LoadInfo));
 		SETERROR(PEE_INVALID_VERSION);
 		return;
 	}

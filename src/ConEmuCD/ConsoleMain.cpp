@@ -184,6 +184,7 @@ extern "C" {
 UINT_PTR gfnLoadLibrary = NULL;
 UINT gnMsgActivateCon = 0;
 UINT gnMsgSwitchCon = 0;
+UINT gnMsgHookedKey = 0;
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
@@ -221,6 +222,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			gpLocalSecurity = LocalSecurity();
 			gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 			gnMsgSwitchCon = RegisterWindowMessage(CONEMUMSG_SWITCHCON);
+			gnMsgHookedKey = RegisterWindowMessage(CONEMUMSG_HOOKEDKEY);
 			//#endif
 			//wchar_t szSkipEventName[128];
 			//_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
@@ -1823,22 +1825,22 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		{
 			wchar_t* pszEnd = NULL;
 
-			if (wcsncmp(szArg, L"/FN=", 4)==0)
+			if (wcsncmp(szArg, L"/FN=", 4)==0) //-V112
 			{
-				lstrcpynW(gpSrv->szConsoleFont, szArg+4, 32);
+				lstrcpynW(gpSrv->szConsoleFont, szArg+4, 32); //-V112
 			}
-			else if (wcsncmp(szArg, L"/FW=", 4)==0)
+			else if (wcsncmp(szArg, L"/FW=", 4)==0) //-V112
 			{
 				gpSrv->nConFontWidth = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10);
 			}
-			else if (wcsncmp(szArg, L"/FH=", 4)==0)
+			else if (wcsncmp(szArg, L"/FH=", 4)==0) //-V112
 			{
 				gpSrv->nConFontHeight = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10);
 				//} else if (wcsncmp(szArg, L"/FF=", 4)==0) {
 				//  lstrcpynW(gpSrv->szConsoleFontFile, szArg+4, MAX_PATH);
 			}
 		}
-		else if (wcsncmp(szArg, L"/LOG",4)==0)
+		else if (wcsncmp(szArg, L"/LOG",4)==0) //-V112
 		{
 			int nLevel = 0;
 			if (szArg[4]==L'1') nLevel = 1; else if (szArg[4]>=L'2') nLevel = 2;
@@ -3177,7 +3179,7 @@ void CreateLogSizeFile(int nLevel)
 
 	if ((pszDot = wcsrchr(szFile, L'.')) == NULL)
 	{
-		_printf("wcsrchr failed!\n", 0, szFile);
+		_printf("wcsrchr failed!\n", 0, szFile); //-V576
 		return; // ошибка
 	}
 
@@ -3188,7 +3190,7 @@ void CreateLogSizeFile(int nLevel)
 	{
 		ghLogSize = NULL;
 		dwErr = GetLastError();
-		_printf("Create console log file failed! ErrCode=0x%08X\n", dwErr, szFile);
+		_printf("Create console log file failed! ErrCode=0x%08X\n", dwErr, szFile); //-V576
 		return;
 	}
 
@@ -3480,7 +3482,14 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 		}
 		else
 		{
+			// !!! Во время сильной загрузки процессора периодически
+			// !!! случается, что ConEmu отваливается быстрее, чем в
+			// !!! консоли появится фар. Обратить внимание на nPrevProcessedDbg[]
+			// !!! в вызывающей функции. Откуда там появилось 2 процесса,
+			// !!! и какого фига теперь стал только 1?
 			_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
+			// !!! ****
+
 
 			if (pCS)
 				pCS->Unlock();
@@ -3546,6 +3555,12 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 {
 	//static DWORD dwLastCheckTick = GetTickCount();
 	UINT nPrevCount = gpSrv->nProcessCount;
+#ifdef _DEBUG
+	DWORD nCurProcessesDbg[128]; // для отладки, получение текущего состояния консоли
+	DWORD nPrevProcessedDbg[128] = {}; // для отладки, запомнить предыдущее состояние консоли
+	if (gpSrv->pnProcesses && gpSrv->nProcessCount)
+		memmove(nPrevProcessedDbg, gpSrv->pnProcesses, min(countof(nPrevProcessedDbg),gpSrv->nProcessCount)*sizeof(*gpSrv->pnProcesses));
+#endif
 
 	if (gpSrv->nProcessCount <= 0)
 	{
@@ -3607,7 +3622,6 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		DWORD nCurCount = 0;
 		nCurCount = pfnGetConsoleProcessList(gpSrv->pnProcessesGet, gpSrv->nMaxProcesses);
 		#ifdef _DEBUG
-		DWORD nCurProcessesDbg[128];
 		int nCurCountDbg = pfnGetConsoleProcessList(nCurProcessesDbg, countof(nCurProcessesDbg));
 		#endif
 		lbChanged = gpSrv->nProcessCount != nCurCount;

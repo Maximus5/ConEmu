@@ -218,9 +218,9 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
 	{
 		if (!szMess[0]) wsprintfA(szMess, "%i", m);
 
-		if (!szWP[0]) wsprintfA(szWP, "%i", w);
+		if (!szWP[0]) wsprintfA(szWP, "%i", (DWORD)w);
 
-		if (!szLP[0]) wsprintfA(szLP, "%i(0x%08X)", l, l);
+		if (!szLP[0]) wsprintfA(szLP, "%i(0x%08X)", (int)l, (DWORD)l);
 
 		if (bSendToDebugger)
 		{
@@ -1276,7 +1276,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					{
 						INT_PTR nCchSize = nLen+100;
 						wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
-						_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /FontFile name (%I64i chars).\r\n", nLen);
+						_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /FontFile name (%u chars).\r\n", (DWORD)nLen);
 						_wcscat_c(psz, nCchSize, curCommand);
 						MBoxA(psz);
 						free(psz); free(cmdLine);

@@ -1862,9 +1862,9 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		          L"Requesting panel redraw: {Cur:%i, Top:%i}.\n"
 		          L"  Current state: {Cur:%i, Top:%i, Count:%i, OurTop:%i}\n"
 		          L"  Current request: {%s, Cur:%i, Top=%i}\n",
-		          iCurItem, iTopItem,
-		          pi->CurrentItem, pi->TopPanelItem, pi->ItemsNumber, pi->OurTopPanelItem,
-		          pi->bRequestItemSet ? L"YES" : L"No", pi->ReqCurrentItem, pi->ReqTopPanelItem);
+		          (int)iCurItem, (int)iTopItem,
+		          (int)pi->CurrentItem, (int)pi->TopPanelItem, (int)pi->ItemsNumber, (int)pi->OurTopPanelItem,
+		          pi->bRequestItemSet ? L"YES" : L"No", (int)pi->ReqCurrentItem, (int)pi->ReqTopPanelItem);
 		DEBUGSTRCTRL(szDbg);
 #endif
 		// Вызвать обновление панели с новой позицией

@@ -246,6 +246,8 @@ class CSettings
 		BYTE isCTSActMode, isCTSVkAct; // режим и модификатор разрешения действий правой и средней кнопки мышки
 		BYTE isCTSRBtnAction, isCTSMBtnAction; // 0-off, 1-copy, 2-paste
 		BYTE isCTSColorIndex;
+		bool isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
+		BYTE isFarGotoEditorVk; // Клавиша-модификатор для isFarGotoEditor
 		bool isModifierPressed(DWORD vk);
 		//bool isSelectionModifierPressed();
 	protected:
@@ -426,9 +428,9 @@ class CSettings
 		void RegisterFontsInt(LPCWSTR asFromDir);
 	public:
 		void UnregisterFonts();
-		BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[32]);
-		BOOL GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[32]);
-		BOOL GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[32]);
+		BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
+		BOOL GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
+		BOOL GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		void HistoryCheck();
 		void HistoryAdd(LPCWSTR asCmd);
 		LPCWSTR HistoryGet();

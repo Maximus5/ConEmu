@@ -150,7 +150,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				WCHAR szMsg[128];
 				_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"InChild %s(CP:%i, HKL:0x%08X)\n",
 				          (messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
-				          wParam, lParam);
+				          (DWORD)wParam, (DWORD)lParam);
 				DEBUGSTRLANG(szMsg);
 			}
 
@@ -180,7 +180,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				{
 					//изменились табы, их нужно перечитать
 #ifdef MSGLOGGER
-					WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Tabs:Notified(%i)\n", wParam);
+					WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Tabs:Notified(%i)\n", (DWORD)wParam);
 					DEBUGSTRTABS(szDbg);
 #endif
 					TODO("здесь хорошо бы вместо OnTimer реально обновить mn_TopProcessID")

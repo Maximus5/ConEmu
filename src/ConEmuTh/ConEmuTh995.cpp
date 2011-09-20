@@ -55,7 +55,7 @@ void GetPluginInfoW995(void *piv)
 	static WCHAR *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1;
 	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240); //-V303
-	_ASSERTE(pi->StructSize = sizeof(struct PluginInfo));
+	_ASSERTE(pi->StructSize == sizeof(struct PluginInfo));
 	pi->Flags = PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	//pi->DiskMenuNumbers = 0;
@@ -559,7 +559,7 @@ void GetFarRectW995(SMALL_RECT* prcFarRect)
 {
 	if (!InfoW995) return;
 
-	_ASSERTE(ACTL_GETFARRECT==32);
+	_ASSERTE(ACTL_GETFARRECT==32); //-V112
 	if (!InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARRECT, prcFarRect))
 	{
 		prcFarRect->Left = prcFarRect->Right = prcFarRect->Top = prcFarRect->Bottom = 0;

@@ -913,7 +913,7 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 {
 	if (!pLoadPreview || *((LPDWORD)pLoadPreview) != sizeof(struct CET_LoadInfo))
 	{
-		_ASSERTE(*((LPDWORD)pLoadPreview) == sizeof(struct CET_LoadInfo));
+		_ASSERTE(*(LPDWORD)pLoadPreview == sizeof(struct CET_LoadInfo));
 		SETERROR(PGE_INVALID_VERSION);
 		return FALSE;
 	}
@@ -1040,7 +1040,7 @@ VOID WINAPI CET_Free(struct CET_LoadInfo* pLoadPreview)
 {
 	if (!pLoadPreview || *((LPDWORD)pLoadPreview) != sizeof(struct CET_LoadInfo))
 	{
-		_ASSERTE(*((LPDWORD)pLoadPreview) == sizeof(struct CET_LoadInfo));
+		_ASSERTE(*(LPDWORD)pLoadPreview == sizeof(struct CET_LoadInfo));
 		SETERROR(PGE_INVALID_VERSION);
 		return;
 	}

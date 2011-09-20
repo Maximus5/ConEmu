@@ -532,7 +532,7 @@ int ServerInit()
 
 			if (!dwParentPID)
 			{
-				_printf("Attach to GUI was requested, but there is no console processes:\n", 0, GetCommandLineW());
+				_printf("Attach to GUI was requested, but there is no console processes:\n", 0, GetCommandLineW()); //-V576
 				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
 			}
@@ -545,7 +545,7 @@ int ServerInit()
 				dwErr = GetLastError();
 				wchar_t* lpMsgBuf = NULL;
 				FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
-				_printf("Can't open process (%i) handle, ErrCode=0x%08X, Description:\n",
+				_printf("Can't open process (%i) handle, ErrCode=0x%08X, Description:\n", //-V576
 				        dwParentPID, dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
 
 				if (lpMsgBuf) LocalFree(lpMsgBuf);
@@ -585,7 +585,7 @@ int ServerInit()
 
 			if (!lbRc)
 			{
-				_printf("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, pszSelf);
+				_printf("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, pszSelf); //-V576
 				return CERR_CREATEPROCESS;
 			}
 
@@ -624,7 +624,7 @@ int ServerInit()
 				dwErr = GetLastError();
 				wchar_t* lpMsgBuf = NULL;
 				FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
-				_printf("Can't open process (%i) handle, ErrCode=0x%08X, Description:\n",
+				_printf("Can't open process (%i) handle, ErrCode=0x%08X, Description:\n", //-V576
 				        gpSrv->dwRootProcess, dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
 
 				if (lpMsgBuf) LocalFree(lpMsgBuf);
@@ -1513,7 +1513,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 		if (!pszSlash)
 		{
-			_printf("Invalid GetModuleFileName, backslash not found!\n", 0, pszSelf);
+			_printf("Invalid GetModuleFileName, backslash not found!\n", 0, pszSelf); //-V576
 			return NULL;
 		}
 
@@ -1558,7 +1558,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 		if (!lbRc)
 		{
-			_printf("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, pszSelf);
+			_printf("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, pszSelf); //-V576
 			return NULL;
 		}
 
@@ -1862,7 +1862,7 @@ int CreateMapHeader()
 
 	if (!gpSrv->pConsoleMap)
 	{
-		_printf("ConEmuC: calloc(MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>) failed, pConsoleMap is null", 0);
+		_printf("ConEmuC: calloc(MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>) failed, pConsoleMap is null", 0); //-V576
 		goto wrap;
 	}
 

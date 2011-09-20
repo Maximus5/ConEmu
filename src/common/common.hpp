@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    69
+#define CESERVER_REQ_VER    70
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -106,6 +106,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 //#define CONEMUMSG_LLKEYHOOK L"ConEmuMain::LLKeyHook"    // wParam == hConWnd, lParam == ConEmuC_PID
 #define CONEMUMSG_ACTIVATECON L"ConEmuMain::ActivateCon"  // wParam == ConNumber (1..12)
 #define CONEMUMSG_SWITCHCON L"ConEmuMain::SwitchCon"
+#define CONEMUMSG_HOOKEDKEY L"ConEmuMain::HookedKey"
 #define CONEMUMSG_PNLVIEWFADE L"ConEmuTh::Fade"
 #define CONEMUMSG_PNLVIEWSETTINGS L"ConEmuTh::Settings"
 
@@ -206,7 +207,8 @@ const CECMD
 	CMD_SET_CON_FONT     = 217, // CESERVER_REQ_SETFONT
 	CMD_GUICHANGED       = 218, // CESERVER_REQ_GUICHANGED. изменились настройки GUI (шрифт), размер окна ConEmu, или еще что-то
 	CMD_ACTIVEWNDTYPE    = 219, // ThreadSafe - получить информацию об активном окне (его типе) в Far
-	CMD_LAST_FAR_CMD     = CMD_ACTIVEWNDTYPE;
+	CMD_OPENEDITORLINE   = 220, // CESERVER_REQ_FAREDITOR. Открыть в редакторе файл и перейти на строку (обработка ошибок компилятора)
+	CMD_LAST_FAR_CMD     = CMD_OPENEDITORLINE;
 
 
 #define PIPEBUFSIZE 4096
@@ -1035,6 +1037,14 @@ struct CESERVER_REQ_GUICHANGED
 	DWORD cbSize; // страховка
 	DWORD nGuiPID;
 	HWND2 hLeftView, hRightView;
+};
+
+// CMD_OPENEDITORLINE. Открыть в редакторе файл и перейти на строку (обработка ошибок компилятора)
+struct CESERVER_REQ_FAREDITOR
+{
+	DWORD cbSize; // страховка
+	int nLine;
+	wchar_t szFile[MAX_PATH+1];
 };
 
 enum StartStopType

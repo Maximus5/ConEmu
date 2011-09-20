@@ -685,7 +685,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 					{
 						memsize[i] = GlobalSize(stg[i].hGlobal);
 						nCurLen = _tcslen(szName[i]);
-						_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", DataSize=%i", memsize[i]);
+						_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", DataSize=%i", (DWORD)(memsize[i]));
 
 						if (memsize[i] == 1)
 						{
@@ -1351,7 +1351,7 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 		if (!IsDebuggerPresent())
 		{
 			_ASSERT(nInfoSize == nReqSize); // Неизвестный формат?
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"DragImageBits unknown format? (nInfoSize=%u) != (nReqSize=%u)", nInfoSize, nReqSize);
+			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"DragImageBits unknown format? (nInfoSize=%u) != (nReqSize=%u)", (DWORD)nInfoSize, (DWORD)nReqSize);
 			gpConEmu->DebugStep(szDbg, TRUE);
 		}
 

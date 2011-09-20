@@ -1364,7 +1364,7 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 #ifdef _DEBUG
 			nMaxRects = 5;
 #endif
-			POINT *lpAllPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT));
+			POINT *lpAllPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT)); // 4 угла
 			//INT   *lpAllCounts = (INT*)Alloc(nMaxRects,sizeof(INT));
 			HEAPVAL;
 			int    nRectCount = 0;
@@ -1401,7 +1401,7 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 						{
 							nMaxRects += TextHeight;
 							HEAPVAL;
-							POINT *lpTmpPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT));
+							POINT *lpTmpPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT)); // 4 угла
 							//INT   *lpTmpCounts = (INT*)Alloc(nMaxRects,sizeof(INT));
 							HEAPVAL;
 
@@ -3306,7 +3306,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 	if (lbLeftExists && !mb_LeftPanelRedraw)
 	{
-		DWORD n = GetWindowLong(m_LeftPanelView.hWnd, 16*4);
+		DWORD n = GetWindowLong(m_LeftPanelView.hWnd, 16*4); //-V112
 
 		if (n != (isFade ? 2 : 1)) mb_LeftPanelRedraw = TRUE;
 	}
@@ -3315,7 +3315,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 	if (lbRightExists && !mb_RightPanelRedraw)
 	{
-		DWORD n = GetWindowLong(m_RightPanelView.hWnd, 16*4);
+		DWORD n = GetWindowLong(m_RightPanelView.hWnd, 16*4); //-V112
 
 		if (n != (isFade ? 2 : 1)) mb_RightPanelRedraw = TRUE;
 	}
@@ -4444,7 +4444,7 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister/*=FALS
 
 	// Подготовить размеры
 	POINT pt[2];
-	int nTopShift = 1 + ((pp->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) ? 1 : 0);
+	int nTopShift = 1 + ((pp->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) ? 1 : 0); //-V112
 	int nBottomShift = 0;
 	if (mp_RCon && (pp->nFarPanelSettings & 0x40/*FPS_SHOWSTATUSLINE*/))
 	{
@@ -4567,7 +4567,7 @@ void CVirtualConsole::PolishPanelViews()
 		int nNFore = btNamesColor & 0xF;
 		int nNBack = (btNamesColor & 0xF0) >> 4;
 
-		if ((pp->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) && pp->tColumnTitle.nFlags)
+		if ((pp->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) && pp->tColumnTitle.nFlags) //-V112
 		{
 			LPCWSTR pszNameTitle = pp->tColumnTitle.sText;
 			CharAttr ca; CharAttrFromConAttr(pp->tColumnTitle.bConAttr, &ca);

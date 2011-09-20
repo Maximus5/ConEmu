@@ -85,7 +85,7 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 		{
 			CloseHandle(hModuleFile);
 			ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
-			ImageBits = IsWindows64() ? 64 : 32;
+			ImageBits = IsWindows64() ? 64 : 32; //-V112
 			return true;
 		}
 
@@ -124,7 +124,7 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 								{
 									ImageSubsystem = PEHeader.OptionalHeader32.Subsystem;
 									_ASSERTE((ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI));
-									ImageBits = 32;
+									ImageBits = 32; //-V112
 								}
 								break;
 								case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
@@ -142,7 +142,7 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 						}
 						else if ((WORD)PEHeader.Signature == IMAGE_OS2_SIGNATURE)
 						{
-							ImageBits = 32;
+							ImageBits = 32; //-V112
 							/*
 							NE,  хмм...  а как определить что оно √”≈¬ќ≈?
 
@@ -153,7 +153,7 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 							*/
 							BYTE ne_exetyp = reinterpret_cast<PIMAGE_OS2_HEADER>(&PEHeader)->ne_exetyp;
 
-							if (ne_exetyp==2||ne_exetyp==4)
+							if (ne_exetyp==2||ne_exetyp==4) //-V112
 							{
 								ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
 							}
@@ -211,7 +211,7 @@ bool GetImageSubsystem(DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/)
 	#ifdef _WIN64
 	ImageBits = 64;
 	#else
-	ImageBits = 32;
+	ImageBits = 32; //-V112
 	#endif
 
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)hModule;
@@ -232,7 +232,7 @@ bool GetImageSubsystem(DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/)
 			{
 				ImageSubsystem = nt_header->OptionalHeader32.Subsystem;
 				_ASSERTE((ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI));
-				_ASSERTE(ImageBits == 32);
+				_ASSERTE(ImageBits == 32); //-V112
 			}
 			break;
 			case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
@@ -258,7 +258,7 @@ bool GetImageSubsystem(PROCESS_INFORMATION pi,DWORD& ImageSubsystem,DWORD& Image
 	DWORD nErrCode = 0;
 	DWORD nFlags = TH32CS_SNAPMODULE;
 	
-	ImageBits = 32;
+	ImageBits = 32; //-V112
 	ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
 	
 	#ifdef _WIN64
@@ -319,8 +319,8 @@ bool GetImageSubsystem(PROCESS_INFORMATION pi,DWORD& ImageSubsystem,DWORD& Image
 		{
 			case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
 			{
-				_ASSERTE(ImageBits == 32);
-				ImageBits = 32;
+				_ASSERTE(ImageBits == 32); //-V112
+				ImageBits = 32; //-V112
 				ImageSubsystem = hdr.OptionalHeader32.Subsystem;
 				_ASSERTE((ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI));
 			}

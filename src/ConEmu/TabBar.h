@@ -174,4 +174,5 @@ class TabBarClass : public CToolTip
 		BOOL OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam);
 		void SetRedraw(BOOL abEnableRedraw);
 		void PaintHeader(HDC hdc, RECT rcPaint);
+		int  ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon);
 };

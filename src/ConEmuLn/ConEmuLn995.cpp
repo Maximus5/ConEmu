@@ -54,7 +54,7 @@ void GetPluginInfoW995(void *piv)
 	static WCHAR *szMenu[1], szMenu1[255];
 	szMenu[0] = szMenu1;
 	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
-	_ASSERTE(pi->StructSize = sizeof(struct PluginInfo));
+	_ASSERTE(pi->StructSize == sizeof(struct PluginInfo));
 	pi->Flags = PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	//pi->DiskMenuNumbers = 0;

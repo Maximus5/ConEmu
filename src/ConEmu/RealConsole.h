@@ -79,6 +79,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define CONSOLE_BLOCK_SELECTION 0x0100 // selecting text (standard mode)
 #define CONSOLE_TEXT_SELECTION 0x0200 // selecting text (stream mode)
+#define CONSOLE_DBLCLICK_SELECTION 0x0400 // двойным кликом выделено слово, пропустить WM_LBUTTONUP
+#define CONSOLE_KEYMOD_MASK 0xFF000000 // Здесь хранится модификатор, которым начали выделение мышкой
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -239,12 +241,32 @@ class CRealConsole
 		void PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		void PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		void PostConsoleEventPipe(MSG64 *pMsg);
+	private:
+		void PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend = false);
+	public:
 		BOOL OpenConsoleEventPipe();
 		LRESULT PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam);
 		BOOL ShowOtherWindow(HWND hWnd, int swShow);
 		BOOL SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
 		BOOL SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOOL bRedraw);
-		void PostMacro(LPCWSTR asMacro);
+		void PostMacro(LPCWSTR asMacro, BOOL abAsync = FALSE);
+	private:
+		struct PostMacroAnyncArg
+		{
+			CRealConsole* pRCon;
+			BOOL    bPipeCommand;
+			DWORD   nCmdSize;
+			DWORD   nCmdID;
+			union
+			{
+				wchar_t szMacro[1];
+				BYTE    Data[1];
+			};
+		};
+		static DWORD WINAPI PostMacroThread(LPVOID lpParameter);
+		HANDLE mh_PostMacroThread; DWORD mn_PostMacroThreadID;
+		void PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData);
+	public:
 		//BOOL FlushInputQueue(DWORD nTimeout = 500);
 		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -282,12 +304,26 @@ class CRealConsole
 		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
 		void ExpandSelection(SHORT anX=-1, SHORT anY=-1);
 		bool DoSelectionCopy();
+		void DoSelectionStop();
 		BOOL isFar(BOOL abPluginRequired=FALSE);
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		BOOL isDetached();
 		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_REQ_STARTSTOP rStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		BOOL RecreateProcess(RConStartArgs *args);
 		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+	private:
+		BOOL GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData);
+		enum ExpandTextRangeType
+		{
+			etr_None = 0,
+			etr_Word = 1,
+			etr_FileAndLine = 2,
+		};
+		ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
+		bool IsFarHyperlinkAllowed();
+		bool ProcessFarHyperlink(UINT messg, COORD crFrom);
+	public:
+		
 		BOOL IsConsoleDataChanged();
 		void OnActivate(int nNewNum, int nOldNum);
 		void OnDeactivate(int nNewNum);
@@ -358,7 +394,7 @@ class CRealConsole
 		void UpdateCursorInfo();
 		void Detach();
 		void AdminDuplicate();
-		const CEFAR_INFO_MAPPING *GetFarInfo();
+		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
 		BOOL InCreateRoot();
 		//LPCWSTR GetLngNameTime();
 		void ShowPropertiesDialog();
@@ -424,6 +460,7 @@ class CRealConsole
 			USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
 			wchar_t *pConChar;
 			WORD  *pConAttr;
+			COORD mcr_FileLineStart, mcr_FileLineEnd; // Подсветка строк ошибок компиляторов
 			//CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
 			CHAR_INFO *pDataCmp;
 			int nTextWidth, nTextHeight, nBufferHeight;
@@ -542,7 +579,7 @@ class CRealConsole
 		//const CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> m_ConsoleMap;
 		//const CEFAR_INFO_MAPPING *mp_FarInfo;
-		CEFAR_INFO_MAPPING m_FarInfo;
+		CEFAR_INFO_MAPPING m_FarInfo; // FarVer и прочее
 		MFileMapping<const CEFAR_INFO_MAPPING> m__FarInfo; // в коде напрямую не использовать, только через секцию!
 		MSection ms_FarInfoCS;
 		// Colorer Mapping
@@ -591,7 +628,7 @@ class CRealConsole
 		void FindPanels();
 		//
 		BOOL mb_MouseButtonDown;
-		COORD mcr_LastMouseEventPos;
+		COORD mcr_LastMouseEventPos, mcr_LastMousePos;
 		//
 		SHELLEXECUTEINFO *mp_sei;
 		//

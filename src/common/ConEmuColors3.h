@@ -179,7 +179,16 @@ __inline BYTE FarColor_3_2(const FarColor& Color3)
 
 	if (Color3.Flags & FCF_BG_4BIT)
 	{
-		Color2 |= (WORD)(Color3.BackgroundColor & 0xF)<<4;
+		WORD bk = (WORD)(Color3.BackgroundColor & 0xF);
+		// Коррекция яркости, если подобранные индексы совпали
+		if (Color2 == bk)
+		{
+			if (Color2 & 8)
+				bk ^= 8;
+			else
+				Color2 |= 8;
+		}
+		Color2 |= bk<<4;
 	}
 	else
 	{

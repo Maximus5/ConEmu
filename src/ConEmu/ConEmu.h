@@ -218,6 +218,7 @@ class CConEmuMain
 		//LPARAM lastMML;
 		COORD m_LastConSize; // console size after last resize (in columns and lines)
 		bool mb_IgnoreSizeChange;
+		//bool mb_IgnoreStoreNormalRect;
 		TCHAR szConEmuVersion[32];
 		DWORD m_ProcCount;
 		//DWORD mn_ActiveStatus;
@@ -315,6 +316,7 @@ class CConEmuMain
 		UINT mn_MsgOldCmdVer; BOOL mb_InShowOldCmdVersion;
 		UINT mn_MsgTabCommand;
 		UINT mn_MsgTabSwitchFromHook; BOOL mb_InWinTabSwitch; // = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
+		UINT mn_MsgWinKeyFromHook;
 		UINT mn_MsgSheelHook;
 		UINT mn_ShellExecuteEx;
 		UINT mn_PostConsoleResize;
@@ -487,6 +489,7 @@ class CConEmuMain
 		void OnHideCaption();
 		LRESULT OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam);
 		LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		LRESULT OnKeyboardHook(WORD vk, BOOL abReverse);
 		LRESULT OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayoutName);
