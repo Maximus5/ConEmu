@@ -66,6 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define FAR_T(s) s
 	#define FAR_CHAR char
 	#define strcpyT lstrcpyA
+	#define strlenT lstrlenA
 	#define FAR_PTR LONG_PTR
 #endif
 
@@ -76,12 +77,14 @@ enum
 	cfgShowLines   = 1,
 	cfgColorLabel  = 2,
 	cfgColor       = 3,
-	cfgHilight     = 4,
-	cfgPlugLabel   = 5,
-	cfgPlugBack    = 6,
-	cfgSeparator   = 7,
-	cfgOk          = 8,
-	cfgCancel      = 9,
+	cfgTypeLines   = 4,
+	cfgTypeStripes = 5,
+	cfgHilight     = 6,
+	cfgPlugLabel   = 7,
+	cfgPlugBack    = 8,
+	cfgSeparator   = 9,
+	cfgOk          = 10,
+	cfgCancel      = 11,
 };
 
 #if FAR_UNICODE>=1867
@@ -92,10 +95,14 @@ static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 {
 	if (Msg == DN_BTNCLICK)
 	{
-		if ((Param1 == cfgShowLines) || (Param1 == cfgHilight))
+		if ((Param1 == cfgShowLines) || (Param1 == cfgTypeLines) || (Param1 == cfgTypeStripes) || (Param1 == cfgHilight))
 		{
 			if (Param1 == cfgShowLines)
 				gbBackgroundEnabled = (int)Param2; //-V205
+			else if (Param1 == cfgTypeLines)
+				giHilightType = 0;
+			else if (Param1 == cfgTypeStripes)
+				giHilightType = 1;
 			else if (Param1 == cfgHilight)
 				gbHilightPlugins = (int)Param2; //-V205
 
@@ -138,7 +145,7 @@ static int ConfigureProc(int ItemNumber)
 	if (!InfoT)
 		return false;
 
-	int height = 14;
+	int height = 15;
 	FAR_CHAR szColorMask[16]; strcpyT(szColorMask, FAR_T("0xXXXXXX"));
 	FAR_CHAR szColor[16], szBack[16];
 	FarDialogItem items[] =
@@ -157,23 +164,30 @@ static int ConfigureProc(int ItemNumber)
 		#else
 		{DI_FIXEDIT,  29,  5,  36, 0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
 		#endif
-
-		{DI_CHECKBOX,  5,  7,  0,  0},    //cfgHilight
-		{DI_TEXT,      5,  8,  0,  0, false},   //cfgPlugLabel, cfgPlugBack
+		
 		#if FAR_UNICODE>=1867
-		{DI_FIXEDIT,  29,  8,  36, 0, {0}, NULL, szColorMask, DIF_MASKEDIT},
-		{DI_TEXT,      0, 10,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_SEPARATOR},
+		{DI_RADIOBUTTON,  5,  6,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_GROUP},    //cfgTypeLines
 		#else
-		{DI_FIXEDIT,  29,  8,  36, 0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
-		{DI_TEXT,      0, 10,  0,  0, false, {(DWORD_PTR)0}, DIF_SEPARATOR},
+		{DI_RADIOBUTTON,  5,  6,  0,  0, 0, {(DWORD_PTR)0}, DIF_GROUP},    //cfgTypeLines
+		#endif
+		{DI_RADIOBUTTON,  5,  6,  0,  0},    //cfgTypeStripes
+
+		{DI_CHECKBOX,  5,  8,  0,  0},    //cfgHilight
+		{DI_TEXT,      5,  9,  0,  0, false},   //cfgPlugLabel, cfgPlugBack
+		#if FAR_UNICODE>=1867
+		{DI_FIXEDIT,  29,  9,  36, 0, {0}, NULL, szColorMask, DIF_MASKEDIT},
+		{DI_TEXT,      0, 11,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_SEPARATOR},
+		#else
+		{DI_FIXEDIT,  29,  9,  36, 0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
+		{DI_TEXT,      0, 11,  0,  0, false, {(DWORD_PTR)0}, DIF_SEPARATOR},
 		#endif
 
 		#if FAR_UNICODE>=1867
-		{DI_BUTTON,    0, 11,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP|DIF_DEFAULTBUTTON},  //cfgOk
-		{DI_BUTTON,    0, 11,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP}, //cfgCancel
+		{DI_BUTTON,    0, 12,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP|DIF_DEFAULTBUTTON},  //cfgOk
+		{DI_BUTTON,    0, 12,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP}, //cfgCancel
 		#else
-		{DI_BUTTON,    0, 11,  0,  0, false,  {(DWORD_PTR)true},        DIF_CENTERGROUP, true},  //cfgOk
-		{DI_BUTTON,    0, 11,  0,  0, false,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //cfgCancel
+		{DI_BUTTON,    0, 12,  0,  0, false,  {(DWORD_PTR)true},        DIF_CENTERGROUP, true},  //cfgOk
+		{DI_BUTTON,    0, 12,  0,  0, false,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //cfgCancel
 		#endif
 	};
 	SETTEXT(items[cfgTitle], GetMsgT(CEPluginName));
@@ -182,6 +196,10 @@ static int ConfigureProc(int ItemNumber)
 	SETTEXT(items[cfgColorLabel], GetMsgT(CEColorLabel));
 	wsprintfT(szColor, FAR_T("%06X"), (0xFFFFFF & gcrLinesColor));
 	SETTEXT(items[cfgColor], szColor);
+	SETTEXT(items[cfgTypeLines], GetMsgT(CEColorTypeLines));
+	items[cfgTypeStripes].X1 += strlenT(GetMsgT(CEColorTypeLines)) + 4;
+	SETTEXT(items[cfgTypeStripes], GetMsgT(CEColorTypeStripes));
+	items[(giHilightType == 0) ? cfgTypeLines : cfgTypeStripes].Selected = TRUE;
 	SETTEXT(items[cfgHilight], GetMsgT(CEHilightPlugins));
 	items[cfgHilight].Selected = gbHilightPlugins;
 	SETTEXT(items[cfgPlugLabel], GetMsgT(CEPluginColor));

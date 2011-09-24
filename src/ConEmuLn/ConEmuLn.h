@@ -47,6 +47,7 @@ extern FarVersion gFarVersion;
 //Settings
 extern BOOL gbBackgroundEnabled;
 extern COLORREF gcrLinesColor;
+extern int giHilightType; // 0 - линии, 1 - полосы
 extern BOOL gbHilightPlugins;
 extern COLORREF gcrHilightPlugBack;
 struct ConEmuLnSettings

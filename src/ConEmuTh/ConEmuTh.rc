@@ -71,7 +71,7 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
-            VALUE "FileDescription", "ConEmu Thumbnails for FAR manager 1.7x and 2.x" CONEMUPLTFRM
+            VALUE "FileDescription", "ConEmu Thumbnails for FAR manager 1.7x, 2.x, 3.x" CONEMUPLTFRM
             VALUE "FileVersion", CONEMUVERS
             VALUE "LegalCopyright", "(C) 2010 Maximus5"
             VALUE "OriginalFilename", "ConEmuTh.dll"

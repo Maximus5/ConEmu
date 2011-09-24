@@ -493,6 +493,8 @@ enum PaintBackgroundPlaces
 	pbp_KeyBar      = 32,
 	pbp_MenuBar     = 64, // Верхняя строка - падающее меню
 	pbp_StatusLine  = 128, // Статусная строка - редактор/вьювер
+	// Этот код используется для завершения нити отрисовки
+	pbp_Finalize    = 0x80000000,
 };
 
 #define BkPanelInfo_CurDirMax 32768
@@ -542,11 +544,12 @@ struct PaintBackgroundArg
 	BOOL bPanelsAllowed;
 	typedef struct tag_BkPanelInfo
 	{
-		BOOL bVisible; // Наличие панели
-		BOOL bFocused; // В фокусе
-		BOOL bPlugin;  // Плагиновая панель
+		BOOL bVisible;   // Наличие панели
+		BOOL bFocused;   // В фокусе
+		BOOL bPlugin;    // Плагиновая панель
+		int  nPanelType; // enum PANELINFOTYPE
 		wchar_t *szCurDir/*[32768]*/;    // Текущая папка на панели
-		wchar_t *szFormat/*[MAX_PATH]*/; // Доступно только в FAR2
+		wchar_t *szFormat/*[MAX_PATH]*/; // Доступно только в FAR2, в FAR3 это может быть префикс, если "формат" плагином не опереден
 		wchar_t *szHostFile/*[32768]*/;  // Доступно только в FAR2
 		RECT rcPanelRect; // Консольные кооринаты панели. В FAR 2 с ключом /w верх может быть != {0,0}
 	} BkPanelInfo;

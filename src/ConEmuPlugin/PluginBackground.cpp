@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/ConEmuCheck.h"
 
+TODO("ѕри завершении нити отрисовки - нужно дернуть все зарегистрированные PaintConEmuBackground(pbp_Finalize)");
 
 BOOL gbNeedBgActivate = FALSE; // требуетс€ активаци€ модул€ в главной нити
 BOOL gbBgPluginsAllowed = FALSE;
@@ -269,7 +270,16 @@ void CPluginBackground::OnMainThreadActivated(int anEditorEvent /*= -1*/, int an
 #endif
 
 	if (anEditorEvent != -1 || anViewerEvent != -1)
+	{
 		mn_ReqActions |= ra_CheckPanelFolders;
+		// ѕри закрытии QView нельз€ перечитывать параметры панелей,
+		// т.к. панель на месте QView еще Ќ≈ видима, будет глюк отрисовки
+		if (anViewerEvent == VE_CLOSE)
+		{
+			SetForceCheck();
+			return;
+		}
+	}
 
 	if ((mn_ReqActions & ra_CheckPanelFolders))
 	{

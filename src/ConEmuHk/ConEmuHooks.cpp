@@ -186,6 +186,10 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 #endif
 BOOL WINAPI OnChooseColorA(LPCHOOSECOLORA lpcc);
 BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc);
+//HWND WINAPI OnCreateWindowA(LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+//HWND WINAPI OnCreateWindowW(LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 
 bool InitHooksCommon()
 {
@@ -256,6 +260,11 @@ bool InitHooksCommon()
 		{(void*)OnGetWindowRect,		"GetWindowRect",		user32},
 		{(void*)OnScreenToClient,		"ScreenToClient",		user32},
 		#endif
+		/* ************************ */
+		//{(void*)OnCreateWindowA,		"CreateWindowA",		user32}, -- таких экспортов нет
+		//{(void*)OnCreateWindowW,		"CreateWindowW",		user32}, -- таких экспортов нет
+		{(void*)OnCreateWindowExA,		"CreateWindowExA",		user32},
+		{(void*)OnCreateWindowExW,		"CreateWindowExW",		user32},
 		/* ************************ */
 		{(void*)OnShellExecuteExA,		"ShellExecuteExA",		shell32},
 		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
@@ -933,6 +942,97 @@ BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint)
 	}
 
 	return lbRc;
+}
+
+
+static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD dwStyle)
+{
+#ifndef _DEBUG
+	return true;
+#else
+	if (gnHookMainThreadId && gnHookMainThreadId != GetCurrentThreadId())
+		return true; // Разрешено, отдается на откуп консольной программе/плагинам
+	
+	if ((dwStyle & (WS_POPUP|DS_MODALFRAME)) == (WS_POPUP|DS_MODALFRAME))
+	{
+		// Это скорее всего обычный диалог, разрешим, но пока для отладчика - assert
+		_ASSERTE((dwStyle & WS_POPUP) == 0);
+		return true;
+	}
+
+	if ((lpClassNameA && ((DWORD_PTR)lpClassNameA) <= 0xFFFF)
+		|| (lpClassNameW && ((DWORD_PTR)lpClassNameW) <= 0xFFFF))
+	{
+		// Что-то системное
+		return true;
+	}
+	
+	// Окно на любой чих создается. dwStyle == 0x88000000.
+	if (lpClassNameW && lstrcmp(lpClassNameW, L"CicMarshalWndClass") == 0)
+	{
+		return true;
+	}
+
+	#ifdef _DEBUG
+	// В консоли нет обработчика сообщений, поэтому создание окон в главной
+	// нити приводит к "зависанию" приложения - например, любые программы,
+	// использующие DDE будут виснуть.
+	_ASSERTE(dwStyle == 0 && FALSE);
+	//SetLastError(ERROR_THREAD_MODE_NOT_BACKGROUND);
+	//return false;
+	#endif
+	
+	// Разрешить? По настройке?
+	return true;
+#endif
+}
+
+//typedef HWND (WINAPI* OnCreateWindowA_t)(LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+//HWND WINAPI OnCreateWindowA(LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
+//{
+//	ORIGINALFASTEX(CreateWindowA,NULL);
+//	HWND hWnd = NULL;
+//
+//	if (CheckCanCreateWindow(lpClassName, NULL, dwStyle) && F(CreateWindowA) != NULL)
+//		hWnd = F(CreateWindowA)(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+//
+//	return hWnd;
+//}
+//
+//typedef HWND (WINAPI* OnCreateWindowW_t)(LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+//HWND WINAPI OnCreateWindowW(LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
+//{
+//	ORIGINALFASTEX(CreateWindowW,NULL);
+//	HWND hWnd = NULL;
+//
+//	if (CheckCanCreateWindow(NULL, lpClassName, dwStyle) && F(CreateWindowW) != NULL)
+//		hWnd = F(CreateWindowW)(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+//
+//	return hWnd;
+//}
+
+typedef HWND (WINAPI* OnCreateWindowExA_t)(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
+{
+	ORIGINALFASTEX(CreateWindowExA,NULL);
+	HWND hWnd = NULL;
+
+	if (CheckCanCreateWindow(lpClassName, NULL, dwStyle) && F(CreateWindowExA) != NULL)
+		hWnd = F(CreateWindowExA)(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+
+	return hWnd;
+}
+
+typedef HWND (WINAPI* OnCreateWindowExW_t)(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
+{
+	ORIGINALFASTEX(CreateWindowExW,NULL);
+	HWND hWnd = NULL;
+
+	if (CheckCanCreateWindow(NULL, lpClassName, dwStyle) && F(CreateWindowExW) != NULL)
+		hWnd = F(CreateWindowExW)(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+
+	return hWnd;
 }
 
 #ifndef NORM_STOP_ON_NULL

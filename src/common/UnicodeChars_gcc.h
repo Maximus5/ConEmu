@@ -28,8 +28,12 @@
 #define ucBoxSinglUpLeft         0x2518
 #define ucBoxSinglDownDblHorz    0x2564
 #define ucBoxSinglUpDblHorz      0x2567
+#define ucBoxDblDownDblHorz      0x2566
+#define ucBoxDblUpDblHorz        0x2569
 #define ucBoxSinglDownHorz       0x252C
 #define ucBoxSinglUpHorz         0x2534
+#define ucBoxDblDownSinglHorz    0x2565
+#define ucBoxDblUpSinglHorz      0x2568
 #define ucBoxDblVertRight        0x2560
 #define ucBoxDblVertLeft         0x2563
 #define ucBoxDblVertSinglRight   0x255F

@@ -1067,6 +1067,7 @@ static void CopyPanelInfo(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pBk
 	pBk->bVisible = pInfo->Visible;
 	pBk->bFocused = pInfo->Focus;
 	pBk->bPlugin = pInfo->Plugin;
+	pBk->nPanelType = pInfo->PanelType;
 	MultiByteToWideChar(CP_OEMCP, 0, pInfo->CurDir, -1, pBk->szCurDir, BkPanelInfo_CurDirMax);
 	lstrcpyW(pBk->szFormat, pInfo->Plugin ? L"Plugin" : L"");
 	pBk->szHostFile[0] = 0;

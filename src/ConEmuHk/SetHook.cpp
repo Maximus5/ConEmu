@@ -581,7 +581,10 @@ bool __stdcall InitHooks(HookItem* apHooks)
 			else
 			{
 				gpHooks[i].OldAddress = (void*)GetProcAddress(mod, gpHooks[i].Name);
-				_ASSERTE(gpHooks[i].OldAddress != NULL);
+				if (gpHooks[i].OldAddress == NULL)
+				{
+					_ASSERTE(gpHooks[i].OldAddress != NULL);
+				}
 				gpHooks[i].hDll = mod;
 			}
 		}

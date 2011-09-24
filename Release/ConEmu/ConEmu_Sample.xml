@@ -165,6 +165,7 @@
 			<value name="TryToCenter" type="hex" data="00"/>
 			<value name="ShowScrollbar" type="hex" data="02"/>
 			<value name="MainTimerElapse" type="dword" data="0000000a"/>
+			<value name="MainTimerInactiveElapse" type="dword" data="000003e8"/>
 			<value name="AffinityMask" type="dword" data="00000000"/>
 			<value name="DesktopMode" type="hex" data="00"/>
 			<value name="AlwaysOnTop" type="hex" data="00"/>

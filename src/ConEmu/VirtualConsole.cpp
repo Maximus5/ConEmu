@@ -2317,7 +2317,9 @@ void CVirtualConsole::UpdateText()
 							//SetBkColor(hDC, pColors[attrBack]);
 							SetBkColor(hDC, attr.crBackColor);
 							wchar_t *pchBorder = (c == ucBoxDblDownLeft || c == ucBoxDblUpLeft
-							                      || c == ucBoxSinglDownDblHorz || c == ucBoxSinglUpDblHorz || c == ucBoxDblVertLeft
+							                      || c == ucBoxSinglDownDblHorz || c == ucBoxSinglUpDblHorz
+							                      || c == ucBoxDblDownDblHorz || c == ucBoxDblUpDblHorz
+												  || c == ucBoxDblVertLeft
 							                      || c == ucBoxDblVertHorz) ? ms_HorzDbl : ms_HorzSingl;
 							int nCnt = ((rect.right - rect.left) / CharWidth(pchBorder[0]))+1;
 
@@ -4551,13 +4553,13 @@ void CVirtualConsole::PolishPanelViews()
 
 		for(x = rc.left+1; x < rc.right && pszLine[x] != L' '; x++)
 		{
-			if (pszLine[x] == ucBoxSinglDownDblHorz && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
+			if ((pszLine[x] == ucBoxSinglDownDblHorz || pszLine[x] == ucBoxDblDownDblHorz) && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
 				pszLine[x] = ucBoxDblHorz;
 		}
 
 		for(x = rc.right-1; x > rc.left && pszLine[x] != L' '; x--)
 		{
-			if (pszLine[x] == ucBoxSinglDownDblHorz && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
+			if ((pszLine[x] == ucBoxSinglDownDblHorz || pszLine[x] == ucBoxDblDownDblHorz) && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
 				pszLine[x] = ucBoxDblHorz;
 		}
 
@@ -4590,14 +4592,14 @@ void CVirtualConsole::PolishPanelViews()
 			//TODO("Возможно нужно будет и атрибуты (цвет) обновить");
 			for(x = nX1; x < nX3; x++)
 				if ((pszLine[x] != L' ' && pAttrs[x].nForeIdx == nNFore && pAttrs[x].nBackIdx == nNBack)
-				        || (pszLine[x] == ucBoxSinglVert && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
+				        || ((pszLine[x] == ucBoxSinglVert || pszLine[x] == ucBoxDblVert) && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
 				  ) pszLine[x] = L' ';
 
 			int nX4 = min(rc.right,(nX3+nNameLen));
 
 			for(x = nX3; x < nX4; x++, pszNameTitle++)
 				if ((pAttrs[x].nForeIdx == nNFore && pAttrs[x].nBackIdx == nNBack)
-				        || (pszLine[x] == ucBoxSinglVert && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
+				        || ((pszLine[x] == ucBoxSinglVert || pszLine[x] == ucBoxDblVert) && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
 				  )
 				{
 					pszLine[x] = *pszNameTitle;
@@ -4606,7 +4608,7 @@ void CVirtualConsole::PolishPanelViews()
 
 			for(x = nX4; x < rc.right; x++)
 				if ((pszLine[x] != L' ' && pAttrs[x].nForeIdx == nNFore && pAttrs[x].nBackIdx == nNBack)
-				        || (pszLine[x] == ucBoxSinglVert && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
+				        || ((pszLine[x] == ucBoxSinglVert || pszLine[x] == ucBoxDblVert) && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
 				  ) pszLine[x] = L' ';
 		}
 
@@ -4618,8 +4620,13 @@ void CVirtualConsole::PolishPanelViews()
 		if ((pp->nFarPanelSettings & 0x40/*FPS_SHOWSTATUSLINE*/))
 		{
 			for(x = rc.left+1; x < rc.right; x++)
-				if (pszLine[x] == ucBoxSinglUpHorz && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
+			{
+				if ((pszLine[x] == ucBoxSinglUpHorz || pszLine[x] == ucBoxDblUpSinglHorz || pszLine[x] == ucBoxDblUpSinglHorz)
+					&& pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
+				{
 					pszLine[x] = ucBoxSinglHorz;
+				}
+			}
 		}
 	}
 }

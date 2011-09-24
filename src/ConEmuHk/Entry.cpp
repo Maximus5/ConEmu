@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //  –аскомментировать, чтобы сразу после загрузки модул€ показать MessageBox, чтобы прицепитьс€ дебаггером
-//  #define SHOW_STARTED_MSGBOX
+//  #define SHOW_STARTED_MSGBOX -- не работает, в этот момент еще не найдено окно GUI
 //  #define SHOW_INJECT_MSGBOX
 //  #define SHOW_MINGW_MSGBOX
 #endif

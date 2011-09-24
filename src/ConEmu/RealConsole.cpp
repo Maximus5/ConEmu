@@ -1353,6 +1353,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	DWORD  nWait = 0, nSrvWait = -1;
 	BOOL   bException = FALSE, bIconic = FALSE, /*bFirst = TRUE,*/ bActive = TRUE;
 	DWORD nElapse = max(10,gpSet->nMainTimerElapse);
+	DWORD nInactiveElapse = max(10,gpSet->nMainTimerInactiveElapse);
 	DWORD nLastFarPID = 0;
 	bool bLastAlive = false, bLastAliveActive = false;
 	bool lbForceUpdate = false;
@@ -1382,7 +1383,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 		bIconic = gpConEmu->isIconic();
 		// в минимизированном/неактивном режиме - сократить расходы
-		nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, (bIconic || !bActive) ? max(1000,nElapse) : nElapse);
+		nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, bIconic ? max(1000,nInactiveElapse) : !bActive ? nInactiveElapse : nElapse);
 		_ASSERTE(nWait!=(DWORD)-1);
 
 		if (nWait == IDEVENT_TERM || nWait == IDEVENT_CONCLOSED)
@@ -7765,7 +7766,7 @@ BOOL CRealConsole::RecreateProcessStart()
 //				// мы могли начать не с верха панели
 //				while (nY >= 0) {
 //					wc = pChar[nFromX+nY*nWidth];
-//					if (wc != ucBoxSinglVert && wc != ucBoxSinglDownHorz && wc != ucBoxSinglDownDblHorz)
+//					if (wc != ucBoxSinglVert && wc != ucBoxSinglDownHorz && wc != ucBoxSinglDownDblHorz && wc != ucBoxDblDownDblHorz)
 //						break;
 //					//_ASSERTE(p->bDialog);
 //					_ASSERTE(p >= pAttr);
@@ -11369,8 +11370,10 @@ void CRealConsole::FindPanels()
 		            ((bFirstCharOk || con.pConChar[nIdx] == ucBoxDblDownRight)
 		             && ((con.pConChar[nIdx+1] == ucBoxDblHorz && bFarShowColNames)
 		                 || con.pConChar[nIdx+1] == ucBoxSinglDownDblHorz // доп.окон нет, только рамка
+						 || con.pConChar[nIdx+1] == ucBoxDblDownDblHorz
 		                 || (con.pConChar[nIdx+1] == L'[' && con.pConChar[nIdx+2] == ucLeftScroll) // ScreenGadgets, default
-						 || (!bFarShowColNames && con.pConChar[nIdx+1] != ucBoxDblHorz && con.pConChar[nIdx+1] != ucBoxSinglDownDblHorz)
+						 || (!bFarShowColNames && con.pConChar[nIdx+1] != ucBoxDblHorz
+							&& con.pConChar[nIdx+1] != ucBoxSinglDownDblHorz && con.pConChar[nIdx+1] != ucBoxDblDownDblHorz)
 		                ))
 		        )
 		        && con.pConChar[nIdx+con.nTextWidth] == ucBoxDblVert) // двойная рамка продолжается вниз
@@ -11381,6 +11384,7 @@ void CRealConsole::FindPanels()
 				if (con.pConChar[nIdx+i] == ucBoxDblDownLeft
 				        && ((con.pConChar[nIdx+i-1] == ucBoxDblHorz)
 				            || con.pConChar[nIdx+i-1] == ucBoxSinglDownDblHorz // правый угол панели
+							|| con.pConChar[nIdx+i-1] == ucBoxDblDownDblHorz
 				            || (con.pConChar[nIdx+i-1] == L']' && con.pConChar[nIdx+i-2] == L'\\') // ScreenGadgets, default
 							)
 				        // МОЖЕТ быть закрыто AltHistory
@@ -11467,8 +11471,10 @@ void CRealConsole::FindPanels()
 						if (con.pConChar[nIdx+i] == ucBoxDblDownRight
 						        && ((con.pConChar[nIdx+i+1] == ucBoxDblHorz && bFarShowColNames)
 						            || con.pConChar[nIdx+i+1] == ucBoxSinglDownDblHorz // правый угол панели
+									|| con.pConChar[nIdx+i+1] == ucBoxDblDownDblHorz
 						            || (con.pConChar[nIdx+i-1] == L']' && con.pConChar[nIdx+i-2] == L'\\') // ScreenGadgets, default
-									|| (!bFarShowColNames && con.pConChar[nIdx+i+1] != ucBoxDblHorz && con.pConChar[nIdx+i+1] != ucBoxSinglDownDblHorz)
+									|| (!bFarShowColNames && con.pConChar[nIdx+i+1] != ucBoxDblHorz 
+										&& con.pConChar[nIdx+i+1] != ucBoxSinglDownDblHorz && con.pConChar[nIdx+i+1] != ucBoxDblDownDblHorz)
 									)
 						        // МОЖЕТ быть закрыто AltHistory
 						        /*&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert*/)
@@ -12591,7 +12597,8 @@ bool CRealConsole::isCharBorderLeftVertical(WCHAR inChar)
 bool CRealConsole::isCharBorderHorizontal(WCHAR inChar)
 {
 	if (inChar == ucBoxSinglDownDblHorz || inChar == ucBoxSinglUpDblHorz
-	        || inChar == ucBoxSinglDownHorz || inChar == ucBoxSinglUpHorz
+			|| inChar == ucBoxDblDownDblHorz || inChar == ucBoxDblUpDblHorz
+	        || inChar == ucBoxSinglDownHorz || inChar == ucBoxSinglUpHorz || inChar == ucBoxDblUpSinglHorz
 	        || inChar == ucBoxDblHorz)
 		return true;
 	else

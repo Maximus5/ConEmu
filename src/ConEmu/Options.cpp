@@ -329,6 +329,7 @@ void CSettings::InitSettings()
 	m_RealConLoggingType = glt_None;
 	//wcscpy_c(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
 	nMainTimerElapse = 10;
+	nMainTimerInactiveElapse = 1000;
 	nAffinity = 0; // 0 - don't change default affinity
 	//isAdvLangChange = true;
 	isSkipFocusEvents = false;
@@ -937,6 +938,7 @@ void CSettings::LoadSettings()
 		//reg->Load(L"AllowDetach", isAllowDetach);
 
 		reg->Load(L"MainTimerElapse", nMainTimerElapse); if (nMainTimerElapse>1000) nMainTimerElapse = 1000;
+		reg->Load(L"MainTimerInactiveElapse", nMainTimerInactiveElapse); if (nMainTimerInactiveElapse>10000) nMainTimerInactiveElapse = 10000;
 
 		reg->Load(L"AffinityMask", nAffinity);
 		//reg->Load(L"AdvLangChange", isAdvLangChange);
@@ -1504,6 +1506,7 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		/*reg->Save(L"ScrollTitle", isScrollTitle);
 		reg->Save(L"ScrollTitleLen", ScrollTitleLen);*/
 		reg->Save(L"MainTimerElapse", nMainTimerElapse);
+		reg->Save(L"MainTimerInactiveElapse", nMainTimerInactiveElapse);
 		reg->Save(L"AffinityMask", nAffinity);
 		reg->Save(L"SkipFocusEvents", isSkipFocusEvents);
 		reg->Save(L"MonitorConsoleLang", isMonitorConsoleLang);

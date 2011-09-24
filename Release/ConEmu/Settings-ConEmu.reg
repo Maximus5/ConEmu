@@ -348,6 +348,8 @@ REGEDIT4
 
 ;; Time interval between console read in ms (10..1000)
 ;"MainTimerElapse"=dword:0000000A
+;; Same as above, for inactive windows (10..10000)
+;"MainTimerInactiveElapse"=dword:000003E8
 
 ;; PictureView1 support
 ;; Interval between slides for PictureView1 plugin (default is 2.5s).

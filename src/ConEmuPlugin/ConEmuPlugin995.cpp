@@ -1188,6 +1188,7 @@ static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pB
 	pBk->bVisible = pInfo->Visible;
 	pBk->bFocused = pInfo->Focus;
 	pBk->bPlugin = pInfo->Plugin;
+	pBk->nPanelType = pInfo->PanelType;
 	HANDLE hPanel = (pInfo->Focus) ? PANEL_ACTIVE : PANEL_PASSIVE;
 	InfoW995->Control(hPanel, FCTL_GETPANELDIR /* == FCTL_GETPANELDIR == 25*/, BkPanelInfo_CurDirMax, (LONG_PTR)pBk->szCurDir);
 

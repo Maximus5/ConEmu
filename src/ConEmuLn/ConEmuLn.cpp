@@ -62,6 +62,7 @@ bool gbSetStartupInfoOk = false;
 ConEmuLnSettings gSettings[] = {
 	{L"PluginEnabled", (LPBYTE)&gbBackgroundEnabled, REG_BINARY, 1},
 	{L"LinesColor", (LPBYTE)&gcrLinesColor, REG_DWORD, 4},
+	{L"HilightType", (LPBYTE)&giHilightType, REG_DWORD, 4},
 	{L"HilightPlugins", (LPBYTE)&gbHilightPlugins, REG_BINARY, 1},
 	{L"HilightPlugBack", (LPBYTE)&gcrHilightPlugBack, REG_DWORD, 4},
 	{NULL}
@@ -69,6 +70,7 @@ ConEmuLnSettings gSettings[] = {
 
 BOOL gbBackgroundEnabled = FALSE;
 COLORREF gcrLinesColor = RGB(0,0,0xA8); // чуть светлее синего
+int giHilightType = 0; // 0 - линии, 1 - полосы
 BOOL gbHilightPlugins = FALSE;
 COLORREF gcrHilightPlugBack = RGB(0xA8,0,0); // чуть светлее красного
 
@@ -255,6 +257,7 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 	{
 		HPEN hPen = CreatePen(PS_SOLID, 1, gcrLinesColor);
 		HPEN hOldPen = (HPEN)SelectObject(pBk->hdc, hPen);
+		HBRUSH hBrush = CreateSolidBrush(gcrLinesColor);
 		int nCellHeight = 12;
 
 		if (pBk->LeftPanel.bVisible)
@@ -267,14 +270,33 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 		int nX1 = (pBk->LeftPanel.bVisible) ? 0 : pBk->rcDcRight.left;
 		int nX2 = (pBk->RightPanel.bVisible) ? pBk->rcDcRight.right : pBk->rcDcLeft.right;
 
+		bool bDrawStipe = true;
+		
 		for(int Y = nY1; Y < nY2; Y += nCellHeight)
 		{
-			MoveToEx(pBk->hdc, nX1, Y, NULL);
-			LineTo(pBk->hdc, nX2, Y);
+			if (giHilightType == 0)
+			{
+				MoveToEx(pBk->hdc, nX1, Y, NULL);
+				LineTo(pBk->hdc, nX2, Y);
+			}
+			else if (giHilightType == 1)
+			{
+				if (bDrawStipe)
+				{
+					bDrawStipe = false;
+					RECT rc = {nX1, Y - nCellHeight + 1, nX2, Y};
+					FillRect(pBk->hdc, &rc, hBrush);
+				}
+				else
+				{
+					bDrawStipe = true;
+				}
+			}
 		}
 
 		SelectObject(pBk->hdc, hOldPen);
 		DeleteObject(hPen);
+		DeleteObject(hBrush);
 	}
 
 	return TRUE;

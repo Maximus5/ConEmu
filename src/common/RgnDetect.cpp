@@ -357,11 +357,11 @@ bool CRgnDetect::FindFrameRight_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nW
 	wchar_t wc = pChar[nShift+nFromX];
 	nMostRight = nFromX;
 
-	if (wc == ucBoxSinglUpRight || wc == ucBoxSinglHorz || wc == ucBoxSinglUpHorz)
+	if (wc == ucBoxSinglUpRight || wc == ucBoxSinglHorz || wc == ucBoxSinglUpHorz || wc == ucBoxDblUpSinglHorz)
 	{
 		wcMostRight = ucBoxSinglUpLeft;
 	}
-	else if (wc == ucBoxDblUpRight || wc == ucBoxSinglUpDblHorz || wc == ucBoxDblHorz)
+	else if (wc == ucBoxDblUpRight || wc == ucBoxSinglUpDblHorz || wc == ucBoxDblUpDblHorz || wc == ucBoxDblHorz)
 	{
 		wcMostRight = ucBoxDblUpLeft;
 	}
@@ -397,11 +397,11 @@ bool CRgnDetect::FindFrameLeft_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWi
 	wchar_t wc = pChar[nShift+nFromX];
 	nMostLeft = nFromX;
 
-	if (wc == ucBoxSinglUpLeft || wc == ucBoxSinglHorz || wc == ucBoxSinglUpHorz)
+	if (wc == ucBoxSinglUpLeft || wc == ucBoxSinglHorz || wc == ucBoxSinglUpHorz || wc == ucBoxDblUpSinglHorz)
 	{
 		wcMostLeft = ucBoxSinglUpRight;
 	}
-	else if (wc == ucBoxDblUpLeft || wc == ucBoxSinglUpDblHorz || wc == ucBoxDblHorz)
+	else if (wc == ucBoxDblUpLeft || wc == ucBoxSinglUpDblHorz || wc == ucBoxDblUpDblHorz || wc == ucBoxDblHorz)
 	{
 		wcMostLeft = ucBoxDblUpRight;
 	}
@@ -497,7 +497,7 @@ bool CRgnDetect::FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 {
 	bMarkBorder = TRUE;
 	//nBackColor = pAttr[nFromX+nWidth*nFromY].crBackColor; // но на вс€кий случай сохраним цвет фона дл€ сравнени€
-	wchar_t wcMostRight, wcMostBottom, wcMostRightBottom, wcMostTop, wcNotMostBottom1, wcNotMostBottom2;
+	wchar_t wcMostRight, wcMostBottom, wcMostRightBottom, wcMostTop, wcNotMostBottom1;
 	int nShift = nWidth*nFromY;
 	int nMostTop, nY, nX;
 	wchar_t wc = pChar[nShift+nFromX];
@@ -509,14 +509,14 @@ bool CRgnDetect::FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 		// наткнулись на вертикальную линию на панели
 		if (wc == ucBoxSinglVert)
 		{
-			wcNotMostBottom1 = ucBoxSinglUpHorz; wcNotMostBottom2 = ucBoxSinglUpDblHorz;
+			wcNotMostBottom1 = ucBoxSinglUpHorz; //wcNotMostBottom2 = ucBoxSinglUpDblHorz;
 			nMostBottom = nFromY;
 
 			while(++nMostBottom < nHeight)
 			{
 				wc = pChar[nFromX+nMostBottom*nWidth];
 
-				if (wc == wcNotMostBottom1 || wc == wcNotMostBottom2)
+				if (wc == wcNotMostBottom1 || wc == ucBoxDblUpSinglHorz || wc == ucBoxSinglUpDblHorz || wc == ucBoxDblUpDblHorz)
 					return false;
 			}
 		}
@@ -812,7 +812,9 @@ bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 				return false;
 				// достигли низа панели
 			case ucBoxSinglUpHorz:
+			case ucBoxDblUpSinglHorz:
 			case ucBoxSinglUpDblHorz:
+			case ucBoxDblUpDblHorz:
 				nY++; // пометить все сверху (включа€)
 				// иначе - прервать поиск и пометить все сверху (не включа€)
 			default:
@@ -834,8 +836,11 @@ bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 					{
 						wc = pChar[nFromX+nY*nWidth];
 
-						if (wc != ucBoxSinglVert && wc != ucBoxSinglDownHorz && wc != ucBoxSinglDownDblHorz)
+						if (wc != ucBoxSinglVert && wc != ucBoxSinglDownHorz 
+							&& wc != ucBoxSinglDownDblHorz && wc != ucBoxDblDownDblHorz)
+						{
 							break;
+						}
 
 						//_ASSERTE(p->bDialog);
 						_ASSERTE(p >= pAttr);
@@ -1504,20 +1509,49 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 
 	if ((DlgFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)) != 0)
 	{
+		bool bSeparateTabs = false;
+
 		// ƒл€ детекта наличи€ PanelTabs
-		if (r.left && mp_FarInfo->PanelTabs.SeparateTabs == 0
+		int nBottom = r.bottom;
+		int nLeft = r.left;
+		// SeparateTabs может быть не проинициализирован
+		if (r.left /*&& mp_FarInfo->PanelTabs.SeparateTabs == 0*/
 		        && (m_DetectedDialogs.AllFlags & FR_LEFTPANEL))
 		{
 			if (mrc_LeftPanel.Bottom > r.bottom
 			        && nHeight > (nBottomLines+mrc_LeftPanel.Bottom+1))
 			{
-				r.bottom = mrc_LeftPanel.Bottom;
-				r.left = 0;
+				nBottom = mrc_LeftPanel.Bottom;
+				nLeft = 0;
 			}
 			else if (nHeight > (nBottomLines+mrc_LeftPanel.Bottom+1))
 			{
-				r.left = 0;
+				nLeft = 0;
 			}
+		}
+
+		// SeparateTabs может быть не проинициализирован
+		int nIdxLeft, nIdxRight;
+		if (DlgFlags & FR_LEFTPANEL)
+		{
+			nIdxLeft = nWidth*(r.bottom+1)+r.right-1;
+			nIdxRight = nWidth*(r.bottom+1)+(nWidth-2);
+		}
+		else
+		{
+			nIdxLeft = nWidth*(r.bottom+1)+r.left-2;
+			nIdxRight = nWidth*(r.bottom+1)+r.right-1;
+		}
+		if ((pChar[nIdxRight-1] == 9616 && pChar[nIdxRight] == L'+' && pChar[nIdxRight+1] == 9616)
+			&& !(pChar[nIdxLeft-1] == 9616 && pChar[nIdxLeft] == L'+' && pChar[nIdxLeft+1] == 9616))
+			bSeparateTabs = false; // ≈сть только одна строка табов (одна на обе панели)
+		else
+			bSeparateTabs = true;
+
+		if (!bSeparateTabs)
+		{
+			r.left = nLeft;
+			r.bottom = nBottom;
 		}
 
 		if (nHeight > (nBottomLines+r.bottom+1))
@@ -1525,13 +1559,28 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			int nIdx = nWidth*(r.bottom+1)+r.right-1;
 
 			if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
+				/* -- может быть Ќ≈ проинициализировано
 			        && pAttr[nIdx].nBackIdx == nPanelTabsBackIdx
-			        && pAttr[nIdx].nForeIdx == nPanelTabsForeIdx)
+			        && pAttr[nIdx].nForeIdx == nPanelTabsForeIdx
+				*/
+					)
 			{
 				MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1,
 				           false, false, FR_PANELTABS|(DlgFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)));
 			}
+			#ifdef _DEBUG
+			else
+			{
+				int nDbg2 = 0;
+			}
+			#endif
 		}
+		#ifdef _DEBUG
+		else if (!(DlgFlags & FR_PANELTABS))
+		{
+			int nDbg = 0;
+		}
+		#endif
 	}
 
 	m_DetectedDialogs.AllFlags |= DlgFlags;
@@ -2170,8 +2219,10 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 				//PRAGMA_ERROR("тут ошибаетс€: пол€ bDialog и bDialogCorner не зачищаютс€, поэтому возникают проблемы в ConEmuTh");
 
 				if (m_DetectedDialogs.AllFlags == 0 && nX == 0 && nY == nTopLines
-				        && (pszDst[nX] == L'[' && pnDst[nX].crBackColor == crPanelsNumberBack && pnDst[nX].crForeColor == crPanelsNumberFore)
-				        && (pszDst[nX+nWidth] == ucBoxDblVert && pnDst[nX+nWidth].crBackColor == crPanelsBorderBack && pnDst[nX+nWidth].crForeColor == crPanelsBorderFore)
+				        && ((pszDst[0] == L'[' && pnDst[0].crBackColor == crPanelsNumberBack && pnDst[0].crForeColor == crPanelsNumberFore)
+							|| (!nY && pszDst[0] == L'P' && (pnDst[0].nBackIdx & 7) == 0x2 && pnDst[0].nForeIdx == 0xF)
+							|| (!nY && pszDst[0] == L'R' && (pnDst[0].nBackIdx & 7) == 0x4 && pnDst[0].nForeIdx == 0xF))
+				        && (pszDst[nWidth] == ucBoxDblVert && pnDst[nWidth].crBackColor == crPanelsBorderBack && pnDst[nWidth].crForeColor == crPanelsBorderFore)
 				  )
 				{
 					// ѕринудительно сдетектить, как панель

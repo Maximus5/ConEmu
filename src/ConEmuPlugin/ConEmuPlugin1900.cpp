@@ -1265,17 +1265,24 @@ static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pB
 	pBk->bVisible = ((pInfo->Flags & PFLAGS_VISIBLE) == PFLAGS_VISIBLE);
 	pBk->bFocused = ((pInfo->Flags & PFLAGS_FOCUS) == PFLAGS_FOCUS);
 	pBk->bPlugin = ((pInfo->Flags & PFLAGS_PLUGIN) == PFLAGS_PLUGIN);
+	pBk->nPanelType = (int)pInfo->PanelType;
 	HANDLE hPanel = (pBk->bFocused) ? PANEL_ACTIVE : PANEL_PASSIVE;
 	InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR /* == FCTL_GETPANELDIR == 25*/, BkPanelInfo_CurDirMax, pBk->szCurDir);
 
-	if (gFarVersion.dwBuild >= 1657)
+	if (pBk->bPlugin)
 	{
-		InfoW1900->PanelControl(hPanel, FCTL_GETPANELFORMAT, BkPanelInfo_FormatMax, pBk->szFormat);
+		pBk->szFormat[0] = 0;
+		INT_PTR iFRc = InfoW1900->PanelControl(hPanel, FCTL_GETPANELFORMAT, BkPanelInfo_FormatMax, pBk->szFormat);
+		if (iFRc < 0 || iFRc > BkPanelInfo_FormatMax || !*pBk->szFormat)
+		{
+			InfoW1900->PanelControl(hPanel, FCTL_GETPANELPREFIX, BkPanelInfo_FormatMax, pBk->szFormat);
+		}
+		
 		InfoW1900->PanelControl(hPanel, FCTL_GETPANELHOSTFILE, BkPanelInfo_HostFileMax, pBk->szHostFile);
 	}
 	else
 	{
-		lstrcpyW(pBk->szFormat, (pInfo->Flags & PFLAGS_PLUGIN) ? L"Plugin" : L"");
+		pBk->szFormat[0] = 0;
 		pBk->szHostFile[0] = 0;
 	}
 

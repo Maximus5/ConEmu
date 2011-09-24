@@ -298,6 +298,8 @@ struct GDIPlusDecoder
 		return result;
 	};
 
+	// ѕри использовании в фаре GdiPlus иногда может зависать на FreeLibrary.
+	// ѕричины пока не вы€снены
 	static DWORD WINAPI FreeThreadProc(LPVOID lpParameter)
 	{
 		struct GDIPlusDecoder* p = (struct GDIPlusDecoder*)lpParameter;

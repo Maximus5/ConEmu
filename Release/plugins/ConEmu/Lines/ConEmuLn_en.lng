@@ -3,7 +3,10 @@
 // Plugin title
 "ConEmu Underlines"
 "&Enable plugin"
-"&Lines color (0xBBGGRR):"
+"&Color (0xBBGGRR):"
+"Drawing style:"
+"&Underlines"
+"&Stripes"
 "&Hilight plugin panels"
 "&Back color (0xBBGGRR):"
 "OK"

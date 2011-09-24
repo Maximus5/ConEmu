@@ -1053,7 +1053,7 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 
 				if (pCmp->Flags == pItem->Flags
 				        && (nMask&pCmp->FindData.dwFileAttributes) == (nMask&pItem->FindData.dwFileAttributes)
-				        && (!Focus || (j != this->CurrentItem))
+						&& (!Focus || (abCurrentItem ? FALSE : (j != this->CurrentItem)))
 				  )
 				{
 					pItemColor->crBack = pCmpColor->crBack;

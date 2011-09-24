@@ -1077,6 +1077,10 @@ int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBt
 			ExecuteFreeResult(pOut);
 		}
 	}
+	else
+	{
+		_ASSERTE(hConEmuWndRoot!=NULL);
+	}
 
 	return nResult;
 }
