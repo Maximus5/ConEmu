@@ -3,11 +3,6 @@
 // Plugin title
 "ConEmu Background"
 "&Enable plugin"
-"&Color (0xBBGGRR):"
-"Drawing style:"
-"&Underlines"
-"&Stripes"
-"&Hilight plugin panels"
-"&Back color (0xBBGGRR):"
+"&Settings file path (Background.xml)"
 "OK"
 "Cancel"

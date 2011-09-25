@@ -46,10 +46,13 @@ extern FarVersion gFarVersion;
 
 //Settings
 extern BOOL gbBackgroundEnabled;
-extern COLORREF gcrLinesColor;
-extern int giHilightType; // 0 - линии, 1 - полосы
-extern BOOL gbHilightPlugins;
-extern COLORREF gcrHilightPlugBack;
+extern wchar_t gsXmlConfigFile[MAX_PATH];
+extern const wchar_t* szDefaultXmlName;
+bool CheckXmlFile(bool abUpdateName = false);
+//extern COLORREF gcrLinesColor;
+//extern int giHilightType; // 0 - линии, 1 - полосы
+//extern BOOL gbHilightPlugins;
+//extern COLORREF gcrHilightPlugBack;
 struct ConEmuBgSettings
 {
 	LPCWSTR pszValueName;

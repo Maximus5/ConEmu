@@ -1602,6 +1602,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Configure.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\Memory.h"
 				>
 			</File>
@@ -1649,7 +1653,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1659,7 +1663,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1670,7 +1674,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1681,7 +1685,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1691,7 +1695,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1701,7 +1705,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1711,7 +1715,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1721,7 +1725,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1731,7 +1735,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1741,7 +1745,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1751,7 +1755,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1761,7 +1765,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1772,7 +1776,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1783,7 +1787,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1793,7 +1797,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1803,7 +1807,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1813,7 +1817,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>
@@ -1823,7 +1827,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Updating $(TargetDir)$(InputFileName)"
-					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;"
+					CommandLine="copy &quot;$(InputPath)&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="$(TargetDir)$(InputFileName)"
 				/>
 			</FileConfiguration>

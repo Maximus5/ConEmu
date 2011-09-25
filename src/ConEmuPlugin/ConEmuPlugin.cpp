@@ -1532,6 +1532,22 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			//		ghFarHintsFix = LoadLibrary(szVarValue);
 			//	}
 			//}
+
+			if (!TerminalMode)
+			{
+				if (!StartupHooks(ghPluginModule))
+				{
+					if (ConEmuHwnd)
+					{
+						_ASSERTE(FALSE);
+						OutputDebugString(L"!!! Can't install injects!!!\n");
+					}
+					else
+					{
+						OutputDebugString(L"No GUI, injects was not installed!\n");
+					}
+				}
+			}
 		}
 		break;
 		case DLL_PROCESS_DETACH:

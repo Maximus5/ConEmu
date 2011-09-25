@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuLn"
 	ProjectGUID="{64DB4963-B19E-43E2-B6A5-C659F632E655}"
 	RootNamespace="ConEmuLn"
@@ -1593,6 +1593,10 @@
 			</File>
 			<File
 				RelativePath=".\ConEmuLn_Lang.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Configure.h"
 				>
 			</File>
 			<File

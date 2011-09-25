@@ -70,6 +70,7 @@ bool gbInStartPlugin = false;
 bool gbSetStartupInfoOk = false;
 ConEmuBgSettings gSettings[] = {
 	{L"PluginEnabled", (LPBYTE)&gbBackgroundEnabled, REG_BINARY, 1},
+	{L"XmlConfigFile", (LPBYTE)gsXmlConfigFile, REG_SZ, countof(gsXmlConfigFile)},
 	//{L"LinesColor", (LPBYTE)&gcrLinesColor, REG_DWORD, 4},
 	//{L"HilightType", (LPBYTE)&giHilightType, REG_DWORD, 4},
 	//{L"HilightPlugins", (LPBYTE)&gbHilightPlugins, REG_BINARY, 1},
@@ -78,10 +79,11 @@ ConEmuBgSettings gSettings[] = {
 };
 
 BOOL gbBackgroundEnabled = FALSE;
-COLORREF gcrLinesColor = RGB(0,0,0xA8); // чуть светлее синего
-int giHilightType = 0; // 0 - линии, 1 - полосы
-BOOL gbHilightPlugins = FALSE;
-COLORREF gcrHilightPlugBack = RGB(0xA8,0,0); // чуть светлее красного
+wchar_t gsXmlConfigFile[MAX_PATH] = {};
+//COLORREF gcrLinesColor = RGB(0,0,0xA8); // чуть светлее синего
+//int giHilightType = 0; // 0 - линии, 1 - полосы
+//BOOL gbHilightPlugins = FALSE;
+//COLORREF gcrHilightPlugBack = RGB(0xA8,0,0); // чуть светлее красного
 
 
 
@@ -277,11 +279,54 @@ struct XmlConfigFile
 };
 XmlConfigFile XmlFile;
 wchar_t* gpszXmlFile = NULL;
-const wchar_t* szXmlName = L"Background.xml";
+const wchar_t* szDefaultXmlName = L"Background.xml";
 
 // Возвращает TRUE, если файл изменился
-bool CheckXmlFile()
+bool CheckXmlFile(bool abUpdateName /*= false*/)
 {
+	if (abUpdateName)
+	{
+		bool lbNameOk = false;
+		int nNameLen = lstrlen(szDefaultXmlName);
+		if (!gpszXmlFile)
+			gpszXmlFile = (wchar_t*)malloc((MAX_PATH+1)*sizeof(*gpszXmlFile));
+
+		if (gpszXmlFile)
+		{
+			*gpszXmlFile = 0;
+			if (*gsXmlConfigFile && wcschr(gsXmlConfigFile, L'\\'))
+			{
+				DWORD nRc = ExpandEnvironmentStrings(gsXmlConfigFile, gpszXmlFile, MAX_PATH+1);
+				if (!nRc || nRc > MAX_PATH)
+				{
+					*gpszXmlFile = 0;
+					ReportFail(L"Too long xml path after ExpandEnvironmentStrings");
+				}
+				else
+				{
+					lbNameOk = true;
+				}
+			}
+			if (!*gpszXmlFile && GetModuleFileName(ghPluginModule, gpszXmlFile, MAX_PATH-nNameLen))
+			{
+				wchar_t* pszSlash = wcsrchr(gpszXmlFile, L'\\');
+				if (pszSlash) pszSlash++; else pszSlash = gpszXmlFile;
+				_wcscpy_c(pszSlash, nNameLen+1, *gsXmlConfigFile ? gsXmlConfigFile : szDefaultXmlName);
+				lbNameOk = true;
+			}
+		}
+		if (!lbNameOk)
+		{
+			if (gpszXmlFile)
+			{
+				free(gpszXmlFile);
+				gpszXmlFile = NULL;
+			};
+			ReportFail(L"Can't initialize name of xml file");
+			return false;
+		}
+	}
+
 	bool lbChanged = false;
 	wchar_t szErr[128];
 	
@@ -295,7 +340,7 @@ bool CheckXmlFile()
 			
 			if (!inf.nFileSizeLow)
 			{
-				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s file in the plugin folder is empty", szXmlName);
+				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s file in the plugin folder is empty", szDefaultXmlName);
 				ReportFail(szErr);
 			}
 			else if (!XmlFile.FileData)
@@ -317,12 +362,12 @@ bool CheckXmlFile()
 				LPBYTE ptrData = (LPBYTE)calloc(inf.nFileSizeLow+1, sizeof(*ptrData));
 				if (!ptrData)
 				{
-					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't allocate %u bytes for %s", inf.nFileSizeLow+1, szXmlName);
+					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't allocate %u bytes for %s", inf.nFileSizeLow+1, szDefaultXmlName);
 					ReportFail(szErr);
 				}
 				else if (!ReadFile(hFile, ptrData, inf.nFileSizeLow, &dwRead, NULL) || (dwRead != inf.nFileSizeLow))
 				{
-					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't read %u bytes from %s", inf.nFileSizeLow+1, szXmlName);
+					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't read %u bytes from %s", inf.nFileSizeLow+1, szDefaultXmlName);
 					ReportFail(szErr);
 				}
 				else
@@ -348,7 +393,7 @@ bool CheckXmlFile()
 			// В первый раз - на отсутствие файла ругнемся
 			if (!XmlFile.FileData)
 			{
-				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s not found in the plugin folder", szXmlName);
+				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s not found in the plugin folder", szDefaultXmlName);
 				ReportFail(szErr);
 			}
 		}
@@ -843,15 +888,33 @@ bool GdipInit()
 		
 	InitializeCriticalSection(&XmlFile.cr);
 	
+#if 0
 	bool lbNameOk = false;
-	int nNameLen = lstrlen(szXmlName);
+	int nNameLen = lstrlen(szDefaultXmlName);
 	gpszXmlFile = (wchar_t*)malloc((MAX_PATH+1)*sizeof(*gpszXmlFile));
-	if (gpszXmlFile && GetModuleFileName(ghPluginModule, gpszXmlFile, MAX_PATH-nNameLen))
+	if (gpszXmlFile)
 	{
-		wchar_t* pszSlash = wcsrchr(gpszXmlFile, L'\\');
-		if (pszSlash) pszSlash++; else pszSlash = gpszXmlFile;
-		_wcscpy_c(pszSlash, nNameLen+1, szXmlName);
-		lbNameOk = true;
+		*gpszXmlFile = 0;
+		if (*gsXmlConfigFile && wcschr(gsXmlConfigFile, L'\\'))
+		{
+			DWORD nRc = ExpandEnvironmentStrings(gsXmlConfigFile, gpszXmlFile, MAX_PATH+1);
+			if (!nRc || nRc > MAX_PATH)
+			{
+				*gpszXmlFile = 0;
+				ReportFail(L"Too long xml path after ExpandEnvironmentStrings");
+			}
+			else
+			{
+				lbNameOk = true;
+			}
+		}
+		if (!*gpszXmlFile && GetModuleFileName(ghPluginModule, gpszXmlFile, MAX_PATH-nNameLen))
+		{
+			wchar_t* pszSlash = wcsrchr(gpszXmlFile, L'\\');
+			if (pszSlash) pszSlash++; else pszSlash = gpszXmlFile;
+			_wcscpy_c(pszSlash, nNameLen+1, *gsXmlConfigFile ? gsXmlConfigFile : szDefaultXmlName);
+			lbNameOk = true;
+		}
 	}
 	if (!lbNameOk)
 	{
@@ -862,9 +925,10 @@ bool GdipInit()
 		};
 		ReportFail(L"Can't initialize name of xml file");
 	}
-	
+#endif
+
 	// Загрузить его содержимое
-	CheckXmlFile();
+	CheckXmlFile(true);
 		
 	// Инициализация XMLLite
 	ghXmlLite = LoadLibrary(L"xmllite.dll");
@@ -2149,189 +2213,192 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		if (gpDecoder && *pDraw->szPic)
 		{
 			pI = gpDecoder->GetImage(pDraw->szPic);
-			int nPicDim = max(pI->nWidth,pI->nHeight);
-			int nW = min(nMaxPicSize,nPicDim), nH = min(nMaxPicSize,nPicDim); //TODO: Пропорционально pI->nWidth/pI->nHeight
-			if (pI && (rcWork.top <= (rcText.top - nH - IMG_SHIFT_Y)) && (rcWork.left <= (rcWork.right - nW - IMG_SHIFT_X)))
+			if (pI)
 			{
-				// - картинки чисто черного цвета
-			#if 0
-				const HDC hScreenDC = GetDC(0);
+				int nPicDim = max(pI->nWidth,pI->nHeight);
+				int nW = min(nMaxPicSize,nPicDim), nH = min(nMaxPicSize,nPicDim); //TODO: Пропорционально pI->nWidth/pI->nHeight
+				if (pI && (rcWork.top <= (rcText.top - nH - IMG_SHIFT_Y)) && (rcWork.left <= (rcWork.right - nW - IMG_SHIFT_X)))
+				{
+					// - картинки чисто черного цвета
+				#if 0
+					const HDC hScreenDC = GetDC(0);
+					
+					HDC hReadyDC = CreateCompatibleDC(hScreenDC);
+					HBITMAP hReadyBmp = CreateCompatibleBitmap(hScreenDC, nW, nH);
+					HBITMAP hOldReadyBmp = (HBITMAP)SelectObject(hReadyDC, hReadyBmp);
+					
+					StretchBlt(hReadyDC, 0, 0, nW, nH, pI->hDc, 0,0, pI->nWidth, pI->nHeight, SRCCOPY);
+					
+					BitBlt(pBk->hdc, rcWork.right - nW - IMG_SHIFT_X, rcText.top - nH - IMG_SHIFT_Y, nW, nH,
+						hReadyDC, 0,0, SRCAND);
+					
+					SelectObject(hReadyDC, hOldReadyBmp);
+					DeleteObject(hReadyBmp);
+					DeleteDC(hReadyDC);
+					
+					ReleaseDC(0, hScreenDC);
+				#endif
 				
-				HDC hReadyDC = CreateCompatibleDC(hScreenDC);
-				HBITMAP hReadyBmp = CreateCompatibleBitmap(hScreenDC, nW, nH);
-				HBITMAP hOldReadyBmp = (HBITMAP)SelectObject(hReadyDC, hReadyBmp);
-				
-				StretchBlt(hReadyDC, 0, 0, nW, nH, pI->hDc, 0,0, pI->nWidth, pI->nHeight, SRCCOPY);
-				
-				BitBlt(pBk->hdc, rcWork.right - nW - IMG_SHIFT_X, rcText.top - nH - IMG_SHIFT_Y, nW, nH,
-					hReadyDC, 0,0, SRCAND);
-				
-				SelectObject(hReadyDC, hOldReadyBmp);
-				DeleteObject(hReadyBmp);
-				DeleteDC(hReadyDC);
-				
-				ReleaseDC(0, hScreenDC);
-			#endif
-			
-				// OK
-			#if 1
-				const HDC hScreenDC = GetDC(0);
+					// OK
+				#if 1
+					const HDC hScreenDC = GetDC(0);
 
-				HDC hMaskDC = CreateCompatibleDC(hScreenDC);
-				HBITMAP hMaskBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
-				HBITMAP hOldMaskBmp = (HBITMAP)SelectObject(hMaskDC, hMaskBmp);
+					HDC hMaskDC = CreateCompatibleDC(hScreenDC);
+					HBITMAP hMaskBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
+					HBITMAP hOldMaskBmp = (HBITMAP)SelectObject(hMaskDC, hMaskBmp);
 
-				StretchBlt(hMaskDC, 0, 0, nW, nH, pI->hDc, 0,0, pI->nWidth, pI->nHeight, NOTSRCCOPY);
+					StretchBlt(hMaskDC, 0, 0, nW, nH, pI->hDc, 0,0, pI->nWidth, pI->nHeight, NOTSRCCOPY);
 
-				HDC hInvDC = CreateCompatibleDC(hScreenDC);
-				HBITMAP hInvBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
-				HBITMAP hOldInvBmp = (HBITMAP)SelectObject(hInvDC, hInvBmp);
+					HDC hInvDC = CreateCompatibleDC(hScreenDC);
+					HBITMAP hInvBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
+					HBITMAP hOldInvBmp = (HBITMAP)SelectObject(hInvDC, hInvBmp);
 
-				HBRUSH hDarkBr = CreateSolidBrush(pDraw->crDark);
-				HBRUSH hOldBr = (HBRUSH)SelectObject(hInvDC, hDarkBr);
+					HBRUSH hDarkBr = CreateSolidBrush(pDraw->crDark);
+					HBRUSH hOldBr = (HBRUSH)SelectObject(hInvDC, hDarkBr);
 
-				BitBlt(hInvDC, 0, 0, nW, nH,
-					hMaskDC, 0,0, MERGECOPY);
+					BitBlt(hInvDC, 0, 0, nW, nH,
+						hMaskDC, 0,0, MERGECOPY);
 
-				SelectObject(hInvDC, hOldBr);
+					SelectObject(hInvDC, hOldBr);
 
-				HDC hReadyDC = CreateCompatibleDC(hScreenDC);
-				HBITMAP hReadyBmp = CreateCompatibleBitmap(hScreenDC, nW, nH);
-				HBITMAP hOldReadyBmp = (HBITMAP)SelectObject(hReadyDC, hReadyBmp);
-				HBRUSH hBackBr = CreateSolidBrush(pDraw->crBack);
-				hOldBr = (HBRUSH)SelectObject(hReadyDC, hBackBr);
+					HDC hReadyDC = CreateCompatibleDC(hScreenDC);
+					HBITMAP hReadyBmp = CreateCompatibleBitmap(hScreenDC, nW, nH);
+					HBITMAP hOldReadyBmp = (HBITMAP)SelectObject(hReadyDC, hReadyBmp);
+					HBRUSH hBackBr = CreateSolidBrush(pDraw->crBack);
+					hOldBr = (HBRUSH)SelectObject(hReadyDC, hBackBr);
 
-				BitBlt(hMaskDC, 0, 0, nW, nH,
-					hMaskDC, 0,0, DSTINVERT);
+					BitBlt(hMaskDC, 0, 0, nW, nH,
+						hMaskDC, 0,0, DSTINVERT);
 
-				BitBlt(hReadyDC, 0, 0, nW, nH,
-					hMaskDC, 0,0, MERGECOPY);
+					BitBlt(hReadyDC, 0, 0, nW, nH,
+						hMaskDC, 0,0, MERGECOPY);
 
-				SelectObject(hReadyDC, hOldBr);
+					SelectObject(hReadyDC, hOldBr);
 
-				BitBlt(hReadyDC, 0, 0, nW, nH,
-					hInvDC, 0,0, SRCPAINT);
-				
-				DeleteObject(hDarkBr);
-				DeleteObject(hBackBr);
+					BitBlt(hReadyDC, 0, 0, nW, nH,
+						hInvDC, 0,0, SRCPAINT);
+					
+					DeleteObject(hDarkBr);
+					DeleteObject(hBackBr);
 
-				BitBlt(pBk->hdc, rcWork.right - nW - IMG_SHIFT_X, rcText.top - nH - IMG_SHIFT_Y, nW, nH,
-					hReadyDC, 0,0, SRCCOPY);
+					BitBlt(pBk->hdc, rcWork.right - nW - IMG_SHIFT_X, rcText.top - nH - IMG_SHIFT_Y, nW, nH,
+						hReadyDC, 0,0, SRCCOPY);
 
-				SelectObject(hReadyDC, hOldReadyBmp);
-				DeleteObject(hReadyBmp);
-				DeleteDC(hReadyDC);
+					SelectObject(hReadyDC, hOldReadyBmp);
+					DeleteObject(hReadyBmp);
+					DeleteDC(hReadyDC);
 
-				SelectObject(hInvDC, hOldInvBmp);
-				DeleteObject(hInvBmp);
-				DeleteDC(hInvDC);
+					SelectObject(hInvDC, hOldInvBmp);
+					DeleteObject(hInvBmp);
+					DeleteDC(hInvDC);
 
-				SelectObject(hMaskDC, hOldMaskBmp);
-				DeleteObject(hMaskBmp);
-				DeleteDC(hMaskDC);
+					SelectObject(hMaskDC, hOldMaskBmp);
+					DeleteObject(hMaskBmp);
+					DeleteDC(hMaskDC);
 
-				ReleaseDC(0, hScreenDC);
-			#endif
+					ReleaseDC(0, hScreenDC);
+				#endif
 
-			#if 0
-				const HDC hScreenDC = GetDC(0);
+				#if 0
+					const HDC hScreenDC = GetDC(0);
 
-				HDC hInvDC = CreateCompatibleDC(hScreenDC);
-				HBITMAP hInvBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
-				HBITMAP hOldInvBmp = (HBITMAP)SelectObject(hInvDC, hInvBmp);
-				
-				RECT rcFill = {0,0,pI->nWidth, pI->nHeight};
-				HBRUSH hDarkBr = CreateSolidBrush(/*RGB(128,128,128)*/pDraw->crDark);
-				FillRect(hInvDC, &rcFill, hDarkBr);
-				DeleteObject(hDarkBr);
-				
-				BitBlt(hInvDC, 0, 0, pI->nWidth, pI->nHeight,
-					pI->hDc, 0,0, SRCAND);
-				
-				HDC hReadyDC = CreateCompatibleDC(hScreenDC);
-				HBITMAP hReadyBmp = CreateCompatibleBitmap(hScreenDC, nW, nH);
-				HBITMAP hOldReadyBmp = (HBITMAP)SelectObject(hReadyDC, hReadyBmp);
-				
-				//SetStretchBltMode(hReadyDC, HALFTONE);
-				rcFill.right = nW; rcFill.bottom = nH;
-				FillRect(hReadyDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH));
-				StretchBlt(hReadyDC, 0, 0, nW, nH, hInvDC, 0,0, pI->nWidth, pI->nHeight, SRCINVERT);
-				
-				BitBlt(pBk->hdc, rcWork.right - nW - IMG_SHIFT_X, rcText.top - nH - IMG_SHIFT_Y, nW, nH,
-					hReadyDC, 0,0, SRCCOPY);
-				
-				SelectObject(hReadyDC, hOldReadyBmp);
-				DeleteObject(hReadyBmp);
-				DeleteDC(hReadyDC);
-				
-				ReleaseDC(0, hScreenDC);
-			#endif
+					HDC hInvDC = CreateCompatibleDC(hScreenDC);
+					HBITMAP hInvBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
+					HBITMAP hOldInvBmp = (HBITMAP)SelectObject(hInvDC, hInvBmp);
+					
+					RECT rcFill = {0,0,pI->nWidth, pI->nHeight};
+					HBRUSH hDarkBr = CreateSolidBrush(/*RGB(128,128,128)*/pDraw->crDark);
+					FillRect(hInvDC, &rcFill, hDarkBr);
+					DeleteObject(hDarkBr);
+					
+					BitBlt(hInvDC, 0, 0, pI->nWidth, pI->nHeight,
+						pI->hDc, 0,0, SRCAND);
+					
+					HDC hReadyDC = CreateCompatibleDC(hScreenDC);
+					HBITMAP hReadyBmp = CreateCompatibleBitmap(hScreenDC, nW, nH);
+					HBITMAP hOldReadyBmp = (HBITMAP)SelectObject(hReadyDC, hReadyBmp);
+					
+					//SetStretchBltMode(hReadyDC, HALFTONE);
+					rcFill.right = nW; rcFill.bottom = nH;
+					FillRect(hReadyDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH));
+					StretchBlt(hReadyDC, 0, 0, nW, nH, hInvDC, 0,0, pI->nWidth, pI->nHeight, SRCINVERT);
+					
+					BitBlt(pBk->hdc, rcWork.right - nW - IMG_SHIFT_X, rcText.top - nH - IMG_SHIFT_Y, nW, nH,
+						hReadyDC, 0,0, SRCCOPY);
+					
+					SelectObject(hReadyDC, hOldReadyBmp);
+					DeleteObject(hReadyBmp);
+					DeleteDC(hReadyDC);
+					
+					ReleaseDC(0, hScreenDC);
+				#endif
 
-				// - Черная окантовка вокруг плагиновой картинки
-			#if 0
-				const HDC hScreenDC = GetDC(0);
+					// - Черная окантовка вокруг плагиновой картинки
+				#if 0
+					const HDC hScreenDC = GetDC(0);
 
-				HDC hInvDC = CreateCompatibleDC(hScreenDC);
-				HBITMAP hInvBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
-				HBITMAP hOldInvBmp = (HBITMAP)SelectObject(hInvDC, hInvBmp);
+					HDC hInvDC = CreateCompatibleDC(hScreenDC);
+					HBITMAP hInvBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
+					HBITMAP hOldInvBmp = (HBITMAP)SelectObject(hInvDC, hInvBmp);
 
-				BitBlt(hInvDC, 0, 0, pI->nWidth, pI->nHeight, pI->hDc, 0,0, SRCCOPY); //NOTSRCCOPY
-				
-				HDC hCompDC = CreateCompatibleDC(hScreenDC);
-				HBITMAP hCompBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
-				HBITMAP hOldCompBmp = (HBITMAP)SelectObject(hCompDC, hCompBmp);
-				HDC hBackDC = CreateCompatibleDC(hScreenDC);
-				HBITMAP hBackBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
-				HBITMAP hOldBackBmp = (HBITMAP)SelectObject(hBackDC, hBackBmp);
-				
-				HBRUSH hPaintBr = CreateSolidBrush(pDraw->crDark);
-				HBRUSH hBackBr = CreateSolidBrush(pDraw->crBack);
-				
-				RECT rcFill = {0,0,pI->nWidth, pI->nHeight};
-				
-				HBRUSH hOldCompBr = (HBRUSH)SelectObject(hCompDC, hBackBr);
-				
-				
-				BitBlt(hCompDC, 0, 0, pI->nWidth, pI->nHeight, hInvDC, 0,0, MERGECOPY);
-				
-				BitBlt(hInvDC, 0, 0, pI->nWidth, pI->nHeight, pI->hDc, 0,0, NOTSRCCOPY);
-				HBRUSH hOldBackBr = (HBRUSH)SelectObject(hBackDC, hPaintBr);
-				BitBlt(hBackDC, 0, 0, pI->nWidth, pI->nHeight, hInvDC, 0,0, MERGECOPY);
-				
-				BitBlt(hCompDC, 0, 0, pI->nWidth, pI->nHeight, hBackDC, 0,0, SRCPAINT);
-				
-				
-				HDC hReadyDC = CreateCompatibleDC(hScreenDC);
-				HBITMAP hReadyBmp = CreateCompatibleBitmap(hScreenDC, nW, nH);
-				HBITMAP hOldReadyBmp = (HBITMAP)SelectObject(hReadyDC, hReadyBmp);
+					BitBlt(hInvDC, 0, 0, pI->nWidth, pI->nHeight, pI->hDc, 0,0, SRCCOPY); //NOTSRCCOPY
+					
+					HDC hCompDC = CreateCompatibleDC(hScreenDC);
+					HBITMAP hCompBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
+					HBITMAP hOldCompBmp = (HBITMAP)SelectObject(hCompDC, hCompBmp);
+					HDC hBackDC = CreateCompatibleDC(hScreenDC);
+					HBITMAP hBackBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
+					HBITMAP hOldBackBmp = (HBITMAP)SelectObject(hBackDC, hBackBmp);
+					
+					HBRUSH hPaintBr = CreateSolidBrush(pDraw->crDark);
+					HBRUSH hBackBr = CreateSolidBrush(pDraw->crBack);
+					
+					RECT rcFill = {0,0,pI->nWidth, pI->nHeight};
+					
+					HBRUSH hOldCompBr = (HBRUSH)SelectObject(hCompDC, hBackBr);
+					
+					
+					BitBlt(hCompDC, 0, 0, pI->nWidth, pI->nHeight, hInvDC, 0,0, MERGECOPY);
+					
+					BitBlt(hInvDC, 0, 0, pI->nWidth, pI->nHeight, pI->hDc, 0,0, NOTSRCCOPY);
+					HBRUSH hOldBackBr = (HBRUSH)SelectObject(hBackDC, hPaintBr);
+					BitBlt(hBackDC, 0, 0, pI->nWidth, pI->nHeight, hInvDC, 0,0, MERGECOPY);
+					
+					BitBlt(hCompDC, 0, 0, pI->nWidth, pI->nHeight, hBackDC, 0,0, SRCPAINT);
+					
+					
+					HDC hReadyDC = CreateCompatibleDC(hScreenDC);
+					HBITMAP hReadyBmp = CreateCompatibleBitmap(hScreenDC, nW, nH);
+					HBITMAP hOldReadyBmp = (HBITMAP)SelectObject(hReadyDC, hReadyBmp);
 
-				StretchBlt(hReadyDC, 0, 0, nW, nH, hCompDC, 0,0, pI->nWidth, pI->nHeight, SRCCOPY); //NOTSRCCOPY
-				
-				BOOL lbBitRc = BitBlt(pBk->hdc, rcWork.right - nW - IMG_SHIFT_X, rcText.top - nH - IMG_SHIFT_Y, nW, nH,
-					hReadyDC, 0,0, SRCCOPY);
-				
-				SelectObject(hReadyDC, hOldReadyBmp);
-				DeleteObject(hReadyBmp);
-				DeleteDC(hReadyDC);
+					StretchBlt(hReadyDC, 0, 0, nW, nH, hCompDC, 0,0, pI->nWidth, pI->nHeight, SRCCOPY); //NOTSRCCOPY
+					
+					BOOL lbBitRc = BitBlt(pBk->hdc, rcWork.right - nW - IMG_SHIFT_X, rcText.top - nH - IMG_SHIFT_Y, nW, nH,
+						hReadyDC, 0,0, SRCCOPY);
+					
+					SelectObject(hReadyDC, hOldReadyBmp);
+					DeleteObject(hReadyBmp);
+					DeleteDC(hReadyDC);
 
-				DeleteObject(hPaintBr);
-				SelectObject(hCompDC, hOldCompBr);
-				DeleteObject(hBackBr);
-				
-				SelectObject(hInvDC, hOldInvBmp);
-				DeleteObject(hInvBmp);
-				DeleteDC(hInvDC);
-				
-				SelectObject(hCompDC, hOldCompBmp);
-				DeleteObject(hCompBmp);
-				DeleteDC(hCompDC);
-				
-				SelectObject(hBackDC, hOldBackBmp);
-				DeleteObject(hBackBmp);
-				DeleteDC(hBackDC);
+					DeleteObject(hPaintBr);
+					SelectObject(hCompDC, hOldCompBr);
+					DeleteObject(hBackBr);
+					
+					SelectObject(hInvDC, hOldInvBmp);
+					DeleteObject(hInvBmp);
+					DeleteDC(hInvDC);
+					
+					SelectObject(hCompDC, hOldCompBmp);
+					DeleteObject(hCompBmp);
+					DeleteDC(hCompDC);
+					
+					SelectObject(hBackDC, hOldBackBmp);
+					DeleteObject(hBackBmp);
+					DeleteDC(hBackDC);
 
-				ReleaseDC(0, hScreenDC);
-			#endif
+					ReleaseDC(0, hScreenDC);
+				#endif
+				}
 			}
 		}
 
@@ -2540,6 +2607,11 @@ void SettingsLoad()
 		return;
 	}
 
+	if (!*gsXmlConfigFile)
+	{
+		lstrcpyn(gsXmlConfigFile, szDefaultXmlName, countof(gsXmlConfigFile));
+	}
+
 	if (gFarVersion.dwVerMajor == 1)
 		SettingsLoadA();
 	else if (gFarVersion.dwBuild >= FAR_Y_VER)
@@ -2569,6 +2641,12 @@ void SettingsLoadReg(LPCWSTR pszRegKey)
 				_ASSERTE(p->nValueSize == 4);
 				if (!RegQueryValueExW(hkey, p->pszValueName, 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
 					*((DWORD*)p->pValue) = nVal;
+			}
+			else if (p->nValueType == REG_SZ)
+			{
+				wchar_t szValue[MAX_PATH] = {};
+				if (!RegQueryValueExW(hkey, p->pszValueName, 0, &(nType = REG_SZ), (LPBYTE)szValue, &(nSize = sizeof(szValue))))
+					lstrcpyn((wchar_t*)p->pValue, szValue, p->nValueSize);
 			}
 		}
 
@@ -2606,6 +2684,10 @@ void SettingsSaveReg(LPCWSTR pszRegKey)
 			{
 				_ASSERTE(p->nValueSize == 4);
 				RegSetValueExW(hkey, p->pszValueName, 0, REG_DWORD, p->pValue, p->nValueSize);
+			}
+			else if (p->nValueType == REG_SZ)
+			{
+				RegSetValueExW(hkey, p->pszValueName, 0, REG_SZ, p->pValue, sizeof(wchar_t)*(1+lstrlenW((wchar_t*)p->pValue)));
 			}
 		}
 
@@ -2752,9 +2834,9 @@ bool FMatch(LPCWSTR asMask, LPWSTR asPath)
 	{
 		bool lbRc = false;
 		int nMaskLen = lstrlenW(asMask);
-		char* pszMask = (char*)malloc(nMaskLen);
+		char* pszMask = (char*)malloc(nMaskLen+1);
 		int nPathLen = lstrlenW(asPath);
-		char* pszPath = (char*)malloc(nMaskLen);
+		char* pszPath = (char*)malloc(nPathLen+1);
 
 		if (pszMask && pszPath)
 		{

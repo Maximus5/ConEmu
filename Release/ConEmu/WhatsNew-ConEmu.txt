@@ -1,3 +1,8 @@
+2011.09.25
+[%] Плагины 'ConEmu Background' и плагин 'ConEmu Underlines' не работали в Far 1.7x.
+[+] Настройка плагина 'ConEmu Background'. Можно задать полный путь к xml файлу, например "%FARHOME%\Background.xml".
+
+
 2011.09.24
 [%] Issue 158: ConEmu PanelViews в некоторых случаях конфликтовал с плагином PanelTabs (не реагировал на клавиатуру и мышь).
 [+] Опция "MainTimerInactiveElapse" - периодичность обновления неактивной консоли.

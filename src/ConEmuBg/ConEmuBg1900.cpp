@@ -239,6 +239,14 @@ void SettingsLoadW1900()
 				if (InfoW1900->SettingsControl(sc.Handle, SCTL_GET, 0, &fsi) && (fsi.Data.Size == sizeof(DWORD)))
 					*((DWORD*)p->pValue) = *((DWORD*)fsi.Data.Data);
 			}
+			else if (p->nValueType == REG_SZ)
+			{
+				fsi.Name = p->pszValueName;
+				fsi.Type = FST_STRING;
+				fsi.String = NULL;
+				if (InfoW1900->SettingsControl(sc.Handle, SCTL_GET, 0, &fsi) && fsi.String)
+					lstrcpyn((wchar_t*)p->pValue, fsi.String, p->nValueSize);
+			}
 		}
 
 		InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
@@ -273,6 +281,14 @@ void SettingsSaveW1900()
 				fsi.Type = FST_DATA;
 				fsi.Data.Size = 4;
 				fsi.Data.Data = p->pValue;
+				InfoW1900->SettingsControl(sc.Handle, SCTL_SET, 0, &fsi);
+			}
+			else if (p->nValueType == REG_SZ)
+			{
+				_ASSERTE(p->nValueSize == 4);
+				fsi.Name = p->pszValueName;
+				fsi.Type = FST_STRING;
+				fsi.String = (wchar_t*)p->pValue; // ASCIIZ
 				InfoW1900->SettingsControl(sc.Handle, SCTL_SET, 0, &fsi);
 			}
 		}
