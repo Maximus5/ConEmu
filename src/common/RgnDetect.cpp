@@ -827,7 +827,11 @@ bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 					{
 						//_ASSERTE(p->bDialog);
 						_ASSERTE(p >= pAttr);
+						#if 0
 						p->bDialogVBorder = true;
+						#else
+						p->Flags |= CharAttr_DialogVBorder;
+						#endif
 						p -= nWidth;
 					}
 
@@ -844,7 +848,11 @@ bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 
 						//_ASSERTE(p->bDialog);
 						_ASSERTE(p >= pAttr);
+						#if 0
 						p->bDialogVBorder = true;
+						#else
+						p->Flags |= CharAttr_DialogVBorder;
+						#endif
 						p -= nWidth;
 						nY --;
 					}
@@ -1092,13 +1100,13 @@ bool CRgnDetect::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 	return true;
 }
 
-void CRgnDetect::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight, int *pnMostBottom)
+bool CRgnDetect::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight, int *pnMostBottom)
 {
 	if (nFromX >= nWidth || nFromY >= nHeight)
 	{
 		_ASSERTE(nFromX<nWidth);
 		_ASSERTE(nFromY<nHeight);
-		return;
+		return false;
 	}
 
 #ifdef _DEBUG
@@ -1114,12 +1122,13 @@ void CRgnDetect::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int n
 	if (mn_DetectCallCount >= 3)
 	{
 		_ASSERTE(mn_DetectCallCount<3);
-		return;
+		return false;
 	}
 
 	/* *********************************************** */
 	/* ѕосле этой строки 'return' использовать нельз€! */
 	/* *********************************************** */
+	bool lbDlgFound = false;
 	mn_DetectCallCount++;
 	wchar_t wc; //, wcMostRight, wcMostBottom, wcMostRightBottom, wcMostTop, wcNotMostBottom1, wcNotMostBottom2;
 	int nMostRight, nMostBottom; //, nMostRightBottom, nMostTop, nShift, n;
@@ -1236,6 +1245,7 @@ done:
 #endif
 	// «абить атрибуты
 	MarkDialog(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder);
+	lbDlgFound = true;
 
 	// ¬ернуть размеры, если просили
 	if (pnMostRight) *pnMostRight = nMostRight;
@@ -1245,7 +1255,7 @@ done:
 fin:
 	mn_DetectCallCount--;
 	_ASSERTE(mn_DetectCallCount>=0);
-	return;
+	return lbDlgFound;
 }
 
 int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder, bool bFindExterior /*= TRUE*/, DWORD nFlags /*= -1*/)
@@ -1455,31 +1465,57 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 
 	if (bMarkBorder)
 	{
+		#if 0
 		pAttr[nY1 * nWidth + nX1].bDialogCorner = TRUE;
 		pAttr[nY1 * nWidth + nX2].bDialogCorner = TRUE;
 		pAttr[nY2 * nWidth + nX1].bDialogCorner = TRUE;
 		pAttr[nY2 * nWidth + nX2].bDialogCorner = TRUE;
+		#else
+		pAttr[nY1 * nWidth + nX1].Flags |= CharAttr_DialogCorner;
+		pAttr[nY1 * nWidth + nX2].Flags |= CharAttr_DialogCorner;
+		pAttr[nY2 * nWidth + nX1].Flags |= CharAttr_DialogCorner;
+		pAttr[nY2 * nWidth + nX2].Flags |= CharAttr_DialogCorner;
+		#endif
 	}
 
 	for(int nY = nY1; nY <= nY2; nY++)
 	{
+		#if 0
 		int nShift = nY * nWidth + nX1;
+		#else
+		CharAttr* pAttrShift = pAttr + nY * nWidth + nX1;
+		#endif
 
 		if (bMarkBorder)
 		{
+			#if 0
 			pAttr[nShift].bDialogVBorder = TRUE;
 			pAttr[nShift+nX2-nX1].bDialogVBorder = TRUE;
+			#else
+			pAttrShift->Flags |= CharAttr_DialogVBorder;
+			pAttrShift[nX2-nX1].Flags |= CharAttr_DialogVBorder;
+			#endif
 		}
 
+		#if 0
 		for(int nX = nX1; nX <= nX2; nX++, nShift++)
+		#else
+		for(int nX = nX2 - nX1 + 1; nX > 0; nX--, pAttrShift++)
+		#endif
 		{
+			/*
 			if (nY > 0 && nX >= 58)
 			{
 				nX = nX;
 			}
+			*/
 
+			#if 0
 			pAttr[nShift].bDialog = TRUE;
 			pAttr[nShift].bTransparent = FALSE;
+			#else
+			pAttrShift->Flags = (pAttrShift->Flags | CharAttr_Dialog) & ~CharAttr_Transparent;
+			#endif
 		}
 
 		//if (bMarkBorder)
@@ -1783,7 +1819,8 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 		if (mpsz_Chars) free(mpsz_Chars);
 
 		mn_MaxCells = (nTextWidth * nTextHeight);
-		mpsz_Chars = (wchar_t*)calloc(mn_MaxCells, sizeof(wchar_t));
+		// „тобы безопасно использовать строковые функции - гарантированно делаем ASCIIZ. ’от€ mpsz_Chars может и \0 содержать?
+		mpsz_Chars = (wchar_t*)calloc(mn_MaxCells+1, sizeof(wchar_t));
 		mp_Attrs = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
 		mp_AttrsWork = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
 	}
@@ -1936,6 +1973,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	mp_FarInfo = apFarInfo;
 	mp_Colors = apColors;
 	_ASSERTE(mp_Colors && (mp_Colors[1] || mp_Colors[2]));
+	_ASSERTE(pChar[nWidth*nHeight] == 0); // ƒолжен быть ASCIIZ
 
 	if (apSbi != &m_sbi)
 		m_sbi = *apSbi;
@@ -2122,7 +2160,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 
 	// ћожет быть перва€ строка - меню? посто€нное или текущее
 	if (bAlwaysShowMenuBar  // всегда
-	        || (pAttr[0].crBackColor == crMenuTitleBack
+	        || (pAttr->crBackColor == crMenuTitleBack
 	            && (pChar[0] == L' ' && pChar[1] == L' ' && pChar[2] == L' ' && pChar[3] == L' ' && pChar[4] != L' '))
 	  )
 	{
@@ -2144,8 +2182,14 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 
 	wchar_t* pszDst = pChar;
 	CharAttr* pnDst = pAttr;
+	
+	const wchar_t szCornerChars[] = {
+			ucBoxSinglDownRight,ucBoxSinglDownLeft,ucBoxSinglUpRight,ucBoxSinglUpLeft,
+			ucBoxDblDownRight,ucBoxDblDownLeft,ucBoxDblUpRight,ucBoxDblUpLeft,
+			0}; // ASCIIZ
+	
 
-	for(int nY = 0; nY < nHeight; nY++)
+	for (int nY = 0; nY < nHeight; nY++)
 	{
 		if (nY >= nTopLines && nY < (nHeight-nBottomLines))
 		{
@@ -2178,66 +2222,62 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 			}
 
 #endif
+			#if 0
 			int nShift = nY*nWidth+nX1;
-			int nX = nX1;
+			#endif
+			//int nX = nX1;
 
-			while(nX <= nX2)
+			if (m_DetectedDialogs.AllFlags == 0 && /*nX == 0 &&*/ nY == nTopLines
+		        && ((*pszDst == L'[' && pnDst->crBackColor == crPanelsNumberBack && pnDst->crForeColor == crPanelsNumberFore)
+		        	||	(!nY
+						&& ((*pszDst == L'P' && (pnDst->nBackIdx & 7) == 0x2 && pnDst->nForeIdx == 0xF)
+							|| (*pszDst == L'R' && (pnDst->nBackIdx & 7) == 0x4 && pnDst->nForeIdx == 0xF))))
+		        && (pszDst[nWidth] == ucBoxDblVert && pnDst[nWidth].crBackColor == crPanelsBorderBack && pnDst[nWidth].crForeColor == crPanelsBorderFore)
+			  )
 			{
-				// ≈сли еще не определен как поле диалога
-				/*if (!pnDst[nX].bDialogVBorder) {
-					if (pszDst[nX] == ucBoxSinglDownLeft || pszDst[nX] == ucBoxDblDownLeft) {
-						// Ёто правый кусок диалога, который не полностью влез на экран
-						// ѕометить "рамкой" до его низа
-						int nYY = nY;
-						int nXX = nX;
-						wchar_t wcWait = (pszDst[nX] == ucBoxSinglDownLeft) ? ucBoxSinglUpLeft : ucBoxDblUpLeft;
-						while (nYY++ < nHeight) {
-							if (!pnDst[nX].bDialog)
-								break;
-							pnDst[nXX].bDialogVBorder = TRUE;
-							if (pszDst[nXX] == wcWait)
-								break;
-							nXX += nWidth;
-						}
-					}
+				// ѕринудительно сдетектить, как панель
+				DetectDialog(pChar, pAttr, nWidth, nHeight, 0/*nX*/, nY+1);
+			}
 
-					//Optimize:
-					if (isCharBorderLeftVertical(pszDst[nX])) {
-						DetectDialog(pChar, pAttr, nWidth, nHeight, nX, nY, &nX);
-						nX++; nShift++;
-						continue;
-					}
-				}*/
-#ifdef _DEBUG
-				if (nX == 18 && nY == 6 && pszDst[nX] == ucBoxDblDownRight)
+			//wchar_t* pszDstX = pszDst + nX;
+			//CharAttr* pnDstX = pnDst + nX;
+
+			wchar_t *pszFrom = pszDst;
+			wchar_t *pszEnd = pszDst + nWidth;
+			
+			while (pszFrom < pszEnd)
+			{
+				//DWORD DstFlags = pnDst[nX].Flags;
+				
+				wchar_t cSave = pszDst[nWidth];
+				pszDst[nWidth] = 0;
+				wchar_t* pszCorner = wcspbrk(pszFrom, szCornerChars);
+				// ≈сли не нашли - может в консоли '\0' есть?
+				while (!pszCorner)
 				{
-					nX = nX;
-				}
-
-#endif
-
-				//PRAGMA_ERROR("тут ошибаетс€: пол€ bDialog и bDialogCorner не зачищаютс€, поэтому возникают проблемы в ConEmuTh");
-
-				if (m_DetectedDialogs.AllFlags == 0 && nX == 0 && nY == nTopLines
-				        && ((pszDst[0] == L'[' && pnDst[0].crBackColor == crPanelsNumberBack && pnDst[0].crForeColor == crPanelsNumberFore)
-							|| (!nY && pszDst[0] == L'P' && (pnDst[0].nBackIdx & 7) == 0x2 && pnDst[0].nForeIdx == 0xF)
-							|| (!nY && pszDst[0] == L'R' && (pnDst[0].nBackIdx & 7) == 0x4 && pnDst[0].nForeIdx == 0xF))
-				        && (pszDst[nWidth] == ucBoxDblVert && pnDst[nWidth].crBackColor == crPanelsBorderBack && pnDst[nWidth].crForeColor == crPanelsBorderFore)
-				  )
-				{
-					// ѕринудительно сдетектить, как панель
-					DetectDialog(pChar, pAttr, nWidth, nHeight, nX, nY+1);
-				}
-				else if (!pnDst[nX].bDialog)
-				{
-					if (pnDst[nX].crBackColor != crUserBack)
+					pszFrom += lstrlen(pszFrom)+1;
+					if (pszFrom >= (pszDst + nWidth))
 					{
-						DetectDialog(pChar, pAttr, nWidth, nHeight, nX, nY);
+						break;
 					}
+					pszCorner = wcspbrk(pszFrom, szCornerChars);
 				}
-				else if (!pnDst[nX].bDialogCorner)
+				pszDst[nWidth] = cSave;
+				
+				if (!pszCorner)
+					break;
+				pszFrom = pszCorner + 1; // сразу накрутим, чтобы не забыть
+				int nX = (int)(pszCorner - pszDst);
+
+				if (
+						#if 0
+						!pnDst[nX].bDialogCorner
+						#else
+						!(pnDst[nX].Flags/*DstFlags*/ & CharAttr_DialogCorner)
+						#endif
+					)
 				{
-					switch(pszDst[nX])
+					switch (pszDst[nX])
 					{
 						case ucBoxSinglDownRight:
 						case ucBoxSinglDownLeft:
@@ -2259,7 +2299,12 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 					}
 				}
 
-				nX++; nShift++;
+				//nX++;
+				//pszDstX++;
+				//pnDstX++;
+				#if 0
+				nShift++;
+				#endif
 			}
 		}
 
@@ -2286,6 +2331,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	pszDst = pChar;
 	pnDst = pAttr;
 
+#ifndef _DEBUG //!!! ѕока не будем. Ёто занимает значительное врем€. ¬озможно, стоит необходимые проверки уже при отрисовке проводить
 	for(int nY = 0; nY < nHeight; nY++)
 	{
 		if (nY >= nTopLines && nY < (nHeight-nBottomLines))
@@ -2304,31 +2350,59 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 			//} else {
 			//	//¬нимание! ѕанели могут быть, но они могут быть перекрыты PlugMenu!
 			//}
+			
 			WARNING("¬о врем€ запуска непри€тно мелькает - пока не по€в€тс€ панели - становитс€ прозрачным");
+			#if 0
 			int nShift = nY*nWidth+nX1;
 			int nX = nX1;
+			#else
+			CharAttr* pnDstShift = pnDst + /*nY*nWidth +*/ nX1;
+			CharAttr* pnDstEnd = pnDst + nX2 + 1;
+			#endif
 
-			while(nX <= nX2)
+			#if 0
+			while (nX <= nX2)
+			#else
+			while (pnDstShift < pnDstEnd)
+			#endif
 			{
 				// ≈сли еще не определен как поле диалога
+				#if 0
 				if (!pnDst[nX].bDialog)
+				#else
+				if (!(pnDstShift->Flags & CharAttr_Dialog))
+				#endif
 				{
+					#if 0
 					if (pnDst[nX].crBackColor == crUserBack)
+					#else
+					if (pnDstShift->crBackColor == crUserBack)
+					#endif
 					{
 						// помечаем прозрачным
+						#if 0
 						pnDst[nX].bTransparent = TRUE;
 						//pnDst[nX].crBackColor = crColorKey;
+						#else
+						pnDstShift->Flags |= CharAttr_Transparent;
+						//pnDstShift->crBackColor = crColorKey;
+						#endif
 						//pszDst[nX] = L' ';
 					}
 				}
 
+				#if 0
 				nX++; nShift++;
+				#else
+				pnDstShift++;
+				#endif
 			}
 		}
 
 		pszDst += nWidth;
 		pnDst += nWidth;
 	}
+#endif
 
 	// Ќекрасиво...
 	//// 0x0 должен быть непрозрачным

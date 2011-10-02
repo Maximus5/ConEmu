@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-//#define HDCWND ghWndDC
+//#define HDCWND 'ghWnd DC'
 
 #ifndef __ITaskbarList3_FWD_DEFINED__
 #define __ITaskbarList3_FWD_DEFINED__
@@ -163,7 +163,7 @@ class CConEmuMain
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
 	public:
-		CConEmuChild *m_Child;
+		//CConEmuChild *m_Child;
 		CConEmuBack  *m_Back;
 		CConEmuMacro *m_Macro;
 		TabBarClass *mp_TabBar;
@@ -289,8 +289,8 @@ class CConEmuMain
 		BOOL mb_RightClickingPaint, mb_RightClickingLSent;
 		void StartRightClickingPaint();
 		void StopRightClickingPaint();
-		void RightClickingPaint(HDC hdc = NULL);
 	public:
+		void RightClickingPaint(HDC hdc, CVirtualConsole* apVCon);
 		void RegisterMinRestore(bool abRegister);
 		void RegisterHoooks();
 		void UnRegisterHoooks(BOOL abFinal=FALSE);
@@ -365,6 +365,7 @@ class CConEmuMain
 		static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 		void AskChangeBufferHeight();
 		BOOL AttachRequested(HWND ahConWnd, CESERVER_REQ_STARTSTOP pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
+		CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
 		void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
 		static RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* apVCon=NULL);
 		static RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
@@ -393,6 +394,7 @@ class CConEmuMain
 		void InitInactiveDC(CVirtualConsole* apVCon);
 		void Invalidate(CVirtualConsole* apVCon);
 		void InvalidateAll();
+		void UpdateWindowChild(CVirtualConsole* apVCon);
 		bool isActive(CVirtualConsole* apVCon);
 		bool isConSelectMode();
 		bool isDragging();
@@ -421,7 +423,7 @@ class CConEmuMain
 		void LoadIcons();
 		bool LoadVersionInfo(wchar_t* pFullPath);
 		static RECT MapRect(RECT rFrom, BOOL bFrame2Client);
-		void PaintCon(HDC hPaintDC);
+		//void PaintCon(HDC hPaintDC);
 		void PaintGaps(HDC hDC);
 		void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 		void PostMacro(LPCWSTR asMacro);
@@ -442,7 +444,7 @@ class CConEmuMain
 		void ReSize(BOOL abCorrect2Ideal = FALSE);
 		BOOL RunSingleInstance();
 		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
-		void SetConsoleWindowSize(const COORD& size, bool updateInfo);
+		void SetConsoleWindowSize(const COORD& size, bool updateInfo, CVirtualConsole* apVCon);
 		void SetDragCursor(HCURSOR hCur);
 		void SetWaitCursor(BOOL abWait);
 		bool SetWindowMode(uint inMode, BOOL abForce = FALSE);
@@ -494,13 +496,13 @@ class CConEmuMain
 		LRESULT OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayoutName);
 		LRESULT OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-		LRESULT OnMouse_Move(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
-		LRESULT OnMouse_LBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
-		LRESULT OnMouse_LBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
-		LRESULT OnMouse_LBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
-		LRESULT OnMouse_RBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
-		LRESULT OnMouse_RBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
-		LRESULT OnMouse_RBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
+		LRESULT OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
+		LRESULT OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
+		LRESULT OnMouse_LBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
+		LRESULT OnMouse_LBtnDblClk(CVirtualConsole* pVCon, HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
+		LRESULT OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
+		LRESULT OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
+		LRESULT OnMouse_RBtnDblClk(CVirtualConsole* pVCon, HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
 		BOOL OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnNcMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnNcPaint(HRGN hRgn);

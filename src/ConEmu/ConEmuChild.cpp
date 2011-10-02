@@ -55,54 +55,123 @@ CConEmuChild::CConEmuChild()
 	mb_RedrawPosted = FALSE;
 	memset(&Caret, 0, sizeof(Caret));
 	mb_DisableRedraw = FALSE;
+	mh_WndDC = NULL;
 }
 
 CConEmuChild::~CConEmuChild()
 {
+	if (mh_WndDC)
+	{
+		DestroyWindow(mh_WndDC);
+		mh_WndDC = NULL;
+	}
 }
 
-HWND CConEmuChild::Create()
+HWND CConEmuChild::CreateView()
 {
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return NULL;
+	}
+	if (mh_WndDC)
+	{
+		_ASSERTE(mh_WndDC == NULL);
+		return mh_WndDC;
+	}
+
 	// Имя класса - то же самое, что и у главного окна
 	DWORD style = /*WS_VISIBLE |*/ WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 	//RECT rc = gpConEmu->DCClientRect();
 	RECT rcMain; GetClientRect(ghWnd, &rcMain);
 	RECT rc = gpConEmu->CalcRect(CER_DC, rcMain, CER_MAINCLIENT);
-	ghWndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
+	CVirtualConsole* pVCon = dynamic_cast<CVirtualConsole*>(this);
+	_ASSERTE(pVCon);
+	mh_WndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, pVCon);
 
-	if (!ghWndDC)
+	if (!mh_WndDC)
 	{
-		ghWndDC = (HWND)-1; // чтобы родитель не ругался
 		MBoxA(_T("Can't create DC window!"));
 		return NULL; //
 	}
 
-	//SetClassLong(ghWndDC, GCL_HBRBACKGROUND, (LONG)gpConEmu->m_Back->mh_BackBrush);
-	SetWindowPos(ghWndDC, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+	//SetClassLong('ghWnd DC', GCL_HBRBACKGROUND, (LONG)gpConEmu->m_Back->mh_BackBrush);
+	SetWindowPos(mh_WndDC, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	//gpConEmu->dcWindowLast = rc; //TODO!!!
-	return ghWndDC;
+
+	// Установить переменную среды с дескриптором окна
+	SetConEmuEnvVar(mh_WndDC);
+
+	return mh_WndDC;
+}
+
+HWND CConEmuChild::GetView()
+{
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return NULL;
+	}
+	return mh_WndDC;
 }
 
 LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
 
-	if (messg == WM_SYSCHAR)
-		return TRUE;
+	CVirtualConsole* pVCon = NULL;
+	if (messg == WM_CREATE || messg == WM_NCCREATE)
+	{
+		LPCREATESTRUCT lp = (LPCREATESTRUCT)lParam;
+		pVCon = (CVirtualConsole*)lp->lpCreateParams;
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)pVCon);
+	}
+	else
+	{
+		pVCon = (CVirtualConsole*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	}
 
-	switch(messg)
+	if (messg == WM_SYSCHAR)
+	{
+		// Чтобы не пищало
+		result = TRUE;
+		if (pVCon)
+		{
+			HWND hGuiWnd = pVCon->GuiWnd();
+			if (hGuiWnd)
+			{
+				TODO("Послать Alt+<key> в прилепленное GUI приложение?");
+				// pVCon->RCon()->PostMessage(hGuiWnd, messg, wParam, lParam);
+			}
+		}
+		goto wrap;
+	}
+
+	if (!pVCon)
+	{
+		_ASSERTE(pVCon!=NULL);
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
+		goto wrap;
+	}
+
+	switch (messg)
 	{
 		case WM_SETFOCUS:
-			SetFocus(ghWnd); // Фокус должен быть в главном окне!
+			// Если в консоли работает "GUI" окно (GUI режим), то фокус нужно отдать туда.
+			{
+				// Фокус должен быть в главном окне! За исключением случая работы в GUI режиме.
+				HWND hGuiWnd = pVCon->GuiWnd();
+				SetFocus(hGuiWnd ? hGuiWnd : ghWnd);
+			}
 			return 0;
 		case WM_ERASEBKGND:
 			result = 0;
 			break;
 		case WM_PAINT:
-			result = gpConEmu->m_Child->OnPaint();
+			result = pVCon->OnPaint();
 			break;
 		case WM_SIZE:
-			result = gpConEmu->m_Child->OnSize(wParam, lParam);
+			result = pVCon->OnSize(wParam, lParam);
 			break;
 		case WM_CREATE:
 			break;
@@ -135,7 +204,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			POINT pt = {LOWORD(lParam),HIWORD(lParam)};
 			MapWindowPoints(hWnd, ghWnd, &pt, 1);
 			lParam = MAKELONG(pt.x,pt.y);
-			result = gpConEmu->WndProc(hWnd, messg, wParam, lParam);
+			result = gpConEmu->WndProc(ghWnd, messg, wParam, lParam);
 		}
 		return result;
 		case WM_IME_NOTIFY:
@@ -174,7 +243,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		default:
 
 			// Сообщение приходит из ConEmuPlugin
-			if (messg == gpConEmu->m_Child->mn_MsgTabChanged)
+			if (messg == pVCon->mn_MsgTabChanged)
 			{
 				if (gpSet->isTabs)
 				{
@@ -191,9 +260,9 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 					gpConEmu->mp_TabBar->Retrieve();
 				}
 			}
-			else if (messg == gpConEmu->m_Child->mn_MsgPostFullPaint)
+			else if (messg == pVCon->mn_MsgPostFullPaint)
 			{
-				gpConEmu->m_Child->Redraw();
+				pVCon->Redraw();
 			}
 			else if (messg)
 			{
@@ -201,16 +270,22 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			}
 	}
 
+wrap:
 	return result;
 }
 
 LRESULT CConEmuChild::OnPaint()
 {
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return 0;
+	}
 	LRESULT result = 0;
 	BOOL lbSkipDraw = FALSE;
 	//if (gbInPaint)
 	//    break;
-	_ASSERT(FALSE);
+	//_ASSERT(FALSE);
 
 	//2009-09-28 может так (autotabs)
 	if (mb_DisableRedraw)
@@ -228,28 +303,52 @@ LRESULT CConEmuChild::OnPaint()
 		// если PictureView распахнуто не на все окно - отрисовать видимую часть консоли!
 		RECT rcPic, rcClient, rcCommon;
 		GetWindowRect(gpConEmu->hPictureView, &rcPic);
-		GetClientRect(ghWnd, &rcClient); // Нам нужен ПОЛНЫЙ размер но ПОД тулбаром.
-		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcClient, 2);
-#ifdef _DEBUG
+		GetClientRect(mh_WndDC, &rcClient); // Нам нужен ПОЛНЫЙ размер но ПОД тулбаром.
+		MapWindowPoints(mh_WndDC, NULL, (LPPOINT)&rcClient, 2);
+
+		#ifdef _DEBUG
 		BOOL lbIntersect =
-#endif
-		    IntersectRect(&rcCommon, &rcClient, &rcPic);
+		#endif
+		IntersectRect(&rcCommon, &rcClient, &rcPic);
+
 		// Убрать из отрисовки прямоугольник PictureView
-		MapWindowPoints(NULL, ghWndDC, (LPPOINT)&rcPic, 2);
-		ValidateRect(ghWndDC, &rcPic);
+		MapWindowPoints(NULL, mh_WndDC, (LPPOINT)&rcPic, 2);
+		ValidateRect(mh_WndDC, &rcPic);
+
+
 		GetClientRect(gpConEmu->hPictureView, &rcPic);
-		GetClientRect(ghWndDC, &rcClient);
+		GetClientRect(mh_WndDC, &rcClient);
 
 		if (rcPic.right>=rcClient.right)
 		{
+			_ASSERTE(FALSE);
 			lbSkipDraw = TRUE;
-			result = DefWindowProc(ghWndDC, WM_PAINT, 0, 0);
+			WARNING("Что-то сомнительно. Проверить, как ведет себя обновление консоли при наличии QView");
+			result = DefWindowProc(mh_WndDC, WM_PAINT, 0, 0);
 		}
 	}
 
 	if (!lbSkipDraw)
 	{
-		//gpConEmu->PaintCon();
+		CVirtualConsole* pVCon = dynamic_cast<CVirtualConsole*>(this);
+		_ASSERTE(pVCon!=NULL);
+
+		PAINTSTRUCT ps;
+		#ifdef _DEBUG
+		HDC hDc =
+		#endif
+		BeginPaint(mh_WndDC, &ps);
+
+		RECT rcClient = {}; GetClientRect(mh_WndDC, &rcClient);
+		pVCon->Paint(ps.hdc, rcClient);
+
+		if (gpConEmu->isRightClickingPaint() && gpConEmu->isActive(pVCon))
+		{
+			// Нарисует кружочек, или сбросит таймер, если кнопку отпустили
+			gpConEmu->RightClickingPaint(ps.hdc, pVCon);
+		}
+
+		EndPaint(mh_WndDC, &ps);
 	}
 
 	Validate();
@@ -261,10 +360,15 @@ LRESULT CConEmuChild::OnPaint()
 
 LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 {
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return 0;
+	}
 	LRESULT result = 0;
 #ifdef _DEBUG
 	BOOL lbIsPicView = FALSE;
-	RECT rcNewClient; GetClientRect(ghWndDC,&rcNewClient);
+	RECT rcNewClient; GetClientRect(mh_WndDC,&rcNewClient);
 #endif
 	// Вроде это и не нужно. Ни для Ansi ни для Unicode версии плагина
 	// Все равно в ConEmu запрещен ресайз во время видимости окошка PictureView
@@ -273,7 +377,7 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 	//    if (gpConEmu->hPictureView) {
 	//        lbIsPicView = TRUE;
 	//        gpConEmu->isPiewUpdate = true;
-	//        RECT rcClient; GetClientRect(ghWndDC, &rcClient);
+	//        RECT rcClient; GetClientRect('ghWnd DC', &rcClient);
 	//        //TODO: а ведь PictureView может и в QuickView активироваться...
 	//        MoveWindow(gpConEmu->hPictureView, 0,0,rcClient.right,rcClient.bottom, 1);
 	//        //INVALIDATE(); //InvalidateRect(hWnd, NULL, FALSE);
@@ -286,6 +390,11 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 
 void CConEmuChild::CheckPostRedraw()
 {
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return;
+	}
 	// Если был "Отмененный" Redraw, но
 	if (mb_IsPendingRedraw && mn_LastPostRedrawTick && ((GetTickCount() - mn_LastPostRedrawTick) >= CON_REDRAW_TIMOUT))
 	{
@@ -297,6 +406,11 @@ void CConEmuChild::CheckPostRedraw()
 
 void CConEmuChild::Redraw()
 {
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return;
+	}
 	if (mb_DisableRedraw)
 	{
 		DEBUGSTRDRAW(L" +++ RedrawWindow on DC window will be ignored!\n");
@@ -318,14 +432,14 @@ void CConEmuChild::Redraw()
 		}
 
 		mb_RedrawPosted = TRUE; // чтобы не было кумулятивного эффекта
-		PostMessage(ghWndDC, mn_MsgPostFullPaint, 0, 0);
+		PostMessage(mh_WndDC, mn_MsgPostFullPaint, 0, 0);
 		return;
 	}
 
 	DEBUGSTRDRAW(L" +++ RedrawWindow on DC window called\n");
-	RECT rcClient; GetClientRect(ghWndDC, &rcClient);
-	MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&rcClient, 2);
-	InvalidateRect(ghWnd, &rcClient, FALSE);
+	//RECT rcClient; GetClientRect(mh_WndDC, &rcClient);
+	//MapWindowPoints(mh_WndDC, ghWnd, (LPPOINT)&rcClient, 2);
+	InvalidateRect(mh_WndDC, NULL, FALSE);
 	// Из-за этого - возникает двойная перерисовка
 	//gpConEmu->OnPaint(0,0);
 	//#ifdef _DEBUG
@@ -338,11 +452,21 @@ void CConEmuChild::Redraw()
 
 void CConEmuChild::SetRedraw(BOOL abRedrawEnabled)
 {
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return;
+	}
 	mb_DisableRedraw = !abRedrawEnabled;
 }
 
 void CConEmuChild::Invalidate()
 {
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return;
+	}
 	if (mb_DisableRedraw)
 		return; // Иначе, при автотабах начинаются глюки
 
@@ -355,15 +479,22 @@ void CConEmuChild::Invalidate()
 	//	DEBUGSTRDRAW(L" ### Warning! Invalidate on DC window will be duplicated\n");
 	////	return;
 	//}
-	if (ghWndDC)
+	if (mh_WndDC)
 	{
 		DEBUGSTRDRAW(L" +++ Invalidate on DC window called\n");
-		//RECT rcClient; GetClientRect(ghWndDC, &rcClient);
-		//MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&rcClient, 2);
+		//RECT rcClient; GetClientRect('ghWnd DC', &rcClient);
+		//MapWindowPoints('ghWnd DC', ghWnd, (LPPOINT)&rcClient, 2);
 		//InvalidateRect(ghWnd, &rcClient, FALSE);
-		RECT rcMainClient; GetClientRect(ghWnd, &rcMainClient);
-		RECT rcClient = gpConEmu->CalcRect(CER_BACK, rcMainClient, CER_MAINCLIENT);
-		InvalidateRect(ghWnd, &rcClient, FALSE);
+
+		//RECT rcMainClient; GetClientRect(ghWnd, &rcMainClient);
+		//RECT rcClient = gpConEmu->CalcRect(CER_BACK, rcMainClient, CER_MAINCLIENT);
+		//InvalidateRect(ghWnd, &rcClient, FALSE);
+
+		InvalidateRect(mh_WndDC, NULL, FALSE);
+	}
+	else
+	{
+		_ASSERTE(mh_WndDC != NULL);
 	}
 }
 
@@ -371,7 +502,7 @@ void CConEmuChild::Validate()
 {
 	//mb_Invalidated = FALSE;
 	//DEBUGSTRDRAW(L" +++ Validate on DC window called\n");
-	//if (ghWndDC) ValidateRect(ghWnd, NULL);
+	//if ('ghWnd DC') ValidateRect(ghWnd, NULL);
 }
 
 

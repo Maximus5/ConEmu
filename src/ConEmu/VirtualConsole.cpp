@@ -59,7 +59,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 
 #define SHOWDEBUGSTR
 #ifdef _DEBUG
-#define SHOWDEBUGSTEPS
+//#define SHOWDEBUGSTEPS
 #endif
 
 #include "Header.h"
@@ -71,6 +71,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "Options.h"
 #include "Background.h"
 #include "ConEmuPipe.h"
+#include "TabBar.h"
 
 
 #ifdef _DEBUG
@@ -118,7 +119,7 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #define HEAPVAL
 #endif
 
-#define ISBGIMGCOLOR(a) (gpSet->nBgImageColors & (1 << a))
+#define ISBGIMGCOLOR(a) (nBgImageColors & (1 << a))
 
 #ifndef CONSOLE_SELECTION_NOT_EMPTY
 #define CONSOLE_SELECTION_NOT_EMPTY     0x0002   // non-null select rectangle
@@ -170,7 +171,9 @@ CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
 
 CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 {
-	mp_RCon = new CRealConsole(this);
+	mh_WndDC = NULL;
+	//CreateView();
+	mp_RCon = NULL; //new CRealConsole(this);
 	gpConEmu->OnVConCreated(this);
 	WARNING("скорректировать размер кучи");
 	SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
@@ -181,9 +184,9 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mb_RequiredForceUpdate = true;
 	mb_LastFadeFlag = false;
 	mn_LastBitsPixel = 0;
-	mp_BkImgData = NULL; mb_BkImgChanged = FALSE; mb_BkImgExist = /*mb_BkImgDelete =*/ FALSE;
+	mp_BkImgData = NULL; mn_BkImgDataMax = 0; mb_BkImgChanged = FALSE; mb_BkImgExist = /*mb_BkImgDelete =*/ FALSE;
+	mp_BkEmfData = NULL; mn_BkEmfDataMax = 0; mb_BkEmfChanged = FALSE;
 	mcs_BkImgData = NULL;
-	mn_BkImgDataMax = 0;
 	mn_BkImgWidth = mn_BkImgHeight = 0;
 	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gpSet->mh_Font)+sizeof(mh_FontByIndex[0])));
 	// mh_FontByIndex[MAX_FONT_STYLES] // зарезервировано для 'Unicode CharMap'
@@ -277,6 +280,9 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 		wcscpy(mpsz_LogScreen+_tcslen(mpsz_LogScreen), L"\\ConEmu-VCon-%i-%i.con"/*, RCon()->GetServerPID()*/);
 	}
 
+	CreateView();
+	mp_RCon = new CRealConsole(this);
+
 	// InitDC звать бессмысленно - консоль еще не создана
 }
 
@@ -369,6 +375,13 @@ CVirtualConsole::~CVirtualConsole()
 		mn_BkImgDataMax = 0;
 	}
 
+	if (mp_BkEmfData)
+	{
+		free(mp_BkEmfData);
+		mp_BkEmfData = NULL;
+		mn_BkImgDataMax = 0;
+	}
+	
 	if (mcs_BkImgData)
 	{
 		SC.Unlock();
@@ -377,6 +390,27 @@ CVirtualConsole::~CVirtualConsole()
 	}
 
 	//FreeBackgroundImage();
+}
+
+CRealConsole* CVirtualConsole::RCon()
+{
+	if (this)
+		return mp_RCon;
+	_ASSERTE(this!=NULL);
+	return NULL;
+}
+
+HWND CVirtualConsole::GuiWnd()
+{
+	if (this && mp_RCon)
+		return mp_RCon->GuiWnd();
+	_ASSERTE(this!=NULL);
+	return NULL;
+}
+
+bool CVirtualConsole::isVisible()
+{
+	return gpConEmu->isVisible(this);
 }
 
 int CVirtualConsole::GetTabCount()
@@ -421,13 +455,6 @@ BOOL CVirtualConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 		return TRUE;
 	}
 	return mp_RCon->GetTab(tabIdx, pTab);
-}
-
-HWND CVirtualConsole::GetView()
-{
-	TODO("Доработать для DoubleView");
-	HWND hView = ghWndDC;
-	return hView;
 }
 
 void CVirtualConsole::PointersInit()
@@ -479,8 +506,8 @@ bool CVirtualConsole::PointersAlloc()
 #undef AllocArray
 #endif
 #define AllocArray(p,t,c) p = (t*)Alloc(c,sizeof(t)); if (!p) return false;
-	AllocArray(mpsz_ConChar, wchar_t, nWidthHeight);
-	AllocArray(mpsz_ConCharSave, wchar_t, nWidthHeight);
+	AllocArray(mpsz_ConChar, wchar_t, nWidthHeight+1); // ASCIIZ
+	AllocArray(mpsz_ConCharSave, wchar_t, nWidthHeight+1); // ASCIIZ
 	AllocArray(mpn_ConAttrEx, CharAttr, nWidthHeight);
 	AllocArray(mpn_ConAttrExSave, CharAttr, nWidthHeight);
 	AllocArray(ConCharX, DWORD, nWidthHeight);
@@ -502,7 +529,7 @@ void CVirtualConsole::PointersZero()
 	//100607: Сбрасывать ВСЕ не будем. Эти массивы могут использоваться и в других нитях!
 	HEAPVAL;
 	//ZeroMemory(mpsz_ConChar, nWidthHeight*sizeof(*mpsz_ConChar));
-	ZeroMemory(mpsz_ConCharSave, nWidthHeight*sizeof(*mpsz_ConChar));
+	ZeroMemory(mpsz_ConCharSave, (nWidthHeight+1)*sizeof(*mpsz_ConChar)); // ASCIIZ
 	HEAPVAL;
 	//ZeroMemory(mpn_ConAttrEx, nWidthHeight*sizeof(*mpn_ConAttrEx));
 	ZeroMemory(mpn_ConAttrExSave, nWidthHeight*sizeof(*mpn_ConAttrExSave));
@@ -1316,7 +1343,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 			if (gpSet->isAdvLogging>=3) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
 
 			//09.06.13 а если так? быстрее изменения на экране не появятся?
-			//UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
+			//UpdateWindow('ghWnd DC'); // оно посылает сообщение в окно, и ждет окончания отрисовки
 #ifdef _DEBUG
 			//_ASSERTE(!gpConEmu->m_Child->mb_Invalidated);
 #endif
@@ -1382,8 +1409,14 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 					while(nX < TextWidth)
 					{
 						// Найти первый прозрачный cell
-						while(nX < TextWidth && !pnAttr[nX].bTransparent)
+						#if 0
+						while (nX < TextWidth && !pnAttr[nX].bTransparent)
 							nX++;
+						#else
+						WARNING("CharAttr_Transparent");
+						while (nX < TextWidth && !(pnAttr[nX].Flags & CharAttr_Transparent))
+							nX++;
+						#endif
 
 						if (nX >= TextWidth)
 							break;
@@ -1391,8 +1424,14 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 						// Найти конец прозрачного блока
 						uint nTranStart = nX;
 
-						while(++nX < TextWidth && pnAttr[nX].bTransparent)
+						#if 0
+						while (++nX < TextWidth && pnAttr[nX].bTransparent)
 							;
+						#else
+						WARNING("CharAttr_Transparent");
+						while (++nX < TextWidth && (pnAttr[nX].Flags & CharAttr_Transparent))
+							;
+						#endif
 
 						// Сформировать соответствующий Rect
 						int nXPix = 0;
@@ -1526,13 +1565,15 @@ bool CVirtualConsole::LoadConsoleData()
 
 	gpSet->Performance(tPerfData, FALSE);
 	{
-#ifdef SHOWDEBUGSTEPS
+		#ifdef SHOWDEBUGSTEPS
 		gpConEmu->DebugStep(L"mp_RCon->GetConsoleData");
-#endif
+		#endif
+
 		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight); //TextLen*2);
-#ifdef SHOWDEBUGSTEPS
+
+		#ifdef SHOWDEBUGSTEPS
 		gpConEmu->DebugStep(NULL);
-#endif
+		#endif
 	}
 	SMALL_RECT rcFull, rcGlyph = {0,0,-1,-1};
 
@@ -1696,6 +1737,22 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 	drawImage = gpSet->IsBackgroundEnabled(this);
 	TextLen = TextWidth * TextHeight;
 	coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
+
+	DWORD nIndexes = gpSet->nBgImageColors;
+	if (nIndexes == (DWORD)-1 && mp_RCon)
+	{
+		// Получить из фара
+		const CEFAR_INFO_MAPPING* pFar = mp_RCon->GetFarInfo();
+		if (pFar)
+		{
+			// Цвет фона панелей
+			BYTE bgIndex = (pFar->nFarColors[col_PanelText] & 0xF0) >> 4;
+			nIndexes = 1 << (DWORD)bgIndex;
+		}
+	}
+	if (nIndexes == (DWORD)-1)
+		nIndexes = BgImageColorsDefaults; // Умолчания
+	nBgImageColors = nIndexes;
 
 	if (drawImage)
 	{
@@ -3151,8 +3208,15 @@ void CVirtualConsole::Free(LPVOID ptr)
 // rcClient - это место, куда нужно "положить" битмап. может быть произвольным!
 void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 {
-	if (!ghWndDC)
+	// Если "завис" PostUpdate
+	if (gpConEmu->mp_TabBar->NeedPostUpdate())
+		gpConEmu->mp_TabBar->Update();
+
+	if (!mh_WndDC)
+	{
+		_ASSERTE(mh_WndDC!=NULL);
 		return;
+	}
 
 	_ASSERTE(hPaintDc);
 	_ASSERTE(rcClient.left!=rcClient.right && rcClient.top!=rcClient.bottom);
@@ -3178,10 +3242,11 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 	//	lbSimpleBlack = TRUE;
 	if (lbSimpleBlack)
 	{
-		RECT rcWndClient; GetClientRect(ghWnd, &rcWndClient);
-		RECT rcCalcCon = gpConEmu->CalcRect(CER_BACK, rcWndClient, CER_MAINCLIENT);
-		RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
-		rcClient = gpConEmu->CalcRect(CER_BACK, rcCon, CER_CONSOLE);
+		//RECT rcWndClient; GetClientRect(ghWnd, &rcWndClient);
+		//RECT rcCalcCon = gpConEmu->CalcRect(CER_BACK, rcWndClient, CER_MAINCLIENT);
+		//RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
+		//rcClient = gpConEmu->CalcRect(CER_BACK, rcCon, CER_CONSOLE);
+		GetClientRect(mh_WndDC, &rcClient);
 		// Залить цветом 0
 #ifdef _DEBUG
 		int nBackColorIdx = 2; // Green
@@ -3190,9 +3255,9 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 #endif
 		COLORREF *pColors = gpSet->GetColors();
 		HBRUSH hBr = CreateSolidBrush(pColors[nBackColorIdx]);
-		//RECT rcClient; GetClientRect(ghWndDC, &rcClient);
+		//RECT rcClient; GetClientRect('ghWnd DC', &rcClient);
 		//PAINTSTRUCT ps;
-		//HDC hPaintDc = BeginPaint(ghWndDC, &ps);
+		//HDC hPaintDc = BeginPaint('ghWnd DC', &ps);
 #ifndef SKIP_ALL_FILLRECT
 		FillRect(hPaintDc, &rcClient, hBr);
 #endif
@@ -3221,7 +3286,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		           pszStarting, _tcslen(pszStarting), 0);
 		SelectObject(hPaintDc, hOldF);
 		DeleteObject(hBr);
-		//EndPaint(ghWndDC, &ps);
+		//EndPaint('ghWnd DC', &ps);
 		return;
 	}
 
@@ -3249,7 +3314,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 	//PAINTSTRUCT ps;
 	//HDC hPaintDc = NULL;
 
-	//GetClientRect(ghWndDC, &client);
+	//GetClientRect('ghWnd DC', &client);
 
 	if (!gpConEmu->isNtvdm())
 	{
@@ -3263,11 +3328,11 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 	MSectionLock S; //&csDC, &ncsTDC);
 	//RECT rcUpdateRect = {0};
-	//BOOL lbInval = GetUpdateRect(ghWndDC, &rcUpdateRect, FALSE);
+	//BOOL lbInval = GetUpdateRect('ghWnd DC', &rcUpdateRect, FALSE);
 	//if (lbInval)
-	//  hPaintDc = BeginPaint(ghWndDC, &ps);
+	//  hPaintDc = BeginPaint('ghWnd DC', &ps);
 	//else
-	//	hPaintDc = GetDC(ghWndDC);
+	//	hPaintDc = GetDC('ghWnd DC');
 	// Если окно больше готового DC - залить края (справа/снизу) фоновым цветом
 	HBRUSH hBr = NULL;
 
@@ -3374,8 +3439,17 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			DeleteObject ( hBr );
 
 		} else {*/
-		BitBlt(hPaintDc, client.left, client.top, client.right-client.left, client.bottom-client.top, hDC, 0, 0,
-		       SRCCOPY);
+
+		BOOL lbBltRc = BitBlt(
+				hPaintDc, client.left, client.top, client.right-client.left, client.bottom-client.top,
+				hDC, 0, 0,
+				SRCCOPY);
+
+		//#ifdef _DEBUG
+		//MoveToEx(hPaintDc, client.left, client.top, NULL);
+		//LineTo(hPaintDc, client.right-client.left, client.bottom-client.top);
+		//FillRect(hPaintDc, &rcClient, (HBRUSH)GetStockObject(WHITE_BRUSH));
+		//#endif
 
 		/*}*/
 
@@ -3436,25 +3510,23 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 	//#ifdef _DEBUG
 	if (mp_RCon)
 	{
-#ifdef DEBUGDRAW_RCONPOS
-
+		#ifdef DEBUGDRAW_RCONPOS
 		if (GetKeyState(DEBUGDRAW_RCONPOS) & 1)
 		{
 			// Прямоугольник, соответвующий положения окна RealConsole
 			HWND hConWnd = mp_RCon->hConWnd;
 			RECT rcCon; GetWindowRect(hConWnd, &rcCon);
-			MapWindowPoints(NULL, ghWndDC, (LPPOINT)&rcCon, 2);
+			MapWindowPoints(NULL, GetView(), (LPPOINT)&rcCon, 2);
 			SelectObject(hPaintDc, GetStockObject(WHITE_PEN));
 			SelectObject(hPaintDc, GetStockObject(HOLLOW_BRUSH));
 			Rectangle(hPaintDc, rcCon.left, rcCon.top, rcCon.right, rcCon.bottom);
 		}
-
-#endif
+		#endif
 
 		if (gbDebugShowRects
-#ifdef DEBUGDRAW_DIALOGS
+				#ifdef DEBUGDRAW_DIALOGS
 		        || (GetKeyState(DEBUGDRAW_DIALOGS) & 1)
-#endif
+				#endif
 		  )
 		{
 			// Прямоугольники найденных диалогов
@@ -3462,7 +3534,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			//int nFound = mp_RCon->GetDetectedDialogs(MAX_DETECTED_DIALOGS, rcFound, nDlgFlags);
 			const DetectedDialogs* pDlg = NULL;
 			// Если включены PanelView - попробовать взять диалоги у него
-#ifdef _DEBUG
+			//#ifdef _DEBUG
 			MFileMapping<DetectedDialogs> pvMap;
 
 			if (m_LeftPanelView.bRegister || m_RightPanelView.bRegister)
@@ -3470,8 +3542,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 				pvMap.InitName(CEPANELDLGMAPNAME, mp_RCon->GetFarPID(TRUE));
 				pDlg = pvMap.Open();
 			}
-
-#endif
+			//#endif
 
 			if (!pDlg) pDlg = mp_RCon->GetDetector()->GetDetectedDialogsPtr();
 
@@ -3517,7 +3588,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 				POINT pt[2];
 				pt[0] = ConsoleToClient(pDlg->Rects[i].Left, pDlg->Rects[i].Top);
 				pt[1] = ConsoleToClient(pDlg->Rects[i].Right+1, pDlg->Rects[i].Bottom+1);
-				MapWindowPoints(ghWndDC, ghWnd, pt, 2);
+				MapWindowPoints(GetView(), ghWnd, pt, 2);
 				Rectangle(hPaintDc, pt[0].x+n, pt[0].y+n, pt[1].x-n, pt[1].y-n);
 				wchar_t szCoord[32]; _wsprintf(szCoord, SKIPLEN(countof(szCoord)) L"%ix%i", pDlg->Rects[i].Left, pDlg->Rects[i].Top);
 				TextOut(hPaintDc, pt[0].x+1, pt[0].y+1, szCoord, _tcslen(szCoord));
@@ -3541,14 +3612,23 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 	if (lbExcept)
 		Box(_T("Exception triggered in CVirtualConsole::Paint"));
 
-	//  if (hPaintDc && ghWndDC) {
+	//  if (hPaintDc && 'ghWnd DC') {
 	//if (lbInval)
-	//	EndPaint(ghWndDC, &ps);
+	//	EndPaint('ghWnd DC', &ps);
 	//else
-	//	ReleaseDC(ghWndDC, hPaintDc);
+	//	ReleaseDC('ghWnd DC', hPaintDc);
 	//  }
 	//gpSet->Performance(tPerfFPS, FALSE); // Обратный
 	mb_DialogsChanged = FALSE; // сбросим, флажок больше не нужен
+
+	#ifdef _DEBUG
+	if ((GetKeyState(VK_SCROLL) & 1) && (GetKeyState(VK_CAPITAL) & 1))
+	{
+		gpConEmu->DebugStep(L"ConEmu: Sleeping in CVirtualConsole::Paint for 1s");
+		Sleep(1000);
+		gpConEmu->DebugStep(NULL);
+	}
+	#endif
 }
 
 void CVirtualConsole::UpdateInfo()
@@ -3960,18 +4040,22 @@ COORD CVirtualConsole::FindOpaqueCell()
 			CharAttr* pnAttr = mpn_ConAttrEx;
 
 			// Поиск первого непрозрачного
-			for(uint y = 0; y < TextHeight; y++)
+			for (uint y = 0; y < TextHeight; y++)
 			{
-				for(uint x = 0; x < TextWidth; x++)
+				for (uint x = 0; x < TextWidth; x++, pnAttr++)
 				{
+					#if 0
 					if (!pnAttr[x].bTransparent)
+					#else
+					if (!(pnAttr->Flags & CharAttr_Transparent))
+					#endif
 					{
 						cr.X = x; cr.Y = y;
 						return cr;
 					}
 				}
 
-				pnAttr += TextWidth;
+				//pnAttr += TextWidth;
 			}
 		}
 	}
@@ -4466,7 +4550,7 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister/*=FALS
 	//pt[0] = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
 	//pt[1] = ConsoleToClient(pp->WorkRect.right, pp->WorkRect.bottom);
 	TODO("Потребуется коррекция для DoubleView");
-	MapWindowPoints(ghWndDC, ghWnd, pt, 2);
+	MapWindowPoints(GetView(), ghWnd, pt, 2);
 	//MoveWindow(ahView, pt[0].x,pt[0].y, pt[1].x-pt[0].x,pt[1].y-pt[0].y, FALSE);
 	// Не дергаться, если менять ничего не нужно
 	DWORD dwErr = 0; BOOL lbRc = TRUE;
@@ -4648,6 +4732,9 @@ bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LON
 
 	_ASSERTE(gpConEmu->isMainThread());
 
+	// Сразу
+	mb_BkImgChanged = FALSE;
+
 	/*if (mb_BkImgDelete && mp_BkImgData)
 	{
 		free(mp_BkImgData); mp_BkImgData = NULL;
@@ -4656,19 +4743,146 @@ bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LON
 	}*/
 	if (!mb_BkImgExist)
 		return false;
+		
+	MSectionLock SC;
+	SC.Lock(mcs_BkImgData, FALSE);
+
+	if (mb_BkEmfChanged)
+	{
+		// Сразу сброс
+		mb_BkEmfChanged = FALSE;
+		
+		if (!mp_BkEmfData)
+		{
+			_ASSERTE(mp_BkEmfData!=NULL);
+			return false;
+		}
+		
+		// Нужно перекинуть EMF в mp_BkImgData
+		BITMAPINFOHEADER bi = mp_BkEmfData->bi;
+		size_t nBitSize = bi.biWidth*bi.biHeight*sizeof(COLORREF);
+		size_t nWholeSize = sizeof(CESERVER_REQ_SETBACKGROUND)+nBitSize; //-V103 //-V119
+		if (!mp_BkImgData || (mn_BkImgDataMax < nWholeSize))
+		{
+			if (mp_BkImgData)
+				free(mp_BkImgData);
+			mp_BkImgData = (CESERVER_REQ_SETBACKGROUND*)malloc(nWholeSize);
+			if (!mp_BkImgData)
+			{
+				_ASSERTE(mp_BkImgData!=NULL);
+				return false;
+			}
+		}
+		
+		*mp_BkImgData = *mp_BkEmfData;
+		mp_BkImgData->bmp.bfType = 0x4D42/*BM*/;
+		mp_BkImgData->bmp.bfSize = nBitSize+sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER); //-V119
+		
+		// Теперь нужно сформировать DIB и нарисовать в нем EMF
+		HDC hScreen = GetDC(NULL);
+		//RECT rcMeta = {0,0, mn_BkImgWidth, mn_BkImgHeight}; // (in pixels)
+		//RECT rcMetaMM = {0,0, mn_BkImgWidth*10, mn_BkImgHeight*10}; // (in .01-millimeter units)
+		//HDC hdcEmf = CreateEnhMetaFile(NULL, NULL, &rcMetaMM, L"ConEmu\0Far Background\0\0");
+		//if (!hdcEmf)
+		//{
+		//	_ASSERTE(hdcEmf!=NULL);
+		//	return;
+		//}
+
+		HDC hdcDib = CreateCompatibleDC(hScreen);
+		if (!hdcDib)
+		{
+			_ASSERTE(hdcDib!=NULL);
+			//DeleteEnhMetaFile(hdcEmf);
+			return false;
+		}
+		COLORREF* pBits = NULL;
+		HBITMAP hDib = CreateDIBSection(hScreen, (BITMAPINFO*)&bi, DIB_RGB_COLORS, (void**)&pBits, NULL, 0);
+		ReleaseDC(NULL, hScreen); hScreen = NULL;
+		
+		HBITMAP hOld = (HBITMAP)SelectObject(hdcDib, hDib);
+	
+		size_t nBitsSize = bi.biWidth*bi.biHeight*sizeof(COLORREF);
+		// Залить черным - по умолчанию
+		#ifdef _DEBUG
+			memset(pBits, 128, nBitSize);
+		#else
+			memset(pBits, 0, nBitsSize);
+		#endif
+		
+		DWORD nEmfBits = mp_BkEmfData->bmp.bfSize - sizeof(BITMAPFILEHEADER) - sizeof(BITMAPINFOHEADER);
+		LPBYTE pEmfBits = (LPBYTE)(mp_BkEmfData+1);
+		HENHMETAFILE hdcEmf = SetEnhMetaFileBits(nEmfBits, pEmfBits);
+		RECT rcPlay = {0,0, bi.biWidth, bi.biHeight};
+		DWORD nPlayErr = 0;
+		if (hdcEmf)
+		{
+			#ifdef _DEBUG
+			ENHMETAHEADER	emh = {0};
+			DWORD			PixelsX, PixelsY, MMX, MMY, cx, cy;
+			emh.nSize = sizeof(ENHMETAHEADER);
+			if( GetEnhMetaFileHeader( hdcEmf, sizeof( ENHMETAHEADER ), &emh ) )
+			{
+				// Get the characteristics of the output device
+				HDC hDC = GetDC(NULL);
+				PixelsX = GetDeviceCaps( hDC, HORZRES );
+				PixelsY = GetDeviceCaps( hDC, VERTRES );
+				MMX = GetDeviceCaps( hDC, HORZSIZE ) * 100;
+				MMY = GetDeviceCaps( hDC, VERTSIZE ) * 100;
+				ReleaseDC(NULL, hDC);
+
+				// Calculate the rect in which to draw the metafile based on the
+				// intended size and the current output device resolution
+				// Remember that the intended size is given in 0.01mm units, so
+				// convert those to device units on the target device
+				cx = (int)((float)(emh.rclFrame.right - emh.rclFrame.left) * PixelsX / (MMX));
+				cy = (int)((float)(emh.rclFrame.bottom - emh.rclFrame.top) * PixelsY / (MMY));
+				//pw->PreferredSize.cx = ip.MulDivI32((emh.rclFrame.right - emh.rclFrame.left), PixelsX, MMX);
+				//pw->PreferredSize.cy = ip.MulDivI32((emh.rclFrame.bottom - emh.rclFrame.top), PixelsY, MMY);
+				_ASSERTE(cx>0 && cy>0);
+				//if (pw->PreferredSize.cx < 0) pw->PreferredSize.cx = -pw->PreferredSize.cx;
+				//if (pw->PreferredSize.cy < 0) pw->PreferredSize.cy = -pw->PreferredSize.cy;
+				//rcPlay = MakeRect(emh.rclBounds.left,emh.rclBounds.top,emh.rclBounds.right,emh.rclBounds.bottom);
+			}
+			#endif
+
+			if (!PlayEnhMetaFile(hdcDib, hdcEmf, &rcPlay))
+			{
+				nPlayErr = GetLastError();
+				_ASSERTE(FALSE && (nPlayErr == 0));
+			}
+
+			GdiFlush();
+			memmove(mp_BkImgData+1, pBits, nBitSize);
+		}
+		
+		SelectObject(hdcDib, hOld);
+		DeleteObject(hDib);
+		DeleteDC(hdcDib);
+		if (hdcEmf)
+		{
+			DeleteEnhMetaFile(hdcEmf);
+		}
+		else
+		{
+			return false;
+		}
+	}
 
 	if (!mp_BkImgData)
+	{
+		// Нужен ли тут? Или допустимая ситуация?
+		_ASSERTE(mp_BkImgData!=NULL);
 		return false;
+	}
 
 	bool lbFade = false;
 
 	if (gpSet->isFadeInactive && !gpConEmu->isMeForeground(false))
 		lbFade = true;
 
-	MSectionLock SC;
-	SC.Lock(mcs_BkImgData, FALSE);
 	bool lbRc = pBack->FillBackground(&mp_BkImgData->bmp, X, Y, Width, Height, eUpLeft, lbFade);
-	mb_BkImgChanged = FALSE;
+	//mb_BkImgChanged = FALSE;
 	return lbRc;
 }
 
@@ -4683,8 +4897,11 @@ bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LON
 //    }
 //}
 
-UINT CVirtualConsole::IsBackgroundValid(CESERVER_REQ_SETBACKGROUND* apImgData) const
+UINT CVirtualConsole::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, BOOL* rpIsEmf) const
 {
+	if (rpIsEmf)
+		*rpIsEmf = FALSE;
+		
 	if (!apImgData)
 		return 0;
 
@@ -4695,15 +4912,14 @@ UINT CVirtualConsole::IsBackgroundValid(CESERVER_REQ_SETBACKGROUND* apImgData) c
 
 	if (apImgData->bmp.bfType == 0x4D42/*BM*/ && apImgData->bmp.bfSize)
 	{
-#ifdef _DEBUG
-
+		#ifdef _DEBUG
 		if (IsBadReadPtr(&apImgData->bmp, apImgData->bmp.bfSize))
 		{
 			_ASSERTE(!IsBadReadPtr(&apImgData->bmp, apImgData->bmp.bfSize));
 			return 0;
 		}
-
-#endif
+		#endif
+		
 		LPBYTE pBuf = (LPBYTE)&apImgData->bmp;
 
 		if (*(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
@@ -4714,6 +4930,26 @@ UINT CVirtualConsole::IsBackgroundValid(CESERVER_REQ_SETBACKGROUND* apImgData) c
 			             + (((LPBYTE)(void*)&(apImgData->bmp)) - ((LPBYTE)apImgData));
 			return nSize;
 		}
+	}
+	else if (apImgData->bmp.bfType == 0x4645/*EF*/ && apImgData->bmp.bfSize)
+	{
+		#ifdef _DEBUG
+		if (IsBadReadPtr(&apImgData->bmp, apImgData->bmp.bfSize))
+		{
+			_ASSERTE(!IsBadReadPtr(&apImgData->bmp, apImgData->bmp.bfSize));
+			return 0;
+		}
+		#endif
+		
+		// Это EMF, но передан как BITMAPINFOHEADER
+		if (rpIsEmf)
+			*rpIsEmf = TRUE;
+		
+		LPBYTE pBuf = (LPBYTE)&apImgData->bmp;
+		
+		UINT nSize = apImgData->bmp.bfSize
+		             + (((LPBYTE)(void*)&(apImgData->bmp)) - ((LPBYTE)apImgData));
+		return nSize;
 	}
 
 	return 0;
@@ -4731,11 +4967,12 @@ SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACK
 	if (mp_RCon->isConsoleClosing())
 		return esbr_ConEmuInShutdown;
 
-	UINT nSize = IsBackgroundValid(apImgData);
+	BOOL bIsEmf = FALSE;
+	UINT nSize = IsBackgroundValid(apImgData, &bIsEmf);
 
 	if (!nSize)
 	{
-		_ASSERTE(IsBackgroundValid(apImgData) != 0);
+		_ASSERTE(IsBackgroundValid(apImgData, NULL) != 0);
 		return esbr_InvalidArg;
 	}
 
@@ -4815,36 +5052,71 @@ SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACK
 	MSectionLock SC;
 	SC.Lock(mcs_BkImgData, TRUE);
 
-	if (!mp_BkImgData || mn_BkImgDataMax < nSize)
+	if (bIsEmf)
 	{
-		if (mp_BkImgData)
+		if (!mp_BkEmfData || mn_BkEmfDataMax < nSize)
 		{
-			free(mp_BkImgData); mp_BkImgData = NULL;
-			mb_BkImgChanged = TRUE;
-			mb_BkImgExist = FALSE;
-			mn_BkImgWidth = mn_BkImgHeight = 0;
+			if (mp_BkEmfData)
+			{
+				free(mp_BkEmfData); mp_BkEmfData = NULL;
+				mb_BkImgChanged = mb_BkEmfChanged = TRUE;
+				mb_BkImgExist = FALSE;
+				mn_BkImgWidth = mn_BkImgHeight = 0;
+			}
+
+			mn_BkEmfDataMax = nSize+8192;
+			mp_BkEmfData = (CESERVER_REQ_SETBACKGROUND*)malloc(mn_BkEmfDataMax);
 		}
-
-		mp_BkImgData = (CESERVER_REQ_SETBACKGROUND*)malloc(nSize);
 	}
-
-	memmove(mp_BkImgData, apImgData, nSize);
-	mb_BkImgChanged = TRUE;
-	mb_BkImgExist = TRUE;
-	BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)((&mp_BkImgData->bmp)+1);
-	mn_BkImgWidth = pBmp->biWidth;
-	mn_BkImgHeight = pBmp->biHeight;
-	gpSet->NeedBackgroundUpdate();
-
-	//// Это была копия данных - нужно освободить
-	//free(apImgData); apImgData = NULL;
-
-	if (gpConEmu->isVisible(this) && gpSet->isBgPluginAllowed)
+	else
 	{
-		Update(true/*bForce*/);
-	}
+		if (!mp_BkImgData || mn_BkImgDataMax < nSize)
+		{
+			if (mp_BkImgData)
+			{
+				free(mp_BkImgData); mp_BkImgData = NULL;
+				mb_BkImgChanged = TRUE;
+				mb_BkImgExist = FALSE;
+				mn_BkImgWidth = mn_BkImgHeight = 0;
+			}
 
-	return esbr_OK;
+			mp_BkImgData = (CESERVER_REQ_SETBACKGROUND*)malloc(nSize);
+		}
+	}
+	
+	SetBackgroundResult rc;
+
+	if (!(bIsEmf ? mp_BkEmfData : mp_BkImgData))
+	{
+		_ASSERTE((bIsEmf ? mp_BkEmfData : mp_BkImgData)!=NULL);
+		rc = esbr_Unexpected;
+	}
+	else
+	{
+		if (bIsEmf)
+			memmove(mp_BkEmfData, apImgData, nSize);
+		else
+			memmove(mp_BkImgData, apImgData, nSize);
+		mb_BkImgChanged = TRUE;
+		mb_BkEmfChanged = bIsEmf;
+		mb_BkImgExist = TRUE;
+		BITMAPINFOHEADER* pBmp = bIsEmf ? (&mp_BkEmfData->bi) : (&mp_BkImgData->bi);
+		mn_BkImgWidth = pBmp->biWidth;
+		mn_BkImgHeight = pBmp->biHeight;
+		gpSet->NeedBackgroundUpdate();
+
+		//// Это была копия данных - нужно освободить
+		//free(apImgData); apImgData = NULL;
+
+		if (gpConEmu->isVisible(this) && gpSet->isBgPluginAllowed)
+		{
+			Update(true/*bForce*/);
+		}
+		
+		rc = esbr_OK;
+	}
+	
+	return rc;
 }
 
 bool CVirtualConsole::HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)
@@ -4853,7 +5125,7 @@ bool CVirtualConsole::HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)
 
 	if (!mp_RCon || !mp_RCon->isFar()) return false;
 
-	if (!mb_BkImgExist || !mp_BkImgData) return false;
+	if (!mb_BkImgExist || !(mp_BkImgData || (mp_BkEmfData && mb_BkEmfChanged))) return false;
 
 	// Возвращаем mn_BkImgXXX чтобы не беспокоиться об указателе mp_BkImgData
 

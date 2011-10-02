@@ -578,7 +578,7 @@ int ServerInit()
 			// CREATE_NEW_PROCESS_GROUP - низ€, перестает работать Ctrl-C
 			MWow64Disable wow; wow.Disable();
 			// Ёто запуск нового сервера в этой консоли. ¬ сервер хуки ставить не нужно
-			BOOL lbRc = CreateProcessW(NULL, pszSelf, NULL,NULL, TRUE,
+			BOOL lbRc = CreateProcess(NULL, pszSelf, NULL,NULL, TRUE,
 			                           NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 			dwErr = GetLastError();
 			wow.Restore();
@@ -756,6 +756,7 @@ int ServerInit()
 		if (GetConsoleScreenBufferInfo(hOut, &lsbi))
 		{
 			gpSrv->crReqSizeNewSize = lsbi.dwSize;
+			_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
 			gcrBufferSize.X = lsbi.dwSize.X;
 
 			if (lsbi.dwSize.Y > lsbi.dwMaximumWindowSize.Y)
@@ -1551,7 +1552,7 @@ HWND Attach2Gui(DWORD nTimeout)
 		// CREATE_NEW_PROCESS_GROUP - низ€, перестает работать Ctrl-C
 		MWow64Disable wow; wow.Disable();
 		// «апуск GUI (conemu.exe), хуки ест-но не нужны
-		BOOL lbRc = CreateProcessW(NULL, pszSelf, NULL,NULL, TRUE,
+		BOOL lbRc = CreateProcess(NULL, pszSelf, NULL,NULL, TRUE,
 		                           NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 		dwErr = GetLastError();
 		wow.Restore();
@@ -1597,6 +1598,7 @@ HWND Attach2Gui(DWORD nTimeout)
 	else
 	{
 		gpSrv->crReqSizeNewSize = In.StartStop.sbi.dwSize;
+		_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
 	}
 
 //LoopFind:
@@ -3325,6 +3327,7 @@ DWORD WINAPI GetDataThread(LPVOID lpvParam)
 				}
 				else //if (Command.nCmd == CECMD_CONSOLEDATA)
 				{
+					_ASSERTE(Command.nCmd == CECMD_CONSOLEDATA);
 					gpSrv->pConsole->bDataChanged = FALSE;
 					cbWrite = gpSrv->pConsole->info.crWindow.X * gpSrv->pConsole->info.crWindow.Y;
 

@@ -47,11 +47,22 @@ typedef struct tag_CharAttr
 			unsigned int crOrigForeColor : 32;
 			unsigned int crOrigBackColor : 32; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
 			// вспомогательные флаги
-			unsigned int bDialog : 1;
-			unsigned int bDialogVBorder : 1;
-			unsigned int bDialogCorner : 1;
-			unsigned int bSomeFilled : 1;
-			unsigned int bTransparent : 1; // UserScreen
+			DWORD Flags;
+			#define CharAttr_Dialog         1
+			#define CharAttr_DialogVBorder  2
+			#define CharAttr_DialogCorner   4
+			#define CharAttr_SomeFilled     8
+			#define CharAttr_Transparent   16
+			//bool bDialog;
+			//bool bDialogVBorder;
+			//bool bDialogCorner;
+			//bool bSomeFilled;
+			//bool bTransparent; // UserScreen
+			//unsigned int bDialog : 1;
+			//unsigned int bDialogVBorder : 1;
+			//unsigned int bDialogCorner : 1;
+			//unsigned int bSomeFilled : 1;
+			//unsigned int bTransparent : 1; // UserScreen
 		};
 		// А это для сравнения (поиск изменений)
 		unsigned __int64 All;
@@ -140,7 +151,7 @@ class CRgnDetect
 
 	protected:
 		// Private methods
-		void DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight=NULL, int *pnMostBottom=NULL);
+		bool DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight=NULL, int *pnMostBottom=NULL);
 		bool FindDialog_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
 		bool FindDialog_TopRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
 		bool FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);

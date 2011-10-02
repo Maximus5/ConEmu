@@ -285,7 +285,7 @@ void SettingsSaveW1900()
 			}
 			else if (p->nValueType == REG_SZ)
 			{
-				_ASSERTE(p->nValueSize == 4);
+				_ASSERTE(p->nValueSize == MAX_PATH);
 				fsi.Name = p->pszValueName;
 				fsi.Type = FST_STRING;
 				fsi.String = (wchar_t*)p->pValue; // ASCIIZ

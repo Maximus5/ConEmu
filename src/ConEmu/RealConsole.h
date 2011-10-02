@@ -216,12 +216,20 @@ class CRealConsole
 
 	private:
 		HWND    hConWnd;
+		HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
+		DWORD   mn_GuiWndStyle, mn_GuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
+		DWORD   mn_GuiWndPID;
 		//HANDLE  hFileMapping;
 		//CESERVER_REQ_CONINFO* pConsoleData;
 		//void CloseMapping();
 
 	public:
 		HWND    ConWnd();
+		HWND    GetView();
+
+		// Если работаем в Gui-режиме (Notepad, Putty, ...)
+		HWND    GuiWnd();
+		void    SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID);
 
 		CRealConsole(CVirtualConsole* apVCon);
 		~CRealConsole();
@@ -240,6 +248,7 @@ class CRealConsole
 		void PostConsoleEvent(INPUT_RECORD* piRec);
 		void PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		void PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
+		void PostLeftClickSync(COORD crDC);
 		void PostConsoleEventPipe(MSG64 *pMsg);
 	private:
 		void PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend = false);
@@ -396,6 +405,7 @@ class CRealConsole
 		void AdminDuplicate();
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
 		BOOL InCreateRoot();
+		BOOL GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID);
 		//LPCWSTR GetLngNameTime();
 		void ShowPropertiesDialog();
 

@@ -64,6 +64,8 @@ enum BackgroundOp
 	eTile = 2,
 };
 
+#define BgImageColorsDefaults (1|2)
+
 class CSettings
 {
 	public:

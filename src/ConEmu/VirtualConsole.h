@@ -33,20 +33,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Options.h"
 #include "RealConsole.h"
+#include "ConEmuChild.h"
 
 #define MAX_COUNT_PART_BRUSHES 16*16*4
 #define MAX_SPACES 0x400
 
 class CBackground;
 
-class CVirtualConsole
+class CVirtualConsole : public CConEmuChild
 {
 	private:
 		// RealConsole
 		CRealConsole *mp_RCon;
 	public:
-		CRealConsole *RCon() { if (this) return mp_RCon; _ASSERTE(this!=NULL); return NULL; };
-		HWND GetView();
+		CRealConsole *RCon();
+		HWND GuiWnd();
+		bool isVisible();
 		int GetTabCount();
 		int GetActiveTab();
 		BOOL GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
@@ -194,14 +196,18 @@ class CVirtualConsole
 		bool HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight);
 	protected:
 		MSection *mcs_BkImgData;
-		UINT mn_BkImgDataMax;
+		size_t mn_BkImgDataMax;
 		CESERVER_REQ_SETBACKGROUND* mp_BkImgData; // followed by image data
 		BOOL mb_BkImgChanged; // Данные в mp_BkImgData были изменены плагином, требуется отрисовка
 		BOOL mb_BkImgExist; //, mb_BkImgDelete;
 		LONG mn_BkImgWidth, mn_BkImgHeight;
+		// Поддержка EMF
+		size_t mn_BkEmfDataMax;
+		CESERVER_REQ_SETBACKGROUND* mp_BkEmfData; // followed by EMF data
+		BOOL mb_BkEmfChanged; // Данные в mp_BkEmfData были изменены плагином, требуется отрисовка
 		//// Для проверки, что пришедшая в основную нить картинка является актуальной
 		//const CESERVER_REQ_SETBACKGROUND* mp_LastImgData;
-		UINT IsBackgroundValid(CESERVER_REQ_SETBACKGROUND* apImgData) const; // возвращает размер данных, или 0 при ошибке
+		UINT IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, BOOL* rpIsEmf) const; // возвращает размер данных, или 0 при ошибке
 //public:
 		//MSection csBkImgData;
 
@@ -221,7 +227,7 @@ class CVirtualConsole
 		//CONSOLE_SELECTION_INFO SelectionInfo;
 
 		CVirtualConsole(/*HANDLE hConsoleOutput = NULL*/);
-		~CVirtualConsole();
+		virtual ~CVirtualConsole();
 		static CVirtualConsole* CreateVCon(RConStartArgs *args);
 
 		void DumpConsole();
@@ -268,6 +274,7 @@ class CVirtualConsole
 		//CONSOLE_SELECTION_INFO select1, select2;
 		uint TextLen;
 		bool isCursorValid, drawImage, textChanged, attrChanged;
+		DWORD nBgImageColors;
 		COORD bgBmpSize; HDC hBgDc;
 		void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
 		bool UpdatePrepare(HDC *ahDc, MSectionLock *pSDC);

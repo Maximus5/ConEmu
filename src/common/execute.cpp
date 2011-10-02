@@ -70,6 +70,21 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 	// Пытаться в UNC? Хотя сам CreateProcess UNC не поддерживает, так что смысла пока нет
 	HANDLE hModuleFile = CreateFile(FileName,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
 
+#if 0
+	// Если не указан путь к файлу - попробовать найти его в %PATH%
+	if (hModuleFile != INVALID_HANDLE_VALUE && FileName && wcschr(FileName, L'\\') == NULL && wcschr(FileName, L'.') != NULL)
+	{
+		DWORD nErrCode = GetLastError();
+		if (nErrCode)
+		{
+			wchar_t szFind[MAX_PATH], *psz;
+			DWORD nLen = SearchPath(NULL, FileName, NULL, countof(szFind), szFind, &psz);
+			if (nLen && nLen < countof(szFind))
+				hModuleFile = CreateFile(szFind,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
+		}
+	}
+#endif
+
 	if (hModuleFile != INVALID_HANDLE_VALUE)
 	{
 		BY_HANDLE_FILE_INFORMATION bfi = {0};

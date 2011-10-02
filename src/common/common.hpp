@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // ¬ерси€ интерфейса
-#define CESERVER_REQ_VER    70
+#define CESERVER_REQ_VER    72
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -79,9 +79,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECONMAPNAME_A      "ConEmuFileMapping.%08X"   // --> CESERVER_CONSOLE_MAPPING_HDR ( % == (DWORD)ghConWnd ) simplifying ansi
 #define CEFARMAPNAME        L"ConEmuFarMapping.%u"     // --> CEFAR_INFO_MAPPING               ( % == nFarPID )
 #define CECONVIEWSETNAME    L"ConEmuViewSetMapping.%u" // --> PanelViewSetMapping
-#ifdef _DEBUG
+//#ifdef _DEBUG
 #define CEPANELDLGMAPNAME   L"ConEmuPanelViewDlgsMapping.%u" // -> DetectedDialogs     ( % == nFarPID )
-#endif
+//#endif
 
 #define CEDATAREADYEVENT    L"ConEmuSrvDataReady.%u"
 #define CEFARALIVEEVENT     L"ConEmuFarAliveEvent.%u"
@@ -185,6 +185,8 @@ const CECMD
 	CECMD_ASSERT         = 42, // ќтобразить Assert в ConEmu. In=wchar_t[], Out=DWORD.
 	CECMD_GUICHANGED     = 43, // посылаетс€ в сервер, чтобы он обновил у себ€ ConEmuGuiMapping->CESERVER_CONSOLE_MAPPING_HDR
 	CECMD_PEEKREADINFO   = 44, // CESERVER_REQ_PEEKREADINFO: посылаетс€ в GUI на вкладку Debug
+	CECMD_TERMINATEPID   = 45,
+	CECMD_ATTACHGUIAPP   = 46, // CESERVER_REQ_ATTACHGUIAPP
 /**  оманды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1249,6 +1251,16 @@ struct CESERVER_REQ_PEEKREADINFO
 	INPUT_RECORD Buffer[1];
 };
 
+struct CESERVER_REQ_ATTACHGUIAPP
+{
+	BOOL  bOk;
+	HWND2 hWindow;  // NULL - проверка можно ли, HWND - когда создан
+	RECT  rcWindow; // координаты
+	DWORD nPID;
+	DWORD nStyle, nStyleEx;
+	wchar_t sAppFileName[MAX_PATH*2];
+};
+
 struct MyAssertInfo
 {
 	int nBtns;
@@ -1291,6 +1303,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_ONCREATEPROCESSRET OnCreateProcRet;
 		CESERVER_REQ_PEEKREADINFO PeekReadInfo;
 		MyAssertInfo AssertInfo;
+		CESERVER_REQ_ATTACHGUIAPP AttachGuiApp;
 	};
 };
 

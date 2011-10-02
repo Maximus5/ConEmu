@@ -674,7 +674,7 @@ void SetWindowW995(int nTab)
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void PostMacroW995(wchar_t* asMacro)
+void PostMacroW995(wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;

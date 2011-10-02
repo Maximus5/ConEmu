@@ -2470,7 +2470,7 @@ void TabBarClass::OnNewConPopup()
 			if (nRc != IDC_START)
 				return;
 
-			gpConEmu->m_Child->Redraw();
+			gpConEmu->ActiveCon()->Redraw();
 		}
 		else
 		{

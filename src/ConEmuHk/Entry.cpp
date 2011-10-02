@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после загрузки модуля показать MessageBox, чтобы прицепиться дебаггером
-//  #define SHOW_STARTED_MSGBOX -- не работает, в этот момент еще не найдено окно GUI
+//  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_INJECT_MSGBOX
 //  #define SHOW_MINGW_MSGBOX
 #endif
@@ -99,6 +99,8 @@ DWORD   gnGuiPID = 0;
 HWND    ghConWnd = NULL; // Console window
 HWND    ghConEmuWnd = NULL; // Root! window
 HWND    ghConEmuWndDC = NULL; // ConEmu DC window
+RECT    grcConEmuClient = {}; // Для аттача гуевых окон
+BOOL    gbAttachGuiClient = FALSE; // Для аттача гуевых окон
 BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
 DWORD   gnImageSubsystem = 0;
@@ -262,38 +264,92 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//}
 
 	
-	#ifdef _WIN64
-	DWORD nImageBits = 64, nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-	#else
-	DWORD nImageBits = 32, nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-	#endif
+	DWORD nImageBits = WIN3264TEST(32,64), nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+	BOOL lbGuiWindowAttach = FALSE; // Прицепить к ConEmu гуевую программу (notepad, putty, ...)
 
 	#ifndef SKIP_GETIMAGESUBSYSTEM_ONLOAD
 	GetImageSubsystem(nImageSubsystem,nImageBits);
+	#else
+	PRAGMA_ERROR("error: Подцепление гуевого приложения как вкладки в ConEmu работать не будет");
 	#endif
 	
 
 	WARNING("Попробовать не ломиться в мэппинг, а взять все из переменной ConEmuData");
-	CShellProc* sp = new CShellProc;
-	if (sp->LoadGuiMapping())
+	if (ghConWnd)
 	{
-	
-		wchar_t *szExeName = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
-		//BOOL lbDosBoxAllowed = FALSE;
-		if (!GetModuleFileName(NULL, szExeName, MAX_PATH+1)) szExeName[0] = 0;
-		CESERVER_REQ* pIn = sp->NewCmdOnCreate(eInjectingHooks, L"",
-			szExeName, GetCommandLineW(),
-			NULL, NULL, NULL, NULL, // flags
-			nImageBits, nImageSubsystem,
-			GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
-		if (pIn)
+		CShellProc* sp = new CShellProc;
+		if (sp)
 		{
-			//HWND hConWnd = GetConsoleWindow();
-			CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-			ExecuteFreeResult(pIn);
-			if (pOut) ExecuteFreeResult(pOut);
+			if (sp->LoadGuiMapping())
+			{
+			
+				wchar_t *szExeName = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
+				//BOOL lbDosBoxAllowed = FALSE;
+				if (!GetModuleFileName(NULL, szExeName, MAX_PATH+1)) szExeName[0] = 0;
+				CESERVER_REQ* pIn = sp->NewCmdOnCreate(eInjectingHooks, L"",
+					szExeName, GetCommandLineW(),
+					NULL, NULL, NULL, NULL, // flags
+					nImageBits, nImageSubsystem,
+					GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
+				if (pIn)
+				{
+					//HWND hConWnd = GetConsoleWindow();
+					CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+					ExecuteFreeResult(pIn);
+					if (pOut) ExecuteFreeResult(pOut);
+				}
+				free(szExeName);
+			}
+			delete sp;
 		}
-		free(szExeName);
+	}
+	else if (nImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+	{
+		DWORD dwConEmuHwnd = 0;
+		wchar_t szVar[64], *psz;
+		if (GetEnvironmentVariable(L"ConEmuHWND", szVar, countof(szVar)))
+		{
+			if (szVar[0] == L'0' && szVar[1] == L'x')
+			{
+				dwConEmuHwnd = wcstoul(szVar+2, &psz, 16);
+				if (!IsWindow((HWND)dwConEmuHwnd))
+					dwConEmuHwnd = 0;
+				else if (!GetClassName((HWND)dwConEmuHwnd, szVar, countof(szVar)))
+					dwConEmuHwnd = 0;
+				else if (lstrcmp(szVar, VirtualConsoleClassMain) != 0)
+					dwConEmuHwnd = 0;
+			}
+		}
+		
+		if (dwConEmuHwnd)
+		{
+			DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
+			CESERVER_REQ *pIn = (CESERVER_REQ*)calloc(nSize,1);
+			ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
+			pIn->AttachGuiApp.nPID = GetCurrentProcessId();
+			GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
+
+			wchar_t szGuiPipeName[128];
+			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", dwConEmuHwnd);
+
+			CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 1000, NULL);
+
+			free(pIn);
+
+			if (pOut)
+			{
+				if (pOut->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
+				{
+					if (pOut->AttachGuiApp.bOk)
+					{
+						ghConEmuWnd = (HWND)dwConEmuHwnd;
+						gbAttachGuiClient = TRUE;
+						grcConEmuClient = pOut->AttachGuiApp.rcWindow;
+					}
+				}
+				ExecuteFreeResult(pOut);
+			}
+		}
 	}
 
 	//if (!gbSkipInjects)
@@ -303,7 +359,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		#ifdef _DEBUG
 		//wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
 		//GetModuleFileName(NULL, szModule, countof(szModule));
-		_ASSERTE((nImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0));
+		_ASSERTE((nImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0) || gbAttachGuiClient);
 		//if (!lstrcmpi(pszName, L"far.exe") || !lstrcmpi(pszName, L"mingw32-make.exe"))
 		//if (!lstrcmpi(pszName, L"as.exe"))
 		//	MessageBoxW(NULL, L"as.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
@@ -342,13 +398,15 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//	gbHooksWasSet = FALSE;
 	//}
 	
-	delete sp;
-	
+	//delete sp;
+
+	/*
 	#ifdef _DEBUG
 	if (!lstrcmpi(pszName, L"mingw32-make.exe"))
 		GuiMessageBox(ghConEmuWnd, L"mingw32-make.exe DllMain finished", L"ConEmuHk", MB_SYSTEMMODAL);
 	free(szModule);
 	#endif
+	*/
 	
 	//if (hStartedEvent)
 	//	SetEvent(hStartedEvent);
@@ -467,7 +525,10 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			#endif
 
 			#ifdef SHOW_STARTED_MSGBOX
-			if (!IsDebuggerPresent()) GuiMessageBox(ghConEmuWnd, L"ConEmuHk*.dll loaded", L"ConEmu hooks", 0);
+			if (!IsDebuggerPresent())
+			{
+				::MessageBox(ghConEmuWnd, L"ConEmuHk*.dll loaded", L"ConEmu hooks", MB_SYSTEMMODAL);
+			}
 			#endif
 			#ifdef _DEBUG
 			DWORD dwConMode = -1;

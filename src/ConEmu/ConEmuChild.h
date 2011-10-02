@@ -36,13 +36,14 @@ class CConEmuChild
 {
 	public:
 		CConEmuChild();
-		~CConEmuChild();
+		virtual ~CConEmuChild();
 
-		LRESULT ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		static LRESULT ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		LRESULT OnPaint();
 		LRESULT OnSize(WPARAM wParam, LPARAM lParam);
-		HWND Create();
+		HWND CreateView();
+		HWND GetView();
 		void Invalidate();
 		void Validate();
 		void Redraw();
@@ -52,6 +53,7 @@ class CConEmuChild
 		void CheckPostRedraw();
 
 	protected:
+		HWND mh_WndDC;
 		UINT mn_MsgTabChanged;
 		UINT mn_MsgPostFullPaint;
 		BOOL mb_PostFullPaint;

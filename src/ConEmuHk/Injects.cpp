@@ -80,6 +80,9 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 
 	if (!GetModuleFileName(ghOurModule, szPluginPath, MAX_PATH))
 	{
+		#ifdef _DEBUG
+		_CrtDbgBreak();
+		#endif
 		dwErr = GetLastError();
 		//_printf("GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
 		iRc = -501;
@@ -190,7 +193,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 		PROCESS_INFORMATION pi64 = {NULL};
 		LPSECURITY_ATTRIBUTES lpSec = LocalSecurity();
 
-		BOOL lbHelper = CreateProcessW(NULL, sz64helper, lpSec, lpSec, TRUE, HIGH_PRIORITY_CLASS, NULL, NULL, &si, &pi64);
+		BOOL lbHelper = CreateProcess(NULL, sz64helper, lpSec, lpSec, TRUE, HIGH_PRIORITY_CLASS, NULL, NULL, &si, &pi64);
 
 		if (!lbHelper)
 		{

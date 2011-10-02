@@ -395,7 +395,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="shlwapi.lib version.lib"
-				OutputFile="C:\Utils\Far180\Plugins\ConEmu\Lines\ConEmuLn.dll"
+				OutputFile="C:\Far3\Plugins\ConEmu\Lines\ConEmuLn.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

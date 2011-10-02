@@ -80,7 +80,7 @@ class CDragDropData
 		BOOL InDragDrop();
 		// Support for background D&D
 		BOOL IsDragStarting();
-		BOOL ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		BOOL ForwardMessage(UINT messg, WPARAM wParam, LPARAM lParam);
 	private:
 		//wchar_t *mpsz_DraggedPath; // ASCIIZZ
 		int RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar_t** ppszDraggedPath, UINT* pnFilesCount);

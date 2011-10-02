@@ -136,8 +136,9 @@ BOOL gbIgnoreUpdateTabs = FALSE; // выставляется на время CMD_SETWINDOW
 BOOL gbRequestUpdateTabs = FALSE; // выставляется при получении события FOCUS/KILLFOCUS
 BOOL gbClosingModalViewerEditor = FALSE; // выставляется при закрытии модального редактора/вьювера
 MOUSE_EVENT_RECORD gLastMouseReadEvent = {{0,0}};
-BOOL gbPostDummyMouseEvent = FALSE;
-BOOL gbAllowDummyMouseEvent = FALSE;
+BOOL gbUngetDummyMouseEvent = FALSE;
+LONG gnAllowDummyMouseEvent = 0;
+LONG gnDummyMouseEventFromMacro = 0;
 
 extern HMODULE ghHooksModule;
 extern BOOL gbHooksModuleLoaded; // TRUE, если был вызов LoadLibrary("ConEmuHk.dll"), тогда его нужно FreeLibrary при выходе
@@ -622,7 +623,7 @@ void OnMainThreadActivated()
 		}
 		gnReqCommand = -1;
 		gpReqCommandData = NULL;
-		PostMacro(szMacro);
+		PostMacro(szMacro, NULL);
 		// Done
 	}
 	else
@@ -961,7 +962,7 @@ VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs)
 	}
 }
 
-BOOL PostDummyMouseEvent(HookCallbackArg* pArgs)
+BOOL UngetDummyMouseEvent(BOOL abRead, HookCallbackArg* pArgs)
 {
 	if (!(pArgs->lArguments[1] && pArgs->lArguments[2] && pArgs->lArguments[3]))
 	{
@@ -969,13 +970,22 @@ BOOL PostDummyMouseEvent(HookCallbackArg* pArgs)
 	}
 	else if ((gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)))
 	{
-		// Такой финт нужен только в одном случае:
+		// Такой финт нужен только в случае:
 		// в редакторе идет скролл мышкой (скролл - зажатой кнопкой на заголовке/кейбаре)
 		// нужно заставить фар остановить скролл, иначе активация Synchro невозможна
-		if (!gbAllowDummyMouseEvent)
+
+		// Или второй случай
+		//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
+		//  Это чаще всего проявляется при вызове меню по RClick
+		//  Если курсор на другой панели, то RClick сразу по пассивной
+		//  не вызывает отрисовку :(
+
+		if ((gnAllowDummyMouseEvent < 1) && (gnDummyMouseEventFromMacro < 1))
 		{
-			_ASSERTE(gbAllowDummyMouseEvent);
-			gbPostDummyMouseEvent = FALSE;
+			_ASSERTE(gnAllowDummyMouseEvent >= 1);
+			if (gnAllowDummyMouseEvent < 0)
+				gnAllowDummyMouseEvent = 0;
+			gbUngetDummyMouseEvent = FALSE;
 			return FALSE;
 		}
 
@@ -1012,11 +1022,19 @@ BOOL PostDummyMouseEvent(HookCallbackArg* pArgs)
 		p->Event.MouseEvent.dwButtonState = 0;
 		p->Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
 		*((LPBOOL)pArgs->lpResult) = TRUE;
+
+		if ((gnDummyMouseEventFromMacro > 0) && abRead)
+		{
+			TODO("А если в очередь фара закинуто несколько макросов? По одному мышиному события выполнится только один, или все?");
+			//InterlockedDecrement(&gnDummyMouseEventFromMacro);
+			gnDummyMouseEventFromMacro = 0;
+		}
+
 		return TRUE;
 	}
 	else
 	{
-		gbPostDummyMouseEvent = FALSE; // Не требуется, фар сам кнопку "отпустил"
+		gbUngetDummyMouseEvent = FALSE; // Не требуется, фар сам кнопку "отпустил"
 	}
 	return FALSE;
 }
@@ -1028,9 +1046,9 @@ BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
 	if (!pArgs->bMainThread)
 		return TRUE;  // обработку делаем только в основной нити
 
-	if (gbPostDummyMouseEvent)
+	if (gbUngetDummyMouseEvent)
 	{
-		if (PostDummyMouseEvent(pArgs))
+		if (UngetDummyMouseEvent(FALSE, pArgs))
 			return FALSE; // реальный ReadConsoleInput вызван не будет
 	}
 		
@@ -1104,15 +1122,15 @@ BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 	if (!pArgs->bMainThread)
 		return TRUE;  // обработку делаем только в основной нити
 
-	if (gbPostDummyMouseEvent)
+	if (gbUngetDummyMouseEvent)
 	{
-		if (PostDummyMouseEvent(pArgs))
+		if (UngetDummyMouseEvent(TRUE, pArgs))
 		{
-			gbPostDummyMouseEvent = FALSE;
+			gbUngetDummyMouseEvent = FALSE;
 			gLastMouseReadEvent.dwButtonState = 0; // будем считать, что "мышиную блокировку" успешно сняли
 			return FALSE; // реальный ReadConsoleInput вызван не будет
 		}
-		_ASSERTE(gbPostDummyMouseEvent == FALSE);
+		_ASSERTE(gbUngetDummyMouseEvent == FALSE);
 	}
 
 	//// Выставить флажок "Жив" можно и при вызове из плагина
@@ -2022,7 +2040,7 @@ void ExecuteSynchro()
 		//редактора, в плагине мониторить нажатие мыши. Если последнее МЫШИНОЕ событие
 		//было с нажатой кнопкой - сначала пульнуть в консоль команду "отпускания" кнопки,
 		//и только после этого - пытаться активироваться.
-		if (gbAllowDummyMouseEvent && (gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)))
+		if ((gnAllowDummyMouseEvent > 0) && (gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)))
 		{
 			//_ASSERTE(!(gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)));
 			int nWindowType = GetActiveWindowType();
@@ -2030,7 +2048,7 @@ void ExecuteSynchro()
 			// редактора или вьювера. Так что в других областях - не дергаться.
 			if (nWindowType == WTYPE_EDITOR || nWindowType == WTYPE_VIEWER)
 			{
-				gbPostDummyMouseEvent = TRUE;
+				gbUngetDummyMouseEvent = TRUE;
 			}
 		}
 
@@ -2072,18 +2090,18 @@ static BOOL ActivatePlugin(
 	//if (gFarVersion.dwVerMajor = 2 && gFarVersion.dwBuild >= 1006)
 	else if (IS_SYNCHRO_ALLOWED)
 	{
-		gbAllowDummyMouseEvent = TRUE;
+		InterlockedIncrement(&gnAllowDummyMouseEvent);
 		ExecuteSynchro();
 
-		if (!gbPostDummyMouseEvent && gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED))
+		if (!gbUngetDummyMouseEvent && gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED))
 		{
 			// Страховка от зависаний
 			nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, min(1000,max(250,nTimeout)));
 			if (nWait == WAIT_TIMEOUT)
 			{
-				if (!gbPostDummyMouseEvent && gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED))
+				if (!gbUngetDummyMouseEvent && gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED))
 				{
-					gbPostDummyMouseEvent = TRUE;
+					gbUngetDummyMouseEvent = TRUE;
 					// попытаться еще раз
 					nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
 				}
@@ -2094,6 +2112,18 @@ static BOOL ActivatePlugin(
 			// Подождать активации. Сколько ждать - может указать вызывающая функция
 			nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
 		}
+
+		if (gnAllowDummyMouseEvent > 0)
+		{
+			InterlockedDecrement(&gnAllowDummyMouseEvent);
+		}
+		else
+		{
+			_ASSERTE(gnAllowDummyMouseEvent >= 0);
+			if (gnAllowDummyMouseEvent < 0)
+				gnAllowDummyMouseEvent = 0;
+		}
+
 	}
 	else
 	{
@@ -2101,7 +2131,6 @@ static BOOL ActivatePlugin(
 		nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
 	}
 
-	gbAllowDummyMouseEvent = FALSE;
 
 	if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1))
 	{
@@ -2514,46 +2543,55 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			_ASSERTE(pCommandData!=NULL);
 
 			if (pCommandData!=NULL)
-				PostMacro((wchar_t*)pCommandData);
+				PostMacro((wchar_t*)pCommandData, NULL);
 
 			break;
 		}
 		case(CMD_CLOSEQSEARCH):
 		{
-			PostMacro(L"$if (Search) Esc $end");
+			PostMacro(L"$if (Search) Esc $end", NULL);
 			break;
 		}
 		case(CMD_LEFTCLKSYNC):
 		{
-			WARNING("Заменить бы его на макрос в Far3");
-			// Сначала в консоль дослать просто WM_MOUSEMOVE без кнопок, а потом дернуть макрос "MsLClick"
-			// Для Far3 - координаты вроде можно сразу в макрос кинуть
-			
-			//COORD *crMouse = (COORD *)pCommandData;
 			BOOL  *pbClickNeed = (BOOL*)pCommandData;
 			COORD *crMouse = (COORD *)(pbClickNeed+1);
-			INPUT_RECORD clk[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
-			int i = 0;
 
-			if (*pbClickNeed)
+			// Для Far3 - координаты вроде можно сразу в макрос кинуть
+			if (gFarVersion.dwVer >= 3)
 			{
-				clk[i].Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;
+				INPUT_RECORD r = {MOUSE_EVENT};
+				r.Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;
+				r.Event.MouseEvent.dwMousePosition = *crMouse;
+				#ifdef _DEBUG
+				//r.Event.MouseEvent.dwMousePosition.X = 5;
+				#endif
+				PostMacro(L"MsLClick", &r);
+			}
+			else
+			{
+				INPUT_RECORD clk[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
+				int i = 0;
+
+				if (*pbClickNeed)
+				{
+					clk[i].Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;
+					clk[i].Event.MouseEvent.dwMousePosition = *crMouse;
+					i++;
+				}
+
 				clk[i].Event.MouseEvent.dwMousePosition = *crMouse;
 				i++;
+				DWORD cbWritten = 0;
+				HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+				_ASSERTE(h!=INVALID_HANDLE_VALUE && h!=NULL);
+				BOOL fSuccess = WriteConsoleInput(h, clk, 2, &cbWritten);
+
+				if (!fSuccess || cbWritten != 2)
+				{
+					_ASSERTE(fSuccess && cbWritten==2);
+				}
 			}
-
-			clk[i].Event.MouseEvent.dwMousePosition = *crMouse;
-			i++;
-			DWORD cbWritten = 0;
-			HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-			_ASSERTE(h!=INVALID_HANDLE_VALUE && h!=NULL);
-			BOOL fSuccess = WriteConsoleInput(h, clk, 2, &cbWritten);
-
-			if (!fSuccess || cbWritten != 2)
-			{
-				_ASSERTE(fSuccess && cbWritten==2);
-			}
-
 			break;
 		}
 		case(CMD_EMENU):  //RMENU
@@ -2591,7 +2629,14 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			if (*pszUserMacro)
 				pszMacro = pszUserMacro;
 
-			PostMacro((wchar_t*)pszMacro);
+			INPUT_RECORD r = {MOUSE_EVENT};
+			r.Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;
+			r.Event.MouseEvent.dwMousePosition = *crMouse;
+			#ifdef _DEBUG
+			//r.Event.MouseEvent.dwMousePosition.X = 5;
+			#endif
+
+			PostMacro((wchar_t*)pszMacro, &r);
 			//// Чтобы GUI не дожидался окончания всплытия EMenu
 			//LeaveCriticalSection(&cs Data);
 			//SetEvent(ghReqCommandEvent);
@@ -2708,7 +2753,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				}
 
 				_wcscat_c(pszMacro, cchMax, L" $end");
-				PostMacro(pszMacro);
+				PostMacro(pszMacro, NULL);
 				free(pszMacro);
 			}
 			break;
@@ -5035,10 +5080,21 @@ LPCWSTR GetMsgW(int aiMsg)
 		return FUNC_X(GetMsgW)(aiMsg);
 }
 
-void PostMacro(wchar_t* asMacro)
+void PostMacro(wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!asMacro || !*asMacro)
 		return;
+
+	MOUSE_EVENT_RECORD mre;
+
+	if (apRec && apRec->EventType == MOUSE_EVENT)
+	{
+		gLastMouseReadEvent = mre = apRec->Event.MouseEvent;
+	}
+	else
+	{
+		mre = gLastMouseReadEvent;
+	}
 
 	if (gFarVersion.dwVerMajor == 1)
 	{
@@ -5048,23 +5104,30 @@ void PostMacro(wchar_t* asMacro)
 		if (pszMacro)
 		{
 			WideCharToMultiByte(CP_OEMCP,0,asMacro,nLen+1,pszMacro,nLen+1,0,0);
-			PostMacroA(pszMacro);
+			PostMacroA(pszMacro, apRec); // хотя, все равно в 1.7x не используется
 			Free(pszMacro);
 		}
 	}
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
 	{
-		FUNC_Y(PostMacroW)(asMacro);
+		FUNC_Y(PostMacroW)(asMacro, apRec);
 	}
 	else
 	{
-		FUNC_X(PostMacroW)(asMacro);
+		FUNC_X(PostMacroW)(asMacro, apRec);
 	}
 
 	//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
 	//  Это чаще всего проявляется при вызове меню по RClick
 	//  Если курсор на другой панели, то RClick сразу по пассивной
 	//  не вызывает отрисовку :(
+
+#if 1
+	//111002 - попробуем просто gbUngetDummyMouseEvent
+	//InterlockedIncrement(&gnDummyMouseEventFromMacro);
+	gnDummyMouseEventFromMacro = TRUE;
+	gbUngetDummyMouseEvent = TRUE;
+#else
 	//if (!mcr.Param.PlainText.Flags) {
 	INPUT_RECORD ir[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
 
@@ -5078,10 +5141,16 @@ void PostMacro(wchar_t* asMacro)
 		ir[0].Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
 
 	ir[0].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+	ir[0].Event.MouseEvent.dwMousePosition = mre.dwMousePosition;
+
+	// Вроде одного хватало, правда когда {0,0} посылался
 	ir[1].Event.MouseEvent.dwControlKeyState = ir[0].Event.MouseEvent.dwControlKeyState;
 	ir[1].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-	ir[1].Event.MouseEvent.dwMousePosition.X = 1;
-	ir[1].Event.MouseEvent.dwMousePosition.Y = 1;
+	//ir[1].Event.MouseEvent.dwMousePosition.X = 1;
+	//ir[1].Event.MouseEvent.dwMousePosition.Y = 1;
+	ir[0].Event.MouseEvent.dwMousePosition = mre.dwMousePosition;
+	ir[0].Event.MouseEvent.dwMousePosition.X++;
+
 	//2010-01-29 попробуем STD_OUTPUT
 	//if (!ghConIn) {
 	//	ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
@@ -5098,13 +5167,16 @@ void PostMacro(wchar_t* asMacro)
 	TODO("Необязательно выполнять реальную запись в консольный буфер. Можно обойтись подстановкой в наших функциях перехвата чтения буфера.");
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	DWORD cbWritten = 0;
+
+	// Вроде одного хватало, правда когда {0,0} посылался
 #ifdef _DEBUG
 	BOOL fSuccess =
 #endif
-	    WriteConsoleInput(hIn/*ghConIn*/, ir, 1, &cbWritten);
+	WriteConsoleInput(hIn/*ghConIn*/, ir, 1, &cbWritten);
 	_ASSERTE(fSuccess && cbWritten==1);
 	//}
 	//InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,NULL);
+#endif
 }
 
 DWORD WINAPI PlugServerThread(LPVOID lpvParam)
@@ -5469,16 +5541,10 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 #ifdef _DEBUG
 		const wchar_t *pszUserMacro = (wchar_t*)(crMouse+1);
 #endif
-		struct
-		{
-			BOOL  bClickNeed;
-			COORD crMouse;
-		} DragArg;
-		DragArg.bClickNeed = TRUE;
-		DragArg.crMouse = *crMouse;
+		DWORD ClickArg[2] = {TRUE, MAKELONG(crMouse->X, crMouse->Y)};
 		// Выделить файл под курсором
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_LEFTCLKSYNC) begin\n");
-		ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, &DragArg/*pIn->Data*/);
+		ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, ClickArg/*pIn->Data*/);
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_LEFTCLKSYNC) done\n");
 		// А теперь, собственно вызовем меню
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_EMENU) begin\n");
@@ -6235,10 +6301,11 @@ DWORD GetMainThreadId()
 // Вызывается при загрузке dll
 void WINAPI OnLibraryLoaded(HMODULE ahModule)
 {
-#ifdef _DEBUG
-	wchar_t szModulePath[MAX_PATH]; szModulePath[0] = 0;
-	GetModuleFileName(ahModule, szModulePath, MAX_PATH);
-#endif
+	//#ifdef _DEBUG
+	//wchar_t szModulePath[MAX_PATH]; szModulePath[0] = 0;
+	//GetModuleFileName(ahModule, szModulePath, MAX_PATH);
+	//#endif
+
 	//// Если GUI неактивно (запущен standalone FAR) - сразу выйти
 	//if (ConEmuHwnd == NULL)
 	//{

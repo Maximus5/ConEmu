@@ -365,7 +365,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Utils\Far180\ConEmu\ConEmuC.exe"
+				OutputFile="C:\Far3\ConEmu\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -439,7 +439,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Utils\Far180\ConEmu\ConEmuC64.exe"
+				OutputFile="C:\Far3\ConEmu\ConEmuC64.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"

@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="C:\Utils\Far180\Plugins\ConEmu\Thumbs\ico.t32"
+				OutputFile="C:\Far3\Plugins\ConEmu\Thumbs\ico.t32"
 				LinkIncremental="2"
 				ModuleDefinitionFile="ico.def"
 				GenerateDebugInformation="true"

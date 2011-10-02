@@ -29,6 +29,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DROP_SETCP_ON_WIN2K3R2
 
+#ifdef _DEBUG
+	#define TRAP_ON_MOUSE_0x0
+#else
+	#undef TRAP_ON_MOUSE_0x0
+#endif
+
 // Иначе не опередяется GetConsoleAliases (хотя он должен быть доступен в Win2k)
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
@@ -78,6 +84,12 @@ extern BOOL    gbHooksTemporaryDisabled;
 //HWND ghConEmuWndDC = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
 extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
+extern RECT    grcConEmuClient; // Для аттача гуевых окон
+extern BOOL    gbAttachGuiClient; // Для аттача гуевых окон
+HWND ghAttachGuiClient = NULL; // Чтобы ShowWindow перехватить
+BOOL gbForceShowGuiClient = FALSE; // --
+HMENU ghAttachGuiClientMenu = NULL;
+RECT grcAttachGuiClientPos;
 //HWND ghConsoleHwnd = NULL;
 extern HWND    ghConWnd;
 //BOOL gbFARuseASCIIsort = FALSE;
@@ -159,6 +171,8 @@ BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+BOOL WINAPI OnWriteConsoleInputA(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten);
+BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten);
 //BOOL WINAPI OnPeekConsoleInputAx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 //BOOL WINAPI OnPeekConsoleInputWx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 //BOOL WINAPI OnReadConsoleInputAx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
@@ -190,6 +204,7 @@ BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc);
 //HWND WINAPI OnCreateWindowW(LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow);
 
 bool InitHooksCommon()
 {
@@ -212,6 +227,8 @@ bool InitHooksCommon()
 		{(void*)OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32},
 		{(void*)OnReadConsoleInputW,	"ReadConsoleInputW",	kernel32},
 		{(void*)OnReadConsoleInputA,	"ReadConsoleInputA",	kernel32},
+		{(void*)OnWriteConsoleInputA,	"WriteConsoleInputA",	kernel32},
+		{(void*)OnWriteConsoleInputW,	"WriteConsoleInputW",	kernel32},
 		{(void*)OnSetConsoleTextAttribute, "SetConsoleTextAttribute", kernel32},
 		#endif
 		/* ************************ */
@@ -265,6 +282,7 @@ bool InitHooksCommon()
 		//{(void*)OnCreateWindowW,		"CreateWindowW",		user32}, -- таких экспортов нет
 		{(void*)OnCreateWindowExA,		"CreateWindowExA",		user32},
 		{(void*)OnCreateWindowExW,		"CreateWindowExW",		user32},
+		{(void*)OnShowWindow,			"ShowWindow",			user32},
 		/* ************************ */
 		{(void*)OnShellExecuteExA,		"ShellExecuteExA",		shell32},
 		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
@@ -945,8 +963,34 @@ BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint)
 }
 
 
-static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD dwStyle)
+static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwStyle, DWORD& dwExStyle, HWND& hWndParent, BOOL& bAttachGui)
 {
+	bAttachGui = FALSE;
+	if (gbAttachGuiClient && ghConEmuWnd)
+	{
+		bool lbCanAttach = (dwStyle & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW;
+		if (dwStyle & (WS_POPUP|DS_MODALFRAME|WS_CHILDWINDOW))
+			lbCanAttach = false;
+		else if (dwExStyle & (WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_DLGMODALFRAME|WS_EX_MDICHILD))
+			lbCanAttach = false;
+
+		if (lbCanAttach)
+		{
+			// Родительское окно - ConEmu
+			hWndParent = ghConEmuWnd;
+			// Уберем рамку, меню и заголовок - оставим
+			dwStyle = (dwStyle | WS_CHILDWINDOW|WS_TABSTOP) & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
+			bAttachGui = TRUE;
+			gbAttachGuiClient = FALSE; // Только одно окно приложения
+		}
+		return true;
+	}
+
+	if (ghAttachGuiClient)
+	{
+		return true; // В GUI приложениях - разрешено все
+	}
+
 #ifndef _DEBUG
 	return true;
 #else
@@ -968,7 +1012,8 @@ static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWOR
 	}
 	
 	// Окно на любой чих создается. dwStyle == 0x88000000.
-	if (lpClassNameW && lstrcmp(lpClassNameW, L"CicMarshalWndClass") == 0)
+	if ((lpClassNameW && lstrcmpW(lpClassNameW, L"CicMarshalWndClass") == 0)
+		|| (lpClassNameA && lstrcmpA(lpClassNameA, "CicMarshalWndClass") == 0))
 	{
 		return true;
 	}
@@ -987,38 +1032,146 @@ static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWOR
 #endif
 }
 
-//typedef HWND (WINAPI* OnCreateWindowA_t)(LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
-//HWND WINAPI OnCreateWindowA(LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
-//{
-//	ORIGINALFASTEX(CreateWindowA,NULL);
-//	HWND hWnd = NULL;
-//
-//	if (CheckCanCreateWindow(lpClassName, NULL, dwStyle) && F(CreateWindowA) != NULL)
-//		hWnd = F(CreateWindowA)(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
-//
-//	return hWnd;
-//}
-//
-//typedef HWND (WINAPI* OnCreateWindowW_t)(LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
-//HWND WINAPI OnCreateWindowW(LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
-//{
-//	ORIGINALFASTEX(CreateWindowW,NULL);
-//	HWND hWnd = NULL;
-//
-//	if (CheckCanCreateWindow(NULL, lpClassName, dwStyle) && F(CreateWindowW) != NULL)
-//		hWnd = F(CreateWindowW)(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
-//
-//	return hWnd;
-//}
+BOOL MySetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
+{
+	BOOL lbRc = FALSE;
+	typedef BOOL (WINAPI* SetWindowPos_t)(HWND,HWND,int,int,int,int,UINT);
+	SetWindowPos_t SetWindowPos_f = (SetWindowPos_t)GetProcAddress(ghUser32, "SetWindowPos");
+
+	if (SetWindowPos_f)
+		lbRc = SetWindowPos_f(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
+
+	return lbRc;
+}
+
+static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asClassW, DWORD anStyle, DWORD anStyleEx)
+{
+	ghAttachGuiClient = hWindow;
+	gbForceShowGuiClient = TRUE;
+
+	// Для WS_CHILDWINDOW меню нельзя указать при создании окна
+	if (!hMenu && !ghAttachGuiClientMenu && (asClassA || asClassW))
+	{
+		BOOL lbRcClass;
+		WNDCLASSEXA wca = {sizeof(WNDCLASSEXA)};
+		WNDCLASSEXW wcw = {sizeof(WNDCLASSEXW)};
+		if (asClassA)
+		{
+			lbRcClass = GetClassInfoExA(GetModuleHandle(NULL), asClassA, &wca);
+			if (lbRcClass)
+				ghAttachGuiClientMenu = LoadMenuA(wca.hInstance, wca.lpszMenuName);
+		}
+		else
+		{
+			lbRcClass = GetClassInfoExW(GetModuleHandle(NULL), asClassW, &wcw);
+			if (lbRcClass)
+				ghAttachGuiClientMenu = LoadMenuW(wca.hInstance, wcw.lpszMenuName);
+		}
+		hMenu = ghAttachGuiClientMenu;
+	}
+	if (hMenu)
+	{
+		// Для WS_CHILDWINDOW - не работает
+		SetMenu(hWindow, hMenu);
+		HMENU hSys = GetSystemMenu(hWindow, FALSE);
+		TODO("Это в принципе прокатывает, но нужно транслировать WM_SYSCOMMAND -> WM_COMMAND, соответственно, перехватывать WndProc, или хук ставить");
+		if (hSys)
+		{
+			TODO("Хотя, хорошо бы не все в Popup засоывать, а извлечь ChildPopups из hMenu");
+			InsertMenu(hSys, 0, MF_BYPOSITION|MF_POPUP, (UINT_PTR)hMenu, L"Window menu");
+			InsertMenu(hSys, 1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL);
+		}
+	}
+
+	DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
+	CESERVER_REQ *pIn = (CESERVER_REQ*)calloc(nSize,1);
+	ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
+
+	pIn->AttachGuiApp.bOk = TRUE;
+	pIn->AttachGuiApp.nPID = GetCurrentProcessId();
+	pIn->AttachGuiApp.hWindow = hWindow;
+	pIn->AttachGuiApp.nStyle = anStyle;
+	pIn->AttachGuiApp.nStyleEx = anStyleEx;
+	GetWindowRect(hWindow, &pIn->AttachGuiApp.rcWindow);
+	GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
+
+	wchar_t szGuiPipeName[128];
+	msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
+
+	CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 1000, NULL);
+
+	free(pIn);
+
+	if (pOut)
+	{
+		if (pOut->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
+		{
+			_ASSERTE(pOut->AttachGuiApp.bOk);
+			
+			RECT rcGui = grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
+			MySetWindowPos(hWindow, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+				SWP_FRAMECHANGED);
+		}
+		ExecuteFreeResult(pOut);
+	}
+}
+
+typedef BOOL (WINAPI* OnShowWindow_t)(HWND hWnd, int nCmdShow);
+BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
+{
+	ORIGINALFASTEX(ShowWindow,NULL);
+	BOOL lbRc = FALSE, lbGuiAttach = FALSE;
+
+	if (gbForceShowGuiClient && (ghAttachGuiClient == hWnd))
+	{
+		RECT rcGui = grcAttachGuiClientPos;
+		MySetWindowPos(hWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+			SWP_FRAMECHANGED);
+	
+		nCmdShow = SW_SHOWNORMAL;
+		gbForceShowGuiClient = FALSE; // Один раз?
+		lbGuiAttach = TRUE;
+	}
+
+	if (F(ShowWindow))
+		lbRc = F(ShowWindow)(hWnd, nCmdShow);
+
+	if (lbGuiAttach)
+	{
+		//SetFocus(ghConEmuWnd);
+		RECT rcGui = grcAttachGuiClientPos;
+		//MySetWindowPos(hWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+		//	SWP_FRAMECHANGED|SWP_SHOWWINDOW);
+		GetClientRect(hWnd, &rcGui);
+		SendMessage(hWnd, WM_SIZE, SIZE_RESTORED, MAKELONG((rcGui.right-rcGui.left),(rcGui.bottom-rcGui.top)));
+	}
+
+	return lbRc;
+}
 
 typedef HWND (WINAPI* OnCreateWindowExA_t)(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
 {
 	ORIGINALFASTEX(CreateWindowExA,NULL);
 	HWND hWnd = NULL;
+	BOOL bAttachGui = FALSE;
+	DWORD lStyle = dwStyle, lStyleEx = dwExStyle;
 
-	if (CheckCanCreateWindow(lpClassName, NULL, dwStyle) && F(CreateWindowExA) != NULL)
+	if (CheckCanCreateWindow(lpClassName, NULL, dwStyle, dwExStyle, hWndParent, bAttachGui) && F(CreateWindowExA) != NULL)
+	{
+		if (bAttachGui)
+		{
+			x = grcConEmuClient.left; y = grcConEmuClient.top;
+			nWidth = grcConEmuClient.right - grcConEmuClient.left; nHeight = grcConEmuClient.bottom - grcConEmuClient.top;
+		}
+
 		hWnd = F(CreateWindowExA)(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+
+		if (hWnd && bAttachGui)
+		{
+			OnGuiWindowAttached(hWnd, hMenu, lpClassName, NULL, lStyle, lStyleEx);
+		}
+	}
 
 	return hWnd;
 }
@@ -1028,9 +1181,24 @@ HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWi
 {
 	ORIGINALFASTEX(CreateWindowExW,NULL);
 	HWND hWnd = NULL;
+	BOOL bAttachGui = FALSE;
+	DWORD lStyle = dwStyle, lStyleEx = dwExStyle;
 
-	if (CheckCanCreateWindow(NULL, lpClassName, dwStyle) && F(CreateWindowExW) != NULL)
+	if (CheckCanCreateWindow(NULL, lpClassName, dwStyle, dwExStyle, hWndParent, bAttachGui) && F(CreateWindowExW) != NULL)
+	{
+		if (bAttachGui)
+		{
+			x = grcConEmuClient.left; y = grcConEmuClient.top;
+			nWidth = grcConEmuClient.right - grcConEmuClient.left; nHeight = grcConEmuClient.bottom - grcConEmuClient.top;
+		}
+
 		hWnd = F(CreateWindowExW)(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+
+		if (hWnd && bAttachGui)
+		{
+			OnGuiWindowAttached(hWnd, hMenu, NULL, lpClassName, lStyle, lStyleEx);
+		}
+	}
 
 	return hWnd;
 }
@@ -1506,7 +1674,27 @@ BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNum
 
 // Для нотификации вкладки Debug в ConEmu
 void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*/, HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nRead)
-{	
+{
+#ifdef TRAP_ON_MOUSE_0x0
+	if (lpBuffer && nRead)
+	{
+		for (UINT i = 0; i < nRead; i++)
+		{
+			if (lpBuffer[i].EventType == MOUSE_EVENT)
+			{
+				if (lpBuffer[i].Event.MouseEvent.dwMousePosition.X == 0 && lpBuffer[i].Event.MouseEvent.dwMousePosition.Y == 0)
+				{
+					_ASSERTE(!(lpBuffer[i].Event.MouseEvent.dwMousePosition.X == 0 && lpBuffer[i].Event.MouseEvent.dwMousePosition.Y == 0));
+				}
+				//if (lpBuffer[i].Event.MouseEvent.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED && lpBuffer[i].Event.MouseEvent.dwMousePosition.X != 5)
+				//{
+				//	_ASSERTE(!(lpBuffer[i].Event.MouseEvent.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED && lpBuffer[i].Event.MouseEvent.dwMousePosition.X != 5));
+				//}
+			}
+		}
+	}
+#endif
+
 	if (!gFarMode.bFarHookMode || !gFarMode.bMonitorConsoleInput || !nRead || !lpBuffer)
 		return;
 		
@@ -1532,6 +1720,31 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 		ExecuteFreeResult(pIn);
 	}
 }
+
+#ifdef _DEBUG
+void PreWriteConsoleInput(BOOL abUnicode, const INPUT_RECORD *lpBuffer, DWORD nLength)
+{
+#ifdef TRAP_ON_MOUSE_0x0
+	if (lpBuffer && nLength)
+	{
+		for (UINT i = 0; i < nLength; i++)
+		{
+			if (lpBuffer[i].EventType == MOUSE_EVENT)
+			{
+				if (lpBuffer[i].Event.MouseEvent.dwMousePosition.X == 0 && lpBuffer[i].Event.MouseEvent.dwMousePosition.Y == 0)
+				{
+					_ASSERTE(!(lpBuffer[i].Event.MouseEvent.dwMousePosition.X == 0 && lpBuffer[i].Event.MouseEvent.dwMousePosition.Y == 0));
+				}
+				//if (lpBuffer[i].Event.MouseEvent.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED && lpBuffer[i].Event.MouseEvent.dwMousePosition.X != 5)
+				//{
+				//	_ASSERTE(!(lpBuffer[i].Event.MouseEvent.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED && lpBuffer[i].Event.MouseEvent.dwMousePosition.X != 5));
+				//}
+			}
+		}
+	}
+#endif
+}
+#endif
 
 typedef BOOL (WINAPI* OnPeekConsoleInputA_t)(HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
 BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
@@ -1698,6 +1911,66 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 
 	if (lbRc && lpNumberOfEventsRead && *lpNumberOfEventsRead && lpBuffer)
 		OnPeekReadConsoleInput('R', 'W', hConsoleInput, lpBuffer, *lpNumberOfEventsRead);
+
+	return lbRc;
+}
+
+typedef BOOL (WINAPI* OnWriteConsoleInputA_t)(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten);
+BOOL WINAPI OnWriteConsoleInputA(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten)
+{
+	ORIGINAL(WriteConsoleInputA);
+	BOOL lbRc = FALSE;
+
+	#ifdef _DEBUG
+	PreWriteConsoleInput(FALSE, lpBuffer, nLength);
+	#endif
+
+	if (ph && ph->PreCallBack)
+	{
+		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsWritten);
+
+		// Если функция возвращает FALSE - реальная запись не будет вызвана
+		if (!ph->PreCallBack(&args))
+			return lbRc;
+	}
+
+	lbRc = F(WriteConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsWritten);
+
+	if (ph && ph->PostCallBack)
+	{
+		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsWritten);
+		ph->PostCallBack(&args);
+	}
+
+	return lbRc;
+}
+
+typedef BOOL (WINAPI* OnWriteConsoleInputW_t)(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten);
+BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten)
+{
+	ORIGINAL(WriteConsoleInputW);
+	BOOL lbRc = FALSE;
+
+	#ifdef _DEBUG
+	PreWriteConsoleInput(FALSE, lpBuffer, nLength);
+	#endif
+
+	if (ph && ph->PreCallBack)
+	{
+		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsWritten);
+
+		// Если функция возвращает FALSE - реальная запись не будет вызвана
+		if (!ph->PreCallBack(&args))
+			return lbRc;
+	}
+
+	lbRc = F(WriteConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsWritten);
+
+	if (ph && ph->PostCallBack)
+	{
+		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsWritten);
+		ph->PostCallBack(&args);
+	}
 
 	return lbRc;
 }
@@ -1934,10 +2207,7 @@ INT_PTR CALLBACK SimpleApiDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 				break;
 		}
 		
-		typedef BOOL (WINAPI* SetWindowPos_t)(HWND,HWND,int,int,int,int,UINT);
-		SetWindowPos_t SetWindowPos_f = (SetWindowPos_t)GetProcAddress(ghUser32, "SetWindowPos");
-		
-		SetWindowPos_f(hwndDlg, HWND_TOP, x, y, 0, 0, SWP_SHOWWINDOW);
+		MySetWindowPos(hwndDlg, HWND_TOP, x, y, 0, 0, SWP_SHOWWINDOW);
 		
 		P->bResult = P->funcPtr(P->pArg);
 		P->nLastError = GetLastError();

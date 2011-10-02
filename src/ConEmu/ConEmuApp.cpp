@@ -64,7 +64,7 @@ wchar_t gszDbgModLabel[6] = {0};
 
 //externs
 HINSTANCE g_hInstance=NULL;
-HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL, ghWndApp=NULL;
+HWND ghWnd=NULL, /*ghWnd DC=NULL,*/ ghConWnd=NULL, ghWndApp=NULL;
 CConEmuMain *gpConEmu = NULL;
 //CVirtualConsole *pVCon=NULL;
 CSettings *gpSet = NULL;

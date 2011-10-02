@@ -423,7 +423,8 @@ void CSettings::InitSettings()
 	wcscpy_c(sBgImage, L"c:\\back.bmp");
 	bgImageDarker = 255; // 0x46;
 	//nBgImageColors = 1|2; синий,зеленый
-	nBgImageColors = 2; // только синий
+	//nBgImageColors = 2; // только синий
+	nBgImageColors = (DWORD)-1; // Получить цвет панелей из фара - иначе "1|2" == BgImageColorsDefaults.
 	bgOperation = eUpLeft;
 	isBgPluginAllowed = 1;
 	nTransparent = 255;
@@ -835,7 +836,7 @@ void CSettings::LoadSettings()
 		reg->Load(L"bgImageDarker", bgImageDarker);
 		reg->Load(L"bgImageColors", nBgImageColors);
 
-		if (!nBgImageColors) nBgImageColors = 1|2;
+		if (!nBgImageColors) nBgImageColors = (DWORD)-1; //1|2 == BgImageColorsDefaults;
 
 		reg->Load(L"bgOperation", bgOperation);
 
@@ -1828,7 +1829,11 @@ void CSettings::FillBgImageColors()
 	DWORD nTest = nBgImageColors;
 	wchar_t *pszTemp = tmp; tmp[0] = 0;
 
-	for(int idx = 0; nTest && idx < 16; idx++)
+	if (nBgImageColors == (DWORD)-1)
+	{
+		*(pszTemp++) = L'*';
+	}
+	else for (int idx = 0; nTest && idx < 16; idx++)
 	{
 		if (nTest & 1)
 		{
@@ -2189,8 +2194,15 @@ LRESULT CSettings::OnInitDialog_Ext()
 		CheckDlgButton(hExt, cbUseInjects, BST_CHECKED);
 
 	if (gpConEmu->mb_DosBoxExists)
+	{
 		CheckDlgButton(hExt, cbDosBox, BST_CHECKED);
-	EnableWindow(GetDlgItem(hExt, cbDosBox), FALSE); // изменение пока запрещено
+		EnableWindow(GetDlgItem(hExt, cbDosBox), FALSE); // изменение пока запрещено
+	}
+	else
+	{
+		CheckDlgButton(hExt, cbDosBox, BST_UNCHECKED);
+		EnableWindow(GetDlgItem(hExt, cbDosBox), TRUE); // чтобы ругнуться, если DosBox не установлен
+	}
 	EnableWindow(GetDlgItem(hExt, bDosBoxSettings), FALSE); // изменение пока запрещено
 
 	#ifdef USEPORTABLEREGISTRY
@@ -2580,7 +2592,8 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 					gpConEmu->SetWindowMode(rNormal);
 
 				// Установить размер
-				gpConEmu->SetConsoleWindowSize(MakeCoord(newX, newY), true);
+				TODO("DoubleView: непонятно что делать. То ли на два делить?");
+				gpConEmu->SetConsoleWindowSize(MakeCoord(newX, newY), true, NULL);
 			}
 			else if (IsChecked(hMain, rMaximized) == BST_CHECKED)
 			{
@@ -2888,7 +2901,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			break;
 		case cbBlockInactiveCursor:
 			isCursorBlockInactive = IsChecked(hMain, cbBlockInactiveCursor);
-			gpConEmu->m_Child->Invalidate();
+			gpConEmu->ActiveCon()->Invalidate();
 			break;
 		case bBgImage:
 		{
@@ -3016,6 +3029,28 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			}
 
 			break;
+		case cbDosBox:
+			if (gpConEmu->mb_DosBoxExists)
+			{
+				CheckDlgButton(hExt, cbDosBox, BST_CHECKED);
+				EnableWindow(GetDlgItem(hExt, cbDosBox), FALSE); // изменение пока запрещено
+			}
+			else
+			{
+				CheckDlgButton(hExt, cbDosBox, BST_UNCHECKED);
+				size_t nMaxCCH = MAX_PATH*3;
+				wchar_t* pszErrInfo = (wchar_t*)malloc(nMaxCCH*sizeof(wchar_t));
+				_wsprintf(pszErrInfo, SKIPLEN(nMaxCCH) L"DosBox is not installed!\n"
+						L"\n"
+						L"DosBox files must be located here:"
+						L"%s\\DosBox\\"
+						L"\n"
+						L"1. Copy files DOSBox.exe, SDL.dll, SDL_net.dll\n"
+						L"2. Create of modify configuration file DOSBox.conf",
+						gpConEmu->ms_ConEmuBaseDir);
+			}
+			break;
+
 		default:
 
 			if (CB >= cbHostWin && CB <= cbHostRShift)
@@ -3072,7 +3107,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 			break;
 		case cbFadeInactive:
 			isFadeInactive = IsChecked(hColors, cbFadeInactive);
-			gpConEmu->m_Child->Invalidate();
+			gpConEmu->ActiveCon()->Invalidate();
 			break;
 		case cbTransparent:
 		{
@@ -3218,8 +3253,14 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
 		GetDlgItemText(hMain, tBgImageColors, temp, countof(temp)-1);
 		DWORD newBgColors = 0;
 
-		for(wchar_t* pc = temp; *pc; pc++)
+		for (wchar_t* pc = temp; *pc; pc++)
 		{
+			if (*pc == L'*')
+			{
+				newBgColors = (DWORD)-1;
+				break;
+			}
+
 			if (*pc == L'#')
 			{
 				if (isDigit(pc[1]))
@@ -3544,8 +3585,10 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
 void CSettings::Dialog()
 {
 	SetCursor(LoadCursor(NULL,IDC_WAIT));
+
 	// Сначала обновить DC, чтобы некрасивостей не было
-	UpdateWindow(ghWndDC);
+	gpConEmu->UpdateWindowChild(NULL);
+
 	//2009-05-03. DialogBox создает МОДАЛЬНЫЙ Диалог
 	HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, wndOpProc);
 

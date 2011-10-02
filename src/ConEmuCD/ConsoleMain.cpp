@@ -131,6 +131,7 @@ BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
 //int       gnBufferHeight = 0;
 wchar_t* gpszRunCmd = NULL;
+BOOL    gbRunViaCmdExe = FALSE;
 DWORD   gnImageSubsystem = 0, gnImageBits = 32;
 //HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
 //HANDLE ghHeap = NULL; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
@@ -694,7 +695,31 @@ int __stdcall ConsoleMain()
 		WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");
 
 		if (gbUseDosBox)
+		{
 			DosBoxHelp();
+		}
+		else if (gnRunMode == RM_SERVER && !gbRunViaCmdExe)
+		{
+			// Проверить, может пытаются запустить GUI приложение как вкладку в ConEmu?
+			if (!((si.dwFlags & STARTF_USESHOWWINDOW) && (si.wShowWindow == SW_HIDE)))
+			{
+				// Имеет смысл, только если окно хотят изначально спрятать
+				const wchar_t *psz = gpszRunCmd, *pszStart;
+				wchar_t szExe[MAX_PATH+1];
+				if (NextArg(&psz, szExe, &pszStart) == 0)
+				{
+					DWORD RunImageSubsystem = 0, RunImageBits = 0, RunFileAttrs = 0;
+					if (GetImageSubsystem(szExe, RunImageSubsystem, RunImageBits, RunFileAttrs))
+					{
+						if (RunImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+						{
+							si.dwFlags |= STARTF_USESHOWWINDOW;
+							si.wShowWindow = SW_SHOWNORMAL;
+						}
+					}
+				}
+			}
+		}
 
 		// ConEmuC должен быть максимально прозрачен для конечного процесса
 		WARNING("При компиляции gcc все равно прозрачно не получается");
@@ -718,7 +743,7 @@ int __stdcall ConsoleMain()
 		//		lpSec = NULL;
 		//#endif
 		// Не будем разрешать наследование, если нужно - сделаем DuplicateHandle
-		lbRc = CreateProcessW(NULL, gpszRunCmd, lpSec,lpSec, lbInheritHandle,
+		lbRc = CreateProcess(NULL, gpszRunCmd, lpSec,lpSec, lbInheritHandle,
 		                      NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
 		                      |CREATE_SUSPENDED/*((gnRunMode == RM_SERVER) ? CREATE_SUSPENDED : 0)*/,
 		                      NULL, pszCurDir, &si, &pi);
@@ -740,10 +765,10 @@ int __stdcall ConsoleMain()
 					{
 						*pszSlash = 0; // получили родительскую папку
 						pszCurDir = szSelf;
-						SetCurrentDirectoryW(pszCurDir);
+						SetCurrentDirectory(pszCurDir);
 						// Пробуем еще раз, в родительской директории
 						// Не будем разрешать наследование, если нужно - сделаем DuplicateHandle
-						lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, FALSE/*TRUE*/,
+						lbRc = CreateProcess(NULL, gpszRunCmd, NULL,NULL, FALSE/*TRUE*/,
 						                      NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
 						                      |CREATE_SUSPENDED/*((gnRunMode == RM_SERVER) ? CREATE_SUSPENDED : 0)*/,
 						                      NULL, pszCurDir, &si, &pi);
@@ -901,6 +926,8 @@ int __stdcall ConsoleMain()
 
 	if (gnRunMode == RM_SERVER)
 	{
+		DWORD dwWaitGui = -1;
+
 		nExitPlaceStep = 500;
 		gpSrv->hRootProcess  = pi.hProcess; pi.hProcess = NULL; // Required for Win2k
 		gpSrv->hRootThread   = pi.hThread;  pi.hThread  = NULL;
@@ -922,7 +949,7 @@ int __stdcall ConsoleMain()
 
 		if (gpSrv->hConEmuGuiAttached)
 		{
-			DWORD dwWaitGui = WaitForSingleObject(gpSrv->hConEmuGuiAttached, 1000);
+			dwWaitGui = WaitForSingleObject(gpSrv->hConEmuGuiAttached, 1000);
 
 			if (dwWaitGui == WAIT_OBJECT_0)
 			{
@@ -952,13 +979,14 @@ int __stdcall ConsoleMain()
 					_wprintf(gpszRunCmd);
 					_printf("\n\nPress Ctrl+Break to stop waiting\n");
 
-					while(!gbInShutdown && (nWait != WAIT_OBJECT_0))
+					while (!gbInShutdown && (nWait != WAIT_OBJECT_0))
 					{
 						nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, 250);
 
 						if ((nWait != WAIT_OBJECT_0) && (gpSrv->nProcessCount > 1))
 						{
 							gbTerminateOnCtrlBreak = FALSE;
+							gbCtrlBreakStopWaitingShown = FALSE; // сбросим, чтобы ассерты не лезли
 							goto wait; // OK, переходим в основной цикл ожидания завершения
 						}
 					}
@@ -1698,7 +1726,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 	wchar_t szComSpec[MAX_PATH+1] = {0};
 	LPCWSTR pwszCopy = NULL;
 	wchar_t* psFilePart = NULL;
-	BOOL bViaCmdExe = TRUE;
+	//BOOL bViaCmdExe = TRUE;
+	gbRunViaCmdExe = TRUE;
 	gbRootIsCmdExe = TRUE;
 	size_t nCmdLine = 0;
 	LPCWSTR pwszStartCmdLine = asCmdLine;
@@ -2372,18 +2401,18 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		//#pragma warning( push )
 		//#pragma warning(disable : 6400)
 		//if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0) {
-		//    bViaCmdExe = FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
+		//    gbRunViaCmdExe = FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
 		//}
 		//#pragma warning( pop )
 		//} else {
-		//    bViaCmdExe = FALSE; // командным процессором выступает сам ConEmuC (серверный режим)
+		//    gbRunViaCmdExe = FALSE; // командным процессором выступает сам ConEmuC (серверный режим)
 	}
 
 	if (gnRunMode == RM_COMSPEC && (!asCmdLine || !*asCmdLine))
 	{
 		if (gpSrv->bK)
 		{
-			bViaCmdExe = TRUE;
+			gbRunViaCmdExe = TRUE;
 		}
 		else
 		{
@@ -2396,7 +2425,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 	}
 	else
 	{
-		bViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot, szExeTest, gbRootIsCmdExe, gbAlwaysConfirmExit, gbAutoDisableConfirmExit);
+		gbRunViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot, szExeTest, gbRootIsCmdExe, gbAlwaysConfirmExit, gbAutoDisableConfirmExit);
 	}
 
 #ifndef WIN64
@@ -2440,7 +2469,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 #endif
 	nCmdLine = lstrlenW(asCmdLine);
 
-	if (!bViaCmdExe)
+	if (!gbRunViaCmdExe)
 	{
 		nCmdLine += 1; // только место под 0
 	}
@@ -2587,7 +2616,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		SetConsoleTitleW(asCmdLine);
 	}
 
-	if (bViaCmdExe)
+	if (gbRunViaCmdExe)
 	{
 		CheckUnicodeMode();
 
@@ -3465,9 +3494,11 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 	// Пример - запускаемся из фара. Количество процессов ИЗНАЧАЛЬНО - 5
 	// cmd вываливается сразу (path not found)
 	// количество процессов ОСТАЕТСЯ 5 и ни одно из ниже условий не проходит
-	if (anPrevCount == 1 && gpSrv->nProcessCount == 1 && gpSrv->nProcessStartTick &&
-	        ((gpSrv->dwProcessLastCheckTick - gpSrv->nProcessStartTick) > CHECK_ROOTSTART_TIMEOUT) &&
-	        WaitForSingleObject(ghExitQueryEvent,0) == WAIT_TIMEOUT)
+	if (anPrevCount == 1 && gpSrv->nProcessCount == 1 && gpSrv->nProcessStartTick
+		&& ((gpSrv->dwProcessLastCheckTick - gpSrv->nProcessStartTick) > CHECK_ROOTSTART_TIMEOUT)
+		&& WaitForSingleObject(ghExitQueryEvent,0) == WAIT_TIMEOUT
+		// выходить можно только если корневой процесс завершился
+		&& gpSrv->hRootProcess && WaitForSingleObject(gpSrv->hRootProcess,0) != WAIT_TIMEOUT)
 	{
 		anPrevCount = 2; // чтобы сработало следующее условие
 		//2010-03-06 - установка флажка должна быть при старте сервера
@@ -3597,8 +3628,11 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		return FALSE;
 	}
 
-	if (!pfnGetConsoleProcessList)
+	if (!pfnGetConsoleProcessList || gpSrv->hRootProcessGui)
 	{
+		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
+		gpSrv->pnProcesses[0] = gnSelfPID;
+
 		if (gpSrv->hRootProcess)
 		{
 			if (WaitForSingleObject(gpSrv->hRootProcess, 0) == WAIT_OBJECT_0)
@@ -4439,7 +4473,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 			cbBytesRead += cbNextRead;
 	}
 
-	if (!GetAnswerToRequest(pIn ? *pIn : in, &pOut) || pOut==NULL)
+	if (!ProcessSrvCommand(pIn ? *pIn : in, &pOut) || pOut==NULL)
 	{
 		// Если результата нет - все равно что-нибудь запишем, иначе TransactNamedPipe может виснуть?
 		CESERVER_REQ_HDR Out= {0};
@@ -5014,7 +5048,119 @@ BOOL cmd_GuiChanged(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
-BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
+BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	// Прибить процесс (TerminateProcess)
+	BOOL lbRc = FALSE;
+	HANDLE hProcess = NULL;
+	BOOL bNeedClose = FALSE;
+	DWORD nErrCode = 0;
+
+	if (gpSrv && gpSrv->pConsole)
+	{
+		if (in.dwData[0] == gpSrv->dwRootProcess)
+		{
+			hProcess = gpSrv->hRootProcess;
+			bNeedClose = FALSE;
+		}
+	}
+
+	if (!hProcess)
+	{
+		hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, in.dwData[0]);
+		if (hProcess != NULL)
+		{
+			bNeedClose = TRUE;
+		}
+		else
+		{
+			nErrCode = GetLastError();
+		}
+	}
+
+	if (!hProcess)
+	{
+		if (TerminateProcess(hProcess, 100))
+		{
+			lbRc = TRUE;
+		}
+		else
+		{
+			nErrCode = GetLastError();
+			if (!bNeedClose)
+			{
+				hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, in.dwData[0]);
+				if (hProcess != NULL)
+				{
+					bNeedClose = TRUE;
+					if (TerminateProcess(hProcess, 100))
+						lbRc = TRUE;
+				}
+			}
+		}
+	}
+
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_TERMINATEPID,nOutSize);
+
+	if (*out != NULL)
+	{
+		(*out)->dwData[0] = lbRc;
+		(*out)->dwData[1] = nErrCode;
+	}
+
+	if (hProcess && bNeedClose)
+		CloseHandle(hProcess);
+	return lbRc;
+}
+
+BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = FALSE;
+
+	if (!gpSrv)
+	{
+		_ASSERTE(gpSrv!=NULL);
+	}
+	else
+	{
+		_ASSERTE(in.AttachGuiApp.nPID == gpSrv->dwRootProcess);
+
+		// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
+		if (gpSrv->hRootProcessGui == NULL)
+		{
+			wchar_t szInfo[MAX_PATH*2];
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GUI application (PID=%u) was attached to ConEmu:\n%s\n",
+				in.AttachGuiApp.nPID, in.AttachGuiApp.sAppFileName);
+			_wprintf(szInfo);
+		}
+
+		if (in.AttachGuiApp.hWindow == NULL)
+		{
+			gpSrv->hRootProcessGui = (HWND)-1;
+		}
+		else
+		{
+			gpSrv->hRootProcessGui = in.AttachGuiApp.hWindow;
+		}
+		// Смысла в подтверждении нет - GUI приложение в консоль ничего не выводит
+		gbAlwaysConfirmExit = FALSE;
+		CheckProcessCount(TRUE);
+		lbRc = TRUE;
+	}
+
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_ATTACHGUIAPP,nOutSize);
+
+	if (*out != NULL)
+	{
+		(*out)->dwData[0] = lbRc;
+	}
+
+	return TRUE;
+}
+
+BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 	MCHKHEAP;
@@ -5032,7 +5178,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		//		return FALSE;
 		//	ReloadFullConsoleInfo(TRUE);
 		//	MCHKHEAP;
-		//	// На запрос из GUI (GetAnswerToRequest)
+		//	// На запрос из GUI (ProcessSrvCommand)
 		//	if (in.hdr.nCmd == CECMD_GETCONSOLEINFO) {
 		//		//*out = CreateConsoleInfo(NULL, (in.hdr.nCmd == CECMD_GETFULLINFO));
 		//		int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_CONSOLE_MAPPING_HDR);
@@ -5114,6 +5260,14 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_GUICHANGED:
 		{
 			lbRc = cmd_GuiChanged(in, out);
+		} break;
+		case CECMD_TERMINATEPID:
+		{
+			lbRc = cmd_TerminatePid(in, out);
+		} break;
+		case CECMD_ATTACHGUIAPP:
+		{
+			lbRc = cmd_GuiAppAttached(in, out);
 		} break;
 	}
 
@@ -5323,6 +5477,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		// Запомним то, что последний раз установил сервер. пригодится
 		gpSrv->nReqSizeBufferHeight = BufferHeight;
 		gpSrv->crReqSizeNewSize = crNewSize;
+		_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
 		gpSrv->rReqSizeNewRect = rNewRect;
 		gpSrv->sReqSizeLabel = asLabel;
 

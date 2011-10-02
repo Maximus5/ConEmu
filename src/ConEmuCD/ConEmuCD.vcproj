@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="WinInet.lib"
-				OutputFile="C:\Utils\Far180\ConEmu\ConEmuCD.dll"
+				OutputFile="C:\Far3\ConEmu\ConEmuCD.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -141,7 +141,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="WinInet.lib"
-				OutputFile="C:\Utils\Far180\ConEmu\ConEmuCD64.dll"
+				OutputFile="C:\Far3\ConEmu\ConEmuCD64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

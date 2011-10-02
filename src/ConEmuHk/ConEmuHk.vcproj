@@ -63,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Utils\Far180\ConEmu\ConEmuHk.dll"
+				OutputFile="C:\Far3\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -141,7 +141,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Utils\Far180\ConEmu\ConEmuHk64.dll"
+				OutputFile="C:\Far3\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"

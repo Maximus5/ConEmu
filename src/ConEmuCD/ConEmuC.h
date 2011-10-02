@@ -186,7 +186,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam);
 //DWORD WINAPI InputThread(LPVOID lpvParam);
 DWORD WINAPI InputPipeThread(LPVOID lpvParam);
 DWORD WINAPI GetDataThread(LPVOID lpvParam);
-BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out);
+BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out);
 #ifdef USE_WINEVENT_SRV
 DWORD WINAPI WinEventThread(LPVOID lpvParam);
 void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
@@ -340,6 +340,7 @@ extern DWORD gnConsoleModeFlags;
 struct SrvInfo
 {
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
+	HWND hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
 	BOOL bDebuggerActive, bDebuggerRequestDump; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
 	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
 	DWORD nActiveFarPID; // PID последнего активного Far

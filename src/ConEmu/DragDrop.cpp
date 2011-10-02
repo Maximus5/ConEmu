@@ -1266,7 +1266,13 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	}
 
 	// Определить, на какую панель бросаем
-	ScreenToClient(ghWndDC, (LPPOINT)&pt);
+	HWND hWndDC = gpConEmu->ActiveCon()->GetView();
+	if (!hWndDC)
+	{
+		_ASSERTE(hWndDC!=NULL);
+		return S_OK;
+	}
+	ScreenToClient(hWndDC, (LPPOINT)&pt);
 	COORD cr = gpConEmu->ActiveCon()->ClientToConsole(pt.x, pt.y);
 	pt.x = cr.X; pt.y = cr.Y;
 	//pt.x/=gpSet->Log Font.lfWidth;
@@ -1546,66 +1552,76 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 #ifdef _DEBUG
 		GetCursorPos(&ptCur);
 #endif
-		RECT rcDC; GetWindowRect(ghWndDC, &rcDC);
-
-		//HWND hWndFrom = WindowFromPoint(ptCur);
-		if (/*(hWndFrom != ghWnd && hWndFrom != mh_Overlapped)
-			||*/ !PtInRect(&rcDC, ptCur))
+		RECT rcDC;
+		HWND hWndDC = gpConEmu->ActiveCon()->GetView();
+		if (!hWndDC)
 		{
+			_ASSERTE(hWndDC!=NULL);
 			*pdwEffect = DROPEFFECT_NONE;
 		}
 		else
 		{
-			ScreenToClient(ghWndDC, (LPPOINT)&pt);
-			COORD cr = gpConEmu->ActiveCon()->ClientToConsole(pt.x, pt.y);
-			pt.x = cr.X; pt.y = cr.Y;
-			//pt.x/=gpSet->Log Font.lfWidth;
-			//pt.y/=gpSet->Log Font.lfHeight;
-			BOOL lbActive = FALSE, lbPassive = FALSE;
-			BOOL lbAllowToActive = // Можно ли бросать на активную панель
-			    (!mb_selfdrag) // если тащат снаружи
-			    || (grfKeyState & MK_ALT) // или нажат Alt
-			    || (grfKeyState == MK_RBUTTON); // или тащат правой кнопкой без модификаторов
+			GetWindowRect(hWndDC, &rcDC);
 
-			if (m_pfpi->NoFarConsole)
+			//HWND hWndFrom = WindowFromPoint(ptCur);
+			if (/*(hWndFrom != ghWnd && hWndFrom != mh_Overlapped)
+				||*/ !PtInRect(&rcDC, ptCur))
 			{
-				*pdwEffect = DROPEFFECT_COPY; // Drop в консоль с cmd.exe
+				*pdwEffect = DROPEFFECT_NONE;
 			}
 			else
 			{
-				lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt);
-				// пассивная панель может быть FullScreen и частично ПОД активной
-				lbPassive = !lbActive && PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt);
+				ScreenToClient(hWndDC, (LPPOINT)&pt);
+				COORD cr = gpConEmu->ActiveCon()->ClientToConsole(pt.x, pt.y);
+				pt.x = cr.X; pt.y = cr.Y;
+				//pt.x/=gpSet->Log Font.lfWidth;
+				//pt.y/=gpSet->Log Font.lfHeight;
+				BOOL lbActive = FALSE, lbPassive = FALSE;
+				BOOL lbAllowToActive = // Можно ли бросать на активную панель
+					(!mb_selfdrag) // если тащат снаружи
+					|| (grfKeyState & MK_ALT) // или нажат Alt
+					|| (grfKeyState == MK_RBUTTON); // или тащат правой кнопкой без модификаторов
 
-				// Проверяем, можно ли
-				if ((lbActive && m_pfpi->pszActivePath && m_pfpi->pszActivePath[0] && lbAllowToActive) ||
-					(lbPassive && m_pfpi->pszPassivePath && (m_pfpi->pszPassivePath[0] || mb_selfdrag)))
+				if (m_pfpi->NoFarConsole)
 				{
-					if (grfKeyState & MK_CONTROL)
-						*pdwEffect = DROPEFFECT_COPY;
-					else if (grfKeyState & MK_SHIFT)
-						*pdwEffect = DROPEFFECT_MOVE;
-					else if (grfKeyState & (MK_ALT | MK_RBUTTON))
-						*pdwEffect = DROPEFFECT_LINK;
-					else if (gpConEmu->mouse.state & DRAG_R_STARTED)
-						*pdwEffect = DROPEFFECT_LINK; // при Drop - правая кнопка уже отпущена
-					else
-					{
-						// Смотрим на допустимые эфеекты, определенные источником (иначе драг из корзины не работает)
-						*pdwEffect = (gpSet->isDefCopy && (dwAllowed&DROPEFFECT_COPY)==DROPEFFECT_COPY) ? DROPEFFECT_COPY : DROPEFFECT_MOVE;
-					}
-
-					if (*pdwEffect == DROPEFFECT_LINK && lbPassive && m_pfpi->pszPassivePath[0] == 0)
-						*pdwEffect = DROPEFFECT_NONE;
-				}
-				else if ((lbActive && m_pfpi->ActiveRect.bottom && pt.y > m_pfpi->ActiveRect.bottom) ||
-						(lbPassive && m_pfpi->PassiveRect.bottom && pt.y > m_pfpi->PassiveRect.bottom))
-				{
-					*pdwEffect = DROPEFFECT_COPY;
+					*pdwEffect = DROPEFFECT_COPY; // Drop в консоль с cmd.exe
 				}
 				else
 				{
-					*pdwEffect = DROPEFFECT_NONE;
+					lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt);
+					// пассивная панель может быть FullScreen и частично ПОД активной
+					lbPassive = !lbActive && PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt);
+
+					// Проверяем, можно ли
+					if ((lbActive && m_pfpi->pszActivePath && m_pfpi->pszActivePath[0] && lbAllowToActive) ||
+						(lbPassive && m_pfpi->pszPassivePath && (m_pfpi->pszPassivePath[0] || mb_selfdrag)))
+					{
+						if (grfKeyState & MK_CONTROL)
+							*pdwEffect = DROPEFFECT_COPY;
+						else if (grfKeyState & MK_SHIFT)
+							*pdwEffect = DROPEFFECT_MOVE;
+						else if (grfKeyState & (MK_ALT | MK_RBUTTON))
+							*pdwEffect = DROPEFFECT_LINK;
+						else if (gpConEmu->mouse.state & DRAG_R_STARTED)
+							*pdwEffect = DROPEFFECT_LINK; // при Drop - правая кнопка уже отпущена
+						else
+						{
+							// Смотрим на допустимые эфеекты, определенные источником (иначе драг из корзины не работает)
+							*pdwEffect = (gpSet->isDefCopy && (dwAllowed&DROPEFFECT_COPY)==DROPEFFECT_COPY) ? DROPEFFECT_COPY : DROPEFFECT_MOVE;
+						}
+
+						if (*pdwEffect == DROPEFFECT_LINK && lbPassive && m_pfpi->pszPassivePath[0] == 0)
+							*pdwEffect = DROPEFFECT_NONE;
+					}
+					else if ((lbActive && m_pfpi->ActiveRect.bottom && pt.y > m_pfpi->ActiveRect.bottom) ||
+							(lbPassive && m_pfpi->PassiveRect.bottom && pt.y > m_pfpi->PassiveRect.bottom))
+					{
+						*pdwEffect = DROPEFFECT_COPY;
+					}
+					else
+					{
+						*pdwEffect = DROPEFFECT_NONE;
+					}
 				}
 			}
 		}

@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2202
+  Plugin API for Far Manager 3.0 build 2204
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2202
+#define FARMANAGERVERSION_BUILD 2204
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -435,9 +435,9 @@ struct FarList
 
 struct FarListTitles
 {
-	size_t   TitleLen;
+	size_t TitleSize;
 	const wchar_t *Title;
-	size_t   BottomLen;
+	size_t BottomSize;
 	const wchar_t *Bottom;
 };
 
@@ -737,8 +737,8 @@ struct PanelInfo
 	size_t ItemsNumber;
 	size_t SelectedItemsNumber;
 	RECT PanelRect;
-	int CurrentItem;
-	int TopPanelItem;
+	size_t CurrentItem;
+	size_t TopPanelItem;
 	int ViewMode;
 	enum PANELINFOTYPE PanelType;
 	enum OPENPANELINFO_SORTMODES SortMode;
@@ -748,8 +748,8 @@ struct PanelInfo
 
 struct PanelRedrawInfo
 {
-	int CurrentItem;
-	int TopPanelItem;
+	size_t CurrentItem;
+	size_t TopPanelItem;
 };
 
 struct CmdLineSelect

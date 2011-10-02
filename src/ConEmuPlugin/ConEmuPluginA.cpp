@@ -742,7 +742,7 @@ void SetWindowA(int nTab)
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void PostMacroA(char* asMacro)
+void PostMacroA(char* asMacro, INPUT_RECORD* apRec)
 {
 	if (!InfoA || !InfoA->AdvControl) return;
 

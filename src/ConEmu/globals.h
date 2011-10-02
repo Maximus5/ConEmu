@@ -50,7 +50,7 @@ extern HINSTANCE g_hInstance;
 extern CConEmuMain *gpConEmu;
 //extern TCHAR Title[0x400];
 //extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
-extern HWND ghWnd, ghConWnd, ghWndDC, ghOpWnd, ghWndApp;
+extern HWND ghWnd, ghConWnd, /*ghWnd DC,*/ ghOpWnd, ghWndApp;
 extern BOOL gbMessagingStarted, gbDontEnable;
 //extern TabBarClass TabBar;
 extern OSVERSIONINFO gOSVer;

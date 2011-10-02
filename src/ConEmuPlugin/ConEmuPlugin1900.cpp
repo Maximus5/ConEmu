@@ -726,7 +726,7 @@ void SetWindowW1900(int nTab)
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void PostMacroW1900(wchar_t* asMacro)
+void PostMacroW1900(wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return;
@@ -741,6 +741,9 @@ void PostMacroW1900(wchar_t* asMacro)
 	}
 
 	mcr.SequenceText = asMacro;
+	if (apRec)
+		mcr.AKey = *apRec;
+
 	//gFarVersion.dwBuild
 	InfoW1900->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, 0, &mcr);
 	//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(

@@ -32,7 +32,7 @@ class CPluginBackground
 		void SetDcPanelRect(RECT *rcDc, PaintBackgroundArg::BkPanelInfo *Panel, PaintBackgroundArg *Arg);
 
 		/* Вызывается только в thread-safe (Synchro) - begin */
-		void CheckPanelFolders();
+		void CheckPanelFolders(int anForceSetPlace = 0);
 		void UpdateBackground();
 		static void UpdateBackground_Exec(struct RegisterBackgroundArg *pPlugin, struct PaintBackgroundArg *pArg);
 		/* end- Вызывается только в thread-safe (Synchro)*/

@@ -483,11 +483,13 @@ struct CachedImage
 		}
 		if (hDc)
 		{
+			WARNING("Исключение CloseHandle в Background");
 			CloseHandle(hDc);
 			hDc = NULL;
 		}
 		if (hBmp)
 		{
+			WARNING("Исключение CloseHandle в Background");
 			CloseHandle(hBmp);
 			hBmp = NULL;
 		}
@@ -1839,10 +1841,17 @@ void HSV2RGB(const HSVColor& HSV, RGBColor& rgb)
 int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 {
 	if (!(pBk->nFarPanelSettings & FPS_SHOWSTATUSLINE))
+	{
+		// Что-то при запуске (1.7x?) иногда картинки прыгают, как будто статус сразу не нашли
+		_ASSERTE((pBk->nFarPanelSettings & FPS_SHOWSTATUSLINE) == FPS_SHOWSTATUSLINE);
 		return 0;
+	}
 
 	if ((bLeft ? pBk->LeftPanel.nPanelType : pBk->RightPanel.nPanelType) != PTYPE_FILEPANEL)
+	{
+		_ASSERTE(((UINT)(bLeft ? pBk->LeftPanel.nPanelType : pBk->RightPanel.nPanelType)) <= PTYPE_INFOPANEL);
 		return 0;
+	}
 
 	RECT rcPanel = bLeft ? pBk->LeftPanel.rcPanelRect : pBk->RightPanel.rcPanelRect;
 		
@@ -1885,6 +1894,9 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 		}
 	}
 	
+	// Что-то при запуске (1.7x?) иногда картинки прыгают, как будто статус сразу не нашли
+	_ASSERTE(nLines>0);
+
 	free(pChars);
 	
 	return nLines;

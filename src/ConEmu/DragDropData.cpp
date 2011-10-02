@@ -1773,7 +1773,7 @@ BOOL CDragDropData::IsDragStarting()
 	return lbDragStarting;
 }
 
-BOOL CDragDropData::ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+BOOL CDragDropData::ForwardMessage(UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	if (!this)
 		return FALSE;
