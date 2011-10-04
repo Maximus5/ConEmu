@@ -86,10 +86,14 @@ extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern RECT    grcConEmuClient; // Для аттача гуевых окон
 extern BOOL    gbAttachGuiClient; // Для аттача гуевых окон
+BOOL gbGuiClientAttached; // Для аттача гуевых окон (успешно подключились)
 HWND ghAttachGuiClient = NULL; // Чтобы ShowWindow перехватить
 BOOL gbForceShowGuiClient = FALSE; // --
 HMENU ghAttachGuiClientMenu = NULL;
 RECT grcAttachGuiClientPos;
+#ifdef _DEBUG
+HHOOK ghGuiClientRetHook = NULL;
+#endif
 //HWND ghConsoleHwnd = NULL;
 extern HWND    ghConWnd;
 //BOOL gbFARuseASCIIsort = FALSE;
@@ -495,6 +499,184 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	// Теперь можно обработать модули
 	return SetAllHooks(ahOurDll, NULL, TRUE);
 }
+
+
+BOOL MyAllowSetForegroundWindow(DWORD dwProcessId)
+{
+	BOOL lbRc = FALSE;
+	typedef BOOL (WINAPI* AllowSetForegroundWindow_t)(DWORD);
+	AllowSetForegroundWindow_t AllowSetForegroundWindow_f = (AllowSetForegroundWindow_t)GetProcAddress(ghUser32, "AllowSetForegroundWindow");
+	if (AllowSetForegroundWindow_f)
+	{
+		lbRc = AllowSetForegroundWindow_f(dwProcessId);
+	}
+	else
+	{
+		_ASSERTE(AllowSetForegroundWindow_f!=NULL);
+	}
+	return lbRc;
+}
+
+DWORD MyGetWindowThreadProcessId(HWND hWnd, LPDWORD lpdwProcessId)
+{
+	DWORD lRc = 0;
+	typedef BOOL (WINAPI* GetWindowThreadProcessId_t)(HWND,LPDWORD);
+	GetWindowThreadProcessId_t GetWindowThreadProcessId_f = (GetWindowThreadProcessId_t)GetProcAddress(ghUser32, "GetWindowThreadProcessId");
+	if (GetWindowThreadProcessId_f)
+	{
+		lRc = GetWindowThreadProcessId_f(hWnd, lpdwProcessId);
+	}
+	else
+	{
+		_ASSERTE(GetWindowThreadProcessId_f!=NULL);
+	}
+	return lRc;
+}
+
+BOOL MySetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
+{
+	BOOL lbRc = FALSE;
+	typedef BOOL (WINAPI* SetWindowPos_t)(HWND,HWND,int,int,int,int,UINT);
+	SetWindowPos_t SetWindowPos_f = (SetWindowPos_t)GetProcAddress(ghUser32, "SetWindowPos");
+	if (SetWindowPos_f)
+	{
+		lbRc = SetWindowPos_f(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
+	}
+	else
+	{
+		_ASSERTE(SetWindowPos_f!=NULL);
+	}
+	return lbRc;
+}
+
+LONG_PTR MyGetWindowLongPtrW(HWND hWnd, int nIndex)
+{
+	LONG_PTR lRc = 0;
+	typedef LONG_PTR (WINAPI* GetWindowLongPtr_t)(HWND,int);
+	GetWindowLongPtr_t GetWindowLongPtr_f = (GetWindowLongPtr_t)GetProcAddress(ghUser32,WIN3264TEST("GetWindowLongW","GetWindowLongPtrW"));
+	if (GetWindowLongPtr_f)
+	{
+		lRc = GetWindowLongPtr_f(hWnd, nIndex);
+	}
+	else
+	{
+		_ASSERTE(GetWindowLongPtr_f!=NULL);
+	}
+	return lRc;
+}
+
+LONG_PTR MySetWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
+{
+	LONG_PTR lRc = 0;
+	typedef LONG_PTR (WINAPI* SetWindowLongPtr_t)(HWND,int,LONG_PTR);
+	SetWindowLongPtr_t SetWindowLongPtr_f = (SetWindowLongPtr_t)GetProcAddress(ghUser32,WIN3264TEST("SetWindowLongW","SetWindowLongPtrW"));
+	if (SetWindowLongPtr_f)
+	{
+		lRc = SetWindowLongPtr_f(hWnd, nIndex, dwNewLong);
+	}
+	else
+	{
+		_ASSERTE(SetWindowLongPtr_f!=NULL);
+	}
+	return lRc;
+}
+
+BOOL MyGetWindowRect(HWND hWnd, LPRECT lpRect)
+{
+	BOOL bRc = FALSE;
+	typedef BOOL (WINAPI* GetWindowRect_t)(HWND,LPRECT);
+	GetWindowRect_t GetWindowRect_f = (GetWindowRect_t)GetProcAddress(ghUser32, "GetWindowRect");
+	if (GetWindowRect_f)
+	{
+		bRc = GetWindowRect_f(hWnd, lpRect);
+	}
+	else
+	{
+		_ASSERTE(GetWindowRect_f!=NULL);
+	}
+	return bRc;
+}
+
+BOOL MySystemParametersInfoW(UINT uiAction, UINT uiParam, PVOID pvParam, UINT fWinIni)
+{
+	BOOL bRc = FALSE;
+	typedef BOOL (WINAPI* SystemParametersInfo_t)(UINT,UINT,PVOID,UINT);
+	SystemParametersInfo_t SystemParametersInfo_f = (SystemParametersInfo_t)GetProcAddress(ghUser32, "SystemParametersInfoW");
+	if (SystemParametersInfo_f)
+	{
+		bRc = SystemParametersInfo_f(uiAction, uiParam, pvParam, fWinIni);
+	}
+	else
+	{
+		_ASSERTE(SystemParametersInfo_f!=NULL);
+	}
+	return bRc;
+}
+
+BOOL MySetWindowTextW(HWND hWnd, LPCWSTR lpString)
+{
+	BOOL bRc = FALSE;
+	typedef BOOL (WINAPI* SetWindowText_t)(HWND,LPCWSTR);
+	SetWindowText_t SetWindowText_f = (SetWindowText_t)GetProcAddress(ghUser32, "SetWindowTextW");
+	if (SetWindowText_f)
+	{
+		bRc = SetWindowText_f(hWnd, lpString);
+	}
+	else
+	{
+		_ASSERTE(SetWindowText_f!=NULL);
+	}
+	return bRc;
+}
+
+BOOL MyEndDialog(HWND hDlg, INT_PTR nResult)
+{
+	BOOL bRc = FALSE;
+	typedef BOOL (WINAPI* EndDialog_t)(HWND,INT_PTR);
+	EndDialog_t EndDialog_f = (EndDialog_t)GetProcAddress(ghUser32, "EndDialog");
+	if (EndDialog_f)
+	{
+		bRc = EndDialog_f(hDlg, nResult);
+	}
+	else
+	{
+		_ASSERTE(EndDialog_f!=NULL);
+	}
+	return bRc;
+}
+
+INT_PTR MyDialogBoxIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATEW hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+{
+	INT_PTR nRc = 0;
+	typedef INT_PTR (WINAPI* DialogBoxIndirectParam_t)(HINSTANCE,LPCDLGTEMPLATE,HWND,DLGPROC,LPARAM);
+	DialogBoxIndirectParam_t DialogBoxIndirectParam_f = (DialogBoxIndirectParam_t)GetProcAddress(ghUser32, "DialogBoxIndirectParamW");
+	if (DialogBoxIndirectParam_f)
+	{
+		nRc = DialogBoxIndirectParam_f(hInstance, hDialogTemplate, hWndParent, lpDialogFunc, dwInitParam);
+	}
+	else
+	{
+		_ASSERTE(DialogBoxIndirectParam_f!=NULL);
+	}
+	return nRc;
+}
+
+TODO("User32.dll - импорты");
+/*
+GetClassInfoExA
+GetClassInfoExW
+GetClassNameW
+GetClientRect
+GetSystemMenu
+GetWindowLongW
+GetWindowRect
+InsertMenuW
+IsWindow
+LoadMenuA
+LoadMenuW
+SendMessageW
+SetMenu
+*/
 
 
 //void ShutdownHooks()
@@ -962,11 +1144,47 @@ BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint)
 	return lbRc;
 }
 
+#ifdef _DEBUG
+LRESULT CALLBACK GuiClientRetHook(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode == HC_ACTION)
+	{
+		CWPRETSTRUCT* p = (CWPRETSTRUCT*)lParam;
+		CREATESTRUCT* pc = NULL;
+		wchar_t szDbg[200]; szDbg[0] = 0;
+		wchar_t szClass[127]; szClass[0] = 0;
+		switch (p->message)
+		{
+			case WM_DESTROY:
+			{
+				GetClassName(p->hwnd, szClass, countof(szClass));
+				_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_DESTROY on 0x%08X (%s)\n", (DWORD)p->hwnd, szClass);
+				break;
+			}
+			case WM_CREATE:
+			{
+				pc = (CREATESTRUCT*)p->lParam;
+				if (p->lResult == -1)
+				{
+					wcscpy_c(szDbg, L"WM_CREATE --FAILED--\n");
+					break;
+				}
+			}
+		}
 
-static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwStyle, DWORD& dwExStyle, HWND& hWndParent, BOOL& bAttachGui)
+		if (*szDbg)
+			OutputDebugString(szDbg);
+	}
+
+	return CallNextHookEx(ghGuiClientRetHook, nCode, wParam, lParam);
+}
+#endif
+
+
+static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwStyle, DWORD& dwExStyle, HWND& hWndParent, BOOL& bAttachGui, BOOL& bStyleHidden)
 {
 	bAttachGui = FALSE;
-	if (gbAttachGuiClient && ghConEmuWnd)
+	if (gbAttachGuiClient && ghConEmuWndDC && (GetCurrentThreadId() == gnHookMainThreadId))
 	{
 		bool lbCanAttach = (dwStyle & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW;
 		if (dwStyle & (WS_POPUP|DS_MODALFRAME|WS_CHILDWINDOW))
@@ -976,17 +1194,29 @@ static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWOR
 
 		if (lbCanAttach)
 		{
-			// Родительское окно - ConEmu
-			hWndParent = ghConEmuWnd;
-			// Уберем рамку, меню и заголовок - оставим
-			dwStyle = (dwStyle | WS_CHILDWINDOW|WS_TABSTOP) & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
+			// Родительское окно - ConEmu DC
+			hWndParent = ghConEmuWndDC; // Надо ли его ставить сразу, если не включаем WS_CHILD?
+
+			// WS_CHILDWINDOW перед созданием выставлять нельзя, т.к. например у WordPad.exe сносит крышу:
+			// все его окна создаются нормально, но он показывает ошибку "Не удалось создать новый документ"
+			//// Уберем рамку, меню и заголовок - оставим
+			//dwStyle = (dwStyle | WS_CHILDWINDOW|WS_TABSTOP) & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
+			dwStyle &= ~WS_VISIBLE; // А вот видимость - точно сбросим
+			////dwExStyle = dwExStyle & ~WS_EX_WINDOWEDGE;
+
 			bAttachGui = TRUE;
-			gbAttachGuiClient = FALSE; // Только одно окно приложения
+			//gbAttachGuiClient = FALSE; // Только одно окно приложения -- сбросим после реального создания окна
+			gbGuiClientAttached = TRUE; // Сразу взведем флажок режима
+
+			#ifdef _DEBUG
+			if (!ghGuiClientRetHook)
+				ghGuiClientRetHook = SetWindowsHookEx(WH_CALLWNDPROCRET, GuiClientRetHook, NULL, GetCurrentThreadId());
+			#endif
 		}
 		return true;
 	}
 
-	if (ghAttachGuiClient)
+	if (gbGuiClientAttached /*ghAttachGuiClient*/)
 	{
 		return true; // В GUI приложениях - разрешено все
 	}
@@ -1032,23 +1262,13 @@ static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWOR
 #endif
 }
 
-BOOL MySetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
-{
-	BOOL lbRc = FALSE;
-	typedef BOOL (WINAPI* SetWindowPos_t)(HWND,HWND,int,int,int,int,UINT);
-	SetWindowPos_t SetWindowPos_f = (SetWindowPos_t)GetProcAddress(ghUser32, "SetWindowPos");
-
-	if (SetWindowPos_f)
-		lbRc = SetWindowPos_f(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
-
-	return lbRc;
-}
-
-static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asClassW, DWORD anStyle, DWORD anStyleEx)
+static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asClassW, DWORD anStyle, DWORD anStyleEx, BOOL abStyleHidden)
 {
 	ghAttachGuiClient = hWindow;
 	gbForceShowGuiClient = TRUE;
+	gbAttachGuiClient = FALSE; // Только одно окно приложения. Пока?
 
+#if 0
 	// Для WS_CHILDWINDOW меню нельзя указать при создании окна
 	if (!hMenu && !ghAttachGuiClientMenu && (asClassA || asClassW))
 	{
@@ -1082,6 +1302,10 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 			InsertMenu(hSys, 1, MF_BYPOSITION|MF_SEPARATOR, NULL, NULL);
 		}
 	}
+#endif
+
+	DWORD nCurStyle = (DWORD)MyGetWindowLongPtrW(hWindow, GWL_STYLE);
+	DWORD nCurStyleEx = (DWORD)MyGetWindowLongPtrW(hWindow, GWL_EXSTYLE);
 
 	DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
 	CESERVER_REQ *pIn = (CESERVER_REQ*)calloc(nSize,1);
@@ -1090,8 +1314,8 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 	pIn->AttachGuiApp.bOk = TRUE;
 	pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 	pIn->AttachGuiApp.hWindow = hWindow;
-	pIn->AttachGuiApp.nStyle = anStyle;
-	pIn->AttachGuiApp.nStyleEx = anStyleEx;
+	pIn->AttachGuiApp.nStyle = nCurStyle; // стили могли измениться после создания окна,
+	pIn->AttachGuiApp.nStyleEx = nCurStyleEx; // поэтому получим актуальные
 	GetWindowRect(hWindow, &pIn->AttachGuiApp.rcWindow);
 	GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
 
@@ -1102,17 +1326,35 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 
 	free(pIn);
 
+	// abStyleHidden == TRUE, если окно при создании указало флаг WS_VISIBLE (т.е. не собиралось звать ShowWindow)
+
 	if (pOut)
 	{
 		if (pOut->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
 		{
 			_ASSERTE(pOut->AttachGuiApp.bOk);
+
+			if (!(nCurStyle & WS_CHILDWINDOW))
+			{
+				nCurStyle = (nCurStyle | WS_CHILDWINDOW|WS_TABSTOP); // & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
+				MySetWindowLongPtrW(hWindow, GWL_STYLE, nCurStyle);
+				SetParent(hWindow, ghConEmuWndDC);
+			}
 			
 			RECT rcGui = grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
-			MySetWindowPos(hWindow, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
-				SWP_FRAMECHANGED);
+			if (MySetWindowPos(hWindow, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+				SWP_FRAMECHANGED | (abStyleHidden ? SWP_SHOWWINDOW : 0)))
+			{
+				if (abStyleHidden)
+					abStyleHidden = FALSE;
+			}
 		}
 		ExecuteFreeResult(pOut);
+	}
+
+	if (abStyleHidden)
+	{
+		ShowWindow(hWindow, SW_SHOW);
 	}
 }
 
@@ -1154,10 +1396,10 @@ HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWind
 {
 	ORIGINALFASTEX(CreateWindowExA,NULL);
 	HWND hWnd = NULL;
-	BOOL bAttachGui = FALSE;
+	BOOL bAttachGui = FALSE, bStyleHidden = FALSE;
 	DWORD lStyle = dwStyle, lStyleEx = dwExStyle;
 
-	if (CheckCanCreateWindow(lpClassName, NULL, dwStyle, dwExStyle, hWndParent, bAttachGui) && F(CreateWindowExA) != NULL)
+	if (CheckCanCreateWindow(lpClassName, NULL, dwStyle, dwExStyle, hWndParent, bAttachGui, bStyleHidden) && F(CreateWindowExA) != NULL)
 	{
 		if (bAttachGui)
 		{
@@ -1169,7 +1411,7 @@ HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWind
 
 		if (hWnd && bAttachGui)
 		{
-			OnGuiWindowAttached(hWnd, hMenu, lpClassName, NULL, lStyle, lStyleEx);
+			OnGuiWindowAttached(hWnd, hMenu, lpClassName, NULL, lStyle, lStyleEx, bStyleHidden);
 		}
 	}
 
@@ -1181,10 +1423,10 @@ HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWi
 {
 	ORIGINALFASTEX(CreateWindowExW,NULL);
 	HWND hWnd = NULL;
-	BOOL bAttachGui = FALSE;
+	BOOL bAttachGui = FALSE, bStyleHidden = FALSE;
 	DWORD lStyle = dwStyle, lStyleEx = dwExStyle;
 
-	if (CheckCanCreateWindow(NULL, lpClassName, dwStyle, dwExStyle, hWndParent, bAttachGui) && F(CreateWindowExW) != NULL)
+	if (CheckCanCreateWindow(NULL, lpClassName, dwStyle, dwExStyle, hWndParent, bAttachGui, bStyleHidden) && F(CreateWindowExW) != NULL)
 	{
 		if (bAttachGui)
 		{
@@ -1196,7 +1438,7 @@ HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWi
 
 		if (hWnd && bAttachGui)
 		{
-			OnGuiWindowAttached(hWnd, hMenu, NULL, lpClassName, lStyle, lStyleEx);
+			OnGuiWindowAttached(hWnd, hMenu, NULL, lpClassName, lStyle, lStyleEx, bStyleHidden);
 		}
 	}
 
@@ -2161,49 +2403,43 @@ INT_PTR CALLBACK SimpleApiDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 {
 	SimpleApiFunctionArg* P = NULL;
 
-	typedef LONG_PTR (WINAPI* SetWindowLongPtr_t)(HWND,int,LONG_PTR);
-	SetWindowLongPtr_t SetWindowLongPtr_f = (SetWindowLongPtr_t)GetProcAddress(ghUser32,
-		#ifdef _WIN64
-		"SetWindowLongPtrW"
-		#else
-		"SetWindowLongW"
-		#endif
-		);
+	//typedef LONG_PTR (WINAPI* SetWindowLongPtr_t)(HWND,int,LONG_PTR);
+	//SetWindowLongPtr_t SetWindowLongPtr_f = (SetWindowLongPtr_t)GetProcAddress(ghUser32,WIN3264TEST("SetWindowLongW","SetWindowLongPtrW"));
 	
 	if (uMsg == WM_INITDIALOG)
 	{
 		P = (SimpleApiFunctionArg*)lParam;
-		SetWindowLongPtr_f(hwndDlg, GWLP_USERDATA, lParam);
+		MySetWindowLongPtrW(hwndDlg, GWLP_USERDATA, lParam);
 		
-		typedef BOOL (WINAPI* GetWindowRect_t)(HWND,LPRECT);
-		GetWindowRect_t GetWindowRect_f = (GetWindowRect_t)GetProcAddress(ghUser32, "GetWindowRect");
-		typedef BOOL (WINAPI* SystemParametersInfo_t)(UINT,UINT,PVOID,UINT);
-		SystemParametersInfo_t SystemParametersInfo_f = (SystemParametersInfo_t)GetProcAddress(ghUser32, "SystemParametersInfoW");
+		//typedef BOOL (WINAPI* GetWindowRect_t)(HWND,LPRECT);
+		//GetWindowRect_t GetWindowRect_f = (GetWindowRect_t)GetProcAddress(ghUser32, "GetWindowRect");
+		//typedef BOOL (WINAPI* SystemParametersInfo_t)(UINT,UINT,PVOID,UINT);
+		//SystemParametersInfo_t SystemParametersInfo_f = (SystemParametersInfo_t)GetProcAddress(ghUser32, "SystemParametersInfoW");
 
 
 		int x = 0, y = 0;
 		RECT rcDC = {};
-		if (!GetWindowRect_f(ghConEmuWndDC, &rcDC))
-			SystemParametersInfo_f(SPI_GETWORKAREA, 0, &rcDC, 0);
+		if (!MyGetWindowRect(ghConEmuWndDC, &rcDC))
+			MySystemParametersInfoW(SPI_GETWORKAREA, 0, &rcDC, 0);
 		if (rcDC.right > rcDC.left && rcDC.bottom > rcDC.top)
 		{
 			x = max(rcDC.left, ((rcDC.right+rcDC.left-300)>>1));
 			y = max(rcDC.top, ((rcDC.bottom+rcDC.top-200)>>1));
 		}
 		
-		typedef BOOL (WINAPI* SetWindowText_t)(HWND,LPCWSTR);
-		SetWindowText_t SetWindowText_f = (SetWindowText_t)GetProcAddress(ghUser32, "SetWindowTextW");
+		//typedef BOOL (WINAPI* SetWindowText_t)(HWND,LPCWSTR);
+		//SetWindowText_t SetWindowText_f = (SetWindowText_t)GetProcAddress(ghUser32, "SetWindowTextW");
 
 		
 		switch (P->funcType)
 		{
 			case SimpleApiFunctionArg::sft_ChooseColorA:
 				((LPCHOOSECOLORA)P->pArg)->hwndOwner = hwndDlg;
-				SetWindowText_f(hwndDlg, L"ConEmu ColorPicker");
+				MySetWindowTextW(hwndDlg, L"ConEmu ColorPicker");
 				break;
 			case SimpleApiFunctionArg::sft_ChooseColorW:
 				((LPCHOOSECOLORW)P->pArg)->hwndOwner = hwndDlg;
-				SetWindowText_f(hwndDlg, L"ConEmu ColorPicker");
+				MySetWindowTextW(hwndDlg, L"ConEmu ColorPicker");
 				break;
 		}
 		
@@ -2212,9 +2448,9 @@ INT_PTR CALLBACK SimpleApiDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 		P->bResult = P->funcPtr(P->pArg);
 		P->nLastError = GetLastError();
 		
-		typedef BOOL (WINAPI* EndDialog_t)(HWND,INT_PTR);
-		EndDialog_t EndDialog_f = (EndDialog_t)GetProcAddress(ghUser32, "EndDialog");
-		EndDialog_f(hwndDlg, 1);
+		//typedef BOOL (WINAPI* EndDialog_t)(HWND,INT_PTR);
+		//EndDialog_t EndDialog_f = (EndDialog_t)GetProcAddress(ghUser32, "EndDialog");
+		MyEndDialog(hwndDlg, 1);
 		
 		return FALSE;
 	}
@@ -2225,7 +2461,7 @@ INT_PTR CALLBACK SimpleApiDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 		{
 			MINMAXINFO* p = (MINMAXINFO*)lParam;
 			p->ptMinTrackSize.x = p->ptMinTrackSize.y = 0;
-			SetWindowLongPtr_f(hwndDlg, DWLP_MSGRESULT, 0);
+			MySetWindowLongPtrW(hwndDlg, DWLP_MSGRESULT, 0);
 		}
 		return TRUE;
 	}
@@ -2254,18 +2490,20 @@ BOOL MyChooseColor(SimpleApiFunction_t funcPtr, void* lpcc, BOOL abUnicode)
 	pTempl->style = WS_POPUP|/*DS_MODALFRAME|DS_CENTER|*/DS_SETFOREGROUND;
 	
 	
-	typedef INT_PTR (WINAPI* DialogBoxIndirectParam_t)(HINSTANCE,LPCDLGTEMPLATE,HWND,DLGPROC,LPARAM);
-	DialogBoxIndirectParam_t DialogBoxIndirectParam_f = (DialogBoxIndirectParam_t)GetProcAddress(ghUser32, "DialogBoxIndirectParamW");
+	//typedef INT_PTR (WINAPI* DialogBoxIndirectParam_t)(HINSTANCE,LPCDLGTEMPLATE,HWND,DLGPROC,LPARAM);
+	//DialogBoxIndirectParam_t DialogBoxIndirectParam_f = (DialogBoxIndirectParam_t)GetProcAddress(ghUser32, "DialogBoxIndirectParamW");
 	
-	if (DialogBoxIndirectParam_f)
+	//if (DialogBoxIndirectParam_f)
+	//{
+
+	INT_PTR iRc = MyDialogBoxIndirectParamW(ghHookOurModule, pTempl, NULL, SimpleApiDialogProc, (LPARAM)&Arg);
+	if (iRc == 1)
 	{
-		INT_PTR iRc = DialogBoxIndirectParam_f(ghHookOurModule, pTempl, NULL, SimpleApiDialogProc, (LPARAM)&Arg);
-		if (iRc == 1)
-		{
-			lbRc = Arg.bResult;
-			SetLastError(Arg.nLastError);
-		}
+		lbRc = Arg.bResult;
+		SetLastError(Arg.nLastError);
 	}
+
+	//}
 	
 	return lbRc;
 }

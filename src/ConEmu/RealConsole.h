@@ -230,6 +230,7 @@ class CRealConsole
 		// Если работаем в Gui-режиме (Notepad, Putty, ...)
 		HWND    GuiWnd();
 		void    SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID);
+		void    CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui);
 
 		CRealConsole(CVirtualConsole* apVCon);
 		~CRealConsole();
@@ -337,7 +338,7 @@ class CRealConsole
 		void OnActivate(int nNewNum, int nOldNum);
 		void OnDeactivate(int nNewNum);
 		void ShowHideViews(BOOL abShow);
-		void OnGuiFocused(BOOL abFocus);
+		void OnGuiFocused(BOOL abFocus, BOOL abForceChild = FALSE);
 		void UpdateServerActive(BOOL abActive);
 		BOOL CheckBufferSize();
 		//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);

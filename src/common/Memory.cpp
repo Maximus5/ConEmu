@@ -31,15 +31,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Memory.h"
 #include "MStrSafe.h"
 
-HANDLE ghHeap = NULL;
+#ifdef _DEBUG
+#include "MAssert.h"
+#endif
 
 #ifndef _ASSERTE
-#ifdef _DEBUG
-#include <crtdbg.h>
-#else
 #define _ASSERTE(x)
 #endif
-#endif
+
+HANDLE ghHeap = NULL;
 
 #ifdef TRACK_MEMORY_ALLOCATIONS
 static const char* PointToName(const char* asFileOrPath)
@@ -169,7 +169,14 @@ void __cdecl xf_free
 #endif
 )
 {
-	_ASSERTE(ghHeap && _Memory);
+	if (!ghHeap || !_Memory)
+	{
+		//_ASSERTE(ghHeap && _Memory);
+		#ifdef _DEBUG
+		_CrtDbgBreak();
+		#endif
+		return;
+	}
 #ifdef TRACK_MEMORY_ALLOCATIONS
 	xf_mem_block* p = ((xf_mem_block*)_Memory)-1;
 
@@ -342,7 +349,7 @@ void * __cdecl operator new[](size_t _Size)
 }
 void __cdecl operator delete(void *p)
 {
-	return xf_free(
+	xf_free(
 	           p
 #ifdef TRACK_MEMORY_ALLOCATIONS
 	           ,__FILE__,__LINE__
@@ -351,7 +358,7 @@ void __cdecl operator delete(void *p)
 }
 void __cdecl operator delete[](void *p)
 {
-	return xf_free(
+	xf_free(
 	           p
 #ifdef TRACK_MEMORY_ALLOCATIONS
 	           ,__FILE__,__LINE__

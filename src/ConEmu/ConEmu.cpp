@@ -59,7 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRIME(s) //DEBUGSTR(s)
 #define DEBUGSTRCHAR(s) //DEBUGSTR(s)
-#define DEBUGSTRSETCURSOR(s) //DEBUGSTR(s)
+#define DEBUGSTRSETCURSOR(s) OutputDebugString(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
@@ -413,6 +413,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgAutoSizeFont = ++nAppMsg;
 	mn_MsgDisplayRConError = ++nAppMsg;
 	mn_MsgMacroFontSetName = ++nAppMsg;
+	mn_MsgCreateViewWindow = ++nAppMsg;
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 }
@@ -1504,26 +1505,36 @@ void CConEmuMain::AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand/*=FALSE*/
 
 void CConEmuMain::AskChangeBufferHeight()
 {
+	CRealConsole *pRCon = ActiveCon()->RCon();
+	if (!pRCon) return;
+
+
+	HWND hGuiClient = pRCon->GuiWnd();
+	if (hGuiClient)
+	{
+		pRCon->ShowOtherWindow(hGuiClient, ::IsWindowVisible(hGuiClient) ? SW_HIDE : SW_SHOW);
+		return;
+	}
+
+
 	// Win7 BUGBUG: Issue 192: падение Conhost при turn bufferheight ON
 	// http://code.google.com/p/conemu-maximus5/issues/detail?id=192
 	if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1)
 		return;
 
-	CRealConsole *pRCon = ActiveCon()->RCon();
-
-	if (!pRCon) return;
 
 	BOOL lbBufferHeight = pRCon->isBufferHeight();
+
 	BOOL b = gbDontEnable; gbDontEnable = TRUE;
 	int nBtn = MessageBox(ghWnd, lbBufferHeight ?
-	                      L"Do You want to turn bufferheight OFF?" :
-	                      L"Do You want to turn bufferheight ON?",
-	                      ms_ConEmuVer, MB_ICONQUESTION|MB_OKCANCEL);
+						  L"Do You want to turn bufferheight OFF?" :
+						  L"Do You want to turn bufferheight ON?",
+						  ms_ConEmuVer, MB_ICONQUESTION|MB_OKCANCEL);
 	gbDontEnable = b;
 
 	if (nBtn != IDOK) return;
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	HANDLE hFarInExecuteEvent = NULL;
 
 	if (!lbBufferHeight)
@@ -1540,15 +1551,17 @@ void CConEmuMain::AskChangeBufferHeight()
 				SetEvent(hFarInExecuteEvent);
 		}
 	}
+	#endif
 
-#endif
+	
 	pRCon->ChangeBufferHeightMode(!lbBufferHeight);
-#ifdef _DEBUG
 
+
+	#ifdef _DEBUG
 	if (hFarInExecuteEvent)
 		ResetEvent(hFarInExecuteEvent);
+	#endif
 
-#endif
 	OnBufferHeight();
 }
 
@@ -2684,10 +2697,10 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			}
 
 			UpdateWindowRgn();
-#ifdef _DEBUG
-			GetWindowPlacement(ghWnd, &wpl);
-			UpdateWindow(ghWnd);
-#endif
+			//#ifdef _DEBUG
+			//GetWindowPlacement(ghWnd, &wpl);
+			//UpdateWindow(ghWnd);
+			//#endif
 		} break;
 		case rMaximized:
 		{
@@ -3931,10 +3944,12 @@ bool CConEmuMain::ConActivate(int nCon)
 			SyncWindowToConsole();
 
 		// Теперь можно показать активную
-		ShowWindow(mp_VActive->GetView(), SW_SHOW);
+		//ShowWindow(mp_VActive->GetView(), SW_SHOW);
+		mp_VActive->ShowView(SW_SHOW);
 		// и спрятать деактивированную
 		if (pOldActive && (pOldActive != mp_VActive) && !pOldActive->isVisible())
-			ShowWindow(pOldActive->GetView(), SW_HIDE);
+			pOldActive->ShowView(SW_HIDE);
+			//ShowWindow(pOldActive->GetView(), SW_HIDE);
 
 		Invalidate(mp_VActive);
 	}
@@ -7778,6 +7793,21 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 	}
 }
 
+// Это не Post, а Send. Синхронное создание окна в главной нити
+HWND CConEmuMain::PostCreateView(CConEmuChild* pChild)
+{
+	HWND hChild = NULL;
+	if (GetCurrentThreadId() == mn_MainThreadId)
+	{
+		hChild = pChild->CreateView();
+	}
+	else
+	{
+		hChild = (HWND)SendMessage(ghWnd, mn_MsgCreateViewWindow, 0, (LPARAM)pChild);
+	}
+	return hChild;
+}
+
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
 	gpSet->SaveSizePosOnExit();
@@ -10706,34 +10736,48 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 
 LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 {
+	DEBUGSTRSETCURSOR(lParam==-1 ? L"WM_SETCURSOR (int)" : L"WM_SETCURSOR");
+
 	POINT ptCur; GetCursorPos(&ptCur);
 	CVirtualConsole* pVCon = GetVConFromPoint(ptCur);
+	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
+
+	// В GUI режиме - не ломать курсор, заданный дочерним приложением
+	HWND hGuiClient = pRCon->GuiWnd();
+	if (pRCon && hGuiClient && ::IsWindowVisible(hGuiClient))
+	{
+		return TRUE;
+	}
 
 	if (lParam == (LPARAM)-1)
-	{
+	{ 
 		RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 
 		if (!PtInRect(&rcWnd, ptCur))
 		{
 			if (!isMeForeground())
+			{
+				DEBUGSTRSETCURSOR(L" ---> skipped, !isMeForeground()\n");
 				return FALSE;
+			}
 
 			lParam = HTNOWHERE;
 		}
 		else
 		{
-			CVirtualConsole* pVCon = GetVConFromPoint(ptCur);
+			//CVirtualConsole* pVCon = GetVConFromPoint(ptCur); -- уже
 			if (pVCon)
 				lParam = HTCLIENT;
 			else
 				lParam = HTCAPTION;
 		}
 
-		wParam = (WPARAM)ghWnd;
+		wParam = pVCon ? (WPARAM)pVCon->GetView() : (WPARAM)ghWnd;
 	}
 
-	if (((HWND)wParam) != ghWnd || isSizing()
-	        || (LOWORD(lParam) != HTCLIENT && LOWORD(lParam) != HTNOWHERE))
+	if (!(((HWND)wParam) == ghWnd || pVCon)
+		|| isSizing()
+		|| (LOWORD(lParam) != HTCLIENT && LOWORD(lParam) != HTNOWHERE))
 	{
 		/*if (gpSet->isHideCaptionAlways && !mb_InTrackSysMenu && !isSizing()
 			&& (LOWORD(lParam) == HTTOP || LOWORD(lParam) == HTCAPTION))
@@ -10741,11 +10785,12 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 			SetCursor(mh_CursorMove);
 			return TRUE;
 		}*/
+		DEBUGSTRSETCURSOR(L" ---> skipped, condition\n");
 		return FALSE;
 	}
 
 	HCURSOR hCur = NULL;
-	DEBUGSTRSETCURSOR(L"WM_SETCURSOR");
+	LPCWSTR pszCurName = NULL;
 	BOOL lbMeFore = TRUE;
 
 	if (LOWORD(lParam) == HTCLIENT && pVCon)
@@ -10753,13 +10798,20 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 		if (mh_DragCursor && isDragging())
 		{
 			hCur = mh_DragCursor;
+			DEBUGSTRSETCURSOR(L" ---> DragCursor\n");
 		}
 		else if (mouse.state & MOUSE_DRAGPANEL_ALL)
 		{
 			if (mouse.state & MOUSE_DRAGPANEL_SPLIT)
+			{
 				hCur = mh_SplitH;
+				DEBUGSTRSETCURSOR(L" ---> SplitH (dragging)\n");
+			}
 			else
+			{
 				hCur = mh_SplitV;
+				DEBUGSTRSETCURSOR(L" ---> SplitV (dragging)\n");
+			}
 		}
 		else
 		{
@@ -10767,8 +10819,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 
 			if (lbMeFore)
 			{
-				CRealConsole *pRCon = pVCon->RCon();
-				HWND hWndDC = pRCon ? pRCon->GetView() : NULL;
+				HWND hWndDC = pVCon ? pVCon->GetView() : NULL;
 				if (pRCon && pRCon->isFar(FALSE) && hWndDC)  // Плагин не нужен, ФАР сам...
 				{
 					MapWindowPoints(NULL, hWndDC, &ptCur, 1);
@@ -10776,9 +10827,15 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 					enum DragPanelBorder dpb = CheckPanelDrag(crCon);
 
 					if (dpb == DPB_SPLIT)
+					{
 						hCur = mh_SplitH;
+						DEBUGSTRSETCURSOR(L" ---> SplitH (allow)\n");
+					}
 					else if (dpb != DPB_NONE)
+					{
 						hCur = mh_SplitV;
+						DEBUGSTRSETCURSOR(L" ---> SplitV (allow)\n");
+					}
 				}
 			}
 		}
@@ -10789,20 +10846,17 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 		if (mb_WaitCursor)
 		{
 			hCur = mh_CursorWait;
-			DEBUGSTRSETCURSOR(L" ---> CursorWait\n");
+			DEBUGSTRSETCURSOR(L" ---> CursorWait (mb_CursorWait)\n");
 		}
 		else if (gpSet->isFarHourglass)
 		{
-			CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
-
 			if (pRCon)
 			{
 				BOOL lbAlive = pRCon->isAlive();
-
 				if (!lbAlive)
 				{
 					hCur = mh_CursorAppStarting;
-					DEBUGSTRSETCURSOR(L" ---> AppStarting\n");
+					DEBUGSTRSETCURSOR(L" ---> AppStarting (!pRCon->isAlive())\n");
 				}
 			}
 		}
@@ -10811,7 +10865,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	if (!hCur)
 	{
 		hCur = mh_CursorArrow;
-		DEBUGSTRSETCURSOR(L" ---> Arrow\n");
+		DEBUGSTRSETCURSOR(L" ---> Arrow (default)\n");
 	}
 
 	SetCursor(hCur);
@@ -12160,15 +12214,18 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		if (pRCon)
 		{
 			HWND hView = pRCon->GetView();
-			GetWindowRect(hView, &pIn->AttachGuiApp.rcWindow);
-			MapWindowPoints(NULL, hView, (LPPOINT)&pIn->AttachGuiApp.rcWindow, 2);
+			GetClientRect(hView, &pIn->AttachGuiApp.rcWindow);
+			//MapWindowPoints(NULL, hView, (LPPOINT)&pIn->AttachGuiApp.rcWindow, 2);
+			pRCon->CorrectGuiChildRect(pIn->AttachGuiApp.nStyle, pIn->AttachGuiApp.nStyleEx, pIn->AttachGuiApp.rcWindow);
 			
 			// Уведомить RCon и ConEmuC, что гуй подцепился
 			// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
 			pRCon->SetGuiMode(pIn->AttachGuiApp.hWindow, pIn->AttachGuiApp.nStyle, pIn->AttachGuiApp.nStyleEx, pIn->AttachGuiApp.sAppFileName, pIn->hdr.nSrcPID);
 
+			ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, pIn->hdr.cbSize);
 			pIn->AttachGuiApp.bOk = TRUE;
 			pIn->AttachGuiApp.nPID = pRCon->GetServerPID();
+			pIn->AttachGuiApp.hWindow = pRCon->GetView();
 		}
 		else
 		{
@@ -12635,8 +12692,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_SETCURSOR:
 			result = gpConEmu->OnSetCursor(wParam, lParam);
 
-			if (!result)
+			if (!result && (lParam != -1))
+			{
+				// Установка resize-курсоров на рамке, и т.п.
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
 
 			MCHKHEAP;
 			// If an application processes this message, it should return TRUE to halt further processing or FALSE to continue.
@@ -12915,6 +12975,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 				free(pszErrMsg);
 				return 0;
+			}
+			else if (messg == gpConEmu->mn_MsgCreateViewWindow)
+			{
+				CConEmuChild* pChild = (CConEmuChild*)lParam;
+				HWND hChild = pChild ? pChild->CreateView() : NULL;
+				return (LRESULT)hChild;
 			}
 
 			//else if (messg == gpConEmu->mn_MsgCmdStarted || messg == gpConEmu->mn_MsgCmdStopped) {

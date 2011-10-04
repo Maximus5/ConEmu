@@ -82,6 +82,8 @@ enum
 	cfgCancel        = 6,
 };
 
+extern bool gbGdiPlusInitialized;
+
 #if FAR_UNICODE>=1867
 static INT_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, FAR_PTR Param2)
 #else
@@ -214,7 +216,10 @@ static int ConfigureProc(int ItemNumber)
 		lstrcpyn(gsXmlConfigFile, szCurXmlConfigFile, countof(gsXmlConfigFile));
 	}
 
-	CheckXmlFile(true);
+	if (gbGdiPlusInitialized)
+	{
+		CheckXmlFile(true);
+	}
 
 	// Обновить или отключить
 	StartPlugin(TRUE /*НЕ считывать параметры из реестра*/);

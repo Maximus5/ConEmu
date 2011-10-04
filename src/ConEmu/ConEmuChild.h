@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#define SKIP_HIDE_TIMER
 //#define SKIP_ALL_FILLRECT
 class CVirtualConsole;
 class CRealConsole;
@@ -44,6 +45,7 @@ class CConEmuChild
 		LRESULT OnSize(WPARAM wParam, LPARAM lParam);
 		HWND CreateView();
 		HWND GetView();
+		BOOL ShowView(int nShowCmd);
 		void Invalidate();
 		void Validate();
 		void Redraw();
@@ -82,7 +84,11 @@ class CConEmuBack
 		HWND mh_WndBack;
 		HWND mh_WndScroll; UINT mn_ScrollWidth;
 		BOOL mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup;
-		CTimer m_TScrollShow, m_TScrollHide, m_TScrollCheck;
+		CTimer m_TScrollShow;
+		CTimer m_TScrollHide;
+		#ifndef SKIP_HIDE_TIMER
+		CTimer m_TScrollCheck;
+		#endif
 		HBRUSH mh_BackBrush;
 		COLORREF mn_LastColor;
 

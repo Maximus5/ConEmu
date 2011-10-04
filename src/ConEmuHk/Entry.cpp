@@ -88,8 +88,11 @@ extern BOOL StartupHooks(HMODULE ahOurDll);
 extern void ShutdownHooks();
 extern void InitializeHookedModules();
 extern void FinalizeHookedModules();
+extern BOOL MyAllowSetForegroundWindow(DWORD dwProcessId);
+extern DWORD MyGetWindowThreadProcessId(HWND hWnd, LPDWORD lpdwProcessId);
 //HMODULE ghPsApi = NULL;
 #ifdef _DEBUG
+extern HHOOK ghGuiClientRetHook;
 //extern bool gbAllowAssertThread;
 #endif
 
@@ -156,6 +159,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap()
 			gnGuiPID = gpConInfo->nGuiPID;
 			ghConEmuWnd = gpConInfo->hConEmuRoot;
 			ghConEmuWndDC = gpConInfo->hConEmuWnd;
+			_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
 			gnServerPID = gpConInfo->nServerPID;
 		}
 		else
@@ -331,7 +335,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 			wchar_t szGuiPipeName[128];
 			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", dwConEmuHwnd);
-
+			
 			CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 1000, NULL);
 
 			free(pIn);
@@ -342,9 +346,13 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				{
 					if (pOut->AttachGuiApp.bOk)
 					{
+						MyAllowSetForegroundWindow(pOut->hdr.nSrcPID); // PID ConEmu.
 						ghConEmuWnd = (HWND)dwConEmuHwnd;
-						gbAttachGuiClient = TRUE;
+						ghConEmuWndDC = pOut->AttachGuiApp.hWindow;
+						_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
 						grcConEmuClient = pOut->AttachGuiApp.rcWindow;
+						gnServerPID = pOut->AttachGuiApp.nPID;
+						gbAttachGuiClient = TRUE;
 					}
 				}
 				ExecuteFreeResult(pOut);
@@ -445,6 +453,11 @@ void DllStop()
 	if (!lstrcmpi(pszName, L"mingw32-make.exe"))
 		GuiMessageBox(ghConEmuWnd, L"mingw32-make.exe terminating", L"ConEmuHk", MB_SYSTEMMODAL);
 	free(szModule);
+	#endif
+
+	#ifdef _DEBUG
+	if (ghGuiClientRetHook)
+		UnhookWindowsHookEx(ghGuiClientRetHook);
 	#endif
 
 	if (/*!gbSkipInjects &&*/ gbHooksWasSet)
@@ -922,6 +935,7 @@ void SendStarted()
 			gnGuiPID = pOut->StartStopRet.dwPID;
 			ghConEmuWnd = pOut->StartStopRet.hWnd;
 			ghConEmuWndDC = pOut->StartStopRet.hWndDC;
+			_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
 			//if (gnRunMode == RM_SERVER)
 			//{
 			//	if (gpSrv)

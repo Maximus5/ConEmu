@@ -123,8 +123,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 {
 	MCHKHEAP;
 	SetConStatus(L"Initializing ConEmu..");
-	PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
 	mp_VCon = apVCon;
+	PostMessage(apVCon->GetView(), WM_SETCURSOR, -1, -1);
 	mp_Rgn = new CRgnDetect();
 	mn_LastRgnFlags = -1;
 	memset(Title,0,sizeof(Title)); memset(TitleCmp,0,sizeof(TitleCmp));
@@ -839,9 +839,11 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	
 	if (hGuiWnd)
 	{
-		RECT rcGui = gpConEmu->CalcRect(CER_BACK, rcClient, CER_MAINCLIENT, mp_VCon);
-		//PostConsoleMessage(hGuiWnd, WM_MOVE, 0, MAKELONG(rcGui.left,rcGui.top));
-		//PostConsoleMessage(hGuiWnd, WM_SIZE, SIZE_RESTORED, MAKELONG(rcGui.left,rcGui.top));
+		RECT rcGui = gpConEmu->CalcRect(CER_WORKSPACE, rcClient, CER_MAINCLIENT, mp_VCon);
+		OffsetRect(&rcGui, -rcGui.left, -rcGui.top);
+		DWORD dwExStyle = GetWindowLong(hGuiWnd, GWL_EXSTYLE);
+		DWORD dwStyle = GetWindowLong(hGuiWnd, GWL_STYLE);
+		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui);
 		TODO("Переделать в команду");
 		SetWindowPos(hGuiWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 			SWP_ASYNCWINDOWPOS);
@@ -1412,7 +1414,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 	_ASSERT(EVENTS_COUNT==countof(hEvents)); // проверить размерность
 	DWORD  nWait = 0, nSrvWait = -1;
-	BOOL   bException = FALSE, bIconic = FALSE, /*bFirst = TRUE,*/ bActive = TRUE;
+	BOOL   bException = FALSE, bIconic = FALSE, /*bFirst = TRUE,*/ bActive = TRUE, bGuiVisible = FALSE;
 	DWORD nElapse = max(10,gpSet->nMainTimerElapse);
 	DWORD nInactiveElapse = max(10,gpSet->nMainTimerInactiveElapse);
 	DWORD nLastFarPID = 0;
@@ -1673,7 +1675,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					if (bLastAlive != bAlive || !bLastAliveActive)
 					{
 						DEBUGSTRALIVE(bAlive ? L"MonitorThread: Alive changed to TRUE\n" : L"MonitorThread: Alive changed to FALSE\n");
-						PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
+						PostMessage(pRCon->GetView(), WM_SETCURSOR, -1, -1);
 					}
 
 					bLastAliveActive = true;
@@ -1770,8 +1772,19 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			}
 
 
-			if (pRCon->hConWnd)  // Если знаем хэндл окна -
-				GetWindowText(pRCon->hConWnd, pRCon->TitleCmp, countof(pRCon->TitleCmp)-2);
+			// Видимость гуй-клиента - это кнопка "буферного режима"
+			if (pRCon->hGuiWnd && bActive)
+			{
+				BOOL lbVisible = ::IsWindowVisible(pRCon->hGuiWnd);
+				if (lbVisible != bGuiVisible)
+				{
+					gpConEmu->OnBufferHeight();
+					bGuiVisible = lbVisible;
+				}
+			}
+
+			if (pRCon->hConWnd || pRCon->hGuiWnd)  // Если знаем хэндл окна -
+				GetWindowText(pRCon->hGuiWnd ? pRCon->hGuiWnd : pRCon->hConWnd, pRCon->TitleCmp, countof(pRCon->TitleCmp)-2);
 
 			// возможно, требуется сбросить прогресс
 			//bool lbCheckProgress = (pRCon->mn_PreWarningProgress != -1);
@@ -3875,6 +3888,11 @@ BOOL CRealConsole::isBufferHeight()
 {
 	if (!this)
 		return FALSE;
+
+	if (hGuiWnd)
+	{
+		return !::IsWindowVisible(hGuiWnd);
+	}
 
 	return con.bBufferHeight;
 }
@@ -8669,7 +8687,7 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 
 			// Обновить мышиный курсор
 			if (this->isActive())
-				PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
+				PostMessage(GetView(), WM_SETCURSOR, -1, -1);
 
 			mn_LastRgnFlags = mp_Rgn->GetFlags();
 		}
@@ -9011,13 +9029,26 @@ void CRealConsole::OnDeactivate(int nNewNum)
 	//if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_NORMAL);
 }
 
-void CRealConsole::OnGuiFocused(BOOL abFocus)
+void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 {
 	if (!this) return;
 
-	if (hGuiWnd)
+	if (abFocus)
 	{
-		SetFocus(hGuiWnd);
+		if (hGuiWnd)
+		{
+			HWND hFore = GetForegroundWindow();
+			DWORD nForePID = 0;
+			if (hFore) GetWindowThreadProcessId(hFore, &nForePID);
+			if (mn_GuiWndPID != nForePID || abForceChild)
+			{
+				SetFocus(hGuiWnd);
+			}
+		}
+		else
+		{
+			SetFocus(ghWnd);
+		}
 	}
 
 	// Если FALSE - сервер увеличивает интервал опроса консоли (GUI теряет фокус)
@@ -9419,7 +9450,19 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	if (!this)
 		return FALSE;
 
-	if (!mp_tabs || tabIdx<0 || tabIdx>=mn_tabsCount)
+	//if (hGuiWnd)
+	//{
+	//	if (tabIdx == 0)
+	//	{
+	//		pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
+	//		int nMaxLen = max(countof(TitleFull) , countof(pTab->Name));
+	//		GetWindowText(hGuiWnd, pTab->Name, nMaxLen);
+	//		return TRUE;
+	//	}
+	//	return FALSE;
+	//}
+
+	if (!mp_tabs || tabIdx<0 || tabIdx>=mn_tabsCount || hGuiWnd)
 	{
 		// На всякий случай, даже если табы не инициализированы, а просят первый -
 		// вернем просто заголовок консоли
@@ -9780,6 +9823,12 @@ void CRealConsole::ChangeBufferHeightMode(BOOL abBufferHeight)
 
 void CRealConsole::SetBufferHeightMode(BOOL abBufferHeight, BOOL abLock/*=FALSE*/)
 {
+	if (hGuiWnd)
+	{
+		ShowOtherWindow(hGuiWnd, abBufferHeight ? SW_HIDE : SW_SHOW);
+		return;
+	}
+
 	if (mb_BuferModeChangeLocked)
 	{
 		if (!abLock)
@@ -10215,6 +10264,10 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 
 	_ASSERTE(!mb_ProcessRestarted);
 
+	// Сброс background
+	CESERVER_REQ_SETBACKGROUND BackClear = {};
+	mp_VCon->SetBackgroundImageData(&BackClear);
+
 	if (hConWnd)
 	{
 		if (gpSet->isSafeFarClose && !abForceTerminate)
@@ -10353,7 +10406,7 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 // Разрешено только в фаре
 BOOL CRealConsole::CanCloseTab()
 {
-	if (!isFar(TRUE/* abPluginRequired */))
+	if (!isFar(TRUE/* abPluginRequired */) && !GuiWnd())
 		return FALSE;
 	return TRUE;
 }
@@ -10363,7 +10416,14 @@ void CRealConsole::CloseTab()
 {
 	if (!CanCloseTab())
 		return;
-	PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
+	if (GuiWnd())
+	{
+		PostConsoleMessage(GuiWnd(), WM_CLOSE, 0, 0);
+	}
+	else
+	{
+		PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
+	}
 }
 
 uint CRealConsole::TextWidth()
@@ -11293,17 +11353,26 @@ void CRealConsole::SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPC
 		return;
 	}
 
+	if ((hGuiWnd != NULL) && !IsWindow(hGuiWnd))
+		hGuiWnd = NULL; // окно закрылось, открылось другое
+
 	if (hGuiWnd != NULL)
 	{
 		_ASSERTE(hGuiWnd==NULL);
 		return;
 	}
 
+	AllowSetForegroundWindow(anAppPID);
+
 	// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
 	hGuiWnd = ahGuiWnd;
 	mn_GuiWndPID = anAppPID;
 	mn_GuiWndStyle = anStyle; mn_GuiWndStylEx = anStyleEx;
 
+	// Ставим после "hGuiWnd = ahGuiWnd", т.к. для гуй-приложений логика кнопки другая.
+	if (isActive())
+		gpConEmu->OnBufferHeight();
+	
 	// Уведомить сервер (ConEmuC), что создано GUI подключение
 	DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
 	CESERVER_REQ In;
@@ -11318,8 +11387,49 @@ void CRealConsole::SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPC
 	CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &In, ghWnd);
 
 	if (pOut) ExecuteFreeResult(pOut);
+	
+	if (hGuiWnd)
+	{
+		// SetFocus не сработает - другой процесс
+		SetForegroundWindow(hGuiWnd);
+
+		GetWindowText(hGuiWnd, Title, countof(Title)-2);
+		wcscpy_c(TitleFull, Title);
+		mb_ForceTitleChanged = FALSE;
+		OnTitleChanged();
+	}
 }
 
+void CRealConsole::CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
+{
+	int nX = 0, nY = 0;
+	if (anStyle & WS_THICKFRAME)
+	{
+		nX = GetSystemMetrics(SM_CXSIZEFRAME);
+		nY = GetSystemMetrics(SM_CXSIZEFRAME);
+	}
+	else if (anStyleEx & WS_EX_WINDOWEDGE)
+	{
+		nX = GetSystemMetrics(SM_CXFIXEDFRAME);
+		nY = GetSystemMetrics(SM_CXFIXEDFRAME);
+	}
+	else if (anStyle & WS_DLGFRAME)
+	{
+		nX = GetSystemMetrics(SM_CXEDGE);
+		nY = GetSystemMetrics(SM_CYEDGE);
+	}
+	else if (anStyle & WS_BORDER)
+	{
+		nX = GetSystemMetrics(SM_CXBORDER);
+		nY = GetSystemMetrics(SM_CYBORDER);
+	}
+	else
+	{
+		nX = GetSystemMetrics(SM_CXFIXEDFRAME);
+		nY = GetSystemMetrics(SM_CXFIXEDFRAME);
+	}
+	rcGui.left -= nX; rcGui.right += nX; rcGui.top -= nY; rcGui.bottom += nY;
+}
 
 int CRealConsole::GetStatusLineCount(int nLeftPanelEdge)
 {

@@ -80,12 +80,20 @@ HWND CConEmuChild::CreateView()
 		return mh_WndDC;
 	}
 
+	if (!gpConEmu->isMainThread())
+	{
+		// Окно должно создаваться в главной нити!
+		HWND hCreate = gpConEmu->PostCreateView(this);
+		_ASSERTE(hCreate && (hCreate == mh_WndDC));
+		return mh_WndDC;
+	}
+
 	// Имя класса - то же самое, что и у главного окна
 	DWORD style = /*WS_VISIBLE |*/ WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 	//RECT rc = gpConEmu->DCClientRect();
 	RECT rcMain; GetClientRect(ghWnd, &rcMain);
 	RECT rc = gpConEmu->CalcRect(CER_DC, rcMain, CER_MAINCLIENT);
-	CVirtualConsole* pVCon = dynamic_cast<CVirtualConsole*>(this);
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	_ASSERTE(pVCon);
 	mh_WndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, pVCon);
 
@@ -113,6 +121,36 @@ HWND CConEmuChild::GetView()
 		return NULL;
 	}
 	return mh_WndDC;
+}
+
+BOOL CConEmuChild::ShowView(int nShowCmd)
+{
+	if (!this || !mh_WndDC)
+		return FALSE;
+
+	BOOL bRc = FALSE;
+	DWORD nTID = 0, nPID = 0;
+
+	// Должно быть создано в главной нити!
+	nTID = GetWindowThreadProcessId(mh_WndDC, &nPID);
+
+	#ifdef _DEBUG
+	DWORD nMainThreadID = GetWindowThreadProcessId(ghWnd, &nPID);
+	_ASSERTE(nTID==nMainThreadID);
+	#endif
+
+	// Если это "GUI" режим - могут возникать блокировки из-за дочернего окна
+	HWND hChildGUI = ((CVirtualConsole*)this)->GuiWnd();
+
+	if ((GetCurrentThreadId() != nTID) || (hChildGUI != NULL))
+	{
+		bRc = ShowWindowAsync(mh_WndDC, nShowCmd);
+	}
+	else
+	{
+		bRc = ShowWindow(mh_WndDC, nShowCmd);
+	}
+	return bRc;
 }
 
 LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -200,46 +238,55 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		case WM_XBUTTONDBLCLK:
 		case WM_VSCROLL:
 			// Вся обработка в родителе
-		{
-			POINT pt = {LOWORD(lParam),HIWORD(lParam)};
-			MapWindowPoints(hWnd, ghWnd, &pt, 1);
-			lParam = MAKELONG(pt.x,pt.y);
-			result = gpConEmu->WndProc(ghWnd, messg, wParam, lParam);
-		}
-		return result;
+			{
+				POINT pt = {LOWORD(lParam),HIWORD(lParam)};
+				MapWindowPoints(hWnd, ghWnd, &pt, 1);
+				lParam = MAKELONG(pt.x,pt.y);
+				result = gpConEmu->WndProc(ghWnd, messg, wParam, lParam);
+			}
+			break;
 		case WM_IME_NOTIFY:
 			break;
 		case WM_INPUTLANGCHANGE:
 		case WM_INPUTLANGCHANGEREQUEST:
-		{
-#ifdef _DEBUG
-
-			if (IsDebuggerPresent())
 			{
-				WCHAR szMsg[128];
-				_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"InChild %s(CP:%i, HKL:0x%08X)\n",
-				          (messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
-				          (DWORD)wParam, (DWORD)lParam);
-				DEBUGSTRLANG(szMsg);
-			}
+				#ifdef _DEBUG
+				if (IsDebuggerPresent())
+				{
+					WCHAR szMsg[128];
+					_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"InChild %s(CP:%i, HKL:0x%08X)\n",
+							  (messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
+							  (DWORD)wParam, (DWORD)lParam);
+					DEBUGSTRLANG(szMsg);
+				}
+				#endif
+				result = DefWindowProc(hWnd, messg, wParam, lParam);
+			} break;
 
-#endif
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
-		} break;
 #ifdef _DEBUG
 		case WM_WINDOWPOSCHANGING:
-		{
-			WINDOWPOS* pwp = (WINDOWPOS*)lParam;
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
-		}
-		return result;
+			{
+				WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+				result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
+			return result;
 		case WM_WINDOWPOSCHANGED:
-		{
-			WINDOWPOS* pwp = (WINDOWPOS*)lParam;
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
-		}
-		return result;
+			{
+				WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+				result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
+			break;
 #endif
+		case WM_SETCURSOR:
+			{
+				gpConEmu->WndProc(hWnd, messg, wParam, lParam);
+
+				//if (!result)
+				//	result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
+			// If an application processes this message, it should return TRUE to halt further processing or FALSE to continue.
+			break;
+
 		default:
 
 			// Сообщение приходит из ConEmuPlugin
@@ -319,18 +366,20 @@ LRESULT CConEmuChild::OnPaint()
 		GetClientRect(gpConEmu->hPictureView, &rcPic);
 		GetClientRect(mh_WndDC, &rcClient);
 
-		if (rcPic.right>=rcClient.right)
+		// Если PicView занимает всю (почти? 95%) площадь окна
+		//if (rcPic.right>=rcClient.right)
+		if ((rcPic.right * rcPic.bottom) >= (rcClient.right * rcClient.bottom * 95 / 100))
 		{
-			_ASSERTE(FALSE);
+			//_ASSERTE(FALSE);
 			lbSkipDraw = TRUE;
-			WARNING("Что-то сомнительно. Проверить, как ведет себя обновление консоли при наличии QView");
+			// Типа "зальет цветом фона окна"?
 			result = DefWindowProc(mh_WndDC, WM_PAINT, 0, 0);
 		}
 	}
 
 	if (!lbSkipDraw)
 	{
-		CVirtualConsole* pVCon = dynamic_cast<CVirtualConsole*>(this);
+		CVirtualConsole* pVCon = (CVirtualConsole*)this;
 		_ASSERTE(pVCon!=NULL);
 
 		PAINTSTRUCT ps;
@@ -734,7 +783,9 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 			gpConEmu->m_Back->mh_WndScroll = hWnd;
 			gpConEmu->m_Back->m_TScrollShow.Init(hWnd, TIMER_SCROLL_SHOW, TIMER_SCROLL_SHOW_DELAY);
 			gpConEmu->m_Back->m_TScrollHide.Init(hWnd, TIMER_SCROLL_HIDE, TIMER_SCROLL_HIDE_DELAY);
+			#ifndef SKIP_HIDE_TIMER
 			gpConEmu->m_Back->m_TScrollCheck.Init(hWnd, TIMER_SCROLL_CHECK, TIMER_SCROLL_CHECK_DELAY);
+			#endif
 			break;
 		case WM_VSCROLL:
 
@@ -751,15 +802,20 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 
 			switch(wParam)
 			{
+				#ifndef SKIP_HIDE_TIMER // Не будем прятать по таймеру - только по движению мышки
 				case TIMER_SCROLL_CHECK:
 
 					if (gpConEmu->m_Back->mb_Scroll2Visible)
 					{
 						if (!gpConEmu->m_Back->CheckMouseOverScroll())
+						{
 							gpConEmu->m_Back->HideScroll(FALSE/*abImmediate*/);
+						}
 					}
 
 					break;
+				#endif
+
 				case TIMER_SCROLL_SHOW:
 
 					if (gpConEmu->m_Back->CheckMouseOverScroll() || gpConEmu->m_Back->CheckScrollAutoPopup())
@@ -771,6 +827,7 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 						gpConEmu->m_Back->m_TScrollShow.Stop();
 
 					break;
+
 				case TIMER_SCROLL_HIDE:
 
 					if (!gpConEmu->m_Back->CheckMouseOverScroll())
@@ -922,7 +979,10 @@ BOOL CConEmuBack::TrackMouse()
 {
 	BOOL lbCapture = FALSE; // По умолчанию - мышь не перехватывать
 	BOOL lbHided = FALSE;
-	BOOL lbBufferMode = gpConEmu->ActiveCon()->RCon()->isBufferHeight();
+	#ifdef _DEBUG
+	CRealConsole* pRCon = gpConEmu->ActiveCon()->RCon();
+	BOOL lbBufferMode = pRCon->isBufferHeight() && !pRCon->GuiWnd();
+	#endif
 	BOOL lbOverVScroll = CheckMouseOverScroll();
 
 	if (lbOverVScroll || (gpSet->isAlwaysShowScrollbar == 1))
@@ -932,10 +992,12 @@ BOOL CConEmuBack::TrackMouse()
 			mb_Scroll2Visible = TRUE;
 			ShowScroll(FALSE/*abImmediate*/); // Если gpSet->isAlwaysShowScrollbar==1 - сама разберется
 		}
+		#ifndef SKIP_HIDE_TIMER
 		else if (mb_ScrollVisible && (gpSet->isAlwaysShowScrollbar != 1) && !m_TScrollCheck.IsStarted())
 		{
 			m_TScrollCheck.Start();
 		}
+		#endif
 	}
 	else if (mb_Scroll2Visible)
 	{
@@ -956,7 +1018,7 @@ BOOL CConEmuBack::CheckMouseOverScroll()
 
 	if (pRCon)
 	{
-		BOOL lbBufferMode = pRCon->isBufferHeight();
+		BOOL lbBufferMode = pRCon->isBufferHeight() && !pRCon->GuiWnd();
 
 		if (lbBufferMode)
 		{
@@ -1088,10 +1150,16 @@ void CConEmuBack::ShowScroll(BOOL abImmediate)
 		bTShow = true;
 	}
 
+	#ifndef SKIP_HIDE_TIMER
 	if (bTCheck)
+	{
 		m_TScrollCheck.Start(mb_ScrollAutoPopup ? TIMER_SCROLL_CHECK_DELAY2 : TIMER_SCROLL_CHECK_DELAY);
+	}
 	else if (m_TScrollCheck.IsStarted())
+	{
 		m_TScrollCheck.Stop();
+	}
+	#endif
 
 	//
 	if (bTShow)
@@ -1133,8 +1201,10 @@ void CConEmuBack::HideScroll(BOOL abImmediate)
 		//m_TScrollHide.Start();
 	}
 
+	#ifndef SKIP_HIDE_TIMER
 	if (m_TScrollCheck.IsStarted())
 		m_TScrollCheck.Stop();
+	#endif
 
 	//
 	if (m_TScrollShow.IsStarted())

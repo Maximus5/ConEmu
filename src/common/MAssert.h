@@ -71,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define ASSERT(expr)
 	#define ASSERTE(expr)
 	#define MCHKHEAP
+	#define MyAssertTrap()
 #endif
 
 #undef _ASSERT

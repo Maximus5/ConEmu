@@ -333,6 +333,7 @@ class CConEmuMain
 		UINT mn_MsgAutoSizeFont;
 		UINT mn_MsgDisplayRConError;
 		UINT mn_MsgMacroFontSetName;
+		UINT mn_MsgCreateViewWindow;
 
 		//
 		static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
@@ -428,6 +429,7 @@ class CConEmuMain
 		void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 		void PostMacro(LPCWSTR asMacro);
 		void PostCreate(BOOL abRecieved=FALSE);
+		HWND PostCreateView(CConEmuChild* pChild);
 		void PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
 		void PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted);
 		void PostDisplayRConError(CRealConsole* mp_VCon, wchar_t* pszErrMsg);
