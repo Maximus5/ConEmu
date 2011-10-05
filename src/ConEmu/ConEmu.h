@@ -62,6 +62,22 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #define ID_ABOUT 0xABCE
 #define ID_TOTRAY 0xABCF
 #define ID_DEBUGCON 0xABD0 // есть подозрение, что 0xABBC Win7 сама юзает...
+// VCon menu items
+#define IDM_VCONCMD_FIRST 0xABD1
+#define IDM_CLOSE IDM_VCONCMD_FIRST
+#define IDM_RESTART 0xABD2
+#define IDM_RESTARTAS 0xABD3
+#define IDM_TERMINATE 0xABD4
+#define IDM_NEW 0xABD5
+#define IDM_ADMIN_DUPLICATE 0xABD6
+#define IDM_SAVE 0xABD7
+#define IDM_SAVEALL 0xABD8
+#define IDM_DETACH 0xABD9
+#define IDM_VCONCMD_LAST IDM_DETACH
+// Consoles // DWORD MAKELONG(WORD wLow,WORD wHigh);
+#define IDM_VCON_FIRST MAKELONG(1,1)
+#define IDM_VCON_LAST  MAKELONG(0,MAX_CONSOLE_COUNT+1)
+
 
 #define IID_IShellLink IID_IShellLinkW
 
@@ -231,6 +247,7 @@ class CConEmuMain
 		CDragDrop *mp_DragDrop;
 	protected:
 		//CProgressBars *ProgressBars;
+		HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_VConListPopup; // Popup's для SystemMenu
 		TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE]; //, MultiTitle[MAX_TITLE_SIZE+30];
 		short mn_Progress;
 		LPTSTR GetTitleStart();
@@ -453,7 +470,9 @@ class CConEmuMain
 		void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
 		void ShowSysmenu(int x=-32000, int y=-32000);
 		HMENU CreateDebugMenuPopup();
-		void PopulateEditMenuPopup(HMENU hMenu);
+		HMENU CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
+		HMENU CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly);
+		HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew);
 		void StartDebugLogConsole();
 		void StartDebugActiveProcess();
 		//void StartLogCreateProcess();

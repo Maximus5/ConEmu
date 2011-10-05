@@ -203,7 +203,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	//InitializeCriticalSection(&csPKT); ncsTPKT = 0;
 	//mn_LastProcessedPkt = 0;
 	hConWnd = NULL;
-	hGuiWnd = NULL; mn_GuiWndStyle = mn_GuiWndStylEx = mn_GuiWndPID = 0;
+	hGuiWnd = NULL; mn_GuiWndStyle = mn_GuiWndStylEx = mn_GuiWndPID = 0; mb_InSetFocus = FALSE;
 	//hFileMapping = NULL; pConsoleData = NULL;
 	mh_GuiAttached = NULL;
 	mn_Focused = -1;
@@ -3891,7 +3891,10 @@ BOOL CRealConsole::isBufferHeight()
 
 	if (hGuiWnd)
 	{
-		return !::IsWindowVisible(hGuiWnd);
+		//return !::IsWindowVisible(hGuiWnd);
+		// IsWindowVisible не подходит, т.к. учитывает видимость и mh_WndDC
+		DWORD_PTR nStyle = GetWindowLongPtr(hGuiWnd, GWL_STYLE);
+		return (nStyle & WS_VISIBLE) == 0;
 	}
 
 	return con.bBufferHeight;
@@ -5945,6 +5948,9 @@ DWORD CRealConsole::GetActivePID()
 {
 	if (!this)
 		return 0;
+
+	if (hGuiWnd)
+		return mn_GuiWndPID;
 
 	DWORD nPID = GetFarPID();
 	if (nPID)
@@ -9031,7 +9037,12 @@ void CRealConsole::OnDeactivate(int nNewNum)
 
 void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 {
-	if (!this) return;
+	if (!this)
+		return;
+	if (mb_InSetFocus)
+		return;
+
+	mb_InSetFocus = TRUE;
 
 	if (abFocus)
 	{
@@ -9073,6 +9084,8 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 		if (lbNeedChange)
 			UpdateServerActive(lbActive);
 	}
+
+	mb_InSetFocus = FALSE;
 }
 
 // Обновить в сервере флаги Active & ThawRefreshThread,

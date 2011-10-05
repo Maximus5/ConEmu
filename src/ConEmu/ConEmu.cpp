@@ -64,7 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
-#define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
+#define DEBUGSTRFOCUS(s) DEBUGSTR(s)
 #define DEBUGSTRFOREGROUND(s) //DEBUGSTR(s)
 #define DEBUGSTRLLKB(s) //DEBUGSTR(s)
 #ifdef _DEBUG
@@ -145,6 +145,7 @@ CConEmuMain::CConEmuMain()
 	//mb_InConsoleResize = FALSE;
 	//ProgressBars = NULL;
 	//cBlinkShift=0;
+	mh_DebugPopup = mh_EditPopup = mh_ActiveVConPopup = mh_VConListPopup = NULL;
 	Title[0] = 0; TitleCmp[0] = 0; /*MultiTitle[0] = 0;*/ mn_Progress = -1;
 	mb_InTimer = FALSE;
 	//mb_InClose = FALSE;
@@ -618,7 +619,7 @@ RECT CConEmuMain::GetVirtualScreenRect(BOOL abFullScreen)
 
 HMENU CConEmuMain::GetSystemMenu(BOOL abInitial /*= FALSE*/)
 {
-	HMENU hwndMain = ::GetSystemMenu(ghWnd, FALSE), hDebug = NULL;
+	HMENU hwndMain = ::GetSystemMenu(ghWnd, FALSE);
 	MENUITEMINFO mi = {sizeof(mi), MIIM_DATA};
 	wchar_t szText[255];
 	mi.dwTypeData = szText;
@@ -635,10 +636,29 @@ HMENU CConEmuMain::GetSystemMenu(BOOL abInitial /*= FALSE*/)
 		if (ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
 			InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
 
+		// --------------------
 		InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-		hDebug = CreateDebugMenuPopup();
-		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
-		PopulateEditMenuPopup(hwndMain);
+		
+		if (mh_DebugPopup) DestroyMenu(mh_DebugPopup);
+		mh_DebugPopup = CreateDebugMenuPopup();
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_DebugPopup, _T("&Debug"));
+		
+		if (mh_EditPopup) DestroyMenu(mh_EditPopup);
+		mh_EditPopup = CreateEditMenuPopup(NULL);
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_EditPopup, _T("Ed&it"));
+		
+		// --------------------
+		InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+		
+		if (mh_VConListPopup) DestroyMenu(mh_VConListPopup);
+		mh_VConListPopup = CreateVConListPopupMenu(mh_VConListPopup, TRUE/*abFirstTabOnly*/);
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_VConListPopup, _T("Console list"));
+		
+		if (mh_ActiveVConPopup) DestroyMenu(mh_ActiveVConPopup);
+		mh_ActiveVConPopup = CreateVConPopupMenu(NULL, NULL, FALSE);
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_ActiveVConPopup, _T("Acti&ve console"));
+		
+		// --------------------
 		InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
 			ID_ALWAYSONTOP, _T("Al&ways on top"));
@@ -1446,6 +1466,24 @@ CConEmuMain::~CConEmuMain()
 		m_Macro = NULL;
 	}
 
+	if (mh_DebugPopup)
+	{
+		DestroyMenu(mh_DebugPopup);
+		mh_DebugPopup = NULL;
+	}
+	
+	if (mh_EditPopup)
+	{
+		DestroyMenu(mh_EditPopup);
+		mh_EditPopup = NULL;
+	}
+	
+	if (mh_ActiveVConPopup)
+	{
+		DestroyMenu(mh_ActiveVConPopup);
+		mh_ActiveVConPopup = NULL;
+	}
+	
 	//if (mh_RecreatePasswFont)
 	//{
 	//	DeleteObject(mh_RecreatePasswFont);
@@ -1512,7 +1550,8 @@ void CConEmuMain::AskChangeBufferHeight()
 	HWND hGuiClient = pRCon->GuiWnd();
 	if (hGuiClient)
 	{
-		pRCon->ShowOtherWindow(hGuiClient, ::IsWindowVisible(hGuiClient) ? SW_HIDE : SW_SHOW);
+		int nNewShow = (GetWindowLongPtr(hGuiClient, GWL_STYLE) & WS_VISIBLE) ? SW_HIDE : SW_SHOW;
+		pRCon->ShowOtherWindow(hGuiClient, nNewShow);
 		return;
 	}
 
@@ -4425,11 +4464,12 @@ void CConEmuMain::UpdateWinHookSettings()
 void CConEmuMain::RegisterHoooks()
 {
 //	#ifndef _DEBUG
-	// Для WinXP это не было нужно
-	if (gOSVer.dwMajorVersion < 6)
-	{
-		return;
-	}
+	// -- для GUI режима таки нужно
+	//// Для WinXP это не было нужно
+	//if (gOSVer.dwMajorVersion < 6)
+	//{
+	//	return;
+	//}
 
 //	#endif
 
@@ -5298,10 +5338,40 @@ LRESULT CConEmuMain::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 	{
 		BOOL bSelectionExist = FALSE;
 
-		if (ActiveCon() && ActiveCon()->RCon())
-			bSelectionExist = ActiveCon()->RCon()->isSelectionPresent();
+		CVirtualConsole* pVCon = ActiveCon();
+		if (pVCon && pVCon->RCon())
+			bSelectionExist = pVCon->RCon()->isSelectionPresent();
 
-		EnableMenuItem(hMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
+		//EnableMenuItem(hMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
+		if (mh_EditPopup)
+		{
+			TODO("Проверить, сработает ли, если mh_EditPopup уже был вставлен в SystemMenu?");
+			CreateEditMenuPopup(pVCon, mh_EditPopup);
+		}
+		else
+		{
+			_ASSERTE(mh_EditPopup!=NULL);
+		}
+		
+		if (mh_VConListPopup)
+		{
+			CreateVConListPopupMenu(mh_VConListPopup, TRUE/*abFirstTabOnly*/);
+		}
+		else
+		{
+			_ASSERTE(mh_VConListPopup!=NULL);
+		}
+		
+		if (mh_ActiveVConPopup)
+		{
+			CreateVConPopupMenu(NULL, mh_ActiveVConPopup, FALSE);
+		}
+		else
+		{
+			_ASSERTE(mh_ActiveVConPopup!=NULL);
+		}
+		
+		
 		CheckMenuItem(hMenu, ID_DEBUG_SHOWRECTS, MF_BYCOMMAND|(gbDebugShowRects ? MF_CHECKED : MF_UNCHECKED));
 		//#ifdef _DEBUG
 		//		wchar_t szText[128];
@@ -7330,12 +7400,201 @@ HMENU CConEmuMain::CreateDebugMenuPopup()
 	return hDebug;
 }
 
-void CConEmuMain::PopulateEditMenuPopup(HMENU hMenu)
+HMENU CConEmuMain::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 {
-	InsertMenu(hMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_PASTE, _T("&Paste"));
-	InsertMenu(hMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_COPY, _T("Cop&y"));
-	InsertMenu(hMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKTEXT, _T("Mar&k text"));
-	InsertMenu(hMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKBLOCK, _T("Mark &block"));
+	HMENU h = ahExist ? ahExist : CreatePopupMenu();
+	wchar_t szText[128];
+	const int nMaxStrLen = 32;
+
+	BOOL lbActiveVCon = FALSE;
+	int nActiveCmd = -1; // DWORD MAKELONG(WORD wLow,WORD wHigh);
+	CVirtualConsole* pVCon = NULL;
+	DWORD nAddFlags = 0;
+	
+	if (ahExist)
+	{
+		while (DeleteMenu(ahExist, 0, MF_BYPOSITION))
+			;
+	}
+	
+	for (int V = 0; (pVCon = GetVCon(V))!=NULL; V++)
+	{
+		if (lbActiveVCon = isActive(pVCon))
+			nActiveCmd = MAKELONG(1, V+1);
+		nAddFlags = 0; //(lbActiveVCon ? MF_DEFAULT : 0);
+		CRealConsole* pRCon = pVCon->RCon();
+		if (!pRCon)
+		{
+			wsprintf(szText, L"%i: VConsole", V+1);
+			AppendMenu(h, MF_STRING|nAddFlags, MAKELONG(1, V+1), szText);
+		}
+		else
+		{
+			ConEmuTab tab = {};
+			int R = 0;
+			if (!pRCon->GetTab(R, &tab))
+			{
+				wsprintf(szText, L"%i: RConsole", V+1);
+				AppendMenu(h, MF_STRING|nAddFlags, MAKELONG(1, V+1), szText);
+			}
+			else
+			{
+				do
+				{
+					nAddFlags = 0/*((lbActiveVCon && (R==0)) ? MF_DEFAULT : 0)*/
+						| ((lbActiveVCon && (abFirstTabOnly || pRCon->GetActiveTab() == R)) ? MF_CHECKED : MF_UNCHECKED)
+						#if 0
+						| ((tab->Flags() & etfDisabled) ? (MF_DISABLED|MF_GRAYED) : 0)
+						#endif
+						;
+					int nLen = lstrlen(tab.Name/*.Ptr()*/);
+					if (!R)
+						wsprintf(szText, L"%i: ", V+1);
+					else
+						wcscpy_c(szText, L"      ");
+					if (nLen <= nMaxStrLen)
+					{
+						wcscat_c(szText, tab.Name/*.Ptr()*/);
+					}
+					else
+					{
+						lstrcpyn(szText, tab.Name/*.Ptr()*/, nMaxStrLen-1);
+						wcscat_c(szText, L"\x2026"); //...
+					}
+					AppendMenu(h, MF_STRING|nAddFlags, MAKELONG(R+1, V+1), szText);
+				} while (!abFirstTabOnly && pRCon->GetTab(++R, &tab));
+			}
+		}
+	}
+
+	if (nActiveCmd != -1 && !abFirstTabOnly)
+	{
+		MENUITEMINFO mi = {sizeof(mi), MIIM_STATE|MIIM_ID};
+		mi.wID = nActiveCmd;
+		GetMenuItemInfo(h, nActiveCmd, FALSE, &mi);
+		mi.fState |= MF_DEFAULT;
+		SetMenuItemInfo(h, nActiveCmd, FALSE, &mi);
+	}
+	
+	return h;
+}
+
+HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew)
+{
+	BOOL lbEnabled = TRUE;
+	HMENU hMenu = ahExist;
+	
+	if (!apVCon)
+		apVCon = ActiveCon();
+	
+	if (!hMenu)
+	{	
+		hMenu = CreatePopupMenu();
+		
+		/*
+        MENUITEM "&Close",                      IDM_CLOSE
+        MENUITEM "Detach",                      IDM_DETACH
+        MENUITEM "&Terminate",                  IDM_TERMINATE
+        MENUITEM SEPARATOR
+        MENUITEM "&Restart",                    IDM_RESTART
+        MENUITEM "Restart as...",               IDM_RESTARTAS
+        MENUITEM SEPARATOR
+        MENUITEM "New console...",              IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Save",                       IDM_SAVE
+        MENUITEM "Save &all",                   IDM_SAVEALL
+		*/
+		
+		TODO("Добавить пункт IDM_ADMIN_DUPLICATE");
+		
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_CLOSE,     L"&Close");
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_DETACH,    L"Detach");
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_TERMINATE, L"&Terminate");
+		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTART,   L"&Restart");
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTARTAS, L"Restart as...");
+		if (abAddNew)
+		{
+			AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
+			AppendMenu(hMenu, MF_STRING | MF_ENABLED, IDM_NEW,       L"New console...");
+		}
+		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_SAVE,      L"&Save");
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_SAVEALL,   L"Save &all");
+	}
+
+	if (apVCon)
+	{
+		bool lbIsFar = apVCon->RCon()->isFar(TRUE/* abPluginRequired */)!=FALSE;
+		bool lbIsPanels = lbIsFar && apVCon->RCon()->isFilePanel(false/* abPluginAllowed */)!=FALSE;
+		bool lbIsEditorModified = lbIsFar && apVCon->RCon()->isEditorModified()!=FALSE;
+		bool lbHaveModified = lbIsFar && apVCon->RCon()->GetModifiedEditors()!=FALSE;
+		bool lbCanCloseTab = apVCon->RCon()->CanCloseTab();
+
+		if (lbHaveModified)
+		{
+			if (!gpSet->sSaveAllMacro || !*gpSet->sSaveAllMacro)
+				lbHaveModified = false;
+		}
+
+		EnableMenuItem(hMenu, IDM_CLOSE, MF_BYCOMMAND | (lbCanCloseTab ? MF_ENABLED : MF_GRAYED));
+		EnableMenuItem(hMenu, IDM_DETACH, MF_BYCOMMAND | MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_TERMINATE, MF_BYCOMMAND | MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_RESTART, MF_BYCOMMAND | MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_RESTARTAS, MF_BYCOMMAND | MF_ENABLED);
+		//EnableMenuItem(hMenu, IDM_ADMIN_DUPLICATE, MF_BYCOMMAND | (lbIsPanels ? MF_ENABLED : MF_GRAYED));
+		EnableMenuItem(hMenu, IDM_SAVE, MF_BYCOMMAND | (lbIsEditorModified ? MF_ENABLED : MF_GRAYED));
+		EnableMenuItem(hMenu, IDM_SAVEALL, MF_BYCOMMAND | (lbHaveModified ? MF_ENABLED : MF_GRAYED));
+	}
+	else
+	{
+		EnableMenuItem(hMenu, IDM_CLOSE, MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_DETACH, MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_TERMINATE, MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_RESTART, MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_RESTARTAS, MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_SAVE, MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_SAVEALL, MF_BYCOMMAND | MF_GRAYED);
+	}
+
+	return hMenu;
+}
+
+//void CConEmuMain::PopulateEditMenuPopup(HMENU hMenu)
+HMENU CConEmuMain::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*= NULL*/)
+{
+	if (!apVCon)
+		apVCon = ActiveCon();
+		
+	BOOL lbEnabled = TRUE;
+	BOOL lbSelectionExist = FALSE;
+	if (apVCon && apVCon->RCon())
+	{
+		if (apVCon->RCon()->GuiWnd() && !apVCon->RCon()->isBufferHeight())
+			lbEnabled = FALSE; // Если видимо дочернее графическое окно - выделение смысла не имеет
+		// Нужно ли серить пункт "Copy"
+		lbSelectionExist = lbEnabled && ActiveCon()->RCon()->isSelectionPresent();
+	}
+
+	HMENU hMenu = ahExist;
+	
+	if (!hMenu)
+	{	
+		hMenu = CreatePopupMenu();
+		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKBLOCK, _T("Mark &block"));
+		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKTEXT, _T("Mar&k text"));
+		AppendMenu(hMenu, MF_STRING | (lbSelectionExist?MF_ENABLED:MF_GRAYED), ID_CON_COPY, _T("Cop&y"));
+		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_PASTE, _T("&Paste"));
+	}
+	else
+	{
+		EnableMenuItem(hMenu, ID_CON_MARKBLOCK, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
+		EnableMenuItem(hMenu, ID_CON_MARKTEXT, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
+		EnableMenuItem(hMenu, ID_CON_COPY, MF_BYCOMMAND | (lbSelectionExist?MF_ENABLED:MF_GRAYED));
+		EnableMenuItem(hMenu, ID_CON_PASTE, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
+	}
+	
+	return hMenu;
 }
 
 LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
@@ -8128,10 +8387,23 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 	}
 
+	// GUI client?
+	if (!lbSetFocus && hNewFocus && mp_VActive)
+	{
+		DWORD nNewPID = 0; GetWindowThreadProcessId(hNewFocus, &nNewPID);
+		DWORD nRConPID = mp_VActive->RCon()->GetActivePID();
+		if (nNewPID == nRConPID)
+			lbSetFocus = TRUE;
+	}
+
 	if (!lbSetFocus)
 	{
 		gpConEmu->mp_TabBar->SwitchRollback();
 		UnRegisterHotKeys();
+	}
+	else if (!mb_HotKeyRegistered)
+	{
+		RegisterHotKeys();
 	}
 
 	if (mp_VActive && mp_VActive->RCon())
@@ -8553,7 +8825,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 #endif
 
 	if (messg == WM_KEYDOWN && !mb_HotKeyRegistered)
-		RegisterHotKeys(); // CtrlWinAltSpace
+		RegisterHotKeys(); // Win и прочее
 
 	if (messg == WM_KEYDOWN || messg == WM_KEYUP)
 	{
@@ -10744,7 +11016,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 
 	// В GUI режиме - не ломать курсор, заданный дочерним приложением
 	HWND hGuiClient = pRCon->GuiWnd();
-	if (pRCon && hGuiClient && ::IsWindowVisible(hGuiClient))
+	if (pRCon && hGuiClient && !pRCon->isBufferHeight())
 	{
 		return TRUE;
 	}
@@ -11163,7 +11435,31 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 #endif
 	LRESULT result = 0;
 
-	switch(LOWORD(wParam))
+	if (wParam >= IDM_VCON_FIRST && wParam <= IDM_VCON_LAST)
+	{
+		int nNewV = ((int)HIWORD(wParam))-1;
+		int nNewR = ((int)LOWORD(wParam))-1;
+		
+		CVirtualConsole* pVCon = GetVCon(nNewV);
+		if (pVCon)
+		{
+			// -- в SysMenu показываются только консоли (редакторов/вьюверов там нет)
+			//CRealConsole* pRCon = pVCon->RCon();
+			//if (pRCon)
+			//{
+			//	//if (pRCon->CanActivateFarWindow(nNewR))
+			//	pRCon->ActivateFarWindow(nNewR);
+			//}
+			if (!isActive(pVCon))
+				Activate(pVCon);
+			//else
+			//	UpdateTabs();
+		}
+		return 0;
+	}
+
+	//switch(LOWORD(wParam))
+	switch (wParam)
 	{
 		case ID_NEWCONSOLE:
 			// Создать новую консоль
@@ -11366,11 +11662,12 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			if (mp_VActive && mp_VActive->RCon())
 				mp_VActive->RCon()->ShowPropertiesDialog();
 			return 0;
-			//break;
-	}
+			//break; // case ID_CONPROP:
+	//}
 
-	switch(wParam)
-	{
+	//switch (wParam)
+	//{
+
 		case SC_MAXIMIZE_SECRET:
 			SetWindowMode(rMaximized);
 			break;
@@ -11503,7 +11800,12 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			break;
 		default:
 
-			if (wParam != 0xF100)
+			if (wParam >= IDM_VCONCMD_FIRST && wParam <= IDM_VCONCMD_LAST)
+			{
+				ActiveCon()->ExecPopupMenuCmd((int)(DWORD)wParam);
+				result = 0; 
+			}
+			else if (wParam != 0xF100)
 			{
 #ifdef _DEBUG
 				wchar_t szDbg[64]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand(%i)\n", (DWORD)wParam);

@@ -760,30 +760,6 @@ IDI_ICON3               ICON                    "Far2.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Menu
-//
-
-IDR_TABMENU MENU 
-BEGIN
-    POPUP "Tab menu"
-    BEGIN
-        MENUITEM "&Close",                      IDM_CLOSE
-        MENUITEM "Detach",                      IDM_DETACH
-        MENUITEM "&Terminate",                  IDM_TERMINATE
-        MENUITEM SEPARATOR
-        MENUITEM "&Restart",                    IDM_RESTART
-        MENUITEM "Restart as...",               IDM_RESTARTAS
-        MENUITEM SEPARATOR
-        MENUITEM "New console...",              IDM_NEW
-        MENUITEM SEPARATOR
-        MENUITEM "&Save",                       IDM_SAVE
-        MENUITEM "Save &all",                   IDM_SAVEALL
-    END
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // String Table
 //
 

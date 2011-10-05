@@ -447,7 +447,7 @@ class MPipe
 #ifdef _DEBUG
 			DWORD nStartTick = GetTickCount();
 #endif
-			WARNING("БЛОКИРОВКА! Иногда зависает при закрытии консоли");
+			WARNING("BLOKIROVKA! Inogda zavisaet pri zakrytii konsoli");
 			fSuccess = TransactNamedPipe(mh_Pipe, (LPVOID)apIn, anInSize, ptrOut, cbReadBuf, &cbRead, NULL);
 			dwErr = fSuccess ? 0 : GetLastError();
 #ifdef _DEBUG

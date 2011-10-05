@@ -261,6 +261,7 @@ class CVirtualConsole : public CConEmuChild
 		HRGN GetExclusionRgn(bool abTestOnly=false);
 		COORD FindOpaqueCell();
 		void ShowPopupMenu(POINT ptCur);
+		void ExecPopupMenuCmd(int nCmd);
 		BOOL RegisterPanelView(PanelViewInit* ppvi);
 		void OnPanelViewSettingsChanged();
 		BOOL IsPanelViews();
@@ -320,5 +321,5 @@ class CVirtualConsole : public CConEmuChild
 			POINT *pAllPoints;
 			INT   *pAllCounts;
 		} TransparentInfo;
-		static HMENU mh_PopupMenu;
+		static HMENU mh_PopupMenu, mh_DebugPopup, mh_EditPopup;
 };

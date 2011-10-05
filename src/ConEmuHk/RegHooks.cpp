@@ -437,7 +437,7 @@ void PrepareHookedKeyList()
 
 	if (!gpRegKeyStore)
 	{
-		WARNING("");
+		WARNING("gpRegKeyStore");
 		gpRegKeyStore = (RegKeyStore*)calloc(1,sizeof(*gpRegKeyStore));
 		if (!gpRegKeyStore)
 		{

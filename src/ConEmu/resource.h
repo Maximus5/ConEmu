@@ -25,7 +25,6 @@
 #define IDD_DIALOG1                     202
 #define IDD_MORE_FADE                   203
 #define IDD_MORE_SELECTION              204
-#define IDR_TABMENU                     205
 #define IDD_SPG_TABS                    206
 #define IDD_SPG_VIEWS                   208
 #define IDD_MORE_CONFONT                209
@@ -384,15 +383,6 @@
 #define cbUseWinTab                     1764
 #define cbFarGotoEditor                 1765
 #define lbFarGotoEditorVk              1766
-#define IDM_CLOSE                       40001
-#define IDM_RESTART                     40002
-#define IDM_RESTARTAS                   40003
-#define IDM_TERMINATE                   40004
-#define IDM_NEW                         40005
-#define IDM_ADMIN_DUPLICATE             40006
-#define IDM_SAVE                        40007
-#define IDM_SAVEALL                     40008
-#define IDM_DETACH                      40009
 
 // Next default values for new objects
 // 

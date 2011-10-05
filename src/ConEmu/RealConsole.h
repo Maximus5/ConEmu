@@ -217,6 +217,7 @@ class CRealConsole
 	private:
 		HWND    hConWnd;
 		HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
+		BOOL    mb_InSetFocus;
 		DWORD   mn_GuiWndStyle, mn_GuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
 		DWORD   mn_GuiWndPID;
 		//HANDLE  hFileMapping;

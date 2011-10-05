@@ -916,7 +916,7 @@ struct ICOImage
 			}
 		}
 
-		WARNING("Хорошо бы возвращать умолчательный индекс отображаемой иконки, если первая НЕ содержит изображения вообще");
+		WARNING("Horosho by vozvraschatj umolchatel'nyj indeks otobrazhaemoj ikonki, esli pervaja NE soderzhit izobrazhenija voobsche");
 		// file_view_hc.ico - первый фрейм вообще пустой (полностью прозрачный), а второй содержит картинку
 
 		if (pIcon->nDataSize < (sizeof(ICONDIR) + (pIcon->Icon.idCount-1)*sizeof(ICONDIRENTRY)))
