@@ -247,19 +247,27 @@ struct DrawInfo
 {
 	LPCWSTR  szVolume, szVolumeRoot, szVolumeSize;
 	DWORD    nDriveType;
+	enum {
+		dib_Small = 0, dib_Large = 1, dib_Off = 2
+	} nSpaceBar;
 
 	wchar_t  szPic[MAX_PATH];  // Это относительный путь! считая от папки с плагином ("img/plugin.png")
 	wchar_t  szText[MAX_PATH]; // Текст, который отображается под картинкой ("G: 128Gb")
-	COLORREF crBack;           // Цвет фона
-	COLORREF crDark;           // Цвет спрайтов, текста, фона градусника
-	COLORREF crLight;          // Цвет градусника
+	COLORREF crBack[32];       // Цвет фона
+	int      nBackCount;
+	COLORREF crDark[32];       // Цвет спрайтов, текста, фона градусника
+	int      nDarkCount;
+	COLORREF crLight[32];      // Цвет градусника
+	int      nLightCount;
 	
 	enum DrawInfoFlags
 	{
 		dif_PicFilled        = 0x0000001,
 		dif_TextFilled       = 0x0000002,
 		dif_BackFilled       = 0x0000004,
-		dif_ShiftBackColor   = 0x0000008,
+		dif_DarkFilled       = 0x0000008,
+		dif_LightFilled      = 0x0000010,
+		dif_ShiftBackColor   = 0x0000020,
 		dif_Disabled         = 0x8000000,
 	};
 	DWORD Flags; // of DrawInfoFlags
@@ -1051,6 +1059,50 @@ struct RGBColor
 };
 
 
+void ParseColors(LPCWSTR asColors, BOOL abSwap/*RGB->COLORREF*/, COLORREF (&crValues)[32], int &nCount)
+{
+	size_t i = 0;
+	wchar_t* pszEnd = NULL;
+	
+	while (asColors && *asColors)
+	{
+		if (abSwap)
+		{
+			// Нам нужен COLORREF - это перевернутые R&B
+			RGBColor rgb = {}, bgr;
+			if (*asColors == L'#')
+				bgr.clr = wcstoul(asColors+1, &pszEnd, 16) & 0xFFFFFF;
+			else
+				bgr.clr = wcstoul(asColors, &pszEnd, 10) & 0xFFFFFF;
+			rgb.R = bgr.B;
+			rgb.G = bgr.G;
+			rgb.B = bgr.R;
+			crValues[i++] = rgb.clr;
+		}
+		else
+		{
+			RGBColor rgb;
+			if (*asColors == L'#')
+				rgb.clr = wcstoul(asColors+1, &pszEnd, 16) & 0xFFFFFF;
+			else
+				rgb.clr = wcstoul(asColors, &pszEnd, 10) & 0xFFFFFF;
+			crValues[i++] = rgb.clr;
+		}
+		
+		if (pszEnd && *pszEnd == L'|')
+			asColors = pszEnd + 1;
+		else
+			break;
+	}
+	
+	nCount = i;
+	
+	//while (i < countof(crValues))
+	//{
+	//	crValues[i++] = (COLORREF)-1;
+	//}
+}
+
 int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pPanel, DrawInfo *pDraw)
 {
 	int iFound = 0;
@@ -1390,33 +1442,68 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 										if (lstrcmpi(pszAttrName, L"rgb") == 0)
 										{
 											// Нам нужен COLORREF - это перевернутые R&B
-											RGBColor rgb = {}, bgr;
-											wchar_t* pszEnd = NULL;
-											if (*pszAttrValue == L'#')
-												bgr.clr = wcstoul(pszAttrValue+1, &pszEnd, 16) & 0xFFFFFF;
-											else
-												bgr.clr = wcstoul(pszAttrValue, &pszEnd, 10) & 0xFFFFFF;
-											rgb.R = bgr.B;
-											rgb.G = bgr.G;
-											rgb.B = bgr.R;
-											pDraw->crBack = rgb.clr;
+											ParseColors(pszAttrValue, TRUE/*RGB->COLORREF*/, pDraw->crBack, pDraw->nBackCount);
 											pDraw->Flags |= DrawInfo::dif_BackFilled;
+										}
+										else if (lstrcmpi(pszAttrName, L"rgb_dark") == 0)
+										{
+											// Нам нужен COLORREF - это перевернутые R&B
+											ParseColors(pszAttrValue, TRUE/*RGB->COLORREF*/, pDraw->crDark, pDraw->nDarkCount);
+											pDraw->Flags |= DrawInfo::dif_DarkFilled;
+										}
+										else if (lstrcmpi(pszAttrName, L"rgb_light") == 0)
+										{
+											// Нам нужен COLORREF - это перевернутые R&B
+											ParseColors(pszAttrValue, TRUE/*RGB->COLORREF*/, pDraw->crLight, pDraw->nLightCount);
+											pDraw->Flags |= DrawInfo::dif_LightFilled;
 										}
 										else if (lstrcmpi(pszAttrName, L"bgr") == 0)
 										{
-											RGBColor rgb;
-											wchar_t* pszEnd = NULL;
-											if (*pszAttrValue == L'#')
-												rgb.clr = wcstoul(pszAttrValue+1, &pszEnd, 16) & 0xFFFFFF;
-											else
-												rgb.clr = wcstoul(pszAttrValue, &pszEnd, 10) & 0xFFFFFF;
-											pDraw->crBack = rgb.clr;
+											ParseColors(pszAttrValue, FALSE/*RGB->COLORREF*/, pDraw->crBack, pDraw->nBackCount);
 											pDraw->Flags |= DrawInfo::dif_BackFilled;
+										}
+										else if (lstrcmpi(pszAttrName, L"bgr_dark") == 0)
+										{
+											ParseColors(pszAttrValue, FALSE/*RGB->COLORREF*/, pDraw->crDark, pDraw->nDarkCount);
+											pDraw->Flags |= DrawInfo::dif_DarkFilled;
+										}
+										else if (lstrcmpi(pszAttrName, L"bgr_light") == 0)
+										{
+											ParseColors(pszAttrValue, FALSE/*RGB->COLORREF*/, pDraw->crLight, pDraw->nLightCount);
+											pDraw->Flags |= DrawInfo::dif_LightFilled;
 										}
 										else if (lstrcmpi(pszAttrName, L"shift") == 0)
 										{
 											if (lstrcmpi(pszAttrValue, L"yes") == 0)
 												pDraw->Flags |= DrawInfo::dif_ShiftBackColor;
+										}
+									}
+								}
+							} while ((hr = pXmlReader->MoveToNextAttribute()) == S_OK);
+						}
+					}
+					else if (lstrcmpi(pszName, L"space") == 0)
+					{
+						// Смотрим атрибуты
+						hr = pXmlReader->MoveToFirstAttribute();
+						if (SUCCEEDED(hr))
+						{
+							do {
+								#ifdef _DEBUG
+								hr = pXmlReader->GetPrefix(&pszPrefix, NULL);
+								#endif
+								if (SUCCEEDED(hr = pXmlReader->GetLocalName(&pszAttrName, NULL)))
+								{
+									if (SUCCEEDED(hr = pXmlReader->GetValue(&pszAttrValue, NULL)))
+									{
+										if (lstrcmpi(pszAttrName, L"type") == 0)
+										{
+											if (lstrcmpi(pszAttrValue, L"large") == 0)
+												pDraw->nSpaceBar = DrawInfo::dib_Large;
+											else if (lstrcmpi(pszAttrValue, L"off") == 0)
+												pDraw->nSpaceBar = DrawInfo::dib_Off;
+											else //if (lstrcmpi(pszAttrValue, L"small") == 0)
+												pDraw->nSpaceBar = DrawInfo::dib_Small;
 										}
 									}
 								}
@@ -1895,7 +1982,17 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 	}
 	
 	// Что-то при запуске (1.7x?) иногда картинки прыгают, как будто статус сразу не нашли
-	_ASSERTE(nLines>0);
+#ifdef _DEBUG
+	if (nLines<1)
+	{
+		static bool bWarnLines = false;
+		if (!bWarnLines)
+		{
+			bWarnLines = true;
+			_ASSERTE(nLines>0);
+		}
+	}
+#endif
 
 	free(pChars);
 	
@@ -2082,58 +2179,116 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		{
 			if (bkInfo->bPlugin)
 			{
-				pDraw->crBack = RGB(128,128,128);
+				pDraw->crBack[0] = RGB(128,128,128);
 			}
 			else
 			{
 				switch (nDriveType)
 				{
 				case DRIVE_REMOVABLE:
-					pDraw->crBack = 0x00D98C; break;
+					pDraw->crBack[0] = 0x00D98C; break;
 				case DRIVE_REMOTE:
-					pDraw->crBack = 0xFF00E6; break;
+					pDraw->crBack[0] = 0xFF00E6; break;
 				case DRIVE_CDROM:
-					pDraw->crBack = 0x7E00FF; break;
+					pDraw->crBack[0] = 0x7E00FF; break;
 				case DRIVE_RAMDISK:
-					pDraw->crBack = 0x008080; break;
+					pDraw->crBack[0] = 0x008080; break;
 				default:
-					pDraw->crBack = 0xFF0000;
+					pDraw->crBack[0] = 0xFF0000;
 				}
 				pDraw->Flags |= DrawInfo::dif_ShiftBackColor;
 			}
+			pDraw->nBackCount = 1;
 		}
+		
+		int nLetter = 0;
+		
 		if ((pDraw->Flags & DrawInfo::dif_ShiftBackColor) && pDraw->crBack && (szVolume[1] == L':'))
 		{
-			// Сконвертить в HSV, сдвинуть, и обратно в COLORREF
-			int nLetter = (szVolume[0] >= L'a' && szVolume[0] <= L'z') ? (szVolume[0] - L'c') :
-						  (szVolume[0] >= L'A' && szVolume[0] <= L'Z') ? (szVolume[0] - L'C') : 0;
-			int nShift = (nLetter % 5) * 15;
-			HSVColor hsv = {};
-			RGBColor rgb; rgb.clr = pDraw->crBack;
-			//COLORREF2HSB(pDraw->crBack, hsb);
-			RGB2HSV(rgb, hsv);
-			#ifdef _DEBUG
-			HSV2RGB(hsv, rgb);
-			#endif
-			//hsv.H += nShift;
-			hsv.S -= nShift;
-			if (hsv.S < 0) hsv.S += 100;
-			hsv.V = hsv.V / 2;
-			HSV2RGB(hsv, rgb);
-			//hsv.Brightness *= 0.7;
-			//HSB2COLORREF(hsb, clr);
-			if (bLeft)
+			nLetter = (szVolume[0] >= L'a' && szVolume[0] <= L'b') ? (szVolume[0] - L'a' + 24) :
+					  (szVolume[0] >= L'c' && szVolume[0] <= L'z') ? (szVolume[0] - L'c') :
+					  (szVolume[0] >= L'A' && szVolume[0] <= L'B') ? (szVolume[0] - L'A' + 24) :
+					  (szVolume[0] >= L'C' && szVolume[0] <= L'Z') ? (szVolume[0] - L'C') :
+					  0;
+			if (pDraw->nBackCount > 0)
 			{
-				crOtherColor = rgb.clr;
-				cOtherDrive = nLetter;
+				_ASSERTE(pDraw->nBackCount <= countof(pDraw->crBack));
+				pDraw->crBack[0] = pDraw->crBack[nLetter % pDraw->nBackCount];
 			}
-			else if ((rgb.clr == crOtherColor) && (cOtherDrive != nLetter))
+			else
 			{
-				hsv.H += 15;
+				// Сконвертить в HSV, сдвинуть, и обратно в COLORREF
+				int nShift = (nLetter % 5) * 15;
+				HSVColor hsv = {};
+				RGBColor rgb; rgb.clr = *pDraw->crBack;
+				//COLORREF2HSB(pDraw->crBack, hsb);
+				RGB2HSV(rgb, hsv);
+				#ifdef _DEBUG
 				HSV2RGB(hsv, rgb);
+				#endif
+				//hsv.H += nShift;
+				hsv.S -= nShift;
+				if (hsv.S < 0) hsv.S += 100;
+				hsv.V = hsv.V / 2;
+				HSV2RGB(hsv, rgb);
+				//hsv.Brightness *= 0.7;
+				//HSB2COLORREF(hsb, clr);
+				if (bLeft)
+				{
+					crOtherColor = rgb.clr;
+					cOtherDrive = nLetter;
+				}
+				else if ((rgb.clr == crOtherColor) && (cOtherDrive != nLetter))
+				{
+					hsv.H += 15;
+					HSV2RGB(hsv, rgb);
+				}
+				
+				pDraw->crBack[0] = rgb.clr;
 			}
-			pDraw->crBack = rgb.clr;
 		}
+		
+		// Цвет спрайтов, текста, фона градусника
+		if (!(pDraw->Flags & DrawInfo::dif_DarkFilled))
+		{
+			RGBColor rgb; rgb.clr = *pDraw->crBack;
+			rgb.R = (BYTE)((int)rgb.R * 2 / 3);
+			rgb.G = (BYTE)((int)rgb.G * 2 / 3);
+			rgb.B = (BYTE)((int)rgb.B * 2 / 3);
+			pDraw->crDark[0] = rgb.clr;
+			pDraw->nDarkCount = 1;
+		}
+		else if (pDraw->Flags & DrawInfo::dif_ShiftBackColor)
+		{
+			if (pDraw->nDarkCount > 0)
+			{
+				_ASSERTE(pDraw->nDarkCount <= countof(pDraw->crDark));
+				pDraw->crDark[0] = pDraw->crDark[nLetter % pDraw->nDarkCount];
+			}
+		}
+		// Цвет градусника
+		if (!(pDraw->Flags & DrawInfo::dif_LightFilled))
+		{
+			HSVColor hsv = {};
+			RGBColor rgb; rgb.clr = *pDraw->crBack;
+			RGB2HSV(rgb, hsv);
+			hsv.H += 20;
+			hsv.S = min(100,hsv.S+25);
+			hsv.V = min(100,hsv.V+25);
+			HSV2RGB(hsv, rgb);
+			pDraw->crLight[0] = rgb.clr;
+			pDraw->nLightCount = 1;
+		}
+		else if (pDraw->Flags & DrawInfo::dif_ShiftBackColor)
+		{
+			if (pDraw->nLightCount > 0)
+			{
+				_ASSERTE(pDraw->nLightCount <= countof(pDraw->crLight));
+				pDraw->crLight[0] = pDraw->crLight[nLetter % pDraw->nLightCount];
+			}
+		}
+		
+		
 		if (!(pDraw->Flags & DrawInfo::dif_PicFilled))
 		{
 			if (bkInfo->bPlugin)
@@ -2163,46 +2318,15 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			wcscpy_c(pDraw->szText, szVolume);
 		}
 		
-		// Цвет спрайтов, текста, фона градусника
-		{
-			//HSVColor hsv = {};
-			RGBColor rgb; rgb.clr = pDraw->crBack;
-			//RGB2HSV(rgb, hsv);
-			//#ifdef _DEBUG
-			//HSV2RGB(hsv, rgb);
-			//#endif
-			//hsv.H += 5;
-			////hsv.S = max(0,hsv.S-15);
-			//hsv.V = max(0,hsv.V-15);
-			//HSV2RGB(hsv, rgb);
-			rgb.R = (BYTE)((int)rgb.R * 2 / 3);
-			rgb.G = (BYTE)((int)rgb.G * 2 / 3);
-			rgb.B = (BYTE)((int)rgb.B * 2 / 3);
-			pDraw->crDark = rgb.clr;
-		}
-		// Цвет градусника
-		{
-			HSVColor hsv = {};
-			RGBColor rgb; rgb.clr = pDraw->crBack;
-			RGB2HSV(rgb, hsv);
-			#ifdef _DEBUG
-			HSV2RGB(hsv, rgb);
-			#endif
-			hsv.H += 20;
-			hsv.S = min(100,hsv.S+25);
-			hsv.V = min(100,hsv.V+25);
-			HSV2RGB(hsv, rgb);
-			pDraw->crLight = rgb.clr;
-		}
 
 		// Поехали рисовать
 		if (pBk->dwLevel == 0)
 		{
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"ConEmuBk: %s - {%i,%i,%i,%i) #%06X\n",
 				bLeft ? L"Left" : L"Right", rcConPanel.left, rcConPanel.top, rcConPanel.right, rcConPanel.bottom,
-				pDraw->crBack);
+				*pDraw->crBack);
 			DBGSTR(szDbg);
-			HBRUSH hBrush = CreateSolidBrush(pDraw->crBack);
+			HBRUSH hBrush = CreateSolidBrush(*pDraw->crBack);
 			FillRect(pBk->hdc, &rcPanel, hBrush);
 			DeleteObject(hBrush);
 		}
@@ -2265,7 +2389,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 					HBITMAP hInvBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
 					HBITMAP hOldInvBmp = (HBITMAP)SelectObject(hInvDC, hInvBmp);
 
-					HBRUSH hDarkBr = CreateSolidBrush(pDraw->crDark);
+					HBRUSH hDarkBr = CreateSolidBrush(*pDraw->crDark);
 					HBRUSH hOldBr = (HBRUSH)SelectObject(hInvDC, hDarkBr);
 
 					BitBlt(hInvDC, 0, 0, nW, nH,
@@ -2276,7 +2400,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 					HDC hReadyDC = CreateCompatibleDC(hScreenDC);
 					HBITMAP hReadyBmp = CreateCompatibleBitmap(hScreenDC, nW, nH);
 					HBITMAP hOldReadyBmp = (HBITMAP)SelectObject(hReadyDC, hReadyBmp);
-					HBRUSH hBackBr = CreateSolidBrush(pDraw->crBack);
+					HBRUSH hBackBr = CreateSolidBrush(*pDraw->crBack);
 					hOldBr = (HBRUSH)SelectObject(hReadyDC, hBackBr);
 
 					BitBlt(hMaskDC, 0, 0, nW, nH,
@@ -2319,7 +2443,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 					HBITMAP hOldInvBmp = (HBITMAP)SelectObject(hInvDC, hInvBmp);
 					
 					RECT rcFill = {0,0,pI->nWidth, pI->nHeight};
-					HBRUSH hDarkBr = CreateSolidBrush(/*RGB(128,128,128)*/pDraw->crDark);
+					HBRUSH hDarkBr = CreateSolidBrush(/*RGB(128,128,128)*/ *pDraw->crDark);
 					FillRect(hInvDC, &rcFill, hDarkBr);
 					DeleteObject(hDarkBr);
 					
@@ -2362,8 +2486,8 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 					HBITMAP hBackBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
 					HBITMAP hOldBackBmp = (HBITMAP)SelectObject(hBackDC, hBackBmp);
 					
-					HBRUSH hPaintBr = CreateSolidBrush(pDraw->crDark);
-					HBRUSH hBackBr = CreateSolidBrush(pDraw->crBack);
+					HBRUSH hPaintBr = CreateSolidBrush(*pDraw->crDark);
+					HBRUSH hBackBr = CreateSolidBrush(*pDraw->crBack);
 					
 					RECT rcFill = {0,0,pI->nWidth, pI->nHeight};
 					
@@ -2415,7 +2539,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		}
 
 		SetBkMode(pBk->hdc, TRANSPARENT);
-		SetTextColor(pBk->hdc, pDraw->crDark);
+		SetTextColor(pBk->hdc, *pDraw->crDark);
 		
 		DrawText(pBk->hdc, pDraw->szText, -1, &rcText, DT_HIDEPREFIX|DT_RIGHT|DT_SINGLELINE|DT_TOP);
 		/*
@@ -2431,13 +2555,16 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		*/
 		
 		TODO("В Far3 можно и в плагинах свободное место получить");
+		if (bProgressAllowed && pDraw->nSpaceBar == DrawInfo::dib_Off)
+			bProgressAllowed = FALSE;
 		if (bProgressAllowed && (nStatusLines > 0) && !bkInfo->bPlugin && llTotalSize.QuadPart)
 		{
 			//llTotalSize = {}, 	
-			HBRUSH hUsedBr = CreateSolidBrush(pDraw->crLight);
-			HBRUSH hFreeBr = CreateSolidBrush(pDraw->crDark);
-			RECT rcUsed = rcWork;
-			rcUsed.top = rcUsed.bottom - nStatusLines * ((rcPanel.bottom - rcPanel.top + 1) / nPanelHeight);
+			HBRUSH hUsedBr = CreateSolidBrush(*pDraw->crLight);
+			HBRUSH hFreeBr = CreateSolidBrush(*pDraw->crDark);
+			RECT rcUsed = (pDraw->nSpaceBar == DrawInfo::dib_Small) ? rcWork : rcPanel;
+			int iShift = (pDraw->nSpaceBar == DrawInfo::dib_Small) ? 0 : 2;
+			rcUsed.top = rcUsed.bottom - (nStatusLines+iShift) * ((rcPanel.bottom - rcPanel.top + 1) / nPanelHeight);
 			rcUsed.right = rcUsed.right - (int)((u64)(rcUsed.right - rcUsed.left + 1) * llFreeSize.QuadPart / llTotalSize.QuadPart);
 			if (rcUsed.right > rcWork.right)
 			{
@@ -2451,7 +2578,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			}
 			RECT rcFree = rcUsed;
 			rcFree.left = rcUsed.right;
-			rcFree.right = rcWork.right;
+			rcFree.right = (pDraw->nSpaceBar == DrawInfo::dib_Small) ? rcWork.right : rcPanel.right;
 			FillRect(pBk->hdc, &rcFree, hFreeBr);
 			FillRect(pBk->hdc, &rcUsed, hUsedBr);
 			DeleteObject(hUsedBr);

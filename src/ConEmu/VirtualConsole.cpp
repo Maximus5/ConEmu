@@ -3281,13 +3281,16 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 				pszStarting = mp_RCon->GetConStatus();
 		}
 
-		UINT nFlags = ETO_CLIPPED;
-		SetTextColor(hPaintDc, pColors[7]);
-		SetBkColor(hPaintDc, pColors[0]);
-		ExtTextOut(hPaintDc, rcClient.left, rcClient.top, nFlags, &rcClient,
-		           pszStarting, _tcslen(pszStarting), 0);
-		SelectObject(hPaintDc, hOldF);
-		DeleteObject(hBr);
+		if (pszStarting != NULL)
+		{
+			UINT nFlags = ETO_CLIPPED;
+			SetTextColor(hPaintDc, pColors[7]);
+			SetBkColor(hPaintDc, pColors[0]);
+			ExtTextOut(hPaintDc, rcClient.left, rcClient.top, nFlags, &rcClient,
+			           pszStarting, _tcslen(pszStarting), 0);
+			SelectObject(hPaintDc, hOldF);
+			DeleteObject(hBr);
+		}
 		//EndPaint('ghWnd DC', &ps);
 		return;
 	}
@@ -3590,7 +3593,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 				POINT pt[2];
 				pt[0] = ConsoleToClient(pDlg->Rects[i].Left, pDlg->Rects[i].Top);
 				pt[1] = ConsoleToClient(pDlg->Rects[i].Right+1, pDlg->Rects[i].Bottom+1);
-				MapWindowPoints(GetView(), ghWnd, pt, 2);
+				//MapWindowPoints(GetView(), ghWnd, pt, 2);
 				Rectangle(hPaintDc, pt[0].x+n, pt[0].y+n, pt[1].x-n, pt[1].y-n);
 				wchar_t szCoord[32]; _wsprintf(szCoord, SKIPLEN(countof(szCoord)) L"%ix%i", pDlg->Rects[i].Left, pDlg->Rects[i].Top);
 				TextOut(hPaintDc, pt[0].x+1, pt[0].y+1, szCoord, _tcslen(szCoord));

@@ -1343,7 +1343,7 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 			
 			RECT rcGui = grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
 			if (MySetWindowPos(hWindow, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
-				SWP_FRAMECHANGED | (abStyleHidden ? SWP_SHOWWINDOW : 0)))
+				SWP_DRAWFRAME | SWP_FRAMECHANGED | (abStyleHidden ? SWP_SHOWWINDOW : 0)))
 			{
 				if (abStyleHidden)
 					abStyleHidden = FALSE;

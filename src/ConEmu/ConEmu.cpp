@@ -59,12 +59,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRIME(s) //DEBUGSTR(s)
 #define DEBUGSTRCHAR(s) //DEBUGSTR(s)
-#define DEBUGSTRSETCURSOR(s) OutputDebugString(s)
+#define DEBUGSTRSETCURSOR(s) //OutputDebugString(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
-#define DEBUGSTRFOCUS(s) DEBUGSTR(s)
+#define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #define DEBUGSTRFOREGROUND(s) //DEBUGSTR(s)
 #define DEBUGSTRLLKB(s) //DEBUGSTR(s)
 #ifdef _DEBUG
@@ -7307,9 +7307,12 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 	gpConEmu->mp_TabBar->OnBufferHeight(lbBufferHeight);
 }
 
-TODO("И вообще, похоже это событие не вызывается");
+
 LRESULT CConEmuMain::OnClose(HWND hWnd)
 {
+	TODO("И вообще, похоже это событие не вызывается");
+	_ASSERTE("CConEmuMain::OnClose"==NULL);
+
 	// Если все-таки вызовется - имитировать SC_CLOSE
 	OnSysCommand(hWnd, SC_CLOSE, 0);
 	//_ASSERTE(FALSE);

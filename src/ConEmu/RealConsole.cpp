@@ -7144,6 +7144,8 @@ BOOL CRealConsole::RecreateProcessStart()
 		StopThread(TRUE/*abRecreate*/);
 		ResetEvent(mh_TermEvent);
 		hConWnd = NULL;
+		hGuiWnd = NULL;
+		mn_GuiWndStyle = mn_GuiWndStylEx = mn_GuiWndPID;
 		ms_VConServer_Pipe[0] = 0;
 		SafeCloseHandle(mh_ServerSemaphore);
 		SafeCloseHandle(mh_GuiAttached);
@@ -8269,12 +8271,39 @@ CRealConsole::ExpandTextRangeType CRealConsole::ExpandTextRange(COORD& crFrom/*[
 			// -- GCC
 			// ConEmuC.cpp:49: error: 'qqq' does not name a type
 			// { // 1.c:3: 
+			bool bDigits = false, bLineNumberFound = false;
 			while (((crTo.X+1) < nLen)
 				&& ((pChar[crTo.X] != L':') || (pChar[crTo.X] == L':' && wcschr(L"0123456789", pChar[crTo.X+1]))))
 			{
 				if ((pChar[crTo.X] == L'/') && ((crTo.X+1) < nLen) && (pChar[crTo.X+1] == L'/'))
 				{
 					goto wrap; // Не оно (комментарий в строке)
+				}
+				if (pChar[crTo.X] >= L'0' && pChar[crTo.X] <= L'9')
+				{
+					if (bLineNumberFound)
+					{
+						// gcc такие строки тоже может выкинуть
+						// file.cpp:29:29: error
+						crTo.X--;
+						break;
+					}
+					if (!bDigits && (crFrom.X < crTo.X) && (pChar[crTo.X-1] == L':'))
+					{
+						bDigits = true;
+					}
+				}
+				else
+				{
+					if (pChar[crTo.X] == L':')
+					{
+						if (bDigits)
+						{
+							_ASSERTE(bLineNumberFound==false);
+							bLineNumberFound = true;
+						}
+					}
+					bDigits = false;
 				}
 				crTo.X++;
 				if (wcschr(pszBreak, pChar[crTo.X]))
@@ -8635,7 +8664,7 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 				{
 					int nFrom = con.mcr_FileLineStart.X;
 					int nTo = min(con.mcr_FileLineEnd.X,(int)cnSrcLineLen);
-					for (nX = nFrom; nX < nTo; nX++)
+					for (nX = nFrom; nX <= nTo; nX++)
 					{
 						pnDst[nX].nFontIndex |= 4; // Отрисовать его как Underline
 					}
@@ -12759,6 +12788,8 @@ bool CRealConsole::isAlive()
 
 LPCWSTR CRealConsole::GetConStatus()
 {
+	if (hGuiWnd)
+		return NULL;
 	return ms_ConStatus;
 }
 

@@ -450,8 +450,8 @@ void DllStop()
 	if (!GetModuleFileName(NULL, szModule, MAX_PATH+1))
 		_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
 	const wchar_t* pszName = PointToName(szModule);
-	if (!lstrcmpi(pszName, L"mingw32-make.exe"))
-		GuiMessageBox(ghConEmuWnd, L"mingw32-make.exe terminating", L"ConEmuHk", MB_SYSTEMMODAL);
+	//if (!lstrcmpi(pszName, L"mingw32-make.exe"))
+	//	GuiMessageBox(ghConEmuWnd, L"mingw32-make.exe terminating", L"ConEmuHk", MB_SYSTEMMODAL);
 	free(szModule);
 	#endif
 

@@ -1,15 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
-  PanelFormat - переменная, определяющая формат панели
-  PathMatch - та часть пути, что совпала с pathmatch
-  Volume - имя диска
-  VolumeSize - размер диска
+=== configuration ===
+	description:
+		root node, one per file
+	child nodes:
+		window
+
+=== window ===
+	attributes:
+		type
+			may be "PANELS", "EDITOR", "VIEWER"
+	child nodes:
+		panel, disabled, color, title, img
+		Note: "color, title, img" nodes may exists only in EDITOR/VIEWER
+
+=== disabled ===
+	syntax:
+		<disabled/>
+	description:
+		turn off coloring of this item
+
+=== panel ===
+	attributes:
+		type
+			values: "DRIVE", "PLUGIN", "INFO", "QVIEW", "TREE"
+		pathtype [optional]
+			"TEMP" means "%TEMP%" or X:\...\TEMP\...
+		pathmatch [optional]
+			one or several standard masks, delimited with "|"
+			example: pathmatch="*/.svn/*|*/.git/*|*/.hg/*|*/.bzr/*|*/CVS/*"
+		drivetype [optional]
+			may be used with type="DRIVE" only
+			values: "REMOVABLE", "REMOTE", "CDROM", "RAMDISK", "FIXED"
+		format [optional]
+			may be used with type="PLUGIN" only
+			one or several standard masks, delimited with "|"
+			each mask will be compared with panel [A|P]Panel.Prefix or [A|P]Panel.Format
+	child nodes:
+		disabled, color, space, title, img
+	
+=== color ===
+	attributes:
+		rgb
+			color value RRGGBB, you can use hexadecimal or decimal formats
+			example, light green
+			hexadecimal: rgb="#00FF00"
+			or decimal:  rgb="65280"
+		bgr
+			color value BBGGRR (WinAPI COLORREF), hexadecimal or decimal formats
+			example, light red
+			hexadecimal: bgr="#0000FF"
+			or decimal:  bgr="255"
+		rgb_light, bgr_light
+			color of drive used space
+		rgb_dark, bgr_dark
+			color of sprites and drive free space
+		shift
+			values: "yes", "no"
+			"yes" enables color 'rotation' of drive letter
+
+=== space ===
+	description:
+		drive used/free space bar, wich located in status area
+		see also: rgb_light, bgr_light, rgb_dark, bgr_dark
+	attributes:
+		type
+			"small", "large", "off"
+
+=== title ===
+	syntax:
+		<title>token[+token[+token[...]]</title>
+		where 'token' may be verbatim string,
+		or one of predefined 'variables'
+			PanelFormat - [A|P]Panel.Prefix or [A|P]Panel.Format
+			Volume      - drive letter with colon
+			VolumeSize  - drive size
+	example:
+		<title>Volume+" "+VolumeSize</title>
+
+=== img ===
+	attributes:
+		ref
+			full or relative (of plugin folder) path to 'sprite'
+			environment variables allowed
+
 -->
+
 <configuration>
 	<window type="PANELS">
 		<!--Temp folder-->
 		<panel type="DRIVE" pathtype="TEMP">
 			<color rgb="#663300"/> <!--Brown-->
+			<space type="small"/>
 			<title>"Temporary files"</title>
 			<img ref="img/trash.png"/>
 		</panel>
