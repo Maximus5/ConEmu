@@ -1524,7 +1524,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			csTabs = new MSection();
 			csData = new MSection();
 			ghCommandThreads = new CommandThreads();
-			HWND hConWnd = GetConsoleWindow();
+			HWND hConWnd = GetConEmuHWND(2);
 			// Текущая нить не обязана быть главной! Поэтому ищем первую нить процесса!
 			gnMainThreadId = GetMainThreadId();
 			InitHWND(hConWnd);
@@ -2393,7 +2393,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 
 			if (pFont && pFont->cbSize == sizeof(CESERVER_REQ_SETFONT))
 			{
-				SetConsoleFontSizeTo(GetConsoleWindow(), pFont->inSizeY, pFont->inSizeX, pFont->sFontName);
+				SetConsoleFontSizeTo(GetConEmuHWND(2), pFont->inSizeY, pFont->inSizeX, pFont->sFontName);
 			}
 		}
 		else if (nCmd == CMD_GUICHANGED)
@@ -2810,7 +2810,7 @@ BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
 		// Для 'far /w' нужно оставить высоту буфера!
 		In.SetSize.nBufferHeight = gpFarInfo->bBufferSupport ? -1 : 0;
 		In.SetSize.size.X = nNewWidth; In.SetSize.size.Y = nNewHeight;
-		CESERVER_REQ* pOut = ExecuteSrvCmd(gdwServerPID, &In, GetConsoleWindow());
+		CESERVER_REQ* pOut = ExecuteSrvCmd(gdwServerPID, &In, GetConEmuHWND(2));
 
 		if (pOut)
 		{
@@ -2883,7 +2883,7 @@ void CheckColorerHeader()
 	//wchar_t szMapName[64];
 	HWND lhConWnd = NULL;
 	//HANDLE h;
-	lhConWnd = GetConsoleWindow();
+	lhConWnd = GetConEmuHWND(2);
 	//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
 	//h = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
 	//gbHasColorMapping = (h!=NULL);
@@ -2962,7 +2962,7 @@ int CreateColorerHeader()
 	if (gnColorMappingMaxCells > nMapCells)
 		nMapCells = gnColorMappingMaxCells;
 	nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
-	lhConWnd = GetConsoleWindow();
+	lhConWnd = GetConEmuHWND(2);
 
 	if (gpColorMapping)
 	{
@@ -3112,7 +3112,7 @@ BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
 // Функции вызываются в основной нити, вполне можно дергать FAR-API
 VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 {
-	FarHwnd = GetConsoleWindow();
+	FarHwnd = GetConEmuHWND(2);
 
 	if (gbWasDetached)
 	{
@@ -3213,7 +3213,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			// Может быть ConEmu свалилось
 			if (!IsWindow(ConEmuHwnd) && ConEmuHwnd)
 			{
-				HWND hConWnd = GetConsoleWindow();
+				HWND hConWnd = GetConEmuHWND(2);
 
 				if ((hConWnd && !IsWindow(hConWnd))
 					|| (!gbWasDetached && FarHwnd && !IsWindow(FarHwnd)))
@@ -5924,7 +5924,7 @@ BOOL Attach2Gui()
 
 	gdwServerPID = 0;
 	//TODO("У сервера пока не получается менять шрифт в консоли, которую создал FAR");
-	//SetConsoleFontSizeTo(GetConsoleWindow(), 6, 4, L"Lucida Console");
+	//SetConsoleFontSizeTo(GetConEmuHWND(2), 6, 4, L"Lucida Console");
 	// Create process, with flag /Attach GetCurrentProcessId()
 	// Sleep for sometimes, try InitHWND(hConWnd); several times
 

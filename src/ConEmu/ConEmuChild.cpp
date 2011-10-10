@@ -724,7 +724,7 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 			DeleteObject(gpConEmu->m_Back->mh_BackBrush);
 			break;
 		case WM_SETFOCUS:
-			SetFocus(ghWnd); // Фокус должен быть в главном окне!
+			gpConEmu->setFocus(); // Фокус должен быть в главном окне!
 			return 0;
 		case WM_VSCROLL:
 			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
@@ -796,7 +796,7 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 			gpConEmu->ActiveCon()->RCon()->OnSetScrollPos(wParam);
 			break;
 		case WM_SETFOCUS:
-			SetFocus(ghWnd); // Фокус должен быть в главном окне!
+			gpConEmu->setFocus(); // Фокус должен быть в главном окне!
 			return 0;
 		case WM_TIMER:
 

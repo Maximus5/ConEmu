@@ -81,7 +81,7 @@ int ComspecInit()
 	// Правда нужно проверить, что там происходит с ghConOut.Close(),...
 	// Размер должен менять сам GUI, через серверный ConEmuC!
 #ifdef SHOW_STARTED_MSGBOX
-	MessageBox(GetConsoleWindow(), L"ConEmuC (comspec mode) is about to START", L"ConEmuC.ComSpec", 0);
+	MessageBox(GetConEmuHWND(2), L"ConEmuC (comspec mode) is about to START", L"ConEmuC.ComSpec", 0);
 #endif
 	//int nNewBufferHeight = 0;
 	//COORD crNewSize = {0,0};
@@ -261,7 +261,7 @@ void ComspecDone(int aiRc)
 						MCHKHEAP;
 						memmove(pIn->Data, pszPostAliases, nPostAliasSize);
 						MCHKHEAP;
-						CESERVER_REQ* pOut = ExecuteSrvCmd(gnServerPID, pIn, GetConsoleWindow());
+						CESERVER_REQ* pOut = ExecuteSrvCmd(gnServerPID, pIn, GetConEmuHWND(2));
 						MCHKHEAP;
 
 						if (pOut) ExecuteFreeResult(pOut);
@@ -308,7 +308,7 @@ void ComspecDone(int aiRc)
 	BOOL lbRc1 = FALSE, lbRc2 = FALSE;
 	CONSOLE_SCREEN_BUFFER_INFO sbi1 = {{0,0}}, sbi2 = {{0,0}};
 #ifdef _DEBUG
-	HWND hWndCon = GetConsoleWindow();
+	HWND hWndCon = GetConEmuHWND(2);
 #endif
 
 	// Тут нужна реальная, а не скорректированная информация!
@@ -325,7 +325,7 @@ void ComspecDone(int aiRc)
 
 	//PRAGMA_ERROR("Размер должен возвращать сам GUI, через серверный ConEmuC!");
 #ifdef SHOW_STARTED_MSGBOX
-	MessageBox(GetConsoleWindow(), L"ConEmuC (comspec mode) is about to TERMINATE", L"ConEmuC.ComSpec", 0);
+	MessageBox(GetConEmuHWND(2), L"ConEmuC (comspec mode) is about to TERMINATE", L"ConEmuC.ComSpec", 0);
 #endif
 #ifdef _DEBUG
 	xf_dump_chk();

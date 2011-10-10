@@ -89,7 +89,7 @@ extern HANDLE ghHeap;
 //		case DLL_PROCESS_ATTACH:
 //		{
 //			ghOurModule = (HMODULE)hModule;
-//			ghConWnd = GetConsoleWindow();
+//			ghConWnd = GetConEmuHWND(2);
 //			gnSelfPID = GetCurrentProcessId();
 //
 //			HANDLE hProcHeap = GetProcessHeap();
@@ -211,7 +211,7 @@ extern HANDLE ghHeap;
 //			//		GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
 //			//	if (pIn)
 //			//	{
-//			//		//HWND hConWnd = GetConsoleWindow();
+//			//		//HWND hConWnd = GetConEmuHWND(2);
 //			//		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 //			//		ExecuteFreeResult(pIn);
 //			//		if (pOut) ExecuteFreeResult(pOut);

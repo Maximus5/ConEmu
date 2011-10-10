@@ -445,7 +445,7 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 	else if (messg == WM_ACTIVATEAPP)
 	{
 		if (wParam && ghWnd)
-			SetFocus(ghWnd);
+			gpConEmu->setFocus();
 	}
 
 	result = DefWindowProc(hWnd, messg, wParam, lParam);
@@ -1001,7 +1001,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	GetImageSubsystem(ImageSubsystem,ImageBits);
 
 	wchar_t szConEmuBaseDir[MAX_PATH+1], szConEmuExe[MAX_PATH+1];
-	BOOL lbDbgFind = FindConEmuBaseDir(szConEmuBaseDir, szConEmuExe);
+	//BOOL lbDbgFind = FindConEmuBaseDir(szConEmuBaseDir, szConEmuExe);
 
 	wchar_t szDebug[1024] = {};
 	msprintf(szDebug, countof(szDebug), L"Test %u %i %s 0x%X %c 0x%08X*",

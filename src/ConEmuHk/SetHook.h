@@ -28,6 +28,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#ifndef ORIGINALSHOWCALL
+#define ORIGINALSHOWCALL(n) { char sFunc[128]; _wsprintfA(sFunc, SKIPLEN(countof(sFunc)) "Hook: %s\n", #n); OutputDebugStringA(sFunc); }
+#endif
+
 //enum HookExeOnly
 //{
 //	HEO_Undefined  = 0,
@@ -239,6 +243,7 @@ void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL 
 #define ORIGINALFASTEX(n,o) \
 	static HookItem *ph = NULL; \
 	static void* f##n = NULL; \
+	ORIGINALSHOWCALL(n); \
 	if ((f##n)==NULL) f##n = (void*)GetOriginalAddress((void*)(On##n) , (void*)o , FALSE, &ph); \
 	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
 

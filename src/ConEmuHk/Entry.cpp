@@ -1045,6 +1045,18 @@ void SendStopped()
 	}
 }
 
+// GetConsoleWindow хукается, поэтому, для получения реального консольного окна
+// можно дергать эту экспортируемую функцию
+HWND WINAPI GetRealConsoleWindow()
+{
+	HWND hConWnd = GetConsoleWindow();
+#ifdef _DEBUG
+	wchar_t sClass[64]; GetClassName(hConWnd, sClass, countof(sClass));
+	_ASSERTE(lstrcmp(sClass, L"ConsoleWindowClass")==0);
+#endif
+	return hConWnd;
+}
+
 #ifdef _DEBUG
 LONG WINAPI HkExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
 {

@@ -11,6 +11,7 @@
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConEmuColors3.h"
 #include "../common/common.hpp"
+#include "../common/ConEmuCheck.h"
 #include "../common/UnicodeChars.h"
 #include "../ConEmu/version.h"
 #include "ConEmuDw.h"
@@ -38,6 +39,7 @@ extern "C" {
 
 HMODULE ghOurModule = NULL; // ConEmuDw.dll
 HWND    ghConWnd = NULL; // инициализируется в CheckBuffers()
+HWND    ghConEmuWnd = NULL; // extern для MAssert
 
 AnnotationHeader* gpTrueColor = NULL;
 HANDLE ghTrueColor = NULL;
@@ -52,7 +54,6 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		case DLL_PROCESS_ATTACH:
 			{
 				//HeapInitialize();
-				
 				ghOurModule = (HMODULE)hModule;
 				
 			}
@@ -91,7 +92,7 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 BOOL CheckBuffers()
 {
 	//TODO: Проверить, не изменился ли HWND консоли?
-	HWND hCon = GetConsoleWindow();
+	HWND hCon = GetConEmuHWND(2);
 	if (!hCon)
 	{
 		CloseBuffers();

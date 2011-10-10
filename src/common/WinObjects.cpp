@@ -884,7 +884,7 @@ const wchar_t* SkipNonPrintable(const wchar_t* asParams)
 //	// Сначала пробуем Mapping консоли (вдруг есть?)
 //	{
 //		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
-//		ConMap.InitName(CECONMAPNAME, (DWORD)GetConsoleWindow());
+//		ConMap.InitName(CECONMAPNAME, (DWORD)GetConEmuHWND(2));
 //		CESERVER_CONSOLE_MAPPING_HDR* p = ConMap.Open();
 //		if (p && p->sConEmuBaseDir[0])
 //		{

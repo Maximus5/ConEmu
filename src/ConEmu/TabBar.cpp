@@ -496,7 +496,7 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 		}
 		case WM_SETFOCUS:
 		{
-			SetFocus(ghWnd);
+			gpConEmu->setFocus();
 			return 0;
 		}
 		case WM_SETCURSOR:
@@ -586,7 +586,7 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		case WM_SETFOCUS:
 		{
-			SetFocus(ghWnd);
+			gpConEmu->setFocus();
 			return 0;
 		}
 		case WM_TIMER:
@@ -1166,7 +1166,7 @@ LRESULT TabBarClass::OnNotify(LPNMHDR nmhdr)
 		return false;
 	}
 
-	//SetFocus(ghWnd); // 02.04.2009 Maks - ?
+	//gpConEmu->setFocus(); // 02.04.2009 Maks - ?
 	if (nmhdr->code == TCN_SELCHANGING)
 	{
 		//if (mb_ChangeAllowed) {

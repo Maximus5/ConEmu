@@ -64,9 +64,11 @@ enum CmdOnCreateType
 int ConEmuCheck(HWND* ahConEmuWnd);
 
 
-// Returns HWND of Gui console DC window (abRoot==FALSE),
-//              or Gui Main window (abRoot==TRUE)
-HWND GetConEmuHWND(BOOL abRoot);
+// Returns HWND of ...
+//  aiType==0: Gui console DC window
+//        ==1: Gui Main window
+//        ==2: Console window
+HWND GetConEmuHWND(int aiType);
 
 // hConEmuWnd - HWND с отрисовкой!
 void SetConEmuEnvVar(HWND hConEmuWnd);

@@ -1913,7 +1913,7 @@ int CreateColorerHeader()
 	DWORD nMapSize = 0;
 	HWND lhConWnd = NULL;
 	_ASSERTE(gpSrv->pColorerMapping == NULL);
-	lhConWnd = GetConsoleWindow();
+	lhConWnd = GetConEmuHWND(2);
 
 	if (!lhConWnd)
 	{

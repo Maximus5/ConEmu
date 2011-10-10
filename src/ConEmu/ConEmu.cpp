@@ -8250,6 +8250,22 @@ LRESULT CConEmuMain::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
 	return lbRc;
 }
 
+void CConEmuMain::setFocus()
+{
+#ifdef _DEBUG
+	DWORD nSelfPID = GetCurrentProcessId();
+	wchar_t sFore[1024], sFocus[1024]; sFore[0] = sFocus[0] = 0;
+	HWND hFocused = GetFocus();
+	DWORD nFocusPID = 0; if (hFocused) { GetWindowThreadProcessId(hFocused, &nFocusPID); getWindowInfo(hFocused, sFocus); }
+	HWND hFore = GetForegroundWindow();
+	DWORD nForePID = 0; if (hFore) { GetWindowThreadProcessId(hFore, &nForePID); getWindowInfo(hFore, sFore); }
+	bool bNeedFocus = false;
+	if (hFocused != ghWnd)
+		bNeedFocus = true;
+#endif
+	SetFocus(ghWnd);
+}
+
 LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	BOOL lbSetFocus = FALSE;
@@ -8368,7 +8384,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				if ((dwStyle & (WS_POPUP|WS_OVERLAPPEDWINDOW|WS_DLGFRAME)) != 0)
 					break; // Это диалог, не трогаем
 
-				SetFocus(ghWnd);
+				setFocus();
 				hNewFocus = GetFocus();
 #ifdef _DEBUG
 

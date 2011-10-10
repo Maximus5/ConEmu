@@ -897,7 +897,7 @@ void GetConsoleSizeInfo(CONSOLE_INFO *pci)
 	// Поскольку включен флажок "AutoPosition" - то это игнорируется
 	pci->WindowPosX = pci->WindowPosY = 0;
 	/*
-	RECT rcWnd = {0}; GetWindowRect(GetConsoleWindow(), &rcWnd);
+	RECT rcWnd = {0}; GetWindowRect(Get ConsoleWindow(), &rcWnd);
 	pci->WindowPosX	      = rcWnd.left;
 	pci->WindowPosY		  = rcWnd.top;
 	*/

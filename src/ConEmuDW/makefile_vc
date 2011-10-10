@@ -87,7 +87,15 @@ BASEADDRESS=/DYNAMICBASE
 NAME = ConEmuDw
 RC_NAME = ConEmuDw
 
-LINK_OBJS = $(OBJDIR)\ConEmuDw.obj
+LINK_OBJS = \
+	$(OBJDIR)\ConEmuDw.obj \
+	$(OBJDIR)\Common.obj \
+	$(OBJDIR)\ConEmuCheck.obj \
+	$(OBJDIR)\MAssert.obj \
+	$(OBJDIR)\Memory.obj \
+	$(OBJDIR)\MStrSafe.obj \
+	$(OBJDIR)\WinObjects.obj
+	
 
 USERLIBS = 
 
@@ -334,3 +342,15 @@ clean:
 
 
 $(OBJDIR)\ConEmuDw.obj: ConEmuDw.cpp
+
+$(OBJDIR)\Common.obj: ../common/Common.cpp
+
+$(OBJDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp
+
+$(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
+
+$(OBJDIR)\Memory.obj: ../common/Memory.cpp
+
+$(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+
+$(OBJDIR)\WinObjects.obj: ../common/WinObjects.cpp

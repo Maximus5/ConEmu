@@ -6645,7 +6645,7 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
 			// Issue 246. Возвращать фокус в ConEmu можно только если удалось установить
 			// "OnTop" для RealConsole, иначе - RealConsole "всплывет" на заднем плане
 			if ((dwExStyle & WS_EX_TOPMOST))
-				SetFocus(ghWnd);
+				gpConEmu->setFocus();
 
 			//} else { //2010-06-05 Не требуется. SetOtherWindowPos выполнит команду в сервере при необходимости
 			//	if (isAdministrator() || (m_Args.pszUserName != NULL)) {
@@ -6682,7 +6682,7 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
 		////if (setParent) SetParent(hConWnd, setParent2 ? ghWnd : 'ghWnd DC');
 		////if (!gpSet->isConVisible)
 		////EnableWindow(hConWnd, false); -- наверное не нужно
-		SetFocus(ghWnd);
+		gpConEmu->setFocus();
 	}
 }
 
@@ -6744,6 +6744,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 	}
 
 	hConWnd = ahConWnd;
+	SetWindowLongPtr(mp_VCon->GetView(), 0, (LONG_PTR)ahConWnd);
 	//if (mb_Detached && ahConWnd) // Не сбрасываем, а то нить может не успеть!
 	//  mb_Detached = FALSE; // Сброс флажка, мы уже подключились
 	//OpenColorMapping();
@@ -8332,6 +8333,9 @@ CRealConsole::ExpandTextRangeType CRealConsole::ExpandTextRange(COORD& crFrom/*[
 			{
 				goto wrap; // Номера строки нет
 			}
+			// Для красивости в VC включить скобки
+			if ((pChar[crTo.X] == L')') && (pChar[crTo.X+1] == L':'))
+				crTo.X++;
 			// Ok
 			if (pszText && cchTextMax)
 			{
@@ -9087,7 +9091,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 		}
 		else
 		{
-			SetFocus(ghWnd);
+			gpConEmu->setFocus();
 		}
 	}
 

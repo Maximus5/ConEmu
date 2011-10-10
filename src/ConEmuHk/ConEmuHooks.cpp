@@ -184,7 +184,7 @@ BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuf
 HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
 BOOL WINAPI OnAllocConsole(void);
 BOOL WINAPI OnFreeConsole(void);
-//HWND WINAPI OnGetConsoleWindow(void); // в фаре дофига и больше вызовов этой функции
+HWND WINAPI OnGetConsoleWindow();
 BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes);
@@ -209,6 +209,13 @@ BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc);
 HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow);
+HWND WINAPI OnSetParent(HWND hWndChild, HWND hWndNewParent);
+HWND WINAPI OnGetParent(HWND hWnd);
+HWND WINAPI OnGetWindow(HWND hWnd, UINT uCmd);
+HWND WINAPI OnGetAncestor(HWND hwnd, UINT gaFlags);
+
+
+
 
 bool InitHooksCommon()
 {
@@ -218,7 +225,7 @@ bool InitHooksCommon()
 	{
 		/* ***** MOST CALLED ***** */
 		#ifndef HOOKS_COMMON_PROCESS_ONLY
-		//{(void*)OnGetConsoleWindow,     "GetConsoleWindow",     kernel32}, -- пока смысла нет. инжекты еще не на старте ставятся
+		{(void*)OnGetConsoleWindow,     "GetConsoleWindow",     kernel32},
 		//{(void*)OnWriteConsoleOutputWx,	"WriteConsoleOutputW",  kernel32},
 		//{(void*)OnWriteConsoleOutputAx,	"WriteConsoleOutputA",  kernel32},
 		{(void*)OnWriteConsoleOutputW,	"WriteConsoleOutputW",  kernel32},
@@ -287,6 +294,10 @@ bool InitHooksCommon()
 		{(void*)OnCreateWindowExA,		"CreateWindowExA",		user32},
 		{(void*)OnCreateWindowExW,		"CreateWindowExW",		user32},
 		{(void*)OnShowWindow,			"ShowWindow",			user32},
+		{(void*)OnSetParent,			"SetParent",			user32},
+		{(void*)OnGetParent,			"GetParent",			user32},
+		{(void*)OnGetWindow,			"GetWindow",			user32},
+		{(void*)OnGetAncestor,			"GetAncestor",			user32},
 		/* ************************ */
 		{(void*)OnShellExecuteExA,		"ShellExecuteExA",		shell32},
 		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
@@ -435,7 +446,7 @@ void __stdcall SetFarHookMode(struct HookModeFar *apFarMode)
 //		ReleaseConsoleInputSemaphore();
 //	}
 //	wchar_t szName[128];
-//	HWND hConWnd = GetConsoleWindow();
+//	HWND hConWnd = GetConEmuHWND(2);
 //	if (hConWnd != ghConWnd)
 //	{
 //		_ASSERTE(ghConWnd == hConWnd);
@@ -463,7 +474,13 @@ void __stdcall SetFarHookMode(struct HookModeFar *apFarMode)
 // Эту функцию нужно позвать из DllMain
 BOOL StartupHooks(HMODULE ahOurDll)
 {
-	ghConWnd = GetConsoleWindow();
+#ifdef _DEBUG
+	// Консольное окно уже должно быть иницализировано в DllMain
+	_ASSERTE(ghConWnd != NULL && ghConWnd == GetConsoleWindow());
+	wchar_t sClass[128]; GetClassName(ghConWnd, sClass, countof(sClass));
+	_ASSERTE(lstrcmp(sClass, L"ConsoleWindowClass") == 0);
+#endif
+
 	// -- ghConEmuWnd уже должен быть установлен в DllMain!!!
 	//ghConEmuWndDC = GetConEmuHWND(FALSE);
 	//ghConEmuWnd = ghConEmuWndDC ? ghConEmuWnd : NULL;
@@ -1184,6 +1201,9 @@ LRESULT CALLBACK GuiClientRetHook(int nCode, WPARAM wParam, LPARAM lParam)
 static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwStyle, DWORD& dwExStyle, HWND& hWndParent, BOOL& bAttachGui, BOOL& bStyleHidden)
 {
 	bAttachGui = FALSE;
+	
+	_ASSERTE(hWndParent==NULL || ghConEmuWnd == NULL || hWndParent!=ghConEmuWnd);
+	
 	if (gbAttachGuiClient && ghConEmuWndDC && (GetCurrentThreadId() == gnHookMainThreadId))
 	{
 		bool lbCanAttach = (dwStyle & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW;
@@ -1390,6 +1410,84 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 
 	return lbRc;
 }
+
+typedef HWND (WINAPI* OnSetParent_t)(HWND hWndChild, HWND hWndNewParent);
+HWND WINAPI OnSetParent(HWND hWndChild, HWND hWndNewParent)
+{
+	ORIGINALFASTEX(SetParent,NULL);
+	HWND lhRc = NULL;
+
+	if (hWndNewParent && ghConEmuWndDC)
+	{
+		_ASSERTE(hWndNewParent!=ghConEmuWnd);
+		//hWndNewParent = ghConEmuWndDC;
+	}
+
+	if (F(SetParent))
+	{
+		lhRc = F(SetParent)(hWndChild, hWndNewParent);
+	}
+
+	return lhRc;
+}
+
+typedef HWND (WINAPI* OnGetParent_t)(HWND hWnd);
+HWND WINAPI OnGetParent(HWND hWnd)
+{
+	ORIGINALFASTEX(GetParent,NULL);
+	HWND lhRc = NULL;
+
+	if (hWnd == ghConEmuWndDC)
+	{
+		hWnd = ghConEmuWnd;
+	}
+
+	if (F(GetParent))
+	{
+		lhRc = F(GetParent)(hWnd);
+	}
+
+	return lhRc;
+}
+
+typedef HWND (WINAPI* OnGetWindow_t)(HWND hWnd, UINT uCmd);
+HWND WINAPI OnGetWindow(HWND hWnd, UINT uCmd)
+{
+	ORIGINALFASTEX(GetWindow,NULL);
+	HWND lhRc = NULL;
+
+	if ((hWnd == ghConEmuWndDC) && (uCmd == GW_OWNER))
+	{
+		hWnd = ghConEmuWnd;
+	}
+
+	if (F(GetWindow))
+	{
+		lhRc = F(GetWindow)(hWnd, uCmd);
+	}
+
+	return lhRc;
+}
+
+typedef HWND (WINAPI* OnGetAncestor_t)(HWND hWnd, UINT gaFlags);
+HWND WINAPI OnGetAncestor(HWND hWnd, UINT gaFlags)
+{
+	ORIGINALFASTEX(GetAncestor,NULL);
+	HWND lhRc = NULL;
+
+	if (hWnd == ghConEmuWndDC)
+	{
+		hWnd = ghConEmuWnd;
+	}
+
+	if (F(GetAncestor))
+	{
+		lhRc = F(GetAncestor)(hWnd, gaFlags);
+	}
+
+	return lhRc;
+}
+
 
 typedef HWND (WINAPI* OnCreateWindowExA_t)(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
@@ -2286,20 +2384,21 @@ BOOL WINAPI OnFreeConsole(void)
 	return lbRc;
 }
 
-//typedef HWND (WINAPI* OnGetConsoleWindow_t)(void);
-//HWND WINAPI OnGetConsoleWindow(void)
-//{
-//	ORIGINALFAST(GetConsoleWindow);
-//
-//	if (ghConEmuWndDC && ghConsoleHwnd)
-//	{
-//		return ghConsoleHwnd;
-//	}
-//
-//	HWND h;
-//	h = F(GetConsoleWindow)();
-//	return h;
-//}
+typedef HWND (WINAPI* OnGetConsoleWindow_t)(void);
+HWND WINAPI OnGetConsoleWindow(void)
+{
+	ORIGINALFAST(GetConsoleWindow);
+
+	if (ghConEmuWndDC && IsWindow(ghConEmuWndDC) /*ghConsoleHwnd*/)
+	{
+		//return ghConsoleHwnd;
+		return ghConEmuWndDC;
+	}
+
+	HWND h;
+	h = F(GetConsoleWindow)();
+	return h;
+}
 
 typedef BOOL (WINAPI* OnWriteConsoleOutputA_t)(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)

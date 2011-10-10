@@ -473,6 +473,7 @@ class CConEmuMain
 		HMENU CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
 		HMENU CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly);
 		HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew);
+		void setFocus();
 		void StartDebugLogConsole();
 		void StartDebugActiveProcess();
 		//void StartLogCreateProcess();

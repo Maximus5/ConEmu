@@ -54,7 +54,6 @@ u64 ghWorkingModule = 0;
 //extern LPVOID _malloc(size_t);
 //extern void   _free(LPVOID);
 
-typedef HWND (APIENTRY *FGetConsoleWindow)();
 //typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
 
 //WARNING("Для 'Простых' запросов можно использовать 'CallNamedPipe', Это если нужно например получить хэндлы окон");
@@ -578,13 +577,15 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	{
 #ifdef _DEBUG
 
-		//_ASSERTE(hPipe != NULL && hPipe != INVALID_HANDLE_VALUE);
+		// в заголовке "чисти" запущенного фара появляются отладочные(?) сообщения
+		// по идее - не должны, т.к. все должно быть через мэппинг
+		_ASSERTE(hPipe != NULL && hPipe != INVALID_HANDLE_VALUE);
 #ifdef CONEMU_MINIMAL
 		SetConsoleTitle(szErr);
 #else
 		if (hOwner)
 		{
-			if (hOwner == GetConsoleWindow())
+			if (hOwner == myGetConsoleWindow())
 				SetConsoleTitle(szErr);
 			else
 				SetWindowText(hOwner, szErr);
@@ -739,6 +740,77 @@ void ExecuteFreeResult(CESERVER_REQ* pOut)
 HWND myGetConsoleWindow()
 {
 	HWND hConWnd = NULL;
+	static HMODULE hHookLib = NULL;
+	if (!hHookLib)
+		hHookLib = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+	if (hHookLib)
+	{
+		typedef HWND (WINAPI* GetRealConsoleWindow_t)();
+		static GetRealConsoleWindow_t GetRealConsoleWindow_f = NULL;
+		if (!GetRealConsoleWindow_f)
+			GetRealConsoleWindow_f = (GetRealConsoleWindow_t)GetProcAddress(hHookLib, "GetRealConsoleWindow");
+		if (GetRealConsoleWindow_f)
+		{
+			hConWnd = GetRealConsoleWindow_f();
+		}
+		else
+		{
+			_ASSERTE(GetRealConsoleWindow_f!=NULL);
+		}
+	}
+
+	if (!hConWnd)
+		hConWnd = GetConsoleWindow();
+
+#ifdef _DEBUG
+	// Избежать статической линковки для user32.dll
+	HMODULE hUser32 = GetModuleHandle(L"user32.dll");
+	if (!hUser32)
+	{
+		// Скорее всего, user32 уже должен быть загружен, но если вдруг - сильно
+		// плохо, если он будет вызываться из DllMain
+		_ASSERTE(hUser32!=NULL);
+		hUser32 = LoadLibrary(L"user32.dll");
+	}
+	typedef LONG_PTR (WINAPI* GetWindowLongPtr_t)(HWND,int);
+	GetWindowLongPtr_t GetWindowLongPtr_f = (GetWindowLongPtr_t)GetProcAddress(hUser32,WIN3264TEST("GetWindowLongW","GetWindowLongPtrW"));
+	typedef int (WINAPI* GetClassName_t)(HWND hWnd,LPWSTR lpClassName,int nMaxCount);
+	GetClassName_t GetClassName_f = (GetClassName_t)GetProcAddress(hUser32,"GetClassNameW");
+	typedef LONG_PTR (WINAPI* IsWindow_t)(HWND);
+	IsWindow_t IsWindow_f = (IsWindow_t)GetProcAddress(hUser32,"IsWindow");
+
+	if (!(GetClassName_f && GetWindowLongPtr_f && IsWindow_f))
+	{
+		_ASSERTE(GetClassName_f && GetWindowLongPtr_f);
+	}
+	else
+	{
+		wchar_t sClass[64];
+		GetClassName_f(hConWnd, sClass, countof(sClass));
+		_ASSERTE(lstrcmp(sClass, L"ConsoleWindowClass")==0);
+		#if 0
+		if (lstrcmp(sClass, VirtualConsoleClass) == 0)
+		{
+			// в данных окна DC - хранится хэндл окна консоли
+			HWND h = (HWND)GetWindowLongPtr_f(hConWnd, 0);
+			if (h && IsWindow_f(h))
+			{
+				hConWnd = h;
+			}
+			else
+			{
+				_ASSERTE(h && IsWindow_f(h));
+			}
+		}
+		#endif
+	}
+#endif
+
+	return hConWnd;
+
+#if 0
+	// Смысла звать GetProcAddress для "GetConsoleWindow" мало, все равно хукается
+	typedef HWND (APIENTRY *FGetConsoleWindow)();
 	static FGetConsoleWindow fGetConsoleWindow = NULL;
 
 	if (!fGetConsoleWindow)
@@ -755,30 +827,35 @@ HWND myGetConsoleWindow()
 		hConWnd = fGetConsoleWindow();
 
 	return hConWnd;
+#endif
 }
 
-// Returns HWND of Gui console DC window
-HWND GetConEmuHWND(BOOL abRoot)
+// Returns HWND of ...
+//  aiType==0: Gui console DC window
+//        ==1: Gui Main window
+//        ==2: Console window
+HWND GetConEmuHWND(int aiType)
 {
-	CESERVER_REQ *pIn = NULL;
-	CESERVER_REQ *pOut = NULL;
+	//CESERVER_REQ *pIn = NULL;
+	//CESERVER_REQ *pOut = NULL;
 	DWORD nLastErr = GetLastError();
 	HWND FarHwnd = NULL, ConEmuHwnd = NULL, ConEmuRoot = NULL;
-
 	size_t cchMax = 128;
-	wchar_t *szGuiPipeName = (wchar_t*)malloc(cchMax*sizeof(*szGuiPipeName));
-	if (!szGuiPipeName)
-	{
-		_ASSERTE(szGuiPipeName!=NULL);
-		return NULL;
-	}
+	wchar_t *szGuiPipeName = NULL;
 
 	FarHwnd = myGetConsoleWindow();
-	if (!FarHwnd)
+	if (!FarHwnd || (aiType == 2))
 	{
 		goto wrap;
 		//SetLastError(nLastErr);
 		//return NULL;
+	}
+
+	szGuiPipeName = (wchar_t*)malloc(cchMax*sizeof(*szGuiPipeName));
+	if (!szGuiPipeName)
+	{
+		_ASSERTE(szGuiPipeName!=NULL);
+		return NULL;
 	}
 
 	// Сначала пробуем Mapping консоли (вдруг есть?)
@@ -813,7 +890,7 @@ HWND GetConEmuHWND(BOOL abRoot)
 			CloseHandle(hMapping);
 	}
 
-#ifdef _DEBUG
+#if 0
 	// Сервер не мог подцепиться БЕЗ создания мэппинга, поэтому CECMD_GETGUIHWND можно не делать
 	if (!ConEmuRoot)
 	{
@@ -849,11 +926,17 @@ HWND GetConEmuHWND(BOOL abRoot)
 
 wrap:
 	SetLastError(nLastErr);
-	if (pIn)
-		free(pIn);
+	//if (pIn)
+	//	free(pIn);
 	if (szGuiPipeName)
 		free(szGuiPipeName);
-	return (abRoot) ? ConEmuRoot : ConEmuHwnd;
+
+	if (aiType == 2)
+		return FarHwnd;
+	else if (aiType == 0)
+		return ConEmuHwnd;
+	else // aiType == 1
+		return ConEmuRoot;
 }
 
 
@@ -1054,7 +1137,7 @@ int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBt
 	
 	if (hConEmuWndRoot)
 	{
-		HWND hConWnd = GetConsoleWindow();
+		HWND hConWnd = myGetConsoleWindow();
 		CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(sizeof(*pIn));
 		ExecutePrepareCmd(pIn, CECMD_ASSERT, sizeof(CESERVER_REQ_HDR)+sizeof(MyAssertInfo));
 		pIn->AssertInfo.nBtns = anBtns;

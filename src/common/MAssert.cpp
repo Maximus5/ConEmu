@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #include "MStrSafe.h"
 #include "common.hpp"
+#include "ConEmuCheck.h"
 #ifdef ASSERT_PIPE_ALLOWED
 #include "ConEmuCheck.h"
 #endif
@@ -115,7 +116,7 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest)
 #ifdef _DEBUG
 	if (gAllowAssertThread == am_Pipe)
 	{
-		HWND hConWnd = GetConsoleWindow();
+		HWND hConWnd = GetConEmuHWND(2);
 		HWND hGuiWnd = ghConEmuWnd;
 		#ifndef CONEMU_MINIMAL
 		if (hGuiWnd == NULL)

@@ -194,7 +194,14 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		case DLL_PROCESS_ATTACH:
 		{
 			ghOurModule = (HMODULE)hModule;
-			ghConWnd = GetConsoleWindow();
+
+			DWORD nImageBits = WIN3264TEST(32,64), nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+			GetImageSubsystem(nImageSubsystem,nImageBits);
+			if (nImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+				ghConWnd = NULL;
+			else
+				ghConWnd = GetConEmuHWND(2);
+
 			gnSelfPID = GetCurrentProcessId();
 			ghWorkingModule = (u64)hModule;
 
@@ -319,7 +326,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			//		GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
 			//	if (pIn)
 			//	{
-			//		//HWND hConWnd = GetConsoleWindow();
+			//		//HWND hConWnd = GetConEmuHWND(2);
 			//		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 			//		ExecuteFreeResult(pIn);
 			//		if (pOut) ExecuteFreeResult(pOut);
@@ -512,7 +519,7 @@ int __stdcall ConsoleMain()
 	}
 
 	// Хэндл консольного окна
-	ghConWnd = GetConsoleWindow();
+	ghConWnd = GetConEmuHWND(2);
 	// здесь действительно может быть NULL при запуска как detached comspec
 	//_ASSERTE(ghConWnd!=NULL);
 	//if (!ghConWnd)
@@ -1114,7 +1121,7 @@ wrap:
 	// в самой процедуре ExitWaitForKey вставлена проверка флага gbInShutdown
 	PRINT_COMSPEC(L"Finalizing. gbInShutdown=%i\n", gbInShutdown);
 #ifdef SHOW_STARTED_MSGBOX
-	MessageBox(GetConsoleWindow(), L"Finalizing", (gnRunMode == RM_SERVER) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
+	MessageBox(GetConEmuHWND(2), L"Finalizing", (gnRunMode == RM_SERVER) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
 #endif
 #ifdef _DEBUG
 	xf_validate(NULL);
@@ -1263,7 +1270,7 @@ wrap:
 		iRc = gnExitCode;
 
 #ifdef SHOW_STARTED_MSGBOX
-	MessageBox(GetConsoleWindow(), L"Exiting", (gnRunMode == RM_SERVER) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
+	MessageBox(GetConEmuHWND(2), L"Exiting", (gnRunMode == RM_SERVER) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
 #endif
 	if (gpSrv)
 	{
@@ -2100,7 +2107,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			wchar_t szInfo[128];
 			StringCchPrintf(szInfo, countof(szInfo), L"Attaching debugger...\nConEmuC PID = %u\nDebug PID = %u",
 			                GetCurrentProcessId(), gpSrv->dwRootProcess);
-			MessageBox(GetConsoleWindow(), szInfo, L"ConEmuC.Debugger", 0);
+			MessageBox(GetConEmuHWND(2), szInfo, L"ConEmuC.Debugger", 0);
 #endif
 			//if (!DebugActiveProcess(gpSrv->dwRootProcess))
 			//{
@@ -2753,7 +2760,7 @@ void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDon
 	{
 		BOOL lbNeedVisible = FALSE;
 
-		if (!ghConWnd) ghConWnd = GetConsoleWindow();
+		if (!ghConWnd) ghConWnd = GetConEmuHWND(2);
 
 		if (ghConWnd)  // Если консоль была скрыта
 		{
@@ -2874,7 +2881,7 @@ void SendStarted()
 
 	//crNewSize = gpSrv->sbi.dwSize;
 	//_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
-	HWND hConWnd = GetConsoleWindow();
+	HWND hConWnd = GetConEmuHWND(2);
 
 	if (!gnSelfPID)
 	{
