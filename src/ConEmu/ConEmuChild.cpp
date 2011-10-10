@@ -286,6 +286,19 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			}
 			// If an application processes this message, it should return TRUE to halt further processing or FALSE to continue.
 			break;
+			
+		case WM_SYSCOMMAND:
+			if (wParam >= SC_SIZE && wParam <= SC_CONTEXTHELP/*0xF180*/)
+			{
+				// Изменение размеров/максимизация/и т.п. окна консоли - запрещена
+				_ASSERTE(!(wParam >= SC_SIZE && wParam <= SC_CONTEXTHELP));
+			}
+			else
+			{
+				// По идее, сюда ничего приходить больше не должно
+				_ASSERTE(FALSE);
+			}
+			break;
 
 		default:
 
