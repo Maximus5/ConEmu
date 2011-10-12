@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    72
+#define CESERVER_REQ_VER    73
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -107,6 +107,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CONEMUMSG_ACTIVATECON L"ConEmuMain::ActivateCon"  // wParam == ConNumber (1..12)
 #define CONEMUMSG_SWITCHCON L"ConEmuMain::SwitchCon"
 #define CONEMUMSG_HOOKEDKEY L"ConEmuMain::HookedKey"
+#define CONEMUMSG_CONSOLEHOOKEDKEY L"ConEmuMain::ConsoleHookedKey"
 #define CONEMUMSG_PNLVIEWFADE L"ConEmuTh::Fade"
 #define CONEMUMSG_PNLVIEWSETTINGS L"ConEmuTh::Settings"
 
@@ -187,6 +188,7 @@ const CECMD
 	CECMD_PEEKREADINFO   = 44, // CESERVER_REQ_PEEKREADINFO: посылается в GUI на вкладку Debug
 	CECMD_TERMINATEPID   = 45,
 	CECMD_ATTACHGUIAPP   = 46, // CESERVER_REQ_ATTACHGUIAPP
+	CECMD_KEYSHORTCUTS   = 47, // BYTE Data[2]; SetConsoleKeyShortcuts from kernel32.dll
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -215,6 +217,11 @@ const CECMD
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
+
+#define MOD_LALT         0x0010
+#define MOD_RALT         0x0020
+#define MOD_LCONTROL     0x0040
+#define MOD_RCONTROL     0x0080
 
 
 //// Команды FAR плагина

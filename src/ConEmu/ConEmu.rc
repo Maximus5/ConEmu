@@ -516,27 +516,21 @@ BEGIN
     EDITTEXT        tLongOutputHeight,163,109,29,12,ES_AUTOHSCROLL
     RTEXT           "16bit height:",IDC_STATIC,218,111,44,8
     COMBOBOX        lbNtvdmHeight,264,109,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
-    GROUPBOX        "Hotkeys",IDC_STATIC,4,131,319,54
-    GROUPBOX        "Host-key",IDC_STATIC,8,139,145,42
-    CONTROL         "Win",cbHostWin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,152,28,10
-    CONTROL         "LAlt",cbHostLAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,48,152,28,10
-    CONTROL         "LCtrl",cbHostLCtrl,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,152,31,10
-    CONTROL         "LShift",cbHostLShift,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,152,34,10
-    CONTROL         "Apps",cbHostApps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,166,32,10
-    CONTROL         "RAlt",cbHostRAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,48,166,29,10
-    CONTROL         "RCtrl",cbHostRCtrl,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,166,32,10
-    CONTROL         "RShift",cbHostRShift,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,166,35,10
-    RTEXT           "New:",IDC_STATIC,157,144,19,8
-    CONTROL         "",hkNewConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,179,142,23,13
-    RTEXT           "Switch:",IDC_STATIC,206,144,25,8
-    CONTROL         "",hkSwitchConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,233,142,23,13
-    RTEXT           "Recreate:",IDC_STATIC,257,144,35,8
-    CONTROL         "",hkCloseConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,295,142,23,13
-    CONTROL         "Use «Host-key»+Number to switch consoles",cbUseWinNumber,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,158,159,10
-    CONTROL         "Install keyboard hooks (Vista+)",cbInstallKeybHooks,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,159,170,114,10
-    CONTROL         "Win+Tab",cbUseWinTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,276,170,42,10
+    RTEXT           "New:",IDC_STATIC,9,145,19,8
+    CONTROL         "",hkNewConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,31,143,23,13
+    RTEXT           "Switch:",IDC_STATIC,58,145,25,8
+    CONTROL         "",hkSwitchConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,85,143,23,13
+    RTEXT           "Recreate:",IDC_STATIC,109,145,35,8
+    CONTROL         "",hkCloseConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,147,143,23,13
+    GROUPBOX        "Hotkeys",IDC_STATIC,4,129,319,50
+    RTEXT           "Close:",IDC_STATIC,174,145,22,8
+    CONTROL         "",hkDelConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,198,143,23,13
+    RTEXT           "Cmd:",IDC_STATIC,10,161,18,8
+    CONTROL         "",hkStartCmd,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,31,158,23,13
+    RTEXT           "Min:",IDC_STATIC,67,161,16,8
+    CONTROL         "",hkMinRestore,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,85,158,23,13
+    RTEXT           "Buffer:",IDC_STATIC,111,161,34,8
+    CONTROL         "",hkBufferMode,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,147,159,23,13
 END
 
 IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319
@@ -662,6 +656,33 @@ BEGIN
     EDITTEXT        ebDosBoxDrives,4,67,202,12,ES_AUTOHSCROLL
     LTEXT           "Autoexec commands:",IDC_STATIC,4,83,202,8
     EDITTEXT        ebDosBoxAutoexec,4,93,202,53,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_VSCROLL | WS_HSCROLL
+END
+
+IDD_SPG_KEYS DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "ConEmu hotkeys",IDC_STATIC,4,1,319,230
+    CONTROL         "List1",lbConEmuHotKeys,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,8,13,311,150
+    RTEXT           "Choose hotkey:",stHotKeySelect,9,169,56,8,WS_DISABLED
+    CONTROL         "",hkHotKeySelect,"msctls_hotkey32",WS_DISABLED | WS_BORDER | WS_TABSTOP,68,167,23,14
+    RTEXT           "Choose modifier:",stHotModifierSelect,100,169,56,8,WS_DISABLED
+    COMBOBOX        lbLDragKey,159,167,56,30,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Host-key",IDC_STATIC,8,185,145,42
+    CONTROL         "Win",cbHostWin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,198,28,10
+    CONTROL         "LAlt",cbHostLAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,48,198,28,10
+    CONTROL         "LCtrl",cbHostLCtrl,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,198,31,10
+    CONTROL         "LShift",cbHostLShift,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,198,34,10
+    CONTROL         "Apps",cbHostApps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,212,32,10
+    CONTROL         "RAlt",cbHostRAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,48,212,29,10
+    CONTROL         "RCtrl",cbHostRCtrl,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,212,32,10
+    CONTROL         "RShift",cbHostRShift,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,212,35,10
+    CONTROL         "Use «Host-key»+Number to switch consoles",cbUseWinNumber,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,190,159,10
+    CONTROL         "Install keyboard hooks",cbInstallKeybHooks,"Button",BS_AUTO3STATE | WS_TABSTOP,159,203,159,10
+    CONTROL         "Win+Tab",cbUseWinTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,216,47,10
+    CONTROL         "Win+Arrows",cbUseWinArrows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,208,216,60,10
 END
 
 
@@ -987,6 +1008,66 @@ END
 STRINGTABLE 
 BEGIN
     cbUseWinTab             "Disable Windows 7 Aero switch (Win+Tab) when ConEmu in foreground"
+END
+
+STRINGTABLE 
+BEGIN
+    vkMinimizeRestore       "Minimize/Restore"
+    vkMultiNew              "Create new console"
+    vkMultiNext             "Switch next console"
+    vkMultiRecreate         "Recreate active console"
+    vkMultiBuffer           "Switch bufferheight mode"
+    vkMultiClose            "Close active console"
+    vkMultiCmd              "Create new «cmd.exe» console"
+    vkCTSVkBlock            "Block selection modifier"
+    vkCTSVkText             "Text selection modifier"
+    vkCTSVkAct              "Right and middle mouse buttons modifier (Text selection)"
+    vkFarGotoEditorVk       "FarGotoEditor modifier (hyperlinks and compiler errors)"
+    vkLDragKey              "LDrag modifier"
+    vkRDragKey              "RDrag modifier"
+    vkWinAltP               "Show Settings dialog"
+    vkWinAltSpace           "Show ConEmu menu"
+    vkAltF9                 "Maximize/restore"
+END
+
+STRINGTABLE 
+BEGIN
+    vkCtrlWinAltSpace       "Show real console"
+    vkAltEnter              "Full screen (may be disabled via «Send Alt+Enter to console»)"
+    vkAltSpace              "Show ConEmu menu (may be disabled via «Send Alt+Space to console»)"
+    vkCtrlUp                "Scroll buffer one line up (disabled in Far /w)"
+    vkCtrlDown              "Scroll buffer one line down (disabled in Far /w)"
+    vkCtrlPgUp              "Scroll buffer one page up (disabled in Far /w)"
+    vkCtrlPgDn              "Scroll buffer one page down (disabled in Far /w)"
+    vkCtrlTab               "Next tab (may be disabled)"
+    vkCtrlShiftTab          "Previous tab (may be disabled)"
+    vkCtrlTab_Left          "Switch tab to left (while Ctrl-Tab was pressed and Ctrl - hold)"
+    vkCtrlTab_Right         "Switch tab to right (while Ctrl-Tab was pressed and Ctrl - hold)"
+    vkCtrlTab_Up            "Switch tab to left (while Ctrl-Tab was pressed and Ctrl - hold)"
+    vkCtrlTab_Down          "Switch tab to right (while Ctrl-Tab was pressed and Ctrl - hold)"
+    vkCtrlWinEnter          "Full screen"
+    vkMultiNextShift        "Switch previous console"
+    vkConsole_1             "Activate console 1 (Use «Host-key»+Number to switch consoles)"
+END
+
+STRINGTABLE 
+BEGIN
+    vkConsole_2             "Activate console 2 (Use «Host-key»+Number to switch consoles)"
+    vkConsole_3             "Activate console 3 (Use «Host-key»+Number to switch consoles)"
+    vkConsole_4             "Activate console 4 (Use «Host-key»+Number to switch consoles)"
+    vkConsole_5             "Activate console 5 (Use «Host-key»+Number to switch consoles)"
+    vkConsole_6             "Activate console 6 (Use «Host-key»+Number to switch consoles)"
+    vkConsole_7             "Activate console 7 (Use «Host-key»+Number to switch consoles)"
+    vkConsole_8             "Activate console 8 (Use «Host-key»+Number to switch consoles)"
+    vkConsole_9             "Activate console 9 (Use «Host-key»+Number to switch consoles)"
+    vkConsole_10            "Activate console 10 (Use «Host-key»+Number to switch consoles)"
+    vkConsole_11            "Activate console 11 (Use «Host-key»+Number to switch consoles)"
+    vkConsole_12            "Activate console 12 (Use «Host-key»+Number to switch consoles)"
+    vkMultiNewShift         "Create new console (alter «Create confirmation»)"
+    vkWinLeft               "Decrease window width"
+    vkWinRight              "Increase window width"
+    vkWinUp                 "Decrease window height"
+    vkWinDown               "Increase window height"
 END
 
 #endif    // English (U.S.) resources

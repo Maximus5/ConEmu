@@ -107,7 +107,7 @@ int main(
 		           "ConEmuCD.dll",
 #endif
 		           dwErr);
-		WriteConsole(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
+		WriteConsoleA(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
 		return CERR_CONEMUHK_NOTFOUND;
 	}
 

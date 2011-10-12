@@ -128,6 +128,7 @@ enum ConEmuRect
 	CER_FULLSCREEN, // полный размер в pix текущего монитора (содержащего ghWnd)
 	CER_MAXIMIZED,  // размер максимизированного окна на текущем мониторе (содержащего ghWnd)
 	CER_RESTORE,    // размер "восстановленного" окна после максимизации (коррекция по размеру монитора?)
+	CER_MONITOR,    // полный размер в pix рабочей области текущего монитора (содержащего ghWnd)
 //	CER_CORRECTED   // скорректированное положение (чтобы окно было видно на текущем мониторе)
 };
 
@@ -334,6 +335,7 @@ class CConEmuMain
 		UINT mn_MsgTabCommand;
 		UINT mn_MsgTabSwitchFromHook; BOOL mb_InWinTabSwitch; // = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 		UINT mn_MsgWinKeyFromHook;
+		UINT mn_MsgConsoleHookedKey;
 		UINT mn_MsgSheelHook;
 		UINT mn_ShellExecuteEx;
 		UINT mn_PostConsoleResize;
@@ -502,6 +504,7 @@ class CConEmuMain
 		LRESULT OnClose(HWND hWnd);
 		BOOL OnCloseQuery();
 		//BOOL mb_InConsoleResize;
+		void OnConsoleKey(WORD vk, LPARAM Mods);
 		void OnConsoleResize(BOOL abPosted=FALSE);
 		void OnCopyingState();
 		LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);

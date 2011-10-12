@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTROVL(s) //DEBUGSTR(s)
 #define DEBUGSTRBACK(s) //DEBUGSTR(s)
+#define DEBUGSTROVER(s) DEBUGSTR(s)
 
 
 CDragDrop::CDragDrop()
@@ -1613,8 +1614,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 						if (*pdwEffect == DROPEFFECT_LINK && lbPassive && m_pfpi->pszPassivePath[0] == 0)
 							*pdwEffect = DROPEFFECT_NONE;
 					}
-					else if ((lbActive && m_pfpi->ActiveRect.bottom && pt.y > m_pfpi->ActiveRect.bottom) ||
-							(lbPassive && m_pfpi->PassiveRect.bottom && pt.y > m_pfpi->PassiveRect.bottom))
+					else if ((m_pfpi->ActiveRect.bottom && pt.y > m_pfpi->ActiveRect.bottom && pt.x >= m_pfpi->ActiveRect.left && pt.x <= m_pfpi->ActiveRect.right)
+							|| (m_pfpi->PassiveRect.bottom && pt.y > m_pfpi->PassiveRect.bottom && pt.x >= m_pfpi->PassiveRect.left && pt.x <= m_pfpi->PassiveRect.right)
+							|| (!m_pfpi->ActiveRect.bottom && !m_pfpi->PassiveRect.bottom))
 					{
 						*pdwEffect = DROPEFFECT_COPY;
 					}
@@ -1626,6 +1628,11 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 			}
 		}
 	}
+
+#ifdef _DEBUG
+	//if (*pdwEffect == DROPEFFECT_NONE)
+	//	*pdwEffect = DROPEFFECT_LINK;
+#endif
 
 	if (!mb_selfdrag)
 	{

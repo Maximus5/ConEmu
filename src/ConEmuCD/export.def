@@ -12,5 +12,6 @@ EXPORTS
 	ghKeyHook
 	gnVkWinFix
 	gbWinTabHook
+	gnConsoleKeyShortcuts
 	gnHookedKeys
 	ghKeyHookConEmuRoot

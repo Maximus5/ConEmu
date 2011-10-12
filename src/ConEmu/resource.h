@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by ConEmu.rc
 //
 #define IDI_ICON1                       1
@@ -29,6 +29,7 @@
 #define IDD_SPG_VIEWS                   208
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
+#define IDD_SPG_KEYS                    211
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -181,6 +182,7 @@
 #define cbSkipFocusEvents               1538
 #define hkNewConsole                    1539
 #define hkSwitchConsole                 1540
+#define hkDelConsole                    1541
 #define cbSkipActivation                1542
 #define cbSkipMove                      1543
 #define gbStandardColors                1544
@@ -233,6 +235,7 @@
 #define tPanelRight                     1601
 #define IDC_CHOOSE_DIR                  1602
 #define IDC_STARTUP_DIR                 1603
+#define hkStartCmd                      1604
 #define hkCloseConsole                  1605
 #define bFarHourglass                   1606
 #define bRClick                         1607
@@ -382,15 +385,70 @@
 #define rbActivityInput                 1762
 #define cbUseWinTab                     1764
 #define cbFarGotoEditor                 1765
-#define lbFarGotoEditorVk              1766
+#define lbFarGotoEditorVk               1766
+#define hkHotKeySelect                  1767
+#define cbUseWinArrows                  1768
+#define stHotKeySelect                  1769
+#define stHotModifierSelect             1770
+#define lbConEmuHotKeys                 1771
+#define hkMinRestore                    1772
+#define hkBufferMode                    1773
+#define vkMinimizeRestore               2000
+#define vkMultiNew                      2001
+#define vkMultiNext                     2002
+#define vkMultiRecreate                 2003
+#define vkMultiBuffer                   2004
+#define vkMultiClose                    2005
+#define vkMultiCmd                      2006
+#define vkCTSVkBlock                    2007
+#define vkCTSVkText                     2008
+#define vkCTSVkAct                      2009
+#define vkFarGotoEditorVk               2010
+#define vkLDragKey                      2011
+#define vkRDragKey                      2012
+#define vkWinAltP                       2013
+#define vkWinAltSpace                   2014
+#define vkAltF9                         2015
+#define vkCtrlWinAltSpace               2016
+#define vkAltEnter                      2017
+#define vkAltSpace                      2018
+#define vkCtrlUp                        2019
+#define vkCtrlDown                      2020
+#define vkCtrlPgUp                      2021
+#define vkCtrlPgDn                      2022
+#define vkCtrlTab                       2023
+#define vkCtrlShiftTab                  2024
+#define vkCtrlTab_Left                  2025
+#define vkCtrlTab_Right                 2026
+#define vkCtrlTab_Up                    2027
+#define vkCtrlTab_Down                  2028
+#define vkCtrlWinEnter                  2029
+#define vkMultiNextShift                2030
+#define vkConsole_1                     2031
+#define vkConsole_2                     2032
+#define vkConsole_3                     2033
+#define vkConsole_4                     2034
+#define vkConsole_5                     2035
+#define vkConsole_6                     2036
+#define vkConsole_7                     2037
+#define vkConsole_8                     2038
+#define vkConsole_9                     2039
+#define vkConsole_10                    2040
+#define vkConsole_11                    2041
+#define vkConsole_12                    2042
+#define vkMultiNewShift                 2043
+#define vkWinLeft                       2044
+#define vkWinRight                      2045
+#define vkWinUp                         2046
+#define vkWinDown                       2047
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        211
+#define _APS_NEXT_RESOURCE_VALUE        212
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1767
+#define _APS_NEXT_CONTROL_VALUE         1774
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

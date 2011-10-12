@@ -85,9 +85,21 @@ bool SettingsRegistry::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 {
 	_ASSERTE(nSize>0);
 
-	if (RegQueryValueEx(regMy, regName, NULL, NULL, (LPBYTE)value, &nSize) == ERROR_SUCCESS)
+	DWORD nNewSize = nSize;
+	LONG lRc = RegQueryValueEx(regMy, regName, NULL, NULL, (LPBYTE)value, &nNewSize);
+	if (lRc == ERROR_SUCCESS)
 		return true;
-
+	if (lRc == ERROR_MORE_DATA && nSize == sizeof(BYTE) && nNewSize == sizeof(DWORD))
+	{
+		// если тип раньше был DWORD а стал - BYTE
+		DWORD nData = 0;
+		lRc = RegQueryValueEx(regMy, regName, NULL, NULL, (LPBYTE)value, &nNewSize);
+		if (lRc == ERROR_SUCCESS)
+		{
+			*value = (BYTE)(nData & 0xFF);
+			return true;
+		}
+	}
 	return false;
 }
 // После вызова ЭТОЙ функции - про старое значение в *value строго забываем
@@ -977,7 +989,7 @@ bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 			wchar_t cHex;
 			DWORD lVal = 0;
 			lbRc = true;
-
+			
 			while(*pszCur && nSize)
 			{
 				lVal = 0;

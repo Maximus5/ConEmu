@@ -220,6 +220,7 @@ BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+BOOL WINAPI OnSetConsoleKeyShortcuts(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DWORD n1);
 
 
 
@@ -247,6 +248,7 @@ bool InitHooksCommon()
 		{(void*)OnWriteConsoleInputA,	"WriteConsoleInputA",	kernel32},
 		{(void*)OnWriteConsoleInputW,	"WriteConsoleInputW",	kernel32},
 		{(void*)OnSetConsoleTextAttribute, "SetConsoleTextAttribute", kernel32},
+		{(void*)OnSetConsoleKeyShortcuts, "SetConsoleKeyShortcuts", kernel32},
 		#endif
 		/* ************************ */
 		{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
@@ -1245,7 +1247,8 @@ static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWOR
 {
 	bAttachGui = FALSE;
 	
-	_ASSERTE(hWndParent==NULL || ghConEmuWnd == NULL || hWndParent!=ghConEmuWnd);
+	// "!dwStyle" добавил для shell32.dll!CExecuteApplication::_CreateHiddenDDEWindow()
+	_ASSERTE(hWndParent==NULL || ghConEmuWnd == NULL || hWndParent!=ghConEmuWnd || !dwStyle);
 	
 	if (gbAttachGuiClient && ghConEmuWndDC && (GetCurrentThreadId() == gnHookMainThreadId))
 	{
@@ -2840,6 +2843,41 @@ BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc)
 		lbRc = MyChooseColor((SimpleApiFunction_t)F(ChooseColorW), lpcc, TRUE);
 	else
 		lbRc = F(ChooseColorW)(lpcc);
+	return lbRc;
+}
+
+// Undocumented function
+BOOL WINAPI OnSetConsoleKeyShortcuts(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DWORD n1)
+{
+	typedef BOOL (WINAPI* OnSetConsoleKeyShortcuts_t)(BOOL,BYTE,LPVOID,DWORD);
+	ORIGINALFASTEX(SetConsoleKeyShortcuts,NULL);
+	BOOL lbRc = FALSE;
+
+	if (F(SetConsoleKeyShortcuts))
+		lbRc = F(SetConsoleKeyShortcuts)(bSet, bReserveKeys, p1, n1);
+
+	if (ghConEmuWnd)
+	{
+		DWORD nLastErr = GetLastError();
+		DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(BYTE)*2;
+		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_KEYSHORTCUTS, nSize);
+		if (pIn)
+		{
+			pIn->Data[0] = bSet;
+			pIn->Data[1] = bReserveKeys;
+
+			wchar_t szGuiPipeName[128];
+			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)ghConWnd);
+
+			CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 1000, NULL);
+
+			if (pOut)
+				ExecuteFreeResult(pOut);
+			ExecuteFreeResult(pIn);
+		}
+		SetLastError(nLastErr);
+	}
+
 	return lbRc;
 }
 

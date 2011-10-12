@@ -186,6 +186,7 @@ UINT_PTR gfnLoadLibrary = NULL;
 UINT gnMsgActivateCon = 0;
 UINT gnMsgSwitchCon = 0;
 UINT gnMsgHookedKey = 0;
+UINT gnMsgConsoleHookedKey = 0;
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
@@ -231,6 +232,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 			gnMsgSwitchCon = RegisterWindowMessage(CONEMUMSG_SWITCHCON);
 			gnMsgHookedKey = RegisterWindowMessage(CONEMUMSG_HOOKEDKEY);
+			gnMsgConsoleHookedKey = RegisterWindowMessage(CONEMUMSG_CONSOLEHOOKEDKEY);
 			//#endif
 			//wchar_t szSkipEventName[128];
 			//_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());

@@ -26,6 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define DEBUGSTRHOOK(s) //OutputDebugString(s)
 
 #include <windows.h>
 
@@ -46,6 +47,7 @@ extern "C" {
 	__declspec(dllexport) HHOOK ghKeyHook = 0;
 	__declspec(dllexport) DWORD gnVkWinFix = 0xF0;
 	__declspec(dllexport) BOOL  gbWinTabHook = FALSE;
+	__declspec(dllexport) BYTE  gnConsoleKeyShortcuts = 0;
 	__declspec(dllexport) DWORD gnHookedKeys[64] = {};
 	__declspec(dllexport) HWND  ghKeyHookConEmuRoot = NULL;
 #if defined(__GNUC__)
@@ -64,11 +66,40 @@ extern "C" {
 extern UINT gnMsgActivateCon; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 extern UINT gnMsgSwitchCon;
 extern UINT gnMsgHookedKey;
+extern UINT gnMsgConsoleHookedKey;
 //SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
 extern HANDLE ghHeap;
+
+enum CONSOLE_KEY_ID
+{
+	ID_ALTTAB,
+	ID_ALTESC,
+	ID_ALTSPACE,
+	ID_ALTENTER,
+	ID_ALTPRTSC,
+	ID_PRTSC,
+	ID_CTRLESC,
+};
+
+struct
+{
+	int iMask;
+	int vk;
+	int Mod;
+}
+ConsoleKeys[]=
+{
+	{1<<ID_ALTTAB,   VK_TAB, VK_MENU},
+	{1<<ID_ALTESC,   VK_ESCAPE, VK_MENU},
+	{1<<ID_ALTSPACE, 0, 0}, // Internally by ConEmu
+	{1<<ID_ALTENTER, 0, 0}, // Internally by ConEmu
+	{1<<ID_ALTPRTSC, VK_PRINT, VK_MENU},
+	{1<<ID_PRTSC,    VK_PRINT, 0},
+	{1<<ID_CTRLESC,  VK_ESCAPE, VK_CONTROL},
+};
 
 //BOOL gbSkipInjects = FALSE;
 //BOOL gbHooksWasSet = FALSE;
@@ -324,6 +355,7 @@ extern HANDLE ghHeap;
 
 BYTE gnOtherWin = 0;
 DWORD gnSkipVkModCode = 0;
+WPARAM gnSkipVkMessage = 0;
 //DWORD gnSkipScanModCode = 0;
 DWORD gnSkipVkKeyCode = 0;
 //DWORD gnWinPressTick = 0;
@@ -346,26 +378,58 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 		//if (wParam == WM_KEYUP && gnSkipVkModCode && pKB->vkCode == gnSkipVkModCode) {
 		//	wsprintf(szKH+lstrlen(szKH)-1, L" - WinDelta=%i\n", (pKB->time - gnWinPressTick));
 		//}
-		OutputDebugString(szKH);
+		DEBUGSTRHOOK(szKH);
 #endif
 
-		if (wParam == WM_KEYDOWN && ghKeyHookConEmuRoot)
+		if (((wParam == WM_KEYDOWN) || (wParam == WM_SYSKEYDOWN)) && ghKeyHookConEmuRoot)
 		{
-			BOOL lbHooked = FALSE;
-			if (pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9') /*|| pKB->vkCode == (int)' '*/
-				lbHooked = TRUE;
-			else if (gbWinTabHook && pKB->vkCode == VK_TAB)
-				lbHooked = TRUE;
-			else
+			BOOL lbHooked = FALSE, lbConsoleKey = FALSE;
+			if ((wParam == WM_KEYDOWN))
 			{
-				for (size_t i = 0; i < countof(gnHookedKeys); i++)
+				if (pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9') /*|| pKB->vkCode == (int)' '*/
+					lbHooked = TRUE;
+				else if (gbWinTabHook && pKB->vkCode == VK_TAB)
+					lbHooked = TRUE;
+				else
 				{
-					if (gnHookedKeys[i] == pKB->vkCode)
+					for (size_t i = 0; i < countof(gnHookedKeys); i++)
 					{
-						lbHooked = TRUE;
-						break;
+						if (gnHookedKeys[i] == pKB->vkCode)
+						{
+							lbHooked = TRUE;
+							break;
+						}
 					}
 				}
+			}
+			if (!lbHooked)
+			{
+				#ifdef _DEBUG
+				DEBUGSTRHOOK(L"[hook] checking vk ");
+				#endif
+				for (size_t h = 0; h < countof(ConsoleKeys); h++)
+				{
+					if (ConsoleKeys[h].vk)
+					{
+						#ifdef _DEBUG
+						_wsprintf(szKH, SKIPLEN(countof(szKH)) L"%i ", ConsoleKeys[h].vk);
+						DEBUGSTRHOOK(szKH);
+						#endif
+						if ((ConsoleKeys[h].vk == pKB->vkCode)
+							&& (gnConsoleKeyShortcuts & ConsoleKeys[h].iMask)
+							&& (ConsoleKeys[h].Mod == 0 || isPressed(ConsoleKeys[h].Mod)))
+						{
+							lbHooked = lbConsoleKey = TRUE;
+							#ifdef _DEBUG
+							DEBUGSTRHOOK(L"proceed");
+							#endif
+							break;
+						}
+					}
+				}
+				#ifdef _DEBUG
+				DEBUGSTRHOOK(L"\n");
+				#endif
 			}
 
 			if (lbHooked)
@@ -374,45 +438,77 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 				BOOL lbRightWin = isPressed(VK_RWIN);
 				BOOL lbShiftPressed = isPressed(VK_SHIFT);
 
-				if ((lbLeftWin || lbRightWin) && IsWindow(ghKeyHookConEmuRoot))
+				if (IsWindow(ghKeyHookConEmuRoot))
 				{
-					if (pKB->vkCode == VK_TAB)
+					if (lbConsoleKey)
 					{
-						PostMessage(ghKeyHookConEmuRoot, gnMsgSwitchCon, lbShiftPressed, 0);
+						LPARAM lMods = 0;
+						if (isPressed(VK_LCONTROL))
+							lMods |= MOD_LCONTROL|MOD_CONTROL;
+						if (isPressed(VK_RCONTROL))
+							lMods |= MOD_RCONTROL|MOD_CONTROL;
+						if (isPressed(VK_LMENU))
+							lMods |= MOD_LALT|MOD_ALT;
+						if (isPressed(VK_RMENU))
+							lMods |= MOD_RALT|MOD_ALT;
+						if (lbShiftPressed)
+							lMods |= MOD_SHIFT;
+						if (lbLeftWin || lbRightWin)
+							lMods |= MOD_WIN;
+						PostMessage(ghKeyHookConEmuRoot, gnMsgConsoleHookedKey, pKB->vkCode, lMods);
+						gnSkipVkModCode = 0;
+						gnSkipVkKeyCode = pKB->vkCode;
+						gnSkipVkMessage = wParam;
+						#ifdef _DEBUG
+						_wsprintf(szKH, SKIPLEN(countof(szKH)) L"[hook] vk=%i (press) blocked\n", pKB->vkCode);
+						DEBUGSTRHOOK(szKH);
+						#endif
+						return 1; // Ќужно возвращать 1, чтобы нажатие не ушло в Win7 Taskbar
 					}
-					else if (pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9')
+					else if (lbLeftWin || lbRightWin)
 					{
-						DWORD nConNumber = (pKB->vkCode == (UINT)'0') ? 10 : (pKB->vkCode - (UINT)'0');
-						PostMessage(ghKeyHookConEmuRoot, gnMsgActivateCon, nConNumber, 0);
+						if (pKB->vkCode == VK_TAB)
+						{
+							PostMessage(ghKeyHookConEmuRoot, gnMsgSwitchCon, lbShiftPressed, 0);
+						}
+						else if (pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9')
+						{
+							DWORD nConNumber = (pKB->vkCode == (UINT)'0') ? 10 : (pKB->vkCode - (UINT)'0');
+							PostMessage(ghKeyHookConEmuRoot, gnMsgActivateCon, nConNumber, 0);
+						}
+						else
+						{
+							PostMessage(ghKeyHookConEmuRoot, gnMsgHookedKey, pKB->vkCode, lbShiftPressed);
+						}
+						gnSkipVkModCode = lbLeftWin ? VK_LWIN : lbRightWin ? VK_RWIN : 0;
+						gnSkipVkKeyCode = pKB->vkCode;
+						// запрет обработки системой
+						#ifdef _DEBUG
+						_wsprintf(szKH, SKIPLEN(countof(szKH)) L"[hook] vk=%i (press) blocked\n", pKB->vkCode);
+						DEBUGSTRHOOK(szKH);
+						#endif
+						return 1; // Ќужно возвращать 1, чтобы нажатие не ушло в Win7 Taskbar
+						////gnWinPressTick = pKB->time;
+						//HWND hConEmu = GetForegroundWindow();
+						//// ѕо идее, должен быть ConEmu, но необходимо проверить (может хук не сн€лс€?)
+						//if (hConEmu)
+						//{
+						//	wchar_t szClass[64];
+						//	if (GetClassNameW(hConEmu, szClass, 63) && lstrcmpW(szClass, VirtualConsoleClass)==0)
+						//	{
+						//		//if (!gnMsgActivateCon) --> DllMain
+						//		//	gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
+						//		WORD nConNumber = (pKB->vkCode == (UINT)'0') ? 10 : (pKB->vkCode - (UINT)'0');
+						//		if (SendMessage(hConEmu, gnMsgActivateCon, wParam, pKB->vkCode) == 1)
+						//		{
+						//			gnSkipVkModCode = lbLeftWin ? VK_LWIN : VK_RWIN;
+						//			gnSkipVkKeyCode = pKB->vkCode;
+						//			// запрет обработки системой
+						//			return 1; // Ќужно возвращать 1, чтобы нажатие не ушло в Win7 Taskbar
+						//		}
+						//	}
+						//}
 					}
-					else
-					{
-						PostMessage(ghKeyHookConEmuRoot, gnMsgHookedKey, pKB->vkCode, lbShiftPressed);
-					}
-					gnSkipVkModCode = lbLeftWin ? VK_LWIN : VK_RWIN;
-					gnSkipVkKeyCode = pKB->vkCode;
-					// запрет обработки системой
-					return 1; // Ќужно возвращать 1, чтобы нажатие не ушло в Win7 Taskbar
-					////gnWinPressTick = pKB->time;
-					//HWND hConEmu = GetForegroundWindow();
-					//// ѕо идее, должен быть ConEmu, но необходимо проверить (может хук не сн€лс€?)
-					//if (hConEmu)
-					//{
-					//	wchar_t szClass[64];
-					//	if (GetClassNameW(hConEmu, szClass, 63) && lstrcmpW(szClass, VirtualConsoleClass)==0)
-					//	{
-					//		//if (!gnMsgActivateCon) --> DllMain
-					//		//	gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
-					//		WORD nConNumber = (pKB->vkCode == (UINT)'0') ? 10 : (pKB->vkCode - (UINT)'0');
-					//		if (SendMessage(hConEmu, gnMsgActivateCon, wParam, pKB->vkCode) == 1)
-					//		{
-					//			gnSkipVkModCode = lbLeftWin ? VK_LWIN : VK_RWIN;
-					//			gnSkipVkKeyCode = pKB->vkCode;
-					//			// запрет обработки системой
-					//			return 1; // Ќужно возвращать 1, чтобы нажатие не ушло в Win7 Taskbar
-					//		}
-					//	}
-					//}
 				}
 			}
 
@@ -426,16 +522,17 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 				// —траховка от залипаний
 				gnSkipVkModCode = 0;
 				gnSkipVkKeyCode = 0;
+				gnSkipVkMessage = 0;
 			}
 		}
-		else if (wParam == WM_KEYUP)
+		else if (wParam == WM_KEYUP || (wParam == WM_SYSKEYUP && gnSkipVkMessage == WM_SYSKEYDOWN))
 		{
 			if (gnSkipVkModCode && pKB->vkCode == gnSkipVkModCode)
 			{
 				if (gnSkipVkKeyCode)
 				{
 #ifdef _DEBUG
-					OutputDebugString(L"*** Win released before key ***\n");
+					DEBUGSTRHOOK(L"*** Win released before key ***\n");
 #endif
 					// ѕри быстром нажатии Win+<кнопка> часто получаетс€ что сам Win отпускаетс€ раньше <кнопки>.
 					gnOtherWin = (BYTE)gnVkWinFix;
@@ -460,6 +557,19 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 					gnOtherWin = 0;
 				}
 
+				if (gnSkipVkMessage)
+				{
+					gnSkipVkMessage = 0;
+					#ifdef _DEBUG
+					_wsprintf(szKH, SKIPLEN(countof(szKH)) L"[hook] vk=%i (release) blocked\n", pKB->vkCode);
+					DEBUGSTRHOOK(szKH);
+					#endif
+					return 1;
+				}
+				#ifdef _DEBUG
+				_wsprintf(szKH, SKIPLEN(countof(szKH)) L"[hook] vk=%i processed\n", pKB->vkCode);
+				DEBUGSTRHOOK(szKH);
+				#endif
 				return 0; // разрешить обработку системой, но не передавать в другие хуки
 			}
 		}

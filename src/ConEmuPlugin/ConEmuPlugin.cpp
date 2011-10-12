@@ -5084,6 +5084,8 @@ void PostMacro(wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!asMacro || !*asMacro)
 		return;
+		
+	_ASSERTE(GetCurrentThreadId()==gnMainThreadId);
 
 	MOUSE_EVENT_RECORD mre;
 
@@ -5169,9 +5171,9 @@ void PostMacro(wchar_t* asMacro, INPUT_RECORD* apRec)
 	DWORD cbWritten = 0;
 
 	// Вроде одного хватало, правда когда {0,0} посылался
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	BOOL fSuccess =
-#endif
+	#endif
 	WriteConsoleInput(hIn/*ghConIn*/, ir, 1, &cbWritten);
 	_ASSERTE(fSuccess && cbWritten==1);
 	//}

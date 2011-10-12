@@ -288,7 +288,7 @@ class CSettings
 		//Drag
 		BYTE isDragEnabled;
 		BYTE isDropEnabled;
-		DWORD nLDragKey, nRDragKey;
+		BYTE nLDragKey, nRDragKey; // Был DWORD
 		bool isDefCopy;
 		BYTE isDragOverlay;
 		bool isDragShowIcons;
@@ -313,14 +313,15 @@ class CSettings
 		RECT rcTabMargins;
 		bool isTabFrame;
 		BYTE icMinimizeRestore;
-		bool isMulti; BYTE icMultiNew, icMultiNext, icMultiRecreate, icMultiBuffer, icMultiClose, icMultiCmd;
+		bool isMulti;
+		BYTE icMultiNew, icMultiNext, icMultiRecreate, icMultiBuffer, icMultiClose, icMultiCmd;
 		bool isMultiAutoCreate, isMultiLeaveOnClose, isMultiIterate;
 		bool IsHostkey(WORD vk);
 		bool IsHostkeySingle(WORD vk);
 		bool IsHostkeyPressed();
 		WORD GetPressedHostkey();
 		UINT GetHostKeyMod(); // набор флагов MOD_xxx для RegisterHotKey
-		bool isMultiNewConfirm, isUseWinNumber, isUseWinTab;
+		bool isMultiNewConfirm, isUseWinNumber, isUseWinTab, isUseWinArrows;
 		bool isFARuseASCIIsort, isFixAltOnAltTab, isShellNoZoneCheck;
 
 		// Заголовки табов
@@ -393,13 +394,14 @@ class CSettings
 		WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 		ABC     CharABC[0x10000];
 
-		HWND hMain, hExt, hTabs, hColors, hViews, hInfo, hDebug;
+		HWND hMain, hExt, hKeys, hTabs, hColors, hViews, hInfo, hDebug;
 
 		//static void CenterDialog(HWND hWnd2);
 		void OnClose();
 		static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		static INT_PTR CALLBACK mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		static INT_PTR CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		static INT_PTR CALLBACK keysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		static INT_PTR CALLBACK tabsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		static INT_PTR CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		static INT_PTR CALLBACK viewsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -474,6 +476,7 @@ class CSettings
 		LRESULT OnInitDialog();
 		LRESULT OnInitDialog_Main();
 		LRESULT OnInitDialog_Ext();
+		LRESULT OnInitDialog_Keys();
 		LRESULT OnInitDialog_Tabs();
 		LRESULT OnInitDialog_Color();
 		LRESULT OnInitDialog_Views();
@@ -490,6 +493,8 @@ class CSettings
 		INT_PTR OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnSaveActivityLogFile(HWND hListView);
+		void FillHotKeysList();
+		UINT mn_ActivateTabMsg;
 	private:
 		bool GetColorById(WORD nID, COLORREF* color);
 		bool SetColorById(WORD nID, COLORREF color);
@@ -571,4 +576,52 @@ class CSettings
 		static void GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue);
 		static void CenterMoreDlg(HWND hWnd2);
 		static bool IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight);
+	private:
+		struct ConEmuHotKeys
+		{
+			int  DescrLangID;
+			
+			int  Type; // 0 - hotkey, 1 - modifier (для драга, например)
+			
+			// User
+			BYTE* VkPtr; // Если NULL - значит системный, не изменяемый
+			
+			// System or default
+			BYTE Vk;
+			DWORD Modifier; // System only, для "User" - используется "HostKey"
+			
+			TODO("Сюда можно бы еще добавить инфу на какой странице и как его настраивать");
+		};
+		#define MAKEMODIFIER2(vk1,vk2) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)
+		#define MAKEMODIFIER3(vk1,vk2,vk3) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)|(((DWORD)vk3&0xFF)<<16)
+		ConEmuHotKeys *m_HotKeys;
+		enum KeyListColumns
+		{
+			klc_Type = 0,
+			klc_Hotkey,
+			klc_Desc
+		};
+		enum LogProcessColumns
+		{
+			lpc_Time = 0,
+			lpc_PPID,
+			lpc_Func,
+			lpc_Oper,
+			lpc_Bits,
+			lpc_System,
+			lpc_App,
+			lpc_Params,
+			lpc_Flags,
+			lpc_StdIn,
+			lpc_StdOut,
+			lpc_StdErr,
+		};
+		enum LogInputColumns
+		{
+			lic_Time = 0,
+			lic_Type,
+			lic_Dup,
+			lic_Event,
+		};
+		static void GetVkKeyName(BYTE vk, wchar_t (&szName)[128]);
 };

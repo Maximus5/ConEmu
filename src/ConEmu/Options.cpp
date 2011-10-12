@@ -81,11 +81,11 @@ HWND ghOpWnd=NULL;
 #define DEFAULT_FADE_HIGH 0xD0
 
 
-typedef struct tagCONEMUDEFCOLORS
+struct CONEMUDEFCOLORS
 {
 	const wchar_t* pszTitle;
 	DWORD dwDefColors[0x10];
-} CONEMUDEFCOLORS;
+};
 
 const CONEMUDEFCOLORS DefColors[] =
 {
@@ -123,8 +123,6 @@ BOOL  gbLastColorsOk = FALSE;
 
 
 
-
-
 namespace Settings
 {
 	const WCHAR* szKeys[] = {L"<None>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
@@ -143,6 +141,7 @@ namespace Settings
 	const DWORD  nColorIdxTh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15,    16};
 	const WCHAR* szThumbMaxZoom[] = {L"100%",L"200%",L"300%",L"400%",L"500%",L"600%"};
 	const DWORD  nThumbMaxZoom[] = {100,200,300,400,500,600};
+	
 };
 
 #define FillListBox(hDlg,nDlgID,Items,Values,Value) \
@@ -200,7 +199,7 @@ CSettings::CSettings()
 	mb_IgnoreTtfChange = TRUE;
 	mb_CharSetWasSet = FALSE;
 	mb_TabHotKeyRegistered = FALSE;
-	hMain = hExt = hTabs = hColors = hViews = hInfo = hDebug = NULL; hwndTip = NULL; hwndBalloon = NULL;
+	hMain = hExt = hTabs = hKeys = hColors = hViews = hInfo = hDebug = NULL; hwndTip = NULL; hwndBalloon = NULL;
 	hConFontDlg = NULL; hwndConFontBalloon = NULL; bShowConFontError = FALSE; sConFontError[0] = sDefaultConFontName[0] = 0; bConsoleFontChecked = FALSE;
 	QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
 	memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
@@ -250,8 +249,71 @@ CSettings::CSettings()
 	mn_MsgUpdateCounter = RegisterWindowMessage(L"ConEmuSettings::Counter");
 	mn_MsgRecreateFont = RegisterWindowMessage(L"CSettings::RecreateFont");
 	mn_MsgLoadFontFromMain = RegisterWindowMessage(L"CSettings::LoadFontNames");
+	mn_ActivateTabMsg = RegisterWindowMessage(L"CSettings::ActivateTab");
 	mh_EnumThread = NULL;
 	mh_CtlColorBrush = NULL;
+	
+	// Горячие клавиши
+	TODO("Дополнить системные комбинации");
+	WARNING("У nLDragKey,nRDragKey был тип DWORD");
+	ConEmuHotKeys HotKeys[] = {
+		// User (Keys)
+		{vkMinimizeRestore, 0, &icMinimizeRestore},
+		{vkMultiNew, 0, &icMultiNew},
+		{vkMultiNewShift, 0, &icMultiNew},
+		{vkMultiNext, 0, &icMultiNext},
+		{vkMultiNextShift, 0, &icMultiNext},
+		{vkMultiRecreate, 0, &icMultiRecreate},
+		{vkMultiBuffer, 0, &icMultiBuffer},
+		{vkMultiClose, 0, &icMultiClose},
+		{vkMultiCmd, 0, &icMultiCmd},
+		// User (Modifiers)
+		{vkCTSVkBlock, 1, &isCTSVkBlock},      // модификатор запуска выделения мышкой
+		{vkCTSVkText, 1, &isCTSVkText},       // модификатор запуска выделения мышкой
+		{vkCTSVkAct, 1, &isCTSVkAct},        // модификатор разрешения действий правой и средней кнопки мышки
+		{vkFarGotoEditorVk, 1, &isFarGotoEditorVk}, // модификатор для isFarGotoEditor
+		{vkLDragKey, 1, &nLDragKey},         // модификатор драга левой кнопкой
+		{vkRDragKey, 1, &nRDragKey},         // модификатор драга правой кнопкой
+		// System (predefined, fixed)
+		{vkWinAltP, 0, NULL, 'P', MAKEMODIFIER2(VK_LWIN,VK_MENU)}, // Settings
+		{vkWinAltSpace, 0, NULL, VK_SPACE, MAKEMODIFIER2(VK_LWIN,VK_MENU)}, // System menu
+		{vkAltF9, 0, NULL, VK_F9, VK_MENU}, // System menu
+		{vkCtrlWinAltSpace, 0, NULL, VK_SPACE, MAKEMODIFIER3(VK_CONTROL,VK_LWIN,VK_MENU)}, // Show real console
+		{vkAltEnter, 0, NULL, VK_RETURN, VK_MENU}, // Full screen
+		{vkCtrlWinEnter, 0, NULL, VK_RETURN, MAKEMODIFIER2(VK_LWIN,VK_CONTROL)},
+		{vkAltSpace, 0, NULL, VK_SPACE, VK_MENU}, // System menu
+		{vkCtrlUp, 0, NULL, VK_UP, VK_CONTROL}, // Buffer scroll
+		{vkCtrlDown, 0, NULL, VK_DOWN, VK_CONTROL}, // Buffer scroll
+		{vkCtrlPgUp, 0, NULL, VK_PRIOR, VK_CONTROL}, // Buffer scroll
+		{vkCtrlPgDn, 0, NULL, VK_NEXT, VK_CONTROL}, // Buffer scroll
+		{vkCtrlTab, 0, NULL, VK_TAB, VK_CONTROL}, // Tab switch
+		{vkCtrlShiftTab, 0, NULL, VK_TAB, MAKEMODIFIER2(VK_CONTROL,VK_SHIFT)}, // Tab switch
+		{vkCtrlTab_Left, 0, NULL, VK_LEFT, VK_CONTROL}, // Tab switch
+		{vkCtrlTab_Up, 0, NULL, VK_UP, VK_CONTROL}, // Tab switch
+		{vkCtrlTab_Right, 0, NULL, VK_RIGHT, VK_CONTROL}, // Tab switch
+		{vkCtrlTab_Down, 0, NULL, VK_DOWN, VK_CONTROL}, // Tab switch
+		{vkWinLeft, 0, NULL, VK_LEFT, (DWORD)-1}, // Decrease window width
+		{vkWinRight, 0, NULL, VK_RIGHT, (DWORD)-1}, // Increase window width
+		{vkWinUp, 0, NULL, VK_UP, (DWORD)-1}, // Decrease window height
+		{vkWinDown, 0, NULL, VK_DOWN, (DWORD)-1}, // Increase window height
+		// Console activate by number
+		{vkConsole_1, 0, NULL, '1', (DWORD)-1},
+		{vkConsole_2, 0, NULL, '2', (DWORD)-1},
+		{vkConsole_3, 0, NULL, '3', (DWORD)-1},
+		{vkConsole_4, 0, NULL, '4', (DWORD)-1},
+		{vkConsole_5, 0, NULL, '5', (DWORD)-1},
+		{vkConsole_6, 0, NULL, '6', (DWORD)-1},
+		{vkConsole_7, 0, NULL, '7', (DWORD)-1},
+		{vkConsole_8, 0, NULL, '8', (DWORD)-1},
+		{vkConsole_9, 0, NULL, '9', (DWORD)-1},
+		{vkConsole_10, 0, NULL, '0', (DWORD)-1},
+		{vkConsole_11, 0, NULL, VK_F11, (DWORD)-1},
+		{vkConsole_12, 0, NULL, VK_F12, (DWORD)-1},
+		// End
+		{},
+	};
+	m_HotKeys = (ConEmuHotKeys*)malloc(sizeof(HotKeys));
+	memmove(m_HotKeys, HotKeys, sizeof(HotKeys));
 }
 
 CSettings::~CSettings()
@@ -318,7 +380,7 @@ void CSettings::InitSettings()
 	isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A';
 	icMinimizeRestore = 'C';
 	icMultiClose = 0/*VK_DELETE*/; icMultiCmd = 'X'; isMultiAutoCreate = false; isMultiLeaveOnClose = false; isMultiIterate = true;
-	isMultiNewConfirm = true; isUseWinNumber = true; isUseWinTab = false; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
+	isMultiNewConfirm = true; isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
 	m_isKeyboardHooks = 0;
 	isFARuseASCIIsort = false; isFixAltOnAltTab = false; isShellNoZoneCheck = false;
 	isFadeInactive = true; mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; mb_FadeInitialized = false;
@@ -668,6 +730,7 @@ void CSettings::LoadSettings()
 		reg->Load(L"Multi.CmdKey", icMultiCmd);
 		reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);
 		reg->Load(L"Multi.Buffer", icMultiBuffer);
+		reg->Load(L"Multi.UseArrows", isUseWinArrows);
 		reg->Load(L"Multi.UseNumbers", isUseWinNumber);
 		reg->Load(L"Multi.UseWinTab", isUseWinTab);
 		reg->Load(L"Multi.AutoCreate", isMultiAutoCreate);
@@ -1356,6 +1419,7 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"Multi.CmdKey", icMultiCmd);
 		reg->Save(L"Multi.NewConfirm", isMultiNewConfirm);
 		reg->Save(L"Multi.Buffer", icMultiBuffer);
+		reg->Save(L"Multi.UseArrows", isUseWinArrows);
 		reg->Save(L"Multi.UseNumbers", isUseWinNumber);
 		reg->Save(L"Multi.UseWinTab", isUseWinTab);
 		reg->Save(L"Multi.AutoCreate", isMultiAutoCreate);
@@ -1711,7 +1775,7 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 LRESULT CSettings::OnInitDialog()
 {
 	_ASSERTE(!hMain && !hColors && !hViews && !hExt && !hInfo && !hDebug);
-	hMain = hExt = hTabs = hViews = hColors = hInfo = hDebug = NULL;
+	hMain = hExt = hTabs = hKeys = hViews = hColors = hInfo = hDebug = NULL;
 	gbLastColorsOk = FALSE;
 	HMENU hSysMenu = GetSystemMenu(ghOpWnd, FALSE);
 	InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
@@ -1774,11 +1838,12 @@ LRESULT CSettings::OnInitDialog()
 
 		wcscpy_c(szTitle, L"Main");		TabCtrl_InsertItem(_hwndTab, 0, &tie);
 		wcscpy_c(szTitle, L"Features");	TabCtrl_InsertItem(_hwndTab, 1, &tie);
-		wcscpy_c(szTitle, L"Tabs");		TabCtrl_InsertItem(_hwndTab, 2, &tie);
-		wcscpy_c(szTitle, L"Colors");	TabCtrl_InsertItem(_hwndTab, 3, &tie);
-		wcscpy_c(szTitle, L"Views");	TabCtrl_InsertItem(_hwndTab, 4, &tie); //-V112
-		wcscpy_c(szTitle, L"Debug");	TabCtrl_InsertItem(_hwndTab, 5, &tie);
-		wcscpy_c(szTitle, L"Info");		TabCtrl_InsertItem(_hwndTab, 6, &tie);
+		wcscpy_c(szTitle, L"Keys");		TabCtrl_InsertItem(_hwndTab, 2, &tie);
+		wcscpy_c(szTitle, L"Tabs");		TabCtrl_InsertItem(_hwndTab, 3, &tie);
+		wcscpy_c(szTitle, L"Colors");	TabCtrl_InsertItem(_hwndTab, 4, &tie); //-V112
+		wcscpy_c(szTitle, L"Views");	TabCtrl_InsertItem(_hwndTab, 5, &tie);
+		wcscpy_c(szTitle, L"Debug");	TabCtrl_InsertItem(_hwndTab, 6, &tie);
+		wcscpy_c(szTitle, L"Info");		TabCtrl_InsertItem(_hwndTab, 7, &tie);
 
 		HFONT hFont = CreateFont(nTabFontHeight/*TAB_FONT_HEIGTH*/, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, nTabFontCharSet /*ANSI_CHARSET*/, OUT_DEFAULT_PRECIS,
 		CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, /* L"Tahoma" */ sTabFontFace);
@@ -2115,8 +2180,8 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isDefCopy) CheckDlgButton(hExt, cbDnDCopy, BST_CHECKED);
 
 	// Списки
-	FillListBox(hExt, lbLDragKey, Settings::szKeys, Settings::nKeys, nLDragKey);
-	FillListBox(hExt, lbRDragKey, Settings::szKeys, Settings::nKeys, nRDragKey);
+	FillListBoxByte(hExt, lbLDragKey, Settings::szKeys, Settings::nKeys, nLDragKey);
+	FillListBoxByte(hExt, lbRDragKey, Settings::szKeys, Settings::nKeys, nRDragKey);
 
 	// Overlay
 	if (isDragOverlay) CheckDlgButton(hExt, cbDragImage, (isDragOverlay==1) ? BST_CHECKED : BST_INDETERMINATE);
@@ -2232,6 +2297,216 @@ LRESULT CSettings::OnInitDialog_Ext()
 	return 0;
 }
 
+void CSettings::GetVkKeyName(BYTE vk, wchar_t (&szName)[128])
+{
+	szName[0] = 0;
+
+	switch (vk)
+	{
+	case VK_LWIN:
+	case VK_RWIN:
+		wcscat_c(szName, L"Win"); break;
+	case VK_CONTROL:
+		wcscat_c(szName, L"Ctrl"); break;
+	case VK_LCONTROL:
+		wcscat_c(szName, L"LCtrl"); break;
+	case VK_RCONTROL:
+		wcscat_c(szName, L"RCtrl"); break;
+	case VK_MENU:
+		wcscat_c(szName, L"Alt"); break;
+	case VK_LMENU:
+		wcscat_c(szName, L"LAlt"); break;
+	case VK_RMENU:
+		wcscat_c(szName, L"RAlt"); break;
+	case VK_SHIFT:
+		wcscat_c(szName, L"Shift"); break;
+	case VK_LSHIFT:
+		wcscat_c(szName, L"LShift"); break;
+	case VK_RSHIFT:
+		wcscat_c(szName, L"RShift"); break;
+	case VK_APPS:
+		wcscat_c(szName, L"Apps"); break;
+	case VK_LEFT:
+		wcscat_c(szName, L"Left"); break;
+	case VK_RIGHT:
+		wcscat_c(szName, L"Right"); break;
+	case VK_UP:
+		wcscat_c(szName, L"Up"); break;
+	case VK_DOWN:
+		wcscat_c(szName, L"Down"); break;
+	case VK_PRIOR:
+		wcscat_c(szName, L"PgUp"); break;
+	case VK_NEXT:
+		wcscat_c(szName, L"PgDn"); break;
+	case VK_SPACE:
+		wcscat_c(szName, L"Space"); break;
+	case VK_TAB:
+		wcscat_c(szName, L"Tab"); break;
+	case VK_ESCAPE:
+		wcscat_c(szName, L"Esc"); break;
+	case VK_INSERT:
+		wcscat_c(szName, L"Ins"); break;
+	case VK_DELETE:
+		wcscat_c(szName, L"Del"); break;
+	case VK_HOME:
+		wcscat_c(szName, L"Home"); break;
+	case VK_END:
+		wcscat_c(szName, L"End"); break;
+	case VK_PAUSE:
+		wcscat_c(szName, L"Pause"); break;
+
+	default:
+		if (vk >= VK_F1 && vk <= VK_F24)
+		{
+			_wsprintf(szName, SKIPLEN(countof(szName)) L"F%u", (DWORD)vk-VK_F1+1);
+		}
+		else if ((vk >= (BYTE)'A' && vk <= (BYTE)'Z') || (vk >= (BYTE)'0' && vk <= (BYTE)'9'))
+		{
+			szName[0] = vk;
+			szName[1] = 0;
+		}
+		else
+		{
+			szName[0] = MapVirtualKey(vk, MAPVK_VK_TO_CHAR);
+			szName[1] = 0;
+			//BYTE States[256] = {};
+			//// Скорее всго не сработает
+			//if (!ToUnicode(vk, 0, States, szName, countof(szName), 0))
+			//	_wsprintf(szName, SKIPLEN(countof(szName)) L"<%u>", (DWORD)vk);
+			// есть еще if (!GetKeyNameText((LONG)(DWORD)*m_HotKeys[i].VkPtr, szName, countof(szName)))
+		}
+	}
+}
+
+void CSettings::FillHotKeysList()
+{
+	HWND hList = GetDlgItem(hKeys, lbConEmuHotKeys);
+
+	// Населить список всеми хоткеями
+	if (m_HotKeys)
+	{
+		ListView_DeleteAllItems(hList);
+	
+		wchar_t szName[128], szFull[512];
+		//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
+		LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
+		lvi.state = lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
+		lvi.pszText = szName;
+		for (size_t i = 0; m_HotKeys[i].DescrLangID; i++)
+		{
+			wcscpy_c(szName, (m_HotKeys[i].Type == 1) ? L"Modifier" : m_HotKeys[i].VkPtr ? L"User" : L"System");
+			lvi.iItem = i + 1; // в конец
+			int nItem = ListView_InsertItem(hList, &lvi);
+			ListView_SetItemState(hList, nItem, 0, LVIS_SELECTED|LVIS_FOCUSED);
+			
+			szFull[0] = 0;
+			
+			DWORD nModifier = (m_HotKeys[i].Type == 1) ? 0 : m_HotKeys[i].VkPtr ? (DWORD)-1/*nMultiHotkeyModifier*/ : m_HotKeys[i].Modifier;
+			if (nModifier == (DWORD)-1)
+			{
+				//nModifier = nMultiHotkeyModifier; // для Win-Number
+				wcscpy_c(szFull, L"«Host»");
+				if ((m_HotKeys[i].DescrLangID == vkMultiNextShift) || (m_HotKeys[i].DescrLangID == vkMultiNewShift))
+					wcscat_c(szFull, L"-Shift");
+			}
+			else
+			{
+				if ((m_HotKeys[i].DescrLangID == vkMultiNextShift) || (m_HotKeys[i].DescrLangID == vkMultiNewShift))
+				{
+					if (nModifier & VK_SHIFT)
+						nModifier &= ~VK_SHIFT;
+					else
+						nModifier |= VK_SHIFT;
+				}
+				
+				while (nModifier)
+				{
+					LONG vk = (LONG)(nModifier & 0xFF);
+					// Не более 3-х модификаторов!
+					nModifier = (nModifier & 0xFFFF00) >> 8;
+					GetVkKeyName(vk, szName);
+					if (szFull[0])
+						wcscat_c(szFull, L"-");
+					wcscat_c(szFull, szName);
+				}
+			}
+			
+			szName[0] = 0;
+			if (m_HotKeys[i].VkPtr)
+			{
+				TODO("Для списков там может быть что-то типа <Auto>");
+				if (*m_HotKeys[i].VkPtr)
+				{
+					GetVkKeyName(*m_HotKeys[i].VkPtr, szName);
+				}
+			}
+			else if (m_HotKeys[i].Vk)
+			{
+				GetVkKeyName(m_HotKeys[i].Vk, szName);
+			}
+			
+			if (szName[0])
+			{
+				if (szFull[0])
+					wcscat_c(szFull, L"-");
+				wcscat_c(szFull, szName);
+			}
+			else
+			{
+				wcscpy_c(szFull, L"<None>");
+			}
+			ListView_SetItemText(hList, nItem, klc_Hotkey, szFull);
+			
+			if (!LoadString(g_hInstance, m_HotKeys[i].DescrLangID, szName, countof(szName)))
+				_wsprintf(szName, SKIPLEN(countof(szName)) L"%i", m_HotKeys[i].DescrLangID);
+			ListView_SetItemText(hList, nItem, klc_Desc, szName);
+		}
+
+		//ListView_SetSelectionMark(hList, -1);
+	}
+}
+
+LRESULT CSettings::OnInitDialog_Keys()
+{
+	if (gpSet->EnableThemeDialogTextureF)
+		gpSet->EnableThemeDialogTextureF(hKeys, 6/*ETDT_ENABLETAB*/);
+
+	HWND hList = GetDlgItem(hKeys, lbConEmuHotKeys);
+	
+	// Создать колонки
+	{
+		LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+		wchar_t szTitle[64]; col.pszText = szTitle;
+
+		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
+		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
+		
+		wcscpy_c(szTitle, L"Type");			ListView_InsertColumn(hList, klc_Type, &col);
+		col.cx = 120;
+		wcscpy_c(szTitle, L"Hotkey");		ListView_InsertColumn(hList, klc_Hotkey, &col);
+		col.cx = 300;
+		wcscpy_c(szTitle, L"Description");	ListView_InsertColumn(hList, klc_Desc, &col);
+	}
+
+	FillHotKeysList();	
+		
+	SetupHotkeyChecks(hKeys);
+
+	if (gpSet->isUseWinArrows)
+		CheckDlgButton(hKeys, cbUseWinArrows, BST_CHECKED);
+	if (gpSet->isUseWinNumber)
+		CheckDlgButton(hKeys, cbUseWinNumber, BST_CHECKED);
+	if (gpSet->isUseWinTab)
+		CheckDlgButton(hKeys, cbUseWinTab, BST_CHECKED);
+
+	CheckDlgButton(hKeys, cbInstallKeybHooks,
+	               (m_isKeyboardHooks == 1) ? BST_CHECKED :
+	               ((m_isKeyboardHooks == 0) ? BST_INDETERMINATE : BST_UNCHECKED));
+		
+	RegisterTipsFor(hKeys);
+	return 0;
+}
+
 LRESULT CSettings::OnInitDialog_Tabs()
 {
 	if (gpSet->EnableThemeDialogTextureF)
@@ -2280,23 +2555,23 @@ LRESULT CSettings::OnInitDialog_Tabs()
 	SendDlgItemMessage(hTabs, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM");
 	SendDlgItemMessage(hTabs, lbCmdOutputCP, CB_SETCURSEL, nCmdOutputCP, 0);
 	//
-	SetupHotkeyChecks(hTabs);
+	//SetupHotkeyChecks(hTabs);
 	SendDlgItemMessage(hTabs, hkNewConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
 	SendDlgItemMessage(hTabs, hkNewConsole, HKM_SETHOTKEY, gpSet->icMultiNew, 0);
 	SendDlgItemMessage(hTabs, hkSwitchConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
 	SendDlgItemMessage(hTabs, hkSwitchConsole, HKM_SETHOTKEY, gpSet->icMultiNext, 0);
 	SendDlgItemMessage(hTabs, hkCloseConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
 	SendDlgItemMessage(hTabs, hkCloseConsole, HKM_SETHOTKEY, gpSet->icMultiRecreate, 0);
+	SendDlgItemMessage(hTabs, hkDelConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+	SendDlgItemMessage(hTabs, hkDelConsole, HKM_SETHOTKEY, gpSet->icMultiClose, 0);
+	SendDlgItemMessage(hTabs, hkStartCmd, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+	SendDlgItemMessage(hTabs, hkStartCmd, HKM_SETHOTKEY, gpSet->icMultiCmd, 0);
+	SendDlgItemMessage(hTabs, hkMinRestore, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+	SendDlgItemMessage(hTabs, hkMinRestore, HKM_SETHOTKEY, gpSet->icMinimizeRestore, 0);
+	SendDlgItemMessage(hTabs, hkBufferMode, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+	SendDlgItemMessage(hTabs, hkBufferMode, HKM_SETHOTKEY, gpSet->icMultiBuffer, 0);
 	// SendDlgItemMessage(hTabs, hkMinimizeRestore, HKM_SETHOTKEY, gpSet->icMinimizeRestore, 0);
 
-	if (gpSet->isUseWinNumber)
-		CheckDlgButton(hTabs, cbUseWinNumber, BST_CHECKED);
-	if (gpSet->isUseWinTab)
-		CheckDlgButton(hTabs, cbUseWinTab, BST_CHECKED);
-
-	CheckDlgButton(hTabs, cbInstallKeybHooks,
-	               (m_isKeyboardHooks == 1) ? BST_CHECKED :
-	               ((m_isKeyboardHooks == 0) ? BST_INDETERMINATE : BST_UNCHECKED));
 	SetDlgItemText(hTabs, tTabConsole, gpSet->szTabConsole);
 	SetDlgItemText(hTabs, tTabViewer, gpSet->szTabViewer);
 	SetDlgItemText(hTabs, tTabEditor, gpSet->szTabEditor);
@@ -3009,16 +3284,24 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			gpSet->bHideInactiveConsoleTabs = IsChecked(hTabs, cbHideInactiveConTabs);
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
+			
+		case cbUseWinArrows:
 		case cbUseWinNumber:
-			gpSet->isUseWinNumber = IsChecked(hTabs, cbUseWinNumber);
-			break;
 		case cbUseWinTab:
-			gpSet->isUseWinTab = IsChecked(hTabs, cbUseWinTab);
+			switch (CB)
+			{
+				case cbUseWinArrows:
+					gpSet->isUseWinArrows = IsChecked(hKeys, cbUseWinArrows); break;
+				case cbUseWinNumber:
+					gpSet->isUseWinNumber = IsChecked(hKeys, cbUseWinNumber); break;
+				case cbUseWinTab:
+					gpSet->isUseWinTab = IsChecked(hKeys, cbUseWinTab); break;
+			}
 			gpConEmu->UpdateWinHookSettings();
 			break;
+			
 		case cbInstallKeybHooks:
-
-			switch(IsChecked(hTabs,cbInstallKeybHooks))
+			switch (IsChecked(hKeys,cbInstallKeybHooks))
 			{
 					// Разрешено
 				case BST_CHECKED: gpSet->m_isKeyboardHooks = 1; gpConEmu->RegisterHoooks(); break;
@@ -3059,20 +3342,20 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 
 				for(UINT i = 0; i < countof(HostkeyCtrlIds); i++)
 				{
-					if (IsChecked(hTabs, HostkeyCtrlIds[i]))
+					if (IsChecked(hKeys, HostkeyCtrlIds[i]))
 						gpSet->CheckHostkeyModifier(HostkeyCtrlId2Vk(HostkeyCtrlIds[i]));
 				}
 
 				gpSet->TrimHostkeys();
 
-				if (IsChecked(hTabs, CB))
+				if (IsChecked(hKeys, CB))
 				{
 					gpSet->CheckHostkeyModifier(HostkeyCtrlId2Vk(CB));
 					gpSet->TrimHostkeys();
 				}
 
 				// Обновить, что осталось
-				gpSet->SetupHotkeyChecks(hTabs);
+				gpSet->SetupHotkeyChecks(hKeys);
 				gpSet->MakeHostkeyModifier();
 			}
 	}
@@ -3449,11 +3732,11 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 	}
 	else if (wId == lbLDragKey)
 	{
-		GetListBox(hExt,wId,Settings::szKeys,Settings::nKeys,nLDragKey);
+		GetListBoxByte(hExt,wId,Settings::szKeys,Settings::nKeys,nLDragKey);
 	}
 	else if (wId == lbRDragKey)
 	{
-		GetListBox(hExt,wId,Settings::szKeys,Settings::nKeys,nRDragKey);
+		GetListBoxByte(hExt,wId,Settings::szKeys,Settings::nKeys,nRDragKey);
 	}
 	else if (wId == lbNtvdmHeight)
 	{
@@ -3501,6 +3784,7 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
 			HWND* phCurrent = NULL;
 			UINT  nDlgRc = 0;
 			DLGPROC dlgProc = NULL;
+			BOOL bJustCreated = FALSE;
 
 			if (nSel==0)
 			{
@@ -3514,23 +3798,29 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
 			}
 			else if (nSel==2)
 			{
+				phCurrent = &hKeys;
+				nDlgRc = IDD_SPG_KEYS;
+				dlgProc = keysOpProc;
+			}
+			else if (nSel==3)
+			{
 				phCurrent = &hTabs;
 				nDlgRc = IDD_SPG_TABS;
 				dlgProc = tabsOpProc;
 			}
-			else if (nSel==3)
+			else if (nSel==4) //-V112
 			{
 				phCurrent = &hColors;
 				nDlgRc = IDD_SPG_COLORS;
 				dlgProc = colorOpProc;
 			}
-			else if (nSel==4) //-V112
+			else if (nSel==5)
 			{
 				phCurrent = &hViews;
 				nDlgRc = IDD_SPG_VIEWS;
 				dlgProc = viewsOpProc;
 			}
-			else if (nSel==5)
+			else if (nSel==6)
 			{
 				phCurrent = &hDebug;
 				nDlgRc = IDD_SPG_DEBUG;
@@ -3553,25 +3843,33 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
 				*phCurrent = CreateDialog((HINSTANCE)GetModuleHandle(NULL),
 				                          MAKEINTRESOURCE(nDlgRc), ghOpWnd, dlgProc);
 				MoveWindow(*phCurrent, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+				bJustCreated = TRUE;
 			}
 
 			if (*phCurrent != NULL)
 			{
+				if (!bJustCreated)
+				{
+					SendMessage(*phCurrent, mn_ActivateTabMsg, 0, 0);
+				}
+				
 				apiShowWindow(*phCurrent, SW_SHOW);
 
-				if (*phCurrent != hMain)   apiShowWindow(hMain, SW_HIDE);
+				if (*phCurrent != hMain)   apiShowWindow(hMain,   SW_HIDE);
 
-				if (*phCurrent != hExt)    apiShowWindow(hExt,  SW_HIDE);
+				if (*phCurrent != hExt)    apiShowWindow(hExt,    SW_HIDE);
+				
+				if (*phCurrent != hKeys)   apiShowWindow(hKeys,   SW_HIDE);
 
-				if (*phCurrent != hTabs)   apiShowWindow(hTabs,  SW_HIDE);
+				if (*phCurrent != hTabs)   apiShowWindow(hTabs,   SW_HIDE);
 
 				if (*phCurrent != hColors) apiShowWindow(hColors, SW_HIDE);
 
-				if (*phCurrent != hViews)  apiShowWindow(hViews, SW_HIDE);
+				if (*phCurrent != hViews)  apiShowWindow(hViews,  SW_HIDE);
 
-				if (*phCurrent != hDebug)   apiShowWindow(hDebug, SW_HIDE);
+				if (*phCurrent != hDebug)  apiShowWindow(hDebug,  SW_HIDE);
 				
-				if (*phCurrent != hInfo)   apiShowWindow(hInfo, SW_HIDE);
+				if (*phCurrent != hInfo)   apiShowWindow(hInfo,   SW_HIDE);
 
 				SetFocus(*phCurrent);
 			}
@@ -3721,7 +4019,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 			//EndDialog(hWnd2, TRUE);
 			ghOpWnd = NULL;
-			gpSet->hMain = gpSet->hExt = gpSet->hTabs = gpSet->hColors = NULL;
+			gpSet->hMain = gpSet->hExt = gpSet->hKeys = gpSet->hTabs = gpSet->hColors = NULL;
 			gpSet->hViews = gpSet->hInfo = gpSet->hDebug = NULL;
 			gbLastColorsOk = FALSE;
 			break;
@@ -3928,6 +4226,45 @@ INT_PTR CSettings::extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 			break;
 		default:
+			return 0;
+	}
+
+	return 0;
+}
+
+INT_PTR CSettings::keysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	static bool bSkipSelChange = false;
+	switch (messg)
+	{
+		case WM_INITDIALOG:
+			_ASSERTE(gpSet->hKeys==NULL || gpSet->hKeys==hWnd2);
+			gpSet->hKeys = hWnd2;
+			bSkipSelChange = true;
+			gpSet->OnInitDialog_Keys();
+			bSkipSelChange = false;
+			break;
+		case WM_COMMAND:
+
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				gpSet->OnButtonClicked(wParam, lParam);
+			}
+			else if (HIWORD(wParam) == EN_CHANGE)
+			{
+				gpSet->OnEditChanged(wParam, lParam);
+			}
+			else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
+			{
+				gpSet->OnComboBox(wParam, lParam);
+			}
+
+			break;
+		default:
+			if (messg == gpSet->mn_ActivateTabMsg)
+			{
+				gpSet->FillHotKeysList(); // перезаполнить кнопки
+			}
 			return 0;
 	}
 
@@ -4322,29 +4659,6 @@ INT_PTR CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	enum LogProcessColumns
-	{
-		lpc_Time = 0,
-		lpc_PPID,
-		lpc_Func,
-		lpc_Oper,
-		lpc_Bits,
-		lpc_System,
-		lpc_App,
-		lpc_Params,
-		lpc_Flags,
-		lpc_StdIn,
-		lpc_StdOut,
-		lpc_StdErr,
-	};
-	enum LogInputColumns
-	{
-		lic_Time = 0,
-		lic_Type,
-		lic_Dup,
-		lic_Event,
-	};
-
 	static bool bSkipSelChange = false;
 	switch(messg)
 	{

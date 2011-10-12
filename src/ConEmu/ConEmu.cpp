@@ -399,6 +399,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgTabCommand = ++nAppMsg;
 	mn_MsgTabSwitchFromHook = RegisterWindowMessage(CONEMUMSG_SWITCHCON); mb_InWinTabSwitch = FALSE;
 	mn_MsgWinKeyFromHook = RegisterWindowMessage(CONEMUMSG_HOOKEDKEY);
+	mn_MsgConsoleHookedKey = RegisterWindowMessage(CONEMUMSG_CONSOLEHOOKEDKEY);
 	mn_MsgSheelHook = RegisterWindowMessage(L"SHELLHOOK");
 	mn_ShellExecuteEx = ++nAppMsg;
 	mn_PostConsoleResize = ++nAppMsg;
@@ -1853,7 +1854,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		return rc;
 		case CER_FULLSCREEN: // switch (tFrom)
 		case CER_MAXIMIZED: // switch (tFrom)
-		case CER_RESTORE:
+		case CER_RESTORE: // switch (tFrom)
+		case CER_MONITOR: // switch (tFrom)
 			// Ќапример, таким способом можно получить размер развернутого окна на текущем мониторе
 			// RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
 			_ASSERTE((tFrom!=CER_FULLSCREEN && tFrom!=CER_MAXIMIZED && tFrom!=CER_RESTORE) || (tFrom==tWhat));
@@ -2034,9 +2036,10 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 				return rc;
 			}
 		} break;
+		case CER_MONITOR:    // switch (tWhat)
 		case CER_FULLSCREEN: // switch (tWhat)
-		case CER_MAXIMIZED: // switch (tWhat)
-		case CER_RESTORE: // switch (tWhat)
+		case CER_MAXIMIZED:  // switch (tWhat)
+		case CER_RESTORE:    // switch (tWhat)
 			//case CER_CORRECTED:
 		{
 			HMONITOR hMonitor = NULL;
@@ -2054,6 +2057,10 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			{
 				switch(tFrom)
 				{
+					case CER_MONITOR:
+					{
+						rc = mi.rcWork;
+					} break;
 					case CER_FULLSCREEN:
 					{
 						rc = mi.rcMonitor;
@@ -2118,6 +2125,10 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			{
 				switch(tFrom)
 				{
+					case CER_MONITOR:
+					{
+						SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
+					} break;
 					case CER_FULLSCREEN:
 					{
 						rc = MakeRect(GetSystemMetrics(SM_CXFULLSCREEN),GetSystemMetrics(SM_CYFULLSCREEN));
@@ -4433,9 +4444,21 @@ void CConEmuMain::UpdateWinHookSettings()
 	if (mh_LLKeyHookDll)
 	{
 		BOOL *pbWinTabHook = (BOOL*)GetProcAddress(mh_LLKeyHookDll, "gbWinTabHook");
+		BYTE *pnConsoleKeyShortcuts = (BYTE*)GetProcAddress(mh_LLKeyHookDll, "gnConsoleKeyShortcuts");
 
 		if (pbWinTabHook)
 			*pbWinTabHook = gpSet->isUseWinTab;
+
+		if (pnConsoleKeyShortcuts)
+		{
+			BYTE nNewValue = 0;
+			CVirtualConsole* pVCon;
+			for (size_t i = 0; (pVCon = GetVCon(i)) != NULL; i++)
+			{
+				nNewValue |= pVCon->RCon()->GetConsoleKeyShortcuts();
+			}
+			*pnConsoleKeyShortcuts = nNewValue;
+		}
 
 		// __declspec(dllexport) DWORD gnHookedKeys[64] = {};
 		DWORD *pnHookedKeys = (DWORD*)GetProcAddress(mh_LLKeyHookDll, "gnHookedKeys");
@@ -4455,6 +4478,13 @@ void CConEmuMain::UpdateWinHookSettings()
 					*(pnHookedKeys++) = gpSet->icMultiClose;
 				if (gpSet->icMultiCmd)
 					*(pnHookedKeys++) = gpSet->icMultiCmd;
+			}
+			if (gpSet->isUseWinArrows)
+			{
+				*(pnHookedKeys++) = VK_LEFT;
+				*(pnHookedKeys++) = VK_RIGHT;
+				*(pnHookedKeys++) = VK_UP;
+				*(pnHookedKeys++) = VK_DOWN;
 			}
 			*pnHookedKeys = 0;
 		}
@@ -8995,6 +9025,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			if (wParam==gpSet->icMultiNext || wParam==gpSet->icMultiNew || wParam==gpSet->icMultiRecreate
 			        || wParam==gpSet->icMultiClose || wParam==gpSet->icMultiCmd
 			        || (gpSet->isUseWinNumber && wParam>='0' && wParam<='9')
+			        || (gpSet->isUseWinArrows && (wParam == VK_LEFT || wParam == VK_RIGHT || wParam == VK_UP || wParam == VK_DOWN))
 			        || (gpSet->isUseWinNumber && (wParam==VK_F11 || wParam==VK_F12)) // KeyDown дл€ этого не проходит, но на вс€кий случай
 			  )
 			{
@@ -9150,7 +9181,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 			return 0;
 		}
-		// WinAltEnter зарезервиновано 7-кой под запуск MediaPlayer
+		// WinAltEnter зарезервиновано 7-кой под запуск MediaPlayer, поэтому - "Ctrl-Win-Enter"
 		else if (wParam == VK_RETURN && isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_SHIFT))
 		{
 			if (messg == WM_KEYUP)
@@ -9227,8 +9258,113 @@ LRESULT CConEmuMain::OnKeyboardHook(WORD vk, BOOL abReverse)
 		args.pszSpecialCmd = lstrdup(L"cmd");
 		CreateCon(&args);
 	}
+	else if (gpSet->isUseWinArrows && (vk == VK_LEFT || vk == VK_RIGHT || vk == VK_UP || vk == VK_DOWN))
+	{
+		if (gpSet->isFullScreen || isZoomed() || isIconic())
+		{
+			// ничего не делать
+		}
+		else
+		{
+			CVirtualConsole* pVCon = ActiveCon();
+			RECT rcWindow = {};
+			if (GetWindowRect(ghWnd, &rcWindow))
+			{
+				RECT rcMon = CalcRect(CER_MONITOR, rcWindow, CER_MONITOR, pVCon);
+				int nX = gpSet->FontWidth();
+				int nY = gpSet->FontHeight();
+				if (vk == VK_LEFT)
+				{
+					rcWindow.right = rcWindow.right - nX;
+				}
+				else if (vk == VK_RIGHT)
+				{
+					if ((rcWindow.right + nX) < rcMon.right)
+						rcWindow.right = rcWindow.right + nX;
+				}
+				else if (vk == VK_UP)
+				{	
+				rcWindow.bottom = rcWindow.bottom - nY;
+				}
+				else if (vk == VK_DOWN)
+				{
+					if ((rcWindow.bottom + nY) < rcMon.bottom)
+						rcWindow.bottom = rcWindow.bottom + nY;
+				}
+				
+				if (rcWindow.right > rcWindow.left && rcWindow.bottom > rcWindow.top)
+				{
+					MoveWindow(ghWnd, rcWindow.left, rcWindow.top,
+			           (rcWindow.right - rcWindow.left), (rcWindow.bottom - rcWindow.top), 1);
+				}
+			}
+			//
+			//CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
+			//if (pRCon)
+			//{
+			//	
+			//	//if (!pRCon->GuiWnd())
+			//	//{
+			//	//	
+			//	//}
+			//	//else
+			//	//{
+			//	//	// –есайз в √”» режиме
+			//	//}
+			//}
+		}
+	}
 
 	return 0;
+}
+
+void CConEmuMain::OnConsoleKey(WORD vk, LPARAM Mods)
+{
+	// Ќекоторые комбинации обрабатываютс€ в самом ConEmu и сюда приходить по идее не должны
+	if (vk == VK_SPACE && (Mods == (Mods & (MOD_ALT|MOD_LALT|MOD_RALT))))
+	{
+		_ASSERTE(vk != VK_SPACE);
+		if (!gpSet->isSendAltSpace)
+		{
+			ShowSysmenu();
+			return;
+		}
+	}
+	if (vk == VK_RETURN && (Mods == (Mods & (MOD_ALT|MOD_LALT|MOD_RALT))))
+	{
+		_ASSERTE(vk != VK_RETURN);
+		if (!gpSet->isSendAltEnter)
+		{
+			OnAltEnter();
+			return;
+		}
+	}
+
+	// ¬се остальное - обычным образом
+	CRealConsole* pRCon = ActiveCon() ? ActiveCon()->RCon() : NULL;
+	if (pRCon)
+	{
+		INPUT_RECORD r = {KEY_EVENT};
+		// Alt и прочих слать не нужно - он уже послан
+		r.Event.KeyEvent.bKeyDown = TRUE;
+		r.Event.KeyEvent.wRepeatCount = 1;
+		r.Event.KeyEvent.wVirtualKeyCode = vk;
+		r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(vk, 0/*MAPVK_VK_TO_VSC*/);
+		if (Mods & MOD_LALT)
+			r.Event.KeyEvent.dwControlKeyState = LEFT_ALT_PRESSED;
+		if (Mods & MOD_RALT)
+			r.Event.KeyEvent.dwControlKeyState = RIGHT_ALT_PRESSED;
+		if (Mods & MOD_LCONTROL)
+			r.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED;
+		if (Mods & MOD_RCONTROL)
+			r.Event.KeyEvent.dwControlKeyState = RIGHT_CTRL_PRESSED;
+		if (Mods & MOD_SHIFT)
+			r.Event.KeyEvent.dwControlKeyState = SHIFT_PRESSED;
+		pRCon->PostConsoleEvent(&r);
+		//On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
+		r.Event.KeyEvent.bKeyDown = FALSE;
+		pRCon->PostConsoleEvent(&r);
+	}
 }
 
 bool CConEmuMain::isInImeComposition()
@@ -13200,6 +13336,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				WORD vk = LOWORD(wParam);
 				BOOL lbShift = (lParam!=0);
 				OnKeyboardHook(vk, lbShift);
+				return 0;
+			}
+			else if (messg == gpConEmu->mn_MsgConsoleHookedKey)
+			{
+				WORD vk = LOWORD(wParam);
+				gpConEmu->OnConsoleKey(vk, lParam);
 				return 0;
 			}
 			else if (messg == gpConEmu->mn_MsgSheelHook)

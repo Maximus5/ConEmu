@@ -127,6 +127,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	PostMessage(apVCon->GetView(), WM_SETCURSOR, -1, -1);
 	mp_Rgn = new CRgnDetect();
 	mn_LastRgnFlags = -1;
+	m_ConsoleKeyShortcuts = 0;
 	memset(Title,0,sizeof(Title)); memset(TitleCmp,0,sizeof(TitleCmp));
 	mn_tabsCount = 0; ms_PanelTitle[0] = 0; mn_ActiveTab = 0;
 	mn_MaxTabs = 20; mb_TabsWasChanged = FALSE;
@@ -5601,6 +5602,19 @@ CESERVER_REQ* CRealConsole::cmdOnPeekReadInput(HANDLE hPipe, CESERVER_REQ* pIn, 
 	return pOut;
 }
 
+CESERVER_REQ* CRealConsole::cmdOnSetConsoleKeyShortcuts(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	CESERVER_REQ* pOut = NULL;
+
+	DEBUGSTRCMD(L"GUI recieved CECMD_KEYSHORTCUTS\n");
+
+	m_ConsoleKeyShortcuts = pIn->Data[0] ? pIn->Data[1] : 0;
+	gpConEmu->UpdateWinHookSettings();
+
+	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));	
+	return pOut;
+}
+
 //CESERVER_REQ* CRealConsole::cmdAssert(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
 //{
 //	CESERVER_REQ* pOut = NULL;
@@ -5774,6 +5788,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		pOut = cmdGetNewConParm(hPipe, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_PEEKREADINFO)
 		pOut = cmdOnPeekReadInput(hPipe, pIn, nDataSize);
+	else if (pIn->hdr.nCmd == CECMD_KEYSHORTCUTS)
+		pOut = cmdOnSetConsoleKeyShortcuts(hPipe, pIn, nDataSize);
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(hPipe, pIn, nDataSize);
 	else

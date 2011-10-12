@@ -220,6 +220,7 @@ class CRealConsole
 		BOOL    mb_InSetFocus;
 		DWORD   mn_GuiWndStyle, mn_GuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
 		DWORD   mn_GuiWndPID;
+		BYTE    m_ConsoleKeyShortcuts;
 		//HANDLE  hFileMapping;
 		//CESERVER_REQ_CONINFO* pConsoleData;
 		//void CloseMapping();
@@ -235,6 +236,8 @@ class CRealConsole
 
 		CRealConsole(CVirtualConsole* apVCon);
 		~CRealConsole();
+
+		BYTE GetConsoleKeyShortcuts() { return this ? m_ConsoleKeyShortcuts : 0; };
 
 		BOOL PreInit(BOOL abCreateBuffers=TRUE);
 		void DumpConsole(HANDLE ahFile);
@@ -555,6 +558,7 @@ class CRealConsole
 		CESERVER_REQ* cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdGetNewConParm(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdOnPeekReadInput(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdOnSetConsoleKeyShortcuts(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		//CESERVER_REQ* cmdAssert(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		
 		//void ApplyConsoleInfo(CESERVER_REQ* pInfo);
