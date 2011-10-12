@@ -99,6 +99,8 @@ HHOOK ghGuiClientRetHook = NULL;
 //BOOL gbFARuseASCIIsort = FALSE;
 //DWORD gdwServerPID = 0;
 //BOOL gbShellNoZoneCheck = FALSE;
+GetConsoleWindow_T gfGetRealConsoleWindow = NULL;
+extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
 /* ************ Globals for SetHook ************ */
 
 /* ************ Globals for Far Hooks ************ */
@@ -218,8 +220,8 @@ BOOL WINAPI OnSetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx
 BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
 BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-BOOL WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-BOOL WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+LRESULT WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI OnSetConsoleKeyShortcuts(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DWORD n1);
 
 
@@ -505,9 +507,13 @@ BOOL StartupHooks(HMODULE ahOurDll)
 {
 #ifdef _DEBUG
 	// Консольное окно уже должно быть иницализировано в DllMain
-	_ASSERTE(ghConWnd != NULL && ghConWnd == GetConsoleWindow());
-	wchar_t sClass[128]; GetClassName(ghConWnd, sClass, countof(sClass));
-	_ASSERTE(lstrcmp(sClass, L"ConsoleWindowClass") == 0);
+	_ASSERTE(gbAttachGuiClient || (ghConWnd != NULL && ghConWnd == GetRealConsoleWindow()));
+	wchar_t sClass[128];
+	if (ghConWnd)
+	{
+		GetClassName(ghConWnd, sClass, countof(sClass));
+		_ASSERTE(lstrcmp(sClass, L"ConsoleWindowClass") == 0);
+	}
 #endif
 
 	// -- ghConEmuWnd уже должен быть установлен в DllMain!!!
@@ -521,8 +527,11 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	// windows приложении, но вот shell32 - не обязательно, а нам нужно хуки проинициализировать
 	ghKernel32 = LoadLibrary(kernel32);
 	// user32/shell32/advapi32 тянут за собой много других библиотек, НЕ загружаем, если они еще не подлинкованы
-	ghUser32 = GetModuleHandle(user32);
-	if (ghUser32) ghUser32 = LoadLibrary(user32); // если подлинкован - увеличить счетчик
+	if (!ghUser32)
+	{
+		ghUser32 = GetModuleHandle(user32);
+		if (ghUser32) ghUser32 = LoadLibrary(user32); // если подлинкован - увеличить счетчик
+	}
 	ghShell32 = GetModuleHandle(shell32);
 	if (ghShell32) ghShell32 = LoadLibrary(shell32); // если подлинкован - увеличить счетчик
 	ghAdvapi32 = GetModuleHandle(advapi32);
@@ -1402,6 +1411,7 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 
 			if (!(nCurStyle & WS_CHILDWINDOW))
 			{
+				WARNING("Если ставить WS_CHILD - пропадет меню, если не ставить - фокус из ConEmu улетает");
 				nCurStyle = (nCurStyle | WS_CHILDWINDOW|WS_TABSTOP); // & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
 				MySetWindowLongPtrW(hWindow, GWL_STYLE, nCurStyle);
 				SetParent(hWindow, ghConEmuWndDC);
@@ -1637,10 +1647,11 @@ BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	typedef BOOL (WINAPI* OnPostMessageA_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 	ORIGINALFASTEX(PostMessageA,NULL);
-	LRESULT lRc = 0;
+	BOOL lRc = 0;
+	LRESULT ll = 0;
 
-	if (!CanSendMessage(hWnd, Msg, wParam, lParam, lRc))
-		return lRc; // Обманем, это сообщение запрещено посылать в ConEmuDC
+	if (!CanSendMessage(hWnd, Msg, wParam, lParam, ll))
+		return TRUE; // Обманем, это сообщение запрещено посылать в ConEmuDC
 
 	if (F(PostMessageA))
 		lRc = F(PostMessageA)(hWnd, Msg, wParam, lParam);
@@ -1651,17 +1662,18 @@ BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	typedef BOOL (WINAPI* OnPostMessageW_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 	ORIGINALFASTEX(PostMessageW,NULL);
-	LRESULT lRc = 0;
+	BOOL lRc = 0;
+	LRESULT ll = 0;
 
-	if (!CanSendMessage(hWnd, Msg, wParam, lParam, lRc))
-		return lRc; // Обманем, это сообщение запрещено посылать в ConEmuDC
+	if (!CanSendMessage(hWnd, Msg, wParam, lParam, ll))
+		return TRUE; // Обманем, это сообщение запрещено посылать в ConEmuDC
 
 	if (F(PostMessageW))
 		lRc = F(PostMessageW)(hWnd, Msg, wParam, lParam);
 
 	return lRc;
 }
-BOOL WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	typedef BOOL (WINAPI* OnSendMessageA_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 	ORIGINALFASTEX(SendMessageA,NULL);
@@ -1675,7 +1687,7 @@ BOOL WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 	return lRc;
 }
-BOOL WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	typedef BOOL (WINAPI* OnSendMessageW_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 	ORIGINALFASTEX(SendMessageW,NULL);
@@ -2598,11 +2610,12 @@ BOOL WINAPI OnFreeConsole(void)
 	return lbRc;
 }
 
-
 HWND WINAPI OnGetConsoleWindow(void)
 {
 	typedef HWND (WINAPI* OnGetConsoleWindow_t)(void);
 	ORIGINALFAST(GetConsoleWindow);
+
+	_ASSERTE(F(GetConsoleWindow) != GetRealConsoleWindow);
 
 	if (ghConEmuWndDC && IsWindow(ghConEmuWndDC) /*ghConsoleHwnd*/)
 	{

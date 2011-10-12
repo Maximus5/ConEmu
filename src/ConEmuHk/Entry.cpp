@@ -79,6 +79,12 @@ HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
 extern HANDLE ghHeap;
+extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32, ghComdlg32;
+extern const wchar_t *kernel32;// = L"kernel32.dll";
+extern const wchar_t *user32  ;// = L"user32.dll";
+extern const wchar_t *shell32 ;// = L"shell32.dll";
+extern const wchar_t *advapi32;// = L"Advapi32.dll";
+extern const wchar_t *comdlg32;// = L"comdlg32.dll";
 
 //BOOL gbSkipInjects = FALSE;
 BOOL gbHooksWasSet = FALSE;
@@ -223,6 +229,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		gfnLoadLibrary = NULL;
 	}
 	
+	ghUser32 = GetModuleHandle(user32);
+	if (ghUser32) ghUser32 = LoadLibrary(user32); // если подлинкован - увеличить счетчик
+
 	WARNING("Попробовать не создавать LocalSecurity при старте");
 	
 	//#ifndef TESTLINK
@@ -528,6 +537,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ghConWnd = GetConsoleWindow();
 			gnSelfPID = GetCurrentProcessId();
 			ghWorkingModule = (u64)hModule;
+			gfGetRealConsoleWindow = GetConsoleWindow;
 
 			#ifdef _DEBUG
 			gAllowAssertThread = am_Pipe;
@@ -1049,7 +1059,8 @@ void SendStopped()
 // можно дергать эту экспортируемую функцию
 HWND WINAPI GetRealConsoleWindow()
 {
-	HWND hConWnd = GetConsoleWindow();
+	_ASSERTE(gfGetRealConsoleWindow);
+	HWND hConWnd = gfGetRealConsoleWindow ? gfGetRealConsoleWindow() : NULL; //GetConsoleWindow();
 #ifdef _DEBUG
 	wchar_t sClass[64]; GetClassName(hConWnd, sClass, countof(sClass));
 	_ASSERTE(lstrcmp(sClass, L"ConsoleWindowClass")==0);
