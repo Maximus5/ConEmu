@@ -189,6 +189,8 @@ const CECMD
 	CECMD_TERMINATEPID   = 45,
 	CECMD_ATTACHGUIAPP   = 46, // CESERVER_REQ_ATTACHGUIAPP
 	CECMD_KEYSHORTCUTS   = 47, // BYTE Data[2]; SetConsoleKeyShortcuts from kernel32.dll
+	CECMD_SETFOCUS       = 48, // CESERVER_REQ_SETFOCUS
+	CECMD_SETPARENT      = 49, // CESERVER_REQ_SETPARENT
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1268,9 +1270,22 @@ struct CESERVER_REQ_ATTACHGUIAPP
 	wchar_t sAppFileName[MAX_PATH*2];
 };
 
+struct CESERVER_REQ_SETFOCUS
+{
+	BOOL  bSetForeground;
+	HWND2 hWindow;
+};
+
+struct CESERVER_REQ_SETPARENT
+{
+	HWND2 hWnd;
+	HWND2 hParent;
+};
+
 struct MyAssertInfo
 {
 	int nBtns;
+	BOOL bNoPipe;
 	wchar_t szTitle[255];
 	wchar_t szDebugInfo[4096];
 };
@@ -1311,6 +1326,8 @@ struct CESERVER_REQ
 		CESERVER_REQ_PEEKREADINFO PeekReadInfo;
 		MyAssertInfo AssertInfo;
 		CESERVER_REQ_ATTACHGUIAPP AttachGuiApp;
+		CESERVER_REQ_SETFOCUS setFocus;
+		CESERVER_REQ_SETPARENT setParent;
 	};
 };
 

@@ -4915,6 +4915,39 @@ BOOL cmd_SetWindowPos(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_SetFocus(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = FALSE, lbForeRc = FALSE;
+	HWND hFocusRc = NULL;
+	
+	if (in.setFocus.bSetForeground)
+		lbForeRc = SetForegroundWindow(in.setFocus.hWindow);
+	else
+		hFocusRc = SetFocus(in.setFocus.hWindow);
+	
+	return lbRc;
+}
+
+BOOL cmd_SetParent(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = FALSE, lbForeRc = FALSE;
+
+	HWND h = SetParent(in.setParent.hWnd, in.setParent.hParent);
+
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETPARENT);
+	*out = ExecuteNewCmd(CECMD_SETPARENT,nOutSize);
+
+	if (*out != NULL)
+	{
+		(*out)->setParent.hWnd = (HWND)GetLastError();
+		(*out)->setParent.hParent = h;
+
+		lbRc = TRUE;
+	}
+
+	return lbRc;
+}
+
 BOOL cmd_SetWindowRgn(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -5248,6 +5281,14 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 			//             in.SetWndPos.X, in.SetWndPos.Y, in.SetWndPos.cx, in.SetWndPos.cy,
 			//             in.SetWndPos.uFlags);
 			lbRc = cmd_SetWindowPos(in, out);
+		} break;
+		case CECMD_SETFOCUS:
+		{
+			lbRc = cmd_SetFocus(in, out);
+		} break;
+		case CECMD_SETPARENT:
+		{
+			lbRc = cmd_SetParent(in, out);
 		} break;
 		case CECMD_SETWINDOWRGN:
 		{

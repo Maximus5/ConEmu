@@ -61,19 +61,20 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #define ID_SETTINGS 0xABCD
 #define ID_ABOUT 0xABCE
 #define ID_TOTRAY 0xABCF
-#define ID_DEBUGCON 0xABD0 // есть подозрение, что 0xABBC Win7 сама юзает...
+#define ID_DEBUGCON 0xABD0
 // VCon menu items
 #define IDM_VCONCMD_FIRST 0xABD1
 #define IDM_CLOSE IDM_VCONCMD_FIRST
 #define IDM_RESTART 0xABD2
 #define IDM_RESTARTAS 0xABD3
 #define IDM_TERMINATE 0xABD4
-#define IDM_NEW 0xABD5
+//#define IDM_NEW 0xABD5
 #define IDM_ADMIN_DUPLICATE 0xABD6
 #define IDM_SAVE 0xABD7
 #define IDM_SAVEALL 0xABD8
 #define IDM_DETACH 0xABD9
-#define IDM_VCONCMD_LAST IDM_DETACH
+#define IDM_ATTACHTO 0xABDA
+#define IDM_VCONCMD_LAST IDM_ATTACHTO
 // Consoles // DWORD MAKELONG(WORD wLow,WORD wHigh);
 #define IDM_VCON_FIRST MAKELONG(1,1)
 #define IDM_VCON_LAST  MAKELONG(0,MAX_CONSOLE_COUNT+1)
@@ -384,6 +385,9 @@ class CConEmuMain
 		int ActiveConNum(); // 0-based
 		static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 		void AskChangeBufferHeight();
+		void AttachDlg();
+		static BOOL CALLBACK AttachDlgEnumWin(HWND hFind, LPARAM lParam);
+		static INT_PTR CALLBACK AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 		BOOL AttachRequested(HWND ahConWnd, CESERVER_REQ_STARTSTOP pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
 		void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);

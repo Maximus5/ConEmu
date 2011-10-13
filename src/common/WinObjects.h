@@ -562,7 +562,7 @@ class MPipe
 					nAllSize -= cbRead;
 				}
 
-				TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
+				TODO("Mozhet vozniknutj ASSERT, esli konsolj byla zakryta v processe chtenija");
 
 				if (nAllSize > 0)
 				{

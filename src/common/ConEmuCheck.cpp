@@ -577,9 +577,9 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	{
 #ifdef _DEBUG
 
-		// в заголовке "чисти" запущенного фара появляются отладочные(?) сообщения
+		// в заголовке "чисто" запущенного фара появляются отладочные(?) сообщения
 		// по идее - не должны, т.к. все должно быть через мэппинг
-		_ASSERTE(hPipe != NULL && hPipe != INVALID_HANDLE_VALUE);
+		_ASSERTEX(hPipe != NULL && hPipe != INVALID_HANDLE_VALUE);
 #ifdef CONEMU_MINIMAL
 		SetConsoleTitle(szErr);
 #else
@@ -1162,7 +1162,21 @@ int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBt
 	}
 	else
 	{
-		_ASSERTE(hConEmuWndRoot!=NULL);
+		//_ASSERTE(hConEmuWndRoot!=NULL);
+		// Избежать статической линковки к user32
+		HMODULE hUser32 = GetModuleHandle(L"User32.dll");
+		if (hUser32 == NULL)
+			hUser32 = LoadLibrary(L"User32.dll");
+		typedef int (WINAPI* MessageBoxW_T)(HWND, LPCWSTR, LPCWSTR, UINT);
+		MessageBoxW_T _MessageBoxW = hUser32 ? (MessageBoxW_T)GetProcAddress(hUser32, "MessageBoxW") : NULL;
+		if (_MessageBoxW)
+		{
+			nResult = _MessageBoxW(NULL, asText, asTitle, MB_SYSTEMMODAL|anBtns);
+		}
+		else
+		{
+			_CrtDbgBreak();
+		}
 	}
 
 	return nResult;

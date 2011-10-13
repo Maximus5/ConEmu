@@ -2208,7 +2208,7 @@ static BOOL ReadConsoleInfo()
 					_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Size req by server: {%ix%i},  Current size: {%ix%i}",
 					          crReq.X, crReq.Y, crSize.X, crSize.Y);
 					//MessageBox(NULL, szInfo, szTitle, MB_OK|MB_SETFOREGROUND|MB_SYSTEMMODAL);
-					MY_ASSERT_EXPR(FALSE, szInfo);
+					MY_ASSERT_EXPR(FALSE, szInfo, false);
 				}
 			}
 

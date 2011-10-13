@@ -116,14 +116,14 @@ class CPipeServer
 
 			if (abShow)
 			{
-				StringCchPrintf(sText, countof(sText), L"%s\n%s", pPipe->sErrorMsg, ms_PipeName);
-				StringCchPrintf(sTitle, countof(sTitle), L"PipeServerError, PID=%u, TID=%u",
+				_wsprintf(sText, SKIPLEN(countof(sText)) L"%s\n%s", pPipe->sErrorMsg, ms_PipeName);
+				_wsprintf(sTitle, SKIPLEN(countof(sTitle)) L"PipeServerError, PID=%u, TID=%u",
 				                GetCurrentProcessId(), GetCurrentThreadId());
-				MessageBoxW(NULL, sText, sTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+				GuiMessageBox(NULL, sText, sTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 			}
 			else
 			{
-				StringCchPrintf(sText, countof(sText), L"PipeServerError, PID=%u, TID=%u\  %s\n  %s\n",
+				_wsprintf(sText, SKIPLEN(countof(sText)) L"PipeServerError, PID=%u, TID=%u\  %s\n  %s\n",
 				                GetCurrentProcessId(), GetCurrentThreadId(),
 				                pPipe->sErrorMsg, ms_PipeName);
 				OutputDebugStringW(sText);
@@ -755,7 +755,7 @@ class CPipeServer
 
 				if (m_Pipes[i].hPipeInst && (m_Pipes[i].hPipeInst != INVALID_HANDLE_VALUE))
 				{
-					DisconnectNamedPipe(m_Pipes[i].hPipeInst)
+					DisconnectNamedPipe(m_Pipes[i].hPipeInst);
 					CloseHandle(m_Pipes[i].hPipeInst);
 				}
 

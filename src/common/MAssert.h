@@ -47,29 +47,31 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	};
 	extern CEAssertMode gAllowAssertThread;
 
-	int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest);
+	int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool abNoPipe);
 	void MyAssertTrap();
 	void MyAssertShutdown();
 	extern bool gbInMyAssertTrap;
 
-	#define MY_ASSERT_EXPR(expr, msg) \
+	#define MY_ASSERT_EXPR(expr, msg, nopipe) \
 		if (!(expr)) { \
-			if (1 != MyAssertProc(_CRT_WIDE(__FILE__), __LINE__, msg)) \
+			if (1 != MyAssertProc(_CRT_WIDE(__FILE__), __LINE__, msg, nopipe)) \
 				MyAssertTrap(); \
 		}
 
 	//extern int MDEBUG_CHK;
 	//extern char gsz_MDEBUG_TRAP_MSG_APPEND[2000];
 	//#define MDEBUG_TRAP1(S1) {strcpy(gsz_MDEBUG_TRAP_MSG_APPEND,(S1));_MDEBUG_TRAP(__FILE__,__LINE__);}
-	#define MCHKHEAP MY_ASSERT_EXPR(_CrtCheckMemory(),L"_CrtCheckMemory failed");
+	#define MCHKHEAP MY_ASSERT_EXPR(_CrtCheckMemory(),L"_CrtCheckMemory failed",false);
 
-	#define ASSERT(expr)   MY_ASSERT_EXPR((expr), _CRT_WIDE(#expr))
-	#define ASSERTE(expr)  MY_ASSERT_EXPR((expr), _CRT_WIDE(#expr))
+	#define ASSERT(expr)   MY_ASSERT_EXPR((expr), _CRT_WIDE(#expr), false)
+	#define ASSERTE(expr)  MY_ASSERT_EXPR((expr), _CRT_WIDE(#expr), false)
+	#define ASSERTEX(expr) MY_ASSERT_EXPR((expr), _CRT_WIDE(#expr), true)
 
 #else
 	#define MY_ASSERT_EXPR(expr, msg)
 	#define ASSERT(expr)
 	#define ASSERTE(expr)
+	#define ASSERTEX(expr)
 	#define MCHKHEAP
 	#define MyAssertTrap()
 #endif
@@ -78,5 +80,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _ASSERT ASSERT
 #undef _ASSERTE
 #define _ASSERTE ASSERTE
+#undef _ASSERTEX
+#define _ASSERTEX ASSERTEX
 
 #endif // #ifndef MASSERT_HEADER_DEFINED

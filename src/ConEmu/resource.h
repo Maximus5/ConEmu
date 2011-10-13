@@ -30,6 +30,7 @@
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_SPG_KEYS                    211
+#define IDD_ATTACHDLG                   212
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -393,6 +394,10 @@
 #define lbConEmuHotKeys                 1771
 #define hkMinRestore                    1772
 #define hkBufferMode                    1773
+#define IDC_ATTACHLIST                  1774
+#define IDC_NEWCONSOLE                  1775
+#define IDC_BUTTON2                     1776
+#define IDC_REFRESH                     1776
 #define vkMinimizeRestore               2000
 #define vkMultiNew                      2001
 #define vkMultiNext                     2002
@@ -446,9 +451,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        212
+#define _APS_NEXT_RESOURCE_VALUE        213
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1774
+#define _APS_NEXT_CONTROL_VALUE         1777
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

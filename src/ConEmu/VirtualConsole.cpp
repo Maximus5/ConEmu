@@ -2931,6 +2931,15 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeC
 
 void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize)
 {
+	if (mp_RCon && mp_RCon->GuiWnd())
+	{
+		// В GUI режиме VirtualConsole скрыта под GUI окном и видна только при "включении" BufferHeight
+		if (!mp_RCon->isBufferHeight())
+		{
+			return;
+		}
+	}
+
 	Cursor.x = csbi.dwCursorPosition.X;
 	Cursor.y = csbi.dwCursorPosition.Y;
 	int CurChar = pos.Y * TextWidth + pos.X;
@@ -3093,6 +3102,15 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 void CVirtualConsole::UpdateCursor(bool& lRes)
 {
+	if (mp_RCon && mp_RCon->GuiWnd())
+	{
+		// В GUI режиме VirtualConsole скрыта под GUI окном и видна только при "включении" BufferHeight
+		if (!mp_RCon->isBufferHeight())
+		{
+			lRes = false;
+			return;
+		}
+	}
 	//------------------------------------------------------------------------
 	///| Drawing cursor |/////////////////////////////////////////////////////
 	//------------------------------------------------------------------------
@@ -4161,8 +4179,11 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 			}
 
 			break;
-		case IDM_NEW:
+		case ID_NEWCONSOLE:
 			gpConEmu->Recreate(FALSE, gpSet->isMultiNewConfirm);
+			break;
+		case IDM_ATTACHTO:
+			gpConEmu->AttachDlg();
 			break;
 		case IDM_ADMIN_DUPLICATE:
 			mp_RCon->AdminDuplicate();

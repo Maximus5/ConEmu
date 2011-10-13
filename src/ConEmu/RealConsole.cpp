@@ -205,6 +205,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	//mn_LastProcessedPkt = 0;
 	hConWnd = NULL;
 	hGuiWnd = NULL; mn_GuiWndStyle = mn_GuiWndStylEx = mn_GuiWndPID = 0; mb_InSetFocus = FALSE;
+	rcPreGuiWndRect = MakeRect(0,0);
 	//hFileMapping = NULL; pConsoleData = NULL;
 	mh_GuiAttached = NULL;
 	mn_Focused = -1;
@@ -845,8 +846,8 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 		DWORD dwExStyle = GetWindowLong(hGuiWnd, GWL_EXSTYLE);
 		DWORD dwStyle = GetWindowLong(hGuiWnd, GWL_STYLE);
 		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui);
-		TODO("Переделать в команду");
-		SetWindowPos(hGuiWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+		// Через команду пайпа, а то если он "под админом" будет Access denied
+		SetOtherWindowPos(hGuiWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 			SWP_ASYNCWINDOWPOS);
 	}
 
@@ -1392,28 +1393,27 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	//_ASSERTE(pRCon->mh_ConChanged!=NULL);
 	// Пока нить запускалась - произошел "аттач" так что все нормально...
 	//_ASSERTE(pRCon->mb_Detached || pRCon->mh_ConEmuC!=NULL);
-	//TODO: а тут мы будем читать консоль...
-#define IDEVENT_TERM  0
-#define IDEVENV_MONITORTHREADEVENT 1
-	//#define IDEVENT_SYNC2WINDOW 2
-	//#define IDEVENT_CURSORCHANGED 4
-	//#define IDEVENT_PACKETARRIVED 2
-#define IDEVENT_CONCLOSED 2
-#define EVENTS_COUNT (IDEVENT_CONCLOSED+1)
-	HANDLE hEvents[EVENTS_COUNT];
-	hEvents[IDEVENT_TERM] = pRCon->mh_TermEvent;
-	//hEvents[IDEVENT_CONCHANGED] = pRCon->mh_ConChanged;
-	hEvents[IDEVENV_MONITORTHREADEVENT] = pRCon->mh_MonitorThreadEvent; // Использовать, чтобы вызвать Update & Invalidate
-	//hEvents[IDEVENT_SYNC2WINDOW] = pRCon->mh_Sync2WindowEvent;
-	//hEvents[IDEVENT_CURSORCHANGED] = pRCon->mh_CursorChanged;
-	//hEvents[IDEVENT_PACKETARRIVED] = pRCon->mh_PacketArrived;
-	hEvents[IDEVENT_CONCLOSED] = pRCon->mh_ConEmuC;
-	DWORD  nEvents = /*bDetached ? (IDEVENT_SYNC2WINDOW+1) :*/ countof(hEvents);
 
-	if (hEvents[IDEVENT_CONCLOSED] == NULL)
+	// а тут мы будем читать консоль...
+
+	#define IDEVENT_TERM  0              // Завершение нити/консоли/conemu
+	#define IDEVENV_MONITORTHREADEVENT 1 // Используется, чтобы вызвать Update & Invalidate
+	#define IDEVENT_SERVERPH 2           // ConEmuC.exe process handle (server)
+	#define EVENTS_COUNT (IDEVENT_SERVERPH+1)
+
+	HANDLE hEvents[EVENTS_COUNT];
+	_ASSERT(EVENTS_COUNT==countof(hEvents)); // проверить размерность
+
+	hEvents[IDEVENT_TERM] = pRCon->mh_TermEvent;
+	hEvents[IDEVENV_MONITORTHREADEVENT] = pRCon->mh_MonitorThreadEvent; // Использовать, чтобы вызвать Update & Invalidate
+	hEvents[IDEVENT_SERVERPH] = pRCon->mh_ConEmuC;
+
+	DWORD  nEvents = countof(hEvents);
+
+	// Скорее всего будет NULL, если запуск идет через ShellExecuteEx(runas)
+	if (hEvents[IDEVENT_SERVERPH] == NULL)
 		nEvents --;
 
-	_ASSERT(EVENTS_COUNT==countof(hEvents)); // проверить размерность
 	DWORD  nWait = 0, nSrvWait = -1;
 	BOOL   bException = FALSE, bIconic = FALSE, /*bFirst = TRUE,*/ bActive = TRUE, bGuiVisible = FALSE;
 	DWORD nElapse = max(10,gpSet->nMainTimerElapse);
@@ -1433,14 +1433,14 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			gpSet->Performance(tPerfInterval, TRUE); // считается по своему
 
 		// Проверка, вдруг осталась висеть "мертвая" консоль?
-		if (hEvents[IDEVENT_CONCLOSED] == NULL && pRCon->mh_ConEmuC)
+		if (hEvents[IDEVENT_SERVERPH] == NULL && pRCon->mh_ConEmuC)
 		{
 			nSrvWait = WaitForSingleObject(pRCon->mh_ConEmuC,0);
 			if (nSrvWait == WAIT_OBJECT_0)
 			{
 				// ConEmuC was terminated!
 				_ASSERTE(bDetached == FALSE);
-				nWait = IDEVENT_CONCLOSED;
+				nWait = IDEVENT_SERVERPH;
 				break;
 			}
 		}
@@ -1450,9 +1450,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, bIconic ? max(1000,nInactiveElapse) : !bActive ? nInactiveElapse : nElapse);
 		_ASSERTE(nWait!=(DWORD)-1);
 
-		if (nWait == IDEVENT_TERM || nWait == IDEVENT_CONCLOSED)
+		if (nWait == IDEVENT_TERM || nWait == IDEVENT_SERVERPH)
 		{
-			//if (nWait == IDEVENT_CONCLOSED) -- внизу
+			//if (nWait == IDEVENT_SERVERPH) -- внизу
 			//{
 			//	DEBUGSTRPROC(L"### ConEmuC.exe was terminated\n");
 			//}
@@ -1467,14 +1467,15 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			ResetEvent(hEvents[IDEVENV_MONITORTHREADEVENT]);
 
 			// Сюда мы попадаем, например, при запуске новой консоли "Под админом", когда GUI НЕ "Под админом"
-			if (hEvents[IDEVENT_CONCLOSED] == NULL)
+			// В начале нити (pRCon->mh_ConEmuC == NULL), если запуск идет через ShellExecuteEx(runas)
+			if (hEvents[IDEVENT_SERVERPH] == NULL)
 			{
 				if (pRCon->mh_ConEmuC)
 				{
-					if (bDetached)
+					if (bDetached || pRCon->m_Args.bRunAsAdministrator)
 					{
 						bDetached = FALSE;
-						hEvents[IDEVENT_CONCLOSED] = pRCon->mh_ConEmuC;
+						hEvents[IDEVENT_SERVERPH] = pRCon->mh_ConEmuC;
 						nEvents = countof(hEvents);
 					}
 					else
@@ -1497,7 +1498,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			gpConEmu->OnRConStartedSuccess(pRCon);
 		}
 
-		// IDEVENT_CONCLOSED уже проверен, а код возврата обработается при выходе из цикла
+		// IDEVENT_SERVERPH уже проверен, а код возврата обработается при выходе из цикла
 		//// Проверим, что ConEmuC жив
 		//if (pRCon->mh_ConEmuC)
 		//{
@@ -1911,12 +1912,12 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		{
 			// Видимо, сервер повис во время выхода?
 			pRCon->isConsoleClosing(); // функция позовет TerminateProcess(mh_ConEmuC)
-			nWait = IDEVENT_CONCLOSED;
+			nWait = IDEVENT_SERVERPH;
 			break;
 		}
 	}
 
-	if (nWait == IDEVENT_CONCLOSED)
+	if (nWait == IDEVENT_SERVERPH)
 	{
 		DEBUGSTRPROC(L"### ConEmuC.exe was terminated\n");
 		DWORD nExitCode = 999;
@@ -8933,6 +8934,75 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 	return lbRc;
 }
 
+BOOL CRealConsole::SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground)
+{
+	BOOL lbRc = FALSE;
+	DWORD dwErr = 0;
+	HWND hLastFocus = NULL;
+
+	if (!(m_Args.bRunAsAdministrator || m_Args.pszUserName || m_Args.bRunAsRestricted/*?*/))
+	{
+		if (abSetForeground)
+		{
+			lbRc = SetForegroundWindow(hWnd);
+		}
+		else
+		{
+			SetLastError(0);
+			hLastFocus = SetFocus(hWnd);
+			dwErr = GetLastError();
+			lbRc != (dwErr == ERROR_ACCESS_DENIED /*5*/);
+		}
+	}
+	else
+	{
+		lbRc = SetForegroundWindow(hWnd);
+	}
+
+	// -- смысла нет, не работает
+	//if (!lbRc)
+	//{
+	//	CESERVER_REQ in;
+	//	ExecutePrepareCmd(&in, CECMD_SETFOCUS, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETFOCUS));
+	//	// Собственно, аргументы
+	//	in.setFocus.bSetForeground = abSetForeground;
+	//	in.setFocus.hWindow = hWnd;
+	//	CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+	//	if (pOut) ExecuteFreeResult(pOut);
+	//	lbRc = TRUE;
+	//}
+
+	return lbRc;
+}
+
+HWND CRealConsole::SetOtherWindowParent(HWND hWnd, HWND hParent)
+{
+	HWND h = NULL;
+	DWORD dwErr = 0;
+
+	SetLastError(0);
+	h = SetParent(hWnd, hParent);
+	if (h == NULL)
+		dwErr = GetLastError();
+
+	if (dwErr)
+	{
+		CESERVER_REQ in;
+		ExecutePrepareCmd(&in, CECMD_SETPARENT, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETPARENT));
+		// Собственно, аргументы
+		in.setParent.hWnd = hWnd;
+		in.setParent.hParent = hParent;
+		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+		if (pOut)
+		{
+			h = pOut->setParent.hParent;
+			ExecuteFreeResult(pOut);
+		}
+	}
+
+	return h;
+}
+
 BOOL CRealConsole::SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOOL bRedraw)
 {
 	BOOL lbRc = FALSE;
@@ -9014,11 +9084,25 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	SetWindowLongPtr(ghWnd, GWLP_USERDATA, (LONG_PTR)hConWnd);
 	ghConWnd = hConWnd;
 	// Чтобы все в одном месте было
-	OnGuiFocused(TRUE);
+	OnGuiFocused(TRUE, TRUE);
 	//if (mp_ConsoleInfo) {
 	//	PRAGMA_ERROR("Смену флажка нужно делать через команду сервера");
 	//	mp_ConsoleInfo->bConsoleActive = TRUE;
 	//}
+
+	//if (hGuiWnd)
+	//{
+	//	HWND hFore = GetForegroundWindow();
+	//	DWORD nForePID = 0;
+	//	if (hFore) GetWindowThreadProcessId(hFore, &nForePID);
+	//	if (mn_GuiWndPID != nForePID)
+	//	{
+	//		//SetOtherWindowFocus(hGuiWnd, FALSE/*use SetFocus*/);
+	//		SetFocus(hGuiWnd);
+	//		//PostConsoleMessage(hConWnd, WM_SETFOCUS, NULL, NULL);
+	//	}
+	//}
+
 
 	//if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
@@ -9097,17 +9181,24 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 	{
 		if (hGuiWnd)
 		{
-			HWND hFore = GetForegroundWindow();
-			DWORD nForePID = 0;
-			if (hFore) GetWindowThreadProcessId(hFore, &nForePID);
-			if (mn_GuiWndPID != nForePID || abForceChild)
+			if (abForceChild)
 			{
-				SetFocus(hGuiWnd);
+				HWND hFore = GetForegroundWindow();
+				DWORD nForePID = 0;
+				if (hFore) GetWindowThreadProcessId(hFore, &nForePID);
+				if (mn_GuiWndPID != nForePID /*|| abForceChild*/)
+				{
+					//SetOtherWindowFocus(hGuiWnd, FALSE/*use SetFocus*/);
+					//--SetFocus(hGuiWnd);
+					//PostConsoleMessage(hConWnd, WM_SETFOCUS, NULL, NULL);
+				}
 			}
+			SendMessage(ghWnd, WM_NCACTIVATE, TRUE, 0);
 		}
 		else
 		{
-			gpConEmu->setFocus();
+			// -- От этого кода одни проблемы - например, не активируется диалог Settings щелчком по TaskBar-у
+			// gpConEmu->setFocus();
 		}
 	}
 
@@ -11407,7 +11498,7 @@ HWND CRealConsole::GuiWnd()
 	return hGuiWnd;
 }
 
-void CRealConsole::SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID)
+void CRealConsole::SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev)
 {
 	if (!this)
 	{
@@ -11430,6 +11521,7 @@ void CRealConsole::SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPC
 	hGuiWnd = ahGuiWnd;
 	mn_GuiWndPID = anAppPID;
 	mn_GuiWndStyle = anStyle; mn_GuiWndStylEx = anStyleEx;
+	rcPreGuiWndRect = arcPrev;
 
 	// Ставим после "hGuiWnd = ahGuiWnd", т.к. для гуй-приложений логика кнопки другая.
 	if (isActive())
@@ -11452,8 +11544,19 @@ void CRealConsole::SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPC
 	
 	if (hGuiWnd)
 	{
+		/*
+		DWORD nTID = 0, nPID = 0;
+		nTID = GetWindowThreadProcessId(hGuiWnd, &nPID);
+		_ASSERTE(nPID == anAppPID);
+
+		BOOL lbThreadAttach = AttachThreadInput(nTID, GetCurrentThreadId(), TRUE);
+		DWORD nMainTID = GetWindowThreadProcessId(ghWnd, NULL);
+		BOOL lbThreadAttach2 = AttachThreadInput(nTID, nMainTID, TRUE);
+		DWORD nErr = GetLastError();
+		*/
+
 		// SetFocus не сработает - другой процесс
-		SetForegroundWindow(hGuiWnd);
+		SetOtherWindowFocus(hGuiWnd, TRUE/*use SetForegroundWindow*/);
 
 		GetWindowText(hGuiWnd, Title, countof(Title)-2);
 		wcscpy_c(TitleFull, Title);
@@ -13084,13 +13187,26 @@ void CRealConsole::Detach()
 {
 	if (!this) return;
 
-	ShowConsole(1);
-	// Уведомить сервер, что он больше не наш
-	CESERVER_REQ in;
-	ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR));
-	CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
-
-	if (pOut) ExecuteFreeResult(pOut);
+	if (hGuiWnd)
+	{
+		ShowOtherWindow(hGuiWnd, SW_HIDE);
+		SetOtherWindowParent(hGuiWnd, NULL);
+		SetOtherWindowPos(hGuiWnd, HWND_NOTOPMOST, rcPreGuiWndRect.left, rcPreGuiWndRect.top, rcPreGuiWndRect.right-rcPreGuiWndRect.left, rcPreGuiWndRect.bottom-rcPreGuiWndRect.top,
+			SWP_SHOWWINDOW);
+		// Сбросить переменные, чтобы гуй закрыть не пыталось
+		hGuiWnd = NULL;
+		// Закрыть консоль
+		CloseConsole(FALSE);
+	}
+	else
+	{
+		ShowConsole(1);
+		// Уведомить сервер, что он больше не наш
+		CESERVER_REQ in;
+		ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR));
+		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+		if (pOut) ExecuteFreeResult(pOut);
+	}
 
 	// Чтобы случайно не закрыть RealConsole?
 	m_Args.bDetached = TRUE;

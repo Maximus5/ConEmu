@@ -2390,7 +2390,8 @@ void CSettings::FillHotKeysList()
 		wchar_t szName[128], szFull[512];
 		//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
 		LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
-		lvi.state = lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
+		lvi.state = 0;
+		lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
 		lvi.pszText = szName;
 		for (size_t i = 0; m_HotKeys[i].DescrLangID; i++)
 		{

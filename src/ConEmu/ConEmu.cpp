@@ -64,7 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
-#define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
+#define DEBUGSTRFOCUS(s) DEBUGSTR(s)
 #define DEBUGSTRFOREGROUND(s) //DEBUGSTR(s)
 #define DEBUGSTRLLKB(s) //DEBUGSTR(s)
 #ifdef _DEBUG
@@ -109,6 +109,14 @@ const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x
 #define RCLICKAPPS_START 200 // начало отрисовки кружка вокруг курсора
 #define RCLICKAPPSTIMEOUT_MAX 10000
 #define RCLICKAPPSDELTA 3
+
+enum AttachListColumns
+{
+	alc_PID = 0,
+	alc_Type,
+	alc_Title,
+	alc_Class,
+};
 
 
 CConEmuMain::CConEmuMain()
@@ -653,7 +661,7 @@ HMENU CConEmuMain::GetSystemMenu(BOOL abInitial /*= FALSE*/)
 		
 		if (mh_VConListPopup) DestroyMenu(mh_VConListPopup);
 		mh_VConListPopup = CreateVConListPopupMenu(mh_VConListPopup, TRUE/*abFirstTabOnly*/);
-		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_VConListPopup, _T("Console list"));
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_VConListPopup, _T("Console &list"));
 		
 		if (mh_ActiveVConPopup) DestroyMenu(mh_ActiveVConPopup);
 		mh_ActiveVConPopup = CreateVConPopupMenu(NULL, NULL, FALSE);
@@ -666,6 +674,7 @@ HMENU CConEmuMain::GetSystemMenu(BOOL abInitial /*= FALSE*/)
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->AutoScroll ? MF_CHECKED : 0),
 			ID_AUTOSCROLL, _T("Auto scro&ll"));
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, IDM_ATTACHTO, _T("Attach t&o..."));
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_NEWCONSOLE, _T("&New console..."));
 	}
 
@@ -698,7 +707,7 @@ DWORD_PTR CConEmuMain::GetWindowStyle()
 // Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE_EX
 DWORD_PTR CConEmuMain::GetWindowStyleEx()
 {
-	DWORD_PTR styleEx = 0;
+	DWORD_PTR styleEx = WS_EX_APPWINDOW;
 
 	if (gpSet->nTransparent < 255 /*&& !gpSet->isDesktopMode*/)
 		styleEx |= WS_EX_LAYERED;
@@ -4653,6 +4662,190 @@ void CConEmuMain::CtrlWinAltSpace()
 	mp_VActive->RCon()->ShowConsole(-1); // Toggle visibility
 }
 
+BOOL CConEmuMain::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
+{
+	if (IsWindowVisible(hFind))
+	{
+		// Условия?
+		DWORD_PTR nStyle = GetWindowLongPtr(hFind, GWL_STYLE);
+		DWORD_PTR nStyleEx = GetWindowLongPtr(hFind, GWL_EXSTYLE);
+		DWORD nPID;
+		if (!GetWindowThreadProcessId(hFind, &nPID))
+			nPID = 0;
+
+		bool lbCan = ((nStyle & (WS_VISIBLE|WS_CAPTION|WS_MAXIMIZEBOX)) == (WS_VISIBLE|WS_CAPTION|WS_MAXIMIZEBOX));
+		if (nPID == GetCurrentProcessId())
+			lbCan = false;
+		if ((nStyle & WS_CHILD))
+			lbCan = false;
+		if ((nStyleEx & WS_EX_TOOLWINDOW))
+			lbCan = false;
+
+		if (lbCan)
+		{
+			wchar_t szClass[MAX_PATH], szTitle[4096], szTemp[32]; szClass[0] = szTitle[0] = 0;
+			GetClassName(hFind, szClass, countof(szClass));
+			GetWindowText(hFind, szTitle, countof(szTitle));
+
+			HWND hList = (HWND)lParam;
+			DWORD nPID = 0;
+			if (GetWindowThreadProcessId(hFind, &nPID))
+				_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"%u", nPID);
+			else
+				wcscpy_c(szTemp, L"????");
+
+			LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
+			lvi.state = 0;
+			lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
+			lvi.pszText = szTemp;
+			lvi.iItem = ListView_GetItemCount(hList); // в конец
+			int nItem = ListView_InsertItem(hList, &lvi);
+			ListView_SetItemState(hList, nItem, 0, LVIS_SELECTED|LVIS_FOCUSED);
+
+			wcscpy_c(szTemp, (lstrcmp(szClass, L"ConsoleWindowClass") == 0) ? L"CON" : L"GUI");
+			ListView_SetItemText(hList, nItem, alc_Type, szTemp);
+			ListView_SetItemText(hList, nItem, alc_Title, szTitle);
+			ListView_SetItemText(hList, nItem, alc_Class, szClass);
+		}
+	}
+	return TRUE; // Продолжить
+}
+
+INT_PTR CConEmuMain::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	switch(messg)
+	{
+		case WM_INITDIALOG:
+		{
+			LRESULT lbRc = TRUE;
+
+			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)lParam);
+
+			if (GetWindowLongPtr(ghWnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
+				SetWindowPos(hDlg, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+
+			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+			SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
+
+			HWND hList = GetDlgItem(hDlg, IDC_ATTACHLIST);
+			{
+				LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+				wchar_t szTitle[64]; col.pszText = szTitle;
+
+				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
+				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
+				
+				wcscpy_c(szTitle, L"PID");			ListView_InsertColumn(hList, alc_PID, &col);
+				wcscpy_c(szTitle, L"Type");			ListView_InsertColumn(hList, alc_Type, &col);
+				col.cx = 200;
+				wcscpy_c(szTitle, L"Title");		ListView_InsertColumn(hList, alc_Title, &col);
+				wcscpy_c(szTitle, L"Class");		ListView_InsertColumn(hList, alc_Class, &col);
+			}
+			EnumWindows(AttachDlgEnumWin, (LPARAM)hList);
+
+			AttachDlgProc(hDlg, WM_SIZE, 0, 0);
+
+			RECT rect;
+			GetWindowRect(hDlg, &rect);
+			RECT rcParent;
+			GetWindowRect(ghWnd, &rcParent);
+			MoveWindow(hDlg,
+			           (rcParent.left+rcParent.right-rect.right+rect.left)/2,
+			           (rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2,
+			           rect.right - rect.left, rect.bottom - rect.top, false);
+			
+			return lbRc;
+		}
+
+		case WM_SIZE:
+		{
+			RECT rcDlg, rcBtn, rcList;
+			GetClientRect(hDlg, &rcDlg);
+			HWND h = GetDlgItem(hDlg, IDC_ATTACHLIST);
+			GetWindowRect(h, &rcList); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcList, 2);
+			HWND hb = GetDlgItem(hDlg, IDOK);
+			GetWindowRect(hb, &rcBtn); MapWindowPoints(NULL, hb, (LPPOINT)&rcBtn, 2);
+			MoveWindow(h,
+				rcList.left, rcList.top, rcDlg.right - 2*rcList.left, rcDlg.bottom - 3*rcList.top - rcBtn.bottom, true);
+			MoveWindow(GetDlgItem(hDlg, IDC_NEWCONSOLE),
+				rcList.left, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, true);
+			MoveWindow(GetDlgItem(hDlg, IDC_REFRESH),
+				rcList.left*2 + rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, true);
+			MoveWindow(GetDlgItem(hDlg, IDCANCEL),
+				rcDlg.right - rcList.left - rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, true);
+			MoveWindow(GetDlgItem(hDlg, IDOK),
+				rcDlg.right - 2*rcList.left - 2*rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, true);
+			break;
+		}
+
+		case WM_NOTIFY:
+			TODO("Обработать DblClick на списке");
+			break;
+
+		case WM_TIMER:
+			// Автообновление?
+			break;
+
+		case WM_COMMAND:
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				DWORD_PTR *pAttachParm = (DWORD_PTR*)GetWindowLongPtr(hDlg, DWLP_USER);
+				switch (LOWORD(wParam))
+				{
+					case IDOK:
+						// Тут нужно получить инфу из списка и дернуть собственно аттач
+						_ASSERTE(FALSE);
+						pAttachParm[0] = 0; // Type: 1 - console, 2 - GUI
+						pAttachParm[1] = 0; // PID
+						pAttachParm[2] = 0; // HWND (для GUI)
+						EndDialog(hDlg, IDOK);
+						return 1;
+					case IDCANCEL:
+						EndDialog(hDlg, IDCANCEL);
+						return 1;
+					case IDC_NEWCONSOLE:
+						EndDialog(hDlg, IDC_NEWCONSOLE);
+						return 1;
+					case IDC_REFRESH:
+						{
+							HWND hList = GetDlgItem(hDlg, IDC_ATTACHLIST);
+							ListView_DeleteAllItems(hList);
+							EnumWindows(AttachDlgEnumWin, (LPARAM)hList);
+						}
+						return 1;
+				}
+			}
+
+			break;
+		default:
+			return 0;
+	}
+
+	return 0;
+}
+
+// Открыть диалог со списком окон/процессов, к которым мы можем подцепиться
+void CConEmuMain::AttachDlg()
+{
+	DWORD_PTR nAttachParm[3] = {};
+	int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_ATTACHDLG), ghWnd, AttachDlgProc, (LPARAM)nAttachParm);
+	switch (nRc)
+	{
+	case IDC_NEWCONSOLE:
+		Recreate(FALSE, gpSet->isMultiNewConfirm);
+		break;
+
+	case IDOK:
+		// [0] Type: 1 - console, 2 - GUI
+		// [1] PID
+		// [2] HWND (для GUI)
+		_ASSERTE((nAttachParm[0] == 1 || nAttachParm[0] == 2) && (nAttachParm[1]) && (nAttachParm[2] || nAttachParm[0] == 1));
+		TODO("Ну и сам аттач, собственно");
+		break;
+	}
+}
+
 // abRecreate: TRUE - пересоздать текущую, FALSE - создать новую
 // abConfirm:  TRUE - показать диалог подтверждения
 // abRunAs:    TRUE - под админом
@@ -6269,9 +6462,25 @@ LRESULT CConEmuMain::OnNcMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 			{
 				// Force paint our non-client area otherwise Windows will paint its own.
 				if (lbUseCaption)
+				{
+					// Тут все переделать нужно, когда табы новые будут
+					_ASSERTE(lbUseCaption==FALSE);
 					RedrawWindow(hWnd, NULL, NULL, RDW_UPDATENOW);
+				}
 				else
+				{
+					// При потере фокуса
+					if (!wParam)
+					{
+						CVirtualConsole* pVCon = ActiveCon();
+						CRealConsole* pRCon;
+						// Нужно схалтурить, чтобы при переходе фокуса в дочернее GUI приложение
+						// рамка окна самого ConEmu не стала неактивной (серой)
+						if (pVCon && ((pRCon = ActiveCon()->RCon()) != NULL) && pRCon->GuiWnd() && !pRCon->isBufferHeight())
+							wParam = TRUE;
+					}
 					lRc = DefWindowProc(hWnd, messg, wParam, lParam);
+				}
 
 				break;
 			}
@@ -7549,7 +7758,8 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		if (abAddNew)
 		{
 			AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
-			AppendMenu(hMenu, MF_STRING | MF_ENABLED, IDM_NEW,       L"New console...");
+			AppendMenu(hMenu, MF_STRING | MF_ENABLED, ID_NEWCONSOLE, L"New console...");
+			AppendMenu(hMenu, MF_STRING | MF_ENABLED, IDM_ATTACHTO,  L"Attach to...");
 		}
 		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_SAVE,      L"&Save");
@@ -8456,7 +8666,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 	if (mp_VActive && mp_VActive->RCon())
-		mp_VActive->RCon()->OnGuiFocused(lbSetFocus);
+		mp_VActive->RCon()->OnGuiFocused(lbSetFocus, (messg == WM_ACTIVATEAPP));
 
 	if (gpSet->isFadeInactive && mp_VActive)
 	{
@@ -11620,6 +11830,9 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			// Создать новую консоль
 			Recreate(FALSE, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			return 0;
+		case IDM_ATTACHTO:
+			AttachDlg();
+			return 0;
 		case ID_SETTINGS:
 
 			if (ghOpWnd && IsWindow(ghOpWnd))
@@ -12670,6 +12883,7 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		CRealConsole* pRCon = AttachRequestedGui(pIn->AttachGuiApp.sAppFileName, pIn->hdr.nSrcPID);
 		if (pRCon)
 		{
+			RECT rcPrev = pIn->AttachGuiApp.rcWindow;
 			HWND hView = pRCon->GetView();
 			GetClientRect(hView, &pIn->AttachGuiApp.rcWindow);
 			//MapWindowPoints(NULL, hView, (LPPOINT)&pIn->AttachGuiApp.rcWindow, 2);
@@ -12677,7 +12891,7 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 			
 			// Уведомить RCon и ConEmuC, что гуй подцепился
 			// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
-			pRCon->SetGuiMode(pIn->AttachGuiApp.hWindow, pIn->AttachGuiApp.nStyle, pIn->AttachGuiApp.nStyleEx, pIn->AttachGuiApp.sAppFileName, pIn->hdr.nSrcPID);
+			pRCon->SetGuiMode(pIn->AttachGuiApp.hWindow, pIn->AttachGuiApp.nStyle, pIn->AttachGuiApp.nStyleEx, pIn->AttachGuiApp.sAppFileName, pIn->hdr.nSrcPID, rcPrev);
 
 			ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, pIn->hdr.cbSize);
 			pIn->AttachGuiApp.bOk = TRUE;

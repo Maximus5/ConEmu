@@ -217,6 +217,7 @@ class CRealConsole
 	private:
 		HWND    hConWnd;
 		HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
+		RECT    rcPreGuiWndRect; // Положение окна ДО аттача
 		BOOL    mb_InSetFocus;
 		DWORD   mn_GuiWndStyle, mn_GuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
 		DWORD   mn_GuiWndPID;
@@ -231,7 +232,7 @@ class CRealConsole
 
 		// Если работаем в Gui-режиме (Notepad, Putty, ...)
 		HWND    GuiWnd();
-		void    SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID);
+		void    SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
 		void    CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui);
 
 		CRealConsole(CVirtualConsole* apVCon);
@@ -262,6 +263,8 @@ class CRealConsole
 		LRESULT PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam);
 		BOOL ShowOtherWindow(HWND hWnd, int swShow);
 		BOOL SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
+		BOOL SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground);
+		HWND SetOtherWindowParent(HWND hWnd, HWND hParent);
 		BOOL SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOOL bRedraw);
 		void PostMacro(LPCWSTR asMacro, BOOL abAsync = FALSE);
 	private:

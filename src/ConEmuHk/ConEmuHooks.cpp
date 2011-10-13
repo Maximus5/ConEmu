@@ -703,6 +703,22 @@ BOOL MyEndDialog(HWND hDlg, INT_PTR nResult)
 	return bRc;
 }
 
+BOOL MyPostMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	BOOL lbRc = FALSE;
+	typedef BOOL (WINAPI* PostMessage_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+	PostMessage_t PostMessage_f = (PostMessage_t)GetProcAddress(ghUser32, "PostMessageW");
+	if (PostMessage_f)
+	{
+		lbRc = PostMessage_f(hWnd, Msg, wParam, lParam);
+	}
+	else
+	{
+		_ASSERTE(PostMessage_f!=NULL);
+	}
+	return lbRc;
+}
+
 INT_PTR MyDialogBoxIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATEW hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
 	INT_PTR nRc = 0;
@@ -1270,7 +1286,7 @@ static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWOR
 		if (lbCanAttach)
 		{
 			// –одительское окно - ConEmu DC
-			hWndParent = ghConEmuWndDC; // Ќадо ли его ставить сразу, если не включаем WS_CHILD?
+			// -- hWndParent = ghConEmuWndDC; // Ќадо ли его ставить сразу, если не включаем WS_CHILD?
 
 			// WS_CHILDWINDOW перед созданием выставл€ть нельз€, т.к. например у WordPad.exe сносит крышу:
 			// все его окна создаютс€ нормально, но он показывает ошибку "Ќе удалось создать новый документ"
@@ -1412,8 +1428,8 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 			if (!(nCurStyle & WS_CHILDWINDOW))
 			{
 				WARNING("≈сли ставить WS_CHILD - пропадет меню, если не ставить - фокус из ConEmu улетает");
-				nCurStyle = (nCurStyle | WS_CHILDWINDOW|WS_TABSTOP); // & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
-				MySetWindowLongPtrW(hWindow, GWL_STYLE, nCurStyle);
+				//nCurStyle = (nCurStyle | WS_CHILDWINDOW|WS_TABSTOP); // & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
+				//MySetWindowLongPtrW(hWindow, GWL_STYLE, nCurStyle);
 				SetParent(hWindow, ghConEmuWndDC);
 			}
 			
@@ -1424,6 +1440,8 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 				if (abStyleHidden)
 					abStyleHidden = FALSE;
 			}
+
+			MyPostMessage(ghConEmuWnd, WM_NCACTIVATE, TRUE, 0);
 		}
 		ExecuteFreeResult(pOut);
 	}
@@ -2869,7 +2887,7 @@ BOOL WINAPI OnSetConsoleKeyShortcuts(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DW
 	if (F(SetConsoleKeyShortcuts))
 		lbRc = F(SetConsoleKeyShortcuts)(bSet, bReserveKeys, p1, n1);
 
-	if (ghConEmuWnd)
+	if (ghConEmuWnd && IsWindow(ghConEmuWnd))
 	{
 		DWORD nLastErr = GetLastError();
 		DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(BYTE)*2;
