@@ -1175,7 +1175,9 @@ int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBt
 		}
 		else
 		{
+			#ifdef _DEBUG
 			_CrtDbgBreak();
+			#endif
 		}
 	}
 

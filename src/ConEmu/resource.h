@@ -74,7 +74,7 @@
 #define cbMonospace                     1048
 #define tFontSizeX2                     1049
 #define slDarker                        1050
-#define cbSendAE                        1051
+#define cbSendAltEnter                  1051
 #define cbDnDCopy                       1053
 #define cbTabs                          1054
 #define cbEnhanceGraphics               1055
@@ -225,7 +225,6 @@
 #define tHideCaptionAlwaysDissapear     1591
 #define bMultiConHotkeys                1592
 #define cbMultiConKeybHooks             1593
-#define cbToolbar                       1593
 #define bTabTemplates                   1594
 #define bResetSettings                  1595
 #define bReloadSettings                 1596
@@ -257,8 +256,8 @@
 #define tCursorPos                      1622
 #define tFadeLow                        1624
 #define tFadeHigh                       1625
+#define cbToolbar                       1626
 #define bConsoleTextSelection           1627
-#define bCTSSettings                    1627
 #define rbCTSAlways                     1628
 #define rbCTSBufferOnly                 1629
 #define cbCTSTextSelection              1630
@@ -270,18 +269,19 @@
 #define lbCTSForeIdx                    1636
 #define lbCTSBackIdx                    1637
 #define tTabConsole                     1638
-#define lbCTSActAlways                  1638
 #define tTabEditor                      1639
 #define tTabViewer                      1640
 #define tTabEditorMod                   1641
 #define cbHideInactiveConTabs           1642
 #define tTabLenMax                      1643
 #define cbHideInactiveConTabs2          1644
+#define lbCTSActAlways                  1645
 #define cbAdminShield                   1646
 #define tAdminSuffix                    1647
 #define cbUseWinNumber                  1648
 #define cbInstallKeybHooks              1649
 #define cbRunAsRestricted               1650
+#define bCTSSettings                    1651
 #define tRunAsUser                      1652
 #define tRunAsPassword                  1653
 #define cbSafeFarClose                  1654
@@ -295,12 +295,10 @@
 #define cbThumbLoadFolders              1663
 #define cbThumbLoadFiles                1664
 #define tThumbFullSize                  1665
-#define tThumbsImgSize                  1665
 #define tTilesFontSize                  1666
 #define cbThumbPreviewBox               1667
 #define cbThumbSelectionBox             1668
 #define tThumbLabelHeight               1669
-#define tTilesImgSize                   1669
 #define rbThumbBackColorIdx             1670
 #define rbThumbBackColorRGB             1671
 #define lbThumbBackColorIdx             1672
@@ -312,6 +310,8 @@
 #define lbThumbSelectionBoxColorIdx     1678
 #define tThumbLoadingTimeout            1679
 #define cbThumbUsePicView2              1680
+#define tTilesImgSize                   1681
+#define tThumbsImgSize                  1682
 #define rbThumbCachePluginFolder        1687
 #define rbThumbCacheUserFolder          1688
 #define rbThumbCacheDisabled            1689
@@ -337,16 +337,16 @@
 #define tTilesY2                        1712
 #define tTilesSpacing                   1713
 #define tTilesPadding                   1714
-#define bApplyViewSettings              1717
-#define bConFontOK                      1717
+#define bApplyViewSettings              1715
+#define bConFontOK                      1716
 #define cbActivityReset                 1717
-#define bDosBoxSettings                 1717
 #define cbDisableFarFlashing            1718
 #define cbDisableAllFlashing            1719
 #define cbThumbRestoreOnStartup         1720
 #define cbSleepInBackground             1721
 #define cbExtendUCharMap                1722
 #define cbAutoSaveSizePos               1723
+#define bDosBoxSettings                 1724
 #define cbShellNoZoneCheck              1725
 #define bConFontCancel                  1726
 #define tConsoleFontFace                1727
@@ -372,14 +372,12 @@
 #define ebActivityApp                   1750
 #define ebActivityParm                  1751
 #define cbUseInjects                    1752
-#define cbDosBoxForceConfig             1752
 #define cbDosBox                        1753
 #define ebDosBoxPath                    1754
 #define bDosBoxPath                     1755
 #define ebDosBoxForceConfig             1756
 #define bDosBoxForceConfig              1757
 #define ebDosBoxDrives                  1758
-#define IDC_EDIT3                       1759
 #define ebDosBoxAutoexec                1759
 #define tsRConFlags                     1760
 #define bPortableRegistrySettings       1761
@@ -396,8 +394,14 @@
 #define hkBufferMode                    1773
 #define IDC_ATTACHLIST                  1774
 #define IDC_NEWCONSOLE                  1775
-#define IDC_BUTTON2                     1776
 #define IDC_REFRESH                     1776
+#define cbSendAltTab                    1777
+#define cbSendAltEsc                    1778
+#define cbSendAltPrintScrn              1779
+#define cbSendPrintScrn                 1780
+#define cbSendCtrlEsc                   1781
+#define cbUseWinNumberK                 1782
+#define cbDosBoxForceConfig             1783
 #define vkMinimizeRestore               2000
 #define vkMultiNew                      2001
 #define vkMultiNext                     2002
@@ -453,7 +457,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        213
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1777
+#define _APS_NEXT_CONTROL_VALUE         2048
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

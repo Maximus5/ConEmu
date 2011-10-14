@@ -4117,6 +4117,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				WARNING("ј надо ли так заморачиватьс€?");
 				//On Keyboard(hConWnd, WM_KEYDOWN, VK_RETURN, 0);
 				r.Event.KeyEvent.bKeyDown = TRUE;
+				r.Event.KeyEvent.wRepeatCount = 1;
 				r.Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
 				r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_RETURN, 0/*MAPVK_VK_TO_VSC*/);
 				r.Event.KeyEvent.dwControlKeyState = NUMLOCK_ON|LEFT_ALT_PRESSED /*0x22*/;

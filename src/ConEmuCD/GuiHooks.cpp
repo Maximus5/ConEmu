@@ -73,16 +73,16 @@ extern UINT gnMsgConsoleHookedKey;
 
 extern HANDLE ghHeap;
 
-enum CONSOLE_KEY_ID
-{
-	ID_ALTTAB,
-	ID_ALTESC,
-	ID_ALTSPACE,
-	ID_ALTENTER,
-	ID_ALTPRTSC,
-	ID_PRTSC,
-	ID_CTRLESC,
-};
+//enum CONSOLE_KEY_ID
+//{
+//	ID_ALTTAB,
+//	ID_ALTESC,
+//	ID_ALTSPACE,
+//	ID_ALTENTER,
+//	ID_ALTPRTSC,
+//	ID_PRTSC,
+//	ID_CTRLESC,
+//};
 
 struct
 {
@@ -96,8 +96,8 @@ ConsoleKeys[]=
 	{1<<ID_ALTESC,   VK_ESCAPE, VK_MENU},
 	{1<<ID_ALTSPACE, 0, 0}, // Internally by ConEmu
 	{1<<ID_ALTENTER, 0, 0}, // Internally by ConEmu
-	{1<<ID_ALTPRTSC, VK_PRINT, VK_MENU},
-	{1<<ID_PRTSC,    VK_PRINT, 0},
+	{1<<ID_ALTPRTSC, VK_SNAPSHOT, VK_MENU},
+	{1<<ID_PRTSC,    VK_SNAPSHOT, 0},
 	{1<<ID_CTRLESC,  VK_ESCAPE, VK_CONTROL},
 };
 

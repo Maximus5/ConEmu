@@ -4461,11 +4461,19 @@ void CConEmuMain::UpdateWinHookSettings()
 		if (pnConsoleKeyShortcuts)
 		{
 			BYTE nNewValue = 0;
+			
+			if (gpSet->isSendAltTab) nNewValue |= 1<<ID_ALTTAB;
+			if (gpSet->isSendAltEsc) nNewValue |= 1<<ID_ALTESC;
+			if (gpSet->isSendAltPrintScrn) nNewValue |= 1<<ID_ALTPRTSC;
+			if (gpSet->isSendPrintScrn) nNewValue |= 1<<ID_PRTSC;
+			if (gpSet->isSendCtrlEsc) nNewValue |= 1<<ID_CTRLESC;
+			
 			CVirtualConsole* pVCon;
 			for (size_t i = 0; (pVCon = GetVCon(i)) != NULL; i++)
 			{
 				nNewValue |= pVCon->RCon()->GetConsoleKeyShortcuts();
 			}
+			
 			*pnConsoleKeyShortcuts = nNewValue;
 		}
 
@@ -9561,15 +9569,15 @@ void CConEmuMain::OnConsoleKey(WORD vk, LPARAM Mods)
 		r.Event.KeyEvent.wVirtualKeyCode = vk;
 		r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(vk, 0/*MAPVK_VK_TO_VSC*/);
 		if (Mods & MOD_LALT)
-			r.Event.KeyEvent.dwControlKeyState = LEFT_ALT_PRESSED;
+			r.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
 		if (Mods & MOD_RALT)
-			r.Event.KeyEvent.dwControlKeyState = RIGHT_ALT_PRESSED;
+			r.Event.KeyEvent.dwControlKeyState |= RIGHT_ALT_PRESSED;
 		if (Mods & MOD_LCONTROL)
-			r.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED;
+			r.Event.KeyEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
 		if (Mods & MOD_RCONTROL)
-			r.Event.KeyEvent.dwControlKeyState = RIGHT_CTRL_PRESSED;
+			r.Event.KeyEvent.dwControlKeyState |= RIGHT_CTRL_PRESSED;
 		if (Mods & MOD_SHIFT)
-			r.Event.KeyEvent.dwControlKeyState = SHIFT_PRESSED;
+			r.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
 		pRCon->PostConsoleEvent(&r);
 		//On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
 		r.Event.KeyEvent.bKeyDown = FALSE;

@@ -52,7 +52,7 @@ class SettingsBase
 			return lbRc;
 		}*/
 		bool Load(const wchar_t *regName, char &value) { return Load(regName, (LPBYTE)&value, 1); }
-		bool Load(const wchar_t *regName, bool &value) { return Load(regName, (LPBYTE)&value, 1); }
+		bool Load(const wchar_t *regName, bool &value) { BYTE bval = 0; bool bRc = Load(regName, &bval, sizeof(bval)); if (bRc) value = (bval!=0); return bRc; }
 		bool Load(const wchar_t *regName, BYTE &value) { return Load(regName, (LPBYTE)&value, 1); }
 		bool Load(const wchar_t *regName, DWORD &value) { return Load(regName, (LPBYTE)&value, sizeof(DWORD)); }
 		bool Load(const wchar_t *regName, LONG &value) { return Load(regName, (LPBYTE)&value, sizeof(DWORD)); }

@@ -120,6 +120,17 @@ enum ConEmuTabCommand
 	ctc_SwitchCommit = 3,
 };
 
+enum CONSOLE_KEY_ID
+{
+	ID_ALTTAB,
+	ID_ALTESC,
+	ID_ALTSPACE,
+	ID_ALTENTER,
+	ID_ALTPRTSC,
+	ID_PRTSC,
+	ID_CTRLESC,
+};
+
 //#define CONEMUMAPPING    L"ConEmuPluginData%u"
 //#define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
 //#define CONEMUDRAGTO     L"ConEmuDragTo%u"

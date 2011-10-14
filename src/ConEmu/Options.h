@@ -278,7 +278,8 @@ class CSettings
 		bool isSafeFarClose;
 		wchar_t *sSafeFarCloseMacro;
 		bool isSendAltEnter;
-		BYTE isSendAltSpace;
+		bool isSendAltSpace;
+		bool isSendAltTab, isSendAltEsc, isSendAltPrintScrn, isSendPrintScrn, isSendCtrlEsc;
 		bool isMinToTray;
 		bool isAlwaysShowTrayIcon;
 		//bool isForceMonospace, isProportional;

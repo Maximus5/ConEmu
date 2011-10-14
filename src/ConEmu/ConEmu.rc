@@ -387,18 +387,16 @@ BEGIN
     GROUPBOX        "Miscellaneous options",IDC_STATIC,4,98,319,72
     CONTROL         "Skip mouse click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,110,117,8
     CONTROL         "Skip mouse in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,121,117,8
-    CONTROL         "Send Alt+Enter to console",cbSendAE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,132,117,8
-    CONTROL         "Send Alt+Space to console",cbSendAltSpace,"Button",BS_AUTO3STATE | WS_TABSTOP,10,144,117,8
-    CONTROL         "Select text with mouse",cbConsoleTextSelection,"Button",BS_AUTO3STATE | WS_TABSTOP,10,156,101,8
-    PUSHBUTTON      "...",bCTSSettings,114,155,13,11
-    CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,110,89,8
-    CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,121,89,8
-    CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,132,89,8
+    CONTROL         "Select text with mouse",cbConsoleTextSelection,"Button",BS_AUTO3STATE | WS_TABSTOP,10,145,101,8
+    PUSHBUTTON      "...",bCTSSettings,114,144,13,11
+    CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,132,89,8
+    CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,110,89,8
+    CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,121,89,8
     CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,206,89,8
     CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,218,89,8
-    CONTROL         "Fix Alt on AltTab/AltF9",cbFixAltOnAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,110,91,8
-    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,121,74,8
-    PUSHBUTTON      "...",bRealConsoleSettings,306,120,13,11
+    CONTROL         "Fix Alt on AltTab/AltF9",cbFixAltOnAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,157,117,8
+    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,110,74,8
+    PUSHBUTTON      "...",bRealConsoleSettings,306,109,13,11
     GROUPBOX        "Appearence",IDC_STATIC,4,172,319,59
     CONTROL         "Enhance progress- and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,182,119,8
@@ -410,16 +408,16 @@ BEGIN
     CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,206,89,8
     CONTROL         "Ignore telnet cursor size",cbIgnoreTelnetCursorSize,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,182,91,8
-    CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,132,91,8
+    CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,121,91,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,227,194,91,8
     CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,218,91,8
     CONTROL         "Always show scrollbar",cbAlwaysShowScrollbar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,218,100,8
-    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,144,89,8
-    CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,156,76,8
-    PUSHBUTTON      "...",bDosBoxSettings,210,155,13,11
-    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,144,91,8
-    CONTROL         "Portable registry",cbPortableRegistry,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,156,75,8
-    PUSHBUTTON      "...",bPortableRegistrySettings,306,155,13,11,WS_DISABLED
+    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,133,89,8
+    CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,145,76,8
+    PUSHBUTTON      "...",bDosBoxSettings,210,144,13,11
+    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,133,91,8
+    CONTROL         "Portable registry",cbPortableRegistry,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,145,75,8
+    PUSHBUTTON      "...",bPortableRegistrySettings,306,144,13,11,WS_DISABLED
 END
 
 IDD_SPG_DEBUG DIALOGEX 0, 0, 328, 235
@@ -559,7 +557,7 @@ BEGIN
     CONTROL         "",hkSwitchConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,85,143,23,13
     RTEXT           "Recreate:",IDC_STATIC,109,145,35,8
     CONTROL         "",hkCloseConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,147,143,23,13
-    GROUPBOX        "Hotkeys",IDC_STATIC,4,129,319,50
+    GROUPBOX        "Hotkeys",IDC_STATIC,4,129,319,61
     RTEXT           "Close:",IDC_STATIC,174,145,22,8
     CONTROL         "",hkDelConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,198,143,23,13
     RTEXT           "Cmd:",IDC_STATIC,10,161,18,8
@@ -568,6 +566,8 @@ BEGIN
     CONTROL         "",hkMinRestore,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,85,158,23,13
     RTEXT           "Buffer:",IDC_STATIC,111,161,34,8
     CONTROL         "",hkBufferMode,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,147,159,23,13
+    CONTROL         "Use «Host-key»+Number to switch consoles",cbUseWinNumber,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,176,163,10
 END
 
 IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319
@@ -700,26 +700,34 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "ConEmu hotkeys",IDC_STATIC,4,1,319,230
-    CONTROL         "List1",lbConEmuHotKeys,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,8,13,311,150
-    RTEXT           "Choose hotkey:",stHotKeySelect,9,169,56,8,WS_DISABLED
-    CONTROL         "",hkHotKeySelect,"msctls_hotkey32",WS_DISABLED | WS_BORDER | WS_TABSTOP,68,167,23,14
-    RTEXT           "Choose modifier:",stHotModifierSelect,100,169,56,8,WS_DISABLED
-    COMBOBOX        lbLDragKey,159,167,56,30,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Host-key",IDC_STATIC,8,185,145,42
-    CONTROL         "Win",cbHostWin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,198,28,10
-    CONTROL         "LAlt",cbHostLAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,48,198,28,10
-    CONTROL         "LCtrl",cbHostLCtrl,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,198,31,10
-    CONTROL         "LShift",cbHostLShift,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,198,34,10
-    CONTROL         "Apps",cbHostApps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,212,32,10
-    CONTROL         "RAlt",cbHostRAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,48,212,29,10
-    CONTROL         "RCtrl",cbHostRCtrl,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,212,32,10
-    CONTROL         "RShift",cbHostRShift,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,212,35,10
-    CONTROL         "Use «Host-key»+Number to switch consoles",cbUseWinNumber,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,190,159,10
-    CONTROL         "Install keyboard hooks",cbInstallKeybHooks,"Button",BS_AUTO3STATE | WS_TABSTOP,159,203,159,10
-    CONTROL         "Win+Tab",cbUseWinTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,216,47,10
-    CONTROL         "Win+Arrows",cbUseWinArrows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,208,216,60,10
+    GROUPBOX        "ConEmu hotkeys list",IDC_STATIC,4,1,319,162
+    CONTROL         "List1",lbConEmuHotKeys,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,8,12,311,127
+    RTEXT           "Choose hotkey:",stHotKeySelect,9,146,56,8,WS_DISABLED
+    CONTROL         "",hkHotKeySelect,"msctls_hotkey32",WS_DISABLED | WS_BORDER | WS_TABSTOP,68,144,23,14
+    RTEXT           "Choose modifier:",stHotModifierSelect,100,146,56,8,WS_DISABLED
+    COMBOBOX        lbLDragKey,159,144,56,30,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Host-key",IDC_STATIC,4,166,87,65
+    CONTROL         "Win",cbHostWin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,179,28,10
+    CONTROL         "LAlt",cbHostLAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,179,28,10
+    CONTROL         "LCtrl",cbHostLCtrl,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,203,31,10
+    CONTROL         "LShift",cbHostLShift,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,203,34,10
+    CONTROL         "Apps",cbHostApps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,191,32,10
+    CONTROL         "RAlt",cbHostRAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,191,29,10
+    CONTROL         "RCtrl",cbHostRCtrl,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,215,32,10
+    CONTROL         "RShift",cbHostRShift,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,215,35,10
+    GROUPBOX        "Intercept keys",IDC_STATIC,97,166,106,65
+    CONTROL         "«Host-key»+Number",cbUseWinNumberK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,191,93,10
+    CONTROL         "Install keyboard hooks",cbInstallKeybHooks,"Button",BS_AUTO3STATE | WS_TABSTOP,105,179,89,10
+    CONTROL         "Win+Tab",cbUseWinTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,203,47,10
+    CONTROL         "Win+Arrows",cbUseWinArrows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,215,60,10
+    GROUPBOX        "Send to console",IDC_STATIC,209,166,112,65
+    CONTROL         "Alt+Enter",cbSendAltEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,271,191,45,10
+    CONTROL         "Alt+Space",cbSendAltSpace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,191,49,10
+    CONTROL         "Alt+Tab",cbSendAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,179,42,10
+    CONTROL         "Alt+Esc",cbSendAltEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,271,179,41,10
+    CONTROL         "Alt+PrntScrn",cbSendAltPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,215,57,10
+    CONTROL         "PrntScrn",cbSendPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,203,43,10
+    CONTROL         "Ctrl+Esc",cbSendCtrlEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,271,203,43,10
 END
 
 
@@ -853,7 +861,7 @@ BEGIN
     tWndHeight              "Height of console window\nThis is in characters"
     cbMonospace             "Check it for non proportional (monospaced) fonts, 3d state means - center symbols in the cells"
     tFontSizeX2             "WIDTH for additional font.\nIt must be wider than main font,\notherwise, You get 'dashed' borders."
-    cbSendAE                "When is on, You can't enter fullscreen mode\nfrom keyboard, but You can use 'Alt+Enter'\nfor macros in FAR"
+    cbSendAltEnter          "When is on, You can't enter fullscreen mode\nfrom keyboard, but You can use 'Alt+Enter'\nfor macros in FAR"
     cbDnDCopy               "Forced 'Copy' action as default,\nYou can use Ctrl, Shift or Alt\nduring drag to change action"
     cbTabs                  "Show tabs (all opened panels, editors and viewers)\non the top of ConEmu window"
     cbEnhanceGraphics       "Enhance appearence of progressbars and scrollbars"
@@ -984,8 +992,8 @@ END
 
 STRINGTABLE 
 BEGIN
-    cbUseWinNumber          "Enables switching of tabs (12 consoles) by their numbers (1,2,...,9.0,F11,F12). «Host-key» is «Win» key, by default."
-    cbInstallKeybHooks      "Allows «Host-key»+Number in Vista, Windows 7, or higher\n3d state - confirm on startup"
+    cbUseWinNumber          "Enables switching of tabs (12 consoles) by their numbers (1,2,...,9.0,F11,F12). «Host-key» is «Win» key, by default.\nSame as «Host-key»+Number on «Keys» page."
+    cbInstallKeybHooks      "Allows interception of Win+Number, Win+Arrows, Alt+Esc, Alt+Tab, etc."
     cbSafeFarClose          "Try to close Far Manager softly, instead of closing console window"
     cbIgnoreTelnetCursorSize "Always show normal cursor in telnet"
     tThumbsFontName         "Text labels font name in Thumbnails mode"
@@ -998,10 +1006,15 @@ END
 STRINGTABLE 
 BEGIN
     cbThumbLoadFiles        "Generate previews for files"
-    tThumbsImgSize          "Size in pixels of preview square in Thumbnails mode\nDefault is 96"
     tTilesFontSize          "Text labels font height in Tiles mode"
-    tTilesImgSize           "Size in pixels of preview square in Tiles mode\nDefault is 48"
     tThumbLoadingTimeout    "Maximal duration of preview generation (per file)"
+END
+
+STRINGTABLE 
+BEGIN
+    cbThumbUsePicView2      "Try to use PicView2 plugin to generate previews (FAR2 only)"
+    tTilesImgSize           "Size in pixels of preview square in Tiles mode\nDefault is 48"
+    tThumbsImgSize          "Size in pixels of preview square in Thumbnails mode\nDefault is 96"
 END
 
 STRINGTABLE 
@@ -1013,11 +1026,6 @@ BEGIN
     cbSleepInBackground     "Reduce FPS when ConEmu loose focus"
     cbExtendUCharMap        "Show glyphs from selected font in «Unicode CharMap» plugin (FAR2 only)"
     cbShellNoZoneCheck      "SEE_MASK_NOZONECHECKS. Same as appeared in Far 2 build 771 and disappeared after 1464."
-END
-
-STRINGTABLE 
-BEGIN
-    cbThumbUsePicView2      "Try to use PicView2 plugin to generate previews (FAR2 only)"
 END
 
 STRINGTABLE 
@@ -1105,6 +1113,11 @@ BEGIN
     vkWinRight              "Increase window width"
     vkWinUp                 "Decrease window height"
     vkWinDown               "Increase window height"
+END
+
+STRINGTABLE 
+BEGIN
+    cbUseWinNumberK         "Enables switching of tabs (12 consoles) by their numbers (1,2,...,9.0,F11,F12). «Host-key» is «Win» key, by default.\nSame as «Host-key»+Number on «Tabs» page."
 END
 
 #endif    // English (U.S.) resources

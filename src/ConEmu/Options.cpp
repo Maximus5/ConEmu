@@ -395,7 +395,7 @@ void CSettings::InitSettings()
 	nAffinity = 0; // 0 - don't change default affinity
 	//isAdvLangChange = true;
 	isSkipFocusEvents = false;
-	isSendAltEnter = false; isSendAltSpace = 0;
+	isSendAltEnter = isSendAltSpace = isSendAltTab = isSendAltEsc = isSendAltPrintScrn = isSendPrintScrn = isSendCtrlEsc = false;
 	//isLangChangeWsPlugin = false;
 	isMonitorConsoleLang = 3;
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
@@ -880,10 +880,15 @@ void CSettings::LoadSettings()
 
 		reg->Load(L"RightClick opens context menu", isRClickSendKey);
 		reg->Load(L"RightClickMacro2", &sRClickMacro);
+		
 		reg->Load(L"AltEnter", isSendAltEnter);
-
-		reg->Load(L"AltSpace", isSendAltSpace); if (isSendAltSpace > 2) isSendAltSpace = 2;
-
+		reg->Load(L"AltSpace", isSendAltSpace); //if (isSendAltSpace > 2) isSendAltSpace = 2; // когда-то был 3state, теперь - bool
+		reg->Load(L"SendAltTab", isSendAltTab);
+		reg->Load(L"SendAltEsc", isSendAltEsc);
+		reg->Load(L"SendAltPrintScrn", isSendAltPrintScrn);
+		reg->Load(L"SendPrintScrn", isSendPrintScrn);
+		reg->Load(L"SendCtrlEsc", isSendCtrlEsc);
+		
 		reg->Load(L"Min2Tray", isMinToTray);
 		reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
 		reg->Load(L"SafeFarClose", isSafeFarClose);
@@ -1509,6 +1514,11 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"RightClickMacro2", sRClickMacro);
 		reg->Save(L"AltEnter", isSendAltEnter);
 		reg->Save(L"AltSpace", isSendAltSpace);
+		reg->Save(L"SendAltTab", isSendAltTab);
+		reg->Save(L"SendAltEsc", isSendAltEsc);
+		reg->Save(L"SendAltPrintScrn", isSendAltPrintScrn);
+		reg->Save(L"SendPrintScrn", isSendPrintScrn);
+		reg->Save(L"SendCtrlEsc", isSendCtrlEsc);
 		reg->Save(L"Min2Tray", isMinToTray);
 		reg->Save(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
 		reg->Save(L"SafeFarClose", isSafeFarClose);
@@ -2137,10 +2147,6 @@ LRESULT CSettings::OnInitDialog_Ext()
 
 	if (isRClickSendKey) CheckDlgButton(hExt, cbRClick, (isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
 
-	if (isSendAltEnter) CheckDlgButton(hExt, cbSendAE, BST_CHECKED);
-
-	if (isSendAltSpace) CheckDlgButton(hExt, cbSendAltSpace, isSendAltSpace);
-
 	if (isMinToTray) CheckDlgButton(hExt, cbMinToTray, BST_CHECKED);
 
 	if (isAlwaysShowTrayIcon) CheckDlgButton(hExt, cbAlwaysShowTrayIcon, BST_CHECKED);
@@ -2496,14 +2502,22 @@ LRESULT CSettings::OnInitDialog_Keys()
 	if (gpSet->isUseWinArrows)
 		CheckDlgButton(hKeys, cbUseWinArrows, BST_CHECKED);
 	if (gpSet->isUseWinNumber)
-		CheckDlgButton(hKeys, cbUseWinNumber, BST_CHECKED);
+		CheckDlgButton(hKeys, cbUseWinNumberK, BST_CHECKED);
 	if (gpSet->isUseWinTab)
 		CheckDlgButton(hKeys, cbUseWinTab, BST_CHECKED);
 
 	CheckDlgButton(hKeys, cbInstallKeybHooks,
 	               (m_isKeyboardHooks == 1) ? BST_CHECKED :
 	               ((m_isKeyboardHooks == 0) ? BST_INDETERMINATE : BST_UNCHECKED));
-		
+	
+	if (isSendAltEnter) CheckDlgButton(hKeys, cbSendAltEnter, BST_CHECKED);
+	if (isSendAltSpace) CheckDlgButton(hKeys, cbSendAltSpace, BST_CHECKED);
+	if (isSendAltTab) CheckDlgButton(hKeys, cbSendAltTab, BST_CHECKED);
+	if (isSendAltEsc) CheckDlgButton(hKeys, cbSendAltEsc, BST_CHECKED);
+	if (isSendAltPrintScrn) CheckDlgButton(hKeys, cbSendAltPrintScrn, BST_CHECKED);
+	if (isSendPrintScrn) CheckDlgButton(hKeys, cbSendPrintScrn, BST_CHECKED);
+	if (isSendCtrlEsc) CheckDlgButton(hKeys, cbSendCtrlEsc, BST_CHECKED);
+
 	RegisterTipsFor(hKeys);
 	return 0;
 }
@@ -2572,6 +2586,8 @@ LRESULT CSettings::OnInitDialog_Tabs()
 	SendDlgItemMessage(hTabs, hkBufferMode, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
 	SendDlgItemMessage(hTabs, hkBufferMode, HKM_SETHOTKEY, gpSet->icMultiBuffer, 0);
 	// SendDlgItemMessage(hTabs, hkMinimizeRestore, HKM_SETHOTKEY, gpSet->icMinimizeRestore, 0);
+	if (gpSet->isUseWinNumber)
+		CheckDlgButton(hTabs, cbUseWinNumber, BST_CHECKED);
 
 	SetDlgItemText(hTabs, tTabConsole, gpSet->szTabConsole);
 	SetDlgItemText(hTabs, tTabViewer, gpSet->szTabViewer);
@@ -3007,12 +3023,6 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		case cbSafeFarClose:
 			isSafeFarClose = IsChecked(hExt, cbSafeFarClose);
 			break;
-		case cbSendAE:
-			isSendAltEnter = IsChecked(hExt, cbSendAE);
-			break;
-		case cbSendAltSpace:
-			isSendAltSpace = IsChecked(hExt, cbSendAltSpace);
-			break;
 		case cbMinToTray:
 			isMinToTray = IsChecked(hExt, cbMinToTray);
 			break;
@@ -3287,16 +3297,56 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			break;
 			
 		case cbUseWinArrows:
-		case cbUseWinNumber:
+		case cbUseWinNumberK:
 		case cbUseWinTab:
 			switch (CB)
 			{
 				case cbUseWinArrows:
-					gpSet->isUseWinArrows = IsChecked(hKeys, cbUseWinArrows); break;
-				case cbUseWinNumber:
-					gpSet->isUseWinNumber = IsChecked(hKeys, cbUseWinNumber); break;
+					gpSet->isUseWinArrows = IsChecked(hKeys, CB);
+					break;
+				case cbUseWinNumberK:
+					gpSet->isUseWinNumber = IsChecked(hKeys, CB);
+					if (hTabs) CheckDlgButton(hTabs, cbUseWinNumber, gpSet->isUseWinNumber ? BST_CHECKED : BST_UNCHECKED);
+					break;
 				case cbUseWinTab:
-					gpSet->isUseWinTab = IsChecked(hKeys, cbUseWinTab); break;
+					gpSet->isUseWinTab = IsChecked(hKeys, CB);
+					break;
+			}
+			gpConEmu->UpdateWinHookSettings();
+			break;
+
+		case cbUseWinNumber:
+			gpSet->isUseWinNumber = IsChecked(hTabs, cbUseWinNumber);
+			if (hKeys) CheckDlgButton(hKeys, cbUseWinNumberK, gpSet->isUseWinNumber ? BST_CHECKED : BST_UNCHECKED);
+			gpConEmu->UpdateWinHookSettings();
+			break;
+
+		case cbSendAltEnter:
+			// хуков не требует
+			isSendAltEnter = IsChecked(hKeys, cbSendAltEnter);
+			break;
+		case cbSendAltSpace:
+			// хуков не требует
+			isSendAltSpace = IsChecked(hKeys, cbSendAltSpace);
+			break;
+			
+		case cbSendAltTab:
+		case cbSendAltEsc:
+		case cbSendAltPrintScrn:
+		case cbSendPrintScrn:
+		case cbSendCtrlEsc:
+			switch (CB)
+			{
+				case cbSendAltTab:
+					gpSet->isSendAltTab = IsChecked(hKeys, cbSendAltTab); break;
+				case cbSendAltEsc:
+					gpSet->isSendAltEsc = IsChecked(hKeys, cbSendAltEsc); break;
+				case cbSendAltPrintScrn:
+					gpSet->isSendAltPrintScrn = IsChecked(hKeys, cbSendAltPrintScrn); break;
+				case cbSendPrintScrn:
+					gpSet->isSendPrintScrn = IsChecked(hKeys, cbSendPrintScrn); break;
+				case cbSendCtrlEsc:
+					gpSet->isSendCtrlEsc = IsChecked(hKeys, cbSendCtrlEsc); break;
 			}
 			gpConEmu->UpdateWinHookSettings();
 			break;
