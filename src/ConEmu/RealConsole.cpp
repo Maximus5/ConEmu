@@ -5411,8 +5411,20 @@ CESERVER_REQ* CRealConsole::cmdSetForeground(HANDLE hPipe, CESERVER_REQ* pIn, UI
 	
 	DEBUGSTRCMD(L"GUI recieved CECMD_SETFOREGROUNDWND\n");
 	AllowSetForegroundWindow(pIn->hdr.nSrcPID);
-	apiSetForegroundWindow((HWND)pIn->qwData[0]);
-	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
+
+	HWND hWnd = (HWND)pIn->qwData[0];
+	DWORD nWndPID = 0; GetWindowThreadProcessId(hWnd, &nWndPID);
+	if (nWndPID == GetCurrentProcessId())
+	{
+		// ≈сли это один из hWndDC - поднимаем главное окно
+		if (hWnd != ghWnd && GetParent(hWnd) == ghWnd)
+			hWnd = ghWnd;
+	}
+	
+	BOOL lbRc = apiSetForegroundWindow(hWnd);
+	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+	if (pOut)
+		pOut->dwData[0] = lbRc;
 
 	return pOut;
 }
@@ -8952,7 +8964,7 @@ BOOL CRealConsole::SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground)
 			SetLastError(0);
 			hLastFocus = SetFocus(hWnd);
 			dwErr = GetLastError();
-			lbRc != (dwErr == ERROR_ACCESS_DENIED /*5*/);
+			lbRc = (dwErr == 0 /* != ERROR_ACCESS_DENIED /*5*/);
 		}
 	}
 	else

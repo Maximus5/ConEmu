@@ -170,6 +170,7 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 BOOL WINAPI OnFlashWindow(HWND hWnd, BOOL bInvert);
 BOOL WINAPI OnFlashWindowEx(PFLASHWINFO pfwi);
 BOOL WINAPI OnSetForegroundWindow(HWND hWnd);
+HWND WINAPI OnGetForegroundWindow();
 int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
 DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName);
 BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents);
@@ -317,6 +318,7 @@ bool InitHooksUser32()
 		{(void*)OnFlashWindow,			"FlashWindow",			user32},
 		{(void*)OnFlashWindowEx,		"FlashWindowEx",		user32},
 		{(void*)OnSetForegroundWindow,	"SetForegroundWindow",	user32},
+		{(void*)OnGetForegroundWindow,	"GetForegroundWindow",	user32},
 		{(void*)OnGetWindowRect,		"GetWindowRect",		user32},
 		{(void*)OnScreenToClient,		"ScreenToClient",		user32},
 		#endif
@@ -791,7 +793,7 @@ SetMenu
 
 
 // Forward
-void GuiSetForeground(HWND hWnd);
+BOOL GuiSetForeground(HWND hWnd);
 void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT uCount, DWORD dwTimeout);
 //BOOL PrepareExecuteParmsA(enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags, 
 //				LPCSTR asFile, LPCSTR asParam,
@@ -1165,12 +1167,16 @@ BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
 	typedef BOOL (WINAPI* OnSetForegroundWindow_t)(HWND hWnd);
 	ORIGINALFASTEX(SetForegroundWindow,NULL);
 
+	BOOL lbRc = FALSE;
+
 	if (ghConEmuWndDC)
 	{
-		GuiSetForeground(hWnd);
+		if (hWnd == ghConEmuWndDC)
+			hWnd = ghConEmuWnd;
+		lbRc = GuiSetForeground(hWnd);
 	}
 
-	BOOL lbRc = FALSE;
+	// ConEmu наверное уже все сделал, но на всякий случай, дернем и здесь
 	if (F(SetForegroundWindow) != NULL)
 	{
 		lbRc = F(SetForegroundWindow)(hWnd);
@@ -1181,9 +1187,24 @@ BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
 		//		ShowWindow(hWnd, SW_SHOW);
 		//}
 	}
+
 	return lbRc;
 }
 
+HWND WINAPI OnGetForegroundWindow()
+{
+	typedef HWND (WINAPI* OnGetForegroundWindow_t)();
+	ORIGINALFASTEX(GetForegroundWindow,NULL);
+
+	HWND hFore = NULL;
+	if (F(GetForegroundWindow))
+		hFore = F(GetForegroundWindow)();
+
+	if (ghConEmuWndDC && hFore == ghConEmuWnd)
+		hFore = ghConEmuWndDC;
+
+	return hFore;
+}
 
 BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect)
 {
@@ -3069,22 +3090,35 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 //	return lbRc;
 //}
 
-void GuiSetForeground(HWND hWnd)
+BOOL GuiSetForeground(HWND hWnd)
 {
+	BOOL lbRc = FALSE;
+
 	if (ghConEmuWndDC)
 	{
 		CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(sizeof(*pIn)), *pOut;
 		if (pIn)
 		{
+			DWORD nConEmuPID = ASFW_ANY;
+			MyGetWindowThreadProcessId(ghConEmuWndDC, &nConEmuPID);
+			MyAllowSetForegroundWindow(nConEmuPID);
+
 			ExecutePrepareCmd(pIn, CECMD_SETFOREGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(u64)); //-V119
 			pIn->qwData[0] = (u64)hWnd;
-			HWND hConWnd = GetConsoleWindow();
+			HWND hConWnd = GetRealConsoleWindow();
 			pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
 
-			if (pOut) ExecuteFreeResult(pOut);
+			if (pOut)
+			{
+				if (pOut->hdr.cbSize == (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)))
+					lbRc = pOut->dwData[0];
+				ExecuteFreeResult(pOut);
+			}
 			free(pIn);
 		}
 	}
+
+	return lbRc;
 }
 
 void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT uCount, DWORD dwTimeout)
