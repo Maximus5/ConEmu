@@ -1751,6 +1751,7 @@
 			</FileConfiguration>
 			<FileConfiguration
 				Name="Debug_F|Win32"
+				ExcludedFromBuild="true"
 				>
 				<Tool
 					Name="VCCustomBuildTool"

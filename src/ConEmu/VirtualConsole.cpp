@@ -1416,6 +1416,7 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 							nX++;
 						#else
 						WARNING("CharAttr_Transparent");
+						// хорошо бы требуемые проверки прозрачности делать здесь, а не в RgnDetect
 						while (nX < TextWidth && !(pnAttr[nX].Flags & CharAttr_Transparent))
 							nX++;
 						#endif
@@ -1431,6 +1432,7 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 							;
 						#else
 						WARNING("CharAttr_Transparent");
+						// хорошо бы требуемые проверки прозрачности делать здесь, а не в RgnDetect
 						while (++nX < TextWidth && (pnAttr[nX].Flags & CharAttr_Transparent))
 							;
 						#endif

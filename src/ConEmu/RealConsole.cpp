@@ -8214,6 +8214,7 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 		FI.bViewerOrEditor = (isViewer() || isEditor());
 	}
 
+	mp_Rgn->SetNeedTransparency(gpSet->isUserScreenTransparent);
 	mp_Rgn->PrepareTransparent(&FI, mp_VCon->mp_Colors, &con.m_sbi, pChar, pAttr, nWidth, nHeight);
 #ifdef _DEBUG
 	int nCount = mp_Rgn->GetDetectedDialogs(0,NULL,NULL);

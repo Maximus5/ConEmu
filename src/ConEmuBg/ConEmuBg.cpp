@@ -280,18 +280,28 @@ HMODULE ghXmlLite = NULL;
 
 struct XmlConfigFile
 {
+	BOOL crInit;
 	CRITICAL_SECTION cr;
 	FILETIME FileTime;
 	LPBYTE FileData;
 	DWORD FileSize;
 };
-XmlConfigFile XmlFile;
+XmlConfigFile XmlFile = {};
 wchar_t* gpszXmlFile = NULL;
+wchar_t* gpszXmlFolder = NULL;
+HANDLE ghXmlNotification = NULL;
 const wchar_t* szDefaultXmlName = L"Background.xml";
 
 // Возвращает TRUE, если файл изменился
 bool CheckXmlFile(bool abUpdateName /*= false*/)
 {
+	bool lbChanged = false, lbNeedCheck = false;
+	DWORD nNotify = 0;
+	wchar_t szErr[128];
+
+	_ASSERTE(XmlFile.crInit==TRUE);
+	EnterCriticalSection(&XmlFile.cr);
+
 	if (abUpdateName)
 	{
 		bool lbNameOk = false;
@@ -301,13 +311,13 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 
 		if (gpszXmlFile)
 		{
-			*gpszXmlFile = 0;
+			gpszXmlFile[0] = 0;
 			if (*gsXmlConfigFile && wcschr(gsXmlConfigFile, L'\\'))
 			{
 				DWORD nRc = ExpandEnvironmentStrings(gsXmlConfigFile, gpszXmlFile, MAX_PATH+1);
 				if (!nRc || nRc > MAX_PATH)
 				{
-					*gpszXmlFile = 0;
+					gpszXmlFile[0] = 0;
 					ReportFail(L"Too long xml path after ExpandEnvironmentStrings");
 				}
 				else
@@ -331,14 +341,48 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 				gpszXmlFile = NULL;
 			};
 			ReportFail(L"Can't initialize name of xml file");
-			return false;
+			lbChanged = false;
+			goto wrap;
+		}
+
+		// Notification - мониторинг изменения файла
+		if (ghXmlNotification && (ghXmlNotification != INVALID_HANDLE_VALUE))
+		{
+			FindCloseChangeNotification(ghXmlNotification);
+			ghXmlNotification = NULL;
+		}
+		if (gpszXmlFolder)
+			free(gpszXmlFolder);
+		gpszXmlFolder = lstrdup(gpszXmlFile);
+		if (gpszXmlFolder)
+		{
+			wchar_t* pszSlash = wcsrchr(gpszXmlFolder, L'\\');
+			if (pszSlash)
+			{
+				if (wcschr(gpszXmlFolder, L'\\') < pszSlash)
+					pszSlash[0] = 0;
+				else
+					pszSlash[1] = 0;
+			}
+			ghXmlNotification = FindFirstChangeNotification(gpszXmlFolder, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
 		}
 	}
 
-	bool lbChanged = false;
-	wchar_t szErr[128];
+	if (ghXmlNotification && (ghXmlNotification != INVALID_HANDLE_VALUE))
+	{
+		nNotify = WaitForSingleObject(ghXmlNotification, 0);
+		if (nNotify == WAIT_OBJECT_0)
+		{
+			lbNeedCheck = true;
+			//FindNextChangeNotification(ghXmlNotification); -- в конце позовем
+		}
+	}
+
+	// в первый раз - выставляем строго
+	if (!lbNeedCheck && !XmlFile.FileData)
+		lbNeedCheck = true;
 	
-	if (gpszXmlFile && *gpszXmlFile)
+	if (gpszXmlFile && *gpszXmlFile && lbNeedCheck)
 	{
 		HANDLE hFile = CreateFile(gpszXmlFile, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
 		if (hFile && hFile != INVALID_HANDLE_VALUE)
@@ -353,14 +397,14 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 			}
 			else if (!XmlFile.FileData)
 			{
-				lbChanged = TRUE;
+				lbChanged = true;
 			}
 			else
 			{
 				if ((memcmp(&inf.ftLastWriteTime, &XmlFile.FileTime, sizeof(XmlFile.FileTime)) != 0)
 					|| (inf.nFileSizeLow != XmlFile.FileSize))
 				{
-					lbChanged = TRUE;
+					lbChanged = true;
 				}
 			}
 			
@@ -380,13 +424,11 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 				}
 				else
 				{
-					EnterCriticalSection(&XmlFile.cr);
 					if (XmlFile.FileData)
 						free(XmlFile.FileData);
 					XmlFile.FileData = ptrData;
 					ptrData = NULL;
 					XmlFile.FileSize = dwRead;
-					LeaveCriticalSection(&XmlFile.cr);
 				}
 				
 				if (ptrData) // Если ошибка, освободить память
@@ -413,6 +455,13 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 		XmlFile.FileSize = 0;
 		XmlFile.FileData = (LPBYTE)calloc(1,sizeof(*XmlFile.FileData));
 	}
+
+wrap:
+	if (ghXmlNotification && (ghXmlNotification != INVALID_HANDLE_VALUE) && (nNotify == WAIT_OBJECT_0))
+	{
+		FindNextChangeNotification(ghXmlNotification);
+	}
+	LeaveCriticalSection(&XmlFile.cr);
 	return lbChanged;
 }
 
@@ -896,47 +945,8 @@ bool GdipInit()
 	if (gbGdiPlusInitialized)
 		return true; // уже
 		
-	InitializeCriticalSection(&XmlFile.cr);
+	_ASSERTE(XmlFile.crInit==TRUE);
 	
-#if 0
-	bool lbNameOk = false;
-	int nNameLen = lstrlen(szDefaultXmlName);
-	gpszXmlFile = (wchar_t*)malloc((MAX_PATH+1)*sizeof(*gpszXmlFile));
-	if (gpszXmlFile)
-	{
-		*gpszXmlFile = 0;
-		if (*gsXmlConfigFile && wcschr(gsXmlConfigFile, L'\\'))
-		{
-			DWORD nRc = ExpandEnvironmentStrings(gsXmlConfigFile, gpszXmlFile, MAX_PATH+1);
-			if (!nRc || nRc > MAX_PATH)
-			{
-				*gpszXmlFile = 0;
-				ReportFail(L"Too long xml path after ExpandEnvironmentStrings");
-			}
-			else
-			{
-				lbNameOk = true;
-			}
-		}
-		if (!*gpszXmlFile && GetModuleFileName(ghPluginModule, gpszXmlFile, MAX_PATH-nNameLen))
-		{
-			wchar_t* pszSlash = wcsrchr(gpszXmlFile, L'\\');
-			if (pszSlash) pszSlash++; else pszSlash = gpszXmlFile;
-			_wcscpy_c(pszSlash, nNameLen+1, *gsXmlConfigFile ? gsXmlConfigFile : szDefaultXmlName);
-			lbNameOk = true;
-		}
-	}
-	if (!lbNameOk)
-	{
-		if (gpszXmlFile)
-		{
-			free(gpszXmlFile);
-			gpszXmlFile = NULL;
-		};
-		ReportFail(L"Can't initialize name of xml file");
-	}
-#endif
-
 	// Загрузить его содержимое
 	CheckXmlFile(true);
 		
@@ -973,28 +983,46 @@ void GdipDone()
 	if (!gbGdiPlusInitialized)
 		return; // Не выполнялось
 		
+	if (XmlFile.crInit)
+		EnterCriticalSection(&XmlFile.cr);
+
 	if (ghXmlLite)
 	{
 		FreeLibrary(ghXmlLite);
 		ghXmlLite = NULL;
 	}
 	gfCreateXmlReader = NULL;
-	
+
 	if (gpszXmlFile)
 	{
 		free(gpszXmlFile);
 		gpszXmlFile = NULL;
 	}
+	if (gpszXmlFolder)
+	{
+		free(gpszXmlFolder);
+		gpszXmlFolder = NULL;
+	}
 	
-	EnterCriticalSection(&XmlFile.cr);
 	if (XmlFile.FileData)
 	{
 		free(XmlFile.FileData);
 		XmlFile.FileData = NULL;
 	}
 	XmlFile.FileSize = 0;
-	LeaveCriticalSection(&XmlFile.cr);
-	DeleteCriticalSection(&XmlFile.cr);
+
+	if (ghXmlNotification && (ghXmlNotification != INVALID_HANDLE_VALUE))
+	{
+		FindCloseChangeNotification(ghXmlNotification);
+		ghXmlNotification = NULL;
+	}
+
+	if (XmlFile.crInit)
+	{
+		XmlFile.crInit = FALSE;
+		LeaveCriticalSection(&XmlFile.cr);
+		DeleteCriticalSection(&XmlFile.cr);
+	}
 	
 	if (gpDecoder)
 	{
@@ -2844,6 +2872,12 @@ void StartPlugin(BOOL bConfigure)
 	}
 
 	gbInStartPlugin = true;
+
+	if (!XmlFile.crInit)
+	{
+		XmlFile.crInit = TRUE;
+		InitializeCriticalSection(&XmlFile.cr);
+	}
 
 	if (!bConfigure)
 	{

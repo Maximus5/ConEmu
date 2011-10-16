@@ -149,6 +149,8 @@ class CRgnDetect
 		const DetectedDialogs *GetDetectedDialogsPtr() const;
 		//#endif
 
+		void SetNeedTransparency(bool abNeed);
+
 	protected:
 		// Private methods
 		bool DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight=NULL, int *pnMostBottom=NULL);
@@ -182,6 +184,7 @@ class CRgnDetect
 		const COLORREF *mp_Colors;
 		CONSOLE_SCREEN_BUFFER_INFO m_sbi;
 		bool   mb_BufferHeight;
+		bool   mb_NeedTransparency;
 
 		DWORD   /*mn_AllFlags,*/ mn_NextDlgId;
 		BOOL    mb_NeedPanelDetect;

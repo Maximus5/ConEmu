@@ -59,6 +59,7 @@ CRgnDetect::CRgnDetect()
 	mn_CurWidth = mn_CurHeight = mn_MaxCells = 0;
 	mb_SBI_Loaded = false;
 	mb_TableCreated = false;
+	mb_NeedTransparency = false;
 	//
 	nUserBackIdx = nMenuBackIdx = 0;
 	crUserBack = crMenuTitleBack = 0;
@@ -2331,78 +2332,81 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	pszDst = pChar;
 	pnDst = pAttr;
 
-#ifndef _DEBUG //!!! ѕока не будем. Ёто занимает значительное врем€. ¬озможно, стоит необходимые проверки уже при отрисовке проводить
-	for(int nY = 0; nY < nHeight; nY++)
+	// “олько если это реально нужно, т.к. занимает значительное врем€.
+	// ¬озможно, стоит необходимые проверки уже при отрисовке проводить
+	if (mb_NeedTransparency)
 	{
-		if (nY >= nTopLines && nY < (nHeight-nBottomLines))
+		for(int nY = 0; nY < nHeight; nY++)
 		{
-			// ! первый cell - резервируем дл€ скрыти€/показа панелей
-			int nX1 = 0;
-			int nX2 = nWidth-1; // по умолчанию - на всю ширину
-			// ¬се-таки, если панели приподн€ты - делаем UserScreen прозрачным
-			// ¬едь остаетс€ возможность посмотреть его по CtrlAltShift
-			//if (!mb_LeftPanel && mb_RightPanel) {
-			//	// ѕогашена только лева€ панель
-			//	nX2 = mr_RightPanelFull.left-1;
-			//} else if (mb_LeftPanel && !mb_RightPanel) {
-			//	// ѕогашена только права€ панель
-			//	nX1 = mr_LeftPanelFull.right+1;
-			//} else {
-			//	//¬нимание! ѕанели могут быть, но они могут быть перекрыты PlugMenu!
-			//}
-			
-			WARNING("¬о врем€ запуска непри€тно мелькает - пока не по€в€тс€ панели - становитс€ прозрачным");
-			#if 0
-			int nShift = nY*nWidth+nX1;
-			int nX = nX1;
-			#else
-			CharAttr* pnDstShift = pnDst + /*nY*nWidth +*/ nX1;
-			CharAttr* pnDstEnd = pnDst + nX2 + 1;
-			#endif
-
-			#if 0
-			while (nX <= nX2)
-			#else
-			while (pnDstShift < pnDstEnd)
-			#endif
+			if (nY >= nTopLines && nY < (nHeight-nBottomLines))
 			{
-				// ≈сли еще не определен как поле диалога
+				// ! первый cell - резервируем дл€ скрыти€/показа панелей
+				int nX1 = 0;
+				int nX2 = nWidth-1; // по умолчанию - на всю ширину
+				// ¬се-таки, если панели приподн€ты - делаем UserScreen прозрачным
+				// ¬едь остаетс€ возможность посмотреть его по CtrlAltShift
+				//if (!mb_LeftPanel && mb_RightPanel) {
+				//	// ѕогашена только лева€ панель
+				//	nX2 = mr_RightPanelFull.left-1;
+				//} else if (mb_LeftPanel && !mb_RightPanel) {
+				//	// ѕогашена только права€ панель
+				//	nX1 = mr_LeftPanelFull.right+1;
+				//} else {
+				//	//¬нимание! ѕанели могут быть, но они могут быть перекрыты PlugMenu!
+				//}
+				
+				WARNING("¬о врем€ запуска непри€тно мелькает - пока не по€в€тс€ панели - становитс€ прозрачным");
 				#if 0
-				if (!pnDst[nX].bDialog)
+				int nShift = nY*nWidth+nX1;
+				int nX = nX1;
 				#else
-				if (!(pnDstShift->Flags & CharAttr_Dialog))
+				CharAttr* pnDstShift = pnDst + /*nY*nWidth +*/ nX1;
+				CharAttr* pnDstEnd = pnDst + nX2 + 1;
+				#endif
+
+				#if 0
+				while (nX <= nX2)
+				#else
+				while (pnDstShift < pnDstEnd)
 				#endif
 				{
+					// ≈сли еще не определен как поле диалога
 					#if 0
-					if (pnDst[nX].crBackColor == crUserBack)
+					if (!pnDst[nX].bDialog)
 					#else
-					if (pnDstShift->crBackColor == crUserBack)
+					if (!(pnDstShift->Flags & CharAttr_Dialog))
 					#endif
 					{
-						// помечаем прозрачным
 						#if 0
-						pnDst[nX].bTransparent = TRUE;
-						//pnDst[nX].crBackColor = crColorKey;
+						if (pnDst[nX].crBackColor == crUserBack)
 						#else
-						pnDstShift->Flags |= CharAttr_Transparent;
-						//pnDstShift->crBackColor = crColorKey;
+						if (pnDstShift->crBackColor == crUserBack)
 						#endif
-						//pszDst[nX] = L' ';
+						{
+							// помечаем прозрачным
+							#if 0
+							pnDst[nX].bTransparent = TRUE;
+							//pnDst[nX].crBackColor = crColorKey;
+							#else
+							pnDstShift->Flags |= CharAttr_Transparent;
+							//pnDstShift->crBackColor = crColorKey;
+							#endif
+							//pszDst[nX] = L' ';
+						}
 					}
+
+					#if 0
+					nX++; nShift++;
+					#else
+					pnDstShift++;
+					#endif
 				}
-
-				#if 0
-				nX++; nShift++;
-				#else
-				pnDstShift++;
-				#endif
 			}
-		}
 
-		pszDst += nWidth;
-		pnDst += nWidth;
+			pszDst += nWidth;
+			pnDst += nWidth;
+		}
 	}
-#endif
 
 	// Ќекрасиво...
 	//// 0x0 должен быть непрозрачным
@@ -2690,4 +2694,9 @@ bool CRgnRects::LoadFrom(CRgnRects* pRgn)
 	}
 
 	return lbChanges;
+}
+
+void CRgnDetect::SetNeedTransparency(bool abNeed)
+{
+	mb_NeedTransparency = abNeed;
 }
