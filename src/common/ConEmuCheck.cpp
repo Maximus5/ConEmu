@@ -760,7 +760,12 @@ HWND myGetConsoleWindow()
 	}
 
 	if (!hConWnd)
+	{
 		hConWnd = GetConsoleWindow();
+		// Это может быть GUI приложение
+		if (!hConWnd)
+			return NULL;
+	}
 
 #ifdef _DEBUG
 	// Избежать статической линковки для user32.dll
@@ -786,8 +791,9 @@ HWND myGetConsoleWindow()
 	else
 	{
 		wchar_t sClass[64];
-		GetClassName_f(hConWnd, sClass, countof(sClass));
-		_ASSERTE(lstrcmp(sClass, L"ConsoleWindowClass")==0);
+		if (hConWnd)
+			GetClassName_f(hConWnd, sClass, countof(sClass));
+		_ASSERTE(hConWnd==NULL || lstrcmp(sClass, L"ConsoleWindowClass")==0);
 		#if 0
 		if (lstrcmp(sClass, VirtualConsoleClass) == 0)
 		{

@@ -3257,7 +3257,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		lbSimpleBlack = TRUE;
 	else if (!mp_RCon)
 		lbSimpleBlack = TRUE;
-	else if (!mp_RCon->ConWnd())
+	else if (!mp_RCon->ConWnd() && !mp_RCon->GuiWnd())
 		lbSimpleBlack = TRUE;
 
 	//else if (!mpsz_ConChar || !mpn_ConAttrEx)

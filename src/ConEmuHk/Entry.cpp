@@ -1063,7 +1063,7 @@ HWND WINAPI GetRealConsoleWindow()
 	HWND hConWnd = gfGetRealConsoleWindow ? gfGetRealConsoleWindow() : NULL; //GetConsoleWindow();
 #ifdef _DEBUG
 	wchar_t sClass[64]; GetClassName(hConWnd, sClass, countof(sClass));
-	_ASSERTE(lstrcmp(sClass, L"ConsoleWindowClass")==0);
+	_ASSERTEX(hConWnd==NULL || lstrcmp(sClass, L"ConsoleWindowClass")==0);
 #endif
 	return hConWnd;
 }

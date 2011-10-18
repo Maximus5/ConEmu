@@ -204,7 +204,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	//InitializeCriticalSection(&csPKT); ncsTPKT = 0;
 	//mn_LastProcessedPkt = 0;
 	hConWnd = NULL;
-	hGuiWnd = NULL; mn_GuiWndStyle = mn_GuiWndStylEx = mn_GuiWndPID = 0; mb_InSetFocus = FALSE;
+	hGuiWnd = NULL; mn_GuiWndStyle = mn_GuiWndStylEx = mn_GuiWndPID = 0; mb_InSetFocus = FALSE; mb_InGuiAttaching = FALSE;
 	rcPreGuiWndRect = MakeRect(0,0);
 	//hFileMapping = NULL; pConsoleData = NULL;
 	mh_GuiAttached = NULL;
@@ -885,7 +885,7 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 
 // Вызывается при аттаче (после детача), или после RunAs?
 // sbi передавать не ссылкой, а копией, ибо та же память
-BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_REQ_STARTSTOP rStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
+BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
 {
 	DWORD dwErr = 0;
 	HANDLE hProcess = NULL;
@@ -916,13 +916,19 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_RE
 			mp_sei->hProcess = NULL; // более не требуется. хэндл закроется в другом месте
 		}
 	}
+	else
+	{
+		SafeFree(m_Args.pszSpecialCmd);
+		_ASSERTE(m_Args.bDetached == TRUE);
+		m_Args.pszSpecialCmd = lstrdup(rStartStop->sCmdLine);
+	}
 
-	if (rStartStop.hServerProcessHandle)
+	if (rStartStop->hServerProcessHandle)
 	{
 		if (hProcess)
-			CloseHandle((HANDLE)rStartStop.hServerProcessHandle);
+			CloseHandle((HANDLE)rStartStop->hServerProcessHandle);
 		else if (!hProcess)
-			hProcess = (HANDLE)rStartStop.hServerProcessHandle;
+			hProcess = (HANDLE)rStartStop->hServerProcessHandle;
 	}
 
 	// Иначе - отркрываем как обычно
@@ -938,9 +944,10 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_RE
 	//2010-03-03 переделано для аттача через пайп
 	int nCurWidth = 0, nCurHeight = 0;
 	BOOL bCurBufHeight = FALSE;
-	GetConWindowSize(rStartStop.sbi, nCurWidth, nCurHeight, &bCurBufHeight);
+	CONSOLE_SCREEN_BUFFER_INFO lsbi = rStartStop->sbi;
+	GetConWindowSize(lsbi, nCurWidth, nCurHeight, &bCurBufHeight);
 
-	if (rStartStop.bRootIsCmdExe)
+	if (rStartStop->bRootIsCmdExe)
 		bCurBufHeight = TRUE; //2010-06-09
 
 	if (con.bBufferHeight != bCurBufHeight)
@@ -953,21 +960,21 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_RE
 	gpConEmu->AutoSizeFont(rcWnd, CER_MAINCLIENT);
 	RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
 	// Скорректировать sbi на новый, который БУДЕТ установлен после отработки сервером аттача
-	rStartStop.sbi.dwSize.X = rcCon.right;
-	rStartStop.sbi.srWindow.Left = 0; rStartStop.sbi.srWindow.Right = rcCon.right-1;
+	lsbi.dwSize.X = rcCon.right;
+	lsbi.srWindow.Left = 0; lsbi.srWindow.Right = rcCon.right-1;
 
 	if (bCurBufHeight)
 	{
 		// sbi.dwSize.Y не трогаем
-		rStartStop.sbi.srWindow.Bottom = rStartStop.sbi.srWindow.Top + rcCon.bottom - 1;
+		lsbi.srWindow.Bottom = lsbi.srWindow.Top + rcCon.bottom - 1;
 	}
 	else
 	{
-		rStartStop.sbi.dwSize.Y = rcCon.bottom;
-		rStartStop.sbi.srWindow.Top = 0; rStartStop.sbi.srWindow.Bottom = rcCon.bottom - 1;
+		lsbi.dwSize.Y = rcCon.bottom;
+		lsbi.srWindow.Top = 0; lsbi.srWindow.Bottom = rcCon.bottom - 1;
 	}
 
-	con.m_sbi = rStartStop.sbi;
+	con.m_sbi = lsbi;
 	//// Событие "изменения" консоли //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
 	//swprintf_c(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_ConEmuC_PID);
 	//mh_CursorChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
@@ -996,7 +1003,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_RE
 	pRet->hWnd = ghWnd;
 	pRet->hWndDC = mp_VCon->GetView();
 	pRet->dwPID = GetCurrentProcessId();
-	pRet->nBufferHeight = bCurBufHeight ? rStartStop.sbi.dwSize.Y : 0;
+	pRet->nBufferHeight = bCurBufHeight ? lsbi.dwSize.Y : 0;
 	pRet->nWidth = rcCon.right;
 	pRet->nHeight = rcCon.bottom;
 	pRet->dwSrvPID = anConemuC_PID;
@@ -9048,6 +9055,8 @@ BOOL CRealConsole::SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOO
 
 void CRealConsole::ShowHideViews(BOOL abShow)
 {
+	// Все окна теперь создаются в дочернем окне, и скрывается именно оно, этого достаточно
+#if 0
 	// т.к. apiShowWindow обломается, если окно создано от имени другого пользователя (или Run as admin)
 	// то скрытие и отображение окна делаем другим способом
 	HWND hPic = isPictureView();
@@ -9086,6 +9095,7 @@ void CRealConsole::ShowHideViews(BOOL abShow)
 			}
 		}
 	}
+#endif
 }
 
 void CRealConsole::OnActivate(int nNewNum, int nOldNum)
@@ -9611,6 +9621,23 @@ int CRealConsole::GetActiveTab()
 	return (mn_ActiveTab < nCount) ? mn_ActiveTab : 0;
 }
 
+void CRealConsole::UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab)
+{
+	if (isAdministrator() && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix[0]))
+	{
+		if (gpSet->bAdminShield)
+		{
+			pTab->Type |= 0x100;
+		}
+		else
+		{
+			INT_PTR nMaxLen = min(countof(TitleFull), countof(pTab->Name));
+			if ((INT_PTR)(_tcslen(pTab->Name) + _tcslen(gpSet->szAdminTitleSuffix)) < nMaxLen)
+				_wcscat_c(pTab->Name, nMaxLen, gpSet->szAdminTitleSuffix);
+		}
+	}
+}
+
 // Если такого таба нет - pTab НЕ ОБНУЛЯТЬ!!!
 BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 {
@@ -9622,7 +9649,7 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	//	if (tabIdx == 0)
 	//	{
 	//		pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
-	//		int nMaxLen = max(countof(TitleFull) , countof(pTab->Name));
+	//		int nMaxLen = min(countof(TitleFull) , countof(pTab->Name));
 	//		GetWindowText(hGuiWnd, pTab->Name, nMaxLen);
 	//		return TRUE;
 	//	}
@@ -9636,8 +9663,9 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 		if (tabIdx == 0)
 		{
 			pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
-			int nMaxLen = max(countof(TitleFull) , countof(pTab->Name));
+			int nMaxLen = min(countof(TitleFull) , countof(pTab->Name));
 			lstrcpyn(pTab->Name, TitleFull, nMaxLen);
+			UpdateTabFlags(pTab);
 			return TRUE;
 		}
 
@@ -9654,7 +9682,7 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	{
 		if (TitleFull[0])  // Если панель единственная - точно показываем заголовок консоли
 		{
-			int nMaxLen = max(countof(TitleFull) , countof(pTab->Name));
+			int nMaxLen = min(countof(TitleFull) , countof(pTab->Name));
 			lstrcpyn(pTab->Name, TitleFull, nMaxLen);
 		}
 	}
@@ -9667,18 +9695,18 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 			int nMaxLen = min(countof(ms_PanelTitle) , countof(pTab->Name));
 			lstrcpyn(pTab->Name, ms_PanelTitle, nMaxLen);
 
-			if (isAdministrator() && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix[0]))
-			{
-				if (gpSet->bAdminShield)
-				{
-					pTab->Type |= 0x100;
-				}
-				else
-				{
-					if ((INT_PTR)_tcslen(ms_PanelTitle) < (INT_PTR)(countof(pTab->Name) + _tcslen(gpSet->szAdminTitleSuffix) + 1))
-						lstrcat(pTab->Name, gpSet->szAdminTitleSuffix);
-				}
-			}
+			//if (isAdministrator() && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix[0]))
+			//{
+			//	if (gpSet->bAdminShield)
+			//	{
+			//		pTab->Type |= 0x100;
+			//	}
+			//	else
+			//	{
+			//		if ((INT_PTR)_tcslen(ms_PanelTitle) < (INT_PTR)(countof(pTab->Name) + _tcslen(gpSet->szAdminTitleSuffix) + 1))
+			//			lstrcat(pTab->Name, gpSet->szAdminTitleSuffix);
+			//	}
+			//}
 		}
 		else if (mn_tabsCount == 1 && TitleFull[0])  // Если панель единственная - точно показываем заголовок консоли
 		{
@@ -9688,10 +9716,10 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 		}
 	}
 
-	if (tabIdx == 0 && isAdministrator() && gpSet->bAdminShield)
-	{
-		pTab->Type |= 0x100;
-	}
+	//if (tabIdx == 0 && isAdministrator() && gpSet->bAdminShield)
+	//{
+	//	pTab->Type |= 0x100;
+	//}
 
 	wchar_t* pszAmp = pTab->Name;
 	int nCurLen = _tcslen(pTab->Name), nMaxLen = countof(pTab->Name)-1;
@@ -9715,6 +9743,8 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 			pszAmp += 2;
 		}
 	}
+
+	UpdateTabFlags(pTab);
 
 	return TRUE;
 }
@@ -9866,6 +9896,12 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 
 	if (lbMenuActive)
 		return 0;
+
+	// Если висит диалог - не даем переключаться по табам
+	if (mp_Rgn->GetFlags() & FR_FREEDLG_MASK)
+	{
+		return 0;
+	}
 
 	return dwPID;
 }
@@ -11558,19 +11594,28 @@ void CRealConsole::SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPC
 	
 	if (hGuiWnd)
 	{
-		/*
+		mb_InGuiAttaching = TRUE;
+		HWND hDcWnd = mp_VCon->GetView();
+		RECT rcDC; GetClientRect(hDcWnd, &rcDC);
+		// Чтобы артефакты не появлялись
+		ValidateRect(hDcWnd, &rcDC);
+		
 		DWORD nTID = 0, nPID = 0;
 		nTID = GetWindowThreadProcessId(hGuiWnd, &nPID);
 		_ASSERTE(nPID == anAppPID);
-
+		AllowSetForegroundWindow(nPID);
+		
+		/*
 		BOOL lbThreadAttach = AttachThreadInput(nTID, GetCurrentThreadId(), TRUE);
 		DWORD nMainTID = GetWindowThreadProcessId(ghWnd, NULL);
 		BOOL lbThreadAttach2 = AttachThreadInput(nTID, nMainTID, TRUE);
 		DWORD nErr = GetLastError();
 		*/
 
+		// Хм. Окошко еще не внедрено в ConEmu, смысл отдавать фокус в другое приложение?
 		// SetFocus не сработает - другой процесс
-		SetOtherWindowFocus(hGuiWnd, TRUE/*use SetForegroundWindow*/);
+		//SetOtherWindowFocus(hGuiWnd, TRUE/*use SetForegroundWindow*/);
+		SetForegroundWindow(hGuiWnd);
 
 		GetWindowText(hGuiWnd, Title, countof(Title)-2);
 		wcscpy_c(TitleFull, Title);
@@ -13289,6 +13334,7 @@ BOOL CRealConsole::GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID)
 		// Теперь то, что запущено (пришло из GUI приложения)
 		pszApp = PointToName(asAppFileName);
 		lstrcpyn(szApp, pszApp, countof(szApp));
+		wchar_t* pszDot = wcsrchr(szApp, L'.'); // расширение?
 		CharUpperBuff(szApp, lstrlen(szApp));
 
 		if (NextArg(&pszCmd, szArg, &pszApp) == 0)
@@ -13298,6 +13344,13 @@ BOOL CRealConsole::GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID)
 			pszArg = PointToName(szArg);
 			if (lstrcmp(pszArg, szApp) == 0)
 				return true;
+			if (!wcschr(pszArg, L'.') && pszDot)
+			{
+				*pszDot = 0;
+				if (lstrcmp(pszArg, szApp) == 0)
+					return true;
+				*pszDot = L'.';
+			}
 		}
 
 		// Может там кавычек нет, а путь с пробелом
@@ -13305,6 +13358,13 @@ BOOL CRealConsole::GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID)
 		CharUpperBuff(szArg, lstrlen(szArg));
 		if (lstrcmp(szArg, szApp) == 0)
 			return true;
+		if (!wcschr(pszArg, L'.') && pszDot)
+		{
+			*pszDot = 0;
+			if (lstrcmp(pszArg, szApp) == 0)
+				return true;
+			*pszDot = L'.';
+		}
 
 		return false;
 	}

@@ -743,9 +743,9 @@ int __stdcall ConsoleMain()
 
 
 		MWow64Disable wow;
-		#ifndef _DEBUG
+		//#ifndef _DEBUG
 		if (!gbSkipWowChange) wow.Disable();
-		#endif
+		//#endif
 
 		LPSECURITY_ATTRIBUTES lpSec = LocalSecurity();
 		//#ifdef _DEBUG

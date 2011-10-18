@@ -115,7 +115,7 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 	
 #ifdef ASSERT_PIPE_ALLOWED
 #ifdef _DEBUG
-	if (gAllowAssertThread == am_Pipe)
+	if (!abNoPipe && (gAllowAssertThread == am_Pipe))
 	{
 		HWND hConWnd = GetConEmuHWND(2);
 		HWND hGuiWnd = ghConEmuWnd;

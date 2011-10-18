@@ -1572,32 +1572,40 @@ HWND Attach2Gui(DWORD nTimeout)
 	}
 
 	DWORD dwStart = GetTickCount(), dwDelta = 0, dwCur = 0;
-	CESERVER_REQ In = {{0}};
+	CESERVER_REQ *pIn = NULL;
 	_ASSERTE(sizeof(CESERVER_REQ_STARTSTOP) >= sizeof(CESERVER_REQ_STARTSTOPRET));
-	ExecutePrepareCmd(&In, CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP));
-	In.StartStop.nStarted = sst_ServerStart;
-	In.StartStop.hWnd = ghConWnd;
-	In.StartStop.dwPID = gnSelfPID;
-	//In.StartStop.dwInputTID = gpSrv->dwInputPipeThreadId;
-	In.StartStop.nSubSystem = gnImageSubsystem;
+	DWORD nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP)+(gpszRunCmd ? lstrlen(gpszRunCmd) : 0)*sizeof(wchar_t);
+	pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, nInSize);
+	pIn->StartStop.nStarted = sst_ServerStart;
+	pIn->StartStop.hWnd = ghConWnd;
+	pIn->StartStop.dwPID = gnSelfPID;
+	//pIn->StartStop.dwInputTID = gpSrv->dwInputPipeThreadId;
+	pIn->StartStop.nSubSystem = gnImageSubsystem;
 
 	if (gbAttachFromFar)
-		In.StartStop.bRootIsCmdExe = FALSE;
+		pIn->StartStop.bRootIsCmdExe = FALSE;
 	else
-		In.StartStop.bRootIsCmdExe = gbRootIsCmdExe || (gbAttachMode && !gbNoCreateProcess);
+		pIn->StartStop.bRootIsCmdExe = gbRootIsCmdExe || (gbAttachMode && !gbNoCreateProcess);
+
+	if (gpszRunCmd && *gpszRunCmd)
+	{
+		BOOL lbNeedCutQuot = FALSE, lbRootIsCmd = FALSE, lbConfirmExit = FALSE, lbAutoDisable = FALSE;
+		IsNeedCmd(gpszRunCmd, &lbNeedCutQuot, pIn->StartStop.sModuleName, lbRootIsCmd, lbConfirmExit, lbAutoDisable);
+		lstrcpy(pIn->StartStop.sCmdLine, gpszRunCmd);
+	}
 
 	// Если GUI запущен не от имени админа - то он обломается при попытке
 	// открыть дескриптор процесса сервера. Нужно будет ему помочь.
-	In.StartStop.bUserIsAdmin = IsUserAdmin();
+	pIn->StartStop.bUserIsAdmin = IsUserAdmin();
 	HANDLE hOut = (HANDLE)ghConOut;
 
-	if (!GetConsoleScreenBufferInfo(hOut, &In.StartStop.sbi))
+	if (!GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi))
 	{
 		_ASSERTE(FALSE);
 	}
 	else
 	{
-		gpSrv->crReqSizeNewSize = In.StartStop.sbi.dwSize;
+		gpSrv->crReqSizeNewSize = pIn->StartStop.sbi.dwSize;
 		_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
 	}
 
@@ -1622,9 +1630,9 @@ HWND Attach2Gui(DWORD nTimeout)
 			//}
 			// Если GUI запущен не от имени админа - то он обломается при попытке
 			// открыть дескриптор процесса сервера. Нужно будет ему помочь.
-			In.StartStop.hServerProcessHandle = NULL;
+			pIn->StartStop.hServerProcessHandle = NULL;
 
-			if (In.StartStop.bUserIsAdmin)
+			if (pIn->StartStop.bUserIsAdmin)
 			{
 				DWORD  nGuiPid = 0;
 
@@ -1641,7 +1649,7 @@ HWND Attach2Gui(DWORD nTimeout)
 						                   FALSE, 0)
 						        && hDupHandle)
 						{
-							In.StartStop.hServerProcessHandle = (u64)hDupHandle;
+							pIn->StartStop.hServerProcessHandle = (u64)hDupHandle;
 						}
 
 						CloseHandle(hGuiHandle);
@@ -1651,7 +1659,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 			wchar_t szPipe[64];
 			_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEGUIPIPENAME, L".", (DWORD)hGui); //-V205
-			CESERVER_REQ *pOut = ExecuteCmd(szPipe, &In, GUIATTACH_TIMEOUT, ghConWnd);
+			CESERVER_REQ *pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, ghConWnd);
 
 			if (!pOut)
 			{
@@ -1685,7 +1693,7 @@ HWND Attach2Gui(DWORD nTimeout)
 				}
 
 				COORD crNewSize = {(SHORT)pOut->StartStopRet.nWidth, (SHORT)pOut->StartStopRet.nHeight};
-				//SMALL_RECT rcWnd = {0,In.StartStop.sbi.srWindow.Top};
+				//SMALL_RECT rcWnd = {0,pIn->StartStop.sbi.srWindow.Top};
 				SMALL_RECT rcWnd = {0};
 				SetConsoleSize((USHORT)pOut->StartStopRet.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
 				// Установить переменную среды с дескриптором окна

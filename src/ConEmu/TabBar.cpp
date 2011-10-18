@@ -2299,7 +2299,7 @@ void TabBarClass::ShowTabError(LPCTSTR asInfo, int tabIndex)
 		MapWindowPoints(mh_Tabbar, NULL, (LPPOINT)&rcTab, 2);
 		//int ptx = 0; //rcControl.right - 10;
 		//int pty = 0; //(rcControl.top + rcControl.bottom) / 2;
-		SendMessage(mh_Balloon, TTM_TRACKPOSITION, 0, MAKELONG(rcTab.left,rcTab.bottom));
+		SendMessage(mh_Balloon, TTM_TRACKPOSITION, 0, MAKELONG((rcTab.left+rcTab.right)>>1,rcTab.bottom));
 		SendMessage(mh_Balloon, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tiBalloon);
 		SetTimer(mh_Tabbar, FAILED_TABBAR_TIMERID, FAILED_TABBAR_TIMEOUT, 0);
 	}

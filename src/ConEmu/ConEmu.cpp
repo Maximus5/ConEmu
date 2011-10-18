@@ -3790,11 +3790,11 @@ int CConEmuMain::ActiveConNum()
 	return nActive;
 }
 
-BOOL CConEmuMain::AttachRequested(HWND ahConWnd, CESERVER_REQ_STARTSTOP pStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
+BOOL CConEmuMain::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
 {
 	CVirtualConsole* pCon = NULL;
 	CRealConsole* pRCon = NULL;
-	_ASSERTE(pStartStop.dwPID!=0);
+	_ASSERTE(pStartStop->dwPID!=0);
 
 	// Может быть какой-то VCon ждет аттача?
 	if (!pCon)
@@ -3803,7 +3803,7 @@ BOOL CConEmuMain::AttachRequested(HWND ahConWnd, CESERVER_REQ_STARTSTOP pStartSt
 		{
 			if (mp_VCon[i] && (pRCon = mp_VCon[i]->RCon()) != NULL)
 			{
-				if (pRCon->GetServerPID() == pStartStop.dwPID)
+				if (pRCon->GetServerPID() == pStartStop->dwPID)
 				{
 					//_ASSERTE(pRCon->GetServerPID() != pStartStop.dwPID);
 					pCon = mp_VCon[i];
@@ -3838,7 +3838,7 @@ BOOL CConEmuMain::AttachRequested(HWND ahConWnd, CESERVER_REQ_STARTSTOP pStartSt
 	}
 
 	// Пытаемся подцепить консоль
-	if (!pCon->RCon()->AttachConemuC(ahConWnd, pStartStop.dwPID, pStartStop, pRet))
+	if (!pCon->RCon()->AttachConemuC(ahConWnd, pStartStop->dwPID, pStartStop, pRet))
 		return FALSE;
 
 	// OK
@@ -5332,7 +5332,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 					{
 						wchar_t *pszFilePath = NULL;
 						int nLen = MAX_PATH*2;
-						pszFilePath = (wchar_t*)calloc(nLen+1,2);
+						pszFilePath = (wchar_t*)calloc(nLen+3,2); // +2*'"'+\0
 
 						if (!pszFilePath) return 1;
 
@@ -5341,14 +5341,22 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 						ofn.hwndOwner = hDlg;
 						ofn.lpstrFilter = _T("Executables (*.exe)\0*.exe\0\0");
 						ofn.nFilterIndex = 1;
-						ofn.lpstrFile = pszFilePath;
+						ofn.lpstrFile = pszFilePath+1;
 						ofn.nMaxFile = nLen;
 						ofn.lpstrTitle = _T("Choose program to run");
 						ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
 						            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
 
 						if (GetOpenFileName(&ofn))
-							SetDlgItemText(hDlg, IDC_RESTART_CMD, pszFilePath);
+						{
+							LPCWSTR pszNewText = pszFilePath + 1;
+							if (wcschr(pszFilePath, L' '))
+							{
+								pszFilePath[0] = L'"'; _wcscat_c(pszFilePath, nLen+3, L"\"");
+								pszNewText = pszFilePath;
+							}
+							SetDlgItemText(hDlg, IDC_RESTART_CMD, pszNewText);
+						}
 
 						SafeFree(pszFilePath);
 						return 1;
@@ -12815,9 +12823,10 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 	else if (pIn->hdr.nCmd == CECMD_ATTACH2GUI)
 	{
 		// Получен запрос на Attach из сервера
-		if (AttachRequested(pIn->StartStop.hWnd, pIn->StartStop, &(pIn->StartStopRet)))
+		CESERVER_REQ* pOut = ExecuteNewCmd(CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOPRET));
+		if (AttachRequested(pIn->StartStop.hWnd, &(pIn->StartStop), &(pOut->StartStopRet)))
 		{
-			fSuccess = WriteFile(hPipe, pIn, pIn->hdr.cbSize, &cbWritten, NULL);
+			fSuccess = WriteFile(hPipe, pOut, pOut->hdr.cbSize, &cbWritten, NULL);
 		}
 	}
 	else if (pIn->hdr.nCmd == CECMD_SRVSTARTSTOP)

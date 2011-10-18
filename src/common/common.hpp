@@ -1102,6 +1102,8 @@ struct CESERVER_REQ_STARTSTOP
 	wchar_t sModuleName[MAX_PATH+1];
 	// Reserved
 	DWORD nReserved0[20];
+	// CmdLine
+	wchar_t sCmdLine[1]; // variable length
 };
 
 // CECMD_ONCREATEPROC

@@ -218,6 +218,7 @@ class CRealConsole
 		HWND    hConWnd;
 		HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
 		RECT    rcPreGuiWndRect; // Положение окна ДО аттача
+		BOOL    mb_InGuiAttaching;
 		BOOL    mb_InSetFocus;
 		DWORD   mn_GuiWndStyle, mn_GuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
 		DWORD   mn_GuiWndPID;
@@ -325,7 +326,7 @@ class CRealConsole
 		BOOL isFar(BOOL abPluginRequired=FALSE);
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		BOOL isDetached();
-		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_REQ_STARTSTOP rStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
+		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		BOOL RecreateProcess(RConStartArgs *args);
 		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 	private:
@@ -339,6 +340,7 @@ class CRealConsole
 		ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
 		bool IsFarHyperlinkAllowed();
 		bool ProcessFarHyperlink(UINT messg, COORD crFrom);
+		void UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab);
 	public:
 		
 		BOOL IsConsoleDataChanged();

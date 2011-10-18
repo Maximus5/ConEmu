@@ -696,6 +696,10 @@ BOOL IsExecutable(LPCWSTR aszFilePathName)
 #pragma warning( pop )
 #endif
 
+// Команды, которые не нужно пытаться развернуть в exe?
+// кроме того, если команда содержит "?" или "*" - тоже не пытаться.
+const wchar_t* gsInternalCommands = L"ACTIVATE\0ALIAS\0ASSOC\0ATTRIB\0BEEP\0BREAK\0CALL\0CDD\0CHCP\0COLOR\0COPY\0DATE\0DEFAULT\0DEL\0DELAY\0DESCRIBE\0DETACH\0DIR\0DIRHISTORY\0DIRS\0DRAWBOX\0DRAWHLINE\0DRAWVLINE\0ECHO\0ECHOERR\0ECHOS\0ECHOSERR\0ENDLOCAL\0ERASE\0ERRORLEVEL\0ESET\0EXCEPT\0EXIST\0EXIT\0FFIND\0FOR\0FREE\0FTYPE\0GLOBAL\0GOTO\0HELP\0HISTORY\0IF\0IFF\0INKEY\0INPUT\0KEYBD\0KEYS\0LABEL\0LIST\0LOG\0MD\0MEMORY\0MKDIR\0MOVE\0MSGBOX\0NOT\0ON\0OPTION\0PATH\0PAUSE\0POPD\0PROMPT\0PUSHD\0RD\0REBOOT\0REN\0RENAME\0RMDIR\0SCREEN\0SCRPUT\0SELECT\0SET\0SETDOS\0SETLOCAL\0SHIFT\0SHRALIAS\0START\0TEE\0TIME\0TIMER\0TITLE\0TOUCH\0TREE\0TRUENAME\0TYPE\0UNALIAS\0UNSET\0VER\0VERIFY\0VOL\0VSCRPUT\0WINDOW\0Y\0\0";
+
 BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1],
 			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit)
 {
@@ -706,7 +710,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 
 	if (!asCmdLine || *asCmdLine == 0)
 		return TRUE;
-
+		
 	//110202 перенес вниз, т.к. это уже может быть cmd.exe, и тогда у него сносит крышу
 	//// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
 	//if (wcschr(asCmdLine, L'&') ||
@@ -758,7 +762,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 				//Parsing command line failed
 				return TRUE;
 			}
-
+			
 			if (lstrcmpiW(szExe, L"start") == 0)
 			{
 				// Команду start обрабатывает только процессор
@@ -803,6 +807,70 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 				return TRUE;
 			}
 		}
+	}
+	
+	if (!*szExe)
+	{
+		_ASSERTE(szExe[0] != 0);
+	}
+	else
+	{
+		// "Левые" символы в имени файла
+		if (wcspbrk(szExe, L"?*<>|"))
+		{
+			rbRootIsCmdExe = TRUE; // запуск через "процессор"
+			return TRUE; // добавить "cmd.exe"
+		}
+		
+		// если "путь" не указан
+		if (wcschr(szExe, L'\\') == NULL) 
+		{
+			bool bHasExt = (wcschr(szExe, L'.') != NULL);
+			// Проверим, может это команда процессора (типа "DIR")?
+			if (!bHasExt)
+			{
+				bool bIsCommand = false;
+				wchar_t* pszUppr = lstrdup(szExe);
+				if (pszUppr)
+				{
+					CharUpperBuff(pszUppr, lstrlen(pszUppr));
+					const wchar_t* pszFind = gsInternalCommands;
+					while (*pszFind)
+					{
+						if (lstrcmp(pszUppr, pszFind) == 0)
+						{
+							bIsCommand = true;
+							break;
+						}
+						pszFind += lstrlen(pszFind)+1;
+					}
+					free(pszUppr);
+				}
+				if (bIsCommand)
+				{
+					rbRootIsCmdExe = TRUE; // запуск через "процессор"
+					return TRUE; // добавить "cmd.exe"
+				}
+			}
+			
+			// Пробуем найти "по путям" соответствующий exe-шник.
+			DWORD nCchMax = countof(szExe); // выделить память, длинее чем szExe вернуть не сможем
+			wchar_t* pszSearch = (wchar_t*)malloc(nCchMax*sizeof(wchar_t));
+			if (pszSearch)
+			{
+				#ifndef CONEMU_MINIMAL
+				MWow64Disable wow; wow.Disable(); // Отключить редиректор!
+				#endif
+				wchar_t *pszName = NULL;
+				DWORD nRc = SearchPath(NULL, szExe, bHasExt ? NULL : L".exe", nCchMax, pszSearch, &pszName);
+				if (nRc && (nRc < nCchMax))
+				{
+					// Нашли, возвращаем что нашли
+					wcscpy_c(szExe, pszSearch);
+				}
+				free(pszSearch);
+			}
+		} // end: if (wcschr(szExe, L'\\') == NULL) 
 	}
 
 	// Если szExe не содержит путь к файлу - запускаем через cmd

@@ -1416,6 +1416,8 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 	}
 #endif
 
+	AllowSetForegroundWindow(ASFW_ANY);
+
 	DWORD nCurStyle = (DWORD)MyGetWindowLongPtrW(hWindow, GWL_STYLE);
 	DWORD nCurStyleEx = (DWORD)MyGetWindowLongPtrW(hWindow, GWL_EXSTYLE);
 
@@ -1446,9 +1448,28 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 		{
 			_ASSERTE(pOut->AttachGuiApp.bOk);
 
-			if (!(nCurStyle & WS_CHILDWINDOW))
+            HWND hFocus = GetFocus();
+            DWORD nFocusPID = 0;
+            if (hFocus)
+            {
+                MyGetWindowThreadProcessId(hFocus, &nFocusPID);
+                if (nFocusPID != GetCurrentProcessId())
+                {                                                    
+                    _ASSERTE(hFocus==NULL || (nFocusPID==GetCurrentProcessId()));
+                    hFocus = NULL;
+                }
+            }
+
+			// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
+			//SetForegroundWindow(ghConEmuWnd);
+			#if 0
+			wchar_t szClass[64] = {}; GetClassName(hFocus, szClass, countof(szClass));
+			MessageBox(NULL, szClass, L"WasFocused", MB_SYSTEMMODAL);
+			#endif
+
+			//if (!(nCurStyle & WS_CHILDWINDOW))
 			{
-				WARNING("Если ставить WS_CHILD - пропадет меню, если не ставить - фокус из ConEmu улетает");
+				// Если ставить WS_CHILD - пропадет меню!
 				//nCurStyle = (nCurStyle | WS_CHILDWINDOW|WS_TABSTOP); // & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
 				//MySetWindowLongPtrW(hWindow, GWL_STYLE, nCurStyle);
 				SetParent(hWindow, ghConEmuWndDC);
@@ -1456,13 +1477,21 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 			
 			RECT rcGui = grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
 			if (MySetWindowPos(hWindow, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
-				SWP_DRAWFRAME | SWP_FRAMECHANGED | (abStyleHidden ? SWP_SHOWWINDOW : 0)))
+				SWP_DRAWFRAME | /*SWP_FRAMECHANGED |*/ (abStyleHidden ? SWP_SHOWWINDOW : 0)))
 			{
 				if (abStyleHidden)
 					abStyleHidden = FALSE;
 			}
+			
+			// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
+			SetForegroundWindow(ghConEmuWnd);
+			//if (hFocus)
+			//SetFocus(hFocus ? hFocus : hWindow); // hFocus==NULL, эффекта нет
+			//OnSetForegroundWindow(hWindow);
 
-			MyPostMessage(ghConEmuWnd, WM_NCACTIVATE, TRUE, 0);
+			//MyPostMessage(ghConEmuWnd, WM_NCACTIVATE, TRUE, 0);
+			//MyPostMessage(ghConEmuWnd, WM_NCPAINT, 0, 0);
+			MyPostMessage(hWindow, WM_NCPAINT, 0, 0);
 		}
 		ExecuteFreeResult(pOut);
 	}
