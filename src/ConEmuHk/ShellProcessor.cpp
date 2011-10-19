@@ -906,7 +906,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 				// Откусить "-new_console" из аргументов
 				int nCurLen = lstrlen((*psParam));
 				wchar_t* pszDst = (*psParam)+nCurLen;
-				int nCchLeft = nCchSize - nCurLen;
+				INT_PTR nCchLeft = nCchSize - nCurLen;
 				if (pszNewPtr > asParam)
 				{
 					_wcscpyn_c(pszDst, nCchLeft, asParam, (pszNewPtr-asParam)+1);

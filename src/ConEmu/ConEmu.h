@@ -91,7 +91,7 @@ typedef interface ITaskbarList2 ITaskbarList2;
 //#define RCLICKAPPSDELTA 3
 #define DRAG_DELTA 5
 
-//typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
+typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
 
 typedef HRESULT(WINAPI* FDwmIsCompositionEnabled)(BOOL *pfEnabled);
 
@@ -99,6 +99,7 @@ class CConEmuChild;
 class CConEmuBack;
 class TabBarClass;
 class CConEmuMacro;
+class CProcessData;
 
 WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
 enum ConEmuMargins
@@ -144,8 +145,8 @@ enum DragPanelBorder
 class CConEmuMain
 {
 	public:
-		//HMODULE mh_Psapi;
-		//FGetModuleFileNameEx GetModuleFileNameEx;
+		HMODULE mh_Psapi;
+		FGetModuleFileNameEx GetModuleFileNameEx;
 		wchar_t ms_ConEmuVer[32];               // Название с версией, например "ConEmu 110117"
 		wchar_t ms_ConEmuExe[MAX_PATH+1];       // полный путь к ConEmu.exe (GUI)
 		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
@@ -359,6 +360,9 @@ class CConEmuMain
 		static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
 		void GuiServerThreadCommand(HANDLE hPipe);
 		DWORD mn_GuiServerThreadId; HANDLE mh_GuiServerThread, mh_GuiServerThreadTerminate;
+
+	protected:
+		CProcessData *mp_ProcessData;
 
 	public:
 		DWORD CheckProcesses();

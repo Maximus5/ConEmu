@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "version.h"
 #include "Macro.h"
 #include "../ConEmuCD/RegPrepare.h"
+#include "../common/ProcList.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
@@ -115,6 +116,7 @@ enum AttachListColumns
 	alc_PID = 0,
 	alc_Type,
 	alc_Title,
+	alc_File, // executable
 	alc_Class,
 };
 
@@ -207,6 +209,7 @@ CConEmuMain::CConEmuMain()
 	memset(&m_GuiInfo, 0, sizeof(m_GuiInfo));
 	m_GuiInfo.cbSize = sizeof(m_GuiInfo);
 	//mh_RecreatePasswFont = NULL;
+	mp_ProcessData = NULL;
 
 
 	mpsz_ConEmuArgs = NULL;
@@ -382,6 +385,15 @@ CConEmuMain::CConEmuMain()
 	else
 	{
 		mb_IsUacAdmin = FALSE;
+	}
+	
+	mh_Psapi = NULL;
+	GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(GetModuleHandle(L"Kernel32.dll"), "GetModuleFileNameExW");
+	if (GetModuleFileNameEx == NULL)
+	{
+		mh_Psapi = LoadLibrary(_T("psapi.dll"));
+		if (mh_Psapi)
+		    GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
 	}
 
 	mh_WinHook = NULL;
@@ -4714,6 +4726,47 @@ BOOL CConEmuMain::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			ListView_SetItemText(hList, nItem, alc_Type, szTemp);
 			ListView_SetItemText(hList, nItem, alc_Title, szTitle);
 			ListView_SetItemText(hList, nItem, alc_Class, szClass);
+
+			HANDLE h;
+			bool lbExeFound = false;
+
+			if (gpConEmu->mp_ProcessData)
+			{
+				lbExeFound = gpConEmu->mp_ProcessData->GetProcessName(nPID, szClass, countof(szClass));
+				if (lbExeFound)
+					ListView_SetItemText(hList, nItem, alc_File, szClass);
+			}
+
+			if (!lbExeFound)
+			{
+				h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nPID);
+				if (h && h != INVALID_HANDLE_VALUE)
+				{
+					MODULEENTRY32 mi = {sizeof(mi)};
+					if (Module32First(h, &mi))
+					{
+						ListView_SetItemText(hList, nItem, alc_File, *mi.szModule ? mi.szModule : mi.szExePath);
+						lbExeFound = true;
+					}
+					CloseHandle(h);
+				}
+				
+				#ifdef _WIN64
+				if (!lbExeFound)
+				{
+					h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE|TH32CS_SNAPMODULE32, nPID);
+					if (h && h != INVALID_HANDLE_VALUE)
+					{
+						MODULEENTRY32 mi = {sizeof(mi)};
+						if (Module32First(h, &mi))
+						{
+							ListView_SetItemText(hList, nItem, alc_File, *mi.szModule ? mi.szModule : mi.szExePath);
+						}
+						CloseHandle(h);
+					}
+				}
+				#endif
+			}
 		}
 	}
 	return TRUE; // Продолжить
@@ -4745,12 +4798,22 @@ INT_PTR CConEmuMain::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 				
 				wcscpy_c(szTitle, L"PID");			ListView_InsertColumn(hList, alc_PID, &col);
+				col.cx = 45;
 				wcscpy_c(szTitle, L"Type");			ListView_InsertColumn(hList, alc_Type, &col);
 				col.cx = 200;
 				wcscpy_c(szTitle, L"Title");		ListView_InsertColumn(hList, alc_Title, &col);
+				col.cx = 120;
+				wcscpy_c(szTitle, L"Image name");	ListView_InsertColumn(hList, alc_File, &col);
+				col.cx = 200;
 				wcscpy_c(szTitle, L"Class");		ListView_InsertColumn(hList, alc_Class, &col);
 			}
+
+			gpConEmu->mp_ProcessData = new CProcessData;
+
 			EnumWindows(AttachDlgEnumWin, (LPARAM)hList);
+
+			delete gpConEmu->mp_ProcessData;
+			gpConEmu->mp_ProcessData = NULL;
 
 			AttachDlgProc(hDlg, WM_SIZE, 0, 0);
 
@@ -4819,7 +4882,10 @@ INT_PTR CConEmuMain::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 						{
 							HWND hList = GetDlgItem(hDlg, IDC_ATTACHLIST);
 							ListView_DeleteAllItems(hList);
+							gpConEmu->mp_ProcessData = new CProcessData;
 							EnumWindows(AttachDlgEnumWin, (LPARAM)hList);
+							delete gpConEmu->mp_ProcessData;
+							gpConEmu->mp_ProcessData = NULL;
 						}
 						return 1;
 				}
