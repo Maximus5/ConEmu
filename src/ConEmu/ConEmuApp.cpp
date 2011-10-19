@@ -990,25 +990,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gAllowAssertThread = am_Thread;
 #endif
 
-#ifdef _DEBUG
-	wchar_t* pszShort = GetShortFileNameEx(L"T:\\VCProject\\FarPlugin\\ConEmu\\Maximus5\\Debug\\Far2x86\\ConEmu\\ConEmu.exe");
-	if (pszShort) free(pszShort);
-	pszShort = GetShortFileNameEx(L"\\\\MAX\\X-change\\GoogleDesktopEnterprise\\AdminGuide.pdf");
-	if (pszShort) free(pszShort);
-	
-
-	DWORD ImageSubsystem, ImageBits;
-	GetImageSubsystem(ImageSubsystem,ImageBits);
-
-	//wchar_t szConEmuBaseDir[MAX_PATH+1], szConEmuExe[MAX_PATH+1];
-	//BOOL lbDbgFind = FindConEmuBaseDir(szConEmuBaseDir, szConEmuExe);
-
-	wchar_t szDebug[1024] = {};
-	msprintf(szDebug, countof(szDebug), L"Test %u %i %s 0x%X %c 0x%08X*",
-		987654321, -1234, L"abcdef", 0xAB1298, L'Z', 0xAB1298);
-	msprintf(szDebug, countof(szDebug), L"<%c%c>%u.%s",
-		'ÿ', (wchar_t)0x44F, 0x44F, L"End");
-#endif
+//#ifdef _DEBUG
+//	wchar_t* pszShort = GetShortFileNameEx(L"T:\\VCProject\\FarPlugin\\ConEmu\\Maximus5\\Debug\\Far2x86\\ConEmu\\ConEmu.exe");
+//	if (pszShort) free(pszShort);
+//	pszShort = GetShortFileNameEx(L"\\\\MAX\\X-change\\GoogleDesktopEnterprise\\AdminGuide.pdf");
+//	if (pszShort) free(pszShort);
+//	
+//
+//	DWORD ImageSubsystem, ImageBits;
+//	GetImageSubsystem(ImageSubsystem,ImageBits);
+//
+//	//wchar_t szConEmuBaseDir[MAX_PATH+1], szConEmuExe[MAX_PATH+1];
+//	//BOOL lbDbgFind = FindConEmuBaseDir(szConEmuBaseDir, szConEmuExe);
+//
+//	wchar_t szDebug[1024] = {};
+//	msprintf(szDebug, countof(szDebug), L"Test %u %i %s 0x%X %c 0x%08X*",
+//		987654321, -1234, L"abcdef", 0xAB1298, L'Z', 0xAB1298);
+//	msprintf(szDebug, countof(szDebug), L"<%c%c>%u.%s",
+//		'ÿ', (wchar_t)0x44F, 0x44F, L"End");
+//#endif
 
 #ifdef SHOW_STARTED_MSGBOX
 	wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Conemu started, PID=%i", GetCurrentProcessId());

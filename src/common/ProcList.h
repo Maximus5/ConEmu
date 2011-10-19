@@ -390,6 +390,14 @@ protected:
 			}
 		}
 	}
+	
+protected:
+	HMODULE mh_Psapi;
+	typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
+	FGetModuleFileNameEx GetModuleFileNameEx;
+	BOOL mb_Is64BitOs;
+	typedef BOOL (WINAPI* IsWow64Process_t)(HANDLE hProcess, PBOOL Wow64Process);
+	IsWow64Process_t IsWow64Process_f;
 
 public:
 
@@ -399,6 +407,19 @@ public:
 		mp_ProcPerfData = NULL;
 		mn_ProcPerfDataSize = 0;
 
+		mh_Psapi = NULL;
+		HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
+		GetModuleFileNameEx = (FGetModuleFileNameEx)(hKernel ? GetProcAddress(hKernel, "GetModuleFileNameExW") : NULL);
+		if (GetModuleFileNameEx == NULL)
+		{
+			mh_Psapi = LoadLibrary(_T("psapi.dll"));
+			if (mh_Psapi)
+			    GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
+		}
+		IsWow64Process_f = (IsWow64Process_t)(hKernel ? GetProcAddress(hKernel, "IsWow64Process") : NULL);
+		
+		mb_Is64BitOs = IsWindows64(NULL);
+		
 		LoadPerfData();
 	}
 	~CProcessData()
@@ -408,10 +429,14 @@ public:
 			free(mp_ProcPerfData);
 			mp_ProcPerfData = NULL;
 		}
+		if (mh_Psapi)
+		{
+			FreeLibrary(mh_Psapi);
+		}
 	}
-
+	
 public:
-	bool GetProcessName(DWORD anPID, wchar_t* pProcessName, DWORD cbProcessName)
+	bool GetProcessName(DWORD anPID, wchar_t* pProcessName, DWORD cbProcessName, wchar_t* pProcessPath, DWORD cbProcessPath, int* pnProcessBits)
 	{
 		bool lbFound = false;
 
@@ -458,17 +483,58 @@ public:
 				pCounterDef++;
 			}
 		}
+		
+		// wchar_t* pProcessPath, DWORD cbProcessPath, int* pnProcessBits
 
-		if (!lbFound && pProcessName)
+		if ((!lbFound && pProcessName) || pProcessPath || pnProcessBits)
 		{
-			HANDLE h = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, anPID);
-			if (h && h != INVALID_HANDLE_VALUE)
+			if (pProcessPath)
+				*pProcessPath = 0;
+			if (pnProcessBits)
+				*pnProcessBits = 32;
+			
+			DWORD cchMax = max(MAX_PATH*2,cbProcessPath);
+			wchar_t* pszPath = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
+			
+			if (pszPath)
 			{
-				GetOpenProcessData(h, pProcessName, cbProcessName, NULL, 0, NULL, 0);
+				HANDLE h = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, anPID);
+				if (h && h != INVALID_HANDLE_VALUE)
+				{
+					if (GetModuleFileNameEx)
+					{
+						if (!GetModuleFileNameEx(h, NULL, pszPath, cchMax))
+							*pszPath = 0;
+					}
+					
+					if (*pszPath == 0)
+					{
+						GetOpenProcessData(h, NULL, 0, pszPath, cchMax, NULL, 0);
+					}
+					
+					if (*pszPath != 0)
+					{
+						lbFound = true;
+						
+						if (pProcessPath)
+							lstrcpyn(pProcessPath, pszPath, cbProcessPath);
+						if (pProcessName && !*pProcessName)
+							lstrcpyn(pProcessName, PointToName(pszPath), cbProcessName);
+					}
 
-				lbFound = (*pProcessName != 0);
+					if (mb_Is64BitOs && pnProcessBits && IsWow64Process_f)
+					{
+						BOOL lbWow64 = FALSE;
+						if (IsWow64Process_f(h, &lbWow64))
+						{
+							*pnProcessBits = lbWow64 ? 32 : 64;
+						}
+					}
 
-				CloseHandle(h);
+					CloseHandle(h);
+				}
+				
+				free(pszPath);
 			}
 		}
 

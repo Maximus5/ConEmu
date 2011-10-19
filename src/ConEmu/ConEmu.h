@@ -91,7 +91,7 @@ typedef interface ITaskbarList2 ITaskbarList2;
 //#define RCLICKAPPSDELTA 3
 #define DRAG_DELTA 5
 
-typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
+//typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
 
 typedef HRESULT(WINAPI* FDwmIsCompositionEnabled)(BOOL *pfEnabled);
 
@@ -99,7 +99,7 @@ class CConEmuChild;
 class CConEmuBack;
 class TabBarClass;
 class CConEmuMacro;
-class CProcessData;
+class CAttachDlg;
 
 WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
 enum ConEmuMargins
@@ -145,8 +145,8 @@ enum DragPanelBorder
 class CConEmuMain
 {
 	public:
-		HMODULE mh_Psapi;
-		FGetModuleFileNameEx GetModuleFileNameEx;
+		//HMODULE mh_Psapi;
+		//FGetModuleFileNameEx GetModuleFileNameEx;
 		wchar_t ms_ConEmuVer[32];               // Название с версией, например "ConEmu 110117"
 		wchar_t ms_ConEmuExe[MAX_PATH+1];       // полный путь к ConEmu.exe (GUI)
 		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
@@ -260,6 +260,7 @@ class CConEmuMain
 		static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 		CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT];
 		CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
+		CAttachDlg *mp_AttachDlg;
 		bool mb_SkipSyncSize, mb_PassSysCommand, mb_CreatingActive;
 		BOOL mb_WaitCursor, mb_InTrackSysMenu;
 		BOOL mb_LastRgnWasNull;
@@ -361,9 +362,6 @@ class CConEmuMain
 		void GuiServerThreadCommand(HANDLE hPipe);
 		DWORD mn_GuiServerThreadId; HANDLE mh_GuiServerThread, mh_GuiServerThreadTerminate;
 
-	protected:
-		CProcessData *mp_ProcessData;
-
 	public:
 		DWORD CheckProcesses();
 		DWORD GetFarPID(BOOL abPluginRequired=FALSE);
@@ -389,9 +387,6 @@ class CConEmuMain
 		int ActiveConNum(); // 0-based
 		static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 		void AskChangeBufferHeight();
-		void AttachDlg();
-		static BOOL CALLBACK AttachDlgEnumWin(HWND hFind, LPARAM lParam);
-		static INT_PTR CALLBACK AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 		BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
 		void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
@@ -438,6 +433,7 @@ class CConEmuMain
 		bool isMeForeground(bool abRealAlso=false);
 		bool isMouseOverFrame(bool abReal=false);
 		bool isNtvdm(BOOL abCheckAllConsoles=FALSE);
+		bool IsOurConsoleWindow(HWND hCon);
 		bool isPictureView();
 		bool isProcessCreated();
 		bool isRightClickingPaint();

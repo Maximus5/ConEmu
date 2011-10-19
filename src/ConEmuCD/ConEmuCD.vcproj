@@ -1443,10 +1443,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Conole2.h"
-				>
-			</File>
-			<File
 				RelativePath="..\common\defines.h"
 				>
 			</File>

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    73
+#define CESERVER_REQ_VER    74
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -70,6 +70,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui%u"      // GetConsoleWindow() // необходимо, чтобы плагин мог общаться с GUI
 															  // ghConEmuWndRoot --> CConEmuMain::GuiServerThreadCommand
 #define CEPLUGINPIPENAME    L"\\\\%s\\pipe\\ConEmuPlugin%u"   // Far_PID
+#define CEHOOKSPIPENAME     L"\\\\%s\\pipe\\ConEmuHk%u"       // PID процесса, в котором крутится Pipe
 
 #define CEINPUTSEMAPHORE    L"ConEmuInputSemaphore.%08X"      // GetConsoleWindow()
 

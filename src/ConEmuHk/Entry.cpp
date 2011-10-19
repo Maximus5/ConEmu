@@ -35,6 +35,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
 
+#ifdef _DEBUG
+	#define USE_PIPE_SERVER
+#else
+	#undef USE_PIPE_SERVER
+#endif
+
 #include <windows.h>
 
 #ifndef TESTLINK
@@ -42,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
 #endif
+#include "../common/PipeServer.h"
 
 #ifdef _DEBUG
 #include "DbgHooks.h"
@@ -186,6 +193,14 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap()
 	return gpConInfo;
 }
 
+BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ** ppReply, DWORD* pcbReplySize, DWORD* pcbMaxReplySize, LPARAM lParam);
+BOOL WINAPI HookServerReady(LPARAM lParam);
+void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
+
+#ifdef USE_PIPE_SERVER
+PipeServer<CESERVER_REQ,1> *gpHookServer = NULL;
+#endif
+
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
 	InitializeHookedModules();
@@ -277,14 +292,45 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//}
 
 	
-	DWORD nImageBits = WIN3264TEST(32,64), nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+	// Необходимо определить битность и тип (CUI/GUI) процесса, в который нас загрузили
+	gnImageBits = WIN3264TEST(32,64);
+	gnImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+	// Определим тип (CUI/GUI)
+	GetImageSubsystem(gnImageSubsystem, gnImageBits);
+	// Проверка чего получилось
+	_ASSERTE(gnImageBits==WIN3264TEST(32,64));
+	_ASSERTE(gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_GUI || gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI);
+	
+	
 	BOOL lbGuiWindowAttach = FALSE; // Прицепить к ConEmu гуевую программу (notepad, putty, ...)
 
-	#ifndef SKIP_GETIMAGESUBSYSTEM_ONLOAD
-	GetImageSubsystem(nImageSubsystem,nImageBits);
-	#else
-	PRAGMA_ERROR("error: Подцепление гуевого приложения как вкладки в ConEmu работать не будет");
-	#endif
+	
+#ifdef USE_PIPE_SERVER
+	_ASSERTEX(gpHookServer==NULL);
+	gpHookServer = (PipeServer<CESERVER_REQ,1>*)calloc(1,sizeof(*gpHookServer));
+	if (gpHookServer)
+	{
+		wchar_t szPipeName[128];
+		_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CEHOOKSPIPENAME, GetCurrentProcessId());
+		if (!gpHookServer->StartPipeServer(szPipeName, HookServerCommand, HookServerReady, HookServerFree, (LPARAM)gpHookServer))
+		{
+			_ASSERTEX(FALSE); // Ошибка запуска Pipes?
+			gpHookServer->StopPipeServer();
+			free(gpHookServer);
+			gpHookServer = NULL;
+		}
+	}
+	else
+	{
+		_ASSERTEX(gpHookServer!=NULL);
+	}
+#endif
+
+	//#ifndef SKIP_GETIMAGESUBSYSTEM_ONLOAD
+	//GetImageSubsystem(nImageSubsystem,nImageBits);
+	//#else
+	//PRAGMA_ERROR("error: Подцепление гуевого приложения как вкладки в ConEmu работать не будет");
+	//#endif
 	
 
 	WARNING("Попробовать не ломиться в мэппинг, а взять все из переменной ConEmuData");
@@ -302,7 +348,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				CESERVER_REQ* pIn = sp->NewCmdOnCreate(eInjectingHooks, L"",
 					szExeName, GetCommandLineW(),
 					NULL, NULL, NULL, NULL, // flags
-					nImageBits, nImageSubsystem,
+					gnImageBits, gnImageSubsystem,
 					GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
 				if (pIn)
 				{
@@ -316,7 +362,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			delete sp;
 		}
 	}
-	else if (nImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+	else if (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
 	{
 		DWORD dwConEmuHwnd = 0;
 		wchar_t szVar[64], *psz;
@@ -376,7 +422,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		#ifdef _DEBUG
 		//wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
 		//GetModuleFileName(NULL, szModule, countof(szModule));
-		_ASSERTE((nImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0) || gbAttachGuiClient);
+		_ASSERTE((gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0) || gbAttachGuiClient);
 		//if (!lstrcmpi(pszName, L"far.exe") || !lstrcmpi(pszName, L"mingw32-make.exe"))
 		//if (!lstrcmpi(pszName, L"as.exe"))
 		//	MessageBoxW(NULL, L"as.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
@@ -464,6 +510,15 @@ void DllStop()
 	free(szModule);
 	#endif
 
+#ifdef USE_PIPE_SERVER
+	if (gpHookServer)
+	{
+		gpHookServer->StopPipeServer();
+		free(gpHookServer);
+		gpHookServer = NULL;
+	}
+#endif
+	
 	#ifdef _DEBUG
 	if (ghGuiClientRetHook)
 		UnhookWindowsHookEx(ghGuiClientRetHook);
@@ -850,11 +905,7 @@ void SendStarted()
 		//}
 		pIn->StartStop.hWnd = ghConWnd;
 		pIn->StartStop.dwPID = gnSelfPID;
-		#ifdef _WIN64
-		pIn->StartStop.nImageBits = 64;
-		#else
-		pIn->StartStop.nImageBits = 32;
-		#endif
+		pIn->StartStop.nImageBits = WIN3264TEST(32,64);
 		//TODO("Ntvdm/DosBox -> 16");
 
 		////pIn->StartStop.dwInputTID = (gnRunMode == RM_SERVER) ? gpSrv->dwInputThreadId : 0;
@@ -891,8 +942,9 @@ void SendStarted()
 		//else
 		//{
 
-		// Необходимо определить битность и тип (CUI/GUI) процесса, в который нас загрузили
-		GetImageSubsystem(gnImageSubsystem, gnImageBits);
+		// -- уже, в DllStart
+		//// Необходимо определить битность и тип (CUI/GUI) процесса, в который нас загрузили
+		//GetImageSubsystem(gnImageSubsystem, gnImageBits);
 
 		pIn->StartStop.nSubSystem = gnImageSubsystem;
 		//pIn->StartStop.bRootIsCmdExe = gbRootIsCmdExe; //2009-09-14
@@ -1067,6 +1119,54 @@ HWND WINAPI GetRealConsoleWindow()
 #endif
 	return hConWnd;
 }
+
+
+// Для облегчения жизни - сервер кеширует данные, калбэк может использовать ту же память (*pcbMaxReplySize)
+BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ** ppReply, DWORD* pcbReplySize, DWORD* pcbMaxReplySize, LPARAM lParam)
+{
+	TODO("Собственно, выполнение команд!");
+	
+	switch (pCmd->hdr.nCmd)
+	{
+	case CECMD_ATTACHGUIAPP:
+		break;
+	case CECMD_SETFOCUS:
+		break;
+	case CECMD_SETPARENT:
+		break;
+	}
+	
+	// Если еще нет - отдать "пустышку"
+	if (*ppReply && (*pcbMaxReplySize < sizeof(CESERVER_REQ_HDR)))
+	{
+		ExecuteFreeResult(*ppReply);
+		*ppReply = NULL;
+	}
+	if (!*ppReply)
+	{
+		*pcbMaxReplySize = sizeof(CESERVER_REQ_HDR);
+		*ppReply = ExecuteNewCmd(pCmd->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
+	}
+	else
+	{
+		ExecutePrepareCmd(*ppReply, pCmd->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
+	}
+	
+	return TRUE;
+}
+
+// Вызывается после того, как создан Pipe Instance
+BOOL WINAPI HookServerReady(LPARAM lParam)
+{
+	return TRUE;
+}
+
+// освободить память, отведенную под результат
+void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam)
+{
+	ExecuteFreeResult(pReply);
+}
+
 
 #ifdef _DEBUG
 LONG WINAPI HkExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)

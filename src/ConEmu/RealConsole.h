@@ -228,8 +228,8 @@ class CRealConsole
 		//void CloseMapping();
 
 	public:
-		HWND    ConWnd();
-		HWND    GetView();
+		HWND    ConWnd();  // HWND RealConsole
+		HWND    GetView(); // HWND Gui приложения
 
 		// Если работаем в Gui-режиме (Notepad, Putty, ...)
 		HWND    GuiWnd();

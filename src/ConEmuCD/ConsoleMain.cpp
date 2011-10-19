@@ -712,11 +712,15 @@ int __stdcall ConsoleMain()
 			// Проверить, может пытаются запустить GUI приложение как вкладку в ConEmu?
 			if (!((si.dwFlags & STARTF_USESHOWWINDOW) && (si.wShowWindow == SW_HIDE)))
 			{
+				_ASSERTEX(si.wShowWindow != SW_HIDE);
 				// Имеет смысл, только если окно хотят изначально спрятать
 				const wchar_t *psz = gpszRunCmd, *pszStart;
 				wchar_t szExe[MAX_PATH+1];
 				if (NextArg(&psz, szExe, &pszStart) == 0)
 				{
+					MWow64Disable wow;
+					if (!gbSkipWowChange) wow.Disable();
+					
 					DWORD RunImageSubsystem = 0, RunImageBits = 0, RunFileAttrs = 0;
 					if (GetImageSubsystem(szExe, RunImageSubsystem, RunImageBits, RunFileAttrs))
 					{
@@ -2997,6 +3001,9 @@ void SendStarted()
 		{
 			PRINT_COMSPEC(L"Starting: <%s>", lsRoot);
 
+			MWow64Disable wow;
+			if (!gbSkipWowChange) wow.Disable();
+			
 			DWORD nImageFileAttr = 0;
 			if (!GetImageSubsystem(lsRoot, gnImageSubsystem, gnImageBits, nImageFileAttr))
 				gnImageSubsystem = 0;
@@ -5842,16 +5849,26 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 			}
 			else
 			{
-				_printf("ConEmuC: Sending DebugBreak event to process\n");
-				gpSrv->bDebuggerRequestDump = TRUE;
-				DWORD dwErr = 0;
-				if (!DebugBreakProcess(gpSrv->hRootProcess))
+				HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+				typedef BOOL (WINAPI* DebugBreakProcess_t)(HANDLE Process);
+				DebugBreakProcess_t DebugBreakProcess_f = (DebugBreakProcess_t)(hKernel ? GetProcAddress(hKernel, "DebugBreakProcess") : NULL);
+				if (DebugBreakProcess_f)
 				{
-					dwErr = GetLastError();
-					//_ASSERTE(FALSE && dwErr==0);
-					_printf("ConEmuC: Sending DebugBreak event failed, Code=x%X, WriteMiniDump on the fly\n", dwErr);
-					gpSrv->bDebuggerRequestDump = FALSE;
-					WriteMiniDump(gpSrv->dwRootThread, NULL);
+					_printf("ConEmuC: Sending DebugBreak event to process\n");
+					gpSrv->bDebuggerRequestDump = TRUE;
+					DWORD dwErr = 0;
+					if (!DebugBreakProcess_f(gpSrv->hRootProcess))
+					{
+						dwErr = GetLastError();
+						//_ASSERTE(FALSE && dwErr==0);
+						_printf("ConEmuC: Sending DebugBreak event failed, Code=x%X, WriteMiniDump on the fly\n", dwErr);
+						gpSrv->bDebuggerRequestDump = FALSE;
+						WriteMiniDump(gpSrv->dwRootThread, NULL);
+					}
+				}
+				else
+				{
+					_printf("ConEmuC: DebugBreakProcess not found in kernel32.dll\n");
 				}
 			}
 		}

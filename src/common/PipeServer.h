@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Класс предполагает, что первый DWORD в (T*) это размер передаваемого блока в байтах!
 template <class T, int MaxCount>
-class CPipeServer
+struct PipeServer
 {
 	protected:
 		enum PipeState
@@ -84,7 +84,7 @@ class CPipeServer
 			//HANDLE hServerSemaphore;
 
 			// Pointer to object
-			CPipeServer *pServer;
+			PipeServer *pServer;
 
 			// Server thread.
 			HANDLE hThread;
@@ -95,13 +95,25 @@ class CPipeServer
 		wchar_t ms_PipeName[MAX_PATH];
 		PipeInst m_Pipes[MaxCount];
 		PipeInst mp_ActivePipe;
-		// Callback function and it's LParam
+		
+		// *** Callback function and it's LParam ***
+		
+		// Сервером получена команда. Выполнить, вернуть результат.
+		// Для облегчения жизни - сервер кеширует данные, калбэк может использовать ту же память (*pcbMaxReplySize)
 		typedef BOOL (WINAPI* PipeServerCommand_t)(T* pCmd, T** ppReply, DWORD* pcbReplySize, DWORD* pcbMaxReplySize, LPARAM lParam);
-		typedef BOOL (WINAPI* PipeServerReady_t)(LPARAM lParam);
 		PipeServerCommand_t mfn_PipeServerCommand;
+		
+		// Вызывается после того, как создан Pipe Instance
+		typedef BOOL (WINAPI* PipeServerReady_t)(LPARAM lParam);
 		PipeServerReady_t mfn_PipeServerReady;
+		
+		// освободить память, отведенную под результат
+		typedef void (WINAPI* PipeServerFree_t)(T* pReply, LPARAM lParam);
+		PipeServerFree_t mfn_PipeServerFree;
+		
+		// Params
 		BOOL mb_ReadyCalled;
-		LPARAM m_lParam;
+		LPARAM m_lParam; // указан при StartPipeServer, передается в калбэки
 	protected:
 		// Event descriptors
 		HANDLE mh_TermEvent;
@@ -123,7 +135,7 @@ class CPipeServer
 			}
 			else
 			{
-				_wsprintf(sText, SKIPLEN(countof(sText)) L"PipeServerError, PID=%u, TID=%u\  %s\n  %s\n",
+				_wsprintf(sText, SKIPLEN(countof(sText)) L"PipeServerError, PID=%u, TID=%u\n  %s\n  %s\n",
 				                GetCurrentProcessId(), GetCurrentThreadId(),
 				                pPipe->sErrorMsg, ms_PipeName);
 				OutputDebugStringW(sText);
@@ -194,7 +206,7 @@ class CPipeServer
 			// overlapped ConnectNamedPipe operation is started for
 			// each instance.
 
-			for(int i = 0; i < MaxCount; i++)
+			for (int i = 0; i < MaxCount; i++)
 			{
 				m_Pipes[i].pServer = this;
 
@@ -288,7 +300,7 @@ class CPipeServer
 			_ASSERTE(hEvents[1] != NULL);
 			pPipe->cbReadSize = 0;
 
-			while(!mb_Terminate)
+			while (!mb_Terminate)
 			{
 				// Wait for the event object to be signaled, indicating
 				// completion of an overlapped read, write, or
@@ -347,6 +359,10 @@ class CPipeServer
 							// Pending write operation
 						case WRITING_STATE:
 							// Write operation finished, reconnect
+							TODO("Тут можно было бы не переподключаться, если при инициализации указан «фиксированный коннект»");
+							// Фиксированный коннект может использоваться не всегда.
+							// Например, он допустим для Pipe консольного ввода
+							// (сервер-ConEmuC, клиент-ConEmu, меняться не могут, разве что после Detach/Attach)
 							DisconnectAndReconnect(pPipe);
 							continue;
 						default:
@@ -540,7 +556,7 @@ class CPipeServer
 				LPBYTE ptrData = ((LPBYTE)pIn)+cbRead;
 				nAllSize -= cbRead;
 
-				while(nAllSize>0)
+				while (nAllSize>0)
 				{
 					//_tprintf(TEXT("%s\n"), chReadBuf);
 
@@ -593,9 +609,9 @@ class CPipeServer
 			hWait[1] = pPipe->hServerSemaphore;
 
 			// Пока не затребовано завершение сервера
-			while(WaitForSingleObject(pPipe->hTermEvent, 0) != WAIT_OBJECT_0)
+			while (WaitForSingleObject(pPipe->hTermEvent, 0) != WAIT_OBJECT_0)
 			{
-				while(TRUE)
+				while (TRUE)
 				{
 					_ASSERTE(pPipe->hPipeInst == NULL);
 					// !!! Переносить проверку семафора ПОСЛЕ CreateNamedPipe нельзя, т.к. в этом случае
@@ -702,9 +718,39 @@ class CPipeServer
 			nResult = pPipe->pServer->PipeServerThread(pPipe);
 			return nResult;
 		};
+	//public:
+	//	CPipeServer()
+	//	{
+	//		mb_Initialized = FALSE;
+	//		ms_PipeName[0] = 0;
+	//		memset(m_Pipes, 0, sizeof(m_Pipes));
+	//		mp_ActivePipe = NULL;
+	//		mfn_PipeServerCommand = NULL;
+	//		mfn_PipeServerReady = NULL;
+	//		mb_ReadyCalled = FALSE;
+	//		m_lParam = 0;
+	//		mh_TermEvent = NULL;
+	//		mb_Terminate = FALSE;
+	//		mh_ServerSemaphore = NULL;
+	//	};
+	//	~CPipeServer()
+	//	{
+	//		StopPipeServer();
+	//	};
 	public:
-		CPipeServer()
+		BOOL StartPipeServer(
+		    LPCWSTR asPipeName,
+		    PipeServerCommand_t apfnPipeServerCommand,
+		    PipeServerReady_t apfnPipeServerReady,
+		    PipeServerFree_t apfnPipeServerFree,
+		    LPARAM alParam)
 		{
+			if (mb_Initialized)
+			{
+				_ASSERTE(mb_Initialized==FALSE);
+				return FALSE;
+			}
+			
 			mb_Initialized = FALSE;
 			ms_PipeName[0] = 0;
 			memset(m_Pipes, 0, sizeof(m_Pipes));
@@ -716,18 +762,17 @@ class CPipeServer
 			mh_TermEvent = NULL;
 			mb_Terminate = FALSE;
 			mh_ServerSemaphore = NULL;
-		};
-		~CPipeServer()
-		{
-		};
-	public:
-		BOOL StartPipeServer(
-		    LPCWSTR asPipeName,
-		    PipeServerCommand_t apfnPipeServerCommand,
-		    PipeServerReady_t apfnPipeServerReady,
-		    (void* FreeResult)(LPVOID),
-		    LPARAM alParam)
-		{
+			
+			wcscpy_c(ms_PipeName, asPipeName);
+			m_lParam = alParam;
+			mfn_PipeServerCommand = apfnPipeServerCommand;
+			mfn_PipeServerReady = apfnPipeServerReady;
+			mfn_PipeServerFree = apfnPipeServerFree;
+			_ASSERTE(mb_ReadyCalled==FALSE);
+			
+			// Созаем Instances
+			int iRc = InitPipes();
+			return (iRc == 0);
 		};
 		void StopPipeServer()
 		{
@@ -737,7 +782,7 @@ class CPipeServer
 			if (mh_TermEvent)
 				SetEvent(mh_TermEvent);
 
-			for(int i = 0; i < MaxCount; i++)
+			for (int i = 0; i < MaxCount; i++)
 			{
 				if (m_Pipes[i].hThread)
 				{
@@ -758,7 +803,6 @@ class CPipeServer
 					DisconnectNamedPipe(m_Pipes[i].hPipeInst);
 					CloseHandle(m_Pipes[i].hPipeInst);
 				}
-
 				m_Pipes[i].hPipeInst = NULL;
 			}
 		};

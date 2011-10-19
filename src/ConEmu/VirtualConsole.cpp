@@ -4185,7 +4185,7 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 			gpConEmu->Recreate(FALSE, gpSet->isMultiNewConfirm);
 			break;
 		case IDM_ATTACHTO:
-			gpConEmu->AttachDlg();
+			gpConEmu->OnSysCommand(ghWnd, IDM_ATTACHTO, 0);
 			break;
 		case IDM_ADMIN_DUPLICATE:
 			mp_RCon->AdminDuplicate();

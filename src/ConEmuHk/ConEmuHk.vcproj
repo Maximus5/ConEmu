@@ -1469,7 +1469,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Conole2.h"
+				RelativePath=".\Console2.h"
 				>
 			</File>
 			<File
@@ -1506,6 +1506,10 @@
 			</File>
 			<File
 				RelativePath=".\ShellProcessor.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\PipeServer.h"
 				>
 			</File>
 			<File

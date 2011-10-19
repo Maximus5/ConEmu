@@ -48,8 +48,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuPipe.h"
 #include "version.h"
 #include "Macro.h"
+#include "Attach.h"
 #include "../ConEmuCD/RegPrepare.h"
-#include "../common/ProcList.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
@@ -110,15 +110,6 @@ const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x
 #define RCLICKAPPS_START 200 // начало отрисовки кружка вокруг курсора
 #define RCLICKAPPSTIMEOUT_MAX 10000
 #define RCLICKAPPSDELTA 3
-
-enum AttachListColumns
-{
-	alc_PID = 0,
-	alc_Type,
-	alc_Title,
-	alc_File, // executable
-	alc_Class,
-};
 
 
 CConEmuMain::CConEmuMain()
@@ -209,7 +200,7 @@ CConEmuMain::CConEmuMain()
 	memset(&m_GuiInfo, 0, sizeof(m_GuiInfo));
 	m_GuiInfo.cbSize = sizeof(m_GuiInfo);
 	//mh_RecreatePasswFont = NULL;
-	mp_ProcessData = NULL;
+	
 
 
 	mpsz_ConEmuArgs = NULL;
@@ -387,14 +378,14 @@ CConEmuMain::CConEmuMain()
 		mb_IsUacAdmin = FALSE;
 	}
 	
-	mh_Psapi = NULL;
-	GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(GetModuleHandle(L"Kernel32.dll"), "GetModuleFileNameExW");
-	if (GetModuleFileNameEx == NULL)
-	{
-		mh_Psapi = LoadLibrary(_T("psapi.dll"));
-		if (mh_Psapi)
-		    GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
-	}
+	//mh_Psapi = NULL;
+	//GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(GetModuleHandle(L"Kernel32.dll"), "GetModuleFileNameExW");
+	//if (GetModuleFileNameEx == NULL)
+	//{
+	//	mh_Psapi = LoadLibrary(_T("psapi.dll"));
+	//	if (mh_Psapi)
+	//	    GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
+	//}
 
 	mh_WinHook = NULL;
 	//mh_PopupHook = NULL;
@@ -402,6 +393,7 @@ CConEmuMain::CConEmuMain()
 	mp_TaskBar3 = NULL;
 	mp_VActive = NULL; mp_VCon1 = NULL; mp_VCon2 = NULL; mb_CreatingActive = false;
 	memset(mp_VCon, 0, sizeof(mp_VCon));
+	mp_AttachDlg = NULL;
 	UINT nAppMsg = WM_APP+10;
 	mn_MsgPostCreate = ++nAppMsg;
 	mn_MsgPostCopy = ++nAppMsg;
@@ -1430,6 +1422,12 @@ void CConEmuMain::Destroy()
 
 CConEmuMain::~CConEmuMain()
 {
+	if (mp_AttachDlg)
+	{
+		delete mp_AttachDlg;
+		mp_AttachDlg = NULL;
+	}
+
 	for (size_t i = 0; i < countof(mp_VCon); i++)
 	{
 		if (mp_VCon[i])
@@ -4682,244 +4680,6 @@ void CConEmuMain::CtrlWinAltSpace()
 	mp_VActive->RCon()->ShowConsole(-1); // Toggle visibility
 }
 
-BOOL CConEmuMain::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
-{
-	if (IsWindowVisible(hFind))
-	{
-		// Условия?
-		DWORD_PTR nStyle = GetWindowLongPtr(hFind, GWL_STYLE);
-		DWORD_PTR nStyleEx = GetWindowLongPtr(hFind, GWL_EXSTYLE);
-		DWORD nPID;
-		if (!GetWindowThreadProcessId(hFind, &nPID))
-			nPID = 0;
-
-		bool lbCan = ((nStyle & (WS_VISIBLE|WS_CAPTION|WS_MAXIMIZEBOX)) == (WS_VISIBLE|WS_CAPTION|WS_MAXIMIZEBOX));
-		if (nPID == GetCurrentProcessId())
-			lbCan = false;
-		if ((nStyle & WS_CHILD))
-			lbCan = false;
-		if ((nStyleEx & WS_EX_TOOLWINDOW))
-			lbCan = false;
-
-		if (lbCan)
-		{
-			wchar_t szClass[MAX_PATH], szTitle[4096], szTemp[32]; szClass[0] = szTitle[0] = 0;
-			GetClassName(hFind, szClass, countof(szClass));
-			GetWindowText(hFind, szTitle, countof(szTitle));
-
-			HWND hList = (HWND)lParam;
-			DWORD nPID = 0;
-			if (GetWindowThreadProcessId(hFind, &nPID))
-				_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"%u", nPID);
-			else
-				wcscpy_c(szTemp, L"????");
-
-			LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
-			lvi.state = 0;
-			lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
-			lvi.pszText = szTemp;
-			lvi.iItem = ListView_GetItemCount(hList); // в конец
-			int nItem = ListView_InsertItem(hList, &lvi);
-			ListView_SetItemState(hList, nItem, 0, LVIS_SELECTED|LVIS_FOCUSED);
-
-			wcscpy_c(szTemp, (lstrcmp(szClass, L"ConsoleWindowClass") == 0) ? L"CON" : L"GUI");
-			ListView_SetItemText(hList, nItem, alc_Type, szTemp);
-			ListView_SetItemText(hList, nItem, alc_Title, szTitle);
-			ListView_SetItemText(hList, nItem, alc_Class, szClass);
-
-			HANDLE h;
-			bool lbExeFound = false;
-
-			if (gpConEmu->mp_ProcessData)
-			{
-				lbExeFound = gpConEmu->mp_ProcessData->GetProcessName(nPID, szClass, countof(szClass));
-				if (lbExeFound)
-					ListView_SetItemText(hList, nItem, alc_File, szClass);
-			}
-
-			if (!lbExeFound)
-			{
-				h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nPID);
-				if (h && h != INVALID_HANDLE_VALUE)
-				{
-					MODULEENTRY32 mi = {sizeof(mi)};
-					if (Module32First(h, &mi))
-					{
-						ListView_SetItemText(hList, nItem, alc_File, *mi.szModule ? mi.szModule : mi.szExePath);
-						lbExeFound = true;
-					}
-					CloseHandle(h);
-				}
-				
-				#ifdef _WIN64
-				if (!lbExeFound)
-				{
-					h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE|TH32CS_SNAPMODULE32, nPID);
-					if (h && h != INVALID_HANDLE_VALUE)
-					{
-						MODULEENTRY32 mi = {sizeof(mi)};
-						if (Module32First(h, &mi))
-						{
-							ListView_SetItemText(hList, nItem, alc_File, *mi.szModule ? mi.szModule : mi.szExePath);
-						}
-						CloseHandle(h);
-					}
-				}
-				#endif
-			}
-		}
-	}
-	return TRUE; // Продолжить
-}
-
-INT_PTR CConEmuMain::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-	switch(messg)
-	{
-		case WM_INITDIALOG:
-		{
-			LRESULT lbRc = TRUE;
-
-			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)lParam);
-
-			if (GetWindowLongPtr(ghWnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
-				SetWindowPos(hDlg, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
-
-			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
-			SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
-
-			HWND hList = GetDlgItem(hDlg, IDC_ATTACHLIST);
-			{
-				LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
-				wchar_t szTitle[64]; col.pszText = szTitle;
-
-				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
-				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
-				
-				wcscpy_c(szTitle, L"PID");			ListView_InsertColumn(hList, alc_PID, &col);
-				col.cx = 45;
-				wcscpy_c(szTitle, L"Type");			ListView_InsertColumn(hList, alc_Type, &col);
-				col.cx = 200;
-				wcscpy_c(szTitle, L"Title");		ListView_InsertColumn(hList, alc_Title, &col);
-				col.cx = 120;
-				wcscpy_c(szTitle, L"Image name");	ListView_InsertColumn(hList, alc_File, &col);
-				col.cx = 200;
-				wcscpy_c(szTitle, L"Class");		ListView_InsertColumn(hList, alc_Class, &col);
-			}
-
-			gpConEmu->mp_ProcessData = new CProcessData;
-
-			EnumWindows(AttachDlgEnumWin, (LPARAM)hList);
-
-			delete gpConEmu->mp_ProcessData;
-			gpConEmu->mp_ProcessData = NULL;
-
-			AttachDlgProc(hDlg, WM_SIZE, 0, 0);
-
-			RECT rect;
-			GetWindowRect(hDlg, &rect);
-			RECT rcParent;
-			GetWindowRect(ghWnd, &rcParent);
-			MoveWindow(hDlg,
-			           (rcParent.left+rcParent.right-rect.right+rect.left)/2,
-			           (rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2,
-			           rect.right - rect.left, rect.bottom - rect.top, false);
-			
-			return lbRc;
-		}
-
-		case WM_SIZE:
-		{
-			RECT rcDlg, rcBtn, rcList;
-			GetClientRect(hDlg, &rcDlg);
-			HWND h = GetDlgItem(hDlg, IDC_ATTACHLIST);
-			GetWindowRect(h, &rcList); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcList, 2);
-			HWND hb = GetDlgItem(hDlg, IDOK);
-			GetWindowRect(hb, &rcBtn); MapWindowPoints(NULL, hb, (LPPOINT)&rcBtn, 2);
-			MoveWindow(h,
-				rcList.left, rcList.top, rcDlg.right - 2*rcList.left, rcDlg.bottom - 3*rcList.top - rcBtn.bottom, true);
-			MoveWindow(GetDlgItem(hDlg, IDC_NEWCONSOLE),
-				rcList.left, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, true);
-			MoveWindow(GetDlgItem(hDlg, IDC_REFRESH),
-				rcList.left*2 + rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, true);
-			MoveWindow(GetDlgItem(hDlg, IDCANCEL),
-				rcDlg.right - rcList.left - rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, true);
-			MoveWindow(GetDlgItem(hDlg, IDOK),
-				rcDlg.right - 2*rcList.left - 2*rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, true);
-			break;
-		}
-
-		case WM_NOTIFY:
-			TODO("Обработать DblClick на списке");
-			break;
-
-		case WM_TIMER:
-			// Автообновление?
-			break;
-
-		case WM_COMMAND:
-			if (HIWORD(wParam) == BN_CLICKED)
-			{
-				DWORD_PTR *pAttachParm = (DWORD_PTR*)GetWindowLongPtr(hDlg, DWLP_USER);
-				switch (LOWORD(wParam))
-				{
-					case IDOK:
-						// Тут нужно получить инфу из списка и дернуть собственно аттач
-						_ASSERTE(FALSE);
-						pAttachParm[0] = 0; // Type: 1 - console, 2 - GUI
-						pAttachParm[1] = 0; // PID
-						pAttachParm[2] = 0; // HWND (для GUI)
-						EndDialog(hDlg, IDOK);
-						return 1;
-					case IDCANCEL:
-						EndDialog(hDlg, IDCANCEL);
-						return 1;
-					case IDC_NEWCONSOLE:
-						EndDialog(hDlg, IDC_NEWCONSOLE);
-						return 1;
-					case IDC_REFRESH:
-						{
-							HWND hList = GetDlgItem(hDlg, IDC_ATTACHLIST);
-							ListView_DeleteAllItems(hList);
-							gpConEmu->mp_ProcessData = new CProcessData;
-							EnumWindows(AttachDlgEnumWin, (LPARAM)hList);
-							delete gpConEmu->mp_ProcessData;
-							gpConEmu->mp_ProcessData = NULL;
-						}
-						return 1;
-				}
-			}
-
-			break;
-		default:
-			return 0;
-	}
-
-	return 0;
-}
-
-// Открыть диалог со списком окон/процессов, к которым мы можем подцепиться
-void CConEmuMain::AttachDlg()
-{
-	DWORD_PTR nAttachParm[3] = {};
-	int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_ATTACHDLG), ghWnd, AttachDlgProc, (LPARAM)nAttachParm);
-	switch (nRc)
-	{
-	case IDC_NEWCONSOLE:
-		Recreate(FALSE, gpSet->isMultiNewConfirm);
-		break;
-
-	case IDOK:
-		// [0] Type: 1 - console, 2 - GUI
-		// [1] PID
-		// [2] HWND (для GUI)
-		_ASSERTE((nAttachParm[0] == 1 || nAttachParm[0] == 2) && (nAttachParm[1]) && (nAttachParm[2] || nAttachParm[0] == 1));
-		TODO("Ну и сам аттач, собственно");
-		break;
-	}
-}
-
 // abRecreate: TRUE - пересоздать текущую, FALSE - создать новую
 // abConfirm:  TRUE - показать диалог подтверждения
 // abRunAs:    TRUE - под админом
@@ -7294,7 +7054,7 @@ bool CConEmuMain::isMeForeground(bool abRealAlso)
 
 	if (h != hLastFore)
 	{
-		isMe = (h != NULL) && (h == ghWnd || h == ghOpWnd);
+		isMe = (h != NULL) && (h == ghWnd || h == ghOpWnd || (mp_AttachDlg && mp_AttachDlg->GetHWND() == h));
 
 		if (h && !isMe && abRealAlso)
 		{
@@ -7375,6 +7135,23 @@ bool CConEmuMain::isNtvdm(BOOL abCheckAllConsoles/*=FALSE*/)
 		}
 	}
 
+	return false;
+}
+
+bool CConEmuMain::IsOurConsoleWindow(HWND hCon)
+{
+	if (!hCon)
+		return false;
+	
+	for (size_t i = 0; i < countof(mp_VCon); i++)
+	{
+		if (mp_VCon[i] && mp_VCon[i]->RCon())
+		{
+			if (mp_VCon[i]->RCon()->ConWnd() == hCon)
+				return true;
+		}
+	}
+	
 	return false;
 }
 
@@ -8394,6 +8171,11 @@ HWND CConEmuMain::PostCreateView(CConEmuChild* pChild)
 
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
+	if (mp_AttachDlg)
+	{
+		mp_AttachDlg->Close();
+	}
+	
 	gpSet->SaveSizePosOnExit();
 	// Делать обязательно перед ResetEvent(mh_ConEmuAliveEvent), чтобы у другого
 	// экземпляра не возникло проблем с регистрацией hotkey
@@ -11913,7 +11695,9 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			Recreate(FALSE, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			return 0;
 		case IDM_ATTACHTO:
-			AttachDlg();
+			if (!mp_AttachDlg)
+				mp_AttachDlg = new CAttachDlg;
+			mp_AttachDlg->AttachDlg();
 			return 0;
 		case ID_SETTINGS:
 

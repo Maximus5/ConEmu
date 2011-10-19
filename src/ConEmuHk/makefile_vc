@@ -347,9 +347,9 @@ clean:
 #	@rd $(OUTDIR)$(ADDOUTDIR)
 
 
-$(OBJDIR)\Entry.obj: Entry.cpp
+$(OBJDIR)\Entry.obj: Entry.cpp ..\common\PipeServer.h
 
-$(OBJDIR)\Injects.obj: Injects.cpp Conole2.h
+$(OBJDIR)\Injects.obj: Injects.cpp Console2.h
 
 $(OBJDIR)\Common.obj: ..\common\Common.cpp
 

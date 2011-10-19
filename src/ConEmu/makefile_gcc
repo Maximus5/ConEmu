@@ -1,5 +1,6 @@
 NAME = ConEmu
 SRCS =  \
+		Attach.cpp         \
 		Background.cpp     \
 		BaseDragDrops.cpp  \
 		ConEmu.cpp         \

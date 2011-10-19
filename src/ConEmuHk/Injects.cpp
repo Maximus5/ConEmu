@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuCD/ExitCodes.h"
 #include "ConEmuHooks.h"
 
-#include "Conole2.h"
+#include "Console2.h"
 
 extern HMODULE ghOurModule;
 extern UINT_PTR gfnLoadLibrary;
