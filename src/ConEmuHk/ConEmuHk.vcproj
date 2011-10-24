@@ -1493,6 +1493,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\PipeServer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\RegHooks.h"
 				>
 			</File>
@@ -1506,10 +1510,6 @@
 			</File>
 			<File
 				RelativePath=".\ShellProcessor.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\PipeServer.h"
 				>
 			</File>
 			<File

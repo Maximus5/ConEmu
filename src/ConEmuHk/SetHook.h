@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef ORIGINALSHOWCALL
 	#ifdef _DEBUG
-		#define ORIGINALSHOWCALL(n) // { char sFunc[128]; _wsprintfA(sFunc, SKIPLEN(countof(sFunc)) "Hook: %s\n", #n); OutputDebugStringA(sFunc); }
+		#define ORIGINALSHOWCALL(n) //{ char sFunc[128]; _wsprintfA(sFunc, SKIPLEN(countof(sFunc)) "Hook: %s\n", #n); OutputDebugStringA(sFunc); }
 	#else
 		#define ORIGINALSHOWCALL(n)
 	#endif

@@ -5285,10 +5285,16 @@ void CConEmuMain::UpdateCursorInfo(COORD crCursor, CONSOLE_CURSOR_INFO cInfo)
 
 void CConEmuMain::UpdateSizes()
 {
+	POINT ptCur = {}; GetCursorPos(&ptCur);
+	HWND hPoint = WindowFromPoint(ptCur);
+
 	if (!ghOpWnd || !gpSet->hInfo)
 	{
 		// Может курсор-сплиттер нужно убрать или поставить
-		PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
+		if (hPoint && ((hPoint == ghWnd) || (GetParent(hPoint) == ghWnd)))
+		{
+			PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
+		}
 		return;
 	}
 
@@ -5299,7 +5305,10 @@ void CConEmuMain::UpdateSizes()
 	}
 
 	// Может курсор-сплиттер нужно убрать или поставить
-	SendMessage(ghWnd, WM_SETCURSOR, -1, -1);
+	if (hPoint && ((hPoint == ghWnd) || (GetParent(hPoint) == ghWnd)))
+	{
+		SendMessage(ghWnd, WM_SETCURSOR, -1, -1);
+	}
 
 	if (mp_VActive)
 	{
@@ -7595,14 +7604,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 							if (Msg.message == WM_QUIT)
 								return;
 
-							BOOL lbDlgMsg = FALSE;
-
-							if (ghOpWnd)
-							{
-								if (IsWindow(ghOpWnd))
-									lbDlgMsg = IsDialogMessage(ghOpWnd, &Msg);
-							}
-
+							BOOL lbDlgMsg = isDialogMessage(Msg);
 							if (!lbDlgMsg)
 							{
 								TranslateMessage(&Msg);
@@ -10824,6 +10826,12 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 {
 	DEBUGSTRSETCURSOR(lParam==-1 ? L"WM_SETCURSOR (int)" : L"WM_SETCURSOR");
+#ifdef _DEBUG
+	if (isPressed(VK_LBUTTON))
+	{
+		int nDbg = 0;
+	}
+#endif
 
 	POINT ptCur; GetCursorPos(&ptCur);
 	CVirtualConsole* pVCon = GetVConFromPoint(ptCur);
@@ -12364,15 +12372,15 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 			
 			// Уведомить RCon и ConEmuC, что гуй подцепился
 			// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
-			pRCon->SetGuiMode(pIn->AttachGuiApp.hWindow, pIn->AttachGuiApp.nStyle, pIn->AttachGuiApp.nStyleEx, pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID, rcPrev);
+			pRCon->SetGuiMode(pIn->AttachGuiApp.nFlags, pIn->AttachGuiApp.hWindow, pIn->AttachGuiApp.nStyle, pIn->AttachGuiApp.nStyleEx, pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID, rcPrev);
 
-			Out.AttachGuiApp.bOk = TRUE;
+			Out.AttachGuiApp.nFlags = agaf_Success;
 			Out.AttachGuiApp.nPID = pRCon->GetServerPID();
 			Out.AttachGuiApp.hWindow = pRCon->GetView();
 		}
 		else
 		{
-			Out.AttachGuiApp.bOk = FALSE;
+			Out.AttachGuiApp.nFlags = agaf_Fail;
 		}
 		// Отправляем
 		fSuccess = WriteFile(
@@ -12418,6 +12426,28 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	//	result = DefWindowProc(hWnd, messg, wParam, lParam);
 
 	return result;
+}
+
+BOOL CConEmuMain::isDialogMessage(MSG &Msg)
+{
+	BOOL lbDlgMsg = FALSE;
+	_ASSERTE(this!=NULL && this==gpConEmu);
+
+	HWND hDlg = NULL;
+
+	if (ghOpWnd)
+	{
+		if (IsWindow(ghOpWnd))
+			lbDlgMsg = IsDialogMessage(ghOpWnd, &Msg);
+	}
+
+	if (!lbDlgMsg && mp_AttachDlg && (hDlg = mp_AttachDlg->GetHWND()))
+	{
+		if (IsWindow(hDlg))
+			lbDlgMsg = IsDialogMessage(hDlg, &Msg);
+	}
+
+	return lbDlgMsg;
 }
 
 LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)

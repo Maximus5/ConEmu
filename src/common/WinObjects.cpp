@@ -44,9 +44,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 {
-#ifdef CONEMU_MINIMAL
-	rsInfo[0] = 0;
-#else
+//#ifdef CONEMU_MINIMAL
+//	rsInfo[0] = 0;
+//#else
 	if (!ahWnd)
 	{
 		wcscpy_c(rsInfo, L"<NULL>");
@@ -64,7 +64,7 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 
 		msprintf(rsInfo, countof(rsInfo), L"0x%08X: %s - '%s'", (DWORD)ahWnd, szClass, szTitle);
 	}
-#endif
+//#endif
 }
 #endif
 

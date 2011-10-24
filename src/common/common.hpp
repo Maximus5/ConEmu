@@ -1277,9 +1277,16 @@ struct CESERVER_REQ_PEEKREADINFO
 	INPUT_RECORD Buffer[1];
 };
 
+enum ATTACHGUIAPP_FLAGS
+{
+	agaf_Fail    = 0,
+	agaf_Success = 1,
+	agaf_DotNet  = 2,
+};
+
 struct CESERVER_REQ_ATTACHGUIAPP
 {
-	BOOL  bOk;
+	DWORD nFlags;
 	DWORD nPID;
 	HWND2 hWindow;  // NULL - проверка можно ли, HWND - когда создан
 	RECT  rcWindow; // координаты

@@ -33,6 +33,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WinObjects.h"
 #include "../common/ProcList.h"
 
+/*
+
+IDD_ATTACHDLG DIALOGEX 0, 0, 317, 186
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOPMOST
+CAPTION "Choose window or console application for attach"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Attach",IDOK,205,165,50,14
+    //PUSHBUTTON      "Cancel",IDCANCEL,260,165,50,14
+    CONTROL         "",IDC_ATTACHLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,303,152
+    PUSHBUTTON      "&New",IDC_NEWCONSOLE,7,165,50,14
+    PUSHBUTTON      "&Refresh",IDC_REFRESH,60,165,50,14
+END
+
+*/
+
 enum AttachListColumns
 {
 	alc_PID = 0,
@@ -87,7 +104,7 @@ void CAttachDlg::AttachDlg()
 		return;
 	}
 	
-	mh_Dlg = CreateDialogParam(g_hInstance, MAKEINTRESOURCE(IDD_ATTACHDLG), ghWnd, AttachDlgProc, (LPARAM)this);
+	mh_Dlg = CreateDialogParam(g_hInstance, MAKEINTRESOURCE(IDD_ATTACHDLG), NULL, AttachDlgProc, (LPARAM)this);
 
 	//DWORD_PTR nAttachParm[3] = {};
 	//int nRc = DialogBoxParam(nAttachParm);
@@ -255,9 +272,9 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 	CAttachDlg* pDlg = NULL;
 	if (messg == WM_INITDIALOG)
 	{
-		SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)lParam);
 		pDlg = (CAttachDlg*)lParam;
 		pDlg->mh_Dlg = hDlg;
+		SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)lParam);
 	}
 	else
 	{
@@ -275,7 +292,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 	{
 		case WM_INITDIALOG:
 		{
-			LRESULT lbRc = TRUE;
+			LRESULT lbRc = 0;
 
 			// Если ConEmu - AlwaysOnTop, то и диалогу нужно выставит этот флаг
 			if (GetWindowLongPtr(ghWnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
@@ -342,17 +359,34 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			GetWindowRect(h, &rcList); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcList, 2);
 			HWND hb = GetDlgItem(hDlg, IDOK);
 			GetWindowRect(hb, &rcBtn); MapWindowPoints(NULL, hb, (LPPOINT)&rcBtn, 2);
+			BOOL lbRedraw = FALSE;
 			MoveWindow(h,
-				rcList.left, rcList.top, rcDlg.right - 2*rcList.left, rcDlg.bottom - 3*rcList.top - rcBtn.bottom, true);
+				rcList.left, rcList.top, rcDlg.right - 2*rcList.left, rcDlg.bottom - 3*rcList.top - rcBtn.bottom, lbRedraw);
 			MoveWindow(GetDlgItem(hDlg, IDC_NEWCONSOLE),
-				rcList.left, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, true);
+				rcList.left, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, lbRedraw);
 			MoveWindow(GetDlgItem(hDlg, IDC_REFRESH),
-				rcList.left*2 + rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, true);
+				rcList.left*2 + rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, lbRedraw);
 			MoveWindow(GetDlgItem(hDlg, IDCANCEL),
-				rcDlg.right - rcList.left - rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, true);
+				rcDlg.right - rcList.left - rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, lbRedraw);
 			MoveWindow(GetDlgItem(hDlg, IDOK),
-				rcDlg.right - 2*rcList.left - 2*rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, true);
+				rcDlg.right - 2*rcList.left - 2*rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, lbRedraw);
+			RedrawWindow(hDlg, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
 			break;
+		}
+
+		case WM_GETMINMAXINFO:
+		{
+			MINMAXINFO* p = (MINMAXINFO*)lParam;
+			HWND h;
+			RECT rcBtn = {}, rcList = {};
+			GetWindowRect((h = GetDlgItem(hDlg, IDOK)), &rcBtn); MapWindowPoints(NULL, h, (LPPOINT)&rcBtn, 2);
+			GetWindowRect((h = GetDlgItem(hDlg, IDC_ATTACHLIST)), &rcList); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcList, 2);
+			RECT rcWnd = {}, rcClient = {};
+			GetWindowRect(hDlg, &rcWnd);
+			GetClientRect(hDlg, &rcClient);
+			p->ptMinTrackSize.x = (rcWnd.right - rcWnd.left - rcClient.right) + 4*rcBtn.right + 6*rcList.left;
+			p->ptMinTrackSize.y = 6*rcBtn.bottom + 3*rcList.top;
+			return 0;
 		}
 
 		case WM_NOTIFY:

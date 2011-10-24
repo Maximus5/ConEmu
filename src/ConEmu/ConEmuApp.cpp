@@ -759,11 +759,9 @@ void MessageLoop()
 	{
 		BOOL lbDlgMsg = FALSE;
 
-		if (ghOpWnd)
-		{
-			if (IsWindow(ghOpWnd))
-				lbDlgMsg = IsDialogMessage(ghOpWnd, &Msg);
-		}
+		if (gpConEmu)
+			lbDlgMsg = gpConEmu->isDialogMessage(Msg);
+
 		//if (Msg.message == WM_INITDIALOG)
 		//{
 		//	SendMessage(Msg.hwnd, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);

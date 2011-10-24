@@ -61,7 +61,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <WinInet.h>
 //#pragma comment(lib, "wininet.lib")
 
-#define DebugString(x) // OutputDebugString(x)
+#define DebugString(x) OutputDebugString(x)
 
 //#ifdef _DEBUG
 //	#include <crtdbg.h>
@@ -90,9 +90,10 @@ extern RECT    grcConEmuClient; // Для аттача гуевых окон
 extern BOOL    gbAttachGuiClient; // Для аттача гуевых окон
 BOOL gbGuiClientAttached; // Для аттача гуевых окон (успешно подключились)
 HWND ghAttachGuiClient = NULL; // Чтобы ShowWindow перехватить
+DWORD gnAttachGuiClientFlags = 0;
 BOOL gbForceShowGuiClient = FALSE; // --
-HMENU ghAttachGuiClientMenu = NULL;
-RECT grcAttachGuiClientPos;
+//HMENU ghAttachGuiClientMenu = NULL;
+RECT grcAttachGuiClientPos = {};
 #ifdef _DEBUG
 HHOOK ghGuiClientRetHook = NULL;
 #endif
@@ -640,6 +641,38 @@ LONG_PTR MySetWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 		_ASSERTE(SetWindowLongPtr_f!=NULL);
 	}
 	return lRc;
+}
+
+HWND MyGetParent(HWND hWnd)
+{
+	HWND hRc = NULL;
+	typedef HWND (WINAPI* GetParent_t)(HWND);
+	GetParent_t GetParent_f = (GetParent_t)GetProcAddress(ghUser32, "GetParent");
+	if (GetParent_f)
+	{
+		hRc = GetParent_f(hWnd);
+	}
+	else
+	{
+		_ASSERTE(GetParent_f!=NULL);
+	}
+	return hRc;
+}
+
+HWND MySetParent(HWND hWndChild, HWND hWndNewParent)
+{
+	HWND hRc = NULL;
+	typedef HWND (WINAPI* SetParent_t)(HWND,HWND);
+	SetParent_t SetParent_f = (SetParent_t)GetProcAddress(ghUser32, "SetParent");
+	if (SetParent_f)
+	{
+		hRc = SetParent_f(hWndChild, hWndNewParent);
+	}
+	else
+	{
+		_ASSERTE(SetParent_f!=NULL);
+	}
+	return hRc;
 }
 
 BOOL MyGetWindowRect(HWND hWnd, LPRECT lpRect)
@@ -1201,8 +1234,18 @@ HWND WINAPI OnGetForegroundWindow()
 	if (F(GetForegroundWindow))
 		hFore = F(GetForegroundWindow)();
 
-	if (ghConEmuWndDC && hFore == ghConEmuWnd)
-		hFore = ghConEmuWndDC;
+	if (ghConEmuWndDC)
+	{
+		if (ghAttachGuiClient && ((hFore == ghConEmuWnd) || (hFore == ghConEmuWndDC)))
+		{
+			// Обмануть GUI-клиента, пусть он думает, что он "сверху"
+			hFore = ghAttachGuiClient;
+		}
+		else if (hFore == ghConEmuWnd)
+		{
+			hFore = ghConEmuWndDC;
+		}
+	}
 
 	return hFore;
 }
@@ -1276,8 +1319,33 @@ LRESULT CALLBACK GuiClientRetHook(int nCode, WPARAM wParam, LPARAM lParam)
 				if (p->lResult == -1)
 				{
 					wcscpy_c(szDbg, L"WM_CREATE --FAILED--\n");
-					break;
 				}
+				break;
+			}
+			case WM_SIZE:
+			case WM_MOVE:
+			case WM_WINDOWPOSCHANGED:
+			case WM_WINDOWPOSCHANGING:
+			{
+				WINDOWPOS *wp = (WINDOWPOS*)p->lParam;
+				WORD x = LOWORD(p->lParam);
+				WORD y = HIWORD(p->lParam);
+				if (p->hwnd == ghAttachGuiClient)
+				{
+					int nDbg = 0;
+					if (p->message == WM_WINDOWPOSCHANGING || p->message == WM_WINDOWPOSCHANGED)
+					{
+						if ((wp->x > 0 || wp->y > 0) && !isPressed(VK_LBUTTON))
+						{
+							if (MyGetParent(p->hwnd) == ghConEmuWndDC)
+							{
+								//_ASSERTEX(!(wp->x > 0 || wp->y > 0));
+								break;
+							}
+						}
+					}
+				}
+				break;
 			}
 		}
 
@@ -1375,6 +1443,44 @@ static bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWOR
 #endif
 }
 
+static void ReplaceGuiAppWindow(BOOL abStyleHidden)
+{
+	if (!ghAttachGuiClient)
+	{
+		_ASSERTEX(ghAttachGuiClient!=NULL);
+		return;
+	}
+
+	RECT rcGui = grcAttachGuiClientPos;
+
+	// DotNet: если не включить WS_CHILD - не работают toolStrip & menuStrip
+	// Native: если включить WS_CHILD - исчезает оконное меню
+	if (gnAttachGuiClientFlags & agaf_DotNet)
+	{
+		DWORD_PTR dwStyle = MyGetWindowLongPtrW(ghAttachGuiClient, GWL_STYLE);
+		if (!(dwStyle & WS_CHILD))
+			MySetWindowLongPtrW(ghAttachGuiClient, GWL_STYLE, dwStyle|WS_CHILD);
+	}
+
+	HWND hCurParent = MyGetParent(ghAttachGuiClient);
+	if (hCurParent != ghConEmuWndDC)
+	{
+		MySetParent(ghAttachGuiClient, ghConEmuWndDC);
+	}
+	
+	if (MySetWindowPos(ghAttachGuiClient, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+		SWP_DRAWFRAME | /*SWP_FRAMECHANGED |*/ (abStyleHidden ? SWP_SHOWWINDOW : 0)))
+	{
+		if (abStyleHidden)
+			abStyleHidden = FALSE;
+	}
+	
+	// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
+	SetForegroundWindow(ghConEmuWnd);
+
+	MyPostMessage(ghAttachGuiClient, WM_NCPAINT, 0, 0);
+}
+
 static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asClassW, DWORD anStyle, DWORD anStyleEx, BOOL abStyleHidden)
 {
 	ghAttachGuiClient = hWindow;
@@ -1425,7 +1531,10 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 	DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
 	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_ATTACHGUIAPP, nSize);
 
-	pIn->AttachGuiApp.bOk = TRUE;
+	gnAttachGuiClientFlags = agaf_Success;
+	if (GetModuleHandle(L"mscoree.dll") != NULL)
+		gnAttachGuiClientFlags |= agaf_DotNet;
+	pIn->AttachGuiApp.nFlags = gnAttachGuiClientFlags;
 	pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 	pIn->AttachGuiApp.hWindow = hWindow;
 	pIn->AttachGuiApp.nStyle = nCurStyle; // стили могли измениться после создания окна,
@@ -1446,7 +1555,7 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 	{
 		if (pOut->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
 		{
-			_ASSERTE(pOut->AttachGuiApp.bOk);
+			_ASSERTE((pOut->AttachGuiApp.nFlags & agaf_Success) == agaf_Success);
 
             HWND hFocus = GetFocus();
             DWORD nFocusPID = 0;
@@ -1459,39 +1568,46 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
                     hFocus = NULL;
                 }
             }
+            
+            grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
+            ReplaceGuiAppWindow(abStyleHidden);
 
-			// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
+			//// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
+			////SetForegroundWindow(ghConEmuWnd);
+			//#if 0
+			//wchar_t szClass[64] = {}; GetClassName(hFocus, szClass, countof(szClass));
+			//MessageBox(NULL, szClass, L"WasFocused", MB_SYSTEMMODAL);
+			//#endif
+			////if (!(nCurStyle & WS_CHILDWINDOW))
+			//{
+			//	// Если ставить WS_CHILD - пропадет меню!
+			//	//nCurStyle = (nCurStyle | WS_CHILDWINDOW|WS_TABSTOP); // & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
+			//	//MySetWindowLongPtrW(hWindow, GWL_STYLE, nCurStyle);
+			//	if (gnAttachGuiClientFlags & agaf_DotNet)
+			//	{
+			//	}
+			//	else
+			//	{
+			//		SetParent(hWindow, ghConEmuWndDC);
+			//	}
+			//}
+			//
+			//RECT rcGui = grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
+			//if (MySetWindowPos(hWindow, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+			//	SWP_DRAWFRAME | /*SWP_FRAMECHANGED |*/ (abStyleHidden ? SWP_SHOWWINDOW : 0)))
+			//{
+			//	if (abStyleHidden)
+			//		abStyleHidden = FALSE;
+			//}
+			//
+			//// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
 			//SetForegroundWindow(ghConEmuWnd);
-			#if 0
-			wchar_t szClass[64] = {}; GetClassName(hFocus, szClass, countof(szClass));
-			MessageBox(NULL, szClass, L"WasFocused", MB_SYSTEMMODAL);
-			#endif
-
-			//if (!(nCurStyle & WS_CHILDWINDOW))
-			{
-				// Если ставить WS_CHILD - пропадет меню!
-				//nCurStyle = (nCurStyle | WS_CHILDWINDOW|WS_TABSTOP); // & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
-				//MySetWindowLongPtrW(hWindow, GWL_STYLE, nCurStyle);
-				SetParent(hWindow, ghConEmuWndDC);
-			}
-			
-			RECT rcGui = grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
-			if (MySetWindowPos(hWindow, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
-				SWP_DRAWFRAME | /*SWP_FRAMECHANGED |*/ (abStyleHidden ? SWP_SHOWWINDOW : 0)))
-			{
-				if (abStyleHidden)
-					abStyleHidden = FALSE;
-			}
-			
-			// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
-			SetForegroundWindow(ghConEmuWnd);
-			//if (hFocus)
-			//SetFocus(hFocus ? hFocus : hWindow); // hFocus==NULL, эффекта нет
-			//OnSetForegroundWindow(hWindow);
-
-			//MyPostMessage(ghConEmuWnd, WM_NCACTIVATE, TRUE, 0);
-			//MyPostMessage(ghConEmuWnd, WM_NCPAINT, 0, 0);
-			MyPostMessage(hWindow, WM_NCPAINT, 0, 0);
+			////if (hFocus)
+			////SetFocus(hFocus ? hFocus : hWindow); // hFocus==NULL, эффекта нет
+			////OnSetForegroundWindow(hWindow);
+			////MyPostMessage(ghConEmuWnd, WM_NCACTIVATE, TRUE, 0);
+			////MyPostMessage(ghConEmuWnd, WM_NCPAINT, 0, 0);
+			//MyPostMessage(hWindow, WM_NCPAINT, 0, 0);
 		}
 		ExecuteFreeResult(pOut);
 	}
@@ -1517,9 +1633,43 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 
 	if (gbForceShowGuiClient && (ghAttachGuiClient == hWnd))
 	{
-		RECT rcGui = grcAttachGuiClientPos;
-		MySetWindowPos(hWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
-			SWP_FRAMECHANGED);
+		HWND hCurParent = MyGetParent(hWnd);
+		if (hCurParent != ghConEmuWndDC)
+		{
+			DWORD nCurStyle = (DWORD)MyGetWindowLongPtrW(hWnd, GWL_STYLE);
+			DWORD nCurStyleEx = (DWORD)MyGetWindowLongPtrW(hWnd, GWL_EXSTYLE);
+
+			DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
+			CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_ATTACHGUIAPP, nSize);
+
+			pIn->AttachGuiApp.nFlags = gnAttachGuiClientFlags;
+			pIn->AttachGuiApp.nPID = GetCurrentProcessId();
+			pIn->AttachGuiApp.hWindow = hWnd;
+			pIn->AttachGuiApp.nStyle = nCurStyle; // стили могли измениться после создания окна,
+			pIn->AttachGuiApp.nStyleEx = nCurStyleEx; // поэтому получим актуальные
+			GetWindowRect(hWnd, &pIn->AttachGuiApp.rcWindow);
+			GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
+
+			wchar_t szGuiPipeName[128];
+			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
+
+			CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 1000, NULL);
+			ExecuteFreeResult(pIn);
+			if (pOut)
+			{
+				if (pOut->hdr.cbSize > sizeof(CESERVER_REQ_HDR) && (pOut->AttachGuiApp.nFlags & agaf_Success))
+					grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
+				ExecuteFreeResult(pOut);
+			}
+
+			//OnSetParent(hWnd, ghConEmuWndDC);
+		}
+
+        ReplaceGuiAppWindow(FALSE);
+		
+		//RECT rcGui = grcAttachGuiClientPos;
+		//MySetWindowPos(hWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+		//	SWP_FRAMECHANGED);
 	
 		nCmdShow = SW_SHOWNORMAL;
 		gbForceShowGuiClient = FALSE; // Один раз?
@@ -1576,9 +1726,24 @@ HWND WINAPI OnGetParent(HWND hWnd)
 	ORIGINALFASTEX(GetParent,NULL);
 	HWND lhRc = NULL;
 
-	if (ghConEmuWndDC && hWnd == ghConEmuWndDC)
+	//if (ghConEmuWndDC && hWnd == ghConEmuWndDC)
+	//{
+	//	hWnd = ghConEmuWnd;
+	//}
+	if (ghConEmuWndDC)
 	{
-		hWnd = ghConEmuWnd;
+		if (ghAttachGuiClient)
+		{
+			if (hWnd == ghAttachGuiClient || hWnd == ghConEmuWndDC)
+			{
+				// Обмануть GUI-клиента, пусть он думает, что он "сверху"
+				hWnd = ghConEmuWnd;
+			}
+		}
+		else if (hWnd == ghConEmuWndDC)
+		{
+			hWnd = ghConEmuWnd;
+		}
 	}
 
 	if (F(GetParent))
@@ -1596,9 +1761,19 @@ HWND WINAPI OnGetWindow(HWND hWnd, UINT uCmd)
 	ORIGINALFASTEX(GetWindow,NULL);
 	HWND lhRc = NULL;
 
-	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC) && (uCmd == GW_OWNER))
+	if (ghConEmuWndDC)
 	{
-		hWnd = ghConEmuWnd;
+		if (ghAttachGuiClient)
+		{
+			if ((hWnd == ghAttachGuiClient || hWnd == ghConEmuWndDC) && (uCmd == GW_OWNER))
+			{
+				hWnd = ghConEmuWnd;
+			}
+		}
+		else if ((hWnd == ghConEmuWndDC) && (uCmd == GW_OWNER))
+		{
+			hWnd = ghConEmuWnd;
+		}
 	}
 
 	if (F(GetWindow))
@@ -1616,9 +1791,49 @@ HWND WINAPI OnGetAncestor(HWND hWnd, UINT gaFlags)
 	ORIGINALFASTEX(GetAncestor,NULL);
 	HWND lhRc = NULL;
 
-	if (ghConEmuWndDC && hWnd == ghConEmuWndDC)
+#ifdef _DEBUG
+	if (ghAttachGuiClient)
 	{
-		hWnd = ghConEmuWnd;
+		wchar_t szInfo[1024];
+		getWindowInfo(hWnd, szInfo);
+		lstrcat(szInfo, L"\n");
+		DebugString(szInfo);
+	}
+#endif
+
+	//if (ghConEmuWndDC && hWnd == ghConEmuWndDC)
+	//{
+	//	hWnd = ghConEmuWnd;
+	//}
+	if (ghConEmuWndDC)
+	{
+		if (ghAttachGuiClient)
+		{
+			if (hWnd == ghAttachGuiClient || hWnd == ghConEmuWndDC)
+			{
+				// Обмануть GUI-клиента, пусть он думает, что он "сверху"
+				hWnd = ghConEmuWnd;
+			}
+			#if 0
+			else
+			{
+				wchar_t szName[255];
+				GetClassName(hWnd, szName, countof(szName));
+				if (wcsncmp(szName, L"WindowsForms", 12) == 0)
+				{
+					GetWindowText(hWnd, szName, countof(szName));
+					if (wcsncmp(szName, L"toolStrip", 8) == 0 || wcsncmp(szName, L"menuStrip", 8) == 0)
+					{
+						hWnd = ghConEmuWndDC;
+					}
+				}
+			}
+			#endif
+		}
+		else if (hWnd == ghConEmuWndDC)
+		{
+			hWnd = ghConEmuWnd;
+		}
 	}
 
 	if (F(GetAncestor))
@@ -1655,6 +1870,18 @@ BOOL WINAPI OnSetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx
 	if (ghConEmuWndDC && hWnd == ghConEmuWndDC)
 	{
 		return TRUE; // обманем. приложениям запрещено "двигать" ConEmuDC
+	}
+
+	// GUI приложениями запрещено самостоятельно двигаться внутри ConEmu
+	if (ghAttachGuiClient && hWnd == ghAttachGuiClient && grcAttachGuiClientPos.right)
+	{
+		if (MyGetParent(hWnd) == ghConEmuWndDC)
+		{
+			X = grcAttachGuiClientPos.left;
+			Y = grcAttachGuiClientPos.top;
+			cx = grcAttachGuiClientPos.right - X;
+			cy = grcAttachGuiClientPos.bottom - Y;
+		}
 	}
 
 	if (F(SetWindowPos))

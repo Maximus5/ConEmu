@@ -496,6 +496,7 @@ class CConEmuMain
 		void UpdateProgress(/*BOOL abUpdateTitle*/);
 		void UpdateWindowRgn(int anX=-1, int anY=-1, int anWndWidth=-1, int anWndHeight=-1);
 		static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		BOOL isDialogMessage(MSG &Msg);
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		void OnAltEnter();

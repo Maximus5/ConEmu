@@ -399,7 +399,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			{
 				if (pOut->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
 				{
-					if (pOut->AttachGuiApp.bOk)
+					if (pOut->AttachGuiApp.nFlags & agaf_Success)
 					{
 						MyAllowSetForegroundWindow(pOut->hdr.nSrcPID); // PID ConEmu.
 						ghConEmuWnd = (HWND)dwConEmuHwnd;

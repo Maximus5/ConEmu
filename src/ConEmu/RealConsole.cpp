@@ -11552,7 +11552,7 @@ HWND CRealConsole::GuiWnd()
 	return hGuiWnd;
 }
 
-void CRealConsole::SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev)
+void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev)
 {
 	if (!this)
 	{
@@ -11563,7 +11563,7 @@ void CRealConsole::SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPC
 	if ((hGuiWnd != NULL) && !IsWindow(hGuiWnd))
 		hGuiWnd = NULL; // окно закрылось, открылось другое
 
-	if (hGuiWnd != NULL)
+	if (hGuiWnd != NULL && hGuiWnd != ahGuiWnd)
 	{
 		_ASSERTE(hGuiWnd==NULL);
 		return;
@@ -11572,10 +11572,14 @@ void CRealConsole::SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPC
 	AllowSetForegroundWindow(anAppPID);
 
 	// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
+	// А может и три, если при вызове ShowWindow оказалось что SetParent пролетел (XmlNotepad)
+	if (hGuiWnd == NULL)
+	{
+		rcPreGuiWndRect = arcPrev;
+	}
 	hGuiWnd = ahGuiWnd;
 	mn_GuiWndPID = anAppPID;
 	mn_GuiWndStyle = anStyle; mn_GuiWndStylEx = anStyleEx;
-	rcPreGuiWndRect = arcPrev;
 
 	// Ставим после "hGuiWnd = ahGuiWnd", т.к. для гуй-приложений логика кнопки другая.
 	if (isActive())
@@ -11586,7 +11590,7 @@ void CRealConsole::SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPC
 	CESERVER_REQ In;
 	ExecutePrepareCmd(&In, CECMD_ATTACHGUIAPP, nSize);
 
-	In.AttachGuiApp.bOk = TRUE;
+	In.AttachGuiApp.nFlags = anFlags;
 	In.AttachGuiApp.hWindow = ahGuiWnd;
 	In.AttachGuiApp.nPID = anAppPID;
 	if (asAppFileName)

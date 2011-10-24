@@ -233,7 +233,7 @@ class CRealConsole
 
 		// Если работаем в Gui-режиме (Notepad, Putty, ...)
 		HWND    GuiWnd();
-		void    SetGuiMode(HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
+		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
 		void    CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui);
 
 		CRealConsole(CVirtualConsole* apVCon);

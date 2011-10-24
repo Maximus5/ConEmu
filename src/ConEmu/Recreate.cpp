@@ -155,6 +155,8 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 	if (messg == WM_INITDIALOG)
 	{
 		pDlg = (CRecreateDlg*)lParam;
+		pDlg->mh_Dlg = hDlg;
+		SetWindowLongPtr(hDlg, DWLP_USER, lParam);
 	}
 	else
 	{
@@ -170,7 +172,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		case WM_INITDIALOG:
 		{
 			LRESULT lbRc = FALSE;
-			pDlg->mh_Dlg = hDlg;
+			
 
 			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
