@@ -41,10 +41,6 @@ u64 ghWorkingModule = 0;
 //#ifdef _DEBUG
 //	#include <crtdbg.h>
 //#else
-//	#ifndef _ASSERT
-//	#define _ASSERT()
-//	#endif
-//
 //	#ifndef _ASSERTE
 //	#define _ASSERTE(f)
 //	#endif
@@ -267,7 +263,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 	if (!fSuccess)
 	{
 		dwErr = GetLastError();
-		_ASSERT(fSuccess);
+		_ASSERTE(fSuccess);
 		//if (pszErr)
 		{
 			msprintf(szErr, countof(szErr), L"%s.%u: SetNamedPipeHandleState(%s) failed, code=0x%08X",
@@ -287,6 +283,10 @@ void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, size_t cbSize)
 		return;
 
 	ExecutePrepareCmd(&(pIn->hdr), nCmd, cbSize);
+	
+	// Обнулить хвост с данными
+	if (cbSize > sizeof(pIn->hdr))
+		memset(((LPBYTE)&(pIn->hdr))+sizeof(pIn->hdr), 0, cbSize - sizeof(pIn->hdr));
 }
 
 void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, size_t cbSize)
@@ -297,14 +297,15 @@ void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, size_t cbSize)
 	pHdr->nCmd = nCmd;
 	pHdr->nSrcThreadId = GetCurrentThreadId();
 	pHdr->nSrcPID = GetCurrentProcessId();
-	_ASSERTE((cbSize & 0xFFFFFFFF) == cbSize); //-V112
+	// Обмен данными идет и между 32bit & 64bit процессами, размеры __int64 недопустимы
+	_ASSERTE(cbSize == (DWORD)cbSize);
 	pHdr->cbSize = (DWORD)cbSize;
 	pHdr->nVersion = CESERVER_REQ_VER;
 	pHdr->nCreateTick = GetTickCount();
 	_ASSERTE(ghWorkingModule!=0);
 	pHdr->hModule = ghWorkingModule;
 	pHdr->nBits = WIN3264TEST(32,64);
-	pHdr->nReserved = 0;
+	pHdr->nLastError = GetLastError();
 }
 
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, size_t nSize)
@@ -313,16 +314,42 @@ CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, size_t nSize)
 
 	if (nSize)
 	{
+		DWORD nErr = GetLastError();
+		
 		// Обязательно с обнулением выделяемой памяти
 		pIn = (CESERVER_REQ*)calloc(nSize, 1);
 
 		if (pIn)
 		{
 			ExecutePrepareCmd(pIn, nCmd, nSize);
+			pIn->hdr.nLastError = GetLastError();
 		}
 	}
 
 	return pIn;
+}
+
+BOOL ExecuteNewCmd(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, DWORD nCmd, size_t nSize)
+{
+	if (!ppCmd || (pcbCurMaxSize < nSize))
+	{
+		DWORD nErr = GetLastError();
+		ExecuteFreeResult(ppCmd);
+		ppCmd = ExecuteNewCmd(nCmd, nSize);
+		if (ppCmd != NULL)
+		{
+			// Обмен данными идет и между 32bit & 64bit процессами, размеры __int64 недопустимы
+			_ASSERTE(nSize == (DWORD)nSize);
+			pcbCurMaxSize = (DWORD)nSize;
+			ppCmd->hdr.nLastError = GetLastError();
+		}
+	}
+	else
+	{
+		ExecutePrepareCmd(ppCmd, nCmd, nSize);
+	}
+	
+	return (ppCmd != NULL);
 }
 
 BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping)
@@ -730,11 +757,13 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	return pOut;
 }
 
-void ExecuteFreeResult(CESERVER_REQ* pOut)
+void ExecuteFreeResult(CESERVER_REQ* &pOut)
 {
 	if (!pOut) return;
 
-	free(pOut);
+	CESERVER_REQ* p = pOut;
+	pOut = NULL;
+	free(p);
 }
 
 HWND myGetConsoleWindow()

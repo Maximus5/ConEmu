@@ -385,6 +385,9 @@ LRESULT CConEmuChild::OnPaint()
 		{
 			//_ASSERTE(FALSE);
 			lbSkipDraw = TRUE;
+
+			((CVirtualConsole*)this)->CheckTransparent();
+
 			// Типа "зальет цветом фона окна"?
 			result = DefWindowProc(mh_WndDC, WM_PAINT, 0, 0);
 		}

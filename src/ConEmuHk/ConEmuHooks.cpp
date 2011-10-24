@@ -1423,8 +1423,7 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 	DWORD nCurStyleEx = (DWORD)MyGetWindowLongPtrW(hWindow, GWL_EXSTYLE);
 
 	DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
-	CESERVER_REQ *pIn = (CESERVER_REQ*)calloc(nSize,1);
-	ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
+	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_ATTACHGUIAPP, nSize);
 
 	pIn->AttachGuiApp.bOk = TRUE;
 	pIn->AttachGuiApp.nPID = GetCurrentProcessId();
@@ -1439,7 +1438,7 @@ static void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCW
 
 	CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 1000, NULL);
 
-	free(pIn);
+	ExecuteFreeResult(pIn);
 
 	// abStyleHidden == TRUE, если окно при создании указало флаг WS_VISIBLE (т.е. не собиралось звать ShowWindow)
 
@@ -1919,7 +1918,7 @@ DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, L
 			if (nServerPID)
 			{
 				CESERVER_REQ_HDR In;
-				ExecutePrepareCmd((CESERVER_REQ*)&In, CECMD_GETALIASES,sizeof(CESERVER_REQ_HDR));
+				ExecutePrepareCmd(&In, CECMD_GETALIASES, sizeof(CESERVER_REQ_HDR));
 				CESERVER_REQ* pOut = ExecuteSrvCmd(nServerPID/*gdwServerPID*/, (CESERVER_REQ*)&In, hConWnd);
 
 				if (pOut)
@@ -3129,11 +3128,12 @@ BOOL GuiSetForeground(HWND hWnd)
 		CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(sizeof(*pIn)), *pOut;
 		if (pIn)
 		{
+			ExecutePrepareCmd(pIn, CECMD_SETFOREGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(u64)); //-V119
+
 			DWORD nConEmuPID = ASFW_ANY;
 			MyGetWindowThreadProcessId(ghConEmuWndDC, &nConEmuPID);
 			MyAllowSetForegroundWindow(nConEmuPID);
 
-			ExecutePrepareCmd(pIn, CECMD_SETFOREGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(u64)); //-V119
 			pIn->qwData[0] = (u64)hWnd;
 			HWND hConWnd = GetRealConsoleWindow();
 			pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);

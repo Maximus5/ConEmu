@@ -185,7 +185,6 @@ class CSettings
 		LOGFONT ConsoleFont;
 		COLORREF* GetColors(BOOL abFade = FALSE);
 		COLORREF GetFadeColor(COLORREF cr);
-		bool isUserScreenTransparent;
 		bool NeedDialogDetect();
 		//COLORREF ColorKey;
 		bool isExtendColors;
@@ -204,6 +203,7 @@ class CSettings
 
 		/* Transparency */
 		u8 nTransparent;
+		bool isUserScreenTransparent;
 
 		/* Command Line History (from start dialog) */
 		LPWSTR psCmdHistory; DWORD nCmdHistorySize;

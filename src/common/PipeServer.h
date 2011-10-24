@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+// struct - для того, чтобы выделять память простым calloc. "new" не прокатывает, т.к. Crt может быть не инициализирован (ConEmuHk).
+
 // Класс предполагает, что первый DWORD в (T*) это размер передаваемого блока в байтах!
 template <class T, int MaxCount>
 struct PipeServer
@@ -44,11 +46,16 @@ struct PipeServer
 		{
 			// Common
 			HANDLE hPipeInst; // Pipe Handle
+			
+			#if 0
 			HANDLE hEvent; // Overlapped event
 			OVERLAPPED oOverlap;
-			wchar_t sErrorMsg[128];
 			BOOL fPendingIO;
 			PipeState dwState;
+			#endif
+			
+			wchar_t sErrorMsg[128];
+			
 			// Request (from client)
 			DWORD cbReadSize, cbMaxReadSize;
 			T* ptrRequest;
@@ -66,19 +73,17 @@ struct PipeServer
 			};
 			// Answer (to client)
 			DWORD cbReplySize, cbMaxReplySize;
-			T* ptrReply;
-			T* AllocReplyBuf(DWORD anSize)
-			{
-				if (ptrReply && (cbMaxReplySize >= anSize))
-					return ptrReply;
-
-				if (ptrReply)
-					free(ptrReply);
-
-				ptrReply = (T*)malloc(anSize);
-				cbMaxReplySize = anSize;
-				return ptrReply;
-			};
+			T* ptrReply; // !!! Память выделяется в mfn_PipeServerCommand
+			//T* AllocReplyBuf(DWORD anSize)
+			//{
+			//	if (ptrReply && (cbMaxReplySize >= anSize))
+			//		return ptrReply;
+			//	if (ptrReply)
+			//		free(ptrReply);
+			//	ptrReply = (T*)malloc(anSize);
+			//	cbMaxReplySize = anSize;
+			//	return ptrReply;
+			//};
 			//// Event descriptors
 			//HANDLE hTermEvent;
 			//HANDLE hServerSemaphore;
@@ -94,13 +99,13 @@ struct PipeServer
 		BOOL mb_Initialized;
 		wchar_t ms_PipeName[MAX_PATH];
 		PipeInst m_Pipes[MaxCount];
-		PipeInst mp_ActivePipe;
+		PipeInst *mp_ActivePipe;
 		
 		// *** Callback function and it's LParam ***
 		
 		// Сервером получена команда. Выполнить, вернуть результат.
 		// Для облегчения жизни - сервер кеширует данные, калбэк может использовать ту же память (*pcbMaxReplySize)
-		typedef BOOL (WINAPI* PipeServerCommand_t)(T* pCmd, T** ppReply, DWORD* pcbReplySize, DWORD* pcbMaxReplySize, LPARAM lParam);
+		typedef BOOL (WINAPI* PipeServerCommand_t)(T* pCmd, T* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 		PipeServerCommand_t mfn_PipeServerCommand;
 		
 		// Вызывается после того, как создан Pipe Instance
@@ -120,6 +125,7 @@ struct PipeServer
 		BOOL   mb_Terminate;
 		HANDLE mh_ServerSemaphore;
 
+		// Overlapped, доделать
 		void DumpError(PipeInst *pPipe, LPCWSTR asFormat, BOOL abShow = TRUE)
 		{
 			wchar_t sTitle[128], sText[MAX_PATH*2];
@@ -142,6 +148,8 @@ struct PipeServer
 			}
 		}
 
+#if 0
+		// Overlapped, доделать
 		// ConnectToNewClient(HANDLE, LPOVERLAPPED)
 		// This function is called to start an overlapped connect operation.
 		// It returns TRUE if an operation is pending or FALSE if the
@@ -190,7 +198,10 @@ struct PipeServer
 
 			return pPipe->fPendingIO;
 		}
+#endif
 
+#if 0
+		// Overlapped, доделать
 		int InitPipes()
 		{
 			if (mb_Initialized)
@@ -253,7 +264,11 @@ struct PipeServer
 			mb_Initialized = TRUE;
 			return 0;
 		}
+#endif
 
+#if 0
+		// Overlapped, доделать
+		
 		// DisconnectAndReconnect(PipeInst*)
 		// This function is called when an error occurs or when the client
 		// closes its handle to the pipe. Disconnect from this client, then
@@ -272,10 +287,12 @@ struct PipeServer
 			// Call a subroutine to connect to the new client and update state
 			ConnectToNewClient(pPipe);
 		}
+#endif
 
+#if 0
 		int GetAnswerToRequest(PipeInst* pPipe)
 		{
-			if (!PipeServerCommand(pPipe->ptrRequest, &pPipe->ptrReply, &pPipe->cbReplySize, &pPipe->cbMaxReplySize, m_lParam))
+			if (!mfn_PipeServerCommand(pPipe->ptrRequest, &pPipe->ptrReply, &pPipe->cbReplySize, &pPipe->cbMaxReplySize, m_lParam))
 			{
 				if ((pPipe->ptrReply == NULL) || (pPipe->cbMaxReplySize < sizeof(DWORD)))
 				{
@@ -290,7 +307,11 @@ struct PipeServer
 
 			return pPipe->cbReplySize;
 		}
+#endif
 
+#if 0
+		// Overlapped, доделать
+		
 		int PipeServerWork(PipeInst* pPipe)
 		{
 			DWORD i, dwWait, cbRet, cbRead, dwErr;
@@ -507,16 +528,18 @@ struct PipeServer
 			// Exiting
 			return mb_Terminate ? 0 : -1;
 		}
+#endif
 
 		BOOL PipeServerRead(PipeInst* pPipe)
 		{
 			DWORD cbRead = 0, dwErr = 0, cbWholeSize = 0;
 			BOOL fSuccess = FALSE;
-			T In, *pIn = NULL;;
+			DWORD In[32];
+			T *pIn = NULL;;
 			// Send a message to the pipe server and read the response.
 			fSuccess = ReadFile(
 			               pPipe->hPipeInst, // pipe handle
-			               &In,              // buffer to receive reply
+			               In,              // buffer to receive reply
 			               sizeof(In),       // size of read buffer
 			               &cbRead,          // bytes read
 			               NULL);            // not overlapped
@@ -538,13 +561,13 @@ struct PipeServer
 			//	//CloseHandle(hPipe);
 			//	return;
 			//}
-			cbWholeSize = *((DWORD*)&In);
+			cbWholeSize = In[0];
 
 			if (cbWholeSize <= cbRead)
 			{
 				_ASSERTE(cbWholeSize >= cbRead);
 				pIn = pPipe->AllocRequestBuf(cbRead);
-				memmove(pIn, &In, cbRead);
+				memmove(pIn, In, cbRead);
 				pPipe->cbReadSize = cbRead;
 			}
 			else
@@ -552,7 +575,7 @@ struct PipeServer
 				int nAllSize = cbWholeSize;
 				pIn = pPipe->AllocRequestBuf(cbWholeSize);
 				_ASSERTE(pIn!=NULL);
-				memmove(pIn, &In, cbRead);
+				memmove(pIn, In, cbRead);
 				LPBYTE ptrData = ((LPBYTE)pIn)+cbRead;
 				nAllSize -= cbRead;
 
@@ -597,6 +620,7 @@ struct PipeServer
 		// Processing methods
 		DWORD PipeServerThread(PipeInst* pPipe)
 		{
+			_ASSERTE(this && pPipe && pPipe->pServer==this);
 			BOOL fConnected = FALSE;
 			DWORD dwErr = 0;
 			HANDLE hWait[2] = {NULL,NULL};
@@ -605,12 +629,15 @@ struct PipeServer
 			// then waits for a client to connect to it. When the client
 			// connects, a thread is created to handle communications
 			// with that client, and the loop is repeated.
-			hWait[0] = pPipe->hTermEvent;
-			hWait[1] = pPipe->hServerSemaphore;
+			hWait[0] = mh_TermEvent;
+			hWait[1] = mh_ServerSemaphore;
 
 			// Пока не затребовано завершение сервера
-			while (WaitForSingleObject(pPipe->hTermEvent, 0) != WAIT_OBJECT_0)
+			while (WaitForSingleObject(mh_TermEvent, 0) != WAIT_OBJECT_0)
 			{
+				BOOL  fWriteSuccess = FALSE;
+				DWORD cbWritten = 0;
+				
 				while (TRUE)
 				{
 					_ASSERTE(pPipe->hPipeInst == NULL);
@@ -638,7 +665,7 @@ struct PipeServer
 					                       PIPEBUFSIZE,                // output buffer size
 					                       PIPEBUFSIZE,                // input buffer size
 					                       0,                          // client time-out
-					                       LocalSecurity);            // default security attribute
+					                       LocalSecurity());            // default security attribute
 
 					if (pPipe->hPipeInst == INVALID_HANDLE_VALUE)
 					{
@@ -672,40 +699,48 @@ struct PipeServer
 					// Сервер закрывается?
 					if (WaitForSingleObject(hWait[0], 0) == WAIT_OBJECT_0)
 					{
-						TODO("Записать в пайп (DWORD)0");
-						//FlushFileBuffers(hPipe); -- это не нужно, мы ничего не возвращали
+						// Всегда чего-нибудь ответить в пайп, а то ошибка (Pipe was closed) у клиента возникает
+						DWORD dwNil = 0, cbSize = sizeof(DWORD);
+						fWriteSuccess = WriteFile(pPipe->hPipeInst, &dwNil, cbSize, &cbWritten, NULL);
+						FlushFileBuffers(pPipe->hPipeInst);
 						//DisconnectNamedPipe(hPipe);
-						SafeCloseHandle(pPipe->hPipeInst);
+						CloseHandle(pPipe->hPipeInst);
+						pPipe->hPipeInst = NULL;
 						return 0;
 					}
 
 					if (fConnected)
+					{
 						break;
+					}
 					else
-						SafeCloseHandle(pPipe->hPipeInst);
+					{
+						CloseHandle(pPipe->hPipeInst);
+						pPipe->hPipeInst = NULL;
+					}
 				}
 
 				// Чтение данных запроса из пайпа
-				if (!PipeServerRead(pPipe))
+				if (PipeServerRead(pPipe)
+					&& mfn_PipeServerCommand(pPipe->ptrRequest, /*OUT&*/pPipe->ptrReply,
+							/*OUT&*/pPipe->cbReplySize, /*OUT&*/pPipe->cbMaxReplySize, m_lParam))
 				{
-					// Запись в результат - (DWORD)0
-				}
-				// Если успешно - запись в пайп результата
-				else if (mfn_PipeServerCommand(pPipe->ptrRequest, &pPipe->ptrReply,
-				                              &pPipe->cbReplySize, &pPipe->cbMaxReplySize, m_lParam))
-				{
-					_ASSERTE(pPipe->cbReplySize == *((DWORD*)pPipe->ptrReply));
-					_ASSERTE(pPipe->cbReplySize <= pPipe->cbMaxReplySize);
+					// Если успешно - запись в пайп результата
+					fWriteSuccess = WriteFile(pPipe->hPipeInst, pPipe->ptrReply, pPipe->cbReplySize, &cbWritten, NULL);
 				}
 				else
 				{
-					// Иначе - запись (DWORD)0
+					// Всегда чего-нибудь ответить в пайп, а то ошибка (Pipe was closed) у клиента возникает
+					DWORD dwNil = 0, cbSize = sizeof(DWORD);
+					fWriteSuccess = WriteFile(pPipe->hPipeInst, &dwNil, cbSize, &cbWritten, NULL);
 				}
-
-				TODO("Запись в пайп результата");
+				
 				FlushFileBuffers(pPipe->hPipeInst);
+				
+				TODO("DisconnectAndReconnect?");
 				//DisconnectNamedPipe(hPipe);
-				SafeCloseHandle(pPipe->hPipeInst);
+				CloseHandle(pPipe->hPipeInst);
+				pPipe->hPipeInst = NULL;
 				// Перейти к открытию нового instance пайпа
 			}
 
@@ -715,6 +750,7 @@ struct PipeServer
 		{
 			DWORD nResult = 0;
 			PipeInst* pPipe = (PipeInst*)lpvParam;
+			_ASSERTE(pPipe!=NULL && pPipe->pServer!=NULL);
 			nResult = pPipe->pServer->PipeServerThread(pPipe);
 			return nResult;
 		};
@@ -752,16 +788,12 @@ struct PipeServer
 			}
 			
 			mb_Initialized = FALSE;
-			ms_PipeName[0] = 0;
 			memset(m_Pipes, 0, sizeof(m_Pipes));
 			mp_ActivePipe = NULL;
-			mfn_PipeServerCommand = NULL;
-			mfn_PipeServerReady = NULL;
 			mb_ReadyCalled = FALSE;
-			m_lParam = 0;
-			mh_TermEvent = NULL;
+			mh_TermEvent = CreateEvent(NULL,TRUE/*MANUAL - используется в нескольких нитях!*/,FALSE,NULL); ResetEvent(mh_TermEvent);
 			mb_Terminate = FALSE;
-			mh_ServerSemaphore = NULL;
+			mh_ServerSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
 			
 			wcscpy_c(ms_PipeName, asPipeName);
 			m_lParam = alParam;
@@ -770,15 +802,43 @@ struct PipeServer
 			mfn_PipeServerFree = apfnPipeServerFree;
 			_ASSERTE(mb_ReadyCalled==FALSE);
 			
+			// Необходимо указать как минимум эту функцию
+			if (!apfnPipeServerCommand)
+			{
+				//_ASSERTE(apfnPipeServerCommand!=NULL);
+				DumpError(&(m_Pipes[0]), L"StartPipeServer:apfnPipeServerCommand is NULL");
+				return FALSE;
+			}
+			
+			for (int i = 0; i < MaxCount; i++)
+			{
+				_ASSERTE(m_Pipes[i].hThread == NULL);
+
+				m_Pipes[i].pServer = this;
+				m_Pipes[i].nThreadId = 0;
+				m_Pipes[i].hThread = CreateThread(NULL, 0, _PipeServerThread, (LPVOID)&(m_Pipes[i]), 0, &m_Pipes[i].nThreadId);
+				if (m_Pipes[i].hThread == NULL)
+				{
+					//_ASSERTE(m_Pipes[i].hThread!=NULL);
+					DumpError(&(m_Pipes[i]), L"StartPipeServer:CreateThread failed, code=0x%08X");
+					return FALSE; // Не удалось создать серверные потоки
+				}
+			}
+			
+			#if 0
+			// Overlapped, доделать
 			// Созаем Instances
 			int iRc = InitPipes();
 			return (iRc == 0);
+			#endif
+			
+			return TRUE;
 		};
 		void StopPipeServer()
 		{
 			DWORD nWait;
+			
 			mb_Terminate = TRUE;
-
 			if (mh_TermEvent)
 				SetEvent(mh_TermEvent);
 
@@ -804,6 +864,29 @@ struct PipeServer
 					CloseHandle(m_Pipes[i].hPipeInst);
 				}
 				m_Pipes[i].hPipeInst = NULL;
+				
+				if (m_Pipes[i].ptrRequest)
+				{
+					free(m_Pipes[i].ptrRequest);
+					m_Pipes[i].ptrRequest = NULL;
+				}
+				
+				if (m_Pipes[i].ptrReply && mfn_PipeServerFree)
+				{
+					mfn_PipeServerFree(m_Pipes[i].ptrReply, m_lParam);
+					m_Pipes[i].ptrReply = NULL;
+				}
+			}
+			
+			if (mh_ServerSemaphore)
+			{
+				CloseHandle(mh_ServerSemaphore);
+				mh_ServerSemaphore = NULL;
+			}
+			if (mh_TermEvent)
+			{
+				CloseHandle(mh_TermEvent);
+				mh_TermEvent = NULL;
 			}
 		};
 };

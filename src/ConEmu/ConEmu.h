@@ -100,6 +100,7 @@ class CConEmuBack;
 class TabBarClass;
 class CConEmuMacro;
 class CAttachDlg;
+class CRecreateDlg;
 
 WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
 enum ConEmuMargins
@@ -261,6 +262,7 @@ class CConEmuMain
 		CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT];
 		CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
 		CAttachDlg *mp_AttachDlg;
+		CRecreateDlg *mp_RecreateDlg;
 		bool mb_SkipSyncSize, mb_PassSysCommand, mb_CreatingActive;
 		BOOL mb_WaitCursor, mb_InTrackSysMenu;
 		BOOL mb_LastRgnWasNull;
@@ -419,6 +421,7 @@ class CConEmuMain
 		void InvalidateAll();
 		void UpdateWindowChild(CVirtualConsole* apVCon);
 		bool isActive(CVirtualConsole* apVCon);
+		bool isChildWindow();
 		bool isConSelectMode();
 		bool isDragging();
 		bool isEditor();
@@ -459,12 +462,7 @@ class CConEmuMain
 		//void PostSetBackground(CVirtualConsole* apVCon, CESERVER_REQ_SETBACKGROUND* apImgData);
 		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 		void Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs = FALSE);
-		HHOOK mh_RecreateDlgKeyHook;
-		BOOL mb_SkipAppsInRecreate;
-		int RecreateDlg(LPARAM lParam);
-		static LRESULT CALLBACK RecreateDlgKeyHook(int code, WPARAM wParam, LPARAM lParam);
-		static INT_PTR CALLBACK RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
-		static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
+		int RecreateDlg(RConStartArgs* apArg);
 		void RePaint();
 		void ReSize(BOOL abCorrect2Ideal = FALSE);
 		BOOL RunSingleInstance();

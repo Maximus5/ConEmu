@@ -2360,6 +2360,8 @@ void CSettings::GetVkKeyName(BYTE vk, wchar_t (&szName)[128])
 		wcscat_c(szName, L"End"); break;
 	case VK_PAUSE:
 		wcscat_c(szName, L"Pause"); break;
+	case VK_RETURN:
+		wcscat_c(szName, L"Enter"); break;
 
 	default:
 		if (vk >= VK_F1 && vk <= VK_F24)

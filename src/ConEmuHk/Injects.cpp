@@ -193,7 +193,9 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 		PROCESS_INFORMATION pi64 = {NULL};
 		LPSECURITY_ATTRIBUTES lpSec = LocalSecurity();
 
-		BOOL lbHelper = CreateProcess(NULL, sz64helper, lpSec, lpSec, TRUE, HIGH_PRIORITY_CLASS, NULL, NULL, &si, &pi64);
+		// Добавил DETACHED_PROCESS, чтобы helper не появлялся в списке процессов консоли,
+		// а то у сервера может крышу сорвать, когда helper исчезнет, а приложение еще не появится.
+		BOOL lbHelper = CreateProcess(NULL, sz64helper, lpSec, lpSec, TRUE, HIGH_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL, &si, &pi64);
 
 		if (!lbHelper)
 		{

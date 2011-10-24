@@ -119,6 +119,7 @@ $(INTDIR)\DragDropData.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\Options.obj \
 $(INTDIR)\RealConsole.obj \
+$(INTDIR)\Recreate.obj \
 $(INTDIR)\Registry.obj \
 $(INTDIR)\ScreenDump.obj \
 $(INTDIR)\TabBar.obj \
@@ -303,7 +304,9 @@ $(INTDIR)\Options.obj: Options.cpp Options.h Background.h
 
 $(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h  ..\common\Common.hpp
 
-$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h
+$(INTDIR)\Recreate.obj: Recreate.cpp Recreate.h
+
+$(INTDIR)\Registry.obj: Registry.cpp Registry.h
 
 $(INTDIR)\ScreenDump.obj: ScreenDump.cpp
 

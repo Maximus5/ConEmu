@@ -12,6 +12,7 @@ SRCS =  \
 		Macro.cpp          \
 		Options.cpp        \
 		RealConsole.cpp    \
+		Recreate.cpp       \
 		Registry.cpp       \
 		ScreenDump.cpp     \
 		TabBar.cpp         \

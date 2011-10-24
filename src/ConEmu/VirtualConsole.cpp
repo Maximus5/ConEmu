@@ -216,6 +216,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	nLastNormalBack = 255;
 	mb_ConDataChanged = FALSE;
 	mh_TransparentRgn = NULL;
+	mb_ChildWindowWasFound = FALSE;
 #ifdef _DEBUG
 	mn_BackColorIdx = 2; // Green
 #else
@@ -1375,11 +1376,68 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	return lRes;
 }
 
-BOOL CVirtualConsole::CheckTransparentRgn()
+BOOL CVirtualConsole::CheckTransparent()
+{
+	if (!this)
+	{
+		_ASSERTE(this);
+		return FALSE;
+	}
+
+	BOOL lbChanged = FALSE;
+	static bool lbInCheckTransparent = false;
+
+	if (lbInCheckTransparent)
+	{
+		_ASSERTE(lbInCheckTransparent==false);
+		return FALSE;
+	}
+
+	BOOL lbHasChildWindows = FALSE;
+	if (mp_RCon)
+	{
+		// ≈сли работа идет в GUI режиме (notepad во вкладке ConEmu)
+		if (mp_RCon->GuiWnd() != NULL)
+			lbHasChildWindows = TRUE;
+		// »ли включен просмотр картинок/видефайлов
+		if (mp_RCon->isPictureView())
+			lbHasChildWindows = TRUE;
+	}
+
+	lbInCheckTransparent = true;
+
+	// ѕроверим услови€, в которых вообще не нужно провер€ть регионы
+	if (gpSet->isUserScreenTransparent)
+	{
+		// ≈сли была смена стил€: был дыр€вый регион, не стало дыр€вого региона
+		if (CheckTransparentRgn(lbHasChildWindows))
+		{
+			lbChanged = TRUE;
+		}
+	}
+
+	// ≈сли сменилс€ статус наличи€ внедренного PicView
+	if (mb_ChildWindowWasFound != lbHasChildWindows)
+	{
+		mb_ChildWindowWasFound = lbHasChildWindows;
+		// нужно передернуть общую альфа-прозрачность окна
+		gpConEmu->OnTransparent();
+	}
+
+
+	lbInCheckTransparent = false;
+
+	return lbChanged;
+}
+
+BOOL CVirtualConsole::CheckTransparentRgn(BOOL abHasChildWindows)
 {
 	BOOL lbRgnChanged = FALSE;
+	BOOL lbTransparentChanged = FALSE;
 
-	if (mb_ConDataChanged)
+
+	// ≈сли изменены данные, или была прозрачность и по€вились дочерние окна (или наоборот)
+	if (mb_ConDataChanged || !((mh_TransparentRgn != NULL) ^ abHasChildWindows))
 	{
 		mb_ConDataChanged = FALSE;
 
@@ -1390,9 +1448,9 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 			CharAttr* pnAttr = mpn_ConAttrEx;
 			int nFontHeight = gpSet->FontHeight();
 			int    nMaxRects = TextHeight*5;
-#ifdef _DEBUG
-			nMaxRects = 5;
-#endif
+			//#ifdef _DEBUG
+			//nMaxRects = 5;
+			//#endif
 			POINT *lpAllPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT)); // 4 угла
 			//INT   *lpAllCounts = (INT*)Alloc(nMaxRects,sizeof(INT));
 			HEAPVAL;
@@ -1403,96 +1461,100 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 				POINT *lpPoints = lpAllPoints;
 				//INT   *lpCounts = lpAllCounts;
 
-				for(uint nY = 0; nY < TextHeight; nY++)
+				if (!abHasChildWindows)
 				{
-					uint nX = 0;
-					int nYPix1 = nY * nFontHeight;
-
-					while(nX < TextWidth)
+					for(uint nY = 0; nY < TextHeight; nY++)
 					{
-						// Ќайти первый прозрачный cell
-						#if 0
-						while (nX < TextWidth && !pnAttr[nX].bTransparent)
-							nX++;
-						#else
-						WARNING("CharAttr_Transparent");
-						// хорошо бы требуемые проверки прозрачности делать здесь, а не в RgnDetect
-						while (nX < TextWidth && !(pnAttr[nX].Flags & CharAttr_Transparent))
-							nX++;
-						#endif
+						uint nX = 0;
+						int nYPix1 = nY * nFontHeight;
 
-						if (nX >= TextWidth)
-							break;
-
-						// Ќайти конец прозрачного блока
-						uint nTranStart = nX;
-
-						#if 0
-						while (++nX < TextWidth && pnAttr[nX].bTransparent)
-							;
-						#else
-						WARNING("CharAttr_Transparent");
-						// хорошо бы требуемые проверки прозрачности делать здесь, а не в RgnDetect
-						while (++nX < TextWidth && (pnAttr[nX].Flags & CharAttr_Transparent))
-							;
-						#endif
-
-						// —формировать соответствующий Rect
-						int nXPix = 0;
-
-						if (nRectCount>=nMaxRects)
+						while(nX < TextWidth)
 						{
-							nMaxRects += TextHeight;
-							HEAPVAL;
-							POINT *lpTmpPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT)); // 4 угла
-							//INT   *lpTmpCounts = (INT*)Alloc(nMaxRects,sizeof(INT));
-							HEAPVAL;
+							// Ќайти первый прозрачный cell
+							#if 0
+							while (nX < TextWidth && !pnAttr[nX].bTransparent)
+								nX++;
+							#else
+							WARNING("CharAttr_Transparent");
+							// хорошо бы требуемые проверки прозрачности делать здесь, а не в RgnDetect
+							while (nX < TextWidth && !(pnAttr[nX].Flags & CharAttr_Transparent))
+								nX++;
+							#endif
 
-							if (!lpTmpPoints /*|| !lpTmpCounts*/)
+							if (nX >= TextWidth)
+								break;
+
+							// Ќайти конец прозрачного блока
+							uint nTranStart = nX;
+
+							#if 0
+							while (++nX < TextWidth && pnAttr[nX].bTransparent)
+								;
+							#else
+							WARNING("CharAttr_Transparent");
+							// хорошо бы требуемые проверки прозрачности делать здесь, а не в RgnDetect
+							while (++nX < TextWidth && (pnAttr[nX].Flags & CharAttr_Transparent))
+								;
+							#endif
+
+							// —формировать соответствующий Rect
+							int nXPix = 0;
+
+							if (nRectCount>=nMaxRects)
 							{
-								_ASSERTE(/*lpTmpCounts &&*/ lpTmpPoints);
+								nMaxRects += TextHeight;
+								HEAPVAL;
+								POINT *lpTmpPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT)); // 4 угла
+								//INT   *lpTmpCounts = (INT*)Alloc(nMaxRects,sizeof(INT));
+								HEAPVAL;
+
+								if (!lpTmpPoints /*|| !lpTmpCounts*/)
+								{
+									_ASSERTE(/*lpTmpCounts &&*/ lpTmpPoints);
+									//Free(lpAllCounts);
+									Free(lpAllPoints);
+									return FALSE;
+								}
+
+								memmove(lpTmpPoints, lpAllPoints, nRectCount*4*sizeof(POINT));
+								//memmove(lpTmpCounts, lpAllCounts, nRectCount*sizeof(INT));
+								HEAPVAL;
+								lpPoints = lpTmpPoints + (lpPoints - lpAllPoints);
 								//Free(lpAllCounts);
 								Free(lpAllPoints);
-								return FALSE;
+								lpAllPoints = lpTmpPoints;
+								//lpAllCounts = lpTmpCounts;
+								HEAPVAL;
 							}
 
-							memmove(lpTmpPoints, lpAllPoints, nRectCount*4*sizeof(POINT));
-							//memmove(lpTmpCounts, lpAllCounts, nRectCount*sizeof(INT));
-							HEAPVAL;
-							lpPoints = lpTmpPoints + (lpPoints - lpAllPoints);
-							//Free(lpAllCounts);
-							Free(lpAllPoints);
-							lpAllPoints = lpTmpPoints;
-							//lpAllCounts = lpTmpCounts;
+							nRectCount++;
+	#ifdef _DEBUG
+
+							if (nRectCount>=nMaxRects)
+							{
+								nRectCount = nRectCount;
+							}
+
+	#endif
+							//*(lpCounts++) = 4;
+							lpPoints[0] = ConsoleToClient(nTranStart, nY);
+							lpPoints[1] = ConsoleToClient(nX, nY);
+							// x - 1?
+							//if (lpPoints[1].x > lpPoints[0].x) lpPoints[1].x--;
+							lpPoints[2] = lpPoints[1]; lpPoints[2].y += nFontHeight;
+							lpPoints[3] = lpPoints[0]; lpPoints[3].y = lpPoints[2].y;
+							lpPoints += 4;
+							nX++;
 							HEAPVAL;
 						}
 
-						nRectCount++;
-#ifdef _DEBUG
-
-						if (nRectCount>=nMaxRects)
-						{
-							nRectCount = nRectCount;
-						}
-
-#endif
-						//*(lpCounts++) = 4;
-						lpPoints[0] = ConsoleToClient(nTranStart, nY);
-						lpPoints[1] = ConsoleToClient(nX, nY);
-						// x - 1?
-						//if (lpPoints[1].x > lpPoints[0].x) lpPoints[1].x--;
-						lpPoints[2] = lpPoints[1]; lpPoints[2].y += nFontHeight;
-						lpPoints[3] = lpPoints[0]; lpPoints[3].y = lpPoints[2].y;
-						lpPoints += 4;
-						nX++;
-						HEAPVAL;
+						pnAttr += TextWidth;
 					}
-
-					pnAttr += TextWidth;
 				}
 
 				HEAPVAL;
 				lbRgnChanged = (nRectCount != TransparentInfo.nRectCount);
+				lbTransparentChanged = ((nRectCount==0) != (TransparentInfo.nRectCount==0));
 
 				if (!lbRgnChanged && TransparentInfo.nRectCount)
 				{
@@ -1546,7 +1608,12 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 		}
 	}
 
-	return lbRgnChanged;
+	if (lbRgnChanged && isVisible())
+	{
+		gpConEmu->UpdateWindowRgn();
+	}
+
+	return lbTransparentChanged;
 }
 
 bool CVirtualConsole::LoadConsoleData()
@@ -3478,11 +3545,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 		/*}*/
 
-		if (gpSet->isUserScreenTransparent)
-		{
-			if (CheckTransparentRgn())
-				gpConEmu->UpdateWindowRgn();
-		}
+		CheckTransparent();
 	}
 	else
 	{

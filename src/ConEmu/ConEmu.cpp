@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <Tlhelp32.h>
 #include <Shlobj.h>
-#include <lm.h>
+//#include <lm.h>
 //#include "../common/ConEmuCheck.h"
 #include "VirtualConsole.h"
 #include "options.h"
@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "version.h"
 #include "Macro.h"
 #include "Attach.h"
+#include "Recreate.h"
 #include "../ConEmuCD/RegPrepare.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
@@ -159,7 +160,6 @@ CConEmuMain::CConEmuMain()
 	mn_GuiServerThreadId = 0; mh_GuiServerThread = NULL; mh_GuiServerThreadTerminate = NULL;
 	//mpsz_RecreateCmd = NULL;
 	mb_InImeComposition = false; mb_ImeMethodChanged = false;
-	mh_RecreateDlgKeyHook = NULL; mb_SkipAppsInRecreate = FALSE;
 	ZeroStruct(mrc_Ideal);
 	mn_InResize = 0;
 	mb_MaximizedHideCaption = FALSE;
@@ -394,6 +394,7 @@ CConEmuMain::CConEmuMain()
 	mp_VActive = NULL; mp_VCon1 = NULL; mp_VCon2 = NULL; mb_CreatingActive = false;
 	memset(mp_VCon, 0, sizeof(mp_VCon));
 	mp_AttachDlg = NULL;
+	mp_RecreateDlg = NULL;
 	UINT nAppMsg = WM_APP+10;
 	mn_MsgPostCreate = ++nAppMsg;
 	mn_MsgPostCopy = ++nAppMsg;
@@ -1426,6 +1427,11 @@ CConEmuMain::~CConEmuMain()
 	{
 		delete mp_AttachDlg;
 		mp_AttachDlg = NULL;
+	}
+	if (mp_RecreateDlg)
+	{
+		delete mp_RecreateDlg;
+		mp_RecreateDlg = NULL;
 	}
 
 	for (size_t i = 0; i < countof(mp_VCon); i++)
@@ -4722,7 +4728,7 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
 
 		if (abConfirm)
 		{
-			int nRc = RecreateDlg((LPARAM)&args);
+			int nRc = RecreateDlg(&args);
 
 			//BOOL b = gbDontEnable;
 			//gbDontEnable = TRUE;
@@ -4748,7 +4754,7 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
 
 			if (abConfirm)
 			{
-				int nRc = RecreateDlg((LPARAM)&args);
+				int nRc = RecreateDlg(&args);
 
 				//BOOL b = gbDontEnable;
 				//gbDontEnable = TRUE;
@@ -4764,9 +4770,12 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
 					return;
 			}
 
-			mp_VActive->Redraw();
-			// Собственно, Recreate
-			mp_VActive->RCon()->RecreateProcess(&args);
+			if (mp_VActive)
+			{
+				mp_VActive->Redraw();
+				// Собственно, Recreate
+				mp_VActive->RCon()->RecreateProcess(&args);
+			}
 		}
 	}
 
@@ -4776,39 +4785,13 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
 	//SafeFree(args.pszUserPassword);
 }
 
-int CConEmuMain::RecreateDlg(LPARAM lParam)
+int CConEmuMain::RecreateDlg(RConStartArgs* apArg)
 {
-	BOOL b = gbDontEnable;
-	gbDontEnable = TRUE;
+	if (!mp_RecreateDlg)
+		mp_RecreateDlg = new CRecreateDlg();
 
-	if (isPressed(VK_APPS))
-	{
-		// Игнорировать одно следующее VK_APPS
-		mb_SkipAppsInRecreate = TRUE;
-		mh_RecreateDlgKeyHook = SetWindowsHookEx(WH_GETMESSAGE, RecreateDlgKeyHook, NULL, GetCurrentThreadId());
-	}
+	int nRc = mp_RecreateDlg->RecreateDlg(apArg);
 
-	//if (!gpConEmu->mh_RecreatePasswFont)
-	//{
-	//	gpConEmu->mh_RecreatePasswFont = CreateFont(
-
-	//}
-
-	int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, lParam);
-
-	//if (gpConEmu->mh_RecreatePasswFont)
-	//{
-	//	DeleteObject(gpConEmu->mh_RecreatePasswFont);
-	//	gpConEmu->mh_RecreatePasswFont = NULL;
-	//}
-
-	if (mh_RecreateDlgKeyHook)
-	{
-		UnhookWindowsHookEx(mh_RecreateDlgKeyHook);
-		mh_RecreateDlgKeyHook = NULL;
-	}
-
-	gbDontEnable = b;
 	return nRc;
 }
 
@@ -4834,11 +4817,10 @@ BOOL CConEmuMain::RunSingleInstance()
 				nSize += (nCmdLen - MAX_PATH + 2) * 2;
 			}
 
-			pIn = (CESERVER_REQ*)calloc(nSize,1);
+			pIn = ExecuteNewCmd(CECMD_NEWCMD, nSize);
 
 			if (pIn)
 			{
-				ExecutePrepareCmd(pIn, CECMD_NEWCMD, nSize);
 				lstrcpyW(pIn->NewCmd.szCommand, lpszCmd);
 				DWORD dwPID = 0;
 
@@ -4851,455 +4833,13 @@ BOOL CConEmuMain::RunSingleInstance()
 					lbAccepted = TRUE;
 			}
 
-			if (pIn) {free(pIn); pIn = NULL;}
+			if (pIn) ExecuteFreeResult(pIn);
 
 			if (pOut) ExecuteFreeResult(pOut);
 		}
 	}
 
 	return lbAccepted;
-}
-
-int CConEmuMain::BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
-{
-	if (uMsg==BFFM_INITIALIZED)
-	{
-		SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
-	}
-
-	return 0;
-}
-
-LRESULT CConEmuMain::RecreateDlgKeyHook(int code, WPARAM wParam, LPARAM lParam)
-{
-	if (code >= 0)
-	{
-		if (gpConEmu->mb_SkipAppsInRecreate && lParam)
-		{
-			LPMSG pMsg = (LPMSG)lParam;
-
-			if (pMsg->message == WM_CONTEXTMENU)
-			{
-				pMsg->message = WM_NULL;
-				gpConEmu->mb_SkipAppsInRecreate = FALSE;
-				return FALSE; // Skip one Apps
-			}
-		}
-	}
-
-	return CallNextHookEx(gpConEmu->mh_RecreateDlgKeyHook, code, wParam, lParam);
-}
-
-INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-#define UM_USER_CONTROLS (WM_USER+121)
-
-	switch(messg)
-	{
-		case WM_INITDIALOG:
-		{
-			LRESULT lbRc = FALSE;
-
-			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
-
-			SendDlgItemMessage(hDlg, tRunAsPassword, WM_SETFONT, (LPARAM)(HFONT)GetStockObject(DEFAULT_GUI_FONT), 0);
-
-			//#ifdef _DEBUG
-			//SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-			//#endif
-			RConStartArgs* pArgs = (RConStartArgs*)lParam;
-			_ASSERTE(pArgs);
-			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)lParam);
-			// Если на момент открытия диалога был нажат Apps - пропустить его "отжатие"
-			LPCWSTR pszCmd = pArgs->pszSpecialCmd
-			                 ? pArgs->pszSpecialCmd
-			                 : gpConEmu->ActiveCon()->RCon()->GetCmd();
-			int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszCmd);
-
-			if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszCmd);
-
-			LPCWSTR pszSystem = gpSet->GetCmd();
-
-			if (pszSystem != pszCmd)
-			{
-				int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszSystem);
-
-				if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszSystem);
-			}
-
-			pszSystem = gpSet->HistoryGet();
-
-			if (pszSystem)
-			{
-				while(*pszSystem)
-				{
-					int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszSystem);
-
-					if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pszSystem);
-
-					pszSystem += _tcslen(pszSystem)+1;
-				}
-			}
-
-			SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
-			SetDlgItemText(hDlg, IDC_STARTUP_DIR, gpConEmu->ActiveCon()->RCon()->GetDir());
-			//EnableWindow(GetDlgItem(hDlg, IDC_STARTUP_DIR), FALSE);
-			//#ifndef _DEBUG
-			//EnableWindow(GetDlgItem(hDlg, IDC_CHOOSE_DIR), FALSE);
-			//#endif
-			const wchar_t *pszUser, *pszDomain; BOOL bResticted;
-			int nChecked = rbCurrentUser;
-			wchar_t szCurUser[MAX_PATH*2+1]; DWORD nUserNameLen = countof(szCurUser);
-
-			if (!GetUserName(szCurUser, &nUserNameLen)) szCurUser[0] = 0;
-
-			wchar_t szRbCaption[MAX_PATH+32];
-			lstrcpy(szRbCaption, L"Run as current &user: "); lstrcat(szRbCaption, szCurUser);
-			SetDlgItemText(hDlg, rbCurrentUser, szRbCaption);
-
-			if (gpConEmu->ActiveCon()->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted))
-			{
-				nChecked = rbAnotherUser;
-
-				if (bResticted)
-				{
-					CheckDlgButton(hDlg, cbRunAsRestricted, BST_CHECKED);
-				}
-				else
-				{
-					if (pszDomain)
-					{
-						if (wcschr(pszDomain, L'.'))
-						{
-							// Если в имени домена есть точка - используем нотацию user@domain
-							// По идее, мы сюда не попадаем, т.к. при вводе имени в таком формате
-							// pszDomain не заполняется, и "UPN format" остается в pszUser
-							lstrcpyn(szCurUser, pszUser, MAX_PATH);
-							wcscat_c(szCurUser, L"@");
-							lstrcpyn(szCurUser+_tcslen(szCurUser), pszDomain, MAX_PATH);
-						}
-						else
-						{
-							// "Старая" нотация domain\user
-							lstrcpyn(szCurUser, pszDomain, MAX_PATH);
-							wcscat_c(szCurUser, L"\\");
-							lstrcpyn(szCurUser+_tcslen(szCurUser), pszUser, MAX_PATH);
-						}
-					}
-					else
-					{
-						lstrcpyn(szCurUser, pszUser, countof(szCurUser));
-					}
-					SetDlgItemText(hDlg, tRunAsPassword, L"");
-				}
-			}
-
-			SetDlgItemText(hDlg, tRunAsUser, szCurUser);
-			CheckRadioButton(hDlg, rbCurrentUser, rbAnotherUser, nChecked);
-			RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
-
-			if (gpConEmu->m_osv.dwMajorVersion < 6)
-			{
-				// В XP и ниже это просто RunAs - с возможностью ввода имени пользователя и пароля
-				//apiShowWindow(GetDlgItem(hDlg, cbRunAsAdmin), SW_HIDE);
-				SetDlgItemTextA(hDlg, cbRunAsAdmin, "&Run as..."); //GCC hack. иначе не собирается
-				// И уменьшить длину
-				RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
-				SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, 0, 0, (rcBox.right-rcBox.left)/2, rcBox.bottom-rcBox.top,
-				             SWP_NOMOVE|SWP_NOZORDER);
-			}
-			else if (gpConEmu->mb_IsUacAdmin || (pArgs && pArgs->bRunAsAdministrator))
-			{
-				CheckDlgButton(hDlg, cbRunAsAdmin, BST_CHECKED);
-
-				if (gpConEmu->mb_IsUacAdmin)  // Только в Vista+ если GUI уже запущен под админом
-				{
-					EnableWindow(GetDlgItem(hDlg, cbRunAsAdmin), FALSE);
-				}
-				else if (gpConEmu->m_osv.dwMajorVersion < 6)
-				{
-					RecreateDlgProc(hDlg, WM_COMMAND, cbRunAsAdmin, 0);
-				}
-			}
-
-			//}
-			SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
-
-			RECT rcBtnBox = {0};
-			if (pArgs->bRecreate)
-			{
-				//GCC hack. иначе не собирается
-				SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "About to recreate console");
-				SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
-				// Выровнять флажок по кнопке
-				GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
-				lbRc = TRUE;
-			}
-			else
-			{
-				//GCC hack. иначе не собирается
-				SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "Create new console");
-				SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_QUESTION), 0);
-				POINT pt = {0,0};
-				MapWindowPoints(GetDlgItem(hDlg, IDC_TERMINATE), hDlg, &pt, 1);
-				DestroyWindow(GetDlgItem(hDlg, IDC_TERMINATE));
-				SetWindowPos(GetDlgItem(hDlg, IDC_START), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-				SetDlgItemText(hDlg, IDC_START, L"&Start");
-				DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
-				// Выровнять флажок по кнопке
-				GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
-				SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
-			}
-
-			if (rcBtnBox.left)
-			{
-				// Выровнять флажок по кнопке
-				MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtnBox, 2);
-				RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
-				POINT pt;
-				pt.x = rcBtnBox.left - (rcBox.right - rcBox.left) - 5;
-				pt.y = rcBtnBox.top + ((rcBtnBox.bottom-rcBtnBox.top) - (rcBox.bottom-rcBox.top))/2;
-				SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-				SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
-			}
-
-			RECT rect;
-			GetWindowRect(hDlg, &rect);
-			RECT rcParent;
-			GetWindowRect(ghWnd, &rcParent);
-			MoveWindow(hDlg,
-			           (rcParent.left+rcParent.right-rect.right+rect.left)/2,
-			           (rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2,
-			           rect.right - rect.left, rect.bottom - rect.top, false);
-			return lbRc;
-		}
-		case WM_CTLCOLORSTATIC:
-
-			if (GetDlgItem(hDlg, IDC_WARNING) == (HWND)lParam)
-			{
-				SetTextColor((HDC)wParam, 255);
-				HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-				SetBkMode((HDC)wParam, TRANSPARENT);
-				return (INT_PTR)hBrush;
-			}
-
-			break;
-		//case WM_GETICON:
-
-		//	if (wParam==ICON_BIG)
-		//	{
-		//		/*SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIcon);
-		//		return 1;*/
-		//	}
-		//	else
-		//	{
-		//		SetWindowLongPtr(hDlg, DWLP_MSGRESULT, (LRESULT)hClassIconSm);
-		//		return 1;
-		//	}
-
-		//	return 0;
-		case UM_USER_CONTROLS:
-		{
-			if (SendDlgItemMessage(hDlg, rbCurrentUser, BM_GETCHECK, 0, 0))
-			{
-				EnableWindow(GetDlgItem(hDlg, cbRunAsRestricted), TRUE);
-				//BOOL lbText = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0) == 0;
-				EnableWindow(GetDlgItem(hDlg, tRunAsUser), FALSE);
-				EnableWindow(GetDlgItem(hDlg, tRunAsPassword), FALSE);
-			}
-			else
-			{
-				if (SendDlgItemMessage(hDlg, tRunAsUser, CB_GETCOUNT, 0, 0) == 0)
-				{
-					DWORD dwLevel = 3, dwEntriesRead = 0, dwTotalEntries = 0, dwResumeHandle = 0;
-					NET_API_STATUS nStatus;
-					USER_INFO_3 *info = NULL;
-					nStatus = ::NetUserEnum(NULL, dwLevel, FILTER_NORMAL_ACCOUNT, (PBYTE*) & info,
-					                        MAX_PREFERRED_LENGTH, &dwEntriesRead, &dwTotalEntries, &dwResumeHandle);
-
-					if (nStatus == NERR_Success)
-					{
-						for(DWORD i = 0; i < dwEntriesRead; ++i)
-						{
-							// usri3_logon_server	"\\*"	wchar_t *
-							if ((info[i].usri3_flags & UF_ACCOUNTDISABLE) == 0)
-								SendDlgItemMessage(hDlg, tRunAsUser, CB_ADDSTRING, 0, (LPARAM)info[i].usri3_name);
-						}
-
-						::NetApiBufferFree(info);
-					}
-					else
-					{
-						// Добавить хотя бы текущего
-						wchar_t szCurUser[MAX_PATH];
-
-						if (GetWindowText(GetDlgItem(hDlg, tRunAsUser), szCurUser, countof(szCurUser)))
-							SendDlgItemMessage(hDlg, tRunAsUser, CB_ADDSTRING, 0, (LPARAM)szCurUser);
-					}
-				}
-
-				EnableWindow(GetDlgItem(hDlg, cbRunAsRestricted), FALSE);
-				EnableWindow(GetDlgItem(hDlg, tRunAsUser), TRUE);
-				EnableWindow(GetDlgItem(hDlg, tRunAsPassword), TRUE);
-			}
-
-			if (wParam == rbAnotherUser)
-				SetFocus(GetDlgItem(hDlg, tRunAsUser));
-		}
-		return 0;
-		case WM_COMMAND:
-
-			if (HIWORD(wParam) == BN_CLICKED)
-			{
-				switch(LOWORD(wParam))
-				{
-					case IDC_CHOOSE:
-					{
-						wchar_t *pszFilePath = NULL;
-						int nLen = MAX_PATH*2;
-						pszFilePath = (wchar_t*)calloc(nLen+3,2); // +2*'"'+\0
-
-						if (!pszFilePath) return 1;
-
-						OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
-						ofn.lStructSize=sizeof(ofn);
-						ofn.hwndOwner = hDlg;
-						ofn.lpstrFilter = _T("Executables (*.exe)\0*.exe\0\0");
-						ofn.nFilterIndex = 1;
-						ofn.lpstrFile = pszFilePath+1;
-						ofn.nMaxFile = nLen;
-						ofn.lpstrTitle = _T("Choose program to run");
-						ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-						            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
-
-						if (GetOpenFileName(&ofn))
-						{
-							LPCWSTR pszNewText = pszFilePath + 1;
-							if (wcschr(pszFilePath, L' '))
-							{
-								pszFilePath[0] = L'"'; _wcscat_c(pszFilePath, nLen+3, L"\"");
-								pszNewText = pszFilePath;
-							}
-							SetDlgItemText(hDlg, IDC_RESTART_CMD, pszNewText);
-						}
-
-						SafeFree(pszFilePath);
-						return 1;
-					}
-					case IDC_CHOOSE_DIR:
-					{
-						BROWSEINFO bi = {ghWnd};
-						wchar_t szFolder[MAX_PATH+1] = {0};
-						GetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder, countof(szFolder));
-						bi.pszDisplayName = szFolder;
-						wchar_t szTitle[100];
-						bi.lpszTitle = wcscpy(szTitle, L"Choose startup directory");
-						bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
-						bi.lpfn = BrowseCallbackProc;
-						bi.lParam = (LPARAM)szFolder;
-						LPITEMIDLIST pRc = SHBrowseForFolder(&bi);
-
-						if (pRc)
-						{
-							if (SHGetPathFromIDList(pRc, szFolder))
-							{
-								SetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder);
-							}
-
-							CoTaskMemFree(pRc);
-						}
-
-						return 1;
-					}
-					case cbRunAsAdmin:
-					{
-						// BCM_SETSHIELD = 5644
-						BOOL bRunAs = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
-
-						if (gOSVer.dwMajorVersion >= 6)
-						{
-							SendDlgItemMessage(hDlg, IDC_START, 5644/*BCM_SETSHIELD*/, 0, bRunAs);
-						}
-
-						if (bRunAs)
-						{
-							CheckRadioButton(hDlg, rbCurrentUser, rbAnotherUser, rbCurrentUser);
-							CheckDlgButton(hDlg, cbRunAsRestricted, BST_UNCHECKED);
-							RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
-						}
-
-						return 1;
-					}
-					case rbCurrentUser:
-					case rbAnotherUser:
-					case cbRunAsRestricted:
-					{
-						RecreateDlgProc(hDlg, UM_USER_CONTROLS, LOWORD(wParam), 0);
-						return 1;
-					}
-					case IDC_START:
-					{
-						RConStartArgs* pArgs = (RConStartArgs*)GetWindowLongPtr(hDlg, DWLP_USER);
-						_ASSERTE(pArgs);
-						SafeFree(pArgs->pszUserName);
-						SafeFree(pArgs->pszDomain);
-
-						//SafeFree(pArgs->pszUserPassword);
-						if (SendDlgItemMessage(hDlg, rbAnotherUser, BM_GETCHECK, 0, 0))
-						{
-							pArgs->bRunAsRestricted = FALSE;
-							pArgs->pszUserName = GetDlgItemText(hDlg, tRunAsUser);
-
-							if (pArgs->pszUserName)
-							{
-								//pArgs->pszUserPassword = GetDlgItemText(hDlg, tRunAsPassword);
-								// Попытаться проверить правильность введенного пароля и возможность запуска
-								if (!pArgs->CheckUserToken(GetDlgItem(hDlg, tRunAsPassword)))
-									return 1;
-							}
-						}
-						else
-						{
-							pArgs->bRunAsRestricted = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0);
-						}
-
-						// Command
-						// pszSpecialCmd мог быть передан аргументом - умолчание для строки ввода
-						if (pArgs->pszSpecialCmd)
-						{
-							SafeFree(pArgs->pszSpecialCmd);
-						}
-
-						// GetDlgItemText выделяет память через calloc
-						pArgs->pszSpecialCmd = GetDlgItemText(hDlg, IDC_RESTART_CMD);
-
-						if (pArgs->pszSpecialCmd)
-							gpSet->HistoryAdd(pArgs->pszSpecialCmd);
-
-						// StartupDir
-						_ASSERTE(pArgs->pszStartupDir==NULL);
-						pArgs->pszStartupDir = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
-						// Vista+ (As Admin...)
-						pArgs->bRunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
-						EndDialog(hDlg, IDC_START);
-						return 1;
-					}
-					case IDC_TERMINATE:
-						EndDialog(hDlg, IDC_TERMINATE);
-						return 1;
-					case IDCANCEL:
-						EndDialog(hDlg, IDCANCEL);
-						return 1;
-				}
-			}
-
-			break;
-		default:
-			return 0;
-	}
-
-	return 0;
 }
 
 void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits)
@@ -7054,7 +6594,9 @@ bool CConEmuMain::isMeForeground(bool abRealAlso)
 
 	if (h != hLastFore)
 	{
-		isMe = (h != NULL) && (h == ghWnd || h == ghOpWnd || (mp_AttachDlg && mp_AttachDlg->GetHWND() == h));
+		isMe = (h != NULL) && (h == ghWnd || h == ghOpWnd
+			|| (mp_AttachDlg && mp_AttachDlg->GetHWND() == h))
+			|| (mp_RecreateDlg && mp_RecreateDlg->GetHWND() == h);
 
 		if (h && !isMe && abRealAlso)
 		{
@@ -7216,6 +6758,23 @@ bool CConEmuMain::isWindowNormal()
 	return true;
 }
 
+bool CConEmuMain::isChildWindow()
+{
+	for (size_t i = 0; i < countof(mp_VCon); i++)
+	{
+		if (mp_VCon[i] && isVisible(mp_VCon[i]))
+		{
+			if (mp_VCon[i]->RCon())
+			{
+				if (mp_VCon[i]->RCon()->GuiWnd() || mp_VCon[i]->RCon()->isPictureView())
+					return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 // Заголовок окна для PictureView вообще может пользователем настраиваться, так что
 // рассчитывать на него при определения "Просмотра" - нельзя
 bool CConEmuMain::isPictureView()
@@ -7230,18 +6789,22 @@ bool CConEmuMain::isPictureView()
 
 	bool lbPrevPicView = (hPictureView != NULL);
 
-	if (mp_VActive && mp_VActive->RCon())
-		hPictureView = mp_VActive->RCon()->isPictureView();
-	else
-		hPictureView = NULL;
-
-	lbRc = hPictureView!=NULL;
-
-	// Если вызывали Help (F1) - окошко PictureView прячется
-	if (hPictureView && !IsWindowVisible(hPictureView))
+	for (size_t i = 0; !lbRc && i < countof(mp_VCon); i++)
 	{
-		lbRc = false;
-		hPictureView = NULL;
+		CVirtualConsole* pVCon = mp_VCon[i];
+		if (!pVCon || !isVisible(pVCon) || !pVCon->RCon())
+			continue;
+
+		hPictureView = pVCon->RCon()->isPictureView();
+
+		lbRc = hPictureView!=NULL;
+
+		// Если вызывали Help (F1) - окошко PictureView прячется
+		if (hPictureView && !IsWindowVisible(hPictureView))
+		{
+			lbRc = false;
+			hPictureView = NULL;
+		}
 	}
 
 	if (bPicViewSlideShow && !hPictureView)
@@ -8175,6 +7738,10 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	{
 		mp_AttachDlg->Close();
 	}
+	if (mp_RecreateDlg)
+	{
+		mp_RecreateDlg->Close();
+	}
 	
 	gpSet->SaveSizePosOnExit();
 	// Делать обязательно перед ResetEvent(mh_ConEmuAliveEvent), чтобы у другого
@@ -8960,21 +8527,36 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 		if (wParam == VK_PAUSE && !isPressed(VK_CONTROL))
 		{
-			if (isPictureView() && !IsWindowUnicode(hPictureView))
+			// SlideShow в PicView2 подзадержался
+			if (isPictureView() /*&& !IsWindowUnicode(hPictureView)*/)
 			{
-				if (messg == WM_KEYUP)
+				bool lbAllowed = true;
+				if (IsWindowUnicode(hPictureView))
 				{
-					bPicViewSlideShow = !bPicViewSlideShow;
-
-					if (bPicViewSlideShow)
-					{
-						if (gpSet->nSlideShowElapse<=500) gpSet->nSlideShowElapse=500;
-
-						dwLastSlideShowTick = GetTickCount() - gpSet->nSlideShowElapse;
-					}
+					// На будущее, если будет "встроенный" SlideShow - вернуть на это сообщение TRUE
+					UINT nMsg = RegisterWindowMessage(L"PicView:HasSlideShow");
+					DWORD_PTR nRc = 0;
+					LRESULT lRc = SendMessageTimeout(hPictureView, nMsg, 0,0, SMTO_NORMAL, 500, &nRc);
+					if (!lRc || nRc != TRUE)
+						lbAllowed = false;
 				}
 
-				return 0;
+				if (lbAllowed)
+				{
+					if (messg == WM_KEYUP)
+					{
+						bPicViewSlideShow = !bPicViewSlideShow;
+
+						if (bPicViewSlideShow)
+						{
+							if (gpSet->nSlideShowElapse<=500) gpSet->nSlideShowElapse=500;
+
+							dwLastSlideShowTick = GetTickCount() - gpSet->nSlideShowElapse;
+						}
+					}
+
+					return 0;
+				}
 			}
 		}
 		else if (bPicViewSlideShow)
@@ -9088,7 +8670,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	            &&
 	            (wParam==gpSet->icMultiNext || wParam==gpSet->icMultiNew || wParam==gpSet->icMultiRecreate
 	             || wParam==gpSet->icMultiClose || wParam==gpSet->icMultiCmd
-	             || (gpSet->isUseWinNumber && wParam>='0' && wParam<='9') // активировать консоль по номеру
+	             || (gpSet->isUseWinNumber && (wParam>='0' && wParam<='9')) // активировать консоль по номеру
+				 || (gpSet->isUseWinArrows && (wParam == VK_LEFT || wParam == VK_RIGHT || wParam == VK_UP || wParam == VK_DOWN))
 	             || (gpSet->isUseWinNumber && (wParam==VK_F11 || wParam==VK_F12))) // KeyDown для этого не проходит, но на всякий случай
 	            &&
 	            gpSet->IsHostkeyPressed())
@@ -9096,12 +8679,13 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	{
 		if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN /*&& (lbLWin || lbRWin) && (wParam != VK_LWIN && wParam != VK_RWIN)*/)
 		{
-			if (wParam==gpSet->icMultiNext || wParam==gpSet->icMultiNew || wParam==gpSet->icMultiRecreate
-			        || wParam==gpSet->icMultiClose || wParam==gpSet->icMultiCmd
-			        || (gpSet->isUseWinNumber && wParam>='0' && wParam<='9')
-			        || (gpSet->isUseWinArrows && (wParam == VK_LEFT || wParam == VK_RIGHT || wParam == VK_UP || wParam == VK_DOWN))
-			        || (gpSet->isUseWinNumber && (wParam==VK_F11 || wParam==VK_F12)) // KeyDown для этого не проходит, но на всякий случай
-			  )
+			// -- это только что проверено
+			//if (wParam==gpSet->icMultiNext || wParam==gpSet->icMultiNew || wParam==gpSet->icMultiRecreate
+			//        || wParam==gpSet->icMultiClose || wParam==gpSet->icMultiCmd
+			//        || (gpSet->isUseWinNumber && wParam>='0' && wParam<='9')
+			//        || (gpSet->isUseWinArrows && (wParam == VK_LEFT || wParam == VK_RIGHT || wParam == VK_UP || wParam == VK_DOWN))
+			//        || (gpSet->isUseWinNumber && (wParam==VK_F11 || wParam==VK_F12)) // KeyDown для этого не проходит, но на всякий случай
+			//  )
 			{
 				// Запомнить, что не нужно пускать в консоль
 				sb_SkipMulticonChar = true;
@@ -9248,7 +8832,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 	if (isPressed(VK_LWIN) || isPressed(VK_RWIN))
 	{
-		if (wParam == ' ' && isPressed(VK_MENU) && !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
+		if (wParam == ' ' 
+			&& ((isPressed(VK_MENU) && !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
+				|| (!isPressed(VK_MENU) && isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))))
 		{
 			if (messg == WM_SYSKEYUP)
 				ShowSysmenu();
@@ -12293,8 +11879,9 @@ void CConEmuMain::OnTransparent()
 	BOOL bNeedRedrawOp = FALSE;
 	UINT nTransparent = max(MIN_ALPHA_VALUE,gpSet->nTransparent);
 	DWORD dwExStyle = GetWindowLongPtr(ghWnd, GWL_EXSTYLE);
+	BOOL lbChanged = FALSE;
 
-	if (nTransparent == 255 /*&& !gpSet->isColorKey*/)
+	if (nTransparent == 255 /*&& !gpSet->isColorKey*/ || isPictureView())
 	{
 		// Прозрачность отключается (полностью непрозрачный)
 		//SetLayeredWindowAttributes(ghWnd, 0, 255, LWA_ALPHA);
@@ -12303,6 +11890,7 @@ void CConEmuMain::OnTransparent()
 			dwExStyle &= ~WS_EX_LAYERED;
 			SetLayeredWindowAttributes(ghWnd, 0, 255, LWA_ALPHA);
 			SetWindowLongPtr(ghWnd, GWL_EXSTYLE, dwExStyle);
+			lbChanged = TRUE;
 		}
 	}
 	else
@@ -12312,12 +11900,23 @@ void CConEmuMain::OnTransparent()
 			dwExStyle |= WS_EX_LAYERED;
 			SetWindowLongPtr(ghWnd, GWL_EXSTYLE, dwExStyle);
 			bNeedRedrawOp = TRUE;
+			lbChanged = TRUE;
 		}
 
-		SetLayeredWindowAttributes(ghWnd,
-		                           0/*gpSet->ColorKey*/, nTransparent,
-		                           ((nTransparent<255) ? LWA_ALPHA : 0) /*| (gpSet->isColorKey ? LWA_COLORKEY : 0)*/);
+		DWORD nNewFlags = ((nTransparent<255) ? LWA_ALPHA : 0);
 
+		BYTE nCurAlpha = 0;
+		DWORD nCurFlags = 0;
+		if (lbChanged
+			|| !GetLayeredWindowAttributes(ghWnd, NULL, &nCurAlpha, &nCurFlags)
+			|| (nCurAlpha != nTransparent) || (nCurFlags != nNewFlags))
+		{
+			lbChanged = TRUE;
+			SetLayeredWindowAttributes(ghWnd, 0, nTransparent, nNewFlags);
+		}
+
+		// После смены стиля (не было альфа - появилась альфа) измененное окно "выносится наверх"
+		// и принудительно перерисовывается. Если в этот момент видим диалог настроек - он затирается.
 		if (bNeedRedrawOp && ghOpWnd)
 		{
 			// Ask the window and its children to repaint
@@ -12328,7 +11927,10 @@ void CConEmuMain::OnTransparent()
 		}
 	}
 
-	OnSetCursor();
+	if (lbChanged)
+	{
+		OnSetCursor();
+	}
 }
 
 // Вызовем UpdateScrollPos для АКТИВНОЙ консоли
@@ -12746,34 +12348,37 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 	}
 	else if (pIn->hdr.nCmd == CECMD_ATTACHGUIAPP)
 	{
+		CESERVER_REQ Out;
+		ExecutePrepareCmd(&Out.hdr, CECMD_ATTACHGUIAPP, sizeof(CESERVER_REQ_HDR)+sizeof(Out.AttachGuiApp));
+		Out.AttachGuiApp = pIn->AttachGuiApp;
+
 		// Уведомить ожидающую вкладку
-		CRealConsole* pRCon = AttachRequestedGui(pIn->AttachGuiApp.sAppFileName, pIn->hdr.nSrcPID);
+		CRealConsole* pRCon = AttachRequestedGui(pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID);
 		if (pRCon)
 		{
-			RECT rcPrev = pIn->AttachGuiApp.rcWindow;
+			RECT rcPrev = Out.AttachGuiApp.rcWindow;
 			HWND hView = pRCon->GetView();
-			GetClientRect(hView, &pIn->AttachGuiApp.rcWindow);
-			//MapWindowPoints(NULL, hView, (LPPOINT)&pIn->AttachGuiApp.rcWindow, 2);
-			pRCon->CorrectGuiChildRect(pIn->AttachGuiApp.nStyle, pIn->AttachGuiApp.nStyleEx, pIn->AttachGuiApp.rcWindow);
+			GetClientRect(hView, &Out.AttachGuiApp.rcWindow);
+			//MapWindowPoints(NULL, hView, (LPPOINT)&Out.AttachGuiApp.rcWindow, 2);
+			pRCon->CorrectGuiChildRect(Out.AttachGuiApp.nStyle, Out.AttachGuiApp.nStyleEx, Out.AttachGuiApp.rcWindow);
 			
 			// Уведомить RCon и ConEmuC, что гуй подцепился
 			// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
-			pRCon->SetGuiMode(pIn->AttachGuiApp.hWindow, pIn->AttachGuiApp.nStyle, pIn->AttachGuiApp.nStyleEx, pIn->AttachGuiApp.sAppFileName, pIn->hdr.nSrcPID, rcPrev);
+			pRCon->SetGuiMode(pIn->AttachGuiApp.hWindow, pIn->AttachGuiApp.nStyle, pIn->AttachGuiApp.nStyleEx, pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID, rcPrev);
 
-			ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, pIn->hdr.cbSize);
-			pIn->AttachGuiApp.bOk = TRUE;
-			pIn->AttachGuiApp.nPID = pRCon->GetServerPID();
-			pIn->AttachGuiApp.hWindow = pRCon->GetView();
+			Out.AttachGuiApp.bOk = TRUE;
+			Out.AttachGuiApp.nPID = pRCon->GetServerPID();
+			Out.AttachGuiApp.hWindow = pRCon->GetView();
 		}
 		else
 		{
-			pIn->AttachGuiApp.bOk = FALSE;
+			Out.AttachGuiApp.bOk = FALSE;
 		}
 		// Отправляем
 		fSuccess = WriteFile(
 		               hPipe,        // handle to pipe
-		               pIn,         // buffer to write from
-		               pIn->hdr.cbSize,  // number of bytes to write
+		               &Out,         // buffer to write from
+		               Out.hdr.cbSize,  // number of bytes to write
 		               &cbWritten,   // number of bytes written
 		               NULL);        // not overlapped I/O
 	}

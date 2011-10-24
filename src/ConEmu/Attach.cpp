@@ -391,6 +391,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 							pDlg->Close();
 						return 1;
 					case IDCANCEL:
+					case IDCLOSE:
 						// Просто закрыть
 						pDlg->Close();
 						return 1;

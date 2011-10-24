@@ -96,6 +96,7 @@ class CVirtualConsole : public CConEmuChild
 		BOOL    mb_ConDataChanged;
 		HRGN    mh_TransparentRgn;
 		//
+		BOOL	mb_ChildWindowWasFound;
 	public:
 		bool InitDC(bool abNoDc, bool abNoWndResize);
 	private:
@@ -265,6 +266,7 @@ class CVirtualConsole : public CConEmuChild
 		BOOL RegisterPanelView(PanelViewInit* ppvi);
 		void OnPanelViewSettingsChanged();
 		BOOL IsPanelViews();
+		BOOL CheckTransparent();
 
 	protected:
 		//inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);
@@ -280,10 +282,10 @@ class CVirtualConsole : public CConEmuChild
 		void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
 		bool UpdatePrepare(HDC *ahDc, MSectionLock *pSDC);
 		void UpdateText(); //, bool updateText, bool updateCursor);
-		BOOL CheckTransparentRgn();
 		WORD CharWidth(wchar_t ch);
 		void CharABC(wchar_t ch, ABC *abc);
 		bool CheckChangedTextAttr();
+		BOOL CheckTransparentRgn(BOOL abHasChildWindows);
 		//void ParseLine(int row, wchar_t *ConCharLine, WORD *ConAttrLine);
 		HANDLE mh_Heap;
 		LPVOID Alloc(size_t nCount, size_t nSize);

@@ -149,19 +149,17 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	DEBUGSTR(szMsg);
 #endif
 	int nAllSize = sizeof(CESERVER_REQ_HDR)+anDataSize;
-	CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(nAllSize,1);
-	_ASSERTE(pIn!=NULL);
+	CESERVER_REQ* pIn = ExecuteNewCmd(nCmd, nAllSize);
 
 	if (!pIn)
 	{
+		_ASSERTE(pIn!=NULL);
 		TCHAR szError[128];
 		_wsprintf(szError, SKIPLEN(countof(szError)) _T("Pipe: Can't allocate memory (%i) bytes, Cmd = %i!"), nAllSize, nCmd);
 		MBoxA(szError);
 		Close();
 		return FALSE;
 	}
-
-	ExecutePrepareCmd(pIn, nCmd, nAllSize);
 
 	if (apData && anDataSize)
 	{

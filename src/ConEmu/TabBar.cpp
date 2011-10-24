@@ -2465,7 +2465,7 @@ void TabBarClass::OnNewConPopup()
 
 		if (isPressed(VK_SHIFT))
 		{
-			int nRc = gpConEmu->RecreateDlg((LPARAM)&con);
+			int nRc = gpConEmu->RecreateDlg(&con);
 
 			if (nRc != IDC_START)
 				return;

@@ -193,11 +193,11 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap()
 	return gpConInfo;
 }
 
-BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ** ppReply, DWORD* pcbReplySize, DWORD* pcbMaxReplySize, LPARAM lParam);
+#ifdef USE_PIPE_SERVER
+BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 BOOL WINAPI HookServerReady(LPARAM lParam);
 void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 
-#ifdef USE_PIPE_SERVER
 PipeServer<CESERVER_REQ,1> *gpHookServer = NULL;
 #endif
 
@@ -311,7 +311,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	if (gpHookServer)
 	{
 		wchar_t szPipeName[128];
-		_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CEHOOKSPIPENAME, GetCurrentProcessId());
+		_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CEHOOKSPIPENAME, L".", GetCurrentProcessId());
 		if (!gpHookServer->StartPipeServer(szPipeName, HookServerCommand, HookServerReady, HookServerFree, (LPARAM)gpHookServer))
 		{
 			_ASSERTEX(FALSE); // Ошибка запуска Pipes?
@@ -383,7 +383,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		if (dwConEmuHwnd)
 		{
 			DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
-			CESERVER_REQ *pIn = (CESERVER_REQ*)calloc(nSize,1);
+			CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(nSize);
 			ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
 			pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 			GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
@@ -1122,9 +1122,11 @@ HWND WINAPI GetRealConsoleWindow()
 
 
 // Для облегчения жизни - сервер кеширует данные, калбэк может использовать ту же память (*pcbMaxReplySize)
-BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ** ppReply, DWORD* pcbReplySize, DWORD* pcbMaxReplySize, LPARAM lParam)
+BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
-	TODO("Собственно, выполнение команд!");
+	WARNING("Собственно, выполнение команд!");
+	
+	BOOL lbRc = FALSE, lbFRc;
 	
 	switch (pCmd->hdr.nCmd)
 	{
@@ -1134,25 +1136,20 @@ BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ** ppReply, DWORD*
 		break;
 	case CECMD_SETPARENT:
 		break;
+	case CECMD_CTRLBREAK:
+		if (CHECK_CMD_SIZE(pCmd,2*sizeof(DWORD)))
+		{
+			lbFRc = GenerateConsoleCtrlEvent(pCmd->dwData[0], pCmd->dwData[1]);
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
+			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize);
+			if (lbRc)
+				ppReply->dwData[0] = lbFRc;
+		}
+		break;
 	}
 	
-	// Если еще нет - отдать "пустышку"
-	if (*ppReply && (*pcbMaxReplySize < sizeof(CESERVER_REQ_HDR)))
-	{
-		ExecuteFreeResult(*ppReply);
-		*ppReply = NULL;
-	}
-	if (!*ppReply)
-	{
-		*pcbMaxReplySize = sizeof(CESERVER_REQ_HDR);
-		*ppReply = ExecuteNewCmd(pCmd->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
-	}
-	else
-	{
-		ExecutePrepareCmd(*ppReply, pCmd->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
-	}
-	
-	return TRUE;
+	// Если (lbRc == FALSE) - в пайп будет отдана "пустышка" ((DWORD)0)
+	return lbRc;
 }
 
 // Вызывается после того, как создан Pipe Instance

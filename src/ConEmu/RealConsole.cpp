@@ -438,7 +438,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 	CESERVER_REQ lOut = {{nOutSize}};
 	SMALL_RECT rect = {0};
 	_ASSERTE(anCmdID==CECMD_SETSIZESYNC || anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED);
-	ExecutePrepareCmd(&lIn, anCmdID, lIn.hdr.cbSize);
+	ExecutePrepareCmd(&lIn.hdr, anCmdID, lIn.hdr.cbSize);
 
 	// Для режима BufferHeight нужно передать еще и видимый прямоугольник (нужна только верхняя координата?)
 	if (con.bBufferHeight)
@@ -1431,6 +1431,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	WARNING("Переделать ожидание на hDataReadyEvent, который выставляется в сервере?");
 	TODO("Нить не завершается при F10 в фаре - процессы пока не инициализированы...");
 	DWORD nConsoleStartTick = GetTickCount();
+	DWORD nTimeout = 0;
 
 	while(TRUE)
 	{
@@ -1454,7 +1455,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 		bIconic = gpConEmu->isIconic();
 		// в минимизированном/неактивном режиме - сократить расходы
-		nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, bIconic ? max(1000,nInactiveElapse) : !bActive ? nInactiveElapse : nElapse);
+		nTimeout = bIconic ? max(1000,nInactiveElapse) : !bActive ? nInactiveElapse : nElapse;
+		nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, nTimeout);
 		_ASSERTE(nWait!=(DWORD)-1);
 
 		if (nWait == IDEVENT_TERM || nWait == IDEVENT_SERVERPH)
@@ -4631,7 +4633,6 @@ DWORD CRealConsole::RConServerThread(LPVOID lpvParam)
 		//DisconnectNamedPipe(hPipe);
 		SafeCloseHandle(hPipe);
 	} // Перейти к открытию нового instance пайпа
-
 	while(WaitForSingleObject(pRCon->mh_TermEvent, 0) != WAIT_OBJECT_0);
 
 	return 0;
@@ -6813,7 +6814,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 		if (!mh_ServerSemaphore)
 			mh_ServerSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
 
-		for(int i=0; i<MAX_SERVER_THREADS; i++)
+		for (int i=0; i<MAX_SERVER_THREADS; i++)
 		{
 			if (mh_RConServerThreads[i])
 				continue;
@@ -9267,7 +9268,7 @@ void CRealConsole::UpdateServerActive(BOOL abActive)
 		CESERVER_REQ lIn = {{nInSize}};
 		lIn.dwData[0] = abActive;
 		lIn.dwData[1] = mb_ThawRefreshThread;
-		ExecutePrepareCmd(&lIn, CECMD_ONACTIVATION, lIn.hdr.cbSize);
+		ExecutePrepareCmd(&lIn.hdr, CECMD_ONACTIVATION, lIn.hdr.cbSize);
 		fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, &lIn, lIn.hdr.cbSize, &lIn, lIn.hdr.cbSize, &dwRead, 500);
 	}
 }
@@ -10076,6 +10077,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 	const CESERVER_REQ *pOut = NULL;
 	DWORD cbRead = 0;
 	MPipe<CESERVER_REQ_HDR,CESERVER_REQ> Pipe;
+	_ASSERTE(sizeof(In)==sizeof(CESERVER_REQ_HDR));
 	ExecutePrepareCmd(&In, CECMD_GETOUTPUT, sizeof(CESERVER_REQ_HDR));
 	Pipe.InitName(gpConEmu->ms_ConEmuVer, L"%s", ms_ConEmuC_Pipe, 0);
 
@@ -10150,7 +10152,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 	//    return 0;
 	//}
 	//
-	//ExecutePrepareCmd((CESERVER_REQ*)&in, CECMD_GETOUTPUT, sizeof(CESERVER_REQ_HDR));
+	//ExecutePrepareCmd((CESERVER_REQ*)&in.hdr, CECMD_GETOUTPUT, sizeof(CESERVER_REQ_HDR));
 	//
 	//// Send a message to the pipe server and read the response.
 	//fSuccess = TransactNamedPipe(
@@ -11445,7 +11447,7 @@ HWND CRealConsole::FindPicViewFrom(HWND hFrom)
 		DWORD dwPID, dwTID;
 		dwTID = GetWindowThreadProcessId(hPicView, &dwPID);
 
-		if (dwPID == mn_FarPID)
+		if (dwPID == mn_FarPID || dwPID == GetActivePID())
 			break;
 	}
 
@@ -11467,12 +11469,12 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 	// !!! PicView может быть несколько, по каждому на открытый ФАР
 	if (!hPictureView)
 	{
+		// !! Дочерние окна должны быть только в окнах отрисовки. В главном - быть ничего не должно !!
 		//hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
-		hPictureView = FindPicViewFrom(ghWnd);
-
-		if (!hPictureView)
-			//hPictureView = FindWindowEx('ghWnd DC', NULL, L"FarPictureViewControlClass", NULL);
-			hPictureView = FindPicViewFrom(mp_VCon->GetView());
+		//hPictureView = FindPicViewFrom(ghWnd);
+		//if (!hPictureView)
+		//hPictureView = FindWindowEx('ghWnd DC', NULL, L"FarPictureViewControlClass", NULL);
+		hPictureView = FindPicViewFrom(mp_VCon->GetView());
 
 		if (!hPictureView)    // FullScreen?
 		{
@@ -11493,11 +11495,13 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 
 	if (hPictureView)
 	{
+		WARNING("PicView теперь дочернее в DC, но может быть FullScreen?")
 		if (mb_PicViewWasHidden)
 		{
 			// Окошко было скрыто при переключении на другую консоль, но картинка еще активна
 		}
-		else if (!IsWindowVisible(hPictureView))
+		else
+		if (!IsWindowVisible(hPictureView))
 		{
 			// Если вызывали Help (F1) - окошко PictureView прячется (самим плагином), считаем что картинки нет
 			hPictureView = NULL; mb_PicViewWasHidden = FALSE;

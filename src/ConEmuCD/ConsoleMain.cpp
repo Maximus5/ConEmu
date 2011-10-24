@@ -4492,8 +4492,8 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 	if (!ProcessSrvCommand(pIn ? *pIn : in, &pOut) || pOut==NULL)
 	{
 		// Если результата нет - все равно что-нибудь запишем, иначе TransactNamedPipe может виснуть?
-		CESERVER_REQ_HDR Out= {0};
-		ExecutePrepareCmd((CESERVER_REQ*)&Out, in.hdr.nCmd, sizeof(Out));
+		CESERVER_REQ_HDR Out;
+		ExecutePrepareCmd(&Out, in.hdr.nCmd, sizeof(Out));
 		fSuccess = WriteFile(
 		               hPipe,        // handle to pipe
 		               &Out,         // buffer to write from
@@ -4694,8 +4694,7 @@ BOOL cmd_GetOutput(CESERVER_REQ& in, CESERVER_REQ** out)
 		DWORD nSize = sizeof(CESERVER_CONSAVE_HDR)
 		              + min((int)gpStoredOutput->hdr.cbMaxOneBufferSize,
 		                    (gpStoredOutput->hdr.sbi.dwSize.X*gpStoredOutput->hdr.sbi.dwSize.Y*2));
-		ExecutePrepareCmd(
-		    (CESERVER_REQ*)&(gpStoredOutput->hdr), CECMD_GETOUTPUT, nSize);
+		ExecutePrepareCmd(&gpStoredOutput->hdr.hdr, CECMD_GETOUTPUT, nSize);
 		*out = (CESERVER_REQ*)gpStoredOutput;
 		lbRc = TRUE;
 	}
@@ -5173,7 +5172,7 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 	}
 	else
 	{
-		_ASSERTE(in.AttachGuiApp.nPID == gpSrv->dwRootProcess);
+		_ASSERTEX(in.AttachGuiApp.nPID == gpSrv->dwRootProcess && gpSrv->dwRootProcess && in.AttachGuiApp.nPID);
 
 		// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
 		if (gpSrv->hRootProcessGui == NULL)

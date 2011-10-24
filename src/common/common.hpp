@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    74
+#define CESERVER_REQ_VER    75
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -203,6 +203,7 @@ const CECMD
 	CECMD_KEYSHORTCUTS   = 47, // BYTE Data[2]; SetConsoleKeyShortcuts from kernel32.dll
 	CECMD_SETFOCUS       = 48, // CESERVER_REQ_SETFOCUS
 	CECMD_SETPARENT      = 49, // CESERVER_REQ_SETPARENT
+	CECMD_CTRLBREAK      = 50, // GenerateConsoleCtrlEvent(dwData[0], dwData[1])
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -794,16 +795,18 @@ struct ForwardedFileInfo
 
 struct CESERVER_REQ_HDR
 {
-	DWORD   cbSize;
-	CECMD   nCmd;
+	DWORD   cbSize;     // Не size_t(!), а именно DWORD, т.к. пакетами обмениваются и 32<->64 бит между собой.
+	CECMD   nCmd;       // DWORD
 	DWORD   nVersion;
 	DWORD   nSrcThreadId;
 	DWORD   nSrcPID;
 	DWORD   nCreateTick;
-	DWORD   nBits;     // битность вызывающего процесса
-	DWORD   nReserved; // для выравнивания
+	DWORD   nBits;      // битность вызывающего процесса
+	DWORD   nLastError; // последний GetLastError() при отправке пакета
 	u64     hModule;
 };
+
+#define CHECK_CMD_SIZE(pCmd,data_size) ((pCmd)->hdr.cbSize >= (sizeof(CESERVER_REQ_HDR) + data_size))
 
 
 struct CESERVER_CHAR_HDR
@@ -1277,9 +1280,9 @@ struct CESERVER_REQ_PEEKREADINFO
 struct CESERVER_REQ_ATTACHGUIAPP
 {
 	BOOL  bOk;
+	DWORD nPID;
 	HWND2 hWindow;  // NULL - проверка можно ли, HWND - когда создан
 	RECT  rcWindow; // координаты
-	DWORD nPID;
 	DWORD nStyle, nStyleEx;
 	wchar_t sAppFileName[MAX_PATH*2];
 };

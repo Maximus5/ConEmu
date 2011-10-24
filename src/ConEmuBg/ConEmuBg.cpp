@@ -1046,7 +1046,7 @@ bool CompareNames(LPCWSTR asMaskList, LPWSTR asPath)
 		LPCWSTR pszSep = wcschr(asMaskList, L'|');
 		if (pszSep)
 		{
-			size_t nLen = min(countof(szMask)-1,pszSep-asMaskList);
+			int nLen = min(countof(szMask)-1,pszSep-asMaskList);
 			lstrcpyn(szMask, asMaskList, nLen+1);
 			szMask[nLen] = 0;
 		}
@@ -1089,7 +1089,7 @@ struct RGBColor
 
 void ParseColors(LPCWSTR asColors, BOOL abSwap/*RGB->COLORREF*/, COLORREF (&crValues)[32], int &nCount)
 {
-	size_t i = 0;
+	int i = 0;
 	wchar_t* pszEnd = NULL;
 	
 	while (asColors && *asColors)

@@ -968,7 +968,7 @@ BOOL UngetDummyMouseEvent(BOOL abRead, HookCallbackArg* pArgs)
 	{
 		_ASSERTE(pArgs->lArguments[1] && pArgs->lArguments[2] && pArgs->lArguments[3]);
 	}
-	else if ((gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)))
+	else if ((gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)) || (gnDummyMouseEventFromMacro > 0))
 	{
 		// Такой финт нужен только в случае:
 		// в редакторе идет скролл мышкой (скролл - зажатой кнопкой на заголовке/кейбаре)
@@ -2805,7 +2805,7 @@ BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
 	else
 	{
 		CESERVER_REQ In;
-		ExecutePrepareCmd((CESERVER_REQ*)&In, CECMD_SETSIZENOSYNC, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE));
+		ExecutePrepareCmd(&In, CECMD_SETSIZENOSYNC, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE));
 		memset(&In.SetSize, 0, sizeof(In.SetSize));
 		// Для 'far /w' нужно оставить высоту буфера!
 		In.SetSize.nBufferHeight = gpFarInfo->bBufferSupport ? -1 : 0;
@@ -4301,7 +4301,7 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 	gpTabs->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB)
 	                     + sizeof(ConEmuTab) * ((tabCount > 1) ? (tabCount - 1) : 0);
 	// Обновляем структуру сразу, чтобы она была готова к отправке в любой момент
-	ExecutePrepareCmd(gpTabs, CECMD_TABSCHANGED, gpTabs->hdr.cbSize);
+	ExecutePrepareCmd(&gpTabs->hdr, CECMD_TABSCHANGED, gpTabs->hdr.cbSize);
 
 	// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
 	if (tabCount && ConEmuHwnd && IsWindow(ConEmuHwnd) && abForceSend)
@@ -4909,7 +4909,7 @@ void InitResources()
 
 	if (pIn)
 	{
-		ExecutePrepareCmd(pIn, CECMD_RESOURCES, nSize);
+		ExecutePrepareCmd(&pIn->hdr, CECMD_RESOURCES, nSize);
 		pIn->dwData[0] = GetCurrentProcessId();
 		//pIn->dwData[1] = gnInputThreadId;
 		wchar_t* pszRes = (wchar_t*)&(pIn->dwData[1]);
@@ -4971,7 +4971,7 @@ BOOL OutDataAlloc(DWORD anSize)
 		return FALSE;
 
 	// Код команды пока не известен - установит вызывающая функция
-	ExecutePrepareCmd(gpCmdRet, 0, anSize+sizeof(CESERVER_REQ_HDR));
+	ExecutePrepareCmd(&gpCmdRet->hdr, 0, anSize+sizeof(CESERVER_REQ_HDR));
 	gpData = gpCmdRet->Data;
 	gnDataSize = anSize;
 	gpCursor = gpData;
@@ -4994,7 +4994,7 @@ BOOL OutDataRealloc(DWORD anNewSize)
 	if (!lpNewCmdRet)
 		return FALSE;
 
-	ExecutePrepareCmd(lpNewCmdRet, gpCmdRet->hdr.nCmd, anNewSize+sizeof(CESERVER_REQ_HDR));
+	ExecutePrepareCmd(&lpNewCmdRet->hdr, gpCmdRet->hdr.nCmd, anNewSize+sizeof(CESERVER_REQ_HDR));
 	LPBYTE lpNewData = lpNewCmdRet->Data;
 
 	if (!lpNewData)
@@ -5689,7 +5689,7 @@ void ShowPluginMenu(int nID /*= -1*/)
 			if (!pIn) return;
 
 			CESERVER_REQ* pOut = NULL;
-			ExecutePrepareCmd(pIn, CECMD_GETOUTPUTFILE, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+			ExecutePrepareCmd(&pIn->hdr, CECMD_GETOUTPUTFILE, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
 			pIn->OutputFile.bUnicode = (gFarVersion.dwVerMajor>=2);
 			pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 
