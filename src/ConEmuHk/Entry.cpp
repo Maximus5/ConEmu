@@ -57,6 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuHooks.h"
 #include "RegHooks.h"
 #include "ShellProcessor.h"
+#include "UserImp.h"
 
 
 #if defined(__GNUC__)
@@ -101,8 +102,6 @@ extern BOOL StartupHooks(HMODULE ahOurDll);
 extern void ShutdownHooks();
 extern void InitializeHookedModules();
 extern void FinalizeHookedModules();
-extern BOOL MyAllowSetForegroundWindow(DWORD dwProcessId);
-extern DWORD MyGetWindowThreadProcessId(HWND hWnd, LPDWORD lpdwProcessId);
 //HMODULE ghPsApi = NULL;
 #ifdef _DEBUG
 extern HHOOK ghGuiClientRetHook;
@@ -172,7 +171,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap()
 			gnGuiPID = gpConInfo->nGuiPID;
 			ghConEmuWnd = gpConInfo->hConEmuRoot;
 			ghConEmuWndDC = gpConInfo->hConEmuWnd;
-			_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
+			_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 			gnServerPID = gpConInfo->nServerPID;
 		}
 		else
@@ -311,7 +310,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	if (gpHookServer)
 	{
 		wchar_t szPipeName[128];
-		_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CEHOOKSPIPENAME, L".", GetCurrentProcessId());
+		msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", GetCurrentProcessId());
 		if (!gpHookServer->StartPipeServer(szPipeName, HookServerCommand, HookServerReady, HookServerFree, (LPARAM)gpHookServer))
 		{
 			_ASSERTEX(FALSE); // Ошибка запуска Pipes?
@@ -371,9 +370,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			if (szVar[0] == L'0' && szVar[1] == L'x')
 			{
 				dwConEmuHwnd = wcstoul(szVar+2, &psz, 16);
-				if (!IsWindow((HWND)dwConEmuHwnd))
+				if (!user->isWindow((HWND)dwConEmuHwnd))
 					dwConEmuHwnd = 0;
-				else if (!GetClassName((HWND)dwConEmuHwnd, szVar, countof(szVar)))
+				else if (!user->getClassNameW((HWND)dwConEmuHwnd, szVar, countof(szVar)))
 					dwConEmuHwnd = 0;
 				else if (lstrcmp(szVar, VirtualConsoleClassMain) != 0)
 					dwConEmuHwnd = 0;
@@ -401,10 +400,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				{
 					if (pOut->AttachGuiApp.nFlags & agaf_Success)
 					{
-						MyAllowSetForegroundWindow(pOut->hdr.nSrcPID); // PID ConEmu.
+						user->allowSetForegroundWindow(pOut->hdr.nSrcPID); // PID ConEmu.
 						ghConEmuWnd = (HWND)dwConEmuHwnd;
 						ghConEmuWndDC = pOut->AttachGuiApp.hWindow;
-						_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
+						_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 						grcConEmuClient = pOut->AttachGuiApp.rcWindow;
 						gnServerPID = pOut->AttachGuiApp.nPID;
 						gbAttachGuiClient = TRUE;
@@ -521,7 +520,7 @@ void DllStop()
 	
 	#ifdef _DEBUG
 	if (ghGuiClientRetHook)
-		UnhookWindowsHookEx(ghGuiClientRetHook);
+		user->unhookWindowsHookEx(ghGuiClientRetHook);
 	#endif
 
 	if (/*!gbSkipInjects &&*/ gbHooksWasSet)
@@ -593,6 +592,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			gnSelfPID = GetCurrentProcessId();
 			ghWorkingModule = (u64)hModule;
 			gfGetRealConsoleWindow = GetConsoleWindow;
+			user = (UserImp*)calloc(1, sizeof(*user));
 
 			#ifdef _DEBUG
 			gAllowAssertThread = am_Pipe;
@@ -640,6 +640,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			#else
 			DllStart(NULL);
 			#endif
+			
+			user->setAllowLoadLibrary();
 		}
 		break;
 		
@@ -661,6 +663,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			if (gbHooksWasSet)
 				lbAllow = FALSE; // Иначе свалимся, т.к. FreeLibrary перехвачена
 			DllStop();
+			// -- free не нужен, т.к. уже вызван HeapDeinitialize()
+			//free(user);
 		}
 		break;
 	}
@@ -714,7 +718,7 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 //		          (wParam==WM_SYSKEYUP) ? L"WM_SYSKEYUP" : L"UnknownMessage",
 //		          pKB->vkCode, pKB->flags, pKB->time, dwTick, (dwTick-pKB->time));
 //		//if (wParam == WM_KEYUP && gnSkipVkModCode && pKB->vkCode == gnSkipVkModCode) {
-//		//	wsprintf(szKH+lstrlen(szKH)-1, L" - WinDelta=%i\n", (pKB->time - gnWinPressTick));
+//		//	msprintf(szKH+lstrlen(szKH)-1, L" - WinDelta=%i\n", (pKB->time - gnWinPressTick));
 //		//}
 //		OutputDebugString(szKH);
 //#endif
@@ -997,7 +1001,7 @@ void SendStarted()
 			gnGuiPID = pOut->StartStopRet.dwPID;
 			ghConEmuWnd = pOut->StartStopRet.hWnd;
 			ghConEmuWndDC = pOut->StartStopRet.hWndDC;
-			_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
+			_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 			//if (gnRunMode == RM_SERVER)
 			//{
 			//	if (gpSrv)
@@ -1114,7 +1118,7 @@ HWND WINAPI GetRealConsoleWindow()
 	_ASSERTE(gfGetRealConsoleWindow);
 	HWND hConWnd = gfGetRealConsoleWindow ? gfGetRealConsoleWindow() : NULL; //GetConsoleWindow();
 #ifdef _DEBUG
-	wchar_t sClass[64]; GetClassName(hConWnd, sClass, countof(sClass));
+	wchar_t sClass[64]; user->getClassNameW(hConWnd, sClass, countof(sClass));
 	_ASSERTEX(hConWnd==NULL || lstrcmp(sClass, L"ConsoleWindowClass")==0);
 #endif
 	return hConWnd;

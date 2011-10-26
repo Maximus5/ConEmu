@@ -362,8 +362,8 @@ class CRealConsole
 		DWORD CanActivateFarWindow(int anWndIndex);
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
 		void CloseConsole(BOOL abForceTerminate = FALSE);
-		BOOL CanCloseTab(); // Разрешено только в фаре
-		void CloseTab(); // Доступно только для фара
+		BOOL CanCloseTab(BOOL abPluginRequired = FALSE);
+		void CloseTab();
 		bool isConsoleClosing();
 		void OnServerClosing(DWORD anSrvPID);
 		void Paste();

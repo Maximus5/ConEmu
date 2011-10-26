@@ -1,3 +1,15 @@
+2011.10.26
+[%] Issue 438: Far мог падать при попытке настройки палитры TrueColor (ExtendedConsole64.dll) в режиме "Far /w".
+[%] В 111019 поломался плагин ConEmu Panel Views.
+[*] При включенном флажке 'Save window size and position on exit' сохряняем один раз, перед закрытием консолей.
+[*] Разработчикам Far-плагинов. ConEmu.dll: HWND WINAPI GetFarHWND2(int anConEmuOnly)
+	anConEmuOnly
+		2 - вернуть главное окно ConEmu
+		1 - вернуть окно отрисовки
+		0 - если в ConEmu - вернуть окно отрисовки, иначе - вернуть окно консоли
+[*] Еще немного FAQ-ConEmu.txt
+
+
 2011.10.24
 [%] В 111023 поломался диалог 'Recreate console'.
 [*] Продолжение GUI приложений во вкладках.

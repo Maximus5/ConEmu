@@ -764,7 +764,7 @@ public:
 public:
 	void ShowTip(HWND ahOwner, HWND ahControl, LPCWSTR asText, BOOL abBalloon, POINT pt, HINSTANCE hInstance = NULL/*g_hInstance*/);
 	void HideTip();
-	virtual bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags) { return false; };
+	//virtual bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags) { return false; };
 private:
 	HWND mh_Tip, mh_Ball;
 	wchar_t *mpsz_LastTip;

@@ -108,7 +108,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 
 void SendTabs(int tabCount, BOOL abForceSend=FALSE);
 
-void InitHWND(HWND ahFarHwnd);
+void InitHWND(/*HWND ahFarHwnd*/);
 void InitRootKey();
 
 #define ConEmu_SysID 0x43454D55 // 'CEMU'

@@ -1391,9 +1391,10 @@ void TabBarClass::OnMouse(int message, int x, int y)
 					}
 					else
 					{
-						// Если запущен CMD, PowerShell, и т.п. - показать ДИАЛОГ пересоздания консоли
-						// Там есть кнопки Terminate & Recreate
-						gpConEmu->Recreate(TRUE, TRUE);
+						// Если запущен CMD, PowerShell, и т.п.
+						pVCon->RCon()->CloseTab();
+						//// показать ДИАЛОГ пересоздания консоли, там есть кнопки Terminate & Recreate
+						//gpConEmu->Recreate(TRUE, TRUE);
 					}
 				}
 			}
@@ -2453,10 +2454,10 @@ void TabBarClass::OnNewConPopup()
 	SendMessage(mh_Toolbar, TB_GETRECT, TID_CREATE_CON, (LPARAM)&rcBtnRect);
 	MapWindowPoints(mh_Toolbar, NULL, (LPPOINT)&rcBtnRect, 2);
 	mb_InNewConPopup = true;
-	int nId = TrackPopupMenu(hPopup, TPM_RIGHTALIGN|TPM_TOPALIGN|TPM_RETURNCMD/*|TPM_NONOTIFY*/,
+	int nId = gpConEmu->trackPopupMenu(tmp_Cmd, hPopup, TPM_RIGHTALIGN|TPM_TOPALIGN|TPM_RETURNCMD/*|TPM_NONOTIFY*/,
 	                         rcBtnRect.right,rcBtnRect.bottom, 0, ghWnd, NULL);
 	mb_InNewConPopup = false;
-	HideTip();
+	//gpConEmu->mp_Tip->HideTip();
 	
 	if (nId >= 1 && nId <= nLastID)
 	{
@@ -2494,12 +2495,39 @@ bool TabBarClass::OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags)
 			if (History[nID-1].szShort[0] && lstrcmp(pszCmd, History[nID-1].szShort))
 			{
 				POINT pt; GetCursorPos(&pt);
-				ShowTip(ghWnd, ghWnd, pszCmd, TRUE, pt, g_hInstance);
+				RECT rcMenuItem = {};
+				BOOL lbMenuItemPos = FALSE;
+				if (nFlags & MF_POPUP)
+				{
+					lbMenuItemPos = GetMenuItemRect(ghWnd, hMenu, nID, &rcMenuItem);
+				}
+				else
+				{
+					for (int i = 0; i < 100; i++)
+					{
+						if (GetMenuItemID(hMenu, i) == nID)
+						{
+							lbMenuItemPos = GetMenuItemRect(ghWnd, hMenu, i, &rcMenuItem);
+							break;
+						}
+					}
+				}
+				if (lbMenuItemPos)
+				{
+					pt.x = rcMenuItem.left + (rcMenuItem.bottom - rcMenuItem.top)*2; //(rcMenuItem.left + rcMenuItem.right) >> 1;
+					pt.y = rcMenuItem.bottom;
+				}
+				
+				gpConEmu->mp_Tip->ShowTip(ghWnd, ghWnd, pszCmd, TRUE, pt, g_hInstance);
 			}
 			else
 			{
-				HideTip();
+				gpConEmu->mp_Tip->HideTip();
 			}
+		}
+		else
+		{
+			gpConEmu->mp_Tip->HideTip();
 		}
 		return true;
 	}

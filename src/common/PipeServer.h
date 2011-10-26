@@ -130,18 +130,18 @@ struct PipeServer
 		{
 			wchar_t sTitle[128], sText[MAX_PATH*2];
 			DWORD dwErr = GetLastError();
-			wsprintfW(pPipe->sErrorMsg, asFormat/*i.e. L"ConnectNamedPipe failed with 0x%08X."*/, dwErr);
+			msprintf(pPipe->sErrorMsg, countof(pPipe->sErrorMsg), asFormat/*i.e. L"ConnectNamedPipe failed with 0x%08X."*/, dwErr);
 
 			if (abShow)
 			{
-				_wsprintf(sText, SKIPLEN(countof(sText)) L"%s\n%s", pPipe->sErrorMsg, ms_PipeName);
-				_wsprintf(sTitle, SKIPLEN(countof(sTitle)) L"PipeServerError, PID=%u, TID=%u",
+				msprintf(sText, countof(sText), L"%s\n%s", pPipe->sErrorMsg, ms_PipeName);
+				msprintf(sTitle, countof(sTitle), L"PipeServerError, PID=%u, TID=%u",
 				                GetCurrentProcessId(), GetCurrentThreadId());
 				GuiMessageBox(NULL, sText, sTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 			}
 			else
 			{
-				_wsprintf(sText, SKIPLEN(countof(sText)) L"PipeServerError, PID=%u, TID=%u\n  %s\n  %s\n",
+				msprintf(sText, countof(sText), L"PipeServerError, PID=%u, TID=%u\n  %s\n  %s\n",
 				                GetCurrentProcessId(), GetCurrentThreadId(),
 				                pPipe->sErrorMsg, ms_PipeName);
 				OutputDebugStringW(sText);

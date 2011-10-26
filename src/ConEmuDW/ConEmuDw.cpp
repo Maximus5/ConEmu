@@ -1297,8 +1297,8 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 	LPCWSTR pszText = L"Executing GUI dialog";
 	int nWidth = Far3Color::Max(lstrlen(pszText),lstrlen(pszTitle))+10;
 	int nHeight = 6;
-	int nX = (csbi.srWindow.Right + csbi.srWindow.Left - nWidth) >> 1;
-	int nY = (csbi.srWindow.Bottom + csbi.srWindow.Top - nHeight) >> 1;
+	int nX = (csbi.srWindow.Right - csbi.srWindow.Left - nWidth) >> 1;
+	int nY = (csbi.srWindow.Bottom - csbi.srWindow.Top - nHeight) >> 1;
 	SMALL_RECT Region = {nX, nY, nX+nWidth-1, nY+nHeight-1};
 	COORD BufSize = {nWidth,nHeight};
 	COORD BufCoord = {0,0};

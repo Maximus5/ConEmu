@@ -425,16 +425,6 @@ void SetStartupInfoW1900(void *aInfo)
 			_ASSERTE(FarVer.Major == 3);
 		}
 	}
-	//lstrcpynW(gszRootKey, InfoW1900->RootKey, MAX_PATH);
-	//WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
-
-	//if (*pszSlash == L'\\') *(pszSlash--) = 0;
-
-	//while(pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
-
-	//*pszSlash = 0;
-	/*if (!FarHwnd)
-		InitHWND((HWND)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETFARHWND, 0));*/
 }
 
 DWORD GetEditorModifiedStateW1900()

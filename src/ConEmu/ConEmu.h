@@ -42,42 +42,45 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #endif 	/* __ITaskbarList2_FWD_DEFINED__ */
 
 #define WM_TRAYNOTIFY WM_USER+1
-#define ID_TOMONITOR 0xABBD
-#define ID_NEWCONSOLE 0xABBE
-#define ID_DUMPPROCESS 0xABBF
-#define ID_DEBUG_SHOWRECTS 0xABC0
-//#define ID_MONITOR_SHELLACTIVITY 0xABC1
-#define ID_CON_COPY 0xABC2
-#define ID_CON_MARKTEXT 0xABC3
-#define ID_CON_MARKBLOCK 0xABC4
-#define ID_ALWAYSONTOP 0xABC5
-#define ID_DEBUGGUI 0xABC6
-#define ID_HELP 0xABC7
-#define ID_CON_TOGGLE_VISIBLE 0xABC8
-#define ID_CON_PASTE 0xABC9
-#define ID_AUTOSCROLL 0xABCA
-#define ID_DUMPCONSOLE 0xABCB
-#define ID_CONPROP 0xABCC
-#define ID_SETTINGS 0xABCD
-#define ID_ABOUT 0xABCE
-#define ID_TOTRAY 0xABCF
-#define ID_DEBUGCON 0xABD0
-// VCon menu items
-#define IDM_VCONCMD_FIRST 0xABD1
-#define IDM_CLOSE IDM_VCONCMD_FIRST
-#define IDM_RESTART 0xABD2
-#define IDM_RESTARTAS 0xABD3
-#define IDM_TERMINATE 0xABD4
-//#define IDM_NEW 0xABD5
-#define IDM_ADMIN_DUPLICATE 0xABD6
-#define IDM_SAVE 0xABD7
-#define IDM_SAVEALL 0xABD8
-#define IDM_DETACH 0xABD9
-#define IDM_ATTACHTO 0xABDA
-#define IDM_VCONCMD_LAST IDM_ATTACHTO
-// Consoles // DWORD MAKELONG(WORD wLow,WORD wHigh);
-#define IDM_VCON_FIRST MAKELONG(1,1)
-#define IDM_VCON_LAST  MAKELONG(0,MAX_CONSOLE_COUNT+1)
+
+//#define ID_TOMONITOR 0xABBD
+//#define ID_NEWCONSOLE 0xABBE
+//#define ID_DUMPPROCESS 0xABBF
+//#define ID_DEBUG_SHOWRECTS 0xABC0
+////#define ID_MONITOR_SHELLACTIVITY 0xABC1
+//#define ID_CON_COPY 0xABC2
+//#define ID_CON_MARKTEXT 0xABC3
+//#define ID_CON_MARKBLOCK 0xABC4
+//#define ID_ALWAYSONTOP 0xABC5
+//#define ID_DEBUGGUI 0xABC6
+//#define ID_HELP 0xABC7
+//#define ID_CON_TOGGLE_VISIBLE 0xABC8
+//#define ID_CON_PASTE 0xABC9
+//#define ID_AUTOSCROLL 0xABCA
+//#define ID_DUMPCONSOLE 0xABCB
+//#define ID_CONPROP 0xABCC
+//#define ID_SETTINGS 0xABCD
+//#define ID_ABOUT 0xABCE
+//#define ID_TOTRAY 0xABCF
+//#define ID_DEBUGCON 0xABD0
+//// VCon menu items
+//#define IDM_VCONCMD_FIRST 0xABD1
+//#define IDM_CLOSE IDM_VCONCMD_FIRST
+//#define IDM_RESTART 0xABD2
+//#define IDM_RESTARTAS 0xABD3
+//#define IDM_TERMINATE 0xABD4
+////#define IDM_NEW 0xABD5
+//#define IDM_ADMIN_DUPLICATE 0xABD6
+//#define IDM_SAVE 0xABD7
+//#define IDM_SAVEALL 0xABD8
+//#define IDM_DETACH 0xABD9
+//#define IDM_ATTACHTO 0xABDA
+//#define IDM_VCONCMD_LAST IDM_ATTACHTO
+//// Consoles // DWORD MAKELONG(WORD wLow,WORD wHigh);
+//#define IDM_VCON_FIRST MAKELONG(1,1)
+//#define IDM_VCON_LAST  MAKELONG(0,MAX_CONSOLE_COUNT+1)
+
+#include "MenuIds.h"
 
 
 #define IID_IShellLink IID_IShellLinkW
@@ -101,6 +104,7 @@ class TabBarClass;
 class CConEmuMacro;
 class CAttachDlg;
 class CRecreateDlg;
+class CToolTip;
 
 WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
 enum ConEmuMargins
@@ -141,6 +145,14 @@ enum DragPanelBorder
 	DPB_SPLIT,    // драг влево/вправо
 	DPB_LEFT,     // высота левой
 	DPB_RIGHT,    // высота правой
+};
+
+enum TrackMenuPlace
+{
+	tmp_None = 0,
+	tmp_System,
+	tmp_VCon,
+	tmp_Cmd,
 };
 
 class CConEmuMain
@@ -187,6 +199,7 @@ class CConEmuMain
 		CConEmuBack  *m_Back;
 		CConEmuMacro *m_Macro;
 		TabBarClass *mp_TabBar;
+		CToolTip *mp_Tip;
 		//POINT cwShift; // difference between window size and client area size for main ConEmu window
 		POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
 		//DWORD gnLastProcessCount;
@@ -264,7 +277,9 @@ class CConEmuMain
 		CAttachDlg *mp_AttachDlg;
 		CRecreateDlg *mp_RecreateDlg;
 		bool mb_SkipSyncSize, mb_PassSysCommand, mb_CreatingActive;
-		BOOL mb_WaitCursor, mb_InTrackSysMenu;
+		BOOL mb_WaitCursor;
+		//BOOL mb_InTrackSysMenu; -> mn_TrackMenuPlace
+		TrackMenuPlace mn_TrackMenuPlace;
 		BOOL mb_LastRgnWasNull;
 		BOOL mb_CaptionWasRestored; // заголовок восстановлен на время ресайза
 		BOOL mb_ForceShowFrame;     // восстановить заголовок по таймауту
@@ -471,6 +486,7 @@ class CConEmuMain
 		void SetDragCursor(HCURSOR hCur);
 		void SetWaitCursor(BOOL abWait);
 		bool SetWindowMode(uint inMode, BOOL abForce = FALSE);
+		void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
 		void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
 		void ShowSysmenu(int x=-32000, int y=-32000);
 		HMENU CreateDebugMenuPopup();
@@ -489,6 +505,7 @@ class CConEmuMain
 		void SyncWindowToConsole();
 		void SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout);
 		void TabCommand(UINT nTabCmd);
+		int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, RECT *prcRect);
 		void Update(bool isForce = false);
 		void UpdateFarSettings();
 		void UpdateIdealRect(BOOL abAllowUseConSize=FALSE);

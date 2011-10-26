@@ -513,7 +513,8 @@ void CSettings::InitSettings()
 	isDesktopMode = false;
 	isAlwaysOnTop = false;
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
-	wndX = 0; wndY = 0; wndCascade = true; isAutoSaveSizePos = false;
+	wndX = 0; wndY = 0; wndCascade = true;
+	isAutoSaveSizePos = false; mb_SizePosAutoSaved = false;
 	isConVisible = false; //isLockRealConsolePos = false;
 	//WARNING("isUseInjects в релизе по умолчанию отключен");
 	//#ifdef _DEBUG
@@ -1311,6 +1312,12 @@ void CSettings::SaveSizePosOnExit()
 	if (!this || !isAutoSaveSizePos)
 		return;
 
+	// При закрытии окна крестиком - сохранять только один раз,
+	// а то размер может в процессе закрытия консолей измениться
+	if (mb_SizePosAutoSaved)
+		return;
+	mb_SizePosAutoSaved = true;
+		
 	SettingsBase* reg = CreateSettings();
 
 	if (reg->OpenKey(ConfigPath, KEY_WRITE))
@@ -1578,6 +1585,7 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ConWnd Y", wndY);
 		reg->Save(L"Cascaded", wndCascade);
 		reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
+		mb_SizePosAutoSaved = false; // Раз было инициированное пользователей сохранение настроек - сбросим флажок
 		/*reg->Save(L"ScrollTitle", isScrollTitle);
 		reg->Save(L"ScrollTitleLen", ScrollTitleLen);*/
 		reg->Save(L"MainTimerElapse", nMainTimerElapse);
@@ -6184,7 +6192,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 
 			if (wID == -1) continue;
 
-			if (LoadString(g_hInstance, wID, szText, 0x200))
+			if (LoadString(g_hInstance, wID, szText, countof(szText)))
 			{
 				// Associate the ToolTip with the tool.
 				TOOLINFO toolInfo = { 0 };

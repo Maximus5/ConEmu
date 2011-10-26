@@ -201,6 +201,23 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			int nImageBits = 32;
 
 			wcscpy_c(szType, (lstrcmp(szClass, L"ConsoleWindowClass") == 0) ? L"CON" : L"GUI");
+
+			#if 0
+			// Так можно получить только имя файла процесса, а интересен еще и путь
+			PROCESSENTRY32 pi = {sizeof(pi)};
+			h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+			if (h && h != INVALID_HANDLE_VALUE)
+			{
+				if (Process32First(h, &pi))
+				{
+					while (pi.th32ProcessID != nPID)
+					{
+						if (!Process32Next(h, &pi))
+							pi.th32ProcessID = 0;
+					}
+				}
+			}
+			#endif
 			
 			if (pDlg->mp_ProcessData)
 			{

@@ -306,7 +306,13 @@ class CSettings
 		int nToolbarAddSpace;
 		DWORD wndWidth, wndHeight, ntvdmHeight; // в символах
 		int wndX, wndY; // в пиксел€х
-		bool wndCascade, isAutoSaveSizePos;
+		bool wndCascade;
+		bool isAutoSaveSizePos;
+	private:
+		// ѕри закрытии окна крестиком - сохран€ть только один раз,
+		// а то размер может в процессе закрыти€ консолей изменитьс€
+		bool mb_SizePosAutoSaved;
+	public:
 		DWORD nSlideShowElapse;
 		DWORD nIconID;
 		bool isTryToCenter;

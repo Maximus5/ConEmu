@@ -74,7 +74,7 @@ extern "C" {
 
 PanelViewSetMapping gThSet = {0}; // параметры получаются из мэппинга при открытии плага или при перерегистрации
 
-HWND ghConEmuRoot = NULL;
+HWND ghConEmuRoot = NULL, ghConEmuWnd = NULL;
 HMODULE ghPluginModule = NULL; // ConEmuTh.dll - сам плагин
 BOOL TerminalMode = FALSE;
 DWORD gnSelfPID = 0;
@@ -439,7 +439,7 @@ BOOL CheckConEmu(BOOL abSilence/*=FALSE*/)
 	//// Страховка от того, что conemu.dll могли выгрузить (unload:...)
 	//if (!abForceCheck) {
 	//	if ((GetTickCount() - nLastCheckConEmu) > CONEMUCHECKDELTA) {
-	//		if (!ghConEmuRoot)
+	//		if (!ghConEmuWnd)
 	//			return FALSE;
 	//		return TRUE;
 	//	}
@@ -484,18 +484,19 @@ BOOL CheckConEmu(BOOL abSilence/*=FALSE*/)
 		return FALSE;
 	}
 
-	HWND hWnd = gfGetFarHWND2(TRUE);
-	HWND hRoot = hWnd ? GetParent(hWnd) : NULL;
+	HWND hWnd = gfGetFarHWND2(1);
+	HWND hRoot = gfGetFarHWND2(2);
 
-	if (hRoot != ghConEmuRoot)
+	if (hWnd != ghConEmuWnd)
 	{
+		ghConEmuWnd = hWnd;
 		ghConEmuRoot = hRoot;
 
-		if (hRoot)
+		if (hWnd)
 		{
 			//MFileMapping<PanelViewSetMapping> ThSetMap;
 			//DWORD nGuiPID;
-			//GetWindowThreadProcessId(ghConEmuRoot, &nGuiPID);
+			//GetWindowThreadProcessId(ghConEmuWnd, &nGuiPID);
 			//_ASSERTE(nGuiPID!=0);
 			//ThSetMap.InitName(CECONVIEWSETNAME, nGuiPID);
 			//if (!ThSetMap.Open()) {
@@ -508,7 +509,7 @@ BOOL CheckConEmu(BOOL abSilence/*=FALSE*/)
 		}
 	}
 
-	if (!hRoot)
+	if (!ghConEmuWnd)
 	{
 		if (!abSilence)
 			ShowMessage(CEFarNonGuiMode, 0);
@@ -1995,11 +1996,11 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 		RECT rc;
 		GetClientRect(pi->hView, &rc);
 		POINT pt = {((rc.left+rc.right)>>1),((rc.top+rc.bottom)>>1)};
-		MapWindowPoints(pi->hView, ghConEmuRoot, &pt, 1);
+		MapWindowPoints(pi->hView, ghConEmuWnd, &pt, 1);
 		HWND hChild[2];
-		hChild[0] = ChildWindowFromPointEx(ghConEmuRoot, pt, CWP_SKIPINVISIBLE|CWP_SKIPTRANSPARENT);
+		hChild[0] = ChildWindowFromPointEx(ghConEmuWnd, pt, CWP_SKIPINVISIBLE|CWP_SKIPTRANSPARENT);
 		// Теперь проверим полноэкранные окна
-		MapWindowPoints(ghConEmuRoot, NULL, &pt, 1);
+		MapWindowPoints(ghConEmuWnd, NULL, &pt, 1);
 		hChild[1] = WindowFromPoint(pt);
 
 		for(int i = 0; i <= 1; i++)

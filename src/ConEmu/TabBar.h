@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define CONEMUMSG_UPDATETABS _T("ConEmuMain::UpdateTabs")
 
-class TabBarClass : public CToolTip
+class TabBarClass //: public CToolTip
 {
 	private:
 		// Пока - банально. VCon, номер в FAR

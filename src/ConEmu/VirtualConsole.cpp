@@ -4203,7 +4203,7 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 	//EnableMenuItem(mh_PopupMenu, IDM_SAVE, MF_BYCOMMAND | (lbIsEditorModified ? MF_ENABLED : MF_GRAYED));
 	//EnableMenuItem(mh_PopupMenu, IDM_SAVEALL, MF_BYCOMMAND | (lbHaveModified ? MF_ENABLED : MF_GRAYED));
 	
-	int nCmd = TrackPopupMenu(mh_PopupMenu,
+	int nCmd = gpConEmu->trackPopupMenu(tmp_VCon, mh_PopupMenu,
 	                          TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
 	                          ptCur.x, ptCur.y, 0, ghWnd, NULL);
 
@@ -4349,14 +4349,14 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 			//	SetWindowLong(pp->hWnd, i*4, 0);
 			HWND hViewParent = GetParent(ppvi->hWnd);
 
-			if (hViewParent != ghWnd)
+			if (hViewParent != GetView())
 			{
-				MBoxAssert(hViewParent==ghWnd);
+				MBoxAssert(GetView()==ghWnd);
 				// -- смысла пытаться менять родителя - немного, в Win7 это и не получится
 				// -- если консольный процесс запущен "Run as administrator"
 				// --- но все-таки попробуем?
 				//DWORD dwSetParentErr = 0;
-				HWND hRc = SetParent((HWND)ppvi->hWnd, ghWnd);
+				HWND hRc = mp_RCon->SetOtherWindowParent((HWND)ppvi->hWnd, GetView());
 				dwSetParentErr = GetLastError();
 			}
 			else
@@ -4651,13 +4651,13 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister/*=FALS
 	pt[1] = MakePoint(pp->WorkRect.right*gpSet->FontWidth(), pp->WorkRect.bottom*gpSet->FontHeight());
 	//pt[0] = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
 	//pt[1] = ConsoleToClient(pp->WorkRect.right, pp->WorkRect.bottom);
-	TODO("Потребуется коррекция для DoubleView");
-	MapWindowPoints(GetView(), ghWnd, pt, 2);
+	//TODO("Потребуется коррекция для DoubleView");
+	//MapWindowPoints(GetView(), ghWnd, pt, 2);
 	//MoveWindow(ahView, pt[0].x,pt[0].y, pt[1].x-pt[0].x,pt[1].y-pt[0].y, FALSE);
 	// Не дергаться, если менять ничего не нужно
 	DWORD dwErr = 0; BOOL lbRc = TRUE;
 	RECT rcCur; GetWindowRect(pp->hWnd, &rcCur);
-	MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcCur, 2);
+	//MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcCur, 2);
 
 	if (rcCur.left != pt[0].x || rcCur.top != pt[0].y
 	        || rcCur.right != pt[1].x || rcCur.bottom != pt[1].y)

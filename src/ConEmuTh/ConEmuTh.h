@@ -203,6 +203,7 @@ extern BOOL gbCancelAll;
 
 
 extern HWND ghConEmuRoot;
+extern HWND ghConEmuWnd;
 extern HMODULE ghPluginModule; // ConEmuTh.dll - сам плагин
 extern DWORD gnSelfPID, gnMainThreadId;
 //extern int lastModifiedStateW;

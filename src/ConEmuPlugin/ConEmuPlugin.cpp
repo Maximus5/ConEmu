@@ -98,7 +98,7 @@ wchar_t gszDbgModLabel[6] = {0};
 extern "C" {
 	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
 	HWND WINAPI GetFarHWND();
-	HWND WINAPI GetFarHWND2(BOOL abConEmuOnly);
+	HWND WINAPI GetFarHWND2(int anConEmuOnly);
 	void WINAPI GetFarVersion(FarVersion* pfv);
 	int  WINAPI ProcessEditorInputW(void* Rec);
 	void WINAPI SetStartupInfoW(void *aInfo);
@@ -1524,10 +1524,10 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			csTabs = new MSection();
 			csData = new MSection();
 			ghCommandThreads = new CommandThreads();
-			HWND hConWnd = GetConEmuHWND(2);
+			//HWND hConWnd = GetConEmuHWND(2);
 			// “екуща€ нить не об€зана быть главной! ѕоэтому ищем первую нить процесса!
 			gnMainThreadId = GetMainThreadId();
-			InitHWND(hConWnd);
+			InitHWND(/*hConWnd*/);
 			//TODO("перенести инициализацию фаровских callback'ов в SetStartupInfo, т.к. будет грузитьс€ как Inject!");
 			//if (!StartupHooks(ghPluginModule)) {
 			//	_ASSERTE(FALSE);
@@ -1655,19 +1655,29 @@ BOOL WINAPI IsConsoleActive()
 	return TRUE;
 }
 
-HWND WINAPI GetFarHWND2(BOOL abConEmuOnly)
+// anConEmuOnly
+//	2 - вернуть главное окно ConEmu
+//	1 - вернуть окно отрисовки
+//	0 - если в ConEmu - вернуть окно отрисовки, иначе - вернуть окно консоли
+HWND WINAPI GetFarHWND2(int anConEmuOnly)
 {
 	if (ConEmuHwnd)
 	{
 		if (IsWindow(ConEmuHwnd))
+		{
+			if (anConEmuOnly == 2)
+				return GetConEmuHWND(1);
 			return ConEmuHwnd;
+		}
 
+		// ƒескриптор уже должен быть сброшен!
+		_ASSERTE(ConEmuHwnd==NULL);
 		ConEmuHwnd = NULL;
 		//
 		SetConEmuEnvVar(NULL);
 	}
 
-	if (abConEmuOnly)
+	if (anConEmuOnly)
 		return NULL;
 
 	return FarHwnd;
@@ -3645,7 +3655,7 @@ void InitRootKey()
 		*pszUserSlash = 0;
 }
 
-void InitHWND(HWND ahFarHwnd)
+void InitHWND(/*HWND ahFarHwnd*/)
 {
 	gsFarLang[0] = 0;
 
@@ -3680,10 +3690,18 @@ void InitHWND(HWND ahFarHwnd)
 	//if (GetEnvironmentVariable(L"FARUSER", pszUserAdd, MAX_PATH) == 0)
 	//	*pszUserSlash = 0;
 
-	ConEmuHwnd = NULL;
-	FarHwnd = ahFarHwnd;
+
+	// Returns HWND of ...
+	//  aiType==0: Gui console DC window
+	//        ==1: Gui Main window
+	//        ==2: Console window
+	FarHwnd = GetConEmuHWND(2/*Console window*/);
+	ConEmuHwnd = GetConEmuHWND(0/*Gui console DC window*/);
+	SetConEmuEnvVar(ConEmuHwnd);
+
+
 	{
-		// Console2 check
+		// TrueColor buffer check
 		wchar_t szMapName[64];
 		_wsprintf(szMapName, SKIPLEN(countof(szMapName)) L"Console2_consoleBuffer_%d", (DWORD)GetCurrentProcessId());
 		HANDLE hConsole2 = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
@@ -3712,8 +3730,8 @@ void InitHWND(HWND ahFarHwnd)
 	CheckColorerHeader();
 	//memset(hEventCmd, 0, sizeof(HANDLE)*MAXCMDCOUNT);
 	//int nChk = 0;
-	ConEmuHwnd = GetConEmuHWND(FALSE/*abRoot*/  /*, &nChk*/);
-	SetConEmuEnvVar(ConEmuHwnd);
+	//ConEmuHwnd = GetConEmuHWND(FALSE/*abRoot*/  /*, &nChk*/);
+	//SetConEmuEnvVar(ConEmuHwnd);
 	gnMsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 
 	if (!ghSetWndSendTabsEvent) ghSetWndSendTabsEvent = CreateEvent(0,0,0,0);

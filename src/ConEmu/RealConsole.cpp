@@ -2077,8 +2077,17 @@ BOOL CRealConsole::StartMonitorThread()
 
 BOOL CRealConsole::StartProcess()
 {
+	if (!this)
+	{
+		_ASSERTE(this);
+		return FALSE;
+	}
+
 	BOOL lbRc = FALSE;
 	SetConStatus(L"Preparing process startup line...");
+
+	// Для валидации объектов
+	CVirtualConsole* pVCon = mp_VCon;
 
 	if (!mb_ProcessRestarted)
 	{
@@ -2430,8 +2439,15 @@ BOOL CRealConsole::StartProcess()
 				// ??? Может ведь быть НЕСКОЛЬКО консолей. Нельзя так разрушать основное окно!
 				//gpConEmu->Destroy();
 				//SetEvent(mh_CreateRootEvent);
-				mb_InCreateRoot = FALSE;
-				CloseConsole();
+				if (gpConEmu->isValid(pVCon))
+				{
+					mb_InCreateRoot = FALSE;
+					CloseConsole();
+				}
+				else
+				{
+					_ASSERTE(gpConEmu->isValid(pVCon));
+				}
 				return FALSE;
 			}
 
@@ -9191,6 +9207,8 @@ void CRealConsole::OnDeactivate(int nNewNum)
 	//	mp_ConsoleInfo->bConsoleActive = FALSE;
 	//}
 	//if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_NORMAL);
+
+	gpConEmu->setFocus();
 }
 
 void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
@@ -10609,25 +10627,37 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 }
 
 // Разрешено только в фаре
-BOOL CRealConsole::CanCloseTab()
+BOOL CRealConsole::CanCloseTab(BOOL abPluginRequired /*= FALSE*/)
 {
-	if (!isFar(TRUE/* abPluginRequired */) && !GuiWnd())
-		return FALSE;
+	if (abPluginRequired)
+	{
+		if (!isFar(TRUE/* abPluginRequired */) /*&& !GuiWnd()*/)
+			return FALSE;
+	}
 	return TRUE;
 }
 
-// Доступно только для фара. Мягко (с подтверждением) закрыть текущий таб.
+// для фара - Мягко (с подтверждением) закрыть текущий таб.
+// для GUI  - WM_CLOSE, пусть само разбирается
+// для остальных (cmd.exe, и т.п.) WM_CLOSE в консоль. Скорее всего, она закроется сразу
 void CRealConsole::CloseTab()
 {
-	if (!CanCloseTab())
+	if (!this)
+	{
+		_ASSERTE(this);
 		return;
+	}
+
 	if (GuiWnd())
 	{
 		PostConsoleMessage(GuiWnd(), WM_CLOSE, 0, 0);
 	}
 	else
 	{
-		PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
+		if (CanCloseTab(TRUE))
+			PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
+		else
+			PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
 	}
 }
 

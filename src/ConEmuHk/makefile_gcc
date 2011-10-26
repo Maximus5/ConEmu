@@ -5,6 +5,7 @@ SRCS = Entry.cpp \
        RegHooks.cpp \
        SetHook.cpp \
        ShellProcessor.cpp \
+       UserImp.obj \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp \
        ../common/Execute.cpp \

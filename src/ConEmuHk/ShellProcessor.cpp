@@ -746,7 +746,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	if (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
 	{
 		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
-		_wsprintf((*psParam), SKIPLEN(nCchSize) L" /ATTACH /GID=%u /ROOT ", m_SrvMapping.nGuiPID);
+		msprintf((*psParam), nCchSize, L" /ATTACH /GID=%u /ROOT ", m_SrvMapping.nGuiPID);
 	}
 	else
 	{

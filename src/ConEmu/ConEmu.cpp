@@ -26,6 +26,10 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifdef _DEBUG
+  #define SHOW_GUIATTACH_START
+#endif
+
 
 #define SHOWDEBUGSTR
 
@@ -124,7 +128,7 @@ CConEmuMain::CConEmuMain()
 	//HeapInitialize(); - уже
 	//#define D(N) (1##N-100)
 	_wsprintf(ms_ConEmuVer, SKIPLEN(countof(ms_ConEmuVer)) L"ConEmu %02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
-	mp_TabBar = NULL; m_Back = NULL; m_Macro = NULL;
+	mp_TabBar = NULL; m_Back = NULL; m_Macro = NULL; mp_Tip = NULL;
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
 	mn_MainThreadId = GetCurrentThreadId();
 	wcscpy_c(szConEmuVersion, L"?.?.?.?");
@@ -173,7 +177,8 @@ CConEmuMain::CConEmuMain()
 	mh_RightClickingBmp = NULL; mh_RightClickingDC = NULL; mb_RightClickingPaint = mb_RightClickingLSent = FALSE;
 	m_RightClickingSize.x = m_RightClickingSize.y = m_RightClickingFrames = 0; m_RightClickingCurrent = -1;
 	mb_WaitCursor = FALSE;
-	mb_InTrackSysMenu = FALSE;
+	//mb_InTrackSysMenu = FALSE;
+	mn_TrackMenuPlace = tmp_None;
 	mb_LastRgnWasNull = TRUE;
 	mb_CaptionWasRestored = FALSE; mb_ForceShowFrame = FALSE;
 	mh_CursorWait = LoadCursor(NULL, IDC_WAIT);
@@ -458,6 +463,7 @@ LPWSTR CConEmuMain::ConEmuXml()
 BOOL CConEmuMain::Init()
 {
 	_ASSERTE(mp_TabBar == NULL);
+	mp_Tip = new CToolTip();
 	mp_TabBar = new TabBarClass();
 	//m_Child = new CConEmuChild();
 	m_Back = new CConEmuBack();
@@ -1472,6 +1478,12 @@ CConEmuMain::~CConEmuMain()
 	{
 		delete mp_TabBar;
 		mp_TabBar = NULL;
+	}
+
+	if (mp_Tip)
+	{
+		delete mp_Tip;
+		mp_Tip = NULL;
 	}
 
 	//if (m_Child)
@@ -3996,7 +4008,10 @@ bool CConEmuMain::ConActivate(int nCon)
 		CVirtualConsole* pOldActive = mp_VActive;
 
 		// Спрятать PictureView, или еще чего...
-		if (mp_VActive) mp_VActive->RCon()->OnDeactivate(nCon);
+		if (mp_VActive && mp_VActive->RCon())
+		{
+			mp_VActive->RCon()->OnDeactivate(nCon);
+		}
 
 		// ПЕРЕД переключением на новую консоль - обновить ее размеры
 		if (mp_VActive)
@@ -4047,7 +4062,10 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
 
 			if (pCon)
 			{
-				if (pOldActive) pOldActive->RCon()->OnDeactivate(i);
+				if (pOldActive && pOldActive->RCon())
+				{
+					pOldActive->RCon()->OnDeactivate(i);
+				}
 
 				mp_VCon[i] = pCon;
 				mp_VActive = pCon;
@@ -5001,6 +5019,52 @@ LRESULT CConEmuMain::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 	return 0;
 }
 
+int CConEmuMain::trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, RECT *prcRect)
+{
+	mp_Tip->HideTip();
+	mn_TrackMenuPlace = place;
+
+	int cmd = TrackPopupMenu(hMenu, uFlags, x, y, nReserved, hWnd, prcRect);
+
+	mp_Tip->HideTip();
+
+	return cmd;
+}
+
+void CConEmuMain::ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags)
+{
+	if (nID && !(nFlags & MF_POPUP))
+	{
+		//POINT pt; GetCursorPos(&pt);
+		RECT rcMenuItem = {};
+		BOOL lbMenuItemPos = FALSE;
+		UINT nMenuID = 0;
+		for (int i = 0; i < 100; i++)
+		{
+			nMenuID = GetMenuItemID(hMenu, i);
+			if (nMenuID == nID)
+			{
+				lbMenuItemPos = GetMenuItemRect(ghWnd, hMenu, i, &rcMenuItem);
+				break;
+			}
+		}
+		if (lbMenuItemPos)
+		{
+			POINT pt = {rcMenuItem.left + (rcMenuItem.bottom - rcMenuItem.top)*2, rcMenuItem.bottom};
+			//pt.x = rcMenuItem.left; //(rcMenuItem.left + rcMenuItem.right) >> 1;
+			//pt.y = rcMenuItem.bottom;
+			TCHAR szText[0x200];
+			if (LoadString(g_hInstance, nMenuID, szText, countof(szText)))
+			{
+				mp_Tip->ShowTip(ghWnd, ghWnd, szText, TRUE, pt, g_hInstance);
+				return;
+			}
+		}
+	}
+
+	mp_Tip->HideTip();
+}
+
 void CConEmuMain::ShowSysmenu(int x, int y)
 {
 	//if (!Wnd)
@@ -5049,9 +5113,9 @@ void CConEmuMain::ShowSysmenu(int x, int y)
 	//BOOL bSelectionExist = ActiveCon()->RCon()->isSelectionPresent();
 	//EnableMenuItem(systemMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
 	SetActiveWindow(ghWnd);
-	mb_InTrackSysMenu = TRUE;
-	int command = TrackPopupMenu(systemMenu, TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, x, y, 0, ghWnd, NULL);
-	mb_InTrackSysMenu = FALSE;
+	//mb_InTrackSysMenu = TRUE;
+	int command = trackPopupMenu(tmp_System, systemMenu, TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, x, y, 0, ghWnd, NULL);
+	//mb_InTrackSysMenu = FALSE;
 
 	if (Icon.isWindowInTray())
 		switch(command)
@@ -9616,6 +9680,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			return 0;
 	}
 
+	if (pRCon && pRCon->GuiWnd() && !pRCon->isBufferHeight())
+	{
+		//pRCon->PostConsoleMessage(pRCon->GuiWnd(), messg, wParam, lParam);
+		return 0;
+	}
+
 	if (pRCon && pRCon->isSelectionPresent()
 	        && ((wParam & MK_LBUTTON) || messg == WM_LBUTTONUP))
 	{
@@ -11537,6 +11607,9 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			if (!gpConEmu->OnCloseQuery())
 				return 0; // не закрывать
 
+			// Сохраним размер перед закрытием консолей, а то они могут напакостить и "вернуть" старый размер
+			gpSet->SaveSizePosOnExit();
+				
 			for (int i = (int)(countof(mp_VCon)-1); i >= 0; i--)
 			{
 				if (mp_VCon[i] && mp_VCon[i]->RCon())
@@ -11555,8 +11628,6 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					}
 				}
 			}
-
-			gpSet->SaveSizePosOnExit();
 
 			if (nConCount == 0)
 			{
@@ -12359,6 +12430,15 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		CESERVER_REQ Out;
 		ExecutePrepareCmd(&Out.hdr, CECMD_ATTACHGUIAPP, sizeof(CESERVER_REQ_HDR)+sizeof(Out.AttachGuiApp));
 		Out.AttachGuiApp = pIn->AttachGuiApp;
+		
+		#ifdef SHOW_GUIATTACH_START
+		if (pIn->AttachGuiApp.hWindow == NULL)
+		{
+			wchar_t szDbg[1024];
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"AttachGuiApp requested from:\n%s\nPID=%u", pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID);
+			MBoxA(szDbg);
+		}
+		#endif
 
 		// Уведомить ожидающую вкладку
 		CRealConsole* pRCon = AttachRequestedGui(pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID);
@@ -12491,9 +12571,17 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 		case WM_MENUSELECT:
 		{
-			if (gpConEmu->mp_TabBar 
-				&& gpConEmu->mp_TabBar->OnMenuSelected((HMENU)lParam, LOWORD(wParam), HIWORD(wParam)))
+			switch (gpConEmu->mn_TrackMenuPlace)
+			{
+			case tmp_Cmd:
+				if (gpConEmu->mp_TabBar)
+					gpConEmu->mp_TabBar->OnMenuSelected((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
 				return 0;
+			case tmp_System:
+			case tmp_VCon:
+				gpConEmu->ShowMenuHint((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
+				return 0;
+			}
 			// Else ...
 			return 0;
 		}

@@ -252,7 +252,7 @@ HWND CeFullPanelInfo::CreateView()
 	wchar_t szTitle[128];
 	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu.%sPanelView.%i", (this->bLeftPanel) ? L"Left" : L"Right", gnSelfPID);
 	lhView = CreateWindow(gsDisplayClassName, szTitle, WS_CHILD|WS_CLIPSIBLINGS, 0,0,0,0,
-	                      ghConEmuRoot, NULL, (HINSTANCE)ghPluginModule, (LPVOID)this);
+	                      ghConEmuWnd, NULL, (HINSTANCE)ghPluginModule, (LPVOID)this);
 #ifdef _DEBUG
 	HWND hParent = GetParent(lhView);
 #endif

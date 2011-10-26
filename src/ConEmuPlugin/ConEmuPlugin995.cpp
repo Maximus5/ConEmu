@@ -425,9 +425,6 @@ void SetStartupInfoW995(void *aInfo)
 	if (*pszSlash == L'\\') *(pszSlash--) = 0;
 	while(pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
 	*pszSlash = 0;
-
-	/*if (!FarHwnd)
-		InitHWND((HWND)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARHWND, 0));*/
 }
 
 DWORD GetEditorModifiedStateW995()

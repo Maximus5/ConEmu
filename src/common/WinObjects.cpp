@@ -57,10 +57,32 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 	}
 	else
 	{
-
-		wchar_t szClass[256]; if (!GetClassName(ahWnd, szClass, 256)) wcscpy_c(szClass, L"<GetClassName failed>");
-
-		wchar_t szTitle[512]; if (!GetWindowText(ahWnd, szTitle, 512)) szTitle[0] = 0;
+		wchar_t szClass[256], szTitle[512];
+		
+		// »збежать статической линковки дл€ user32.dll
+		typedef int (WINAPI* GetClassName_t)(HWND hWnd,LPWSTR lpClassName,int nMaxCount);
+		static GetClassName_t GetClassName_f = NULL;
+		typedef int (WINAPI* GetWindowText_t)(HWND hWnd, LPWSTR lpString, int nMaxCount);
+		static GetWindowText_t GetWindowText_f = NULL;
+		
+		if (!GetClassName_f)
+		{
+			HMODULE hUser32 = GetModuleHandle(L"user32.dll");
+			if (!hUser32)
+			{
+				// —корее всего, user32 уже должен быть загружен, но если вдруг - сильно
+				// плохо, если LoadLibrary будет вызыватьс€ из DllMain
+				_ASSERTE(hUser32!=NULL);
+			}
+			else
+			{
+				GetClassName_f = (GetClassName_t)GetProcAddress(hUser32,"GetClassNameW");
+				GetWindowText_f = (GetWindowText_t)GetProcAddress(hUser32,"GetWindowTextW");
+			}
+		}
+		
+		if (!GetClassName_f || !GetClassName_f(ahWnd, szClass, 256)) wcscpy_c(szClass, L"<GetClassName failed>");
+		if (!GetWindowText_f || !GetWindowText_f(ahWnd, szTitle, 512)) szTitle[0] = 0;
 
 		msprintf(rsInfo, countof(rsInfo), L"0x%08X: %s - '%s'", (DWORD)ahWnd, szClass, szTitle);
 	}
@@ -833,7 +855,14 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 				wchar_t* pszUppr = lstrdup(szExe);
 				if (pszUppr)
 				{
-					CharUpperBuff(pszUppr, lstrlen(pszUppr));
+					// избежать линковки на user32.dll
+					//CharUpperBuff(pszUppr, lstrlen(pszUppr));
+					for (wchar_t* p = pszUppr; *p; p++)
+					{
+						if (*p >= L'a' && *p <= 'z')
+							*p -= 0x20;
+					}
+					
 					const wchar_t* pszFind = gsInternalCommands;
 					while (*pszFind)
 					{
