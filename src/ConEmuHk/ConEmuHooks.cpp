@@ -3013,18 +3013,22 @@ bool IsHandleConsole(HANDLE handle, bool output = true)
 }
 #endif
 
-static BOOL MyGetConsoleFontSize(COORD& crFontSize)
+static BOOL BMyGetConsoleFontSize(COORD& crFontSize)
 {
 	BOOL lbRc = FALSE;
 
 	if (ghConEmuWnd)
 	{
 		ConEmuGuiMapping* inf = (ConEmuGuiMapping*)malloc(sizeof(ConEmuGuiMapping));
-		if (inf && LoadGuiMapping(gnGuiPID, *inf))
+		if (inf)
 		{
-			crFontSize.Y = (SHORT)inf->MainFont.nFontHeight;
-			crFontSize.X = (SHORT)inf->MainFont.nFontCellWidth;
-			lbRc = TRUE;
+			if (LoadGuiMapping(gnGuiPID, *inf))
+			{
+				crFontSize.Y = (SHORT)inf->MainFont.nFontHeight;
+				crFontSize.X = (SHORT)inf->MainFont.nFontCellWidth;
+				lbRc = TRUE;
+			}
+			free(inf);
 		}
 
 		_ASSERTEX(lbRc && (crFontSize.X > 3) && (crFontSize.Y > 4));
