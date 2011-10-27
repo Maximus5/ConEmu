@@ -1481,6 +1481,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GuiAttach.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Injects.h"
 				>
 			</File>
@@ -1558,6 +1562,10 @@
 			</File>
 			<File
 				RelativePath=".\export.def"
+				>
+			</File>
+			<File
+				RelativePath=".\GuiAttach.cpp"
 				>
 			</File>
 			<File

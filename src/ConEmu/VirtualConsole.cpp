@@ -3318,13 +3318,15 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 //        }
 //    }
 //#endif
-	BOOL lbSimpleBlack = FALSE;
+	BOOL lbSimpleBlack = FALSE, lbGuiVisible = FALSE;
 
 	if (!this)
 		lbSimpleBlack = TRUE;
 	else if (!mp_RCon)
 		lbSimpleBlack = TRUE;
 	else if (!mp_RCon->ConWnd() && !mp_RCon->GuiWnd())
+		lbSimpleBlack = TRUE;
+	else if (mp_RCon->GuiWnd() && (lbGuiVisible = IsWindowVisible(mp_RCon->GuiWnd())))
 		lbSimpleBlack = TRUE;
 
 	//else if (!mpsz_ConChar || !mpn_ConAttrEx)
@@ -3336,48 +3338,71 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		//RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
 		//rcClient = gpConEmu->CalcRect(CER_BACK, rcCon, CER_CONSOLE);
 		GetClientRect(mh_WndDC, &rcClient);
-		// Залить цветом 0
-#ifdef _DEBUG
-		int nBackColorIdx = 2; // Green
-#else
-		int nBackColorIdx = 0; // Black
-#endif
+		
+		HBRUSH hBr = NULL;
+		BOOL lbDelBrush = FALSE;
+		
 		COLORREF *pColors = gpSet->GetColors();
-		HBRUSH hBr = CreateSolidBrush(pColors[nBackColorIdx]);
+		
+		if (lbGuiVisible)
+		{
+			hBr = GetSysColorBrush(COLOR_APPWORKSPACE);
+			//hBr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
+			//lbDelBrush = (hBr != NULL);
+		}
+		else
+		{
+			// Залить цветом 0
+			int nBackColorIdx = 0; // Black
+			#ifdef _DEBUG
+			nBackColorIdx = 2; // Green
+			#endif
+			
+			hBr = CreateSolidBrush(pColors[nBackColorIdx]);
+			lbDelBrush = (hBr != NULL);
+		}
 		//RECT rcClient; GetClientRect('ghWnd DC', &rcClient);
 		//PAINTSTRUCT ps;
 		//HDC hPaintDc = BeginPaint('ghWnd DC', &ps);
-#ifndef SKIP_ALL_FILLRECT
-		FillRect(hPaintDc, &rcClient, hBr);
-#endif
-		HFONT hOldF = (HFONT)SelectObject(hPaintDc, gpSet->mh_Font[0]);
-		LPCWSTR pszStarting = L"Initializing ConEmu.";
 		
-		if (gpConEmu->isProcessCreated())
+		//#ifndef SKIP_ALL_FILLRECT
+		FillRect(hPaintDc, &rcClient, hBr);
+		//#endif
+		
+		if (!lbGuiVisible)
 		{
-			pszStarting = L"No consoles";
-		}
-		else if (CRealConsole::ms_LastRConStatus[0])
-		{
-			pszStarting = CRealConsole::ms_LastRConStatus;
+			HFONT hOldF = (HFONT)SelectObject(hPaintDc, gpSet->mh_Font[0]);
+			LPCWSTR pszStarting = L"Initializing ConEmu.";
+			
+			if (gpConEmu->isProcessCreated())
+			{
+				pszStarting = L"No consoles";
+			}
+			else if (CRealConsole::ms_LastRConStatus[0])
+			{
+				pszStarting = CRealConsole::ms_LastRConStatus;
+			}
+
+			if (this)
+			{
+				if (mp_RCon)
+					pszStarting = mp_RCon->GetConStatus();
+			}
+
+			if (pszStarting != NULL)
+			{
+				UINT nFlags = ETO_CLIPPED;
+				SetTextColor(hPaintDc, pColors[7]);
+				SetBkColor(hPaintDc, pColors[0]);
+				ExtTextOut(hPaintDc, rcClient.left, rcClient.top, nFlags, &rcClient,
+				           pszStarting, _tcslen(pszStarting), 0);
+				SelectObject(hPaintDc, hOldF);
+			}
 		}
 
-		if (this)
-		{
-			if (mp_RCon)
-				pszStarting = mp_RCon->GetConStatus();
-		}
-
-		if (pszStarting != NULL)
-		{
-			UINT nFlags = ETO_CLIPPED;
-			SetTextColor(hPaintDc, pColors[7]);
-			SetBkColor(hPaintDc, pColors[0]);
-			ExtTextOut(hPaintDc, rcClient.left, rcClient.top, nFlags, &rcClient,
-			           pszStarting, _tcslen(pszStarting), 0);
-			SelectObject(hPaintDc, hOldF);
+		if (lbDelBrush)
 			DeleteObject(hBr);
-		}
+		
 		//EndPaint('ghWnd DC', &ps);
 		return;
 	}

@@ -846,9 +846,15 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 		DWORD dwExStyle = GetWindowLong(hGuiWnd, GWL_EXSTYLE);
 		DWORD dwStyle = GetWindowLong(hGuiWnd, GWL_STYLE);
 		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui);
-		// Через команду пайпа, а то если он "под админом" будет Access denied
-		SetOtherWindowPos(hGuiWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
-			SWP_ASYNCWINDOWPOS);
+		RECT rcCur = {};
+		GetWindowRect(hGuiWnd, &rcCur);
+		MapWindowPoints(NULL, GetView(), (LPPOINT)&rcCur, 2);
+		if (memcmp(&rcCur, &rcGui, sizeof(RECT)) != 0)
+		{
+			// Через команду пайпа, а то если он "под админом" будет Access denied
+			SetOtherWindowPos(hGuiWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+				SWP_ASYNCWINDOWPOS|SWP_NOACTIVATE);
+		}
 	}
 
 	// Во избежание лишних движений да и зацикливания...
@@ -3910,8 +3916,7 @@ void CRealConsole::Box(LPCTSTR szText)
 	MessageBox(NULL, szText, gpConEmu->ms_ConEmuVer, MB_ICONSTOP);
 }
 
-// Проверить, включен ли буфер (TRUE). Или высота окна равна высоте буфера (FALSE).
-BOOL CRealConsole::isBufferHeight()
+BOOL CRealConsole::isGuiVisible()
 {
 	if (!this)
 		return FALSE;
@@ -3922,6 +3927,19 @@ BOOL CRealConsole::isBufferHeight()
 		// IsWindowVisible не подходит, т.к. учитывает видимость и mh_WndDC
 		DWORD_PTR nStyle = GetWindowLongPtr(hGuiWnd, GWL_STYLE);
 		return (nStyle & WS_VISIBLE) == 0;
+	}
+	return FALSE;
+}
+
+// Проверить, включен ли буфер (TRUE). Или высота окна равна высоте буфера (FALSE).
+BOOL CRealConsole::isBufferHeight()
+{
+	if (!this)
+		return FALSE;
+
+	if (hGuiWnd)
+	{
+		return isGuiVisible();
 	}
 
 	return con.bBufferHeight;
@@ -6036,8 +6054,18 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 		// Корневой процесс ConEmuC не учитываем!
 		if (cp.ProcessID != mn_ConEmuC_PID)
 		{
-			if (!bIsFar && cp.IsFar)
-				bIsFar = true;
+			if (!bIsFar)
+			{
+				if (cp.IsFar)
+				{
+					bIsFar = true;
+				}
+				else if (cp.ProcessID == mn_FarPID_PluginDetected)
+				{
+					bIsFar = true;
+					iter->IsFar = iter->IsFarPlugin = true;
+				}
+			}
 
 			if (!bIsTelnet && cp.IsTelnet)
 				bIsTelnet = true;
@@ -10045,9 +10073,13 @@ void CRealConsole::ChangeBufferHeightMode(BOOL abBufferHeight)
 
 void CRealConsole::SetBufferHeightMode(BOOL abBufferHeight, BOOL abLock/*=FALSE*/)
 {
+	if (!this)
+		return;
+		
 	if (hGuiWnd)
 	{
 		ShowOtherWindow(hGuiWnd, abBufferHeight ? SW_HIDE : SW_SHOW);
+		mp_VCon->Invalidate();
 		return;
 	}
 

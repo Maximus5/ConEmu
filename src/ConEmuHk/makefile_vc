@@ -102,6 +102,7 @@ $(OBJDIR)\Common.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\Memory.obj \
+$(OBJDIR)\GuiAttach.obj \
 $(OBJDIR)\UserImp.obj
 
 USERLIBS = 
@@ -379,5 +380,7 @@ $(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
 $(OBJDIR)\MStrSafe.obj: ..\common\MStrSafe.cpp
 
 $(OBJDIR)\Memory.obj: ..\common\Memory.cpp
+
+$(OBJDIR)\GuiAttach.obj: GuiAttach.cpp GuiAttach.h
 
 $(OBJDIR)\UserImp.obj: UserImp.cpp UserImp.h

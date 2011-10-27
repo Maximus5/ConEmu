@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RegHooks.h"
 #include "ShellProcessor.h"
 #include "UserImp.h"
+#include "GuiAttach.h"
 
 
 #if defined(__GNUC__)
@@ -114,8 +115,6 @@ DWORD   gnGuiPID = 0;
 HWND    ghConWnd = NULL; // Console window
 HWND    ghConEmuWnd = NULL; // Root! window
 HWND    ghConEmuWndDC = NULL; // ConEmu DC window
-RECT    grcConEmuClient = {}; // Для аттача гуевых окон
-BOOL    gbAttachGuiClient = FALSE; // Для аттача гуевых окон
 BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
 DWORD   gnImageSubsystem = 0;
@@ -401,6 +400,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 					if (pOut->AttachGuiApp.nFlags & agaf_Success)
 					{
 						user->allowSetForegroundWindow(pOut->hdr.nSrcPID); // PID ConEmu.
+						_ASSERTEX(gnGuiPID==0 || gnGuiPID==pOut->hdr.nSrcPID);
+						gnGuiPID = pOut->hdr.nSrcPID;
 						ghConEmuWnd = (HWND)dwConEmuHwnd;
 						ghConEmuWndDC = pOut->AttachGuiApp.hWindow;
 						_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));

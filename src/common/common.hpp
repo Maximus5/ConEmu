@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    75
+#define CESERVER_REQ_VER    76
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -204,6 +204,7 @@ const CECMD
 	CECMD_SETFOCUS       = 48, // CESERVER_REQ_SETFOCUS
 	CECMD_SETPARENT      = 49, // CESERVER_REQ_SETPARENT
 	CECMD_CTRLBREAK      = 50, // GenerateConsoleCtrlEvent(dwData[0], dwData[1])
+	CECMD_GETCGUINFO     = 51, // ConEmuGuiMapping
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,

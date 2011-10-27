@@ -5174,12 +5174,21 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		_ASSERTEX(in.AttachGuiApp.nPID == gpSrv->dwRootProcess && gpSrv->dwRootProcess && in.AttachGuiApp.nPID);
 
+		wchar_t szInfo[MAX_PATH*2];
+
 		// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
 		if (gpSrv->hRootProcessGui == NULL)
 		{
-			wchar_t szInfo[MAX_PATH*2];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GUI application (PID=%u) was attached to ConEmu:\n%s\n",
 				in.AttachGuiApp.nPID, in.AttachGuiApp.sAppFileName);
+			_wprintf(szInfo);
+		}
+
+		if (in.AttachGuiApp.hWindow && (gpSrv->hRootProcessGui != in.AttachGuiApp.hWindow))
+		{
+			wchar_t szTitle[MAX_PATH];
+			GetWindowText(in.AttachGuiApp.hWindow, szTitle, countof(szTitle));
+			_wsprintf(szInfo,  SKIPLEN(countof(szInfo)) L"\nWindow (x%08X) was attached to ConEmu:\n%s\n", (DWORD)in.AttachGuiApp.hWindow, szTitle);
 			_wprintf(szInfo);
 		}
 

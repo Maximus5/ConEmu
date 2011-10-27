@@ -4955,6 +4955,9 @@ void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer,
 
 LRESULT CConEmuMain::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 {
+	// Уже должен быть выставлен тип меню, иначе не будут всплывать подсказки для пунктов меню
+	_ASSERTE(mn_TrackMenuPlace == tmp_System);
+
 	DefWindowProc(hWnd, WM_INITMENUPOPUP, (WPARAM)hMenu, lParam);
 
 	if (HIWORD(lParam))
@@ -5025,6 +5028,8 @@ int CConEmuMain::trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, 
 	mn_TrackMenuPlace = place;
 
 	int cmd = TrackPopupMenu(hMenu, uFlags, x, y, nReserved, hWnd, prcRect);
+
+	mn_TrackMenuPlace = tmp_None;
 
 	mp_Tip->HideTip();
 
@@ -8602,8 +8607,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 					// На будущее, если будет "встроенный" SlideShow - вернуть на это сообщение TRUE
 					UINT nMsg = RegisterWindowMessage(L"PicView:HasSlideShow");
 					DWORD_PTR nRc = 0;
-					LRESULT lRc = SendMessageTimeout(hPictureView, nMsg, 0,0, SMTO_NORMAL, 500, &nRc);
-					if (!lRc || nRc != TRUE)
+					LRESULT lRc = SendMessageTimeout(hPictureView, nMsg, 0,0, SMTO_NORMAL, 1000, &nRc);
+					if (!lRc || nRc == TRUE)
 						lbAllowed = false;
 				}
 
@@ -9579,6 +9584,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	// кто его знает, в каких координатах оно пришло...
 	//short winX = GET_X_LPARAM(lParam);
 	//short winY = GET_Y_LPARAM(lParam);
+
+	if (mn_TrackMenuPlace != tmp_None && mp_Tip)
+	{
+		mp_Tip->HideTip();
+	}
 
 	//2010-05-20 все-таки будем ориентироваться на lParam, потому что
 	//  только так ConEmuTh может передать корректные координаты
@@ -11685,6 +11695,13 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		case SC_MINIMIZE:
 			DEBUGSTRSYS(L"OnSysCommand(SC_MINIMIZE)\n");
 
+			// Если "фокус" в дочернем Gui приложении - нужно перед скрытием ConEmu "поднять" его
+			if (mp_VActive && mp_VActive->RCon())
+			{
+				if (mp_VActive->RCon()->GuiWnd())
+					SetForegroundWindow(ghWnd);
+			}
+
 			if (gpSet->isMinToTray)
 			{
 				Icon.HideWindowToTray();
@@ -11718,7 +11735,19 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, wParam, lParam, FALSE);
 				}
 
+				if (wParam == SC_SYSMENUPOPUP_SECRET)
+				{
+					mn_TrackMenuPlace = tmp_System;
+					mp_Tip->HideTip();
+				}
+
 				result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
+
+				if (wParam == SC_SYSMENUPOPUP_SECRET)
+				{
+					mn_TrackMenuPlace = tmp_None;
+					mp_Tip->HideTip();
+				}
 			}
 	}
 
@@ -11924,6 +11953,30 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 			if (gpSet->PollBackgroundFile())
 			{
 				gpConEmu->Update(true);
+			}
+
+			if (mn_TrackMenuPlace != tmp_None && mp_Tip)
+			{
+				POINT ptCur; GetCursorPos(&ptCur);
+				HWND hPoint = WindowFromPoint(ptCur);
+				if (hPoint)
+				{
+					#if 0
+					wchar_t szWinInfo[1024];
+					_wsprintf(szWinInfo, SKIPLEN(countof(szWinInfo)) L"WindowFromPoint(%i,%i) ", ptCur.x, ptCur.y);
+					OutputDebugString(szWinInfo);
+					getWindowInfo(hPoint, szWinInfo);
+					wcscat_c(szWinInfo, L"\n");
+					OutputDebugString(szWinInfo);
+					#endif
+
+					wchar_t szClass[128];
+					if (GetClassName(hPoint, szClass, countof(szClass))
+						&& (lstrcmp(szClass, VirtualConsoleClass) == 0 || lstrcmp(szClass, VirtualConsoleClassMain) == 0))
+					{
+						mp_Tip->HideTip();
+					}
+				}
 			}
 
 			CheckFocus(L"TIMER_MAIN_ID");
@@ -12436,7 +12489,8 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		{
 			wchar_t szDbg[1024];
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"AttachGuiApp requested from:\n%s\nPID=%u", pIn->AttachGuiApp.sAppFileName, pIn->AttachGuiApp.nPID);
-			MBoxA(szDbg);
+			//MBoxA(szDbg);
+			MessageBox(NULL, szDbg, L"ConEmu", MB_SYSTEMMODAL);
 		}
 		#endif
 
@@ -13254,7 +13308,23 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			//  return gpConEmu->OnConEmuCmd( (messg == gpConEmu->mn_MsgCmdStarted), (HWND)wParam, (DWORD)lParam);
 			//}
 
-			if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
+
+			if (messg)
+			{
+				if (messg == WM_CONTEXTMENU)
+				{
+					mn_TrackMenuPlace = tmp_System;
+					mp_Tip->HideTip();
+				}
+
+				result = DefWindowProc(hWnd, messg, wParam, lParam);
+
+				if (messg == WM_CONTEXTMENU)
+				{
+					mn_TrackMenuPlace = tmp_None;
+					mp_Tip->HideTip();
+				}
+			}
 	}
 
 	return result;

@@ -56,6 +56,7 @@ class CConEmuChild
 
 	protected:
 		HWND mh_WndDC;
+		HWND mh_LastGuiChild;
 		UINT mn_MsgTabChanged;
 		UINT mn_MsgPostFullPaint;
 		BOOL mb_PostFullPaint;

@@ -186,7 +186,6 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			RConStartArgs* pArgs = pDlg->mp_Args;
 			_ASSERTE(pArgs);
 
-			// Если на момент открытия диалога был нажат Apps - пропустить его "отжатие"
 			LPCWSTR pszCmd = pArgs->pszSpecialCmd
 			                 ? pArgs->pszSpecialCmd
 			                 : gpConEmu->ActiveCon()->RCon()->GetCmd();
@@ -203,22 +202,30 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszSystem);
 			}
 
-			pszSystem = gpSet->HistoryGet();
+			LPCWSTR pszHistory = gpSet->HistoryGet();
 
-			if (pszSystem)
+			if (pszHistory)
 			{
-				while(*pszSystem)
+				while (*pszHistory)
 				{
-					int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszSystem);
+					int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszHistory);
+					if (nId < 0)
+						SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pszHistory);
 
-					if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pszSystem);
-
-					pszSystem += _tcslen(pszSystem)+1;
+					pszHistory += _tcslen(pszHistory)+1;
 				}
 			}
 
-			SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
-			SetDlgItemText(hDlg, IDC_STARTUP_DIR, gpConEmu->ActiveCon()->RCon()->GetDir());
+			if (pArgs->bRecreate)
+			{
+				SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
+				SetDlgItemText(hDlg, IDC_STARTUP_DIR, gpConEmu->ActiveCon()->RCon()->GetDir());
+			}
+			else
+			{
+				SetDlgItemText(hDlg, IDC_RESTART_CMD, pszSystem);
+				SetDlgItemText(hDlg, IDC_STARTUP_DIR, L"");
+			}
 			//EnableWindow(GetDlgItem(hDlg, IDC_STARTUP_DIR), FALSE);
 			//#ifndef _DEBUG
 			//EnableWindow(GetDlgItem(hDlg, IDC_CHOOSE_DIR), FALSE);
@@ -233,7 +240,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			lstrcpy(szRbCaption, L"Run as current &user: "); lstrcat(szRbCaption, szCurUser);
 			SetDlgItemText(hDlg, rbCurrentUser, szRbCaption);
 
-			if (gpConEmu->ActiveCon()->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted))
+			if (pArgs->bRecreate && gpConEmu->ActiveCon()->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted))
 			{
 				nChecked = rbAnotherUser;
 

@@ -87,8 +87,8 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 void ExecuteFreeResult(CESERVER_REQ* &pOut);
 
 BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping);
-#ifndef CONEMU_MINIMAL
 BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping);
+#ifndef CONEMU_MINIMAL
 BOOL LoadGuiMapping(HWND hConEmuWnd, ConEmuGuiMapping& GuiMapping);
 #endif
 CESERVER_REQ* ExecuteNewCmdOnCreate(enum CmdOnCreateType aCmd,

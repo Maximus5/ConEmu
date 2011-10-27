@@ -391,6 +391,7 @@ BOOL LoadGuiMapping(HWND hConEmuWnd, ConEmuGuiMapping& GuiMapping)
 
 	return LoadGuiMapping(dwGuiProcessId, GuiMapping);
 }
+#endif
 
 BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping)
 {
@@ -417,7 +418,7 @@ BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping)
 
 	return (GuiMapping.cbSize != 0);
 }
-#endif
+
 
 CESERVER_REQ* ExecuteNewCmdOnCreate(enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,

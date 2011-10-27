@@ -56,6 +56,7 @@ CConEmuChild::CConEmuChild()
 	memset(&Caret, 0, sizeof(Caret));
 	mb_DisableRedraw = FALSE;
 	mh_WndDC = NULL;
+	mh_LastGuiChild = NULL;
 }
 
 CConEmuChild::~CConEmuChild()
@@ -397,6 +398,19 @@ LRESULT CConEmuChild::OnPaint()
 	{
 		CVirtualConsole* pVCon = (CVirtualConsole*)this;
 		_ASSERTE(pVCon!=NULL);
+
+		if (mh_LastGuiChild)
+		{
+			if (!IsWindow(mh_LastGuiChild))
+			{
+				mh_LastGuiChild = NULL;
+				Invalidate();
+			}
+		}
+		else
+		{
+			mh_LastGuiChild = pVCon->RCon() ? pVCon->RCon()->GuiWnd() : NULL;
+		}
 
 		PAINTSTRUCT ps;
 		#ifdef _DEBUG
