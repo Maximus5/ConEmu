@@ -9,6 +9,7 @@ SRCS =  \
 		ConEmuPipe.cpp     \
 		DragDrop.cpp       \
 		DragDropData.cpp   \
+		LoadImg.cpp        \
 		Macro.cpp          \
 		Options.cpp        \
 		RealConsole.cpp    \

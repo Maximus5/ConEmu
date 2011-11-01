@@ -1515,6 +1515,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\LoadImg.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Macro.cpp"
 				>
 			</File>
@@ -1642,6 +1646,10 @@
 			</File>
 			<File
 				RelativePath=".\kl_parts.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LoadImg.h"
 				>
 			</File>
 			<File
@@ -2549,6 +2557,10 @@
 		</File>
 		<File
 			RelativePath="..\..\Release\ConEmu\About-ConEmu.txt"
+			>
+		</File>
+		<File
+			RelativePath=".\ClassDiagram1.cd"
 			>
 		</File>
 		<File
