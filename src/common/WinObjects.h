@@ -318,6 +318,26 @@ class MFileMapping
 			_ASSERTE(nSize==-1 || nSize>=sizeof(T));
 			return InternalOpenCreate(FALSE/*abCreate*/,abReadWrite,nSize);
 		};
+		const T* ReopenForRead()
+		{
+			if (mh_Mapping)
+			{
+				if (mp_Data) ClosePtr();
+
+				mb_WriteAllowed = FALSE;
+
+				DWORD nFlags = FILE_MAP_READ;
+				mp_Data = (T*)MapViewOfFile(mh_Mapping, nFlags,0,0,0);
+
+				if (!mp_Data)
+				{
+					mn_LastError = GetLastError();
+					msprintf(ms_Error, countof(ms_Error), L"Can't map console info (%s). ErrCode=0x%08X\n%s",
+						mb_WriteAllowed ? L"ReadWrite" : L"Read" ,mn_LastError, ms_MapName);
+				}
+			}
+			return mp_Data;
+		};
 	public:
 		MFileMapping()
 		{

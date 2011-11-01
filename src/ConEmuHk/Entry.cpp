@@ -87,6 +87,7 @@ HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
+extern DWORD  gnHookMainThreadId;
 extern HANDLE ghHeap;
 extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32, ghComdlg32;
 extern const wchar_t *kernel32;// = L"kernel32.dll";
@@ -96,13 +97,15 @@ extern const wchar_t *advapi32;// = L"Advapi32.dll";
 extern const wchar_t *comdlg32;// = L"comdlg32.dll";
 
 //BOOL gbSkipInjects = FALSE;
-BOOL gbHooksWasSet = FALSE;
+BOOL gbHooksWasSet = false;
+BOOL gbDllDeinitialized = false; 
 
 UINT_PTR gfnLoadLibrary = NULL;
 extern BOOL StartupHooks(HMODULE ahOurDll);
 extern void ShutdownHooks();
 extern void InitializeHookedModules();
 extern void FinalizeHookedModules();
+extern DWORD GetMainThreadId();
 //HMODULE ghPsApi = NULL;
 #ifdef _DEBUG
 extern HHOOK ghGuiClientRetHook;
@@ -385,6 +388,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
 			pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 			GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
+			pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
 
 			wchar_t szGuiPipeName[128];
 			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", dwConEmuHwnd);
@@ -407,6 +411,11 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 						_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 						grcConEmuClient = pOut->AttachGuiApp.rcWindow;
 						gnServerPID = pOut->AttachGuiApp.nPID;
+						if (pOut->AttachGuiApp.hkl)
+						{
+							LONG_PTR hkl = (LONG_PTR)(LONG)pOut->AttachGuiApp.hkl;
+							BOOL lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != NULL;
+						}
 						gbAttachGuiClient = TRUE;
 					}
 				}
@@ -594,6 +603,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ghWorkingModule = (u64)hModule;
 			gfGetRealConsoleWindow = GetConsoleWindow;
 			user = (UserImp*)calloc(1, sizeof(*user));
+			GetMainThreadId(); // Инициализировать gnHookMainThreadId
 
 			#ifdef _DEBUG
 			gAllowAssertThread = am_Pipe;
@@ -656,6 +666,12 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		{
 			if (gbHooksWasSet)
 				DoneHooksRegThread();
+			// DLL_PROCESS_DETACH зовется как выяснилось не всегда
+			if (gnHookMainThreadId && (GetCurrentThreadId() == gnHookMainThreadId) && !gbDllDeinitialized)
+			{
+				gbDllDeinitialized = true;
+				DllStop();
+			}
 		}
 		break;
 		
@@ -663,7 +679,12 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		{
 			if (gbHooksWasSet)
 				lbAllow = FALSE; // Иначе свалимся, т.к. FreeLibrary перехвачена
-			DllStop();
+			// Уже могли дернуть в DLL_THREAD_DETACH
+			if (!gbDllDeinitialized)
+			{
+				gbDllDeinitialized = true;
+				DllStop();
+			}
 			// -- free не нужен, т.к. уже вызван HeapDeinitialize()
 			//free(user);
 		}
@@ -965,6 +986,8 @@ void SendStarted()
 		//BOOL lbRc1 =
 		GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
 
+		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(hOut);
+
 		//if (!lbRc1) dwErr1 = GetLastError();
 		//
 		//PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd started)\n",(RunMode==RM_SERVER) ? L"Server" : L"ComSpec");
@@ -1096,9 +1119,13 @@ void SendStopped()
 		pIn->StartStop.nSubSystem = gnImageSubsystem;
 		pIn->StartStop.bWasBufferHeight = gbWasBufferHeight;
 
+		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
 		// НЕ MyGet..., а то можем заблокироваться...
 		// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
-		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &pIn->StartStop.sbi);
+		GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
+
+		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(hOut);
 
 		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
 
@@ -1149,6 +1176,29 @@ BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD 
 			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize);
 			if (lbRc)
 				ppReply->dwData[0] = lbFRc;
+		}
+		break;
+	case CECMD_SETGUIEXTERN:
+		if (ghAttachGuiClient)
+		{
+			SetGuiExternMode(pCmd->dwData[0] != 0);
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
+			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize);
+			if (lbRc)
+				ppReply->dwData[0] = gbGuiClientExternMode;
+		}
+		break;
+	case CECMD_LANGCHANGE:
+		{
+			LONG_PTR hkl = (LONG_PTR)(LONG)pCmd->dwData[0];
+			BOOL lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != NULL;
+			DWORD nErrCode = lbRc ? 0 : GetLastError();
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD);
+			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
+			{
+				ppReply->dwData[0] = lbRc;
+				ppReply->dwData[1] = nErrCode;
+			}
 		}
 		break;
 	}

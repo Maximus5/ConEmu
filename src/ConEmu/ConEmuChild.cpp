@@ -49,6 +49,10 @@ CConEmuChild::CConEmuChild()
 {
 	mn_MsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 	mn_MsgPostFullPaint = RegisterWindowMessage(L"CConEmuChild::PostFullPaint");
+#ifdef _DEBUG
+	mn_MsgCreateDbgDlg = RegisterWindowMessage(L"CConEmuChild::MsgCreateDbgDlg");
+	hDlgTest = NULL;
+#endif
 	mb_PostFullPaint = FALSE;
 	mn_LastPostRedrawTick = 0;
 	mb_IsPendingRedraw = FALSE;
@@ -91,12 +95,14 @@ HWND CConEmuChild::CreateView()
 
 	// »м€ класса - то же самое, что и у главного окна
 	DWORD style = /*WS_VISIBLE |*/ WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+	DWORD styleEx = 0;
 	//RECT rc = gpConEmu->DCClientRect();
 	RECT rcMain; GetClientRect(ghWnd, &rcMain);
 	RECT rc = gpConEmu->CalcRect(CER_DC, rcMain, CER_MAINCLIENT);
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	_ASSERTE(pVCon);
-	mh_WndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, pVCon);
+	mh_WndDC = CreateWindowEx(styleEx, szClassName, 0, style,
+		rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, pVCon);
 
 	if (!mh_WndDC)
 	{
@@ -325,6 +331,12 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			{
 				pVCon->Redraw();
 			}
+			#ifdef _DEBUG
+			else if (messg == pVCon->mn_MsgCreateDbgDlg)
+			{
+				pVCon->CreateDbgDlg();
+			}
+			#endif
 			else if (messg)
 			{
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
@@ -334,6 +346,35 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 wrap:
 	return result;
 }
+
+#ifdef _DEBUG
+void CConEmuChild::CreateDbgDlg()
+{
+	return;
+
+	if (!hDlgTest)
+	{
+		if (!gpConEmu->isMainThread())
+		{
+			PostMessage(mh_WndDC, mn_MsgCreateDbgDlg, 0, (LPARAM)this);
+		}
+		else
+		{
+			hDlgTest = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SPG_MAIN), mh_WndDC, DbgChildDlgProc);
+			if (hDlgTest)
+			{
+				SetWindowPos(hDlgTest, NULL, 100,100, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+				ShowWindow(hDlgTest, SW_SHOW);
+			}
+		}
+	}
+}
+
+INT_PTR CConEmuChild::DbgChildDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	return 0;
+}
+#endif
 
 LRESULT CConEmuChild::OnPaint()
 {

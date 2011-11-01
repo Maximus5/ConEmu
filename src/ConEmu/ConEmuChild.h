@@ -54,6 +54,14 @@ class CConEmuChild
 
 		void CheckPostRedraw();
 
+#ifdef _DEBUG
+	public:
+		UINT    mn_MsgCreateDbgDlg;
+		HWND    hDlgTest;
+		static  INT_PTR CALLBACK DbgChildDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		void    CreateDbgDlg();
+#endif
+
 	protected:
 		HWND mh_WndDC;
 		HWND mh_LastGuiChild;

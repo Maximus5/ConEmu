@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TabBar.h"
 #include "Background.h"
 #include "TrayIcon.h"
+#include "LoadImg.h"
 #include "version.h"
 
 
@@ -3206,7 +3207,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
 			ofn.lStructSize=sizeof(ofn);
 			ofn.hwndOwner = ghOpWnd;
-			ofn.lpstrFilter = L"Bitmap images (*.bmp)\0*.bmp\0\0";
+			ofn.lpstrFilter = L"All images (*.bmp,*.jpg,*.png)\0*.bmp;*.jpg;*.jpe;*.jpeg;*.png\0Bitmap images (*.bmp)\0*.bmp\0JPEG images (*.jpg)\0*.jpg;*.jpe;*.jpeg\0PNG images (*.png)\0*.png\0\0";
 			ofn.nFilterIndex = 1;
 			ofn.lpstrFile = temp;
 			ofn.nMaxFile = MAX_PATH;
@@ -9048,41 +9049,50 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 	}
 
 	bool lRes = false;
-	BITMAPFILEHEADER* pBkImgData = NULL;
-	HANDLE hFile = CreateFile(exPath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
-
-	if (hFile != INVALID_HANDLE_VALUE)
+	BY_HANDLE_FILE_INFORMATION inf = {0};
+	BITMAPFILEHEADER* pBkImgData = LoadImageEx(exPath, inf);
+	if (pBkImgData)
 	{
-		BY_HANDLE_FILE_INFORMATION inf = {0};
-
-		//LARGE_INTEGER nFileSize;
-		//if (GetFileSizeEx(hFile, &nFileSize) && nFileSize.HighPart == 0
-		if (GetFileInformationByHandle(hFile, &inf) && inf.nFileSizeHigh == 0
-		        && inf.nFileSizeLow >= (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO))) //-V119
-		{
-			pBkImgData = (BITMAPFILEHEADER*)malloc(inf.nFileSizeLow);
-
-			if (pBkImgData && ReadFile(hFile, pBkImgData, inf.nFileSizeLow, &inf.nFileSizeLow, NULL))
-			{
-				char *pBuf = (char*)pBkImgData;
-
-				if (pBuf[0] == 'B' && pBuf[1] == 'M' && *(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
-				{
-					ftBgModified = inf.ftLastWriteTime;
-					nBgModifiedTick = GetTickCount();
-					NeedBackgroundUpdate();
-					_ASSERTE(gpConEmu->isMainThread());
-					//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
-					SafeFree(mp_BgImgData);
-					isBackgroundImageValid = true;
-					mp_BgImgData = pBkImgData;
-					lRes = true;
-				}
-			}
-		}
-
-		SafeCloseHandle(hFile);
+		ftBgModified = inf.ftLastWriteTime;
+		nBgModifiedTick = GetTickCount();
+		NeedBackgroundUpdate();
+		_ASSERTE(gpConEmu->isMainThread());
+		//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
+		SafeFree(mp_BgImgData);
+		isBackgroundImageValid = true;
+		mp_BgImgData = pBkImgData;
+		lRes = true;
 	}
+	
+	//HANDLE hFile = CreateFile(exPath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
+	//if (hFile != INVALID_HANDLE_VALUE)
+	//{
+	//	BY_HANDLE_FILE_INFORMATION inf = {0};
+	//	//LARGE_INTEGER nFileSize;
+	//	//if (GetFileSizeEx(hFile, &nFileSize) && nFileSize.HighPart == 0
+	//	if (GetFileInformationByHandle(hFile, &inf) && inf.nFileSizeHigh == 0
+	//	        && inf.nFileSizeLow >= (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO))) //-V119
+	//	{
+	//		pBkImgData = (BITMAPFILEHEADER*)malloc(inf.nFileSizeLow);
+	//		if (pBkImgData && ReadFile(hFile, pBkImgData, inf.nFileSizeLow, &inf.nFileSizeLow, NULL))
+	//		{
+	//			char *pBuf = (char*)pBkImgData;
+	//			if (pBuf[0] == 'B' && pBuf[1] == 'M' && *(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
+	//			{
+	//				ftBgModified = inf.ftLastWriteTime;
+	//				nBgModifiedTick = GetTickCount();
+	//				NeedBackgroundUpdate();
+	//				_ASSERTE(gpConEmu->isMainThread());
+	//				//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
+	//				SafeFree(mp_BgImgData);
+	//				isBackgroundImageValid = true;
+	//				mp_BgImgData = pBkImgData;
+	//				lRes = true;
+	//			}
+	//		}
+	//	}
+	//	SafeCloseHandle(hFile);
+	//}
 
 	//klFile file;
 	//if (file.Open(exPath))

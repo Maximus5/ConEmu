@@ -310,6 +310,7 @@ void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, size_t cbSize)
 
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, size_t nSize)
 {
+	_ASSERTE(nSize>=sizeof(CESERVER_REQ_HDR));
 	CESERVER_REQ* pIn = NULL;
 
 	if (nSize)
@@ -569,6 +570,22 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner
 	DWORD nLastErr = GetLastError();
 	//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	msprintf(szGuiPipeName, countof(szGuiPipeName), CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
+	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
+	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
+	return lpRet;
+}
+
+// Выполнить в ConEmuHk
+CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, const CESERVER_REQ* pIn, HWND hOwner)
+{
+	wchar_t szGuiPipeName[128];
+
+	if (!dwHkPID)
+		return NULL;
+
+	DWORD nLastErr = GetLastError();
+	//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
+	msprintf(szGuiPipeName, countof(szGuiPipeName), CEHOOKSPIPENAME, L".", (DWORD)dwHkPID);
 	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
 	return lpRet;

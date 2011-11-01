@@ -46,7 +46,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 PHANDLER_ROUTINE gfHandlerRoutine = NULL;
 
-
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
 	if (gfHandlerRoutine)

@@ -11,14 +11,17 @@ extern DWORD   gnHookMainThreadId;
 
 RECT    grcConEmuClient = {}; // Для аттача гуевых окон
 BOOL    gbAttachGuiClient = FALSE; // Для аттача гуевых окон
-BOOL gbGuiClientAttached; // Для аттача гуевых окон (успешно подключились)
-HWND ghAttachGuiClient = NULL; // Чтобы ShowWindow перехватить
-DWORD gnAttachGuiClientFlags = 0;
-BOOL gbForceShowGuiClient = FALSE; // --
+BOOL 	gbGuiClientAttached = FALSE; // Для аттача гуевых окон (успешно подключились)
+BOOL 	gbGuiClientExternMode = FALSE; // Если нужно показать Gui-приложение вне вкладки ConEmu
+HWND 	ghAttachGuiClient = NULL;
+DWORD 	gnAttachGuiClientFlags = 0;
+DWORD 	gnAttachGuiClientStyle = 0, gnAttachGuiClientStyleEx = 0;
+BOOL  	gbAttachGuiClientStyleOk = FALSE;
+BOOL 	gbForceShowGuiClient = FALSE; // --
 //HMENU ghAttachGuiClientMenu = NULL;
-RECT grcAttachGuiClientPos = {};
+RECT 	grcAttachGuiClientPos = {};
 #ifdef _DEBUG
-HHOOK ghGuiClientRetHook = NULL;
+HHOOK 	ghGuiClientRetHook = NULL;
 #endif
 
 #ifdef _DEBUG
@@ -182,32 +185,52 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 
 	RECT rcGui = grcAttachGuiClientPos;
 
-	// DotNet: если не включить WS_CHILD - не работают toolStrip & menuStrip
-	// Native: если включить WS_CHILD - исчезает оконное меню
-	if (gnAttachGuiClientFlags & agaf_DotNet)
-	{
-		DWORD_PTR dwStyle = user->getWindowLongPtrW(ghAttachGuiClient, GWL_STYLE);
-		if (!(dwStyle & WS_CHILD))
-			user->setWindowLongPtrW(ghAttachGuiClient, GWL_STYLE, dwStyle|WS_CHILD);
-	}
+	DWORD_PTR dwStyle = user->getWindowLongPtrW(ghAttachGuiClient, GWL_STYLE);
+	DWORD_PTR dwStyleEx = user->getWindowLongPtrW(ghAttachGuiClient, GWL_EXSTYLE);
 
-	HWND hCurParent = user->getParent(ghAttachGuiClient);
-	if (hCurParent != ghConEmuWndDC)
+	if (!gbAttachGuiClientStyleOk)
 	{
-		user->setParent(ghAttachGuiClient, ghConEmuWndDC);
+		gbAttachGuiClientStyleOk = TRUE;
+		gnAttachGuiClientStyle = (DWORD)dwStyle;
+		gnAttachGuiClientStyleEx = (DWORD)dwStyleEx;
 	}
 	
-	if (user->setWindowPos(ghAttachGuiClient, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
-		SWP_DRAWFRAME | /*SWP_FRAMECHANGED |*/ (abStyleHidden ? SWP_SHOWWINDOW : 0)))
+	if (!gbGuiClientExternMode)
 	{
-		if (abStyleHidden && IsWindowVisible(ghAttachGuiClient))
-			abStyleHidden = FALSE;
-	}
-	
-	// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
-	user->setForegroundWindow(ghConEmuWnd);
+		// DotNet: если не включить WS_CHILD - не работают toolStrip & menuStrip
+		// Native: если включить WS_CHILD - исчезает оконное меню
+		DWORD_PTR dwNewStyle = dwStyle & ~(WS_MAXIMIZEBOX|WS_MINIMIZEBOX);
+		if (gnAttachGuiClientFlags & agaf_DotNet)
+			dwNewStyle = (dwNewStyle|WS_CHILD/*|DS_CONTROL*/) & ~(WS_POPUP);
 
-	user->postMessageW(ghAttachGuiClient, WM_NCPAINT, 0, 0);
+		if (dwStyle != dwNewStyle)
+			user->setWindowLongPtrW(ghAttachGuiClient, GWL_STYLE, dwNewStyle);
+
+		/*
+		
+		DWORD_PTR dwNewStyleEx = (dwStyleEx|WS_EX_CONTROLPARENT);
+		if (dwStyleEx != dwNewStyleEx)
+			user->setWindowLongPtrW(ghAttachGuiClient, GWL_EXSTYLE, dwNewStyleEx);
+		*/
+
+		HWND hCurParent = user->getParent(ghAttachGuiClient);
+		if (hCurParent != ghConEmuWndDC)
+		{
+			user->setParent(ghAttachGuiClient, ghConEmuWndDC);
+		}
+		
+		if (user->setWindowPos(ghAttachGuiClient, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+			SWP_DRAWFRAME | /*SWP_FRAMECHANGED |*/ (abStyleHidden ? SWP_SHOWWINDOW : 0)))
+		{
+			if (abStyleHidden && IsWindowVisible(ghAttachGuiClient))
+				abStyleHidden = FALSE;
+		}
+		
+		// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
+		user->setForegroundWindow(ghConEmuWnd);
+
+		user->postMessageW(ghAttachGuiClient, WM_NCPAINT, 0, 0);
+	}
 }
 
 void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asClassW, DWORD anStyle, DWORD anStyleEx, BOOL abStyleHidden)
@@ -267,8 +290,8 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 		gnAttachGuiClientFlags |= agaf_DotNet;
 	// Если в окне нет меню - работаем с ним как с WS_CHILD
 	// так не возникает проблем с активацией и т.д.
-	//if (user->getMenu(hWindow) == NULL)
-	//	gnAttachGuiClientFlags |= agaf_DotNet;
+	else if (user->getMenu(hWindow) == NULL)
+		gnAttachGuiClientFlags |= agaf_DotNet;
 	pIn->AttachGuiApp.nFlags = gnAttachGuiClientFlags;
 	pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 	pIn->AttachGuiApp.hWindow = hWindow;
@@ -276,6 +299,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	pIn->AttachGuiApp.nStyleEx = nCurStyleEx; // поэтому получим актуальные
 	user->getWindowRect(hWindow, &pIn->AttachGuiApp.rcWindow);
 	GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
+	pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
 
 	wchar_t szGuiPipeName[128];
 	msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
@@ -304,6 +328,12 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
                 }
             }
             
+			if (pOut->AttachGuiApp.hkl)
+			{
+				LONG_PTR hkl = (LONG_PTR)(LONG)pOut->AttachGuiApp.hkl;
+				BOOL lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != NULL;
+			}
+
             grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
             ReplaceGuiAppWindow(abStyleHidden);
 
@@ -431,4 +461,32 @@ bool OnSetGuiClientWindowPos(HWND hWnd, HWND hWndInsertAfter, int &X, int &Y, in
 		}
 	}
 	return lbChanged;
+}
+
+void SetGuiExternMode(BOOL abUseExternMode)
+{
+	if (gbGuiClientExternMode != abUseExternMode)
+	{
+		gbGuiClientExternMode = abUseExternMode;
+		
+		if (!abUseExternMode)
+		{
+			ReplaceGuiAppWindow(FALSE);
+		}
+		else
+		{
+			RECT rcGui; GetWindowRect(ghAttachGuiClient, &rcGui);
+
+			if (gbAttachGuiClientStyleOk)
+			{
+				user->setWindowLongPtrW(ghAttachGuiClient, GWL_STYLE, gnAttachGuiClientStyle & ~WS_VISIBLE);
+				user->setWindowLongPtrW(ghAttachGuiClient, GWL_EXSTYLE, gnAttachGuiClientStyleEx);
+			}
+			user->setParent(ghAttachGuiClient, NULL);
+			
+			TODO("Вернуть старый размер?");
+			user->setWindowPos(ghAttachGuiClient, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+				SWP_DRAWFRAME | /*SWP_FRAMECHANGED |*/ SWP_SHOWWINDOW);
+		}
+	}
 }

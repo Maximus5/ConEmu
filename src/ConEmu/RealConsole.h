@@ -217,6 +217,7 @@ class CRealConsole
 	private:
 		HWND    hConWnd;
 		HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
+		BOOL    mb_GuiExternMode; // FALSE если захотели показать GUI приложение вне вкладки ConEmu (Ctrl-Win-Alt-Space)
 		RECT    rcPreGuiWndRect; // Положение окна ДО аттача
 		BOOL    mb_InGuiAttaching;
 		BOOL    mb_InSetFocus;
@@ -229,11 +230,12 @@ class CRealConsole
 
 	public:
 		HWND    ConWnd();  // HWND RealConsole
-		HWND    GetView(); // HWND Gui приложения
+		HWND    GetView(); // HWND отрисовки
 
 		// Если работаем в Gui-режиме (Notepad, Putty, ...)
-		HWND    GuiWnd();
+		HWND    GuiWnd();  // HWND Gui приложения
 		BOOL    isGuiVisible();
+		BOOL    isGuiOverCon();
 		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
 		void    CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui);
 
@@ -478,6 +480,7 @@ class CRealConsole
 			CONSOLE_CURSOR_INFO m_ci;
 			DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
 			CONSOLE_SCREEN_BUFFER_INFO m_sbi;
+			COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
 			USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
 			wchar_t *pConChar;
 			WORD  *pConAttr;
@@ -607,11 +610,11 @@ class CRealConsole
 		// Colorer Mapping
 		//HANDLE mh_ColorMapping;
 		//AnnotationHeader *mp_ColorHdr;
-		MFileMapping<const AnnotationHeader> m_TrueColorerMap;
+		MFileMapping<AnnotationHeader> m_TrueColorerMap;
 		AnnotationHeader m_TrueColorerHeader;
 		const AnnotationInfo *mp_TrueColorerData;
 		DWORD mn_LastColorFarID;
-		void OpenColorMapping(); // Открыть мэппинг колорера (по HWND)
+		void CreateColorMapping(); // Открыть мэппинг колорера (по HWND)
 		//void CheckColorMapping(DWORD dwPID); // Проверить валидность буфера - todo
 		void CloseColorMapping();
 		//

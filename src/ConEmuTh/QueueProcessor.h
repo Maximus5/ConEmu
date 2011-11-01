@@ -29,8 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #ifndef TRY
-#define TRY __try
-#define CATCH __except(EXCEPTION_EXECUTE_HANDLER)
+	#define TRY __try
+	#define CATCH __except(EXCEPTION_EXECUTE_HANDLER)
 #endif
 
 //#ifndef sizeofarray
@@ -424,8 +424,8 @@ class CQueueProcessor
 					//	// Уже обработан асинхронно
 					//	return p->Result;
 					//}
-					if (p->Status == eItemPassed ||
-					        (p->Status == eItemFailed || p->Status == eItemReady))
+					if (p->Status == eItemPassed
+					    || (p->Status == eItemFailed || p->Status == eItemReady))
 					{
 						if (mp_SynchRequest == p)
 						{

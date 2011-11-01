@@ -4956,12 +4956,14 @@ void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer,
 LRESULT CConEmuMain::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 {
 	// ”же должен быть выставлен тип меню, иначе не будут всплывать подсказки дл€ пунктов меню
-	_ASSERTE(mn_TrackMenuPlace == tmp_System);
+	_ASSERTE(mn_TrackMenuPlace != tmp_None);
 
 	DefWindowProc(hWnd, WM_INITMENUPOPUP, (WPARAM)hMenu, lParam);
 
 	if (HIWORD(lParam))
 	{
+		_ASSERTE(mn_TrackMenuPlace == tmp_System);
+
 		BOOL bSelectionExist = FALSE;
 
 		CVirtualConsole* pVCon = ActiveCon();
@@ -9364,12 +9366,13 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 		nLastMsg = messg;
 		lLastPrm = lParam;
 
-		if (pRCon)
-		{
-			HWND hGuiWnd = pRCon->GuiWnd();
-			if (hGuiWnd)
-				pRCon->PostConsoleMessage(hGuiWnd, messg, wParam, lParam);
-		}
+		// -- Ёффекта не имеет
+		//if (pRCon)
+		//{
+		//	HWND hGuiWnd = pRCon->GuiWnd();
+		//	if (hGuiWnd)
+		//		pRCon->PostConsoleMessage(hGuiWnd, messg, wParam, lParam);
+		//}
 	}
 
 	m_ActiveKeybLayout = (DWORD_PTR)lParam;
@@ -12511,6 +12514,7 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 			Out.AttachGuiApp.nFlags = agaf_Success;
 			Out.AttachGuiApp.nPID = pRCon->GetServerPID();
 			Out.AttachGuiApp.hWindow = pRCon->GetView();
+			Out.AttachGuiApp.hkl = (DWORD)(LONG_PTR)(LONG)GetKeyboardLayout(mn_MainThreadId);
 		}
 		else
 		{

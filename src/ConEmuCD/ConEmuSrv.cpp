@@ -314,8 +314,13 @@ int ServerInit()
 	if (iRc != 0)
 		goto wrap;
 
-	// Создать мэппинг для Colorer
-	CreateColorerHeader(); // ошибку не обрабатываем - не критическая
+	// 111101 - мэппинг теперь создается по хэндлу окна отрисовки. Оно еще скорее всего не инициализировано
+	if (ghConEmuWndDC)
+	{
+		// Создать мэппинг для Colorer
+		CreateColorerHeader(); // ошибку не обрабатываем - не критическая
+	}
+
 	//if (hKernel) {
 	//    pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
 	//    pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress (hKernel, "GetConsoleProcessList");
@@ -1609,6 +1614,8 @@ HWND Attach2Gui(DWORD nTimeout)
 		_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
 	}
 
+	pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(hOut);
+
 //LoopFind:
 	// В обычном "серверном" режиме шрифт уже установлен, а при аттаче
 	// другого процесса - шрифт все-равно поменять не получится
@@ -1896,7 +1903,20 @@ void UpdateConsoleMapHeader()
 	if (gpSrv && gpSrv->pConsole)
 	{
 		if (gnRunMode == RM_SERVER)
+		{
+			if (ghConEmuWndDC && !gpSrv->pColorerMapping || (gpSrv->pConsole->hdr.hConEmuWnd != ghConEmuWndDC))
+			{
+				if (gpSrv->pColorerMapping && (gpSrv->pConsole->hdr.hConEmuWnd != ghConEmuWndDC))
+				{
+					// По идее, не должно быть пересоздания TrueColor мэппинга
+					_ASSERTE(gpSrv->pColorerMapping);
+					delete gpSrv->pColorerMapping;
+					gpSrv->pColorerMapping = NULL;
+				}
+				CreateColorerHeader();
+			}
 			gpSrv->pConsole->hdr.nServerPID = GetCurrentProcessId();
+		}
 		else if (gnRunMode == RM_ALTSERVER)
 			gpSrv->pConsole->hdr.nAltServerPID = GetCurrentProcessId();
 		gpSrv->pConsole->hdr.nGuiPID = gpSrv->dwGuiPID;
@@ -1917,28 +1937,29 @@ int CreateColorerHeader()
 	//wchar_t szMapName[64];
 	DWORD dwErr = 0;
 	//int nConInfoSize = sizeof(CESERVER_CONSOLE_MAPPING_HDR);
-	int nMapCells = 0;
-	DWORD nMapSize = 0;
+	//int nMapCells = 0;
+	//DWORD nMapSize = 0;
 	HWND lhConWnd = NULL;
 	_ASSERTE(gpSrv->pColorerMapping == NULL);
-	lhConWnd = GetConEmuHWND(2);
+	// 111101 - было "GetConEmuHWND(2)", но GetConsoleWindow теперь перехватывается.
+	lhConWnd = ghConEmuWndDC; // GetConEmuHWND(2);
 
 	if (!lhConWnd)
 	{
 		_ASSERTE(lhConWnd != NULL);
 		dwErr = GetLastError();
-		_printf("Can't create console data file mapping. Console window is NULL.\n");
-		iRc = CERR_COLORERMAPPINGERR;
+		_printf("Can't create console data file mapping. ConEmu DC window is NULL.\n");
+		//iRc = CERR_COLORERMAPPINGERR; -- ошибка не критическая и не обрабатывается
 		return 0;
 	}
 
-	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
-	nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * 2;
-	nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
+	//COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
+	//nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * 2;
+	//nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
 
 	if (gpSrv->pColorerMapping == NULL)
 	{
-		gpSrv->pColorerMapping = new MFileMapping<AnnotationHeader>;
+		gpSrv->pColorerMapping = new MFileMapping<const AnnotationHeader>;
 	}
 	// Задать имя для mapping, если надо - сам сделает CloseMap();
 	gpSrv->pColorerMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd); //-V205
@@ -1957,24 +1978,34 @@ int CreateColorerHeader()
 	//{
 	// Заголовок мэппинга содержит информацию о размере, нужно заполнить!
 	//AnnotationHeader* pHdr = (AnnotationHeader*)MapViewOfFile(gpSrv->hColorerMapping, FILE_MAP_ALL_ACCESS,0,0,0);
-	AnnotationHeader* pHdr = gpSrv->pColorerMapping->Create(nMapSize);
+	// 111101 - было "Create(nMapSize);"
+	const AnnotationHeader* pHdr = gpSrv->pColorerMapping->Open();
 
 	if (!pHdr)
 	{
 		dwErr = GetLastError();
-		_printf("Can't map colorer data mapping. ErrCode=0x%08X\n", dwErr/*, szMapName*/);
-		_wprintf(gpSrv->pColorerMapping->GetErrorText());
-		_printf("\n");
-		iRc = CERR_COLORERMAPPINGERR;
+		// 111101 теперь не ошибка - мэппинг может быть отключен в ConEmu
+		//_printf("Can't map colorer data mapping. ErrCode=0x%08X\n", dwErr/*, szMapName*/);
+		//_wprintf(gpSrv->pColorerMapping->GetErrorText());
+		//_printf("\n");
+		//iRc = CERR_COLORERMAPPINGERR;
 		//CloseHandle(gpSrv->hColorerMapping); gpSrv->hColorerMapping = NULL;
+		delete gpSrv->pColorerMapping;
+		gpSrv->pColorerMapping = NULL;
+	}
+	else if (pHdr->struct_size != sizeof(AnnotationHeader))
+	{
+		_ASSERTE(pHdr->struct_size == sizeof(AnnotationHeader));
 		delete gpSrv->pColorerMapping;
 		gpSrv->pColorerMapping = NULL;
 	}
 	else
 	{
-		pHdr->struct_size = sizeof(AnnotationHeader);
-		pHdr->bufferSize = nMapCells;
-		pHdr->locked = 0; pHdr->flushCounter = 0;
+		//pHdr->struct_size = sizeof(AnnotationHeader);
+		//pHdr->bufferSize = nMapCells;
+		_ASSERTE(pHdr->locked == 0 && pHdr->flushCounter == 0);
+		//pHdr->locked = 0;
+		//pHdr->flushCounter = 0;
 		gpSrv->ColorerHdr = *pHdr;
 		//// В сервере - данные не нужны
 		////UnmapViewOfFile(pHdr);

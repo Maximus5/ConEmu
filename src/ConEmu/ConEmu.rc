@@ -120,7 +120,7 @@ BEGIN
     CONTROL         "&Horizontal (as console)",rCursorH,"Button",BS_AUTORADIOBUTTON,230,15,89,8
     CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,153,27,33,8
     GROUPBOX        "",IDC_STATIC,4,130,319,67
-    CONTROL         "Back&ground image (bmp):",cbBgImage,"Button",BS_AUTO3STATE | WS_TABSTOP,10,130,96,8
+    CONTROL         "Back&ground image (bmp, jpg, png):",cbBgImage,"Button",BS_AUTO3STATE | WS_TABSTOP,10,130,128,8
     EDITTEXT        tBgImage,34,142,261,12,ES_AUTOHSCROLL
     COMBOBOX        tFontFace,10,16,123,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        tFontSizeY,67,34,24,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP

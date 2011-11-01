@@ -1165,6 +1165,41 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 	return res;
 }
 
+DWORD GetMainThreadId()
+{
+	// Найти ID основной нити
+	if (!gnHookMainThreadId)
+	{
+		DWORD dwPID = GetCurrentProcessId();
+		HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
+
+		if (snapshot != INVALID_HANDLE_VALUE)
+		{
+			THREADENTRY32 module = {sizeof(THREADENTRY32)};
+
+			if (Thread32First(snapshot, &module))
+			{
+				while(!gnHookMainThreadId)
+				{
+					if (module.th32OwnerProcessID == dwPID)
+					{
+						gnHookMainThreadId = module.th32ThreadID;
+						break;
+					}
+
+					if (!Thread32Next(snapshot, &module))
+						break;
+				}
+			}
+
+			CloseHandle(snapshot);
+		}
+	}
+
+	_ASSERTE(gnHookMainThreadId!=0);
+	return gnHookMainThreadId;
+}
+
 // Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemu.dll
 // *aszExcludedModules - должны указывать на константные значения (program lifetime)
 bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules /*= NULL*/, BOOL abForceHooks)
@@ -1230,35 +1265,32 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 	HANDLE snapshot;
 
 	// Найти ID основной нити
-	if (!gnHookMainThreadId)
-	{
-		DWORD dwPID = GetCurrentProcessId();
-		snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
-
-		if (snapshot != INVALID_HANDLE_VALUE)
-		{
-			THREADENTRY32 module = {sizeof(THREADENTRY32)};
-
-			if (Thread32First(snapshot, &module))
-			{
-				while(!gnHookMainThreadId)
-				{
-					if (module.th32OwnerProcessID == dwPID)
-					{
-						gnHookMainThreadId = module.th32ThreadID;
-						break;
-					}
-
-					if (!Thread32Next(snapshot, &module))
-						break;
-				}
-			}
-
-			CloseHandle(snapshot);
-		}
-	}
-
+	GetMainThreadId();
 	_ASSERTE(gnHookMainThreadId!=0);
+	//if (!gnHookMainThreadId)
+	//{
+	//	DWORD dwPID = GetCurrentProcessId();
+	//	snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
+	//	if (snapshot != INVALID_HANDLE_VALUE)
+	//	{
+	//		THREADENTRY32 module = {sizeof(THREADENTRY32)};
+	//		if (Thread32First(snapshot, &module))
+	//		{
+	//			while(!gnHookMainThreadId)
+	//			{
+	//				if (module.th32OwnerProcessID == dwPID)
+	//				{
+	//					gnHookMainThreadId = module.th32ThreadID;
+	//					break;
+	//				}
+	//				if (!Thread32Next(snapshot, &module))
+	//					break;
+	//			}
+	//		}
+	//		CloseHandle(snapshot);
+	//	}
+	//}
+
 	// Начались замены во всех загруженных (linked) модулях
 	snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
 

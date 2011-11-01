@@ -92,7 +92,8 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 BOOL CheckBuffers()
 {
 	//TODO: Проверить, не изменился ли HWND консоли?
-	HWND hCon = GetConEmuHWND(2);
+	//111101 - зовем именно GetConsoleWindow. Если она перехвачена - вернет как раз то окно, которое нам требуется
+	HWND hCon = GetConsoleWindow(); // GetConEmuHWND(2);
 	if (!hCon)
 	{
 		CloseBuffers();

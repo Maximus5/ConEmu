@@ -3326,7 +3326,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		lbSimpleBlack = TRUE;
 	else if (!mp_RCon->ConWnd() && !mp_RCon->GuiWnd())
 		lbSimpleBlack = TRUE;
-	else if (mp_RCon->GuiWnd() && (lbGuiVisible = IsWindowVisible(mp_RCon->GuiWnd())))
+	else if ((lbGuiVisible = mp_RCon->isGuiOverCon()))
 		lbSimpleBlack = TRUE;
 
 	//else if (!mpsz_ConChar || !mpn_ConAttrEx)

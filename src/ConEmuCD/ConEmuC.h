@@ -396,7 +396,7 @@ struct SrvInfo
 	INPUT_RECORD* pInputQueueWrite;
 	// TrueColorer buffer
 	//HANDLE hColorerMapping;
-	MFileMapping<AnnotationHeader>* pColorerMapping; // поддержка Colorer TrueMod
+	MFileMapping<const AnnotationHeader>* pColorerMapping; // поддержка Colorer TrueMod
 	AnnotationHeader ColorerHdr; // для сравнения индексов
 	//
 	HANDLE hConEmuGuiAttached;

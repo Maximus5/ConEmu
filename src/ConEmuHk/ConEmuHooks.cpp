@@ -227,7 +227,7 @@ HWND WINAPI OnCreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWN
 HWND WINAPI OnCreateDialogParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
 BOOL WINAPI OnGetCurrentConsoleFont(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFO lpConsoleCurrentFont);
 COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont);
-
+HWND WINAPI OnGetActiveWindow();
 
 
 
@@ -339,6 +339,7 @@ bool InitHooksUser32()
 		{(void*)OnGetParent,			"GetParent",			user32},
 		{(void*)OnGetWindow,			"GetWindow",			user32},
 		{(void*)OnGetAncestor,			"GetAncestor",			user32},
+		{(void*)OnGetActiveWindow,		"GetActiveWindow",		user32},
 		{(void*)OnMoveWindow,			"MoveWindow",			user32},
 		{(void*)OnSetWindowPos,			"SetWindowPos",			user32},
 		{(void*)OnSetWindowPlacement,	"SetWindowPlacement",	user32},
@@ -3013,7 +3014,7 @@ bool IsHandleConsole(HANDLE handle, bool output = true)
 }
 #endif
 
-static BOOL BMyGetConsoleFontSize(COORD& crFontSize)
+static BOOL MyGetConsoleFontSize(COORD& crFontSize)
 {
 	BOOL lbRc = FALSE;
 
@@ -3069,4 +3070,24 @@ COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont)
 	}
 
 	return cr;
+}
+
+HWND WINAPI OnGetActiveWindow()
+{
+	typedef HWND (WINAPI* OnGetActiveWindow_t)();
+	ORIGINALFASTEX(GetActiveWindow,NULL);
+	HWND hWnd = NULL;
+
+	if (F(GetActiveWindow))
+		hWnd = F(GetActiveWindow)();
+
+	if (ghAttachGuiClient)
+	{
+		if (hWnd == ghConEmuWnd || hWnd == ghConEmuWndDC)
+			hWnd = ghAttachGuiClient;
+		else if (hWnd == NULL)
+			hWnd = ghAttachGuiClient;
+	}
+
+	return hWnd;
 }

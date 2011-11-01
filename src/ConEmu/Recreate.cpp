@@ -195,11 +195,11 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			LPCWSTR pszSystem = gpSet->GetCmd();
 
-			if (pszSystem != pszCmd)
+			if (pszSystem != pszCmd && (pszSystem && pszCmd && (lstrcmpi(pszSystem, pszCmd) != 0)))
 			{
 				int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszSystem);
 
-				if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszSystem);
+				if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, pArgs->pszSpecialCmd ? -1 : 0, (LPARAM)pszSystem);
 			}
 
 			LPCWSTR pszHistory = gpSet->HistoryGet();
@@ -223,7 +223,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			}
 			else
 			{
-				SetDlgItemText(hDlg, IDC_RESTART_CMD, pszSystem);
+				SetDlgItemText(hDlg, IDC_RESTART_CMD, pArgs->pszSpecialCmd ? pArgs->pszSpecialCmd : pszSystem);
 				SetDlgItemText(hDlg, IDC_STARTUP_DIR, L"");
 			}
 			//EnableWindow(GetDlgItem(hDlg, IDC_STARTUP_DIR), FALSE);

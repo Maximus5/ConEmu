@@ -710,9 +710,11 @@ int __stdcall ConsoleMain()
 		else if (gnRunMode == RM_SERVER && !gbRunViaCmdExe)
 		{
 			// Проверить, может пытаются запустить GUI приложение как вкладку в ConEmu?
-			if (!((si.dwFlags & STARTF_USESHOWWINDOW) && (si.wShowWindow == SW_HIDE)))
+			if (((si.dwFlags & STARTF_USESHOWWINDOW) && (si.wShowWindow == SW_HIDE))
+				|| !(si.dwFlags & STARTF_USESHOWWINDOW) || (si.wShowWindow != SW_SHOWNORMAL))
 			{
-				_ASSERTEX(si.wShowWindow != SW_HIDE);
+				//_ASSERTEX(si.wShowWindow != SW_HIDE); -- да, окно сервера (консоль) спрятана
+
 				// Имеет смысл, только если окно хотят изначально спрятать
 				const wchar_t *psz = gpszRunCmd, *pszStart;
 				wchar_t szExe[MAX_PATH+1];
@@ -3036,6 +3038,8 @@ void SendStarted()
 
 		if (!lbRc1) dwErr1 = GetLastError();
 
+		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(hOut);
+
 		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd started)\n",(RunMode==RM_SERVER) ? L"Server" : L"ComSpec");
 		// CECMD_CMDSTARTSTOP
 		if (gnRunMode == RM_APPLICATION)
@@ -3189,6 +3193,8 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 			// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
 			GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &pIn->StartStop.sbi);
 		}
+
+		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
 
 		PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd started)\n",0);
 		if (gnRunMode == RM_APPLICATION)

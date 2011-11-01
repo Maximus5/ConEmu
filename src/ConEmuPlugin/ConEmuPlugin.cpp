@@ -192,8 +192,8 @@ BOOL StartupHooks();
 //HANDLE ghFileMapping = NULL;
 //HANDLE ghColorMapping = NULL; // Создается при детаче консоли сразу после AllocConsole
 //BOOL gbHasColorMapping = FALSE; // Чтобы знать, что буфер True-Colorer создан
-int gnColorMappingMaxCells = 0;
-MFileMapping<AnnotationHeader>* gpColorMapping = NULL;
+//int gnColorMappingMaxCells = 0;
+//MFileMapping<AnnotationHeader>* gpColorMapping = NULL;
 //#ifdef TRUE_COLORER_OLD_SUPPORT
 //HANDLE ghColorMappingOld = NULL;
 //BOOL gbHasColorMappingOld = FALSE;
@@ -202,9 +202,9 @@ MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap;
 const CESERVER_CONSOLE_MAPPING_HDR *gpConMapInfo = NULL;
 //AnnotationInfo *gpColorerInfo = NULL;
 BOOL gbStartedUnderConsole2 = FALSE;
-void CheckColorerHeader();
-int CreateColorerHeader();
-void CloseColorerHeader();
+//void CheckColorerHeader();
+//int CreateColorerHeader();
+//void CloseColorerHeader();
 BOOL ReloadFarInfo(BOOL abForce);
 DWORD gnSelfPID = 0; //GetCurrentProcessId();
 //BOOL  gbNeedReloadFarInfo = FALSE;
@@ -1656,11 +1656,18 @@ BOOL WINAPI IsConsoleActive()
 }
 
 // anConEmuOnly
-//	2 - вернуть главное окно ConEmu
-//	1 - вернуть окно отрисовки
 //	0 - если в ConEmu - вернуть окно отрисовки, иначе - вернуть окно консоли
+//	1 - вернуть окно отрисовки
+//	2 - вернуть главное окно ConEmu
+//	3 - вернуть окно консоли
 HWND WINAPI GetFarHWND2(int anConEmuOnly)
 {
+	// Если просили реальное окно консоли - вернем сразу
+	if (anConEmuOnly == 3)
+	{
+		return FarHwnd;
+	}
+	
 	if (ConEmuHwnd)
 	{
 		if (IsWindow(ConEmuHwnd))
@@ -2888,186 +2895,188 @@ int OpenMapHeader();
 void CloseMapHeader();
 //void ResetExeHooks();
 
-void CheckColorerHeader()
-{
-	//wchar_t szMapName[64];
-	HWND lhConWnd = NULL;
-	//HANDLE h;
-	lhConWnd = GetConEmuHWND(2);
-	//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
-	//h = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
-	//gbHasColorMapping = (h!=NULL);
-	//if (h) CloseHandle(h);
+//void CheckColorerHeader()
+//{
+//	//wchar_t szMapName[64];
+//	HWND lhConWnd = NULL;
+//	//HANDLE h;
+//	// 111101 - было "GetConEmuHWND(2)", но GetConsoleWindow теперь перехватывается.
+//	lhConWnd = GetConEmuHWND(0);
+//	//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
+//	//h = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
+//	//gbHasColorMapping = (h!=NULL);
+//	//if (h) CloseHandle(h);
+//
+//	if (gpColorMapping == NULL)
+//		gpColorMapping = new MFileMapping<AnnotationHeader>;
+//	gpColorMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd); //-V205
+//
+//	// Заголовок мэппинга содержит информацию о размере, нужно запомнить!
+//	AnnotationHeader* pHdr = gpColorMapping->Open();
+//	if (pHdr)
+//	{
+//		// Чтобы при детаче не создать меньший буфер, чем был создан сервером при созаднии консоли
+//		gnColorMappingMaxCells = pHdr->bufferSize;
+//		// Сам мэппинг нам не нужен
+//		gpColorMapping->CloseMap();
+//	}
+//	else
+//	{
+//		delete gpColorMapping;
+//		gpColorMapping = NULL;
+//	}
+//
+//	//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
+//
+//	// Создаем! т.к. должна вызываться только после Detach!
+//	//ghColorMapping = CreateFileMapping(INVALID_HANDLE_VALUE,
+//	//                                   gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+//
+//	//		if (!ghColorMapping)
+//	//		{
+//	//#ifdef _DEBUG
+//	//			dwErr = GetLastError();
+//	//#endif
+//	//			// Функции вызываются в основной нити, вполне можно дергать FAR-API
+//	//			TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
+//	//		}
+//	//		else
+//	//		{
+//
+//
+//	//#ifdef TRUE_COLORER_OLD_SUPPORT
+//	//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
+//	//h = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
+//	//gbHasColorMappingOld = (h!=NULL);
+//	//if (h) CloseHandle(h);
+//	//#endif
+//}
 
-	if (gpColorMapping == NULL)
-		gpColorMapping = new MFileMapping<AnnotationHeader>;
-	gpColorMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd); //-V205
-
-	// Заголовок мэппинга содержит информацию о размере, нужно запомнить!
-	AnnotationHeader* pHdr = gpColorMapping->Open();
-	if (pHdr)
-	{
-		// Чтобы при детаче не создать меньший буфер, чем был создан сервером при созаднии консоли
-		gnColorMappingMaxCells = pHdr->bufferSize;
-		// Сам мэппинг нам не нужен
-		gpColorMapping->CloseMap();
-	}
-	else
-	{
-		delete gpColorMapping;
-		gpColorMapping = NULL;
-	}
-
-	//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
-
-	// Создаем! т.к. должна вызываться только после Detach!
-	//ghColorMapping = CreateFileMapping(INVALID_HANDLE_VALUE,
-	//                                   gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
-
-	//		if (!ghColorMapping)
-	//		{
-	//#ifdef _DEBUG
-	//			dwErr = GetLastError();
-	//#endif
-	//			// Функции вызываются в основной нити, вполне можно дергать FAR-API
-	//			TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
-	//		}
-	//		else
-	//		{
-
-
-	//#ifdef TRUE_COLORER_OLD_SUPPORT
-	//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
-	//h = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
-	//gbHasColorMappingOld = (h!=NULL);
-	//if (h) CloseHandle(h);
-	//#endif
-}
-
-// Функции вызываются в основной нити, вполне можно дергать FAR-API
-int CreateColorerHeader()
-{
-	int iRc = -1;
-	//wchar_t szMapName[64];
-#ifdef _DEBUG
-	DWORD dwErr = 0;
-#endif
-	//int nConInfoSize = sizeof(CESERVER_CONSOLE_MAPPING_HDR);
-	int nMapCells = 0;
-	DWORD nMapSize = 0;
-	HWND lhConWnd = NULL;
-
-	if (gpColorMapping)
-	{
-		gpColorMapping->CloseMap();
-	}
-
-	//#ifdef TRUE_COLORER_OLD_SUPPORT
-	//	if (ghColorMappingOld) {
-	//		CloseHandle(ghColorMappingOld); ghColorMappingOld = NULL;
-	//	}
-	//#endif
-	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
-	nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * 2;
-	if (gnColorMappingMaxCells > nMapCells)
-		nMapCells = gnColorMappingMaxCells;
-	nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
-	lhConWnd = GetConEmuHWND(2);
-
-	if (gpColorMapping)
-	{
-		gpColorMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd); //-V205
-		//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
-
-		// Создаем! т.к. должна вызываться только после Detach!
-		//ghColorMapping = CreateFileMapping(INVALID_HANDLE_VALUE,
-		//                                   gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
-
-//		if (!ghColorMapping)
-//		{
+//// Функции вызываются в основной нити, вполне можно дергать FAR-API
+//int CreateColorerHeader()
+//{
+//	int iRc = -1;
+//	//wchar_t szMapName[64];
 //#ifdef _DEBUG
-//			dwErr = GetLastError();
+//	DWORD dwErr = 0;
 //#endif
-//			// Функции вызываются в основной нити, вполне можно дергать FAR-API
-//			TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
+//	//int nConInfoSize = sizeof(CESERVER_CONSOLE_MAPPING_HDR);
+//	int nMapCells = 0;
+//	DWORD nMapSize = 0;
+//	HWND lhConWnd = NULL;
+//
+//	if (gpColorMapping)
+//	{
+//		gpColorMapping->CloseMap();
+//	}
+//
+//	//#ifdef TRUE_COLORER_OLD_SUPPORT
+//	//	if (ghColorMappingOld) {
+//	//		CloseHandle(ghColorMappingOld); ghColorMappingOld = NULL;
+//	//	}
+//	//#endif
+//	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
+//	nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * 2;
+//	if (gnColorMappingMaxCells > nMapCells)
+//		nMapCells = gnColorMappingMaxCells;
+//	nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
+//	// 111101 - было "GetConEmuHWND(2)", но GetConsoleWindow теперь перехватывается.
+//	lhConWnd = GetConEmuHWND(0);
+//
+//	if (gpColorMapping)
+//	{
+//		gpColorMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd); //-V205
+//		//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
+//
+//		// Создаем! т.к. должна вызываться только после Detach!
+//		//ghColorMapping = CreateFileMapping(INVALID_HANDLE_VALUE,
+//		//                                   gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+//
+////		if (!ghColorMapping)
+////		{
+////#ifdef _DEBUG
+////			dwErr = GetLastError();
+////#endif
+////			// Функции вызываются в основной нити, вполне можно дергать FAR-API
+////			TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
+////		}
+////		else
+////		{
+//		// Заголовок мэппинга содержит информацию о размере, нужно заполнить!
+//		AnnotationHeader* pHdr = gpColorMapping->Create(nMapSize);
+//
+//		if (!pHdr)
+//		{
+//			//#ifdef _DEBUG
+//			//			dwErr = GetLastError();
+//			//#endif
+//			//CloseHandle(ghColorMapping); ghColorMapping = NULL;
+//			//// Функции вызываются в основной нити, вполне можно дергать FAR-API
+//			//TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
+//			wchar_t szFmt[MAX_PATH], szFullInfo[2048], szTitle[MAX_PATH];
+//			if (gFarVersion.dwVerMajor==1)
+//			{
+//				GetMsgA(CEPluginMsgTitle, szTitle);
+//				GetMsgA(CEColorMappingCreateError, szFmt);
+//			}
+//			else
+//			{
+//				_wcscpyn_c(szTitle, countof(szTitle), GetMsgW(CEPluginMsgTitle), countof(szTitle));
+//				_wcscpyn_c(szFmt, countof(szFmt), GetMsgW(CEColorMappingCreateError), countof(szFmt));
+//			}
+//			wcscpy_c(szFullInfo, szFmt);
+//			if (gpColorMapping->GetErrorText())
+//				wcscat_c(szFullInfo, gpColorMapping->GetErrorText());
+//
+//			delete gpColorMapping;
+//			gpColorMapping = NULL;
+//
+//			MessageBoxW(NULL, szFullInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 //		}
 //		else
 //		{
-		// Заголовок мэппинга содержит информацию о размере, нужно заполнить!
-		AnnotationHeader* pHdr = gpColorMapping->Create(nMapSize);
+//			pHdr->struct_size = sizeof(AnnotationHeader);
+//			pHdr->bufferSize = nMapCells;
+//			pHdr->locked = 0; pHdr->flushCounter = 0;
+//			// В плагине - данные не нужны
+//			UnmapViewOfFile(pHdr);
+//		}
+//		//}
+//	}
+//
+//	//#ifdef TRUE_COLORER_OLD_SUPPORT
+//	//if (gbHasColorMappingOld)
+//	//{
+//	//	_wsprintf(szMapName, SKIPLEN(countof(szMapName)) L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
+//	//	nMapSize = nMapCells * sizeof(AnnotationInfo);
+//	//	ghColorMappingOld = CreateFileMapping(INVALID_HANDLE_VALUE,
+//	//		gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+//	//}
+//	//#endif
+//	return iRc;
+//}
 
-		if (!pHdr)
-		{
-			//#ifdef _DEBUG
-			//			dwErr = GetLastError();
-			//#endif
-			//CloseHandle(ghColorMapping); ghColorMapping = NULL;
-			//// Функции вызываются в основной нити, вполне можно дергать FAR-API
-			//TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
-			wchar_t szFmt[MAX_PATH], szFullInfo[2048], szTitle[MAX_PATH];
-			if (gFarVersion.dwVerMajor==1)
-			{
-				GetMsgA(CEPluginMsgTitle, szTitle);
-				GetMsgA(CEColorMappingCreateError, szFmt);
-			}
-			else
-			{
-				_wcscpyn_c(szTitle, countof(szTitle), GetMsgW(CEPluginMsgTitle), countof(szTitle));
-				_wcscpyn_c(szFmt, countof(szFmt), GetMsgW(CEColorMappingCreateError), countof(szFmt));
-			}
-			wcscpy_c(szFullInfo, szFmt);
-			if (gpColorMapping->GetErrorText())
-				wcscat_c(szFullInfo, gpColorMapping->GetErrorText());
-
-			delete gpColorMapping;
-			gpColorMapping = NULL;
-
-			MessageBoxW(NULL, szFullInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
-		}
-		else
-		{
-			pHdr->struct_size = sizeof(AnnotationHeader);
-			pHdr->bufferSize = nMapCells;
-			pHdr->locked = 0; pHdr->flushCounter = 0;
-			// В плагине - данные не нужны
-			UnmapViewOfFile(pHdr);
-		}
-		//}
-	}
-
-	//#ifdef TRUE_COLORER_OLD_SUPPORT
-	//if (gbHasColorMappingOld)
-	//{
-	//	_wsprintf(szMapName, SKIPLEN(countof(szMapName)) L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
-	//	nMapSize = nMapCells * sizeof(AnnotationInfo);
-	//	ghColorMappingOld = CreateFileMapping(INVALID_HANDLE_VALUE,
-	//		gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
-	//}
-	//#endif
-	return iRc;
-}
-
-void CloseColorerHeader()
-{
-	if (gpColorMapping)
-	{
-		delete gpColorMapping;
-		gpColorMapping = NULL;
-	}
-	//if (ghColorMapping)
-	//{
-	//	CloseHandle(ghColorMapping);
-	//	ghColorMapping = NULL;
-	//}
-
-	//#ifdef TRUE_COLORER_OLD_SUPPORT
-	//if (ghColorMappingOld)
-	//{
-	//	CloseHandle(ghColorMappingOld);
-	//	ghColorMappingOld = NULL;
-	//}
-	//#endif
-}
+//void CloseColorerHeader()
+//{
+//	if (gpColorMapping)
+//	{
+//		delete gpColorMapping;
+//		gpColorMapping = NULL;
+//	}
+//	//if (ghColorMapping)
+//	//{
+//	//	CloseHandle(ghColorMapping);
+//	//	ghColorMapping = NULL;
+//	//}
+//
+//	//#ifdef TRUE_COLORER_OLD_SUPPORT
+//	//if (ghColorMappingOld)
+//	//{
+//	//	CloseHandle(ghColorMappingOld);
+//	//	ghColorMappingOld = NULL;
+//	//}
+//	//#endif
+//}
 
 
 
@@ -3112,7 +3121,9 @@ BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
 		}
 	}
 
-	CloseColorerHeader(); // Если было
+	// -- теперь мэппинги создает GUI
+	//CloseColorerHeader(); // Если было
+
 	CloseMapHeader();
 	ConEmuHwnd = NULL;
 	SetConEmuEnvVar(NULL);
@@ -3130,8 +3141,9 @@ VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 		//apiShowWindow(FarHwnd, SW_HIDE);
 	}
 
-	// Если ранее были созданы мэппинги для цвета - пересоздать
-	CreateColorerHeader();
+	// -- теперь мэппинги создает GUI
+	//// Если ранее были созданы мэппинги для цвета - пересоздать
+	//CreateColorerHeader();
 
 	if (gbWasDetached)
 	{
@@ -3727,7 +3739,7 @@ void InitHWND(/*HWND ahFarHwnd*/)
 	OpenMapHeader();
 	// Проверить, созданы ли буферы для True-Colorer
 	// Это для того, чтобы пересоздать их при детаче
-	CheckColorerHeader();
+	//CheckColorerHeader();
 	//memset(hEventCmd, 0, sizeof(HANDLE)*MAXCMDCOUNT);
 	//int nChk = 0;
 	//ConEmuHwnd = GetConEmuHWND(FALSE/*abRoot*/  /*, &nChk*/);
@@ -4633,7 +4645,9 @@ void StopThread(void)
 	//	CloseHandle(ghFileMapping);
 	//	ghFileMapping = NULL;
 	//}
-	CloseColorerHeader();
+	// -- теперь мэппинги создает GUI
+	//CloseColorerHeader();
+
 	CommonShutdown();
 }
 
