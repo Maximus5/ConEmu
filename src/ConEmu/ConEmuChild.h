@@ -63,10 +63,13 @@ class CConEmuChild
 #endif
 
 	protected:
+		virtual void OnDestroy() = 0; // WM_DESTROY
+
 		HWND mh_WndDC;
 		HWND mh_LastGuiChild;
 		UINT mn_MsgTabChanged;
 		UINT mn_MsgPostFullPaint;
+		UINT mn_MsgSavePaneSnapshoot;
 		BOOL mb_PostFullPaint;
 		BOOL mb_DisableRedraw;
 #ifdef _DEBUG

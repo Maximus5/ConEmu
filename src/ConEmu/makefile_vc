@@ -116,6 +116,7 @@ $(INTDIR)\ConEmuChild.obj \
 $(INTDIR)\ConEmuPipe.obj \
 $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
+$(INTDIR)\DwmHelper.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\Options.obj \
@@ -124,6 +125,8 @@ $(INTDIR)\Recreate.obj \
 $(INTDIR)\Registry.obj \
 $(INTDIR)\ScreenDump.obj \
 $(INTDIR)\TabBar.obj \
+$(INTDIR)\TaskBar.obj \
+$(INTDIR)\TaskBarGhost.obj \
 $(INTDIR)\TrayIcon.obj \
 $(INTDIR)\VirtualConsole.obj \
 $(INTDIR)\Common.obj \
@@ -299,6 +302,8 @@ $(INTDIR)\DragDrop.obj: DragDrop.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
 $(INTDIR)\DragDropData.obj: DragDropData.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
+$(INTDIR)\DwmHelper.obj: DwmHelper.cpp DwmHelper.h
+
 $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 
 $(INTDIR)\Macro.obj: Macro.cpp Macro.h
@@ -314,6 +319,10 @@ $(INTDIR)\Registry.obj: Registry.cpp Registry.h
 $(INTDIR)\ScreenDump.obj: ScreenDump.cpp
 
 $(INTDIR)\TabBar.obj: TabBar.cpp
+
+$(INTDIR)\TaskBar.obj: TaskBar.cpp
+
+$(INTDIR)\TaskBarGhost.obj: TaskBarGhost.cpp
 
 $(INTDIR)\TrayIcon.obj: TrayIcon.cpp
 

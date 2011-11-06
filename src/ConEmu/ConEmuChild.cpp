@@ -49,6 +49,7 @@ CConEmuChild::CConEmuChild()
 {
 	mn_MsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 	mn_MsgPostFullPaint = RegisterWindowMessage(L"CConEmuChild::PostFullPaint");
+	mn_MsgSavePaneSnapshoot = RegisterWindowMessage(L"CConEmuChild::SavePaneSnapshoot");
 #ifdef _DEBUG
 	mn_MsgCreateDbgDlg = RegisterWindowMessage(L"CConEmuChild::MsgCreateDbgDlg");
 	hDlgTest = NULL;
@@ -330,6 +331,10 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			else if (messg == pVCon->mn_MsgPostFullPaint)
 			{
 				pVCon->Redraw();
+			}
+			else if (messg == pVCon->mn_MsgSavePaneSnapshoot)
+			{
+				pVCon->SavePaneSnapshoot();
 			}
 			#ifdef _DEBUG
 			else if (messg == pVCon->mn_MsgCreateDbgDlg)

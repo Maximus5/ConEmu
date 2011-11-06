@@ -1515,6 +1515,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DwmHelper.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\LoadImg.cpp"
 				>
 			</File>
@@ -1560,6 +1564,14 @@
 			</File>
 			<File
 				RelativePath=".\TabBar.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TaskBar.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TaskBarGhost.cpp"
 				>
 			</File>
 			<File
@@ -1633,6 +1645,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DwmHelper.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\far3color.h"
 				>
 			</File>
@@ -1698,6 +1714,14 @@
 			</File>
 			<File
 				RelativePath=".\TabBar.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TaskBar.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TaskBarGhost.h"
 				>
 			</File>
 			<File

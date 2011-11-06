@@ -72,6 +72,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "Background.h"
 #include "ConEmuPipe.h"
 #include "TabBar.h"
+#include "TaskBarGhost.h"
 
 
 #ifdef _DEBUG
@@ -176,6 +177,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mh_WndDC = NULL;
 	//CreateView();
 	mp_RCon = NULL; //new CRealConsole(this);
+	mp_Ghost = NULL;
 	gpConEmu->OnVConCreated(this);
 	WARNING("скорректировать размер кучи");
 	SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
@@ -186,6 +188,8 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mb_RequiredForceUpdate = true;
 	mb_LastFadeFlag = false;
 	mn_LastBitsPixel = 0;
+	mb_NeedBgUpdate = FALSE; mb_BgLastFade = false;
+	mp_Bg = NULL;
 	mp_BkImgData = NULL; mn_BkImgDataMax = 0; mb_BkImgChanged = FALSE; mb_BkImgExist = /*mb_BkImgDelete =*/ FALSE;
 	mp_BkEmfData = NULL; mn_BkEmfDataMax = 0; mb_BkEmfChanged = FALSE;
 	mcs_BkImgData = NULL;
@@ -285,6 +289,11 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 
 	CreateView();
 	mp_RCon = new CRealConsole(this);
+	
+	//if (gpSet->isTabsOnTaskBar())
+	//{
+	//	mp_Ghost = CTaskBarGhost::Create(this);
+	//}
 
 	// InitDC звать бессмысленно - консоль еще не создана
 }
@@ -296,6 +305,8 @@ CVirtualConsole::~CVirtualConsole()
 		//_ASSERTE(gpConEmu->isMainThread());
 		MBoxA(L"~CVirtualConsole() called from background thread");
 	}
+
+	OnDestroy();
 
 	if (mp_RCon)
 		mp_RCon->StopThread();
@@ -392,7 +403,39 @@ CVirtualConsole::~CVirtualConsole()
 		mcs_BkImgData = NULL;
 	}
 
+	if (mp_Bg)
+	{
+		delete mp_Bg;
+		mp_Bg = NULL;
+	}
+
 	//FreeBackgroundImage();
+}
+
+void CVirtualConsole::InitGhost()
+{
+	if (gpSet->isTabsOnTaskBar())
+	{
+		if (mp_Ghost)
+		{
+			_ASSERTE(mp_Ghost==NULL);
+		}
+		else
+		{
+			mp_Ghost = CTaskBarGhost::Create(this);
+		}
+	}
+}
+
+// WM_DESTROY
+void CVirtualConsole::OnDestroy()
+{
+	if (this && mp_Ghost)
+	{
+		CTaskBarGhost* p = mp_Ghost;
+		mp_Ghost = NULL;
+		delete p;
+	}
 }
 
 CRealConsole* CVirtualConsole::RCon()
@@ -454,7 +497,7 @@ BOOL CVirtualConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	if (!mp_RCon)
 	{
 		pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
-		lstrcpyn(pTab->Name, gpConEmu->ms_ConEmuVer, countof(pTab->Name));
+		lstrcpyn(pTab->Name, gpConEmu->GetDefaultTitle(), countof(pTab->Name));
 		return TRUE;
 	}
 	return mp_RCon->GetTab(tabIdx, pTab);
@@ -1169,6 +1212,18 @@ bool CVirtualConsole::CheckChangedTextAttr()
 	return textChanged || attrChanged;
 }
 
+void CVirtualConsole::UpdateThumbnail(BOOL abNoSnapshoot /*= FALSE*/)
+{
+	if (!this)
+		return;
+
+	if (!mp_Ghost || !gpConEmu->Taskbar_GhostSnapshootRequired())
+		return;
+
+	// —корее всего мы не в главной нити, но оно само разберетс€
+	mp_Ghost->UpdateTabSnapshoot(FALSE, abNoSnapshoot);
+}
+
 bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 {
 	if (!this || !mp_RCon || !mp_RCon->ConWnd())
@@ -1828,7 +1883,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 	if (drawImage)
 	{
 		// ќна заодно проверит, не изменилс€ ли файл?
-		if (gpSet->PrepareBackground(&hBgDc, &bgBmpSize))
+		if (PrepareBackground(&hBgDc, &bgBmpSize))
 		{
 			isForce = true;
 		}
@@ -3292,6 +3347,32 @@ void CVirtualConsole::Free(LPVOID ptr)
 	}
 }
 
+void CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight)
+{
+	if (!this)
+		return;
+
+	if (!gpConEmu->isMainThread())
+	{
+		_ASSERTE(gpConEmu->isMainThread());
+		return;
+	}
+
+	if (!hDC && mpsz_ConChar)
+	{
+		Update();
+	}
+	
+	if (hDC)
+	{
+		SetStretchBltMode(hPaintDC, HALFTONE);
+		StretchBlt(hPaintDC, anX,anY,anShowWidth,anShowHeight, hDC, 0,0,Width,Height, SRCCOPY);
+	}
+	else
+	{
+		_ASSERTE(hDC!=NULL);
+	}
+}
 
 // hdc - это DC родительского окна (ghWnd)
 // rcClient - это место, куда нужно "положить" битмап. может быть произвольным!
@@ -3402,6 +3483,9 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 		if (lbDelBrush)
 			DeleteObject(hBr);
+			
+		if (mp_Ghost)
+			mp_Ghost->UpdateTabSnapshoot(TRUE); //CreateTabSnapshoot(hPaintDc, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
 		
 		//EndPaint('ghWnd DC', &ps);
 		return;
@@ -3620,6 +3704,9 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		}
 	}
 
+	if (mp_Ghost)
+		mp_Ghost->UpdateTabSnapshoot(); //CreateTabSnapshoot(hPaintDc, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
+	
 	//#ifdef _DEBUG
 	if (mp_RCon)
 	{
@@ -3794,7 +3881,7 @@ void CVirtualConsole::Box(LPCTSTR szText)
 #ifdef _DEBUG
 	_ASSERT(FALSE);
 #endif
-	MessageBox(NULL, szText, gpConEmu->ms_ConEmuVer, MB_ICONSTOP);
+	MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
 }
 
 RECT CVirtualConsole::GetRect()
@@ -5082,6 +5169,108 @@ UINT CVirtualConsole::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgD
 	return 0;
 }
 
+void CVirtualConsole::NeedBackgroundUpdate()
+{
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return;
+	}
+
+	mb_NeedBgUpdate = TRUE;
+}
+
+// ƒолжна вернуть true, если данные изменились (то есть будет isForce при полной перерисовке)
+bool CVirtualConsole::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
+{
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return false;
+	}
+
+	_ASSERTE(gpConEmu->isMainThread());
+	LONG lBgWidth = 0, lBgHeight = 0;
+	BOOL lbVConImage = FALSE;
+
+	if (gpSet->isBgPluginAllowed)
+	{
+		if (HasBackgroundImage(&lBgWidth, &lBgHeight)
+			&& lBgWidth && lBgHeight)
+		{
+			lbVConImage = TRUE;
+		}
+	}
+
+	if (!lbVConImage)
+	{
+		if (mp_Bg)
+		{
+			delete mp_Bg;
+			mp_Bg = NULL;
+		}
+
+		return gpSet->PrepareBackground(phBgDc, pbgBmpSize);
+	}
+
+	bool lbForceUpdate = false;
+	LONG lMaxBgWidth = 0, lMaxBgHeight = 0;
+	bool bIsForeground = gpConEmu->isMeForeground(false);
+
+	if (!mb_NeedBgUpdate)
+	{
+		if ((mb_BgLastFade == bIsForeground && gpSet->isFadeInactive)
+			|| (!gpSet->isFadeInactive && mb_BgLastFade))
+		{
+			NeedBackgroundUpdate();
+		}
+	}
+
+	if (mp_Bg == NULL)
+	{
+		NeedBackgroundUpdate();
+	}
+
+	if (mb_NeedBgUpdate)
+	{
+		mb_NeedBgUpdate = FALSE;
+		lbForceUpdate = true;
+
+		if (!mp_Bg)
+			mp_Bg = new CBackground;
+
+		mb_BgLastFade = (!bIsForeground && gpSet->isFadeInactive);
+		TODO("ѕеределать, ориентироватьс€ только на размер картинки - неправильно");
+		TODO("DoubleView - скорректировать X,Y");
+
+		if (lMaxBgWidth && lMaxBgHeight)
+		{
+			lBgWidth = lMaxBgWidth;
+			lBgHeight = lMaxBgHeight;
+		}
+
+		if (!mp_Bg->CreateField(lBgWidth, lBgHeight) ||
+			!PutBackgroundImage(mp_Bg, 0,0, lBgWidth, lBgHeight))
+		{
+			delete mp_Bg;
+			mp_Bg = NULL;
+		}
+	}
+
+	if (mp_Bg)
+	{
+		*phBgDc = mp_Bg->hBgDc;
+		*pbgBmpSize = mp_Bg->bgSize;
+	}
+	else
+	{
+		*phBgDc = NULL;
+		*pbgBmpSize = MakeCoord(0,0);
+	}
+
+	return lbForceUpdate;
+}
+
 // вызываетс€ при получении нового Background
 SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData)
 {
@@ -5107,7 +5296,7 @@ SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACK
 	{
 		//mb_BkImgDelete = TRUE;
 		mb_BkImgExist = FALSE;
-		gpSet->NeedBackgroundUpdate();
+		NeedBackgroundUpdate();
 		Update(true/*bForce*/);
 		return gpSet->isBgPluginAllowed ? esbr_OK : esbr_PluginForbidden;
 	}
@@ -5230,7 +5419,7 @@ SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACK
 		BITMAPINFOHEADER* pBmp = bIsEmf ? (&mp_BkEmfData->bi) : (&mp_BkImgData->bi);
 		mn_BkImgWidth = pBmp->biWidth;
 		mn_BkImgHeight = pBmp->biHeight;
-		gpSet->NeedBackgroundUpdate();
+		NeedBackgroundUpdate();
 
 		//// Ёто была копи€ данных - нужно освободить
 		//free(apImgData); apImgData = NULL;
@@ -5273,4 +5462,48 @@ bool CVirtualConsole::HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)
 	//		*pnBgHeight = pBmp->biHeight;
 	//}
 	//return mp_BkImgData;
+}
+
+void CVirtualConsole::OnTitleChanged()
+{
+	if (mp_Ghost)
+		mp_Ghost->CheckTitle();
+}
+
+void CVirtualConsole::SavePaneSnapshoot()
+{
+	if (!gpConEmu->isMainThread())
+	{
+		PostMessage(GetView(), mn_MsgSavePaneSnapshoot, 0, 0);
+		return;
+	}
+	
+	if (mp_Ghost /*&& !gbNoDblBuffer*/)
+	{
+		mp_Ghost->UpdateTabSnapshoot(); //CreateTabSnapshoot(hDC, Width, Height, TRUE);
+	}
+}
+
+// ¬ызываетс€ при кликах по CheckBox-у "Show on taskbar"
+void CVirtualConsole::OnTaskbarSettingsChanged()
+{
+	if (gpSet->isTabsOnTaskBar())
+	{
+		if (!mp_Ghost)
+			InitGhost();	
+	}
+	else
+	{
+		if (mp_Ghost)
+		{
+			delete mp_Ghost;
+			mp_Ghost = NULL;
+		}
+	}
+}
+
+void CVirtualConsole::OnTaskbarFocus()
+{
+	if (mp_Ghost)
+		mp_Ghost->ActivateTaskbar();
 }

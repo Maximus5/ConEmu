@@ -309,8 +309,8 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,268,259,70,14
     CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,252
-    PUSHBUTTON      "Reset",bResetSettings,4,259,51,14,WS_DISABLED
-    PUSHBUTTON      "Reload",bReloadSettings,62,259,51,14,WS_DISABLED
+    PUSHBUTTON      "Reset",bResetSettings,152,259,51,14,NOT WS_VISIBLE | WS_DISABLED
+    PUSHBUTTON      "Reload",bReloadSettings,210,259,51,14,NOT WS_VISIBLE | WS_DISABLED
 END
 
 IDD_SPG_INFO DIALOGEX 0, 0, 328, 224
@@ -545,12 +545,11 @@ BEGIN
     EDITTEXT        tAdminSuffix,254,61,64,12,ES_AUTOHSCROLL | WS_DISABLED
     GROUPBOX        "Multi console",IDC_STATIC,4,82,319,44
     CONTROL         "Multi Console",cbMultiCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,95,61,8
-    CONTROL         "Create confirmation",cbNewConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,78,95,77,8
+    CONTROL         "Create confirmation",cbNewConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,95,77,8
     RTEXT           "Cmd output codepage:",IDC_STATIC,174,94,88,8
     COMBOBOX        lbCmdOutputCP,264,91,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
-    PUSHBUTTON      "More...",bMultiConHotkeys,9,107,48,13,WS_DISABLED
-    CONTROL         "Long console output",cbLongOutput,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,78,111,84,8
-    EDITTEXT        tLongOutputHeight,163,109,29,12,ES_AUTOHSCROLL
+    CONTROL         "Long console output",cbLongOutput,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,111,84,8
+    EDITTEXT        tLongOutputHeight,173,109,29,12,ES_AUTOHSCROLL
     RTEXT           "16bit height:",IDC_STATIC,218,111,44,8
     COMBOBOX        lbNtvdmHeight,264,109,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
     RTEXT           "New:",IDC_STATIC,9,145,19,8
@@ -570,6 +569,7 @@ BEGIN
     CONTROL         "",hkBufferMode,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,147,159,23,13
     CONTROL         "Use «Host-key»+Number to switch consoles",cbUseWinNumber,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,176,163,10
+    CONTROL         "Show on taskbar",cbTabsOnTaskBar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,111,74,8
 END
 
 IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319

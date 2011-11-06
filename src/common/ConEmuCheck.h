@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define VirtualConsoleClassApp L"VirtualConsoleClassApp"
 #define VirtualConsoleClassBack L"VirtualConsoleClassBack"
 #define VirtualConsoleClassScroll L"VirtualConsoleClassScroll"
+#define VirtualConsoleClassGhost L"VirtualConsoleClassGhost"
 
 #ifdef _DEBUG
 	#define EXECUTE_CMD_WARN_TIMEOUT 500

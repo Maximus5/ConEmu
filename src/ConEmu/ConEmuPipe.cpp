@@ -62,7 +62,7 @@ void CConEmuPipe::Close()
 BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 {
 	wchar_t szErr[MAX_PATH*2];
-	mh_Pipe = ExecuteOpenPipe(ms_PipeName, szErr, gpConEmu->ms_ConEmuVer);
+	mh_Pipe = ExecuteOpenPipe(ms_PipeName, szErr, gpConEmu->GetDefaultTitle());
 
 	if (!mh_Pipe || mh_Pipe == INVALID_HANDLE_VALUE)
 	{

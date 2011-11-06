@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "Options.h"
 #include "ConEmu.h"
+#include "TaskBar.h"
+#include "DwmHelper.h"
 #include "ConEmuApp.h"
 
 #ifdef _DEBUG
@@ -82,7 +84,7 @@ const TCHAR *const szClassNameBack = VirtualConsoleClassBack;
 const TCHAR *const szClassNameScroll = VirtualConsoleClassScroll;
 
 
-OSVERSIONINFO gOSVer;
+OSVERSIONINFO gOSVer = {};
 
 
 #ifdef MSGLOGGER
@@ -452,28 +454,22 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
-BOOL CreateAppWindow()
+BOOL CheckCreateAppWindow()
 {
-	//2009-03-05 - нельзя этого делать. а то дочерние процессы с тем же Affinity запускаются...
-	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-за глюков в железе могут быть ошибки подсчета производительности, если этого не сделать
-	if (gpSet->nAffinity)
-		SetProcessAffinityMask(GetCurrentProcess(), gpSet->nAffinity);
-
-	//SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
-	//SetThreadAffinityMask(GetCurrentThread(), 1);
-	INITCOMMONCONTROLSEX icex;
-	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-	icex.dwICC   = ICC_COOL_CLASSES|ICC_BAR_CLASSES|ICC_TAB_CLASSES|ICC_PROGRESS_CLASS;
-	InitCommonControlsEx(&icex);
-	/*DWORD dwErr = 0;
-	HMODULE hInf = LoadLibrary(L"infis.dll");
-	if (!hInf)
-		dwErr = GetLastError();*/
-	//!!!ICON
-	gpConEmu->LoadIcons();
-
-	if (!gpSet->isCreateAppWindow)
+	if (!gpSet->NeedCreateAppWindow())
+	{
+		// Если окно не требуется
+		if (ghWndApp)
+		{
+			// Вызов DestroyWindow(ghWndApp); закроет и "дочернее" ghWnd
+			_ASSERTE(ghWnd==NULL);
+			if (ghWnd)
+				gpConEmu->SetParent(NULL);
+			DestroyWindow(ghWndApp);
+			ghWndApp = NULL;
+		}
 		return TRUE;
+	}
 
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC, AppWndProc, 0, 0,
 	                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
@@ -482,14 +478,14 @@ BOOL CreateAppWindow()
 	                };// | CS_DROPSHADOW
 
 	if (!RegisterClassEx(&wc))
-		return -1;
+		return FALSE;
 
 	//ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gpSet->wndX, gpSet->wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
-	DWORD style = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
+	DWORD style = WS_OVERLAPPEDWINDOW | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
 	int nWidth=100, nHeight=100, nX = -32000, nY = -32000;
-	DWORD exStyle = WS_EX_APPWINDOW|WS_EX_ACCEPTFILES;
+	DWORD exStyle = WS_EX_TOOLWINDOW|WS_EX_ACCEPTFILES;
 	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
-	ghWndApp = CreateWindowEx(exStyle, szClassNameApp, gpConEmu->ms_ConEmuVer, style, nX, nY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+	ghWndApp = CreateWindowEx(exStyle, szClassNameApp, gpConEmu->GetDefaultTitle(), style, nX, nY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
 
 	if (!ghWndApp)
 	{
@@ -699,7 +695,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 //				TCHAR* psz=(TCHAR*)calloc(_tcslen(fnd.cFileName)+100,sizeof(TCHAR));
 //				lstrcpyW(psz, L"Too long full pathname for font:\n");
 //				lstrcatW(psz, fnd.cFileName);
-//				MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);
+//				MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OK|MB_ICONSTOP);
 //				free(psz);
 //			} else {
 //				wcscat(szFind, fnd.cFileName);
@@ -710,7 +706,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 //				//	TCHAR* psz=(TCHAR*)calloc(_tcslen(szFind)+100,sizeof(TCHAR));
 //				//	lstrcpyW(psz, L"Can't register font:\n");
 //				//	lstrcatW(psz, szFind);
-//				//	MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);
+//				//	MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OK|MB_ICONSTOP);
 //				//	free(psz);
 //				//} else
 //				//if (!GetFontResourceInfo(szFind, &dwSize, szTempFontFam, 1)) {
@@ -720,7 +716,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 //					lstrcpyW(psz, L"Can't query font family for file:\n");
 //					lstrcatW(psz, szFind);
 //					wsprintf(psz+_tcslen(psz), L"\nErrCode=0x%08X", dwErr);
-//					MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);
+//					MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OK|MB_ICONSTOP);
 //					free(psz);
 //				} else {
 //					lstrcpynW(gpSet->FontFile, szFind, countof(gpSet->FontFile));
@@ -968,6 +964,8 @@ void ResetConman()
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
+	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
+	GetVersionEx(&gOSVer);
 	HeapInitialize();
 	RemoveOldComSpecC();
 	gpSet = new CSettings;
@@ -1041,9 +1039,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//bool SingleInstance = false;
 	gpSet->SingleInstanceArg = false;
 	//gpConEmu->cBlinkShift = GetCaretBlinkTime()/15;
-	memset(&gOSVer, 0, sizeof(gOSVer));
-	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
-	GetVersionEx(&gOSVer);
+	//memset(&gOSVer, 0, sizeof(gOSVer));
+	//gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
+	//GetVersionEx(&gOSVer);
 	//DisableIME();
 	//Windows7 - SetParent для консоли валится
 	//gpConEmu->setParent = false; // PictureView теперь идет через Wrapper
@@ -1486,7 +1484,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//		TCHAR* psz=(TCHAR*)calloc(_tcslen(FontFile)+100,sizeof(TCHAR));
 	//		lstrcpyW(psz, L"Can't register font:\n");
 	//		lstrcatW(psz, FontFile);
-	//		MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);
+	//		MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OK|MB_ICONSTOP);
 	//		free(psz);
 	//		return 100;
 	//	}
@@ -1551,13 +1549,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 //------------------------------------------------------------------------
+///| Initializing |///////////////////////////////////////////////////////
+//------------------------------------------------------------------------
+
+	// Тут загружаются иконки, Affinity, и т.п.
+	if (!gpConEmu->Init())
+	{
+		return 100;
+	}
+
+//------------------------------------------------------------------------
 ///| Create taskbar window |//////////////////////////////////////////////
 //------------------------------------------------------------------------
 
-	// Тут загружаются иконки, и создается кнопка на таскбаре (если надо)
-	if (!CreateAppWindow())
+	// Тут создается кнопка на таскбаре (если надо)
+	if (!CheckCreateAppWindow())
 	{
-		//delete pVCon;
 		return 100;
 	}
 

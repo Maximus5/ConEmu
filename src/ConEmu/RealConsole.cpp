@@ -150,7 +150,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mcr_LastMouseEventPos = mcr_LastMousePos = MakeCoord(-1,-1);
 	//m_DetectedDialogs.Count = 0;
 	//mn_DetectCallCount = 0;
-	wcscpy(Title, gpConEmu->ms_ConEmuVer);
+	wcscpy(Title, gpConEmu->GetDefaultTitle());
 	wcscpy(TitleFull, Title);
 	wcscpy(ms_PanelTitle, Title);
 	mb_ForceTitleChanged = FALSE;
@@ -1852,7 +1852,12 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 #endif
 
 			TODO("После DoubleView нужно будет заменить на IsVisible");
-			if (lbIsActive)
+			if (!lbIsActive)
+			{
+				if (lbForceUpdate)
+					pRCon->mp_VCon->UpdateThumbnail();
+			}
+			else
 			{
 				//2009-01-21 сомнительно, что здесь действительно нужно подресайзивать дочерние окна
 				//if (lbForceUpdate) // размер текущего консольного окна был изменен
@@ -2446,7 +2451,7 @@ BOOL CRealConsole::StartProcess()
 
 			MCHKHEAP
 			//Box(psz);
-			int nBrc = MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, nButtons);
+			int nBrc = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), nButtons);
 			Free(psz); Free(pszErr);
 
 			if (nBrc!=IDYES)
@@ -2520,7 +2525,7 @@ void CRealConsole::InitNames()
 	m_ConDataChanged.InitName(CEDATAREADYEVENT, mn_ConEmuC_PID);
 	//swprintf_c(ms_ConEmuC_DataReady, CEDATAREADYEVENT, mn_ConEmuC_PID);
 	MCHKHEAP;
-	m_GetDataPipe.InitName(gpConEmu->ms_ConEmuVer, CESERVERREADNAME, L".", mn_ConEmuC_PID);
+	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", mn_ConEmuC_PID);
 }
 
 // Если включена прокрутка - скорректировать индекс ячейки из экранных в буферные
@@ -3922,7 +3927,7 @@ void CRealConsole::Box(LPCTSTR szText)
 #ifdef _DEBUG
 	_ASSERT(FALSE);
 #endif
-	MessageBox(NULL, szText, gpConEmu->ms_ConEmuVer, MB_ICONSTOP);
+	MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
 }
 
 BOOL CRealConsole::isGuiVisible()
@@ -9240,7 +9245,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	gpConEmu->mp_TabBar->Update();
 	gpConEmu->OnBufferHeight(); //con.bBufferHeight);
 	gpConEmu->UpdateProcessDisplay(TRUE);
-	gpSet->NeedBackgroundUpdate();
+	//gpSet->NeedBackgroundUpdate(); -- 111105 плагиновые подложки теперь в VCon, а файловая - все равно общая, дергать не нужно
 	ShowHideViews(TRUE);
 	//HWND hPic = isPictureView();
 	//if (hPic && mb_PicViewWasHidden) {
@@ -9265,6 +9270,8 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 void CRealConsole::OnDeactivate(int nNewNum)
 {
 	if (!this) return;
+	
+	mp_VCon->SavePaneSnapshoot();
 
 	ShowHideViews(FALSE);
 	//HWND hPic = isPictureView();
@@ -9303,6 +9310,8 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 
 	if (abFocus)
 	{
+		mp_VCon->OnTaskbarFocus();
+
 		if (hGuiWnd)
 		{
 			if (abForceChild)
@@ -9600,7 +9609,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 			if (tabs[i].Name[0] == 0)
 			{
 				_ASSERTE(tabs[i].Name[0]!=0);
-				//wcscpy(tabs[i].Name, gpConEmu->ms_ConEmuVer);
+				//wcscpy(tabs[i].Name, gpConEmu->GetDefaultTitle());
 			}
 		}
 
@@ -10182,7 +10191,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 	MPipe<CESERVER_REQ_HDR,CESERVER_REQ> Pipe;
 	_ASSERTE(sizeof(In)==sizeof(CESERVER_REQ_HDR));
 	ExecutePrepareCmd(&In, CECMD_GETOUTPUT, sizeof(CESERVER_REQ_HDR));
-	Pipe.InitName(gpConEmu->ms_ConEmuVer, L"%s", ms_ConEmuC_Pipe, 0);
+	Pipe.InitName(gpConEmu->GetDefaultTitle(), L"%s", ms_ConEmuC_Pipe, 0);
 
 	if (!Pipe.Transact(&In, In.cbSize, &pOut, &cbRead))
 	{
@@ -11250,6 +11259,8 @@ void CRealConsole::OnTitleChanged()
 		mn_LastShownProgress = nNewProgress;
 		gpConEmu->UpdateProgress();
 	}
+	
+	mp_VCon->OnTitleChanged(); // Обновить таб на таскбаре
 
 	gpConEmu->mp_TabBar->Update(); // сменить заголовок закладки?
 }
@@ -11761,6 +11772,8 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 		wcscpy_c(TitleFull, Title);
 		mb_ForceTitleChanged = FALSE;
 		OnTitleChanged();
+
+		mp_VCon->UpdateThumbnail(TRUE);
 	}
 }
 
@@ -12890,6 +12903,7 @@ BOOL CRealConsole::ApplyConsoleInfo()
 		if (/*mp_ConsoleData &&*/ nNewWidth && nNewHeight)
 		{
 			// Это может случиться во время пересоздания консоли (когда фар падал)
+			// или при изменении параметров экрана (Aero->Standard)
 			_ASSERTE(nNewWidth == pInfo->crWindow.X && nNewHeight == pInfo->crWindow.Y);
 			// 10
 			//DWORD MaxBufferSize = pInfo->nCurDataMaxSize;

@@ -3987,7 +3987,7 @@ void WriteMiniDump(DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR 
 			BOOL lbDumpRc = MiniDumpWriteDump_f(
 			                    gpSrv->hRootProcess, gpSrv->dwRootProcess,
 			                    hDmpFile,
-			                    MiniDumpNormal /*MiniDumpWithDataSegs*/,
+			                    dumpType,
 			                    pmei,
 			                    NULL, NULL);
 

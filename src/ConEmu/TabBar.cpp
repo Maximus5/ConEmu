@@ -777,7 +777,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 
 #endif
-	TODO("Обработка gpSet->bHideInactiveConsoleTabs");
+	TODO("Обработка gpSet->bHideInactiveConsoleTabs для новых табов");
 	MCHKHEAP
 
 	if (!gpConEmu->mp_TabBar->IsActive() && gpSet->isTabs)
@@ -1584,7 +1584,7 @@ HWND TabBarClass::CreateTabbar()
 	if (!mh_TabIcons)
 	{
 		mh_TabIcons = ImageList_LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_SHIELD), 14, 1, RGB(128,0,0), IMAGE_BITMAP, LR_CREATEDIBSECTION);
-		mn_AdminIcon = (gpConEmu->m_osv.dwMajorVersion >= 6) ? 0 : 1;
+		mn_AdminIcon = (gOSVer.dwMajorVersion >= 6) ? 0 : 1;
 	}
 
 	// Важно проверку делать после создания главного окна, иначе IsAppThemed будет возвращать FALSE
@@ -1817,7 +1817,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 #endif
 			//100930 - нельзя. GetLastTitle() вернет текущую консоль, а pTab может быть из любой консоли!
 			// -- _tcscpy(pTab->Name, gpConEmu->GetLastTitle()); //isFar() ? gpSet->szTabPanels : gpSet->pszTabConsole);
-			_tcscpy(pTab->Name, gpConEmu->ms_ConEmuVer);
+			_tcscpy(pTab->Name, gpConEmu->GetDefaultTitle());
 		}
 
 		lstrcpyn(fileName, pTab->Name, countof(fileName));

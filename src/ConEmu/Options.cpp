@@ -210,7 +210,8 @@ CSettings::CSettings()
 	memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
 	//hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL;
 	isBackgroundImageValid = false;
-	mb_NeedBgUpdate = FALSE; mb_WasVConBgImage = FALSE; mb_BgLastFade = false;
+	mb_NeedBgUpdate = FALSE; //mb_WasVConBgImage = FALSE;
+	mb_BgLastFade = false;
 	ftBgModified.dwHighDateTime = ftBgModified.dwLowDateTime = nBgModifiedTick = 0;
 	mp_Bg = NULL; mp_BgImgData = NULL;
 	ZeroStruct(mh_Font);
@@ -555,6 +556,7 @@ void CSettings::InitSettings()
 	isCTSColorIndex = 0xE0;
 	isFarGotoEditor = true; isFarGotoEditorVk = VK_LCONTROL;
 	isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
+	m_isTabsOnTaskBar = 2;
 	isTabsInCaption = false; //cbTabsInCaption
 	wcscpy_c(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
 	sTabCloseMacro = sSaveAllMacro = NULL;
@@ -563,7 +565,7 @@ void CSettings::InitSettings()
 	//nVizNormal = 1; nVizFore = 15; nVizTab = 15; nVizEOL = 8; nVizEOF = 12;
 	//cVizTab = 0x2192; cVizEOL = 0x2193; cVizEOF = 0x2640;
 	isAllowDetach = 0;
-	isCreateAppWindow = false;
+	//isCreateAppWindow = false;
 	/*isScrollTitle = true;
 	ScrollTitleLen = 22;*/
 	wcscpy_c(szAdminTitleSuffix, L" (Admin)");
@@ -962,6 +964,7 @@ void CSettings::LoadSettings()
 		reg->Load(L"TabSelf", isTabSelf);
 		reg->Load(L"TabLazy", isTabLazy);
 		reg->Load(L"TabRecent", isTabRecent);
+		reg->Load(L"TabsOnTaskBar", m_isTabsOnTaskBar);
 
 		if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { if (sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; } }
 
@@ -1554,6 +1557,7 @@ BOOL CSettings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"TabSelf", isTabSelf);
 		reg->Save(L"TabLazy", isTabLazy);
 		reg->Save(L"TabRecent", isTabRecent);
+		reg->Save(L"TabsOnTaskBar", m_isTabsOnTaskBar);
 		reg->Save(L"TabCloseMacro", sTabCloseMacro ? sTabCloseMacro : L"");
 		reg->Save(L"TabFontFace", sTabFontFace);
 		reg->Save(L"TabFontCharSet", nTabFontCharSet);
@@ -1839,11 +1843,11 @@ LRESULT CSettings::OnInitDialog()
 #endif
 
 	//if (nConfLen>(nStdLen+1))
-	//	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->ms_ConEmuVer, (Config+nStdLen+1), pszType);
+	//	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->GetDefaultTitle(), (Config+nStdLen+1), pszType);
 	if (ConfigName[0])
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->ms_ConEmuVer, ConfigName, pszType);
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->GetDefaultTitle(), ConfigName, pszType);
 	else
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings %s", gpConEmu->ms_ConEmuVer, pszType);
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings %s", gpConEmu->GetDefaultTitle(), pszType);
 
 	SetWindowText(ghOpWnd, szTitle);
 	MCHKHEAP
@@ -2550,6 +2554,9 @@ LRESULT CSettings::OnInitDialog_Tabs()
 	if (isTabLazy)
 		CheckDlgButton(hTabs, cbTabLazy, BST_CHECKED);
 
+	if (m_isTabsOnTaskBar)
+		CheckDlgButton(hTabs, cbTabsOnTaskBar, (m_isTabsOnTaskBar==1) ? BST_CHECKED : BST_INDETERMINATE);
+
 	if (gpSet->bHideInactiveConsoleTabs)
 		CheckDlgButton(hTabs, cbHideInactiveConTabs, BST_CHECKED);
 
@@ -2993,7 +3000,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 				if (MessageBox(ghOpWnd,
 				              L"Background image will NOT be visible\n"
 				              L"while 'Darkening' is 0. Increase it?",
-				              gpConEmu->ms_ConEmuVer, MB_YESNO|MB_ICONEXCLAMATION)!=IDNO)
+				              gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION)!=IDNO)
 				{
 					bgImageDarker = 0x46;
 					SendDlgItemMessage(hMain, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) bgImageDarker);
@@ -3150,6 +3157,18 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		case cbTabLazy:
 			isTabLazy = IsChecked(hTabs, cbTabLazy);
 			break;
+		case cbTabsOnTaskBar:
+			switch(IsChecked(hTabs, cbTabsOnTaskBar))
+			{
+			case BST_UNCHECKED:
+				m_isTabsOnTaskBar = 0; break;
+			case BST_CHECKED:
+				m_isTabsOnTaskBar = 1; break;
+			case BST_INDETERMINATE:
+				m_isTabsOnTaskBar = 2; break;
+			}
+			gpConEmu->OnTaskbarSettingsChanged();
+			break;
 		case cbRSelectionFix:
 			isRSelFix = IsChecked(hExt, cbRSelectionFix);
 			break;
@@ -3202,8 +3221,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			break;
 		case bBgImage:
 		{
-			wchar_t temp[MAX_PATH];
-			GetDlgItemText(hMain, tBgImage, temp, MAX_PATH);
+			wchar_t temp[MAX_PATH], edt[MAX_PATH];
+			if (!GetDlgItemText(hMain, tBgImage, edt, MAX_PATH))
+				edt[0] = 0;
+			ExpandEnvironmentStrings(edt, temp, countof(temp));
 			OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
 			ofn.lStructSize=sizeof(ofn);
 			ofn.hwndOwner = ghOpWnd;
@@ -3219,8 +3240,25 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			{
 				if (LoadBackgroundFile(temp, true))
 				{
-					wcscpy_c(sBgImage, temp);
-					SetDlgItemText(hMain, tBgImage, temp);
+					bool bUseEnvVar = false;
+					size_t nEnvLen = _tcslen(gpConEmu->ms_ConEmuExeDir);
+					if (_tcslen(temp) > nEnvLen && temp[nEnvLen] == L'\\')
+					{
+						temp[nEnvLen] = 0;
+						if (lstrcmpi(temp, gpConEmu->ms_ConEmuExeDir) == 0)
+							bUseEnvVar = true;
+						temp[nEnvLen] = L'\\';
+					}
+					if (bUseEnvVar)
+					{
+						wcscpy_c(sBgImage, L"%ConEmuDir%");
+						wcscat_c(sBgImage, temp + _tcslen(gpConEmu->ms_ConEmuExeDir));
+					}
+					else
+					{
+						wcscpy_c(sBgImage, temp);
+					}
+					SetDlgItemText(hMain, tBgImage, sBgImage);
 					gpConEmu->Update(true);
 				}
 			}
@@ -5199,7 +5237,7 @@ bool CSettings::isKeyboardHooks()
 		                      L"You can change behavior later via Settings->Features->\n"
 		                      L"'Install keyboard hooks (Vista & Win7)' check box, or\n"
 		                      L"'KeyboardHooks' value in ConEmu settings (registry or xml)."
-		                      , gpConEmu->ms_ConEmuVer, MB_YESNOCANCEL|MB_ICONQUESTION);
+		                      , gpConEmu->GetDefaultTitle(), MB_YESNOCANCEL|MB_ICONQUESTION);
 
 		if (nBtn == IDCANCEL)
 		{
@@ -7379,7 +7417,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		_wcscpy_c(psz, cchLen, L"Can't retrieve font family from file:\n");
 		_wcscat_c(psz, cchLen, asFontFile);
 		_wcscat_c(psz, cchLen, L"\nContinue?");
-		int nBtn = MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OKCANCEL|MB_ICONSTOP);
+		int nBtn = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OKCANCEL|MB_ICONSTOP);
 		free(psz);
 
 		if (nBtn == IDCANCEL)
@@ -7466,7 +7504,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		_wcscpy_c(psz, cchLen, L"Can't register font:\n");
 		_wcscat_c(psz, cchLen, asFontFile);
 		_wcscat_c(psz, cchLen, L"\nContinue?");
-		int nBtn = MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OKCANCEL|MB_ICONSTOP);
+		int nBtn = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OKCANCEL|MB_ICONSTOP);
 		free(psz);
 
 		if (nBtn == IDCANCEL)
@@ -7662,7 +7700,7 @@ void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
 					wchar_t* psz=(wchar_t*)calloc(cchLen,sizeof(wchar_t));
 					_wcscpy_c(psz, cchLen, L"Too long full pathname for font:\n");
 					_wcscat_c(psz, cchLen, fnd.cFileName);
-					int nBtn = MessageBox(NULL, psz, gpConEmu->ms_ConEmuVer, MB_OKCANCEL|MB_ICONSTOP);
+					int nBtn = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OKCANCEL|MB_ICONSTOP);
 					free(psz);
 
 					if (nBtn == IDCANCEL) break;
@@ -8355,7 +8393,7 @@ BOOL CSettings::CheckConIme()
 				                        L"Take a look at 'FAQ-ConEmu.txt'.\r\n"
 				                        L"You may simply import file 'Disable_ConIme.reg'\r\n"
 				                        L"located in 'ConEmu.Addons' folder.",
-				                        gpConEmu->ms_ConEmuVer,MB_OKCANCEL|MB_ICONEXCLAMATION))
+				                        gpConEmu->GetDefaultTitle(),MB_OKCANCEL|MB_ICONEXCLAMATION))
 					lbStopWarning = TRUE;
 			}
 		}
@@ -8365,7 +8403,7 @@ BOOL CSettings::CheckConIme()
 			                        L"Can't determine a value of 'LoadConIme' registry parameter!\r\n"
 			                        L"Press 'Cancel' to stop this message.\r\n"
 			                        L"Take a look at 'FAQ-ConEmu.txt'",
-			                        gpConEmu->ms_ConEmuVer,MB_OKCANCEL|MB_ICONEXCLAMATION))
+			                        gpConEmu->GetDefaultTitle(),MB_OKCANCEL|MB_ICONEXCLAMATION))
 				lbStopWarning = TRUE;
 		}
 
@@ -8829,19 +8867,9 @@ bool CSettings::PollBackgroundFile()
 }
 
 // Должна вернуть true, если файл изменился
+// Работает ТОЛЬКО с файлом. Данные плагинов обрабатываются в самом CVirtualConsole!
 bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 {
-	/*
-	    HBITMAP  hBgBitmap;
-	    COORD    bgBmp;
-	    HDC      hBgDc;
-	    FILETIME ftBgModified;
-	    WCHAR sBgImage[MAX_PATH];
-	    char isShowBgImage;
-		bool isBackgroundImageValid;
-		u8 bgImageDarker;
-		DWORD nBgImageColors;
-	*/
 	bool lbForceUpdate = false;
 	LONG lMaxBgWidth = 0, lMaxBgHeight = 0;
 	bool bIsForeground = gpConEmu->isMeForeground(false);
@@ -8863,7 +8891,8 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 	}
 
 	// Если это НЕ плагиновая подложка - необходимо проверить размер требуемой картинки
-	if (!mb_WasVConBgImage)
+	// -- здесь - всегда только файловая подложка
+	//if (!mb_WasVConBgImage)
 	{
 		if (bgOperation == eUpLeft)
 		{
@@ -8914,22 +8943,22 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 		//BITMAPFILEHEADER* pImgData = mp_BgImgData;
 		BackgroundOp op = (BackgroundOp)bgOperation;
 		BOOL lbImageExist = (mp_BgImgData != NULL);
-		BOOL lbVConImage = FALSE;
+		//BOOL lbVConImage = FALSE;
 		LONG lBgWidth = 0, lBgHeight = 0;
-		CVirtualConsole* pVCon = gpConEmu->ActiveCon();
+		//CVirtualConsole* pVCon = gpConEmu->ActiveCon();
 
-		//MSectionLock SBK;
-		if (pVCon && isBgPluginAllowed)
-		{
-			//SBK.Lock(&pVCon->csBkImgData);
-			if (pVCon->HasBackgroundImage(&lBgWidth, &lBgHeight)
-			        && lBgWidth && lBgHeight)
-			{
-				lbVConImage = lbImageExist = TRUE;
-			}
-		}
+		////MSectionLock SBK;
+		//if (apVCon && isBgPluginAllowed)
+		//{
+		//	//SBK.Lock(&apVCon->csBkImgData);
+		//	if (apVCon->HasBackgroundImage(&lBgWidth, &lBgHeight)
+		//	        && lBgWidth && lBgHeight)
+		//	{
+		//		lbVConImage = lbImageExist = TRUE;
+		//	}
+		//}
 
-		mb_WasVConBgImage = lbVConImage;
+		//mb_WasVConBgImage = lbVConImage;
 
 		if (lbImageExist)
 		{
@@ -8940,22 +8969,22 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 			TODO("Переделать, ориентироваться только на размер картинки - неправильно");
 			TODO("DoubleView - скорректировать X,Y");
 
-			if (lbVConImage)
-			{
-				if (lMaxBgWidth && lMaxBgHeight)
-				{
-					lBgWidth = lMaxBgWidth;
-					lBgHeight = lMaxBgHeight;
-				}
+			//if (lbVConImage)
+			//{
+			//	if (lMaxBgWidth && lMaxBgHeight)
+			//	{
+			//		lBgWidth = lMaxBgWidth;
+			//		lBgHeight = lMaxBgHeight;
+			//	}
 
-				if (!mp_Bg->CreateField(lBgWidth, lBgHeight) ||
-				        !pVCon->PutBackgroundImage(mp_Bg, 0,0, lBgWidth, lBgHeight))
-				{
-					delete mp_Bg;
-					mp_Bg = NULL;
-				}
-			}
-			else
+			//	if (!mp_Bg->CreateField(lBgWidth, lBgHeight) ||
+			//	        !apVCon->PutBackgroundImage(mp_Bg, 0,0, lBgWidth, lBgHeight))
+			//	{
+			//		delete mp_Bg;
+			//		mp_Bg = NULL;
+			//	}
+			//}
+			//else
 			{
 				BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(mp_BgImgData+1);
 
@@ -9048,6 +9077,7 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 		return false;
 	}
 
+	_ASSERTE(gpConEmu->isMainThread());
 	bool lRes = false;
 	BY_HANDLE_FILE_INFORMATION inf = {0};
 	BITMAPFILEHEADER* pBkImgData = LoadImageEx(exPath, inf);
@@ -9056,7 +9086,6 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 		ftBgModified = inf.ftLastWriteTime;
 		nBgModifiedTick = GetTickCount();
 		NeedBackgroundUpdate();
-		_ASSERTE(gpConEmu->isMainThread());
 		//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
 		SafeFree(mp_BgImgData);
 		isBackgroundImageValid = true;
@@ -9462,7 +9491,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					if (gpSet->nConFontError)
 					{
 						_ASSERTE(gpSet->nConFontError==0);
-						MessageBox(hWnd2, gpSet->sConFontError[0] ? gpSet->sConFontError : gpSet->CreateConFontError(NULL,NULL), gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP);
+						MessageBox(hWnd2, gpSet->sConFontError[0] ? gpSet->sConFontError : gpSet->CreateConFontError(NULL,NULL), gpConEmu->GetDefaultTitle(), MB_OK|MB_ICONSTOP);
 						return 0;
 					}
 
@@ -9832,4 +9861,23 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 	MCHKHEAP
 	return TRUE;
 	UNREFERENCED_PARAMETER(lpntm);
+}
+
+bool CSettings::NeedCreateAppWindow()
+{
+	// Пока что, окно для Application нужно создавать только для XP и ниже
+	// в том случае, если на таскбаре отображаются кнопки запущенных консолей
+	// Это для того, чтобы при Alt-Tab не светилась "лишняя" иконка главного окна
+	if ((gOSVer.dwMajorVersion == 5) && isTabsOnTaskBar())
+		return TRUE;
+	return FALSE;
+}
+
+bool CSettings::isTabsOnTaskBar()
+{
+	if (isDesktopMode)
+		return false;
+	if ((m_isTabsOnTaskBar == 1) || (((BYTE)m_isTabsOnTaskBar > 1) && (gOSVer.dwMajorVersion >= 6)))
+		return true;
+	return false;
 }

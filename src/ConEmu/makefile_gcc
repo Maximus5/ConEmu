@@ -9,6 +9,7 @@ SRCS =  \
 		ConEmuPipe.cpp     \
 		DragDrop.cpp       \
 		DragDropData.cpp   \
+		DwmHelper.cpp      \
 		LoadImg.cpp        \
 		Macro.cpp          \
 		Options.cpp        \
@@ -17,6 +18,8 @@ SRCS =  \
 		Registry.cpp       \
 		ScreenDump.cpp     \
 		TabBar.cpp         \
+		TaskBar.cpp        \
+		TaskBarGhost.cpp   \
 		TrayIcon.cpp       \
 		VirtualConsole.cpp \
 		../common/Common.cpp \

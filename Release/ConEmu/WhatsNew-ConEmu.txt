@@ -1,4 +1,12 @@
-﻿2011.11.01
+﻿2011.11.06
+[%] Issue 449: Resizing tabs with mouse in "panel view" (thumbs/tiles) does not work.
+[%] Issue 451: падение при загрузке background из png.
+[+] Settings->Tabs->'Show on taskbar' - отображение на панели задач всех запущенных консолей.
+    Если флажок в 3-м состоянии - консоли отображаются только в Vista и выше.
+    В Windows 7 добавлена поддержка Aero thumbnails & peeks.
+
+
+2011.11.01
 [%] В 111019 поломался TrueMod в Far2.
 [*] Продолжение GUI приложений во вкладках.
 

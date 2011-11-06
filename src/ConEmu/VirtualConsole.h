@@ -39,12 +39,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_SPACES 0x400
 
 class CBackground;
+class CTaskBarGhost;
 
 class CVirtualConsole : public CConEmuChild
 {
 	private:
 		// RealConsole
-		CRealConsole *mp_RCon;
+		CRealConsole  *mp_RCon;
+		CTaskBarGhost *mp_Ghost;
 	public:
 		CRealConsole *RCon();
 		HWND GuiWnd();
@@ -184,6 +186,7 @@ class CVirtualConsole : public CConEmuChild
 		BOOL mb_DialogsChanged;
 		UINT mn_ConEmuFadeMsg;
 		UINT mn_ConEmuSettingsMsg;
+		//UINT mn_MsgSavePaneSnapshoot; -> CConEmuChild
 
 		void CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr);
 	public:
@@ -195,7 +198,12 @@ class CVirtualConsole : public CConEmuChild
 		//void FreeBackgroundImage(); // Освободить (если создан) HBITMAP для mp_BkImgData
 		SetBackgroundResult SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData); // вызывается при получении нового Background
 		bool HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight);
+		void NeedBackgroundUpdate();
 	protected:
+		BOOL mb_NeedBgUpdate;
+		bool mb_BgLastFade;
+		bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
+		CBackground* mp_Bg;
 		MSection *mcs_BkImgData;
 		size_t mn_BkImgDataMax;
 		CESERVER_REQ_SETBACKGROUND* mp_BkImgData; // followed by image data
@@ -230,11 +238,13 @@ class CVirtualConsole : public CConEmuChild
 		CVirtualConsole(/*HANDLE hConsoleOutput = NULL*/);
 		virtual ~CVirtualConsole();
 		static CVirtualConsole* CreateVCon(RConStartArgs *args);
+		void InitGhost();
 
 		void DumpConsole();
 		BOOL Dump(LPCWSTR asFile);
 		bool Update(bool abForce = false, HDC *ahDc=NULL);
 		void UpdateCursor(bool& lRes);
+		void UpdateThumbnail(BOOL abNoSnapshoot = FALSE);
 		void SelectFont(HFONT hNew);
 		void SelectBrush(HBRUSH hNew);
 		inline bool isCharBorder(wchar_t inChar);
@@ -247,6 +257,7 @@ class CVirtualConsole : public CConEmuChild
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
 		void Paint(HDC hPaintDc, RECT rcClient);
+		void StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight);
 		void UpdateInfo();
 		//void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };
 		//DWORD GetConsoleCP() { return mp_RCon->GetConsoleCP(); };
@@ -267,6 +278,10 @@ class CVirtualConsole : public CConEmuChild
 		void OnPanelViewSettingsChanged();
 		BOOL IsPanelViews();
 		BOOL CheckTransparent();
+		void OnTitleChanged();
+		void SavePaneSnapshoot();
+		void OnTaskbarSettingsChanged();
+		void OnTaskbarFocus();
 
 	protected:
 		//inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);
@@ -324,4 +339,6 @@ class CVirtualConsole : public CConEmuChild
 			INT   *pAllCounts;
 		} TransparentInfo;
 		static HMENU mh_PopupMenu, mh_DebugPopup, mh_EditPopup;
+	protected:
+		virtual void OnDestroy();
 };

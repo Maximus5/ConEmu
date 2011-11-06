@@ -29,59 +29,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-//#define HDCWND 'ghWnd DC'
-
-#ifndef __ITaskbarList3_FWD_DEFINED__
-#define __ITaskbarList3_FWD_DEFINED__
-typedef interface ITaskbarList3 ITaskbarList3;
-#endif 	/* __ITaskbarList3_FWD_DEFINED__ */
-
-#ifndef __ITaskbarList2_FWD_DEFINED__
-#define __ITaskbarList2_FWD_DEFINED__
-typedef interface ITaskbarList2 ITaskbarList2;
-#endif 	/* __ITaskbarList2_FWD_DEFINED__ */
-
 #define WM_TRAYNOTIFY WM_USER+1
 
-//#define ID_TOMONITOR 0xABBD
-//#define ID_NEWCONSOLE 0xABBE
-//#define ID_DUMPPROCESS 0xABBF
-//#define ID_DEBUG_SHOWRECTS 0xABC0
-////#define ID_MONITOR_SHELLACTIVITY 0xABC1
-//#define ID_CON_COPY 0xABC2
-//#define ID_CON_MARKTEXT 0xABC3
-//#define ID_CON_MARKBLOCK 0xABC4
-//#define ID_ALWAYSONTOP 0xABC5
-//#define ID_DEBUGGUI 0xABC6
-//#define ID_HELP 0xABC7
-//#define ID_CON_TOGGLE_VISIBLE 0xABC8
-//#define ID_CON_PASTE 0xABC9
-//#define ID_AUTOSCROLL 0xABCA
-//#define ID_DUMPCONSOLE 0xABCB
-//#define ID_CONPROP 0xABCC
-//#define ID_SETTINGS 0xABCD
-//#define ID_ABOUT 0xABCE
-//#define ID_TOTRAY 0xABCF
-//#define ID_DEBUGCON 0xABD0
-//// VCon menu items
-//#define IDM_VCONCMD_FIRST 0xABD1
-//#define IDM_CLOSE IDM_VCONCMD_FIRST
-//#define IDM_RESTART 0xABD2
-//#define IDM_RESTARTAS 0xABD3
-//#define IDM_TERMINATE 0xABD4
-////#define IDM_NEW 0xABD5
-//#define IDM_ADMIN_DUPLICATE 0xABD6
-//#define IDM_SAVE 0xABD7
-//#define IDM_SAVEALL 0xABD8
-//#define IDM_DETACH 0xABD9
-//#define IDM_ATTACHTO 0xABDA
-//#define IDM_VCONCMD_LAST IDM_ATTACHTO
-//// Consoles // DWORD MAKELONG(WORD wLow,WORD wHigh);
-//#define IDM_VCON_FIRST MAKELONG(1,1)
-//#define IDM_VCON_LAST  MAKELONG(0,MAX_CONSOLE_COUNT+1)
-
 #include "MenuIds.h"
-
 
 #define IID_IShellLink IID_IShellLinkW
 
@@ -96,7 +46,7 @@ typedef interface ITaskbarList2 ITaskbarList2;
 
 //typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
 
-typedef HRESULT(WINAPI* FDwmIsCompositionEnabled)(BOOL *pfEnabled);
+//typedef HRESULT(WINAPI* FDwmIsCompositionEnabled)(BOOL *pfEnabled);
 
 class CConEmuChild;
 class CConEmuBack;
@@ -155,7 +105,12 @@ enum TrackMenuPlace
 	tmp_Cmd,
 };
 
-class CConEmuMain
+#include "DwmHelper.h"
+#include "TaskBar.h"
+
+class CConEmuMain :
+	public CDwmHelper,
+	public CTaskBar
 {
 	public:
 		//HMODULE mh_Psapi;
@@ -256,7 +211,7 @@ class CConEmuMain
 		DWORD m_ProcCount;
 		//DWORD mn_ActiveStatus;
 		//TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
-		OSVERSIONINFO m_osv;
+		//OSVERSIONINFO m_osv;
 		BOOL mb_IsUacAdmin;
 		HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove;
 		HCURSOR mh_SplitV, mh_SplitH;
@@ -267,7 +222,7 @@ class CConEmuMain
 		HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_VConListPopup; // Popup's для SystemMenu
 		TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE]; //, MultiTitle[MAX_TITLE_SIZE+30];
 		short mn_Progress;
-		LPTSTR GetTitleStart();
+		//LPTSTR GetTitleStart();
 		BOOL mb_InTimer;
 		BOOL mb_ProcessCreated, mb_WorkspaceErasedOnClose; //DWORD mn_StartTick;
 		HWINEVENTHOOK mh_WinHook; //, mh_PopupHook;
@@ -284,8 +239,8 @@ class CConEmuMain
 		BOOL mb_CaptionWasRestored; // заголовок восстановлен на время ресайза
 		BOOL mb_ForceShowFrame;     // восстановить заголовок по таймауту
 		//wchar_t *mpsz_RecreateCmd;
-		ITaskbarList3 *mp_TaskBar3;
-		ITaskbarList2 *mp_TaskBar2;
+		//ITaskbarList3 *mp_TaskBar3;
+		//ITaskbarList2 *mp_TaskBar2;
 		typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
 		RECT mrc_Ideal;
 		BOOL mn_InResize;
@@ -319,8 +274,8 @@ class CConEmuMain
 		void RegisterHotKeys();
 		void UnRegisterHotKeys(BOOL abFinal=FALSE);
 		int mn_MinRestoreRegistered; UINT mn_MinRestore_VK, mn_MinRestore_MOD;
-		HMODULE mh_DwmApi;
-		FDwmIsCompositionEnabled DwmIsCompositionEnabled;
+		//HMODULE mh_DwmApi;
+		//FDwmIsCompositionEnabled DwmIsCompositionEnabled;
 		HBITMAP mh_RightClickingBmp; HDC mh_RightClickingDC;
 		POINT m_RightClickingSize; // {384 x 16} 24 фрейма, считаем, что четверть отведенного времени прошла до начала показа
 		int m_RightClickingFrames, m_RightClickingCurrent;
@@ -373,17 +328,24 @@ class CConEmuMain
 		UINT mn_MsgDisplayRConError;
 		UINT mn_MsgMacroFontSetName;
 		UINT mn_MsgCreateViewWindow;
+		UINT mn_MsgPostTaskbarActivate; BOOL mb_PostTaskbarActivate;
 
 		//
 		static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
 		void GuiServerThreadCommand(HANDLE hPipe);
 		DWORD mn_GuiServerThreadId; HANDLE mh_GuiServerThread, mh_GuiServerThreadTerminate;
 
+		//
+		virtual void OnUseGlass(bool abEnableGlass);
+		virtual void OnUseTheming(bool abEnableTheming);
+		virtual void OnUseDwm(bool abEnableDwm);
+
 	public:
 		DWORD CheckProcesses();
 		DWORD GetFarPID(BOOL abPluginRequired=FALSE);
 
 	public:
+		LPCWSTR GetDefaultTitle(); // вернуть ms_ConEmuVer
 		LPCTSTR GetLastTitle(bool abUseDefault=true);
 		LPCTSTR GetVConTitle(int nIdx);
 		int GetActiveVCon();
@@ -396,7 +358,7 @@ class CConEmuMain
 
 	public:
 		CConEmuMain();
-		~CConEmuMain();
+		virtual ~CConEmuMain();
 
 	public:
 		CVirtualConsole* ActiveCon();
@@ -407,8 +369,8 @@ class CConEmuMain
 		BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
 		void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
-		static RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* apVCon=NULL);
-		static RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
+		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* apVCon=NULL);
+		RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 		void CheckFocus(LPCWSTR asFrom);
 		enum DragPanelBorder CheckPanelDrag(COORD crCon);
 		bool ConActivate(int nCon);
@@ -427,8 +389,8 @@ class CConEmuMain
 		RECT GetIdealRect() { return mrc_Ideal; };
 		HMENU GetSystemMenu(BOOL abInitial = FALSE);
 		RECT GetVirtualScreenRect(BOOL abFullScreen);
-		static DWORD_PTR GetWindowStyle();
-		static DWORD_PTR GetWindowStyleEx();
+		DWORD_PTR GetWindowStyle();
+		DWORD_PTR GetWindowStyleEx();
 		LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync);
 		BOOL Init();
 		void InitInactiveDC(CVirtualConsole* apVCon);
@@ -443,7 +405,7 @@ class CConEmuMain
 		bool isFar();
 		bool isFilePanel(bool abPluginAllowed=false);
 		bool isFirstInstance();
-		bool IsGlass();
+		//bool IsGlass();
 		bool isIconic();
 		bool isInImeComposition();
 		bool isLBDown();
@@ -464,7 +426,7 @@ class CConEmuMain
 		bool isZoomed();
 		void LoadIcons();
 		bool LoadVersionInfo(wchar_t* pFullPath);
-		static RECT MapRect(RECT rFrom, BOOL bFrame2Client);
+		RECT MapRect(RECT rFrom, BOOL bFrame2Client);
 		//void PaintCon(HDC hPaintDC);
 		void PaintGaps(HDC hDC);
 		void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
@@ -489,6 +451,7 @@ class CConEmuMain
 		void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
 		void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
 		void ShowSysmenu(int x=-32000, int y=-32000);
+		bool SetParent(HWND hNewParent);
 		HMENU CreateDebugMenuPopup();
 		HMENU CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
 		HMENU CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly);
@@ -563,10 +526,13 @@ class CConEmuMain
 		void OnVConCreated(CVirtualConsole* apVCon);
 		LRESULT OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 		void OnAllVConClosed();
+		void OnAllGhostClosed();
+		void OnGhostCreated(CVirtualConsole* apVCon, HWND ahGhost);
 		void OnRConStartedSuccess(CRealConsole* apRCon);
 		LRESULT OnUpdateScrollInfo(BOOL abPosted = FALSE);
 		void OnPanelViewSettingsChanged(BOOL abSendChanges=TRUE);
 		void OnGlobalSettingsChanged();
+		void OnTaskbarSettingsChanged();
 };
 
 extern CConEmuMain *gpConEmu;

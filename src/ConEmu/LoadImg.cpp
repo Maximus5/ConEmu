@@ -40,12 +40,21 @@ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImagePixelFormat_t)(Gdiplus::GpIma
 
 #include "LoadImg.h"
 
+static HMODULE hGdi = NULL;
+static ULONG_PTR gdiplusToken = 0;
+static BOOL gdiplusInitialized = FALSE;
+static GdiplusStartup_t GdiplusStartup = NULL;
+static GdiplusShutdown_t GdiplusShutdown = NULL;
+static GdipCreateBitmapFromFile_t GdipCreateBitmapFromFile = NULL;
+static GdipDisposeImage_t GdipDisposeImage = NULL;
+static GdipGetImageWidth_t GdipGetImageWidth = NULL;
+static GdipGetImageHeight_t GdipGetImageHeight = NULL;
+static GdipCreateHBITMAPFromBitmap_t GdipCreateHBITMAPFromBitmap = NULL;
+static GdipGetImagePixelFormat_t GdipGetImagePixelFormat = NULL;
+
 BITMAPFILEHEADER* LoadImageGdip(LPCWSTR asImgPath)
 {
 	BITMAPFILEHEADER* pBkImgData = NULL;
-	HMODULE hGdi = NULL;
-	ULONG_PTR gdiplusToken = 0;
-	BOOL lbInitialized = FALSE;
 
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	Gdiplus::Status lRc;
@@ -54,41 +63,38 @@ BITMAPFILEHEADER* LoadImageGdip(LPCWSTR asImgPath)
 	UINT lWidth = 0, lHeight = 0;
 	Gdiplus::PixelFormat format;
 	
-	GdiplusStartup_t GdiplusStartup = NULL;
-	GdiplusShutdown_t GdiplusShutdown = NULL;
-	GdipCreateBitmapFromFile_t GdipCreateBitmapFromFile = NULL;
-	GdipDisposeImage_t GdipDisposeImage = NULL;
-	GdipGetImageWidth_t GdipGetImageWidth = NULL;
-	GdipGetImageHeight_t GdipGetImageHeight = NULL;
-	GdipCreateHBITMAPFromBitmap_t GdipCreateHBITMAPFromBitmap = NULL;
-	GdipGetImagePixelFormat_t GdipGetImagePixelFormat = NULL;
 	
 	HDC hdcSrc = NULL, hdcDst = NULL;
 	HBITMAP hLoadBmp = NULL, hDestBmp = NULL, hOldSrc = NULL, hOldDst = NULL;
 	
-	hGdi = LoadLibrary(L"GdiPlus.dll");
-	if (!hGdi || hGdi == INVALID_HANDLE_VALUE)
-		goto wrap;
-	if (!(GdiplusStartup = (GdiplusStartup_t)GetProcAddress(hGdi, "GdiplusStartup")))
-		goto wrap;
-	if (!(GdiplusShutdown = (GdiplusShutdown_t)GetProcAddress(hGdi, "GdiplusShutdown")))
-		goto wrap;
-	if (!(GdipCreateBitmapFromFile = (GdipCreateBitmapFromFile_t)GetProcAddress(hGdi, "GdipCreateBitmapFromFile")))
-		goto wrap;
-	if (!(GdipDisposeImage = (GdipDisposeImage_t)GetProcAddress(hGdi, "GdipDisposeImage")))
-		goto wrap;
-	if (!(GdipGetImageWidth = (GdipGetImageWidth_t)GetProcAddress(hGdi, "GdipGetImageWidth")))
-		goto wrap;
-	if (!(GdipGetImageHeight = (GdipGetImageHeight_t)GetProcAddress(hGdi, "GdipGetImageHeight")))
-		goto wrap;
-	if (!(GdipCreateHBITMAPFromBitmap = (GdipCreateHBITMAPFromBitmap_t)GetProcAddress(hGdi, "GdipCreateHBITMAPFromBitmap")))
-		goto wrap;
-	if (!(GdipGetImagePixelFormat = (GdipGetImagePixelFormat_t)GetProcAddress(hGdi, "GdipGetImagePixelFormat")))
-		goto wrap;
-	
-	lRc = GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-	if (lRc != Gdiplus::Ok)
-		goto wrap;
+	if (!hGdi || !gdiplusInitialized)
+	{
+		hGdi = LoadLibrary(L"GdiPlus.dll");
+		if (!hGdi || hGdi == INVALID_HANDLE_VALUE)
+			goto wrap;
+		if (!(GdiplusStartup = (GdiplusStartup_t)GetProcAddress(hGdi, "GdiplusStartup")))
+			goto wrap;
+		if (!(GdiplusShutdown = (GdiplusShutdown_t)GetProcAddress(hGdi, "GdiplusShutdown")))
+			goto wrap;
+		if (!(GdipCreateBitmapFromFile = (GdipCreateBitmapFromFile_t)GetProcAddress(hGdi, "GdipCreateBitmapFromFile")))
+			goto wrap;
+		if (!(GdipDisposeImage = (GdipDisposeImage_t)GetProcAddress(hGdi, "GdipDisposeImage")))
+			goto wrap;
+		if (!(GdipGetImageWidth = (GdipGetImageWidth_t)GetProcAddress(hGdi, "GdipGetImageWidth")))
+			goto wrap;
+		if (!(GdipGetImageHeight = (GdipGetImageHeight_t)GetProcAddress(hGdi, "GdipGetImageHeight")))
+			goto wrap;
+		if (!(GdipCreateHBITMAPFromBitmap = (GdipCreateHBITMAPFromBitmap_t)GetProcAddress(hGdi, "GdipCreateHBITMAPFromBitmap")))
+			goto wrap;
+		if (!(GdipGetImagePixelFormat = (GdipGetImagePixelFormat_t)GetProcAddress(hGdi, "GdipGetImagePixelFormat")))
+			goto wrap;
+		
+		lRc = GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+		if (lRc != Gdiplus::Ok)
+			goto wrap;
+
+		gdiplusInitialized = TRUE;
+	}
 	
 	lRc = GdipCreateBitmapFromFile(asImgPath, &bmp);
 	if (lRc != Gdiplus::Ok)
@@ -182,11 +188,24 @@ wrap:
 		DeleteObject(hDestBmp);
 	if (bmp)
 		GdipDisposeImage(bmp);
-	if (lbInitialized)
-		GdiplusShutdown(gdiplusToken);
-	if (hGdi)
-		FreeLibrary(hGdi);
+	if (!gdiplusInitialized)
+		LoadImageFinalize();
 	return pBkImgData;
+}
+
+void LoadImageFinalize()
+{
+	if (hGdi)
+	{
+		if (gdiplusInitialized)
+		{
+			GdiplusShutdown(gdiplusToken);
+			gdiplusInitialized = FALSE;
+		}
+		FreeLibrary(hGdi);
+		hGdi = NULL;
+		GdiplusShutdown = NULL;
+	}
 }
 
 BITMAPFILEHEADER* LoadImageEx(LPCWSTR asImgPath, BY_HANDLE_FILE_INFORMATION& inf)

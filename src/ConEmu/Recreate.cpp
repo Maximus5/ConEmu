@@ -281,7 +281,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			CheckRadioButton(hDlg, rbCurrentUser, rbAnotherUser, nChecked);
 			RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
 
-			if (gpConEmu->m_osv.dwMajorVersion < 6)
+			if (gOSVer.dwMajorVersion < 6)
 			{
 				// В XP и ниже это просто RunAs - с возможностью ввода имени пользователя и пароля
 				//apiShowWindow(GetDlgItem(hDlg, cbRunAsAdmin), SW_HIDE);
@@ -299,7 +299,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				{
 					EnableWindow(GetDlgItem(hDlg, cbRunAsAdmin), FALSE);
 				}
-				else if (gpConEmu->m_osv.dwMajorVersion < 6)
+				else if (gOSVer.dwMajorVersion < 6)
 				{
 					RecreateDlgProc(hDlg, WM_COMMAND, cbRunAsAdmin, 0);
 				}

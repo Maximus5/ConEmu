@@ -300,6 +300,10 @@ class CSettings
 		bool isFadeInactive;
 		//DWORD nFadeInactiveMask;
 		char isTabs; bool isTabSelf, isTabRecent, isTabLazy, isTabsInCaption;
+	private:
+		char m_isTabsOnTaskBar;
+	public:
+		bool isTabsOnTaskBar();
 		wchar_t sTabFontFace[LF_FACESIZE]; DWORD nTabFontCharSet; int nTabFontHeight;
 		wchar_t *sTabCloseMacro;
 		wchar_t *sSaveAllMacro;
@@ -343,7 +347,8 @@ class CSettings
 		//wchar_t cVizTab, cVizEOL, cVizEOF;
 
 		char isAllowDetach;
-		bool isCreateAppWindow;
+		//bool isCreateAppWindow;
+		bool NeedCreateAppWindow();
 		/*bool isScrollTitle;
 		DWORD ScrollTitleLen;*/
 		wchar_t szAdminTitleSuffix[64]; //" (Admin)"
@@ -384,7 +389,7 @@ class CSettings
 		CBackground* mp_Bg;
 		//MSection mcs_BgImgData;
 		BITMAPFILEHEADER* mp_BgImgData;
-		BOOL mb_NeedBgUpdate, mb_WasVConBgImage;
+		BOOL mb_NeedBgUpdate; //, mb_WasVConBgImage;
 		bool mb_BgLastFade;
 		FILETIME ftBgModified;
 		DWORD nBgModifiedTick;

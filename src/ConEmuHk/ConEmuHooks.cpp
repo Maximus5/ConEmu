@@ -220,6 +220,10 @@ BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+BOOL WINAPI OnGetMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
+BOOL WINAPI OnGetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
+BOOL WINAPI OnPeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
+BOOL WINAPI OnPeekMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
 BOOL WINAPI OnSetConsoleKeyShortcuts(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DWORD n1);
 HWND WINAPI OnCreateDialogIndirectParamA(HINSTANCE hInstance, LPCDLGTEMPLATE lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM lParamInit);
 HWND WINAPI OnCreateDialogIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATE lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM lParamInit);
@@ -347,6 +351,10 @@ bool InitHooksUser32()
 		{(void*)OnPostMessageW,			"PostMessageW",			user32},
 		{(void*)OnSendMessageA,			"SendMessageA",			user32},
 		{(void*)OnSendMessageW,			"SendMessageW",			user32},
+		{(void*)OnGetMessageA,			"GetMessageA",			user32},
+		{(void*)OnGetMessageW,			"GetMessageW",			user32},
+		{(void*)OnPeekMessageA,			"PeekMessageA",			user32},
+		{(void*)OnPeekMessageW,			"PeekMessageW",			user32},
 		{(void*)OnCreateDialogParamA,	"CreateDialogParamA",	user32},
 		{(void*)OnCreateDialogParamW,	"CreateDialogParamW",	user32},
 		{(void*)OnCreateDialogIndirectParamA, "CreateDialogIndirectParamA", user32},
@@ -981,61 +989,6 @@ BOOL WINAPI OnFlashWindowEx(PFLASHWINFO pfwi)
 	return lbRc;
 }
 
-
-BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
-{
-	typedef BOOL (WINAPI* OnSetForegroundWindow_t)(HWND hWnd);
-	ORIGINALFASTEX(SetForegroundWindow,NULL);
-
-	BOOL lbRc = FALSE;
-
-	if (ghConEmuWndDC)
-	{
-		if (hWnd == ghConEmuWndDC)
-			hWnd = ghConEmuWnd;
-		lbRc = GuiSetForeground(hWnd);
-	}
-
-	// ConEmu наверное уже все сделал, но на всякий случай, дернем и здесь
-	if (F(SetForegroundWindow) != NULL)
-	{
-		lbRc = F(SetForegroundWindow)(hWnd);
-
-		//if (gbShowOnSetForeground && lbRc)
-		//{
-		//	if (user->isWindow(hWnd) && !IsWindowVisible(hWnd))
-		//		ShowWindow(hWnd, SW_SHOW);
-		//}
-	}
-
-	return lbRc;
-}
-
-HWND WINAPI OnGetForegroundWindow()
-{
-	typedef HWND (WINAPI* OnGetForegroundWindow_t)();
-	ORIGINALFASTEX(GetForegroundWindow,NULL);
-
-	HWND hFore = NULL;
-	if (F(GetForegroundWindow))
-		hFore = F(GetForegroundWindow)();
-
-	if (ghConEmuWndDC)
-	{
-		if (ghAttachGuiClient && ((hFore == ghConEmuWnd) || (hFore == ghConEmuWndDC)))
-		{
-			// Обмануть GUI-клиента, пусть он думает, что он "сверху"
-			hFore = ghAttachGuiClient;
-		}
-		else if (hFore == ghConEmuWnd)
-		{
-			hFore = ghConEmuWndDC;
-		}
-	}
-
-	return hFore;
-}
-
 BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect)
 {
 	typedef BOOL (WINAPI* OnGetWindowRect_t)(HWND hWnd, LPRECT lpRect);
@@ -1195,6 +1148,12 @@ HWND WINAPI OnGetWindow(HWND hWnd, UINT uCmd)
 	if (F(GetWindow))
 	{
 		lhRc = F(GetWindow)(hWnd, uCmd);
+
+		if (ghAttachGuiClient && (uCmd == GW_OWNER) && (lhRc == ghConEmuWndDC))
+		{
+			_ASSERTE(lhRc != ghConEmuWndDC);
+			lhRc = ghAttachGuiClient;
+		}
 	}
 
 	return lhRc;
@@ -1223,11 +1182,17 @@ HWND WINAPI OnGetAncestor(HWND hWnd, UINT gaFlags)
 	//}
 	if (ghConEmuWndDC)
 	{
+#ifdef _DEBUG
+		if ((GetKeyState(VK_CAPITAL) & 1))
+		{
+			int nDbg = 0;
+		}
+#endif
 		if (ghAttachGuiClient)
 		{
+			// Обмануть GUI-клиента, пусть он думает, что он "сверху"
 			if (hWnd == ghAttachGuiClient || hWnd == ghConEmuWndDC)
 			{
-				// Обмануть GUI-клиента, пусть он думает, что он "сверху"
 				hWnd = ghConEmuWnd;
 			}
 			#if 0
@@ -1255,9 +1220,90 @@ HWND WINAPI OnGetAncestor(HWND hWnd, UINT gaFlags)
 	if (F(GetAncestor))
 	{
 		lhRc = F(GetAncestor)(hWnd, gaFlags);
+
+		if (ghAttachGuiClient && (gaFlags == GA_ROOTOWNER || gaFlags == GA_ROOT) && lhRc == ghConEmuWnd)
+		{
+			lhRc = ghAttachGuiClient;
+		}
 	}
 
 	return lhRc;
+}
+
+HWND WINAPI OnGetActiveWindow()
+{
+	typedef HWND (WINAPI* OnGetActiveWindow_t)();
+	ORIGINALFASTEX(GetActiveWindow,NULL);
+	HWND hWnd = NULL;
+
+	if (F(GetActiveWindow))
+		hWnd = F(GetActiveWindow)();
+
+	#if 1
+	if (ghAttachGuiClient)
+	{
+		if (hWnd == ghConEmuWnd || hWnd == ghConEmuWndDC)
+			hWnd = ghAttachGuiClient;
+		else if (hWnd == NULL)
+			hWnd = ghAttachGuiClient;
+	}
+	#endif
+
+	return hWnd;
+}
+
+HWND WINAPI OnGetForegroundWindow()
+{
+	typedef HWND (WINAPI* OnGetForegroundWindow_t)();
+	ORIGINALFASTEX(GetForegroundWindow,NULL);
+
+	HWND hFore = NULL;
+	if (F(GetForegroundWindow))
+		hFore = F(GetForegroundWindow)();
+
+	if (ghConEmuWndDC)
+	{
+		if (ghAttachGuiClient && ((hFore == ghConEmuWnd) || (hFore == ghConEmuWndDC)))
+		{
+			// Обмануть GUI-клиента, пусть он думает, что он "сверху"
+			hFore = ghAttachGuiClient;
+		}
+		else if (hFore == ghConEmuWnd)
+		{
+			hFore = ghConEmuWndDC;
+		}
+	}
+
+	return hFore;
+}
+
+BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
+{
+	typedef BOOL (WINAPI* OnSetForegroundWindow_t)(HWND hWnd);
+	ORIGINALFASTEX(SetForegroundWindow,NULL);
+
+	BOOL lbRc = FALSE;
+
+	if (ghConEmuWndDC)
+	{
+		if (hWnd == ghConEmuWndDC)
+			hWnd = ghConEmuWnd;
+		lbRc = GuiSetForeground(hWnd);
+	}
+
+	// ConEmu наверное уже все сделал, но на всякий случай, дернем и здесь
+	if (F(SetForegroundWindow) != NULL)
+	{
+		lbRc = F(SetForegroundWindow)(hWnd);
+
+		//if (gbShowOnSetForeground && lbRc)
+		//{
+		//	if (user->isWindow(hWnd) && !IsWindowVisible(hWnd))
+		//		ShowWindow(hWnd, SW_SHOW);
+		//}
+	}
+
+	return lbRc;
 }
 
 BOOL WINAPI OnMoveWindow(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint)
@@ -1366,6 +1412,30 @@ bool CanSendMessage(HWND& hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT&
 	return true; // разрешено
 }
 
+void PatchGuiMessage(HWND& hWnd, UINT& Msg, WPARAM& wParam, LPARAM& lParam)
+{
+	if (!ghAttachGuiClient)
+		return;
+
+	switch (Msg)
+	{
+	case WM_MOUSEACTIVATE:
+		if (wParam == (WPARAM)ghConEmuWnd)
+		{
+			wParam = (WPARAM)ghAttachGuiClient;
+		}
+		break;
+	}
+}
+
+//void PatchGuiMessage(LPMSG lpMsg)
+//{
+//	if (!ghAttachGuiClient)
+//		return;
+//
+//	PatchGuiMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+//}
+
 BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	typedef BOOL (WINAPI* OnPostMessageA_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -1375,6 +1445,9 @@ BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 	if (!CanSendMessage(hWnd, Msg, wParam, lParam, ll))
 		return TRUE; // Обманем, это сообщение запрещено посылать в ConEmuDC
+
+	if (ghAttachGuiClient)
+		PatchGuiMessage(hWnd, Msg, wParam, lParam);
 
 	if (F(PostMessageA))
 		lRc = F(PostMessageA)(hWnd, Msg, wParam, lParam);
@@ -1391,6 +1464,9 @@ BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	if (!CanSendMessage(hWnd, Msg, wParam, lParam, ll))
 		return TRUE; // Обманем, это сообщение запрещено посылать в ConEmuDC
 
+	if (ghAttachGuiClient)
+		PatchGuiMessage(hWnd, Msg, wParam, lParam);
+
 	if (F(PostMessageW))
 		lRc = F(PostMessageW)(hWnd, Msg, wParam, lParam);
 
@@ -1398,12 +1474,15 @@ BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 }
 LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-	typedef BOOL (WINAPI* OnSendMessageA_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+	typedef LRESULT (WINAPI* OnSendMessageA_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 	ORIGINALFASTEX(SendMessageA,NULL);
 	LRESULT lRc = 0;
 
 	if (!CanSendMessage(hWnd, Msg, wParam, lParam, lRc))
 		return lRc; // Обманем, это сообщение запрещено посылать в ConEmuDC
+
+	if (ghAttachGuiClient)
+		PatchGuiMessage(hWnd, Msg, wParam, lParam);
 
 	if (F(SendMessageA))
 		lRc = F(SendMessageA)(hWnd, Msg, wParam, lParam);
@@ -1412,12 +1491,15 @@ LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 }
 LRESULT WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-	typedef BOOL (WINAPI* OnSendMessageW_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+	typedef LRESULT (WINAPI* OnSendMessageW_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 	ORIGINALFASTEX(SendMessageW,NULL);
 	LRESULT lRc = 0;
 
 	if (!CanSendMessage(hWnd, Msg, wParam, lParam, lRc))
 		return lRc; // Обманем, это сообщение запрещено посылать в ConEmuDC
+
+	if (ghAttachGuiClient)
+		PatchGuiMessage(hWnd, Msg, wParam, lParam);
 
 	if (F(SendMessageW))
 		lRc = F(SendMessageW)(hWnd, Msg, wParam, lParam);
@@ -1425,6 +1507,62 @@ LRESULT WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	return lRc;
 }
 
+BOOL WINAPI OnGetMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax)
+{
+	typedef BOOL (WINAPI* OnGetMessageA_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
+	ORIGINALFASTEX(GetMessageA,NULL);
+	BOOL lRc = 0;
+
+	if (F(GetMessageA))
+		lRc = F(GetMessageA)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax);
+
+	if (lRc && ghAttachGuiClient)
+		PatchGuiMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+		
+	return lRc;
+}
+BOOL WINAPI OnGetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax)
+{
+	typedef BOOL (WINAPI* OnGetMessageW_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
+	ORIGINALFASTEX(GetMessageW,NULL);
+	BOOL lRc = 0;
+
+	if (F(GetMessageW))
+		lRc = F(GetMessageW)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax);
+
+	if (lRc && ghAttachGuiClient)
+		PatchGuiMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+		
+	return lRc;
+}
+BOOL WINAPI OnPeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
+{
+	typedef BOOL (WINAPI* OnPeekMessageA_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
+	ORIGINALFASTEX(PeekMessageA,NULL);
+	BOOL lRc = 0;
+
+	if (F(PeekMessageA))
+		lRc = F(PeekMessageA)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
+
+	if (lRc && ghAttachGuiClient)
+		PatchGuiMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+		
+	return lRc;
+}
+BOOL WINAPI OnPeekMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
+{
+	typedef BOOL (WINAPI* OnPeekMessageW_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
+	ORIGINALFASTEX(PeekMessageW,NULL);
+	BOOL lRc = 0;
+
+	if (F(PeekMessageW))
+		lRc = F(PeekMessageW)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
+
+	if (lRc && ghAttachGuiClient)
+		PatchGuiMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+		
+	return lRc;
+}
 
 HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
 {
@@ -3070,24 +3208,4 @@ COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont)
 	}
 
 	return cr;
-}
-
-HWND WINAPI OnGetActiveWindow()
-{
-	typedef HWND (WINAPI* OnGetActiveWindow_t)();
-	ORIGINALFASTEX(GetActiveWindow,NULL);
-	HWND hWnd = NULL;
-
-	if (F(GetActiveWindow))
-		hWnd = F(GetActiveWindow)();
-
-	if (ghAttachGuiClient)
-	{
-		if (hWnd == ghConEmuWnd || hWnd == ghConEmuWndDC)
-			hWnd = ghAttachGuiClient;
-		else if (hWnd == NULL)
-			hWnd = ghAttachGuiClient;
-	}
-
-	return hWnd;
 }

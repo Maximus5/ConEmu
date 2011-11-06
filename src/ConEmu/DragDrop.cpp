@@ -131,7 +131,7 @@ CDragDrop::~CDragDrop()
 	if (!lbEmpty)
 	{
 		if (MessageBox(ghWnd, L"Not all shell operations was finished!\r\nDo You want to terminate them (it's may be harmful)?",
-		              gpConEmu->ms_ConEmuVer, MB_YESNO|MB_ICONEXCLAMATION) == IDYES)
+		              gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION) == IDYES)
 		{
 			// Terminate all shell (copying) threads
 			EnterCriticalSection(&m_CrThreads);
@@ -689,7 +689,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LP
 				pszMsg = (wchar_t*)calloc(nSize + 100,2);
 				wcscpy(pszMsg, L"Can't create directory! Same name file exists!\n");
 				wcscat(pszMsg, pszFullName);
-				MessageBox(ghWnd, pszMsg, gpConEmu->ms_ConEmuVer, MB_ICONSTOP);
+				MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
 				free(pszMsg);
 				free(pszFullName);
 				return NULL;
@@ -700,7 +700,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LP
 			pszMsg = (wchar_t*)calloc(nSize + 100,2);
 			wcscpy(pszMsg, L"Can't create file! Same name folder exists!\n");
 			wcscat(pszMsg, pszFullName);
-			MessageBox(ghWnd, pszMsg, gpConEmu->ms_ConEmuVer, MB_ICONSTOP);
+			MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
 			free(pszMsg);
 			free(pszFullName);
 			return NULL;
@@ -716,7 +716,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, BOOL abFolder, LP
 			SYSTEMTIME st; FileTimeToSystemTime(&ftl, &st);
 			_wsprintf(pszMsg, SKIPLEN(nCchSize) L"File already exists!\n\n%s\nSize: %I64i\nDate: %02i.%02i.%i %02i:%02i:%02i\n\nOverwrite?",
 			          pszFullName, liSize.QuadPart, st.wDay, st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond);
-			int nRc = MessageBox(ghWnd, pszMsg, gpConEmu->ms_ConEmuVer, MB_ICONEXCLAMATION|MB_YESNO);
+			int nRc = MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNO);
 			free(pszMsg);
 
 			if (nRc != IDYES)
@@ -908,7 +908,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 							INT_PTR nLen = _tcslen(pszNewFileName) + 128;
 							wchar_t* pszErr = (wchar_t*)malloc(nLen*2);
 							_wsprintf(pszErr, SKIPLEN(nLen) L"Can't create directory for drag item #%i!\n%s\nError code=0x%08X", mn_CurFile+1, pszNewFileName, nErr);
-							MessageBox(NULL, pszErr, gpConEmu->ms_ConEmuVer, MB_OK|MB_ICONSTOP|MB_SYSTEMMODAL);
+							MessageBox(NULL, pszErr, gpConEmu->GetDefaultTitle(), MB_OK|MB_ICONSTOP|MB_SYSTEMMODAL);
 							free(pszErr);
 							free(pszNewFileName); pszNewFileName = NULL;
 							break;
@@ -1189,7 +1189,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		        && (GetTickCount() - dwStartTick) >= OPER_TIMEOUT)
 		{
 			BOOL b = gbDontEnable; gbDontEnable = TRUE;
-			int nBtn = MessageBox(ghWnd, L"Drop operation is too long. Continue?", gpConEmu->ms_ConEmuVer, MB_YESNO|MB_ICONEXCLAMATION);
+			int nBtn = MessageBox(ghWnd, L"Drop operation is too long. Continue?", gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION);
 			gbDontEnable = b;
 
 			if (nBtn != IDYES) break;
@@ -2459,7 +2459,7 @@ void CDragDrop::ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownErr
 	lstrcpy(pszMsg, sUnknownError);
 	lstrcpy(pszMsg+nLen, L"\n\nPress 'Retry' to create report for developer");
 	BOOL b = gbDontEnable; gbDontEnable = TRUE;
-	int nBtn = (int)MessageBox(ghWnd, pszMsg, gpConEmu->ms_ConEmuVer,
+	int nBtn = (int)MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(),
 	                           MB_SYSTEMMODAL|MB_ICONINFORMATION|MB_RETRYCANCEL|MB_DEFBUTTON2);
 	gbDontEnable = b;
 	free(pszMsg);

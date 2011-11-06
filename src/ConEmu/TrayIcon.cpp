@@ -115,7 +115,7 @@ void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
 	if (asInfoTip && *asInfoTip)
 	{
 		IconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_INFO | NIF_TIP;
-		lstrcpyn(IconData.szInfoTitle, gpConEmu->ms_ConEmuVer, countof(IconData.szInfoTitle));
+		lstrcpyn(IconData.szInfoTitle, gpConEmu->GetDefaultTitle(), countof(IconData.szInfoTitle));
 		lstrcpyn(IconData.szInfo, asInfoTip, countof(IconData.szInfo));
 	}
 	else
@@ -169,7 +169,7 @@ void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
 	IconData.hWnd = inWnd;
 	IconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_INFO | NIF_TIP;
 	IconData.uCallbackMessage = WM_TRAYNOTIFY;
-	//lstrcpyn(IconData.szInfoTitle, gpConEmu->ms_ConEmuVer, countof(IconData.szInfoTitle));
+	//lstrcpyn(IconData.szInfoTitle, gpConEmu->GetDefaultTitle(), countof(IconData.szInfoTitle));
 	IconData.uTimeout = 10000;
 	//!!!ICON
 	IconData.hIcon = hClassIconSm;
