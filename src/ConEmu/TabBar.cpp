@@ -460,7 +460,7 @@ LRESULT TabBarClass::TabHitTest()
 	if ((gpSet->isHideCaptionAlways() || gpSet->isFullScreen || (gpConEmu->isZoomed() && gpSet->isHideCaption))
 	        && gpSet->isTabs)
 	{
-		if (gpConEmu->mp_TabBar->IsShown())
+		if (gpConEmu->mp_TabBar->IsTabsShown())
 		{
 			TCHITTESTINFO tch = {{0,0}};
 			HWND hTabBar = gpConEmu->mp_TabBar->mh_Tabbar;
@@ -681,13 +681,23 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 }
 
 
-bool TabBarClass::IsActive()
+bool TabBarClass::IsTabsActive()
 {
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return false;
+	}
 	return _active;
 }
 
-bool TabBarClass::IsShown()
+bool TabBarClass::IsTabsShown()
 {
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return false;
+	}
 	return _active && IsWindowVisible(mh_Tabbar);
 }
 
@@ -780,7 +790,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	TODO("Обработка gpSet->bHideInactiveConsoleTabs для новых табов");
 	MCHKHEAP
 
-	if (!gpConEmu->mp_TabBar->IsActive() && gpSet->isTabs)
+	if (!gpConEmu->mp_TabBar->IsTabsActive() && gpSet->isTabs)
 	{
 		int nTabs = 0;
 
@@ -807,7 +817,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			_ASSERTE(m_Tab2VCon.size()==0);
 		}
 	}
-	else if (gpConEmu->mp_TabBar->IsActive() && gpSet->isTabs==2)
+	else if (gpConEmu->mp_TabBar->IsTabsActive() && gpSet->isTabs==2)
 	{
 		int nTabs = 0;
 
@@ -968,10 +978,10 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		SelectTab(nCurTab);
 	}
 
-	if (gpSet->isTabsInCaption)
-	{
-		SendMessage(ghWnd, WM_NCPAINT, 0, 0);
-	}
+	//if (gpSet->isTabsInCaption)
+	//{
+	//	SendMessage(ghWnd, WM_NCPAINT, 0, 0);
+	//}
 
 	mn_InUpdate --;
 
@@ -1404,7 +1414,7 @@ void TabBarClass::OnMouse(int message, int x, int y)
 
 void TabBarClass::Invalidate()
 {
-	if (gpConEmu->mp_TabBar->IsActive())
+	if (gpConEmu->mp_TabBar->IsTabsActive())
 		InvalidateRect(mh_Rebar, NULL, TRUE);
 }
 

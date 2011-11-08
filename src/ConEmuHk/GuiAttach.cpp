@@ -156,7 +156,15 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	
 	// Окно на любой чих создается. dwStyle == 0x88000000.
 	if ((lpClassNameW && lstrcmpW(lpClassNameW, L"CicMarshalWndClass") == 0)
-		|| (lpClassNameA && lstrcmpA(lpClassNameA, "CicMarshalWndClass") == 0))
+		|| (lpClassNameA && lstrcmpA(lpClassNameA, "CicMarshalWndClass") == 0)
+		)
+	{
+		return true;
+	}
+
+	// WiX
+	if ((lpClassNameW && lstrcmpW(lpClassNameW, L"MsiHiddenWindow") == 0)
+		)
 	{
 		return true;
 	}

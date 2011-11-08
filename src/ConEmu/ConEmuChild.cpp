@@ -943,7 +943,7 @@ void CConEmuBack::Resize()
 
 	//RECT rc = gpConEmu->ConsoleOffsetRect();
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
-	bool bTabsShown = gpConEmu->mp_TabBar->IsShown();
+	bool bTabsShown = gpConEmu->mp_TabBar->IsTabsShown();
 
 	if (mb_LastTabVisible == bTabsShown && mb_LastAlwaysScroll == (gpSet->isAlwaysShowScrollbar == 1))
 	{

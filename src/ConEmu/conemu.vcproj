@@ -1519,6 +1519,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FrameHolder.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\LoadImg.cpp"
 				>
 			</File>
@@ -1646,6 +1650,10 @@
 			</File>
 			<File
 				RelativePath=".\DwmHelper.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FrameHolder.h"
 				>
 			</File>
 			<File

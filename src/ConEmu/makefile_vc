@@ -117,6 +117,7 @@ $(INTDIR)\ConEmuPipe.obj \
 $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
 $(INTDIR)\DwmHelper.obj \
+$(INTDIR)\FrameHolder.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\Options.obj \
@@ -303,6 +304,8 @@ $(INTDIR)\DragDrop.obj: DragDrop.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 $(INTDIR)\DragDropData.obj: DragDropData.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
 $(INTDIR)\DwmHelper.obj: DwmHelper.cpp DwmHelper.h
+
+$(INTDIR)\FrameHolder.obj: FrameHolder.cpp FrameHolder.h
 
 $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 

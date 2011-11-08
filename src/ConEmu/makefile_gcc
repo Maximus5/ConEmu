@@ -10,6 +10,7 @@ SRCS =  \
 		DragDrop.cpp       \
 		DragDropData.cpp   \
 		DwmHelper.cpp      \
+		FrameHolder.cpp    \
 		LoadImg.cpp        \
 		Macro.cpp          \
 		Options.cpp        \

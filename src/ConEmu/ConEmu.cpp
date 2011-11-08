@@ -424,6 +424,8 @@ CConEmuMain::CConEmuMain()
 	mn_MsgPostTaskbarActivate = ++nAppMsg; mb_PostTaskbarActivate = FALSE;
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
+
+	InitFrameHolder();
 }
 
 LPWSTR CConEmuMain::ConEmuXml()
@@ -1351,7 +1353,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				RECT rcClient; GetClientRect(ghWnd, &rcClient);
 				RECT rcFrame = CalcMargins(CEM_FRAME);
 				_ASSERTE(!rcClient.left && !rcClient.top);
-				hRgn = CreateWindowRgn(abTestOnly, gpSet->CheckTheming() && mp_TabBar->IsShown(),
+				hRgn = CreateWindowRgn(abTestOnly, gpSet->CheckTheming() && mp_TabBar->IsTabsShown(),
 				                       rcFrame.left-gpSet->nHideCaptionAlwaysFrame,
 				                       rcFrame.top-gpSet->nHideCaptionAlwaysFrame,
 				                       rcClient.right+2*gpSet->nHideCaptionAlwaysFrame,
@@ -1742,7 +1744,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* a
 	{
 		if (ghWnd)
 		{
-			bool lbTabActive = ((mg & CEM_TAB_MASK) == CEM_TAB) ? gpConEmu->mp_TabBar->IsActive()
+			bool lbTabActive = ((mg & CEM_TAB_MASK) == CEM_TAB) ? gpConEmu->mp_TabBar->IsTabsActive()
 			                   : ((mg & ((DWORD)CEM_TABACTIVATE)) == ((DWORD)CEM_TABACTIVATE));
 
 			// Главное окно уже создано, наличие таба определено
@@ -3157,7 +3159,7 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 	//2009-05-20 Раз это Force - значит на возможность получить табы из фара забиваем! Для консоли показывается "Console"
 	BOOL lbTabsAllowed = abShow /*&& gpConEmu->mp_TabBar->IsAllowed()*/;
 
-	if (abShow && !gpConEmu->mp_TabBar->IsShown() && gpSet->isTabs && lbTabsAllowed)
+	if (abShow && !gpConEmu->mp_TabBar->IsTabsShown() && gpSet->isTabs && lbTabsAllowed)
 	{
 		gpConEmu->mp_TabBar->Activate();
 		//ConEmuTab tab; memset(&tab, 0, sizeof(tab));
@@ -3466,7 +3468,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 		GetWindowRect(ghWnd, &mrc_Ideal);
 	}
 
-	if (gpConEmu->mp_TabBar->IsActive())
+	if (gpConEmu->mp_TabBar->IsTabsActive())
 		gpConEmu->mp_TabBar->UpdateWidth();
 
 	// Background - должен занять все клиентское место под тулбаром
@@ -5141,7 +5143,7 @@ void CConEmuMain::ShowSysmenu(int x, int y)
 		GetClientRect(ghWnd, &cRect);
 		WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
 		int nTabShift =
-		    ((gpSet->isHideCaptionAlways() || gpSet->isFullScreen) && gpConEmu->mp_TabBar->IsShown())
+		    ((gpSet->isHideCaptionAlways() || gpSet->isFullScreen) && gpConEmu->mp_TabBar->IsTabsShown())
 		    ? gpConEmu->mp_TabBar->GetTabbarHeight() : 0;
 
 		if (x == -32000)
@@ -5171,8 +5173,11 @@ void CConEmuMain::ShowSysmenu(int x, int y)
 	EnableMenuItem(systemMenu, SC_MAXIMIZE,
 	               MF_BYCOMMAND | ((visible && (!zoomed && (style & WS_MAXIMIZEBOX))) ? MF_ENABLED : MF_GRAYED));
 	EnableMenuItem(systemMenu, ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
+
+	mn_TrackMenuPlace = tmp_System;
 	SendMessage(ghWnd, WM_INITMENU, (WPARAM)systemMenu, 0);
 	SendMessage(ghWnd, WM_INITMENUPOPUP, (WPARAM)systemMenu, MAKELPARAM(0, true));
+
 	// Переехало в OnMenuPopup
 	//BOOL bSelectionExist = ActiveCon()->RCon()->isSelectionPresent();
 	//EnableMenuItem(systemMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
@@ -5577,7 +5582,7 @@ void CConEmuMain::UpdateProgress(/*BOOL abUpdateTitle*/)
 		wsprintf(MultiTitle+_tcslen(MultiTitle), L"{*%i%%} ", mn_Progress);
 	}
 
-	if (gpSet->isMulti && !gpConEmu->mp_TabBar->IsShown())
+	if (gpSet->isMulti && !gpConEmu->mp_TabBar->IsTabsShown())
 	{
 		int nCur = 1, nCount = 0;
 
@@ -5945,183 +5950,183 @@ void CConEmuMain::UpdateWindowChild(CVirtualConsole* apVCon)
 //	       composition_enabled /*&& g_glass*/;
 //}
 
-LRESULT CConEmuMain::OnNcMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-	LRESULT lRc = 0;
+//LRESULT CConEmuMain::OnNcMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+//{
+//	LRESULT lRc = 0;
+//
+//	if (hWnd != ghWnd)
+//	{
+//		lRc = DefWindowProc(hWnd, messg, wParam, lParam);
+//	}
+//	else
+//	{
+//		BOOL lbUseCaption = gpSet->isTabsInCaption && gpConEmu->mp_TabBar->IsActive();
+//
+//		switch(messg)
+//		{
+//			case WM_NCHITTEST:
+//			{
+//				lRc = DefWindowProc(hWnd, messg, wParam, lParam);
+//
+//				if (gpSet->isHideCaptionAlways() && !gpConEmu->mp_TabBar->IsShown() && lRc == HTTOP)
+//					lRc = HTCAPTION;
+//
+//				break;
+//			}
+//			case WM_NCPAINT:
+//			{
+//				if (lbUseCaption)
+//					lRc = gpConEmu->OnNcPaint((HRGN)wParam);
+//				else
+//					lRc = DefWindowProc(hWnd, messg, wParam, lParam);
+//
+//				break;
+//			}
+//			case WM_NCACTIVATE:
+//			{
+//				// Force paint our non-client area otherwise Windows will paint its own.
+//				if (lbUseCaption)
+//				{
+//					// Тут все переделать нужно, когда табы новые будут
+//					_ASSERTE(lbUseCaption==FALSE);
+//					RedrawWindow(hWnd, NULL, NULL, RDW_UPDATENOW);
+//				}
+//				else
+//				{
+//					// При потере фокуса
+//					if (!wParam)
+//					{
+//						CVirtualConsole* pVCon = ActiveCon();
+//						CRealConsole* pRCon;
+//						// Нужно схалтурить, чтобы при переходе фокуса в дочернее GUI приложение
+//						// рамка окна самого ConEmu не стала неактивной (серой)
+//						if (pVCon && ((pRCon = ActiveCon()->RCon()) != NULL) && pRCon->GuiWnd() && !pRCon->isBufferHeight())
+//							wParam = TRUE;
+//					}
+//					lRc = DefWindowProc(hWnd, messg, wParam, lParam);
+//				}
+//
+//				break;
+//			}
+//			case 0x31E: // WM_DWMCOMPOSITIONCHANGED:
+//			{
+//				if (lbUseCaption)
+//				{
+//					lRc = 0;
+//					/*
+//					DWMNCRENDERINGPOLICY policy = g_glass ? DWMNCRP_ENABLED : DWMNCRP_DISABLED;
+//					DwmSetWindowAttribute(hwnd, DWMWA_NCRENDERING_POLICY,
+//					                    &policy, sizeof(DWMNCRENDERINGPOLICY));
+//
+//					SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
+//					           SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+//					RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+//					*/
+//				}
+//				else
+//					lRc = DefWindowProc(hWnd, messg, wParam, lParam);
+//
+//				break;
+//			}
+//			case 0xAE: // WM_NCUAHDRAWCAPTION:
+//			case 0xAF: // WM_NCUAHDRAWFRAME:
+//			{
+//				lRc = lbUseCaption ? 0 : DefWindowProc(hWnd, messg, wParam, lParam);
+//				break;
+//			}
+//			case WM_NCCALCSIZE:
+//			{
+//				NCCALCSIZE_PARAMS *pParms = NULL;
+//				LPRECT pRect = NULL;
+//				if (wParam) pParms = (NCCALCSIZE_PARAMS*)lParam; else pRect = (LPRECT)lParam;
+//
+//				lRc = DefWindowProc(hWnd, messg, wParam, lParam);
+//				break;
+//			}
+//			default:
+//				if (messg == WM_NCLBUTTONDOWN && wParam == HTSYSMENU)
+//					GetSystemMenu(); // Проверить корректность системного меню
+//				lRc = DefWindowProc(hWnd, messg, wParam, lParam);
+//		}
+//	}
+//
+//	return lRc;
+//}
 
-	if (hWnd != ghWnd)
-	{
-		lRc = DefWindowProc(hWnd, messg, wParam, lParam);
-	}
-	else
-	{
-		BOOL lbUseCaption = gpSet->isTabsInCaption && gpConEmu->mp_TabBar->IsActive();
-
-		switch(messg)
-		{
-			case WM_NCHITTEST:
-			{
-				lRc = DefWindowProc(hWnd, messg, wParam, lParam);
-
-				if (gpSet->isHideCaptionAlways() && !gpConEmu->mp_TabBar->IsShown() && lRc == HTTOP)
-					lRc = HTCAPTION;
-
-				break;
-			}
-			case WM_NCPAINT:
-			{
-				if (lbUseCaption)
-					lRc = gpConEmu->OnNcPaint((HRGN)wParam);
-				else
-					lRc = DefWindowProc(hWnd, messg, wParam, lParam);
-
-				break;
-			}
-			case WM_NCACTIVATE:
-			{
-				// Force paint our non-client area otherwise Windows will paint its own.
-				if (lbUseCaption)
-				{
-					// Тут все переделать нужно, когда табы новые будут
-					_ASSERTE(lbUseCaption==FALSE);
-					RedrawWindow(hWnd, NULL, NULL, RDW_UPDATENOW);
-				}
-				else
-				{
-					// При потере фокуса
-					if (!wParam)
-					{
-						CVirtualConsole* pVCon = ActiveCon();
-						CRealConsole* pRCon;
-						// Нужно схалтурить, чтобы при переходе фокуса в дочернее GUI приложение
-						// рамка окна самого ConEmu не стала неактивной (серой)
-						if (pVCon && ((pRCon = ActiveCon()->RCon()) != NULL) && pRCon->GuiWnd() && !pRCon->isBufferHeight())
-							wParam = TRUE;
-					}
-					lRc = DefWindowProc(hWnd, messg, wParam, lParam);
-				}
-
-				break;
-			}
-			case 0x31E: // WM_DWMCOMPOSITIONCHANGED:
-			{
-				if (lbUseCaption)
-				{
-					lRc = 0;
-					/*
-					DWMNCRENDERINGPOLICY policy = g_glass ? DWMNCRP_ENABLED : DWMNCRP_DISABLED;
-					DwmSetWindowAttribute(hwnd, DWMWA_NCRENDERING_POLICY,
-					                    &policy, sizeof(DWMNCRENDERINGPOLICY));
-
-					SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
-					           SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
-					RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-					*/
-				}
-				else
-					lRc = DefWindowProc(hWnd, messg, wParam, lParam);
-
-				break;
-			}
-			case 0xAE: // WM_NCUAHDRAWCAPTION:
-			case 0xAF: // WM_NCUAHDRAWFRAME:
-			{
-				lRc = lbUseCaption ? 0 : DefWindowProc(hWnd, messg, wParam, lParam);
-				break;
-			}
-			case WM_NCCALCSIZE:
-			{
-				NCCALCSIZE_PARAMS *pParms = NULL;
-				LPRECT pRect = NULL;
-				if (wParam) pParms = (NCCALCSIZE_PARAMS*)lParam; else pRect = (LPRECT)lParam;
-
-				lRc = DefWindowProc(hWnd, messg, wParam, lParam);
-				break;
-			}
-			default:
-				if (messg == WM_NCLBUTTONDOWN && wParam == HTSYSMENU)
-					GetSystemMenu(); // Проверить корректность системного меню
-				lRc = DefWindowProc(hWnd, messg, wParam, lParam);
-		}
-	}
-
-	return lRc;
-}
-
-LRESULT CConEmuMain::OnNcPaint(HRGN hRgn)
-{
-	LRESULT lRc = 0, lMyRc = 0;
-	//HRGN hFrameRgn = hRgn;
-	RECT wr = {0}, dirty = {0}, dirty_box = {0};
-	GetWindowRect(ghWnd, &wr);
-
-	if (!hRgn || ((WPARAM)hRgn) == 1)
-	{
-		dirty = wr;
-		dirty.left = dirty.top = 0;
-	}
-	else
-	{
-		GetRgnBox(hRgn, &dirty_box);
-
-		if (!IntersectRect(&dirty, &dirty_box, &wr))
-			return 0;
-
-		OffsetRect(&dirty, -wr.left, -wr.top);
-	}
-
-	//hdc = GetWindowDC(hwnd);
-	//br = CreateSolidBrush(RGB(255,0,0));
-	//FillRect(hdc, &dirty, br);
-	//DeleteObject(br);
-	//ReleaseDC(hwnd, hdc);
-	int nXFrame = GetSystemMetrics(SM_CXSIZEFRAME);
-	int nYFrame = GetSystemMetrics(SM_CYSIZEFRAME);
-	int nPad = GetSystemMetrics(92/*SM_CXPADDEDBORDER*/);
-	int nXBtn = GetSystemMetrics(SM_CXSIZE);
-	int nYBtn = GetSystemMetrics(SM_CYSIZE);
-	int nYCaption = GetSystemMetrics(SM_CYCAPTION);
-	int nXMBtn = GetSystemMetrics(SM_CXSMSIZE);
-	int nYMBtn = GetSystemMetrics(SM_CYSMSIZE);
-	int nXIcon = GetSystemMetrics(SM_CXSMICON);
-	int nYIcon = GetSystemMetrics(SM_CYSMICON);
-	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
-	RECT rcUsing =
-	{
-		nXFrame + nXIcon, nYFrame,
-		(rcWnd.right-rcWnd.left) - nXFrame - 3*nXBtn,
-		nYFrame + nYCaption
-	};
-	//lRc = DefWindowProc(ghWnd, WM_NCPAINT, (WPARAM)hRgn, 0);
-	//HRGN hRect = CreateRectRgn(rcUsing.left,rcUsing.top,rcUsing.right,rcUsing.bottom);
-	//hFrameRgn = CreateRectRgn(0,0,1,1);
-	//int nRgn = CombineRgn(hFrameRgn, hRgn, hRect, RGN_XOR);
-	//if (nRgn == ERROR)
-	//{
-	//	DeleteObject(hFrameRgn);
-	//	hFrameRgn = hRgn;
-	//}
-	//else
-	{
-		// Рисуем
-		HDC hdc = NULL;
-		//hdc = GetDCEx(ghWnd, hRect, DCX_WINDOW|DCX_INTERSECTRGN);
-		//hRect = NULL; // system maintains this region
-		hdc = GetWindowDC(ghWnd);
-		mp_TabBar->PaintHeader(hdc, rcUsing);
-		ReleaseDC(ghWnd, hdc);
-	}
-	//if (hRect)
-	//	DeleteObject(hRect);
-	lMyRc = TRUE;
-	//lRc = DefWindowProc(ghWnd, WM_NCPAINT, (WPARAM)hFrameRgn, 0);
-	//
-	//if (hRgn != hFrameRgn)
-	//{
-	//	DeleteObject(hFrameRgn); hFrameRgn = NULL;
-	//}
-	return lMyRc ? lMyRc : lRc;
-}
+//LRESULT CConEmuMain::OnNcPaint(HRGN hRgn)
+//{
+//	LRESULT lRc = 0, lMyRc = 0;
+//	//HRGN hFrameRgn = hRgn;
+//	RECT wr = {0}, dirty = {0}, dirty_box = {0};
+//	GetWindowRect(ghWnd, &wr);
+//
+//	if (!hRgn || ((WPARAM)hRgn) == 1)
+//	{
+//		dirty = wr;
+//		dirty.left = dirty.top = 0;
+//	}
+//	else
+//	{
+//		GetRgnBox(hRgn, &dirty_box);
+//
+//		if (!IntersectRect(&dirty, &dirty_box, &wr))
+//			return 0;
+//
+//		OffsetRect(&dirty, -wr.left, -wr.top);
+//	}
+//
+//	//hdc = GetWindowDC(hwnd);
+//	//br = CreateSolidBrush(RGB(255,0,0));
+//	//FillRect(hdc, &dirty, br);
+//	//DeleteObject(br);
+//	//ReleaseDC(hwnd, hdc);
+//	int nXFrame = GetSystemMetrics(SM_CXSIZEFRAME);
+//	int nYFrame = GetSystemMetrics(SM_CYSIZEFRAME);
+//	int nPad = GetSystemMetrics(92/*SM_CXPADDEDBORDER*/);
+//	int nXBtn = GetSystemMetrics(SM_CXSIZE);
+//	int nYBtn = GetSystemMetrics(SM_CYSIZE);
+//	int nYCaption = GetSystemMetrics(SM_CYCAPTION);
+//	int nXMBtn = GetSystemMetrics(SM_CXSMSIZE);
+//	int nYMBtn = GetSystemMetrics(SM_CYSMSIZE);
+//	int nXIcon = GetSystemMetrics(SM_CXSMICON);
+//	int nYIcon = GetSystemMetrics(SM_CYSMICON);
+//	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+//	RECT rcUsing =
+//	{
+//		nXFrame + nXIcon, nYFrame,
+//		(rcWnd.right-rcWnd.left) - nXFrame - 3*nXBtn,
+//		nYFrame + nYCaption
+//	};
+//	//lRc = DefWindowProc(ghWnd, WM_NCPAINT, (WPARAM)hRgn, 0);
+//	//HRGN hRect = CreateRectRgn(rcUsing.left,rcUsing.top,rcUsing.right,rcUsing.bottom);
+//	//hFrameRgn = CreateRectRgn(0,0,1,1);
+//	//int nRgn = CombineRgn(hFrameRgn, hRgn, hRect, RGN_XOR);
+//	//if (nRgn == ERROR)
+//	//{
+//	//	DeleteObject(hFrameRgn);
+//	//	hFrameRgn = hRgn;
+//	//}
+//	//else
+//	{
+//		// Рисуем
+//		HDC hdc = NULL;
+//		//hdc = GetDCEx(ghWnd, hRect, DCX_WINDOW|DCX_INTERSECTRGN);
+//		//hRect = NULL; // system maintains this region
+//		hdc = GetWindowDC(ghWnd);
+//		mp_TabBar->PaintHeader(hdc, rcUsing);
+//		ReleaseDC(ghWnd, hdc);
+//	}
+//	//if (hRect)
+//	//	DeleteObject(hRect);
+//	lMyRc = TRUE;
+//	//lRc = DefWindowProc(ghWnd, WM_NCPAINT, (WPARAM)hFrameRgn, 0);
+//	//
+//	//if (hRgn != hFrameRgn)
+//	//{
+//	//	DeleteObject(hFrameRgn); hFrameRgn = NULL;
+//	//}
+//	return lMyRc ? lMyRc : lRc;
+//}
 
 bool CConEmuMain::isRightClickingPaint()
 {
@@ -6252,6 +6257,29 @@ void CConEmuMain::StopRightClickingPaint()
 	}
 }
 
+void CConEmuMain::OnPaintClient(HDC hdc, int width, int height)
+{
+	// Если "завис" PostUpdate
+	if (mp_TabBar->NeedPostUpdate())
+		mp_TabBar->Update();
+
+#ifdef _DEBUG
+	RECT rcDbgSize; GetWindowRect(ghWnd, &rcDbgSize);
+	wchar_t szSize[255]; _wsprintf(szSize, SKIPLEN(countof(szSize)) L"WM_PAINT -> Window size (X=%i, Y=%i, W=%i, H=%i)\n",
+	                               rcDbgSize.left, rcDbgSize.top, (rcDbgSize.right-rcDbgSize.left), (rcDbgSize.bottom-rcDbgSize.top));
+	DEBUGSTRSIZE(szSize);
+	static RECT rcDbgSize1;
+
+	if (memcmp(&rcDbgSize1, &rcDbgSize, sizeof(rcDbgSize1)))
+	{
+		rcDbgSize1 = rcDbgSize;
+	}
+#endif
+
+	PaintGaps(hdc);
+}
+
+#if 0
 LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
@@ -6299,6 +6327,7 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 	//ValidateRect(ghWnd, &rcClient);
 	return result;
 }
+#endif
 
 void CConEmuMain::PaintGaps(HDC hDC)
 {
@@ -7054,7 +7083,7 @@ void CConEmuMain::TabCommand(UINT nTabCmd)
 	{
 		case ctc_ShowHide:
 		{
-			if (gpConEmu->mp_TabBar->IsShown())
+			if (gpConEmu->mp_TabBar->IsTabsShown())
 				gpSet->isTabs = 0;
 			else
 				gpSet->isTabs = 1;
@@ -12731,6 +12760,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (messg == WM_SYSCHAR)  // Вернул. Для пересылки в консоль не используется, но чтобы не пищало - необходимо
 		return TRUE;
 
+	if (gpConEmu->ProcessNcMessage(hWnd, messg, wParam, lParam, result))
+		return result;
+		
 	//if (messg == WM_CHAR)
 	//  return TRUE;
 
@@ -12777,19 +12809,19 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_ERASEBKGND:
 			//return 0;
 			return 1; //2010-10-05
-		case WM_NCPAINT:
-		case WM_NCACTIVATE:
-		case WM_NCCALCSIZE:
-		case WM_NCHITTEST:
-		case 0x31E: // WM_DWMCOMPOSITIONCHANGED:
-		case 0xAE: // WM_NCUAHDRAWCAPTION:
-		case 0xAF: // WM_NCUAHDRAWFRAME:
-			//result = gpConEmu->OnNcPaint((HRGN)wParam);
-			result = gpConEmu->OnNcMessage(hWnd, messg, wParam, lParam);
-			break;
-		case WM_PAINT:
-			result = gpConEmu->OnPaint(wParam, lParam);
-			break;
+		//case WM_NCPAINT:
+		//case WM_NCACTIVATE:
+		//case WM_NCCALCSIZE:
+		//case WM_NCHITTEST:
+		//case 0x31E: // WM_DWMCOMPOSITIONCHANGED:
+		//case 0xAE: // WM_NCUAHDRAWCAPTION:
+		//case 0xAF: // WM_NCUAHDRAWFRAME:
+		//	//result = gpConEmu->OnNcPaint((HRGN)wParam);
+		//	result = gpConEmu->OnNcMessage(hWnd, messg, wParam, lParam);
+		//	break;
+		//case WM_PAINT:
+		//	result = gpConEmu->OnPaint(wParam, lParam);
+		//	break;
 		case WM_TIMER:
 			result = gpConEmu->OnTimer(wParam, lParam);
 			break;

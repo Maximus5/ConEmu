@@ -309,8 +309,8 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,268,259,70,14
     CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,252
-    PUSHBUTTON      "Reset",bResetSettings,152,259,51,14,NOT WS_VISIBLE | WS_DISABLED
-    PUSHBUTTON      "Reload",bReloadSettings,210,259,51,14,NOT WS_VISIBLE | WS_DISABLED
+    PUSHBUTTON      "Reset",bResetSettings,152,259,51,14
+    PUSHBUTTON      "Reload",bReloadSettings,210,259,51,14
 END
 
 IDD_SPG_INFO DIALOGEX 0, 0, 328, 224

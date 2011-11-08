@@ -2474,6 +2474,7 @@ BOOL CRealConsole::StartProcess()
 			// Выполнить стандартную команду...
 			if (m_Args.pszSpecialCmd == NULL)
 			{
+				_ASSERTE(gpSet->psCurCmd==NULL);
 				gpSet->psCurCmd = lstrdup(gpSet->GetDefaultCmd());
 			}
 
@@ -5195,7 +5196,7 @@ CESERVER_REQ* CRealConsole::cmdTabsChanged(HANDLE hPipe, CESERVER_REQ* pIn, UINT
 		if (pIn->Tabs.bMainThread && lbCanUpdate && gpSet->isTabs == 2)
 		{
 			TODO("расчитать новый размер, если сменилась видимость табов");
-			bool lbCurrentActive = gpConEmu->mp_TabBar->IsActive();
+			bool lbCurrentActive = gpConEmu->mp_TabBar->IsTabsActive();
 			bool lbNewActive = lbCurrentActive;
 
 			// Если консолей более одной - видимость табов не изменится
@@ -9713,8 +9714,11 @@ int CRealConsole::GetTabCount()
 		return 0;
 
 	#ifdef HT_CONEMUTAB
+	#ifndef _DEBUG
 	PRAGMA_ERROR("После перехода на «свои» табы отдавать и те, которые сейчас недоступны");
 	#endif
+	#endif
+
 	if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
 		return 1; // На время выполнения команд - ТОЛЬКО одна закладка
 
@@ -9834,7 +9838,9 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	int nCurLen = _tcslen(pTab->Name), nMaxLen = countof(pTab->Name)-1;
 	
 	#ifdef HT_CONEMUTAB
+	#ifndef _DEBUG
 	PRAGMA_ERROR("После перевода табов на ручную отрисовку - эту часть с амперсандами можно будет убрать");
+	#endif
 	#endif
 
 	while((pszAmp = wcschr(pszAmp, L'&')) != NULL)

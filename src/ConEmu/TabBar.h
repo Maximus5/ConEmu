@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define CONEMUMSG_UPDATETABS _T("ConEmuMain::UpdateTabs")
 
+#define HT_CONEMUTAB HTBORDER
+
 class TabBarClass //: public CToolTip
 {
 	private:
@@ -139,8 +141,8 @@ class TabBarClass //: public CToolTip
 		void Retrieve();
 		void Reset();
 		void Invalidate();
-		bool IsActive();
-		bool IsShown();
+		bool IsTabsActive();
+		bool IsTabsShown();
 		//BOOL IsAllowed();
 		RECT GetMargins();
 		void Activate();
@@ -175,4 +177,14 @@ class TabBarClass //: public CToolTip
 		void SetRedraw(BOOL abEnableRedraw);
 		void PaintHeader(HDC hdc, RECT rcPaint);
 		int  ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon);
+
+		// Из Samples\Tabs
+		bool ProcessTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };
+		int GetHoverTab() { return -1; };
+		void HoverTab(int anTab) {};
+		void Toolbar_UnHover() {};
+		bool ProcessTabKeyboardEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };
+		void PaintTabs(HDC hdc, const RECT &rcCaption, const RECT &rcTabs) {};
+		int TabFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
+		int TabBtnFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
 };

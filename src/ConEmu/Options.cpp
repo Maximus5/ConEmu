@@ -192,8 +192,32 @@ namespace Settings
 CSettings::CSettings()
 {
 	gpSet = this; // сразу!
-	//HeapInitialize();
+
+	// Некоторые вещи нужно делать вне InitSettings, т.к. она может быть
+	// вызвана потом из интерфейса диалога настроек
+	wcscpy_c(ConfigPath, CONEMU_ROOT_KEY L"\\.Vanilla");
+	ConfigName[0] = 0;
+	Type[0] = 0;
+	psCmd = NULL; psCurCmd = NULL; wcscpy_c(szDefCmd, L"far");
+	psCmdHistory = NULL; nCmdHistorySize = 0;
+	
+	m_ThSetMap.InitName(CECONVIEWSETNAME, GetCurrentProcessId());
+	if (!m_ThSetMap.Create())
+	{
+		MBoxA(m_ThSetMap.GetErrorText());
+	}
+	else
+	{
+		// Применить в Mapping (там заодно и палитра копируется)
+		//m_ThSetMap.Set(&ThSet);
+		//!! Это нужно делать после создания основного шрифта
+		//gpConEmu->OnPanelViewSettingsChanged(FALSE);
+	}
+
+	
+	// Теперь установим умолчания настроек	
 	InitSettings();
+	
 	SingleInstanceArg = false;
 	mb_StopRegisterFonts = FALSE;
 	mb_IgnoreEditChanged = FALSE;
@@ -318,36 +342,45 @@ CSettings::CSettings()
 	memmove(m_HotKeys, HotKeys, sizeof(HotKeys));
 }
 
+void CSettings::ReleaseHandles()
+{
+	if (sTabCloseMacro) {free(sTabCloseMacro); sTabCloseMacro = NULL;}
+	
+	if (sSafeFarCloseMacro) {free(sSafeFarCloseMacro); sSafeFarCloseMacro = NULL;}
+
+	if (sSaveAllMacro) {free(sSaveAllMacro); sSaveAllMacro = NULL;}
+
+	if (sRClickMacro) {free(sRClickMacro); sRClickMacro = NULL;}
+
+	if (mp_Bg) { delete mp_Bg; mp_Bg = NULL; }
+
+	SafeFree(mp_BgImgData);
+}
+
 CSettings::~CSettings()
 {
+	ReleaseHandles();
+
 	for(int i=0; i<MAX_FONT_STYLES; i++)
 	{
 		if (mh_Font[i]) { DeleteObject(mh_Font[i]); mh_Font[i] = NULL; }
 
 		if (m_otm[i]) {free(m_otm[i]); m_otm[i] = NULL;}
 	}
+	
+	TODO("Очистить m_Fonts[Idx].hFonts");
 
 	if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
-
+	
 	if (psCmd) {free(psCmd); psCmd = NULL;}
 
 	if (psCmdHistory) {free(psCmdHistory); psCmdHistory = NULL;}
 
 	if (psCurCmd) {free(psCurCmd); psCurCmd = NULL;}
 
-	if (sTabCloseMacro) {free(sTabCloseMacro); sTabCloseMacro = NULL;}
-
-	if (sSaveAllMacro) {free(sSaveAllMacro); sSaveAllMacro = NULL;}
-
-	if (sRClickMacro) {free(sRClickMacro); sRClickMacro = NULL;}
-
 	if (mh_Uxtheme!=NULL) { FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL; }
 
 	if (mh_CtlColorBrush) { DeleteObject(mh_CtlColorBrush); mh_CtlColorBrush = NULL; }
-
-	if (mp_Bg) { delete mp_Bg; mp_Bg = NULL; }
-
-	SafeFree(mp_BgImgData);
 }
 
 void CSettings::SetConfigName(LPCWSTR asConfigName)
@@ -372,13 +405,8 @@ void CSettings::InitSettings()
 //------------------------------------------------------------------------
 ///| Moved from CVirtualConsole |/////////////////////////////////////////
 //------------------------------------------------------------------------
-	wcscpy_c(ConfigPath, CONEMU_ROOT_KEY L"\\.Vanilla");
-	ConfigName[0] = 0;
-	Type[0] = 0;
 	//FontFile[0] = 0;
 	isAutoRegisterFonts = true;
-	psCmd = NULL; psCurCmd = NULL; wcscpy_c(szDefCmd, L"far");
-	psCmdHistory = NULL; nCmdHistorySize = 0;
 	isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A';
 	icMinimizeRestore = 'C';
 	icMultiClose = 0/*VK_DELETE*/; icMultiCmd = 'X'; isMultiAutoCreate = false; isMultiLeaveOnClose = false; isMultiIterate = true;
@@ -406,6 +434,7 @@ void CSettings::InitSettings()
 	bForceBufferHeight = false; nForceBufferHeight = 1000; /* устанавливается в true, из ком.строки /BufferHeight */
 	AutoScroll = true;
 
+	WARNING("InitSettings() может вызываться из интерфейса настройки, не промахнуться с хэндлами");
 	// Шрифты
 	memset(m_Fonts, 0, sizeof(m_Fonts));
 	//TODO: OLD - на переделку
@@ -556,6 +585,7 @@ void CSettings::InitSettings()
 	isCTSColorIndex = 0xE0;
 	isFarGotoEditor = true; isFarGotoEditorVk = VK_LCONTROL;
 	isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
+	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
 	isTabsInCaption = false; //cbTabsInCaption
 	wcscpy_c(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
@@ -608,19 +638,6 @@ void CSettings::InitSettings()
 	//// Пока не используется
 	//DWORD nCacheFolderType; // юзер/программа/temp/и т.п.
 	//wchar_t sCacheFolder[MAX_PATH];
-	m_ThSetMap.InitName(CECONVIEWSETNAME, GetCurrentProcessId());
-
-	if (!m_ThSetMap.Create())
-	{
-		MBoxA(m_ThSetMap.GetErrorText());
-	}
-	else
-	{
-		// Применить в Mapping (там заодно и палитра копируется)
-		//m_ThSetMap.Set(&ThSet);
-		//!! Это нужно делать после создания основного шрифта
-		//gpConEmu->OnPanelViewSettingsChanged(FALSE);
-	}
 }
 
 void CSettings::LoadSettings()
@@ -3330,10 +3347,11 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			break;
 		case cbTabsInCaption:
 			isTabsInCaption = IsChecked(hExt, cbTabsInCaption);
-			//RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW|RDW_FRAME);
-			//gpConEmu->OnNcMessage(ghWnd, WM_NCPAINT, 0,0);
-			SendMessage(ghWnd, WM_NCACTIVATE, 0, 0);
-			SendMessage(ghWnd, WM_NCPAINT, 0, 0);
+			////RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW|RDW_FRAME);
+			////gpConEmu->OnNcMessage(ghWnd, WM_NCPAINT, 0,0);
+			//SendMessage(ghWnd, WM_NCACTIVATE, 0, 0);
+			//SendMessage(ghWnd, WM_NCPAINT, 0, 0);
+			gpConEmu->RedrawTabPanel();
 			break;
 		case cbAdminShield:
 			gpSet->bAdminShield = IsChecked(hTabs, cbAdminShield);
@@ -3876,7 +3894,7 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
 		SendMessage(hwndTip, TTM_ACTIVATE, TRUE, 0);
 	}
 
-	switch(phdr->code)
+	switch (phdr->code)
 	{
 		case TCN_SELCHANGE:
 		{
@@ -4017,6 +4035,41 @@ void CSettings::OnClose()
 		gpConEmu->UnRegisterHoooks();
 }
 
+void CSettings::OnResetOrReload(BOOL abResetSettings)
+{
+	BOOL lbWasPos = FALSE;
+	RECT rcWnd = {};
+	int nSel = -1;
+	
+	int nBtn = MessageBox(ghOpWnd,
+		abResetSettings ? L"Confirm reset settings to defaults" : L"Confirm reload settings from xml/registry",
+		gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2);
+	if (nBtn != IDYES)
+		return;
+	
+	if (ghOpWnd && IsWindow(ghOpWnd))
+	{
+		lbWasPos = TRUE;
+		nSel = TabCtrl_GetCurSel(GetDlgItem(ghOpWnd, tabMain));
+		GetWindowRect(ghOpWnd, &rcWnd);
+		DestroyWindow(ghOpWnd);
+	}
+	_ASSERTE(ghOpWnd == NULL);
+	
+	if (abResetSettings)
+		InitSettings();
+	else
+		LoadSettings();
+	
+	RecreateFont(0);
+	
+	if (lbWasPos && !ghOpWnd)
+	{
+		Dialog();
+		TabCtrl_SetCurSel(GetDlgItem(ghOpWnd, tabMain), nSel);
+	}
+}
+
 INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	switch(messg)
@@ -4084,7 +4137,14 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 			if (HIWORD(wParam) == BN_CLICKED)
 			{
-				gpSet->OnButtonClicked(wParam, lParam);
+				if (LOWORD(wParam) == bResetSettings || LOWORD(wParam) == bReloadSettings)
+				{
+					gpSet->OnResetOrReload(LOWORD(wParam) == bResetSettings);
+				}
+				else
+				{
+					gpSet->OnButtonClicked(wParam, lParam);
+				}
 			}
 			else if (HIWORD(wParam) == EN_CHANGE)
 			{
@@ -6339,42 +6399,50 @@ void CSettings::RecreateFont(WORD wFromID)
 		mb_IgnoreTtfChange = FALSE;
 
 	LOGFONT LF = {0};
-	LF.lfOutPrecision = OUT_TT_PRECIS;
-	LF.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-	LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-	GetDlgItemText(hMain, tFontFace, LF.lfFaceName, countof(LF.lfFaceName));
-	LF.lfHeight = FontSizeY = GetNumber(hMain, tFontSizeY);
-	LF.lfWidth = FontSizeX = GetNumber(hMain, tFontSizeX);
-	LF.lfWeight = IsChecked(hMain, cbBold) ? FW_BOLD : FW_NORMAL;
-	LF.lfItalic = IsChecked(hMain, cbItalic);
-	LF.lfCharSet = mn_LoadFontCharSet;
-
-	if (mb_CharSetWasSet)
+	
+	if (ghOpWnd == NULL)
 	{
-		//mb_CharSetWasSet = FALSE;
-		INT_PTR newCharSet = SendDlgItemMessage(hMain, tFontCharset, CB_GETCURSEL, 0, 0);
-
-		if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < (INT_PTR)countof(chSetsNums))
-			LF.lfCharSet = chSetsNums[newCharSet];
-		else
-			LF.lfCharSet = DEFAULT_CHARSET;
+		LF = LogFont;
 	}
-
-	if (IsChecked(hMain, rNoneAA))
-		LF.lfQuality = NONANTIALIASED_QUALITY;
-	else if (IsChecked(hMain, rStandardAA))
-		LF.lfQuality = ANTIALIASED_QUALITY;
-	else if (IsChecked(hMain, rCTAA))
-		LF.lfQuality = CLEARTYPE_NATURAL_QUALITY;
-
-	GetDlgItemText(hMain, tFontFace2, LogFont2.lfFaceName, countof(LogFont2.lfFaceName));
-	FontSizeX2 = GetNumber(hMain, tFontSizeX2);
-	FontSizeX3 = GetNumber(hMain, tFontSizeX3);
-
-	if (isAdvLogging)
+	else
 	{
-		char szInfo[128]; sprintf_s(szInfo, "AutoRecreateFont(H=%i, W=%i)", LF.lfHeight, LF.lfWidth);
-		gpConEmu->ActiveCon()->RCon()->LogString(szInfo);
+		LF.lfOutPrecision = OUT_TT_PRECIS;
+		LF.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+		LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+		GetDlgItemText(hMain, tFontFace, LF.lfFaceName, countof(LF.lfFaceName));
+		LF.lfHeight = FontSizeY = GetNumber(hMain, tFontSizeY);
+		LF.lfWidth = FontSizeX = GetNumber(hMain, tFontSizeX);
+		LF.lfWeight = IsChecked(hMain, cbBold) ? FW_BOLD : FW_NORMAL;
+		LF.lfItalic = IsChecked(hMain, cbItalic);
+		LF.lfCharSet = mn_LoadFontCharSet;
+
+		if (mb_CharSetWasSet)
+		{
+			//mb_CharSetWasSet = FALSE;
+			INT_PTR newCharSet = SendDlgItemMessage(hMain, tFontCharset, CB_GETCURSEL, 0, 0);
+
+			if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < (INT_PTR)countof(chSetsNums))
+				LF.lfCharSet = chSetsNums[newCharSet];
+			else
+				LF.lfCharSet = DEFAULT_CHARSET;
+		}
+
+		if (IsChecked(hMain, rNoneAA))
+			LF.lfQuality = NONANTIALIASED_QUALITY;
+		else if (IsChecked(hMain, rStandardAA))
+			LF.lfQuality = ANTIALIASED_QUALITY;
+		else if (IsChecked(hMain, rCTAA))
+			LF.lfQuality = CLEARTYPE_NATURAL_QUALITY;
+
+		GetDlgItemText(hMain, tFontFace2, LogFont2.lfFaceName, countof(LogFont2.lfFaceName));
+		FontSizeX2 = GetNumber(hMain, tFontSizeX2);
+		FontSizeX3 = GetNumber(hMain, tFontSizeX3);
+
+		if (isAdvLogging)
+		{
+			char szInfo[128]; sprintf_s(szInfo, "AutoRecreateFont(H=%i, W=%i)", LF.lfHeight, LF.lfWidth);
+			gpConEmu->ActiveCon()->RCon()->LogString(szInfo);
+		}
 	}
 
 	HFONT hf = CreateFontIndirectMy(&LF);
@@ -6397,17 +6465,17 @@ void CSettings::RecreateFont(WORD wFromID)
 		gpConEmu->ReSize();
 	}
 
-	if (wFromID == tFontFace)
+	if (ghOpWnd && wFromID == tFontFace)
 	{
 		wchar_t szSize[10];
 		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", LF.lfHeight);
 		SetDlgItemText(hMain, tFontSizeY, szSize);
 	}
 
-	UpdateFontInfo();
-
 	if (ghOpWnd)
 	{
+		UpdateFontInfo();
+	
 		ShowFontErrorTip(gpSet->szFontError);
 		//tiBalloon.lpszText = gpSet->szFontError;
 		//if (gpSet->szFontError[0]) {

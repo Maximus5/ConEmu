@@ -107,10 +107,12 @@ enum TrackMenuPlace
 
 #include "DwmHelper.h"
 #include "TaskBar.h"
+#include "FrameHolder.h"
 
 class CConEmuMain :
 	public CDwmHelper,
-	public CTaskBar
+	public CTaskBar,
+	public CFrameHolder
 {
 	public:
 		//HMODULE mh_Psapi;
@@ -450,7 +452,7 @@ class CConEmuMain :
 		bool SetWindowMode(uint inMode, BOOL abForce = FALSE);
 		void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
 		void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
-		void ShowSysmenu(int x=-32000, int y=-32000);
+		virtual void ShowSysmenu(int x=-32000, int y=-32000);
 		bool SetParent(HWND hNewParent);
 		HMENU CreateDebugMenuPopup();
 		HMENU CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
@@ -512,9 +514,10 @@ class CConEmuMain :
 		LRESULT OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
 		LRESULT OnMouse_RBtnDblClk(CVirtualConsole* pVCon, HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
 		BOOL OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam);
-		LRESULT OnNcMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-		LRESULT OnNcPaint(HRGN hRgn);
-		LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
+		//LRESULT OnNcMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		//LRESULT OnNcPaint(HRGN hRgn);
+		//LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
+		virtual void OnPaintClient(HDC hdc, int width, int height);
 		LRESULT OnSetCursor(WPARAM wParam=-1, LPARAM lParam=-1);
 		LRESULT OnSize(WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
 		LRESULT OnSizing(WPARAM wParam, LPARAM lParam);

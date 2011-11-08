@@ -71,6 +71,9 @@ class CSettings
 	public:
 		CSettings();
 		~CSettings();
+	private:
+		void ReleaseHandles();
+	public:
 
 		wchar_t Type[16];
 		private:
@@ -300,6 +303,10 @@ class CSettings
 		bool isFadeInactive;
 		//DWORD nFadeInactiveMask;
 		char isTabs; bool isTabSelf, isTabRecent, isTabLazy, isTabsInCaption;
+
+		// Tab theme properties
+		int ilDragHeight;
+
 	private:
 		char m_isTabsOnTaskBar;
 	public:
@@ -485,6 +492,7 @@ class CSettings
 	private:
 		static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout);
 	protected:
+		void OnResetOrReload(BOOL abResetSettings);
 		LRESULT OnInitDialog();
 		LRESULT OnInitDialog_Main();
 		LRESULT OnInitDialog_Ext();
