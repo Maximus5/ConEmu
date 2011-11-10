@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuHooks.h"
 #include "ShellProcessor.h"
 #include "Injects.h"
+#include "GuiAttach.h"
 
 #ifndef SEE_MASK_NOZONECHECKS
 #define SEE_MASK_NOZONECHECKS 0x800000
@@ -709,7 +710,10 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		*psFile = NULL;
 	}
 
-	if (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+	// Если запускается новый GUI как вкладка, или консольное приложения из GUI как вкладки
+	bool lbNewGuiConsole = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ghAttachGuiClient != NULL);
+
+	if (lbNewGuiConsole)
 	{
 		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
 		nCchSize += 128;
@@ -743,10 +747,13 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	if (lbUseDosBox)
 		_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
 
-	if (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+	//if (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+	if (lbNewGuiConsole)
 	{
 		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
-		msprintf((*psParam), nCchSize, L" /ATTACH /GID=%u /ROOT ", m_SrvMapping.nGuiPID);
+		int nCurLen = lstrlen(*psParam);
+		msprintf((*psParam) + nCurLen, nCchSize - nCurLen, L" /ATTACH /GID=%u /ROOT ", m_SrvMapping.nGuiPID);
+		TODO("Наверное, хорошо бы обработать /K|/C? Если консольное запускается из GUI");
 	}
 	else
 	{
@@ -901,7 +908,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 					pszNewPtr = NULL;
 			}
 
-			if ((ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) && pszNewPtr)
+			if ((lbNewGuiConsole) && pszNewPtr)
 			{
 				// Откусить "-new_console" из аргументов
 				int nCurLen = lstrlen((*psParam));
@@ -1046,7 +1053,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	if (!LoadGuiMapping() || !(m_SrvMapping.bUseInjects & 1))
 	{
 		// Настройка в ConEmu ConEmuGuiMapping.bUseInjects, или gFarMode.bFarHookMode. Иначе - сразу выходим
-		if (!gFarMode.bFarHookMode)
+		if (!gFarMode.bFarHookMode /*&& !ghAttachGuiClient*/)
 		{
 			return FALSE;
 		}
@@ -1066,7 +1073,23 @@ BOOL CShellProc::PrepareExecuteParms(
 	
 	if (/*(aCmd == eShellExecute) &&*/ asFile && *asFile)
 	{
-		wcscpy_c(ms_ExeTmp, asFile ? asFile : L"");
+		if (*asFile == L'"')
+		{
+			LPCWSTR pszEnd = wcschr(asFile+1, L'"');
+			if (pszEnd)
+			{
+				size_t cchLen = (pszEnd - asFile) - 1;
+				_wcscpyn_c(ms_ExeTmp, countof(ms_ExeTmp), asFile+1, cchLen);
+			}
+			else
+			{
+				_wcscpyn_c(ms_ExeTmp, countof(ms_ExeTmp), asFile+1, countof(ms_ExeTmp));
+			}
+		}
+		else
+		{
+			_wcscpyn_c(ms_ExeTmp, countof(ms_ExeTmp), asFile, countof(ms_ExeTmp));
+		}
 	}
 	else
 	{
@@ -1195,6 +1218,16 @@ BOOL CShellProc::PrepareExecuteParms(
 		if (pszFind && ((pszFind == asParam) || (*(pszFind-1) == L' ')) && ((pszFind[nNewConsoleLen] == 0) || (pszFind[nNewConsoleLen] == L' ')))
 			bNewConsoleArg = true;
 	}
+	// Если GUI приложение работает во вкладке ConEmu - запускать консольные приложение в новой вкладке ConEmu
+	if (!bNewConsoleArg && ghAttachGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI))
+	{
+		WARNING("Не забыть, что цеплять во вкладку нужно только если консоль запускается ВИДИМОЙ");
+		bNewConsoleArg = true;
+	}
+	if (ghAttachGuiClient && bNewConsoleArg && !lbGuiApp)
+	{
+		lbGuiApp = true;
+	}
 	
 	if (aCmd == eShellExecute)
 	{
@@ -1280,7 +1313,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	_ASSERTE(mn_ImageBits!=0);
 	// Если это Фар - однозначно вставляем ConEmuC.exe
 	if ((gFarMode.bFarHookMode)
-		|| (lbGuiApp && bNewConsoleArg) // хотят GUI прицепить к новуй вкладке в ConEmu
+		|| (lbGuiApp && bNewConsoleArg) // хотят GUI прицепить к новуй вкладке в ConEmu, или новую консоль из GUI
 		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
 		|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
 			&& ((aCmd == eShellExecute) 

@@ -5,6 +5,8 @@ extern RECT    grcConEmuClient;   // Для аттача гуевых окон
 extern BOOL    gbAttachGuiClient; // Для аттача гуевых окон
 extern BOOL    gbGuiClientExternMode; // Если нужно показать Gui-приложение вне вкладки ConEmu
 extern HWND    ghAttachGuiClient; // Чтобы ShowWindow перехватить
+extern DWORD   gnAttachGuiClientFlags; // enum ATTACHGUIAPP_FLAGS
+extern DWORD   gnAttachGuiClientStyle, gnAttachGuiClientStyleEx;
 
 bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwStyle, DWORD& dwExStyle, HWND& hWndParent, BOOL& bAttachGui, BOOL& bStyleHidden);
 void ReplaceGuiAppWindow(BOOL abStyleHidden);

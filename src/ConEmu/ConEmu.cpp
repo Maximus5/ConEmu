@@ -422,6 +422,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgMacroFontSetName = ++nAppMsg;
 	mn_MsgCreateViewWindow = ++nAppMsg;
 	mn_MsgPostTaskbarActivate = ++nAppMsg; mb_PostTaskbarActivate = FALSE;
+	mn_MsgInitVConGhost = ++nAppMsg;
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 
@@ -4139,6 +4140,11 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
 	}
 
 	return pCon;
+}
+
+void CConEmuMain::CreateGhostVCon(CVirtualConsole* apVCon)
+{
+	PostMessage(ghWnd, mn_MsgInitVConGhost, 0, (LPARAM)apVCon);
 }
 
 // Послать во все активные фары CMD_FARSETCHANGED
@@ -12674,6 +12680,7 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 			Out.AttachGuiApp.nFlags = agaf_Success;
 			Out.AttachGuiApp.nPID = pRCon->GetServerPID();
 			Out.AttachGuiApp.hWindow = pRCon->GetView();
+			Out.AttachGuiApp.hSrvConWnd = pRCon->ConWnd();
 			Out.AttachGuiApp.hkl = (DWORD)(LONG_PTR)(LONG)GetKeyboardLayout(mn_MainThreadId);
 		}
 		else
@@ -13476,6 +13483,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				HWND hFore = GetForegroundWindow();
 				if (gpConEmu->mp_VActive && hFore == ghWnd)
 					gpConEmu->mp_VActive->OnTaskbarFocus();
+				return 0;
+			}
+			else if (messg == gpConEmu->mn_MsgInitVConGhost)
+			{
+				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
+				if (gpConEmu->isValid(pVCon))
+					pVCon->InitGhost();
 				return 0;
 			}
 

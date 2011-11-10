@@ -408,6 +408,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 						gnGuiPID = pOut->hdr.nSrcPID;
 						ghConEmuWnd = (HWND)dwConEmuHwnd;
 						ghConEmuWndDC = pOut->AttachGuiApp.hWindow;
+						ghConWnd = pOut->AttachGuiApp.hSrvConWnd;
 						_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 						grcConEmuClient = pOut->AttachGuiApp.rcWindow;
 						gnServerPID = pOut->AttachGuiApp.nPID;

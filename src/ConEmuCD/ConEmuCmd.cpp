@@ -117,13 +117,11 @@ int ComspecInit()
 		xf_dump_chk();
 #endif
 		// CREATE_NEW_PROCESS_GROUP - низ€, перестает работать Ctrl-C
-		MWow64Disable wow; wow.Disable();
 		// «апускаетс€ новый сервер (нова€ консоль), сюда хуки ставить не надо.
-		BOOL lbRc = CreateProcess(NULL, gpszRunCmd, NULL,NULL, TRUE,
+		BOOL lbRc = createProcess(TRUE, NULL, gpszRunCmd, NULL,NULL, TRUE,
 		                           NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE,
 		                           NULL, NULL, &si, &pi);
 		DWORD dwErr = GetLastError();
-		wow.Restore();
 
 		if (!lbRc)
 		{

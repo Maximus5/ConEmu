@@ -1,10 +1,13 @@
-﻿[%] Issue 449: Resizing tabs with mouse in "panel view" (thumbs/tiles) does not work.
+﻿2011.11.10
+[%] Issue 449: Resizing tabs with mouse in 'panel view' (thumbs/tiles) does not work.
 [%] Issue 451: падение при загрузке background из png.
 [+] Settings->Tabs->'Show on taskbar' - отображение на панели задач всех запущенных консолей.
     Если флажок в 3-м состоянии - консоли отображаются только в Vista и выше.
     В Windows 7 добавлена поддержка Aero thumbnails & peeks.
 [%] msi: не запоминался путь, заданный для ExtendedConsole.
 [*] Начало подготовки к переходу на новые табы.
+[+] В диалоге настроек добавлены кнопки 'Reset' (сброс к настройкам по умолчанию) и 'Reload' (перезагрузить из xml/reg).
+[*] Правки в запускаторе.
 
 
 2011.11.01

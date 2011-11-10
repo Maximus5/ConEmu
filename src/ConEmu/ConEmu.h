@@ -331,6 +331,7 @@ class CConEmuMain :
 		UINT mn_MsgMacroFontSetName;
 		UINT mn_MsgCreateViewWindow;
 		UINT mn_MsgPostTaskbarActivate; BOOL mb_PostTaskbarActivate;
+		UINT mn_MsgInitVConGhost;
 
 		//
 		static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
@@ -380,6 +381,7 @@ class CConEmuMain :
 		bool CorrectWindowPos(WINDOWPOS *wp);
 		//void CheckGuiBarsCreated();
 		CVirtualConsole* CreateCon(RConStartArgs *args);
+		void CreateGhostVCon(CVirtualConsole* apVCon);
 		BOOL CreateMainWindow();
 		HRGN CreateWindowRgn(bool abTestOnly=false);
 		HRGN CreateWindowRgn(bool abTestOnly,bool abRoundTitle,int anX, int anY, int anWndWidth, int anWndHeight);

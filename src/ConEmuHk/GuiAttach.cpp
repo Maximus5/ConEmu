@@ -208,7 +208,7 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 		// DotNet: если не включить WS_CHILD - не работают toolStrip & menuStrip
 		// Native: если включить WS_CHILD - исчезает оконное меню
 		DWORD_PTR dwNewStyle = dwStyle & ~(WS_MAXIMIZEBOX|WS_MINIMIZEBOX);
-		if (gnAttachGuiClientFlags & agaf_DotNet)
+		if (gnAttachGuiClientFlags & agaf_WS_CHILD)
 			dwNewStyle = (dwNewStyle|WS_CHILD/*|DS_CONTROL*/) & ~(WS_POPUP);
 
 		if (dwStyle != dwNewStyle)
@@ -295,11 +295,11 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	// — приложен€ми .Net - приходитс€ работать как с WS_CHILD,
 	// иначе в них "не нажимаютс€" тулбары и меню
 	if (GetModuleHandle(L"mscoree.dll") != NULL)
-		gnAttachGuiClientFlags |= agaf_DotNet;
+		gnAttachGuiClientFlags |= (agaf_DotNet|agaf_WS_CHILD);
 	// ≈сли в окне нет меню - работаем с ним как с WS_CHILD
 	// так не возникает проблем с активацией и т.д.
 	else if (user->getMenu(hWindow) == NULL)
-		gnAttachGuiClientFlags |= agaf_DotNet;
+		gnAttachGuiClientFlags |= (agaf_NoMenu|agaf_WS_CHILD);
 	pIn->AttachGuiApp.nFlags = gnAttachGuiClientFlags;
 	pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 	pIn->AttachGuiApp.hWindow = hWindow;

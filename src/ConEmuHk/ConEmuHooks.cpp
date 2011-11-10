@@ -232,6 +232,7 @@ HWND WINAPI OnCreateDialogParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HW
 BOOL WINAPI OnGetCurrentConsoleFont(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFO lpConsoleCurrentFont);
 COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont);
 HWND WINAPI OnGetActiveWindow();
+BOOL WINAPI OnSetMenu(HWND hWnd, HMENU hMenu);
 
 
 
@@ -359,6 +360,7 @@ bool InitHooksUser32()
 		{(void*)OnCreateDialogParamW,	"CreateDialogParamW",	user32},
 		{(void*)OnCreateDialogIndirectParamA, "CreateDialogIndirectParamA", user32},
 		{(void*)OnCreateDialogIndirectParamW, "CreateDialogIndirectParamW", user32},
+		{(void*)OnSetMenu,				"SetMenu",				user32},
 		/* ************************ */
 		{0}
 	};
@@ -1301,6 +1303,35 @@ BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
 		//	if (user->isWindow(hWnd) && !IsWindowVisible(hWnd))
 		//		ShowWindow(hWnd, SW_SHOW);
 		//}
+	}
+
+	return lbRc;
+}
+
+BOOL WINAPI OnSetMenu(HWND hWnd, HMENU hMenu)
+{
+	typedef BOOL (WINAPI* OnSetMenu_t)(HWND hWnd, HMENU hMenu);
+	ORIGINALFASTEX(SetMenu,NULL);
+
+	BOOL lbRc = FALSE;
+
+	if (hMenu && ghAttachGuiClient && hWnd == ghAttachGuiClient)
+	{
+		if ((gnAttachGuiClientFlags & (agaf_WS_CHILD|agaf_NoMenu|agaf_DotNet)) == (agaf_WS_CHILD|agaf_NoMenu))
+		{
+			gnAttachGuiClientFlags &= ~(agaf_WS_CHILD|agaf_NoMenu);
+			DWORD_PTR dwStyle = user->getWindowLongPtrW(ghAttachGuiClient, GWL_STYLE);
+			DWORD_PTR dwNewStyle = (dwStyle & ~WS_CHILD) | (gnAttachGuiClientStyle & WS_POPUP);
+			if (dwStyle != dwNewStyle)
+			{
+				user->setWindowLongPtrW(ghAttachGuiClient, GWL_STYLE, dwNewStyle);
+			}
+		}
+	}
+
+	if (F(SetMenu) != NULL)
+	{
+		lbRc = F(SetMenu)(hWnd, hMenu);
 	}
 
 	return lbRc;

@@ -581,12 +581,10 @@ int ServerInit()
 			STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
 			PRINT_COMSPEC(L"Starting modeless:\n%s\n", pszSelf);
 			// CREATE_NEW_PROCESS_GROUP - низ€, перестает работать Ctrl-C
-			MWow64Disable wow; wow.Disable();
 			// Ёто запуск нового сервера в этой консоли. ¬ сервер хуки ставить не нужно
-			BOOL lbRc = CreateProcess(NULL, pszSelf, NULL,NULL, TRUE,
+			BOOL lbRc = createProcess(TRUE, NULL, pszSelf, NULL,NULL, TRUE,
 			                           NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 			dwErr = GetLastError();
-			wow.Restore();
 
 			if (!lbRc)
 			{
@@ -1555,12 +1553,10 @@ HWND Attach2Gui(DWORD nTimeout)
 		STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
 		PRINT_COMSPEC(L"Starting GUI:\n%s\n", pszSelf);
 		// CREATE_NEW_PROCESS_GROUP - низ€, перестает работать Ctrl-C
-		MWow64Disable wow; wow.Disable();
 		// «апуск GUI (conemu.exe), хуки ест-но не нужны
-		BOOL lbRc = CreateProcess(NULL, pszSelf, NULL,NULL, TRUE,
+		BOOL lbRc = createProcess(TRUE, NULL, pszSelf, NULL,NULL, TRUE,
 		                           NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 		dwErr = GetLastError();
-		wow.Restore();
 
 		if (!lbRc)
 		{

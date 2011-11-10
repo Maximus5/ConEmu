@@ -1283,9 +1283,11 @@ struct CESERVER_REQ_PEEKREADINFO
 
 enum ATTACHGUIAPP_FLAGS
 {
-	agaf_Fail    = 0,
-	agaf_Success = 1,
-	agaf_DotNet  = 2,
+	agaf_Fail     = 0,
+	agaf_Success  = 1,
+	agaf_DotNet   = 2,
+	agaf_NoMenu   = 4,
+	agaf_WS_CHILD = 8,
 };
 
 struct CESERVER_REQ_ATTACHGUIAPP
@@ -1294,6 +1296,7 @@ struct CESERVER_REQ_ATTACHGUIAPP
 	DWORD nPID;
 	DWORD hkl;
 	HWND2 hWindow;  // NULL - проверка можно ли, HWND - когда создан
+	HWND2 hSrvConWnd;
 	RECT  rcWindow; // координаты
 	DWORD nStyle, nStyleEx;
 	wchar_t sAppFileName[MAX_PATH*2];

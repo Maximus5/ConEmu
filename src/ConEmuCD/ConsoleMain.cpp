@@ -438,7 +438,36 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 //}
 //#endif
 
+#ifdef _DEBUG
+void OnProcessCreatedDbg(BOOL bRc, DWORD dwErr, LPPROCESS_INFORMATION pProcessInformation, LPSHELLEXECUTEINFO pSEI)
+{
+	int iDbg = 0;
+}
+#endif
 
+BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+{
+	MWow64Disable wow;
+	if (!abSkipWowChange)
+		wow.Disable();
+
+	SetLastError(0);
+
+	BOOL lbRc = CreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	DWORD dwErr = GetLastError();
+
+	#ifdef _DEBUG
+	OnProcessCreatedDbg(lbRc, dwErr, lpProcessInformation, NULL);
+	#endif
+
+	if (!abSkipWowChange)
+	{
+		wow.Restore();
+		SetLastError(dwErr);
+	}
+
+	return lbRc;
+}
 
 #if defined(__GNUC__)
 extern "C" {
@@ -748,17 +777,17 @@ int __stdcall ConsoleMain()
 		// Возможно, проблема в наследовании pipe-ов, проверить бы... или в другом SecurityDescriptor.
 
 
-		MWow64Disable wow;
-		//#ifndef _DEBUG
-		if (!gbSkipWowChange) wow.Disable();
-		//#endif
+		//MWow64Disable wow;
+		////#ifndef _DEBUG
+		//if (!gbSkipWowChange) wow.Disable();
+		////#endif
 
 		LPSECURITY_ATTRIBUTES lpSec = LocalSecurity();
 		//#ifdef _DEBUG
 		//		lpSec = NULL;
 		//#endif
 		// Не будем разрешать наследование, если нужно - сделаем DuplicateHandle
-		lbRc = CreateProcess(NULL, gpszRunCmd, lpSec,lpSec, lbInheritHandle,
+		lbRc = createProcess(!gbSkipWowChange, NULL, gpszRunCmd, lpSec,lpSec, lbInheritHandle,
 		                      NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
 		                      |CREATE_SUSPENDED/*((gnRunMode == RM_SERVER) ? CREATE_SUSPENDED : 0)*/,
 		                      NULL, pszCurDir, &si, &pi);
@@ -783,7 +812,7 @@ int __stdcall ConsoleMain()
 						SetCurrentDirectory(pszCurDir);
 						// Пробуем еще раз, в родительской директории
 						// Не будем разрешать наследование, если нужно - сделаем DuplicateHandle
-						lbRc = CreateProcess(NULL, gpszRunCmd, NULL,NULL, FALSE/*TRUE*/,
+						lbRc = createProcess(!gbSkipWowChange, NULL, gpszRunCmd, NULL,NULL, FALSE/*TRUE*/,
 						                      NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
 						                      |CREATE_SUSPENDED/*((gnRunMode == RM_SERVER) ? CREATE_SUSPENDED : 0)*/,
 						                      NULL, pszCurDir, &si, &pi);
@@ -793,7 +822,7 @@ int __stdcall ConsoleMain()
 			}
 		}
 
-		wow.Restore();
+		//wow.Restore();
 
 		if (lbRc) // && (gnRunMode == RM_SERVER))
 		{
@@ -866,9 +895,12 @@ int __stdcall ConsoleMain()
 				sei.lpParameters = pszCmd;
 				sei.lpDirectory = pszCurDir;
 				sei.nShow = SW_SHOWNORMAL;
-				wow.Disable();
+				MWow64Disable wow; wow.Disable();
 				lbRc = ShellExecuteEx(&sei);
 				dwErr = GetLastError();
+				#ifdef _DEBUG
+				OnProcessCreatedDbg(lbRc, dwErr, NULL, &sei);
+				#endif
 				wow.Restore();
 
 				if (lbRc)
@@ -924,7 +956,8 @@ int __stdcall ConsoleMain()
 	}
 	else
 	{
-		gpSrv->nProcessStartTick = GetTickCount();
+		if (!gpSrv->nProcessStartTick) // Уже мог быть проинициализирован из cmd_CmdStartStop
+			gpSrv->nProcessStartTick = GetTickCount();
 	}
 
 	//delete psNewCmd; psNewCmd = NULL;
@@ -1067,17 +1100,22 @@ wait:
 			//gbAlwaysConfirmExit = TRUE;
 		}
 
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		xf_validate(NULL);
-#endif
-#ifdef _DEBUG
+		#endif
 
+
+		// Получить ExitCode
+		GetExitCodeProcess(gpSrv->hRootProcess, &gnExitCode);
+
+
+		#ifdef _DEBUG
 		if (nWait == WAIT_OBJECT_0)
 		{
 			DEBUGSTR(L"*** FinilizeEvent was set!\n");
 		}
+		#endif
 
-#endif
 	}
 	else
 	{
@@ -1087,19 +1125,23 @@ wait:
 		//hEvents[1] = ghCtrlCEvent;
 		//hEvents[2] = ghCtrlBreakEvent;
 		//WaitForSingleObject(pi.hProcess, INFINITE);
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		xf_validate(NULL);
-#endif
+		#endif
+
 		DWORD dwWait = 0;
 		dwWait = nWaitComspecExit = WaitForSingleObject(pi.hProcess, INFINITE);
-#ifdef _DEBUG
+
+		#ifdef _DEBUG
 		xf_validate(NULL);
-#endif
+		#endif
+
 		// Получить ExitCode
 		GetExitCodeProcess(pi.hProcess, &gnExitCode);
-#ifdef _DEBUG
+
+		#ifdef _DEBUG
 		xf_validate(NULL);
-#endif
+		#endif
 
 		// Сразу закрыть хэндлы
 		if (pi.hProcess)
@@ -1108,9 +1150,9 @@ wait:
 		if (pi.hThread)
 			SafeCloseHandle(pi.hThread);
 
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		xf_validate(NULL);
-#endif
+		#endif
 	}
 
 	/* ************************* */
@@ -1138,6 +1180,11 @@ wrap:
 	if (iRc == CERR_GUIMACRO_SUCCEEDED)
 		iRc = 0;
 
+
+	if (gnRunMode == RM_SERVER && gpSrv->hRootProcess)
+		GetExitCodeProcess(gpSrv->hRootProcess, &gnExitCode);
+	else if (pi.hProcess)
+		GetExitCodeProcess(pi.hProcess, &gnExitCode);
 
 	if (!gbInShutdown  // только если юзер не нажал крестик в заголовке окна, или не удался /ATTACH (чтобы в консоль не гадить)
 	        && ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE)
@@ -1167,7 +1214,13 @@ wrap:
 			if (gbRootWasFoundInCon == 1)
 			{
 				if (gbRootAliveLess10sec)  // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
-					pszMsg = L"\n\nConEmuC: Root process was alive less than 10 sec.\nPress Enter or Esc to close console...";
+				{
+					static wchar_t szMsg[255];
+					_wsprintf(szMsg, SKIPLEN(countof(szMsg))
+						L"\n\nConEmuC: Root process was alive less than 10 sec, ExitCode=%u.\nPress Enter or Esc to close console...",
+						gnExitCode);
+					pszMsg = szMsg;
+				}
 				else
 					pszMsg = L"\n\nPress Enter or Esc to close console...";
 			}
@@ -1176,7 +1229,8 @@ wrap:
 		if (!pszMsg)  // Иначе - сообщение по умолчанию
 		{
 			pszMsg = L"\n\nPress Enter or Esc to close console, or wait...";
-#ifdef _DEBUG
+
+			#ifdef _DEBUG
 			static wchar_t szDbgMsg[255];
 			_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg))
 			          L"\n\ngbInShutdown=%i, iRc=%i, gbAlwaysConfirmExit=%i, nExitQueryPlace=%i"
@@ -1184,7 +1238,7 @@ wrap:
 			          (int)gbInShutdown, iRc, (int)gbAlwaysConfirmExit, nExitQueryPlace,
 			          pszMsg);
 			pszMsg = szDbgMsg;
-#endif
+			#endif
 		}
 
 		WORD vkKeys[3]; vkKeys[0] = VK_RETURN; vkKeys[1] = VK_ESCAPE; vkKeys[2] = 0;
@@ -4993,6 +5047,11 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	BOOL lbChanged = FALSE;
 	_ASSERTE(in.StartStop.dwPID!=0);
 	DWORD nPID = in.StartStop.dwPID;
+
+	if (!gpSrv->nProcessStartTick && (gpSrv->dwRootProcess == in.StartStop.dwPID))
+	{
+		gpSrv->nProcessStartTick = GetTickCount();
+	}
 	
 	if (in.StartStop.nStarted == sst_AppStart)
 	{

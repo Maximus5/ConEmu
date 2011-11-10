@@ -420,9 +420,15 @@ void CVirtualConsole::InitGhost()
 		{
 			_ASSERTE(mp_Ghost==NULL);
 		}
-		else
+		else if (gpConEmu->isMainThread())
 		{
 			mp_Ghost = CTaskBarGhost::Create(this);
+		}
+		else
+		{
+			// Ghost-окна нужно создавать в главной нити
+			// сюда мы попадаем при внешнем аттаче (например, при "-new_console")
+			gpConEmu->CreateGhostVCon(this);
 		}
 	}
 }
