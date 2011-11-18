@@ -1219,7 +1219,9 @@ BOOL CShellProc::PrepareExecuteParms(
 			bNewConsoleArg = true;
 	}
 	// Если GUI приложение работает во вкладке ConEmu - запускать консольные приложение в новой вкладке ConEmu
-	if (!bNewConsoleArg && ghAttachGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI))
+	if (!bNewConsoleArg 
+		&& ghAttachGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+		&& ((anShowCmd == NULL) || (*anShowCmd != SW_HIDE)))
 	{
 		WARNING("Не забыть, что цеплять во вкладку нужно только если консоль запускается ВИДИМОЙ");
 		bNewConsoleArg = true;
@@ -1553,7 +1555,7 @@ void CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, DWORD* an
 	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
 		return; // Перехватывать только под ConEmu
 		
-	DWORD nShowCmd = lpSI->wShowWindow;
+	DWORD nShowCmd = (lpSI->dwFlags & STARTF_USESHOWWINDOW) ? lpSI->wShowWindow : SW_SHOWNORMAL;
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
 
 	BOOL lbRc = PrepareExecuteParms(eCreateProcess,
@@ -1570,7 +1572,11 @@ void CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, DWORD* an
 	if (lbRc)
 	{
 		if (lpSI->wShowWindow != nShowCmd)
+		{
 			lpSI->wShowWindow = (WORD)nShowCmd;
+			if (!(lpSI->dwFlags & STARTF_USESHOWWINDOW))
+				lpSI->dwFlags |= STARTF_USESHOWWINDOW;
+		}
 		*asFile = mpwsz_TempRetFile;
 		*asCmdLine = mpwsz_TempRetParam;
 	}

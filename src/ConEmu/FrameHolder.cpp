@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int nStep = 0; wchar_t szDbg[512];
 #define DBGFUNCTION(s) // { wsprintf(szDbg, L"%i: %s", ++nStep, s); OutputDebugString(szDbg); /*Sleep(1000);*/ }
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 
 extern HICON hClassIconSm;
 
@@ -297,7 +298,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		//TODO: ¬о врем€ анимации Maximize/Restore/Minimize заголовок отрисовываетс€ 
 		//TODO: системой, в итоге мелькает текст и срезаютс€ табы                    
 		//TODO: —делаем, пока, чтобы текст хот€ бы не мелькал...                     
-		if (mb_NcAnimate)
+		if (mb_NcAnimate && gpSet->isTabsInCaption)
 		{
 			if (wParam && lParam)
 			{
@@ -315,23 +316,23 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	return false;
 }
 
-LRESULT CFrameHolder::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	gpConEmu->ExtendWindowFrame();
-
-	return DefWindowProc(hWnd, uMsg, wParam, lParam);
-}
-
 LRESULT CFrameHolder::OnDwmMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	switch (uMsg)
+	if (gpSet->isTabsInCaption)
 	{
-	case 0x31E: // WM_DWMCOMPOSITIONCHANGED:
-		gpConEmu->CheckGlassAttribute();
-		return 0; // ??? позвать DefWindowProc?
-	case 0xAE: // WM_NCUAHDRAWCAPTION:
-	case 0xAF: // WM_NCUAHDRAWFRAME:
-		return (gpConEmu->DrawType()==fdt_Aero) ? DefWindowProc(hWnd, uMsg, wParam, lParam) : 0;
+		switch (uMsg)
+		{
+		case 0x31E: // WM_DWMCOMPOSITIONCHANGED:
+			gpConEmu->CheckGlassAttribute();
+			return 0; // ??? позвать DefWindowProc?
+
+			//0xAE посылаетс€ при необходимости перерисовки заголовка окна, например
+			//после вызова SetWindowText(ghWnd, ...).
+			// ак минимум, вызываетс€ при включенных темах (WinXP).
+		case 0xAE: // WM_NCUAHDRAWCAPTION:
+		case 0xAF: // WM_NCUAHDRAWFRAME:
+			return (gpConEmu->DrawType()==fdt_Aero) ? DefWindowProc(hWnd, uMsg, wParam, lParam) : 0;
+		}
 	}
 	
 	// Unknown!
@@ -524,24 +525,26 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, BOOL abForceGetDc)
 		cr.top += nOffset;
 	}
 
-		
+
+	int nWidth = (cr.right-cr.left);
+	int nHeight = (cr.bottom-cr.top);
+
+	WARNING("ѕока табы рисуем не сами и ExtendDWM отсутствует - дополнительные изыски с временным DC не нужны");
+	if (!gpSet->isTabsInCaption)
+	{
+		OnPaintClient(hdc, nWidth, nHeight);
+	}
+	else
 
 	// —оздадим временный DC, дл€ удобства отрисовки в Glass-режиме и дл€ фикса глюка DWM(?) см.ниже
 	// ¬ принципе, дл€ режима Win2k/XP временный DC можно не создавать, если это будет тормозить
 	{
-		int nWidth = (cr.right-cr.left);
-		int nHeight = (cr.bottom-cr.top);
 		HDC hdcPaint = CreateCompatibleDC(hdc);
 		HBITMAP hbmp = CreateCompatibleBitmap(hdc, nWidth, nHeight);
 		HBITMAP hOldBmp = (HBITMAP)SelectObject(hdcPaint, hbmp);
 
 		OnPaintClient(hdcPaint, nWidth, nHeight);
 
-		if (!gpSet->isTabsInCaption)
-		{
-			//
-		}
-		else
 		if ((gpConEmu->DrawType() == fdt_Aero) || !(mb_WasGlassDraw && gpConEmu->isZoomed()))
 		{
 			BitBlt(hdc, cr.left, cr.top, nWidth, nHeight, hdcPaint, 0, 0, SRCCOPY);
@@ -820,7 +823,7 @@ LRESULT CFrameHolder::OnNcActivate(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 {
 	mb_NcActive = (wParam != 0);
 	
-	if (gpConEmu->IsGlass())
+	if (gpConEmu->IsGlass() || !gpSet->isTabsInCaption)
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 		
 	//return DefWindowProc(hWnd, uMsg, wParam, lParam);

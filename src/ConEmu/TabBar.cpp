@@ -457,7 +457,7 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 
 LRESULT TabBarClass::TabHitTest()
 {
-	if ((gpSet->isHideCaptionAlways() || gpSet->isFullScreen || (gpConEmu->isZoomed() && gpSet->isHideCaption))
+	if ((gpSet->isHideCaptionAlways() || gpConEmu->mb_isFullScreen || (gpConEmu->isZoomed() && gpSet->isHideCaption))
 	        && gpSet->isTabs)
 	{
 		if (gpConEmu->mp_TabBar->IsTabsShown())
@@ -501,7 +501,7 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 		}
 		case WM_SETCURSOR:
 
-			if (gpSet->isHideCaptionAlways() && gpSet->isTabs && !gpSet->isFullScreen && !gpConEmu->isZoomed())
+			if (gpSet->isHideCaptionAlways() && gpSet->isTabs && !gpConEmu->mb_isFullScreen && !gpConEmu->isZoomed())
 			{
 				if (TabHitTest()==HTCAPTION)
 				{
@@ -515,7 +515,7 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 		case WM_LBUTTONDOWN: case WM_LBUTTONUP: case WM_LBUTTONDBLCLK:
 		/*case WM_RBUTTONDOWN:*/ case WM_RBUTTONUP: //case WM_RBUTTONDBLCLK:
 
-			if ((gpSet->isHideCaptionAlways() || gpSet->isFullScreen || (gpConEmu->isZoomed() && gpSet->isHideCaption))
+			if ((gpSet->isHideCaptionAlways() || gpConEmu->mb_isFullScreen || (gpConEmu->isZoomed() && gpSet->isHideCaption))
 			        && gpSet->isTabs)
 			{
 				if (TabHitTest()==HTCAPTION)
@@ -529,14 +529,14 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 						// „тобы клик случайно не провалилс€ в консоль
 						gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
 						// јналог AltF9
-						//gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(gpSet->isFullScreen&&gpConEmu->isWndNotFSMaximized)) ? rNormal : rMaximized);
+						//gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(gpConEmu->mb_isFullScreen&&gpConEmu->isWndNotFSMaximized)) ? rNormal : rMaximized);
 						gpConEmu->OnAltF9(TRUE);
 					}
 					else if (uMsg == WM_RBUTTONUP)
 					{
 						gpConEmu->ShowSysmenu(ptScr.x, ptScr.y/*-32000*/);
 					}
-					else if (!gpSet->isFullScreen && !gpConEmu->isZoomed())
+					else if (!gpConEmu->mb_isFullScreen && !gpConEmu->isZoomed())
 					{
 						lRc = gpConEmu->WndProc(ghWnd, uMsg-(WM_MOUSEMOVE-WM_NCMOUSEMOVE), HTCAPTION, lParam);
 					}
@@ -562,7 +562,7 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
 				LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
 
 				//if (gpConEmu->mp_TabBar->mb_ThemingEnabled) {
-				if (gpSet->CheckTheming())
+				if (gpSetCls->CheckTheming())
 				{
 					pos->y = 2; // иначе в Win7 он смещаетс€ в {0x0} и снизу видна некрасива€ полоса
 					pos->cy = gpConEmu->mp_TabBar->_tabHeight -3; // на вс€кий случай
@@ -1425,7 +1425,7 @@ void TabBarClass::OnCaptionHidden()
 	if (mh_Toolbar)
 	{
 		BOOL lbHide = !(gpSet->isHideCaptionAlways()
-		                || gpSet->isFullScreen
+		                || gpConEmu->mb_isFullScreen
 		                || (gpConEmu->isZoomed() && gpSet->isHideCaption));
 		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE_SEP, lbHide);
 		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE, lbHide);
@@ -1443,7 +1443,7 @@ void TabBarClass::OnWindowStateChanged()
 	if (mh_Toolbar)
 	{
 		TBBUTTONINFO tbi = {sizeof(TBBUTTONINFO), TBIF_IMAGE};
-		tbi.iImage = (gpSet->isFullScreen || gpConEmu->isZoomed()) ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX;
+		tbi.iImage = (gpConEmu->mb_isFullScreen || gpConEmu->isZoomed()) ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX;
 		SendMessage(mh_Toolbar, TB_SETBUTTONINFO, TID_MAXIMIZE, (LPARAM)&tbi);
 		OnCaptionHidden();
 	}
@@ -1494,7 +1494,7 @@ void TabBarClass::OnBufferHeight(BOOL abBufferHeight)
 
 HWND TabBarClass::CreateToolbar()
 {
-	gpSet->CheckTheming();
+	gpSetCls->CheckTheming();
 
 	if (!mh_Rebar || !gpSet->isMulti)
 		return NULL; // нет табов - нет и тулбара
@@ -1583,7 +1583,7 @@ int TabBarClass::GetTabbarHeight()
 
 HWND TabBarClass::CreateTabbar()
 {
-	gpSet->CheckTheming();
+	gpSetCls->CheckTheming();
 
 	if (!mh_Rebar)
 		return NULL; // нет табов - нет и тулбара
@@ -1692,7 +1692,7 @@ HWND TabBarClass::CreateTabbar()
 void TabBarClass::CreateRebar()
 {
 	RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
-	gpSet->CheckTheming();
+	gpSetCls->CheckTheming();
 
 	if (NULL == (mh_Rebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
 	                                      WS_VISIBLE |WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|

@@ -1047,7 +1047,14 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 	
 	if (ghConEmuWndDC && hWnd == ghConEmuWndDC)
 	{
-		_ASSERTE(hWnd != ghConEmuWndDC);
+		#ifdef _DEBUG
+		static bool bShowWarned = false;
+		if (!bShowWarned)
+		{
+			bShowWarned = true;
+			_ASSERTE(hWnd != ghConEmuWndDC);
+		}
+		#endif
 		return TRUE; // обманем
 	}
 

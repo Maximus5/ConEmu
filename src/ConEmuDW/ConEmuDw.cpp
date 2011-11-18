@@ -662,7 +662,14 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 
 			if (pTrueColor && pTrueColor >= pTrueColorEnd)
 			{
-				_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd);
+				#ifdef _DEBUG
+				static bool bBufferAsserted = false;
+				if (!bBufferAsserted)
+				{
+					bBufferAsserted = true;
+					_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd);
+				}
+				#endif
 				pTrueColor = NULL; // Выделенный буфер оказался недостаточным
 			}
 			

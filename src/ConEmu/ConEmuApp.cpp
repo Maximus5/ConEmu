@@ -69,7 +69,8 @@ HINSTANCE g_hInstance=NULL;
 HWND ghWnd=NULL, /*ghWnd DC=NULL,*/ ghConWnd=NULL, ghWndApp=NULL;
 CConEmuMain *gpConEmu = NULL;
 //CVirtualConsole *pVCon=NULL;
-CSettings *gpSet = NULL;
+Settings  *gpSet = NULL;
+CSettings *gpSetCls = NULL;
 //TCHAR temp[MAX_PATH]; -- низзя, очень велик шанс нарваться при многопоточности
 HICON hClassIcon = NULL, hClassIconSm = NULL;
 BOOL gbDontEnable = FALSE;
@@ -968,7 +969,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	GetVersionEx(&gOSVer);
 	HeapInitialize();
 	RemoveOldComSpecC();
-	gpSet = new CSettings;
+	gpSetCls = new CSettings;
 	gpConEmu = new CConEmuMain;
 	/*int nCmp;
 	nCmp = StrCmpI(L" ", L"A"); // -1
@@ -1037,7 +1038,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool MultiConPrm = false, MultiConValue = false;
 	bool VisPrm = false, VisValue = false;
 	//bool SingleInstance = false;
-	gpSet->SingleInstanceArg = false;
+	gpSetCls->SingleInstanceArg = false;
 	//gpConEmu->cBlinkShift = GetCaretBlinkTime()/15;
 	//memset(&gOSVer, 0, sizeof(gOSVer));
 	//gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
@@ -1255,7 +1256,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 							}
 						}
 
-						gpSet->hAttachConWnd = hCon;
+						gpSetCls->hAttachConWnd = hCon;
 					}
 				}
 			}
@@ -1280,7 +1281,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 
 					//FontFile = curCommand;
-					gpSet->RegisterFont(curCommand, TRUE);
+					gpSetCls->RegisterFont(curCommand, TRUE);
 				}
 			}
 			//End ADD fontname; by Mors
@@ -1294,19 +1295,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0")  || !klstricmp(curCommand, L"/log1"))
 			{
-				gpSet->isAdvLogging = 1;
+				gpSetCls->isAdvLogging = 1;
 			}
 			else if (!klstricmp(curCommand, _T("/log2")))
 			{
-				gpSet->isAdvLogging = 2;
+				gpSetCls->isAdvLogging = 2;
 			}
 			else if (!klstricmp(curCommand, _T("/log3")))
 			{
-				gpSet->isAdvLogging = 3;
+				gpSetCls->isAdvLogging = 3;
 			}
 			else if (!klstricmp(curCommand, _T("/single")))
 			{
-				gpSet->SingleInstanceArg = true;
+				gpSetCls->SingleInstanceArg = true;
 			}
 			//else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
 			//{
@@ -1399,7 +1400,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		//_tcscat(gpSet->Config, _T("\\"));
 		//_tcscat(gpSet->Config, ConfigVal);
-		gpSet->SetConfigName(ConfigVal);
+		gpSetCls->SetConfigName(ConfigVal);
 	}
 
 	// load settings from registry
@@ -1414,7 +1415,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//    gpSet->LogFont.lfHeight = SizeVal;
 	if (BufferHeightPrm)
 	{
-		gpSet->SetArgBufferHeight(BufferHeightVal);
+		gpSetCls->SetArgBufferHeight(BufferHeightVal);
 	}
 
 	if (!WindowPrm)
@@ -1499,8 +1500,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//		FontFile = gpSet->FontFile;
 	//	}
 	//}
-	gpSet->RegisterFonts();
-	gpSet->InitFont(
+	gpSetCls->RegisterFonts();
+	gpSetCls->InitFont(
 	    FontPrm ? FontVal : NULL,
 	    SizePrm ? SizeVal : -1,
 	    ClearTypePrm ? CLEARTYPE_NATURAL_QUALITY : -1
@@ -1508,7 +1509,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 ///////////////////////////////////
 
-	if (gpSet->SingleInstanceArg)
+	if (gpSetCls->SingleInstanceArg)
 	{
 		// При запуске серии закладок из cmd файла второму экземпляру лучше чуть-чуть подождать
 		Sleep(1000);
@@ -1545,7 +1546,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			return 100;
 		}
 
-		gpSet->nAttachPID = AttachVal;
+		gpSetCls->nAttachPID = AttachVal;
 	}
 
 //------------------------------------------------------------------------
@@ -1595,7 +1596,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//delete pVCon;
 	//CloseHandle(hChildProcess); -- он более не требуется
 	//if (FontFilePrm) RemoveFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
-	gpSet->UnregisterFonts();
+	gpSetCls->UnregisterFonts();
 
 	if (lbConsoleAllocated)
 		FreeConsole();
@@ -1610,10 +1611,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpConEmu = NULL;
 	}
 
-	if (gpSet)
+	if (gpSetCls)
 	{
-		delete gpSet;
-		gpSet = NULL;
+		delete gpSetCls;
+		gpSetCls = NULL;
 	}
 
 	// Нельзя. Еще живут глобальные объекты

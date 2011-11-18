@@ -715,6 +715,8 @@ struct PipeServer
 					}
 					else
 					{
+						WARNING("При пересоздании возникает ошибка 231");
+						//DisconnectNamedPipe(pPipe->hPipeInst); //111117 не было, появлялась GetLastError()==231
 						CloseHandle(pPipe->hPipeInst);
 						pPipe->hPipeInst = NULL;
 					}
@@ -738,7 +740,8 @@ struct PipeServer
 				FlushFileBuffers(pPipe->hPipeInst);
 				
 				TODO("DisconnectAndReconnect?");
-				//DisconnectNamedPipe(hPipe);
+				WARNING("При пересоздании возникает ошибка 231");
+				//DisconnectNamedPipe(pPipe->hPipeInst); //111117 не было, появлялась GetLastError()==231
 				CloseHandle(pPipe->hPipeInst);
 				pPipe->hPipeInst = NULL;
 				// Перейти к открытию нового instance пайпа

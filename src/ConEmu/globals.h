@@ -34,6 +34,7 @@ extern const TCHAR *const szClassNameApp;
 extern const TCHAR *const szClassNameBack;
 extern const TCHAR *const szClassNameScroll;
 
+struct Settings;
 class CSettings;
 class TrayIcon;
 class TabBarClass;
@@ -65,7 +66,8 @@ extern BOOL gbDebugShowRects;
 //extern TCHAR szIconPath[MAX_PATH];
 extern HICON hClassIcon, hClassIconSm;
 
-extern CSettings *gpSet;
+extern Settings  *gpSet;
+extern CSettings *gpSetCls;
 extern TrayIcon Icon;
 //extern TCHAR temp[MAX_PATH];
 

@@ -1547,6 +1547,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\OptionsClass.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\RealConsole.cpp"
 				>
 			</File>
@@ -1690,6 +1694,10 @@
 			</File>
 			<File
 				RelativePath=".\Options.h"
+				>
+			</File>
+			<File
+				RelativePath=".\OptionsClass.h"
 				>
 			</File>
 			<File

@@ -121,6 +121,7 @@ $(INTDIR)\FrameHolder.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\Options.obj \
+$(INTDIR)\OptionsClass.obj \
 $(INTDIR)\RealConsole.obj \
 $(INTDIR)\Recreate.obj \
 $(INTDIR)\Registry.obj \
@@ -311,7 +312,9 @@ $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 
 $(INTDIR)\Macro.obj: Macro.cpp Macro.h
 
-$(INTDIR)\Options.obj: Options.cpp Options.h Background.h
+$(INTDIR)\Options.obj: Options.cpp Options.h
+
+$(INTDIR)\OptionsClass.obj: OptionsClass.cpp OptionsClass.h Options.h Background.h
 
 $(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h  ..\common\Common.hpp
 

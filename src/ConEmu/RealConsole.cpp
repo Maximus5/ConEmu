@@ -55,7 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRLOG(s) //OutputDebugStringA(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
-#define DEBUGSTRTABS(s) //DEBUGSTR(s)
+#define DEBUGSTRTABS(s) DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
@@ -203,7 +203,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	ZeroStruct(con); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&csCON);
 	con.hInSetSize = CreateEvent(0,TRUE,TRUE,0);
 	mb_BuferModeChangeLocked = FALSE;
-	con.DefaultBufferHeight = gpSet->bForceBufferHeight ? gpSet->nForceBufferHeight : gpSet->DefaultBufferHeight;
+	con.DefaultBufferHeight = gpSetCls->bForceBufferHeight ? gpSetCls->nForceBufferHeight : gpSet->DefaultBufferHeight;
 	ZeroStruct(m_ServerClosing);
 	ZeroStruct(m_Args);
 	mn_LastInvalidateTick = 0;
@@ -233,7 +233,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	//mp_ColorData = NULL;
 	mn_LastColorFarID = 0;
 	//ms_ConEmuC_DataReady[0] = 0; mh_ConEmuC_DataReady = NULL;
-	m_UseLogs = gpSet->isAdvLogging;
+	m_UseLogs = gpSetCls->isAdvLogging;
 
 	mp_TrueColorerData = NULL;
 	memset(&m_TrueColorerHeader, 0, sizeof(m_TrueColorerHeader));
@@ -385,10 +385,10 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 
 		m_Args.bDetached = TRUE;
 	}
-	else if (gpSet->nAttachPID)
+	else if (gpSetCls->nAttachPID)
 	{
 		// Attach - only once
-		DWORD dwPID = gpSet->nAttachPID; gpSet->nAttachPID = 0;
+		DWORD dwPID = gpSetCls->nAttachPID; gpSetCls->nAttachPID = 0;
 
 		if (!AttachPID(dwPID))
 		{
@@ -433,7 +433,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 		//Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
 		DEBUGSTRSIZE(L"SetConsoleSize skipped (!hConWnd || !ms_ConEmuC_Pipe)\n");
 
-		if (gpSet->isAdvLogging) LogString("SetConsoleSize skipped (!hConWnd || !ms_ConEmuC_Pipe)");
+		if (gpSetCls->isAdvLogging) LogString("SetConsoleSize skipped (!hConWnd || !ms_ConEmuC_Pipe)");
 
 		return FALSE; // консоль пока не создана?
 	}
@@ -491,7 +491,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 	lIn.SetSize.size.X = sizeX;
 	lIn.SetSize.size.Y = sizeY;
 	TODO("nTopVisibleLine должен передаваться при скролле, а не при ресайзе!");
-	lIn.SetSize.nSendTopLine = (gpSet->AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
+	lIn.SetSize.nSendTopLine = (gpSetCls->AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
 	lIn.SetSize.rcWindow = rect;
 	lIn.SetSize.dwFarPID = (con.bBufferHeight && !isFarBufferSupported()) ? 0 : GetFarPID();
 
@@ -525,7 +525,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 
 	//}
 
-	if (gpSet->isAdvLogging)
+	if (gpSetCls->isAdvLogging)
 	{
 		char szInfo[128];
 		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%s(Cols=%i, Rows=%i, Buf=%i, Top=%i)",
@@ -545,7 +545,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 
 	if (!fSuccess || dwRead<(DWORD)nOutSize)
 	{
-		if (gpSet->isAdvLogging)
+		if (gpSetCls->isAdvLogging)
 		{
 			char szInfo[128]; DWORD dwErr = GetLastError();
 			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv.CallNamedPipe FAILED!!! ErrCode=0x%08X, Bytes read=%i", dwErr, dwRead);
@@ -567,7 +567,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 		{
 			_ASSERTE(lOut.hdr.nCmd == lIn.hdr.nCmd);
 
-			if (gpSet->isAdvLogging)
+			if (gpSetCls->isAdvLogging)
 			{
 				char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED!!! OutCmd(%i)!=InCmd(%i)", lOut.hdr.nCmd, lIn.hdr.nCmd);
 				LogString(szInfo);
@@ -609,7 +609,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 
 					if (crDebugCurSize.X != sizeX)
 					{
-						if (gpSet->isAdvLogging)
+						if (gpSetCls->isAdvLogging)
 						{
 							char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSize FAILED!!! ReqSize={%ix%i}, OutSize={%ix%i}", sizeX, (sizeBuffer ? sizeBuffer : sizeY), crDebugCurSize.X, crDebugCurSize.Y);
 							LogString(szInfo);
@@ -621,7 +621,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 					}
 				}
 
-				if (gpSet->isAdvLogging)
+				if (gpSetCls->isAdvLogging)
 				{
 					LogString(
 					    (nWait == (DWORD)-1) ?
@@ -639,7 +639,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 				sbi = lOut.SetSizeRet.SetSizeRet;
 				nBufHeight = lIn.SetSize.nBufferHeight;
 
-				if (gpSet->isAdvLogging)
+				if (gpSetCls->isAdvLogging)
 					LogString("SetConsoleSizeSrv.Not waiting for ApplyFinished");
 			}
 
@@ -649,7 +649,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 			{
 				_ASSERTE((sbi.srWindow.Bottom-sbi.srWindow.Top)<200);
 
-				if (gpSet->isAdvLogging)
+				if (gpSetCls->isAdvLogging)
 				{
 					char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "Current size: Cols=%i, Buf=%i", sbi.dwSize.X, sbi.dwSize.Y);
 					LogString(szInfo, TRUE);
@@ -661,7 +661,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 				}
 				else
 				{
-					if (gpSet->isAdvLogging)
+					if (gpSetCls->isAdvLogging)
 					{
 						char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
 						                             sizeX, sizeY,
@@ -681,7 +681,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 					_ASSERTE(sbi.dwSize.Y<200);
 				}
 
-				if (gpSet->isAdvLogging)
+				if (gpSetCls->isAdvLogging)
 				{
 					char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "Current size: Cols=%i, Rows=%i", sbi.dwSize.X, sbi.dwSize.Y);
 					LogString(szInfo, TRUE);
@@ -693,7 +693,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 				}
 				else
 				{
-					if (gpSet->isAdvLogging)
+					if (gpSetCls->isAdvLogging)
 					{
 						char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
 						                             sizeX, sizeY,
@@ -748,7 +748,7 @@ BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer,
 	{
 		// 19.06.2009 Maks - Она действительно может быть еще не создана
 		//Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
-		if (gpSet->isAdvLogging) LogString("SetConsoleSize skipped (!hConWnd || !ms_ConEmuC_Pipe)");
+		if (gpSetCls->isAdvLogging) LogString("SetConsoleSize skipped (!hConWnd || !ms_ConEmuC_Pipe)");
 
 		DEBUGSTRSIZE(L"SetConsoleSize skipped (!hConWnd || !ms_ConEmuC_Pipe)\n");
 		return false; // консоль пока не создана?
@@ -793,11 +793,11 @@ BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer,
 	if (lbRc && isActive() && !isNtvdm())
 	{
 		// update size info
-		//if (!gpSet->isFullScreen && !gpConEmu->isZoomed() && !gpConEmu->isIconic())
+		//if (!gpConEmu->mb_isFullScreen && !gpConEmu->isZoomed() && !gpConEmu->isIconic())
 		if (gpConEmu->isWindowNormal())
 		{
 			int nHeight = TextHeight();
-			gpSet->UpdateSize(sizeX, nHeight);
+			gpSetCls->UpdateSize(sizeX, nHeight);
 		}
 	}
 
@@ -869,7 +869,7 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	// Во избежание лишних движений да и зацикливания...
 	if (con.nTextWidth != newCon.right || con.nTextHeight != newCon.bottom)
 	{
-		if (gpSet->isAdvLogging>=2)
+		if (gpSetCls->isAdvLogging>=2)
 		{
 			char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SyncConsoleToWindow(Cols=%i, Rows=%i, Current={%i,%i})", newCon.right, newCon.bottom, con.nTextWidth, con.nTextHeight);
 			LogString(szInfo);
@@ -1298,7 +1298,7 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 		}
 	}
 	
-	if (ghOpWnd && gpSet->hDebug && gpSet->m_RealConLoggingType == glt_Input)
+	if (ghOpWnd && gpSetCls->hDebug && gpSetCls->m_RealConLoggingType == glt_Input)
 	{
 		//INPUT_RECORD *prCopy = (INPUT_RECORD*)calloc(sizeof(INPUT_RECORD),1);
 		CESERVER_REQ_PEEKREADINFO* pCopy = (CESERVER_REQ_PEEKREADINFO*)malloc(sizeof(CESERVER_REQ_PEEKREADINFO));
@@ -1309,7 +1309,7 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 			pCopy->cPeekRead = 'S';
 			pCopy->cUnicode = 'W';
 			pCopy->Buffer[0] = *piRec;
-			PostMessage(gpSet->hDebug, DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
+			PostMessage(gpSetCls->hDebug, DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
 		}
 	}
 
@@ -1406,9 +1406,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 		// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
 		// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
-		if (gpSet->SingleInstanceArg)
+		if (gpSetCls->SingleInstanceArg)
 		{
-			gpSet->ResetCmdArg();
+			gpSetCls->ResetCmdArg();
 		}
 	}
 
@@ -1453,7 +1453,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		bActive = pRCon->isActive();
 
 		if (bActive)
-			gpSet->Performance(tPerfInterval, TRUE); // считается по своему
+			gpSetCls->Performance(tPerfInterval, TRUE); // считается по своему
 
 		// Проверка, вдруг осталась висеть "мертвая" консоль?
 		if (hEvents[IDEVENT_SERVERPH] == NULL && pRCon->mh_ConEmuC)
@@ -1933,7 +1933,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		}
 
 		//if (bActive)
-		//	gpSet->Performance(tPerfInterval, FALSE);
+		//	gpSetCls->Performance(tPerfInterval, FALSE);
 
 		if (pRCon->m_ServerClosing.nServerPID
 		        && pRCon->m_ServerClosing.nServerPID == pRCon->mn_ConEmuC_PID
@@ -2018,8 +2018,8 @@ BOOL CRealConsole::PreInit(BOOL abCreateBuffers/*=TRUE*/)
 	// Инициализировать переменные m_sbi, m_ci, m_sel
 	RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
 	// isBufferHeight использовать нельзя, т.к. con.m_sbi еще не инициализирован!
-	bool bNeedBufHeight = (gpSet->bForceBufferHeight && gpSet->nForceBufferHeight>0)
-	                      || (!gpSet->bForceBufferHeight && con.DefaultBufferHeight);
+	bool bNeedBufHeight = (gpSetCls->bForceBufferHeight && gpSetCls->nForceBufferHeight>0)
+	                      || (!gpSetCls->bForceBufferHeight && con.DefaultBufferHeight);
 
 	if (bNeedBufHeight && !con.bBufferHeight)
 	{
@@ -2162,7 +2162,7 @@ BOOL CRealConsole::StartProcess()
 	int nStep = (m_Args.pszSpecialCmd!=NULL) ? 2 : 1;
 	wchar_t* psCurCmd = NULL;
 
-	while(nStep <= 2)
+	while (nStep <= 2)
 	{
 		MCHKHEAP;
 		/*if (!*gpSet->GetCmd()) {
@@ -2176,6 +2176,7 @@ BOOL CRealConsole::StartProcess()
 			lpszCmd = m_Args.pszSpecialCmd;
 		else
 			lpszCmd = gpSet->GetCmd();
+		_ASSERTE(lpszCmd && *lpszCmd);
 
 		int nCurLen = 0;
 		int nLen = _tcslen(lpszCmd);
@@ -2439,11 +2440,11 @@ BOOL CRealConsole::StartProcess()
 			{
 				if (psz[_tcslen(psz)-1]!=_T('\n')) _wcscat_c(psz, nLen, _T("\r\n"));
 
-				if (!gpSet->psCurCmd && StrStrI(gpSet->GetCmd(), gpSet->GetDefaultCmd())==NULL)
+				if (!gpSet->psCurCmd && StrStrI(gpSet->GetCmd(), gpSetCls->GetDefaultCmd())==NULL)
 				{
 					_wcscat_c(psz, nLen, _T("\r\n\r\n"));
 					_wcscat_c(psz, nLen, _T("Do You want to simply start "));
-					_wcscat_c(psz, nLen, gpSet->GetDefaultCmd());
+					_wcscat_c(psz, nLen, gpSetCls->GetDefaultCmd());
 					_wcscat_c(psz, nLen, _T("?"));
 					nButtons |= MB_YESNO;
 				}
@@ -2475,7 +2476,7 @@ BOOL CRealConsole::StartProcess()
 			if (m_Args.pszSpecialCmd == NULL)
 			{
 				_ASSERTE(gpSet->psCurCmd==NULL);
-				gpSet->psCurCmd = lstrdup(gpSet->GetDefaultCmd());
+				gpSet->psCurCmd = lstrdup(gpSetCls->GetDefaultCmd());
 			}
 
 			nStep ++;
@@ -4237,7 +4238,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			//r.Event.KeyEvent.bKeyDown = FALSE;
 			//r.Event.KeyEvent.dwControlKeyState = 0x22;
 			//PostConsoleEvent(&r);
-			//gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(gpSet->isFullScreen&&gpConEmu->isWndNotFSMaximized)) ? rNormal : rMaximized);
+			//gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(gpConEmu->mb_isFullScreen&&gpConEmu->isWndNotFSMaximized)) ? rNormal : rMaximized);
 			gpConEmu->OnAltF9(TRUE);
 		}
 		else
@@ -4985,7 +4986,7 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 			int nNewWidth=0, nNewHeight=0; BOOL bBufferHeight = FALSE;
 
 			if ((mn_ProgramStatus & CES_NTVDM) == 0
-			        && !(gpSet->isFullScreen || gpConEmu->isZoomed()))
+			        && !(gpConEmu->mb_isFullScreen || gpConEmu->isZoomed()))
 			{
 				pIn->StartStopRet.bWasBufferHeight = FALSE;
 
@@ -5607,7 +5608,7 @@ CESERVER_REQ* CRealConsole::cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UIN
 	BOOL lbDos = (pIn->OnCreateProc.nImageBits == 16)
 		&& (pIn->OnCreateProc.nImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE);
 
-	if (ghOpWnd && gpSet->hDebug)
+	if (ghOpWnd && gpSetCls->hDebug)
 	{
 		DebugLogShellActivity *shl = (DebugLogShellActivity*)calloc(sizeof(DebugLogShellActivity),1);
 		shl->nParentPID = pIn->hdr.nSrcPID;
@@ -5627,7 +5628,7 @@ CESERVER_REQ* CRealConsole::cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UIN
 		shl->hStdOut = (DWORD)pIn->OnCreateProc.hStdOut;
 		shl->hStdErr = (DWORD)pIn->OnCreateProc.hStdErr;
 
-		PostMessage(gpSet->hDebug, DBGMSG_LOG_ID, DBGMSG_LOG_SHELL_MAGIC, (LPARAM)shl);
+		PostMessage(gpSetCls->hDebug, DBGMSG_LOG_ID, DBGMSG_LOG_SHELL_MAGIC, (LPARAM)shl);
 	}
 	
 	if (pIn->OnCreateProc.nImageBits > 0)
@@ -5673,7 +5674,7 @@ CESERVER_REQ* CRealConsole::cmdOnPeekReadInput(HANDLE hPipe, CESERVER_REQ* pIn, 
 
 	DEBUGSTRCMD(L"GUI recieved CECMD_PEEKREADINFO\n");
 	
-	if (ghOpWnd && gpSet->hDebug && gpSet->m_RealConLoggingType == glt_Input)
+	if (ghOpWnd && gpSetCls->hDebug && gpSetCls->m_RealConLoggingType == glt_Input)
 	{
 		if (nDataSize >= sizeof(CESERVER_REQ_PEEKREADINFO))
 		{
@@ -5681,7 +5682,7 @@ CESERVER_REQ* CRealConsole::cmdOnPeekReadInput(HANDLE hPipe, CESERVER_REQ* pIn, 
 			if (pCopy)
 			{
 				memmove(pCopy, &pIn->PeekReadInfo, nDataSize);
-				PostMessage(gpSet->hDebug, DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
+				PostMessage(gpSetCls->hDebug, DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
 			}
 		}
 	}
@@ -9259,7 +9260,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	//mb_PicViewWasHidden = FALSE;
 
 	if (ghOpWnd && isActive())
-		gpSet->UpdateConsoleMode(con.m_dwConsoleMode);
+		gpSetCls->UpdateConsoleMode(con.m_dwConsoleMode);
 
 	if (isActive())
 	{
@@ -9714,9 +9715,11 @@ int CRealConsole::GetTabCount()
 		return 0;
 
 	#ifdef HT_CONEMUTAB
-	#ifndef _DEBUG
-	PRAGMA_ERROR("После перехода на «свои» табы отдавать и те, которые сейчас недоступны");
-	#endif
+	WARNING("После перехода на «свои» табы отдавать и те, которые сейчас недоступны");
+	if (gpSet->isTabsInCaption)
+	{
+		_ASSERTE(FALSE);
+	}
 	#endif
 
 	if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
@@ -9838,9 +9841,11 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	int nCurLen = _tcslen(pTab->Name), nMaxLen = countof(pTab->Name)-1;
 	
 	#ifdef HT_CONEMUTAB
-	#ifndef _DEBUG
-	PRAGMA_ERROR("После перевода табов на ручную отрисовку - эту часть с амперсандами можно будет убрать");
-	#endif
+	WARNING("После перевода табов на ручную отрисовку - эту часть с амперсандами можно будет убрать");
+	if (gpSet->isTabsInCaption)
+	{
+		_ASSERTE(FALSE);
+	}
 	#endif
 
 	while((pszAmp = wcschr(pszAmp, L'&')) != NULL)
@@ -10049,8 +10054,11 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 		if (!mn_ActiveTab && (mp_Rgn->GetFlags() & FR_QSEARCH))
 			nData[1] = TRUE;
 
+		DEBUGSTRCMD(L"GUI send CMD_SETWINDOW\n");	
 		if (pipe.Execute(CMD_SETWINDOW, nData, 8))
 		{
+			DEBUGSTRCMD(L"CMD_SETWINDOW executed\n");	
+
 			WARNING("CMD_SETWINDOW по таймауту возвращает последнее считанное положение окон (gpTabs).");
 			// То есть если переключение окна выполняется дольше 2х сек - возвратится предыдущее состояние
 			DWORD cbBytesRead=0;
@@ -10463,7 +10471,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 	DEBUGSTRLANG(szMsg);
 #endif
 
-	if (gpSet->isAdvLogging > 1)
+	if (gpSetCls->isAdvLogging > 1)
 	{
 		WCHAR szInfo[255];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CRealConsole::SwitchKeyboardLayout(CP:%i, HKL:0x%08I64X)",
@@ -11531,7 +11539,7 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 	//wchar_t *szData = pSetEnvVar->szEnv;
 	pSetEnvVar->bFARuseASCIIsort = gpSet->isFARuseASCIIsort;
 	pSetEnvVar->bShellNoZoneCheck = gpSet->isShellNoZoneCheck;
-	pSetEnvVar->bMonitorConsoleInput = (gpSet->m_RealConLoggingType == glt_Input);
+	pSetEnvVar->bMonitorConsoleInput = (gpSetCls->m_RealConLoggingType == glt_Input);
 	//BOOL lbNeedQuot = (wcschr(gpConEmu->ms_ConEmuCExeFull, L' ') != NULL);
 	//wchar_t* pszName = szData;
 	//lstrcpy(pszName, L"ComSpec");
@@ -12369,7 +12377,7 @@ void CRealConsole::OnConsoleLangChange(DWORD_PTR dwNewKeybLayout)
 {
 	if (con.dwKeybLayout != dwNewKeybLayout)
 	{
-		if (gpSet->isAdvLogging > 1)
+		if (gpSetCls->isAdvLogging > 1)
 		{
 			wchar_t szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CRealConsole::OnConsoleLangChange, Old=0x%08X, New=0x%08X",
@@ -12390,7 +12398,7 @@ void CRealConsole::OnConsoleLangChange(DWORD_PTR dwNewKeybLayout)
 	}
 	else
 	{
-		if (gpSet->isAdvLogging > 1)
+		if (gpSetCls->isAdvLogging > 1)
 		{
 			wchar_t szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CRealConsole::OnConsoleLangChange skipped, con.dwKeybLayout already is 0x%08X",
@@ -12856,7 +12864,7 @@ BOOL CRealConsole::ApplyConsoleInfo()
 		if (con.m_dwConsoleMode != pInfo->dwConsoleMode)
 		{
 			if (ghOpWnd && isActive())
-				gpSet->UpdateConsoleMode(pInfo->dwConsoleMode);
+				gpSetCls->UpdateConsoleMode(pInfo->dwConsoleMode);
 		}
 
 		con.m_dwConsoleMode = pInfo->dwConsoleMode;
@@ -12898,7 +12906,7 @@ BOOL CRealConsole::ApplyConsoleInfo()
 				}
 			}
 
-			if (gpSet->AutoScroll)
+			if (gpSetCls->AutoScroll)
 				con.nTopVisibleLine = con.m_sbi.srWindow.Top;
 
 			MCHKHEAP

@@ -112,6 +112,7 @@ void InitHWND(/*HWND ahFarHwnd*/);
 void InitRootKey();
 
 #define ConEmu_SysID 0x43454D55 // 'CEMU'
+#define ConEmu_GuidS L"4b675d80-1d4a-4ea9-8436-fdc23f2fc14b"
 extern GUID guid_ConEmu;
 extern GUID guid_ConEmuPluginItems;
 extern GUID guid_ConEmuPluginMenu;

@@ -400,10 +400,10 @@ LRESULT CConEmuChild::OnPaint()
 
 	mb_PostFullPaint = FALSE;
 
-	if (gpSet->isAdvLogging>1)
+	if (gpSetCls->isAdvLogging>1)
 		gpConEmu->ActiveCon()->RCon()->LogString("CConEmuChild::OnPaint");
 
-	gpSet->Performance(tPerfBlt, FALSE);
+	gpSetCls->Performance(tPerfBlt, FALSE);
 
 	if (gpConEmu->isPictureView())
 	{
@@ -477,7 +477,7 @@ LRESULT CConEmuChild::OnPaint()
 	}
 
 	Validate();
-	gpSet->Performance(tPerfBlt, TRUE);
+	gpSetCls->Performance(tPerfBlt, TRUE);
 	// ≈сли открыто окно настроек - обновить системную информацию о размерах
 	gpConEmu->UpdateSizes();
 	return result;
@@ -934,7 +934,7 @@ void CConEmuBack::Resize()
 	{
 #if defined(EXT_GNUC_LOG)
 
-		if (gpSet->isAdvLogging>1)
+		if (gpSetCls->isAdvLogging>1)
 			pVCon->RCon()->LogString("  --  CConEmuBack::Resize() - exiting, mh_WndBack failed");
 
 #endif
@@ -955,7 +955,7 @@ void CConEmuBack::Resize()
 			          rcClient.left, rcClient.top, rcClient.right, rcClient.bottom,
 			          mrc_LastClient.left, mrc_LastClient.top, mrc_LastClient.right, mrc_LastClient.bottom);
 
-			if (gpSet->isAdvLogging>1)
+			if (gpSetCls->isAdvLogging>1)
 				pVCon->RCon()->LogString(szDbg);
 
 #endif
@@ -975,7 +975,7 @@ void CConEmuBack::Resize()
 #if defined(EXT_GNUC_LOG)
 	char szDbg[255]; wsprintfA(szDbg, "  --  CConEmuBack::Resize() - X=%i, Y=%i, W=%i, H=%i", rc.left, rc.top, 	rc.right - rc.left,	rc.bottom - rc.top);
 
-	if (gpSet->isAdvLogging>1)
+	if (gpSetCls->isAdvLogging>1)
 		pVCon->RCon()->LogString(szDbg);
 
 #endif

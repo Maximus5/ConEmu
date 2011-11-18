@@ -58,7 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuCD/RegPrepare.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
@@ -71,7 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
-#define DEBUGSTRFOCUS(s) DEBUGSTR(s)
+#define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #define DEBUGSTRFOREGROUND(s) //DEBUGSTR(s)
 #define DEBUGSTRLLKB(s) //DEBUGSTR(s)
 #ifdef _DEBUG
@@ -120,6 +120,7 @@ CConEmuMain::CConEmuMain()
 	mn_MainThreadId = GetCurrentThreadId();
 	wcscpy_c(szConEmuVersion, L"?.?.?.?");
 	WindowMode=rNormal; mb_PassSysCommand = false; change2WindowMode = -1;
+	mb_isFullScreen = false;
 	mb_ExternalHidden = FALSE;
 	memset(&mrc_StoredNormalRect, 0, sizeof(mrc_StoredNormalRect));
 	isWndNotFSMaximized = false;
@@ -520,7 +521,7 @@ RECT CConEmuMain::GetDefaultRect()
 {
 	int nWidth, nHeight;
 	RECT rcWnd;
-	MBoxAssert(gpSet->FontWidth() && gpSet->FontHeight());
+	MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
 	COORD conSize; conSize.X=gpSet->wndWidth; conSize.Y=gpSet->wndHeight;
 	//int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
 	//int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + (gpSet->isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
@@ -528,9 +529,9 @@ RECT CConEmuMain::GetDefaultRect()
 	int nShiftX = rcFrameMargin.left + rcFrameMargin.right;
 	int nShiftY = rcFrameMargin.top + rcFrameMargin.bottom;
 	// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
-	nWidth  = conSize.X * gpSet->FontWidth() + nShiftX
+	nWidth  = conSize.X * gpSetCls->FontWidth() + nShiftX
 	          + ((gpSet->isTabs == 1) ? (gpSet->rcTabMargins.left+gpSet->rcTabMargins.right) : 0);
-	nHeight = conSize.Y * gpSet->FontHeight() + nShiftY
+	nHeight = conSize.Y * gpSetCls->FontHeight() + nShiftY
 	          + ((gpSet->isTabs == 1) ? (gpSet->rcTabMargins.top+gpSet->rcTabMargins.bottom) : 0);
 	rcWnd = MakeRect(gpSet->wndX, gpSet->wndY, gpSet->wndX+nWidth, gpSet->wndY+nHeight);
 
@@ -705,7 +706,7 @@ HMENU CConEmuMain::GetSystemMenu(BOOL abInitial /*= FALSE*/)
 		InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
 			ID_ALWAYSONTOP, _T("Al&ways on top"));
-		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->AutoScroll ? MF_CHECKED : 0),
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSetCls->AutoScroll ? MF_CHECKED : 0),
 			ID_AUTOSCROLL, _T("Auto scro&ll"));
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, IDM_ATTACHTO, _T("Attach t&o..."));
@@ -808,7 +809,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	// Расчет размеров окна в Normal режиме
 	if (gpSet->wndWidth && gpSet->wndHeight)
 	{
-		MBoxAssert(gpSet->FontWidth() && gpSet->FontHeight());
+		MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
 		//COORD conSize; conSize.X=gpSet->wndWidth; conSize.Y=gpSet->wndHeight;
 		////int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
 		////int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + (gpSet->isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
@@ -816,9 +817,9 @@ BOOL CConEmuMain::CreateMainWindow()
 		//int nShiftX = rcFrameMargin.left + rcFrameMargin.right;
 		//int nShiftY = rcFrameMargin.top + rcFrameMargin.bottom;
 		//// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
-		//nWidth  = conSize.X * gpSet->FontWidth() + nShiftX
+		//nWidth  = conSize.X * gpSetCls->FontWidth() + nShiftX
 		//	+ ((gpSet->isTabs == 1) ? (gpSet->rcTabMargins.left+gpSet->rcTabMargins.right) : 0);
-		//nHeight = conSize.Y * gpSet->FontHeight() + nShiftY
+		//nHeight = conSize.Y * gpSetCls->FontHeight() + nShiftY
 		//	+ ((gpSet->isTabs == 1) ? (gpSet->rcTabMargins.top+gpSet->rcTabMargins.bottom) : 0);
 		//mrc_Ideal = MakeRect(gpSet->wndX, gpSet->wndY, gpSet->wndX+nWidth, gpSet->wndY+nHeight);
 		mrc_Ideal = GetDefaultRect();
@@ -870,16 +871,16 @@ bool CConEmuMain::SetParent(HWND hNewParent)
 void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 {
 	// Параметры основного шрифта ConEmu
-	lstrcpy(pFont->sFontName, gpSet->FontFaceName());
-	pFont->nFontHeight = gpSet->FontHeight();
-	pFont->nFontWidth = gpSet->FontWidth();
-	pFont->nFontCellWidth = gpSet->FontSizeX3 ? gpSet->FontSizeX3 : gpSet->FontWidth();
-	pFont->nFontQuality = gpSet->FontQuality();
-	pFont->nFontCharSet = gpSet->FontCharSet();
-	pFont->Bold = gpSet->FontBold();
-	pFont->Italic = gpSet->FontItalic();
-	lstrcpy(pFont->sBorderFontName, gpSet->BorderFontFaceName());
-	pFont->nBorderFontWidth = gpSet->BorderFontWidth();
+	lstrcpy(pFont->sFontName, gpSetCls->FontFaceName());
+	pFont->nFontHeight = gpSetCls->FontHeight();
+	pFont->nFontWidth = gpSetCls->FontWidth();
+	pFont->nFontCellWidth = gpSet->FontSizeX3 ? gpSet->FontSizeX3 : gpSetCls->FontWidth();
+	pFont->nFontQuality = gpSetCls->FontQuality();
+	pFont->nFontCharSet = gpSetCls->FontCharSet();
+	pFont->Bold = gpSetCls->FontBold();
+	pFont->Italic = gpSetCls->FontItalic();
+	lstrcpy(pFont->sBorderFontName, gpSetCls->BorderFontFaceName());
+	pFont->nBorderFontWidth = gpSetCls->BorderFontWidth();
 }
 
 BOOL CConEmuMain::CheckDosBoxExists()
@@ -1245,7 +1246,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.nProtocolVersion = CESERVER_REQ_VER;
 	m_GuiInfo.hGuiWnd = ghWnd;
 	
-	m_GuiInfo.nLoggingType = (ghOpWnd && gpSet->hDebug) ? gpSet->m_RealConLoggingType : glt_None;
+	m_GuiInfo.nLoggingType = (ghOpWnd && gpSetCls->hDebug) ? gpSetCls->m_RealConLoggingType : glt_None;
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0);
 	m_GuiInfo.bUseTrueColor = gpSet->isTrueColorer;
 
@@ -1317,7 +1318,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 
 	WARNING("Установка любого НЕ NULL региона сбивает темы при отрисовке кнопок в заголовке");
 
-	if ((gpSet->isFullScreen || (isZoomed() && (gpSet->isHideCaption || gpSet->isHideCaptionAlways())))
+	if ((mb_isFullScreen || (isZoomed() && (gpSet->isHideCaption || gpSet->isHideCaptionAlways())))
 	        && !mb_InRestore)
 	{
 		if (abTestOnly)
@@ -1354,7 +1355,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				RECT rcClient; GetClientRect(ghWnd, &rcClient);
 				RECT rcFrame = CalcMargins(CEM_FRAME);
 				_ASSERTE(!rcClient.left && !rcClient.top);
-				hRgn = CreateWindowRgn(abTestOnly, gpSet->CheckTheming() && mp_TabBar->IsTabsShown(),
+				hRgn = CreateWindowRgn(abTestOnly, gpSetCls->CheckTheming() && mp_TabBar->IsTabsShown(),
 				                       rcFrame.left-gpSet->nHideCaptionAlwaysFrame,
 				                       rcFrame.top-gpSet->nHideCaptionAlwaysFrame,
 				                       rcClient.right+2*gpSet->nHideCaptionAlwaysFrame,
@@ -1365,7 +1366,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 		if (!hRgn && hExclusion)
 		{
 			// Таки нужно создать...
-			bool bTheming = gpSet->CheckTheming();
+			bool bTheming = gpSetCls->CheckTheming();
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 			hRgn = CreateWindowRgn(abTestOnly, bTheming,
 			                       0,0, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top);
@@ -1926,13 +1927,13 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			// Размер консоли в символах!
 			//MBoxAssert(!(rFrom.left || rFrom.top));
 			_ASSERTE(tWhat!=CER_CONSOLE);
-			//if (gpSet->FontWidth()==0) {
+			//if (gpSetCls->FontWidth()==0) {
 			//    MBoxAssert(pVCon!=NULL);
 			//    pVCon->InitDC(false, true); // инициализировать ширину шрифта по умолчанию
 			//}
 			// ЭТО размер окна отрисовки DC
-			rc = MakeRect((rFrom.right-rFrom.left) * gpSet->FontWidth(),
-			              (rFrom.bottom-rFrom.top) * gpSet->FontHeight());
+			rc = MakeRect((rFrom.right-rFrom.left) * gpSetCls->FontWidth(),
+			              (rFrom.bottom-rFrom.top) * gpSetCls->FontHeight());
 
 			if (tWhat != CER_DC)
 				rc = CalcRect(tWhat, rc, CER_DC);
@@ -2029,23 +2030,23 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			}
 
 			//// Для корректного деления на размер знакоместа...
-			//         if (gpSet->FontWidth()==0 || gpSet->FontHeight()==0)
+			//         if (gpSetCls->FontWidth()==0 || gpSetCls->FontHeight()==0)
 			//             pVCon->InitDC(false, true); // инициализировать ширину шрифта по умолчанию
 			//rc.right ++;
-			//int nShift = (gpSet->FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
+			//int nShift = (gpSetCls->FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
 			//rc.right += nShift;
 			// Если есть вкладки
 			//if (rcShift.top || rcShift.bottom || )
-			//nShift = (gpSet->FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
+			//nShift = (gpSetCls->FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
 
 			if (tWhat != CER_CONSOLE_NTVDMOFF && pVCon && pVCon->RCon() && pVCon->RCon()->isNtvdm())
 			{
 				// NTVDM устанавливает ВЫСОТУ экранного буфера... в 25/28/43/50 строк
 				// путем округления текущей высоты (то есть если до запуска 16bit
 				// было 27 строк, то скорее всего будет установлена высота в 28 строк)
-				RECT rc1 = MakeRect(pVCon->TextWidth*gpSet->FontWidth(), pVCon->TextHeight*gpSet->FontHeight());
+				RECT rc1 = MakeRect(pVCon->TextWidth*gpSetCls->FontWidth(), pVCon->TextHeight*gpSetCls->FontHeight());
 
-				//gpSet->ntvdmHeight /* pVCon->TextHeight */ * gpSet->FontHeight());
+				//gpSet->ntvdmHeight /* pVCon->TextHeight */ * gpSetCls->FontHeight());
 				if (rc1.bottom > (rc.bottom - rc.top))
 					rc1.bottom = (rc.bottom - rc.top); // Если размер вылез за текущий - обрежем снизу :(
 
@@ -2083,8 +2084,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			{
 				//2009-07-09 - ClientToConsole использовать нельзя, т.к. после его
 				//  приближений высота может получиться больше Ideal, а ширина - меньше
-				int nW = (rc.right - rc.left + 1) / gpSet->FontWidth();
-				int nH = (rc.bottom - rc.top) / gpSet->FontHeight();
+				int nW = (rc.right - rc.left + 1) / gpSetCls->FontWidth();
+				int nH = (rc.bottom - rc.top) / gpSetCls->FontHeight();
 				rc.left = 0; rc.top = 0; rc.right = nW; rc.bottom = nH;
 
 				//2010-01-19
@@ -2518,7 +2519,7 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo, CVirt
 	// update size info
 	// !!! Это вроде делает консоль
 	WARNING("updateInfo убить");
-	/*if (updateInfo && !gpSet->isFullScreen && !isZoomed() && !isIconic())
+	/*if (updateInfo && !mb_isFullScreen && !isZoomed() && !isIconic())
 	{
 	    gpSet->UpdateSize(size.X, size.Y);
 	}*/
@@ -2594,13 +2595,13 @@ void CConEmuMain::SyncWindowToConsole()
 	//GetCWShift(ghWnd, &cwShift);
 	RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
 
-	if (gpSet->isAdvLogging)
+	if (gpSetCls->isAdvLogging)
 	{
 		char szInfo[128]; wsprintfA(szInfo, "SyncWindowToConsole(Cols=%i, Rows=%i)", mp_VActive->TextWidth, mp_VActive->TextHeight);
 		mp_VActive->RCon()->LogString(szInfo, TRUE);
 	}
 
-	gpSet->UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
+	gpSetCls->UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
 	MOVEWINDOW(ghWnd, wndR.left, wndR.top, rcWnd.right, rcWnd.bottom, 1);
 }
 
@@ -2642,7 +2643,7 @@ void CConEmuMain::AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom)
 
 				if (nFontH < 8) nFontH = 8;
 
-				gpSet->AutoRecreateFont(nFontW, nFontH);
+				gpSetCls->AutoRecreateFont(nFontW, nFontH);
 			}
 		}
 	}
@@ -2652,17 +2653,17 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 {
 	// Обновить коордианты в gpSet, если требуется
 	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
-	if ((change2WindowMode == -1) && !gpSet->isFullScreen && !isZoomed() && !isIconic())
+	if ((change2WindowMode == -1) && !mb_isFullScreen && !isZoomed() && !isIconic())
 	{
 		if (prcWnd)
 			mrc_StoredNormalRect = *prcWnd;
 		else
 			GetWindowRect(ghWnd, &mrc_StoredNormalRect);
 
-		gpSet->UpdatePos(mrc_StoredNormalRect.left, mrc_StoredNormalRect.top);
+		gpSetCls->UpdatePos(mrc_StoredNormalRect.left, mrc_StoredNormalRect.top);
 
 		if (mp_VActive)
-			gpSet->UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
+			gpSetCls->UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
 	}
 }
 
@@ -2678,7 +2679,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 	}
 
 	if (inMode == rFullScreen && gpSet->isDesktopMode)
-		inMode = (gpSet->isFullScreen || isZoomed()) ? rNormal : rMaximized; // FullScreen на Desktop-е невозможен
+		inMode = (mb_isFullScreen || isZoomed()) ? rNormal : rMaximized; // FullScreen на Desktop-е невозможен
 
 #ifdef _DEBUG
 	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
@@ -2713,7 +2714,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 		}
 	}
 
-	CRealConsole* pRCon = (gpSet->isAdvLogging!=0) ? ActiveCon()->RCon() : NULL;
+	CRealConsole* pRCon = (gpSetCls->isAdvLogging!=0) ? ActiveCon()->RCon() : NULL;
 
 	if (pRCon) pRCon->LogString((inMode==rNormal) ? "SetWindowMode(rNormal)" :
 		                           (inMode==rMaximized) ? "SetWindowMode(rMaximized)" :
@@ -2763,13 +2764,13 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				}
 				else if (IsWindowVisible(ghWnd))
 				{
-					if (pRCon && gpSet->isAdvLogging) pRCon->LogString("WM_SYSCOMMAND(SC_RESTORE)");
+					if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("WM_SYSCOMMAND(SC_RESTORE)");
 
 					DefWindowProc(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0); //2009-04-22 Было SendMessage
 				}
 				else
 				{
-					if (pRCon && gpSet->isAdvLogging) pRCon->LogString("ShowWindow(SW_SHOWNORMAL)");
+					if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("ShowWindow(SW_SHOWNORMAL)");
 
 					apiShowWindow(ghWnd, SW_SHOWNORMAL);
 				}
@@ -2781,7 +2782,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				if (mb_MaximizedHideCaption)
 					mb_MaximizedHideCaption = FALSE;
 
-				if (pRCon && gpSet->isAdvLogging) pRCon->LogString("OnSize(-1)");
+				if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("OnSize(-1)");
 
 				OnSize(-1); // подровнять ТОЛЬКО дочерние окошки
 			}
@@ -2803,7 +2804,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			GetWindowPlacement(ghWnd, &wpl);
 #endif
 
-			if (pRCon && gpSet->isAdvLogging)
+			if (pRCon && gpSetCls->isAdvLogging)
 			{
 				char szInfo[128]; wsprintfA(szInfo, "SetWindowPos(X=%i, Y=%i, W=%i, H=%i)", rcNew.left, rcNew.top, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top);
 				pRCon->LogString(szInfo);
@@ -2815,9 +2816,9 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 #endif
 
 			if (ghOpWnd)
-				CheckRadioButton(gpSet->hMain, rNormal, rFullScreen, rNormal);
+				CheckRadioButton(gpSetCls->hMain, rNormal, rFullScreen, rNormal);
 
-			gpSet->isFullScreen = false;
+			mb_isFullScreen = false;
 
 			if (!IsWindowVisible(ghWnd))
 				apiShowWindow(ghWnd, SW_SHOWNORMAL);
@@ -2846,7 +2847,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			DEBUGLOGFILE("SetWindowMode(rMaximized)\n");
 
 			// Обновить коордианты в gpSet, если требуется
-			if (!gpSet->isFullScreen && !isZoomed() && !isIconic())
+			if (!mb_isFullScreen && !isZoomed() && !isIconic())
 				StoreNormalRect(&rcWnd);
 
 			if (!gpSet->isHideCaption && !gpSet->isHideCaptionAlways())
@@ -2890,15 +2891,15 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 					mb_IgnoreSizeChange = FALSE;
 					RePaint();
 
-					if (pRCon && gpSet->isAdvLogging) pRCon->LogString("OnSize(-1).2");
+					if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("OnSize(-1).2");
 
 					OnSize(-1); // консоль уже изменила свой размер
 				}
 
 				if (ghOpWnd)
-					CheckRadioButton(gpSet->hMain, rNormal, rFullScreen, rMaximized);
+					CheckRadioButton(gpSetCls->hMain, rNormal, rFullScreen, rMaximized);
 
-				gpSet->isFullScreen = false;
+				mb_isFullScreen = false;
 
 				if (!IsWindowVisible(ghWnd))
 				{
@@ -2906,7 +2907,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 					apiShowWindow(ghWnd, SW_SHOWMAXIMIZED);
 					mb_IgnoreSizeChange = FALSE;
 
-					if (pRCon && gpSet->isAdvLogging) pRCon->LogString("OnSize(-1).3");
+					if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("OnSize(-1).3");
 
 					OnSize(-1); // консоль уже изменила свой размер
 				}
@@ -2916,7 +2917,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			else
 			{
 				// (gpSet->isHideCaption)
-				if (!isZoomed() || (gpSet->isFullScreen || isIconic()) || abForce)
+				if (!isZoomed() || (mb_isFullScreen || isIconic()) || abForce)
 				{
 					mb_MaximizedHideCaption = TRUE;
 					RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
@@ -2984,7 +2985,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 
 					// for virtual screens mi.rcWork. may contains negative values...
 
-					if (pRCon && gpSet->isAdvLogging)
+					if (pRCon && gpSetCls->isAdvLogging)
 					{
 						char szInfo[128]; wsprintfA(szInfo, "SetWindowPos(X=%i, Y=%i, W=%i, H=%i)", -rcShift.left+mi.rcWork.left,-rcShift.top+mi.rcWork.top, ptFullScreenSize.x,ptFullScreenSize.y);
 						pRCon->LogString(szInfo);
@@ -2996,10 +2997,10 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 					                   SWP_NOZORDER);
 
 					if (ghOpWnd)
-						CheckRadioButton(gpSet->hMain, rNormal, rMaximized, rMaximized);
+						CheckRadioButton(gpSetCls->hMain, rNormal, rMaximized, rMaximized);
 				}
 
-				gpSet->isFullScreen = false;
+				mb_isFullScreen = false;
 
 				if (!IsWindowVisible(ghWnd))
 				{
@@ -3007,7 +3008,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 					apiShowWindow(ghWnd, SW_SHOWNORMAL);
 					mb_IgnoreSizeChange = FALSE;
 
-					if (pRCon && gpSet->isAdvLogging) pRCon->LogString("OnSize(-1).3");
+					if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("OnSize(-1).3");
 
 					OnSize(-1);  // консоль уже изменила свой размер
 				}
@@ -3019,10 +3020,10 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			DEBUGLOGFILE("SetWindowMode(rFullScreen)\n");
 
 			// Обновить коордианты в gpSet, если требуется
-			if (!gpSet->isFullScreen && !isZoomed() && !isIconic())
+			if (!mb_isFullScreen && !isZoomed() && !isIconic())
 				StoreNormalRect(&rcWnd);
 
-			if (!gpSet->isFullScreen || (isZoomed() || isIconic()))
+			if (!mb_isFullScreen || (isZoomed() || isIconic()))
 			{
 				RECT rcMax = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
 				AutoSizeFont(rcMax, CER_MAINCLIENT);
@@ -3036,7 +3037,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 					goto wrap;
 				}
 
-				gpSet->isFullScreen = true;
+				mb_isFullScreen = true;
 				isWndNotFSMaximized = isZoomed();
 				RECT rcShift = CalcMargins(CEM_FRAME);
 				//GetCWShift(ghWnd, &rcShift); // Обновить, на всякий случай
@@ -3079,7 +3080,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 
 				// for virtual screens mi.rcMonitor. may contains negative values...
 
-				if (pRCon && gpSet->isAdvLogging)
+				if (pRCon && gpSetCls->isAdvLogging)
 				{
 					char szInfo[128]; wsprintfA(szInfo, "SetWindowPos(X=%i, Y=%i, W=%i, H=%i)", -rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top, ptFullScreenSize.x,ptFullScreenSize.y);
 					pRCon->LogString(szInfo);
@@ -3095,7 +3096,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				                   SWP_NOZORDER);
 
 				if (ghOpWnd)
-					CheckRadioButton(gpSet->hMain, rNormal, rFullScreen, rFullScreen);
+					CheckRadioButton(gpSetCls->hMain, rNormal, rFullScreen, rFullScreen);
 			}
 
 			if (!IsWindowVisible(ghWnd))
@@ -3104,7 +3105,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				apiShowWindow(ghWnd, SW_SHOWNORMAL);
 				mb_IgnoreSizeChange = FALSE;
 
-				if (pRCon && gpSet->isAdvLogging) pRCon->LogString("OnSize(-1).3");
+				if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("OnSize(-1).3");
 
 				OnSize(-1);  // консоль уже изменила свой размер
 			}
@@ -3112,7 +3113,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			break;
 	}
 
-	if (pRCon && gpSet->isAdvLogging) pRCon->LogString("SetWindowMode done");
+	if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("SetWindowMode done");
 
 	WindowMode = inMode; // Запомним!
 	canEditWindowSizes = inMode == rNormal;
@@ -3133,12 +3134,12 @@ wrap:
 	// полноэкранности у панели задач. Вернем его...
 	if (mp_TaskBar2)
 	{
-		if (bWasSetFullscreen != gpSet->isFullScreen)
+		if (bWasSetFullscreen != mb_isFullScreen)
 		{
 			if (!gpSet->isDesktopMode)
-				mp_TaskBar2->MarkFullscreenWindow(ghWnd, gpSet->isFullScreen);
+				mp_TaskBar2->MarkFullscreenWindow(ghWnd, mb_isFullScreen);
 
-			bWasSetFullscreen = gpSet->isFullScreen;
+			bWasSetFullscreen = mb_isFullScreen;
 		}
 	}
 
@@ -3215,6 +3216,19 @@ bool CConEmuMain::isZoomed()
 	return bZoomed;
 }
 
+bool CConEmuMain::isFullScreen()
+{
+	if (mb_isFullScreen)
+	{
+		if (isZoomed())
+		{
+			_ASSERTE(mb_isFullScreen==false && isZoomed());
+			return false;
+		}
+	}
+	return mb_isFullScreen;
+}
+
 void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 {
 	if (isIconic())
@@ -3227,7 +3241,7 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 
 	if (abCorrect2Ideal)
 	{
-		if (!isZoomed() && !gpSet->isFullScreen)
+		if (!isZoomed() && !mb_isFullScreen)
 		{
 			// Выполняем всегда, даже если размер уже соответсвует...
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
@@ -3293,7 +3307,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 
 	if (!abPosted)
 	{
-		if (gpSet->isAdvLogging)
+		if (gpSetCls->isAdvLogging)
 			mp_VActive->RCon()->LogString("OnConsoleResize(abPosted==false)", TRUE);
 
 		if (!lbPosted)
@@ -3313,7 +3327,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 
 	if (isIconic())
 	{
-		if (gpSet->isAdvLogging)
+		if (gpSetCls->isAdvLogging)
 			mp_VActive->RCon()->LogString("OnConsoleResize ignored, because of iconic");
 
 		return; // если минимизировано - ничего не делать
@@ -3330,7 +3344,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 		mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 	}
 
-	if (gpSet->isAdvLogging)
+	if (gpSetCls->isAdvLogging)
 	{
 		char szInfo[160]; wsprintfA(szInfo, "OnConsoleResize: mouse.state=0x%08X, SizingToDo=%i, IsSizing=%i, LBtnPressed=%i, gbPostUpdateWindowSize=%i",
 		                            mouse.state, (int)lbSizingToDo, (int)lbIsSizing, (int)lbLBtnPressed, (int)gbPostUpdateWindowSize);
@@ -3356,7 +3370,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 			lbSizeChanged = (c.right != nCurConWidth || c.bottom != nCurConHeight);
 		}
 
-		if (gpSet->isAdvLogging)
+		if (gpSetCls->isAdvLogging)
 		{
 			char szInfo[160]; wsprintfA(szInfo, "OnConsoleResize: lbSizeChanged=%i, client={{%i,%i},{%i,%i}}, CalcCon={%i,%i}, CurCon={%i,%i}",
 			                            lbSizeChanged, client.left, client.top, client.right, client.bottom,
@@ -3377,7 +3391,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 			}
 			else
 			{
-				if (!gpSet->isFullScreen && !isZoomed() && !lbSizingToDo)
+				if (!mb_isFullScreen && !isZoomed() && !lbSizingToDo)
 					SyncWindowToConsole();
 				else
 					SyncConsoleToWindow();
@@ -3395,7 +3409,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 			if (lbSizingToDo)
 				UpdateIdealRect();
 
-			//if (lbSizingToDo && !gpSet->isFullScreen && !isZoomed() && !isIconic()) {
+			//if (lbSizingToDo && !mb_isFullScreen && !isZoomed() && !isIconic()) {
 			//	GetWindowRect(ghWnd, &mrc_Ideal);
 			//}
 		}
@@ -3464,7 +3478,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 	}
 
 	// Запомнить "идеальный" размер окна, выбранный пользователем
-	if (isSizing() && !gpSet->isFullScreen && !isZoomed() && !isIconic())
+	if (isSizing() && !mb_isFullScreen && !isZoomed() && !isIconic())
 	{
 		GetWindowRect(ghWnd, &mrc_Ideal);
 	}
@@ -3493,7 +3507,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 	if (mp_VActive && mp_VActive->Width && mp_VActive->Height)
 	{
-		if ((gpSet->isTryToCenter && (isZoomed() || gpSet->isFullScreen))
+		if ((gpSet->isTryToCenter && (isZoomed() || mb_isFullScreen))
 		        || isNtvdm())
 		{
 			rcNewCon.left = (client.right+client.left-(int)mp_VActive->Width)/2;
@@ -3550,7 +3564,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 	wsprintfA(szDbg, "CConEmuMain::OnSizing(wParam=%i, L.Lo=%i, L.Hi=%i)\n",
 	          wParam, LOWORD(lParam), HIWORD(lParam));
 
-	if (gpSet->isAdvLogging)
+	if (gpSetCls->isAdvLogging)
 		mp_VActive->RCon()->LogString(szDbg);
 
 #endif
@@ -3573,7 +3587,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 		{
 			// не менять для 16бит приложений
 		}
-		else if (!gpSet->isFullScreen && !isZoomed())
+		else if (!mb_isFullScreen && !isZoomed())
 		{
 			RECT srctWindow;
 			RECT wndSizeRect, restrictRect, calcRect;
@@ -3588,7 +3602,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 
 			wndSizeRect = *pRect;
 			// Для красивости рамки под мышкой
-			LONG nWidth = gpSet->FontWidth(), nHeight = gpSet->FontHeight();
+			LONG nWidth = gpSetCls->FontWidth(), nHeight = gpSetCls->FontHeight();
 
 			if (nWidth && nHeight)
 			{
@@ -3659,6 +3673,143 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 #endif
 			}
 		}
+
+	return result;
+}
+
+LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 0; // DefWindowProc зовется в середине функции
+
+	// Если нужно поправить параметры DWM
+	gpConEmu->ExtendWindowFrame();
+
+	static int WindowPosStackCount = 0;
+	WINDOWPOS *p = (WINDOWPOS*)lParam;
+	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+
+	#ifdef _DEBUG
+	static int cx, cy;
+
+	if (!(p->flags & SWP_NOSIZE) && (cx != p->cx || cy != p->cy))
+	{
+		cx = p->cx; cy = p->cy;
+	}
+	#endif
+
+	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGED ({%i-%i}x{%i-%i} Flags=0x%08X), style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
+	DEBUGSTRSIZE(szDbg);
+	WindowPosStackCount++;
+
+	if (WindowPosStackCount == 1)
+	{
+		bool bNoMove = (p->flags & SWP_NOMOVE);
+		bool bNoSize = (p->flags & SWP_NOSIZE);
+
+		if (gpConEmu->CorrectWindowPos(p))
+		{
+			MoveWindow(ghWnd, p->x, p->y, p->cx, p->cy, TRUE);
+		}
+	}
+
+	// Иначе могут не вызваться события WM_SIZE/WM_MOVE
+	result = DefWindowProc(hWnd, uMsg, wParam, lParam);
+	WindowPosStackCount--;
+
+	if (hWnd == ghWnd /*&& ghOpWnd*/)  //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
+	{
+		if (!gpConEmu->mb_IgnoreSizeChange && !gpConEmu->isFullScreen() && !gpConEmu->isZoomed() && !gpConEmu->isIconic())
+		{
+			RECT rc; GetWindowRect(ghWnd, &rc);
+			//gpSet->UpdatePos(rc.left, rc.top);
+			gpConEmu->StoreNormalRect(&rc);
+
+			if (gpConEmu->hPictureView)
+			{
+				gpConEmu->mrc_WndPosOnPicView = rc;
+			}
+
+			//else
+			//{
+			//	TODO("Доработать, когда будет ресайз PicView на лету");
+			//	if (!(p->flags & SWP_NOSIZE))
+			//	{
+			//		RECT rcWnd = {0,0,p->cx,p->cy};
+			//		ActiveCon()->RCon()->SyncConsole2Window(FALSE, &rcWnd);
+			//	}
+			//}
+		}
+	}
+	else if (gpConEmu->hPictureView)
+	{
+		GetWindowRect(ghWnd, &gpConEmu->mrc_WndPosOnPicView);
+	}
+
+	return result;
+}
+
+LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 0;
+
+	WINDOWPOS *p = (WINDOWPOS*)lParam;
+	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+
+	#ifdef _DEBUG
+	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X) style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
+	DEBUGSTRSIZE(szDbg);
+	static int cx, cy;
+
+	if (!(p->flags & SWP_NOSIZE) && (cx != p->cx || cy != p->cy))
+	{
+		cx = p->cx; cy = p->cy;
+	}
+	#endif
+
+	//if (gpSet->isDontMinimize) {
+	//	if ((p->flags & (0x8000|SWP_NOACTIVATE)) == (0x8000|SWP_NOACTIVATE)
+	//		|| ((p->flags & (SWP_NOMOVE|SWP_NOSIZE)) == 0 && p->x < -30000 && p->y < -30000 )
+	//		)
+	//	{
+	//		p->flags = SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE;
+	//		p->hwndInsertAfter = HWND_BOTTOM;
+	//		result = 0;
+	//		if ((dwStyle & WS_MINIMIZE) == WS_MINIMIZE) {
+	//			dwStyle &= ~WS_MINIMIZE;
+	//			SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
+	//			gpConEmu->InvalidateAll();
+	//		}
+	//		break;
+	//	}
+	//}
+
+	if (!(p->flags & SWP_NOSIZE)
+	        && (hWnd == ghWnd) && !gpConEmu->mb_IgnoreSizeChange
+	        && !mb_isFullScreen && !isZoomed() && !isIconic())
+	{
+		if (!hPictureView)
+		{
+			TODO("Доработать, когда будет ресайз PicView на лету");
+			RECT rcWnd = {0,0,p->cx,p->cy};
+			CVirtualConsole* pVCon = ActiveCon();
+
+			if (pVCon && pVCon->RCon())
+				pVCon->RCon()->SyncConsole2Window(FALSE, &rcWnd);
+		}
+	}
+
+	/*
+	-- DWM, Glass --
+	dwmm.cxLeftWidth = 0;
+	dwmm.cxRightWidth = 0;
+	dwmm.cyTopHeight = kClientRectTopOffset;
+	dwmm.cyBottomHeight = 0;
+	DwmExtendFrameIntoClientArea(hwnd, &dwmm);
+	-- DWM, Glass --
+	*/
+	// Иначе не вызвутся события WM_SIZE/WM_MOVE
+	result = DefWindowProc(hWnd, uMsg, wParam, lParam);
+	p = (WINDOWPOS*)lParam;
 
 	return result;
 }
@@ -4169,7 +4320,7 @@ void CConEmuMain::UpdateFarSettings()
 void CConEmuMain::UpdateIdealRect(BOOL abAllowUseConSize/*=FALSE*/)
 {
 	// Запомнить "идеальный" размер окна, выбранный пользователем
-	if (!gpSet->isFullScreen && !isZoomed() && !isIconic())
+	if (!mb_isFullScreen && !isZoomed() && !isIconic())
 	{
 		GetWindowRect(ghWnd, &mrc_Ideal);
 	}
@@ -4432,8 +4583,8 @@ void CConEmuMain::PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0
 	}
 	else
 	{
-		if (gpSet)
-			gpSet->MacroFontSetName(pszFontName, anHeight, anWidth);
+		if (gpSetCls)
+			gpSetCls->MacroFontSetName(pszFontName, anHeight, anWidth);
 		free(pszFontName);
 	}
 }
@@ -5149,7 +5300,7 @@ void CConEmuMain::ShowSysmenu(int x, int y)
 		GetClientRect(ghWnd, &cRect);
 		WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
 		int nTabShift =
-		    ((gpSet->isHideCaptionAlways() || gpSet->isFullScreen) && gpConEmu->mp_TabBar->IsTabsShown())
+		    ((gpSet->isHideCaptionAlways() || mb_isFullScreen) && gpConEmu->mp_TabBar->IsTabsShown())
 		    ? gpConEmu->mp_TabBar->GetTabbarHeight() : 0;
 
 		if (x == -32000)
@@ -5352,30 +5503,30 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 	DWORD nProgramStatus = mp_VActive->RCon()->GetProgramStatus();
 	DWORD nFarStatus = mp_VActive->RCon()->GetFarStatus();
 	if (nProgramStatus&CES_TELNETACTIVE) wcscat_c(szFlags, L"Telnet ");
-	//CheckDlgButton(gpSet->hInfo, cbsTelnetActive, (nProgramStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(gpSetCls->hInfo, cbsTelnetActive, (nProgramStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
 	if (nProgramStatus&CES_NTVDM) wcscat_c(szFlags, L"16bit ");
-	//CheckDlgButton(gpSet->hInfo, cbsNtvdmActive, (nProgramStatus&CES_NTVDM) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(gpSetCls->hInfo, cbsNtvdmActive, (nProgramStatus&CES_NTVDM) ? BST_CHECKED : BST_UNCHECKED);
 	if (nProgramStatus&CES_FARACTIVE) wcscat_c(szFlags, L"Far ");
-	//CheckDlgButton(gpSet->hInfo, cbsFarActive, (nProgramStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(gpSetCls->hInfo, cbsFarActive, (nProgramStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
 	if (nFarStatus&CES_FILEPANEL) wcscat_c(szFlags, L"Panels ");
-	//CheckDlgButton(gpSet->hInfo, cbsFilePanel, (nFarStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(gpSetCls->hInfo, cbsFilePanel, (nFarStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
 	if (nFarStatus&CES_EDITOR) wcscat_c(szFlags, L"Editor ");
-	//CheckDlgButton(gpSet->hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(gpSetCls->hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
 	if (nFarStatus&CES_VIEWER) wcscat_c(szFlags, L"Viewer ");
-	//CheckDlgButton(gpSet->hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(gpSetCls->hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
 	if (nFarStatus&CES_WASPROGRESS) wcscat_c(szFlags, L"%%Progress ");
-	//CheckDlgButton(gpSet->hInfo, cbsProgress, ((nFarStatus&CES_WASPROGRESS) /*|| mp_VActive->RCon()->GetProgress(NULL)>=0*/) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(gpSetCls->hInfo, cbsProgress, ((nFarStatus&CES_WASPROGRESS) /*|| mp_VActive->RCon()->GetProgress(NULL)>=0*/) ? BST_CHECKED : BST_UNCHECKED);
 	if (nFarStatus&CES_OPER_ERROR) wcscat_c(szFlags, L"%%Error ");
-	//CheckDlgButton(gpSet->hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(gpSetCls->hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
 	_wsprintf(szNo, SKIPLEN(countof(szNo)) L"%i/%i", mp_VActive->RCon()->GetFarPID(), mp_VActive->RCon()->GetFarPID(TRUE));
-	SetDlgItemText(gpSet->hInfo, tsTopPID, szNo);
-	SetDlgItemText(gpSet->hInfo, tsRConFlags, szFlags);
+	SetDlgItemText(gpSetCls->hInfo, tsTopPID, szNo);
+	SetDlgItemText(gpSetCls->hInfo, tsRConFlags, szFlags);
 
 	if (!abForce)
 		return;
 
 	MCHKHEAP
-	SendDlgItemMessage(gpSet->hInfo, lbProcesses, LB_RESETCONTENT, 0, 0);
+	SendDlgItemMessage(gpSetCls->hInfo, lbProcesses, LB_RESETCONTENT, 0, 0);
 	wchar_t temp[MAX_PATH];
 
 	for (size_t j = 0; j < countof(mp_VCon); j++)
@@ -5394,7 +5545,7 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 
 			swprintf(temp+_tcslen(temp), _T("[%i.%i] %s - PID:%i"),
 			         j+1, i, pPrc[i].Name, pPrc[i].ProcessID);
-			SendDlgItemMessage(gpSet->hInfo, lbProcesses, LB_ADDSTRING, 0, (LPARAM)temp);
+			SendDlgItemMessage(gpSetCls->hInfo, lbProcesses, LB_ADDSTRING, 0, (LPARAM)temp);
 		}
 
 		if (pPrc) { free(pPrc); pPrc = NULL; }
@@ -5405,7 +5556,7 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 
 void CConEmuMain::UpdateCursorInfo(COORD crCursor, CONSOLE_CURSOR_INFO cInfo)
 {
-	if (!ghOpWnd || !gpSet->hInfo) return;
+	if (!ghOpWnd || !gpSetCls->hInfo) return;
 
 	if (!isMainThread())
 	{
@@ -5419,7 +5570,7 @@ void CConEmuMain::UpdateCursorInfo(COORD crCursor, CONSOLE_CURSOR_INFO cInfo)
 	_wsprintf(szCursor, SKIPLEN(countof(szCursor)) _T("%ix%i, %i %s"),
 		(int)crCursor.X, (int)crCursor.Y,
 		cInfo.dwSize, cInfo.bVisible ? L"vis" : L"hid");
-	SetDlgItemText(gpSet->hInfo, tCursorPos, szCursor);
+	SetDlgItemText(gpSetCls->hInfo, tCursorPos, szCursor);
 }
 
 void CConEmuMain::UpdateSizes()
@@ -5427,7 +5578,7 @@ void CConEmuMain::UpdateSizes()
 	POINT ptCur = {}; GetCursorPos(&ptCur);
 	HWND hPoint = WindowFromPoint(ptCur);
 
-	if (!ghOpWnd || !gpSet->hInfo)
+	if (!ghOpWnd || !gpSetCls->hInfo)
 	{
 		// Может курсор-сплиттер нужно убрать или поставить
 		if (hPoint && ((hPoint == ghWnd) || (GetParent(hPoint) == ghWnd)))
@@ -5455,10 +5606,10 @@ void CConEmuMain::UpdateSizes()
 	}
 	else
 	{
-		SetDlgItemText(gpSet->hInfo, tConSizeChr, _T("?"));
-		SetDlgItemText(gpSet->hInfo, tConSizePix, _T("?"));
-		SetDlgItemText(gpSet->hInfo, tPanelLeft, _T("?"));
-		SetDlgItemText(gpSet->hInfo, tPanelRight, _T("?"));
+		SetDlgItemText(gpSetCls->hInfo, tConSizeChr, _T("?"));
+		SetDlgItemText(gpSetCls->hInfo, tConSizePix, _T("?"));
+		SetDlgItemText(gpSetCls->hInfo, tPanelLeft, _T("?"));
+		SetDlgItemText(gpSetCls->hInfo, tPanelRight, _T("?"));
 	}
 
 	HWND hWndDC = mp_VActive ? mp_VActive->GetView() : NULL;
@@ -5466,11 +5617,11 @@ void CConEmuMain::UpdateSizes()
 	{
 		RECT rcClient; GetClientRect(hWndDC, &rcClient);
 		TCHAR szSize[32]; _wsprintf(szSize, SKIPLEN(countof(szSize)) _T("%ix%i"), rcClient.right, rcClient.bottom);
-		SetDlgItemText(gpSet->hInfo, tDCSize, szSize);
+		SetDlgItemText(gpSetCls->hInfo, tDCSize, szSize);
 	}
 	else
 	{
-		SetDlgItemText(gpSet->hInfo, tDCSize, L"<none>");
+		SetDlgItemText(gpSetCls->hInfo, tDCSize, L"<none>");
 	}
 }
 
@@ -5693,7 +5844,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			//A new console process has started.
 			//The idObject parameter contains the process identifier of the newly created process.
 			//If the application is a 16-bit application, the idChild parameter is CONSOLE_APPLICATION_16BIT and idObject is the process identifier of the NTVDM session associated with the console.
-			if ((idChild == CONSOLE_APPLICATION_16BIT) && gpSet->isAdvLogging)
+			if ((idChild == CONSOLE_APPLICATION_16BIT) && gpSetCls->isAdvLogging)
 			{
 				char szInfo[64]; wsprintfA(szInfo, "NTVDM started, PID=%i\n", idObject);
 				gpConEmu->mp_VActive->RCon()->LogString(szInfo, TRUE);
@@ -5708,7 +5859,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 
 			//A console process has exited.
 			//The idObject parameter contains the process identifier of the terminated process.
-			if ((idChild == CONSOLE_APPLICATION_16BIT) && gpSet->isAdvLogging)
+			if ((idChild == CONSOLE_APPLICATION_16BIT) && gpSetCls->isAdvLogging)
 			{
 				char szInfo[64]; wsprintfA(szInfo, "NTVDM stopped, PID=%i\n", idObject);
 				gpConEmu->mp_VActive->RCon()->LogString(szInfo, TRUE);
@@ -6388,7 +6539,7 @@ void CConEmuMain::PaintGaps(HDC hDC)
 
 		if (mp_VActive && mp_VActive->Width && mp_VActive->Height)
 		{
-			if ((gpSet->isTryToCenter && (isZoomed() || gpSet->isFullScreen))
+			if ((gpSet->isTryToCenter && (isZoomed() || mb_isFullScreen))
 					|| isNtvdm())
 			{
 				offsetRect.left = (client.right+client.left-(int)mp_VActive->Width)/2;
@@ -6924,7 +7075,7 @@ bool CConEmuMain::isWindowNormal()
 		return (change2WindowMode == rNormal);
 	}
 
-	if (gpSet->isFullScreen || isZoomed() || isIconic())
+	if (mb_isFullScreen || isZoomed() || isIconic())
 		return false;
 
 	return true;
@@ -7012,7 +7163,7 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 {
 	if ((gpSet->isMonitorConsoleLang & 1) == 0)
 	{
-		if (gpSet->isAdvLogging > 1)
+		if (gpSetCls->isAdvLogging > 1)
 			mp_VActive->RCon()->LogString(L"CConEmuMain::SwitchKeyboardLayout skipped, cause of isMonitorConsoleLang==0");
 
 		return;
@@ -7053,7 +7204,7 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 		DEBUGSTRLANG(szDbg);
 #endif
 
-		if (gpSet->isAdvLogging > 1)
+		if (gpSetCls->isAdvLogging > 1)
 		{
 			wchar_t szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::SwitchKeyboardLayout, posting WM_INPUTLANGCHANGEREQUEST, WM_INPUTLANGCHANGE for 0x%08X",
@@ -7067,7 +7218,7 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 	}
 	else
 	{
-		if (gpSet->isAdvLogging > 1)
+		if (gpSetCls->isAdvLogging > 1)
 		{
 			wchar_t szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::SwitchKeyboardLayout skipped, cause of GetActiveKeyboardLayout()==0x%08X",
@@ -7495,7 +7646,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
 	//           ID_ALWAYSONTOP, _T("Al&ways on top"));
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->AutoScroll ? MF_CHECKED : 0),
+	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSetCls->AutoScroll ? MF_CHECKED : 0),
 	//           ID_AUTOSCROLL, _T("Auto scro&ll"));
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_NEWCONSOLE, _T("&New console..."));
@@ -7576,16 +7727,16 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 		//SetWindowRgn(ghWnd, CreateWindowRgn(), TRUE);
 
-		if (gpSet->szFontError[0])
+		if (gpSetCls->szFontError[0])
 		{
-			MBoxA(gpSet->szFontError);
-			gpSet->szFontError[0] = 0;
+			MBoxA(gpSetCls->szFontError);
+			gpSetCls->szFontError[0] = 0;
 		}
 
-		if (!gpSet->CheckConsoleFontFast())
+		if (!gpSetCls->CheckConsoleFontFast())
 		{
 			gbDontEnable = TRUE;
-			gpSet->EditConsoleFont(ghWnd);
+			gpSetCls->EditConsoleFont(ghWnd);
 			gbDontEnable = FALSE;
 		}
 		
@@ -7595,7 +7746,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		gpSet->CheckConsoleSettings();
 
 		if (gpSet->isShowBgImage)
-			gpSet->LoadBackgroundFile(gpSet->sBgImage);
+			gpSetCls->LoadBackgroundFile(gpSet->sBgImage);
 
 		if (mp_VActive == NULL || !gpConEmu->mb_StartDetached)  // Консоль уже может быть создана, если пришел Attach из ConEmuC
 		{
@@ -7727,7 +7878,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 								wchar_t* pszEnd = NULL;
 								long lBufHeight = wcstol(pszLine, &pszEnd, 10);
-								gpSet->SetArgBufferHeight(lBufHeight);
+								gpSetCls->SetArgBufferHeight(lBufHeight);
 
 								if (pszEnd) pszLine = pszEnd;
 							}
@@ -7813,9 +7964,9 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 				// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
 				// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
-				if (gpSet->SingleInstanceArg)
+				if (gpSetCls->SingleInstanceArg)
 				{
-					gpSet->ResetCmdArg();
+					gpSetCls->ResetCmdArg();
 				}
 
 				lbCreated = TRUE;
@@ -8357,7 +8508,7 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	//pInfo->ptMinTrackSize.y = srctWindow.Y * (gpSet->Log Font.lfHeight ? gpSet->Log Font.lfHeight : 6)
 	//  + p.y + shiftRect.top + shiftRect.bottom;
 
-	if (gpSet->isFullScreen)
+	if (mb_isFullScreen)
 	{
 		if (pInfo->ptMaxTrackSize.x < ptFullScreenSize.x)
 			pInfo->ptMaxTrackSize.x = ptFullScreenSize.x;
@@ -8409,11 +8560,11 @@ void CConEmuMain::OnHideCaption()
 	//OnSize(-1);
 	//mp_TabBar->OnCaptionHidden();
 	//mb_SkipSyncSize = FALSE;
-	//if (!gpSet->isFullScreen && !isZoomed() && !isIconic()) {
+	//if (!mb_isFullScreen && !isZoomed() && !isIconic()) {
 	//	RECT rcCon = MakeRect(gpSet->wndWidth,gpSet->wndHeight);
 	//	RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE); // размеры окна
 	//	RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
-	//	if (gpSet->isAdvLogging) {
+	//	if (gpSetCls->isAdvLogging) {
 	//		char szInfo[128]; wsprintfA(szInfo, "OnHideCaption(Cols=%i, Rows=%i)", gpSet->wndWidth,gpSet->wndHeight);
 	//		mp_VActive->RCon()->LogString(szInfo);
 	//	}
@@ -8454,14 +8605,14 @@ void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 		gpSet->ThSet.crFadePalette[i] = (pcrFade[i]) & 0xFFFFFF;
 	}
 
-	gpSet->ThSet.nFontQuality = gpSet->FontQuality();
+	gpSet->ThSet.nFontQuality = gpSetCls->FontQuality();
 	
 	// Параметры основного шрифта ConEmu
 	FillConEmuMainFont(&gpSet->ThSet.MainFont);
 	//lstrcpy(gpSet->ThSet.MainFont.sFontName, gpSet->FontFaceName());
-	//gpSet->ThSet.MainFont.nFontHeight = gpSet->FontHeight();
-	//gpSet->ThSet.MainFont.nFontWidth = gpSet->FontWidth();
-	//gpSet->ThSet.MainFont.nFontCellWidth = gpSet->FontSizeX3 ? gpSet->FontSizeX3 : gpSet->FontWidth();
+	//gpSet->ThSet.MainFont.nFontHeight = gpSetCls->FontHeight();
+	//gpSet->ThSet.MainFont.nFontWidth = gpSetCls->FontWidth();
+	//gpSet->ThSet.MainFont.nFontCellWidth = gpSet->FontSizeX3 ? gpSet->FontSizeX3 : gpSetCls->FontWidth();
 	//gpSet->ThSet.MainFont.nFontQuality = gpSet->FontQuality();
 	//gpSet->ThSet.MainFont.nFontCharSet = gpSet->FontCharSet();
 	//gpSet->ThSet.MainFont.Bold = gpSet->FontBold();
@@ -8470,7 +8621,7 @@ void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 	//gpSet->ThSet.MainFont.nBorderFontWidth = gpSet->BorderFontWidth();
 	
 	// Применить в мэппинг (используется в "Panel View" и "Background"-плагинах
-	bool lbChanged = gpSet->m_ThSetMap.SetFrom(&gpSet->ThSet);
+	bool lbChanged = gpSetCls->m_ThSetMap.SetFrom(&gpSet->ThSet);
 
 	if (abSendChanges && lbChanged)
 	{
@@ -8501,9 +8652,9 @@ void CConEmuMain::OnTaskbarSettingsChanged()
 
 void CConEmuMain::OnAltEnter()
 {
-	if (!gpSet->isFullScreen)
+	if (!mb_isFullScreen)
 		gpConEmu->SetWindowMode(rFullScreen);
-	else if (gpSet->isDesktopMode && (gpSet->isFullScreen || gpConEmu->isZoomed()))
+	else if (gpSet->isDesktopMode && (mb_isFullScreen || gpConEmu->isZoomed()))
 		gpConEmu->SetWindowMode(rNormal);
 	else
 		gpConEmu->SetWindowMode(gpConEmu->isWndNotFSMaximized ? rMaximized : rNormal);
@@ -8517,7 +8668,7 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 		return;
 	}
 
-	gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(gpSet->isFullScreen/*&&gpConEmu->isWndNotFSMaximized*/)) ? rNormal : rMaximized);
+	gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(mb_isFullScreen/*&&gpConEmu->isWndNotFSMaximized*/)) ? rNormal : rMaximized);
 }
 
 void CConEmuMain::OnMinimizeRestore()
@@ -9121,7 +9272,7 @@ LRESULT CConEmuMain::OnKeyboardHook(WORD vk, BOOL abReverse)
 	}
 	else if (gpSet->isUseWinArrows && (vk == VK_LEFT || vk == VK_RIGHT || vk == VK_UP || vk == VK_DOWN))
 	{
-		if (gpSet->isFullScreen || isZoomed() || isIconic())
+		if (mb_isFullScreen || isZoomed() || isIconic())
 		{
 			// ничего не делать
 		}
@@ -9132,8 +9283,8 @@ LRESULT CConEmuMain::OnKeyboardHook(WORD vk, BOOL abReverse)
 			if (GetWindowRect(ghWnd, &rcWindow))
 			{
 				RECT rcMon = CalcRect(CER_MONITOR, rcWindow, CER_MONITOR, pVCon);
-				int nX = gpSet->FontWidth();
-				int nY = gpSet->FontHeight();
+				int nX = gpSetCls->FontWidth();
+				int nY = gpSetCls->FontHeight();
 				if (vk == VK_LEFT)
 				{
 					rcWindow.right = rcWindow.right - nX;
@@ -9323,7 +9474,7 @@ LRESULT CConEmuMain::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			//{
 			//	IMECHARPOSITION* p = (IMECHARPOSITION*)lParam;
 			//	GetWindowRect(ghWnd DC, &p->rcDocument);
-			//	p->cLineHeight = gpSet->FontHeight();
+			//	p->cLineHeight = gpSetCls->FontHeight();
 			//	if (mp_VActive && mp_VActive->RCon())
 			//	{
 			//		COORD crCur = {};
@@ -9415,7 +9566,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	DEBUGSTRLANG(szMsg);
 #endif
 
-	if (gpSet->isAdvLogging > 1)
+	if (gpSetCls->isAdvLogging > 1)
 	{
 		WCHAR szInfo[255];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChange: %s(CP:%i, HKL:0x%08I64X)",
@@ -9555,7 +9706,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 
 	if (!isMainThread())
 	{
-		if (gpSet->isAdvLogging > 1)
+		if (gpSetCls->isAdvLogging > 1)
 		{
 			WCHAR szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole (0x%08X), Posting to main thread", dwLayoutName);
@@ -9567,7 +9718,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 	}
 	else
 	{
-		if (gpSet->isAdvLogging > 1)
+		if (gpSetCls->isAdvLogging > 1)
 		{
 			WCHAR szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole (0x%08X), MainThread", dwLayoutName);
@@ -9647,7 +9798,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 		wchar_t szLayoutName[9] = {0};
 		_wsprintf(szLayoutName, SKIPLEN(countof(szLayoutName)) L"%08X", dwLayoutName);
 
-		if (gpSet->isAdvLogging > 1)
+		if (gpSetCls->isAdvLogging > 1)
 		{
 			WCHAR szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole -> LoadKeyboardLayout(0x%08X)", dwLayoutName);
@@ -9656,7 +9807,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 
 		dwNewKeybLayout = (DWORD_PTR)LoadKeyboardLayout(szLayoutName, 0);
 
-		if (gpSet->isAdvLogging > 1)
+		if (gpSetCls->isAdvLogging > 1)
 		{
 			WCHAR szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole -> LoadKeyboardLayout()=0x%08X", (DWORD)dwNewKeybLayout);
@@ -9800,7 +9951,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (!pVCon)
 		return 0;
 
-	if (gpSet->FontWidth()==0 || gpSet->FontHeight()==0)
+	if (gpSetCls->FontWidth()==0 || gpSetCls->FontHeight()==0)
 		return 0;
 
 #ifdef _DEBUG
@@ -10441,7 +10592,7 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 	mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
 	mouse.bIgnoreMouseMove = false;
 
-	if (gpSet->isAdvLogging)
+	if (gpSetCls->isAdvLogging)
 	{
 		char szLog[100];
 		wsprintfA(szLog, "Right button down: Rcursor={%i-%i}", (int)Rcursor.x, (int)Rcursor.y);
@@ -10465,7 +10616,7 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 			{
 				mouse.state = DRAG_R_ALLOWED;
 
-				if (gpSet->isAdvLogging) pVCon->RCon()->LogString("RightClick ignored of gpSet->nRDragKey pressed");
+				if (gpSetCls->isAdvLogging) pVCon->RCon()->LogString("RightClick ignored of gpSet->nRDragKey pressed");
 
 				return 0;
 			}
@@ -10486,7 +10637,7 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 		}
 		else
 		{
-			if (gpSet->isAdvLogging)
+			if (gpSetCls->isAdvLogging)
 				pVCon->RCon()->LogString(
 					gpSet->isDisableMouse ? "RightClick ignored of gpSet->isDisableMouse" :
 				    !gpSet->isRClickSendKey ? "RightClick ignored of !gpSet->isRClickSendKey" :
@@ -10496,7 +10647,7 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 	}
 	else
 	{
-		if (gpSet->isAdvLogging)
+		if (gpSetCls->isAdvLogging)
 			pVCon->RCon()->LogString(
 			    bSelect ? "RightClick ignored of isConSelectMode" :
 			    !bPanel ? "RightClick ignored of NOT isFilePanel" :
@@ -10593,7 +10744,7 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 						else
 						{
 							// OK
-							if (gpSet->isAdvLogging)
+							if (gpSetCls->isAdvLogging)
 							{
 								char szInfo[255] = {0};
 								lstrcpyA(szInfo, "RightClicked, pipe.Execute(CMD_EMENU) OK");
@@ -10741,10 +10892,10 @@ BOOL CConEmuMain::OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPA
 	// По DblClick на рамке - развернуть окно по горизонтали (вертикали) на весь монитор
 	if (wParam == HTLEFT || wParam == HTRIGHT || wParam == HTTOP || wParam == HTBOTTOM)
 	{
-		if (isZoomed() || gpSet->isFullScreen)
+		if (isZoomed() || mb_isFullScreen)
 		{
 			// Так быть не должно - рамка не должна быть видна в этих режимах
-			_ASSERTE(!isZoomed() && !gpSet->isFullScreen);
+			_ASSERTE(!isZoomed() && !mb_isFullScreen);
 			return FALSE;
 		}
 
@@ -11014,7 +11165,7 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 	RECT rcPanel;
 	
 	TODO("Сделаем все-таки драг влево-вправо хватанием за «промежуток» между рамками");
-	int nSplitWidth = gpSet->BorderFontWidth()/5;
+	int nSplitWidth = gpSetCls->BorderFontWidth()/5;
 	if (nSplitWidth < 1) nSplitWidth = 1;
 	
 
@@ -11418,15 +11569,15 @@ void CConEmuMain::OnDesktopMode()
 				hShellWnd = hShell;
 		}
 
-		if (gpSet->isFullScreen)  // этот режим с Desktop несовместим
+		if (mb_isFullScreen)  // этот режим с Desktop несовместим
 			SetWindowMode(rMaximized);
 
 		if (!hShellWnd)
 		{
 			gpSet->isDesktopMode = false;
 
-			if (ghOpWnd && gpSet->hExt)
-				CheckDlgButton(gpSet->hExt, cbDesktopMode, BST_UNCHECKED);
+			if (ghOpWnd && gpSetCls->hExt)
+				CheckDlgButton(gpSetCls->hExt, cbDesktopMode, BST_UNCHECKED);
 		}
 		else
 		{
@@ -11518,7 +11669,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				break; // А то открывались несколько окон диалогов :)
 			}
 
-			//DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SPG_MAIN), 0, CSettings::wndOpProc);
+			//DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SPG_MAIN), 0, Settings::wndOpProc);
 			CSettings::Dialog();
 			return 0;
 			//break;
@@ -11533,17 +11684,17 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			mp_VActive->RCon()->StartSelection(LOWORD(wParam) == ID_CON_MARKTEXT);
 			return 0;
 		case ID_AUTOSCROLL:
-			gpSet->AutoScroll = !gpSet->AutoScroll;
+			gpSetCls->AutoScroll = !gpSetCls->AutoScroll;
 			CheckMenuItem(gpConEmu->GetSystemMenu(), ID_AUTOSCROLL, MF_BYCOMMAND |
-			              (gpSet->AutoScroll ? MF_CHECKED : MF_UNCHECKED));
+			              (gpSetCls->AutoScroll ? MF_CHECKED : MF_UNCHECKED));
 			return 0;
 		case ID_ALWAYSONTOP:
 			gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
 			OnAlwaysOnTop();
 
-			if (ghOpWnd && gpSet->hExt)
+			if (ghOpWnd && gpSetCls->hExt)
 			{
-				CheckDlgButton(gpSet->hExt, cbAlwaysOnTop, gpSet->isAlwaysOnTop ? BST_CHECKED : BST_UNCHECKED);
+				CheckDlgButton(gpSetCls->hExt, cbAlwaysOnTop, gpSet->isAlwaysOnTop ? BST_CHECKED : BST_UNCHECKED);
 			}
 
 			return 0;
@@ -12041,7 +12192,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 				{
 					// в Normal режиме при помещении мышки над местом, где должен быть
 					// заголовок или рамка - показать их
-					if (!isIconic() && !isZoomed() && !gpSet->isFullScreen)
+					if (!isIconic() && !isZoomed() && !mb_isFullScreen)
 					{
 						TODO("Не наколоться бы с предыдущим статусом при ресайзе?");
 						//static bool bPrevForceShow = false;
@@ -12073,6 +12224,8 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 				bool bLastFade = mp_VActive->mb_LastFadeFlag;
 				bool bNewFade = (gpSet->isFadeInactive && !bForeground && !lbIsPicView);
 
+				// Это условие скорее всего никогда не выполнится, т.к.
+				// смена Fade обрабатывается в WM_ACTIVATE/WM_SETFOCUS/WM_KILLFOCUS
 				if (bLastFade != bNewFade)
 				{
 					mp_VActive->mb_LastFadeFlag = bNewFade;
@@ -12084,7 +12237,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 				isFirstInstance(); // Заодно и проверит...
 
 			// Если был изменен файл background
-			if (gpSet->PollBackgroundFile())
+			if (gpSetCls->PollBackgroundFile())
 			{
 				gpConEmu->Update(true);
 			}
@@ -12888,126 +13041,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		} break;
 		case WM_WINDOWPOSCHANGING:
 		{
-			WINDOWPOS *p = (WINDOWPOS*)lParam;
-			DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
-#ifdef _DEBUG
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X) style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
-			DEBUGSTRSIZE(szDbg);
-			static int cx, cy;
-
-			if (!(p->flags & SWP_NOSIZE) && (cx != p->cx || cy != p->cy))
-			{
-				cx = p->cx; cy = p->cy;
-			}
-
-#endif
-
-			//if (gpSet->isDontMinimize) {
-			//	if ((p->flags & (0x8000|SWP_NOACTIVATE)) == (0x8000|SWP_NOACTIVATE)
-			//		|| ((p->flags & (SWP_NOMOVE|SWP_NOSIZE)) == 0 && p->x < -30000 && p->y < -30000 )
-			//		)
-			//	{
-			//		p->flags = SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE;
-			//		p->hwndInsertAfter = HWND_BOTTOM;
-			//		result = 0;
-			//		if ((dwStyle & WS_MINIMIZE) == WS_MINIMIZE) {
-			//			dwStyle &= ~WS_MINIMIZE;
-			//			SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
-			//			gpConEmu->InvalidateAll();
-			//		}
-			//		break;
-			//	}
-			//}
-
-			if (!(p->flags & SWP_NOSIZE)
-			        && (hWnd == ghWnd) && !gpConEmu->mb_IgnoreSizeChange
-			        && !gpSet->isFullScreen && !isZoomed() && !isIconic())
-			{
-				if (!hPictureView)
-				{
-					TODO("Доработать, когда будет ресайз PicView на лету");
-					RECT rcWnd = {0,0,p->cx,p->cy};
-					CVirtualConsole* pVCon = ActiveCon();
-
-					if (pVCon && pVCon->RCon())
-						pVCon->RCon()->SyncConsole2Window(FALSE, &rcWnd);
-				}
-			}
-
-			/*
-			-- DWM, Glass --
-			dwmm.cxLeftWidth = 0;
-			dwmm.cxRightWidth = 0;
-			dwmm.cyTopHeight = kClientRectTopOffset;
-			dwmm.cyBottomHeight = 0;
-			DwmExtendFrameIntoClientArea(hwnd, &dwmm);
-			-- DWM, Glass --
-			*/
-			// Иначе не вызвутся события WM_SIZE/WM_MOVE
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
-			p = (WINDOWPOS*)lParam;
-		} break;
-		case WM_WINDOWPOSCHANGED:
-		{
-			static int WindowPosStackCount = 0;
-			WINDOWPOS *p = (WINDOWPOS*)lParam;
-			DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
-#ifdef _DEBUG
-			static int cx, cy;
-
-			if (!(p->flags & SWP_NOSIZE) && (cx != p->cx || cy != p->cy))
-			{
-				cx = p->cx; cy = p->cy;
-			}
-
-#endif
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGED ({%i-%i}x{%i-%i} Flags=0x%08X), style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
-			DEBUGSTRSIZE(szDbg);
-			WindowPosStackCount++;
-
-			if (WindowPosStackCount == 1)
-			{
-				bool bNoMove = (p->flags & SWP_NOMOVE);
-				bool bNoSize = (p->flags & SWP_NOSIZE);
-
-				if (gpConEmu->CorrectWindowPos(p))
-				{
-					MoveWindow(ghWnd, p->x, p->y, p->cx, p->cy, TRUE);
-				}
-			}
-
-			// Иначе могут не вызваться события WM_SIZE/WM_MOVE
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
-			WindowPosStackCount--;
-
-			if (hWnd == ghWnd /*&& ghOpWnd*/)  //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
-			{
-				if (!gpConEmu->mb_IgnoreSizeChange && !gpSet->isFullScreen && !isZoomed() && !isIconic())
-				{
-					RECT rc; GetWindowRect(ghWnd, &rc);
-					//gpSet->UpdatePos(rc.left, rc.top);
-					StoreNormalRect(&rc);
-
-					if (hPictureView)
-					{
-						mrc_WndPosOnPicView = rc;
-					}
-
-					//else
-					//{
-					//	TODO("Доработать, когда будет ресайз PicView на лету");
-					//	if (!(p->flags & SWP_NOSIZE))
-					//	{
-					//		RECT rcWnd = {0,0,p->cx,p->cy};
-					//		ActiveCon()->RCon()->SyncConsole2Window(FALSE, &rcWnd);
-					//	}
-					//}
-				}
-			}
-			else if (hPictureView)
-			{
-				GetWindowRect(ghWnd, &mrc_WndPosOnPicView);
-			}
+			result = gpConEmu->OnWindowPosChanging(hWnd, messg, wParam, lParam);
 		} break;
 		//case WM_NCCALCSIZE:
 		//	{
@@ -13452,7 +13486,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgAutoSizeFont)
 			{
-				gpSet->MacroFontSetSize((int)wParam, (int)lParam);
+				gpSetCls->MacroFontSetSize((int)wParam, (int)lParam);
 				return 0;
 			}
 			else if (messg == gpConEmu->mn_MsgMacroFontSetName)

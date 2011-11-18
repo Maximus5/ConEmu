@@ -520,7 +520,7 @@ LPWSTR CConEmuMacro::FontSetSize(LPWSTR asArgs, CRealConsole* apRCon)
 
 	//int cchSize = 32;
 	//LPWSTR pszResult = (LPWSTR)malloc(2*cchSize);
-	//_wsprintf(pszResult, cchSize, L"%i", gpSet->FontHeight());
+	//_wsprintf(pszResult, cchSize, L"%i", gpSetCls->FontHeight());
 	return lstrdup(L"InvalidArg");
 }
 

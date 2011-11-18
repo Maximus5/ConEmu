@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMENU(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRDLGEVT(s) //OutputDebugStringW(s)
+#define DEBUGSTRCMD(s) DEBUGSTR(s)
 
 
 //#include <stdio.h>
@@ -414,6 +415,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)
 			}
 			else if (Item >= SETWND_CALLPLUGIN_BASE)
 			{
+				DEBUGSTRCMD(L"Plugin: SETWND_CALLPLUGIN_BASE\n");
 				gnPluginOpenFrom = OPEN_PLUGINSMENU;
 				DWORD nTab = (DWORD)(Item - SETWND_CALLPLUGIN_BASE);
 				ProcessCommand(CMD_SETWINDOW, FALSE, &nTab);
@@ -422,6 +424,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)
 			}
 			else if (Item == SETWND_CALLPLUGIN_SENDTABS)
 			{
+				DEBUGSTRCMD(L"Plugin: SETWND_CALLPLUGIN_SENDTABS\n");
 				// Force Send tabs to ConEmu
 				//MSectionLock SC; SC.Lock(csTabs, TRUE);
 				//SendTabs(gnCurTabCount, TRUE);
@@ -597,33 +600,36 @@ void OnMainThreadActivated()
 	TODO("Определить текущую область... (panel/editor/viewer/menu/...");
 	gnPluginOpenFrom = 0;
 
-	// заглушка для Ansi
-	if (gnReqCommand == CMD_SETWINDOW && (gFarVersion.dwVerMajor==1))
+	// Обработка CtrlTab из ConEmu
+	if (gnReqCommand == CMD_SETWINDOW)
 	{
-		gnPluginOpenFrom = OPEN_PLUGINSMENU;
-	}
-
-	//
-	if ((gnReqCommand == CMD_SETWINDOW) && (gFarVersion.dwVerMajor==2))
-	{
-		// Необходимо быть в panel/editor/viewer
-		wchar_t szMacro[255];
-		DWORD nTabShift = SETWND_CALLPLUGIN_BASE + *((DWORD*)gpReqCommandData);
-		// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
-		if (gFarVersion.dwBuild>=FAR_Y_VER)
+		DEBUGSTRCMD(L"Plugin: OnMainThreadActivated: CMD_SETWINDOW\n");
+		if (gFarVersion.dwVerMajor==1)
 		{
-			WARNING("SysID -> GUID?");
-			_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"$if (Search) Esc $end $if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
-		          ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
+			gnPluginOpenFrom = OPEN_PLUGINSMENU;
+			// Результата ожидает вызывающая нить, поэтому передаем параметр
+			ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData, &gpCmdRet);
 		}
 		else
 		{
-			_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"$if (Search) Esc $end $if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
-		          ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
+			// Необходимо быть в panel/editor/viewer
+			wchar_t szMacro[255];
+			DWORD nTabShift = SETWND_CALLPLUGIN_BASE + *((DWORD*)gpReqCommandData);
+			// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
+			if (gFarVersion.dwVerMajor==2)
+			{
+				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"$if (Search) Esc $end $if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
+					  ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
+			}
+			else
+			{
+				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"$if (Search) Esc $end $if (Shell||Viewer||Editor) callplugin(\"%s\",%i) $else callplugin(\"%s\",%i) $end",
+					  ConEmu_GuidS, nTabShift, ConEmu_GuidS, SETWND_CALLPLUGIN_SENDTABS);
+			}
+			gnReqCommand = -1;
+			gpReqCommandData = NULL;
+			PostMacro(szMacro, NULL);
 		}
-		gnReqCommand = -1;
-		gpReqCommandData = NULL;
-		PostMacro(szMacro, NULL);
 		// Done
 	}
 	else
@@ -2523,6 +2529,10 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		{
 			int nTab = 0;
 
+			// Для Far1 мы сюда попадаем обычным образом, при обработке команды пайпом
+			// Для Far2 и выше - через макрос (проверяющий допустимость смены) и callplugin
+			DEBUGSTRCMD(L"Plugin: ACTL_SETCURRENTWINDOW\n");
+
 			// Окно мы можем сменить только если:
 			if (gnPluginOpenFrom == OPEN_VIEWER || gnPluginOpenFrom == OPEN_EDITOR
 			        || gnPluginOpenFrom == OPEN_PLUGINSMENU
@@ -2547,8 +2557,12 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 						FUNC_X(SetWindowW)(nTab);
 				}
 
+				DEBUGSTRCMD(L"Plugin: ACTL_COMMIT finished\n");
+
 				gbIgnoreUpdateTabs = FALSE;
 				UpdateConEmuTabs(0, false, false);
+
+				DEBUGSTRCMD(L"Plugin: Tabs updated\n");
 			}
 
 			//SendTabs(gnCurTabCount, FALSE); // Обновить размер передаваемых данных
@@ -2697,7 +2711,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		}
 		case(CMD_REDRAWFAR):
 
-			if (gFarVersion.dwVerMajor==2) RedrawAll();
+			if (gFarVersion.dwVerMajor>=2) RedrawAll();
 
 			break;
 		case(CMD_CHKRESOURCES):
@@ -5479,17 +5493,20 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 			// Пересылается 2 DWORD
 			ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->dwData);
 
-			if (gFarVersion.dwVerMajor == 2)
+			DEBUGSTRCMD(L"Plugin: PlugServerThreadCommand: CMD_SETWINDOW waiting...\n");
+
+			WARNING("Почему для FAR1 не ждем? Есть возможность заблокироваться в 1.7 или что?");
+			if (gFarVersion.dwVerMajor >= 2)
 			{
-				WARNING("Почему для FAR1 не ждем?");
 				DWORD nTimeout = 2000;
-#ifdef _DEBUG
-
+				#ifdef _DEBUG
 				if (IsDebuggerPresent()) nTimeout = 120000;
-
-#endif
+				#endif
+				
 				WaitForSingleObject(ghSetWndSendTabsEvent, nTimeout);
 			}
+
+			DEBUGSTRCMD(L"Plugin: PlugServerThreadCommand: CMD_SETWINDOW finished\n");
 		}
 
 		if (gpTabs)

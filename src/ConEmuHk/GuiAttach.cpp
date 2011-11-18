@@ -4,7 +4,9 @@
 #include "GuiAttach.h"
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
+#include "../common/WinObjects.h"
 
+extern HMODULE ghOurModule;
 extern HWND    ghConEmuWnd;   // Root! ConEmu window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnHookMainThreadId;
@@ -172,8 +174,13 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	#ifdef _DEBUG
 	// В консоли нет обработчика сообщений, поэтому создание окон в главной
 	// нити приводит к "зависанию" приложения - например, любые программы,
-	// использующие DDE будут виснуть.
-	_ASSERTE(dwStyle == 0 && FALSE);
+	// использующие DDE могут виснуть.
+	wchar_t szModule[MAX_PATH] = {}; GetModuleFileName(ghOurModule, szModule, countof(szModule));
+	const wchar_t* pszSlash = PointToName(szModule);
+	if (lstrcmpi(pszSlash, L"far.exe")==0 || lstrcmpi(szModule, L"far64.exe")==0)
+	{
+		_ASSERTE(dwStyle == 0 && FALSE);
+	}
 	//SetLastError(ERROR_THREAD_MODE_NOT_BACKGROUND);
 	//return false;
 	#endif

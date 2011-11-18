@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define LPCBYTE const BYTE*
 #endif
 
-class SettingsBase
+struct SettingsBase
 {
 	public:
 		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) = 0;
@@ -90,7 +90,7 @@ class SettingsBase
 		virtual ~SettingsBase() {};
 };
 
-class SettingsRegistry : public SettingsBase
+struct SettingsRegistry : public SettingsBase
 {
 	public:
 		HKEY regMy;
@@ -114,7 +114,7 @@ class SettingsRegistry : public SettingsBase
 };
 
 #ifndef __GNUC__
-class SettingsXML : public SettingsBase
+struct SettingsXML : public SettingsBase
 {
 	protected:
 		IXMLDOMDocument* mp_File;
