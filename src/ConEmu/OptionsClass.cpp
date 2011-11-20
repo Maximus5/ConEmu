@@ -281,6 +281,8 @@ CSettings::CSettings()
 	}
 
 	mn_LastChangingFontCtrlId = 0;
+
+	#if 0
 	SetWindowThemeF = NULL;
 	mh_Uxtheme = LoadLibrary(L"UxTheme.dll");
 
@@ -290,6 +292,7 @@ CSettings::CSettings()
 		EnableThemeDialogTextureF = (EnableThemeDialogTextureT)GetProcAddress(mh_Uxtheme, "EnableThemeDialogTexture");
 		//if (SetWindowThemeF) { SetWindowThemeF(Progressbar1, L" ", L" "); }
 	}
+	#endif
 
 	mn_MsgUpdateCounter = RegisterWindowMessage(L"ConEmuSettings::Counter");
 	mn_MsgRecreateFont = RegisterWindowMessage(L"Settings::RecreateFont");
@@ -297,7 +300,16 @@ CSettings::CSettings()
 	mn_ActivateTabMsg = RegisterWindowMessage(L"Settings::ActivateTab");
 	mh_EnumThread = NULL;
 	mh_CtlColorBrush = NULL;
-	
+
+	// Горячие клавиши
+	InitVars_Hotkeys();
+
+	// Вкладки-диалоги
+	InitVars_Pages();
+}
+
+void CSettings::InitVars_Hotkeys()
+{	
 	// Горячие клавиши
 	TODO("Дополнить системные комбинации");
 	WARNING("У gpSet->nLDragKey,gpSet->nRDragKey был тип DWORD");
@@ -361,6 +373,25 @@ CSettings::CSettings()
 	memmove(m_HotKeys, HotKeys, sizeof(HotKeys));
 }
 
+void CSettings::InitVars_Pages()
+{
+	ConEmuSetupPages Pages[] = 
+	{
+		{IDD_SPG_MAIN,    L"Main",     mainOpProc,  &hMain},
+		{IDD_SPG_FEATURE, L"Features", extOpProc,   &hExt},
+		{IDD_SPG_KEYS,    L"Keys",     keysOpProc,  &hKeys},
+		{IDD_SPG_TABS,    L"Tabs",     tabsOpProc,  &hTabs},
+		{IDD_SPG_COLORS,  L"Colors",   colorOpProc, &hColors},
+		{IDD_SPG_VIEWS,   L"Views",    viewsOpProc, &hViews},
+		{IDD_SPG_DEBUG,   L"Debug",    debugOpProc, &hDebug},
+		{IDD_SPG_INFO,    L"Info",     infoOpProc,  &hInfo},
+		// End
+		{},
+	};
+	m_Pages = (ConEmuSetupPages*)malloc(sizeof(Pages));
+	memmove(m_Pages, Pages, sizeof(Pages));
+}
+
 void CSettings::ReleaseHandles()
 {
 	//if (sTabCloseMacro) {free(sTabCloseMacro); sTabCloseMacro = NULL;}
@@ -394,7 +425,9 @@ CSettings::~CSettings()
 
 	if (gpSet->psCurCmd) {free(gpSet->psCurCmd); gpSet->psCurCmd = NULL;}
 
+#if 0
 	if (mh_Uxtheme!=NULL) { FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL; }
+#endif
 
 	if (mh_CtlColorBrush) { DeleteObject(mh_CtlColorBrush); mh_CtlColorBrush = NULL; }
 
@@ -403,6 +436,16 @@ CSettings::~CSettings()
 	//	delete gpSet;
 	//	gpSet = NULL;
 	//}
+	if (m_HotKeys)
+	{
+		free(m_HotKeys);
+		m_HotKeys = NULL;
+	}
+	if (m_Pages)
+	{
+		free(m_Pages);
+		m_Pages = NULL;
+	}
 }
 
 LPCWSTR CSettings::GetConfigPath()
@@ -1536,6 +1579,7 @@ LRESULT CSettings::OnInitDialog()
 	SetWindowText(ghOpWnd, szTitle);
 	MCHKHEAP
 	{
+		#if 0
 		TCITEM tie;
 		wchar_t szTitle[32];
 		HWND _hwndTab = GetDlgItem(ghOpWnd, tabMain);
@@ -1560,12 +1604,30 @@ LRESULT CSettings::OnInitDialog()
 		MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 		TabCtrl_AdjustRect(_hwndTab, FALSE, &rcClient);
 
-		hMain = CreateDialog((HINSTANCE)GetModuleHandle(NULL),
-		MAKEINTRESOURCE(IDD_SPG_MAIN), ghOpWnd, mainOpProc);
-		MoveWindow(hMain, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+		#else
+		mb_IgnoreSelPage = true;
+		TVINSERTSTRUCT ti = {TVI_ROOT, TVI_LAST, {TVIF_TEXT}};
+		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
+		for (size_t i = 0; m_Pages[i].PageID; i++)
+		{
+			ti.item.pszText = m_Pages[i].PageName;
+			m_Pages[i].hTI = TreeView_InsertItem(hTree, &ti);
+			*m_Pages[i].hPage = NULL;
+		}
+
+		HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
+		RECT rcClient; GetWindowRect(hPlace, &rcClient);
+		MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+		ShowWindow(hPlace, SW_HIDE);
+		#endif
+		mb_IgnoreSelPage = false;
+
+		*m_Pages[0].hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
+			MAKEINTRESOURCE(m_Pages[0].PageID), ghOpWnd, mainOpProc, (LPARAM)&(m_Pages[0]));
+		MoveWindow(*m_Pages[0].hPage, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 
 
-		apiShowWindow(hMain, SW_SHOW);
+		apiShowWindow(*m_Pages[0].hPage, SW_SHOW);
 	}
 	MCHKHEAP
 	{
@@ -1628,8 +1690,10 @@ void CSettings::FillBgImageColors()
 
 LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 {
+	#if 0
 	if (gpSetCls->EnableThemeDialogTextureF)
 		gpSetCls->EnableThemeDialogTextureF(hMain, 6/*ETDT_ENABLETAB*/);
+	#endif
 
 	//if (isUpdConHandle)
 	//	CheckDlgButton(ghOpWnd, cbAutoConHandle, BST_CHECKED);
@@ -1839,8 +1903,10 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 {
+	#if 0
 	if (gpSetCls->EnableThemeDialogTextureF)
 		gpSetCls->EnableThemeDialogTextureF(hExt, 6/*ETDT_ENABLETAB*/);
+	#endif
 
 	if (gpSet->isRClickSendKey) CheckDlgButton(hExt, cbRClick, (gpSet->isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
 
@@ -2174,8 +2240,10 @@ void CSettings::FillHotKeysList()
 
 LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2)
 {
+	#if 0
 	if (gpSetCls->EnableThemeDialogTextureF)
 		gpSetCls->EnableThemeDialogTextureF(hKeys, 6/*ETDT_ENABLETAB*/);
+	#endif
 
 	HWND hList = GetDlgItem(hKeys, lbConEmuHotKeys);
 	
@@ -2223,8 +2291,10 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 {
+	#if 0
 	if (gpSetCls->EnableThemeDialogTextureF)
 		gpSetCls->EnableThemeDialogTextureF(hTabs, 6/*ETDT_ENABLETAB*/);
+	#endif
 
 	if (gpSet->isTabs)
 		CheckDlgButton(hTabs, cbTabs, (gpSet->isTabs==1) ? BST_CHECKED : BST_INDETERMINATE);
@@ -2308,8 +2378,10 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 {
+	#if 0
 	if (gpSetCls->EnableThemeDialogTextureF)
 		gpSetCls->EnableThemeDialogTextureF(hColors, 6/*ETDT_ENABLETAB*/);
+	#endif
 
 #define getR(inColorref) (byte)inColorref
 #define getG(inColorref) (byte)(inColorref >> 8)
@@ -2351,8 +2423,10 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Views(HWND hWnd2)
 {
+	#if 0
 	if (gpSetCls->EnableThemeDialogTextureF)
 		gpSetCls->EnableThemeDialogTextureF(hViews, 6/*ETDT_ENABLETAB*/);
+	#endif
 
 	// пока выключим
 	EnableWindow(GetDlgItem(hViews, bApplyViewSettings), gpConEmu->ActiveCon()->IsPanelViews());
@@ -2456,8 +2530,10 @@ LRESULT CSettings::OnInitDialog_ViewsFonts(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Info(HWND hWnd2)
 {
+	#if 0
 	if (gpSetCls->EnableThemeDialogTextureF)
 		gpSetCls->EnableThemeDialogTextureF(hInfo, 6/*ETDT_ENABLETAB*/);
+	#endif
 
 	SetDlgItemText(hInfo, tCurCmdLine, GetCommandLine());
 	// Performance
@@ -2473,8 +2549,10 @@ LRESULT CSettings::OnInitDialog_Info(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Debug(HWND hWnd2)
 {
+	#if 0
 	if (gpSetCls->EnableThemeDialogTextureF)
 		gpSetCls->EnableThemeDialogTextureF(hDebug, 6/*ETDT_ENABLETAB*/);
+	#endif
 
 	//if (gpSet->isDebugSteps) CheckDlgButton(hExt, cbDebugSteps, BST_CHECKED);
 		
@@ -2492,7 +2570,7 @@ LRESULT CSettings::OnInitDialog_Debug(HWND hWnd2)
 	wcscpy_c(szTitle, L" ");		ListView_InsertColumn(hList, 0, &col);
 	
 	HWND hTip = ListView_GetToolTips(hList);
-	SetWindowPos(hTip, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+	SetWindowPos(hTip, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 
 
 	//HWND hDetails = GetDlgItem(hDebug, lbActivityDetails);
@@ -3552,7 +3630,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-LRESULT CSettings::OnTab(LPNMHDR phdr)
+LRESULT CSettings::OnPage(LPNMHDR phdr)
 {
 	if (gpSetCls->szFontError[0])
 	{
@@ -3561,8 +3639,97 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
 		SendMessage(hwndTip, TTM_ACTIVATE, TRUE, 0);
 	}
 
+	if ((LONG_PTR)phdr == 0x101)
+	{
+		// Переключиться на следующий таб
+		#if 1
+		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
+		NMTREEVIEW nm = {hTree, tvSetupCategories, TVN_SELCHANGED};
+		nm.itemOld.hItem = TreeView_GetSelection(hTree);
+		if (!nm.itemOld.hItem)
+			nm.itemOld.hItem = TreeView_GetRoot(hTree);
+		nm.itemNew.hItem = TreeView_GetNextSibling(hTree, nm.itemOld.hItem);
+		if (!nm.itemNew.hItem)
+			nm.itemNew.hItem = TreeView_GetRoot(hTree);
+		//return OnPage((LPNMHDR)&nm);
+		if (nm.itemNew.hItem)
+			TreeView_SelectItem(hTree, nm.itemNew.hItem);
+		return 0;
+		#else
+		int nCur = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETCURSEL,0,0);
+		int nAll = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETITEMCOUNT,0,0);
+
+		nCur ++; if (nCur>=nAll) nCur = 0;
+
+		SendDlgItemMessage(ghOpWnd, tabMain, TCM_SETCURSEL,nCur,0);
+		NMHDR hdr = {GetDlgItem(ghOpWnd, tabMain),tabMain,TCN_SELCHANGE};
+		return OnPage(&hdr);
+		#endif
+	}
+	else if ((LONG_PTR)phdr == 0x102)
+	{
+		#if 1
+		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
+		NMTREEVIEW nm = {hTree, tvSetupCategories, TVN_SELCHANGED};
+		nm.itemOld.hItem = TreeView_GetSelection(hTree);
+		if (!nm.itemOld.hItem)
+			nm.itemOld.hItem = TreeView_GetLastVisible(hTree);
+		nm.itemNew.hItem = TreeView_GetPrevSibling(hTree, nm.itemOld.hItem);
+		if (!nm.itemNew.hItem)
+			nm.itemNew.hItem = TreeView_GetRoot(hTree);
+		//return OnPage((LPNMHDR)&nm);
+		if (nm.itemNew.hItem)
+			TreeView_SelectItem(hTree, nm.itemNew.hItem);
+		return 0;
+		#else
+		// Переключиться на предыдущий таб
+		int nCur = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETCURSEL,0,0);
+		int nAll = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETITEMCOUNT,0,0);
+
+		nCur --; if (nCur<0) nCur = nAll - 1;
+
+		SendDlgItemMessage(ghOpWnd, tabMain, TCM_SETCURSEL,nCur,0);
+		NMHDR hdr = {GetDlgItem(ghOpWnd, tabMain),tabMain,TCN_SELCHANGE};
+		return OnPage(&hdr);
+		#endif
+	}
+
+
 	switch (phdr->code)
 	{
+#if 1
+		case TVN_SELCHANGED:
+		{
+			if (mb_IgnoreSelPage)
+				return 0;
+			HWND hCurrent = NULL;
+			LPNMTREEVIEW p = (LPNMTREEVIEW)phdr;
+			for (size_t i = 0; m_Pages[i].PageID; i++)
+			{
+				if (p->itemNew.hItem == m_Pages[i].hTI)
+				{
+					if (*m_Pages[i].hPage == NULL)
+					{
+						SetCursor(LoadCursor(NULL,IDC_WAIT));
+						HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
+						RECT rcClient; GetWindowRect(hPlace, &rcClient);
+						MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+						*m_Pages[i].hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
+							MAKEINTRESOURCE(m_Pages[i].PageID), ghOpWnd, m_Pages[i].dlgProc, (LPARAM)&(m_Pages[i]));
+						MoveWindow(*m_Pages[i].hPage, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+					}
+					ShowWindow(*m_Pages[i].hPage, SW_SHOW);
+				}
+				else if (p->itemOld.hItem == m_Pages[i].hTI)
+				{
+					hCurrent = *m_Pages[i].hPage;
+				}
+			}
+			if (hCurrent)
+				ShowWindow(hCurrent, SW_HIDE);
+		} // TVN_SELCHANGED
+		break;
+#else
 		case TCN_SELCHANGE:
 		{
 			int nSel = TabCtrl_GetCurSel(phdr->hwndFrom);
@@ -3658,8 +3825,9 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
 
 				SetFocus(*phCurrent);
 			}
-		}
+		} // TCN_SELCHANGE
 		break;
+#endif
 	}
 
 	return 0;
@@ -3827,8 +3995,16 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		{
 			LPNMHDR phdr = (LPNMHDR)lParam;
 
-			if (phdr->idFrom == tabMain)
-				gpSetCls->OnTab(phdr);
+			switch (phdr->idFrom)
+			{
+			#if 0
+			case tabMain:
+			#else
+			case tvSetupCategories:
+			#endif
+				gpSetCls->OnPage(phdr);
+				break;
+			}
 		} break;
 		case WM_CLOSE:
 		{
@@ -3855,26 +4031,12 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			if (wParam == 0x101)
 			{
 				// Переключиться на следующий таб
-				int nCur = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETCURSEL,0,0);
-				int nAll = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETITEMCOUNT,0,0);
-
-				nCur ++; if (nCur>=nAll) nCur = 0;
-
-				SendDlgItemMessage(ghOpWnd, tabMain, TCM_SETCURSEL,nCur,0);
-				NMHDR hdr = {GetDlgItem(ghOpWnd, tabMain),tabMain,TCN_SELCHANGE};
-				gpSetCls->OnTab(&hdr);
+				gpSetCls->OnPage((LPNMHDR)wParam);
 			}
 			else if (wParam == 0x102)
 			{
 				// Переключиться на предыдущий таб
-				int nCur = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETCURSEL,0,0);
-				int nAll = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETITEMCOUNT,0,0);
-
-				nCur --; if (nCur<0) nCur = nAll - 1;
-
-				SendDlgItemMessage(ghOpWnd, tabMain, TCM_SETCURSEL,nCur,0);
-				NMHDR hdr = {GetDlgItem(ghOpWnd, tabMain),tabMain,TCN_SELCHANGE};
-				gpSetCls->OnTab(&hdr);
+				gpSetCls->OnPage((LPNMHDR)wParam);
 			}
 
 		case WM_ACTIVATE:

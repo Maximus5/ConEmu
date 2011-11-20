@@ -50,6 +50,7 @@ class CVirtualConsole : public CConEmuChild
 	public:
 		CRealConsole *RCon();
 		HWND GuiWnd();
+		HWND GhostWnd();
 		bool isVisible();
 		int GetTabCount();
 		int GetActiveTab();

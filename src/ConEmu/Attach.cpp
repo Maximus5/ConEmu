@@ -100,7 +100,7 @@ void CAttachDlg::AttachDlg()
 	if (mh_Dlg && IsWindow(mh_Dlg))
 	{
 		ShowWindow(mh_Dlg, SW_SHOWNORMAL);
-		SetForegroundWindow(mh_Dlg);
+		apiSetForegroundWindow(mh_Dlg);
 		return;
 	}
 	

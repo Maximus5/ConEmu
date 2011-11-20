@@ -44,6 +44,8 @@ class CSettings
 	private:
 		Settings m_Settings;
 		void ReleaseHandles();
+		void InitVars_Hotkeys();
+		void InitVars_Pages();
 	public:
 
 		private:
@@ -485,13 +487,14 @@ class CSettings
 		LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		
 		LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
 		LRESULT OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
-		LRESULT OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		
-		LRESULT OnTab(LPNMHDR phdr);
+		LRESULT OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		LRESULT OnPage(LPNMHDR phdr);
 		INT_PTR OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnSaveActivityLogFile(HWND hListView);
 		void FillHotKeysList();
 		UINT mn_ActivateTabMsg;
+		bool mb_IgnoreSelPage;
 	private:
 		bool GetColorById(WORD nID, COLORREF* color);
 		bool SetColorById(WORD nID, COLORREF color);
@@ -516,12 +519,14 @@ class CSettings
 		void RegisterTipsFor(HWND hChildDlg);
 		HFONT CreateFontIndirectMy(LOGFONT *inFont);
 		void RecreateFont(WORD wFromID);
+#if 0
 		// Theming
 		HMODULE mh_Uxtheme;
 		typedef HRESULT(STDAPICALLTYPE *SetWindowThemeT)(HWND hwnd,LPCWSTR pszSubAppName,LPCWSTR pszSubIdList);
 		SetWindowThemeT SetWindowThemeF;
 		typedef HRESULT(STDAPICALLTYPE *EnableThemeDialogTextureT)(HWND hwnd,DWORD dwFlags);
 		EnableThemeDialogTextureT EnableThemeDialogTextureF;
+#endif
 		UINT mn_MsgUpdateCounter;
 		//wchar_t temp[MAX_PATH];
 		UINT mn_MsgRecreateFont;
@@ -623,4 +628,14 @@ class CSettings
 			lic_Event,
 		};
 		static void GetVkKeyName(BYTE vk, wchar_t (&szName)[128]);
+
+		struct ConEmuSetupPages
+		{
+			int       PageID;
+			wchar_t   PageName[64];
+			DLGPROC   dlgProc;
+			HWND     *hPage;
+			HTREEITEM hTI;
+		};
+		ConEmuSetupPages *m_Pages;
 };

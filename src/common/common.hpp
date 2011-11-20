@@ -94,6 +94,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEKEYEVENT_SHIFT    L"ConEmuShiftPressed.%u"
 #define CEHOOKLOCKMUTEX     L"ConEmuHookMutex.%u"
 //#define CEHOOKDISABLEEVENT  L"ConEmuSkipHooks.%u"
+#define CEGHOSTSKIPACTIVATE L"ConEmuGhostActivate.%u"
 
 #define CESECURITYNAME       "ConEmuLocalData"
 

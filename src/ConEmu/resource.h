@@ -451,6 +451,9 @@
 #define vkWinUp                         2046
 #define vkWinDown                       2047
 #define cbTabsOnTaskBar                 2048
+#define tvSetupCategories               2049
+#define tSetupPagePlace                 2050
+#define cbHideDisabledTabs              2051
 
 // Next default values for new objects
 // 
@@ -458,7 +461,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        213
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2049
+#define _APS_NEXT_CONTROL_VALUE         2052
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

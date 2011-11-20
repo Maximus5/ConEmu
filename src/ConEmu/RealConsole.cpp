@@ -9070,7 +9070,7 @@ BOOL CRealConsole::SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground)
 	{
 		if (abSetForeground)
 		{
-			lbRc = SetForegroundWindow(hWnd);
+			lbRc = apiSetForegroundWindow(hWnd);
 		}
 		else
 		{
@@ -9082,7 +9082,7 @@ BOOL CRealConsole::SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground)
 	}
 	else
 	{
-		lbRc = SetForegroundWindow(hWnd);
+		lbRc = apiSetForegroundWindow(hWnd);
 	}
 
 	// -- смысла нет, не работает
@@ -9264,6 +9264,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
 	if (isActive())
 	{
+		gpConEmu->UpdateActiveGhost(mp_VCon);
 		gpConEmu->OnSetCursor(-1,-1);
 		gpConEmu->UpdateWindowRgn();
 	}
@@ -9724,6 +9725,22 @@ int CRealConsole::GetTabCount()
 
 	if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
 		return 1; // На время выполнения команд - ТОЛЬКО одна закладка
+
+	//if (mn_tabsCount > 1 && gpSet->bHideDisabledConsoleTabs)
+	//{
+	//	int nCount = 0;
+	//	for (int i = 0; i < mn_tabsCount; i++)
+	//	{
+	//		if (CanActivateFarWindow(i))
+	//			nCount++;
+	//	}
+	//	if (nCount == 0)
+	//	{
+	//		_ASSERTE(nCount>0);
+	//		nCount = 1;
+	//	}
+	//	return nCount;
+	//}
 
 	return max(mn_tabsCount,1);
 }
@@ -11779,8 +11796,8 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 
 		// Хм. Окошко еще не внедрено в ConEmu, смысл отдавать фокус в другое приложение?
 		// SetFocus не сработает - другой процесс
-		//SetOtherWindowFocus(hGuiWnd, TRUE/*use SetForegroundWindow*/);
-		SetForegroundWindow(hGuiWnd);
+		//SetOtherWindowFocus(hGuiWnd, TRUE/*use apiSetForegroundWindow*/);
+		apiSetForegroundWindow(hGuiWnd);
 
 		GetWindowText(hGuiWnd, Title, countof(Title)-2);
 		wcscpy_c(TitleFull, Title);
@@ -13574,7 +13591,7 @@ void CRealConsole::ShowPropertiesDialog()
 			&& szTitle[0] == L'"' && szTitle[nDefLen+1] == L'"'
 			&& !wmemcmp(szTitle+1, CEC_INITTITLE, nDefLen))
 		{
-			SetForegroundWindow(hConProp);
+			apiSetForegroundWindow(hConProp);
 			return; // нашли, показываем!
 		}
 	}

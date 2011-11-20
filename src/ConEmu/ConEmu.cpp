@@ -160,6 +160,7 @@ CConEmuMain::CConEmuMain()
 	mb_HotKeyRegistered = FALSE;
 	mn_MinRestoreRegistered = 0; mn_MinRestore_VK = mn_MinRestore_MOD = 0;
 	mh_LLKeyHookDll = NULL;
+	mph_HookedGhostWnd = NULL;
 	mh_LLKeyHook = NULL;
 	//mh_DwmApi = NULL; DwmIsCompositionEnabled = NULL;
 	mh_RightClickingBmp = NULL; mh_RightClickingDC = NULL; mb_RightClickingPaint = mb_RightClickingLSent = FALSE;
@@ -4298,6 +4299,13 @@ void CConEmuMain::CreateGhostVCon(CVirtualConsole* apVCon)
 	PostMessage(ghWnd, mn_MsgInitVConGhost, 0, (LPARAM)apVCon);
 }
 
+void CConEmuMain::UpdateActiveGhost(CVirtualConsole* apVCon)
+{
+	_ASSERTE(apVCon == mp_VActive);
+	if (mh_LLKeyHookDll && mph_HookedGhostWnd)
+		*mph_HookedGhostWnd = apVCon->GhostWnd();
+}
+
 // Послать во все активные фары CMD_FARSETCHANGED
 // Обновляются настройки: gpSet->isFARuseASCIIsort, gpSet->isShellNoZoneCheck;
 void CConEmuMain::UpdateFarSettings()
@@ -4693,7 +4701,13 @@ HMODULE CConEmuMain::LoadConEmuCD()
 		//HANDLE hSkipEvent = CreateEvent(NULL, TRUE, TRUE, szSkipEventName);
 		mh_LLKeyHookDll = LoadLibrary(szConEmuDll);
 		//CloseHandle(hSkipEvent);
+
+		if (mh_LLKeyHookDll)
+			mph_HookedGhostWnd = (HWND*)GetProcAddress(mh_LLKeyHookDll, "ghActiveGhost");
 	}
+
+	if (!mh_LLKeyHookDll)
+		mph_HookedGhostWnd = NULL;
 	
 	return mh_LLKeyHookDll;
 }
@@ -4755,6 +4769,8 @@ void CConEmuMain::UpdateWinHookSettings()
 			}
 			*pnHookedKeys = 0;
 		}
+
+		UpdateActiveGhost(mp_VActive);
 	}
 }
 
@@ -4820,6 +4836,7 @@ void CConEmuMain::RegisterHoooks()
 
 				if (pfnLLHK)
 				{
+					// WH_KEYBOARD_LL - может быть только глобальной
 					mh_LLKeyHook = SetWindowsHookEx(WH_KEYBOARD_LL, pfnLLHK, mh_LLKeyHookDll, 0);
 
 					if (!mh_LLKeyHook)
@@ -5815,7 +5832,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 	//if (anEvent == EVENT_SYSTEM_MENUPOPUPSTART) {
 	//	if (gpConEmu->isMeForeground())
 	//	{
-	//		//SetForegroundWindow(hwnd);
+	//		//apiSetForegroundWindow(hwnd);
 	//		DWORD dwPID = 0;
 	//		GetWindowThreadProcessId(hwnd, &dwPID);
 	//		AllowSetForegroundWindow(dwPID);
@@ -8647,7 +8664,7 @@ void CConEmuMain::OnTaskbarSettingsChanged()
 	if (!gpSet->isTabsOnTaskBar())
 		OnAllGhostClosed();
 
-	SetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
+	apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
 }
 
 void CConEmuMain::OnAltEnter()
@@ -11984,7 +12001,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			if (mp_VActive && mp_VActive->RCon())
 			{
 				if (mp_VActive->RCon()->GuiWnd())
-					SetForegroundWindow(ghWnd);
+					apiSetForegroundWindow(ghWnd);
 			}
 
 			if (gpSet->isMinToTray)

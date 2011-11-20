@@ -43,6 +43,9 @@ protected:
 	CVirtualConsole* mp_VCon;
 	DWORD mn_LastUpdate;
 	UINT mn_MsgUpdateThumbnail;
+	HANDLE mh_SkipActivateEvent;
+	bool mb_WasSkipActivate;
+	wchar_t ms_LastTitle[1024];
 protected:
 	static LRESULT CALLBACK GhostStatic(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT GhostProc(UINT message, WPARAM wParam, LPARAM lParam);
@@ -71,4 +74,5 @@ public:
 	LPCWSTR CheckTitle(BOOL abSkipValidation = FALSE);
 	void ActivateTaskbar();
 	bool NeedSnapshootCache();
+	HWND GhostWnd();
 };

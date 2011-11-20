@@ -504,6 +504,9 @@ struct Settings
 		bool bAdminShield;
 		//reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
 		bool bHideInactiveConsoleTabs;
+
+		TODO("загрузка bHideDisabledTabs");
+		bool bHideDisabledTabs;
 		
 		//bool isVisualizer;
 		//char nVizNormal, nVizFore, nVizTab, nVizEOL, nVizEOF;

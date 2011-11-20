@@ -886,6 +886,12 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			MCHKHEAP;
 #endif
 
+			if (gpSet->bHideDisabledTabs)
+			{
+				if (!pRCon->CanActivateFarWindow(I))
+					continue;
+			}
+
 			if (!pRCon->GetTab(I, &tab))
 				break;
 
@@ -2321,76 +2327,76 @@ void TabBarClass::ShowTabError(LPCTSTR asInfo, int tabIndex)
 	}
 }
 
-void TabBarClass::PaintHeader(HDC hdc, RECT rcPaint)
-{
-	int nCount = 0, V, R;
-	CVirtualConsole *pVCon = NULL;
-	CRealConsole *pRCon = NULL;
-
-	for(V = 0; V < MAX_CONSOLE_COUNT; V++)
-	{
-		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
-
-		//BOOL lbActive = gpConEmu->isActive(pVCon);
-		//if (gpSet->bHideInactiveConsoleTabs)
-		//{
-		//	if (!lbActive) continue;
-		//}
-		if (!(pRCon = pVCon->RCon())) continue;
-
-		nCount += pRCon->GetTabCount();
-	}
-
-	if (nCount < 1) nCount = 1;
-
-	int nWidth = ((rcPaint.right - rcPaint.left) / nCount);
-	HBRUSH hWhite = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	FillRect(hdc, &rcPaint, hWhite);
-	HBRUSH hSilver = (HBRUSH)GetStockObject(GRAY_BRUSH);
-	HBRUSH hOldBr = (HBRUSH)SelectObject(hdc, hSilver);
-	HPEN hBlack = CreatePen(PS_SOLID, 1, RGB(80,80,80));
-	HPEN hOldPen = (HPEN)SelectObject(hdc, hBlack);
-	ConEmuTab tab = {0};
-	RECT rcTab = {rcPaint.left, rcPaint.top, rcPaint.left+nWidth-1, rcPaint.bottom};
-	std::vector<VConTabs>::iterator iter = m_Tab2VCon.begin();
-	int i = 0;
-
-	for(V = 0; V < MAX_CONSOLE_COUNT && i < nCount; V++)
-	{
-		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
-
-		//BOOL lbActive = gpConEmu->isActive(pVCon);
-		//if (gpSet->bHideInactiveConsoleTabs)
-		//{
-		//	if (!lbActive) continue;
-		//}
-		if (!(pRCon = pVCon->RCon())) continue;
-
-		int nRCount = pRCon->GetTabCount();
-
-		for(R = 0; R < nRCount; R++)
-		{
-			if (!pRCon->GetTab(R, &tab))
-				continue;
-
-			i++;
-
-			if (i > nCount)
-			{
-				_ASSERTE(i <= nCount);
-				break;
-			}
-
-			Rectangle(hdc, rcTab.left, rcTab.top, rcTab.right, rcTab.bottom);
-			DrawText(hdc, tab.Name, lstrlenW(tab.Name), &rcTab, DT_LEFT|DT_NOPREFIX|DT_VCENTER|DT_WORD_ELLIPSIS);
-			// Next
-			++iter; rcTab.left += nWidth; rcTab.right += nWidth;
-		}
-	}
-
-	SelectObject(hdc, hOldBr);
-	SelectObject(hdc, hOldPen);
-}
+//void TabBarClass::PaintHeader(HDC hdc, RECT rcPaint)
+//{
+//	int nCount = 0, V, R;
+//	CVirtualConsole *pVCon = NULL;
+//	CRealConsole *pRCon = NULL;
+//
+//	for(V = 0; V < MAX_CONSOLE_COUNT; V++)
+//	{
+//		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
+//
+//		//BOOL lbActive = gpConEmu->isActive(pVCon);
+//		//if (gpSet->bHideInactiveConsoleTabs)
+//		//{
+//		//	if (!lbActive) continue;
+//		//}
+//		if (!(pRCon = pVCon->RCon())) continue;
+//
+//		nCount += pRCon->GetTabCount();
+//	}
+//
+//	if (nCount < 1) nCount = 1;
+//
+//	int nWidth = ((rcPaint.right - rcPaint.left) / nCount);
+//	HBRUSH hWhite = (HBRUSH)GetStockObject(WHITE_BRUSH);
+//	FillRect(hdc, &rcPaint, hWhite);
+//	HBRUSH hSilver = (HBRUSH)GetStockObject(GRAY_BRUSH);
+//	HBRUSH hOldBr = (HBRUSH)SelectObject(hdc, hSilver);
+//	HPEN hBlack = CreatePen(PS_SOLID, 1, RGB(80,80,80));
+//	HPEN hOldPen = (HPEN)SelectObject(hdc, hBlack);
+//	ConEmuTab tab = {0};
+//	RECT rcTab = {rcPaint.left, rcPaint.top, rcPaint.left+nWidth-1, rcPaint.bottom};
+//	std::vector<VConTabs>::iterator iter = m_Tab2VCon.begin();
+//	int i = 0;
+//
+//	for(V = 0; V < MAX_CONSOLE_COUNT && i < nCount; V++)
+//	{
+//		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
+//
+//		//BOOL lbActive = gpConEmu->isActive(pVCon);
+//		//if (gpSet->bHideInactiveConsoleTabs)
+//		//{
+//		//	if (!lbActive) continue;
+//		//}
+//		if (!(pRCon = pVCon->RCon())) continue;
+//
+//		int nRCount = pRCon->GetTabCount();
+//
+//		for(R = 0; R < nRCount; R++)
+//		{
+//			if (!pRCon->GetTab(R, &tab))
+//				continue;
+//
+//			i++;
+//
+//			if (i > nCount)
+//			{
+//				_ASSERTE(i <= nCount);
+//				break;
+//			}
+//
+//			Rectangle(hdc, rcTab.left, rcTab.top, rcTab.right, rcTab.bottom);
+//			DrawText(hdc, tab.Name, lstrlenW(tab.Name), &rcTab, DT_LEFT|DT_NOPREFIX|DT_VCENTER|DT_WORD_ELLIPSIS);
+//			// Next
+//			++iter; rcTab.left += nWidth; rcTab.right += nWidth;
+//		}
+//	}
+//
+//	SelectObject(hdc, hOldBr);
+//	SelectObject(hdc, hOldPen);
+//}
 
 void TabBarClass::OnNewConPopup()
 {
@@ -2562,10 +2568,11 @@ int TabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** p
 
 		BOOL lbActive = gpConEmu->isActive(pVCon);
 
-		if (gpSet->bHideInactiveConsoleTabs)
-		{
-			if (!lbActive) continue;
-		}
+		//111120 - Ёту опцию игнорируем. ≈сли редактор открыт в другой консоли - активируем ее потом
+		//if (gpSet->bHideInactiveConsoleTabs)
+		//{
+		//	if (!lbActive) continue;
+		//}
 
 		CRealConsole *pRCon = pVCon->RCon();
 

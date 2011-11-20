@@ -301,16 +301,19 @@ BEGIN
     EDITTEXT        tFadeHigh,299,201,20,12,ES_AUTOHSCROLL
 END
 
-IDD_SETTINGS DIALOGEX 0, 0, 341, 276
+IDD_SETTINGS DIALOGEX 0, 0, 405, 260
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Settings..."
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Save settings",bSaveSettings,268,259,70,14
-    CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,252
-    PUSHBUTTON      "Reset",bResetSettings,152,259,51,14
-    PUSHBUTTON      "Reload",bReloadSettings,210,259,51,14
+    CONTROL         "List1",tvSetupCategories,"SysTreeView32",
+	                WS_BORDER | WS_TABSTOP | TVS_SHOWSELALWAYS ,4,4,70,232
+	LTEXT           " ",tSetupPagePlace,75,4,326,234,WS_BORDER
+    DEFPUSHBUTTON   "Save settings",bSaveSettings,331,243,70,14
+//    CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,252
+    PUSHBUTTON      "Reset",bResetSettings,215,243,51,14
+    PUSHBUTTON      "Reload",bReloadSettings,273,243,51,14
 END
 
 IDD_SPG_INFO DIALOGEX 0, 0, 328, 224

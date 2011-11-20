@@ -460,6 +460,13 @@ HWND CVirtualConsole::GuiWnd()
 	return NULL;
 }
 
+HWND CVirtualConsole::GhostWnd()
+{
+	if (this && mp_Ghost)
+		return mp_Ghost->GhostWnd();
+	return NULL;
+}
+
 bool CVirtualConsole::isVisible()
 {
 	return gpConEmu->isVisible(this);

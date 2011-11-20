@@ -537,6 +537,7 @@ void Settings::InitSettings()
 	wcscpy_c(szAdminTitleSuffix, L" (Admin)");
 	bAdminShield = true;
 	bHideInactiveConsoleTabs = false;
+	bHideDisabledTabs = false;
 	isDisableMouse = false;
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
 	isFarHourglass = true; nFarHourglassDelay = 500;
@@ -1503,14 +1504,12 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 
 bool Settings::isKeyboardHooks()
 {
-//	#ifndef _DEBUG
-	// Для WinXP это не было нужно
+	// Нужно и для WinXP, но только в "локальном" режиме
 	if (gOSVer.dwMajorVersion < 6)
 	{
-		return false;
+		return true;
 	}
 
-//	#endif
 
 	if (m_isKeyboardHooks == 0)
 	{

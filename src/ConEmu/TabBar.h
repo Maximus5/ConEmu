@@ -175,7 +175,7 @@ class TabBarClass //: public CToolTip
 		void SwitchRollback();
 		BOOL OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam);
 		void SetRedraw(BOOL abEnableRedraw);
-		void PaintHeader(HDC hdc, RECT rcPaint);
+		//void PaintHeader(HDC hdc, RECT rcPaint);
 		int  ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon);
 
 		// Из Samples\Tabs

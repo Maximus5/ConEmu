@@ -273,6 +273,7 @@ class CConEmuMain :
 		BOOL mb_HotKeyRegistered;
 		HHOOK mh_LLKeyHook;
 		HMODULE mh_LLKeyHookDll;
+		HWND* mph_HookedGhostWnd;
 		HMODULE LoadConEmuCD();
 		void RegisterHotKeys();
 		void UnRegisterHotKeys(BOOL abFinal=FALSE);
@@ -476,6 +477,7 @@ class CConEmuMain :
 		void TabCommand(UINT nTabCmd);
 		int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, RECT *prcRect);
 		void Update(bool isForce = false);
+		void UpdateActiveGhost(CVirtualConsole* apVCon);
 		void UpdateFarSettings();
 		void UpdateIdealRect(BOOL abAllowUseConSize=FALSE);
 		void UpdateTitle(/*LPCTSTR asNewTitle*/);

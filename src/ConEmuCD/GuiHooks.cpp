@@ -50,24 +50,16 @@ extern "C" {
 	__declspec(dllexport) BYTE  gnConsoleKeyShortcuts = 0;
 	__declspec(dllexport) DWORD gnHookedKeys[64] = {};
 	__declspec(dllexport) HWND  ghKeyHookConEmuRoot = NULL;
+	__declspec(dllexport) HWND  ghActiveGhost = NULL;
 #if defined(__GNUC__)
 };
 #endif
 
-//__declspec(dllexport) HHOOK ghKeyHook = 0;
-//__declspec(dllexport) DWORD gnVkWinFix = 0xF0;
-//__declspec(dllexport) HWND  ghKeyHookConEmuRoot = NULL;
 
-//HHOOK ghKeyHook = 0;
-//DWORD gnVkWinFix = 0xF0;
-//HWND  ghKeyHookConEmuRoot = NULL;
-
-//HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 extern UINT gnMsgActivateCon; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 extern UINT gnMsgSwitchCon;
 extern UINT gnMsgHookedKey;
 extern UINT gnMsgConsoleHookedKey;
-//SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
@@ -101,265 +93,12 @@ ConsoleKeys[]=
 	{1<<ID_CTRLESC,  VK_ESCAPE, VK_CONTROL},
 };
 
-//BOOL gbSkipInjects = FALSE;
-//BOOL gbHooksWasSet = FALSE;
-
-//UINT_PTR gfnLoadLibrary = NULL;
-//extern BOOL StartupHooks(HMODULE ahOurDll);
-//extern void ShutdownHooks();
-//HMODULE ghPsApi = NULL;
-//#ifdef _DEBUG
-////extern bool gbAllowAssertThread;
-//#endif
-
-
-//BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
-//{
-//	switch(ul_reason_for_call)
-//	{
-//		case DLL_PROCESS_ATTACH:
-//		{
-//			ghOurModule = (HMODULE)hModule;
-//			ghConWnd = GetConEmuHWND(2);
-//			gnSelfPID = GetCurrentProcessId();
-//
-//			HANDLE hProcHeap = GetProcessHeap();
-//
-//			#ifdef _DEBUG
-//			gAllowAssertThread = am_Pipe;
-//			#endif
-//
-//			#ifdef SHOW_STARTED_MSGBOX
-//			if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuHk*.dll loaded", "ConEmu hooks", 0);
-//			#endif
-//			#ifdef _DEBUG
-//			DWORD dwConMode = -1;
-//			GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwConMode);
-//			#endif
-//
-//			//_ASSERTE(ghHeap == NULL);
-//			//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
-//			HeapInitialize();
-//			
-//			// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
-//			// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
-//			gfnLoadLibrary = (UINT_PTR)::GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "LoadLibraryW");
-//			
-//			//#ifndef TESTLINK
-//			gpLocalSecurity = LocalSecurity();
-//			gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
-//			//#endif
-//			//wchar_t szSkipEventName[128];
-//			//_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
-//			//HANDLE hSkipEvent = OpenEvent(EVENT_ALL_ACCESS , FALSE, szSkipEventName);
-//			////BOOL lbSkipInjects = FALSE;
-//
-//			//if (hSkipEvent)
-//			//{
-//			//	gbSkipInjects = (WaitForSingleObject(hSkipEvent, 0) == WAIT_OBJECT_0);
-//			//	CloseHandle(hSkipEvent);
-//			//}
-//			//else
-//			//{
-//			//	gbSkipInjects = FALSE;
-//			//}
-//
-//			// Открыть мэппинг консоли и попытаться получить HWND GUI, PID сервера, и пр...
-//			if (ghConWnd)
-//			{
-//				MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
-//				ConInfo.InitName(CECONMAPNAME, (DWORD)ghConWnd);
-//				CESERVER_CONSOLE_MAPPING_HDR *pInfo = ConInfo.Open();
-//				if (pInfo)
-//				{
-//					if (pInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
-//					{
-//						if (pInfo->hConEmuRoot && IsWindow(pInfo->hConEmuRoot))
-//						{
-//							ghConEmuWnd = pInfo->hConEmuRoot;
-//							if (pInfo->hConEmuWnd && IsWindow(pInfo->hConEmuWnd))
-//								ghConEmuWndDC = pInfo->hConEmuWnd;
-//						}
-//						if (pInfo->nServerPID && pInfo->nServerPID != gnSelfPID)
-//							gnServerPID = pInfo->nServerPID;
-//
-//						if (pInfo->nLoggingType == glt_Processes)
-//						{
-//							wchar_t szExeName[MAX_PATH], szDllName[MAX_PATH]; szExeName[0] = szDllName[0] = 0;
-//							GetModuleFileName(NULL, szExeName, countof(szExeName));
-//							GetModuleFileName((HMODULE)hModule, szDllName, countof(szDllName));
-//							int ImageBits = 0, ImageSystem = 0;
-//							#ifdef _WIN64
-//							ImageBits = 64;
-//							#else
-//							ImageBits = 32;
-//							#endif
-//							CESERVER_REQ* pIn = ExecuteNewCmdOnCreate(eSrvLoaded,
-//								L"", szExeName, szDllName, NULL, NULL, NULL, NULL, 
-//								ImageBits, ImageSystem, 
-//								GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
-//							if (pIn)
-//							{
-//								CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-//								ExecuteFreeResult(pIn);
-//								if (pOut) ExecuteFreeResult(pOut);
-//							}
-//						}
-//
-//						ConInfo.CloseMap();
-//					}
-//					else
-//					{
-//						_ASSERTE(pInfo->cbSize == sizeof(CESERVER_CONSOLE_MAPPING_HDR));
-//					}
-//				}
-//			}
-//
-//			//if (!gbSkipInjects && ghConWnd)
-//			//{
-//			//	InitializeConsoleInputSemaphore();
-//			//}
-//			
-//			
-//			//#ifdef _WIN64
-//			//DWORD nImageBits = 64, nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-//			//#else
-//			//DWORD nImageBits = 32, nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-//			//#endif
-//			//GetImageSubsystem(nImageSubsystem,nImageBits);
-//
-//			//CShellProc sp;
-//			//if (sp.LoadGuiMapping())
-//			//{
-//			//	wchar_t szExeName[MAX_PATH+1]; //, szBaseDir[MAX_PATH+2];
-//			//	//BOOL lbDosBoxAllowed = FALSE;
-//			//	if (!GetModuleFileName(NULL, szExeName, countof(szExeName))) szExeName[0] = 0;
-//			//	CESERVER_REQ* pIn = sp.NewCmdOnCreate(
-//			//		gbSkipInjects ? eHooksLoaded : eInjectingHooks,
-//			//		L"", szExeName, GetCommandLineW(),
-//			//		NULL, NULL, NULL, NULL, // flags
-//			//		nImageBits, nImageSubsystem,
-//			//		GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
-//			//	if (pIn)
-//			//	{
-//			//		//HWND hConWnd = GetConEmuHWND(2);
-//			//		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-//			//		ExecuteFreeResult(pIn);
-//			//		if (pOut) ExecuteFreeResult(pOut);
-//			//	}
-//			//}
-//
-//			//if (!gbSkipInjects)
-//			//{
-//			//	#ifdef _DEBUG
-//			//	wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
-//			//	#endif
-//
-//			//	#ifdef SHOW_INJECT_MSGBOX
-//			//	wchar_t szDbgMsg[1024], szTitle[128];//, szModule[MAX_PATH];
-//			//	if (!GetModuleFileName(NULL, szModule, countof(szModule)))
-//			//		wcscpy_c(szModule, L"GetModuleFileName failed");
-//			//	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
-//			//	_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"SetAllHooks, ConEmuHk, PID=%u\n%s", GetCurrentProcessId(), szModule);
-//			//	MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-//			//	#endif
-//			//	gnRunMode = RM_APPLICATION;
-//
-//			//	#ifdef _DEBUG
-//			//	//wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
-//			//	GetModuleFileName(NULL, szModule, countof(szModule));
-//			//	const wchar_t* pszName = PointToName(szModule);
-//			//	_ASSERTE((nImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0));
-//			//	//if (!lstrcmpi(pszName, L"far.exe") || !lstrcmpi(pszName, L"mingw32-make.exe"))
-//			//	//if (!lstrcmpi(pszName, L"as.exe"))
-//			//	//	MessageBoxW(NULL, L"as.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
-//			//	//else if (!lstrcmpi(pszName, L"cc1plus.exe"))
-//			//	//	MessageBoxW(NULL, L"cc1plus.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
-//			//	//else if (!lstrcmpi(pszName, L"mingw32-make.exe"))
-//			//	//	MessageBoxW(NULL, L"mingw32-make.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
-//			//	//if (!lstrcmpi(pszName, L"g++.exe"))
-//			//	//	MessageBoxW(NULL, L"g++.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
-//			//	//{
-//			//	#endif
-//
-//			//	gbHooksWasSet = StartupHooks(ghOurModule);
-//
-//			//	#ifdef _DEBUG
-//			//	//}
-//			//	#endif
-//
-//			//	// Если NULL - значит это "Detached" консольный процесс, посылать "Started" в сервер смысла нет
-//			//	if (ghConWnd != NULL)
-//			//	{
-//			//		SendStarted();
-//			//		//#ifdef _DEBUG
-//			//		//// Здесь это приводит к обвалу _chkstk,
-//			//		//// похоже из-за того, что dll-ка загружена НЕ из известных модулей,
-//			//		//// а из специально сформированного блока памяти
-//			//		// -- в одной из функций, под локальные переменные выделялось слишком много памяти
-//			//		// -- переделал в malloc/free, все заработало
-//			//		//TestShellProcessor();
-//			//		//#endif
-//			//	}
-//			//}
-//			//else
-//			//{
-//			//	gbHooksWasSet = FALSE;
-//			//}
-//		}
-//		break;
-//		case DLL_PROCESS_DETACH:
-//		{
-//			//if (!gbSkipInjects && gbHooksWasSet)
-//			//{
-//			//	gbHooksWasSet = FALSE;
-//			//	ShutdownHooks();
-//			//}
-//
-//			if (gnRunMode == RM_APPLICATION)
-//			{
-//				SendStopped();
-//			}
-//
-//			//#ifndef TESTLINK
-//			CommonShutdown();
-//
-//			//ReleaseConsoleInputSemaphore();
-//
-//			//#endif
-//			//if (ghHeap)
-//			//{
-//			//	HeapDestroy(ghHeap);
-//			//	ghHeap = NULL;
-//			//}
-//			HeapDeinitialize();
-//		}
-//		break;
-//	}
-//
-//	return TRUE;
-//}
-
-
-///* Используются как extern в ConEmuCheck.cpp */
-//LPVOID _calloc(size_t nCount,size_t nSize) {
-//	return calloc(nCount,nSize);
-//}
-//LPVOID _malloc(size_t nCount) {
-//	return malloc(nCount);
-//}
-//void   _free(LPVOID ptr) {
-//	free(ptr);
-//}
-
 
 BYTE gnOtherWin = 0;
 DWORD gnSkipVkModCode = 0;
 WPARAM gnSkipVkMessage = 0;
-//DWORD gnSkipScanModCode = 0;
 DWORD gnSkipVkKeyCode = 0;
-//DWORD gnWinPressTick = 0;
-//int gnMouseTouch = 0;
+
 
 LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 {
@@ -430,6 +169,26 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 				#ifdef _DEBUG
 				DEBUGSTRHOOK(L"\n");
 				#endif
+			}
+
+			// Win2k & WinXP: при размножении на таскбаре кнопок под каждую консоль
+			// возникает неприятный эффект при AltTab
+			// lbHooked - AltTab может вообще игнорироваться по настройке в ConEmu
+			if (!lbHooked && ghActiveGhost && wParam == WM_SYSKEYDOWN)
+			{
+				if (pKB->vkCode == VK_TAB && IsWindow(ghActiveGhost))
+				{
+					wchar_t szEvtName[64];
+					_wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) CEGHOSTSKIPACTIVATE, (DWORD)ghActiveGhost);
+					HANDLE hSkipActivateEvent = OpenEvent(EVENT_MODIFY_STATE, FALSE, szEvtName);
+					if (hSkipActivateEvent)
+					{
+						SetEvent(hSkipActivateEvent);
+						CloseHandle(hSkipActivateEvent);
+					}
+
+					SetActiveWindow(ghActiveGhost);
+				}
 			}
 
 			if (lbHooked)

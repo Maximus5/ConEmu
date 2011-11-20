@@ -49,6 +49,10 @@ CTaskBarGhost::CTaskBarGhost(CVirtualConsole* apVCon)
 	mb_SimpleBlack = TRUE;
 
 	mn_MsgUpdateThumbnail = RegisterWindowMessage(L"ConEmu::TaskBarGhost");
+
+	mh_SkipActivateEvent = NULL;
+	mb_WasSkipActivate = false;
+	ms_LastTitle[0] = 0;
 }
 
 CTaskBarGhost::~CTaskBarGhost()
@@ -62,6 +66,12 @@ CTaskBarGhost::~CTaskBarGhost()
 	{
 		//_ASSERTE(mh_Ghost==NULL);
 		DestroyWindow(mh_Ghost);
+	}
+
+	if (mh_SkipActivateEvent)
+	{
+		CloseHandle(mh_SkipActivateEvent);
+		mh_SkipActivateEvent = NULL;
 	}
 }
 
@@ -123,6 +133,16 @@ CTaskBarGhost* CTaskBarGhost::Create(CVirtualConsole* apVCon)
 	return pGhost;
 }
 
+HWND CTaskBarGhost::GhostWnd()
+{
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return NULL;
+	}
+	return mh_Ghost;
+}
+
 void CTaskBarGhost::UpdateGhostSize()
 {
 	HWND hView = mp_VCon->GetView();
@@ -135,7 +155,12 @@ void CTaskBarGhost::UpdateGhostSize()
 		int nShowWidth = 0, nShowHeight = 0;
 		if (CalcThumbnailSize(200, 150, nShowWidth, nShowHeight))
 		{
-			SetWindowPos(mh_Ghost, NULL, -32000, -32000, nShowWidth, nShowHeight, SWP_NOZORDER|SWP_NOACTIVATE);
+			RECT rcGhost = {}; GetWindowRect(mh_Ghost, &rcGhost);
+			if ((rcGhost.right - rcGhost.left) != nShowWidth || (rcGhost.bottom - rcGhost.top) != nShowHeight
+				|| rcGhost.left != -32000 || rcGhost.top != -32000)
+			{
+				SetWindowPos(mh_Ghost, NULL, -32000, -32000, nShowWidth, nShowHeight, SWP_NOZORDER|SWP_NOACTIVATE);
+			}
 		}
 	}
 }
@@ -452,9 +477,20 @@ LPCWSTR CTaskBarGhost::CheckTitle(BOOL abSkipValidation /*= FALSE*/)
 	TODO("Разбивка по табам консоли");
 	if (mp_VCon && (abSkipValidation || gpConEmu->isValid(mp_VCon)) && mp_VCon->RCon())
 		pszTitle = mp_VCon->RCon()->GetTitle();
+	if (!pszTitle)
+	{
+		pszTitle = gpConEmu->GetDefaultTitle();
+		_ASSERTE(pszTitle!=NULL);
+	}
 	
 	if (mh_Ghost)
-		SetWindowTextW(mh_Ghost, pszTitle ? pszTitle : gpConEmu->GetDefaultTitle());
+	{
+		if (wcsncmp(ms_LastTitle, pszTitle, countof(ms_LastTitle)) != 0)
+		{
+			lstrcpyn(ms_LastTitle, pszTitle, countof(ms_LastTitle));
+			SetWindowText(mh_Ghost, pszTitle);
+		}
+	}
 
 #ifdef _DEBUG
 	wchar_t szInfo[1024];
@@ -505,6 +541,11 @@ LRESULT CALLBACK CTaskBarGhost::GhostStatic(HWND hWnd, UINT message, WPARAM wPar
 LRESULT CTaskBarGhost::OnCreate()
 {
 	SetTimer(mh_Ghost, 101, 2500, NULL);
+
+	wchar_t szEvtName[64];
+	_wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) CEGHOSTSKIPACTIVATE, (DWORD)mh_Ghost);
+	SafeCloseHandle(mh_SkipActivateEvent);
+	mh_SkipActivateEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
 
 	UpdateGhostSize();
 
@@ -559,23 +600,32 @@ LRESULT CTaskBarGhost::OnActivate(WPARAM wParam, LPARAM lParam)
 	// to the tab window outer frame.
 	if (LOWORD(wParam) == WA_ACTIVE)
 	{
-#if 0
-		// -- смена родителя (owner) на WinXP не срабатывает
-		if (gOSVer.dwMajorVersion == 5)
+		mb_WasSkipActivate = false;
+		if (gOSVer.dwMajorVersion <= 5 && mh_SkipActivateEvent)
 		{
 			// Чтобы не было глюков при Alt-Tab, Alt-Tab
-			gpConEmu->SetParent(mh_Ghost);
+			DWORD nSkipActivate = WaitForSingleObject(mh_SkipActivateEvent, 0);
+			if (nSkipActivate == WAIT_OBJECT_0)
+			{
+				mb_WasSkipActivate = true;
+				return 0;
+			}
 		}
-#endif
 
-		SetForegroundWindow(ghWnd);
+		if (gpConEmu->isIconic())
+			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+
+		apiSetForegroundWindow(ghWnd);
 
 		// Update taskbar
 		hr = gpConEmu->Taskbar_SetActiveTab(mh_Ghost);
 		//hr = gpConEmu->DwmInvalidateIconicBitmaps(mh_Ghost); -- need?
 
-		// Activate tab
-		gpConEmu->Activate(mp_VCon);
+		// Activate tab.
+		// Чтобы при клике по миниатюре табы НЕ итерировались (gpSet->isMultiIterate)
+		// сначала проверяем активный таб
+		if (gpConEmu->ActiveCon() != mp_VCon)
+			gpConEmu->Activate(mp_VCon);
 
 		// Forward message
 		SendMessage(ghWnd, WM_ACTIVATE, wParam, lParam);
@@ -590,6 +640,15 @@ LRESULT CTaskBarGhost::OnSysCommand(WPARAM wParam, LPARAM lParam)
 	// outer frame. This allows functions such as move/size to occur properly.
 	if (wParam != SC_CLOSE)
 	{
+		if (wParam == SC_RESTORE || wParam == SC_MINIMIZE || wParam == SC_MAXIMIZE)
+		{
+			if (gpConEmu->isIconic())
+				wParam = (wParam == SC_MAXIMIZE) ? SC_MAXIMIZE : SC_MINIMIZE;
+			else if (gpConEmu->isZoomed() || gpConEmu->isFullScreen())
+				wParam = (wParam == SC_RESTORE) ? SC_RESTORE : SC_MINIMIZE;
+			else
+				wParam = (wParam == SC_MAXIMIZE) ? SC_MAXIMIZE : SC_MINIMIZE;
+		}
 		SendMessage(ghWnd, WM_SYSCOMMAND, wParam, lParam);
 	}
 	else
@@ -662,8 +721,13 @@ LRESULT CTaskBarGhost::OnDwmSendIconicLivePreviewBitmap()
 			RECT rcMain = {0}; GetWindowRect(ghWnd, &rcMain);
 			RECT rcView = {0}; GetWindowRect(hView, &rcView);
 			TODO("Проверить, учитывается ли DWM и прочая фигня с шириной рамок");
-			ptOffset.x = rcView.left - rcMain.left - GetSystemMetrics(SM_CXFRAME);
-			ptOffset.y = rcView.top - rcMain.top - GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYFRAME);
+			ptOffset.x = rcView.left - rcMain.left;
+			ptOffset.y = rcView.top - rcMain.top;
+			if (!gpConEmu->isIconic())
+			{
+				ptOffset.x -= GetSystemMetrics(SM_CXFRAME);
+				ptOffset.y -= GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
+			}
 		}
 
 		BITMAP bi = {};
@@ -722,6 +786,24 @@ LRESULT CTaskBarGhost::GhostProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
     LRESULT lResult = 0;
 
+#ifdef _DEBUG
+	// Для уменьшения мусора в DebugLog
+	if (message == WM_SETTEXT)
+	{
+		bool lbDbg = false;
+	}
+	else if (message == WM_WINDOWPOSCHANGING)
+	{
+		bool lbDbg = false;
+	}
+	else if (message != 0xAE/*WM_NCUAHDRAWCAPTION*/ && message != WM_GETTEXT && message != WM_GETMINMAXINFO
+		&& message != WM_GETICON && message != WM_TIMER)
+	{
+		wchar_t szDbg[127]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GhostProc(%i{x%03X},%i,%i)\n", message, message, (DWORD)wParam, (DWORD)lParam);
+		OutputDebugStringW(szDbg);
+	}
+#endif
+
     switch (message)
     {
         case WM_CREATE:
@@ -758,6 +840,21 @@ LRESULT CTaskBarGhost::GhostProc(UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_DESTROY:
 			lResult = OnDestroy();
+			break;
+
+		//case WM_SYSKEYUP:
+		case WM_NCACTIVATE:
+			//if (wParam == VK_MENU)
+			if (wParam)
+			{
+				if (mb_WasSkipActivate)
+				{
+					ResetEvent(mh_SkipActivateEvent);
+					mb_WasSkipActivate = false;
+					OnActivate(WA_ACTIVE, NULL);
+				}
+			}
+			lResult = ::DefWindowProcW(mh_Ghost, message, wParam, lParam);
 			break;
 
         default:
