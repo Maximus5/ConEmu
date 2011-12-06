@@ -404,7 +404,7 @@ LRESULT UserImp::sendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	return lRc;
 }
 
-INT_PTR UserImp::dialogBoxIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATEW hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+INT_PTR UserImp::dialogBoxIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATE hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
 	if (!bUserLoaded && !loadExports(bAllowLoadLibrary))
 	{

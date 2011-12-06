@@ -76,11 +76,11 @@ extern HANDLE ghHeap;
 //	ID_CTRLESC,
 //};
 
-struct
+struct ConsoleKeysStr
 {
-	int iMask;
-	int vk;
-	int Mod;
+	int  iMask;
+	UINT vk;
+	int  Mod;
 }
 ConsoleKeys[]=
 {
@@ -290,9 +290,10 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 			{
 				if (gnSkipVkKeyCode)
 				{
-#ifdef _DEBUG
+					#ifdef _DEBUG
 					DEBUGSTRHOOK(L"*** Win released before key ***\n");
-#endif
+					#endif
+
 					// При быстром нажатии Win+<кнопка> часто получается что сам Win отпускается раньше <кнопки>.
 					gnOtherWin = (BYTE)gnVkWinFix;
 					keybd_event(gnOtherWin, gnOtherWin, 0, 0);

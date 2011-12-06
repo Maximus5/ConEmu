@@ -84,6 +84,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define PROCESS_WAIT_START_TIME 1000
 
+#define SETSYNCSIZEAPPLYTIMEOUT 500
+#define SETSYNCSIZEMAPPINGTIMEOUT 300
+#define CONSOLEPROGRESSTIMEOUT 300
+#define CONSOLEPROGRESSWARNTIMEOUT 2000 // поставил 2с, т.к. при минимизации консоль обновляется раз в секунду
+#define CONSOLEINACTIVERGNTIMEOUT 500
+#define SERVERCLOSETIMEOUT 2000
+
 /*#pragma pack(push, 1)
 
 
@@ -202,6 +209,7 @@ struct DebugLogShellActivity
 
 class CVirtualConsole;
 class CRgnDetect;
+class CRealBuffer;
 
 class CRealConsole
 {
@@ -301,11 +309,11 @@ class CRealConsole
 		BOOL isWindowVisible();
 		LPCTSTR GetTitle();
 		void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
-		void GetConsoleCursorPos(COORD *pcr);
+		//void GetConsoleCursorPos(COORD *pcr);
 		void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
-		DWORD GetConsoleCP() { return con.m_dwConsoleCP; };
-		DWORD GetConsoleOutputCP() { return con.m_dwConsoleOutputCP; };
-		DWORD GetConsoleMode() { return con.m_dwConsoleMode; };
+		DWORD GetConsoleCP();
+		DWORD GetConsoleOutputCP();
+		DWORD GetConsoleMode();
 		void SyncConsole2Window(BOOL abNtvdmOff=FALSE, LPRECT prcNewWnd=NULL);
 		void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
@@ -334,13 +342,13 @@ class CRealConsole
 		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 	private:
 		BOOL GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData);
-		enum ExpandTextRangeType
-		{
-			etr_None = 0,
-			etr_Word = 1,
-			etr_FileAndLine = 2,
-		};
-		ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
+		//enum ExpandTextRangeType
+		//{
+		//	etr_None = 0,
+		//	etr_Word = 1,
+		//	etr_FileAndLine = 2,
+		//};
+		//ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
 		bool IsFarHyperlinkAllowed();
 		bool ProcessFarHyperlink(UINT messg, COORD crFrom);
 		void UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab);
@@ -443,7 +451,7 @@ class CRealConsole
 		short mn_PreWarningProgress; DWORD mn_LastWarnCheckTick;
 		short mn_ConsoleProgress, mn_LastConsoleProgress; DWORD mn_LastConProgrTick;
 		short CheckProgressInTitle();
-		short CheckProgressInConsole(const wchar_t* pszCurLine);
+		//short CheckProgressInConsole(const wchar_t* pszCurLine);
 		//void SetProgress(short anProgress); // установить переменную mn_Progress и mn_LastProgressTick
 
 		BOOL AttachPID(DWORD dwPID);
@@ -465,45 +473,57 @@ class CRealConsole
 		//BOOL mb_RunAsAdministrator;
 
 
-		void Box(LPCTSTR szText);
+		static void Box(LPCTSTR szText);
 
 		//BOOL RetrieveConsoleInfo(/*BOOL bShortOnly,*/ UINT anWaitSize);
-		BOOL WaitConsoleSize(UINT anWaitSize, DWORD nTimeout);
+		BOOL WaitConsoleSize(int anWaitSize, DWORD nTimeout);
 		BOOL InitBuffers(DWORD OneBufferSize);
 		BOOL LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
 	private:
-		// Эти переменные инициализируются в RetrieveConsoleInfo()
-		MSection csCON; //DWORD ncsT;
-		struct RConInfo
-		{
-			CONSOLE_SELECTION_INFO m_sel;
-			CONSOLE_CURSOR_INFO m_ci;
-			DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
-			CONSOLE_SCREEN_BUFFER_INFO m_sbi;
-			COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
-			USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
-			wchar_t *pConChar;
-			WORD  *pConAttr;
-			COORD mcr_FileLineStart, mcr_FileLineEnd; // Подсветка строк ошибок компиляторов
-			//CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
-			CHAR_INFO *pDataCmp;
-			int nTextWidth, nTextHeight, nBufferHeight;
-			BOOL bLockChange2Text;
-			int nChange2TextWidth, nChange2TextHeight;
-			BOOL bBufferHeight; // TRUE, если есть прокрутка
-			//DWORD nPacketIdx;
-			DWORD_PTR dwKeybLayout;
-			BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
-			COORD crRBtnDrag;
-			BOOL bInSetSize; HANDLE hInSetSize;
-			int DefaultBufferHeight;
-			BOOL bConsoleDataChanged;
-			DWORD nLastInactiveRgnCheck;
-
-#ifdef _DEBUG
-			BOOL bDebugLocked;
-#endif
-		} con;
+		friend class CRealBuffer;
+		CRealBuffer* mp_RBuf; // Реальный буфер консоли
+		CRealBuffer* mp_EBuf; // Сохранение данных после выполненной команды в Far
+		CRealBuffer* mp_SBuf; // Временный буфер (полный) для блокирования содержимого (выделение/прокрутка/поиск)
+		CRealBuffer* mp_ABuf; // Активный буфер консоли -- ссылка на один из mp_RBuf/mp_EBuf/mp_SBuf
+		
+		int mn_DefaultBufferHeight;
+		DWORD mn_LastInactiveRgnCheck;
+		#ifdef _DEBUG
+		BOOL mb_DebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
+		#endif
+		
+		//// Эти переменные инициализируются в RetrieveConsoleInfo()
+		//MSection csCON; //DWORD ncsT;
+		//struct RConInfo
+		//{
+		//	CONSOLE_SELECTION_INFO m_sel;
+		//	CONSOLE_CURSOR_INFO m_ci;
+		//	DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
+		//	CONSOLE_SCREEN_BUFFER_INFO m_sbi;
+		//	COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
+		//	USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
+		//	wchar_t *pConChar;
+		//	WORD  *pConAttr;
+		//	COORD mcr_FileLineStart, mcr_FileLineEnd; // Подсветка строк ошибок компиляторов
+		//	//CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
+		//	CHAR_INFO *pDataCmp;
+		//	int nTextWidth, nTextHeight, nBufferHeight;
+		//	BOOL bLockChange2Text;
+		//	int nChange2TextWidth, nChange2TextHeight;
+		//	BOOL bBufferHeight; // TRUE, если есть прокрутка
+		//	//DWORD nPacketIdx;
+		//	DWORD_PTR dwKeybLayout;
+		//	BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
+		//	COORD crRBtnDrag;
+		//	BOOL bInSetSize; HANDLE hInSetSize;
+		//	int DefaultBufferHeight;
+		//	BOOL bConsoleDataChanged;
+		//	DWORD nLastInactiveRgnCheck;
+		//	#ifdef _DEBUG
+		//	BOOL bDebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
+		//	#endif
+		//} con;
+		
 		BOOL mb_ThawRefreshThread;
 		struct ServerClosing
 		{
@@ -516,9 +536,9 @@ class CRealConsole
 		std::vector<ConProcess> m_Processes;
 		int mn_ProcessCount;
 		DWORD m_FarPlugPIDs[128];
-		int mn_FarPlugPIDsCount;
+		UINT mn_FarPlugPIDsCount;
 		BOOL mb_SkipFarPidChange;
-		DWORD m_TerminatedPIDs[128]; int mn_TerminatedIdx;
+		DWORD m_TerminatedPIDs[128]; UINT mn_TerminatedIdx;
 		//
 		DWORD mn_FarPID;
 		DWORD mn_ActivePID;
@@ -541,14 +561,14 @@ class CRealConsole
 		BOOL isShowConsole;
 		//BOOL mb_FarGrabberActive; // бывший mb_ConsoleSelectMode
 		WORD mn_SelectModeSkipVk; // пропустить "отпускание" клавиши Esc/Enter при выделении текста
-		bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
-		void UpdateSelection(); // обновить на экране
+		//bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
+		//void UpdateSelection(); // обновить на экране
 		static DWORD WINAPI RConServerThread(LPVOID lpvParam);
 		HANDLE mh_RConServerThreads[MAX_SERVER_THREADS], mh_ActiveRConServerThread;
 		DWORD  mn_RConServerThreadsId[MAX_SERVER_THREADS];
 		HANDLE mh_ServerSemaphore, mh_GuiAttached;
-		void SetBufferHeightMode(BOOL abBufferHeight, BOOL abLock=FALSE);
-		BOOL mb_BuferModeChangeLocked;
+		//void SetBufferHeightMode(BOOL abBufferHeight, BOOL abIgnoreLock=FALSE);
+		//BOOL mb_BuferModeChangeLocked; -> mp_RBuf
 
 		void ServerThreadCommand(HANDLE hPipe);
 		CESERVER_REQ* cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
@@ -621,7 +641,7 @@ class CRealConsole
 		DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx; //, mn_LastFarReadIdx;
 		DWORD mn_LastFarReadTick;
 		BOOL OpenFarMapData();
-		void CloseFarMapData();
+		void CloseFarMapData(MSectionLock* pCS = NULL);
 		BOOL OpenMapHeader(BOOL abFromAttach=FALSE);
 		//void CloseMapData();
 		//BOOL ReopenMapData();
@@ -648,12 +668,9 @@ class CRealConsole
 		DWORD mn_LastInvalidateTick;
 		//
 		HWND hPictureView; BOOL mb_PicViewWasHidden;
-		// координаты панелей в символах
-		RECT mr_LeftPanel, mr_RightPanel, mr_LeftPanelFull, mr_RightPanelFull; BOOL mb_LeftPanel, mb_RightPanel;
-		void FindPanels();
 		//
 		BOOL mb_MouseButtonDown;
-		COORD mcr_LastMouseEventPos, mcr_LastMousePos;
+		COORD mcr_LastMouseEventPos;
 		//
 		SHELLEXECUTEINFO *mp_sei;
 		//

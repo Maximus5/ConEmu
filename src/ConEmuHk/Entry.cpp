@@ -35,11 +35,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
 
-#ifdef _DEBUG
-	#define USE_PIPE_SERVER
-#else
-	#undef USE_PIPE_SERVER
-#endif
+//#ifdef _DEBUG
+#define USE_PIPE_SERVER
+//#else
+//	#undef USE_PIPE_SERVER
+//#endif
 
 #include <windows.h>
 
@@ -195,7 +195,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap()
 }
 
 #ifdef USE_PIPE_SERVER
-BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
+BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam, HANDLE hPipe);
 BOOL WINAPI HookServerReady(LPARAM lParam);
 void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 
@@ -303,7 +303,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	_ASSERTE(gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_GUI || gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI);
 	
 	
-	BOOL lbGuiWindowAttach = FALSE; // Прицепить к ConEmu гуевую программу (notepad, putty, ...)
+	//BOOL lbGuiWindowAttach = FALSE; // Прицепить к ConEmu гуевую программу (notepad, putty, ...)
 
 	
 #ifdef USE_PIPE_SERVER
@@ -313,7 +313,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	{
 		wchar_t szPipeName[128];
 		msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", GetCurrentProcessId());
-		if (!gpHookServer->StartPipeServer(szPipeName, HookServerCommand, HookServerReady, HookServerFree, (LPARAM)gpHookServer))
+		BOOL lbOverlapped = TRUE;
+		if (!gpHookServer->StartPipeServer(szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady, lbOverlapped))
 		{
 			_ASSERTEX(FALSE); // Ошибка запуска Pipes?
 			gpHookServer->StopPipeServer();
@@ -416,6 +417,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 						{
 							LONG_PTR hkl = (LONG_PTR)(LONG)pOut->AttachGuiApp.hkl;
 							BOOL lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != NULL;
+							UNREFERENCED_PARAMETER(lbRc);
 						}
 						gbAttachGuiClient = TRUE;
 					}
@@ -1155,7 +1157,7 @@ HWND WINAPI GetRealConsoleWindow()
 
 
 // Для облегчения жизни - сервер кеширует данные, калбэк может использовать ту же память (*pcbMaxReplySize)
-BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
+BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam, HANDLE hPipe)
 {
 	WARNING("Собственно, выполнение команд!");
 	

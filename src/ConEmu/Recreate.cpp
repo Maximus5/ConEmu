@@ -40,8 +40,8 @@ BOOL CRecreateDlg::mb_SkipAppsInRecreate = FALSE;
 
 CRecreateDlg::CRecreateDlg()
 	: mh_Dlg(NULL)
-	, mp_Args(NULL)
 	, mn_DlgRc(0)
+	, mp_Args(NULL)
 {
 }
 
@@ -96,7 +96,10 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 	mn_DlgRc = IDCANCEL;
 	mp_Args = apArgs;
 
+	gpConEmu->SetSkipOnFocus(TRUE);
 	int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, (LPARAM)this);
+	UNREFERENCED_PARAMETER(nRc);
+	gpConEmu->SetSkipOnFocus(FALSE);
 
 	//if (gpConEmu->mh_RecreatePasswFont)
 	//{
@@ -354,8 +357,13 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			           (rcParent.left+rcParent.right-rect.right+rect.left)/2,
 			           (rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2,
 			           rect.right - rect.left, rect.bottom - rect.top, false);
+
+			PostMessage(hDlg, (WM_APP+1), 0,0);
 			return lbRc;
 		}
+		case (WM_APP+1):
+			gpConEmu->SetSkipOnFocus(FALSE);
+			return FALSE;
 		case WM_CTLCOLORSTATIC:
 
 			if (GetDlgItem(hDlg, IDC_WARNING) == (HWND)lParam)

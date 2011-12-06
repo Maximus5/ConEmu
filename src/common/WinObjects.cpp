@@ -1848,7 +1848,7 @@ MSection::MSection()
 	ZeroStruct(mn_LockedTID); ZeroStruct(mn_LockedCount);
 	InitializeCriticalSection(&m_cs);
 	mh_ReleaseEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	_ASSERTE(mh_ReleaseEvent!=NULL);
+	_ASSERTEX(mh_ReleaseEvent!=NULL);
 
 	if (mh_ReleaseEvent) ResetEvent(mh_ReleaseEvent);
 };
@@ -1871,7 +1871,7 @@ void MSection::ThreadTerminated(DWORD dwTID)
 
 			if (mn_LockedCount[i] != 0)
 			{
-				_ASSERTE(mn_LockedCount[i] == 0);
+				_ASSERTEX(mn_LockedCount[i] == 0);
 			}
 
 			break;
@@ -1881,7 +1881,7 @@ void MSection::ThreadTerminated(DWORD dwTID)
 void MSection::AddRef(DWORD dwTID)
 {
 	mn_Locked ++; // увеличиваем счетчик nonexclusive locks
-	_ASSERTE(mn_Locked>0);
+	_ASSERTEX(mn_Locked>0);
 	ResetEvent(mh_ReleaseEvent); // На всякий случай сбросим Event
 	int j = -1; // будет -2, если ++ на существующий, иначе - +1 на пустой
 
@@ -1904,12 +1904,12 @@ void MSection::AddRef(DWORD dwTID)
 
 	if (j == -1)  // Этого быть не должно
 	{
-		_ASSERTE(j != -1);
+		_ASSERTEX(j != -1);
 	}
 };
 int MSection::ReleaseRef(DWORD dwTID)
 {
-	_ASSERTE(mn_Locked>0);
+	_ASSERTEX(mn_Locked>0);
 	int nInThreadLeft = 0;
 
 	if (mn_Locked > 0) mn_Locked --;
@@ -1960,23 +1960,22 @@ void MSection::WaitUnlocked(DWORD dwTID, DWORD anTimeout)
 		{
 			if (dwDelta > anTimeout)
 			{
-#ifndef CSECTION_NON_RAISE
-				_ASSERTE(dwDelta<=anTimeout);
-#endif
+				#ifndef CSECTION_NON_RAISE
+				_ASSERTEX(dwDelta<=anTimeout);
+				#endif
 				break;
 			}
 		}
 
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		else if (dwDelta > 3000)
 		{
-#ifndef CSECTION_NON_RAISE
-			_ASSERTE(dwDelta <= 3000);
-#endif
+			#ifndef CSECTION_NON_RAISE
+			_ASSERTEX(dwDelta <= 3000);
+			#endif
 			break;
 		}
-
-#endif
+		#endif
 	}
 };
 bool MSection::MyEnterCriticalSection(DWORD anTimeout)
@@ -2000,23 +1999,22 @@ bool MSection::MyEnterCriticalSection(DWORD anTimeout)
 			{
 				if (((dwCurrentTick - dwTryLockSectionStart) > anTimeout))
 				{
-#ifndef CSECTION_NON_RAISE
-					_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= anTimeout);
-#endif
+					#ifndef CSECTION_NON_RAISE
+					_ASSERTEX((dwCurrentTick - dwTryLockSectionStart) <= anTimeout);
+					#endif
 					return false;
 				}
 			}
 
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			else if ((dwCurrentTick - dwTryLockSectionStart) > 3000)
 			{
-#ifndef CSECTION_NON_RAISE
-				_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= 3000);
-#endif
+				#ifndef CSECTION_NON_RAISE
+				_ASSERTEX((dwCurrentTick - dwTryLockSectionStart) <= 3000);
+				#endif
 				dwTryLockSectionStart = GetTickCount();
 			}
-
-#endif
+			#endif
 		}
 	}
 
@@ -2029,7 +2027,9 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 	// Может эта нить уже полностью заблокирована?
 	if (mb_Exclusive && dwTID == mn_TID)
 	{
-		return FALSE; // Уже, но Unlock делать не нужно!
+		//111126 возвращался FALSE
+		_ASSERTEX(!mb_Exclusive || dwTID != mn_TID);
+		return TRUE; // Уже, но Unlock делать не нужно!
 	}
 
 	if (!abExclusive)
@@ -2047,13 +2047,13 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 			{
 				// Нужно избегать этого. Значит выше по стеку в этой нити
 				// более одного раза был выполнен non exclusive lock
-				_ASSERTE(nLeft == 0);
+				_ASSERTEX(nLeft == 0);
 			}
 
 			DEBUGSTR(L"!!! Failed non exclusive lock, trying to use CriticalSection\n");
 			bool lbEntered = MyEnterCriticalSection(anTimeout); // дождаться пока секцию отпустят
 			// mb_Exclusive может быть выставлен, если сейчас другая нить пытается выполнить exclusive lock
-			_ASSERTE(!mb_Exclusive); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
+			_ASSERTEX(!mb_Exclusive); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
 			AddRef(dwTID); // Возвращаем блокировку
 
 			// Но поскольку нам нужен только nonexclusive lock
@@ -2085,7 +2085,7 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 		if (!MyEnterCriticalSection(anTimeout))
 		{
 			// Пока поставил _ASSERTE, чтобы посмотреть, возникают ли Timeout-ы при блокировке
-			_ASSERTE(FALSE);
+			_ASSERTEX(FALSE);
 
 			if (mn_TID == 0)  // поскольку заблокировать не удалось - сбросим флажок
 				mb_Exclusive = FALSE;
@@ -2093,10 +2093,10 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 			return FALSE;
 		}
 
-		_ASSERTE(!(lbPrev && mb_Exclusive)); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
+		_ASSERTEX(!(lbPrev && mb_Exclusive)); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
 		mn_TID = dwTID; // И запомним, в какой нити это произошло
 		mb_Exclusive = TRUE; // Флаг могла сбросить другая нить, выполнившая Leave
-		_ASSERTE(mn_LockedTID[0] == 0 && mn_LockedCount[0] == 0);
+		_ASSERTEX(mn_LockedTID[0] == 0 && mn_LockedCount[0] == 0);
 		mn_LockedTID[0] = dwTID;
 		mn_LockedCount[0] ++;
 
@@ -2121,11 +2121,11 @@ void MSection::Unlock(BOOL abExclusive)
 
 	if (abExclusive)
 	{
-		_ASSERTE(mn_TID == dwTID && mb_Exclusive);
-		_ASSERTE(mn_LockedTID[0] == dwTID);
-#ifdef _DEBUG
+		_ASSERTEX(mn_TID == dwTID && mb_Exclusive);
+		_ASSERTEX(mn_LockedTID[0] == dwTID);
+		#ifdef _DEBUG
 		mn_UnlockedExclusiveTID = dwTID;
-#endif
+		#endif
 		mb_Exclusive = FALSE; mn_TID = 0;
 		mn_LockedTID[0] = 0; mn_LockedCount[0] --;
 		LeaveCriticalSection(&m_cs);
@@ -2157,6 +2157,7 @@ MSectionLock::MSectionLock()
 };
 MSectionLock::~MSectionLock()
 {
+	_ASSERTEX((mb_Locked==FALSE || mb_Locked==TRUE) && (mb_Exclusive==FALSE || mb_Exclusive==TRUE));
 	if (mb_Locked) Unlock();
 };
 BOOL MSectionLock::Lock(MSection* apS, BOOL abExclusive/*=FALSE*/, DWORD anTimeout/*=-1*/)
@@ -2164,10 +2165,10 @@ BOOL MSectionLock::Lock(MSection* apS, BOOL abExclusive/*=FALSE*/, DWORD anTimeo
 	if (!apS)
 		return FALSE;
 	if (mb_Locked && apS == mp_S && (abExclusive == mb_Exclusive || mb_Exclusive))
-		return FALSE; // уже заблокирован
+		return TRUE; // уже заблокирован //111126 - возвращался FALSE
 
-	_ASSERTE(!mb_Locked);
-	mb_Exclusive = abExclusive;
+	_ASSERTEX(!mb_Locked);
+	mb_Exclusive = (abExclusive!=FALSE);
 	mp_S = apS;
 	mb_Locked = mp_S->Lock(mb_Exclusive, anTimeout);
 	return mb_Locked;
@@ -2175,9 +2176,12 @@ BOOL MSectionLock::Lock(MSection* apS, BOOL abExclusive/*=FALSE*/, DWORD anTimeo
 BOOL MSectionLock::RelockExclusive(DWORD anTimeout/*=-1*/)
 {
 	if (!mp_S)
+	{
+		_ASSERTEX(mp_S!=NULL);
 		return FALSE;
+	}
 	if (mb_Locked && mb_Exclusive)
-		return FALSE;  // уже
+		return TRUE;  // уже
 
 	// Чистый ReLock делать нельзя. Виснут другие нити, которые тоже запросили ReLock
 	Unlock();
@@ -2193,9 +2197,9 @@ void MSectionLock::Unlock()
 		mb_Locked = FALSE;
 	}
 };
-BOOL MSectionLock::isLocked()
+BOOL MSectionLock::isLocked(BOOL abExclusiveOnly/*=FALSE*/)
 {
-	return (mp_S!=NULL) && mb_Locked;
+	return (mp_S!=NULL) && mb_Locked && (!abExclusiveOnly || mb_Exclusive);
 };
 
 

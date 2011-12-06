@@ -435,7 +435,7 @@ void Settings::InitSettings()
 			RegConColors.CloseKey();
 		}
 	}
-	isTrueColorer = false;
+	isTrueColorer = true; // включим по умочанию, ибо Far3
 	isExtendColors = false;
 	nExtendColor = 14;
 	isExtendFonts = false;
@@ -553,7 +553,7 @@ void Settings::InitSettings()
 	memset(&ThSet, 0, sizeof(ThSet));
 	ThSet.cbSize = sizeof(ThSet);
 	// фон превьюшки: RGB или Index
-	SetThumbColor(ThSet.crBackground, RGB(255,255,255), 16, FALSE);
+	SetThumbColor(ThSet.crBackground, RGB(255,255,255), 16, TRUE); // Поставим по умолчанию "Auto"
 	// серая рамка вокруг превьюшки
 	ThSet.nPreviewFrame = 1;
 	SetThumbColor(ThSet.crPreviewFrame, RGB(128,128,128), 8, TRUE);
@@ -1163,7 +1163,7 @@ BOOL Settings::FontRangeLoad(SettingsBase* reg, int Idx)
 {
 	_ASSERTE(FALSE); // Не реализовано
 
-	BOOL lbOpened = FALSE, lbNeedCreateVanilla = FALSE;
+	BOOL lbOpened = FALSE; //, lbNeedCreateVanilla = FALSE;
 	wchar_t szFontKey[MAX_PATH+20];
 	_wsprintf(szFontKey, SKIPLEN(countof(szFontKey)) L"%s\\Font%i", gpSetCls->GetConfigPath(), (Idx+1));
 	
@@ -1760,7 +1760,7 @@ void Settings::TrimHostkeys()
 	// Если вдруг задали более 3-х модификаторов - обрезать, оставив 3 последних
 	if (i > 3)
 	{
-		if (i >= countof(gpSet->mn_HostModOk))
+		if (i >= (int)countof(gpSet->mn_HostModOk))
 		{
 			_ASSERTE(i < countof(gpSet->mn_HostModOk));
 			i = countof(gpSet->mn_HostModOk) - 1;
@@ -2418,7 +2418,7 @@ COLORREF* Settings::GetColors(BOOL abFade)
 		mn_FadeMul = mn_FadeHigh - mn_FadeLow;
 		mb_FadeInitialized = true;
 
-		for(int i=0; i<countof(ColorsFade); i++)
+		for (size_t i=0; i<countof(ColorsFade); i++)
 		{
 			ColorsFade[i] = GetFadeColor(Colors[i]);
 		}
@@ -2435,7 +2435,7 @@ COLORREF Settings::GetFadeColor(COLORREF cr)
 	if (cr == mn_LastFadeSrc)
 		return mn_LastFadeDst;
 
-	MYCOLORREF mcr, mcrFade = {0}; mcr.color = cr;
+	MYCOLORREF mcr, mcrFade = {}; mcr.color = cr;
 
 	if (!mb_FadeInitialized)
 	{
@@ -2519,7 +2519,7 @@ bool Settings::NeedCreateAppWindow()
 	// Пока что, окно для Application нужно создавать только для XP и ниже
 	// в том случае, если на таскбаре отображаются кнопки запущенных консолей
 	// Это для того, чтобы при Alt-Tab не светилась "лишняя" иконка главного окна
-	if ((gOSVer.dwMajorVersion == 5) && isTabsOnTaskBar())
+	if (!IsWindows7 && isTabsOnTaskBar())
 		return TRUE;
 	return FALSE;
 }
@@ -2528,7 +2528,7 @@ bool Settings::isTabsOnTaskBar()
 {
 	if (isDesktopMode)
 		return false;
-	if ((m_isTabsOnTaskBar == 1) || (((BYTE)m_isTabsOnTaskBar > 1) && (gOSVer.dwMajorVersion >= 6)))
+	if ((m_isTabsOnTaskBar == 1) || (((BYTE)m_isTabsOnTaskBar > 1) && IsWindows7))
 		return true;
 	return false;
 }

@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __GNUC__
 #define TimeGetTime GetTickCount
 #define wmemmove_s(d,ds,s,ss) wmemmove(d,s,ss)
+#define SecureZeroMemory(p,s) memset(p,0,s)
 #else
 #define TimeGetTime timeGetTime
 #endif
@@ -347,3 +348,42 @@ struct RConStartArgs
 #include "../common/UnicodeChars.h"
 #include "../common/defines.h"
 #include "../common/WinObjects.h"
+
+#define IsWindows7 ((gOSVer.dwMajorVersion > 6) || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion > 0))
+
+// GNU C HEADER PATCH
+#ifdef __GNUC__
+typedef BOOL (WINAPI* AlphaBlend_t)(HDC hdcDest, int xoriginDest, int yoriginDest, int wDest, int hDest, HDC hdcSrc, int xoriginSrc, int yoriginSrc, int wSrc, int hSrc, BLENDFUNCTION ftn);
+typedef BOOL (WINAPI* GetLayeredWindowAttributes_t)(HWND hwnd, COLORREF *pcrKey, BYTE *pbAlpha, DWORD *pdwFlags);
+typedef BOOL (WINAPI* SetLayeredWindowAttributes_t)(HWND hwnd, COLORREF crKey, BYTE bAlpha, DWORD dwFlags);
+typedef BOOL (WINAPI* CreateRestrictedToken_t)(HANDLE ExistingTokenHandle, DWORD Flags, DWORD DisableSidCount, PSID_AND_ATTRIBUTES SidsToDisable, DWORD DeletePrivilegeCount, PLUID_AND_ATTRIBUTES PrivilegesToDelete, DWORD RestrictedSidCount, PSID_AND_ATTRIBUTES SidsToRestrict, PHANDLE NewTokenHandle);
+#endif
+
+#ifdef __GNUC__
+	#define MAPVK_VK_TO_VSC     (0)
+	#define MAPVK_VSC_TO_VK     (1)
+	#define MAPVK_VK_TO_CHAR    (2)
+	#define MAPVK_VSC_TO_VK_EX  (3)
+#endif
+
+#ifndef SEE_MASK_NOASYNC
+	#define SEE_MASK_NOASYNC    0x00000100   // block on the call until the invoke has completed, use for callers that exit after calling ShellExecuteEx()
+#endif
+
+#ifndef TTM_SETTITLEW
+	#define TTM_SETTITLEW           (WM_USER + 33)  // wParam = TTI_*, lParam = wchar* szTitle
+#endif
+#ifndef TTM_SETTITLE
+	#define TTM_SETTITLE            TTM_SETTITLEW
+#endif
+#ifndef TTI_WARNING
+	#define TTI_WARNING             2
+#endif
+
+#ifndef INPUTLANGCHANGE_SYSCHARSET
+#define INPUTLANGCHANGE_SYSCHARSET 0x0001
+#endif
+
+#ifndef DISABLE_MAX_PRIVILEGE
+#define DISABLE_MAX_PRIVILEGE   0x1 
+#endif

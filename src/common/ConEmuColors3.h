@@ -41,7 +41,7 @@ public:
 		COLORREF StdPalette[16] = 
 			{0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
 			0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
-		for (int i = 0; i < ARRAYSIZE(StdPalette); i++)
+		for (size_t i = 0; i < countof(StdPalette); i++)
 		{
 			if (Color == StdPalette[i])
 				return i;
@@ -62,7 +62,8 @@ public:
 	static void Color2FgIndex(COLORREF Color, WORD& Con)
 	{
 		int Index = - 1;
-		static int LastColor, LastIndex;
+		static COLORREF LastColor;
+		static int LastIndex;
 		if (LastColor == Color)
 		{
 			Index = LastIndex;
@@ -108,7 +109,8 @@ public:
 	static void Color2BgIndex(COLORREF Color, BOOL Equal, WORD& Con)
 	{
 		int Index = -1;
-		static int LastColor, LastIndex;
+		static COLORREF LastColor;
+		static int LastIndex;
 		if (LastColor == Color)
 		{
 			Index = LastIndex;

@@ -83,7 +83,7 @@ class CVirtualConsole : public CConEmuChild
 		bool    mb_IsForceUpdate; // Это устанавливается в InitDC, чтобы случайно isForce не потерялся
 		bool    mb_RequiredForceUpdate; // Сменился шрифт, например...
 		bool    isForce; // а это - сейчас (устанавливается по аргументу в Update)
-		int     mn_LastBitsPixel;
+		DWORD   mn_LastBitsPixel;
 	private:
 		BOOL    mb_InUpdate;
 		HDC     hDC;
@@ -101,7 +101,7 @@ class CVirtualConsole : public CConEmuChild
 		//
 		BOOL	mb_ChildWindowWasFound;
 	public:
-		bool InitDC(bool abNoDc, bool abNoWndResize);
+		bool InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC, MSectionLock *pSCON);
 	private:
 		enum _PartType
 		{
@@ -252,8 +252,8 @@ class CVirtualConsole : public CConEmuChild
 		static bool isCharBorderVertical(wchar_t inChar);
 		static bool isCharProgress(wchar_t inChar);
 		static bool isCharScroll(wchar_t inChar);
-		inline bool isCharNonSpacing(wchar_t inChar);
-		inline bool isCharSpace(wchar_t inChar);
+		static bool isCharNonSpacing(wchar_t inChar);
+		static bool isCharSpace(wchar_t inChar);
 		void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
@@ -296,7 +296,7 @@ class CVirtualConsole : public CConEmuChild
 		DWORD nBgImageColors;
 		COORD bgBmpSize; HDC hBgDc;
 		void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
-		bool UpdatePrepare(HDC *ahDc, MSectionLock *pSDC);
+		bool UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock *pSCON);
 		void UpdateText(); //, bool updateText, bool updateCursor);
 		WORD CharWidth(wchar_t ch);
 		void CharABC(wchar_t ch, ABC *abc);

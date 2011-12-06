@@ -437,7 +437,7 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE SetTabActive(
 	    /* [in] */ __RPC__in HWND hwndTab,
 	    /* [in] */ __RPC__in HWND hwndMDI,
-	    /* [in] */ TBATFLAG tbatFlags) = 0;
+	    /* [in] */ DWORD/*TBATFLAG*/ tbatFlags) = 0;
 
 	virtual HRESULT STDMETHODCALLTYPE ThumbBarAddButtons(
 	    /* [in] */ __RPC__in HWND hwnd,

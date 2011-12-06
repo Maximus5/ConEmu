@@ -33,6 +33,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "../common/ConEmuCheck.h"
 
+#ifdef __GNUC__
+#include "DwmApi_Part.h"
+#endif
+
 #define UPDATE_DELTA 1000
 
 ATOM CTaskBarGhost::mh_Class = NULL;
@@ -79,7 +83,7 @@ CTaskBarGhost* CTaskBarGhost::Create(CVirtualConsole* apVCon)
 {
 	_ASSERTE(gpConEmu->isMainThread());
 
-	if (mh_Class == NULL)
+	if (mh_Class == 0)
 	{
 		WNDCLASSEX wcex = {0};
 		wcex.cbSize         = sizeof(wcex);
@@ -105,7 +109,7 @@ CTaskBarGhost* CTaskBarGhost::Create(CVirtualConsole* apVCon)
 #endif
 
 	DWORD dwStyle, dwStyleEx;
-	if (gOSVer.dwMajorVersion >= 6)
+	if (IsWindows7)
 	{
 		dwStyleEx = WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_ACCEPTFILES;
 		dwStyle = WS_POPUP | WS_BORDER | WS_SYSMENU | WS_CAPTION;
@@ -202,7 +206,7 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 	if (mh_Snap)
 	{
 		bool lbChanged = false;
-		if ((m_TabSize.cx != mp_VCon->Width || m_TabSize.cy != mp_VCon->Height))
+		if ((m_TabSize.cx != (int)mp_VCon->Width || m_TabSize.cy != (int)mp_VCon->Height))
 		{
 			lbChanged = true;
 		}
@@ -210,7 +214,7 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 		{
 			BITMAP bi = {};
 			GetObject(mh_Snap, sizeof(bi), &bi);
-			if ((bi.bmWidth != mp_VCon->Width) || (bi.bmHeight != mp_VCon->Height))
+			if ((bi.bmWidth != (int)mp_VCon->Width) || (bi.bmHeight != (int)mp_VCon->Height))
 				lbChanged = true;
 		}
 
@@ -505,7 +509,7 @@ void CTaskBarGhost::ActivateTaskbar()
 	gpConEmu->Taskbar_SetActiveTab(mh_Ghost);
 #if 0
 	// -- смена родителя (owner) на WinXP не срабатывает
-	if (gOSVer.dwMajorVersion == 5)
+	if (!IsWindows7)
 	{
 		HWND hParent = GetParent(ghWnd);
 		if (hParent != mh_Ghost)
@@ -553,7 +557,8 @@ LRESULT CTaskBarGhost::OnCreate()
 	// to always render the thumbnail using the iconic bitmap.
 	gpConEmu->ForceSetIconic(mh_Ghost);
 
-	if (gOSVer.dwMajorVersion >= 6)
+	// Win7 и выше!
+	if (IsWindows7)
 	{
 		// Tell the taskbar about this tab window
 		gpConEmu->Taskbar_RegisterTab(mh_Ghost, gpConEmu->isActive(mp_VCon));
@@ -601,7 +606,7 @@ LRESULT CTaskBarGhost::OnActivate(WPARAM wParam, LPARAM lParam)
 	if (LOWORD(wParam) == WA_ACTIVE)
 	{
 		mb_WasSkipActivate = false;
-		if (gOSVer.dwMajorVersion <= 5 && mh_SkipActivateEvent)
+		if (!IsWindows7 && mh_SkipActivateEvent)
 		{
 			// Чтобы не было глюков при Alt-Tab, Alt-Tab
 			DWORD nSkipActivate = WaitForSingleObject(mh_SkipActivateEvent, 0);
@@ -774,7 +779,7 @@ LRESULT CTaskBarGhost::OnDestroy()
 	}
 	#endif
 
-	if (gOSVer.dwMajorVersion >= 6)
+	if (IsWindows7)
 	{
 		gpConEmu->Taskbar_UnregisterTab(mh_Ghost);
 	}
@@ -799,8 +804,8 @@ LRESULT CTaskBarGhost::GhostProc(UINT message, WPARAM wParam, LPARAM lParam)
 	else if (message != 0xAE/*WM_NCUAHDRAWCAPTION*/ && message != WM_GETTEXT && message != WM_GETMINMAXINFO
 		&& message != WM_GETICON && message != WM_TIMER)
 	{
-		wchar_t szDbg[127]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GhostProc(%i{x%03X},%i,%i)\n", message, message, (DWORD)wParam, (DWORD)lParam);
-		OutputDebugStringW(szDbg);
+		//wchar_t szDbg[127]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GhostProc(%i{x%03X},%i,%i)\n", message, message, (DWORD)wParam, (DWORD)lParam);
+		//OutputDebugStringW(szDbg);
 	}
 #endif
 

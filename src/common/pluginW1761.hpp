@@ -2127,7 +2127,7 @@ extern "C"
 	HANDLE WINAPI OpenPluginW(int OpenFrom,INT_PTR Item);
 	int    WINAPI ProcessDialogEventW(int Event,void *Param);
 	int    WINAPI ProcessEditorEventW(int Event,void *Param);
-	int    WINAPI ProcessEditorInputW(const INPUT_RECORD *Rec);
+	int    WINAPI ProcessEditorInputW(void *Rec);
 	int    WINAPI ProcessEventW(HANDLE hPlugin,int Event,void *Param);
 	int    WINAPI ProcessHostFileW(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode);
 	int    WINAPI ProcessKeyW(HANDLE hPlugin,int Key,unsigned int ControlState);
@@ -2136,7 +2136,7 @@ extern "C"
 	int    WINAPI PutFilesW(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int Move,const wchar_t *SrcPath,int OpMode);
 	int    WINAPI SetDirectoryW(HANDLE hPlugin,const wchar_t *Dir,int OpMode);
 	int    WINAPI SetFindListW(HANDLE hPlugin,const struct PluginPanelItem *PanelItem,int ItemsNumber);
-	void   WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info);
+	void   WINAPI SetStartupInfoW(void *Info);
 
 #ifdef __cplusplus
 };

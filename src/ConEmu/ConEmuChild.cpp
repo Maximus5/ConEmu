@@ -89,7 +89,7 @@ HWND CConEmuChild::CreateView()
 	if (!gpConEmu->isMainThread())
 	{
 		// ќкно должно создаватьс€ в главной нити!
-		HWND hCreate = gpConEmu->PostCreateView(this);
+		HWND hCreate = gpConEmu->PostCreateView(this); UNREFERENCED_PARAMETER(hCreate);
 		_ASSERTE(hCreate && (hCreate == mh_WndDC));
 		return mh_WndDC;
 	}
@@ -1054,7 +1054,7 @@ void CConEmuBack::Invalidate()
 BOOL CConEmuBack::TrackMouse()
 {
 	BOOL lbCapture = FALSE; // ѕо умолчанию - мышь не перехватывать
-	BOOL lbHided = FALSE;
+	//BOOL lbHided = FALSE;
 	#ifdef _DEBUG
 	CRealConsole* pRCon = gpConEmu->ActiveCon()->RCon();
 	BOOL lbBufferMode = pRCon->isBufferHeight() && !pRCon->GuiWnd();

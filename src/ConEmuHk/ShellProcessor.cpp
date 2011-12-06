@@ -346,6 +346,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасываетс€
 	int nCchSize = 0;
 	BOOL lbEndQuote = FALSE;
+	bool lbNewGuiConsole = false;
+	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
 
 	szConEmuC = (wchar_t*)malloc(cchConEmuC*sizeof(*szConEmuC)); // ConEmuC64.exe
 	if (!szConEmuC)
@@ -358,7 +360,6 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	
 	_ASSERTE(aCmd==eShellExecute || aCmd==eCreateProcess);
 
-	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
 
 	if (aCmd == eCreateProcess)
 	{
@@ -711,7 +712,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	}
 
 	// ≈сли запускаетс€ новый GUI как вкладка, или консольное приложени€ из GUI как вкладки
-	bool lbNewGuiConsole = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ghAttachGuiClient != NULL);
+	lbNewGuiConsole = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ghAttachGuiClient != NULL);
 
 	if (lbNewGuiConsole)
 	{
@@ -1025,6 +1026,8 @@ BOOL CShellProc::PrepareExecuteParms(
 	HANDLE hIn  = lphStdIn  ? *lphStdIn  : NULL;
 	HANDLE hOut = lphStdOut ? *lphStdOut : NULL;
 	HANDLE hErr = lphStdErr ? *lphStdErr : NULL;
+	
+	bool bNewConsoleArg = false;
 		
 	// Issue 351: ѕосле перехода исполн€тел€ фара на ShellExecuteEx почему-то сюда стал приходить
 	//            левый хэндл (hStdOutput = 0x00010001), иногда получаетс€ 0x00060265
@@ -1209,7 +1212,6 @@ BOOL CShellProc::PrepareExecuteParms(
 	//wchar_t* pszExecFile = (wchar_t*)pOut->OnCreateProcRet.wsValue;
 	//wchar_t* pszBaseDir = (wchar_t*)(pOut->OnCreateProcRet.wsValue); // + pOut->OnCreateProcRet.nFileLen);
 	
-	bool bNewConsoleArg = false;
 	if (asParam)
 	{
 		const wchar_t* sNewConsole = L"-new_console";

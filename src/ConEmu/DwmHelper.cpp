@@ -27,12 +27,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "Header.h"
-#include <dwmapi.h>
+#include "DwmApi_Part.h"
 //#include "TabBarClass.h"
 //#include "FrameHolder.h"
 #include "ConEmu.h"
 #include "Options.h"
 
+
+
+
+
+/* *************************** */
 
 CDwmHelper::CDwmHelper(void)
 {

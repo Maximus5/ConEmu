@@ -40,10 +40,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MIN_CON_HEIGHT 7
 #define GUI_ATTACH_TIMEOUT 5000
 
-// with line number
-#if !defined(_MSC_VER)
 
-//#define CONSOLE_APPLICATION_16BIT 1
+#ifndef CONSOLE_NO_SELECTION
 
 typedef struct _CONSOLE_SELECTION_INFO
 {
@@ -281,7 +279,7 @@ struct HWND2
 	DWORD u;
 	operator HWND() const
 	{
-		return (HWND)u; //-V204
+		return (HWND)(DWORD_PTR)u; //-V204
 	};
 	operator DWORD() const
 	{
@@ -289,7 +287,7 @@ struct HWND2
 	};
 	struct HWND2& operator=(HWND h)
 	{
-		u = (DWORD)h; //-V205
+		u = (DWORD)(DWORD_PTR)h; //-V205
 		return *this;
 	};
 };
@@ -1432,8 +1430,6 @@ int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsAr
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg);
 BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec);
-SECURITY_ATTRIBUTES* NullSecurity();
-SECURITY_ATTRIBUTES* LocalSecurity();
 void CommonShutdown();
 
 
@@ -1443,6 +1439,7 @@ void CommonShutdown();
 #endif
 
 #include "MAssert.h"
+#include "MSecurity.h"
 
 #endif // __cplusplus
 

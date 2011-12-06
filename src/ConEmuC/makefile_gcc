@@ -42,17 +42,24 @@ USERLIBS = -lkernel32 -luser32
 
 WIDE = 1
 DIRSURF = W
-RCWIDE = -D UNICODE -D _UNICODE
-CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500
-CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500
+ifeq ($(DIRBIT),64)
+  BITDEF = -D _WIN64 -D WIN64
+  BITNAME = 64
+else
+  BITDEF = 
+  BITNAME = 
+endif
+RCWIDE = -D UNICODE -D _UNICODE $(BITDEF)
+CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 $(BITDEF)
+CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 $(BITDEF)
 
-OBJDIR = ../../gcc/conemuc
-REOBJDIR = \.\.\/\.\.\/gcc\/conemuc
+OBJDIR = ../../gcc/conemuc$(DIRBIT)
+REOBJDIR = \.\.\/\.\.\/gcc\/conemuc$(DIRBIT)
 EXEDIR = ../../Release/ConEmu
 COMMON = ../common
 COMINC = $(COMMON)
 EXT = exe
-EXENAME = $(NAME).$(EXT)
+EXENAME = $(NAME)$(BITNAME).$(EXT)
 EXEFULLNAME = $(EXEDIR)/$(EXENAME)
 DEF = ConEmuC.def
 RC_NAME = $(NAME).rc
@@ -84,8 +91,8 @@ MV = mv -f
 MKDIR = mkdir -p
 WINDRES = windres -D__FARBIT__=$(DIRBIT)
 DEFINES = -D FAR_ALPHA_VERSION -D UNICODE -D _UNICODE
-CXXFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -fno-rtti -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CXXWIDE)
-CFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CCWIDE)
+CXXFLAGS = -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -fno-rtti -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CXXWIDE)
+CFLAGS = -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CCWIDE)
 LNKFLAGS = -mconsole -s -lShlwapi -lgdi32
 RCFLAGS = $(RCWIDE)
 

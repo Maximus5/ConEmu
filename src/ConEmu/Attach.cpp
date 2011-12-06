@@ -104,7 +104,9 @@ void CAttachDlg::AttachDlg()
 		return;
 	}
 	
+	gpConEmu->SetSkipOnFocus(TRUE);
 	mh_Dlg = CreateDialogParam(g_hInstance, MAKEINTRESOURCE(IDD_ATTACHDLG), NULL, AttachDlgProc, (LPARAM)this);
+	gpConEmu->SetSkipOnFocus(FALSE);
 
 	//DWORD_PTR nAttachParm[3] = {};
 	//int nRc = DialogBoxParam(nAttachParm);
@@ -412,7 +414,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			// По LMouseDblClick - выполнить аттач
 			if (lpnmitem && (lpnmitem->hdr.idFrom == IDC_ATTACHLIST))
 			{
-				if (lpnmitem->hdr.code == NM_DBLCLK)
+				if (lpnmitem->hdr.code == (UINT)NM_DBLCLK)
 				{
 					PostMessage(hDlg, WM_COMMAND, IDOK, 0);
 				}
@@ -433,7 +435,6 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		case WM_COMMAND:
 			if (HIWORD(wParam) == BN_CLICKED)
 			{
-				DWORD_PTR *pAttachParm = (DWORD_PTR*)GetWindowLongPtr(hDlg, DWLP_USER);
 				switch (LOWORD(wParam))
 				{
 					case IDOK:

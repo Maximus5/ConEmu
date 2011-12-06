@@ -34,13 +34,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __GNUC__
 #include "ShObjIdl_Part.h"
 const CLSID CLSID_TaskbarList = {0x56FDF344, 0xFD6D, 0x11d0, {0x95, 0x8A, 0x00, 0x60, 0x97, 0xC9, 0xA0, 0x90}};
+const IID IID_ITaskbarList4 = {0xc43dc798, 0x95d1, 0x4bea, {0x90, 0x30, 0xbb, 0x99, 0xe2, 0x98, 0x3a, 0x1a}};
 const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
 const IID IID_ITaskbarList2 = {0x602D4995, 0xB13A, 0x429b, {0xA6, 0x6E, 0x19, 0x35, 0xE4, 0x4F, 0x43, 0x17}};
+const IID IID_ITaskbarList  = {0x56FDF342, 0xFD6D, 0x11d0, {0x95, 0x8A, 0x00, 0x60, 0x97, 0xC9, 0xA0, 0x90}};
 #else
 #include <ShObjIdl.h>
 #ifndef __ITaskbarList3_INTERFACE_DEFINED__
 #undef __shobjidl_h__
 #include "ShObjIdl_Part.h"
+const IID IID_ITaskbarList4 = {0xc43dc798, 0x95d1, 0x4bea, {0x90, 0x30, 0xbb, 0x99, 0xe2, 0x98, 0x3a, 0x1a}};
 const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
 #endif
 #endif
@@ -130,6 +133,7 @@ HRESULT CTaskBar::Taskbar_SetActiveTab(HWND hBtn)
 
 	if (mp_TaskBar3)
 	{
+		// 3-й параметр в писании описан как Reserved
 		hr = mp_TaskBar3->SetTabActive(hBtn, ghWnd, 0);
 	}
 	else if (mp_TaskBar2)
@@ -207,7 +211,8 @@ HRESULT CTaskBar::Taskbar_AddTabXP(HWND hBtn)
 {
 	HRESULT hr;
 
-	_ASSERTE(gpConEmu && gOSVer.dwMajorVersion <= 5);
+	// 111127 на Vista тоже кнопку "убирать" нужно
+	_ASSERTE(gpConEmu && (gOSVer.dwMajorVersion <= 5 || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)));
 
 	if (mp_TaskBar1)
 	{
@@ -225,7 +230,8 @@ HRESULT CTaskBar::Taskbar_DeleteTabXP(HWND hBtn)
 {
 	HRESULT hr;
 
-	_ASSERTE(gpConEmu && gOSVer.dwMajorVersion <= 5);
+	// 111127 на Vista тоже кнопку "убирать" нужно
+	_ASSERTE(gpConEmu && (gOSVer.dwMajorVersion <= 5 || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)));
 
 	if (mp_TaskBar1)
 	{

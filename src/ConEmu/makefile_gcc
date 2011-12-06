@@ -15,17 +15,22 @@ SRCS =  \
 		Macro.cpp          \
 		Options.cpp        \
 		OptionsClass.cpp   \
+		RealBuffer.cpp    \
 		RealConsole.cpp    \
 		Recreate.cpp       \
 		Registry.cpp       \
 		ScreenDump.cpp     \
 		TabBar.cpp         \
+		TabID.cpp          \
 		TaskBar.cpp        \
 		TaskBarGhost.cpp   \
 		TrayIcon.cpp       \
 		VirtualConsole.cpp \
 		../common/Common.cpp \
 		../common/ConEmuCheck.cpp \
+		../common/Memory.cpp \
+		../common/MSecurity.cpp \
+		../common/MStrSafe.cpp \
 		../common/RgnDetect.cpp \
         ../common/WinObjects.cpp
 
@@ -76,18 +81,25 @@ endif
 
 WIDE = 1
 DIRSURF = W
-RCWIDE = -D UNICODE -D _UNICODE
-CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 -D _WIN32_IE=0x0500
-CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 -D _WIN32_IE=0x0500
+ifeq ($(DIRBIT),64)
+  BITDEF = -D _WIN64 -D WIN64
+  BITNAME = 64
+else
+  BITDEF = 
+  BITNAME = 
+endif
+RCWIDE = -D UNICODE -D _UNICODE $(BITDEF)
+CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 -D _WIN32_IE=0x0500 $(BITDEF)
+CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 -D _WIN32_IE=0x0500 $(BITDEF)
 
-OBJDIR = ../../gcc/conemu
-REOBJDIR = \.\.\/\.\.\/gcc\/conemu
-EXEDIR = ../../Release/ConEmu
+OBJDIR = ../../gcc/conemu$(DIRBIT)
+REOBJDIR = \.\.\/\.\.\/gcc\/conemu$(DIRBIT)
+EXEDIR = ../../Release
 COMMON = ../common
 #COMINC = "C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
 COMINC = $(COMMON)
 EXT = exe
-EXENAME = $(NAME).$(EXT)
+EXENAME = $(NAME)$(BITNAME).$(EXT)
 EXEFULLNAME = $(EXEDIR)/$(EXENAME)
 #DEF = export.gcc.def
 RC_NAME = ConEmu.rc

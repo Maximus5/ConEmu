@@ -1807,7 +1807,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	TCHAR fileName[MAX_PATH+4]; fileName[0] = 0;
 	TCHAR szFormat[32];
 	TCHAR szEllip[MAX_PATH+1];
-	wchar_t /**tFileName=NULL,*/ *pszNo=NULL, *pszTitle=NULL; //--Maximus
+	//wchar_t /**tFileName=NULL,*/ *pszNo=NULL, *pszTitle=NULL;
 	int nSplit = 0;
 	int nMaxLen = 0; //gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
 	int origLength = 0; //_tcslen(tFileName);
@@ -1815,7 +1815,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	if (pTab->Name[0]==0 || (pTab->Type & 0xFF) == 1/*WTYPE_PANELS*/)
 	{
 		//_tcscpy(szFormat, _T("%s"));
-		lstrcpyn(szFormat, gpSet->szTabConsole, ARRAYSIZE(szFormat));
+		lstrcpyn(szFormat, gpSet->szTabConsole, countof(szFormat));
 		nMaxLen = gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
 
 		if (pTab->Name[0] == 0)
@@ -1857,14 +1857,14 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 		if ((pTab->Type & 0xFF) == 3/*WTYPE_EDITOR*/)
 		{
 			if (pTab->Modified)
-				lstrcpyn(szFormat, gpSet->szTabEditorModified, ARRAYSIZE(szFormat));
+				lstrcpyn(szFormat, gpSet->szTabEditorModified, countof(szFormat));
 			else
-				lstrcpyn(szFormat, gpSet->szTabEditor, ARRAYSIZE(szFormat));
+				lstrcpyn(szFormat, gpSet->szTabEditor, countof(szFormat));
 		}
 		else if ((pTab->Type & 0xFF) == 2/*WTYPE_VIEWER*/)
-			lstrcpyn(szFormat, gpSet->szTabViewer, ARRAYSIZE(szFormat));
+			lstrcpyn(szFormat, gpSet->szTabViewer, countof(szFormat));
 		else
-			lstrcpyn(szFormat, gpSet->szTabConsole, ARRAYSIZE(szFormat));
+			lstrcpyn(szFormat, gpSet->szTabConsole, countof(szFormat));
 	}
 
 	// restrict length
@@ -1914,9 +1914,9 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	////else
 	////	_wsprintf(fileName, SKIPLEN(countof(fileName)) szFormat, tFileName, pTab->Pos);
 	//wcscpy(pTab->Name, fileName);
-	TCHAR* pszFmt = szFormat;
+	const TCHAR* pszFmt = szFormat;
 	TCHAR* pszDst = pTab->Name;
-	TCHAR* pszEnd = pTab->Name + ARRAYSIZE(pTab->Name) - 1; // в конце еще нужно зарезервировать место для '\0'
+	TCHAR* pszEnd = pTab->Name + countof(pTab->Name) - 1; // в конце еще нужно зарезервировать место для '\0'
 	
 	if (!pszFmt || !*pszFmt)
 		pszFmt = _T("%s");
@@ -1936,7 +1936,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 					pszText = fileName;
 					break;
 				case _T('i'): case _T('I'):
-					_wsprintf(szTmp, SKIPLEN(ARRAYSIZE(szTmp)) _T("%i"), pTab->Pos);
+					_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%i"), pTab->Pos);
 					pszText = szTmp;
 					break;
 				case _T('p'): case _T('P'):
@@ -1946,7 +1946,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 					}
 					else
 					{
-						_wsprintf(szTmp, SKIPLEN(ARRAYSIZE(szTmp)) _T("%u"), apVCon->RCon()->GetActivePID());
+						_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%u"), apVCon->RCon()->GetActivePID());
 					}
 					pszText = szTmp;
 					break;
@@ -1954,7 +1954,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 					{
 						int iCon = gpConEmu->IsVConValid(apVCon);
 						if (iCon > 0)
-							_wsprintf(szTmp, SKIPLEN(ARRAYSIZE(szTmp)) _T("%u"), iCon);
+							_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%u"), iCon);
 						else
 							wcscpy_c(szTmp, _T("?"));
 						pszText = szTmp;
@@ -2163,6 +2163,7 @@ void TabBarClass::SwitchCommit()
 	int nCurSel = GetCurSel();
 	mb_InKeySwitching = FALSE;
 	CVirtualConsole* pVCon = FarSendChangeTab(nCurSel);
+	UNREFERENCED_PARAMETER(pVCon);
 }
 
 void TabBarClass::SwitchRollback()
@@ -2303,7 +2304,7 @@ void TabBarClass::ShowTabError(LPCTSTR asInfo, int tabIndex)
 	if (!asInfo)
 		ms_TabErrText[0] = 0;
 	else if (asInfo != ms_TabErrText)
-		lstrcpyn(ms_TabErrText, asInfo, ARRAYSIZE(ms_TabErrText));
+		lstrcpyn(ms_TabErrText, asInfo, countof(ms_TabErrText));
 
 	tiBalloon.lpszText = ms_TabErrText;
 
@@ -2566,7 +2567,9 @@ int TabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** p
 	{
 		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
 
+		#ifdef _DEBUG
 		BOOL lbActive = gpConEmu->isActive(pVCon);
+		#endif
 
 		//111120 - Эту опцию игнорируем. Если редактор открыт в другой консоли - активируем ее потом
 		//if (gpSet->bHideInactiveConsoleTabs)

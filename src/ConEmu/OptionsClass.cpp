@@ -82,7 +82,6 @@ HWND ghOpWnd=NULL;
 //#define DEFAULT_FADE_LOW 0
 //#define DEFAULT_FADE_HIGH 0xD0
 
-
 struct CONEMUDEFCOLORS
 {
 	const wchar_t* pszTitle;
@@ -165,28 +164,28 @@ namespace SettingsNS
 		Value = dwVal; }
 
 //#define SetThumbColor(s,rgb,idx,us) { (s).RawColor = 0; (s).ColorRGB = rgb; (s).ColorIdx = idx; (s).UseIndex = us; }
-//#define SetThumbSize(s,sz,x1,y1,x2,y2,ls,lp,fn,fs) { \
-//		(s).nImgSize = sz; (s).nSpaceX1 = x1; (s).nSpaceY1 = y1; (s).nSpaceX2 = x2; (s).nSpaceY2 = y2; \
+//#define SetThumbSize(s,sz,x1,y1,x2,y2,ls,lp,fn,fs) { 
+//		(s).nImgSize = sz; (s).nSpaceX1 = x1; (s).nSpaceY1 = y1; (s).nSpaceX2 = x2; (s).nSpaceY2 = y2; 
 //		(s).nLabelSpacing = ls; (s).nLabelPadding = lp; wcscpy_c((s).sFontName,fn); (s).nFontHeight=fs; }
-//#define ThumbLoadSet(s,n) { \
-//		reg->Load(L"PanView." s L".ImgSize", n.nImgSize); \
-//		reg->Load(L"PanView." s L".SpaceX1", n.nSpaceX1); \
-//		reg->Load(L"PanView." s L".SpaceY1", n.nSpaceY1); \
-//		reg->Load(L"PanView." s L".SpaceX2", n.nSpaceX2); \
-//		reg->Load(L"PanView." s L".SpaceY2", n.nSpaceY2); \
-//		reg->Load(L"PanView." s L".LabelSpacing", n.nLabelSpacing); \
-//		reg->Load(L"PanView." s L".LabelPadding", n.nLabelPadding); \
-//		reg->Load(L"PanView." s L".FontName", n.sFontName, countof(n.sFontName)); \
+//#define ThumbLoadSet(s,n) { 
+//		reg->Load(L"PanView." s L".ImgSize", n.nImgSize); 
+//		reg->Load(L"PanView." s L".SpaceX1", n.nSpaceX1); 
+//		reg->Load(L"PanView." s L".SpaceY1", n.nSpaceY1); 
+//		reg->Load(L"PanView." s L".SpaceX2", n.nSpaceX2); 
+//		reg->Load(L"PanView." s L".SpaceY2", n.nSpaceY2); 
+//		reg->Load(L"PanView." s L".LabelSpacing", n.nLabelSpacing); 
+//		reg->Load(L"PanView." s L".LabelPadding", n.nLabelPadding); 
+//		reg->Load(L"PanView." s L".FontName", n.sFontName, countof(n.sFontName)); 
 //		reg->Load(L"PanView." s L".FontHeight", n.nFontHeight); }
-//#define ThumbSaveSet(s,n) { \
-//		reg->Save(L"PanView." s L".ImgSize", n.nImgSize); \
-//		reg->Save(L"PanView." s L".SpaceX1", n.nSpaceX1); \
-//		reg->Save(L"PanView." s L".SpaceY1", n.nSpaceY1); \
-//		reg->Save(L"PanView." s L".SpaceX2", n.nSpaceX2); \
-//		reg->Save(L"PanView." s L".SpaceY2", n.nSpaceY2); \
-//		reg->Save(L"PanView." s L".LabelSpacing", n.nLabelSpacing); \
-//		reg->Save(L"PanView." s L".LabelPadding", n.nLabelPadding); \
-//		reg->Save(L"PanView." s L".FontName", n.sFontName); \
+//#define ThumbSaveSet(s,n) { 
+//		reg->Save(L"PanView." s L".ImgSize", n.nImgSize); 
+//		reg->Save(L"PanView." s L".SpaceX1", n.nSpaceX1); 
+//		reg->Save(L"PanView." s L".SpaceY1", n.nSpaceY1); 
+//		reg->Save(L"PanView." s L".SpaceX2", n.nSpaceX2); 
+//		reg->Save(L"PanView." s L".SpaceY2", n.nSpaceY2); 
+//		reg->Save(L"PanView." s L".LabelSpacing", n.nLabelSpacing); 
+//		reg->Save(L"PanView." s L".LabelPadding", n.nLabelPadding); 
+//		reg->Save(L"PanView." s L".FontName", n.sFontName); 
 //		reg->Save(L"PanView." s L".FontHeight", n.nFontHeight); }
 
 
@@ -939,7 +938,7 @@ void CSettings::SettingsPreSave()
 void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
 {
 	lstrcpyn(LogFont.lfFaceName, (asFontName && *asFontName) ? asFontName : (*gpSet->inFont) ? gpSet->inFont : L"Lucida Console", countof(LogFont.lfFaceName));
-	if (asFontName && *asFontName || *gpSet->inFont)
+	if ((asFontName && *asFontName) || *gpSet->inFont)
 		mb_Name1Ok = TRUE;
 		
 	if (anFontHeight!=-1)
@@ -1606,7 +1605,7 @@ LRESULT CSettings::OnInitDialog()
 
 		#else
 		mb_IgnoreSelPage = true;
-		TVINSERTSTRUCT ti = {TVI_ROOT, TVI_LAST, {TVIF_TEXT}};
+		TVINSERTSTRUCT ti = {TVI_ROOT, TVI_LAST, {{TVIF_TEXT}}};
 		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
 		for (size_t i = 0; m_Pages[i].PageID; i++)
 		{
@@ -2177,7 +2176,7 @@ void CSettings::FillHotKeysList()
 			if (nModifier == (DWORD)-1)
 			{
 				//nModifier = nMultiHotkeyModifier; // для Win-Number
-				wcscpy_c(szFull, L"«Host»");
+				wcscpy_c(szFull, L"\xAB"/*"«"*/ L"Host" L"\xBB"/*L"»"*/);
 				if ((m_HotKeys[i].DescrLangID == vkMultiNextShift) || (m_HotKeys[i].DescrLangID == vkMultiNewShift))
 					wcscat_c(szFull, L"-Shift");
 			}
@@ -2948,7 +2947,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbMonospace:
 		{
+			#ifdef _DEBUG
 			BYTE cMonospaceNow = gpSet->isMonospace;
+			#endif
 			gpSet->isMonospace = IsChecked(hMain, cbMonospace);
 
 			if (gpSet->isMonospace) gpSetCls->isMonospaceSelected = gpSet->isMonospace;
@@ -3644,7 +3645,7 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 		// Переключиться на следующий таб
 		#if 1
 		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
-		NMTREEVIEW nm = {hTree, tvSetupCategories, TVN_SELCHANGED};
+		NMTREEVIEW nm = {{hTree, tvSetupCategories, TVN_SELCHANGED}};
 		nm.itemOld.hItem = TreeView_GetSelection(hTree);
 		if (!nm.itemOld.hItem)
 			nm.itemOld.hItem = TreeView_GetRoot(hTree);
@@ -3670,7 +3671,7 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 	{
 		#if 1
 		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
-		NMTREEVIEW nm = {hTree, tvSetupCategories, TVN_SELCHANGED};
+		NMTREEVIEW nm = {{hTree, tvSetupCategories, TVN_SELCHANGED}};
 		nm.itemOld.hItem = TreeView_GetSelection(hTree);
 		if (!nm.itemOld.hItem)
 			nm.itemOld.hItem = TreeView_GetLastVisible(hTree);
@@ -3700,10 +3701,16 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 #if 1
 		case TVN_SELCHANGED:
 		{
+			LPNMTREEVIEW p = (LPNMTREEVIEW)phdr;
+			HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
+			if (p->itemOld.hItem && p->itemOld.hItem != p->itemNew.hItem)
+				TreeView_SetItemState(hTree, p->itemOld.hItem, 0, TVIS_BOLD);
+			if (p->itemNew.hItem)
+				TreeView_SetItemState(hTree, p->itemNew.hItem, TVIS_BOLD, TVIS_BOLD);
+
 			if (mb_IgnoreSelPage)
 				return 0;
 			HWND hCurrent = NULL;
-			LPNMTREEVIEW p = (LPNMTREEVIEW)phdr;
 			for (size_t i = 0; m_Pages[i].PageID; i++)
 			{
 				if (p->itemNew.hItem == m_Pages[i].hTI)
@@ -4549,7 +4556,7 @@ INT_PTR CSettings::viewsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 						break;
 					case tThumbsFontSize:
 
-						if (nSel>=0 && nSel<countof(SettingsNS::FSizesSmall))
+						if (nSel>=0 && nSel<(INT_PTR)countof(SettingsNS::FSizesSmall))
 							gpSet->ThSet.Thumbs.nFontHeight = SettingsNS::FSizesSmall[nSel];
 
 						break;
@@ -4558,7 +4565,7 @@ INT_PTR CSettings::viewsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 						break;
 					case tTilesFontSize:
 
-						if (nSel>=0 && nSel<countof(SettingsNS::FSizesSmall))
+						if (nSel>=0 && nSel<(INT_PTR)countof(SettingsNS::FSizesSmall))
 							gpSet->ThSet.Tiles.nFontHeight = SettingsNS::FSizesSmall[nSel];
 
 						break;
@@ -4816,200 +4823,14 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 			{
 				bSkipSelChange = true;
 				DebugLogShellActivity *pShl = (DebugLogShellActivity*)lParam;
-				SYSTEMTIME st; GetLocalTime(&st);
-				wchar_t szTime[128]; _wsprintf(szTime, SKIPLEN(countof(szTime)) L"%02i:%02i:%02i", st.wHour, st.wMinute, st.wSecond);
-				HWND hList = GetDlgItem(hWnd2, lbActivityLog);
-				//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
-				LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
-				lvi.state = lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
-				lvi.pszText = szTime;
-				int nItem = ListView_InsertItem(hList, &lvi);
-				//
-				ListView_SetItemText(hList, nItem, lpc_Func, (wchar_t*)pShl->szFunction);
-				_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u:%u", pShl->nParentPID, pShl->nParentBits);
-				ListView_SetItemText(hList, nItem, lpc_PPID, szTime);
-				if (pShl->pszAction)
-					ListView_SetItemText(hList, nItem, lpc_Oper, (wchar_t*)pShl->pszAction);
-				if (pShl->nImageBits)
-				{
-					_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", pShl->nImageBits);
-					ListView_SetItemText(hList, nItem, lpc_Bits, szTime);
-				}
-				if (pShl->nImageSubsystem)
-				{
-					_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", pShl->nImageSubsystem);
-					ListView_SetItemText(hList, nItem, lpc_System, szTime);
-				}
-				if (pShl->pszFile)
-					ListView_SetItemText(hList, nItem, lpc_App, (wchar_t*)pShl->pszFile);
-				SetDlgItemText(hWnd2, ebActivityApp, (wchar_t*)(pShl->pszFile ? pShl->pszFile : L""));
-				//ListView_SetItemText(hDetails, 0, 1, (wchar_t*)(pShl->pszFile ? pShl->pszFile : L""));
-				if (pShl->pszParam)
-					ListView_SetItemText(hList, nItem, lpc_Params, (wchar_t*)pShl->pszParam);
-				SetDlgItemText(hWnd2, ebActivityParm, (wchar_t*)(pShl->pszParam ? pShl->pszParam : L""));
-				//ListView_SetItemText(hDetails, 1, 1, (wchar_t*)(pShl->pszParam ? pShl->pszParam : L""));
-				//TODO: CurDir?
-
-				szTime[0] = 0;
-				if (pShl->nShellFlags)
-					_wsprintf(szTime+_tcslen(szTime), SKIPLEN(32) L"Sh:0x%04X ", pShl->nShellFlags); //-V112
-				if (pShl->nCreateFlags)
-					_wsprintf(szTime+_tcslen(szTime), SKIPLEN(32) L"Cr:0x%04X ", pShl->nCreateFlags); //-V112
-				if (pShl->nStartFlags)
-					_wsprintf(szTime+_tcslen(szTime), SKIPLEN(32) L"St:0x%04X ", pShl->nStartFlags); //-V112
-				if (pShl->nShowCmd)
-					_wsprintf(szTime+_tcslen(szTime), SKIPLEN(32) L"Sw:%u ", pShl->nShowCmd); //-V112
-				ListView_SetItemText(hList, nItem, lpc_Flags, szTime);
-
-				if (pShl->hStdIn)
-				{
-					_wsprintf(szTime, SKIPLEN(countof(szTime)) L"0x%08X", pShl->hStdIn);
-					ListView_SetItemText(hList, nItem, lpc_StdIn, szTime);
-				}
-				if (pShl->hStdOut)
-				{
-					_wsprintf(szTime, SKIPLEN(countof(szTime)) L"0x%08X", pShl->hStdOut);
-					ListView_SetItemText(hList, nItem, lpc_StdOut, szTime);
-				}
-				if (pShl->hStdErr)
-				{
-					_wsprintf(szTime, SKIPLEN(countof(szTime)) L"0x%08X", pShl->hStdErr);
-					ListView_SetItemText(hList, nItem, lpc_StdErr, szTime);
-				}
-				if (pShl->pszAction)
-					free(pShl->pszAction);
-				if (pShl->pszFile)
-					free(pShl->pszFile);
-				if (pShl->pszParam)
-					free(pShl->pszParam);
-				free(pShl);
+				gpSetCls->debugLogShell(hWnd2, pShl);
 				bSkipSelChange = false;
 			} // DBGMSG_LOG_SHELL_MAGIC
 			else if (wParam == DBGMSG_LOG_INPUT_MAGIC)
 			{
 				bSkipSelChange = true;
 				CESERVER_REQ_PEEKREADINFO* pInfo = (CESERVER_REQ_PEEKREADINFO*)lParam;
-				for (UINT nIdx = 0; nIdx < pInfo->nCount; nIdx++)
-				{
-					const INPUT_RECORD *pr = pInfo->Buffer+nIdx;
-					SYSTEMTIME st; GetLocalTime(&st);
-					wchar_t szTime[255]; _wsprintf(szTime, SKIPLEN(countof(szTime)) L"%02i:%02i:%02i", st.wHour, st.wMinute, st.wSecond);
-					HWND hList = GetDlgItem(hWnd2, lbActivityLog);
-					LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
-					lvi.state = lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
-					lvi.pszText = szTime;
-					static INPUT_RECORD LastLogEvent1; static char LastLogEventType1; static UINT LastLogEventDup1;
-					static INPUT_RECORD LastLogEvent2; static char LastLogEventType2; static UINT LastLogEventDup2;
-					if (LastLogEventType1 == pInfo->cPeekRead &&
-						memcmp(&LastLogEvent1, pr, sizeof(LastLogEvent1)) == 0)
-					{
-						LastLogEventDup1 ++;
-						_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", LastLogEventDup1);
-						ListView_SetItemText(hList, 0, lic_Dup, szTime); // верхний
-						//free(pr);
-						continue; // дубли - не показывать? только если прошло время?
-					}
-					if (LastLogEventType2 == pInfo->cPeekRead &&
-						memcmp(&LastLogEvent2, pr, sizeof(LastLogEvent2)) == 0)
-					{
-						LastLogEventDup2 ++;
-						_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", LastLogEventDup2);
-						ListView_SetItemText(hList, 1, lic_Dup, szTime); // верхний
-						//free(pr);
-						continue; // дубли - не показывать? только если прошло время?
-					}
-					int nItem = ListView_InsertItem(hList, &lvi);
-					if (LastLogEventType1 && LastLogEventType1 != pInfo->cPeekRead)
-					{
-						LastLogEvent2 = LastLogEvent1; LastLogEventType2 = LastLogEventType1; LastLogEventDup2 = LastLogEventDup1;
-					}
-					LastLogEventType1 = pInfo->cPeekRead;
-					memmove(&LastLogEvent1, pr, sizeof(LastLogEvent1));
-					LastLogEventDup1 = 1;
-					ListView_SetItemText(hList, nItem, lic_Dup, L"1");
-					//
-					szTime[0] = (wchar_t)pInfo->cPeekRead; szTime[1] = L'.'; szTime[2] = 0;
-					if (pr->EventType == MOUSE_EVENT)
-					{
-						wcscat_c(szTime, L"Mouse");
-						ListView_SetItemText(hList, nItem, lic_Type, szTime);
-						const MOUSE_EVENT_RECORD *rec = &pr->Event.MouseEvent;
-						_wsprintf(szTime, SKIPLEN(countof(szTime))
-						    L"[%d,%d], Btn=0x%08X (%c%c%c%c%c), Ctrl=0x%08X (%c%c%c%c%c - %c%c%c%c), Flgs=0x%08X (%s)",
-						    rec->dwMousePosition.X,
-						    rec->dwMousePosition.Y,
-						    rec->dwButtonState,
-						    (rec->dwButtonState&FROM_LEFT_1ST_BUTTON_PRESSED?L'L':L'l'),
-						    (rec->dwButtonState&RIGHTMOST_BUTTON_PRESSED?L'R':L'r'),
-						    (rec->dwButtonState&FROM_LEFT_2ND_BUTTON_PRESSED?L'2':L' '),
-						    (rec->dwButtonState&FROM_LEFT_3RD_BUTTON_PRESSED?L'3':L' '),
-						    (rec->dwButtonState&FROM_LEFT_4TH_BUTTON_PRESSED?L'4':L' '),
-						    rec->dwControlKeyState,
-						    (rec->dwControlKeyState&LEFT_CTRL_PRESSED?L'C':L'c'),
-						    (rec->dwControlKeyState&LEFT_ALT_PRESSED?L'A':L'a'),
-						    (rec->dwControlKeyState&SHIFT_PRESSED?L'S':L's'),
-						    (rec->dwControlKeyState&RIGHT_ALT_PRESSED?L'A':L'a'),
-						    (rec->dwControlKeyState&RIGHT_CTRL_PRESSED?L'C':L'c'),
-						    (rec->dwControlKeyState&ENHANCED_KEY?L'E':L'e'),
-						    (rec->dwControlKeyState&CAPSLOCK_ON?L'C':L'c'),
-						    (rec->dwControlKeyState&NUMLOCK_ON?L'N':L'n'),
-						    (rec->dwControlKeyState&SCROLLLOCK_ON?L'S':L's'),
-						    rec->dwEventFlags,
-							(rec->dwEventFlags==0?L"(Click)":
-						     (rec->dwEventFlags==DOUBLE_CLICK?L"(DblClick)":
-						      (rec->dwEventFlags==MOUSE_MOVED?L"(Moved)":
-						       (rec->dwEventFlags==MOUSE_WHEELED?L"(Wheel)":
-						        (rec->dwEventFlags==0x0008/*MOUSE_HWHEELED*/?L"(HWheel)":L"")))))
-						);
-						if (rec->dwEventFlags==MOUSE_WHEELED  || rec->dwEventFlags==0x0008/*MOUSE_HWHEELED*/)
-						{
-							int nLen = _tcslen(szTime);
-							_wsprintf(szTime+nLen, SKIPLEN(countof(szTime)-nLen)
-								L" (Delta=%d)",HIWORD(rec->dwButtonState));
-						}
-						ListView_SetItemText(hList, nItem, lic_Event, szTime);
-					}
-					else if (pr->EventType == KEY_EVENT)
-					{
-						wcscat_c(szTime, L"Key");
-						ListView_SetItemText(hList, nItem, lic_Type, szTime);
-						_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%c(%i) VK=%i, SC=%i, U=%c(x%04X), ST=x%08X",
-							pr->Event.KeyEvent.bKeyDown ? L'D' : L'U',
-							pr->Event.KeyEvent.wRepeatCount,
-							pr->Event.KeyEvent.wVirtualKeyCode, pr->Event.KeyEvent.wVirtualScanCode,
-							pr->Event.KeyEvent.uChar.UnicodeChar ? pr->Event.KeyEvent.uChar.UnicodeChar : L' ',
-							pr->Event.KeyEvent.uChar.UnicodeChar,
-							pr->Event.KeyEvent.dwControlKeyState);
-						ListView_SetItemText(hList, nItem, lic_Event, szTime);
-					}
-					else if (pr->EventType == FOCUS_EVENT)
-					{
-						wcscat_c(szTime, L"Focus");
-						ListView_SetItemText(hList, nItem, lic_Type, szTime);
-						_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", (DWORD)pr->Event.FocusEvent.bSetFocus);
-						ListView_SetItemText(hList, nItem, lic_Event, szTime);
-					}
-					else if (pr->EventType == WINDOW_BUFFER_SIZE_EVENT)
-					{
-						wcscat_c(szTime, L"Buffer");
-						ListView_SetItemText(hList, nItem, lic_Type, szTime);
-						_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%ix%i", (int)pr->Event.WindowBufferSizeEvent.dwSize.X, (int)pr->Event.WindowBufferSizeEvent.dwSize.Y);
-						ListView_SetItemText(hList, nItem, lic_Event, szTime);
-					}
-					else if (pr->EventType == MENU_EVENT)
-					{
-						wcscat_c(szTime, L"Menu");
-						ListView_SetItemText(hList, nItem, lic_Type, szTime);
-						_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", (DWORD)pr->Event.MenuEvent.dwCommandId);
-						ListView_SetItemText(hList, nItem, lic_Event, szTime);
-					}
-					else
-					{
-						_wsprintf(szTime+2, SKIPLEN(countof(szTime)-2) L"%u", (DWORD)pr->EventType);
-						ListView_SetItemText(hList, nItem, lic_Type, szTime);
-					}
-				}
-				free(pInfo);
+				gpSetCls->debugLogInfo(hWnd2, pInfo);
 				bSkipSelChange = false;
 			}
 			break; // DBGMSG_LOG_ID
@@ -5019,6 +4840,282 @@ INT_PTR CSettings::debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 	}
 
 	return 0;
+}
+
+void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)
+{
+	SYSTEMTIME st; GetLocalTime(&st);
+	wchar_t szTime[128]; _wsprintf(szTime, SKIPLEN(countof(szTime)) L"%02i:%02i:%02i", st.wHour, st.wMinute, st.wSecond);
+	HWND hList = GetDlgItem(hWnd2, lbActivityLog);
+	//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
+	LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
+	lvi.state = lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
+	lvi.pszText = szTime;
+	int nItem = ListView_InsertItem(hList, &lvi);
+	//
+	ListView_SetItemText(hList, nItem, lpc_Func, (wchar_t*)pShl->szFunction);
+	_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u:%u", pShl->nParentPID, pShl->nParentBits);
+	ListView_SetItemText(hList, nItem, lpc_PPID, szTime);
+	if (pShl->pszAction)
+		ListView_SetItemText(hList, nItem, lpc_Oper, (wchar_t*)pShl->pszAction);
+	if (pShl->nImageBits)
+	{
+		_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", pShl->nImageBits);
+		ListView_SetItemText(hList, nItem, lpc_Bits, szTime);
+	}
+	if (pShl->nImageSubsystem)
+	{
+		_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", pShl->nImageSubsystem);
+		ListView_SetItemText(hList, nItem, lpc_System, szTime);
+	}
+
+	wchar_t* pszParamEx = lstrdup(pShl->pszParam);
+	LPCWSTR pszAppFile = NULL;
+	if (pShl->pszFile)
+	{
+		ListView_SetItemText(hList, nItem, lpc_App, pShl->pszFile);
+		LPCWSTR pszExt = PointToExt(pShl->pszFile);
+		if (pszExt && (!lstrcmpi(pszExt, L".bat") || !lstrcmpi(pszExt, L".cmd")))
+			debugLogShellText(pszParamEx, (pszAppFile = pShl->pszFile));
+	}
+	SetDlgItemText(hWnd2, ebActivityApp, (wchar_t*)(pShl->pszFile ? pShl->pszFile : L""));
+
+	if (pShl->pszParam && *pShl->pszParam)
+	{
+		LPCWSTR pszNext = pShl->pszParam;
+		wchar_t szArg[MAX_PATH+1];
+		while (0 == NextArg(&pszNext, szArg))
+		{
+			if (!*szArg || (*szArg == L'-') || (*szArg == L'/'))
+				continue;
+			LPCWSTR pszExt = PointToExt(szArg);
+			TODO("наверное еще и *.tmp файлы подхватить, вроде они при компиляции ресурсов в VC гоняются");
+			if (pszExt && (!lstrcmpi(pszExt, L".bat") || !lstrcmpi(pszExt, L".cmd") /*|| !lstrcmpi(pszExt, L".tmp")*/)
+				&& (!pszAppFile || (lstrcmpi(szArg, pszAppFile) != 0)))
+			{
+				debugLogShellText(pszParamEx, szArg);
+			}
+			else if (szArg[0] == L'@' && szArg[2] == L':' && szArg[3] == L'\\')
+			{
+				debugLogShellText(pszParamEx, szArg+1);
+			}
+		}
+	}
+	if (pszParamEx)
+		ListView_SetItemText(hList, nItem, lpc_Params, pszParamEx);
+	SetDlgItemText(hWnd2, ebActivityParm, (wchar_t*)(pszParamEx ? pszParamEx : L""));
+	if (pszParamEx && pszParamEx != pShl->pszParam)
+		free(pszParamEx);
+
+	//TODO: CurDir?
+
+	szTime[0] = 0;
+	if (pShl->nShellFlags)
+		_wsprintf(szTime+_tcslen(szTime), SKIPLEN(32) L"Sh:0x%04X ", pShl->nShellFlags); //-V112
+	if (pShl->nCreateFlags)
+		_wsprintf(szTime+_tcslen(szTime), SKIPLEN(32) L"Cr:0x%04X ", pShl->nCreateFlags); //-V112
+	if (pShl->nStartFlags)
+		_wsprintf(szTime+_tcslen(szTime), SKIPLEN(32) L"St:0x%04X ", pShl->nStartFlags); //-V112
+	if (pShl->nShowCmd)
+		_wsprintf(szTime+_tcslen(szTime), SKIPLEN(32) L"Sw:%u ", pShl->nShowCmd); //-V112
+	ListView_SetItemText(hList, nItem, lpc_Flags, szTime);
+
+	if (pShl->hStdIn)
+	{
+		_wsprintf(szTime, SKIPLEN(countof(szTime)) L"0x%08X", pShl->hStdIn);
+		ListView_SetItemText(hList, nItem, lpc_StdIn, szTime);
+	}
+	if (pShl->hStdOut)
+	{
+		_wsprintf(szTime, SKIPLEN(countof(szTime)) L"0x%08X", pShl->hStdOut);
+		ListView_SetItemText(hList, nItem, lpc_StdOut, szTime);
+	}
+	if (pShl->hStdErr)
+	{
+		_wsprintf(szTime, SKIPLEN(countof(szTime)) L"0x%08X", pShl->hStdErr);
+		ListView_SetItemText(hList, nItem, lpc_StdErr, szTime);
+	}
+	if (pShl->pszAction)
+		free(pShl->pszAction);
+	if (pShl->pszFile)
+		free(pShl->pszFile);
+	if (pShl->pszParam)
+		free(pShl->pszParam);
+	free(pShl);
+}
+
+void CSettings::debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile)
+{
+	_ASSERTE(pszParamEx!=NULL && asFile && *asFile);
+
+	HANDLE hFile = CreateFile(asFile, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
+	LARGE_INTEGER liSize = {};
+	char szBuf[32770]; DWORD nRead = 0;
+	if (hFile && hFile != INVALID_HANDLE_VALUE
+		&& GetFileSizeEx(hFile, &liSize) && (liSize.QuadPart < 0xFFFFFF)
+		&& ReadFile(hFile, szBuf, sizeof(szBuf)-3, &nRead, NULL) && nRead)
+	{
+		szBuf[nRead] = 0; szBuf[nRead+1] = 0; szBuf[nRead+2] = 0;
+		CloseHandle(hFile);
+		bool lbUnicode = false;
+		LPCWSTR pszExt = PointToExt(asFile);
+		// Для расширений помимо ".bat" и ".cmd" - проверить содержимое
+		if (lstrcmpi(pszExt, L".bat")!=0 && lstrcmpi(pszExt, L".cmd")!=0)
+		{
+			// например, ".tmp" файлы
+			for (UINT i = 0; i < nRead; i++)
+			{
+				if (szBuf[i] == 0)
+				{
+					TODO("Может файл просто юникодный?");
+					return;
+				}
+			}
+		}
+
+		size_t nAll = (lstrlen(pszParamEx)+20) + nRead + 1 + 2*lstrlen(asFile);
+		wchar_t* pszNew = (wchar_t*)realloc(pszParamEx, nAll*sizeof(wchar_t));
+		if (pszNew)
+		{
+			_wcscat_c(pszNew, nAll, L"\r\n\r\n>>>");
+			_wcscat_c(pszNew, nAll, asFile);
+			_wcscat_c(pszNew, nAll, L"\r\n");
+			if (lbUnicode)
+				_wcscat_c(pszNew, nAll, (wchar_t*)szBuf);
+			else
+				MultiByteToWideChar(CP_OEMCP, 0, szBuf, nRead+1, pszNew+lstrlen(pszNew), nRead+1);
+			_wcscat_c(pszNew, nAll, L"\r\n<<<");
+			_wcscat_c(pszNew, nAll, asFile);
+			pszParamEx = pszNew;
+		}
+	}
+}
+
+void CSettings::debugLogInfo(HWND hWnd2, CESERVER_REQ_PEEKREADINFO* pInfo)
+{
+	for (UINT nIdx = 0; nIdx < pInfo->nCount; nIdx++)
+	{
+		const INPUT_RECORD *pr = pInfo->Buffer+nIdx;
+		SYSTEMTIME st; GetLocalTime(&st);
+		wchar_t szTime[255]; _wsprintf(szTime, SKIPLEN(countof(szTime)) L"%02i:%02i:%02i", st.wHour, st.wMinute, st.wSecond);
+		HWND hList = GetDlgItem(hWnd2, lbActivityLog);
+		LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
+		lvi.state = lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
+		lvi.pszText = szTime;
+		static INPUT_RECORD LastLogEvent1; static char LastLogEventType1; static UINT LastLogEventDup1;
+		static INPUT_RECORD LastLogEvent2; static char LastLogEventType2; static UINT LastLogEventDup2;
+		if (LastLogEventType1 == pInfo->cPeekRead &&
+			memcmp(&LastLogEvent1, pr, sizeof(LastLogEvent1)) == 0)
+		{
+			LastLogEventDup1 ++;
+			_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", LastLogEventDup1);
+			ListView_SetItemText(hList, 0, lic_Dup, szTime); // верхний
+			//free(pr);
+			continue; // дубли - не показывать? только если прошло время?
+		}
+		if (LastLogEventType2 == pInfo->cPeekRead &&
+			memcmp(&LastLogEvent2, pr, sizeof(LastLogEvent2)) == 0)
+		{
+			LastLogEventDup2 ++;
+			_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", LastLogEventDup2);
+			ListView_SetItemText(hList, 1, lic_Dup, szTime); // верхний
+			//free(pr);
+			continue; // дубли - не показывать? только если прошло время?
+		}
+		int nItem = ListView_InsertItem(hList, &lvi);
+		if (LastLogEventType1 && LastLogEventType1 != pInfo->cPeekRead)
+		{
+			LastLogEvent2 = LastLogEvent1; LastLogEventType2 = LastLogEventType1; LastLogEventDup2 = LastLogEventDup1;
+		}
+		LastLogEventType1 = pInfo->cPeekRead;
+		memmove(&LastLogEvent1, pr, sizeof(LastLogEvent1));
+		LastLogEventDup1 = 1;
+
+		_wcscpy_c(szTime, countof(szTime), L"1");
+		ListView_SetItemText(hList, nItem, lic_Dup, szTime);
+		//
+		szTime[0] = (wchar_t)pInfo->cPeekRead; szTime[1] = L'.'; szTime[2] = 0;
+		if (pr->EventType == MOUSE_EVENT)
+		{
+			wcscat_c(szTime, L"Mouse");
+			ListView_SetItemText(hList, nItem, lic_Type, szTime);
+			const MOUSE_EVENT_RECORD *rec = &pr->Event.MouseEvent;
+			_wsprintf(szTime, SKIPLEN(countof(szTime))
+				L"[%d,%d], Btn=0x%08X (%c%c%c%c%c), Ctrl=0x%08X (%c%c%c%c%c - %c%c%c%c), Flgs=0x%08X (%s)",
+				rec->dwMousePosition.X,
+				rec->dwMousePosition.Y,
+				rec->dwButtonState,
+				(rec->dwButtonState&FROM_LEFT_1ST_BUTTON_PRESSED?L'L':L'l'),
+				(rec->dwButtonState&RIGHTMOST_BUTTON_PRESSED?L'R':L'r'),
+				(rec->dwButtonState&FROM_LEFT_2ND_BUTTON_PRESSED?L'2':L' '),
+				(rec->dwButtonState&FROM_LEFT_3RD_BUTTON_PRESSED?L'3':L' '),
+				(rec->dwButtonState&FROM_LEFT_4TH_BUTTON_PRESSED?L'4':L' '),
+				rec->dwControlKeyState,
+				(rec->dwControlKeyState&LEFT_CTRL_PRESSED?L'C':L'c'),
+				(rec->dwControlKeyState&LEFT_ALT_PRESSED?L'A':L'a'),
+				(rec->dwControlKeyState&SHIFT_PRESSED?L'S':L's'),
+				(rec->dwControlKeyState&RIGHT_ALT_PRESSED?L'A':L'a'),
+				(rec->dwControlKeyState&RIGHT_CTRL_PRESSED?L'C':L'c'),
+				(rec->dwControlKeyState&ENHANCED_KEY?L'E':L'e'),
+				(rec->dwControlKeyState&CAPSLOCK_ON?L'C':L'c'),
+				(rec->dwControlKeyState&NUMLOCK_ON?L'N':L'n'),
+				(rec->dwControlKeyState&SCROLLLOCK_ON?L'S':L's'),
+				rec->dwEventFlags,
+				(rec->dwEventFlags==0?L"(Click)":
+				(rec->dwEventFlags==DOUBLE_CLICK?L"(DblClick)":
+				(rec->dwEventFlags==MOUSE_MOVED?L"(Moved)":
+				(rec->dwEventFlags==MOUSE_WHEELED?L"(Wheel)":
+				(rec->dwEventFlags==0x0008/*MOUSE_HWHEELED*/?L"(HWheel)":L"")))))
+				);
+			if (rec->dwEventFlags==MOUSE_WHEELED  || rec->dwEventFlags==0x0008/*MOUSE_HWHEELED*/)
+			{
+				int nLen = _tcslen(szTime);
+				_wsprintf(szTime+nLen, SKIPLEN(countof(szTime)-nLen)
+					L" (Delta=%d)",HIWORD(rec->dwButtonState));
+			}
+			ListView_SetItemText(hList, nItem, lic_Event, szTime);
+		}
+		else if (pr->EventType == KEY_EVENT)
+		{
+			wcscat_c(szTime, L"Key");
+			ListView_SetItemText(hList, nItem, lic_Type, szTime);
+			_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%c(%i) VK=%i, SC=%i, U=%c(x%04X), ST=x%08X",
+				pr->Event.KeyEvent.bKeyDown ? L'D' : L'U',
+				pr->Event.KeyEvent.wRepeatCount,
+				pr->Event.KeyEvent.wVirtualKeyCode, pr->Event.KeyEvent.wVirtualScanCode,
+				pr->Event.KeyEvent.uChar.UnicodeChar ? pr->Event.KeyEvent.uChar.UnicodeChar : L' ',
+				pr->Event.KeyEvent.uChar.UnicodeChar,
+				pr->Event.KeyEvent.dwControlKeyState);
+			ListView_SetItemText(hList, nItem, lic_Event, szTime);
+		}
+		else if (pr->EventType == FOCUS_EVENT)
+		{
+			wcscat_c(szTime, L"Focus");
+			ListView_SetItemText(hList, nItem, lic_Type, szTime);
+			_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", (DWORD)pr->Event.FocusEvent.bSetFocus);
+			ListView_SetItemText(hList, nItem, lic_Event, szTime);
+		}
+		else if (pr->EventType == WINDOW_BUFFER_SIZE_EVENT)
+		{
+			wcscat_c(szTime, L"Buffer");
+			ListView_SetItemText(hList, nItem, lic_Type, szTime);
+			_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%ix%i", (int)pr->Event.WindowBufferSizeEvent.dwSize.X, (int)pr->Event.WindowBufferSizeEvent.dwSize.Y);
+			ListView_SetItemText(hList, nItem, lic_Event, szTime);
+		}
+		else if (pr->EventType == MENU_EVENT)
+		{
+			wcscat_c(szTime, L"Menu");
+			ListView_SetItemText(hList, nItem, lic_Type, szTime);
+			_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%u", (DWORD)pr->Event.MenuEvent.dwCommandId);
+			ListView_SetItemText(hList, nItem, lic_Event, szTime);
+		}
+		else
+		{
+			_wsprintf(szTime+2, SKIPLEN(countof(szTime)-2) L"%u", (DWORD)pr->EventType);
+			ListView_SetItemText(hList, nItem, lic_Type, szTime);
+		}
+	}
+	free(pInfo);
 }
 
 void CSettings::OnSaveActivityLogFile(HWND hListView)
@@ -5050,7 +5147,7 @@ void CSettings::OnSaveActivityLogFile(HWND hListView)
 	int nMaxText = 262144;
 	wchar_t* pszText = (wchar_t*)malloc(nMaxText*sizeof(wchar_t));
 	LVCOLUMN lvc = {LVCF_TEXT};
-	LVITEM lvi = {0};
+	//LVITEM lvi = {0};
 	int nColumnCount = 0;
 	DWORD nWritten = 0, nLen;
 
@@ -6176,7 +6273,7 @@ void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WOR
 
 	if (isAdvLogging)
 	{
-		char szInfo[128]; sprintf_s(szInfo, "MacroFontSetName('%s', H=%i, W=%i)", LF.lfFaceName, LF.lfHeight, LF.lfWidth);
+		char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "MacroFontSetName('%s', H=%i, W=%i)", LF.lfFaceName, LF.lfHeight, LF.lfWidth);
 		gpConEmu->ActiveCon()->RCon()->LogString(szInfo);
 	}
 
@@ -6269,7 +6366,7 @@ void CSettings::RecreateFont(WORD wFromID)
 
 		if (isAdvLogging)
 		{
-			char szInfo[128]; sprintf_s(szInfo, "AutoRecreateFont(H=%i, W=%i)", LF.lfHeight, LF.lfWidth);
+			char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "AutoRecreateFont(H=%i, W=%i)", LF.lfHeight, LF.lfWidth);
 			gpConEmu->ActiveCon()->RCon()->LogString(szInfo);
 		}
 	}
@@ -6486,7 +6583,7 @@ bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 
 	if (isAdvLogging)
 	{
-		char szInfo[128]; sprintf_s(szInfo, "AutoRecreateFont(H=%i, W=%i)", nFontH, nFontW);
+		char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "AutoRecreateFont(H=%i, W=%i)", nFontH, nFontW);
 		gpConEmu->ActiveCon()->RCon()->LogString(szInfo);
 	}
 
@@ -6718,7 +6815,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 					int nCurLen = _tcslen(szFontError);
 					_wsprintf(szFontError+nCurLen, SKIPLEN(countof(szFontError)-nCurLen)
 					          L"Failed to create main font!\nRequested: %s\nCreated: %s\n", inFont->lfFaceName, szFontFace);
-					wcsncpy_s(inFont->lfFaceName, szFontFace, countof(inFont->lfFaceName)); inFont->lfFaceName[countof(inFont->lfFaceName)-1] = 0;
+					lstrcpyn(inFont->lfFaceName, szFontFace, countof(inFont->lfFaceName)); inFont->lfFaceName[countof(inFont->lfFaceName)-1] = 0;
 					wcscpy_c(tmpFont.lfFaceName, inFont->lfFaceName);
 				}
 			}
@@ -7944,20 +8041,21 @@ BOOL CSettings::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 							continue;
 						iOffset = iFamOffset; iLen = iFamLength;
 						break;
-					case 2:
+					//case 2:
+					default:
 						if (iSubFamOffset == -1)
 							continue;
 						iOffset = iSubFamOffset; iLen = iSubFamLength;
-						break;
+						//break;
 					}
 					if (SetFilePointer(f, tbl.Offset + nam.StringOffset + iOffset, NULL, FILE_BEGIN)==INVALID_SET_FILE_POINTER)
 						break;
-					if (iLen >= sizeof(szData))
+					if (iLen >= (int)sizeof(szData))
 					{
-						_ASSERTE(iLen < sizeof(szData));
+						_ASSERTE(iLen < (int)sizeof(szData));
 						iLen = sizeof(szData)-1;
 					}
-					if (!ReadFile(f, szData, iLen, &(dwRead=0), NULL) || (dwRead != iLen))
+					if (!ReadFile(f, szData, iLen, &(dwRead=0), NULL) || (dwRead != (DWORD)iLen))
 						break;
 					
 					switch (n)
@@ -8842,7 +8940,7 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 		BackgroundOp op = (BackgroundOp)gpSet->bgOperation;
 		BOOL lbImageExist = (mp_BgImgData != NULL);
 		//BOOL lbVConImage = FALSE;
-		LONG lBgWidth = 0, lBgHeight = 0;
+		//LONG lBgWidth = 0, lBgHeight = 0;
 		//CVirtualConsole* pVCon = gpConEmu->ActiveCon();
 
 		////MSectionLock SBK;
@@ -9197,7 +9295,7 @@ bool CSettings::CheckConsoleFontRegistry(LPCWSTR asFaceName)
 // EnumFontFamilies не вызывается, т.к. занимает время
 bool CSettings::CheckConsoleFontFast()
 {
-	wchar_t szCreatedFaceName[32] = {0};
+	//wchar_t szCreatedFaceName[32] = {0};
 	LOGFONT LF = gpSet->ConsoleFont;
 	gpSetCls->nConFontError = 0; //ConFontErr_NonSystem|ConFontErr_NonRegistry|ConFontErr_InvalidName;
 	HFONT hf = CreateFontIndirect(&LF);
@@ -9473,7 +9571,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 						}
 						else
 						{
-							DWORD nWait = WaitForSingleObject(sei.hProcess, 30000);
+							DWORD nWait = WaitForSingleObject(sei.hProcess, 30000); UNREFERENCED_PARAMETER(nWait);
 							CloseHandle(sei.hProcess);
 
 							if (gpSetCls->CheckConsoleFontRegistry(gpSet->ConsoleFont.lfFaceName))

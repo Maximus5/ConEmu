@@ -716,7 +716,7 @@ void SetWindowW1900(int nTab)
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void PostMacroW1900(wchar_t* asMacro, INPUT_RECORD* apRec)
+void PostMacroW1900(const wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return;
@@ -893,12 +893,12 @@ void WaitEndSynchroW1900()
 		{DI_BUTTON,     0,  2,  0,  0, {0},  0, 0, DIF_FOCUS|DIF_CENTERGROUP|DIF_DEFAULTBUTTON, GetMsgW1900(CEStopSynchroWaiting)},
 	};
 	
-	GUID ConEmuWaitEndSynchro = { /* d0f369dc-2800-4833-a858-43dd1c115370 */
-		    0xd0f369dc,
-		    0x2800,
-		    0x4833,
-		    {0xa8, 0x58, 0x43, 0xdd, 0x1c, 0x11, 0x53, 0x70}
-		  };
+	//GUID ConEmuWaitEndSynchro = { /* d0f369dc-2800-4833-a858-43dd1c115370 */
+	//	    0xd0f369dc,
+	//	    0x2800,
+	//	    0x4833,
+	//	    {0xa8, 0x58, 0x43, 0xdd, 0x1c, 0x11, 0x53, 0x70}
+	//	  };
 	
 	ghSyncDlg = InfoW1900->DialogInit(&guid_ConEmu, &guid_ConEmuWaitEndSynchro,
 			-1,-1, 55, 5, NULL, items, countof(items), 0, 0, NULL, 0);
@@ -1307,7 +1307,7 @@ void FillUpdateBackgroundW1900(struct PaintBackgroundArg* pFar)
 	}
 
 	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO scbi = {sizeof(CONSOLE_SCREEN_BUFFER_INFO)};
+	CONSOLE_SCREEN_BUFFER_INFO scbi = {};
 	GetConsoleScreenBufferInfo(hCon, &scbi);
 
 	if (CheckBufferEnabledW1900())

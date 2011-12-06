@@ -119,7 +119,7 @@ void CheckLoadedModule(LPCWSTR asModule)
 		},
 	};
 
-	for (int m = 0; m < countof(Checks); m++)
+	for (size_t m = 0; m < countof(Checks); m++)
 	{
 		if ((*Checks[m].pModulePtr) != NULL)
 			continue;
@@ -129,11 +129,11 @@ void CheckLoadedModule(LPCWSTR asModule)
 			*Checks[m].pModulePtr = LoadLibraryW(Checks[m].sModule); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
 			if ((*Checks[m].pModulePtr) != NULL)
 			{
-				for (int f = 0; f < countof(Checks[m].Funcs); f++)
+				for (size_t f = 0; f < countof(Checks[m].Funcs); f++)
 				{
 					if (!Checks[m].Funcs[f].sFuncName)
 						break;
-					*Checks[m].Funcs[f].pFuncPtr = GetProcAddress(*Checks[m].pModulePtr, Checks[m].Funcs[f].sFuncName);
+					*Checks[m].Funcs[f].pFuncPtr = (void*)GetProcAddress(*Checks[m].pModulePtr, Checks[m].Funcs[f].sFuncName);
 				}
 			}
 		}
@@ -1004,10 +1004,28 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 			continue;
 		}
 
-		int f = 0;
+		int f;
 
-		for(f = 0 ; thunk->u1.Function; thunk++, thunkO++, f++)
+		for (f = 0;; thunk++, thunkO++, f++)
 		{
+			//111127 - ..\GIT\lib\perl5\site_perl\5.8.8\msys\auto\SVN\_Core\_Core.dll
+			//         похоже, в этой длл кривая таблица импортов
+			BOOL lbBadThunk = IsBadReadPtr(thunk, sizeof(*thunk));
+			if (lbBadThunk)
+			{
+				_ASSERTEX(!lbBadThunk);
+				break;
+			}
+			BOOL lbBadThunkO = IsBadReadPtr(thunkO, sizeof(*thunkO));
+			if (lbBadThunkO)
+			{
+				_ASSERTEX(!lbBadThunkO);
+				break;
+			}
+
+			if (!thunk->u1.Function)
+				break;
+
 			const char* pszFuncName = NULL;
 			ULONGLONG ordinalO = -1;
 
@@ -1045,13 +1063,12 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 			}
 
 			int j;
-
-			for(j = 0; gpHooks[j].Name; j++)
+			for (j = 0; gpHooks[j].Name; j++)
 			{
-#ifdef _DEBUG
+				#ifdef _DEBUG
 				const void* ptrNewAddress = gpHooks[j].NewAddress;
 				const void* ptrOldAddress = (void*)thunk->u1.Function;
-#endif
+				#endif
 
 				// Если адрес импорта в модуле уже совпадает с адресом одной из наших функций
 				if (gpHooks[j].NewAddress == (void*)thunk->u1.Function)
@@ -1422,7 +1439,14 @@ bool UnsetHook(HMODULE Module)
 			{
 				pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
 				BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
-				_ASSERTE(lbValidPtr);
+				#ifdef _DEBUG
+				static bool bFirstAssert = false;
+				if (!lbValidPtr && !bFirstAssert)
+				{
+					bFirstAssert = true;
+					_ASSERTE(lbValidPtr);
+				}
+				#endif
 
 				if (lbValidPtr)
 				{
@@ -1929,7 +1953,7 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 	BOOL lbRc = FALSE;
 	BOOL lbResource = LDR_IS_RESOURCE(hModule);
 	// lbResource получается TRUE например при вызовах из version.dll
-	BOOL lbProcess = !lbResource;
+	//BOOL lbProcess = !lbResource;
 	wchar_t szModule[MAX_PATH*2]; szModule[0] = 0;
 
 	if (gbLogLibraries)
@@ -1983,7 +2007,9 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 	{
 		// Попробуем определить, действительно ли модуль выгружен, или только счетчик уменьшился
 		BOOL lbModulePost = IsModuleValid(hModule); // GetModuleFileName(hModule, szModule, countof(szModule));
+		#ifdef _DEBUG
 		DWORD dwErr = lbModulePost ? 0 : GetLastError();
+		#endif
 
 		if (!lbModulePost)
 		{

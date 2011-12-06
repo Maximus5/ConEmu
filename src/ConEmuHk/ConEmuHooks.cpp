@@ -1052,7 +1052,7 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 		if (!bShowWarned)
 		{
 			bShowWarned = true;
-			_ASSERTE(hWnd != ghConEmuWndDC);
+			_ASSERTE(hWnd != ghConEmuWndDC && L"OnShowWindow");
 		}
 		#endif
 		return TRUE; // обманем
@@ -2684,8 +2684,18 @@ HWND WINAPI OnGetConsoleWindow(void)
 
 	if (ghConEmuWndDC && user->isWindow(ghConEmuWndDC) /*ghConsoleHwnd*/)
 	{
-		//return ghConsoleHwnd;
-		return ghConEmuWndDC;
+		if (ghAttachGuiClient)
+		{
+			// В GUI режиме (notepad, putty) отдавать реальный результат GetConsoleWindow()
+			// в этом режиме не нужно отдавать ни ghConEmuWndDC, ни серверную консоль
+			HWND hReal = GetRealConsoleWindow();
+			return hReal;
+		}
+		else
+		{
+			//return ghConsoleHwnd;
+			return ghConEmuWndDC;
+		}
 	}
 
 	HWND h;
@@ -3217,7 +3227,7 @@ static BOOL MyGetConsoleFontSize(COORD& crFontSize)
 BOOL WINAPI OnGetCurrentConsoleFont(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFO lpConsoleCurrentFont)
 {
 	typedef BOOL (WINAPI* OnGetCurrentConsoleFont_t)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFO lpConsoleCurrentFont);
-	ORIGINALFAST(GetCurrentConsoleFont);
+	ORIGINALFASTEX(GetCurrentConsoleFont,NULL);
 	BOOL lbRc = FALSE;
 	COORD crSize = {};
 
@@ -3236,7 +3246,7 @@ BOOL WINAPI OnGetCurrentConsoleFont(HANDLE hConsoleOutput, BOOL bMaximumWindow, 
 COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont)
 {
 	typedef COORD (WINAPI* OnGetConsoleFontSize_t)(HANDLE hConsoleOutput, DWORD nFont);
-	ORIGINALFAST(GetConsoleFontSize);
+	ORIGINALFASTEX(GetConsoleFontSize,NULL);
 	COORD cr = {};
 
 	if (!MyGetConsoleFontSize(cr))

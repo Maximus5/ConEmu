@@ -882,7 +882,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 					// Запомнить текущий путь в SubFolder
 					INT_PTR nFolderLen = lbWide ? (_tcslen((LPCWSTR)ptrFileName)) : (strlen((LPCSTR)ptrFileName));
 
-					if ((nFolderLen + 1) >= countof(szSubFolder))
+					if ((nFolderLen + 1) >= (INT_PTR)countof(szSubFolder))
 					{
 						_wsprintf(sUnknownError, SKIPLEN(countof(sUnknownError)) L"Drag item #%i contains too long path!", mn_CurFile+1);
 						gpConEmu->DebugStep(sUnknownError, TRUE);
@@ -1108,7 +1108,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 				if (*psz == L'"' || *psz == L'\\')
 				{
 					INT_PTR cch = nLen+1;
-					INT_PTR cchMax = countof(szData) - ((psz+1) - szData);
+					INT_PTR cchMax = countof(szData) - ((psz+1) - szData); UNREFERENCED_PARAMETER(cchMax);
 					_ASSERTE(cch > 0 && cch <= cchMax && cchMax > 0 && cchMax < countof(szData));
 					wmemmove_s(psz+1, cchMax, psz, cch);
 
@@ -1258,7 +1258,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 #endif
 	gpConEmu->SetDragCursor(NULL);
 	//PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
+	#ifdef _DEBUG
 	DWORD dwAllowed = *pdwEffect;
+	#endif
 	*pdwEffect = DROPEFFECT_COPY|DROPEFFECT_MOVE;
 
 	if (S_OK != DragOver(grfKeyState, pt, pdwEffect) ||  *pdwEffect == DROPEFFECT_NONE)

@@ -103,9 +103,9 @@ void GetPluginInfoW1900(void *piv)
 	pi->PluginMenu.Guids = &guid_ConEmuBgPluginMenu;
 	pi->PluginMenu.Strings = szMenu;
 	pi->PluginMenu.Count = 1;
-	pi->PluginMenu.Guids = &guid_ConEmuBgPluginConfig;
-	pi->PluginMenu.Strings = szMenu;
-	pi->PluginMenu.Count = 1;
+	pi->PluginConfig.Guids = &guid_ConEmuBgPluginConfig;
+	pi->PluginConfig.Strings = szMenu;
+	pi->PluginConfig.Count = 1;
 }
 
 void SetStartupInfoW1900(void *aInfo)

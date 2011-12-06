@@ -1,8 +1,6 @@
 
 #pragma once
 
-typedef BOOL (WINAPI* AlphaBlend_t)(HDC hdcDest, int xoriginDest, int yoriginDest, int wDest, int hDest, HDC hdcSrc, int xoriginSrc, int yoriginSrc, int wSrc, int hSrc, BLENDFUNCTION ftn);
-
 class CBackground
 {
 	public:
@@ -19,7 +17,7 @@ class CBackground
 		HBITMAP  hBgBitmap, hOldBitmap;
 		void Destroy();
 
-		//// Alpha blending
-		//HMODULE mh_MsImg32;
-		//AlphaBlend_t fAlphaBlend;
+		#ifdef __GNUC__
+		AlphaBlend_t GdiAlphaBlend;
+		#endif
 };

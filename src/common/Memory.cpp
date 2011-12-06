@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 HANDLE ghHeap = NULL;
 
 #ifdef TRACK_MEMORY_ALLOCATIONS
-static const char* PointToName(const char* asFileOrPath)
+static const char* _PointToName(const char* asFileOrPath)
 {
 	if (!asFileOrPath)
 	{
@@ -82,21 +82,6 @@ void HeapDeinitialize()
 	}
 }
 
-//const char* PointToName(const char* asFileOrPath)
-//{
-//	if (!asFileOrPath)
-//	{
-//		_ASSERTE(asFileOrPath!=NULL);
-//		return NULL;
-//	}
-//
-//	const char* pszSlash = strrchr(asFileOrPath, L'\\');
-//
-//	if (pszSlash)
-//		return pszSlash+1;
-//
-//	return asFileOrPath;
-//}
 
 void * __cdecl xf_malloc
 (
@@ -109,29 +94,36 @@ void * __cdecl xf_malloc
 	_ASSERTE(ghHeap);
 	_ASSERTE(_Size>0);
 #ifdef TRACK_MEMORY_ALLOCATIONS
-#ifdef FORCE_HEAP_CHECK
+	#ifdef FORCE_HEAP_CHECK
 	xf_dump_chk();
-#endif
+	#endif
+
 	xf_mem_block* p = (xf_mem_block*)HeapAlloc(ghHeap, 0, _Size+sizeof(xf_mem_block)+8);
-	p->bBlockUsed = TRUE;
-	p->nBlockSize = _Size;
-#ifdef CONEMU_MINIMAL
-	lstrcpynA(p->sCreatedFrom, PointToName(lpszFileName), sizeof(p->sCreatedFrom)/sizeof(p->sCreatedFrom[0]));
-#else
-	wsprintfA(p->sCreatedFrom, "%s:%i", PointToName(lpszFileName), nLine);
-#endif
-#ifdef _DEBUG
+	if (p)
+	{
+		p->bBlockUsed = TRUE;
+		p->nBlockSize = _Size;
 
-	if (_Size > 0) memset(p+1, 0xFD, _Size);
+		msprintf(p->sCreatedFrom, countof(p->sCreatedFrom), "%s:%i", _PointToName(lpszFileName), nLine);
 
-#endif
-	memset(((LPBYTE)(p+1))+_Size, 0xCC, 8);
+		#ifdef _DEBUG
+		if (_Size > 0) memset(p+1, 0xFD, _Size);
+		#endif
+
+		memset(((LPBYTE)(p+1))+_Size, 0xCC, 8);
+	}
+	else
+	{
+		_ASSERTE(p!=NULL);
+	}
 	return p?(p+1):p;
 #else
 	void* p = HeapAlloc(ghHeap, 0, _Size);
 	return p;
 #endif
 }
+
+
 void * __cdecl xf_calloc
 (
     size_t _Count, size_t _Size
@@ -143,24 +135,89 @@ void * __cdecl xf_calloc
 	_ASSERTE(ghHeap);
 	_ASSERTE((_Count*_Size)>0);
 #ifdef TRACK_MEMORY_ALLOCATIONS
-#ifdef FORCE_HEAP_CHECK
+	#ifdef FORCE_HEAP_CHECK
 	xf_dump_chk();
-#endif
+	#endif
+
 	xf_mem_block* p = (xf_mem_block*)HeapAlloc(ghHeap, HEAP_ZERO_MEMORY, _Count*_Size+sizeof(xf_mem_block)+8);
-	p->bBlockUsed = TRUE;
-	p->nBlockSize = _Count*_Size;
-#ifdef CONEMU_MINIMAL
-	lstrcpynA(p->sCreatedFrom, PointToName(lpszFileName), sizeof(p->sCreatedFrom)/sizeof(p->sCreatedFrom[0]));
-#else
-	wsprintfA(p->sCreatedFrom, "%s:%i", PointToName(lpszFileName), nLine);
-#endif
-	memset(((LPBYTE)(p+1))+_Count*_Size, 0xCC, 8);
+	if (p)
+	{
+		p->bBlockUsed = TRUE;
+		p->nBlockSize = _Count*_Size;
+
+		msprintf(p->sCreatedFrom, countof(p->sCreatedFrom), "%s:%i", _PointToName(lpszFileName), nLine);
+
+		memset(((LPBYTE)(p+1))+_Count*_Size, 0xCC, 8);
+	}
+	else
+	{
+		_ASSERTE(p!=NULL);
+	}
 	return p?(p+1):p;
 #else
 	void* p = HeapAlloc(ghHeap, HEAP_ZERO_MEMORY, _Count*_Size);
 	return p;
 #endif
 }
+
+
+void* __cdecl xf_realloc
+(
+    void * _Memory, size_t _Size
+#ifdef TRACK_MEMORY_ALLOCATIONS
+    , LPCSTR lpszFileName, int nLine
+#endif
+)
+{
+	_ASSERTE(ghHeap);
+	_ASSERTE(_Size>0);
+#ifdef TRACK_MEMORY_ALLOCATIONS
+	xf_mem_block* pOld = ((xf_mem_block*)_Memory)-1;
+
+	size_t _Size1 = HeapSize(ghHeap, 0, pOld);
+	_ASSERTE(_Size1 < _Size);
+	size_t _Size2 = 0;
+
+	if (pOld->bBlockUsed == TRUE)
+	{
+		int nCCcmp = memcmp(((LPBYTE)_Memory)+pOld->nBlockSize, "\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC", 8);
+		_ASSERTE(nCCcmp == 0);
+		_ASSERTE(_Size1 == (pOld->nBlockSize+sizeof(xf_mem_block)+8));
+		_Size2 = pOld->nBlockSize;
+	}
+	else
+	{
+		_ASSERTE(pOld->bBlockUsed == TRUE);
+		if (_Size1 > (sizeof(xf_mem_block)+8))
+			_Size2 = _Size1 - (sizeof(xf_mem_block)+8);
+	}
+
+	xf_mem_block* p = (xf_mem_block*)HeapReAlloc(ghHeap, 0, pOld, _Size+sizeof(xf_mem_block)+8);
+	if (p)
+	{
+		p->bBlockUsed = TRUE;
+		p->nBlockSize = _Size;
+
+		msprintf(p->sCreatedFrom, countof(p->sCreatedFrom), "%s:%i", _PointToName(lpszFileName), nLine);
+
+		#ifdef _DEBUG
+		if (_Size > _Size2) memset(((LPBYTE)(p+1))+_Size2, 0xFD, _Size - _Size2);
+		#endif
+
+		memset(((LPBYTE)(p+1))+_Size, 0xCC, 8);
+	}
+	else
+	{
+		_ASSERTE(p!=NULL);
+	}
+	return p?(p+1):p;
+#else
+	void* p = HeapReAlloc(ghHeap, HEAP_ZERO_MEMORY, _Memory, _Size);
+	return p;
+#endif
+}
+
+
 void __cdecl xf_free
 (
     void * _Memory
@@ -192,21 +249,19 @@ void __cdecl xf_free
 	}
 
 	p->bBlockUsed = FALSE;
-#ifdef CONEMU_MINIMAL
-	lstrcpynA(p->sCreatedFrom, PointToName(lpszFileName), sizeof(p->sCreatedFrom)/sizeof(p->sCreatedFrom[0]));
-#else
-	wsprintfA(p->sCreatedFrom, "-- %s:%i", PointToName(lpszFileName), nLine);
-#endif
+	msprintf(p->sCreatedFrom, countof(p->sCreatedFrom), "-- %s:%i", _PointToName(lpszFileName), nLine);
 	_Memory = (void*)p;
 #endif
-#ifdef _DEBUG
-	__int64 _Size1 = HeapSize(ghHeap, 0, _Memory);
+	#ifdef _DEBUG
+	size_t _Size1 = HeapSize(ghHeap, 0, _Memory);
 	_ASSERTE(_Size1 > 0);
-#endif
+	#endif
+
 	HeapFree(ghHeap, 0, _Memory);
-#ifdef FORCE_HEAP_CHECK
+
+	#ifdef FORCE_HEAP_CHECK
 	xf_dump_chk();
-#endif
+	#endif
 	//#ifdef _DEBUG
 	//SIZE_T _Size2 = HeapSize(ghHeap, 0, _Memory);
 	//if (_Size1 == _Size2) {
@@ -214,6 +269,8 @@ void __cdecl xf_free
 	//}
 	//#endif
 }
+
+
 #ifdef TRACK_MEMORY_ALLOCATIONS
 #ifdef FORCE_HEAP_CHECK
 void __cdecl xf_dump_chk()
@@ -229,7 +286,7 @@ void __cdecl xf_dump_chk()
 	{
 		if (pLast == ent.lpData)
 		{
-			wsprintfA(sBlockInfo, "!!! HeapWalk cycled at 0x%08X, size=0x%08X\n", (DWORD)ent.lpData, ent.cbData);
+			msprintf(sBlockInfo, countof(sBlockInfo), "!!! HeapWalk cycled at 0x%08X, size=0x%08X\n", (DWORD)ent.lpData, ent.cbData);
 			OutputDebugStringA(sBlockInfo);
 			_ASSERTE(pLast != ent.lpData);
 			break;
@@ -237,7 +294,7 @@ void __cdecl xf_dump_chk()
 
 		if (((int)ent.cbData) < 0)
 		{
-			wsprintfA(sBlockInfo, "!!! Invalid memory block size at 0x%08X, size=0x%08X\n", (DWORD)ent.lpData, ent.cbData);
+			msprintf(sBlockInfo, countof(sBlockInfo), "!!! Invalid memory block size at 0x%08X, size=0x%08X\n", (DWORD)ent.lpData, ent.cbData);
 			OutputDebugStringA(sBlockInfo);
 			_ASSERTE(((int)ent.cbData) >= 0);
 			break;
@@ -248,6 +305,8 @@ void __cdecl xf_dump_chk()
 #endif
 }
 #endif
+
+
 void __cdecl xf_dump()
 {
 #ifndef CONEMU_MINIMAL
@@ -261,7 +320,7 @@ void __cdecl xf_dump()
 	{
 		if (pLast == ent.lpData)
 		{
-			wsprintfA(sBlockInfo, "!!! HeapWalk cycled at 0x%08X, size=0x%08X\n", (DWORD)ent.lpData, ent.cbData);
+			msprintf(sBlockInfo, countof(sBlockInfo), "!!! HeapWalk cycled at 0x%08X, size=0x%08X\n", (DWORD)ent.lpData, ent.cbData);
 			OutputDebugStringA(sBlockInfo);
 			_ASSERTE(pLast != ent.lpData);
 			break;
@@ -269,7 +328,7 @@ void __cdecl xf_dump()
 
 		if (((int)ent.cbData) < 0)
 		{
-			wsprintfA(sBlockInfo, "!!! Invalid memory block size at 0x%08X, size=0x%08X\n", (DWORD)ent.lpData, ent.cbData);
+			msprintf(sBlockInfo, countof(sBlockInfo), "!!! Invalid memory block size at 0x%08X, size=0x%08X\n", (DWORD)ent.lpData, ent.cbData);
 			OutputDebugStringA(sBlockInfo);
 			_ASSERTE(((int)ent.cbData) >= 0);
 			break;
@@ -281,12 +340,12 @@ void __cdecl xf_dump()
 
 			if (p->bBlockUsed==TRUE && p->nBlockSize==ent.cbData)
 			{
-				wsprintfA(sBlockInfo, "!!! Lost memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n", WIN3264WSPRINT(ent.lpData), ent.cbData,
+				msprintf(sBlockInfo, countof(sBlockInfo), "!!! Lost memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n", WIN3264WSPRINT(ent.lpData), ent.cbData,
 				          p->sCreatedFrom);
 			}
 			else
 			{
-				wsprintfA(sBlockInfo, "!!! Lost memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n", WIN3264WSPRINT(ent.lpData), ent.cbData,
+				msprintf(sBlockInfo, countof(sBlockInfo), "!!! Lost memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n", WIN3264WSPRINT(ent.lpData), ent.cbData,
 				          "<Header information broken!>");
 			}
 
@@ -299,6 +358,8 @@ void __cdecl xf_dump()
 #endif
 }
 #endif
+
+
 bool __cdecl xf_validate(void * _Memory /*= NULL*/)
 {
 	_ASSERTE(ghHeap);
@@ -315,6 +376,8 @@ bool __cdecl xf_validate(void * _Memory /*= NULL*/)
 	BOOL b = HeapValidate(ghHeap, 0, _Memory);
 	return (b!=FALSE);
 }
+
+
 void * __cdecl operator new(size_t _Size)
 {
 	void * p = xf_malloc(
@@ -331,6 +394,8 @@ void * __cdecl operator new(size_t _Size)
 #endif
 	return p;
 }
+
+
 void * __cdecl operator new[](size_t _Size)
 {
 	void * p = xf_malloc(
@@ -347,6 +412,8 @@ void * __cdecl operator new[](size_t _Size)
 #endif
 	return p;
 }
+
+
 void __cdecl operator delete(void *p)
 {
 	xf_free(
@@ -356,6 +423,8 @@ void __cdecl operator delete(void *p)
 #endif
 	       );
 }
+
+
 void __cdecl operator delete[](void *p)
 {
 	xf_free(
@@ -365,6 +434,7 @@ void __cdecl operator delete[](void *p)
 #endif
 	       );
 }
+
 
 char* lstrdup(const char* asText)
 {

@@ -44,6 +44,10 @@ CBackground::CBackground()
 	//} else {
 	//	fAlphaBlend = NULL;
 	//}
+	#ifdef __GNUC__
+	HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
+	GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : NULL);
+	#endif
 }
 
 CBackground::~CBackground()

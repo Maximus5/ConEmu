@@ -962,6 +962,7 @@ void LoadFarColorsA(BYTE (&nFarColors)[col_LastIndex])
 	INT_PTR nDefColorSize = COL_LASTPALETTECOLOR;
 	_ASSERTE(nColorSize==nDefColorSize);
 #endif
+	UNREFERENCED_PARAMETER(nColorSize);
 	nFarColors[col_PanelText] = FarConsoleColors[COL_PANELTEXT];
 	nFarColors[col_PanelSelectedCursor] = FarConsoleColors[COL_PANELSELECTEDCURSOR];
 	nFarColors[col_PanelSelectedText] = FarConsoleColors[COL_PANELSELECTEDTEXT];
@@ -1099,7 +1100,7 @@ void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar)
 	}
 
 	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO scbi = {sizeof(CONSOLE_SCREEN_BUFFER_INFO)};
+	CONSOLE_SCREEN_BUFFER_INFO scbi = {};
 	GetConsoleScreenBufferInfo(hCon, &scbi);
 	pFar->rcConWorkspace.left = pFar->rcConWorkspace.top = 0;
 	pFar->rcConWorkspace.right = scbi.dwSize.X - 1;

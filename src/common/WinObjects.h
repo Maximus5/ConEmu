@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wchar.h>
 #include <CommCtrl.h>
 #include "common.hpp"
+#include "MSecurity.h"
 #include "ConEmuCheck.h"
 
 #ifdef _DEBUG
@@ -132,7 +133,7 @@ class MSectionLock
 		BOOL Lock(MSection* apS, BOOL abExclusive=FALSE, DWORD anTimeout=-1);
 		BOOL RelockExclusive(DWORD anTimeout=-1);
 		void Unlock();
-		BOOL isLocked();
+		BOOL isLocked(BOOL abExclusiveOnly=FALSE);
 	public:
 		MSectionLock();
 		~MSectionLock();
@@ -234,7 +235,7 @@ class MFileMapping
 		{
 			if (mp_Data)
 			{
-				UnmapViewOfFile(mp_Data);
+				UnmapViewOfFile((void*)mp_Data);
 				mp_Data = NULL;
 			}
 		};

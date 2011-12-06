@@ -91,12 +91,13 @@ $(OBJDIR)\Execute.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\Memory.obj \
+$(OBJDIR)\MSecurity.obj \
 $(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\WinObjects.obj
 
-!if "$(EXTERNAL_HOOK_LIBRARY)" == "0"
-LINK_OBJS = $(LINK_OBJS) $(OBJDIR)\SetHook.obj
-!endif
+#!if "$(EXTERNAL_HOOK_LIBRARY)" == "0"
+#LINK_OBJS = $(LINK_OBJS) $(OBJDIR)\SetHook.obj
+#!endif
 
 #$(OBJDIR)\LogBrowser.obj
 

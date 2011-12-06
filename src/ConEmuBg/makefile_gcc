@@ -43,20 +43,27 @@ USERLIBS = -lversion -lgdi32
 
 WIDE = 1
 DIRSURF = W
-RCWIDE = -D UNICODE -D _UNICODE
-CXXWIDE = -D UNICODE -D _UNICODE -D
-CCWIDE = -D UNICODE -D _UNICODE -D
-WINVER = _WIN32_WINNT=0x0500 -D WINVER=0x0500
+ifeq ($(DIRBIT),64)
+  BITDEF = -D _WIN64 -D WIN64
+  BITNAME = .x64
+else
+  BITDEF = 
+  BITNAME = 
+endif
+RCWIDE = -D UNICODE -D _UNICODE $(BITDEF)
+CXXWIDE = -D UNICODE -D _UNICODE $(BITDEF)
+CCWIDE = -D UNICODE -D _UNICODE $(BITDEF)
+WINVER = -D _WIN32_WINNT=0x0500 -D WINVER=0x0500
 
 TMPDIR = ../../gcc
-OBJDIR = $(TMPDIR)/pluginLn
+OBJDIR = $(TMPDIR)/pluginLn$(DIRBIT)
 COMDIR = $(TMPDIR)/common
-REOBJDIR = \.\.\/\.\.\/gcc\/pluginln
+REOBJDIR = \.\.\/\.\.\/gcc\/pluginln$(DIRBIT)
 DLLDIR = ../../Release/plugins/ConEmu/Background
 COMMON = ../common
 COMINC = $(COMMON)
 EXT = dll
-DLLNAME = $(NAME).$(EXT)
+DLLNAME = $(NAME)$(BITNAME).$(EXT)
 DLLFULLNAME = $(DLLDIR)/$(DLLNAME)
 DEF = export.gcc.def
 RC_NAME = $(NAME).rc
@@ -89,8 +96,8 @@ MKDIR = mkdir -p
 WINDRES = windres
 AR = ar
 RANLIB = ranlib
-CXXFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti -fno-exceptions $(CXXWIDE) $(USERCPP) $(WINVER)
-CCFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-exceptions $(CCWIDE) $(USERCPP) $(WINVER)
+CXXFLAGS = -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti -fno-exceptions $(CXXWIDE) $(USERCPP) $(WINVER)
+CCFLAGS = -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-exceptions $(CCWIDE) $(USERCPP) $(WINVER)
 LNKFLAGS = -mdll -s -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 

@@ -1202,8 +1202,8 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 	
 #define ORIGINALFASTREGOPENW(n,k,s,wow) \
 	ORIGINALFASTREGW(n,k,s,wow);
-	//RegKeyType rktSoftware = (rkt && (\
-	//	((rkt>=RKT_HKCU && rkt<=RKT_HKLM64) && (s[0] == L'S' || s[0] == L's') && (lstrcmpi(s, L"Software") == 0)); \
+	//RegKeyType rktSoftware = (rkt && (
+	//	((rkt>=RKT_HKCU && rkt<=RKT_HKLM64) && (s[0] == L'S' || s[0] == L's') && (lstrcmpi(s, L"Software") == 0));
 
 #define FINALIZEREG(l) \
 	if (lpTemp1) \

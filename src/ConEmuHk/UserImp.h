@@ -26,6 +26,9 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef LPCDLGTEMPLATEW
+#endif
+
 struct UserImp
 {
 public:
@@ -48,7 +51,7 @@ public:
 	BOOL     endDialog(HWND hDlg, INT_PTR nResult);
 	BOOL     postMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 	LRESULT  sendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-	INT_PTR  dialogBoxIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATEW hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
+	INT_PTR  dialogBoxIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATE hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
 	int      getClassNameW(HWND hWnd, LPWSTR lpClassName, int nMaxCount);
 	BOOL     getClientRect(HWND hWnd, LPRECT lpRect);
 	HMENU    getMenu(HWND hWnd);
@@ -97,7 +100,7 @@ private:
 	postMessageW_t postMessageW_f;
 	typedef LRESULT  (WINAPI* sendMessageW_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 	sendMessageW_t sendMessageW_f;
-	typedef INT_PTR  (WINAPI* dialogBoxIndirectParamW_t)(HINSTANCE hInstance, LPCDLGTEMPLATEW hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
+	typedef INT_PTR  (WINAPI* dialogBoxIndirectParamW_t)(HINSTANCE hInstance, LPCDLGTEMPLATE hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
 	dialogBoxIndirectParamW_t dialogBoxIndirectParamW_f;
 	typedef int      (WINAPI* getClassNameW_t)(HWND hWnd, LPWSTR lpClassName, int nMaxCount);
 	getClassNameW_t getClassNameW_f;

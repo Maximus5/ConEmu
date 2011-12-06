@@ -93,6 +93,7 @@ $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\Memory.obj \
+$(OBJDIR)\MSecurity.obj \
 $(OBJDIR)\MStrSafe.obj
 
 USERLIBS = 
@@ -360,5 +361,7 @@ $(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp ..\common\ConEmuCheck.h
 $(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
 
 $(OBJDIR)\Memory.obj: ..\common\Memory.cpp
+
+$(OBJDIR)\MSecurity.obj: ..\common\MSecurity.cpp
 
 $(OBJDIR)\MStrSafe.obj: ..\common\MStrSafe.cpp

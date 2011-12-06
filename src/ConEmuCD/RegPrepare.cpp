@@ -19,7 +19,7 @@ int WINAPI MountVirtualHive(LPCWSTR asHive, PHKEY phKey, LPCWSTR asXPMountName, 
 	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
 	GetVersionEx(&osv);
 	HMODULE hAdvapi32 = LoadLibrary(L"advapi32.dll");
-	LPCWSTR pszKeyName = NULL;
+	//LPCWSTR pszKeyName = NULL;
 	LPCWSTR ppszKeys[] =
 	{
 		L"HKCU",

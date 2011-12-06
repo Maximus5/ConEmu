@@ -62,7 +62,7 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 	wchar_t szFunction[64], chTerm = 0;
 	bool lbFuncOk = false;
 
-	for(int i = 0; i < (countof(szFunction)-1); i++)
+	for (size_t i = 0; i < (countof(szFunction)-1); i++)
 	{
 		chTerm = asMacro[i];
 		szFunction[i] = chTerm;
@@ -446,9 +446,9 @@ LPWSTR CConEmuMacro::FindFarWindowHelper(
 	if (iFound > 0)
 		_wsprintf(pszResult, SKIPLEN(cchSize) L"Found:%i", iFound);
 	else if (iFound == -1)
-		StringCchCopy(pszResult, cchSize, L"Blocked");
+		lstrcpyn(pszResult, L"Blocked", cchSize);
 	else
-		StringCchCopy(pszResult, cchSize, L"NotFound");
+		lstrcpyn(pszResult, L"NotFound", cchSize);
 
 	return pszResult;
 }
@@ -507,7 +507,7 @@ LPWSTR CConEmuMacro::MsgBox(LPWSTR asArgs, CRealConsole* apRCon)
 // Возвращает - OK или InvalidArg
 LPWSTR CConEmuMacro::FontSetSize(LPWSTR asArgs, CRealConsole* apRCon)
 {
-	bool lbSetFont = false;
+	//bool lbSetFont = false;
 	int nRelative, nValue;
 
 	if (GetNextInt(asArgs, nRelative) && GetNextInt(asArgs, nValue))

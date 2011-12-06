@@ -1900,7 +1900,7 @@ void UpdateConsoleMapHeader()
 	{
 		if (gnRunMode == RM_SERVER)
 		{
-			if (ghConEmuWndDC && !gpSrv->pColorerMapping || (gpSrv->pConsole->hdr.hConEmuWnd != ghConEmuWndDC))
+			if (ghConEmuWndDC && (!gpSrv->pColorerMapping || (gpSrv->pConsole->hdr.hConEmuWnd != ghConEmuWndDC)))
 			{
 				if (gpSrv->pColorerMapping && (gpSrv->pConsole->hdr.hConEmuWnd != ghConEmuWndDC))
 				{
@@ -3722,6 +3722,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 			
 		}
 	}
+	SetLastError(0);
 #endif
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
 	fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);

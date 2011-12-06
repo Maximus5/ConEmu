@@ -671,7 +671,7 @@ void SetWindowW995(int nTab)
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void PostMacroW995(wchar_t* asMacro, INPUT_RECORD* apRec)
+void PostMacroW995(const wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -838,9 +838,9 @@ void WaitEndSynchroW995()
 
 	FarDialogItem items[] =
 	{
-		{DI_DOUBLEBOX,  3,  1,  51, 3, false, 0, 0, false, GetMsgW995(CEPluginName)},
+		{DI_DOUBLEBOX,  3,  1,  51, 3, false, {0}, 0, false, GetMsgW995(CEPluginName)},
 
-		{DI_BUTTON,     0,  2,  0,  0, true,  0, DIF_CENTERGROUP, true, GetMsgW995(CEStopSynchroWaiting)},
+		{DI_BUTTON,     0,  2,  0,  0, true,  {0}, DIF_CENTERGROUP, true, GetMsgW995(CEStopSynchroWaiting)},
 	};
 	ghSyncDlg = InfoW995->DialogInit(InfoW995->ModuleNumber, -1,-1, 55, 5, NULL, items, countof(items), 0, 0, NULL, 0);
 
@@ -1016,6 +1016,7 @@ void LoadFarColorsW995(BYTE (&nFarColors)[col_LastIndex])
 	INT_PTR nDefColorSize = COL_LASTPALETTECOLOR;
 	_ASSERTE(nColorSize==nDefColorSize);
 #endif
+	UNREFERENCED_PARAMETER(nColorSize);
 	nFarColors[col_PanelText] = FarConsoleColors[COL_PANELTEXT];
 	nFarColors[col_PanelSelectedCursor] = FarConsoleColors[COL_PANELSELECTEDCURSOR];
 	nFarColors[col_PanelSelectedText] = FarConsoleColors[COL_PANELSELECTEDTEXT];
@@ -1228,7 +1229,7 @@ void FillUpdateBackgroundW995(struct PaintBackgroundArg* pFar)
 	}
 
 	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO scbi = {sizeof(CONSOLE_SCREEN_BUFFER_INFO)};
+	CONSOLE_SCREEN_BUFFER_INFO scbi = {};
 	GetConsoleScreenBufferInfo(hCon, &scbi);
 
 	if (CheckBufferEnabledW995())

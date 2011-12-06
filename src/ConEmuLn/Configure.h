@@ -173,7 +173,7 @@ static int ConfigureProc(int ItemNumber)
 		{DI_RADIOBUTTON,  5,  6,  0,  0},    //cfgTypeStripes
 
 		{DI_CHECKBOX,  5,  8,  0,  0},    //cfgHilight
-		{DI_TEXT,      5,  9,  0,  0, false},   //cfgPlugLabel, cfgPlugBack
+		{DI_TEXT,      5,  9,  0,  0},   //cfgPlugLabel, cfgPlugBack
 		#if FAR_UNICODE>=1867
 		{DI_FIXEDIT,  29,  9,  36, 0, {0}, NULL, szColorMask, DIF_MASKEDIT},
 		{DI_TEXT,      0, 11,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_SEPARATOR},

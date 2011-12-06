@@ -37,9 +37,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 
 #include "../common/common.hpp"
+#ifdef _DEBUG
 #pragma warning( disable : 4995 )
+#endif
 #include "../common/pluginW1761.hpp" // ќтличаетс€ от 995 наличием SynchoApi
+#ifdef _DEBUG
 #pragma warning( default : 4995 )
+#endif
 #include "ConEmuLn.h"
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
@@ -50,6 +54,7 @@ extern "C" {
 	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
 	void WINAPI SetStartupInfoW(void *aInfo);
 	void WINAPI OnConEmuLoaded(struct ConEmuLoadedArg* pConEmuInfo);
+	void WINAPI GetPluginInfoWcmn(void *piv);
 };
 #endif
 
@@ -77,13 +82,13 @@ COLORREF gcrHilightPlugBack = RGB(0xA8,0,0); // чуть светлее красного
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
-int WINAPI _export GetMinFarVersionW(void)
+int WINAPI GetMinFarVersionW(void)
 {
 	// ACTL_SYNCHRO required
 	return MAKEFARVERSION(2,0,max(1007,FAR_X_VER));
 }
 
-void WINAPI _export GetPluginInfoWcmn(void *piv)
+void WINAPI GetPluginInfoWcmn(void *piv)
 {
 	if (gFarVersion.dwBuild>=FAR_Y_VER)
 		FUNC_Y(GetPluginInfoW)(piv);
@@ -95,16 +100,16 @@ void WINAPI _export GetPluginInfoWcmn(void *piv)
 BOOL gbInfoW_OK = FALSE;
 
 
-void WINAPI _export ExitFARW(void);
-void WINAPI _export ExitFARW3(void*);
+void WINAPI ExitFARW(void);
+void WINAPI ExitFARW3(void*);
 int WINAPI ConfigureW(int ItemNumber);
 int WINAPI ConfigureW3(void*);
 
 #include "../common/SetExport.h"
 ExportFunc Far3Func[] =
 {
-	{"ExitFARW", ExitFARW, ExitFARW3},
-	{"ConfigureW", ConfigureW, ConfigureW3},
+	{"ExitFARW", (void*)ExitFARW, (void*)ExitFARW3},
+	{"ConfigureW", (void*)ConfigureW, (void*)ConfigureW3},
 	{NULL}
 };
 
@@ -206,7 +211,7 @@ BOOL LoadFarVersion()
 	return lbRc;
 }
 
-void WINAPI _export SetStartupInfoW(void *aInfo)
+void WINAPI SetStartupInfoW(void *aInfo)
 {
 	gbSetStartupInfoOk = true;
 
@@ -487,7 +492,7 @@ void ExitPlugin(void)
 	//}
 }
 
-void   WINAPI _export ExitFARW(void)
+void   WINAPI ExitFARW(void)
 {
 	ExitPlugin();
 
@@ -497,7 +502,7 @@ void   WINAPI _export ExitFARW(void)
 		FUNC_X(ExitFARW)();
 }
 
-void WINAPI _export ExitFARW3(void*)
+void WINAPI ExitFARW3(void*)
 {
 	ExitPlugin();
 

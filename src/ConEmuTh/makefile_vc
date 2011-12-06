@@ -88,6 +88,7 @@ $(OBJDIR)\RgnDetect.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\Memory.obj \
+$(OBJDIR)\MSecurity.obj \
 $(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\WinObjects.obj
 
@@ -320,17 +321,19 @@ $(OBJDIR)\Display.obj: Display.cpp
 
 $(OBJDIR)\ImgCache.obj: ImgCache.cpp
 
-$(OBJDIR)\RgnDetect.obj: ..\common\RgnDetect.cpp
+$(OBJDIR)\RgnDetect.obj: ../common/RgnDetect.cpp
 
-$(OBJDIR)\common.obj: ..\common\common.cpp
+$(OBJDIR)\common.obj: ../common/common.cpp
 
-$(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp
+$(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
 
-$(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
+$(OBJDIR)\Memory.obj: ../common/Memory.cpp
 
-$(OBJDIR)\Memory.obj: ..\common\Memory.cpp
+$(OBJDIR)\MSecurity.obj: ../common/MSecurity.cpp
 
 $(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+
+$(OBJDIR)\WinObjects.obj: ../common/WinObjects.cpp
 
 
 

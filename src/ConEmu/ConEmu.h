@@ -220,6 +220,7 @@ class CConEmuMain :
 		HCURSOR mh_SplitV, mh_SplitH;
 		HCURSOR mh_DragCursor;
 		CDragDrop *mp_DragDrop;
+		BOOL mb_SkipOnFocus;
 	protected:
 		//CProgressBars *ProgressBars;
 		HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_VConListPopup; // Popup's для SystemMenu
@@ -453,6 +454,7 @@ class CConEmuMain :
 		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
 		void SetConsoleWindowSize(const COORD& size, bool updateInfo, CVirtualConsole* apVCon);
 		void SetDragCursor(HCURSOR hCur);
+		void SetSkipOnFocus(BOOL abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);
 		bool SetWindowMode(uint inMode, BOOL abForce = FALSE);
 		void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
@@ -544,6 +546,11 @@ class CConEmuMain :
 		void OnPanelViewSettingsChanged(BOOL abSendChanges=TRUE);
 		void OnGlobalSettingsChanged();
 		void OnTaskbarSettingsChanged();
+		#ifdef __GNUC__
+		AlphaBlend_t GdiAlphaBlend;
+		GetLayeredWindowAttributes_t GetLayeredWindowAttributes;
+		SetLayeredWindowAttributes_t SetLayeredWindowAttributes;
+		#endif
 };
 
 extern CConEmuMain *gpConEmu;

@@ -105,8 +105,9 @@ $(OBJDIR)\WinObjects.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\MAssert.obj \
-$(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\Memory.obj \
+$(OBJDIR)\MSecurity.obj \
+$(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\GuiAttach.obj \
 $(OBJDIR)\UserImp.obj
 
@@ -382,9 +383,11 @@ $(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp ..\common\ConEmuCheck.h
 
 $(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
 
-$(OBJDIR)\MStrSafe.obj: ..\common\MStrSafe.cpp
-
 $(OBJDIR)\Memory.obj: ..\common\Memory.cpp
+
+$(OBJDIR)\MSecurity.obj: ..\common\MSecurity.cpp
+
+$(OBJDIR)\MStrSafe.obj: ..\common\MStrSafe.cpp
 
 $(OBJDIR)\GuiAttach.obj: GuiAttach.cpp GuiAttach.h
 

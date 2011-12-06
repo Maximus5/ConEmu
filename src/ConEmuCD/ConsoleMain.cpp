@@ -4996,7 +4996,7 @@ BOOL cmd_SetFocus(CESERVER_REQ& in, CESERVER_REQ** out)
 
 BOOL cmd_SetParent(CESERVER_REQ& in, CESERVER_REQ** out)
 {
-	BOOL lbRc = FALSE, lbForeRc = FALSE;
+	BOOL lbRc = FALSE; //, lbForeRc = FALSE;
 
 	HWND h = SetParent(in.setParent.hWnd, in.setParent.hParent);
 
@@ -5910,7 +5910,9 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 		else if (gbDebugProcess)
 		{
 			DWORD nWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
+			#ifdef _DEBUG
 			DWORD nErr = GetLastError();
+			#endif
 			if (nWait == WAIT_OBJECT_0)
 			{
 				_ASSERTE(gbTerminateOnCtrlBreak==FALSE);

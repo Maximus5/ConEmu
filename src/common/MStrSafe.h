@@ -418,6 +418,7 @@ int wcscat_c(wchar_t (&Dst)[size], const wchar_t *Src)
 //}
 
 LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...);
+LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...);
 
 #define _wcscpy_c(Dst,cchDest,Src) StringCchCopyW(Dst, cchDest, Src)
 #define _wcscpyn_c(Dst,cchDest,Src,cchSrc) { _ASSERTE(((INT_PTR)cchDest)>=((INT_PTR)cchSrc)); StringCchCopyNW(Dst, cchDest, Src, cchSrc); }

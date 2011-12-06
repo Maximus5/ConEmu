@@ -27,9 +27,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <windows.h>
-#include <dwmapi.h>
+#include "DwmApi_Part.h"
 #include <TCHAR.H>
-#include <CRTDBG.H>
+//#ifdef _DEBUG
+//#include <CRTDBG.H>
+//#endif
 #include "Header.h"
 #include "TabBar.h"
 #include "FrameHolder.h"
@@ -588,7 +590,7 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, BOOL abForceGetDc)
 				if (nHeight > bi.biHeight)
 					BitBlt(hdc, cr.left, cr.top+bi.biHeight, nWidth, nHeight-bi.biHeight, hdcPaint, 0, bi.biHeight, SRCCOPY);
 
-				SelectObject(hdcTmp, hOldBmp);
+				SelectObject(hdcTmp, hOldTmp);
 				DeleteObject(hbmp);
 			}
 			DeleteDC(hdcTmp);

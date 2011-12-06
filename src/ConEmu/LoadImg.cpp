@@ -27,16 +27,51 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "Header.h"
-#include <GdiPlus.h>
 
-typedef Gdiplus::Status (WINAPI *GdiplusStartup_t)(OUT ULONG_PTR *token, const Gdiplus::GdiplusStartupInput *input, OUT Gdiplus::GdiplusStartupOutput *output);
+TODO("GdiPlus для GCC");
+#ifndef __GNUC__
+#include <GdiPlus.h>
+#else
+namespace Gdiplus
+{
+enum Status { Ok = 0 };
+typedef DWORD ARGB;
+typedef DWORD PixelFormat;
+struct GdiplusStartupInput
+{
+    UINT32 GdiplusVersion;             
+    void* DebugEventCallback;
+    BOOL SuppressBackgroundThread;
+    BOOL SuppressExternalCodecs; 
+    
+    GdiplusStartupInput()
+    {
+        GdiplusVersion = 1;
+        DebugEventCallback = NULL;
+        SuppressBackgroundThread = FALSE;
+        SuppressExternalCodecs = FALSE;
+    }
+};
+
+typedef struct _GpBitmap
+{
+	int Dummy;
+} GpBitmap, GpImage;
+};
+
+#define OUT
+#define GDIPCONST const
+
+#endif
+
+typedef Gdiplus::Status (WINAPI *GdiplusStartup_t)(OUT ULONG_PTR *token, const Gdiplus::GdiplusStartupInput *input, void /*OUT Gdiplus::GdiplusStartupOutput*/ *output);
 typedef VOID (WINAPI *GdiplusShutdown_t)(ULONG_PTR token);
-typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromFile_t)(GDIPCONST WCHAR* filename, Gdiplus::GpBitmap **bitmap);
-typedef Gdiplus::GpStatus (WINGDIPAPI *GdipDisposeImage_t)(Gdiplus::GpImage *image);
-typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageWidth_t)(Gdiplus::GpImage *image, UINT *width);
-typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageHeight_t)(Gdiplus::GpImage *image, UINT *height);
-typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateHBITMAPFromBitmap_t)(Gdiplus::GpBitmap* bitmap, HBITMAP* hbmReturn, Gdiplus::ARGB background);
-typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImagePixelFormat_t)(Gdiplus::GpImage *image, Gdiplus::PixelFormat *format);
+typedef Gdiplus::Status (WINAPI *GdipCreateBitmapFromFile_t)(GDIPCONST WCHAR* filename, Gdiplus::GpBitmap **bitmap);
+typedef Gdiplus::Status (WINAPI *GdipDisposeImage_t)(Gdiplus::GpImage *image);
+typedef Gdiplus::Status (WINAPI *GdipGetImageWidth_t)(Gdiplus::GpImage *image, UINT *width);
+typedef Gdiplus::Status (WINAPI *GdipGetImageHeight_t)(Gdiplus::GpImage *image, UINT *height);
+typedef Gdiplus::Status (WINAPI *GdipCreateHBITMAPFromBitmap_t)(Gdiplus::GpBitmap* bitmap, HBITMAP* hbmReturn, Gdiplus::ARGB background);
+typedef Gdiplus::Status (WINAPI *GdipGetImagePixelFormat_t)(Gdiplus::GpImage *image, Gdiplus::PixelFormat *format);
 
 #include "LoadImg.h"
 
@@ -51,6 +86,7 @@ static GdipGetImageWidth_t GdipGetImageWidth = NULL;
 static GdipGetImageHeight_t GdipGetImageHeight = NULL;
 static GdipCreateHBITMAPFromBitmap_t GdipCreateHBITMAPFromBitmap = NULL;
 static GdipGetImagePixelFormat_t GdipGetImagePixelFormat = NULL;
+
 
 BITMAPFILEHEADER* LoadImageGdip(LPCWSTR asImgPath)
 {

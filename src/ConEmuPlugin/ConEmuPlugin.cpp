@@ -63,10 +63,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PluginHeader.h"
 #include "PluginBackground.h"
 #include <Tlhelp32.h>
-#include <Dbghelp.h>
-//#include <vector>
 
-//WARNING("Перевести ghCommandThreads с vector<> на обычный класс. Это позволит собрать с минимальным размером файла");
+#ifndef __GNUC__
+	#include <Dbghelp.h>
+#else
+#endif
 
 #include "../common/ConEmuCheck.h"
 
@@ -110,6 +111,7 @@ extern "C" {
 	int  WINAPI RegisterBackground(RegisterBackgroundArg *pbk);
 	int  WINAPI ActivateConsole();
 	int  WINAPI SyncExecute(HMODULE ahModule, SyncExecuteCallback_t CallBack, LONG_PTR lParam);
+	void WINAPI GetPluginInfoWcmn(void *piv);
 };
 #endif
 
@@ -127,7 +129,7 @@ DWORD gnMainThreadId = 0;
 HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
 //HANDLE ghInputThread = NULL; DWORD gnInputThreadId = 0;
 HANDLE ghSetWndSendTabsEvent = NULL;
-FarVersion gFarVersion = {0};
+FarVersion gFarVersion = {};
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 // gszRootKey используется ТОЛЬКО для ЧТЕНИЯ настроек PanelTabs (SeparateTabs/ButtonColors)
 WCHAR gszRootKey[MAX_PATH*2]; // НЕ ВКЛЮЧАЯ "\\Plugins"
@@ -464,7 +466,12 @@ void TouchReadPeekConsoleInputs(int Peek = -1)
 		return;
 	}
 
-	SetEvent(ghFarAliveEvent);
+	// Во время макросов - считаем, что Фар "думает"
+	if (!IsMacroActive())
+	{
+		SetEvent(ghFarAliveEvent);
+	}
+	
 	//gpFarInfo->nFarReadIdx++;
 	//gpFarInfoMapping->nFarReadIdx = gpFarInfo->nFarReadIdx;
 #ifdef _DEBUG
@@ -1494,11 +1501,11 @@ int WINAPI ProcessSynchroEventW3(void*);
 #include "../common/SetExport.h"
 ExportFunc Far3Func[] =
 {
-	{"ExitFARW", ExitFARW, ExitFARW3},
-	{"ProcessEditorEventW", ProcessEditorEventW, ProcessEditorEventW3},
-	{"ProcessViewerEventW", ProcessViewerEventW, ProcessViewerEventW3},
-	{"ProcessDialogEventW", ProcessDialogEventW, ProcessDialogEventW3},
-	{"ProcessSynchroEventW", ProcessSynchroEventW, ProcessSynchroEventW3},
+	{"ExitFARW", (void*)ExitFARW, (void*)ExitFARW3},
+	{"ProcessEditorEventW", (void*)ProcessEditorEventW, (void*)ProcessEditorEventW3},
+	{"ProcessViewerEventW", (void*)ProcessViewerEventW, (void*)ProcessViewerEventW3},
+	{"ProcessDialogEventW", (void*)ProcessDialogEventW, (void*)ProcessDialogEventW3},
+	{"ProcessSynchroEventW", (void*)ProcessSynchroEventW, (void*)ProcessSynchroEventW3},
 	{NULL}
 };
 
@@ -2236,7 +2243,9 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		}
 
 		// Запомним, чтобы знать, были ли созданы данные?
+		#ifdef _DEBUG
 		CESERVER_REQ* pOldCmdRet = gpCmdRet;
+		#endif
 
 		//// Некоторые команды можно выполнить сразу
 		//if (nCmd == CMD_SETSIZE) {
@@ -4522,7 +4531,10 @@ void NotifyConEmuUnloaded()
 
 void StopThread(void)
 {
-	LPCVOID lpPtrConInfo = gpConMapInfo; gpConMapInfo = NULL;
+	#ifdef _DEBUG
+	LPCVOID lpPtrConInfo = gpConMapInfo;
+	#endif
+	gpConMapInfo = NULL;
 	//LPVOID lpPtrColorInfo = gpColorerInfo; gpColorerInfo = NULL;
 	gbBgPluginsAllowed = FALSE;
 	NotifyConEmuUnloaded();
@@ -5126,7 +5138,7 @@ LPCWSTR GetMsgW(int aiMsg)
 		return FUNC_X(GetMsgW)(aiMsg);
 }
 
-void PostMacro(wchar_t* asMacro, INPUT_RECORD* apRec)
+void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!asMacro || !*asMacro)
 		return;
@@ -5441,9 +5453,9 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 		CloseHandle(hPipe);
 		return 0; // удалось считать не все данные
 	}
-
+	#ifdef _DEBUG
 	UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
-
+	#endif
 	// Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
 	//fSuccess = WriteFile( hPipe, pOut, pOut->nSize, &cbWritten, NULL);
 
@@ -5872,7 +5884,7 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
 
 	if (nProcessCount >= 2)
 	{
-		DWORD nParentPID = 0;
+		//DWORD nParentPID = 0;
 		DWORD nSelfPID = GetCurrentProcessId();
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
 
@@ -5927,7 +5939,7 @@ BOOL Attach2Gui()
 	BOOL lbFound = FALSE;
 	WCHAR  szCmdLine[MAX_PATH+0x100] = {0};
 	wchar_t szConEmuBase[MAX_PATH+1], szConEmuGui[MAX_PATH+1];
-	DWORD nLen = 0;
+	//DWORD nLen = 0;
 	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
 	STARTUPINFO si = {sizeof(si)};
 	DWORD dwSelfPID = GetCurrentProcessId();
@@ -6459,7 +6471,7 @@ BOOL CheckCallbackPtr(HMODULE hModule, FARPROC CallBack, BOOL abCheckModuleInfo)
 
 	DWORD_PTR nModulePtr = (DWORD_PTR)hModule;
 	DWORD_PTR nModuleSize = (4<<20);
-	BOOL lbModuleInformation = FALSE;
+	//BOOL lbModuleInformation = FALSE;
 
 	// Если разрешили - попробовать определить размер модуля, чтобы CallBack не выпал из его тела
 	if (abCheckModuleInfo)

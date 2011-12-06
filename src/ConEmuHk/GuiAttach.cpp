@@ -235,7 +235,7 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 		}
 		
 		if (user->setWindowPos(ghAttachGuiClient, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
-			SWP_DRAWFRAME | /*SWP_FRAMECHANGED |*/ (abStyleHidden ? SWP_SHOWWINDOW : 0)))
+			SWP_DRAWFRAME | SWP_NOCOPYBITS | /*SWP_FRAMECHANGED |*/ (abStyleHidden ? SWP_SHOWWINDOW : 0)))
 		{
 			if (abStyleHidden && IsWindowVisible(ghAttachGuiClient))
 				abStyleHidden = FALSE;
@@ -333,6 +333,8 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 
             HWND hFocus = user->getFocus();
             DWORD nFocusPID = 0;
+            BOOL lbRc = FALSE;
+            
             if (hFocus)
             {
                 user->getWindowThreadProcessId(hFocus, &nFocusPID);
@@ -346,7 +348,8 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 			if (pOut->AttachGuiApp.hkl)
 			{
 				LONG_PTR hkl = (LONG_PTR)(LONG)pOut->AttachGuiApp.hkl;
-				BOOL lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != NULL;
+				lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != NULL;
+				UNREFERENCED_PARAMETER(lbRc);
 			}
 
             grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
@@ -500,8 +503,8 @@ void SetGuiExternMode(BOOL abUseExternMode)
 			user->setParent(ghAttachGuiClient, NULL);
 			
 			TODO("Вернуть старый размер?");
-			user->setWindowPos(ghAttachGuiClient, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
-				SWP_DRAWFRAME | /*SWP_FRAMECHANGED |*/ SWP_SHOWWINDOW);
+			user->setWindowPos(ghAttachGuiClient, ghConEmuWnd, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+				SWP_DRAWFRAME | SWP_SHOWWINDOW | SWP_ASYNCWINDOWPOS | SWP_NOACTIVATE);
 		}
 	}
 }

@@ -122,11 +122,13 @@ $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\Options.obj \
 $(INTDIR)\OptionsClass.obj \
+$(INTDIR)\RealBuffer.obj \
 $(INTDIR)\RealConsole.obj \
 $(INTDIR)\Recreate.obj \
 $(INTDIR)\Registry.obj \
 $(INTDIR)\ScreenDump.obj \
 $(INTDIR)\TabBar.obj \
+$(INTDIR)\TabID.obj \
 $(INTDIR)\TaskBar.obj \
 $(INTDIR)\TaskBarGhost.obj \
 $(INTDIR)\TrayIcon.obj \
@@ -135,6 +137,7 @@ $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmuCheck.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
+$(INTDIR)\MSecurity.obj \
 $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\RgnDetect.obj \
 $(INTDIR)\WinObjects.obj
@@ -316,6 +319,8 @@ $(INTDIR)\Options.obj: Options.cpp Options.h
 
 $(INTDIR)\OptionsClass.obj: OptionsClass.cpp OptionsClass.h Options.h Background.h
 
+$(INTDIR)\RealBuffer.obj: RealBuffer.cpp RealBuffer.h RealConsole.h  ..\common\Common.hpp
+
 $(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h  ..\common\Common.hpp
 
 $(INTDIR)\Recreate.obj: Recreate.cpp Recreate.h
@@ -325,6 +330,8 @@ $(INTDIR)\Registry.obj: Registry.cpp Registry.h
 $(INTDIR)\ScreenDump.obj: ScreenDump.cpp
 
 $(INTDIR)\TabBar.obj: TabBar.cpp
+
+$(INTDIR)\TabID.obj: TabID.cpp
 
 $(INTDIR)\TaskBar.obj: TaskBar.cpp
 
@@ -341,6 +348,8 @@ $(INTDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
 $(INTDIR)\Memory.obj: ..\common\Memory.cpp
 
 $(INTDIR)\MAssert.obj: ..\common\MAssert.cpp
+
+$(INTDIR)\MSecurity.obj: ..\common\MSecurity.cpp
 
 $(INTDIR)\MStrSafe.obj: ..\common\MStrSafe.cpp
 

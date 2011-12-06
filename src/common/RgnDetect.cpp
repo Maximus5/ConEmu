@@ -31,6 +31,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RgnDetect.h"
 #include "UnicodeChars.h"
 
+#ifndef RGN_ERROR
+#define RGN_ERROR 0
+#endif
+
 
 static bool gbInTransparentAssert = false;
 
@@ -434,7 +438,9 @@ bool CRgnDetect::FindFrameLeft_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWi
 bool CRgnDetect::FindDialog_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder)
 {
 	bMarkBorder = TRUE;
+	#ifdef _DEBUG
 	int nShift = nWidth*nFromY;
+	#endif
 	int nMostRightBottom;
 	// Найти правую границу по верху
 	nMostRight = nFromX;
@@ -463,7 +469,9 @@ bool CRgnDetect::FindDialog_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth,
 bool CRgnDetect::FindDialog_TopRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder)
 {
 	bMarkBorder = TRUE;
+	#ifdef _DEBUG
 	int nShift = nWidth*nFromY;
+	#endif
 	int nX;
 	nMostRight = nFromX;
 	nMostBottom = nFromY;
@@ -911,8 +919,10 @@ bool CRgnDetect::FindFrame_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom)
 {
 	bool bExpanded = false;
+	#ifdef _DEBUG
 	int nStartRight = nMostRight;
 	int nStartBottom = nMostBottom;
+	#endif
 	// Теперь расширить nMostRight & nMostBottom на окантовку
 	int n, n2, nShift = nWidth*nFromY;
 	wchar_t wc = pChar[nShift+nFromX];
@@ -1275,7 +1285,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 	int nHeight_1 = nHeight - 1;
 	RECT r = {nX1,nY1,nX2,nY2};
 
-	if (nFlags != -1)
+	if (nFlags != (DWORD)-1)
 	{
 		DlgFlags |= nFlags;
 	}
@@ -1849,7 +1859,9 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 		return FALSE;
 	}
 
+	#ifdef _DEBUG
 	CHAR_INFO *pCharInfoEnd = pCharInfo+mn_MaxCells;
+	#endif
 	BOOL bReadOk = FALSE;
 	COORD bufSize, bufCoord;
 	SMALL_RECT rgn;
@@ -1876,9 +1888,11 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 		rgn = sbi.srWindow;
 		CHAR_INFO* pLine = pCharInfo;
 		SMALL_RECT rcFar = mrc_FarRect;
+		#ifdef _DEBUG
 		int nFarWidth = rcFar.Right - rcFar.Left + 1;
+		#endif
 
-		for(SHORT y = sbi.srWindow.Top; y <= sbi.srWindow.Bottom; y++, rgn.Top++, pLine+=nTextWidth)
+		for (SHORT y = sbi.srWindow.Top; y <= sbi.srWindow.Bottom; y++, rgn.Top++, pLine+=nTextWidth)
 		{
 			rgn.Bottom = rgn.Top;
 			rgn.Right = rgn.Left+nTextWidth-1;
@@ -2084,15 +2098,16 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 		r = mp_FarInfo->FarLeftPanel.PanelRect;
 	}
 	else
-
+	{
 		// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
 		if (mp_FarInfo->bFarLeftPanel && mp_FarInfo->FarLeftPanel.Visible)
 		{
 			// В "буферном" режиме размер панелей намного больше экрана
 			lbLeftVisible = ConsoleRect2ScreenRect(mp_FarInfo->FarLeftPanel.PanelRect, &r);
 		}
+	}
 
-	RECT rLeft = {0}, rRight = {0};
+	//RECT rLeft = {0}, rRight = {0};
 
 	if (lbLeftVisible)
 	{

@@ -610,7 +610,7 @@ void CVirtualConsole::PointersZero()
 
 
 // InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap
-bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
+bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC, MSectionLock *pSCON)
 {
 	if (!this || !mp_RCon)
 	{
@@ -618,7 +618,9 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 		return false;
 	}
 
-	MSectionLock SCON; SCON.Lock(&csCON);
+	MSectionLock _SCON;
+	if (!(pSCON ? pSCON : &_SCON)->isLocked())
+		(pSCON ? pSCON : &_SCON)->Lock(&csCON);
 	BOOL lbNeedCreateBuffers = FALSE;
 	uint rTextWidth = mp_RCon->TextWidth();
 	uint rTextHeight = mp_RCon->TextHeight();
@@ -651,7 +653,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 	if (lbNeedCreateBuffers && mb_PointersAllocated)
 	{
 		DEBUGSTRDRAW(L"Relocking SCON exclusively\n");
-		SCON.RelockExclusive();
+		(pSCON ? pSCON : &_SCON)->RelockExclusive();
 		DEBUGSTRDRAW(L"Relocking SCON exclusively (done)\n");
 		PointersFree();
 	}
@@ -671,7 +673,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 			nMaxTextHeight = TextHeight+30;
 
 		DEBUGSTRDRAW(L"Relocking SCON exclusively\n");
-		SCON.RelockExclusive();
+		(pSCON ? pSCON : &_SCON)->RelockExclusive();
 		DEBUGSTRDRAW(L"Relocking SCON exclusively (done)\n");
 
 		if (!PointersAlloc())
@@ -685,7 +687,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 		PointersZero();
 	}
 
-	SCON.Unlock();
+	if (!pSCON)
+		_SCON.Unlock();
 	HEAPVAL
 	hSelectedFont = NULL;
 
@@ -693,9 +696,9 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 	if (!abNoDc)
 	{
 		DEBUGSTRDRAW(L"*** Recreate DC\n");
-		MSectionLock SDC;
+		MSectionLock _SDC;
 		// Если в этой нити уже заблокирован - секция не дергается
-		SDC.Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
+		(pSDC ? pSDC : &_SDC)->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
 
 		if (hDC)
 			{ DeleteDC(hDC); hDC = NULL; }
@@ -1312,7 +1315,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	//------------------------------------------------------------------------
 	///| Read console output and cursor info... |/////////////////////////////
 	//------------------------------------------------------------------------
-	if (!UpdatePrepare(ahDc, &SDC))
+	if (!UpdatePrepare(ahDc, &SDC, &SCON))
 	{
 		gpConEmu->DebugStep(_T("DC initialization failed!"));
 		return false;
@@ -1534,9 +1537,9 @@ BOOL CVirtualConsole::CheckTransparentRgn(BOOL abHasChildWindows)
 					for(uint nY = 0; nY < TextHeight; nY++)
 					{
 						uint nX = 0;
-						int nYPix1 = nY * nFontHeight;
+						//int nYPix1 = nY * nFontHeight;
 
-						while(nX < TextWidth)
+						while (nX < TextWidth)
 						{
 							// Найти первый прозрачный cell
 							#if 0
@@ -1566,7 +1569,7 @@ BOOL CVirtualConsole::CheckTransparentRgn(BOOL abHasChildWindows)
 							#endif
 
 							// Сформировать соответствующий Rect
-							int nXPix = 0;
+							//int nXPix = 0;
 
 							if (nRectCount>=nMaxRects)
 							{
@@ -1729,7 +1732,7 @@ bool CVirtualConsole::LoadConsoleData()
 				pszStart = mpsz_ConChar + TextWidth*(rcFull.Top+1) + rcFull.Left + 1;
 				pszEnd = pszStart + 31;
 
-				while(*pszEnd == L' ' && pszEnd >= pszStart) pszEnd--;
+				while (*pszEnd == L' ' && pszEnd >= pszStart) pszEnd--;
 
 				if (pszEnd > pszStart)
 				{
@@ -1768,7 +1771,7 @@ bool CVirtualConsole::LoadConsoleData()
 	return true;
 }
 
-bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
+bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock *pSCON)
 {
 	MSectionLock SCON; SCON.Lock(&csCON);
 	attrBackLast = 0;
@@ -1838,7 +1841,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 		if (pSDC && !pSDC->isLocked())  // Если секция еще не заблокирована (отпускает - вызывающая функция)
 			pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
 
-		if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/ , false/*abNoWndResize*/))
+		if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/ , false/*abNoWndResize*/, pSDC, pSCON))
 			return false;
 
 		if (lbSizeChanged)
@@ -2117,6 +2120,9 @@ void CVirtualConsole::Update_CheckAndFill()
 // Функция также производит распределение (заполнение координат и DX)
 bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine, const CharAttr* ConAttrLine)
 {
+#if 1
+	return false;
+#else
 	bool bHasAlternateBg = false;
 	int j = 0, j0 = 0;
 	TEXTPARTS *pTP = TextParts;
@@ -2132,9 +2138,9 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 	uint nPrevColorIdx = ConAttrLine[0].nBackIdx;
 	j = j0 = 0;
 
-	while(j < (int)TextWidth)
+	while (j < (int)TextWidth)
 	{
-		while(++j < (int)TextWidth)
+		while (++j < (int)TextWidth)
 		{
 			if (nPrevColorIdx != ConAttrLine[j].nBackIdx)
 			{
@@ -2159,7 +2165,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 	j = 0;
 	nPrevForeFont = ConAttrLine[0].ForeFont;
 
-	while(j < (int)TextWidth)
+	while (j < (int)TextWidth)
 	{
 		j0 = j;
 		const CharAttr* attr = ConAttrLine+j;
@@ -2181,7 +2187,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 
 		if (isProgress)
 		{
-			while(++j < (int)TextWidth)
+			while (++j < (int)TextWidth)
 			{
 				if (ConCharLine[j] != c || attr->All != ConAttrLine[j].All)
 					break; // до первой смены символа или цвета фона-текста
@@ -2189,7 +2195,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 		}
 		else if (isSpace)
 		{
-			while(++j < (int)TextWidth)
+			while (++j < (int)TextWidth)
 			{
 				if (!isCharSpace(ConCharLine[j]))
 					break; // до первого непробельного символа
@@ -2199,7 +2205,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 		{
 			COLORREF crFore = attr->crForeColor;
 
-			while(++j < (int)TextWidth)
+			while (++j < (int)TextWidth)
 			{
 				if (!isCharBorder(ConCharLine[j]) || crFore != ConAttrLine[j].crForeColor)
 					break; // до первого нерамочного символа или смены цвета текста
@@ -2208,7 +2214,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 		else
 		{
 			//PRAGMA_ERROR("доделать ветку");
-			while(++j < (int)TextWidth)
+			while (++j < (int)TextWidth)
 			{
 				attr = ConAttrLine+j;
 				nForeFont = attr->ForeFont;
@@ -2237,6 +2243,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 	}
 
 	return bHasAlternateBg;
+#endif
 }
 
 // Заливка ячеек с НЕ основным фоном, отрисовка прогрессов и рамок
@@ -2399,7 +2406,7 @@ void CVirtualConsole::UpdateText()
 			{
 				lbS1 = true; nS11 = nS12 = j;
 
-				while((nS12 < end) && (ConCharLine[nS12+1] == c))
+				while ((nS12 < end) && (ConCharLine[nS12+1] == c))
 					nS12 ++;
 
 				// Посчитать сколько этих же символов ПОСЛЕ текста
@@ -2408,14 +2415,14 @@ void CVirtualConsole::UpdateText()
 					nS21 = nS12+1; // Это должен быть НЕ c
 
 					// ищем первый "рамочный" символ
-					while((nS21<end) && (ConCharLine[nS21] != c) && !isCharBorder(ConCharLine[nS21]))
+					while ((nS21<end) && (ConCharLine[nS21] != c) && !isCharBorder(ConCharLine[nS21]))
 						nS21 ++;
 
 					if (nS21<end && ConCharLine[nS21]==c)
 					{
 						lbS2 = true; nS22 = nS21;
 
-						while((nS22 < end) && (ConCharLine[nS22+1] == c))
+						while ((nS22 < end) && (ConCharLine[nS22+1] == c))
 							nS22 ++;
 					}
 				}
@@ -2688,7 +2695,7 @@ void CVirtualConsole::UpdateText()
 				{
 					j2 = j + 1; HEAPVAL;
 
-					while(j2 < end && ConAttrLine[j2] == attr && isCharSpace(ConCharLine[j2]))
+					while (j2 < end && ConAttrLine[j2] == attr && isCharSpace(ConCharLine[j2]))
 						j2++;
 
 					DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
@@ -2697,8 +2704,8 @@ void CVirtualConsole::UpdateText()
 				{
 					j2 = j + 1; HEAPVAL
 					wchar_t ch;
-					int nLastNonSpace = -1;
-					while(j2 < end && ConAttrLine[j2] == attr
+					//int nLastNonSpace = -1;
+					while (j2 < end && ConAttrLine[j2] == attr
 					        && isCharNonSpacing(ch = ConCharLine[j2]))
 					{
 						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
@@ -2713,11 +2720,11 @@ void CVirtualConsole::UpdateText()
 #ifndef DRAWEACHCHAR
 					// Если этого не делать - в пропорциональных шрифтах буквы будут наезжать одна на другую
 					wchar_t ch;
-					int nLastNonSpace = -1;
+					//int nLastNonSpace = -1;
 					WARNING("*** сомнение в следующей строчке: (!gpSet->isProportional || !isFilePanel || (ch != L'}' && ch!=L' '))");
 					TODO("при поиске по строке - обновлять nLastNonSpace");
 
-					while(j2 < end && ConAttrLine[j2] == attr
+					while (j2 < end && ConAttrLine[j2] == attr
 					        && !isCharBorder(ch = ConCharLine[j2])
 							&& !isCharNonSpacing(ch)
 					        && (!bProportional || !isFilePanel || (ch != L'}' && ch!=L' '))) // корректировка имен в колонках
@@ -2744,7 +2751,7 @@ void CVirtualConsole::UpdateText()
 						wchar_t ch;
 						ch = c; // Графическая отрисовка прокрутки и прогресса
 
-						while(j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2+1])
+						while (j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2+1])
 						{
 							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
 							j2++;
@@ -2758,7 +2765,7 @@ void CVirtualConsole::UpdateText()
 						_ASSERTE(!isUnicodeOrProgress);
 						wchar_t ch;
 
-						while(j2 < end && ConAttrLine[j2] == attr && isCharBorder(ch = ConCharLine[j2]))
+						while (j2 < end && ConAttrLine[j2] == attr && isCharBorder(ch = ConCharLine[j2]))
 						{
 							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
 							j2++;
@@ -2773,7 +2780,7 @@ void CVirtualConsole::UpdateText()
 
 						if (bIsHorzBorder)
 						{
-							while(j2 < end && ConAttrLine[j2] == attr && c == ConCharLine[j2])
+							while (j2 < end && ConAttrLine[j2] == attr && c == ConCharLine[j2])
 								j2++;
 						}
 
@@ -2808,7 +2815,7 @@ void CVirtualConsole::UpdateText()
 #endif
 						}
 
-						//while(j2 < end && ConAttrLine[j2] == attr &&
+						//while (j2 < end && ConAttrLine[j2] == attr &&
 						//    isCharBorder(ch = ConCharLine[j2]) && ch == ConCharLine[j2+1])
 						//{
 						//    ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
@@ -2949,7 +2956,7 @@ void CVirtualConsole::UpdateText()
 			//    HEAPVAL
 			//	wchar_t ch;
 			//    // skip the same except spaces
-			//    while(j2 < end && (ch = ConCharLine[j2]) == ConCharLine2[j2] && ConAttrLine[j2] == ConAttrLine2[j2]
+			//    while (j2 < end && (ch = ConCharLine[j2]) == ConCharLine2[j2] && ConAttrLine[j2] == ConAttrLine2[j2]
 			//		&& (ch != ucSpace && ch != ucNoBreakSpace && ch != 0))
 			//    {
 			//        ++j2;
@@ -3255,6 +3262,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	BOOL lbUpdateTick = FALSE;
 	bool bForeground = gpConEmu->isMeForeground();
 	bool bConActive = gpConEmu->isActive(this); // а тут именно Active, т.к. курсор должен мигать в активной консоли
+	bool bIsAlive = mp_RCon ? (mp_RCon->isAlive() || !mp_RCon->isFar(TRUE)) : false; // не мигать, если фар "думает"
 	//if (bConActive) {
 	//	bForeground = gpConEmu->isMeForeground();
 	//}
@@ -3283,7 +3291,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 				lbUpdateTick = TRUE;
 			}
 			else
-
+			{
 				// Настало время мигания
 				if ((GetTickCount() - Cursor.nLastBlink) > Cursor.nBlinkTime)
 				{
@@ -3300,11 +3308,13 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 					}
 					else
 					{
-						Cursor.isVisible = bConActive && !Cursor.isVisible;
+						WARNING("DoubleView: в неактивной но видимой консоли тоже отрисовать, но блоком");
+						Cursor.isVisible = bConActive && (!Cursor.isVisible || !bIsAlive);
 					}
 
 					lbUpdateTick = TRUE;
 				}
+			}
 		}
 	}
 	else
@@ -3658,6 +3668,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 				hPaintDc, client.left, client.top, client.right-client.left, client.bottom-client.top,
 				hDC, 0, 0,
 				SRCCOPY);
+		UNREFERENCED_PARAMETER(lbBltRc);
 
 		//#ifdef _DEBUG
 		//MoveToEx(hPaintDc, client.left, client.top, NULL);
@@ -4038,20 +4049,20 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 	//
 	//if ((c=ConCharLine[j]) == ucSpace || c == ucNoBreakSpace || c == 0)
 	//{
-	//	while(j2 < end && ConAttrLine[j2] == attr
+	//	while (j2 < end && ConAttrLine[j2] == attr
 	//		// также и для &nbsp; и 0x00
 	//		&& ((ch=ConCharLine[j2]) == ucSpace || ch == ucNoBreakSpace || ch == 0))
 	//		j2++;
 	//} else
 	//if ((c=ConCharLine[j]) == ucBoxSinglHorz || c == ucBoxDblVertHorz)
 	//{
-	//	while(j2 < end && ConAttrLine[j2] == attr
+	//	while (j2 < end && ConAttrLine[j2] == attr
 	//		&& ((ch=ConCharLine[j2]) == ucBoxSinglHorz || ch == ucBoxDblVertHorz))
 	//		j2++;
 	//} else
 	//if (isCharProgress(c=ConCharLine[j]))
 	//{
-	//	while(j2 < end && ConAttrLine[j2] == attr && (ch=ConCharLine[j2]) == c)
+	//	while (j2 < end && ConAttrLine[j2] == attr && (ch=ConCharLine[j2]) == c)
 	//		j2++;
 	//}
 	_ASSERTE(j2 > j && j >= 0);
@@ -4146,7 +4157,7 @@ BOOL CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConC
 	{
 		TODO("OPTIMIZE:");
 
-		while(--end >= 0 && ConCharLine[end] == ConCharLine2[end] && ConAttrLine[end] == ConAttrLine2[end])
+		while (--end >= 0 && ConCharLine[end] == ConCharLine2[end] && ConAttrLine[end] == ConAttrLine2[end])
 		{
 			// Если есть стили шрифта (курсив/жирный), то
 			// во избежение обрезания правой части буквы нужно рисовать строку целиком
@@ -4165,7 +4176,7 @@ BOOL CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConC
 		{
 			int n = TextWidth - 1;
 
-			while((end < n)
+			while ((end < n)
 			        && (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])))
 				end++;
 		}
@@ -4177,7 +4188,7 @@ BOOL CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConC
 	}
 
 	// *) Skip not changed head symbols.
-	while(j < end && ConCharLine[j] == ConCharLine2[j] && ConAttrLine[j] == ConAttrLine2[j])
+	while (j < end && ConCharLine[j] == ConCharLine2[j] && ConAttrLine[j] == ConAttrLine2[j])
 	{
 		// Если есть стили шрифта (курсив/жирный) то
 		// во избежение обрезания правой части буквы нужно рисовать строку целиком
@@ -4203,7 +4214,7 @@ BOOL CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConC
 		}
 		else
 		{
-			while((j > 0)
+			while ((j > 0)
 			        && (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1])))
 			{
 				j--;
@@ -4482,6 +4493,7 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 				// --- но все-таки попробуем?
 				//DWORD dwSetParentErr = 0;
 				HWND hRc = mp_RCon->SetOtherWindowParent((HWND)ppvi->hWnd, GetView());
+				UNREFERENCED_PARAMETER(hRc);
 				dwSetParentErr = GetLastError();
 			}
 			else
@@ -4749,7 +4761,7 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister/*=FALS
 	if (!mn_ConEmuFadeMsg)
 		mn_ConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWFADE);
 
-	DWORD nNewFadeValue = isFade ? 2 : 1;
+	LONG nNewFadeValue = isFade ? 2 : 1;
 	WARNING("Нифига не будет работать на Win7 RunAsAdmin");
 
 	if (GetWindowLong(pp->hWnd, 16*4) != nNewFadeValue)
@@ -5172,7 +5184,9 @@ UINT CVirtualConsole::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgD
 		if (rpIsEmf)
 			*rpIsEmf = TRUE;
 		
+		#ifdef _DEBUG
 		LPBYTE pBuf = (LPBYTE)&apImgData->bmp;
+		#endif
 		
 		UINT nSize = apImgData->bmp.bfSize
 		             + (((LPBYTE)(void*)&(apImgData->bmp)) - ((LPBYTE)apImgData));

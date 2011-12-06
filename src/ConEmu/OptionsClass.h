@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 
 class CBackground;
+struct DebugLogShellActivity;
 
 class CSettings
 {
@@ -407,6 +408,11 @@ class CSettings
 		static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		//static INT_PTR CALLBACK multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		static INT_PTR CALLBACK selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		//
+		void debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl);
+		void debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile);
+		void debugLogInfo(HWND hWnd2, CESERVER_REQ_PEEKREADINFO* pInfo);
+		//
 		void SettingsLoaded();
 		void SettingsPreSave();
 		//void InitSettings();

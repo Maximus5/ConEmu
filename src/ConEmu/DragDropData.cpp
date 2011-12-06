@@ -40,6 +40,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 //#include "../common/ConEmuCheck.h"
 
+#ifdef __GNUC__
+#define PCUIDLIST_RELATIVE LPCITEMIDLIST
+#define StringCbCopy(d,cbd,s) lstrcpynW(d,s,cbd)
+#endif
+
 #define MAX_OVERLAY_WIDTH    300
 #define MAX_OVERLAY_HEIGHT   300
 #define OVERLAY_ALPHA        0xAA
@@ -272,7 +277,8 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	file_PIDLs->aoffset[0] = nCurSize;
 	memmove((((LPBYTE)file_PIDLs)+nCurSize), &m_DesktopID, nParentSize);
 	nCurSize += nParentSize;
-	_try
+	
+	SAFETRY //__try
 	{
 		// Сначала нужно получить Interface для Desktop
 		SFGAOF tmp;
@@ -327,7 +333,7 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 			}
 		}
 	}
-	_except(EXCEPTION_EXECUTE_HANDLER)
+	SAFECATCH //__except(EXCEPTION_EXECUTE_HANDLER)
 	{
 		hr = (HRESULT)-1;
 	}
@@ -346,17 +352,19 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	}
 
 	// Добавляем
-	FORMATETC       fmtetc[] =
 	{
-		{ RegisterClipboardFormat(CFSTR_SHELLIDLIST), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL},
-	};
-	STGMEDIUM       stgmed[] =
-	{
-		{ TYMED_HGLOBAL, { (HBITMAP)file_PIDLs }, 0 }
-	};
-	mp_DataObject->SetData(fmtetc, stgmed, TRUE);
-	lbAdded = TRUE;
-	file_PIDLs = NULL;
+		FORMATETC       fmtetc[] =
+		{
+			{ RegisterClipboardFormat(CFSTR_SHELLIDLIST), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL},
+		};
+		STGMEDIUM       stgmed[] =
+		{
+			{ TYMED_HGLOBAL, { (HBITMAP)file_PIDLs }, 0 }
+		};
+		mp_DataObject->SetData(fmtetc, stgmed, TRUE);
+		lbAdded = TRUE;
+		file_PIDLs = NULL;
+	}
 wrap:
 
 	if (pDesktop) { pDesktop->Release(); pDesktop = NULL; }
@@ -419,15 +427,17 @@ BOOL CDragDropData::AddFmt_HDROP(wchar_t* pszDraggedPath, UINT nFilesCount, int 
 
 	memcpy(drop_data, &drop_struct, sizeof(drop_struct));
 	memcpy(((byte*)drop_data) + sizeof(drop_struct), pszDraggedPath, cbSize);
-	FORMATETC       fmtetc[] =
 	{
-		{ CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
-	};
-	STGMEDIUM       stgmed[] =
-	{
-		{ TYMED_HGLOBAL, { (HBITMAP)drop_data }, 0 },
-	};
-	mp_DataObject->SetData(fmtetc, stgmed, TRUE);
+		FORMATETC       fmtetc[] =
+		{
+			{ CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+		};
+		STGMEDIUM       stgmed[] =
+		{
+			{ TYMED_HGLOBAL, { (HBITMAP)drop_data }, 0 },
+		};
+		mp_DataObject->SetData(fmtetc, stgmed, TRUE);
+	}
 wrap:
 	return TRUE;
 }
@@ -533,7 +543,7 @@ wrap:
 }
 
 template <class T> LPITEMIDLIST PidlGetNextItem(
-    __in T pidl
+    T pidl
 )
 {
 	if (pidl)
@@ -544,7 +554,7 @@ template <class T> LPITEMIDLIST PidlGetNextItem(
 		return NULL;
 };
 template <class T> void PidlDump(
-    __in T pidl, HANDLE hDumpFile = NULL
+    T pidl, HANDLE hDumpFile = NULL
 )
 {
 	LPITEMIDLIST p = (LPITEMIDLIST)(pidl);
@@ -786,7 +796,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 			}
 			else
 			{
-				int nCurLen = _tcslen(szName[i]);
+				int nCurLen = _tcslen(szName[i]); UNREFERENCED_PARAMETER(nCurLen);
 				_wsprintf(szName[i], SKIPLEN(countof(szName[i])-nCurLen) L", Error in source! TYMED_HGLOBAL was requested, but got (%i)", stg[i].tymed);
 				ReleaseStgMedium(stg+i);
 				stg[i].hGlobal = NULL;
@@ -1484,8 +1494,11 @@ BOOL CDragDropData::CreateDragImageWindow()
 	}
 
 	//int nCount = mp_Bits->nWidth * mp_Bits->nHeight;
+	
 	_ASSERTE(mh_Overlapped==NULL);
 	int nWidth = MAX_OVERLAY_WIDTH, nHeight = MAX_OVERLAY_HEIGHT;
+	UNREFERENCED_PARAMETER(nWidth); UNREFERENCED_PARAMETER(nHeight);
+	
 	// |WS_BORDER|WS_SYSMENU - создает проводник. попробуем?
 	//2009-08-20 [+] WS_EX_NOACTIVATE
 #ifdef PERSIST_OVL

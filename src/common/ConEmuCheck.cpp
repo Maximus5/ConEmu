@@ -323,7 +323,7 @@ CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, size_t nSize)
 		if (pIn)
 		{
 			ExecutePrepareCmd(pIn, nCmd, nSize);
-			pIn->hdr.nLastError = GetLastError();
+			pIn->hdr.nLastError = nErr;
 		}
 	}
 
@@ -342,7 +342,7 @@ BOOL ExecuteNewCmd(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, DWORD nCmd, size_
 			// Обмен данными идет и между 32bit & 64bit процессами, размеры __int64 недопустимы
 			_ASSERTE(nSize == (DWORD)nSize);
 			pcbCurMaxSize = (DWORD)nSize;
-			ppCmd->hdr.nLastError = GetLastError();
+			ppCmd->hdr.nLastError = nErr;
 		}
 	}
 	else
@@ -922,7 +922,9 @@ HWND GetConEmuHWND(int aiType)
 		CESERVER_CONSOLE_MAPPING_HDR* p = NULL;
 
 		msprintf(szGuiPipeName, cchMax, CECONMAPNAME, (DWORD)FarHwnd); //-V205
-		DWORD nSize = sizeof(*p); //-V105 //-V103
+		#ifdef _DEBUG
+		size_t nSize = sizeof(*p);
+		#endif
 		HANDLE hMapping = OpenFileMapping(FILE_MAP_READ, FALSE, szGuiPipeName);
 		if (hMapping)
 		{

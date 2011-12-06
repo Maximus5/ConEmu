@@ -1,12 +1,16 @@
 
 #include <windows.h>
+
+#ifndef __GNUC__
 #include <crtdbg.h>
 
 #pragma comment(lib, "Comdlg32.lib")
+#endif
 
 #define MASSERT_HEADER_DEFINED
 #define MEMORY_HEADER_DEFINED
 
+#include "../common/defines.h"
 #include "../common/pluginW1900.hpp"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConEmuColors3.h"
@@ -33,6 +37,13 @@
 #if defined(__GNUC__)
 extern "C" {
 	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
+	//BOOL WINAPI GetTextAttributes(FarColor* Attributes);
+	//BOOL WINAPI SetTextAttributes(const FarColor* Attributes);
+	//BOOL WINAPI ClearExtraRegions(const FarColor* Color);
+	//BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* ReadRegion);
+	//BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion);
+	//BOOL WINAPI Commit();
+	//int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent);
 };
 #endif
 
@@ -45,6 +56,9 @@ AnnotationHeader* gpTrueColor = NULL;
 HANDLE ghTrueColor = NULL;
 BOOL CheckBuffers();
 void CloseBuffers();
+
+bool gbInitialized = false;
+bool gbFarBufferMode = false; // true, если Far запущен с ключом "/w"
 
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
@@ -87,10 +101,57 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 #endif
 
 
-
+BOOL GetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWork)
+{
+	_ASSERTE(gbInitialized);
+	
+	h = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (!GetConsoleScreenBufferInfo(h, &csbi))
+		return FALSE;
+	
+	if (gbFarBufferMode)
+	{
+		// Фар занимает нижнюю часть консоли. Прилеплен к левому краю
+		SHORT nWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+		SHORT nHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+		srWork.Left = 0;
+		srWork.Right = nWidth - 1;
+		srWork.Top = csbi.dwSize.Y - nHeight;
+		srWork.Bottom = csbi.dwSize.Y - 1;
+	}
+	else
+	{
+		// Фар занимает все поле консоли
+		srWork.Left = srWork.Top = 0;
+		srWork.Right = csbi.dwSize.X - 1;
+		srWork.Bottom = csbi.dwSize.Y - 1;
+	}
+	
+	if (srWork.Left < 0 || srWork.Top < 0 || srWork.Left > srWork.Right || srWork.Top > srWork.Bottom)
+	{
+		_ASSERTE(srWork.Left >= 0 && srWork.Top >= 0 && srWork.Left <= srWork.Right && srWork.Top <= srWork.Bottom);
+		return FALSE;
+	}
+	
+	return TRUE;
+}
 
 BOOL CheckBuffers()
 {
+	if (!gbInitialized)
+	{
+		HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+		if (GetConsoleScreenBufferInfo(h, &csbi))
+		{
+			SHORT nWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+			SHORT nHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+			_ASSERTE((nWidth <= csbi.dwSize.X) && (nHeight <= csbi.dwSize.Y));
+			gbFarBufferMode = (nWidth < csbi.dwSize.X) || (nHeight < csbi.dwSize.Y);
+			gbInitialized = true;
+		}
+	}
+
 	//TODO: Проверить, не изменился ли HWND консоли?
 	//111101 - зовем именно GetConsoleWindow. Если она перехвачена - вернет как раз то окно, которое нам требуется
 	HWND hCon = GetConsoleWindow(); // GetConEmuHWND(2);
@@ -246,10 +307,12 @@ void CloseBuffers()
 BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 {
 	BOOL lbTrueColor = CheckBuffers();
+	UNREFERENCED_PARAMETER(lbTrueColor);
 	
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (!GetConsoleScreenBufferInfo(h, &csbi))
+	SMALL_RECT srWork = {};
+	HANDLE h;
+	if (!GetBufferInfo(h, csbi, srWork))
 		return FALSE;
 
 	// Что-то в некоторых случаях сбивается цвет вывода для printf
@@ -267,7 +330,7 @@ BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 	//int nBufWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
 	//int nBufHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 	//int nBufCount  = nBufWidth*nBufHeight;
-	//if (nBufWidth <= ARRAYSIZE(nDefReadBuf))
+	//if (nBufWidth <= countof(nDefReadBuf))
 	//	pnReadAttr = nDefReadBuf;
 	//else
 	//	pnReadAttr = (WORD*)calloc(nBufCount,sizeof(*pnReadAttr));
@@ -351,18 +414,20 @@ BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 {
 	BOOL lbTrueColor = CheckBuffers();
+	UNREFERENCED_PARAMETER(lbTrueColor);
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (!GetConsoleScreenBufferInfo(h, &csbi))
+	SMALL_RECT srWork = {};
+	HANDLE h;
+	if (!GetBufferInfo(h, csbi, srWork))
 		return FALSE;
 	
 	WORD nDefWriteBuf[1024];
 	WORD *pnWriteAttr = NULL;
-	int nBufWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-	int nBufHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+	int nBufWidth  = srWork.Right - srWork.Left + 1;
+	int nBufHeight = srWork.Bottom - srWork.Top + 1;
 	int nBufCount  = nBufWidth*nBufHeight;
-	if (nBufWidth <= ARRAYSIZE(nDefWriteBuf))
+	if (nBufWidth <= (int)countof(nDefWriteBuf))
 		pnWriteAttr = nDefWriteBuf;
 	else
 		pnWriteAttr = (WORD*)calloc(nBufCount,sizeof(*pnWriteAttr));
@@ -373,11 +438,13 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 	}
 	
 	BOOL lbRc = TRUE;
-	COORD cr = {csbi.srWindow.Left, csbi.srWindow.Top};
+	//COORD cr = {srWork.Left, srWork.Top};
 	//DWORD nWritten;
 	
+	#ifdef _DEBUG
 	AnnotationInfo* pTrueColor = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
 	AnnotationInfo* pTrueColorEnd = pTrueColor ? (pTrueColor + gpTrueColor->bufferSize) : NULL;
+	#endif
 
 	// <G|S>etTextAttributes должны ожидать указатель на ОДИН FarColor.
 	AnnotationInfo t = {};
@@ -465,6 +532,7 @@ BOOL WINAPI ClearExtraRegions(const FarColor* Color)
 BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* ReadRegion)
 {
 	BOOL lbTrueColor = CheckBuffers();
+	UNREFERENCED_PARAMETER(lbTrueColor);
 	/*
 	struct FAR_CHAR_INFO
 	{
@@ -488,14 +556,15 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 	*/
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (!GetConsoleScreenBufferInfo(h, &csbi))
+	SMALL_RECT srWork = {};
+	HANDLE h;
+	if (!GetBufferInfo(h, csbi, srWork))
 		return FALSE;
 
 	CHAR_INFO cDefReadBuf[1024];
 	CHAR_INFO *pcReadBuf = NULL;
-	int nWindowWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-	if (BufferSize.X <= ARRAYSIZE(cDefReadBuf))
+	int nWindowWidth  = srWork.Right - srWork.Left + 1;
+	if (BufferSize.X <= (int)countof(cDefReadBuf))
 		pcReadBuf = cDefReadBuf;
 	else
 		pcReadBuf = (CHAR_INFO*)calloc(BufferSize.X,sizeof(*pcReadBuf));
@@ -509,14 +578,14 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL;
-	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (ReadRegion->Top /*- csbi.srWindow.Top*/)) : NULL);
+	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (ReadRegion->Top /*- srWork.Top*/)) : NULL);
 
 	FAR_CHAR_INFO* pFarEnd = Buffer + BufferSize.X*BufferSize.Y; //-V104
 
 	SMALL_RECT rcRead = *ReadRegion;
 	COORD MyBufferSize = {BufferSize.X, 1};
 	COORD MyBufferCoord = {BufferCoord.X, 0};
-	SHORT YShift = csbi.dwSize.Y - (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+	SHORT YShift = gbFarBufferMode ? (csbi.dwSize.Y - (srWork.Bottom - srWork.Top + 1)) : 0;
 	SHORT Y1 = ReadRegion->Top + YShift;
 	SHORT Y2 = ReadRegion->Bottom + YShift;
 	SHORT BufferShift = ReadRegion->Top + YShift;
@@ -595,6 +664,7 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion)
 {
 	BOOL lbTrueColor = CheckBuffers();
+	UNREFERENCED_PARAMETER(lbTrueColor);
 	/*
 	struct FAR_CHAR_INFO
 	{
@@ -618,14 +688,15 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 	*/
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (!GetConsoleScreenBufferInfo(h, &csbi))
+	SMALL_RECT srWork = {};
+	HANDLE h;
+	if (!GetBufferInfo(h, csbi, srWork))
 		return FALSE;
 
 	CHAR_INFO cDefWriteBuf[1024];
 	CHAR_INFO *pcWriteBuf = NULL;
-	int nWindowWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-	if (BufferSize.X <= ARRAYSIZE(cDefWriteBuf))
+	int nWindowWidth  = srWork.Right - srWork.Left + 1;
+	if (BufferSize.X <= (int)countof(cDefWriteBuf))
 		pcWriteBuf = cDefWriteBuf;
 	else
 		pcWriteBuf = (CHAR_INFO*)calloc(BufferSize.X,sizeof(*pcWriteBuf));
@@ -639,12 +710,12 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
-	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (WriteRegion->Top /*- csbi.srWindow.Top*/)) : NULL); //-V104
+	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (WriteRegion->Top /*- srWork.Top*/)) : NULL); //-V104
 
 	SMALL_RECT rcWrite = *WriteRegion;
 	COORD MyBufferSize = {BufferSize.X, 1};
 	COORD MyBufferCoord = {BufferCoord.X, 0};
-	SHORT YShift = csbi.dwSize.Y - (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+	SHORT YShift = gbFarBufferMode ? (csbi.dwSize.Y - (srWork.Bottom - srWork.Top + 1)) : 0;
 	SHORT Y1 = WriteRegion->Top + YShift;
 	SHORT Y2 = WriteRegion->Bottom + YShift;
 	SHORT BufferShift = WriteRegion->Top + YShift;
@@ -872,7 +943,7 @@ struct ColorParam
 		if (Foreground ? b4bitfore : b4bitback)
 		{
 			//int Change = -1;
-			//for (int i = 0; i < ARRAYSIZE(crCustom); i++)
+			//for (int i = 0; i < countof(crCustom); i++)
 			//{
 			//	if (crCustom[i] == Color)
 			//	{
@@ -1294,95 +1365,113 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 		MapWindowPoints(Parm.hGUI ? Parm.hGUI : Parm.hConsole, NULL, (POINT*)&Parm.rcParent, 2);
 	}
 	
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-	GetConsoleScreenBufferInfo(h, &csbi);
-	Parm.rcBuffer = csbi.srWindow;
-
 	int nRc = 0;
-
 	LPCWSTR pszTitle = L"ConEmu Colors";
 	LPCWSTR pszText = L"Executing GUI dialog";
-	int nWidth = Far3Color::Max(lstrlen(pszText),lstrlen(pszTitle))+10;
-	int nHeight = 6;
-	int nX = (csbi.srWindow.Right - csbi.srWindow.Left - nWidth) >> 1;
-	int nY = (csbi.srWindow.Bottom - csbi.srWindow.Top - nHeight) >> 1;
-	SMALL_RECT Region = {nX, nY, nX+nWidth-1, nY+nHeight-1};
-	COORD BufSize = {nWidth,nHeight};
+	
+	FAR_CHAR_INFO* SaveBuffer = NULL;
+	FAR_CHAR_INFO* WriteBuffer = NULL;
+	SMALL_RECT Region = {0, 0, 0, 0};
+	COORD BufSize = {0,0};
 	COORD BufCoord = {0,0};
-
-	FAR_CHAR_INFO* SaveBuffer = (FAR_CHAR_INFO*)calloc(nWidth*nHeight, sizeof(*SaveBuffer)); //-V106
-	FAR_CHAR_INFO* WriteBuffer = (FAR_CHAR_INFO*)calloc(nWidth*nHeight, sizeof(*WriteBuffer)); //-V106
-
-	ReadOutput(SaveBuffer, BufSize, BufCoord, &Region);
-	FAR_CHAR_INFO* Src = SaveBuffer;
-	FAR_CHAR_INFO* Dst = WriteBuffer;
-	FAR_CHAR_INFO chr = {L' ', {FCF_FG_4BIT|FCF_BG_4BIT, 0, 7}};
-	int x;
-	// Первая строка - просто фон диалога
-	for (x = 0; x < (nWidth-2); x++, Src++, Dst++)
-		*Dst = chr;
-	*(Dst++) = *(Src++); *(Dst++) = *(Src++); // содержимое консоли (правой верхний угол)
-	// 2-я строка - заголовок диалога
-	*(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон перед рамкой
-	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblDownRight; // угол рамки
-	chr.Char = ucBoxDblHorz;
-	int Ln = lstrlen(pszTitle);
-	int X1 = 4+((nWidth - 12 - Ln)>>1); //-V112
-	int X2 = X1 + Ln + 1;
-	for (x = 3; x < (nWidth-5); x++, Src++, Dst++)
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	SMALL_RECT srWork = {};
+	HANDLE h;
+	if (GetBufferInfo(h, csbi, srWork))
 	{
-		*Dst = chr;
-		if (x == X1)
-			Dst->Char = L' ';
-		else if (x == X2)
-			Dst->Char = L' ';
-		else if (x > X1 && x < X2)
-			Dst->Char = *(pszTitle++);
-	}
-	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblDownLeft; // угол рамки
-	chr.Char = L' '; *(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон после рамки
-	CopyShaded(Src++, Dst++); CopyShaded(Src++, Dst++);
-	// 3-я строка - текст
-	*(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон перед рамкой
-	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblVert; // рамка
-	chr.Char = L' ';
-	Ln = lstrlen(pszText);
-	X1 = 4+((nWidth - 12 - Ln)>>1); //-V112
-	X2 = X1 + Ln + 1;
-	for (x = 3; x < (nWidth-5); x++, Src++, Dst++)
-	{
-		*Dst = chr;
-		if (x == X1)
-			Dst->Char = L' ';
-		else if (x == X2)
-			Dst->Char = L' ';
-		else if (x > X1 && x < X2)
-			Dst->Char = *(pszText++);
-	}
-	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblVert; // рамка
-	chr.Char = L' '; *(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон после рамки
-	CopyShaded(Src++, Dst++); CopyShaded(Src++, Dst++);
-	// 4-я строка - низ рамки
-	*(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон перед рамкой
-	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblUpRight; // угол рамки
-	chr.Char = ucBoxDblHorz;
-	for (x = 3; x < (nWidth-5); x++, Src++, Dst++)
-		*Dst = chr;
-	*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblUpLeft; // угол рамки
-	chr.Char = L' '; *(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон после рамки
-	CopyShaded(Src++, Dst++); CopyShaded(Src++, Dst++);
-	// 5-я строка - фон внизу диалога
-	for (x = 0; x < (nWidth-2); x++, Src++, Dst++)
-		*Dst = chr;
-	CopyShaded(Src++, Dst++); CopyShaded(Src++, Dst++);
-	// 6-я строка - тень под диалогом
-	*(Dst++) = *(Src++); *(Dst++) = *(Src++); // содержимое консоли (нижний левый угол)
-	for (x = 0; x < (nWidth-2); x++, Src++, Dst++)
-		CopyShaded(Src, Dst);
+		Parm.rcBuffer = srWork;
 
-	// Вывалить в консоль "диалог"
-	WriteOutput(WriteBuffer, BufSize, BufCoord, &Region);
+		int nWidth = Far3Color::Max(lstrlen(pszText),lstrlen(pszTitle))+10;
+		int nHeight = 6;
+		int nX = (srWork.Right - srWork.Left - nWidth) >> 1;
+		int nY = (srWork.Bottom - srWork.Top - nHeight) >> 1;
+		Region.Left = nX; Region.Top = nY; Region.Right = nX+nWidth-1; Region.Bottom = nY+nHeight-1;
+		BufSize.X = nWidth; BufSize.Y = nHeight;
+
+		SaveBuffer = (FAR_CHAR_INFO*)calloc(nWidth*nHeight, sizeof(*SaveBuffer)); //-V106
+		WriteBuffer = (FAR_CHAR_INFO*)calloc(nWidth*nHeight, sizeof(*WriteBuffer)); //-V106
+		
+		if (!SaveBuffer || !WriteBuffer)
+		{
+			if (SaveBuffer)
+			{
+				free(SaveBuffer);
+				SaveBuffer = NULL;
+			}
+		}
+		else
+		{
+			ReadOutput(SaveBuffer, BufSize, BufCoord, &Region);
+			FAR_CHAR_INFO* Src = SaveBuffer;
+			FAR_CHAR_INFO* Dst = WriteBuffer;
+			FAR_CHAR_INFO chr = {L' ', {FCF_FG_4BIT|FCF_BG_4BIT, 0, 7}};
+			int x;
+			// Первая строка - просто фон диалога
+			for (x = 0; x < (nWidth-2); x++, Src++, Dst++)
+				*Dst = chr;
+			*(Dst++) = *(Src++); *(Dst++) = *(Src++); // содержимое консоли (правой верхний угол)
+			// 2-я строка - заголовок диалога
+			*(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон перед рамкой
+			*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblDownRight; // угол рамки
+			chr.Char = ucBoxDblHorz;
+			int Ln = lstrlen(pszTitle);
+			int X1 = 4+((nWidth - 12 - Ln)>>1); //-V112
+			int X2 = X1 + Ln + 1;
+			for (x = 3; x < (nWidth-5); x++, Src++, Dst++)
+			{
+				*Dst = chr;
+				if (x == X1)
+					Dst->Char = L' ';
+				else if (x == X2)
+					Dst->Char = L' ';
+				else if (x > X1 && x < X2)
+					Dst->Char = *(pszTitle++);
+			}
+			*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblDownLeft; // угол рамки
+			chr.Char = L' '; *(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон после рамки
+			CopyShaded(Src++, Dst++); CopyShaded(Src++, Dst++);
+			// 3-я строка - текст
+			*(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон перед рамкой
+			*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblVert; // рамка
+			chr.Char = L' ';
+			Ln = lstrlen(pszText);
+			X1 = 4+((nWidth - 12 - Ln)>>1); //-V112
+			X2 = X1 + Ln + 1;
+			for (x = 3; x < (nWidth-5); x++, Src++, Dst++)
+			{
+				*Dst = chr;
+				if (x == X1)
+					Dst->Char = L' ';
+				else if (x == X2)
+					Dst->Char = L' ';
+				else if (x > X1 && x < X2)
+					Dst->Char = *(pszText++);
+			}
+			*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblVert; // рамка
+			chr.Char = L' '; *(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон после рамки
+			CopyShaded(Src++, Dst++); CopyShaded(Src++, Dst++);
+			// 4-я строка - низ рамки
+			*(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон перед рамкой
+			*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblUpRight; // угол рамки
+			chr.Char = ucBoxDblHorz;
+			for (x = 3; x < (nWidth-5); x++, Src++, Dst++)
+				*Dst = chr;
+			*(Dst) = chr; Src++; (Dst++)->Char = ucBoxDblUpLeft; // угол рамки
+			chr.Char = L' '; *(Dst++) = chr; *(Dst++) = chr; Src+=2; // фон после рамки
+			CopyShaded(Src++, Dst++); CopyShaded(Src++, Dst++);
+			// 5-я строка - фон внизу диалога
+			for (x = 0; x < (nWidth-2); x++, Src++, Dst++)
+				*Dst = chr;
+			CopyShaded(Src++, Dst++); CopyShaded(Src++, Dst++);
+			// 6-я строка - тень под диалогом
+			*(Dst++) = *(Src++); *(Dst++) = *(Src++); // содержимое консоли (нижний левый угол)
+			for (x = 0; x < (nWidth-2); x++, Src++, Dst++)
+				CopyShaded(Src, Dst);
+
+			// Вывалить в консоль "диалог"
+			WriteOutput(WriteBuffer, BufSize, BufCoord, &Region);
+		}
+	}
 
 	// Запускаем нить, чтобы 1) не драться с консолью; 2) не иметь проблем с обработчиком сообщений и дескрипторами GDI
 	DWORD dwThreadID = 0;
@@ -1416,10 +1505,16 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 		}
 	}
 
-	WriteOutput(SaveBuffer, BufSize, BufCoord, &Region);
+	if (SaveBuffer)
+	{
+		WriteOutput(SaveBuffer, BufSize, BufCoord, &Region);
 
-	free(SaveBuffer);
-	free(WriteBuffer);
+		free(SaveBuffer);
+	}
+	if (WriteBuffer)
+	{
+		free(WriteBuffer);
+	}
 
 	return (nRc == 1);
 }
