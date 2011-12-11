@@ -97,6 +97,8 @@ int ComspecInit()
 	// Это наверное и не нужно, просто для информации...
 	lbSbiRc = MyGetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &gpSrv->sbi);
 
+#if 0
+	// 111211 - "-new_console" теперь передается в GUI и исполняется в нем
 	// Сюда мы попадаем если был ключик -new_console
 	// А этом случае нужно завершить ЭТОТ экземпляр и запустить в ConEmu новую вкладку
 	if (gpSrv->bNewConsole)
@@ -145,6 +147,7 @@ int ComspecInit()
 #endif
 		return CERR_RUNNEWCONSOLE;
 	}
+#endif
 
 	// Если определена ComSpecC - значит ConEmuC переопределил стандартный ComSpec
 	// Вернем его

@@ -1766,16 +1766,19 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	return false; // Продолжить (и возможно, переслать в консоль)
 }
 
-BOOL CRealBuffer::GetRBtnDrag(COORD& crMouse)
+BOOL CRealBuffer::GetRBtnDrag(COORD* pcrMouse)
 {
-	crMouse = con.crRBtnDrag;
+	if (pcrMouse)
+		*pcrMouse = con.crRBtnDrag;
 	return con.bRBtnDrag;
 }
 
-void CRealBuffer::SetRBtnDrag(BOOL abRBtnDrag, const COORD& crMouse)
+void CRealBuffer::SetRBtnDrag(BOOL abRBtnDrag, const COORD* pcrMouse)
 {
-	con.crRBtnDrag = crMouse;
 	con.bRBtnDrag = abRBtnDrag;
+
+	if (pcrMouse)
+		con.crRBtnDrag = *pcrMouse;
 }
 
 // x,y - экранные координаты

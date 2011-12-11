@@ -353,6 +353,7 @@ BOOL ExecuteNewCmd(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, DWORD nCmd, size_
 	return (ppCmd != NULL);
 }
 
+// hConWnd - HWND _реальной_ консоли
 BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping)
 {
 	if (!hConWnd)

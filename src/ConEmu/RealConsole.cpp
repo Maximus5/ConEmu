@@ -337,6 +337,33 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 
 		if (!m_Args.pszSpecialCmd)
 			return FALSE;
+
+		// 111211 - здесь может быть передан "-new_console:..."
+		LPCWSTR pszNewCon = L"-new_console";
+		int nNewConLen = lstrlen(pszNewCon);
+		wchar_t* pszFind = wcsstr(m_Args.pszSpecialCmd, pszNewCon);
+		if (pszFind)
+		{
+			// Проверка валидности
+			if (((pszFind == m_Args.pszSpecialCmd) || (*(pszFind-1) == L'"') || (*(pszFind-1) == L' '))
+				&& (pszFind[nNewConLen] == L' ' || pszFind[nNewConLen] == L':' || pszFind[nNewConLen] == L'"' || pszFind[nNewConLen] == 0))
+			{
+				// OK, пока - просто вырежем, чтобы не попало в сервер
+				TODO("Обработка доп.параметров -new_console:xxx");
+				const wchar_t* pszEnd = (*(pszFind-1) == L'"') ? (pszFind-1) : pszFind;
+				wchar_t szNewConArg[MAX_PATH+1];
+				NextArg(&pszEnd, szNewConArg);
+				if (pszEnd > pszFind)
+				{
+					wmemset(pszFind, L' ', pszEnd - pszFind);
+				}
+				else
+				{
+					_ASSERTE(pszEnd > pszFind);
+					*pszFind = 0;
+				}
+			}
+		}
 	}
 
 	if (args->pszStartupDir)
@@ -417,6 +444,36 @@ BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer,
 	return mp_RBuf->SetConsoleSize(sizeX, sizeY, sizeBuffer, anCmdID);
 }
 
+void CRealConsole::SyncGui2Window(RECT* prcClient)
+{
+	if (!this)
+		return;
+
+	if (hGuiWnd && !mb_GuiExternMode)
+	{
+		RECT rcClient;
+		if (prcClient)
+			rcClient = *prcClient;
+		else
+			GetClientRect(ghWnd, &rcClient);
+
+		RECT rcGui = gpConEmu->CalcRect(CER_WORKSPACE, rcClient, CER_MAINCLIENT, mp_VCon);
+		OffsetRect(&rcGui, -rcGui.left, -rcGui.top);
+		DWORD dwExStyle = GetWindowLong(hGuiWnd, GWL_EXSTYLE);
+		DWORD dwStyle = GetWindowLong(hGuiWnd, GWL_STYLE);
+		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui);
+		RECT rcCur = {};
+		GetWindowRect(hGuiWnd, &rcCur);
+		MapWindowPoints(NULL, GetView(), (LPPOINT)&rcCur, 2);
+		if (memcmp(&rcCur, &rcGui, sizeof(RECT)) != 0)
+		{
+			// Через команду пайпа, а то если он "под админом" будет Access denied
+			SetOtherWindowPos(hGuiWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+				SWP_ASYNCWINDOWPOS|SWP_NOACTIVATE);
+		}
+	}
+}
+
 // Изменить размер консоли по размеру окна (главного)
 // prcNewWnd передается из CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 // для опережающего ресайза консоли (во избежание мелькания отрисовки панелей)
@@ -460,22 +517,23 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	_ASSERTE(newCon.right>20 && newCon.bottom>6);
 	
 	if (hGuiWnd && !mb_GuiExternMode)
-	{
-		RECT rcGui = gpConEmu->CalcRect(CER_WORKSPACE, rcClient, CER_MAINCLIENT, mp_VCon);
-		OffsetRect(&rcGui, -rcGui.left, -rcGui.top);
-		DWORD dwExStyle = GetWindowLong(hGuiWnd, GWL_EXSTYLE);
-		DWORD dwStyle = GetWindowLong(hGuiWnd, GWL_STYLE);
-		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui);
-		RECT rcCur = {};
-		GetWindowRect(hGuiWnd, &rcCur);
-		MapWindowPoints(NULL, GetView(), (LPPOINT)&rcCur, 2);
-		if (memcmp(&rcCur, &rcGui, sizeof(RECT)) != 0)
-		{
-			// Через команду пайпа, а то если он "под админом" будет Access denied
-			SetOtherWindowPos(hGuiWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
-				SWP_ASYNCWINDOWPOS|SWP_NOACTIVATE);
-		}
-	}
+		SyncGui2Window(&rcClient);
+	//{
+	//	RECT rcGui = gpConEmu->CalcRect(CER_WORKSPACE, rcClient, CER_MAINCLIENT, mp_VCon);
+	//	OffsetRect(&rcGui, -rcGui.left, -rcGui.top);
+	//	DWORD dwExStyle = GetWindowLong(hGuiWnd, GWL_EXSTYLE);
+	//	DWORD dwStyle = GetWindowLong(hGuiWnd, GWL_STYLE);
+	//	CorrectGuiChildRect(dwStyle, dwExStyle, rcGui);
+	//	RECT rcCur = {};
+	//	GetWindowRect(hGuiWnd, &rcCur);
+	//	MapWindowPoints(NULL, GetView(), (LPPOINT)&rcCur, 2);
+	//	if (memcmp(&rcCur, &rcGui, sizeof(RECT)) != 0)
+	//	{
+	//		// Через команду пайпа, а то если он "под админом" будет Access denied
+	//		SetOtherWindowPos(hGuiWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+	//			SWP_ASYNCWINDOWPOS|SWP_NOACTIVATE);
+	//	}
+	//}
 
 	// Всегда меняем _реальный_ буфер консоли.
 	mp_RBuf->SyncConsole2Window(newCon.right, newCon.bottom);
@@ -2274,49 +2332,57 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 	}
 
 	// При БЫСТРОМ драге правой кнопкой мышки выделение в панели получается прерывистым. Исправим это.
-	// Имеет смысл только если в GUI сейчас показывается реальный буфер
-	if (gpSet->isRSelFix && (mp_ABuf == mp_RBuf))
+	if (gpSet->isRSelFix)
 	{
-		BOOL lbRBtnDrag = (r.Event.MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED) == RIGHTMOST_BUTTON_PRESSED;
-		COORD con_crRBtnDrag = {};
-		BOOL con_bRBtnDrag = mp_RBuf->GetRBtnDrag(con_crRBtnDrag);
-
-		if (con_bRBtnDrag && !lbRBtnDrag)
+		// Имеет смысл только если в GUI сейчас показывается реальный буфер
+		if (mp_ABuf != mp_RBuf)
 		{
-			con_bRBtnDrag = FALSE;
+			mp_RBuf->SetRBtnDrag(FALSE);
 		}
-		else if (con_bRBtnDrag)
+		else
 		{
-			#ifdef _DEBUG
-			SHORT nXDelta = crMouse.X - con_crRBtnDrag.X;
-			#endif
-			SHORT nYDelta = crMouse.Y - con_crRBtnDrag.Y;
+			BOOL lbRBtnDrag = (r.Event.MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED) == RIGHTMOST_BUTTON_PRESSED;
+			COORD con_crRBtnDrag = {};
+			BOOL con_bRBtnDrag = mp_RBuf->GetRBtnDrag(&con_crRBtnDrag);
 
-			if (nYDelta < -1 || nYDelta > 1)
+			if (con_bRBtnDrag && !lbRBtnDrag)
 			{
-				// Если после предыдущего драга прошло более 1 строки
-				SHORT nYstep = (nYDelta < -1) ? -1 : 1;
-				SHORT nYend = crMouse.Y; // - nYstep;
-				crMouse.Y = con_crRBtnDrag.Y + nYstep;
+				con_bRBtnDrag = FALSE;
+				mp_RBuf->SetRBtnDrag(FALSE);
+			}
+			else if (con_bRBtnDrag)
+			{
+				#ifdef _DEBUG
+				SHORT nXDelta = crMouse.X - con_crRBtnDrag.X;
+				#endif
+				SHORT nYDelta = crMouse.Y - con_crRBtnDrag.Y;
 
-				// досылаем пропущенные строки
-				while (crMouse.Y != nYend)
+				if (nYDelta < -1 || nYDelta > 1)
 				{
-					#ifdef _DEBUG
-					wchar_t szDbg[60]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"+++ Add right button drag: {%ix%i}\n", crMouse.X, crMouse.Y);
-					DEBUGSTRINPUT(szDbg);
-					#endif
-					
-					r.Event.MouseEvent.dwMousePosition = crMouse;
-					PostConsoleEvent(&r);
-					crMouse.Y += nYstep;
+					// Если после предыдущего драга прошло более 1 строки
+					SHORT nYstep = (nYDelta < -1) ? -1 : 1;
+					SHORT nYend = crMouse.Y; // - nYstep;
+					crMouse.Y = con_crRBtnDrag.Y + nYstep;
+
+					// досылаем пропущенные строки
+					while (crMouse.Y != nYend)
+					{
+						#ifdef _DEBUG
+						wchar_t szDbg[60]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"+++ Add right button drag: {%ix%i}\n", crMouse.X, crMouse.Y);
+						DEBUGSTRINPUT(szDbg);
+						#endif
+						
+						r.Event.MouseEvent.dwMousePosition = crMouse;
+						PostConsoleEvent(&r);
+						crMouse.Y += nYstep;
+					}
 				}
 			}
-		}
 
-		if (lbRBtnDrag)
-		{
-			mp_RBuf->SetRBtnDrag(TRUE, crMouse);
+			if (lbRBtnDrag)
+			{
+				mp_RBuf->SetRBtnDrag(TRUE, &crMouse);
+			}
 		}
 	}
 
@@ -4015,16 +4081,16 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdGetGuiHwnd(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
-{
-	CESERVER_REQ* pOut = NULL;
-	
-	DEBUGSTRCMD(L"GUI recieved CECMD_GETGUIHWND\n");
-	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD));
-	pOut->dwData[0] = (DWORD)ghWnd; //-V205
-	pOut->dwData[1] = (DWORD)mp_VCon->GetView(); //-V205
-	return pOut;
-}
+//CESERVER_REQ* CRealConsole::cmdGetGuiHwnd(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+//{
+//	CESERVER_REQ* pOut = NULL;
+//	
+//	DEBUGSTRCMD(L"GUI recieved CECMD_GETGUIHWND\n");
+//	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD));
+//	pOut->dwData[0] = (DWORD)ghWnd; //-V205
+//	pOut->dwData[1] = (DWORD)mp_VCon->GetView(); //-V205
+//	return pOut;
+//}
 
 CESERVER_REQ* CRealConsole::cmdTabsChanged(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
 {
@@ -4550,16 +4616,16 @@ CESERVER_REQ* CRealConsole::cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UIN
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdGetNewConParm(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
-{
-	CESERVER_REQ* pOut = NULL;
-
-	DEBUGSTRCMD(L"GUI recieved CECMD_GETNEWCONPARM\n");		
-	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t));
-	pOut->wData[0] = 0;
-	
-	return pOut;
-}
+//CESERVER_REQ* CRealConsole::cmdNewConsole(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+//{
+//	CESERVER_REQ* pOut = NULL;
+//
+//	DEBUGSTRCMD(L"GUI recieved CECMD_NEWCONSOLE\n");		
+//	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t));
+//	pOut->wData[0] = 0;
+//	
+//	return pOut;
+//}
 
 CESERVER_REQ* CRealConsole::cmdOnPeekReadInput(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
 {
@@ -4740,8 +4806,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
 	if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP)
 		pOut = cmdStartStop(hPipe, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_GETGUIHWND)
-		pOut = cmdGetGuiHwnd(hPipe, pIn, nDataSize);
+	//else if (pIn->hdr.nCmd == CECMD_GETGUIHWND)
+	//	pOut = cmdGetGuiHwnd(hPipe, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_TABSCHANGED)
 		pOut = cmdTabsChanged(hPipe, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_GETOUTPUTFILE)
@@ -4766,12 +4832,14 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		pOut = cmdActivateCon(hPipe, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_ONCREATEPROC)
 		pOut = cmdOnCreateProc(hPipe, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_GETNEWCONPARM)
-		pOut = cmdGetNewConParm(hPipe, pIn, nDataSize);
+	//else if (pIn->hdr.nCmd == CECMD_NEWCONSOLE)
+	//	pOut = cmdNewConsole(hPipe, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_PEEKREADINFO)
 		pOut = cmdOnPeekReadInput(hPipe, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_KEYSHORTCUTS)
 		pOut = cmdOnSetConsoleKeyShortcuts(hPipe, pIn, nDataSize);
+	else if (pIn->hdr.nCmd == CECMD_ALIVE)
+		pOut = ExecuteNewCmd(CECMD_ALIVE, sizeof(CESERVER_REQ_HDR));
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(hPipe, pIn, nDataSize);
 	else

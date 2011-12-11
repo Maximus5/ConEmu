@@ -3,7 +3,7 @@ LIBRARY
 EXPORTS
 ; functions
 	LLKeybHook
-	ConsoleMain
+	ConsoleMain2
 	HandlerRoutine
 	MountVirtualHive
 	UnMountVirtualHive

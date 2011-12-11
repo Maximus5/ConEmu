@@ -319,6 +319,14 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	wchar_t szGuiPipeName[128];
 	msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
 
+
+	// AttachThreadInput
+	DWORD nConEmuTID = user->getWindowThreadProcessId(ghConEmuWnd, NULL);
+	_ASSERTEX(GetCurrentThreadId()==gnHookMainThreadId);
+	BOOL bAttachRc = user->attachThreadInput(GetCurrentThreadId(), nConEmuTID, TRUE);
+	DWORD nAttachErr = GetLastError();
+
+
 	CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 1000, NULL);
 
 	ExecuteFreeResult(pIn);
@@ -331,19 +339,23 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 		{
 			_ASSERTE((pOut->AttachGuiApp.nFlags & agaf_Success) == agaf_Success);
 
+            BOOL lbRc = FALSE;
+            
+			#ifdef _DEBUG
             HWND hFocus = user->getFocus();
             DWORD nFocusPID = 0;
-            BOOL lbRc = FALSE;
             
             if (hFocus)
             {
                 user->getWindowThreadProcessId(hFocus, &nFocusPID);
-                if (nFocusPID != GetCurrentProcessId())
+				DWORD nConEmuPID = 0; user->getWindowThreadProcessId(ghConEmuWnd, &nConEmuPID);
+                if (nFocusPID != GetCurrentProcessId() && nFocusPID != nConEmuPID)
                 {                                                    
-                    _ASSERTE(hFocus==NULL || (nFocusPID==GetCurrentProcessId()));
+                    _ASSERTE(hFocus==NULL || (nFocusPID==GetCurrentProcessId() || nFocusPID == nConEmuPID));
                     hFocus = NULL;
                 }
             }
+			#endif
             
 			if (pOut->AttachGuiApp.hkl)
 			{

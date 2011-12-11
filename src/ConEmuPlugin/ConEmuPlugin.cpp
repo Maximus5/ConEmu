@@ -3514,12 +3514,14 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 void CommonPluginStartup()
 {
 	gbBgPluginsAllowed = TRUE;
-	// Надо табы загрузить
-	UpdateConEmuTabs(0,false,false);
 
+	//111209 - CheckResources зовем перед UpdateConEmuTabs, т.к. иначе CheckResources вызывается дважды
 	//2010-12-13 информацию (начальную) о фаре грузим всегда, а отсылаем в GUI только если в ConEmu
 	// здесь же и ReloadFarInfo() позовется
 	CheckResources(TRUE);
+
+	// Надо табы загрузить
+	UpdateConEmuTabs(0,false,false);
 
 	
 	//if (gpConMapInfo)  //2010-03-04 Имеет смысл только при запуске из-под ConEmu
@@ -5823,6 +5825,43 @@ void ShowPluginMenu(int nID /*= -1*/)
 
 BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
 {
+	if (!FarHwnd)
+	{
+		_ASSERTE(FarHwnd!=NULL);
+		return FALSE;
+	}
+
+	BOOL lbRc = FALSE;
+
+	//111209 - пробуем через мэппинг, там ИД сервера уже должен быть
+	CESERVER_CONSOLE_MAPPING_HDR SrvMapping = {};
+	if (LoadSrvMapping(FarHwnd, SrvMapping))
+	{
+		CESERVER_REQ* pIn = ExecuteNewCmd(nServerCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+		pIn->dwData[0] = GetCurrentProcessId();
+		CESERVER_REQ* pOut = ExecuteSrvCmd(SrvMapping.nServerPID, pIn, FarHwnd);
+
+		if (pOut)
+		{
+			dwServerPID = SrvMapping.nServerPID;
+			ExecuteFreeResult(pOut);
+			lbRc = TRUE;
+		}
+
+		ExecuteFreeResult(pIn); 
+
+		// Если команда успешно выполнена - выходим
+		if (lbRc)
+			return TRUE;
+	}
+	else
+	{
+		_ASSERTE(LoadSrvMapping(FarHwnd, SrvMapping));
+		return FALSE;
+	}
+	return FALSE;
+
+#if 0
 	BOOL lbRc = FALSE;
 	DWORD nProcessCount = 0, nProcesses[100] = {0};
 	dwServerPID = 0;
@@ -5930,6 +5969,7 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
 	}
 
 	return lbRc;
+#endif
 }
 
 BOOL Attach2Gui()

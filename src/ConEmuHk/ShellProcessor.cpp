@@ -714,11 +714,13 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	// ≈сли запускаетс€ новый GUI как вкладка, или консольное приложени€ из GUI как вкладки
 	lbNewGuiConsole = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ghAttachGuiClient != NULL);
 
+	#if 0
 	if (lbNewGuiConsole)
 	{
 		// Ќужно еще добавить /ATTACH /GID=%i,  и т.п.
 		nCchSize += 128;
 	}
+	#endif
 	
 	// ¬ ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а дл€ CreatePocess - в psParam
 	// /C или /K в обоих случа€х нужно пихать в psParam
@@ -748,6 +750,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	if (lbUseDosBox)
 		_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
 
+	// 111211 - "-new_console" передаетс€ в GUI
+	#if 0
 	//if (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
 	if (lbNewGuiConsole)
 	{
@@ -757,6 +761,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		TODO("Ќаверное, хорошо бы обработать /K|/C? ≈сли консольное запускаетс€ из GUI");
 	}
 	else
+	#endif
 	{
 		_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
 	}
@@ -900,6 +905,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 
 		if (asParam && *asParam)
 		{
+			// 111211 - "-new_console" передаетс€ в GUI
+			#if 0
 			const wchar_t* sNewConsole = L"-new_console";
 			int nNewConsoleLen = lstrlen(sNewConsole);
 			const wchar_t* pszNewPtr = wcsstr(asParam, sNewConsole);
@@ -925,6 +932,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 				_wcscpy_c(pszDst, nCchLeft, pszNewPtr+lstrlen(sNewConsole));
 			}
 			else
+			#endif
 			{
 				_wcscat_c((*psParam), nCchSize, asParam);
 			}
@@ -1217,8 +1225,12 @@ BOOL CShellProc::PrepareExecuteParms(
 		const wchar_t* sNewConsole = L"-new_console";
 		int nNewConsoleLen = lstrlen(sNewConsole);
 		const wchar_t* pszFind = wcsstr(asParam, sNewConsole);
-		if (pszFind && ((pszFind == asParam) || (*(pszFind-1) == L' ')) && ((pszFind[nNewConsoleLen] == 0) || (pszFind[nNewConsoleLen] == L' ')))
+		// 111211 - после "-new_console:" теперь допускаютс€ аргументы
+		if (pszFind && ((pszFind == asParam) || (*(pszFind-1) == L' ') || (*(pszFind-1) == L'"'))
+			&& ((pszFind[nNewConsoleLen] == 0) || (pszFind[nNewConsoleLen] == L' ') || (pszFind[nNewConsoleLen] == L':') || (pszFind[nNewConsoleLen] == L'"')))
+		{
 			bNewConsoleArg = true;
+		}
 	}
 	// ≈сли GUI приложение работает во вкладке ConEmu - запускать консольные приложение в новой вкладке ConEmu
 	if (!bNewConsoleArg 
@@ -1338,9 +1350,27 @@ BOOL CShellProc::PrepareExecuteParms(
 		}
 		else
 		{
-			if (lbGuiApp && bNewConsoleArg && anShowCmd)
+			if (lbGuiApp && bNewConsoleArg)
 			{
-				*anShowCmd = SW_HIDE;
+				if (anShowCmd)
+					*anShowCmd = SW_HIDE;
+
+				#if 0
+				// нужно запускатьс€ ¬Ќ≈ текущей консоли!
+				if (aCmd == eCreateProcess)
+				{
+					if (anCreateFlags)
+					{
+						*anCreateFlags |= CREATE_NEW_CONSOLE;
+						*anCreateFlags &= ~(DETACHED_PROCESS|CREATE_NO_WINDOW);
+					}
+				}
+				else if (aCmd == eShellExecute)
+				{
+					if (anShellFlags)
+						*anShellFlags |= SEE_MASK_NO_CONSOLE;
+				}
+				#endif
 			}
 			pIn = NewCmdOnCreate(eParmsChanged, 
 					asAction, *psFile, *psParam, 

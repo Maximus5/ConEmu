@@ -315,6 +315,7 @@ class CRealConsole
 		DWORD GetConsoleOutputCP();
 		DWORD GetConsoleMode();
 		void SyncConsole2Window(BOOL abNtvdmOff=FALSE, LPRECT prcNewWnd=NULL);
+		void SyncGui2Window(RECT* prcClient=NULL);
 		void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
 		int  GetProcesses(ConProcess** ppPrc);
@@ -572,7 +573,7 @@ class CRealConsole
 
 		void ServerThreadCommand(HANDLE hPipe);
 		CESERVER_REQ* cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdGetGuiHwnd(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
+		//CESERVER_REQ* cmdGetGuiHwnd(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdTabsChanged(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdGetOutputFile(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdGuiMacro(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
@@ -585,7 +586,7 @@ class CRealConsole
 		CESERVER_REQ* cmdSetBackground(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdActivateCon(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdGetNewConParm(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
+		//CESERVER_REQ* cmdNewConsole(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdOnPeekReadInput(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdOnSetConsoleKeyShortcuts(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		//CESERVER_REQ* cmdAssert(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);

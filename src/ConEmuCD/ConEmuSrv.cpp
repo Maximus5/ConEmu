@@ -225,7 +225,7 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 }
 
 // Создать необходимые события и нити
-int ServerInit()
+int ServerInit(BOOL abAlternative/*=FALSE*/)
 {
 	int iRc = 0;
 	BOOL bConRc = FALSE;
@@ -302,24 +302,64 @@ int ServerInit()
 
 	// Было 10, чтобы не перенапрягать консоль при ее быстром обновлении ("dir /s" и т.п.)
 	gpSrv->nMaxFPS = 100;
-#ifdef _DEBUG
 
+	#ifdef _DEBUG
 	if (ghFarInExecuteEvent)
 		SetEvent(ghFarInExecuteEvent);
+	#endif
 
-#endif
+	if (ghConEmuWndDC)
+	{
+		CESERVER_CONSOLE_MAPPING_HDR test = {};
+		BOOL lbExist = LoadSrvMapping(ghConWnd, test);
+		if (abAlternative == FALSE)
+		{
+			// Основной сервер! Мэппинг консоли по идее создан еще быть не должен!
+			// Это должно быть ошибка - попытка запуска второго сервера в той же консоли!
+			if (lbExist)
+			{
+				CESERVER_REQ_HDR In; ExecutePrepareCmd(&In, CECMD_ALIVE, sizeof(CESERVER_REQ_HDR));
+				CESERVER_REQ* pOut = ExecuteSrvCmd(test.nServerPID, (CESERVER_REQ*)&In, NULL);
+				if (pOut)
+				{
+					_ASSERTE(test.nServerPID == 0);
+					ExecuteFreeResult(pOut);
+					wchar_t szErr[127];
+					msprintf(szErr, countof(szErr), L"\nServer (PID=%u) already exist in console! Current PID=%u\n", test.nServerPID, GetCurrentProcessId());
+					_wprintf(szErr);
+					iRc = CERR_SERVER_ALREADY_EXISTS;
+					goto wrap;
+				}
+
+				// Старый сервер умер, запустился новый? нужна какая-то дополнительная инициализация?
+				_ASSERTE(test.nServerPID == 0 && "Server already exists");
+			}
+		}
+		else
+		{
+			// По идее, в консоли должен быть _живой_ сервер.
+			_ASSERTE(lbExist && test.nServerPID != 0);
+		}
+	}
+	else
+	{
+		_ASSERTE(!abAlternative || ghConEmuWndDC!=NULL);
+	}
+
 	// Создать MapFile для заголовка (СРАЗУ!!!) и буфера для чтения и сравнения
 	iRc = CreateMapHeader();
 
 	if (iRc != 0)
 		goto wrap;
 
-	// 111101 - мэппинг теперь создается по хэндлу окна отрисовки. Оно еще скорее всего не инициализировано
-	if (ghConEmuWndDC)
-	{
-		// Создать мэппинг для Colorer
-		CreateColorerHeader(); // ошибку не обрабатываем - не критическая
-	}
+	// 111210 - CreateMapHeader, тоже дергает CreateColorerHeader
+	//// 111101 - мэппинг теперь создается по хэндлу окна отрисовки. Оно еще скорее всего не инициализировано
+	//if (ghConEmuWndDC)
+	//{
+	//	// Создать мэппинг для Colorer
+	//	CreateColorerHeader(); // ошибку не обрабатываем - не критическая
+	//}
+	_ASSERTE((ghConEmuWndDC==NULL) || (gpSrv->pColorerMapping!=NULL));
 
 	//if (hKernel) {
 	//    pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");

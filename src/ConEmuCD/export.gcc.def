@@ -3,7 +3,7 @@ LIBRARY
 EXPORTS
 ; functions
 	LLKeybHook=LLKeybHook@12
-	ConsoleMain=ConsoleMain@0
+	ConsoleMain2=ConsoleMain2@4
 	HandlerRoutine=HandlerRoutine@4
 	MountVirtualHive=MountVirtualHive@24
 	UnMountVirtualHive=UnMountVirtualHive@12

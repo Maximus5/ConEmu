@@ -2869,6 +2869,8 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				AutoSizeFont(rcMax, CER_MAIN);
 				RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAIN);
 
+				WARNING("ћожет обломатьс€ из-за максимального размера консоли");
+				// в этом случае хорошо бы установить максимально возможный и отцентрировать ее в ConEmu
 				if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right,rcCon.bottom))
 				{
 					if (pRCon) pRCon->LogString("!!!SetConsoleSize FAILED!!!");
@@ -2937,6 +2939,8 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 					AutoSizeFont(rcMax, CER_MAIN);
 					RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAIN);
 
+					WARNING("ћожет обломатьс€ из-за максимального размера консоли");
+					// в этом случае хорошо бы установить максимально возможный и отцентрировать ее в ConEmu
 					if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right,rcCon.bottom))
 					{
 						if (pRCon) pRCon->LogString("!!!SetConsoleSize FAILED!!!");
@@ -3042,6 +3046,8 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				AutoSizeFont(rcMax, CER_MAINCLIENT);
 				RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAINCLIENT);
 
+				WARNING("ћожет обломатьс€ из-за максимального размера консоли");
+				// в этом случае хорошо бы установить максимально возможный и отцентрировать ее в ConEmu
 				if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right,rcCon.bottom))
 				{
 					if (pRCon) pRCon->LogString("!!!SetConsoleSize FAILED!!!");
@@ -3130,6 +3136,11 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 
 	WindowMode = inMode; // «апомним!
 	canEditWindowSizes = inMode == rNormal;
+
+	if (ActiveCon())
+	{
+		ActiveCon()->RCon()->SyncGui2Window();
+	}
 
 	if (ghOpWnd)
 	{
@@ -3520,23 +3531,32 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 	if (mp_VActive && mp_VActive->Width && mp_VActive->Height)
 	{
-		if ((gpSet->isTryToCenter && (isZoomed() || mb_isFullScreen))
-		        || isNtvdm())
+		if (mp_VActive->GuiWnd() && mp_VActive->RCon()->isGuiOverCon())
 		{
-			rcNewCon.left = (client.right+client.left-(int)mp_VActive->Width)/2;
-			rcNewCon.top = (client.bottom+client.top-(int)mp_VActive->Height)/2;
+			// ≈сли работает в режиме "GUI во вкладке" - зан€ть всю доступную область
+			rcNewCon = dcSize;
 		}
+		else
+		{
+			// »наче - "консольную" область возможно придетс€ отцентрировать (по настройке)
+			if ((gpSet->isTryToCenter && (isZoomed() || mb_isFullScreen))
+					|| isNtvdm())
+			{
+				rcNewCon.left = (client.right+client.left-(int)mp_VActive->Width)/2;
+				rcNewCon.top = (client.bottom+client.top-(int)mp_VActive->Height)/2;
+			}
 
-		if (rcNewCon.left<client.left) rcNewCon.left=client.left;
+			if (rcNewCon.left<client.left) rcNewCon.left=client.left;
 
-		if (rcNewCon.top<client.top) rcNewCon.top=client.top;
+			if (rcNewCon.top<client.top) rcNewCon.top=client.top;
 
-		rcNewCon.right = rcNewCon.left + mp_VActive->Width;
-		rcNewCon.bottom = rcNewCon.top + mp_VActive->Height;
+			rcNewCon.right = rcNewCon.left + mp_VActive->Width;
+			rcNewCon.bottom = rcNewCon.top + mp_VActive->Height;
 
-		if (rcNewCon.right>client.right) rcNewCon.right=client.right;
+			if (rcNewCon.right>client.right) rcNewCon.right=client.right;
 
-		if (rcNewCon.bottom>client.bottom) rcNewCon.bottom=client.bottom;
+			if (rcNewCon.bottom>client.bottom) rcNewCon.bottom=client.bottom;
+		}
 	}
 	else
 	{
@@ -5080,17 +5100,14 @@ BOOL CConEmuMain::RunSingleInstance()
 		{
 			CESERVER_REQ *pIn = NULL, *pOut = NULL;
 			int nCmdLen = lstrlenW(lpszCmd);
-			int nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_NEWCMD);
-
-			if (nCmdLen >= MAX_PATH)
-			{
-				nSize += (nCmdLen - MAX_PATH + 2) * 2;
-			}
+			int nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_NEWCMD) + (nCmdLen*sizeof(wchar_t));
 
 			pIn = ExecuteNewCmd(CECMD_NEWCMD, nSize);
 
 			if (pIn)
 			{
+				GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
+
 				lstrcpyW(pIn->NewCmd.szCommand, lpszCmd);
 				DWORD dwPID = 0;
 
@@ -5974,6 +5991,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			if (!gpConEmu->mp_VCon[i]) continue;
 
 			// «апускаемые через "-new_console" цепл€ютс€ через CECMD_ATTACH2GUI, а не через WinEvent
+			// 111211 - "-new_console" теперь передаетс€ в GUI и исполн€етс€ в нем
 			if (gpConEmu->mp_VCon[i]->RCon()->isDetached())
 				continue;
 
@@ -12771,9 +12789,15 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 
 		apiSetForegroundWindow(ghWnd);
-		RConStartArgs args; args.pszSpecialCmd = pIn->NewCmd.szCommand;
+		WARNING("");
+		RConStartArgs args;
+		args.pszSpecialCmd = pIn->NewCmd.szCommand;
+		args.pszStartupDir = pIn->NewCmd.szCurDir;
+		
 		CVirtualConsole* pCon = CreateCon(&args);
-		args.pszSpecialCmd = NULL;
+
+		args.pszSpecialCmd = NULL; // ј то free зовет в деструкторе
+		args.pszStartupDir = NULL; // ј то free зовет в деструкторе
 
 		if (pCon)
 		{

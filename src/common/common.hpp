@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    77
+#define CESERVER_REQ_VER    78
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -157,7 +157,7 @@ const CECMD
 	CECMD_CONSOLEDATA    = 2,
 //	CECMD_SETSIZE        = 3,
 	CECMD_CMDSTARTSTOP   = 4, // CESERVER_REQ_STARTSTOP //-V112
-	CECMD_GETGUIHWND     = 5,
+//	CECMD_GETGUIHWND     = 5, // GUI_CMD, In = {}, Out = {dwData[0]==ghWnd, dwData[1]==ConEmuDcWindow
 //	CECMD_RECREATE       = 6,
 	CECMD_TABSCHANGED    = 7,
 	CECMD_CMDSTARTED     = 8, // == CECMD_SETSIZE + восстановить содержимое консоли (запустился comspec)
@@ -165,10 +165,10 @@ const CECMD
 	CECMD_GETOUTPUTFILE  = 10, // Записать вывод последней консольной программы во временный файл и вернуть его имя
 	CECMD_GETOUTPUT      = 11,
 	CECMD_LANGCHANGE     = 12,
-	CECMD_NEWCMD         = 13, // Запустить в этом экземпляре новую консоль с переданной командой (используется при SingleInstance)
+	CECMD_NEWCMD         = 13, // Запустить в этом экземпляре новую консоль с переданной командой (используется при SingleInstance и -new_console). Выполняется в GUI!
 	CECMD_TABSCMD        = 14, // enum ConEmuTabCommand: 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
 	CECMD_RESOURCES      = 15, // Посылается плагином при инициализации (установка ресурсов)
-	CECMD_GETNEWCONPARM  = 16, // Доп.аргументы для создания новой консоли (шрифт, размер,...)
+//	CECMD_GETNEWCONPARM  = 16, // Доп.аргументы для создания новой консоли (шрифт, размер,...)
 	CECMD_SETSIZESYNC    = 17, // Синхронно, ждет (но недолго), пока FAR обработает изменение размера (то есть отрисуется)
 	CECMD_ATTACH2GUI     = 18, // Выполнить подключение видимой (отключенной) консоли к GUI. Без аргументов
 	CECMD_FARLOADED      = 19, // Посылается плагином в сервер
@@ -203,8 +203,9 @@ const CECMD
 	CECMD_SETFOCUS       = 48, // CESERVER_REQ_SETFOCUS
 	CECMD_SETPARENT      = 49, // CESERVER_REQ_SETPARENT
 	CECMD_CTRLBREAK      = 50, // GenerateConsoleCtrlEvent(dwData[0], dwData[1])
-	CECMD_GETCGUINFO     = 51, // ConEmuGuiMapping
+//	CECMD_GETCGUINFO     = 51, // ConEmuGuiMapping
 	CECMD_SETGUIEXTERN   = 52, // dwData[0]==TRUE - вынести приложение наружу из вкладки ConEmu, dwData[0]==FALSE - вернуть во вкладку
+	CECMD_ALIVE          = 53, // просто проверка
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1047,10 +1048,12 @@ struct CESERVER_REQ_RETSIZE
 	CONSOLE_SCREEN_BUFFER_INFO SetSizeRet;
 };
 
-struct CESERVER_REQ_NEWCMD
+struct CESERVER_REQ_NEWCMD // CECMD_NEWCMD
 {
+	HWND2   hFromConWnd;
 	wchar_t szCurDir[MAX_PATH];
-	wchar_t szCommand[MAX_PATH]; // На самом деле - variable_size !!!
+	// Внимание! Может содержать параметр -new_console. GUI его должен вырезать перед запуском сервера!
+	wchar_t szCommand[1]; // На самом деле - variable_size !!!
 };
 
 struct CESERVER_REQ_SETFONT

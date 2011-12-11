@@ -471,12 +471,12 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 
 #if defined(__GNUC__)
 extern "C" {
-	int __stdcall ConsoleMain();
+	int __stdcall ConsoleMain2(BOOL abAlternative);
 };
 #endif
 
 // Main entry point for ConEmuC.exe
-int __stdcall ConsoleMain()
+int __stdcall ConsoleMain2(BOOL abAlternative)
 {
 	TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
 
@@ -490,7 +490,7 @@ int __stdcall ConsoleMain()
 	if (ghOurModule == NULL)
 	{
 		wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
-		MessageBox(NULL, L"ConsoleMain. ghOurModule is NULL\nDllMain was not executed", szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+		MessageBox(NULL, L"ConsoleMain2. ghOurModule is NULL\nDllMain was not executed", szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 		return CERR_DLLMAIN_SKIPPED;
 	}
 
@@ -504,7 +504,7 @@ int __stdcall ConsoleMain()
 	//	_ASSERTE(ghHeap != NULL);
 	//	#else
 	//	wchar_t szTitle[128]; swprintf_c(szTitle, L"ConEmuHk, PID=%u", GetCurrentProcessId());
-	//	MessageBox(NULL, L"ConsoleMain. ghHeap is NULL", szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+	//	MessageBox(NULL, L"ConsoleMain2. ghHeap is NULL", szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 	//	#endif
 	//	return CERR_NOTENOUGHMEM1;
 	//}
@@ -682,7 +682,7 @@ int __stdcall ConsoleMain()
 	/* ******************************** */
 	if (gnRunMode == RM_SERVER)
 	{
-		if ((iRc = ServerInit()) != 0)
+		if ((iRc = ServerInit(abAlternative)) != 0)
 		{
 			nExitPlaceStep = 250;
 			goto wrap;
@@ -2270,8 +2270,9 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		pwszCopy = (wchar_t*)wcsstr(asCmdLine, L" -new_console");
 
 		// ≈сли после -new_console идет пробел, или это вообще конец строки
+		// 111211 - после -new_console: допускаютс€ параметры
 		if (pwszCopy &&
-		        (pwszCopy[nArgLen]==L' ' || pwszCopy[nArgLen]==0
+				(pwszCopy[nArgLen]==L' ' || pwszCopy[nArgLen]==L':' || pwszCopy[nArgLen]==0
 		         || (pwszCopy[nArgLen]==L'"' || pwszCopy[nArgLen+1]==0)))
 		{
 			if (!ghConWnd)
@@ -2283,6 +2284,43 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			{
 				xf_check();
 				// тогда обрабатываем
+				gpSrv->bNewConsole = TRUE;
+
+				int iNewConRc = CERR_RUNNEWCONSOLE;
+
+				DWORD nCmdLen = lstrlen(asCmdLine);
+				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_NEWCMD)+(nCmdLen*sizeof(wchar_t)));
+				if (pIn)
+				{
+					pIn->NewCmd.hFromConWnd = ghConWnd;
+					GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
+					lstrcpyn(pIn->NewCmd.szCommand, asCmdLine, nCmdLen+1);
+
+					CESERVER_REQ* pOut = ExecuteGuiCmd(ghConEmuWnd, pIn, ghConWnd);
+					if (pOut)
+					{
+						if (pOut->hdr.cbSize <= sizeof(pOut->hdr) || pOut->Data[0] == FALSE)
+						{
+							iNewConRc = CERR_RUNNEWCONSOLEFAILED;
+						}
+						ExecuteFreeResult(pOut);
+					}
+					else
+					{
+						_ASSERTE(pOut!=NULL);
+						iNewConRc = CERR_RUNNEWCONSOLEFAILED;
+					}
+					ExecuteFreeResult(pIn);
+				}
+				else
+				{
+					iNewConRc = CERR_NOTENOUGHMEM1;
+				}
+
+				DisableAutoConfirmExit();
+				return iNewConRc;
+
+				#if 0
 				gpSrv->bNewConsole = TRUE;
 				//
 				size_t nNewLen = lstrlen(pwszStartCmdLine) + 200;
@@ -2458,6 +2496,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				xf_check();
 				//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT; //2010-03-06
 				return 0;
+				#endif
 			}
 		}
 
@@ -5399,6 +5438,11 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			lbRc = cmd_GuiAppAttached(in, out);
 		} break;
+		case CECMD_ALIVE:
+		{
+			*out = ExecuteNewCmd(CECMD_ALIVE, sizeof(CESERVER_REQ_HDR));
+			lbRc = TRUE;
+		} break;
 	}
 
 	if (gbInRecreateRoot) gbInRecreateRoot = FALSE;
@@ -5877,7 +5921,7 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 		}
 		else
 		{
-			// trick to let ConsoleMain() finish correctly
+			// trick to let ConsoleMain2() finish correctly
 			ExitThread(1);
 			//return TRUE;
 		

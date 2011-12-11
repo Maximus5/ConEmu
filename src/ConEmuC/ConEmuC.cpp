@@ -70,8 +70,8 @@ int main(
 	HMODULE hConEmu;
 	char szErrInfo[512];
 	DWORD dwErr, dwOut;
-	typedef int (__stdcall* ConsoleMain_t)();
-	ConsoleMain_t lfConsoleMain;
+	typedef int (__stdcall* ConsoleMain2_t)(BOOL abAlternative);
+	ConsoleMain2_t lfConsoleMain2;
 	// Обязательно, иначе по CtrlC мы свалимся
 	SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
 #if defined(SHOW_STARTED_MSGBOX) || defined(SHOW_COMSPEC_STARTED_MSGBOX)
@@ -111,15 +111,15 @@ int main(
 	}
 
 	// Загрузить функи из ConEmuHk
-	lfConsoleMain = (ConsoleMain_t)GetProcAddress(hConEmu, "ConsoleMain");
+	lfConsoleMain2 = (ConsoleMain2_t)GetProcAddress(hConEmu, "ConsoleMain2");
 	gfHandlerRoutine = (PHANDLER_ROUTINE)GetProcAddress(hConEmu, "HandlerRoutine");
 
-	if (!lfConsoleMain || !gfHandlerRoutine)
+	if (!lfConsoleMain2 || !gfHandlerRoutine)
 	{
 		dwErr = GetLastError();
 		_wsprintfA(szErrInfo, SKIPLEN(countof(szErrInfo))
 		           "Procedure \"%s\"  not found in library \"%s\"",
-		           lfConsoleMain ? "HandlerRoutine" : "ConsoleMain",
+		           lfConsoleMain2 ? "HandlerRoutine" : "ConsoleMain2",
 #ifdef WIN64
 		           "ConEmuHk64.dll"
 #else
@@ -132,7 +132,7 @@ int main(
 	}
 
 	// Main dll entry point for Server & ComSpec
-	iRc = lfConsoleMain();
+	iRc = lfConsoleMain2(FALSE/*abAlternative*/);
 	// Exiting
 	gfHandlerRoutine = NULL;
 	FreeLibrary(hConEmu);

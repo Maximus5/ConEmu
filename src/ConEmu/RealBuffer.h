@@ -100,8 +100,8 @@ public:
 	
 	bool OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse);
 	
-	BOOL GetRBtnDrag(COORD& crMouse);
-	void SetRBtnDrag(BOOL abRBtnDrag, const COORD& crMouse);
+	BOOL GetRBtnDrag(COORD* pcrMouse);
+	void SetRBtnDrag(BOOL abRBtnDrag, const COORD* pcrMouse = NULL);
 
 	bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
 	void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
