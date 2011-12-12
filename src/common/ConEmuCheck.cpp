@@ -622,6 +622,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE)
 	{
 #ifdef _DEBUG
+		DWORD dwErr = GetLastError();
 
 		// в заголовке "чисто" запущенного фара по€вл€ютс€ отладочные(?) сообщени€
 		// по идее - не должны, т.к. все должно быть через мэппинг

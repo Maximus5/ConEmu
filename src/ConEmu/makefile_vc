@@ -122,6 +122,7 @@ $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\Options.obj \
 $(INTDIR)\OptionsClass.obj \
+$(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\RealBuffer.obj \
 $(INTDIR)\RealConsole.obj \
 $(INTDIR)\Recreate.obj \
@@ -319,9 +320,11 @@ $(INTDIR)\Options.obj: Options.cpp Options.h
 
 $(INTDIR)\OptionsClass.obj: OptionsClass.cpp OptionsClass.h Options.h Background.h
 
+$(INTDIR)\RConStartArgs.obj: RConStartArgs.cpp RConStartArgs.h
+
 $(INTDIR)\RealBuffer.obj: RealBuffer.cpp RealBuffer.h RealConsole.h  ..\common\Common.hpp
 
-$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h  ..\common\Common.hpp
+$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h RConStartArgs.h  ..\common\Common.hpp
 
 $(INTDIR)\Recreate.obj: Recreate.cpp Recreate.h
 

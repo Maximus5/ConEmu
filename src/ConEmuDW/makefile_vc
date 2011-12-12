@@ -327,12 +327,15 @@ dirs:
 clean:
 	@echo copying release files
 	@if not exist "..\..$(RELEASEDIR)\$(NULL)" mkdir "..\..$(RELEASEDIR)"
+    @echo move $(DLLFULLNAME) ..\..$(RELEASEDIR)\$(OUTNAME).dll
 	@move $(DLLFULLNAME) ..\..$(RELEASEDIR)\$(OUTNAME).dll
 #!ifdef DEBUG
+    @echo move $(PDBNAME) ..\..$(RELEASEDIR)\$(OUTNAME).pdb
 	@move $(PDBNAME) ..\..$(RELEASEDIR)\$(OUTNAME).pdb
 #!else
 #	@if exist $(PDBNAME) del $(PDBNAME)
 #!endif
+    @echo move $(MAP) ..\..$(RELEASEDIR)\$(OUTNAME).map
 	@move $(MAP) ..\..$(RELEASEDIR)\$(OUTNAME).map
 
 #	@echo final cleaning

@@ -15,7 +15,8 @@ SRCS =  \
 		Macro.cpp          \
 		Options.cpp        \
 		OptionsClass.cpp   \
-		RealBuffer.cpp    \
+		RConStartArgs.cpp  \
+		RealBuffer.cpp     \
 		RealConsole.cpp    \
 		Recreate.cpp       \
 		Registry.cpp       \

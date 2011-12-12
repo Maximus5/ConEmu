@@ -1213,7 +1213,7 @@ wrap:
 		{
 			if (gbRootWasFoundInCon == 1)
 			{
-				if (gbRootAliveLess10sec)  // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
+				if (gbRootAliveLess10sec && (gnConfirmExitParm != 1))  // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
 				{
 					static wchar_t szMsg[255];
 					_wsprintf(szMsg, SKIPLEN(countof(szMsg))
@@ -2266,13 +2266,14 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 	if (gnRunMode == RM_COMSPEC)
 	{
 		// ћожет просили открыть новую консоль?
-		int nArgLen = lstrlenA(" -new_console");
-		pwszCopy = (wchar_t*)wcsstr(asCmdLine, L" -new_console");
+		int nArgLen = lstrlenA("-new_console");
+		pwszCopy = (wchar_t*)wcsstr(asCmdLine, L"-new_console");
 
 		// ≈сли после -new_console идет пробел, или это вообще конец строки
 		// 111211 - после -new_console: допускаютс€ параметры
-		if (pwszCopy &&
-				(pwszCopy[nArgLen]==L' ' || pwszCopy[nArgLen]==L':' || pwszCopy[nArgLen]==0
+		if (pwszCopy
+			&& ((pwszCopy > asCmdLine) || (*(pwszCopy-1) == L' ') || (*(pwszCopy-1) == L'"'))
+			&& (pwszCopy[nArgLen]==L' ' || pwszCopy[nArgLen]==L':' || pwszCopy[nArgLen]==0
 		         || (pwszCopy[nArgLen]==L'"' || pwszCopy[nArgLen+1]==0)))
 		{
 			if (!ghConWnd)
@@ -2533,7 +2534,15 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 	}
 	else
 	{
-		gbRunViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot, szExeTest, gbRootIsCmdExe, gbAlwaysConfirmExit, gbAutoDisableConfirmExit);
+		BOOL bAlwaysConfirmExit = gbAlwaysConfirmExit, bAutoDisableConfirmExit = gbAutoDisableConfirmExit;
+
+		gbRunViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot, szExeTest, gbRootIsCmdExe, bAlwaysConfirmExit, bAutoDisableConfirmExit);
+
+		if (gnConfirmExitParm == 0)
+		{
+			gbAlwaysConfirmExit = bAlwaysConfirmExit;
+			gbAutoDisableConfirmExit = bAutoDisableConfirmExit;
+		}
 	}
 
 #ifndef WIN64
@@ -3550,6 +3559,7 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 	{
 		if ((gpSrv->dwProcessLastCheckTick - gpSrv->nProcessStartTick) > CHECK_ROOTOK_TIMEOUT)
 		{
+			_ASSERTE(gnConfirmExitParm==0);
 			// эта проверка выполн€етс€ один раз
 			gbAutoDisableConfirmExit = FALSE;
 			// 10 сек. прошло, теперь необходимо проверить, а жив ли процесс?
@@ -6145,6 +6155,7 @@ void _wprintf(LPCWSTR asBuffer)
 
 void DisableAutoConfirmExit()
 {
+	_ASSERTE(gnConfirmExitParm==0);
 	gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
 	// мен€ть nProcessStartTick не нужно. проверка только по флажкам
 	//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;

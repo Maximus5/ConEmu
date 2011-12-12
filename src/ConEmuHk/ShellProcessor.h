@@ -69,7 +69,7 @@ private:
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd, // или Shell & Create флаги
 				HANDLE* lphStdIn, HANDLE* lphStdOut, HANDLE* lphStdErr,
 				LPWSTR* psFile, LPWSTR* psParam);
-	BOOL ChangeExecuteParms(enum CmdOnCreateType aCmd,
+	BOOL ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole,
 				LPCWSTR asFile, LPCWSTR asParam, /*LPCWSTR asBaseDir,*/
 				LPCWSTR asExeFile, DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam);

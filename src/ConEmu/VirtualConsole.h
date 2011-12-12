@@ -236,7 +236,7 @@ class CVirtualConsole : public CConEmuChild
 
 		//CONSOLE_SELECTION_INFO SelectionInfo;
 
-		CVirtualConsole(/*HANDLE hConsoleOutput = NULL*/);
+		CVirtualConsole(const RConStartArgs *args);
 		virtual ~CVirtualConsole();
 		static CVirtualConsole* CreateVCon(RConStartArgs *args);
 		void InitGhost();

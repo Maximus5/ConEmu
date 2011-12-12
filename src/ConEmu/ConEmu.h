@@ -335,6 +335,7 @@ class CConEmuMain :
 		UINT mn_MsgCreateViewWindow;
 		UINT mn_MsgPostTaskbarActivate; BOOL mb_PostTaskbarActivate;
 		UINT mn_MsgInitVConGhost;
+		UINT mn_MsgCreateCon;
 
 		//
 		static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
@@ -536,7 +537,7 @@ class CConEmuMain :
 		LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
 		LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 		void OnTransparent();
-		void OnVConCreated(CVirtualConsole* apVCon);
+		void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args);
 		LRESULT OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 		void OnAllVConClosed();
 		void OnAllGhostClosed();

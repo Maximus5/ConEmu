@@ -317,6 +317,16 @@ CRealConsole::~CRealConsole()
 BOOL CRealConsole::PreCreate(RConStartArgs *args)
 //(BOOL abDetached, LPCWSTR asNewCmd /*= NULL*/, , BOOL abAsAdmin /*= FALSE*/)
 {
+	_ASSERTE(args!=NULL);
+
+	// 111211 - здесь может быть передан "-new_console:..."
+	if (args->pszSpecialCmd)
+	{
+		// Должен быть обработан в вызывающей функции (CVirtualConsole::CreateVCon?)
+		_ASSERTE(wcsstr(args->pszSpecialCmd, L"-new_console")==NULL);
+		args->ProcessNewConArg();
+	}
+
 	mb_NeedStartProcess = FALSE;
 	
 	// Если надо - подготовить портабельный реестр
@@ -337,38 +347,14 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 
 		if (!m_Args.pszSpecialCmd)
 			return FALSE;
-
-		// 111211 - здесь может быть передан "-new_console:..."
-		LPCWSTR pszNewCon = L"-new_console";
-		int nNewConLen = lstrlen(pszNewCon);
-		wchar_t* pszFind = wcsstr(m_Args.pszSpecialCmd, pszNewCon);
-		if (pszFind)
-		{
-			// Проверка валидности
-			if (((pszFind == m_Args.pszSpecialCmd) || (*(pszFind-1) == L'"') || (*(pszFind-1) == L' '))
-				&& (pszFind[nNewConLen] == L' ' || pszFind[nNewConLen] == L':' || pszFind[nNewConLen] == L'"' || pszFind[nNewConLen] == 0))
-			{
-				// OK, пока - просто вырежем, чтобы не попало в сервер
-				TODO("Обработка доп.параметров -new_console:xxx");
-				const wchar_t* pszEnd = (*(pszFind-1) == L'"') ? (pszFind-1) : pszFind;
-				wchar_t szNewConArg[MAX_PATH+1];
-				NextArg(&pszEnd, szNewConArg);
-				if (pszEnd > pszFind)
-				{
-					wmemset(pszFind, L' ', pszEnd - pszFind);
-				}
-				else
-				{
-					_ASSERTE(pszEnd > pszFind);
-					*pszFind = 0;
-				}
-			}
-		}
 	}
 
+	// Директория запуска. В большинстве случаев совпадает с CurDir в conemu.exe,
+	// но может быть задана из консоли, если запуск идет через "-new_console"
+	_ASSERTE(m_Args.pszStartupDir==NULL);
+	SafeFree(m_Args.pszStartupDir);
 	if (args->pszStartupDir)
 	{
-		SafeFree(m_Args.pszStartupDir);
 		m_Args.pszStartupDir = lstrdup(args->pszStartupDir);
 
 		if (!m_Args.pszStartupDir)
@@ -393,6 +379,18 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 		//m_Args.hLogonToken = args->hLogonToken; args->hLogonToken = NULL;
 		if (!m_Args.pszUserName || !*m_Args.szUserPassword)
 			return FALSE;
+	}
+
+	m_Args.bBackgroundTab = args->bBackgroundTab;
+	m_Args.bBufHeight = args->bBufHeight;
+	m_Args.nBufHeight = args->nBufHeight;
+	m_Args.eConfirmation = args->eConfirmation;
+	m_Args.bForceUserDialog = args->bForceUserDialog;
+
+	if (m_Args.bBufHeight)
+	{
+		mn_DefaultBufferHeight = m_Args.nBufHeight;
+		mp_RBuf->SetBufferHeightMode(mn_DefaultBufferHeight>0);
 	}
 
 	if (args->bDetached)
@@ -424,6 +422,9 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 	{
 		return FALSE;
 	}
+	
+	// В фоновой вкладке?
+	args->bBackgroundTab = m_Args.bBackgroundTab;
 
 	return TRUE;
 }
@@ -1813,6 +1814,11 @@ BOOL CRealConsole::StartProcess()
 		if (m_UseLogs) _wcscat_c(psCurCmd, nLen, (m_UseLogs==3) ? L" /LOG3" : (m_UseLogs==2) ? L" /LOG2" : L" /LOG");
 
 		if (!gpSet->isConVisible) _wcscat_c(psCurCmd, nLen, L" /HIDE");
+		
+		if (m_Args.eConfirmation == RConStartArgs::eConfAlways)
+			_wcscat_c(psCurCmd, nLen, L" /CONFIRM");
+		else if (m_Args.eConfirmation == RConStartArgs::eConfNever)
+			_wcscat_c(psCurCmd, nLen, L" /NOCONFIRM");
 
 		_wcscat_c(psCurCmd, nLen, L" /ROOT ");
 		_wcscat_c(psCurCmd, nLen, lpszCmd);

@@ -435,6 +435,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgCreateViewWindow = ++nAppMsg;
 	mn_MsgPostTaskbarActivate = ++nAppMsg; mb_PostTaskbarActivate = FALSE;
 	mn_MsgInitVConGhost = ++nAppMsg;
+	mn_MsgCreateCon = ++nAppMsg;
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 
@@ -4287,6 +4288,9 @@ bool CConEmuMain::ConActivate(int nCon)
 
 CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
 {
+	_ASSERTE(args!=NULL);
+	_ASSERTE(gpConEmu->isMainThread());
+
 	CVirtualConsole* pCon = NULL;
 
 	for (size_t i = 0; i < countof(mp_VCon); i++)
@@ -4298,27 +4302,42 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
 			pCon = CVirtualConsole::CreateVCon(args);
 			mb_CreatingActive = false;
 
+			BOOL lbInBackground = args->bBackgroundTab && (pOldActive != NULL);
+
 			if (pCon)
 			{
-				if (pOldActive && pOldActive->RCon())
+				if (!lbInBackground && pOldActive && pOldActive->RCon())
 				{
 					pOldActive->RCon()->OnDeactivate(i);
 				}
 
 				mp_VCon[i] = pCon;
-				mp_VActive = pCon;
+				
+				if (!lbInBackground)
+				{
+					mp_VActive = pCon;
+				}
+				else
+				{
+					_ASSERTE(mp_VActive==pOldActive);
+				}
+				
 				pCon->InitGhost();
 
-				pCon->RCon()->OnActivate(i, ActiveConNum());
+				if (!lbInBackground)
+				{
+					pCon->RCon()->OnActivate(i, ActiveConNum());
 
-				//mn_ActiveCon = i;
-				//Update(true);
+					//mn_ActiveCon = i;
+					//Update(true);
 
-				// Теперь можно показать активную
-				ShowWindow(mp_VActive->GetView(), SW_SHOW);
-				// и спрятать деактивированную
-				if (pOldActive && (pOldActive != mp_VActive) && !pOldActive->isVisible())
-					ShowWindow(pOldActive->GetView(), SW_HIDE);
+					TODO("DoubleView: показать на неактивной?");
+					// Теперь можно показать активную
+					ShowWindow(mp_VActive->GetView(), SW_SHOW);
+					// и спрятать деактивированную
+					if (pOldActive && (pOldActive != mp_VActive) && !pOldActive->isVisible())
+						ShowWindow(pOldActive->GetView(), SW_HIDE);
+				}
 			}
 
 			break;
@@ -12461,9 +12480,9 @@ LRESULT CConEmuMain::OnUpdateScrollInfo(BOOL abPosted/* = FALSE*/)
 }
 
 // Чтобы при создании ПЕРВОЙ консоли на экране сразу можно было что-то нарисовать
-void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon)
+void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args)
 {
-	if (!mp_VActive || mb_CreatingActive)
+	if (!mp_VActive || (mb_CreatingActive && !args->bBackgroundTab))
 	{
 		mp_VActive = apVCon;
 
@@ -12790,19 +12809,23 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 
 		apiSetForegroundWindow(ghWnd);
 		WARNING("");
-		RConStartArgs args;
-		args.pszSpecialCmd = pIn->NewCmd.szCommand;
-		args.pszStartupDir = pIn->NewCmd.szCurDir;
-		
-		CVirtualConsole* pCon = CreateCon(&args);
+		RConStartArgs *pArgs = new RConStartArgs;
+		pArgs->pszSpecialCmd = lstrdup(pIn->NewCmd.szCommand);
+		pArgs->pszStartupDir = lstrdup(pIn->NewCmd.szCurDir);
 
-		args.pszSpecialCmd = NULL; // А то free зовет в деструкторе
-		args.pszStartupDir = NULL; // А то free зовет в деструкторе
+		PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon, (LPARAM)pArgs);
+
+		// Отпустим команду сразу, во избежание блокирования и задержек в консоли
+		pIn->Data[0] = TRUE;
+
+		/*
+		CVirtualConsole* pCon = CreateCon(&args);
 
 		if (pCon)
 		{
 			pIn->Data[0] = TRUE;
 		}
+		*/
 
 		// Отправляем
 		fSuccess = WriteFile(
@@ -13632,6 +13655,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				if (gpConEmu->isValid(pVCon))
 					pVCon->InitGhost();
 				return 0;
+			}
+			else if (messg == gpConEmu->mn_MsgCreateCon)
+			{
+				_ASSERTE(wParam == gpConEmu->mn_MsgCreateCon);
+				RConStartArgs *pArgs = (RConStartArgs*)lParam;
+				CVirtualConsole* pCon = CreateCon(pArgs);
+				UNREFERENCED_PARAMETER(pCon);
+				delete pArgs;
 			}
 
 			//else if (messg == gpConEmu->mn_MsgCmdStarted || messg == gpConEmu->mn_MsgCmdStopped) {

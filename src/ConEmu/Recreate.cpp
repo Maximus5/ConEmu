@@ -227,7 +227,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			else
 			{
 				SetDlgItemText(hDlg, IDC_RESTART_CMD, pArgs->pszSpecialCmd ? pArgs->pszSpecialCmd : pszSystem);
-				SetDlgItemText(hDlg, IDC_STARTUP_DIR, L"");
+				SetDlgItemText(hDlg, IDC_STARTUP_DIR, pArgs->pszStartupDir ? pArgs->pszStartupDir : L"");
 			}
 			//EnableWindow(GetDlgItem(hDlg, IDC_STARTUP_DIR), FALSE);
 			//#ifndef _DEBUG
@@ -556,10 +556,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 						// Command
 						// pszSpecialCmd мог быть передан аргументом - умолчание для строки ввода
-						if (pArgs->pszSpecialCmd)
-						{
-							SafeFree(pArgs->pszSpecialCmd);
-						}
+						SafeFree(pArgs->pszSpecialCmd);
 
 						// GetDlgItemText выделяет память через calloc
 						pArgs->pszSpecialCmd = GetDlgItemText(hDlg, IDC_RESTART_CMD);
@@ -567,8 +564,8 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						if (pArgs->pszSpecialCmd)
 							gpSet->HistoryAdd(pArgs->pszSpecialCmd);
 
-						// StartupDir
-						_ASSERTE(pArgs->pszStartupDir==NULL);
+						// StartupDir (может быть передан аргументом)
+						SafeFree(pArgs->pszStartupDir);
 						pArgs->pszStartupDir = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
 						// Vista+ (As Admin...)
 						pArgs->bRunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);

@@ -222,75 +222,7 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 
 
 
-
-struct RConStartArgs
-{
-	BOOL     bDetached;
-	wchar_t* pszSpecialCmd;
-	wchar_t* pszStartupDir;
-	BOOL     bRunAsAdministrator, bRunAsRestricted;
-	wchar_t* pszUserName, *pszDomain, szUserPassword[MAX_PATH];
-	//wchar_t* pszUserPassword;
-	BOOL     bRecreate; // !!! Информационно !!!
-	//HANDLE   hLogonToken;
-
-	RConStartArgs()
-	{
-		bDetached = bRunAsAdministrator = bRunAsRestricted = bRecreate = FALSE;
-		pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = /*pszUserPassword =*/ NULL;
-		szUserPassword[0] = 0;
-		//hLogonToken = NULL;
-	};
-	~RConStartArgs()
-	{
-		SafeFree(pszSpecialCmd); // именно SafeFree
-		SafeFree(pszStartupDir); // именно SafeFree
-		SafeFree(pszUserName);
-		SafeFree(pszDomain);
-
-		//SafeFree(pszUserPassword);
-		if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
-
-		//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
-	};
-
-	BOOL CheckUserToken(HWND hPwd)
-	{
-		//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
-		if (!pszUserName || !*pszUserName)
-			return FALSE;
-
-		//wchar_t szPwd[MAX_PATH]; szPwd[0] = 0;
-		szUserPassword[0] = 0;
-
-		if (!GetWindowText(hPwd, szUserPassword, MAX_PATH-1))
-			return FALSE;
-
-		SafeFree(pszDomain);
-		wchar_t* pszSlash = wcschr(pszUserName, L'\\');
-		if (pszSlash)
-		{
-			pszDomain = pszUserName;
-			*pszSlash = 0;
-			pszUserName = lstrdup(pszSlash+1);
-		}
-
-		HANDLE hLogonToken = NULL;
-		BOOL lbRc = LogonUser(pszUserName, pszDomain, szUserPassword, LOGON32_LOGON_INTERACTIVE,
-		                      LOGON32_PROVIDER_DEFAULT, &hLogonToken);
-		//if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
-
-		if (!lbRc || !hLogonToken)
-		{
-			MessageBox(GetParent(hPwd), L"Invalid user name or password specified!", L"ConEmu", MB_OK|MB_ICONSTOP);
-			return FALSE;
-		}
-
-		CloseHandle(hLogonToken);
-		//hLogonToken may be used for CreateProcessAsUser
-		return TRUE;
-	};
-};
+#include "RConStartArgs.h"
 
 
 

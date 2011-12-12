@@ -327,7 +327,7 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 	//return pIn;
 }
 
-BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
+BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole,
 				LPCWSTR asFile, LPCWSTR asParam, /*LPCWSTR asBaseDir,*/
 				LPCWSTR asExeFile, DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam)
@@ -482,11 +482,19 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 			{
 				if (psz[0] == L'/' && wcschr(L"CcKk", psz[1]))
 				{
-					// не добавлять в измененную команду asFile (это отбрасываемый cmd.exe)
-					lbComSpecK = (psz[1] == L'K' || psz[1] == L'k');
-					asFile = NULL;
-					asParam = SkipNonPrintable(psz+2); // /C или /K добавляется к ConEmuC.exe
-					lbNewCmdCheck = TRUE;
+					if (abNewConsole)
+					{
+						// 111211 - "-new_console" передается в GUI
+						lbComSpecK = FALSE;
+					}
+					else
+					{
+						// не добавлять в измененную команду asFile (это отбрасываемый cmd.exe)
+						lbComSpecK = (psz[1] == L'K' || psz[1] == L'k');
+						asFile = NULL;
+						asParam = SkipNonPrintable(psz+2); // /C или /K добавляется к ConEmuC.exe
+						lbNewCmdCheck = TRUE;
+					}
 
 					//BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
 					//BOOL lbNeedCutStartEndQuot = FALSE;
@@ -1256,9 +1264,14 @@ BOOL CShellProc::PrepareExecuteParms(
 		{
 			if (anShellFlags)
 			{
+				// 111211 - "-new_console" выполняется в GUI
 				// Будет переопределение на ConEmuC, и его нужно запустить в ЭТОЙ консоли
 				//--WARNING("Хотя, наверное нужно не так, чтобы он не гадил в консоль, фар ведь ждать не будет, он думает что запустил ГУЙ");
-				*anShellFlags = (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS);
+				//--*anShellFlags = (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS);
+				if (anShowCmd && !(*anShellFlags & SEE_MASK_NO_CONSOLE))
+				{
+					*anShowCmd = SW_HIDE;
+				}
 			}
 			else
 			{
@@ -1341,7 +1354,7 @@ BOOL CShellProc::PrepareExecuteParms(
 		|| ((mn_ImageBits == 16) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
 		    && m_SrvMapping.cbSize && m_SrvMapping.bDosBox))
 	{
-		lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, /*szBaseDir, */
+		lbChanged = ChangeExecuteParms(aCmd, bNewConsoleArg, asFile, asParam, /*szBaseDir, */
 						ms_ExeTmp, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 		if (!lbChanged)
 		{

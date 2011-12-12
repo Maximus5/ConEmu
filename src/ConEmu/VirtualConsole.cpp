@@ -161,7 +161,24 @@ HMENU CVirtualConsole::mh_EditPopup = NULL;
 
 CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
 {
-	CVirtualConsole* pCon = new CVirtualConsole();
+	_ASSERTE(args!=NULL);
+
+	if (args->pszSpecialCmd)
+	{
+		args->ProcessNewConArg();
+	}
+
+	if (args->bForceUserDialog)
+	{
+		_ASSERTE(args->bRecreate==FALSE);
+		args->bRecreate = FALSE;
+
+		int nRc = gpConEmu->RecreateDlg(args);
+		if (nRc != IDC_START)
+			return NULL;
+	}
+
+	CVirtualConsole* pCon = new CVirtualConsole(args);
 
 	if (!pCon->mp_RCon->PreCreate(args))
 	{
@@ -172,13 +189,15 @@ CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
 	return pCon;
 }
 
-CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
+CVirtualConsole::CVirtualConsole(const RConStartArgs *args)
 {
 	mh_WndDC = NULL;
 	//CreateView();
 	mp_RCon = NULL; //new CRealConsole(this);
 	mp_Ghost = NULL;
-	gpConEmu->OnVConCreated(this);
+
+	gpConEmu->OnVConCreated(this, args);
+
 	WARNING("скорректировать размер кучи");
 	SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
 	mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
