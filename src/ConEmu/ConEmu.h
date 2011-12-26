@@ -223,7 +223,7 @@ class CConEmuMain :
 		BOOL mb_SkipOnFocus;
 	protected:
 		//CProgressBars *ProgressBars;
-		HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_VConListPopup; // Popup's для SystemMenu
+		HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu
 		TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE]; //, MultiTitle[MAX_TITLE_SIZE+30];
 		short mn_Progress;
 		//LPTSTR GetTitleStart();
@@ -336,11 +336,13 @@ class CConEmuMain :
 		UINT mn_MsgPostTaskbarActivate; BOOL mb_PostTaskbarActivate;
 		UINT mn_MsgInitVConGhost;
 		UINT mn_MsgCreateCon;
+		UINT mn_MsgRequestUpdate;
 
 		//
 		static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
 		void GuiServerThreadCommand(HANDLE hPipe);
 		DWORD mn_GuiServerThreadId; HANDLE mh_GuiServerThread, mh_GuiServerThreadTerminate;
+		wchar_t ms_ServerPipe[MAX_PATH];
 
 		//
 		virtual void OnUseGlass(bool abEnableGlass);
@@ -379,6 +381,7 @@ class CConEmuMain :
 		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* apVCon=NULL);
 		RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 		void CheckFocus(LPCWSTR asFrom);
+		void CheckUpdates(BOOL abShowMessages);
 		enum DragPanelBorder CheckPanelDrag(COORD crCon);
 		bool ConActivate(int nCon);
 		bool ConActivateNext(BOOL abNext);
@@ -418,7 +421,7 @@ class CConEmuMain :
 		bool isIconic();		
 		bool isInImeComposition();		
 		bool isLBDown();		
-		bool isMainThread();		
+		bool isMainThread();
 		bool isMeForeground(bool abRealAlso=false);		
 		bool isMouseOverFrame(bool abReal=false);		
 		bool isNtvdm(BOOL abCheckAllConsoles=FALSE);		
@@ -438,11 +441,12 @@ class CConEmuMain :
 		RECT MapRect(RECT rFrom, BOOL bFrame2Client);
 		//void PaintCon(HDC hPaintDC);
 		void PaintGaps(HDC hDC);
-		void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
-		void PostMacro(LPCWSTR asMacro);
-		void PostCreate(BOOL abRecieved=FALSE);
-		HWND PostCreateView(CConEmuChild* pChild);
 		void PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
+		void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
+		void PostCreate(BOOL abRecieved=FALSE);
+		void PostCreateCon(RConStartArgs *pArgs);
+		HWND PostCreateView(CConEmuChild* pChild);
+		void PostMacro(LPCWSTR asMacro);
 		void PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted);
 		void PostDisplayRConError(CRealConsole* mp_VCon, wchar_t* pszErrMsg);
 		//void PostSetBackground(CVirtualConsole* apVCon, CESERVER_REQ_SETBACKGROUND* apImgData);
@@ -450,6 +454,8 @@ class CConEmuMain :
 		void Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs = FALSE);
 		int RecreateDlg(RConStartArgs* apArg);
 		void RePaint();
+		void ReportUpdateError();
+		void RequestExitUpdate();
 		void ReSize(BOOL abCorrect2Ideal = FALSE);
 		BOOL RunSingleInstance();
 		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
@@ -464,6 +470,7 @@ class CConEmuMain :
 		bool SetParent(HWND hNewParent);
 		HMENU CreateDebugMenuPopup();
 		HMENU CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
+		HMENU CreateHelpMenuPopup();
 		HMENU CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly);
 		HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew);
 		void setFocus();

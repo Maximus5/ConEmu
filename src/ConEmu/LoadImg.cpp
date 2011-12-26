@@ -28,41 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
-TODO("GdiPlus для GCC");
-#ifndef __GNUC__
-#include <GdiPlus.h>
-#else
-namespace Gdiplus
-{
-enum Status { Ok = 0 };
-typedef DWORD ARGB;
-typedef DWORD PixelFormat;
-struct GdiplusStartupInput
-{
-    UINT32 GdiplusVersion;             
-    void* DebugEventCallback;
-    BOOL SuppressBackgroundThread;
-    BOOL SuppressExternalCodecs; 
-    
-    GdiplusStartupInput()
-    {
-        GdiplusVersion = 1;
-        DebugEventCallback = NULL;
-        SuppressBackgroundThread = FALSE;
-        SuppressExternalCodecs = FALSE;
-    }
-};
-
-typedef struct _GpBitmap
-{
-	int Dummy;
-} GpBitmap, GpImage;
-};
-
-#define OUT
-#define GDIPCONST const
-
-#endif
+#include "../common/GdiPlusLt.h"
 
 typedef Gdiplus::Status (WINAPI *GdiplusStartup_t)(OUT ULONG_PTR *token, const Gdiplus::GdiplusStartupInput *input, void /*OUT Gdiplus::GdiplusStartupOutput*/ *output);
 typedef VOID (WINAPI *GdiplusShutdown_t)(ULONG_PTR token);

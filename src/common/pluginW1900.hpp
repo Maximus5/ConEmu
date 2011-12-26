@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2204
+  Plugin API for Far Manager 3.0 build 2311
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2204
+#define FARMANAGERVERSION_BUILD 2311
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -1058,22 +1058,24 @@ enum FARMACROSENDSTRINGCOMMAND
 
 enum FARMACROAREA
 {
-	MACROAREA_OTHER             = 0,
-	MACROAREA_SHELL             = 1,
-	MACROAREA_VIEWER            = 2,
-	MACROAREA_EDITOR            = 3,
-	MACROAREA_DIALOG            = 4,
-	MACROAREA_SEARCH            = 5,
-	MACROAREA_DISKS             = 6,
-	MACROAREA_MAINMENU          = 7,
-	MACROAREA_MENU              = 8,
-	MACROAREA_HELP              = 9,
-	MACROAREA_INFOPANEL         =10,
-	MACROAREA_QVIEWPANEL        =11,
-	MACROAREA_TREEPANEL         =12,
-	MACROAREA_FINDFOLDER        =13,
-	MACROAREA_USERMENU          =14,
-	MACROAREA_AUTOCOMPLETION    =15,
+	MACROAREA_OTHER                      =   0,
+	MACROAREA_SHELL                      =   1,
+	MACROAREA_VIEWER                     =   2,
+	MACROAREA_EDITOR                     =   3,
+	MACROAREA_DIALOG                     =   4,
+	MACROAREA_SEARCH                     =   5,
+	MACROAREA_DISKS                      =   6,
+	MACROAREA_MAINMENU                   =   7,
+	MACROAREA_MENU                       =   8,
+	MACROAREA_HELP                       =   9,
+	MACROAREA_INFOPANEL                  =  10,
+	MACROAREA_QVIEWPANEL                 =  11,
+	MACROAREA_TREEPANEL                  =  12,
+	MACROAREA_FINDFOLDER                 =  13,
+	MACROAREA_USERMENU                   =  14,
+	MACROAREA_SHELLAUTOCOMPLETION        =  15,
+	MACROAREA_DIALOGAUTOCOMPLETION       =  16,
+
 };
 
 enum FARMACROSTATE
@@ -1153,10 +1155,10 @@ struct MacroAddMacro
 
 enum FARMACROVARTYPE
 {
-	FMVT_UNKNOWN                = -1,
-	FMVT_INTEGER                = 0,
-	FMVT_STRING                 = 1,
-	FMVT_DOUBLE                 = 2,
+	FMVT_UNKNOWN                = 0,
+	FMVT_INTEGER                = 1,
+	FMVT_STRING                 = 2,
+	FMVT_DOUBLE                 = 3,
 };
 
 struct FarMacroValue
@@ -1164,9 +1166,9 @@ struct FarMacroValue
 	enum FARMACROVARTYPE type;
 	union
 	{
-		__int64  i;
-		double   d;
-		const wchar_t *s;
+		__int64  Integer;
+		double   Double;
+		const wchar_t *String;
 	}
 #ifndef __cplusplus
 	Value
@@ -1174,11 +1176,49 @@ struct FarMacroValue
 	;
 };
 
-
-struct TFarGetValue
+struct FarMacroFunction
 {
-	int GetType;
-	struct FarMacroValue Val;
+	unsigned __int64 Flags;
+	const wchar_t *Name;
+	int nParam;
+	int oParam;
+	const wchar_t *Syntax;
+	const wchar_t *Description;
+};
+
+struct ProcessMacroFuncInfo
+{
+	size_t StructSize;
+	const wchar_t *Name;
+	const struct FarMacroValue *Params;
+	int nParams;
+	struct FarMacroValue *Results;
+	int nResults;
+};
+
+enum FAR_MACROINFOTYPE
+{
+	FMIT_GETFUNCINFO   = 0,
+	FMIT_PROCESSFUNC   = 1,
+};
+
+struct ProcessMacroInfo
+{
+	size_t StructSize;
+	enum FAR_MACROINFOTYPE Type;
+	union {
+		struct ProcessMacroFuncInfo Func;
+	}
+#ifndef __cplusplus
+	Value
+#endif
+	;
+};
+
+struct FarGetValue
+{
+	int Type;
+	struct FarMacroValue Value;
 };
 
 typedef unsigned __int64 FARSETCOLORFLAGS;
@@ -1498,6 +1538,7 @@ enum EDITOR_OPTIONS
 	EOPT_EXPANDONLYNEWTABS = 0x00000080,
 	EOPT_SHOWWHITESPACE    = 0x00000100,
 	EOPT_BOM               = 0x00000200,
+	EOPT_SHOWLINEBREAK     = 0x00000400,
 };
 
 
@@ -1712,6 +1753,26 @@ enum FARSETTINGSTYPES
 	FST_DATA                        = 4,
 };
 
+enum FARSETTINGS_SUBFOLDERS
+{
+	FSSF_ROOT                       =  0,
+	FSSF_HISTORY_CMD                =  1,
+	FSSF_HISTORY_FOLDER             =  2,
+	FSSF_HISTORY_VIEW               =  3,
+	FSSF_HISTORY_EDIT               =  4,
+	FSSF_HISTORY_EXTERNAL           =  5,
+	FSSF_FOLDERSHORTCUT_0           =  6,
+	FSSF_FOLDERSHORTCUT_1           =  7,
+	FSSF_FOLDERSHORTCUT_2           =  8,
+	FSSF_FOLDERSHORTCUT_3           =  9,
+	FSSF_FOLDERSHORTCUT_4           = 10,
+	FSSF_FOLDERSHORTCUT_5           = 11,
+	FSSF_FOLDERSHORTCUT_6           = 12,
+	FSSF_FOLDERSHORTCUT_7           = 13,
+	FSSF_FOLDERSHORTCUT_8           = 14,
+	FSSF_FOLDERSHORTCUT_9           = 15,
+};
+
 struct FarSettingsCreate
 {
 	size_t StructSize;
@@ -1746,11 +1807,29 @@ struct FarSettingsName
 	enum FARSETTINGSTYPES Type;
 };
 
+struct FarSettingsHistory
+{
+	const wchar_t* Name;
+	const wchar_t* Param;
+	GUID PluginId;
+	const wchar_t* File;
+	FILETIME Time;
+	BOOL Lock;
+};
+
 struct FarSettingsEnum
 {
 	size_t Root;
 	size_t Count;
-	const struct FarSettingsName* Items;
+	union
+	{
+		const struct FarSettingsName* Items;
+		const struct FarSettingsHistory* Histories;
+	}
+#ifndef __cplusplus
+	Value
+#endif
+	;
 };
 
 struct FarSettingsValue
@@ -1831,7 +1910,7 @@ typedef void (WINAPI *FARSTDQSORT)(void *base, size_t nelem, size_t width, int (
 typedef void (WINAPI *FARSTDQSORTEX)(void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *,void *userparam),void *userparam);
 typedef void   *(WINAPI *FARSTDBSEARCH)(const void *key, const void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *));
 typedef size_t (WINAPI *FARSTDGETFILEOWNER)(const wchar_t *Computer,const wchar_t *Name,wchar_t *Owner,size_t Size);
-typedef int (WINAPI *FARSTDGETNUMBEROFLINKS)(const wchar_t *Name);
+typedef size_t (WINAPI *FARSTDGETNUMBEROFLINKS)(const wchar_t *Name);
 typedef int (WINAPI *FARSTDATOI)(const wchar_t *s);
 typedef __int64(WINAPI *FARSTDATOI64)(const wchar_t *s);
 typedef wchar_t   *(WINAPI *FARSTDITOA64)(__int64 value, wchar_t *string, int radix);
@@ -2099,6 +2178,8 @@ struct PluginInfo
 	struct PluginMenuItem PluginMenu;
 	struct PluginMenuItem PluginConfig;
 	const wchar_t *CommandPrefix;
+	int MacroFunctionNumber;
+	const struct FarMacroFunction *MacroFunctions;
 };
 
 
@@ -2459,6 +2540,7 @@ extern "C"
 	int    WINAPI ProcessPanelEventW(const struct ProcessPanelEventInfo *Info);
 	int    WINAPI ProcessHostFileW(const struct ProcessHostFileInfo *Info);
 	int    WINAPI ProcessPanelInputW(const struct ProcessPanelInputInfo *Info);
+	int    WINAPI ProcessMacroW(const struct ProcessMacroInfo *Info);
 	int    WINAPI ProcessConsoleInputW(struct ProcessConsoleInputInfo *Info);
 	/*
 	int    WINAPI ProcessSynchroEventW(const struct ProcessSynchroEventInfo *Info);

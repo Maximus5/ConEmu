@@ -361,7 +361,8 @@ class CSettings
 		//DWORD nConInMode;
 		
 		//
-		enum GuiLoggingType m_RealConLoggingType;
+		enum GuiLoggingType m_ActivityLoggingType;
+		DWORD mn_ActivityCmdStartTick;
 
 		// Thumbnails and Tiles
 		//PanelViewSetMapping ThSet;
@@ -392,26 +393,31 @@ class CSettings
 		WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 		ABC     CharABC[0x10000];
 
-		HWND hMain, hExt, hKeys, hTabs, hColors, hViews, hInfo, hDebug;
+		HWND hMain, hExt, hKeys, hTabs, hColors, hViews, hInfo, hDebug, hUpdate;
 
 		//static void CenterDialog(HWND hWnd2);
 		void OnClose();
+		// IDD_SETTINGS
 		static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		static INT_PTR CALLBACK mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		static INT_PTR CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		static INT_PTR CALLBACK keysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		static INT_PTR CALLBACK tabsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		static INT_PTR CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		static INT_PTR CALLBACK viewsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		static INT_PTR CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		static INT_PTR CALLBACK debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		// ¬кладки настроек: IDD_SPG_MAIN, IDD_SPG_FEATURE, и т.д.
+		static INT_PTR CALLBACK pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		////static INT_PTR CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		////static INT_PTR CALLBACK keysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		////static INT_PTR CALLBACK tabsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		////static INT_PTR CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		////static INT_PTR CALLBACK viewsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		////static INT_PTR CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		////static INT_PTR CALLBACK debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		// IDD_MORE_HIDE
 		static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//static INT_PTR CALLBACK multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		////static INT_PTR CALLBACK multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		// IDD_MORE_SELECTION
 		static INT_PTR CALLBACK selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		//
 		void debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl);
 		void debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile);
 		void debugLogInfo(HWND hWnd2, CESERVER_REQ_PEEKREADINFO* pInfo);
+		void debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTick, DWORD anDur, LPCWSTR asPipe, CESERVER_REQ* pResult = NULL);
 		//
 		void SettingsLoaded();
 		void SettingsPreSave();
@@ -478,20 +484,24 @@ class CSettings
 		static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout);
 	protected:
 		void OnResetOrReload(BOOL abResetSettings);
+		// IDD_SETTINGS
 		LRESULT OnInitDialog();
+		// OnInitDialogPage_t: IDD_SPG_MAIN, и т.д.
 		LRESULT OnInitDialog_Main(HWND hWnd2);
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
 		LRESULT OnInitDialog_Keys(HWND hWnd2);
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
 		LRESULT OnInitDialog_Color(HWND hWnd2);
 		LRESULT OnInitDialog_Views(HWND hWnd2);
-		LRESULT OnInitDialog_ViewsFonts(HWND hWnd2);
-		LRESULT OnInitDialog_Info(HWND hWnd2);
+		void OnInitDialog_ViewsFonts(HWND hWnd2); // скопировать список шрифтов с вкладки hMain
 		LRESULT OnInitDialog_Debug(HWND hWnd2);
+		LRESULT OnInitDialog_Update(HWND hWnd2);
+		LRESULT OnInitDialog_Info(HWND hWnd2);
+		// ...
 		LRESULT OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		LRESULT OnColorButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		
-		LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
+		//LRESULT OnColorButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		//LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		
+		//LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
 		LRESULT OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
 		LRESULT OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnPage(LPNMHDR phdr);
@@ -633,13 +643,32 @@ class CSettings
 			lic_Dup,
 			lic_Event,
 		};
+		enum LogCommandsColumns
+		{
+			lcc_InOut = 0,
+			lcc_Time,
+			lcc_Duration,
+			lcc_Command,
+			lcc_Size,
+			lcc_PID,
+			lcc_Pipe,
+			lcc_Extra,
+		};
+		struct LogCommandsData
+		{
+			BOOL  bInput, bMainThread;
+			DWORD nTick, nDur, nCmd, nSize, nPID;
+			wchar_t szPipe[64];
+			wchar_t szExtra[128];
+		};
+		void debugLogCommand(HWND hWnd2, LogCommandsData* apData);
+		
 		static void GetVkKeyName(BYTE vk, wchar_t (&szName)[128]);
 
 		struct ConEmuSetupPages
 		{
 			int       PageID;
 			wchar_t   PageName[64];
-			DLGPROC   dlgProc;
 			HWND     *hPage;
 			HTREEITEM hTI;
 		};

@@ -50,7 +50,11 @@ void __cdecl operator delete[](void *ptr);
 #ifdef TRACK_MEMORY_ALLOCATIONS
 	typedef struct tag_xf_mem_block
 	{
-		BOOL   bBlockUsed;
+		union
+		{
+			BOOL   bBlockUsed;
+			LPVOID Padding;
+		};
 		size_t nBlockSize;
 		char   sCreatedFrom[32];
 	} xf_mem_block;

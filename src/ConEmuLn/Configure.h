@@ -227,7 +227,7 @@ static int ConfigureProc(int ItemNumber)
 	dialog_res = InfoT->DialogRun(hDlg);
 #else
 	dialog_res = InfoT->DialogEx(InfoT->ModuleNumber,-1,-1,42,height,
-	                             NULL/*"Configure"*/, items, countof(items), 0, 0, ConfigDlgProc, NULL);
+	                             NULL/*"Configure"*/, items, countof(items), 0, 0, ConfigDlgProc, 0);
 #endif
 
 	if (dialog_res != -1 && dialog_res != cfgCancel)

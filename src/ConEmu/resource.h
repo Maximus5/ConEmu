@@ -31,6 +31,7 @@
 #define IDD_MORE_DOSBOX                 210
 #define IDD_SPG_KEYS                    211
 #define IDD_ATTACHDLG                   212
+#define IDD_SPG_UPDATE                  214
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -454,14 +455,34 @@
 #define tvSetupCategories               2049
 #define tSetupPagePlace                 2050
 #define cbHideDisabledTabs              2051
+#define tUpdateVerLocation              2052
+#define rbUpdateStableOnly              2054
+#define rbUpdateLatestAvailable         2055
+#define cbUpdateCheckOnStartup          2058
+#define cbUpdateUseProxy                2059
+#define tUpdateProxy                    2060
+#define tUpdateProxyUser                2061
+#define tUpdateProxyPassword            2062
+#define tUpdateDownloadPath             2063
+#define cbUpdateDownloadPath            2064
+#define cbUpdateLeavePackages           2065
+#define tUpdatePostUpdateCmd            2066
+#define cbUpdateCheckHourly             2067
+#define cbUpdateCheckNotifyOnly         2068
+#define rbActivityCmd                   2069
+#define rbUpdateUseExe                  2070
+#define rbUpdateUseArc                  2071
+#define tUpdateArcCmdLine               2072
+#define cbUpdateArcCmdLine              2073
+#define tUpdateExeCmdLine               2074
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        213
+#define _APS_NEXT_RESOURCE_VALUE        215
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2052
+#define _APS_NEXT_CONTROL_VALUE         2076
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

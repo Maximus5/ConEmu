@@ -155,154 +155,17 @@ Settings::Settings()
 	// Сброс переменных (struct, допустимо)
 	memset(this, 0, sizeof(*this));
 
-	//wcscpy_c(gpSetCls->GetConfigPath(), CONEMU_ROOT_KEY L"\\.Vanilla");
-	//ConfigName[0] = 0;
-	
-	// Некоторые вещи нужно делать вне InitSettings, т.к. она может быть
-	// вызвана потом из интерфейса диалога настроек
-	Type[0] = 0;
-	psCmd = psCurCmd = NULL;
-	//wcscpy_c(szDefCmd, L"far");
-	psCmdHistory = NULL; nCmdHistorySize = 0;
-	
-	//m_ThSetMap.InitName(CECONVIEWSETNAME, GetCurrentProcessId());
-	//if (!m_ThSetMap.Create())
-	//{
-	//	MBoxA(m_ThSetMap.GetErrorText());
-	//}
-	//else
-	//{
-	//	// Применить в Mapping (там заодно и палитра копируется)
-	//	//m_ThSetMap.Set(&ThSet);
-	//	//!! Это нужно делать после создания основного шрифта
-	//	//gpConEmu->OnPanelViewSettingsChanged(FALSE);
-	//}
+	// -- уже memset
+	//// Некоторые вещи нужно делать вне InitSettings, т.к. она может быть
+	//// вызвана потом из интерфейса диалога настроек
+	//Type[0] = 0;
+	//psCmd = psCurCmd = NULL;
+	////wcscpy_c(szDefCmd, L"far");
+	//psCmdHistory = NULL; nCmdHistorySize = 0;
 
-	
-	// Теперь установим умолчания настроек	
-	InitSettings();
-	
-	//SingleInstanceArg = false;
-	//mb_StopRegisterFonts = FALSE;
-	//mb_IgnoreEditChanged = FALSE;
-	//mb_IgnoreTtfChange = TRUE;
-	//mb_CharSetWasSet = FALSE;
-	//mb_TabHotKeyRegistered = FALSE;
-	//hMain = hExt = hTabs = hKeys = hColors = hViews = hInfo = hDebug = NULL; hwndTip = NULL; hwndBalloon = NULL;
-	//hConFontDlg = NULL; hwndConFontBalloon = NULL; bShowConFontError = FALSE; sConFontError[0] = sDefaultConFontName[0] = 0; bConsoleFontChecked = FALSE;
-	//QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
-	//memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
-	//memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
-	//memset(mn_FPS, 0, sizeof(mn_FPS)); mn_FPS_CUR_FRAME = 0;
-	//memset(mn_RFPS, 0, sizeof(mn_RFPS)); mn_RFPS_CUR_FRAME = 0;
-	//memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
-	////hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL;
-	//isBackgroundImageValid = false;
-	//mb_NeedBgUpdate = FALSE; //mb_WasVConBgImage = FALSE;
-	//mb_BgLastFade = false;
-	//ftBgModified.dwHighDateTime = ftBgModified.dwLowDateTime = nBgModifiedTick = 0;
-	//mp_Bg = NULL; mp_BgImgData = NULL;
-	//ZeroStruct(mh_Font);
-	//mh_Font2 = NULL;
-	//ZeroStruct(m_tm);
-	//ZeroStruct(m_otm);
-	//ResetFontWidth();
-	//nAttachPID = 0; hAttachConWnd = NULL;
-	//memset(&ourSI, 0, sizeof(ourSI));
-	//ourSI.cb = sizeof(ourSI);
-	//szFontError[0] = 0;
-	//nConFontError = 0;
-	//memset(&tiBalloon, 0, sizeof(tiBalloon));
-	//mn_FadeMul = mn_FadeHigh - mn_FadeLow;
-	//mn_LastFadeSrc = mn_LastFadeDst = -1;
-	//try
-	//{
-	//	GetStartupInfoW(&ourSI);
-	//}
-	//catch(...)
-	//{
-	//	memset(&ourSI, 0, sizeof(ourSI));
-	//}
-
-	//mn_LastChangingFontCtrlId = 0;
-	//SetWindowThemeF = NULL;
-	//mh_Uxtheme = LoadLibrary(L"UxTheme.dll");
-
-	//if (mh_Uxtheme)
-	//{
-	//	SetWindowThemeF = (SetWindowThemeT)GetProcAddress(mh_Uxtheme, "SetWindowTheme");
-	//	EnableThemeDialogTextureF = (EnableThemeDialogTextureT)GetProcAddress(mh_Uxtheme, "EnableThemeDialogTexture");
-	//	//if (SetWindowThemeF) { SetWindowThemeF(Progressbar1, L" ", L" "); }
-	//}
-
-	//mn_MsgUpdateCounter = RegisterWindowMessage(L"ConEmuSettings::Counter");
-	//mn_MsgRecreateFont = RegisterWindowMessage(L"Settings::RecreateFont");
-	//mn_MsgLoadFontFromMain = RegisterWindowMessage(L"Settings::LoadFontNames");
-	//mn_ActivateTabMsg = RegisterWindowMessage(L"Settings::ActivateTab");
-	//mh_EnumThread = NULL;
-	//mh_CtlColorBrush = NULL;
-	
-	//// Горячие клавиши
-	//TODO("Дополнить системные комбинации");
-	//WARNING("У nLDragKey,nRDragKey был тип DWORD");
-	//ConEmuHotKeys HotKeys[] = {
-	//	// User (Keys)
-	//	{vkMinimizeRestore, 0, &icMinimizeRestore},
-	//	{vkMultiNew, 0, &icMultiNew},
-	//	{vkMultiNewShift, 0, &icMultiNew},
-	//	{vkMultiNext, 0, &icMultiNext},
-	//	{vkMultiNextShift, 0, &icMultiNext},
-	//	{vkMultiRecreate, 0, &icMultiRecreate},
-	//	{vkMultiBuffer, 0, &icMultiBuffer},
-	//	{vkMultiClose, 0, &icMultiClose},
-	//	{vkMultiCmd, 0, &icMultiCmd},
-	//	// User (Modifiers)
-	//	{vkCTSVkBlock, 1, &isCTSVkBlock},      // модификатор запуска выделения мышкой
-	//	{vkCTSVkText, 1, &isCTSVkText},       // модификатор запуска выделения мышкой
-	//	{vkCTSVkAct, 1, &isCTSVkAct},        // модификатор разрешения действий правой и средней кнопки мышки
-	//	{vkFarGotoEditorVk, 1, &isFarGotoEditorVk}, // модификатор для isFarGotoEditor
-	//	{vkLDragKey, 1, &nLDragKey},         // модификатор драга левой кнопкой
-	//	{vkRDragKey, 1, &nRDragKey},         // модификатор драга правой кнопкой
-	//	// System (predefined, fixed)
-	//	{vkWinAltP, 0, NULL, 'P', MAKEMODIFIER2(VK_LWIN,VK_MENU)}, // Settings
-	//	{vkWinAltSpace, 0, NULL, VK_SPACE, MAKEMODIFIER2(VK_LWIN,VK_MENU)}, // System menu
-	//	{vkAltF9, 0, NULL, VK_F9, VK_MENU}, // System menu
-	//	{vkCtrlWinAltSpace, 0, NULL, VK_SPACE, MAKEMODIFIER3(VK_CONTROL,VK_LWIN,VK_MENU)}, // Show real console
-	//	{vkAltEnter, 0, NULL, VK_RETURN, VK_MENU}, // Full screen
-	//	{vkCtrlWinEnter, 0, NULL, VK_RETURN, MAKEMODIFIER2(VK_LWIN,VK_CONTROL)},
-	//	{vkAltSpace, 0, NULL, VK_SPACE, VK_MENU}, // System menu
-	//	{vkCtrlUp, 0, NULL, VK_UP, VK_CONTROL}, // Buffer scroll
-	//	{vkCtrlDown, 0, NULL, VK_DOWN, VK_CONTROL}, // Buffer scroll
-	//	{vkCtrlPgUp, 0, NULL, VK_PRIOR, VK_CONTROL}, // Buffer scroll
-	//	{vkCtrlPgDn, 0, NULL, VK_NEXT, VK_CONTROL}, // Buffer scroll
-	//	{vkCtrlTab, 0, NULL, VK_TAB, VK_CONTROL}, // Tab switch
-	//	{vkCtrlShiftTab, 0, NULL, VK_TAB, MAKEMODIFIER2(VK_CONTROL,VK_SHIFT)}, // Tab switch
-	//	{vkCtrlTab_Left, 0, NULL, VK_LEFT, VK_CONTROL}, // Tab switch
-	//	{vkCtrlTab_Up, 0, NULL, VK_UP, VK_CONTROL}, // Tab switch
-	//	{vkCtrlTab_Right, 0, NULL, VK_RIGHT, VK_CONTROL}, // Tab switch
-	//	{vkCtrlTab_Down, 0, NULL, VK_DOWN, VK_CONTROL}, // Tab switch
-	//	{vkWinLeft, 0, NULL, VK_LEFT, (DWORD)-1}, // Decrease window width
-	//	{vkWinRight, 0, NULL, VK_RIGHT, (DWORD)-1}, // Increase window width
-	//	{vkWinUp, 0, NULL, VK_UP, (DWORD)-1}, // Decrease window height
-	//	{vkWinDown, 0, NULL, VK_DOWN, (DWORD)-1}, // Increase window height
-	//	// Console activate by number
-	//	{vkConsole_1, 0, NULL, '1', (DWORD)-1},
-	//	{vkConsole_2, 0, NULL, '2', (DWORD)-1},
-	//	{vkConsole_3, 0, NULL, '3', (DWORD)-1},
-	//	{vkConsole_4, 0, NULL, '4', (DWORD)-1},
-	//	{vkConsole_5, 0, NULL, '5', (DWORD)-1},
-	//	{vkConsole_6, 0, NULL, '6', (DWORD)-1},
-	//	{vkConsole_7, 0, NULL, '7', (DWORD)-1},
-	//	{vkConsole_8, 0, NULL, '8', (DWORD)-1},
-	//	{vkConsole_9, 0, NULL, '9', (DWORD)-1},
-	//	{vkConsole_10, 0, NULL, '0', (DWORD)-1},
-	//	{vkConsole_11, 0, NULL, VK_F11, (DWORD)-1},
-	//	{vkConsole_12, 0, NULL, VK_F12, (DWORD)-1},
-	//	// End
-	//	{},
-	//};
-	//m_HotKeys = (ConEmuHotKeys*)malloc(sizeof(HotKeys));
-	//memmove(m_HotKeys, HotKeys, sizeof(HotKeys));
+	// Умолчания устанавливаются в CSettings::CSettings
+	//-- // Теперь установим умолчания настроек	
+	//-- InitSettings();
 }
 
 void Settings::ReleasePointers()
@@ -318,6 +181,8 @@ void Settings::ReleasePointers()
 	if (psCmd) {free(psCmd); psCmd = NULL;}
 	if (psCurCmd) {free(psCurCmd); psCurCmd = NULL;}
 	if (psCmdHistory) {free(psCmdHistory); psCmdHistory = NULL;}
+	
+	UpdSet.FreePointers();
 }
 
 Settings::~Settings()
@@ -338,7 +203,6 @@ void Settings::InitSettings()
 //------------------------------------------------------------------------
 ///| Moved from CVirtualConsole |/////////////////////////////////////////
 //------------------------------------------------------------------------
-	//FontFile[0] = 0;
 	isAutoRegisterFonts = true;
 	isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A';
 	icMinimizeRestore = 'C';
@@ -348,24 +212,14 @@ void Settings::InitSettings()
 	isFARuseASCIIsort = false; isFixAltOnAltTab = false; isShellNoZoneCheck = false;
 	isFadeInactive = true; mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; mb_FadeInitialized = false;
 	mn_LastFadeSrc = mn_LastFadeDst = -1;
-	//nFadeInactiveMask = 0xD0D0D0;
-	// Logging
-	//isAdvLogging = 0;
-	//m_RealConLoggingType = glt_None;
-	//wcscpy_c(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
 	nMainTimerElapse = 10;
 	nMainTimerInactiveElapse = 1000;
 	nAffinity = 0; // 0 - don't change default affinity
-	//isAdvLangChange = true;
 	isSkipFocusEvents = false;
 	isSendAltEnter = isSendAltSpace = isSendAltTab = isSendAltEsc = isSendAltPrintScrn = isSendPrintScrn = isSendCtrlEsc = false;
-	//isLangChangeWsPlugin = false;
 	isMonitorConsoleLang = 3;
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
-	//FarSyncSize = true;
 	nCmdOutputCP = 0;
-	//bForceBufferHeight = false; nForceBufferHeight = 1000; /* устанавливается в true, из ком.строки /BufferHeight */
-	//AutoScroll = true;
 
 	//WARNING("InitSettings() может вызываться из интерфейса настройки, не промахнуться с хэндлами");
 	//// Шрифты
@@ -465,10 +319,6 @@ void Settings::InitSettings()
 	isPartBrushBlack = 32; //-V112
 	isExtendUCharMap = true;
 	isDownShowHiddenMessage = false;
-	//memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
-	//wcscpy_c(mszCharRanges, L"2013-25C4");
-	//icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
-	//mpc_FixFarBorderValues = (bool*)calloc(65536,sizeof(bool));
 	ParseCharRanges(L"2013-25C4", mpc_FixFarBorderValues);
 	wndHeight = 25;
 	ntvdmHeight = 0; // Подбирать автоматически
@@ -483,14 +333,9 @@ void Settings::InitSettings()
 	wndX = 0; wndY = 0; wndCascade = true;
 	isAutoSaveSizePos = false; mb_SizePosAutoSaved = false;
 	isConVisible = false; //isLockRealConsolePos = false;
-	//WARNING("isUseInjects в релизе по умолчанию отключен");
-	//#ifdef _DEBUG
 	isUseInjects = true;
-	//#else
-	//isUseInjects = false;
-	//#endif
 	#ifdef USEPORTABLEREGISTRY
-	isPortableReg = true; // включено по умолчанию
+	isPortableReg = true; // включено по умолчанию, DEBUG
 	#else
 	isPortableReg = false;
 	#endif
@@ -500,10 +345,9 @@ void Settings::InitSettings()
 	isRClickSendKey = 2;
 	sRClickMacro = NULL;
 	wcscpy_c(szTabConsole, L"%s");
-	//pszTabConsole = wcscpy_c(szTabPanels+_tcslen(szTabPanels)+1, L"Console");
 	wcscpy_c(szTabEditor, L"[%s]");
 	wcscpy_c(szTabEditorModified, L"[%s] *");
-	/* */ wcscpy_c(szTabViewer, L"{%s}");
+	wcscpy_c(szTabViewer, L"{%s}");
 	nTabLenMax = 20;
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
@@ -527,13 +371,6 @@ void Settings::InitSettings()
 	wcscpy_c(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
 	sTabCloseMacro = sSaveAllMacro = NULL;
 	nToolbarAddSpace = 0;
-	//isVisualizer = false;
-	//nVizNormal = 1; nVizFore = 15; nVizTab = 15; nVizEOL = 8; nVizEOF = 12;
-	//cVizTab = 0x2192; cVizEOL = 0x2193; cVizEOF = 0x2640;
-	//isAllowDetach = 0;
-	//isCreateAppWindow = false;
-	/*isScrollTitle = true;
-	ScrollTitleLen = 22;*/
 	wcscpy_c(szAdminTitleSuffix, L" (Admin)");
 	bAdminShield = true;
 	bHideInactiveConsoleTabs = false;
@@ -575,23 +412,16 @@ void Settings::InitSettings()
 	//// Пока не используется
 	//DWORD nCacheFolderType; // юзер/программа/temp/и т.п.
 	//wchar_t sCacheFolder[MAX_PATH];
+
+	/* *** AutoUpdate *** */
+	_ASSERTE(UpdSet.szUpdateVerLocation==NULL); // Уже должен был быть вызван ReleasePointers
+	UpdSet.ResetToDefaults();
 }
 
 void Settings::LoadSettings()
 {
 	MCHKHEAP
-	//FontSizeY = LogFont.lfHeight;
-	//TCHAR inFont[MAX_PATH], inFont2[MAX_PATH];
-	//wcscpy_c(inFont, LogFont.lfFaceName);
-	//wcscpy_c(inFont2, LogFont2.lfFaceName);
-	
-	//DWORD FontRangeCount = countof(m_Fonts);
-	//DWORD Quality = LogFont.lfQuality;
-	//gpConEmu->WindowMode = rMaximized;
-	//mn_LoadFontCharSet = LogFont.lfCharSet;
 	mb_CharSetWasSet = FALSE;
-	//bool isBold = (LogFont.lfWeight>=FW_BOLD);
-	//bool isItalic = (LogFont.lfItalic!=FALSE);
 
 	//;; Q. В Windows Vista зависают другие консольные процессы.
 	//	;; A. "Виноват" процесс ConIme.exe. Вроде бы он служит для ввода иероглифов
@@ -1010,21 +840,31 @@ void Settings::LoadSettings()
 		reg->Load(L"PanView.MaxZoom", ThSet.nMaxZoom);
 		reg->Load(L"PanView.UsePicView2", ThSet.bUsePicView2);
 		reg->Load(L"PanView.RestoreOnStartup", ThSet.bRestoreOnStartup);
+
+		/* *** AutoUpdate *** */
+		reg->Load(L"Update.VerLocation", &UpdSet.szUpdateVerLocation);
+		reg->Load(L"Update.CheckOnStartup", UpdSet.isUpdateCheckOnStartup);
+		reg->Load(L"Update.CheckHourly", UpdSet.isUpdateCheckHourly);
+		reg->Load(L"Update.CheckNotifyOnly", UpdSet.isUpdateCheckNotifyOnly);
+		reg->Load(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds); if (UpdSet.isUpdateUseBuilds!=1 && UpdSet.isUpdateUseBuilds!=2) UpdSet.isUpdateUseBuilds = 2; // 1-stable only, 2-latest
+		reg->Load(L"Update.UseProxy", UpdSet.isUpdateUseProxy);
+		reg->Load(L"Update.Proxy", &UpdSet.szUpdateProxy);
+		reg->Load(L"Update.ProxyUser", &UpdSet.szUpdateProxyUser);
+		reg->Load(L"Update.ProxyPassword", &UpdSet.szUpdateProxyPassword);
+		reg->Load(L"Update.DownloadSetup", UpdSet.isUpdateDownloadSetup); // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+		reg->Load(L"Update.ExeCmdLine", &UpdSet.szUpdateExeCmdLine);
+		reg->Load(L"Update.ArcCmdLine", &UpdSet.szUpdateArcCmdLine);
+		reg->Load(L"Update.DownloadPath", &UpdSet.szUpdateDownloadPath);
+		reg->Load(L"Update.LeavePackages", UpdSet.isUpdateLeavePackages);
+		reg->Load(L"Update.PostUpdateCmd", &UpdSet.szUpdatePostUpdateCmd);
+
+		/* Done */
 		reg->CloseKey();
 	}
 
 	// сервис больше не нужен
 	delete reg;
 	reg = NULL;
-
-	//LogFont.lfHeight = mn_FontHeight = FontSizeY;
-	//LogFont.lfWidth = mn_FontWidth = FontSizeX;
-	//lstrcpyn(LogFont.lfFaceName, inFont, countof(LogFont.lfFaceName));
-	//lstrcpyn(LogFont2.lfFaceName, inFont2, countof(LogFont2.lfFaceName));
-	//LogFont.lfQuality = mn_AntiAlias;
-	//LogFont.lfWeight = isBold ? FW_BOLD : FW_NORMAL;
-	//LogFont.lfCharSet = (BYTE) mn_LoadFontCharSet;
-	//LogFont.lfItalic = isItalic;
 
 	if (lbNeedCreateVanilla)
 	{
@@ -1034,9 +874,6 @@ void Settings::LoadSettings()
 	// Передернуть палитру затенения
 	mb_FadeInitialized = false; GetColors(TRUE);
 	
-	//// Применить в Mapping (там заодно и палитра копируется)
-	////!! Это нужно делать после создания основного шрифта
-	////gpConEmu->OnPanelViewSettingsChanged(FALSE);
 	
 	// Проверить необходимость установки хуков
 	isKeyboardHooks();
@@ -1114,32 +951,6 @@ void Settings::LoadSettings()
 		psCmdHistory = (wchar_t*)calloc(2,2);
 	}
 
-	//for(UINT n = 0; n < countof(icFixFarBorderRanges); n++)
-	//{
-	//	if (!icFixFarBorderRanges[n].bUsed) break;
-	//
-	//	for(WORD x = (WORD)(icFixFarBorderRanges[n].cBegin); x <= (WORD)(icFixFarBorderRanges[n].cEnd); x++)
-	//		mpc_FixFarBorderValues[x] = true;
-	//}
-
-	/*if (wndWidth)
-	    pVCon->TextWidth = wndWidth;
-	if (wndHeight)
-	    pVCon->TextHeight = wndHeight;*/
-	/*if (wndHeight && wndWidth)
-	{
-	    COORD b = {wndWidth, wndHeight};
-	  SetConsoleWindowSize(b,false); // Maximus5 - по аналогии с NightRoman
-	  //MoveWindow(hConWnd, 0, 0, 1, 1, 0);
-	  //SetConsoleScreenBufferSize(pVCon->hConOut(), b);
-	  //MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
-	}*/
-
-	// pVCon еще не создано!
-	/*if (isShowBgImage && pVCon)
-	    LoadImageFrom(pBgImage);*/
-	//2009-06-07 Размер шрифта может быть задан в командной строке, так что создаем шрифт не здесь
-	//InitFont();
 	MCHKHEAP
 	
 	// Переменные загружены, выполнить дополнительные действия в классе настроек
@@ -1487,6 +1298,25 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"PanView.MaxZoom", ThSet.nMaxZoom);
 		reg->Save(L"PanView.UsePicView2", ThSet.bUsePicView2);
 		reg->Save(L"PanView.RestoreOnStartup", ThSet.bRestoreOnStartup);
+
+		/* *** AutoUpdate *** */
+		reg->Save(L"Update.VerLocation", UpdSet.szUpdateVerLocation);
+		reg->Save(L"Update.CheckOnStartup", UpdSet.isUpdateCheckOnStartup);
+		reg->Save(L"Update.CheckHourly", UpdSet.isUpdateCheckHourly);
+		reg->Save(L"Update.CheckNotifyOnly", UpdSet.isUpdateCheckNotifyOnly);
+		reg->Save(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds);
+		reg->Save(L"Update.UseProxy", UpdSet.isUpdateUseProxy);
+		reg->Save(L"Update.Proxy", UpdSet.szUpdateProxy);
+		reg->Save(L"Update.ProxyUser", UpdSet.szUpdateProxyUser);
+		reg->Save(L"Update.ProxyPassword", UpdSet.szUpdateProxyPassword);
+		reg->Save(L"Update.DownloadSetup", UpdSet.isUpdateDownloadSetup); // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+		reg->Save(L"Update.ExeCmdLine", UpdSet.szUpdateExeCmdLine);
+		reg->Save(L"Update.ArcCmdLine", UpdSet.szUpdateArcCmdLine);
+		reg->Save(L"Update.DownloadPath", UpdSet.szUpdateDownloadPath);
+		reg->Save(L"Update.LeavePackages", UpdSet.isUpdateLeavePackages);
+		reg->Save(L"Update.PostUpdateCmd", UpdSet.szUpdatePostUpdateCmd);
+
+		/* Done */
 		reg->CloseKey();
 		delete reg;
 		//if (isTabs==1) ForceShowTabs();
@@ -1916,25 +1746,6 @@ bool Settings::IsHostkeyPressed()
 	return true;
 }
 
-//LPCTSTR Settings::GetDefaultCmd()
-//{
-//	return szDefCmd;
-//}
-
-//void Settings::ResetCmdArg()
-//{
-//	SingleInstanceArg = false;
-//	// Сбросить нужно только psCurCmd, psCmd не меняется - загружается только из настройки
-//	SafeFree(psCurCmd);
-//	//SettingsBase* reg = CreateSettings();
-//	//if (reg->OpenKey(Config, KEY_READ))
-//	//{
-//	//	reg->Load(L"CmdLine", &psCmd);
-//	//    reg->CloseKey();
-//	//}
-//	//delete reg;
-//}
-
 LPCTSTR Settings::GetCmd()
 {
 	if (psCurCmd && *psCurCmd)
@@ -2114,17 +1925,6 @@ LPCWSTR Settings::HistoryGet()
 
 	return NULL;
 }
-
-//// Показать в "Инфо" текущий режим консоли
-//void Settings::UpdateConsoleMode(DWORD nMode)
-//{
-//	if (hInfo && IsWindow(hInfo))
-//	{
-//		wchar_t szInfo[255];
-//		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Console states (0x%X)", nMode);
-//		SetDlgItemText(hInfo, IDC_CONSOLE_STATES, szInfo);
-//	}
-//}
 
 // например, L"2013-25C3,25C4"
 // Возвращает 0 - в случае успеха,

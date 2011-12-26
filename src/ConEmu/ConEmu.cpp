@@ -54,6 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Macro.h"
 #include "Attach.h"
 #include "Recreate.h"
+#include "Update.h"
 #include "LoadImg.h"
 #include "../ConEmuCD/RegPrepare.h"
 #ifdef __GNUC__
@@ -105,6 +106,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RCLICKAPPSTIMEOUT_MAX 10000
 #define RCLICKAPPSDELTA 3
 
+const wchar_t* gsHomePage = L"http://conemu-maximus5.googlecode.com";
+
 
 CConEmuMain::CConEmuMain()
 {
@@ -142,7 +145,7 @@ CConEmuMain::CConEmuMain()
 	//mb_InConsoleResize = FALSE;
 	//ProgressBars = NULL;
 	//cBlinkShift=0;
-	mh_DebugPopup = mh_EditPopup = mh_ActiveVConPopup = mh_VConListPopup = NULL;
+	mh_DebugPopup = mh_EditPopup = mh_ActiveVConPopup = mh_VConListPopup = mh_HelpPopup = NULL;
 	Title[0] = 0; TitleCmp[0] = 0; /*MultiTitle[0] = 0;*/ mn_Progress = -1;
 	mb_InTimer = FALSE;
 	//mb_InClose = FALSE;
@@ -152,7 +155,7 @@ CConEmuMain::CConEmuMain()
 	mb_IgnoreSizeChange = false;
 	//mb_IgnoreStoreNormalRect = false;
 	//mn_CurrentKeybLayout = (DWORD_PTR)GetKeyboardLayout(0);
-	mn_GuiServerThreadId = 0; mh_GuiServerThread = NULL; mh_GuiServerThreadTerminate = NULL;
+	mn_GuiServerThreadId = 0; mh_GuiServerThread = NULL; mh_GuiServerThreadTerminate = NULL; ms_ServerPipe[0] = 0;
 	//mpsz_RecreateCmd = NULL;
 	mb_InImeComposition = false; mb_ImeMethodChanged = false;
 	ZeroStruct(mrc_Ideal);
@@ -436,6 +439,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgPostTaskbarActivate = ++nAppMsg; mb_PostTaskbarActivate = FALSE;
 	mn_MsgInitVConGhost = ++nAppMsg;
 	mn_MsgCreateCon = ++nAppMsg;
+	mn_MsgRequestUpdate = ++nAppMsg;
 	//// ¬ Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 
@@ -687,10 +691,13 @@ HMENU CConEmuMain::GetSystemMenu(BOOL abInitial /*= FALSE*/)
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
 		InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About"));
-
-		if (ms_ConEmuChm[0])  //ѕоказывать пункт только если есть conemu.chm
-			InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
+		
+		//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About"));
+		if (mh_HelpPopup) DestroyMenu(mh_HelpPopup);
+		mh_HelpPopup = CreateHelpMenuPopup();
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_HelpPopup, _T("Hel&p"));
+		//if (ms_ConEmuChm[0])  //ѕоказывать пункт только если есть conemu.chm
+		//	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
 
 		// --------------------
 		InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
@@ -1258,7 +1265,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.nProtocolVersion = CESERVER_REQ_VER;
 	m_GuiInfo.hGuiWnd = ghWnd;
 	
-	m_GuiInfo.nLoggingType = (ghOpWnd && gpSetCls->hDebug) ? gpSetCls->m_RealConLoggingType : glt_None;
+	m_GuiInfo.nLoggingType = (ghOpWnd && gpSetCls->hDebug) ? gpSetCls->m_ActivityLoggingType : glt_None;
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0);
 	m_GuiInfo.bUseTrueColor = gpSet->isTrueColorer;
 
@@ -4286,6 +4293,13 @@ bool CConEmuMain::ConActivate(int nCon)
 	return false;
 }
 
+// args должен быть выделен через "new"
+// по завершении - на него будет вызван "delete"
+void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
+{
+	PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon, (LPARAM)pArgs);
+}
+
 CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
 {
 	_ASSERTE(args!=NULL);
@@ -4357,7 +4371,8 @@ void CConEmuMain::UpdateActiveGhost(CVirtualConsole* apVCon)
 	_ASSERTE(apVCon == mp_VActive);
 	if (mh_LLKeyHookDll && mph_HookedGhostWnd)
 	{
-		if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)
+		// Win7 и выше!
+		if (IsWindows7 || !gpSet->isTabsOnTaskBar())
 			*mph_HookedGhostWnd = NULL; //ghWndApp ? ghWndApp : ghWnd;
 		else
 			*mph_HookedGhostWnd = apVCon->GhostWnd();
@@ -5328,7 +5343,7 @@ int CConEmuMain::trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, 
 
 void CConEmuMain::ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags)
 {
-	if (nID && !(nFlags & MF_POPUP))
+	if (nID && (nID != MF_SEPARATOR) && !(nFlags & MF_POPUP))
 	{
 		//POINT pt; GetCursorPos(&pt);
 		RECT rcMenuItem = {};
@@ -7659,6 +7674,31 @@ HMENU CConEmuMain::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 	}
 	
 	return hMenu;
+}
+
+HMENU CConEmuMain::CreateHelpMenuPopup()
+{
+	HMENU hHelp = CreatePopupMenu();
+	if (gpUpd && gpUpd->InUpdate())
+		AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_STOPUPDATE, _T("&Stop updates checking"));
+	else
+		AppendMenu(hHelp, 
+			#ifdef _DEBUG
+			MF_STRING | MF_ENABLED
+			#else
+			MF_STRING | MF_DISABLED
+			#endif
+			, ID_CHECKUPDATE, _T("&Check for updates"));
+	
+	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HOMEPAGE, _T("&Visit home page"));
+	
+	if (ms_ConEmuChm[0])  //ѕоказывать пункт только если есть conemu.chm
+		AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
+
+	AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);	
+	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About"));
+	
+	return hHelp;
 }
 
 LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
@@ -11239,6 +11279,43 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 	DEBUGSTRFOREGROUND(szDbg);
 }
 
+void CConEmuMain::CheckUpdates(BOOL abShowMessages)
+{
+	if (!gpUpd)
+		gpUpd = new CConEmuUpdate;
+	
+	if (gpUpd)
+		gpUpd->StartCheckProcedure(abShowMessages);
+}
+
+void CConEmuMain::ReportUpdateError()
+{
+	if (isMainThread())
+	{
+		if (gpUpd)
+			gpUpd->ShowLastError();
+	}
+	else
+	{
+		PostMessage(ghWnd, mn_MsgRequestUpdate, 0, 0);
+	}
+}
+
+void CConEmuMain::RequestExitUpdate()
+{
+	if (!gpUpd || !gpUpd->IsUpdatePending(isMainThread() ? CConEmuUpdate::us_Check : CConEmuUpdate::us_Confirm))
+		return;
+
+	if (isMainThread())
+	{
+		PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+	}
+	else
+	{
+		PostMessage(ghWnd, mn_MsgRequestUpdate, 1, 0);
+	}
+}
+
 enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 {
 	if (!gpSet->isDragPanel || isPictureView())
@@ -11759,11 +11836,13 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			// —оздать новую консоль
 			Recreate(FALSE, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			return 0;
+			
 		case IDM_ATTACHTO:
 			if (!mp_AttachDlg)
 				mp_AttachDlg = new CAttachDlg;
 			mp_AttachDlg->AttachDlg();
 			return 0;
+			
 		case ID_SETTINGS:
 
 			if (ghOpWnd && IsWindow(ghOpWnd))
@@ -11778,22 +11857,26 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			//DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SPG_MAIN), 0, Settings::wndOpProc);
 			CSettings::Dialog();
 			return 0;
-			//break;
+			
 		case ID_CON_PASTE:
 			mp_VActive->RCon()->Paste();
 			return 0;
+			
 		case ID_CON_COPY:
 			mp_VActive->RCon()->DoSelectionCopy();
 			return 0;
+			
 		case ID_CON_MARKBLOCK:
 		case ID_CON_MARKTEXT:
 			mp_VActive->RCon()->StartSelection(LOWORD(wParam) == ID_CON_MARKTEXT);
 			return 0;
+			
 		case ID_AUTOSCROLL:
 			gpSetCls->AutoScroll = !gpSetCls->AutoScroll;
 			CheckMenuItem(gpConEmu->GetSystemMenu(), ID_AUTOSCROLL, MF_BYCOMMAND |
 			              (gpSetCls->AutoScroll ? MF_CHECKED : MF_UNCHECKED));
 			return 0;
+			
 		case ID_ALWAYSONTOP:
 			gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
 			OnAlwaysOnTop();
@@ -11804,19 +11887,22 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			}
 
 			return 0;
+			
 		case ID_DUMPCONSOLE:
 
 			if (mp_VActive)
 				mp_VActive->DumpConsole();
 
 			return 0;
-			//break;
+			
 		case ID_DEBUGGUI:
 			StartDebugLogConsole();
 			return 0;
+			
 		case ID_DEBUGCON:
 			StartDebugActiveProcess();
 			return 0;
+			
 		//case ID_MONITOR_SHELLACTIVITY:
 		//{
 		//	CRealConsole* pRCon = mp_VActive->RCon();
@@ -11829,17 +11915,20 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		//	//else
 		//	//	StopLogCreateProcess();
 		//}
-		return 0;
+		//return 0;
+		
 		case ID_DEBUG_SHOWRECTS:
 			gbDebugShowRects = !gbDebugShowRects;
 			InvalidateAll();
 			return 0;
+			
 		case ID_CON_TOGGLE_VISIBLE:
 
 			if (mp_VActive)
 				mp_VActive->RCon()->ShowConsole(-1); // Toggle visibility
 
 			return 0;
+			
 		case ID_HELP:
 		{
 			static HMODULE hhctrl = NULL;
@@ -11861,14 +11950,34 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					//if (pszSlash) pszSlash++; else pszSlash = szHelpFile;
 					//lstrcpy(pszSlash, L"ConEmu.chm");
 					// lstrcat(szHelpFile, L::/Intro.htm");
-#define HH_HELP_CONTEXT 0x000F
-#define HH_DISPLAY_TOC  0x0001
+					#define HH_HELP_CONTEXT 0x000F
+					#define HH_DISPLAY_TOC  0x0001
 					//fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_HELP_CONTEXT, contextID);
 					fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_DISPLAY_TOC, 0);
 				}
 			}
+			return 0;
+		} // case ID_HELP:
+		
+		case ID_HOMEPAGE:
+		{
+			DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsHomePage, NULL, NULL, SW_SHOWNORMAL);
+			if (shellRc <= 32)
+			{
+				DisplayLastError(L"ShellExecute failed", shellRc);
+			}
+			return 0;
 		}
-		return 0;
+		
+		case ID_CHECKUPDATE:
+			gpConEmu->CheckUpdates(TRUE);
+			return 0;
+		
+		case ID_STOPUPDATE:
+			if (gpUpd)
+				gpUpd->StopChecking();
+			return 0;
+		
 		case ID_ABOUT:
 		{
 			WCHAR szTitle[255];
@@ -11891,21 +12000,20 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			MessageBoxIndirectW(&mb);
 			//MessageBoxW(ghWnd, pHelp, szTitle, MB_ICONQUESTION);
 			gbDontEnable = b;
+			return 0;
 		}
-		return 0;
-		//break;
 
 		case ID_TOMONITOR:
-			{
-				if (!IsWindowVisible(ghWnd))
-					Icon.RestoreWindowFromTray();
-				POINT ptCur = {}; GetCursorPos(&ptCur);
-				HMONITOR hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTOPRIMARY);
-				MONITORINFO mi = {sizeof(mi)};
-				GetMonitorInfo(hMon, &mi);
-				SetWindowPos(ghWnd, HWND_TOP, mi.rcWork.left, mi.rcWork.top, 0,0, SWP_NOSIZE);
-			}
+		{
+			if (!IsWindowVisible(ghWnd))
+				Icon.RestoreWindowFromTray();
+			POINT ptCur = {}; GetCursorPos(&ptCur);
+			HMONITOR hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTOPRIMARY);
+			MONITORINFO mi = {sizeof(mi)};
+			GetMonitorInfo(hMon, &mi);
+			SetWindowPos(ghWnd, HWND_TOP, mi.rcWork.left, mi.rcWork.top, 0,0, SWP_NOSIZE);
 			return 0;
+		}
 
 		case ID_TOTRAY:
 			if (IsWindowVisible(ghWnd))
@@ -11914,9 +12022,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				Icon.RestoreWindowFromTray();
 
 			return 0;
-			//break;
+			
 		case ID_CONPROP:
-#ifdef MSGLOGGER
+		{
+			#ifdef MSGLOGGER
 			{
 				HMENU hMenu = ::GetSystemMenu(ghConWnd, FALSE);
 				MENUITEMINFO mii; TCHAR szText[255];
@@ -11956,28 +12065,26 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 						break;
 				}
 			}
-#endif
+			#endif
 			//POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, SC_PROPERTIES_SECRET/*65527*/, 0, TRUE);
 			if (mp_VActive && mp_VActive->RCon())
 				mp_VActive->RCon()->ShowPropertiesDialog();
 			return 0;
-			//break; // case ID_CONPROP:
-	//}
-
-	//switch (wParam)
-	//{
+		} // case ID_CONPROP:
 
 		case SC_MAXIMIZE_SECRET:
 			SetWindowMode(rMaximized);
 			break;
+			
 		case SC_RESTORE_SECRET:
 			SetWindowMode(rNormal);
 			break;
+			
 		case SC_CLOSE:
+		{
 			//Icon.Delete();
 			//SENDMESSAGE(ghConWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
 			//SENDMESSAGE(ghConWnd ? ghConWnd : ghWnd, WM_CLOSE, 0, 0); // ?? фар не ловит сообщение, ExitFAR не вызываютс€
-		{
 			int nConCount = 0, nDetachedCount = 0;
 
 			//int nEditors = 0, nProgress = 0, i;
@@ -12041,19 +12148,20 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 				Destroy();
 			}
-		}
-		break;
+			break;
+		} // case SC_CLOSE:
+		
 		case SC_MAXIMIZE:
+		{
 			DEBUGSTRSYS(L"OnSysCommand(SC_MAXIMIZE)\n");
 
 			if (!mb_PassSysCommand)
 			{
-#ifndef _DEBUG
-
+				#ifndef _DEBUG
 				if (isPictureView())
 					break;
-
-#endif
+				#endif
+				
 				SetWindowMode(rMaximized);
 			}
 			else
@@ -12062,17 +12170,18 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			}
 
 			break;
+		} // case SC_MAXIMIZE:
+		
 		case SC_RESTORE:
+		{
 			DEBUGSTRSYS(L"OnSysCommand(SC_RESTORE)\n");
 
 			if (!mb_PassSysCommand)
 			{
-#ifndef _DEBUG
-
+				#ifndef _DEBUG
 				if (!isIconic() && isPictureView())
 					break;
-
-#endif
+				#endif
 
 				if (!SetWindowMode(isIconic() ? WindowMode : rNormal))
 					result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
@@ -12083,7 +12192,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			}
 
 			break;
+		} // case SC_RESTORE:
+		
 		case SC_MINIMIZE:
+		{
 			DEBUGSTRSYS(L"OnSysCommand(SC_MINIMIZE)\n");
 
 			// ≈сли "фокус" в дочернем Gui приложении - нужно перед скрытием ConEmu "подн€ть" его
@@ -12105,8 +12217,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			//}
 			result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
 			break;
+		} // case SC_MINIMIZE:
+		
 		default:
-
+		{
 			if (wParam >= IDM_VCONCMD_FIRST && wParam <= IDM_VCONCMD_LAST)
 			{
 				ActiveCon()->ExecPopupMenuCmd((int)(DWORD)wParam);
@@ -12114,10 +12228,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			}
 			else if (wParam != 0xF100)
 			{
-#ifdef _DEBUG
+				#ifdef _DEBUG
 				wchar_t szDbg[64]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand(%i)\n", (DWORD)wParam);
 				DEBUGSTRSYS(szDbg);
-#endif
+				#endif
 
 				// иначе это приводит к потере фокуса и активации невидимой консоли,
 				// перехвате стрелок клавиатуры, и прочей фигни...
@@ -12140,6 +12254,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					mp_Tip->HideTip();
 				}
 			}
+		} // default:
 	}
 
 	return result;
@@ -12639,10 +12754,9 @@ DWORD CConEmuMain::GuiServerThread(LPVOID lpvParam)
 #ifdef _DEBUG
 	DWORD dwTID = GetCurrentThreadId();
 #endif
-	wchar_t szServerPipe[MAX_PATH];
 	MCHKHEAP;
 	_ASSERTE(ghWnd!=NULL);
-	_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghWnd); //-V205
+	_wsprintf(gpConEmu->ms_ServerPipe, SKIPLEN(countof(gpConEmu->ms_ServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghWnd); //-V205
 	// The main loop creates an instance of the named pipe and
 	// then waits for a client to connect to it. When the client
 	// connects, a thread is created to handle communications
@@ -12656,7 +12770,7 @@ DWORD CConEmuMain::GuiServerThread(LPVOID lpvParam)
 		{
 			_ASSERTE(hPipe == NULL);
 			hPipe = CreateNamedPipe(
-			            szServerPipe,             // pipe name
+			            gpConEmu->ms_ServerPipe,             // pipe name
 			            PIPE_ACCESS_DUPLEX,       // read/write access
 			            PIPE_TYPE_MESSAGE |       // message type pipe
 			            PIPE_READMODE_MESSAGE |   // message-read mode
@@ -12743,6 +12857,8 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		//CloseHandle(hPipe);
 		return;
 	}
+	
+	gpSetCls->debugLogCommand(&in, TRUE, timeGetTime(), 0, ms_ServerPipe);
 
 	if (in.hdr.cbSize <= cbRead)
 	{
@@ -12813,7 +12929,7 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		pArgs->pszSpecialCmd = lstrdup(pIn->NewCmd.szCommand);
 		pArgs->pszStartupDir = lstrdup(pIn->NewCmd.szCurDir);
 
-		PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon, (LPARAM)pArgs);
+		gpConEmu->PostCreateCon(pArgs);
 
 		// ќтпустим команду сразу, во избежание блокировани€ и задержек в консоли
 		pIn->Data[0] = TRUE;
@@ -13663,6 +13779,20 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				CVirtualConsole* pCon = CreateCon(pArgs);
 				UNREFERENCED_PARAMETER(pCon);
 				delete pArgs;
+				return 0;
+			}
+			else if (messg == gpConEmu->mn_MsgRequestUpdate)
+			{
+				switch (wParam)
+				{
+				case 0:
+					gpConEmu->ReportUpdateError();
+					return 0;
+				case 1:
+					gpConEmu->RequestExitUpdate();
+					return 0;
+				}
+				return 0;
 			}
 
 			//else if (messg == gpConEmu->mn_MsgCmdStarted || messg == gpConEmu->mn_MsgCmdStopped) {

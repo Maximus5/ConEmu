@@ -27,9 +27,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <windows.h>
+#ifdef _DEBUG
 #pragma warning( disable : 4995 )
+#endif
 #include "..\common\pluginW1900.hpp" // Far3
+#ifdef _DEBUG
 #pragma warning( default : 4995 )
+#endif
 #include "ConEmuBg.h"
 #include "../ConEmu/version.h"
 

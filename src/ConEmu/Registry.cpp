@@ -59,10 +59,10 @@ bool SettingsRegistry::OpenKey(HKEY inHKEY, const wchar_t *regPath, uint access,
 {
 	bool res = false;
 
-	if (access == KEY_READ)
-		res = RegOpenKeyEx(inHKEY, regPath, 0, KEY_READ, &regMy) == ERROR_SUCCESS;
-	else
+	if ((access & KEY_WRITE) == KEY_WRITE)
 		res = RegCreateKeyEx(inHKEY, regPath, 0, NULL, 0, access, 0, &regMy, 0) == ERROR_SUCCESS;
+	else
+		res = RegOpenKeyEx(inHKEY, regPath, 0, access, &regMy) == ERROR_SUCCESS;
 
 	return res;
 }
@@ -107,25 +107,26 @@ bool SettingsRegistry::Load(const wchar_t *regName, wchar_t **value)
 {
 	DWORD len = 0;
 
-	if (*value) {free(*value); *value = NULL;}
-
 	if (RegQueryValueExW(regMy, regName, NULL, NULL, NULL, &len) == ERROR_SUCCESS && len)
 	{
 		int nChLen = len/2;
+		if (*value) {free(*value); *value = NULL;}
 		*value = (wchar_t*)malloc((nChLen+2)*sizeof(wchar_t));
+
+		bool lbRc = (RegQueryValueExW(regMy, regName, NULL, NULL, (LPBYTE)(*value), &len) == ERROR_SUCCESS);
+
+		if (!lbRc)
+			nChLen = 0;
 		(*value)[nChLen] = 0; (*value)[nChLen+1] = 0;
 
-		if (RegQueryValueExW(regMy, regName, NULL, NULL, (LPBYTE)(*value), &len) == ERROR_SUCCESS)
-		{
-			return true;
-		}
+		return lbRc;
 	}
-	else
+	else if (!*value)
 	{
 		*value = (wchar_t*)malloc(sizeof(wchar_t)*2);
+		(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
 	}
 
-	(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
 	return false;
 }
 // А эта функция, если значения нет (или тип некорректный) value НЕ трогает

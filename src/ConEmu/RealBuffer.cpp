@@ -241,7 +241,9 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	                                 sizeX, sizeY, sizeBuffer, anCmdID);
 	DEBUGSTRSIZE(szDbgCmd);
 #endif
+	DWORD dwTickStart = timeGetTime();
 	fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, &lIn, lIn.hdr.cbSize, &lOut, lOut.hdr.cbSize, &dwRead, 500);
+	gpSetCls->debugLogCommand(&lIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, mp_RCon->ms_ConEmuC_Pipe, &lOut);
 
 	if (!fSuccess || dwRead<(DWORD)nOutSize)
 	{
@@ -2883,6 +2885,7 @@ void CRealBuffer::FindPanels()
 	#ifdef _DEBUG
 	if (mp_RCon->mb_DebugLocked)
 		return;
+	_ASSERTE(this==mp_RCon->mp_RBuf);
 	#endif
 
 	RECT rLeftPanel = MakeRect(-1,-1);
@@ -2895,7 +2898,7 @@ void CRealBuffer::FindPanels()
 	BOOL lbNeedUpdateSizes = FALSE;
 	BOOL lbPanelsChanged = FALSE;
 	short nLastProgress = mp_RCon->mn_ConsoleProgress;
-	short nNewProgress;
+	short nNewProgress = -1;
 	/*
 	Имеем облом. При ресайзе панелей CtrlLeft/CtrlRight иногда сервер считывает
 	содержимое консоли ДО окончания вывода в нее новой информации. В итоге верхняя
@@ -3182,7 +3185,7 @@ void CRealBuffer::FindPanels()
 		}
 	}
 
-	if (mp_RCon->mn_ConsoleProgress != nNewProgress || nLastProgress != nNewProgress /*|| mn_Progress != mp_RCon->mn_ConsoleProgress*/)
+	if (mp_RCon->mn_ConsoleProgress != nNewProgress || nLastProgress != nNewProgress)
 	{
 		// Запомнить, что получили из консоли
 		mp_RCon->mn_ConsoleProgress = nNewProgress;
@@ -3617,9 +3620,25 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 	int nIdx = 0;
 	bool bAllowDot = false;
 	short nProgress = -1;
-	TODO("Хорошо бы и русские названия обрабатывать?");
 
-	// Сначала проверим, может цифры идут в начале строки?
+	const wchar_t *szPercentEng = L" percent";
+	const wchar_t *szComplEng  = L"Completed:";
+	static wchar_t szPercentRus[16] = {}, szComplRus[16] = {};
+	static int nPercentEngLen = lstrlen(szPercentEng), nComplEngLen = lstrlen(szComplEng);
+	static int nPercentRusLen, nComplRusLen;
+	
+	if (szPercentRus[0] == 0)
+	{
+		szPercentRus[0] = L' ';
+		TODO("Хорошо бы и другие национальные названия обрабатывать, брать из настройки");
+		MultiByteToWideChar(CP_ACP,0,"процент",-1,szPercentRus+1,countof(szPercentRus)-1);
+		MultiByteToWideChar(CP_ACP,0,"Завершено:",-1,szComplRus,countof(szComplRus));
+		
+		nPercentRusLen = lstrlen(szPercentRus);
+		nComplRusLen = lstrlen(szComplEng);
+	}
+
+	// Сначала проверим, может цифры идут в начале строки (лидирующие пробелы)?
 	if (pszCurLine[nIdx] == L' ' && isDigit(pszCurLine[nIdx+1]))
 		nIdx++; // один лидирующий пробел перед цифрой
 	else if (pszCurLine[nIdx] == L' ' && pszCurLine[nIdx+1] == L' ' && isDigit(pszCurLine[nIdx+2]))
@@ -3627,20 +3646,10 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 	else if (!isDigit(pszCurLine[nIdx]))
 	{
 		// Строка начинается НЕ с цифры. Может начинается одним из известных префиксов (ChkDsk)?
-		static int nRusLen = 0;
-		static wchar_t szComplRus[32] = {0};
 
-		if (!szComplRus[0])
+		if (!wcsncmp(pszCurLine, szComplRus, nComplRusLen))
 		{
-			MultiByteToWideChar(CP_ACP,0,"Завершено:",-1,szComplRus,countof(szComplRus));
-			nRusLen = _tcslen(szComplRus);
-		}
-
-		static int nEngLen = _tcslen(L"Completed:");
-
-		if (!wcsncmp(pszCurLine, szComplRus, nRusLen))
-		{
-			nIdx += nRusLen;
+			nIdx += nComplRusLen;
 
 			if (pszCurLine[nIdx] == L' ') nIdx++;
 
@@ -3648,9 +3657,9 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 
 			bAllowDot = true;
 		}
-		else if (!wcsncmp(pszCurLine, L"Completed:", nEngLen))
+		else if (!wcsncmp(pszCurLine, szComplEng, nComplEngLen))
 		{
-			nIdx += nRusLen;
+			nIdx += nComplEngLen;
 
 			if (pszCurLine[nIdx] == L' ') nIdx++;
 
@@ -3713,18 +3722,21 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 	{
 		if (isDigit(pszCurLine[nIdx+1]) && isDigit(pszCurLine[nIdx+2])
 			&& (pszCurLine[nIdx+3]==L'%' || (bAllowDot && pszCurLine[nIdx+3]==L'.')
-			|| !wcsncmp(pszCurLine+nIdx+3,L" percent",8)))
+			|| !wcsncmp(pszCurLine+nIdx+3,szPercentEng,nPercentEngLen)
+			|| !wcsncmp(pszCurLine+nIdx+3,szPercentRus,nPercentRusLen)))
 		{
 			nProgress = 100*(pszCurLine[nIdx] - L'0') + 10*(pszCurLine[nIdx+1] - L'0') + (pszCurLine[nIdx+2] - L'0');
 		}
 		else if (isDigit(pszCurLine[nIdx+1])
 			&& (pszCurLine[nIdx+2]==L'%' || (bAllowDot && pszCurLine[nIdx+2]==L'.')
-			|| !wcsncmp(pszCurLine+nIdx+2,L" percent",8)))
+			|| !wcsncmp(pszCurLine+nIdx+2,szPercentEng,nPercentEngLen)
+			|| !wcsncmp(pszCurLine+nIdx+2,szPercentRus,nPercentRusLen)))
 		{
 			nProgress = 10*(pszCurLine[nIdx] - L'0') + (pszCurLine[nIdx+1] - L'0');
 		}
 		else if (pszCurLine[nIdx+1]==L'%' || (bAllowDot && pszCurLine[nIdx+1]==L'.')
-			|| !wcsncmp(pszCurLine+nIdx+1,L" percent",8))
+			|| !wcsncmp(pszCurLine+nIdx+1,szPercentEng,nPercentEngLen)
+			|| !wcsncmp(pszCurLine+nIdx+1,szPercentRus,nPercentRusLen))
 		{
 			nProgress = (pszCurLine[nIdx] - L'0');
 		}
@@ -3732,8 +3744,15 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 
 	if (nProgress != -1)
 	{
-		mp_RCon->mn_LastConsoleProgress = nProgress;
 		mp_RCon->mn_LastConProgrTick = GetTickCount();
+		mp_RCon->mn_LastConsoleProgress = nProgress; // его обновляем всегда
+	}
+	else
+	{
+		DWORD nDelta = GetTickCount() - mp_RCon->mn_LastConProgrTick;
+		if (nDelta < CONSOLEPROGRESSTIMEOUT) // Если таймаут предыдущего значения еще не наступил
+			nProgress = mp_RCon->mn_ConsoleProgress; // возъмем предыдущее значение
+		mp_RCon->mn_LastConsoleProgress = -1; // его обновляем всегда
 	}
 
 	return nProgress;

@@ -31,6 +31,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #include "WinObjects.h"
 
+#ifdef _DEBUG
+	//#define WARN_NEED_CMD
+	#undef WARN_NEED_CMD
+#else
+	#undef WARN_NEED_CMD
+#endif
+
 #ifndef TTS_BALLOON
 #define TTS_BALLOON             0x40
 #define TTF_TRACK               0x0020
@@ -731,7 +738,10 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 	memset(szExe, 0, sizeof(szExe));
 
 	if (!asCmdLine || *asCmdLine == 0)
+	{
+		_ASSERTE(asCmdLine && *asCmdLine);
 		return TRUE;
+	}
 		
 	//110202 перенес вниз, т.к. это уже может быть cmd.exe, и тогда у него сносит крышу
 	//// ≈сли есть одна из команд перенаправлени€, или сли€ни€ - нужен CMD.EXE
@@ -782,12 +792,18 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 			if ((iRc = NextArg(&pwszTemp, szExe)) != 0)
 			{
 				//Parsing command line failed
+				#ifdef WARN_NEED_CMD
+				_ASSERTE(FALSE);
+				#endif
 				return TRUE;
 			}
 			
 			if (lstrcmpiW(szExe, L"start") == 0)
 			{
 				//  оманду start обрабатывает только процессор
+				#ifdef WARN_NEED_CMD
+				_ASSERTE(FALSE);
+				#endif
 				return TRUE;
 			}
 
@@ -826,6 +842,9 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 			if ((iRc = NextArg(&pwszCopy, szExe)) != 0)
 			{
 				//Parsing command line failed
+				#ifdef WARN_NEED_CMD
+				_ASSERTE(FALSE);
+				#endif
 				return TRUE;
 			}
 		}
@@ -877,6 +896,9 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 				}
 				if (bIsCommand)
 				{
+					#ifdef WARN_NEED_CMD
+					_ASSERTE(FALSE);
+					#endif
 					rbRootIsCmdExe = TRUE; // запуск через "процессор"
 					return TRUE; // добавить "cmd.exe"
 				}
@@ -906,6 +928,9 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 	// "start "" C:\Utils\Files\Hiew32\hiew32.exe C:\00\Far.exe"
 	if (!IsFilePath(szExe))
 	{
+		#ifdef WARN_NEED_CMD
+		_ASSERTE(FALSE);
+		#endif
 		rbRootIsCmdExe = TRUE; // запуск через "процессор"
 		return TRUE; // добавить "cmd.exe"
 	}
@@ -939,6 +964,9 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 		wcschr(asCmdLine, L'^') // или экранировани€
 		)
 	{
+		#ifdef WARN_NEED_CMD
+		_ASSERTE(FALSE);
+		#endif
 		return TRUE;
 	}
 
@@ -958,6 +986,9 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 
 	//ћожно еще ƒоделать поиски с: SearchPath, GetFullPathName, добавив расширени€ .exe & .com
 	//хот€ фар сам формирует полные пути к командам, так что можно не заморачиватьс€
+	#ifdef WARN_NEED_CMD
+	_ASSERTE(FALSE);
+	#endif
 	rbRootIsCmdExe = TRUE;
 #ifndef __GNUC__
 #pragma warning( pop )

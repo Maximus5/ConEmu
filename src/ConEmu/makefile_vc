@@ -133,6 +133,8 @@ $(INTDIR)\TabID.obj \
 $(INTDIR)\TaskBar.obj \
 $(INTDIR)\TaskBarGhost.obj \
 $(INTDIR)\TrayIcon.obj \
+$(INTDIR)\Update.obj \
+$(INTDIR)\UpdateSet.obj \
 $(INTDIR)\VirtualConsole.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmuCheck.obj \
@@ -316,9 +318,9 @@ $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 
 $(INTDIR)\Macro.obj: Macro.cpp Macro.h
 
-$(INTDIR)\Options.obj: Options.cpp Options.h
+$(INTDIR)\Options.obj: Options.cpp Options.h UpdateSet.h
 
-$(INTDIR)\OptionsClass.obj: OptionsClass.cpp OptionsClass.h Options.h Background.h
+$(INTDIR)\OptionsClass.obj: OptionsClass.cpp OptionsClass.h Options.h Background.h UpdateSet.h
 
 $(INTDIR)\RConStartArgs.obj: RConStartArgs.cpp RConStartArgs.h
 
@@ -341,6 +343,10 @@ $(INTDIR)\TaskBar.obj: TaskBar.cpp
 $(INTDIR)\TaskBarGhost.obj: TaskBarGhost.cpp
 
 $(INTDIR)\TrayIcon.obj: TrayIcon.cpp
+
+$(INTDIR)\Update.obj: Update.cpp Update.h UpdateSet.h
+
+$(INTDIR)\UpdateSet.obj: UpdateSet.cpp UpdateSet.h
 
 $(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp
 

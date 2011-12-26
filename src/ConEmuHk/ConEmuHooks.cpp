@@ -181,7 +181,6 @@ BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuf
 //BOOL WINAPI OnPeekConsoleInputWx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 //BOOL WINAPI OnReadConsoleInputAx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 //BOOL WINAPI OnReadConsoleInputWx(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
-HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
 BOOL WINAPI OnAllocConsole(void);
 BOOL WINAPI OnFreeConsole(void);
 HWND WINAPI OnGetConsoleWindow();
@@ -233,7 +232,10 @@ BOOL WINAPI OnGetCurrentConsoleFont(HANDLE hConsoleOutput, BOOL bMaximumWindow, 
 COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont);
 HWND WINAPI OnGetActiveWindow();
 BOOL WINAPI OnSetMenu(HWND hWnd, HMENU hMenu);
-
+BOOL IsVisibleRectLocked(COORD& crLocked);
+HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
+BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
+BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
 
 
 bool InitHooksCommon()
@@ -278,6 +280,16 @@ bool InitHooksCommon()
 		{
 			(void*)OnCreateConsoleScreenBuffer,
 			"CreateConsoleScreenBuffer",
+			kernel32
+		},
+		{
+			(void*)OnSetConsoleWindowInfo,
+			"SetConsoleWindowInfo",
+			kernel32
+		},
+		{
+			(void*)OnSetConsoleScreenBufferSize,
+			"SetConsoleScreenBufferSize",
 			kernel32
 		},
 		#endif
@@ -2604,26 +2616,13 @@ BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuf
 }
 
 
-HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData)
-{
-	typedef HANDLE(WINAPI* OnCreateConsoleScreenBuffer_t)(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
-	ORIGINALFAST(CreateConsoleScreenBuffer);
-
-	if ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) != (FILE_SHARE_READ|FILE_SHARE_WRITE))
-		dwShareMode |= (FILE_SHARE_READ|FILE_SHARE_WRITE);
-
-	HANDLE h;
-	h = F(CreateConsoleScreenBuffer)(dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlags, lpScreenBufferData);
-	return h;
-}
-
-
 BOOL WINAPI OnAllocConsole(void)
 {
 	typedef BOOL (WINAPI* OnAllocConsole_t)(void);
 	ORIGINALFAST(AllocConsole);
 	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
 	BOOL lbRc = FALSE;
+	COORD crLocked;
 
 	if (ph && ph->PreCallBack)
 	{
@@ -2634,6 +2633,22 @@ BOOL WINAPI OnAllocConsole(void)
 	}
 
 	lbRc = F(AllocConsole)();
+
+	if (lbRc && IsVisibleRectLocked(crLocked))
+	{
+		// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
+		// Размер может менять только пользователь ресайзом окна ConEmu
+		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+		if (GetConsoleScreenBufferInfo(hStdOut, &csbi))
+		{
+			//specified width and height cannot be less than the width and height of the console screen buffer's window
+			SMALL_RECT rNewRect = {0, 0, crLocked.X-1, crLocked.Y-1};
+			OnSetConsoleWindowInfo(hStdOut, TRUE, &rNewRect);
+			COORD crNewSize = {crLocked.X, max(crLocked.Y, csbi.dwSize.Y)};
+			SetConsoleScreenBufferSize(hStdOut, crLocked);
+		}
+	}
 
 	//InitializeConsoleInputSemaphore();
 
@@ -3257,3 +3272,89 @@ COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont)
 
 	return cr;
 }
+
+BOOL IsVisibleRectLocked(COORD& crLocked)
+{
+	CESERVER_CONSOLE_MAPPING_HDR SrvMap;
+	if (LoadSrvMapping(ghConWnd, SrvMap))
+	{
+		if (SrvMap.bLockVisibleArea && (SrvMap.crLockedVisible.X > 0) && (SrvMap.crLockedVisible.Y > 0))
+		{
+			crLocked = SrvMap.crLockedVisible;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData)
+{
+	typedef HANDLE(WINAPI* OnCreateConsoleScreenBuffer_t)(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
+	ORIGINALFAST(CreateConsoleScreenBuffer);
+
+	if ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) != (FILE_SHARE_READ|FILE_SHARE_WRITE))
+		dwShareMode |= (FILE_SHARE_READ|FILE_SHARE_WRITE);
+
+	HANDLE h;
+	h = F(CreateConsoleScreenBuffer)(dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlags, lpScreenBufferData);
+	return h;
+}
+
+BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow)
+{
+	typedef BOOL (WINAPI* OnSetConsoleWindowInfo_t)(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
+	ORIGINALFAST(SetConsoleWindowInfo);
+	BOOL lbRc = FALSE;
+	SMALL_RECT tmp;
+	COORD crLocked;
+
+	if (lpConsoleWindow && IsVisibleRectLocked(crLocked))
+	{
+		tmp = *lpConsoleWindow;
+		// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
+		// Размер может менять только пользователь ресайзом окна ConEmu
+		if ((tmp.Right - tmp.Left + 1) != crLocked.X)
+		{
+			if (!bAbsolute)
+				tmp.Left = 0;
+			tmp.Right = tmp.Left + crLocked.X - 1;
+			lpConsoleWindow = &tmp;
+		}
+		if ((tmp.Bottom - tmp.Top + 1) != crLocked.Y)
+		{
+			if (!bAbsolute)
+				tmp.Top = 0;
+			tmp.Bottom = tmp.Top + crLocked.Y - 1;
+			lpConsoleWindow = &tmp;
+		}
+	}
+
+	if (F(SetConsoleWindowInfo))
+		lbRc = F(SetConsoleWindowInfo)(hConsoleOutput, bAbsolute, lpConsoleWindow);
+
+	return lbRc;
+}
+
+BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
+{
+	typedef BOOL (WINAPI* OnSetConsoleScreenBufferSize_t)(HANDLE hConsoleOutput, COORD dwSize);
+	ORIGINALFAST(SetConsoleScreenBufferSize);
+	BOOL lbRc = FALSE;
+	COORD crLocked;
+
+	if (IsVisibleRectLocked(crLocked))
+	{
+		// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
+		// Размер может менять только пользователь ресайзом окна ConEmu
+		if (crLocked.X > dwSize.X)
+			dwSize.X = crLocked.X;
+		if (crLocked.Y > dwSize.Y)
+			dwSize.Y = crLocked.Y;
+	}
+
+	if (F(SetConsoleScreenBufferSize))
+		lbRc = F(SetConsoleScreenBufferSize)(hConsoleOutput, dwSize);
+
+	return lbRc;
+}
+

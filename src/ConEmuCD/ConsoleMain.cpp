@@ -162,7 +162,7 @@ CESERVER_CONSAVE* gpStoredOutput = NULL;
 
 //CmdInfo* gpSrv = NULL;
 
-COORD gcrBufferSize = {80,25};
+COORD gcrBufferSize = {80,25}; TODO("Переименовать gcrBufferSize в gcrVisibleSize");
 BOOL  gbParmBufferSize = FALSE;
 SHORT gnBufferHeight = 0;
 SHORT gnBufferWidth = 0; // Определяется в MyGetConsoleScreenBufferInfo
@@ -479,6 +479,9 @@ extern "C" {
 int __stdcall ConsoleMain2(BOOL abAlternative)
 {
 	TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
+	
+	WARNING("После создания AltServer - проверить в ConEmuCD все условия на RM_SERVER!!!");
+	_ASSERTE(abAlternative==FALSE);
 
 	//#ifdef _DEBUG
 	//InitializeCriticalSection(&gcsHeap);
@@ -1413,215 +1416,6 @@ void DosBoxHelp()
 	);
 }
 
-//#ifndef __GNUC__
-//#pragma warning( push )
-//#pragma warning(disable : 6400)
-//#endif
-//BOOL IsExecutable(LPCWSTR aszFilePathName)
-//{
-//#ifndef __GNUC__
-//#pragma warning( push )
-//#pragma warning(disable : 6400)
-//#endif
-//	LPCWSTR pwszDot = wcsrchr(aszFilePathName, L'.');
-//
-//	if (pwszDot)  // Если указан .exe или .com файл
-//	{
-//		if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0)
-//		{
-//			if (FileExists(aszFilePathName))
-//				return TRUE;
-//		}
-//	}
-//
-//	return FALSE;
-//}
-//#ifndef __GNUC__
-//#pragma warning( pop )
-//#endif
-//
-//BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1])
-//{
-//	_ASSERTE(asCmdLine && *asCmdLine);
-//	gbRootIsCmdExe = TRUE;
-//	
-//	memset(szExe, 0, sizeof(szExe));
-//
-//	if (!asCmdLine || *asCmdLine == 0)
-//		return TRUE;
-//
-//	//110202 перенес вниз, т.к. это уже может быть cmd.exe, и тогда у него сносит крышу
-//	//// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
-//	//if (wcschr(asCmdLine, L'&') ||
-//	//        wcschr(asCmdLine, L'>') ||
-//	//        wcschr(asCmdLine, L'<') ||
-//	//        wcschr(asCmdLine, L'|') ||
-//	//        wcschr(asCmdLine, L'^') // или экранирования
-//	//  )
-//	//{
-//	//	return TRUE;
-//	//}
-//
-//	//wchar_t szArg[MAX_PATH+10] = {0};
-//	int iRc = 0;
-//	BOOL lbFirstWasGot = FALSE;
-//	LPCWSTR pwszCopy = asCmdLine;
-//	// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
-//	// cmd /c "dir c:\"
-//	int nLastChar = lstrlenW(pwszCopy) - 1;
-//
-//	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"')
-//	{
-//		if (pwszCopy[1] == L'"' && pwszCopy[2])
-//		{
-//			pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
-//
-//			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
-//		}
-//		else
-//			// глючила на ""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""
-//			//if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
-//			//	LPCWSTR pwszTemp = pwszCopy;
-//			//	// Получим первую команду (исполняемый файл?)
-//			//	if ((iRc = NextArg(&pwszTemp, szArg)) != 0) {
-//			//		//Parsing command line failed
-//			//		return TRUE;
-//			//	}
-//			//	pwszCopy ++; // Отбросить первую кавычку в командах типа: "c:\arc\7z.exe -?"
-//			//	lbFirstWasGot = TRUE;
-//			//	if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
-//			//} else
-//		{
-//			// отбросить первую кавычку в: "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
-//			LPCWSTR pwszTemp = pwszCopy + 1;
-//
-//			// Получим первую команду (исполняемый файл?)
-//			if ((iRc = NextArg(&pwszTemp, szExe)) != 0)
-//			{
-//				//Parsing command line failed
-//				return TRUE;
-//			}
-//
-//			if (lstrcmpiW(szExe, L"start") == 0)
-//			{
-//				// Команду start обрабатывает только процессор
-//				return TRUE;
-//			}
-//
-//			LPCWSTR pwszQ = pwszCopy + 1 + lstrlen(szExe);
-//
-//			if (*pwszQ != L'"' && IsExecutable(szExe))
-//			{
-//				pwszCopy ++; // отбрасываем
-//				lbFirstWasGot = TRUE;
-//
-//				if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
-//			}
-//		}
-//	}
-//
-//	// Получим первую команду (исполняемый файл?)
-//	if (!lbFirstWasGot)
-//	{
-//		szExe[0] = 0;
-//		// 17.10.2010 - поддержка переданного исполняемого файла без параметров, но с пробелами в пути
-//		LPCWSTR pchEnd = pwszCopy + lstrlenW(pwszCopy);
-//
-//		while(pchEnd > pwszCopy && *(pchEnd-1) == L' ') pchEnd--;
-//
-//		if ((pchEnd - pwszCopy) < MAX_PATH)
-//		{
-//			memcpy(szExe, pwszCopy, (pchEnd - pwszCopy)*sizeof(wchar_t));
-//			szExe[(pchEnd - pwszCopy)] = 0;
-//
-//			if (!FileExists(szExe))
-//				szExe[0] = 0;
-//		}
-//
-//		if (szExe[0] == 0)
-//		{
-//			if ((iRc = NextArg(&pwszCopy, szExe)) != 0)
-//			{
-//				//Parsing command line failed
-//				return TRUE;
-//			}
-//		}
-//	}
-//
-//	// Если szExe не содержит путь к файлу - запускаем через cmd
-//	// "start "" C:\Utils\Files\Hiew32\hiew32.exe C:\00\Far.exe"
-//	if (!IsFilePath(szExe))
-//	{
-//		gbRootIsCmdExe = TRUE; // запуск через "процессор"
-//		return TRUE; // добавить "cmd.exe"
-//	}
-//
-//	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
-//	pwszCopy = PointToName(szExe);
-//	//2009-08-27
-//	wchar_t *pwszEndSpace = szExe + lstrlenW(szExe) - 1;
-//
-//	while((*pwszEndSpace == L' ') && (pwszEndSpace > szExe))
-//		*(pwszEndSpace--) = 0;
-//
-//#ifndef __GNUC__
-//#pragma warning( push )
-//#pragma warning(disable : 6400)
-//#endif
-//
-//	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0)
-//	{
-//		gbRootIsCmdExe = TRUE; // уже должен быть выставлен, но проверим
-//		gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = FALSE;
-//		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
-//	}
-//
-//
-//	// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
-//	if (wcschr(asCmdLine, L'&') ||
-//	        wcschr(asCmdLine, L'>') ||
-//	        wcschr(asCmdLine, L'<') ||
-//	        wcschr(asCmdLine, L'|') ||
-//	        wcschr(asCmdLine, L'^') // или экранирования
-//	  )
-//	{
-//		return TRUE;
-//	}
-//
-//
-//	if (lstrcmpiW(pwszCopy, L"far")==0 || lstrcmpiW(pwszCopy, L"far.exe")==0)
-//	{
-//		gbAutoDisableConfirmExit = TRUE;
-//		gbRootIsCmdExe = FALSE; // FAR!
-//		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
-//	}
-//
-//	if (IsExecutable(szExe))
-//	{
-//		gbRootIsCmdExe = FALSE; // Для других программ - буфер не включаем
-//		return FALSE; // Запускается конкретная консольная программа. cmd.exe не требуется
-//	}
-//
-//	//Можно еще Доделать поиски с: SearchPath, GetFullPathName, добавив расширения .exe & .com
-//	//хотя фар сам формирует полные пути к командам, так что можно не заморачиваться
-//	gbRootIsCmdExe = TRUE;
-//#ifndef __GNUC__
-//#pragma warning( pop )
-//#endif
-//	return TRUE;
-//}
-
-//BOOL FileExists(LPCWSTR asFile)
-//{
-//	WIN32_FIND_DATA fnd; memset(&fnd, 0, sizeof(fnd));
-//	HANDLE h = FindFirstFile(asFile, &fnd);
-//	if (h != INVALID_HANDLE_VALUE) {
-//		FindClose(h);
-//		return (fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
-//	}
-//	return FALSE;
-//}
-
 void CheckUnicodeMode()
 {
 	if (gnCmdUnicodeMode) return;
@@ -1841,7 +1635,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		{
 			TODO("уточнить, что нужно в gbAutoDisableConfirmExit");
 			gnConfirmExitParm = 1;
-			gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = TRUE;
+			gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = FALSE;
 		}
 		else if (wcscmp(szArg, L"/NOCONFIRM")==0)
 		{
@@ -2287,6 +2081,17 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				// тогда обрабатываем
 				gpSrv->bNewConsole = TRUE;
 
+				// По идее, должен запускаться в табе ConEmu (в существующей консоли), но если нет
+				HWND hConEmu = ghConEmuWnd;
+				if (!hConEmu || !IsWindow(hConEmu))
+				{
+					_ASSERTE(ghConEmuWnd!=NULL && IsWindow(ghConEmuWnd));
+					// попытаться найти открытый ConEmu
+					hConEmu = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
+					if (hConEmu)
+						gbNonGuiMode = TRUE; // Чтобы не пытаться выполнить SendStopped (ибо некому)
+				}
+
 				int iNewConRc = CERR_RUNNEWCONSOLE;
 
 				DWORD nCmdLen = lstrlen(asCmdLine);
@@ -2297,7 +2102,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 					GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
 					lstrcpyn(pIn->NewCmd.szCommand, asCmdLine, nCmdLen+1);
 
-					CESERVER_REQ* pOut = ExecuteGuiCmd(ghConEmuWnd, pIn, ghConWnd);
+					CESERVER_REQ* pOut = ExecuteGuiCmd(hConEmu, pIn, ghConWnd);
 					if (pOut)
 					{
 						if (pOut->hdr.cbSize <= sizeof(pOut->hdr) || pOut->Data[0] == FALSE)
@@ -4840,10 +4645,12 @@ BOOL cmd_FarLoaded(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 	
-	if (gbAutoDisableConfirmExit && gpSrv->dwRootProcess == in.dwData[0])
+	// gnConfirmExitParm==1 получается, когда консоль запускалась через "-new_console"
+	// Если плагин фара загрузился - думаю можно отключить подтверждение закрытия консоли
+	if ((gbAutoDisableConfirmExit || (gnConfirmExitParm == 1)) && gpSrv->dwRootProcess == in.dwData[0])
 	{
 		// FAR нормально запустился, считаем что все ок и подтверждения закрытия консоли не потребуется
-		DisableAutoConfirmExit();
+		DisableAutoConfirmExit(TRUE);
 	}
 	
 	return lbRc;
@@ -5537,7 +5344,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	//
 	_ASSERTE((csbi.srWindow.Bottom-csbi.srWindow.Top)<200);
 
-	if (lbRc && gnRunMode == RM_SERVER)  // ComSpec окно менять НЕ ДОЛЖЕН!
+	if (lbRc && (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER))  // ComSpec окно менять НЕ ДОЛЖЕН!
 	{
 		// Перенесено в SetConsoleSize
 		//     if (gnBufferHeight) {
@@ -5547,8 +5354,54 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		//     }
 		// Если прокрутки быть не должно - по возможности уберем ее, иначе при запуске FAR
 		// запустится только в ВИДИМОЙ области
-		BOOL lbNeedCorrect = FALSE;
+		BOOL lbNeedCorrect = FALSE, lbNeedUpdateSrvMap = FALSE;
 
+		SHORT nWidth = (csbi.srWindow.Right - csbi.srWindow.Left + 1);
+		SHORT nHeight = (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+
+		// Приложениям запрещено менять размер видимой области.
+		// Размер буфера - могут менять, но не менее чем текущая видимая область
+		if (gpSrv && !gpSrv->nRequestChangeSize && (gpSrv->crReqSizeNewSize.X > 0) && (gpSrv->crReqSizeNewSize.Y > 0))
+		{
+			COORD crMax = GetLargestConsoleWindowSize(ghConOut);
+			// Это может случиться, если пользователь резко уменьшил разрешение экрана
+			if (crMax.X > 0 && crMax.X < gpSrv->crReqSizeNewSize.X)
+			{
+				gpSrv->crReqSizeNewSize.X = crMax.X;
+				TODO("Обновить gcrBufferSize");
+				//lbNeedUpdateSrvMap = TRUE; 
+			}
+			if (crMax.Y > 0 && crMax.Y < gpSrv->crReqSizeNewSize.Y)
+			{
+				gpSrv->crReqSizeNewSize.Y = crMax.Y;
+				TODO("Обновить gcrBufferSize");
+				//lbNeedUpdateSrvMap = TRUE;
+			}
+
+			WARNING("Пока всякую коррекцию убрал. Ибо конфликтует с gpSrv->nRequestChangeSize.");
+			//Видимо, нужно сравнивать не с gpSrv->crReqSizeNewSize, а с gcrBufferSize
+#if 0
+			if (nWidth != gpSrv->crReqSizeNewSize.X && gpSrv->crReqSizeNewSize.X <= )
+			{
+				
+				csbi.srWindow.Right = min(csbi.dwSize.X, gpSrv->crReqSizeNewSize.X)-1;
+				csbi.srWindow.Left = max(0, (csbi.srWindow.Right-gpSrv->crReqSizeNewSize.X+1));
+				lbNeedCorrect = TRUE;
+			}
+			
+			if (nHeight != gpSrv->crReqSizeNewSize.Y)
+			{
+				csbi.srWindow.Bottom = min(csbi.dwSize.Y, gpSrv->crReqSizeNewSize.Y)-1;
+				csbi.srWindow.Top = max(0, (csbi.srWindow.Bottom-gpSrv->crReqSizeNewSize.Y+1));
+				lbNeedCorrect = TRUE;
+			}
+
+			if (lbNeedUpdateSrvMap)
+				UpdateConsoleMapHeader();
+#endif
+		}
+
+#if 0
 		// Левая граница
 		if (csbi.srWindow.Left > 0)
 		{
@@ -5559,7 +5412,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		if (csbi.dwSize.X > csbi.dwMaximumWindowSize.X)
 		{
 			// Это может случиться, если пользователь резко уменьшил разрешение экрана
-			// или консольное приложение значительно увеличило размер горизонтального буфера (Issue 373)
+			// или консольное приложение значительно увеличило размер горизонтального буфера (Issue 373: падает при запуске wmic)
 			lbNeedCorrect = TRUE;
 			if (gpSrv 
 				&& (gpSrv->crReqSizeNewSize.X > 0)
@@ -5609,6 +5462,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 				lbNeedCorrect = TRUE; csbi.srWindow.Bottom = (csbi.dwSize.Y - 1);
 			}
 		}
+#endif
 
 		WARNING("CorrectVisibleRect пока закомментарен, ибо все равно нифига не делает");
 
@@ -5763,6 +5617,9 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	gnBufferHeight = BufferHeight;
 	gcrBufferSize = crNewSize;
 	_ASSERTE(gcrBufferSize.Y<200);
+	
+	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
+		UpdateConsoleMapHeader(); // Обновить pConsoleMap.crLockedVisible
 
 	if (gnBufferHeight)
 	{
@@ -6153,9 +6010,9 @@ void _wprintf(LPCWSTR asBuffer)
 	//}
 }
 
-void DisableAutoConfirmExit()
+void DisableAutoConfirmExit(BOOL abFromFarPlugin)
 {
-	_ASSERTE(gnConfirmExitParm==0);
+	_ASSERTE(gnConfirmExitParm==0 || abFromFarPlugin);
 	gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
 	// менять nProcessStartTick не нужно. проверка только по флажкам
 	//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;

@@ -186,10 +186,13 @@ char* CShellProc::wcs2str(const wchar_t* pwsz, UINT anCP)
 
 BOOL CShellProc::LoadGuiMapping()
 {
-	if (m_SrvMapping.cbSize)
-		return TRUE;
+	if (!m_SrvMapping.cbSize || (m_SrvMapping.hConEmuWnd && !IsWindow(m_SrvMapping.hConEmuWnd)))
+	{
+		if (!::LoadSrvMapping(ghConWnd, m_SrvMapping))
+			return FALSE;
+	}
 
-	if (!::LoadSrvMapping(ghConWnd, m_SrvMapping))
+	if (!m_SrvMapping.hConEmuWnd || !IsWindow(m_SrvMapping.hConEmuWnd))
 		return FALSE;
 
 	return TRUE;
@@ -1363,10 +1366,17 @@ BOOL CShellProc::PrepareExecuteParms(
 		}
 		else
 		{
+			HWND hConWnd = GetConsoleWindow();
+
 			if (lbGuiApp && bNewConsoleArg)
 			{
 				if (anShowCmd)
 					*anShowCmd = SW_HIDE;
+
+				if (anShellFlags && hConWnd)
+				{
+					*anShellFlags |= SEE_MASK_NO_CONSOLE;
+				}
 
 				#if 0
 				// нужно запускаться ВНЕ текущей консоли!
@@ -1392,7 +1402,6 @@ BOOL CShellProc::PrepareExecuteParms(
 					hIn, hOut, hErr/*, szBaseDir, mb_DosBoxAllowed*/);
 			if (pIn)
 			{
-				HWND hConWnd = GetConsoleWindow();
 				CESERVER_REQ *pOut = NULL;
 				pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
 				ExecuteFreeResult(pIn); pIn = NULL;

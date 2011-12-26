@@ -422,20 +422,20 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 	if (!GetBufferInfo(h, csbi, srWork))
 		return FALSE;
 	
-	WORD nDefWriteBuf[1024];
-	WORD *pnWriteAttr = NULL;
-	int nBufWidth  = srWork.Right - srWork.Left + 1;
-	int nBufHeight = srWork.Bottom - srWork.Top + 1;
-	int nBufCount  = nBufWidth*nBufHeight;
-	if (nBufWidth <= (int)countof(nDefWriteBuf))
-		pnWriteAttr = nDefWriteBuf;
-	else
-		pnWriteAttr = (WORD*)calloc(nBufCount,sizeof(*pnWriteAttr));
-	if (!pnWriteAttr)
-	{
-		SetLastError(E_OUTOFMEMORY);
-		return FALSE;
-	}
+	//WORD nDefWriteBuf[1024];
+	//WORD *pnWriteAttr = NULL;
+	//int nBufWidth  = srWork.Right - srWork.Left + 1;
+	//int nBufHeight = srWork.Bottom - srWork.Top + 1;
+	//int nBufCount  = nBufWidth*nBufHeight;
+	//if (nBufWidth <= (int)countof(nDefWriteBuf))
+	//	pnWriteAttr = nDefWriteBuf;
+	//else
+	//	pnWriteAttr = (WORD*)calloc(nBufCount,sizeof(*pnWriteAttr));
+	//if (!pnWriteAttr)
+	//{
+	//	SetLastError(E_OUTOFMEMORY);
+	//	return FALSE;
+	//}
 	
 	BOOL lbRc = TRUE;
 	//COORD cr = {srWork.Left, srWork.Top};
@@ -516,8 +516,11 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 	
 	SetConsoleTextAttribute(h, n);
 	
-	if (pnWriteAttr != nDefWriteBuf)
-		free(pnWriteAttr);
+	TODO("ћожно бы запомнить, что WriteConsole должен писать атрибутом t");
+	UNREFERENCED_PARAMETER(t);
+	
+	//if (pnWriteAttr != nDefWriteBuf)
+	//	free(pnWriteAttr);
 	
 	return lbRc;
 }

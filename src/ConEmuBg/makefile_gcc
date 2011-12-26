@@ -1,9 +1,13 @@
 NAME = ConEmuBg
 SRCS = ConEmuBg.cpp \
        ConEmuBg995.cpp \
-       ConEmuBgA.cpp
+       ConEmuBg1900.cpp \
+       ConEmuBgA.cpp \
+       ../common/MAssert.cpp \
+       ../common/Memory.cpp \
+       ../common/MStrSafe.cpp
 
-USERLIBS = -lversion -lgdi32
+USERLIBS = -lversion -lgdi32 -luuid -lole32
 
 
 

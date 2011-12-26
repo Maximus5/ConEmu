@@ -39,13 +39,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 
 #include "../common/common.hpp"
+#ifdef _DEBUG
 #pragma warning( disable : 4995 )
+#endif
 #include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
+#ifdef _DEBUG
 #pragma warning( default : 4995 )
+#endif
 #define GDIPVER 0x0110
-#include <GdiPlus.h>
-#include <GdiplusPixelFormats.h>
-#include <xmllite.h>
+#include "../common/GdiPlusLt.h"
+#include "../common/xmllite.h"
 #include "../common/MStream.h"
 #include "../common/UnicodeChars.h"
 #include "ConEmuBg.h"
@@ -59,7 +62,12 @@ extern "C" {
 	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
 	void WINAPI SetStartupInfoW(void *aInfo);
 	void WINAPI OnConEmuLoaded(struct ConEmuLoadedArg* pConEmuInfo);
+	void WINAPI GetPluginInfoWcmn(void *piv);
 };
+#endif
+
+#ifndef DT_HIDEPREFIX
+#define DT_HIDEPREFIX               0x00100000
 #endif
 
 HMODULE ghPluginModule = NULL; // ConEmuBg.dll - сам плагин
@@ -88,13 +96,13 @@ wchar_t gsXmlConfigFile[MAX_PATH] = {};
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
-int WINAPI _export GetMinFarVersionW(void)
+int WINAPI GetMinFarVersionW(void)
 {
 	// ACTL_SYNCHRO required
 	return MAKEFARVERSION(2,0,max(1007,FAR_X_VER));
 }
 
-void WINAPI _export GetPluginInfoWcmn(void *piv)
+void WINAPI GetPluginInfoWcmn(void *piv)
 {
 	if (gFarVersion.dwBuild>=FAR_Y_VER)
 		FUNC_Y(GetPluginInfoW)(piv);
@@ -106,8 +114,8 @@ void WINAPI _export GetPluginInfoWcmn(void *piv)
 BOOL gbInfoW_OK = FALSE;
 
 
-void WINAPI _export ExitFARW(void);
-void WINAPI _export ExitFARW3(void*);
+void WINAPI ExitFARW(void);
+void WINAPI ExitFARW3(void*);
 int WINAPI ConfigureW(int ItemNumber);
 int WINAPI ConfigureW3(void*);
 bool FMatch(LPCWSTR asMask, LPWSTR asPath);
@@ -115,8 +123,8 @@ bool FMatch(LPCWSTR asMask, LPWSTR asPath);
 #include "../common/SetExport.h"
 ExportFunc Far3Func[] =
 {
-	{"ExitFARW", ExitFARW, ExitFARW3},
-	{"ConfigureW", ConfigureW, ConfigureW3},
+	{"ExitFARW",   (void*)ExitFARW,   (void*)ExitFARW3},
+	{"ConfigureW", (void*)ConfigureW, (void*)ConfigureW3},
 	{NULL}
 };
 
@@ -218,7 +226,7 @@ BOOL LoadFarVersion()
 	return lbRc;
 }
 
-void WINAPI _export SetStartupInfoW(void *aInfo)
+void WINAPI SetStartupInfoW(void *aInfo)
 {
 	gbSetStartupInfoOk = true;
 
@@ -571,20 +579,20 @@ struct GDIPlusDecoder
 	CachedImage *pImages;
 
 
-	typedef Gdiplus::Status(WINAPI *GdiplusStartup_t)(OUT ULONG_PTR *token, const Gdiplus::GdiplusStartupInput *input, OUT Gdiplus::GdiplusStartupOutput *output);
+	typedef Gdiplus::Status(WINAPI *GdiplusStartup_t)(ULONG_PTR *token, const Gdiplus::GdiplusStartupInput *input, void /*Gdiplus::GdiplusStartupOutput*/ *output);
 	typedef VOID (WINAPI *GdiplusShutdown_t)(ULONG_PTR token);
-	typedef Gdiplus::GpStatus(WINGDIPAPI *GdipCreateBitmapFromFile_t)(GDIPCONST WCHAR* filename, Gdiplus::GpBitmap **bitmap);
-	typedef Gdiplus::GpStatus(WINGDIPAPI *GdipGetImageWidth_t)(Gdiplus::GpImage *image, UINT *width);
-	typedef Gdiplus::GpStatus(WINGDIPAPI *GdipGetImageHeight_t)(Gdiplus::GpImage *image, UINT *height);
-	typedef Gdiplus::GpStatus(WINGDIPAPI *GdipDisposeImage_t)(Gdiplus::GpImage *image);
-	//typedef Gdiplus::GpStatus(WINGDIPAPI *GdipCreateHBITMAPFromBitmap_t)(Gdiplus::GpBitmap* bitmap, HBITMAP* hbmReturn, ARGB background);
-	typedef Gdiplus::GpStatus(WINGDIPAPI *GdipDrawImageI_t)(Gdiplus::GpGraphics *graphics, Gdiplus::GpImage *image, INT x, INT y);
-	typedef Gdiplus::GpStatus(WINGDIPAPI *GdipCreateFromHDC_t)(HDC hdc, Gdiplus::GpGraphics **graphics);
-	typedef Gdiplus::GpStatus(WINGDIPAPI *GdipDeleteGraphics_t)(Gdiplus::GpGraphics *graphics);
-	typedef Gdiplus::GpStatus(WINGDIPAPI *GdipGetDC_t)(Gdiplus::GpGraphics* graphics, HDC * hdc);
-	typedef Gdiplus::GpStatus(WINGDIPAPI *GdipReleaseDC_t)(Gdiplus::GpGraphics* graphics, HDC hdc);
-	typedef Gdiplus::GpStatus(WINGDIPAPI *GdipGetImageGraphicsContext_t)(Gdiplus::GpImage *image, Gdiplus::GpGraphics **graphics);
-	typedef Gdiplus::GpStatus(WINGDIPAPI *GdipBitmapConvertFormat_t)(Gdiplus::GpBitmap *pInputBitmap, Gdiplus::PixelFormat format, Gdiplus::DitherType dithertype, Gdiplus::PaletteType palettetype, Gdiplus::ColorPalette *palette, DWORD alphaThresholdPercent);
+	typedef Gdiplus::Status(WINAPI *GdipCreateBitmapFromFile_t)(GDIPCONST WCHAR* filename, Gdiplus::GpBitmap **bitmap);
+	typedef Gdiplus::Status(WINAPI *GdipGetImageWidth_t)(Gdiplus::GpImage *image, UINT *width);
+	typedef Gdiplus::Status(WINAPI *GdipGetImageHeight_t)(Gdiplus::GpImage *image, UINT *height);
+	typedef Gdiplus::Status(WINAPI *GdipDisposeImage_t)(Gdiplus::GpImage *image);
+	//typedef Gdiplus::Status(WINAPI *GdipCreateHBITMAPFromBitmap_t)(Gdiplus::GpBitmap* bitmap, HBITMAP* hbmReturn, ARGB background);
+	typedef Gdiplus::Status(WINAPI *GdipDrawImageI_t)(Gdiplus::GpGraphics *graphics, Gdiplus::GpImage *image, INT x, INT y);
+	typedef Gdiplus::Status(WINAPI *GdipCreateFromHDC_t)(HDC hdc, Gdiplus::GpGraphics **graphics);
+	typedef Gdiplus::Status(WINAPI *GdipDeleteGraphics_t)(Gdiplus::GpGraphics *graphics);
+	typedef Gdiplus::Status(WINAPI *GdipGetDC_t)(Gdiplus::GpGraphics* graphics, HDC * hdc);
+	typedef Gdiplus::Status(WINAPI *GdipReleaseDC_t)(Gdiplus::GpGraphics* graphics, HDC hdc);
+	typedef Gdiplus::Status(WINAPI *GdipGetImageGraphicsContext_t)(Gdiplus::GpImage *image, Gdiplus::GpGraphics **graphics);
+	typedef Gdiplus::Status(WINAPI *GdipBitmapConvertFormat_t)(Gdiplus::GpBitmap *pInputBitmap, Gdiplus::PixelFormat format, Gdiplus::DitherType dithertype, Gdiplus::PaletteType palettetype, Gdiplus::ColorPalette *palette, DWORD alphaThresholdPercent);
 
 
 	GdiplusStartup_t GdiplusStartup;
@@ -605,7 +613,7 @@ struct GDIPlusDecoder
 	bool Init()
 	{
 		nMagic = eGdiStr_Decoder;
-		hGDIPlus = NULL; gdiplusToken = NULL; bTokenInitialized = false;
+		hGDIPlus = NULL; gdiplusToken = 0; bTokenInitialized = false;
 		nLastError = 0;
 
 		if (!GetModuleFileName(ghPluginModule, sModulePath, countof(sModulePath)))
@@ -625,7 +633,7 @@ struct GDIPlusDecoder
 		bool result = false;
 		HRESULT hrCoInitialized = CoInitialize(NULL);
 		bCoInitialized = SUCCEEDED(hrCoInitialized);
-		wchar_t FullPath[MAX_PATH*2+15]; FullPath[0] = 0;
+		//wchar_t FullPath[MAX_PATH*2+15]; FullPath[0] = 0;
 		hGDIPlus = LoadLibraryW(L"GdiPlus.dll");
 
 		if (!hGDIPlus)
@@ -732,6 +740,7 @@ struct GDIPlusDecoder
 				CloseHandle(hFree);
 			}
 
+			UNREFERENCED_PARAMETER(nErr);
 			hGDIPlus = NULL;
 		}
 
@@ -756,7 +765,7 @@ struct GDIPlusDecoder
 		size_t cchError = MAX_PATH*3;
 		wchar_t* szError = (wchar_t*)malloc(cchError*sizeof(*szError));
 		wchar_t* psz = NULL;
-		Gdiplus::GpStatus lRc;
+		Gdiplus::Status lRc;
 		Gdiplus::GpBitmap *bmp = NULL;
 		Gdiplus::GpGraphics *gr = NULL;
 		CachedImage *pI = NULL, *pLast = NULL;
@@ -1138,7 +1147,7 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 	IXmlReader* pXmlReader = NULL;
 	HRESULT hr = S_OK;
 
-	int WindowType = -1;
+	//int WindowType = -1;
 	struct ChunkInfo
 	{
 		enum {
@@ -1280,7 +1289,7 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 	strm.SetData(XmlFile.FileData, XmlFile.FileSize);
 	LeaveCriticalSection(&XmlFile.cr);
 	
-    hr = gfCreateXmlReader(IID_PPV_ARGS(&pXmlReader), NULL);
+    hr = gfCreateXmlReader(IID_IXmlReader, (void**)&pXmlReader, NULL);
     if (SUCCEEDED(hr))
     {
         hr = pXmlReader->SetInput(&strm);
@@ -1632,6 +1641,8 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 					}
 				}
 				break;
+			default:
+				; // GCC warning elimination
 			}
 		} // end - while (!iFound && (S_OK == (hr = pXmlReader->Read(&nodeType))))
 		pXmlReader->Release();
@@ -2675,6 +2686,8 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 		DBGSTR(szDbg);
 	}
 	
+	UNREFERENCED_PARAMETER(iLeftRc); UNREFERENCED_PARAMETER(iRightRc);
+	
 	return TRUE;
 	
 	//DWORD nPanelBackIdx = (pBk->nFarColors[col_PanelText] & 0xF0) >> 4;
@@ -2934,7 +2947,7 @@ void ExitPlugin(void)
 	gbSetStartupInfoOk = false;
 }
 
-void   WINAPI _export ExitFARW(void)
+void   WINAPI ExitFARW(void)
 {
 	ExitPlugin();
 
@@ -2944,7 +2957,7 @@ void   WINAPI _export ExitFARW(void)
 		FUNC_X(ExitFARW)();
 }
 
-void WINAPI _export ExitFARW3(void*)
+void WINAPI ExitFARW3(void*)
 {
 	ExitPlugin();
 

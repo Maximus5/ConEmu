@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "ConEmuPipe.h"
 #include "ConEmu.h"
+#include "OptionsClass.h"
 
 WARNING("!!! Обязательно нужно сделать возможность отваливаться по таймауту!");
 
@@ -165,6 +166,8 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	{
 		memmove(pIn->Data, apData, anDataSize);
 	}
+	
+	DWORD dwTickStart = timeGetTime();
 
 	BYTE cbReadBuf[512];
 	BOOL fSuccess;
@@ -179,6 +182,8 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	               &cbRead,                // bytes read
 	               NULL);                  // not overlapped
 	dwErr = GetLastError();
+	
+	gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_PipeName);
 
 	if (!fSuccess && dwErr == ERROR_BROKEN_PIPE)
 	{

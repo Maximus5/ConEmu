@@ -238,7 +238,8 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 
 #define pHelp \
 	L"Console emulation program.\n" \
-	L"By default this program launches \"Far.exe\" from the same directory it is in.\n" \
+	L"Home page: http://conemu-maximus5.googlecode.com\n\n" \
+	L"By default this program launches \"Far.exe\" (if exists) or \"cmd.exe\".\n" \
 	L"\n" \
 	L"Command line switches:\n" \
 	L"/? - This help screen.\n" \

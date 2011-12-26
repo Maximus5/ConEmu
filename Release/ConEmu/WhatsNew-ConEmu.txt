@@ -1,8 +1,36 @@
-﻿2011.12.11
+﻿[%] Параметр '-new_console' не запускал во вкладке GUI приложения.
+[*] В системное меню добавлен пункт 'Visit home page'.
+[*] Еще немного FAQ-ConEmu.txt
+[*] Far3 build 2311.
+
+
+2011.12.20
+[*] Улучшен детектор прогресса в консоли.
+[+] GuiMacro. Новая функция: Shell("<Verb>","<File>"[,"<Parms>"[,"<Dir>"[,<ShowCmd>]]])
+    Verb - "open", "print", и т.п. или специальный "new_console"
+    Примеры (для диалога ConEmu GUI Macro):
+      shell("open","cmd","/c dir c:\ -new_console:b")
+    Примеры (для макросов Far 3.x):
+      callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"open\",\""+env("FARHOME")+"\\Encyclopedia\\FarEncyclopedia.ru.chm\")")
+      callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"new_console\",\""+env("FARHOME")+"\\far.exe\")")
+[+] На вкладке 'Debug' окна настроек добавлена возможность журналирования выполняемых команд.
+[%] Некорректно вырезался '-new_console' при наличии кавычки после параметра.
+
+
+2011.12.12
 [*] Продолжение GUI приложений во вкладках.
 [%] ConEmu64 & Far x86: при выходе из Far могло появляться сообщение 'Press Enter or Esc to close console'.
 [%] Issue 462: ConEmu 111206 & right click.
 [%] Issue 461: При максимизации внутренняя консоль не максимизируется.
+[+] Расширены возможности запуска новой консоли: -new_console[:bh[N]caru[:user:pwd]]
+    b - Create background tab
+    h<height> - пример, h0 - отключить буфер, h9999 - включить буфер в 9999 строк
+    n - отключить 'Press Enter or Esc to close console'
+    c - принудительно включить 'Press Enter or Esc to close console'
+    a - RunAs shell verb (as admin on Vista+, login/password in Win2k and WinXP)
+    r - Run as restricted user
+    u - ConEmu choose user dialog
+    u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST OPTION
 
 
 2011.12.06
@@ -385,7 +413,7 @@
 [*] При запуске ConEmu без параметров Far 2 по умолчанию запускается с ключом /w.
 [+] Положено начало 'GUI-макросам'. Смысл в том, чтобы дать фару 'порулить' параметрами ConEmu.
     Пример вызова через callplugin (Far 2):
-    $if (callplugin(0x43454D55,"IsConEmu()")<>0 && env("ConEmuMacroResult")=="Yes") MsgBox("Macro", "Far started under ConEmu") $end
+    $if (callplugin(0x43454D55,"IsConEmu()")!=0 && env("ConEmuMacroResult")=="Yes") MsgBox("Macro", "Far started under ConEmu") $end
     В Far 1 (врочем, как и в Far 2) для исполнения GUI-макроса (и просмотра его результата) можно использвать меню плагина.
     Пока что поддерживаются следующие функции:
     IsConEmu()

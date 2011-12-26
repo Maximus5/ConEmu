@@ -26,6 +26,8 @@ SRCS =  \
 		TaskBar.cpp        \
 		TaskBarGhost.cpp   \
 		TrayIcon.cpp       \
+		Update.cpp         \
+		UpdateSet.cpp      \
 		VirtualConsole.cpp \
 		../common/Common.cpp \
 		../common/ConEmuCheck.cpp \
@@ -35,7 +37,7 @@ SRCS =  \
 		../common/RgnDetect.cpp \
         ../common/WinObjects.cpp
 
-USERLIBS = -lversion -lshlwapi -loleaut32 -lNetapi32
+USERLIBS = -lversion -lshlwapi -loleaut32 -lNetapi32 -lwinmm
 
 #The following variables can be set by the user:
 #

@@ -307,11 +307,9 @@ EXSTYLE WS_EX_TOPMOST
 CAPTION "Settings..."
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    CONTROL         "List1",tvSetupCategories,"SysTreeView32",
-	                WS_BORDER | WS_TABSTOP | TVS_SHOWSELALWAYS ,4,4,70,232
-	LTEXT           " ",tSetupPagePlace,75,4,326,234,WS_BORDER
+    CONTROL         "List1",tvSetupCategories,"SysTreeView32",TVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,4,4,70,232
+    LTEXT           " ",tSetupPagePlace,75,4,326,234,WS_BORDER
     DEFPUSHBUTTON   "Save settings",bSaveSettings,331,243,70,14
-//    CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,252
     PUSHBUTTON      "Reset",bResetSettings,215,243,51,14
     PUSHBUTTON      "Reload",bReloadSettings,273,243,51,14
 END
@@ -431,14 +429,15 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Shell activity",gbActivityLog,4,1,319,230
-    CONTROL         "List1",lbActivityLog,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,28,311,135
+    CONTROL         "&Disabled",rbActivityDisabled,"Button",BS_AUTORADIOBUTTON,9,14,43,8
+    CONTROL         "Sh&ell and processes",rbActivityShell,"Button",BS_AUTORADIOBUTTON,54,14,79,8
+    CONTROL         "&Input",rbActivityInput,"Button",BS_AUTORADIOBUTTON,135,14,35,8
+    CONTROL         "Cmd",rbActivityCmd,"Button",BS_AUTORADIOBUTTON,171,14,29,8
     PUSHBUTTON      "&Reset",cbActivityReset,215,10,50,14
     PUSHBUTTON      "Save &as...",cbActivitySaveAs,269,10,50,14
-    CONTROL         "&Disabled",rbActivityDisabled,"Button",BS_AUTORADIOBUTTON,9,13,43,10
-    CONTROL         "Sh&ell and processes",rbActivityShell,"Button",BS_AUTORADIOBUTTON,56,13,79,10
+    CONTROL         "List1",lbActivityLog,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,28,311,135
     EDITTEXT        ebActivityApp,8,166,311,14,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        ebActivityParm,8,182,311,44,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL
-    CONTROL         "&Input",rbActivityInput,"Button",BS_AUTORADIOBUTTON,140,13,35,10
 END
 
 IDD_RESTART DIALOGEX 0, 0, 310, 167
@@ -733,6 +732,44 @@ BEGIN
     CONTROL         "PrntScrn",cbSendPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,203,43,10
     CONTROL         "Ctrl+Esc",cbSendCtrlEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,271,203,43,10
     CONTROL         "Alt+PrntScrn",cbSendAltPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,215,57,10
+END
+
+IDD_SPG_UPDATE DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Check mode",IDC_STATIC,9,40,184,27
+    CONTROL         "On startup",cbUpdateCheckOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,52,50,8
+    CONTROL         "Hourly",cbUpdateCheckHourly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,74,52,42,8
+    CONTROL         "Notify only",cbUpdateCheckNotifyOnly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,120,52,51,8
+    GROUPBOX        "Builds",IDC_STATIC,198,40,119,27
+    CONTROL         "Stable only",rbUpdateStableOnly,"Button",BS_AUTORADIOBUTTON,206,52,52,10
+    CONTROL         "Latest",rbUpdateLatestAvailable,"Button",BS_AUTORADIOBUTTON,262,52,36,8
+    GROUPBOX        "",IDC_STATIC,9,68,308,29
+    CONTROL         "Use proxy",cbUpdateUseProxy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,68,49,10
+    LTEXT           "Server:port",IDC_STATIC,19,80,42,8,WS_DISABLED
+    EDITTEXT        tUpdateProxy,62,78,83,13,ES_AUTOHSCROLL | WS_DISABLED
+    RTEXT           "User",IDC_STATIC,149,80,19,8,WS_DISABLED
+    EDITTEXT        tUpdateProxyUser,171,78,52,13,ES_AUTOHSCROLL | WS_DISABLED
+    RTEXT           "Password",IDC_STATIC,227,80,36,8,WS_DISABLED
+    EDITTEXT        tUpdateProxyPassword,266,78,46,13,ES_PASSWORD | ES_AUTOHSCROLL | WS_DISABLED
+    GROUPBOX        "Download package",IDC_STATIC,9,98,308,53
+    CONTROL         "Installer (ConEmuSetup.exe)",rbUpdateUseExe,"Button",BS_AUTORADIOBUTTON,15,110,114,10
+    CONTROL         "7z archieve (ConEmu.7z), WinRar or 7z required",rbUpdateUseArc,
+                    "Button",BS_AUTORADIOBUTTON,135,110,177,10
+    GROUPBOX        "Download path",IDC_STATIC,9,152,308,42
+    EDITTEXT        tUpdateDownloadPath,14,162,279,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",cbUpdateDownloadPath,297,162,15,13,WS_DISABLED
+    CONTROL         "Leave downloaded packages",cbUpdateLeavePackages,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,179,275,10
+    GROUPBOX        "Post-update command",IDC_STATIC,9,195,308,30
+    EDITTEXT        tUpdatePostUpdateCmd,14,206,298,13,ES_AUTOHSCROLL
+    GROUPBOX        "Update settings",IDC_STATIC,4,1,319,229
+    LTEXT           "Command line for 7z, %1 - archive file, %2 - ConEmu base dir",IDC_STATIC,16,122,293,8,WS_DISABLED
+    EDITTEXT        tUpdateArcCmdLine,14,133,279,13,ES_AUTOHSCROLL | WS_DISABLED
+    PUSHBUTTON      "...",cbUpdateArcCmdLine,297,133,15,13,WS_DISABLED
+    GROUPBOX        "ConEmu latest version location info",IDC_STATIC,9,10,308,29
+    EDITTEXT        tUpdateVerLocation,14,20,298,13,ES_AUTOHSCROLL | ES_READONLY
 END
 
 

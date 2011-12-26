@@ -161,7 +161,7 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 		}
 	}
 
-	while (gbInMyAssertPipe)
+	while (gbInMyAssertPipe && (gnInMyAssertThread != GetCurrentThreadId()))
 	{
 		Sleep(250);
 	}

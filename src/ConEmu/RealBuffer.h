@@ -33,12 +33,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CRealConsole;
 
-enum RealBufferScroll
-{
-	rbs_Any  = 0,
-	rbs_Vert = 1,
-	rbs_Horz = 2,
-};
+// >> common.hpp
+//enum RealBufferScroll
+//{
+//	rbs_None = 0,
+//	rbs_Vert = 1,
+//	rbs_Horz = 2,
+//	rbs_Any  = 3,
+//};
 
 #ifndef CONSOLE_MOUSE_SELECTION
 	#define CONSOLE_SELECTION_IN_PROGRESS   0x0001   // selection has begun

@@ -212,8 +212,8 @@ public:
 		/* [in] */ ULARGE_INTEGER libNewSize)
 	{
 		HRESULT hr = STG_E_INVALIDFUNCTION;
-		ULARGE_INTEGER llTest; llTest.QuadPart = 0;
-		LARGE_INTEGER llShift; llShift.QuadPart = 0;
+		//ULARGE_INTEGER llTest; llTest.QuadPart = 0;
+		//LARGE_INTEGER llShift; llShift.QuadPart = 0;
 
 		if (libNewSize.HighPart)
 			return E_OUTOFMEMORY;

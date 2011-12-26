@@ -1954,7 +1954,19 @@ void UpdateConsoleMapHeader()
 			gpSrv->pConsole->hdr.nServerPID = GetCurrentProcessId();
 		}
 		else if (gnRunMode == RM_ALTSERVER)
+		{
 			gpSrv->pConsole->hdr.nAltServerPID = GetCurrentProcessId();
+		}
+		if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
+		{
+			// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
+			// Размер может менять только пользователь ресайзом окна ConEmu
+			_ASSERTE(gcrBufferSize.X>0 && gcrBufferSize.X<=400 && gcrBufferSize.Y>0 && gcrBufferSize.Y<=300);
+			gpSrv->pConsole->hdr.bLockVisibleArea = TRUE;
+			gpSrv->pConsole->hdr.crLockedVisible = gcrBufferSize;
+			// Какая прокрутка допустима. Пока - любая.
+			gpSrv->pConsole->hdr.rbsAllowed = rbs_Any;
+		}
 		gpSrv->pConsole->hdr.nGuiPID = gpSrv->dwGuiPID;
 		gpSrv->pConsole->hdr.hConEmuRoot = ghConEmuWnd;
 		gpSrv->pConsole->hdr.hConEmuWnd = ghConEmuWndDC;

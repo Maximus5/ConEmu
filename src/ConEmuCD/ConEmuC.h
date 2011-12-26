@@ -283,7 +283,7 @@ void EmergencyShow();
 
 //int CreateColorerHeader();
 
-void DisableAutoConfirmExit();
+void DisableAutoConfirmExit(BOOL abFromFarPlugin=FALSE);
 
 int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn);
 

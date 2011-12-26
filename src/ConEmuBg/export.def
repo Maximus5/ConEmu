@@ -7,8 +7,8 @@ EXPORTS
 	OpenPluginW
 	ConfigureW
 ;  Far3
-   GetGlobalInfoW
-   OpenW
+	GetGlobalInfoW
+	OpenW
 ;
 	SetStartupInfo
 	GetPluginInfo

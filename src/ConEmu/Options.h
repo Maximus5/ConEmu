@@ -61,6 +61,8 @@ enum BackgroundOp
 
 #define BgImageColorsDefaults (1|2)
 
+#include "UpdateSet.h"
+
 class CSettings;
 
 struct Settings
@@ -507,16 +509,8 @@ struct Settings
 
 		TODO("загрузка bHideDisabledTabs");
 		bool bHideDisabledTabs;
-		
-		//bool isVisualizer;
-		//char nVizNormal, nVizFore, nVizTab, nVizEOL, nVizEOF;
-		//wchar_t cVizTab, cVizEOL, cVizEOF;
 
-		//char isAllowDetach;
-		//bool isCreateAppWindow;
 		bool NeedCreateAppWindow();
-		/*bool isScrollTitle;
-		DWORD ScrollTitleLen;*/
 		
 		//reg->Load(L"MainTimerElapse", nMainTimerElapse); if (nMainTimerElapse>1000) nMainTimerElapse = 1000;
 		DWORD nMainTimerElapse; // периодичность, с которой из консоли считывается текст
@@ -549,9 +543,6 @@ struct Settings
 		bool isConVisible;
 		//reg->Load(L"ConInMode", nConInMode);
 		DWORD nConInMode;
-		
-		//
-		//enum GuiLoggingType m_RealConLoggingType;
 
 		/* *** Thumbnails and Tiles *** */
 		//reg->Load(L"PanView.BackColor", ThSet.crBackground.RawColor);
@@ -559,72 +550,31 @@ struct Settings
 		//и т.п...
 		PanelViewSetMapping ThSet;
 		
-		//MFileMapping<PanelViewSetMapping> m_ThSetMap;
-
-		// Working variables...
-	//private:
-	//	//HBITMAP  hBgBitmap;
-	//	//COORD    bgBmp;
-	//	//HDC      hBgDc;
-	//	CBackground* mp_Bg;
-	//	//MSection mcs_BgImgData;
-	//	BITMAPFILEHEADER* mp_BgImgData;
-	//	BOOL mb_NeedBgUpdate; //, mb_WasVConBgImage;
-	//	bool mb_BgLastFade;
-	//	FILETIME ftBgModified;
-	//	DWORD nBgModifiedTick;
-	//public:
-	//	bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
-	//	bool PollBackgroundFile(); // true, если файл изменен
-	//	bool /*LoadImageFrom*/LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
-	//	bool IsBackgroundEnabled(CVirtualConsole* apVCon);
-	//	void NeedBackgroundUpdate();
-	//	//CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);
+		/* *** AutoUpdate *** */
+		ConEmuUpdateSettings UpdSet;
+		//wchar_t *szUpdateVerLocation; // ConEmu latest version location info
+		//bool isUpdateCheckOnStartup;
+		//bool isUpdateCheckHourly;
+		//bool isUpdateCheckNotifyOnly;
+		//BYTE isUpdateUseBuilds; // 1-stable only, 2-latest
+		//bool isUpdateUseProxy;
+		//wchar_t *szUpdateProxy; // "Server:port"
+		//wchar_t *szUpdateProxyUser;
+		//wchar_t *szUpdateProxyPassword;
+		//BYTE isUpdateDownloadSetup; // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+		//wchar_t *szUpdateArcCmdLine; // "%1"-archive file, "%2"-ConEmu base dir
+		//wchar_t *szUpdateDownloadPath; // "%TEMP%"
+		//bool isUpdateLeavePackages;
+		//wchar_t *szUpdatePostUpdateCmd; // Юзер может чего-то свое делать с распакованными файлами
+		
 	public:
-		//HFONT   mh_Font[MAX_FONT_STYLES], mh_Font2;
-		//TODO("По хорошему, CharWidth & CharABC нужно разделять по шрифтам - у Bold ширина может быть больше");
-		//WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
-		//ABC     CharABC[0x10000];
-		//HWND hMain, hExt, hKeys, hTabs, hColors, hViews, hInfo, hDebug;
-		////static void CenterDialog(HWND hWnd2);
-		//void OnClose();
-		//static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//static INT_PTR CALLBACK mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//static INT_PTR CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//static INT_PTR CALLBACK keysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//static INT_PTR CALLBACK tabsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//static INT_PTR CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//static INT_PTR CALLBACK viewsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//static INT_PTR CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//static INT_PTR CALLBACK debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		////static INT_PTR CALLBACK multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//static INT_PTR CALLBACK selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		void LoadSettings();
 		void InitSettings();
 		BOOL SaveSettings(BOOL abSilent = FALSE);
 		void SaveSizePosOnExit();
 		void SaveConsoleFont();
-		//bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
-		//static int CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
-		//static int CALLBACK EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
 		void UpdateMargins(RECT arcMargins);
-		//static void Dialog();
-		//void UpdatePos(int x, int y);
-		//void UpdateSize(UINT w, UINT h);
-		//void UpdateTTF(BOOL bNewTTF);
-		//void UpdateFontInfo();
-		//void Performance(UINT nID, BOOL bEnd);
-		//void InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
-		//BOOL RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
-		//void RegisterFonts();
-	//private:
-	//	void RegisterFontsInt(LPCWSTR asFromDir);
 	public:
-		//void UnregisterFonts();
-		//BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
-		//BOOL GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
-		//BOOL GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		void HistoryCheck();
 		void HistoryAdd(LPCWSTR asCmd);
 		LPCWSTR HistoryGet();
@@ -634,114 +584,7 @@ struct Settings
 		
 		SettingsBase* CreateSettings();
 		
-		//bool AutoRecreateFont(int nFontW, int nFontH);
-		//bool MacroFontSetSize(int nRelative/*0/1*/, int nValue/*1,2,...*/);
-		//void MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
-		//bool CheckTheming();
-		//void OnPanelViewAppeared(BOOL abAppear);
-		//bool EditConsoleFont(HWND hParent);
-		//static INT_PTR CALLBACK EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//static int CALLBACK EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
-		//bool CheckConsoleFontFast();
-		//enum
-		//{
-		//	ConFontErr_NonSystem   = 0x01,
-		//	ConFontErr_NonRegistry = 0x02,
-		//	ConFontErr_InvalidName = 0x04,
-		//};
-	//protected:
-	//	BOOL bShowConFontError, bConsoleFontChecked;
-	//	wchar_t sConFontError[512];
-	//	wchar_t sDefaultConFontName[32]; // "последний шанс", если юзер отказался выбрать нормальный шрифт
-	//	HWND hConFontDlg;
-	//	DWORD nConFontError; // 0x01 - шрифт не зарегистрирован в системе, 0x02 - не указан в реестре для консоли
-	//	HWND hwndConFontBalloon;
-	//	static bool CheckConsoleFontRegistry(LPCWSTR asFaceName);
-	//	static bool CheckConsoleFont(HWND ahDlg);
-	//	static void ShowConFontErrorTip(LPCTSTR asInfo);
-	//	LPCWSTR CreateConFontError(LPCWSTR asReqFont=NULL, LPCWSTR asGotFont=NULL);
-	//	TOOLINFO tiConFontBalloon;
-	//private:
-	//	static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout);
-	//protected:
-	//	void OnResetOrReload(BOOL abResetSettings);
-	//	LRESULT OnInitDialog();
-	//	LRESULT OnInitDialog_Main(HWND hWnd2);
-	//	LRESULT OnInitDialog_Ext(HWND hWnd2);
-	//	LRESULT OnInitDialog_Keys(HWND hWnd2);
-	//	LRESULT OnInitDialog_Tabs(HWND hWnd2);
-	//	LRESULT OnInitDialog_Color(HWND hWnd2);
-	//	LRESULT OnInitDialog_Views(HWND hWnd2);
-	//	LRESULT OnInitDialog_ViewsFonts(HWND hWnd2);
-	//	LRESULT OnInitDialog_Info(HWND hWnd2);
-	//	LRESULT OnInitDialog_Debug(HWND hWnd2);
-	//	LRESULT OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-	//	LRESULT OnColorButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-	//	LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		
-	//	LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
-	//	LRESULT OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
-	//	LRESULT OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		
-	//	LRESULT OnTab(LPNMHDR phdr);
-	//	INT_PTR OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-	//	INT_PTR OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-	//	void OnSaveActivityLogFile(HWND hListView);
-	//	void FillHotKeysList();
-	//	UINT mn_ActivateTabMsg;
 	private:
-		//bool GetColorById(WORD nID, COLORREF* color);
-		//bool SetColorById(WORD nID, COLORREF color);
-		//void ColorSetEdit(HWND hWnd2, WORD c);
-		//bool ColorEditDialog(HWND hWnd2, WORD c);
-		//void FillBgImageColors();
-		//HBRUSH mh_CtlColorBrush;
-		//INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
-		//COLORREF acrCustClr[16]; // array of custom colors
-		//BOOL mb_IgnoreEditChanged, mb_IgnoreTtfChange, mb_CharSetWasSet;
-		//i64 mn_Freq;
-		//i64 mn_FPS[20]; int mn_FPS_CUR_FRAME;
-		//i64 mn_RFPS[20]; int mn_RFPS_CUR_FRAME;
-		//i64 mn_Counter[tPerfInterval-gbPerformance];
-		//i64 mn_CounterMax[tPerfInterval-gbPerformance];
-		//DWORD mn_CounterTick[tPerfInterval-gbPerformance];
-		//HWND hwndTip, hwndBalloon;
-		//static void ShowFontErrorTip(LPCTSTR asInfo);
-		//TOOLINFO tiBalloon;
-		//void RegisterTipsFor(HWND hChildDlg);
-		//HFONT CreateFontIndirectMy(LOGFONT *inFont);
-		//void RecreateFont(WORD wFromID);
-		//// Theming
-		//HMODULE mh_Uxtheme;
-		//typedef HRESULT(STDAPICALLTYPE *SetWindowThemeT)(HWND hwnd,LPCWSTR pszSubAppName,LPCWSTR pszSubIdList);
-		//SetWindowThemeT SetWindowThemeF;
-		//typedef HRESULT(STDAPICALLTYPE *EnableThemeDialogTextureT)(HWND hwnd,DWORD dwFlags);
-		//EnableThemeDialogTextureT EnableThemeDialogTextureF;
-		//UINT mn_MsgUpdateCounter;
-		////wchar_t temp[MAX_PATH];
-		//UINT mn_MsgRecreateFont;
-		//UINT mn_MsgLoadFontFromMain;
-		//static int IsChecked(HWND hParent, WORD nCtrlId);
-		//static int GetNumber(HWND hParent, WORD nCtrlId);
-		//static int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
-		//static int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
-		//BOOL mb_TabHotKeyRegistered;
-		//void RegisterTabs();
-		//void UnregisterTabs();
-		//static DWORD CALLBACK EnumFontsThread(LPVOID apArg);
-		//HANDLE mh_EnumThread;
-		//WORD mn_LastChangingFontCtrlId;
-		//// Временно регистрируемые шрифты
-		//typedef struct tag_RegFont
-		//{
-		//	BOOL    bDefault;             // Этот шрифт пользователь указал через /fontfile
-		//	wchar_t szFontFile[MAX_PATH]; // полный путь
-		//	wchar_t szFontName[32];       // Font Family
-		//	BOOL    bUnicode;             // Юникодный?
-		//	BOOL    bHasBorders;          // Имеет ли данный шрифт символы рамок
-		//	BOOL    bAlreadyInSystem;     // Шрифт с таким именем уже был зарегистрирован в системе
-		//} RegFont;
-		//std::vector<RegFont> m_RegFonts;
-		//BOOL mb_StopRegisterFonts;
-		
 		// reg->Load(L"ColorTableNN", Colors[i]);
 		COLORREF Colors[0x20];
 		
@@ -749,74 +592,17 @@ struct Settings
 		
 		DWORD mn_FadeMul;
 		COLORREF ColorsFade[0x20];
-		//BOOL GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
 		inline BYTE GetFadeColorItem(BYTE c);
 		
-		//
-		//bool mb_ThemingEnabled;
-		//
 		bool TestHostkeyModifiers();
 		static BYTE CheckHostkeyModifier(BYTE vk);
 		static void ReplaceHostkey(BYTE vk, BYTE vkNew);
 		static void AddHostkey(BYTE vk);
 		static void TrimHostkeys();
-		//static void SetupHotkeyChecks(HWND hWnd2);
 		static bool MakeHostkeyModifier();
 		static BYTE HostkeyCtrlId2Vk(WORD nID);
 		BYTE mn_HostModOk[15], mn_HostModSkip[15];
 		bool isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR);
-		//static void FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue);
-		//static void GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue);
-		//static void CenterMoreDlg(HWND hWnd2);
-		//static bool IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight);
-	private:
-		//struct ConEmuHotKeys
-		//{
-		//	int  DescrLangID;
-		//	
-		//	int  Type; // 0 - hotkey, 1 - modifier (для драга, например)
-		//	
-		//	// User
-		//	BYTE* VkPtr; // Если NULL - значит системный, не изменяемый
-		//	
-		//	// System or default
-		//	BYTE Vk;
-		//	DWORD Modifier; // System only, для "User" - используется "HostKey"
-		//	
-		//	TODO("Сюда можно бы еще добавить инфу на какой странице и как его настраивать");
-		//};
-		//#define MAKEMODIFIER2(vk1,vk2) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)
-		//#define MAKEMODIFIER3(vk1,vk2,vk3) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)|(((DWORD)vk3&0xFF)<<16)
-		//ConEmuHotKeys *m_HotKeys;
-		//enum KeyListColumns
-		//{
-		//	klc_Type = 0,
-		//	klc_Hotkey,
-		//	klc_Desc
-		//};
-		//enum LogProcessColumns
-		//{
-		//	lpc_Time = 0,
-		//	lpc_PPID,
-		//	lpc_Func,
-		//	lpc_Oper,
-		//	lpc_Bits,
-		//	lpc_System,
-		//	lpc_App,
-		//	lpc_Params,
-		//	lpc_Flags,
-		//	lpc_StdIn,
-		//	lpc_StdOut,
-		//	lpc_StdErr,
-		//};
-		//enum LogInputColumns
-		//{
-		//	lic_Time = 0,
-		//	lic_Type,
-		//	lic_Dup,
-		//	lic_Event,
-		//};
-		//static void GetVkKeyName(BYTE vk, wchar_t (&szName)[128]);
 	private:
 		struct CEFontRange
 		{

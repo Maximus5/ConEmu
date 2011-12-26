@@ -146,6 +146,8 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 		pszResult = IsRealVisible(asMacro, apRCon);
 	else if (!lstrcmpi(szFunction, L"IsConsoleActive"))
 		pszResult = IsConsoleActive(asMacro, apRCon);
+	else if (!lstrcmpi(szFunction, L"Shell"))
+		pszResult = Shell(asMacro, apRCon);
 	else
 		pszResult = NULL; // Неизвестная функция
 
@@ -542,4 +544,72 @@ LPWSTR CConEmuMacro::FontSetName(LPWSTR asArgs, CRealConsole* apRCon)
 	}
 
 	return lstrdup(L"InvalidArg");
+}
+
+// ShellExecute
+LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	LPWSTR pszOper = NULL, pszFile = NULL, pszParm = NULL, pszDir = NULL;
+	int nShowCmd = SW_SHOWNORMAL;
+	
+	if (GetNextString(asArgs, pszOper))
+	{
+		if (GetNextString(asArgs, pszFile) && *pszFile)
+		{
+			if (!GetNextString(asArgs, pszParm))
+				pszParm = NULL;
+			else if (!GetNextString(asArgs, pszDir))
+				pszDir = NULL;
+			else if (!GetNextInt(asArgs, nShowCmd))
+				nShowCmd = SW_SHOWNORMAL;
+			
+			if ((lstrcmpi(pszOper,L"new_console")==0) || (pszParm && wcsstr(pszParm, L"-new_console")))
+			{
+				RConStartArgs *pArgs = new RConStartArgs;
+				
+				size_t nAllLen = _tcslen(pszFile) + (pszParm ? _tcslen(pszParm) : 0) + 16;
+				pArgs->pszSpecialCmd = (wchar_t*)malloc(nAllLen*sizeof(wchar_t));
+				
+				if (*pszFile != L'"')
+				{
+					pArgs->pszSpecialCmd[0] = L'"';
+					_wcscpy_c(pArgs->pszSpecialCmd+1, nAllLen-1, pszFile);
+					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L"\" ");
+				}
+				else
+				{
+					_wcscpy_c(pArgs->pszSpecialCmd, nAllLen, pszFile);
+					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" ");
+				}
+				
+				if (pszParm && *pszParm)
+				{
+					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, pszParm);
+				}
+				
+				if (pszDir)
+					pArgs->pszStartupDir = lstrdup(pszDir);
+			
+				gpConEmu->PostCreateCon(pArgs);
+				
+				return lstrdup(L"OK");
+			}
+			else
+			{
+				int nRc = (int)ShellExecuteW(ghWnd, pszOper, pszFile, pszParm, pszDir, nShowCmd);
+				
+				size_t cchSize = 16;
+				LPWSTR pszResult = (LPWSTR)malloc(2*cchSize);
+
+				if (nRc <= 32)
+					_wsprintf(pszResult, SKIPLEN(cchSize) L"Failed:%i", nRc);
+				else
+					lstrcpyn(pszResult, L"OK", cchSize);
+				
+				return pszResult;
+			}
+		}
+	}
+
+	return lstrdup(L"InvalidArg");	
 }

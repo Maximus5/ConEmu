@@ -937,7 +937,7 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 		}
 	}
 	
-	if (ghOpWnd && gpSetCls->hDebug && gpSetCls->m_RealConLoggingType == glt_Input)
+	if (ghOpWnd && gpSetCls->hDebug && gpSetCls->m_ActivityLoggingType == glt_Input)
 	{
 		//INPUT_RECORD *prCopy = (INPUT_RECORD*)calloc(sizeof(INPUT_RECORD),1);
 		CESERVER_REQ_PEEKREADINFO* pCopy = (CESERVER_REQ_PEEKREADINFO*)malloc(sizeof(CESERVER_REQ_PEEKREADINFO));
@@ -2747,7 +2747,12 @@ LRESULT CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LP
 		in.Msg.nMsg = nMsg;
 		in.Msg.wParam = wParam;
 		in.Msg.lParam = lParam;
+		
+		DWORD dwTickStart = timeGetTime();
+		
 		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+
+		gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 		if (pOut) ExecuteFreeResult(pOut);
 	}
@@ -4078,9 +4083,10 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 	{
 		OnDosAppStartStop((enum StartStopType)nStarted, nPID);
 	}
-
+	
 	// Готовим результат к отправке
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, pIn->hdr.cbSize);
+
 	if (pIn->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
 		memmove(pOut->Data, pIn->Data, pIn->hdr.cbSize - (int)sizeof(CESERVER_REQ_HDR));
 		
@@ -4639,7 +4645,7 @@ CESERVER_REQ* CRealConsole::cmdOnPeekReadInput(HANDLE hPipe, CESERVER_REQ* pIn, 
 
 	DEBUGSTRCMD(L"GUI recieved CECMD_PEEKREADINFO\n");
 	
-	if (ghOpWnd && gpSetCls->hDebug && gpSetCls->m_RealConLoggingType == glt_Input)
+	if (ghOpWnd && gpSetCls->hDebug && gpSetCls->m_ActivityLoggingType == glt_Input)
 	{
 		if (nDataSize >= sizeof(CESERVER_REQ_PEEKREADINFO))
 		{
@@ -4731,6 +4737,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		//CloseHandle(hPipe);
 		return;
 	}
+	
+	gpSetCls->debugLogCommand(&in, TRUE, timeGetTime(), 0, ms_VConServer_Pipe, pOut);
 
 	if (in.hdr.cbSize <= cbRead)
 	{
@@ -6196,7 +6204,12 @@ BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow)
 			in.Msg.nMsg = WM_SHOWWINDOW;
 			in.Msg.wParam = swShow; //SW_SHOWNA;
 			in.Msg.lParam = 0;
+			
+			DWORD dwTickStart = timeGetTime();
+			
 			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+			
+			gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 			if (pOut) ExecuteFreeResult(pOut);
 
@@ -6239,7 +6252,12 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 			in.SetWndPos.cx = cx;
 			in.SetWndPos.cy = cy;
 			in.SetWndPos.uFlags = uFlags;
+			
+			DWORD dwTickStart = timeGetTime();
+			
 			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+			
+			gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 			if (pOut) ExecuteFreeResult(pOut);
 
@@ -6318,7 +6336,13 @@ HWND CRealConsole::SetOtherWindowParent(HWND hWnd, HWND hParent)
 		// Собственно, аргументы
 		in.setParent.hWnd = hWnd;
 		in.setParent.hParent = hParent;
+		
+		DWORD dwTickStart = timeGetTime();
+		
 		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+		
+		gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+		
 		if (pOut)
 		{
 			h = pOut->setParent.hParent;
@@ -6349,8 +6373,12 @@ BOOL CRealConsole::SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOO
 		in.SetWndRgn.bRedraw = bRedraw;
 		memmove(in.SetWndRgn.rcRects, prcRects, nRects*sizeof(RECT));
 	}
+	
+	DWORD dwTickStart = timeGetTime();
 
 	CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+	
+	gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 	if (pOut) ExecuteFreeResult(pOut);
 
@@ -6577,11 +6605,13 @@ void CRealConsole::UpdateServerActive(BOOL abActive)
 	{
 		int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2;
 		DWORD dwRead = 0;
-		CESERVER_REQ lIn = {{nInSize}};
+		CESERVER_REQ lIn = {{nInSize}}, lOut = {};
 		lIn.dwData[0] = abActive;
 		lIn.dwData[1] = mb_ThawRefreshThread;
 		ExecutePrepareCmd(&lIn.hdr, CECMD_ONACTIVATION, lIn.hdr.cbSize);
-		fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, &lIn, lIn.hdr.cbSize, &lIn, lIn.hdr.cbSize, &dwRead, 500);
+		DWORD dwTickStart = timeGetTime();
+		fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, &lIn, lIn.hdr.cbSize, &lOut, sizeof(lOut), &dwRead, 500);
+		gpSetCls->debugLogCommand(&lIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_ConEmuC_Pipe, &lOut);
 	}
 }
 
@@ -7454,7 +7484,13 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 		if (pIn)
 		{
 			pIn->dwData[0] = (DWORD)dwNewKeyboardLayout;
+			
+			DWORD dwTickStart = timeGetTime();
+			
 			CESERVER_REQ *pOut = ExecuteHkCmd(mn_GuiWndPID, pIn, ghWnd);
+			
+			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteHkCmd", pOut);
+			
 			ExecuteFreeResult(pOut);
 			ExecuteFreeResult(pIn);
 		}
@@ -7699,7 +7735,12 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 						if (pIn)
 						{
 							pIn->dwData[0] = nActivePID;
+							DWORD dwTickStart = timeGetTime();
+							
 							CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
+							
+							gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+							
 							if (pOut)
 							{
 								if (pOut->hdr.cbSize == sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD))
@@ -8284,7 +8325,12 @@ void CRealConsole::UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo)
 		if (pIn)
 		{
 			memmove(&(pIn->GuiInfo), apGuiInfo, apGuiInfo->cbSize);
+			DWORD dwTickStart = timeGetTime();
+			
 			CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
+			
+			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+			
 			if (pOut)
 				ExecuteFreeResult(pOut);
 			ExecuteFreeResult(pIn);
@@ -8350,7 +8396,7 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 	//wchar_t *szData = pSetEnvVar->szEnv;
 	pSetEnvVar->bFARuseASCIIsort = gpSet->isFARuseASCIIsort;
 	pSetEnvVar->bShellNoZoneCheck = gpSet->isShellNoZoneCheck;
-	pSetEnvVar->bMonitorConsoleInput = (gpSetCls->m_RealConLoggingType == glt_Input);
+	pSetEnvVar->bMonitorConsoleInput = (gpSetCls->m_ActivityLoggingType == glt_Input);
 	//BOOL lbNeedQuot = (wcschr(gpConEmu->ms_ConEmuCExeFull, L' ') != NULL);
 	//wchar_t* pszName = szData;
 	//lstrcpy(pszName, L"ComSpec");
@@ -8564,7 +8610,11 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	if (asAppFileName)
 		wcscpy_c(In.AttachGuiApp.sAppFileName, asAppFileName);
 	
+	DWORD dwTickStart = timeGetTime();
+	
 	CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &In, ghWnd);
+	
+	gpSetCls->debugLogCommand(&In, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 	if (pOut) ExecuteFreeResult(pOut);
 	
@@ -8719,7 +8769,8 @@ void CRealConsole::GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
 // По крайней мене в фаре мы можем проверить токены.
 // В свойствах приложения проводником может быть установлен флажок "Run as administrator"
 // Может быть соответствующий манифест...
-// Хотя скорее всего это невозможно. В одной консоли не могут крутиться программы под разными аккаунтами
+// Хотя скорее всего это невозможно. В одной консоли не могут крутиться программы
+// под разными аккаунтами (точнее elevated/non elevated)
 bool CRealConsole::isAdministrator()
 {
 	if (!this) return false;
@@ -9356,7 +9407,12 @@ void CRealConsole::Detach()
 		// Уведомить сервер, что он больше не наш
 		CESERVER_REQ in;
 		ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR));
+		DWORD dwTickStart = timeGetTime();
+		
 		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+		
+		gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+		
 		if (pOut) ExecuteFreeResult(pOut);
 	}
 
@@ -9421,6 +9477,9 @@ BOOL CRealConsole::GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID)
 	{
 		wchar_t szApp[MAX_PATH+1], szArg[MAX_PATH+1];
 		LPCWSTR pszArg = NULL, pszApp = NULL, pszOnly = NULL;
+
+		while (pszCmd[0] == L'"' && pszCmd[1] == L'"')
+			pszCmd++;
 
 		pszOnly = PointToName(pszCmd);
 

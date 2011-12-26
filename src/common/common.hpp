@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    78
+#define CESERVER_REQ_VER    79
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -129,6 +129,14 @@ enum CONSOLE_KEY_ID
 	ID_ALTPRTSC,
 	ID_PRTSC,
 	ID_CTRLESC,
+};
+
+enum RealBufferScroll
+{
+	rbs_None = 0,
+	rbs_Vert = 1,
+	rbs_Horz = 2,
+	rbs_Any  = 3,
 };
 
 //#define CONEMUMAPPING    L"ConEmuPluginData%u"
@@ -690,7 +698,8 @@ enum GuiLoggingType
 	glt_None = 0,
 	glt_Processes = 1,
 	glt_Input = 2,
-	// glt_Keyboard, glt_Files, ...
+	glt_Commands = 3,
+	// glt_Files, ...
 };
 
 struct ConEmuGuiMapping
@@ -963,9 +972,11 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	HKEY2   hMountRoot;  // NULL для Vista+, для Win2k&XP здесь хранится корневой ключ (HKEY_USERS), в который загружен hive
 	wchar_t sMountKey[MAX_PATH]; // Для Win2k&XP здесь хранится имя ключа, в который загружен hive
 
-	//// Логирование CreateProcess, ShellExecute, и прочих запускающих функций
-	//// Если пусто - не логируется
-	//wchar_t  sLogCreateProcess[MAX_PATH];
+	// Разрешенный размер видимой области
+	BOOL  bLockVisibleArea;
+	COORD crLockedVisible;
+	// И какая прокрутка допустима
+	RealBufferScroll rbsAllowed;
 };
 
 struct CESERVER_REQ_CONINFO_INFO
