@@ -390,7 +390,9 @@ void CloseRootKeys()
 
 void DoneHooksReg()
 {
+#ifdef _DEBUG
 	OutputDebugString(L"ConEmuHk: Deinitializing registry virtualization!\n");
+#endif
 	if (gpRegKeyHooks)
 	{
 		free(gpRegKeyHooks);
@@ -403,7 +405,9 @@ void DoneHooksReg()
 		free(gpRegKeyStore);
 		gpRegKeyStore = NULL;
 	}
+#ifdef _DEBUG
 	OutputDebugString(L"ConEmuHk: Registry virtualization deinitialized!\n");
+#endif
 }
 
 void InitHooksRegThread()

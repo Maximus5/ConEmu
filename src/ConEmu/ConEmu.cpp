@@ -7439,12 +7439,13 @@ BOOL CConEmuMain::OnCloseQuery()
 			return FALSE; // не закрывать
 	}
 
-#ifdef _DEBUG
-
+	#ifdef _DEBUG
 	if (gbInMyAssertTrap)
 		return FALSE;
+	#endif
 
-#endif
+	// Чтобы мог сработать таймер закрытия
+	OnRConStartedSuccess(NULL);
 	return TRUE; // можно
 }
 
@@ -12658,6 +12659,7 @@ void CConEmuMain::OnAllGhostClosed()
 
 void CConEmuMain::OnRConStartedSuccess(CRealConsole* apRCon)
 {
+	// Note, apRCon MAY be NULL
 	mb_ProcessCreated = TRUE;
 }
 
