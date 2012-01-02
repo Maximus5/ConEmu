@@ -73,6 +73,8 @@ struct CeFullPanelInfo
 	// ************************
 	size_t nMaxPanelDir;
 	wchar_t* pszPanelDir;
+	size_t nMaxPanelGetDir;
+	void* pFarPanelDirectory;
 	// ************************
 	INT_PTR nMaxItemsNumber;
 	CePluginPanelItem** ppItems;

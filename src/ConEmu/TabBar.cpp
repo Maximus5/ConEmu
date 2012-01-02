@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1401,17 +1401,18 @@ void TabBarClass::OnMouse(int message, int x, int y)
 				}
 				else
 				{
-					if (pVCon->RCon()->GetFarPID())
-					{
-						pVCon->RCon()->PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
-					}
-					else
-					{
-						// Если запущен CMD, PowerShell, и т.п.
-						pVCon->RCon()->CloseTab();
-						//// показать ДИАЛОГ пересоздания консоли, там есть кнопки Terminate & Recreate
-						//gpConEmu->Recreate(TRUE, TRUE);
-					}
+					pVCon->RCon()->CloseTab();
+					//if (pVCon->RCon()->GetFarPID())
+					//{
+					//	pVCon->RCon()->PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
+					//}
+					//else
+					//{
+					//	// Если запущен CMD, PowerShell, и т.п.
+					//	pVCon->RCon()->CloseTab();
+					//	//// показать ДИАЛОГ пересоздания консоли, там есть кнопки Terminate & Recreate
+					//	//gpConEmu->Recreate(TRUE, TRUE);
+					//}
 				}
 			}
 		}

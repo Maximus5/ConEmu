@@ -122,6 +122,7 @@ $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\Options.obj \
 $(INTDIR)\OptionsClass.obj \
+$(INTDIR)\OptionsFast.obj \
 $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\RealBuffer.obj \
 $(INTDIR)\RealConsole.obj \
@@ -274,7 +275,7 @@ AllDirs:
 #	$(CPPFLAGS) $<
 # <<
 
-$(RES_FILE): ConEmu.rc ..\ConEmu\Version.h
+$(RES_FILE): ConEmu.rc Version.h
 	echo compiling resource file
 	$(RC) $(RFLAGS) ConEmu.rc
 
@@ -298,9 +299,9 @@ $(INTDIR)\Background.obj: Background.cpp Background.h
 
 $(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
-$(INTDIR)\ConEmu.obj: ConEmu.cpp
+$(INTDIR)\ConEmu.obj: ConEmu.cpp Version.h
 
-$(INTDIR)\ConEmuApp.obj: ConEmuApp.cpp
+$(INTDIR)\ConEmuApp.obj: ConEmuApp.cpp Version.h
 
 $(INTDIR)\ConEmuChild.obj: ConEmuChild.cpp
 
@@ -318,15 +319,17 @@ $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 
 $(INTDIR)\Macro.obj: Macro.cpp Macro.h
 
-$(INTDIR)\Options.obj: Options.cpp Options.h UpdateSet.h
+$(INTDIR)\Options.obj: Options.cpp Options.h UpdateSet.h Version.h
 
-$(INTDIR)\OptionsClass.obj: OptionsClass.cpp OptionsClass.h Options.h Background.h UpdateSet.h
+$(INTDIR)\OptionsClass.obj: OptionsClass.cpp OptionsClass.h Options.h Background.h UpdateSet.h Version.h
 
-$(INTDIR)\RConStartArgs.obj: RConStartArgs.cpp RConStartArgs.h
+$(INTDIR)\OptionsFast.obj: OptionsFast.cpp OptionsFast.h Options.h
+
+$(INTDIR)\RConStartArgs.obj: ..\common\RConStartArgs.cpp ..\common\RConStartArgs.h
 
 $(INTDIR)\RealBuffer.obj: RealBuffer.cpp RealBuffer.h RealConsole.h  ..\common\Common.hpp
 
-$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h RConStartArgs.h  ..\common\Common.hpp
+$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h ..\common\RConStartArgs.h  ..\common\Common.hpp
 
 $(INTDIR)\Recreate.obj: Recreate.cpp Recreate.h
 
@@ -344,9 +347,9 @@ $(INTDIR)\TaskBarGhost.obj: TaskBarGhost.cpp
 
 $(INTDIR)\TrayIcon.obj: TrayIcon.cpp
 
-$(INTDIR)\Update.obj: Update.cpp Update.h UpdateSet.h
+$(INTDIR)\Update.obj: Update.cpp Update.h UpdateSet.h Version.h
 
-$(INTDIR)\UpdateSet.obj: UpdateSet.cpp UpdateSet.h
+$(INTDIR)\UpdateSet.obj: UpdateSet.cpp UpdateSet.h Version.h
 
 $(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp
 

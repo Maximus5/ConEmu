@@ -6,7 +6,7 @@
 //TODO: ChangeXXX - послать в консоль и установить значение переменной
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

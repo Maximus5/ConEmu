@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -72,8 +72,9 @@ extern "C" {
 };
 #endif
 
+BOOL gbPreloadByDefault = TRUE;
+DWORD gdwModes[2] = {0,0}; // pvm_XXX
 PanelViewSetMapping gThSet = {0}; // параметры получаются из мэппинга при открытии плага или при перерегистрации
-
 HWND ghConEmuRoot = NULL, ghConEmuWnd = NULL;
 HMODULE ghPluginModule = NULL; // ConEmuTh.dll - сам плагин
 BOOL TerminalMode = FALSE;
@@ -194,7 +195,7 @@ void EntryPoint(int OpenFrom,INT_PTR Item)
 	// Вызов плагина из меню - нужно выбрать режим
 	if (PVM == pvm_None)
 	{
-		switch(ShowPluginMenu())
+		switch (ShowPluginMenu())
 		{
 			case 0:
 				PVM = pvm_Thumbnails;
@@ -256,7 +257,8 @@ void EntryPoint(int OpenFrom,INT_PTR Item)
 
 	HKEY hk = NULL;
 
-	SettingsSave(pi->bLeftPanel ? L"LeftPanelView" : L"RightPanelView", &dwMode);
+	SavePanelViewState(pi->bLeftPanel, dwMode);
+	//SettingsSave(pi->bLeftPanel ? L"LeftPanelView" : L"RightPanelView", &dwMode);
 	//if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL))
 	//{
 	//	RegSetValueEx(hk, pi->bLeftPanel ? L"LeftPanelView" : L"RightPanelView", 0,
@@ -591,9 +593,9 @@ void StartPlugin(BOOL abManual)
 
 	//if (!RegOpenKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, KEY_READ, &hk))
 	{
-		DWORD dwModes[2] = {0,0}; //, dwSize = 4;
-		SettingsLoad(L"LeftPanelView", dwModes);
-		SettingsLoad(L"RightPanelView", dwModes+1);
+		//DWORD dwModes[2] = {0,0}; //, dwSize = 4;
+		SettingsLoad(L"LeftPanelView", gdwModes);
+		SettingsLoad(L"RightPanelView", gdwModes+1);
 
 		//if (RegQueryValueEx(hk, L"LeftPanelView", NULL, NULL, (LPBYTE)dwModes, &(dwSize=4)))
 		//	dwModes[0] = 0;
@@ -608,7 +610,7 @@ void StartPlugin(BOOL abManual)
 			CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 		}
 
-		if (dwModes[0] || dwModes[1])
+		if (gdwModes[0] || gdwModes[1])
 		{
 			if (gThSet.bRestoreOnStartup)
 			{
@@ -625,9 +627,9 @@ void StartPlugin(BOOL abManual)
 
 				for(int i = 0; i < 2; i++)
 				{
-					if (!pi[i]->hView && dwModes[i])
+					if (!pi[i]->hView && gdwModes[i])
 					{
-						pi[i]->PVM = (PanelViewMode)dwModes[i];
+						pi[i]->PVM = (PanelViewMode)gdwModes[i];
 						pi[i]->DisplayReloadPanel();
 
 						if (pi[i]->hView == NULL)
@@ -2350,6 +2352,25 @@ void SettingsSaveReg(LPCWSTR pszRegKey, LPCWSTR pszName, DWORD* pValue)
 		RegSetValueEx(hk, pszName, 0, REG_DWORD, (LPBYTE)pValue, sizeof(*pValue));
 		RegCloseKey(hk);
 	}
+}
+
+void SavePanelViewState(BOOL bLeftPanel, DWORD dwMode)
+{
+	gdwModes[bLeftPanel ? 0 : 1] = dwMode;
+	SettingsSave(bLeftPanel ? L"LeftPanelView" : L"RightPanelView", &dwMode);
+}
+
+bool isPreloadByDefault()
+{
+	// Только когда плагин запущен из-под ConEmu можно получить настройки "PanelViews"
+	// (они задаются через графический интерфейс)
+	if (!ghConEmuWnd)
+		return true;
+	
+	// Теперь можно настройки смотреть
+	if ((gdwModes[0] || gdwModes[1]) && gThSet.bRestoreOnStartup)
+		return true;
+	return false;
 }
 
 void SettingsLoadOther(LPCWSTR pszRegKey)

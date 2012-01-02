@@ -386,15 +386,15 @@ extern RPC_IF_HANDLE __MIDL_itf_shobjidl_0000_0092_v0_0_s_ifspec;
 /* interface ITaskbarList3 */
 /* [object][uuid] */
 
-typedef /* [v1_enum] */
-enum TBPFLAG
-{
-	TBPF_NOPROGRESS	= 0,
-	TBPF_INDETERMINATE	= 0x1,
-	TBPF_NORMAL	= 0x2,
-	TBPF_ERROR	= 0x4,
-	TBPF_PAUSED	= 0x8
-} 	TBPFLAG;
+//typedef /* [v1_enum] */
+//enum TBPFLAG
+//{
+//	TBPF_NOPROGRESS	= 0,
+//	TBPF_INDETERMINATE	= 0x1,
+//	TBPF_NORMAL	= 0x2,
+//	TBPF_ERROR	= 0x4,
+//	TBPF_PAUSED	= 0x8
+//} 	TBPFLAG;
 
 DEFINE_ENUM_FLAG_OPERATORS(TBPFLAG)
 typedef /* [v1_enum] */

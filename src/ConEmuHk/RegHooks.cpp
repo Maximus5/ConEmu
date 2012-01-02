@@ -391,6 +391,7 @@ void CloseRootKeys()
 void DoneHooksReg()
 {
 #ifdef _DEBUG
+	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
 	OutputDebugString(L"ConEmuHk: Deinitializing registry virtualization!\n");
 #endif
 	if (gpRegKeyHooks)
@@ -406,6 +407,7 @@ void DoneHooksReg()
 		gpRegKeyStore = NULL;
 	}
 #ifdef _DEBUG
+	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
 	OutputDebugString(L"ConEmuHk: Registry virtualization deinitialized!\n");
 #endif
 }

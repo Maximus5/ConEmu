@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -277,7 +277,9 @@ struct Settings
 		BYTE m_isKeyboardHooks;
 	public:
 		bool isKeyboardHooks();
-		
+
+		//bool CheckUpdatesWanted();
+
 		bool isCharBorder(wchar_t inChar);
 		
 		//reg->Load(L"PartBrush75", isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
@@ -302,11 +304,15 @@ struct Settings
 		char isRClickSendKey;
 		//reg->Load(L"RightClickMacro2", &sRClickMacro);
 		wchar_t *sRClickMacro;
+		LPCWSTR RClickMacro();
+		LPCWSTR RClickMacroDefault();
 		
 		//reg->Load(L"SafeFarClose", isSafeFarClose);
 		bool isSafeFarClose;
 		//reg->Load(L"SafeFarCloseMacro", &sSafeFarCloseMacro);
 		wchar_t *sSafeFarCloseMacro;
+		LPCWSTR SafeFarCloseMacro();
+		LPCWSTR SafeFarCloseMacroDefault();
 		
 		//reg->Load(L"AltEnter", isSendAltEnter);
 		bool isSendAltEnter;
@@ -357,6 +363,8 @@ struct Settings
 		
 		//reg->Load(L"EnhanceGraphics", isEnhanceGraphics);
 		bool isEnhanceGraphics; // Progressbars and scrollbars (pseudographics)
+		//reg->Load(L"EnhanceButtons", isEnhanceButtons);
+		bool isEnhanceButtons; // Buttons, CheckBoxes and RadioButtons (pseudographics)
 		
 		//reg->Load(L"FadeInactive", isFadeInactive);
 		bool isFadeInactive;
@@ -401,8 +409,13 @@ struct Settings
 		
 		//if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { if (sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; } }
 		wchar_t *sTabCloseMacro;
+		LPCWSTR TabCloseMacro();
+		LPCWSTR TabCloseMacroDefault();
+		
 		//if (!reg->Load(L"SaveAllEditors", &sSaveAllMacro)) { sSaveAllMacro = lstrdup(L"...
 		wchar_t *sSaveAllMacro;
+		LPCWSTR SaveAllMacro();
+		LPCWSTR SaveAllMacroDefault();
 		
 		//reg->Load(L"ToolbarAddSpace", nToolbarAddSpace);
 		int nToolbarAddSpace;
@@ -555,7 +568,7 @@ struct Settings
 		//wchar_t *szUpdateVerLocation; // ConEmu latest version location info
 		//bool isUpdateCheckOnStartup;
 		//bool isUpdateCheckHourly;
-		//bool isUpdateCheckNotifyOnly;
+		//bool isUpdateConfirmDownload;
 		//BYTE isUpdateUseBuilds; // 1-stable only, 2-latest
 		//bool isUpdateUseProxy;
 		//wchar_t *szUpdateProxy; // "Server:port"
@@ -579,7 +592,7 @@ struct Settings
 		void HistoryAdd(LPCWSTR asCmd);
 		LPCWSTR HistoryGet();
 		//void UpdateConsoleMode(DWORD nMode);
-		BOOL CheckConIme();
+		//BOOL CheckConIme();
 		void CheckConsoleSettings();
 		
 		SettingsBase* CreateSettings();

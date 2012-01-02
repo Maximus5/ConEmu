@@ -1435,6 +1435,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\RConStartArgs.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuC.h"
 				>
 			</File>
@@ -1496,6 +1500,10 @@
 			>
 			<File
 				RelativePath="..\common\Common.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\RConStartArgs.cpp"
 				>
 			</File>
 			<File

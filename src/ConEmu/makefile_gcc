@@ -15,7 +15,7 @@ SRCS =  \
 		Macro.cpp          \
 		Options.cpp        \
 		OptionsClass.cpp   \
-		RConStartArgs.cpp  \
+        OptionsFast.cpp    \
 		RealBuffer.cpp     \
 		RealConsole.cpp    \
 		Recreate.cpp       \
@@ -34,6 +34,7 @@ SRCS =  \
 		../common/Memory.cpp \
 		../common/MSecurity.cpp \
 		../common/MStrSafe.cpp \
+		../common/RConStartArgs.cpp  \
 		../common/RgnDetect.cpp \
         ../common/WinObjects.cpp
 

@@ -36,6 +36,16 @@ typedef interface ITaskbarList4 ITaskbarList4;
 #ifndef __ITaskbarList3_FWD_DEFINED__
 #define __ITaskbarList3_FWD_DEFINED__
 typedef interface ITaskbarList3 ITaskbarList3;
+
+typedef /* [v1_enum] */
+enum TBPFLAG
+{
+	TBPF_NOPROGRESS	= 0,
+	TBPF_INDETERMINATE	= 0x1,
+	TBPF_NORMAL	= 0x2,
+	TBPF_ERROR	= 0x4,
+	TBPF_PAUSED	= 0x8
+} 	TBPFLAG;
 #endif 	/* __ITaskbarList3_FWD_DEFINED__ */
 
 #ifndef __ITaskbarList2_FWD_DEFINED__
@@ -47,7 +57,6 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #define __ITaskbarList_FWD_DEFINED__
 typedef interface ITaskbarList ITaskbarList;
 #endif 	/* __ITaskbarList_FWD_DEFINED__ */
-
 
 
 class CTaskBar
@@ -69,6 +78,8 @@ public:
 	HRESULT Taskbar_UnregisterTab(HWND hBtn);
 	HRESULT Taskbar_AddTabXP(HWND hBtn);
 	HRESULT Taskbar_DeleteTabXP(HWND hBtn);
+	HRESULT Taskbar_SetProgressValue(int nProgress);
+	HRESULT Taskbar_SetProgressState(TBPFLAG nState);
 	
 	bool Taskbar_GhostSnapshootRequired();
 };

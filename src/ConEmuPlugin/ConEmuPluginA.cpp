@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -224,11 +224,13 @@ void ProcessDragFromA()
 				nWholeLen += (nLen+1);
 			}
 
+			nMaxLen += nDirLen;
+
 			//WriteFile(hPipe, &nWholeLen, sizeof(int), &cout, NULL);
 			OutDataWrite(&nWholeLen, sizeof(int));
-			WCHAR* Path=new WCHAR[nMaxLen+1];
+			WCHAR* Path = new WCHAR[nMaxLen+1];
 
-			for(i=0; i<ItemsCount; i++)
+			for (i=0; i<ItemsCount; i++)
 			{
 				if (i == 0
 				        && ((PInfo.SelectedItems[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)

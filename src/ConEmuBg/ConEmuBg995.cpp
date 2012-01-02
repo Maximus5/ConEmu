@@ -55,11 +55,11 @@ void GetPluginInfoW995(void *piv)
 	szMenu[0] = szMenu1;
 	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
 	_ASSERTE(pi->StructSize == sizeof(struct PluginInfo));
-	pi->Flags = PF_PRELOAD;
-	pi->DiskMenuStrings = NULL;
+	pi->Flags = gbBackgroundEnabled?PF_PRELOAD:0;
+	//pi->DiskMenuStrings = NULL;
 	//pi->DiskMenuNumbers = 0;
-	pi->PluginMenuStrings = szMenu;
-	pi->PluginMenuStringsNumber = 1;
+	//pi->PluginMenuStrings = szMenu;
+	//pi->PluginMenuStringsNumber = 1;
 	pi->PluginConfigStrings = szMenu;
 	pi->PluginConfigStringsNumber = 1;
 }

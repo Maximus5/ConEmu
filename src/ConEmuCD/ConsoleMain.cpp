@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../common/execute.h"
 #include "../ConEmuHk/Injects.h"
+#include "../common/RConStartArgs.h"
 #include "TokenHelper.h"
 
 #ifdef __GNUC__
@@ -131,6 +132,7 @@ BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
 //int       gnBufferHeight = 0;
 wchar_t* gpszRunCmd = NULL;
+BOOL    gbRunInBackgroundTab = FALSE;
 BOOL    gbRunViaCmdExe = FALSE;
 DWORD   gnImageSubsystem = 0, gnImageBits = 32;
 //HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
@@ -498,6 +500,10 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 	}
 
 	gpSrv = (SrvInfo*)calloc(sizeof(SrvInfo),1);
+	if (gpSrv && ghConEmuWnd)
+	{
+		GetWindowThreadProcessId(ghConEmuWnd, &gpSrv->dwGuiPID);
+	}
 
 	RemoveOldComSpecC();
 
@@ -597,7 +603,7 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 	nExitPlaceStep = 50;
 	xf_check();
 
-	if ((iRc = ParseCommandLine(GetCommandLineW(), &gpszRunCmd)) != 0)
+	if ((iRc = ParseCommandLine(GetCommandLineW(), &gpszRunCmd, &gbRunInBackgroundTab)) != 0)
 		goto wrap;
 
 	//#ifdef _DEBUG
@@ -963,7 +969,6 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 			gpSrv->nProcessStartTick = GetTickCount();
 	}
 
-	//delete psNewCmd; psNewCmd = NULL;
 	if (pi.dwProcessId)
 		AllowSetForegroundWindow(pi.dwProcessId);
 
@@ -1360,7 +1365,7 @@ wrap:
 void PrintVersion()
 {
 	char szProgInfo[255];
-	_wsprintfA(szProgInfo, SKIPLEN(countof(szProgInfo)) "ConEmuC build %s. Copyright (c) 2009-2010, Maximus5\n", CONEMUVERS);
+	_wsprintfA(szProgInfo, SKIPLEN(countof(szProgInfo)) "ConEmuC build %s. " CECOPYRIGHTSTRING_A "\n", CONEMUVERS);
 	_printf(szProgInfo);
 }
 
@@ -1387,7 +1392,19 @@ void Help()
 	    "     /B{W|H|Z}    - define window width, height and buffer height\n"
 	    "     /F{N|W|H}    - define console font name, width, height\n"
 	    "     /LOG[N]      - create (debug) log file, N is number from 0 to 3\n"
-	);
+	    "\n"
+	    "When you run application from ConEmu conole, you may use\n"
+        "  Switch: -new_console[:bh[N]caru[:user:pwd]]\n"
+        "     b - Create background tab\n"
+        "     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\n"
+        "     n - disable 'Press Enter or Esc to close console'\n"
+        "     c - force enable 'Press Enter or Esc to close console' (default)\n"
+        "     a - RunAs shell verb (as Admin on Vista+, login/password in Win2k and WinXP)\n"
+        "     r - run as restricted user\n"
+        "     u - ConEmu choose user dialog\n"
+        "     u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST OPTION\n"
+        "  Warning: Option 'Inject ConEmuHk' must be enabled in ConEmu settings!\n"
+        "  Example: dir \"-new_console:bh9999c\" c:\\ /s\n");
 }
 
 void DosBoxHelp()
@@ -1581,8 +1598,14 @@ int CheckAttachProcess()
 }
 
 // Разбор параметров командной строки
-int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
+int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab)
 {
+	if (!psNewCmd || !pbRunInBackgroundTab)
+	{
+		_ASSERTE(psNewCmd && pbRunInBackgroundTab);
+		return CERR_CARGUMENT;
+	}
+	
 	int iRc = 0;
 	wchar_t szArg[MAX_PATH+1] = {0}, szExeTest[MAX_PATH+1];
 	LPCWSTR pszArgStarts = NULL;
@@ -1592,6 +1615,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 	//BOOL bViaCmdExe = TRUE;
 	gbRunViaCmdExe = TRUE;
 	gbRootIsCmdExe = TRUE;
+	*pbRunInBackgroundTab = FALSE;
 	size_t nCmdLine = 0;
 	LPCWSTR pwszStartCmdLine = asCmdLine;
 	BOOL lbNeedCutStartEndQuot = FALSE;
@@ -2434,7 +2458,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		nCmdLine += lstrlenW(szComSpec)+15; // "/C", кавычки и возможный "/U"
 	}
 
-	size_t nCchLen = nCmdLine+1;
+	size_t nCchLen = nCmdLine+1; // nCmdLine учитывает длинну asCmdLine + szComSpec + еще чуть-чуть на "/C" и прочее
 	*psNewCmd = (wchar_t*)calloc(nCchLen,2);
 
 	if (!(*psNewCmd))
@@ -2445,6 +2469,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 
 	// это нужно для смены заголовка консоли. при необходимости COMSPEC впишем ниже, после смены
 	_wcscpy_c(*psNewCmd, nCchLen, asCmdLine);
+	// !!! psNewCmd может поменяться ниже!
 
 	// Сменим заголовок консоли
 	if (*asCmdLine == L'"')
@@ -2593,6 +2618,13 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 
 		if (pszEndQ && *pszEndQ == L'"') *pszEndQ = 0;
 	}
+	
+	// Теперь выкусить и обработать "-new_console"
+	RConStartArgs args;
+	args.pszSpecialCmd = *psNewCmd;
+	args.ProcessNewConArg();
+	args.pszSpecialCmd = NULL;
+	*pbRunInBackgroundTab = args.bBackgroundTab;
 
 #ifdef _DEBUG
 	OutputDebugString(*psNewCmd); OutputDebugString(L"\n");
@@ -2982,6 +3014,15 @@ void SendStarted()
 			DWORD nGuiPID = pOut->StartStopRet.dwPID;
 			ghConEmuWnd = pOut->StartStopRet.hWnd;
 			ghConEmuWndDC = pOut->StartStopRet.hWndDC;
+			if (gpSrv)
+			{
+				gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
+				#ifdef _DEBUG
+				DWORD dwPID; GetWindowThreadProcessId(ghConEmuWnd, &dwPID);
+				_ASSERTE(ghConEmuWnd==NULL || dwPID==gpSrv->dwGuiPID);
+				#endif
+			}
+
 			if (gnRunMode == RM_SERVER)
 			{
 				if (gpSrv)

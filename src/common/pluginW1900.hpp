@@ -660,7 +660,7 @@ struct PluginPanelItem
 	FILETIME LastWriteTime;
 	FILETIME ChangeTime;
 	unsigned __int64 FileSize;
-	unsigned __int64 PackSize;
+	unsigned __int64 AllocationSize;
 	const wchar_t *FileName;
 	const wchar_t *AlternateFileName;
 	const wchar_t *Description;
@@ -758,6 +758,15 @@ struct CmdLineSelect
 	int SelEnd;
 };
 
+struct FarPanelDirectory
+{
+	size_t StructSize;
+	const wchar_t* Name;
+	const wchar_t* Param;
+	GUID PluginId;
+	const wchar_t* File;
+};
+
 #define PANEL_NONE    ((HANDLE)(-1))
 #define PANEL_ACTIVE  ((HANDLE)(-1))
 #define PANEL_PASSIVE ((HANDLE)(-2))
@@ -774,7 +783,7 @@ enum FILE_CONTROL_COMMANDS
 	FCTL_SETVIEWMODE                = 7,
 	FCTL_INSERTCMDLINE              = 8,
 	FCTL_SETUSERSCREEN              = 9,
-	FCTL_SETPANELDIR                = 10,
+	FCTL_SETPANELDIRECTORY          = 10,
 	FCTL_SETCMDLINEPOS              = 11,
 	FCTL_GETCMDLINEPOS              = 12,
 	FCTL_SETSORTMODE                = 13,
@@ -788,7 +797,7 @@ enum FILE_CONTROL_COMMANDS
 	FCTL_GETPANELITEM               = 21,
 	FCTL_GETSELECTEDPANELITEM       = 22,
 	FCTL_GETCURRENTPANELITEM        = 23,
-	FCTL_GETPANELDIR                = 24,
+	FCTL_GETPANELDIRECTORY          = 24,
 	FCTL_GETCOLUMNTYPES             = 25,
 	FCTL_GETCOLUMNWIDTHS            = 26,
 	FCTL_BEGINSELECTION             = 27,
@@ -1771,6 +1780,7 @@ enum FARSETTINGS_SUBFOLDERS
 	FSSF_FOLDERSHORTCUT_7           = 13,
 	FSSF_FOLDERSHORTCUT_8           = 14,
 	FSSF_FOLDERSHORTCUT_9           = 15,
+	FSSF_CONFIRMATIONS              = 16,
 };
 
 struct FarSettingsCreate

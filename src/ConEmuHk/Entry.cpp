@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  –аскомментировать, чтобы сразу после загрузки модул€ показать MessageBox, чтобы прицепитьс€ дебаггером
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_INJECT_MSGBOX
-//  #define SHOW_MINGW_MSGBOX
+//  #define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
+//  #define SHOW_EXE_MSGBOX_NAME L"signtool.exe"
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
@@ -95,6 +96,10 @@ extern const wchar_t *user32  ;// = L"user32.dll";
 extern const wchar_t *shell32 ;// = L"shell32.dll";
 extern const wchar_t *advapi32;// = L"Advapi32.dll";
 extern const wchar_t *comdlg32;// = L"comdlg32.dll";
+
+ConEmuHkDllState gnDllState = ds_Undefined;
+int gnDllThreadCount = 0;
+BOOL gbDllStopCalled = FALSE;
 
 //BOOL gbSkipInjects = FALSE;
 BOOL gbHooksWasSet = false;
@@ -172,6 +177,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap()
 		{
 			gnGuiPID = gpConInfo->nGuiPID;
 			ghConEmuWnd = gpConInfo->hConEmuRoot;
+			_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
 			ghConEmuWndDC = gpConInfo->hConEmuWnd;
 			_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 			gnServerPID = gpConInfo->nServerPID;
@@ -207,28 +213,32 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	InitializeHookedModules();
 
 	//HANDLE hStartedEvent = (HANDLE)apParm;
+
 	#ifdef _DEBUG
-	wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
-	if (!GetModuleFileName(NULL, szModule, MAX_PATH+1))
-		_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
-	const wchar_t* pszName = PointToName(szModule);
-	if (!lstrcmpi(pszName, L"mingw32-make.exe"))
-	{
-		#ifdef SHOW_MINGW_MSGBOX
-		// GuiMessageBox еще не прокатит, ничего не инициализировано
-		HMODULE hUser = LoadLibrary(L"user32.dll");
-		typedef int (WINAPI* MessageBoxW_t)(HWND hWnd,LPCTSTR lpText,LPCTSTR lpCaption,UINT uType);
-		if (hUser)
+		wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
+		if (!GetModuleFileName(NULL, szModule, MAX_PATH+1))
+			_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
+		const wchar_t* pszName = PointToName(szModule);
+	#endif
+
+	#ifdef SHOW_EXE_MSGBOX
+		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
 		{
-			MessageBoxW_t MsgBox = (MessageBoxW_t)GetProcAddress(hUser, "MessageBoxW");
-			if (MsgBox)
+			// GuiMessageBox еще не прокатит, ничего не инициализировано
+			HMODULE hUser = LoadLibrary(L"user32.dll");
+			typedef int (WINAPI* MessageBoxW_t)(HWND hWnd,LPCTSTR lpText,LPCTSTR lpCaption,UINT uType);
+			if (hUser)
 			{
-				MsgBox(NULL, L"mingw32-make.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
+				MessageBoxW_t MsgBox = (MessageBoxW_t)GetProcAddress(hUser, "MessageBoxW");
+				if (MsgBox)
+				{
+					wchar_t szMsg[128]; lstrcpyn(szMsg, pszName, 96); lstrcat(szMsg, L" loaded!");
+					wchar_t szTitle[64]; msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+					MsgBox(NULL, szMsg, szTitle, MB_SYSTEMMODAL);
+				}
+				FreeLibrary(hUser);
 			}
-			FreeLibrary(hUser);
 		}
-		#endif
-	}
 	#endif
 	
 	// ѕоскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
@@ -408,6 +418,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 						_ASSERTEX(gnGuiPID==0 || gnGuiPID==pOut->hdr.nSrcPID);
 						gnGuiPID = pOut->hdr.nSrcPID;
 						ghConEmuWnd = (HWND)dwConEmuHwnd;
+						_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
 						ghConEmuWndDC = pOut->AttachGuiApp.hWindow;
 						ghConWnd = pOut->AttachGuiApp.hSrvConWnd;
 						_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
@@ -508,6 +519,8 @@ void DllThreadClose()
 
 void DllStop()
 {
+	//gbDllStopCalled = TRUE; -- в конце
+
 	#ifdef HOOK_USE_DLLTHREAD
 	DllThreadClose();
 	#endif
@@ -570,21 +583,17 @@ void DllStop()
 
 	FinalizeHookedModules();
 
-	//ReleaseConsoleInputSemaphore();
-
-	//#endif
-	//if (ghHeap)
-	//{
-	//	HeapDestroy(ghHeap);
-	//	ghHeap = NULL;
-	//}
+#ifndef _DEBUG
 	HeapDeinitialize();
+#endif
 	
 	#ifdef _DEBUG
 	// ?gfnPrevFilter?
 	// ¬ернуть. A value of NULL for this parameter specifies default handling within UnhandledExceptionFilter.
 	SetUnhandledExceptionFilter(NULL);
 	#endif
+
+	gbDllStopCalled = TRUE;
 }
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
@@ -595,6 +604,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 	{
 		case DLL_PROCESS_ATTACH:
 		{
+			gnDllState = ds_DllProcessAttach;
 			#ifdef _DEBUG
 			HANDLE hProcHeap = GetProcessHeap();
 			#endif
@@ -661,6 +671,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		
 		case DLL_THREAD_ATTACH:
 		{
+			gnDllThreadCount++;
 			if (gbHooksWasSet)
 				InitHooksRegThread();
 		}
@@ -673,19 +684,23 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			if (gnHookMainThreadId && (GetCurrentThreadId() == gnHookMainThreadId) && !gbDllDeinitialized)
 			{
 				gbDllDeinitialized = true;
+				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
 				DllStop();
 			}
+			gnDllThreadCount--;
 		}
 		break;
 		
 		case DLL_PROCESS_DETACH:
 		{
+			gnDllState = ds_DllProcessDetach;
 			if (gbHooksWasSet)
 				lbAllow = FALSE; // »наче свалимс€, т.к. FreeLibrary перехвачена
 			// ”же могли дернуть в DLL_THREAD_DETACH
 			if (!gbDllDeinitialized)
 			{
 				gbDllDeinitialized = true;
+				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
 				DllStop();
 			}
 			// -- free не нужен, т.к. уже вызван HeapDeinitialize()
@@ -1027,6 +1042,7 @@ void SendStarted()
 			gbWasBufferHeight = pOut->StartStopRet.bWasBufferHeight;
 			gnGuiPID = pOut->StartStopRet.dwPID;
 			ghConEmuWnd = pOut->StartStopRet.hWnd;
+			_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
 			ghConEmuWndDC = pOut->StartStopRet.hWndDC;
 			_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 			//if (gnRunMode == RM_SERVER)

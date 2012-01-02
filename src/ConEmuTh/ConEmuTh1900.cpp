@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -101,7 +101,7 @@ void GetPluginInfoW1900(void *piv)
 	szMenu[0] = szMenu1;
 	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240); //-V303
 
-	pi->Flags = PF_PRELOAD;
+	pi->Flags = isPreloadByDefault()?PF_PRELOAD:0;
 	pi->PluginMenu.Guids = &guid_ConEmuThPluginMenu;
 	pi->PluginMenu.Strings = szMenu;
 	pi->PluginMenu.Count = 1;
@@ -522,27 +522,47 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	//SafeFree(pColors);
 	
 	// Текущая папка панели
-	size_t nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR, 0, 0);
+	size_t nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, 0, 0);
 
 	if (nSize)
 	{
-		if ((pcefpi->nMaxPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir))
+		if (gFarVersion.dwBuild < 2343)
 		{
-			pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
-			pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
+			if ((pcefpi->pszPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir))
+			{
+				pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
+				SafeFree(pcefpi->pszPanelDir);
+				pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
+			}
+			nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, (int)nSize, pcefpi->pszPanelDir);
 		}
+		else
+		{
+			if ((pcefpi->pFarPanelDirectory == NULL) || (nSize > pcefpi->nMaxPanelGetDir))
+			{
+				pcefpi->nMaxPanelGetDir = nSize + 1024; // + выделим немножко заранее
+				pcefpi->pFarPanelDirectory = calloc(pcefpi->nMaxPanelGetDir,1);
+			}
+			nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, nSize, pcefpi->pFarPanelDirectory);
 
-		nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR, (int)nSize, pcefpi->pszPanelDir);
+			if ((pcefpi->pszPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir))
+			{
+				pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
+				SafeFree(pcefpi->pszPanelDir);
+				pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
+			}
+			lstrcpyn(pcefpi->pszPanelDir, ((FarPanelDirectory*)pcefpi->pFarPanelDirectory)->Name, pcefpi->nMaxPanelDir);
+		}
 
 		if (!nSize)
 		{
-			free(pcefpi->pszPanelDir); pcefpi->pszPanelDir = NULL;
+			SafeFree(pcefpi->pszPanelDir);
 			pcefpi->nMaxPanelDir = 0;
 		}
 	}
 	else
 	{
-		if (pcefpi->pszPanelDir) { free(pcefpi->pszPanelDir); pcefpi->pszPanelDir = NULL; }
+		SafeFree(pcefpi->pszPanelDir);
 	}
 
 	// Готовим буфер для информации об элементах

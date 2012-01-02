@@ -62,9 +62,11 @@
 DEF_NAME = export
 
 NEEDENTRY=1
-!undef NEEDDEFLIB
-#NEEDDEFLIB = 1
+#!undef NEEDDEFLIB
+NEEDDEFLIB = 1
 USE_PDB = 1
+
+DEFINES=/DUSE_SEH
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
 OUTNAME = ConEmuHk64
@@ -209,7 +211,7 @@ COMMONLIB = ../common/libCRT.lib
 CPP_ALIGN=/Zp1
 !endif
 # /I"$(COMMON)"
-CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c-a- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(CPPWINVER) $(USERCPP)
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(DEFINES) $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c-a- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(CPPWINVER) $(USERCPP)
 ULOUT=-Tpd -Re
 LINK_MACHINE = /MACHINE:X86
 !endif
@@ -220,7 +222,7 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
 #!endif
 #Wininet.lib
 LIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib version.lib $(USERLIBS)
-LIBS = $(COMMONLIB) chkstk.obj $(LIBS)
+#LIBS = $(COMMONLIB) chkstk.obj $(LIBS)
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_
@@ -255,7 +257,8 @@ NODEFLIB = /nodefaultlib
 
 #/merge:.rdata=.text /SUBSYSTEM:WINDOWS
 #/ENTRY:_DllMainCRTStartup
-LINK_FLAGS=/nologo /DLL /RELEASE /ENTRY:DllMain $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
+#/ENTRY:DllMain
+LINK_FLAGS=/nologo /DLL /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
 
 
 CFLAGS_NO = $(MP) $(CPP_PROJ_NO) $(CPP_DEBUG) $(CPP_OPT)

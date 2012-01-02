@@ -12,6 +12,7 @@ SRCS = ConsoleMain.cpp \
        ../common/MSecurity.cpp \
        ../common/MStrSafe.cpp \
        ../common/Memory.cpp \
+       ../common/RConStartArgs.cpp \
        ../common/WinObjects.cpp
 
 

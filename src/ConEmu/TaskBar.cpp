@@ -31,22 +31,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 
 // COM TaskBarList interface support
-#ifdef __GNUC__
 #include "ShObjIdl_Part.h"
+#ifdef __GNUC__
 const CLSID CLSID_TaskbarList = {0x56FDF344, 0xFD6D, 0x11d0, {0x95, 0x8A, 0x00, 0x60, 0x97, 0xC9, 0xA0, 0x90}};
 const IID IID_ITaskbarList4 = {0xc43dc798, 0x95d1, 0x4bea, {0x90, 0x30, 0xbb, 0x99, 0xe2, 0x98, 0x3a, 0x1a}};
 const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
 const IID IID_ITaskbarList2 = {0x602D4995, 0xB13A, 0x429b, {0xA6, 0x6E, 0x19, 0x35, 0xE4, 0x4F, 0x43, 0x17}};
 const IID IID_ITaskbarList  = {0x56FDF342, 0xFD6D, 0x11d0, {0x95, 0x8A, 0x00, 0x60, 0x97, 0xC9, 0xA0, 0x90}};
-#else
-#include <ShObjIdl.h>
-#ifndef __ITaskbarList3_INTERFACE_DEFINED__
-#undef __shobjidl_h__
-#include "ShObjIdl_Part.h"
-const IID IID_ITaskbarList4 = {0xc43dc798, 0x95d1, 0x4bea, {0x90, 0x30, 0xbb, 0x99, 0xe2, 0x98, 0x3a, 0x1a}};
-const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
 #endif
-#endif
+//#else
+//#include <ShObjIdl.h>
+//#ifndef __ITaskbarList3_INTERFACE_DEFINED__
+//#undef __shobjidl_h__
+//#include "ShObjIdl_Part.h"
+//const IID IID_ITaskbarList4 = {0xc43dc798, 0x95d1, 0x4bea, {0x90, 0x30, 0xbb, 0x99, 0xe2, 0x98, 0x3a, 0x1a}};
+//const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
+//#endif
+//#endif
 
 CTaskBar::CTaskBar()
 {
@@ -242,5 +243,36 @@ HRESULT CTaskBar::Taskbar_DeleteTabXP(HWND hBtn)
 		hr = E_NOINTERFACE;
 	}
 
+	return hr;
+}
+
+HRESULT CTaskBar::Taskbar_SetProgressValue(int nProgress)
+{
+	HRESULT hr = S_FALSE;
+	
+	if (mp_TaskBar3)
+	{
+		if (nProgress >= 0)
+		{
+			hr = mp_TaskBar3->SetProgressValue(ghWnd, nProgress, 100);
+		}
+		else
+		{
+			hr = mp_TaskBar3->SetProgressState(ghWnd, TBPF_NOPROGRESS);
+		}
+	}
+	
+	return hr;
+}
+
+HRESULT CTaskBar::Taskbar_SetProgressState(TBPFLAG nState)
+{
+	HRESULT hr = S_FALSE;
+	
+	if (mp_TaskBar3)
+	{
+		hr = mp_TaskBar3->SetProgressState(ghWnd, nState);
+	}
+	
 	return hr;
 }

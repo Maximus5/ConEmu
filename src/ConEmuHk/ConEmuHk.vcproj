@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuHk"
 	ProjectGUID="{525F3223-BC12-479E-8487-5FA4406461F4}"
 	RootNamespace="ConEmuHk"
@@ -1329,10 +1329,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../common/libCRT.lib kernel32.lib"
 				OutputFile="\Far3\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
-				IgnoreAllDefaultLibraries="true"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -1412,10 +1411,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../common/libCRT64.lib kernel32.lib"
 				OutputFile="\Far3\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
-				IgnoreAllDefaultLibraries="true"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"

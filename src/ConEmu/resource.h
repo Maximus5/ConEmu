@@ -21,6 +21,7 @@
 #define IDD_SPG_INFO                    153
 #define IDD_SPG_FEATURE                 154
 #define IDD_SPG_DEBUG                   155
+#define IDD_SPG_FEATURE_FAR             156
 #define IDD_MORE_HIDE                   200
 #define IDD_DIALOG1                     202
 #define IDD_MORE_FADE                   203
@@ -32,6 +33,7 @@
 #define IDD_SPG_KEYS                    211
 #define IDD_ATTACHDLG                   212
 #define IDD_SPG_UPDATE                  214
+#define IDD_FAST_CONFIG                 215
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -468,21 +470,45 @@
 #define cbUpdateLeavePackages           2065
 #define tUpdatePostUpdateCmd            2066
 #define cbUpdateCheckHourly             2067
-#define cbUpdateCheckNotifyOnly         2068
+#define cbUpdateConfirmDownload         2068
 #define rbActivityCmd                   2069
 #define rbUpdateUseExe                  2070
 #define rbUpdateUseArc                  2071
 #define tUpdateArcCmdLine               2072
 #define cbUpdateArcCmdLine              2073
 #define tUpdateExeCmdLine               2074
+#define tRClickMacro                    2075
+#define cbEnhanceButtons                2076
+#define tCloseTabMacro                  2078
+#define tSaveAllMacro                   2079
+#define tSafeFarCloseMacro              2080
+#define stUpdateProxy                   2083
+#define stUpdateProxyUser               2084
+#define stUpdateProxyPassword           2085
+#define cbUseKeyboardHooksFast          2086
+#define cbEnableAutoUpdateFast          2087
+#define rbAutoUpdateStableFast          2088
+#define rbAutoUpdateDeveloperFast       2089
+#define cbDisableConImeFast             2090
+#define stUseKeyboardHooksFast1         2091
+#define stUseWinNumberFast2             2092
+#define stUseKeyboardHooksFast2         2092
+#define stEnableAutoUpdateFast          2093
+#define stDisableConImeFast1            2094
+#define stDisableConImeFast2            2095
+#define stDisableConImeFast3            2096
+#define gbDisableConImeFast             2097
+#define cbInjectConEmuHkFast            2098
+#define stInjectConEmuHkFast2           2099
+#define stInjectConEmuHkFast1           2100
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        215
+#define _APS_NEXT_RESOURCE_VALUE        216
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2076
+#define _APS_NEXT_CONTROL_VALUE         2101
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

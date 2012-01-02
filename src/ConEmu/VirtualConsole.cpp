@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -4376,7 +4376,6 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 	switch(nCmd)
 	{
 		case IDM_CLOSE:
-			//mp_RCon->PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
 			mp_RCon->CloseTab();
 			break;
 		case IDM_DETACH:

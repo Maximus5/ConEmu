@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -236,6 +236,7 @@ BOOL IsVisibleRectLocked(COORD& crLocked);
 HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
 BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
 BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
+INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
 
 
 bool InitHooksCommon()
@@ -372,6 +373,7 @@ bool InitHooksUser32()
 		{(void*)OnCreateDialogParamW,	"CreateDialogParamW",	user32},
 		{(void*)OnCreateDialogIndirectParamA, "CreateDialogIndirectParamA", user32},
 		{(void*)OnCreateDialogIndirectParamW, "CreateDialogIndirectParamW", user32},
+		{(void*)OnDialogBoxParamW,		"DialogBoxParamW",		user32},
 		{(void*)OnSetMenu,				"SetMenu",				user32},
 		/* ************************ */
 		{0}
@@ -3221,6 +3223,7 @@ static BOOL MyGetConsoleFontSize(COORD& crFontSize)
 
 	if (ghConEmuWnd)
 	{
+		_ASSERTE(gnGuiPID!=0);
 		ConEmuGuiMapping* inf = (ConEmuGuiMapping*)malloc(sizeof(ConEmuGuiMapping));
 		if (inf)
 		{
@@ -3358,3 +3361,21 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 	return lbRc;
 }
 
+// Нужна для "поднятия" консольного окна при вызове Shell операций
+INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+{
+	typedef INT_PTR (WINAPI* OnDialogBoxParamW_t)(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
+	ORIGINALFASTEX(DialogBoxParamW,NULL);
+	INT_PTR iRc = 0;
+
+	if (ghConEmuWndDC)
+	{
+		// Необходимо "поднять" наверх консольное окно, иначе Shell-овский диалог окажется ПОД ConEmu
+		GuiSetForeground(hWndParent ? hWndParent : ghConWnd);
+	}
+
+	if (F(DialogBoxParamW))
+		iRc = F(DialogBoxParamW)(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+
+	return iRc;
+}

@@ -103,13 +103,13 @@ void GetPluginInfoW1900(void *piv)
 	szMenu[0] = szMenu1;
 	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
 
-	pi->Flags = PF_PRELOAD;
-	pi->PluginMenu.Guids = &guid_ConEmuLnPluginMenu;
-	pi->PluginMenu.Strings = szMenu;
-	pi->PluginMenu.Count = 1;
-	pi->PluginMenu.Guids = &guid_ConEmuLnPluginConfig;
-	pi->PluginMenu.Strings = szMenu;
-	pi->PluginMenu.Count = 1;
+	pi->Flags = gbBackgroundEnabled?PF_PRELOAD:0;
+	//pi->PluginMenu.Guids = &guid_ConEmuLnPluginMenu;
+	//pi->PluginMenu.Strings = szMenu;
+	//pi->PluginMenu.Count = 1;
+	pi->PluginConfig.Guids = &guid_ConEmuLnPluginConfig;
+	pi->PluginConfig.Strings = szMenu;
+	pi->PluginConfig.Count = 1;
 }
 
 void SetStartupInfoW1900(void *aInfo)

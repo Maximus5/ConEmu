@@ -88,13 +88,14 @@ $(OBJDIR)\ConEmuCmd.obj \
 $(OBJDIR)\ConEmuSrv.obj \
 $(OBJDIR)\Injects.obj \
 $(OBJDIR)\execute.obj \
-$(OBJDIR)\WinObjects.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\Memory.obj \
 $(OBJDIR)\MSecurity.obj \
-$(OBJDIR)\MStrSafe.obj
+$(OBJDIR)\MStrSafe.obj \
+$(OBJDIR)\RConStartArgs.obj \
+$(OBJDIR)\WinObjects.obj
 
 USERLIBS = 
 
@@ -354,8 +355,6 @@ $(OBJDIR)\Injects.obj: ..\ConEmuHk\Injects.cpp
 
 $(OBJDIR)\execute.obj: ..\common\execute.cpp ..\common\execute.h
 
-$(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp ..\common\WinObjects.h
-
 $(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp ..\common\ConEmuCheck.h
 
 $(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
@@ -365,3 +364,7 @@ $(OBJDIR)\Memory.obj: ..\common\Memory.cpp
 $(OBJDIR)\MSecurity.obj: ..\common\MSecurity.cpp
 
 $(OBJDIR)\MStrSafe.obj: ..\common\MStrSafe.cpp
+
+$(OBJDIR)\RConStartArgs.obj: ..\common\RConStartArgs.cpp ..\common\RConStartArgs.h
+
+$(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp ..\common\WinObjects.h

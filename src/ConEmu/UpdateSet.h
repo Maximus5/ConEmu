@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2011 Maximus5
+Copyright (c) 2011-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,16 @@ struct ConEmuUpdateSettings
 {
 public:
 	wchar_t *szUpdateVerLocation; // ConEmu latest version location info
+	LPCWSTR UpdateVerLocation();
+	LPCWSTR UpdateVerLocationDefault();
 	
 	bool isUpdateCheckOnStartup;
 	bool isUpdateCheckHourly;
-	bool isUpdateCheckNotifyOnly;
-	BYTE isUpdateUseBuilds; // 1-stable only, 2-latest
-	BYTE isUpdateDownloadSetup; // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+	bool isUpdateConfirmDownload;
+	BYTE isUpdateUseBuilds; // 0-спросить пользователя при первом запуске, 1-stable only, 2-latest
+	BYTE isUpdateDownloadSetup; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+	BYTE isSetupDetected; // 0-пока не проверялся, 1-установлено через Installer, пути совпали, 2-Installer не запускался
+	BYTE UpdateDownloadSetup();
 	
 	bool isUpdateUseProxy;
 	wchar_t *szUpdateProxy; // "Server:port"
@@ -46,12 +50,16 @@ public:
 	wchar_t *szUpdateProxyPassword;
 	
 	// "%1"-archive or setup file, "%2"-ConEmu.exe folder, "%3"-x86/x64, "%4"-ConEmu PID
-	wchar_t *szUpdateExeCmdLine; // isUpdateDownloadSetup==1
-	wchar_t *szUpdateArcCmdLine; // isUpdateDownloadSetup==2
+	wchar_t *szUpdateExeCmdLine, *szUpdateExeCmdLineDef; // isUpdateDownloadSetup==1
+	LPCWSTR UpdateExeCmdLine();
+	wchar_t *szUpdateArcCmdLine, *szUpdateArcCmdLineDef; // isUpdateDownloadSetup==2
+	LPCWSTR UpdateArcCmdLine();
 	wchar_t *szUpdatePostUpdateCmd; // Юзер может чего-то свое делать с распакованными файлами
 
 	wchar_t *szUpdateDownloadPath; // "%TEMP%"
 	bool isUpdateLeavePackages;
+
+	DWORD dwLastUpdateCheck;
 
 public:
 	ConEmuUpdateSettings();
@@ -60,5 +68,6 @@ public:
 	void ResetToDefaults();
 	void FreePointers();
 	void LoadFrom(ConEmuUpdateSettings* apFrom);
-	bool UpdatesAllowed();
+	bool UpdatesAllowed(wchar_t (&szReason)[128]);
+	void CheckHourlyUpdate();
 };

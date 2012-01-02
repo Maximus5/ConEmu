@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -56,13 +56,13 @@ void GetPluginInfoW995(void *piv)
 	szMenu[0]=szMenu1;
 	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240); //-V303
 	_ASSERTE(pi->StructSize == sizeof(struct PluginInfo));
-	pi->Flags = PF_PRELOAD;
+	pi->Flags = isPreloadByDefault()?PF_PRELOAD:0;
 	pi->DiskMenuStrings = NULL;
 	//pi->DiskMenuNumbers = 0;
 	pi->PluginMenuStrings = szMenu;
 	pi->PluginMenuStringsNumber = 1;
-	pi->PluginConfigStrings = NULL;
-	pi->PluginConfigStringsNumber = 0;
+	//pi->PluginConfigStrings = NULL;
+	//pi->PluginConfigStringsNumber = 0;
 	pi->CommandPrefix = 0;
 	pi->Reserved = ConEmuTh_SysID; // 'CETh'
 }
@@ -428,9 +428,10 @@ BOOL LoadPanelInfo995(BOOL abActive)
 
 	if (nSize)
 	{
-		if ((pcefpi->nMaxPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir))
+		if ((pcefpi->pszPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir))
 		{
 			pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
+			SafeFree(pcefpi->pszPanelDir);
 			pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
 		}
 

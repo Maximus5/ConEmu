@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -57,9 +57,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Update.h"
 #include "LoadImg.h"
 #include "../ConEmuCD/RegPrepare.h"
-#ifdef __GNUC__
+//#ifdef __GNUC__
 #include "ShObjIdl_Part.h"
-#endif
+//#endif
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
@@ -107,6 +107,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RCLICKAPPSDELTA 3
 
 const wchar_t* gsHomePage = L"http://conemu-maximus5.googlecode.com";
+const wchar_t* gsReportBug = L"http://code.google.com/p/conemu-maximus5/issues/entry";
 
 
 CConEmuMain::CConEmuMain()
@@ -124,7 +125,7 @@ CConEmuMain::CConEmuMain()
 	mp_TabBar = NULL; m_Back = NULL; m_Macro = NULL; mp_Tip = NULL;
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
 	mn_MainThreadId = GetCurrentThreadId();
-	wcscpy_c(szConEmuVersion, L"?.?.?.?");
+	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
 	WindowMode=rNormal; mb_PassSysCommand = false; change2WindowMode = -1;
 	mb_isFullScreen = false;
 	mb_ExternalHidden = FALSE;
@@ -225,7 +226,7 @@ CConEmuMain::CConEmuMain()
 	SetLayeredWindowAttributes = (SetLayeredWindowAttributes_t)(hGdi32 ? GetProcAddress(hGdi32, "SetLayeredWindowAttributes") : NULL);
 	#endif
 	
-	LoadVersionInfo(ms_ConEmuExe);
+	//LoadVersionInfo(ms_ConEmuExe);
 	// Папка программы
 	wcscpy_c(ms_ConEmuExeDir, ms_ConEmuExe);
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
@@ -444,6 +445,84 @@ CConEmuMain::CConEmuMain()
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 
 	InitFrameHolder();
+}
+
+bool CConEmuMain::CheckRequiredFiles()
+{
+	wchar_t szPath[MAX_PATH+32];
+	struct ReqFile {
+		int  Bits;
+		wchar_t File[16];
+	} Files[] = {
+		{32, L"ConEmuC.exe"},
+		{64, L"ConEmuC64.exe"},
+		{32, L"ConEmuCD.dll"},
+		{64, L"ConEmuCD64.dll"},
+		{32, L"ConEmuHk.dll"},
+		{64, L"ConEmuHk64.dll"},
+	};
+	
+	wchar_t szRequired[128], szRecommended[128]; szRequired[0] = szRecommended[0] = 0;
+	bool isWin64 = IsWindows64(NULL);
+	int  nExeBits = WIN3264TEST(32,64);
+
+	wcscpy_c(szPath, ms_ConEmuBaseDir);
+	wcscat_c(szPath, L"\\");
+	wchar_t* pszSlash = szPath + _tcslen(szPath);
+	DWORD nFileSize;
+
+	for (size_t i = 0; i < countof(Files); i++)
+	{
+		if (Files[i].Bits == 64)
+		{
+			if (!isWin64)
+				continue; // 64битные файлы в 32битных ОС не нужны
+		}
+
+		_wcscpy_c(pszSlash, 32, Files[i].File);
+		if (!FileExists(szPath, &nFileSize) || !nFileSize)
+		{
+			wchar_t* pszList = (Files[i].Bits == nExeBits) ? szRequired : szRecommended;
+			if (*pszList)
+				_wcscat_c(pszList, countof(szRequired), L", ");
+			_wcscat_c(pszList, countof(szRequired), Files[i].File);
+		}
+	}
+
+	if (*szRequired || *szRecommended)
+	{
+		size_t cchMax = _tcslen(szRequired) + _tcslen(szRecommended) + _tcslen(ms_ConEmuExe) + 255;
+		wchar_t* pszMsg = (wchar_t*)calloc(cchMax, sizeof(*pszMsg));
+		if (pszMsg)
+		{
+			_wcscpy_c(pszMsg, cchMax, *szRequired ? L"Critical error\n\n" : L"Warning\n\n");
+			if (*szRequired)
+			{
+				_wcscat_c(pszMsg, cchMax, L"Required files not found!\n");
+				_wcscat_c(pszMsg, cchMax, szRequired);
+				_wcscat_c(pszMsg, cchMax, L"\n\n");
+			}
+			if (*szRecommended)
+			{
+				_wcscat_c(pszMsg, cchMax, L"Recommended files not found!\n");
+				_wcscat_c(pszMsg, cchMax, szRecommended);
+				_wcscat_c(pszMsg, cchMax, L"\n\n");
+			}
+			_wcscat_c(pszMsg, cchMax, L"ConEmu was started from:\n");
+			_wcscat_c(pszMsg, cchMax, ms_ConEmuExe);
+			_wcscat_c(pszMsg, cchMax, L"\n");
+			if (*szRequired)
+			{
+				_wcscat_c(pszMsg, cchMax, L"\nConEmu will exits now");
+			}
+			MessageBox(NULL, pszMsg, GetDefaultTitle(), MB_SYSTEMMODAL|(*szRequired ? MB_ICONSTOP : MB_ICONWARNING));
+			free(pszMsg);
+		}
+	}
+
+	if (*szRequired)
+		return false;
+	return true; // Можно продолжать
 }
 
 LPWSTR CConEmuMain::ConEmuXml()
@@ -1496,6 +1575,9 @@ void CConEmuMain::Destroy()
 
 CConEmuMain::~CConEmuMain()
 {
+	_ASSERTE(ghWnd==NULL || !IsWindow(ghWnd));
+	//ghWnd = NULL;
+
 	if (mp_AttachDlg)
 	{
 		delete mp_AttachDlg;
@@ -1602,6 +1684,8 @@ CConEmuMain::~CConEmuMain()
 
 	_ASSERTE(mh_LLKeyHookDll==NULL);
 	CommonShutdown();
+
+	gpConEmu = NULL;
 }
 
 
@@ -4066,12 +4150,12 @@ int CConEmuMain::ActiveConNum()
 
 BOOL CConEmuMain::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
 {
-	CVirtualConsole* pCon = NULL;
+	CVirtualConsole* pVCon = NULL;
 	CRealConsole* pRCon = NULL;
 	_ASSERTE(pStartStop->dwPID!=0);
 
 	// Может быть какой-то VCon ждет аттача?
-	if (!pCon)
+	if (!pVCon)
 	{
 		for (size_t i = 0; i < countof(mp_VCon); i++)
 		{
@@ -4080,14 +4164,14 @@ BOOL CConEmuMain::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* p
 				if (pRCon->GetServerPID() == pStartStop->dwPID)
 				{
 					//_ASSERTE(pRCon->GetServerPID() != pStartStop.dwPID);
-					pCon = mp_VCon[i];
+					pVCon = mp_VCon[i];
 					break;
 				}
 			}
 		}
 	}
 
-	if (!pCon)
+	if (!pVCon)
 	{
 		for (size_t i = 0; i < countof(mp_VCon); i++)
 		{
@@ -4095,7 +4179,7 @@ BOOL CConEmuMain::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* p
 			{
 				if (pRCon->isDetached())
 				{
-					pCon = mp_VCon[i];
+					pVCon = mp_VCon[i];
 					break;
 				}
 			}
@@ -4103,16 +4187,25 @@ BOOL CConEmuMain::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* p
 	}
 
 	// Если не нашли - определим, можно ли добавить новую консоль?
-	if (!pCon)
+	if (!pVCon)
 	{
-		RConStartArgs args; args.bDetached = TRUE;
+		RConStartArgs* pArgs = new RConStartArgs;
+		pArgs->bDetached = TRUE;
+		pArgs->bBackgroundTab = pStartStop->bRunInBackgroundTab;
 
-		if ((pCon = CreateCon(&args)) == NULL)
-			return FALSE;
+		// т.к. это приходит из серверного потока - зовем в главном
+		pVCon = (CVirtualConsole*)SendMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon, (LPARAM)pArgs);
+		if (pVCon && !isValid(pVCon))
+		{
+			_ASSERTE(isValid(pVCon));
+			pVCon = NULL;
+		}
+		//if ((pVCon = CreateCon(&args)) == NULL)
+		//	return FALSE;
 	}
 
 	// Пытаемся подцепить консоль
-	if (!pCon->RCon()->AttachConemuC(ahConWnd, pStartStop->dwPID, pStartStop, pRet))
+	if (!pVCon->RCon()->AttachConemuC(ahConWnd, pStartStop->dwPID, pStartStop, pRet))
 		return FALSE;
 
 	// OK
@@ -4211,9 +4304,9 @@ bool CConEmuMain::ConActivate(int nCon)
 
 	if (nCon >= 0 && nCon < (int)countof(mp_VCon))
 	{
-		CVirtualConsole* pCon = mp_VCon[nCon];
+		CVirtualConsole* pVCon = mp_VCon[nCon];
 
-		if (pCon == NULL)
+		if (pVCon == NULL)
 		{
 			if (gpSet->isMultiAutoCreate)
 			{
@@ -4225,7 +4318,7 @@ bool CConEmuMain::ConActivate(int nCon)
 			return false; // консоль с этим номером не была создана!
 		}
 
-		if (pCon == mp_VActive)
+		if (pVCon == mp_VActive)
 		{
 			// Итерация табов
 			int nTabCount;
@@ -4264,17 +4357,17 @@ bool CConEmuMain::ConActivate(int nCon)
 		{
 			int nOldConWidth = mp_VActive->RCon()->TextWidth();
 			int nOldConHeight = mp_VActive->RCon()->TextHeight();
-			int nNewConWidth = pCon->RCon()->TextWidth();
-			int nNewConHeight = pCon->RCon()->TextHeight();
+			int nNewConWidth = pVCon->RCon()->TextWidth();
+			int nNewConHeight = pVCon->RCon()->TextHeight();
 
 			if (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight)
 			{
-				lbSizeOK = pCon->RCon()->SetConsoleSize(nOldConWidth,nOldConHeight);
+				lbSizeOK = pVCon->RCon()->SetConsoleSize(nOldConWidth,nOldConHeight);
 			}
 		}
 
-		mp_VActive = pCon;
-		pCon->RCon()->OnActivate(nCon, nOldConNum);
+		mp_VActive = pVCon;
+		pVCon->RCon()->OnActivate(nCon, nOldConNum);
 
 		if (!lbSizeOK)
 			SyncWindowToConsole();
@@ -4303,9 +4396,14 @@ void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
 CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
 {
 	_ASSERTE(args!=NULL);
-	_ASSERTE(gpConEmu->isMainThread());
+	if (!gpConEmu->isMainThread())
+	{
+		// Создание VCon в фоновых потоках не допускается, т.к. здесь создаются HWND
+		MBoxAssert(gpConEmu->isMainThread());
+		return NULL;
+	}
 
-	CVirtualConsole* pCon = NULL;
+	CVirtualConsole* pVCon = NULL;
 
 	for (size_t i = 0; i < countof(mp_VCon); i++)
 	{
@@ -4313,34 +4411,34 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
 		{
 			CVirtualConsole* pOldActive = mp_VActive;
 			mb_CreatingActive = true;
-			pCon = CVirtualConsole::CreateVCon(args);
+			pVCon = CVirtualConsole::CreateVCon(args);
 			mb_CreatingActive = false;
 
 			BOOL lbInBackground = args->bBackgroundTab && (pOldActive != NULL);
 
-			if (pCon)
+			if (pVCon)
 			{
 				if (!lbInBackground && pOldActive && pOldActive->RCon())
 				{
 					pOldActive->RCon()->OnDeactivate(i);
 				}
 
-				mp_VCon[i] = pCon;
+				mp_VCon[i] = pVCon;
 				
 				if (!lbInBackground)
 				{
-					mp_VActive = pCon;
+					mp_VActive = pVCon;
 				}
 				else
 				{
 					_ASSERTE(mp_VActive==pOldActive);
 				}
 				
-				pCon->InitGhost();
+				pVCon->InitGhost();
 
 				if (!lbInBackground)
 				{
-					pCon->RCon()->OnActivate(i, ActiveConNum());
+					pVCon->RCon()->OnActivate(i, ActiveConNum());
 
 					//mn_ActiveCon = i;
 					//Update(true);
@@ -4358,7 +4456,7 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
 		}
 	}
 
-	return pCon;
+	return pVCon;
 }
 
 void CConEmuMain::CreateGhostVCon(CVirtualConsole* apVCon)
@@ -4559,57 +4657,57 @@ void CConEmuMain::LoadIcons()
 	}
 }
 
-bool CConEmuMain::LoadVersionInfo(wchar_t* pFullPath)
-{
-	LPBYTE pBuffer=NULL;
-	wchar_t* pVersion=NULL;
-	//wchar_t* pDesc=NULL;
-	const wchar_t WSFI[] = L"StringFileInfo";
-	DWORD size = GetFileVersionInfoSizeW(pFullPath, &size);
-
-	if (!size) return false;
-
-	MCHKHEAP
-	pBuffer = new BYTE[size];
-	MCHKHEAP
-	GetFileVersionInfoW((wchar_t*)pFullPath, 0, size, pBuffer);
-	//Find StringFileInfo
-	DWORD ofs;
-
-	for(ofs = 92; ofs < size; ofs += *(WORD*)(pBuffer+ofs))
-		if (!lstrcmpiW((wchar_t*)(pBuffer+ofs+6), WSFI))
-			break;
-
-	if (ofs >= size)
-	{
-		delete pBuffer;
-		return false;
-	}
-
-	TCHAR *langcode;
-	langcode = (TCHAR*)(pBuffer + ofs + 42);
-	TCHAR blockname[48];
-	unsigned dsize;
-	_wsprintf(blockname, SKIPLEN(countof(blockname)) _T("\\%s\\%s\\FileVersion"), WSFI, langcode);
-
-	if (!VerQueryValue(pBuffer, blockname, (void**)&pVersion, &dsize))
-	{
-		pVersion = 0;
-	}
-	else
-	{
-		if (dsize>=31) pVersion[31]=0;
-
-		wcscpy(szConEmuVersion, pVersion);
-		pVersion = wcsrchr(szConEmuVersion, L',');
-
-		if (pVersion && wcscmp(pVersion, L", 0")==0)
-			*pVersion = 0;
-	}
-
-	delete[] pBuffer;
-	return true;
-}
+//bool CConEmuMain::LoadVersionInfo(wchar_t* pFullPath)
+//{
+//	LPBYTE pBuffer=NULL;
+//	wchar_t* pVersion=NULL;
+//	//wchar_t* pDesc=NULL;
+//	const wchar_t WSFI[] = L"StringFileInfo";
+//	DWORD size = GetFileVersionInfoSizeW(pFullPath, &size);
+//
+//	if (!size) return false;
+//
+//	MCHKHEAP
+//	pBuffer = new BYTE[size];
+//	MCHKHEAP
+//	GetFileVersionInfoW((wchar_t*)pFullPath, 0, size, pBuffer);
+//	//Find StringFileInfo
+//	DWORD ofs;
+//
+//	for(ofs = 92; ofs < size; ofs += *(WORD*)(pBuffer+ofs))
+//		if (!lstrcmpiW((wchar_t*)(pBuffer+ofs+6), WSFI))
+//			break;
+//
+//	if (ofs >= size)
+//	{
+//		delete pBuffer;
+//		return false;
+//	}
+//
+//	TCHAR *langcode;
+//	langcode = (TCHAR*)(pBuffer + ofs + 42);
+//	TCHAR blockname[48];
+//	unsigned dsize;
+//	_wsprintf(blockname, SKIPLEN(countof(blockname)) _T("\\%s\\%s\\FileVersion"), WSFI, langcode);
+//
+//	if (!VerQueryValue(pBuffer, blockname, (void**)&pVersion, &dsize))
+//	{
+//		pVersion = 0;
+//	}
+//	else
+//	{
+//		if (dsize>=31) pVersion[31]=0;
+//
+//		wcscpy(szConEmuVersion, pVersion);
+//		pVersion = wcsrchr(szConEmuVersion, L',');
+//
+//		if (pVersion && wcscmp(pVersion, L", 0")==0)
+//			*pVersion = 0;
+//	}
+//
+//	delete[] pBuffer;
+//	return true;
+//}
 
 void CConEmuMain::OnCopyingState()
 {
@@ -5746,8 +5844,11 @@ void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
 
 // Если в текущей консоли есть проценты - отображаются они
 // Иначе - отображается максимальное значение процентов из всех консолей
-void CConEmuMain::UpdateProgress(/*BOOL abUpdateTitle*/)
+void CConEmuMain::UpdateProgress()
 {
+	if (!this)
+		return;
+
 	if (GetCurrentThreadId() != mn_MainThreadId)
 	{
 		/*чтобы не наколоться на многопоточности */
@@ -5759,17 +5860,28 @@ void CConEmuMain::UpdateProgress(/*BOOL abUpdateTitle*/)
 	LPCWSTR pszFixTitle = GetLastTitle(true);
 	wchar_t MultiTitle[MAX_TITLE_SIZE+30];
 	MultiTitle[0] = 0;
-	short nProgress = -1, n;
+	short nProgress = -1;
+	short nUpdateProgress = gpUpd ? gpUpd->GetUpdateProgress() : -1;
+	short n;
 	BOOL bActiveHasProgress = FALSE;
 	BOOL bWasError = FALSE;
 
 	if (mp_VActive)
 	{
-		if ((nProgress = mp_VActive->RCon()->GetProgress(&bWasError)) >= 0)
+		if (!isValid(mp_VActive))
 		{
-			mn_Progress = nProgress;
+			_ASSERTE(isValid(mp_VActive));
+		}
+		else if ((nProgress = mp_VActive->RCon()->GetProgress(&bWasError)) >= 0)
+		{
+			mn_Progress = max(nProgress, nUpdateProgress);
 			bActiveHasProgress = TRUE;
 		}
+	}
+
+	if (!bActiveHasProgress && nUpdateProgress >= 0)
+	{
+		nProgress = max(nProgress, nUpdateProgress);
 	}
 
 	// нас интересует возможное наличие ошибки во всех остальных консолях
@@ -5800,20 +5912,20 @@ void CConEmuMain::UpdateProgress(/*BOOL abUpdateTitle*/)
 	{
 		HRESULT hr = S_OK;
 
-		if (mp_TaskBar3)
+		//if (mp_TaskBar3)
+		//{
+		if (mn_Progress >= 0)
 		{
-			if (mn_Progress >= 0)
-			{
-				hr = mp_TaskBar3->SetProgressValue(ghWnd, mn_Progress, 100);
+			hr = Taskbar_SetProgressValue(mn_Progress);
 
-				if (nLastProgress == -1 || bLastProgressError != bWasError)
-					hr = mp_TaskBar3->SetProgressState(ghWnd, bWasError ? TBPF_ERROR : TBPF_NORMAL);
-			}
-			else
-			{
-				hr = mp_TaskBar3->SetProgressState(ghWnd, TBPF_NOPROGRESS);
-			}
+			if (nLastProgress == -1 || bLastProgressError != bWasError)
+				hr = Taskbar_SetProgressState(bWasError ? TBPF_ERROR : TBPF_NORMAL);
 		}
+		else
+		{
+			hr = Taskbar_SetProgressState(TBPF_NOPROGRESS);
+		}
+		//}
 
 		// Запомнить последнее
 		nLastProgress = mn_Progress;
@@ -7608,7 +7720,7 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		bool lbIsPanels = lbIsFar && apVCon->RCon()->isFilePanel(false/* abPluginAllowed */)!=FALSE;
 		#endif
 		bool lbIsEditorModified = lbIsFar && apVCon->RCon()->isEditorModified()!=FALSE;
-		bool lbHaveModified = lbIsFar && apVCon->RCon()->GetModifiedEditors()!=FALSE;
+		bool lbHaveModified = lbIsFar && apVCon->RCon()->GetModifiedEditors()!=0;
 		bool lbCanCloseTab = apVCon->RCon()->CanCloseTab();
 
 		if (lbHaveModified)
@@ -7683,15 +7795,10 @@ HMENU CConEmuMain::CreateHelpMenuPopup()
 	if (gpUpd && gpUpd->InUpdate())
 		AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_STOPUPDATE, _T("&Stop updates checking"));
 	else
-		AppendMenu(hHelp, 
-			#ifdef _DEBUG
-			MF_STRING | MF_ENABLED
-			#else
-			MF_STRING | MF_DISABLED
-			#endif
-			, ID_CHECKUPDATE, _T("&Check for updates"));
+		AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_CHECKUPDATE, _T("&Check for updates"));
 	
 	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HOMEPAGE, _T("&Visit home page"));
+	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_REPORTBUG, _T("&Report a bug..."));
 	
 	if (ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
 		AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
@@ -7842,6 +7949,9 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		if (gpSet->icMinimizeRestore)
 			RegisterMinRestore(true);
 
+		if (gpSet->UpdSet.isUpdateCheckOnStartup)
+			CheckUpdates(FALSE); // Не показывать сообщение "You are using latest available version"
+
 		//SetWindowRgn(ghWnd, CreateWindowRgn(), TRUE);
 
 		if (gpSetCls->szFontError[0])
@@ -7962,7 +8072,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 				// Поехали
 				wchar_t *pszLine = pszDataW;
 				wchar_t *pszNewLine = wcschr(pszLine, L'\r');
-				CVirtualConsole *pSetActive = NULL, *pCon = NULL;
+				CVirtualConsole *pSetActive = NULL, *pVCon = NULL;
 				BOOL lbSetActive = FALSE, lbOneCreated = FALSE, lbRunAdmin = FALSE;
 
 				while(*pszLine)
@@ -8016,9 +8126,9 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 							RConStartArgs args;
 							args.pszSpecialCmd = lstrdup(pszLine);
 							args.bRunAsAdministrator = lbRunAdmin;
-							pCon = CreateCon(&args);
+							pVCon = CreateCon(&args);
 
-							if (!pCon)
+							if (!pVCon)
 							{
 								DisplayLastError(L"Can't create new virtual console!");
 
@@ -8033,7 +8143,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 								lbOneCreated = TRUE;
 
 								if (lbSetActive && !pSetActive)
-									pSetActive = pCon;
+									pSetActive = pVCon;
 
 								if (GetVCon((int)countof(mp_VCon)-1))
 									break; // Больше создать не получится
@@ -11289,6 +11399,23 @@ void CConEmuMain::CheckUpdates(BOOL abShowMessages)
 		gpUpd->StartCheckProcedure(abShowMessages);
 }
 
+bool CConEmuMain::ReportUpdateConfirmation()
+{
+	bool lbRc = false;
+
+	if (isMainThread())
+	{
+		if (gpUpd)
+			lbRc = gpUpd->ShowConfirmation();
+	}
+	else
+	{
+		lbRc = (SendMessage(ghWnd, mn_MsgRequestUpdate, 1, 0) != 0);
+	}
+
+	return lbRc;
+}
+
 void CConEmuMain::ReportUpdateError()
 {
 	if (isMainThread())
@@ -11304,16 +11431,25 @@ void CConEmuMain::ReportUpdateError()
 
 void CConEmuMain::RequestExitUpdate()
 {
-	if (!gpUpd || !gpUpd->IsUpdatePending(isMainThread() ? CConEmuUpdate::us_Check : CConEmuUpdate::us_Confirm))
+	CConEmuUpdate::UpdateStep step = CConEmuUpdate::us_NotStarted;
+	if (!gpUpd)
 		return;
+
+	step = gpUpd->InUpdate();
+	if (step != CConEmuUpdate::us_ExitAndUpdate)
+	{
+		_ASSERTE(step == CConEmuUpdate::us_ExitAndUpdate);
+		return;
+	}
 
 	if (isMainThread())
 	{
+		UpdateProgress();
 		PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
 	}
 	else
 	{
-		PostMessage(ghWnd, mn_MsgRequestUpdate, 1, 0);
+		PostMessage(ghWnd, mn_MsgRequestUpdate, 2, 0);
 	}
 }
 
@@ -11970,6 +12106,16 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			return 0;
 		}
 		
+		case ID_REPORTBUG:
+		{
+			DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsReportBug, NULL, NULL, SW_SHOWNORMAL);
+			if (shellRc <= 32)
+			{
+				DisplayLastError(L"ShellExecute failed", shellRc);
+			}
+			return 0;
+		}
+		
 		case ID_CHECKUPDATE:
 			gpConEmu->CheckUpdates(TRUE);
 			return 0;
@@ -11982,18 +12128,15 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		case ID_ABOUT:
 		{
 			WCHAR szTitle[255];
-			const wchar_t *pszBits =
-#ifdef WIN64
-			    L"x64"
-#else
-			    L"x86"
-#endif
-			    ;
-#ifdef _DEBUG
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%s [DEBUG] %s)", szConEmuVersion, pszBits);
-#else
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%s %s)", szConEmuVersion, pszBits);
-#endif
+			LPCWSTR pszBits = WIN3264TEST(L"x86",L"x64");
+			LPCWSTR pszDebug = L"";
+			#ifdef _DEBUG
+			pszDebug = L"[DEBUG] ";
+			#endif
+
+			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%02u%02u%02u%s %s%s)", 
+				(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), pszDebug, pszBits);
+
 			BOOL b = gbDontEnable; gbDontEnable = TRUE;
 			MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance, pHelp, szTitle,
 			                   MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), NULL, NULL, LANG_NEUTRAL
@@ -12489,6 +12632,12 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 			}
 
 			CheckFocus(L"TIMER_MAIN_ID");
+
+			if (!lbIsPicView && gpSet->UpdSet.isUpdateCheckHourly)
+			{
+				gpSet->UpdSet.CheckHourlyUpdate();
+			}
+
 		} break; // case 0:
 		case TIMER_CONREDRAW_ID: // Период: CON_REDRAW_TIMOUT*2
 		{
@@ -12937,9 +13086,9 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		pIn->Data[0] = TRUE;
 
 		/*
-		CVirtualConsole* pCon = CreateCon(&args);
+		CVirtualConsole* pVCon = CreateCon(&args);
 
-		if (pCon)
+		if (pVCon)
 		{
 			pIn->Data[0] = TRUE;
 		}
@@ -12969,25 +13118,31 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		{
 			fSuccess = WriteFile(hPipe, pOut, pOut->hdr.cbSize, &cbWritten, NULL);
 		}
+		ExecuteFreeResult(pOut);
 	}
 	else if (pIn->hdr.nCmd == CECMD_SRVSTARTSTOP)
 	{
+		CESERVER_REQ* pOut = ExecuteNewCmd(CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOPRET));
+
 		if (pIn->dwData[0] == 1)
 		{
 			// Запущен процесс сервера
 			HWND hConWnd = (HWND)pIn->dwData[1];
 			_ASSERTE(hConWnd && IsWindow(hConWnd));
 			//LRESULT l = 0;
-			DWORD_PTR dwRc = 0;
+			//DWORD_PTR dwRc = 0;
 			//2010-05-21 Поскольку это критично - лучше ждать до упора, хотя может быть DeadLock?
 			//l = SendMessageTimeout(ghWnd, gpConEmu->mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID,
 			//	SMTO_BLOCK, 5000, &dwRc);
 			//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
-			dwRc = SendMessage(ghWnd, gpConEmu->mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID);
-			_ASSERTE(dwRc!=NULL);
-			pIn->dwData[0] = (DWORD)ghWnd; //-V205
-			pIn->dwData[1] = (DWORD)dwRc; //-V205
+			HWND hWndDC = (HWND)SendMessage(ghWnd, gpConEmu->mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID);
+			_ASSERTE(hWndDC!=NULL);
+			//pIn->dwData[0] = (DWORD)ghWnd; //-V205
+			//pIn->dwData[1] = (DWORD)dwRc; //-V205
 			//pIn->dwData[0] = (l == 0) ? 0 : 1;
+			pOut->StartStopRet.hWnd = ghWnd;
+			pOut->StartStopRet.hWndDC = hWndDC;
+			pOut->StartStopRet.dwPID = GetCurrentProcessId();
 		}
 		else if (pIn->dwData[0] == 101)
 		{
@@ -13006,26 +13161,27 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 			if (pRCon)
 				pRCon->OnServerClosing(pIn->hdr.nSrcPID);
 
-			pIn->dwData[0] = 1;
+			//pIn->dwData[0] = 1;
 		}
 		else
 		{
-			pIn->dwData[0] = 0;
+			_ASSERTE((pIn->dwData[0] == 1) || (pIn->dwData[0] == 101));
 		}
 
-		pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
 		// Отправляем
 		fSuccess = WriteFile(
 		               hPipe,        // handle to pipe
-		               pIn,         // buffer to write from
-		               pIn->hdr.cbSize,  // number of bytes to write
+		               pOut,         // buffer to write from
+		               pOut->hdr.cbSize,  // number of bytes to write
 		               &cbWritten,   // number of bytes written
 		               NULL);        // not overlapped I/O
+
+		ExecuteFreeResult(pOut);
 	}
 	else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	{
 		DWORD nBtn = MessageBox(NULL, pIn->AssertInfo.szDebugInfo, pIn->AssertInfo.szTitle, pIn->AssertInfo.nBtns);
-		pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+		ExecutePrepareCmd(&pIn->hdr, CECMD_ASSERT, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
 		pIn->dwData[0] = nBtn;
 		// Отправляем
 		fSuccess = WriteFile(
@@ -13535,7 +13691,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgMyDestroy)
 			{
-				gpConEmu->OnDestroy(hWnd);
+				//gpConEmu->OnDestroy(hWnd);
+				DestroyWindow(hWnd);
 				return 0;
 			}
 			else if (messg == gpConEmu->mn_MsgUpdateSizes)
@@ -13587,16 +13744,16 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 #ifdef _DEBUG
 				wchar_t szDbg[200];
 				lstrcpy(szDbg, L"OnVConTerminated");
-				CVirtualConsole* pCon = (CVirtualConsole*)lParam;
+				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
 
-				if (pCon)
+				if (pVCon)
 				{
 					for (size_t i = 0; i < countof(mp_VCon); i++)
 					{
-						if (pCon == mp_VCon[i])
+						if (pVCon == mp_VCon[i])
 						{
 							ConEmuTab tab = {0};
-							pCon->RCon()->GetTab(0, &tab);
+							pVCon->RCon()->GetTab(0, &tab);
 							tab.Name[128] = 0; // чтобы не вылезло из szDbg
 							wsprintf(szDbg+_tcslen(szDbg), L": #%i: %s", i+1, tab.Name);
 							break;
@@ -13778,10 +13935,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				_ASSERTE(wParam == gpConEmu->mn_MsgCreateCon);
 				RConStartArgs *pArgs = (RConStartArgs*)lParam;
-				CVirtualConsole* pCon = CreateCon(pArgs);
-				UNREFERENCED_PARAMETER(pCon);
+				CVirtualConsole* pVCon = CreateCon(pArgs);
+				UNREFERENCED_PARAMETER(pVCon);
 				delete pArgs;
-				return 0;
+				return (LRESULT)pVCon;
 			}
 			else if (messg == gpConEmu->mn_MsgRequestUpdate)
 			{
@@ -13791,6 +13948,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					gpConEmu->ReportUpdateError();
 					return 0;
 				case 1:
+					return (LRESULT)gpConEmu->ReportUpdateConfirmation();
+				case 2:
 					gpConEmu->RequestExitUpdate();
 					return 0;
 				}

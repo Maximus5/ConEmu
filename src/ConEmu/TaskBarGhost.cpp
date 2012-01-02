@@ -33,9 +33,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "../common/ConEmuCheck.h"
 
-#ifdef __GNUC__
+//#ifdef __GNUC__
 #include "DwmApi_Part.h"
-#endif
+//#endif
 
 #define UPDATE_DELTA 1000
 

@@ -34,6 +34,8 @@ class MSection;
 
 extern CConEmuUpdate* gpUpd;
 
+class CWinInet;
+
 class CConEmuUpdate
 {
 protected:
@@ -41,7 +43,12 @@ protected:
 	DWORD mn_CheckThreadId;
 	HANDLE mh_CheckThread;
 	
-	HANDLE mh_StopThread;
+	//HANDLE mh_StopThread;
+
+	CWinInet* wi;
+	friend class CWinInet;
+	HANDLE mh_Internet, mh_Connect;
+	DWORD mn_InternetContentLen, mn_InternetContentReady;
 	
 	BOOL mb_ManualCallMode;
 	ConEmuUpdateSettings* mp_Set;
@@ -49,6 +56,14 @@ protected:
 	bool mb_InShowLastError;
 	wchar_t* ms_LastErrorInfo;
 	MSection* mp_LastErrorSC;
+
+	wchar_t* mpsz_DeleteIniFile;
+	wchar_t* mpsz_DeletePackageFile;
+	wchar_t* mpsz_DeleteBatchFile;
+	void DeleteBadTempFiles();
+
+	wchar_t* mpsz_PendingPackageFile;
+	wchar_t* mpsz_PendingBatchFile;
 	
 	static DWORD WINAPI CheckThreadProc(LPVOID lpParameter);
 	DWORD CheckProcInt();
@@ -58,7 +73,8 @@ protected:
 	
 	bool IsLocalFile(LPWSTR& asPathOrUrl);
 	bool IsLocalFile(LPCWSTR& asPathOrUrl);
-	
+
+	bool bNeedRunElevation;
 	bool NeedRunElevation();
 	
 	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc);
@@ -78,14 +94,25 @@ public:
 	void StartCheckProcedure(BOOL abShowMessages);
 	void StopChecking();
 	void ShowLastError();
-	
-	bool InUpdate();
+	bool ShowConfirmation();
 
 	enum UpdateStep
 	{
-		us_Check = 0,
-		us_Confirm = 1,
-		us_Update = 2,
+		us_NotStarted = 0,
+		us_Check = 1,
+		us_ConfirmDownload = 2,
+		us_Downloading = 3,
+		us_ConfirmUpdate = 4,
+		us_ExitAndUpdate = 5,
 	};
-	bool IsUpdatePending(UpdateStep us);
+	UpdateStep InUpdate();
+
+	short GetUpdateProgress();
+
+protected:
+	BOOL mb_RequestTerminate;
+	UpdateStep m_UpdateStep;
+	wchar_t ms_NewVersion[64], ms_CurVersion[64];
+	bool QueryConfirmation(UpdateStep step, LPCWSTR asParm = NULL);
+	bool QueryConfirmationInt(LPCWSTR asConfirmInfo);
 };

@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -282,6 +282,9 @@ void SettingsSaveReg(LPCWSTR pszRegKey, LPCWSTR pszName, DWORD* pValue);
 void SettingsSaveA(LPCWSTR pszName, DWORD* pValue);
 void FUNC_X(SettingsSaveW)(LPCWSTR pszName, DWORD* pValue);
 void FUNC_Y(SettingsSaveW)(LPCWSTR pszName, DWORD* pValue);
+void SavePanelViewState(BOOL bLeftPanel, DWORD dwMode);
+
+bool isPreloadByDefault();
 
 void EntryPoint(int OpenFrom,INT_PTR Item);
 BOOL LoadFarVersion();

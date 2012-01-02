@@ -129,8 +129,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //}
 //#endif
 //#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
-#define isDriveLetter(c) ((c>=L'A' && c<=L'Z') || (c>=L'a' && c<=L'z'))
-#define isDigit(c) (c>=L'0' && c<=L'9')
+//#define isDriveLetter(c) ((c>=L'A' && c<=L'Z') || (c>=L'a' && c<=L'z'))
+//#define isDigit(c) (c>=L'0' && c<=L'9')
 
 //#define PTDIFFTEST(C,D) (((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 
@@ -222,7 +222,7 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 
 
 
-#include "RConStartArgs.h"
+#include "../common/RConStartArgs.h"
 
 
 
@@ -259,7 +259,7 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 	L"ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd Far.exe /w\n" \
 	L"\n" \
 	L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\n" \
-	L"\x00A9 2009-2011 ConEmu.Maximus5@gmail.com\n" \
+	CECOPYRIGHTSTRING_W /*\x00A9 2009-2011 ConEmu.Maximus5@gmail.com*/ L"\n" \
 	L"\n" \
 	L"Contributors\n" \
 	L"NightRoman: drawing optimization, BufferHeight and other fixes\n" \

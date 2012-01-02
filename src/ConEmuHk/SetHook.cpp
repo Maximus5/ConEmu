@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 HMODULE ghHookOurModule = NULL; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 DWORD   gnHookMainThreadId = 0;
+
+extern BOOL gbDllStopCalled;
 
 //extern CEFAR_INFO_MAPPING *gpFarInfo, *gpFarInfoMapping; //gpConsoleInfo;
 //extern HANDLE ghFarAliveEvent;
@@ -140,6 +142,7 @@ void CheckLoadedModule(LPCWSTR asModule)
 	}
 }
 
+#define MAX_HOOKED_PROCS 255
 
 // Использовать GetModuleFileName или CreateToolhelp32Snapshot во время загрузки библиотек нельзя
 // Однако, хранить список модулей нужно
@@ -148,11 +151,28 @@ void CheckLoadedModule(LPCWSTR asModule)
 struct HkModuleInfo
 {
 	BOOL    bUsed;   // ячейка занята
-	BOOL    bHooked; // модуль обрабатывался (хуки установлены)
+	int     Hooked;  // 1-модуль обрабатывался (хуки установлены), 2-хуки сняты
 	HMODULE hModule; // хэндл
 	wchar_t sModuleName[128]; // Только информационно, в обработке не участвует
+	HkModuleInfo* pNext;
+	HkModuleInfo* pPrev;
+	size_t nAdrUsed;
+	struct StrAddresses
+	{
+		DWORD_PTR* ppAdr;
+		DWORD_PTR  pOld;
+		DWORD_PTR  pOur;
+		union {
+			BOOL bHooked;
+			LPVOID Dummy;
+		};
+		#ifdef _DEBUG
+		char sName[32];
+		#endif
+	} Addresses[MAX_HOOKED_PROCS];
 };
-HkModuleInfo *gpHookedModules = NULL;
+WARNING("Хорошо бы выделять память под gpHookedModules через VirtualProtect, чтобы защитить ее от изменений дурными программами");
+HkModuleInfo *gpHookedModules = NULL, *gpHookedModulesLast = NULL;
 size_t gnHookedModules = 0;
 CRITICAL_SECTION *gpHookedModulesSection = NULL;
 void InitializeHookedModules()
@@ -169,14 +189,19 @@ void InitializeHookedModules()
 		//WARNING: причем, когда главная нить еще не была запущена. В итоге, если это 
 		//WARNING: попытаться сделать мы получим:
 		//WARNING: runtime error R6030  - CRT not initialized
-		//gpHookedModules = new MArray<HkModuleInfo>;
+		// -- gpHookedModules = new MArray<HkModuleInfo>;
 		// -- поэтому тупо через массив
-		#ifdef _DEBUG
-		gnHookedModules = 16;
-		#else
-		gnHookedModules = 256;
-		#endif
-		gpHookedModules = (HkModuleInfo*)calloc(gnHookedModules,sizeof(*gpHookedModules));
+		//#ifdef _DEBUG
+		//gnHookedModules = 16;
+		//#else
+		//gnHookedModules = 256;
+		//#endif
+		gpHookedModules = (HkModuleInfo*)calloc(sizeof(HkModuleInfo),1);
+		if (!gpHookedModules)
+		{
+			_ASSERTE(gpHookedModules!=NULL);
+		}
+		gpHookedModulesLast = gpHookedModules;
 	}
 }
 void FinalizeHookedModules()
@@ -188,7 +213,12 @@ void FinalizeHookedModules()
 
 		HkModuleInfo *p = gpHookedModules;
 		gpHookedModules = NULL;
-		free(p);
+		while (p)
+		{
+			HkModuleInfo *pNext = p->pNext;
+			free(p);
+			p = pNext;
+		}
 
 		if (gpHookedModulesSection)
 			LeaveCriticalSection(gpHookedModulesSection);
@@ -200,7 +230,7 @@ void FinalizeHookedModules()
 		gpHookedModulesSection = NULL;
 	}
 }
-bool IsHookedModule(HMODULE hModule, bool bSection = true, LPWSTR pszName = NULL, size_t cchNameMax = 0)
+HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchNameMax = 0)
 {
 	if (!gpHookedModulesSection)
 		InitializeHookedModules();
@@ -211,29 +241,34 @@ bool IsHookedModule(HMODULE hModule, bool bSection = true, LPWSTR pszName = NULL
 		return false;
 	}
 
-	bool lbHooked = false;
+	//bool lbHooked = false;
 
-	_ASSERTE(gpHookedModules && gpHookedModulesSection);
-	if (bSection)
-		EnterCriticalSection(gpHookedModulesSection);
+	//_ASSERTE(gpHookedModules && gpHookedModulesSection);
+	//if (bSection)
+	//	EnterCriticalSection(gpHookedModulesSection);
 
-	for (size_t i = 0; i < gnHookedModules; i++)
+	HkModuleInfo* p = gpHookedModules;
+	while (p)
 	{
-		if (gpHookedModules[i].bUsed && (gpHookedModules[i].hModule == hModule))
+		if (p->bUsed && (p->hModule == hModule))
 		{
-			_ASSERTE(gpHookedModules[i].bHooked == TRUE);
-			lbHooked = true;
+			_ASSERTE(p->Hooked == 1 || p->Hooked == 2);
+			//lbHooked = true;
+			
+			// Если хотят узнать имя модуля (по hModule)
 			if (pszName && (cchNameMax > 0))
-				lstrcpyn(pszName, gpHookedModules[i].sModuleName, (int)cchNameMax);
+				lstrcpyn(pszName, p->sModuleName, (int)cchNameMax);
+			break;
 		}
+		p = p->pNext;
 	}
 
-	if (bSection)
-		LeaveCriticalSection(gpHookedModulesSection);
+	//if (bSection)
+	//	LeaveCriticalSection(gpHookedModulesSection);
 
-	return lbHooked;
+	return p;
 }
-void AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
+HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 {
 	if (!gpHookedModulesSection)
 		InitializeHookedModules();
@@ -242,44 +277,55 @@ void AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 	if (!gpHookedModules)
 	{
 		_ASSERTE(gpHookedModules!=NULL);
-		return;
+		return NULL;
 	}
 
-	EnterCriticalSection(gpHookedModulesSection);
+	HkModuleInfo* p = IsHookedModule(hModule);
 
-	if (!IsHookedModule(hModule, false))
+	if (!p)
 	{
-		for (size_t i = 0; i < gnHookedModules; i++)
+		EnterCriticalSection(gpHookedModulesSection);
+		
+		p = gpHookedModules;
+		while (p)
 		{
-			if (!gpHookedModules[i].bUsed)
+			if (!p->bUsed)
 			{
-				gpHookedModules[i].bUsed = TRUE;
-				gpHookedModules[i].bHooked = TRUE;
-				gpHookedModules[i].hModule = hModule;
-				lstrcpyn(gpHookedModules[i].sModuleName, sModuleName?sModuleName:L"", countof(gpHookedModules[i].sModuleName));
+				gnHookedModules++;
+				p->nAdrUsed = 0;
+				p->Hooked = 1;
+				p->hModule = hModule;
+				lstrcpyn(p->sModuleName, sModuleName?sModuleName:L"", countof(p->sModuleName));
+				// bUsed - последним, чтобы не было проблем с другими потоками
+				p->bUsed = TRUE;
 				goto done;
 			}
+			p = p->pNext;
 		}
-		HkModuleInfo hk = {TRUE, TRUE, hModule};
-		lstrcpyn(hk.sModuleName, sModuleName?sModuleName:L"", countof(hk.sModuleName));
-		size_t nNewSize = gnHookedModules+256;
-		HkModuleInfo* ptrNew = (HkModuleInfo*)calloc(nNewSize, sizeof(*ptrNew));
-		if (!ptrNew)
+		
+		p = (HkModuleInfo*)calloc(sizeof(HkModuleInfo),1);
+		if (!p)
 		{
-			_ASSERTE(ptrNew!=NULL);
+			_ASSERTE(p!=NULL);
 		}
 		else
 		{
-			memmove(ptrNew, gpHookedModules, gnHookedModules*sizeof(*gpHookedModules));
-			ptrNew[gnHookedModules] = hk;
-			free(gpHookedModules);
-			gpHookedModules = ptrNew;
-			gnHookedModules = nNewSize;
+			gnHookedModules++;
+			p->bUsed = TRUE;   // ячейка занята. тут можно первой, т.к. в цепочку еще не добавили
+			p->Hooked = 1; // модуль обрабатывался (хуки установлены)
+			p->hModule = hModule; // хэндл
+			lstrcpyn(p->sModuleName, sModuleName?sModuleName:L"", countof(p->sModuleName));
+			p->pNext = NULL;
+			p->pPrev = gpHookedModulesLast;
+			gpHookedModulesLast->pNext = p;
+			gpHookedModulesLast = p;
 		}
+		
+	done:
+		LeaveCriticalSection(gpHookedModulesSection);
 	}
 
-done:
-	LeaveCriticalSection(gpHookedModulesSection);
+	return p;
 }
 void RemoveHookedModule(HMODULE hModule)
 {
@@ -293,19 +339,19 @@ void RemoveHookedModule(HMODULE hModule)
 		return;
 	}
 
-	EnterCriticalSection(gpHookedModulesSection);
-
-	for (size_t i = 0; i < gnHookedModules; i++)
+	HkModuleInfo* p = gpHookedModules;
+	while (p)
 	{
-		if (gpHookedModules[i].bUsed && (gpHookedModules[i].hModule == hModule))
+		if (p->bUsed && (p->hModule == hModule))
 		{
-			_ASSERTE(gpHookedModules[i].bHooked == TRUE);
-			gpHookedModules[i].bUsed = FALSE;
-			gpHookedModules[i].bHooked = FALSE;
+			gnHookedModules--;
+			// Именно в такой последовательности, чтобы с другими потоками не драться
+			p->Hooked = 0;
+			p->bUsed = FALSE;
+			break;
 		}
+		p = p->pNext;
 	}
-
-	LeaveCriticalSection(gpHookedModulesSection);
 }
 
 
@@ -326,8 +372,8 @@ HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFl
 BOOL WINAPI OnFreeLibrary(HMODULE hModule);
 FARPROC WINAPI OnGetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 
-#define MAX_HOOKED_PROCS 255
 HookItem *gpHooks = NULL;
+size_t gnHookedFuncs = 0;
 
 const char *szLoadLibraryA = "LoadLibraryA";
 const char *szLoadLibraryW = "LoadLibraryW";
@@ -373,12 +419,12 @@ bool InitHooksLibrary()
 	//	gpHooks[i].DllName = LibHooks[i].DllName;
 	//}
 
-	size_t i = 0;
+	gnHookedFuncs = 0;
 	#define ADDFUNC(pProc,szName,szDll) \
-		gpHooks[i].NewAddress = pProc; \
-		gpHooks[i].Name = szName; \
-		gpHooks[i].DllName = szDll; \
-		i++;
+		gpHooks[gnHookedFuncs].NewAddress = pProc; \
+		gpHooks[gnHookedFuncs].Name = szName; \
+		gpHooks[gnHookedFuncs].DllName = szDll; \
+		if (pProc) gnHookedFuncs++;
 	/* ************************ */
 	ADDFUNC((void*)OnLoadLibraryA,			szLoadLibraryA,			kernel32);
 	ADDFUNC((void*)OnLoadLibraryW,			szLoadLibraryW,			kernel32);
@@ -389,6 +435,7 @@ bool InitHooksLibrary()
 	ADDFUNC((void*)OnGetProcAddress,		szGetProcAddress,		kernel32);
 	#endif
 	ADDFUNC(NULL,NULL,NULL);
+	#undef ADDFUNC
 	/* ************************ */
 
 #endif
@@ -426,11 +473,12 @@ void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL 
 {
 	if (gpHooks)
 	{
-		for(int i = 0; gpHooks[i].NewAddress; i++)
+		for (int i = 0; gpHooks[i].NewAddress; i++)
 		{
 			if (gpHooks[i].NewAddress == OurFunction)
 			{
 				*ph = &(gpHooks[i]);
+				// По идее, ExeOldAddress должен совпадать с OldAddress, если включен "Inject ConEmuHk"
 				return (abAllowModified && gpHooks[i].ExeOldAddress) ? gpHooks[i].ExeOldAddress : gpHooks[i].OldAddress;
 			}
 		}
@@ -470,7 +518,7 @@ MSection* gpHookCS = NULL;
 // apHooks->Name && apHooks->DllName MUST be for a lifetime
 bool __stdcall InitHooks(HookItem* apHooks)
 {
-	int i, j;
+	size_t i, j;
 	bool skip;
 
 	//if (!ghHookMutex)
@@ -506,7 +554,7 @@ bool __stdcall InitHooks(HookItem* apHooks)
 
 	if (apHooks && gpHooks)
 	{
-		for(i = 0; apHooks[i].NewAddress; i++)
+		for (i = 0; apHooks[i].NewAddress; i++)
 		{
 			if (apHooks[i].Name==NULL || apHooks[i].DllName==NULL)
 			{
@@ -516,7 +564,7 @@ bool __stdcall InitHooks(HookItem* apHooks)
 
 			skip = false;
 
-			for(j = 0; gpHooks[j].NewAddress; j++)
+			for (j = 0; gpHooks[j].NewAddress; j++)
 			{
 				if (gpHooks[j].NewAddress == apHooks[i].NewAddress)
 				{
@@ -533,7 +581,11 @@ bool __stdcall InitHooks(HookItem* apHooks)
 				if (!lstrcmpiA(gpHooks[j].Name, apHooks[i].Name)
 				        && !lstrcmpiW(gpHooks[j].DllName, apHooks[i].DllName))
 				{
+					// Не должно быть такого - функции должны только добавляться
+					_ASSERTEX(lstrcmpiA(gpHooks[j].Name, apHooks[i].Name) && lstrcmpiW(gpHooks[j].DllName, apHooks[i].DllName));
 					gpHooks[j].NewAddress = apHooks[i].NewAddress;
+					if (j >= gnHookedFuncs)
+						gnHookedFuncs = j+1;
 					skip = true; break;
 				}
 
@@ -554,6 +606,8 @@ bool __stdcall InitHooks(HookItem* apHooks)
 				gpHooks[j].Name = apHooks[i].Name;
 				gpHooks[j].DllName = apHooks[i].DllName;
 				gpHooks[j].NewAddress = apHooks[i].NewAddress;
+				_ASSERTEX(j >= gnHookedFuncs);
+				gnHookedFuncs = j+1;
 				gpHooks[j+1].Name = NULL; // на всякий
 				gpHooks[j+1].NewAddress = NULL; // на всякий
 			}
@@ -561,7 +615,7 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	}
 
 	// Для добавленных в gpHooks функций определить "оригинальный" адрес экспорта
-	for(i = 0; gpHooks[i].NewAddress; i++)
+	for (i = 0; gpHooks[i].NewAddress; i++)
 	{
 		if (!gpHooks[i].OldAddress)
 		{
@@ -659,7 +713,7 @@ bool __stdcall SetHookCallbacks(const char* ProcName, const wchar_t* DllName, HM
 
 	if (gpHooks)
 	{
-		for(int i = 0; i<MAX_HOOKED_PROCS && gpHooks[i].NewAddress; i++)
+		for (int i = 0; i<MAX_HOOKED_PROCS && gpHooks[i].NewAddress; i++)
 		{
 			if (!lstrcmpA(gpHooks[i].Name, ProcName) && !lstrcmpW(gpHooks[i].DllName,DllName))
 			{
@@ -721,7 +775,7 @@ bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, size_t cchNameMax)
 	}
 
 	//TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary.
-	lbFound = IsHookedModule(ahModule, true, pszName, cchNameMax);
+	lbFound = (IsHookedModule(ahModule, pszName, cchNameMax) != NULL);
 
 /*
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
@@ -730,7 +784,7 @@ bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, size_t cchNameMax)
 	{
 		MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
 
-		for(BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
+		for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
 		{
 			if (module.hModule == ahModule)
 			{
@@ -773,7 +827,7 @@ bool IsModuleExcluded(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW)
 	}
 
 #if 1
-	for(int i = 0; ExcludedModules[i]; i++)
+	for (int i = 0; ExcludedModules[i]; i++)
 		if (module == GetModuleHandle(ExcludedModules[i]))
 			return true;
 #else
@@ -803,7 +857,7 @@ extern BOOL gbInCommonShutdown;
 
 bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
 {
-	//while(nHookMutexWait != WAIT_OBJECT_0)
+	//while (nHookMutexWait != WAIT_OBJECT_0)
 	BOOL lbLockHooksSection = FALSE;
 	while (!(lbLockHooksSection = apCS->Lock(gpHookCS, TRUE, 10000)))
 	{
@@ -826,7 +880,7 @@ bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
 
 		DWORD nTID = GetCurrentThreadId(); DWORD nPID = GetCurrentProcessId();
 		msprintf(szTrapMsg, 1024, 
-			L"Can't %s hooks in module '%s'\nCurrent PID=%u, TID=%i\nCan't lock hook mutex\nPress 'Retry' to repeat locking",
+			L"Can't %s hooks in module '%s'\nCurrent PID=%u, TID=%i\nCan't lock hook section\nPress 'Retry' to repeat locking",
 			asAction, szName, nPID, nTID);
 
 		int nBtn = 
@@ -850,13 +904,15 @@ bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
 	return true;
 }
 
+bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExecutable, IMAGE_IMPORT_DESCRIPTOR* Import, size_t ImportCount, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p);
+bool SetHookChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p);
 // Подменить Импортируемые функции в модуле (Module)
 //	если (abForceHooks == FALSE) то хуки не ставятся, если
 //  будет обнаружен импорт, не совпадающий с оригиналом
 //  Это для того, чтобы не выполнять множественные хуки при множественных LoadLibrary
-bool SetHook(HMODULE Module, BOOL abForceHooks)
+bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 {
-	IMAGE_IMPORT_DESCRIPTOR* Import = 0;
+	IMAGE_IMPORT_DESCRIPTOR* Import = NULL;
 	DWORD Size = 0;
 	HMODULE hExecutable = GetModuleHandle(0);
 
@@ -869,17 +925,25 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 	//#ifdef NDEBUG
 	//	PRAGMA_ERROR("Один модуль обрабатывать ОДИН раз");
 	//#endif
+
+	// Если он уже хукнут - не проверять больше ничего
+	HkModuleInfo* p = IsHookedModule(Module);
+	if (p)
+		return true;
 	
 	if (!IsModuleValid(Module))
 		return false;
-
-	BOOL bExecutable = (Module == hExecutable);
+		
+	bool bExecutable = (Module == hExecutable);
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
 	IMAGE_NT_HEADERS* nt_header = NULL;
 
+	// Валидность адреса размером sizeof(IMAGE_DOS_HEADER) проверяется в IsModuleValid.
 	if (dos_header->e_magic == IMAGE_DOS_SIGNATURE /*'ZM'*/)
 	{
 		nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
+		if (IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)))
+			return false;
 
 		if (nt_header->Signature != 0x004550)
 			return false;
@@ -919,7 +983,14 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 	if (!LockHooks(Module, L"install", &CS))
 		return false;
 
-//	//while(nHookMutexWait != WAIT_OBJECT_0)
+	if (!p)
+	{
+		p = AddHookedModule(Module, asModule);
+		if (!p)
+			return false;
+	}
+		
+//	//while (nHookMutexWait != WAIT_OBJECT_0)
 //	while (!CS.Lock(gpHookCS, TRUE, 10000))
 //	{
 //#ifdef _DEBUG
@@ -963,197 +1034,16 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 
 	TODO("!!! Сохранять ORDINAL процедур !!!");
 	bool res = false, bHooked = false;
-	INT_PTR i;
+	//INT_PTR i;
 	INT_PTR nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
+	bool bFnNeedHook[MAX_HOOKED_PROCS] = {};
 
-	//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
-	for(i = 0; i < nCount; i++)
-	{
-		if (Import[i].Name == 0)
-			break;
+	// в отдельной функции, т.к. __try
+	res = SetHookPrep(asModule, Module, abForceHooks, bExecutable, Import, nCount, bFnNeedHook, p);
 
-		//DebugString( ToTchar( (char*)Module + Import[i].Name ) );
-#ifdef _DEBUG
-		char* mod_name = (char*)Module + Import[i].Name;
-#endif
-		DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
-		DWORD_PTR rvaIAT = Import[i].FirstThunk; //-V101
-
-		if (rvaINT == 0)      // No Characteristics field?
-		{
-			// Yes! Gotta have a non-zero FirstThunk field then.
-			rvaINT = rvaIAT;
-
-			if (rvaINT == 0)       // No FirstThunk field?  Ooops!!!
-			{
-				_ASSERTE(rvaINT!=0);
-				break;
-			}
-		}
-
-		//PIMAGE_IMPORT_BY_NAME pOrdinalName = NULL, pOrdinalNameO = NULL;
-		PIMAGE_IMPORT_BY_NAME pOrdinalNameO = NULL;
-		//IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)((char*)Module + rvaINT);
-		//IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + rvaIAT);
-		IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaIAT, nt_header, (PBYTE)Module);
-		IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaINT, nt_header, (PBYTE)Module);
-
-		if (!thunk ||  !thunkO)
-		{
-			_ASSERTE(thunk && thunkO);
-			continue;
-		}
-
-		int f;
-
-		for (f = 0;; thunk++, thunkO++, f++)
-		{
-			//111127 - ..\GIT\lib\perl5\site_perl\5.8.8\msys\auto\SVN\_Core\_Core.dll
-			//         похоже, в этой длл кривая таблица импортов
-			BOOL lbBadThunk = IsBadReadPtr(thunk, sizeof(*thunk));
-			if (lbBadThunk)
-			{
-				_ASSERTEX(!lbBadThunk);
-				break;
-			}
-			BOOL lbBadThunkO = IsBadReadPtr(thunkO, sizeof(*thunkO));
-			if (lbBadThunkO)
-			{
-				_ASSERTEX(!lbBadThunkO);
-				break;
-			}
-
-			if (!thunk->u1.Function)
-				break;
-
-			const char* pszFuncName = NULL;
-			ULONGLONG ordinalO = -1;
-
-			if (thunk->u1.Function != thunkO->u1.Function)
-			{
-				// Ordinal у нас пока не используется
-				if (IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal))
-				{
-					WARNING("Это НЕ ORDINAL, это Hint!!!");
-					ordinalO = IMAGE_ORDINAL(thunkO->u1.Ordinal);
-					pOrdinalNameO = NULL;
-				}
-
-				TODO("Возможно стоит искать имя функции не только для EXE, но и для всех dll?");
-
-				if (bExecutable)
-				{
-					if (!IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal))
-					{
-						pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
-						WARNING("Множественные вызовы IsBad???Ptr могут глючить");
-						BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
-						_ASSERTE(lbValidPtr);
-
-						if (lbValidPtr)
-						{
-							lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
-							_ASSERTE(lbValidPtr);
-
-							if (lbValidPtr)
-								pszFuncName = (LPCSTR)pOrdinalNameO->Name;
-						}
-					}
-				}
-			}
-
-			int j;
-			for (j = 0; gpHooks[j].Name; j++)
-			{
-				#ifdef _DEBUG
-				const void* ptrNewAddress = gpHooks[j].NewAddress;
-				const void* ptrOldAddress = (void*)thunk->u1.Function;
-				#endif
-
-				// Если адрес импорта в модуле уже совпадает с адресом одной из наших функций
-				if (gpHooks[j].NewAddress == (void*)thunk->u1.Function)
-				{
-					res = true; // это уже захучено
-					break;
-				}
-
-				// Если не удалось определить оригинальный адрес процедуры (kernel32/WriteConsoleOutputW, и т.п.)
-				if (gpHooks[j].OldAddress == NULL)
-				{
-					continue;
-				}
-
-				// Проверяем, имя функции совпадает с перехватываемыми?
-				if ((void*)thunk->u1.Function != gpHooks[j].OldAddress)
-				{
-					// bExecutable проверяется выше, если нет - то (pszFuncName == NULL)
-					if (!pszFuncName /*|| !bExecutable*/)
-					{
-						continue; // Если имя импорта определить не удалось - пропускаем
-					}
-					else
-					{
-						if (lstrcmpA(pszFuncName, gpHooks[j].Name))
-							continue;
-					}
-
-					if (!abForceHooks)
-					{
-						continue; // запрещен перехват, если текущий адрес в модуле НЕ совпадает с оригинальным экспортом!
-					}
-					else
-					{
-						// OldAddress уже может отличаться от оригинального экспорта библиотеки
-						// Это происходит например с PeekConsoleIntputW при наличии плагина Anamorphosis
-						gpHooks[j].ExeOldAddress = (void*)thunk->u1.Function;
-					}
-				}
-
-				//#ifdef _DEBUG
-				//// Это НЕ ORDINAL, это Hint!!!
-				//if (gpHooks[j].nOrdinal == 0 && ordinalO != (ULONGLONG)-1)
-				//	gpHooks[j].nOrdinal = (DWORD)ordinalO;
-				//#endif
-
-				bHooked = true;
-				DWORD old_protect = 0; DWORD dwErr = 0;
-
-				_ASSERTE(sizeof(thunk->u1.Function)==sizeof(DWORD_PTR));
-				
-				if (!VirtualProtect(&thunk->u1.Function, sizeof(thunk->u1.Function),
-				                   PAGE_READWRITE, &old_protect))
-				{
-					dwErr = GetLastError();
-					_ASSERTE(FALSE);
-				}
-				else
-				{
-					if (thunk->u1.Function == (DWORD_PTR)gpHooks[j].NewAddress)
-					{
-						// оказалось захучено в другой нити? такого быть не должно, блокируется мутексом
-						_ASSERTE(thunk->u1.Function != (DWORD_PTR)gpHooks[j].NewAddress);
-					}
-					else
-					{
-						thunk->u1.Function = (DWORD_PTR)gpHooks[j].NewAddress;
-					}
-
-					VirtualProtect(&thunk->u1.Function, sizeof(thunk->u1.Function), old_protect, &old_protect);
-#ifdef _DEBUG
-
-					if (bExecutable)
-						gpHooks[j].ReplacedInExe = TRUE;
-
-#endif
-					//DebugString( ToTchar( gpHooks[j].Name ) );
-					res = true;
-				}
-
-				break;
-			}
-		}
-	}
-
+	// в отдельной функции, т.к. __try
+	bHooked = SetHookChange(asModule, Module, abForceHooks, bFnNeedHook, p);
+	
 #ifdef _DEBUG
 
 	if (bHooked)
@@ -1164,7 +1054,7 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 		_wcscpy_c(szDbg, MAX_PATH*3, L"  ## Hooks was set by conemu: ");
 		_wcscat_c(szDbg, MAX_PATH*3, szModPath);
 		_wcscat_c(szDbg, MAX_PATH*3, L"\n");
-		OutputDebugStringW(szDbg);
+		DebugString(szDbg);
 		free(szDbg);
 		free(szModPath);
 	}
@@ -1182,6 +1072,276 @@ bool SetHook(HMODULE Module, BOOL abForceHooks)
 	return res;
 }
 
+bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExecutable, IMAGE_IMPORT_DESCRIPTOR* Import, size_t ImportCount, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p)
+{
+	bool res = false;
+	size_t i;
+	
+	SAFETRY
+	{
+		//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
+		for (i = 0; i < ImportCount; i++)
+		{
+			if (Import[i].Name == 0)
+				break;
+
+			//DebugString( ToTchar( (char*)Module + Import[i].Name ) );
+			#ifdef _DEBUG
+			char* mod_name = (char*)Module + Import[i].Name;
+			#endif
+			DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
+			DWORD_PTR rvaIAT = Import[i].FirstThunk; //-V101
+
+			if (rvaINT == 0)      // No Characteristics field?
+			{
+				// Yes! Gotta have a non-zero FirstThunk field then.
+				rvaINT = rvaIAT;
+
+				if (rvaINT == 0)       // No FirstThunk field?  Ooops!!!
+				{
+					_ASSERTE(rvaINT!=0);
+					break;
+				}
+			}
+
+			//PIMAGE_IMPORT_BY_NAME pOrdinalName = NULL, pOrdinalNameO = NULL;
+			PIMAGE_IMPORT_BY_NAME pOrdinalNameO = NULL;
+			//IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)((char*)Module + rvaINT);
+			//IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + rvaIAT);
+			IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaIAT, nt_header, (PBYTE)Module);
+			IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaINT, nt_header, (PBYTE)Module);
+
+			if (!thunk ||  !thunkO)
+			{
+				_ASSERTE(thunk && thunkO);
+				continue;
+			}
+
+			size_t f, s, j;
+			for (s = 0; s <= 1; s++)
+			{
+				for (f = 0;; thunk++, thunkO++, f++)
+				{
+					//111127 - ..\GIT\lib\perl5\site_perl\5.8.8\msys\auto\SVN\_Core\_Core.dll
+					//         похоже, в этой длл кривая таблица импортов
+					#ifndef USE_SEH
+					BOOL lbBadThunk = IsBadReadPtr(thunk, sizeof(*thunk));
+					if (lbBadThunk)
+					{
+						_ASSERTEX(!lbBadThunk);
+						break;
+					}
+					#endif
+					
+					if (!thunk->u1.Function)
+						break;
+					
+					#ifndef USE_SEH
+					BOOL lbBadThunkO = IsBadReadPtr(thunkO, sizeof(*thunkO));
+					if (lbBadThunkO)
+					{
+						_ASSERTEX(!lbBadThunkO);
+						break;
+					}
+					#endif
+
+					const char* pszFuncName = NULL;
+					//ULONGLONG ordinalO = -1;
+
+					if (thunk->u1.Function != thunkO->u1.Function)
+					{
+						//// Ordinal у нас пока не используется
+						////if (IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal))
+						////{
+						////	WARNING("Это НЕ ORDINAL, это Hint!!!");
+						////	ordinalO = IMAGE_ORDINAL(thunkO->u1.Ordinal);
+						////	pOrdinalNameO = NULL;
+						////}
+
+						
+						// стоит искать имя функции не только для EXE, но и для всех dll?
+						if (s /*bExecutable*/)
+						{
+							if (!IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal))
+							{
+								pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
+								
+								#ifdef USE_SEH
+									pszFuncName = (LPCSTR)pOrdinalNameO->Name;
+								#else
+									//WARNING!!! Множественные вызовы IsBad???Ptr могут глючить и тормозить
+									BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
+									_ASSERTE(lbValidPtr);
+
+									if (lbValidPtr)
+									{
+										lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
+										_ASSERTE(lbValidPtr);
+
+										if (lbValidPtr)
+											pszFuncName = (LPCSTR)pOrdinalNameO->Name;
+									}
+								#endif
+							}
+						}
+					}
+
+					// Получили адрес функции, и (на втором шаге) имя функции
+					// Теперь нужно подобрать (если есть) адрес перехвата
+					for (j = 0; gpHooks[j].Name; j++)
+					{
+						_ASSERTEX(j<gnHookedFuncs && gnHookedFuncs<=MAX_HOOKED_PROCS);
+					
+						// Если не удалось определить оригинальный адрес процедуры (kernel32/WriteConsoleOutputW, и т.п.)
+						if (gpHooks[j].OldAddress == NULL)
+						{
+							continue;
+						}
+						
+						// Если адрес импорта в модуле уже совпадает с адресом одной из наших функций
+						if (gpHooks[j].NewAddress == (void*)thunk->u1.Function)
+						{
+							res = true; // это уже захучено
+							break;
+						}
+						
+						#ifdef _DEBUG
+						const void* ptrNewAddress = gpHooks[j].NewAddress;
+						const void* ptrOldAddress = (void*)thunk->u1.Function;
+						#endif
+
+						// Проверяем адрес перехватываемой функции
+						if ((void*)thunk->u1.Function != gpHooks[j].OldAddress)
+						{
+							// pszFuncName заполняется на втором шаге
+							if (!pszFuncName /*|| !bExecutable*/)
+							{
+								continue; // Если имя импорта определить не удалось - пропускаем
+							}
+							else
+							{
+								// Проверяем, имя функции совпадает с перехватываемыми?
+								if (lstrcmpA(pszFuncName, gpHooks[j].Name))
+									continue;
+							}
+
+							if (!abForceHooks)
+							{
+								continue; // запрещен перехват, если текущий адрес в модуле НЕ совпадает с оригинальным экспортом!
+							}
+							else if (bExecutable && !gpHooks[j].ExeOldAddress)
+							{
+								// OldAddress уже может отличаться от оригинального экспорта библиотеки
+								//// Это происходит например с PeekConsoleIntputW при наличии плагина Anamorphosis
+								// Про Anamorphosis несколько устарело. При включенном "Inject ConEmuHk"
+								// хуки ставятся сразу при запуске процесса.
+								// Но, теоретически, кто-то может успеть раньше, или флажок "Inject" выключен.
+								gpHooks[j].ExeOldAddress = (void*)thunk->u1.Function;
+							}
+						}
+
+						if (p->Addresses[j].ppAdr != NULL)
+							break; // уже обработали, следующий импорт
+						
+						//#ifdef _DEBUG
+						//// Это НЕ ORDINAL, это Hint!!!
+						//if (gpHooks[j].nOrdinal == 0 && ordinalO != (ULONGLONG)-1)
+						//	gpHooks[j].nOrdinal = (DWORD)ordinalO;
+						//#endif
+
+
+						_ASSERTE(sizeof(thunk->u1.Function)==sizeof(DWORD_PTR));
+						
+						if (thunk->u1.Function == (DWORD_PTR)gpHooks[j].NewAddress)
+						{
+							// оказалось захучено в другой нити? такого быть не должно, блокируется секцией
+							// Но может быть захучено в прошлый раз, если не все модули были загружены при старте
+							_ASSERTE(thunk->u1.Function != (DWORD_PTR)gpHooks[j].NewAddress);
+						}
+						else
+						{
+							bFnNeedHook[j] = true;
+							p->Addresses[j].ppAdr = &thunk->u1.Function;
+							p->Addresses[j].pOld = thunk->u1.Function;
+							p->Addresses[j].pOur = (DWORD_PTR)gpHooks[j].NewAddress;
+							#ifdef _DEBUG
+							lstrcpynA(p->Addresses[j].sName, gpHooks[j].Name, countof(p->Addresses[j].sName));
+							#endif
+							
+							_ASSERTEX(p->nAdrUsed < countof(p->Addresses));
+							p->nAdrUsed++; //информационно
+						}
+
+						#ifdef _DEBUG
+						if (bExecutable)
+							gpHooks[j].ReplacedInExe = TRUE;
+						#endif
+							
+						//DebugString( ToTchar( gpHooks[j].Name ) );
+						res = true;
+
+						break;
+					} // for (j = 0; gpHooks[j].Name; j++)
+				} // for (f = 0;; thunk++, thunkO++, f++)
+			} // for (s = 0; s <= 1; s++)
+		} // for (i = 0; i < nCount; i++)
+	} SAFECATCH {
+	}
+	
+	return res;
+}
+
+bool SetHookChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p)
+{
+	bool bHooked = false;
+	size_t j = 0;
+	DWORD dwErr = (DWORD)-1;
+	_ASSERTEX(j<gnHookedFuncs && gnHookedFuncs<=MAX_HOOKED_PROCS);
+	
+	SAFETRY
+	{
+		while (j < gnHookedFuncs)
+		{
+			// Может быть NULL, если импортируются не все функции
+			if (p->Addresses[j].ppAdr && bFnNeedHook[j])
+			{
+				if (*p->Addresses[j].ppAdr == p->Addresses[j].pOur)
+				{
+					// оказалось захучено в другой нити или раньше
+					_ASSERTEX(*p->Addresses[j].ppAdr != p->Addresses[j].pOur);
+				}
+				else
+				{
+					DWORD old_protect;
+					if (!VirtualProtect(p->Addresses[j].ppAdr, sizeof(*p->Addresses[j].ppAdr),
+					                   PAGE_READWRITE, &old_protect))
+					{
+						dwErr = GetLastError();
+						_ASSERTEX(FALSE);
+					}
+					else
+					{
+						bHooked = true;
+						
+						*p->Addresses[j].ppAdr = p->Addresses[j].pOur;
+						p->Addresses[j].bHooked = TRUE;
+						
+						VirtualProtect(p->Addresses[j].ppAdr, sizeof(*p->Addresses[j].ppAdr), old_protect, &old_protect);
+					}
+
+				}
+			}
+			
+			j++;
+		}
+	} SAFECATCH {
+		// Ошибка назначения
+		p->Addresses[j].pOur = 0;
+	}
+	
+	return bHooked;
+}
+
 DWORD GetMainThreadId()
 {
 	// Найти ID основной нити
@@ -1196,7 +1356,7 @@ DWORD GetMainThreadId()
 
 			if (Thread32First(snapshot, &module))
 			{
-				while(!gnHookMainThreadId)
+				while (!gnHookMainThreadId)
 				{
 					if (module.th32OwnerProcessID == dwPID)
 					{
@@ -1230,10 +1390,10 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 
 #ifdef _DEBUG
 	wchar_t szHookProc[128];
-	for(int i = 0; gpHooks[i].NewAddress; i++)
+	for (int i = 0; gpHooks[i].NewAddress; i++)
 	{
 		msprintf(szHookProc, countof(szHookProc), L"## %S -> 0x%08X (exe: 0x%X)\n", gpHooks[i].Name, (DWORD)gpHooks[i].NewAddress, (DWORD)gpHooks[i].ExeOldAddress);
-		OutputDebugStringW(szHookProc);
+		DebugString(szHookProc);
 	}
 
 #endif
@@ -1244,11 +1404,11 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 		INT_PTR j;
 		bool skip;
 
-		for(INT_PTR i = 0; aszExcludedModules[i]; i++)
+		for (INT_PTR i = 0; aszExcludedModules[i]; i++)
 		{
 			j = 0; skip = false;
 
-			while(ExcludedModules[j])
+			while (ExcludedModules[j])
 			{
 				if (lstrcmpi(ExcludedModules[j], aszExcludedModules[i]) == 0)
 				{
@@ -1293,7 +1453,7 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 	//		THREADENTRY32 module = {sizeof(THREADENTRY32)};
 	//		if (Thread32First(snapshot, &module))
 	//		{
-	//			while(!gnHookMainThreadId)
+	//			while (!gnHookMainThreadId)
 	//			{
 	//				if (module.th32OwnerProcessID == dwPID)
 	//				{
@@ -1315,12 +1475,12 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 	{
 		MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
 
-		for(BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
+		for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
 		{
 			if (module.hModule && !IsModuleExcluded(module.hModule, NULL, module.szModule))
 			{
 				DebugString(module.szModule);
-				SetHook(module.hModule/*, (module.hModule == hExecutable)*/, abForceHooks);
+				SetHook(module.szModule, module.hModule/*, (module.hModule == hExecutable)*/, abForceHooks);
 			}
 		}
 
@@ -1331,7 +1491,196 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 }
 
 
+bool UnsetHookInt(HMODULE Module)
+{
+	bool bUnhooked = false, res = false;
+	IMAGE_IMPORT_DESCRIPTOR* Import = 0;
+	size_t Size = 0;
+	_ASSERTE(Module!=NULL);
+	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
 
+	SAFETRY
+	{
+		if (dos_header->e_magic == IMAGE_DOS_SIGNATURE /*'ZM'*/)
+		{
+			IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
+		
+			if (nt_header->Signature != 0x004550)
+				goto wrap;
+			else
+			{
+				Import = (IMAGE_IMPORT_DESCRIPTOR*)((char*)Module +
+													(DWORD)(nt_header->OptionalHeader.
+															DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].
+															VirtualAddress));
+				Size = nt_header->OptionalHeader.
+					   DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size;
+			}
+		}
+		else
+			goto wrap;
+		
+		// if wrong module or no import table
+		if (Module == INVALID_HANDLE_VALUE || !Import)
+			goto wrap;
+		
+		size_t i, s;
+		size_t nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
+		
+		//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
+		for (s = 0; s <= 1; s++)
+		{
+			for (i = 0; i < nCount; i++)
+			{
+				if (Import[i].Name == 0)
+					break;
+			
+				#ifdef _DEBUG
+				char* mod_name = (char*)Module + Import[i].Name;
+				#endif
+				DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
+				DWORD_PTR rvaIAT = Import[i].FirstThunk; //-V101
+			
+				if (rvaINT == 0)      // No Characteristics field?
+				{
+					// Yes! Gotta have a non-zero FirstThunk field then.
+					rvaINT = rvaIAT;
+			
+					if (rvaINT == 0)       // No FirstThunk field?  Ooops!!!
+					{
+						_ASSERTE(rvaINT!=0);
+						break;
+					}
+				}
+			
+				//PIMAGE_IMPORT_BY_NAME pOrdinalName = NULL, pOrdinalNameO = NULL;
+				PIMAGE_IMPORT_BY_NAME pOrdinalNameO = NULL;
+				//IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)((char*)Module + rvaINT);
+				//IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + rvaIAT);
+				IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaIAT, nt_header, (PBYTE)Module);
+				IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaINT, nt_header, (PBYTE)Module);
+			
+				if (!thunk ||  !thunkO)
+				{
+					_ASSERTE(thunk && thunkO);
+					continue;
+				}
+			
+				int f = 0;
+				for (f = 0 ;; thunk++, thunkO++, f++)
+				{
+					//110220 - something strange. валимся при выходе из некоторых программ (AddFont.exe)
+					//         смысл в том, что thunk указывает на НЕ валидную область памяти.
+					//         Разбор полетов показал, что программа сама порушила таблицу импортов.
+					//Issue 466: We must check every thunk, not first (perl.exe fails?)
+					//111127 - ..\GIT\lib\perl5\site_perl\5.8.8\msys\auto\SVN\_Core\_Core.dll
+					//         похоже, в этой длл кривая таблица импортов
+					#ifndef USE_SEH
+					if (IsBadReadPtr(thunk, sizeof(IMAGE_THUNK_DATA)))
+					{
+						_ASSERTE(thunk && FALSE);
+						break;
+					}
+					#endif
+
+					if (!thunk->u1.Function)
+					{
+						break;
+					}
+
+					#ifndef USE_SEH
+					if (IsBadReadPtr(thunkO, sizeof(IMAGE_THUNK_DATA)))
+					{
+						_ASSERTE(thunkO && FALSE);
+						break;
+					}
+					#endif
+			
+					const char* pszFuncName = NULL;
+
+					// Имя функции проверяем на втором шаге
+					if (s && thunk->u1.Function != thunkO->u1.Function && !IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal))
+					{
+						pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
+
+						#ifdef USE_SEH
+							pszFuncName = (LPCSTR)pOrdinalNameO->Name;
+						#else
+							//WARNING!!! Множественные вызовы IsBad???Ptr могут глючить и тормозить
+							BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
+							#ifdef _DEBUG
+							static bool bFirstAssert = false;
+							if (!lbValidPtr && !bFirstAssert)
+							{
+								bFirstAssert = true;
+								_ASSERTE(lbValidPtr);
+							}
+							#endif
+				
+							if (lbValidPtr)
+							{
+								//WARNING!!! Множественные вызовы IsBad???Ptr могут глючить и тормозить
+								lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
+								_ASSERTE(lbValidPtr);
+				
+								if (lbValidPtr)
+									pszFuncName = (LPCSTR)pOrdinalNameO->Name;
+							}
+						#endif
+					}
+			
+					int j;
+			
+					for (j = 0; gpHooks[j].Name; j++)
+					{
+						if (!gpHooks[j].OldAddress)
+							continue; // Эту функцию не обрабатывали (хотя должны были?)
+			
+						// Нужно найти функцию (thunk) в gpHooks через NewAddress или имя
+						if ((void*)thunk->u1.Function != gpHooks[j].NewAddress)
+						{
+							if (!pszFuncName)
+							{
+								continue;
+							}
+							else
+							{
+								if (lstrcmpA(pszFuncName, gpHooks[j].Name))
+									continue;
+							}
+			
+							// OldAddress уже может отличаться от оригинального экспорта библиотеки
+							// Это если функцию захукали уже после нас
+						}
+			
+						// Если мы дошли сюда - значит функция найдена (или по адресу или по имени)
+						// BugBug: в принципе, эту функцию мог захукать и другой модуль (уже после нас),
+						// но лучше вернуть оригинальную, чем потом свалиться
+						DWORD old_protect;
+						if (VirtualProtect(&thunk->u1.Function, sizeof(thunk->u1.Function),
+									   PAGE_READWRITE, &old_protect))
+						{
+							// BugBug: ExeOldAddress может отличаться от оригинального, если функция была перехвачена ДО нас
+							//if (abExecutable && gpHooks[j].ExeOldAddress)
+							//	thunk->u1.Function = (DWORD_PTR)gpHooks[j].ExeOldAddress;
+							//else
+							thunk->u1.Function = (DWORD_PTR)gpHooks[j].OldAddress;
+							VirtualProtect(&thunk->u1.Function, sizeof(thunk->u1.Function), old_protect, &old_protect);
+							bUnhooked = true;
+						}
+						//DebugString( ToTchar( gpHooks[j].Name ) );
+						break; // перейти к следующему thunk-у
+					}
+				}
+			}
+		}
+	wrap:
+		res = bUnhooked;
+	} SAFECATCH {
+	}
+
+	return res;
+}
 
 // Подменить Импортируемые функции в модуле
 bool UnsetHook(HMODULE Module)
@@ -1346,179 +1695,63 @@ bool UnsetHook(HMODULE Module)
 	if (!LockHooks(Module, L"uninstall", &CS))
 		return false;
 
-	IMAGE_IMPORT_DESCRIPTOR* Import = 0;
-	size_t Size = 0;
-	_ASSERTE(Module!=NULL);
-	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
-
-	if (dos_header->e_magic == IMAGE_DOS_SIGNATURE /*'ZM'*/)
+	HkModuleInfo* p = IsHookedModule(Module);
+	bool bUnhooked = false;
+	DWORD dwErr = (DWORD)-1;
+	
+	if (!p)
 	{
-		IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
-
-		if (nt_header->Signature != 0x004550)
-			return false;
-		else
-		{
-			Import = (IMAGE_IMPORT_DESCRIPTOR*)((char*)Module +
-			                                    (DWORD)(nt_header->OptionalHeader.
-			                                            DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].
-			                                            VirtualAddress));
-			Size = nt_header->OptionalHeader.
-			       DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size;
-		}
+		// Хотя модуль и не обрабатывался нами, но может получиться, что у него переопределенные импорты
+		// Зовем в отдельной функции, т.к. __try
+		bUnhooked = UnsetHookInt(Module);
 	}
 	else
-		return false;
-
-	// if wrong module or no import table
-	if (Module == INVALID_HANDLE_VALUE || !Import)
-		return false;
-
-	bool res = false, bUnhooked = false;
-	size_t i;
-	size_t nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
-
-	//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
-	for(i = 0; i < nCount; i++)
 	{
-		if (Import[i].Name == 0)
-			break;
-
-#ifdef _DEBUG
-		char* mod_name = (char*)Module + Import[i].Name;
-#endif
-		DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
-		DWORD_PTR rvaIAT = Import[i].FirstThunk; //-V101
-
-		if (rvaINT == 0)      // No Characteristics field?
+		if (p->Hooked == 1)
 		{
-			// Yes! Gotta have a non-zero FirstThunk field then.
-			rvaINT = rvaIAT;
-
-			if (rvaINT == 0)       // No FirstThunk field?  Ooops!!!
+			for (size_t i = 0; i < MAX_HOOKED_PROCS; i++)
 			{
-				_ASSERTE(rvaINT!=0);
-				break;
-			}
-		}
-
-		//PIMAGE_IMPORT_BY_NAME pOrdinalName = NULL, pOrdinalNameO = NULL;
-		PIMAGE_IMPORT_BY_NAME pOrdinalNameO = NULL;
-		//IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)((char*)Module + rvaINT);
-		//IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + rvaIAT);
-		IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaIAT, nt_header, (PBYTE)Module);
-		IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaINT, nt_header, (PBYTE)Module);
-
-		if (!thunk ||  !thunkO)
-		{
-			_ASSERTE(thunk && thunkO);
-			continue;
-		}
-
-		//110220 - something strange. валимся при выходе из некоторых программ (AddFont.exe)
-		//         смысл в том, что thunk указывает на НЕ валидную область памяти.
-		//         Разбор полетов показал, что программа сама порушила таблицу импортов.
-		if (IsBadReadPtr(thunk, sizeof(IMAGE_THUNK_DATA)) || IsBadReadPtr(thunkO, sizeof(IMAGE_THUNK_DATA)))
-		{
-			_ASSERTE(thunk && FALSE);
-			break;
-		}
-
-		int f = 0;
-
-		for(f = 0 ; thunk->u1.Function; thunk++, thunkO++, f++)
-		{
-			const char* pszFuncName = NULL;
-			//ULONGLONG ordinalO = -1;
-
-			//if ( IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal) ) {
-			//	ordinalO = IMAGE_ORDINAL(thunkO->u1.Ordinal);
-			//	pOrdinalNameO = NULL;
-			//}
-			if (thunk->u1.Function!=thunkO->u1.Function && !IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal))
-			{
-				pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
-				BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
-				#ifdef _DEBUG
-				static bool bFirstAssert = false;
-				if (!lbValidPtr && !bFirstAssert)
-				{
-					bFirstAssert = true;
-					_ASSERTE(lbValidPtr);
-				}
-				#endif
-
-				if (lbValidPtr)
-				{
-					lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
-					_ASSERTE(lbValidPtr);
-
-					if (lbValidPtr)
-						pszFuncName = (LPCSTR)pOrdinalNameO->Name;
-				}
-			}
-
-			int j;
-
-			for(j = 0; gpHooks[j].Name; j++)
-			{
-				if (!gpHooks[j].OldAddress)
-					continue; // Эту функцию не обрабатывали (хотя должны были?)
-
-				// Нужно найти функцию (thunk) в gpHooks через NewAddress или имя
-				if ((void*)thunk->u1.Function != gpHooks[j].NewAddress)
-				{
-					if (!pszFuncName)
-					{
-						continue;
-					}
-					else
-					{
-						if (lstrcmpA(pszFuncName, gpHooks[j].Name))
-							continue;
-					}
-
-					// OldAddress уже может отличаться от оригинального экспорта библиотеки
-					// Это если функцию захукали уже после нас
-				}
-
-				// Если мы дошли сюда - значит функция найдена (или по адресу или по имени)
-				// BugBug: в принципе, эту функцию мог захукать и другой модуль (уже после нас),
-				// но лучше вернуть оригинальную, чем потом свалиться
+				if (p->Addresses[i].pOur == 0)
+					continue; // Этот адрес поменять не смогли
+			
 				DWORD old_protect;
-				bUnhooked = true;
-				VirtualProtect(&thunk->u1.Function, sizeof(thunk->u1.Function),
-				               PAGE_READWRITE, &old_protect);
-				// BugBug: ExeOldAddress может отличаться от оригинального, если функция была перехвачена ДО нас
-				//if (abExecutable && gpHooks[j].ExeOldAddress)
-				//	thunk->u1.Function = (DWORD_PTR)gpHooks[j].ExeOldAddress;
-				//else
-				thunk->u1.Function = (DWORD_PTR)gpHooks[j].OldAddress;
-				VirtualProtect(&thunk->u1.Function, sizeof(DWORD), old_protect, &old_protect);
-				//DebugString( ToTchar( gpHooks[j].Name ) );
-				res = true;
-				break; // перейти к следующему thunk-у
+				if (!VirtualProtect(p->Addresses[i].ppAdr, sizeof(*p->Addresses[i].ppAdr),
+								   PAGE_READWRITE, &old_protect))
+				{
+					dwErr = GetLastError();
+					_ASSERTEX(dwErr==ERROR_INVALID_ADDRESS);
+				}
+				else
+				{
+					bUnhooked = true;
+					// BugBug: ExeOldAddress может отличаться от оригинального, если функция была перехвачена без нас
+					//if (abExecutable && gpHooks[j].ExeOldAddress)
+					//	thunk->u1.Function = (DWORD_PTR)gpHooks[j].ExeOldAddress;
+					//else
+					*p->Addresses[i].ppAdr = p->Addresses[i].pOld;
+					p->Addresses[i].bHooked = FALSE;
+					VirtualProtect(p->Addresses[i].ppAdr, sizeof(*p->Addresses[i].ppAdr), old_protect, &old_protect);
+				}
 			}
+			// Хуки сняты
+			p->Hooked = 2;
 		}
 	}
 
-#ifdef _DEBUG
 
-	if (bUnhooked)
+	#ifdef _DEBUG
+	if (bUnhooked && p)
 	{
 		wchar_t* szDbg = (wchar_t*)calloc(MAX_PATH*3, 2);
-		wchar_t* szModPath = (wchar_t*)calloc(MAX_PATH*2, 2);
-		FindModuleFileName(Module, szModPath, MAX_PATH*2);
 		lstrcpy(szDbg, L"  ## Hooks was UNset by conemu: ");
-		lstrcat(szDbg, szModPath);
+		lstrcat(szDbg, p->sModuleName);
 		lstrcat(szDbg, L"\n");
-		OutputDebugStringW(szDbg);
-		free(szModPath);
+		DebugString(szDbg);
 		free(szDbg);
 	}
-
-#endif
-	return res;
+	#endif
+	
+	return bUnhooked;
 }
 
 void __stdcall UnsetAllHooks()
@@ -1533,10 +1766,11 @@ void __stdcall UnsetAllHooks()
 	{
 		MODULEENTRY32 module = {sizeof(module)};
 
-		for(BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
+		for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
 		{
 			if (module.hModule && !IsModuleExcluded(module.hModule, NULL, module.szModule))
 			{
+				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
 				DebugString(module.szModule);
 				UnsetHook(module.hModule/*, (module.hModule == hExecutable)*/);
 			}
@@ -1733,11 +1967,10 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 				if (!pszNameW) pszNameW = asModuleW; else pszNameW++;
 				lstrcpyn(szModule, pszNameW, countof(szModule));
 			}
-			AddHookedModule(module, szModule);
-
+			
 			lbModuleOk = true;
 			// Подмена импортируемых функций в module
-			SetHook(module/*, FALSE*/, FALSE);
+			SetHook(szModule, module, FALSE);
 		}
 	}
 
@@ -1926,15 +2159,24 @@ FARPROC WINAPI OnGetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 	}
 	else if (gpHooks)
 	{
-		for(int i = 0; gpHooks[i].Name; i++)
+		if (gbDllStopCalled)
 		{
-			// The spelling and case of a function name pointed to by lpProcName must be identical
-			// to that in the EXPORTS statement of the source DLL's module-definition (.Def) file
-			if (gpHooks[i].hDll == hModule
-			        && lstrcmpA(gpHooks[i].Name, lpProcName) == 0)
+			//-- assert нельзя, т.к. все уже деинициализировано!
+			//_ASSERTE(ghHeap!=NULL);
+			lpfn = NULL;
+		}
+		else
+		{
+			for (int i = 0; gpHooks[i].Name; i++)
 			{
-				lpfn = (FARPROC)gpHooks[i].NewAddress;
-				break;
+				// The spelling and case of a function name pointed to by lpProcName must be identical
+				// to that in the EXPORTS statement of the source DLL's module-definition (.Def) file
+				if (gpHooks[i].hDll == hModule
+						&& lstrcmpA(gpHooks[i].Name, lpProcName) == 0)
+				{
+					lpfn = (FARPROC)gpHooks[i].NewAddress;
+					break;
+				}
 			}
 		}
 	}
@@ -1956,7 +2198,7 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 	//BOOL lbProcess = !lbResource;
 	wchar_t szModule[MAX_PATH*2]; szModule[0] = 0;
 
-	if (gbLogLibraries)
+	if (gbLogLibraries && !gbDllStopCalled)
 	{
 		CShellProc* sp = new CShellProc();
 		if (sp->LoadGuiMapping())
@@ -2003,7 +2245,7 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 	lbRc = F(FreeLibrary)(hModule);
 
 	// Далее только если !LDR_IS_RESOURCE
-	if (lbRc && !lbResource)
+	if (lbRc && !lbResource && !gbDllStopCalled)
 	{
 		// Попробуем определить, действительно ли модуль выгружен, или только счетчик уменьшился
 		BOOL lbModulePost = IsModuleValid(hModule); // GetModuleFileName(hModule, szModule, countof(szModule));
@@ -2024,7 +2266,7 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 
 			if (gpHooks)
 			{
-				for(int i = 0; i<MAX_HOOKED_PROCS && gpHooks[i].NewAddress; i++)
+				for (int i = 0; i<MAX_HOOKED_PROCS && gpHooks[i].NewAddress; i++)
 				{
 					if (gpHooks[i].hCallbackModule == hModule)
 					{

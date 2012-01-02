@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -393,7 +393,7 @@ class CSettings
 		WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 		ABC     CharABC[0x10000];
 
-		HWND hMain, hExt, hKeys, hTabs, hColors, hViews, hInfo, hDebug, hUpdate;
+		HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hViews, hInfo, hDebug, hUpdate;
 
 		//static void CenterDialog(HWND hWnd2);
 		void OnClose();
@@ -446,13 +446,7 @@ class CSettings
 		BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		BOOL GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		BOOL GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
-		//void HistoryCheck();
-		//void HistoryAdd(LPCWSTR asCmd);
-		//LPCWSTR HistoryGet();
 		void UpdateConsoleMode(DWORD nMode);
-		//BOOL CheckConIme();
-		//void CheckConsoleSettings();
-		//SettingsBase* CreateSettings();
 		bool AutoRecreateFont(int nFontW, int nFontH);
 		bool MacroFontSetSize(int nRelative/*0/1*/, int nValue/*1,2,...*/);
 		void MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
@@ -489,6 +483,7 @@ class CSettings
 		// OnInitDialogPage_t: IDD_SPG_MAIN, и т.д.
 		LRESULT OnInitDialog_Main(HWND hWnd2);
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
+		LRESULT OnInitDialog_Far(HWND hWnd2);
 		LRESULT OnInitDialog_Keys(HWND hWnd2);
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
 		LRESULT OnInitDialog_Color(HWND hWnd2);
@@ -549,6 +544,7 @@ class CSettings
 		UINT mn_MsgLoadFontFromMain;
 		static int IsChecked(HWND hParent, WORD nCtrlId);
 		static int GetNumber(HWND hParent, WORD nCtrlId);
+		static INT_PTR GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCWSTR asNoDefault = NULL);
 		static int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 		static int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 		BOOL mb_TabHotKeyRegistered;
@@ -665,12 +661,47 @@ class CSettings
 		
 		static void GetVkKeyName(BYTE vk, wchar_t (&szName)[128]);
 
+		enum ConEmuSetupItemType
+		{
+			sit_Bool      = 1,
+			sit_Byte      = 2,
+			sit_Char      = 3,
+			sit_Long      = 4,
+			sit_ULong     = 5,
+			sit_Rect      = 6,
+			sit_FixString = 7,
+			sit_VarString = 8,
+			sit_MSZString = 9,
+			sit_FixData   = 10,
+			sit_Fonts     = 11,
+			sit_FontsAndRaster = 12,
+		};
+		struct ConEmuSetupItem
+		{
+			//DWORD nDlgID; // ID диалога
+			DWORD nItemID; // ID контрола в диалоге, 0 - последний элемент в списке
+			ConEmuSetupItemType nDataType; // Тип данных
+
+			void* pData; // Ссылка на элемент в gpSet
+			size_t nDataSize; // Размер или maxlen, если pData фиксированный
+
+			ConEmuSetupItemType nListType; // Тип данных в pListData
+			const void* pListData; // Для DDLB - можно задать список
+			size_t nListItems; // количество элементов в списке
+			
+			#ifdef _DEBUG
+			BOOL bFound; // для отладки корректности настройки
+			#endif
+
+			//wchar_t sItemName[32]; // Имя элемента в настройке (reg/xml)
+		};
 		struct ConEmuSetupPages
 		{
 			int       PageID;
 			wchar_t   PageName[64];
 			HWND     *hPage;
 			HTREEITEM hTI;
+			ConEmuSetupItem* pItems;
 		};
 		ConEmuSetupPages *m_Pages;
 };

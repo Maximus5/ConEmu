@@ -1,5 +1,5 @@
 Copyright (c) 2006-2008, Zoin <zoinen@gmail.com>
-Copyright (c) 2009-2011, Maximus5 <ConEmu.Maximus5@gmail.com>
+Copyright (c) 2009-2012, Maximus5 <ConEmu.Maximus5@gmail.com>
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above

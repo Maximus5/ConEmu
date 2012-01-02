@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -210,7 +210,7 @@ class CConEmuMain :
 		COORD m_LastConSize; // console size after last resize (in columns and lines)
 		bool mb_IgnoreSizeChange;
 		//bool mb_IgnoreStoreNormalRect;
-		TCHAR szConEmuVersion[32];
+		//TCHAR szConEmuVersion[32];
 		DWORD m_ProcCount;
 		//DWORD mn_ActiveStatus;
 		//TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
@@ -381,6 +381,7 @@ class CConEmuMain :
 		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* apVCon=NULL);
 		RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 		void CheckFocus(LPCWSTR asFrom);
+		bool CheckRequiredFiles();
 		void CheckUpdates(BOOL abShowMessages);
 		enum DragPanelBorder CheckPanelDrag(COORD crCon);
 		bool ConActivate(int nCon);
@@ -437,7 +438,7 @@ class CConEmuMain :
 		bool isWindowNormal();		
 		bool isZoomed();
 		void LoadIcons();
-		bool LoadVersionInfo(wchar_t* pFullPath);
+		//bool LoadVersionInfo(wchar_t* pFullPath);
 		RECT MapRect(RECT rFrom, BOOL bFrame2Client);
 		//void PaintCon(HDC hPaintDC);
 		void PaintGaps(HDC hDC);
@@ -454,6 +455,7 @@ class CConEmuMain :
 		void Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs = FALSE);
 		int RecreateDlg(RConStartArgs* apArg);
 		void RePaint();
+		bool ReportUpdateConfirmation();
 		void ReportUpdateError();
 		void RequestExitUpdate();
 		void ReSize(BOOL abCorrect2Ideal = FALSE);

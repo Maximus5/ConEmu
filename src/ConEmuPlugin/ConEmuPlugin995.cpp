@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -72,6 +72,22 @@ enum FARMACROAREA
 };
 #define MCMD_GETAREA 6
 
+
+static wchar_t* GetPanelDir(HANDLE hPanel)
+{
+	wchar_t* pszDir = NULL;
+	size_t nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
+
+	if (nSize)
+	{
+		pszDir = (wchar_t*)calloc(nSize, sizeof(*pszDir));
+		if (pszDir)
+			nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, nSize, (LONG_PTR)pszDir);
+	}
+	_ASSERTE(nSize>0);
+	return pszDir;
+}
+
 	
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
 int WINAPI _export GetMinFarVersionW(void)
@@ -136,12 +152,20 @@ void ProcessDragFromW995()
 	}
 
 	PanelInfo PInfo;
-	WCHAR *szCurDir=gszDir1; szCurDir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
+	WCHAR *szCurDir = NULL;
 	InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, (LONG_PTR)&PInfo);
 
 	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL) && PInfo.Visible)
 	{
-		InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELDIR, 0x400, (LONG_PTR)szCurDir);
+		szCurDir = GetPanelDir(PANEL_ACTIVE);
+		if (!szCurDir)
+		{
+			_ASSERTE(szCurDir!=NULL);
+			int ItemsCount=0;
+			OutDataWrite(&ItemsCount, sizeof(int));
+			OutDataWrite(&ItemsCount, sizeof(int)); // смена формата
+			return;
+		}
 		int nDirLen=0, nDirNoSlash=0;
 
 		if (szCurDir[0])
@@ -232,11 +256,13 @@ void ProcessDragFromW995()
 				nWholeLen += (nLen+1);
 			}
 
+			nMaxLen += nDirLen;
+
 			//WriteFile(hPipe, &nWholeLen, sizeof(int), &cout, NULL);
 			OutDataWrite(&nWholeLen, sizeof(int));
-			WCHAR* Path=new WCHAR[nMaxLen+1];
+			WCHAR* Path = new WCHAR[nMaxLen+1];
 
-			for(i=0; i<ItemsCount; i++)
+			for (i=0; i<ItemsCount; i++)
 			{
 				//WCHAR Path[MAX_PATH+1];
 				//ZeroMemory(Path, MAX_PATH+1);
@@ -282,6 +308,8 @@ void ProcessDragFromW995()
 			//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
 			OutDataWrite(&nNull, sizeof(int));
 		}
+
+		SafeFree(szCurDir);
 	}
 	else
 	{
@@ -322,17 +350,17 @@ void ProcessDragToW995()
 	int nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
 	//ZeroMemory(&fpi, sizeof(fpi));
 	BOOL lbAOK=FALSE, lbPOK=FALSE;
-	WCHAR *szPDir=gszDir1; szPDir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
-	WCHAR *szADir=gszDir2; szADir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
+	WCHAR *szPDir = NULL;
+	WCHAR *szADir = NULL;
 	//if (!(lbAOK=InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
 	lbAOK=InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PAInfo) &&
-	      InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELDIR, 0x400, (LONG_PTR)szADir);
+	      (szADir = GetPanelDir(PANEL_ACTIVE));
 
 	if (lbAOK && szADir)
 		nStructSize += (lstrlen(szADir))*sizeof(WCHAR); //-V103
 
 	lbPOK=InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PPInfo) &&
-	      InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELDIR, 0x400, (LONG_PTR)szPDir);
+	      (szPDir = GetPanelDir(PANEL_PASSIVE));
 
 	if (lbPOK && szPDir)
 		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR //-V103
@@ -348,6 +376,8 @@ void ProcessDragToW995()
 			OutDataAlloc(sizeof(ItemsCount));
 
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
+		SafeFree(szADir);
+		SafeFree(szPDir);
 		return;
 	}
 
@@ -391,6 +421,8 @@ void ProcessDragToW995()
 	OutDataWrite(&nStructSize, sizeof(nStructSize));
 	OutDataWrite(pfpi, nStructSize);
 	free(pfpi); pfpi=NULL;
+	SafeFree(szADir);
+	SafeFree(szPDir);
 }
 
 void SetStartupInfoW995(void *aInfo)

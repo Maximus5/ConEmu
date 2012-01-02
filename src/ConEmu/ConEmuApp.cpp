@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TaskBar.h"
 #include "DwmHelper.h"
 #include "ConEmuApp.h"
+#include "Update.h"
 
 #ifdef _DEBUG
 //	#define SHOW_STARTED_MSGBOX
@@ -971,6 +972,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	RemoveOldComSpecC();
 	gpSetCls = new CSettings;
 	gpConEmu = new CConEmuMain;
+	if (!gpConEmu->CheckRequiredFiles())
+	{
+		return 100;
+	}
 	/*int nCmp;
 	nCmp = StrCmpI(L" ", L"A"); // -1
 	nCmp = StrCmpI(L" ", L"+");
@@ -1615,6 +1620,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		delete gpSetCls;
 		gpSetCls = NULL;
+	}
+
+	if (gpUpd)
+	{
+		delete gpUpd;
+		gpUpd = NULL;
 	}
 
 	// Нельзя. Еще живут глобальные объекты

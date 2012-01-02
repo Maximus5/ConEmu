@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2011 Maximus5
+Copyright (c) 2011-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "header.h"
 #include "UpdateSet.h"
+#include "ConEmu.h"
 
 ConEmuUpdateSettings::ConEmuUpdateSettings()
 {
@@ -38,17 +39,42 @@ ConEmuUpdateSettings::ConEmuUpdateSettings()
 	memset(this, 0, sizeof(*this));
 }
 
+LPCWSTR ConEmuUpdateSettings::UpdateVerLocation()
+{
+	if (szUpdateVerLocation && *szUpdateVerLocation)
+		return szUpdateVerLocation;
+	return UpdateVerLocationDefault();
+}
+
+LPCWSTR ConEmuUpdateSettings::UpdateVerLocationDefault()
+{
+	static LPCWSTR pszDefault = 
+		//L"file://T:\\VCProject\\FarPlugin\\ConEmu\\Maximus5\\version.ini"
+		//L"http://conemu.narod.ru/version.ini"
+		L"http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/version.ini"
+		;
+	return pszDefault;
+}
+
 void ConEmuUpdateSettings::ResetToDefaults()
 {
-	szUpdateVerLocation = lstrdup(L"file://T:\\VCProject\\FarPlugin\\ConEmu\\Maximus5\\version.ini");
-	isUpdateCheckOnStartup = true;
+	// ”казатели должны быть освобождены перед вызовом
+	_ASSERTE(szUpdateExeCmdLine==NULL);
+
+	szUpdateVerLocation = NULL;
+	isUpdateCheckOnStartup = false;
 	isUpdateCheckHourly = false;
-	isUpdateCheckNotifyOnly = true;
-	isUpdateUseBuilds = 2; // 1-stable only, 2-latest
+	isUpdateConfirmDownload = true;
+	isUpdateUseBuilds = 0; // 0-спросить пользовател€ при первом запуске, 1-stable only, 2-latest
 	isUpdateUseProxy = false;
 	szUpdateProxy = szUpdateProxyUser = szUpdateProxyPassword = NULL; // "Server:port"
-	isUpdateDownloadSetup = 1; // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
-	szUpdateExeCmdLine = lstrdup(L"\"%1\" /p:%3 /wait:%4 /qr");
+	// ѕровер€ем, была ли программа установлена через ConEmuSetup.exe?
+	isUpdateDownloadSetup = 0; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+	isSetupDetected = 0; // 0-пока не провер€лс€, 1-установлено через Installer, пути совпали, 2-Installer не запускалс€
+
+	szUpdateExeCmdLineDef = lstrdup(L"\"%1\" /p:%3 /qr");
+	SafeFree(szUpdateExeCmdLine);
+
 	wchar_t* pszArcPath = NULL; BOOL bWin64 = IsWindows64(NULL);
 	for (int i = 0; !(pszArcPath && *pszArcPath) && (i <= 5); i++)
 	{
@@ -86,30 +112,36 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	}
 	if (!pszArcPath || !*pszArcPath)
 	{
-		szUpdateArcCmdLine = lstrdup(L"\"%ProgramFiles%\\7-Zip\7zg.exe\" x \"%1\" \"%2\\\""); // "%1"-archive file, "%2"-ConEmu base dir
+		szUpdateArcCmdLineDef = lstrdup(L"\"%ProgramFiles%\\7-Zip\7zg.exe\" x -y \"%1\""); // "%1"-archive file, "%2"-ConEmu base dir
 	}
 	else
 	{
 		LPCWSTR pszExt = PointToExt(pszArcPath);
 		int cchMax = lstrlen(pszArcPath)+64;
-		szUpdateArcCmdLine = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
-		if (szUpdateArcCmdLine)
+		szUpdateArcCmdLineDef = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
+		if (szUpdateArcCmdLineDef)
 		{
 			if (pszExt && lstrcmpi(pszExt, L".exe") == 0)
-				_wsprintf(szUpdateArcCmdLine, SKIPLEN(cchMax) L"\"%s\" x \"%%1\" \"%%2\\\"", pszArcPath);
+				_wsprintf(szUpdateArcCmdLineDef, SKIPLEN(cchMax) L"\"%s\" x -y \"%%1\"", pszArcPath);
 			else
-				_wsprintf(szUpdateArcCmdLine, SKIPLEN(cchMax) L"\"%s\\7zg.exe\" x \"%%1\" \"%%2\\\"", pszArcPath);
+				_wsprintf(szUpdateArcCmdLineDef, SKIPLEN(cchMax) L"\"%s\\7zg.exe\" x -y \"%%1\"", pszArcPath);
 		}
 	}
-	if (pszArcPath) free(pszArcPath);
+	SafeFree(pszArcPath);
+	SafeFree(szUpdateArcCmdLine);
+
 	szUpdateDownloadPath = lstrdup(L"%TEMP%");
 	isUpdateLeavePackages = false;
-	szUpdatePostUpdateCmd = lstrdup(L"echo Last successful update>update.info && date /t>>update.info && time /t>>update.info"); // ёзер может чего-то свое делать с распакованными файлами
+	szUpdatePostUpdateCmd = lstrdup(L"echo Last successful update>ConEmuUpdate.info && date /t>>ConEmuUpdate.info && time /t>>ConEmuUpdate.info"); // ёзер может чего-то свое делать с распакованными файлами
 }
 
 ConEmuUpdateSettings::~ConEmuUpdateSettings()
 {
 	FreePointers();
+
+	// Ёти два параметра не освобождаютс€ в FreePointers
+	SafeFree(szUpdateExeCmdLineDef);
+	SafeFree(szUpdateArcCmdLineDef);
 }
 
 void ConEmuUpdateSettings::FreePointers()
@@ -119,7 +151,9 @@ void ConEmuUpdateSettings::FreePointers()
 	SafeFree(szUpdateProxyUser);
 	SafeFree(szUpdateProxyPassword);
 	SafeFree(szUpdateExeCmdLine);
+	//SafeFree(szUpdateExeCmdLineDef); -- нельз€
 	SafeFree(szUpdateArcCmdLine);
+	//SafeFree(szUpdateArcCmdLineDef); -- нельз€
 	SafeFree(szUpdateDownloadPath);
 	SafeFree(szUpdatePostUpdateCmd);
 }
@@ -128,46 +162,141 @@ void ConEmuUpdateSettings::LoadFrom(ConEmuUpdateSettings* apFrom)
 {
 	FreePointers();
 	
-	szUpdateVerLocation = lstrdup(apFrom->szUpdateVerLocation); // ConEmu latest version location info
+	szUpdateVerLocation = (apFrom->szUpdateVerLocation && *apFrom->szUpdateVerLocation) ? lstrdup(apFrom->szUpdateVerLocation) : NULL; // ConEmu latest version location info
 	isUpdateCheckOnStartup = apFrom->isUpdateCheckOnStartup;
 	isUpdateCheckHourly = apFrom->isUpdateCheckHourly;
-	isUpdateCheckNotifyOnly = apFrom->isUpdateCheckNotifyOnly;
-	isUpdateUseBuilds = apFrom->isUpdateUseBuilds; // 1-stable only, 2-latest
+	isUpdateConfirmDownload = apFrom->isUpdateConfirmDownload;
+	isUpdateUseBuilds = (apFrom->isUpdateUseBuilds == 1) ? 1 : 2; // 1-stable only, 2-latest
 	isUpdateUseProxy = apFrom->isUpdateUseProxy;
 	szUpdateProxy = lstrdup(apFrom->szUpdateProxy); // "Server:port"
 	szUpdateProxyUser = lstrdup(apFrom->szUpdateProxyUser);
 	szUpdateProxyPassword = lstrdup(apFrom->szUpdateProxyPassword);
-	isUpdateDownloadSetup = apFrom->isUpdateDownloadSetup; // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+	isUpdateDownloadSetup = apFrom->isUpdateDownloadSetup; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+	isSetupDetected = apFrom->isSetupDetected;
 	// "%1"-archive or setup file, "%2"-ConEmu base dir, "%3"-x86/x64, "%4"-ConEmu PID
 	szUpdateExeCmdLine = lstrdup(apFrom->szUpdateExeCmdLine); 
+	szUpdateExeCmdLineDef = lstrdup(apFrom->szUpdateExeCmdLineDef); 
 	szUpdateArcCmdLine = lstrdup(apFrom->szUpdateArcCmdLine);
+	szUpdateArcCmdLineDef = lstrdup(apFrom->szUpdateArcCmdLineDef);
 	szUpdateDownloadPath = lstrdup(apFrom->szUpdateDownloadPath); // "%TEMP%"
 	isUpdateLeavePackages = apFrom->isUpdateLeavePackages;
 	szUpdatePostUpdateCmd = lstrdup(apFrom->szUpdatePostUpdateCmd); // ёзер может чего-то свое делать с распакованными файлами
 }
 
-bool ConEmuUpdateSettings::UpdatesAllowed()
+bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])
 {
-	if (!szUpdateVerLocation || !*szUpdateVerLocation)
+	szReason[0] = 0;
+
+	if (!*UpdateVerLocation())
+	{
+		wcscpy_c(szReason, L"Update.VerLocation is empty");
 		return false; // Ќе указано расположение обновлени€
+	}
+
 	if (isUpdateUseBuilds != 1 && isUpdateUseBuilds != 2)
+	{
+		wcscpy_c(szReason, L"Update.UseBuilds is not specified");
 		return false; // Ќе указано, какие сборки можно загружать
+	}
 	
-	if (isUpdateDownloadSetup == 1)
+	switch (UpdateDownloadSetup())
 	{
-		if (!szUpdateExeCmdLine || !*szUpdateExeCmdLine)
+	case 1:
+		if (!*UpdateExeCmdLine())
+		{
+			wcscpy_c(szReason, L"Update.ExeCmdLine is not specified");
 			return false; // Ќе указана строка запуска инсталл€тора
-	}
-	else if (isUpdateDownloadSetup == 2)
-	{
-		if (!szUpdateArcCmdLine || !*szUpdateArcCmdLine)
+		}
+		break;
+	case 2:
+		if (!*UpdateArcCmdLine())
+		{
+			wcscpy_c(szReason, L"Update.ArcCmdLine is not specified");
 			return false; // Ќе указана строка запуска архиватора
-	}
-	else
-	{
+		}
+		break;
+	default:
+		wcscpy_c(szReason, L"Update.DownloadSetup is not specified");
 		return false; // Ќе указан тип загружаемого пакета (exe/7z)
 	}
 
 	// ћожно
 	return true;
+}
+
+BYTE ConEmuUpdateSettings::UpdateDownloadSetup()
+{
+	if (isUpdateDownloadSetup)
+		return isUpdateDownloadSetup;
+
+	if (isSetupDetected == 0)
+	{
+		HKEY hk;
+		LONG lRc;
+		bool bUseSetupExe = false;
+		wchar_t szInstallDir[MAX_PATH+2], szExeDir[MAX_PATH+2];
+
+		wcscpy_c(szExeDir, gpConEmu->ms_ConEmuExeDir);
+		wcscat_c(szExeDir, L"\\");
+
+		for (size_t i = 0; i <= 2; i++)
+		{
+			DWORD dwSam = KEY_READ | ((i == 0) ? 0 : (i == 1) ? KEY_WOW64_32KEY : KEY_WOW64_64KEY);
+			LPCWSTR pszName = ((i == 0) ? WIN3264TEST(L"InstallDir",L"InstallDir_x64") : (i == 1) ? L"InstallDir" : L"InstallDir_x64");
+			lRc = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\ConEmu", 0, dwSam, &hk);
+			if (lRc == 0)
+			{
+				_ASSERTE(countof(szInstallDir)>(MAX_PATH+1));
+				DWORD dwSize = MAX_PATH*sizeof(*szInstallDir);
+				if (0 == RegQueryValueEx(hk, pszName, NULL, NULL, (LPBYTE)szInstallDir, &dwSize) && *szInstallDir)
+				{
+					size_t nLen = _tcslen(szInstallDir);
+					if (szInstallDir[nLen-1] != L'\\')
+						wcscat_c(szInstallDir, L"\\");
+					if (lstrcmpi(szInstallDir, szExeDir) == 0)
+					{
+						isSetupDetected = 1;
+					}
+				}
+				RegCloseKey(hk);
+			}
+		}
+
+		if (!isSetupDetected)
+			isSetupDetected = 2;
+	}
+
+	// ≈сли признаки установки через "ConEmuSetup.exe" не найдены, или пути не совпали - грузим через 7z
+	_ASSERTE(isSetupDetected!=0);
+	return isSetupDetected ? isSetupDetected : 2;
+}
+
+LPCWSTR ConEmuUpdateSettings::UpdateExeCmdLine()
+{
+	if (szUpdateExeCmdLine && *szUpdateExeCmdLine)
+		return szUpdateExeCmdLine;
+	return szUpdateExeCmdLineDef ? szUpdateExeCmdLineDef : L"";
+}
+
+LPCWSTR ConEmuUpdateSettings::UpdateArcCmdLine()
+{
+	if (szUpdateArcCmdLine && *szUpdateArcCmdLine)
+		return szUpdateArcCmdLine;
+	return szUpdateArcCmdLineDef ? szUpdateArcCmdLineDef : L"";;
+}
+
+void ConEmuUpdateSettings::CheckHourlyUpdate()
+{
+	if (!dwLastUpdateCheck)
+	{
+		dwLastUpdateCheck = GetTickCount();
+	}
+	else
+	{
+		DWORD dwDelta = (GetTickCount() - dwLastUpdateCheck);
+		if (dwDelta >= (60*60*1000))
+		{
+			gpConEmu->CheckUpdates(FALSE);
+		}
+	}
 }

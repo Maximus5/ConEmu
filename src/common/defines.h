@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -93,19 +93,19 @@ WARNING("WIN64 was not defined");
 #endif
 
 #ifdef USE_SEH
-#if defined(_MSC_VER)
-#pragma message ("Compiling USING exception handler")
-#endif
+	#if defined(_MSC_VER)
+	#pragma message ("Compiling USING exception handler")
+	#endif
 
-#define SAFETRY   __try
-#define SAFECATCH __except(EXCEPTION_EXECUTE_HANDLER)
+	#define SAFETRY   __try
+	#define SAFECATCH __except(EXCEPTION_EXECUTE_HANDLER)
 #else
-#if defined(_MSC_VER)
-#pragma message ("Compiling NOT using exception handler")
-#endif
+	#if defined(_MSC_VER)
+	#pragma message ("Compiling NOT using exception handler")
+	#endif
 
-#define SAFETRY   if (true)
-#define SAFECATCH else
+	#define SAFETRY   if (true)
+	#define SAFECATCH else
 #endif
 
 
@@ -116,6 +116,10 @@ WARNING("WIN64 was not defined");
 #define countof(a) (sizeof((a))/(sizeof(*(a))))
 #endif
 #define ZeroStruct(s) memset(&(s), 0, sizeof(s))
+
+#define isDriveLetter(c) ((c>=L'A' && c<=L'Z') || (c>=L'a' && c<=L'z'))
+#define isDigit(c) (c>=L'0' && c<=L'9')
+
 
 // Для облегчения кодинга - возвращает значение для соответствующей платформы
 #ifdef _WIN64

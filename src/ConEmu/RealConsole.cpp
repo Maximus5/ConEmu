@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -6964,15 +6964,14 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 int CRealConsole::GetModifiedEditors()
 {
 	int nEditors = 0;
-	ConEmuTab tab;
-
-	for(int j = 0; TRUE; j++)
+	
+	if (mp_tabs && mn_tabsCount)
 	{
-		if (!GetTab(j, &tab))
-			break;
-
-		if (tab.Modified)
-			nEditors ++;
+		for(int j = 0; j < mn_tabsCount; j++)
+		{
+			if ((mp_tabs[j].Type == /*Editor*/3) && (mp_tabs[j].Modified != 0))
+				nEditors++;
+		}
 	}
 
 	return nEditors;
@@ -7665,12 +7664,8 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 					//DWORD cbWritten=0;
 					gpConEmu->DebugStep(_T("ConEmu: ACTL_QUIT"));
 					//lbExecuted = pipe.Execute(CMD_QUITFAR);
-					LPCWSTR pszMacro = gpSet->sSafeFarCloseMacro;
-
-					if (!pszMacro || !*pszMacro)
-					{
-						pszMacro = L"@$while (Dialog||Editor||Viewer||Menu||Disks||MainMenu||UserMenu||Other||Help) $if (Editor) ShiftF10 $else Esc $end $end  Esc  $if (Shell) F10 $if (Dialog) Enter $end $Exit $end  F10";
-					}
+					LPCWSTR pszMacro = gpSet->SafeFarCloseMacro();
+					_ASSERTE(pszMacro && *pszMacro);
 
 					// Async, иначе ConEmu зависнуть может
 					PostMacro(pszMacro, TRUE);
@@ -7817,7 +7812,7 @@ void CRealConsole::CloseTab()
 	else
 	{
 		if (CanCloseTab(TRUE))
-			PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
+			PostMacro(gpSet->TabCloseMacro());
 		else
 			PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
 	}

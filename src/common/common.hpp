@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    79
+#define CESERVER_REQ_VER    80
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -57,6 +57,10 @@ typedef struct _CONSOLE_SELECTION_INFO
 //#define MAXCONMAPCELLS      (600*400)
 #define CES_NTVDM 0x10
 #define CEC_INITTITLE       L"ConEmu"
+
+#define CECOPYRIGHTSTRING_A "Copyright (c) 2009-2011, ConEmu.Maximus5@gmail.com"
+#define CECOPYRIGHTSTRING_W L"\x00A9 2009-2011 ConEmu.Maximus5@gmail.com"
+
 //#define CE_CURSORUPDATE     L"ConEmuCursorUpdate%u" // ConEmuC_PID - изменился курсор (размер или выделение). положение курсора отслеживает GUI
 
 // Pipe name formats
@@ -1122,7 +1126,9 @@ struct CESERVER_REQ_STARTSTOP
 	// Для информации и удобства (GetModuleFileName(0))
 	wchar_t sModuleName[MAX_PATH+1];
 	// Reserved
-	DWORD nReserved0[20];
+	DWORD nReserved0[19];
+	// Create background tab, when attaching new console
+	BOOL bRunInBackgroundTab;
 	// CmdLine
 	wchar_t sCmdLine[1]; // variable length
 };

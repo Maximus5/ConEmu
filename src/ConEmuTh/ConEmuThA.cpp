@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -127,13 +127,13 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	szMenu[0]=szMenu1;
 	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240); //-V303
 	_ASSERTE(pi->StructSize == sizeof(struct PluginInfo));
-	pi->Flags = PF_PRELOAD;
-	pi->DiskMenuStrings = NULL;
-	pi->DiskMenuNumbers = 0;
+	pi->Flags = isPreloadByDefault()?PF_PRELOAD:0;
+	//pi->DiskMenuStrings = NULL;
+	//pi->DiskMenuNumbers = 0;
 	pi->PluginMenuStrings = szMenu;
 	pi->PluginMenuStringsNumber = 1;
-	pi->PluginConfigStrings = NULL;
-	pi->PluginConfigStringsNumber = 0;
+	//pi->PluginConfigStrings = NULL;
+	//pi->PluginConfigStringsNumber = 0;
 	pi->CommandPrefix = NULL;
 	pi->Reserved = 0;
 }
@@ -381,6 +381,7 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	// Текущая папка панели
 	int nSize = lstrlenA(pi.CurDir); //-V303
 	pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
+	SafeFree(pcefpi->pszPanelDir);
 	pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2); //-V106
 	MultiByteToWideChar(CP_OEMCP, 0, pi.CurDir, nSize+1, pcefpi->pszPanelDir, nSize + MAX_PATH);
 	// Готовим буфер для информации об элементах

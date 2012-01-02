@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -462,15 +462,20 @@ int ServerInit(BOOL abAlternative/*=FALSE*/)
 			In.dwData[1] = (DWORD)ghConWnd; //-V205
 			lbCallRc = CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, 1000);
 
-			if (!lbCallRc)
+			if (!lbCallRc || !Out.StartStopRet.hWndDC)
 			{
 				dwErr = GetLastError();
-				_ASSERTE(lbCallRc);
+				_ASSERTE(lbCallRc && Out.StartStopRet.hWndDC);
 			}
 			else
 			{
-				ghConEmuWnd = (HWND)Out.dwData[0];
-				ghConEmuWndDC = (HWND)Out.dwData[1];
+				ghConEmuWnd = Out.StartStop.hWnd;
+				ghConEmuWndDC = Out.StartStopRet.hWndDC;
+				gpSrv->dwGuiPID = Out.StartStopRet.dwPID;
+				#ifdef _DEBUG
+				DWORD nGuiPID; GetWindowThreadProcessId(ghConEmuWnd, &nGuiPID);
+				_ASSERTE(Out.hdr.nSrcPID==nGuiPID);
+				#endif
 				gpSrv->bWasDetached = FALSE;
 				UpdateConsoleMapHeader();
 			}
@@ -1420,7 +1425,7 @@ void CheckConEmuHwnd()
 {
 	//HWND hWndFore = GetForegroundWindow();
 	//HWND hWndFocus = GetFocus();
-	DWORD dwGuiThreadId = 0, dwGuiProcessId = 0;
+	DWORD dwGuiThreadId = 0;
 
 	if (gpSrv->bDebuggerActive)
 	{
@@ -1428,6 +1433,7 @@ void CheckConEmuHwnd()
 
 		if (ghConEmuWnd)
 		{
+			GetWindowThreadProcessId(ghConEmuWnd, &gpSrv->dwGuiPID);
 			// Просто для информации
 			ghConEmuWndDC = FindWindowEx(ghConEmuWnd, NULL, VirtualConsoleClassMain, NULL);
 		}
@@ -1467,8 +1473,8 @@ void CheckConEmuHwnd()
 
 		// Установить переменную среды с дескриптором окна
 		SetConEmuEnvVar(ghConEmuWnd);
-		dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId);
-		AllowSetForegroundWindow(dwGuiProcessId);
+		dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWnd, &gpSrv->dwGuiPID);
+		AllowSetForegroundWindow(gpSrv->dwGuiPID);
 
 		//if (hWndFore == ghConWnd || hWndFocus == ghConWnd)
 		//if (hWndFore != ghConEmuWnd)
@@ -1627,6 +1633,8 @@ HWND Attach2Gui(DWORD nTimeout)
 		pIn->StartStop.bRootIsCmdExe = FALSE;
 	else
 		pIn->StartStop.bRootIsCmdExe = gbRootIsCmdExe || (gbAttachMode && !gbNoCreateProcess);
+	
+	pIn->StartStop.bRunInBackgroundTab = gbRunInBackgroundTab;
 
 	if (gpszRunCmd && *gpszRunCmd)
 	{
@@ -1713,10 +1721,18 @@ HWND Attach2Gui(DWORD nTimeout)
 				//ghConEmuWnd = hGui;
 				ghConEmuWnd = pOut->StartStopRet.hWnd;
 				ghConEmuWndDC = hDcWnd = pOut->StartStopRet.hWndDC;
+				gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
 				_ASSERTE(gpSrv->pConsoleMap != NULL); // мэппинг уже должен быть создан,
 				_ASSERTE(gpSrv->pConsole != NULL); // и локальная копия тоже
 				//gpSrv->pConsole->info.nGuiPID = pOut->StartStopRet.dwPID;
-				gpSrv->pConsoleMap->Ptr()->nGuiPID = pOut->StartStopRet.dwPID;
+				CESERVER_CONSOLE_MAPPING_HDR *pMap = gpSrv->pConsoleMap->Ptr();
+				if (pMap)
+				{
+					pMap->nGuiPID = pOut->StartStopRet.dwPID;
+					pMap->hConEmuRoot = ghConEmuWnd;
+					pMap->hConEmuWnd = ghConEmuWndDC;
+					_ASSERTE(pMap->hConEmuRoot==NULL || pMap->nGuiPID!=0);
+				}
 
 				//DisableAutoConfirmExit();
 
@@ -1865,6 +1881,9 @@ int CreateMapHeader()
 	gpSrv->pConsole->hdr.hConWnd = ghConWnd; _ASSERTE(ghConWnd!=NULL);
 	gpSrv->pConsole->hdr.nServerPID = GetCurrentProcessId();
 	gpSrv->pConsole->hdr.nGuiPID = gpSrv->dwGuiPID;
+	gpSrv->pConsole->hdr.hConEmuRoot = ghConEmuWnd;
+	gpSrv->pConsole->hdr.hConEmuWnd = ghConEmuWndDC;
+	_ASSERTE(gpSrv->pConsole->hdr.hConEmuRoot==NULL || gpSrv->pConsole->hdr.nGuiPID!=0);
 	gpSrv->pConsole->hdr.bConsoleActive = TRUE; // пока - TRUE (это на старте сервера)
 	gpSrv->pConsole->hdr.nServerInShutdown = 0;
 	gpSrv->pConsole->hdr.bThawRefreshThread = TRUE; // пока - TRUE (это на старте сервера)
@@ -1970,6 +1989,7 @@ void UpdateConsoleMapHeader()
 		gpSrv->pConsole->hdr.nGuiPID = gpSrv->dwGuiPID;
 		gpSrv->pConsole->hdr.hConEmuRoot = ghConEmuWnd;
 		gpSrv->pConsole->hdr.hConEmuWnd = ghConEmuWndDC;
+		_ASSERTE(gpSrv->pConsole->hdr.hConEmuRoot==NULL || gpSrv->pConsole->hdr.nGuiPID!=0);
 		gpSrv->pConsole->hdr.nActiveFarPID = gpSrv->nActiveFarPID;
 
 		if (gpSrv->pConsoleMap)

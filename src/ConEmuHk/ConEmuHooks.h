@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -70,3 +70,13 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap();
 
 typedef HWND (WINAPI* GetConsoleWindow_T)();
 extern GetConsoleWindow_T gfGetRealConsoleWindow;
+
+enum ConEmuHkDllState
+{
+	ds_Undefined = 0,
+	ds_DllProcessAttach = 1,
+	ds_DllProcessDetach = 2,
+};
+extern ConEmuHkDllState gnDllState;
+extern int gnDllThreadCount;
+extern BOOL gbDllStopCalled;

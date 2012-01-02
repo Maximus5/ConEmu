@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Background.h"
 #include "TrayIcon.h"
 #include "LoadImg.h"
+#include "../ConEmuPlugin/FarDefaultMacros.h"
+#include "OptionsFast.h"
 #include "version.h"
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
@@ -314,7 +316,7 @@ void Settings::InitSettings()
 	//isColorKey = false;
 	//ColorKey = RGB(1,1,1);
 	isUserScreenTransparent = false;
-	isFixFarBorders = 1; isEnhanceGraphics = true;
+	isFixFarBorders = 1; isEnhanceGraphics = true; isEnhanceButtons = false;
 	isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
 	isPartBrushBlack = 32; //-V112
 	isExtendUCharMap = true;
@@ -423,16 +425,17 @@ void Settings::LoadSettings()
 	MCHKHEAP
 	mb_CharSetWasSet = FALSE;
 
+	// -- перенесено в CheckOptionsFast()
 	//;; Q. В Windows Vista зависают другие консольные процессы.
 	//	;; A. "Виноват" процесс ConIme.exe. Вроде бы он служит для ввода иероглифов
 	//	;;    (китай и т.п.). Зачем он нужен, если ввод теперь идет в графическом окне?
 	//	;;    Нужно запретить его автозапуск или вообще переименовать этот файл, например
 	//	;;    в 'ConIme.ex1' (видимо это возможно только в безопасном режиме).
 	//	;;    Запретить автозапуск: Внесите в реестр и перезагрузитесь
-	if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)
-	{
-		CheckConIme();
-	}
+	//if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)
+	//{
+	//	CheckConIme();
+	//}
 
 //------------------------------------------------------------------------
 ///| Loading from registry |//////////////////////////////////////////////
@@ -679,6 +682,8 @@ void Settings::LoadSettings()
 
 		// Выделим в отдельную настройку
 		reg->Load(L"EnhanceGraphics", isEnhanceGraphics);
+		
+		reg->Load(L"EnhanceButtons", isEnhanceButtons);
 
 		if (isFixFarBorders == 2 && !isEnhanceGraphics)
 		{
@@ -687,7 +692,7 @@ void Settings::LoadSettings()
 		}
 
 		reg->Load(L"RightClick opens context menu", isRClickSendKey);
-		reg->Load(L"RightClickMacro2", &sRClickMacro);
+		if (!reg->Load(L"RightClickMacro2", &sRClickMacro) || (sRClickMacro && !*sRClickMacro)) { SafeFree(sRClickMacro); }
 		
 		reg->Load(L"AltEnter", isSendAltEnter);
 		reg->Load(L"AltSpace", isSendAltSpace); //if (isSendAltSpace > 2) isSendAltSpace = 2; // когда-то был 3state, теперь - bool
@@ -701,7 +706,7 @@ void Settings::LoadSettings()
 		reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
 		
 		reg->Load(L"SafeFarClose", isSafeFarClose);
-		reg->Load(L"SafeFarCloseMacro", &sSafeFarCloseMacro);
+		if (!reg->Load(L"SafeFarCloseMacro", &sSafeFarCloseMacro) || (sSafeFarCloseMacro && !*sSafeFarCloseMacro)) { SafeFree(sSafeFarCloseMacro); }
 		
 		reg->Load(L"FARuseASCIIsort", isFARuseASCIIsort);
 		reg->Load(L"ShellNoZoneCheck", isShellNoZoneCheck);
@@ -753,16 +758,13 @@ void Settings::LoadSettings()
 		reg->Load(L"TabRecent", isTabRecent);
 		reg->Load(L"TabsOnTaskBar", m_isTabsOnTaskBar);
 
-		if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { if (sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; } }
+		if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { SafeFree(sTabCloseMacro); }
 
 		reg->Load(L"TabFontFace", sTabFontFace, countof(sTabFontFace));
 		reg->Load(L"TabFontCharSet", nTabFontCharSet);
 		reg->Load(L"TabFontHeight", nTabFontHeight);
 
-		if (!reg->Load(L"SaveAllEditors", &sSaveAllMacro))
-		{
-			sSaveAllMacro = lstrdup(L"@F2 $If (!Editor) $Exit $End %i0=-1; F12 %cur = CurPos; Home Down %s = Menu.Select(\" * \",3,2); $While (%s > 0) $If (%s == %i0) MsgBox(\"FAR SaveAll\",\"Asterisk in menuitem for already processed window\",0x10001) $Exit $End Enter $If (Editor) F2 $If (!Editor) $Exit $End $Else $If (!Viewer) $Exit $End $End %i0 = %s; F12 %s = Menu.Select(\" * \",3,2); $End $If (Menu && Title==\"Screens\") Home $Rep (%cur-1) Down $End Enter $End $Exit");
-		}
+		if (!reg->Load(L"SaveAllEditors", &sSaveAllMacro) || (sSaveAllMacro && !*sSaveAllMacro)) { SafeFree(sSaveAllMacro); }
 
 		reg->Load(L"TabFrame", isTabFrame);
 		reg->Load(L"TabMargins", rcTabMargins);
@@ -845,8 +847,8 @@ void Settings::LoadSettings()
 		reg->Load(L"Update.VerLocation", &UpdSet.szUpdateVerLocation);
 		reg->Load(L"Update.CheckOnStartup", UpdSet.isUpdateCheckOnStartup);
 		reg->Load(L"Update.CheckHourly", UpdSet.isUpdateCheckHourly);
-		reg->Load(L"Update.CheckNotifyOnly", UpdSet.isUpdateCheckNotifyOnly);
-		reg->Load(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds); if (UpdSet.isUpdateUseBuilds!=1 && UpdSet.isUpdateUseBuilds!=2) UpdSet.isUpdateUseBuilds = 2; // 1-stable only, 2-latest
+		reg->Load(L"Update.ConfirmDownload", UpdSet.isUpdateConfirmDownload);
+		reg->Load(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds); if (UpdSet.isUpdateUseBuilds>2) UpdSet.isUpdateUseBuilds = 2; // 1-stable only, 2-latest
 		reg->Load(L"Update.UseProxy", UpdSet.isUpdateUseProxy);
 		reg->Load(L"Update.Proxy", &UpdSet.szUpdateProxy);
 		reg->Load(L"Update.ProxyUser", &UpdSet.szUpdateProxyUser);
@@ -875,8 +877,15 @@ void Settings::LoadSettings()
 	mb_FadeInitialized = false; GetColors(TRUE);
 	
 	
+
 	// Проверить необходимость установки хуков
-	isKeyboardHooks();
+	//-- isKeyboardHooks();
+	// При первом запуске - проверить, хотят ли включить автообновление?
+	//-- CheckUpdatesWanted();
+
+	CheckOptionsFast();
+
+
 
 	// Стили окна
 	if (!WindowMode)
@@ -1098,8 +1107,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ConVisible", isConVisible);
 		reg->Save(L"ConInMode", nConInMode);
 		
-		//WARNING("Сохранение isUseInjects отключено принудительно");
 		reg->Save(L"UseInjects", isUseInjects);
+
 		#ifdef USEPORTABLEREGISTRY
 		reg->Save(L"PortableReg", isPortableReg);
 		#endif
@@ -1201,6 +1210,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		}
 		reg->Save(L"ExtendUCharMap", isExtendUCharMap);
 		reg->Save(L"EnhanceGraphics", isEnhanceGraphics);
+		reg->Save(L"EnhanceButtons", isEnhanceButtons);
 		reg->Save(L"PartBrush75", isPartBrush75);
 		reg->Save(L"PartBrush50", isPartBrush50);
 		reg->Save(L"PartBrush25", isPartBrush25);
@@ -1242,7 +1252,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"TabLazy", isTabLazy);
 		reg->Save(L"TabRecent", isTabRecent);
 		reg->Save(L"TabsOnTaskBar", m_isTabsOnTaskBar);
-		reg->Save(L"TabCloseMacro", sTabCloseMacro ? sTabCloseMacro : L"");
+		reg->Save(L"TabCloseMacro", sTabCloseMacro);
 		reg->Save(L"TabFontFace", sTabFontFace);
 		reg->Save(L"TabFontCharSet", nTabFontCharSet);
 		reg->Save(L"TabFontHeight", nTabFontHeight);
@@ -1303,7 +1313,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"Update.VerLocation", UpdSet.szUpdateVerLocation);
 		reg->Save(L"Update.CheckOnStartup", UpdSet.isUpdateCheckOnStartup);
 		reg->Save(L"Update.CheckHourly", UpdSet.isUpdateCheckHourly);
-		reg->Save(L"Update.CheckNotifyOnly", UpdSet.isUpdateCheckNotifyOnly);
+		reg->Save(L"Update.ConfirmDownload", UpdSet.isUpdateConfirmDownload);
 		reg->Save(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds);
 		reg->Save(L"Update.UseProxy", UpdSet.isUpdateUseProxy);
 		reg->Save(L"Update.Proxy", UpdSet.szUpdateProxy);
@@ -1334,54 +1344,96 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 
 bool Settings::isKeyboardHooks()
 {
-	// Нужно и для WinXP, но только в "локальном" режиме
-	if (gOSVer.dwMajorVersion < 6)
-	{
-		return true;
-	}
+	//// Нужно и для WinXP, но только в "локальном" режиме
+	//if (gOSVer.dwMajorVersion < 6)
+	//{
+	//	return true;
+	//}
 
 
-	if (m_isKeyboardHooks == 0)
-	{
-		// Вопрос пользователю еще не задавали (это на старте, окно еще и не создано)
-		int nBtn = MessageBox(NULL,
-		                      L"Do You want to use Win-Number combination for \n"
-		                      L"switching between consoles (Multi Console feature)? \n\n"
-		                      L"If You choose 'Yes' - ConEmu will install keyboard hook. \n"
-		                      L"So, You must allow that in antiviral software (such as AVP). \n\n"
-		                      L"You can change behavior later via Settings->Features->\n"
-		                      L"'Install keyboard hooks (Vista & Win7)' check box, or\n"
-		                      L"'KeyboardHooks' value in ConEmu settings (registry or xml)."
-		                      , gpConEmu->GetDefaultTitle(), MB_YESNOCANCEL|MB_ICONQUESTION);
+	//if (m_isKeyboardHooks == 0)
+	//{
+	//	// Вопрос пользователю еще не задавали (это на старте, окно еще и не создано)
+	//	int nBtn = MessageBox(NULL,
+	//	                      L"Do You want to use Win-Number combination for \n"
+	//	                      L"switching between consoles (Multi Console feature)? \n\n"
+	//	                      L"If You choose 'Yes' - ConEmu will install keyboard hook. \n"
+	//	                      L"So, You must allow that in antiviral software (such as AVP). \n\n"
+	//	                      L"You can change behavior later via Settings->Features->\n"
+	//	                      L"'Install keyboard hooks (Vista & Win7)' check box, or\n"
+	//	                      L"'KeyboardHooks' value in ConEmu settings (registry or xml)."
+	//	                      , gpConEmu->GetDefaultTitle(), MB_YESNOCANCEL|MB_ICONQUESTION);
 
-		if (nBtn == IDCANCEL)
-		{
-			m_isKeyboardHooks = 2; // NO
-		}
-		else
-		{
-			m_isKeyboardHooks = (nBtn == IDYES) ? 1 : 2;
-			SettingsBase* reg = CreateSettings();
+	//	if (nBtn == IDCANCEL)
+	//	{
+	//		m_isKeyboardHooks = 2; // NO
+	//	}
+	//	else
+	//	{
+	//		m_isKeyboardHooks = (nBtn == IDYES) ? 1 : 2;
+	//		SettingsBase* reg = CreateSettings();
 
-			if (!reg)
-			{
-				_ASSERTE(reg!=NULL);
-			}
-			else
-			{
-				if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
-				{
-					reg->Save(L"KeyboardHooks", m_isKeyboardHooks);
-					reg->CloseKey();
-				}
+	//		if (!reg)
+	//		{
+	//			_ASSERTE(reg!=NULL);
+	//		}
+	//		else
+	//		{
+	//			if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+	//			{
+	//				reg->Save(L"KeyboardHooks", m_isKeyboardHooks);
+	//				reg->CloseKey();
+	//			}
 
-				delete reg;
-			}
-		}
-	}
+	//			delete reg;
+	//		}
+	//	}
+	//}
 
 	return (m_isKeyboardHooks == 1);
 }
+
+//bool Settings::CheckUpdatesWanted()
+//{
+//	if (UpdSet.isUpdateUseBuilds == 0)
+//	{
+//		int nBtn = MessageBox(NULL,
+//			L"Do you want to enable automatic updates? \n\n"
+//			L"You may change settings on 'Update' page of Settings dialog later"
+//			, gpConEmu->GetDefaultTitle(), MB_YESNOCANCEL|MB_ICONQUESTION);
+//
+//		if (nBtn == IDCANCEL)
+//		{
+//			return false;
+//		}
+//
+//		UpdSet.isUpdateCheckOnStartup = (nBtn == IDYES);
+//		UpdSet.isUpdateCheckHourly = false;
+//		UpdSet.isUpdateConfirmDownload = true;
+//		UpdSet.isUpdateUseBuilds = 2;
+//
+//		SettingsBase* reg = CreateSettings();
+//		if (!reg)
+//		{
+//			_ASSERTE(reg!=NULL);
+//		}
+//		else
+//		{
+//			if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+//			{
+//				reg->Save(L"Update.CheckOnStartup", UpdSet.isUpdateCheckOnStartup);
+//				reg->Save(L"Update.CheckHourly", UpdSet.isUpdateCheckHourly);
+//				reg->Save(L"Update.ConfirmDownload", UpdSet.isUpdateConfirmDownload);
+//				reg->Save(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds);
+//				reg->CloseKey();
+//			}
+//
+//			delete reg;
+//		}
+//	}
+//
+//	return (UpdSet.isUpdateUseBuilds != 0);
+//}
 
 bool Settings::IsHostkey(WORD vk)
 {
@@ -2054,70 +2106,73 @@ bool Settings::isCharBorder(wchar_t inChar)
 	return mpc_FixFarBorderValues[(WORD)inChar];
 }
 
-BOOL Settings::CheckConIme()
-{
-	long  lbStopWarning = FALSE;
-	DWORD dwValue=1;
-	SettingsBase* reg = CreateSettings();
-
-	// БЕЗ имени конфигурации!
-	if (reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ))
-	{
-		if (!reg->Load(_T("StopWarningConIme"), lbStopWarning))
-			lbStopWarning = FALSE;
-
-		reg->CloseKey();
-	}
-
-	if (!lbStopWarning)
-	{
-		HKEY hk = NULL;
-
-		if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Console", 0, KEY_READ, &hk))
-		{
-			DWORD dwType = REG_DWORD, nSize = sizeof(DWORD);
-
-			if (0 != RegQueryValueEx(hk, L"LoadConIme", 0, &dwType, (LPBYTE)&dwValue, &nSize))
-				dwValue = 1;
-
-			RegCloseKey(hk);
-
-			if (dwValue!=0)
-			{
-				if (IDCANCEL==MessageBox(0,
-				                        L"Unwanted value of 'LoadConIme' registry parameter!\r\n"
-				                        L"Press 'Cancel' to stop this message.\r\n"
-				                        L"Take a look at 'FAQ-ConEmu.txt'.\r\n"
-				                        L"You may simply import file 'Disable_ConIme.reg'\r\n"
-				                        L"located in 'ConEmu.Addons' folder.",
-				                        gpConEmu->GetDefaultTitle(),MB_OKCANCEL|MB_ICONEXCLAMATION))
-					lbStopWarning = TRUE;
-			}
-		}
-		else
-		{
-			if (IDCANCEL==MessageBox(0,
-			                        L"Can't determine a value of 'LoadConIme' registry parameter!\r\n"
-			                        L"Press 'Cancel' to stop this message.\r\n"
-			                        L"Take a look at 'FAQ-ConEmu.txt'",
-			                        gpConEmu->GetDefaultTitle(),MB_OKCANCEL|MB_ICONEXCLAMATION))
-				lbStopWarning = TRUE;
-		}
-
-		if (lbStopWarning)
-		{
-			// БЕЗ имени конфигурации!
-			if (reg->OpenKey(CONEMU_ROOT_KEY, KEY_WRITE))
-			{
-				reg->Save(_T("StopWarningConIme"), lbStopWarning);
-				reg->CloseKey();
-			}
-		}
-	}
-
-	delete reg;
-	return TRUE;
-}
+//BOOL Settings::CheckConIme()
+//{
+//	if (!(gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0))
+//		return FALSE; // Проверять только в Vista
+//
+//	long  lbStopWarning = FALSE;
+//	DWORD dwValue=1;
+//	SettingsBase* reg = CreateSettings();
+//
+//	// БЕЗ имени конфигурации!
+//	if (reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ))
+//	{
+//		if (!reg->Load(_T("StopWarningConIme"), lbStopWarning))
+//			lbStopWarning = FALSE;
+//
+//		reg->CloseKey();
+//	}
+//
+//	if (!lbStopWarning)
+//	{
+//		HKEY hk = NULL;
+//
+//		if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Console", 0, KEY_READ, &hk))
+//		{
+//			DWORD dwType = REG_DWORD, nSize = sizeof(DWORD);
+//
+//			if (0 != RegQueryValueEx(hk, L"LoadConIme", 0, &dwType, (LPBYTE)&dwValue, &nSize))
+//				dwValue = 1;
+//
+//			RegCloseKey(hk);
+//
+//			if (dwValue!=0)
+//			{
+//				if (IDCANCEL==MessageBox(0,
+//				                        L"Unwanted value of 'LoadConIme' registry parameter!\r\n"
+//				                        L"Press 'Cancel' to stop this message.\r\n"
+//				                        L"Take a look at 'FAQ-ConEmu.txt'.\r\n"
+//				                        L"You may simply import file 'Disable_ConIme.reg'\r\n"
+//				                        L"located in 'ConEmu.Addons' folder.",
+//				                        gpConEmu->GetDefaultTitle(),MB_OKCANCEL|MB_ICONEXCLAMATION))
+//					lbStopWarning = TRUE;
+//			}
+//		}
+//		else
+//		{
+//			if (IDCANCEL==MessageBox(0,
+//			                        L"Can't determine a value of 'LoadConIme' registry parameter!\r\n"
+//			                        L"Press 'Cancel' to stop this message.\r\n"
+//			                        L"Take a look at 'FAQ-ConEmu.txt'",
+//			                        gpConEmu->GetDefaultTitle(),MB_OKCANCEL|MB_ICONEXCLAMATION))
+//				lbStopWarning = TRUE;
+//		}
+//
+//		if (lbStopWarning)
+//		{
+//			// БЕЗ имени конфигурации!
+//			if (reg->OpenKey(CONEMU_ROOT_KEY, KEY_WRITE))
+//			{
+//				reg->Save(_T("StopWarningConIme"), lbStopWarning);
+//				reg->CloseKey();
+//			}
+//		}
+//	}
+//
+//	delete reg;
+//	return TRUE;
+//}
 
 void Settings::CheckConsoleSettings()
 {
@@ -2331,4 +2386,60 @@ bool Settings::isTabsOnTaskBar()
 	if ((m_isTabsOnTaskBar == 1) || (((BYTE)m_isTabsOnTaskBar > 1) && IsWindows7))
 		return true;
 	return false;
+}
+
+LPCWSTR Settings::RClickMacro()
+{
+	if (sRClickMacro && *sRClickMacro)
+		return sRClickMacro;
+	return RClickMacroDefault();
+}
+
+LPCWSTR Settings::RClickMacroDefault()
+{
+	// L"@$If (!CmdLine.Empty) %Flg_Cmd=1; %CmdCurPos=CmdLine.ItemCount-CmdLine.CurPos+1; %CmdVal=CmdLine.Value; Esc $Else %Flg_Cmd=0; $End $Text \"rclk_gui:\" Enter $If (%Flg_Cmd==1) $Text %CmdVal %Flg_Cmd=0; %Num=%CmdCurPos; $While (%Num!=0) %Num=%Num-1; CtrlS $End $End"
+	static LPCWSTR pszDefaultMacro = FarRClickMacroDefault;
+	return pszDefaultMacro;
+}
+
+LPCWSTR Settings::SafeFarCloseMacro()
+{
+	if (sSafeFarCloseMacro && *sSafeFarCloseMacro)
+		return sSafeFarCloseMacro;
+	return SafeFarCloseMacroDefault();
+}
+
+LPCWSTR Settings::SafeFarCloseMacroDefault()
+{
+	// L"@$while (Dialog||Editor||Viewer||Menu||Disks||MainMenu||UserMenu||Other||Help) $if (Editor) ShiftF10 $else Esc $end $end  Esc  $if (Shell) F10 $if (Dialog) Enter $end $Exit $end  F10"
+	static LPCWSTR pszDefaultMacro = FarSafeCloseMacroDefault;
+	return pszDefaultMacro;
+}
+
+LPCWSTR Settings::TabCloseMacro()
+{
+	if (sTabCloseMacro && *sTabCloseMacro)
+		return sTabCloseMacro;
+	return TabCloseMacroDefault();
+}
+
+LPCWSTR Settings::TabCloseMacroDefault()
+{
+	// L"@$if (Shell) F10 $if (Dialog) Enter $end $else F10 $end";
+	static LPCWSTR pszDefaultMacro = FarTabCloseMacroDefault;
+	return pszDefaultMacro;
+}
+
+LPCWSTR Settings::SaveAllMacro()
+{
+	if (sSaveAllMacro && *sSaveAllMacro)
+		return sSaveAllMacro;
+	return SaveAllMacroDefault();
+}
+
+LPCWSTR Settings::SaveAllMacroDefault()
+{
+	// L"@F2 $If (!Editor) $Exit $End %i0=-1; F12 %cur = CurPos; Home Down %s = Menu.Select(\" * \",3,2); $While (%s > 0) $If (%s == %i0) MsgBox(\"FAR SaveAll\",\"Asterisk in menuitem for already processed window\",0x10001) $Exit $End Enter $If (Editor) F2 $If (!Editor) $Exit $End $Else $If (!Viewer) $Exit $End $End %i0 = %s; F12 %s = Menu.Select(\" * \",3,2); $End $If (Menu && Title==\"Screens\") Home $Rep (%cur-1) Down $End Enter $End $Exit"
+	static LPCWSTR pszDefaultMacro = FarSaveAllMacroDefault;
+	return pszDefaultMacro;
 }

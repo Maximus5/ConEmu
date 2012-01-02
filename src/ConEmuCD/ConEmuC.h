@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2011 Maximus5
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -101,6 +101,7 @@ extern BOOL    gbForceHideConWnd;
 extern DWORD   gdwMainThreadId;
 //int       gnBufferHeight = 0;
 extern wchar_t* gpszRunCmd;
+extern BOOL    gbRunInBackgroundTab;
 extern DWORD   gnImageSubsystem;
 //HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
 extern HANDLE ghHeap; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
@@ -269,7 +270,7 @@ void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
 HWND Attach2Gui(DWORD nTimeout);
 
 
-int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd); // –азбор параметров командной строки
+int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab); // –азбор параметров командной строки
 void Help();
 void DosBoxHelp();
 void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
