@@ -1,8 +1,6 @@
 
-#pragma once
-
-/**************************************************************************
-Copyright (c) 2010 Maximus5
+/*
+Copyright (c) 2009-2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -16,7 +14,7 @@ are met:
 3. The name of the authors may not be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -26,16 +24,28 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-**************************************************************************/
+*/
 
-class CRefRelease
+#pragma once
+
+
+class CVConRelease
 {
 private:
-	LONG mn_RefCount;
+	LONG volatile mn_RefCount;
 public:
-	CRefRelease();
+	CVConRelease();
 	void AddRef();
 	int Release();
 protected:
-	virtual ~CRefRelease();
+	virtual ~CVConRelease();
+};
+
+class CVConGuard
+{
+private:
+	CVConRelease *mp_Ref;
+public:
+	CVConGuard(CVConRelease *apRef);
+	~CVConGuard();
 };
