@@ -402,9 +402,9 @@ BEGIN
     CONTROL         "No zone check",cbShellNoZoneCheck,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,57,81,8
     CONTROL         "Disable FAR flashing",cbDisableFarFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,9,81,117,8
     GROUPBOX        "Far macros",IDC_STATIC,4,97,319,77
-    CONTROL         "&RightClick 4 EMenu",cbRClick,"Button",BS_AUTO3STATE | WS_TABSTOP,9,109,79,8
+    CONTROL         "&RightClick 4 EMenu",cbRClick,"Button",BS_AUTO3STATE | WS_TABSTOP,9,109,78,8
     EDITTEXT        tRClickMacro,88,107,229,12,ES_AUTOHSCROLL
-    CONTROL         "Safe Far close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,126,100,8
+    CONTROL         "Safe Far close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,126,78,8
     EDITTEXT        tSafeFarCloseMacro,88,124,229,12,ES_AUTOHSCROLL
     LTEXT           "Close tab:",IDC_STATIC,10,142,54,8
     EDITTEXT        tCloseTabMacro,70,140,247,12,ES_AUTOHSCROLL
@@ -521,7 +521,7 @@ BEGIN
     CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,14,66,8
     CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,206,14,59,8
     CONTROL         "Active only",cbHideInactiveConTabs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,14,51,10
-    GROUPBOX        "Tab templates",IDC_STATIC,4,32,319,45
+    GROUPBOX        "Tab templates",IDC_STATIC,4,32,319,54
     RTEXT           "Console:",IDC_STATIC,8,44,30,8
     EDITTEXT        tTabConsole,42,42,40,12,ES_AUTOHSCROLL
     RTEXT           "Viewer:",IDC_STATIC,85,44,29,8
@@ -530,37 +530,23 @@ BEGIN
     EDITTEXT        tTabEditor,192,42,40,12,ES_AUTOHSCROLL
     RTEXT           "Modified:",IDC_STATIC,237,44,36,8
     EDITTEXT        tTabEditorMod,278,42,40,12,ES_AUTOHSCROLL
-    RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,61,107,8
-    EDITTEXT        tTabLenMax,119,59,40,12,ES_AUTOHSCROLL
-    CONTROL         "Admin shield, or suffix",cbAdminShield,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,60,83,10
-    EDITTEXT        tAdminSuffix,254,59,64,12,ES_AUTOHSCROLL | WS_DISABLED
-    GROUPBOX        "Multi console",IDC_STATIC,4,79,319,44
-    CONTROL         "Multi Console",cbMultiCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,92,61,8
-    CONTROL         "Create confirmation",cbNewConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,92,77,8
-    RTEXT           "Cmd output codepage:",IDC_STATIC,174,91,88,8
-    COMBOBOX        lbCmdOutputCP,264,88,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
-    CONTROL         "Long console output",cbLongOutput,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,108,84,8
-    EDITTEXT        tLongOutputHeight,173,106,29,12,ES_AUTOHSCROLL
-    RTEXT           "16bit height:",IDC_STATIC,218,108,44,8
-    COMBOBOX        lbNtvdmHeight,264,106,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
-    RTEXT           "New:",IDC_STATIC,9,141,19,8
-    CONTROL         "",hkNewConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,31,139,23,13
-    RTEXT           "Switch:",IDC_STATIC,58,141,25,8
-    CONTROL         "",hkSwitchConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,85,139,23,13
-    RTEXT           "Recreate:",IDC_STATIC,109,141,35,8
-    CONTROL         "",hkCloseConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,147,139,23,13
-    GROUPBOX        "Hotkeys",IDC_STATIC,4,125,319,61
-    RTEXT           "Close:",IDC_STATIC,174,141,22,8
-    CONTROL         "",hkDelConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,198,139,23,13
-    RTEXT           "Cmd:",IDC_STATIC,10,157,18,8
-    CONTROL         "",hkStartCmd,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,31,154,23,13
-    RTEXT           "Min:",IDC_STATIC,67,157,16,8
-    CONTROL         "",hkMinRestore,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,85,154,23,13
-    RTEXT           "Buffer:",IDC_STATIC,111,157,34,8
-    CONTROL         "",hkBufferMode,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,147,155,23,13
-    CONTROL         "Use «Host-key»+Number to switch consoles",cbUseWinNumber,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,172,163,10
-    CONTROL         "Show on taskbar",cbTabsOnTaskBar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,108,74,8
+    RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,69,107,8
+    EDITTEXT        tTabLenMax,119,67,40,12,ES_AUTOHSCROLL
+    CONTROL         "Admin shield, or suffix",cbAdminShield,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,68,83,10
+    EDITTEXT        tAdminSuffix,254,67,64,12,ES_AUTOHSCROLL | WS_DISABLED
+    GROUPBOX        "Multi console",IDC_STATIC,4,88,319,58
+    CONTROL         "Multi Console",cbMultiCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,101,61,8
+    CONTROL         "Create confirmation",cbNewConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,101,77,8
+    RTEXT           "Cmd output codepage:",IDC_STATIC,174,100,88,8
+    COMBOBOX        lbCmdOutputCP,264,97,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
+    CONTROL         "Long console output",cbLongOutput,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,117,84,8
+    EDITTEXT        tLongOutputHeight,173,115,29,12,ES_AUTOHSCROLL
+    RTEXT           "16bit height:",IDC_STATIC,218,117,44,8
+    COMBOBOX        lbNtvdmHeight,264,115,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
+    CONTROL         "Show on taskbar",cbTabsOnTaskBar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,117,74,8
+    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %i - Far window number (F12), %% - %",IDC_STATIC,10,55,309,8
+    CONTROL         "«Host-key»+Number iterates Far windows",cbMultiIterate,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,131,159,10
 END
 
 IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319
@@ -694,11 +680,10 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "ConEmu hotkeys list",IDC_STATIC,4,1,319,162
-    CONTROL         "List1",lbConEmuHotKeys,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,8,12,311,145
-    RTEXT           "Choose hotkey:",stHotKeySelect,9,146,56,8,NOT WS_VISIBLE | WS_DISABLED
-    CONTROL         "",hkHotKeySelect,"msctls_hotkey32",NOT WS_VISIBLE | WS_DISABLED | WS_BORDER | WS_TABSTOP,68,144,23,14
-    RTEXT           "Choose modifier:",stHotModifierSelect,100,146,56,8,NOT WS_VISIBLE | WS_DISABLED
-    COMBOBOX        lbLDragKey,159,144,56,30,CBS_DROPDOWNLIST | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "List1",lbConEmuHotKeys,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,8,12,311,128
+    RTEXT           "Choose hotkey:",stHotKeySelect,9,146,64,8,WS_DISABLED
+    CONTROL         "",hkHotKeySelect,"msctls_hotkey32",WS_DISABLED | WS_BORDER | WS_TABSTOP,77,144,47,14
+    COMBOBOX        lbHotKeyList,130,144,56,30,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Host-key",IDC_STATIC,4,166,87,65
     CONTROL         "Win",cbHostWin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,179,28,10
     CONTROL         "LAlt",cbHostLAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,179,28,10
@@ -710,7 +695,7 @@ BEGIN
     CONTROL         "RShift",cbHostRShift,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,215,35,10
     GROUPBOX        "Intercept keys",IDC_STATIC,97,166,106,65
     CONTROL         "Install keyboard hooks",cbInstallKeybHooks,"Button",BS_AUTO3STATE | WS_TABSTOP,105,179,93,10
-    CONTROL         "«Host-key»+Number",cbUseWinNumberK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,191,93,10
+    CONTROL         "«Host-key»+Number",cbUseWinNumber,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,191,93,10
     CONTROL         "Disable Win+Tab",cbUseWinTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,203,93,10
     CONTROL         "«Host-key»+Arrows",cbUseWinArrows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,215,93,10
     GROUPBOX        "Send to console",IDC_STATIC,209,166,112,65
@@ -721,6 +706,7 @@ BEGIN
     CONTROL         "PrntScrn",cbSendPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,203,43,10
     CONTROL         "Ctrl+Esc",cbSendCtrlEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,271,203,43,10
     CONTROL         "Alt+PrntScrn",cbSendAltPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,215,57,10
+    EDITTEXT        tGuiMacro,191,144,127,13,ES_AUTOHSCROLL | WS_DISABLED
 END
 
 IDD_SPG_UPDATE DIALOGEX 0, 0, 328, 235
@@ -788,6 +774,7 @@ BEGIN
     LTEXT           """LoadConIme""=dword:00000000",stDisableConImeFast3,20,196,292,8
     DEFPUSHBUTTON   "OK",IDOK,215,212,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,269,212,50,14
+    LTEXT           "http://conemu-maximus5.googlecode.com",stHomePage,10,215,150,8,SS_NOTIFY
 END
 
 

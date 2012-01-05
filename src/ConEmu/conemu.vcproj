@@ -1617,6 +1617,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\VConRelease.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\VirtualConsole.cpp"
 				>
 			</File>
@@ -1816,6 +1820,10 @@
 			</File>
 			<File
 				RelativePath=".\UpdateSet.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VConRelease.h"
 				>
 			</File>
 			<File

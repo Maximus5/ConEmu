@@ -28,6 +28,7 @@ SRCS =  \
 		TrayIcon.cpp       \
 		Update.cpp         \
 		UpdateSet.cpp      \
+		VConRelease.cpp \
 		VirtualConsole.cpp \
 		../common/Common.cpp \
 		../common/ConEmuCheck.cpp \

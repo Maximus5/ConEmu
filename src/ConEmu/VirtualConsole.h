@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "kl_parts.h"
 //#include "../Common/common.hpp"
 #include "../Common/ConEmuCheck.h"
+#include "VConRelease.h"
 
 #include "Options.h"
 #include "RealConsole.h"
@@ -41,12 +42,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CBackground;
 class CTaskBarGhost;
 
-class CVirtualConsole : public CConEmuChild
+class CVirtualConsole :
+	public CConEmuChild,
+	public CVConRelease
 {
 	private:
 		// RealConsole
 		CRealConsole  *mp_RCon;
 		CTaskBarGhost *mp_Ghost;
+	public:
+		CVirtualConsole(const RConStartArgs *args);
+		static CVirtualConsole* CreateVCon(RConStartArgs *args);
+		void InitGhost();
+	protected:
+		virtual ~CVirtualConsole();
+		friend class CVConRelease;
 	public:
 		CRealConsole *RCon();
 		HWND GuiWnd();
@@ -234,13 +244,6 @@ class CVirtualConsole : public CConEmuChild
 
 		bool  mb_LastFadeFlag;
 
-		//CONSOLE_SELECTION_INFO SelectionInfo;
-
-		CVirtualConsole(const RConStartArgs *args);
-		virtual ~CVirtualConsole();
-		static CVirtualConsole* CreateVCon(RConStartArgs *args);
-		void InitGhost();
-
 		void DumpConsole();
 		BOOL Dump(LPCWSTR asFile);
 		bool Update(bool abForce = false, HDC *ahDc=NULL);
@@ -306,7 +309,9 @@ class CVirtualConsole : public CConEmuChild
 		HANDLE mh_Heap;
 		LPVOID Alloc(size_t nCount, size_t nSize);
 		void Free(LPVOID ptr);
-		MSection csDC;  /*DWORD ncsTDC;*/ BOOL mb_PaintRequested; BOOL mb_PaintLocked;
+		//MSection csDC;  /*DWORD ncsTDC;*/
+		//BOOL mb_PaintRequested;
+		//BOOL mb_PaintLocked;
 		MSection csCON; /*DWORD ncsTCON;*/
 		int mn_BackColorIdx; //==0
 		void Box(LPCTSTR szText);

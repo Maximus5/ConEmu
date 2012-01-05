@@ -112,7 +112,7 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	}
 	if (!pszArcPath || !*pszArcPath)
 	{
-		szUpdateArcCmdLineDef = lstrdup(L"\"%ProgramFiles%\\7-Zip\7zg.exe\" x -y \"%1\""); // "%1"-archive file, "%2"-ConEmu base dir
+		szUpdateArcCmdLineDef = lstrdup(L"\"%ProgramFiles%\\7-Zip\\7zg.exe\" x -y \"%1\""); // "%1"-archive file, "%2"-ConEmu base dir
 	}
 	else
 	{

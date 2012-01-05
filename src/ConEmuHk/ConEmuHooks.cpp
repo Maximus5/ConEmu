@@ -46,13 +46,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SETCONCP_TIMEOUT 1000
 
 #include <windows.h>
+#include <WinError.h>
+#include <WinNT.h>
 #include <TCHAR.h>
 #include <Tlhelp32.h>
 #include <shlwapi.h>
-#include "..\common\common.hpp"
-#include "..\common\ConEmuCheck.h"
+#include "../common/common.hpp"
+#include "../common/ConEmuCheck.h"
 #include "SetHook.h"
-#include "..\common\execute.h"
+#include "../common/execute.h"
 #include "ConEmuHooks.h"
 #include "RegHooks.h"
 #include "ShellProcessor.h"
@@ -212,6 +214,8 @@ HWND WINAPI OnSetParent(HWND hWndChild, HWND hWndNewParent);
 HWND WINAPI OnGetParent(HWND hWnd);
 HWND WINAPI OnGetWindow(HWND hWnd, UINT uCmd);
 HWND WINAPI OnGetAncestor(HWND hwnd, UINT gaFlags);
+int WINAPI OnGetClassNameA(HWND hWnd, LPSTR lpClassName, int nMaxCount);
+int WINAPI OnGetClassNameW(HWND hWnd, LPWSTR lpClassName, int nMaxCount);
 BOOL WINAPI OnMoveWindow(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint);
 BOOL WINAPI OnSetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
 BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
@@ -357,6 +361,8 @@ bool InitHooksUser32()
 		{(void*)OnGetParent,			"GetParent",			user32},
 		{(void*)OnGetWindow,			"GetWindow",			user32},
 		{(void*)OnGetAncestor,			"GetAncestor",			user32},
+		{(void*)OnGetClassNameA,		"GetClassNameA",		user32},
+		{(void*)OnGetClassNameW,		"GetClassNameW",		user32},
 		{(void*)OnGetActiveWindow,		"GetActiveWindow",		user32},
 		{(void*)OnMoveWindow,			"MoveWindow",			user32},
 		{(void*)OnSetWindowPos,			"SetWindowPos",			user32},
@@ -1029,6 +1035,8 @@ BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect)
 	//	lpRect->top += ptCur.y;
 	//	lpRect->bottom += ptCur.y;
 	//}
+
+	_ASSERTRESULT(lbRc);
 	return lbRc;
 }
 
@@ -1179,6 +1187,7 @@ HWND WINAPI OnGetWindow(HWND hWnd, UINT uCmd)
 		}
 	}
 
+	_ASSERTRESULT(lhRc!=NULL);
 	return lhRc;
 }
 
@@ -1250,7 +1259,38 @@ HWND WINAPI OnGetAncestor(HWND hWnd, UINT gaFlags)
 		}
 	}
 
+	_ASSERTRESULT(lhRc);
 	return lhRc;
+}
+
+//Issue 469: Some programs requires "ConsoleWindowClass" for GetConsoleWindow
+int WINAPI OnGetClassNameA(HWND hWnd, LPSTR lpClassName, int nMaxCount)
+{
+	typedef int (WINAPI *OnGetClassNameA_t)(HWND hWnd, LPSTR lpClassName, int nMaxCount);
+	ORIGINALFASTEX(GetClassNameA,NULL);
+	int iRc = 0;
+	if (ghConEmuWndDC && hWnd == ghConEmuWndDC && lpClassName)
+	{
+		lstrcpynA(lpClassName, "ConsoleWindowClass", nMaxCount);
+		iRc = lstrlenA(lpClassName);
+	}
+	else if (F(GetClassNameA))
+		iRc = F(GetClassNameA)(hWnd, lpClassName, nMaxCount);
+	return iRc;
+}
+int WINAPI OnGetClassNameW(HWND hWnd, LPWSTR lpClassName, int nMaxCount)
+{
+	typedef int (WINAPI *OnGetClassNameW_t)(HWND hWnd, LPWSTR lpClassName, int nMaxCount);
+	ORIGINALFASTEX(GetClassNameW,NULL);
+	int iRc = 0;
+	if (ghConEmuWndDC && hWnd == ghConEmuWndDC && lpClassName)
+	{
+		lstrcpynW(lpClassName, L"ConsoleWindowClass", nMaxCount);
+		iRc = lstrlenW(lpClassName);
+	}
+	else if (F(GetClassNameW))
+		iRc = F(GetClassNameW)(hWnd, lpClassName, nMaxCount);
+	return iRc;
 }
 
 HWND WINAPI OnGetActiveWindow()
@@ -1386,7 +1426,10 @@ BOOL WINAPI OnSetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx
 	BOOL lbRc = FALSE;
 
 	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
+	{
+		_ASSERTRESULT(FALSE);
 		return TRUE; // обманем. приложениям запрещено "двигать" ConEmuDC
+	}
 
 	if (ghConEmuWndDC && ghAttachGuiClient && hWnd == ghAttachGuiClient)
 	{
@@ -1397,6 +1440,7 @@ BOOL WINAPI OnSetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx
 	if (F(SetWindowPos))
 		lbRc = F(SetWindowPos)(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
 
+	_ASSERTRESULT(lbRc);
 	return lbRc;
 }
 
@@ -1584,7 +1628,8 @@ BOOL WINAPI OnGetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgF
 
 	if (lRc && ghAttachGuiClient)
 		PatchGuiMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
-		
+	
+	_ASSERTRESULT(TRUE);
 	return lRc;
 }
 BOOL WINAPI OnPeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
@@ -1670,6 +1715,7 @@ HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWi
 		}
 	}
 
+	_ASSERTRESULT(hWnd!=NULL);
 	return hWnd;
 }
 
@@ -1845,6 +1891,7 @@ HWND WINAPI OnCreateDialogParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HW
 int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2)
 {
 	typedef int (WINAPI* OnCompareStringW_t)(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
+	SUPPRESSORIGINALSHOWCALL;
 	ORIGINALFAST(CompareStringW);
 	int nCmp = -1;
 
@@ -2386,6 +2433,7 @@ void PreWriteConsoleInput(BOOL abUnicode, const INPUT_RECORD *lpBuffer, DWORD nL
 BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
 	typedef BOOL (WINAPI* OnPeekConsoleInputA_t)(HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
+	SUPPRESSORIGINALSHOWCALL;
 	ORIGINAL(PeekConsoleInputA);
 	//if (gpFarInfo && bMainThread)
 	//	TouchReadPeekConsoleInputs(1);
@@ -2427,6 +2475,7 @@ BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
 	typedef BOOL (WINAPI* OnPeekConsoleInputW_t)(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+	SUPPRESSORIGINALSHOWCALL;
 	ORIGINAL(PeekConsoleInputW);
 	//if (gpFarInfo && bMainThread)
 	//	TouchReadPeekConsoleInputs(1);
@@ -2477,6 +2526,7 @@ BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
 	typedef BOOL (WINAPI* OnReadConsoleInputA_t)(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+	SUPPRESSORIGINALSHOWCALL;
 	ORIGINAL(ReadConsoleInputA);
 	//if (gpFarInfo && bMainThread)
 	//	TouchReadPeekConsoleInputs(0);
@@ -2518,6 +2568,7 @@ BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
 	typedef BOOL (WINAPI* OnReadConsoleInputW_t)(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+	SUPPRESSORIGINALSHOWCALL;
 	ORIGINAL(ReadConsoleInputW);
 	//if (gpFarInfo && bMainThread)
 	//	TouchReadPeekConsoleInputs(0);

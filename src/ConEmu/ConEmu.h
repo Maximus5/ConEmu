@@ -517,6 +517,10 @@ class CConEmuMain :
 		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 		void OnHideCaption();
+		void OnInfo_About();
+		void OnInfo_Help();
+		void OnInfo_HomePage();
+		void OnInfo_ReportBug();
 		LRESULT OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam);
 		LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnKeyboardHook(WORD vk, BOOL abReverse);

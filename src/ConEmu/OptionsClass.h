@@ -483,8 +483,8 @@ class CSettings
 		// OnInitDialogPage_t: IDD_SPG_MAIN, и т.д.
 		LRESULT OnInitDialog_Main(HWND hWnd2);
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
-		LRESULT OnInitDialog_Far(HWND hWnd2);
-		LRESULT OnInitDialog_Keys(HWND hWnd2);
+		LRESULT OnInitDialog_Far(HWND hWnd2, BOOL abInitial);
+		LRESULT OnInitDialog_Keys(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
 		LRESULT OnInitDialog_Color(HWND hWnd2);
 		LRESULT OnInitDialog_Views(HWND hWnd2);
@@ -503,7 +503,9 @@ class CSettings
 		INT_PTR OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnSaveActivityLogFile(HWND hListView);
-		void FillHotKeysList();
+		LRESULT OnActivityLogNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		void FillHotKeysList(BOOL abInitial);
+		LRESULT OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
 	private:
@@ -607,10 +609,15 @@ class CSettings
 			DWORD Modifier; // System only, дл€ "User" - используетс€ "HostKey"
 			
 			TODO("—юда можно бы еще добавить инфу на какой странице и как его настраивать");
+
+			// Internal
+
 		};
 		#define MAKEMODIFIER2(vk1,vk2) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)
 		#define MAKEMODIFIER3(vk1,vk2,vk3) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)|(((DWORD)vk3&0xFF)<<16)
 		ConEmuHotKeys *m_HotKeys;
+		ConEmuHotKeys *mp_ActiveHotKey;
+
 		enum KeyListColumns
 		{
 			klc_Type = 0,

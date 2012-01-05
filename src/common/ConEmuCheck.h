@@ -31,13 +31,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.hpp"
 
-#define VirtualConsoleClass L"VirtualConsoleClass"
-#define VirtualConsoleClassMain L"VirtualConsoleClass"
-#define VirtualConsoleClassApp L"VirtualConsoleClassApp"
-#define VirtualConsoleClassBack L"VirtualConsoleClassBack"
-#define VirtualConsoleClassScroll L"VirtualConsoleClassScroll"
-#define VirtualConsoleClassGhost L"VirtualConsoleClassGhost"
-
 #ifdef _DEBUG
 	#define EXECUTE_CMD_WARN_TIMEOUT 500
 	#define EXECUTE_CMD_WARN_TIMEOUT2 10000

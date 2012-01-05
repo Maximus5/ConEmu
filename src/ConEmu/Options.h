@@ -579,6 +579,20 @@ struct Settings
 		//wchar_t *szUpdateDownloadPath; // "%TEMP%"
 		//bool isUpdateLeavePackages;
 		//wchar_t *szUpdatePostUpdateCmd; // ёзер может чего-то свое делать с распакованными файлами
+
+
+		/* *** HotKeys & GuiMacros *** */
+		//reg->Load(L"GuiMacro<N>.Key", &Macros.vk);
+		//reg->Load(L"GuiMacro<N>.Macro", &Macros.szGuiMacro);
+		struct HotGuiMacro
+		{
+			union {
+				BYTE vk;
+				LPVOID dummy;
+			};
+			wchar_t* szGuiMacro;
+		};
+		HotGuiMacro Macros[24];
 		
 	public:
 		void LoadSettings();

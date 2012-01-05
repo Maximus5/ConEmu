@@ -27,16 +27,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <windows.h>
-#include "..\common\common.hpp"
+#include "../common/common.hpp"
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif
-#include "..\common\pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
+#include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif
+#include "../common/plugin_helper.h"
 #include "PluginHeader.h"
-#include "..\common\farcolor2.hpp"
+#include "../common/farcolor2.hpp"
 
 #ifdef _DEBUG
 //#define SHOW_DEBUG_EVENTS
@@ -106,9 +107,9 @@ int WINAPI _export GetMinFarVersionW(void)
 void GetPluginInfoW995(void *piv)
 {
 	PluginInfo *pi = (PluginInfo*)piv;
-	memset(pi, 0, sizeof(PluginInfo));
-
-	pi->StructSize = sizeof(struct PluginInfo);
+	//memset(pi, 0, sizeof(PluginInfo));
+	//pi->StructSize = sizeof(struct PluginInfo);
+	_ASSERTE(pi->StructSize>0 && (pi->StructSize >= sizeof(*pi)));
 
 	static WCHAR *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1; //lstrcpyW(szMenu[0], L"[&\x2560] ConEmu"); -> 0x2584
@@ -427,15 +428,7 @@ void ProcessDragToW995()
 
 void SetStartupInfoW995(void *aInfo)
 {
-	::InfoW995 = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
-	::FSFW995 = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
-
-	if (::InfoW995 == NULL || ::FSFW995 == NULL)
-		return;
-
-	*::InfoW995 = *((struct PluginStartupInfo*)aInfo);
-	*::FSFW995 = *((struct PluginStartupInfo*)aInfo)->FSF;
-	::InfoW995->FSF = ::FSFW995;
+	INIT_FAR_PSI(::InfoW995, ::FSFW995, (PluginStartupInfo*)aInfo);
 
 	DWORD nFarVer = 0;
 	if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARVERSION, &nFarVer))

@@ -28,12 +28,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include <wchar.h>
-#include "..\common\common.hpp"
-#include "..\common\RgnDetect.h"
+#include "../common/common.hpp"
+#include "../common/RgnDetect.h"
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif
-#include "..\common\pluginW1761.hpp"
+#include "../common/pluginW1761.hpp"
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif

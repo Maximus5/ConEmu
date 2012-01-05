@@ -213,7 +213,7 @@ CConEmuUpdate::CConEmuUpdate()
 	mpsz_PendingPackageFile = mpsz_PendingBatchFile = NULL;
 	wi = NULL;
 	m_UpdateStep = us_NotStarted;
-	ms_NewVersion[0] = ms_CurVersion[0] = 0;
+	ms_NewVersion[0] = ms_CurVersion[0] = ms_SkipVersion[0] = 0;
 }
 
 CConEmuUpdate::~CConEmuUpdate()
@@ -562,13 +562,16 @@ DWORD CConEmuUpdate::CheckProcInt()
 		goto wrap;
 	}
 	
-	if (lstrcmpi(ms_NewVersion, ms_CurVersion) <= 0)
+	if ((lstrcmpi(ms_NewVersion, ms_CurVersion) <= 0)
+		// ≈сли пользователь отказалс€ от обновлени€ в этом сеансе - не предлагать ту же версию при ежечасных проверках
+		|| (!mb_ManualCallMode && (lstrcmp(ms_NewVersion, ms_SkipVersion) == 0)))
 	{
 		// Ќовых версий нет
 		if (mb_ManualCallMode)
 		{
 			ReportError(L"You are using latest available %s version (%s)", (mp_Set->isUpdateUseBuilds==1) ? L"stable" : L"developer", ms_CurVersion, 0);
 		}
+
 		if (bTempUpdateVerLocation && pszUpdateVerLocation && *pszUpdateVerLocation)
 		{
 			DeleteFile(pszUpdateVerLocation);
@@ -599,6 +602,8 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 	if (!QueryConfirmation(us_ConfirmDownload, pszSource))
 	{
+		// ≈сли пользователь отказалс€ от обновлени€ в этом сеансе - не предлагать ту же версию при ежечасных проверках
+		wcscpy_c(ms_SkipVersion, ms_NewVersion);
 		goto wrap;
 	}
 
@@ -669,6 +674,8 @@ DWORD CConEmuUpdate::CheckProcInt()
 	*/
 	if (!QueryConfirmation(us_ConfirmUpdate))
 	{
+		// ≈сли пользователь отказалс€ от обновлени€ в этом сеансе - не предлагать ту же версию при ежечасных проверках
+		wcscpy_c(ms_SkipVersion, ms_NewVersion);
 		goto wrap;
 	}
 	mpsz_PendingPackageFile = pszLocalPackage;

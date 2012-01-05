@@ -30,10 +30,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TCHAR.h>
 #include <Tlhelp32.h>
 #include <shlwapi.h>
-#include "..\common\common.hpp"
-#include "..\common\ConEmuCheck.h"
+#include "../common/common.hpp"
+#include "../common/ConEmuCheck.h"
 #include "SetHook.h"
-#include "..\common\execute.h"
+#include "../common/execute.h"
 #include "ConEmuHooks.h"
 #include "ShellProcessor.h"
 #include "Injects.h"

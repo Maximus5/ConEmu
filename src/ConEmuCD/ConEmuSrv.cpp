@@ -29,8 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "ConEmuC.h"
-#include "..\common\ConsoleAnnotation.h"
-#include "..\common\Execute.h"
+#include "../common/ConsoleAnnotation.h"
+#include "../common/Execute.h"
 #include "TokenHelper.h"
 
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s) // ConEmuC: Recieved key... / ConEmuC: Recieved input

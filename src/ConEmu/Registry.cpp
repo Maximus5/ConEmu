@@ -102,7 +102,7 @@ bool SettingsRegistry::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 	}
 	return false;
 }
-// После вызова ЭТОЙ функции - про старое значение в *value строго забываем
+// эта функция, если значения нет (или тип некорректный) *value НЕ трогает
 bool SettingsRegistry::Load(const wchar_t *regName, wchar_t **value)
 {
 	DWORD len = 0;
@@ -117,19 +117,19 @@ bool SettingsRegistry::Load(const wchar_t *regName, wchar_t **value)
 
 		if (!lbRc)
 			nChLen = 0;
-		(*value)[nChLen] = 0; (*value)[nChLen+1] = 0;
+		(*value)[nChLen] = 0; (*value)[nChLen+1] = 0; // На случай REG_MULTI_SZ
 
 		return lbRc;
 	}
-	else if (!*value)
-	{
-		*value = (wchar_t*)malloc(sizeof(wchar_t)*2);
-		(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
-	}
+	//else if (!*value)
+	//{
+	//	*value = (wchar_t*)malloc(sizeof(wchar_t)*2);
+	//	(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
+	//}
 
 	return false;
 }
-// А эта функция, если значения нет (или тип некорректный) value НЕ трогает
+// эта функция, если значения нет (или тип некорректный) value НЕ трогает
 bool SettingsRegistry::Load(const wchar_t *regName, wchar_t *value, int maxLen)
 {
 	_ASSERTE(maxLen>1);
@@ -730,7 +730,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 	return pChild;
 }
 
-// После вызова ЭТОЙ функции - про старое значение в *value строго забываем
+// эта функция, если значения нет (или тип некорректный) *value НЕ трогает
 bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 {
 	bool lbRc = false;
@@ -744,7 +744,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 	BSTR bsData = NULL;
 	size_t nLen = 0;
 
-	if (*value) {free(*value); *value = NULL;}
+	//if (*value) {free(*value); *value = NULL;}
 
 	if (mp_Key)
 		pChild = FindItem(mp_Key, L"value", regName, false);
@@ -840,6 +840,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 			// значит что-то прочитать удалось
 			if (pszData)
 			{
+				if (*value) {free(*value); *value = NULL;}
 				*value = pszData;
 				lbRc = true;
 			}
@@ -851,6 +852,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 			if (SUCCEEDED(hr) && bsData)
 			{
 				nLen = _tcslen(bsData);
+				if (*value) {free(*value); *value = NULL;}
 				*value = (wchar_t*)malloc((nLen+2)*sizeof(wchar_t));
 				lstrcpy(*value, bsData);
 				(*value)[nLen] = 0; // уже должен быть после lstrcpy
@@ -870,16 +872,16 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 
 	if (pAttrs) { pAttrs->Release(); pAttrs = NULL; }
 
-	if (!lbRc)
-	{
-		_ASSERTE(*value == NULL);
-		*value = (wchar_t*)malloc(sizeof(wchar_t)*2);
-		(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
-	}
+	//if (!lbRc)
+	//{
+	//	_ASSERTE(*value == NULL);
+	//	*value = (wchar_t*)malloc(sizeof(wchar_t)*2);
+	//	(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
+	//}
 
 	return lbRc;
 }
-// А эта функция, если значения нет (или тип некорректный) value НЕ трогает
+// эта функция, если значения нет (или тип некорректный) value НЕ трогает
 bool SettingsXML::Load(const wchar_t *regName, wchar_t *value, int maxLen)
 {
 	_ASSERTE(maxLen>1);

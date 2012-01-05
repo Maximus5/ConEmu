@@ -34,6 +34,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEFINE_HOOK_MACROS
 
+#ifdef _DEBUG
+	//#define HOOK_ERROR_PROC
+	#undef HOOK_ERROR_PROC
+	#define HOOK_ERROR_NO ERROR_INVALID_DATA
+#else
+	#undef HOOK_ERROR_PROC
+#endif
+
 #include <windows.h>
 #include <Tlhelp32.h>
 #include "../common/common.hpp"
@@ -56,6 +64,10 @@ HMODULE ghHookOurModule = NULL; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 DWORD   gnHookMainThreadId = 0;
 
 extern BOOL gbDllStopCalled;
+
+#ifdef _DEBUG
+bool gbSuppressShowCall = false;
+#endif
 
 //extern CEFAR_INFO_MAPPING *gpFarInfo, *gpFarInfoMapping; //gpConsoleInfo;
 //extern HANDLE ghFarAliveEvent;
@@ -371,6 +383,10 @@ HMODULE WINAPI OnLoadLibraryExW(const WCHAR* lpFileName, HANDLE hFile, DWORD dwF
 HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
 BOOL WINAPI OnFreeLibrary(HMODULE hModule);
 FARPROC WINAPI OnGetProcAddress(HMODULE hModule, LPCSTR lpProcName);
+#ifdef HOOK_ERROR_PROC
+DWORD WINAPI OnGetLastError();
+VOID WINAPI OnSetLastError(DWORD dwErrCode);
+#endif
 
 HookItem *gpHooks = NULL;
 size_t gnHookedFuncs = 0;
@@ -381,6 +397,10 @@ const char *szLoadLibraryExA = "LoadLibraryExA";
 const char *szLoadLibraryExW = "LoadLibraryExW";
 const char *szFreeLibrary = "FreeLibrary";
 const char *szGetProcAddress = "GetProcAddress";
+#ifdef HOOK_ERROR_PROC
+const char *szGetLastError = "GetLastError";
+const char *szSetLastError = "SetLastError";
+#endif
 
 bool InitHooksLibrary()
 {
@@ -396,29 +416,6 @@ bool InitHooksLibrary()
 		return false;
 	}
 
-	//HookItemLt LibHooks[MAX_HOOKED_PROCS] =
-	//{
-	//	/* ************************ */
-	//	{(void*)OnLoadLibraryA,			"LoadLibraryA",			kernel32},
-	//	{(void*)OnLoadLibraryW,			"LoadLibraryW",			kernel32},
-	//	{(void*)OnLoadLibraryExA,		"LoadLibraryExA",		kernel32},
-	//	{(void*)OnLoadLibraryExW,		"LoadLibraryExW",		kernel32},
-	//	{(void*)OnFreeLibrary,			"FreeLibrary",			kernel32}, // OnFreeLibrary тоже нужен!
-	//	#ifndef HOOKS_SKIP_GETPROCADDRESS
-	//	{(void*)OnGetProcAddress,		"GetProcAddress",		kernel32},
-	//	#endif
-	//	/* ************************ */
-	//	{0}
-	//};
-	//
-	////memmove(gpHooks, LibHooks, sizeof(LibHooks));
-	//for (size_t i = 0; i < countof(LibHooks) && LibHooks[i].NewAddress; i++)
-	//{
-	//	gpHooks[i].NewAddress = LibHooks[i].NewAddress;
-	//	gpHooks[i].Name = LibHooks[i].Name;
-	//	gpHooks[i].DllName = LibHooks[i].DllName;
-	//}
-
 	gnHookedFuncs = 0;
 	#define ADDFUNC(pProc,szName,szDll) \
 		gpHooks[gnHookedFuncs].NewAddress = pProc; \
@@ -431,9 +428,14 @@ bool InitHooksLibrary()
 	ADDFUNC((void*)OnLoadLibraryExA,		szLoadLibraryExA,		kernel32);
 	ADDFUNC((void*)OnLoadLibraryExW,		szLoadLibraryExW,		kernel32);
 	ADDFUNC((void*)OnFreeLibrary,			szFreeLibrary,			kernel32); // OnFreeLibrary тоже нужен!
-	#ifndef HOOKS_SKIP_GETPROCADDRESS
 	ADDFUNC((void*)OnGetProcAddress,		szGetProcAddress,		kernel32);
+
+	#ifdef HOOK_ERROR_PROC
+	// Для отладки появления системных ошибок
+	ADDFUNC((void*)OnGetLastError,			szGetLastError,		kernel32);
+	ADDFUNC((void*)OnSetLastError,			szSetLastError,		kernel32);
 	#endif
+
 	ADDFUNC(NULL,NULL,NULL);
 	#undef ADDFUNC
 	/* ************************ */
@@ -738,6 +740,32 @@ bool IsModuleValid(HMODULE module)
 	if (LDR_IS_RESOURCE(module))
 		return false;
 
+#ifdef USE_SEH
+	bool lbValid = true;
+	IMAGE_DOS_HEADER dos;
+	IMAGE_NT_HEADERS nt;
+
+	SAFETRY
+	{
+		memmove(&dos, (void*)module, sizeof(dos));
+		if (dos.e_magic != IMAGE_DOS_SIGNATURE /*'ZM'*/)
+		{
+			lbValid = false;
+		}
+		else
+		{
+			memmove(&nt, (IMAGE_NT_HEADERS*)((char*)module + ((IMAGE_DOS_HEADER*)module)->e_lfanew), sizeof(nt));
+			if (nt.Signature != 0x004550)
+				lbValid = false;
+		}
+	}
+	SAFECATCH
+	{
+		lbValid = false;
+	}
+
+	return lbValid;
+#else
 	if (IsBadReadPtr((void*)module, sizeof(IMAGE_DOS_HEADER)))
 		return false;
 
@@ -752,6 +780,7 @@ bool IsModuleValid(HMODULE module)
 		return false;
 
 	return true;
+#endif
 }
 
 bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, size_t cchNameMax)
@@ -2143,43 +2172,68 @@ HMODULE WINAPI OnLoadLibraryExW(const wchar_t* lpFileName, HANDLE hFile, DWORD d
 	return module;
 }
 
-typedef FARPROC(WINAPI* OnGetProcAddress_t)(HMODULE hModule, LPCSTR lpProcName);
 FARPROC WINAPI OnGetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 {
+	typedef FARPROC(WINAPI* OnGetProcAddress_t)(HMODULE hModule, LPCSTR lpProcName);
 	ORIGINALFAST(GetProcAddress);
 	FARPROC lpfn = NULL;
+
+	#ifdef LOG_ORIGINAL_CALL
+	char gszLastGetProcAddress[255];
+	#endif
 
 	if (gbHooksTemporaryDisabled)
 	{
 		TODO("!!!");
+		#ifdef LOG_ORIGINAL_CALL
+		msprintf(gszLastGetProcAddress, countof(gszLastGetProcAddress),
+			(((DWORD_PTR)lpProcName) <= 0xFFFF) ? "   OnGetProcAddress(x%08X,%u)\n" : "   OnGetProcAddress(x%08X,%s)\n",
+			(DWORD)hModule, lpProcName);
+		#endif
 	}
 	else if (((DWORD_PTR)lpProcName) <= 0xFFFF)
 	{
 		TODO("!!! Обрабатывать и ORDINAL values !!!");
+		#ifdef LOG_ORIGINAL_CALL
+		msprintf(gszLastGetProcAddress, countof(gszLastGetProcAddress), "   OnGetProcAddress(x%08X,%u)\n",
+			(DWORD)hModule, (DWORD)lpProcName);
+		#endif
 	}
-	else if (gpHooks)
+	else
 	{
-		if (gbDllStopCalled)
+		#ifdef LOG_ORIGINAL_CALL
+		msprintf(gszLastGetProcAddress, countof(gszLastGetProcAddress), "   OnGetProcAddress(x%08X,%s)\n",
+			(DWORD)hModule, lpProcName);
+		#endif
+
+		if (gpHooks)
 		{
-			//-- assert нельзя, т.к. все уже деинициализировано!
-			//_ASSERTE(ghHeap!=NULL);
-			lpfn = NULL;
-		}
-		else
-		{
-			for (int i = 0; gpHooks[i].Name; i++)
+			if (gbDllStopCalled)
 			{
-				// The spelling and case of a function name pointed to by lpProcName must be identical
-				// to that in the EXPORTS statement of the source DLL's module-definition (.Def) file
-				if (gpHooks[i].hDll == hModule
-						&& lstrcmpA(gpHooks[i].Name, lpProcName) == 0)
+				//-- assert нельзя, т.к. все уже деинициализировано!
+				//_ASSERTE(ghHeap!=NULL);
+				lpfn = NULL;
+			}
+			else
+			{
+				for (int i = 0; gpHooks[i].Name; i++)
 				{
-					lpfn = (FARPROC)gpHooks[i].NewAddress;
-					break;
+					// The spelling and case of a function name pointed to by lpProcName must be identical
+					// to that in the EXPORTS statement of the source DLL's module-definition (.Def) file
+					if (gpHooks[i].hDll == hModule
+							&& lstrcmpA(gpHooks[i].Name, lpProcName) == 0)
+					{
+						lpfn = (FARPROC)gpHooks[i].NewAddress;
+						break;
+					}
 				}
 			}
 		}
 	}
+
+	#ifdef LOG_ORIGINAL_CALL
+	OutputDebugStringA(gszLastGetProcAddress);
+	#endif
 
 	if (!lpfn)
 		lpfn = F(GetProcAddress)(hModule, lpProcName);
@@ -2187,10 +2241,9 @@ FARPROC WINAPI OnGetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 	return lpfn;
 }
 
-TODO("по хорошему бы еще и FreeDll хукать нужно, чтобы не позвать случайно неактуальную функцию...");
-typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
 BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 {
+	typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
 	ORIGINALFAST(FreeLibrary);
 	BOOL lbRc = FALSE;
 	BOOL lbResource = LDR_IS_RESOURCE(hModule);
@@ -2315,3 +2368,36 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 	return lbRc;
 }
 
+
+#ifdef HOOK_ERROR_PROC
+DWORD WINAPI OnGetLastError()
+{
+	typedef DWORD (WINAPI* OnGetLastError_t)();
+	SUPPRESSORIGINALSHOWCALL;
+	ORIGINALFAST(GetLastError);
+	DWORD nErr = 0;
+
+	if (F(GetLastError))
+		nErr = F(GetLastError)();
+
+	if (nErr == HOOK_ERROR_NO)
+	{
+		nErr = HOOK_ERROR_NO;
+	}
+	return nErr;
+}
+VOID WINAPI OnSetLastError(DWORD dwErrCode)
+{
+	typedef DWORD (WINAPI* OnSetLastError_t)(DWORD dwErrCode);
+	SUPPRESSORIGINALSHOWCALL;
+	ORIGINALFAST(SetLastError);
+
+	if (dwErrCode == HOOK_ERROR_NO)
+	{
+		dwErrCode = HOOK_ERROR_NO;
+	}
+
+	if (F(SetLastError))
+		F(SetLastError)(dwErrCode);
+}
+#endif

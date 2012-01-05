@@ -58,6 +58,13 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CES_NTVDM 0x10
 #define CEC_INITTITLE       L"ConEmu"
 
+#define VirtualConsoleClass L"VirtualConsoleClass"
+#define VirtualConsoleClassMain L"VirtualConsoleClass"
+#define VirtualConsoleClassApp L"VirtualConsoleClassApp"
+#define VirtualConsoleClassBack L"VirtualConsoleClassBack"
+#define VirtualConsoleClassScroll L"VirtualConsoleClassScroll"
+#define VirtualConsoleClassGhost L"VirtualConsoleClassGhost"
+
 #define CECOPYRIGHTSTRING_A "Copyright (c) 2009-2011, ConEmu.Maximus5@gmail.com"
 #define CECOPYRIGHTSTRING_W L"\x00A9 2009-2011 ConEmu.Maximus5@gmail.com"
 

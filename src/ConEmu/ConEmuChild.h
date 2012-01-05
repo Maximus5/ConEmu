@@ -37,8 +37,9 @@ class CConEmuChild
 {
 	public:
 		CConEmuChild();
+	protected:
 		virtual ~CConEmuChild();
-
+	public:
 		static LRESULT ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		LRESULT OnPaint();

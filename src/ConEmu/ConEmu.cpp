@@ -1557,12 +1557,13 @@ void CConEmuMain::Destroy()
 		}
 	}
 
-#ifdef _DEBUG
+	if (gbInDisplayLastError)
+		return; // Чтобы не схлопывались окна с сообщениями об ошибках
 
+	#ifdef _DEBUG
 	if (gbInMyAssertTrap)
 		return;
-
-#endif
+	#endif
 
 	if (ghWnd)
 	{
@@ -1595,7 +1596,7 @@ CConEmuMain::~CConEmuMain()
 		{
 			CVirtualConsole* p = mp_VCon[i];
 			mp_VCon[i] = NULL;
-			delete p;
+			p->Release();
 		}
 	}
 
@@ -8353,7 +8354,9 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	{
 		if (mp_VCon[i])
 		{
-			delete mp_VCon[i]; mp_VCon[i] = NULL;
+			CVirtualConsole* p = mp_VCon[i];
+			mp_VCon[i] = NULL;
+			p->Release();
 		}
 	}
 
@@ -11935,6 +11938,74 @@ void CConEmuMain::OnDesktopMode()
 #endif
 }
 
+void CConEmuMain::OnInfo_About()
+{
+	WCHAR szTitle[255];
+	LPCWSTR pszBits = WIN3264TEST(L"x86",L"x64");
+	LPCWSTR pszDebug = L"";
+	#ifdef _DEBUG
+	pszDebug = L"[DEBUG] ";
+	#endif
+
+	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%02u%02u%02u%s %s%s)", 
+		(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), pszDebug, pszBits);
+
+	BOOL b = gbDontEnable; gbDontEnable = TRUE;
+	MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance, pHelp, szTitle,
+		MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), NULL, NULL, LANG_NEUTRAL
+	};
+	MessageBoxIndirectW(&mb);
+	//MessageBoxW(ghWnd, pHelp, szTitle, MB_ICONQUESTION);
+	gbDontEnable = b;
+}
+
+void CConEmuMain::OnInfo_Help()
+{
+	static HMODULE hhctrl = NULL;
+
+	if (!hhctrl) hhctrl = GetModuleHandle(L"hhctrl.ocx");
+
+	if (!hhctrl) hhctrl = LoadLibrary(L"hhctrl.ocx");
+
+	if (hhctrl)
+	{
+		typedef BOOL (WINAPI* HTMLHelpW_t)(HWND hWnd, LPCWSTR pszFile, INT uCommand, INT dwData);
+		HTMLHelpW_t fHTMLHelpW = (HTMLHelpW_t)GetProcAddress(hhctrl, "HtmlHelpW");
+
+		if (fHTMLHelpW)
+		{
+			wchar_t szHelpFile[MAX_PATH*2];
+			lstrcpy(szHelpFile, ms_ConEmuChm);
+			//wchar_t* pszSlash = wcsrchr(szHelpFile, L'\\');
+			//if (pszSlash) pszSlash++; else pszSlash = szHelpFile;
+			//lstrcpy(pszSlash, L"ConEmu.chm");
+			// lstrcat(szHelpFile, L::/Intro.htm");
+			#define HH_HELP_CONTEXT 0x000F
+			#define HH_DISPLAY_TOC  0x0001
+			//fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_HELP_CONTEXT, contextID);
+			fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_DISPLAY_TOC, 0);
+		}
+	}
+}
+
+void CConEmuMain::OnInfo_HomePage()
+{
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsHomePage, NULL, NULL, SW_SHOWNORMAL);
+	if (shellRc <= 32)
+	{
+		DisplayLastError(L"ShellExecute failed", shellRc);
+	}
+}
+
+void CConEmuMain::OnInfo_ReportBug()
+{
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsReportBug, NULL, NULL, SW_SHOWNORMAL);
+	if (shellRc <= 32)
+	{
+		DisplayLastError(L"ShellExecute failed", shellRc);
+	}
+}
+
 LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
 #ifdef _DEBUG
@@ -12068,51 +12139,19 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			
 		case ID_HELP:
 		{
-			static HMODULE hhctrl = NULL;
-
-			if (!hhctrl) hhctrl = GetModuleHandle(L"hhctrl.ocx");
-
-			if (!hhctrl) hhctrl = LoadLibrary(L"hhctrl.ocx");
-
-			if (hhctrl)
-			{
-				typedef BOOL (WINAPI* HTMLHelpW_t)(HWND hWnd, LPCWSTR pszFile, INT uCommand, INT dwData);
-				HTMLHelpW_t fHTMLHelpW = (HTMLHelpW_t)GetProcAddress(hhctrl, "HtmlHelpW");
-
-				if (fHTMLHelpW)
-				{
-					wchar_t szHelpFile[MAX_PATH*2];
-					lstrcpy(szHelpFile, ms_ConEmuChm);
-					//wchar_t* pszSlash = wcsrchr(szHelpFile, L'\\');
-					//if (pszSlash) pszSlash++; else pszSlash = szHelpFile;
-					//lstrcpy(pszSlash, L"ConEmu.chm");
-					// lstrcat(szHelpFile, L::/Intro.htm");
-					#define HH_HELP_CONTEXT 0x000F
-					#define HH_DISPLAY_TOC  0x0001
-					//fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_HELP_CONTEXT, contextID);
-					fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_DISPLAY_TOC, 0);
-				}
-			}
+			gpConEmu->OnInfo_Help();
 			return 0;
 		} // case ID_HELP:
 		
 		case ID_HOMEPAGE:
 		{
-			DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsHomePage, NULL, NULL, SW_SHOWNORMAL);
-			if (shellRc <= 32)
-			{
-				DisplayLastError(L"ShellExecute failed", shellRc);
-			}
+			gpConEmu->OnInfo_HomePage();
 			return 0;
 		}
 		
 		case ID_REPORTBUG:
 		{
-			DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsReportBug, NULL, NULL, SW_SHOWNORMAL);
-			if (shellRc <= 32)
-			{
-				DisplayLastError(L"ShellExecute failed", shellRc);
-			}
+			gpConEmu->OnInfo_ReportBug();
 			return 0;
 		}
 		
@@ -12127,23 +12166,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		
 		case ID_ABOUT:
 		{
-			WCHAR szTitle[255];
-			LPCWSTR pszBits = WIN3264TEST(L"x86",L"x64");
-			LPCWSTR pszDebug = L"";
-			#ifdef _DEBUG
-			pszDebug = L"[DEBUG] ";
-			#endif
-
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%02u%02u%02u%s %s%s)", 
-				(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), pszDebug, pszBits);
-
-			BOOL b = gbDontEnable; gbDontEnable = TRUE;
-			MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance, pHelp, szTitle,
-			                   MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), NULL, NULL, LANG_NEUTRAL
-			                  };
-			MessageBoxIndirectW(&mb);
-			//MessageBoxW(ghWnd, pHelp, szTitle, MB_ICONQUESTION);
-			gbDontEnable = b;
+			gpConEmu->OnInfo_About();
 			return 0;
 		}
 
@@ -12883,7 +12906,7 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 			if (mp_VActive == apVCon)
 				mp_VActive = NULL;
 
-			delete apVCon;
+			apVCon->Release();
 			break;
 		}
 	}

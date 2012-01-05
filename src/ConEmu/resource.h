@@ -184,9 +184,6 @@
 #define cbRSelectionFix                 1536
 #define cbMonitorConsoleLang            1537
 #define cbSkipFocusEvents               1538
-#define hkNewConsole                    1539
-#define hkSwitchConsole                 1540
-#define hkDelConsole                    1541
 #define cbSkipActivation                1542
 #define cbSkipMove                      1543
 #define gbStandardColors                1544
@@ -238,8 +235,6 @@
 #define tPanelRight                     1601
 #define IDC_CHOOSE_DIR                  1602
 #define IDC_STARTUP_DIR                 1603
-#define hkStartCmd                      1604
-#define hkCloseConsole                  1605
 #define bFarHourglass                   1606
 #define bRClick                         1607
 #define bRealConsoleSettings            1608
@@ -393,8 +388,6 @@
 #define stHotKeySelect                  1769
 #define stHotModifierSelect             1770
 #define lbConEmuHotKeys                 1771
-#define hkMinRestore                    1772
-#define hkBufferMode                    1773
 #define IDC_ATTACHLIST                  1774
 #define IDC_NEWCONSOLE                  1775
 #define IDC_REFRESH                     1776
@@ -403,7 +396,6 @@
 #define cbSendAltPrintScrn              1779
 #define cbSendPrintScrn                 1780
 #define cbSendCtrlEsc                   1781
-#define cbUseWinNumberK                 1782
 #define cbDosBoxForceConfig             1783
 #define vkMinimizeRestore               2000
 #define vkMultiNew                      2001
@@ -501,6 +493,12 @@
 #define cbInjectConEmuHkFast            2098
 #define stInjectConEmuHkFast2           2099
 #define stInjectConEmuHkFast1           2100
+#define lbHotKeyList                    2101
+#define stHomePage                      2103
+#define IDC_CHECK1                      2104
+#define cbMultiIterate                  2104
+#define IDC_EDIT1                       2105
+#define tGuiMacro                       2105
 
 // Next default values for new objects
 // 
@@ -508,7 +506,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        216
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2101
+#define _APS_NEXT_CONTROL_VALUE         2106
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

@@ -112,7 +112,7 @@ public:
 protected:
 	BOOL mb_RequestTerminate;
 	UpdateStep m_UpdateStep;
-	wchar_t ms_NewVersion[64], ms_CurVersion[64];
+	wchar_t ms_NewVersion[64], ms_CurVersion[64], ms_SkipVersion[64];
 	bool QueryConfirmation(UpdateStep step, LPCWSTR asParm = NULL);
 	bool QueryConfirmationInt(LPCWSTR asConfirmInfo);
 };

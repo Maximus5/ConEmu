@@ -27,7 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <windows.h>
-#include "..\common\common.hpp"
+#include "../common/common.hpp"
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif
@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif
+#include "../common/plugin_helper.h"
 #include "PluginHeader.h"
 #include "../ConEmu/version.h"
 #include "../common/farcolor3.hpp"
@@ -112,9 +113,9 @@ static wchar_t* GetPanelDir(HANDLE hPanel)
 void GetPluginInfoW1900(void *piv)
 {
 	PluginInfo *pi = (PluginInfo*)piv;
-	memset(pi, 0, sizeof(PluginInfo));
-
-	pi->StructSize = sizeof(struct PluginInfo);
+	//memset(pi, 0, sizeof(PluginInfo));
+	//pi->StructSize = sizeof(struct PluginInfo);
+	_ASSERTE(pi->StructSize>0 && ((size_t)pi->StructSize >= (size_t)(((LPBYTE)&pi->MacroFunctionNumber) - (LPBYTE)pi)));
 
 	static wchar_t *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1; //lstrcpyW(szMenu[0], L"[&\x2560] ConEmu"); -> 0x2584
@@ -443,15 +444,7 @@ void ProcessDragToW1900()
 
 void SetStartupInfoW1900(void *aInfo)
 {
-	::InfoW1900 = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
-	::FSFW1900 = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
-
-	if (::InfoW1900 == NULL || ::FSFW1900 == NULL)
-		return;
-
-	*::InfoW1900 = *((struct PluginStartupInfo*)aInfo);
-	*::FSFW1900 = *((struct PluginStartupInfo*)aInfo)->FSF;
-	::InfoW1900->FSF = ::FSFW1900;
+	INIT_FAR_PSI(::InfoW1900, ::FSFW1900, (PluginStartupInfo*)aInfo);
 
 	VersionInfo FarVer = {0};
 	if (InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETFARMANAGERVERSION, 0, &FarVer))
@@ -1452,7 +1445,8 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	//static wchar_t szDescr[64]; _wcscpy_c(szTitle, L"ConEmu support for Far Manager");
 	//static wchar_t szAuthr[64]; _wcscpy_c(szTitle, L"ConEmu.Maximus5@gmail.com");
 	
-	Info->StructSize = sizeof(GlobalInfo);
+	//Info->StructSize = sizeof(GlobalInfo);
+	_ASSERTE(Info->StructSize >= sizeof(GlobalInfo));
 	Info->MinFarVersion = FARMANAGERVERSION;
 
 	// Build: YYMMDDX (YY - две цифры года, MM - мес€ц, DD - день, X - 0 и выше-номер подсборки)

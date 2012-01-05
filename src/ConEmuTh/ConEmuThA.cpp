@@ -27,9 +27,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <windows.h>
-#include "..\common\pluginA.hpp"
+#include "../common/pluginA.hpp"
+#include "../common/plugin_helper.h"
 #include "ConEmuTh.h"
-#include "..\common\farcolor1.hpp"
+#include "../common/farcolor1.hpp"
 #include "ImgCache.h"
 
 //#define SHOW_DEBUG_EVENTS
@@ -82,15 +83,8 @@ void ReloadResourcesA()
 void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 {
 	//LoadFarVersion - уже вызван в GetStartupInfo
-	::InfoA = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
-	::FSFA = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
 
-	if (::InfoA == NULL || ::FSFA == NULL)
-		return;
-
-	*::InfoA = *aInfo;
-	*::FSFA = *aInfo->FSF;
-	::InfoA->FSF = ::FSFA;
+	INIT_FAR_PSI(::InfoA, ::FSFA, aInfo);
 
 	DWORD nFarVer = 0;
 	if (InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARVERSION, &nFarVer))
@@ -121,7 +115,8 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 {
-	pi->StructSize = sizeof(struct PluginInfo);
+	//pi->StructSize = sizeof(struct PluginInfo);
+	_ASSERTE(pi->StructSize>0 && (pi->StructSize >= sizeof(*pi)));
 
 	static char *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1;

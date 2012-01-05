@@ -1961,6 +1961,9 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 						pszText = szTmp;
 					}
 					break;
+				case _T('%'):
+					pszText = L"%";
+					break;
 				case 0:
 					pszFmt--;
 					break;

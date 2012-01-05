@@ -1024,7 +1024,7 @@ const wchar_t* SkipNonPrintable(const wchar_t* asParams)
 //	}
 //
 //	// “еперь - пробуем найти существующее окно ConEmu
-//	HWND hConEmu = FindWindow(VirtualConsoleClassMain, NULL);
+//	HWND hConEmu = FindWindow(Virtual_Console_ClassMain, NULL);
 //	DWORD dwGuiPID = 0;
 //	if (hConEmu)
 //	{

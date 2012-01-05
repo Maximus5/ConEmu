@@ -101,7 +101,9 @@ HWND CConEmuChild::CreateView()
 	RECT rcMain; GetClientRect(ghWnd, &rcMain);
 	RECT rc = gpConEmu->CalcRect(CER_DC, rcMain, CER_MAINCLIENT);
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
-	_ASSERTE(pVCon);
+	_ASSERTE(pVCon!=NULL);
+	CVConGuard guard(pVCon);
+
 	mh_WndDC = CreateWindowEx(styleEx, szClassName, 0, style,
 		rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, pVCon);
 
@@ -148,7 +150,11 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 	#endif
 
 	// ≈сли это "GUI" режим - могут возникать блокировки из-за дочернего окна
-	HWND hChildGUI = ((CVirtualConsole*)this)->GuiWnd();
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	_ASSERTE(pVCon!=NULL);
+	CVConGuard guard(pVCon);
+
+	HWND hChildGUI = pVCon->GuiWnd();
 
 	if ((GetCurrentThreadId() != nTID) || (hChildGUI != NULL))
 	{
@@ -176,6 +182,9 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 	{
 		pVCon = (CVirtualConsole*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	}
+
+	CVConGuard guard(pVCon);
+
 
 	if (messg == WM_SYSCHAR)
 	{
@@ -398,6 +407,10 @@ LRESULT CConEmuChild::OnPaint()
 	if (mb_DisableRedraw)
 		return 0;
 
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	_ASSERTE(pVCon!=NULL);
+	CVConGuard guard(pVCon);
+
 	mb_PostFullPaint = FALSE;
 
 	if (gpSetCls->isAdvLogging>1)
@@ -433,7 +446,7 @@ LRESULT CConEmuChild::OnPaint()
 			//_ASSERTE(FALSE);
 			lbSkipDraw = TRUE;
 
-			((CVirtualConsole*)this)->CheckTransparent();
+			pVCon->CheckTransparent();
 
 			// “ипа "зальет цветом фона окна"?
 			result = DefWindowProc(mh_WndDC, WM_PAINT, 0, 0);
@@ -442,9 +455,6 @@ LRESULT CConEmuChild::OnPaint()
 
 	if (!lbSkipDraw)
 	{
-		CVirtualConsole* pVCon = (CVirtualConsole*)this;
-		_ASSERTE(pVCon!=NULL);
-
 		if (mh_LastGuiChild)
 		{
 			if (!IsWindow(mh_LastGuiChild))
@@ -811,15 +821,16 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 		{
 			PAINTSTRUCT ps; memset(&ps, 0, sizeof(ps));
 			HDC hDc = BeginPaint(hWnd, &ps);
-#ifndef SKIP_ALL_FILLRECT
 
+			#ifndef SKIP_ALL_FILLRECT
 			if (!IsRectEmpty(&ps.rcPaint))
 				FillRect(hDc, &ps.rcPaint, gpConEmu->m_Back->mh_BackBrush);
+			#endif
 
-#endif
 			EndPaint(hWnd, &ps);
 		}
 		return 0;
+
 #ifdef _DEBUG
 		case WM_SIZE:
 		{
@@ -926,18 +937,16 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 
 void CConEmuBack::Resize()
 {
-#if defined(EXT_GNUC_LOG)
 	CVirtualConsole* pVCon = gpConEmu->ActiveCon();
-#endif
+	CVConGuard guard(pVCon);
 
 	if (!mh_WndBack || !IsWindow(mh_WndBack))
 	{
-#if defined(EXT_GNUC_LOG)
-
+		#if defined(EXT_GNUC_LOG)
 		if (gpSetCls->isAdvLogging>1)
 			pVCon->RCon()->LogString("  --  CConEmuBack::Resize() - exiting, mh_WndBack failed");
+		#endif
 
-#endif
 		return;
 	}
 
@@ -949,7 +958,7 @@ void CConEmuBack::Resize()
 	{
 		if (memcmp(&rcClient, &mrc_LastClient, sizeof(RECT))==0)
 		{
-#if defined(EXT_GNUC_LOG)
+			#if defined(EXT_GNUC_LOG)
 			char szDbg[255];
 			wsprintfA(szDbg, "  --  CConEmuBack::Resize() - exiting, (%i,%i,%i,%i)==(%i,%i,%i,%i)",
 			          rcClient.left, rcClient.top, rcClient.right, rcClient.bottom,
@@ -957,8 +966,8 @@ void CConEmuBack::Resize()
 
 			if (gpSetCls->isAdvLogging>1)
 				pVCon->RCon()->LogString(szDbg);
+			#endif
 
-#endif
 			return; // ничего не мен€лось
 		}
 	}
@@ -968,17 +977,19 @@ void CConEmuBack::Resize()
 	mb_LastAlwaysScroll = (gpSet->isAlwaysShowScrollbar == 1);
 	//RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
 	RECT rc = gpConEmu->CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);
-#ifdef _DEBUG
+
+	#ifdef _DEBUG
 	RECT rcTest;
 	GetClientRect(mh_WndBack, &rcTest);
-#endif
-#if defined(EXT_GNUC_LOG)
+	#endif
+
+	#if defined(EXT_GNUC_LOG)
 	char szDbg[255]; wsprintfA(szDbg, "  --  CConEmuBack::Resize() - X=%i, Y=%i, W=%i, H=%i", rc.left, rc.top, 	rc.right - rc.left,	rc.bottom - rc.top);
 
 	if (gpSetCls->isAdvLogging>1)
 		pVCon->RCon()->LogString(szDbg);
+	#endif
 
-#endif
 	// Ёто скрытое окно отрисовки. ќно должно соответствовать
 	// размеру виртуальной консоли. Ќа это окно ориентируютс€ плагины!
 	WARNING("DoubleView");
@@ -988,28 +999,31 @@ void CConEmuBack::Resize()
 	           rc.bottom - rc.top,
 	           1);
 	rc = gpConEmu->CalcRect(CER_SCROLL, rcClient, CER_MAINCLIENT);
-#ifdef _DEBUG
 
+
+	#ifdef _DEBUG
 	if (rc.bottom != rcClient.bottom || rc.right != rcClient.right)
 	{
 		_ASSERTE(rc.bottom == rcClient.bottom && rc.right == rcClient.right);
 	}
+	#endif
 
-#endif
+
 	MoveWindow(mh_WndScroll,
 	           rc.left, rc.top,
 	           rc.right - rc.left,
 	           rc.bottom - rc.top,
 	           1);
+
 	//MoveWindow(mh_WndScroll,
 	//	rc.right - (rcScroll.right-rcScroll.left),
 	//	rc.top,
 	//	rcScroll.right-rcScroll.left,
 	//	rc.bottom - rc.top,
 	//	1);
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	GetClientRect(mh_WndBack, &rcTest);
-#endif
+	#endif
 }
 
 void CConEmuBack::Refresh()
@@ -1089,7 +1103,10 @@ BOOL CConEmuBack::TrackMouse()
 BOOL CConEmuBack::CheckMouseOverScroll()
 {
 	BOOL lbOverVScroll = FALSE;
+
 	CVirtualConsole* pVCon = gpConEmu->ActiveCon();
+	CVConGuard guard(pVCon);
+
 	CRealConsole* pRCon = pVCon ? gpConEmu->ActiveCon()->RCon() : NULL;
 
 	if (pRCon)

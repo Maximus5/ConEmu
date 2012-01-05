@@ -136,6 +136,7 @@ $(INTDIR)\TaskBarGhost.obj \
 $(INTDIR)\TrayIcon.obj \
 $(INTDIR)\Update.obj \
 $(INTDIR)\UpdateSet.obj \
+$(INTDIR)\VConRelease.obj \
 $(INTDIR)\VirtualConsole.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmuCheck.obj \
@@ -303,7 +304,7 @@ $(INTDIR)\ConEmu.obj: ConEmu.cpp Version.h
 
 $(INTDIR)\ConEmuApp.obj: ConEmuApp.cpp Version.h
 
-$(INTDIR)\ConEmuChild.obj: ConEmuChild.cpp
+$(INTDIR)\ConEmuChild.obj: ConEmuChild.cpp VConRelease.h VirtualConsole.h ConEmuChild.h
 
 $(INTDIR)\ConEmuPipe.obj: ConEmuPipe.cpp
 
@@ -351,7 +352,9 @@ $(INTDIR)\Update.obj: Update.cpp Update.h UpdateSet.h Version.h
 
 $(INTDIR)\UpdateSet.obj: UpdateSet.cpp UpdateSet.h Version.h
 
-$(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp
+$(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h ConEmuChild.h
+
+$(INTDIR)\VConRelease.obj: VConRelease.cpp VConRelease.h VirtualConsole.h ConEmuChild.h
 
 $(INTDIR)\Common.obj: ..\common\Common.cpp ..\common\Common.hpp
 

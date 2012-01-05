@@ -229,7 +229,8 @@ CVirtualConsole::CVirtualConsole(const RConStartArgs *args)
 	mn_LastDialogsCount = 0;
 	memset(mrc_LastDialogs, 0, sizeof(mrc_LastDialogs));
 	//InitializeCriticalSection(&csDC); ncsTDC = 0;
-	mb_PaintRequested = FALSE; mb_PaintLocked = FALSE;
+	//mb_PaintRequested = FALSE;
+	//mb_PaintLocked = FALSE;
 	//InitializeCriticalSection(&csCON); ncsTCON = 0;
 	mb_InPaintCall = FALSE;
 	mb_InConsoleResize = FALSE;
@@ -636,6 +637,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 		_ASSERTE(mp_RCon != NULL);
 		return false;
 	}
+	_ASSERTE(gpConEmu->isMainThread());
 
 	MSectionLock _SCON;
 	if (!(pSCON ? pSCON : &_SCON)->isLocked())
@@ -715,9 +717,9 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 	if (!abNoDc)
 	{
 		DEBUGSTRDRAW(L"*** Recreate DC\n");
-		MSectionLock _SDC;
-		// Если в этой нити уже заблокирован - секция не дергается
-		(pSDC ? pSDC : &_SDC)->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
+		//MSectionLock _SDC;
+		//// Если в этой нити уже заблокирован - секция не дергается
+		//(pSDC ? pSDC : &_SDC)->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
 
 		if (hDC)
 			{ DeleteDC(hDC); hDC = NULL; }
@@ -1316,11 +1318,12 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	HEAPVAL
 	bool lRes = false;
 	MSectionLock SCON; SCON.Lock(&csCON);
-	MSectionLock SDC; //&csDC, &ncsTDC);
+	//MSectionLock SDC; //&csDC, &ncsTDC);
+	_ASSERTE(gpConEmu->isMainThread());
 
 	//if (mb_PaintRequested) -- не должно быть. Эта функция работает ТОЛЬКО в консольной нити
-	if (mb_PaintLocked)  // Значит идет асинхронный Paint (BitBlt) - это может быть во время ресайза, или над окошком что-то протащили
-		SDC.Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
+	//if (mb_PaintLocked)  // Значит идет асинхронный Paint (BitBlt) - это может быть во время ресайза, или над окошком что-то протащили
+	//	SDC.Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
 
 	mp_RCon->GetConsoleScreenBufferInfo(&csbi);
 	// start timer before "Read Console Output*" calls, they do take time
@@ -1334,7 +1337,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	//------------------------------------------------------------------------
 	///| Read console output and cursor info... |/////////////////////////////
 	//------------------------------------------------------------------------
-	if (!UpdatePrepare(ahDc, &SDC, &SCON))
+	if (!UpdatePrepare(ahDc, NULL/*&SDC*/, &SCON))
 	{
 		gpConEmu->DebugStep(_T("DC initialization failed!"));
 		return false;
@@ -1430,17 +1433,17 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 		{
 			// должен вызываться в основной нити
 			_ASSERTE(gpConEmu->isMainThread());
-			mb_PaintRequested = TRUE;
+			//mb_PaintRequested = TRUE;
 			gpConEmu->Invalidate(this);
 
 			if (gpSetCls->isAdvLogging>=3) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
 
 			//09.06.13 а если так? быстрее изменения на экране не появятся?
 			//UpdateWindow('ghWnd DC'); // оно посылает сообщение в окно, и ждет окончания отрисовки
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			//_ASSERTE(!gpConEmu->m_Child->mb_Invalidated);
-#endif
-			mb_PaintRequested = FALSE;
+			#endif
+			//mb_PaintRequested = FALSE;
 		}
 	}
 
@@ -1852,13 +1855,15 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	COORD dbgTxtSize = {TextWidth,TextHeight};
 #endif
 
+	_ASSERTE(gpConEmu->isMainThread());
+
 	if (isForce || !mb_PointersAllocated || lbSizeChanged)
 	{
 		// 100627 перенес после InitDC, т.к. циклилось
 		//if (lbSizeChanged)
 		//	gpConEmu->OnConsoleResize(TRUE);
-		if (pSDC && !pSDC->isLocked())  // Если секция еще не заблокирована (отпускает - вызывающая функция)
-			pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
+		//if (pSDC && !pSDC->isLocked())  // Если секция еще не заблокирована (отпускает - вызывающая функция)
+		//	pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
 
 		if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/ , false/*abNoWndResize*/, pSDC, pSCON))
 			return false;
@@ -3430,6 +3435,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		return;
 	}
 
+	CVConGuard guard(this);
+
 	_ASSERTE(hPaintDc);
 	_ASSERTE(rcClient.left!=rcClient.right && rcClient.top!=rcClient.bottom);
 //#ifdef _DEBUG
@@ -3569,7 +3576,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		}
 	}
 
-	MSectionLock S; //&csDC, &ncsTDC);
+	//MSectionLock S; //&csDC, &ncsTDC);
 	//RECT rcUpdateRect = {0};
 	//BOOL lbInval = GetUpdateRect('ghWnd DC', &rcUpdateRect, FALSE);
 	//if (lbInval)
@@ -3603,13 +3610,13 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 	if (hBr) { DeleteObject(hBr); hBr = NULL; }
 
-	BOOL lbPaintLocked = FALSE;
+	//BOOL lbPaintLocked = FALSE;
 
-	if (!mb_PaintRequested)    // Если Paint вызыван НЕ из Update (а например ресайз, или над нашим окошком что-то протащили).
-	{
-		if (S.Lock(&csDC, 200))  // но по таймауту, чтобы не повисли ненароком
-			mb_PaintLocked = lbPaintLocked = TRUE;
-	}
+	//if (!mb_PaintRequested)    // Если Paint вызыван НЕ из Update (а например ресайз, или над нашим окошком что-то протащили).
+	//{
+	//	//if (S.Lock(&csDC, 200))  // но по таймауту, чтобы не повисли ненароком
+	//	//	mb_PaintLocked = lbPaintLocked = TRUE;
+	//}
 
 	//bool bFading = false;
 	bool lbLeftExists = (m_LeftPanelView.hWnd && IsWindowVisible(m_LeftPanelView.hWnd));
@@ -3712,10 +3719,10 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 	// Запомнить последнюю битность дисплея
 	mn_LastBitsPixel = nBits;
 	//mb_LastFadeFlag = bFading;
-	S.Unlock();
+	//S.Unlock();
 
-	if (lbPaintLocked)
-		mb_PaintLocked = FALSE;
+	//if (lbPaintLocked)
+	//	mb_PaintLocked = FALSE;
 
 	// Палку курсора теперь рисуем только в окне
 	//UpdateCursor(hPaintDc);

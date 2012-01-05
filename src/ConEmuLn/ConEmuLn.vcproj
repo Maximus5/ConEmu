@@ -1626,6 +1626,10 @@
 			Name="Far-Api"
 			>
 			<File
+				RelativePath="..\common\plugin_helper.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\pluginA.hpp"
 				>
 			</File>

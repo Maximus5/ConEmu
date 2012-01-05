@@ -54,12 +54,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TCHAR.h>
 #include <Tlhelp32.h>
 #include <shlwapi.h>
-#include "..\common\common.hpp"
-#include "..\common\ConEmuCheck.h"
+#include "../common/common.hpp"
+#include "../common/ConEmuCheck.h"
 #include "SetHook.h"
-#include "..\common\execute.h"
+#include "../common/execute.h"
 #include "ConEmuHooks.h"
-#include "..\common\WinObjects.h"
+#include "../common/WinObjects.h"
 
 #define MAX_HOOKED_PATH 64
 //#define MAX_ADD_ENUMS 8 // пока хватает 3-х!

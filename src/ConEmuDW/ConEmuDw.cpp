@@ -101,6 +101,16 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 #endif
 
 
+bool isCharSpace(wchar_t inChar)
+{
+	// Сюда пихаем все символы, которые можно отрисовать пустым фоном (как обычный пробел)
+	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0 
+		/*|| (inChar>=0x2000 && inChar<=0x200F)
+		|| inChar == 0x2060 || inChar == 0x3000 || inChar == 0xFEFF*/);
+	return isSpace;
+}
+
+
 BOOL GetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWork)
 {
 	_ASSERTE(gbInitialized);
@@ -749,6 +759,7 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 			
 			WORD n = 0, f = 0;
 			unsigned __int64 Flags = pFar->Attributes.Flags;
+			BOOL Fore4bit = (Flags & FCF_FG_4BIT);
 			
 			if (pTrueColor)
 			{
@@ -762,7 +773,7 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 			}
 
 			DWORD nForeColor, nBackColor;
-			if (Flags & FCF_FG_4BIT)
+			if (Fore4bit)
 			{
 				nForeColor = -1;
 				n |= (WORD)(pFar->Attributes.ForegroundColor & 0xF);
@@ -782,13 +793,13 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 					pTrueColor->fg_valid = TRUE;
 				}
 			}
-				
+			
 			if (Flags & FCF_BG_4BIT)
 			{
 				nBackColor = -1;
 				WORD bk = (WORD)(pFar->Attributes.BackgroundColor & 0xF);
 				// Коррекция яркости, если подобранные индексы совпали
-				if (n == bk)
+				if (n == bk && !Fore4bit && !isCharSpace(pFar->Char))
 				{
 					if (n & 8)
 						bk ^= 8;
