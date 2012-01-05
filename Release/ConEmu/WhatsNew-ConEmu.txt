@@ -1,4 +1,12 @@
-﻿2012.01.02
+﻿2012.01.05
+[%] Issue 461: В некоторых случаях ConEmu падал при закрытии GUI приложения во вкладке.
+[%] Issue 469: YAC (Yet Another Completion) doesn't work. Для GetConsoleWindow (возвращающего окно отрисовки) GetClassName перехватывается и возвращает "ConsoleWindowClass".
+[%] Issue 472: Падение при выборе меню дисков (alt+F1).
+[%] При отрисовке TrueColor через ExtendedConsole.dll сбивался цвет фона пробельных символов при совпадении с 'цветом текста'.
+[*] Все HotKeys теперь можно задать на вкладке 'Keys' окна настроек. Настройка клавиш с вкладки 'Tabs' убрана. На вкладке 'Tabs' добавлен флажок '«Host-key»+Number iterates Far windows'.
+
+
+2012.01.02
 [*] На главной странице проекта ( http://code.google.com/p/conemu-maximus5/ ) добавлена кнопочка '+1'. Щелкните, кому не жалко :) Ну, и тут ( http://sourceforge.net/projects/conemu/ ) тоже.
 [*] Far3 build 2311 (build 2343 supported).
 [+] Issue 102: AutoUpdate. Умеем обновляться как через инсталлятор, так и через 7z-архив. Для обновления через архив - нужен архиватор (7z или WinRar).
