@@ -193,7 +193,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	TODO("nTopVisibleLine должен передаватьс€ при скролле, а не при ресайзе!");
 	lIn.SetSize.nSendTopLine = (gpSetCls->AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
 	lIn.SetSize.rcWindow = rect;
-	lIn.SetSize.dwFarPID = (con.bBufferHeight && !mp_RCon->isFarBufferSupported()) ? 0 : mp_RCon->GetFarPID();
+	lIn.SetSize.dwFarPID = (con.bBufferHeight && !mp_RCon->isFarBufferSupported()) ? 0 : mp_RCon->GetFarPID(TRUE);
 
 	// ≈сли размер мен€ть не нужно - то и CallNamedPipe не делать
 	//if (mp_ConsoleInfo) {

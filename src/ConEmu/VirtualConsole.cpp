@@ -228,6 +228,8 @@ CVirtualConsole::CVirtualConsole(const RConStartArgs *args)
 	mb_LeftPanelRedraw = mb_RightPanelRedraw = FALSE;
 	mn_LastDialogsCount = 0;
 	memset(mrc_LastDialogs, 0, sizeof(mrc_LastDialogs));
+	mn_DialogsCount = 0; mn_DialogFlags = 0;
+	memset(mrc_Dialogs, 0, sizeof(mrc_Dialogs));
 	//InitializeCriticalSection(&csDC); ncsTDC = 0;
 	//mb_PaintRequested = FALSE;
 	//mb_PaintLocked = FALSE;
@@ -880,7 +882,8 @@ bool CVirtualConsole::isCharBorderVertical(wchar_t inChar)
 	//    || (inChar>=0x2551 && inChar<=0x25C5)) // По набору символов Arial Unicode MS
 	TODO("ucBoxSinglHorz отсекать не нужно?");
 
-	if (inChar != ucBoxDblHorz && (inChar >= ucBoxSinglVert && inChar <= ucBoxDblVertHorz))
+	if ((inChar != ucBoxDblHorz && (inChar >= ucBoxSinglVert && inChar <= ucBoxDblVertHorz))
+		|| (inChar == ucArrowUp || inChar == ucArrowDown))
 		return true;
 	else
 		return false;
@@ -1741,10 +1744,13 @@ bool CVirtualConsole::LoadConsoleData()
 	}
 	SMALL_RECT rcFull, rcGlyph = {0,0,-1,-1};
 
+	const CRgnDetect* pRgn = mp_RCon->GetDetector();
+
+	mn_DialogsCount = pRgn->GetDetectedDialogs(countof(mrc_Dialogs), mrc_Dialogs, NULL);
+	mn_DialogFlags = pRgn->GetFlags();
+
 	if (gpSet->isExtendUCharMap)
 	{
-		const CRgnDetect* pRgn = mp_RCon->GetDetector();
-
 		if (pRgn && (pRgn->GetFlags() & (FR_UCHARMAP|FR_UCHARMAPGLYPH)) == (FR_UCHARMAP|FR_UCHARMAPGLYPH))
 		{
 			if (pRgn->GetDetectedDialogs(1, &rcFull, NULL, FR_UCHARMAP, FR_UCHARMAP)
@@ -2392,15 +2398,48 @@ void CVirtualConsole::UpdateText()
 		// More calls for the sake of fewer symbols is slower, e.g. in panel status lines.
 		int j2=j+1;
 
+		bool NextDialog = true;
+		int NextDialogX = TextWidth;
+
 		for(; j < end; j = j2)
 		{
+			if (NextDialog)
+			{
+				NextDialogX = TextWidth;
+				NextDialog = false;
+				int nMax = TextWidth-1;
+				for (int i = 0; i < mn_DialogsCount; i++)
+				{
+					if (mrc_Dialogs[i].Top <= row && row <= mrc_Dialogs[i].Bottom)
+					{
+						int border = mrc_Dialogs[i].Left;
+						if (border && border >= j && NextDialogX > border)
+							NextDialogX = border;
+						else
+						{
+							border = mrc_Dialogs[i].Right;
+							if (border < nMax && border >= j && NextDialogX > border)
+								NextDialogX = border;
+						}
+					}
+				}
+			}
+
 			TODO("OPTIMIZE: вынести переменные из цикла");
 			TODO("OPTIMIZE: если символ/атрибут совпадает с предыдущим (j>0 !) то не звать повторно CharWidth, isChar..., isUnicode, ...");
 			const CharAttr attr = ConAttrLine[j];
 			wchar_t c = ConCharLine[j];
 			//BYTE attrForeIdx, attrBackIdx;
 			//COLORREF attrForeClr, attrBackClr;
-			bool isUnicode = gpSet->isFixFarBorders && isCharBorder(c/*ConCharLine[j]*/);
+			bool isUnicode;
+			if (j == NextDialogX)
+			{
+				isUnicode = true; NextDialog = true;
+			}
+			else
+			{
+				isUnicode = (gpSet->isFixFarBorders && isCharBorder(c/*ConCharLine[j]*/));
+			}
 			bool isProgress = false, isSpace = false, isUnicodeOrProgress = false, isNonSpacing = false;
 			bool lbS1 = false, lbS2 = false;
 			int nS11 = 0, nS12 = 0, nS21 = 0, nS22 = 0;
@@ -2471,7 +2510,7 @@ void CVirtualConsole::UpdateText()
 				// Символом } фар помечает имена файлов вылезшие за пределы колонки...
 				// Если сверху или снизу на той же позиции рамки (или тот же '}')
 				// корректируем позицию
-				bool bBord = isCharBorderVertical(c);
+				bool bBord = (j == NextDialogX) || isCharBorderVertical(c);
 				TODO("Пока не будет учтено, что поверх рамок может быть другой диалог!");
 				bool bFrame = false; // mpn_ConAttrEx[row*TextWidth+j].bDialogVBorder;
 
@@ -2574,7 +2613,7 @@ void CVirtualConsole::UpdateText()
 						}
 						else
 						{
-							HBRUSH hbr = PartBrush(L' ', attr.crBackColor, attr.crForeColor);
+							HBRUSH hbr = PartBrush(L' ', PrevAttr.crBackColor, PrevAttr.crForeColor);
 							FillRect(hDC, &rect, hbr);
 						}
 					}
@@ -4578,24 +4617,24 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 BOOL CVirtualConsole::CheckDialogsChanged()
 {
 	BOOL lbChanged = FALSE;
-	SMALL_RECT rcDlg[32];
-	_ASSERTE(sizeof(mrc_LastDialogs) == sizeof(rcDlg));
-	int nDlgCount = mp_RCon->GetDetectedDialogs(countof(rcDlg), rcDlg, NULL);
+	//SMALL_RECT rcDlg[32];
+	_ASSERTE(sizeof(mrc_LastDialogs) == sizeof(mrc_Dialogs));
+	//int nDlgCount = mp_RCon->GetDetectedDialogs(countof(rcDlg), rcDlg, NULL);
 
-	if (mn_LastDialogsCount != nDlgCount)
+	if (mn_LastDialogsCount != mn_DialogsCount)
 	{
 		lbChanged = TRUE;
 	}
-	else if (memcmp(rcDlg, mrc_LastDialogs, nDlgCount*sizeof(rcDlg[0]))!=0)
+	else if (memcmp(mrc_Dialogs, mrc_LastDialogs, mn_DialogsCount*sizeof(mrc_Dialogs[0]))!=0)
 	{
 		lbChanged = TRUE;
 	}
 
 	if (lbChanged)
 	{
-		memset(mrc_LastDialogs, 0, sizeof(mrc_LastDialogs));
-		memmove(mrc_LastDialogs, rcDlg, nDlgCount*sizeof(rcDlg[0]));
-		mn_LastDialogsCount = nDlgCount;
+		//memset(mrc_LastDialogs, 0, sizeof(mrc_LastDialogs));
+		memmove(mrc_LastDialogs, mrc_Dialogs, mn_DialogsCount*sizeof(mrc_Dialogs[0]));
+		mn_LastDialogsCount = mn_DialogsCount;
 	}
 
 	return lbChanged;

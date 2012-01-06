@@ -2894,6 +2894,35 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				}
 			}
 			break;
+		case cbUpdateDownloadPath:
+			{
+				wchar_t szStorePath[MAX_PATH] = {};
+				wchar_t szInitial[MAX_PATH+1];
+				ExpandEnvironmentStrings(gpSet->UpdSet.szUpdateDownloadPath, szInitial, countof(szInitial));
+				OPENFILENAME ofn = {sizeof(ofn)};
+				ofn.hwndOwner = ghOpWnd;
+				ofn.lpstrFilter = L"Packages\0ConEmuSetup.*.exe;ConEmu.*.7z\0\0";
+				ofn.nFilterIndex = 1;
+				wcscpy_c(szStorePath, L"ConEmuSetup.exe");
+				ofn.lpstrFile = szStorePath;
+				ofn.nMaxFile = countof(szStorePath);
+				ofn.lpstrInitialDir = szInitial;
+				ofn.lpstrTitle = L"Choose download path";
+				ofn.lpstrDefExt = L"";
+				ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+					| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY;
+
+				if (GetSaveFileName(&ofn))
+				{
+					wchar_t *pszSlash = wcsrchr(szStorePath, L'\\');
+					if (pszSlash)
+					{
+						*pszSlash = 0;
+						SetDlgItemText(hWnd2, tUpdateDownloadPath, szStorePath);
+					}
+				}
+			}
+			break;
 		/* *** Update settings *** */
 
 

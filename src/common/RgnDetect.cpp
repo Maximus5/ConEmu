@@ -958,8 +958,9 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 			{
 				n--; n2--;
 
-				if ((pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace))
-				        && (pAttr[n2].crBackColor == nColor && (pChar[n2] == L' ' || pChar[n2] == ucNoBreakSpace)))
+				// ƒиалоги в фаре можно "таскать" с клавиатуры через CtrlF5. ”глы диалога помечаютс€ слешами.
+				if ((pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace) || pChar[n] == L'\\')
+					&& (pAttr[n2].crBackColor == nColor && (pChar[n2] == L' ' || pChar[n2] == ucNoBreakSpace)))
 				{
 					nFromX--;
 				}
@@ -1551,6 +1552,12 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 
 			//Optimize: помечать можно только окантовку - сам диалог уже помечен
 			MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1, nNewY1, nMostRight, nMostBottom, true, false);
+			// ≈ще нужно "пометить" тень под диалогом
+			if (((nMostBottom+1) < nHeight) && ((nNewX1+2) < nWidth))
+				MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1+2, nMostBottom+1, min(nMostRight+2,nWidth-1), nMostBottom+1, true, false);
+			// » справа от диалога
+			if (((nMostRight+1) < nWidth) && ((nNewY1+1) < nHeight))
+				MarkDialog(pChar, pAttr, nWidth, nHeight, nMostRight+1, nNewY1+1, min(nMostRight+2,nWidth-1), nMostBottom, true, false);
 		}
 	}
 

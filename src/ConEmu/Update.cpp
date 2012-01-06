@@ -214,6 +214,8 @@ CConEmuUpdate::CConEmuUpdate()
 	wi = NULL;
 	m_UpdateStep = us_NotStarted;
 	ms_NewVersion[0] = ms_CurVersion[0] = ms_SkipVersion[0] = 0;
+
+	lstrcpyn(ms_DefaultTitle, gpConEmu->GetDefaultTitle(), countof(ms_DefaultTitle));
 }
 
 CConEmuUpdate::~CConEmuUpdate()
@@ -262,6 +264,8 @@ CConEmuUpdate::~CConEmuUpdate()
 
 	if (m_UpdateStep == us_ExitAndUpdate && mpsz_PendingBatchFile)
 	{
+		WaitAllInstances();
+
 		wchar_t *pszCmd = lstrdup(L"cmd.exe"); // Мало ли что в ComSpec пользователь засунул...
 		size_t cchParmMax = lstrlen(mpsz_PendingBatchFile)+16;
 		wchar_t *pszParm = (wchar_t*)calloc(cchParmMax,sizeof(*pszParm));
@@ -354,7 +358,7 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 
 void CConEmuUpdate::StopChecking()
 {
-	if (MessageBox(NULL, L"Are you sure, stop updates checking?", gpConEmu->GetDefaultTitle(), MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO) != IDYES)
+	if (MessageBox(NULL, L"Are you sure, stop updates checking?", ms_DefaultTitle, MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO) != IDYES)
 		return;
 
 	mb_RequestTerminate = TRUE;
@@ -428,7 +432,7 @@ bool CConEmuUpdate::ShowConfirmation()
 		SC.Unlock();
 
 		BOOL b = gbDontEnable; gbDontEnable = FALSE;
-		int iBtn = MessageBox(NULL, pszConfirm, gpConEmu->GetDefaultTitle(), MB_ICONQUESTION|MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_YESNO);
+		int iBtn = MessageBox(NULL, pszConfirm, ms_DefaultTitle, MB_ICONQUESTION|MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_YESNO);
 		gbDontEnable = b;
 
 		SafeFree(pszConfirm);
@@ -1142,6 +1146,8 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			wi->_InternetCloseHandle(mh_Connect);
 			mh_Connect = NULL;
 		}
+		
+		//TODO после включения ноута вылезла ошибка ERROR_INTERNET_NAME_NOT_RESOLVED==12007
 
 		if (mh_Connect == NULL)
 		{
@@ -1555,19 +1561,51 @@ short CConEmuUpdate::GetUpdateProgress()
 	case us_Downloading:
 		if (mn_InternetContentLen > 0)
 		{
-			int nValue = (mn_InternetContentReady * 80 / mn_InternetContentLen);
+			int nValue = (mn_InternetContentReady * 88 / mn_InternetContentLen);
 			if (nValue < 0)
 				nValue = 0;
-			else if (nValue > 80)
-				nValue = 80;
+			else if (nValue > 88)
+				nValue = 88;
 			return nValue+10;
 		}
 		return 10;
 	case us_ConfirmUpdate:
-		return 95;
+		return 98;
 	case us_ExitAndUpdate:
 		return 99;
 	}
 
 	return -1;
+}
+
+void CConEmuUpdate::WaitAllInstances()
+{
+	while (true)
+	{
+		bool bStillExists = false;
+		wchar_t szMessage[255];
+		wcscpy_c(szMessage, L"Please, close all ConEmu instances before continue");
+
+		HWND hFind = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
+		if (hFind)
+		{
+			bStillExists = true;
+			DWORD nPID; GetWindowThreadProcessId(hFind, &nPID);
+			_wsprintf(szMessage+_tcslen(szMessage), SKIPLEN(64) L"\nConEmu still running, PID=%u", nPID);
+		}
+
+		if (!bStillExists)
+		{
+			TODO("Можно бы проехаться по всем модулям запущенных процессов на предмет блокировки файлов в папках ConEmu");
+		}
+
+		// Если никого запущенного не нашли - выходим из цикла
+		if (!bStillExists)
+			return;
+
+		// Ругнуться
+		int nBtn = MessageBox(NULL, szMessage, ms_DefaultTitle, MB_ICONEXCLAMATION|MB_OKCANCEL);
+		if (nBtn == IDCANCEL)
+			return; // "Cancel" - means stop checking
+	}
 }

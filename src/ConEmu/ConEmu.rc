@@ -732,7 +732,7 @@ BEGIN
                     "Button",BS_AUTORADIOBUTTON | WS_DISABLED,12,128,226,10
     GROUPBOX        "Download path",IDC_STATIC,5,59,319,28
     EDITTEXT        tUpdateDownloadPath,10,69,160,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",cbUpdateDownloadPath,173,68,15,13,WS_DISABLED
+    PUSHBUTTON      "...",cbUpdateDownloadPath,173,68,15,13
     CONTROL         "Leave downloaded packages",cbUpdateLeavePackages,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,70,113,10
     GROUPBOX        "Post-update command",IDC_STATIC,5,161,319,30
     EDITTEXT        tUpdatePostUpdateCmd,10,172,310,13,ES_AUTOHSCROLL
