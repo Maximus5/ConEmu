@@ -634,7 +634,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 		if (!pszLocalPackage)
 			goto wrap;
 		
-		lbDownloadRc = DownloadFile(pszSource, pszLocalPackage, hTarget, nLocalCRC);
+		lbDownloadRc = DownloadFile(pszSource, pszLocalPackage, hTarget, nLocalCRC, TRUE);
 		if (lbDownloadRc)
 		{
 			wchar_t szInfo[2048];
@@ -1046,7 +1046,7 @@ bool CConEmuUpdate::IsLocalFile(LPWSTR& asPathOrUrl)
 	return false;
 }
 
-BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc)
+BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc, BOOL abPackage /*= FALSE*/)
 {
 	BOOL lbRc = FALSE, lbRead = FALSE, lbWrite = FALSE;
 	HANDLE hSrcFile = NULL;
@@ -1157,7 +1157,8 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			if (!mh_Connect)
 			{
 				DWORD dwErr = GetLastError();
-				ReportError(L"Connection failed, code=%u", dwErr);
+				if (mb_ManualCallMode || abPackage)
+					ReportError(L"Connection failed, code=%u", dwErr);
 				goto wrap;
 			}
 
@@ -1198,14 +1199,16 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 		if (!hSrcFile)
 		{
 			DWORD dwErr = GetLastError();
-			ReportError(L"HttpOpenRequest failed\nURL=%s\ncode=%u", asSource, dwErr);
+			if (mb_ManualCallMode || abPackage)
+				ReportError(L"HttpOpenRequest failed\nURL=%s\ncode=%u", asSource, dwErr);
 			goto wrap;
 		}
 
 		if (!wi->_HttpSendRequestW(hSrcFile,NULL,0,NULL,0))
 		{
 			DWORD dwErr = GetLastError();
-			ReportError(L"HttpSendRequest failed\nURL=%s\ncode=%u", asSource, dwErr);
+			if (mb_ManualCallMode || abPackage)
+				ReportError(L"HttpSendRequest failed\nURL=%s\ncode=%u", asSource, dwErr);
 			goto wrap;
 		}
 		else
