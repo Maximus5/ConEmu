@@ -65,8 +65,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define VirtualConsoleClassScroll L"VirtualConsoleClassScroll"
 #define VirtualConsoleClassGhost L"VirtualConsoleClassGhost"
 
-#define CECOPYRIGHTSTRING_A "Copyright (c) 2009-2011, ConEmu.Maximus5@gmail.com"
-#define CECOPYRIGHTSTRING_W L"\x00A9 2009-2011 ConEmu.Maximus5@gmail.com"
+#define CECOPYRIGHTSTRING_A "Copyright (c) 2009-2012, ConEmu.Maximus5@gmail.com"
+#define CECOPYRIGHTSTRING_W L"\x00A9 2009-2012 ConEmu.Maximus5@gmail.com"
 
 //#define CE_CURSORUPDATE     L"ConEmuCursorUpdate%u" // ConEmuC_PID - изменился курсор (размер или выделение). положение курсора отслеживает GUI
 

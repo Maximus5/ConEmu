@@ -269,7 +269,9 @@ CConEmuUpdate::~CConEmuUpdate()
 		wchar_t *pszCmd = lstrdup(L"cmd.exe"); // ћало ли что в ComSpec пользователь засунул...
 		size_t cchParmMax = lstrlen(mpsz_PendingBatchFile)+16;
 		wchar_t *pszParm = (wchar_t*)calloc(cchParmMax,sizeof(*pszParm));
-		_wsprintf(pszParm, SKIPLEN(cchParmMax) L"/c \"%s\"", mpsz_PendingBatchFile);
+		// ќб€зательно двойное окавычивание. cmd.exe отбрасывает кавычки,
+		// и при наличии разделителей (пробелы, скобки,...) получаем проблемы
+		_wsprintf(pszParm, SKIPLEN(cchParmMax) L"/c \"\"%s\"\"", mpsz_PendingBatchFile);
 		// ghWnd уже закрыт
 		INT_PTR nShellRc = (INT_PTR)ShellExecute(NULL, bNeedRunElevation ? L"runas" : L"open", pszCmd, pszParm, NULL, SW_SHOWMINIMIZED);
 		if (nShellRc <= 32)

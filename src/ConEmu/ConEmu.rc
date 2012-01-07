@@ -515,38 +515,44 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,1,319,29
+    GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,1,319,49
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,10,14,57,8
     CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,69,14,64,8
     CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,14,66,8
     CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,206,14,59,8
     CONTROL         "Active only",cbHideInactiveConTabs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,14,51,10
-    GROUPBOX        "Tab templates",IDC_STATIC,4,32,319,54
-    RTEXT           "Console:",IDC_STATIC,8,44,30,8
-    EDITTEXT        tTabConsole,42,42,40,12,ES_AUTOHSCROLL
-    RTEXT           "Viewer:",IDC_STATIC,85,44,29,8
-    EDITTEXT        tTabViewer,119,42,40,12,ES_AUTOHSCROLL
-    RTEXT           "Editor:",IDC_STATIC,166,44,22,8
-    EDITTEXT        tTabEditor,192,42,40,12,ES_AUTOHSCROLL
-    RTEXT           "Modified:",IDC_STATIC,237,44,36,8
-    EDITTEXT        tTabEditorMod,278,42,40,12,ES_AUTOHSCROLL
-    RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,69,107,8
-    EDITTEXT        tTabLenMax,119,67,40,12,ES_AUTOHSCROLL
-    CONTROL         "Admin shield, or suffix",cbAdminShield,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,68,83,10
-    EDITTEXT        tAdminSuffix,254,67,64,12,ES_AUTOHSCROLL | WS_DISABLED
-    GROUPBOX        "Multi console",IDC_STATIC,4,88,319,58
-    CONTROL         "Multi Console",cbMultiCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,101,61,8
-    CONTROL         "Create confirmation",cbNewConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,101,77,8
-    RTEXT           "Cmd output codepage:",IDC_STATIC,174,100,88,8
-    COMBOBOX        lbCmdOutputCP,264,97,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
-    CONTROL         "Long console output",cbLongOutput,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,117,84,8
-    EDITTEXT        tLongOutputHeight,173,115,29,12,ES_AUTOHSCROLL
-    RTEXT           "16bit height:",IDC_STATIC,218,117,44,8
-    COMBOBOX        lbNtvdmHeight,264,115,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
-    CONTROL         "Show on taskbar",cbTabsOnTaskBar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,117,74,8
-    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %i - Far window number (F12), %% - %",IDC_STATIC,10,55,309,8
+    GROUPBOX        "Tab templates",IDC_STATIC,4,52,319,54
+    RTEXT           "Console:",IDC_STATIC,8,64,30,8
+    EDITTEXT        tTabConsole,42,62,40,12,ES_AUTOHSCROLL
+    RTEXT           "Viewer:",IDC_STATIC,85,64,29,8
+    EDITTEXT        tTabViewer,119,62,40,12,ES_AUTOHSCROLL
+    RTEXT           "Editor:",IDC_STATIC,166,64,22,8
+    EDITTEXT        tTabEditor,192,62,40,12,ES_AUTOHSCROLL
+    RTEXT           "Modified:",IDC_STATIC,237,64,36,8
+    EDITTEXT        tTabEditorMod,278,62,40,12,ES_AUTOHSCROLL
+    RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,89,107,8
+    EDITTEXT        tTabLenMax,119,87,40,12,ES_AUTOHSCROLL
+    CONTROL         "Admin shield, or suffix",cbAdminShield,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,88,83,10
+    EDITTEXT        tAdminSuffix,254,87,64,12,ES_AUTOHSCROLL | WS_DISABLED
+    GROUPBOX        "Multi console",IDC_STATIC,4,108,319,58
+    CONTROL         "Multi Console",cbMultiCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,121,61,8
+    CONTROL         "Create confirmation",cbNewConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,121,77,8
+    RTEXT           "Cmd output codepage:",IDC_STATIC,174,120,88,8
+    COMBOBOX        lbCmdOutputCP,264,117,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
+    CONTROL         "Long console output",cbLongOutput,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,137,84,8
+    EDITTEXT        tLongOutputHeight,173,135,29,12,ES_AUTOHSCROLL
+    RTEXT           "16bit height:",IDC_STATIC,218,137,44,8
+    COMBOBOX        lbNtvdmHeight,264,135,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
+    CONTROL         "Show on taskbar",cbTabsOnTaskBar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,137,74,8
+    LTEXT           "%s - Title, %c - Console number, %p - Active PID, %i - Far window number (F12), %% - %",IDC_STATIC,10,75,309,8
     CONTROL         "«Host-key»+Number iterates Far windows",cbMultiIterate,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,131,159,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,151,159,10
+    COMBOBOX        tTabFontFace,70,30,107,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        tTabFontHeight,193,30,29,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        tTabFontCharset,264,30,54,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    CTEXT           "x",IDC_STATIC,182,32,8,8
+    RTEXT           "Charset:",IDC_STATIC,226,32,32,8
+    RTEXT           "Tabs font:",IDC_STATIC,22,32,42,8
 END
 
 IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319

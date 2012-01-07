@@ -64,11 +64,6 @@ const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed 
 #define FAILED_FONT_TIMEOUT 3000
 #define FAILED_CONFONT_TIMEOUT 30000
 
-const u8 chSetsNums[] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
-const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
-                        "GB 2312", "Greek", "Hebrew", "Hangul", "Johab", "Mac", "OEM", "Russian", "Shiftjis",
-                        "Symbol", "Thai", "Turkish", "Vietnamese"
-                       };
 const WORD HostkeyCtrlIds[] = {cbHostWin, cbHostApps, cbHostLCtrl, cbHostRCtrl, cbHostLAlt, cbHostRAlt, cbHostLShift, cbHostRShift};
 //int upToFontHeight=0;
 HWND ghOpWnd=NULL;
@@ -132,8 +127,8 @@ namespace SettingsNS
 	const DWORD  nKeysAct[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
 	const WCHAR* szKeysHot[] = {L"", L"Esc", L"Delete", L"Tab", L"Enter", L"Space", L"Backspace"};
 	const DWORD  nKeysHot[] =  {0, VK_ESCAPE, VK_DELETE, VK_TAB, VK_RETURN, VK_SPACE, VK_BACK};
-	const BYTE   FSizes[] = {0, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
-	const BYTE   FSizesSmall[] = {5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32};
+	const DWORD  FSizes[] = {0, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
+	const DWORD  FSizesSmall[] = {5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32};
 	const WCHAR* szClipAct[] = {L"<None>", L"Copy", L"Paste", L"Auto"};
 	const DWORD  nClipAct[] =  {0,         1,       2,        3};
 	const WCHAR* szColorIdx[] = {L" 0", L" 1", L" 2", L" 3", L" 4", L" 5", L" 6", L" 7", L" 8", L" 9", L"10", L"11", L"12", L"13", L"14", L"15", L"None"};
@@ -144,17 +139,35 @@ namespace SettingsNS
 	const DWORD  nColorIdxTh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15,    16};
 	const WCHAR* szThumbMaxZoom[] = {L"100%",L"200%",L"300%",L"400%",L"500%",L"600%"};
 	const DWORD  nThumbMaxZoom[] = {100,200,300,400,500,600};
-	
+	const DWORD  nCharSets[] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
+	const WCHAR* szCharSets[] = {L"ANSI", L"Arabic", L"Baltic", L"Chinese Big 5", L"Default", L"East Europe",
+		L"GB 2312", L"Greek", L"Hebrew", L"Hangul", L"Johab", L"Mac", L"OEM", L"Russian", L"Shiftjis",
+		L"Symbol", L"Thai", L"Turkish", L"Vietnamese"
+	};
 };
 
 #define FillListBox(hDlg,nDlgID,Items,Values,Value) \
 	_ASSERTE(countof(Items) == countof(Values)); \
 	FillListBoxItems(GetDlgItem(hDlg,nDlgID), countof(Items), Items, Values, Value)
+#define FillListBoxInt(hDlg,nDlgID,Values,Value) \
+	FillListBoxItems(GetDlgItem(hDlg,nDlgID), countof(Values), NULL, Values, Value)
 #define FillListBoxByte(hDlg,nDlgID,Items,Values,Value) \
 	_ASSERTE(countof(Items) == countof(Values)); { \
 		DWORD dwVal = Value; \
 		FillListBoxItems(GetDlgItem(hDlg,nDlgID), countof(Items), Items, Values, dwVal); \
 		Value = dwVal; }
+#define FillListBoxCharSet(hDlg,nDlgID,Value) \
+	{ \
+		_ASSERTE(countof(SettingsNS::nCharSets) == countof(SettingsNS::szCharSets)); \
+		u8 num = 4; /*индекс DEFAULT_CHARSET*/ \
+		for (size_t i = 0; i < countof(SettingsNS::nCharSets); i++) \
+		{ \
+			SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, (LPARAM)SettingsNS::szCharSets[i]); \
+			if (SettingsNS::nCharSets[i] == Value) num = i; \
+		} \
+		SendDlgItemMessage(hDlg, nDlgID, CB_SETCURSEL, num, 0); \
+	}
+
 
 #define GetListBox(hDlg,nDlgID,Items,Values,Value) \
 	_ASSERTE(countof(Items) == countof(Values)); \
@@ -838,9 +851,12 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 
 	// Если шустрый юзер успел переключиться на вкладку "Views" до оконачания
 	// загрузки шрифтов - послать в диалог сообщение "Считать список из hMain"
-	if (ghOpWnd && gpSetCls->hViews)
+	if (ghOpWnd)
 	{
-		PostMessage(gpSetCls->hViews, gpSetCls->mn_MsgLoadFontFromMain, 0, 0);
+		if (gpSetCls->hViews)
+			PostMessage(gpSetCls->hViews, gpSetCls->mn_MsgLoadFontFromMain, 0, 0);
+		if (gpSetCls->hTabs)
+			PostMessage(gpSetCls->hTabs, gpSetCls->mn_MsgLoadFontFromMain, 0, 0);
 	}
 
 	return 0;
@@ -1068,19 +1084,19 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeX3);
 		SelectStringExact(hMain, tFontSizeX3, temp);
 	}
-	{
-		_ASSERTE(countof(chSetsNums) == countof(ChSets));
-		u8 num = 4; //-V112
 
-		for(uint i=0; i < countof(ChSets); i++)
-		{
-			SendDlgItemMessageA(hMain, tFontCharset, CB_ADDSTRING, 0, (LPARAM) ChSets[i]);
+	FillListBoxCharSet(hMain, tFontCharset, LogFont.lfCharSet);
 
-			if (chSetsNums[i] == LogFont.lfCharSet) num = i;
-		}
-
-		SendDlgItemMessage(hMain, tFontCharset, CB_SETCURSEL, num, 0);
-	}
+	//{
+	//	_ASSERTE(countof(SettingsNS::nCharSets) == countof(SettingsNS::szCharSets));
+	//	u8 num = 4; //-V112
+	//	for (size_t i = 0; i < countof(SettingsNS::nCharSets); i++)
+	//	{
+	//		SendDlgItemMessageA(hMain, tFontCharset, CB_ADDSTRING, 0, (LPARAM) ChSets[i]);
+	//		if (chSetsNums[i] == LogFont.lfCharSet) num = i;
+	//	}
+	//	SendDlgItemMessage(hMain, tFontCharset, CB_SETCURSEL, num, 0);
+	//}
 	
 	MCHKHEAP
 	SetDlgItemText(hMain, tCmdLine, gpSet->psCmd ? gpSet->psCmd : L"");
@@ -1705,6 +1721,16 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 
 	CheckDlgButton(hWnd2, cbHideInactiveConTabs, gpSet->bHideInactiveConsoleTabs);
 
+	SetDlgItemText(hWnd2, tTabFontFace, gpSet->sTabFontFace);
+
+	if (gpSetCls->mh_EnumThread == NULL)  // Если шрифты уже считаны
+		OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0); // можно скопировать список с вкладки hMain
+
+	DWORD nVal = gpSet->nTabFontHeight;
+	FillListBoxInt(hWnd2, tTabFontHeight, SettingsNS::FSizesSmall, nVal);
+
+	FillListBoxCharSet(hWnd2, tTabFontCharset, gpSet->nTabFontCharSet);
+
 	CheckDlgButton(hWnd2, cbMultiCon, gpSet->isMulti);
 
 	CheckDlgButton(hWnd2, cbMultiIterate, gpSet->isMultiIterate);
@@ -1782,8 +1808,7 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 		ColorSetEdit(hColors, c);
 
 	DWORD nVal = gpSet->nExtendColor;
-	FillListBoxItems(GetDlgItem(hColors, lbExtendIdx), countof(SettingsNS::szColorIdxSh),
-	                 SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
+	FillListBox(hColors, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
 	gpSet->nExtendColor = nVal;
 	CheckDlgButton(hColors, cbExtendColors, gpSet->isExtendColors ? BST_CHECKED : BST_UNCHECKED);
 	OnButtonClicked(hColors, cbExtendColors, 0);
@@ -1812,108 +1837,133 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Views(HWND hWnd2)
 {
-	#if 0
-	if (gpSetCls->EnableThemeDialogTextureF)
-		gpSetCls->EnableThemeDialogTextureF(hViews, 6/*ETDT_ENABLETAB*/);
-	#endif
-
 	// пока выключим
-	EnableWindow(GetDlgItem(hViews, bApplyViewSettings), gpConEmu->ActiveCon()->IsPanelViews());
-	SetDlgItemText(hViews, tThumbsFontName, gpSet->ThSet.Thumbs.sFontName);
-	SetDlgItemText(hViews, tTilesFontName, gpSet->ThSet.Tiles.sFontName);
+	EnableWindow(GetDlgItem(hWnd2, bApplyViewSettings), gpConEmu->ActiveCon()->IsPanelViews());
+
+	SetDlgItemText(hWnd2, tThumbsFontName, gpSet->ThSet.Thumbs.sFontName);
+	SetDlgItemText(hWnd2, tTilesFontName, gpSet->ThSet.Tiles.sFontName);
 
 	if (gpSetCls->mh_EnumThread == NULL)  // Если шрифты уже считаны
-		OnInitDialog_ViewsFonts(hWnd2); // можно скопировать список с вкладки hMain
+		OnInitDialog_CopyFonts(hWnd2, tThumbsFontName, tTilesFontName, 0); // можно скопировать список с вкладки hMain
 
 	DWORD nVal;
-	wchar_t temp[MAX_PATH];
 
-	for(uint i=0; i < countof(SettingsNS::FSizesSmall); i++)
-	{
-		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", SettingsNS::FSizesSmall[i]);
-		SendDlgItemMessage(hViews, tThumbsFontSize, CB_ADDSTRING, 0, (LPARAM) temp);
-		SendDlgItemMessage(hViews, tTilesFontSize, CB_ADDSTRING, 0, (LPARAM) temp);
-	}
+	nVal = gpSet->ThSet.Thumbs.nFontHeight;
+	FillListBoxInt(hWnd2, tThumbsFontSize, SettingsNS::FSizesSmall, nVal);
 
-	_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->ThSet.Thumbs.nFontHeight);
-	SelectStringExact(hViews, tThumbsFontSize, temp);
-	_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->ThSet.Tiles.nFontHeight);
-	SelectStringExact(hViews, tTilesFontSize, temp);
-	SetDlgItemInt(hViews, tThumbsImgSize, gpSet->ThSet.Thumbs.nImgSize, FALSE);
-	SetDlgItemInt(hViews, tThumbsX1, gpSet->ThSet.Thumbs.nSpaceX1, FALSE);
-	SetDlgItemInt(hViews, tThumbsY1, gpSet->ThSet.Thumbs.nSpaceY1, FALSE);
-	SetDlgItemInt(hViews, tThumbsX2, gpSet->ThSet.Thumbs.nSpaceX2, FALSE);
-	SetDlgItemInt(hViews, tThumbsY2, gpSet->ThSet.Thumbs.nSpaceY2, FALSE);
-	SetDlgItemInt(hViews, tThumbsSpacing, gpSet->ThSet.Thumbs.nLabelSpacing, FALSE);
-	SetDlgItemInt(hViews, tThumbsPadding, gpSet->ThSet.Thumbs.nLabelPadding, FALSE);
-	SetDlgItemInt(hViews, tTilesImgSize, gpSet->ThSet.Tiles.nImgSize, FALSE);
-	SetDlgItemInt(hViews, tTilesX1, gpSet->ThSet.Tiles.nSpaceX1, FALSE);
-	SetDlgItemInt(hViews, tTilesY1, gpSet->ThSet.Tiles.nSpaceY1, FALSE);
-	SetDlgItemInt(hViews, tTilesX2, gpSet->ThSet.Tiles.nSpaceX2, FALSE);
-	SetDlgItemInt(hViews, tTilesY2, gpSet->ThSet.Tiles.nSpaceY2, FALSE);
-	SetDlgItemInt(hViews, tTilesSpacing, gpSet->ThSet.Tiles.nLabelSpacing, FALSE);
-	SetDlgItemInt(hViews, tTilesPadding, gpSet->ThSet.Tiles.nLabelPadding, FALSE);
-	FillListBoxItems(GetDlgItem(hViews, tThumbMaxZoom), countof(SettingsNS::szThumbMaxZoom),
-	                 SettingsNS::szThumbMaxZoom, SettingsNS::nThumbMaxZoom, gpSet->ThSet.nMaxZoom);
+	nVal = gpSet->ThSet.Tiles.nFontHeight;
+	FillListBoxInt(hWnd2, tTilesFontSize, SettingsNS::FSizesSmall, nVal);
+
+	//wchar_t temp[MAX_PATH];
+	//for (uint i=0; i < countof(SettingsNS::FSizesSmall); i++)
+	//{
+	//	_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", SettingsNS::FSizesSmall[i]);
+	//	SendDlgItemMessage(hWnd2, tThumbsFontSize, CB_ADDSTRING, 0, (LPARAM) temp);
+	//	SendDlgItemMessage(hWnd2, tTilesFontSize, CB_ADDSTRING, 0, (LPARAM) temp);
+	//}
+	//_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->ThSet.Thumbs.nFontHeight);
+	//SelectStringExact(hWnd2, tThumbsFontSize, temp);
+	//_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->ThSet.Tiles.nFontHeight);
+	//SelectStringExact(hWnd2, tTilesFontSize, temp);
+
+	SetDlgItemInt(hWnd2, tThumbsImgSize, gpSet->ThSet.Thumbs.nImgSize, FALSE);
+	SetDlgItemInt(hWnd2, tThumbsX1, gpSet->ThSet.Thumbs.nSpaceX1, FALSE);
+	SetDlgItemInt(hWnd2, tThumbsY1, gpSet->ThSet.Thumbs.nSpaceY1, FALSE);
+	SetDlgItemInt(hWnd2, tThumbsX2, gpSet->ThSet.Thumbs.nSpaceX2, FALSE);
+	SetDlgItemInt(hWnd2, tThumbsY2, gpSet->ThSet.Thumbs.nSpaceY2, FALSE);
+	SetDlgItemInt(hWnd2, tThumbsSpacing, gpSet->ThSet.Thumbs.nLabelSpacing, FALSE);
+	SetDlgItemInt(hWnd2, tThumbsPadding, gpSet->ThSet.Thumbs.nLabelPadding, FALSE);
+	SetDlgItemInt(hWnd2, tTilesImgSize, gpSet->ThSet.Tiles.nImgSize, FALSE);
+	SetDlgItemInt(hWnd2, tTilesX1, gpSet->ThSet.Tiles.nSpaceX1, FALSE);
+	SetDlgItemInt(hWnd2, tTilesY1, gpSet->ThSet.Tiles.nSpaceY1, FALSE);
+	SetDlgItemInt(hWnd2, tTilesX2, gpSet->ThSet.Tiles.nSpaceX2, FALSE);
+	SetDlgItemInt(hWnd2, tTilesY2, gpSet->ThSet.Tiles.nSpaceY2, FALSE);
+	SetDlgItemInt(hWnd2, tTilesSpacing, gpSet->ThSet.Tiles.nLabelSpacing, FALSE);
+	SetDlgItemInt(hWnd2, tTilesPadding, gpSet->ThSet.Tiles.nLabelPadding, FALSE);
+	FillListBox(hWnd2, tThumbMaxZoom, SettingsNS::szThumbMaxZoom, SettingsNS::nThumbMaxZoom, gpSet->ThSet.nMaxZoom);
 
 	// Colors
 	for(uint c = c32; c <= c34; c++)
-		ColorSetEdit(hViews, c);
+		ColorSetEdit(hWnd2, c);
 
 	nVal = gpSet->ThSet.crBackground.ColorIdx;
-	FillListBoxItems(GetDlgItem(hViews, lbThumbBackColorIdx), countof(SettingsNS::szColorIdxTh),
-	                 SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
-	CheckRadioButton(hViews, rbThumbBackColorIdx, rbThumbBackColorRGB,
+	FillListBox(hWnd2, lbThumbBackColorIdx, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	CheckRadioButton(hWnd2, rbThumbBackColorIdx, rbThumbBackColorRGB,
 	                 gpSet->ThSet.crBackground.UseIndex ? rbThumbBackColorIdx : rbThumbBackColorRGB);
-	CheckDlgButton(hViews, cbThumbPreviewBox, gpSet->ThSet.nPreviewFrame ? 1 : 0);
+	CheckDlgButton(hWnd2, cbThumbPreviewBox, gpSet->ThSet.nPreviewFrame ? 1 : 0);
 	nVal = gpSet->ThSet.crPreviewFrame.ColorIdx;
-	FillListBoxItems(GetDlgItem(hViews, lbThumbPreviewBoxColorIdx), countof(SettingsNS::szColorIdxTh),
-	                 SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
-	CheckRadioButton(hViews, rbThumbPreviewBoxColorIdx, rbThumbPreviewBoxColorRGB,
+	FillListBox(hWnd2, lbThumbPreviewBoxColorIdx, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	CheckRadioButton(hWnd2, rbThumbPreviewBoxColorIdx, rbThumbPreviewBoxColorRGB,
 	                 gpSet->ThSet.crPreviewFrame.UseIndex ? rbThumbPreviewBoxColorIdx : rbThumbPreviewBoxColorRGB);
-	CheckDlgButton(hViews, cbThumbSelectionBox, gpSet->ThSet.nSelectFrame ? 1 : 0);
+	CheckDlgButton(hWnd2, cbThumbSelectionBox, gpSet->ThSet.nSelectFrame ? 1 : 0);
 	nVal = gpSet->ThSet.crSelectFrame.ColorIdx;
-	FillListBoxItems(GetDlgItem(hViews, lbThumbSelectionBoxColorIdx), countof(SettingsNS::szColorIdxTh),
-	                 SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
-	CheckRadioButton(hViews, rbThumbSelectionBoxColorIdx, rbThumbSelectionBoxColorRGB,
+	FillListBox(hWnd2, lbThumbSelectionBoxColorIdx, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	CheckRadioButton(hWnd2, rbThumbSelectionBoxColorIdx, rbThumbSelectionBoxColorRGB,
 	                 gpSet->ThSet.crSelectFrame.UseIndex ? rbThumbSelectionBoxColorIdx : rbThumbSelectionBoxColorRGB);
 
 	if ((gpSet->ThSet.bLoadPreviews & 3) == 3)
-		CheckDlgButton(hViews, cbThumbLoadFiles, BST_CHECKED);
+		CheckDlgButton(hWnd2, cbThumbLoadFiles, BST_CHECKED);
 	else if ((gpSet->ThSet.bLoadPreviews & 3) == 1)
-		CheckDlgButton(hViews, cbThumbLoadFiles, BST_INDETERMINATE);
+		CheckDlgButton(hWnd2, cbThumbLoadFiles, BST_INDETERMINATE);
 
-	CheckDlgButton(hViews, cbThumbLoadFolders, gpSet->ThSet.bLoadFolders);
-	SetDlgItemInt(hViews, tThumbLoadingTimeout, gpSet->ThSet.nLoadTimeout, FALSE);
-	CheckDlgButton(hViews, cbThumbUsePicView2, gpSet->ThSet.bUsePicView2);
-	CheckDlgButton(hViews, cbThumbRestoreOnStartup, gpSet->ThSet.bRestoreOnStartup);
-	RegisterTipsFor(hViews);
+	CheckDlgButton(hWnd2, cbThumbLoadFolders, gpSet->ThSet.bLoadFolders);
+	SetDlgItemInt(hWnd2, tThumbLoadingTimeout, gpSet->ThSet.nLoadTimeout, FALSE);
+	CheckDlgButton(hWnd2, cbThumbUsePicView2, gpSet->ThSet.bUsePicView2);
+	CheckDlgButton(hWnd2, cbThumbRestoreOnStartup, gpSet->ThSet.bRestoreOnStartup);
+
+	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
-void CSettings::OnInitDialog_ViewsFonts(HWND hWnd2)
+// tThumbsFontName, tTilesFontName, 0
+void CSettings::OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...)
 {
 	DWORD bAlmostMonospace;
 	int nIdx, nCount, i;
 	wchar_t szFontName[128]; // не должно быть более 32
 	nCount = SendDlgItemMessage(gpSetCls->hMain, tFontFace, CB_GETCOUNT, 0, 0);
 
-	for(i = 0; i < nCount; i++)
+#ifdef _DEBUG
+	GetDlgItemText(hWnd2, nList1, szFontName, 128);
+#endif
+
+	int nCtrls = 1;
+	int nCtrlIds[10] = {nList1};
+	va_list argptr;
+	va_start(argptr, nList1);
+	int nNext = va_arg( argptr, int );
+	while (nNext)
 	{
+		nCtrlIds[nCtrls++] = nNext;
+		nNext = va_arg( argptr, int );
+	}
+
+
+	for (i = 0; i < nCount; i++)
+	{
+		// Взять список шрифтов с главной страницы
 		if (SendDlgItemMessage(gpSetCls->hMain, tFontFace, CB_GETLBTEXT, i, (LPARAM) szFontName) > 0)
 		{
+			// Показывать [Raster Fonts WxH] смысла нет
+			if (szFontName[0] == L'[' && !wcsncmp(szFontName+1, RASTER_FONTS_NAME, _tcslen(RASTER_FONTS_NAME)))
+				continue;
+
 			bAlmostMonospace = (DWORD)SendDlgItemMessage(gpSetCls->hMain, tFontFace, CB_GETITEMDATA, i, 0);
-			nIdx = SendDlgItemMessage(gpSetCls->hViews, tThumbsFontName, CB_ADDSTRING, 0, (LPARAM) szFontName);
-			SendDlgItemMessage(gpSetCls->hViews, tThumbsFontName, CB_SETITEMDATA, nIdx, bAlmostMonospace);
-			nIdx = SendDlgItemMessage(gpSetCls->hViews, tTilesFontName, CB_ADDSTRING, 0, (LPARAM) szFontName);
-			SendDlgItemMessage(gpSetCls->hViews, tTilesFontName, CB_SETITEMDATA, nIdx, bAlmostMonospace);
+
+			// Теперь создаем новые строки
+			for (int j = 0; j < nCtrls; j++)
+			{
+				nIdx = SendDlgItemMessage(hWnd2, nCtrlIds[j], CB_ADDSTRING, 0, (LPARAM) szFontName);
+				SendDlgItemMessage(hWnd2, nCtrlIds[j], CB_SETITEMDATA, nIdx, bAlmostMonospace);
+			}
 		}
 	}
 
-	GetDlgItemText(gpSetCls->hViews, tThumbsFontName, szFontName, 128);
-	gpSetCls->SelectString(gpSetCls->hViews, tThumbsFontName, szFontName);
-	GetDlgItemText(gpSetCls->hViews, tTilesFontName, szFontName, 128);
-	gpSetCls->SelectString(gpSetCls->hViews, tTilesFontName, szFontName);
+	for (int j = 0; j < nCtrls; j++)
+	{
+		GetDlgItemText(hWnd2, nCtrlIds[j], szFontName, 128);
+		gpSetCls->SelectString(hWnd2, nCtrlIds[j], szFontName);
+	}
 }
 
 LRESULT CSettings::OnInitDialog_Debug(HWND hWnd2)
@@ -3639,6 +3689,45 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
+	case tTabFontFace:
+	case tTabFontHeight:
+	case tTabFontCharset:
+	{
+		if (HIWORD(wParam) == CBN_EDITCHANGE)
+		{
+			switch(wId)
+			{
+			case tTabFontFace:
+				GetDlgItemText(hWnd2, wId, gpSet->sTabFontFace, countof(gpSet->sTabFontFace)); break;
+			case tTabFontHeight:
+				gpSet->nTabFontHeight = GetNumber(hWnd2, wId); break;
+			}
+		}
+		else if (HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+
+			switch(wId)
+			{
+			case tTabFontFace:
+				SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->sTabFontFace);
+				break;
+			case tTabFontHeight:
+				if (nSel >= 0 && nSel < (INT_PTR)countof(SettingsNS::FSizesSmall))
+					gpSet->nTabFontHeight = SettingsNS::FSizesSmall[nSel];
+				break;
+			case tTabFontCharset:
+				if (nSel >= 0 && nSel < (INT_PTR)countof(SettingsNS::nCharSets))
+					gpSet->nTabFontCharSet = SettingsNS::nCharSets[nSel];
+				else
+					gpSet->nTabFontCharSet = DEFAULT_CHARSET;
+			}
+		}
+		gpConEmu->mp_TabBar->UpdateTabFont();
+		break;
+	}
+
+
 	default:
 		if (hWnd2 == gpSetCls->hViews)
 		{
@@ -4077,7 +4166,7 @@ INT_PTR CSettings::OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 {
 	DWORD wID = wParam;
 
-	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName)
+	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName || wID == tTabFontFace)
 	{
 		MEASUREITEMSTRUCT *pItem = (MEASUREITEMSTRUCT*)lParam;
 		pItem->itemHeight = 15; //pItem->itemHeight;
@@ -4090,7 +4179,7 @@ INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 {
 	DWORD wID = wParam;
 
-	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName)
+	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName || wID == tTabFontFace)
 	{
 		DRAWITEMSTRUCT *pItem = (DRAWITEMSTRUCT*)lParam;
 		wchar_t szText[128]; szText[0] = 0;
@@ -4295,7 +4384,11 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			}
 			else if (messg == gpSetCls->mn_MsgLoadFontFromMain)
 			{
-				gpSetCls->OnInitDialog_ViewsFonts(hWnd2);
+				if (hWnd2 == gpSetCls->hViews)
+					gpSetCls->OnInitDialog_CopyFonts(hWnd2, tThumbsFontName, tTilesFontName, 0);
+				else if (hWnd2 == gpSetCls->hTabs)
+					gpSetCls->OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0);
+					
 			}
 			else if (messg == gpSetCls->mn_MsgUpdateCounter)
 			{
@@ -6015,8 +6108,8 @@ void CSettings::RecreateFont(WORD wFromID)
 			//gpSet->mb_CharSetWasSet = FALSE;
 			INT_PTR newCharSet = SendDlgItemMessage(hMain, tFontCharset, CB_GETCURSEL, 0, 0);
 
-			if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < (INT_PTR)countof(chSetsNums))
-				LF.lfCharSet = chSetsNums[newCharSet];
+			if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < (INT_PTR)countof(SettingsNS::nCharSets))
+				LF.lfCharSet = SettingsNS::nCharSets[newCharSet];
 			else
 				LF.lfCharSet = DEFAULT_CHARSET;
 		}
@@ -6534,9 +6627,9 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		{
 			inFont->lfCharSet = m_tm->tmCharSet;
 
-			for(uint i=0; i < countof(ChSets); i++)
+			for (uint i = 0; i < countof(SettingsNS::nCharSets); i++)
 			{
-				if (chSetsNums[i] == m_tm->tmCharSet)
+				if (SettingsNS::nCharSets[i] == m_tm->tmCharSet)
 				{
 					SendDlgItemMessage(hMain, tFontCharset, CB_SETCURSEL, i, 0);
 					break;
@@ -6847,26 +6940,26 @@ int CSettings::SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 	return nIdx;
 }
 
+// Если nCtrlId==0 - hParent==hList
 int CSettings::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 {
 	if (!hParent)  // был ghOpWnd. теперь может быть вызван и для других диалогов!
 		return -1;
 
-#ifdef _DEBUG
-	HWND hChild = GetDlgItem(hParent, nCtrlId);
-	_ASSERTE(hChild!=NULL);
-#endif
-	int nIdx = SendDlgItemMessage(hParent, nCtrlId, CB_FINDSTRINGEXACT, -1, (LPARAM)asText);
+	HWND hList = nCtrlId ? GetDlgItem(hParent, nCtrlId) : hParent;
+	_ASSERTE(hList!=NULL);
+
+	int nIdx = SendMessage(hList, CB_FINDSTRINGEXACT, -1, (LPARAM)asText);
 
 	if (nIdx < 0)
 	{
-		int nCount = SendDlgItemMessage(hParent, nCtrlId, CB_GETCOUNT, 0, 0);
+		int nCount = SendMessage(hList, CB_GETCOUNT, 0, 0);
 		int nNewVal = _wtol(asText);
 		wchar_t temp[MAX_PATH];
 
 		for(int i = 0; i < nCount; i++)
 		{
-			if (!SendDlgItemMessage(hParent, nCtrlId, CB_GETLBTEXT, i, (LPARAM)temp)) break;
+			if (!SendMessage(hList, CB_GETLBTEXT, i, (LPARAM)temp)) break;
 
 			int nCurVal = _wtol(temp);
 
@@ -6877,19 +6970,19 @@ int CSettings::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 			}
 			else if (nCurVal > nNewVal)
 			{
-				nIdx = SendDlgItemMessage(hParent, nCtrlId, CB_INSERTSTRING, i, (LPARAM) asText);
+				nIdx = SendMessage(hList, CB_INSERTSTRING, i, (LPARAM) asText);
 				break;
 			}
 		}
 
 		if (nIdx < 0)
-			nIdx = SendDlgItemMessage(hParent, nCtrlId, CB_INSERTSTRING, 0, (LPARAM) asText);
+			nIdx = SendMessage(hList, CB_INSERTSTRING, 0, (LPARAM) asText);
 	}
 
 	if (nIdx >= 0)
-		SendDlgItemMessage(hParent, nCtrlId, CB_SETCURSEL, nIdx, 0);
+		SendMessage(hList, CB_SETCURSEL, nIdx, 0);
 	else
-		SetDlgItemText(hParent, nCtrlId, asText);
+		SetWindowText(hList, asText);
 
 	return nIdx;
 }
@@ -8316,23 +8409,40 @@ bool CSettings::SetColorById(WORD nID, COLORREF color)
 //	//return (gpSet->isUserScreenTransparent || !gpSet->isMonospace);
 //}
 
-void CSettings::FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue)
+void CSettings::FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue, BOOL abExact /*= FALSE*/)
 {
 	_ASSERTE(hList!=NULL);
 	uint num = 0;
+	wchar_t szNumber[32];
 
 	SendMessage(hList, CB_RESETCONTENT, 0, 0);
 
 	for (uint i = 0; i < nItems; i++)
 	{
-		SendMessage(hList, CB_ADDSTRING, 0, (LPARAM) pszItems[i]); //-V108
+		if (pszItems)
+		{
+			SendMessage(hList, CB_ADDSTRING, 0, (LPARAM) pszItems[i]); //-V108
+		}
+		else
+		{
+			_wsprintf(szNumber, SKIPLEN(countof(szNumber)) L"%i", pnValues[i]);
+			SendMessage(hList, CB_ADDSTRING, 0, (LPARAM)szNumber);
+		}
 
 		if (pnValues[i] == nValue) num = i; //-V108
 	}
 
-	if (!num) nValue = 0;  // если код неизвестен?
-
-	SendMessage(hList, CB_SETCURSEL, num, 0);
+	if (abExact)
+	{
+		_wsprintf(szNumber, SKIPLEN(countof(szNumber)) L"%i", nValue);
+		SelectStringExact(hList, 0, szNumber);
+	}
+	else
+	{
+		if (!num)
+			nValue = 0;  // если код неизвестен?
+		SendMessage(hList, CB_SETCURSEL, num, 0);
+	}
 }
 
 void CSettings::GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue)
@@ -8969,14 +9079,14 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			gpSetCls->hConFontDlg = NULL; // пока не выставим - на смену в контролах не реагировать
 			wchar_t temp[10];
 
-			for(uint i=0; i < countof(SettingsNS::FSizesSmall); i++)
+			for (uint i = 0; i < countof(SettingsNS::FSizesSmall); i++)
 			{
 				_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", SettingsNS::FSizesSmall[i]);
 				SendDlgItemMessage(hWnd2, tConsoleFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
 				_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", (int)(SettingsNS::FSizesSmall[i]*3/2));
 				SendDlgItemMessage(hWnd2, tConsoleFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
 
-				if (SettingsNS::FSizesSmall[i] >= gpSetCls->LogFont.lfHeight)
+				if ((LONG)SettingsNS::FSizesSmall[i] >= gpSetCls->LogFont.lfHeight)
 					break; // не допускаются шрифты больше, чем выбрано для основного шрифта!
 			}
 

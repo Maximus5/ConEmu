@@ -9387,6 +9387,9 @@ void CRealConsole::Detach()
 
 	if (hGuiWnd)
 	{
+		if (MessageBox(NULL, L"Detach GUI application from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
+			return;
+	
 		ShowOtherWindow(hGuiWnd, SW_HIDE);
 		SetOtherWindowParent(hGuiWnd, NULL);
 		SetOtherWindowPos(hGuiWnd, HWND_NOTOPMOST, rcPreGuiWndRect.left, rcPreGuiWndRect.top, rcPreGuiWndRect.right-rcPreGuiWndRect.left, rcPreGuiWndRect.bottom-rcPreGuiWndRect.top,
@@ -9398,6 +9401,9 @@ void CRealConsole::Detach()
 	}
 	else
 	{
+		if (MessageBox(NULL, L"Detach console from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
+			return;
+	
 		ShowConsole(1);
 		// Уведомить сервер, что он больше не наш
 		CESERVER_REQ in;

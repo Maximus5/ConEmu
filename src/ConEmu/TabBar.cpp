@@ -118,10 +118,16 @@ TabBarClass::TabBarClass()
 	//mb_ThemingEnabled = FALSE;
 	mh_TabTip = mh_Balloon = NULL; ms_TabErrText[0] = 0; memset(&tiBalloon,0,sizeof(tiBalloon));
 	mb_InNewConPopup = false;
+	mh_TabFont = NULL;
 }
 
 TabBarClass::~TabBarClass()
 {
+	if (mh_TabFont)
+	{
+		DeleteObject(mh_TabFont);
+		mh_TabFont = NULL;
+	}
 }
 
 //void TabBarClass::CheckTheming()
@@ -1658,9 +1664,10 @@ HWND TabBarClass::CreateTabbar()
 		TabCtrl_SetToolTips(mh_Tabbar, mh_TabTip);
 	}
 
-	HFONT hFont = CreateFont(gpSet->nTabFontHeight, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gpSet->nTabFontCharSet, OUT_DEFAULT_PRECIS,
-	                         CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gpSet->sTabFontFace);
-	SendMessage(mh_Tabbar, WM_SETFONT, WPARAM(hFont), TRUE);
+	UpdateTabFont();
+	//HFONT hFont = CreateFont(gpSet->nTabFontHeight, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gpSet->nTabFontCharSet, OUT_DEFAULT_PRECIS,
+	//                         CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gpSet->sTabFontFace);
+	//SendMessage(mh_Tabbar, WM_SETFONT, WPARAM(hFont), TRUE);
 
 	if (!mh_Balloon || !IsWindow(mh_Balloon))
 	{
@@ -2620,4 +2627,19 @@ int TabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** p
 		*ppVCon = pVCon;
 	
 	return nTab;
+}
+
+void TabBarClass::UpdateTabFont()
+{
+	if (!mh_Tabbar)
+		return;
+
+	HFONT hFont = CreateFont(gpSet->nTabFontHeight, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gpSet->nTabFontCharSet, OUT_DEFAULT_PRECIS,
+		CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gpSet->sTabFontFace);
+	
+	SendMessage(mh_Tabbar, WM_SETFONT, WPARAM(hFont), TRUE);
+
+	if (mh_TabFont)
+		DeleteObject(mh_TabFont);
+	mh_TabFont = hFont;
 }

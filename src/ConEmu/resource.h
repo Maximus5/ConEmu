@@ -499,6 +499,10 @@
 #define cbMultiIterate                  2104
 #define IDC_EDIT1                       2105
 #define tGuiMacro                       2105
+#define tTabFontFace                    2106
+#define tTabFontSizeY                   2107
+#define tTabFontHeight                  2107
+#define tTabFontCharset                 2108
 
 // Next default values for new objects
 // 
@@ -506,7 +510,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        216
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2106
+#define _APS_NEXT_CONTROL_VALUE         2109
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

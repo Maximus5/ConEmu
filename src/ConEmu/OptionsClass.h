@@ -488,7 +488,7 @@ class CSettings
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
 		LRESULT OnInitDialog_Color(HWND hWnd2);
 		LRESULT OnInitDialog_Views(HWND hWnd2);
-		void OnInitDialog_ViewsFonts(HWND hWnd2); // скопировать список шрифтов с вкладки hMain
+		void OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...); // скопировать список шрифтов с вкладки hMain
 		LRESULT OnInitDialog_Debug(HWND hWnd2);
 		LRESULT OnInitDialog_Update(HWND hWnd2);
 		LRESULT OnInitDialog_Info(HWND hWnd2);
@@ -590,7 +590,7 @@ class CSettings
 		//DWORD nMultiHotkeyModifier;
 		//BYTE mn_HostModOk[15], mn_HostModSkip[15];
 		//bool isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR);
-		static void FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue);
+		static void FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue, BOOL abExact = FALSE);
 		static void GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue);
 		static void CenterMoreDlg(HWND hWnd2);
 		static bool IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight);

@@ -58,6 +58,7 @@ class TabBarClass //: public CToolTip
 
 	private:
 		HWND mh_Tabbar, mh_Toolbar, mh_Rebar, mh_TabTip, mh_Balloon;
+		HFONT mh_TabFont;
 		TOOLINFO tiBalloon; wchar_t ms_TabErrText[512];
 		HIMAGELIST mh_TabIcons; int mn_AdminIcon;
 		struct CmdHistory
@@ -157,6 +158,7 @@ class TabBarClass //: public CToolTip
 		void Update(BOOL abPosted=FALSE);
 		BOOL NeedPostUpdate();
 		void UpdatePosition();
+		void UpdateTabFont();
 		void UpdateWidth();
 		void OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/);
 		void OnCaptionHidden();

@@ -52,9 +52,9 @@ Installation
        Each macro file (*.reg) has description in header.
        Just doubleclick choosen files in Windows Explorer to import them.
     3. By default (started without command line params), ConEmu runs "far.exe"
-       from it's home folder. Alternatively, You may specify any root command,
-       specifying "/Cmd <App with params>" argument in ConEmu shortcut or
-       command line.
+       from it's home folder, or "cmd.exe" if Far Manager not found.
+       Alternatively, You may specify any root command, specifying
+       "/Cmd <App with params>" argument in ConEmu shortcut or command line.
 
 
 Command Line Syntax
