@@ -626,7 +626,7 @@ BOOL CRealBuffer::PreInit()
 {
 	MCHKHEAP;
 	// Инициализировать переменные m_sbi, m_ci, m_sel
-	RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+	//RECT rcWnd; Get ClientRect(ghWnd, &rcWnd);
 	
 	// mp_RCon->isBufferHeight использовать нельзя, т.к. mp_RBuf.m_sbi еще не инициализирован!
 	bool bNeedBufHeight = (gpSetCls->bForceBufferHeight && gpSetCls->nForceBufferHeight>0)
@@ -647,7 +647,7 @@ BOOL CRealBuffer::PreInit()
 	if (gpConEmu->isIconic())
 		rcCon = MakeRect(gpSet->wndWidth, gpSet->wndHeight);
 	else
-		rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
+		rcCon = gpConEmu->CalcRect(CER_CONSOLE, mp_RCon->mp_VCon);
 
 	_ASSERTE(rcCon.right!=0 && rcCon.bottom!=0);
 

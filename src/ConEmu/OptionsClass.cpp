@@ -2324,8 +2324,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbAlwaysShowScrollbar:
 			gpSet->isAlwaysShowScrollbar = IsChecked(hWnd2, cbAlwaysShowScrollbar);
+			gpConEmu->OnAlwaysShowScrollbar();
 			gpConEmu->OnSize(-1);
-			gpConEmu->m_Back->TrackMouse();
 			gpConEmu->InvalidateAll();
 			break;
 		case cbFarHourglass:
@@ -3028,7 +3028,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				if (ColorEditDialog(hColors, CB))
 				{
-					gpConEmu->m_Back->Refresh();
+					//gpConEmu->m_Back->Refresh();
 					gpConEmu->Update(true);
 				}
 			} // else if (CB >= c0 && CB <= MAX_COLOR_EDT_ID)

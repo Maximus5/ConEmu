@@ -1863,7 +1863,8 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 
 	_ASSERTE(gpConEmu->isMainThread());
 
-	if (isForce || !mb_PointersAllocated || lbSizeChanged)
+	// 120108 - пересоздавать DC на каждый чих не нужно (isForce выставляется, например, при смене Fade)
+	if (/*isForce ||*/ !mb_PointersAllocated || lbSizeChanged)
 	{
 		// 100627 перенес после InitDC, т.к. циклилось
 		//if (lbSizeChanged)
@@ -3474,7 +3475,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		return;
 	}
 
-	CVConGuard guard(this);
+	CVirtualConsole* pVCon = this;
+	CVConGuard guard(pVCon);
 
 	_ASSERTE(hPaintDc);
 	_ASSERTE(rcClient.left!=rcClient.right && rcClient.top!=rcClient.bottom);
@@ -3489,7 +3491,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 //#endif
 	BOOL lbSimpleBlack = FALSE, lbGuiVisible = FALSE;
 
-	if (!this)
+	if (!pVCon)
 		lbSimpleBlack = TRUE;
 	else if (!mp_RCon)
 		lbSimpleBlack = TRUE;
@@ -3502,11 +3504,13 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 	//	lbSimpleBlack = TRUE;
 	if (lbSimpleBlack)
 	{
-		//RECT rcWndClient; GetClientRect(ghWnd, &rcWndClient);
+		//RECT rcWndClient; Get ClientRect(ghWnd, &rcWndClient);
 		//RECT rcCalcCon = gpConEmu->CalcRect(CER_BACK, rcWndClient, CER_MAINCLIENT);
 		//RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
 		//rcClient = gpConEmu->CalcRect(CER_BACK, rcCon, CER_CONSOLE);
-		GetClientRect(mh_WndDC, &rcClient);
+
+		//// Заливка без полос прокруток
+		//::GetClientRect(mh_WndDC, &rcClient);
 		
 		HBRUSH hBr = NULL;
 		BOOL lbDelBrush = FALSE;
@@ -3530,7 +3534,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			hBr = CreateSolidBrush(pColors[nBackColorIdx]);
 			lbDelBrush = (hBr != NULL);
 		}
-		//RECT rcClient; GetClientRect('ghWnd DC', &rcClient);
+		//RECT rcClient; Get ClientRect('ghWnd DC', &rcClient);
 		//PAINTSTRUCT ps;
 		//HDC hPaintDc = BeginPaint('ghWnd DC', &ps);
 		
@@ -3572,7 +3576,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		if (lbDelBrush)
 			DeleteObject(hBr);
 			
-		if (mp_Ghost)
+		if (pVCon && mp_Ghost)
 			mp_Ghost->UpdateTabSnapshoot(TRUE); //CreateTabSnapshoot(hPaintDc, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
 		
 		//EndPaint('ghWnd DC', &ps);
@@ -3603,12 +3607,14 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 	//PAINTSTRUCT ps;
 	//HDC hPaintDc = NULL;
 
-	//GetClientRect('ghWnd DC', &client);
+	//Get ClientRect('ghWnd DC', &client);
 
 	if (!gpConEmu->isNtvdm())
 	{
+		// rcClient не учитывает возможную полосу прокрутки
+		RECT rcFull; GetWindowRect(mh_WndDC, &rcFull);
 		// после глюков с ресайзом могут быть проблемы с размером окна DC
-		if ((client.right-client.left) < (LONG)Width || (client.bottom-client.top) < (LONG)Height)
+		if ((rcFull.right - rcFull.left) < (LONG)Width || (rcFull.bottom - client.top) < (LONG)Height)
 		{
 			WARNING("Зацикливается. Вызывает Paint, который вызывает OnSize. В итоге - 100% загрузки проц.");
 			gpConEmu->OnSize(-1); // Только ресайз дочерних окон
@@ -3980,9 +3986,9 @@ RECT CVirtualConsole::GetRect()
 	if (Width == 0 || Height == 0)    // если консоль еще не загрузилась - прикидываем по размеру GUI окна
 	{
 		//rc = MakeRect(winSize.X, winSize.Y);
-		RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
-		RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
-		RECT rcDC = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE);
+		//RECT rcWnd; Get ClientRect(ghWnd, &rcWnd);
+		RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, this);
+		RECT rcDC = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE, this);
 		rc = MakeRect(rcDC.right, rcDC.bottom);
 	}
 	else
@@ -3991,6 +3997,28 @@ RECT CVirtualConsole::GetRect()
 	}
 
 	return rc;
+}
+
+RECT CVirtualConsole::GetDcClientRect()
+{
+	BOOL lbRc;
+	RECT rcClient = {};
+	if (gpSet->isAlwaysShowScrollbar == 1)
+	{
+		// Режим "Полоса прокрутки видна всегда"
+		lbRc = ::GetClientRect(mh_WndDC, &rcClient);
+	}
+	else
+	{
+		// Полоса прокрутки может перекрывать часть рабочей области, поэтому
+		lbRc = ::GetWindowRect(mh_WndDC, &rcClient);
+		// И приводим к клиентским координатам
+		rcClient.right -= rcClient.left;
+		rcClient.bottom -= rcClient.top;
+		rcClient.left = rcClient.top = 0;
+	}
+	UNREFERENCED_PARAMETER(lbRc);
+	return rcClient;
 }
 
 void CVirtualConsole::OnFontChanged()

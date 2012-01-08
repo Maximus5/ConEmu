@@ -270,7 +270,7 @@ void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
 HWND Attach2Gui(DWORD nTimeout);
 
 
-int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab); // –азбор параметров командной строки
+int ParseCommandLine(LPCWSTR asCmdLine /*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/); // –азбор параметров командной строки
 void Help();
 void DosBoxHelp();
 void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);

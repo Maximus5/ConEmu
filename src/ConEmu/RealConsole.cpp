@@ -456,7 +456,7 @@ void CRealConsole::SyncGui2Window(RECT* prcClient)
 		if (prcClient)
 			rcClient = *prcClient;
 		else
-			GetClientRect(ghWnd, &rcClient);
+			rcClient = gpConEmu->GetGuiClientRect();
 
 		RECT rcGui = gpConEmu->CalcRect(CER_WORKSPACE, rcClient, CER_MAINCLIENT, mp_VCon);
 		OffsetRect(&rcGui, -rcGui.left, -rcGui.top);
@@ -486,7 +486,7 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	//2009-06-17 Попробуем так. Вроде быстрее и наверное ничего блокироваться не должно
 	/*
 	if (GetCurrentThreadId() != mn_MonitorThreadID) {
-	    RECT rcClient; GetClientRect(ghWnd, &rcClient);
+	    RECT rcClient; Get ClientRect(ghWnd, &rcClient);
 	    _ASSERTE(rcClient.right>250 && rcClient.bottom>200);
 
 	    // Посчитать нужный размер консоли
@@ -504,7 +504,7 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 
 	if (prcNewWnd == NULL)
 	{
-		GetClientRect(ghWnd, &rcClient);
+		rcClient = gpConEmu->GetGuiClientRect();
 	}
 	else
 	{
@@ -609,7 +609,8 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 		mp_RBuf->SetBufferHeightMode(bCurBufHeight, FALSE);
 	}
 
-	RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+	RECT rcWnd = gpConEmu->GetGuiClientRect();
+	TODO("DoubleView: ?");
 	gpConEmu->AutoSizeFont(rcWnd, CER_MAINCLIENT);
 	RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
 	// Скорректировать sbi на новый, который БУДЕТ установлен после отработки сервером аттача
@@ -3671,7 +3672,7 @@ DWORD CRealConsole::RConServerThread(LPVOID lpvParam)
 
 CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
 {
-	CESERVER_REQ* pOut = NULL;
+	CESERVER_REQ* pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET));
 	
 	//
 	DWORD nStarted = pIn->StartStop.nStarted;
@@ -3717,7 +3718,7 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 	BOOL lbWasBuffer = pIn->StartStop.bWasBufferHeight;
 	//DWORD nInputTID = pIn->StartStop.dwInputTID;
 	_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
-	pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
+	//pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
 
 	// Если процесс отваливается (кроме корневого сервера) - добавить его в m_TerminatedPIDs
 	TODO("Проверить, нужно ли добавлять отваливающийся sst_App16Stop? По идее, все равно после него должен sst_ComspecStop прийти?");
@@ -3765,7 +3766,7 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 		}
 
 		// Сразу заполним результат
-		pIn->StartStopRet.bWasBufferHeight = isBufferHeight(); // чтобы comspec знал, что буфер нужно будет отключить
+		pOut->StartStopRet.bWasBufferHeight = isBufferHeight(); // чтобы comspec знал, что буфер нужно будет отключить
 		//DWORD nParentPID = 0;
 		//if (nStarted == 2)
 		//{
@@ -3795,12 +3796,12 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 		//		free(pPrc);
 		//	}
 		//}
-		//pIn->StartStopRet.bWasBufferHeight = FALSE;// (nStarted == 2) && (nParentPID == 0); // comspec должен уведомить о завершении
-		pIn->StartStopRet.hWnd = ghWnd;
-		pIn->StartStopRet.hWndDC = mp_VCon->GetView();
-		pIn->StartStopRet.dwPID = GetCurrentProcessId();
-		pIn->StartStopRet.dwSrvPID = mn_ConEmuC_PID;
-		pIn->StartStopRet.bNeedLangChange = FALSE;
+		//pOut->StartStopRet.bWasBufferHeight = FALSE;// (nStarted == 2) && (nParentPID == 0); // comspec должен уведомить о завершении
+		pOut->StartStopRet.hWnd = ghWnd;
+		pOut->StartStopRet.hWndDC = mp_VCon->GetView();
+		pOut->StartStopRet.dwPID = GetCurrentProcessId();
+		pOut->StartStopRet.dwSrvPID = mn_ConEmuC_PID;
+		pOut->StartStopRet.bNeedLangChange = FALSE;
 
 		if (nStarted == sst_ServerStart)
 		{
@@ -3819,9 +3820,9 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 			{
 				// Команду - низя, нити еще не функционируют
 				//	SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gpConEmu->GetActiveKeyboardLayout());
-				pIn->StartStopRet.bNeedLangChange = TRUE;
+				pOut->StartStopRet.bNeedLangChange = TRUE;
 				TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
-				pIn->StartStopRet.NewConsoleLang = gpConEmu->GetActiveKeyboardLayout();
+				pOut->StartStopRet.NewConsoleLang = gpConEmu->GetActiveKeyboardLayout();
 			}
 
 			// Теперь мы гарантированно знаем дескриптор окна консоли
@@ -3855,27 +3856,39 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 				//mb_IgnoreCmdStop = TRUE; -- уже, в OnDosAppStartStop
 
 				mp_RBuf->SetConsoleSize(cr16bit.X, cr16bit.Y, 0, CECMD_CMDSTARTED);
-				pIn->StartStopRet.nBufferHeight = 0;
-				pIn->StartStopRet.nWidth = cr16bit.X;
-				pIn->StartStopRet.nHeight = cr16bit.Y;
+				pOut->StartStopRet.nBufferHeight = 0;
+				pOut->StartStopRet.nWidth = cr16bit.X;
+				pOut->StartStopRet.nHeight = cr16bit.Y;
 			}
 			else
 			{
+				BOOL bAllowBufferHeight = (gpSet->AutoBufferHeight || isBufferHeight());
+				if (pIn->StartStop.bForceBufferHeight)
+					bAllowBufferHeight = (pIn->StartStop.nForceBufferHeight != 0);
+				
 				// но пока его нужно сбросить
 				mb_IgnoreCmdStop = FALSE;
-				// в ComSpec передаем именно то, что сейчас в gpSet
-				pIn->StartStopRet.nBufferHeight = gpSet->DefaultBufferHeight;
+				// Если пользователь указал требуемое к строке запуска приложения
+				if (pIn->StartStop.bForceBufferHeight)
+				{
+					pOut->StartStopRet.nBufferHeight = pIn->StartStop.nForceBufferHeight;
+				}
+				else
+				{
+					// в ComSpec передаем именно то, что сейчас в gpSet
+					pOut->StartStopRet.nBufferHeight = bAllowBufferHeight ? gpSet->DefaultBufferHeight : 0;
+				}
 				// 111125 было "con.m_sbi.dwSize.X" и "con.m_sbi.dwSize.X"
-				pIn->StartStopRet.nWidth = mp_RBuf->GetBufferWidth()/*con.m_sbi.dwSize.X*/;
-				pIn->StartStopRet.nHeight = mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/;
+				pOut->StartStopRet.nWidth = mp_RBuf->GetBufferWidth()/*con.m_sbi.dwSize.X*/;
+				pOut->StartStopRet.nHeight = mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/;
 
-				if (gpSet->DefaultBufferHeight && !isBufferHeight())
+				if ((pOut->StartStopRet.nBufferHeight == 0) != (isBufferHeight() == FALSE))
 				{
 					WARNING("Тут наверное нужно бы заблокировать прием команды смена размера из сервера ConEmuC");
 					//con.m_sbi.dwSize.Y = gpSet->DefaultBufferHeight; -- не будем менять сразу, а то SetConsoleSize просто skip
 					mp_RBuf->BuferModeChangeLock();
-					mp_RBuf->SetBufferHeightMode(TRUE, TRUE); // Сразу включаем, иначе команда неправильно сформируется
-					mp_RBuf->SetConsoleSize(mp_RBuf->GetTextWidth()/*con.m_sbi.dwSize.X*/, mp_RBuf->TextHeight(), gpSet->DefaultBufferHeight, CECMD_CMDSTARTED);
+					mp_RBuf->SetBufferHeightMode((pOut->StartStopRet.nBufferHeight != 0), TRUE); // Сразу меняем, иначе команда неправильно сформируется
+					mp_RBuf->SetConsoleSize(mp_RBuf->GetTextWidth()/*con.m_sbi.dwSize.X*/, mp_RBuf->TextHeight(), pOut->StartStopRet.nBufferHeight, CECMD_CMDSTARTED);
 					mp_RBuf->BuferModeChangeUnlock();
 				}
 			}
@@ -3887,13 +3900,13 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 			// Server
 			if (nSubSystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE/*255*/)
 			{
-				pIn->StartStopRet.nBufferHeight = 0;
-				pIn->StartStopRet.nWidth = cr16bit.X;
-				pIn->StartStopRet.nHeight = cr16bit.Y;
+				pOut->StartStopRet.nBufferHeight = 0;
+				pOut->StartStopRet.nWidth = cr16bit.X;
+				pOut->StartStopRet.nHeight = cr16bit.Y;
 			}
 			else
 			{
-				pIn->StartStopRet.nWidth = mp_RBuf->GetBufferWidth()/*con.m_sbi.dwSize.X*/;
+				pOut->StartStopRet.nWidth = mp_RBuf->GetBufferWidth()/*con.m_sbi.dwSize.X*/;
 
 				//0x101 - запуск отладчика
 				if (nSubSystem != 0x100   // 0x100 - Аттач из фар-плагина
@@ -3901,23 +3914,23 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 				            || (mn_DefaultBufferHeight && bRunViaCmdExe)))
 				{
 					_ASSERTE(m_Args.bDetached || mn_DefaultBufferHeight == mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/ || mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/ == TextHeight());
-					pIn->StartStopRet.nBufferHeight = max(mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/,mn_DefaultBufferHeight);
+					pOut->StartStopRet.nBufferHeight = max(mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/,mn_DefaultBufferHeight);
 					_ASSERTE(mp_RBuf->TextHeight()/*con.nTextHeight*/ > 5);
-					pIn->StartStopRet.nHeight = mp_RBuf->TextHeight()/*con.nTextHeight*/;
+					pOut->StartStopRet.nHeight = mp_RBuf->TextHeight()/*con.nTextHeight*/;
 					//111126 - убрал. выше буфер блокируется
-					//con.m_sbi.dwSize.Y = pIn->StartStopRet.nBufferHeight; // Сразу обновить, иначе буфер может сброситься самопроизвольно
+					//con.m_sbi.dwSize.Y = pOut->StartStopRet.nBufferHeight; // Сразу обновить, иначе буфер может сброситься самопроизвольно
 				}
 				else
 				{
 					_ASSERTE(!mp_RBuf->isScroll());
-					pIn->StartStopRet.nBufferHeight = 0;
-					pIn->StartStopRet.nHeight = mp_RBuf->TextHeight()/*con.m_sbi.dwSize.Y*/;
+					pOut->StartStopRet.nBufferHeight = 0;
+					pOut->StartStopRet.nHeight = mp_RBuf->TextHeight()/*con.m_sbi.dwSize.Y*/;
 				}
 				
 			}
 
-			mp_RBuf->SetBufferHeightMode((pIn->StartStopRet.nBufferHeight != 0), TRUE);
-			mp_RBuf->SetChange2Size(pIn->StartStopRet.nWidth, pIn->StartStopRet.nHeight);
+			mp_RBuf->SetBufferHeightMode((pOut->StartStopRet.nBufferHeight != 0), TRUE);
+			mp_RBuf->SetChange2Size(pOut->StartStopRet.nWidth, pOut->StartStopRet.nHeight);
 			
 			if (b) mp_RBuf->BuferModeChangeUnlock();
 		}
@@ -3945,16 +3958,16 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 			if ((mn_ProgramStatus & CES_NTVDM) == 0
 			        && !(gpConEmu->mb_isFullScreen || gpConEmu->isZoomed()))
 			{
-				pIn->StartStopRet.bWasBufferHeight = FALSE;
+				pOut->StartStopRet.bWasBufferHeight = FALSE;
 
 				// В некоторых случаях (comspec без консоли?) GetConsoleScreenBufferInfo обламывается
-				if (pIn->StartStop.sbi.dwSize.X && pIn->StartStop.sbi.dwSize.Y)
+				if (pOut->StartStop.sbi.dwSize.X && pOut->StartStop.sbi.dwSize.Y)
 				{
 					DWORD nScroll = 0;
 					
 					// Интересуют реальные размеры консоли, определенные при текущему SBI
 					// 111125 - bBufferHeight заменен на nScroll (который учитывает и наличие горизонтальной прокрутки)
-					if (CRealBuffer::GetConWindowSize(pIn->StartStop.sbi, &nNewWidth, &nNewHeight, &nScroll))
+					if (CRealBuffer::GetConWindowSize(pOut->StartStop.sbi, &nNewWidth, &nNewHeight, &nScroll))
 					{
 						lbNeedResizeGui = (crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight);
 
@@ -3973,9 +3986,9 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 							crNewSize.X = nNewWidth;
 							crNewSize.Y = nNewHeight;
 							
-							//pIn->StartStopRet.bWasBufferHeight = TRUE; -- 111124 всегда ставилось pIn->StartStopRet.bWasBufferHeight=TRUE;
+							//pOut->StartStopRet.bWasBufferHeight = TRUE; -- 111124 всегда ставилось pOut->StartStopRet.bWasBufferHeight=TRUE;
 							_ASSERTE(nScroll!=0);
-							pIn->StartStopRet.bWasBufferHeight = (nScroll!=0);
+							pOut->StartStopRet.bWasBufferHeight = (nScroll!=0);
 						}
 					}
 				}
@@ -4085,10 +4098,10 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 	}
 	
 	// Готовим результат к отправке
-	pOut = ExecuteNewCmd(pIn->hdr.nCmd, pIn->hdr.cbSize);
 
-	if (pIn->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
-		memmove(pOut->Data, pIn->Data, pIn->hdr.cbSize - (int)sizeof(CESERVER_REQ_HDR));
+	//pOut = ExecuteNewCmd(pIn->hdr.nCmd, pIn->hdr.cbSize);
+	//if (pIn->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
+	//	memmove(pOut->Data, pIn->Data, pIn->hdr.cbSize - (int)sizeof(CESERVER_REQ_HDR));
 		
 	return pOut;
 }
@@ -5516,7 +5529,7 @@ BOOL CRealConsole::WaitConsoleSize(int anWaitSize, DWORD nTimeout)
 //	}
 //}
 
-void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
+void CRealConsole::ShowConsoleOrGuiClient(int nMode) // -1 Toggle 0 - Hide 1 - Show
 {
 	if (this == NULL) return;
 
@@ -5524,121 +5537,141 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
 	// Но только в том случае, если НЕ включен "буферный" режим (GUI скрыто, показан текст консоли сервера)
 	if (hGuiWnd && isGuiVisible())
 	{
-		if (nMode == -1)
-		{
-			nMode = mb_GuiExternMode ? 0 : 1;
-		}
-
-		gpConEmu->SetSkipOnFocus(TRUE);
-
-		// Вынести Gui приложение из вкладки ConEmu (но Detach не делать)	
-		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETGUIEXTERN, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
-		if (pIn)
-		{
-			pIn->dwData[0] = (nMode == 0) ? FALSE : TRUE;
-
-			CESERVER_REQ *pOut = ExecuteHkCmd(mn_GuiWndPID, pIn, ghWnd);
-			if (pOut && pOut->hdr.cbSize == pIn->hdr.cbSize)
-			{
-				mb_GuiExternMode = pOut->dwData[0];
-				ExecuteFreeResult(pOut);
-			}
-			ExecuteFreeResult(pIn);
-
-			SetOtherWindowPos(hGuiWnd, ghWnd, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
-		}
-
-		gpConEmu->SetSkipOnFocus(FALSE);
-		
-		mp_VCon->Invalidate();
+		ShowGuiClient(nMode);
 	}
 	else
 	{
-		if (!hConWnd) return;
+		ShowConsole(nMode);
+	}
+}
 
-		if (nMode == -1)
+
+void CRealConsole::ShowGuiClient(int nMode) // -1 Toggle 0 - Hide 1 - Show
+{
+	if (this == NULL) return;
+
+	// В GUI-режиме (putty, notepad, ...) CtrlWinAltSpace "переключает" привязку (делает detach/attach)
+	// Но только в том случае, если НЕ включен "буферный" режим (GUI скрыто, показан текст консоли сервера)
+	if (!hGuiWnd)
+		return;
+
+	if (nMode == -1)
+	{
+		nMode = mb_GuiExternMode ? 0 : 1;
+	}
+
+	gpConEmu->SetSkipOnFocus(TRUE);
+
+	// Вынести Gui приложение из вкладки ConEmu (но Detach не делать)	
+	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETGUIEXTERN, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
+	if (pIn)
+	{
+		pIn->dwData[0] = (nMode == 0) ? FALSE : TRUE;
+
+		CESERVER_REQ *pOut = ExecuteHkCmd(mn_GuiWndPID, pIn, ghWnd);
+		if (pOut && pOut->hdr.cbSize == pIn->hdr.cbSize)
 		{
-			//nMode = IsWindowVisible(hConWnd) ? 0 : 1;
-			nMode = isShowConsole ? 0 : 1;
+			mb_GuiExternMode = pOut->dwData[0];
+			ExecuteFreeResult(pOut);
 		}
+		ExecuteFreeResult(pIn);
 
-		if (nMode == 1)
+		SetOtherWindowPos(hGuiWnd, ghWnd, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+	}
+
+	gpConEmu->SetSkipOnFocus(FALSE);
+	
+	mp_VCon->Invalidate();
+}
+
+void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
+{
+	if (this == NULL) return;
+
+	if (!hConWnd) return;
+
+	if (nMode == -1)
+	{
+		//nMode = IsWindowVisible(hConWnd) ? 0 : 1;
+		nMode = isShowConsole ? 0 : 1;
+	}
+
+	if (nMode == 1)
+	{
+		isShowConsole = true;
+		//apiShowWindow(hConWnd, SW_SHOWNORMAL);
+		//if (setParent) SetParent(hConWnd, 0);
+		RECT rcCon, rcWnd; GetWindowRect(hConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
+		//if (!IsDebuggerPresent())
+		TODO("Скорректировать позицию так, чтобы не вылезло за экран");
+
+		if (SetOtherWindowPos(hConWnd, HWND_TOPMOST,
+			rcWnd.right-rcCon.right+rcCon.left, rcWnd.bottom-rcCon.bottom+rcCon.top,
+			0,0, SWP_NOSIZE|SWP_SHOWWINDOW))
 		{
-			isShowConsole = true;
-			//apiShowWindow(hConWnd, SW_SHOWNORMAL);
-			//if (setParent) SetParent(hConWnd, 0);
-			RECT rcCon, rcWnd; GetWindowRect(hConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
-			//if (!IsDebuggerPresent())
-			TODO("Скорректировать позицию так, чтобы не вылезло за экран");
+			if (!IsWindowEnabled(hConWnd))
+				EnableWindow(hConWnd, true); // Для админской консоли - не сработает.
 
-			if (SetOtherWindowPos(hConWnd, HWND_TOPMOST,
-			                     rcWnd.right-rcCon.right+rcCon.left, rcWnd.bottom-rcCon.bottom+rcCon.top,
-			                     0,0, SWP_NOSIZE|SWP_SHOWWINDOW))
+			DWORD dwExStyle = GetWindowLong(hConWnd, GWL_EXSTYLE);
+
+			#if 0
+			DWORD dw1, dwErr;
+
+			if ((dwExStyle & WS_EX_TOPMOST) == 0)
 			{
-				if (!IsWindowEnabled(hConWnd))
-					EnableWindow(hConWnd, true); // Для админской консоли - не сработает.
-
-				DWORD dwExStyle = GetWindowLong(hConWnd, GWL_EXSTYLE);
-				
-				#if 0
-				DWORD dw1, dwErr;
+				dw1 = SetWindowLong(hConWnd, GWL_EXSTYLE, dwExStyle|WS_EX_TOPMOST);
+				dwErr = GetLastError();
+				dwExStyle = GetWindowLong(hConWnd, GWL_EXSTYLE);
 
 				if ((dwExStyle & WS_EX_TOPMOST) == 0)
 				{
-					dw1 = SetWindowLong(hConWnd, GWL_EXSTYLE, dwExStyle|WS_EX_TOPMOST);
-					dwErr = GetLastError();
-					dwExStyle = GetWindowLong(hConWnd, GWL_EXSTYLE);
-
-					if ((dwExStyle & WS_EX_TOPMOST) == 0)
-					{
-						SetOtherWindowPos(hConWnd, HWND_TOPMOST,
-						                  0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-					}
+					SetOtherWindowPos(hConWnd, HWND_TOPMOST,
+						0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 				}
-				#endif
-
-				// Issue 246. Возвращать фокус в ConEmu можно только если удалось установить
-				// "OnTop" для RealConsole, иначе - RealConsole "всплывет" на заднем плане
-				if ((dwExStyle & WS_EX_TOPMOST))
-					gpConEmu->setFocus();
-
-				//} else { //2010-06-05 Не требуется. SetOtherWindowPos выполнит команду в сервере при необходимости
-				//	if (isAdministrator() || (m_Args.pszUserName != NULL)) {
-				//		// Если оно запущено в Win7 as admin
-				//        CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SHOWCONSOLE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
-				//		if (pIn) {
-				//			pIn->dwData[0] = SW_SHOWNORMAL;
-				//			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
-				//			if (pOut) ExecuteFreeResult(pOut);
-				//			ExecuteFreeResult(pIn);
-				//		}
-				//	}
 			}
+			#endif
 
-			//if (setParent) SetParent(hConWnd, 0);
-		}
-		else
-		{
-			isShowConsole = false;
-			ShowOtherWindow(hConWnd, SW_HIDE);
-			////if (!gpSet->isConVisible)
-			//if (!apiShowWindow(hConWnd, SW_HIDE)) {
+			// Issue 246. Возвращать фокус в ConEmu можно только если удалось установить
+			// "OnTop" для RealConsole, иначе - RealConsole "всплывет" на заднем плане
+			if ((dwExStyle & WS_EX_TOPMOST))
+				gpConEmu->setFocus();
+
+			//} else { //2010-06-05 Не требуется. SetOtherWindowPos выполнит команду в сервере при необходимости
 			//	if (isAdministrator() || (m_Args.pszUserName != NULL)) {
 			//		// Если оно запущено в Win7 as admin
 			//        CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SHOWCONSOLE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
 			//		if (pIn) {
-			//			pIn->dwData[0] = SW_HIDE;
+			//			pIn->dwData[0] = SW_SHOWNORMAL;
 			//			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
 			//			if (pOut) ExecuteFreeResult(pOut);
 			//			ExecuteFreeResult(pIn);
 			//		}
 			//	}
-			//}
-			////if (setParent) SetParent(hConWnd, setParent2 ? ghWnd : 'ghWnd DC');
-			////if (!gpSet->isConVisible)
-			////EnableWindow(hConWnd, false); -- наверное не нужно
-			gpConEmu->setFocus();
 		}
+
+		//if (setParent) SetParent(hConWnd, 0);
+	}
+	else
+	{
+		isShowConsole = false;
+		ShowOtherWindow(hConWnd, SW_HIDE);
+		////if (!gpSet->isConVisible)
+		//if (!apiShowWindow(hConWnd, SW_HIDE)) {
+		//	if (isAdministrator() || (m_Args.pszUserName != NULL)) {
+		//		// Если оно запущено в Win7 as admin
+		//        CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SHOWCONSOLE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
+		//		if (pIn) {
+		//			pIn->dwData[0] = SW_HIDE;
+		//			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
+		//			if (pOut) ExecuteFreeResult(pOut);
+		//			ExecuteFreeResult(pIn);
+		//		}
+		//	}
+		//}
+		////if (setParent) SetParent(hConWnd, setParent2 ? ghWnd : 'ghWnd DC');
+		////if (!gpSet->isConVisible)
+		////EnableWindow(hConWnd, false); -- наверное не нужно
+		gpConEmu->setFocus();
 	}
 }
 
@@ -5752,8 +5785,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 		//		}
 	}
 
-	if (gpSet->isConVisible)
-		ShowConsole(1); // установить консольному окну флаг AlwaysOnTop
+	ShowConsole(gpSet->isConVisible ? 1 : 0); // установить консольному окну флаг AlwaysOnTop или спрятать его
 
 	//else if (isAdministrator())
 	//	ShowConsole(0); // В Win7 оно таки появляется видимым - проверка вынесена в ConEmuC
@@ -6440,6 +6472,8 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	// Чтобы можно было найти хэндл окна по хэндлу консоли
 	SetWindowLongPtr(ghWnd, GWLP_USERDATA, (LONG_PTR)hConWnd);
 	ghConWnd = hConWnd;
+	// Проверить
+	mp_VCon->OnAlwaysShowScrollbar();
 	// Чтобы все в одном месте было
 	OnGuiFocused(TRUE, TRUE);
 	//if (mp_ConsoleInfo) {
@@ -6626,6 +6660,8 @@ void CRealConsole::UpdateScrollInfo()
 		return;
 	}
 
+	CVConGuard guard(mp_VCon);
+
 	WARNING("DoubleView: заменить static на member");
 	static SHORT nLastHeight = 0, nLastWndHeight = 0, nLastTop = 0;
 
@@ -6637,7 +6673,7 @@ void CRealConsole::UpdateScrollInfo()
 	nLastHeight = mp_ABuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/;
 	nLastWndHeight = mp_ABuf->GetTextHeight()/*(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1)*/;
 	nLastTop = mp_ABuf->GetBufferPosY()/*con.m_sbi.srWindow.Top*/;
-	gpConEmu->m_Back->SetScroll(mp_ABuf->isScroll()/*con.bBufferHeight*/, nLastTop, nLastWndHeight, nLastHeight);
+	mp_VCon->SetScroll(mp_ABuf->isScroll()/*con.bBufferHeight*/, nLastTop, nLastWndHeight, nLastHeight);
 }
 
 void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
@@ -8573,6 +8609,8 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 		return;
 	}
 
+	CVConGuard guard(mp_VCon);
+
 	AllowSetForegroundWindow(anAppPID);
 
 	// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
@@ -8617,7 +8655,8 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	{
 		mb_InGuiAttaching = TRUE;
 		HWND hDcWnd = mp_VCon->GetView();
-		RECT rcDC; GetClientRect(hDcWnd, &rcDC);
+		RECT rcDC; ::GetWindowRect(hDcWnd, &rcDC);
+		MapWindowPoints(NULL, hDcWnd, (LPPOINT)&rcDC, 2);
 		// Чтобы артефакты не появлялись
 		ValidateRect(hDcWnd, &rcDC);
 		

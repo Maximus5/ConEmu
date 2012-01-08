@@ -153,7 +153,7 @@ class CConEmuMain :
 		void UpdateGuiInfoMapping();
 	public:
 		//CConEmuChild *m_Child;
-		CConEmuBack  *m_Back;
+		//CConEmuBack  *m_Back;
 		CConEmuMacro *m_Macro;
 		TabBarClass *mp_TabBar;
 		CToolTip *mp_Tip;
@@ -379,6 +379,7 @@ class CConEmuMain :
 		CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
 		void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
 		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* apVCon=NULL);
+		RECT CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon=NULL);
 		RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
@@ -398,6 +399,7 @@ class CConEmuMain :
 		void ForceShowTabs(BOOL abShow);
 		DWORD_PTR GetActiveKeyboardLayout();
 		RECT GetDefaultRect();
+		RECT GetGuiClientRect();
 		RECT GetIdealRect() { return mrc_Ideal; };
 		HMENU GetSystemMenu(BOOL abInitial = FALSE);
 		RECT GetVirtualScreenRect(BOOL abFullScreen);
@@ -459,6 +461,7 @@ class CConEmuMain :
 		void ReportUpdateError();
 		void RequestExitUpdate();
 		void ReSize(BOOL abCorrect2Ideal = FALSE);
+		//void ResizeChildren();
 		BOOL RunSingleInstance();
 		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
 		void SetConsoleWindowSize(const COORD& size, bool updateInfo, CVirtualConsole* apVCon);
@@ -487,6 +490,7 @@ class CConEmuMain :
 		void SyncWindowToConsole();
 		void SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout);
 		void TabCommand(UINT nTabCmd);
+		BOOL TrackMouse();
 		int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, RECT *prcRect);
 		void Update(bool isForce = false);
 		void UpdateActiveGhost(CVirtualConsole* apVCon);
@@ -503,6 +507,7 @@ class CConEmuMain :
 		void OnAltF9(BOOL abPosted=FALSE);
 		void OnMinimizeRestore();
 		void OnAlwaysOnTop();
+		void OnAlwaysShowScrollbar();
 		void OnBufferHeight(); //BOOL abBufferHeight);
 		LRESULT OnClose(HWND hWnd);
 		BOOL OnCloseQuery();

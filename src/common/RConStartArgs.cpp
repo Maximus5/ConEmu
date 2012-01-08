@@ -103,9 +103,12 @@ void RConStartArgs::ProcessNewConArg()
 
 	// 111211 - здесь может быть передан "-new_console:..."
 	LPCWSTR pszNewCon = L"-new_console";
+	// 120108 - или "-cur_console:..." для уточнения параметров запуска команд (из фара например)
+	LPCWSTR pszCurCon = L"-cur_console";
 	int nNewConLen = lstrlen(pszNewCon);
+	_ASSERTE(lstrlen(pszCurCon)==nNewConLen);
 	wchar_t* pszFind;
-	while ((pszFind = wcsstr(pszSpecialCmd, pszNewCon)) != NULL)
+	while ((pszFind = wcsstr(pszSpecialCmd, pszNewCon)) != NULL || (pszFind = wcsstr(pszSpecialCmd, pszCurCon)) != NULL)
 	{
 		// Проверка валидности
 		_ASSERTE(pszFind > pszSpecialCmd);

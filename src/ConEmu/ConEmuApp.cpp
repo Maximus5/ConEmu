@@ -82,8 +82,8 @@ BOOL gbDebugShowRects = FALSE;
 const TCHAR *const szClassName = VirtualConsoleClass;
 const TCHAR *const szClassNameParent = VirtualConsoleClassMain;
 const TCHAR *const szClassNameApp = VirtualConsoleClassApp;
-const TCHAR *const szClassNameBack = VirtualConsoleClassBack;
-const TCHAR *const szClassNameScroll = VirtualConsoleClassScroll;
+//const TCHAR *const szClassNameBack = VirtualConsoleClassBack;
+//const TCHAR *const szClassNameScroll = VirtualConsoleClassScroll;
 
 
 OSVERSIONINFO gOSVer = {};

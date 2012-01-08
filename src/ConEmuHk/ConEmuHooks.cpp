@@ -238,6 +238,7 @@ HWND WINAPI OnGetActiveWindow();
 BOOL WINAPI OnSetMenu(HWND hWnd, HMENU hMenu);
 BOOL IsVisibleRectLocked(COORD& crLocked);
 HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
+BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput);
 BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
 BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
 INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
@@ -285,6 +286,11 @@ bool InitHooksCommon()
 		{
 			(void*)OnCreateConsoleScreenBuffer,
 			"CreateConsoleScreenBuffer",
+			kernel32
+		},
+		{
+			(void*)OnSetConsoleActiveScreenBuffer,
+			"SetConsoleActiveScreenBuffer",
 			kernel32
 		},
 		{
@@ -2181,6 +2187,7 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents)
 {
 	typedef BOOL (WINAPI* OnGetNumberOfConsoleInputEvents_t)(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents);
+	SUPPRESSORIGINALSHOWCALL;
 	ORIGINAL(GetNumberOfConsoleInputEvents);
 	BOOL lbRc = FALSE;
 
@@ -2778,6 +2785,13 @@ BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffe
 	ORIGINAL(WriteConsoleOutputA);
 	BOOL lbRc = FALSE;
 
+	#ifdef _DEBUG
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD dwMode = 0;
+	GetConsoleMode(hOut, &dwMode);
+	GetConsoleMode(hConsoleOutput, &dwMode);
+	#endif
+
 	if (ph && ph->PreCallBack)
 	{
 		SETARGS5(&lbRc, hConsoleOutput, lpBuffer, &dwBufferSize, &dwBufferCoord, lpWriteRegion);
@@ -3349,9 +3363,27 @@ HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMo
 	if ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) != (FILE_SHARE_READ|FILE_SHARE_WRITE))
 		dwShareMode |= (FILE_SHARE_READ|FILE_SHARE_WRITE);
 
-	HANDLE h;
-	h = F(CreateConsoleScreenBuffer)(dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlags, lpScreenBufferData);
+	HANDLE h = INVALID_HANDLE_VALUE;
+	if (F(CreateConsoleScreenBuffer))
+		h = F(CreateConsoleScreenBuffer)(dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlags, lpScreenBufferData);
 	return h;
+}
+
+BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
+{
+	typedef BOOL (WINAPI* OnSetConsoleActiveScreenBuffer_t)(HANDLE hConsoleOutput);
+	ORIGINALFAST(SetConsoleActiveScreenBuffer);
+
+#ifdef _DEBUG
+	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+	h = GetStdHandle(STD_INPUT_HANDLE);
+	h = GetStdHandle(STD_ERROR_HANDLE);
+#endif
+
+	BOOL lbRc = FALSE;
+	if (F(SetConsoleActiveScreenBuffer))
+		lbRc = F(SetConsoleActiveScreenBuffer)(hConsoleOutput);
+	return lbRc;
 }
 
 BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow)

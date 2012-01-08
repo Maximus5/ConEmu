@@ -373,7 +373,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		case WM_SIZE:
 		{
 			RECT rcDlg, rcBtn, rcList;
-			GetClientRect(hDlg, &rcDlg);
+			::GetClientRect(hDlg, &rcDlg);
 			HWND h = GetDlgItem(hDlg, IDC_ATTACHLIST);
 			GetWindowRect(h, &rcList); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcList, 2);
 			HWND hb = GetDlgItem(hDlg, IDOK);
@@ -402,7 +402,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			GetWindowRect((h = GetDlgItem(hDlg, IDC_ATTACHLIST)), &rcList); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcList, 2);
 			RECT rcWnd = {}, rcClient = {};
 			GetWindowRect(hDlg, &rcWnd);
-			GetClientRect(hDlg, &rcClient);
+			::GetClientRect(hDlg, &rcClient);
 			p->ptMinTrackSize.x = (rcWnd.right - rcWnd.left - rcClient.right) + 4*rcBtn.right + 6*rcList.left;
 			p->ptMinTrackSize.y = 6*rcBtn.bottom + 3*rcList.top;
 			return 0;

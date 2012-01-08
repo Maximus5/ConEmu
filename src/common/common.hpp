@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    80
+#define CESERVER_REQ_VER    81
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -61,8 +61,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define VirtualConsoleClass L"VirtualConsoleClass"
 #define VirtualConsoleClassMain L"VirtualConsoleClass"
 #define VirtualConsoleClassApp L"VirtualConsoleClassApp"
-#define VirtualConsoleClassBack L"VirtualConsoleClassBack"
-#define VirtualConsoleClassScroll L"VirtualConsoleClassScroll"
+//#define VirtualConsoleClassBack L"VirtualConsoleClassBack"
+//#define VirtualConsoleClassScroll L"VirtualConsoleClassScroll"
 #define VirtualConsoleClassGhost L"VirtualConsoleClassGhost"
 
 #define CECOPYRIGHTSTRING_A "Copyright (c) 2009-2012, ConEmu.Maximus5@gmail.com"
@@ -1128,6 +1128,9 @@ struct CESERVER_REQ_STARTSTOP
 	COORD crMaxSize;
 	// Только ComSpec
 	BOOL  bWasBufferHeight;
+	// "-cur_console:h<N>" для ComSpec
+	BOOL  bForceBufferHeight;
+	DWORD nForceBufferHeight;
 	// Только при аттаче. Может быть NULL-ом
 	u64   hServerProcessHandle;
 	// Для информации и удобства (GetModuleFileName(0))

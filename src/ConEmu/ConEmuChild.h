@@ -55,6 +55,9 @@ class CConEmuChild
 
 		void CheckPostRedraw();
 
+		BOOL TrackMouse();
+		void OnAlwaysShowScrollbar();
+
 #ifdef _DEBUG
 	public:
 		UINT    mn_MsgCreateDbgDlg;
@@ -86,54 +89,19 @@ class CConEmuChild
 		} Caret;
 		DWORD mn_LastPostRedrawTick;
 		BOOL  mb_IsPendingRedraw, mb_RedrawPosted;
-};
 
-class CConEmuBack
-{
-	public:
-		CConEmuBack();
-		~CConEmuBack();
-
-		HWND mh_WndBack;
-		HWND mh_WndScroll; UINT mn_ScrollWidth;
-		BOOL mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup;
+		BOOL mb_ScrollDisabled, mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup, mb_VTracking;
 		CTimer m_TScrollShow;
 		CTimer m_TScrollHide;
 		#ifndef SKIP_HIDE_TIMER
 		CTimer m_TScrollCheck;
 		#endif
-		HBRUSH mh_BackBrush;
-		COLORREF mn_LastColor;
 
-		HWND Create();
-		void Resize();
-		void Refresh();
-		void Invalidate();
-		void RePaint();
-		BOOL TrackMouse();
+		BYTE m_LastAlwaysShowScrollbar;
+		SCROLLINFO m_si;
 		BOOL CheckMouseOverScroll();
 		BOOL CheckScrollAutoPopup();
 		void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
 		void ShowScroll(BOOL abImmediate);
 		void HideScroll(BOOL abImmediate);
-
-		static LRESULT CALLBACK BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-		static LRESULT CALLBACK ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	protected:
-		RECT mrc_LastClient;
-		bool mb_LastTabVisible, mb_LastAlwaysScroll;
-		int mn_ColorIdx;
-		bool mb_VTracking;
-		//WNDPROC mpfn_ScrollProc;
-//protected:
-//	// Theming
-//    typedef HANDLE (WINAPI* FOpenThemeData)(HWND,LPCWSTR);
-//    FOpenThemeData mfn_OpenThemeData;
-//    typedef HANDLE (WINAPI* FOpenThemeDataEx)(HWND,LPCWSTR,DWORD);
-//    FOpenThemeData mfn_OpenThemeDataEx;
-//    typedef HRESULT (WINAPI* FCloseThemeData)(HANDLE);
-//    FCloseThemeData mfn_CloseThemeData;
-//    typedef BOOL (WINAPI* FAppThemed)();
-//    HMODULE mh_UxTheme;
-//    HANDLE  mh_ThemeData;
 };

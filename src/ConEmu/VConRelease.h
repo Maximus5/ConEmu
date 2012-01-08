@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+class CVirtualConsole;
 
 class CVConRelease
 {
@@ -44,8 +45,8 @@ protected:
 class CVConGuard
 {
 private:
-	CVConRelease *mp_Ref;
+	CVirtualConsole *mp_Ref;
 public:
-	CVConGuard(CVConRelease *apRef);
+	CVConGuard(CVirtualConsole* &apRef);
 	~CVConGuard();
 };

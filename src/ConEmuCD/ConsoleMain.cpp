@@ -489,6 +489,13 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 	//InitializeCriticalSection(&gcsHeap);
 	//#endif
 
+	if (!abAlternative)
+	{
+		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT);
+	}
+
+
 	// Ќа вс€кий случай - сбросим
 	gnRunMode = RM_UNDEFINED;
 
@@ -603,7 +610,7 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 	nExitPlaceStep = 50;
 	xf_check();
 
-	if ((iRc = ParseCommandLine(GetCommandLineW(), &gpszRunCmd, &gbRunInBackgroundTab)) != 0)
+	if ((iRc = ParseCommandLine(GetCommandLineW()/*, &gpszRunCmd, &gbRunInBackgroundTab*/)) != 0)
 		goto wrap;
 
 	//#ifdef _DEBUG
@@ -1598,13 +1605,13 @@ int CheckAttachProcess()
 }
 
 // –азбор параметров командной строки
-int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab)
+int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/)
 {
-	if (!psNewCmd || !pbRunInBackgroundTab)
-	{
-		_ASSERTE(psNewCmd && pbRunInBackgroundTab);
-		return CERR_CARGUMENT;
-	}
+	//if (!psNewCmd || !pbRunInBackgroundTab)
+	//{
+	//	_ASSERTE(psNewCmd && pbRunInBackgroundTab);
+	//	return CERR_CARGUMENT;
+	//}
 	
 	int iRc = 0;
 	wchar_t szArg[MAX_PATH+1] = {0}, szExeTest[MAX_PATH+1];
@@ -1615,7 +1622,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd, BOOL* pbRunInBackgro
 	//BOOL bViaCmdExe = TRUE;
 	gbRunViaCmdExe = TRUE;
 	gbRootIsCmdExe = TRUE;
-	*pbRunInBackgroundTab = FALSE;
+	gbRunInBackgroundTab = FALSE;
 	size_t nCmdLine = 0;
 	LPCWSTR pwszStartCmdLine = asCmdLine;
 	BOOL lbNeedCutStartEndQuot = FALSE;
@@ -2016,15 +2023,15 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd, BOOL* pbRunInBackgro
 				return nExit;
 			}
 
-			*psNewCmd = (wchar_t*)calloc(1,2);
+			gpszRunCmd = (wchar_t*)calloc(1,2);
 
-			if (!*psNewCmd)
+			if (!gpszRunCmd)
 			{
 				_printf("Can't allocate 1 wchar!\n");
 				return CERR_NOTENOUGHMEM1;
 			}
 
-			(*psNewCmd)[0] = 0;
+			gpszRunCmd[0] = 0;
 			gpSrv->bDebuggerActive = TRUE;
 			return 0;
 		}
@@ -2036,15 +2043,15 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd, BOOL* pbRunInBackgro
 			if (nChk != 0)
 				return nChk;
 
-			*psNewCmd = (wchar_t*)calloc(1,2);
+			gpszRunCmd = (wchar_t*)calloc(1,2);
 
-			if (!*psNewCmd)
+			if (!gpszRunCmd)
 			{
 				_printf("Can't allocate 1 wchar!\n");
 				return CERR_NOTENOUGHMEM1;
 			}
 
-			(*psNewCmd)[0] = 0;
+			gpszRunCmd[0] = 0;
 			return 0;
 		}
 	}
@@ -2320,7 +2327,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd, BOOL* pbRunInBackgro
 				//MessageBox(NULL, pszNewCmd, L"CmdLine", 0);
 				//return 200;
 				// ћожно запускатьс€
-				*psNewCmd = pszNewCmd;
+				gpszRunCmd = pszNewCmd;
 				// 26.06.2009 Maks - чтобы сразу выйти - вс€ обработка будет в новой консоли.
 				DisableAutoConfirmExit();
 				xf_check();
@@ -2459,24 +2466,24 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd, BOOL* pbRunInBackgro
 	}
 
 	size_t nCchLen = nCmdLine+1; // nCmdLine учитывает длинну asCmdLine + szComSpec + еще чуть-чуть на "/C" и прочее
-	*psNewCmd = (wchar_t*)calloc(nCchLen,2);
+	gpszRunCmd = (wchar_t*)calloc(nCchLen,2);
 
-	if (!(*psNewCmd))
+	if (!gpszRunCmd)
 	{
 		_printf("Can't allocate %i wchars!\n", (DWORD)nCmdLine);
 		return CERR_NOTENOUGHMEM1;
 	}
 
 	// это нужно дл€ смены заголовка консоли. при необходимости COMSPEC впишем ниже, после смены
-	_wcscpy_c(*psNewCmd, nCchLen, asCmdLine);
-	// !!! psNewCmd может помен€тьс€ ниже!
+	_wcscpy_c(gpszRunCmd, nCchLen, asCmdLine);
+	// !!! gpszRunCmd может помен€тьс€ ниже!
 
 	// —меним заголовок консоли
 	if (*asCmdLine == L'"')
 	{
 		if (asCmdLine[1])
 		{
-			wchar_t *pszTitle = *psNewCmd;
+			wchar_t *pszTitle = gpszRunCmd;
 			wchar_t *pszEndQ = pszTitle + lstrlenW(pszTitle) - 1;
 
 			if (pszEndQ > (pszTitle+1) && *pszEndQ == L'"'
@@ -2569,22 +2576,22 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd, BOOL* pbRunInBackgro
 
 		if (wcschr(szComSpec, L' '))
 		{
-			(*psNewCmd)[0] = L'"';
-			_wcscpy_c((*psNewCmd)+1, nCchLen-1, szComSpec);
+			gpszRunCmd[0] = L'"';
+			_wcscpy_c(gpszRunCmd+1, nCchLen-1, szComSpec);
 
 			if (gnCmdUnicodeMode)
-				_wcscat_c((*psNewCmd), nCchLen, (gnCmdUnicodeMode == 2) ? L" /U" : L" /A");
+				_wcscat_c(gpszRunCmd, nCchLen, (gnCmdUnicodeMode == 2) ? L" /U" : L" /A");
 
-			_wcscat_c((*psNewCmd), nCchLen, gpSrv->bK ? L"\" /K " : L"\" /C ");
+			_wcscat_c(gpszRunCmd, nCchLen, gpSrv->bK ? L"\" /K " : L"\" /C ");
 		}
 		else
 		{
-			_wcscpy_c((*psNewCmd), nCchLen, szComSpec);
+			_wcscpy_c(gpszRunCmd, nCchLen, szComSpec);
 
 			if (gnCmdUnicodeMode)
-				_wcscat_c((*psNewCmd), nCchLen, (gnCmdUnicodeMode == 2) ? L" /U" : L" /A");
+				_wcscat_c(gpszRunCmd, nCchLen, (gnCmdUnicodeMode == 2) ? L" /U" : L" /A");
 
-			_wcscat_c((*psNewCmd), nCchLen, gpSrv->bK ? L" /K " : L" /C ");
+			_wcscat_c(gpszRunCmd, nCchLen, gpSrv->bK ? L" /K " : L" /C ");
 		}
 
 		// Ќаверное можно положитьс€ на фар, и не кавычить самосто€тельно
@@ -2602,32 +2609,37 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd, BOOL* pbRunInBackgro
 		//	//	lbNeedQuatete = FALSE; // не требуетс€. внутри кавычек нет
 		//}
 		//if (lbNeedQuatete) { // надо
-		//	lstrcatW( (*psNewCmd), L"\"" );
+		//	lstrcatW(gpszRunCmd, L"\"" );
 		//}
 		// —обственно, командна€ строка
-		_wcscat_c((*psNewCmd), nCchLen, asCmdLine);
+		_wcscat_c(gpszRunCmd, nCchLen, asCmdLine);
 		//if (lbNeedQuatete)
-		//	lstrcatW( (*psNewCmd), L"\"" );
+		//	lstrcatW(gpszRunCmd, L"\"" );
 	}
 	else if (lbNeedCutStartEndQuot)
 	{
 		// ""c:\arc\7z.exe -?"" - не запуститс€!
-		_wcscpy_c((*psNewCmd), nCchLen, asCmdLine+1);
-		wchar_t *pszEndQ = *psNewCmd + lstrlenW(*psNewCmd) - 1;
+		_wcscpy_c(gpszRunCmd, nCchLen, asCmdLine+1);
+		wchar_t *pszEndQ = gpszRunCmd + lstrlenW(gpszRunCmd) - 1;
 		_ASSERTE(pszEndQ && *pszEndQ == L'"');
 
 		if (pszEndQ && *pszEndQ == L'"') *pszEndQ = 0;
 	}
 	
-	// “еперь выкусить и обработать "-new_console"
+	// “еперь выкусить и обработать "-new_console" / "-cur_console"
 	RConStartArgs args;
-	args.pszSpecialCmd = *psNewCmd;
+	args.pszSpecialCmd = gpszRunCmd;
 	args.ProcessNewConArg();
 	args.pszSpecialCmd = NULL;
-	*pbRunInBackgroundTab = args.bBackgroundTab;
+	gbRunInBackgroundTab = args.bBackgroundTab;
+	if (args.bBufHeight)
+	{
+		gnBufferHeight = args.nBufHeight;
+		gbParmBufferSize = TRUE;
+	}
 
 #ifdef _DEBUG
-	OutputDebugString(*psNewCmd); OutputDebugString(L"\n");
+	OutputDebugString(gpszRunCmd); OutputDebugString(L"\n");
 #endif
 	return 0;
 }
@@ -2745,6 +2757,9 @@ void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDon
 
 	if (gbInShutdown)
 		return; // Event закрыти€ мог припозднитьс€
+
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT);
 
 	//
 	_wprintf(asConfirm);
@@ -2978,6 +2993,13 @@ void SendStarted()
 		if (!lbRc1) dwErr1 = GetLastError();
 
 		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(hOut);
+
+		// ≈сли (дл€ ComSpec) указан параметр "-cur_console:h<N>"
+		if (gbParmBufferSize)
+		{
+			pIn->StartStop.bForceBufferHeight = TRUE;
+			pIn->StartStop.nForceBufferHeight = gnBufferHeight;
+		}
 
 		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd started)\n",(RunMode==RM_SERVER) ? L"Server" : L"ComSpec");
 		// CECMD_CMDSTARTSTOP
@@ -5625,7 +5647,9 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	if (MyGetConsoleScreenBufferInfo(ghConOut, &csbi))
 	{
 		// »спользуетс€ только при (gnBufferHeight == 0)
-		lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y);
+		lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y)
+			|| ((csbi.srWindow.Right - csbi.srWindow.Left + 1) != crNewSize.X)
+			|| ((csbi.srWindow.Bottom - csbi.srWindow.Top + 1) != crNewSize.Y);
 #ifdef _DEBUG
 
 		if (!lbNeedChange)

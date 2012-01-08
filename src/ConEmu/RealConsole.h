@@ -337,7 +337,9 @@ class CRealConsole
 		bool DoSelectionCopy();
 		void DoSelectionStop();
 		BOOL isFar(BOOL abPluginRequired=FALSE);
+		void ShowConsoleOrGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
+		void ShowGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		BOOL isDetached();
 		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		BOOL RecreateProcess(RConStartArgs *args);

@@ -69,17 +69,17 @@ DWORD gnLastWin32Error = 0;
 
 #define CALLOC(n) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, n)
 #define FREE(p) HeapFree(GetProcessHeap(), 0, p)
-#define STRING2(x) #x
-#define STRING(x) STRING2(x)
-#define FILE_LINE __FILE__ "(" STRING(__LINE__) "): "
-#ifdef HIDE_TODO
-#define TODO(s)
-#define WARNING(s)
-#else
-#define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
-#define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
-#endif
-#define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
+//#define STRING2(x) #x
+//#define STRING(x) STRING2(x)
+//#define FILE_LINE __FILE__ "(" STRING(__LINE__) "): "
+//#ifdef HIDE_TODO
+//#define TODO(s)
+//#define WARNING(s)
+//#else
+//#define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
+//#define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
+//#endif
+//#define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
 
 
 HMODULE ghModule = NULL;

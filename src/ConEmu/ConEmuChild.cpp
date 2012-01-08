@@ -45,6 +45,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)
 
+WARNING("!!! На время скроллирования необходимо установить AutoScroll в TRUE, а при отпускании ползунка - вернуть старое значение!");
+TODO("И вообще, скроллинг нужно передавать через pipe");
+
+//#define SCROLLHIDE_TIMER_ID 1726
+#define TIMER_SCROLL_SHOW         3201
+#define TIMER_SCROLL_SHOW_DELAY   1000
+#define TIMER_SCROLL_SHOW_DELAY2  500
+#define TIMER_SCROLL_HIDE         3202
+#define TIMER_SCROLL_HIDE_DELAY   1000
+#define TIMER_SCROLL_CHECK        3203
+#define TIMER_SCROLL_CHECK_DELAY  250
+#define TIMER_SCROLL_CHECK_DELAY2 1000
+
 CConEmuChild::CConEmuChild()
 {
 	mn_MsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
@@ -58,10 +71,18 @@ CConEmuChild::CConEmuChild()
 	mn_LastPostRedrawTick = 0;
 	mb_IsPendingRedraw = FALSE;
 	mb_RedrawPosted = FALSE;
-	memset(&Caret, 0, sizeof(Caret));
+	ZeroStruct(Caret);
 	mb_DisableRedraw = FALSE;
 	mh_WndDC = NULL;
 	mh_LastGuiChild = NULL;
+	mb_ScrollVisible = FALSE; mb_Scroll2Visible = FALSE; /*mb_ScrollTimerSet = FALSE;*/ mb_ScrollAutoPopup = FALSE;
+	mb_VTracking = FALSE;
+
+	ZeroStruct(m_si);
+	m_si.cbSize = sizeof(m_si);
+	m_si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_DISABLENOSCROLL;
+	mb_ScrollDisabled = FALSE;
+	m_LastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
 }
 
 CConEmuChild::~CConEmuChild()
@@ -94,15 +115,17 @@ HWND CConEmuChild::CreateView()
 		return mh_WndDC;
 	}
 
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	_ASSERTE(pVCon!=NULL);
+	//-- тут консоль только создается, guard не нужен
+	//CVConGuard guard(pVCon);
+
 	// Имя класса - то же самое, что и у главного окна
 	DWORD style = /*WS_VISIBLE |*/ WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 	DWORD styleEx = 0;
 	//RECT rc = gpConEmu->DCClientRect();
-	RECT rcMain; GetClientRect(ghWnd, &rcMain);
-	RECT rc = gpConEmu->CalcRect(CER_DC, rcMain, CER_MAINCLIENT);
-	CVirtualConsole* pVCon = (CVirtualConsole*)this;
-	_ASSERTE(pVCon!=NULL);
-	CVConGuard guard(pVCon);
+	//RECT rcMain; Get ClientRect(ghWnd, &rcMain);
+	RECT rc = gpConEmu->CalcRect(CER_DC, pVCon);
 
 	mh_WndDC = CreateWindowEx(styleEx, szClassName, 0, style,
 		rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, pVCon);
@@ -177,6 +200,13 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		LPCREATESTRUCT lp = (LPCREATESTRUCT)lParam;
 		pVCon = (CVirtualConsole*)lp->lpCreateParams;
 		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)pVCon);
+
+		pVCon->m_TScrollShow.Init(hWnd, TIMER_SCROLL_SHOW, TIMER_SCROLL_SHOW_DELAY);
+		pVCon->m_TScrollHide.Init(hWnd, TIMER_SCROLL_HIDE, TIMER_SCROLL_HIDE_DELAY);
+		#ifndef SKIP_HIDE_TIMER
+		pVCon->m_TScrollCheck.Init(hWnd, TIMER_SCROLL_CHECK, TIMER_SCROLL_CHECK_DELAY);
+		#endif
+
 	}
 	else
 	{
@@ -256,6 +286,13 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		case WM_VSCROLL:
 			// Вся обработка в родителе
 			{
+				if (messg == WM_VSCROLL)
+				{
+					if (LOWORD(wParam) == SB_THUMBTRACK)
+						pVCon->mb_VTracking = TRUE;
+					pVCon->RCon()->OnSetScrollPos(wParam);
+				}
+
 				POINT pt = {LOWORD(lParam),HIWORD(lParam)};
 				MapWindowPoints(hWnd, ghWnd, &pt, 1);
 				lParam = MAKELONG(pt.x,pt.y);
@@ -305,17 +342,64 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			break;
 			
 		case WM_SYSCOMMAND:
-			if (wParam >= SC_SIZE && wParam <= SC_CONTEXTHELP/*0xF180*/)
-			{
-				// Изменение размеров/максимизация/и т.п. окна консоли - запрещена
-				_ASSERTE(!(wParam >= SC_SIZE && wParam <= SC_CONTEXTHELP));
-			}
-			else
-			{
-				// По идее, сюда ничего приходить больше не должно
-				_ASSERTE(FALSE);
-			}
+			// -- лишние ограничения, похоже
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			//if (wParam >= SC_SIZE && wParam <= SC_CONTEXTHELP/*0xF180*/)
+			//{
+			//	// Изменение размеров/максимизация/и т.п. окна консоли - запрещена
+			//	_ASSERTE(!(wParam >= SC_SIZE && wParam <= SC_CONTEXTHELP));
+			//}
+			//else
+			//{
+			//	// По идее, сюда ничего приходить больше не должно
+			//	_ASSERTE(FALSE);
+			//}
 			break;
+
+		case WM_TIMER:
+			{
+				switch(wParam)
+				{
+				#ifndef SKIP_HIDE_TIMER // Не будем прятать по таймеру - только по движению мышки
+				case TIMER_SCROLL_CHECK:
+
+					if (pVCon->mb_Scroll2Visible)
+					{
+						if (!pVCon->CheckMouseOverScroll())
+						{
+							pVCon->HideScroll(FALSE/*abImmediate*/);
+						}
+					}
+
+					break;
+				#endif
+
+				case TIMER_SCROLL_SHOW:
+
+					if (pVCon->CheckMouseOverScroll() || pVCon->CheckScrollAutoPopup())
+						pVCon->ShowScroll(TRUE/*abImmediate*/);
+					else
+						pVCon->mb_Scroll2Visible = FALSE;
+
+					if (pVCon->m_TScrollShow.IsStarted())
+						pVCon->m_TScrollShow.Stop();
+
+					break;
+
+				case TIMER_SCROLL_HIDE:
+
+					if (!pVCon->CheckMouseOverScroll())
+						pVCon->HideScroll(TRUE/*abImmediate*/);
+					else
+						pVCon->mb_Scroll2Visible = TRUE;
+
+					if (pVCon->m_TScrollHide.IsStarted())
+						pVCon->m_TScrollHide.Stop();
+
+					break;
+				}
+				break;
+			} // case WM_TIMER:
 
 		default:
 
@@ -421,27 +505,26 @@ LRESULT CConEmuChild::OnPaint()
 	if (gpConEmu->isPictureView())
 	{
 		// если PictureView распахнуто не на все окно - отрисовать видимую часть консоли!
-		RECT rcPic, rcClient, rcCommon;
+		RECT rcPic, rcVRect, rcCommon;
 		GetWindowRect(gpConEmu->hPictureView, &rcPic);
-		GetClientRect(mh_WndDC, &rcClient); // Нам нужен ПОЛНЫЙ размер но ПОД тулбаром.
-		MapWindowPoints(mh_WndDC, NULL, (LPPOINT)&rcClient, 2);
+		GetWindowRect(mh_WndDC, &rcVRect); // Нам нужен ПОЛНЫЙ размер но ПОД тулбаром.
+		//MapWindowPoints(mh_WndDC, NULL, (LPPOINT)&rcClient, 2);
 
-		#ifdef _DEBUG
-		BOOL lbIntersect =
-		#endif
-		IntersectRect(&rcCommon, &rcClient, &rcPic);
+		BOOL lbIntersect = IntersectRect(&rcCommon, &rcVRect, &rcPic);
+		UNREFERENCED_PARAMETER(lbIntersect);
 
 		// Убрать из отрисовки прямоугольник PictureView
 		MapWindowPoints(NULL, mh_WndDC, (LPPOINT)&rcPic, 2);
 		ValidateRect(mh_WndDC, &rcPic);
 
+		MapWindowPoints(NULL, mh_WndDC, (LPPOINT)&rcVRect, 2);
 
-		GetClientRect(gpConEmu->hPictureView, &rcPic);
-		GetClientRect(mh_WndDC, &rcClient);
+		//Get ClientRect(gpConEmu->hPictureView, &rcPic);
+		//Get ClientRect(mh_WndDC, &rcClient);
 
 		// Если PicView занимает всю (почти? 95%) площадь окна
 		//if (rcPic.right>=rcClient.right)
-		if ((rcPic.right * rcPic.bottom) >= (rcClient.right * rcClient.bottom * 95 / 100))
+		if ((rcPic.right * rcPic.bottom) >= (rcVRect.right * rcVRect.bottom * 95 / 100))
 		{
 			//_ASSERTE(FALSE);
 			lbSkipDraw = TRUE;
@@ -469,12 +552,10 @@ LRESULT CConEmuChild::OnPaint()
 		}
 
 		PAINTSTRUCT ps;
-		#ifdef _DEBUG
-		HDC hDc =
-		#endif
-		BeginPaint(mh_WndDC, &ps);
+		HDC hDc = BeginPaint(mh_WndDC, &ps);
+		UNREFERENCED_PARAMETER(hDc);
 
-		RECT rcClient = {}; GetClientRect(mh_WndDC, &rcClient);
+		RECT rcClient = pVCon->GetDcClientRect();
 		pVCon->Paint(ps.hdc, rcClient);
 
 		if (gpConEmu->isRightClickingPaint() && gpConEmu->isActive(pVCon))
@@ -500,11 +581,15 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 		_ASSERTE(this!=NULL);
 		return 0;
 	}
+
 	LRESULT result = 0;
-#ifdef _DEBUG
+
+	#ifdef _DEBUG
 	BOOL lbIsPicView = FALSE;
-	RECT rcNewClient; GetClientRect(mh_WndDC,&rcNewClient);
-#endif
+	RECT rcNewClient; ::GetClientRect(mh_WndDC, &rcNewClient);
+	RECT rcNewWnd;    ::GetWindowRect(mh_WndDC, &rcNewWnd);
+	#endif
+
 	// Вроде это и не нужно. Ни для Ansi ни для Unicode версии плагина
 	// Все равно в ConEmu запрещен ресайз во время видимости окошка PictureView
 	//if (gpConEmu->isPictureView())
@@ -512,7 +597,7 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 	//    if (gpConEmu->hPictureView) {
 	//        lbIsPicView = TRUE;
 	//        gpConEmu->isPiewUpdate = true;
-	//        RECT rcClient; GetClientRect('ghWnd DC', &rcClient);
+	//        RECT rcClient; Get ClientRect('ghWnd DC', &rcClient);
 	//        //TODO: а ведь PictureView может и в QuickView активироваться...
 	//        MoveWindow(gpConEmu->hPictureView, 0,0,rcClient.right,rcClient.bottom, 1);
 	//        //INVALIDATE(); //InvalidateRect(hWnd, NULL, FALSE);
@@ -572,7 +657,7 @@ void CConEmuChild::Redraw()
 	}
 
 	DEBUGSTRDRAW(L" +++ RedrawWindow on DC window called\n");
-	//RECT rcClient; GetClientRect(mh_WndDC, &rcClient);
+	//RECT rcClient; Get ClientRect(mh_WndDC, &rcClient);
 	//MapWindowPoints(mh_WndDC, ghWnd, (LPPOINT)&rcClient, 2);
 	InvalidateRect(mh_WndDC, NULL, FALSE);
 	// Из-за этого - возникает двойная перерисовка
@@ -617,11 +702,11 @@ void CConEmuChild::Invalidate()
 	if (mh_WndDC)
 	{
 		DEBUGSTRDRAW(L" +++ Invalidate on DC window called\n");
-		//RECT rcClient; GetClientRect('ghWnd DC', &rcClient);
+		//RECT rcClient; Get ClientRect('ghWnd DC', &rcClient);
 		//MapWindowPoints('ghWnd DC', ghWnd, (LPPOINT)&rcClient, 2);
 		//InvalidateRect(ghWnd, &rcClient, FALSE);
 
-		//RECT rcMainClient; GetClientRect(ghWnd, &rcMainClient);
+		//RECT rcMainClient; Get ClientRect(ghWnd, &rcMainClient);
 		//RECT rcClient = gpConEmu->CalcRect(CER_BACK, rcMainClient, CER_MAINCLIENT);
 		//InvalidateRect(ghWnd, &rcClient, FALSE);
 
@@ -640,442 +725,54 @@ void CConEmuChild::Validate()
 	//if ('ghWnd DC') ValidateRect(ghWnd, NULL);
 }
 
-
-
-
-
-
-
-
-WARNING("!!! На время скроллирования необходимо установить AutoScroll в TRUE, а при отпускании ползунка - вернуть старое значение!");
-TODO("И вообще, скроллинг нужно передавать через pipe");
-
-//#define SCROLLHIDE_TIMER_ID 1726
-#define TIMER_SCROLL_SHOW         3201
-#define TIMER_SCROLL_SHOW_DELAY   1000
-#define TIMER_SCROLL_SHOW_DELAY2  500
-#define TIMER_SCROLL_HIDE         3202
-#define TIMER_SCROLL_HIDE_DELAY   1000
-#define TIMER_SCROLL_CHECK        3203
-#define TIMER_SCROLL_CHECK_DELAY  250
-#define TIMER_SCROLL_CHECK_DELAY2 1000
-
-CConEmuBack::CConEmuBack()
+void CConEmuChild::OnAlwaysShowScrollbar()
 {
-	mh_WndBack = NULL;
-	mh_WndScroll = NULL;
-	mh_BackBrush = NULL;
-	mn_LastColor = -1;
-	mn_ScrollWidth = 0;
-	mb_ScrollVisible = FALSE; mb_Scroll2Visible = FALSE; /*mb_ScrollTimerSet = FALSE;*/ mb_ScrollAutoPopup = FALSE;
-	//m_TScrollShow, m_TScrollHide, m_TScrollCheck
-	memset(&mrc_LastClient, 0, sizeof(mrc_LastClient));
-	mb_LastTabVisible = false; mb_LastAlwaysScroll = false;
-	mb_VTracking = false;
-#ifdef _DEBUG
-	mn_ColorIdx = 1; // Blue
-#else
-	mn_ColorIdx = 0; // Black
-#endif
-	//mh_UxTheme = NULL; mh_ThemeData = NULL; mfn_OpenThemeData = NULL; mfn_CloseThemeData = NULL;
-}
-
-CConEmuBack::~CConEmuBack()
-{
-}
-
-HWND CConEmuBack::Create()
-{
-	mn_LastColor = gpSet->GetColors()[mn_ColorIdx];
-	mh_BackBrush = CreateSolidBrush(mn_LastColor);
-	DWORD dwLastError = 0;
-	WNDCLASS wc = {CS_OWNDC/*|CS_SAVEBITS*/, CConEmuBack::BackWndProc, 0, 0,
-	               g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW),
-	               mh_BackBrush,
-	               NULL, szClassNameBack
-	              };
-
-	if (!RegisterClass(&wc))
+	if (m_LastAlwaysShowScrollbar != gpSet->isAlwaysShowScrollbar)
 	{
-		dwLastError = GetLastError();
-		mh_WndBack = (HWND)-1; // чтобы родитель не ругался
-		mh_WndScroll = (HWND)-1;
-		MBoxA(_T("Can't register background window class!"));
-		return NULL;
-	}
+		CVirtualConsole* pVCon = (CVirtualConsole*)this;
+		CVConGuard guard(pVCon);
 
-	// Scroller
-	wc.lpfnWndProc = CConEmuBack::ScrollWndProc;
-	wc.lpszClassName = szClassNameScroll;
+		if (gpSet->isAlwaysShowScrollbar == 1)
+			ShowScroll(TRUE);
+		else if (!m_si.nMax)
+			HideScroll(TRUE);
+		else
+			TrackMouse();
 
-	if (!RegisterClass(&wc))
-	{
-		dwLastError = GetLastError();
-		mh_WndBack = (HWND)-1; // чтобы родитель не ругался
-		mh_WndScroll = (HWND)-1;
-		MBoxA(_T("Can't register scroller window class!"));
-		return NULL;
-	}
-
-	DWORD style = /*WS_VISIBLE |*/ WS_CHILD | WS_CLIPSIBLINGS ;
-	//RECT rc = gpConEmu->ConsoleOffsetRect();
-	RECT rcClient; GetClientRect(ghWnd, &rcClient);
-	RECT rc = gpConEmu->CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);
-	mh_WndBack = CreateWindow(szClassNameBack, NULL, style,
-	                          rc.left, rc.top,
-	                          rcClient.right - rc.right - rc.left,
-	                          rcClient.bottom - rc.bottom - rc.top,
-	                          ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
-
-	if (!mh_WndBack)
-	{
-		dwLastError = GetLastError();
-		mh_WndBack = (HWND)-1; // чтобы родитель не ругался
-		MBoxA(_T("Can't create background window!"));
-		return NULL; //
-	}
-
-	// Прокрутка
-	//style = SBS_RIGHTALIGN/*|WS_VISIBLE*/|SBS_VERT|WS_CHILD|WS_CLIPSIBLINGS;
-	//mh_WndScroll = CreateWindowEx(0/*|WS_EX_LAYERED*/ /*WS_EX_TRANSPARENT*/, L"SCROLLBAR", NULL, style,
-	//	rc.left, rc.top,
-	//	rcClient.right - rc.right - rc.left,
-	//	rcClient.bottom - rc.bottom - rc.top,
-	//	ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
-	style = WS_VSCROLL|WS_CHILD|WS_CLIPSIBLINGS;
-	mn_ScrollWidth = GetSystemMetrics(SM_CXVSCROLL);
-	mh_WndScroll = CreateWindowEx(0/*|WS_EX_LAYERED*/ /*WS_EX_TRANSPARENT*/, szClassNameScroll, NULL, style,
-	                              rc.left - mn_ScrollWidth, rc.top,
-	                              mn_ScrollWidth, rc.bottom - rc.top,
-	                              ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
-
-	if (!mh_WndScroll)
-	{
-		dwLastError = GetLastError();
-		mh_WndScroll = (HWND)-1; // чтобы родитель не ругался
-		MBoxA(_T("Can't create scrollbar window!"));
-		return NULL; //
-	}
-
-	//GetWindowRect(mh_WndScroll, &rcClient);
-	//mn_ScrollWidth = rcClient.right - rcClient.left;
-	TODO("alpha-blended. похоже для WS_CHILD это не прокатит...");
-	//BOOL lbRcLayered = SetLayeredWindowAttributes ( mh_WndScroll, 0, 100, LWA_ALPHA );
-	//if (!lbRcLayered)
-	//	dwLastError = GetLastError();
-	//// Важно проверку делать после создания главного окна, иначе IsAppThemed будет возвращать FALSE
-	//BOOL bAppThemed = FALSE, bThemeActive = FALSE;
-	//FAppThemed pfnThemed = NULL;
-	//mh_UxTheme = LoadLibrary ( L"UxTheme.dll" );
-	//if (mh_UxTheme) {
-	//	pfnThemed = (FAppThemed)GetProcAddress( mh_UxTheme, "IsAppThemed" );
-	//	if (pfnThemed) bAppThemed = pfnThemed();
-	//	pfnThemed = (FAppThemed)GetProcAddress( mh_UxTheme, "IsThemeActive" );
-	//	if (pfnThemed) bThemeActive = pfnThemed();
-	//}
-	//if (!bAppThemed || !bThemeActive) {
-	//	FreeLibrary(mh_UxTheme); mh_UxTheme = NULL;
-	//} else {
-	//	mfn_OpenThemeData = (FOpenThemeData)GetProcAddress( mh_UxTheme, "OpenThemeData" );
-	//	mfn_OpenThemeDataEx = (FOpenThemeData)GetProcAddress( mh_UxTheme, "OpenThemeDataEx" );
-	//	mfn_CloseThemeData = (FCloseThemeData)GetProcAddress( mh_UxTheme, "CloseThemeData" );
-	//
-	//	if (mfn_OpenThemeDataEx)
-	//		mh_ThemeData = mfn_OpenThemeDataEx ( mh_WndScroll, L"Scrollbar", OTD_NONCLIENT );
-	//}
-	return mh_WndBack;
-}
-
-LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-	LRESULT result = 0;
-
-	if (messg == WM_SYSCHAR)
-		return TRUE;
-
-	switch(messg)
-	{
-		case WM_CREATE:
-			gpConEmu->m_Back->mh_WndBack = hWnd;
-			break;
-		case WM_DESTROY:
-			//if (gpConEmu->m_Back->mh_ThemeData && gpConEmu->m_Back->mfn_CloseThemeData) {
-			//	gpConEmu->m_Back->mfn_CloseThemeData ( gpConEmu->m_Back->mh_ThemeData );
-			//	gpConEmu->m_Back->mh_ThemeData = NULL;
-			//}
-			//if (gpConEmu->m_Back->mh_UxTheme) {
-			//	FreeLibrary(gpConEmu->m_Back->mh_UxTheme);
-			//	gpConEmu->m_Back->mh_UxTheme = NULL;
-			//}
-			DeleteObject(gpConEmu->m_Back->mh_BackBrush);
-			break;
-		case WM_SETFOCUS:
-			gpConEmu->setFocus(); // Фокус должен быть в главном окне!
-			return 0;
-		case WM_VSCROLL:
-			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
-			// -- не должно вызываться вообще
-			_ASSERTE(messg!=WM_VSCROLL);
-			break;
-		case WM_PAINT:
+		if (pVCon->isVisible())
 		{
-			PAINTSTRUCT ps; memset(&ps, 0, sizeof(ps));
-			HDC hDc = BeginPaint(hWnd, &ps);
-
-			#ifndef SKIP_ALL_FILLRECT
-			if (!IsRectEmpty(&ps.rcPaint))
-				FillRect(hDc, &ps.rcPaint, gpConEmu->m_Back->mh_BackBrush);
-			#endif
-
-			EndPaint(hWnd, &ps);
+			if (gpConEmu->isZoomed() || gpConEmu->isFullScreen())
+				pVCon->RCon()->SyncConsole2Window();
+			else
+				gpConEmu->SyncWindowToConsole();
 		}
-		return 0;
 
-#ifdef _DEBUG
-		case WM_SIZE:
-		{
-			UINT nW = LOWORD(lParam), nH = HIWORD(lParam);
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
-		}
-		return result;
-		case WM_WINDOWPOSCHANGING:
-		{
-			WINDOWPOS* pwp = (WINDOWPOS*)lParam;
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
-		}
-		return result;
-		case WM_WINDOWPOSCHANGED:
-		{
-			WINDOWPOS* pwp = (WINDOWPOS*)lParam;
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
-		}
-		return result;
-#endif
-	}
-
-	result = DefWindowProc(hWnd, messg, wParam, lParam);
-	return result;
-}
-
-LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-	LRESULT result = 0;
-
-	if (messg == WM_SYSCHAR)
-		return TRUE;
-
-	switch(messg)
-	{
-		case WM_CREATE:
-			gpConEmu->m_Back->mh_WndScroll = hWnd;
-			gpConEmu->m_Back->m_TScrollShow.Init(hWnd, TIMER_SCROLL_SHOW, TIMER_SCROLL_SHOW_DELAY);
-			gpConEmu->m_Back->m_TScrollHide.Init(hWnd, TIMER_SCROLL_HIDE, TIMER_SCROLL_HIDE_DELAY);
-			#ifndef SKIP_HIDE_TIMER
-			gpConEmu->m_Back->m_TScrollCheck.Init(hWnd, TIMER_SCROLL_CHECK, TIMER_SCROLL_CHECK_DELAY);
-			#endif
-			break;
-		case WM_VSCROLL:
-
-			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
-			if (LOWORD(wParam) == SB_THUMBTRACK)
-				gpConEmu->m_Back->mb_VTracking = true;
-
-			gpConEmu->ActiveCon()->RCon()->OnSetScrollPos(wParam);
-			break;
-		case WM_SETFOCUS:
-			gpConEmu->setFocus(); // Фокус должен быть в главном окне!
-			return 0;
-		case WM_TIMER:
-
-			switch(wParam)
-			{
-				#ifndef SKIP_HIDE_TIMER // Не будем прятать по таймеру - только по движению мышки
-				case TIMER_SCROLL_CHECK:
-
-					if (gpConEmu->m_Back->mb_Scroll2Visible)
-					{
-						if (!gpConEmu->m_Back->CheckMouseOverScroll())
-						{
-							gpConEmu->m_Back->HideScroll(FALSE/*abImmediate*/);
-						}
-					}
-
-					break;
-				#endif
-
-				case TIMER_SCROLL_SHOW:
-
-					if (gpConEmu->m_Back->CheckMouseOverScroll() || gpConEmu->m_Back->CheckScrollAutoPopup())
-						gpConEmu->m_Back->ShowScroll(TRUE/*abImmediate*/);
-					else
-						gpConEmu->m_Back->mb_Scroll2Visible = FALSE;
-
-					if (gpConEmu->m_Back->m_TScrollShow.IsStarted())
-						gpConEmu->m_Back->m_TScrollShow.Stop();
-
-					break;
-
-				case TIMER_SCROLL_HIDE:
-
-					if (!gpConEmu->m_Back->CheckMouseOverScroll())
-						gpConEmu->m_Back->HideScroll(TRUE/*abImmediate*/);
-					else
-						gpConEmu->m_Back->mb_Scroll2Visible = TRUE;
-
-					if (gpConEmu->m_Back->m_TScrollHide.IsStarted())
-						gpConEmu->m_Back->m_TScrollHide.Stop();
-
-					break;
-			}
-
-			break;
-	}
-
-	result = DefWindowProc(hWnd, messg, wParam, lParam);
-	return result;
-}
-
-void CConEmuBack::Resize()
-{
-	CVirtualConsole* pVCon = gpConEmu->ActiveCon();
-	CVConGuard guard(pVCon);
-
-	if (!mh_WndBack || !IsWindow(mh_WndBack))
-	{
-		#if defined(EXT_GNUC_LOG)
-		if (gpSetCls->isAdvLogging>1)
-			pVCon->RCon()->LogString("  --  CConEmuBack::Resize() - exiting, mh_WndBack failed");
-		#endif
-
-		return;
-	}
-
-	//RECT rc = gpConEmu->ConsoleOffsetRect();
-	RECT rcClient; GetClientRect(ghWnd, &rcClient);
-	bool bTabsShown = gpConEmu->mp_TabBar->IsTabsShown();
-
-	if (mb_LastTabVisible == bTabsShown && mb_LastAlwaysScroll == (gpSet->isAlwaysShowScrollbar == 1))
-	{
-		if (memcmp(&rcClient, &mrc_LastClient, sizeof(RECT))==0)
-		{
-			#if defined(EXT_GNUC_LOG)
-			char szDbg[255];
-			wsprintfA(szDbg, "  --  CConEmuBack::Resize() - exiting, (%i,%i,%i,%i)==(%i,%i,%i,%i)",
-			          rcClient.left, rcClient.top, rcClient.right, rcClient.bottom,
-			          mrc_LastClient.left, mrc_LastClient.top, mrc_LastClient.right, mrc_LastClient.bottom);
-
-			if (gpSetCls->isAdvLogging>1)
-				pVCon->RCon()->LogString(szDbg);
-			#endif
-
-			return; // ничего не менялось
-		}
-	}
-
-	memmove(&mrc_LastClient, &rcClient, sizeof(RECT)); // сразу запомним
-	mb_LastTabVisible = bTabsShown;
-	mb_LastAlwaysScroll = (gpSet->isAlwaysShowScrollbar == 1);
-	//RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
-	RECT rc = gpConEmu->CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);
-
-	#ifdef _DEBUG
-	RECT rcTest;
-	GetClientRect(mh_WndBack, &rcTest);
-	#endif
-
-	#if defined(EXT_GNUC_LOG)
-	char szDbg[255]; wsprintfA(szDbg, "  --  CConEmuBack::Resize() - X=%i, Y=%i, W=%i, H=%i", rc.left, rc.top, 	rc.right - rc.left,	rc.bottom - rc.top);
-
-	if (gpSetCls->isAdvLogging>1)
-		pVCon->RCon()->LogString(szDbg);
-	#endif
-
-	// Это скрытое окно отрисовки. Оно должно соответствовать
-	// размеру виртуальной консоли. На это окно ориентируются плагины!
-	WARNING("DoubleView");
-	MoveWindow(mh_WndBack,
-	           rc.left, rc.top,
-	           rc.right - rc.left,
-	           rc.bottom - rc.top,
-	           1);
-	rc = gpConEmu->CalcRect(CER_SCROLL, rcClient, CER_MAINCLIENT);
-
-
-	#ifdef _DEBUG
-	if (rc.bottom != rcClient.bottom || rc.right != rcClient.right)
-	{
-		_ASSERTE(rc.bottom == rcClient.bottom && rc.right == rcClient.right);
-	}
-	#endif
-
-
-	MoveWindow(mh_WndScroll,
-	           rc.left, rc.top,
-	           rc.right - rc.left,
-	           rc.bottom - rc.top,
-	           1);
-
-	//MoveWindow(mh_WndScroll,
-	//	rc.right - (rcScroll.right-rcScroll.left),
-	//	rc.top,
-	//	rcScroll.right-rcScroll.left,
-	//	rc.bottom - rc.top,
-	//	1);
-	#ifdef _DEBUG
-	GetClientRect(mh_WndBack, &rcTest);
-	#endif
-}
-
-void CConEmuBack::Refresh()
-{
-	COLORREF* pcr = gpSet->GetColors(gpConEmu->isMeForeground());
-
-	if (mn_LastColor == pcr[mn_ColorIdx])
-		return;
-
-	mn_LastColor = pcr[mn_ColorIdx];
-	HBRUSH hNewBrush = CreateSolidBrush(mn_LastColor);
-	SetClassLongPtr(mh_WndBack, GCLP_HBRBACKGROUND, (LONG_PTR)hNewBrush);
-	DeleteObject(mh_BackBrush);
-	mh_BackBrush = hNewBrush;
-	//RECT rc; GetClientRect(mh_Wnd, &rc);
-	//InvalidateRect(mh_Wnd, &rc, TRUE);
-	Invalidate();
-}
-
-void CConEmuBack::RePaint()
-{
-	WARNING("mh_WndBack invisible, поэтому отрисовка смысла не имеет");
-
-	if (mh_WndBack && mh_WndBack!=(HWND)-1)
-	{
-		Refresh();
-		UpdateWindow(mh_WndBack);
-		//if (mh_WndScroll) UpdateWindow(mh_WndScroll);
-	}
-}
-
-void CConEmuBack::Invalidate()
-{
-	if (this && mh_WndBack)
-	{
-		InvalidateRect(mh_WndBack, NULL, FALSE);
-		InvalidateRect(mh_WndScroll, NULL, FALSE);
+		m_LastAlwaysShowScrollbar != gpSet->isAlwaysShowScrollbar;
 	}
 }
 
 // Должна вернуть TRUE, если события мыши не нужно пропускать в консоль
-BOOL CConEmuBack::TrackMouse()
+BOOL CConEmuChild::TrackMouse()
 {
 	BOOL lbCapture = FALSE; // По умолчанию - мышь не перехватывать
-	//BOOL lbHided = FALSE;
+	
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	CVConGuard guard(pVCon);
+
 	#ifdef _DEBUG
-	CRealConsole* pRCon = gpConEmu->ActiveCon()->RCon();
+	CRealConsole* pRCon = pVCon->RCon();
 	BOOL lbBufferMode = pRCon->isBufferHeight() && !pRCon->GuiWnd();
 	#endif
+
 	BOOL lbOverVScroll = CheckMouseOverScroll();
 
-	if (lbOverVScroll || (gpSet->isAlwaysShowScrollbar == 1))
+	if (gpSet->isAlwaysShowScrollbar == 1)
+	{
+		// Если полоса прокрутки показывается всегда - то она и не прячется
+		if (!mb_ScrollVisible)
+			ShowScroll(TRUE);
+	}
+	else if (lbOverVScroll)
 	{
 		if (!mb_Scroll2Visible)
 		{
@@ -1089,22 +786,23 @@ BOOL CConEmuBack::TrackMouse()
 		}
 		#endif
 	}
-	else if (mb_Scroll2Visible)
+	else if (mb_Scroll2Visible || mb_ScrollVisible)
 	{
 		_ASSERTE(gpSet->isAlwaysShowScrollbar != 1);
 		mb_Scroll2Visible = FALSE;
-		HideScroll(FALSE/*abImmediate*/); // Если gpSet->isAlwaysShowScrollbar==1 - сама разберется
+		// Запустить таймер скрытия
+		HideScroll(FALSE/*abImmediate*/);
 	}
 
 	lbCapture = (lbOverVScroll && mb_ScrollVisible);
 	return lbCapture;
 }
 
-BOOL CConEmuBack::CheckMouseOverScroll()
+BOOL CConEmuChild::CheckMouseOverScroll()
 {
 	BOOL lbOverVScroll = FALSE;
 
-	CVirtualConsole* pVCon = gpConEmu->ActiveCon();
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	CVConGuard guard(pVCon);
 
 	CRealConsole* pRCon = pVCon ? gpConEmu->ActiveCon()->RCon() : NULL;
@@ -1119,7 +817,7 @@ BOOL CConEmuBack::CheckMouseOverScroll()
 			if (mb_VTracking && !isPressed(VK_LBUTTON))
 			{
 				// Сбросим флажок
-				mb_VTracking = false;
+				mb_VTracking = FALSE;
 			}
 
 			// чтобы полоса не скрылась, когда ее тащат мышкой
@@ -1129,9 +827,12 @@ BOOL CConEmuBack::CheckMouseOverScroll()
 			}
 			else // Теперь проверим, если мышь в над скроллбаром - показать его
 			{
-				POINT ptCur; RECT rcScroll;
+				POINT ptCur; RECT rcScroll, rcClient;
 				GetCursorPos(&ptCur);
-				GetWindowRect(mh_WndScroll, &rcScroll);
+				GetWindowRect(mh_WndDC, &rcClient);
+				//GetWindowRect(mh_WndScroll, &rcScroll);
+				rcScroll = rcClient;
+				rcScroll.left = rcScroll.right - GetSystemMetrics(SM_CXVSCROLL);
 
 				if (PtInRect(&rcScroll, ptCur))
 				{
@@ -1147,32 +848,33 @@ BOOL CConEmuBack::CheckMouseOverScroll()
 	return lbOverVScroll;
 }
 
-BOOL CConEmuBack::CheckScrollAutoPopup()
+BOOL CConEmuChild::CheckScrollAutoPopup()
 {
 	return mb_ScrollAutoPopup;
 }
 
-void CConEmuBack::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight)
+void CConEmuChild::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight)
 {
-	int nCurPos = 0;
+	//int nCurPos = 0;
 	//BOOL lbScrollRc = FALSE;
-	SCROLLINFO si;
-	ZeroMemory(&si, sizeof(si));
-	si.cbSize = sizeof(si);
-	si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE; // | SIF_TRACKPOS;
-	si.nMin = 0;
+	//SCROLLINFO si;
+	//ZeroMemory(&si, sizeof(si));
+	m_si.cbSize = sizeof(m_si);
+	m_si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE; // | SIF_TRACKPOS;
+	m_si.nMin = 0;
 
 	if (!abEnabled)
 	{
-		si.nPos = 0;
-		si.nPage = 1;
-		si.nMax = 1;
+		m_si.nPos = 0;
+		m_si.nPage = 0;
+		m_si.nMax = 0;
+		m_si.fMask |= SIF_DISABLENOSCROLL;
 	}
 	else
 	{
-		si.nPos = anTop;
-		si.nPage = anVisible - 1;
-		si.nMax = anHeight;
+		m_si.nPos = anTop;
+		m_si.nPage = anVisible - 1;
+		m_si.nMax = anHeight;
 	}
 
 	//// Если режим "BufferHeight" включен - получить из консольного окна текущее состояние полосы прокрутки
@@ -1182,55 +884,123 @@ void CConEmuBack::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeig
 	//    // Сбросываем параметры так, чтобы полоса не отображалась (все на 0)
 	//}
 	//TODO("Нужно при необходимости 'всплыть' полосу прокрутки");
-	nCurPos = SetScrollInfo(mh_WndScroll, SB_VERT, &si, true);
+	//nCurPos = SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, true);
 
 	if (!abEnabled)
 	{
 		mb_ScrollAutoPopup = FALSE;
 
-		if ((gpSet->isAlwaysShowScrollbar == 1) && IsWindowEnabled(mh_WndScroll))
+		if (gpSet->isAlwaysShowScrollbar == 1)
 		{
-			EnableScrollBar(mh_WndScroll, SB_VERT, ESB_DISABLE_BOTH);
-			EnableWindow(mh_WndScroll, FALSE);
+			if (!mb_ScrollVisible)
+			{
+				ShowScroll(TRUE);
+			}
+			else
+			{
+				SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, TRUE);
+				if (!mb_ScrollDisabled)
+				{
+					EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
+					mb_ScrollDisabled = TRUE;
+				}
+			}
 		}
-
-		HideScroll((gpSet->isAlwaysShowScrollbar != 1));
+		else
+		{
+			HideScroll(TRUE/*сразу!*/);
+		}
 	}
 	else
 	{
-		if (!IsWindowEnabled(mh_WndScroll))
-		{
-			EnableWindow(mh_WndScroll, TRUE);
-			EnableScrollBar(mh_WndScroll, SB_VERT, ESB_ENABLE_BOTH);
-		}
+		//if (!IsWindowEnabled(mh_WndScroll))
+		//{
+		//	//EnableWindow(mh_WndScroll, TRUE);
+		//	EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
+		//}
 
 		// Показать прокрутку, если например буфер скроллится с клавиатуры
-		if ((si.nPos > 0) && (si.nPos < (si.nMax - (int)si.nPage - 1)) && gpSet->isAlwaysShowScrollbar)
+		if ((m_si.nPos > 0) && (m_si.nPos < (m_si.nMax - (int)m_si.nPage - 1)) && gpSet->isAlwaysShowScrollbar)
 		{
 			mb_ScrollAutoPopup = (gpSet->isAlwaysShowScrollbar == 2);
 
 			if (!mb_Scroll2Visible)
+			{
 				ShowScroll((gpSet->isAlwaysShowScrollbar == 1));
+			}
 		}
 		else
 		{
 			mb_ScrollAutoPopup = FALSE;
 		}
+
+		if (mb_ScrollVisible)
+		{
+			SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, TRUE);
+			if (mb_ScrollDisabled)
+			{
+				EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
+				mb_ScrollDisabled = FALSE;
+			}
+		}
 	}
 }
 
-void CConEmuBack::ShowScroll(BOOL abImmediate)
+void CConEmuChild::ShowScroll(BOOL abImmediate)
 {
 	bool bTShow = false, bTCheck = false;
 
 	if (abImmediate || (gpSet->isAlwaysShowScrollbar == 1))
 	{
+		if (!mb_ScrollVisible && !m_si.nMax)
+		{
+			// Прокрутка всегда показывается! Скрывать нельзя!
+			SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE|SIF_DISABLENOSCROLL, 0, 1, 1};
+			SetScrollInfo(mh_WndDC, SB_VERT, &si, TRUE);
+		}
+
 		mb_ScrollVisible = TRUE; mb_Scroll2Visible = TRUE;
 
-		if (!IsWindowVisible(mh_WndScroll))
-			apiShowWindow(mh_WndScroll, SW_SHOWNOACTIVATE);
+		#ifdef _DEBUG
+		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE};
+		GetScrollInfo(mh_WndDC, SB_VERT, &si);
+		#endif
 
-		SetWindowPos(mh_WndScroll, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
+		int nCurPos = -1;
+		if (m_si.nMax)
+		{
+			nCurPos = SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, TRUE); UNREFERENCED_PARAMETER(nCurPos);
+		}
+
+		if (mb_ScrollDisabled && m_si.nMax > 1)
+		{
+			EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
+			mb_ScrollDisabled = FALSE;
+		}
+		else if (!mb_ScrollDisabled && !m_si.nMax)
+		{
+			EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
+			mb_ScrollDisabled = TRUE;
+		}
+
+		ShowScrollBar(mh_WndDC, SB_VERT, TRUE);
+
+		#ifdef _DEBUG
+		GetScrollInfo(mh_WndDC, SB_VERT, &si);
+		#endif
+
+		TODO("Scroll: Horizontal");
+
+		#ifdef _DEBUG
+		DWORD dwStyle = GetWindowLong(mh_WndDC, GWL_STYLE);
+		//if (!(dwStyle & WS_VSCROLL))
+		//	SetWindowLong(mh_WndDC, GWL_STYLE, dwStyle | WS_VSCROLL);
+		#endif
+
+		//if (!IsWindowVisible(mh_WndScroll))
+		//	apiShowWindow(mh_WndScroll, SW_SHOWNOACTIVATE);
+
+		//SetWindowPos(mh_WndScroll, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
 
 		if ((gpSet->isAlwaysShowScrollbar != 1))
 		{
@@ -1265,7 +1035,7 @@ void CConEmuBack::ShowScroll(BOOL abImmediate)
 		m_TScrollHide.Stop();
 }
 
-void CConEmuBack::HideScroll(BOOL abImmediate)
+void CConEmuChild::HideScroll(BOOL abImmediate)
 {
 	bool bTHide = false;
 	mb_ScrollAutoPopup = FALSE;
@@ -1273,19 +1043,38 @@ void CConEmuBack::HideScroll(BOOL abImmediate)
 	if (gpSet->isAlwaysShowScrollbar == 1)
 	{
 		// Прокрутка всегда показывается! Скрывать нельзя!
+		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE|SIF_DISABLENOSCROLL, 0, 1, 1};
+		SetScrollInfo(mh_WndDC, SB_VERT, &si, TRUE);
+		if (!mb_ScrollDisabled)
+		{
+			EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
+			mb_ScrollDisabled = TRUE;
+		}
+		Invalidate();
 	}
 	else if (abImmediate)
 	{
 		mb_ScrollVisible = FALSE;
 		mb_Scroll2Visible = FALSE;
 
-		if (IsWindowVisible(mh_WndScroll))
-			apiShowWindow(mh_WndScroll, SW_HIDE);
+		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE};
+		int nCurPos = SetScrollInfo(mh_WndDC, SB_VERT, &si, TRUE);  UNREFERENCED_PARAMETER(nCurPos);
 
-		RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
-		// вьюпорт невидимый, передернуть нужно основное окно
-		MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcScroll, 2);
-		InvalidateRect(ghWnd, &rcScroll, FALSE);
+		TODO("Scroll: Horizontal");
+		#ifdef _DEBUG
+		DWORD dwStyle = GetWindowLong(mh_WndDC, GWL_STYLE);
+		//if (dwStyle & WS_VSCROLL)
+		//	SetWindowLong(mh_WndDC, GWL_STYLE, dwStyle & ~WS_VSCROLL);
+		#endif
+
+		Invalidate();
+
+		//if (IsWindowVisible(mh_WndScroll))
+		//	apiShowWindow(mh_WndScroll, SW_HIDE);
+		//RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
+		//// вьюпорт невидимый, передернуть нужно основное окно
+		//MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcScroll, 2);
+		//InvalidateRect(ghWnd, &rcScroll, FALSE);
 	}
 	else
 	{

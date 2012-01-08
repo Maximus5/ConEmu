@@ -70,8 +70,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TODO(s)
 #define WARNING(s)
 #else
-#define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
-#define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
+// Чтобы было удобнее работать с ErrorList - для TODO тоже префикс warning
+#define TODO(s) __pragma(message (FILE_LINE "warning: TODO: " s))
+#define WARNING(s) __pragma(message (FILE_LINE "warning: WARN: " s))
 #endif
 #define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
 

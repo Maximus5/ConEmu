@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "Header.h"
+#include "ConEmu.h"
 #include "VConRelease.h"
 #include "VirtualConsole.h"
 
@@ -70,11 +71,24 @@ int CVConRelease::Release()
 }
 
 
-CVConGuard::CVConGuard(CVConRelease *apRef)
+CVConGuard::CVConGuard(CVirtualConsole* &apRef)
 {
 	mp_Ref = apRef;
 	if (mp_Ref)
+	{
 		mp_Ref->AddRef();
+
+		// -- не получается. вызывается еще на этапе WM_CREATE
+		//if (!gpConEmu->isValid(mp_Ref))
+		//{
+		//	MBoxAssert(gpConEmu->isValid(mp_Ref));
+		//	apRef = NULL;
+		//}
+		//else
+		//{
+		//	mp_Ref->AddRef();
+		//}
+	}
 }
 
 CVConGuard::~CVConGuard()

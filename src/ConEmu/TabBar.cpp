@@ -170,7 +170,7 @@ void TabBarClass::RePaint()
 		return;
 
 	RECT client, self;
-	GetClientRect(ghWnd, &client);
+	client = gpConEmu->GetGuiClientRect();
 	GetWindowRect(mh_Rebar, &self);
 
 	if (client.right != (self.right - self.left))
@@ -1036,7 +1036,7 @@ void TabBarClass::UpdatePosition()
 		return; // иначе расчет размеров будет некорректным!
 
 	RECT client;
-	GetClientRect(ghWnd, &client); // нас интересует ширина окна
+	client = gpConEmu->GetGuiClientRect(); // нас интересует ширина окна
 	DEBUGSTRTABS(_active ? L"TabBarClass::UpdatePosition(activate)\n" : L"TabBarClass::UpdatePosition(DEactivate)\n");
 #ifdef _DEBUG
 	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
@@ -1095,7 +1095,7 @@ void TabBarClass::UpdateWidth()
 	}
 
 	RECT client, self;
-	GetClientRect(ghWnd, &client);
+	client = gpConEmu->GetGuiClientRect();
 	GetWindowRect(mh_Tabbar, &self);
 
 	if (mh_Rebar)
@@ -1635,7 +1635,7 @@ HWND TabBarClass::CreateTabbar()
 	        WS_VISIBLE|WS_CHILD, 0,0,340,22, ghWnd, 0, 0, 0);
 	if (!mh_TabbarP) return NULL;*/
 	RECT rcClient;
-	GetClientRect(ghWnd, &rcClient);
+	rcClient = gpConEmu->GetGuiClientRect();
 	DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE/*|TCS_BUTTONS*//*|TCS_TOOLTIPS*/;
 	mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CHILD | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0,
 	                         rcClient.right, 0, mh_Rebar, NULL, g_hInstance, NULL);
@@ -1697,7 +1697,7 @@ HWND TabBarClass::CreateTabbar()
 	// Добавляет закладку, или меняет (при необходимости) заголовок существующей
 	//AddTab(gpConEmu->isFar() ? gpSet->szTabPanels : gpSet->pszTabConsole, 0);
 	AddTab(gpConEmu->GetLastTitle(), 0, false);
-	GetClientRect(ghWnd, &rcClient);
+	rcClient = gpConEmu->GetGuiClientRect();
 	TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
 	_tabHeight = rcClient.top - mn_ThemeHeightDiff;
 	return mh_Tabbar;
@@ -1705,7 +1705,7 @@ HWND TabBarClass::CreateTabbar()
 
 void TabBarClass::CreateRebar()
 {
-	RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+	RECT rcWnd = gpConEmu->GetGuiClientRect();
 	gpSetCls->CheckTheming();
 
 	if (NULL == (mh_Rebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
@@ -1747,8 +1747,7 @@ void TabBarClass::CreateRebar()
 	}
 	else
 	{
-		RECT rcClient;
-		GetClientRect(ghWnd, &rcClient);
+		RECT rcClient = gpConEmu->GetGuiClientRect();
 		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
 		sz.cy = rcClient.top - 3 - mn_ThemeHeightDiff;
 	}

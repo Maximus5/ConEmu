@@ -730,49 +730,14 @@ class CTimer
 		UINT mn_Elapse;
 		bool mb_Started;
 	public:
-		bool IsStarted()
-		{
-			return mb_Started;
-		};
-		void Start(UINT anElapse = 0)
-		{
-			if (!mh_Wnd || mb_Started)
-				return;
-
-			mb_Started = true;
-			SetTimer(mh_Wnd, mn_TimerId, anElapse ? anElapse : mn_Elapse, FALSE);
-		};
-		void Stop()
-		{
-			if (mb_Started)
-			{
-				mb_Started = false;
-				KillTimer(mh_Wnd, mn_TimerId);
-			}
-		};
-		void Restart(UINT anElapse = 0)
-		{
-			if (mb_Started)
-				Stop();
-
-			Start(anElapse);
-		};
+		bool IsStarted();
+		void Start(UINT anElapse = 0);
+		void Stop();
+		void Restart(UINT anElapse = 0);
 	public:
-		CTimer()
-		{
-			mh_Wnd = NULL;
-			mn_TimerId = mn_Elapse = 0;
-			mb_Started = false;
-		};
-		~CTimer()
-		{
-			Stop();
-		};
-		void Init(HWND ahWnd, UINT_PTR anTimerID, UINT anElapse)
-		{
-			Stop();
-			mh_Wnd = ahWnd; mn_TimerId = anTimerID; mn_Elapse = anElapse;
-		};
+		CTimer();
+		~CTimer();
+		void Init(HWND ahWnd, UINT_PTR anTimerID, UINT anElapse);
 };
 #endif
 

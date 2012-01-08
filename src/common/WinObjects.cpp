@@ -2494,3 +2494,63 @@ void CToolTip::HideTip()
 		SendMessage(hTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)pti);
 }
 #endif
+
+
+
+
+#ifndef CONEMU_MINIMAL
+// Обертка для таймера
+CTimer::CTimer()
+{
+	mh_Wnd = NULL;
+	mn_TimerId = mn_Elapse = 0;
+	mb_Started = false;
+}
+
+CTimer::~CTimer()
+{
+	Stop();
+}
+
+bool CTimer::IsStarted()
+{
+	return mb_Started;
+}
+
+void CTimer::Start(UINT anElapse /*= 0*/)
+{
+	if (!mh_Wnd || mb_Started)
+		return;
+
+	mb_Started = true;
+	INT_PTR iRc = SetTimer(mh_Wnd, mn_TimerId, anElapse ? anElapse : mn_Elapse, NULL);
+	UNREFERENCED_PARAMETER(iRc);
+	#ifdef _DEBUG
+	DWORD nErr = GetLastError();
+	_ASSERTE(iRc!=0);
+	#endif
+}
+
+void CTimer::Stop()
+{
+	if (mb_Started)
+	{
+		mb_Started = false;
+		KillTimer(mh_Wnd, mn_TimerId);
+	}
+}
+
+void CTimer::Restart(UINT anElapse /*= 0*/)
+{
+	if (mb_Started)
+		Stop();
+
+	Start(anElapse);
+}
+
+void CTimer::Init(HWND ahWnd, UINT_PTR anTimerID, UINT anElapse)
+{
+	Stop();
+	mh_Wnd = ahWnd; mn_TimerId = anTimerID; mn_Elapse = anElapse;
+}
+#endif

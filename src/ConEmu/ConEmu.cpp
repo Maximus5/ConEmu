@@ -122,7 +122,7 @@ CConEmuMain::CConEmuMain()
 	//HeapInitialize(); - уже
 	//#define D(N) (1##N-100)
 	_wsprintf(ms_ConEmuVer, SKIPLEN(countof(ms_ConEmuVer)) L"ConEmu %02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
-	mp_TabBar = NULL; m_Back = NULL; m_Macro = NULL; mp_Tip = NULL;
+	mp_TabBar = NULL; m_Macro = NULL; mp_Tip = NULL;
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
 	mn_MainThreadId = GetCurrentThreadId();
 	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
@@ -572,7 +572,7 @@ BOOL CConEmuMain::Init()
 	mp_Tip = new CToolTip();
 	mp_TabBar = new TabBarClass();
 	//m_Child = new CConEmuChild();
-	m_Back = new CConEmuBack();
+	//m_Back = new CConEmuBack();
 	m_Macro = new CConEmuMacro();
 	//#pragma message("Win2k: EVENT_CONSOLE_START_APPLICATION, EVENT_CONSOLE_END_APPLICATION")
 	//Нас интересуют только START и END. Все остальные события приходят от ConEmuC через серверный пайп
@@ -699,6 +699,13 @@ RECT CConEmuMain::GetDefaultRect()
 	}
 
 	return rcWnd;
+}
+
+RECT CConEmuMain::GetGuiClientRect()
+{
+	RECT rcClient = {};
+	BOOL lbRc = ::GetClientRect(ghWnd, &rcClient); UNREFERENCED_PARAMETER(lbRc);
+	return rcClient;
 }
 
 RECT CConEmuMain::GetVirtualScreenRect(BOOL abFullScreen)
@@ -1450,7 +1457,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 			if (!isMouseOverFrame())
 			{
 				// Рамка невидима (мышка не над рамкой или заголовком)
-				RECT rcClient; GetClientRect(ghWnd, &rcClient);
+				RECT rcClient = GetGuiClientRect();
 				RECT rcFrame = CalcMargins(CEM_FRAME);
 				_ASSERTE(!rcClient.left && !rcClient.top);
 				hRgn = CreateWindowRgn(abTestOnly, gpSetCls->CheckTheming() && mp_TabBar->IsTabsShown(),
@@ -1642,11 +1649,11 @@ CConEmuMain::~CConEmuMain()
 	//	m_Child = NULL;
 	//}
 
-	if (m_Back)
-	{
-		delete m_Back;
-		m_Back = NULL;
-	}
+	//if (m_Back)
+	//{
+	//	delete m_Back;
+	//	m_Back = NULL;
+	//}
 
 	if (m_Macro)
 	{
@@ -1922,7 +1929,25 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* a
 	return rc;
 }
 
-/*!!!static!!*/
+RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*/)
+{
+	_ASSERTE(ghWnd!=NULL);
+	RECT rcMain = {};
+	if (isIconic())
+	{
+		WINDOWPLACEMENT wpl = {sizeof(wpl)};
+		GetWindowPlacement(ghWnd, &wpl);
+		TODO("Если окно было свернуто из Maximized состояние? Нужно брать не rcNormalPosition а Maximized?");
+		rcMain = wpl.rcNormalPosition;
+	}
+	else
+	{
+		GetWindowRect(ghWnd, &rcMain);
+	}
+
+	return CalcRect(tWhat, rcMain, CER_MAIN, pVCon);
+}
+
 // Для приблизительного расчета размеров - нужен только (размер главного окна)|(размер консоли)
 // Для точного расчета размеров - требуется (размер главного окна) и (размер окна отрисовки) для корректировки
 // на x64 возникают какие-то глюки с ",RECT rFrom,". Отладчик показывает мусор в rFrom,
@@ -2486,7 +2511,7 @@ bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
 //void CConEmuMain::GetCWShift(HWND inWnd, RECT *outShift)
 //{
 //    RECT cRect, wRect;
-//    GetClientRect(inWnd, &cRect); // The left and top members are zero. The right and bottom members contain the width and height of the window.
+//    Get ClientRect(inWnd, &cRect); // The left and top members are zero. The right and bottom members contain the width and height of the window.
 //    MapWindowPoints(inWnd, NULL, (LPPOINT)&cRect, 2);
 //    GetWindowRect(inWnd, &wRect); // screen coordinates of the upper-left and lower-right corners of the window
 //    outShift->top = wRect.top - cRect.top;          // <0
@@ -2518,7 +2543,7 @@ bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
 //  if (pClient)
 //      rect = *pClient;
 //  else
-//      GetClientRect(ghWnd, &rect);
+//      Get ClientRect(ghWnd, &rect);
 //  if (gpConEmu->mp_TabBar->IsActive()) {
 //      RECT mr = gpConEmu->mp_TabBar->GetMargins();
 //      //rect.top += gpConEmu->mp_TabBar->Height();
@@ -2552,7 +2577,7 @@ bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
 //    if (arect == NULL)
 //    {
 //      frameIncluded = false;
-//        GetClientRect(ghWnd, &rect);
+//        Get ClientRect(ghWnd, &rect);
 //      consoleRect = ConsoleOffsetRect();
 //    }
 //    else
@@ -3304,7 +3329,7 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 	// 2009-07-04 Resize выполняет сам TabBar
 	//if (gbPostUpdateWindowSize) { // значит мы что-то поменяли
 	//    ReSize();
-	//    /*RECT rcNewCon; GetClientRect(ghWnd, &rcNewCon);
+	//    /*RECT rcNewCon; Get ClientRect(ghWnd, &rcNewCon);
 	//    DCClientRect(&rcNewCon);
 	//    MoveWindow(ghWnd DC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 0);
 	//    dcWindowLast = rcNewCon;
@@ -3351,10 +3376,11 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 	if (isIconic())
 		return;
 
-	RECT client; GetClientRect(ghWnd, &client);
-#ifdef _DEBUG
+	RECT client = GetGuiClientRect();
+
+	#ifdef _DEBUG
 	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
-#endif
+	#endif
 
 	if (abCorrect2Ideal)
 	{
@@ -3415,6 +3441,93 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 	}
 }
 
+//void CConEmuMain::ResizeChildren()
+//{
+//	CVirtualConsole* pVCon = gpConEmu->ActiveCon();
+//	_ASSERTE(isMainThread());
+//	if (!pVCon)
+//	{
+//		// По идее, не должно вызываться, если консолей вообще нет
+//		_ASSERTE(pVCon!=NULL);
+//		return;
+//	}
+//	CVConGuard guard(pVCon);
+//
+//	//RECT rc = gpConEmu->ConsoleOffsetRect();
+//	RECT rcClient; Get ClientRect(ghWnd, &rcClient);
+//	bool bTabsShown = gpConEmu->mp_TabBar->IsTabsShown();
+//
+//	static bool bTabsShownLast, bAlwaysScrollLast;
+//	static RECT rcClientLast;
+//
+//	if (bTabsShownLast == bTabsShown && bAlwaysScrollLast == (gpSet->isAlwaysShowScrollbar == 1))
+//	{
+//		if (memcmp(&rcClient, &rcClientLast, sizeof(RECT))==0)
+//		{
+//			#if defined(EXT_GNUC_LOG)
+//			char szDbg[255];
+//			wsprintfA(szDbg, "  --  CConEmuBack::Resize() - exiting, (%i,%i,%i,%i)==(%i,%i,%i,%i)",
+//				rcClient.left, rcClient.top, rcClient.right, rcClient.bottom,
+//				rcClientLast.left, rcClientLast.top, rcClientLast.right, rcClientLast.bottom);
+//
+//			if (gpSetCls->isAdvLogging>1)
+//				pVCon->RCon()->LogString(szDbg);
+//			#endif
+//
+//			return; // ничего не менялось
+//		}
+//	}
+//
+//	rcClientLast = rcClient;
+//	//memmove(&mrc_LastClient, &rcClient, sizeof(RECT)); // сразу запомним
+//	bTabsShownLast = bTabsShown;
+//	bAlwaysScrollLast = (gpSet->isAlwaysShowScrollbar == 1);
+//	//RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
+//	RECT rc = gpConEmu->CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);
+//
+//
+//	#if defined(EXT_GNUC_LOG)
+//	char szDbg[255]; wsprintfA(szDbg, "  --  CConEmuBack::Resize() - X=%i, Y=%i, W=%i, H=%i", rc.left, rc.top, 	rc.right - rc.left,	rc.bottom - rc.top);
+//
+//	if (gpSetCls->isAdvLogging>1)
+//		pVCon->RCon()->LogString(szDbg);
+//	#endif
+//
+//	// Это скрытое окно отрисовки. Оно должно соответствовать
+//	// размеру виртуальной консоли. На это окно ориентируются плагины!
+//	WARNING("DoubleView");
+//	rc = gpConEmu->CalcRect(CER_SCROLL, rcClient, CER_MAINCLIENT);
+//
+//
+//	#ifdef _DEBUG
+//	if (rc.bottom != rcClient.bottom || rc.right != rcClient.right)
+//	{
+//		_ASSERTE(rc.bottom == rcClient.bottom && rc.right == rcClient.right);
+//	}
+//	#endif
+//}
+
+// Должна вернуть TRUE, если события мыши не нужно пропускать в консоль
+BOOL CConEmuMain::TrackMouse()
+{
+	BOOL lbCapture = FALSE; // По умолчанию - мышь не перехватывать
+
+	TODO("DoubleView: переделать на обработку в видимых консолях");
+	if (ActiveCon()->TrackMouse())
+		lbCapture = TRUE;
+
+	return lbCapture;
+}
+
+void CConEmuMain::OnAlwaysShowScrollbar()
+{
+	for (size_t i = 0; i < countof(mp_VCon); i++)
+	{
+		if (mp_VCon[i])
+			mp_VCon[i]->OnAlwaysShowScrollbar();
+	}
+}
+
 void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 {
 	//MSetter lInConsoleResize(&mb_InConsoleResize);
@@ -3469,7 +3582,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 	}
 
 	//COORD c = ConsoleSizeFromWindow();
-	RECT client; GetClientRect(ghWnd, &client);
+	RECT client = GetGuiClientRect();
 
 	// Проверим, вдруг не отработал isIconic
 	if (client.bottom > 10)
@@ -3587,9 +3700,12 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 	//}
 	mn_InResize++;
 
+	CVirtualConsole* pVCon = mp_VActive;
+	CVConGuard guard(pVCon);
+
 	if (newClientWidth==(WORD)-1 || newClientHeight==(WORD)-1)
 	{
-		RECT rcClient; GetClientRect(ghWnd, &rcClient);
+		RECT rcClient = GetGuiClientRect();
 		newClientWidth = rcClient.right;
 		newClientHeight = rcClient.bottom;
 	}
@@ -3605,11 +3721,9 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 	// Background - должен занять все клиентское место под тулбаром
 	// Там же ресайзится ScrollBar
-	m_Back->Resize();
-#ifdef _DEBUG
-	BOOL lbIsPicView =
-#endif
-	    isPictureView();
+	//ResizeChildren();
+
+	BOOL lbIsPicView = isPictureView();		UNREFERENCED_PARAMETER(lbIsPicView);
 
 	if (wParam != (DWORD)-1 && change2WindowMode == (DWORD)-1 && mn_InResize <= 1)
 	{
@@ -3620,11 +3734,14 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 	RECT dcSize = CalcRect(CER_DC, mainClient, CER_MAINCLIENT);
 	RECT client = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, NULL, &dcSize);
 	WARNING("Вынести в CalcRect");
-	RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
+	RECT rcNewCon = {};
 
-	if (mp_VActive && mp_VActive->Width && mp_VActive->Height)
+	if (gpSet->isAlwaysShowScrollbar == 1)
+		client.right += GetSystemMetrics(SM_CXVSCROLL);
+
+	if (pVCon && pVCon->Width && pVCon->Height)
 	{
-		if (mp_VActive->GuiWnd() && mp_VActive->RCon()->isGuiOverCon())
+		if (pVCon->GuiWnd() && pVCon->RCon()->isGuiOverCon())
 		{
 			// Если работает в режиме "GUI во вкладке" - занять всю доступную область
 			rcNewCon = dcSize;
@@ -3635,16 +3752,16 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 			if ((gpSet->isTryToCenter && (isZoomed() || mb_isFullScreen))
 					|| isNtvdm())
 			{
-				rcNewCon.left = (client.right+client.left-(int)mp_VActive->Width)/2;
-				rcNewCon.top = (client.bottom+client.top-(int)mp_VActive->Height)/2;
+				rcNewCon.left = (client.right + client.left - (int)pVCon->Width)/2;
+				rcNewCon.top = (client.bottom + client.top - (int)pVCon->Height)/2;
 			}
 
 			if (rcNewCon.left<client.left) rcNewCon.left=client.left;
 
 			if (rcNewCon.top<client.top) rcNewCon.top=client.top;
 
-			rcNewCon.right = rcNewCon.left + mp_VActive->Width;
-			rcNewCon.bottom = rcNewCon.top + mp_VActive->Height;
+			rcNewCon.right = rcNewCon.left + pVCon->Width + ((gpSet->isAlwaysShowScrollbar == 1) ? GetSystemMetrics(SM_CXVSCROLL) : 0);
+			rcNewCon.bottom = rcNewCon.top + pVCon->Height;
 
 			if (rcNewCon.right>client.right) rcNewCon.right=client.right;
 
@@ -3657,28 +3774,28 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 	}
 
 	bool lbPosChanged = false;
-	RECT rcCurCon;
-	HWND hWndDC = mp_VActive ? mp_VActive->GetView() : NULL;
+	RECT rcCurCon = {};
+	HWND hWndDC = pVCon ? pVCon->GetView() : NULL;
 	if (hWndDC)
 	{
-		GetClientRect(hWndDC, &rcCurCon);
-		MapWindowPoints(hWndDC, ghWnd, (LPPOINT)&rcCurCon, 2);
+		GetWindowRect(hWndDC, &rcCurCon);
+		MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcCurCon, 2);
 		lbPosChanged = memcmp(&rcCurCon, &rcNewCon, sizeof(RECT))!=0;
 
 		if (lbPosChanged)
 		{
 			// Двигаем/ресайзим окошко DC
 			MoveWindow(hWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
-			mp_VActive->Invalidate();
+			pVCon->Invalidate();
 		}
 	}
 
 	if (mn_InResize>0)
 		mn_InResize--;
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
-#endif
+	#endif
 	return result;
 }
 
@@ -5106,7 +5223,7 @@ void CConEmuMain::CtrlWinAltSpace()
 
 	dwLastSpaceTick = GetTickCount();
 	//MBox(L"CtrlWinAltSpace: Toggle");
-	mp_VActive->RCon()->ShowConsole(-1); // Toggle visibility
+	mp_VActive->RCon()->ShowConsoleOrGuiClient(-1); // Toggle visibility
 }
 
 // abRecreate: TRUE - пересоздать текущую, FALSE - создать новую
@@ -5483,7 +5600,7 @@ void CConEmuMain::ShowSysmenu(int x, int y)
 	{
 		RECT rect, cRect;
 		GetWindowRect(ghWnd, &rect);
-		GetClientRect(ghWnd, &cRect);
+		cRect = GetGuiClientRect();
 		WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
 		int nTabShift =
 		    ((gpSet->isHideCaptionAlways() || mb_isFullScreen) && gpConEmu->mp_TabBar->IsTabsShown())
@@ -5786,9 +5903,12 @@ void CConEmuMain::UpdateSizes()
 		SendMessage(ghWnd, WM_SETCURSOR, -1, -1);
 	}
 
-	if (mp_VActive)
+	CVirtualConsole* pVCon = mp_VActive;
+	CVConGuard guard(pVCon);
+
+	if (pVCon)
 	{
-		mp_VActive->UpdateInfo();
+		pVCon->UpdateInfo();
 	}
 	else
 	{
@@ -5798,10 +5918,9 @@ void CConEmuMain::UpdateSizes()
 		SetDlgItemText(gpSetCls->hInfo, tPanelRight, _T("?"));
 	}
 
-	HWND hWndDC = mp_VActive ? mp_VActive->GetView() : NULL;
-	if (hWndDC)
+	if (pVCon && pVCon->GetView())
 	{
-		RECT rcClient; GetClientRect(hWndDC, &rcClient);
+		RECT rcClient = pVCon->GetDcClientRect();
 		TCHAR szSize[32]; _wsprintf(szSize, SKIPLEN(countof(szSize)) _T("%ix%i"), rcClient.right, rcClient.bottom);
 		SetDlgItemText(gpSetCls->hInfo, tDCSize, szSize);
 	}
@@ -6258,7 +6377,7 @@ void CConEmuMain::InvalidateAll()
 		if (mp_VCon[i] && mp_VCon[i]->isVisible())
 			mp_VCon[i]->Invalidate();
 	}
-	m_Back->Invalidate();
+	//m_Back->Invalidate();
 	gpConEmu->mp_TabBar->Invalidate();
 }
 
@@ -6665,7 +6784,7 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 	HDC hDc =
 	#endif
 	BeginPaint(ghWnd, &ps);
-	//RECT rcClient; GetClientRect(ghWnd, &rcClient);
+	//RECT rcClient; Get ClientRect(ghWnd, &rcClient);
 	//RECT rcTabMargins = CalcMargins(CEM_TAB);
 	//AddMargins(rcClient, rcTabMargins, FALSE);
 	//HDC hdc = GetDC(ghWnd);
@@ -6705,7 +6824,7 @@ void CConEmuMain::PaintGaps(HDC hDC)
 #endif
 	HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(isMeForeground())[nColorIdx]);
 
-	RECT rcClient; GetClientRect(ghWnd, &rcClient); // Клиентская часть главного окна
+	RECT rcClient = GetGuiClientRect(); // Клиентская часть главного окна
 
 	HWND hView = mp_VActive ? mp_VActive->GetView() : NULL;
 
@@ -6720,8 +6839,8 @@ void CConEmuMain::PaintGaps(HDC hDC)
 		//RECT rcMargins = CalcMargins(CEM_TAB); // Откусить площадь, занятую строкой табов
 		//AddMargins(rcClient, rcMargins, FALSE);
 		//// На старте при /max - ghWnd DC еще не изменил свое положение
-		////RECT offsetRect; GetClientRect(ghWnd DC, &offsetRect);
-		//RECT rcWndClient; GetClientRect(ghWnd, &rcWndClient);
+		////RECT offsetRect; Get ClientRect(ghWnd DC, &offsetRect);
+		//RECT rcWndClient; Get ClientRect(ghWnd, &rcWndClient);
 		//RECT rcCalcCon = gpConEmu->CalcRect(CER_BACK, rcWndClient, CER_MAINCLIENT);
 		//RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
 		// -- работает не правильно - не учитывает центрирование в Maximized
@@ -6729,7 +6848,7 @@ void CConEmuMain::PaintGaps(HDC hDC)
 		/*
 		RECT rcClient = {0};
 		if (ghWnd DC) {
-			GetClientRect(ghWnd DC, &rcClient);
+			Get ClientRect(ghWnd DC, &rcClient);
 			MapWindowPoints(ghWnd DC, ghWnd, (LPPOINT)&rcClient, 2);
 		}
 		*/
@@ -6829,7 +6948,7 @@ void CConEmuMain::PaintGaps(HDC hDC)
 //
 //	if ('ghWnd DC')
 //	{
-//		GetClientRect('ghWnd DC', &rcClient);
+//		Get ClientRect('ghWnd DC', &rcClient);
 //		MapWindowPoints('ghWnd DC', ghWnd, (LPPOINT)&rcClient, 2);
 //	}
 //
@@ -6849,7 +6968,7 @@ void CConEmuMain::PaintGaps(HDC hDC)
 void CConEmuMain::RePaint()
 {
 	gpConEmu->mp_TabBar->RePaint();
-	m_Back->RePaint();
+	//m_Back->RePaint();
 	HDC hDc = GetDC(ghWnd);
 	//mp_VActive->Paint(hDc); // если mp_VActive==NULL - будет просто выполнена заливка фоном.
 	PaintGaps(hDc);
@@ -6860,12 +6979,14 @@ void CConEmuMain::RePaint()
 	{
 		if (mp_VCon[i] && mp_VCon[i]->isVisible())
 		{
-			HWND hView = mp_VCon[i]->GetView();
+			CVirtualConsole* pVCon = mp_VCon[i];
+			CVConGuard guard(pVCon);
+			HWND hView = pVCon->GetView();
 			if (hView)
 			{
 				hDc = GetDC(hView);
-				RECT rcClient = {}; GetClientRect(hView, &rcClient);
-				mp_VCon[i]->Paint(hDc, rcClient);
+				RECT rcClient = pVCon->GetDcClientRect();
+				pVCon->Paint(hDc, rcClient);
 				ReleaseDC(ghWnd, hDc);
 			}
 		}
@@ -7168,7 +7289,7 @@ bool CConEmuMain::isMouseOverFrame(bool abReal)
 
 		if (PtInRect(&rcWnd, ptMouse))
 		{
-			RECT rcClient; GetClientRect(ghWnd, &rcClient);
+			RECT rcClient = GetGuiClientRect();
 			// чтобы область активации рамки была чуть побольше
 			rcClient.left++; rcClient.right--; rcClient.bottom--;
 			MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcClient, 2);
@@ -7482,15 +7603,15 @@ void CConEmuMain::TabCommand(UINT nTabCmd)
 
 void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 {
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		PostMessage(ghWnd, mn_MsgPostOnBufferHeight, 0, 0);
 		return;
 	}
 
 	BOOL lbBufferHeight = mp_VActive->RCon()->isBufferHeight();
-	gpConEmu->m_Back->TrackMouse(); // спрятать или показать прокрутку, если над ней мышка
-	gpConEmu->mp_TabBar->OnBufferHeight(lbBufferHeight);
+	TrackMouse(); // спрятать или показать прокрутку, если над ней мышка
+	mp_TabBar->OnBufferHeight(lbBufferHeight);
 }
 
 
@@ -7840,7 +7961,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 
 	// Чтобы можно было найти хэндл окна по хэндлу консоли
 	SetWindowLongPtr(ghWnd, GWLP_USERDATA, (LONG_PTR)ghConWnd); // 31.03.2009 Maximus - только нихрена оно еще не создано!
-	m_Back->Create();
+	//m_Back->Create();
 
 	//if (!m_Child->Create())
 	//	return -1;
@@ -10229,7 +10350,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	if (messg == WM_MOUSEMOVE)
 	{
-		if (m_Back->TrackMouse())
+		if (TrackMouse())
 			return 0;
 	}
 
@@ -10263,7 +10384,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	// Переводим в клиентские (относительно hView) координаты
 	ptCurClient.x -= dcRect.left; ptCurClient.y -= dcRect.top;
-	GetClientRect(ghConWnd, &conRect);
+	WARNING("Избавляться от ghConWnd. Должно быть обращение через классы");
+	::GetClientRect(ghConWnd, &conRect);
 	COORD cr = pVCon->ClientToConsole(ptCurClient.x,ptCurClient.y);
 	short conX = cr.X; //winX/gpSet->Log Font.lfWidth;
 	short conY = cr.Y; //winY/gpSet->Log Font.lfHeight;
@@ -12133,7 +12255,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		case ID_CON_TOGGLE_VISIBLE:
 
 			if (mp_VActive)
-				mp_VActive->RCon()->ShowConsole(-1); // Toggle visibility
+				mp_VActive->RCon()->ShowConsoleOrGuiClient(-1); // Toggle visibility
 
 			return 0;
 			
@@ -13236,7 +13358,11 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		{
 			RECT rcPrev = Out.AttachGuiApp.rcWindow;
 			HWND hView = pRCon->GetView();
-			GetClientRect(hView, &Out.AttachGuiApp.rcWindow);
+			// Размер должен быть независим от возможности наличия прокрутки в VCon
+			GetWindowRect(hView, &Out.AttachGuiApp.rcWindow);
+			Out.AttachGuiApp.rcWindow.right -= Out.AttachGuiApp.rcWindow.left;
+			Out.AttachGuiApp.rcWindow.bottom -= Out.AttachGuiApp.rcWindow.top;
+			Out.AttachGuiApp.rcWindow.left = Out.AttachGuiApp.rcWindow.top = 0;
 			//MapWindowPoints(NULL, hView, (LPPOINT)&Out.AttachGuiApp.rcWindow, 2);
 			pRCon->CorrectGuiChildRect(Out.AttachGuiApp.nStyle, Out.AttachGuiApp.nStyleEx, Out.AttachGuiApp.rcWindow);
 			

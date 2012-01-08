@@ -270,6 +270,7 @@ class CVirtualConsole :
 		//DWORD GetConsoleMode() { return mp_RCon->GetConsoleMode(); };
 		//void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO *sbi) { mp_RCon->GetConsoleScreenBufferInfo(sbi); };
 		RECT GetRect();
+		RECT GetDcClientRect();
 		void OnFontChanged();
 		COORD ClientToConsole(LONG x, LONG y);
 		POINT ConsoleToClient(LONG x, LONG y);
