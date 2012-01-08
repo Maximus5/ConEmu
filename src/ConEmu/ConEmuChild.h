@@ -53,6 +53,8 @@ class CConEmuChild
 
 		void SetRedraw(BOOL abRedrawEnabled);
 
+		void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
+		
 		void CheckPostRedraw();
 
 		BOOL TrackMouse();
@@ -101,7 +103,6 @@ class CConEmuChild
 		SCROLLINFO m_si;
 		BOOL CheckMouseOverScroll();
 		BOOL CheckScrollAutoPopup();
-		void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
 		void ShowScroll(BOOL abImmediate);
 		void HideScroll(BOOL abImmediate);
 };
