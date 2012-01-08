@@ -747,7 +747,7 @@ void CConEmuChild::OnAlwaysShowScrollbar()
 				gpConEmu->SyncWindowToConsole();
 		}
 
-		m_LastAlwaysShowScrollbar != gpSet->isAlwaysShowScrollbar;
+		m_LastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
 	}
 }
 
