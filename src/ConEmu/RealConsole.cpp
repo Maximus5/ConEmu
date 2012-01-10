@@ -1095,6 +1095,11 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		if (bActive)
 			gpSetCls->Performance(tPerfInterval, TRUE); // считается по своему
 
+		#ifdef _DEBUG
+		int nVConNo = gpConEmu->IsVConValid(pRCon->mp_VCon);
+		nVConNo = nVConNo;
+		#endif
+
 		// Проверка, вдруг осталась висеть "мертвая" консоль?
 		if (hEvents[IDEVENT_SERVERPH] == NULL && pRCon->mh_ConEmuC)
 		{
@@ -6821,7 +6826,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 	}
 }
 
-int CRealConsole::GetTabCount()
+int CRealConsole::GetTabCount(BOOL abVisibleOnly /*= FALSE*/)
 {
 	if (!this)
 		return 0;
@@ -6833,10 +6838,18 @@ int CRealConsole::GetTabCount()
 		_ASSERTE(FALSE);
 	}
 	#endif
-
-	if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
+	
+	if (abVisibleOnly)
+	{
+		// Если не хотят показывать все доступные редакторы/вьювера, а только активное окно
+		if (!gpSet->bShowFarWindows)
+			return 1;
+	}
+	
+	if (((mn_ProgramStatus & CES_FARACTIVE) == 0))
 		return 1; // На время выполнения команд - ТОЛЬКО одна закладка
 
+	TODO("Обработать gpSet->bHideDisabledTabs, вдруг какие-то табы засерены");
 	//if (mn_tabsCount > 1 && gpSet->bHideDisabledConsoleTabs)
 	//{
 	//	int nCount = 0;

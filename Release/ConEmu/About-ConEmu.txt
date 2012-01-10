@@ -3,9 +3,9 @@ ConEmu - Windows Console Emulator
 
 About ConEmu
 
-    ConEmu-Maximus5 is a Windows console emulator, which represents multiple
-    consoles as one customizable GUI window with various features. Basic
-    application - joint use with Far Manager (FAR in Wikipedia).
+    ConEmu-Maximus5 is a Windows console emulator with tabs, which represents
+    multiple consoles as one customizable GUI window with various features.
+    Basic application - joint use with Far Manager (FAR in Wikipedia).
     Far (File and Archive) Manager is a console program for managing files and
     archives in Windows operating systems.
 

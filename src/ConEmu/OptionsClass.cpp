@@ -1720,6 +1720,8 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	CheckDlgButton(hWnd2, cbTabsOnTaskBar, gpSet->m_isTabsOnTaskBar);
 
 	CheckDlgButton(hWnd2, cbHideInactiveConTabs, gpSet->bHideInactiveConsoleTabs);
+	CheckDlgButton(hWnd2, cbHideDisabledTabs, gpSet->bHideDisabledTabs);
+	CheckDlgButton(hWnd2, cbShowFarWindows, gpSet->bShowFarWindows);
 
 	SetDlgItemText(hWnd2, tTabFontFace, gpSet->sTabFontFace);
 
@@ -2576,6 +2578,14 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbHideInactiveConTabs:
 			gpSet->bHideInactiveConsoleTabs = IsChecked(hTabs, cbHideInactiveConTabs);
+			gpConEmu->mp_TabBar->Update(TRUE);
+			break;
+		case cbHideDisabledTabs:
+			gpSet->bHideDisabledTabs = IsChecked(hTabs, cbHideDisabledTabs);
+			gpConEmu->mp_TabBar->Update(TRUE);
+			break;
+		case cbShowFarWindows:
+			gpSet->bShowFarWindows = IsChecked(hTabs, cbShowFarWindows);
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
 			

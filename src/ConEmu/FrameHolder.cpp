@@ -937,8 +937,8 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	
 	POINT point;
 	RECT wr; GetWindowRect(hWnd, &wr);
-	point.x = LOWORD(lParam) - wr.left;
-	point.y = HIWORD(lParam) - wr.top;
+	point.x = (int)(short)LOWORD(lParam) - wr.left;
+	point.y = (int)(short)HIWORD(lParam) - wr.top;
 	//MapWindowPoints(NULL, hWnd, &point, 1);
 	
 	if (gpConEmu->DrawType() == fdt_Aero)
@@ -993,8 +993,8 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 //	{
 //		POINT point;
 //		RECT wr; GetWindowRect(hWnd, &wr);
-//		point.x = LOWORD(lParam) - wr.left;
-//		point.y = HIWORD(lParam) - wr.top;
+//		point.x = (int)(short)LOWORD(lParam) - wr.left;
+//		point.y = (int)(short)HIWORD(lParam) - wr.top;
 //		//MapWindowPoints(NULL, hWnd, &point, 1);
 //
 //		int nTab = gpConEmu->TabFromCursor(point);

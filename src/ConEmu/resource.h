@@ -450,6 +450,7 @@
 #define tSetupPagePlace                 2050
 #define cbHideDisabledTabs              2051
 #define tUpdateVerLocation              2052
+#define cbShowFarWindows                2053
 #define rbUpdateStableOnly              2054
 #define rbUpdateLatestAvailable         2055
 #define cbUpdateCheckOnStartup          2058

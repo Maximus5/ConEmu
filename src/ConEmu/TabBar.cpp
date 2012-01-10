@@ -647,7 +647,7 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 		} break;
 		case WM_RBUTTONUP:
 		{
-			POINT pt = {LOWORD(lParam),HIWORD(lParam)};
+			POINT pt = {(int)(short)LOWORD(lParam),(int)(short)HIWORD(lParam)};
 			int nIdx = SendMessage(hwnd, TB_HITTEST, 0, (LPARAM)&pt);
 
 			// If the return value is zero or a positive value, it is
@@ -779,7 +779,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	mn_InUpdate ++;
 	ConEmuTab tab = {0};
 	MCHKHEAP
-	int V, I, tabIdx = 0, nCurTab = -1;
+	int V, I, tabIdx = 0, nCurTab = -1, rFrom, rFound;
+	BOOL bShowFarWindows = gpSet->bShowFarWindows;
 	CVirtualConsole* pVCon = NULL;
 	VConTabs vct = {NULL};
 	// Выполняться должно только в основной нити, так что CriticalSection не нужна
@@ -800,7 +801,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	{
 		int nTabs = 0;
 
-		for(V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++)
+		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++)
 		{
 			_ASSERTE(m_Tab2VCon.size()==0);
 
@@ -812,7 +813,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			}
 
 			_ASSERTE(m_Tab2VCon.size()==0);
-			nTabs += pVCon->RCon()->GetTabCount();
+			nTabs += pVCon->RCon()->GetTabCount(TRUE);
 			_ASSERTE(m_Tab2VCon.size()==0);
 		}
 
@@ -827,7 +828,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	{
 		int nTabs = 0;
 
-		for(V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++)
+		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++)
 		{
 			_ASSERTE(m_Tab2VCon.size()==0);
 
@@ -839,7 +840,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			}
 
 			_ASSERTE(m_Tab2VCon.size()==0);
-			nTabs += pVCon->RCon()->GetTabCount();
+			nTabs += pVCon->RCon()->GetTabCount(TRUE);
 			_ASSERTE(m_Tab2VCon.size()==0);
 		}
 
@@ -862,9 +863,10 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	MCHKHEAP
 	_ASSERTE(m_Tab2VCon.size()==0);
 
-	for(V = 0; V < MAX_CONSOLE_COUNT; V++)
+	for (V = 0; V < MAX_CONSOLE_COUNT; V++)
 	{
 		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
+		CVConGuard guard(pVCon);
 
 		BOOL lbActive = gpConEmu->isActive(pVCon);
 
@@ -874,25 +876,32 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		}
 
 		CRealConsole *pRCon = pVCon->RCon();
-
-		for(I = 0; TRUE; I++)
+		if (!pRCon)
 		{
-#ifdef _DEBUG
+			_ASSERTE(pRCon!=NULL);
+			continue;
+		}
 
-			if (!I && !V)
-			{
-				_ASSERTE(m_Tab2VCon.size()==0);
-			}
+		rFrom = bShowFarWindows ? 0 : pRCon->GetActiveTab();
+		rFound = 0;
+		
+		for (I = rFrom; bShowFarWindows || !rFound; I++)
+		{
+			#ifdef _DEBUG
+				if (!I && !V)
+				{
+					_ASSERTE(m_Tab2VCon.size()==0);
+				}
+				if (this != gpConEmu->mp_TabBar)
+				{
+					_ASSERTE(this == gpConEmu->mp_TabBar);
+				}
+				MCHKHEAP;
+			#endif
+			
 
-			if (this != gpConEmu->mp_TabBar)
-			{
-				_ASSERTE(this == gpConEmu->mp_TabBar);
-			}
-
-			MCHKHEAP;
-#endif
-
-			if (gpSet->bHideDisabledTabs)
+			// bShowFarWindows проверяем, чтобы не проколоться с недоступностью единственного таба
+			if (gpSet->bHideDisabledTabs && bShowFarWindows)
 			{
 				if (!pRCon->CanActivateFarWindow(I))
 					continue;
@@ -901,26 +910,29 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			if (!pRCon->GetTab(I, &tab))
 				break;
 
-#ifdef _DEBUG
-
-			if (this != gpConEmu->mp_TabBar)
-			{
-				_ASSERTE(this == gpConEmu->mp_TabBar);
-			}
-
-			MCHKHEAP;
-#endif
+			
+			#ifdef _DEBUG
+				if (this != gpConEmu->mp_TabBar)
+				{
+					_ASSERTE(this == gpConEmu->mp_TabBar);
+				}
+				MCHKHEAP;
+			#endif
+			
+			
 			PrepareTab(&tab, pVCon);
 			vct.pVCon = pVCon;
 			vct.nFarWindowId = I;
-#ifdef _DEBUG
 
-			if (!I && !V)
-			{
-				_ASSERTE(m_Tab2VCon.size()==0);
-			}
+			
+			#ifdef _DEBUG
+				if (!I && !V)
+				{
+					_ASSERTE(m_Tab2VCon.size()==0);
+				}
+			#endif
 
-#endif
+
 			AddTab2VCon(vct);
 			// Добавляет закладку, или меняет (при необходимости) заголовок существующей
 			AddTab(tab.Name, tabIdx, (tab.Type & 0x100)==0x100);
@@ -928,15 +940,16 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			if (lbActive && tab.Current)
 				nCurTab = tabIdx;
 
+			rFound++;
 			tabIdx++;
-#ifdef _DEBUG
 
-			if (this != gpConEmu->mp_TabBar)
-			{
-				_ASSERTE(this == gpConEmu->mp_TabBar);
-			}
-
-#endif
+			
+			#ifdef _DEBUG
+				if (this != gpConEmu->mp_TabBar)
+				{
+					_ASSERTE(this == gpConEmu->mp_TabBar);
+				}
+			#endif
 		}
 	}
 

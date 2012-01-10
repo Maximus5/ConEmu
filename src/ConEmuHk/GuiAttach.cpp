@@ -97,8 +97,14 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	
 	if (gbAttachGuiClient && ghConEmuWndDC && (GetCurrentThreadId() == gnHookMainThreadId))
 	{
-		bool lbCanAttach = ((dwStyle & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW)
-						|| ((dwStyle & (WS_POPUP|WS_THICKFRAME)) == (WS_POPUP|WS_THICKFRAME));
+		bool lbCanAttach =
+						// Обычное окно с заголовком
+						((dwStyle & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW)
+						// Диалог с ресайзом рамки
+						|| ((dwStyle & (WS_POPUP|WS_THICKFRAME)) == (WS_POPUP|WS_THICKFRAME))
+						// Обычное окно без заголовка
+						|| ((dwStyle & (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_POPUP|DS_MODALFRAME|WS_CHILDWINDOW)) == (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX)) 
+						;
 		if (dwStyle & (DS_MODALFRAME|WS_CHILDWINDOW))
 			lbCanAttach = false;
 		else if ((dwStyle & WS_POPUP) && !(dwStyle & WS_THICKFRAME))

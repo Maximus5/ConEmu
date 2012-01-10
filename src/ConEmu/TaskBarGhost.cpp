@@ -836,7 +836,7 @@ LRESULT CTaskBarGhost::GhostProc(UINT message, WPARAM wParam, LPARAM lParam)
             break;
 
         case WM_DWMSENDICONICTHUMBNAIL:
-			lResult = OnDwmSendIconicThumbnail(HIWORD(lParam), LOWORD(lParam));
+			lResult = OnDwmSendIconicThumbnail((short)HIWORD(lParam), (short)LOWORD(lParam));
             break;
 
         case WM_DWMSENDICONICLIVEPREVIEWBITMAP:

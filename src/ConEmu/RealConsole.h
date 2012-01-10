@@ -369,7 +369,7 @@ class CRealConsole
 		BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 		void UpdateScrollInfo();
 		void SetTabs(ConEmuTab* tabs, int tabsCount);
-		int GetTabCount();
+		int GetTabCount(BOOL abVisibleOnly = FALSE);
 		int GetActiveTab();
 		BOOL GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
 		int GetModifiedEditors();

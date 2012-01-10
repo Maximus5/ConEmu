@@ -1855,7 +1855,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	}
 
 	// Первая инициализация, или смена размера
-	BOOL lbSizeChanged = (TextWidth != (uint)winSize.X || TextHeight != (uint)winSize.Y);
+	BOOL lbSizeChanged = (hDC == NULL) || (TextWidth != (uint)winSize.X || TextHeight != (uint)winSize.Y);
 #ifdef _DEBUG
 	COORD dbgWinSize = winSize;
 	COORD dbgTxtSize = {TextWidth,TextHeight};
@@ -2317,6 +2317,7 @@ void CVirtualConsole::UpdateText()
 	//}
 	////_ASSERTE(lbDataValid);
 #endif
+	_ASSERTE(hDC!=NULL);
 	memmove(mh_FontByIndex, gpSetCls->mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0]));
 	mh_FontByIndex[MAX_FONT_STYLES] = mh_UCharMapFont ? mh_UCharMapFont : mh_FontByIndex[0];
 	SelectFont(mh_FontByIndex[0]);
@@ -3499,6 +3500,13 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		lbSimpleBlack = TRUE;
 	else if ((lbGuiVisible = mp_RCon->isGuiOverCon()))
 		lbSimpleBlack = TRUE;
+#ifdef _DEBUG
+	else
+	{
+		int nConNo = gpConEmu->IsVConValid(this);
+		nConNo = nConNo;
+	}
+#endif
 
 	//else if (!mpsz_ConChar || !mpn_ConAttrEx)
 	//	lbSimpleBlack = TRUE;

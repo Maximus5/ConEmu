@@ -520,8 +520,11 @@ struct Settings
 		//reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
 		bool bHideInactiveConsoleTabs;
 
-		TODO("загрузка bHideDisabledTabs");
+		TODO("загрузка/сохранение bHideDisabledTabs");
 		bool bHideDisabledTabs;
+		
+		//reg->Load(L"ShowFarWindows", bShowFarWindows);
+		bool bShowFarWindows;
 
 		bool NeedCreateAppWindow();
 		

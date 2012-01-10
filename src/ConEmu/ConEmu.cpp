@@ -85,7 +85,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define PROCESS_WAIT_START_TIME 1000
 
 #define PTDIFFTEST(C,D) PtDiffTest(C, ptCur.x, ptCur.y, D)
-//(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
+//(((abs(C.x-(short)LOWORD(lParam)))<D) && ((abs(C.y-(short)HIWORD(lParam)))<D))
 
 
 
@@ -3805,7 +3805,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 #if defined(EXT_GNUC_LOG)
 	char szDbg[255];
 	wsprintfA(szDbg, "CConEmuMain::OnSizing(wParam=%i, L.Lo=%i, L.Hi=%i)\n",
-	          wParam, LOWORD(lParam), HIWORD(lParam));
+	          wParam, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
 
 	if (gpSetCls->isAdvLogging)
 		mp_VActive->RCon()->LogString(szDbg);
@@ -4893,7 +4893,7 @@ void CConEmuMain::PostDisplayRConError(CRealConsole* mp_RCon, wchar_t* pszErrMsg
 
 bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
 {
-	//(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
+	//(((abs(C.x-(int)(short)LOWORD(lParam)))<D) && ((abs(C.y-(int)(short)HIWORD(lParam)))<D))
 	int nX = C.x - aX;
 
 	if (nX < 0) nX = -nX;
@@ -10256,7 +10256,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	//2010-05-20 все-таки будем ориентироваться на lParam, потому что
 	//  только так ConEmuTh может передать корректные координаты
 	//POINT ptCur = {-1, -1}; GetCursorPos(&ptCur);
-	POINT ptCurClient = {LOWORD(lParam), HIWORD(lParam)};
+	POINT ptCurClient = {(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)};
 	POINT ptCurScreen = ptCurClient;
 	// Для этих сообщений, lParam - relative to the upper-left corner of the screen.
 	if (messg == WM_MOUSEWHEEL || messg == WM_MOUSEHWHEEL)
@@ -10690,12 +10690,12 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 				{
 					// чтобы при RightUp не ушел APPS
 					mouse.state &= ~MOUSE_R_LOCKED;
-					//PtDiffTest(C, LOWORD(lParam), HIWORD(lParam), D)
+					//PtDiffTest(C, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), D)
 					char szLog[255];
 					wsprintfA(szLog, "Right drag started, MOUSE_R_LOCKED cleared: cursor={%i-%i}, Rcursor={%i-%i}, Now={%i-%i}, MinDelta=%i",
 					          (int)cursor.x, (int)cursor.y,
 					          (int)Rcursor.x, (int)Rcursor.y,
-					          (int)LOWORD(lParam), (int)HIWORD(lParam),
+					          (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam),
 					          (int)DRAG_DELTA);
 					pVCon->RCon()->LogString(szLog);
 				}
@@ -10785,7 +10785,7 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 			char szLog[255];
 			wsprintfA(szLog, "Mouse was moved, MOUSE_R_LOCKED cleared: Rcursor={%i-%i}, Now={%i-%i}, MinDelta=%i",
 			          (int)Rcursor.x, (int)Rcursor.y,
-			          (int)LOWORD(lParam), (int)HIWORD(lParam),
+			          (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam),
 			          (int)RCLICKAPPSDELTA);
 			pVCon->RCon()->LogString(szLog);
 			//POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
@@ -10863,8 +10863,8 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 	        pVCon->RCon()->CoordInPanel(mouse.LClkCon))
 	{
 		//SetCapture('ghWnd DC'); --2009-03-14
-		cursor.x = LOWORD(lParam);
-		cursor.y = HIWORD(lParam);
+		cursor.x = (int)(short)LOWORD(lParam);
+		cursor.y = (int)(short)HIWORD(lParam);
 		//isLBDown=true;
 		//isDragProcessed=false;
 		CONSOLE_CURSOR_INFO ci;
@@ -11207,7 +11207,7 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 		else
 		{
 			char szLog[100];
-			wsprintfA(szLog, "RightClicked, but mouse was moved abs({%i-%i}-{%i-%i})>%i", Rcursor.x, Rcursor.y, (int)LOWORD(lParam), (int)HIWORD(lParam), (int)RCLICKAPPSDELTA);
+			wsprintfA(szLog, "RightClicked, but mouse was moved abs({%i-%i}-{%i-%i})>%i", Rcursor.x, Rcursor.y, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (int)RCLICKAPPSDELTA);
 			pVCon->RCon()->LogString(szLog);
 		}
 
@@ -13810,7 +13810,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			//			if (gpConEmu->mp_TabBar->IsShown()) {
 			//				HWND hTabBar = gpConEmu->mp_TabBar->GetTabbar();
 			//				RECT rcWnd; GetWindowRect(hTabBar, &rcWnd);
-			//				TCHITTESTINFO tch = {{LOWORD(lParam),HIWORD(lParam)}};
+			//				TCHITTESTINFO tch = {{(int)(short)LOWORD(lParam),(int)(short)HIWORD(lParam)}};
 			//				if (PtInRect(&rcWnd, tch.pt)) {
 			//					// Преобразовать в относительные координаты
 			//					tch.pt.x -= rcWnd.left; tch.pt.y -= rcWnd.top;
@@ -14024,11 +14024,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgInitInactiveDC)
 			{
-				if (isValid((CVirtualConsole*)lParam)
-				        && !isActive((CVirtualConsole*)lParam))
+				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
+				if (isValid(pVCon) && !isActive(pVCon))
 				{
-					((CVirtualConsole*)lParam)->InitDC(true, true, NULL, NULL);
-					((CVirtualConsole*)lParam)->LoadConsoleData();
+					CVConGuard guard(pVCon);
+					pVCon->InitDC(true, true, NULL, NULL);
+					pVCon->LoadConsoleData();
 				}
 
 				return 0;

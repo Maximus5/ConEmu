@@ -1232,6 +1232,8 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 	#ifdef _DEBUG
 	if (mp_RCon->mb_DebugLocked)
 		return FALSE;
+	int nConNo = gpConEmu->IsVConValid(mp_RCon->mp_VCon);
+	nConNo = nConNo;
 	#endif
 
 	if (mp_RCon->m_ServerClosing.nServerPID && mp_RCon->m_ServerClosing.nServerPID == mp_RCon->mn_ConEmuC_PID)

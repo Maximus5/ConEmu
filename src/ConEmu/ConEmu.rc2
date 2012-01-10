@@ -75,6 +75,7 @@ BEGIN
     cbSendCtrlEsc           "When checked, You can use 'Ctrl+Esc' in Far internally"
     cbSendPrintScrn         "When checked, You can use 'PrintScrn' in Far internally"
     cbShellNoZoneCheck      "SEE_MASK_NOZONECHECKS. Same as appeared in Far 2 build 771 and disappeared after 1464."
+    cbShowFarWindows        "Show all Far Manager windows (panels, editors, viewers) instead of one tab for one console"
     cbSkipActivation        "Skip mouse button (left/right/middle)\nclick, while activating window"
     cbSkipFocusEvents       "Don't send focus events to console to disable\nautoclosing of fast search dialog in panels"
     cbSkipMove              "Skip mouse move events, while\nConEmu is not foreground window"

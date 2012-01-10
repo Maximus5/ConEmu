@@ -377,6 +377,7 @@ void Settings::InitSettings()
 	bAdminShield = true;
 	bHideInactiveConsoleTabs = false;
 	bHideDisabledTabs = false;
+	bShowFarWindows = true;
 	isDisableMouse = false;
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
 	isFarHourglass = true; nFarHourglassDelay = 500;
@@ -795,6 +796,8 @@ void Settings::LoadSettings()
 		reg->Load(L"AdminTitleSuffix", szAdminTitleSuffix, countof(szAdminTitleSuffix)); szAdminTitleSuffix[countof(szAdminTitleSuffix)-1] = 0;
 		reg->Load(L"AdminShowShield", bAdminShield);
 		reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
+		//reg->Load(L"HideDisabledTabs", bHideDisabledTabs);
+		reg->Load(L"ShowFarWindows", bShowFarWindows);
 		
 		reg->Load(L"TryToCenter", isTryToCenter);
 
@@ -1268,6 +1271,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"AdminTitleSuffix", szAdminTitleSuffix);
 		reg->Save(L"AdminShowShield", bAdminShield);
 		reg->Save(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
+		//reg->Save(L"HideDisabledTabs", bHideDisabledTabs);
+		reg->Save(L"ShowFarWindows", bShowFarWindows);
 		reg->Save(L"TryToCenter", isTryToCenter);
 		reg->Save(L"ShowScrollbar", isAlwaysShowScrollbar);
 		reg->Save(L"IconID", nIconID);
