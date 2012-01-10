@@ -1220,7 +1220,8 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 			{
 				DWORD dwErr = GetLastError();
 				// были ошибки: ERROR_HTTP_HEADER_NOT_FOUND
-				ReportError(L"QueryContentLen failed\nURL=%s\ncode=%u", asSource, dwErr);
+				if (mb_ManualCallMode || abPackage)
+					ReportError(L"QueryContentLen failed\nURL=%s\ncode=%u", asSource, dwErr);
 				goto wrap;
 			}
 		}
