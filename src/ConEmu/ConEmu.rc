@@ -541,8 +541,7 @@ BEGIN
     LTEXT           "%s - Title, %c - Console number, %p - Active PID, %i - Far window number (F12), %% - %",IDC_STATIC,10,82,309,8
     RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,96,107,8
     EDITTEXT        tTabLenMax,119,94,40,12,ES_AUTOHSCROLL
-    CONTROL         "Admin shield, or suffix",cbAdminShield,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,95,83,10
-    EDITTEXT        tAdminSuffix,254,94,64,12,ES_AUTOHSCROLL | WS_DISABLED
+    EDITTEXT        tAdminSuffix,261,94,57,12,ES_AUTOHSCROLL
     GROUPBOX        "Multi console",IDC_STATIC,4,115,319,58
     CONTROL         "Multi Console",cbMultiCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,128,61,8
     CONTROL         "Create confirmation",cbNewConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,128,77,8
@@ -555,6 +554,8 @@ BEGIN
     COMBOBOX        lbNtvdmHeight,264,142,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
     CONTROL         "«Host-key»+Number iterates Far windows",cbMultiIterate,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,158,159,10
+    CONTROL         "Admin shield",rbAdminShield,"Button",BS_AUTORADIOBUTTON,167,96,55,8
+    CONTROL         "suffix",rbAdminSuffix,"Button",BS_AUTORADIOBUTTON,223,96,34,8
 END
 
 IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319
@@ -894,6 +895,7 @@ IDB_COPY                BITMAP                  "Copy.bmp"
 IDI_ICON1               ICON                    "ConEmu.ico"
 IDI_ICON2               ICON                    "Far.ico"
 IDI_ICON3               ICON                    "Far2.ico"
+IDI_SHIELD              ICON                    "shield.ico"
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 

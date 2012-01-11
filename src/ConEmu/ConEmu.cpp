@@ -580,8 +580,15 @@ BOOL CConEmuMain::Init()
 	//HMODULE hUser32 = GetModuleHandle(L"user32.dll");
 	//FSetWinEventHook SetWinEventHook = (FSetWinEventHook)GetProcAddress(hUser32, "SetWinEventHook");
 	//#endif
-	mh_WinHook = SetWinEventHook(EVENT_CONSOLE_START_APPLICATION/*EVENT_CONSOLE_CARET*/,EVENT_CONSOLE_END_APPLICATION,
+#ifndef _WIN64
+	// Интересует только запуск/останов 16битных приложений
+	// NTVDM нету в 64битных версиях Windows
+	if (!IsWindows64())
+	{
+		mh_WinHook = SetWinEventHook(EVENT_CONSOLE_START_APPLICATION/*EVENT_CONSOLE_CARET*/,EVENT_CONSOLE_END_APPLICATION,
 	                             NULL, (WINEVENTPROC)CConEmuMain::WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT);
+	}
+#endif
 	//mh_PopupHook = SetWinEventHook(EVENT_SYSTEM_MENUPOPUPSTART,EVENT_SYSTEM_MENUPOPUPSTART,
 	//    NULL, (WINEVENTPROC)CConEmuMain::WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT);
 	/*mh_Psapi = LoadLibrary(_T("psapi.dll"));
@@ -6126,36 +6133,12 @@ void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 	SetWindowRgn(ghWnd, hRgn, TRUE);
 }
 
+#ifndef _WIN64
 VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
 	_ASSERTE(hwnd!=NULL);
-	// Процесс может запуститься и ДО того, как закончится инициализация хэндла окна!
-	// Не помогает
-	//if (anEvent == EVENT_SYSTEM_MENUPOPUPSTART) {
-	//	if (gpConEmu->isMeForeground())
-	//	{
-	//		//apiSetForegroundWindow(hwnd);
-	//		DWORD dwPID = 0;
-	//		GetWindowThreadProcessId(hwnd, &dwPID);
-	//		AllowSetForegroundWindow(dwPID);
-	//		HWND hParent = GetAncestor(hwnd, GA_PARENT); // Это Desktop
-	//		if (hParent) {
-	//			GetWindowThreadProcessId(hParent, &dwPID);
-	//			AllowSetForegroundWindow(dwPID);
-	//		}
-	//	}
-	//	//hwnd это похоже окошко самого меню, ClassName=#32768 (диалог)
-	//	//#ifdef _DEBUG
-	//	//wchar_t szClass[128] = {0}, szTitle[128] = {0};
-	//	//HWND hParent = GetAncestor(hwnd, GA_PARENT); // Это Desktop
-	//	//GetClassName(hParent, szClass, 128); GetWindowText(hParent, szTitle, 128);
-	//	//WCHAR szDbg[512]; _wsprintf(szDbg, countof(szDbg), L"EVENT_SYSTEM_MENUPOPUPSTART(HWND=0x%08X, object=0x%08X, child=0x%08X)\nClass: %s, Title: %s\n\n", hwnd, idObject, idChild, szClass, szTitle);
-	//	//OutputDebugString(szDbg);
-	//	//#endif
-	//	return;
-	//}
-#ifdef _DEBUG
 
+	#ifdef _DEBUG
 	switch(anEvent)
 	{
 		case EVENT_CONSOLE_START_APPLICATION:
@@ -6169,10 +6152,11 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 				gpConEmu->mp_VActive->RCon()->LogString(szInfo, TRUE);
 			}
 
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_START_APPLICATION(HWND=0x%08X, PID=%i%s)\n", (DWORD)hwnd, idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
 			DEBUGSTRCONEVENT(szDbg);
-#endif
+			#endif
+
 			break;
 		case EVENT_CONSOLE_END_APPLICATION:
 
@@ -6184,45 +6168,46 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 				gpConEmu->mp_VActive->RCon()->LogString(szInfo, TRUE);
 			}
 
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_END_APPLICATION(HWND=0x%08X, PID=%i%s)\n", (DWORD)hwnd, idObject,
 			          (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
 			DEBUGSTRCONEVENT(szDbg);
-#endif
+			#endif
+
 			break;
 		case EVENT_CONSOLE_UPDATE_REGION: // 0x4002
 		{
 			//More than one character has changed.
 			//The idObject parameter is a COORD structure that specifies the start of the changed region.
 			//The idChild parameter is a COORD structure that specifies the end of the changed region.
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			COORD crStart, crEnd; memmove(&crStart, &idObject, sizeof(idObject)); memmove(&crEnd, &idChild, sizeof(idChild));
 			WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_UPDATE_REGION({%i, %i} - {%i, %i})\n", crStart.X,crStart.Y, crEnd.X,crEnd.Y);
 			DEBUGSTRCONEVENT(szDbg);
-#endif
+			#endif
 		} break;
 		case EVENT_CONSOLE_UPDATE_SCROLL: //0x4004
 		{
 			//The console has scrolled.
 			//The idObject parameter is the horizontal distance the console has scrolled.
 			//The idChild parameter is the vertical distance the console has scrolled.
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_UPDATE_SCROLL(X=%i, Y=%i)\n", idObject, idChild);
 			DEBUGSTRCONEVENT(szDbg);
-#endif
+			#endif
 		} break;
 		case EVENT_CONSOLE_UPDATE_SIMPLE: //0x4003
 		{
 			//A single character has changed.
 			//The idObject parameter is a COORD structure that specifies the character that has changed.
-			//Warning! В писании от  микрософта тут ошибка!
+			//Warning! В писании от  микрософта тут ошибка (после репорта была исправлена)
 			//The idChild parameter specifies the character in the low word and the character attributes in the high word.
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			COORD crWhere; memmove(&crWhere, &idObject, sizeof(idObject));
 			WCHAR ch = (WCHAR)LOWORD(idChild); WORD wA = HIWORD(idChild);
 			WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_UPDATE_SIMPLE({%i, %i} '%c'(\\x%04X) A=%i)\n", crWhere.X,crWhere.Y, ch, ch, wA);
 			DEBUGSTRCONEVENT(szDbg);
-#endif
+			#endif
 		} break;
 		case EVENT_CONSOLE_CARET: //0x4001
 		{
@@ -6232,13 +6217,13 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			//The idObject parameter is one or more of the following values:
 			//      CONSOLE_CARET_SELECTION or CONSOLE_CARET_VISIBLE.
 			//The idChild parameter is a COORD structure that specifies the cursor's current position.
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			COORD crWhere; memmove(&crWhere, &idChild, sizeof(idChild));
 			WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_CARET({%i, %i} Sel=%c, Vis=%c\n", crWhere.X,crWhere.Y,
 			                            ((idObject & CONSOLE_CARET_SELECTION)==CONSOLE_CARET_SELECTION) ? L'Y' : L'N',
 			                            ((idObject & CONSOLE_CARET_VISIBLE)==CONSOLE_CARET_VISIBLE) ? L'Y' : L'N');
 			DEBUGSTRCONEVENT(szDbg);
-#endif
+			#endif
 		} break;
 		case EVENT_CONSOLE_LAYOUT: //0x4005
 		{
@@ -6246,55 +6231,62 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			DEBUGSTRCONEVENT(L"EVENT_CONSOLE_LAYOUT\n");
 		} break;
 	}
+	#endif
 
-#endif
-	BOOL lbProcessed = FALSE, lbWaitingExist = FALSE;
+	// Интересуют только 16битные приложения.
+	if (!(((anEvent == EVENT_CONSOLE_START_APPLICATION) || (anEvent == EVENT_CONSOLE_END_APPLICATION))
+			&& (idChild == CONSOLE_APPLICATION_16BIT)))
+		return;
 
-	for(int k = 0; k < 2 && !lbProcessed; k++)
+	//BOOL lbProcessed = FALSE, lbWaitingExist = FALSE;
+	//for (int k = 0; k < 2 && !lbProcessed; k++)
+	//{
+	for (size_t i = 0; i < countof(gpConEmu->mp_VCon); i++)
 	{
-		for (size_t i = 0; i < countof(gpConEmu->mp_VCon); i++)
+		if (!gpConEmu->mp_VCon[i]) continue;
+
+		// Запускаемые через "-new_console" цепляются через CECMD_ATTACH2GUI, а не через WinEvent
+		// 111211 - "-new_console" теперь передается в GUI и исполняется в нем
+		if (gpConEmu->mp_VCon[i]->RCon()->isDetached() || !gpConEmu->mp_VCon[i]->RCon()->isServerCreated())
+			continue;
+
+		//if (!k && gpConEmu->mp_VCon[i]->RCon()->InCreateRoot())
+		//{
+		//	lbWaitingExist = TRUE;
+		//	continue;
+		//}
+		//LONG nSrvPID = (LONG)gpConEmu->mp_VCon[i]->RCon()->GetServerPID();
+		//#ifdef _DEBUG
+		//if (nSrvPID == 0)
+		//{
+		//	_ASSERTE(nSrvPID != 0);
+		//}
+		//#endif
+
+		HWND hRConWnd = gpConEmu->mp_VCon[i]->RCon()->ConWnd();
+		if (hRConWnd == hwnd)
 		{
-			if (!gpConEmu->mp_VCon[i]) continue;
-
-			// Запускаемые через "-new_console" цепляются через CECMD_ATTACH2GUI, а не через WinEvent
-			// 111211 - "-new_console" теперь передается в GUI и исполняется в нем
-			if (gpConEmu->mp_VCon[i]->RCon()->isDetached())
-				continue;
-
-			if (!k && gpConEmu->mp_VCon[i]->RCon()->InCreateRoot())
-			{
-				lbWaitingExist = TRUE;
-				continue;
-			}
-
-			LONG nSrvPID = (LONG)gpConEmu->mp_VCon[i]->RCon()->GetServerPID();
-#ifdef _DEBUG
-
-			if (nSrvPID == 0)
-			{
-				_ASSERTE(nSrvPID != 0);
-			}
-
-#endif
-			HWND hRConWnd = gpConEmu->mp_VCon[i]->RCon()->ConWnd();
-
-			if (
-			    (hRConWnd == hwnd) ||
-			    (hRConWnd == NULL && anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == nSrvPID)
-			)
-			{
-				gpConEmu->mp_VCon[i]->RCon()->OnWinEvent(anEvent, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
-				lbProcessed = TRUE;
-				break;
-			}
+			StartStopType sst = (anEvent == EVENT_CONSOLE_START_APPLICATION) ? sst_App16Start : sst_App16Stop;
+			gpConEmu->mp_VCon[i]->RCon()->OnDosAppStartStop(sst, idChild);
+			break;
 		}
 
-		if (!lbWaitingExist)
-			break;
-
-		if (!lbProcessed)
-			Sleep(100);
+		//if (
+		//    (hRConWnd == hwnd) ||
+		//    (hRConWnd == NULL && anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == nSrvPID)
+		//)
+		//{
+		//	gpConEmu->mp_VCon[i]->RCon()->OnWinEvent(anEvent, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
+		//	lbProcessed = TRUE;
+		//	break;
+		//}
 	}
+
+	//if (!lbWaitingExist)
+	//	break;
+	//if (!lbProcessed)
+	//	Sleep(100);
+	//}
 
 	//// Если событие "Запущен процесс" пришло ДО того, как в VirtualConsole определился
 	//// хэндл консольного окна - передать событие в тот VirtualConsole, в котором
@@ -6343,7 +6335,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 	//    break;
 	//}
 }
-
+#endif
 
 /* ****************************************************** */
 /*                                                        */
@@ -12905,6 +12897,8 @@ void CConEmuMain::OnAllVConClosed()
 {
 	OnAllGhostClosed();
 
+	Taskbar_SetShield(false);
+
 	if (!gpSet->isMultiLeaveOnClose)
 	{
 		Destroy();
@@ -13875,12 +13869,15 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
 
 				DWORD nServerPID = (DWORD)lParam;
-				gpConEmu->WinEventProc(NULL, EVENT_CONSOLE_START_APPLICATION, (HWND)wParam, (LONG)nServerPID, 0, 0, 0);
+				//gpConEmu->WinEventProc(NULL, EVENT_CONSOLE_START_APPLICATION, (HWND)wParam, (LONG)nServerPID, 0, 0, 0);
 				for (size_t i = 0; i < countof(gpConEmu->mp_VCon); i++)
 				{
 					CVirtualConsole* pVCon = gpConEmu->mp_VCon[i];
-					if (pVCon && pVCon->RCon() && pVCon->RCon()->GetServerPID() == nServerPID)
+					CVConGuard guard(pVCon);
+					CRealConsole* pRCon;
+					if (pVCon && ((pRCon = pVCon->RCon()) != NULL) && (pRCon->GetServerPID() == nServerPID))
 					{
+						pRCon->OnServerStarted((HWND)wParam, (LONG)nServerPID);
 						hWndDC = pVCon->GetView();
 					}
 				}

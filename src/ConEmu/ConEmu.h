@@ -224,13 +224,15 @@ class CConEmuMain :
 	protected:
 		//CProgressBars *ProgressBars;
 		HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu
-		TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE]; //, MultiTitle[MAX_TITLE_SIZE+30];
+		TCHAR Title[MAX_TITLE_SIZE+192], TitleCmp[MAX_TITLE_SIZE+192]; //, MultiTitle[MAX_TITLE_SIZE+30];
 		short mn_Progress;
 		//LPTSTR GetTitleStart();
 		BOOL mb_InTimer;
 		BOOL mb_ProcessCreated, mb_WorkspaceErasedOnClose; //DWORD mn_StartTick;
+		#ifndef _WIN64
 		HWINEVENTHOOK mh_WinHook; //, mh_PopupHook;
 		static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+		#endif
 		CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT];
 		CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
 		CAttachDlg *mp_AttachDlg;

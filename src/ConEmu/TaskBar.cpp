@@ -55,11 +55,16 @@ CTaskBar::CTaskBar()
 	mp_TaskBar2 = NULL;
 	mp_TaskBar3 = NULL;
 	mp_TaskBar4 = NULL;
+	mh_Shield = NULL;
 }
 
 CTaskBar::~CTaskBar()
 {
 	Taskbar_Release();
+	if (mh_Shield)
+	{
+		DestroyIcon(mh_Shield);
+	}
 }
 
 void CTaskBar::Taskbar_Init()
@@ -275,4 +280,19 @@ HRESULT CTaskBar::Taskbar_SetProgressState(TBPFLAG nState)
 	}
 	
 	return hr;
+}
+
+void CTaskBar::Taskbar_SetShield(bool abShield)
+{
+	if (!mp_TaskBar3)
+		return;
+
+	if (abShield && !mh_Shield)
+	{
+		mh_Shield = (HICON)LoadImage(g_hInstance, MAKEINTRESOURCE(IDI_SHIELD), IMAGE_ICON, 16,16, 0);
+		if (!mh_Shield)
+			return;
+	}
+
+	HRESULT hr = mp_TaskBar3->SetOverlayIcon(ghWnd, abShield ? mh_Shield : NULL, NULL);
 }

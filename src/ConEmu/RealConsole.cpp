@@ -26,6 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define AssertCantActivate(x) //MBoxAssert(x)
 
 #define SHOWDEBUGSTR
 //#define ALLOWUSEFARSYNCHRO
@@ -134,9 +135,10 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mcr_LastMouseEventPos = MakeCoord(-1,-1);
 	//m_DetectedDialogs.Count = 0;
 	//mn_DetectCallCount = 0;
-	wcscpy(Title, gpConEmu->GetDefaultTitle());
-	wcscpy(TitleFull, Title);
-	wcscpy(ms_PanelTitle, Title);
+	wcscpy_c(Title, gpConEmu->GetDefaultTitle());
+	wcscpy_c(TitleFull, Title);
+	TitleAdmin[0] = 0;
+	wcscpy_c(ms_PanelTitle, Title);
 	mb_ForceTitleChanged = FALSE;
 	mn_Progress = mn_PreWarningProgress = mn_LastShownProgress = -1; // Процентов нет
 	mn_ConsoleProgress = mn_LastConsoleProgress = -1;
@@ -1472,8 +1474,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			else if (bActive)
 			{
 				// Если в консоли заголовок не менялся, но он отличается от заголовка в ConEmu
-				if (wcscmp(pRCon->TitleFull, gpConEmu->GetLastTitle(false)))
-					gpConEmu->UpdateTitle(/*pRCon->TitleFull*/); // 100624 - заголовок сам перечитает
+				if (wcscmp(pRCon->GetTitle(), gpConEmu->GetLastTitle(false)))
+					gpConEmu->UpdateTitle();
 			}
 
 			if (lbForceUpdateProgress)
@@ -3027,6 +3029,16 @@ LPCTSTR CRealConsole::GetTitle()
 	// На старте mn_ProcessCount==0, а кнопку в тулбаре показывать уже нужно
 	if (!this /*|| !mn_ProcessCount*/)
 		return NULL;
+		
+	if (isAdministrator() && gpSet->szAdminTitleSuffix[0])
+	{
+		if (TitleAdmin[0] == 0)
+		{
+			wcscpy_c(TitleAdmin, TitleFull);
+			wcscat_c(TitleAdmin, gpSet->szAdminTitleSuffix);
+		}
+		return TitleAdmin;
+	}
 
 	return TitleFull;
 }
@@ -3460,77 +3472,100 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 	}
 }
 
-void CRealConsole::OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+void CRealConsole::OnServerStarted(HWND ahConWnd, DWORD anServerPID)
 {
-	_ASSERTE(hwnd!=NULL);
+	if (!this)
+	{
+		_ASSERTE(this);
+		return;
+	}
+	if ((ahConWnd == NULL) || (hConWnd && (ahConWnd != hConWnd)) || (anServerPID != mn_ConEmuC_PID))
+	{
+		MBoxAssert(ahConWnd!=NULL);
+		MBoxAssert((hConWnd==NULL) || (ahConWnd==hConWnd));
+		MBoxAssert(anServerPID==mn_ConEmuC_PID);
+		return;
+	}
 
-	if (hConWnd == NULL && anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID)
+	// Окошко консоли скорее всего еще не инициализировано
+	if (hConWnd == NULL)
 	{
 		SetConStatus(L"Waiting for console server...");
-		SetHwnd(hwnd);
-	}
-
-	_ASSERTE(hConWnd!=NULL && hwnd==hConWnd);
-	//TODO("!!! Сделать обработку событий и население m_Processes");
-	//
-	//AddProcess(idobject), и удаление idObject из списка процессов
-	// Не забыть, про обработку флажка Ntvdm
-	TODO("При отцеплении от консоли NTVDM - можно прибить этот процесс");
-
-	switch(anEvent)
-	{
-		case EVENT_CONSOLE_START_APPLICATION:
-			//A new console process has started.
-			//The idObject parameter contains the process identifier of the newly created process.
-			//If the application is a 16-bit application, the idChild parameter is CONSOLE_APPLICATION_16BIT and idObject is the process identifier of the NTVDM session associated with the console.
-		{
-			if (mn_InRecreate>=1)
-				mn_InRecreate = 0; // корневой процесс успешно пересоздался
-
-			//WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть добавлен и через сервер");
-			//Process Add(idObject);
-			// Если запущено 16битное приложение - необходимо повысить приоритет нашего процесса, иначе будут тормоза
-#ifndef WIN64
-			_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
-
-			if (idChild == CONSOLE_APPLICATION_16BIT)
-			{
-				OnDosAppStartStop(sst_App16Start, idObject);
-
-				//if (mn_Comspec4Ntvdm == 0)
-				//{
-				//	// mn_Comspec4Ntvdm может быть еще не заполнен, если 16бит вызван из батника
-				//	_ASSERTE(mn_Comspec4Ntvdm != 0);
-				//}
-
-				//if (!(mn_ProgramStatus & CES_NTVDM))
-				//	mn_ProgramStatus |= CES_NTVDM;
-
-				//if (gOSVer.dwMajorVersion>5 || (gOSVer.dwMajorVersion==5 && gOSVer.dwMinorVersion>=1))
-				//	mb_IgnoreCmdStop = TRUE;
-
-				//SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
-			}
-
-#endif
-		} break;
-		case EVENT_CONSOLE_END_APPLICATION:
-			//A console process has exited.
-			//The idObject parameter contains the process identifier of the terminated process.
-		{
-			//WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть удален и через сервер");
-			//Process Delete(idObject);
-			//
-#ifndef WIN64
-			if (idChild == CONSOLE_APPLICATION_16BIT)
-			{
-				OnDosAppStartStop(sst_App16Stop, idObject);
-			}
-
-#endif
-		} break;
+		SetHwnd(ahConWnd);
 	}
 }
+
+//void CRealConsole::OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+//{
+//	_ASSERTE(hwnd!=NULL);
+//
+//	if (hConWnd == NULL && anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID)
+//	{
+//		SetConStatus(L"Waiting for console server...");
+//		SetHwnd(hwnd);
+//	}
+//
+//	_ASSERTE(hConWnd!=NULL && hwnd==hConWnd);
+//	//TODO("!!! Сделать обработку событий и население m_Processes");
+//	//
+//	//AddProcess(idobject), и удаление idObject из списка процессов
+//	// Не забыть, про обработку флажка Ntvdm
+//	TODO("При отцеплении от консоли NTVDM - можно прибить этот процесс");
+//
+//	switch(anEvent)
+//	{
+//		case EVENT_CONSOLE_START_APPLICATION:
+//			//A new console process has started.
+//			//The idObject parameter contains the process identifier of the newly created process.
+//			//If the application is a 16-bit application, the idChild parameter is CONSOLE_APPLICATION_16BIT and idObject is the process identifier of the NTVDM session associated with the console.
+//		{
+//			if (mn_InRecreate>=1)
+//				mn_InRecreate = 0; // корневой процесс успешно пересоздался
+//
+//			//WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть добавлен и через сервер");
+//			//Process Add(idObject);
+//			// Если запущено 16битное приложение - необходимо повысить приоритет нашего процесса, иначе будут тормоза
+//#ifndef WIN64
+//			_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
+//
+//			if (idChild == CONSOLE_APPLICATION_16BIT)
+//			{
+//				OnDosAppStartStop(sst_App16Start, idObject);
+//
+//				//if (mn_Comspec4Ntvdm == 0)
+//				//{
+//				//	// mn_Comspec4Ntvdm может быть еще не заполнен, если 16бит вызван из батника
+//				//	_ASSERTE(mn_Comspec4Ntvdm != 0);
+//				//}
+//
+//				//if (!(mn_ProgramStatus & CES_NTVDM))
+//				//	mn_ProgramStatus |= CES_NTVDM;
+//
+//				//if (gOSVer.dwMajorVersion>5 || (gOSVer.dwMajorVersion==5 && gOSVer.dwMinorVersion>=1))
+//				//	mb_IgnoreCmdStop = TRUE;
+//
+//				//SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+//			}
+//
+//#endif
+//		} break;
+//		case EVENT_CONSOLE_END_APPLICATION:
+//			//A console process has exited.
+//			//The idObject parameter contains the process identifier of the terminated process.
+//		{
+//			//WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть удален и через сервер");
+//			//Process Delete(idObject);
+//			//
+//#ifndef WIN64
+//			if (idChild == CONSOLE_APPLICATION_16BIT)
+//			{
+//				OnDosAppStartStop(sst_App16Stop, idObject);
+//			}
+//
+//#endif
+//		} break;
+//	}
+//}
 
 
 DWORD CRealConsole::RConServerThread(LPVOID lpvParam)
@@ -5020,6 +5055,11 @@ DWORD CRealConsole::GetServerPID()
 	return mn_ConEmuC_PID;
 }
 
+bool CRealConsole::isServerCreated()
+{
+	return (mn_ConEmuC_PID!=0);
+}
+
 DWORD CRealConsole::GetFarPID(BOOL abPluginRequired/*=FALSE*/)
 {
 	if (!this)
@@ -6206,7 +6246,7 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 //#define PICVIEWMSG_SHOWWINDOW_KEY 0x0101
 //#define PICVIEWMSG_SHOWWINDOW_ASC 0x56731469
 
-BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow)
+BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow, BOOL abAsync/*=TRUE*/)
 {
 	if ((IsWindowVisible(hWnd) == FALSE) == (swShow == SW_HIDE))
 		return TRUE; // уже все сделано
@@ -6236,7 +6276,7 @@ BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow)
 			CESERVER_REQ in;
 			ExecutePrepareCmd(&in, CECMD_POSTCONMSG, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_POSTMSG));
 			// Собственно, аргументы
-			in.Msg.bPost = TRUE;
+			in.Msg.bPost = abAsync;
 			in.Msg.hWnd = hWnd;
 			in.Msg.nMsg = WM_SHOWWINDOW;
 			in.Msg.wParam = swShow; //SW_SHOWNA;
@@ -6486,6 +6526,9 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	//	mp_ConsoleInfo->bConsoleActive = TRUE;
 	//}
 
+	if ((gOSVer.dwMajorVersion > 6) || ((gOSVer.dwMajorVersion == 6) && (gOSVer.dwMinorVersion >= 1)))
+		gpConEmu->Taskbar_SetShield(isAdministrator());
+
 	//if (hGuiWnd)
 	//{
 	//	HWND hFore = GetForegroundWindow();
@@ -6508,7 +6551,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 		gpConEmu->SwitchKeyboardLayout(mp_RBuf->GetKeybLayout());
 
 	WARNING("Не работало обновление заголовка");
-	gpConEmu->UpdateTitle(/*TitleFull*/); //100624 - сам перечитает
+	gpConEmu->UpdateTitle();
 	UpdateScrollInfo();
 	gpConEmu->mp_TabBar->OnConsoleActivated(nNewNum+1/*, isBufferHeight()*/);
 	gpConEmu->mp_TabBar->Update();
@@ -6749,29 +6792,28 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 	// Если запущено под "администратором"
 	if (tabsCount && isAdministrator() && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix[0]))
 	{
-		// В идеале - иконкой на закладке (если пользователь это выбрал)
-		if (gpSet->bAdminShield)
+		// В идеале - иконкой на закладке (если пользователь это выбрал) или суффиксом (добавляется в GetTab)
+		//if (gpSet->bAdminShield)
 		{
 			for(i=0; i<tabsCount; i++)
 			{
 				tabs[i].Type |= 0x100;
 			}
 		}
-		else
-		{
-			// Иначе - суффиксом (если он задан)
-			size_t nAddLen = _tcslen(gpSet->szAdminTitleSuffix) + 1;
-
-			for(i=0; i<tabsCount; i++)
-			{
-				if (tabs[i].Name[0])
-				{
-					// Если есть место
-					if (_tcslen(tabs[i].Name) < (nMaxTabName + nAddLen))
-						lstrcat(tabs[i].Name, gpSet->szAdminTitleSuffix);
-				}
-			}
-		}
+		//else
+		//{
+		//	// Иначе - суффиксом (если он задан)
+		//	size_t nAddLen = _tcslen(gpSet->szAdminTitleSuffix) + 1;
+		//	for(i=0; i<tabsCount; i++)
+		//	{
+		//		if (tabs[i].Name[0])
+		//		{
+		//			// Если есть место
+		//			if (_tcslen(tabs[i].Name) < (nMaxTabName + nAddLen))
+		//				lstrcat(tabs[i].Name, gpSet->szAdminTitleSuffix);
+		//		}
+		//	}
+		//}
 	}
 
 	if (tabsCount != mn_tabsCount)
@@ -6935,9 +6977,11 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 
 	memmove(pTab, mp_tabs+tabIdx, sizeof(ConEmuTab));
 
+	// Если панель единственная - точно показываем заголовок консоли
 	if (((mn_tabsCount == 1) || (mn_ProgramStatus & CES_FARACTIVE) == 0) && pTab->Type == 1)
 	{
-		if (TitleFull[0])  // Если панель единственная - точно показываем заголовок консоли
+		// И есть заголовок консоли
+		if (TitleFull[0])  
 		{
 			int nMaxLen = min(countof(TitleFull) , countof(pTab->Name));
 			lstrcpyn(pTab->Name, TitleFull, nMaxLen);
@@ -7068,21 +7112,30 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	// Если висит диалог - выходим (диалог обработает сам плагин)
 
 	if (anWndIndex<0 || anWndIndex>=mn_tabsCount)
+	{
+		AssertCantActivate((anWndIndex>=0 && anWndIndex<mn_tabsCount));
 		return 0;
+	}
 
 	// Добавил такую проверочку. По идее, у нас всегда должен быть актуальный номер текущего окна.
 	if (mn_ActiveTab == anWndIndex)
 		return (DWORD)-1; // Нужное окно уже выделено, лучше не дергаться...
 
 	if (isPictureView(TRUE))
+	{
+		AssertCantActivate("isPictureView"==NULL);
 		return 0; // При наличии PictureView переключиться на другой таб этой консоли не получится
+	}
 
 	if (!GetWindowText(hConWnd, TitleCmp, countof(TitleCmp)-2))
 		TitleCmp[0] = 0;
 
 	// Прогресс уже определился в другом месте
 	if (GetProgress(NULL)>=0)
+	{
+		AssertCantActivate("GetProgress>0"==NULL);
 		return 0; // Идет копирование или какая-то другая операция
+	}
 
 	//// Копирование в FAR: "{33%}..."
 	////2009-06-02: PPCBrowser показывает копирование так: "(33% 00:02:20)..."
@@ -7098,10 +7151,16 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	//}
 
 	if (!mp_RBuf->isInitialized())
+	{
+		AssertCantActivate("Buf.isInitiazed"==NULL);
 		return 0; // консоль не инициализирована, ловить нечего
+	}
 		
 	if (mp_RBuf != mp_ABuf)
+	{
+		AssertCantActivate("mp_RBuf != mp_ABuf"==NULL);
 		return 0; // если активирован доп.буфер - менять окна нельзя
+	}
 
 	BOOL lbMenuActive = FALSE;
 
@@ -7122,14 +7181,19 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	// Неактивное меню отображается всегда одним цветом - в активном подсвечиваются хоткеи и выбранный пункт
 
 	if (lbMenuActive)
+	{
+		AssertCantActivate(lbMenuActive==FALSE);
 		return 0;
+	}
 
 	// Если висит диалог - не даем переключаться по табам
 	if (mp_Rgn->GetFlags() & FR_FREEDLG_MASK)
 	{
+		AssertCantActivate("FR_FREEDLG_MASK"==NULL);
 		return 0;
 	}
 
+	AssertCantActivate(dwPID!=0);
 	return dwPID;
 }
 
@@ -8095,12 +8159,11 @@ void CRealConsole::OnTitleChanged()
 {
 	if (!this) return;
 
-#ifdef _DEBUG
-
+	#ifdef _DEBUG
 	if (mb_DebugLocked)
 		return;
-
-#endif
+	#endif
+	
 	wcscpy(Title, TitleCmp);
 	// Обработка прогресса операций
 	//short nLastProgress = mn_Progress;
@@ -8131,7 +8194,7 @@ void CRealConsole::OnTitleChanged()
 		}
 	}
 
-	wcscat(TitleFull, TitleCmp);
+	wcscat_c(TitleFull, TitleCmp);
 	// Обновляем на что нашли
 	mn_Progress = nNewProgress;
 
@@ -8140,11 +8203,17 @@ void CRealConsole::OnTitleChanged()
 
 	//SetProgress(nNewProgress);
 
-	if (isAdministrator() && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix))
-	{
-		if (!gpSet->bAdminShield)
-			wcscat(TitleFull, gpSet->szAdminTitleSuffix);
-	}
+	TitleAdmin[0] = 0;
+	//if (isAdministrator())
+	//{
+	//	wcscpy_c(TitleAdmin, TitleFull);
+	//	wcscat_c(TitleAdmin, gpSet->szAdminTitleSuffix);
+	//}
+	// && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix))
+	//{
+	//	if (!gpSet->bAdminShield)
+	//		wcscat(TitleFull, gpSet->szAdminTitleSuffix);
+	//}
 
 	CheckFarStates();
 	// иначе может среагировать на изменение заголовка ДО того,
@@ -8157,11 +8226,11 @@ void CRealConsole::OnTitleChanged()
 	// заменил на GetProgress, т.к. он еще учитывает mn_PreWarningProgress
 	nNewProgress = GetProgress(NULL);
 
-	if (gpConEmu->isActive(mp_VCon) && wcscmp(TitleFull, gpConEmu->GetLastTitle(false)))
+	if (gpConEmu->isActive(mp_VCon) && wcscmp(GetTitle(), gpConEmu->GetLastTitle(false)))
 	{
 		// Для активной консоли - обновляем заголовок. Прогресс обновится там же
 		mn_LastShownProgress = nNewProgress;
-		gpConEmu->UpdateTitle(/*TitleFull*/); //100624 - сам перечитает // 20.09.2009 Maks - было TitleCmd
+		gpConEmu->UpdateTitle();
 	}
 	else if (mn_LastShownProgress != nNewProgress)
 	{
@@ -8692,6 +8761,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 
 		GetWindowText(hGuiWnd, Title, countof(Title)-2);
 		wcscpy_c(TitleFull, Title);
+		TitleAdmin[0] = 0;
 		mb_ForceTitleChanged = FALSE;
 		OnTitleChanged();
 
@@ -9441,11 +9511,18 @@ void CRealConsole::Detach()
 	{
 		if (MessageBox(NULL, L"Detach GUI application from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
 			return;
+
+		//#ifdef _DEBUG
+		//WINDOWPLACEMENT wpl = {sizeof(wpl)};
+		//GetWindowPlacement(hGuiWnd, &wpl); // дает клиентские координаты
+		//#endif
+		
+		RECT rcGui = rcPreGuiWndRect;
+		GetWindowRect(hGuiWnd, &rcGui); // Логичнее все же оставить приложение в том же месте
 	
-		ShowOtherWindow(hGuiWnd, SW_HIDE);
+		ShowOtherWindow(hGuiWnd, SW_HIDE, FALSE/*синхронно*/);
 		SetOtherWindowParent(hGuiWnd, NULL);
-		SetOtherWindowPos(hGuiWnd, HWND_NOTOPMOST, rcPreGuiWndRect.left, rcPreGuiWndRect.top, rcPreGuiWndRect.right-rcPreGuiWndRect.left, rcPreGuiWndRect.bottom-rcPreGuiWndRect.top,
-			SWP_SHOWWINDOW);
+		SetOtherWindowPos(hGuiWnd, HWND_NOTOPMOST, rcGui.left, rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top, SWP_SHOWWINDOW);
 		// Сбросить переменные, чтобы гуй закрыть не пыталось
 		hGuiWnd = NULL;
 		// Закрыть консоль

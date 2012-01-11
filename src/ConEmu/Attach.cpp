@@ -172,7 +172,8 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 
 		if (lbCan)
 		{
-			wchar_t szClass[MAX_PATH], szTitle[4096], szTemp[32], szType[16]; szClass[0] = szTitle[0] = szTemp[0] = szType[0] = 0;
+			wchar_t szClass[MAX_PATH], szTitle[4096], szPid[32], szHwnd[32], szType[16]; szClass[0] = szTitle[0] = szPid[0] = szHwnd[0] = szType[0] = 0;
+			wchar_t szExeName[MAX_PATH], szExePathName[MAX_PATH*4]; szExeName[0] = szExePathName[0] = 0;
 			GetClassName(hFind, szClass, countof(szClass));
 			GetWindowText(hFind, szTitle, countof(szTitle));
 
@@ -180,29 +181,21 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			HWND hList = pDlg->mh_List;
 			DWORD nPID = 0;
 			if (GetWindowThreadProcessId(hFind, &nPID))
-				_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"%u", nPID);
+			{
+				_wsprintf(szPid, SKIPLEN(countof(szPid)) L"%u", nPID);
+			}
 			else
-				wcscpy_c(szTemp, L"????");
-
-			LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
-			lvi.state = 0;
-			lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
-			lvi.pszText = szTemp;
-			lvi.iItem = ListView_GetItemCount(hList); // в конец
-			int nItem = ListView_InsertItem(hList, &lvi);
-			ListView_SetItemState(hList, nItem, 0, LVIS_SELECTED|LVIS_FOCUSED);
-
-			ListView_SetItemText(hList, nItem, alc_Title, szTitle);
-			ListView_SetItemText(hList, nItem, alc_Class, szClass);
-			
-			_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"0x%08X", (DWORD)(((DWORD_PTR)hFind) & (DWORD)-1));
-			ListView_SetItemText(hList, nItem, alc_HWND, szTemp);
+			{
+				#ifdef _DEBUG
+					wcscpy_c(szPid, L"????");
+				#else
+					return TRUE;
+				#endif
+			}
 
 			HANDLE h;
 			bool lbExeFound = false;
 			int nImageBits = 32;
-
-			wcscpy_c(szType, (lstrcmp(szClass, L"ConsoleWindowClass") == 0) ? L"CON" : L"GUI");
 
 			#if 0
 			// Так можно получить только имя файла процесса, а интересен еще и путь
@@ -220,17 +213,17 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 				}
 			}
 			#endif
-			
+
 			if (pDlg->mp_ProcessData)
 			{
-				lbExeFound = pDlg->mp_ProcessData->GetProcessName(nPID, szClass, countof(szClass), szTitle, countof(szTitle), &nImageBits);
+				lbExeFound = pDlg->mp_ProcessData->GetProcessName(nPID, szExeName, countof(szExeName), szExePathName, countof(szExePathName), &nImageBits);
 				if (lbExeFound)
 				{
-					ListView_SetItemText(hList, nItem, alc_File, szClass);
-					ListView_SetItemText(hList, nItem, alc_Path, szTitle);
+					//ListView_SetItemText(hList, nItem, alc_File, szExeName);
+					//ListView_SetItemText(hList, nItem, alc_Path, szExePathName);
 					if (pDlg->mb_IsWin64)
 					{
-						wcscat_c(szType, (nImageBits == 64) ? L" *64" : L" *32");
+						wcscat_c(szPid, (nImageBits == 64) ? L" *64" : L" *32");
 					}
 				}
 			}
@@ -243,11 +236,13 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 					MODULEENTRY32 mi = {sizeof(mi)};
 					if (Module32First(h, &mi))
 					{
-						ListView_SetItemText(hList, nItem, alc_File, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath));
-						ListView_SetItemText(hList, nItem, alc_Path, mi.szExePath);
+						//ListView_SetItemText(hList, nItem, alc_File, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath));
+						lstrcpyn(szExeName, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath), countof(szExeName));
+						//ListView_SetItemText(hList, nItem, alc_Path, mi.szExePath);
+						lstrcpyn(szExePathName, mi.szExePath, countof(szExePathName));
 						if (pDlg->mb_IsWin64)
 						{
-							wcscat_c(szType, WIN3264TEST(L" *32",L" *64"));
+							wcscat_c(szPid, WIN3264TEST(L" *32",L" *64"));
 						}
 						lbExeFound = true;
 					}
@@ -255,7 +250,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 					{
 						if (pDlg->mb_IsWin64)
 						{
-							wcscat_c(szType, L" *64");
+							wcscat_c(szPid, L" *64");
 						}
 					}
 					CloseHandle(h);
@@ -272,14 +267,31 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 						{
 							ListView_SetItemText(hList, nItem, alc_File, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath));
 							ListView_SetItemText(hList, nItem, alc_Path, mi.szExePath);
-							wcscat_c(szType, L" *32");
+							wcscat_c(szPid, L" *32");
 						}
 						CloseHandle(h);
 					}
 				}
 				#endif
 			}
+
+			LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
+			lvi.state = 0;
+			lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
+			lvi.pszText = szPid;
+			lvi.iItem = ListView_GetItemCount(hList); // в конец
+			int nItem = ListView_InsertItem(hList, &lvi);
+			ListView_SetItemState(hList, nItem, 0, LVIS_SELECTED|LVIS_FOCUSED);
+
+			ListView_SetItemText(hList, nItem, alc_Title, szTitle);
+			ListView_SetItemText(hList, nItem, alc_Class, szClass);
 			
+			_wsprintf(szHwnd, SKIPLEN(countof(szHwnd)) L"0x%08X", (DWORD)(((DWORD_PTR)hFind) & (DWORD)-1));
+			ListView_SetItemText(hList, nItem, alc_HWND, szHwnd);
+
+			wcscpy_c(szType, (lstrcmp(szClass, L"ConsoleWindowClass") == 0) ? L"CON" : L"GUI");
+			ListView_SetItemText(hList, nItem, alc_File, szExeName);
+			ListView_SetItemText(hList, nItem, alc_Path, szExePathName);
 			ListView_SetItemText(hList, nItem, alc_Type, szType);
 		}
 	}
@@ -332,10 +344,11 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 				
+				col.cx = pDlg->mb_IsWin64 ? 75 : 60;
 				wcscpy_c(szTitle, L"PID");			ListView_InsertColumn(hList, alc_PID, &col);
-				col.cx = pDlg->mb_IsWin64 ? 60 : 45;
+				col.cx = 45; col.fmt = LVCFMT_CENTER;
 				wcscpy_c(szTitle, L"Type");			ListView_InsertColumn(hList, alc_Type, &col);
-				col.cx = 200;
+				col.cx = 200; col.fmt = LVCFMT_LEFT;
 				wcscpy_c(szTitle, L"Title");		ListView_InsertColumn(hList, alc_Title, &col);
 				col.cx = 120;
 				wcscpy_c(szTitle, L"Image name");	ListView_InsertColumn(hList, alc_File, &col);

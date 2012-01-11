@@ -82,12 +82,13 @@ BOOL UserImp::loadExports(BOOL abAllowLoadLibrary)
 			callNextHookEx_f = (callNextHookEx_t)GetProcAddress(hUser32, "CallNextHookEx");
 			setWindowsHookExW_f = (setWindowsHookExW_t)GetProcAddress(hUser32, "SetWindowsHookExW");
 			unhookWindowsHookEx_f = (unhookWindowsHookEx_t)GetProcAddress(hUser32, "UnhookWindowsHookEx");
+			mapWindowPoints_f = (mapWindowPoints_t)GetProcAddress(hUser32, "MapWindowPoints");
 			_ASSERTEX(allowSetForegroundWindow_f && setForegroundWindow_f && getForegroundWindow_f && getWindowThreadProcessId_f);
 			_ASSERTEX(setWindowPos_f && getWindowLongPtrW_f && setWindowLongPtrW_f && getParent_f && setParent_f && getWindowRect_f);
 			_ASSERTEX(systemParametersInfoW_f && setWindowTextW_f && endDialog_f && postMessageW_f && sendMessageW_f);
 			_ASSERTEX(dialogBoxIndirectParamW_f && getClassNameW_f && getClientRect_f && getMenu_f && attachThreadInput_f);
 			_ASSERTEX(getFocus_f && getWindowRect_f && isWindow_f && isWindowVisible_f && showWindow_f);
-			_ASSERTEX(getKeyState_f && callNextHookEx_f && setWindowsHookExW_f && unhookWindowsHookEx_f);
+			_ASSERTEX(getKeyState_f && callNextHookEx_f && setWindowsHookExW_f && unhookWindowsHookEx_f && mapWindowPoints_f);
 		}
 	}
 	
@@ -666,3 +667,22 @@ BOOL UserImp::unhookWindowsHookEx(HHOOK hhk)
 	return lbRc;
 }
 
+BOOL UserImp::mapWindowPoints(HWND hWndFrom, HWND hWndTo, LPPOINT lpPoints, UINT cPoints)
+{
+	if (!bUserLoaded && !loadExports(bAllowLoadLibrary))
+	{
+		_ASSERTEX(hUser32!=NULL);
+		return FALSE;
+	}
+
+	BOOL lbRc = FALSE;
+	if (mapWindowPoints_f)
+	{
+		lbRc = mapWindowPoints_f(hWndFrom, hWndTo, lpPoints, cPoints);
+	}
+	else
+	{
+		_ASSERTEX(mapWindowPoints_f!=NULL);
+	}
+	return lbRc;
+}

@@ -64,6 +64,8 @@ public:
 	LRESULT  callNextHookEx(HHOOK hhk, int nCode, WPARAM wParam, LPARAM lParam);
 	HHOOK    setWindowsHookExW(int idHook, HOOKPROC lpfn, HINSTANCE hMod, DWORD dwThreadId);
 	BOOL     unhookWindowsHookEx(HHOOK hhk);
+	int      mapWindowPoints(HWND hWndFrom, HWND hWndTo, LPPOINT lpPoints, UINT cPoints);
+
 	
 private:
 	HMODULE  hUser32;
@@ -126,6 +128,8 @@ private:
 	setWindowsHookExW_t setWindowsHookExW_f;
 	typedef BOOL     (WINAPI* unhookWindowsHookEx_t)(HHOOK hhk);
 	unhookWindowsHookEx_t unhookWindowsHookEx_f;
+	typedef int      (WINAPI* mapWindowPoints_t)(HWND hWndFrom, HWND hWndTo, LPPOINT lpPoints, UINT cPoints);
+	mapWindowPoints_t mapWindowPoints_f;
 };
 
 extern UserImp* user;

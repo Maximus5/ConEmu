@@ -66,6 +66,7 @@ protected:
 	ITaskbarList3 *mp_TaskBar3; // Win7
 	ITaskbarList2 *mp_TaskBar2; // WinXP
 	ITaskbarList  *mp_TaskBar1; // Win2k
+	HICON mh_Shield;
 public:
 	CTaskBar();
 	virtual ~CTaskBar();
@@ -82,4 +83,6 @@ public:
 	HRESULT Taskbar_SetProgressState(TBPFLAG nState);
 	
 	bool Taskbar_GhostSnapshootRequired();
+
+	void Taskbar_SetShield(bool abShield);
 };

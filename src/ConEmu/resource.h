@@ -504,14 +504,17 @@
 #define tTabFontSizeY                   2107
 #define tTabFontHeight                  2107
 #define tTabFontCharset                 2108
+#define rbAdminShield                   2109
+#define IDC_RADIO2                      2110
+#define rbAdminSuffix                   2110
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        216
+#define _APS_NEXT_RESOURCE_VALUE        217
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2109
+#define _APS_NEXT_CONTROL_VALUE         2111
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

@@ -218,6 +218,7 @@ int WINAPI OnGetClassNameA(HWND hWnd, LPSTR lpClassName, int nMaxCount);
 int WINAPI OnGetClassNameW(HWND hWnd, LPWSTR lpClassName, int nMaxCount);
 BOOL WINAPI OnMoveWindow(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint);
 BOOL WINAPI OnSetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
+BOOL WINAPI OnGetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
 BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
 BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -372,6 +373,7 @@ bool InitHooksUser32()
 		{(void*)OnGetActiveWindow,		"GetActiveWindow",		user32},
 		{(void*)OnMoveWindow,			"MoveWindow",			user32},
 		{(void*)OnSetWindowPos,			"SetWindowPos",			user32},
+		{(void*)OnGetWindowPlacement,	"GetWindowPlacement",	user32},
 		{(void*)OnSetWindowPlacement,	"SetWindowPlacement",	user32},
 		{(void*)OnPostMessageA,			"PostMessageA",			user32},
 		{(void*)OnPostMessageW,			"PostMessageW",			user32},
@@ -1450,6 +1452,24 @@ BOOL WINAPI OnSetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx
 	return lbRc;
 }
 
+BOOL WINAPI OnGetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
+{
+	typedef BOOL (WINAPI* OnGetWindowPlacement_t)(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
+	ORIGINALFASTEX(GetWindowPlacement,NULL);
+	BOOL lbRc = FALSE;
+
+	if (F(GetWindowPlacement))
+		lbRc = F(GetWindowPlacement)(hWnd, lpwndpl);
+
+	if (lbRc && ghConEmuWndDC && !gbGuiClientExternMode && ghAttachGuiClient
+		&& hWnd == ghAttachGuiClient && user)
+	{
+		user->mapWindowPoints(ghConEmuWndDC, NULL, (LPPOINT)&lpwndpl->rcNormalPosition, 2);
+	}
+
+	return lbRc;
+}
+
 BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 {
 	typedef BOOL (WINAPI* OnSetWindowPlacement_t)(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
@@ -1460,7 +1480,7 @@ BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
 		return TRUE; // обманем. приложениям запрещено "двигать" ConEmuDC
 
-	if (lpwndpl && ghConEmuWndDC && ghAttachGuiClient && hWnd == ghAttachGuiClient)
+	if (lpwndpl && ghConEmuWndDC && ghAttachGuiClient && !gbGuiClientExternMode && hWnd == ghAttachGuiClient)
 	{
 		// GUI приложениями запрещено самостоятельно двигаться внутри ConEmu
 		int X, Y, cx, cy;

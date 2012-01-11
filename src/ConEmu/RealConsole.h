@@ -274,7 +274,7 @@ class CRealConsole
 	public:
 		BOOL OpenConsoleEventPipe();
 		LRESULT PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam);
-		BOOL ShowOtherWindow(HWND hWnd, int swShow);
+		BOOL ShowOtherWindow(HWND hWnd, int swShow, BOOL abAsync=TRUE);
 		BOOL SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
 		BOOL SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground);
 		HWND SetOtherWindowParent(HWND hWnd, HWND hParent);
@@ -317,7 +317,8 @@ class CRealConsole
 		DWORD GetConsoleMode();
 		void SyncConsole2Window(BOOL abNtvdmOff=FALSE, LPRECT prcNewWnd=NULL);
 		void SyncGui2Window(RECT* prcClient=NULL);
-		void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+		//void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+		void OnServerStarted(HWND ahConWnd, DWORD anServerPID);
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
 		int  GetProcesses(ConProcess** ppPrc);
 		DWORD GetFarPID(BOOL abPluginRequired=FALSE);
@@ -325,6 +326,7 @@ class CRealConsole
 		DWORD GetProgramStatus();
 		DWORD GetFarStatus();
 		DWORD GetServerPID();
+		bool isServerCreated();
 		LRESULT OnScroll(int nDirection);
 		LRESULT OnSetScrollPos(WPARAM wParam);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
@@ -445,7 +447,7 @@ class CRealConsole
 		// Текущий заголовок консоли и его значение для сравнения (для определения изменений)
 		WCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
 		// А здесь содержится то, что отображается в ConEmu (может быть добавлено " (Admin)")
-		WCHAR TitleFull[MAX_TITLE_SIZE+96];
+		WCHAR TitleFull[MAX_TITLE_SIZE+96], TitleAdmin[MAX_TITLE_SIZE+192];
 		// Принудительно дернуть OnTitleChanged, например, при изменении процентов в консоли
 		BOOL mb_ForceTitleChanged;
 		// Здесь сохраняется заголовок окна (с панелями), когда FAR фокус с панелей уходит (переходит в редактор...).

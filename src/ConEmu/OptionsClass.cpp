@@ -1785,9 +1785,8 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	SetDlgItemText(hWnd2, tTabEditorMod, gpSet->szTabEditorModified);
 	SetDlgItemInt(hWnd2, tTabLenMax, gpSet->nTabLenMax, FALSE);
 
-	CheckDlgButton(hWnd2, cbAdminShield, gpSet->bAdminShield);
+	CheckRadioButton(hWnd2, rbAdminShield, rbAdminSuffix, gpSet->bAdminShield ? rbAdminShield : rbAdminSuffix);
 	SetDlgItemText(hWnd2, tAdminSuffix, gpSet->szAdminTitleSuffix);
-	EnableWindow(GetDlgItem(hWnd2, tAdminSuffix), !gpSet->bAdminShield);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -2571,9 +2570,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			//SendMessage(ghWnd, WM_NCPAINT, 0, 0);
 			gpConEmu->RedrawTabPanel();
 			break;
-		case cbAdminShield:
-			gpSet->bAdminShield = IsChecked(hTabs, cbAdminShield);
-			EnableWindow(GetDlgItem(hTabs, tAdminSuffix), !gpSet->bAdminShield);
+		case rbAdminShield:
+		case rbAdminSuffix:
+			gpSet->bAdminShield = IsChecked(hTabs, rbAdminShield);
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
 		case cbHideInactiveConTabs:
