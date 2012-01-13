@@ -30,8 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../Common/ConsoleAnnotation.h"
-
-class CRealConsole;
+#include "RealConsole.h"
 
 // >> common.hpp
 //enum RealBufferScroll
@@ -50,11 +49,14 @@ class CRealConsole;
 class CRealBuffer
 {
 public:
-	CRealBuffer(CRealConsole* apRCon);
+	CRealBuffer(CRealConsole* apRCon, RealBufferType aType=rbt_Primary);
 	~CRealBuffer();
 	
+	RealBufferType m_Type;
 public:
 	void DumpConsole(HANDLE ahFile);
+	bool LoadDumpConsole(LPCWSTR asDumpFile);
+	
 	BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	void SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY);
 	
@@ -119,7 +121,7 @@ public:
 	
 	const CONSOLE_SCREEN_BUFFER_INFO* GetSBI();
 	
-	BOOL IsConsoleDataChanged();
+	//BOOL IsConsoleDataChanged();
 	
 	BOOL GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData = NULL);
 	void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
@@ -205,4 +207,28 @@ protected:
 		int DefaultBufferHeight;
 		BOOL bConsoleDataChanged;
 	} con;
+	
+protected:
+	struct ConDumpInfo
+	{
+		size_t    cbDataSize;
+		LPBYTE    ptrData;
+		wchar_t*  pszTitle;
+		COORD     crSize, crCursor;
+		//BOOL      NeedApply;
+		// ** Block 1 **
+		BOOL      Block1;
+		wchar_t*  pszBlock1;
+		CharAttr* pcaBlock1;
+		// ** Block 2 **
+		// ** Block 3 **
+		// TODO: Block 2, 3
+		
+		// *************
+		void Close()
+		{
+			SafeFree(ptrData);
+			memset(this, 0, sizeof(*this));
+		}
+	} dump;
 };

@@ -7694,6 +7694,7 @@ HMENU CConEmuMain::CreateDebugMenuPopup()
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, _T("&Real console"));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump screen..."));
+	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_LOADDUMPCONSOLE, _T("&Load screen dump..."));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGGUI, _T("Debug &log (GUI)"));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGCON, _T("Debug &active process"));
 //#ifdef _DEBUG
@@ -12214,6 +12215,13 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 			if (mp_VActive)
 				mp_VActive->DumpConsole();
+
+			return 0;
+
+		case ID_LOADDUMPCONSOLE:
+
+			if (mp_VActive)
+				mp_VActive->LoadDumpConsole();
 
 			return 0;
 			

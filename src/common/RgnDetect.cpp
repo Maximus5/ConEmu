@@ -615,6 +615,7 @@ bool CRgnDetect::FindFrameTop_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidt
 		if (c == ucBoxDblDownLeft || c == ucBoxSinglDownLeft  // двойной и одинарный угол (правый верхний)
 		        || c == ucBoxDblVertLeft || c == ucBoxDblVertSinglLeft || c == ucBoxSinglVertLeft // пересечение (правая граница)
 		        || c == ucBoxDblVert || c == ucBoxSinglVert
+		        || c == L'}' // На правой границе панели могут быть признаки обрезанности имени файла
 		        || (c >= ucBox25 && c <= ucBox75) || c == ucUpScroll || c == ucDnScroll) // полоса прокрутки может быть только справа
 		{
 			nY--; continue;
@@ -751,6 +752,7 @@ bool CRgnDetect::FindDialog_Any(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 
 			if (c == wcCorn1 || c == wcCorn2  // двойной и одинарный угол (правый верхний/нижний)
 			        || c == ucBoxDblVertLeft || c == ucBoxDblVertSinglLeft || c == ucBoxSinglVertLeft // пересечение (правая граница)
+			        || c == L'}' // На правой границе панели могут быть признаки обрезанности имени файла
 			        || (c >= ucBox25 && c <= ucBox75) || c == ucUpScroll || c == ucDnScroll) // полоса прокрутки может быть только справа
 			{
 				if (FindDialog_Right(pChar, pAttr, nWidth, nHeight, nFromX, nY, nMostRight, nMostBottom, bMarkBorder))

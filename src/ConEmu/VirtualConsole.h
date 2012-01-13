@@ -246,6 +246,7 @@ class CVirtualConsole :
 		bool  mb_LastFadeFlag;
 
 		void DumpConsole();
+		bool LoadDumpConsole();
 		BOOL Dump(LPCWSTR asFile);
 		bool Update(bool abForce = false, HDC *ahDc=NULL);
 		void UpdateCursor(bool& lRes);

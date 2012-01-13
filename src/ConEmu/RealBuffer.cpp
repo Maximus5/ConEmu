@@ -83,9 +83,10 @@ const wchar_t gszAnalogues[32] =
 };
 
 
-CRealBuffer::CRealBuffer(CRealConsole* apRCon)
+CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primary*/)
 {
 	mp_RCon = apRCon;
+	m_Type = aType;
 	
 	ZeroStruct(con); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&csCON);
 	con.hInSetSize = CreateEvent(0,TRUE,TRUE,0);
@@ -95,6 +96,8 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon)
 
 	mr_LeftPanel = mr_LeftPanelFull = mr_RightPanel = mr_RightPanel = MakeRect(-1,-1);
 	mb_LeftPanel = mb_RightPanel = FALSE;
+	
+	ZeroStruct(dump);
 }
 
 CRealBuffer::~CRealBuffer()
@@ -107,8 +110,12 @@ CRealBuffer::~CRealBuffer()
 
 	if (con.hInSetSize)
 		{ CloseHandle(con.hInSetSize); con.hInSetSize = NULL; }
+
+	dump.Close();
 }
 
+// Вызывается после CVirtualConsole::Dump и CRealConsole::DumpConsole
+// Это последний, третий блок в файле дампа
 void CRealBuffer::DumpConsole(HANDLE ahFile)
 {
 	BOOL lbRc = FALSE;
@@ -121,6 +128,318 @@ void CRealBuffer::DumpConsole(HANDLE ahFile)
 		lbRc = WriteFile(ahFile, con.pConChar, nSize, &dw, NULL);
 		lbRc = WriteFile(ahFile, con.pConAttr, nSize, &dw, NULL); //-V519
 	}
+}
+
+
+bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
+{
+	bool lbRc = false;
+	HANDLE hFile = NULL;
+	LARGE_INTEGER liSize;
+	COORD cr = {}; //, crSize, crCursor;
+	//WCHAR* pszBuffers[3];
+	//void*  pnBuffers[3];
+	wchar_t* pszDumpTitle, *pszRN, *pszSize;
+	//SetWindowText(FarHwnd, L"ConEmu screen dump");
+	//pszDumpTitle = pszText;
+	//pszRN = wcschr(pszDumpTitle, L'\r');
+	
+	dump.Close();
+
+	if (!asDumpFile || !*asDumpFile)
+	{
+		_ASSERTE(asDumpFile!=NULL && *asDumpFile);
+		goto wrap;
+	}
+	
+	hFile = CreateFile(asDumpFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	if (!hFile || hFile == INVALID_HANDLE_VALUE)
+	{
+		DisplayLastError(L"Can't open dump file for reading");
+		goto wrap;
+	}
+	if (!GetFileSizeEx(hFile, &liSize) || !liSize.LowPart || liSize.HighPart)
+	{
+		DisplayLastError(L"Invalid dump file size", 0);
+		goto wrap;
+	}
+	
+	dump.ptrData = (LPBYTE)malloc(liSize.LowPart);
+	if (!dump.ptrData)
+	{
+		_ASSERTE(dump.ptrData!=NULL);
+		goto wrap;
+	}
+	dump.cbDataSize = liSize.LowPart;
+	
+	if (!ReadFile(hFile, dump.ptrData, liSize.LowPart, (LPDWORD)&liSize.HighPart, NULL) || (liSize.LowPart != (DWORD)liSize.HighPart))
+	{
+		DisplayLastError(L"Dump file reading failed");
+		goto wrap;
+	}
+	CloseHandle(hFile); hFile = NULL;
+
+	// Поехали
+	pszDumpTitle = (wchar_t*)dump.ptrData;
+	
+	pszRN = wcschr(pszDumpTitle, L'\r');
+	if (!pszRN)
+	{
+		DisplayLastError(L"Dump file invalid format (title)", 0);
+		goto wrap;
+	}
+	*pszRN = 0;
+	pszSize = pszRN + 2;
+
+	if (wcsncmp(pszSize, L"Size: ", 6))
+	{
+		DisplayLastError(L"Dump file invalid format (Size start)", 0);
+		goto wrap;
+	}
+
+	pszRN = wcschr(pszSize, L'\r');
+
+	if (!pszRN)
+	{
+		DisplayLastError(L"Dump file invalid format (Size line end)", 0);
+		goto wrap;
+	}
+
+	// Первый блок
+	dump.pszBlock1 = pszRN + 2;
+	
+	pszSize += 6;
+	//if ((pszRN = wcschr(pszSize, L'x'))==NULL) return;
+	//*pszRN = 0;
+	dump.crSize.X = (SHORT)wcstol(pszSize, &pszRN, 10);
+
+	if (!pszRN || *pszRN!=L'x')
+	{
+		DisplayLastError(L"Dump file invalid format (Size.X)", 0);
+		goto wrap;
+	}
+
+	pszSize = pszRN + 1;
+	//if ((pszRN = wcschr(pszSize, L'\r'))==NULL) return;
+	//*pszRN = 0;
+	dump.crSize.Y = (SHORT)wcstol(pszSize, &pszRN, 10);
+
+	if (!pszRN || (*pszRN!=L' ' && *pszRN!=L'\r'))
+	{
+		DisplayLastError(L"Dump file invalid format (Size.Y)", 0);
+		goto wrap;
+	}
+
+	pszSize = pszRN;
+	dump.crCursor.X = 0; dump.crCursor.Y = dump.crSize.Y-1;
+
+	if (*pszSize == L' ')
+	{
+		while(*pszSize == L' ') pszSize++;
+
+		if (wcsncmp(pszSize, L"Cursor: ", 8)==0)
+		{
+			pszSize += 8;
+			cr.X = (SHORT)wcstol(pszSize, &pszRN, 10);
+
+			if (!pszRN || *pszRN!=L'x')
+			{
+				DisplayLastError(L"Dump file invalid format (Cursor)", 0);
+				goto wrap;
+			}
+
+			pszSize = pszRN + 1;
+			cr.Y = (SHORT)wcstol(pszSize, &pszRN, 10);
+
+			if (cr.X>=0 && cr.Y>=0)
+			{
+				dump.crCursor.X = cr.X; dump.crCursor.Y = cr.Y;
+			}
+		}
+	}
+
+	//pszTitle = (WCHAR*)calloc(lstrlenW(pszDumpTitle)+200,2);
+	DWORD dwConDataBufSize = dump.crSize.X * dump.crSize.Y;
+	DWORD dwConDataBufSizeEx = dump.crSize.X * dump.crSize.Y * sizeof(CharAttr);
+	//pnBuffers[0] = (void*)(((WORD*)(pszBuffers[0])) + dwConDataBufSize);
+	//pszBuffers[1] = (WCHAR*)(((LPBYTE)(pnBuffers[0])) + dwConDataBufSizeEx);
+	//pnBuffers[1] = (void*)(((WORD*)(pszBuffers[1])) + dwConDataBufSize);
+	//pszBuffers[2] = (WCHAR*)(((LPBYTE)(pnBuffers[1])) + dwConDataBufSizeEx);
+	//pnBuffers[2] = (void*)(((WORD*)(pszBuffers[2])) + dwConDataBufSize);
+	
+	dump.pcaBlock1 = (CharAttr*)(((WORD*)(dump.pszBlock1)) + dwConDataBufSize);
+	dump.Block1 = (((LPBYTE)(((LPBYTE)(dump.pcaBlock1)) + dwConDataBufSizeEx)) - dump.ptrData) <= dump.cbDataSize;
+	
+	if (!dump.Block1)
+	{
+		DisplayLastError(L"Dump file invalid format (Block1)", 0);
+		goto wrap;
+	}
+	
+	m_Type = rbt_DumpScreen;
+	
+	// Почти все готово, осталась инициализация
+	ZeroStruct(con.m_sel);
+	con.m_ci.dwSize = 15; con.m_ci.bVisible = TRUE;
+	ZeroStruct(con.m_sbi);
+	con.m_dwConsoleCP = con.m_dwConsoleOutputCP = 866; con.m_dwConsoleMode = 0;
+	con.m_sbi.dwSize = dump.crSize;
+	con.m_sbi.dwCursorPosition = dump.crCursor;
+	con.m_sbi.wAttributes = 7;
+	con.m_sbi.srWindow.Left = 0;
+	con.m_sbi.srWindow.Top = 0;
+	con.m_sbi.srWindow.Right = dump.crSize.X - 1;
+	con.m_sbi.srWindow.Bottom = dump.crSize.Y - 1;
+	con.m_sbi.dwMaximumWindowSize = dump.crSize;
+	con.crMaxSize = dump.crSize;
+	con.nTopVisibleLine = 0;
+	con.nTextWidth = dump.crSize.X; con.nTextHeight = dump.crSize.Y;
+	con.nBufferHeight = 0;
+	con.bBufferHeight = FALSE;
+	
+	//dump.NeedApply = TRUE;
+	
+	// Создание буферов
+	if (!InitBuffers(0))
+	{
+		_ASSERTE(FALSE);
+	}
+	else
+	// И копирование
+	{
+		wchar_t*  pszSrc = dump.pszBlock1;
+		CharAttr* pcaSrc = dump.pcaBlock1;
+		wchar_t*  pszDst = con.pConChar;
+		TODO("Хорошо бы весь расширенный буфер тут хранить, а не только CHAR_ATTR");
+		WORD*     pnaDst = con.pConAttr;
+		
+		DWORD dwConDataBufSize = dump.crSize.X * dump.crSize.Y;
+		wmemmove(pszDst, pszSrc, dwConDataBufSize);
+
+		// Расфуговка буфера CharAttr на консольные атрибуты
+		for (DWORD n = 0; n < dwConDataBufSize; n++, pcaSrc++, pnaDst++)
+		{
+			*pnaDst = (pcaSrc->nForeIdx & 0xF0) | ((pcaSrc->nBackIdx & 0xF0) << 4);
+		}
+	}
+
+	lbRc = true; // OK
+	
+	//r->EventType = WINDOW_BUFFER_SIZE_EVENT;
+	//do
+	//{
+	//	if (r->EventType == WINDOW_BUFFER_SIZE_EVENT)
+	//	{
+	//		r->EventType = 0;
+	//		lbNeedRedraw = TRUE;
+	//	}
+	//	else if (r->EventType == KEY_EVENT && r->Event.KeyEvent.bKeyDown)
+	//	{
+	//		if (r->Event.KeyEvent.wVirtualKeyCode == VK_NEXT)
+	//		{
+	//			lbNeedRedraw = TRUE;
+	//			gnPage++;
+	//			FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+	//		}
+	//		else if (r->Event.KeyEvent.wVirtualKeyCode == VK_PRIOR)
+	//		{
+	//			lbNeedRedraw = TRUE;
+	//			gnPage--;
+	//		}
+	//		else if (r->Event.KeyEvent.uChar.UnicodeChar == L'*')
+	//		{
+	//			lbNeedRedraw = TRUE;
+	//			gbShowAttrsOnly = !gbShowAttrsOnly;
+	//		}
+	//	}
+	//	if (gnPage<0) gnPage = 3; else if (gnPage>3) gnPage = 0;
+	//	if (lbNeedRedraw)
+	//	{
+	//		lbNeedRedraw = FALSE;
+	//		cr.X = 0; cr.Y = 0;
+	//		DWORD dw = 0;
+	//		if (gnPage == 0)
+	//		{
+	//			FillConsoleOutputAttribute(hO, 7, csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
+	//			FillConsoleOutputCharacter(hO, L' ', csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
+	//			cr.X = 0; cr.Y = 0; SetConsoleCursorPosition(hO, cr);
+	//			//wprintf(L"Console screen dump viewer\nTitle: %s\nSize: {%i x %i}\n",
+	//			//	pszDumpTitle, dump.crSize.X, dump.crSize.Y);
+	//			LPCWSTR psz = L"Console screen dump viewer";
+	//			WriteConsoleOutputCharacter(hO, psz, lstrlenW(psz), cr, &dw); cr.Y++;
+	//			psz = L"Title: ";
+	//			WriteConsoleOutputCharacter(hO, psz, lstrlenW(psz), cr, &dw); cr.X += lstrlenW(psz);
+	//			WriteConsoleOutputCharacter(hO, pszDumpTitle, lstrlenW(pszDumpTitle), cr, &dw); cr.X = 0; cr.Y++;
+	//			wchar_t szSize[64]; wsprintf(szSize, L"Size: {%i x %i}", dump.crSize.X, dump.crSize.Y);
+	//			WriteConsoleOutputCharacter(hO, szSize, lstrlenW(szSize), cr, &dw); cr.Y++;
+	//			SetConsoleCursorPosition(hO, cr);
+	//		}
+	//		else if (gnPage >= 1 && gnPage <= 3)
+	//		{
+	//			FillConsoleOutputAttribute(hO, gbShowAttrsOnly ? 0xF : 0x10, csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
+	//			FillConsoleOutputCharacter(hO, L' ', csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
+	//			int nMaxX = min(dump.crSize.X, csbi.dwSize.X);
+	//			int nMaxY = min(dump.crSize.Y, csbi.dwSize.Y);
+	//			wchar_t* pszConData = pszBuffers[gnPage-1];
+	//			void* pnConData = pnBuffers[gnPage-1];
+	//			LPBYTE pnTemp = (LPBYTE)malloc(nMaxX*2);
+	//			CharAttr *pSrcEx = (CharAttr*)pnConData;
+	//			if (pszConData && dwConDataBufSize)
+	//			{
+	//				wchar_t* pszSrc = pszConData;
+	//				wchar_t* pszEnd = pszConData + dwConDataBufSize;
+	//				LPBYTE pnSrc;
+	//				DWORD nAttrLineSize;
+	//				if (gnPage == 3)
+	//				{
+	//					pnSrc = (LPBYTE)pnConData;
+	//					nAttrLineSize = dump.crSize.X * 2;
+	//				}
+	//				else
+	//				{
+	//					pnSrc = pnTemp;
+	//					nAttrLineSize = 0;
+	//				}
+	//				cr.X = 0; cr.Y = 0;
+	//				while(cr.Y < nMaxY && pszSrc < pszEnd)
+	//				{
+	//					if (!gbShowAttrsOnly)
+	//					{
+	//						WriteConsoleOutputCharacter(hO, pszSrc, nMaxX, cr, &dw);
+	//						if (gnPage < 3)
+	//						{
+	//							for(int i = 0; i < nMaxX; i++)
+	//							{
+	//								((WORD*)pnSrc)[i] = pSrcEx[i].nForeIdx | (pSrcEx[i].nBackIdx << 4);
+	//							}
+	//							pSrcEx += dump.crSize.X;
+	//						}
+	//						WriteConsoleOutputAttribute(hO, (WORD*)pnSrc, nMaxX, cr, &dw);
+	//					}
+	//					else
+	//					{
+	//						WriteConsoleOutputCharacter(hO, (wchar_t*)pnSrc, nMaxX, cr, &dw);
+	//					}
+	//					pszSrc += dump.crSize.X;
+	//					if (nAttrLineSize)
+	//						pnSrc += nAttrLineSize; //-V102
+	//					cr.Y++;
+	//				}
+	//			}
+	//			free(pnTemp);
+	//			//cr.Y = nMaxY-1;
+	//			SetConsoleCursorPosition(hO, dump.crCursor);
+	//		}
+	//	}
+	//}
+	//while(CheckConInput(r));
+
+wrap:
+	if (hFile && hFile != INVALID_HANDLE_VALUE)
+		CloseHandle(hFile);
+	if (!lbRc)
+		dump.Close();
+	return lbRc;
 }
 
 BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
@@ -619,6 +938,7 @@ bool CRealBuffer::isFarMenuActive()
 
 BOOL CRealBuffer::isConsoleDataChanged()
 {
+	if (!this) return FALSE;
 	return con.bConsoleDataChanged;
 }
 
@@ -679,7 +999,7 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 	
 	#ifdef _DEBUG
 	DWORD dwCurThId = GetCurrentThreadId();
-	_ASSERTE(mp_RCon->mn_MonitorThreadID==0 || dwCurThId==mp_RCon->mn_MonitorThreadID);
+	_ASSERTE(mp_RCon->mn_MonitorThreadID==0 || dwCurThId==mp_RCon->mn_MonitorThreadID || (m_Type==rbt_DumpScreen && gpConEmu->isMainThread()));
 	#endif
 
 	BOOL lbRc = FALSE;
@@ -769,7 +1089,14 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 	con.nTextWidth = nNewWidth;
 	con.nTextHeight = nNewHeight;
 	// чтобы передернулись положения панелей и прочие флаги
-	mp_RCon->mb_DataChanged = TRUE;
+	if (this == mp_RCon->mp_ABuf)
+		mp_RCon->mb_DataChanged = TRUE;
+	//else
+	//{
+	//	// Чтобы не забыть, что после переключения буфера надо флажок выставить
+	//	_ASSERTE(this == mp_RCon->mp_ABuf);
+	//}
+
 	//InitDC(false,true);
 	return lbRc;
 }
@@ -1148,6 +1475,42 @@ BOOL CRealBuffer::CheckBufferSize()
 
 BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 {
+	if (m_Type != rbt_Primary)
+	{
+		_ASSERTE(m_Type == rbt_Primary);
+		//if (dump.NeedApply)
+		//{
+		//	dump.NeedApply = FALSE;
+
+		//	// Создание буферов
+		//	if (!InitBuffers(0))
+		//	{
+		//		_ASSERTE(FALSE);
+		//	}
+		//	else
+		//	// И копирование
+		//	{
+		//		wchar_t*  pszSrc = dump.pszBlock1;
+		//		CharAttr* pcaSrc = dump.pcaBlock1;
+		//		wchar_t*  pszDst = con.pConChar;
+		//		TODO("Хорошо бы весь расширенный буфер тут хранить, а не только CHAR_ATTR");
+		//		WORD*     pnaDst = con.pConAttr;
+		//		
+		//		DWORD dwConDataBufSize = dump.crSize.X * dump.crSize.Y;
+		//		wmemmove(pszDst, pszSrc, dwConDataBufSize);
+
+		//		// Расфуговка буфера CharAttr на консольные атрибуты
+		//		for (DWORD n = 0; n < dwConDataBufSize; n++, pcaSrc++, pnaDst++)
+		//		{
+		//			*pnaDst = (pcaSrc->nForeIdx & 0xF0) | ((pcaSrc->nBackIdx & 0xF0) << 4);
+		//		}
+		//	}
+
+		//	return TRUE;
+		//}
+		return FALSE; // Изменений нет
+	}
+
 	MCHKHEAP;
 	BOOL lbScreenChanged = FALSE;
 	wchar_t* lpChar = con.pConChar;
@@ -1207,7 +1570,7 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 		wchar_t ch;
 
 		// Расфуговка буфера CHAR_INFO на текст и атрибуты
-		for(DWORD n = 0; n < CharCount; n++, lpCur++)
+		for (DWORD n = 0; n < CharCount; n++, lpCur++)
 		{
 			TODO("OPTIMIZE: *(lpAttr++) = lpCur->Attributes;");
 			*(lpAttr++) = lpCur->Attributes;
@@ -2306,12 +2669,12 @@ const CONSOLE_SCREEN_BUFFER_INFO* CRealBuffer::GetSBI()
 	return &con.m_sbi;
 }
 
-BOOL CRealBuffer::IsConsoleDataChanged()
-{
-	if (!this) return FALSE;
-
-	return con.bConsoleDataChanged;
-}
+//BOOL CRealBuffer::IsConsoleDataChanged()
+//{
+//	if (!this) return FALSE;
+//
+//	return con.bConsoleDataChanged;
+//}
 
 BOOL CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData)
 {
@@ -2351,6 +2714,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	//DWORD cbDstBufSize = nWidth * nHeight * 2;
 	DWORD cwDstBufSize = nWidth * nHeight;
 	_ASSERTE(nWidth != 0 && nHeight != 0);
+	bool bDataValid = false;
 
 	if (nWidth == 0 || nHeight == 0)
 		return;
@@ -2363,6 +2727,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	#endif
 	
 	con.bConsoleDataChanged = FALSE;
+
 	// формирование умолчательных цветов, по атрибутам консоли
 	//TODO("В принципе, это можно делать не всегда, а только при изменениях");
 	int  nColorIndex = 0;
@@ -2428,243 +2793,305 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	CharAttr lcaDef;
 	lcaDef = lcaTable[7]; // LtGray on Black
 	//WORD    wSetAttr = 7;
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	wSetChar = (wchar_t)8776; //wSetAttr = 12;
 	lcaDef = lcaTable[12]; // Red on Black
-#endif
+	#endif
 
-	if (!con.pConChar || !con.pConAttr)
+	int nYMax = 0, nXMax = 0, nX = 0, nY = 0;
+	CharAttr *pnDst = pAttr;
+
+	if (m_Type == rbt_DumpScreen)
 	{
-		wmemset(pChar, wSetChar, cwDstBufSize);
+		bDataValid = true;
+		nXMax = min(nWidth, dump.crSize.X);
+		nYMax = min(nHeight, dump.crSize.Y);
+		wchar_t* pszSrc = dump.pszBlock1;
+		wchar_t* pszDst = pChar;
+		CharAttr* pcaSrc = dump.pcaBlock1;
+		CharAttr* pcaDst = pAttr;
+		for (int Y = 0; Y < nYMax; Y++)
+		{
+			wmemmove(pszDst, pszSrc, nXMax);
+			memmove(pcaDst, pcaSrc, nXMax*sizeof(*pcaDst));
 
-		for(DWORD i = 0; i < cwDstBufSize; i++)
-			pAttr[i] = lcaDef;
+			pszDst += nWidth;
+			pcaDst += nWidth;
+			pszSrc += dump.crSize.X;
+			pcaSrc += dump.crSize.X;
+		}
+		TODO("Очистка мусора за пределами");
+		//if (dump.NeedApply)
+		//{
+		//	dump.NeedApply = FALSE;
 
-		//wmemset((wchar_t*)pAttr, wSetAttr, cbDstBufSize);
-		//} else if (nWidth == con.nTextWidth && nHeight == con.nTextHeight) {
-		//    TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
-		//    //_ASSERTE(*con.pConChar!=ucBoxDblVert);
-		//    memmove(pChar, con.pConChar, cbDstBufSize);
-		//    PRAGMA_ERROR("Это заменить на for");
-		//    memmove(pAttr, con.pConAttr, cbDstBufSize);
+		//	// Создание буферов
+		//	if (!InitBuffers(0))
+		//	{
+		//		_ASSERTE(FALSE);
+		//	}
+		//	else
+		//	// И копирование
+		//	{
+		//		wchar_t*  pszSrc = dump.pszBlock1;
+		//		CharAttr* pcaSrc = dump.pcaBlock1;
+		//		wchar_t*  pszDst = con.pConChar;
+		//		TODO("Хорошо бы весь расширенный буфер тут хранить, а не только CHAR_ATTR");
+		//		WORD*     pnaDst = con.pConAttr;
+		//		
+		//		DWORD dwConDataBufSize = dump.crSize.X * dump.crSize.Y;
+		//		wmemmove(pszDst, pszSrc, dwConDataBufSize);
+
+		//		// Расфуговка буфера CharAttr на консольные атрибуты
+		//		for (DWORD n = 0; n < dwConDataBufSize; n++, pcaSrc++, pnaDst++)
+		//		{
+		//			*pnaDst = (pcaSrc->nForeIdx & 0xF0) | ((pcaSrc->nBackIdx & 0xF0) << 4);
+		//		}
+		//	}
+
+		//	return TRUE;
+		//}
+		//return FALSE; // Изменений нет
 	}
 	else
 	{
-		TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
-		//_ASSERTE(*con.pConChar!=ucBoxDblVert);
-		int nYMax = min(nHeight,con.nTextHeight);
-		wchar_t  *pszDst = pChar, *pszSrc = con.pConChar;
-		CharAttr *pnDst = pAttr;
-		WORD     *pnSrc = con.pConAttr;
-		const AnnotationInfo *pcolSrc = NULL;
-		const AnnotationInfo *pcolEnd = NULL;
-		BOOL bUseColorData = FALSE, bStartUseColorData = FALSE;
-
-		if (lbAllowHilightFileLine)
+		if (!con.pConChar || !con.pConAttr)
 		{
-			// Если мышь сместиласть - нужно посчитать
-			// Даже если мышь не двигалась - текст мог измениться.
-			/*if ((con.mcr_FileLineStart.X == con.mcr_FileLineEnd.X)
-				|| (con.mcr_FileLineStart.Y != mcr_LastMousePos.Y)
-				|| (con.mcr_FileLineStart.X > mcr_LastMousePos.X || con.mcr_FileLineEnd.X < mcr_LastMousePos.X))*/
-			{
-				ProcessFarHyperlink();
-			}
+			wmemset(pChar, wSetChar, cwDstBufSize);
+
+			for(DWORD i = 0; i < cwDstBufSize; i++)
+				pAttr[i] = lcaDef;
+
+			//wmemset((wchar_t*)pAttr, wSetAttr, cbDstBufSize);
+			//} else if (nWidth == con.nTextWidth && nHeight == con.nTextHeight) {
+			//    TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
+			//    //_ASSERTE(*con.pConChar!=ucBoxDblVert);
+			//    memmove(pChar, con.pConChar, cbDstBufSize);
+			//    PRAGMA_ERROR("Это заменить на for");
+			//    memmove(pAttr, con.pConAttr, cbDstBufSize);
 		}
-
-		if (gpSet->isTrueColorer && mp_RCon->m_TrueColorerMap.IsValid() && mp_RCon->mp_TrueColorerData)
+		else
 		{
-			pcolSrc = mp_RCon->mp_TrueColorerData;
-			pcolEnd = mp_RCon->mp_TrueColorerData + mp_RCon->m_TrueColorerMap.Ptr()->bufferSize;
-			bUseColorData = TRUE;
-			WARNING("Если far/w - pcolSrc нужно поднять вверх, bStartUseColorData=TRUE, bUseColorData=FALSE");
-			if (con.bBufferHeight)
+			bDataValid = true;
+
+			TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
+			//_ASSERTE(*con.pConChar!=ucBoxDblVert);
+			nYMax = min(nHeight,con.nTextHeight);
+			wchar_t  *pszDst = pChar, *pszSrc = con.pConChar;
+			WORD     *pnSrc = con.pConAttr;
+			const AnnotationInfo *pcolSrc = NULL;
+			const AnnotationInfo *pcolEnd = NULL;
+			BOOL bUseColorData = FALSE, bStartUseColorData = FALSE;
+
+			if (lbAllowHilightFileLine)
 			{
-				if (!mp_RCon->isFarBufferSupported())
+				// Если мышь сместиласть - нужно посчитать
+				// Даже если мышь не двигалась - текст мог измениться.
+				/*if ((con.mcr_FileLineStart.X == con.mcr_FileLineEnd.X)
+					|| (con.mcr_FileLineStart.Y != mcr_LastMousePos.Y)
+					|| (con.mcr_FileLineStart.X > mcr_LastMousePos.X || con.mcr_FileLineEnd.X < mcr_LastMousePos.X))*/
 				{
-					bUseColorData = FALSE;
+					ProcessFarHyperlink();
+				}
+			}
+
+			if (gpSet->isTrueColorer && mp_RCon->m_TrueColorerMap.IsValid() && mp_RCon->mp_TrueColorerData)
+			{
+				pcolSrc = mp_RCon->mp_TrueColorerData;
+				pcolEnd = mp_RCon->mp_TrueColorerData + mp_RCon->m_TrueColorerMap.Ptr()->bufferSize;
+				bUseColorData = TRUE;
+				WARNING("Если far/w - pcolSrc нужно поднять вверх, bStartUseColorData=TRUE, bUseColorData=FALSE");
+				if (con.bBufferHeight)
+				{
+					if (!mp_RCon->isFarBufferSupported())
+					{
+						bUseColorData = FALSE;
+					}
+					else
+					{
+						int nShiftRows = (con.m_sbi.dwSize.Y - nHeight) - con.m_sbi.srWindow.Top;
+						_ASSERTE(nShiftRows>=0);
+						if (nShiftRows > 0)
+						{
+							_ASSERTE(con.nTextWidth == (con.m_sbi.srWindow.Right - con.m_sbi.srWindow.Left + 1));
+							pcolSrc -= nShiftRows*con.nTextWidth;
+							bUseColorData = FALSE;
+							bStartUseColorData = TRUE;
+						}
+					}
+				}
+			}
+
+			DWORD cbDstLineSize = nWidth * 2;
+			DWORD cnSrcLineLen = con.nTextWidth;
+			DWORD cbSrcLineSize = cnSrcLineLen * 2;
+
+			#ifdef _DEBUG
+			if (con.nTextWidth != con.m_sbi.dwSize.X)
+			{
+				_ASSERTE(con.nTextWidth == con.m_sbi.dwSize.X);
+			}
+			#endif
+
+			DWORD cbLineSize = min(cbDstLineSize,cbSrcLineSize);
+			int nCharsLeft = max(0, (nWidth-con.nTextWidth));
+			int nY, nX;
+			BYTE attrBackLast = 0;
+			//int nPrevDlgBorder = -1;
+
+			// Собственно данные
+			for(nY = 0; nY < nYMax; nY++)
+			{
+				if (nY == 1) lcaTable = lcaTableExt;
+
+				// Текст
+				memmove(pszDst, pszSrc, cbLineSize);
+
+				if (nCharsLeft > 0)
+					wmemset(pszDst+cnSrcLineLen, wSetChar, nCharsLeft);
+
+				// Атрибуты
+				DWORD atr = 0;
+
+				if (mp_RCon->mn_InRecreate)
+				{
+					lca = lcaTable[7];
+
+					for(nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
+					{
+						pnDst[nX] = lca;
+					}
 				}
 				else
 				{
-					int nShiftRows = (con.m_sbi.dwSize.Y - nHeight) - con.m_sbi.srWindow.Top;
-					_ASSERTE(nShiftRows>=0);
-					if (nShiftRows > 0)
+					bool lbHilightFileLine = lbAllowHilightFileLine 
+							&& (con.m_sel.dwFlags == 0)
+							&& (nY == con.mcr_FileLineStart.Y)
+							&& (con.mcr_FileLineStart.X < con.mcr_FileLineEnd.X);
+					for(nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
 					{
-						_ASSERTE(con.nTextWidth == (con.m_sbi.srWindow.Right - con.m_sbi.srWindow.Left + 1));
-						pcolSrc -= nShiftRows*con.nTextWidth;
-						bUseColorData = FALSE;
-						bStartUseColorData = TRUE;
-					}
-				}
-			}
-		}
+						atr = (*pnSrc) & 0xFF; // интересут только нижний байт - там индексы цветов
+						TODO("OPTIMIZE: lca = lcaTable[atr];");
+						lca = lcaTable[atr];
+						TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
 
-		DWORD cbDstLineSize = nWidth * 2;
-		DWORD cnSrcLineLen = con.nTextWidth;
-		DWORD cbSrcLineSize = cnSrcLineLen * 2;
-#ifdef _DEBUG
-
-		if (con.nTextWidth != con.m_sbi.dwSize.X)
-		{
-			_ASSERTE(con.nTextWidth == con.m_sbi.dwSize.X);
-		}
-
-#endif
-		DWORD cbLineSize = min(cbDstLineSize,cbSrcLineSize);
-		int nCharsLeft = max(0, (nWidth-con.nTextWidth));
-		int nY, nX;
-		BYTE attrBackLast = 0;
-		//int nPrevDlgBorder = -1;
-
-		// Собственно данные
-		for(nY = 0; nY < nYMax; nY++)
-		{
-			if (nY == 1) lcaTable = lcaTableExt;
-
-			// Текст
-			memmove(pszDst, pszSrc, cbLineSize);
-
-			if (nCharsLeft > 0)
-				wmemset(pszDst+cnSrcLineLen, wSetChar, nCharsLeft);
-
-			// Атрибуты
-			DWORD atr = 0;
-
-			if (mp_RCon->mn_InRecreate)
-			{
-				lca = lcaTable[7];
-
-				for(nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
-				{
-					pnDst[nX] = lca;
-				}
-			}
-			else
-			{
-				bool lbHilightFileLine = lbAllowHilightFileLine 
-						&& (con.m_sel.dwFlags == 0)
-						&& (nY == con.mcr_FileLineStart.Y)
-						&& (con.mcr_FileLineStart.X < con.mcr_FileLineEnd.X);
-				for(nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
-				{
-					atr = (*pnSrc) & 0xFF; // интересут только нижний байт - там индексы цветов
-					TODO("OPTIMIZE: lca = lcaTable[atr];");
-					lca = lcaTable[atr];
-					TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
-
-					if (bExtendColors && nY)
-					{
-						if (lca.nBackIdx == nExtendColor)
+						if (bExtendColors && nY)
 						{
-							lca.nBackIdx = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
-							lca.nForeIdx += 0x10;
-							lca.crForeColor = lca.crOrigForeColor = mp_RCon->mp_VCon->mp_Colors[lca.nForeIdx];
-							lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_VCon->mp_Colors[lca.nBackIdx];
-						}
-						else
-						{
-							attrBackLast = lca.nBackIdx; // запомним обычный цвет предыдущей ячейки
-						}
-					}
-
-					// Colorer & Far - TrueMod
-					TODO("OPTIMIZE: вынести проверку bUseColorData за циклы");
-
-					if (bStartUseColorData)
-					{
-						// В случае "far /w" буфер цвета может начаться НИЖЕ верхней видимой границы,
-						// если буфер немного прокручен вверх
-						if (pcolSrc >= mp_RCon->mp_TrueColorerData)
-							bUseColorData = TRUE;
-					}
-					
-					if (bUseColorData)
-					{
-						if (pcolSrc >= pcolEnd)
-						{
-							bUseColorData = FALSE;
-						}
-						else
-						{
-							TODO("OPTIMIZE: доступ к битовым полям тяжело идет...");
-
-							if (pcolSrc->fg_valid)
+							if (lca.nBackIdx == nExtendColor)
 							{
-								lca.nFontIndex = 0; //bold/italic/underline, выставляется ниже
-								lca.crForeColor = lbFade ? gpSet->GetFadeColor(pcolSrc->fg_color) : pcolSrc->fg_color;
+								lca.nBackIdx = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
+								lca.nForeIdx += 0x10;
+								lca.crForeColor = lca.crOrigForeColor = mp_RCon->mp_VCon->mp_Colors[lca.nForeIdx];
+								lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_VCon->mp_Colors[lca.nBackIdx];
+							}
+							else
+							{
+								attrBackLast = lca.nBackIdx; // запомним обычный цвет предыдущей ячейки
+							}
+						}
 
-								if (pcolSrc->bk_valid)
+						// Colorer & Far - TrueMod
+						TODO("OPTIMIZE: вынести проверку bUseColorData за циклы");
+
+						if (bStartUseColorData)
+						{
+							// В случае "far /w" буфер цвета может начаться НИЖЕ верхней видимой границы,
+							// если буфер немного прокручен вверх
+							if (pcolSrc >= mp_RCon->mp_TrueColorerData)
+								bUseColorData = TRUE;
+						}
+						
+						if (bUseColorData)
+						{
+							if (pcolSrc >= pcolEnd)
+							{
+								bUseColorData = FALSE;
+							}
+							else
+							{
+								TODO("OPTIMIZE: доступ к битовым полям тяжело идет...");
+
+								if (pcolSrc->fg_valid)
+								{
+									lca.nFontIndex = 0; //bold/italic/underline, выставляется ниже
+									lca.crForeColor = lbFade ? gpSet->GetFadeColor(pcolSrc->fg_color) : pcolSrc->fg_color;
+
+									if (pcolSrc->bk_valid)
+										lca.crBackColor = lbFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;
+								}
+								else if (pcolSrc->bk_valid)
+								{
+									lca.nFontIndex = 0; //bold/italic/underline, выставляется ниже
 									lca.crBackColor = lbFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;
-							}
-							else if (pcolSrc->bk_valid)
-							{
-								lca.nFontIndex = 0; //bold/italic/underline, выставляется ниже
-								lca.crBackColor = lbFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;
-							}
+								}
 
-							// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic,..., 4 - underline, ...
-							if (pcolSrc->style)
-								lca.nFontIndex = pcolSrc->style & 7;
+								// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic,..., 4 - underline, ...
+								if (pcolSrc->style)
+									lca.nFontIndex = pcolSrc->style & 7;
+							}
+						}
+
+						//if (lbHilightFileLine && (nX >= con.mcr_FileLineStart.X) && (nX <= con.mcr_FileLineEnd.X))
+						//	lca.nFontIndex |= 4; // Отрисовать его как Underline
+
+						TODO("OPTIMIZE: lca = lcaTable[atr];");
+						pnDst[nX] = lca;
+						//memmove(pnDst, pnSrc, cbLineSize);
+					}
+
+					if (lbHilightFileLine)
+					{
+						int nFrom = con.mcr_FileLineStart.X;
+						int nTo = min(con.mcr_FileLineEnd.X,(int)cnSrcLineLen);
+						for (nX = nFrom; nX <= nTo; nX++)
+						{
+							pnDst[nX].nFontIndex |= 4; // Отрисовать его как Underline
 						}
 					}
-
-					//if (lbHilightFileLine && (nX >= con.mcr_FileLineStart.X) && (nX <= con.mcr_FileLineEnd.X))
-					//	lca.nFontIndex |= 4; // Отрисовать его как Underline
-
-					TODO("OPTIMIZE: lca = lcaTable[atr];");
-					pnDst[nX] = lca;
-					//memmove(pnDst, pnSrc, cbLineSize);
 				}
 
-				if (lbHilightFileLine)
+				// Залить остаток (если запрошен больший участок, чем есть консоль
+				for(nX = cnSrcLineLen; nX < nWidth; nX++)
 				{
-					int nFrom = con.mcr_FileLineStart.X;
-					int nTo = min(con.mcr_FileLineEnd.X,(int)cnSrcLineLen);
-					for (nX = nFrom; nX <= nTo; nX++)
-					{
-						pnDst[nX].nFontIndex |= 4; // Отрисовать его как Underline
-					}
+					pnDst[nX] = lcaDef;
 				}
+
+				// Far2 показывате красный 'A' в правом нижнем углу консоли
+				// Этот ярко красный цвет фона может попасть в Extend Font Colors
+				if (bExtendFonts && ((nY+1) == nYMax) && mp_RCon->isFar()
+						&& (pszDst[nWidth-1] == L'A') && (atr == 0xCF))
+				{
+					// Вернуть "родной" цвет и шрифт
+					pnDst[nWidth-1] = lcaTable[atr];
+				}
+
+				// Next line
+				pszDst += nWidth; pszSrc += cnSrcLineLen;
+				pnDst += nWidth; //pnSrc += con.nTextWidth;
 			}
 
-			// Залить остаток (если запрошен больший участок, чем есть консоль
-			for(nX = cnSrcLineLen; nX < nWidth; nX++)
+			// Если вдруг запросили большую высоту, чем текущая в консоли - почистить низ
+			for (nY = nYMax; nY < nHeight; nY++)
 			{
-				pnDst[nX] = lcaDef;
+				wmemset(pszDst, wSetChar, nWidth);
+				pszDst += nWidth;
+
+				//wmemset((wchar_t*)pnDst, wSetAttr, nWidth);
+				for(nX = 0; nX < nWidth; nX++)
+				{
+					pnDst[nX] = lcaDef;
+				}
+
+				pnDst += nWidth;
 			}
 
-			// Far2 показывате красный 'A' в правом нижнем углу консоли
-			// Этот ярко красный цвет фона может попасть в Extend Font Colors
-			if (bExtendFonts && ((nY+1) == nYMax) && mp_RCon->isFar()
-			        && (pszDst[nWidth-1] == L'A') && (atr == 0xCF))
-			{
-				// Вернуть "родной" цвет и шрифт
-				pnDst[nWidth-1] = lcaTable[atr];
-			}
-
-			// Next line
-			pszDst += nWidth; pszSrc += cnSrcLineLen;
-			pnDst += nWidth; //pnSrc += con.nTextWidth;
+			// Чтобы безопасно использовать строковые функции - гарантированно делаем ASCIIZ. Хотя pChars может и \0 содержать?
+			*pszDst = 0;
 		}
+	} // rbt_Primary
 
-		// Если вдруг запросили большую высоту, чем текущая в консоли - почистить низ
-		for(nY = nYMax; nY < nHeight; nY++)
-		{
-			wmemset(pszDst, wSetChar, nWidth);
-			pszDst += nWidth;
-
-			//wmemset((wchar_t*)pnDst, wSetAttr, nWidth);
-			for(nX = 0; nX < nWidth; nX++)
-			{
-				pnDst[nX] = lcaDef;
-			}
-
-			pnDst += nWidth;
-		}
-
-		// Чтобы безопасно использовать строковые функции - гарантированно делаем ASCIIZ. Хотя pChars может и \0 содержать?
-		*pszDst = 0;
-
+	if (bDataValid)
+	{
 		// Подготовить данные для Transparent
 		// обнаружение диалогов нужно только при включенной прозрачности,
 		// или при пропорциональном шрифте
@@ -2701,7 +3128,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			int nX1, nX2;
 
 			// Block mode
-			for(nY = rc.Top; nY <= rc.Bottom; nY++)
+			for (nY = rc.Top; nY <= rc.Bottom; nY++)
 			{
 				if (!lbStreamMode)
 				{
@@ -2887,7 +3314,7 @@ void CRealBuffer::FindPanels()
 	#ifdef _DEBUG
 	if (mp_RCon->mb_DebugLocked)
 		return;
-	_ASSERTE(this==mp_RCon->mp_RBuf);
+	WARNING("this==mp_RCon->mp_RBuf ?");
 	#endif
 
 	RECT rLeftPanel = MakeRect(-1,-1);

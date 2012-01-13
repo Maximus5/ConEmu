@@ -104,7 +104,7 @@ BEGIN
     COMBOBOX        lbExtendFontBoldIdx,51,76,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontItalicIdx,80,76,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontNormalIdx,109,76,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Fix FAR borders",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,91,64,8
+    CONTROL         "&Fix Far borders",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,91,64,8
     COMBOBOX        tFontFace2,9,103,88,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     CTEXT           "x",IDC_STATIC,101,105,8,8
     COMBOBOX        tFontSizeX2,109,103,24,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
@@ -400,7 +400,7 @@ BEGIN
     CONTROL         "ASCII sort function in Far",cbFARuseASCIIsort,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,69,104,8
     CONTROL         "Right selection fix",cbRSelectionFix,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,81,81,8
     CONTROL         "No zone check",cbShellNoZoneCheck,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,57,81,8
-    CONTROL         "Disable FAR flashing",cbDisableFarFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,9,81,117,8
+    CONTROL         "Disable Far flashing",cbDisableFarFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,9,81,117,8
     GROUPBOX        "Far macros",IDC_STATIC,4,97,319,77
     CONTROL         "&RightClick 4 EMenu",cbRClick,"Button",BS_AUTO3STATE | WS_TABSTOP,9,109,78,8
     EDITTEXT        tRClickMacro,88,107,229,12,ES_AUTOHSCROLL
@@ -563,7 +563,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "FAR Panel Views",IDC_STATIC,4,1,319,198
+    GROUPBOX        "Far Panel Views",IDC_STATIC,4,1,319,198
     GROUPBOX        "Thumbnails mode",IDC_STATIC,9,12,308,49
     RTEXT           "Label font:",IDC_STATIC,12,27,40,8
     COMBOBOX        tThumbsFontName,57,25,116,76,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
@@ -639,7 +639,7 @@ BEGIN
     CONTROL         "Preview frame",cbThumbPreviewBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,118,147,62,10
     CONTROL         "Current item frame",cbThumbSelectionBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,221,147,77,10
     PUSHBUTTON      "&Apply",bApplyViewSettings,3,202,50,14
-    CONTROL         "Restore on FAR startup",cbThumbRestoreOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,214,134,101,10
+    CONTROL         "Restore on Far startup",cbThumbRestoreOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,214,134,101,10
 END
 
 IDD_MORE_CONFONT DIALOG  0, 0, 236, 156

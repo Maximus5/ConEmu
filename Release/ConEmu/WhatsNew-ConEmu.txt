@@ -1,4 +1,6 @@
 ﻿[%] Detach GUI окон.
+[+] Отладочная опция: System menu -> Debug -> Load screen dump.
+[+] Windows 7: Overlay icon 'Shield' on taskbar for elevated tabs.
 
 
 2012.01.10

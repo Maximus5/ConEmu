@@ -788,7 +788,7 @@ void CVirtualConsole::DumpConsole()
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFile = temp; temp[0] = 0;
 	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrTitle = L"Dump console...";
+	ofn.lpstrTitle = L"Save console dump...";
 	ofn.lpstrDefExt = L"con";
 	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
 	            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
@@ -801,6 +801,9 @@ void CVirtualConsole::DumpConsole()
 
 BOOL CVirtualConsole::Dump(LPCWSTR asFile)
 {
+	if (!this || !mp_RCon)
+		return FALSE;
+	
 	// Она сделает снимок нашего буфера (hDC) в png файл
 	DumpImage(hDC, Width, Height, asFile);
 	HANDLE hFile = CreateFile(asFile, GENERIC_WRITE, FILE_SHARE_READ,
@@ -830,6 +833,35 @@ BOOL CVirtualConsole::Dump(LPCWSTR asFile)
 
 	CloseHandle(hFile);
 	return TRUE;
+}
+
+bool CVirtualConsole::LoadDumpConsole()
+{
+	if (!this || !mp_RCon) return false;
+
+	if (mp_RCon->GetActiveBufferType() == rbt_DumpScreen)
+	{
+		mp_RCon->SetActiveBuffer(rbt_Primary);
+		return false;
+	}
+
+	OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+	wchar_t temp[MAX_PATH+5];
+	ofn.lStructSize=sizeof(ofn);
+	ofn.hwndOwner = ghWnd;
+	ofn.lpstrFilter = _T("ConEmu dumps (*.con)\0*.con\0\0");
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFile = temp; temp[0] = 0;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrTitle = L"Load console dump...";
+	ofn.lpstrDefExt = L"con";
+	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+	            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
+
+	if (!GetOpenFileName(&ofn))
+		return false;
+
+	return mp_RCon->LoadDumpConsole(temp);
 }
 
 // Это символы рамок и др. спец. символы

@@ -2,14 +2,16 @@
 #pragma once
 
 /* Boxes: Scrollbars & Progresses */
-#define ucBox25    0x2591
-#define ucBox50    0x2592
-#define ucBox75    0x2593
-#define ucBox100   0x2588
-#define ucUpScroll 0x25B2
-#define ucDnScroll 0x25BC
+#define ucBox25       0x2591
+#define ucBox50       0x2592
+#define ucBox75       0x2593
+#define ucBox100      0x2588
+#define ucUpScroll    0x25B2
+#define ucDnScroll    0x25BC
 #define ucLeftScroll  0x25C4
 #define ucRightScroll 0x25BA
+#define ucArrowUp     0x2191
+#define ucArrowDown   0x2193
 
 /* Spaces */
 #define ucSpace 0x20

@@ -212,6 +212,16 @@ class CVirtualConsole;
 class CRgnDetect;
 class CRealBuffer;
 
+enum RealBufferType
+{
+	rbt_Undefined = 0,
+	rbt_Primary,
+	rbt_Alternative,
+	rbt_Selection,
+	rbt_Find,
+	rbt_DumpScreen,
+};
+
 class CRealConsole
 {
 #ifdef _DEBUG
@@ -255,9 +265,14 @@ class CRealConsole
 
 		BOOL PreInit(BOOL abCreateBuffers=TRUE);
 		void DumpConsole(HANDLE ahFile);
+		bool LoadDumpConsole(LPCWSTR asDumpFile);
+		
+		RealBufferType GetActiveBufferType();
+		bool SetActiveBuffer(RealBufferType aBufferType);
 
 		BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZESYNC);
 	private:
+		bool SetActiveBuffer(CRealBuffer* aBuffer);
 		BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	private:
 		//void SendConsoleEvent(INPUT_RECORD* piRec);

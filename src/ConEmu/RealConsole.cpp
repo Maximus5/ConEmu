@@ -431,12 +431,80 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 	return TRUE;
 }
 
+RealBufferType CRealConsole::GetActiveBufferType()
+{
+	if (!this || !mp_ABuf)
+		return rbt_Undefined;
+	return mp_ABuf->m_Type;
+}
 
 void CRealConsole::DumpConsole(HANDLE ahFile)
 {
 	_ASSERTE(mp_ABuf!=NULL);
 	
 	return mp_ABuf->DumpConsole(ahFile);
+}
+
+bool CRealConsole::LoadDumpConsole(LPCWSTR asDumpFile)
+{
+	if (!this)
+		return false;
+	
+	if (!mp_SBuf)
+	{
+		mp_SBuf = new CRealBuffer(this, rbt_DumpScreen);
+		if (!mp_SBuf)
+		{
+			_ASSERTE(mp_SBuf!=NULL);
+			return false;
+		}
+	}
+	
+	if (!mp_SBuf->LoadDumpConsole(asDumpFile))
+	{
+		return false;
+	}
+	
+	mp_ABuf = mp_SBuf;
+	
+	return true;
+}
+
+bool CRealConsole::SetActiveBuffer(RealBufferType aBufferType)
+{
+	if (!this)
+		return false;
+
+	bool lbRc;
+	switch (aBufferType)
+	{
+	case rbt_Primary:
+		lbRc = SetActiveBuffer(mp_RBuf);
+		break;
+	default:
+		// Другие тут пока не поддерживаются
+		_ASSERTE(aBufferType==rbt_Primary);
+		lbRc = false;
+	}
+	return lbRc;
+}
+
+bool CRealConsole::SetActiveBuffer(CRealBuffer* aBuffer)
+{
+	if (!this)
+		return false;
+	if (!aBuffer || (aBuffer != mp_RBuf && aBuffer != mp_EBuf && aBuffer != mp_SBuf))
+	{
+		_ASSERTE(aBuffer && (aBuffer == mp_RBuf || aBuffer == mp_EBuf || aBuffer == mp_SBuf));
+		return false;
+	}
+	
+	mp_ABuf = mp_RBuf;
+	
+	// Передернуть нить MonitorThread
+	SetEvent(mh_MonitorThreadEvent);
+	
+	return true;
 }
 
 BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
@@ -1089,8 +1157,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	TODO("Нить не завершается при F10 в фаре - процессы пока не инициализированы...");
 	DWORD nConsoleStartTick = GetTickCount();
 	DWORD nTimeout = 0;
+	CRealBuffer* pLastBuf = NULL;
 
-	while(TRUE)
+	while (TRUE)
 	{
 		bActive = pRCon->isActive();
 
@@ -1219,8 +1288,17 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			// Тут и ApplyConsole вызывается
 			//if (pRCon->mp_ConsoleInfo)
 
+			if (pRCon->mp_ABuf != pLastBuf)
+				lbForceUpdate = true;
+
+			if (pRCon->mp_RBuf != pRCon->mp_ABuf)
+			{
+				pRCon->mn_LastFarReadTick = GetTickCount();
+				if (pRCon->mp_ABuf->isConsoleDataChanged())
+					lbForceUpdate = true;
+			}
 			// Если сервер жив - можно проверить наличие фара и его отклик
-			if ((!pRCon->mb_SkipFarPidChange) && pRCon->m_ConsoleMap.IsValid())
+			else if ((!pRCon->mb_SkipFarPidChange) && pRCon->m_ConsoleMap.IsValid())
 			{
 				bool lbFarChanged = false;
 				// Alive?
@@ -1558,6 +1636,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					pRCon->mn_LastInvalidateTick = GetTickCount();
 				}
 			}
+
+			pLastBuf = pRCon->mp_ABuf;
 
 		} SAFECATCH
 		{
@@ -2990,10 +3070,18 @@ BOOL CRealConsole::isBufferHeight()
 
 BOOL CRealConsole::isConSelectMode()
 {
-	if (!this) return false;
+	if (!this || !mp_ABuf) return false;
 	
 	// Когда будут доп.буферы - в них нужно убедиться, что курсор ставится "нормальный", чтобы его с Фар.граббером не путать.
-	_ASSERTE(mp_ABuf==mp_RBuf);
+	#ifdef _DEBUG
+	if (mp_ABuf != mp_RBuf)
+	{
+		CONSOLE_CURSOR_INFO ci;
+		mp_ABuf->GetCursorInfo(NULL, &ci);
+		_ASSERTE(ci.dwSize < 40);
+	}
+	#endif
+
 	return mp_ABuf->isConSelectMode();
 }
 
@@ -3034,6 +3122,7 @@ LPCTSTR CRealConsole::GetTitle()
 	{
 		if (TitleAdmin[0] == 0)
 		{
+			TitleAdmin[countof(TitleAdmin)-1] = 0;
 			wcscpy_c(TitleAdmin, TitleFull);
 			wcscat_c(TitleAdmin, gpSet->szAdminTitleSuffix);
 		}
@@ -6212,7 +6301,7 @@ BOOL CRealConsole::IsConsoleDataChanged()
 	
 	WARNING("После смены буфера - тоже вернуть TRUE!");
 	
-	return mp_ABuf->IsConsoleDataChanged();
+	return mp_ABuf->isConsoleDataChanged();
 }
 
 bool CRealConsole::IsFarHyperlinkAllowed()
