@@ -93,6 +93,9 @@ public:
 	BOOL BuferModeChangeLock();
 	void BuferModeChangeUnlock();
 	BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
+
+	LRESULT OnScroll(int nDirection);
+	LRESULT OnSetScrollPos(WPARAM wParam);
 	
 	BOOL ApplyConsoleInfo();
 	
@@ -150,6 +153,8 @@ public:
 	BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE);
 	BOOL isLeftPanel();
 	BOOL isRightPanel();
+
+	const CRgnDetect* GetDetector();
 	
 private:
 	BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
@@ -177,6 +182,11 @@ private:
 protected:
 	CRealConsole* mp_RCon;
 	
+	/* ****************************************** */
+	/* ѕоиск диалогов и пометка "прозрачных" мест */
+	/* ****************************************** */
+	CRgnDetect m_Rgn; DWORD mn_LastRgnFlags;
+
 	BOOL mb_BuferModeChangeLocked;
 	COORD mcr_LastMousePos;
 	

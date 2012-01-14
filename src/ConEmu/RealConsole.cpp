@@ -120,8 +120,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	{
 		PostMessage(apVCon->GetView(), WM_SETCURSOR, -1, -1);
 	}
-	mp_Rgn = new CRgnDetect();
-	mn_LastRgnFlags = -1;
+	//mp_Rgn = new CRgnDetect();
+	//mn_LastRgnFlags = -1;
 	m_ConsoleKeyShortcuts = 0;
 	memset(Title,0,sizeof(Title)); memset(TitleCmp,0,sizeof(TitleCmp));
 	mn_tabsCount = 0; ms_PanelTitle[0] = 0; mn_ActiveTab = 0;
@@ -196,6 +196,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mp_ABuf = mp_RBuf;
 	mp_EBuf = NULL;
 	mp_SBuf = NULL;
+	mb_ABufChaged = false;
 	
 	mn_LastInactiveRgnCheck = 0;
 	#ifdef _DEBUG
@@ -309,11 +310,11 @@ CRealConsole::~CRealConsole()
 	CloseMapHeader(); // CloseMapData() & CloseFarMapData() зовет сам CloseMapHeader
 	CloseColorMapping(); // Colorer data
 
-	if (mp_Rgn)
-	{
-		delete mp_Rgn;
-		mp_Rgn = NULL;
-	}
+	//if (mp_Rgn)
+	//{
+	//	delete mp_Rgn;
+	//	mp_Rgn = NULL;
+	//}
 }
 
 BOOL CRealConsole::PreCreate(RConStartArgs *args)
@@ -486,6 +487,9 @@ bool CRealConsole::SetActiveBuffer(RealBufferType aBufferType)
 		_ASSERTE(aBufferType==rbt_Primary);
 		lbRc = false;
 	}
+
+	//mp_VCon->Invalidate();
+
 	return lbRc;
 }
 
@@ -500,6 +504,7 @@ bool CRealConsole::SetActiveBuffer(CRealBuffer* aBuffer)
 	}
 	
 	mp_ABuf = mp_RBuf;
+	mb_ABufChaged = true;
 	
 	// Передернуть нить MonitorThread
 	SetEvent(mh_MonitorThreadEvent);
@@ -606,8 +611,8 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	//	}
 	//}
 
-	// Всегда меняем _реальный_ буфер консоли.
-	mp_RBuf->SyncConsole2Window(newCon.right, newCon.bottom);
+	// Меняем активный буфер (пусть даже и виртуальный...)
+	mp_ABuf->SyncConsole2Window(newCon.right, newCon.bottom);
 }
 
 // Вызывается при аттаче (после детача), или после RunAs?
@@ -1158,6 +1163,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	DWORD nConsoleStartTick = GetTickCount();
 	DWORD nTimeout = 0;
 	CRealBuffer* pLastBuf = NULL;
+	bool lbActiveBufferChanged = false;
 
 	while (TRUE)
 	{
@@ -1288,13 +1294,16 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			// Тут и ApplyConsole вызывается
 			//if (pRCon->mp_ConsoleInfo)
 
-			if (pRCon->mp_ABuf != pLastBuf)
-				lbForceUpdate = true;
+			lbActiveBufferChanged = (pRCon->mp_ABuf != pLastBuf);
+			if (lbActiveBufferChanged)
+			{
+				pRCon->mb_ABufChaged = lbForceUpdate = true;
+			}
 
 			if (pRCon->mp_RBuf != pRCon->mp_ABuf)
 			{
 				pRCon->mn_LastFarReadTick = GetTickCount();
-				if (pRCon->mp_ABuf->isConsoleDataChanged())
+				if (lbActiveBufferChanged || pRCon->mp_ABuf->isConsoleDataChanged())
 					lbForceUpdate = true;
 			}
 			// Если сервер жив - можно проверить наличие фара и его отклик
@@ -1462,7 +1471,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 			// Если консоль неактивна - CVirtualConsole::Update не вызывается и диалоги не детектятся. А это требуется.
 			// Смотрим именно mp_ABuf, т.к. здесь нас интересует то, что нужно показать на экране!
-			if ((!bActive || bIconic) && pRCon->mp_ABuf->isConsoleDataChanged())
+			if ((!bActive || bIconic) && (lbActiveBufferChanged || pRCon->mp_ABuf->isConsoleDataChanged()))
 			{
 				DWORD nCurTick = GetTickCount();
 				DWORD nDelta = nCurTick - pRCon->mn_LastInactiveRgnCheck;
@@ -3136,20 +3145,14 @@ LRESULT CRealConsole::OnScroll(int nDirection)
 {
 	if (!this) return 0;
 
-	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
-	WARNING("Переделать в команду пайпа");
-	PostConsoleMessage(hConWnd, WM_VSCROLL, nDirection, NULL);
-	return 0;
+	return mp_ABuf->OnScroll(nDirection);
 }
 
 LRESULT CRealConsole::OnSetScrollPos(WPARAM wParam)
 {
 	if (!this) return 0;
 
-	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
-	TODO("Переделать в команду пайпа"); // не критично. если консоль под админом - сообщение посылается через пайп в сервер, а он уже пересылает в консоль
-	PostConsoleMessage(hConWnd, WM_VSCROLL, wParam, NULL);
-	return 0;
+	return mp_ABuf->OnSetScrollPos(wParam);
 }
 
 void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars)
@@ -3158,8 +3161,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 	//LRESULT result = 0;
 	_ASSERTE(pszChars!=NULL);
-#ifdef _DEBUG
 
+	#ifdef _DEBUG
 	if (wParam != VK_LCONTROL && wParam != VK_RCONTROL && wParam != VK_CONTROL &&
 	        wParam != VK_LSHIFT && wParam != VK_RSHIFT && wParam != VK_SHIFT &&
 	        wParam != VK_LMENU && wParam != VK_RMENU && wParam != VK_MENU &&
@@ -3179,35 +3182,25 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			else //if (messg == WM_KEYUP)
 				_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_KEYUP(%i,0x%08X)\n", (DWORD)wParam, (DWORD)lParam);
 
-			//else
-			//    _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_CHAR(%i,0x%08X)\n", wParam, lParam);
 			DEBUGSTRINPUT(szDbg);
 		}
 	}
+	#endif
 
-#endif
-	
-	// Обработка Left/Right/Up/Down при выделении
-
-	if (messg == WM_KEYDOWN
-	        && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)
-	            || (wParam == VK_LEFT) || (wParam == VK_RIGHT) || (wParam == VK_UP) || (wParam == VK_DOWN))
-	   )
-	{
-		if (mp_ABuf->OnKeyboard(hWnd, messg, wParam, lParam, pszChars))
-			return;
-	}
-
-	if (messg == WM_KEYUP && wParam == mn_SelectModeSkipVk)
-	{
-		mn_SelectModeSkipVk = 0; // игнорируем отпускание, поскольку нажатие было на копирование/отмену
+	// Проверим, может клавишу обработает сам буфер?
+	if (mp_ABuf->OnKeyboard(hWnd, messg, wParam, lParam, pszChars))
 		return;
-	}
 
-	if (messg == WM_KEYDOWN && mn_SelectModeSkipVk)
-	{
-		mn_SelectModeSkipVk = 0; // при нажатии любой другой клавиши - сбросить флажок (во избежание)
-	}
+
+	//// Обработка Left/Right/Up/Down при выделении
+	//if (messg == WM_KEYDOWN
+	//        && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)
+	//            || (wParam == VK_LEFT) || (wParam == VK_RIGHT) || (wParam == VK_UP) || (wParam == VK_DOWN))
+	//   )
+	//{
+	//	if (mp_ABuf->OnKeyboard(hWnd, messg, wParam, lParam, pszChars))
+	//		return;
+	//}
 	
 	WARNING("Тут кое-что нехорошо. Некоторые кнопки нужно обрабатывать раньше.");
 	// Например, AltEnter может посылаться в консоль, а может и "менять FullScreen" (в последнем случае его наверное нужно обработать)
@@ -6301,7 +6294,7 @@ BOOL CRealConsole::IsConsoleDataChanged()
 	
 	WARNING("После смены буфера - тоже вернуть TRUE!");
 	
-	return mp_ABuf->isConsoleDataChanged();
+	return mb_ABufChaged || mp_ABuf->isConsoleDataChanged();
 }
 
 bool CRealConsole::IsFarHyperlinkAllowed()
@@ -6328,7 +6321,11 @@ BOOL CRealConsole::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr
 void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
 {
 	if (!this) return;
-	return mp_ABuf->GetConsoleData(pChar, pAttr, nWidth, nHeight);
+
+	if (mb_ABufChaged)
+		mb_ABufChaged = false; // сбросим
+
+	mp_ABuf->GetConsoleData(pChar, pAttr, nWidth, nHeight);
 }
 
 //#define PICVIEWMSG_SHOWWINDOW (WM_APP + 6)
@@ -7276,7 +7273,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	}
 
 	// Если висит диалог - не даем переключаться по табам
-	if (mp_Rgn->GetFlags() & FR_FREEDLG_MASK)
+	if (mp_ABuf && (mp_ABuf->GetDetector()->GetFlags() & FR_FREEDLG_MASK))
 	{
 		AssertCantActivate("FR_FREEDLG_MASK"==NULL);
 		return 0;
@@ -7311,7 +7308,7 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 		DWORD nData[2] = {anWndIndex,0};
 
 		// Если в панелях висит QSearch - его нужно предварительно "снять"
-		if (!mn_ActiveTab && (mp_Rgn->GetFlags() & FR_QSEARCH))
+		if (!mn_ActiveTab && (mp_ABuf && (mp_ABuf->GetDetector()->GetFlags() & FR_QSEARCH)))
 			nData[1] = TRUE;
 
 		DEBUGSTRCMD(L"GUI send CMD_SETWINDOW\n");	
@@ -8347,7 +8344,7 @@ bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditVi
 	}
 
 	// Если висят какие-либо диалоги - считаем что это НЕ панель
-	DWORD dwFlags = mp_Rgn->GetFlags();
+	DWORD dwFlags = mp_ABuf ? mp_ABuf->GetDetector()->GetFlags() : FR_FREEDLG_MASK;
 
 	if ((dwFlags & FR_FREEDLG_MASK) != 0)
 		return false;
@@ -9449,9 +9446,10 @@ bool CRealConsole::GetMaxConSize(COORD* pcrMaxConSize)
 
 int CRealConsole::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf)
 {
-	if (!this) return 0;
+	if (!this || !mp_ABuf)
+		return 0;
 
-	return mp_Rgn->GetDetectedDialogs(anMaxCount, rc, rf);
+	return mp_ABuf->GetDetector()->GetDetectedDialogs(anMaxCount, rc, rf);
 	//int nCount = min(anMaxCount,m_DetectedDialogs.Count);
 	//if (nCount>0) {
 	//	if (rc)
@@ -9464,7 +9462,9 @@ int CRealConsole::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf)
 
 const CRgnDetect* CRealConsole::GetDetector()
 {
-	return mp_Rgn;
+	if (!this)
+		return NULL;
+	return mp_ABuf->GetDetector();
 }
 
 // Преобразовать абсолютные координаты консоли в координаты нашего буфера

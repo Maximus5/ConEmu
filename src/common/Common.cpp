@@ -561,6 +561,19 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 #endif
 
 #ifndef CONEMU_MINIMAL
+void ChangeScreenBufferSize(CONSOLE_SCREEN_BUFFER_INFO& sbi, SHORT VisibleX, SHORT VisibleY, SHORT BufferX, SHORT BufferY)
+{
+	_ASSERTE(BufferX>=VisibleX && VisibleX && BufferY>=VisibleY && VisibleY);
+	sbi.dwSize.X = BufferX;
+	sbi.dwSize.Y = BufferY;
+	sbi.srWindow.Right = min(BufferX,(sbi.srWindow.Left+VisibleX))-1;
+	sbi.srWindow.Left = max(0,(sbi.srWindow.Right+1-VisibleX));
+	sbi.srWindow.Bottom = min(BufferY,(sbi.srWindow.Top+VisibleY))-1;
+	sbi.srWindow.Top = max(0,(sbi.srWindow.Bottom+1-VisibleY));
+}
+#endif
+
+#ifndef CONEMU_MINIMAL
 //
 //	Fill the CONSOLE_INFO structure with information
 //  about the current console window

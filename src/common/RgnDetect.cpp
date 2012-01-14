@@ -2108,15 +2108,17 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 		//r = mr_LeftPanelFull;
 		r = mp_FarInfo->FarLeftPanel.PanelRect;
 	}
-	else
-	{
-		// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
-		if (mp_FarInfo->bFarLeftPanel && mp_FarInfo->FarLeftPanel.Visible)
-		{
-			// В "буферном" режиме размер панелей намного больше экрана
-			lbLeftVisible = ConsoleRect2ScreenRect(mp_FarInfo->FarLeftPanel.PanelRect, &r);
-		}
-	}
+	// -- Ветка никогда не активировалась
+	_ASSERTE(mp_FarInfo->bFarLeftPanel || !mp_FarInfo->FarLeftPanel.Visible);
+	//else
+	//{
+	//	// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
+	//	if (mp_FarInfo->bFarLeftPanel && mp_FarInfo->FarLeftPanel.Visible)
+	//	{
+	//		// В "буферном" режиме размер панелей намного больше экрана
+	//		lbLeftVisible = ConsoleRect2ScreenRect(mp_FarInfo->FarLeftPanel.PanelRect, &r);
+	//	}
+	//}
 
 	//RECT rLeft = {0}, rRight = {0};
 
@@ -2153,12 +2155,14 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 			lbRightVisible = true;
 			r = mp_FarInfo->FarRightPanel.PanelRect; // mr_RightPanelFull;
 		}
-		// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
-		else if (mp_FarInfo->bFarRightPanel && mp_FarInfo->FarRightPanel.Visible)
-		{
-			// В "буферном" режиме размер панелей намного больше экрана
-			lbRightVisible = ConsoleRect2ScreenRect(mp_FarInfo->FarRightPanel.PanelRect, &r);
-		}
+		// -- Ветка никогда не активировалась
+		_ASSERTE(mp_FarInfo->bFarRightPanel || !mp_FarInfo->FarRightPanel.Visible);
+		//// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
+		//else if (mp_FarInfo->bFarRightPanel && mp_FarInfo->FarRightPanel.Visible)
+		//{
+		//	// В "буферном" режиме размер панелей намного больше экрана
+		//	lbRightVisible = ConsoleRect2ScreenRect(mp_FarInfo->FarRightPanel.PanelRect, &r);
+		//}
 
 		if (lbRightVisible)
 		{
@@ -2191,7 +2195,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	            && (pChar[0] == L' ' && pChar[1] == L' ' && pChar[2] == L' ' && pChar[3] == L' ' && pChar[4] != L' '))
 	  )
 	{
-		MarkDialog(pChar, pAttr, nWidth, nHeight, 0, 0, nWidth-1, 0);
+		MarkDialog(pChar, pAttr, nWidth, nHeight, 0, 0, nWidth-1, 0, false, false, FR_MENUBAR);
 	}
 
 	// Редактор/вьювер
@@ -2254,7 +2258,8 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 			#endif
 			//int nX = nX1;
 
-			if (m_DetectedDialogs.AllFlags == 0 && /*nX == 0 &&*/ nY == nTopLines
+			if (nY == nTopLines
+				&& (m_DetectedDialogs.AllFlags == 0 || m_DetectedDialogs.AllFlags == FR_MENUBAR)
 		        && ((*pszDst == L'[' && pnDst->crBackColor == crPanelsNumberBack && pnDst->crForeColor == crPanelsNumberFore)
 		        	||	(!nY
 						&& ((*pszDst == L'P' && (pnDst->nBackIdx & 7) == 0x2 && pnDst->nForeIdx == 0xF)

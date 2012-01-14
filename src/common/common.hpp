@@ -1462,6 +1462,10 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg);
 BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec);
 void CommonShutdown();
 
+#ifndef CONEMU_MINIMAL
+void ChangeScreenBufferSize(CONSOLE_SCREEN_BUFFER_INFO& sbi, SHORT VisibleX, SHORT VisibleY, SHORT BufferX, SHORT BufferY);
+#endif
+
 
 #ifndef _CRT_WIDE
 #define __CRT_WIDE(_String) L ## _String

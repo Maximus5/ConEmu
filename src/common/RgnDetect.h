@@ -94,7 +94,7 @@ inline bool operator==(const CharAttr& s1, const CharAttr& s2)
 #define FR_RIGHTPANEL     0x00000002 // Правая панель
 #define FR_FULLPANEL      0x00000004 // Одна из панелей растянутая на весь экран
 #define FR_MENUBAR        0x00000008 // Строка меню (верхнее)
-#define FR_ACTIVEMENUBAR  0x00000018 // Если MenuBar виден не всегда, или он активирован (т.е. панели недоступны)
+#define FR_ACTIVEMENUBAR  (0x0000010|FR_MENUBAR) // Если MenuBar виден не всегда, или он активирован (т.е. панели недоступны)
 #define FR_PANELTABS      0x00000020 // Строка под панелями (плагин PanelTabs)
 #define FR_QSEARCH        0x00000040 // QSearch в панелях
 #define FR_VIEWEREDITOR   0x00000080 // Редактор или просмотрщик
