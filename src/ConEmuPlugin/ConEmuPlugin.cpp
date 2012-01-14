@@ -124,7 +124,7 @@ BOOL TerminalMode = FALSE;
 HWND FarHwnd = NULL;
 //WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
 //HANDLE ghConIn = NULL;
-DWORD gnMainThreadId = 0;
+DWORD gnMainThreadId = 0, gnMainThreadIdInitial = 0;
 //HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
 HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
 //HANDLE ghInputThread = NULL; DWORD gnInputThreadId = 0;
@@ -658,7 +658,15 @@ void OnMainThreadActivated()
 void OnConsolePeekReadInput(BOOL abPeek)
 {
 #ifdef _DEBUG
-	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+	DWORD nCurTID = GetCurrentThreadId();
+	DWORD nCurMainTID = gnMainThreadId;
+	if (nCurTID != nCurMainTID)
+	{
+		HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, nCurMainTID);
+		if (hThread) SuspendThread(hThread);
+		_ASSERTE(nCurTID == nCurMainTID);
+		if (hThread) { ResumeThread(hThread); CloseHandle(hThread); }
+	}
 #endif
 	bool lbNeedSynchro = false;
 
@@ -1354,6 +1362,13 @@ int WINAPI ProcessSynchroEventW(int Event,void *Param)
 		if (gbInputSynchroPending)
 			gbInputSynchroPending = false;
 
+		// Некоторые плагины (NetBox) блокируют главный поток, и открывают
+		// в своем потоке диалог. Это ThreadSafe. Некорректные открытия
+		// отследить не удастся. Поэтому, считаем, если Far дернул наш
+		// ProcessSynchroEventW, то это (временно) стала главная нить
+		DWORD nPrevID = gnMainThreadId;
+		gnMainThreadId = GetCurrentThreadId();
+
 #ifdef _DEBUG
 		{
 			static int nLastType = -1;
@@ -1410,6 +1425,8 @@ int WINAPI ProcessSynchroEventW(int Event,void *Param)
 			else
 				FUNC_X(StopWaitEndSynchroW)();
 		}
+
+		gnMainThreadId = nPrevID;
 	}
 
 	return 0;
@@ -1539,7 +1556,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ghCommandThreads = new CommandThreads();
 			//HWND hConWnd = GetConEmuHWND(2);
 			// Текущая нить не обязана быть главной! Поэтому ищем первую нить процесса!
-			gnMainThreadId = GetMainThreadId();
+			gnMainThreadId = gnMainThreadIdInitial = GetMainThreadId();
 			InitHWND(/*hConWnd*/);
 			//TODO("перенести инициализацию фаровских callback'ов в SetStartupInfo, т.к. будет грузиться как Inject!");
 			//if (!StartupHooks(ghPluginModule)) {

@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RGN_ERROR 0
 #endif
 
+WARNING("Заменить *mp_FarInfo на instance копию m_FarInfo");
+
 
 static bool gbInTransparentAssert = false;
 

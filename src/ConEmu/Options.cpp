@@ -346,10 +346,10 @@ void Settings::InitSettings()
 	nIconID = IDI_ICON1;
 	isRClickSendKey = 2;
 	sRClickMacro = NULL;
-	wcscpy_c(szTabConsole, L"%s [%c]");
-	wcscpy_c(szTabEditor, L"[%s]");
-	wcscpy_c(szTabEditorModified, L"[%s] *");
-	wcscpy_c(szTabViewer, L"{%s}");
+	wcscpy_c(szTabConsole, L"<%c> %s `%p`" /*L "%s [%c]" */);
+	wcscpy_c(szTabEditor, L"<%c.%i>{%s} `%p`" /* L"[%s]" */);
+	wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] `%p`" /* L"[%s] *" */);
+	wcscpy_c(szTabViewer, L"<%c.%i>[%s] `%p` *" /* L"{%s}" */);
 	nTabLenMax = 20;
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию

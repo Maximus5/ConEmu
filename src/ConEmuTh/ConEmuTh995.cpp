@@ -50,8 +50,9 @@ void GetPluginInfoW995(void *piv)
 {
 	PluginInfo *pi = (PluginInfo*)piv;
 	//memset(pi, 0, sizeof(PluginInfo));
-	//pi->StructSize = sizeof(struct PluginInfo);
-	_ASSERTE(pi->StructSize>0 && (pi->StructSize >= sizeof(*pi)));
+	_ASSERTE(pi->StructSize==0);
+	pi->StructSize = sizeof(struct PluginInfo);
+	//_ASSERTE(pi->StructSize>0 && (pi->StructSize >= sizeof(*pi)));
 
 	static WCHAR *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1;

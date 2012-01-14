@@ -79,7 +79,7 @@ HWND ghConEmuRoot = NULL, ghConEmuWnd = NULL;
 HMODULE ghPluginModule = NULL; // ConEmuTh.dll - сам плагин
 BOOL TerminalMode = FALSE;
 DWORD gnSelfPID = 0;
-DWORD gnMainThreadId = 0;
+DWORD gnMainThreadId = 0, gnMainThreadIdInitial = 0;
 HANDLE ghDisplayThread = NULL; DWORD gnDisplayThreadId = 0;
 //HWND ghLeftView = NULL, ghRightView = NULL;
 //wchar_t* gszRootKey = NULL;
@@ -331,7 +331,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			ghPluginModule = (HMODULE)hModule;
 			//ghWorkingModule = (u64)hModule;
 			gnSelfPID = GetCurrentProcessId();
-			gnMainThreadId = GetMainThreadId();
+			gnMainThreadId = gnMainThreadIdInitial = GetMainThreadId();
 			HeapInitialize();
 			gpLocalSecurity = LocalSecurity();
 			_ASSERTE(FAR_X_VER<=FAR_Y_VER);
@@ -2192,6 +2192,13 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 {
 	if (Event != SE_COMMONSYNCHRO) return 0;
 
+	// Ќекоторые плагины (NetBox) блокируют главный поток, и открывают
+	// в своем потоке диалог. Ёто ThreadSafe. Ќекорректные открыти€
+	// отследить не удастс€. ѕоэтому, считаем, если Far дернул наш
+	// ProcessSynchroEventW, то это (временно) стала главна€ нить
+	DWORD nPrevID = gnMainThreadId;
+	gnMainThreadId = GetCurrentThreadId();
+
 	if (Param == SYNCHRO_REDRAW_PANEL)
 	{
 		DEBUGSTRCTRL(L"ProcessSynchroEventW(SYNCHRO_REDRAW_PANEL)\n");
@@ -2252,6 +2259,8 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 			LocalFree(pCmd);
 		}
 	}
+
+	gnMainThreadId = nPrevID;
 
 	return 0;
 }

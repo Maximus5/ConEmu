@@ -1127,7 +1127,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug_F3|Win32"
+			Name="Debug_F2|Win32"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
@@ -1170,7 +1170,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\Far3\ConEmu\ConEmuHk.dll"
+				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -1205,7 +1205,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug_F3|x64"
+			Name="Debug_F2|x64"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
@@ -1249,7 +1249,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\Far3\ConEmu\ConEmuHk64.dll"
+				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
@@ -1283,7 +1283,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug_F2|Win32"
+			Name="Debug_F3|Win32"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
@@ -1365,7 +1365,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug_F2|x64"
+			Name="Debug_F3|x64"
 			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"

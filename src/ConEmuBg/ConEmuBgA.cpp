@@ -110,8 +110,9 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 {
-	//pi->StructSize = sizeof(struct PluginInfo);
-	_ASSERTE(pi->StructSize>0 && (pi->StructSize >= sizeof(*pi)));
+	_ASSERTE(pi->StructSize==0);
+	pi->StructSize = sizeof(struct PluginInfo);
+	//_ASSERTE(pi->StructSize>0 && (pi->StructSize >= sizeof(*pi)));
 
 	static char *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1;
