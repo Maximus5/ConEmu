@@ -265,8 +265,10 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 						MODULEENTRY32 mi = {sizeof(mi)};
 						if (Module32First(h, &mi))
 						{
-							ListView_SetItemText(hList, nItem, alc_File, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath));
-							ListView_SetItemText(hList, nItem, alc_Path, mi.szExePath);
+							//ListView_SetItemText(hList, nItem, alc_File, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath));
+							lstrcpyn(szExeName, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath), countof(szExeName));
+							//ListView_SetItemText(hList, nItem, alc_Path, mi.szExePath);
+							lstrcpyn(szExePathName, mi.szExePath, countof(szExePathName));
 							wcscat_c(szPid, L" *32");
 						}
 						CloseHandle(h);

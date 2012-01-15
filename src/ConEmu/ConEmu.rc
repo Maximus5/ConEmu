@@ -326,7 +326,7 @@ BEGIN
     EDITTEXT        tRealFontBorders,287,173,31,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Font",IDC_STATIC,195,164,128,26
     EDITTEXT        tCursorPos,264,121,54,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Cursor:",IDC_STATIC,214,123,45,8
+    RTEXT           "Cursor (x,y,h):",IDC_STATIC,199,123,60,8
     EDITTEXT        tPerfData,93,13,36,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Data:",IDC_STATIC,69,14,22,8
     RTEXT           "Far PID:",IDC_STATIC,8,47,29,8

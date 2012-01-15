@@ -2405,7 +2405,8 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 	// В Far3 поменяли действие ПКМ 0_0
 	bool lbRBtnDrag = (r.Event.MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED) == RIGHTMOST_BUTTON_PRESSED;
 	bool lbNormalRBtnMode = false;
-	if (lbRBtnDrag && isFar(TRUE) && m_FarInfo.cbSize)
+	// gpSet->isRSelFix добавлен, чтобы этот fix можно было отключить
+	if (lbRBtnDrag && isFar(TRUE) && m_FarInfo.cbSize && gpSet->isRSelFix)
 	{
 		if ((m_FarInfo.FarVer.dwVerMajor > 3) || (m_FarInfo.FarVer.dwVerMajor == 3 && m_FarInfo.FarVer.dwBuild >= 2381))
 		{

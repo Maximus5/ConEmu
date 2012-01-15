@@ -187,8 +187,8 @@ class CVirtualConsole :
 		// PanelViews
 		PanelViewInit m_LeftPanelView, m_RightPanelView;
 		BOOL mb_LeftPanelRedraw, mb_RightPanelRedraw;
-		SMALL_RECT mrc_LastDialogs[MAX_DETECTED_DIALOGS]; int mn_LastDialogsCount;
-		SMALL_RECT mrc_Dialogs[MAX_DETECTED_DIALOGS]; int mn_DialogsCount; DWORD mn_DialogFlags;
+		SMALL_RECT mrc_LastDialogs[MAX_DETECTED_DIALOGS]; int mn_LastDialogsCount, mn_LastDialogFlags[MAX_DETECTED_DIALOGS];
+		SMALL_RECT mrc_Dialogs[MAX_DETECTED_DIALOGS]; int mn_DialogsCount; DWORD mn_DialogAllFlags, mn_DialogFlags[MAX_DETECTED_DIALOGS];
 		BOOL UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister=FALSE);
 		CRgnRects m_RgnTest, m_RgnLeftPanel, m_RgnRightPanel;
 		BOOL UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly=FALSE, BOOL abOnRegister=FALSE);

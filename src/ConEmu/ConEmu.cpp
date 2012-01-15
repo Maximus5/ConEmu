@@ -395,7 +395,9 @@ CConEmuMain::CConEmuMain()
 	//	    GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
 	//}
 
+	#ifndef _WIN64
 	mh_WinHook = NULL;
+	#endif
 	//mh_PopupHook = NULL;
 	//mp_TaskBar2 = NULL;
 	//mp_TaskBar3 = NULL;
@@ -1616,11 +1618,13 @@ CConEmuMain::~CConEmuMain()
 
 	CVirtualConsole::ClearPartBrushes();
 
+	#ifndef _WIN64
 	if (mh_WinHook)
 	{
 		UnhookWinEvent(mh_WinHook);
 		mh_WinHook = NULL;
 	}
+	#endif
 
 	//if (mh_PopupHook) {
 	//	UnhookWinEvent(mh_PopupHook);
@@ -8474,11 +8478,13 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 		}
 	}
 
+	#ifndef _WIN64
 	if (mh_WinHook)
 	{
 		UnhookWinEvent(mh_WinHook);
 		mh_WinHook = NULL;
 	}
+	#endif
 
 	//if (mh_PopupHook) {
 	//	UnhookWinEvent(mh_PopupHook);

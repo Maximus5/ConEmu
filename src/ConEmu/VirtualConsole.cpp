@@ -228,8 +228,9 @@ CVirtualConsole::CVirtualConsole(const RConStartArgs *args)
 	mb_LeftPanelRedraw = mb_RightPanelRedraw = FALSE;
 	mn_LastDialogsCount = 0;
 	memset(mrc_LastDialogs, 0, sizeof(mrc_LastDialogs));
-	mn_DialogsCount = 0; mn_DialogFlags = 0;
+	mn_DialogsCount = 0; mn_DialogAllFlags = 0;
 	memset(mrc_Dialogs, 0, sizeof(mrc_Dialogs));
+	memset(mn_DialogFlags, 0, sizeof(mn_DialogFlags));
 	//InitializeCriticalSection(&csDC); ncsTDC = 0;
 	//mb_PaintRequested = FALSE;
 	//mb_PaintLocked = FALSE;
@@ -1777,12 +1778,13 @@ bool CVirtualConsole::LoadConsoleData()
 
 	const CRgnDetect* pRgn = mp_RCon->GetDetector();
 
-	mn_DialogsCount = pRgn->GetDetectedDialogs(countof(mrc_Dialogs), mrc_Dialogs, NULL);
-	mn_DialogFlags = pRgn->GetFlags();
+	_ASSERTE(countof(mrc_Dialogs)==countof(mn_DialogFlags));
+	mn_DialogsCount = pRgn->GetDetectedDialogs(countof(mrc_Dialogs), mrc_Dialogs, mn_DialogFlags);
+	mn_DialogAllFlags = pRgn->GetFlags();
 
 	if (gpSet->isExtendUCharMap)
 	{
-		if (pRgn && (pRgn->GetFlags() & (FR_UCHARMAP|FR_UCHARMAPGLYPH)) == (FR_UCHARMAP|FR_UCHARMAPGLYPH))
+		if (pRgn && (mn_DialogAllFlags & (FR_UCHARMAP|FR_UCHARMAPGLYPH)) == (FR_UCHARMAP|FR_UCHARMAPGLYPH))
 		{
 			if (pRgn->GetDetectedDialogs(1, &rcFull, NULL, FR_UCHARMAP, FR_UCHARMAP)
 			        && pRgn->GetDetectedDialogs(1, &rcGlyph, NULL, FR_UCHARMAPGLYPH, FR_UCHARMAPGLYPH))
@@ -2432,27 +2434,45 @@ void CVirtualConsole::UpdateText()
 		int j2=j+1;
 
 		bool NextDialog = true;
-		int NextDialogX = TextWidth;
+		int NextDialogX, CurDialogX1, CurDialogX2, CurDialogI;
+		DWORD CurDialogFlags;
 
 		for(; j < end; j = j2)
 		{
 			if (NextDialog)
 			{
-				NextDialogX = TextWidth;
 				NextDialog = false;
+				CurDialogX1 = -1;
+				NextDialogX = CurDialogX2 = TextWidth;
+				CurDialogI = -1; CurDialogFlags = 0;
 				int nMax = TextWidth-1;
-				for (int i = 0; i < mn_DialogsCount; i++)
+				// Идем "снизу вверх", чтобы верхние (по Z-order) диалоги обработались первыми
+				for (int i = mn_DialogsCount-1; i >= 0; i--)
 				{
 					if (mrc_Dialogs[i].Top <= row && row <= mrc_Dialogs[i].Bottom)
 					{
-						int border = mrc_Dialogs[i].Left;
-						if (border && border >= j && NextDialogX > border)
-							NextDialogX = border;
-						else
+						int border1 = mrc_Dialogs[i].Left;
+						int border2 = mrc_Dialogs[i].Right;
+
+						// Ищем грань диалога, лежащую на этой строке, ближайший к текущей X-координате.
+						if (border1 && j <= border1 && border1 < NextDialogX)
+							NextDialogX = border1;
+						else if (border2 < nMax && j <= border2 && border2 < NextDialogX)
+							NextDialogX = border2;
+
+						// Ищем диалог (не панели), лежащий на этой строке, содержащий текущую X-координату.
+						TODO("Разделители колонок тоже хорошо бы обработать, но как бы не пересечься");
+						if (!(mn_DialogFlags[i] & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL|FR_VIEWEREDITOR)))
 						{
-							border = mrc_Dialogs[i].Right;
-							if (border < nMax && border >= j && NextDialogX > border)
-								NextDialogX = border;
+							if ((border1 <= j && j <= border2)
+								&& (CurDialogX1 <= border1 && border2 <= CurDialogX2))
+							{
+								CurDialogX1 = border1;
+								CurDialogX2 = border2;
+								CurDialogFlags = mn_DialogFlags[i];
+								_ASSERTE(CurDialogFlags!=0);
+								CurDialogI = i;
+							}
 						}
 					}
 				}
@@ -2464,13 +2484,25 @@ void CVirtualConsole::UpdateText()
 			wchar_t c = ConCharLine[j];
 			//BYTE attrForeIdx, attrBackIdx;
 			//COLORREF attrForeClr, attrBackClr;
-			bool isUnicode;
+			bool isUnicode, isDlgBorder;
 			if (j == NextDialogX)
 			{
-				isUnicode = true; NextDialog = true;
+				NextDialog = true;
+				// Проверяем что это, видимая грань, или поверх координаты другой диалог лежит?
+				if (CurDialogFlags)
+				{
+					// Координата попала в поле диалога. same as below (1)
+					isUnicode = (gpSet->isFixFarBorders && isCharBorder(c/*ConCharLine[j]*/));
+					isDlgBorder = (j == CurDialogX1 || j == CurDialogX2); // чтобы правая грань пошла как рамка;
+				}
+				else
+				{
+					isDlgBorder = isUnicode = true;
+				}
 			}
 			else
 			{
+				// same as above (1)
 				isUnicode = (gpSet->isFixFarBorders && isCharBorder(c/*ConCharLine[j]*/));
 			}
 			bool isProgress = false, isSpace = false, isUnicodeOrProgress = false, isNonSpacing = false;
@@ -2543,29 +2575,34 @@ void CVirtualConsole::UpdateText()
 				// Символом } фар помечает имена файлов вылезшие за пределы колонки...
 				// Если сверху или снизу на той же позиции рамки (или тот же '}')
 				// корректируем позицию
-				bool bBord = (j == NextDialogX) || isCharBorderVertical(c);
-				TODO("Пока не будет учтено, что поверх рамок может быть другой диалог!");
-				bool bFrame = false; // mpn_ConAttrEx[row*TextWidth+j].bDialogVBorder;
+				//bool bBord = isDlgBorder || isCharBorderVertical(c);
+				//TODO("Пока не будет учтено, что поверх рамок может быть другой диалог!");
+				//bool bFrame = false; // mpn_ConAttrEx[row*TextWidth+j].bDialogVBorder;
 
-				if (bFrame || bBord || isCharScroll(c) || (isFilePanel && c==L'}'))
+				if (isDlgBorder || isCharBorderVertical(c) || isCharScroll(c) || (isFilePanel && c==L'}'))
 				{
 					//2009-04-21 было (j-1) * nFontWidth;
 					//ConCharXLine[j-1] = j * nFontWidth;
 					bool bMayBeFrame = true;
 
-					if (!bBord && !bFrame)
+					// Пройти вверх и вних от текущей строки, проверив,
+					// есть ли в этой же X-координате вертикальная рамка (или угол)
+					TODO("Хорошо бы для панелей определять границы колонок более корректно, лучше всего - через API?");
+					//if (!bBord && !bFrame)
+					if (!isDlgBorder)
 					{
 						int R;
 						wchar_t prevC;
+						bool bBord = false;
 
-						for(R = (row-1); bMayBeFrame && !bBord && R>=0; R--)
+						for (R = (row-1); bMayBeFrame && !bBord && R>=0; R--)
 						{
 							prevC = mpsz_ConChar[R*TextWidth+j];
 							bBord = isCharBorderVertical(prevC);
 							bMayBeFrame = (bBord || isCharScroll(prevC) || (isFilePanel && prevC==L'}'));
 						}
 
-						for(R = (row+1); bMayBeFrame && !bBord && R < (int)TextHeight; R++)
+						for (R = (row+1); bMayBeFrame && !bBord && R < (int)TextHeight; R++)
 						{
 							prevC = mpsz_ConChar[R*TextWidth+j];
 							bBord = isCharBorderVertical(prevC);
@@ -2573,6 +2610,7 @@ void CVirtualConsole::UpdateText()
 						}
 					}
 
+					// Это разделитель колонок панели, полоса прокрутки или явно найденная граница диалога
 					if (bMayBeFrame)
 						ConCharXLine[j-1] = j * nFontWidth;
 				}
@@ -2855,10 +2893,12 @@ void CVirtualConsole::UpdateText()
 					}
 					else if (!bFixFarBorders)
 					{
-						// Сюда вроде попадать не должны - тогда isUnicodeOrProgress должен быть false
-						// т.к. в настройке отключено gpSet->isFixFarBorders
-						_ASSERTE(bFixFarBorders);
-						_ASSERTE(!isUnicodeOrProgress);
+						// Сюда попадаем, если это символ рамки, но 'Fix Far borders' отключен.
+						// Смысл в том, чтобы отрисовать рамку точно по знакоместу консоли.
+						// -- Сюда вроде попадать не должны - тогда isUnicodeOrProgress должен быть false
+						// -- т.к. в настройке отключено gpSet->isFixFarBorders
+						// -- _ASSERTE(bFixFarBorders);
+						// -- _ASSERTE(!isUnicodeOrProgress);
 						wchar_t ch;
 
 						while (j2 < end && ConAttrLine[j2] == attr && isCharBorder(ch = ConCharLine[j2]))
@@ -3000,7 +3040,7 @@ void CVirtualConsole::UpdateText()
 
 					} else {
 					}*/
-					if (nFontCharSet == OEM_CHARSET && !isUnicode)
+					if (nFontCharSet == OEM_CHARSET && !(bFixFarBorders && isUnicode))
 					{
 						if (nDrawLen > (int)TextWidth)
 						{
@@ -4692,7 +4732,8 @@ BOOL CVirtualConsole::CheckDialogsChanged()
 	{
 		lbChanged = TRUE;
 	}
-	else if (memcmp(mrc_Dialogs, mrc_LastDialogs, mn_DialogsCount*sizeof(mrc_Dialogs[0]))!=0)
+	else if (memcmp(mrc_Dialogs, mrc_LastDialogs, mn_DialogsCount*sizeof(mrc_Dialogs[0]))!=0
+		|| memcmp(mn_DialogFlags, mn_LastDialogFlags, mn_DialogsCount*sizeof(mn_DialogFlags[0]))!=0)
 	{
 		lbChanged = TRUE;
 	}
@@ -4701,6 +4742,7 @@ BOOL CVirtualConsole::CheckDialogsChanged()
 	{
 		//memset(mrc_LastDialogs, 0, sizeof(mrc_LastDialogs));
 		memmove(mrc_LastDialogs, mrc_Dialogs, mn_DialogsCount*sizeof(mrc_Dialogs[0]));
+		memmove(mn_LastDialogFlags, mn_DialogFlags, mn_DialogsCount*sizeof(mn_DialogFlags[0]));
 		mn_LastDialogsCount = mn_DialogsCount;
 	}
 
