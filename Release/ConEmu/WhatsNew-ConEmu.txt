@@ -1,6 +1,9 @@
 ﻿[%] Detach GUI окон.
+[%] Правки детектора панелей.
 [+] Отладочная опция: System menu -> Debug -> Load screen dump.
 [+] Windows 7: Overlay icon 'Shield' on taskbar for elevated tabs.
+[*] Far 3 build 2381: Исправим безобразие с RightClick :)
+[*] При ошибках запуска корневой команды ConEmuC.exe отображает текущую директорию (Can't create process, ErrCode, Current directory, Command to be executed).
 
 
 2012.01.10

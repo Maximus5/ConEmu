@@ -756,7 +756,7 @@ void MessageLoop()
 	MSG Msg = {NULL};
 	gbMessagingStarted = TRUE;
 
-	while(GetMessage(&Msg, NULL, 0, 0))
+	while (GetMessage(&Msg, NULL, 0, 0))
 	{
 		BOOL lbDlgMsg = FALSE;
 

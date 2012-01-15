@@ -215,6 +215,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 void CreateLogSizeFile(int nLevel);
 void LogSize(COORD* pcrSize, LPCSTR pszLabel);
 void LogString(LPCSTR asText);
+void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr);
 
 
 #if defined(__GNUC__)

@@ -1050,6 +1050,7 @@ enum FAR_MACRO_CONTROL_COMMANDS
 	MCTL_GETAREA           = 6,
 	MCTL_ADDMACRO          = 7,
 	MCTL_DELMACRO          = 8,
+	MCTL_GETLASTERROR      = 9,
 };
 
 typedef unsigned __int64 FARKEYMACROFLAGS;
@@ -1085,6 +1086,7 @@ enum FARMACROAREA
 	MACROAREA_SHELLAUTOCOMPLETION        =  15,
 	MACROAREA_DIALOGAUTOCOMPLETION       =  16,
 
+	MACROAREA_COMMON                     = 255,
 };
 
 enum FARMACROSTATE
@@ -1132,19 +1134,6 @@ struct MacroSendMacroText
 	const wchar_t *SequenceText;
 };
 
-struct MacroCheckMacroText
-{
-	union
-	{
-		struct MacroSendMacroText Text;
-		struct MacroParseResult   Result;
-	}
-#ifndef __cplusplus
-	Check
-#endif
-	;
-};
-
 typedef unsigned __int64 FARADDKEYMACROFLAGS;
 static const FARADDKEYMACROFLAGS
 	AKMFLAGS_NONE                = 0;
@@ -1155,10 +1144,11 @@ struct MacroAddMacro
 {
 	size_t StructSize;
 	void* Id;
-	FARKEYMACROFLAGS Flags;
-	INPUT_RECORD AKey;
 	const wchar_t *SequenceText;
 	const wchar_t *Description;
+	FARKEYMACROFLAGS Flags;
+	INPUT_RECORD AKey;
+	enum FARMACROAREA Area;
 	FARMACROCALLBACK Callback;
 };
 
@@ -1275,7 +1265,7 @@ struct WindowInfo
 struct WindowType
 {
 	size_t StructSize;
-	int Type;
+	enum WINDOWINFO_TYPE Type;
 };
 
 enum PROGRESSTATE
@@ -1680,7 +1670,7 @@ typedef int (WINAPI *FARAPIINPUTBOX)(
     const wchar_t *HistoryName,
     const wchar_t *SrcText,
     wchar_t *DestText,
-    int   DestLength,
+    size_t DestSize,
     const wchar_t *HelpTopic,
     INPUTBOXFLAGS Flags
 );

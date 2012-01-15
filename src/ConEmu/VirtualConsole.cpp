@@ -839,12 +839,6 @@ bool CVirtualConsole::LoadDumpConsole()
 {
 	if (!this || !mp_RCon) return false;
 
-	if (mp_RCon->GetActiveBufferType() == rbt_DumpScreen)
-	{
-		mp_RCon->SetActiveBuffer(rbt_Primary);
-		return false;
-	}
-
 	OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
 	wchar_t temp[MAX_PATH+5];
 	ofn.lStructSize=sizeof(ofn);
@@ -858,10 +852,15 @@ bool CVirtualConsole::LoadDumpConsole()
 	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
 	            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
 
-	if (!GetOpenFileName(&ofn))
+	if (!GetOpenFileName(&ofn)
+		|| !mp_RCon->LoadDumpConsole(temp))
+	{
+		if (mp_RCon->GetActiveBufferType() == rbt_DumpScreen)
+			mp_RCon->SetActiveBuffer(rbt_Primary);
 		return false;
+	}
 
-	return mp_RCon->LoadDumpConsole(temp);
+	return true;
 }
 
 // Это символы рамок и др. спец. символы

@@ -935,30 +935,8 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 	if (!lbRc)
 	{
 		nExitPlaceStep = 900;
-		wchar_t* lpMsgBuf = NULL;
-		DWORD nFmtRc, nFmtErr = 0;
 
-		if (dwErr == 5)
-		{
-			lpMsgBuf = (wchar_t*)LocalAlloc(LPTR, 128*sizeof(wchar_t));
-			_wcscpy_c(lpMsgBuf, 128, L"Access is denied.\nThis may be cause of antiviral or file permissions denial.");
-		}
-		else
-		{
-			nFmtRc = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			                       NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
-
-			if (!nFmtRc)
-				nFmtErr = GetLastError();
-		}
-
-		_printf("Can't create process, ErrCode=0x%08X, Description:\n", dwErr);
-		_wprintf((lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
-		_printf("\nCommand to be executed:\n");
-		_wprintf(gpszRunCmd);
-		_printf("\n");
-
-		if (lpMsgBuf) LocalFree(lpMsgBuf);
+		PrintExecuteError(gpszRunCmd, dwErr);
 
 		iRc = CERR_CREATEPROCESS; goto wrap;
 	}
@@ -1438,6 +1416,46 @@ void DosBoxHelp()
 		"F11, ALT-F11  (machine=cga) change tint in NTSC output modes\n"
 		"F11           (machine=hercules) cycle through amber, green, white colouring\n"
 	);
+}
+
+void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr)
+{
+	wchar_t* lpMsgBuf = NULL;
+	DWORD nFmtRc, nFmtErr = 0;
+
+	if (dwErr == 5)
+	{
+		lpMsgBuf = (wchar_t*)LocalAlloc(LPTR, 128*sizeof(wchar_t));
+		_wcscpy_c(lpMsgBuf, 128, L"Access is denied.\nThis may be cause of antiviral or file permissions denial.");
+	}
+	else
+	{
+		nFmtRc = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+
+		if (!nFmtRc)
+			nFmtErr = GetLastError();
+	}
+
+	_printf("Can't create process, ErrCode=0x%08X, Description:\n", dwErr);
+	_wprintf((lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
+	if (lpMsgBuf) LocalFree(lpMsgBuf);
+
+	size_t nCchMax = MAX_PATH*2+32;
+	lpMsgBuf = (wchar_t*)calloc(nCchMax,sizeof(*lpMsgBuf));
+	if (lpMsgBuf)
+	{
+		_wcscpy_c(lpMsgBuf, nCchMax, L"\nCurrent directory:\n");
+			_ASSERTE(nCchMax>=(MAX_PATH*2+32));
+		GetCurrentDirectory(MAX_PATH*2, lpMsgBuf+lstrlen(lpMsgBuf));
+		_wcscat_c(lpMsgBuf, nCchMax, L"\n");
+		_wprintf(lpMsgBuf);
+		free(lpMsgBuf);
+	}
+
+	_printf("\nCommand to be executed:\n");
+	_wprintf(asCmd ? asCmd : L"<null>");
+	_printf("\n");
 }
 
 void CheckUnicodeMode()

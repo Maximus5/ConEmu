@@ -990,6 +990,14 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 		//    }
 		//    #endif
 		//}
+		#ifdef _DEBUG
+		if (piRec->Event.MouseEvent.dwButtonState == RIGHTMOST_BUTTON_PRESSED
+			&& ((piRec->Event.MouseEvent.dwControlKeyState & 9) != 9))
+		{
+			nLastBtnState = piRec->Event.MouseEvent.dwButtonState;
+		}
+		#endif
+		
 		// Запомним
 		m_LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
 		m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
@@ -2394,6 +2402,30 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 		mb_BtnClicked = TRUE; mrc_BtnClickPos = crMouse;
 	}
 
+	// В Far3 поменяли действие ПКМ 0_0
+	bool lbRBtnDrag = (r.Event.MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED) == RIGHTMOST_BUTTON_PRESSED;
+	bool lbNormalRBtnMode = false;
+	if (lbRBtnDrag && isFar(TRUE) && m_FarInfo.cbSize)
+	{
+		if ((m_FarInfo.FarVer.dwVerMajor > 3) || (m_FarInfo.FarVer.dwVerMajor == 3 && m_FarInfo.FarVer.dwBuild >= 2381))
+		{
+			if (gpSet->isRClickSendKey == 0)
+			{
+				// Если не нажаты LCtrl/RCtrl/LAlt/RAlt - считаем что выделение не идет, отдаем в фар "как есть"
+				if (0 == (r.Event.MouseEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED)))
+					lbRBtnDrag = false;
+			}
+			else
+			{
+				if (0 == (r.Event.MouseEvent.dwControlKeyState & (SHIFT_PRESSED|RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED)))
+				{
+					lbNormalRBtnMode = true;
+					r.Event.MouseEvent.dwControlKeyState |= RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED;
+				}
+			}
+		}
+	}
+
 	if (messg == WM_MOUSEMOVE /*&& mb_MouseButtonDown*/)
 	{
 		// Issue 172: проблема с правым кликом на PanelTabs
@@ -2444,7 +2476,7 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 		}
 		else
 		{
-			BOOL lbRBtnDrag = (r.Event.MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED) == RIGHTMOST_BUTTON_PRESSED;
+			//BOOL lbRBtnDrag = (r.Event.MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED) == RIGHTMOST_BUTTON_PRESSED;
 			COORD con_crRBtnDrag = {};
 			BOOL con_bRBtnDrag = mp_RBuf->GetRBtnDrag(&con_crRBtnDrag);
 

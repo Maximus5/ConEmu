@@ -633,12 +633,7 @@ int ServerInit(BOOL abAlternative/*=FALSE*/)
 
 			if (!lbRc)
 			{
-				_printf("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, pszSelf); //-V576
-				wcscpy_c(szSelf, L"Current directory:\n");
-				_ASSERTE(countof(szSelf)>(MAX_PATH+32));
-				GetCurrentDirectory(MAX_PATH, szSelf);
-				wcscat_c(szSelf, L"\n");
-				_wprintf(szSelf);
+				PrintExecuteError(pszSelf, dwErr);
 				return CERR_CREATEPROCESS;
 			}
 
@@ -1611,12 +1606,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 		if (!lbRc)
 		{
-			_printf("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, pszSelf); //-V576
-			wcscpy_c(szSelf, L"Current directory:\n");
-			_ASSERTE(countof(szSelf)>(MAX_PATH+32));
-			GetCurrentDirectory(MAX_PATH, szSelf);
-			wcscat_c(szSelf, L"\n");
-			_wprintf(szSelf);
+			PrintExecuteError(pszSelf, dwErr);
 			return NULL;
 		}
 
