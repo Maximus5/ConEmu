@@ -1,7 +1,17 @@
-﻿2012.01.15a
+﻿2012.01.18
+[+] Issue 337: Attach не-фаровских консолей: System menu -> Attach to... Проверялось в Windows 7.
+[%] Issue 480: Answering "Detach console" with "no" still detaches console.
+[%] В 120115 для Far 3.x отвалился правый клик на keybar.
+[+] Консольным программа разрешено 'рисовать' в DC ConEmu функцией StretchDIBits (Far плагины ImageView и PicViewAdv).
+    ТехИнфо. Из отрисовки в ConEmu исключается прямоугольник, указанный в последнем вызове StretchDIBits.
+    Его отрисовка восстанавливается при изменении размеров окна или при изменении текста в консоли в этом прямоугольнике.
+[*] Еще немного по пропорциональным шрифтам.
+
+
+2012.01.15a
 [+] Параметр "-cur_console[:n]" можно указать после "ConEmu.exe /cmd" чтобы отключить 'Press Enter or Esc to close console'.
     Пример для UserMenu в Far 3.x
-    macro:post $If (Apanel.Folder || Apanel.Plugin && !!(APanel.OPIFlags & 0x20)) msgbox("Warning!!","Panel or current item type disallows Hiew execution",0) $Else print(@"conemu.exe /config hiew /cmd T:\Utils\Files\Hiew32\hiew32.exe -cur_console:n ") CtrlF Enter $End
+    macro:post $If (Apanel.Folder || Apanel.Plugin && !!(APanel.OPIFlags & 0x20)) msgbox("Warning!!","Panel or current item type disallows Hiew execution",0) $Else print(@"conemu.exe /config hiew /cmd C:\Utils\Files\Hiew32\hiew32.exe -cur_console:n ") CtrlF Enter $End
     Открывает файл под курсором в hiew, запущенном в новом экземпляре ConEmu.
 
 2012.01.15
