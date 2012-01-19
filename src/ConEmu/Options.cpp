@@ -871,6 +871,10 @@ void Settings::LoadSettings()
 	delete reg;
 	reg = NULL;
 
+	// Зовем "FastConfiguration" перед созданием новой/чистой конфигурации
+	CheckOptionsFast(lbNeedCreateVanilla);
+
+
 	if (lbNeedCreateVanilla)
 	{
 		SaveSettings(TRUE/*abSilent*/);
@@ -885,8 +889,6 @@ void Settings::LoadSettings()
 	//-- isKeyboardHooks();
 	// При первом запуске - проверить, хотят ли включить автообновление?
 	//-- CheckUpdatesWanted();
-
-	CheckOptionsFast();
 
 
 

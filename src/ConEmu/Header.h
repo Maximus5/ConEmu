@@ -188,7 +188,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#endif
 
 extern BOOL gbInDisplayLastError;
-int DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0, DWORD dwMsgFlags = 0);
+int DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0, DWORD dwMsgFlags = 0, LPCWSTR asTitlte = NULL);
 
 COORD /*__forceinline*/ MakeCoord(int W,int H);
 //{

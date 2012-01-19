@@ -31,10 +31,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_INJECT_MSGBOX
 //  #define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-//  #define SHOW_EXE_MSGBOX_NAME L"signtool.exe"
+//  #define SHOW_EXE_MSGBOX_NAME L"vlc.exe"
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
+
+#ifdef _DEBUG
+	//#define UseDebugExceptionFilter
+	#undef UseDebugExceptionFilter
+#else
+	#undef UseDebugExceptionFilter
+#endif
 
 //#ifdef _DEBUG
 #define USE_PIPE_SERVER
@@ -132,8 +139,10 @@ DWORD   gnImageBits = WIN3264TEST(32,64); //-V112
 
 
 #ifdef _DEBUG
-LPTOP_LEVEL_EXCEPTION_FILTER gfnPrevFilter = NULL;
-LONG WINAPI HkExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo);
+	#ifdef UseDebugExceptionFilter
+		LPTOP_LEVEL_EXCEPTION_FILTER gfnPrevFilter = NULL;
+		LONG WINAPI HkExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo);
+	#endif
 #endif
 
 void SendStarted();
@@ -394,6 +403,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		
 		if (dwConEmuHwnd)
 		{
+			// Предварительное уведомление ConEmu GUI, что запущено GUI приложение
+			// и оно может "захотеть во вкладку ConEmu".
 			DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
 			CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(nSize);
 			ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
@@ -588,9 +599,11 @@ void DllStop()
 #endif
 	
 	#ifdef _DEBUG
-	// ?gfnPrevFilter?
-	// Вернуть. A value of NULL for this parameter specifies default handling within UnhandledExceptionFilter.
-	SetUnhandledExceptionFilter(NULL);
+		#ifdef UseDebugExceptionFilter
+			// ?gfnPrevFilter?
+			// Вернуть. A value of NULL for this parameter specifies default handling within UnhandledExceptionFilter.
+			SetUnhandledExceptionFilter(NULL);
+		#endif
 	#endif
 
 	gbDllStopCalled = TRUE;
@@ -623,7 +636,9 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			#endif
 			
 			#ifdef _DEBUG
-			gfnPrevFilter = SetUnhandledExceptionFilter(HkExceptionFilter);
+				#ifdef UseDebugExceptionFilter
+					gfnPrevFilter = SetUnhandledExceptionFilter(HkExceptionFilter);
+				#endif
 			#endif
 
 			#ifdef SHOW_STARTED_MSGBOX
@@ -1182,6 +1197,7 @@ BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD 
 	switch (pCmd->hdr.nCmd)
 	{
 	case CECMD_ATTACHGUIAPP:
+		TODO("При 'внешнем' аттаче инициированном юзером из ConEmu");
 		break;
 	case CECMD_SETFOCUS:
 		break;
@@ -1217,6 +1233,40 @@ BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD 
 			{
 				ppReply->dwData[0] = lbRc;
 				ppReply->dwData[1] = nErrCode;
+			}
+		}
+		break;
+	case CECMD_STARTSERVER:
+		{
+			int nErrCode = -1;
+			wchar_t szSelf[MAX_PATH+16], *pszNamePtr, szArgs[64];
+			PROCESS_INFORMATION pi = {};
+			STARTUPINFO si = {sizeof(si)};
+
+			if (GetModuleFileName(ghOurModule, szSelf, MAX_PATH) && ((pszNamePtr = (wchar_t*)PointToName(szSelf)) != NULL))
+			{
+				// Запускаем сервер той же битности, что и текущий процесс
+				_wcscpy_c(pszNamePtr, 16, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
+				_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /GID=%u /ATTACH /PID=%u", pCmd->NewServer.nPID, GetCurrentProcessId());
+				lbRc = CreateProcess(szSelf, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+				if (lbRc)
+				{
+					CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
+					nErrCode = 0;
+				}
+				else
+				{
+					nErrCode = HRESULT_FROM_WIN32(GetLastError());
+				}
+			}
+
+			lbRc = true; // Вернуть результат однозначно
+
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_START);
+			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
+			{
+				ppReply->dwData[0] = pi.dwProcessId;
+				ppReply->dwData[1] = (DWORD)nErrCode;
 			}
 		}
 		break;

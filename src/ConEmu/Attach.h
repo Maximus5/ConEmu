@@ -30,6 +30,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CProcessData;
 
+enum AttachProcessType
+{
+	apt_Unknown = 0,
+	apt_Console,
+	apt_Gui
+};
+
+struct AttachParm
+{
+	HWND  hAttachWnd;
+	DWORD nPID, nBits;
+	AttachProcessType nType;
+};
+
 class CAttachDlg
 {
 protected:
@@ -42,7 +56,10 @@ protected:
 	CProcessData *mp_ProcessData;
 	BOOL  mb_IsWin64;
 protected:
-	bool StartAttach();
+	void OnStartAttach();
+	static bool StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType);
+public:
+	static DWORD WINAPI StartAttachThread(AttachParm* lpParam);
 public:
 	CAttachDlg();
 	~CAttachDlg();

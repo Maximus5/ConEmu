@@ -64,7 +64,7 @@ class CVirtualConsole :
 		bool isVisible();
 		int GetTabCount();
 		int GetActiveTab();
-		BOOL GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
+		bool GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
 	public:
 		WARNING("—делать protected!");
 		uint TextWidth, TextHeight; // размер в символах
@@ -95,7 +95,7 @@ class CVirtualConsole :
 		bool    isForce; // а это - сейчас (устанавливаетс€ по аргументу в Update)
 		DWORD   mn_LastBitsPixel;
 	private:
-		BOOL    mb_InUpdate;
+		bool    mb_InUpdate;
 		HDC     hDC;
 		HBITMAP hBitmap;
 		HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
@@ -103,13 +103,15 @@ class CVirtualConsole :
 		HFONT   mh_FontByIndex[MAX_FONT_STYLES+1]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
 		HFONT   mh_UCharMapFont; SMALL_RECT mrc_UCharMap;
 		wchar_t ms_LastUCharMapFont[32];
-#ifdef _DEBUG
-		BOOL    mb_DebugDumpDC;
-#endif
-		BOOL    mb_ConDataChanged;
+		
+		#ifdef _DEBUG
+		bool    mb_DebugDumpDC;
+		#endif
+		
+		bool    mb_ConDataChanged;
 		HRGN    mh_TransparentRgn;
 		//
-		BOOL	mb_ChildWindowWasFound;
+		bool	mb_ChildWindowWasFound;
 	public:
 		bool InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC, MSectionLock *pSCON);
 	private:
@@ -186,23 +188,21 @@ class CVirtualConsole :
 
 		// PanelViews
 		PanelViewInit m_LeftPanelView, m_RightPanelView;
-		BOOL mb_LeftPanelRedraw, mb_RightPanelRedraw;
+		bool mb_LeftPanelRedraw, mb_RightPanelRedraw;
 		SMALL_RECT mrc_LastDialogs[MAX_DETECTED_DIALOGS]; int mn_LastDialogsCount, mn_LastDialogFlags[MAX_DETECTED_DIALOGS];
 		SMALL_RECT mrc_Dialogs[MAX_DETECTED_DIALOGS]; int mn_DialogsCount; DWORD mn_DialogAllFlags, mn_DialogFlags[MAX_DETECTED_DIALOGS];
-		BOOL UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister=FALSE);
+		bool UpdatePanelView(bool abLeftPanel, bool abOnRegister=false);
 		CRgnRects m_RgnTest, m_RgnLeftPanel, m_RgnRightPanel;
-		BOOL UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly=FALSE, BOOL abOnRegister=FALSE);
+		bool UpdatePanelRgn(bool abLeftPanel, bool abTestOnly=FALSE, bool abOnRegister=FALSE);
 		void PolishPanelViews();
-		//HRGN CreateConsoleRgn(int x1, int y1, int x2, int y2, BOOL abTestOnly);
-		BOOL CheckDialogsChanged();
-		BOOL mb_DialogsChanged;
+		bool CheckDialogsChanged();
+		bool mb_DialogsChanged;
 		UINT mn_ConEmuFadeMsg;
 		UINT mn_ConEmuSettingsMsg;
-		//UINT mn_MsgSavePaneSnapshoot; -> CConEmuChild
 
 		void CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr);
 	public:
-		const PanelViewInit* GetPanelView(BOOL abLeftPanel);
+		const PanelViewInit* GetPanelView(bool abLeftPanel);
 
 	public:
 		// ѕлагин к фару может установить свою "картинку" дл€ панелей (например, нарисовать в фоне букву диска)
@@ -212,23 +212,23 @@ class CVirtualConsole :
 		bool HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight);
 		void NeedBackgroundUpdate();
 	protected:
-		BOOL mb_NeedBgUpdate;
+		bool mb_NeedBgUpdate;
 		bool mb_BgLastFade;
 		bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
 		CBackground* mp_Bg;
 		MSection *mcs_BkImgData;
 		size_t mn_BkImgDataMax;
 		CESERVER_REQ_SETBACKGROUND* mp_BkImgData; // followed by image data
-		BOOL mb_BkImgChanged; // ƒанные в mp_BkImgData были изменены плагином, требуетс€ отрисовка
-		BOOL mb_BkImgExist; //, mb_BkImgDelete;
+		bool mb_BkImgChanged; // ƒанные в mp_BkImgData были изменены плагином, требуетс€ отрисовка
+		bool mb_BkImgExist; //, mb_BkImgDelete;
 		LONG mn_BkImgWidth, mn_BkImgHeight;
 		// ѕоддержка EMF
 		size_t mn_BkEmfDataMax;
 		CESERVER_REQ_SETBACKGROUND* mp_BkEmfData; // followed by EMF data
-		BOOL mb_BkEmfChanged; // ƒанные в mp_BkEmfData были изменены плагином, требуетс€ отрисовка
+		bool mb_BkEmfChanged; // ƒанные в mp_BkEmfData были изменены плагином, требуетс€ отрисовка
 		//// ƒл€ проверки, что пришедша€ в основную нить картинка €вл€етс€ актуальной
 		//const CESERVER_REQ_SETBACKGROUND* mp_LastImgData;
-		UINT IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, BOOL* rpIsEmf) const; // возвращает размер данных, или 0 при ошибке
+		UINT IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, bool* rpIsEmf) const; // возвращает размер данных, или 0 при ошибке
 //public:
 		//MSection csBkImgData;
 
@@ -247,10 +247,10 @@ class CVirtualConsole :
 
 		void DumpConsole();
 		bool LoadDumpConsole();
-		BOOL Dump(LPCWSTR asFile);
+		bool Dump(LPCWSTR asFile);
 		bool Update(bool abForce = false, HDC *ahDc=NULL);
 		void UpdateCursor(bool& lRes);
-		void UpdateThumbnail(BOOL abNoSnapshoot = FALSE);
+		void UpdateThumbnail(bool abNoSnapshoot = FALSE);
 		void SelectFont(HFONT hNew);
 		void SelectBrush(HBRUSH hNew);
 		inline bool isCharBorder(wchar_t inChar);
@@ -273,7 +273,7 @@ class CVirtualConsole :
 		RECT GetRect();
 		RECT GetDcClientRect();
 		void OnFontChanged();
-		COORD ClientToConsole(LONG x, LONG y);
+		COORD ClientToConsole(LONG x, LONG y, bool StrictMonospace=false);
 		POINT ConsoleToClient(LONG x, LONG y);
 		void OnConsoleSizeChanged();
 		static void ClearPartBrushes();
@@ -281,10 +281,10 @@ class CVirtualConsole :
 		COORD FindOpaqueCell();
 		void ShowPopupMenu(POINT ptCur);
 		void ExecPopupMenuCmd(int nCmd);
-		BOOL RegisterPanelView(PanelViewInit* ppvi);
+		bool RegisterPanelView(PanelViewInit* ppvi);
 		void OnPanelViewSettingsChanged();
-		BOOL IsPanelViews();
-		BOOL CheckTransparent();
+		bool IsPanelViews();
+		bool CheckTransparent();
 		void OnTitleChanged();
 		void SavePaneSnapshoot();
 		void OnTaskbarSettingsChanged();
@@ -307,20 +307,16 @@ class CVirtualConsole :
 		WORD CharWidth(wchar_t ch);
 		void CharABC(wchar_t ch, ABC *abc);
 		bool CheckChangedTextAttr();
-		BOOL CheckTransparentRgn(BOOL abHasChildWindows);
+		bool CheckTransparentRgn(bool abHasChildWindows);
 		//void ParseLine(int row, wchar_t *ConCharLine, WORD *ConAttrLine);
 		HANDLE mh_Heap;
 		LPVOID Alloc(size_t nCount, size_t nSize);
 		void Free(LPVOID ptr);
-		//MSection csDC;  /*DWORD ncsTDC;*/
-		//BOOL mb_PaintRequested;
-		//BOOL mb_PaintLocked;
-		MSection csCON; /*DWORD ncsTCON;*/
+		MSection csCON;
 		int mn_BackColorIdx; //==0
 		void Box(LPCTSTR szText);
 		static char mc_Uni2Oem[0x10000];
 		char Uni2Oem(wchar_t ch);
-		//BOOL RetrieveConsoleInfo(BOOL bShortOnly);
 		typedef struct tag_PARTBRUSHES
 		{
 			wchar_t ch; // 0x2591 0x2592 0x2593 0x2588 - по увеличению плотности
@@ -332,10 +328,10 @@ class CVirtualConsole :
 		static PARTBRUSHES m_PartBrushes[MAX_COUNT_PART_BRUSHES];
 		//static HBRUSH PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx);
 		static HBRUSH PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeCol);
-		BOOL mb_InPaintCall;
-		BOOL mb_InConsoleResize;
+		bool mb_InPaintCall;
+		bool mb_InConsoleResize;
 		//
-		BOOL FindChanges(int row, int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2);
+		bool FindChanges(int row, int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2);
 		LONG nFontHeight, nFontWidth;
 		BYTE nFontCharSet;
 		BYTE nLastNormalBack;

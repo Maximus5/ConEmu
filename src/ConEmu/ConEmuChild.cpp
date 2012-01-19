@@ -57,6 +57,7 @@ TODO("» вообще, скроллинг нужно передавать через pipe");
 #define TIMER_SCROLL_CHECK        3203
 #define TIMER_SCROLL_CHECK_DELAY  250
 #define TIMER_SCROLL_CHECK_DELAY2 1000
+#define LOCK_DC_RECT_TIMEOUT      2000
 
 CConEmuChild::CConEmuChild()
 {
@@ -83,6 +84,8 @@ CConEmuChild::CConEmuChild()
 	m_si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_DISABLENOSCROLL;
 	mb_ScrollDisabled = FALSE;
 	m_LastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
+	
+	ZeroStruct(m_LockDc);
 }
 
 CConEmuChild::~CConEmuChild()
@@ -709,8 +712,26 @@ void CConEmuChild::Invalidate()
 		//RECT rcMainClient; Get ClientRect(ghWnd, &rcMainClient);
 		//RECT rcClient = gpConEmu->CalcRect(CER_BACK, rcMainClient, CER_MAINCLIENT);
 		//InvalidateRect(ghWnd, &rcClient, FALSE);
-
-		InvalidateRect(mh_WndDC, NULL, FALSE);
+		
+		if (!m_LockDc.bLocked)
+		{
+			InvalidateRect(mh_WndDC, NULL, FALSE);
+		}
+		else
+		{
+			RECT rcClient; GetClientRect(mh_WndDC, &rcClient);
+			HRGN hRgn = CreateRectRgn(0, 0, rcClient.right, rcClient.bottom);
+			HRGN hLock = CreateRectRgn(m_LockDc.rcScreen.left, m_LockDc.rcScreen.top, m_LockDc.rcScreen.right, m_LockDc.rcScreen.bottom);
+			int iRc = CombineRgn(hRgn, hRgn, hLock, RGN_DIFF);
+			
+			if (iRc == ERROR)
+				InvalidateRect(mh_WndDC, NULL, FALSE);
+			else if (iRc != NULLREGION)
+				InvalidateRgn(mh_WndDC, hRgn, FALSE);
+			
+			DeleteObject(hLock);
+			DeleteObject(hRgn);
+		}
 	}
 	else
 	{
@@ -1097,4 +1118,63 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 		m_TScrollHide.Start();
 	else if (m_TScrollHide.IsStarted())
 		m_TScrollHide.Stop();
+}
+
+// 0 - блокировок нет
+// 1 - заблокировано, игнорировать заполнение консоли пробелами (таймаут обновлени€ буферов)
+// 2 - заблокировано, при любом чихе в этот пр€моугольник - снимать блокировку
+int CConEmuChild::IsDcLocked(RECT* CurrentConLockedRect)
+{
+	if (!m_LockDc.bLocked)
+		return 0;
+	
+	if (CurrentConLockedRect)
+		*CurrentConLockedRect = m_LockDc.rcCon;
+	_ASSERTE(!(m_LockDc.rcCon.left < 0 || m_LockDc.rcCon.top < 0 || m_LockDc.rcCon.right < 0 || m_LockDc.rcCon.bottom < 0));
+
+	DWORD nDelta = GetTickCount() - m_LockDc.nLockTick;
+
+	return (nDelta <= LOCK_DC_RECT_TIMEOUT) ? 1 : 2;
+}
+
+void CConEmuChild::LockDcRect(bool bLock, RECT* Rect)
+{
+	if (!bLock)
+	{
+		if (m_LockDc.bLocked)
+		{
+			m_LockDc.bLocked = FALSE;
+			Invalidate();
+		}
+	}
+	else
+	{
+		if (!Rect)
+		{
+			_ASSERTE(Rect!=NULL);
+			return;
+		}
+
+		CVirtualConsole* pVCon = (CVirtualConsole*)this;
+		CVConGuard guard(pVCon);
+
+		TODO("’орошо бы здесь запомнить в CompatibleBitmap то, что нарисовали. Ёто нужно делать в MainThread!!");
+		
+		m_LockDc.rcScreen = *Rect;
+		COORD cr = pVCon->ClientToConsole(m_LockDc.rcScreen.left+1, m_LockDc.rcScreen.top+1, true);
+		m_LockDc.rcCon.left = cr.X; m_LockDc.rcCon.top = cr.Y;
+		cr = pVCon->ClientToConsole(m_LockDc.rcScreen.right-1, m_LockDc.rcScreen.bottom-1, true);
+		m_LockDc.rcCon.right = cr.X; m_LockDc.rcCon.bottom = cr.Y;
+
+		if (m_LockDc.rcCon.left < 0 || m_LockDc.rcCon.top < 0 || m_LockDc.rcCon.right < 0 || m_LockDc.rcCon.bottom < 0)
+		{
+			_ASSERTE(!(m_LockDc.rcCon.left < 0 || m_LockDc.rcCon.top < 0 || m_LockDc.rcCon.right < 0 || m_LockDc.rcCon.bottom < 0));
+			LockDcRect(false);
+			return;
+		}
+		
+		m_LockDc.nLockTick = GetTickCount();
+		m_LockDc.bLocked = TRUE;
+		ValidateRect(mh_WndDC, &m_LockDc.rcScreen);
+	}
 }

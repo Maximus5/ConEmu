@@ -1838,15 +1838,23 @@ HANDLE MEvent::GetHandle()
 
 #ifndef CONEMU_MINIMAL
 MSetter::MSetter(BOOL* st) :
-	mp_BoolVal(NULL), mdw_DwordVal(NULL)
+	mp_BOOLVal(NULL), mp_boolVal(NULL), mdw_DwordVal(NULL)
 {
 	type = st_BOOL;
-	mp_BoolVal = st;
+	mp_BOOLVal = st;
 
-	if (mp_BoolVal) *mp_BoolVal = TRUE;
+	if (mp_BOOLVal) *mp_BOOLVal = TRUE;
+}
+MSetter::MSetter(bool* st) :
+	mp_BOOLVal(NULL), mp_boolVal(NULL), mdw_DwordVal(NULL)
+{
+	type = st_bool;
+	mp_boolVal = st;
+
+	if (mp_boolVal) *mp_boolVal = true;
 }
 MSetter::MSetter(DWORD* st, DWORD setValue) :
-	mp_BoolVal(NULL), mdw_DwordVal(NULL)
+	mp_BOOLVal(NULL), mp_boolVal(NULL), mdw_DwordVal(NULL)
 {
 	type = st_DWORD; mdw_OldDwordValue = *st; *st = setValue;
 	mdw_DwordVal = st;
@@ -1859,7 +1867,11 @@ void MSetter::Unlock()
 {
 	if (type==st_BOOL)
 	{
-		if (mp_BoolVal) *mp_BoolVal = FALSE;
+		if (mp_BOOLVal) *mp_BOOLVal = FALSE;
+	}
+	else if (type==st_bool)
+	{
+		if (mp_boolVal) *mp_boolVal = false;
 	}
 	else if (type==st_DWORD)
 	{

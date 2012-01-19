@@ -8321,6 +8321,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			if (!lbCreated)
 			{
 				RConStartArgs args; args.bDetached = gpConEmu->mb_StartDetached;
+				if (!args.bDetached)
+					args.pszSpecialCmd = lstrdup(gpSet->GetCmd());
 
 				if (!CreateCon(&args))
 				{

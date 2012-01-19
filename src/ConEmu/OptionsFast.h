@@ -29,4 +29,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-void CheckOptionsFast();
+void CheckOptionsFast(bool abCreatingVanilla = false);

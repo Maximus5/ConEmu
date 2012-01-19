@@ -661,7 +661,8 @@ int ServerInit(BOOL abAlternative/*=FALSE*/)
 			CAdjustProcessToken token;
 			token.Enable(1, SE_DEBUG_NAME);
 
-			gpSrv->hRootProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, gpSrv->dwRootProcess);
+			// PROCESS_ALL_ACCESS may fails on WinXP!
+			gpSrv->hRootProcess = OpenProcess((STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0xFFF), FALSE, gpSrv->dwRootProcess);
 			if (!gpSrv->hRootProcess)
 				gpSrv->hRootProcess = OpenProcess(dwFlags, FALSE, gpSrv->dwRootProcess);
 
@@ -2560,6 +2561,11 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 #ifdef _DEBUG
 	DWORD nPacketID = gpSrv->pConsole->info.nPacketId;
 #endif
+
+	if (gpSrv->hExtConsoleCommit)
+	{
+		WaitForSingleObject(gpSrv->hExtConsoleCommit, EXTCONCOMMIT_TIMEOUT);
+	}
 
 	if (ReadConsoleInfo())
 		lbChanged = TRUE;

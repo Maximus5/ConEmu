@@ -169,6 +169,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	memset(&m_LastMouse, 0, sizeof(m_LastMouse));
 	memset(&m_LastMouseGuiPos, 0, sizeof(m_LastMouseGuiPos));
 	mb_DataChanged = FALSE;
+	mb_RConStartedSuccess = FALSE;
 	ms_LogShellActivity[0] = 0; mb_ShellActivityLogged = false;
 	mn_ProgramStatus = 0; mn_FarStatus = 0; mn_Comspec4Ntvdm = 0;
 	isShowConsole = gpSet->isConVisible;
@@ -515,7 +516,7 @@ bool CRealConsole::SetActiveBuffer(CRealBuffer* aBuffer)
 BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
 {
 	if (!this) return FALSE;
-
+	
 	// Всегда меняем _реальный_ буфер консоли.
 	return mp_RBuf->SetConsoleSize(sizeX, sizeY, sizeBuffer, anCmdID);
 }
@@ -778,7 +779,8 @@ BOOL CRealConsole::AttachPID(DWORD dwPID)
 
 				if (GetWindowThreadProcessId(hConsole,  &dwCurPID))
 				{
-					HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS,FALSE,dwCurPID);
+					// PROCESS_ALL_ACCESS may fails on WinXP!
+					HANDLE hProcess = OpenProcess((STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0xFFF),FALSE,dwCurPID);
 					dwErr = GetLastError();
 
 					if (AttachConsole(dwCurPID))
@@ -1249,7 +1251,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			&& ((GetTickCount() - nConsoleStartTick) > PROCESS_WAIT_START_TIME))
 		{
 			lbChildProcessCreated = TRUE;
-			gpConEmu->OnRConStartedSuccess(pRCon);
+			pRCon->OnRConStartedSuccess();
 		}
 
 		// IDEVENT_SERVERPH уже проверен, а код возврата обработается при выходе из цикла
@@ -1707,10 +1709,17 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		//if (nExitCode >= CERR_FIRSTEXITCODE && nExitCode <= CERR_LASTEXITCODE)
 		//{
 		//}
-		if (nExitCode != 0)
-			pRCon->SetConStatus(szErrInfo);
-		else
+		if (nExitCode == 0)
+		{
 			pRCon->SetConStatus(NULL);
+			// А это чтобы не осталось висеть окно ConEmu, раз сервер завершился корректно
+			if (!lbChildProcessCreated)
+				pRCon->OnRConStartedSuccess();
+		}
+		else
+		{
+			pRCon->SetConStatus(szErrInfo);
+		}
 	}
 
 	pRCon->StopSignal();
@@ -2072,8 +2081,8 @@ BOOL CRealConsole::StartProcess()
 				                  + _tcslen(szCurrentDirectory) + 2
 				                 );
 				mp_sei = (SHELLEXECUTEINFO*)GlobalAlloc(GPTR, nWholeSize);
-				mp_sei->hwnd = ghWnd;
 				mp_sei->cbSize = sizeof(SHELLEXECUTEINFO);
+				mp_sei->hwnd = ghWnd;
 				//mp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
 				mp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NOASYNC;
 				mp_sei->lpVerb = (wchar_t*)(mp_sei+1);
@@ -2274,8 +2283,12 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 		mcr_LastMouseEventPos.X = mcr_LastMouseEventPos.Y = -1;
 	}
 
+	// Если включен фаровский граббер - то координаты нужны скорректированные, чтобы точно позиции выделять
+	TODO("StrictMonospace включать пока нельзя, т.к. сбивается клик в редакторе, например. Да и в диалогах есть текстовые поля!");
+	bool bStrictMonospace = false; //!isConSelectMode(); // она реагирует и на фаровский граббер
+
 	// Получить известные координаты символов
-	COORD crMouse = ScreenToBuffer(mp_VCon->ClientToConsole(x,y));
+	COORD crMouse = ScreenToBuffer(mp_VCon->ClientToConsole(x,y, bStrictMonospace));
 	
 	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
 		return; // В консоль не пересылать, событие обработал "сам буфер"
@@ -2302,6 +2315,10 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 
 void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend /*= false*/)
 {
+	// По идее, мышь в консоль может пересылаться, только
+	// если активный буфер - буфер реальной консоли
+	_ASSERTE(mp_ABuf==mp_RBuf);
+
 	INPUT_RECORD r; memset(&r, 0, sizeof(r));
 	r.EventType = MOUSE_EVENT;
 
@@ -2418,7 +2435,8 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 			}
 			else
 			{
-				if (0 == (r.Event.MouseEvent.dwControlKeyState & (SHIFT_PRESSED|RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED)))
+				// Координата попадает в панель (включая правую/левую рамку)?
+				if (CoordInPanel(crMouse) && !(r.Event.MouseEvent.dwControlKeyState & (SHIFT_PRESSED|RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED)))
 				{
 					lbNormalRBtnMode = true;
 					r.Event.MouseEvent.dwControlKeyState |= RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED;
@@ -4843,6 +4861,20 @@ CESERVER_REQ* CRealConsole::cmdOnSetConsoleKeyShortcuts(HANDLE hPipe, CESERVER_R
 	return pOut;
 }
 
+CESERVER_REQ* CRealConsole::cmdLockDc(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	CESERVER_REQ* pOut = NULL;
+
+	DEBUGSTRCMD(L"GUI recieved CECMD_LOCKDC\n");
+	
+	_ASSERTE(pIn->LockDc.hDcWnd == mp_VCon->GetView());
+	
+	mp_VCon->LockDcRect(pIn->LockDc.bLock, &pIn->LockDc.Rect);
+	
+	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));	
+	return pOut;
+}
+
 //CESERVER_REQ* CRealConsole::cmdAssert(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
 //{
 //	CESERVER_REQ* pOut = NULL;
@@ -5022,6 +5054,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		pOut = cmdOnSetConsoleKeyShortcuts(hPipe, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_ALIVE)
 		pOut = ExecuteNewCmd(CECMD_ALIVE, sizeof(CESERVER_REQ_HDR));
+	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
+	else if (pIn->hdr.nCmd == CECMD_LOCKDC)
+		pOut = cmdLockDc(hPipe, pIn, nDataSize);
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(hPipe, pIn, nDataSize);
 	else
@@ -5865,6 +5900,17 @@ void CRealConsole::OnServerStarted()
 	// Возвращается через CESERVER_REQ_STARTSTOPRET
 	//if ((gpSet->isMonitorConsoleLang & 2) == 2) // Один Layout на все консоли
 	//	SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gpConEmu->GetActiveKeyboardLayout());
+}
+
+// Если эта функция вызвана - считаем, что консоль запустилась нормально
+// И при ее закрытии не нужно оставлять висящим окно ConEmu
+void CRealConsole::OnRConStartedSuccess()
+{
+	if (this)
+	{
+		mb_RConStartedSuccess = TRUE;
+		gpConEmu->OnRConStartedSuccess(this);
+	}
 }
 
 void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
@@ -7057,10 +7103,10 @@ void CRealConsole::UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab)
 }
 
 // Если такого таба нет - pTab НЕ ОБНУЛЯТЬ!!!
-BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
+bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 {
 	if (!this)
-		return FALSE;
+		return false;
 
 	//if (hGuiWnd)
 	//{
@@ -7069,9 +7115,9 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	//		pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
 	//		int nMaxLen = min(countof(TitleFull) , countof(pTab->Name));
 	//		GetWindowText(hGuiWnd, pTab->Name, nMaxLen);
-	//		return TRUE;
+	//		return true;
 	//	}
-	//	return FALSE;
+	//	return false;
 	//}
 
 	if (!mp_tabs || tabIdx<0 || tabIdx>=mn_tabsCount || hGuiWnd)
@@ -7084,15 +7130,15 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 			int nMaxLen = min(countof(TitleFull) , countof(pTab->Name));
 			lstrcpyn(pTab->Name, TitleFull, nMaxLen);
 			UpdateTabFlags(pTab);
-			return TRUE;
+			return true;
 		}
 
-		return FALSE;
+		return false;
 	}
 
 	// На время выполнения DOS-команд - только один таб
 	if ((mn_ProgramStatus & CES_FARACTIVE) == 0 && tabIdx > 0)
-		return FALSE;
+		return false;
 
 	memmove(pTab, mp_tabs+tabIdx, sizeof(ConEmuTab));
 
@@ -7170,7 +7216,7 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 
 	UpdateTabFlags(pTab);
 
-	return TRUE;
+	return true;
 }
 
 int CRealConsole::GetModifiedEditors()
@@ -8929,23 +8975,24 @@ int CRealConsole::GetStatusLineCount(int nLeftPanelEdge)
 	return mp_RBuf->GetStatusLineCount(nLeftPanelEdge);
 }
 
-int CRealConsole::CoordInPanel(COORD cr)
+// abIncludeEdges - включать 
+int CRealConsole::CoordInPanel(COORD cr, BOOL abIncludeEdges /*= FALSE*/)
 {
-	if (!this)
+	if (!this || mp_ABuf != mp_RBuf)
 		return 0;
 
 	RECT rcPanel;
 
-	if (mp_RBuf->GetPanelRect(FALSE, &rcPanel) && CoordInRect(cr, rcPanel))
+	if (GetPanelRect(FALSE, &rcPanel, FALSE, abIncludeEdges) && CoordInRect(cr, rcPanel))
 		return 1;
 
-	if (mp_RBuf->GetPanelRect(TRUE, &rcPanel) && CoordInRect(cr, rcPanel))
+	if (mp_RBuf->GetPanelRect(TRUE, &rcPanel, FALSE, abIncludeEdges) && CoordInRect(cr, rcPanel))
 		return 2;
 
 	return 0;
 }
 
-BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/)
+BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/, BOOL abIncludeEdges /*= FALSE*/)
 {
 	if (!this || mp_ABuf != mp_RBuf)
 	{
@@ -9625,14 +9672,15 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	}
 }
 
-void CRealConsole::Detach()
+bool CRealConsole::Detach()
 {
-	if (!this) return;
+	if (!this)
+		return false;
 
 	if (hGuiWnd)
 	{
 		if (MessageBox(NULL, L"Detach GUI application from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
-			return;
+			return false;
 
 		//#ifdef _DEBUG
 		//WINDOWPLACEMENT wpl = {sizeof(wpl)};
@@ -9653,7 +9701,7 @@ void CRealConsole::Detach()
 	else
 	{
 		if (MessageBox(NULL, L"Detach console from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
-			return;
+			return false;
 	
 		ShowConsole(1);
 		// Уведомить сервер, что он больше не наш
@@ -9670,6 +9718,7 @@ void CRealConsole::Detach()
 
 	// Чтобы случайно не закрыть RealConsole?
 	m_Args.bDetached = TRUE;
+	return true;
 }
 
 // Запустить Elevated копию фара с теми же папками на панелях

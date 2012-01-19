@@ -1,5 +1,39 @@
 
+/*
+Copyright (c) 2009-2012 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <windows.h>
+
+#ifdef _DEBUG
+//  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
+//  #define SHOW_STARTED_MSGBOX
+#else
+//
+#endif
 
 #ifndef __GNUC__
 #include <crtdbg.h>
@@ -8,7 +42,7 @@
 #endif
 
 #define MASSERT_HEADER_DEFINED
-#define MEMORY_HEADER_DEFINED
+//#define MEMORY_HEADER_DEFINED
 
 #include "../common/defines.h"
 #include "../common/pluginW1900.hpp"
@@ -49,12 +83,25 @@ extern "C" {
 
 
 HMODULE ghOurModule = NULL; // ConEmuDw.dll
-HWND    ghConWnd = NULL; // инициализируется в CheckBuffers()
-HWND    ghConEmuWnd = NULL; // extern для MAssert
+HWND    ghConWnd = NULL; // VirtualCon или RealCon. инициализируется в CheckBuffers()
+
+
+/* extern для MAssert, Здесь НЕ используется */
+/* */       HWND ghConEmuWnd = NULL;      /* */
+/* extern для MAssert, Здесь НЕ используется */
+
+#ifdef USE_COMMIT_EVENT
+HWND    ghRealConWnd = NULL;
+bool    gbBatchStarted = false;
+HANDLE  ghBatchEvent = NULL;
+DWORD   gnBatchRegPID = 0;
+#endif
+
+CESERVER_CONSOLE_MAPPING_HDR SrvMapping = {};
 
 AnnotationHeader* gpTrueColor = NULL;
 HANDLE ghTrueColor = NULL;
-BOOL CheckBuffers();
+BOOL CheckBuffers(bool abWrite = false);
 void CloseBuffers();
 
 bool gbInitialized = false;
@@ -69,7 +116,13 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			{
 				//HeapInitialize();
 				ghOurModule = (HMODULE)hModule;
+				ghWorkingModule = (u64)hModule;
+				HeapInitialize();
 				
+				#ifdef SHOW_STARTED_MSGBOX
+				char szMsg[128]; wsprintfA(szMsg, "ConEmuDW, FAR Pid=%u", GetCurrentProcessId());
+				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuDW*.dll loaded", szMsg, 0);
+				#endif
 			}
 			break;
 		
@@ -146,7 +199,7 @@ BOOL GetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWo
 	return TRUE;
 }
 
-BOOL CheckBuffers()
+BOOL CheckBuffers(bool abWrite /*= false*/)
 {
 	if (!gbInitialized)
 	{
@@ -175,6 +228,10 @@ BOOL CheckBuffers()
 	{
 		ghConWnd = hCon;
 		CloseBuffers();
+
+		#ifdef USE_COMMIT_EVENT
+		ghRealConWnd = GetConEmuHWND(2);
+		#endif
 		
 		//TODO: Пока работаем "по-старому", через буфер TrueColor. Переделать, он не оптимален
 		wchar_t szMapName[128];
@@ -191,12 +248,65 @@ BOOL CheckBuffers()
 			ghTrueColor = NULL;
 			return FALSE;
 		}
+		
+		#ifdef USE_COMMIT_EVENT
+		if (!LoadSrvMapping(ghRealConWnd, SrvMapping))
+		{
+			CloseBuffers();
+			SetLastError(E_HANDLE);
+			return FALSE;
+		}
+		#endif
 	}
-	if (gpTrueColor && !gpTrueColor->locked)
+	if (gpTrueColor)
 	{
-		//TODO: Сбросить флаги валидности ячеек?
-		gpTrueColor->locked = TRUE;
+		if (!gpTrueColor->locked)
+		{
+			//TODO: Сбросить флаги валидности ячеек?
+			gpTrueColor->locked = TRUE;
+		}
+		
+		#ifdef USE_COMMIT_EVENT
+		if (!gbBatchStarted)
+		{
+			gbBatchStarted = true;
+			
+			if (!ghBatchEvent)
+				ghBatchEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+				
+			if (ghBatchEvent)
+			{
+				ResetEvent(ghBatchEvent);
+				
+				// Если еще не регистрировались...
+				if (!gnBatchRegPID || gnBatchRegPID != SrvMapping.nServerPID)
+				{
+					gnBatchRegPID = SrvMapping.nServerPID;
+					CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_REGEXTCONSOLE, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_REGEXTCON));
+					if (pIn)
+					{
+						HANDLE hServer = OpenProcess(PROCESS_DUP_HANDLE, FALSE, gnBatchRegPID);
+						if (hServer)
+						{
+							HANDLE hDupEvent = NULL;
+							if (DuplicateHandle(GetCurrentProcess(), ghBatchEvent, hServer, &hDupEvent, 0, FALSE, DUPLICATE_SAME_ACCESS))
+							{
+								pIn->RegExtCon.hCommitEvent = hDupEvent;
+								CESERVER_REQ* pOut = ExecuteSrvCmd(gnBatchRegPID, pIn, ghRealConWnd);
+								if (pOut)
+									ExecuteFreeResult(pOut);
+							}
+							CloseHandle(hServer);
+						}
+						ExecuteFreeResult(pIn);
+					}
+				}
+				
+			}
+		}
+		#endif
 	}
+	
 	return (gpTrueColor!=NULL);
 }
 
@@ -676,7 +786,7 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 
 BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion)
 {
-	BOOL lbTrueColor = CheckBuffers();
+	BOOL lbTrueColor = CheckBuffers(true);
 	UNREFERENCED_PARAMETER(lbTrueColor);
 	/*
 	struct FAR_CHAR_INFO
@@ -858,6 +968,14 @@ BOOL WINAPI Commit()
 			gpTrueColor->locked = FALSE;
 		}
 	}
+	
+	#ifdef USE_COMMIT_EVENT
+	// "Отпустить" сервер
+	if (ghBatchEvent)
+		SetEvent(ghBatchEvent);
+	gbBatchStarted = false;
+	#endif
+	
 	return TRUE; //TODO: А чего возвращать-то?
 }
 

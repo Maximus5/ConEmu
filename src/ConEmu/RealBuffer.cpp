@@ -777,6 +777,9 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 {
 	if (!this) return FALSE;
 
+	// Если была блокировка DC - сбросим ее
+	mp_RCon->mp_VCon->LockDcRect(FALSE, NULL);
+
 	if (m_Type != rbt_Primary)
 	{
 		// Все альтернативные буферы "меняются" виртуально
@@ -4068,7 +4071,7 @@ wrap:
 	return result;
 }
 
-BOOL CRealBuffer::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/)
+BOOL CRealBuffer::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/, BOOL abIncludeEdges /*= FALSE*/)
 {
 	if (!this)
 	{
@@ -4093,6 +4096,12 @@ BOOL CRealBuffer::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/)
 
 		if (mr_LeftPanel.right <= mr_LeftPanel.left)
 			return FALSE;
+	}
+	
+	if (prc && !abFull && abIncludeEdges)
+	{
+		prc->left  = abRight ? mr_RightPanelFull.left  : mr_LeftPanelFull.left;
+		prc->right = abRight ? mr_RightPanelFull.right : mr_LeftPanelFull.right;
 	}
 
 	return TRUE;

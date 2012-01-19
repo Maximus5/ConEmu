@@ -605,7 +605,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	CESERVER_REQ* pOut = NULL;
 	HANDLE hPipe = NULL;
 	BYTE cbReadBuf[600]; // чтобы CESERVER_REQ_OUTPUTFILE поместился
-	wchar_t szErr[MAX_PATH*2];
+	wchar_t szErr[MAX_PATH*2]; szErr[0] = 0;
 	BOOL fSuccess = FALSE;
 	DWORD cbRead = 0, /*dwMode = 0,*/ dwErr = 0;
 

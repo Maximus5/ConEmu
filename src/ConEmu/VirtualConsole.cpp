@@ -241,9 +241,9 @@ CVirtualConsole::CVirtualConsole(const RConStartArgs *args)
 	nFontWidth = gpSetCls->FontWidth();
 	nFontCharSet = gpSetCls->FontCharSet();
 	nLastNormalBack = 255;
-	mb_ConDataChanged = FALSE;
+	mb_ConDataChanged = false;
 	mh_TransparentRgn = NULL;
-	mb_ChildWindowWasFound = FALSE;
+	mb_ChildWindowWasFound = false;
 #ifdef _DEBUG
 	mn_BackColorIdx = 2; // Green
 #else
@@ -256,7 +256,7 @@ CVirtualConsole::CVirtualConsole(const RConStartArgs *args)
 	hSelectedFont = NULL; hOldFont = NULL;
 	PointersInit();
 	mb_IsForceUpdate = false;
-	mb_InUpdate = FALSE;
+	mb_InUpdate = false;
 	hBrush0 = NULL; hSelectedBrush = NULL; hOldBrush = NULL;
 	isEditor = false;
 	memset(&csbi, 0, sizeof(csbi)); mdw_LastError = 0;
@@ -280,9 +280,7 @@ CVirtualConsole::CVirtualConsole(const RConStartArgs *args)
 	if (gpSet->wndHeight)
 		TextHeight = gpSet->wndHeight;
 
-#ifdef _DEBUG
-	mb_DebugDumpDC = FALSE;
-#endif
+	DEBUGTEST(mb_DebugDumpDC = false);
 
 	//if (gpSet->isShowBgImage)
 	//    gpSet->LoadBackgroundFile(gpSet->sBgImage);
@@ -523,18 +521,18 @@ int CVirtualConsole::GetActiveTab()
 	return mp_RCon->GetActiveTab();
 }
 
-BOOL CVirtualConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
+bool CVirtualConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 {
 	if (!this)
 	{
 		_ASSERTE(this!=NULL);
-		return FALSE;
+		return false;
 	}
 	if (!mp_RCon)
 	{
 		pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
 		lstrcpyn(pTab->Name, gpConEmu->GetDefaultTitle(), countof(pTab->Name));
-		return TRUE;
+		return true;
 	}
 	return mp_RCon->GetTab(tabIdx, pTab);
 }
@@ -800,7 +798,7 @@ void CVirtualConsole::DumpConsole()
 	Dump(temp);
 }
 
-BOOL CVirtualConsole::Dump(LPCWSTR asFile)
+bool CVirtualConsole::Dump(LPCWSTR asFile)
 {
 	if (!this || !mp_RCon)
 		return FALSE;
@@ -1258,8 +1256,76 @@ char CVirtualConsole::Uni2Oem(wchar_t ch)
 
 bool CVirtualConsole::CheckChangedTextAttr()
 {
-	textChanged = 0!=memcmp(mpsz_ConChar, mpsz_ConCharSave, TextLen * sizeof(*mpsz_ConChar));
-	attrChanged = 0!=memcmp(mpn_ConAttrEx, mpn_ConAttrExSave, TextLen * sizeof(*mpn_ConAttrEx));
+	bool lbChanged = false;
+	RECT conLocked;
+	int nLocked = IsDcLocked(&conLocked);
+
+	if (isForce && !nLocked)
+	{
+		lbChanged = textChanged = attrChanged = true;
+	}
+	else
+	{
+		textChanged = 0!=memcmp(mpsz_ConChar, mpsz_ConCharSave, TextLen * sizeof(*mpsz_ConChar));
+		attrChanged = 0!=memcmp(mpn_ConAttrEx, mpn_ConAttrExSave, TextLen * sizeof(*mpn_ConAttrEx));
+		
+		if ((lbChanged = (textChanged || attrChanged)))
+		{
+			if (nLocked)
+			{
+				// Нужно проверить, были ли изменения в conLocked
+				if ((UINT)conLocked.right >= TextWidth || (UINT)conLocked.bottom >= TextHeight)
+				{
+					// Хм, по идее, уже должен был быть сброшен при ресайзе консоли
+					_ASSERTE((UINT)conLocked.right < TextWidth && (UINT)conLocked.bottom < TextHeight);
+					LockDcRect(false);
+				}
+				else
+				{
+					wchar_t* pSpaces = NULL;
+					bool lbLineChanged;
+					size_t nChars = conLocked.right - conLocked.left + 1;
+					if (nLocked == 1)
+					{
+						pSpaces = (wchar_t*)malloc((nChars+1)*sizeof(*pSpaces));
+						wmemset(pSpaces, L' ', nChars);
+						pSpaces[nChars] = 0;
+					}
+
+					for (int Y = conLocked.top; Y <= conLocked.bottom; Y++)
+					{
+						size_t nShift = Y * TextWidth + conLocked.left;
+						lbLineChanged = 0!=memcmp(mpsz_ConChar+nShift, mpsz_ConCharSave+nShift, nChars * sizeof(*mpsz_ConChar));
+
+						if (lbLineChanged)
+						{
+							if (nLocked == 1)
+							{
+								// Игнорировать заполнение пробелами
+								if (0==memcmp(mpsz_ConChar+nShift, pSpaces, nChars * sizeof(*mpsz_ConChar)))
+									continue;
+							}
+							// При любых изменениях - сброс
+							LockDcRect(false);
+							break;
+						}
+
+						TODO("Можно бы еще и атрибуты проверять, но это практически всегда избыточно");
+					}
+
+					if (pSpaces)
+						free(pSpaces);
+				}
+			}
+		}
+		else
+		{
+			lbChanged = isForce;
+		}
+	}
+
+	return lbChanged;
+
 //#ifdef MSGLOGGER
 //    COORD ch;
 //    if (textChanged) {
@@ -1281,10 +1347,10 @@ bool CVirtualConsole::CheckChangedTextAttr()
 //        }
 //    }
 //#endif
-	return textChanged || attrChanged;
+//	return textChanged || attrChanged;
 }
 
-void CVirtualConsole::UpdateThumbnail(BOOL abNoSnapshoot /*= FALSE*/)
+void CVirtualConsole::UpdateThumbnail(bool abNoSnapshoot /*= FALSE*/)
 {
 	if (!this)
 		return;
@@ -1385,27 +1451,22 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	//------------------------------------------------------------------------
 	bool updateText, updateCursor;
 
-	if (isForce)
-	{
-		updateText = updateCursor = attrChanged = textChanged = true;
-	}
-	else
-	{
-		// Do we have to update changed text?
-		updateText = CheckChangedTextAttr();
+	// Do we have to update changed text? isForce taked into account
+	updateText = CheckChangedTextAttr();
 
-		// Do we have to update text under changed cursor?
-		// Important: check both 'cinf.bVisible' and 'Cursor.isVisible',
-		// because console may have cursor hidden and its position changed -
-		// in this case last visible cursor remains shown at its old place.
-		// Also, don't check foreground window here for the same reasons.
-		// If position is the same then check the cursor becomes hidden.
-		if (Cursor.x != csbi.dwCursorPosition.X || Cursor.y != csbi.dwCursorPosition.Y)
-			// сменилась позиция. обновляем если курсор видим
-			updateCursor = cinf.bVisible || Cursor.isVisible || Cursor.isVisiblePrevFromInfo;
-		else
-			updateCursor = Cursor.isVisiblePrevFromInfo && !cinf.bVisible;
-	}
+	if (isForce)
+		updateCursor = attrChanged = textChanged = true;
+	// Do we have to update text under changed cursor?
+	// Important: check both 'cinf.bVisible' and 'Cursor.isVisible',
+	// because console may have cursor hidden and its position changed -
+	// in this case last visible cursor remains shown at its old place.
+	// Also, don't check foreground window here for the same reasons.
+	// If position is the same then check the cursor becomes hidden.
+	else if (Cursor.x != csbi.dwCursorPosition.X || Cursor.y != csbi.dwCursorPosition.Y)
+		// сменилась позиция. обновляем если курсор видим
+		updateCursor = cinf.bVisible || Cursor.isVisible || Cursor.isVisiblePrevFromInfo;
+	else
+		updateCursor = Cursor.isVisiblePrevFromInfo && !cinf.bVisible;
 
 	mb_DialogsChanged = CheckDialogsChanged();
 	// Если на панелях открыт ConEmuTh - причесать заголовки и
@@ -1504,7 +1565,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	return lRes;
 }
 
-BOOL CVirtualConsole::CheckTransparent()
+bool CVirtualConsole::CheckTransparent()
 {
 	if (!this)
 	{
@@ -1512,7 +1573,7 @@ BOOL CVirtualConsole::CheckTransparent()
 		return FALSE;
 	}
 
-	BOOL lbChanged = FALSE;
+	bool lbChanged = FALSE;
 	static bool lbInCheckTransparent = false;
 
 	if (lbInCheckTransparent)
@@ -1521,15 +1582,15 @@ BOOL CVirtualConsole::CheckTransparent()
 		return FALSE;
 	}
 
-	BOOL lbHasChildWindows = FALSE;
+	bool lbHasChildWindows = false;
 	if (mp_RCon)
 	{
 		// Если работа идет в GUI режиме (notepad во вкладке ConEmu)
 		if (mp_RCon->GuiWnd() != NULL)
-			lbHasChildWindows = TRUE;
+			lbHasChildWindows = true;
 		// Или включен просмотр картинок/видефайлов
 		if (mp_RCon->isPictureView())
-			lbHasChildWindows = TRUE;
+			lbHasChildWindows = true;
 	}
 
 	lbInCheckTransparent = true;
@@ -1558,16 +1619,16 @@ BOOL CVirtualConsole::CheckTransparent()
 	return lbChanged;
 }
 
-BOOL CVirtualConsole::CheckTransparentRgn(BOOL abHasChildWindows)
+bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 {
-	BOOL lbRgnChanged = FALSE;
-	BOOL lbTransparentChanged = FALSE;
+	bool lbRgnChanged = false;
+	bool lbTransparentChanged = false;
 
 
 	// Если изменены данные, или была прозрачность и появились дочерние окна (или наоборот)
 	if (mb_ConDataChanged || !((mh_TransparentRgn != NULL) ^ abHasChildWindows))
 	{
-		mb_ConDataChanged = FALSE;
+		mb_ConDataChanged = false;
 
 		// (пере)Создать регион
 		if (mpsz_ConChar && mpn_ConAttrEx && TextWidth && TextHeight)
@@ -1641,7 +1702,7 @@ BOOL CVirtualConsole::CheckTransparentRgn(BOOL abHasChildWindows)
 									_ASSERTE(/*lpTmpCounts &&*/ lpTmpPoints);
 									//Free(lpAllCounts);
 									Free(lpAllPoints);
-									return FALSE;
+									return false;
 								}
 
 								memmove(lpTmpPoints, lpAllPoints, nRectCount*4*sizeof(POINT));
@@ -1781,6 +1842,13 @@ bool CVirtualConsole::LoadConsoleData()
 	_ASSERTE(countof(mrc_Dialogs)==countof(mn_DialogFlags));
 	mn_DialogsCount = pRgn->GetDetectedDialogs(countof(mrc_Dialogs), mrc_Dialogs, mn_DialogFlags);
 	mn_DialogAllFlags = pRgn->GetFlags();
+
+#ifdef _DEBUG
+	if (mn_DialogsCount == 7 && mn_LastDialogsCount == 6)
+	{
+		Dump(L"T:\\Dialogs.con");
+	}
+#endif
 
 	if (gpSet->isExtendUCharMap)
 	{
@@ -1978,7 +2046,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 
 	if (bConDataChanged)
 	{
-		mb_ConDataChanged = TRUE; // В FALSE - НЕ сбрасывать
+		mb_ConDataChanged = true; // В false - НЕ сбрасывать
 		// Вынес в функцию, т.к. только так RealConsole может вызвать обновление детектора диалогов
 		LoadConsoleData();
 	}
@@ -2434,12 +2502,12 @@ void CVirtualConsole::UpdateText()
 		int j2=j+1;
 
 		bool NextDialog = true;
-		int NextDialogX, CurDialogX1, CurDialogX2, CurDialogI;
+		int NextDialogX = -1, CurDialogX1, CurDialogX2, CurDialogI;
 		DWORD CurDialogFlags;
 
 		for(; j < end; j = j2)
 		{
-			if (NextDialog)
+			if (NextDialog || (j == NextDialogX))
 			{
 				NextDialog = false;
 				CurDialogX1 = -1;
@@ -2484,7 +2552,7 @@ void CVirtualConsole::UpdateText()
 			wchar_t c = ConCharLine[j];
 			//BYTE attrForeIdx, attrBackIdx;
 			//COLORREF attrForeClr, attrBackClr;
-			bool isUnicode, isDlgBorder;
+			bool isUnicode, isDlgBorder = false;
 			if (j == NextDialogX)
 			{
 				NextDialog = true;
@@ -3590,6 +3658,9 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 		//// Заливка без полос прокруток
 		//::GetClientRect(mh_WndDC, &rcClient);
+
+		// Сброс блокировки, если была
+		LockDcRect(false);
 		
 		HBRUSH hBr = NULL;
 		BOOL lbDelBrush = FALSE;
@@ -3814,10 +3885,40 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 		} else {*/
 
-		BOOL lbBltRc = BitBlt(
+		BOOL lbBltRc;
+		if (!m_LockDc.bLocked)
+		{
+			lbBltRc = BitBlt(
 				hPaintDc, client.left, client.top, client.right-client.left, client.bottom-client.top,
 				hDC, 0, 0,
 				SRCCOPY);
+		}
+		else
+		{
+			RECT rc = m_LockDc.rcScreen;
+			if (client.top < rc.top)
+				lbBltRc = BitBlt(
+					hPaintDc, client.left, client.top, client.right-client.left, rc.top-client.top,
+					hDC, 0, 0,
+					SRCCOPY);
+			if (client.left < rc.left)
+				lbBltRc = BitBlt(
+					hPaintDc, client.left, rc.top, rc.left-client.left, client.bottom-rc.top,
+					hDC, 0, rc.top-client.top,
+					SRCCOPY);
+			if (client.right > rc.right)
+				lbBltRc = BitBlt(
+					hPaintDc, rc.right, rc.top, client.right-rc.right, rc.bottom-rc.top,
+					hDC, rc.right-client.left, rc.top-client.top,
+					SRCCOPY);
+			if (client.bottom > rc.bottom)
+				lbBltRc = BitBlt(
+					hPaintDc, client.left, rc.bottom, client.right-client.left, client.bottom-rc.bottom,
+					hDC, 0, rc.bottom-client.top,
+					SRCCOPY);
+
+			TODO("Можно бы еще восстановить то, что нарисовала на нашем DC консольная программа");
+		}
 		UNREFERENCED_PARAMETER(lbBltRc);
 
 		//#ifdef _DEBUG
@@ -4161,7 +4262,7 @@ POINT CVirtualConsole::ConsoleToClient(LONG x, LONG y)
 }
 
 // Функция живет здесь, а не в gpSet, т.к. здесь мы может более точно опеределить знакоместо
-COORD CVirtualConsole::ClientToConsole(LONG x, LONG y)
+COORD CVirtualConsole::ClientToConsole(LONG x, LONG y, bool StrictMonospace/*=false*/)
 {
 	COORD cr = {0,0};
 
@@ -4181,30 +4282,34 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y)
 	if (nFontWidth)
 		cr.X = x/nFontWidth;
 
-	// А теперь, если возможно, уточним X координату
-	if (x > 0)
+	if (!StrictMonospace)
 	{
-		x++; // иначе сбивается на один пиксел влево
-
-		if (ConCharX && cr.Y >= 0 && cr.Y < (int)TextHeight)
+		// А теперь, если возможно, уточним X координату
+		if (x > 0)
 		{
-			DWORD* ConCharXLine = ConCharX + cr.Y * TextWidth;
+			x++; // иначе сбивается на один пиксел влево
 
-			for(uint i = 0; i < TextWidth; i++, ConCharXLine++)
+			if (ConCharX && cr.Y >= 0 && cr.Y < (int)TextHeight)
 			{
-				if (((int)*ConCharXLine) >= x)
-				{
-					if (cr.X != (int)i)
-					{
-#ifdef _DEBUG
-						wchar_t szDbg[120]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Coord corrected from {%i-%i} to {%i-%i}",
-						                              cr.X, cr.Y, i, cr.Y);
-						DEBUGSTRCOORD(szDbg);
-#endif
-						cr.X = i;
-					}
+				DWORD* ConCharXLine = ConCharX + cr.Y * TextWidth;
 
-					break;
+				for(uint i = 0; i < TextWidth; i++, ConCharXLine++)
+				{
+					if (((int)*ConCharXLine) >= x)
+					{
+						if (cr.X != (int)i)
+						{
+							#ifdef _DEBUG
+							wchar_t szDbg[120]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Coord corrected from {%i-%i} to {%i-%i}",
+														  cr.X, cr.Y, i, cr.Y);
+							DEBUGSTRCOORD(szDbg);
+							#endif
+
+							cr.X = i;
+						}
+
+						break;
+					}
 				}
 			}
 		}
@@ -4301,7 +4406,7 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 	}
 }
 
-BOOL CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2)
+bool CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2)
 {
 	// UCharMap - перерисовать полностью, там может шрифт измениться
 	if (gpSet->isExtendUCharMap && mrc_UCharMap.Right > mrc_UCharMap.Left)
@@ -4532,8 +4637,8 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 			mp_RCon->CloseTab();
 			break;
 		case IDM_DETACH:
-			mp_RCon->Detach();
-			gpConEmu->OnVConTerminated(this);
+			if (mp_RCon->Detach())
+				gpConEmu->OnVConTerminated(this);
 			break;
 		case IDM_TERMINATE:
 			mp_RCon->CloseConsole(TRUE);
@@ -4612,20 +4717,20 @@ void CVirtualConsole::OnPanelViewSettingsChanged()
 	//}
 }
 
-BOOL CVirtualConsole::IsPanelViews()
+bool CVirtualConsole::IsPanelViews()
 {
-	if (!this) return FALSE;
+	if (!this) return false;
 
 	if (m_LeftPanelView.hWnd && IsWindow(m_LeftPanelView.hWnd))
-		return TRUE;
+		return true;
 
 	if (m_RightPanelView.hWnd && IsWindow(m_RightPanelView.hWnd))
-		return TRUE;
+		return true;
 
-	return FALSE;
+	return false;
 }
 
-BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
+bool CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 {
 	_ASSERTE(ppvi && ppvi->cbSize == sizeof(PanelViewInit));
 	BOOL lbRc = FALSE;
@@ -4721,21 +4826,21 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 //	return hRgn;
 //}
 
-BOOL CVirtualConsole::CheckDialogsChanged()
+bool CVirtualConsole::CheckDialogsChanged()
 {
-	BOOL lbChanged = FALSE;
+	bool lbChanged = false;
 	//SMALL_RECT rcDlg[32];
 	_ASSERTE(sizeof(mrc_LastDialogs) == sizeof(mrc_Dialogs));
 	//int nDlgCount = mp_RCon->GetDetectedDialogs(countof(rcDlg), rcDlg, NULL);
 
 	if (mn_LastDialogsCount != mn_DialogsCount)
 	{
-		lbChanged = TRUE;
+		lbChanged = true;
 	}
 	else if (memcmp(mrc_Dialogs, mrc_LastDialogs, mn_DialogsCount*sizeof(mrc_Dialogs[0]))!=0
 		|| memcmp(mn_DialogFlags, mn_LastDialogFlags, mn_DialogsCount*sizeof(mn_DialogFlags[0]))!=0)
 	{
-		lbChanged = TRUE;
+		lbChanged = true;
 	}
 
 	if (lbChanged)
@@ -4749,7 +4854,7 @@ BOOL CVirtualConsole::CheckDialogsChanged()
 	return lbChanged;
 }
 
-const PanelViewInit* CVirtualConsole::GetPanelView(BOOL abLeftPanel)
+const PanelViewInit* CVirtualConsole::GetPanelView(bool abLeftPanel)
 {
 	if (!this) return NULL;
 
@@ -4768,7 +4873,7 @@ const PanelViewInit* CVirtualConsole::GetPanelView(BOOL abLeftPanel)
 }
 
 // Возвращает TRUE, если панель (или хотя бы часть ее ВИДИМА)
-BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abOnRegister)
+bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abOnRegister)
 {
 	PanelViewInit* pp = abLeftPanel ? &m_LeftPanelView : &m_RightPanelView;
 
@@ -4924,7 +5029,7 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 }
 
 // Отсюда - Redraw не звать, только Invalidate!
-BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister/*=FALSE*/)
+bool CVirtualConsole::UpdatePanelView(bool abLeftPanel, bool abOnRegister/*=false*/)
 {
 	PanelViewInit* pp = abLeftPanel ? &m_LeftPanelView : &m_RightPanelView;
 
@@ -5309,10 +5414,10 @@ bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LON
 //    }
 //}
 
-UINT CVirtualConsole::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, BOOL* rpIsEmf) const
+UINT CVirtualConsole::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, bool* rpIsEmf) const
 {
 	if (rpIsEmf)
-		*rpIsEmf = FALSE;
+		*rpIsEmf = false;
 		
 	if (!apImgData)
 		return 0;
@@ -5355,7 +5460,7 @@ UINT CVirtualConsole::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgD
 		
 		// Это EMF, но передан как BITMAPINFOHEADER
 		if (rpIsEmf)
-			*rpIsEmf = TRUE;
+			*rpIsEmf = true;
 		
 		#ifdef _DEBUG
 		LPBYTE pBuf = (LPBYTE)&apImgData->bmp;
@@ -5483,7 +5588,7 @@ SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACK
 	if (mp_RCon->isConsoleClosing())
 		return esbr_ConEmuInShutdown;
 
-	BOOL bIsEmf = FALSE;
+	bool bIsEmf = false;
 	UINT nSize = IsBackgroundValid(apImgData, &bIsEmf);
 
 	if (!nSize)

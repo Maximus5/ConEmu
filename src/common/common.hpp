@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    81
+#define CESERVER_REQ_VER    82
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -225,6 +225,9 @@ const CECMD
 //	CECMD_GETCGUINFO     = 51, // ConEmuGuiMapping
 	CECMD_SETGUIEXTERN   = 52, // dwData[0]==TRUE - вынести приложение наружу из вкладки ConEmu, dwData[0]==FALSE - вернуть во вкладку
 	CECMD_ALIVE          = 53, // просто проверка
+	CECMD_STARTSERVER    = 54, // CESERVER_REQ_START. Запустить в консоли ConEmuC.exe в режиме сервера
+	CECMD_LOCKDC         = 55, // CESERVER_REQ_LOCKDC
+	CECMD_REGEXTCONSOLE  = 56, // CESERVER_REQ_REGEXTCON. Регистрация процесса, использующего ExtendedConsole.dll
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1225,6 +1228,7 @@ struct CESERVER_REQ_SETCONCP
 	DWORD   nCP;          // [IN], [Out]=LastError
 };
 
+// CECMD_SETWINDOWPOS
 struct CESERVER_REQ_SETWINDOWPOS
 {
 	HWND2 hWnd;
@@ -1236,6 +1240,7 @@ struct CESERVER_REQ_SETWINDOWPOS
 	UINT uFlags;
 };
 
+// CECMD_SETWINDOWRGN
 struct CESERVER_REQ_SETWINDOWRGN
 {
 	HWND2 hWnd;
@@ -1319,6 +1324,7 @@ enum ATTACHGUIAPP_FLAGS
 	agaf_WS_CHILD = 8,
 };
 
+// CECMD_ATTACHGUIAPP
 struct CESERVER_REQ_ATTACHGUIAPP
 {
 	DWORD nFlags;
@@ -1331,12 +1337,14 @@ struct CESERVER_REQ_ATTACHGUIAPP
 	wchar_t sAppFileName[MAX_PATH*2];
 };
 
+// CECMD_SETFOCUS
 struct CESERVER_REQ_SETFOCUS
 {
 	BOOL  bSetForeground;
 	HWND2 hWindow;
 };
 
+// CECMD_SETPARENT
 struct CESERVER_REQ_SETPARENT
 {
 	HWND2 hWnd;
@@ -1349,6 +1357,27 @@ struct MyAssertInfo
 	BOOL bNoPipe;
 	wchar_t szTitle[255];
 	wchar_t szDebugInfo[4096];
+};
+
+// CECMD_STARTSERVER
+struct CESERVER_REQ_START
+{
+	DWORD nPID;   // In-GuiPID, Out-NewServerPID
+	DWORD nValue; // Error codes
+};
+
+// CECMD_LOCKDC
+struct CESERVER_REQ_LOCKDC
+{
+	HWND2 hDcWnd;
+	BOOL  bLock;
+	RECT  Rect; // Пока просто
+};
+
+// CECMD_REGEXTCONSOLE
+struct CESERVER_REQ_REGEXTCON
+{
+	HANDLE2 hCommitEvent;
 };
 
 struct CESERVER_REQ
@@ -1389,6 +1418,9 @@ struct CESERVER_REQ
 		CESERVER_REQ_ATTACHGUIAPP AttachGuiApp;
 		CESERVER_REQ_SETFOCUS setFocus;
 		CESERVER_REQ_SETPARENT setParent;
+		CESERVER_REQ_START NewServer;
+		CESERVER_REQ_LOCKDC LockDc;
+		CESERVER_REQ_REGEXTCON RegExtCon;
 	};
 };
 
@@ -1477,7 +1509,14 @@ void ChangeScreenBufferSize(CONSOLE_SCREEN_BUFFER_INFO& sbi, SHORT VisibleX, SHO
 
 #endif // __cplusplus
 
-
+// The size of the PROCESS_ALL_ACCESS flag increased on Windows Server 2008 and Windows Vista.
+// If an application compiled for Windows Server 2008 and Windows Vista is run on Windows Server 2003
+// or Windows XP/2000, the PROCESS_ALL_ACCESS flag is too large and the function specifying this flag
+// fails with ERROR_ACCESS_DENIED. To avoid this problem, specify the minimum set of access rights required
+// for the operation. If PROCESS_ALL_ACCESS must be used, set _WIN32_WINNT to the minimum operating system
+// targeted by your application (for example, #define _WIN32_WINNT _WIN32_WINNT_WINXP).
+#undef PROCESS_ALL_ACCESS
+#define PROCESS_ALL_ACCESS "PROCESS_ALL_ACCESS"
 
 // This must be the end line
 #endif // _COMMON_HEADER_HPP_

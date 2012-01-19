@@ -32,6 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Memory.h"
 #include "MStrSafe.h"
 #include "RConStartArgs.h"
+#include "common.hpp"
+#include "WinObjects.h"
 
 RConStartArgs::RConStartArgs()
 {
@@ -100,6 +102,25 @@ void RConStartArgs::ProcessNewConArg()
 		_ASSERTE(pszSpecialCmd && *pszSpecialCmd);
 		return;
 	}
+
+	
+	// 120115 - Если первый аргумент - "ConEmu.exe" или "ConEmu64.exe" - не обрабатывать "-cur_console" и "-new_console"
+	{
+		LPCWSTR pszTemp = pszSpecialCmd;
+		wchar_t szExe[MAX_PATH+1];
+		if (0 == NextArg(&pszTemp, szExe))
+		{
+			pszTemp = PointToName(szExe);
+			if (lstrcmpi(pszTemp, L"ConEmu.exe") == 0
+				|| lstrcmpi(pszTemp, L"ConEmu") == 0
+				|| lstrcmpi(pszTemp, L"ConEmu64.exe") == 0
+				|| lstrcmpi(pszTemp, L"ConEmu64") == 0)
+			{
+				return;
+			}
+		}
+	}
+	
 
 	// 111211 - здесь может быть передан "-new_console:..."
 	LPCWSTR pszNewCon = L"-new_console";

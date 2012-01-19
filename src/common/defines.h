@@ -71,8 +71,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define WARNING(s)
 #else
 // Чтобы было удобнее работать с ErrorList - для TODO тоже префикс warning
-#define TODO(s) __pragma(message (FILE_LINE "warning: TODO: " s))
-#define WARNING(s) __pragma(message (FILE_LINE "warning: WARN: " s))
+#define TODO(s) __pragma(message (FILE_LINE /*"warning: "*/ "TODO: " s))
+#define WARNING(s) __pragma(message (FILE_LINE /*"warning: "*/ "WARN: " s))
 #endif
 #define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
 
@@ -133,6 +133,14 @@ WARNING("WIN64 was not defined");
 	#define WIN3264WSPRINT(ptr) (DWORD)(((DWORD_PTR)ptr)>>32), (DWORD)(((DWORD_PTR)ptr) & ((DWORD)-1))
 #else
 	#define WIN3264WSPRINT(ptr) (DWORD)(ptr)
+#endif
+// И еще
+#ifdef _DEBUG
+	#define RELEASEDEBUGTEST(rel,dbg) dbg
+	#define DEBUGTEST(dbg) dbg
+#else
+	#define RELEASEDEBUGTEST(rel,dbg) rel
+	#define DEBUGTEST(dbg)
 #endif
 
 #ifdef CONEMU_MINIMAL

@@ -89,6 +89,7 @@ bool gbSuppressShowCall = false;
 
 const wchar_t *kernel32 = L"kernel32.dll",	*kernel32_noext = L"kernel32";
 const wchar_t *user32   = L"user32.dll",	*user32_noext   = L"user32";
+const wchar_t *gdi32    = L"gdi32.dll",		*gdi32_noext    = L"gdi32";
 const wchar_t *shell32  = L"shell32.dll",	*shell32_noext  = L"shell32";
 const wchar_t *advapi32 = L"advapi32.dll",	*advapi32_noext = L"advapi32";
 const wchar_t *comdlg32 = L"comdlg32.dll",	*comdlg32_noext = L"comdlg32";
@@ -630,6 +631,7 @@ bool __stdcall InitHooks(HookItem* apHooks)
 					// Библиотеки, которые могут быть НЕ подлинкованы на старте
 					|| (gpHooks[i].DllName == shell32 
 						|| gpHooks[i].DllName == user32 
+						|| gpHooks[i].DllName == gdi32 
 						|| gpHooks[i].DllName == advapi32
 						|| gpHooks[i].DllName == comdlg32 
 						));

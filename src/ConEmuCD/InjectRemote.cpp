@@ -196,7 +196,7 @@ int InjectRemote(DWORD nRemotePID)
 		goto wrap;
 	}
 
-	hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, nRemotePID);
+	hProc = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ, FALSE, nRemotePID);
 	if (hProc == NULL)
 	{
 		iRc = -201;

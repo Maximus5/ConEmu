@@ -1,4 +1,7 @@
-﻿2012.01.18
+﻿[*] Продолжение GUI приложений во вкладках. Теперь и VLC.
+
+
+2012.01.18
 [+] Issue 337: Attach не-фаровских консолей: System menu -> Attach to... Проверялось в Windows 7.
 [%] Issue 480: Answering "Detach console" with "no" still detaches console.
 [%] В 120115 для Far 3.x отвалился правый клик на keybar.

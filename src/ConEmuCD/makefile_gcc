@@ -3,6 +3,8 @@ SRCS = ConsoleMain.cpp \
        ConEmuCmd.cpp \
        ConEmuSrv.cpp \
        GuiHooks.cpp \
+       Infiltrate.cpp \
+       InjectRemote.cpp \
        RegPrepare.cpp \
        ../ConEmuHk/Injects.cpp \
        ../common/Common.cpp \

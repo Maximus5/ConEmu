@@ -87,6 +87,8 @@ $(OBJDIR)\RegPrepare.obj \
 $(OBJDIR)\ConEmuCmd.obj \
 $(OBJDIR)\ConEmuSrv.obj \
 $(OBJDIR)\Injects.obj \
+$(OBJDIR)\Infiltrate.obj \
+$(OBJDIR)\InjectRemote.obj \
 $(OBJDIR)\execute.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\Common.obj \
@@ -352,6 +354,10 @@ $(OBJDIR)\ConEmuCmd.obj: ConEmuCmd.cpp
 $(OBJDIR)\ConEmuSrv.obj: ConEmuSrv.cpp
 
 $(OBJDIR)\Injects.obj: ..\ConEmuHk\Injects.cpp
+
+$(OBJDIR)\Infiltrate.obj: Infiltrate.cpp
+
+$(OBJDIR)\InjectRemote.obj: InjectRemote.cpp
 
 $(OBJDIR)\execute.obj: ..\common\execute.cpp ..\common\execute.h
 

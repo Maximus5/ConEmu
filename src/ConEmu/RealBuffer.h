@@ -150,7 +150,7 @@ public:
 	DWORD GetConsoleOutputCP();
 
 	void FindPanels();
-	BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE);
+	BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE, BOOL abIncludeEdges = FALSE);
 	BOOL isLeftPanel();
 	BOOL isRightPanel();
 

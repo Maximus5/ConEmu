@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RConStartArgs.h"
 #include "TokenHelper.h"
 
+
 #ifdef __GNUC__
 	#include "../common/DbgHlpGcc.h"
 #else
@@ -1368,15 +1369,35 @@ void Help()
 	    "Usage: ConEmuC [switches] [/U | /A] /C <command line, passed to %%COMSPEC%%>\n"
 	    "   or: ConEmuC [switches] /ROOT <program with arguments, far.exe for example>\n"
 	    "   or: ConEmuC /ATTACH /NOCMD\n"
+		"   or: ConEmuC /ATTACH /[FAR]PID=<PID>\n"
 	    "   or: ConEmuC /GUIMACRO <ConEmu GUI macro command>\n"
+		"   or: ConEmuC /DEBUGPID=<Debugging PID>\n"
+#ifdef _DEBUG
+		"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\n"
+#endif
 	    "   or: ConEmuC /?\n"
 	    "Switches:\n"
-	    "     /[NO]CONFIRM - [don't] confirm closing console on program termination\n"
-	    "     /ATTACH      - auto attach to ConEmu GUI\n"
-	    "     /NOCMD       - attach current (existing) console to GUI\n"
-	    "     /B{W|H|Z}    - define window width, height and buffer height\n"
+	    "     /[NO]CONFIRM    - [don't] confirm closing console on program termination\n"
+	    "     /ATTACH         - auto attach to ConEmu GUI\n"
+	    "     /NOCMD          - attach current (existing) console to GUI\n"
+		"     /[FAR]PID=<PID> - use <PID> as root process\n"
+	    "     /B{W|H|Z}       - define window width, height and buffer height\n"
+#ifdef _DEBUG
+		"     /BW=<WndX> /BH=<WndY> /BZ=<BufY>\n"
+#endif
 	    "     /F{N|W|H}    - define console font name, width, height\n"
+#ifdef _DEBUG
+		"     /FN=<ConFontName> /FH=<FontHeight> /FW=<FontWidth>\n"
+#endif
 	    "     /LOG[N]      - create (debug) log file, N is number from 0 to 3\n"
+#ifdef _DEBUG
+		"     /CINMODE==<hex:gnConsoleModeFlags>\n"
+		"     /HIDE -> gbForceHideConWnd=TRUE\n"
+		"     /GID=<ConEmu.exe PID>\n"
+		"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\n"
+		"     /INJECT=PID{10}\n"
+		"     /DOSBOX -> use DosBox\n"
+#endif
 	    "\n"
 	    "When you run application from ConEmu conole, you may use\n"
         "  Switch: -new_console[:bh[N]caru[:user:pwd]]\n"
@@ -1384,7 +1405,7 @@ void Help()
         "     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\n"
         "     n - disable 'Press Enter or Esc to close console'\n"
         "     c - force enable 'Press Enter or Esc to close console' (default)\n"
-        "     a - RunAs shell verb (as Admin on Vista+, login/password in Win2k and WinXP)\n"
+        "     a - RunAs shell verb (as Admin on Vista+, login/passw in Win2k and WinXP)\n"
         "     r - run as restricted user\n"
         "     u - ConEmu choose user dialog\n"
         "     u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST OPTION\n"
@@ -1659,7 +1680,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 	gnRunMode = RM_UNDEFINED;
 
-	while((iRc = NextArg(&asCmdLine, szArg, &pszArgStarts)) == 0)
+	while ((iRc = NextArg(&asCmdLine, szArg, &pszArgStarts)) == 0)
 	{
 		xf_check();
 
@@ -1696,14 +1717,20 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			#if defined(SHOW_ATTACH_MSGBOX)
 			if (!IsDebuggerPresent())
 			{
-				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC Loaded (PID=%i)", gnSelfPID);
+				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i) /ATTACH", gnSelfPID);
 				const wchar_t* pszCmdLine = GetCommandLineW();
-				MessageBox(NULL,pszCmdLine,szTitle,0);
+				MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
 			}
 			#endif
 
 			gbAttachMode = TRUE;
 			gnRunMode = RM_SERVER;
+		}
+		else if (wcscmp(szArg, L"/NOCMD")==0)
+		{
+			gnRunMode = RM_SERVER;
+			gbNoCreateProcess = TRUE;
+			gbAlienMode = TRUE;
 		}
 		else if (wcsncmp(szArg, L"/PID=", 5)==0 || wcsncmp(szArg, L"/FARPID=", 8)==0)
 		{
@@ -1787,12 +1814,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			if (szArg[4]==L'1') nLevel = 1; else if (szArg[4]>=L'2') nLevel = 2;
 
 			CreateLogSizeFile(nLevel);
-		}
-		else if (wcscmp(szArg, L"/NOCMD")==0)
-		{
-			gnRunMode = RM_SERVER;
-			gbNoCreateProcess = TRUE;
-			gbAlienMode = TRUE;
 		}
 		else if (wcsncmp(szArg, L"/GID=", 5)==0)
 		{
@@ -1905,11 +1926,57 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				//_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
 				wchar_t szDbgMsg[512], szTitle[128];
 				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, CmdLine parsing FAILED (%u,%u,%u,%u,%u,%u)!\n%s",
+				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u,%u,%u,%u,%u)!\n%s",
 					GetCurrentProcessId(), (DWORD)pi.hProcess, (DWORD)pi.hThread, pi.dwProcessId, pi.dwThreadId, lbForceGui, //-V205
 					szArg);
 				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-				return CERR_HOOKS_FAILED;
+				//return CERR_HOOKS_FAILED;
+			}
+
+			return CERR_HOOKS_FAILED;
+		}
+		else if (wcsncmp(szArg, L"/INJECT=", 8) == 0)
+		{
+			gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
+			gnRunMode = RM_SETHOOK64;
+			LPWSTR pszNext = szArg+8;
+			LPWSTR pszEnd = NULL;
+			DWORD nRemotePID = wcstoul(pszNext, &pszEnd, 10);
+			
+			if (nRemotePID)
+			{
+				#if defined(SHOW_ATTACH_MSGBOX)
+				if (!IsDebuggerPresent())
+				{
+					wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i) /INJECT", gnSelfPID);
+					const wchar_t* pszCmdLine = GetCommandLineW();
+					MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
+				}
+				#endif
+
+				int iHookRc = InjectRemote(nRemotePID);
+
+				if (iHookRc == 0)
+					return CERR_HOOKS_WAS_SET;
+
+				// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
+				DWORD nErrCode = GetLastError();
+				//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
+				wchar_t szDbgMsg[255], szTitle[128];
+				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nInjecting remote into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), nRemotePID, iHookRc, nErrCode);
+				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+			}
+			else
+			{
+				//_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
+				wchar_t szDbgMsg[512], szTitle[128];
+				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u)!\n%s",
+					GetCurrentProcessId(), nRemotePID,
+					szArg);
+				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+				//return CERR_HOOKS_FAILED;
 			}
 
 			return CERR_HOOKS_FAILED;
@@ -3351,6 +3418,30 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 	if (!pCS)
 		CS.Lock(gpSrv->csProc);
 
+	// Если кто-то регистрировался как "ExtendedConsole.dll"
+	// то проверить, а не свалился ли процесс его вызвавший
+	if (gpSrv && gpSrv->nExtConsolePID)
+	{
+		DWORD nExtPID = gpSrv->nExtConsolePID;
+		bool bExist = false;
+		for (UINT i = 0; i < gpSrv->nProcessCount; i++)
+		{
+			if (gpSrv->pnProcesses[i] == nExtPID)
+			{
+				bExist = true; break;
+			}
+		}
+		if (!bExist)
+		{
+			if (gpSrv->hExtConsoleCommit)
+			{
+				CloseHandle(gpSrv->hExtConsoleCommit);
+				gpSrv->hExtConsoleCommit = NULL;
+			}
+			gpSrv->nExtConsolePID = 0;
+		}
+	}
+
 	if (abChanged)
 	{
 		BOOL lbFarExists = FALSE, lbTelnetExist = FALSE;
@@ -3367,7 +3458,7 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 				{
 					do
 					{
-						for(UINT i = 0; i < gpSrv->nProcessCount; i++)
+						for (UINT i = 0; i < gpSrv->nProcessCount; i++)
 						{
 							if (prc.th32ProcessID != gnSelfPID
 							        && prc.th32ProcessID == gpSrv->pnProcesses[i])
@@ -5219,6 +5310,47 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 	return TRUE;
 }
 
+BOOL cmd_RegExtConsole(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = FALSE;
+
+	if (!gpSrv)
+	{
+		_ASSERTE(gpSrv!=NULL);
+	}
+	else
+	{
+		if (in.RegExtCon.hCommitEvent != NULL)
+		{
+			if (gpSrv->hExtConsoleCommit && gpSrv->hExtConsoleCommit != (HANDLE)in.RegExtCon.hCommitEvent)
+				CloseHandle(gpSrv->hExtConsoleCommit);
+			gpSrv->hExtConsoleCommit = in.RegExtCon.hCommitEvent;
+			gpSrv->nExtConsolePID = in.hdr.nSrcPID;
+		}
+		else
+		{
+			if (gpSrv->hExtConsoleCommit == (HANDLE)in.RegExtCon.hCommitEvent)
+			{
+				CloseHandle(gpSrv->hExtConsoleCommit);
+				gpSrv->hExtConsoleCommit = NULL;
+				gpSrv->nExtConsolePID = 0;
+			}
+		}
+
+		lbRc = TRUE;
+	}
+
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_REGEXTCONSOLE, nOutSize);
+
+	if (*out != NULL)
+	{
+		(*out)->dwData[0] = lbRc;
+	}
+
+	return TRUE;
+}
+
 BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -5340,6 +5472,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			*out = ExecuteNewCmd(CECMD_ALIVE, sizeof(CESERVER_REQ_HDR));
 			lbRc = TRUE;
+		} break;
+		case CECMD_REGEXTCONSOLE:
+		{
+			lbRc = cmd_RegExtConsole(in, out);
 		} break;
 	}
 

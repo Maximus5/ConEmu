@@ -625,6 +625,7 @@ class MSetter
 		enum tag_MSETTERTYPE
 		{
 			st_BOOL,
+			st_bool,
 			st_DWORD,
 		} type;
 
@@ -633,7 +634,12 @@ class MSetter
 			struct
 			{
 				// st_BOOL
-				BOOL *mp_BoolVal;
+				BOOL *mp_BOOLVal;
+			};
+			struct
+			{
+				// st_bool
+				bool *mp_boolVal;
 			};
 			struct
 			{
@@ -643,6 +649,7 @@ class MSetter
 		};
 	public:
 		MSetter(BOOL* st);
+		MSetter(bool* st);
 		MSetter(DWORD* st, DWORD setValue);
 		~MSetter();
 

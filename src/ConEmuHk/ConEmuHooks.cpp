@@ -94,6 +94,7 @@ extern HWND    ghConWnd;      // RealConsole
 extern HWND    ghConEmuWnd;   // Root! ConEmu window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnGuiPID;
+HDC ghTempHDC = NULL;
 //HWND ghConsoleHwnd = NULL;
 //BOOL gbFARuseASCIIsort = FALSE;
 //DWORD gdwServerPID = 0;
@@ -243,6 +244,12 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput);
 BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
 BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
 INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
+HDC WINAPI OnGetDC(HWND hWnd); // user32
+int WINAPI OnReleaseDC(HWND hWnd, HDC hDC); //user32
+int WINAPI OnStretchDIBits(HDC hdc, int XDest, int YDest, int nDestWidth, int nDestHeight, int XSrc, int YSrc, int nSrcWidth, int nSrcHeight, const VOID *lpBits, const BITMAPINFO *lpBitsInfo, UINT iUsage, DWORD dwRop); //gdi32
+
+
+
 
 
 bool InitHooksCommon()
@@ -341,6 +348,7 @@ bool InitHooksCommon()
 	return true;
 }
 
+// user32 & gdi32
 bool InitHooksUser32()
 {
 #ifndef HOOKS_SKIP_COMMON
@@ -389,6 +397,12 @@ bool InitHooksUser32()
 		{(void*)OnCreateDialogIndirectParamW, "CreateDialogIndirectParamW", user32},
 		{(void*)OnDialogBoxParamW,		"DialogBoxParamW",		user32},
 		{(void*)OnSetMenu,				"SetMenu",				user32},
+		{(void*)OnGetDC,				"GetDC",				user32},
+		{(void*)OnReleaseDC,			"ReleaseDC",			user32},
+		/* ************************ */
+
+		/* ************************ */
+		{(void*)OnStretchDIBits,		"StretchDIBits",		gdi32},
 		/* ************************ */
 		{0}
 	};
@@ -597,7 +611,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	// Общие
 	InitHooksCommon();
 
-	// user32
+	// user32 & gdi32
 	InitHooksUser32();
 	
 	// Far only functions
@@ -1088,7 +1102,7 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 		return TRUE; // обманем
 	}
 
-	if (ghAttachGuiClient == hWnd)
+	if ((ghAttachGuiClient == hWnd) || (!ghAttachGuiClient && gbAttachGuiClient))
 		OnShowGuiClientWindow(hWnd, nCmdShow, lbGuiAttach);
 
 	if (F(ShowWindow))
@@ -2872,7 +2886,9 @@ BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes)
 	}
 	
 	#ifdef _DEBUG
-	if (wAttributes != 7)
+	// Если во вкладку ConEmu приаттачено GUI приложение - нам пофигу
+	// что оно делает со своей консолью
+	if ((ghAttachGuiClient == NULL) && !gbAttachGuiClient && (wAttributes != 7))
 	{
 		// Что-то в некоторых случаях сбивается цвет вывода для printf
 		_ASSERTE("SetConsoleTextAttribute" && (wAttributes==0x07));
@@ -3480,5 +3496,69 @@ INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HW
 	if (F(DialogBoxParamW))
 		iRc = F(DialogBoxParamW)(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
 
+	return iRc;
+}
+
+HDC WINAPI OnGetDC(HWND hWnd)
+{
+	typedef HDC (WINAPI* OnGetDC_t)(HWND hWnd);
+	ORIGINALFASTEX(GetDC,NULL);
+	HDC hDC = NULL;
+	
+	if (F(GetDC))
+		hDC = F(GetDC)(hWnd);
+	
+	if (hDC && ghConEmuWndDC && hWnd == ghConEmuWndDC)
+		ghTempHDC = hDC;
+	
+	return hDC;
+}
+
+int WINAPI OnReleaseDC(HWND hWnd, HDC hDC)
+{
+	typedef int (WINAPI* OnReleaseDC_t)(HWND hWnd, HDC hDC);
+	ORIGINALFASTEX(ReleaseDC,NULL);
+	int iRc = 0;
+	
+	if (F(ReleaseDC))
+		iRc = F(ReleaseDC)(hWnd, hDC);
+	
+	if (ghTempHDC == hDC)
+		ghTempHDC = NULL;
+	
+	return iRc;
+}
+
+int WINAPI OnStretchDIBits(HDC hdc, int XDest, int YDest, int nDestWidth, int nDestHeight, int XSrc, int YSrc, int nSrcWidth, int nSrcHeight, const VOID *lpBits, const BITMAPINFO *lpBitsInfo, UINT iUsage, DWORD dwRop)
+{
+	typedef int (WINAPI* OnStretchDIBits_t)(HDC hdc, int XDest, int YDest, int nDestWidth, int nDestHeight, int XSrc, int YSrc, int nSrcWidth, int nSrcHeight, const VOID *lpBits, const BITMAPINFO *lpBitsInfo, UINT iUsage, DWORD dwRop);
+	ORIGINALFASTEX(StretchDIBits,NULL);
+	int iRc = 0;
+	
+	if (F(StretchDIBits))
+		iRc = F(StretchDIBits)(hdc, XDest, YDest, nDestWidth, nDestHeight, XSrc, YSrc, nSrcWidth, nSrcHeight, lpBits, lpBitsInfo, iUsage, dwRop);
+
+	// Если рисуют _прямо_ на канвасе ConEmu
+	if (iRc != GDI_ERROR && hdc && hdc == ghTempHDC)
+	{
+		// Уведомить GUI, что у него прямо на канвасе кто-то что-то нарисовал :)
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LOCKDC, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_LOCKDC));
+		if (pIn)
+		{
+			pIn->LockDc.hDcWnd = ghConEmuWndDC; // На всякий случай
+			pIn->LockDc.bLock = TRUE;
+			pIn->LockDc.Rect.left = XDest;
+			pIn->LockDc.Rect.top = YDest;
+			pIn->LockDc.Rect.right = XDest+nDestWidth-1;
+			pIn->LockDc.Rect.bottom = YDest+nDestHeight-1;
+
+			CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+
+			if (pOut)
+				ExecuteFreeResult(pOut);
+			ExecuteFreeResult(pIn);
+		}
+	}
+		
 	return iRc;
 }

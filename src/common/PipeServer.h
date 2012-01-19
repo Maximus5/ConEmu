@@ -699,7 +699,7 @@ struct PipeServer
 					nAllSize -= cbRead;
 				}
 
-				TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
+				TODO("Mozhet vozniknutj ASSERT, esli konsolj byla zakryta v processe chtenija");
 
 				if (nAllSize>0)
 				{
@@ -805,6 +805,7 @@ struct PipeServer
 					DWORD dwPipeMode = PIPE_TYPE_MESSAGE |         // message type pipe
 						PIPE_READMODE_MESSAGE |     // message-read mode
 						PIPE_WAIT;
+					// На WinXP наблюдался странный глючок. Если MaxCount==1 то 
 					int Count = MaxCount;
 					DWORD nOutSize = PIPEBUFSIZE, nInSize = PIPEBUFSIZE;
 					_ASSERTE(mlp_Sec!=NULL);
@@ -924,7 +925,7 @@ struct PipeServer
 					return 0;
 				}
 				
-				TODO("По настройке, зациклиться на чтении, не закрывать подключение после одной команды");
+				TODO("Po nastrojke, zaciklit'sja na chtenii, ne zakryvatj podkljuchenie posle odnoj komandy");
 				
 				BOOL lbFirstRead = TRUE;
 				BOOL lbAllowClient = TRUE;
@@ -983,8 +984,14 @@ struct PipeServer
 				if (mfn_PipeServerDisconnected)
 					mfn_PipeServerDisconnected(m_lParam, pPipe->hPipeInst);
 				
-				TODO("DisconnectAndReconnect?");
-				//DisconnectNamedPipe(pPipe->hPipeInst);
+				if (!mb_Terminate)
+				{
+					// FlushFileBuffers уже вызван, т.е. клиент данные не потеряет
+					// А вот вызов CloseHandle перед DisconnectNamedPipe может привести к ошибке 231
+					// (All pipe instances are busy) при следующей попытке CreateNamedPipe
+					DisconnectNamedPipe(pPipe->hPipeInst);
+				}
+
 				CloseHandle(pPipe->hPipeInst);
 				pPipe->hPipeInst = NULL;
 				// Перейти к открытию нового instance пайпа

@@ -30,8 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef ORIGINALSHOWCALL
 	#ifdef _DEBUG
-		#define LOG_ORIGINAL_CALL
-		//#undef LOG_ORIGINAL_CALL
+		//#define LOG_ORIGINAL_CALL
+		#undef LOG_ORIGINAL_CALL
 	#else
 		#undef LOG_ORIGINAL_CALL
 	#endif
@@ -69,6 +69,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern const wchar_t *kernel32;// = L"kernel32.dll";
 extern const wchar_t *user32  ;// = L"user32.dll";
+extern const wchar_t *gdi32  ;// = L"gdi32.dll";
 extern const wchar_t *shell32 ;// = L"shell32.dll";
 extern const wchar_t *advapi32;// = L"Advapi32.dll";
 extern const wchar_t *comdlg32;// = L"comdlg32.dll";

@@ -32,6 +32,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Attach.h"
 #include "../common/WinObjects.h"
 #include "../common/ProcList.h"
+#include "../ConEmuCD/ExitCodes.h"
+#include "../common/ConEmuCheck.h"
+
+#undef ALLOW_GUI_ATTACH
 
 /*
 
@@ -60,6 +64,9 @@ enum AttachListColumns
 	alc_HWND,
 	alc_Class,
 };
+
+const wchar_t szTypeCon[] = L"CON";
+const wchar_t szTypeGui[] = L"GUI";
 
 CAttachDlg::CAttachDlg()
 	: mh_Dlg(NULL)
@@ -142,11 +149,84 @@ void CAttachDlg::Close()
 	}
 }
 
-bool CAttachDlg::StartAttach()
+void CAttachDlg::OnStartAttach()
 {
+	bool lbRc = false;
 	// Тут нужно получить инфу из списка и дернуть собственно аттач
-	_ASSERTE(FALSE);
-	return false;
+	wchar_t szItem[128];
+	DWORD nPID = 0, nBits = WIN3264TEST(32,64);
+	AttachProcessType nType = apt_Unknown;
+	wchar_t *psz;
+	int iSel;
+	DWORD nTID;
+	HANDLE hThread = NULL;
+	AttachParm *pParm = NULL;
+	HWND hAttachWnd = NULL;
+
+	ShowWindow(mh_Dlg, SW_HIDE);
+
+	iSel = ListView_GetNextItem(mh_List, -1, LVNI_SELECTED);
+	if (iSel < 0)
+		goto wrap;
+
+	ListView_GetItemText(mh_List, iSel, alc_PID, szItem, countof(szItem));
+	nPID = wcstoul(szItem, &psz, 10);
+	if (nPID)
+	{
+		psz = wcschr(szItem, L'*');
+		if (psz)
+			nBits = wcstoul(psz+1, &psz, 10);
+	}
+	ListView_GetItemText(mh_List, iSel, alc_Type, szItem, countof(szItem));
+	if (lstrcmp(szItem, szTypeCon) == 0)
+		nType = apt_Console;
+	else if (lstrcmp(szItem, szTypeGui) == 0)
+		nType = apt_Gui;
+
+	ListView_GetItemText(mh_List, iSel, alc_HWND, szItem, countof(szItem));
+	hAttachWnd = (szItem[0]==L'0' && szItem[1]==L'x') ? (HWND)wcstoul(szItem+2, &psz, 16) : NULL;
+
+	if (!nPID || !nBits || !nType || !hAttachWnd)
+	{
+		MBoxAssert(nPID && nBits && nType && hAttachWnd);
+		goto wrap;
+	}
+
+	// Чтобы клик от мышки в консоль не провалился
+	WARNING("Клик от мышки в консоль проваливается");
+	gpConEmu->mouse.nSkipEvents[0] = WM_LBUTTONUP;
+	gpConEmu->mouse.nSkipEvents[1] = 0;
+	gpConEmu->mouse.nReplaceDblClk = 0;
+
+	// Все, диалог закрываем, чтобы не мешался
+	Close();
+
+	// Работу делаем в фоновом потоке, чтобы не блокировать главный
+	// (к окну ConEmu должна подцепиться новая вкладка)
+	pParm = (AttachParm*)malloc(sizeof(*pParm));
+	if (!pParm)
+	{
+		_wsprintf(szItem, SKIPLEN(countof(szItem)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+		DisplayLastError(L"Can't allocate AttachParm*", ERROR_NOT_ENOUGH_MEMORY, 0, szItem);
+		goto wrap;
+	}
+	else
+	{
+		pParm->hAttachWnd = hAttachWnd;
+		pParm->nPID = nPID; pParm->nBits = nBits; pParm->nType = nType;
+		hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)StartAttachThread, pParm, 0, &nTID);
+		if (!hThread)
+		{
+			DWORD dwErr = GetLastError();
+			_wsprintf(szItem, SKIPLEN(countof(szItem)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+			DisplayLastError(L"Can't start attach thread", dwErr, 0, szItem);
+		}
+		else
+			lbRc = true;
+	}
+wrap:
+	if (hThread)
+		CloseHandle(hThread);
 }
 
 BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
@@ -176,6 +256,11 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			wchar_t szExeName[MAX_PATH], szExePathName[MAX_PATH*4]; szExeName[0] = szExePathName[0] = 0;
 			GetClassName(hFind, szClass, countof(szClass));
 			GetWindowText(hFind, szTitle, countof(szTitle));
+
+			#ifndef ALLOW_GUI_ATTACH
+			if (lstrcmp(szClass, L"ConsoleWindowClass") != 0)
+				return TRUE;
+			#endif
 
 			CAttachDlg* pDlg = (CAttachDlg*)lParam;
 			HWND hList = pDlg->mh_List;
@@ -291,7 +376,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			_wsprintf(szHwnd, SKIPLEN(countof(szHwnd)) L"0x%08X", (DWORD)(((DWORD_PTR)hFind) & (DWORD)-1));
 			ListView_SetItemText(hList, nItem, alc_HWND, szHwnd);
 
-			wcscpy_c(szType, (lstrcmp(szClass, L"ConsoleWindowClass") == 0) ? L"CON" : L"GUI");
+			wcscpy_c(szType, (lstrcmp(szClass, L"ConsoleWindowClass") == 0) ? szTypeCon : szTypeGui);
 			ListView_SetItemText(hList, nItem, alc_File, szExeName);
 			ListView_SetItemText(hList, nItem, alc_Path, szExePathName);
 			ListView_SetItemText(hList, nItem, alc_Type, szType);
@@ -335,7 +420,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
 			SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
 			
-			EnableWindow(GetDlgItem(hDlg,IDOK), FALSE);
+			//EnableWindow(GetDlgItem(hDlg,IDOK), FALSE);
 
 			HWND hList = GetDlgItem(hDlg, IDC_ATTACHLIST);
 			pDlg->mh_List = hList;
@@ -454,8 +539,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 				{
 					case IDOK:
 						// Тут нужно получить инфу из списка и дернуть собственно аттач
-						if (pDlg->StartAttach())
-							pDlg->Close();
+						pDlg->OnStartAttach();
 						return 1;
 					case IDCANCEL:
 					case IDCLOSE:
@@ -484,6 +568,151 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		default:
 			return 0;
 	}
+
+	return 0;
+}
+
+bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType)
+{
+	bool lbRc = false;
+	// Тут нужно получить инфу из списка и дернуть собственно аттач
+	wchar_t szPipe[MAX_PATH];
+	PROCESS_INFORMATION pi = {};
+	STARTUPINFO si = {sizeof(si)};
+	SHELLEXECUTEINFO sei = {sizeof(sei)};
+	CESERVER_REQ *pIn = NULL, *pOut = NULL;
+	HANDLE hPipeTest = NULL, hProcTest = NULL;
+	DWORD nErrCode = 0;
+	bool lbCreate;
+	CESERVER_CONSOLE_MAPPING_HDR srv;
+
+	if (!ahAttachWnd || !anPID || !anBits || !anType)
+	{
+		MBoxAssert(ahAttachWnd && anPID && anBits && anType);
+		goto wrap;
+	}
+
+	if (LoadSrvMapping(ahAttachWnd, srv))
+	{
+		pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR));
+		pOut = ExecuteSrvCmd(srv.nServerPID, pIn, ghWnd);
+		if (pOut && (pOut->hdr.cbSize >= (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD))) && (pOut->dwData[0] != 0))
+		{
+			lbRc = true; // Успешно подцепились
+			goto wrap;
+		}
+		ExecuteFreeResult(pIn);
+		ExecuteFreeResult(pOut);
+	}
+
+
+	// Может быть в процессе уже есть ConEmuHk.dll? Или этот процесс вообще уже во вкладке другого ConEmu?
+	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEHOOKSPIPENAME, L".", anPID);
+	hPipeTest = CreateFile(szPipe, GENERIC_READ|GENERIC_WRITE, 0, LocalSecurity(), OPEN_EXISTING, 0, NULL);
+	if (hPipeTest && hPipeTest != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(hPipeTest);
+		goto DoExecute;
+	}
+
+
+	wchar_t szSrv[MAX_PATH+64], szArgs[64];
+	wcscpy_c(szSrv, gpConEmu->ms_ConEmuBaseDir);
+	wcscat_c(szSrv, (anBits==64) ? L"\\ConEmuC64.exe" : L"\\ConEmuC.exe");
+	_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /INJECT=%u", anPID);
+
+	TODO("Определить, может он уже под админом? Тогда и ConEmuC.exe под админом запускать нужно");
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_HIDE;
+
+	hProcTest = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ, FALSE, anPID);
+	if (hProcTest == NULL)
+	{
+		nErrCode = GetLastError();
+		MBoxAssert(hProcTest!=NULL || nErrCode==ERROR_ACCESS_DENIED);
+
+		sei.hwnd = ghWnd;
+		sei.fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NOASYNC;
+		sei.lpVerb = L"runas";
+		sei.lpFile = szSrv;
+		sei.lpParameters = szArgs;
+		sei.lpDirectory = gpConEmu->ms_ConEmuBaseDir;
+		sei.nShow = SW_SHOWMINIMIZED;
+
+		lbCreate = ShellExecuteEx(&sei);
+		if (lbCreate)
+		{
+			MBoxAssert(sei.hProcess!=NULL);
+			pi.hProcess = sei.hProcess;
+		}
+	}
+	else
+	{
+		lbCreate = CreateProcess(szSrv, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+	}
+
+	if (!lbCreate)
+	{
+		wchar_t szErrMsg[MAX_PATH+255], szTitle[128];
+		DWORD dwErr = GetLastError();
+		_wsprintf(szErrMsg, SKIPLEN(countof(szErrMsg)) L"Can't start injection server\n%s %s", szSrv, szArgs);
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+		DisplayLastError(szErrMsg, dwErr, 0, szTitle);
+		goto wrap;
+	}
+	DWORD nWrapperWait = WaitForSingleObject(pi.hProcess, INFINITE);
+	DWORD nWrapperResult = -1;
+	GetExitCodeProcess(pi.hProcess, &nWrapperResult);
+	CloseHandle(pi.hProcess);
+	if (pi.hThread) CloseHandle(pi.hThread);
+	if (nWrapperResult != CERR_HOOKS_WAS_SET)
+	{
+		goto wrap;
+	}
+
+
+DoExecute:
+	// Теперь можно дернуть созданный в удаленном процессе пайп для запуска в той консоли сервера.
+	pIn = ExecuteNewCmd(CECMD_STARTSERVER, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_START));
+	pIn->NewServer.nPID = GetCurrentProcessId();
+	pOut = ExecuteCmd(szPipe, pIn, 500, ghWnd);
+	if (!pOut || (pOut->hdr.cbSize < pIn->hdr.cbSize) || (pOut->dwData[0] == 0))
+	{
+		_ASSERTE(pOut->hdr.cbSize == (sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_START)));
+
+		wchar_t szMsg[255], szTitle[128];
+		wcscpy_c(szMsg, L"Failed to start console server in the remote process");
+		if (hPipeTest && hPipeTest != INVALID_HANDLE_VALUE)
+			wcscat_c(szMsg, L"\nHooks already was set");
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+		DisplayLastError(szMsg, (pOut && (pOut->hdr.cbSize >= pIn->hdr.cbSize)) ? pOut->dwData[1] : -1, 0, szTitle);
+		goto wrap;
+	}
+
+
+	lbRc = true;
+wrap:
+	ExecuteFreeResult(pIn);
+	ExecuteFreeResult(pOut);
+	return lbRc;
+}
+
+// Работу делаем в фоновом потоке, чтобы не блокировать главный
+// (к окну ConEmu должна подцепиться новая вкладка)
+DWORD CAttachDlg::StartAttachThread(AttachParm* lpParam)
+{
+	if (!lpParam)
+	{
+		_ASSERTE(lpParam!=NULL);
+		return 100;
+	}
+
+	bool lbRc = StartAttach(lpParam->hAttachWnd, lpParam->nPID, lpParam->nBits, lpParam->nType);
+
+	free(lpParam);
+
+	if (!lbRc)
+		return 10;
 
 	return 0;
 }

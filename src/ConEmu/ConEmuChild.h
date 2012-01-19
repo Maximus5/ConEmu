@@ -59,6 +59,9 @@ class CConEmuChild
 
 		BOOL TrackMouse();
 		void OnAlwaysShowScrollbar();
+		
+		int IsDcLocked(RECT* CurrentConLockedRect);
+		void LockDcRect(bool bLock, RECT* Rect = NULL);
 
 #ifdef _DEBUG
 	public:
@@ -105,4 +108,12 @@ class CConEmuChild
 		BOOL CheckScrollAutoPopup();
 		void ShowScroll(BOOL abImmediate);
 		void HideScroll(BOOL abImmediate);
+		
+		struct LockDcInfo
+		{
+			BOOL  bLocked;
+			DWORD nLockTick;
+			RECT  rcScreen;
+			RECT  rcCon;
+		} m_LockDc;
 };

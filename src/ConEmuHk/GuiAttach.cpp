@@ -11,6 +11,10 @@ extern HWND    ghConEmuWnd;   // Root! ConEmu window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnHookMainThreadId;
 
+// Этот TID может отличаться от основного потока.
+// Например, VLC создает окна не в главном, а в фоновом потоке.
+DWORD  gnAttachGuiClientThreadId = 0;
+
 RECT    grcConEmuClient = {}; // Для аттача гуевых окон
 BOOL    gbAttachGuiClient = FALSE; // Для аттача гуевых окон
 BOOL 	gbGuiClientAttached = FALSE; // Для аттача гуевых окон (успешно подключились)
@@ -95,46 +99,56 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	// "!dwStyle" добавил для shell32.dll!CExecuteApplication::_CreateHiddenDDEWindow()
 	_ASSERTE(hWndParent==NULL || ghConEmuWnd == NULL || hWndParent!=ghConEmuWnd || !dwStyle);
 	
-	if (gbAttachGuiClient && ghConEmuWndDC && (GetCurrentThreadId() == gnHookMainThreadId))
+	if (gbAttachGuiClient && ghConEmuWndDC)
 	{
-		bool lbCanAttach =
-						// Обычное окно с заголовком
-						((dwStyle & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW)
-						// Диалог с ресайзом рамки
-						|| ((dwStyle & (WS_POPUP|WS_THICKFRAME)) == (WS_POPUP|WS_THICKFRAME))
-						// Обычное окно без заголовка
-						|| ((dwStyle & (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_POPUP|DS_MODALFRAME|WS_CHILDWINDOW)) == (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX)) 
-						;
-		if (dwStyle & (DS_MODALFRAME|WS_CHILDWINDOW))
-			lbCanAttach = false;
-		else if ((dwStyle & WS_POPUP) && !(dwStyle & WS_THICKFRAME))
-			lbCanAttach = false;
-		else if (dwExStyle & (WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_DLGMODALFRAME|WS_EX_MDICHILD))
-			lbCanAttach = false;
-
-		if (lbCanAttach)
+		DWORD nTID = GetCurrentThreadId();
+		if ((nTID != gnHookMainThreadId) && (gnAttachGuiClientThreadId && nTID != gnAttachGuiClientThreadId))
 		{
-			// Родительское окно - ConEmu DC
-			// -- hWndParent = ghConEmuWndDC; // Надо ли его ставить сразу, если не включаем WS_CHILD?
-
-			// WS_CHILDWINDOW перед созданием выставлять нельзя, т.к. например у WordPad.exe сносит крышу:
-			// все его окна создаются нормально, но он показывает ошибку "Не удалось создать новый документ"
-			//// Уберем рамку, меню и заголовок - оставим
-			//dwStyle = (dwStyle | WS_CHILDWINDOW|WS_TABSTOP) & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
-			bStyleHidden = (dwStyle & WS_VISIBLE) == WS_VISIBLE;
-			dwStyle &= ~WS_VISIBLE; // А вот видимость - точно сбросим
-			////dwExStyle = dwExStyle & ~WS_EX_WINDOWEDGE;
-
-			bAttachGui = TRUE;
-			//gbAttachGuiClient = FALSE; // Только одно окно приложения -- сбросим после реального создания окна
-			gbGuiClientAttached = TRUE; // Сразу взведем флажок режима
-
-			#ifdef _DEBUG
-			if (!ghGuiClientRetHook)
-				ghGuiClientRetHook = user->setWindowsHookExW(WH_CALLWNDPROCRET, GuiClientRetHook, NULL, GetCurrentThreadId());
-			#endif
+			_ASSERTEX(nTID==gnHookMainThreadId || !gnAttachGuiClientThreadId);
 		}
-		return true;
+		else
+		{
+			bool lbCanAttach =
+							// Обычное окно с заголовком
+							((dwStyle & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW)
+							// Диалог с ресайзом рамки
+							|| ((dwStyle & (WS_POPUP|WS_THICKFRAME)) == (WS_POPUP|WS_THICKFRAME))
+							// Обычное окно без заголовка
+							|| ((dwStyle & (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_POPUP|DS_MODALFRAME|WS_CHILDWINDOW)) == (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX)) 
+							;
+			if (dwStyle & (DS_MODALFRAME|WS_CHILDWINDOW))
+				lbCanAttach = false;
+			else if ((dwStyle & WS_POPUP) && !(dwStyle & WS_THICKFRAME))
+				lbCanAttach = false;
+			else if (dwExStyle & (WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_DLGMODALFRAME|WS_EX_MDICHILD))
+				lbCanAttach = false;
+
+			if (lbCanAttach)
+			{
+				// Родительское окно - ConEmu DC
+				// -- hWndParent = ghConEmuWndDC; // Надо ли его ставить сразу, если не включаем WS_CHILD?
+
+				// WS_CHILDWINDOW перед созданием выставлять нельзя, т.к. например у WordPad.exe сносит крышу:
+				// все его окна создаются нормально, но он показывает ошибку "Не удалось создать новый документ"
+				//// Уберем рамку, меню и заголовок - оставим
+				//dwStyle = (dwStyle | WS_CHILDWINDOW|WS_TABSTOP) & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
+				bStyleHidden = (dwStyle & WS_VISIBLE) == WS_VISIBLE;
+				dwStyle &= ~WS_VISIBLE; // А вот видимость - точно сбросим
+				////dwExStyle = dwExStyle & ~WS_EX_WINDOWEDGE;
+
+				bAttachGui = TRUE;
+				//gbAttachGuiClient = FALSE; // Только одно окно приложения -- сбросим после реального создания окна
+				gbGuiClientAttached = TRUE; // Сразу взведем флажок режима
+
+				#ifdef _DEBUG
+				if (!ghGuiClientRetHook)
+					ghGuiClientRetHook = user->setWindowsHookExW(WH_CALLWNDPROCRET, GuiClientRetHook, NULL, GetCurrentThreadId());
+				#endif
+
+				gnAttachGuiClientThreadId = nTID;
+			}
+			return true;
+		}
 	}
 
 	if (gbGuiClientAttached /*ghAttachGuiClient*/)
@@ -254,8 +268,23 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 	}
 }
 
-void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asClassW, DWORD anStyle, DWORD anStyleEx, BOOL abStyleHidden)
+// Если (anFromShowWindow != -1), значит функу зовут из ShowWindow
+void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asClassW, DWORD anStyle, DWORD anStyleEx, BOOL abStyleHidden, int anFromShowWindow/*=-1*/)
 {
+	DWORD nCurStyle = (DWORD)user->getWindowLongPtrW(hWindow, GWL_STYLE);
+	DWORD nCurStyleEx = (DWORD)user->getWindowLongPtrW(hWindow, GWL_EXSTYLE);
+
+	user->allowSetForegroundWindow(ASFW_ANY);
+
+	// VLC создает несколько "подходящих" окон, но ShowWindow зовет
+	// только для одного из них. Поэтому фактический аттач делаем
+	// только в том случае, если окно "видимое"
+	if ((!(nCurStyle & WS_VISIBLE)) && (anFromShowWindow <= SW_HIDE))
+	{
+		// Значит потом, из ShowWindow
+		return;
+	}
+
 	ghAttachGuiClient = hWindow;
 	gbForceShowGuiClient = TRUE;
 	gbAttachGuiClient = FALSE; // Только одно окно приложения. Пока?
@@ -296,11 +325,6 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	}
 #endif
 
-	user->allowSetForegroundWindow(ASFW_ANY);
-
-	DWORD nCurStyle = (DWORD)user->getWindowLongPtrW(hWindow, GWL_STYLE);
-	DWORD nCurStyleEx = (DWORD)user->getWindowLongPtrW(hWindow, GWL_EXSTYLE);
-
 	DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
 	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_ATTACHGUIAPP, nSize);
 
@@ -328,8 +352,9 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 
 	// AttachThreadInput
 	DWORD nConEmuTID = user->getWindowThreadProcessId(ghConEmuWnd, NULL);
-	_ASSERTEX(GetCurrentThreadId()==gnHookMainThreadId);
-	BOOL bAttachRc = user->attachThreadInput(GetCurrentThreadId(), nConEmuTID, TRUE);
+	DWORD nTID = GetCurrentThreadId();
+	_ASSERTEX(nTID==gnHookMainThreadId || nTID==gnAttachGuiClientThreadId);
+	BOOL bAttachRc = user->attachThreadInput(nTID, nConEmuTID, TRUE);
 	DWORD nAttachErr = GetLastError();
 
 
@@ -421,6 +446,20 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 
 void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach)
 {
+	if ((!ghAttachGuiClient) && gbAttachGuiClient && (nCmdShow >= SW_SHOWNORMAL))
+	{
+		// VLC создает несколько "подходящих" окон, но ShowWindow зовет
+		// только для одного из них. Поэтому фактический аттач делаем
+		// только в том случае, если окно "видимое"
+		HMENU hMenu = user->getMenu(hWnd);
+		wchar_t szClassName[255]; user->getClassNameW(hWnd, szClassName, countof(szClassName));
+		DWORD nCurStyle = (DWORD)user->getWindowLongPtrW(hWnd, GWL_STYLE);
+		DWORD nCurStyleEx = (DWORD)user->getWindowLongPtrW(hWnd, GWL_EXSTYLE);
+
+		// Пробуем
+		OnGuiWindowAttached(hWnd, hMenu, NULL, szClassName, nCurStyle, nCurStyleEx, FALSE, nCmdShow);
+	}
+
 	if (gbForceShowGuiClient && (ghAttachGuiClient == hWnd))
 	{
 		//if (nCmdShow == SW_HIDE)

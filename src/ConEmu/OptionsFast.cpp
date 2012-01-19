@@ -33,6 +33,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 
 static bool bCheckHooks, bCheckUpdate, bCheckIme;
+// Если файл конфигурации пуст, то после вызова CheckOptionsFast
+// все равно будет SaveSettings(TRUE/*abSilent*/);
+// Поэтому выбранные настройки здесь можно не сохранять (кроме StopWarningConIme)
+static bool bVanilla;
 
 
 static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -151,31 +155,34 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 					/* Save settings */
 					SettingsBase* reg = NULL;
 					
-					if ((reg = gpSet->CreateSettings()) == NULL)
+					if (!bVanilla)
 					{
-						_ASSERTE(reg!=NULL);
-					}
-					else
-					{
-						if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+						if ((reg = gpSet->CreateSettings()) == NULL)
 						{
-							/* Install Keyboard hooks */
-							reg->Save(L"KeyboardHooks", gpSet->m_isKeyboardHooks);
-
-							/* Inject ConEmuHk.dll */
-							reg->Save(L"UseInjects", gpSet->isUseInjects);
-
-							/* Auto Update settings */
-							reg->Save(L"Update.CheckOnStartup", gpSet->UpdSet.isUpdateCheckOnStartup);
-							reg->Save(L"Update.CheckHourly", gpSet->UpdSet.isUpdateCheckHourly);
-							reg->Save(L"Update.ConfirmDownload", gpSet->UpdSet.isUpdateConfirmDownload);
-							reg->Save(L"Update.UseBuilds", gpSet->UpdSet.isUpdateUseBuilds);
-
-							// Fast configuration done
-							reg->CloseKey();
+							_ASSERTE(reg!=NULL);
 						}
-			
-						delete reg;
+						else
+						{
+							if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+							{
+								/* Install Keyboard hooks */
+								reg->Save(L"KeyboardHooks", gpSet->m_isKeyboardHooks);
+
+								/* Inject ConEmuHk.dll */
+								reg->Save(L"UseInjects", gpSet->isUseInjects);
+
+								/* Auto Update settings */
+								reg->Save(L"Update.CheckOnStartup", gpSet->UpdSet.isUpdateCheckOnStartup);
+								reg->Save(L"Update.CheckHourly", gpSet->UpdSet.isUpdateCheckHourly);
+								reg->Save(L"Update.ConfirmDownload", gpSet->UpdSet.isUpdateConfirmDownload);
+								reg->Save(L"Update.UseBuilds", gpSet->UpdSet.isUpdateUseBuilds);
+
+								// Fast configuration done
+								reg->CloseKey();
+							}
+				
+							delete reg;
+						}
 					}
 
 
@@ -233,8 +240,10 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 }
 
 
-void CheckOptionsFast()
+void CheckOptionsFast(bool abCreatingVanilla /*= false*/)
 {
+	bVanilla = abCreatingVanilla;
+
 	bCheckHooks = (gpSet->m_isKeyboardHooks == 0);
 
 	bCheckUpdate = (gpSet->UpdSet.isUpdateUseBuilds == 0);

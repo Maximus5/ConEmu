@@ -501,7 +501,7 @@ BOOL CheckCreateAppWindow()
 
 BOOL gbInDisplayLastError = FALSE;
 
-int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /* =0 */)
+int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /* =0 */, LPCWSTR asTitlte /*= NULL*/)
 {
 	int nBtn = 0;
 	DWORD dw = dwError ? dwError : GetLastError();
@@ -518,7 +518,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 
 	WARNING("!!! Заменить MessageBox на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 	BOOL lb = gbInDisplayLastError; gbInDisplayLastError = TRUE;
-	nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, out, gpConEmu->GetLastTitle(), dwMsgFlags);
+	nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, out, asTitlte ? asTitlte : gpConEmu->GetLastTitle(), dwMsgFlags);
 	gbInDisplayLastError = lb;
 	MCHKHEAP
 	LocalFree(lpMsgBuf);

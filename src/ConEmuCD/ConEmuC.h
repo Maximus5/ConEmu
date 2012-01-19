@@ -134,6 +134,7 @@ extern wchar_t gszDbgModLabel[6];
 #define GUI_PIPE_TIMEOUT 300
 #define MAX_CONREAD_SIZE 30000 // в байтах
 #define RELOAD_INFO_TIMEOUT 500
+#define EXTCONCOMMIT_TIMEOUT 500
 #define REQSIZE_TIMEOUT 5000
 #define GUIREADY_TIMEOUT 10000
 #define UPDATECONHANDLE_TIMEOUT 1000
@@ -270,6 +271,8 @@ void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
 #endif
 HWND Attach2Gui(DWORD nTimeout);
 
+int InjectRemote(DWORD nRemotePID);
+int InfiltrateDll(HANDLE hProcess, LPCWSTR dll);
 
 int ParseCommandLine(LPCWSTR asCmdLine /*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/); // Разбор параметров командной строки
 void Help();
@@ -428,6 +431,8 @@ struct SrvInfo
 	HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
 	HANDLE hRefreshDoneEvent; // ServerMode, выставляется после hRefreshEvent
 	HANDLE hDataReadyEvent; // Флаг, что в сервере есть изменения (GUI должен перечитать данные)
+	HANDLE hExtConsoleCommit; // Event для синхронизации (выставляется по Commit);
+	DWORD  nExtConsolePID;
 	BOOL bForceConsoleRead; // Пнуть нить опроса консоли RefreshThread чтобы она без задержек перечитала содержимое
 	// Смена размера консоли через RefreshThread
 	int nRequestChangeSize;

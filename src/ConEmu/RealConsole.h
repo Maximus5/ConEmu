@@ -82,7 +82,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CONSOLE_DBLCLICK_SELECTION 0x0400 // двойным кликом выделено слово, пропустить WM_LBUTTONUP
 #define CONSOLE_KEYMOD_MASK 0xFF000000 // Здесь хранится модификатор, которым начали выделение мышкой
 
-#define PROCESS_WAIT_START_TIME 1000
+#define PROCESS_WAIT_START_TIME RELEASEDEBUGTEST(1000,1000)
 
 #define SETSYNCSIZEAPPLYTIMEOUT 500
 #define SETSYNCSIZEMAPPINGTIMEOUT 300
@@ -388,7 +388,7 @@ class CRealConsole
 		void SetTabs(ConEmuTab* tabs, int tabsCount);
 		int GetTabCount(BOOL abVisibleOnly = FALSE);
 		int GetActiveTab();
-		BOOL GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
+		bool GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
 		int GetModifiedEditors();
 		BOOL ActivateFarWindow(int anWndIndex);
 		DWORD CanActivateFarWindow(int anWndIndex);
@@ -415,8 +415,8 @@ class CRealConsole
 		short GetProgress(BOOL* rpbError);
 		void UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo);
 		void UpdateFarSettings(DWORD anFarPID=0);
-		int CoordInPanel(COORD cr);
-		BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE);
+		int CoordInPanel(COORD cr, BOOL abIncludeEdges = FALSE);
+		BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE, BOOL abIncludeEdges = FALSE);
 		bool isAdministrator();
 		BOOL isMouseButtonDown();
 		void OnConsoleLangChange(DWORD_PTR dwNewKeybLayout);
@@ -443,7 +443,7 @@ class CRealConsole
 		LPCWSTR GetConStatus();
 		static wchar_t ms_LastRConStatus[80];
 		void UpdateCursorInfo();
-		void Detach();
+		bool Detach();
 		void AdminDuplicate();
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
 		BOOL InCreateRoot();
@@ -610,6 +610,7 @@ class CRealConsole
 		//CESERVER_REQ* cmdNewConsole(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdOnPeekReadInput(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		CESERVER_REQ* cmdOnSetConsoleKeyShortcuts(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdLockDc(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		//CESERVER_REQ* cmdAssert(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
 		
 		//void ApplyConsoleInfo(CESERVER_REQ* pInfo);
@@ -671,6 +672,8 @@ class CRealConsole
 		BOOL ApplyConsoleInfo();
 		BOOL mb_DataChanged;
 		void OnServerStarted();
+		void OnRConStartedSuccess();
+		BOOL mb_RConStartedSuccess;
 		//
 		BOOL PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName);
 		HANDLE PrepareOutputFileCreate(wchar_t* pszFilePathName);

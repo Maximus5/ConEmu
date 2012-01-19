@@ -65,7 +65,7 @@ BEGIN
     cbNewConfirm            "Confirm new console creation.\nYou may change cmd line for it, or turn on 'Run as...' feature.\nEven if unchecked, You may hold 'Shift' to display dialog."
     cbPortableRegistry      "Enable portable mode for Far manager"
     cbRClick                "Off - all RClicks passed to console\nOn - EMenu called instead of RClick\n3s - Short RClick passed, Long RClick -> EMenu\nWarning! This may conflict with RDrag"
-    cbRSelectionFix         "Fix dashed selection with fast right mouse drag"
+    cbRSelectionFix         "Fix dashed selection with fast right mouse drag\nFar 3: restore files selection instead of EMenu"
     cbSafeFarClose          "Try to close Far Manager softly, instead of closing console window, when you close ConEmu window"
     cbSendAltEnter          "When checked, You can use 'Alt+Enter' in Far internally\nYou can enter fullscreen mode with Ctrl+Win+Enter"
     cbSendAltEsc            "When checked, You can use 'Alt+Esc' in Far internally"
