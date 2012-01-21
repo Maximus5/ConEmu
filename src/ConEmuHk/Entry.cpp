@@ -30,8 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  Раскомментировать, чтобы сразу после загрузки модуля показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_INJECT_MSGBOX
-//  #define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-//  #define SHOW_EXE_MSGBOX_NAME L"vlc.exe"
+  #define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
+  #define SHOW_EXE_MSGBOX_NAME L"vlc.exe"
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
@@ -67,6 +67,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShellProcessor.h"
 #include "UserImp.h"
 #include "GuiAttach.h"
+#include "Injects.h"
 
 
 #if defined(__GNUC__)
@@ -112,7 +113,6 @@ BOOL gbDllStopCalled = FALSE;
 BOOL gbHooksWasSet = false;
 BOOL gbDllDeinitialized = false; 
 
-UINT_PTR gfnLoadLibrary = NULL;
 extern BOOL StartupHooks(HMODULE ahOurDll);
 extern void ShutdownHooks();
 extern void InitializeHookedModules();
@@ -164,18 +164,24 @@ DWORD  gnStartThreadID = 0;
 MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap = NULL;
 CESERVER_CONSOLE_MAPPING_HDR* gpConInfo = NULL;
 
-CESERVER_CONSOLE_MAPPING_HDR* GetConMap()
+CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 {
-	if (gpConInfo)
+	if (gpConInfo && !abForceRecreate)
 		return gpConInfo;
 	
-	if (!gpConMap)
+	if (!gpConMap || abForceRecreate)
 	{
-		gpConMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
+		if (!gpConMap)
+			gpConMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
+		if (!gpConMap)
+		{
+			gpConInfo = NULL;
+			return NULL;
+		}
 		gpConMap->InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
 	}
 	
-	if (!gpConInfo)
+	if (!gpConInfo || abForceRecreate)
 	{
 		gpConInfo = gpConMap->Open();
 	}
@@ -207,6 +213,34 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap()
 	}
 	
 	return gpConInfo;
+}
+
+void OnConWndChanged(HWND ahNewConWnd)
+{
+	//BOOL lbForceReopen = FALSE;
+
+	if (ahNewConWnd)
+	{
+		#ifdef _DEBUG
+		if (user)
+		{
+			wchar_t sClass[64]; user->getClassNameW(ahNewConWnd, sClass, countof(sClass));
+			_ASSERTEX(lstrcmp(sClass, L"ConsoleWindowClass")==0);
+		}
+		#endif
+
+		if (ghConWnd != ahNewConWnd)
+		{
+			ghConWnd = ahNewConWnd;
+			//lbForceReopen = TRUE;
+		}
+	}
+	else
+	{
+		//lbForceReopen = TRUE;
+	}
+
+	GetConMap(TRUE);
 }
 
 #ifdef USE_PIPE_SERVER
@@ -252,16 +286,20 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	
 	// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
 	// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
-	HMODULE hKernel = ::GetModuleHandle(L"kernel32.dll");
-	if (hKernel)
+	//HMODULE hKernel = ::GetModuleHandle(L"kernel32.dll");
+	//if (hKernel)
+	//{
+	//	gfnLoadLibrary = (UINT_PTR)::GetProcAddress(hKernel, "LoadLibraryW");
+	//	_ASSERTE(gfnLoadLibrary!=NULL);
+	//}
+	//else
+	//{
+	//	_ASSERTE(hKernel!=NULL);
+	//	gfnLoadLibrary = NULL;
+	//}
+	if (!GetLoadLibraryAddress())
 	{
-		gfnLoadLibrary = (UINT_PTR)::GetProcAddress(hKernel, "LoadLibraryW");
-		_ASSERTE(gfnLoadLibrary!=NULL);
-	}
-	else
-	{
-		_ASSERTE(hKernel!=NULL);
-		gfnLoadLibrary = NULL;
+		_ASSERTE(gfnLoadLibrary!=0);
 	}
 	
 	ghUser32 = GetModuleHandle(user32);
@@ -291,7 +329,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	WARNING("Попробовать не ломиться в мэппинг, а взять все из переменной ConEmuData");
 	// Открыть мэппинг консоли и попытаться получить HWND GUI, PID сервера, и пр...
 	if (ghConWnd)
-		GetConMap();
+	{
+		OnConWndChanged(ghConWnd);
+		//GetConMap();
+	}
 
 	if (ghConEmuWnd)
 	{
@@ -441,6 +482,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 							BOOL lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != NULL;
 							UNREFERENCED_PARAMETER(lbRc);
 						}
+						OnConWndChanged(ghConWnd);
 						gbAttachGuiClient = TRUE;
 					}
 				}

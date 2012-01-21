@@ -1,8 +1,12 @@
 ﻿[*] Продолжение GUI приложений во вкладках. Теперь и VLC.
+[*] Правки в injects.
 
 
 2012.01.18
 [+] Issue 337: Attach не-фаровских консолей: System menu -> Attach to... Проверялось в Windows 7.
+    ТехИнфо. Для аттача необходимо загрузить в выбранный процесс модуль ConEmuHk.dll (ConEmuHk64.dll),
+    что выполняется посредством CreateRemoteThread. В принципе, некоторые антивирусы могут ругаться
+    при попытке использования этой функции. Вызывается CreateRemoteThread из ConEmuC.exe (ConEmuC64.exe).
 [%] Issue 480: Answering "Detach console" with "no" still detaches console.
 [%] В 120115 для Far 3.x отвалился правый клик на keybar.
 [+] Консольным программа разрешено 'рисовать' в DC ConEmu функцией StretchDIBits (Far плагины ImageView и PicViewAdv).

@@ -871,6 +871,9 @@ LRESULT CSettings::OnInitDialog()
 	_ASSERTE(!hMain && !hColors && !hViews && !hExt && !hFar && !hInfo && !hDebug && !hUpdate && !hSelection);
 	hMain = hExt = hFar = hTabs = hKeys = hViews = hColors = hInfo = hDebug = hUpdate = hSelection = NULL;
 	gbLastColorsOk = FALSE;
+
+	RegisterTipsFor(ghOpWnd);
+
 	HMENU hSysMenu = GetSystemMenu(ghOpWnd, FALSE);
 	InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
 	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED
@@ -2120,13 +2123,18 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			SendMessage(ghOpWnd, WM_CLOSE, 0, 0);
 			break;
 		case bSaveSettings:
+			{
+				bool isShiftPressed = isPressed(VK_SHIFT);
 
-			if (IsWindowEnabled(GetDlgItem(hMain, cbApplyPos)))  // были изменения в полях размера/положения
-				OnButtonClicked(NULL, cbApplyPos, 0);
+				if (IsWindowEnabled(GetDlgItem(hMain, cbApplyPos)))  // были изменения в полях размера/положения
+					OnButtonClicked(NULL, cbApplyPos, 0);
 
-			if (gpSet->SaveSettings())
-				SendMessage(ghOpWnd,WM_COMMAND,IDOK,0);
-
+				if (gpSet->SaveSettings())
+				{
+					if (!isShiftPressed)
+						SendMessage(ghOpWnd,WM_COMMAND,IDOK,0);
+				}
+			}
 			break;
 		case rNoneAA:
 		case rStandardAA:

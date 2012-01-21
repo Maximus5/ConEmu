@@ -8,12 +8,12 @@
 int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/*32/64*/, LPCWSTR apszHookDllPath, DWORD_PTR* ptrAllocated, DWORD* pnAllocated)
 {
 	int         iRc = -1000;
-	CONTEXT		context; memset(&context, 0, sizeof(context));
+	CONTEXT		context = {};
 	void*		mem		 = NULL;
 	size_t		memLen	 = 0;
 	size_t		codeSize = 0;
 	BYTE* 		code	 = NULL;
-	wchar_t 	strHookDllPath[MAX_PATH*2];
+	wchar_t 	strHookDllPath[MAX_PATH*2] = {};
 	DWORD 		dwErrCode = 0;
 #ifndef _WIN64
 	// starting a 32-bit process
@@ -37,7 +37,8 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 		goto wrap;
 	}
 
-	codeSize = 91;
+	// Адрес пути к ConEmuHk64 нужно выровнять на 8 байт!
+	codeSize = 96;
 #else
 
 	if (ImageBits != 32)
@@ -146,58 +147,59 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 	} ip;
 	ip.pB = code;
 #ifdef _WIN64
-	*ip.pL++ = context.Rip;
-	*ip.pL++ = fnLoadLibrary;
-	*ip.pB++ = 0x9C;					// pushfq
-	*ip.pB++ = 0x50;					// push  rax
-	*ip.pB++ = 0x51;					// push  rcx
-	*ip.pB++ = 0x52;					// push  rdx
-	*ip.pB++ = 0x53;					// push  rbx
-	*ip.pB++ = 0x55;					// push  rbp
-	*ip.pB++ = 0x56;					// push  rsi
-	*ip.pB++ = 0x57;					// push  rdi
-	*ip.pB++ = 0x41; *ip.pB++ = 0x50;	// push  r8
-	*ip.pB++ = 0x41; *ip.pB++ = 0x51;	// push  r9
-	*ip.pB++ = 0x41; *ip.pB++ = 0x52;	// push  r10
-	*ip.pB++ = 0x41; *ip.pB++ = 0x53;	// push  r11
-	*ip.pB++ = 0x41; *ip.pB++ = 0x54;	// push  r12
-	*ip.pB++ = 0x41; *ip.pB++ = 0x55;	// push  r13
-	*ip.pB++ = 0x41; *ip.pB++ = 0x56;	// push  r14
-	*ip.pB++ = 0x41; *ip.pB++ = 0x57;	// push  r15
-	*ip.pB++ = 0x48;					// sub   rsp, 40
-	*ip.pB++ = 0x83;
-	*ip.pB++ = 0xEC;
-	*ip.pB++ = 0x28;
-	*ip.pB++ = 0x48;					// lea	 ecx, "path\to\our.dll"
-	*ip.pB++ = 0x8D;
-	*ip.pB++ = 0x0D;
-	*ip.pI++ = 40;
-	*ip.pB++ = 0xFF;					// call  LoadLibraryW
-	*ip.pB++ = 0x15;
-	*ip.pI++ = -49;
-	*ip.pB++ = 0x48;					// add   rsp, 40
-	*ip.pB++ = 0x83;
-	*ip.pB++ = 0xC4;
-	*ip.pB++ = 0x28;
-	*ip.pB++ = 0x41; *ip.pB++ = 0x5F;	// pop   r15
-	*ip.pB++ = 0x41; *ip.pB++ = 0x5E;	// pop   r14
-	*ip.pB++ = 0x41; *ip.pB++ = 0x5D;	// pop   r13
-	*ip.pB++ = 0x41; *ip.pB++ = 0x5C;	// pop   r12
-	*ip.pB++ = 0x41; *ip.pB++ = 0x5B;	// pop   r11
-	*ip.pB++ = 0x41; *ip.pB++ = 0x5A;	// pop   r10
-	*ip.pB++ = 0x41; *ip.pB++ = 0x59;	// pop   r9
-	*ip.pB++ = 0x41; *ip.pB++ = 0x58;	// pop   r8
-	*ip.pB++ = 0x5F;					// pop	 rdi
-	*ip.pB++ = 0x5E;					// pop	 rsi
-	*ip.pB++ = 0x5D;					// pop	 rbp
-	*ip.pB++ = 0x5B;					// pop	 rbx
-	*ip.pB++ = 0x5A;					// pop	 rdx
-	*ip.pB++ = 0x59;					// pop	 rcx
-	*ip.pB++ = 0x58;					// pop	 rax
-	*ip.pB++ = 0x9D;					// popfq
-	*ip.pB++ = 0xff;					// jmp	 Rip
-	*ip.pB++ = 0x25;
-	*ip.pI++ = -91;
+	/* 0x00 */ *ip.pL++ = context.Rip;
+	/* 0x08 */ *ip.pL++ = fnLoadLibrary;
+	/* 0x10 */ *ip.pB++ = 0x9C;					// pushfq
+	/* 0x11 */ *ip.pB++ = 0x50;					// push  rax
+	/* 0x12 */ *ip.pB++ = 0x51;					// push  rcx
+	/* 0x13 */ *ip.pB++ = 0x52;					// push  rdx
+	/* 0x14 */ *ip.pB++ = 0x53;					// push  rbx
+	/* 0x15 */ *ip.pB++ = 0x55;					// push  rbp
+	/* 0x16 */ *ip.pB++ = 0x56;					// push  rsi
+	/* 0x17 */ *ip.pB++ = 0x57;					// push  rdi
+	/* 0x18 */ *ip.pB++ = 0x41; *ip.pB++ = 0x50;	// push  r8
+	/* 0x1A */ *ip.pB++ = 0x41; *ip.pB++ = 0x51;	// push  r9
+	/* 0x1C */ *ip.pB++ = 0x41; *ip.pB++ = 0x52;	// push  r10
+	/* 0x1E */ *ip.pB++ = 0x41; *ip.pB++ = 0x53;	// push  r11
+	/* 0x20 */ *ip.pB++ = 0x41; *ip.pB++ = 0x54;	// push  r12
+	/* 0x22 */ *ip.pB++ = 0x41; *ip.pB++ = 0x55;	// push  r13
+	/* 0x24 */ *ip.pB++ = 0x41; *ip.pB++ = 0x56;	// push  r14
+	/* 0x26 */ *ip.pB++ = 0x41; *ip.pB++ = 0x57;	// push  r15
+	/* 0x28 */ *ip.pB++ = 0x48;					// sub   rsp, 40
+	/* 0x29 */ *ip.pB++ = 0x83;
+	/* 0x2A */ *ip.pB++ = 0xEC;
+	/* 0x2B */ *ip.pB++ = 0x28;
+	/* 0x2C */ *ip.pB++ = 0x48;					// lea	 ecx, "path\to\our.dll"
+	/* 0x2D */ *ip.pB++ = 0x8D;
+	/* 0x2E */ *ip.pB++ = 0x0D;
+	/* 0x2F */ *ip.pI++ = 45;
+	/* 0x33 */ *ip.pB++ = 0xFF;					// call  LoadLibraryW
+	/* 0x34 */ *ip.pB++ = 0x15;
+	/* 0x35 */ *ip.pI++ = -49;
+	/* 0x39 */ *ip.pB++ = 0x48;					// add   rsp, 40
+	/* 0x3A */ *ip.pB++ = 0x83;
+	/* 0x3B */ *ip.pB++ = 0xC4;
+	/* 0x3C */ *ip.pB++ = 0x28;
+	/* 0x3D */ *ip.pB++ = 0x41; *ip.pB++ = 0x5F;	// pop   r15
+	/* 0x3F */ *ip.pB++ = 0x41; *ip.pB++ = 0x5E;	// pop   r14
+	/* 0x41 */ *ip.pB++ = 0x41; *ip.pB++ = 0x5D;	// pop   r13
+	/* 0x43 */ *ip.pB++ = 0x41; *ip.pB++ = 0x5C;	// pop   r12
+	/* 0x45 */ *ip.pB++ = 0x41; *ip.pB++ = 0x5B;	// pop   r11
+	/* 0x47 */ *ip.pB++ = 0x41; *ip.pB++ = 0x5A;	// pop   r10
+	/* 0x49 */ *ip.pB++ = 0x41; *ip.pB++ = 0x59;	// pop   r9
+	/* 0x4B */ *ip.pB++ = 0x41; *ip.pB++ = 0x58;	// pop   r8
+	/* 0x4D */ *ip.pB++ = 0x5F;					// pop	 rdi
+	/* 0x4E */ *ip.pB++ = 0x5E;					// pop	 rsi
+	/* 0x4F */ *ip.pB++ = 0x5D;					// pop	 rbp
+	/* 0x50 */ *ip.pB++ = 0x5B;					// pop	 rbx
+	/* 0x51 */ *ip.pB++ = 0x5A;					// pop	 rdx
+	/* 0x52 */ *ip.pB++ = 0x59;					// pop	 rcx
+	/* 0x53 */ *ip.pB++ = 0x58;					// pop	 rax
+	/* 0x54 */ *ip.pB++ = 0x9D;					// popfq
+	/* 0x55 */ *ip.pB++ = 0xff;					// jmp	 Rip
+	/* 0x56 */ *ip.pB++ = 0x25;
+	/* 0x57 */ *ip.pI++ = -91;
+	/* 0x5B */
 
 	context.Rip = (UINT_PTR)mem + 16;	// начало (иструкция pushfq)
 #else

@@ -1089,14 +1089,18 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 	ORIGINALFASTEX(ShowWindow,NULL);
 	BOOL lbRc = FALSE, lbGuiAttach = FALSE;
 	
-	if (ghConEmuWndDC && hWnd == ghConEmuWndDC)
+	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConWnd))
 	{
 		#ifdef _DEBUG
-		static bool bShowWarned = false;
-		if (!bShowWarned)
+		if (hWnd == ghConEmuWndDC)
 		{
-			bShowWarned = true;
-			_ASSERTE(hWnd != ghConEmuWndDC && L"OnShowWindow");
+			static bool bShowWarned = false;
+			if (!bShowWarned) { bShowWarned = true; _ASSERTE(hWnd != ghConEmuWndDC && L"OnShowWindow(ghConEmuWndDC)"); }
+		}
+		else
+		{
+			static bool bShowWarned = false;
+			if (!bShowWarned) { bShowWarned = true; _ASSERTE(hWnd != ghConEmuWndDC && L"OnShowWindow(ghConWnd)"); }
 		}
 		#endif
 		return TRUE; // обманем
@@ -2715,8 +2719,11 @@ BOOL WINAPI OnAllocConsole(void)
 	typedef BOOL (WINAPI* OnAllocConsole_t)(void);
 	ORIGINALFAST(AllocConsole);
 	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
-	BOOL lbRc = FALSE;
+	BOOL lbRc = FALSE, lbAllocated = FALSE;
 	COORD crLocked;
+	HMODULE hKernel = NULL;
+	DWORD nErrCode = 0;
+	BOOL lbAttachRc = FALSE;
 
 	if (ph && ph->PreCallBack)
 	{
@@ -2726,21 +2733,51 @@ BOOL WINAPI OnAllocConsole(void)
 			return lbRc;
 	}
 
-	lbRc = F(AllocConsole)();
-
-	if (lbRc && IsVisibleRectLocked(crLocked))
+	// GUI приложение во вкладке. Если окна консоли еще нет - попробовать прицепиться
+	// к родительской консоли (консоли серверного процесса)
+	if (gbAttachGuiClient || ghAttachGuiClient)
 	{
-		// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
-		// Размер может менять только пользователь ресайзом окна ConEmu
-		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-		if (GetConsoleScreenBufferInfo(hStdOut, &csbi))
+		HWND hCurCon = GetRealConsoleWindow();
+		if (hCurCon == NULL && gnServerPID != 0)
 		{
-			//specified width and height cannot be less than the width and height of the console screen buffer's window
-			SMALL_RECT rNewRect = {0, 0, crLocked.X-1, crLocked.Y-1};
-			OnSetConsoleWindowInfo(hStdOut, TRUE, &rNewRect);
-			COORD crNewSize = {crLocked.X, max(crLocked.Y, csbi.dwSize.Y)};
-			SetConsoleScreenBufferSize(hStdOut, crLocked);
+			// функция есть только в WinXP и выше
+			typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
+			hKernel = GetModuleHandle(L"kernel32.dll");
+			AttachConsole_t _AttachConsole = hKernel ? (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole") : NULL;
+			if (_AttachConsole)
+			{
+				lbAttachRc = _AttachConsole(gnServerPID);
+				if (lbAttachRc)
+				{
+					lbAllocated = TRUE; // Консоль уже есть, ничего не надо
+				}
+				else
+				{
+					nErrCode = GetLastError();
+					_ASSERTE(nErrCode==0 && lbAttachRc);
+				}
+			}
+		}
+	}
+
+	if (!lbAllocated && F(AllocConsole))
+	{
+		lbRc = F(AllocConsole)();
+
+		if (lbRc && IsVisibleRectLocked(crLocked))
+		{
+			// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
+			// Размер может менять только пользователь ресайзом окна ConEmu
+			HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+			CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+			if (GetConsoleScreenBufferInfo(hStdOut, &csbi))
+			{
+				//specified width and height cannot be less than the width and height of the console screen buffer's window
+				SMALL_RECT rNewRect = {0, 0, crLocked.X-1, crLocked.Y-1};
+				OnSetConsoleWindowInfo(hStdOut, TRUE, &rNewRect);
+				COORD crNewSize = {crLocked.X, max(crLocked.Y, csbi.dwSize.Y)};
+				SetConsoleScreenBufferSize(hStdOut, crLocked);
+			}
 		}
 	}
 
@@ -2751,6 +2788,11 @@ BOOL WINAPI OnAllocConsole(void)
 		SETARGS(&lbRc);
 		ph->PostCallBack(&args);
 	}
+
+	// Обновить ghConWnd и мэппинг
+	OnConWndChanged(GetRealConsoleWindow());
+
+	TODO("Можно бы по настройке установить параметры. Кодовую страницу, например");
 
 	return lbRc;
 }

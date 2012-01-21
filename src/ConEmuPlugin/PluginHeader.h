@@ -301,7 +301,6 @@ void FUNC_Y(FillUpdateBackgroundW)(struct PaintBackgroundArg* pFar);
 void FUNC_X(FillUpdateBackgroundW)(struct PaintBackgroundArg* pFar);
 
 void CommonPluginStartup();
-BOOL CheckCallbackPtr(HMODULE hModule, FARPROC CallBack, BOOL abCheckModuleInfo);
 
 #ifdef _DEBUG
 #define SHOWDBGINFO(x) OutputDebugStringW(x)

@@ -66,7 +66,8 @@ extern DWORD   gnServerPID; // PID сервера (инициализируется на старте, при загр
 
 //extern MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap;
 //extern CESERVER_CONSOLE_MAPPING_HDR* gpConInfo;
-CESERVER_CONSOLE_MAPPING_HDR* GetConMap();
+CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate=FALSE);
+void OnConWndChanged(HWND ahNewConWnd);
 
 typedef HWND (WINAPI* GetConsoleWindow_T)();
 extern GetConsoleWindow_T gfGetRealConsoleWindow;

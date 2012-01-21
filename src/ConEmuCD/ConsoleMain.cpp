@@ -185,7 +185,7 @@ extern "C" {
 };
 #endif
 
-UINT_PTR gfnLoadLibrary = NULL;
+//extern UINT_PTR gfnLoadLibrary;
 UINT gnMsgActivateCon = 0;
 UINT gnMsgSwitchCon = 0;
 UINT gnMsgHookedKey = 0;
@@ -215,7 +215,11 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			#endif
 
 			#ifdef SHOW_STARTED_MSGBOX
-			if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuCD*.dll loaded", "ConEmu server", 0);
+			if (!IsDebuggerPresent())
+			{
+				char szMsg[128]; msprintf(szMsg, countof(szMsg), "ConEmuCD*.dll loaded, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+				MessageBoxA(NULL, szMsg, "ConEmu server" WIN3264TEST(""," x64"), 0);
+			}
 			#endif
 			#ifdef _DEBUG
 			DWORD dwConMode = -1;
@@ -228,7 +232,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			
 			// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
 			// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
-			gfnLoadLibrary = (UINT_PTR)::GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "LoadLibraryW");
+			//gfnLoadLibrary = (UINT_PTR)::GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "LoadLibraryW");
+			GetLoadLibraryAddress(); // Загрузить gfnLoadLibrary
 			
 			//#ifndef TESTLINK
 			gpLocalSecurity = LocalSecurity();

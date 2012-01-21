@@ -15,6 +15,7 @@ BEGIN
     bRealConsoleSettings    "You may change font face and size in the Real console. Console restart required."
     bReloadSettings         "Reload all settings from registry/xml"
     bResetSettings          "Reset all settings to defaults"
+	bSaveSettings           "Save settings to registry/xml\nDon't close dialog if Shift pressed"
     cbAdminShield           "When this is checked - «Shield» icon will be shown in tabs, started «As administrator».\nWhen unchecked - suffix will be appended for that tabs. You may clear suffix edit-field."
     cbAlwaysOnTop           "Places the ConEmu window above all non-topmost windows. The window maintains its topmost position even when it is deactivated"
     cbAlwaysShowScrollbar   "Always show scrollbar on the right edge of window\n3d state means - autoshow on scroll"

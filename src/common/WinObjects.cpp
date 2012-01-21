@@ -574,6 +574,126 @@ BOOL IsWindows64(BOOL *pbIsWow64Process/* = NULL */)
 	return is64bitOs;
 }
 
+BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo)
+{
+	if (!hModule || (hModule == INVALID_HANDLE_VALUE))
+	{
+		_ASSERTE(hModule!=NULL);
+		return FALSE;
+	}
+	if (!CallBack || !ProcCount)
+	{
+		_ASSERTE(CallBack && ProcCount);
+		return FALSE;
+	}
+
+	DWORD_PTR nModulePtr = (DWORD_PTR)hModule;
+	DWORD_PTR nModuleSize = (4<<20);
+	//BOOL lbModuleInformation = FALSE;
+
+	// Если разрешили - попробовать определить размер модуля, чтобы CallBack не выпал из его тела
+	if (abCheckModuleInfo)
+	{
+		//#define LDR_IS_DATAFILE(hm)      ((((ULONG_PTR)(hm)) & (ULONG_PTR)1) == (ULONG_PTR)1)
+		//#define LDR_IS_IMAGEMAPPING(hm)  ((((ULONG_PTR)(hm)) & (ULONG_PTR)2) == (ULONG_PTR)2)
+		//#define LDR_IS_RESOURCE(hm)      (LDR_IS_IMAGEMAPPING(hm) || LDR_IS_DATAFILE(hm))
+
+		if (LDR_IS_RESOURCE(hModule))
+		{
+			_ASSERTE(!LDR_IS_RESOURCE(hModule));
+			return FALSE;
+		}
+
+		if (IsBadReadPtr((void*)hModule, sizeof(IMAGE_DOS_HEADER)))
+		{
+			_ASSERTE(!IsBadReadPtr((void*)hModule, sizeof(IMAGE_DOS_HEADER)));
+			return FALSE;
+		}
+
+		if (((IMAGE_DOS_HEADER*)hModule)->e_magic != IMAGE_DOS_SIGNATURE /*'ZM'*/)
+		{
+			_ASSERTE(((IMAGE_DOS_HEADER*)hModule)->e_magic == IMAGE_DOS_SIGNATURE);
+			return FALSE;
+		}
+
+		IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)hModule + ((IMAGE_DOS_HEADER*)hModule)->e_lfanew);
+		if (IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)))
+		{
+			_ASSERTE(!IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)));
+			return FALSE;
+		}
+
+		if (nt_header->Signature != 0x004550)
+		{
+			_ASSERTE(nt_header->Signature == 0x004550);
+			return FALSE;
+		}
+		// Получить размер модуля из OptionalHeader
+		nModuleSize = nt_header->OptionalHeader.SizeOfImage;
+
+		/*
+		static HMODULE hPsApi = NULL;
+
+		if (hPsApi == NULL)
+		{
+		hPsApi = LoadLibrary(L"Psapi.dll");
+
+		if (hPsApi == NULL)
+		hPsApi = (HMODULE)-1;
+		}
+
+		if (hPsApi && hPsApi != (HMODULE)-1)
+		{
+		struct ModInfo
+		{
+		LPVOID lpBaseOfDll;
+		DWORD  SizeOfImage;
+		LPVOID EntryPoint;
+		} mi;
+		typedef BOOL (WINAPI* GetModuleInformation_t)(HANDLE, HMODULE, struct ModInfo*, DWORD);
+		GetModuleInformation_t GetModuleInformation = (GetModuleInformation_t)GetProcAddress(hPsApi, "GetModuleInformation");
+
+		if (GetModuleInformation)
+		{
+		lbModuleInformation = GetModuleInformation(GetCurrentProcess(), hModule, &mi, sizeof(mi));
+
+		if (!lbModuleInformation)
+		{
+		_ASSERTE(lbModuleInformation!=FALSE);
+		return FALSE;
+		}
+
+		nModuleSize = mi.SizeOfImage;
+		}
+		}
+		*/
+	}
+
+	for (size_t i = 0; i < ProcCount; i++)
+	{
+		if (!(CallBack[i]))
+		{
+			_ASSERTE((CallBack[i])!=NULL);
+			return FALSE;
+		}
+
+		if (((DWORD_PTR)(CallBack[i])) < nModulePtr)
+		{
+			_ASSERTE(((DWORD_PTR)(CallBack[i])) >= nModulePtr);
+			return FALSE;
+		}
+
+		if (((DWORD_PTR)(CallBack[i])) > (nModuleSize + nModulePtr))
+		{
+			_ASSERTE(((DWORD_PTR)(CallBack[i])) <= (nModuleSize + nModulePtr));
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+
 #ifndef CONEMU_MINIMAL
 void RemoveOldComSpecC()
 {

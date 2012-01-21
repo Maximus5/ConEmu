@@ -36,8 +36,32 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Console2.h"
 
 extern HMODULE ghOurModule;
-extern UINT_PTR gfnLoadLibrary;
+UINT_PTR gfnLoadLibrary = 0;
 //extern HMODULE ghPsApi;
+
+// Проверить, что gfnLoadLibrary лежит в пределах модуля hKernel!
+UINT_PTR GetLoadLibraryAddress()
+{
+	if (gfnLoadLibrary)
+		return gfnLoadLibrary;
+
+	HMODULE hKernel = ::GetModuleHandle(L"kernel32.dll");
+	if (!hKernel || LDR_IS_RESOURCE(hKernel))
+	{
+		_ASSERTE(hKernel && !LDR_IS_RESOURCE(hKernel));
+		return 0;
+	}
+
+	UINT_PTR fnLoadLibrary = (UINT_PTR)::GetProcAddress(hKernel, "LoadLibraryW");
+	if (!CheckCallbackPtr(hKernel, 1, (FARPROC*)&fnLoadLibrary, TRUE))
+	{
+		// _ASSERTE уже был
+		return 0;
+	}
+
+	gfnLoadLibrary = fnLoadLibrary;
+	return fnLoadLibrary;
+}
 
 // The handle must have the PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION, PROCESS_VM_OPERATION, PROCESS_VM_WRITE, and PROCESS_VM_READ
 int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
@@ -243,7 +267,13 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	{
 		//iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
 		//fnLoadLibrary = (UINT_PTR)::GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "LoadLibraryW");
-		if (gfnLoadLibrary)
+		if (!GetLoadLibraryAddress())
+		{
+			_ASSERTE(gfnLoadLibrary!=NULL);
+			iRc = -503;
+			goto wrap;
+		}
+		else
 		{
 			// -- не имеет смысла. процесс еще "не отпущен", поэтому CreateToolhelp32Snapshot(TH32CS_SNAPMODULE) обламывается
 			//// Проверить, а не Гуй ли это?
@@ -306,12 +336,6 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 					if (pOut) ExecuteFreeResult(pOut);
 				}
 			}
-		}
-		else
-		{
-			_ASSERTE(gfnLoadLibrary!=NULL);
-			iRc = -503;
-			goto wrap;
 		}	
 	}
 

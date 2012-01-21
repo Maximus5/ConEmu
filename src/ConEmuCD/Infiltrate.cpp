@@ -26,6 +26,11 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/*
+This module contains static machine codes for calling LoadLibrary
+These codes was produced by cl.exe with special complier switches
+Look at InfiltrateProc for source
+*/
 
 #include <windows.h>
 #include "Infiltrate.h"

@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MAssert.h"
 #include "../common/WinObjects.h"
 #include "Infiltrate.h"
+#include "../ConEmuHk/Injects.h"
 
 // 0 - OK, иначе - ошибка
 int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
@@ -111,15 +112,30 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 	FuncName[10] = 't'; FuncName[12] = 'T'; FuncName[14] = 'r'; FuncName[16] = 'a';
 	FuncName[11] = 'e'; FuncName[13] = 'h'; FuncName[15] = 'e'; FuncName[17] = 'd'; FuncName[18] = 0;
 	_CreateRemoteThread = (CreateRemoteThread_t)GetProcAddress(hKernel, FuncName);
+
 	// Functions for external process. MUST BE SAME ADDRESSES AS CURRENT PROCESS.
-	TODO("Функции могут быть (потенциально) перехвачены другими инжектами, хорошо бы попытаться получить оригинальные адреса");
+	// kernel32.dll компонуется таким образом, что всегда загружается по одному определенному адресу в памяти
+	// Поэтому адреса процедур для приложений одинаковой битности совпадают (в разных процессах)
 	dat._GetLastError = (GetLastError_t)GetProcAddress(hKernel, "GetLastError");
 	dat._SetLastError = (SetLastError_t)GetProcAddress(hKernel, "SetLastError");
-	dat._LoadLibraryW = (LoadLibraryW_t)GetProcAddress(hKernel, "LoadLibraryW");
+	dat._LoadLibraryW = (LoadLibraryW_t)GetLoadLibraryAddress(); // GetProcAddress(hKernel, "LoadLibraryW");
 	if (!_CreateRemoteThread || !dat._LoadLibraryW || !dat._SetLastError || !dat._GetLastError)
 	{
 		iRc = -105;
 		goto wrap;
+	}
+	else
+	{
+		// Проверим, что адреса этих функций действительно лежат в модуле Kernel32.dll
+		// и не были кем-то перехвачены до нас.
+		FARPROC proc[] = {(FARPROC)dat._GetLastError, (FARPROC)dat._SetLastError, (FARPROC)dat._LoadLibraryW};
+		if (!CheckCallbackPtr(hKernel, countof(proc), proc, TRUE))
+		{
+			// Если функции перехвачены - попытка выполнить код по этим адресам
+			// скорее всего приведет к ошибке доступа, что не есть гут.
+			iRc = -111;
+			goto wrap;
+		}
 	}
 
 	// Копируем параметры в процесс
