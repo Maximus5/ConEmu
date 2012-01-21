@@ -23,9 +23,7 @@
 #define IDD_SPG_DEBUG                   155
 #define IDD_SPG_FEATURE_FAR             156
 #define IDD_MORE_HIDE                   200
-#define IDD_DIALOG1                     202
-#define IDD_MORE_FADE                   203
-#define IDD_MORE_SELECTION              204
+#define IDD_SPG_SELECTION               204
 #define IDD_SPG_TABS                    206
 #define IDD_SPG_VIEWS                   208
 #define IDD_MORE_CONFONT                209
@@ -219,7 +217,6 @@
 #define cbDropUseBCopy                  1580
 #define cbFadeInactive                  1581
 #define cbBlockInactiveCursor           1586
-#define bHideCaptionSettings            1588
 #define tHideCaptionAlwaysFrame         1589
 #define tHideCaptionAlwaysDelay         1590
 #define tHideCaptionAlwaysDissapear     1591
@@ -249,13 +246,12 @@
 #define cbHostLShift                    1617
 #define cbHostRShift                    1618
 #define cbHandleFarDetach               1619
-#define cbConsoleTextSelection          1620
 #define cbPortableRegistry              1621
 #define tCursorPos                      1622
 #define tFadeLow                        1624
 #define tFadeHigh                       1625
 #define cbToolbar                       1626
-#define bConsoleTextSelection           1627
+#define rbCTSNever                      1627
 #define rbCTSAlways                     1628
 #define rbCTSBufferOnly                 1629
 #define cbCTSTextSelection              1630
@@ -279,7 +275,6 @@
 #define cbUseWinNumber                  1648
 #define cbInstallKeybHooks              1649
 #define cbRunAsRestricted               1650
-#define bCTSSettings                    1651
 #define tRunAsUser                      1652
 #define tRunAsPassword                  1653
 #define cbSafeFarClose                  1654
@@ -507,6 +502,7 @@
 #define rbAdminShield                   2109
 #define IDC_RADIO2                      2110
 #define rbAdminSuffix                   2110
+#define IDC_RADIO1                      2111
 
 // Next default values for new objects
 // 
@@ -514,7 +510,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        217
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2111
+#define _APS_NEXT_CONTROL_VALUE         2112
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

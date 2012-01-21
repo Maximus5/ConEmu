@@ -393,7 +393,7 @@ class CSettings
 		WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 		ABC     CharABC[0x10000];
 
-		HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hViews, hInfo, hDebug, hUpdate;
+		HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hViews, hInfo, hDebug, hUpdate, hSelection;
 
 		//static void CenterDialog(HWND hWnd2);
 		void OnClose();
@@ -409,10 +409,10 @@ class CSettings
 		////static INT_PTR CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		////static INT_PTR CALLBACK debugOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		// IDD_MORE_HIDE
-		static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		//static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		////static INT_PTR CALLBACK multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		// IDD_MORE_SELECTION
-		static INT_PTR CALLBACK selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		// IDD_SPG_SELECTION
+		//static INT_PTR CALLBACK selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		//
 		void debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl);
 		void debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile);
@@ -483,6 +483,7 @@ class CSettings
 		// OnInitDialogPage_t: IDD_SPG_MAIN, è ò.ä.
 		LRESULT OnInitDialog_Main(HWND hWnd2);
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
+		LRESULT OnInitDialog_Selection(HWND hWnd2);
 		LRESULT OnInitDialog_Far(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Keys(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
