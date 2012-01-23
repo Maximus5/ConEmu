@@ -1,42 +1,10 @@
 @echo off
+
 echo Cleaning obj files ...
 
-if exist "%~dp0ConEmu\Release.32.vc" rd /Q /S "%~dp0ConEmu\Release.32.vc"
-if exist "%~dp0ConEmu\Release.64.vc" rd /Q /S "%~dp0ConEmu\Release.64.vc"
-if exist "%~dp0ConEmuC\Release.32.vc" rd /Q /S "%~dp0ConEmuC\Release.32.vc"
-if exist "%~dp0ConEmuC\Release.64.vc" rd /Q /S "%~dp0ConEmuC\Release.64.vc"
-if exist "%~dp0ConEmuCD\final.32.vc" rd /Q /S "%~dp0ConEmuCD\final.32.vc"
-if exist "%~dp0ConEmuCD\final.64.vc" rd /Q /S "%~dp0ConEmuCD\final.64.vc"
-if exist "%~dp0ConEmuDW\final.32.vc" rd /Q /S "%~dp0ConEmuDW\final.32.vc"
-if exist "%~dp0ConEmuDW\final.64.vc" rd /Q /S "%~dp0ConEmuDW\final.64.vc"
-if exist "%~dp0ConEmuHk\final.32.vc" rd /Q /S "%~dp0ConEmuHk\final.32.vc"
-if exist "%~dp0ConEmuHk\final.64.vc" rd /Q /S "%~dp0ConEmuHk\final.64.vc"
-if exist "%~dp0ConEmuPlugin\final.32.vc" rd /Q /S "%~dp0ConEmuPlugin\final.32.vc"
-if exist "%~dp0ConEmuPlugin\final.64.vc" rd /Q /S "%~dp0ConEmuPlugin\final.64.vc"
-if exist "%~dp0ConEmuTh\final.32.vc" rd /Q /S "%~dp0ConEmuTh\final.32.vc"
-if exist "%~dp0ConEmuTh\final.64.vc" rd /Q /S "%~dp0ConEmuTh\final.64.vc"
-if exist "%~dp0ConEmuLn\final.32.vc" rd /Q /S "%~dp0ConEmuLn\final.32.vc"
-if exist "%~dp0ConEmuLn\final.64.vc" rd /Q /S "%~dp0ConEmuLn\final.64.vc"
-if exist "%~dp0ConEmuBg\final.32.vc" rd /Q /S "%~dp0ConEmuBg\final.32.vc"
-if exist "%~dp0ConEmuBg\final.64.vc" rd /Q /S "%~dp0ConEmuBg\final.64.vc"
+if exist "%~dp0_VCBUILD" echo rd /Q /S "%~dp0_VCBUILD" & rd /Q /S "%~dp0_VCBUILD"
 
-if exist "%~dp0ConEmu\Release.32W.vc" rd /Q /S "%~dp0ConEmu\Release.32W.vc"
-if exist "%~dp0ConEmu\Release.64W.vc" rd /Q /S "%~dp0ConEmu\Release.64W.vc"
-if exist "%~dp0ConEmuC\Release.32W.vc" rd /Q /S "%~dp0ConEmuC\Release.32W.vc"
-if exist "%~dp0ConEmuC\Release.64W.vc" rd /Q /S "%~dp0ConEmuC\Release.64W.vc"
-if exist "%~dp0ConEmuCD\final.32W.vc" rd /Q /S "%~dp0ConEmuCD\final.32W.vc"
-if exist "%~dp0ConEmuCD\final.64W.vc" rd /Q /S "%~dp0ConEmuCD\final.64W.vc"
-if exist "%~dp0ConEmuDW\final.32W.vc" rd /Q /S "%~dp0ConEmuDW\final.32W.vc"
-if exist "%~dp0ConEmuDW\final.64W.vc" rd /Q /S "%~dp0ConEmuDW\final.64W.vc"
-if exist "%~dp0ConEmuHk\final.32W.vc" rd /Q /S "%~dp0ConEmuHk\final.32W.vc"
-if exist "%~dp0ConEmuHk\final.64W.vc" rd /Q /S "%~dp0ConEmuHk\final.64W.vc"
-if exist "%~dp0ConEmuPlugin\final.32W.vc" rd /Q /S "%~dp0ConEmuPlugin\final.32W.vc"
-if exist "%~dp0ConEmuPlugin\final.64W.vc" rd /Q /S "%~dp0ConEmuPlugin\final.64W.vc"
-if exist "%~dp0ConEmuTh\final.32W.vc" rd /Q /S "%~dp0ConEmuTh\final.32W.vc"
-if exist "%~dp0ConEmuTh\final.64W.vc" rd /Q /S "%~dp0ConEmuTh\final.64W.vc"
-if exist "%~dp0ConEmuLn\final.32W.vc" rd /Q /S "%~dp0ConEmuLn\final.32W.vc"
-if exist "%~dp0ConEmuLn\final.64W.vc" rd /Q /S "%~dp0ConEmuLn\final.64W.vc"
-if exist "%~dp0ConEmuBg\final.32W.vc" rd /Q /S "%~dp0ConEmuBg\final.32W.vc"
-if exist "%~dp0ConEmuBg\final.64W.vc" rd /Q /S "%~dp0ConEmuBg\final.64W.vc"
+del /S /Q "%~dp0..\Release\*.lib">nul
+del /S /Q "%~dp0..\Release\*.exp">nul
 
 echo Cleaning obj files done
