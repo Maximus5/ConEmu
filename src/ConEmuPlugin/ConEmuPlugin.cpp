@@ -5495,9 +5495,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 	//	return 0; // удалось считать не все данные
 	//}
 
-	#ifdef _DEBUG
 	UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
-	#endif
 
 	// ¬се данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
 	//fSuccess = WriteFile( hPipe, pOut, pOut->nSize, &cbWritten, NULL);
