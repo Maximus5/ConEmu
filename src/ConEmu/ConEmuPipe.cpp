@@ -201,12 +201,26 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 		return FALSE;
 	}
 
+	if (cbRead < sizeof(DWORD))
+	{
+		pOut = NULL;
+		Close();
+		return FALSE;
+	}
+
 	// Информационно!
 	pOut = (CESERVER_REQ*)cbReadBuf;
+	if (pOut->hdr.cbSize <= sizeof(pOut->hdr))
+	{
+		_ASSERTE(pOut->hdr.cbSize == 0);
+		pOut = NULL;
+		Close();
+		return FALSE;
+	}
 
 	if (pOut->hdr.nVersion != CESERVER_REQ_VER)
 	{
-		gpConEmu->ShowOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion, -1, pOut->hdr.nSrcPID, pOut->hdr.hModule, pOut->hdr.nBits);
+		gpConEmu->ReportOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion, -1, pOut->hdr.nSrcPID, pOut->hdr.hModule, pOut->hdr.nBits);
 		pOut = NULL;
 		Close();
 		return FALSE;

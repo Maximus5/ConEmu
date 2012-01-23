@@ -472,7 +472,15 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 #endif
 				wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)mp_DataObject, (DWORD)pDropSource); //-V205
 				gpConEmu->DebugStep(szStep);
-				dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
+				SAFETRY
+				{
+					dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
+				}
+				SAFECATCH
+				{
+					dwResult = DRAGDROP_S_CANCEL;
+					MBoxA(L"Exception in DoDragDrop\nConEmu restart is recommended");
+				}
 				_wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop finished, Code=0x%08X", dwResult);
 
 				switch(dwResult)
@@ -801,19 +809,25 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 	STGMEDIUM stgDescr = { 0 };
 	FORMATETC fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 	HANDLE hFile = NULL;
-#define BufferSize 0x10000
-	BYTE cBuffer[BufferSize];
+	size_t BufferSize = 0x10000;
+	BYTE *cBuffer = (BYTE*)malloc(BufferSize);
 	DWORD dwRead = 0;
 	BOOL lbWide = FALSE;
 	HRESULT hr = S_OK;
 	HRESULT hrStg = S_OK;
+
+	if (!cBuffer)
+	{
+		_ASSERTE(cBuffer!=NULL);
+		goto wrap;
+	}
 
 	// CF_HDROP в структуре отсутсвует!
 	//fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
 
 	// Опитизировано. объединены юникодная и ансишная ветки
 
-	for(int iu = 0; iu <= 1; iu++)
+	for (int iu = 0; iu <= 1; iu++)
 	{
 		if (iu == 0)
 		{
@@ -1057,18 +1071,18 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 			}
 
 			gpConEmu->DebugStep(NULL, TRUE);
-			return S_OK;
+			goto wrap;
 		} // если удалось получить "pDataObject->GetData(&fmtetc, &stgMedium)" - уже вышли из функции
 	}
 
 	ReportUnknownData(pDataObject, L"Drag object does not contains known formats!");
+wrap:
+	SafeFree(cBuffer);
 	return S_OK;
 }
 
 HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 {
-	wchar_t szMacro[MAX_DROP_PATH*2+50];
-	wchar_t szData[MAX_DROP_PATH*2+10];
 	wchar_t* pszText = NULL;
 	// -- HRESULT hr = S_OK;
 	DWORD dwStartTick = GetTickCount();
@@ -1084,10 +1098,23 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 	if (!pRCon)
 		return S_FALSE;
 
+	size_t cchMacro = MAX_DROP_PATH*2+50;
+	wchar_t *szMacro = (wchar_t*)malloc(cchMacro*sizeof(*szMacro));
+	size_t cchData = MAX_DROP_PATH*2+10;
+	wchar_t *szData = (wchar_t*)malloc(cchData*sizeof(*szData));
+
+	if (!szMacro || !szData)
+	{
+		_ASSERTE(szMacro && szData);
+		SafeFree(szMacro);
+		SafeFree(szData);
+		return E_UNEXPECTED;
+	}
+
 	for (int i = 0 ; i < iQuantity; i++)
 	{
-		wcscpy(szMacro, L"$Text ");
-		wcscpy(szData,  L"         ");
+		_wcscpy_c(szMacro, cchMacro, L"$Text ");
+		_wcscpy_c(szData, cchData,  L"         ");
 		pszText = szData + _tcslen(szData);
 		UINT lQueryRc = DragQueryFile(hDrop, i, pszText, MAX_DROP_PATH);
 
@@ -1108,8 +1135,8 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 				if (*psz == L'"' || *psz == L'\\')
 				{
 					INT_PTR cch = nLen+1;
-					INT_PTR cchMax = countof(szData) - ((psz+1) - szData); UNREFERENCED_PARAMETER(cchMax);
-					_ASSERTE(cch > 0 && cch <= cchMax && cchMax > 0 && cchMax < countof(szData));
+					INT_PTR cchMax = cchData - ((psz+1) - szData); UNREFERENCED_PARAMETER(cchMax);
+					_ASSERTE(cch > 0 && (INT_PTR)cch <= cchMax && cchMax > 0 && cchMax < (INT_PTR)cchData);
 					wmemmove_s(psz+1, cchMax, psz, cch);
 
 					if (*psz == L'"') *psz = L'\\';
@@ -1142,26 +1169,26 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		}
 
 		if (!m_pfpi->NoFarConsole)
-			wcscat(szMacro, L"\"");
+			_wcscat_c(szMacro, cchMacro, L"\"");
 
 		if (!m_pfpi->NoFarConsole && (lbAddGoto || lbAddEdit || lbAddView))
 		{
 			if (lbAddGoto)
-				wcscat(szMacro, L"goto:");
+				_wcscat_c(szMacro, cchMacro, L"goto:");
 
 			if (lbAddEdit)
-				wcscat(szMacro, L"edit:");
+				_wcscat_c(szMacro, cchMacro, L"edit:");
 
 			if (lbAddView)
-				wcscat(szMacro, L"view:");
+				_wcscat_c(szMacro, cchMacro, L"view:");
 
 			lbAddGoto = FALSE; lbAddEdit = FALSE; lbAddView = FALSE;
 		}
 
 		if (!m_pfpi->NoFarConsole)
 		{
-			wcscat(szMacro, pszText);
-			wcscat(szMacro, L" \"");
+			_wcscat_c(szMacro, cchMacro, pszText);
+			_wcscat_c(szMacro, cchMacro, L" \"");
 			gpConEmu->PostMacro(szMacro);
 		}
 		else
@@ -1198,7 +1225,8 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		}
 	}
 
-	//GlobalFree(hDrop);
+	SafeFree(szMacro);
+	SafeFree(szData);
 	return S_OK;
 }
 
@@ -1240,7 +1268,7 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 		if (hr!=S_OK)
 			DisplayLastError(_T("Can't create link!"), hr);
 
-		delete szLnkPath;
+		delete[] szLnkPath;
 	}
 
 	//GlobalFree(hDrop);
@@ -1468,7 +1496,7 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 {
 	DWORD dwThreadId = GetCurrentThreadId();
 	ShlOpInfo *sfop = (ShlOpInfo *)lpParameter;
-	HRESULT hr = S_OK;
+	int hr = S_OK;
 	CDragDrop* pDragDrop = sfop->pDnD;
 
 	// Собственно операция копирования/перемещения...
@@ -1484,7 +1512,7 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 		hr = E_UNEXPECTED;
 	}
 
-	if (hr != S_OK || sfop->fop.fAnyOperationsAborted)
+	if (hr != NOERROR || sfop->fop.fAnyOperationsAborted)
 	{
 		if (hr == 0x402)
 		{
@@ -1493,7 +1521,7 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 			// An unknown error occurred. This is typically due to an invalid path in the source or destination.
 			// This error does not occur on Windows Vista and later.
 		}
-		else if (hr == 7 || hr == ERROR_CANCELLED || hr == 0)
+		else if (hr == 7 || hr == ERROR_CANCELLED || hr == NOERROR)
 		{
 			MBoxA(_T("Shell operation was cancelled"))
 		}

@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/RgnDetect.h"
 #include "../common/Execute.h"
+#include "../common/PipeServer.h"
 #include "RealConsole.h"
 #include "RealBuffer.h"
 #include "VirtualConsole.h"
@@ -182,10 +183,11 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mb_SkipFarPidChange = FALSE;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
 	mn_LastSetForegroundPID = 0;
-	mh_ServerSemaphore = NULL;
-	memset(mh_RConServerThreads, 0, sizeof(mh_RConServerThreads));
-	mh_ActiveRConServerThread = NULL;
-	memset(mn_RConServerThreadsId, 0, sizeof(mn_RConServerThreadsId));
+	mp_RConServer = (PipeServer<CESERVER_REQ,3>*)calloc(3,sizeof(*mp_RConServer));
+	//mh_ServerSemaphore = NULL;
+	//memset(mh_RConServerThreads, 0, sizeof(mh_RConServerThreads));
+	//mh_ActiveRConServerThread = NULL;
+	//memset(mn_RConServerThreadsId, 0, sizeof(mn_RConServerThreadsId));
 	mb_ThawRefreshThread = FALSE;
 	
 	//mb_BuferModeChangeLocked = FALSE;
@@ -288,7 +290,7 @@ CRealConsole::~CRealConsole()
 	SafeCloseHandle(mh_ConEmuC); mn_ConEmuC_PID = 0; //mn_ConEmuC_Input_TID = 0;
 	SafeCloseHandle(mh_ConEmuCInput);
 	m_ConDataChanged.Close();
-	SafeCloseHandle(mh_ServerSemaphore);
+	//SafeCloseHandle(mh_ServerSemaphore);
 	SafeCloseHandle(mh_GuiAttached);
 
 	//DeleteCriticalSection(&csPRC);
@@ -305,6 +307,12 @@ CRealConsole::~CRealConsole()
 	{
 		SafeCloseHandle(mp_sei->hProcess);
 		GlobalFree(mp_sei); mp_sei = NULL;
+	}
+
+	if (mp_RConServer)
+	{
+		mp_RConServer->StopPipeServer();
+		SafeFree(mp_RConServer);
 	}
 
 	//CloseMapping();
@@ -1038,7 +1046,7 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 		}
 	}
 
-	MSG64 msg = {NULL};
+	MSG64 msg = {sizeof(msg)};
 
 	if (PackInputRecord(piRec, &msg))
 	{
@@ -2137,33 +2145,33 @@ BOOL CRealConsole::StartProcess()
 			//Box("Cannot execute the command.");
 			//DWORD dwLastError = GetLastError();
 			DEBUGSTRPROC(L"CreateProcess failed\n");
-			int nLen = _tcslen(psCurCmd)+100;
-			TCHAR* pszErr = (TCHAR*)Alloc(nLen,sizeof(TCHAR));
+			size_t nErrLen = _tcslen(psCurCmd)+100;
+			TCHAR* pszErr = (TCHAR*)Alloc(nErrLen,sizeof(TCHAR));
 
 			if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 			                    NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 			                    pszErr, 1024, NULL))
 			{
-				_wsprintf(pszErr, SKIPLEN(nLen) L"Unknown system error: 0x%x", dwLastError);
+				_wsprintf(pszErr, SKIPLEN(nErrLen) L"Unknown system error: 0x%x", dwLastError);
 			}
 
-			nLen += _tcslen(pszErr);
-			TCHAR* psz = (TCHAR*)Alloc(nLen+100,sizeof(TCHAR));
+			nErrLen += _tcslen(pszErr);
+			TCHAR* psz = (TCHAR*)Alloc(nErrLen+100,sizeof(TCHAR));
 			int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
-			_wcscpy_c(psz, nLen, _T("Cannot execute the command.\r\n"));
-			_wcscat_c(psz, nLen, psCurCmd); _wcscat_c(psz, nLen, _T("\r\n"));
-			_wcscat_c(psz, nLen, pszErr);
+			_wcscpy_c(psz, nErrLen, _T("Cannot execute the command.\r\n"));
+			_wcscat_c(psz, nErrLen, psCurCmd); _wcscat_c(psz, nErrLen, _T("\r\n"));
+			_wcscat_c(psz, nErrLen, pszErr);
 
 			if (m_Args.pszSpecialCmd == NULL)
 			{
-				if (psz[_tcslen(psz)-1]!=_T('\n')) _wcscat_c(psz, nLen, _T("\r\n"));
+				if (psz[_tcslen(psz)-1]!=_T('\n')) _wcscat_c(psz, nErrLen, _T("\r\n"));
 
 				if (!gpSet->psCurCmd && StrStrI(gpSet->GetCmd(), gpSetCls->GetDefaultCmd())==NULL)
 				{
-					_wcscat_c(psz, nLen, _T("\r\n\r\n"));
-					_wcscat_c(psz, nLen, _T("Do You want to simply start "));
-					_wcscat_c(psz, nLen, gpSetCls->GetDefaultCmd());
-					_wcscat_c(psz, nLen, _T("?"));
+					_wcscat_c(psz, nErrLen, _T("\r\n\r\n"));
+					_wcscat_c(psz, nErrLen, _T("Do You want to simply start "));
+					_wcscat_c(psz, nErrLen, gpSetCls->GetDefaultCmd());
+					_wcscat_c(psz, nErrLen, _T("?"));
 					nButtons |= MB_YESNO;
 				}
 			}
@@ -2820,6 +2828,7 @@ void CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
 #endif
 	gbInSendConEvent = TRUE;
 	DWORD dwSize = sizeof(MSG64), dwWritten;
+	_ASSERTE(pMsg->cbSize==dwSize);
 	fSuccess = WriteFile(mh_ConEmuCInput, pMsg, dwSize, &dwWritten, NULL);
 
 	if (!fSuccess)
@@ -2993,41 +3002,40 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		HANDLE hPipe = INVALID_HANDLE_VALUE;
 		DWORD dwWait = 0;
 
-		// Передернуть пайпы, чтобы нити сервера завершились
-		for(int i=0; i<MAX_SERVER_THREADS; i++)
-		{
-			DEBUGSTRPROC(L"Touching our server pipe\n");
-			HANDLE hServer = mh_ActiveRConServerThread;
-			hPipe = CreateFile(ms_VConServer_Pipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+		//// Передернуть пайпы, чтобы нити сервера завершились
+		//for(int i=0; i<MAX_SERVER_THREADS; i++)
+		//{
+		//	DEBUGSTRPROC(L"Touching our server pipe\n");
+		//	HANDLE hServer = mh_ActiveRConServerThread;
+		//	hPipe = CreateFile(ms_VConServer_Pipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+		//	if (hPipe == INVALID_HANDLE_VALUE)
+		//	{
+		//		DEBUGSTRPROC(L"All pipe instances closed?\n");
+		//		break;
+		//	}
+		//	DEBUGSTRPROC(L"Waiting server pipe thread\n");
+		//	dwWait = WaitForSingleObject(hServer, 200); // пытаемся дождаться, пока нить завершится
+		//	// Просто закроем пайп - его нужно было передернуть
+		//	CloseHandle(hPipe);
+		//	hPipe = INVALID_HANDLE_VALUE;
+		//}
 
-			if (hPipe == INVALID_HANDLE_VALUE)
-			{
-				DEBUGSTRPROC(L"All pipe instances closed?\n");
-				break;
-			}
+		// Закрыть серверные потоки (пайпы)
+		if (mp_RConServer)
+			mp_RConServer->StopPipeServer();
 
-			DEBUGSTRPROC(L"Waiting server pipe thread\n");
-			dwWait = WaitForSingleObject(hServer, 200); // пытаемся дождаться, пока нить завершится
-			// Просто закроем пайп - его нужно было передернуть
-			CloseHandle(hPipe);
-			hPipe = INVALID_HANDLE_VALUE;
-		}
-
-		// Немного подождем, пока ВСЕ нити завершатся
-		DEBUGSTRPROC(L"Checking server pipe threads are closed\n");
-		WaitForMultipleObjects(MAX_SERVER_THREADS, mh_RConServerThreads, TRUE, 500);
-
-		for(int i=0; i<MAX_SERVER_THREADS; i++)
-		{
-			if (WaitForSingleObject(mh_RConServerThreads[i],0) != WAIT_OBJECT_0)
-			{
-				DEBUGSTRPROC(L"### Terminating mh_RConServerThreads\n");
-				TerminateThread(mh_RConServerThreads[i],0);
-			}
-
-			CloseHandle(mh_RConServerThreads[i]);
-			mh_RConServerThreads[i] = NULL;
-		}
+		//DEBUGSTRPROC(L"Checking server pipe threads are closed\n");
+		//WaitForMultipleObjects(MAX_SERVER_THREADS, mh_RConServerThreads, TRUE, 500);
+		//for(int i=0; i<MAX_SERVER_THREADS; i++)
+		//{
+		//	if (WaitForSingleObject(mh_RConServerThreads[i],0) != WAIT_OBJECT_0)
+		//	{
+		//		DEBUGSTRPROC(L"### Terminating mh_RConServerThreads\n");
+		//		TerminateThread(mh_RConServerThreads[i],0);
+		//	}
+		//	CloseHandle(mh_RConServerThreads[i]);
+		//	mh_RConServerThreads[i] = NULL;
+		//}
 
 		ms_VConServer_Pipe[0] = 0;
 	}
@@ -3701,149 +3709,149 @@ void CRealConsole::OnServerStarted(HWND ahConWnd, DWORD anServerPID)
 //}
 
 
-DWORD CRealConsole::RConServerThread(LPVOID lpvParam)
-{
-	CRealConsole *pRCon = (CRealConsole*)lpvParam;
-	CVirtualConsole *pVCon = pRCon->mp_VCon;
-	BOOL fConnected = FALSE;
-	DWORD dwErr = 0;
-	HANDLE hPipe = NULL;
-	HANDLE hWait[2] = {NULL,NULL};
-	DWORD dwTID = GetCurrentThreadId();
-	MCHKHEAP
-	_ASSERTE(pVCon!=NULL);
-	_ASSERTE(pRCon->hConWnd!=NULL);
-	_ASSERTE(pRCon->ms_VConServer_Pipe[0]!=0);
-	_ASSERTE(pRCon->mh_ServerSemaphore!=NULL);
-	_ASSERTE(pRCon->mh_TermEvent!=NULL);
-	//swprintf_c(pRCon->ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)pRCon->hConWnd); //был mn_ConEmuC_PID
-	// The main loop creates an instance of the named pipe and
-	// then waits for a client to connect to it. When the client
-	// connects, a thread is created to handle communications
-	// with that client, and the loop is repeated.
-	hWait[0] = pRCon->mh_TermEvent;
-	hWait[1] = pRCon->mh_ServerSemaphore;
-	MCHKHEAP
+//DWORD CRealConsole::RConServerThread(LPVOID lpvParam)
+//{
+//	CRealConsole *pRCon = (CRealConsole*)lpvParam;
+//	CVirtualConsole *pVCon = pRCon->mp_VCon;
+//	BOOL fConnected = FALSE;
+//	DWORD dwErr = 0;
+//	HANDLE hPipe = NULL;
+//	HANDLE hWait[2] = {NULL,NULL};
+//	DWORD dwTID = GetCurrentThreadId();
+//	MCHKHEAP
+//	_ASSERTE(pVCon!=NULL);
+//	_ASSERTE(pRCon->hConWnd!=NULL);
+//	_ASSERTE(pRCon->ms_VConServer_Pipe[0]!=0);
+//	_ASSERTE(pRCon->mh_ServerSemaphore!=NULL);
+//	_ASSERTE(pRCon->mh_TermEvent!=NULL);
+//	//swprintf_c(pRCon->ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)pRCon->hConWnd); //был mn_ConEmuC_PID
+//	// The main loop creates an instance of the named pipe and
+//	// then waits for a client to connect to it. When the client
+//	// connects, a thread is created to handle communications
+//	// with that client, and the loop is repeated.
+//	hWait[0] = pRCon->mh_TermEvent;
+//	hWait[1] = pRCon->mh_ServerSemaphore;
+//	MCHKHEAP
+//
+//	// Пока не затребовано завершение консоли
+//	do
+//	{
+//		while(!fConnected)
+//		{
+//			_ASSERTE(hPipe == NULL);
+//			// !!! Переносить проверку семафора ПОСЛЕ Create NamedPipe нельзя, т.к. в этом случае
+//			//     нити дерутся и клиент не может подцепиться к серверу
+//			// Дождаться разрешения семафора, или закрытия консоли
+//			dwErr = WaitForMultipleObjects(2, hWait, FALSE, INFINITE);
+//
+//			if (dwErr == WAIT_OBJECT_0)
+//			{
+//				return 0; // Консоль закрывается
+//			}
+//
+//			MCHKHEAP
+//
+//			for(int i=0; i<MAX_SERVER_THREADS; i++)
+//			{
+//				if (pRCon->mn_RConServerThreadsId[i] == dwTID)
+//				{
+//					pRCon->mh_ActiveRConServerThread = pRCon->mh_RConServerThreads[i]; break;
+//				}
+//			}
+//
+//			_ASSERTE(gpLocalSecurity);
+//			hPipe = Create NamedPipe(
+//			            pRCon->ms_VConServer_Pipe, // pipe name
+//			            PIPE_ACCESS_DUPLEX,       // read/write access
+//			            PIPE_TYPE_MESSAGE |       // message type pipe
+//			            PIPE_READMODE_MESSAGE |   // message-read mode
+//			            PIPE_WAIT,                // blocking mode
+//			            PIPE_UNLIMITED_INSTANCES, // max. instances
+//			            PIPEBUFSIZE,              // output buffer size
+//			            PIPEBUFSIZE,              // input buffer size
+//			            0,                        // client time-out
+//			            gpLocalSecurity);          // default security attribute
+//			MCHKHEAP
+//
+//			if (hPipe == INVALID_HANDLE_VALUE)
+//			{
+//				dwErr = GetLastError();
+//				_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
+//				//DisplayLastError(L"Create NamedPipe failed");
+//				hPipe = NULL;
+//				// Разрешить этой или другой нити создать серверный пайп
+//				ReleaseSemaphore(hWait[1], 1, NULL);
+//				//Sleep(50);
+//				continue;
+//			}
+//
+//			MCHKHEAP
+//
+//			// Чтобы ConEmuC знал, что серверный пайп готов
+//			if (pRCon->mh_GuiAttached)
+//			{
+//				SetEvent(pRCon->mh_GuiAttached);
+//				SafeCloseHandle(pRCon->mh_GuiAttached);
+//			}
+//
+//			// Wait for the client to connect; if it succeeds,
+//			// the function returns a nonzero value. If the function
+//			// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
+//			fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED);
+//			MCHKHEAP
+//			// сразу разрешить другой нити принять вызов
+//			ReleaseSemaphore(hWait[1], 1, NULL);
+//
+//			// Консоль закрывается!
+//			if (WaitForSingleObject(hWait[0], 0) == WAIT_OBJECT_0)
+//			{
+//				//FlushFileBuffers(hPipe); -- это не нужно, мы ничего не возвращали
+//				//DisconnectNamedPipe(hPipe);
+//				SafeCloseHandle(hPipe);
+//				return 0;
+//			}
+//
+//			MCHKHEAP
+//
+//			if (fConnected)
+//				break;
+//			else
+//				SafeCloseHandle(hPipe);
+//		}
+//
+//		if (fConnected)
+//		{
+//			// сразу сбросим, чтобы не забыть
+//			fConnected = FALSE;
+//			//// разрешить другой нити принять вызов //2009-08-28 перенесено сразу после ConnectNamedPipe
+//			//ReleaseSemaphore(hWait[1], 1, NULL);
+//			MCHKHEAP
+//
+//			if (gpConEmu->isValid(pVCon))
+//			{
+//				_ASSERTE(pVCon==pRCon->mp_VCon);
+//				pRCon->ServerThreadCommand(hPipe);    // При необходимости - записывает в пайп результат сама
+//			}
+//			else
+//			{
+//				_ASSERTE(FALSE);
+//				// Проблема. VirtualConsole закрыта, а нить еще не завершилась! хотя должна была...
+//				SafeCloseHandle(hPipe);
+//				return 1;
+//			}
+//		}
+//
+//		MCHKHEAP
+//		FlushFileBuffers(hPipe);
+//		//DisconnectNamedPipe(hPipe);
+//		SafeCloseHandle(hPipe);
+//	} // Перейти к открытию нового instance пайпа
+//	while(WaitForSingleObject(pRCon->mh_TermEvent, 0) != WAIT_OBJECT_0);
+//
+//	return 0;
+//}
 
-	// Пока не затребовано завершение консоли
-	do
-	{
-		while(!fConnected)
-		{
-			_ASSERTE(hPipe == NULL);
-			// !!! Переносить проверку семафора ПОСЛЕ CreateNamedPipe нельзя, т.к. в этом случае
-			//     нити дерутся и клиент не может подцепиться к серверу
-			// Дождаться разрешения семафора, или закрытия консоли
-			dwErr = WaitForMultipleObjects(2, hWait, FALSE, INFINITE);
-
-			if (dwErr == WAIT_OBJECT_0)
-			{
-				return 0; // Консоль закрывается
-			}
-
-			MCHKHEAP
-
-			for(int i=0; i<MAX_SERVER_THREADS; i++)
-			{
-				if (pRCon->mn_RConServerThreadsId[i] == dwTID)
-				{
-					pRCon->mh_ActiveRConServerThread = pRCon->mh_RConServerThreads[i]; break;
-				}
-			}
-
-			_ASSERTE(gpLocalSecurity);
-			hPipe = CreateNamedPipe(
-			            pRCon->ms_VConServer_Pipe, // pipe name
-			            PIPE_ACCESS_DUPLEX,       // read/write access
-			            PIPE_TYPE_MESSAGE |       // message type pipe
-			            PIPE_READMODE_MESSAGE |   // message-read mode
-			            PIPE_WAIT,                // blocking mode
-			            PIPE_UNLIMITED_INSTANCES, // max. instances
-			            PIPEBUFSIZE,              // output buffer size
-			            PIPEBUFSIZE,              // input buffer size
-			            0,                        // client time-out
-			            gpLocalSecurity);          // default security attribute
-			MCHKHEAP
-
-			if (hPipe == INVALID_HANDLE_VALUE)
-			{
-				dwErr = GetLastError();
-				_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
-				//DisplayLastError(L"CreateNamedPipe failed");
-				hPipe = NULL;
-				// Разрешить этой или другой нити создать серверный пайп
-				ReleaseSemaphore(hWait[1], 1, NULL);
-				//Sleep(50);
-				continue;
-			}
-
-			MCHKHEAP
-
-			// Чтобы ConEmuC знал, что серверный пайп готов
-			if (pRCon->mh_GuiAttached)
-			{
-				SetEvent(pRCon->mh_GuiAttached);
-				SafeCloseHandle(pRCon->mh_GuiAttached);
-			}
-
-			// Wait for the client to connect; if it succeeds,
-			// the function returns a nonzero value. If the function
-			// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
-			fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED);
-			MCHKHEAP
-			// сразу разрешить другой нити принять вызов
-			ReleaseSemaphore(hWait[1], 1, NULL);
-
-			// Консоль закрывается!
-			if (WaitForSingleObject(hWait[0], 0) == WAIT_OBJECT_0)
-			{
-				//FlushFileBuffers(hPipe); -- это не нужно, мы ничего не возвращали
-				//DisconnectNamedPipe(hPipe);
-				SafeCloseHandle(hPipe);
-				return 0;
-			}
-
-			MCHKHEAP
-
-			if (fConnected)
-				break;
-			else
-				SafeCloseHandle(hPipe);
-		}
-
-		if (fConnected)
-		{
-			// сразу сбросим, чтобы не забыть
-			fConnected = FALSE;
-			//// разрешить другой нити принять вызов //2009-08-28 перенесено сразу после ConnectNamedPipe
-			//ReleaseSemaphore(hWait[1], 1, NULL);
-			MCHKHEAP
-
-			if (gpConEmu->isValid(pVCon))
-			{
-				_ASSERTE(pVCon==pRCon->mp_VCon);
-				pRCon->ServerThreadCommand(hPipe);    // При необходимости - записывает в пайп результат сама
-			}
-			else
-			{
-				_ASSERTE(FALSE);
-				// Проблема. VirtualConsole закрыта, а нить еще не завершилась! хотя должна была...
-				SafeCloseHandle(hPipe);
-				return 1;
-			}
-		}
-
-		MCHKHEAP
-		FlushFileBuffers(hPipe);
-		//DisconnectNamedPipe(hPipe);
-		SafeCloseHandle(hPipe);
-	} // Перейти к открытию нового instance пайпа
-	while(WaitForSingleObject(pRCon->mh_TermEvent, 0) != WAIT_OBJECT_0);
-
-	return 0;
-}
-
-CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET));
 	
@@ -4279,7 +4287,7 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 	return pOut;
 }
 
-//CESERVER_REQ* CRealConsole::cmdGetGuiHwnd(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+//CESERVER_REQ* CRealConsole::cmdGetGuiHwnd(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 //{
 //	CESERVER_REQ* pOut = NULL;
 //	
@@ -4290,7 +4298,7 @@ CESERVER_REQ* CRealConsole::cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 //	return pOut;
 //}
 
-CESERVER_REQ* CRealConsole::cmdTabsChanged(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 	
@@ -4338,13 +4346,14 @@ CESERVER_REQ* CRealConsole::cmdTabsChanged(HANDLE hPipe, CESERVER_REQ* pIn, UINT
 				if (pRet)
 				{
 					pRet->TabsRet.bNeedPostTabSend = TRUE;
-					// Отправляем
-					fSuccess = WriteFile(
-					               hPipe,        // handle to pipe
-					               pRet,         // buffer to write from
-					               pRet->hdr.cbSize,  // number of bytes to write
-					               &cbWritten,   // number of bytes written
-					               NULL);        // not overlapped I/O
+					// Отправляем (сразу, чтобы клиент не ждал, пока ГУЙ закончит свои процессы)
+					fSuccess = mp_RConServer->DelayedWrite(pInst, pRet, pRet->hdr.cbSize);
+					//fSuccess = WriteFile(
+					//               hPipe,        // handle to pipe
+					//               pRet,         // buffer to write from
+					//               pRet->hdr.cbSize,  // number of bytes to write
+					//               &cbWritten,   // number of bytes written
+					//               NULL);        // not overlapped I/O
 					ExecuteFreeResult(pRet);
 					
 					// Чтобы в конце метода не дергаться
@@ -4387,13 +4396,14 @@ CESERVER_REQ* CRealConsole::cmdTabsChanged(HANDLE hPipe, CESERVER_REQ* pIn, UINT
 					pTmp->TabsRet.bNeedResize = TRUE;
 					pTmp->TabsRet.crNewSize.X = rcConsole.right;
 					pTmp->TabsRet.crNewSize.Y = rcConsole.bottom;
-					// Отправляем
-					fSuccess = WriteFile(
-					               hPipe,        // handle to pipe
-					               pTmp,         // buffer to write from
-					               pTmp->hdr.cbSize,  // number of bytes to write
-					               &cbWritten,   // number of bytes written
-					               NULL);        // not overlapped I/O
+					// Отправляем (сразу, чтобы клиент не ждал, пока ГУЙ закончит свои процессы)
+					fSuccess = mp_RConServer->DelayedWrite(pInst, pTmp, pTmp->hdr.cbSize);
+					//fSuccess = WriteFile(
+					//               hPipe,        // handle to pipe
+					//               pTmp,         // buffer to write from
+					//               pTmp->hdr.cbSize,  // number of bytes to write
+					//               &cbWritten,   // number of bytes written
+					//               NULL);        // not overlapped I/O
 					ExecuteFreeResult(pTmp);
 					
 					// Чтобы в конце метода не дергаться
@@ -4427,7 +4437,7 @@ CESERVER_REQ* CRealConsole::cmdTabsChanged(HANDLE hPipe, CESERVER_REQ* pIn, UINT
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdGetOutputFile(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdGetOutputFile(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 	
@@ -4446,7 +4456,7 @@ CESERVER_REQ* CRealConsole::cmdGetOutputFile(HANDLE hPipe, CESERVER_REQ* pIn, UI
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdGuiMacro(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdGuiMacro(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 
@@ -4470,7 +4480,7 @@ CESERVER_REQ* CRealConsole::cmdGuiMacro(HANDLE hPipe, CESERVER_REQ* pIn, UINT nD
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdLangChange(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdLangChange(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 	
@@ -4527,7 +4537,7 @@ CESERVER_REQ* CRealConsole::cmdLangChange(HANDLE hPipe, CESERVER_REQ* pIn, UINT 
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdTabsCmd(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdTabsCmd(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 	
@@ -4541,7 +4551,7 @@ CESERVER_REQ* CRealConsole::cmdTabsCmd(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDa
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdResources(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdResources(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 	
@@ -4637,7 +4647,7 @@ CESERVER_REQ* CRealConsole::cmdResources(HANDLE hPipe, CESERVER_REQ* pIn, UINT n
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdSetForeground(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdSetForeground(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 	
@@ -4661,7 +4671,7 @@ CESERVER_REQ* CRealConsole::cmdSetForeground(HANDLE hPipe, CESERVER_REQ* pIn, UI
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdFlashWindow(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdFlashWindow(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 
@@ -4684,7 +4694,7 @@ CESERVER_REQ* CRealConsole::cmdFlashWindow(HANDLE hPipe, CESERVER_REQ* pIn, UINT
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdRegPanelView(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdRegPanelView(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 	
@@ -4704,7 +4714,7 @@ CESERVER_REQ* CRealConsole::cmdRegPanelView(HANDLE hPipe, CESERVER_REQ* pIn, UIN
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdSetBackground(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdSetBackground(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 
@@ -4736,7 +4746,7 @@ CESERVER_REQ* CRealConsole::cmdSetBackground(HANDLE hPipe, CESERVER_REQ* pIn, UI
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdActivateCon(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdActivateCon(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 	
@@ -4753,7 +4763,7 @@ CESERVER_REQ* CRealConsole::cmdActivateCon(HANDLE hPipe, CESERVER_REQ* pIn, UINT
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 
@@ -4814,7 +4824,7 @@ CESERVER_REQ* CRealConsole::cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UIN
 	return pOut;
 }
 
-//CESERVER_REQ* CRealConsole::cmdNewConsole(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+//CESERVER_REQ* CRealConsole::cmdNewConsole(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 //{
 //	CESERVER_REQ* pOut = NULL;
 //
@@ -4825,7 +4835,7 @@ CESERVER_REQ* CRealConsole::cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UIN
 //	return pOut;
 //}
 
-CESERVER_REQ* CRealConsole::cmdOnPeekReadInput(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdOnPeekReadInput(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 
@@ -4848,7 +4858,7 @@ CESERVER_REQ* CRealConsole::cmdOnPeekReadInput(HANDLE hPipe, CESERVER_REQ* pIn, 
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdOnSetConsoleKeyShortcuts(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdOnSetConsoleKeyShortcuts(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 
@@ -4861,7 +4871,7 @@ CESERVER_REQ* CRealConsole::cmdOnSetConsoleKeyShortcuts(HANDLE hPipe, CESERVER_R
 	return pOut;
 }
 
-CESERVER_REQ* CRealConsole::cmdLockDc(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+CESERVER_REQ* CRealConsole::cmdLockDc(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
 
@@ -4875,7 +4885,7 @@ CESERVER_REQ* CRealConsole::cmdLockDc(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDat
 	return pOut;
 }
 
-//CESERVER_REQ* CRealConsole::cmdAssert(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize)
+//CESERVER_REQ* CRealConsole::cmdAssert(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 //{
 //	CESERVER_REQ* pOut = NULL;
 //
@@ -4887,108 +4897,117 @@ CESERVER_REQ* CRealConsole::cmdLockDc(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDat
 //}
 
 // Эта функция пайп не закрывает!
-void CRealConsole::ServerThreadCommand(HANDLE hPipe)
+//void CRealConsole::ServerThreadCommand(HANDLE hPipe)
+BOOL CRealConsole::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
-	CESERVER_REQ in= {{0}}, *pIn=NULL;
-	CESERVER_REQ *pOut = NULL;
-	DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
-	BOOL fSuccess = FALSE;
-#ifdef _DEBUG
-	HANDLE lhConEmuC = mh_ConEmuC;
-#endif
-	MCHKHEAP;
-	// Send a message to the pipe server and read the response.
-	fSuccess = ReadFile(
-	               hPipe,            // pipe handle
-	               &in,              // buffer to receive reply
-	               sizeof(in),       // size of read buffer
-	               &cbRead,          // bytes read
-	               NULL);            // not overlapped
-
-	if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA))
-	{
-#ifdef _DEBUG
-		// Если консоль закрывается - MonitorThread в ближайшее время это поймет
-		DEBUGSTRPROC(L"!!! ReadFile(pipe) failed - console in close?\n");
-		//DWORD dwWait = WaitForSingleObject ( mh_TermEvent, 0 );
-		//if (dwWait == WAIT_OBJECT_0) return;
-		//Sleep(1000);
-		//if (lhConEmuC != mh_ConEmuC)
-		//	dwWait = WAIT_OBJECT_0;
-		//else
-		//	dwWait = WaitForSingleObject ( mh_ConEmuC, 0 );
-		//if (dwWait == WAIT_OBJECT_0) return;
-		//_ASSERTE("ReadFile(pipe) failed"==NULL);
-#endif
-		//CloseHandle(hPipe);
-		return;
-	}
-
-	if (in.hdr.nVersion != CESERVER_REQ_VER)
-	{
-		gpConEmu->ShowOldCmdVersion(in.hdr.nCmd, in.hdr.nVersion, in.hdr.nSrcPID==GetServerPID() ? 1 : 0, in.hdr.nSrcPID, in.hdr.hModule, in.hdr.nBits);
-		return;
-	}
-
-	_ASSERTE(in.hdr.cbSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
-
-	if (cbRead < sizeof(CESERVER_REQ_HDR) || /*in.hdr.cbSize < cbRead ||*/ in.hdr.nVersion != CESERVER_REQ_VER)
-	{
-		//CloseHandle(hPipe);
-		return;
-	}
+	BOOL lbRc = FALSE;
+	CRealConsole* pRCon = (CRealConsole*)lParam;
 	
-	gpSetCls->debugLogCommand(&in, TRUE, timeGetTime(), 0, ms_VConServer_Pipe, pOut);
+	ExecuteFreeResult(ppReply);
+	CESERVER_REQ *pOut = NULL;
 
-	if (in.hdr.cbSize <= cbRead)
+//	CESERVER_REQ in= {{0}}, *pIn=NULL;
+//	DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
+//	BOOL fSuccess = FALSE;
+//#ifdef _DEBUG
+//	HANDLE lhConEmuC = mh_ConEmuC;
+//#endif
+//	MCHKHEAP;
+//	// Send a message to the pipe server and read the response.
+//	fSuccess = ReadFile(
+//	               hPipe,            // pipe handle
+//	               &in,              // buffer to receive reply
+//	               sizeof(in),       // size of read buffer
+//	               &cbRead,          // bytes read
+//	               NULL);            // not overlapped
+//
+//	if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA))
+//	{
+//#ifdef _DEBUG
+//		// Если консоль закрывается - MonitorThread в ближайшее время это поймет
+//		DEBUGSTRPROC(L"!!! ReadFile(pipe) failed - console in close?\n");
+//		//DWORD dwWait = WaitForSingleObject ( mh_TermEvent, 0 );
+//		//if (dwWait == WAIT_OBJECT_0) return;
+//		//Sleep(1000);
+//		//if (lhConEmuC != mh_ConEmuC)
+//		//	dwWait = WAIT_OBJECT_0;
+//		//else
+//		//	dwWait = WaitForSingleObject ( mh_ConEmuC, 0 );
+//		//if (dwWait == WAIT_OBJECT_0) return;
+//		//_ASSERTE("ReadFile(pipe) failed"==NULL);
+//#endif
+//		//CloseHandle(hPipe);
+//		return;
+//	}
+
+	if (pIn->hdr.nVersion != CESERVER_REQ_VER)
 	{
-		pIn = &in; // выделение памяти не требуется
-	}
-	else
-	{
-		int nAllSize = in.hdr.cbSize;
-		pIn = (CESERVER_REQ*)calloc(nAllSize,1);
-		_ASSERTE(pIn!=NULL);
-		memmove(pIn, &in, cbRead);
-		_ASSERTE(pIn->hdr.nVersion==CESERVER_REQ_VER);
-		LPBYTE ptrData = ((LPBYTE)pIn)+cbRead;
-		nAllSize -= cbRead;
-
-		while(nAllSize>0)
-		{
-			//_tprintf(TEXT("%s\n"), chReadBuf);
-
-			// Break if TransactNamedPipe or ReadFile is successful
-			if (fSuccess)
-				break;
-
-			// Read from the pipe if there is more data in the message.
-			fSuccess = ReadFile(
-			               hPipe,      // pipe handle
-			               ptrData,    // buffer to receive reply
-			               nAllSize,   // size of buffer
-			               &cbRead,    // number of bytes read
-			               NULL);      // not overlapped
-
-			// Exit if an error other than ERROR_MORE_DATA occurs.
-			if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA))
-				break;
-
-			ptrData += cbRead;
-			nAllSize -= cbRead;
-		}
-
-		TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
-		_ASSERTE(nAllSize==0);
-
-		if (nAllSize>0)
-		{
-			//CloseHandle(hPipe);
-			return; // удалось считать не все данные
-		}
+		gpConEmu->ReportOldCmdVersion(pIn->hdr.nCmd, pIn->hdr.nVersion, pIn->hdr.nSrcPID==pRCon->GetServerPID() ? 1 : 0,
+			pIn->hdr.nSrcPID, pIn->hdr.hModule, pIn->hdr.nBits);
+		return FALSE;
 	}
 
-	UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
+	if (pIn->hdr.cbSize < sizeof(CESERVER_REQ_HDR))
+	{
+		_ASSERTE(pIn->hdr.cbSize>=sizeof(CESERVER_REQ_HDR));
+		//CloseHandle(hPipe);
+		return FALSE;
+	}
+
+	DWORD dwTimeStart = timeGetTime();
+	//gpSetCls->debugLogCommand(pIn, TRUE, timeGetTime(), 0, ms_VConServer_Pipe, NULL/*pOut*/);
+
+	//if (in.hdr.cbSize <= cbRead)
+	//{
+	//	pIn = &in; // выделение памяти не требуется
+	//}
+	//else
+	//{
+	//	int nAllSize = in.hdr.cbSize;
+	//	pIn = (CESERVER_REQ*)calloc(nAllSize,1);
+	//	_ASSERTE(pIn!=NULL);
+	//	memmove(pIn, &in, cbRead);
+	//	_ASSERTE(pIn->hdr.nVersion==CESERVER_REQ_VER);
+	//	LPBYTE ptrData = ((LPBYTE)pIn)+cbRead;
+	//	nAllSize -= cbRead;
+
+	//	while(nAllSize>0)
+	//	{
+	//		//_tprintf(TEXT("%s\n"), chReadBuf);
+
+	//		// Break if TransactNamedPipe or ReadFile is successful
+	//		if (fSuccess)
+	//			break;
+
+	//		// Read from the pipe if there is more data in the message.
+	//		fSuccess = ReadFile(
+	//		               hPipe,      // pipe handle
+	//		               ptrData,    // buffer to receive reply
+	//		               nAllSize,   // size of buffer
+	//		               &cbRead,    // number of bytes read
+	//		               NULL);      // not overlapped
+
+	//		// Exit if an error other than ERROR_MORE_DATA occurs.
+	//		if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA))
+	//			break;
+
+	//		ptrData += cbRead;
+	//		nAllSize -= cbRead;
+	//	}
+
+	//	TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
+	//	_ASSERTE(nAllSize==0);
+
+	//	if (nAllSize>0)
+	//	{
+	//		//CloseHandle(hPipe);
+	//		return; // удалось считать не все данные
+	//	}
+	//}
+
+#ifdef _DEBUG
+	int nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
+#endif
 
 	// Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
 
@@ -5019,48 +5038,52 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 	//  } else
 
 	if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP)
-		pOut = cmdStartStop(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdStartStop(pInst, pIn, nDataSize);
 	//else if (pIn->hdr.nCmd == CECMD_GETGUIHWND)
-	//	pOut = cmdGetGuiHwnd(hPipe, pIn, nDataSize);
+	//	pOut = pRCon->cmdGetGuiHwnd(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_TABSCHANGED)
-		pOut = cmdTabsChanged(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdTabsChanged(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_GETOUTPUTFILE)
-		pOut = cmdGetOutputFile(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdGetOutputFile(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_GUIMACRO)
-		pOut = cmdGuiMacro(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdGuiMacro(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_LANGCHANGE)
-		pOut = cmdLangChange(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdLangChange(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_TABSCMD)
-		pOut = cmdTabsCmd(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdTabsCmd(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_RESOURCES)
-		pOut = cmdResources(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdResources(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_SETFOREGROUND)
-		pOut = cmdSetForeground(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdSetForeground(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_FLASHWINDOW)
-		pOut = cmdFlashWindow(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdFlashWindow(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_REGPANELVIEW)
-		pOut = cmdRegPanelView(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdRegPanelView(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_SETBACKGROUND)
-		pOut = cmdSetBackground(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdSetBackground(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_ACTIVATECON)
-		pOut = cmdActivateCon(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdActivateCon(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_ONCREATEPROC)
-		pOut = cmdOnCreateProc(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdOnCreateProc(pInst, pIn, nDataSize);
 	//else if (pIn->hdr.nCmd == CECMD_NEWCONSOLE)
-	//	pOut = cmdNewConsole(hPipe, pIn, nDataSize);
+	//	pOut = pRCon->cmdNewConsole(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_PEEKREADINFO)
-		pOut = cmdOnPeekReadInput(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdOnPeekReadInput(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_KEYSHORTCUTS)
-		pOut = cmdOnSetConsoleKeyShortcuts(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdOnSetConsoleKeyShortcuts(pInst, pIn, nDataSize);
 	else if (pIn->hdr.nCmd == CECMD_ALIVE)
 		pOut = ExecuteNewCmd(CECMD_ALIVE, sizeof(CESERVER_REQ_HDR));
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	else if (pIn->hdr.nCmd == CECMD_LOCKDC)
-		pOut = cmdLockDc(hPipe, pIn, nDataSize);
+		pOut = pRCon->cmdLockDc(pInst, pIn, nDataSize);
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
-	//	pOut = cmdAssert(hPipe, pIn, nDataSize);
+	//	pOut = cmdAssert(pInst, pIn, nDataSize);
 	else
 	{
+		// Неизвестная команда
+		_ASSERTE(pIn->hdr.nCmd == CECMD_CMDSTARTSTOP);
+
+		// Хотя бы "пустую" команду в ответ кинуть, а то ошибка (Pipe was closed) у клиента возникает
 		// 0 - чтобы assert-ами ловить необработанные команды
 		pOut = ExecuteNewCmd(0/*pIn->hdr.nCmd*/, sizeof(CESERVER_REQ_HDR));
 	}
@@ -5071,27 +5094,70 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 	{
 		if (pOut == NULL)
 		{
-			// Хотя бы "пустую" команду в ответ кинуть
-			// 0 - чтобы assert-ами ловить необработанные команды
+			// Для четкости, методы должны сами возвращать реальный результат
+			_ASSERTE(pOut!=NULL);
+			// Хотя бы "пустую" команду в ответ кинуть, а то ошибка (Pipe was closed) у клиента возникает
 			pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
 		}
-		
-		// Всегда чего-нибудь ответить в пайп, а то ошибка (Pipe was closed) у клиента возникает
-		fSuccess = WriteFile(hPipe, pOut, pOut->hdr.cbSize, &cbWritten, NULL);
 
-		ExecuteFreeResult(pOut);
+		DWORD dwDur = timeGetTime() - dwTimeStart;
+		gpSetCls->debugLogCommand(pIn, TRUE, dwTimeStart, dwDur, pRCon->ms_VConServer_Pipe, pOut);
+
+		ppReply = pOut;
+		if (pOut)
+		{
+			pcbReplySize = pOut->hdr.cbSize;
+			lbRc = TRUE;
+		}
+		
+		//// Всегда чего-нибудь ответить в пайп, а то ошибка (Pipe was closed) у клиента возникает
+		//fSuccess = WriteFile(hPipe, pOut, pOut->hdr.cbSize, &cbWritten, NULL);
+		//ExecuteFreeResult(pOut);
+	}
+	else
+	{
+		DWORD dwDur = timeGetTime() - dwTimeStart;
+		gpSetCls->debugLogCommand(pIn, TRUE, dwTimeStart, dwDur, pRCon->ms_VConServer_Pipe, NULL/*pOut*/);
+		
+		// Delayed write
+		_ASSERTE(ppReply==NULL);
+		ppReply = NULL;
+		lbRc = TRUE;
 	}
 	
 
-	// Освободить память
-	if (pIn && (LPVOID)pIn != (LPVOID)&in)
-	{
-		free(pIn); pIn = NULL;
-	}
+	//// Освободить память
+	//if (pIn && (LPVOID)pIn != (LPVOID)&in)
+	//{
+	//	free(pIn); pIn = NULL;
+	//}
 
 	MCHKHEAP;
 	//CloseHandle(hPipe);
-	return;
+	return lbRc;
+}
+
+BOOL CRealConsole::ServerThreadReady(LPVOID pInst, LPARAM lParam)
+{
+	CRealConsole* pRCon = (CRealConsole*)lParam;
+
+	// Чтобы ConEmuC знал, что серверный пайп готов
+	if (pRCon && pRCon->mh_GuiAttached)
+	{
+		SetEvent(pRCon->mh_GuiAttached);
+		SafeCloseHandle(pRCon->mh_GuiAttached);
+	}
+	else
+	{
+		_ASSERTE(pRCon && pRCon->mh_GuiAttached);
+	}
+
+	return TRUE;
+}
+
+void CRealConsole::ServerCommandFree(CESERVER_REQ* pReply, LPARAM lParam)
+{
+	ExecuteFreeResult(pReply);
 }
 
 void CRealConsole::OnServerClosing(DWORD anSrvPID)
@@ -5151,7 +5217,11 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc)
 	if (dwProcCount > 0)
 	{
 		*ppPrc = (ConProcess*)calloc(dwProcCount, sizeof(ConProcess));
-		_ASSERTE((*ppPrc)!=NULL);
+		if (*ppPrc == NULL)
+		{
+			_ASSERTE((*ppPrc)!=NULL);
+			return dwProcCount;
+		}
 		
 		std::vector<ConProcess>::iterator end = m_Processes.end();
 		int i = 0;
@@ -5970,18 +6040,22 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 		// Запустить серверный пайп
 		_wsprintf(ms_VConServer_Pipe, SKIPLEN(countof(ms_VConServer_Pipe)) CEGUIPIPENAME, L".", (DWORD)hConWnd); //был mn_ConEmuC_PID //-V205
 
-		if (!mh_ServerSemaphore)
-			mh_ServerSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
-
-		for (int i=0; i<MAX_SERVER_THREADS; i++)
+		if (!mp_RConServer->StartPipeServer(ms_VConServer_Pipe, (LPARAM)this, LocalSecurity(),
+				ServerCommand, ServerCommandFree, NULL, NULL, ServerThreadReady, TRUE, TRUE))
 		{
-			if (mh_RConServerThreads[i])
-				continue;
-
-			mn_RConServerThreadsId[i] = 0;
-			mh_RConServerThreads[i] = CreateThread(NULL, 0, RConServerThread, (LPVOID)this, 0, &mn_RConServerThreadsId[i]);
-			_ASSERTE(mh_RConServerThreads[i]!=NULL);
+			MBoxAssert("mp_RConServer->StartPipeServer"==0);
 		}
+
+		//if (!mh_ServerSemaphore)
+		//	mh_ServerSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
+		//for (int i=0; i<MAX_SERVER_THREADS; i++)
+		//{
+		//	if (mh_RConServerThreads[i])
+		//		continue;
+		//	mn_RConServerThreadsId[i] = 0;
+		//	mh_RConServerThreads[i] = CreateThread(NULL, 0, RConServerThread, (LPVOID)this, 0, &mn_RConServerThreadsId[i]);
+		//	_ASSERTE(mh_RConServerThreads[i]!=NULL);
+		//}
 
 		// чтобы ConEmuC знал, что мы готовы
 		//     if (mh_GuiAttached) {
@@ -6344,7 +6418,9 @@ BOOL CRealConsole::RecreateProcessStart()
 		hGuiWnd = NULL;
 		mn_GuiWndStyle = mn_GuiWndStylEx = mn_GuiWndPID;
 		ms_VConServer_Pipe[0] = 0;
-		SafeCloseHandle(mh_ServerSemaphore);
+		if (mp_RConServer)
+			mp_RConServer->StopPipeServer();
+		//SafeCloseHandle(mh_ServerSemaphore);
 		SafeCloseHandle(mh_GuiAttached);
 
 		if (!StartProcess())
@@ -6850,15 +6926,23 @@ void CRealConsole::UpdateServerActive(BOOL abActive)
 
 	if (ms_ConEmuC_Pipe[0])
 	{
-		int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2;
+		size_t nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2;
 		DWORD dwRead = 0;
-		CESERVER_REQ lIn = {{nInSize}}, lOut = {};
-		lIn.dwData[0] = abActive;
-		lIn.dwData[1] = mb_ThawRefreshThread;
-		ExecutePrepareCmd(&lIn.hdr, CECMD_ONACTIVATION, lIn.hdr.cbSize);
-		DWORD dwTickStart = timeGetTime();
-		fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, &lIn, lIn.hdr.cbSize, &lOut, sizeof(lOut), &dwRead, 500);
-		gpSetCls->debugLogCommand(&lIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_ConEmuC_Pipe, &lOut);
+		//CESERVER_REQ lIn = {{nInSize}}, lOut = {};
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ONACTIVATION, nInSize);
+		CESERVER_REQ* pOut = ExecuteNewCmd(CECMD_ONACTIVATION, sizeof(CESERVER_REQ));
+		if (pIn && pOut)
+		{
+			pIn->dwData[0] = abActive;
+			pIn->dwData[1] = mb_ThawRefreshThread;
+			//ExecutePrepareCmd(&lIn.hdr, CECMD_ONACTIVATION, lIn.hdr.cbSize);
+			DWORD dwTickStart = timeGetTime();
+			// Таймаут, чтобы не зависнуть
+			fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, 500);
+			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_ConEmuC_Pipe, pOut);
+		}
+		ExecuteFreeResult(pIn);
+		ExecuteFreeResult(pOut);
 	}
 }
 
@@ -6920,7 +7004,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 			tabs[0].Current = 1;
 
 		// найти активную закладку
-		for(i=(tabsCount-1); i>=0; i--)
+		for (i = (tabsCount-1); i >= 0; i--)
 		{
 			if (tabs[i].Current)
 			{
@@ -6960,7 +7044,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 		// В идеале - иконкой на закладке (если пользователь это выбрал) или суффиксом (добавляется в GetTab)
 		//if (gpSet->bAdminShield)
 		{
-			for(i=0; i<tabsCount; i++)
+			for (i = 0; i < tabsCount; i++)
 			{
 				tabs[i].Type |= 0x100;
 			}
@@ -6999,7 +7083,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 		SC.Lock(&msc_Tabs, FALSE);
 	}
 
-	for(int i = 0; i < tabsCount; i++)
+	for (i = 0; i < tabsCount; i++)
 	{
 		if (!mb_TabsWasChanged)
 		{
@@ -7508,13 +7592,12 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 	BOOL lbRc = FALSE;
 	CESERVER_REQ_HDR In = {0};
 	const CESERVER_REQ *pOut = NULL;
-	DWORD cbRead = 0;
 	MPipe<CESERVER_REQ_HDR,CESERVER_REQ> Pipe;
 	_ASSERTE(sizeof(In)==sizeof(CESERVER_REQ_HDR));
 	ExecutePrepareCmd(&In, CECMD_GETOUTPUT, sizeof(CESERVER_REQ_HDR));
 	Pipe.InitName(gpConEmu->GetDefaultTitle(), L"%s", ms_ConEmuC_Pipe, 0);
 
-	if (!Pipe.Transact(&In, In.cbSize, &pOut, &cbRead))
+	if (!Pipe.Transact(&In, In.cbSize, &pOut))
 	{
 		MBoxA(Pipe.GetErrorText());
 		return FALSE;

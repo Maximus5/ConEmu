@@ -229,6 +229,8 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg)
 	}
 
 	memset(pMsg, 0, sizeof(MSG64));
+	pMsg->cbSize = sizeof(*pMsg);
+
 	UINT nMsg = 0; WPARAM wParam = 0; LPARAM lParam = 0;
 
 	if (piRec->EventType == KEY_EVENT)

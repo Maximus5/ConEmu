@@ -79,9 +79,9 @@ BOOL gbDebugLogStarted = FALSE;
 BOOL gbDebugShowRects = FALSE;
 
 
-const TCHAR *const szClassName = VirtualConsoleClass;
-const TCHAR *const szClassNameParent = VirtualConsoleClassMain;
-const TCHAR *const szClassNameApp = VirtualConsoleClassApp;
+const TCHAR *const gsClassName = VirtualConsoleClass;
+const TCHAR *const gsClassNameParent = VirtualConsoleClassMain;
+const TCHAR *const gsClassNameApp = VirtualConsoleClassApp;
 //const TCHAR *const szClassNameBack = VirtualConsoleClassBack;
 //const TCHAR *const szClassNameScroll = VirtualConsoleClassScroll;
 
@@ -476,7 +476,7 @@ BOOL CheckCreateAppWindow()
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC, AppWndProc, 0, 0,
 	                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
 	                 NULL /*(HBRUSH)COLOR_BACKGROUND*/,
-	                 NULL, szClassNameApp, hClassIconSm
+	                 NULL, gsClassNameApp, hClassIconSm
 	                };// | CS_DROPSHADOW
 
 	if (!RegisterClassEx(&wc))
@@ -487,7 +487,7 @@ BOOL CheckCreateAppWindow()
 	int nWidth=100, nHeight=100, nX = -32000, nY = -32000;
 	DWORD exStyle = WS_EX_TOOLWINDOW|WS_EX_ACCEPTFILES;
 	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
-	ghWndApp = CreateWindowEx(exStyle, szClassNameApp, gpConEmu->GetDefaultTitle(), style, nX, nY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+	ghWndApp = CreateWindowEx(exStyle, gsClassNameApp, gpConEmu->GetDefaultTitle(), style, nX, nY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
 
 	if (!ghWndApp)
 	{
@@ -1469,7 +1469,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		pszReady = (TCHAR*)malloc(nLen*sizeof(TCHAR));
-		_ASSERTE(pszReady);
+		if (!pszReady)
+		{
+			MBoxAssert(pszReady!=NULL);
+			return 100;
+		}
+		
 
 		if (pszDefCmd)
 		{

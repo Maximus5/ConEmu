@@ -33,6 +33,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "MenuIds.h"
 
+template <class T, int MaxCount> struct PipeServer;
+//#include "../common/PipeServer.h"
+
 #define IID_IShellLink IID_IShellLinkW
 
 #define GET_X_LPARAM(inPx) ((int)(short)LOWORD(inPx))
@@ -341,10 +344,13 @@ class CConEmuMain :
 		UINT mn_MsgRequestUpdate;
 
 		//
-		static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
-		void GuiServerThreadCommand(HANDLE hPipe);
-		DWORD mn_GuiServerThreadId; HANDLE mh_GuiServerThread, mh_GuiServerThreadTerminate;
+		PipeServer<CESERVER_REQ,2>* mp_GuiServer;
+		//static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
+		//void GuiServerThreadCommand(HANDLE hPipe);
+		//DWORD mn_GuiServerThreadId; HANDLE mh_GuiServerThread, mh_GuiServerThreadTerminate;
 		wchar_t ms_ServerPipe[MAX_PATH];
+		static BOOL WINAPI GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
+		static void WINAPI GuiServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 
 		//
 		virtual void OnUseGlass(bool abEnableGlass);
@@ -472,7 +478,7 @@ class CConEmuMain :
 		void SetWaitCursor(BOOL abWait);
 		bool SetWindowMode(uint inMode, BOOL abForce = FALSE);
 		void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
-		void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
+		void ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
 		virtual void ShowSysmenu(int x=-32000, int y=-32000);
 		bool SetParent(HWND hNewParent);
 		HMENU CreateDebugMenuPopup();

@@ -416,17 +416,17 @@ BOOL CDragDropData::AddFmt_InShellDragLoop(wchar_t* pszDraggedPath, UINT nFilesC
 BOOL CDragDropData::AddFmt_HDROP(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
 {
 	DROPFILES drop_struct = { sizeof(drop_struct), { 0, 0 }, 0, 1 };
-	HGLOBAL drop_data = GlobalAlloc(GPTR, cbSize+sizeof(drop_struct));
-	_ASSERTE(drop_data);
+	LPBYTE drop_data = (LPBYTE)GlobalAlloc(GPTR, cbSize+sizeof(drop_struct));
 
 	if (!drop_data)
 	{
+		_ASSERTE(drop_data);
 		gpConEmu->DebugStep(_T("DnD: Memory allocation failed!"), TRUE);
 		goto wrap;
 	}
 
 	memcpy(drop_data, &drop_struct, sizeof(drop_struct));
-	memcpy(((byte*)drop_data) + sizeof(drop_struct), pszDraggedPath, cbSize);
+	memcpy(drop_data + sizeof(drop_struct), pszDraggedPath, cbSize);
 	{
 		FORMATETC       fmtetc[] =
 		{
@@ -643,7 +643,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 		/*
 		CFSTR_PREFERREDDROPEFFECT ?
 		*/
-		for(i=0; i<nCnt; i++)
+		for (i = 0; i < nCnt; i++)
 		{
 			szName[i][0] = 0;
 
@@ -685,122 +685,128 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 			// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
 			hr = pDataObject->GetData(fmt+i, stg+i);
 
-			if (hr == S_OK && stg[i].hGlobal)
+			if (hr == S_OK)
 			{
 				if (stg[i].tymed == TYMED_HGLOBAL)
 				{
-					psz[i] = (LPCWSTR)GlobalLock(stg[i].hGlobal);
-
-					if (psz[i])
+					if (stg[i].hGlobal)
 					{
-						memsize[i] = GlobalSize(stg[i].hGlobal);
-						nCurLen = _tcslen(szName[i]);
-						_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", DataSize=%i", (DWORD)(memsize[i]));
+						psz[i] = (LPCWSTR)GlobalLock(stg[i].hGlobal);
 
-						if (memsize[i] == 1)
+						if (psz[i])
 						{
+							memsize[i] = GlobalSize(stg[i].hGlobal);
 							nCurLen = _tcslen(szName[i]);
-							_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
-						}
-						else if (memsize[i] == sizeof(DWORD))
-						{
-							nCurLen = _tcslen(szName[i]);
-							_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
-						}
-						else if (memsize[i] == sizeof(u64))
-						{
-							nCurLen = _tcslen(szName[i]);
-							_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
-						}
-						else
-						{
-							wcscat_c(szName[i], L", ");
-							const wchar_t* pwsz = (const wchar_t*)(psz[i]);
-							const char* pasz = (const char*)(psz[i]);
-							nDataSize = (memsize[i]+1)*2;
-							pszData[i] = (wchar_t*)calloc(nDataSize,1);
+							_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", DataSize=%i", (DWORD)(memsize[i]));
 
-							// тупая проверка на юникод. первый символ - обычно из English char set
-							if (pasz[0] && pasz[1])
+							if (memsize[i] == 1)
 							{
-								//if (hDumpFile)
-								//{
-								MultiByteToWideChar(CP_ACP, 0, pasz, memsize[i], pszData[i], memsize[i]);
-								//} else {
-								//	int nMaxLen = min(200,memsize[i]);
-								//	wchar_t* pwszDst = szName[i]+_tcslen(szName[i]);
-								//	MultiByteToWideChar(CP_ACP, 0, pasz, nMaxLen, pwszDst, nMaxLen);
-								//	pwszDst[nMaxLen] = 0;
-								//}
+								nCurLen = _tcslen(szName[i]);
+								_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
+							}
+							else if (memsize[i] == sizeof(DWORD))
+							{
+								nCurLen = _tcslen(szName[i]);
+								_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
+							}
+							else if (memsize[i] == sizeof(u64))
+							{
+								nCurLen = _tcslen(szName[i]);
+								_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
 							}
 							else
 							{
-								//if (hDumpFile)
-								//{
-								StringCbCopy(pszData[i], nDataSize, pwsz);
-								nDataSize = ((memsize[i]>>1)+1)<<1; // было больше, с учетом возможного MultiByteToWideChar
-								//} else {
-								//	int nMaxLen = min(200,memsize[i]/2);
-								//	lstrcpyn(szName[i]+_tcslen(szName[i]), pwsz, nMaxLen);
-								//}
+								wcscat_c(szName[i], L", ");
+								const wchar_t* pwsz = (const wchar_t*)(psz[i]);
+								const char* pasz = (const char*)(psz[i]);
+								nDataSize = (memsize[i]+1)*2;
+								pszData[i] = (wchar_t*)calloc(nDataSize,1);
+
+								// тупая проверка на юникод. первый символ - обычно из English char set
+								if (pasz[0] && pasz[1])
+								{
+									//if (hDumpFile)
+									//{
+									MultiByteToWideChar(CP_ACP, 0, pasz, memsize[i], pszData[i], memsize[i]);
+									//} else {
+									//	int nMaxLen = min(200,memsize[i]);
+									//	wchar_t* pwszDst = szName[i]+_tcslen(szName[i]);
+									//	MultiByteToWideChar(CP_ACP, 0, pasz, nMaxLen, pwszDst, nMaxLen);
+									//	pwszDst[nMaxLen] = 0;
+									//}
+								}
+								else
+								{
+									//if (hDumpFile)
+									//{
+									StringCbCopy(pszData[i], nDataSize, pwsz);
+									nDataSize = ((memsize[i]>>1)+1)<<1; // было больше, с учетом возможного MultiByteToWideChar
+									//} else {
+									//	int nMaxLen = min(200,memsize[i]/2);
+									//	lstrcpyn(szName[i]+_tcslen(szName[i]), pwsz, nMaxLen);
+									//}
+								}
 							}
 						}
+						else
+						{
+							wcscat_c(szName[i], L", hGlobal not available");
+							stg[i].hGlobal = NULL;
+						}
 					}
-					else
-					{
-						wcscat_c(szName[i], L", hGlobal not available");
-						stg[i].hGlobal = NULL;
-					}
+				}
+				else if (stg[i].tymed == TYMED_FILE)
+				{
+					wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_FILE");
+					ReleaseStgMedium(stg+i);
+					stg[i].hGlobal = NULL;
+				}
+				else if (stg[i].tymed == TYMED_ISTREAM)
+				{
+					wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTREAM");
+					ReleaseStgMedium(stg+i);
+					stg[i].hGlobal = NULL;
+				}
+				else if (stg[i].tymed == TYMED_ISTORAGE)
+				{
+					wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTORAGE");
+					ReleaseStgMedium(stg+i);
+					stg[i].hGlobal = NULL;
+				}
+				else if (stg[i].tymed == TYMED_GDI)
+				{
+					wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_GDI");
+					ReleaseStgMedium(stg+i);
+					stg[i].hGlobal = NULL;
+				}
+				else if (stg[i].tymed == TYMED_MFPICT)
+				{
+					wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_MFPICT");
+					ReleaseStgMedium(stg+i);
+					stg[i].hGlobal = NULL;
+				}
+				else if (stg[i].tymed == TYMED_ENHMF)
+				{
+					wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ENHMF");
+					ReleaseStgMedium(stg+i);
+					stg[i].hGlobal = NULL;
 				}
 				else
 				{
-					wcscat_c(szName[i], L", hGlobal not available");
+					nCurLen = _tcslen(szName[i]);
+					_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Error in source! TYMED_HGLOBAL was requested, but got (%i)", stg[i].tymed);
+					ReleaseStgMedium(stg+i);
 					stg[i].hGlobal = NULL;
 				}
 			}
-			else if (stg[i].tymed == TYMED_FILE)
-			{
-				wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_FILE");
-				ReleaseStgMedium(stg+i);
-				stg[i].hGlobal = NULL;
-			}
-			else if (stg[i].tymed == TYMED_ISTREAM)
-			{
-				wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTREAM");
-				ReleaseStgMedium(stg+i);
-				stg[i].hGlobal = NULL;
-			}
-			else if (stg[i].tymed == TYMED_ISTORAGE)
-			{
-				wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTORAGE");
-				ReleaseStgMedium(stg+i);
-				stg[i].hGlobal = NULL;
-			}
-			else if (stg[i].tymed == TYMED_GDI)
-			{
-				wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_GDI");
-				ReleaseStgMedium(stg+i);
-				stg[i].hGlobal = NULL;
-			}
-			else if (stg[i].tymed == TYMED_MFPICT)
-			{
-				wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_MFPICT");
-				ReleaseStgMedium(stg+i);
-				stg[i].hGlobal = NULL;
-			}
-			else if (stg[i].tymed == TYMED_ENHMF)
-			{
-				wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ENHMF");
-				ReleaseStgMedium(stg+i);
-				stg[i].hGlobal = NULL;
-			}
 			else
 			{
-				int nCurLen = _tcslen(szName[i]); UNREFERENCED_PARAMETER(nCurLen);
-				_wsprintf(szName[i], SKIPLEN(countof(szName[i])-nCurLen) L", Error in source! TYMED_HGLOBAL was requested, but got (%i)", stg[i].tymed);
+				nCurLen = _tcslen(szName[i]);
+				_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Can't get TYMED_HGLOBAL, rc=0x%08X", (DWORD)hr);
 				ReleaseStgMedium(stg+i);
 				stg[i].hGlobal = NULL;
 			}
+
 
 			//#ifdef _DEBUG
 			//if (wcscmp(szName[i], L"DragImageBits") == 0)
@@ -840,15 +846,15 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 				LPCITEMIDLIST pidlRoot = HIDA_GetPIDLFolder(pcida);
 				PidlDump(pidlRoot, hDumpFile);
 
-				for(UINT i = 0; i < pcida->cidl; i++)
+				for (UINT c = 0; c < pcida->cidl; c++)
 				{
-					LPCITEMIDLIST pidl = HIDA_GetPIDLItem(pcida, i);
+					LPCITEMIDLIST pidl = HIDA_GetPIDLItem(pcida, c);
 					PidlDump(pidl, hDumpFile);
 				}
 			}
 		}
 
-		for(i=0; i<nCnt; i++)
+		for (i = 0; i < nCnt; i++)
 		{
 			if (psz[i] && stg[i].hGlobal)
 			{
@@ -1941,7 +1947,7 @@ CDragDropData::CEDragSource* CDragDropData::InitialCreateSource()
 	if (pds->hThread == NULL)
 	{
 		DisplayLastError(L"Can't create drag thread");
-		CloseHandle(pds->hReady);
+		SafeCloseHandle(pds->hReady);
 		free(pds);
 		return NULL;
 	}

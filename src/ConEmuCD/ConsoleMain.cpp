@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
 //  #define SHOW_COMSPEC_STARTED_MSGBOX
-//  #define SHOW_SERVER_STARTED_MSGBOX
+  #define SHOW_SERVER_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
 //  #define SHOW_INJECT_MSGBOX
@@ -3330,7 +3330,7 @@ void LogString(LPCSTR asText)
 
 	if (dwId == gdwMainThreadId)
 		pszThread = "MainThread";
-	else if (dwId == gpSrv->dwServerThreadId)
+	else if (gpSrv->CmdServer.IsPipeThread(dwId))
 		pszThread = "ServerThread";
 	else if (dwId == gpSrv->dwRefreshThread)
 		pszThread = "RefreshThread";
@@ -3338,13 +3338,10 @@ void LogString(LPCSTR asText)
 	else if (dwId == gpSrv->dwWinEventThread)
 		pszThread = "WinEventThread";
 	#endif
-	else
-
-		//if (dwId == gpSrv->dwInputThreadId)
-		//	pszThread = "InputThread";
-		//else
-		if (dwId == gpSrv->dwInputPipeThreadId)
-			pszThread = "InputPipeThread";
+	else if (gpSrv->InputServer.IsPipeThread(dwId))
+		pszThread = "InputPipeThread";
+	else if (gpSrv->DataServer.IsPipeThread(dwId))
+		pszThread = "DataPipeThread";
 
 	SYSTEMTIME st; GetLocalTime(&st);
 	_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%i:%02i:%02i.%03i ",
@@ -3370,7 +3367,7 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 
 	if (dwId == gdwMainThreadId)
 		pszThread = "MainThread";
-	else if (dwId == gpSrv->dwServerThreadId)
+	else if (gpSrv->CmdServer.IsPipeThread(dwId))
 		pszThread = "ServerThread";
 	else if (dwId == gpSrv->dwRefreshThread)
 		pszThread = "RefreshThread";
@@ -3378,13 +3375,10 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 	else if (dwId == gpSrv->dwWinEventThread)
 		pszThread = "WinEventThread";
 	#endif
-	else
-
-		//if (dwId == gpSrv->dwInputThreadId)
-		//		pszThread = "InputThread";
-		//		else
-		if (dwId == gpSrv->dwInputPipeThreadId)
-			pszThread = "InputPipeThread";
+	else if (gpSrv->InputServer.IsPipeThread(dwId))
+		pszThread = "InputPipeThread";
+	else if (gpSrv->DataServer.IsPipeThread(dwId))
+		pszThread = "DataPipeThread";
 
 	/*HDESK hDesk = GetThreadDesktop ( GetCurrentThreadId() );
 	HDESK hInp = OpenInputDesktop ( 0, FALSE, GENERIC_READ );*/
@@ -4454,176 +4448,176 @@ void ProcessDebugEvent()
 
 
 
-DWORD WINAPI ServerThread(LPVOID lpvParam)
-{
-	BOOL fConnected = FALSE;
-	DWORD dwInstanceThreadId = 0, dwErr = 0;
-	HANDLE hPipe = NULL, hInstanceThread = NULL;
+//DWORD WINAPI ServerThread(LPVOID lpvParam)
+//{
+//	BOOL fConnected = FALSE;
+//	DWORD dwInstanceThreadId = 0, dwErr = 0;
+//	HANDLE hPipe = NULL, hInstanceThread = NULL;
+//
+//// The main loop creates an instance of the named pipe and
+//// then waits for a client to connect to it. When the client
+//// connects, a thread is created to handle communications
+//// with that client, and the loop is repeated.
+//
+//	for(;;)
+//	{
+//		MCHKHEAP;
+//		hPipe = Create NamedPipe(
+//		            gpSrv->szPipename,               // pipe name
+//		            PIPE_ACCESS_DUPLEX,       // read/write access
+//		            PIPE_TYPE_MESSAGE |       // message type pipe
+//		            PIPE_READMODE_MESSAGE |   // message-read mode
+//		            PIPE_WAIT,                // blocking mode
+//		            PIPE_UNLIMITED_INSTANCES, // max. instances
+//		            PIPEBUFSIZE,              // output buffer size
+//		            PIPEBUFSIZE,              // input buffer size
+//		            0,                        // client time-out
+//		            gpLocalSecurity);          // default security attribute
+//		_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
+//
+//		if (hPipe == INVALID_HANDLE_VALUE)
+//		{
+//			dwErr = GetLastError();
+//			_printf("Create NamedPipe failed, ErrCode=0x%08X\n", dwErr);
+//			Sleep(10);
+//			continue;
+//		}
+//
+//		// Wait for the client to connect; if it succeeds,
+//		// the function returns a nonzero value. If the function
+//		// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
+//		fConnected = ConnectNamedPipe(hPipe, NULL) ?
+//		             TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
+//
+//		if (WaitForSingleObject(ghQuitEvent, 0) == WAIT_OBJECT_0)
+//			break;
+//
+//		MCHKHEAP;
+//
+//		if (fConnected)
+//		{
+//			// Create a thread for this client.
+//			hInstanceThread = CreateThread(
+//			                      NULL,              // no security attribute
+//			                      0,                 // default stack size
+//			                      InstanceThread,    // thread proc
+//			                      (LPVOID) hPipe,    // thread parameter
+//			                      0,                 // not suspended
+//			                      &dwInstanceThreadId);      // returns thread ID
+//
+//			if (hInstanceThread == NULL)
+//			{
+//				dwErr = GetLastError();
+//				_printf("CreateThread(Instance) failed, ErrCode=0x%08X\n", dwErr);
+//				Sleep(10);
+//				continue;
+//			}
+//			else
+//			{
+//				SafeCloseHandle(hInstanceThread);
+//			}
+//		}
+//		else
+//		{
+//			// The client could not connect, so close the pipe.
+//			SafeCloseHandle(hPipe);
+//		}
+//
+//		MCHKHEAP;
+//	}
+//
+//	return 1;
+//}
 
-// The main loop creates an instance of the named pipe and
-// then waits for a client to connect to it. When the client
-// connects, a thread is created to handle communications
-// with that client, and the loop is repeated.
-
-	for(;;)
-	{
-		MCHKHEAP;
-		hPipe = CreateNamedPipe(
-		            gpSrv->szPipename,               // pipe name
-		            PIPE_ACCESS_DUPLEX,       // read/write access
-		            PIPE_TYPE_MESSAGE |       // message type pipe
-		            PIPE_READMODE_MESSAGE |   // message-read mode
-		            PIPE_WAIT,                // blocking mode
-		            PIPE_UNLIMITED_INSTANCES, // max. instances
-		            PIPEBUFSIZE,              // output buffer size
-		            PIPEBUFSIZE,              // input buffer size
-		            0,                        // client time-out
-		            gpLocalSecurity);          // default security attribute
-		_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
-
-		if (hPipe == INVALID_HANDLE_VALUE)
-		{
-			dwErr = GetLastError();
-			_printf("CreateNamedPipe failed, ErrCode=0x%08X\n", dwErr);
-			Sleep(10);
-			continue;
-		}
-
-		// Wait for the client to connect; if it succeeds,
-		// the function returns a nonzero value. If the function
-		// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
-		fConnected = ConnectNamedPipe(hPipe, NULL) ?
-		             TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
-
-		if (WaitForSingleObject(ghQuitEvent, 0) == WAIT_OBJECT_0)
-			break;
-
-		MCHKHEAP;
-
-		if (fConnected)
-		{
-			// Create a thread for this client.
-			hInstanceThread = CreateThread(
-			                      NULL,              // no security attribute
-			                      0,                 // default stack size
-			                      InstanceThread,    // thread proc
-			                      (LPVOID) hPipe,    // thread parameter
-			                      0,                 // not suspended
-			                      &dwInstanceThreadId);      // returns thread ID
-
-			if (hInstanceThread == NULL)
-			{
-				dwErr = GetLastError();
-				_printf("CreateThread(Instance) failed, ErrCode=0x%08X\n", dwErr);
-				Sleep(10);
-				continue;
-			}
-			else
-			{
-				SafeCloseHandle(hInstanceThread);
-			}
-		}
-		else
-		{
-			// The client could not connect, so close the pipe.
-			SafeCloseHandle(hPipe);
-		}
-
-		MCHKHEAP;
-	}
-
-	return 1;
-}
-
-DWORD WINAPI InstanceThread(LPVOID lpvParam)
-{
-	CESERVER_REQ in= {{0}}, *pIn=NULL, *pOut=NULL;
-	DWORD cbBytesRead, cbWritten, dwErr = 0;
-	BOOL fSuccess;
-	HANDLE hPipe;
-	// The thread's parameter is a handle to a pipe instance.
-	hPipe = (HANDLE) lpvParam;
-	MCHKHEAP;
-	// Read client requests from the pipe.
-	memset(&in, 0, sizeof(in));
-	fSuccess = ReadFile(
-	               hPipe,        // handle to pipe
-	               &in,          // buffer to receive data
-	               sizeof(in),   // size of buffer
-	               &cbBytesRead, // number of bytes read
-	               NULL);        // not overlapped I/O
-
-	if ((!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA)) ||
-	        cbBytesRead < sizeof(CESERVER_REQ_HDR) || in.hdr.cbSize < sizeof(CESERVER_REQ_HDR))
-	{
-		goto wrap;
-	}
-
-	if (in.hdr.cbSize > cbBytesRead)
-	{
-		DWORD cbNextRead = 0;
-		// “ут именно calloc, а не ExecuteNewCmd, т.к. данные пришли снаружи, а не заполн€ютс€ здесь
-		pIn = (CESERVER_REQ*)calloc(in.hdr.cbSize, 1);
-
-		if (!pIn)
-			goto wrap;
-
-		memmove(pIn, &in, cbBytesRead); // сто€ло ошибочное присвоение
-		fSuccess = ReadFile(
-		               hPipe,        // handle to pipe
-		               ((LPBYTE)pIn)+cbBytesRead,  // buffer to receive data
-		               in.hdr.cbSize - cbBytesRead,   // size of buffer
-		               &cbNextRead, // number of bytes read
-		               NULL);        // not overlapped I/O
-
-		if (fSuccess)
-			cbBytesRead += cbNextRead;
-	}
-
-	if (!ProcessSrvCommand(pIn ? *pIn : in, &pOut) || pOut==NULL)
-	{
-		// ≈сли результата нет - все равно что-нибудь запишем, иначе TransactNamedPipe может виснуть?
-		CESERVER_REQ_HDR Out;
-		ExecutePrepareCmd(&Out, in.hdr.nCmd, sizeof(Out));
-		fSuccess = WriteFile(
-		               hPipe,        // handle to pipe
-		               &Out,         // buffer to write from
-		               Out.cbSize,    // number of bytes to write
-		               &cbWritten,   // number of bytes written
-		               NULL);        // not overlapped I/O
-	}
-	else
-	{
-		MCHKHEAP;
-		// Write the reply to the pipe.
-		fSuccess = WriteFile(
-		               hPipe,        // handle to pipe
-		               pOut,         // buffer to write from
-		               pOut->hdr.cbSize,  // number of bytes to write
-		               &cbWritten,   // number of bytes written
-		               NULL);        // not overlapped I/O
-
-		// освободить пам€ть
-		if ((LPVOID)pOut != (LPVOID)gpStoredOutput)  // ≈сли это Ќ≈ сохраненный вывод
-			ExecuteFreeResult(pOut);
-	}
-
-	if (pIn)    // не освобождалась, хот€, таких длинных команд наверное не было
-	{
-		free(pIn); pIn = NULL;
-	}
-
-	MCHKHEAP;
-	//if (!fSuccess || pOut->hdr.cbSize != cbWritten) break;
-// Flush the pipe to allow the client to read the pipe's contents
-// before disconnecting. Then disconnect the pipe, and close the
-// handle to this pipe instance.
-wrap: // Flush и Disconnect делать всегда
-	FlushFileBuffers(hPipe);
-	DisconnectNamedPipe(hPipe);
-	SafeCloseHandle(hPipe);
-	return 1;
-}
+//DWORD WINAPI InstanceThread(LPVOID lpvParam)
+//{
+//	CESERVER_REQ in= {{0}}, *pIn=NULL, *pOut=NULL;
+//	DWORD cbBytesRead, cbWritten, dwErr = 0;
+//	BOOL fSuccess;
+//	HANDLE hPipe;
+//	// The thread's parameter is a handle to a pipe instance.
+//	hPipe = (HANDLE) lpvParam;
+//	MCHKHEAP;
+//	// Read client requests from the pipe.
+//	memset(&in, 0, sizeof(in));
+//	fSuccess = ReadFile(
+//	               hPipe,        // handle to pipe
+//	               &in,          // buffer to receive data
+//	               sizeof(in),   // size of buffer
+//	               &cbBytesRead, // number of bytes read
+//	               NULL);        // not overlapped I/O
+//
+//	if ((!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA)) ||
+//	        cbBytesRead < sizeof(CESERVER_REQ_HDR) || in.hdr.cbSize < sizeof(CESERVER_REQ_HDR))
+//	{
+//		goto wrap;
+//	}
+//
+//	if (in.hdr.cbSize > cbBytesRead)
+//	{
+//		DWORD cbNextRead = 0;
+//		// “ут именно calloc, а не ExecuteNewCmd, т.к. данные пришли снаружи, а не заполн€ютс€ здесь
+//		pIn = (CESERVER_REQ*)calloc(in.hdr.cbSize, 1);
+//
+//		if (!pIn)
+//			goto wrap;
+//
+//		memmove(pIn, &in, cbBytesRead); // сто€ло ошибочное присвоение
+//		fSuccess = ReadFile(
+//		               hPipe,        // handle to pipe
+//		               ((LPBYTE)pIn)+cbBytesRead,  // buffer to receive data
+//		               in.hdr.cbSize - cbBytesRead,   // size of buffer
+//		               &cbNextRead, // number of bytes read
+//		               NULL);        // not overlapped I/O
+//
+//		if (fSuccess)
+//			cbBytesRead += cbNextRead;
+//	}
+//
+//	if (!ProcessSrvCommand(pIn ? *pIn : in, &pOut) || pOut==NULL)
+//	{
+//		// ≈сли результата нет - все равно что-нибудь запишем, иначе TransactNamedPipe может виснуть?
+//		CESERVER_REQ_HDR Out;
+//		ExecutePrepareCmd(&Out, in.hdr.nCmd, sizeof(Out));
+//		fSuccess = WriteFile(
+//		               hPipe,        // handle to pipe
+//		               &Out,         // buffer to write from
+//		               Out.cbSize,    // number of bytes to write
+//		               &cbWritten,   // number of bytes written
+//		               NULL);        // not overlapped I/O
+//	}
+//	else
+//	{
+//		MCHKHEAP;
+//		// Write the reply to the pipe.
+//		fSuccess = WriteFile(
+//		               hPipe,        // handle to pipe
+//		               pOut,         // buffer to write from
+//		               pOut->hdr.cbSize,  // number of bytes to write
+//		               &cbWritten,   // number of bytes written
+//		               NULL);        // not overlapped I/O
+//
+//		// освободить пам€ть
+//		if ((LPVOID)pOut != (LPVOID)gpStoredOutput)  // ≈сли это Ќ≈ сохраненный вывод
+//			ExecuteFreeResult(pOut);
+//	}
+//
+//	if (pIn)    // не освобождалась, хот€, таких длинных команд наверное не было
+//	{
+//		free(pIn); pIn = NULL;
+//	}
+//
+//	MCHKHEAP;
+//	//if (!fSuccess || pOut->hdr.cbSize != cbWritten) break;
+//// Flush the pipe to allow the client to read the pipe's contents
+//// before disconnecting. Then disconnect the pipe, and close the
+//// handle to this pipe instance.
+//wrap: // Flush и Disconnect делать всегда
+//	FlushFileBuffers(hPipe);
+//	DisconnectNamedPipe(hPipe);
+//	SafeCloseHandle(hPipe);
+//	return 1;
+//}
 
 BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 {

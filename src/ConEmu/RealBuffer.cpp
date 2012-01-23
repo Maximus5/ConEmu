@@ -323,7 +323,6 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 		TODO("Хорошо бы весь расширенный буфер тут хранить, а не только CHAR_ATTR");
 		WORD*     pnaDst = con.pConAttr;
 		
-		DWORD dwConDataBufSize = dump.crSize.X * dump.crSize.Y;
 		wmemmove(pszDst, pszSrc, dwConDataBufSize);
 
 		// Расфуговка буфера CharAttr на консольные атрибуты
@@ -476,11 +475,16 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	DWORD dwRead = 0;
 	int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE);
 	int nOutSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_RETSIZE);
-	CESERVER_REQ lIn = {{nInSize}};
-	CESERVER_REQ lOut = {{nOutSize}};
+	CESERVER_REQ* pIn = ExecuteNewCmd(anCmdID, nInSize);
+	CESERVER_REQ* pOut = ExecuteNewCmd(anCmdID, nOutSize);
 	SMALL_RECT rect = {0};
 	_ASSERTE(anCmdID==CECMD_SETSIZESYNC || anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED);
-	ExecutePrepareCmd(&lIn.hdr, anCmdID, lIn.hdr.cbSize);
+	//ExecutePrepareCmd(&lIn.hdr, anCmdID, lIn.hdr.cbSize);
+	if (!pIn || !pOut)
+	{
+		_ASSERTE(pIn && pOut);
+		goto wrap;
+	}
 
 	// Для режима BufferHeight нужно передать еще и видимый прямоугольник (нужна только верхняя координата?)
 	if (con.bBufferHeight)
@@ -520,19 +524,19 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 
 	_ASSERTE(sizeY>0 && sizeY<200);
 	// Устанавливаем параметры для передачи в ConEmuC
-	lIn.SetSize.nBufferHeight = sizeBuffer; //con.bBufferHeight ? gpSet->Default BufferHeight : 0;
-	lIn.SetSize.size.X = sizeX;
-	lIn.SetSize.size.Y = sizeY;
+	pIn->SetSize.nBufferHeight = sizeBuffer; //con.bBufferHeight ? gpSet->Default BufferHeight : 0;
+	pIn->SetSize.size.X = sizeX;
+	pIn->SetSize.size.Y = sizeY;
 	TODO("nTopVisibleLine должен передаваться при скролле, а не при ресайзе!");
-	lIn.SetSize.nSendTopLine = (gpSetCls->AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
-	lIn.SetSize.rcWindow = rect;
-	lIn.SetSize.dwFarPID = (con.bBufferHeight && !mp_RCon->isFarBufferSupported()) ? 0 : mp_RCon->GetFarPID(TRUE);
+	pIn->SetSize.nSendTopLine = (gpSetCls->AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
+	pIn->SetSize.rcWindow = rect;
+	pIn->SetSize.dwFarPID = (con.bBufferHeight && !mp_RCon->isFarBufferSupported()) ? 0 : mp_RCon->GetFarPID(TRUE);
 
 	// Если размер менять не нужно - то и CallNamedPipe не делать
 	//if (mp_ConsoleInfo) {
 
 	// Если заблокирована верхняя видимая строка - выполнять строго
-	if (anCmdID != CECMD_CMDFINISHED && lIn.SetSize.nSendTopLine == -1)
+	if (anCmdID != CECMD_CMDFINISHED && pIn->SetSize.nSendTopLine == -1)
 	{
 		// иначе - проверяем текущее соответствие
 		//CONSOLE_SCREEN_BUFFER_INFO sbi = mp_ConsoleInfo->sbi;
@@ -553,7 +557,10 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 
 		// fin
 		if (lbSizeMatch && anCmdID != CECMD_CMDFINISHED)
-			return TRUE; // менять ничего не нужно
+		{
+			lbRc = TRUE; // менять ничего не нужно
+			goto wrap;
+		}
 	}
 
 	//}
@@ -565,7 +572,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		           (anCmdID==CECMD_SETSIZESYNC) ? "CECMD_SETSIZESYNC" :
 		           (anCmdID==CECMD_CMDSTARTED) ? "CECMD_CMDSTARTED" :
 		           (anCmdID==CECMD_CMDFINISHED) ? "CECMD_CMDFINISHED" :
-		           "UnknownSizeCommand", sizeX, sizeY, sizeBuffer, lIn.SetSize.nSendTopLine);
+		           "UnknownSizeCommand", sizeX, sizeY, sizeBuffer, pIn->SetSize.nSendTopLine);
 		mp_RCon->LogString(szInfo, TRUE);
 	}
 
@@ -575,8 +582,9 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	DEBUGSTRSIZE(szDbgCmd);
 #endif
 	DWORD dwTickStart = timeGetTime();
-	fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, &lIn, lIn.hdr.cbSize, &lOut, lOut.hdr.cbSize, &dwRead, 500);
-	gpSetCls->debugLogCommand(&lIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, mp_RCon->ms_ConEmuC_Pipe, &lOut);
+	// С таймаутом
+	fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, 500);
+	gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, mp_RCon->ms_ConEmuC_Pipe, pOut);
 
 	if (!fSuccess || dwRead<(DWORD)nOutSize)
 	{
@@ -598,13 +606,13 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		    && (mp_RCon->mn_MonitorThreadID != GetCurrentThreadId());
 		DEBUGSTRSIZE(L"SetConsoleSize.fSuccess == TRUE\n");
 
-		if (lOut.hdr.nCmd != lIn.hdr.nCmd)
+		if (pOut->hdr.nCmd != pIn->hdr.nCmd)
 		{
-			_ASSERTE(lOut.hdr.nCmd == lIn.hdr.nCmd);
+			_ASSERTE(pOut->hdr.nCmd == pIn->hdr.nCmd);
 
 			if (gpSetCls->isAdvLogging)
 			{
-				char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED!!! OutCmd(%i)!=InCmd(%i)", lOut.hdr.nCmd, lIn.hdr.nCmd);
+				char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED!!! OutCmd(%i)!=InCmd(%i)", pOut->hdr.nCmd, pIn->hdr.nCmd);
 				mp_RCon->LogString(szInfo);
 			}
 		}
@@ -671,8 +679,8 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 			}
 			else
 			{
-				sbi = lOut.SetSizeRet.SetSizeRet;
-				nBufHeight = lIn.SetSize.nBufferHeight;
+				sbi = pOut->SetSizeRet.SetSizeRet;
+				nBufHeight = pIn->SetSize.nBufferHeight;
 
 				if (gpSetCls->isAdvLogging)
 					mp_RCon->LogString("SetConsoleSizeSrv.Not waiting for ApplyFinished");
@@ -701,7 +709,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 						char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
 						                             sizeX, sizeY,
 						                             sbi.dwSize.X, sbi.dwSize.Y,
-						                             lOut.SetSizeRet.SetSizeRet.dwSize.X, lOut.SetSizeRet.SetSizeRet.dwSize.Y
+						                             pOut->SetSizeRet.SetSizeRet.dwSize.X, pOut->SetSizeRet.SetSizeRet.dwSize.Y
 						                            );
 						mp_RCon->LogString(szInfo);
 					}
@@ -733,7 +741,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 						char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
 						                             sizeX, sizeY,
 						                             sbi.dwSize.X, sbi.dwSize.Y,
-						                             lOut.SetSizeRet.SetSizeRet.dwSize.X, lOut.SetSizeRet.SetSizeRet.dwSize.Y
+						                             pOut->SetSizeRet.SetSizeRet.dwSize.X, pOut->SetSizeRet.SetSizeRet.dwSize.Y
 						                            );
 						mp_RCon->LogString(szInfo);
 					}
@@ -770,6 +778,9 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		}
 	}
 
+wrap:
+	ExecuteFreeResult(pIn);
+	ExecuteFreeResult(pOut);
 	return lbRc;
 }
 
@@ -1637,13 +1648,12 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 	ResetEvent(mp_RCon->mh_ApplyFinished);
 	const CESERVER_REQ_CONINFO_INFO* pInfo = NULL;
 	CESERVER_REQ_HDR cmd; ExecutePrepareCmd(&cmd, CECMD_CONSOLEDATA, sizeof(cmd));
-	DWORD nOutSize = 0;
 
 	if (!mp_RCon->m_ConsoleMap.IsValid())
 	{
 		_ASSERTE(mp_RCon->m_ConsoleMap.IsValid());
 	}
-	else if (!mp_RCon->m_GetDataPipe.Transact(&cmd, sizeof(cmd), (const CESERVER_REQ_HDR**)&pInfo, &nOutSize) || !pInfo)
+	else if (!mp_RCon->m_GetDataPipe.Transact(&cmd, sizeof(cmd), (const CESERVER_REQ_HDR**)&pInfo) || !pInfo)
 	{
 #ifdef _DEBUG
 		MBoxA(mp_RCon->m_GetDataPipe.GetErrorText());
@@ -3007,7 +3017,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 			DWORD cbLineSize = min(cbDstLineSize,cbSrcLineSize);
 			int nCharsLeft = max(0, (nWidth-con.nTextWidth));
-			int nY, nX;
+			//int nY, nX;
 			BYTE attrBackLast = 0;
 			//int nPrevDlgBorder = -1;
 

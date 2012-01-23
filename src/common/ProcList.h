@@ -356,7 +356,7 @@ protected:
 
 			while (1)
 			{
-				DWORD dwSize = mn_ProcPerfDataSize, dwType;
+				dwSize = mn_ProcPerfDataSize;
 
 				while ((rc = RegQueryValueEx(HKEY_PERFORMANCE_DATA, szSubKey, 0, &dwType, (LPBYTE)mp_ProcPerfData, &dwSize))
 						==ERROR_LOCK_FAILED)  ; //Just retry

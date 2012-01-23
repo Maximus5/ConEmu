@@ -401,10 +401,12 @@ class MPipe
 		{
 			if (mp_Out && mp_Out != &m_Tmp)
 			{
-				_ASSERTE(mh_Heap!=NULL);
-				HeapFree(mh_Heap, 0, mp_Out);
-				mp_Out = NULL;
+				if (mh_Heap)
+					HeapFree(mh_Heap, 0, mp_Out);
+				else
+					_ASSERTE(mh_Heap!=NULL);
 			}
+			mp_Out = NULL;
 		};
 		void Close()
 		{
@@ -439,11 +441,15 @@ class MPipe
 
 			return (mh_Pipe!=NULL);
 		};
-		BOOL Transact(const T_IN* apIn, DWORD anInSize, const T_OUT** rpOut, DWORD* rnOutSize)
+		BOOL Transact(const T_IN* apIn, DWORD anInSize, const T_OUT** rpOut)
 		{
+			if (!apIn || !rpOut)
+			{
+				_ASSERTE(apIn && rpOut);
+				return FALSE;
+			}
+
 			ms_Error[0] = 0;
-			_ASSERTE(apIn && rnOutSize);
-			*rnOutSize = 0;
 			*rpOut = &m_Tmp;
 
 			if (!Open())  // Пайп может быть уже открыт, функция это учитывает

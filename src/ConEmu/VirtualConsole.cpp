@@ -161,7 +161,11 @@ HMENU CVirtualConsole::mh_EditPopup = NULL;
 
 CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
 {
-	_ASSERTE(args!=NULL);
+	if (!args)
+	{
+		_ASSERTE(args!=NULL);
+		return NULL;
+	}
 
 	if (args->pszSpecialCmd)
 	{
@@ -600,7 +604,9 @@ bool CVirtualConsole::PointersAlloc()
 	AllocArray(pbBackIsPic, bool, nMaxTextHeight);
 	AllocArray(pnBackRGB, COLORREF, nMaxTextHeight);
 	HEAPVAL;
-	return (mb_PointersAllocated = true);
+
+	mb_PointersAllocated = true;
+	return true;
 }
 
 void CVirtualConsole::PointersZero()

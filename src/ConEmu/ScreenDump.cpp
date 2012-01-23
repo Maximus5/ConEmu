@@ -544,5 +544,5 @@ BOOL DumpImage(HDC hScreen, int anWidth, int anHeight, LPCWSTR pszFile)
 		LocalFree(pScreen);
 	}
 
-	return S_OK;
+	return TRUE;
 }

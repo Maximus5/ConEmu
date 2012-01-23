@@ -38,8 +38,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "Options.h"
 
-int nStep = 0; wchar_t szDbg[512];
-#define DBGFUNCTION(s) // { wsprintf(szDbg, L"%i: %s", ++nStep, s); OutputDebugString(szDbg); /*Sleep(1000);*/ }
+#ifdef _DEBUG
+static int _nDbgStep = 0; wchar_t _szDbg[512];
+#endif
+#define DBGFUNCTION(s) // { wsprintf(_szDbg, L"%i: %s", ++_nDbgStep, s); OutputDebugString(_szDbg); /*Sleep(1000);*/ }
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
 
 extern HICON hClassIconSm;
@@ -947,7 +949,7 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		{
 			int nShift = GetSystemMetrics(SM_CXSMICON);
 			int nFrame = 2;
-			RECT wr; GetWindowRect(hWnd, &wr);
+			//RECT wr; GetWindowRect(hWnd, &wr);
 			int nWidth = wr.right - wr.left;
 			if (point.x <= nFrame && point.y <= nShift)
 				l_result = HTTOPLEFT;

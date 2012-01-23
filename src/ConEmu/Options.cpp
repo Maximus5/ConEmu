@@ -510,7 +510,7 @@ void Settings::LoadSettings()
 
 		reg->Load(L"FontName2", inFont2, countof(inFont2));
 
-		if (!*inFont || !*inFont)
+		if (!*inFont || !*inFont2)
 			isAutoRegisterFonts = true;
 
 		reg->Load(L"FontBold", isBold);

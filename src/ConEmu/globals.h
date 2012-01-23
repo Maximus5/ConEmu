@@ -28,11 +28,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-extern const TCHAR *const szClassName;
-extern const TCHAR *const szClassNameParent;
-extern const TCHAR *const szClassNameApp;
-extern const TCHAR *const szClassNameBack;
-extern const TCHAR *const szClassNameScroll;
+extern const TCHAR *const gsClassName;
+extern const TCHAR *const gsClassNameParent;
+extern const TCHAR *const gsClassNameApp;
+//extern const TCHAR *const gsClassNameBack;
+//extern const TCHAR *const gsClassNameScroll;
 
 struct Settings;
 class CSettings;

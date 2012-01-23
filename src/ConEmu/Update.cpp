@@ -1442,7 +1442,7 @@ bool CConEmuUpdate::NeedRunElevation()
 			#endif
 		};
 		size_t nLen;
-		wchar_t szSystem[MAX_PATH+1];
+		wchar_t szSystem[MAX_PATH+2];
 		for (size_t i = 0; i < countof(nFolderIdl); i++)
 		{
 			for (size_t j = 0; j <= 1; j++)

@@ -1288,7 +1288,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 	DWORD DlgFlags = bMarkBorder ? FR_HASBORDER : 0;
 	int nWidth_1 = nWidth - 1;
 	int nHeight_1 = nHeight - 1;
-	RECT r = {nX1,nY1,nX2,nY2};
+	//RECT r = {nX1,nY1,nX2,nY2};
 
 	if (nFlags != (DWORD)-1)
 	{
@@ -1327,25 +1327,26 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		if ((!nY1 || ((m_DetectedDialogs.AllFlags & FR_MENUBAR) && (nY1 == 1)))  // условие для верхней границы панелей
 		        && (nY2 >= (nY1 + 3))) // и минимальная высота панелей
 		{
-			SMALL_RECT r; DWORD nPossible = 0;
+			SMALL_RECT sr = {nX1,nY1,nX2,nY2};
+			DWORD nPossible = 0;
 
 			if (!nX1)
 			{
 				if (nX2 == nWidth_1)
 				{
 					nPossible |= FR_FULLPANEL;
-					r.Left = nX1; r.Top = nY1; r.Right = nX2; r.Bottom = nY2;
+					//r.Left = nX1; r.Top = nY1; r.Right = nX2; r.Bottom = nY2;
 				}
 				else if (nX2 < (nWidth-9))
 				{
 					nPossible |= FR_LEFTPANEL;
-					r.Left = nX1; r.Top = nY1; r.Right = nX2; r.Bottom = nY2;
+					//r.Left = nX1; r.Top = nY1; r.Right = nX2; r.Bottom = nY2;
 				}
 			}
 			else if (nX1 >= 10 && nX2 == nWidth_1)
 			{
 				nPossible |= FR_RIGHTPANEL;
-				r.Left = nX1; r.Top = nY1; r.Right = nX2; r.Bottom = nY2;
+				//r.Left = nX1; r.Top = nY1; r.Right = nX2; r.Bottom = nY2;
 			}
 
 			if (nPossible)
@@ -1370,9 +1371,9 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 					if (pAttr[nShift].nForeIdx == btPanelFore && pAttr[nShift].nBackIdx == btPanelBack)
 					{
 						if ((nPossible & FR_RIGHTPANEL))
-							mrc_RightPanel = r; // только правая
+							mrc_RightPanel = sr; // только правая
 						else
-							mrc_LeftPanel = r;  // левая или полноэкранная
+							mrc_LeftPanel = sr;  // левая или полноэкранная
 
 						DlgFlags |= nPossible;
 
@@ -1494,7 +1495,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		#endif
 	}
 
-	for(int nY = nY1; nY <= nY2; nY++)
+	for (int nY = nY1; nY <= nY2; nY++)
 	{
 		#if 0
 		int nShift = nY * nWidth + nX1;
@@ -1567,9 +1568,9 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 
 	if ((DlgFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)) != 0)
 	{
-		bool bSeparateTabs = false;
-
 		// Для детекта наличия PanelTabs
+		bool bSeparateTabs = false;
+		RECT r = {nX1,nY1,nX2,nY2};
 		int nBottom = r.bottom;
 		int nLeft = r.left;
 		// SeparateTabs может быть не проинициализирован

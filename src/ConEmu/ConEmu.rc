@@ -478,29 +478,31 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Text selection with mouse",IDC_STATIC,4,4,152,79
-    CONTROL         "Always",rbCTSAlways,"Button",BS_AUTORADIOBUTTON,52,14,42,11
-    CONTROL         "Buffer only",rbCTSBufferOnly,"Button",BS_AUTORADIOBUTTON,100,15,49,10
-    CONTROL         "Block selection",cbCTSBlockSelection,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,32,68,8
-    COMBOBOX        lbCTSBlockSelection,94,31,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Text selection",cbCTSTextSelection,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,48,68,8
-    COMBOBOX        lbCTSTextSelection,94,47,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Fore. Index:",IDC_STATIC,11,68,38,8
-    COMBOBOX        lbCTSForeIdx,53,66,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Back. Index:",IDC_STATIC,81,68,43,8
-    COMBOBOX        lbCTSBackIdx,126,66,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Mouse button actions",IDC_STATIC,4,84,152,62
-    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,97,11,8
-    COMBOBOX        lbCTSActAlways,26,95,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Buffer only",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,100,97,49,10
-    LTEXT           "Right mouse button:",IDC_STATIC,11,114,78,8
-    COMBOBOX        lbCTSRBtnAction,94,112,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Middle mouse button:",IDC_STATIC,11,130,80,8
-    COMBOBOX        lbCTSMBtnAction,94,128,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Goto Far editor on compiler errors",IDC_STATIC,4,151,152,29
-    CONTROL         "Hilight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,163,76,8
-    COMBOBOX        lbFarGotoEditorVk,94,161,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Never",rbCTSNever,"Button",BS_AUTORADIOBUTTON,11,15,35,10
+    GROUPBOX        "Text selection with mouse",IDC_STATIC,4,1,319,46
+    CONTROL         "Always",rbCTSAlways,"Button",BS_AUTORADIOBUTTON,131,13,38,8
+    CONTROL         "Buffer only (cmd.exe)",rbCTSBufferOnly,"Button",BS_AUTORADIOBUTTON,173,13,85,8
+    CONTROL         "Block selection",cbCTSBlockSelection,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,30,59,8
+    COMBOBOX        lbCTSBlockSelection,75,28,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Text selection",cbCTSTextSelection,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,139,30,59,8
+    COMBOBOX        lbCTSTextSelection,201,28,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Text:",IDC_STATIC,269,14,22,8
+    COMBOBOX        lbCTSForeIdx,293,11,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Back:",IDC_STATIC,269,30,22,8
+    COMBOBOX        lbCTSBackIdx,293,28,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Mouse button actions",IDC_STATIC,4,48,319,31
+    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,61,11,8
+    COMBOBOX        lbCTSActAlways,25,59,51,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Buffer only (cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,82,61,82,10
+    RTEXT           "Right:",IDC_STATIC,174,62,24,8
+    COMBOBOX        lbCTSRBtnAction,201,59,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Middle:",IDC_STATIC,244,62,28,8
+    COMBOBOX        lbCTSMBtnAction,275,59,42,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Goto Far editor on compiler errors",IDC_STATIC,4,80,152,29
+    CONTROL         "Hilight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,92,76,8
+    COMBOBOX        lbFarGotoEditorVk,94,90,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Never",rbCTSNever,"Button",BS_AUTORADIOBUTTON,90,13,35,8
+    GROUPBOX        "Color indexes",IDC_STATIC,263,1,60,46
+    LTEXT           "Select text in console:",IDC_STATIC,12,13,72,8
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235

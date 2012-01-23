@@ -4366,6 +4366,11 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 	if (messg == WM_INITDIALOG)
 	{
 		//_ASSERTE(gpSetCls->hMain==NULL || gpSetCls->hMain==hWnd2);
+		if (!lParam)
+		{
+			_ASSERTE(lParam!=0);
+			return 0;
+		}
 		_ASSERTE(((ConEmuSetupPages*)lParam)->hPage!=NULL && *((ConEmuSetupPages*)lParam)->hPage==NULL && ((ConEmuSetupPages*)lParam)->PageID!=0);
 		*((ConEmuSetupPages*)lParam)->hPage = hWnd2;
 		switch (((ConEmuSetupPages*)lParam)->PageID)
@@ -4739,15 +4744,23 @@ void CSettings::debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile)
 
 	HANDLE hFile = CreateFile(asFile, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
 	LARGE_INTEGER liSize = {};
-	char szBuf[32770]; DWORD nRead = 0;
+
+	size_t cchMax = 32770;
+	char *szBuf = (char*)malloc(cchMax);
+	DWORD nRead = 0;
+
 	if (hFile && hFile != INVALID_HANDLE_VALUE
 		&& GetFileSizeEx(hFile, &liSize) && (liSize.QuadPart < 0xFFFFFF)
-		&& ReadFile(hFile, szBuf, sizeof(szBuf)-3, &nRead, NULL) && nRead)
+		&& ReadFile(hFile, szBuf, cchMax-3, &nRead, NULL) && nRead)
 	{
 		szBuf[nRead] = 0; szBuf[nRead+1] = 0; szBuf[nRead+2] = 0;
-		CloseHandle(hFile);
+		CloseHandle(hFile); hFile = NULL;
+
 		bool lbUnicode = false;
 		LPCWSTR pszExt = PointToExt(asFile);
+		size_t nAll = 0;
+		wchar_t* pszNew = NULL;
+
 		// Для расширений помимо ".bat" и ".cmd" - проверить содержимое
 		if (lstrcmpi(pszExt, L".bat")!=0 && lstrcmpi(pszExt, L".cmd")!=0)
 		{
@@ -4757,13 +4770,13 @@ void CSettings::debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile)
 				if (szBuf[i] == 0)
 				{
 					TODO("Может файл просто юникодный?");
-					return;
+					goto wrap;
 				}
 			}
 		}
 
-		size_t nAll = (lstrlen(pszParamEx)+20) + nRead + 1 + 2*lstrlen(asFile);
-		wchar_t* pszNew = (wchar_t*)realloc(pszParamEx, nAll*sizeof(wchar_t));
+		nAll = (lstrlen(pszParamEx)+20) + nRead + 1 + 2*lstrlen(asFile);
+		pszNew = (wchar_t*)realloc(pszParamEx, nAll*sizeof(wchar_t));
 		if (pszNew)
 		{
 			_wcscat_c(pszNew, nAll, L"\r\n\r\n>>>");
@@ -4778,6 +4791,10 @@ void CSettings::debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile)
 			pszParamEx = pszNew;
 		}
 	}
+wrap:
+	free(szBuf);
+	if (hFile && hFile != INVALID_HANDLE_VALUE)
+		CloseHandle(hFile);
 }
 
 void CSettings::debugLogInfo(HWND hWnd2, CESERVER_REQ_PEEKREADINFO* pInfo)
@@ -5009,27 +5026,31 @@ LRESULT CSettings::OnActivityLogNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				HWND hList = GetDlgItem(hWnd2, lbActivityLog);
 				//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
-				wchar_t szText[65535]; szText[0] = 0;
+				size_t cchText = 65535;
+				wchar_t *szText = (wchar_t*)malloc(cchText*sizeof(*szText));
+				if (!szText)
+					return 0;
+				szText[0] = 0;
 				if (gpSetCls->m_ActivityLoggingType == glt_Processes)
 				{
-					ListView_GetItemText(hList, p->iItem, lpc_App, szText, countof(szText));
+					ListView_GetItemText(hList, p->iItem, lpc_App, szText, cchText);
 					SetDlgItemText(hWnd2, ebActivityApp, szText);
-					ListView_GetItemText(hList, p->iItem, lpc_Params, szText, countof(szText));
+					ListView_GetItemText(hList, p->iItem, lpc_Params, szText, cchText);
 					SetDlgItemText(hWnd2, ebActivityParm, szText);
 				}
 				else if (gpSetCls->m_ActivityLoggingType == glt_Input)
 				{
-					ListView_GetItemText(hList, p->iItem, lic_Type, szText, countof(szText));
-					wcscat_c(szText, L" - ");
+					ListView_GetItemText(hList, p->iItem, lic_Type, szText, cchText);
+					_wcscat_c(szText, cchText, L" - ");
 					int nLen = _tcslen(szText);
-					ListView_GetItemText(hList, p->iItem, lic_Dup, szText+nLen, countof(szText)-nLen);
+					ListView_GetItemText(hList, p->iItem, lic_Dup, szText+nLen, cchText-nLen);
 					SetDlgItemText(hWnd2, ebActivityApp, szText);
-					ListView_GetItemText(hList, p->iItem, lic_Event, szText, countof(szText));
+					ListView_GetItemText(hList, p->iItem, lic_Event, szText, cchText);
 					SetDlgItemText(hWnd2, ebActivityParm, szText);
 				}
 				else if (gpSetCls->m_ActivityLoggingType == glt_Commands)
 				{
-					ListView_GetItemText(hList, p->iItem, lcc_Pipe, szText, countof(szText));
+					ListView_GetItemText(hList, p->iItem, lcc_Pipe, szText, cchText);
 					SetDlgItemText(hWnd2, ebActivityApp, szText);
 					SetDlgItemText(hWnd2, ebActivityParm, L"");
 				}
@@ -5038,6 +5059,7 @@ LRESULT CSettings::OnActivityLogNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					SetDlgItemText(hWnd2, ebActivityApp, L"");
 					SetDlgItemText(hWnd2, ebActivityParm, L"");
 				}
+				free(szText);
 			}
 		} //LVN_ITEMCHANGED
 		break;
@@ -7123,7 +7145,7 @@ int CSettings::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 	{
 		int nCount = SendMessage(hList, CB_GETCOUNT, 0, 0);
 		int nNewVal = _wtol(asText);
-		wchar_t temp[MAX_PATH];
+		wchar_t temp[MAX_PATH] = {};
 
 		for(int i = 0; i < nCount; i++)
 		{

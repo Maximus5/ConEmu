@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    82
+#define CESERVER_REQ_VER    83
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -356,6 +356,7 @@ struct HANDLE2
 
 struct MSG64
 {
+	DWORD cbSize;
 	UINT  message;
 	HWND2 hwnd;
 	u64   wParam;

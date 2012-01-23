@@ -70,6 +70,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include "../common/ConEmuCheck.h"
+#include "../common/PipeServer.h"
 
 #define Free free
 #define Alloc calloc
@@ -172,8 +173,9 @@ WCHAR gszPluginServerPipe[MAX_PATH];
 #define MAX_SERVER_THREADS 3
 //HANDLE ghServerThreads[MAX_SERVER_THREADS] = {NULL,NULL,NULL};
 //HANDLE ghActiveServerThread = NULL;
-HANDLE ghPlugServerThread = NULL;
-DWORD  gnPlugServerThreadId = 0;
+//HANDLE ghPlugServerThread = NULL;
+//DWORD  gnPlugServerThreadId = 0;
+PipeServer<CESERVER_REQ,3> *gpPlugServer = NULL;
 //DWORD  gnServerThreadsId[MAX_SERVER_THREADS] = {0,0,0};
 HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
@@ -233,65 +235,65 @@ struct HookModeFar gFarMode = {sizeof(HookModeFar), TRUE};
 extern SetFarHookMode_t SetFarHookMode;
 
 
-//std::vector<HANDLE> ghCommandThreads;
-class CommandThreads
-{
-	public:
-		HANDLE h[20];
-	public:
-		CommandThreads()
-		{
-			memset(h, 0, sizeof(h));
-		};
-		~CommandThreads()
-		{
-		};
-		void CheckTerminated()
-		{
-			// Проверить, может какие-то командные нити уже завершились
-			for(size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++)
-			{
-				if (h[i] == NULL) continue;
-
-				if (WaitForSingleObject(h[i], 0) == WAIT_OBJECT_0)
-				{
-					CloseHandle(h[i]);
-					h[i] = NULL;
-				}
-			}
-		};
-		void push_back(HANDLE hThread)
-		{
-			for(size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++)
-			{
-				if (h[i] == NULL)
-				{
-					h[i] = hThread;
-					return;
-				}
-			}
-
-			_ASSERTE(FALSE);
-		};
-		void KillAllThreads()
-		{
-			// Прибивание всех запущенных нитей
-			for(size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++)
-			{
-				if (h[i] == NULL) continue;
-
-				if (WaitForSingleObject(h[i], 100) != WAIT_OBJECT_0)
-				{
-					TerminateThread(h[i], 100);
-				}
-
-				CloseHandle(h[i]);
-				h[i] = NULL;
-			}
-		};
-};
-
-CommandThreads *ghCommandThreads;
+////std::vector<HANDLE> ghCommandThreads;
+//class CommandThreads
+//{
+//	public:
+//		HANDLE h[20];
+//	public:
+//		CommandThreads()
+//		{
+//			memset(h, 0, sizeof(h));
+//		};
+//		~CommandThreads()
+//		{
+//		};
+//		void CheckTerminated()
+//		{
+//			// Проверить, может какие-то командные нити уже завершились
+//			for(size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++)
+//			{
+//				if (h[i] == NULL) continue;
+//
+//				if (WaitForSingleObject(h[i], 0) == WAIT_OBJECT_0)
+//				{
+//					CloseHandle(h[i]);
+//					h[i] = NULL;
+//				}
+//			}
+//		};
+//		void push_back(HANDLE hThread)
+//		{
+//			for(size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++)
+//			{
+//				if (h[i] == NULL)
+//				{
+//					h[i] = hThread;
+//					return;
+//				}
+//			}
+//
+//			_ASSERTE(FALSE);
+//		};
+//		void KillAllThreads()
+//		{
+//			// Прибивание всех запущенных нитей
+//			for(size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++)
+//			{
+//				if (h[i] == NULL) continue;
+//
+//				if (WaitForSingleObject(h[i], 100) != WAIT_OBJECT_0)
+//				{
+//					TerminateThread(h[i], 100);
+//				}
+//
+//				CloseHandle(h[i]);
+//				h[i] = NULL;
+//			}
+//		};
+//};
+//
+//CommandThreads *ghCommandThreads;
 
 
 void WINAPI GetPluginInfoWcmn(void *piv)
@@ -1553,7 +1555,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			gpLocalSecurity = LocalSecurity();
 			csTabs = new MSection();
 			csData = new MSection();
-			ghCommandThreads = new CommandThreads();
+			//ghCommandThreads = new CommandThreads();
 			//HWND hConWnd = GetConEmuHWND(2);
 			// Текущая нить не обязана быть главной! Поэтому ищем первую нить процесса!
 			gnMainThreadId = gnMainThreadIdInitial = GetMainThreadId();
@@ -1634,10 +1636,15 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 				csData = NULL;
 			}
 
-			if (ghCommandThreads)
+			//if (ghCommandThreads)
+			//{
+			//	delete ghCommandThreads;
+			//	ghCommandThreads = NULL;
+			//}
+			if (gpPlugServer)
 			{
-				delete ghCommandThreads;
-				ghCommandThreads = NULL;
+				gpPlugServer->StopPipeServer();
+				SafeFree(gpPlugServer);
 			}
 
 			if (gpBgPlugin)
@@ -3811,9 +3818,17 @@ void InitHWND(/*HWND ahFarHwnd*/)
 	if (ghServerTerminateEvent) ResetEvent(ghServerTerminateEvent);
 
 	ghPluginSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
-	gnPlugServerThreadId = 0;
-	ghPlugServerThread = CreateThread(NULL, 0, PlugServerThread, (LPVOID)NULL, 0, &gnPlugServerThreadId);
-	_ASSERTE(ghPlugServerThread!=NULL);
+	//gnPlugServerThreadId = 0;
+	//ghPlugServerThread = CreateThread(NULL, 0, PlugServerThread, (LPVOID)NULL, 0, &gnPlugServerThreadId);
+	//_ASSERTE(ghPlugServerThread!=NULL);
+	if (!gpPlugServer)
+		gpPlugServer = (PipeServer<CESERVER_REQ,3>*)calloc(1, sizeof(*gpPlugServer));
+	if (gpPlugServer)
+	{
+		gpPlugServer->StartPipeServer(gszPluginServerPipe, NULL, LocalSecurity(),
+			PlugServerCommand, PlugServerFree, NULL, NULL, NULL, true, false);
+	}
+	_ASSERTE(gpPlugServer!=NULL);
 	ghConsoleWrite = CreateEvent(NULL,FALSE,FALSE,NULL);
 	_ASSERTE(ghConsoleWrite!=NULL);
 	ghConsoleInputEmpty = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -4574,39 +4589,41 @@ void StopThread(void)
 	//	PostThreadMessage(gnInputThreadId, WM_QUIT, 0, 0);
 	//}
 
-	if (ghPlugServerThread)
-	{
-		HANDLE hPipe = INVALID_HANDLE_VALUE;
-		DWORD dwWait = 0;
-		// Передернуть пайп, чтобы нить сервера завершилась
-		OutputDebugString(L"Plugin: Touching our server pipe\n");
-		hPipe = CreateFile(gszPluginServerPipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
-
-		if (hPipe == INVALID_HANDLE_VALUE)
-		{
-			OutputDebugString(L"Plugin: All pipe instances closed?\n");
-		}
-		else
-		{
-			OutputDebugString(L"Plugin: Waiting server pipe thread\n");
-			dwWait = WaitForSingleObject(ghPlugServerThread, 300); // пытаемся дождаться, пока нить завершится
-			// Просто закроем пайп - его нужно было передернуть
-			CloseHandle(hPipe);
-			hPipe = INVALID_HANDLE_VALUE;
-		}
-
-		dwWait = WaitForSingleObject(ghPlugServerThread, 0);
-
-		if (dwWait != WAIT_OBJECT_0)
-		{
-#if !defined(__GNUC__)
-#pragma warning (disable : 6258)
-#endif
-			TerminateThread(ghPlugServerThread, 100);
-		}
-
-		SafeCloseHandle(ghPlugServerThread);
-	}
+	if (gpPlugServer)
+		gpPlugServer->StopPipeServer();
+	//if (ghPlugServerThread)
+	//{
+	//	HANDLE hPipe = INVALID_HANDLE_VALUE;
+	//	DWORD dwWait = 0;
+	//	// Передернуть пайп, чтобы нить сервера завершилась
+	//	OutputDebugString(L"Plugin: Touching our server pipe\n");
+	//	hPipe = CreateFile(gszPluginServerPipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+	//
+	//	if (hPipe == INVALID_HANDLE_VALUE)
+	//	{
+	//		OutputDebugString(L"Plugin: All pipe instances closed?\n");
+	//	}
+	//	else
+	//	{
+	//		OutputDebugString(L"Plugin: Waiting server pipe thread\n");
+	//		dwWait = WaitForSingleObject(ghPlugServerThread, 300); // пытаемся дождаться, пока нить завершится
+	//		// Просто закроем пайп - его нужно было передернуть
+	//		CloseHandle(hPipe);
+	//		hPipe = INVALID_HANDLE_VALUE;
+	//	}
+	//
+	//	dwWait = WaitForSingleObject(ghPlugServerThread, 0);
+	//
+	//	if (dwWait != WAIT_OBJECT_0)
+	//	{
+	//#if !defined(__GNUC__)
+	//#pragma warning (disable : 6258)
+	//#endif
+	//		TerminateThread(ghPlugServerThread, 100);
+	//	}
+	//
+	//	SafeCloseHandle(ghPlugServerThread);
+	//}
 
 	SafeCloseHandle(ghPluginSemaphore);
 
@@ -5261,223 +5278,227 @@ void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec)
 #endif
 }
 
-DWORD WINAPI PlugServerThread(LPVOID lpvParam)
+//DWORD WINAPI PlugServerThread(LPVOID lpvParam)
+//{
+//	BOOL fConnected = FALSE;
+//	DWORD dwErr = 0;
+//	HANDLE hPipe = NULL;
+//	//HANDLE hWait[2] = {NULL,NULL};
+//	//DWORD dwTID = GetCurrentThreadId();
+//	//std::vector<HANDLE>::iterator iter;
+//	_ASSERTE(gszPluginServerPipe[0]!=0);
+//	//_ASSERTE(ghServerSemaphore!=NULL);
+//
+//	// The main loop creates an instance of the named pipe and
+//	// then waits for a client to connect to it. When the client
+//	// connects, a thread is created to handle communications
+//	// with that client, and the loop is repeated.
+//
+//	//hWait[0] = ghServerTerminateEvent;
+//	//hWait[1] = ghServerSemaphore;
+//
+//	// Пока не затребовано завершение консоли
+//	do
+//	{
+//		fConnected = FALSE; // Новый пайп
+//
+//		while(!fConnected)
+//		{
+//			_ASSERTE(hPipe == NULL);
+//			// Проверить, может какие-то командные нити уже завершились
+//			ghCommandThreads->CheckTerminated();
+//			//iter = ghCommandThreads.begin();
+//			//while (iter != ghCommandThreads.end()) {
+//			//	HANDLE hThread = *iter; dwErr = 0;
+//			//	if (WaitForSingleObject(hThread, 0) == WAIT_OBJECT_0) {
+//			//		CloseHandle ( hThread );
+//			//		iter = ghCommandThreads.erase(iter);
+//			//	} else {
+//			//		iter++;
+//			//	}
+//			//}
+//			//// Дождаться разрешения семафора, или закрытия консоли
+//			//dwErr = WaitForMultipleObjects ( 2, hWait, FALSE, INFINITE );
+//			//if (dwErr == WAIT_OBJECT_0) {
+//			//    return 0; // Консоль закрывается
+//			//}
+//			//for (int i=0; i<MAX_SERVER_THREADS; i++) {
+//			//	if (gnServerThreadsId[i] == dwTID) {
+//			//		ghActiveServerThread = ghServerThreads[i]; break;
+//			//	}
+//			//}
+//			hPipe = CreateNamedPipe(gszPluginServerPipe, PIPE_ACCESS_DUPLEX,
+//			                        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
+//			                        PIPEBUFSIZE, PIPEBUFSIZE, 0, gpLocalSecurity);
+//			_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
+//
+//			if (hPipe == INVALID_HANDLE_VALUE)
+//			{
+//				//DisplayLastError(L"CreateNamedPipe failed");
+//				hPipe = NULL;
+//				Sleep(50);
+//				continue;
+//			}
+//
+//			// Wait for the client to connect; if it succeeds,
+//			// the function returns a nonzero value. If the function
+//			// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
+//			fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED);
+//
+//			// Консоль закрывается!
+//			if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0)
+//			{
+//				//FlushFileBuffers(hPipe); -- это не нужно, мы ничего не возвращали
+//				//DisconnectNamedPipe(hPipe);
+//				//ReleaseSemaphore(ghServerSemaphore, 1, NULL);
+//				SafeCloseHandle(hPipe);
+//				goto wrap;
+//			}
+//
+//			if (!fConnected)
+//				SafeCloseHandle(hPipe);
+//		}
+//
+//		if (fConnected)
+//		{
+//			// сразу сбросим, чтобы не забыть
+//			//fConnected = FALSE;
+//			// разрешить другой нити принять вызов
+//			//ReleaseSemaphore(ghServerSemaphore, 1, NULL);
+//			//ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
+//			DWORD dwThread = 0;
+//			HANDLE hThread = CreateThread(NULL, 0, PlugServerThreadCommand, (LPVOID)hPipe, 0, &dwThread);
+//			_ASSERTE(hThread!=NULL);
+//
+//			if (hThread==NULL)
+//			{
+//				// Раз не удалось запустить нить - можно попробовать так обработать...
+//				PlugServerThreadCommand((LPVOID)hPipe);
+//			}
+//			else
+//			{
+//				ghCommandThreads->push_back(hThread);
+//			}
+//
+//			hPipe = NULL; // закрывает ServerThreadCommand
+//		}
+//
+//		if (hPipe)
+//		{
+//			if (hPipe != INVALID_HANDLE_VALUE)
+//			{
+//				FlushFileBuffers(hPipe);
+//				//DisconnectNamedPipe(hPipe);
+//				CloseHandle(hPipe);
+//			}
+//
+//			hPipe = NULL;
+//		}
+//	} // Перейти к открытию нового instance пайпа
+//
+//	while(WaitForSingleObject(ghServerTerminateEvent, 0) != WAIT_OBJECT_0);
+//
+//wrap:
+//	// Прибивание всех запущенных нитей
+//	ghCommandThreads->KillAllThreads();
+//	//iter = ghCommandThreads.begin();
+//	//while (iter != ghCommandThreads.end()) {
+//	//	HANDLE hThread = *iter; dwErr = 0;
+//	//	if (WaitForSingleObject(hThread, 100) != WAIT_OBJECT_0) {
+//	//		TerminateThread(hThread, 100);
+//	//	}
+//	//	CloseHandle ( hThread );
+//	//	iter = ghCommandThreads.erase(iter);
+//	//}
+//	return 0;
+//}
+
+BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
-	BOOL fConnected = FALSE;
-	DWORD dwErr = 0;
-	HANDLE hPipe = NULL;
-	//HANDLE hWait[2] = {NULL,NULL};
-	//DWORD dwTID = GetCurrentThreadId();
-	//std::vector<HANDLE>::iterator iter;
-	_ASSERTE(gszPluginServerPipe[0]!=0);
-	//_ASSERTE(ghServerSemaphore!=NULL);
-
-	// The main loop creates an instance of the named pipe and
-	// then waits for a client to connect to it. When the client
-	// connects, a thread is created to handle communications
-	// with that client, and the loop is repeated.
-
-	//hWait[0] = ghServerTerminateEvent;
-	//hWait[1] = ghServerSemaphore;
-
-	// Пока не затребовано завершение консоли
-	do
-	{
-		fConnected = FALSE; // Новый пайп
-
-		while(!fConnected)
-		{
-			_ASSERTE(hPipe == NULL);
-			// Проверить, может какие-то командные нити уже завершились
-			ghCommandThreads->CheckTerminated();
-			//iter = ghCommandThreads.begin();
-			//while (iter != ghCommandThreads.end()) {
-			//	HANDLE hThread = *iter; dwErr = 0;
-			//	if (WaitForSingleObject(hThread, 0) == WAIT_OBJECT_0) {
-			//		CloseHandle ( hThread );
-			//		iter = ghCommandThreads.erase(iter);
-			//	} else {
-			//		iter++;
-			//	}
-			//}
-			//// Дождаться разрешения семафора, или закрытия консоли
-			//dwErr = WaitForMultipleObjects ( 2, hWait, FALSE, INFINITE );
-			//if (dwErr == WAIT_OBJECT_0) {
-			//    return 0; // Консоль закрывается
-			//}
-			//for (int i=0; i<MAX_SERVER_THREADS; i++) {
-			//	if (gnServerThreadsId[i] == dwTID) {
-			//		ghActiveServerThread = ghServerThreads[i]; break;
-			//	}
-			//}
-			hPipe = CreateNamedPipe(gszPluginServerPipe, PIPE_ACCESS_DUPLEX,
-			                        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
-			                        PIPEBUFSIZE, PIPEBUFSIZE, 0, gpLocalSecurity);
-			_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
-
-			if (hPipe == INVALID_HANDLE_VALUE)
-			{
-				//DisplayLastError(L"CreateNamedPipe failed");
-				hPipe = NULL;
-				Sleep(50);
-				continue;
-			}
-
-			// Wait for the client to connect; if it succeeds,
-			// the function returns a nonzero value. If the function
-			// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
-			fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED);
-
-			// Консоль закрывается!
-			if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0)
-			{
-				//FlushFileBuffers(hPipe); -- это не нужно, мы ничего не возвращали
-				//DisconnectNamedPipe(hPipe);
-				//ReleaseSemaphore(ghServerSemaphore, 1, NULL);
-				SafeCloseHandle(hPipe);
-				goto wrap;
-			}
-
-			if (!fConnected)
-				SafeCloseHandle(hPipe);
-		}
-
-		if (fConnected)
-		{
-			// сразу сбросим, чтобы не забыть
-			//fConnected = FALSE;
-			// разрешить другой нити принять вызов
-			//ReleaseSemaphore(ghServerSemaphore, 1, NULL);
-			//ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
-			DWORD dwThread = 0;
-			HANDLE hThread = CreateThread(NULL, 0, PlugServerThreadCommand, (LPVOID)hPipe, 0, &dwThread);
-			_ASSERTE(hThread!=NULL);
-
-			if (hThread==NULL)
-			{
-				// Раз не удалось запустить нить - можно попробовать так обработать...
-				PlugServerThreadCommand((LPVOID)hPipe);
-			}
-			else
-			{
-				ghCommandThreads->push_back(hThread);
-			}
-
-			hPipe = NULL; // закрывает ServerThreadCommand
-		}
-
-		if (hPipe)
-		{
-			if (hPipe != INVALID_HANDLE_VALUE)
-			{
-				FlushFileBuffers(hPipe);
-				//DisconnectNamedPipe(hPipe);
-				CloseHandle(hPipe);
-			}
-
-			hPipe = NULL;
-		}
-	} // Перейти к открытию нового instance пайпа
-
-	while(WaitForSingleObject(ghServerTerminateEvent, 0) != WAIT_OBJECT_0);
-
-wrap:
-	// Прибивание всех запущенных нитей
-	ghCommandThreads->KillAllThreads();
-	//iter = ghCommandThreads.begin();
-	//while (iter != ghCommandThreads.end()) {
-	//	HANDLE hThread = *iter; dwErr = 0;
-	//	if (WaitForSingleObject(hThread, 100) != WAIT_OBJECT_0) {
-	//		TerminateThread(hThread, 100);
-	//	}
-	//	CloseHandle ( hThread );
-	//	iter = ghCommandThreads.erase(iter);
-	//}
-	return 0;
-}
-
-DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
-{
-	HANDLE hPipe = (HANDLE)ahPipe;
-	CESERVER_REQ *pIn=NULL;
-	BYTE cbBuffer[64]; // Для большей части команд нам хватит
-	DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
+	BOOL lbRc = FALSE;
+	//HANDLE hPipe = (HANDLE)ahPipe;
+	//CESERVER_REQ *pIn=NULL;
+	//BYTE cbBuffer[64]; // Для большей части команд нам хватит
+	//DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
 	BOOL fSuccess = FALSE;
 	MSectionThread SCT(csTabs);
 	// Send a message to the pipe server and read the response.
-	fSuccess = ReadFile(hPipe, cbBuffer, sizeof(cbBuffer), &cbRead, NULL);
-	dwErr = GetLastError();
+	//fSuccess = ReadFile(hPipe, cbBuffer, sizeof(cbBuffer), &cbRead, NULL);
+	//dwErr = GetLastError();
 
-	if (!fSuccess && (dwErr != ERROR_MORE_DATA))
+	//if (!fSuccess && (dwErr != ERROR_MORE_DATA))
+	//{
+	//	_ASSERTE("ReadFile(pipe) failed"==NULL);
+	//	CloseHandle(hPipe);
+	//	return 0;
+	//}
+
+	//pIn = (CESERVER_REQ*)cbBuffer; // Пока cast, если нужно больше - выделим память
+	//_ASSERTE(pIn->hdr.cbSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
+	//_ASSERTE(pIn->hdr.nVersion == CESERVER_REQ_VER);
+
+	if (pIn->hdr.cbSize < sizeof(CESERVER_REQ_HDR) || /*in.nSize < cbRead ||*/ pIn->hdr.nVersion != CESERVER_REQ_VER)
 	{
-		_ASSERTE("ReadFile(pipe) failed"==NULL);
-		CloseHandle(hPipe);
-		return 0;
+		//CloseHandle(hPipe);
+		gpPlugServer->BreakConnection(pInst);
+		return FALSE;
 	}
 
-	pIn = (CESERVER_REQ*)cbBuffer; // Пока cast, если нужно больше - выделим память
-	_ASSERTE(pIn->hdr.cbSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
-	_ASSERTE(pIn->hdr.nVersion == CESERVER_REQ_VER);
+	//int nAllSize = pIn->hdr.cbSize;
+	//pIn = (CESERVER_REQ*)Alloc(nAllSize,1);
+	//_ASSERTE(pIn!=NULL);
 
-	if (cbRead < sizeof(CESERVER_REQ_HDR) || /*in.nSize < cbRead ||*/ pIn->hdr.nVersion != CESERVER_REQ_VER)
-	{
-		CloseHandle(hPipe);
-		return 0;
-	}
+	//if (!pIn)
+	//{
+	//	CloseHandle(hPipe);
+	//	return 0;
+	//}
 
-	int nAllSize = pIn->hdr.cbSize;
-	pIn = (CESERVER_REQ*)Alloc(nAllSize,1);
-	_ASSERTE(pIn!=NULL);
+	//memmove(pIn, cbBuffer, cbRead);
+	//_ASSERTE(pIn->hdr.nVersion==CESERVER_REQ_VER);
+	//LPBYTE ptrData = ((LPBYTE)pIn)+cbRead;
+	//nAllSize -= cbRead;
 
-	if (!pIn)
-	{
-		CloseHandle(hPipe);
-		return 0;
-	}
+	//while(nAllSize>0)
+	//{
+	//	//_tprintf(TEXT("%s\n"), chReadBuf);
 
-	memmove(pIn, cbBuffer, cbRead);
-	_ASSERTE(pIn->hdr.nVersion==CESERVER_REQ_VER);
-	LPBYTE ptrData = ((LPBYTE)pIn)+cbRead;
-	nAllSize -= cbRead;
+	//	// Break if TransactNamedPipe or ReadFile is successful
+	//	if (fSuccess)
+	//		break;
 
-	while(nAllSize>0)
-	{
-		//_tprintf(TEXT("%s\n"), chReadBuf);
+	//	// Read from the pipe if there is more data in the message.
+	//	fSuccess = ReadFile(
+	//	               hPipe,      // pipe handle
+	//	               ptrData,    // buffer to receive reply
+	//	               nAllSize,   // size of buffer
+	//	               &cbRead,    // number of bytes read
+	//	               NULL);      // not overlapped
 
-		// Break if TransactNamedPipe or ReadFile is successful
-		if (fSuccess)
-			break;
+	//	// Exit if an error other than ERROR_MORE_DATA occurs.
+	//	if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA))
+	//		break;
 
-		// Read from the pipe if there is more data in the message.
-		fSuccess = ReadFile(
-		               hPipe,      // pipe handle
-		               ptrData,    // buffer to receive reply
-		               nAllSize,   // size of buffer
-		               &cbRead,    // number of bytes read
-		               NULL);      // not overlapped
+	//	ptrData += cbRead;
+	//	nAllSize -= cbRead;
+	//}
 
-		// Exit if an error other than ERROR_MORE_DATA occurs.
-		if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA))
-			break;
+	//TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
+	//_ASSERTE(nAllSize==0);
 
-		ptrData += cbRead;
-		nAllSize -= cbRead;
-	}
+	//if (nAllSize>0)
+	//{
+	//	if (((LPVOID)cbBuffer) != ((LPVOID)pIn))
+	//		Free(pIn);
 
-	TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
-	_ASSERTE(nAllSize==0);
+	//	CloseHandle(hPipe);
+	//	return 0; // удалось считать не все данные
+	//}
 
-	if (nAllSize>0)
-	{
-		if (((LPVOID)cbBuffer) != ((LPVOID)pIn))
-			Free(pIn);
-
-		CloseHandle(hPipe);
-		return 0; // удалось считать не все данные
-	}
 	#ifdef _DEBUG
 	UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
 	#endif
+
 	// Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
 	//fSuccess = WriteFile( hPipe, pOut, pOut->nSize, &cbWritten, NULL);
 
@@ -5488,27 +5509,34 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 		// А HKL от него отличается, так что передаем DWORD
 		// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
 		DWORD hkl = pIn->dwData[0];
+		DWORD dwLastError = 0;
+		HKL hkl1 = NULL, hkl2 = NULL;
 
 		if (hkl)
 		{
-			DWORD dwLastError = 0;
 			WCHAR szLoc[10]; _wsprintf(szLoc, SKIPLEN(countof(szLoc)) L"%08x", hkl);
-			HKL hkl1 = LoadKeyboardLayout(szLoc, KLF_ACTIVATE|KLF_REORDER|KLF_SUBSTITUTE_OK|KLF_SETFORPROCESS);
-			HKL hkl2 = ActivateKeyboardLayout(hkl1, KLF_SETFORPROCESS|KLF_REORDER);
+			hkl1 = LoadKeyboardLayout(szLoc, KLF_ACTIVATE|KLF_REORDER|KLF_SUBSTITUTE_OK|KLF_SETFORPROCESS);
+			hkl2 = ActivateKeyboardLayout(hkl1, KLF_SETFORPROCESS|KLF_REORDER);
 
 			if (!hkl2)
-			{
 				dwLastError = GetLastError();
-			}
-
-			dwLastError = dwLastError;
+			else
+				fSuccess = TRUE;
 		}
 
-		//} else if (pIn->hdr.nCmd == CMD_DEFFONT) {
-		//	// исключение - асинхронный, результат не требуется
-		//	SetConsoleFontSizeTo(FarHwnd, 4, 6);
-		//	MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
+		pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD)*2;
+		if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+		{
+			lbRc = TRUE;
+			ppReply->dwData[0] = fSuccess;
+			ppReply->dwData[1] = fSuccess ? ((DWORD)(LONG)(LONG_PTR)hkl2) : dwLastError;
+		}
+
 	}
+	//} else if (pIn->hdr.nCmd == CMD_DEFFONT) {
+	//	// исключение - асинхронный, результат не требуется
+	//	SetConsoleFontSizeTo(FarHwnd, 4, 6);
+	//	MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
 	else if (pIn->hdr.nCmd == CMD_REQTABS || pIn->hdr.nCmd == CMD_SETWINDOW)
 	{
 		MSectionLock SC; SC.Lock(csTabs, FALSE, 1000);
@@ -5545,7 +5573,13 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 
 		if (gpTabs)
 		{
-			fSuccess = WriteFile(hPipe, gpTabs, gpTabs->hdr.cbSize, &cbWritten, NULL);
+			//fSuccess = WriteFile(hPipe, gpTabs, gpTabs->hdr.cbSize, &cbWritten, NULL);
+			pcbReplySize = gpTabs->hdr.cbSize;
+			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+			{
+				memmove(ppReply->Data, gpTabs->Data, pcbReplySize - sizeof(ppReply->hdr));
+				lbRc = TRUE;
+			}
 		}
 
 		SC.Unlock();
@@ -5566,6 +5600,13 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 		{
 			// Уведомить об изменениях библиотеку хуков (ConEmuHk.dll)
 			SetFarHookMode(&gFarMode);
+
+			pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+			{
+				lbRc = TRUE;
+				ppReply->dwData[0] = TRUE;
+			}
 		}
 
 		//_ASSERTE(nDataSize<sizeof(gsMonitorEnvVar));
@@ -5600,17 +5641,24 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 	}
 	else if (pIn->hdr.nCmd == CMD_DRAGFROM)
 	{
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		BOOL  *pbClickNeed = (BOOL*)pIn->Data;
 		COORD *crMouse = (COORD *)(pbClickNeed+1);
-#endif
+		#endif
+
 		ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, pIn->Data);
 		CESERVER_REQ* pCmdRet = NULL;
 		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data, &pCmdRet);
 
 		if (pCmdRet)
 		{
-			fSuccess = WriteFile(hPipe, pCmdRet, pCmdRet->hdr.cbSize, &cbWritten, NULL);
+			//fSuccess = WriteFile(hPipe, pCmdRet, pCmdRet->hdr.cbSize, &cbWritten, NULL);
+			pcbReplySize = pCmdRet->hdr.cbSize;
+			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+			{
+				lbRc = TRUE;
+				memmove(ppReply->Data, pCmdRet->Data, pCmdRet->hdr.cbSize - sizeof(ppReply->hdr));
+			}
 			Free(pCmdRet);
 		}
 
@@ -5627,34 +5675,57 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 		const wchar_t *pszUserMacro = (wchar_t*)(crMouse+1);
 #endif
 		DWORD ClickArg[2] = {TRUE, MAKELONG(crMouse->X, crMouse->Y)};
+		
 		// Выделить файл под курсором
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_LEFTCLKSYNC) begin\n");
-		ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, ClickArg/*pIn->Data*/);
+		BOOL lb1 = ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, ClickArg/*pIn->Data*/);
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_LEFTCLKSYNC) done\n");
+
 		// А теперь, собственно вызовем меню
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_EMENU) begin\n");
-		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+		BOOL lb2 = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_EMENU) done\n");
+
+		pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD)*2;
+		if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+		{
+			lbRc = TRUE;
+			ppReply->dwData[0] = lb1;
+			ppReply->dwData[1] = lb1;
+		}
 	}
 	else if (pIn->hdr.nCmd == CMD_ACTIVEWNDTYPE)
 	{
-		CESERVER_REQ Out;
-		ExecutePrepareCmd(&Out, CMD_ACTIVEWNDTYPE, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
-		if (gFarVersion.dwVerMajor==1)
-			Out.dwData[0] = -1;
-		else
-			Out.dwData[0] = GetActiveWindowType();
-		fSuccess = WriteFile(hPipe, &Out, Out.hdr.cbSize, &cbWritten, NULL);
-		
+		int nWindowType = -1;
+		//CESERVER_REQ Out;
+		//ExecutePrepareCmd(&Out, CMD_ACTIVEWNDTYPE, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+
+		if (gFarVersion.dwVerMajor>=2)
+			nWindowType = GetActiveWindowType();
+
+		//fSuccess = WriteFile(hPipe, &Out, Out.hdr.cbSize, &cbWritten, NULL);
+
+		pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+		if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+		{
+			lbRc = TRUE;
+			ppReply->dwData[0] = nDataSize;
+		}		
 	}
 	else
 	{
 		CESERVER_REQ* pCmdRet = NULL;
-		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data, &pCmdRet);
+		BOOL lbCmd = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data, &pCmdRet);
 
 		if (pCmdRet)
 		{
-			fSuccess = WriteFile(hPipe, pCmdRet, pCmdRet->hdr.cbSize, &cbWritten, NULL);
+			//fSuccess = WriteFile(hPipe, pCmdRet, pCmdRet->hdr.cbSize, &cbWritten, NULL);
+			pcbReplySize = pCmdRet->hdr.cbSize;
+			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+			{
+				lbRc = TRUE;
+				memmove(ppReply->Data, pCmdRet->Data, pCmdRet->hdr.cbSize - sizeof(ppReply->hdr));
+			}
 			Free(pCmdRet);
 		}
 
@@ -5664,12 +5735,17 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 		//}
 	}
 
-	// Освободить память
-	if (((LPVOID)cbBuffer) != ((LPVOID)pIn))
-		Free(pIn);
+	//// Освободить память
+	//if (((LPVOID)cbBuffer) != ((LPVOID)pIn))
+	//	Free(pIn);
 
-	CloseHandle(hPipe);
-	return 0;
+	//CloseHandle(hPipe);
+	return lbRc;
+}
+
+void WINAPI PlugServerFree(CESERVER_REQ* pReply, LPARAM lParam)
+{
+	ExecuteFreeResult(pReply);
 }
 
 void ShowPluginMenu(int nID /*= -1*/)

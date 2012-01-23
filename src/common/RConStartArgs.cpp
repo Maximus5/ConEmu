@@ -259,7 +259,7 @@ void RConStartArgs::ProcessNewConArg()
 								pszEnd++;
 								//lstrcpyn(szUserPassword, pszPwd, countof(szUserPassword));
 
-								wchar_t *p = szUserPassword, *p2 = szUserPassword+countof(szUserPassword)-1;
+								p = szUserPassword; p2 = szUserPassword+countof(szUserPassword)-1;
 								while (*pszEnd && (p < p2))
 								{
 									if ((*pszEnd == 0) || (*pszEnd == L':') || (*pszEnd == L'"'))

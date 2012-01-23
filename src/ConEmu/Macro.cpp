@@ -172,7 +172,7 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString)
 		LPWSTR pszFind = wcschr(rsString, L'"');
 		bool lbRemoveDup = (pszFind && (pszFind[1] == L'"'));
 
-		while(pszFind && (pszFind[1] == L'"'))
+		while (pszFind && (pszFind[1] == L'"'))
 		{
 			// Удвоенная кавычка, пропускаем
 			pszFind = wcschr(pszFind+2, L'"');
@@ -205,7 +205,7 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString)
 			size_t nLen = _tcslen(rsString);
 			LPWSTR pszSrc = rsString;
 			LPWSTR pszDst = rsString;
-			LPWSTR pszFind = wcschr(rsString, L'"');
+			LPWSTR pszFindQ = wcschr(rsString, L'"');
 
 			/*
 			12345678
@@ -214,25 +214,25 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString)
 			1"2"3
 			12345678
 			*/
-			while(pszFind && (pszFind[1] == L'"'))
+			while (pszFindQ && (pszFindQ[1] == L'"'))
 			{
-				LPWSTR pszNext = wcschr(pszFind+2, L'"');
+				LPWSTR pszNext = wcschr(pszFindQ+2, L'"');
 
 				if (!pszNext) pszNext = rsString+nLen;
 
-				size_t nSkip = pszFind - pszSrc;
+				size_t nSkip = pszFindQ - pszSrc;
 				pszDst += nSkip;
-				size_t nCopy = pszNext - pszFind - 2;
+				size_t nCopy = pszNext - pszFindQ - 2;
 
 				if (nCopy > 0)
 				{
-					wmemmove(pszDst, pszFind+1, nCopy+1);
+					wmemmove(pszDst, pszFindQ+1, nCopy+1);
 				}
 
 				pszDst ++;
 				// Next
-				pszSrc = pszFind+2;
-				pszFind = pszNext;
+				pszSrc = pszFindQ+2;
+				pszFindQ = pszNext;
 			}
 
 			size_t nLeft = _tcslen(pszSrc);
@@ -241,7 +241,7 @@ LPWSTR CConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString)
 				pszDst += nLeft;
 
 			_ASSERTE(*pszDst != 0);
-			_ASSERTE((pszFind == NULL) || (*pszFind == 0));
+			_ASSERTE((pszFindQ == NULL) || (*pszFindQ == 0));
 			*pszDst = 0; // Закрыть строку, ее длина уменьшилась
 		}
 	}

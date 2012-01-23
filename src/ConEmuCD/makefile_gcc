@@ -5,6 +5,8 @@ SRCS = ConsoleMain.cpp \
        GuiHooks.cpp \
        Infiltrate.cpp \
        InjectRemote.cpp \
+       Queue.cpp \
+       SrvPipes.cpp \
        RegPrepare.cpp \
        ../ConEmuHk/Injects.cpp \
        ../common/Common.cpp \

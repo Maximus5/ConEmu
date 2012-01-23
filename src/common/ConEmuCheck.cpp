@@ -621,15 +621,15 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 
 	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE)
 	{
-#ifdef _DEBUG
-		DWORD dwErr = GetLastError();
+		#ifdef _DEBUG
+		dwErr = GetLastError();
 
 		// в заголовке "чисто" запущенного фара появляются отладочные(?) сообщения
 		// по идее - не должны, т.к. все должно быть через мэппинг
 		_ASSERTEX(hPipe != NULL && hPipe != INVALID_HANDLE_VALUE);
-#ifdef CONEMU_MINIMAL
+		#ifdef CONEMU_MINIMAL
 		SetConsoleTitle(szErr);
-#else
+		#else
 		if (hOwner)
 		{
 			if (hOwner == myGetConsoleWindow())
@@ -637,7 +637,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 			else
 				SetWindowText(hOwner, szErr);
 		}
-#endif
+		#endif
 
 #endif
 		return NULL;
@@ -1152,22 +1152,22 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 			BOOL lbExeFound = FALSE;
 			wchar_t* pszName = rsConEmuExe+lstrlen(rsConEmuExe);
 			LPCWSTR szGuiExe[2] = {L"ConEmu64.exe", L"ConEmu.exe"};
-			for (UINT i = 0; !lbExeFound && (i < countof(szGuiExe)); i++)
+			for (size_t s = 0; !lbExeFound && (s < countof(szGuiExe)); s++)
 			{
-				if (!i && !isWin64) continue;
-				wcscpy_add(pszName, rsConEmuExe, szGuiExe[i]);
+				if (!s && !isWin64) continue;
+				wcscpy_add(pszName, rsConEmuExe, szGuiExe[s]);
 				lbExeFound = FileExists(rsConEmuExe);
 			}
 
 			// Если GUI-exe найден - ищем "base"
 			if (lbExeFound)
 			{
-				wchar_t* pszName = szExePath+lstrlen(szExePath);
+				pszName = szExePath+lstrlen(szExePath);
 				LPCWSTR szSrvExe[4] = {L"ConEmuC64.exe", L"ConEmu\\ConEmuC64.exe", L"ConEmuC.exe", L"ConEmu\\ConEmuC.exe"};
-				for (UINT i = 0; (i < countof(szSrvExe)); i++)
+				for (size_t s = 0; s < countof(szSrvExe); s++)
 				{
-					if ((i <=1) && !isWin64) continue;
-					wcscpy_add(pszName, szExePath, szSrvExe[i]);
+					if ((s <=1) && !isWin64) continue;
+					wcscpy_add(pszName, szExePath, szSrvExe[s]);
 					if (FileExists(szExePath))
 					{
 						pszName = wcsrchr(szExePath, L'\\');

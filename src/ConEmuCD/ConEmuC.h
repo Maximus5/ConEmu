@@ -189,11 +189,11 @@ extern wchar_t gszDbgModLabel[6];
 
 BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
-DWORD WINAPI InstanceThread(LPVOID);
-DWORD WINAPI ServerThread(LPVOID lpvParam);
+//DWORD WINAPI InstanceThread(LPVOID);
+//DWORD WINAPI ServerThread(LPVOID lpvParam);
 //DWORD WINAPI InputThread(LPVOID lpvParam);
-DWORD WINAPI InputPipeThread(LPVOID lpvParam);
-DWORD WINAPI GetDataThread(LPVOID lpvParam);
+//DWORD WINAPI InputPipeThread(LPVOID lpvParam);
+//DWORD WINAPI GetDataThread(LPVOID lpvParam);
 BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out);
 #ifdef USE_WINEVENT_SRV
 DWORD WINAPI WinEventThread(LPVOID lpvParam);
@@ -348,6 +348,9 @@ extern DWORD gnConsoleModeFlags;
 #define NTVDMACTIVE (gpSrv->bNtvdmActive)
 #endif
 
+#include "../common/PipeServer.h"
+bool InputServerStart();
+
 struct SrvInfo
 {
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
@@ -357,14 +360,17 @@ struct SrvInfo
 	DWORD nActiveFarPID; // PID последнего активного Far
 	BOOL bWasDetached; // ¬ыставл€етс€ в TRUE при получении CECMD_DETACHCON
 	//
-	HANDLE hServerThread;   DWORD dwServerThreadId; BOOL bServerTermination;
+	//HANDLE hServerThread;   DWORD dwServerThreadId; BOOL bServerTermination;
+	PipeServer<CESERVER_REQ,3> CmdServer;
 	HANDLE hRefreshThread;  DWORD dwRefreshThread;  BOOL bRefreshTermination;
 	#ifdef USE_WINEVENT_SRV
 	HANDLE hWinEventThread; DWORD dwWinEventThread; BOOL bWinEventTermination;
 	#endif
 	//HANDLE hInputThread;    DWORD dwInputThreadId;
-	HANDLE hInputPipeThread; DWORD dwInputPipeThreadId; BOOL bInputPipeTermination; // Needed in Vista & administrator
-	HANDLE hGetDataPipeThread; DWORD dwGetDataPipeThreadId; BOOL bGetDataPipeTermination;
+	//HANDLE hInputPipeThread; DWORD dwInputPipeThreadId; BOOL bInputPipeTermination; // Needed in Vista & administrator
+	PipeServer<MSG64,1> InputServer;
+	//HANDLE hGetDataPipeThread; DWORD dwGetDataPipeThreadId; BOOL bGetDataPipeTermination;
+	PipeServer<CESERVER_REQ,1> DataServer;
 	//
 	OSVERSIONINFO osv;
 	BOOL bReopenHandleAllowed;
@@ -386,7 +392,7 @@ struct SrvInfo
 	//
 	wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH], szQueryname[MAX_PATH];
 	wchar_t szGetDataPipe[MAX_PATH], szDataReadyEvent[64];
-	HANDLE hInputPipe, hQueryPipe, hGetDataPipe;
+	HANDLE /*hInputPipe,*/ hQueryPipe/*, hGetDataPipe*/;
 	//
 	//HANDLE hFileMapping, hFileMappingData;
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *pConsoleMap;

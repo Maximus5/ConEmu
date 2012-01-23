@@ -292,10 +292,10 @@ CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count)
 	m_lRefCount  = 1;
 	m_nMaxNumFormats = 32 + max(32,count); //-V112
 	m_nNumFormats = count;
-	m_pFormatEtc  = new FORMATETC[m_nMaxNumFormats];
-	m_pStgMedium  = new STGMEDIUM[m_nMaxNumFormats];
+	m_pFormatEtc  = (FORMATETC*)calloc(m_nMaxNumFormats,sizeof(FORMATETC));
+	m_pStgMedium  = (STGMEDIUM*)calloc(m_nMaxNumFormats,sizeof(STGMEDIUM));
 
-	for(int i = 0; i < count; i++)
+	for (int i = 0; i < count; i++)
 	{
 		_ASSERTE(fmtetc && stgmed);
 		m_pFormatEtc[i] = fmtetc[i];
@@ -315,9 +315,9 @@ CDataObject::~CDataObject()
 	}
 
 	// cleanup
-	if (m_pFormatEtc) delete[] m_pFormatEtc;
+	SafeFree(m_pFormatEtc);
 
-	if (m_pStgMedium) delete[] m_pStgMedium;
+	SafeFree(m_pStgMedium);
 
 	DEBUGSTR(L"oof\n");
 }
@@ -419,7 +419,7 @@ HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 	pMedium->pUnkForRelease  = 0;
 	//pMedium->lpszFileName =
 
-	switch(m_pFormatEtc[idx].tymed)
+	switch (m_pFormatEtc[idx].tymed)
 	{
 		case TYMED_HGLOBAL:
 		{
@@ -479,19 +479,18 @@ HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 	{
 		_ASSERTE(m_nNumFormats == m_nMaxNumFormats);
 		LONG nNewMaxNumFormats = m_nNumFormats + 32; //-V112
-		FORMATETC *pNewFormatEtc = new FORMATETC[nNewMaxNumFormats];
-		STGMEDIUM *pNewStgMedium = new STGMEDIUM[nNewMaxNumFormats];
+		FORMATETC *pNewFormatEtc = (FORMATETC*)calloc(nNewMaxNumFormats,sizeof(FORMATETC));
+		STGMEDIUM *pNewStgMedium = (STGMEDIUM*)calloc(nNewMaxNumFormats,sizeof(STGMEDIUM));
 
 		if (!pNewFormatEtc || !pNewStgMedium)
 		{
-			if (pNewFormatEtc) delete[] pNewFormatEtc;
-
-			if (pNewStgMedium) delete[] pNewStgMedium;
+			SafeFree(pNewFormatEtc);
+			SafeFree(pNewStgMedium);
 
 			return E_OUTOFMEMORY;
 		}
 
-		for(LONG i = 0; i < m_nNumFormats; i++)
+		for (LONG i = 0; i < m_nNumFormats; i++)
 		{
 			pNewFormatEtc[i] = m_pFormatEtc[i];
 			pNewStgMedium[i] = m_pStgMedium[i];
@@ -499,12 +498,10 @@ HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 
 		m_nMaxNumFormats = nNewMaxNumFormats;
 
-		if (m_pFormatEtc) delete[] m_pFormatEtc;
-
+		SafeFree(m_pFormatEtc);
 		m_pFormatEtc = pNewFormatEtc;
 
-		if (m_pStgMedium) delete[] m_pStgMedium;
-
+		SafeFree(m_pStgMedium);
 		m_pStgMedium = pNewStgMedium;
 	}
 
@@ -629,7 +626,7 @@ CEnumFormatEtc::CEnumFormatEtc(FORMATETC *pFormatEtc, int nNumFormats)
 	m_lRefCount   = 1;
 	m_nIndex      = 0;
 	m_nNumFormats = nNumFormats;
-	m_pFormatEtc  = new FORMATETC[nNumFormats];
+	m_pFormatEtc  = (FORMATETC*)calloc(nNumFormats,sizeof(FORMATETC));
 
 	// copy the FORMATETC structures
 	for(int i = 0; i < nNumFormats; i++)
@@ -651,7 +648,7 @@ CEnumFormatEtc::~CEnumFormatEtc()
 				CoTaskMemFree(m_pFormatEtc[i].ptd);
 		}
 
-		delete[] m_pFormatEtc;
+		SafeFree(m_pFormatEtc);
 	}
 }
 
@@ -776,18 +773,19 @@ HRESULT __stdcall CEnumFormatEtc::Clone(IEnumFORMATETC ** ppEnumFormatEtc)
 
 
 
-HANDLE StringToHandle(LPCWSTR szText, int nTextLen)
-{
-	void  *ptr;
-
-	// if text length is -1 then treat as a nul-terminated string
-	if (nTextLen == -1)
-		nTextLen = _tcslen(szText) + 1;
-
-	// allocate and lock a global memory buffer. Make it fixed
-	// data so we don't have to use GlobalLock
-	ptr = (void *)GlobalAlloc(GMEM_FIXED, nTextLen);
-	// copy the string into the buffer
-	memcpy(ptr, szText, nTextLen);
-	return ptr;
-}
+//HANDLE StringToHandle(LPCWSTR szText, int nTextLen)
+//{
+//	void  *ptr;
+//
+//	// if text length is -1 then treat as a nul-terminated string
+//	if (nTextLen <= 0)
+//		nTextLen = _tcslen(szText) + 1;
+//
+//	// allocate and lock a global memory buffer. Make it fixed
+//	// data so we don't have to use GlobalLock
+//	ptr = (void *)GlobalAlloc(GMEM_FIXED, nTextLen+1);
+//	// copy the string into the buffer
+//	if (ptr)
+//		memcpy(ptr, szText, nTextLen);
+//	return ptr;
+//}

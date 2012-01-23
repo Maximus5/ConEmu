@@ -130,7 +130,7 @@ HWND CConEmuChild::CreateView()
 	//RECT rcMain; Get ClientRect(ghWnd, &rcMain);
 	RECT rc = gpConEmu->CalcRect(CER_DC, pVCon);
 
-	mh_WndDC = CreateWindowEx(styleEx, szClassName, 0, style,
+	mh_WndDC = CreateWindowEx(styleEx, gsClassName, 0, style,
 		rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, pVCon);
 
 	if (!mh_WndDC)

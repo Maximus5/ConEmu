@@ -32,13 +32,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "../common/Execute.h"
 #include "TokenHelper.h"
+#include "SrvPipes.h"
+#include "Queue.h"
 
-#define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s) // ConEmuC: Recieved key... / ConEmuC: Recieved input
-#define DEBUGSTRINPUTEVENT(s) //DEBUGSTR(s) // SetEvent(gpSrv->hInputEvent)
-#define DEBUGLOGINPUT(s) DEBUGSTR(s) // ConEmuC.MouseEvent(X=
-#define DEBUGSTRINPUTWRITE(s) DEBUGSTR(s) // *** ConEmuC.MouseEvent(X=
-#define DEBUGSTRINPUTWRITEALL(s) //DEBUGSTR(s) // *** WriteConsoleInput(Write=
-#define DEBUGSTRINPUTWRITEFAIL(s) DEBUGSTR(s) // ### WriteConsoleInput(Write=
+//#define DEBUGSTRINPUTEVENT(s) //DEBUGSTR(s) // SetEvent(gpSrv->hInputEvent)
+//#define DEBUGLOGINPUT(s) DEBUGSTR(s) // ConEmuC.MouseEvent(X=
+//#define DEBUGSTRINPUTWRITE(s) DEBUGSTR(s) // *** ConEmuC.MouseEvent(X=
+//#define DEBUGSTRINPUTWRITEALL(s) //DEBUGSTR(s) // *** WriteConsoleInput(Write=
+//#define DEBUGSTRINPUTWRITEFAIL(s) DEBUGSTR(s) // ### WriteConsoleInput(Write=
 //#define DEBUGSTRCHANGES(s) DEBUGSTR(s)
 
 #define MAX_EVENTS_PACK 20
@@ -49,20 +50,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef ASSERT_UNWANTED_SIZE
 #endif
 
-extern BOOL gbTerminateOnExit;
+extern BOOL gbTerminateOnExit; // для отладчика
 extern BOOL gbTerminateOnCtrlBreak;
 extern OSVERSIONINFO gOSVer;
 
-#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
-#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
-
-BOOL ProcessInputMessage(MSG64 &msg, INPUT_RECORD &r);
-BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
-BOOL ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount);
-BOOL WriteInputQueue(const INPUT_RECORD *pr);
-BOOL IsInputQueueEmpty();
-BOOL WaitConsoleReady(BOOL abReqEmpty); // Дождаться, пока консольный буфер готов принять события ввода. Возвращает FALSE, если сервер закрывается!
-DWORD WINAPI InputThread(LPVOID lpvParam);
+//BOOL ProcessInputMessage(MSG64 &msg, INPUT_RECORD &r);
+//BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
+//BOOL ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount);
+//BOOL WriteInputQueue(const INPUT_RECORD *pr);
+//BOOL IsInputQueueEmpty();
+//BOOL WaitConsoleReady(BOOL abReqEmpty); // Дождаться, пока консольный буфер готов принять события ввода. Возвращает FALSE, если сервер закрывается!
+//DWORD WINAPI InputThread(LPVOID lpvParam);
 int CreateColorerHeader();
 
 
@@ -416,27 +414,26 @@ int ServerInit(BOOL abAlternative/*=FALSE*/)
 	gpSrv->pInputQueueWrite = gpSrv->pInputQueue;
 	gpSrv->pInputQueueRead = gpSrv->pInputQueueEnd;
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
-	gpSrv->hInputPipeThread = CreateThread(NULL, 0, InputPipeThread, NULL, 0, &gpSrv->dwInputPipeThreadId);
-
-	if (gpSrv->hInputPipeThread == NULL)
+	//gpSrv->hInputPipeThread = CreateThread(NULL, 0, InputPipeThread, NULL, 0, &gpSrv->dwInputPipeThreadId);
+	//if (gpSrv->hInputPipeThread == NULL)
+	if (!InputServerStart())
 	{
 		dwErr = GetLastError();
-		_printf("CreateThread(InputPipeThread) failed, ErrCode=0x%08X\n", dwErr);
+		_printf("CreateThread(InputServerStart) failed, ErrCode=0x%08X\n", dwErr);
 		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 	}
+	//SetThreadPriority(gpSrv->hInputPipeThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
-	SetThreadPriority(gpSrv->hInputPipeThread, THREAD_PRIORITY_ABOVE_NORMAL);
-	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
-	gpSrv->hGetDataPipeThread = CreateThread(NULL, 0, GetDataThread, NULL, 0, &gpSrv->dwGetDataPipeThreadId);
-
-	if (gpSrv->hGetDataPipeThread == NULL)
+	// Пайп возврата содержимого консоли
+	//gpSrv->hGetDataPipeThread = CreateThread(NULL, 0, GetDataThread, NULL, 0, &gpSrv->dwGetDataPipeThreadId);
+	//if (gpSrv->hGetDataPipeThread == NULL)
+	if (!DataServerStart())
 	{
 		dwErr = GetLastError();
-		_printf("CreateThread(InputPipeThread) failed, ErrCode=0x%08X\n", dwErr);
+		_printf("CreateThread(DataServerStart) failed, ErrCode=0x%08X\n", dwErr);
 		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 	}
-
-	SetThreadPriority(gpSrv->hGetDataPipeThread, THREAD_PRIORITY_ABOVE_NORMAL);
+	//SetThreadPriority(gpSrv->hGetDataPipeThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
 	//InitializeCriticalSection(&gpSrv->csChangeSize);
 	//InitializeCriticalSection(&gpSrv->csConBuf);
@@ -932,12 +929,12 @@ int ServerInit(BOOL abAlternative/*=FALSE*/)
 	#endif
 
 	// Запустить нить обработки команд
-	gpSrv->hServerThread = CreateThread(NULL, 0, ServerThread, NULL, 0, &gpSrv->dwServerThreadId);
-
-	if (gpSrv->hServerThread == NULL)
+	//gpSrv->hServerThread = CreateThread(NULL, 0, ServerThread, NULL, 0, &gpSrv->dwServerThreadId);
+	//if (gpSrv->hServerThread == NULL)
+	if (!CmdServerStart())
 	{
 		dwErr = GetLastError();
-		_printf("CreateThread(ServerThread) failed, ErrCode=0x%08X\n", dwErr);
+		_printf("CreateThread(CmdServerStart) failed, ErrCode=0x%08X\n", dwErr);
 		iRc = CERR_CREATESERVERTHREAD; goto wrap;
 	}
 
@@ -1022,23 +1019,23 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	//if (gpSrv->dwInputThreadId && gpSrv->hInputThread)
 	//	PostThreadMessage(gpSrv->dwInputThreadId, WM_QUIT, 0, 0);
 	// Передернуть пайп серверной нити
-	HANDLE hPipe = CreateFile(gpSrv->szPipename,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+	//HANDLE hPipe = CreateFile(gpSrv->szPipename,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
 
-	if (hPipe == INVALID_HANDLE_VALUE)
-	{
-		DEBUGSTR(L"All pipe instances closed?\n");
-	}
+	//if (hPipe == INVALID_HANDLE_VALUE)
+	//{
+	//	DEBUGSTR(L"All pipe instances closed?\n");
+	//}
 
-	// Передернуть нить ввода
-	if (gpSrv->hInputPipe && gpSrv->hInputPipe != INVALID_HANDLE_VALUE)
-	{
-		//DWORD dwSize = 0;
-		//BOOL lbRc = WriteFile(gpSrv->hInputPipe, &dwSize, sizeof(dwSize), &dwSize, NULL);
-		/*BOOL lbRc = DisconnectNamedPipe(gpSrv->hInputPipe);
-		CloseHandle(gpSrv->hInputPipe);
-		gpSrv->hInputPipe = NULL;*/
-		TODO("Нифига не работает, похоже нужно на Overlapped переходить");
-	}
+	//// Передернуть нить ввода
+	//if (gpSrv->hInputPipe && gpSrv->hInputPipe != INVALID_HANDLE_VALUE)
+	//{
+	//	//DWORD dwSize = 0;
+	//	//BOOL lbRc = WriteFile(gpSrv->hInputPipe, &dwSize, sizeof(dwSize), &dwSize, NULL);
+	//	/*BOOL lbRc = DisconnectNamedPipe(gpSrv->hInputPipe);
+	//	CloseHandle(gpSrv->hInputPipe);
+	//	gpSrv->hInputPipe = NULL;*/
+	//	TODO("Нифига не работает, похоже нужно на Overlapped переходить");
+	//}
 
 	//HANDLE hInputPipe = CreateFile(gpSrv->szInputname,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
 	//if (hInputPipe == INVALID_HANDLE_VALUE) {
@@ -1060,14 +1057,15 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 				// Проверить, не вылезло ли Assert-ов в других потоках
 				MyAssertShutdown();
 			#endif
-#ifndef __GNUC__
-#pragma warning( push )
-#pragma warning( disable : 6258 )
-#endif
+
+			#ifndef __GNUC__
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
+			#endif
 			TerminateThread(gpSrv->hWinEventThread, 100);    // раз корректно не хочет...
-#ifndef __GNUC__
-#pragma warning( pop )
-#endif
+			#ifndef __GNUC__
+			#pragma warning( pop )
+			#endif
 		}
 
 		SafeCloseHandle(gpSrv->hWinEventThread);
@@ -1087,95 +1085,102 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 				// Проверить, не вылезло ли Assert-ов в других потоках
 				MyAssertShutdown();
 			#endif
-#ifndef __GNUC__
-#pragma warning( push )
-#pragma warning( disable : 6258 )
-#endif
+
+			#ifndef __GNUC__
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
+			#endif
 			TerminateThread(gpSrv->hInputThread, 100);    // раз корректно не хочет...
-#ifndef __GNUC__
-#pragma warning( pop )
-#endif
+			#ifndef __GNUC__
+			#pragma warning( pop )
+			#endif
 		}
 
 		SafeCloseHandle(gpSrv->hInputThread);
 		//gpSrv->dwInputThread = 0; -- не будем чистить ИД, Для истории
 	}
 
-	if (gpSrv->hInputPipeThread)
-	{
-		// Подождем немножко, пока нить сама завершится
-		if (WaitForSingleObject(gpSrv->hInputPipeThread, 50) != WAIT_OBJECT_0)
-		{
-			gbTerminateOnExit = gpSrv->bInputPipeTermination = TRUE;
-			#ifdef _DEBUG
-				// Проверить, не вылезло ли Assert-ов в других потоках
-				MyAssertShutdown();
-			#endif
-#ifndef __GNUC__
-#pragma warning( push )
-#pragma warning( disable : 6258 )
-#endif
-			TerminateThread(gpSrv->hInputPipeThread, 100);    // раз корректно не хочет...
-#ifndef __GNUC__
-#pragma warning( pop )
-#endif
-		}
+	// Пайп консольного ввода
+	if (gpSrv)
+		gpSrv->InputServer.StopPipeServer();
+	//if (gpSrv->hInputPipeThread)
+	//{
+	//	// Подождем немножко, пока нить сама завершится
+	//	if (WaitForSingleObject(gpSrv->hInputPipeThread, 50) != WAIT_OBJECT_0)
+	//	{
+	//		gbTerminateOnExit = gpSrv->bInputPipeTermination = TRUE;
+	//		#ifdef _DEBUG
+	//			// Проверить, не вылезло ли Assert-ов в других потоках
+	//			MyAssertShutdown();
+	//		#endif
+	//#ifndef __GNUC__
+	//#pragma warning( push )
+	//#pragma warning( disable : 6258 )
+	//#endif
+	//		TerminateThread(gpSrv->hInputPipeThread, 100);    // раз корректно не хочет...
+	//#ifndef __GNUC__
+	//#pragma warning( pop )
+	//#endif
+	//	}
+	//
+	//	SafeCloseHandle(gpSrv->hInputPipeThread);
+	//	//gpSrv->dwInputPipeThreadId = 0; -- не будем чистить ИД, Для истории
+	//}
 
-		SafeCloseHandle(gpSrv->hInputPipeThread);
-		//gpSrv->dwInputPipeThreadId = 0; -- не будем чистить ИД, Для истории
-	}
-
-	SafeCloseHandle(gpSrv->hInputPipe);
+	//SafeCloseHandle(gpSrv->hInputPipe);
 	SafeCloseHandle(gpSrv->hInputEvent);
 
-	if (gpSrv->hGetDataPipeThread)
-	{
-		// Подождем немножко, пока нить сама завершится
-		TODO("Сама нить не завершится. Нужно либо делать overlapped, либо что-то пихать в нить");
-		//if (WaitForSingleObject(gpSrv->hGetDataPipeThread, 50) != WAIT_OBJECT_0)
-		{
-			gbTerminateOnExit = gpSrv->bGetDataPipeTermination = TRUE;
-			#ifdef _DEBUG
-				// Проверить, не вылезло ли Assert-ов в других потоках
-				MyAssertShutdown();
-			#endif
-#ifndef __GNUC__
-#pragma warning( push )
-#pragma warning( disable : 6258 )
-#endif
-			TerminateThread(gpSrv->hGetDataPipeThread, 100);    // раз корректно не хочет...
-#ifndef __GNUC__
-#pragma warning( pop )
-#endif
-		}
-		SafeCloseHandle(gpSrv->hGetDataPipeThread);
-		gpSrv->dwGetDataPipeThreadId = 0;
-	}
+	if (gpSrv)
+		gpSrv->DataServer.StopPipeServer();
+	//if (gpSrv->hGetDataPipeThread)
+	//{
+	//	// Подождем немножко, пока нить сама завершится
+	//	TODO("Сама нить не завершится. Нужно либо делать overlapped, либо что-то пихать в нить");
+	//	//if (WaitForSingleObject(gpSrv->hGetDataPipeThread, 50) != WAIT_OBJECT_0)
+	//	{
+	//		gbTerminateOnExit = gpSrv->bGetDataPipeTermination = TRUE;
+	//		#ifdef _DEBUG
+	//			// Проверить, не вылезло ли Assert-ов в других потоках
+	//			MyAssertShutdown();
+	//		#endif
+	//#ifndef __GNUC__
+	//#pragma warning( push )
+	//#pragma warning( disable : 6258 )
+	//#endif
+	//		TerminateThread(gpSrv->hGetDataPipeThread, 100);    // раз корректно не хочет...
+	//#ifndef __GNUC__
+	//#pragma warning( pop )
+	//#endif
+	//	}
+	//	SafeCloseHandle(gpSrv->hGetDataPipeThread);
+	//	gpSrv->dwGetDataPipeThreadId = 0;
+	//}
 
-	if (gpSrv->hServerThread)
-	{
-		// Подождем немножко, пока нить сама завершится
-		if (WaitForSingleObject(gpSrv->hServerThread, 500) != WAIT_OBJECT_0)
-		{
-			gbTerminateOnExit = gpSrv->bServerTermination = TRUE;
-			#ifdef _DEBUG
-				// Проверить, не вылезло ли Assert-ов в других потоках
-				MyAssertShutdown();
-			#endif
-#ifndef __GNUC__
-#pragma warning( push )
-#pragma warning( disable : 6258 )
-#endif
-			TerminateThread(gpSrv->hServerThread, 100);    // раз корректно не хочет...
-#ifndef __GNUC__
-#pragma warning( pop )
-#endif
-		}
+	if (gpSrv)
+		gpSrv->CmdServer.StopPipeServer();
+	//if (gpSrv->hServerThread)
+	//{
+	//	// Подождем немножко, пока нить сама завершится
+	//	if (WaitForSingleObject(gpSrv->hServerThread, 500) != WAIT_OBJECT_0)
+	//	{
+	//		gbTerminateOnExit = gpSrv->bServerTermination = TRUE;
+	//		#ifdef _DEBUG
+	//			// Проверить, не вылезло ли Assert-ов в других потоках
+	//			MyAssertShutdown();
+	//		#endif
+	//#ifndef __GNUC__
+	//#pragma warning( push )
+	//#pragma warning( disable : 6258 )
+	//#endif
+	//		TerminateThread(gpSrv->hServerThread, 100);    // раз корректно не хочет...
+	//#ifndef __GNUC__
+	//#pragma warning( pop )
+	//#endif
+	//	}
+	//	SafeCloseHandle(gpSrv->hServerThread);
+	//}
 
-		SafeCloseHandle(gpSrv->hServerThread);
-	}
-
-	SafeCloseHandle(hPipe);
+	//SafeCloseHandle(hPipe);
 
 	if (gpSrv->hRefreshThread)
 	{
@@ -1187,14 +1192,15 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 				// Проверить, не вылезло ли Assert-ов в других потоках
 				MyAssertShutdown();
 			#endif
-#ifndef __GNUC__
-#pragma warning( push )
-#pragma warning( disable : 6258 )
-#endif
+
+			#ifndef __GNUC__
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
+			#endif
 			TerminateThread(gpSrv->hRefreshThread, 100);
-#ifndef __GNUC__
-#pragma warning( pop )
-#endif
+			#ifndef __GNUC__
+			#pragma warning( pop )
+			#endif
 		}
 
 		SafeCloseHandle(gpSrv->hRefreshThread);
@@ -3029,800 +3035,113 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 
 
-//// gpSrv->hInputThread && gpSrv->dwInputThreadId
-//DWORD WINAPI InputThread(LPVOID lpvParam)
+
+
+//DWORD WINAPI GetDataThread(LPVOID lpvParam)
 //{
-//	MSG msg;
-//	//while (GetMessage(&msg,0,0,0))
-//	INPUT_RECORD rr[MAX_EVENTS_PACK];
+//	BOOL fConnected, fSuccess;
+//	DWORD dwErr = 0;
 //
-//	while (TRUE) {
-//		if (!PeekMessage(&msg,0,0,0,PM_REMOVE)) {
-//			Sleep(10);
-//			continue;
-//		}
-//		if (msg.message == WM_QUIT)
-//			break;
+//	while(!gbQuit)
+//	{
+//		MCHKHEAP;
+//		gpSrv->hGetDataPipe = Create NamedPipe(
+//		                       gpSrv->szGetDataPipe,        // pipe name
+//		                       PIPE_ACCESS_DUPLEX,       // goes from client to server only
+//		                       PIPE_TYPE_MESSAGE |       // message type pipe
+//		                       PIPE_READMODE_MESSAGE |   // message-read mode
+//		                       PIPE_WAIT,                // blocking mode
+//		                       PIPE_UNLIMITED_INSTANCES, // max. instances
+//		                       DATAPIPEBUFSIZE,          // output buffer size
+//		                       PIPEBUFSIZE,              // input buffer size
+//		                       0,                        // client time-out
+//		                       gpLocalSecurity);          // default security attribute
 //
-//		if (ghQuitEvent) {
-//			if (WaitForSingleObject(ghQuitEvent, 0) == WAIT_OBJECT_0)
-//				break;
-//		}
-//		if (msg.message == WM_NULL) {
-//			_ASSERTE(msg.message != WM_NULL);
-//			continue;
-//		}
-//
-//		//if (msg.message == INPUT_THREAD_ALIVE_MSG) {
-//		//	//pRCon->mn_FlushOut = msg.wParam;
-//		//	TODO("INPUT_THREAD_ALIVE_MSG");
-//		//	continue;
-//		//
-//		//} else {
-//
-//		// обработка пачки сообщений, вдруг они накопились в очереди?
-//		UINT nCount = 0;
-//		while (nCount < MAX_EVENTS_PACK)
+//		if (gpSrv->hGetDataPipe == INVALID_HANDLE_VALUE)
 //		{
-//			if (msg.message == WM_NULL) {
-//				_ASSERTE(msg.message != WM_NULL);
-//			} else {
-//				if (ProcessInputMessage(msg, rr[nCount]))
-//					nCount++;
+//			dwErr = GetLastError();
+//			_ASSERTE(gpSrv->hGetDataPipe != INVALID_HANDLE_VALUE);
+//			_printf("CreatePipe failed, ErrCode=0x%08X\n", dwErr);
+//			Sleep(50);
+//			//return 99;
+//			continue;
+//		}
+//
+//		// Wait for the client to connect; if it succeeds,
+//		// the function returns a nonzero value. If the function
+//		// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
+//		fConnected = ConnectNamedPipe(gpSrv->hGetDataPipe, NULL) ?
+//		             TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
+//		MCHKHEAP;
+//
+//		if (fConnected)
+//		{
+//			//TODO:
+//			DWORD cbBytesRead = 0, cbBytesWritten = 0, cbWrite = 0;
+//			CESERVER_REQ_HDR Command = {0};
+//
+//			while(!gbQuit
+//			        && (fSuccess = ReadFile(gpSrv->hGetDataPipe, &Command, sizeof(Command), &cbBytesRead, NULL)) != FALSE)         // not overlapped I/O
+//			{
+//				// предусмотреть возможность завершения нити
+//				if (gbQuit)
+//					break;
+//
+//				if (Command.nVersion != CESERVER_REQ_VER)
+//				{
+//					_ASSERTE(Command.nVersion == CESERVER_REQ_VER);
+//					break; // переоткрыть пайп!
+//				}
+//
+//				if (Command.nCmd != CECMD_CONSOLEDATA)
+//				{
+//					_ASSERTE(Command.nCmd == CECMD_CONSOLEDATA);
+//					break; // переоткрыть пайп!
+//				}
+//
+//				if (gpSrv->pConsole->bDataChanged == FALSE)
+//				{
+//					cbWrite = sizeof(gpSrv->pConsole->info);
+//					ExecutePrepareCmd(&(gpSrv->pConsole->info.cmd), Command.nCmd, cbWrite);
+//					gpSrv->pConsole->info.nDataShift = 0;
+//					gpSrv->pConsole->info.nDataCount = 0;
+//					fSuccess = WriteFile(gpSrv->hGetDataPipe, &(gpSrv->pConsole->info), cbWrite, &cbBytesWritten, NULL);
+//				}
+//				else //if (Command.nCmd == CECMD_CONSOLEDATA)
+//				{
+//					_ASSERTE(Command.nCmd == CECMD_CONSOLEDATA);
+//					gpSrv->pConsole->bDataChanged = FALSE;
+//					cbWrite = gpSrv->pConsole->info.crWindow.X * gpSrv->pConsole->info.crWindow.Y;
+//
+//					// Такого быть не должно, ReadConsoleData корректирует возможный размер
+//					if ((int)cbWrite > (gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y))
+//					{
+//						_ASSERTE((int)cbWrite <= (gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y));
+//						cbWrite = (gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y);
+//					}
+//
+//					gpSrv->pConsole->info.nDataShift = (DWORD)(((LPBYTE)gpSrv->pConsole->data) - ((LPBYTE)&(gpSrv->pConsole->info)));
+//					gpSrv->pConsole->info.nDataCount = cbWrite;
+//					DWORD nHdrSize = sizeof(gpSrv->pConsole->info);
+//					cbWrite = cbWrite * sizeof(CHAR_INFO) + nHdrSize ;
+//					ExecutePrepareCmd(&(gpSrv->pConsole->info.cmd), Command.nCmd, cbWrite);
+//					fSuccess = WriteFile(gpSrv->hGetDataPipe, &(gpSrv->pConsole->info), cbWrite, &cbBytesWritten, NULL);
+//				}
+//
+//				// Next query
 //			}
-//			if (!PeekMessage(&msg,0,0,0,PM_REMOVE))
-//				break;
-//			if (msg.message == WM_QUIT)
-//				break;
+//
+//			// Выход из пайпа (ошибки чтения и пр.). Пайп будет пересоздан, если не gbQuit
+//			SafeCloseHandle(gpSrv->hInputPipe);
 //		}
-//		if (nCount && msg.message != WM_QUIT) {
-//			SendConsoleEvent(rr, nCount);
-//		}
-//		//}
+//		else
+//			// The client could not connect, so close the pipe. Пайп будет пересоздан, если не gbQuit
+//			SafeCloseHandle(gpSrv->hInputPipe);
 //	}
 //
-//	return 0;
+//	MCHKHEAP;
+//	return 1;
 //}
-
-BOOL WriteInputQueue(const INPUT_RECORD *pr)
-{
-	INPUT_RECORD* pNext = gpSrv->pInputQueueWrite;
-
-	// Проверяем, есть ли свободное место в буфере
-	if (gpSrv->pInputQueueRead != gpSrv->pInputQueueEnd)
-	{
-		if (gpSrv->pInputQueueRead < gpSrv->pInputQueueEnd
-		        && ((gpSrv->pInputQueueWrite+1) == gpSrv->pInputQueueRead))
-		{
-			return FALSE;
-		}
-	}
-
-	// OK
-	*pNext = *pr;
-	gpSrv->pInputQueueWrite++;
-
-	if (gpSrv->pInputQueueWrite >= gpSrv->pInputQueueEnd)
-		gpSrv->pInputQueueWrite = gpSrv->pInputQueue;
-
-	DEBUGSTRINPUTEVENT(L"SetEvent(gpSrv->hInputEvent)\n");
-	SetEvent(gpSrv->hInputEvent);
-
-	// Подвинуть указатель чтения, если до этого буфер был пуст
-	if (gpSrv->pInputQueueRead == gpSrv->pInputQueueEnd)
-		gpSrv->pInputQueueRead = pNext;
-
-	return TRUE;
-}
-
-BOOL IsInputQueueEmpty()
-{
-	if (gpSrv->pInputQueueRead != gpSrv->pInputQueueEnd
-	        && gpSrv->pInputQueueRead != gpSrv->pInputQueueWrite)
-		return FALSE;
-
-	return TRUE;
-}
-
-BOOL ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount)
-{
-	DWORD nCount = 0;
-
-	if (!IsInputQueueEmpty())
-	{
-		DWORD n = *pCount;
-		INPUT_RECORD *pSrc = gpSrv->pInputQueueRead;
-		INPUT_RECORD *pEnd = (gpSrv->pInputQueueRead < gpSrv->pInputQueueWrite) ? gpSrv->pInputQueueWrite : gpSrv->pInputQueueEnd;
-		INPUT_RECORD *pDst = prs;
-
-		while(n && pSrc < pEnd)
-		{
-			*pDst = *pSrc; nCount++; pSrc++;
-			//// Для приведения поведения к стандартному RealConsole&Far
-			//if (pDst->EventType == KEY_EVENT
-			//	// Для нажатия НЕ символьных клавиш
-			//	&& pDst->Event.KeyEvent.bKeyDown && pDst->Event.KeyEvent.uChar.UnicodeChar < 32
-			//	&& pSrc < (pEnd = (gpSrv->pInputQueueRead < gpSrv->pInputQueueWrite) ? gpSrv->pInputQueueWrite : gpSrv->pInputQueueEnd)) // и пока в буфере еще что-то есть
-			//{
-			//	while (pSrc < (pEnd = (gpSrv->pInputQueueRead < gpSrv->pInputQueueWrite) ? gpSrv->pInputQueueWrite : gpSrv->pInputQueueEnd)
-			//		&& pSrc->EventType == KEY_EVENT
-			//		&& pSrc->Event.KeyEvent.bKeyDown
-			//		&& pSrc->Event.KeyEvent.wVirtualKeyCode == pDst->Event.KeyEvent.wVirtualKeyCode
-			//		&& pSrc->Event.KeyEvent.wVirtualScanCode == pDst->Event.KeyEvent.wVirtualScanCode
-			//		&& pSrc->Event.KeyEvent.uChar.UnicodeChar == pDst->Event.KeyEvent.uChar.UnicodeChar
-			//		&& pSrc->Event.KeyEvent.dwControlKeyState == pDst->Event.KeyEvent.dwControlKeyState)
-			//	{
-			//		pDst->Event.KeyEvent.wRepeatCount++; pSrc++;
-			//	}
-			//}
-			n--; pDst++;
-		}
-
-		if (pSrc == gpSrv->pInputQueueEnd)
-			pSrc = gpSrv->pInputQueue;
-
-		TODO("Доделать чтение начала буфера, если считали его конец");
-		//
-		gpSrv->pInputQueueRead = pSrc;
-	}
-
-	*pCount = nCount;
-	return (nCount>0);
-}
-
-#ifdef _DEBUG
-BOOL GetNumberOfBufferEvents()
-{
-	DWORD nCount = 0;
-
-	if (!IsInputQueueEmpty())
-	{
-		INPUT_RECORD *pSrc = gpSrv->pInputQueueRead;
-		INPUT_RECORD *pEnd = (gpSrv->pInputQueueRead < gpSrv->pInputQueueWrite) ? gpSrv->pInputQueueWrite : gpSrv->pInputQueueEnd;
-
-		while(pSrc < pEnd)
-		{
-			nCount++; pSrc++;
-		}
-
-		if (pSrc == gpSrv->pInputQueueEnd)
-		{
-			pSrc = gpSrv->pInputQueue;
-			pEnd = (gpSrv->pInputQueueRead < gpSrv->pInputQueueWrite) ? gpSrv->pInputQueueWrite : gpSrv->pInputQueueEnd;
-
-			while(pSrc < pEnd)
-			{
-				nCount++; pSrc++;
-			}
-		}
-	}
-
-	return nCount;
-}
-#endif
-
-DWORD WINAPI InputThread(LPVOID lpvParam)
-{
-	HANDLE hEvents[2] = {ghQuitEvent, gpSrv->hInputEvent};
-	DWORD dwWait = 0;
-	INPUT_RECORD ir[100];
-
-	while((dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INPUT_QUEUE_TIMEOUT)) != WAIT_OBJECT_0)
-	{
-		if (IsInputQueueEmpty())
-			continue;
-
-		// -- перенесено в SendConsoleEvent
-		//// Если не готов - все равно запишем
-		//if (!WaitConsoleReady())
-		//	break;
-
-		// Читаем и пишем
-		DWORD nInputCount = sizeof(ir)/sizeof(ir[0]);
-
-		//#ifdef USE_INPUT_SEMAPHORE
-		//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_WRITE) : 1;
-		//_ASSERTE(ghConInSemaphore && (nSemaphore == WAIT_OBJECT_0));
-		//#endif
-
-		if (ReadInputQueue(ir, &nInputCount))
-		{
-			_ASSERTE(nInputCount>0);
-#ifdef _DEBUG
-
-			for(DWORD j = 0; j < nInputCount; j++)
-			{
-				if (ir[j].EventType == KEY_EVENT
-				        && (ir[j].Event.KeyEvent.wVirtualKeyCode == 'C' || ir[j].Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
-				        && (      // Удерживается ТОЛЬКО Ctrl
-				            (ir[j].Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-				            ((ir[j].Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
-				             == (ir[j].Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS)))
-				  )
-					DEBUGSTR(L"  ---  CtrlC/CtrlBreak recieved\n");
-			}
-
-#endif
-			//DEBUGSTRINPUTPIPE(L"SendConsoleEvent\n");
-			SendConsoleEvent(ir, nInputCount);
-		}
-
-		//#ifdef USE_INPUT_SEMAPHORE
-		//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
-		//#endif
-
-		// Если во время записи в консоль в буфере еще что-то появилось - передернем
-		if (!IsInputQueueEmpty())
-			SetEvent(gpSrv->hInputEvent);
-	}
-
-	return 1;
-}
-
-DWORD WINAPI InputPipeThread(LPVOID lpvParam)
-{
-	BOOL fConnected, fSuccess;
-	//DWORD nCurInputCount = 0;
-	//DWORD gpSrv->dwServerThreadId;
-	//HANDLE hPipe = NULL;
-	DWORD dwErr = 0;
-
-	// The main loop creates an instance of the named pipe and
-	// then waits for a client to connect to it. When the client
-	// connects, a thread is created to handle communications
-	// with that client, and the loop is repeated.
-
-	while(!gbQuit)
-	{
-		MCHKHEAP;
-		gpSrv->hInputPipe = CreateNamedPipe(
-		                     gpSrv->szInputname,          // pipe name
-		                     PIPE_ACCESS_INBOUND,      // goes from client to server only
-		                     PIPE_TYPE_MESSAGE |       // message type pipe
-		                     PIPE_READMODE_MESSAGE |   // message-read mode
-		                     PIPE_WAIT,                // blocking mode
-		                     PIPE_UNLIMITED_INSTANCES, // max. instances
-		                     PIPEBUFSIZE,              // output buffer size
-		                     PIPEBUFSIZE,              // input buffer size
-		                     0,                        // client time-out
-		                     gpLocalSecurity);          // default security attribute
-
-		if (gpSrv->hInputPipe == INVALID_HANDLE_VALUE)
-		{
-			dwErr = GetLastError();
-			_ASSERTE(gpSrv->hInputPipe != INVALID_HANDLE_VALUE);
-			_printf("CreatePipe failed, ErrCode=0x%08X\n", dwErr);
-			Sleep(50);
-			//return 99;
-			continue;
-		}
-
-		// Wait for the client to connect; if it succeeds,
-		// the function returns a nonzero value. If the function
-		// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
-		fConnected = ConnectNamedPipe(gpSrv->hInputPipe, NULL) ?
-		             TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
-		MCHKHEAP;
-
-		if (fConnected)
-		{
-			//TODO:
-			DWORD cbBytesRead; //, cbWritten;
-			MSG64 imsg; memset(&imsg,0,sizeof(imsg));
-
-			while(!gbQuit && (fSuccess = ReadFile(
-			                                 gpSrv->hInputPipe,        // handle to pipe
-			                                 &imsg,        // buffer to receive data
-			                                 sizeof(imsg), // size of buffer
-			                                 &cbBytesRead, // number of bytes read
-			                                 NULL)) != FALSE)        // not overlapped I/O
-			{
-				// предусмотреть возможность завершения нити
-				if (gbQuit)
-					break;
-
-				MCHKHEAP;
-
-				if (imsg.message)
-				{
-#ifdef _DEBUG
-
-					switch(imsg.message)
-					{
-						case WM_KEYDOWN: case WM_SYSKEYDOWN: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key down\n"); break;
-						case WM_KEYUP: case WM_SYSKEYUP: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key up\n"); break;
-						default: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved input\n");
-					}
-
-#endif
-					INPUT_RECORD r;
-
-					// Некорректные события - отсеиваются,
-					// некоторые события (CtrlC/CtrlBreak) не пишутся в буферном режиме
-					if (ProcessInputMessage(imsg, r))
-					{
-						//SendConsoleEvent(&r, 1);
-						if (!WriteInputQueue(&r))
-						{
-							_ASSERTE(FALSE);
-							WARNING("Если буфер переполнен - ждать? Хотя если будем ждать здесь - может повиснуть GUI на записи в pipe...");
-						}
-					}
-
-					MCHKHEAP;
-				}
-
-				// next
-				memset(&imsg,0,sizeof(imsg));
-				MCHKHEAP;
-			}
-
-			SafeCloseHandle(gpSrv->hInputPipe);
-		}
-		else
-			// The client could not connect, so close the pipe.
-			SafeCloseHandle(gpSrv->hInputPipe);
-	}
-
-	MCHKHEAP;
-	return 1;
-}
-
-DWORD WINAPI GetDataThread(LPVOID lpvParam)
-{
-	BOOL fConnected, fSuccess;
-	DWORD dwErr = 0;
-
-	while(!gbQuit)
-	{
-		MCHKHEAP;
-		gpSrv->hGetDataPipe = CreateNamedPipe(
-		                       gpSrv->szGetDataPipe,        // pipe name
-		                       PIPE_ACCESS_DUPLEX,       // goes from client to server only
-		                       PIPE_TYPE_MESSAGE |       // message type pipe
-		                       PIPE_READMODE_MESSAGE |   // message-read mode
-		                       PIPE_WAIT,                // blocking mode
-		                       PIPE_UNLIMITED_INSTANCES, // max. instances
-		                       DATAPIPEBUFSIZE,          // output buffer size
-		                       PIPEBUFSIZE,              // input buffer size
-		                       0,                        // client time-out
-		                       gpLocalSecurity);          // default security attribute
-
-		if (gpSrv->hGetDataPipe == INVALID_HANDLE_VALUE)
-		{
-			dwErr = GetLastError();
-			_ASSERTE(gpSrv->hGetDataPipe != INVALID_HANDLE_VALUE);
-			_printf("CreatePipe failed, ErrCode=0x%08X\n", dwErr);
-			Sleep(50);
-			//return 99;
-			continue;
-		}
-
-		// Wait for the client to connect; if it succeeds,
-		// the function returns a nonzero value. If the function
-		// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
-		fConnected = ConnectNamedPipe(gpSrv->hGetDataPipe, NULL) ?
-		             TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
-		MCHKHEAP;
-
-		if (fConnected)
-		{
-			//TODO:
-			DWORD cbBytesRead = 0, cbBytesWritten = 0, cbWrite = 0;
-			CESERVER_REQ_HDR Command = {0};
-
-			while(!gbQuit
-			        && (fSuccess = ReadFile(gpSrv->hGetDataPipe, &Command, sizeof(Command), &cbBytesRead, NULL)) != FALSE)         // not overlapped I/O
-			{
-				// предусмотреть возможность завершения нити
-				if (gbQuit)
-					break;
-
-				if (Command.nVersion != CESERVER_REQ_VER)
-				{
-					_ASSERTE(Command.nVersion == CESERVER_REQ_VER);
-					break; // переоткрыть пайп!
-				}
-
-				if (Command.nCmd != CECMD_CONSOLEDATA)
-				{
-					_ASSERTE(Command.nCmd == CECMD_CONSOLEDATA);
-					break; // переоткрыть пайп!
-				}
-
-				if (gpSrv->pConsole->bDataChanged == FALSE)
-				{
-					cbWrite = sizeof(gpSrv->pConsole->info);
-					ExecutePrepareCmd(&(gpSrv->pConsole->info.cmd), Command.nCmd, cbWrite);
-					gpSrv->pConsole->info.nDataShift = 0;
-					gpSrv->pConsole->info.nDataCount = 0;
-					fSuccess = WriteFile(gpSrv->hGetDataPipe, &(gpSrv->pConsole->info), cbWrite, &cbBytesWritten, NULL);
-				}
-				else //if (Command.nCmd == CECMD_CONSOLEDATA)
-				{
-					_ASSERTE(Command.nCmd == CECMD_CONSOLEDATA);
-					gpSrv->pConsole->bDataChanged = FALSE;
-					cbWrite = gpSrv->pConsole->info.crWindow.X * gpSrv->pConsole->info.crWindow.Y;
-
-					// Такого быть не должно, ReadConsoleData корректирует возможный размер
-					if ((int)cbWrite > (gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y))
-					{
-						_ASSERTE((int)cbWrite <= (gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y));
-						cbWrite = (gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y);
-					}
-
-					gpSrv->pConsole->info.nDataShift = (DWORD)(((LPBYTE)gpSrv->pConsole->data) - ((LPBYTE)&(gpSrv->pConsole->info)));
-					gpSrv->pConsole->info.nDataCount = cbWrite;
-					DWORD nHdrSize = sizeof(gpSrv->pConsole->info);
-					cbWrite = cbWrite * sizeof(CHAR_INFO) + nHdrSize ;
-					ExecutePrepareCmd(&(gpSrv->pConsole->info.cmd), Command.nCmd, cbWrite);
-					fSuccess = WriteFile(gpSrv->hGetDataPipe, &(gpSrv->pConsole->info), cbWrite, &cbBytesWritten, NULL);
-				}
-
-				// Next query
-			}
-
-			// Выход из пайпа (ошибки чтения и пр.). Пайп будет пересоздан, если не gbQuit
-			SafeCloseHandle(gpSrv->hInputPipe);
-		}
-		else
-			// The client could not connect, so close the pipe. Пайп будет пересоздан, если не gbQuit
-			SafeCloseHandle(gpSrv->hInputPipe);
-	}
-
-	MCHKHEAP;
-	return 1;
-}
-
-BOOL ProcessInputMessage(MSG64 &msg, INPUT_RECORD &r)
-{
-	memset(&r, 0, sizeof(r));
-	BOOL lbOk = FALSE;
-
-	if (!UnpackInputRecord(&msg, &r))
-	{
-		_ASSERT(FALSE);
-	}
-	else
-	{
-		TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
-		//#ifdef _DEBUG
-		//if (r.EventType == KEY_EVENT && (r.Event.KeyEvent.wVirtualKeyCode == 'C' || r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL))
-		//{
-		//	DEBUGSTR(L"  ---  CtrlC/CtrlBreak recieved\n");
-		//}
-		//#endif
-		bool lbProcessEvent = false;
-		bool lbIngoreKey = false;
-
-		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
-		        (r.Event.KeyEvent.wVirtualKeyCode == 'C' || r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
-		        && (      // Удерживается ТОЛЬКО Ctrl
-		            (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-		            ((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
-		             == (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
-		        )
-		  )
-		{
-			lbProcessEvent = true;
-			DEBUGSTR(L"  ---  CtrlC/CtrlBreak recieved\n");
-			DWORD dwMode = 0;
-			GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwMode);
-
-			// CTRL+C (and Ctrl+Break?) is processed by the system and is not placed in the input buffer
-			if ((dwMode & ENABLE_PROCESSED_INPUT) == ENABLE_PROCESSED_INPUT)
-				lbIngoreKey = lbProcessEvent = true;
-			else
-				lbProcessEvent = false;
-
-			if (lbProcessEvent)
-			{
-				BOOL lbRc = FALSE;
-				DWORD dwEvent = (r.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
-				//&& (gpSrv->dwConsoleMode & ENABLE_PROCESSED_INPUT)
-
-				//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer,
-				//so CTRL+C is reported as keyboard input rather than as a signal.
-				// CTRL+BREAK is always treated as a signal
-				if (  // Удерживается ТОЛЬКО Ctrl
-				    (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-				    ((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
-				     == (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
-				)
-				{
-					// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
-					// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
-					// на Ctrl-Break, но напрочь игнорирует Ctrl-C
-					lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
-					// Это событие (Ctrl+C) в буфер помещается(!) иначе до фара не дойдет собственно клавиша C с нажатым Ctrl
-				}
-			}
-
-			if (lbIngoreKey)
-				return FALSE;
-
-			// CtrlBreak отсылаем СРАЗУ, мимо очереди, иначе макросы FAR нельзя стопнуть
-			if (r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
-			{
-				// При получении CtrlBreak в реальной консоли - буфер ввода очищается
-				// иначе фар, при попытке считать ввод получит старые,
-				// еще не обработанные нажатия, и CtrlBreak проигнорирует
-				FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
-				SendConsoleEvent(&r, 1);
-				return FALSE;
-			}
-		}
-
-#ifdef _DEBUG
-
-		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
-		        r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
-		{
-			DEBUGSTR(L"  ---  F11 recieved\n");
-		}
-
-#endif
-#ifdef _DEBUG
-
-		if (r.EventType == MOUSE_EVENT)
-		{
-			static DWORD nLastEventTick = 0;
-
-			if (nLastEventTick && (GetTickCount() - nLastEventTick) > 2000)
-			{
-				OutputDebugString(L".\n");
-			}
-
-			wchar_t szDbg[60];
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"    ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n", r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y, r.Event.MouseEvent.dwButtonState, (r.Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
-			DEBUGLOGINPUT(szDbg);
-			nLastEventTick = GetTickCount();
-		}
-
-#endif
-
-		// Запомнить, когда была последняя активность пользователя
-		if (r.EventType == KEY_EVENT
-		        || (r.EventType == MOUSE_EVENT
-		            && (r.Event.MouseEvent.dwButtonState || r.Event.MouseEvent.dwEventFlags
-		                || r.Event.MouseEvent.dwEventFlags == DOUBLE_CLICK)))
-		{
-			gpSrv->dwLastUserTick = GetTickCount();
-		}
-
-		lbOk = TRUE;
-		//SendConsoleEvent(&r, 1);
-	}
-
-	return lbOk;
-}
-
-// Дождаться, пока консольный буфер готов принять события ввода
-// Возвращает FALSE, если сервер закрывается!
-BOOL WaitConsoleReady(BOOL abReqEmpty)
-{
-	// Если сейчас идет ресайз - нежелательно помещение в буфер событий
-	if (gpSrv->bInSyncResize)
-		WaitForSingleObject(gpSrv->hAllowInputEvent, MAX_SYNCSETSIZE_WAIT);
-
-	// если убить ожидание очистки очереди - перестает действовать 'Right selection fix'!
-
-	DWORD nQuitWait = WaitForSingleObject(ghQuitEvent, 0);
-
-	if (nQuitWait == WAIT_OBJECT_0)
-		return FALSE;
-
-	if (abReqEmpty)
-	{
-		//#ifdef USE_INPUT_SEMAPHORE
-		//// Нет смысла использовать вместе с семафором ввода
-		//_ASSERTE(FALSE);
-		//#endif
-
-		DWORD nCurInputCount = 0; //, cbWritten = 0;
-		//INPUT_RECORD irDummy[2] = {{0},{0}};
-		HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
-
-		// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
-		// 19.02.2010 Maks - замена на GetNumberOfConsoleInputEvents
-		//if (PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
-		if (GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)) && nCurInputCount > 0)
-		{
-			DWORD dwStartTick = GetTickCount(), dwDelta, dwTick;
-		
-			do
-			{
-				//Sleep(5);
-				nQuitWait = WaitForSingleObject(ghQuitEvent, 5);
-		
-				if (nQuitWait == WAIT_OBJECT_0)
-					return FALSE;
-		
-				//if (!PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)))
-				if (!GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)))
-					nCurInputCount = 0;
-		
-				dwTick = GetTickCount(); dwDelta = dwTick - dwStartTick;
-			}
-			while((nCurInputCount > 0) && (dwDelta < MAX_INPUT_QUEUE_EMPTY_WAIT));
-		}
-		
-		if (WaitForSingleObject(ghQuitEvent, 0) == WAIT_OBJECT_0)
-			return FALSE;
-	}
-
-	//return (nCurInputCount == 0);
-	return TRUE; // Если готов - всегда TRUE
-}
-
-BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
-{
-	if (!nCount || !pr)
-	{
-		_ASSERTE(nCount>0 && pr!=NULL);
-		return FALSE;
-	}
-
-	BOOL fSuccess = FALSE;
-	//// Если сейчас идет ресайз - нежелательно помещение в буфер событий
-	//if (gpSrv->bInSyncResize)
-	//	WaitForSingleObject(gpSrv->hAllowInputEvent, MAX_SYNCSETSIZE_WAIT);
-	//DWORD nCurInputCount = 0, cbWritten = 0;
-	//INPUT_RECORD irDummy[2] = {{0},{0}};
-	//HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
-	// 02.04.2010 Maks - перенесено в WaitConsoleReady
-	//// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
-	//// 19.02.2010 Maks - замена на GetNumberOfConsoleInputEvents
-	////if (PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
-	//if (GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)) && nCurInputCount > 0) {
-	//	DWORD dwStartTick = GetTickCount();
-	//	WARNING("Do NOT wait, but place event in Cyclic queue");
-	//	do {
-	//		Sleep(5);
-	//		//if (!PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)))
-	//		if (!GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)))
-	//			nCurInputCount = 0;
-	//	} while ((nCurInputCount > 0) && ((GetTickCount() - dwStartTick) < MAX_INPUT_QUEUE_EMPTY_WAIT));
-	//}
-	INPUT_RECORD* prNew = NULL;
-	int nAllCount = 0;
-	BOOL lbReqEmpty = FALSE;
-
-	for(UINT n = 0; n < nCount; n++)
-	{
-		if (pr[n].EventType != KEY_EVENT)
-		{
-			nAllCount++;
-			if (!lbReqEmpty && (pr[n].EventType == MOUSE_EVENT))
-			{
-				// По всей видимости дурит консоль Windows.
-				// Если в буфере сейчас еще есть мышиные события, то запись
-				// в буфер возвращает ОК, но считывающее приложение получает 0-событий.
-				// В итоге, получаем пропуск некоторых событий, что очень неприятно 
-				// при выделении кучи файлов правой кнопкой мыши (проводкой с зажатой кнопкой)
-				if (pr[n].Event.MouseEvent.dwButtonState /*== RIGHTMOST_BUTTON_PRESSED*/)
-					lbReqEmpty = TRUE;
-			}
-		}
-		else
-		{
-			if (!pr[n].Event.KeyEvent.wRepeatCount)
-			{
-				_ASSERTE(pr[n].Event.KeyEvent.wRepeatCount!=0);
-				pr[n].Event.KeyEvent.wRepeatCount = 1;
-			}
-
-			nAllCount += pr[n].Event.KeyEvent.wRepeatCount;
-		}
-	}
-
-	if (nAllCount > (int)nCount)
-	{
-		prNew = (INPUT_RECORD*)malloc(sizeof(INPUT_RECORD)*nAllCount);
-
-		if (prNew)
-		{
-			INPUT_RECORD* ppr = prNew;
-			INPUT_RECORD* pprMod = NULL;
-
-			for(UINT n = 0; n < nCount; n++)
-			{
-				*(ppr++) = pr[n];
-
-				if (pr[n].EventType == KEY_EVENT)
-				{
-					UINT nCurCount = pr[n].Event.KeyEvent.wRepeatCount;
-
-					if (nCurCount > 1)
-					{
-						pprMod = (ppr-1);
-						pprMod->Event.KeyEvent.wRepeatCount = 1;
-
-						for(UINT i = 1; i < nCurCount; i++)
-						{
-							*(ppr++) = *pprMod;
-						}
-					}
-				}
-				else if (!lbReqEmpty && (pr[n].EventType == MOUSE_EVENT))
-				{
-					// По всей видимости дурит консоль Windows.
-					// Если в буфере сейчас еще есть мышиные события, то запись
-					// в буфер возвращает ОК, но считывающее приложение получает 0-событий.
-					// В итоге, получаем пропуск некоторых событий, что очень неприятно 
-					// при выделении кучи файлов правой кнопкой мыши (проводкой с зажатой кнопкой)
-					if (pr[n].Event.MouseEvent.dwButtonState == RIGHTMOST_BUTTON_PRESSED)
-						lbReqEmpty = TRUE;
-				}
-			}
-
-			pr = prNew;
-			_ASSERTE(nAllCount == (ppr-prNew));
-			nCount = (UINT)(ppr-prNew);
-		}
-	}
-
-	// Если не готов - все равно запишем
-	WaitConsoleReady(lbReqEmpty);
-
-
-	DWORD cbWritten = 0;
-#ifdef _DEBUG
-	wchar_t szDbg[255];
-	for (UINT i = 0; i < nCount; i++)
-	{
-		if (pr[i].EventType == MOUSE_EVENT)
-		{
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg))
-				L"*** ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n",
-				pr[i].Event.MouseEvent.dwMousePosition.X, pr[i].Event.MouseEvent.dwMousePosition.Y, pr[i].Event.MouseEvent.dwButtonState, (pr[i].Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
-			DEBUGSTRINPUTWRITE(szDbg);
-			
-			#ifdef _DEBUG
-			{
-				static int LastMsButton;
-				if ((LastMsButton & 1) && (pr[i].Event.MouseEvent.dwButtonState == 0))
-				{
-					// LButton was Down, now - Up
-					LastMsButton = pr[i].Event.MouseEvent.dwButtonState;
-				}
-				else if (!LastMsButton && (pr[i].Event.MouseEvent.dwButtonState & 1))
-				{
-					// LButton was Up, now - Down
-					LastMsButton = pr[i].Event.MouseEvent.dwButtonState;
-				}
-				else
-				{ //-V523
-					LastMsButton = pr[i].Event.MouseEvent.dwButtonState;
-				}
-			}
-			#endif
-			
-		}
-	}
-	SetLastError(0);
-#endif
-	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
-	fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
-#ifdef _DEBUG
-	DWORD dwErr = GetLastError();
-	if (!fSuccess || (nCount != cbWritten))
-	{
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"### WriteConsoleInput(Write=%i, Written=%i, Left=%i, Err=x%X)\n", nCount, cbWritten, GetNumberOfBufferEvents(), dwErr);
-		DEBUGSTRINPUTWRITEFAIL(szDbg);
-	}
-	else
-	{
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"*** WriteConsoleInput(Write=%i, Written=%i, Left=%i)\n", nCount, cbWritten, GetNumberOfBufferEvents());
-		DEBUGSTRINPUTWRITEALL(szDbg);
-	}
-#endif
-	_ASSERTE(fSuccess && cbWritten==nCount);
-
-	if (prNew) free(prNew);
-
-	return fSuccess;
-}
 
 int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
 {

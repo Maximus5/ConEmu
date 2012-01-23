@@ -1473,6 +1473,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Queue.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\RConStartArgs.h"
 				>
 			</File>
@@ -1583,11 +1587,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Queue.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\common\RConStartArgs.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\RegPrepare.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SrvPipes.cpp"
 				>
 			</File>
 			<File

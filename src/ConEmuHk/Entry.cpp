@@ -244,8 +244,8 @@ void OnConWndChanged(HWND ahNewConWnd)
 }
 
 #ifdef USE_PIPE_SERVER
-BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam, HANDLE hPipe);
-BOOL WINAPI HookServerReady(LPARAM lParam);
+BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
+BOOL WINAPI HookServerReady(LPVOID pInst, LPARAM lParam);
 void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 
 PipeServer<CESERVER_REQ,1> *gpHookServer = NULL;
@@ -373,7 +373,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	{
 		wchar_t szPipeName[128];
 		msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", GetCurrentProcessId());
-		BOOL lbOverlapped = TRUE;
+		bool lbOverlapped = true;
 		if (!gpHookServer->StartPipeServer(szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady, lbOverlapped))
 		{
 			_ASSERTEX(FALSE); // Ошибка запуска Pipes?
@@ -1230,7 +1230,7 @@ HWND WINAPI GetRealConsoleWindow()
 
 
 // Для облегчения жизни - сервер кеширует данные, калбэк может использовать ту же память (*pcbMaxReplySize)
-BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam, HANDLE hPipe)
+BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
 	WARNING("Собственно, выполнение команд!");
 	
@@ -1319,7 +1319,7 @@ BOOL WINAPI HookServerCommand(CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD 
 }
 
 // Вызывается после того, как создан Pipe Instance
-BOOL WINAPI HookServerReady(LPARAM lParam)
+BOOL WINAPI HookServerReady(LPVOID pInst, LPARAM lParam)
 {
 	return TRUE;
 }

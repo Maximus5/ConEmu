@@ -222,6 +222,8 @@ enum RealBufferType
 	rbt_DumpScreen,
 };
 
+template <class T, int MaxCount> struct PipeServer;
+
 class CRealConsole
 {
 #ifdef _DEBUG
@@ -585,33 +587,38 @@ class CRealConsole
 		WORD mn_SelectModeSkipVk; // пропустить "отпускание" клавиши Esc/Enter при выделении текста
 		//bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
 		//void UpdateSelection(); // обновить на экране
-		static DWORD WINAPI RConServerThread(LPVOID lpvParam);
-		HANDLE mh_RConServerThreads[MAX_SERVER_THREADS], mh_ActiveRConServerThread;
-		DWORD  mn_RConServerThreadsId[MAX_SERVER_THREADS];
-		HANDLE mh_ServerSemaphore, mh_GuiAttached;
+		//static DWORD WINAPI RConServerThread(LPVOID lpvParam);
+		//HANDLE mh_RConServerThreads[MAX_SERVER_THREADS], mh_ActiveRConServerThread;
+		//DWORD  mn_RConServerThreadsId[MAX_SERVER_THREADS];
+		//HANDLE mh_ServerSemaphore;
+		HANDLE mh_GuiAttached;
 		//void SetBufferHeightMode(BOOL abBufferHeight, BOOL abIgnoreLock=FALSE);
 		//BOOL mb_BuferModeChangeLocked; -> mp_RBuf
 
-		void ServerThreadCommand(HANDLE hPipe);
-		CESERVER_REQ* cmdStartStop(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		//CESERVER_REQ* cmdGetGuiHwnd(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdTabsChanged(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdGetOutputFile(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdGuiMacro(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdLangChange(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdTabsCmd(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdResources(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdSetForeground(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdFlashWindow(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdRegPanelView(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdSetBackground(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdActivateCon(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdOnCreateProc(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		//CESERVER_REQ* cmdNewConsole(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdOnPeekReadInput(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdOnSetConsoleKeyShortcuts(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		CESERVER_REQ* cmdLockDc(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
-		//CESERVER_REQ* cmdAssert(HANDLE hPipe, CESERVER_REQ* pIn, UINT nDataSize);
+		//void ServerThreadCommand(HANDLE hPipe);
+		PipeServer<CESERVER_REQ,3>* mp_RConServer;
+		static BOOL WINAPI ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
+		static BOOL WINAPI ServerThreadReady(LPVOID pInst, LPARAM lParam);
+		static void WINAPI ServerCommandFree(CESERVER_REQ* pReply, LPARAM lParam);
+		CESERVER_REQ* cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		//CESERVER_REQ* cmdGetGuiHwnd(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdGetOutputFile(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdGuiMacro(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdLangChange(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdTabsCmd(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdResources(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdSetForeground(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdFlashWindow(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdRegPanelView(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdSetBackground(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdActivateCon(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		//CESERVER_REQ* cmdNewConsole(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdOnPeekReadInput(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdOnSetConsoleKeyShortcuts(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		CESERVER_REQ* cmdLockDc(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+		//CESERVER_REQ* cmdAssert(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 		
 		//void ApplyConsoleInfo(CESERVER_REQ* pInfo);
 		void SetHwnd(HWND ahConWnd, BOOL abForceApprove = FALSE);

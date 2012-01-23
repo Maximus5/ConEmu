@@ -89,6 +89,8 @@ $(OBJDIR)\ConEmuSrv.obj \
 $(OBJDIR)\Injects.obj \
 $(OBJDIR)\Infiltrate.obj \
 $(OBJDIR)\InjectRemote.obj \
+$(OBJDIR)\Queue.obj \
+$(OBJDIR)\SrvPipes.obj \
 $(OBJDIR)\execute.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\Common.obj \
@@ -358,6 +360,10 @@ $(OBJDIR)\Injects.obj: ..\ConEmuHk\Injects.cpp
 $(OBJDIR)\Infiltrate.obj: Infiltrate.cpp
 
 $(OBJDIR)\InjectRemote.obj: InjectRemote.cpp
+
+$(OBJDIR)\Queue.obj: Queue.cpp
+
+$(OBJDIR)\SrvPipes.obj: SrvPipes.cpp
 
 $(OBJDIR)\execute.obj: ..\common\execute.cpp ..\common\execute.h
 

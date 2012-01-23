@@ -213,8 +213,9 @@ extern "C" {
 #endif
 
 
-DWORD WINAPI PlugServerThread(LPVOID lpvParam);
-DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe);
+//DWORD WINAPI PlugServerThread(LPVOID lpvParam);
+BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
+void WINAPI PlugServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 
 void ShowPluginMenu(int nID = -1);
 int ShowPluginMenuA();

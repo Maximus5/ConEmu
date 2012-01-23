@@ -153,7 +153,7 @@ void CAttachDlg::OnStartAttach()
 {
 	bool lbRc = false;
 	// Тут нужно получить инфу из списка и дернуть собственно аттач
-	wchar_t szItem[128];
+	wchar_t szItem[128] = {};
 	DWORD nPID = 0, nBits = WIN3264TEST(32,64);
 	AttachProcessType nType = apt_Unknown;
 	wchar_t *psz;
@@ -169,7 +169,7 @@ void CAttachDlg::OnStartAttach()
 	if (iSel < 0)
 		goto wrap;
 
-	ListView_GetItemText(mh_List, iSel, alc_PID, szItem, countof(szItem));
+	ListView_GetItemText(mh_List, iSel, alc_PID, szItem, countof(szItem)-1);
 	nPID = wcstoul(szItem, &psz, 10);
 	if (nPID)
 	{
@@ -264,8 +264,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 
 			CAttachDlg* pDlg = (CAttachDlg*)lParam;
 			HWND hList = pDlg->mh_List;
-			DWORD nPID = 0;
-			if (GetWindowThreadProcessId(hFind, &nPID))
+			if (nPID)
 			{
 				_wsprintf(szPid, SKIPLEN(countof(szPid)) L"%u", nPID);
 			}

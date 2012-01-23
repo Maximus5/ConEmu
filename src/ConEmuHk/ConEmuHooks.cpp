@@ -3182,7 +3182,14 @@ HANDLE WINAPI OnCreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeM
 	}
 	else
 	{
-		OutputDebugStringW(L"CreateNamedPipeW("); OutputDebugStringW(lpName); OutputDebugStringW(L")\n");
+		int nLen = lstrlen(lpName)+64;
+		wchar_t* psz = (wchar_t*)malloc(nLen*sizeof(*psz));
+		if (psz)
+		{
+			msprintf(psz, nLen, L"CreateNamedPipeW(%s)\n", lpName);
+			OutputDebugStringW(psz);
+			free(psz);
+		}
 	}
 
 #endif

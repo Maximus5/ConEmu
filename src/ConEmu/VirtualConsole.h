@@ -189,7 +189,7 @@ class CVirtualConsole :
 		// PanelViews
 		PanelViewInit m_LeftPanelView, m_RightPanelView;
 		bool mb_LeftPanelRedraw, mb_RightPanelRedraw;
-		SMALL_RECT mrc_LastDialogs[MAX_DETECTED_DIALOGS]; int mn_LastDialogsCount, mn_LastDialogFlags[MAX_DETECTED_DIALOGS];
+		SMALL_RECT mrc_LastDialogs[MAX_DETECTED_DIALOGS]; int mn_LastDialogsCount; DWORD mn_LastDialogFlags[MAX_DETECTED_DIALOGS];
 		SMALL_RECT mrc_Dialogs[MAX_DETECTED_DIALOGS]; int mn_DialogsCount; DWORD mn_DialogAllFlags, mn_DialogFlags[MAX_DETECTED_DIALOGS];
 		bool UpdatePanelView(bool abLeftPanel, bool abOnRegister=false);
 		CRgnRects m_RgnTest, m_RgnLeftPanel, m_RgnRightPanel;

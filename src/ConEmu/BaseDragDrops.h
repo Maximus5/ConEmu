@@ -148,4 +148,4 @@ class CEnumFormatEtc : public IEnumFORMATETC
 HRESULT CreateDropSource(IDropSource **ppDropSource, CDragDropData* pCallback);
 HRESULT CreateDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmeds, UINT count, CDataObject **ppDataObject);
 HRESULT CreateEnumFormatEtc(UINT nNumFormats, FORMATETC *pFormatEtc, IEnumFORMATETC **ppEnumFormatEtc);
-HANDLE StringToHandle(char *szText, int nTextLen);
+//HANDLE StringToHandle(char *szText, int nTextLen);
