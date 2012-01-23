@@ -1,8 +1,8 @@
-!if exists(../make_vc_defs)
-!include ../make_vc_defs
-!endif
+
+.SILENT:
 
 NAME = pe
+DIRNAME=$(NAME)
 OUTNAME = pe
 
 USERCPP=/D_NO_EXEPTION_=1

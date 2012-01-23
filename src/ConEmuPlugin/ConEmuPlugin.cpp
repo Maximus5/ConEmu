@@ -3825,8 +3825,10 @@ void InitHWND(/*HWND ahFarHwnd*/)
 		gpPlugServer = (PipeServer<CESERVER_REQ,3>*)calloc(1, sizeof(*gpPlugServer));
 	if (gpPlugServer)
 	{
-		gpPlugServer->StartPipeServer(gszPluginServerPipe, NULL, LocalSecurity(),
-			PlugServerCommand, PlugServerFree, NULL, NULL, NULL, true, false);
+		gpPlugServer->SetOverlapped(true);
+		gpPlugServer->SetLoopCommands(false);
+		
+		gpPlugServer->StartPipeServer(gszPluginServerPipe, NULL, LocalSecurity(), PlugServerCommand, PlugServerFree);
 	}
 	_ASSERTE(gpPlugServer!=NULL);
 	ghConsoleWrite = CreateEvent(NULL,FALSE,FALSE,NULL);

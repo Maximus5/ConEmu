@@ -1,63 +1,11 @@
-#The following variables can be set by the user:
-#
-#NAME - the name of the plugin (project name|dll name).
-#
-#EXT - extension of the plugin executable (dll by default).
-#
-#DOCS - a list of additional files that need to copied to the target folder.
-#
-#ADDOUTDIR - you can set it to /dir if the target folder for the plugin
-#            is a folder inside the default target folder.
-#            This is used in multiarc for building *.fmt.
-#
-#USERCPP - user defined switches for the compiler (added after the default
-#          ones).
-#
-#CPP_UNALIGN - use 1byte alignment insead of 8bytes in 32bit compiling
-#
-#ADDOBJDIR - you can set it to /dir if the temporary folder for the plugin
-#            compiled files is a folder inside the default temporary folder.
-#            This is used in ftp for building *.fll.
-#
-#DEF_NAME - name of DEF-file (maybe with path, but always without extension).
-#           If unspecifiedn used $(NAME).
-#           This is used in ftp for building *.fll.
-#
-#RC_NAME  - name of RC-file (maybe with path, but always without extension).
-#           If unspecifiedn used $(NAME).
-#           This is used in ftp for building *.fll.
-#
-#LINK_OBJS - a list of target *.obj files
-#
-#LINK_DEP - additional dependents for link rule (e.g. prebuild library)
-#
-#DEBUG - set if a debug build is needed
-#
-#WIDE - set for a unicode build
-#
-#ULINK - set if you want to use ulink for linking
-#
-#NEEDENTRY - set if you want to disable the /noentry link flag
-#
-#NEEDDEFLIB - set if you want to disable the /nodefaultlib link flag
-#
-#EXCLUDECRT - set if you do not want to link with common/crt lib.
-#
-#AMD64 - set for x64 build
-#  or
-#CPU=AMD64 - for x64 build
-#
-#IA64 - set for IA64 build
-#  or
-#CPU=IA64 - for IA64 build
-#
-#VC8 - set to build with VC8, VC9 intended by default
-#
 
+.SILENT:
 
-!if exists(../make_vc_defs)
-!include ../make_vc_defs
-!endif
+NAME=ConEmuTh
+DIRNAME=$(NAME)
+RELEASEDIR=..\..\Release\plugins\ConEmu\Thumbs
+
+!include ../makefile_vc_defs
 
 DEF_NAME = export
 
@@ -67,15 +15,12 @@ NEEDENTRY = 1
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
 OUTNAME = ConEmuTh.x64
-RCWIN64=/D_WIN64 /DWIN64
 BUILD_SUFFUX=x64
 !else
 OUTNAME = ConEmuTh
-RCWIN64=
 BUILD_SUFFUX=x86
 !endif                   
 
-NAME = ConEmuTh
 
 LINK_OBJS = \
 $(OBJDIR)\ConEmuTh.obj \
@@ -92,54 +37,13 @@ $(OBJDIR)\MSecurity.obj \
 $(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\WinObjects.obj
 
-#$(OBJDIR)\LogBrowser.obj
-
-
-!if defined(AMD64) || "$(CPU)" == "AMD64"
-!undef AMD64
-!undef CPU
-AMD64=1
-CPU=AMD64
-!elseif defined(IA64) || "$(CPU)" == "IA64"
-!undef IA64
-!undef CPU
-IA64=1
-CPU=IA64
-!endif
 
 RC_NAME=$(NAME)
 
-!ifndef DEBUG
-DIRNAME=final
-!else
-DIRNAME=debug
-!endif                   
 
-!ifdef WIDE
-DIRSUFF = W
-!endif
-
-
-RELEASEDIR=Release\plugins\ConEmu\Thumbs
-
-!ifdef AMD64
-DIRBIT = 64
-!else
-DIRBIT = 32
-!endif
-WORKDIR = $(DIRNAME).$(DIRBIT)$(DIRSUFF).vc
-!ifdef INSTALL
-OUTDIR=$(INSTALL)
-!else
-OUTDIR=$(WORKDIR)
-!endif
-
-
-OBJDIR = $(WORKDIR)\obj$(ADDOBJDIR)
 #COMMON = ..
 COMINC = ..
-CPP_WIDE = /DUNICODE /D_UNICODE /DUSE_SEH
-RC_WIDE = /dUNICODE
+CPP_WIDE = $(CPP_WIDE) /DUSE_SEH
 EXT = dll
 DLLNAME = $(OUTNAME).$(EXT)
 DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
@@ -274,7 +178,7 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !endif
 
 $(RES): $(RC_NAME).rc
-	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RCWIN64) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
+	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
 
 .PHONY: dirs
 dirs:
@@ -288,26 +192,17 @@ dirs:
 .PHONY: clean
 clean:
 	echo copying release files
-	@if not exist "..\..\$(RELEASEDIR)\$(NULL)" mkdir "..\..\$(RELEASEDIR)"
-	move $(DLLFULLNAME) ..\..\$(RELEASEDIR)
+	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	move $(DLLFULLNAME) $(RELEASEDIR)
 	@cd
-	@echo moving $(PDB) ..\..\$(RELEASEDIR)
+	@echo moving $(PDB) $(RELEASEDIR)
 !ifdef DEBUG
-	move $(PDB) ..\..\$(RELEASEDIR)
+	move $(PDB) $(RELEASEDIR)
 !else
 	@if exist $(PDB) del $(PDB)
 !endif
-	move $(MAP) ..\..\$(RELEASEDIR)
+	move $(MAP) $(RELEASEDIR)
 
-#	echo final cleaning
-#	echo del /Q $(OBJDIR)\*.*
-#	del /Q $(OBJDIR)\*.*
-#	echo rd $(OBJDIR)
-#	rd $(OBJDIR)
-#	echo del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
-#	del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
-#	echo rd $(OUTDIR)$(ADDOUTDIR)
-#	rd $(OUTDIR)$(ADDOUTDIR)
 
 $(OBJDIR)\ConEmuTh.obj: ConEmuTh.cpp
 

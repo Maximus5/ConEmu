@@ -77,10 +77,12 @@ bool InputServerStart()
 		return false;
 	}
 
+	gpSrv->InputServer.SetOverlapped(true);
+	gpSrv->InputServer.SetLoopCommands(true);
 	gpSrv->InputServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
+	gpSrv->InputServer.SetInputOnly(true);
 
-	if (!gpSrv->InputServer.StartPipeServer(gpSrv->szInputname, NULL, LocalSecurity(),
-				InputServerCommand, NULL, NULL, NULL, NULL, true, true))
+	if (!gpSrv->InputServer.StartPipeServer(gpSrv->szInputname, NULL, LocalSecurity(), InputServerCommand))
 		return false;
 
 	return true;
@@ -215,10 +217,11 @@ bool CmdServerStart()
 		return false;
 	}
 
+	gpSrv->CmdServer.SetOverlapped(true);
+	gpSrv->CmdServer.SetLoopCommands(false);
 	//gpSrv->CmdServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
 
-	if (!gpSrv->CmdServer.StartPipeServer(gpSrv->szPipename, NULL, LocalSecurity(),
-		CmdServerCommand, CmdServerFree, NULL, NULL, NULL, true, true))
+	if (!gpSrv->CmdServer.StartPipeServer(gpSrv->szPipename, NULL, LocalSecurity(), CmdServerCommand, CmdServerFree))
 		return false;
 
 	return true;
@@ -296,10 +299,11 @@ bool DataServerStart()
 		return false;
 	}
 
+	gpSrv->DataServer.SetOverlapped(true);
+	gpSrv->DataServer.SetLoopCommands(true);
 	gpSrv->DataServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
 
-	if (!gpSrv->DataServer.StartPipeServer(gpSrv->szGetDataPipe, NULL, LocalSecurity(),
-		DataServerCommand, DataServerFree, NULL, NULL, NULL, true, true))
+	if (!gpSrv->DataServer.StartPipeServer(gpSrv->szGetDataPipe, NULL, LocalSecurity(), DataServerCommand, DataServerFree))
 		return false;
 
 	return true;

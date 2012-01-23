@@ -1,63 +1,11 @@
-#The following variables can be set by the user:
-#
-#NAME - the name of the plugin (project name|dll name).
-#
-#EXT - extension of the plugin executable (dll by default).
-#
-#DOCS - a list of additional files that need to copied to the target folder.
-#
-#ADDOUTDIR - you can set it to /dir if the target folder for the plugin
-#            is a folder inside the default target folder.
-#            This is used in multiarc for building *.fmt.
-#
-#USERCPP - user defined switches for the compiler (added after the default
-#          ones).
-#
-#CPP_UNALIGN - use 1byte alignment insead of 8bytes in 32bit compiling
-#
-#ADDOBJDIR - you can set it to /dir if the temporary folder for the plugin
-#            compiled files is a folder inside the default temporary folder.
-#            This is used in ftp for building *.fll.
-#
-#DEF_NAME - name of DEF-file (maybe with path, but always without extension).
-#           If unspecifiedn used $(NAME).
-#           This is used in ftp for building *.fll.
-#
-#RC_NAME  - name of RC-file (maybe with path, but always without extension).
-#           If unspecifiedn used $(NAME).
-#           This is used in ftp for building *.fll.
-#
-#LINK_OBJS - a list of target *.obj files
-#
-#LINK_DEP - additional dependents for link rule (e.g. prebuild library)
-#
-#DEBUG - set if a debug build is needed
-#
-#WIDE - set for a unicode build
-#
-#ULINK - set if you want to use ulink for linking
-#
-#NEEDENTRY - set if you want to disable the /noentry link flag
-#
-#NEEDDEFLIB - set if you want to disable the /nodefaultlib link flag
-#
-#EXCLUDECRT - set if you do not want to link with common/crt lib.
-#
-#AMD64 - set for x64 build
-#  or
-#CPU=AMD64 - for x64 build
-#
-#IA64 - set for IA64 build
-#  or
-#CPU=IA64 - for IA64 build
-#
-#VC8 - set to build with VC8, VC9 intended by default
-#
 
+.SILENT:
 
-!if exists(../make_vc_defs)
-!include ../make_vc_defs
-!endif
+NAME=ConEmuHk
+DIRNAME=$(NAME)
+RELEASEDIR=..\..\Release\ConEmu
+
+!include ../makefile_vc_defs
 
 DEF_NAME = export
 
@@ -68,12 +16,10 @@ USE_PDB = 1
 
 DEFINES=/DUSE_SEH
 
-!if defined(AMD64) || "$(CPU)" == "AMD64"
+!if defined(AMD64)
 OUTNAME = ConEmuHk64
-RCWIN64=/D_WIN64 /DWIN64
 !else
 OUTNAME = ConEmuHk
-RCWIN64=
 !endif
 
 # !!! WindowsXP для ConsoleAlias !!!
@@ -92,7 +38,6 @@ BASEADDRESS=/DYNAMICBASE:NO /BASE:0x7E110000 /FIXED:NO
 #OUTNAME = ConEmuHk
 #!endif
 
-NAME = ConEmuHk
 RC_NAME = ConEmuHk
 
 LINK_OBJS = \
@@ -116,18 +61,6 @@ $(OBJDIR)\UserImp.obj
 USERLIBS = 
 
 
-!if defined(AMD64) || "$(CPU)" == "AMD64"
-!undef AMD64
-!undef CPU
-AMD64=1
-CPU=AMD64
-!elseif defined(IA64) || "$(CPU)" == "IA64"
-!undef IA64
-!undef CPU
-IA64=1
-CPU=IA64
-!endif
-
 !ifndef RC_NAME
 RC_NAME=$(NAME)
 !endif
@@ -136,39 +69,8 @@ RC_NAME=$(NAME)
 DEF_NAME=$(NAME)
 !endif
 
-!ifndef DEBUG
-DIRNAME=final
-!else
-DIRNAME=debug
-!endif                   
-
-!ifdef WIDE
-DIRSUFF = W
-!endif
-
-
-RELEASEDIR=\Release\ConEmu
-
-!ifdef AMD64
-DIRBIT = 64
-!else
-DIRBIT = 32
-!endif
-WORKDIR = $(DIRNAME).$(DIRBIT)$(DIRSUFF).vc
-!ifndef OUTDIR
-!ifdef INSTALL
-OUTDIR=$(INSTALL)
-!else
-OUTDIR=$(WORKDIR)
-!endif
-!endif
-
-
-OBJDIR = $(WORKDIR)\obj$(ADDOBJDIR)
 #COMMON = ..
 COMINC = ..
-CPP_WIDE = /DUNICODE /D_UNICODE
-RC_WIDE = /dUNICODE
 EXT = dll
 DLLNAME = $(OUTNAME).$(EXT)
 DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
@@ -328,7 +230,7 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !endif
 
 $(RES): $(RC_NAME).rc
-	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RCWIN64) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
+	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
 
 .PHONY: dirs
 dirs:
@@ -342,27 +244,22 @@ dirs:
 .PHONY: clean
 clean:
 	@echo copying release files
-	@if not exist "..\..$(RELEASEDIR)\$(NULL)" mkdir "..\..$(RELEASEDIR)"
-	@move $(DLLFULLNAME) ..\..$(RELEASEDIR)\$(OUTNAME).dll
+	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	@move $(DLLFULLNAME) $(RELEASEDIR)\$(OUTNAME).dll
 #!ifdef DEBUG
-	@move $(PDBNAME) ..\..$(RELEASEDIR)\$(OUTNAME).pdb
+	@move $(PDBNAME) $(RELEASEDIR)\$(OUTNAME).pdb
 #!else
 #	@if exist $(PDBNAME) del $(PDBNAME)
 #!endif
-	@move $(MAP) ..\..$(RELEASEDIR)\$(OUTNAME).map
-
-#	@echo final cleaning
-#	@del /Q $(OBJDIR)\*.*
-#	@rd $(OBJDIR)
-#	@del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
-#	@rd $(OUTDIR)$(ADDOUTDIR)
+	@move $(MAP) $(RELEASEDIR)\$(OUTNAME).map
 
 
-$(OBJDIR)\Entry.obj: Entry.cpp ..\common\PipeServer.h
+
+$(OBJDIR)\Entry.obj: Entry.cpp ../common/PipeServer.h
 
 $(OBJDIR)\Injects.obj: Injects.cpp Console2.h
 
-$(OBJDIR)\Common.obj: ..\common\Common.cpp
+$(OBJDIR)\Common.obj: ../common/Common.cpp
 
 $(OBJDIR)\ConEmuHk.obj: ConEmuHk.cpp
 
@@ -374,23 +271,23 @@ $(OBJDIR)\RegHooks.obj: RegHooks.cpp
 
 $(OBJDIR)\ConEmuSrv.obj: ConEmuSrv.cpp
 
-$(OBJDIR)\execute.obj: ..\common\execute.cpp ..\common\execute.h
+$(OBJDIR)\execute.obj: ../common/execute.cpp ../common/execute.h
 
 $(OBJDIR)\SetHook.obj: SetHook.cpp SetHook.h
 
 $(OBJDIR)\ShellProcessor.obj: ShellProcessor.cpp ShellProcessor.h
 
-$(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp ..\common\WinObjects.h
+$(OBJDIR)\WinObjects.obj: ../common/WinObjects.cpp ../common/WinObjects.h
 
-$(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp ..\common\ConEmuCheck.h
+$(OBJDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp ../common/ConEmuCheck.h
 
-$(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
+$(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
 
-$(OBJDIR)\Memory.obj: ..\common\Memory.cpp
+$(OBJDIR)\Memory.obj: ../common/Memory.cpp
 
-$(OBJDIR)\MSecurity.obj: ..\common\MSecurity.cpp
+$(OBJDIR)\MSecurity.obj: ../common/MSecurity.cpp
 
-$(OBJDIR)\MStrSafe.obj: ..\common\MStrSafe.cpp
+$(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
 $(OBJDIR)\GuiAttach.obj: GuiAttach.cpp GuiAttach.h
 

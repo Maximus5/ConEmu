@@ -8014,7 +8014,11 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	// Запустить серверную нить
 	// 120122 - теперь через PipeServer
 	_wsprintf(ms_ServerPipe, SKIPLEN(countof(ms_ServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghWnd); //-V205
-	if (!mp_GuiServer->StartPipeServer(ms_ServerPipe, NULL, LocalSecurity(), GuiServerCommand, GuiServerFree, NULL, NULL, NULL, TRUE, FALSE))
+	
+	mp_GuiServer->SetOverlapped(true);
+	mp_GuiServer->SetLoopCommands(false);
+	
+	if (!mp_GuiServer->StartPipeServer(ms_ServerPipe, NULL, LocalSecurity(), GuiServerCommand, GuiServerFree))
 	{
 		// Ошибка уже показана
 		return -1;

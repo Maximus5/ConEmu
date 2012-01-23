@@ -1082,17 +1082,43 @@ struct PipeServer
 	//		StopPipeServer();
 	//	};
 	public:
+		void SetPriority(int nPriority)
+		{
+			// Звать ПЕРЕД StartPipeServer
+			_ASSERTE(mb_Initialized==FALSE);
+			mn_Priority = nPriority;
+		};
+
+		void SetInputOnly(bool bInputOnly)
+		{
+			// Звать ПЕРЕД StartPipeServer
+			_ASSERTE(mb_Initialized==FALSE);
+			mb_InputOnly = bInputOnly;
+		};
+
+		void SetOverlapped(bool bOverlapped)
+		{
+			// Звать ПЕРЕД StartPipeServer
+			_ASSERTE(mb_Initialized==FALSE);
+			mb_Overlapped = bOverlapped;
+		};
+
+		void SetLoopCommands(bool bLoopCommands)
+		{
+			// Звать ПЕРЕД StartPipeServer
+			_ASSERTE(mb_Initialized==FALSE);
+			mb_LoopCommands = bLoopCommands;
+		};
+		
 		bool StartPipeServer(
 			    LPCWSTR asPipeName,
 			    LPARAM alParam,
 			    LPSECURITY_ATTRIBUTES alpSec /*= LocalSecurity()*/, // MUST! be alive for life cicle
 			    PipeServerCommand_t apfnPipeServerCommand,
-			    PipeServerFree_t apfnPipeServerFree,
+			    PipeServerFree_t apfnPipeServerFree = NULL,
 			    PipeServerConnected_t apfnPipeServerConnected = NULL,
 			    PipeServerConnected_t apfnPipeServerDisconnected = NULL,
-			    PipeServerReady_t apfnPipeServerReady = NULL,
-			    bool abOverlapped = false, // пока
-			    bool abLoopCommands = false
+			    PipeServerReady_t apfnPipeServerReady = NULL
 		    )
 		{
 			if (mb_Initialized)
@@ -1102,8 +1128,8 @@ struct PipeServer
 			}
 			
 			mb_Initialized = false;
-			mb_Overlapped = abOverlapped;
-			mb_LoopCommands = abLoopCommands;
+			//mb_Overlapped = abOverlapped;
+			//mb_LoopCommands = abLoopCommands;
 			memset(m_Pipes, 0, sizeof(m_Pipes));
 			mp_ActivePipe = NULL;
 			mb_ReadyCalled = FALSE;
@@ -1265,20 +1291,6 @@ struct PipeServer
 		HANDLE GetPipeHandle(LPVOID pInstance)
 		{
 			return pInstance ? ((PipeInst*)pInstance)->hPipeInst : NULL;
-		};
-
-		void SetPriority(int nPriority)
-		{
-			// Звать ПЕРЕД StartPipeServer
-			_ASSERTE(mb_Initialized==FALSE);
-			mn_Priority = nPriority;
-		};
-
-		void SetInputOnly(bool bInputOnly)
-		{
-			// Звать ПЕРЕД StartPipeServer
-			_ASSERTE(mb_Initialized==FALSE);
-			mb_InputOnly = bInputOnly;
 		};
 
 		bool IsPipeThread(DWORD TID)

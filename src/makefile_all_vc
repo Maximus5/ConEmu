@@ -8,7 +8,9 @@ ALLDIRS = ConEmu ConEmuC ConEmuCD ConEmuHk ConEmuPlugin ConEmuTh ConEmuLn ConEmu
 BUILD_SUFFUX=x86
 !endif
 
-all: ALLCLEAN $(ALLDIRS) ALLCLEAN
+all: PRECLEAN $(ALLDIRS) ALLCLEAN
+
+incremental: $(ALLDIRS)
 
 FICTIVE=_fictive_
 $(FICTIVE):
@@ -18,6 +20,10 @@ $(ALLDIRS): $(FICTIVE)
 	@cd $@
 	@$(MAKE) -s -f makefile_vc $(_MDEFS)
 	@cd ..
+
+.PHONY: PRECLEAN
+PRECLEAN:
+	@clean.bat
 
 .PHONY: ALLCLEAN
 ALLCLEAN:

@@ -6038,8 +6038,11 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 		// Запустить серверный пайп
 		_wsprintf(ms_VConServer_Pipe, SKIPLEN(countof(ms_VConServer_Pipe)) CEGUIPIPENAME, L".", (DWORD)hConWnd); //был mn_ConEmuC_PID //-V205
 
+		mp_RConServer->SetOverlapped(true);
+		mp_RConServer->SetLoopCommands(false);
+		
 		if (!mp_RConServer->StartPipeServer(ms_VConServer_Pipe, (LPARAM)this, LocalSecurity(),
-				ServerCommand, ServerCommandFree, NULL, NULL, ServerThreadReady, TRUE, TRUE))
+				ServerCommand, ServerCommandFree, NULL, NULL, ServerThreadReady))
 		{
 			MBoxAssert("mp_RConServer->StartPipeServer"==0);
 		}

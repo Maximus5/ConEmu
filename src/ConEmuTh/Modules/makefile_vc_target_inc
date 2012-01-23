@@ -46,16 +46,6 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 	@$(CC) $(CFLAGS) { $< } 
 !endif
 
-$(OBJDIR)\PVD1Helper.obj: ..\PVD1Helper.cpp ..\PictureViewPlugin.h
-
-$(OBJDIR)\PVD2Helper.obj: ..\PVD2Helper.cpp ..\PVD2Helper.h ..\PictureViewPlugin.h
-
-$(OBJDIR)\PVD_CRT.obj: ..\PVD_CRT.cpp
-
-$(OBJDIR)\MAssert.obj: ..\..\..\common\MAssert.cpp
-
-$(OBJDIR)\Memory.obj: ..\..\..\common\Memory.cpp
-
 $(RES): $(RC_NAME).rc
 	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
 
@@ -69,7 +59,7 @@ dirs:
 
 .PHONY: clean
 clean:
-	@echo final cleaning
+	@echo copying release files
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@move "$(DLLFULLNAME)" $(RELEASEDIR)
 	@move "$(PDBNAME)" "$(RELEASEDIR)\$(DLLNAME).pdb"

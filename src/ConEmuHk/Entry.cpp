@@ -373,8 +373,11 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	{
 		wchar_t szPipeName[128];
 		msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", GetCurrentProcessId());
-		bool lbOverlapped = true;
-		if (!gpHookServer->StartPipeServer(szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady, lbOverlapped))
+		
+		gpHookServer->SetOverlapped(true);
+		gpHookServer->SetLoopCommands(false);
+		
+		if (!gpHookServer->StartPipeServer(szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady))
 		{
 			_ASSERTEX(FALSE); // Ошибка запуска Pipes?
 			gpHookServer->StopPipeServer();

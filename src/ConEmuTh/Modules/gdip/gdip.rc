@@ -8,6 +8,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include "../afxres.h"
+#include "../../../ConEmu/Version.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -35,6 +36,7 @@ END
 2 TEXTINCLUDE 
 BEGIN
     "#include ""../afxres.h""\r\n"
+    "#include ""../../../ConEmu/Version.h""\r\n"
     "\0"
 END
 
@@ -53,8 +55,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,0
- PRODUCTVERSION 1,0,0,0
+ FILEVERSION CONEMUVERN
+ PRODUCTVERSION CONEMUVERN
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -70,11 +72,11 @@ BEGIN
         BLOCK "041904b0"
         BEGIN
             VALUE "FileDescription", "GDI+ for ConEmu Thumbnails"
-            VALUE "FileVersion", "1.0"
+            VALUE "FileVersion", CONEMUVERS
             VALUE "LegalCopyright", "Copyright © 2010 Maximus5"
             VALUE "OriginalFilename", "gdi+"
             VALUE "ProductName", "ConEmu Thumbnails"
-            VALUE "ProductVersion", "1.0"
+            VALUE "ProductVersion", CONEMUVERS
         END
     END
     BLOCK "VarFileInfo"
