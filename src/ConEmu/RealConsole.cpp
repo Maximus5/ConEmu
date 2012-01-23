@@ -5005,9 +5005,7 @@ BOOL CRealConsole::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* 
 	//	}
 	//}
 
-#ifdef _DEBUG
 	int nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
-#endif
 
 	// Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
 
