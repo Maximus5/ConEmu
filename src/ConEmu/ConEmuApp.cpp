@@ -1343,6 +1343,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						//setParent = true; -- Maximus5 - нефиг, все ручками
 						BufferHeightVal = -BufferHeightVal;
 					}
+
+					if (BufferHeightVal < LONGOUTPUTHEIGHT_MIN)
+						BufferHeightVal = LONGOUTPUTHEIGHT_MIN;
+					else if (BufferHeightVal > LONGOUTPUTHEIGHT_MAX)
+						BufferHeightVal = LONGOUTPUTHEIGHT_MAX;
 				}
 			}
 			else if (!klstricmp(curCommand, _T("/Config")) && i + 1 < params)

@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "MenuIds.h"
 
-template <class T, int MaxCount> struct PipeServer;
+template <class T> struct PipeServer;
 //#include "../common/PipeServer.h"
 
 #define IID_IShellLink IID_IShellLinkW
@@ -344,7 +344,7 @@ class CConEmuMain :
 		UINT mn_MsgRequestUpdate;
 
 		//
-		PipeServer<CESERVER_REQ,2>* mp_GuiServer;
+		PipeServer<CESERVER_REQ>* mp_GuiServer;
 		//static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
 		//void GuiServerThreadCommand(HANDLE hPipe);
 		//DWORD mn_GuiServerThreadId; HANDLE mh_GuiServerThread, mh_GuiServerThreadTerminate;

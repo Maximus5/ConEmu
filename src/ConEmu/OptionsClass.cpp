@@ -1310,6 +1310,25 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
 
+	wchar_t sz[16];
+	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
+	SetDlgItemText(hWnd2, tLongOutputHeight, _ltow(gpSet->DefaultBufferHeight, sz, 10));
+	EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
+	// 16bit Height
+	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"Auto");
+	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"25 lines");
+	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"28 lines");
+	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"43 lines");
+	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"50 lines");
+	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_SETCURSEL, !gpSet->ntvdmHeight ? 0 :
+	                   ((gpSet->ntvdmHeight == 25) ? 1 : ((gpSet->ntvdmHeight == 28) ? 2 : ((gpSet->ntvdmHeight == 43) ? 3 : 4))), 0); //-V112
+	// Cmd.exe output cp
+	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Undefined");
+	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Automatic");
+	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Unicode");
+	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM");
+	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_SETCURSEL, gpSet->nCmdOutputCP, 0);
+
 	RegisterTipsFor(hWnd2);
 	return 0;
 }
@@ -1771,24 +1790,6 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 
 	CheckDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
 
-	wchar_t sz[16];
-	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
-	SetDlgItemText(hWnd2, tLongOutputHeight, _ltow(gpSet->DefaultBufferHeight, sz, 10));
-	EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
-	// 16bit Height
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"Auto");
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"25 lines");
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"28 lines");
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"43 lines");
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"50 lines");
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_SETCURSEL, !gpSet->ntvdmHeight ? 0 :
-	                   ((gpSet->ntvdmHeight == 25) ? 1 : ((gpSet->ntvdmHeight == 28) ? 2 : ((gpSet->ntvdmHeight == 43) ? 3 : 4))), 0); //-V112
-	// Cmd.exe output cp
-	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Undefined");
-	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Automatic");
-	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Unicode");
-	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM");
-	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_SETCURSEL, gpSet->nCmdOutputCP, 0);
 	//
 	//SetupHotkeyChecks(hTabs);
 	//SendDlgItemMessage(hTabs, hkNewConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
@@ -2234,18 +2235,18 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				gpConEmu->ActiveCon()->Invalidate();
 			break;
 		case cbMultiCon:
-			gpSet->isMulti = IsChecked(hTabs, cbMultiCon);
+			gpSet->isMulti = IsChecked(hWnd2, cbMultiCon);
 			break;
 		case cbMultiIterate:
-			gpSet->isMultiIterate = IsChecked(hTabs, cbMultiIterate);
+			gpSet->isMultiIterate = IsChecked(hWnd2, cbMultiIterate);
 			break;
 		case cbNewConfirm:
-			gpSet->isMultiNewConfirm = IsChecked(hTabs, cbNewConfirm);
+			gpSet->isMultiNewConfirm = IsChecked(hWnd2, cbNewConfirm);
 			break;
 		case cbLongOutput:
-			gpSet->AutoBufferHeight = IsChecked(hTabs, cbLongOutput);
+			gpSet->AutoBufferHeight = IsChecked(hWnd2, cbLongOutput);
 			gpConEmu->UpdateFarSettings();
-			EnableWindow(GetDlgItem(hTabs, tLongOutputHeight), gpSet->AutoBufferHeight);
+			EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
 			break;
 		case cbBold:
 		case cbItalic:
@@ -2409,7 +2410,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbTabs:
 
-			switch(IsChecked(hTabs, cbTabs))
+			switch(IsChecked(hWnd2, cbTabs))
 			{
 				case BST_UNCHECKED:
 					gpSet->isTabs = 0; break;
@@ -2423,17 +2424,17 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			//gpConEmu->mp_TabBar->Update(TRUE); -- это как-то неправильно работает.
 			break;
 		case cbTabSelf:
-			gpSet->isTabSelf = IsChecked(hTabs, cbTabSelf);
+			gpSet->isTabSelf = IsChecked(hWnd2, cbTabSelf);
 			break;
 		case cbTabRecent:
-			gpSet->isTabRecent = IsChecked(hTabs, cbTabRecent);
+			gpSet->isTabRecent = IsChecked(hWnd2, cbTabRecent);
 			break;
 		case cbTabLazy:
-			gpSet->isTabLazy = IsChecked(hTabs, cbTabLazy);
+			gpSet->isTabLazy = IsChecked(hWnd2, cbTabLazy);
 			break;
 		case cbTabsOnTaskBar:
 			// 3state: BST_UNCHECKED/BST_CHECKED/BST_INDETERMINATE
-			gpSet->m_isTabsOnTaskBar = IsChecked(hTabs, cbTabsOnTaskBar);
+			gpSet->m_isTabsOnTaskBar = IsChecked(hWnd2, cbTabsOnTaskBar);
 			gpConEmu->OnTaskbarSettingsChanged();
 			break;
 		case cbRSelectionFix:
@@ -2607,19 +2608,19 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case rbAdminShield:
 		case rbAdminSuffix:
-			gpSet->bAdminShield = IsChecked(hTabs, rbAdminShield);
+			gpSet->bAdminShield = IsChecked(hWnd2, rbAdminShield);
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
 		case cbHideInactiveConTabs:
-			gpSet->bHideInactiveConsoleTabs = IsChecked(hTabs, cbHideInactiveConTabs);
+			gpSet->bHideInactiveConsoleTabs = IsChecked(hWnd2, cbHideInactiveConTabs);
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
 		case cbHideDisabledTabs:
-			gpSet->bHideDisabledTabs = IsChecked(hTabs, cbHideDisabledTabs);
+			gpSet->bHideDisabledTabs = IsChecked(hWnd2, cbHideDisabledTabs);
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
 		case cbShowFarWindows:
-			gpSet->bShowFarWindows = IsChecked(hTabs, cbShowFarWindows);
+			gpSet->bShowFarWindows = IsChecked(hWnd2, cbShowFarWindows);
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
 			
@@ -2633,7 +2634,6 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					break;
 				case cbUseWinNumber:
 					gpSet->isUseWinNumber = IsChecked(hKeys, CB);
-					//if (hTabs) CheckDlgButton(hTabs, cbUseWinNumber, gpSet->isUseWinNumber ? BST_CHECKED : BST_UNCHECKED);
 					break;
 				case cbUseWinTab:
 					gpSet->isUseWinTab = IsChecked(hKeys, CB);
@@ -2643,7 +2643,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 
 		//case cbUseWinNumber:
-		//	gpSet->isUseWinNumber = IsChecked(hTabs, cbUseWinNumber);
+		//	gpSet->isUseWinNumber = IsChecked(hWnd2, cbUseWinNumber);
 		//	if (hKeys) CheckDlgButton(hKeys, cbUseWinNumberK, gpSet->isUseWinNumber ? BST_CHECKED : BST_UNCHECKED);
 		//	gpConEmu->UpdateWinHookSettings();
 		//	break;
@@ -3357,18 +3357,18 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	{
 		BOOL lbOk = FALSE;
 		wchar_t szTemp[16];
-		UINT nNewVal = GetDlgItemInt(hTabs, tLongOutputHeight, &lbOk, FALSE);
+		UINT nNewVal = GetDlgItemInt(hWnd2, tLongOutputHeight, &lbOk, FALSE);
 
 		if (lbOk)
 		{
-			if (nNewVal >= 300 && nNewVal <= 9999)
+			if (nNewVal >= LONGOUTPUTHEIGHT_MIN && nNewVal <= LONGOUTPUTHEIGHT_MAX)
 				gpSet->DefaultBufferHeight = nNewVal;
-			else if (nNewVal > 9999)
-				SetDlgItemText(hTabs, TB, _ltow(gpSet->DefaultBufferHeight, szTemp, 10));
+			else if (nNewVal > LONGOUTPUTHEIGHT_MAX)
+				SetDlgItemInt(hWnd2, TB, gpSet->DefaultBufferHeight, FALSE);
 		}
 		else
 		{
-			SetDlgItemText(hTabs, TB, _ltow(gpSet->DefaultBufferHeight, szTemp, 10));
+			SetDlgItemText(hWnd2, TB, _ltow(gpSet->DefaultBufferHeight, szTemp, 10));
 		}
 		break;
 	} //case tLongOutputHeight:
@@ -3377,7 +3377,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	//case hkSwitchConsole:
 	//case hkCloseConsole:
 	//{
-	//	UINT nHotKey = 0xFF & SendDlgItemMessage(hTabs, TB, HKM_GETHOTKEY, 0, 0);
+	//	UINT nHotKey = 0xFF & SendDlgItemMessage(hWnd2, TB, HKM_GETHOTKEY, 0, 0);
 
 	//	if (TB == hkNewConsole)
 	//		gpSet->icMultiNew = nHotKey;
@@ -3386,7 +3386,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	//	else if (TB == hkCloseConsole)
 	//		gpSet->icMultiRecreate = nHotKey;
 
-	//	// SendDlgItemMessage(hTabs, hkMinimizeRestore, HKM_SETHOTKEY, gpSet->icMinimizeRestore, 0);
+	//	// SendDlgItemMessage(hWnd2, hkMinimizeRestore, HKM_SETHOTKEY, gpSet->icMinimizeRestore, 0);
 	//	break;
 	//} // case hkNewConsole: case hkSwitchConsole: case hkCloseConsole:
 
@@ -3420,7 +3420,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	{
 		wchar_t temp[MAX_PATH]; temp[0] = 0;
 
-		if (GetDlgItemText(hTabs, TB, temp, MAX_PATH) && temp[0])
+		if (GetDlgItemText(hWnd2, TB, temp, MAX_PATH) && temp[0])
 		{
 			temp[31] = 0; // страховка
 
@@ -3444,7 +3444,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tTabLenMax:
 	{
 		BOOL lbOk = FALSE;
-		DWORD n = GetDlgItemInt(hTabs, tTabLenMax, &lbOk, FALSE);
+		DWORD n = GetDlgItemInt(hWnd2, tTabLenMax, &lbOk, FALSE);
 
 		if (n > 10 && n < CONEMUTABMAX)
 		{
@@ -3456,7 +3456,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	
 	case tAdminSuffix:
 	{
-		GetDlgItemText(hTabs, tAdminSuffix, gpSet->szAdminTitleSuffix, countof(gpSet->szAdminTitleSuffix));
+		GetDlgItemText(hWnd2, tAdminSuffix, gpSet->szAdminTitleSuffix, countof(gpSet->szAdminTitleSuffix));
 		gpConEmu->mp_TabBar->Update(TRUE);
 		break;
 	} // case tAdminSuffix:
@@ -3725,13 +3725,13 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	}
 	case lbNtvdmHeight:
 	{
-		INT_PTR num = SendDlgItemMessage(hTabs, wId, CB_GETCURSEL, 0, 0);
+		INT_PTR num = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
 		gpSet->ntvdmHeight = (num == 1) ? 25 : ((num == 2) ? 28 : ((num == 3) ? 43 : ((num == 4) ? 50 : 0))); //-V112
 		break;
 	}
 	case lbCmdOutputCP:
 	{
-		gpSet->nCmdOutputCP = SendDlgItemMessage(hTabs, wId, CB_GETCURSEL, 0, 0);
+		gpSet->nCmdOutputCP = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
 
 		if (gpSet->nCmdOutputCP == -1) gpSet->nCmdOutputCP = 0;
 

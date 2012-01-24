@@ -217,6 +217,7 @@ bool CmdServerStart()
 		return false;
 	}
 
+	gpSrv->CmdServer.SetMaxCount(3);
 	gpSrv->CmdServer.SetOverlapped(true);
 	gpSrv->CmdServer.SetLoopCommands(false);
 	//gpSrv->CmdServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);

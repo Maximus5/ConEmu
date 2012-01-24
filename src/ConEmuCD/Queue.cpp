@@ -564,7 +564,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 	DWORD dwWait = 0;
 	INPUT_RECORD ir[100];
 
-	while((dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INPUT_QUEUE_TIMEOUT)) != WAIT_OBJECT_0)
+	while ((dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INPUT_QUEUE_TIMEOUT)) != WAIT_OBJECT_0)
 	{
 		if (IsInputQueueEmpty())
 			continue;

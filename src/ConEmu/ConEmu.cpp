@@ -110,6 +110,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 const wchar_t* gsHomePage = L"http://conemu-maximus5.googlecode.com";
 const wchar_t* gsReportBug = L"http://code.google.com/p/conemu-maximus5/issues/entry";
 
+struct MsgSrvStartedArg
+{
+	HWND  hConWnd;
+	DWORD nSrcPID;
+	DWORD timeStart;
+	DWORD timeRecv;
+	DWORD timeFin;
+};
 
 CConEmuMain::CConEmuMain()
 {
@@ -158,7 +166,8 @@ CConEmuMain::CConEmuMain()
 	//mb_IgnoreStoreNormalRect = false;
 	//mn_CurrentKeybLayout = (DWORD_PTR)GetKeyboardLayout(0);
 	//mn_GuiServerThreadId = 0; mh_GuiServerThread = NULL; mh_GuiServerThreadTerminate = NULL;
-	mp_GuiServer = (PipeServer<CESERVER_REQ,2>*)calloc(1, sizeof(*mp_GuiServer));
+	mp_GuiServer = (PipeServer<CESERVER_REQ>*)calloc(1, sizeof(*mp_GuiServer));
+	mp_GuiServer->SetMaxCount(2);
 	ms_ServerPipe[0] = 0;
 	//mpsz_RecreateCmd = NULL;
 	mb_InImeComposition = false; mb_ImeMethodChanged = false;
@@ -5043,8 +5052,11 @@ void CConEmuMain::UpdateWinHookSettings()
 			if (gpSet->isSendCtrlEsc) nNewValue |= 1<<ID_CTRLESC;
 			
 			CVirtualConsole* pVCon;
-			for (size_t i = 0; (pVCon = GetVCon(i)) != NULL; i++)
+			for (size_t i = 0; i < countof(mp_VCon); i++)
 			{
+				pVCon = GetVCon(i);
+				if (!pVCon)
+					break;
 				nNewValue |= pVCon->RCon()->GetConsoleKeyShortcuts();
 			}
 			
@@ -5484,7 +5496,7 @@ void CConEmuMain::ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServe
 	int nMaxLen = 255+_tcslen(pszCallPath);
 	wchar_t *pszMsg = (wchar_t*)calloc(nMaxLen,sizeof(wchar_t));
 	_wsprintf(pszMsg, SKIPLEN(nMaxLen)
-		L"ConEmu received old version packet!\nCommandID: %i, Version: %i, ReqVersion: %i, PID: %u\nPlease check %s\n%s",
+		L"ConEmu received wrong version packet!\nCommandID: %i, Version: %i, ReqVersion: %i, PID: %u\nPlease check %s\n%s",
 		nCmd, nVersion, CESERVER_REQ_VER, nFromProcess,
 		(bFromServer==1) ? L"ConEmuC*.exe" : (bFromServer==0) ? L"ConEmu*.dll and Far plugins" : L"ConEmuC*.exe and ConEmu*.dll",
 		pszCallPath);
@@ -5698,8 +5710,8 @@ void CConEmuMain::StartDebugLogConsole()
 	si.cb = sizeof(si);
 	DWORD dwSelfPID = GetCurrentProcessId();
 	// "/ATTACH" - низ€, а то заблокируемс€ при попытке подключени€ к "отлаживаемому" GUI
-	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%i /BW=80 /BH=25 /BZ=9999",
-	          ms_ConEmuCExeFull, dwSelfPID);
+	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%u /BW=80 /BH=25 /BZ=%u",
+	          ms_ConEmuCExeFull, dwSelfPID, LONGOUTPUTHEIGHT_MAX);
 
 	#ifdef _DEBUG
 	if (MessageBox(NULL, szExe, L"StartDebugLogConsole", MB_OKCANCEL|MB_SYSTEMMODAL) != IDOK)
@@ -5743,8 +5755,8 @@ void CConEmuMain::StartDebugActiveProcess()
 	DWORD dwSelfPID = GetCurrentProcessId();
 	int W = pRCon->TextWidth();
 	int H = pRCon->TextHeight();
-	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%i /BW=%i /BH=%i /BZ=9999 /ROOT \"%s\" /DEBUGPID=%i ",
-		ms_ConEmuCExeFull, dwSelfPID, W, H, ms_ConEmuCExeFull, dwPID);
+	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%i /BW=%i /BH=%i /BZ=%u /ROOT \"%s\" /DEBUGPID=%i ",
+		ms_ConEmuCExeFull, dwSelfPID, W, H, LONGOUTPUTHEIGHT_MAX, ms_ConEmuCExeFull, dwPID);
 
 	#ifdef _DEBUG
 	if (MessageBox(NULL, szExe, L"StartDebugLogConsole", MB_OKCANCEL|MB_SYSTEMMODAL) != IDOK)
@@ -13323,21 +13335,37 @@ BOOL CConEmuMain::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ
 		pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOPRET);
 		if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 			goto wrap;
-		//CESERVER_REQ* pOut = ExecuteNewCmd(CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOPRET));
 
 		if (pIn->dwData[0] == 1)
 		{
 			// «апущен процесс сервера
 			HWND hConWnd = (HWND)pIn->dwData[1];
 			_ASSERTE(hConWnd && IsWindow(hConWnd));
+
+			DWORD nStartTick = timeGetTime();
+
 			//LRESULT l = 0;
 			//DWORD_PTR dwRc = 0;
 			//2010-05-21 ѕоскольку это критично - лучше ждать до упора, хот€ может быть DeadLock?
 			//l = SendMessageTimeout(ghWnd, gpConEmu->mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID,
 			//	SMTO_BLOCK, 5000, &dwRc);
 			//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
-			HWND hWndDC = (HWND)SendMessage(ghWnd, gpConEmu->mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID);
+			MsgSrvStartedArg arg = {hConWnd, pIn->hdr.nSrcPID, nStartTick};
+			HWND hWndDC = (HWND)SendMessage(ghWnd, gpConEmu->mn_MsgSrvStarted, 0, (LPARAM)&arg);
 			_ASSERTE(hWndDC!=NULL);
+
+			#ifdef _DEBUG
+			DWORD dwErr = GetLastError(), nEndTick = timeGetTime(), nDelta = nEndTick - nStartTick;
+			if (hWndDC && nDelta >= EXECUTE_CMD_WARN_TIMEOUT)
+			{
+				if (!IsDebuggerPresent())
+				{
+					//_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT || (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP && nDelta <= EXECUTE_CMD_WARN_TIMEOUT2));
+					_ASSERTEX(nDelta <= EXECUTE_CMD_WARN_TIMEOUT);
+				}
+			}
+			#endif
+
 			//pIn->dwData[0] = (DWORD)ghWnd; //-V205
 			//pIn->dwData[1] = (DWORD)dwRc; //-V205
 			//pIn->dwData[0] = (l == 0) ? 0 : 1;
@@ -13949,23 +13977,60 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgSrvStarted)
 			{
+				MsgSrvStartedArg *pArg = (MsgSrvStartedArg*)lParam;
 				HWND hWndDC = NULL;
 				//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
 
-				DWORD nServerPID = (DWORD)lParam;
-				//gpConEmu->WinEventProc(NULL, EVENT_CONSOLE_START_APPLICATION, (HWND)wParam, (LONG)nServerPID, 0, 0, 0);
+				DWORD nServerPID = pArg->nSrcPID;
+				HWND  hWndCon = pArg->hConWnd;
+				pArg->timeRecv = timeGetTime();
+
+				#ifdef _DEBUG
+				DWORD t1, t2, t3; int iFound = -1;
+				#endif
+
+				//gpConEmu->WinEventProc(NULL, EVENT_CONSOLE_START_APPLICATION, hWndCon, (LONG)nServerPID, 0, 0, 0);
 				for (size_t i = 0; i < countof(gpConEmu->mp_VCon); i++)
 				{
 					CVirtualConsole* pVCon = gpConEmu->mp_VCon[i];
 					CVConGuard guard(pVCon);
 					CRealConsole* pRCon;
-					if (pVCon && ((pRCon = pVCon->RCon()) != NULL) && (pRCon->GetServerPID() == nServerPID))
+					if (pVCon && ((pRCon = pVCon->RCon()) != NULL) && pRCon->isServerCreated())
 					{
-						pRCon->OnServerStarted((HWND)wParam, (LONG)nServerPID);
-						hWndDC = pVCon->GetView();
+						if (pRCon->GetServerPID() == nServerPID)
+						{
+							DEBUGTEST(iFound=i);
+							DEBUGTEST(t1=timeGetTime());
+							
+							pRCon->OnServerStarted(hWndCon, nServerPID);
+							
+							DEBUGTEST(t2=timeGetTime());
+							
+							hWndDC = pVCon->GetView();
+
+							DEBUGTEST(t3=timeGetTime());
+							break;
+						}
 					}
 				}
-				_ASSERTE(hWndDC!=NULL);
+				pArg->timeFin = timeGetTime();
+				if (hWndDC == NULL)
+				{
+					_ASSERTE(hWndDC!=NULL);
+				}
+				else
+				{
+					#ifdef _DEBUG
+					DWORD nRecvDur = pArg->timeRecv - pArg->timeStart;
+					DWORD nProcDur = pArg->timeFin - pArg->timeRecv;
+					
+					#define MSGSTARTED_TIMEOUT 250
+					if ((nRecvDur > MSGSTARTED_TIMEOUT) || (nProcDur > MSGSTARTED_TIMEOUT))
+					{
+						_ASSERTE((nRecvDur <= MSGSTARTED_TIMEOUT) && (nProcDur <= MSGSTARTED_TIMEOUT));
+					}
+					#endif
+				}
 
 				return (LRESULT)hWndDC;
 			}

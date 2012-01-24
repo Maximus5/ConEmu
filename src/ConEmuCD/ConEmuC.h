@@ -141,6 +141,7 @@ extern wchar_t gszDbgModLabel[6];
 #define GUIATTACH_TIMEOUT 10000
 #define INPUT_QUEUE_TIMEOUT 100
 #define ATTACH2GUI_TIMEOUT 10000
+#define GUIATTACHEVENT_TIMEOUT 250
 
 //#define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
@@ -185,7 +186,7 @@ extern wchar_t gszDbgModLabel[6];
 
 #define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 
-#undef USE_WINEVENT_SRV
+//#undef USE_WINEVENT_SRV
 
 BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
@@ -195,10 +196,10 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 //DWORD WINAPI InputPipeThread(LPVOID lpvParam);
 //DWORD WINAPI GetDataThread(LPVOID lpvParam);
 BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out);
-#ifdef USE_WINEVENT_SRV
-DWORD WINAPI WinEventThread(LPVOID lpvParam);
-void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
-#endif
+//#ifdef USE_WINEVENT_SRV
+//DWORD WINAPI WinEventThread(LPVOID lpvParam);
+//void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+//#endif
 void CheckCursorPos();
 //void SendConsoleChanges(CESERVER_REQ* pOut);
 //CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff);
@@ -361,16 +362,16 @@ struct SrvInfo
 	BOOL bWasDetached; // Выставляется в TRUE при получении CECMD_DETACHCON
 	//
 	//HANDLE hServerThread;   DWORD dwServerThreadId; BOOL bServerTermination;
-	PipeServer<CESERVER_REQ,3> CmdServer;
+	PipeServer<CESERVER_REQ> CmdServer;
 	HANDLE hRefreshThread;  DWORD dwRefreshThread;  BOOL bRefreshTermination;
-	#ifdef USE_WINEVENT_SRV
-	HANDLE hWinEventThread; DWORD dwWinEventThread; BOOL bWinEventTermination;
-	#endif
+	//#ifdef USE_WINEVENT_SRV
+	//HANDLE hWinEventThread; DWORD dwWinEventThread; BOOL bWinEventTermination;
+	//#endif
 	//HANDLE hInputThread;    DWORD dwInputThreadId;
 	//HANDLE hInputPipeThread; DWORD dwInputPipeThreadId; BOOL bInputPipeTermination; // Needed in Vista & administrator
-	PipeServer<MSG64,1> InputServer;
+	PipeServer<MSG64> InputServer;
 	//HANDLE hGetDataPipeThread; DWORD dwGetDataPipeThreadId; BOOL bGetDataPipeTermination;
-	PipeServer<CESERVER_REQ,1> DataServer;
+	PipeServer<CESERVER_REQ> DataServer;
 	//
 	OSVERSIONINFO osv;
 	BOOL bReopenHandleAllowed;

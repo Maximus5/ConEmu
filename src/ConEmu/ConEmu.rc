@@ -342,7 +342,7 @@ BEGIN
     GROUPBOX        "Miscellaneous options",IDC_STATIC,4,1,319,62
     CONTROL         "Skip mouse click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,117,8
     CONTROL         "Skip mouse in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,24,117,8
-    CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,35,89,8
+    CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,36,89,8
     CONTROL         "Fix Alt on AltTab/AltF9",cbFixAltOnAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,48,117,8
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,13,89,8
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,24,89,8
@@ -378,6 +378,13 @@ BEGIN
     EDITTEXT        tHideCaptionAlwaysFrame,277,135,40,12,ES_AUTOHSCROLL
     EDITTEXT        tHideCaptionAlwaysDelay,183,151,40,12,ES_AUTOHSCROLL
     EDITTEXT        tHideCaptionAlwaysDissapear,277,151,40,12,ES_AUTOHSCROLL
+    GROUPBOX        "Command execution",IDC_STATIC,4,171,319,28
+    RTEXT           "Cmd output codepage",IDC_STATIC,219,180,43,16
+    COMBOBOX        lbCmdOutputCP,265,181,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
+    CONTROL         "Long console output",cbLongOutput,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,183,82,8
+    EDITTEXT        tLongOutputHeight,93,181,29,12,ES_AUTOHSCROLL
+    RTEXT           "16bit height:",IDC_STATIC,128,183,44,8
+    COMBOBOX        lbNtvdmHeight,175,181,43,30,CBS_DROPDOWNLIST | WS_TABSTOP
 END
 
 IDD_SPG_FEATURE_FAR DIALOGEX 0, 0, 328, 235
@@ -490,9 +497,9 @@ BEGIN
     RTEXT           "Back:",IDC_STATIC,269,30,22,8
     COMBOBOX        lbCTSBackIdx,293,28,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Mouse button actions",IDC_STATIC,4,48,319,31
-    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,61,11,8
+    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,62,11,8
     COMBOBOX        lbCTSActAlways,25,59,51,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Buffer only (cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,82,61,82,10
+    CONTROL         "Buffer only (cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,82,62,82,8
     RTEXT           "Right:",IDC_STATIC,174,62,24,8
     COMBOBOX        lbCTSRBtnAction,201,59,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Middle:",IDC_STATIC,244,62,28,8
@@ -537,18 +544,12 @@ BEGIN
     RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,96,107,8
     EDITTEXT        tTabLenMax,119,94,40,12,ES_AUTOHSCROLL
     EDITTEXT        tAdminSuffix,261,94,57,12,ES_AUTOHSCROLL
-    GROUPBOX        "Multi console",IDC_STATIC,4,115,319,58
-    CONTROL         "Multi Console",cbMultiCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,128,61,8
-    CONTROL         "Create confirmation",cbNewConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,128,77,8
-    RTEXT           "Cmd output codepage:",IDC_STATIC,174,127,88,8
-    COMBOBOX        lbCmdOutputCP,264,124,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
-    CONTROL         "Show on taskbar",cbTabsOnTaskBar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,144,74,8
-    CONTROL         "Long console output",cbLongOutput,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,144,84,8
-    EDITTEXT        tLongOutputHeight,173,142,29,12,ES_AUTOHSCROLL
-    RTEXT           "16bit height:",IDC_STATIC,218,144,44,8
-    COMBOBOX        lbNtvdmHeight,264,142,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
+    GROUPBOX        "Multi console",IDC_STATIC,4,115,319,43
+    CONTROL         "Multi Console",cbMultiCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,128,72,8
+    CONTROL         "Create confirmation",cbNewConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,87,128,88,8
+    CONTROL         "Show on taskbar",cbTabsOnTaskBar,"Button",BS_AUTO3STATE | WS_TABSTOP,187,128,74,8
     CONTROL         "«Host-key»+Number iterates Far windows",cbMultiIterate,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,158,159,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,143,155,8
     CONTROL         "Admin shield",rbAdminShield,"Button",BS_AUTORADIOBUTTON,167,96,55,8
     CONTROL         "suffix",rbAdminSuffix,"Button",BS_AUTORADIOBUTTON,223,96,34,8
 END

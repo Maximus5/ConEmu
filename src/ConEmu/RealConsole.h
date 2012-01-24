@@ -222,7 +222,7 @@ enum RealBufferType
 	rbt_DumpScreen,
 };
 
-template <class T, int MaxCount> struct PipeServer;
+template <class T> struct PipeServer;
 
 class CRealConsole
 {
@@ -596,7 +596,7 @@ class CRealConsole
 		//BOOL mb_BuferModeChangeLocked; -> mp_RBuf
 
 		//void ServerThreadCommand(HANDLE hPipe);
-		PipeServer<CESERVER_REQ,3>* mp_RConServer;
+		PipeServer<CESERVER_REQ>* mp_RConServer;
 		static BOOL WINAPI ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 		static BOOL WINAPI ServerThreadReady(LPVOID pInst, LPARAM lParam);
 		static void WINAPI ServerCommandFree(CESERVER_REQ* pReply, LPARAM lParam);

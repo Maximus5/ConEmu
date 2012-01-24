@@ -996,7 +996,17 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 
 		if (gpSrv->hConEmuGuiAttached)
 		{
+			DEBUGTEST(DWORD t1 = timeGetTime());
+			
 			dwWaitGui = WaitForSingleObject(gpSrv->hConEmuGuiAttached, 1000);
+
+			#ifdef _DEBUG
+			DWORD t2 = timeGetTime(), tDur = t2-t1;
+			if (tDur > GUIATTACHEVENT_TIMEOUT)
+			{
+				_ASSERTE(tDur <= GUIATTACHEVENT_TIMEOUT);
+			}
+			#endif
 
 			if (dwWaitGui == WAIT_OBJECT_0)
 			{
@@ -2926,6 +2936,8 @@ void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDon
 
 void SendStarted()
 {
+	WARNING("Подозрение, что слишком много вызовов при старте сервера. Неаккуратно");
+
 	static bool bSent = false;
 
 	if (bSent)
@@ -3334,10 +3346,10 @@ void LogString(LPCSTR asText)
 		pszThread = "ServerThread";
 	else if (dwId == gpSrv->dwRefreshThread)
 		pszThread = "RefreshThread";
-	#ifdef USE_WINEVENT_SRV
-	else if (dwId == gpSrv->dwWinEventThread)
-		pszThread = "WinEventThread";
-	#endif
+	//#ifdef USE_WINEVENT_SRV
+	//else if (dwId == gpSrv->dwWinEventThread)
+	//	pszThread = "WinEventThread";
+	//#endif
 	else if (gpSrv->InputServer.IsPipeThread(dwId))
 		pszThread = "InputPipeThread";
 	else if (gpSrv->DataServer.IsPipeThread(dwId))
@@ -3371,10 +3383,10 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 		pszThread = "ServerThread";
 	else if (dwId == gpSrv->dwRefreshThread)
 		pszThread = "RefreshThread";
-	#ifdef USE_WINEVENT_SRV
-	else if (dwId == gpSrv->dwWinEventThread)
-		pszThread = "WinEventThread";
-	#endif
+	//#ifdef USE_WINEVENT_SRV
+	//else if (dwId == gpSrv->dwWinEventThread)
+	//	pszThread = "WinEventThread";
+	//#endif
 	else if (gpSrv->InputServer.IsPipeThread(dwId))
 		pszThread = "InputPipeThread";
 	else if (gpSrv->DataServer.IsPipeThread(dwId))

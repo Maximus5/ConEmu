@@ -175,7 +175,7 @@ WCHAR gszPluginServerPipe[MAX_PATH];
 //HANDLE ghActiveServerThread = NULL;
 //HANDLE ghPlugServerThread = NULL;
 //DWORD  gnPlugServerThreadId = 0;
-PipeServer<CESERVER_REQ,3> *gpPlugServer = NULL;
+PipeServer<CESERVER_REQ> *gpPlugServer = NULL;
 //DWORD  gnServerThreadsId[MAX_SERVER_THREADS] = {0,0,0};
 HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
@@ -3822,9 +3822,10 @@ void InitHWND(/*HWND ahFarHwnd*/)
 	//ghPlugServerThread = CreateThread(NULL, 0, PlugServerThread, (LPVOID)NULL, 0, &gnPlugServerThreadId);
 	//_ASSERTE(ghPlugServerThread!=NULL);
 	if (!gpPlugServer)
-		gpPlugServer = (PipeServer<CESERVER_REQ,3>*)calloc(1, sizeof(*gpPlugServer));
+		gpPlugServer = (PipeServer<CESERVER_REQ>*)calloc(1, sizeof(*gpPlugServer));
 	if (gpPlugServer)
 	{
+		gpPlugServer->SetMaxCount(3);
 		gpPlugServer->SetOverlapped(true);
 		gpPlugServer->SetLoopCommands(false);
 		

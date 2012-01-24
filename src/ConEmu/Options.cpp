@@ -597,7 +597,10 @@ void Settings::LoadSettings()
 
 		reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);
 
-		if (DefaultBufferHeight < 300) DefaultBufferHeight = 300;
+		if (DefaultBufferHeight < LONGOUTPUTHEIGHT_MIN)
+			DefaultBufferHeight = LONGOUTPUTHEIGHT_MIN;
+		else if (DefaultBufferHeight > LONGOUTPUTHEIGHT_MAX)
+			DefaultBufferHeight = LONGOUTPUTHEIGHT_MAX;
 
 		reg->Load(L"AutoBufferHeight", AutoBufferHeight);
 		//reg->Load(L"FarSyncSize", FarSyncSize);

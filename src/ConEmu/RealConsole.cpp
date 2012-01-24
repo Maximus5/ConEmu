@@ -183,7 +183,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mb_SkipFarPidChange = FALSE;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
 	mn_LastSetForegroundPID = 0;
-	mp_RConServer = (PipeServer<CESERVER_REQ,3>*)calloc(3,sizeof(*mp_RConServer));
+	mp_RConServer = (PipeServer<CESERVER_REQ>*)calloc(3,sizeof(*mp_RConServer));
+	mp_RConServer->SetMaxCount(3);
 	//mh_ServerSemaphore = NULL;
 	//memset(mh_RConServerThreads, 0, sizeof(mh_RConServerThreads));
 	//mh_ActiveRConServerThread = NULL;
@@ -6041,6 +6042,8 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 		mp_RConServer->SetOverlapped(true);
 		mp_RConServer->SetLoopCommands(false);
 		
+		WARNING("OPTIMIZE: Относительно длительная операция, хорошо бы сократить число стартуемых сразу нитей");
+		//Но просто выносить нельзя из MainThread нельзя - ConEmuC ожидает готовый пайп после возврата из CECMD_SRVSTARTSTOP
 		if (!mp_RConServer->StartPipeServer(ms_VConServer_Pipe, (LPARAM)this, LocalSecurity(),
 				ServerCommand, ServerCommandFree, NULL, NULL, ServerThreadReady))
 		{
@@ -9534,8 +9537,9 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus)
 
 	if (isActive())
 	{
-		if (mp_VCon->Update(true))
-			gpConEmu->Invalidate(mp_VCon);
+		// Нехорошо звать длительные функции из вызывающихся при инициализации
+		//if (mp_VCon->Update(true))
+		gpConEmu->Invalidate(mp_VCon);
 
 		//gpConEmu->Update(true);
 		//if (mp_VCon->Update(false))

@@ -35,6 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_FONT_STYLES 8  //normal/(bold|italic|underline)
 #define MAX_FONT_GROUPS 20 // Main, Borders, Japan, Cyrillic, ...
 
+#define LONGOUTPUTHEIGHT_MIN 300
+#define LONGOUTPUTHEIGHT_MAX 9999
+
 #include <pshpack1.h>
 typedef struct tagMYRGB
 {

@@ -203,7 +203,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		dwErr = GetLastError();
 
 		// Сделаем так, чтобы хотя бы пару раз он попробовал повторить
-		if ((nTries <= 0) && (GetTickCount() - dwStartTick) > 1000)
+		if ((nTries <= 0) && (GetTickCount() - dwStartTick) > EXECUTE_CMD_OPENPIPE_TIMEOUT)
 		{
 			//if (pszErr)
 			{
@@ -537,25 +537,32 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner)
 	DWORD nLastErr = GetLastError();
 	//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CEGUIPIPENAME, L".", (DWORD)hConWnd);
 	msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)hConWnd); //-V205
-#ifdef _DEBUG
+
+	#ifdef _DEBUG
 	DWORD nStartTick = GetTickCount();
-#endif
+	#endif
+
 	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
-#ifdef _DEBUG
+
+	#ifdef _DEBUG
 	DWORD nEndTick = GetTickCount();
 	DWORD nDelta = nEndTick - nStartTick;
-	if (nDelta >= EXECUTE_CMD_WARN_TIMEOUT && !IsDebuggerPresent())
+	if (nDelta >= EXECUTE_CMD_WARN_TIMEOUT)
 	{
-		if (lpRet)
+		if (!IsDebuggerPresent())
 		{
-			_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT || (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP && nDelta <= EXECUTE_CMD_WARN_TIMEOUT2));
-		}
-		else
-		{
-			_ASSERTE(nDelta <= EXECUTE_CMD_TIMEOUT_SRV_ABSENT);
+			if (lpRet)
+			{
+				_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT || (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP && nDelta <= EXECUTE_CMD_WARN_TIMEOUT2));
+			}
+			else
+			{
+				_ASSERTE(nDelta <= EXECUTE_CMD_TIMEOUT_SRV_ABSENT);
+			}
 		}
 	}
-#endif
+	#endif
+
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
 	return lpRet;
 }
@@ -639,7 +646,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 		}
 		#endif
 
-#endif
+		#endif
 		return NULL;
 	}
 
@@ -742,7 +749,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
 	nAllSize -= cbRead;
 
-	while(nAllSize>0)
+	while (nAllSize>0)
 	{
 		// Break if TransactNamedPipe or ReadFile is successful
 		if (fSuccess)

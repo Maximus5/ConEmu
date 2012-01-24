@@ -248,7 +248,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 BOOL WINAPI HookServerReady(LPVOID pInst, LPARAM lParam);
 void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 
-PipeServer<CESERVER_REQ,1> *gpHookServer = NULL;
+PipeServer<CESERVER_REQ> *gpHookServer = NULL;
 #endif
 
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
@@ -368,12 +368,13 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	
 #ifdef USE_PIPE_SERVER
 	_ASSERTEX(gpHookServer==NULL);
-	gpHookServer = (PipeServer<CESERVER_REQ,1>*)calloc(1,sizeof(*gpHookServer));
+	gpHookServer = (PipeServer<CESERVER_REQ>*)calloc(1,sizeof(*gpHookServer));
 	if (gpHookServer)
 	{
 		wchar_t szPipeName[128];
 		msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", GetCurrentProcessId());
 		
+		gpHookServer->SetMaxCount(3);
 		gpHookServer->SetOverlapped(true);
 		gpHookServer->SetLoopCommands(false);
 		

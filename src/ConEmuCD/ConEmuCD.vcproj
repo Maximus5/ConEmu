@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmuCD"
 	ProjectGUID="{F9CB1F86-E724-4BDF-AEA3-649CCF9B0F3F}"
 	RootNamespace="ConEmuCD"
@@ -63,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="C:\Far3\ConEmu\ConEmuCD.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -140,7 +140,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="C:\Far3\ConEmu\ConEmuCD64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -217,7 +217,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="..\..\Release\ConEmu\ConEmuCD.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
@@ -297,7 +297,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="..\..\Release\ConEmu\ConEmuCD64.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
@@ -375,7 +375,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmu\ConEmuCD.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -453,7 +453,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmu\ConEmuCD64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -529,7 +529,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="Z:\ConEmu\ConEmuCD.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -607,7 +607,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="\\WIN7X64\FAR\FAR2x86\ConEmuCD64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -683,7 +683,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\ConEmu\ConEmuCD.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -761,7 +761,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\ConEmu\ConEmuCD64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -839,7 +839,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="..\..\Release.PDB\ConEmu\ConEmuCD.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
@@ -919,7 +919,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="..\..\Release.PDB\ConEmu\ConEmuCD64.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
@@ -998,7 +998,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="\Far3\ConEmu\ConEmuCD.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
@@ -1079,7 +1079,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="..\..\Release\ConEmu\ConEmuCD64.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
@@ -1157,7 +1157,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ConEmuCD.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -1235,7 +1235,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ConEmuCD64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -1313,7 +1313,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="\Far3\ConEmu\ConEmuCD.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -1391,7 +1391,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="WinInet.lib"
+				AdditionalDependencies="WinInet.lib Winmm.lib"
 				OutputFile="\Far3\ConEmu\ConEmuCD64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -1470,6 +1470,10 @@
 			</File>
 			<File
 				RelativePath="..\common\MStrSafe.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\PipeServer.h"
 				>
 			</File>
 			<File

@@ -86,6 +86,12 @@ void MyAssertTrap()
 }
 int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool abNoPipe)
 {
+#ifdef _DEBUG
+	bool lbSkip = false;
+	if (lbSkip)
+		return 1;
+#endif
+
 	HANDLE hHeap = GetProcessHeap();
 	MyAssertInfo* pa = (MyAssertInfo*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(MyAssertInfo));
 	wchar_t *szExeName = (wchar_t*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, (MAX_PATH+1)*sizeof(wchar_t));
