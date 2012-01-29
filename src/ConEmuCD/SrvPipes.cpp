@@ -7,12 +7,12 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions
 are met:
 1. Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
+   notice, this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
 3. The name of the authors may not be used to endorse or promote products
-derived from this software without specific prior written permission.
+   derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,6 +31,73 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s) // ConEmuC: Recieved key... / ConEmuC: Recieved input
 
+// Forwards
+BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
+BOOL WINAPI CmdServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
+void WINAPI CmdServerFree(CESERVER_REQ* pReply, LPARAM lParam);
+BOOL WINAPI DataServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
+void WINAPI DataServerFree(CESERVER_REQ* pReply, LPARAM lParam);
+
+// Helpers
+bool InputServerStart()
+{
+	if (!gpSrv || !*gpSrv->szInputname)
+	{
+		_ASSERTE(gpSrv!=NULL && *gpSrv->szInputname);
+		return false;
+	}
+
+	gpSrv->InputServer.SetOverlapped(true);
+	gpSrv->InputServer.SetLoopCommands(true);
+	gpSrv->InputServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
+	gpSrv->InputServer.SetInputOnly(true);
+
+	if (!gpSrv->InputServer.StartPipeServer(gpSrv->szInputname, NULL, LocalSecurity(), InputServerCommand))
+		return false;
+
+	return true;
+}
+
+bool CmdServerStart()
+{
+	if (!gpSrv || !*gpSrv->szPipename)
+	{
+		_ASSERTE(gpSrv!=NULL && *gpSrv->szPipename);
+		return false;
+	}
+
+	gpSrv->CmdServer.SetMaxCount(3);
+	gpSrv->CmdServer.SetOverlapped(true);
+	gpSrv->CmdServer.SetLoopCommands(false);
+	//gpSrv->CmdServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
+
+	if (!gpSrv->CmdServer.StartPipeServer(gpSrv->szPipename, NULL, LocalSecurity(), CmdServerCommand, CmdServerFree))
+		return false;
+
+	return true;
+}
+
+bool DataServerStart()
+{
+	if (!gpSrv || !*gpSrv->szGetDataPipe)
+	{
+		_ASSERTE(gpSrv!=NULL && *gpSrv->szGetDataPipe);
+		return false;
+	}
+
+	gpSrv->DataServer.SetOverlapped(true);
+	gpSrv->DataServer.SetLoopCommands(true);
+	gpSrv->DataServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
+
+	if (!gpSrv->DataServer.StartPipeServer(gpSrv->szGetDataPipe, NULL, LocalSecurity(), DataServerCommand, DataServerFree))
+		return false;
+
+	return true;
+}
+
+
+
+// Bodies
 BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
 	if (pCmd && pCmd->message)
@@ -69,24 +136,6 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 //	SafeFree(pReply);
 //}
 
-bool InputServerStart()
-{
-	if (!gpSrv || !*gpSrv->szInputname)
-	{
-		_ASSERTE(gpSrv!=NULL && *gpSrv->szInputname);
-		return false;
-	}
-
-	gpSrv->InputServer.SetOverlapped(true);
-	gpSrv->InputServer.SetLoopCommands(true);
-	gpSrv->InputServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
-	gpSrv->InputServer.SetInputOnly(true);
-
-	if (!gpSrv->InputServer.StartPipeServer(gpSrv->szInputname, NULL, LocalSecurity(), InputServerCommand))
-		return false;
-
-	return true;
-}
 
 
 
@@ -209,24 +258,6 @@ void WINAPI CmdServerFree(CESERVER_REQ* pReply, LPARAM lParam)
 	ExecuteFreeResult(pReply);
 }
 
-bool CmdServerStart()
-{
-	if (!gpSrv || !*gpSrv->szPipename)
-	{
-		_ASSERTE(gpSrv!=NULL && *gpSrv->szPipename);
-		return false;
-	}
-
-	gpSrv->CmdServer.SetMaxCount(3);
-	gpSrv->CmdServer.SetOverlapped(true);
-	gpSrv->CmdServer.SetLoopCommands(false);
-	//gpSrv->CmdServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
-
-	if (!gpSrv->CmdServer.StartPipeServer(gpSrv->szPipename, NULL, LocalSecurity(), CmdServerCommand, CmdServerFree))
-		return false;
-
-	return true;
-}
 
 
 BOOL WINAPI DataServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
@@ -290,22 +321,4 @@ BOOL WINAPI DataServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 void WINAPI DataServerFree(CESERVER_REQ* pReply, LPARAM lParam)
 {
 	ExecuteFreeResult(pReply);
-}
-
-bool DataServerStart()
-{
-	if (!gpSrv || !*gpSrv->szGetDataPipe)
-	{
-		_ASSERTE(gpSrv!=NULL && *gpSrv->szGetDataPipe);
-		return false;
-	}
-
-	gpSrv->DataServer.SetOverlapped(true);
-	gpSrv->DataServer.SetLoopCommands(true);
-	gpSrv->DataServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
-
-	if (!gpSrv->DataServer.StartPipeServer(gpSrv->szGetDataPipe, NULL, LocalSecurity(), DataServerCommand, DataServerFree))
-		return false;
-
-	return true;
 }

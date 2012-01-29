@@ -975,10 +975,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	RemoveOldComSpecC();
 	gpSetCls = new CSettings;
 	gpConEmu = new CConEmuMain;
-	if (!gpConEmu->CheckRequiredFiles())
-	{
-		return 100;
-	}
 	/*int nCmp;
 	nCmp = StrCmpI(L" ", L"A"); // -1
 	nCmp = StrCmpI(L" ", L"+");
@@ -1419,6 +1415,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// load settings from registry
 	gpSet->LoadSettings();
 
+
+	// Проверить наличие необходимых файлов (перенес сверху, чтобы учитывался флажок "Inject ConEmuHk")
+	if (!gpConEmu->CheckRequiredFiles())
+	{
+		return 100;
+	}
+	
+	
 	//#pragma message("Win2k: CLEARTYPE_NATURAL_QUALITY")
 	//if (ClearTypePrm)
 	//    gpSet->LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;

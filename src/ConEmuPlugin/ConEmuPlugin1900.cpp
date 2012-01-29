@@ -115,7 +115,7 @@ void GetPluginInfoW1900(void *piv)
 	PluginInfo *pi = (PluginInfo*)piv;
 	//memset(pi, 0, sizeof(PluginInfo));
 	//pi->StructSize = sizeof(struct PluginInfo);
-	_ASSERTE(pi->StructSize>0 && ((size_t)pi->StructSize >= (size_t)(((LPBYTE)&pi->MacroFunctionNumber) - (LPBYTE)pi)));
+	_ASSERTE(pi->StructSize>0 && ((size_t)pi->StructSize >= sizeof(*pi)/*(size_t)(((LPBYTE)&pi->MacroFunctionNumber) - (LPBYTE)pi))*/));
 
 	static wchar_t *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1; //lstrcpyW(szMenu[0], L"[&\x2560] ConEmu"); -> 0x2584
@@ -163,7 +163,7 @@ void ProcessDragFromW1900()
 		return;
 	}
 
-	PanelInfo PInfo;
+	PanelInfo PInfo = {sizeof(PInfo)};
 	WCHAR *szCurDir = NULL;
 	InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, &PInfo);
 
@@ -358,7 +358,7 @@ void ProcessDragToW1900()
 	}
 
 	//InfoW1900->AdvControl(&guid_ConEmu, ACTL_FREEWINDOWINFO, 0, &WInfo);
-	PanelInfo PAInfo, PPInfo;
+	PanelInfo PAInfo = {sizeof(PAInfo)}, PPInfo = {sizeof(PPInfo)};
 	ForwardedPanelInfo *pfpi=NULL;
 	int nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
 	//ZeroMemory(&fpi, sizeof(fpi));
@@ -1214,7 +1214,7 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 	//	gpConMapInfo->bFarLeftPanel = FALSE;
 	//	gpConMapInfo->bFarRightPanel = FALSE;
 	//} else {
-	//	PanelInfo piA = {0}, piP = {0};
+	//	PanelInfo piA = {}, piP = {};
 	//	BOOL lbActive  = InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, &piA);
 	//	BOOL lbPassive = InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &piP);
 	//	if (!lbActive && !lbPassive)
@@ -1326,7 +1326,7 @@ void FillUpdateBackgroundW1900(struct PaintBackgroundArg* pFar)
 
 	if (pFar->bPanelsAllowed)
 	{
-		PanelInfo pasv = {0}, actv = {0};
+		PanelInfo pasv = {sizeof(pasv)}, actv = {sizeof(actv)};
 		InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, &actv);
 		InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &pasv);
 		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;

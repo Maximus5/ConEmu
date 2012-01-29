@@ -217,7 +217,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 void CreateLogSizeFile(int nLevel);
 void LogSize(COORD* pcrSize, LPCSTR pszLabel);
 void LogString(LPCSTR asText);
-void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr);
+void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo=NULL);
 
 
 #if defined(__GNUC__)
@@ -350,7 +350,6 @@ extern DWORD gnConsoleModeFlags;
 #endif
 
 #include "../common/PipeServer.h"
-bool InputServerStart();
 
 struct SrvInfo
 {
@@ -505,6 +504,7 @@ extern SrvInfo *gpSrv;
 #pragma pack(push, 1)
 extern CESERVER_CONSAVE* gpStoredOutput;
 #pragma pack(pop)
+extern MSection* gpcsStoredOutput;
 
 //typedef struct tag_CmdInfo
 //{

@@ -5,12 +5,18 @@ WIDE = 1
 !include $(DEFFILE)
 !endif
 
+#!if exists(make_vc_defs)
+#!include make_vc_defs
+#!endif
+
 !ifndef DEBUG
 DIRNAME=final.$(DIRNAME)
 USEDEBUG=NDEBUG
 !else
 DIRNAME=debug.$(DIRNAME)
 USEDEBUG=_DEBUG
+USE_PDB=1
+NO_OPTIMIZE=1
 !endif                   
 
 !ifdef WIDE
@@ -74,6 +80,11 @@ RCWIN64=
 CPP_WIDE = /DUNICODE /D_UNICODE $(RCWIN64)
 RC_WIDE = /DUNICODE $(RCWIN64)
 
+!if "$(NO_OPTIMIZE)" == "1" || defined(DEBUG)
+CPP_OPT=/Od
+!else
+CPP_OPT=/O1i
+!endif
 
 ## temp working dir
 

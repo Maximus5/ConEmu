@@ -296,7 +296,7 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	if (!InfoA) return FALSE;
 
 	CeFullPanelInfo* pcefpi = NULL;
-	PanelInfo pi = {0};
+	PanelInfo pi = {};
 	int nCmd = abActive ? FCTL_GETPANELINFO : FCTL_GETANOTHERPANELINFO;
 	int nRc = InfoA->Control(INVALID_HANDLE_VALUE, nCmd, &pi);
 
@@ -434,7 +434,7 @@ void SetCurrentPanelItemA(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem
 	// В Far2 можно быстро проверить валидность индексов
 	//HANDLE hPanel = NULL;
 	int nCmd = 0;
-	PanelInfo piActive = {0}, piPassive = {0}, *pi = NULL;
+	PanelInfo piActive = {}, piPassive = {}, *pi = NULL;
 	TODO("Проверять текущую видимость панелей?");
 	InfoA->Control(INVALID_HANDLE_VALUE,  FCTL_GETPANELSHORTINFO, &piActive);
 

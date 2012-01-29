@@ -2815,9 +2815,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	//BYTE lnForegroundColors[0x100], lnBackgroundColors[0x100], lnFontByIndex[0x100];
 	TODO("OPTIMIZE: В принципе, это можно делать не всегда, а только при изменениях");
 
-	for(int nBack = 0; nBack <= 0xF; nBack++)
+	for (int nBack = 0; nBack <= 0xF; nBack++)
 	{
-		for(int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++)
+		for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++)
 		{
 			memset(&lca, 0, sizeof(lca));
 			lca.nForeIdx = nFore;
@@ -3333,52 +3333,76 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 		return;
 
 	TODO("Хорошо бы m_FarInfo тоже в дамп скидывать.");
-	CEFAR_INFO_MAPPING FI = mp_RCon->m_FarInfo;
-
-	//if (mp_RCon->m_FarInfo.IsValid())
-	//{
-	//	//FI = *mp_FarInfo;
-	//	mp_RCon->m_FarInfo.GetTo(&FI);
-	//}
-
-#ifdef _DEBUG
-
-	if (mb_LeftPanel && !mb_RightPanel && mr_LeftPanelFull.right > 120)
+	CEFAR_INFO_MAPPING FI;
+	
+	if (m_Type == rbt_Primary)
 	{
-		mb_LeftPanel = mb_LeftPanel;
-	}
+		FI = mp_RCon->m_FarInfo;
 
-#endif
+		// На (mp_RCon->isViewer() || mp_RCon->isEditor()) ориентироваться
+		// нельзя, т.к. CheckFarStates еще не был вызван
+		BOOL bViewerOrEditor = FALSE;
+		if (mp_RCon->GetFarPID(TRUE))
+		{
+			ConEmuTab tab;
+			if (mp_RCon->GetTab(mp_RCon->GetActiveTab(), &tab))
+			{
+				bViewerOrEditor = (tab.Type == 2 || tab.Type == 3);
+			}
+			else
+			{
+				// Не удалось получить информацию по табу??
+				_ASSERTE(FALSE);
+			}
+		}
 
-	if (mb_LeftPanel)
-	{
-		FI.bFarLeftPanel = true;
-		FI.FarLeftPanel.PanelRect = mr_LeftPanelFull;
+		if (!bViewerOrEditor)
+		{
+			WARNING("Неправильно это, ведь FindPanels еще не был вызван");
+
+			if (mb_LeftPanel)
+			{
+				FI.bFarLeftPanel = true;
+				FI.FarLeftPanel.PanelRect = mr_LeftPanelFull;
+			}
+			else
+			{
+				FI.bFarLeftPanel = false;
+			}
+
+			if (mb_RightPanel)
+			{
+				FI.bFarRightPanel = true;
+				FI.FarRightPanel.PanelRect = mr_RightPanelFull;
+			}
+			else
+			{
+				FI.bFarRightPanel = false;
+			}
+
+			FI.bViewerOrEditor = FALSE;
+		}
+		else
+		{
+			FI.bViewerOrEditor = TRUE;
+			FI.bFarLeftPanel = false;
+			FI.bFarRightPanel = false;
+		}
+
+		//if (!FI.bFarLeftPanel && !FI.bFarRightPanel)
+		//{
+		//	// Если нет панелей - это может быть вьювер/редактор
+		//	FI.bViewerOrEditor = (mp_RCon->isViewer() || mp_RCon->isEditor());
+		//}
 	}
 	else
 	{
-		FI.bFarLeftPanel = false;
-	}
-
-	if (mb_RightPanel)
-	{
-		FI.bFarRightPanel = true;
-		FI.FarRightPanel.PanelRect = mr_RightPanelFull;
-	}
-	else
-	{
-		FI.bFarRightPanel = false;
-	}
-
-	FI.bViewerOrEditor = FALSE;
-
-	if (!FI.bFarLeftPanel && !FI.bFarRightPanel)
-	{
-		// Если нет панелей - это может быть вьювер/редактор
-		FI.bViewerOrEditor = (mp_RCon->isViewer() || mp_RCon->isEditor());
+		ZeroStruct(FI);
+		TODO("Загружать CEFAR_INFO_MAPPING из дампа");
 	}
 
 	m_Rgn.SetNeedTransparency(gpSet->isUserScreenTransparent);
+	TODO("При загрузке дампа хорошо бы из него и палитру фара доставать/отдавать");
 	m_Rgn.PrepareTransparent(&FI, mp_RCon->mp_VCon->mp_Colors, GetSBI(), pChar, pAttr, nWidth, nHeight);
 	
 	#ifdef _DEBUG

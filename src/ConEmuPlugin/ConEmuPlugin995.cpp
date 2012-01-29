@@ -153,7 +153,7 @@ void ProcessDragFromW995()
 		return;
 	}
 
-	PanelInfo PInfo;
+	PanelInfo PInfo = {};
 	WCHAR *szCurDir = NULL;
 	InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, (LONG_PTR)&PInfo);
 
@@ -347,11 +347,11 @@ void ProcessDragToW995()
 	}
 
 	//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
-	PanelInfo PAInfo, PPInfo;
+	PanelInfo PAInfo = {}, PPInfo = {};
 	ForwardedPanelInfo *pfpi=NULL;
 	int nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
 	//ZeroMemory(&fpi, sizeof(fpi));
-	BOOL lbAOK=FALSE, lbPOK=FALSE;
+	BOOL lbAOK = FALSE, lbPOK = FALSE;
 	WCHAR *szPDir = NULL;
 	WCHAR *szADir = NULL;
 	//if (!(lbAOK=InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
@@ -1141,7 +1141,7 @@ BOOL ReloadFarInfoW995(/*BOOL abFull*/)
 	//	gpConMapInfo->bFarLeftPanel = FALSE;
 	//	gpConMapInfo->bFarRightPanel = FALSE;
 	//} else {
-	//	PanelInfo piA = {0}, piP = {0};
+	//	PanelInfo piA = {}, piP = {};
 	//	BOOL lbActive  = InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&piA);
 	//	BOOL lbPassive = InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&piP);
 	//	if (!lbActive && !lbPassive)
@@ -1245,7 +1245,7 @@ void FillUpdateBackgroundW995(struct PaintBackgroundArg* pFar)
 
 	if (pFar->bPanelsAllowed)
 	{
-		PanelInfo pasv = {0}, actv = {0};
+		PanelInfo pasv = {}, actv = {};
 		InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&actv);
 		InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pasv);
 		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;

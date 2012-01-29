@@ -691,6 +691,12 @@ int ServerInit(BOOL abAlternative/*=FALSE*/)
 		gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = TRUE;
 	}
 
+	_ASSERTE(gpcsStoredOutput==NULL && gpStoredOutput==NULL);
+	if (!gpcsStoredOutput)
+	{
+		gpcsStoredOutput = new MSection;
+	}
+
 	// Шрифт в консоли нужно менять в самом начале, иначе могут быть проблемы с установкой размера консоли
 	if (!gpSrv->bDebuggerActive && !gbNoCreateProcess)
 		//&& (!gbNoCreateProcess || (gbAttachMode && gbNoCreateProcess && gpSrv->dwRootProcess))
@@ -1217,9 +1223,14 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	//gpSrv->bWinHookAllow = FALSE; gpSrv->nWinHookMode = 0;
 	//HookWinEvents ( -1 );
 
-	if (gpStoredOutput) { free(gpStoredOutput); gpStoredOutput = NULL; }
+	{
+		MSectionLock CS; CS.Lock(gpcsStoredOutput, TRUE);
+		SafeFree(gpStoredOutput);
+		CS.Unlock();
+		SafeDelete(gpcsStoredOutput);
+	}
 
-	if (gpSrv->pszAliases) { free(gpSrv->pszAliases); gpSrv->pszAliases = NULL; }
+	SafeFree(gpSrv->pszAliases);
 
 	//if (gpSrv->psChars) { free(gpSrv->psChars); gpSrv->psChars = NULL; }
 	//if (gpSrv->pnAttrs) { free(gpSrv->pnAttrs); gpSrv->pnAttrs = NULL; }
@@ -1285,11 +1296,14 @@ void CmdOutputStore()
 	DEBUGSTR(L"--- CmdOutputStore begin\n");
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
 
+	MSectionLock CS; CS.Lock(gpcsStoredOutput, FALSE);
+
 	// !!! Нас интересует реальное положение дел в консоли,
 	//     а не скорректированное функцией MyGetConsoleScreenBufferInfo
 	if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi))
 	{
-		if (gpStoredOutput) { free(gpStoredOutput); gpStoredOutput = NULL; }
+		CS.RelockExclusive();
+		SafeFree(gpStoredOutput);
 
 		return; // Не смогли получить информацию о консоли...
 	}
@@ -1297,13 +1311,18 @@ void CmdOutputStore()
 	int nOneBufferSize = lsbi.dwSize.X * lsbi.dwSize.Y * 2; // Читаем всю консоль целиком!
 
 	// Если требуется увеличение размера выделенной памяти
-	if (gpStoredOutput && gpStoredOutput->hdr.cbMaxOneBufferSize < (DWORD)nOneBufferSize)
+	if (gpStoredOutput)
 	{
-		free(gpStoredOutput); gpStoredOutput = NULL;
+		if (gpStoredOutput->hdr.cbMaxOneBufferSize < (DWORD)nOneBufferSize)
+		{
+			CS.RelockExclusive();
+			SafeFree(gpStoredOutput);
+		}
 	}
 
 	if (gpStoredOutput == NULL)
 	{
+		CS.RelockExclusive();
 		// Выделяем память: заголовок + буфер текста (на атрибуты забьем)
 		gpStoredOutput = (CESERVER_CONSAVE*)calloc(sizeof(CESERVER_CONSAVE_HDR)+nOneBufferSize,1);
 		_ASSERTE(gpStoredOutput!=NULL);
@@ -1352,6 +1371,7 @@ void CmdOutputStore()
 
 void CmdOutputRestore()
 {
+	MSectionLock CS; CS.Lock(gpcsStoredOutput, TRUE);
 	if (gpStoredOutput)
 	{
 		TODO("Восстановить текст скрытой (прокрученной вверх) части консоли");
@@ -3025,114 +3045,6 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 }
 
 
-
-
-
-//DWORD WINAPI GetDataThread(LPVOID lpvParam)
-//{
-//	BOOL fConnected, fSuccess;
-//	DWORD dwErr = 0;
-//
-//	while(!gbQuit)
-//	{
-//		MCHKHEAP;
-//		gpSrv->hGetDataPipe = Create NamedPipe(
-//		                       gpSrv->szGetDataPipe,        // pipe name
-//		                       PIPE_ACCESS_DUPLEX,       // goes from client to server only
-//		                       PIPE_TYPE_MESSAGE |       // message type pipe
-//		                       PIPE_READMODE_MESSAGE |   // message-read mode
-//		                       PIPE_WAIT,                // blocking mode
-//		                       PIPE_UNLIMITED_INSTANCES, // max. instances
-//		                       DATAPIPEBUFSIZE,          // output buffer size
-//		                       PIPEBUFSIZE,              // input buffer size
-//		                       0,                        // client time-out
-//		                       gpLocalSecurity);          // default security attribute
-//
-//		if (gpSrv->hGetDataPipe == INVALID_HANDLE_VALUE)
-//		{
-//			dwErr = GetLastError();
-//			_ASSERTE(gpSrv->hGetDataPipe != INVALID_HANDLE_VALUE);
-//			_printf("CreatePipe failed, ErrCode=0x%08X\n", dwErr);
-//			Sleep(50);
-//			//return 99;
-//			continue;
-//		}
-//
-//		// Wait for the client to connect; if it succeeds,
-//		// the function returns a nonzero value. If the function
-//		// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
-//		fConnected = ConnectNamedPipe(gpSrv->hGetDataPipe, NULL) ?
-//		             TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
-//		MCHKHEAP;
-//
-//		if (fConnected)
-//		{
-//			//TODO:
-//			DWORD cbBytesRead = 0, cbBytesWritten = 0, cbWrite = 0;
-//			CESERVER_REQ_HDR Command = {0};
-//
-//			while(!gbQuit
-//			        && (fSuccess = ReadFile(gpSrv->hGetDataPipe, &Command, sizeof(Command), &cbBytesRead, NULL)) != FALSE)         // not overlapped I/O
-//			{
-//				// предусмотреть возможность завершения нити
-//				if (gbQuit)
-//					break;
-//
-//				if (Command.nVersion != CESERVER_REQ_VER)
-//				{
-//					_ASSERTE(Command.nVersion == CESERVER_REQ_VER);
-//					break; // переоткрыть пайп!
-//				}
-//
-//				if (Command.nCmd != CECMD_CONSOLEDATA)
-//				{
-//					_ASSERTE(Command.nCmd == CECMD_CONSOLEDATA);
-//					break; // переоткрыть пайп!
-//				}
-//
-//				if (gpSrv->pConsole->bDataChanged == FALSE)
-//				{
-//					cbWrite = sizeof(gpSrv->pConsole->info);
-//					ExecutePrepareCmd(&(gpSrv->pConsole->info.cmd), Command.nCmd, cbWrite);
-//					gpSrv->pConsole->info.nDataShift = 0;
-//					gpSrv->pConsole->info.nDataCount = 0;
-//					fSuccess = WriteFile(gpSrv->hGetDataPipe, &(gpSrv->pConsole->info), cbWrite, &cbBytesWritten, NULL);
-//				}
-//				else //if (Command.nCmd == CECMD_CONSOLEDATA)
-//				{
-//					_ASSERTE(Command.nCmd == CECMD_CONSOLEDATA);
-//					gpSrv->pConsole->bDataChanged = FALSE;
-//					cbWrite = gpSrv->pConsole->info.crWindow.X * gpSrv->pConsole->info.crWindow.Y;
-//
-//					// Такого быть не должно, ReadConsoleData корректирует возможный размер
-//					if ((int)cbWrite > (gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y))
-//					{
-//						_ASSERTE((int)cbWrite <= (gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y));
-//						cbWrite = (gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y);
-//					}
-//
-//					gpSrv->pConsole->info.nDataShift = (DWORD)(((LPBYTE)gpSrv->pConsole->data) - ((LPBYTE)&(gpSrv->pConsole->info)));
-//					gpSrv->pConsole->info.nDataCount = cbWrite;
-//					DWORD nHdrSize = sizeof(gpSrv->pConsole->info);
-//					cbWrite = cbWrite * sizeof(CHAR_INFO) + nHdrSize ;
-//					ExecutePrepareCmd(&(gpSrv->pConsole->info.cmd), Command.nCmd, cbWrite);
-//					fSuccess = WriteFile(gpSrv->hGetDataPipe, &(gpSrv->pConsole->info), cbWrite, &cbBytesWritten, NULL);
-//				}
-//
-//				// Next query
-//			}
-//
-//			// Выход из пайпа (ошибки чтения и пр.). Пайп будет пересоздан, если не gbQuit
-//			SafeCloseHandle(gpSrv->hInputPipe);
-//		}
-//		else
-//			// The client could not connect, so close the pipe. Пайп будет пересоздан, если не gbQuit
-//			SafeCloseHandle(gpSrv->hInputPipe);
-//	}
-//
-//	MCHKHEAP;
-//	return 1;
-//}
 
 int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
 {

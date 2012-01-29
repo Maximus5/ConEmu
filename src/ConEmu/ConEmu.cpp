@@ -466,14 +466,15 @@ bool CConEmuMain::CheckRequiredFiles()
 	wchar_t szPath[MAX_PATH+32];
 	struct ReqFile {
 		int  Bits;
+		BOOL Req;
 		wchar_t File[16];
 	} Files[] = {
-		{32, L"ConEmuC.exe"},
-		{64, L"ConEmuC64.exe"},
-		{32, L"ConEmuCD.dll"},
-		{64, L"ConEmuCD64.dll"},
-		{32, L"ConEmuHk.dll"},
-		{64, L"ConEmuHk64.dll"},
+		{32, TRUE, L"ConEmuC.exe"},
+		{64, TRUE, L"ConEmuC64.exe"},
+		{32, TRUE, L"ConEmuCD.dll"},
+		{64, TRUE, L"ConEmuCD64.dll"},
+		{32, gpSet->isUseInjects, L"ConEmuHk.dll"},
+		{64, gpSet->isUseInjects, L"ConEmuHk64.dll"},
 	};
 	
 	wchar_t szRequired[128], szRecommended[128]; szRequired[0] = szRecommended[0] = 0;
@@ -496,6 +497,8 @@ bool CConEmuMain::CheckRequiredFiles()
 		_wcscpy_c(pszSlash, 32, Files[i].File);
 		if (!FileExists(szPath, &nFileSize) || !nFileSize)
 		{
+			if (!Files[i].Req)
+				continue;
 			wchar_t* pszList = (Files[i].Bits == nExeBits) ? szRequired : szRecommended;
 			if (*pszList)
 				_wcscat_c(pszList, countof(szRequired), L", ");

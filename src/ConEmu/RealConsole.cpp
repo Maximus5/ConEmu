@@ -1534,6 +1534,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			if (bCheckStatesFindPanels)
 			{
 				// Статусы mn_FarStatus & mn_PreWarningProgress
+				// Результат зависит от распознанных регионов!
+				// В функции есть вложенные вызовы, например,
+				// mp_ABuf->GetDetector()->GetFlags()
 				pRCon->CheckFarStates();
 				// Если возможны панели - найти их в консоли,
 				// заодно оттуда позовется CheckProgressInConsole
@@ -2445,7 +2448,7 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 			else
 			{
 				// Координата попадает в панель (включая правую/левую рамку)?
-				if (CoordInPanel(crMouse) && !(r.Event.MouseEvent.dwControlKeyState & (SHIFT_PRESSED|RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED)))
+				if (CoordInPanel(crMouse, TRUE) && !(r.Event.MouseEvent.dwControlKeyState & (SHIFT_PRESSED|RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED)))
 				{
 					lbNormalRBtnMode = true;
 					r.Event.MouseEvent.dwControlKeyState |= RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED;
@@ -5168,6 +5171,8 @@ void CRealConsole::OnServerClosing(DWORD anSrvPID)
 		m_ServerClosing.nRecieveTick = GetTickCount();
 		m_ServerClosing.hServerProcess = mh_ConEmuC;
 		m_ServerClosing.nServerPID = anSrvPID;
+		// Поскольку сервер закрывается, пайп более не доступен
+		ms_ConEmuC_Pipe[0] = 0;
 	}
 	else
 	{
@@ -8222,6 +8227,9 @@ bool CRealConsole::isVisible()
 	return gpConEmu->isVisible(mp_VCon);
 }
 
+// Результат зависит от распознанных регионов!
+// В функции есть вложенные вызовы, например,
+// mp_ABuf->GetDetector()->GetFlags()
 void CRealConsole::CheckFarStates()
 {
 #ifdef _DEBUG
@@ -9089,7 +9097,7 @@ BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/
 		return FALSE;
 	}
 
-	return mp_RBuf->GetPanelRect(abRight, prc, abFull);
+	return mp_RBuf->GetPanelRect(abRight, prc, abFull, abIncludeEdges);
 }
 
 // Проверить, включен ли в фаре режим "far /w".

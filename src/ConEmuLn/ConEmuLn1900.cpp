@@ -99,7 +99,7 @@ void GetPluginInfoW1900(void *piv)
 	PluginInfo *pi = (PluginInfo*)piv;
 	//memset(pi, 0, sizeof(PluginInfo));
 	//pi->StructSize = sizeof(struct PluginInfo);
-	_ASSERTE(pi->StructSize>0 && ((size_t)pi->StructSize >= (size_t)(((LPBYTE)&pi->MacroFunctionNumber) - (LPBYTE)pi)));
+	_ASSERTE(pi->StructSize>0 && ((size_t)pi->StructSize >= sizeof(*pi)/*(size_t)(((LPBYTE)&pi->MacroFunctionNumber) - (LPBYTE)pi))*/));
 
 	static wchar_t *szMenu[1], szMenu1[255];
 	szMenu[0] = szMenu1;

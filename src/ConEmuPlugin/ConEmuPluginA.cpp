@@ -157,7 +157,7 @@ void ProcessDragFromA()
 		return;
 	}
 
-	PanelInfo PInfo;
+	PanelInfo PInfo = {};
 	InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &PInfo);
 
 	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL) && PInfo.Visible)
@@ -311,11 +311,11 @@ void ProcessDragToA()
 		return;
 	}
 
-	PanelInfo PAInfo, PPInfo;
-	ForwardedPanelInfo *pfpi=NULL;
+	PanelInfo PAInfo = {}, PPInfo = {};
+	ForwardedPanelInfo *pfpi = NULL;
 	int nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
 	//ZeroMemory(&fpi, sizeof(fpi));
-	BOOL lbAOK=FALSE, lbPOK=FALSE;
+	BOOL lbAOK = FALSE, lbPOK = FALSE;
 
 	//Maximus5 - к сожалению, В FAR2 FCTL_GETPANELSHORTINFO не возвращает CurDir :-(
 
@@ -1031,7 +1031,7 @@ BOOL ReloadFarInfoA(/*BOOL abFull*/)
 	//	gpConMapInfo->bFarLeftPanel = FALSE;
 	//	gpConMapInfo->bFarRightPanel = FALSE;
 	//} else {
-	//	PanelInfo piA = {0}, piP = {0};
+	//	PanelInfo piA = {}, piP = {};
 	//	BOOL lbActive  = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &piA);
 	//	BOOL lbPassive = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &piP);
 	//	if (!lbActive && !lbPassive)
@@ -1088,7 +1088,7 @@ void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar)
 
 	if (pFar->bPanelsAllowed)
 	{
-		PanelInfo pasv = {0}, actv = {0};
+		PanelInfo pasv = {}, actv = {};
 		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &actv);
 		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &pasv);
 		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;

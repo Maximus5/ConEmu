@@ -97,7 +97,7 @@ void GetPluginInfoW1900(void *piv)
 	PluginInfo *pi = (PluginInfo*)piv;
 	//memset(pi, 0, sizeof(PluginInfo));
 	//pi->StructSize = sizeof(struct PluginInfo);
-	_ASSERTE(pi->StructSize>0 && ((size_t)pi->StructSize >= (size_t)(((LPBYTE)&pi->MacroFunctionNumber) - (LPBYTE)pi)));
+	_ASSERTE(pi->StructSize>0 && ((size_t)pi->StructSize >= sizeof(*pi)/*(size_t)(((LPBYTE)&pi->MacroFunctionNumber) - (LPBYTE)pi))*/));
 
 	static wchar_t *szMenu[1], szMenu1[255];
 	szMenu[0] = szMenu1;
@@ -408,7 +408,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	if (!InfoW1900) return FALSE;
 
 	CeFullPanelInfo* pcefpi = NULL;
-	PanelInfo pi = {0};
+	PanelInfo pi = {sizeof(pi)};
 	HANDLE hPanel = abActive ? PANEL_ACTIVE : PANEL_PASSIVE;
 	INT_PTR nRc = InfoW1900->PanelControl(hPanel, FCTL_GETPANELINFO, 0, &pi);
 
@@ -585,7 +585,7 @@ void ReloadPanelsInfoW1900()
 {
 	if (!InfoW1900) return;
 
-	// в FAR2 все просто
+	// в FAR3 все просто
 	LoadPanelInfoW1900(TRUE);
 	LoadPanelInfoW1900(FALSE);
 }
@@ -596,7 +596,7 @@ void SetCurrentPanelItemW1900(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCur
 
 	// ¬ Far2 можно быстро проверить валидность индексов
 	HANDLE hPanel = NULL;
-	PanelInfo piActive = {0}, piPassive = {0}, *pi = NULL;
+	PanelInfo piActive = {sizeof(piActive)}, piPassive = {sizeof(piActive)}, *pi = NULL;
 	TODO("ѕровер€ть текущую видимость панелей?");
 	InfoW1900->PanelControl(PANEL_ACTIVE,  FCTL_GETPANELINFO, 0, &piActive);
 

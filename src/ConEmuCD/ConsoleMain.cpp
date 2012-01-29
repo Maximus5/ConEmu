@@ -162,6 +162,7 @@ SrvInfo* gpSrv = NULL;
 #pragma pack(push, 1)
 CESERVER_CONSAVE* gpStoredOutput = NULL;
 #pragma pack(pop)
+MSection* gpcsStoredOutput = NULL;
 
 //CmdInfo* gpSrv = NULL;
 
@@ -1032,8 +1033,9 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 				{
 					gbTerminateOnCtrlBreak = TRUE;
 					gbCtrlBreakStopWaitingShown = TRUE;
-					_printf("Process was not attached to console. Is it GUI?\nCommand to be executed:\n");
-					_wprintf(gpszRunCmd);
+					//_printf("Process was not attached to console. Is it GUI?\nCommand to be executed:\n");
+					//_wprintf(gpszRunCmd);
+					PrintExecuteError(gpszRunCmd, 0, L"Process was not attached to console. Is it GUI?\n");
 					_printf("\n\nPress Ctrl+Break to stop waiting\n");
 
 					while (!gbInShutdown && (nWait != WAIT_OBJECT_0))
@@ -1454,39 +1456,47 @@ void DosBoxHelp()
 	);
 }
 
-void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr)
+void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=NULL*/)
 {
-	wchar_t* lpMsgBuf = NULL;
-	DWORD nFmtRc, nFmtErr = 0;
-
-	if (dwErr == 5)
+	if (asSpecialInfo)
 	{
-		lpMsgBuf = (wchar_t*)LocalAlloc(LPTR, 128*sizeof(wchar_t));
-		_wcscpy_c(lpMsgBuf, 128, L"Access is denied.\nThis may be cause of antiviral or file permissions denial.");
+		if (*asSpecialInfo)
+			_wprintf(asSpecialInfo);
 	}
 	else
 	{
-		nFmtRc = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+		wchar_t* lpMsgBuf = NULL;
+		DWORD nFmtRc, nFmtErr = 0;
 
-		if (!nFmtRc)
-			nFmtErr = GetLastError();
+		if (dwErr == 5)
+		{
+			lpMsgBuf = (wchar_t*)LocalAlloc(LPTR, 128*sizeof(wchar_t));
+			_wcscpy_c(lpMsgBuf, 128, L"Access is denied.\nThis may be cause of antiviral or file permissions denial.");
+		}
+		else
+		{
+			nFmtRc = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+
+			if (!nFmtRc)
+				nFmtErr = GetLastError();
+		}
+
+		_printf("Can't create process, ErrCode=0x%08X, Description:\n", dwErr);
+		_wprintf((lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
+		if (lpMsgBuf) LocalFree(lpMsgBuf);
 	}
 
-	_printf("Can't create process, ErrCode=0x%08X, Description:\n", dwErr);
-	_wprintf((lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
-	if (lpMsgBuf) LocalFree(lpMsgBuf);
-
 	size_t nCchMax = MAX_PATH*2+32;
-	lpMsgBuf = (wchar_t*)calloc(nCchMax,sizeof(*lpMsgBuf));
-	if (lpMsgBuf)
+	wchar_t* lpInfo = (wchar_t*)calloc(nCchMax,sizeof(*lpInfo));
+	if (lpInfo)
 	{
-		_wcscpy_c(lpMsgBuf, nCchMax, L"\nCurrent directory:\n");
+		_wcscpy_c(lpInfo, nCchMax, L"\nCurrent directory:\n");
 			_ASSERTE(nCchMax>=(MAX_PATH*2+32));
-		GetCurrentDirectory(MAX_PATH*2, lpMsgBuf+lstrlen(lpMsgBuf));
-		_wcscat_c(lpMsgBuf, nCchMax, L"\n");
-		_wprintf(lpMsgBuf);
-		free(lpMsgBuf);
+		GetCurrentDirectory(MAX_PATH*2, lpInfo+lstrlen(lpInfo));
+		_wcscat_c(lpInfo, nCchMax, L"\n");
+		_wprintf(lpInfo);
+		free(lpInfo);
 	}
 
 	_printf("\nCommand to be executed:\n");
@@ -4785,15 +4795,19 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 BOOL cmd_GetOutput(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
+	MSectionLock CS; CS.Lock(gpcsStoredOutput, FALSE);
 
 	if (gpStoredOutput)
 	{
 		DWORD nSize = sizeof(CESERVER_CONSAVE_HDR)
 		              + min((int)gpStoredOutput->hdr.cbMaxOneBufferSize,
 		                    (gpStoredOutput->hdr.sbi.dwSize.X*gpStoredOutput->hdr.sbi.dwSize.Y*2));
-		ExecutePrepareCmd(&gpStoredOutput->hdr.hdr, CECMD_GETOUTPUT, nSize);
-		*out = (CESERVER_REQ*)gpStoredOutput;
-		lbRc = TRUE;
+		*out = ExecuteNewCmd(CECMD_GETOUTPUT, nSize);
+		if (*out)
+		{
+			memmove((*out)->Data, gpStoredOutput->Data, nSize - sizeof(gpStoredOutput->hdr.hdr));
+			lbRc = TRUE;
+		}
 	}
 
 	return lbRc;
@@ -4970,8 +4984,9 @@ BOOL cmd_GetAliases(CESERVER_REQ& in, CESERVER_REQ** out)
 	if (*out != NULL)
 	{
 		if (gpSrv->pszAliases && gpSrv->nAliasesSize)
+		{
 			memmove((*out)->Data, gpSrv->pszAliases, gpSrv->nAliasesSize);
-
+		}
 		lbRc = TRUE;
 	}
 	

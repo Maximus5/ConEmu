@@ -502,7 +502,6 @@
 #define rbAdminShield                   2109
 #define IDC_RADIO2                      2110
 #define rbAdminSuffix                   2110
-#define IDC_RADIO1                      2111
 
 // Next default values for new objects
 // 

@@ -1819,12 +1819,15 @@ bool CVirtualConsole::LoadConsoleData()
 		return false;
 	}
 
+	WARNING("ѕоскольку тут мы с буфером работаем, хорошо бы выполн€ть только в главном потоке");
+
 	// ћожет быть, если консоль неактивна, т.к. CVirtualConsole::Update не вызываетс€ и диалоги не детект€тс€. ј это требуетс€.
 	if (!mpsz_ConChar || !mpn_ConAttrEx)
 	{
 		// ≈сли при старте ConEmu создано несколько консолей через '@'
 		// то все кроме активной - не инициализированы (InitDC не вызывалс€),
-		// что нужно делать в главной нити, LoadConsoleData об этом позаботитс€
+		// что нужно делать в главной нити,
+		// PostMessage(ghWnd, mn_MsgInitInactiveDC, 0, apVCon) об этом позаботитс€
 		gpConEmu->InitInactiveDC(this);
 		return false;
 	}
@@ -4895,7 +4898,7 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 	CRgnRects* pRgn = abLeftPanel ? &m_RgnLeftPanel : &m_RgnRightPanel;
 	BOOL lbPartHidden = FALSE;
 	BOOL lbPanelVisible = FALSE;
-	SMALL_RECT rcDlg[32]; DWORD rnDlgFlags[32];
+	SMALL_RECT rcDlg[MAX_DETECTED_DIALOGS]; DWORD rnDlgFlags[MAX_DETECTED_DIALOGS];
 	_ASSERTE(sizeof(mrc_LastDialogs) == sizeof(rcDlg));
 	const CRgnDetect* pDetect = mp_RCon->GetDetector();
 	int nDlgCount = pDetect->GetDetectedDialogs(countof(rcDlg), rcDlg, rnDlgFlags);
@@ -5038,6 +5041,11 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 bool CVirtualConsole::UpdatePanelView(bool abLeftPanel, bool abOnRegister/*=false*/)
 {
 	PanelViewInit* pp = abLeftPanel ? &m_LeftPanelView : &m_RightPanelView;
+	if (!IsWindow(pp->hWnd))
+	{
+		// Ёто при закрытии фара может так случитьс€
+		return false;
+	}
 
 	// „тобы плагин знал, что помен€лась палитра (это или Fade, или реальна€ перенастройка цветов).
 	//for (int i=0; i<16; i++)

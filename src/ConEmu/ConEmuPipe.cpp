@@ -208,8 +208,9 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 		return FALSE;
 	}
 
-	// Информационно!
 	pOut = (CESERVER_REQ*)cbReadBuf;
+	
+	// Проверка размера
 	if (pOut->hdr.cbSize <= sizeof(pOut->hdr))
 	{
 		_ASSERTE(pOut->hdr.cbSize == 0);

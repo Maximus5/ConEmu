@@ -4,18 +4,21 @@
 NAME=ConEmu
 DIRNAME=$(NAME)Plugin
 RELEASEDIR=..\..\Release\plugins\ConEmu
+NEEDENTRY = 1
+USE_PDB = 1
+NO_OPTIMIZE = 1
 
 !include ../makefile_vc_defs
 
 DEF_NAME = export.release
 
-NEEDENTRY = 1
-
 !if defined(AMD64) || "$(CPU)" == "AMD64"
 OUTNAME = ConEmu.x64
 !else
 OUTNAME = ConEmu
-!endif                   
+!endif
+
+PDBNAME="$(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb"
 
 !if "$(EXTERNAL_HOOK_LIBRARY)" == "1"
 USERCPP=$(USERCPP) /DEXTERNAL_HOOK_LIBRARY
@@ -64,14 +67,20 @@ NOWIN98=/OPT:NOWIN98
 
 
 !ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Fd$(PDB) /DHIDE_TODO /DCRTSTARTUP
-CPP_DEBUG=
-LINK_DEBUG=/map:"$(MAP)"
+CPP_OPT=$(CPP_OPT) /DNDEBUG /Fd$(PDB) /DHIDE_TODO /DCRTSTARTUP
 !else
-CPP_OPT=/DDEBUG /Od /Fd$(PDB) /DCRTSTARTUP
-CPP_DEBUG=/Zi
-LINK_DEBUG=/DEBUG /map:"$(MAP)" /pdb:"$(PDB)"
+CPP_OPT=$(CPP_OPT) /DDEBUG /Fd$(PDB) /DCRTSTARTUP
 !endif
+
+
+!if "$(USE_PDB)" == "1"
+LINK_DEBUG=/map:"$(MAP)" /debug /pdb:$(PDBNAME)
+CPP_DEBUG=/Zi
+!else
+LINK_DEBUG=/map:"$(MAP)" /pdb:$(PDBNAME)
+CPP_DEBUG=
+!endif
+
 
 !ifdef AMD64
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
@@ -211,7 +220,7 @@ clean:
 	move $(DLLFULLNAME) $(RELEASEDIR)
 	@cd
 	@echo moving $(PDB) $(RELEASEDIR)
-!ifdef DEBUG
+!ifdef USE_PDB
 	move $(PDB) $(RELEASEDIR)
 !else
 	@if exist $(PDB) del $(PDB)

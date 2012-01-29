@@ -7,12 +7,12 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions
 are met:
 1. Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
+   notice, this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
 3. The name of the authors may not be used to endorse or promote products
-derived from this software without specific prior written permission.
+   derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -58,13 +58,13 @@ BOOL ProcessInputMessage(MSG64 &msg, INPUT_RECORD &r)
 		bool lbIngoreKey = false;
 
 		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
-			(r.Event.KeyEvent.wVirtualKeyCode == 'C' || r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
-			&& (      // Удерживается ТОЛЬКО Ctrl
-			(r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-			((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
-			== (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
-			)
-			)
+		        (r.Event.KeyEvent.wVirtualKeyCode == 'C' || r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
+		        && (      // Удерживается ТОЛЬКО Ctrl
+		            (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+		            ((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
+		             == (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
+		        )
+		  )
 		{
 			lbProcessEvent = true;
 			DEBUGSTR(L"  ---  CtrlC/CtrlBreak recieved\n");
@@ -87,10 +87,10 @@ BOOL ProcessInputMessage(MSG64 &msg, INPUT_RECORD &r)
 				//so CTRL+C is reported as keyboard input rather than as a signal.
 				// CTRL+BREAK is always treated as a signal
 				if (  // Удерживается ТОЛЬКО Ctrl
-					(r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-					((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
-					== (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
-					)
+				    (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+				    ((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
+				     == (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
+				)
 				{
 					// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
 					// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
@@ -118,7 +118,7 @@ BOOL ProcessInputMessage(MSG64 &msg, INPUT_RECORD &r)
 #ifdef _DEBUG
 
 		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
-			r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
+		        r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
 		{
 			DEBUGSTR(L"  ---  F11 recieved\n");
 		}
@@ -145,9 +145,9 @@ BOOL ProcessInputMessage(MSG64 &msg, INPUT_RECORD &r)
 
 		// Запомнить, когда была последняя активность пользователя
 		if (r.EventType == KEY_EVENT
-			|| (r.EventType == MOUSE_EVENT
-			&& (r.Event.MouseEvent.dwButtonState || r.Event.MouseEvent.dwEventFlags
-			|| r.Event.MouseEvent.dwEventFlags == DOUBLE_CLICK)))
+		        || (r.EventType == MOUSE_EVENT
+		            && (r.Event.MouseEvent.dwButtonState || r.Event.MouseEvent.dwEventFlags
+		                || r.Event.MouseEvent.dwEventFlags == DOUBLE_CLICK)))
 		{
 			gpSrv->dwLastUserTick = GetTickCount();
 		}
@@ -511,8 +511,8 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 				L"*** ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n",
 				pr[i].Event.MouseEvent.dwMousePosition.X, pr[i].Event.MouseEvent.dwMousePosition.Y, pr[i].Event.MouseEvent.dwButtonState, (pr[i].Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
 			DEBUGSTRINPUTWRITE(szDbg);
-
-#ifdef _DEBUG
+			
+			#ifdef _DEBUG
 			{
 				static int LastMsButton;
 				if ((LastMsButton & 1) && (pr[i].Event.MouseEvent.dwButtonState == 0))
@@ -530,8 +530,8 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 					LastMsButton = pr[i].Event.MouseEvent.dwButtonState;
 				}
 			}
-#endif
-
+			#endif
+			
 		}
 	}
 	SetLastError(0);

@@ -339,7 +339,7 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	if (!InfoW995) return FALSE;
 
 	CeFullPanelInfo* pcefpi = NULL;
-	PanelInfo pi = {0};
+	PanelInfo pi = {};
 	HANDLE hPanel = abActive ? PANEL_ACTIVE : PANEL_PASSIVE;
 	int nRc = InfoW995->Control(hPanel, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
 
@@ -479,7 +479,7 @@ void SetCurrentPanelItemW995(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurI
 
 	// В Far2 можно быстро проверить валидность индексов
 	HANDLE hPanel = NULL;
-	PanelInfo piActive = {0}, piPassive = {0}, *pi = NULL;
+	PanelInfo piActive = {}, piPassive = {}, *pi = NULL;
 	TODO("Проверять текущую видимость панелей?");
 	InfoW995->Control(PANEL_ACTIVE,  FCTL_GETPANELINFO, 0, (LONG_PTR)&piActive);
 
@@ -594,7 +594,7 @@ bool CheckFarPanelsW995()
 		ActlKeyMacro area = {MCMD_GETAREA};
 		INT_PTR nArea = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &area);
 
-		lbPanelsActive = (nArea == MACROAREA_SHELL);
+		lbPanelsActive = (nArea == MACROAREA_SHELL || nArea == MACROAREA_SEARCH);
 
 		//switch(nArea)
 		//{

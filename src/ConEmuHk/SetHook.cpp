@@ -457,6 +457,7 @@ const wchar_t* ExcludedModules[MAX_EXCLUDED_MODULES] =
 //#ifndef _DEBUG
 	L"mssign32.dll",
 	L"crypt32.dll",
+	L"uxtheme.dll", // подозрение на exception на некоторых Win7 & Far3
 //#endif
 	// А также исключаются все "API-MS-Win-..." в функции IsModuleExcluded
 	0
