@@ -6046,6 +6046,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 
 		mp_RConServer->SetOverlapped(true);
 		mp_RConServer->SetLoopCommands(false);
+		mp_RConServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 		
 		WARNING("OPTIMIZE: Относительно длительная операция, хорошо бы сократить число стартуемых сразу нитей");
 		//Но просто выносить нельзя из MainThread нельзя - ConEmuC ожидает готовый пайп после возврата из CECMD_SRVSTARTSTOP
@@ -8007,6 +8008,19 @@ bool CRealConsole::isConsoleClosing()
 	return false;
 }
 
+void CRealConsole::CloseConsoleWindow()
+{
+	mb_InCloseConsole = TRUE;
+	if (hGuiWnd)
+	{
+		PostConsoleMessage(hGuiWnd, WM_CLOSE, 0, 0);
+	}
+	else
+	{
+		PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
+	}
+}
+
 void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 {
 	if (!this) return;
@@ -8015,7 +8029,8 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 
 	// Сброс background
 	CESERVER_REQ_SETBACKGROUND BackClear = {};
-	mp_VCon->SetBackgroundImageData(&BackClear);
+	bool lbCleared = false;
+	//mp_VCon->SetBackgroundImageData(&BackClear);
 
 	if (hConWnd)
 	{
@@ -8036,6 +8051,12 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 					//lbExecuted = pipe.Execute(CMD_QUITFAR);
 					LPCWSTR pszMacro = gpSet->SafeFarCloseMacro();
 					_ASSERTE(pszMacro && *pszMacro);
+
+					if (!lbCleared)
+					{
+						lbCleared = true;
+						mp_VCon->SetBackgroundImageData(&BackClear);
+					}
 
 					// Async, иначе ConEmu зависнуть может
 					PostMacro(pszMacro, TRUE);
@@ -8080,20 +8101,23 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 					// Спросим
 					wchar_t szMsg[255];
 					_wsprintf(szMsg, SKIPLEN(countof(szMsg)) 
-						L"Do you want to close %s (Yes),\n"
-						L"or terminate (kill) active process (No)?\n"
-						L"\nActive process '%s' PID=%u",
-						hGuiWnd ? L"active program" : L"RealConsole",
+						//L"Do you want to close %s (Yes),\n"
+						//L"or terminate (kill) active process (No)?\n"
+						//L"\nActive process '%s' PID=%u",
+						L"Kill active process '%s' PID=%u?",
+						//hGuiWnd ? L"active program" : L"RealConsole",
 						szActive, nActivePID);
 					BOOL b = gbDontEnable; gbDontEnable = TRUE;
-					int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+					//int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+					int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNO);
 					gbDontEnable = b;
 
-					if (nBtn == IDCANCEL)
-					{
-						return;
-					}
-					else if (nBtn == IDNO)
+					//if (nBtn == IDCANCEL)
+					//{
+					//	return;
+					//}
+					//else if (nBtn == IDNO)
+					if (nBtn == IDYES)
 					{
 						//Terminate
 						CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_TERMINATEPID, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
@@ -8126,6 +8150,10 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 							ExecuteFreeResult(pIn);
 						}
 					}
+					else
+					{
+						return;
+					}
 				}
 			}
 			if (pPrc)
@@ -8134,15 +8162,13 @@ void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
 				return;
 		}
 
-		mb_InCloseConsole = TRUE;
-		if (hGuiWnd)
+		if (!lbCleared)
 		{
-			PostConsoleMessage(hGuiWnd, WM_CLOSE, 0, 0);
+			lbCleared = true;
+			mp_VCon->SetBackgroundImageData(&BackClear);
 		}
-		else
-		{
-			PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
-		}
+
+		CloseConsoleWindow();
 	}
 	else
 	{

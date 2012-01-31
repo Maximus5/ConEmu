@@ -396,6 +396,7 @@ class CRealConsole
 		DWORD CanActivateFarWindow(int anWndIndex);
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
 		void CloseConsole(BOOL abForceTerminate = FALSE);
+		void CloseConsoleWindow();
 		BOOL CanCloseTab(BOOL abPluginRequired = FALSE);
 		void CloseTab();
 		bool isConsoleClosing();

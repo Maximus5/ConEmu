@@ -343,7 +343,7 @@ class CVirtualConsole :
 			POINT *pAllPoints;
 			INT   *pAllCounts;
 		} TransparentInfo;
-		static HMENU mh_PopupMenu, mh_DebugPopup, mh_EditPopup;
+		static HMENU mh_PopupMenu, mh_TerminatePopup, mh_DebugPopup, mh_EditPopup;
 	protected:
 		virtual void OnDestroy();
 };

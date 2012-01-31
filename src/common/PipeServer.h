@@ -116,6 +116,7 @@ struct PipeServer
 		wchar_t ms_PipeName[MAX_PATH];
 		int mn_MaxCount;
 		int mn_PipesToCreate;
+		int mn_DummyAnswerSize;
 		PipeInst *m_Pipes/*[MaxCount]*/;
 		PipeInst *mp_ActivePipe;
 		
@@ -954,12 +955,27 @@ struct PipeServer
 
 			return lbRc;
 		}
+		
+		BOOL WriteDummyAnswer(PipeInst* pPipe)
+		{
+			BOOL fWriteSuccess = FALSE;
+			DWORD cbSize = mn_DummyAnswerSize, cbWritten;
+			_ASSERTEX(cbSize >= sizeof(DWORD) && cbSize <= sizeof(T));
+			BYTE *ptrNil = (BYTE*)calloc(cbSize, 1);
+			if (ptrNil)
+			{
+				fWriteSuccess = PipeServerWrite(pPipe, ptrNil, cbSize, &cbWritten);
+				free(ptrNil);
+			}
+			return fWriteSuccess;
+		}
 
 		// Processing methods
 		DWORD PipeServerThread(PipeInst* pPipe)
 		{
 			_ASSERTEX(this && pPipe && pPipe->pServer==this);
 			BOOL fConnected = FALSE;
+			BOOL fNewCheckStart = (mn_PipesToCreate > 0);
 			DWORD dwErr = 0;
 			HANDLE hWait[2] = {NULL,NULL}; // без Overlapped - используется только при ожидании свободного сервера
 			DWORD dwTID = GetCurrentThreadId();
@@ -994,8 +1010,7 @@ struct PipeServer
 					{
 						if (bNeedReply)
 						{
-							DWORD dwNil = 0, cbSize = sizeof(DWORD);
-							fWriteSuccess = PipeServerWrite(pPipe, &dwNil, cbSize, &cbWritten);
+							fWriteSuccess = WriteDummyAnswer(pPipe);
 							
 							// Function does not return until the client process has read all the data.
 							//FlushFileBuffers(pPipe->hPipeInst);
@@ -1007,7 +1022,22 @@ struct PipeServer
 					return 0;
 				}
 				
-				TODO("Po nastrojke, zaciklit'sja na chtenii, ne zakryvatj podkljuchenie posle odnoj komandy");
+				// Если еще не все пайпы открыты/потоки запущены
+				if (fNewCheckStart && (mn_PipesToCreate > 0))
+				{
+					mn_PipesToCreate--;
+					fNewCheckStart = FALSE;
+					for (int j = 0; j < mn_MaxCount; j++)
+					{
+						if (m_Pipes[j].hThread == NULL)
+						{
+							// Стартуем новый instance
+							bool bStartNewInstance = StartPipeInstance(&(m_Pipes[j]));
+							_ASSERTEX(bStartNewInstance==true);
+							break;
+						}
+					}
+				}
 				
 				BOOL lbFirstRead = TRUE;
 				BOOL lbAllowClient = TRUE;
@@ -1041,14 +1071,14 @@ struct PipeServer
 							if (!mb_InputOnly && pPipe->ptrReply && pPipe->cbReplySize)
 							{
 								// Если успешно - запись в пайп результата
+								_ASSERTEX(pPipe->cbReplySize>=(DWORD)mn_DummyAnswerSize);
 								fWriteSuccess = PipeServerWrite(pPipe, pPipe->ptrReply, pPipe->cbReplySize, &cbWritten);
 							}
 						}
 						else if (!mb_InputOnly)
 						{
 							// Всегда чего-нибудь ответить в пайп, а то ошибка (Pipe was closed) у клиента возникает
-							DWORD dwNil = 0, cbSize = sizeof(DWORD);
-							fWriteSuccess = PipeServerWrite(pPipe, &dwNil, cbSize, &cbWritten);
+							fWriteSuccess = WriteDummyAnswer(pPipe);
 						}
 
 						if (pPipe->bBreakConnection)
@@ -1066,8 +1096,7 @@ struct PipeServer
 					if (lbFirstRead)
 					{
 						// Всегда чего-нибудь ответить в пайп, а то ошибка (Pipe was closed) у клиента возникает
-						DWORD dwNil = 0, cbSize = sizeof(DWORD);
-						fWriteSuccess = PipeServerWrite(pPipe, &dwNil, cbSize, &cbWritten);
+						fWriteSuccess = WriteDummyAnswer(pPipe);
 					}
 					
 					if (!mb_Terminate)
@@ -1150,21 +1179,6 @@ struct PipeServer
 			{
 				return 100;
 			}
-			// Если еще не все пайпы открыты/потоки запущены
-			if (pPipe->pServer->mn_PipesToCreate > 0)
-			{
-				pPipe->pServer->mn_PipesToCreate--;
-				for (int j = 0; j < pPipe->pServer->mn_MaxCount; j++)
-				{
-					if (pPipe->pServer->m_Pipes[j].hThread == NULL)
-					{
-						// Стартуем новый instance
-						bool bStartNewInstance = pPipe->pServer->StartPipeInstance(&(pPipe->pServer->m_Pipes[j]));
-						_ASSERTEX(bStartNewInstance==true);
-						break;
-					}
-				}
-			}
 
 			// Working method
 			nResult = pPipe->pServer->PipeServerThread(pPipe);
@@ -1218,6 +1232,12 @@ struct PipeServer
 			mb_LoopCommands = bLoopCommands;
 		};
 
+		void SetDummyAnswerSize(int anDummyAnswerSize)
+		{
+			// Звать ПЕРЕД StartPipeServer
+			mn_DummyAnswerSize = anDummyAnswerSize;
+		};
+
 		void SetMaxCount(int nMaxCount)
 		{
 			// Звать ПЕРЕД StartPipeServer
@@ -1252,6 +1272,9 @@ struct PipeServer
 			
 			if (mn_MaxCount < 1)
 				mn_MaxCount = 1;
+			if (mn_DummyAnswerSize <= 0 || mn_DummyAnswerSize > sizeof(T))
+				mn_DummyAnswerSize = sizeof(T);
+				
 			m_Pipes = (PipeInst*)calloc(mn_MaxCount,sizeof(*m_Pipes));
 			if (m_Pipes == NULL)
 			{
@@ -1384,6 +1407,7 @@ struct PipeServer
 			PipeInst* pPipe = (PipeInst*)pInstance;
 			DWORD dwWritten = 0;
 
+			_ASSERTEX(nNumberOfBytesToWrite>=mn_DummyAnswerSize);
 			int iRc = PipeServerWrite(pPipe, lpBuffer, nNumberOfBytesToWrite, &dwWritten, TRUE);
 
 			return (iRc == 1);

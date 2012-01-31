@@ -226,7 +226,7 @@ class CConEmuMain :
 		BOOL mb_SkipOnFocus;
 	protected:
 		//CProgressBars *ProgressBars;
-		HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu
+		HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_TerminateVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu
 		TCHAR Title[MAX_TITLE_SIZE+192], TitleCmp[MAX_TITLE_SIZE+192]; //, MultiTitle[MAX_TITLE_SIZE+30];
 		short mn_Progress;
 		//LPTSTR GetTitleStart();
@@ -485,7 +485,7 @@ class CConEmuMain :
 		HMENU CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
 		HMENU CreateHelpMenuPopup();
 		HMENU CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly);
-		HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew);
+		HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew, HMENU& hTerminate);
 		void setFocus();
 		void StartDebugLogConsole();
 		void StartDebugActiveProcess();

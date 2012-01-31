@@ -505,7 +505,10 @@ DWORD CConEmuUpdate::CheckProcInt()
 #ifdef _WIN64
 	if (mp_Set->UpdateDownloadSetup() == 2)
 	{
-		ReportError(L"64bit versions of ConEmu may be updated with ConEmuSetup.exe only!", 0);
+		if (mb_ManualCallMode)
+		{
+			ReportError(L"64bit versions of ConEmu may be updated with ConEmuSetup.exe only!", 0);
+		}
 		goto wrap;
 	}
 #endif

@@ -194,6 +194,8 @@ extern "C" {
 
 	// All *aszExcludedModules must be valid all time
 	bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules, BOOL abForceHooks);
+	
+	bool __stdcall SetExports(HMODULE Module);
 
 #if defined(__GNUC__)
 }

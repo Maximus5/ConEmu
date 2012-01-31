@@ -457,7 +457,7 @@ const wchar_t* ExcludedModules[MAX_EXCLUDED_MODULES] =
 //#ifndef _DEBUG
 	L"mssign32.dll",
 	L"crypt32.dll",
-	L"uxtheme.dll", // подозрение на exception на некоторых Win7 & Far3
+	L"uxtheme.dll", // подозрение на exception на некоторых Win7 & Far3 (Bugs\2012\120124\Info.txt, пункт 3)
 //#endif
 	// А также исключаются все "API-MS-Win-..." в функции IsModuleExcluded
 	0
@@ -645,6 +645,13 @@ bool __stdcall InitHooks(HookItem* apHooks)
 		}
 	}
 
+	// Обработать экспорты в Kernel32.dll
+	static bool KernelHooked = false;
+	if (!KernelHooked)
+	{
+		KernelHooked = SetExports(ghKernel32);
+	}
+	
 	return true;
 }
 
@@ -930,6 +937,130 @@ bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
 	}
 
 	return true;
+}
+
+bool __stdcall SetExports(HMODULE Module)
+{
+	if (!IsModuleValid(Module))
+	{
+		_ASSERTEX(IsModuleValid(Module));
+		return false;
+	}
+	
+	if (!gpHooks)
+	{
+		_ASSERTEX(gpHooks!=NULL);
+		return false;
+	}
+	
+	#ifdef _WIN64
+	if (((DWORD_PTR)Module) >= ((DWORD_PTR)ghHookOurModule))
+	{
+		_ASSERTEX(((DWORD_PTR)Module) < ((DWORD_PTR)ghHookOurModule))
+		return false;
+	}
+	#endif
+	
+	bool lbRc = false;
+	
+	SAFETRY
+	{
+		DWORD ExportDir = 0;
+		IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
+		IMAGE_NT_HEADERS* nt_header = 0;
+		
+		if (dos_header->e_magic == IMAGE_DOS_SIGNATURE /*'ZM'*/)
+		{
+			nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
+			if (nt_header->Signature == 0x004550)
+			{
+				ExportDir = (DWORD)(nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+			}
+		}
+		
+		if (ExportDir != 0)
+		{
+			IMAGE_SECTION_HEADER* section = (IMAGE_SECTION_HEADER*)IMAGE_FIRST_SECTION(nt_header);
+
+			for (WORD s = 0; s < nt_header->FileHeader.NumberOfSections; s++)
+			{
+				if (!((section[s].VirtualAddress == ExportDir) ||
+				    ((section[s].VirtualAddress < ExportDir) &&
+				     ((section[s].Misc.VirtualSize + section[s].VirtualAddress) > ExportDir))))
+				{
+					// Эта секция не содержит ExportDir
+					continue;
+				}
+
+				//int nDiff = 0;//section[s].VirtualAddress - section[s].PointerToRawData;
+				IMAGE_EXPORT_DIRECTORY* Export = (IMAGE_EXPORT_DIRECTORY*)((char*)Module + (ExportDir/*-nDiff*/));
+
+				if (!Export->AddressOfNames || !Export->AddressOfNameOrdinals || !Export->AddressOfFunctions)
+				{
+					_ASSERTEX(Export->AddressOfNames && Export->AddressOfNameOrdinals && Export->AddressOfFunctions);
+					continue;
+				}
+
+				DWORD* Name  = (DWORD*)(((BYTE*)Module) + Export->AddressOfNames);
+				WORD*  Ordn  = (WORD*)(((BYTE*)Module) + Export->AddressOfNameOrdinals);
+				DWORD* Shift = (DWORD*)(((BYTE*)Module) + Export->AddressOfFunctions);
+
+				DWORD nCount = Export->NumberOfNames; // Export->NumberOfFunctions;
+
+				DWORD old_protect;
+				if (VirtualProtect(Shift, nCount * sizeof( DWORD ), PAGE_READWRITE, &old_protect ))
+				{
+					for (DWORD i = 0; i < nCount; i++)
+					{
+						char* pszExpName = ((char*)Module) + Name[i];
+						DWORD nFnOrdn = Ordn[i];
+						if (nFnOrdn > Export->NumberOfFunctions)
+						{
+							continue;
+						}
+						void* ptrOldAddr = ((BYTE*)Module) + Shift[nFnOrdn];
+
+						for (DWORD j = 0; gpHooks[j].NewAddress; j++)
+						{
+							if (gpHooks[j].hDll != Module)
+								continue;
+							
+							if (gpHooks[j].NewAddress && !lstrcmpA(gpHooks[j].Name, pszExpName))
+							{
+								if (ptrOldAddr == gpHooks[j].OldAddress)
+								{
+									INT_PTR NewShift = ((BYTE*)gpHooks[j].NewAddress) - ((BYTE*)Module);
+									
+									#ifdef _WIN64
+									if (NewShift <= 0 || NewShift > (DWORD)-1)
+									{
+										_ASSERTEX((NewShift > 0) && (NewShift < (DWORD)-1));
+										break;
+									}
+									#endif
+									
+									Shift[nFnOrdn] = (DWORD)NewShift;
+									lbRc = true;
+								}
+								else
+								{
+									_ASSERTEX((((BYTE*)Module) + Shift[nFnOrdn]) == gpHooks[j].OldAddress);
+									break;
+								}
+								break;
+							}
+						}
+					}
+
+					VirtualProtect( Shift, nCount * sizeof( DWORD ), old_protect, &old_protect );
+				}
+			}
+		}
+	} SAFECATCH {
+		lbRc = false;
+	}
+	
+	return lbRc;
 }
 
 bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExecutable, IMAGE_IMPORT_DESCRIPTOR* Import, size_t ImportCount, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p);
@@ -1789,6 +1920,8 @@ void __stdcall UnsetAllHooks()
 	#endif
 	//Warning: TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary.
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
+
+	WARNING("Убрать перехыват экспортов из Kernel32.dll");
 
 	if (snapshot != INVALID_HANDLE_VALUE)
 	{

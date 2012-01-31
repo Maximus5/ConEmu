@@ -3828,6 +3828,7 @@ void InitHWND(/*HWND ahFarHwnd*/)
 		gpPlugServer->SetMaxCount(3);
 		gpPlugServer->SetOverlapped(true);
 		gpPlugServer->SetLoopCommands(false);
+		gpPlugServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 		
 		gpPlugServer->StartPipeServer(gszPluginServerPipe, NULL, LocalSecurity(), PlugServerCommand, PlugServerFree);
 	}

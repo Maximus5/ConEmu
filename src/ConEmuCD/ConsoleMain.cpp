@@ -5245,7 +5245,7 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 		}
 	}
 
-	if (!hProcess)
+	if (hProcess != NULL)
 	{
 		if (TerminateProcess(hProcess, 100))
 		{

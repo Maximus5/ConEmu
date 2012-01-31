@@ -156,6 +156,7 @@ wchar_t CVirtualConsole::ms_Spaces[MAX_SPACES];
 wchar_t CVirtualConsole::ms_HorzDbl[MAX_SPACES];
 wchar_t CVirtualConsole::ms_HorzSingl[MAX_SPACES];
 HMENU CVirtualConsole::mh_PopupMenu = NULL;
+HMENU CVirtualConsole::mh_TerminatePopup = NULL;
 HMENU CVirtualConsole::mh_DebugPopup = NULL;
 HMENU CVirtualConsole::mh_EditPopup = NULL;
 
@@ -4580,7 +4581,7 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 	BOOL lbNeedCreate = (mh_PopupMenu == NULL);
 
 	// Создать или обновить enable/disable
-	mh_PopupMenu = gpConEmu->CreateVConPopupMenu(this, mh_PopupMenu, TRUE);
+	mh_PopupMenu = gpConEmu->CreateVConPopupMenu(this, mh_PopupMenu, TRUE, mh_TerminatePopup);
 	if (!mh_PopupMenu)
 	{
 		MBoxAssert(mh_PopupMenu!=NULL);
@@ -4649,8 +4650,11 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 			if (mp_RCon->Detach())
 				gpConEmu->OnVConTerminated(this);
 			break;
-		case IDM_TERMINATE:
+		case IDM_TERMINATEPRC:
 			mp_RCon->CloseConsole(TRUE);
+			break;
+		case IDM_TERMINATECON:
+			mp_RCon->CloseConsoleWindow();
 			break;
 		case IDM_RESTART:
 		case IDM_RESTARTAS:

@@ -101,6 +101,14 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	
 	if (gbAttachGuiClient && ghConEmuWndDC)
 	{
+		#ifdef _DEBUG
+		WNDCLASS wc = {}; BOOL lbClass = FALSE;
+		if ((lpClassNameW && ((DWORD_PTR)lpClassNameW) <= 0xFFFF))
+		{
+			lbClass = GetClassInfo((HINSTANCE)GetModuleHandle(NULL), lpClassNameW, &wc);
+		}
+		#endif
+
 		DWORD nTID = GetCurrentThreadId();
 		if ((nTID != gnHookMainThreadId) && (gnAttachGuiClientThreadId && nTID != gnAttachGuiClientThreadId))
 		{
