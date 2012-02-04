@@ -33,9 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "MenuIds.h"
 
-template <class T> struct PipeServer;
-//#include "../common/PipeServer.h"
-
 #define IID_IShellLink IID_IShellLinkW
 
 #define GET_X_LPARAM(inPx) ((int)(short)LOWORD(inPx))
@@ -108,9 +105,19 @@ enum TrackMenuPlace
 	tmp_Cmd,
 };
 
+struct MsgSrvStartedArg
+{
+	HWND  hConWnd;
+	DWORD nSrcPID;
+	DWORD timeStart;
+	DWORD timeRecv;
+	DWORD timeFin;
+};
+
 #include "DwmHelper.h"
 #include "TaskBar.h"
 #include "FrameHolder.h"
+#include "GuiServer.h"
 
 class CConEmuMain :
 	public CDwmHelper,
@@ -225,6 +232,9 @@ class CConEmuMain :
 		CDragDrop *mp_DragDrop;
 		BOOL mb_SkipOnFocus;
 	protected:
+		friend class CGuiServer;
+		CGuiServer m_GuiServer;
+
 		//CProgressBars *ProgressBars;
 		HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_TerminateVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu
 		TCHAR Title[MAX_TITLE_SIZE+192], TitleCmp[MAX_TITLE_SIZE+192]; //, MultiTitle[MAX_TITLE_SIZE+30];
@@ -342,15 +352,7 @@ class CConEmuMain :
 		UINT mn_MsgInitVConGhost;
 		UINT mn_MsgCreateCon;
 		UINT mn_MsgRequestUpdate;
-
-		//
-		PipeServer<CESERVER_REQ>* mp_GuiServer;
-		//static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
-		//void GuiServerThreadCommand(HANDLE hPipe);
-		//DWORD mn_GuiServerThreadId; HANDLE mh_GuiServerThread, mh_GuiServerThreadTerminate;
-		wchar_t ms_ServerPipe[MAX_PATH];
-		static BOOL WINAPI GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
-		static void WINAPI GuiServerFree(CESERVER_REQ* pReply, LPARAM lParam);
+		UINT mn_MsgTaskBarCreated;
 
 		//
 		virtual void OnUseGlass(bool abEnableGlass);

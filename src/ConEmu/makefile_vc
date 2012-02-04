@@ -38,6 +38,7 @@ $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
 $(INTDIR)\DwmHelper.obj \
 $(INTDIR)\FrameHolder.obj \
+$(INTDIR)\GuiServer.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\Options.obj \
@@ -46,6 +47,7 @@ $(INTDIR)\OptionsFast.obj \
 $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\RealBuffer.obj \
 $(INTDIR)\RealConsole.obj \
+$(INTDIR)\RealServer.obj \
 $(INTDIR)\Recreate.obj \
 $(INTDIR)\Registry.obj \
 $(INTDIR)\ScreenDump.obj \
@@ -220,7 +222,7 @@ $(INTDIR)\Background.obj: Background.cpp Background.h
 
 $(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
-$(INTDIR)\ConEmu.obj: ConEmu.cpp Version.h ../common/PipeServer.h
+$(INTDIR)\ConEmu.obj: ConEmu.cpp Version.h GuiServer.h ../common/PipeServer.h
 
 $(INTDIR)\ConEmuApp.obj: ConEmuApp.cpp Version.h
 
@@ -236,6 +238,8 @@ $(INTDIR)\DwmHelper.obj: DwmHelper.cpp DwmHelper.h
 
 $(INTDIR)\FrameHolder.obj: FrameHolder.cpp FrameHolder.h
 
+$(INTDIR)\GuiServer.obj: GuiServer.cpp GuiServer.h ConEmu.h RealConsole.h VirtualConsole.h
+
 $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 
 $(INTDIR)\Macro.obj: Macro.cpp Macro.h
@@ -250,7 +254,9 @@ $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs
 
 $(INTDIR)\RealBuffer.obj: RealBuffer.cpp RealBuffer.h RealConsole.h  ../common/Common.hpp
 
-$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h ../common/RConStartArgs.h ../common/Common.hpp ../common/PipeServer.h
+$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h RealServer.h ../common/RConStartArgs.h ../common/Common.hpp ../common/PipeServer.h
+
+$(INTDIR)\RealServer.obj: RealServer.cpp RealConsole.h RealServer.h ../common/Common.hpp ../common/PipeServer.h
 
 $(INTDIR)\Recreate.obj: Recreate.cpp Recreate.h
 

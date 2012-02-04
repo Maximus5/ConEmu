@@ -617,6 +617,8 @@ struct Settings
 		
 		SettingsBase* CreateSettings();
 		
+		void GetSettingsType(wchar_t (&szType)[8], bool& ReadOnly);
+		
 	private:
 		// reg->Load(L"ColorTableNN", Colors[i]);
 		COLORREF Colors[0x20];

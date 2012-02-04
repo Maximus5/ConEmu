@@ -11,6 +11,7 @@ SRCS =  \
 		DragDropData.cpp   \
 		DwmHelper.cpp      \
 		FrameHolder.cpp    \
+		GuiServer.cpp      \
 		LoadImg.cpp        \
 		Macro.cpp          \
 		Options.cpp        \
@@ -18,6 +19,7 @@ SRCS =  \
         OptionsFast.cpp    \
 		RealBuffer.cpp     \
 		RealConsole.cpp    \
+		RealServer.cpp     \
 		Recreate.cpp       \
 		Registry.cpp       \
 		ScreenDump.cpp     \

@@ -61,4 +61,6 @@ class TrayIcon
 		LRESULT OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		void AddTrayIcon();
 		void RemoveTrayIcon();
+		
+		void OnTaskbarCreated();
 };

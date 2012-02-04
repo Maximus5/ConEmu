@@ -46,10 +46,17 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 	case WM_INITDIALOG:
 		{
 			LRESULT lbRc = FALSE;
-			wchar_t szTitle[128];
-			wcscpy_c(szTitle, gpConEmu->GetDefaultTitle());
-			wcscat_c(szTitle, L" fast configuration");
-			SetWindowText(hDlg, szTitle);
+			if (lParam)
+			{
+				SetWindowText(hDlg, (LPCWSTR)lParam);
+			}
+			else
+			{
+				wchar_t szTitle[512];
+				wcscpy_c(szTitle, gpConEmu->GetDefaultTitle());
+				wcscat_c(szTitle, L" fast configuration");
+				SetWindowText(hDlg, szTitle);
+			}
 
 			CheckDlgButton(hDlg, cbUseKeyboardHooksFast, gpSet->isKeyboardHooks());
 
@@ -240,7 +247,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 }
 
 
-void CheckOptionsFast(bool abCreatingVanilla /*= false*/)
+void CheckOptionsFast(LPCWSTR asTitle, bool abCreatingVanilla /*= false*/)
 {
 	bVanilla = abCreatingVanilla;
 
@@ -302,6 +309,6 @@ void CheckOptionsFast(bool abCreatingVanilla /*= false*/)
 
 	if (bCheckHooks || bCheckUpdate || bCheckIme)
 	{
-		DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_FAST_CONFIG), NULL, CheckOptionsFastProc);
+		DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_FAST_CONFIG), NULL, CheckOptionsFastProc, (LPARAM)asTitle);
 	}
 }

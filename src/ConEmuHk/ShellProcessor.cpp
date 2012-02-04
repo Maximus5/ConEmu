@@ -349,7 +349,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
 	int nCchSize = 0;
 	BOOL lbEndQuote = FALSE;
-	bool lbNewGuiConsole = false;
+	bool lbNewGuiConsole = false, lbNewConsoleFromGui = false;
 	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
 
 	szConEmuC = (wchar_t*)malloc(cchConEmuC*sizeof(*szConEmuC)); // ConEmuC64.exe
@@ -488,6 +488,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 					if (abNewConsole)
 					{
 						// 111211 - "-new_console" передается в GUI
+						_ASSERTEX(psz[1] == L'C' || psz[1] == L'c');
 						lbComSpecK = FALSE;
 					}
 					else
@@ -724,6 +725,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 	// Если запускается новый GUI как вкладка, или консольное приложения из GUI как вкладки
 	lbNewGuiConsole = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) || (ghAttachGuiClient != NULL);
+	lbNewConsoleFromGui = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) && (ghAttachGuiClient != NULL);
 
 	#if 0
 	if (lbNewGuiConsole)
@@ -732,6 +734,11 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		nCchSize += 128;
 	}
 	#endif
+	if (lbNewConsoleFromGui)
+	{
+		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
+		nCchSize += 128;
+	}
 	
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
 	// /C или /K в обоих случаях нужно пихать в psParam
@@ -773,6 +780,14 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	}
 	else
 	#endif
+	if (lbNewConsoleFromGui)
+	{
+		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
+		int nCurLen = lstrlen(*psParam);
+		msprintf((*psParam) + nCurLen, nCchSize - nCurLen, L" /ATTACH /GID=%u /ROOT ", m_SrvMapping.nGuiPID);
+		TODO("Наверное, хорошо бы обработать /K|/C? Если консольное запускается из GUI");
+	}
+	else
 	{
 		_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
 	}
@@ -907,9 +922,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 		if (asFile && *asFile)
 		{
-			_wcscat_c((*psParam), nCchSize, L"\"");
+			if (*asFile != L'"')
+				_wcscat_c((*psParam), nCchSize, L"\"");
 			_wcscat_c((*psParam), nCchSize, asFile);
-			_wcscat_c((*psParam), nCchSize, L"\"");
+			if (*asFile != L'"')
+				_wcscat_c((*psParam), nCchSize, L"\"");
+
 			if (asParam && *asParam)
 				_wcscat_c((*psParam), nCchSize, L" ");
 		}
@@ -1046,7 +1064,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	HANDLE hOut = lphStdOut ? *lphStdOut : NULL;
 	HANDLE hErr = lphStdErr ? *lphStdErr : NULL;
 	
-	bool bNewConsoleArg = false;
+	bool bNewConsoleArg = false, bForceNewConsole = false;
 		
 	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить
 	//            левый хэндл (hStdOutput = 0x00010001), иногда получается 0x00060265
@@ -1249,9 +1267,9 @@ BOOL CShellProc::PrepareExecuteParms(
 		&& ((anShowCmd == NULL) || (*anShowCmd != SW_HIDE)))
 	{
 		WARNING("Не забыть, что цеплять во вкладку нужно только если консоль запускается ВИДИМОЙ");
-		bNewConsoleArg = true;
+		bForceNewConsole = true;
 	}
-	if (ghAttachGuiClient && bNewConsoleArg && !lbGuiApp)
+	if (ghAttachGuiClient && (bNewConsoleArg || bForceNewConsole) && !lbGuiApp)
 	{
 		lbGuiApp = true;
 	}
@@ -1263,7 +1281,7 @@ BOOL CShellProc::PrepareExecuteParms(
 		DWORD nFlagsMask = (SEE_MASK_FLAG_NO_UI|SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NO_CONSOLE);
 		DWORD nFlags = (anShellFlags ? *anShellFlags : 0) & nFlagsMask;
 		// Если bNewConsoleArg - то однозначно стартовать в новой вкладке ConEmu (GUI теперь тоже цеплять умеем)
-		if (bNewConsoleArg)
+		if (bNewConsoleArg || bForceNewConsole)
 		{
 			if (anShellFlags)
 			{
@@ -1318,7 +1336,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	//if (GetImageSubsystem(pszExecFile,ImageSubsystem,ImageBits))
 	//lbGuiApp = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
 
-	if (lbGuiApp && !bNewConsoleArg)
+	if (lbGuiApp && !(bNewConsoleArg || bForceNewConsole))
 		goto wrap; // гуй - не перехватывать (если только не указан "-new_console")
 
 	// Подставлять ConEmuC.exe нужно только для того, чтобы 
@@ -1345,7 +1363,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	_ASSERTE(mn_ImageBits!=0);
 	// Если это Фар - однозначно вставляем ConEmuC.exe
 	if ((gFarMode.bFarHookMode)
-		|| (lbGuiApp && bNewConsoleArg) // хотят GUI прицепить к новуй вкладке в ConEmu, или новую консоль из GUI
+		|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хотят GUI прицепить к новуй вкладке в ConEmu, или новую консоль из GUI
 		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
 		|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
 			&& ((aCmd == eShellExecute) 
@@ -1368,7 +1386,7 @@ BOOL CShellProc::PrepareExecuteParms(
 		{
 			HWND hConWnd = GetConsoleWindow();
 
-			if (lbGuiApp && bNewConsoleArg)
+			if (lbGuiApp && (bNewConsoleArg || bForceNewConsole))
 			{
 				if (anShowCmd)
 					*anShowCmd = SW_HIDE;

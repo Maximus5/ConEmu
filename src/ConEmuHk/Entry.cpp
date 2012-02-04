@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_INJECT_MSGBOX
 //  #define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-//  #define SHOW_EXE_MSGBOX_NAME L"vlc.exe"
+//  #define SHOW_EXE_MSGBOX_NAME L"totalcmd.exe"
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
@@ -90,7 +90,8 @@ extern "C" {
 //DWORD gnVkWinFix = 0xF0;
 //HWND  ghKeyHookConEmuRoot = NULL;
 
-HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
+extern HMODULE ghOurModule;
+//HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 //UINT gnMsgActivateCon = 0; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 //SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
@@ -98,12 +99,13 @@ HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 
 extern DWORD  gnHookMainThreadId;
 extern HANDLE ghHeap;
-extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32, ghComdlg32;
-extern const wchar_t *kernel32;// = L"kernel32.dll";
+//extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32, ghComdlg32;
+extern HMODULE ghUser32;
+//extern const wchar_t *kernel32;// = L"kernel32.dll";
 extern const wchar_t *user32  ;// = L"user32.dll";
-extern const wchar_t *shell32 ;// = L"shell32.dll";
-extern const wchar_t *advapi32;// = L"Advapi32.dll";
-extern const wchar_t *comdlg32;// = L"comdlg32.dll";
+//extern const wchar_t *shell32 ;// = L"shell32.dll";
+//extern const wchar_t *advapi32;// = L"Advapi32.dll";
+//extern const wchar_t *comdlg32;// = L"comdlg32.dll";
 
 ConEmuHkDllState gnDllState = ds_Undefined;
 int gnDllThreadCount = 0;
@@ -268,7 +270,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
 		{
 			// GuiMessageBox еще не прокатит, ничего не инициализировано
-			HMODULE hUser = LoadLibrary(L"user32.dll");
+			HMODULE hUser = LoadLibrary(user32);
 			typedef int (WINAPI* MessageBoxW_t)(HWND hWnd,LPCTSTR lpText,LPCTSTR lpCaption,UINT uType);
 			if (hUser)
 			{

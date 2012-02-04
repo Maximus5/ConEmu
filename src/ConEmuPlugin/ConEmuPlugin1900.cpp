@@ -88,22 +88,13 @@ static wchar_t* GetPanelDir(HANDLE hPanel)
 
 	if (nSize)
 	{
-		if (gFarVersion.dwBuild < 2343)
+		FarPanelDirectory* pDir = (FarPanelDirectory*)calloc(nSize, 1);
+		if (pDir)
 		{
-			pszDir = (wchar_t*)calloc(nSize, sizeof(*pszDir));
-			if (pszDir)
-				nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, nSize, pszDir);
-		}
-		else
-		{
-			FarPanelDirectory* pDir = (FarPanelDirectory*)calloc(nSize, 1);
-			if (pDir)
-			{
-				pDir->StructSize = sizeof(*pDir);
-				nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, nSize, pDir);
-				pszDir = lstrdup(pDir->Name);
-				free(pDir);
-			}
+			pDir->StructSize = sizeof(*pDir);
+			nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, nSize, pDir);
+			pszDir = lstrdup(pDir->Name);
+			free(pDir);
 		}
 	}
 	_ASSERTE(nSize>0);
@@ -1467,114 +1458,3 @@ HANDLE WINAPI OpenW(const struct OpenInfo *Info)
 	return OpenPluginWcmn(Info->OpenFrom, Info->Data);
 }
 
-#ifdef _DEBUG
-extern CONSOLE_SCREEN_BUFFER_INFO csbi;
-extern int gnPage;
-extern bool gbShowAttrsOnly;
-extern void ShowConDump(wchar_t* pszText);
-extern void ShowConPacket(CESERVER_REQ* pReq);
-HANDLE WINAPI OpenFilePluginW1900(const wchar_t *Name,const unsigned char *Data,int DataSize,int OpMode)
-{
-	//Name==NULL, когда Shift-F1
-	if (!InfoW1900) return INVALID_HANDLE_VALUE;
-
-	if (OpMode || Name == NULL) return INVALID_HANDLE_VALUE;  // только из панелей в обычном режиме
-
-	const wchar_t* pszDot = wcsrchr(Name, L'.');
-
-	if (!pszDot) return INVALID_HANDLE_VALUE;
-
-	if (lstrcmpi(pszDot, L".con")) return INVALID_HANDLE_VALUE;
-
-	if (DataSize < sizeof(CESERVER_REQ_HDR)) return INVALID_HANDLE_VALUE;
-
-	HANDLE hFile = CreateFile(Name, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-
-	if (hFile == INVALID_HANDLE_VALUE)
-	{
-		GUID lguid_Msg = { /* e7df3ff6-f56a-44ac-a18c-12b0cfb416be */
-		    0xe7df3ff6,
-		    0xf56a,
-		    0x44ac,
-		    {0xa1, 0x8c, 0x12, 0xb0, 0xcf, 0xb4, 0x16, 0xbe}
-		};
-		InfoW1900->Message(&guid_ConEmu, &lguid_Msg, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING,
-			NULL, (const wchar_t* const*)L"ConEmu plugin\nCan't open file!", 0,0);
-		return INVALID_HANDLE_VALUE;
-	}
-
-	DWORD dwSizeLow, dwSizeHigh = 0;
-	dwSizeLow = GetFileSize(hFile, &dwSizeHigh);
-
-	if (dwSizeHigh)
-	{
-		GUID lguid_Msg = { /* 41f1e45e-4714-48f4-9876-dd60ee5b264f */
-		    0x41f1e45e,
-		    0x4714,
-		    0x48f4,
-		    {0x98, 0x76, 0xdd, 0x60, 0xee, 0x5b, 0x26, 0x4f}
-		};
-		InfoW1900->Message(&guid_ConEmu, &lguid_Msg, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING,
-			NULL, (const wchar_t* const*)L"ConEmu plugin\nFile too large!", 0,0);
-		CloseHandle(hFile);
-		return INVALID_HANDLE_VALUE;
-	}
-
-	wchar_t* pszData = (wchar_t*)calloc(dwSizeLow+2,1);
-
-	if (!pszData) return INVALID_HANDLE_VALUE;
-
-	if (!ReadFile(hFile, pszData, dwSizeLow, &dwSizeHigh, 0) || dwSizeHigh != dwSizeLow)
-	{
-		GUID lguid_Msg = { /* 54b9afc2-7fce-4948-8214-c7c6191f30db */
-		    0x54b9afc2,
-		    0x7fce,
-		    0x4948,
-		    {0x82, 0x14, 0xc7, 0xc6, 0x19, 0x1f, 0x30, 0xdb}
-		};
-		InfoW1900->Message(&guid_ConEmu, &lguid_Msg, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING,
-			NULL, (const wchar_t* const*)L"ConEmu plugin\nCan't read file!", 0,0);
-		return INVALID_HANDLE_VALUE;
-	}
-
-	CloseHandle(hFile);
-	memset(&csbi, 0, sizeof(csbi));
-	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-	HANDLE h = InfoW1900->SaveScreen(0,0,-1,-1);
-	CESERVER_REQ* pReq = (CESERVER_REQ*)pszData;
-
-	if (pReq->hdr.cbSize == dwSizeLow)
-	{
-		if (pReq->hdr.nVersion != CESERVER_REQ_VER && pReq->hdr.nVersion < 40)
-		{
-			GUID lguid_Msg = { /* b49be0c6-1a51-4af3-ac74-bb7478666166 */
-			    0xb49be0c6,
-			    0x1a51,
-			    0x4af3,
-			    {0xac, 0x74, 0xbb, 0x74, 0x78, 0x66, 0x61, 0x66}
-			};
-			InfoW1900->Message(&guid_ConEmu, &lguid_Msg, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING,
-				NULL, (const wchar_t* const*)L"ConEmu plugin\nUnknown version of packet", 0,0);
-		}
-		else
-		{
-			ShowConPacket(pReq);
-		}
-	}
-	else if ((*(DWORD*)pszData) >= 0x200020)
-	{
-		ShowConDump(pszData);
-	}
-
-	InfoW1900->RestoreScreen(NULL);
-	InfoW1900->RestoreScreen(h);
-	InfoW1900->Text(0,0,0,0);
-	//InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
-	//InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0);
-	//INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
-	//r.Event.WindowBufferSizeEvent.dwSize = csbi.dwSize;
-	//WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwSizeLow);
-	free(pszData);
-	return INVALID_HANDLE_VALUE;
-}
-#endif

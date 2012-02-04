@@ -73,7 +73,7 @@ extern const wchar_t *gdi32  ;// = L"gdi32.dll";
 extern const wchar_t *shell32 ;// = L"shell32.dll";
 extern const wchar_t *advapi32;// = L"Advapi32.dll";
 extern const wchar_t *comdlg32;// = L"comdlg32.dll";
-extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32, ghComdlg32;
+extern HMODULE ghKernel32, ghUser32, ghGdi32, ghShell32, ghAdvapi32, ghComdlg32;
 
 typedef LONG (WINAPI* RegCloseKey_t)(HKEY hKey);
 extern RegCloseKey_t RegCloseKey_f;
@@ -133,7 +133,7 @@ struct HookItem
 
 	// Next fields are for internal use only!
 	HMODULE hDll;          // handle of DllName
-	void*   OldAddress;    // Original address of function from hDll
+	void*   OldAddress;    // Original address of function from hDll (GetProcAddress)
 #ifdef _DEBUG
 	BOOL    ReplacedInExe; // debug information only
 #endif
@@ -195,8 +195,6 @@ extern "C" {
 	// All *aszExcludedModules must be valid all time
 	bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules, BOOL abForceHooks);
 	
-	bool __stdcall SetExports(HMODULE Module);
-
 #if defined(__GNUC__)
 }
 #endif

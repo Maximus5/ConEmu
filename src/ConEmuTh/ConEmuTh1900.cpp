@@ -520,33 +520,21 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 
 	if (nSize)
 	{
-		if (gFarVersion.dwBuild < 2343)
+		if ((pcefpi->pFarPanelDirectory == NULL) || (nSize > pcefpi->nMaxPanelGetDir))
 		{
-			if ((pcefpi->pszPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir))
-			{
-				pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
-				SafeFree(pcefpi->pszPanelDir);
-				pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
-			}
-			nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, (int)nSize, pcefpi->pszPanelDir);
+			pcefpi->nMaxPanelGetDir = nSize + 1024; // + выделим немножко заранее
+			pcefpi->pFarPanelDirectory = calloc(pcefpi->nMaxPanelGetDir,1);
 		}
-		else
-		{
-			if ((pcefpi->pFarPanelDirectory == NULL) || (nSize > pcefpi->nMaxPanelGetDir))
-			{
-				pcefpi->nMaxPanelGetDir = nSize + 1024; // + выделим немножко заранее
-				pcefpi->pFarPanelDirectory = calloc(pcefpi->nMaxPanelGetDir,1);
-			}
-			nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, nSize, pcefpi->pFarPanelDirectory);
+		((FarPanelDirectory*)pcefpi->pFarPanelDirectory)->StructSize = sizeof(FarPanelDirectory);
+		nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, nSize, pcefpi->pFarPanelDirectory);
 
-			if ((pcefpi->pszPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir))
-			{
-				pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
-				SafeFree(pcefpi->pszPanelDir);
-				pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
-			}
-			lstrcpyn(pcefpi->pszPanelDir, ((FarPanelDirectory*)pcefpi->pFarPanelDirectory)->Name, pcefpi->nMaxPanelDir);
+		if ((pcefpi->pszPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir))
+		{
+			pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
+			SafeFree(pcefpi->pszPanelDir);
+			pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
 		}
+		lstrcpyn(pcefpi->pszPanelDir, ((FarPanelDirectory*)pcefpi->pFarPanelDirectory)->Name, pcefpi->nMaxPanelDir);
 
 		if (!nSize)
 		{

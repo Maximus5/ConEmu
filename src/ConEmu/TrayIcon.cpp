@@ -217,3 +217,12 @@ void TrayIcon::SetMenuItemText(HMENU hMenu, UINT nID, LPCWSTR pszText)
 	mi.dwTypeData = szText;
 	SetMenuItemInfo(hMenu, nID, FALSE, &mi);
 }
+
+void TrayIcon::OnTaskbarCreated()
+{
+	if (mb_WindowInTray)
+	{
+		mb_WindowInTray = false;
+		AddTrayIcon();
+	}
+}

@@ -883,46 +883,19 @@ LRESULT CSettings::OnInitDialog()
 	mn_LastChangingFontCtrlId = 0;
 	mp_ActiveHotKey = NULL;
 	wchar_t szTitle[MAX_PATH*2]; szTitle[0]=0;
-	const wchar_t* pszType = L"[reg]";
-	//int nConfLen = _tcslen(Config);
-	//int nStdLen = strlen("Software\\ConEmu");
-#ifndef __GNUC__
-	HANDLE hFile = NULL;
-	LPWSTR pszXmlFile = gpConEmu->ConEmuXml();
 
-	if (pszXmlFile && *pszXmlFile)
-	{
-		hFile = CreateFile(pszXmlFile, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
-		                   NULL, OPEN_EXISTING, 0, 0);
-
-		// XML-файл есть
-		if (hFile != INVALID_HANDLE_VALUE)
-		{
-			CloseHandle(hFile); hFile = NULL;
-			pszType = L"[xml]";
-			// Проверим, сможем ли мы в него записать
-			hFile = CreateFile(pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-			                   NULL, OPEN_EXISTING, 0, 0);
-
-			if (hFile != INVALID_HANDLE_VALUE)
-			{
-				CloseHandle(hFile); hFile = NULL; // OK
-			}
-			else
-			{
-				EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
-			}
-		}
-	}
-
-#endif
+	wchar_t szType[8];
+	bool ReadOnly = false;
+	gpSet->GetSettingsType(szType, ReadOnly);
+	if (ReadOnly)
+		EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
 
 	//if (nConfLen>(nStdLen+1))
-	//	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->GetDefaultTitle(), (Config+nStdLen+1), pszType);
+	//	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->GetDefaultTitle(), (Config+nStdLen+1), szType);
 	if (ConfigName[0])
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->GetDefaultTitle(), ConfigName, pszType);
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->GetDefaultTitle(), ConfigName, szType);
 	else
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings %s", gpConEmu->GetDefaultTitle(), pszType);
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings %s", gpConEmu->GetDefaultTitle(), szType);
 
 	SetWindowText(ghOpWnd, szTitle);
 	MCHKHEAP

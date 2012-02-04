@@ -1673,6 +1673,7 @@ const wchar_t* SkipNonPrintable(const wchar_t* asParams)
 
 
 #ifndef CONEMU_MINIMAL
+WARNING("ѕосле перехода на альтернативный сервер - должен работать строго в 'стандартном' режиме (mn_StdMode=STD_OUTPUT_HANDLE/STD_INPUT_HANLDE)");
 MConHandle::MConHandle(LPCWSTR asName)
 {
 	mn_StdMode = 0;

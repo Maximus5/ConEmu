@@ -1191,6 +1191,9 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 				ReportError(L"HttpVersion failed, code=%u", GetLastError());
 				goto wrap;
 			}
+
+			TODO("INTERNET_OPTION_RECEIVE_TIMEOUT - Sets or retrieves an unsigned long integer value that contains the time-out value, in milliseconds");
+
 		} // if (mh_Connect == NULL)
 
 		if (mb_RequestTerminate)

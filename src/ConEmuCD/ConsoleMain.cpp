@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_PRINT
 //  #define SHOW_INJECT_MSGBOX
 //	#define SHOW_ATTACH_MSGBOX
+//  #define SHOW_ROOT_STARTED
 #elif defined(__GNUC__)
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
@@ -451,6 +452,15 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 void OnProcessCreatedDbg(BOOL bRc, DWORD dwErr, LPPROCESS_INFORMATION pProcessInformation, LPSHELLEXECUTEINFO pSEI)
 {
 	int iDbg = 0;
+#ifdef SHOW_ROOT_STARTED
+	if (bRc)
+	{
+		wchar_t szTitle[64], szMsg[128];
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuSrv, PID=%u", GetCurrentProcessId());
+		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Root process started, PID=%u", pProcessInformation->dwProcessId);
+		MessageBox(NULL,szMsg,szTitle,0);
+	}
+#endif
 }
 #endif
 
@@ -4799,13 +4809,14 @@ BOOL cmd_GetOutput(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if (gpStoredOutput)
 	{
+		_ASSERTE(sizeof(CESERVER_CONSAVE_HDR) > sizeof(gpStoredOutput->hdr.hdr));
 		DWORD nSize = sizeof(CESERVER_CONSAVE_HDR)
 		              + min((int)gpStoredOutput->hdr.cbMaxOneBufferSize,
 		                    (gpStoredOutput->hdr.sbi.dwSize.X*gpStoredOutput->hdr.sbi.dwSize.Y*2));
 		*out = ExecuteNewCmd(CECMD_GETOUTPUT, nSize);
 		if (*out)
 		{
-			memmove((*out)->Data, gpStoredOutput->Data, nSize - sizeof(gpStoredOutput->hdr.hdr));
+			memmove((*out)->Data, ((LPBYTE)gpStoredOutput) + sizeof(gpStoredOutput->hdr.hdr), nSize - sizeof(gpStoredOutput->hdr.hdr));
 			lbRc = TRUE;
 		}
 	}

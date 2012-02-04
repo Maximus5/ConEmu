@@ -161,6 +161,7 @@ class TabBarClass //: public CToolTip
 		void UpdateTabFont();
 		void UpdateWidth();
 		void OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/);
+		void UpdateToolConsoles(bool abForcePos=false);
 		void OnCaptionHidden();
 		void OnWindowStateChanged();
 		void OnBufferHeight(BOOL abBufferHeight);

@@ -83,7 +83,7 @@ extern "C" {
 
 
 HMODULE ghOurModule = NULL; // ConEmuDw.dll
-HWND    ghConWnd = NULL; // VirtualCon или RealCon. инициализируется в CheckBuffers()
+HWND    ghConWnd = NULL; // VirtualCon. инициализируется в CheckBuffers()
 
 
 /* extern для MAssert, Здесь НЕ используется */
@@ -217,7 +217,7 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 
 	//TODO: Проверить, не изменился ли HWND консоли?
 	//111101 - зовем именно GetConsoleWindow. Если она перехвачена - вернет как раз то окно, которое нам требуется
-	HWND hCon = GetConsoleWindow(); // GetConEmuHWND(2);
+	HWND hCon = /*GetConsoleWindow(); */ GetConEmuHWND(0);
 	if (!hCon)
 	{
 		CloseBuffers();
@@ -226,6 +226,12 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 	}
 	if (hCon != ghConWnd)
 	{
+		#ifdef _DEBUG
+		// Функция GetConsoleWindow должна быть перехвачена в ConEmuHk, проверим
+		ghConWnd = GetConsoleWindow();
+		_ASSERTE(ghConWnd == hCon);
+		#endif
+
 		ghConWnd = hCon;
 		CloseBuffers();
 

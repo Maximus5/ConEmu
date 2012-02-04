@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuPlugin"
 	ProjectGUID="{21152801-8744-4787-83F4-BE4564A367B4}"
 	RootNamespace="ConEmuPlugin"
@@ -69,7 +69,7 @@
 				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\plugins\ConEmu\ConEmu.dll"
 				LinkIncremental="2"
 				GenerateManifest="true"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
@@ -151,7 +151,7 @@
 				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.64.vc\plugins\ConEmu\ConEmu.x64.dll"
 				LinkIncremental="2"
 				GenerateManifest="true"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
@@ -184,8 +184,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
-			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			OutputDirectory="$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -394,7 +394,7 @@
 				AdditionalDependencies="shlwapi.lib version.lib"
 				OutputFile="C:\Far3\Plugins\ConEmu\ConEmu.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
@@ -473,7 +473,7 @@
 				AdditionalDependencies="version.lib"
 				OutputFile="C:\FAR\FARx64\Plugins\ConEmu\ConEmu.x64.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
@@ -634,7 +634,7 @@
 				AdditionalDependencies="version.lib"
 				OutputFile="..\..\Release.x64\plugins\ConEmu\ConEmu.x64.dll"
 				LinkIncremental="1"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				SubSystem="2"
@@ -714,7 +714,7 @@
 				AdditionalDependencies="shlwapi.lib version.lib"
 				OutputFile="Z:\Plugins\ConEmu\ConEmu.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
@@ -794,7 +794,7 @@
 				AdditionalDependencies="version.lib"
 				OutputFile="\\WIN7X64\FAR\FAR2x64\Plugins\ConEmu\ConEmu.x64.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
@@ -872,7 +872,7 @@
 				AdditionalDependencies="shlwapi.lib version.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\Plugins\ConEmu\ConEmu.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
@@ -952,7 +952,7 @@
 				AdditionalDependencies="version.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\Plugins\ConEmu\ConEmu.x64.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
@@ -1031,7 +1031,7 @@
 				AdditionalDependencies="version.lib"
 				OutputFile="..\..\Release.PDB\plugins\ConEmu\ConEmu.dll"
 				LinkIncremental="1"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				SubSystem="2"
@@ -1113,7 +1113,7 @@
 				AdditionalDependencies="version.lib"
 				OutputFile="..\..\Release.PDB\plugins\ConEmu\ConEmu.x64.dll"
 				LinkIncremental="1"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				SubSystem="2"
@@ -1193,7 +1193,7 @@
 				AdditionalDependencies="shlwapi.lib version.lib"
 				OutputFile="\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\Plugins\ConEmu\ConEmu.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
@@ -1272,7 +1272,7 @@
 				AdditionalDependencies="version.lib"
 				OutputFile="F:\Utils\FAR\Far2x64\Plugins\ConEmu\ConEmu.x64.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
@@ -1350,7 +1350,7 @@
 				AdditionalDependencies="shlwapi.lib version.lib"
 				OutputFile="\Far3\Plugins\ConEmu\ConEmu.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
@@ -1429,7 +1429,7 @@
 				AdditionalDependencies="version.lib"
 				OutputFile="T:\VCProject\FarPlugin\Far20\unicode_far\Release.64.vc\Plugins\ConEmu\ConEmu.x64.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
+				ModuleDefinitionFile="export.release.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
@@ -1524,80 +1524,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\export.def"
-				>
-				<FileConfiguration
-					Name="Debug_C|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_C|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_R|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_R|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F2|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F2|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F3|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F3|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath=".\export.release.def"
 				>
 			</File>
@@ -1638,10 +1564,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\LogBrowser.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\common\MAssert.cpp"
 				>
 			</File>
@@ -1659,6 +1581,10 @@
 			</File>
 			<File
 				RelativePath=".\PluginBackground.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PluginSrv.cpp"
 				>
 			</File>
 			<File
@@ -1721,6 +1647,10 @@
 			</File>
 			<File
 				RelativePath=".\PluginHeader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PluginSrv.h"
 				>
 			</File>
 			<File

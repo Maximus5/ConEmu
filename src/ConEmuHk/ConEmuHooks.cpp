@@ -78,7 +78,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#endif
 //#endif
 
-extern HMODULE ghHookOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
+extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 extern DWORD   gnHookMainThreadId;
 extern BOOL    gbHooksTemporaryDisabled;
 //__declspec( thread )
@@ -95,10 +95,6 @@ extern HWND    ghConEmuWnd;   // Root! ConEmu window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnGuiPID;
 HDC ghTempHDC = NULL;
-//HWND ghConsoleHwnd = NULL;
-//BOOL gbFARuseASCIIsort = FALSE;
-//DWORD gdwServerPID = 0;
-//BOOL gbShellNoZoneCheck = FALSE;
 GetConsoleWindow_T gfGetRealConsoleWindow = NULL;
 extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
 /* ************ Globals for SetHook ************ */
@@ -106,31 +102,6 @@ extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
 /* ************ Globals for Far Hooks ************ */
 struct HookModeFar gFarMode = {sizeof(HookModeFar)};
 
-//const wchar_t *kernel32 = L"kernel32.dll";
-//const wchar_t *user32   = L"user32.dll";
-//const wchar_t *shell32  = L"shell32.dll";
-//const wchar_t *advapi32 = L"Advapi32.dll";
-//HMODULE ghKernel32 = NULL, ghUser32 = NULL, ghShell32 = NULL, ghAdvapi32 = NULL;
-
-//static TCHAR kernel32[] = _T("kernel32.dll");
-//static TCHAR user32[]   = _T("user32.dll");
-//static TCHAR shell32[]  = _T("shell32.dll");
-//static HMODULE ghKernel32 = NULL, ghUser32 = NULL, ghShell32 = NULL;
-//110131 попробуем просто добвавить ее в ExcludedModules
-//static TCHAR wininet[]  = _T("wininet.dll");
-
-//extern const wchar_t kernel32[]; // = L"kernel32.dll";
-//extern const wchar_t user32[]; //   = L"user32.dll";
-//extern const wchar_t shell32[]; //  = L"shell32.dll";
-//extern HMODULE ghKernel32, ghUser32, ghShell32;
-
-//static BOOL bHooksWin2k3R2Only = FALSE;
-//static HookItem HooksWin2k3R2Only[] = {
-//	{OnSetConsoleCP, "SetConsoleCP", kernel32, 0},
-//	{OnSetConsoleOutputCP, "SetConsoleOutputCP", kernel32, 0},
-//	/* ************************ */
-//	{0, 0, 0}
-//};
 
 int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
 //
@@ -3054,7 +3025,7 @@ BOOL MyChooseColor(SimpleApiFunction_t funcPtr, void* lpcc, BOOL abUnicode)
 	//if (DialogBoxIndirectParam_f)
 	//{
 
-	INT_PTR iRc = user->dialogBoxIndirectParamW(ghHookOurModule, pTempl, NULL, SimpleApiDialogProc, (LPARAM)&Arg);
+	INT_PTR iRc = user->dialogBoxIndirectParamW(ghOurModule, pTempl, NULL, SimpleApiDialogProc, (LPARAM)&Arg);
 	if (iRc == 1)
 	{
 		lbRc = Arg.bResult;

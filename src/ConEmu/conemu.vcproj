@@ -179,8 +179,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
-			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			OutputDirectory="$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -1525,6 +1525,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GuiServer.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\LoadImg.cpp"
 				>
 			</File>
@@ -1570,6 +1574,10 @@
 			</File>
 			<File
 				RelativePath=".\RealConsole.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RealServer.cpp"
 				>
 			</File>
 			<File
@@ -1703,6 +1711,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GuiServer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Header.h"
 				>
 			</File>
@@ -1760,6 +1772,10 @@
 			</File>
 			<File
 				RelativePath=".\RealConsole.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RealServer.h"
 				>
 			</File>
 			<File

@@ -5,6 +5,7 @@ SRCS = ConEmuPlugin.cpp \
        ConEmuPluginA.cpp \
        ConEmuInjects.cpp \
        PluginBackground.cpp \
+       PluginSrv.cpp \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp \
        ../common/Memory.cpp \

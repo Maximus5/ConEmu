@@ -874,9 +874,22 @@ void Settings::LoadSettings()
 	delete reg;
 	reg = NULL;
 
-	// Зовем "FastConfiguration" перед созданием новой/чистой конфигурации
-	CheckOptionsFast(lbNeedCreateVanilla);
-
+	
+	// Зовем "FastConfiguration" (перед созданием новой/чистой конфигурации)
+	{
+		LPCWSTR pszDef = gpConEmu->GetDefaultTitle();
+		wchar_t szType[8]; bool ReadOnly;
+		GetSettingsType(szType, ReadOnly);
+		LPCWSTR pszConfig = gpSetCls->GetConfigName();
+		wchar_t szTitle[1024];
+		if (pszConfig && *pszConfig)
+			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration (%s) %s", pszDef, pszConfig, szType);
+		else
+			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration %s", pszDef, szType);
+		
+		CheckOptionsFast(szTitle, lbNeedCreateVanilla);
+	}
+	
 
 	if (lbNeedCreateVanilla)
 	{
@@ -2260,6 +2273,45 @@ SettingsBase* Settings::CreateSettings()
 #else
 	return new SettingsRegistry();
 #endif
+}
+
+void Settings::GetSettingsType(wchar_t (&szType)[8], bool& ReadOnly)
+{
+	const wchar_t* pszType = L"[reg]";
+	ReadOnly = false;
+
+#ifndef __GNUC__
+	HANDLE hFile = NULL;
+	LPWSTR pszXmlFile = gpConEmu->ConEmuXml();
+
+	if (pszXmlFile && *pszXmlFile)
+	{
+		hFile = CreateFile(pszXmlFile, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+		                   NULL, OPEN_EXISTING, 0, 0);
+
+		// XML-файл есть
+		if (hFile != INVALID_HANDLE_VALUE)
+		{
+			CloseHandle(hFile); hFile = NULL;
+			pszType = L"[xml]";
+			// Проверим, сможем ли мы в него записать
+			hFile = CreateFile(pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+			                   NULL, OPEN_EXISTING, 0, 0);
+
+			if (hFile != INVALID_HANDLE_VALUE)
+			{
+				CloseHandle(hFile); hFile = NULL; // OK
+			}
+			else
+			{
+				//EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
+				ReadOnly = true;
+			}
+		}
+	}
+#endif
+
+	wcscpy_c(szType, pszType);
 }
 
 bool Settings::isHideCaptionAlways()

@@ -882,7 +882,8 @@ struct PipeServer
 				pPipe->dwConnErr = GetLastError();
 				//? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED);
 				// сразу разрешить другой нити принять вызов
-				ReleaseSemaphore(hWait[1], 1, NULL);
+				if (!mb_Overlapped)
+					ReleaseSemaphore(hWait[1], 1, NULL);
 
 				bool lbFail = false;
 				if (mb_Overlapped)
@@ -892,6 +893,7 @@ struct PipeServer
 					{
 						DumpError(pPipe, L"PipeServerThread:ConnectNamedPipe failed with 0x%08X", FALSE);
 						Sleep(100);
+						ReleaseSemaphore(hWait[1], 1, NULL);
 						continue;
 					}
 					bNeedReply = (pPipe->dwConnErr == ERROR_PIPE_CONNECTED);
@@ -906,6 +908,8 @@ struct PipeServer
 				// Сервер закрывается?
 				if (mb_Terminate)
 				{
+					if (mb_Overlapped)
+						ReleaseSemaphore(hWait[1], 1, NULL);
 					break;
 				}
 
@@ -915,6 +919,7 @@ struct PipeServer
 					// Wait for overlapped connection
 					_ASSERTEX(pPipe->hPipeInst && (pPipe->hPipeInst!=INVALID_HANDLE_VALUE));
 					int nOverRc = WaitOverlapped(pPipe, &cbOver);
+					ReleaseSemaphore(hWait[1], 1, NULL);
 					if (nOverRc == 0)
 					{
 						_ASSERTEX(mb_Terminate==true);
@@ -1407,7 +1412,7 @@ struct PipeServer
 			PipeInst* pPipe = (PipeInst*)pInstance;
 			DWORD dwWritten = 0;
 
-			_ASSERTEX(nNumberOfBytesToWrite>=mn_DummyAnswerSize);
+			_ASSERTEX((int)nNumberOfBytesToWrite>=mn_DummyAnswerSize);
 			int iRc = PipeServerWrite(pPipe, lpBuffer, nNumberOfBytesToWrite, &dwWritten, TRUE);
 
 			return (iRc == 1);

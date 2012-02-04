@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu_Lang.h"
 #include "FarDefaultMacros.h"
 #include "../Common/WinObjects.h"
+#include "PluginSrv.h"
 
 #define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 #ifdef _DEBUG
@@ -123,10 +124,6 @@ extern GUID guid_ConEmuWaitEndSynchro;
 HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item);
 HANDLE WINAPI OpenPluginW1(int OpenFrom,INT_PTR Item);
 HANDLE WINAPI OpenPluginW2(int OpenFrom,const GUID* Guid,INT_PTR Data);
-#ifdef _DEBUG
-HANDLE WINAPI FUNC_X(OpenFilePluginW)(const wchar_t *Name,const unsigned char *Data,int DataSize,int OpMode);
-HANDLE WINAPI FUNC_Y(OpenFilePluginW)(const wchar_t *Name,const unsigned char *Data,int DataSize,int OpMode);
-#endif
 
 void FUNC_X(GetPluginInfoW)(void *piv);
 void FUNC_Y(GetPluginInfoW)(void *piv);
@@ -212,10 +209,6 @@ extern "C" {
 }
 #endif
 
-
-//DWORD WINAPI PlugServerThread(LPVOID lpvParam);
-BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
-void WINAPI PlugServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 
 void ShowPluginMenu(int nID = -1);
 int ShowPluginMenuA();

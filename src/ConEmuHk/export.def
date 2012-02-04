@@ -6,3 +6,4 @@ EXPORTS
 	SetLoadLibraryCallback
 	SetFarHookMode
 	GetRealConsoleWindow
+	GetLoadLibraryW

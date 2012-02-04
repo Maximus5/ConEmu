@@ -45,6 +45,7 @@ UINT_PTR GetLoadLibraryAddress()
 	if (gfnLoadLibrary)
 		return gfnLoadLibrary;
 
+	UINT_PTR fnLoadLibrary = 0;
 	HMODULE hKernel = ::GetModuleHandle(L"kernel32.dll");
 	if (!hKernel || LDR_IS_RESOURCE(hKernel))
 	{
@@ -52,7 +53,23 @@ UINT_PTR GetLoadLibraryAddress()
 		return 0;
 	}
 
-	UINT_PTR fnLoadLibrary = (UINT_PTR)::GetProcAddress(hKernel, "LoadLibraryW");
+	HMODULE hConEmuHk = ::GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll", L"ConEmuHk64.dll"));
+	if (hConEmuHk && (hConEmuHk != ghOurModule))
+	{
+		typedef FARPROC (WINAPI* GetLoadLibraryW_t)();
+		GetLoadLibraryW_t GetLoadLibraryW = (GetLoadLibraryW_t)::GetProcAddress(hConEmuHk, "GetLoadLibraryW");
+		if (GetLoadLibraryW)
+		{
+			fnLoadLibrary = (UINT_PTR)GetLoadLibraryW();
+		}
+	}
+
+	if (!fnLoadLibrary)
+	{
+		fnLoadLibrary = (UINT_PTR)::GetProcAddress(hKernel, "LoadLibraryW");
+	}
+
+	// Функция должна быть изменно в Kernel32.dll (а не в какой либо другой библиотеке, мало ли кто захукал...)
 	if (!CheckCallbackPtr(hKernel, 1, (FARPROC*)&fnLoadLibrary, TRUE))
 	{
 		// _ASSERTE уже был

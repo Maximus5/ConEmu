@@ -112,7 +112,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 		DWORD nTID = GetCurrentThreadId();
 		if ((nTID != gnHookMainThreadId) && (gnAttachGuiClientThreadId && nTID != gnAttachGuiClientThreadId))
 		{
-			_ASSERTEX(nTID==gnHookMainThreadId || !gnAttachGuiClientThreadId);
+			_ASSERTEX(nTID==gnHookMainThreadId || !gnAttachGuiClientThreadId || (ghAttachGuiClient && IsWindow(ghAttachGuiClient)));
 		}
 		else
 		{
@@ -153,7 +153,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 					ghGuiClientRetHook = user->setWindowsHookExW(WH_CALLWNDPROCRET, GuiClientRetHook, NULL, GetCurrentThreadId());
 				#endif
 
-				gnAttachGuiClientThreadId = nTID;
+				//gnAttachGuiClientThreadId = nTID; -- перенес к "ghAttachGuiClient = hWindow;"
 			}
 			return true;
 		}
@@ -294,6 +294,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	}
 
 	ghAttachGuiClient = hWindow;
+	gnAttachGuiClientThreadId = user->getWindowThreadProcessId(hWindow, NULL);
 	gbForceShowGuiClient = TRUE;
 	gbAttachGuiClient = FALSE; // Только одно окно приложения. Пока?
 
@@ -463,9 +464,22 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach)
 		wchar_t szClassName[255]; user->getClassNameW(hWnd, szClassName, countof(szClassName));
 		DWORD nCurStyle = (DWORD)user->getWindowLongPtrW(hWnd, GWL_STYLE);
 		DWORD nCurStyleEx = (DWORD)user->getWindowLongPtrW(hWnd, GWL_EXSTYLE);
+		BOOL bAttachGui = TRUE;
+
+		if (ghAttachGuiClient == NULL)
+		{
+			HWND hWndParent = ::GetParent(hWnd);
+			DWORD dwStyle = nCurStyle, dwExStyle = nCurStyleEx;
+			BOOL bStyleHidden;
+
+			CheckCanCreateWindow(NULL, szClassName, dwStyle, dwExStyle, hWndParent, bAttachGui, bStyleHidden);
+		}
 
 		// Пробуем
-		OnGuiWindowAttached(hWnd, hMenu, NULL, szClassName, nCurStyle, nCurStyleEx, FALSE, nCmdShow);
+		if (bAttachGui)
+		{
+			OnGuiWindowAttached(hWnd, hMenu, NULL, szClassName, nCurStyle, nCurStyleEx, FALSE, nCmdShow);
+		}
 	}
 
 	if (gbForceShowGuiClient && (ghAttachGuiClient == hWnd))

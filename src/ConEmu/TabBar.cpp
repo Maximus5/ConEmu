@@ -1003,6 +1003,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		SelectTab(nCurTab);
 	}
 
+	UpdateToolConsoles();
+
 	//if (gpSet->isTabsInCaption)
 	//{
 	//	SendMessage(ghWnd, WM_NCPAINT, 0, 0);
@@ -1475,28 +1477,51 @@ void TabBarClass::OnWindowStateChanged()
 	}
 }
 
+// Обновить наличие кнопок консолей на тулбаре
+void TabBarClass::UpdateToolConsoles(bool abForcePos/*=false*/)
+{
+	if (!mh_Toolbar) return;
+
+	bool bPresent[MAX_CONSOLE_COUNT] = {};
+	MCHKHEAP
+
+	for (int i = 1; i <= MAX_CONSOLE_COUNT; i++)
+	{
+		bPresent[i-1] = (gpConEmu->GetVConTitle(i-1) != NULL);
+	}
+
+	bool bRedraw = abForcePos;
+	if (abForcePos)
+		SendMessage(mh_Toolbar, WM_SETREDRAW, FALSE, 0);
+
+	for (int i = 1; i <= MAX_CONSOLE_COUNT; i++)
+	{
+		bool bShown = (SendMessage(mh_Toolbar, TB_ISBUTTONHIDDEN, i, 0) == 0);
+		if (bShown != bPresent[i-1])
+		{
+			if (!bRedraw)
+			{
+				bRedraw = true;
+				SendMessage(mh_Toolbar, WM_SETREDRAW, FALSE, 0);
+			}
+
+			SendMessage(mh_Toolbar, TB_HIDEBUTTON, i, !bPresent[i-1]);
+		}
+	}
+
+	if (bRedraw)
+	{
+		UpdateToolbarPos();
+		SendMessage(mh_Toolbar, WM_SETREDRAW, TRUE, 0);
+	}
+}
+
 // nConNumber - 1based
 void TabBarClass::OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/)
 {
 	if (!mh_Toolbar) return;
 
-	BOOL bPresent[MAX_CONSOLE_COUNT]; memset(bPresent, 0, sizeof(bPresent));
-	MCHKHEAP
-
-	for(int i=1; i<=MAX_CONSOLE_COUNT; i++)
-	{
-		bPresent[i-1] = gpConEmu->GetVConTitle(i-1) != NULL;
-	}
-
-	SendMessage(mh_Toolbar, WM_SETREDRAW, 0, 0);
-
-	for(int i=1; i<=MAX_CONSOLE_COUNT; i++)
-	{
-		SendMessage(mh_Toolbar, TB_HIDEBUTTON, i, !bPresent[i-1]);
-	}
-
-	UpdateToolbarPos();
-	SendMessage(mh_Toolbar, WM_SETREDRAW, 1, 0);
+	UpdateToolConsoles(true);
 
 	//nConNumber = gpConEmu->ActiveConNum()+1; -- сюда пришел уже правильный номер!
 
@@ -1506,7 +1531,7 @@ void TabBarClass::OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/)
 	}
 	else
 	{
-		for(int i=1; i<=MAX_CONSOLE_COUNT; i++)
+		for (int i = 1; i <= MAX_CONSOLE_COUNT; i++)
 			SendMessage(mh_Toolbar, TB_CHECKBUTTON, i, 0);
 	}
 }
