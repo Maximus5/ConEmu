@@ -201,6 +201,12 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 			break; // OK, открыли
 
 		dwErr = GetLastError();
+		#ifdef _DEBUG
+		if (dwErr == ERROR_PIPE_BUSY)
+		{
+			_ASSERTEX(dwErr != ERROR_PIPE_BUSY);
+		}
+		#endif
 
 		// Сделаем так, чтобы хотя бы пару раз он попробовал повторить
 		if ((nTries <= 0) && (GetTickCount() - dwStartTick) > EXECUTE_CMD_OPENPIPE_TIMEOUT)

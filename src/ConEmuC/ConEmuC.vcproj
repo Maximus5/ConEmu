@@ -743,7 +743,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\\WIN7X64\FAR\FAR2x86\ConEmuC64.exe"
+				OutputFile="Z:\ConEmu\ConEmuC64.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"

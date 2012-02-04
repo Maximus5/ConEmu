@@ -584,6 +584,7 @@ int ServerInitGuiTab()
 		{
 			// Если запускается сервер - то он должен смочь найти окно ConEmu в которое его просят
 			_ASSERTEX((hConEmuWnd!=NULL));
+			return CERR_ATTACH_NO_GUIWND;
 		}
 		else
 		{
@@ -1385,6 +1386,24 @@ void CmdOutputRestore()
 	}
 }
 
+static BOOL CALLBACK FindConEmuByPidProc(HWND hwnd, LPARAM lParam)
+{
+	DWORD dwPID;
+	GetWindowThreadProcessId(hwnd, &dwPID);
+	if (dwPID == gpSrv->dwGuiPID)
+	{
+		wchar_t szClass[128];
+		if (GetClassName(hwnd, szClass, countof(szClass)))
+		{
+			if (lstrcmp(szClass, VirtualConsoleClassMain) == 0)
+			{
+				*(HWND*)lParam = hwnd;
+				return FALSE;
+			}
+		}
+	}
+	return TRUE;
+}
 
 HWND FindConEmuByPID()
 {
@@ -1422,7 +1441,7 @@ HWND FindConEmuByPID()
 	{
 		HWND hGui = NULL;
 
-		while((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL)
+		while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL)
 		{
 			dwGuiThreadId = GetWindowThreadProcessId(hGui, &dwGuiProcessId);
 
@@ -1431,6 +1450,14 @@ HWND FindConEmuByPID()
 				hConEmuWnd = hGui;
 				break;
 			}
+		}
+
+		// Если "в лоб" по имени класса ничего не нашли - смотрим
+		// среди всех дочерних для текущего десктопа
+		if (hConEmuWnd == NULL)
+		{
+			HWND hDesktop = GetDesktopWindow();
+			EnumChildWindows(hDesktop, FindConEmuByPidProc, (LPARAM)&hConEmuWnd);
 		}
 	}
 

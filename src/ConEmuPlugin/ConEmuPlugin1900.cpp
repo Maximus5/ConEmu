@@ -911,6 +911,8 @@ static HANDLE ghSyncDlg = NULL;
 
 void WaitEndSynchroW1900()
 {
+	// —читаем, что в Far 3 починили
+#if 0
 	if ((gnSynchroCount == 0) || !(IS_SYNCHRO_ALLOWED))
 		return;
 
@@ -944,6 +946,7 @@ void WaitEndSynchroW1900()
 	}
 
 	ghSyncDlg = NULL;
+#endif
 }
 
 void StopWaitEndSynchroW1900()

@@ -601,7 +601,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\\WIN7X64\FAR\FAR2x64\Plugins\ConEmu\Thumbs\ico.t64"
+				OutputFile="Z:\Plugins\ConEmu\Thumbs\ico.t64"
 				LinkIncremental="2"
 				ModuleDefinitionFile="ico.def"
 				GenerateDebugInformation="true"

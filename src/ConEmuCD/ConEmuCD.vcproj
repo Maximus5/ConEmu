@@ -608,7 +608,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="WinInet.lib Winmm.lib"
-				OutputFile="\\WIN7X64\FAR\FAR2x86\ConEmuCD64.dll"
+				OutputFile="Z:\ConEmu\ConEmuCD64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

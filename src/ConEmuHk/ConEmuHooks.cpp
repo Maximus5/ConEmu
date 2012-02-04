@@ -675,7 +675,7 @@ BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LP
 
 
 	lbRc = F(CreateProcessA)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
-	if (!lbRc) dwErr = GetLastError();
+	dwErr = GetLastError();
 
 
 	// Если lbParamsChanged == TRUE - об инжектах позаботится ConEmuC.exe
@@ -689,6 +689,7 @@ BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LP
 		ph->PostCallBack(&args);
 	}
 	
+	SetLastError(dwErr);
 	return lbRc;
 }
 
@@ -716,7 +717,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 
 
 	lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
-	if (!lbRc) dwErr = GetLastError();
+	dwErr = GetLastError();
 
 	// Если lbParamsChanged == TRUE - об инжектах позаботится ConEmuC.exe
 	sp->OnCreateProcessFinished(lbRc, lpProcessInformation);
@@ -729,6 +730,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 		ph->PostCallBack(&args);
 	}
 
+	SetLastError(dwErr);
 	return lbRc;
 }
 
@@ -830,6 +832,7 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 	//gbInShellExecuteEx = TRUE;
 
 	lbRc = F(ShellExecuteExA)(lpExecInfo);
+	DWORD dwErr = GetLastError();
 	
 	//if (lbRc && gfGetProcessId && lpNew->hProcess)
 	//{
@@ -866,6 +869,7 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 
 	//free(lpNew);
 	//gbInShellExecuteEx = FALSE;
+	SetLastError(dwErr);
 	return lbRc;
 }
 
@@ -901,10 +905,12 @@ BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 	BOOL lbRc = FALSE;
 
 	lbRc = F(ShellExecuteExW)(lpExecInfo);
+	DWORD dwErr = GetLastError();
 
 	sp->OnShellFinished(lbRc, lpExecInfo->hInstApp, lpExecInfo->hProcess);
 	delete sp;
 
+	SetLastError(dwErr);
 	return lbRc;
 }
 
@@ -931,11 +937,13 @@ HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, L
 
 	HINSTANCE lhRc;
 	lhRc = F(ShellExecuteA)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
+	DWORD dwErr = GetLastError();
 	
 	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, NULL); //-V112
 	delete sp;
 
 	//gbInShellExecuteEx = FALSE;
+	SetLastError(dwErr);
 	return lhRc;
 }
 
@@ -961,11 +969,13 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 
 	HINSTANCE lhRc;
 	lhRc = F(ShellExecuteW)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
+	DWORD dwErr = GetLastError();
 	
 	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, NULL); //-V112
 	delete sp;
 
 	//gbInShellExecuteEx = FALSE;
+	SetLastError(dwErr);
 	return lhRc;
 }
 
@@ -1082,10 +1092,12 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 
 	if (F(ShowWindow))
 		lbRc = F(ShowWindow)(hWnd, nCmdShow);
+	DWORD dwErr = GetLastError();
 
 	if (lbGuiAttach)
 		OnPostShowGuiClientWindow(hWnd, nCmdShow);
 
+	SetLastError(dwErr);
 	return lbRc;
 }
 
@@ -1694,10 +1706,13 @@ HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWind
 		}
 
 		hWnd = F(CreateWindowExA)(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+		DWORD dwErr = GetLastError();
 
 		if (hWnd && bAttachGui)
 		{
 			OnGuiWindowAttached(hWnd, hMenu, lpClassName, NULL, lStyle, lStyleEx, bStyleHidden);
+
+			SetLastError(dwErr);
 		}
 	}
 
@@ -1723,10 +1738,13 @@ HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWi
 		}
 
 		hWnd = F(CreateWindowExW)(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+		DWORD dwErr = GetLastError();
 
 		if (hWnd && bAttachGui)
 		{
 			OnGuiWindowAttached(hWnd, hMenu, NULL, lpClassName, lStyle, lStyleEx, bStyleHidden);
+
+			SetLastError(dwErr);
 		}
 	}
 
@@ -1754,6 +1772,7 @@ HWND WINAPI OnCreateDialogIndirectParamA(HINSTANCE hInstance, LPCDLGTEMPLATE lpT
 		//}
 
 		hWnd = F(CreateDialogIndirectParamA)(hInstance, lpTemplate, hWndParent, lpDialogFunc, lParamInit);
+		DWORD dwErr = GetLastError();
 
 		if (hWnd && bAttachGui)
 		{
@@ -1763,6 +1782,8 @@ HWND WINAPI OnCreateDialogIndirectParamA(HINSTANCE hInstance, LPCDLGTEMPLATE lpT
 			{
 				OnGuiWindowAttached(hWnd, NULL, (LPCSTR)32770, NULL, lStyle, lStyleEx, bStyleHidden);
 			}
+
+			SetLastError(dwErr);
 		}
 	}
 
@@ -1789,6 +1810,7 @@ HWND WINAPI OnCreateDialogIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATE lpT
 		//}
 
 		hWnd = F(CreateDialogIndirectParamW)(hInstance, lpTemplate, hWndParent, lpDialogFunc, lParamInit);
+		DWORD dwErr = GetLastError();
 
 		if (hWnd && bAttachGui)
 		{
@@ -1798,6 +1820,8 @@ HWND WINAPI OnCreateDialogIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATE lpT
 			{
 				OnGuiWindowAttached(hWnd, NULL, NULL, (LPCWSTR)32770, lStyle, lStyleEx, bStyleHidden);
 			}
+
+			SetLastError(dwErr);
 		}
 	}
 
@@ -1840,10 +1864,13 @@ HWND WINAPI OnCreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWN
 		//}
 
 		hWnd = F(CreateDialogParamA)(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+		DWORD dwErr = GetLastError();
 
 		if (hWnd && bAttachGui)
 		{
 			OnGuiWindowAttached(hWnd, NULL, (LPCSTR)32770, NULL, lStyle, lStyleEx, bStyleHidden);
+
+			SetLastError(dwErr);
 		}
 	}
 
@@ -1886,10 +1913,13 @@ HWND WINAPI OnCreateDialogParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HW
 		//}
 
 		hWnd = F(CreateDialogParamW)(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+		DWORD dwErr = GetLastError();
 
 		if (hWnd && bAttachGui)
 		{
 			OnGuiWindowAttached(hWnd, NULL, NULL, (LPCWSTR)32770, lStyle, lStyleEx, bStyleHidden);
+
+			SetLastError(dwErr);
 		}
 	}
 

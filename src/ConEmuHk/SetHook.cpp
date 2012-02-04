@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #define USECHECKPROCESSMODULES
+//#define ASSERT_ON_PROCNOTFOUND
 
 #include <windows.h>
 #include <Tlhelp32.h>
@@ -2428,6 +2429,7 @@ HMODULE WINAPI OnLoadLibraryAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryA_t)(const char* lpFileName);
 	HMODULE module = ((OnLoadLibraryA_t)lpfn)(lpFileName);
+	DWORD dwLoadErrCode = GetLastError();
 
 	if (gbHooksTemporaryDisabled)
 		return module;
@@ -2441,6 +2443,7 @@ HMODULE WINAPI OnLoadLibraryAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 		}
 	}
 
+	SetLastError(dwLoadErrCode);
 	return module;
 }
 
@@ -2464,16 +2467,16 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
 	HMODULE module = ((OnLoadLibraryW_t)lpfn)(lpFileName);
+	DWORD dwLoadErrCode = GetLastError();
 
 	if (gbHooksTemporaryDisabled)
 		return module;
 
 	// Far 3 x64 все равно пытается загрузить L"ExtendedConsole.dll" вместо L"ExtendedConsole64.dll"
 	#ifdef _WIN64
-	DWORD dwErrCode = 0;	
 	if (!module)
 	{
-		dwErrCode = GetLastError();
+		DWORD dwErrCode = dwLoadErrCode;
 		//0x7E - module not found
 		//0xC1 - module не является приложением Win32.
 		if ((dwErrCode == ERROR_MOD_NOT_FOUND || dwErrCode == ERROR_BAD_EXE_FORMAT)
@@ -2494,6 +2497,7 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 		}
 	}
 
+	SetLastError(dwLoadErrCode);
 	return module;
 }
 
@@ -2517,6 +2521,7 @@ HMODULE WINAPI OnLoadLibraryExAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryExA_t)(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
 	HMODULE module = ((OnLoadLibraryExA_t)lpfn)(lpFileName, hFile, dwFlags);
+	DWORD dwLoadErrCode = GetLastError();
 
 	if (gbHooksTemporaryDisabled)
 		return module;
@@ -2530,6 +2535,7 @@ HMODULE WINAPI OnLoadLibraryExAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 		}
 	}
 
+	SetLastError(dwLoadErrCode);
 	return module;
 }
 
@@ -2553,6 +2559,7 @@ HMODULE WINAPI OnLoadLibraryExWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryExW_t)(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
 	HMODULE module = ((OnLoadLibraryExW_t)lpfn)(lpFileName, hFile, dwFlags);
+	DWORD dwLoadErrCode = GetLastError();
 
 	if (gbHooksTemporaryDisabled)
 		return module;
@@ -2566,6 +2573,7 @@ HMODULE WINAPI OnLoadLibraryExWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 		}
 	}
 
+	SetLastError(dwLoadErrCode);
 	return module;
 }
 
@@ -2591,7 +2599,12 @@ FARPROC WINAPI OnGetProcAddressWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 	FARPROC lpfnRc = NULL;
 
 	#ifdef LOG_ORIGINAL_CALL
-	char gszLastGetProcAddress[255];
+	char gszLastGetProcAddress[255], lsProcNameCut[64];
+
+	if (((DWORD_PTR)lpProcName) <= 0xFFFF)
+		msprintf(lsProcNameCut, countof(lsProcNameCut), "%u", LOWORD(lpProcName));
+	else
+		lstrcpynA(lsProcNameCut, lpProcName, countof(lsProcNameCut));
 	#endif
 
 	WARNING("Убрать gbHooksTemporaryDisabled?");
@@ -2599,24 +2612,23 @@ FARPROC WINAPI OnGetProcAddressWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 	{
 		TODO("!!!");
 		#ifdef LOG_ORIGINAL_CALL
-		msprintf(gszLastGetProcAddress, countof(gszLastGetProcAddress),
-			(((DWORD_PTR)lpProcName) <= 0xFFFF) ? "   OnGetProcAddress(x%08X,%u)\n" : "   OnGetProcAddress(x%08X,%s)\n",
-			(DWORD)hModule, lpProcName);
+		msprintf(gszLastGetProcAddress, countof(gszLastGetProcAddress), "   OnGetProcAddress(x%08X,%s)",
+			(DWORD)hModule, lsProcNameCut);
 		#endif
 	}
 	else if (((DWORD_PTR)lpProcName) <= 0xFFFF)
 	{
 		TODO("!!! Обрабатывать и ORDINAL values !!!");
 		#ifdef LOG_ORIGINAL_CALL
-		msprintf(gszLastGetProcAddress, countof(gszLastGetProcAddress), "   OnGetProcAddress(x%08X,%u)\n",
-			(DWORD)hModule, (DWORD)lpProcName);
+		msprintf(gszLastGetProcAddress, countof(gszLastGetProcAddress), "   OnGetProcAddress(x%08X,%s)",
+			(DWORD)hModule, lsProcNameCut);
 		#endif
 	}
 	else
 	{
 		#ifdef LOG_ORIGINAL_CALL
-		msprintf(gszLastGetProcAddress, countof(gszLastGetProcAddress), "   OnGetProcAddress(x%08X,%s)\n",
-			(DWORD)hModule, lpProcName);
+		msprintf(gszLastGetProcAddress, countof(gszLastGetProcAddress), "   OnGetProcAddress(x%08X,%s)",
+			(DWORD)hModule, lsProcNameCut);
 		#endif
 
 		if (gpHooks)
@@ -2645,11 +2657,29 @@ FARPROC WINAPI OnGetProcAddressWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 	}
 
 	#ifdef LOG_ORIGINAL_CALL
-	OutputDebugStringA(gszLastGetProcAddress);
+	if (lpfnRc)
+		lstrcatA(gszLastGetProcAddress, " - hooked");
 	#endif
 
 	if (!lpfnRc)
+	{
 		lpfnRc = ((OnGetProcAddress_t)lpfn)(hModule, lpProcName);
+
+		#ifdef _DEBUG
+		#ifdef ASSERT_ON_PROCNOTFOUND
+		DWORD dwErr = GetLastError();
+		_ASSERTEX(lpfnRc != NULL);
+		SetLastError(dwErr);
+		#endif
+		#endif
+	}
+
+	#ifdef LOG_ORIGINAL_CALL
+	int nLeft = lstrlenA(gszLastGetProcAddress);
+	msprintf(gszLastGetProcAddress+nLeft, countof(gszLastGetProcAddress)-nLeft, 
+		WIN3264TEST(" - 0x%08X\n"," - 0x%08X%08X\n"), WIN3264WSPRINT(lpfnRc));
+	OutputDebugStringA(gszLastGetProcAddress);
+	#endif
 
 	return lpfnRc;
 }
@@ -2720,6 +2750,7 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMOD
 #endif
 
 	lbRc = ((OnFreeLibrary_t)lpfn)(hModule);
+	DWORD dwFreeErrCode = GetLastError();
 
 	// Далее только если !LDR_IS_RESOURCE
 	if (lbRc && !lbResource && !gbDllStopCalled)
@@ -2768,6 +2799,7 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMOD
 		}
 	}
 
+	SetLastError(dwFreeErrCode);
 	return lbRc;
 }
 

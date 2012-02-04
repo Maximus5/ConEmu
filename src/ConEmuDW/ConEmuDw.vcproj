@@ -632,7 +632,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\\WIN7X64\FAR\FAR2x86\Console64.dll"
+				OutputFile="Z:\ExtendedConsole64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"

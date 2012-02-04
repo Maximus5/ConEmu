@@ -1853,7 +1853,7 @@ bool CVirtualConsole::LoadConsoleData()
 	mn_DialogsCount = pRgn->GetDetectedDialogs(countof(mrc_Dialogs), mrc_Dialogs, mn_DialogFlags);
 	mn_DialogAllFlags = pRgn->GetFlags();
 
-#ifdef _DEBUG
+#if 0
 	if (mn_DialogsCount == 7 && mn_LastDialogsCount == 6)
 	{
 		Dump(L"T:\\Dialogs.con");

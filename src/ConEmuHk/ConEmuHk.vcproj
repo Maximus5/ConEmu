@@ -515,7 +515,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL"
+				PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CONEMU_MINIMAL;LOG_ORIGINAL_CALL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -613,7 +613,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\\WIN7X64\FAR\FAR2x86\ConEmuHk64.dll"
+				OutputFile="Z:\ConEmu\ConEmuHk64.dll"
 				LinkIncremental="2"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="export.def"
