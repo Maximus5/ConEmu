@@ -38,7 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 	#ifdef LOG_ORIGINAL_CALL
 		extern bool gbSuppressShowCall;
-		#define ORIGINALSHOWCALL(n) if (!gbSuppressShowCall) { DWORD nErr=GetLastError(); char sFunc[128]; _wsprintfA(sFunc, SKIPLEN(countof(sFunc)) "Hook: %s\n", #n); OutputDebugStringA(sFunc); gbSuppressShowCall = false; SetLastError(nErr); } else { gbSuppressShowCall = false; }
+		void LogFunctionCall(LPCSTR asFunc, LPCSTR asFile, int anLine);
+		#define ORIGINALSHOWCALL(n) LogFunctionCall(#n, __FILE__, __LINE__)
 		#define SUPPRESSORIGINALSHOWCALL gbSuppressShowCall = true
 		#define _ASSERTRESULT(x) //DWORD dwResultLastErr = GetLastError(); if (!(x) || (dwResultLastErr==ERROR_INVALID_DATA)) { _ASSERTEX((x) && dwResultLastErr==0); }
 	#else
@@ -159,6 +160,7 @@ struct HookModeFar
 	BOOL  bFARuseASCIIsort;  // -> OnCompareStringW
 	BOOL  bShellNoZoneCheck; // -> OnShellExecuteXXX
 	BOOL  bMonitorConsoleInput; // при (Read/Peek)ConsoleInput(A/W) послать инфу в GUI/Settings/Debug
+	BOOL  bPopupMenuPos;     // при вызове EMenu показать меню в позиции мышиного курсора
 };
 
 #if defined(EXTERNAL_HOOK_LIBRARY) && !defined(DEFINE_HOOK_MACROS)
@@ -288,6 +290,9 @@ void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL 
 #define F(n) ((On##n##_t)f##n)
 //#define Fx(n) ((On##n##x_t)f##n##x)
 
+#endif
+
+#endif // #else // EXTERNAL_HOOK_LIBRARY
 
 #define SETARGS(r) HookCallbackArg args = {bMainThread}; args.lpResult = (LPVOID)(r)
 #define SETARGS1(r,a1) SETARGS(r); args.lArguments[0] = (DWORD_PTR)(a1)
@@ -301,6 +306,3 @@ void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL 
 #define SETARGS9(r,a1,a2,a3,a4,a5,a6,a7,a8,a9) SETARGS8(r,a1,a2,a3,a4,a5,a6,a7,a8); args.lArguments[8] = (DWORD_PTR)(a9)
 #define SETARGS10(r,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) SETARGS9(r,a1,a2,a3,a4,a5,a6,a7,a8,a9); args.lArguments[9] = (DWORD_PTR)(a10)
 // !!! WARNING !!! DWORD_PTR lArguments[10]; - пока максимум - 10 аргументов
-#endif
-
-#endif // #else // EXTERNAL_HOOK_LIBRARY

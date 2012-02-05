@@ -1,3 +1,5 @@
+-- нужно синхронизировать с VC
+
 EXPORTS
 ;  Unicode
 	SetStartupInfoW=SetStartupInfoW@4

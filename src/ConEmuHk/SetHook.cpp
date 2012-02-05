@@ -66,6 +66,8 @@ extern BOOL gbDllStopCalled;
 
 #ifdef _DEBUG
 bool gbSuppressShowCall = false;
+bool gbSkipSuppressShowCall = false;
+bool gbSkipCheckProcessModules = false;
 #endif
 
 
@@ -581,6 +583,19 @@ const wchar_t* ExcludedModules[MAX_EXCLUDED_MODULES] =
 	L"mssign32.dll",
 	L"crypt32.dll",
 	L"uxtheme.dll", // подозрение на exception на некоторых Win7 & Far3 (Bugs\2012\120124\Info.txt, пункт 3)
+	/*
+	// test
+	L"twext.dll",
+	L"propsys.dll",
+	L"ntmarta.dll",
+	L"Wldap32.dll",
+	L"userenv.dll",
+	L"zipfldr.dll",
+	L"shdocvw.dll",
+	L"linkinfo.dll",
+	L"ntshrui.dll",
+	L"cscapi.dll",
+	*/
 //#endif
 	// А также исключаются все "API-MS-Win-..." в функции IsModuleExcluded
 	0
@@ -800,8 +815,13 @@ bool __stdcall InitHooks(HookItem* apHooks)
 
 		InitKernelFuncs();
 
+		WARNING("Без перехвата экспорта в kernel не работает поддержка UPX-нутых модулей");
+		// Но при такой обработке валится EMenu на Win8
+		TODO("Нужно вставлять jmp в начало функции LdrGetProcAddressEx в ntdll.dll");
+#if 0
 		// Необходимо для обработки UPX-нутых модулей
 		SetExports(ghKernel32);
+#endif
 
 		/*
 		if (ghKernelBase)
@@ -2364,6 +2384,13 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 // (статически или динамически) и другие библиотеки!
 void CheckProcessModules(HMODULE hFromModule)
 {
+#ifdef _DEBUG
+	if (gbSkipCheckProcessModules)
+	{
+		return;
+	}
+#endif
+
 	WARNING("TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary!!!");
 	// Может, имеет смысл запустить фоновую нить, в которой проверить все загруженные модули?
 
@@ -2847,5 +2874,26 @@ VOID WINAPI OnSetLastError(DWORD dwErrCode)
 
 	if (F(SetLastError))
 		F(SetLastError)(dwErrCode);
+}
+#endif
+
+
+
+
+/* ***************** Logging ****************** */
+#ifdef LOG_ORIGINAL_CALL
+void LogFunctionCall(LPCSTR asFunc, LPCSTR asFile, int anLine)
+{
+	if (!gbSuppressShowCall || gbSkipSuppressShowCall)
+	{
+		DWORD nErr = GetLastError();
+		char sFunc[128]; _wsprintfA(sFunc, SKIPLEN(countof(sFunc)) "Hook: %s\n", asFunc);
+		OutputDebugStringA(sFunc);
+		SetLastError(nErr);
+	}
+	else
+	{
+		gbSuppressShowCall = false;
+	}
 }
 #endif

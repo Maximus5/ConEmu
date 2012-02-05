@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <shlwapi.h>
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
-#include "..\ConEmuHk\SetHook.h"
+#include "../ConEmuHk/SetHook.h"
 #include "PluginHeader.h"
 
 //#ifdef _DEBUG

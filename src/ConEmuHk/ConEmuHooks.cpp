@@ -749,6 +749,13 @@ BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int nReserv
 	{
 		// Ќеобходимо "подн€ть" наверх консольное окно, т.к. от него идет меню
 		GuiSetForeground(hWnd);
+
+		if (gFarMode.cbSize == sizeof(gFarMode) && gFarMode.bPopupMenuPos)
+		{
+			gFarMode.bPopupMenuPos = FALSE; // однократно
+			POINT pt; GetCursorPos(&pt);
+			x = pt.x; y = pt.y;
+		}
 	}
 
 	BOOL lbRc = FALSE;
@@ -771,6 +778,13 @@ BOOL WINAPI OnTrackPopupMenuEx(HMENU hmenu, UINT fuFlags, int x, int y, HWND hWn
 	{
 		// Ќеобходимо "подн€ть" наверх консольное окно, т.к. от него идет меню
 		GuiSetForeground(hWnd);
+
+		if (gFarMode.cbSize == sizeof(gFarMode) && gFarMode.bPopupMenuPos)
+		{
+			gFarMode.bPopupMenuPos = FALSE; // однократно
+			POINT pt; GetCursorPos(&pt);
+			x = pt.x; y = pt.y;
+		}
 	}
 
 	BOOL lbRc = FALSE;

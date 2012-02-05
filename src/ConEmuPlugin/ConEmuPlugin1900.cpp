@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../common/farcolor3.hpp"
 #include "../common/ConEmuColors3.h"
+#include "../ConEmuHk/SetHook.h"
 
 #ifdef _DEBUG
 //#define SHOW_DEBUG_EVENTS
@@ -1461,3 +1462,22 @@ HANDLE WINAPI OpenW(const struct OpenInfo *Info)
 	return OpenPluginWcmn(Info->OpenFrom, Info->Data);
 }
 
+int WINAPI ProcessConsoleInputW(struct ProcessConsoleInputInfo *Info)
+{
+#if 0
+	// Чтобы можно было "нормально" работать в Far3 и без хуков
+	BOOL bMainThread = TRUE; // раз вызов через API - значит MainThread
+	BOOL lbRc = FALSE;
+	HANDLE hConsoleInput = GetStdHandle(STD_INPUT_HANDLE);
+	const INPUT_RECORD* lpBuffer = Info->Rec;
+	DWORD nLength = 1; LPDWORD lpNumberOfEventsRead = &nLength;
+	SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+
+	if (!OnConsoleReadInputWork(&args) || (nLength == 0))
+		return 1;
+
+	OnConsoleReadInputPost(&args);
+#endif
+
+	return 0;
+}

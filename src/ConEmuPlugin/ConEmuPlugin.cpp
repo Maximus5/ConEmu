@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <string.h>
 //#include <tchar.h>
 #include "../common/common.hpp"
-#include "..\ConEmuHk\SetHook.h"
+#include "../ConEmuHk/SetHook.h"
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif
@@ -397,7 +397,7 @@ HANDLE WINAPI OpenPluginW(int OpenFrom,INT_PTR Item)
 	return OpenPluginWcmn(OpenFrom, Item);
 }
 
-void TouchReadPeekConsoleInputs(int Peek = -1)
+void TouchReadPeekConsoleInputs(int Peek /*= -1*/)
 {
 #ifdef _DEBUG
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
@@ -1081,7 +1081,7 @@ VOID WINAPI OnConsolePeekInputPost(HookCallbackArg* pArgs)
 
 // Если функция возвращает FALSE - реальный ReadConsoleInput вызван не будет,
 // и в вызывающую функцию (ФАРа?) вернется то, что проставлено в pArgs->lpResult & pArgs->lArguments[...]
-BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
+BOOL OnConsoleReadInputWork(HookCallbackArg* pArgs)
 {
 	if (!pArgs->bMainThread)
 		return TRUE;  // обработку делаем только в основной нити
@@ -1117,7 +1117,7 @@ BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 		{
 			// это вызвается перед реальным чтением - информация может быть разве что от "PanelViews"
 			// Если под дебагом включен ScrollLock - вывести информацию о считанных событиях
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			if (GetKeyState(VK_SCROLL) & 1)
 			{
 				PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
@@ -1125,16 +1125,21 @@ BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 				_ASSERTE(*pCount <= pArgs->lArguments[2]);
 				UINT nCount = *pCount;
 
-				for(UINT i = 0; i < nCount; i++)
+				for (UINT i = 0; i < nCount; i++)
 					DebugInputPrint(p[i]);
 			}
+			#endif
 
-#endif
 			return FALSE;
 		}
 	}
 
 	return TRUE; // продолжить
+}
+
+BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
+{
+	return OnConsoleReadInputWork(pArgs);
 }
 
 VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
@@ -1211,12 +1216,12 @@ VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
 	// Если зарегистрирован callback для графической панели
 	if (gPanelRegLeft.pfnReadPostCall || gPanelRegRight.pfnReadPostCall)
 	{
-		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnReadPostCall, gPanelRegRight.pfnReadPostCall))
 			return;
 	}
 
 	// Чтобы ФАР сразу прекратил ходить по каталогам при отпускании Enter
+	if (h != NULL)
 	{
 		if (*pCount == 1 && p->EventType == KEY_EVENT && p->Event.KeyEvent.bKeyDown
 		        && (p->Event.KeyEvent.wVirtualKeyCode == VK_RETURN
@@ -2633,6 +2638,13 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			#ifdef _DEBUG
 			//r.Event.MouseEvent.dwMousePosition.X = 5;
 			#endif
+
+			if (SetFarHookMode)
+			{
+				// Сказать библиотеке хуков (ConEmuHk.dll), что меню нужно показать в позиции курсора мыши
+				gFarMode.bPopupMenuPos = TRUE;
+				SetFarHookMode(&gFarMode);
+			}
 
 			PostMacro((wchar_t*)pszMacro, &r);
 			//// Чтобы GUI не дожидался окончания всплытия EMenu

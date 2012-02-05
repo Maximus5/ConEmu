@@ -45,7 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <string.h>
 //#include <tchar.h>
 #include "../common/common.hpp"
-#include "..\ConEmuHk\SetHook.h"
+#include "../ConEmuHk/SetHook.h"
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif

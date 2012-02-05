@@ -296,6 +296,10 @@ void FUNC_X(FillUpdateBackgroundW)(struct PaintBackgroundArg* pFar);
 
 void CommonPluginStartup();
 
+struct HookCallbackArg;
+BOOL OnConsoleReadInputWork(HookCallbackArg* pArgs);
+VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs);
+
 #ifdef _DEBUG
 #define SHOWDBGINFO(x) OutputDebugStringW(x)
 #else

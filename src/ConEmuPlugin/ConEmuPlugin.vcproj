@@ -1654,7 +1654,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\common\SetHook.h"
+				RelativePath="..\ConEmuHk\SetHook.h"
 				>
 			</File>
 			<File
