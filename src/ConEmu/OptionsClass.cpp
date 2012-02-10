@@ -112,6 +112,12 @@ const CONEMUDEFCOLORS DefColors[] =
 			RGB(128,128,128), RGB(0,0,255), RGB(0,255,0), RGB(0,215,243), RGB(190,7,23), RGB(255,0,255), RGB(255,255,0), RGB(255,255,255)
 		}
 	},
+	{
+		L"Solarized (John Doe)", {
+			0x00362b00, 0x00423607, 0x00756e58, 0x00837b65, 0x002f32dc, 0x00c4716c, 0x00164bcb, 0x00d5e8ee,
+			0x00a1a193, 0x00d28b26, 0x00009985, 0x0098a12a, 0x00969483, 0x008236d3, 0x000089b5, 0x00e3f6fd		
+		}
+	},
 
 };
 const DWORD *dwDefColors = DefColors->dwDefColors;

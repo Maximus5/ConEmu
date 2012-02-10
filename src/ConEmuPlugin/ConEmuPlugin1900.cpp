@@ -566,7 +566,7 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 	int tabCount = 0;
 	BOOL lbActiveFound = FALSE;
 
-	for(int i = 0; i < windowCount; i++)
+	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
 		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
@@ -1022,8 +1022,6 @@ bool LoadPluginW1900(wchar_t* pszPluginPath)
 	return true;
 }
 
-bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
-
 bool RunExternalProgramW1900(wchar_t* pszCommand)
 {
 	wchar_t strTemp[MAX_PATH+1];
@@ -1049,14 +1047,22 @@ bool RunExternalProgramW1900(wchar_t* pszCommand)
 	if (!pszCurDir)
 	{
 		pszCurDir = (wchar_t*)malloc(10);
+		if (!pszCurDir)
+			return TRUE;
 		lstrcpy(pszCurDir, L"C:\\");
 	}
 
-	InfoW1900->PanelControl(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
-	RunExternalProgramW(pszCommand, pszCurDir);
-	InfoW1900->PanelControl(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
+	bool bSilent = (wcsstr(pszCommand, L"-new_console") != NULL);
+	
+	if (!bSilent)
+		InfoW1900->PanelControl(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
+		
+	RunExternalProgramW(pszCommand, pszCurDir, bSilent);
+	
+	if (!bSilent)
+		InfoW1900->PanelControl(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
 	InfoW1900->AdvControl(&guid_ConEmu,ACTL_REDRAWALL,0, 0);
-	free(pszCurDir); pszCurDir = NULL;
+	free(pszCurDir); //pszCurDir = NULL;
 	return TRUE;
 }
 

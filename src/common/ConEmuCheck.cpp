@@ -185,7 +185,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 	_ASSERTE(LocalSecurity()!=NULL);
 
 	// Try to open a named pipe; wait for it, if necessary.
-	while(1)
+	while (1)
 	{
 		hPipe = CreateFile(
 		            szPipeName,     // pipe name
@@ -201,12 +201,20 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 			break; // OK, открыли
 
 		dwErr = GetLastError();
-		#ifdef _DEBUG
 		if (dwErr == ERROR_PIPE_BUSY)
 		{
-			_ASSERTEX(dwErr != ERROR_PIPE_BUSY);
+			if (nTries > 0)
+			{
+				// All pipe instances are busy, so wait for 500 ms.
+				WaitNamedPipe(szPipeName, 500);
+				nTries--;
+				continue;
+			}
+			else
+			{
+				_ASSERTEX(dwErr != ERROR_PIPE_BUSY);
+			}
 		}
-		#endif
 
 		// —делаем так, чтобы хот€ бы пару раз он попробовал повторить
 		if ((nTries <= 0) && (GetTickCount() - dwStartTick) > EXECUTE_CMD_OPENPIPE_TIMEOUT)
@@ -231,7 +239,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		}
 
 		// Exit if an error other than ERROR_PIPE_BUSY occurs.
-		if (dwErr != ERROR_PIPE_BUSY)
+		// -- if (dwErr != ERROR_PIPE_BUSY) // уже проверено выше
 		{
 			//if (pszErr)
 			{
@@ -241,8 +249,9 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 			return NULL;
 		}
 
-		// All pipe instances are busy, so wait for 500 ms.
-		WaitNamedPipe(szPipeName, 500);
+		// ”же сделано выше
+		//// All pipe instances are busy, so wait for 500 ms.
+		//WaitNamedPipe(szPipeName, 500);
 		//if (!WaitNamedPipe(szPipeName, 1000) )
 		//{
 		//	dwErr = GetLastError();
@@ -700,6 +709,10 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	//	return NULL;
 	//}
 	_ASSERTE(pIn->hdr.nSrcThreadId==GetCurrentThreadId());
+
+
+	WARNING("ѕри Overlapped часто виснет в этом месте.");
+
 	// Send a message to the pipe server and read the response.
 	fSuccess = TransactNamedPipe(
 	               hPipe,                  // pipe handle

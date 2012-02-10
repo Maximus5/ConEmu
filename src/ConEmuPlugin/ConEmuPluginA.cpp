@@ -912,10 +912,19 @@ bool RunExternalProgramA(char* pszCommand)
 	wchar_t strCurDir[MAX_PATH+1]; GetCurrentDirectory(MAX_PATH, strCurDir);
 	int nLen = lstrlenA(pszCommand)+1;
 	wchar_t* pwszCommand = (wchar_t*)calloc(nLen,2);
+	if (!pwszCommand)
+		return TRUE;
 	MultiByteToWideChar(CP_OEMCP, 0, pszCommand, nLen, pwszCommand, nLen);
-	InfoA->Control(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0);
-	RunExternalProgramW(pwszCommand, strCurDir);
-	InfoA->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0);
+	
+	bool bSilent = (wcsstr(pwszCommand, L"-new_console") != NULL);
+	
+	if (!bSilent)
+		InfoA->Control(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0);
+		
+	RunExternalProgramW(pwszCommand, strCurDir, bSilent);
+	
+	if (!bSilent)
+		InfoA->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0);
 	InfoA->AdvControl(InfoA->ModuleNumber,ACTL_REDRAWALL,0);
 	free(pwszCommand);
 	return true;

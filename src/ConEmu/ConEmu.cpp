@@ -4034,6 +4034,15 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		cx = p->cx; cy = p->cy;
 	}
 	#endif
+	
+	// Если у нас режим скрытия заголовка (при максимизации)
+	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && (change2WindowMode == (DWORD)-1) && mb_MaximizedHideCaption && isZoomed())
+	{
+		// Нужно скорректировать размеры, а то при смене разрешения монитора (в частности при повороте экрана) глюки лезут
+		p->flags |= (SWP_NOSIZE|SWP_NOMOVE);
+		// И обновить размер насильно
+		SetWindowMode(rMaximized, TRUE);
+	}
 
 	//if (gpSet->isDontMinimize) {
 	//	if ((p->flags & (0x8000|SWP_NOACTIVATE)) == (0x8000|SWP_NOACTIVATE)
@@ -4532,6 +4541,7 @@ bool CConEmuMain::ConActivate(int nCon)
 // по завершении - на него будет вызван "delete"
 void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
 {
+	_ASSERTE((pArgs->pszStartupDir == NULL) || (*pArgs->pszStartupDir != 0));
 	PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon, (LPARAM)pArgs);
 }
 
@@ -8908,8 +8918,15 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 
 	if (gpSet->isHideCaption && !gpSet->isHideCaptionAlways())
 	{
-		pInfo->ptMaxPosition.y -= GetSystemMetrics(SM_CYCAPTION);
-		//pInfo->ptMaxSize.y += GetSystemMetrics(SM_CYCAPTION);
+		int yCapt = GetSystemMetrics(SM_CYCAPTION);
+		pInfo->ptMaxPosition.y -= yCapt;
+		//if (!mb_isFullScreen)
+		//	pInfo->ptMaxSize.y += yCapt;
+		//HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTOPRIMARY);
+		//MONITORINFO mi = {sizeof(mi)};
+		//GetMonitorInfo(hMon, &mi);
+		if (pInfo->ptMaxTrackSize.y < (pInfo->ptMaxSize.y + yCapt))
+			pInfo->ptMaxTrackSize.y = (pInfo->ptMaxSize.y + yCapt);
 	}
 
 #ifdef _DEBUG

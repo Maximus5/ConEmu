@@ -4268,6 +4268,27 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		// when receiving saving event receiver is still reported as modified
 		if (editorSave && lstrcmpi(FileName, Name) == 0)
 			Modified = 0;
+		
+
+		// Облагородить заголовок таба с Ctrl-O
+		wchar_t szConOut[MAX_PATH];
+		LPCWSTR pszName = PointToName(Name);
+		if (pszName && (wmemcmp(pszName, L"CEM", 3) == 0))
+		{
+			LPCWSTR pszExt = PointToExt(pszName);
+			if (lstrcmpi(pszExt, L".tmp") == 0)
+			{
+				if (gFarVersion.dwVerMajor==1)
+				{
+					GetMsgA(CEConsoleOutput, szConOut);
+				}
+				else
+					lstrcpyn(szConOut, GetMsgW(CEConsoleOutput), countof(szConOut));
+				
+				Name = szConOut;
+			}
+		}
+		
 
 		lbCh = (gpTabs->Tabs.tabs[tabCount].Current != (Current/*losingFocus*/ ? 1 : 0)/*(losingFocus ? 0 : Current)*/) ||
 		       (gpTabs->Tabs.tabs[tabCount].Type != Type) ||
@@ -5796,51 +5817,97 @@ int GetActiveWindowType()
 //}
 
 
-bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir)
+bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent/*=false*/)
 {
-	//wchar_t strCmd[MAX_PATH+1];
-	//wchar_t* strArgs = pszCommand;
-	//NextArg((const wchar_t**)&strArgs, strCmd);
-	//wchar_t strDir[10]; lstrcpy(strDir, L"C:\\");
-	STARTUPINFO cif= {sizeof(STARTUPINFO)};
-	PROCESS_INFORMATION pri= {0};
-	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
-	DWORD oldConsoleMode;
-	DWORD nErr = 0;
-	DWORD nExitCode = 0;
-	GetConsoleMode(hStdin, &oldConsoleMode);
-	SetConsoleMode(hStdin, ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT); // подбиралось методом тыка
-#ifdef _DEBUG
-	WARNING("Посмотреть, как Update в консоль выводит.");
-	wprintf(L"\nCmd: <%s>\nDir: <%s>\n\n", pszCommand, pszCurDir);
-#endif
-	MWow64Disable wow; wow.Disable();
-	SetLastError(0);
-	BOOL lb = CreateProcess(/*strCmd, strArgs,*/ NULL, pszCommand, NULL, NULL, TRUE,
-	          NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE, NULL, pszCurDir, &cif, &pri);
-	nErr = GetLastError();
-	wow.Restore();
-
-	if (lb)
+	bool lbRc = false;
+	_ASSERTE(pszCommand && *pszCommand);
+	
+	if (bSilent)
 	{
-		WaitForSingleObject(pri.hProcess, INFINITE);
-		GetExitCodeProcess(pri.hProcess, &nExitCode);
-		CloseHandle(pri.hProcess);
-		CloseHandle(pri.hThread);
-#ifdef _DEBUG
-		wprintf(L"\nConEmuC: Process was terminated, ExitCode=%i\n\n", nExitCode);
-#endif
+		DWORD nCmdLen = lstrlen(pszCommand);
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_NEWCMD)+(nCmdLen*sizeof(wchar_t)));
+		if (pIn)
+		{
+			pIn->NewCmd.hFromConWnd = FarHwnd;
+			if (pszCurDir)
+				lstrcpyn(pIn->NewCmd.szCurDir, pszCurDir, countof(pIn->NewCmd.szCurDir));
+				
+			lstrcpyn(pIn->NewCmd.szCommand, pszCommand, nCmdLen+1);
+
+			HWND hGuiRoot = GetConEmuHWND(1);
+			CESERVER_REQ* pOut = ExecuteGuiCmd(hGuiRoot, pIn, FarHwnd);
+			if (pOut)
+			{
+				if (pOut->hdr.cbSize > sizeof(pOut->hdr) && pOut->Data[0])
+				{
+					lbRc = true;
+				}
+				ExecuteFreeResult(pOut);
+			}
+			else
+			{
+				_ASSERTE(pOut!=NULL);
+			}
+			ExecuteFreeResult(pIn);
+		}
 	}
 	else
 	{
-#ifdef _DEBUG
-		wprintf(L"\nConEmuC: CreateProcess failed, ErrCode=0x%08X\n\n", nErr);
-#endif
-	}
+		//wchar_t strCmd[MAX_PATH+1];
+		//wchar_t* strArgs = pszCommand;
+		//NextArg((const wchar_t**)&strArgs, strCmd);
+		//wchar_t strDir[10]; lstrcpy(strDir, L"C:\\");
+		STARTUPINFO cif= {sizeof(STARTUPINFO)};
+		PROCESS_INFORMATION pri= {0};
+		HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+		DWORD oldConsoleMode;
+		DWORD nErr = 0;
+		DWORD nExitCode = 0;
+		GetConsoleMode(hStdin, &oldConsoleMode);
+		SetConsoleMode(hStdin, ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT); // подбиралось методом тыка
+		
+		#ifdef _DEBUG
+		if (!bSilent)
+		{
+			WARNING("Посмотреть, как Update в консоль выводит.");
+			wprintf(L"\nCmd: <%s>\nDir: <%s>\n\n", pszCommand, pszCurDir);
+		}
+		#endif
 
-	//wprintf(L"Cmd: <%s>\nArg: <%s>\nDir: <%s>\n\n", strCmd, strArgs, pszCurDir);
-	SetConsoleMode(hStdin, oldConsoleMode);
-	return true;
+		MWow64Disable wow; wow.Disable();
+		SetLastError(0);
+		BOOL lb = CreateProcess(/*strCmd, strArgs,*/ NULL, pszCommand, NULL, NULL, TRUE,
+		          NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE, NULL, pszCurDir, &cif, &pri);
+		nErr = GetLastError();
+		wow.Restore();
+
+		if (lb)
+		{
+			WaitForSingleObject(pri.hProcess, INFINITE);
+			GetExitCodeProcess(pri.hProcess, &nExitCode);
+			CloseHandle(pri.hProcess);
+			CloseHandle(pri.hThread);
+			
+			#ifdef _DEBUG
+			if (!bSilent)
+				wprintf(L"\nConEmuC: Process was terminated, ExitCode=%i\n\n", nExitCode);
+			#endif
+			
+			lbRc = true;
+		}
+		else
+		{
+			#ifdef _DEBUG
+			if (!bSilent)
+				wprintf(L"\nConEmuC: CreateProcess failed, ErrCode=0x%08X\n\n", nErr);
+			#endif
+		}
+
+		//wprintf(L"Cmd: <%s>\nArg: <%s>\nDir: <%s>\n\n", strCmd, strArgs, pszCurDir);
+		SetConsoleMode(hStdin, oldConsoleMode);
+	}
+	
+	return lbRc;
 }
 
 

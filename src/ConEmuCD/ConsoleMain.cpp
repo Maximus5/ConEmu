@@ -4820,6 +4820,11 @@ BOOL cmd_GetOutput(CESERVER_REQ& in, CESERVER_REQ** out)
 			lbRc = TRUE;
 		}
 	}
+	else
+	{
+		*out = ExecuteNewCmd(CECMD_GETOUTPUT, sizeof(CESERVER_REQ_HDR));
+		lbRc = (*out != NULL);
+	}
 
 	return lbRc;
 }

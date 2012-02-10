@@ -66,6 +66,11 @@ struct PipeServer
 			PipeState dwState;
 			
 			wchar_t sErrorMsg[128];
+
+			#ifdef _DEBUG
+			int nCreateCount, nConnectCount, nCallCount, nAnswCount;
+			SYSTEMTIME stLastCall, stLastEndCall;
+			#endif
 			
 			// Request (from client)
 			DWORD cbReadSize, cbMaxReadSize;
@@ -563,31 +568,51 @@ struct PipeServer
 			BOOL fSuccess = FALSE;
 			// Wait for overlapped connection
 			HANDLE hConnWait[2] = {mh_TermEvent, pPipe->hEvent};
-			DWORD nWait = WaitForMultipleObjects(2, hConnWait, FALSE, INFINITE);
-			if (nWait == WAIT_OBJECT_0)
+			DWORD nWait = (DWORD)-1, dwErr = (DWORD)-1, dwErrT = (DWORD)-1;
+			DWORD nTimeout = RELEASEDEBUGTEST(1000,30000);
+			while (!mb_Terminate)
 			{
-				_ASSERTEX(mb_Terminate==true);
-				DisconnectNamedPipe(pPipe->hPipeInst);
-				return 0; // Завершение сервера
-			}
-			else if (nWait == (WAIT_OBJECT_0+1))
-			{
-				fSuccess = GetOverlappedResult(pPipe->hPipeInst, &pPipe->oOverlap, pcbDataSize, FALSE);
-				DWORD dwErr = GetLastError();
+				nWait = WaitForMultipleObjects(2, hConnWait, FALSE, nTimeout);
+				if (nWait == WAIT_OBJECT_0)
+				{
+					_ASSERTEX(mb_Terminate==true);
+					DisconnectNamedPipe(pPipe->hPipeInst);
+					return 0; // Завершение сервера
+				}
+				else if (nWait == (WAIT_OBJECT_0+1))
+				{
+					fSuccess = GetOverlappedResult(pPipe->hPipeInst, &pPipe->oOverlap, pcbDataSize, FALSE);
+					dwErr = GetLastError();
 
-				if (fSuccess || dwErr==ERROR_MORE_DATA)
-					return 1; // OK, клиент подключился
+					if (fSuccess || dwErr == ERROR_MORE_DATA)
+						return 1; // OK, клиент подключился
 
-				#ifdef _DEBUG
-				_ASSERTEX(dwErr==ERROR_BROKEN_PIPE); // Канал был закрыт?
-				SetLastError(dwErr);
-				#endif
-				return 2; // Требуется переподключение
-			}
-			else
-			{
-				_ASSERTEX(nWait == 0 || nWait == 1);
-				DumpError(pPipe, L"PipeServerThread:WaitForMultipleObjects failed with 0x%08X", FALSE);
+					#ifdef _DEBUG
+					_ASSERTEX(dwErr==ERROR_BROKEN_PIPE); // Канал был закрыт?
+					SetLastError(dwErr);
+					#endif
+					return 2; // Требуется переподключение
+				}
+				else if (nWait == WAIT_TIMEOUT)
+				{
+					fSuccess = GetOverlappedResult(pPipe->hPipeInst, &pPipe->oOverlap, pcbDataSize, FALSE);
+					dwErrT = GetLastError();
+
+					if (fSuccess || dwErrT == ERROR_MORE_DATA)
+						return 1; // OK, клиент подключился
+
+					if (dwErrT == ERROR_IO_INCOMPLETE)
+						continue;
+
+					_ASSERTEX(dwErrT == ERROR_IO_INCOMPLETE);
+					DumpError(pPipe, L"PipeServerThread:GetOverlappedResult failed with 0x%08X", FALSE);
+				}
+				else
+				{
+					_ASSERTEX(nWait == 0 || nWait == 1);
+					DumpError(pPipe, L"PipeServerThread:WaitForMultipleObjects failed with 0x%08X", FALSE);
+				}
+
 				// Force client disconnect (error on server side)
 				DisconnectNamedPipe(pPipe->hPipeInst);
 				// Wait a little
@@ -597,6 +622,8 @@ struct PipeServer
 				pPipe->hPipeInst = NULL;
 				return 2; // ошибка, пробуем еще раз
 			}
+
+			return 2; // Terminate!
 		}
 
 		BOOL PipeServerRead(PipeInst* pPipe)
@@ -862,6 +889,8 @@ struct PipeServer
 						// Try again
 						continue;
 					}
+
+					DEBUGTEST(pPipe->nCreateCount++);
 				}
 
 				// Чтобы ConEmuC знал, что серверный пайп готов
@@ -1006,6 +1035,10 @@ struct PipeServer
 				{
 					_ASSERTEX(mb_Terminate==true);
 				}
+				else
+				{
+					DEBUGTEST(pPipe->nConnectCount++);
+				}
 				
 				// Сервер закрывается?
 				if (mb_Terminate)
@@ -1062,6 +1095,11 @@ struct PipeServer
 					// Чтение данных запроса из пайпа и запись результата
 					while (PipeServerRead(pPipe))
 					{
+						#ifdef _DEBUG
+						pPipe->nCallCount++;
+						GetLocalTime(&pPipe->stLastCall);
+						#endif
+
 						if (lbFirstRead)
 						{
 							lbFirstRead = FALSE;
@@ -1085,6 +1123,12 @@ struct PipeServer
 							// Всегда чего-нибудь ответить в пайп, а то ошибка (Pipe was closed) у клиента возникает
 							fWriteSuccess = WriteDummyAnswer(pPipe);
 						}
+
+						#ifdef _DEBUG
+						if (fWriteSuccess)
+							pPipe->nAnswCount++;
+						GetLocalTime(&pPipe->stLastEndCall);
+						#endif
 
 						if (pPipe->bBreakConnection)
 							break; // Переоткрыть пайп (ошибка протокола)

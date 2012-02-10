@@ -563,11 +563,23 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 			else if (!GetNextInt(asArgs, nShowCmd))
 				nShowCmd = SW_SHOWNORMAL;
 			
-			if ((lstrcmpi(pszOper,L"new_console")==0) || (pszParm && wcsstr(pszParm, L"-new_console")))
+			bool bNewOper = (wmemcmp(pszOper, L"new_console", 11) == 0);
+			if (bNewOper || (pszParm && wcsstr(pszParm, L"-new_console")))
 			{
+				size_t nAllLen;
 				RConStartArgs *pArgs = new RConStartArgs;
 				
-				size_t nAllLen = _tcslen(pszFile) + (pszParm ? _tcslen(pszParm) : 0) + 16;
+				nAllLen = _tcslen(pszFile) + (pszParm ? _tcslen(pszParm) : 0) + 16;
+				
+				if (bNewOper)
+				{
+					size_t nOperLen = _tcslen(pszOper);
+					if ((nOperLen > 11) && (pszOper[nOperLen] == L':'))
+						nAllLen += (nOperLen + 6);
+					else
+						bNewOper = false;
+				}
+				
 				pArgs->pszSpecialCmd = (wchar_t*)malloc(nAllLen*sizeof(wchar_t));
 				
 				if (*pszFile != L'"')
@@ -576,7 +588,7 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 					_wcscpy_c(pArgs->pszSpecialCmd+1, nAllLen-1, pszFile);
 					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L"\" ");
 				}
-				else
+				else if (*pszFile)
 				{
 					_wcscpy_c(pArgs->pszSpecialCmd, nAllLen, pszFile);
 					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" ");
@@ -585,6 +597,14 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 				if (pszParm && *pszParm)
 				{
 					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, pszParm);
+				}
+				
+				// Параметры запуска консоли могли передать в первом аргуементе (например "new_console:b")
+				if (bNewOper)
+				{
+					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" \"-");
+					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, pszOper);
+					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L"\"");
 				}
 				
 				if (pszDir)

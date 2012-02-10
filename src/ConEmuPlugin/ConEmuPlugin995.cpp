@@ -992,14 +992,22 @@ bool RunExternalProgramW995(wchar_t* pszCommand)
 	if (!pszCurDir)
 	{
 		pszCurDir = (wchar_t*)malloc(10);
+		if (!pszCurDir)
+			return TRUE;
 		lstrcpy(pszCurDir, L"C:\\");
 	}
+	
+	bool bSilent = (wcsstr(pszCommand, L"-new_console") != NULL);
 
-	InfoW995->Control(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
-	RunExternalProgramW(pszCommand, pszCurDir);
-	InfoW995->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
+	if (!bSilent)
+		InfoW995->Control(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
+		
+	RunExternalProgramW(pszCommand, pszCurDir, bSilent);
+	
+	if (!bSilent)
+		InfoW995->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
 	InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,0);
-	free(pszCurDir); pszCurDir = NULL;
+	free(pszCurDir); //pszCurDir = NULL;
 	return TRUE;
 }
 

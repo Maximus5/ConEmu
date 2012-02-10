@@ -256,6 +256,7 @@ BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 BOOL StartupHooks(HMODULE ahOurDll);
 void ShutdownHooks();
 
+bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent=false);
 bool FUNC_Y(ProcessCommandLineW)(wchar_t* pszCommand);
 bool FUNC_X(ProcessCommandLineW)(wchar_t* pszCommand);
 bool ProcessCommandLineA(char* pszCommand);

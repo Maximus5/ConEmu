@@ -1878,6 +1878,7 @@ BOOL CRealConsole::StartProcess()
 	MCHKHEAP;
 	int nStep = (m_Args.pszSpecialCmd!=NULL) ? 2 : 1;
 	wchar_t* psCurCmd = NULL;
+	_ASSERTE((m_Args.pszStartupDir == NULL) || (*m_Args.pszStartupDir != 0));
 
 	while (nStep <= 2)
 	{
@@ -6240,7 +6241,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 	HANDLE hFile = PrepareOutputFileCreate(pszFilePathName);
 	lbRc = (hFile != NULL);
 
-	if (pOut->hdr.nVersion == CESERVER_REQ_VER)
+	if ((pOut->hdr.nVersion == CESERVER_REQ_VER) && (pOut->hdr.cbSize > sizeof(CESERVER_CONSAVE)))
 	{
 		const CESERVER_CONSAVE* pSave = (CESERVER_CONSAVE*)pOut;
 		UINT nWidth = pSave->hdr.sbi.dwSize.X;
