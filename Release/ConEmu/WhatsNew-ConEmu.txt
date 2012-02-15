@@ -1,13 +1,15 @@
-﻿--developer build--
+﻿2012.02.15
+[!] Experimental: Внутренние изменения межпроцессного взаимодействия.
 [*] Installer. Подхватывается путь установки Far 3.x, в том числе и для компонентов 'Far Manager plugins' и 'Far3 ExtendedConsole'.
-[*] Внутренние изменения межпроцессного взаимодействия.
 [*] Правки в injects.
-
-2012...
 [%] Issue 296: Исправлена работа в режиме HideCaption & Maximized.
 [+] Префикс плагина "ConEmu:run:" теперь поддерживает и "-new_console" для убирания мерцания панелей.
 [*] Доработаны макросы для Far3.
 [*] В заголовке таба с консольным выводом (макрос Far на CtrlO) отображается 'Console output' вместо имени временного файла.
+[+] Для 'Resize panels by mouse' добавлен флажок 'use both panel edges'.
+[%] Issue 491: ConEmu changes window size on F3 or F4 in Far.
+[+] Win+Apps - active tab popup menu.
+[*] Продолжение GUI-приложений во вкладках.
 
 
 2012.02.05
