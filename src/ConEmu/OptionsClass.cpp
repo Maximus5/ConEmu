@@ -361,6 +361,7 @@ void CSettings::InitVars_Hotkeys()
 		// System (predefined, fixed)
 		{vkWinAltP, 0, NULL, 'P', MAKEMODIFIER2(VK_LWIN,VK_MENU)}, // Settings
 		{vkWinAltSpace, 0, NULL, VK_SPACE, MAKEMODIFIER2(VK_LWIN,VK_MENU)}, // System menu
+		{vkWinApps, 0, NULL, VK_APPS, VK_LWIN}, // Tab menu
 		{vkAltF9, 0, NULL, VK_F9, VK_MENU}, // System menu
 		{vkCtrlWinAltSpace, 0, NULL, VK_SPACE, MAKEMODIFIER3(VK_CONTROL,VK_LWIN,VK_MENU)}, // Show real console
 		{vkAltEnter, 0, NULL, VK_RETURN, VK_MENU}, // Full screen
@@ -1396,6 +1397,7 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 		CheckDlgButton(hWnd2, cbRSelectionFix, BST_CHECKED);
 
 	CheckDlgButton(hWnd2, cbDragPanel, gpSet->isDragPanel);
+	CheckDlgButton(hWnd2, cbDragPanelBothEdges, gpSet->isDragPanelBothEdges);
 
 	if (gpSet->isDisableFarFlashing) CheckDlgButton(hWnd2, cbDisableFarFlashing, gpSet->isDisableFarFlashing);
 
@@ -2331,6 +2333,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbDragPanel:
 			gpSet->isDragPanel = IsChecked(hWnd2, cbDragPanel);
+			gpConEmu->OnSetCursor();
+			break;
+		case cbDragPanelBothEdges:
+			gpSet->isDragPanelBothEdges = IsChecked(hWnd2, cbDragPanelBothEdges);
 			gpConEmu->OnSetCursor();
 			break;
 		case cbTryToCenter:

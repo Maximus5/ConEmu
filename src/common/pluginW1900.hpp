@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2426
+  Plugin API for Far Manager 3.0 build 2460
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2426
+#define FARMANAGERVERSION_BUILD 2460
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -952,7 +952,6 @@ enum ADVANCED_CONTROL_COMMANDS
 
 enum FarSystemSettings
 {
-	FSS_CLEARROATTRIBUTE               = 0x00000001,
 	FSS_DELETETORECYCLEBIN             = 0x00000002,
 	FSS_USESYSTEMCOPYROUTINE           = 0x00000004,
 	FSS_COPYFILESOPENEDFORWRITING      = 0x00000008,
@@ -1391,6 +1390,7 @@ enum EDITOR_EVENTS
 
 	EE_GOTFOCUS   =6,
 	EE_KILLFOCUS  =7,
+	EE_CHANGE     =8,
 };
 
 enum DIALOG_EVENTS
@@ -1406,8 +1406,6 @@ enum SYNCHRO_EVENTS
 };
 
 #define EEREDRAW_ALL    (void*)0
-#define EEREDRAW_CHANGE (void*)1
-#define EEREDRAW_LINE   (void*)2
 
 enum EDITOR_CONTROL_COMMANDS
 {
@@ -1650,6 +1648,20 @@ struct EditorSaveFile
 	const wchar_t *FileName;
 	const wchar_t *FileEOL;
 	UINT CodePage;
+};
+
+enum EDITOR_CHANGETYPE
+{
+	ECTYPE_CHANGED = 0,
+	ECTYPE_ADDED   = 1,
+	ECTYPE_DELETED = 2,
+};
+
+struct EditorChange
+{
+	size_t StructSize;
+	enum EDITOR_CHANGETYPE Type;
+	int StringNumber;
 };
 
 typedef unsigned __int64 INPUTBOXFLAGS;
@@ -2332,6 +2344,13 @@ struct AnalyseInfo
 	OPERATION_MODES OpMode;
 };
 
+struct OpenMacroInfo
+{
+	size_t StructSize;
+	size_t Count;
+	struct FarMacroValue *Values;
+};
+
 enum OPENFROM
 {
 	OPEN_FROM_MASK          = 0x000000FF,
@@ -2347,11 +2366,7 @@ enum OPENFROM
 	OPEN_DIALOG             = 8,
 	OPEN_ANALYSE            = 9,
 	OPEN_RIGHTDISKMENU      = 10,
-
-	OPEN_FROMMACRO_MASK     = 0x000F0000,
-
-	OPEN_FROMMACRO          = 0x00010000,
-	OPEN_FROMMACROSTRING    = 0x00020000,
+	OPEN_FROMMACRO          = 11,
 };
 
 
@@ -2520,6 +2535,7 @@ struct ProcessEditorEventInfo
 	size_t StructSize;
 	int Event;
 	void* Param;
+	int EditorID;
 };
 
 struct ProcessDialogEventInfo
@@ -2541,6 +2557,7 @@ struct ProcessViewerEventInfo
 	size_t StructSize;
 	int Event;
 	void* Param;
+	int ViewerID;
 };
 
 struct ClosePanelInfo

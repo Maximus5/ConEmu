@@ -264,7 +264,7 @@ extern DWORD gnRgnDetectFlags;
 void FUNC_X(GetPluginInfoW)(void* piv);
 void FUNC_Y(GetPluginInfoW)(void* piv);
 
-HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item);
+HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro);
 HANDLE WINAPI OpenPluginW1(int OpenFrom,INT_PTR Item);
 HANDLE WINAPI OpenPluginW2(int OpenFrom,const GUID* Guid,INT_PTR Data);
 
@@ -286,7 +286,7 @@ void SavePanelViewState(BOOL bLeftPanel, DWORD dwMode);
 
 bool isPreloadByDefault();
 
-void EntryPoint(int OpenFrom,INT_PTR Item);
+void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro);
 BOOL LoadFarVersion();
 void StartPlugin(BOOL abManual);
 void ExitPlugin(void);

@@ -2477,6 +2477,28 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 	return rc; // Посчитали, возвращаем
 }
 
+POINT CConEmuMain::CalcTabMenuPos(CVirtualConsole* apVCon)
+{
+	POINT ptCur = {};
+	if (apVCon)
+	{
+		RECT rcWnd;
+		if (mp_TabBar && mp_TabBar->IsTabsShown())
+		{
+			mp_TabBar->GetActiveTabRect(&rcWnd);
+			ptCur.x = rcWnd.left;
+			ptCur.y = rcWnd.bottom;
+		}
+		else
+		{
+			GetWindowRect(mp_VActive->GetView(), &rcWnd);
+			ptCur.x = rcWnd.left;
+			ptCur.y = rcWnd.top;
+		}
+	}
+	return ptCur;
+}
+
 /*!!!static!!*/
 // Получить размер (правый нижний угол) окна по его клиентской области и наоборот
 RECT CConEmuMain::MapRect(RECT rFrom, BOOL bFrame2Client)
@@ -9589,15 +9611,36 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				|| (!isPressed(VK_MENU) && isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))))
 		{
 			if (messg == WM_SYSKEYUP)
+			{
+				//Win-Alt-Space
 				ShowSysmenu();
+			}
 
+			return 0;
+		}
+		else if (wParam == VK_APPS
+			&& (!isPressed(VK_MENU) && !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
+			)
+		{
+			if (messg == WM_KEYUP)
+			{
+				//Win-Apps
+				if (mp_VActive)
+				{
+					POINT ptCur = CalcTabMenuPos(mp_VActive);
+					mp_VActive->ShowPopupMenu(ptCur);
+				}
+			}
+			
 			return 0;
 		}
 		// WinAltEnter зарезервиновано 7-кой под запуск MediaPlayer, поэтому - "Ctrl-Win-Enter"
 		else if (wParam == VK_RETURN && isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_SHIFT))
 		{
 			if (messg == WM_KEYUP)
+			{
 				OnAltEnter();
+			}
 
 			return 0;
 		}
@@ -11628,9 +11671,9 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 	enum DragPanelBorder dpb = DPB_NONE;
 	RECT rcPanel;
 	
-	TODO("Сделаем все-таки драг влево-вправо хватанием за «промежуток» между рамками");
-	int nSplitWidth = gpSetCls->BorderFontWidth()/5;
-	if (nSplitWidth < 1) nSplitWidth = 1;
+	//TODO("Сделаем все-таки драг влево-вправо хватанием за «промежуток» между рамками");
+	//int nSplitWidth = gpSetCls->BorderFontWidth()/5;
+	//if (nSplitWidth < 1) nSplitWidth = 1;
 	
 
 	if (mp_VActive->RCon()->GetPanelRect(TRUE, &rcPanel, TRUE))
@@ -11643,6 +11686,8 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 
 	if (dpb == DPB_NONE && mp_VActive->RCon()->GetPanelRect(FALSE, &rcPanel, TRUE))
 	{
+		if (gpSet->isDragPanelBothEdges && crCon.X == rcPanel.right && (rcPanel.top <= crCon.Y && crCon.Y <= rcPanel.bottom))
+			dpb = DPB_SPLIT;
 		if (crCon.Y == rcPanel.bottom && (rcPanel.left <= crCon.X && crCon.X <= rcPanel.right))
 			dpb = DPB_LEFT;
 	}

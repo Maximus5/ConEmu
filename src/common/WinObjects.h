@@ -68,6 +68,7 @@ BOOL IsUserAdmin();
 BOOL GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
 BOOL IsWindows64(BOOL *pbIsWow64Process = NULL);
 BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo);
+bool IsModuleValid(HMODULE module);
 
 void RemoveOldComSpecC();
 const wchar_t* PointToName(const wchar_t* asFullPath);

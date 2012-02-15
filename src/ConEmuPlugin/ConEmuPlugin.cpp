@@ -290,7 +290,7 @@ void CheckConEmuDetached()
 }
 
 BOOL gbInfoW_OK = FALSE;
-HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)
+HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 {
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;
@@ -315,7 +315,8 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)
 		//if (!gbCmdCallObsolete) {
 		INT_PTR nID = -1; // выбор из меню
 
-		if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
+		//if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
+		if (FromMacro)
 		{
 			if (Item >= 0x4000)
 			{
@@ -394,7 +395,8 @@ HANDLE WINAPI OpenPluginW(int OpenFrom,INT_PTR Item)
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;
 	
-	return OpenPluginWcmn(OpenFrom, Item);
+	// Far2 api!
+	return OpenPluginWcmn(OpenFrom, Item, ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO));
 }
 
 void TouchReadPeekConsoleInputs(int Peek /*= -1*/)
@@ -4858,12 +4860,12 @@ void CheckResources(BOOL abFromStartup)
 	// Теперь он отвязан от gpConMapInfo
 	ReloadFarInfo(TRUE);
 
+	wchar_t szLang[64];
 	if (gpConMapInfo)  //2010-12-13 Имеет смысл только при запуске из-под ConEmu
 	{
-		wchar_t szLang[64];
 		GetEnvironmentVariable(L"FARLANG", szLang, 63);
 
-		if (abFromStartup || lstrcmpW(szLang, gsFarLang))
+		if (abFromStartup || lstrcmpW(szLang, gsFarLang) || !gdwServerPID)
 		{
 			wchar_t szTitle[1024] = {0};
 			GetConsoleTitleW(szTitle, 1024);
@@ -4871,9 +4873,11 @@ void CheckResources(BOOL abFromStartup)
 			InitResources();
 			DWORD dwServerPID = 0;
 			FindServerCmd(CECMD_FARLOADED, dwServerPID);
+			_ASSERTE(dwServerPID!=0);
 			gdwServerPID = dwServerPID;
 			SetConsoleTitleW(szTitle);
 		}
+		_ASSERTE(gdwServerPID!=0);
 	}
 }
 
@@ -5381,9 +5385,14 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
 
 		if (pOut)
 		{
+			_ASSERTE(SrvMapping.nServerPID == pOut->dwData[0]);
 			dwServerPID = SrvMapping.nServerPID;
 			ExecuteFreeResult(pOut);
 			lbRc = TRUE;
+		}
+		else
+		{
+			_ASSERTE(pOut!=NULL);
 		}
 
 		ExecuteFreeResult(pIn); 
@@ -5554,6 +5563,7 @@ BOOL Attach2Gui()
 	{
 		// "Server was already started. PID=%i. Exiting...\n", dwServerPID
 		gdwServerPID = dwServerPID;
+		_ASSERTE(gdwServerPID!=0);
 		gbTryOpenMapHeader = (gpConMapInfo==NULL);
 
 		if (gpConMapInfo)  // 04.03.2010 Maks - Если мэппинг уже открыт - принудительно передернуть ресурсы и информацию
@@ -5641,6 +5651,7 @@ BOOL Attach2Gui()
 	else
 	{
 		gdwServerPID = pi.dwProcessId;
+		_ASSERTE(gdwServerPID!=0);
 		SafeCloseHandle(pi.hProcess);
 		SafeCloseHandle(pi.hThread);
 		lbRc = TRUE;

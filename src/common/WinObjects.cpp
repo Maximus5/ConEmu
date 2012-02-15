@@ -574,11 +574,62 @@ BOOL IsWindows64(BOOL *pbIsWow64Process/* = NULL */)
 	return is64bitOs;
 }
 
+// ѕроверить, валиден ли модуль?
+bool IsModuleValid(HMODULE module)
+{
+	if ((module == NULL) || (module == INVALID_HANDLE_VALUE))
+		return false;
+	if (LDR_IS_RESOURCE(module))
+		return false;
+
+#ifdef USE_SEH
+	bool lbValid = true;
+	IMAGE_DOS_HEADER dos;
+	IMAGE_NT_HEADERS nt;
+
+	SAFETRY
+	{
+		memmove(&dos, (void*)module, sizeof(dos));
+		if (dos.e_magic != IMAGE_DOS_SIGNATURE /*'ZM'*/)
+		{
+			lbValid = false;
+		}
+		else
+		{
+			memmove(&nt, (IMAGE_NT_HEADERS*)((char*)module + ((IMAGE_DOS_HEADER*)module)->e_lfanew), sizeof(nt));
+			if (nt.Signature != 0x004550)
+				lbValid = false;
+		}
+	}
+	SAFECATCH
+	{
+		lbValid = false;
+	}
+
+	return lbValid;
+#else
+	if (IsBadReadPtr((void*)module, sizeof(IMAGE_DOS_HEADER)))
+		return false;
+
+	if (((IMAGE_DOS_HEADER*)module)->e_magic != IMAGE_DOS_SIGNATURE /*'ZM'*/)
+		return false;
+
+	IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)module + ((IMAGE_DOS_HEADER*)module)->e_lfanew);
+	if (IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)))
+		return false;
+
+	if (nt_header->Signature != 0x004550)
+		return false;
+
+	return true;
+#endif
+}
+
 BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo)
 {
-	if (!hModule || (hModule == INVALID_HANDLE_VALUE))
+	if ((hModule == NULL) || (hModule == INVALID_HANDLE_VALUE) || LDR_IS_RESOURCE(hModule))
 	{
-		_ASSERTE(hModule!=NULL);
+		_ASSERTE((hModule != NULL) && (hModule != INVALID_HANDLE_VALUE) && !LDR_IS_RESOURCE(hModule));
 		return FALSE;
 	}
 	if (!CallBack || !ProcCount)
@@ -594,79 +645,13 @@ BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 	// ≈сли разрешили - попробовать определить размер модул€, чтобы CallBack не выпал из его тела
 	if (abCheckModuleInfo)
 	{
-		//#define LDR_IS_DATAFILE(hm)      ((((ULONG_PTR)(hm)) & (ULONG_PTR)1) == (ULONG_PTR)1)
-		//#define LDR_IS_IMAGEMAPPING(hm)  ((((ULONG_PTR)(hm)) & (ULONG_PTR)2) == (ULONG_PTR)2)
-		//#define LDR_IS_RESOURCE(hm)      (LDR_IS_IMAGEMAPPING(hm) || LDR_IS_DATAFILE(hm))
-
-		if (LDR_IS_RESOURCE(hModule))
-		{
-			_ASSERTE(!LDR_IS_RESOURCE(hModule));
+		if (!IsModuleValid(hModule))
 			return FALSE;
-		}
-
-		if (IsBadReadPtr((void*)hModule, sizeof(IMAGE_DOS_HEADER)))
-		{
-			_ASSERTE(!IsBadReadPtr((void*)hModule, sizeof(IMAGE_DOS_HEADER)));
-			return FALSE;
-		}
-
-		if (((IMAGE_DOS_HEADER*)hModule)->e_magic != IMAGE_DOS_SIGNATURE /*'ZM'*/)
-		{
-			_ASSERTE(((IMAGE_DOS_HEADER*)hModule)->e_magic == IMAGE_DOS_SIGNATURE);
-			return FALSE;
-		}
 
 		IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)hModule + ((IMAGE_DOS_HEADER*)hModule)->e_lfanew);
-		if (IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)))
-		{
-			_ASSERTE(!IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)));
-			return FALSE;
-		}
 
-		if (nt_header->Signature != 0x004550)
-		{
-			_ASSERTE(nt_header->Signature == 0x004550);
-			return FALSE;
-		}
 		// ѕолучить размер модул€ из OptionalHeader
 		nModuleSize = nt_header->OptionalHeader.SizeOfImage;
-
-		/*
-		static HMODULE hPsApi = NULL;
-
-		if (hPsApi == NULL)
-		{
-		hPsApi = LoadLibrary(L"Psapi.dll");
-
-		if (hPsApi == NULL)
-		hPsApi = (HMODULE)-1;
-		}
-
-		if (hPsApi && hPsApi != (HMODULE)-1)
-		{
-		struct ModInfo
-		{
-		LPVOID lpBaseOfDll;
-		DWORD  SizeOfImage;
-		LPVOID EntryPoint;
-		} mi;
-		typedef BOOL (WINAPI* GetModuleInformation_t)(HANDLE, HMODULE, struct ModInfo*, DWORD);
-		GetModuleInformation_t GetModuleInformation = (GetModuleInformation_t)GetProcAddress(hPsApi, "GetModuleInformation");
-
-		if (GetModuleInformation)
-		{
-		lbModuleInformation = GetModuleInformation(GetCurrentProcess(), hModule, &mi, sizeof(mi));
-
-		if (!lbModuleInformation)
-		{
-		_ASSERTE(lbModuleInformation!=FALSE);
-		return FALSE;
-		}
-
-		nModuleSize = mi.SizeOfImage;
-		}
-		}
-		*/
 	}
 
 	for (size_t i = 0; i < ProcCount; i++)

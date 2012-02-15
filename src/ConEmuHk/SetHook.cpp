@@ -362,6 +362,7 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 			p->Hooked = 1; // модуль обрабатывался (хуки установлены)
 			p->hModule = hModule; // хэндл
 			lstrcpyn(p->sModuleName, sModuleName?sModuleName:L"", countof(p->sModuleName));
+			//_ASSERTEX(lstrcmpi(p->sModuleName,L"dsound.dll"));
 			p->pNext = NULL;
 			p->pPrev = gpHookedModulesLast;
 			gpHookedModulesLast->pNext = p;
@@ -901,57 +902,6 @@ bool __stdcall SetHookCallbacks(const char* ProcName, const wchar_t* DllName, HM
 	return bFound;
 }
 
-// Проверить, валиден ли модуль?
-bool IsModuleValid(HMODULE module)
-{
-	if ((module == NULL) || (module == INVALID_HANDLE_VALUE))
-		return false;
-	if (LDR_IS_RESOURCE(module))
-		return false;
-
-#ifdef USE_SEH
-	bool lbValid = true;
-	IMAGE_DOS_HEADER dos;
-	IMAGE_NT_HEADERS nt;
-
-	SAFETRY
-	{
-		memmove(&dos, (void*)module, sizeof(dos));
-		if (dos.e_magic != IMAGE_DOS_SIGNATURE /*'ZM'*/)
-		{
-			lbValid = false;
-		}
-		else
-		{
-			memmove(&nt, (IMAGE_NT_HEADERS*)((char*)module + ((IMAGE_DOS_HEADER*)module)->e_lfanew), sizeof(nt));
-			if (nt.Signature != 0x004550)
-				lbValid = false;
-		}
-	}
-	SAFECATCH
-	{
-		lbValid = false;
-	}
-
-	return lbValid;
-#else
-	if (IsBadReadPtr((void*)module, sizeof(IMAGE_DOS_HEADER)))
-		return false;
-
-	if (((IMAGE_DOS_HEADER*)module)->e_magic != IMAGE_DOS_SIGNATURE /*'ZM'*/)
-		return false;
-
-	IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)module + ((IMAGE_DOS_HEADER*)module)->e_lfanew);
-	if (IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)))
-		return false;
-
-	if (nt_header->Signature != 0x004550)
-		return false;
-
-	return true;
-#endif
-}
-
 bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, size_t cchNameMax)
 {
 	bool lbFound = false;
@@ -1148,7 +1098,7 @@ bool SetExportsSEH(HMODULE Module)
 
 			DWORD nCount = Export->NumberOfNames; // Export->NumberOfFunctions;
 
-			DWORD old_protect;
+			DWORD old_protect = 0xCDCDCDCD;
 			if (VirtualProtect(Shift, nCount * sizeof( DWORD ), PAGE_READWRITE, &old_protect ))
 			{
 				for (DWORD i = 0; i < nCount; i++)
@@ -1446,6 +1396,8 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 {
 	bool res = false;
 	size_t i;
+
+	//_ASSERTEX(lstrcmpi(asModule, L"dsound.dll"));
 	
 	SAFETRY
 	{
@@ -1632,6 +1584,9 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 						{
 							bFnNeedHook[j] = true;
 							p->Addresses[j].ppAdr = &thunk->u1.Function;
+							//Для проверки, а то при UnsetHook("cscapi.dll") почему-то возникла ошибка ERROR_INVALID_PARAMETER в VirtualProtect
+							_ASSERTEX(p->hModule==Module);
+							_ASSERTEX(CheckCallbackPtr(p->hModule, 1, (FARPROC*)&p->Addresses[j].ppAdr, TRUE));
 							p->Addresses[j].pOld = thunk->u1.Function;
 							p->Addresses[j].pOur = (DWORD_PTR)gpHooks[j].NewAddress;
 							#ifdef _DEBUG
@@ -1682,7 +1637,7 @@ bool SetHookChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool (&b
 				}
 				else
 				{
-					DWORD old_protect;
+					DWORD old_protect = 0xCDCDCDCD;
 					if (!VirtualProtect(p->Addresses[j].ppAdr, sizeof(*p->Addresses[j].ppAdr),
 					                   PAGE_READWRITE, &old_protect))
 					{
@@ -2026,7 +1981,7 @@ bool UnsetHookInt(HMODULE Module)
 						// Если мы дошли сюда - значит функция найдена (или по адресу или по имени)
 						// BugBug: в принципе, эту функцию мог захукать и другой модуль (уже после нас),
 						// но лучше вернуть оригинальную, чем потом свалиться
-						DWORD old_protect;
+						DWORD old_protect = 0xCDCDCDCD;
 						if (VirtualProtect(&thunk->u1.Function, sizeof(thunk->u1.Function),
 									   PAGE_READWRITE, &old_protect))
 						{
@@ -2084,11 +2039,17 @@ bool UnsetHook(HMODULE Module)
 				if (p->Addresses[i].pOur == 0)
 					continue; // Этот адрес поменять не смогли
 			
-				DWORD old_protect;
+				//Для проверки, а то при UnsetHook("cscapi.dll") почему-то возникла ошибка ERROR_INVALID_PARAMETER в VirtualProtect
+				_ASSERTEX(CheckCallbackPtr(p->hModule, 1, (FARPROC*)&p->Addresses[i].ppAdr, TRUE));
+
+				DWORD old_protect = 0xCDCDCDCD;
 				if (!VirtualProtect(p->Addresses[i].ppAdr, sizeof(*p->Addresses[i].ppAdr),
 								   PAGE_READWRITE, &old_protect))
 				{
 					dwErr = GetLastError();
+					//Один раз выскочило ERROR_INVALID_PARAMETER
+					// При этом, (p->Addresses[i].ppAdr==0x04cde0e0), (p->Addresses[i].ppAdr==0x912edebf)
+					// что было полной пургой. Ни одного модуля в этих адресах не было
 					_ASSERTEX(dwErr==ERROR_INVALID_ADDRESS);
 				}
 				else

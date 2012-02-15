@@ -360,6 +360,8 @@ struct Settings
 		bool isDragShowIcons;
 		//reg->Load(L"DragPanel", isDragPanel); if (isDragPanel > 2) isDragPanel = 1;
 		BYTE isDragPanel; // изменение размера панелей мышкой
+		//reg->Load(L"DragPanelBothEdges", isDragPanelBothEdges);
+		bool isDragPanelBothEdges; // таскать за обе рамки (правую-левой панели и левую-правой панели)
 		
 		//reg->Load(L"DebugSteps", isDebugSteps);
 		bool isDebugSteps;

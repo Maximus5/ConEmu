@@ -146,18 +146,18 @@ void WINAPI _export GetPluginInfoWcmn(void *piv)
 
 
 BOOL gbInfoW_OK = FALSE;
-HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item)
+HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 {
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;
 
 	ReloadResourcesW();
-	EntryPoint(OpenFrom, Item);
+	EntryPoint(OpenFrom, Item, FromMacro);
 	return INVALID_HANDLE_VALUE;
 }
 
 // !!! WARNING !!! Version independent !!!
-void EntryPoint(int OpenFrom,INT_PTR Item)
+void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 {
 	if (!CheckConEmu())
 		return;
@@ -185,7 +185,8 @@ void EntryPoint(int OpenFrom,INT_PTR Item)
 	// В Far2 плагин можно позвать через callplugin(...)
 	if (gFarVersion.dwVerMajor >= 2)
 	{
-		if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
+		//if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
+		if (FromMacro)
 		{
 			if (Item == pvm_Thumbnails || Item == pvm_Tiles)
 				PVM = (PanelViewMode)Item;

@@ -140,7 +140,7 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 		return INVALID_HANDLE_VALUE;
 
 	ReloadResourcesA();
-	EntryPoint(OpenFrom, Item);
+	EntryPoint(OpenFrom, Item, false);
 	return INVALID_HANDLE_VALUE;
 }
 

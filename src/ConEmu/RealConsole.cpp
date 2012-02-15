@@ -1632,7 +1632,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					if (pRCon->mp_VCon->Update(bForce))
 						lbNeedRedraw = true;
 				}
-				else if (gpSet->isCursorBlink)
+				else if (gpSet->isCursorBlink && pRCon->mb_RConStartedSuccess)
 				{
 					// ¬озможно, настало врем€ мигнуть курсором?
 					bool lbNeedBlink = false;
@@ -3338,6 +3338,11 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			//PostConsoleEvent(&r);
 			//gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(gpConEmu->mb_isFullScreen&&gpConEmu->isWndNotFSMaximized)) ? rNormal : rMaximized);
 			gpConEmu->OnAltF9(TRUE);
+		}
+		// *** Not send to console ***
+		else if (GuiWnd())
+		{
+			PostConsoleMessage(GuiWnd(), messg, wParam, lParam);
 		}
 		else
 		{
@@ -8071,6 +8076,31 @@ void CRealConsole::UpdateCursorInfo()
 	COORD cr; CONSOLE_CURSOR_INFO ci;
 	mp_RBuf->GetCursorInfo(&cr, &ci);
 	gpConEmu->UpdateCursorInfo(cr, ci);
+}
+
+bool CRealConsole::isNeedCursorDraw()
+{
+	if (!this)
+		return false;
+
+	if (GuiWnd())
+	{
+		// ¬ GUI режиме VirtualConsole скрыта под GUI окном и видна только при "включении" BufferHeight
+		if (!isBufferHeight())
+			return false;
+	}
+	else
+	{
+		if (!hConWnd || !mb_RConStartedSuccess)
+			return false;
+
+		COORD cr; CONSOLE_CURSOR_INFO ci;
+		mp_ABuf->GetCursorInfo(&cr, &ci);
+		if (!ci.bVisible || !ci.dwSize)
+			return false;
+	}
+
+	return true;
 }
 
 // может отличатьс€ от CVirtualConsole

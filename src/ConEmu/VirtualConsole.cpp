@@ -3289,14 +3289,16 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeC
 
 void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize)
 {
-	if (mp_RCon && mp_RCon->GuiWnd())
-	{
-		// В GUI режиме VirtualConsole скрыта под GUI окном и видна только при "включении" BufferHeight
-		if (!mp_RCon->isBufferHeight())
-		{
-			return;
-		}
-	}
+	if (!mp_RCon || !mp_RCon->isNeedCursorDraw())
+		return;
+	//if (mp_RCon && mp_RCon->GuiWnd())
+	//{
+	//	// В GUI режиме VirtualConsole скрыта под GUI окном и видна только при "включении" BufferHeight
+	//	if (!mp_RCon->isBufferHeight())
+	//	{
+	//		return;
+	//	}
+	//}
 
 	Cursor.x = csbi.dwCursorPosition.X;
 	Cursor.y = csbi.dwCursorPosition.Y;

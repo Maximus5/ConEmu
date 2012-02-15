@@ -205,6 +205,7 @@ BEGIN
     vkRDragKey              "RDrag modifier"
     vkWinAltP               "Show Settings dialog"
     vkWinAltSpace           "Show ConEmu menu"
+    vkWinApps               "Show Tab context menu"
     vkWinDown               "Increase window height"
     vkWinLeft               "Decrease window width"
     vkWinRight              "Increase window width"

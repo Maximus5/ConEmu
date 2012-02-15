@@ -1465,7 +1465,35 @@ HANDLE WINAPI OpenW(const struct OpenInfo *Info)
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;
 	
-	return OpenPluginWcmn(Info->OpenFrom, Info->Data);
+	INT_PTR Item = Info->Data;
+	if (Info->OpenFrom == OPEN_FROMMACRO)
+	{
+		Item = 0; // Сразу сброс
+		OpenMacroInfo* p = (OpenMacroInfo*)Info->Data;
+		if (p->StructSize >= sizeof(*p))
+		{
+			if (p->Count > 0)
+			{
+				switch (p->Values[0].Type)
+				{
+				case FMVT_INTEGER:
+					Item = (INT_PTR)p->Values[0].Integer; break;
+				//case FMVT_DOUBLE:
+				//	Item = (INT_PTR)p->Values[0].Double; break;
+				case FMVT_STRING:
+					_ASSERTE(p->Values[0].String!=NULL);
+					Item = (INT_PTR)p->Values[0].String; break;
+				default:
+					_ASSERTE(p->Values[0].Type==FMVT_INTEGER || p->Values[0].Type==FMVT_STRING);
+				}
+			}
+		}
+		else
+		{
+			_ASSERTE(p->StructSize >= sizeof(*p));
+		}
+	}
+	return OpenPluginWcmn(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
 }
 
 int WINAPI ProcessConsoleInputW(struct ProcessConsoleInputInfo *Info)

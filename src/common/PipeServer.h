@@ -947,7 +947,7 @@ struct PipeServer
 				{
 					// Wait for overlapped connection
 					_ASSERTEX(pPipe->hPipeInst && (pPipe->hPipeInst!=INVALID_HANDLE_VALUE));
-					int nOverRc = WaitOverlapped(pPipe, &cbOver);
+					int nOverRc = (pPipe->dwConnErr == ERROR_PIPE_CONNECTED) ? 0 : WaitOverlapped(pPipe, &cbOver);
 					ReleaseSemaphore(hWait[1], 1, NULL);
 					if (nOverRc == 0)
 					{

@@ -94,7 +94,7 @@ class TabBarClass //: public CToolTip
 		void AddTab2VCon(VConTabs& vct);
 		void ShowTabError(LPCTSTR asInfo, int tabIndex = 0);
 		//void CheckTheming();
-
+		
 	protected:
 		static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		static WNDPROC _defaultTabProc;
@@ -180,6 +180,7 @@ class TabBarClass //: public CToolTip
 		void SetRedraw(BOOL abEnableRedraw);
 		//void PaintHeader(HDC hdc, RECT rcPaint);
 		int  ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon);
+		void GetActiveTabRect(RECT* rcTab);
 
 		// Из Samples\Tabs
 		bool ProcessTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };

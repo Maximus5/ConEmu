@@ -121,7 +121,7 @@ extern GUID guid_ConEmuPluginMenu;
 extern GUID guid_ConEmuGuiMacroDlg;
 extern GUID guid_ConEmuWaitEndSynchro;
 
-HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item);
+HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro);
 HANDLE WINAPI OpenPluginW1(int OpenFrom,INT_PTR Item);
 HANDLE WINAPI OpenPluginW2(int OpenFrom,const GUID* Guid,INT_PTR Data);
 

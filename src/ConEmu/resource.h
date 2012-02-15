@@ -479,7 +479,6 @@
 #define rbAutoUpdateDeveloperFast       2089
 #define cbDisableConImeFast             2090
 #define stUseKeyboardHooksFast1         2091
-#define stUseWinNumberFast2             2092
 #define stUseKeyboardHooksFast2         2092
 #define stEnableAutoUpdateFast          2093
 #define stDisableConImeFast1            2094
@@ -490,18 +489,16 @@
 #define stInjectConEmuHkFast2           2099
 #define stInjectConEmuHkFast1           2100
 #define lbHotKeyList                    2101
+#define cbDragPanelBothEdges            2102
 #define stHomePage                      2103
-#define IDC_CHECK1                      2104
 #define cbMultiIterate                  2104
-#define IDC_EDIT1                       2105
 #define tGuiMacro                       2105
 #define tTabFontFace                    2106
-#define tTabFontSizeY                   2107
 #define tTabFontHeight                  2107
 #define tTabFontCharset                 2108
 #define rbAdminShield                   2109
-#define IDC_RADIO2                      2110
 #define rbAdminSuffix                   2110
+#define vkWinApps                       2111
 
 // Next default values for new objects
 // 

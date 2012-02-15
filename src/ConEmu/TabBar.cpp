@@ -2680,3 +2680,22 @@ void TabBarClass::UpdateTabFont()
 		DeleteObject(mh_TabFont);
 	mh_TabFont = hFont;
 }
+
+void TabBarClass::GetActiveTabRect(RECT* rcTab)
+{
+	if (!IsTabsShown())
+	{
+		_ASSERTE(IsTabsShown());
+		memset(rcTab, 0, sizeof(*rcTab));
+	}
+	else
+	{
+		TODO("TabBar: переделать после 'новых табов'");
+		int iSel = TabCtrl_GetCurSel(mh_Tabbar);
+		TabCtrl_GetItemRect(mh_Tabbar, iSel, rcTab);
+		MapWindowPoints(mh_Tabbar, NULL, (LPPOINT)rcTab, 2);
+		RECT rcBar = {}; GetWindowRect(mh_Rebar, &rcBar);
+		rcTab->bottom = min(rcTab->bottom, rcBar.bottom);
+		rcTab->left = max(rcTab->left-2, rcBar.left);
+	}
+}

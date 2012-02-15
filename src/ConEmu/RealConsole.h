@@ -446,6 +446,7 @@ class CRealConsole
 		LPCWSTR GetConStatus();
 		static wchar_t ms_LastRConStatus[80];
 		void UpdateCursorInfo();
+		bool isNeedCursorDraw();
 		bool Detach();
 		void AdminDuplicate();
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее

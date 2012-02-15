@@ -4866,6 +4866,14 @@ BOOL cmd_FarLoaded(CESERVER_REQ& in, CESERVER_REQ** out)
 		DisableAutoConfirmExit(TRUE);
 	}
 	
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_FARLOADED,nOutSize);
+	if (*out != NULL)
+	{
+		(*out)->dwData[0] = GetCurrentProcessId();
+		lbRc = TRUE;
+	}
+
 	return lbRc;
 }
 
