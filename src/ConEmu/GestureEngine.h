@@ -1,9 +1,3 @@
-// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
-// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-// PARTICULAR PURPOSE.
-//
-// Copyright (c) Microsoft Corporation. All rights reserved.
 
 /*
 Copyright (c) 2009-2012 Maximus5
@@ -32,24 +26,14 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// CGestureEngine.h
-//
-// Definition of helper classes for processing of gestures. During this process
-// driver sends subsequent finger position information (reference point) and 
-// in the some cases other information.
-
 #pragma once
 #include <windows.h>
 
-// CGestureEngine class is abstract class that is responsible for 
-// properly decoding information from multi-touch driver. There are
-// few pure virtual functions that are responsible for manipulation 
-// of the object.
-class CGestureEngine
+class CGestures
 {
 public:
-    CGestureEngine();
-    virtual ~CGestureEngine();
+    CGestures();
+    virtual ~CGestures();
 
 public:
 	bool IsGesturesEnabled();
@@ -70,7 +54,7 @@ public:
     virtual bool ProcessMove(const LONG ldx, const LONG ldy);
 
     // This function is called throughout the duration of the rotation gesture
-    virtual void ProcessRotate(const double dAngle, const LONG lOx, const LONG lOy);
+    virtual bool ProcessRotate(const LONG lAngle, const LONG lOx, const LONG lOy, bool bEnd);
 
 private:
 	void SendRClick(const LONG ldx, const LONG ldy);
@@ -84,6 +68,8 @@ private:
     POINT _ptSecond;
 	// 4 bytes long argument
     DWORD _dwArguments;
+	// Rotation was started?
+	bool  _inRotate;
 private:
 	bool _isTabletPC, _isGestures;
 	typedef BOOL (WINAPI* GetGestureInfo_t)(HGESTUREINFO hGestureInfo, PGESTUREINFO pGestureInfo);

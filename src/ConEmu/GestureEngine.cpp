@@ -1,9 +1,3 @@
-// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
-// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-// PARTICULAR PURPOSE.
-//
-// Copyright (c) Microsoft Corporation. All rights reserved.
 
 /*
 Copyright (c) 2009-2012 Maximus5
@@ -32,8 +26,6 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// GestureEngine.cpp: implementation of CGestureEngine class
-
 #define SHOWDEBUGSTR
 #include "Header.h"
 
@@ -44,27 +36,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define DEBUGSTRGEST(s)
 //#endif
 
-//#define _USE_MATH_DEFINES // has to be defined to activate definition of M_PI
-//#include <math.h>
-
-#include "GestureEngine.h" // contains definition of this class
+#include "GestureEngine.h"
 #include "ConEmu.h"
 #include "VirtualConsole.h"
 #include "RealConsole.h"
+#include "TabBar.h"
 
 #ifndef GID_PRESSANDTAP
     #define GID_PRESSANDTAP GID_ROLLOVER
 #endif
 
-// One of the fields in GESTUREINFO structure is type of ULONGLONG (8 bytes).
-// The relevant gesture information is stored in lower 4 bytes. This
-// macro is used to read gesture information from this field.
 #define LODWORD(ull) ((DWORD)((ULONGLONG)(ull) & 0x00000000ffffffff))
 #define HIDWORD(ull) ((DWORD)(ull>>32))
 
 // Default constructor of the class.
-CGestureEngine::CGestureEngine()
-:   _dwArguments(0)
+CGestures::CGestures()
+:   _dwArguments(0), _inRotate(false)
 {
 	_isTabletPC = GetSystemMetrics(SM_TABLETPC);
 	_isGestures = IsWindows7;
@@ -80,13 +67,25 @@ CGestureEngine::CGestureEngine()
 }
 
 // Destructor
-CGestureEngine::~CGestureEngine()
+CGestures::~CGestures()
 {
 }
 
-bool CGestureEngine::IsGesturesEnabled()
+bool CGestures::IsGesturesEnabled()
 {
-	return (_isTabletPC && _isGestures);
+	if (!_isTabletPC || !_isGestures)
+		return false;
+	// Финт ушами - считаем, что событие от мыши, если мышиный курсор
+	// видим на экране. Если НЕ видим - то событие от тачскрина. Актуально
+	// для того, чтобы различать правый клик от мышки и от тачскрина.
+	CURSORINFO ci = {sizeof(ci)};
+	if (!GetCursorInfo(&ci))
+		return false;
+	// 0 - курсор скрыт, а 2 - похоже недокументировано (тачскрин)
+	if (ci.flags == 0 || ci.flags == 2)
+		return true;
+	_ASSERTE(ci.flags == CURSOR_SHOWING);
+	return false;
 }
 
 // Main function of this class decodes gesture information
@@ -94,7 +93,7 @@ bool CGestureEngine::IsGesturesEnabled()
 //      hWnd        window handle
 //      wParam      message parameter (message-specific)
 //      lParam      message parameter (message-specific)
-bool CGestureEngine::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult)
+bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult)
 {
 	if (!_isGestures)
 		return false;
@@ -108,7 +107,7 @@ bool CGestureEngine::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, 
         // decide to handle all gestures.
         GESTURECONFIG gc[] = {
 			{GID_ZOOM, GC_ZOOM},
-			{GID_ROTATE, 0, GC_ROTATE},
+			{GID_ROTATE, GC_ROTATE},
 			{GID_PAN,
 				GC_PAN|GC_PAN_WITH_GUTTER|GC_PAN_WITH_INERTIA,
 				GC_PAN_WITH_SINGLE_FINGER_VERTICALLY|GC_PAN_WITH_SINGLE_FINGER_HORIZONTALLY
@@ -117,12 +116,16 @@ bool CGestureEngine::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, 
 			{GID_TWOFINGERTAP, GC_TWOFINGERTAP},
         };
 
+		DWORD dwErr = 0;
         BOOL bResult = _SetGestureConfig(hWnd, 0, countof(gc), gc, sizeof(GESTURECONFIG));                        
         
         if (!bResult)
         {
-            _ASSERT(L"Error in execution of SetGestureConfig" && 0);
+			dwErr = GetLastError();
+            DisplayLastError(L"Error in execution of SetGestureConfig");
         }
+
+		lResult = ::DefWindowProc(hWnd, WM_GESTURENOTIFY, wParam, lParam);
 
 		return true;
 	}
@@ -141,7 +144,7 @@ bool CGestureEngine::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, 
 
     if (!bResult)
     {
-        _ASSERT(L"Error in execution of GetGestureInfo" && 0);
+        _ASSERT(L"_GetGestureInfo failed!" && 0);
         return FALSE;
     }
 
@@ -155,6 +158,9 @@ bool CGestureEngine::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, 
 		if (gi.dwID==GID_PRESSANDTAP) { \
 			DWORD h = LODWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32) \
 				L" Dist={%i,%i}", (int)(short)LOWORD(h), (int)(short)HIWORD(h)); } \
+		if (gi.dwID==GID_ROTATE) { \
+			DWORD h = LODWORD(gi.ullArguments); _wsprintf(szDump+_tcslen(szDump), SKIPLEN(32) \
+				L" %i", (int)LOWORD(h)); } \
 		if (gi.dwFlags&GF_BEGIN) wcscat_c(szDump, L" GF_BEGIN"); \
 		if (gi.dwFlags&GF_END) wcscat_c(szDump, L" GF_END"); \
 		if (gi.dwFlags&GF_INERTIA) { wcscat_c(szDump, L" GF_INERTIA"); \
@@ -246,22 +252,21 @@ bool CGestureEngine::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, 
 		DUMPGEST(L"GID_ROTATE");
         if (gi.dwFlags & GF_BEGIN)
         {
-            _dwArguments = 0;
+			_inRotate = false;
+            _dwArguments = LODWORD(gi.ullArguments); // Запомним начальный угол
 		}
 		else
 		{
             _ptFirst.x = gi.ptsLocation.x;
             _ptFirst.y = gi.ptsLocation.y;
-            ScreenToClient(hWnd, &_ptFirst);           
-            // Gesture handler returns cumulative rotation angle. However we
-            // have to pass the delta angle to our function responsible 
-            // to process the rotation gesture.
-            ProcessRotate(
-                GID_ROTATE_ANGLE_FROM_ARGUMENT(LODWORD(gi.ullArguments)) 
-                - GID_ROTATE_ANGLE_FROM_ARGUMENT(_dwArguments),
-                _ptFirst.x,_ptFirst.y
-            );
-            _dwArguments = LODWORD(gi.ullArguments);
+            ScreenToClient(hWnd, &_ptFirst);
+			// Пока угол не станет достаточным для смены таба - игнорируем
+            if (ProcessRotate(
+					LODWORD(gi.ullArguments) - _dwArguments,
+					_ptFirst.x,_ptFirst.y, ((gi.dwFlags & GF_END) == GF_END)))
+			{
+				_dwArguments = LODWORD(gi.ullArguments);
+			}
         }
         break;
 
@@ -295,7 +300,7 @@ bool CGestureEngine::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, 
     return TRUE;
 }
 
-void CGestureEngine::SendRClick(const LONG ldx, const LONG ldy)
+void CGestures::SendRClick(const LONG ldx, const LONG ldy)
 {
 	CVConGuard VCon = gpConEmu->ActiveCon();
 	CRealConsole* pRCon = (VCon.VCon()) ? VCon->RCon() : NULL;
@@ -309,7 +314,7 @@ void CGestureEngine::SendRClick(const LONG ldx, const LONG ldy)
 }
 
 // This function is called when press and tap gesture is recognized
-void CGestureEngine::ProcessPressAndTap(const LONG ldx, const LONG ldy, const short nDeltaX, const short nDeltaY)
+void CGestures::ProcessPressAndTap(const LONG ldx, const LONG ldy, const short nDeltaX, const short nDeltaY)
 {
 	SendRClick(ldx, ldy);
 	return;
@@ -317,14 +322,14 @@ void CGestureEngine::ProcessPressAndTap(const LONG ldx, const LONG ldy, const sh
 
 // This function is invoked when two finger tap gesture is recognized
 // ldx/ldy - Indicates the center of the two fingers.
-void CGestureEngine::ProcessTwoFingerTap(const LONG ldx, const LONG ldy, const ULONG dist)
+void CGestures::ProcessTwoFingerTap(const LONG ldx, const LONG ldy, const ULONG dist)
 {
 	SendRClick(ldx, ldy);
 	return;
 }
 
 // This function is called constantly through duration of zoom in/out gesture
-void CGestureEngine::ProcessZoom(const double dZoomFactor, const LONG lZx, const LONG lZy)
+void CGestures::ProcessZoom(const double dZoomFactor, const LONG lZx, const LONG lZy)
 {
 	if (dZoomFactor > 0)
 	{
@@ -353,7 +358,7 @@ void CGestureEngine::ProcessZoom(const double dZoomFactor, const LONG lZx, const
 }
 
 // This function is called throughout the duration of the panning/inertia gesture
-bool CGestureEngine::ProcessMove(const LONG ldx, const LONG ldy)
+bool CGestures::ProcessMove(const LONG ldx, const LONG ldy)
 {
 	bool lbSent = false;
 
@@ -389,7 +394,37 @@ bool CGestureEngine::ProcessMove(const LONG ldx, const LONG ldy)
 }
 
 // This function is called throughout the duration of the rotation gesture
-void CGestureEngine::ProcessRotate(const double dAngle, const LONG lOx, const LONG lOy)
+bool CGestures::ProcessRotate(const LONG lAngle, const LONG lOx, const LONG lOy, bool bEnd)
 {
-	return;
+	if (!gpConEmu->mp_TabBar)
+	{
+		_ASSERTE(gpConEmu->mp_TabBar!=NULL);
+		return false;
+	}
+
+	bool bProcessed = false;
+
+	if ((((lAngle<0)?-lAngle:lAngle) / 2048) >= 1)
+	{
+		if (!_inRotate)
+		{
+			//starting
+			_inRotate = true;
+		}
+
+		if (lAngle > 0)
+			gpConEmu->mp_TabBar->SwitchPrev();
+		else
+			gpConEmu->mp_TabBar->SwitchNext();
+
+		bProcessed = true;
+	}
+
+	if (bEnd /*&& _inRotate*/)
+	{
+		_inRotate = false;
+		gpConEmu->mp_TabBar->SwitchCommit();
+	}
+
+	return bProcessed;
 }

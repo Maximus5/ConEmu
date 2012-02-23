@@ -55,7 +55,7 @@ class CConEmuMacro;
 class CAttachDlg;
 class CRecreateDlg;
 class CToolTip;
-class CGestureEngine;
+class CGestures;
 
 WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
 enum ConEmuMargins
@@ -125,7 +125,7 @@ class CConEmuMain :
 	public CDwmHelper,
 	public CTaskBar,
 	public CFrameHolder,
-	public CGestureEngine
+	public CGestures
 {
 	public:
 		//HMODULE mh_Psapi;
