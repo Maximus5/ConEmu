@@ -42,13 +42,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TabBar.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
-#include "ConEmuChild.h"
+#include "VConChild.h"
 #include "ConEmuPipe.h"
 #include "Macro.h"
 
 #define DEBUGSTRCMD(s) DEBUGSTR(s)
 #define DEBUGSTRDRAW(s) DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
+#define DEBUGSTRWHEEL(s) DEBUGSTR(s)
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPROC(s) DEBUGSTR(s)
@@ -2386,6 +2387,13 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 		r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
 	else if (messg == WM_MOUSEWHEEL)
 	{
+		#ifdef SHOWDEBUGSTR
+		{
+			wchar_t szDbgMsg[128]; _wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"WM_MOUSEWHEEL(%i, Btns=0x%04X, x=%i, y=%i)\n",
+				(int)(short)HIWORD(wParam), (DWORD)LOWORD(wParam), crMouse.X, crMouse.Y);
+			DEBUGSTRWHEEL(szDbgMsg);			
+		}
+		#endif
 		if (m_UseLogs>=2)
 		{
 			char szDbgMsg[128]; _wsprintfA(szDbgMsg, SKIPLEN(countof(szDbgMsg)) "WM_MOUSEWHEEL(wParam=0x%08X, x=%i, y=%i)", (DWORD)wParam, crMouse.X, crMouse.Y);
@@ -3045,7 +3053,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		// Закрыть все мэппинги
 		CloseMapHeader();
 		CloseColorMapping();
-		gpConEmu->Invalidate(mp_VCon);
+		mp_VCon->Invalidate();
 	}
 
 #ifdef _DEBUG
@@ -8061,7 +8069,7 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus)
 	{
 		// Нехорошо звать длительные функции из вызывающихся при инициализации
 		//if (mp_VCon->Update(true))
-		gpConEmu->Invalidate(mp_VCon);
+		mp_VCon->Invalidate();
 
 		//gpConEmu->Update(true);
 		//if (mp_VCon->Update(false))

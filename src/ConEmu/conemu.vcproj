@@ -1501,10 +1501,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ConEmuChild.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\ConEmuPipe.cpp"
 				>
 			</File>
@@ -1522,6 +1518,10 @@
 			</File>
 			<File
 				RelativePath=".\FrameHolder.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GestureEngine.cpp"
 				>
 			</File>
 			<File
@@ -1625,6 +1625,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\VConChild.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\VConRelease.cpp"
 				>
 			</File>
@@ -1671,10 +1675,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ConEmuChild.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ConEmuPipe.h"
 				>
 			</File>
@@ -1704,6 +1704,10 @@
 			</File>
 			<File
 				RelativePath=".\FrameHolder.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GestureEngine.h"
 				>
 			</File>
 			<File
@@ -1836,6 +1840,10 @@
 			</File>
 			<File
 				RelativePath=".\UpdateSet.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VConChild.h"
 				>
 			</File>
 			<File

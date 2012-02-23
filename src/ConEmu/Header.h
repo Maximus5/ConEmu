@@ -273,7 +273,7 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 //#include "options.h"
 //#include "DragDrop.h"
 //#include "TrayIcon.h"
-//#include "ConEmuChild.h"
+//#include "VConChild.h"
 //#include "ConEmu.h"
 //#include "ConEmuApp.h"
 //#include "tabbar.h"

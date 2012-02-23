@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/ConEmuCheck.h"
 #include "Options.h"
 #include "ConEmu.h"
-#include "ConEmuChild.h"
+#include "VConChild.h"
 #include "VirtualConsole.h"
 #include "RealConsole.h"
 #include "TabBar.h"
@@ -348,8 +348,8 @@ void Settings::InitSettings()
 	sRClickMacro = NULL;
 	wcscpy_c(szTabConsole, L"<%c> %s `%p`" /*L "%s [%c]" */);
 	wcscpy_c(szTabEditor, L"<%c.%i>{%s} `%p`" /* L"[%s]" */);
-	wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] `%p`" /* L"[%s] *" */);
-	wcscpy_c(szTabViewer, L"<%c.%i>[%s] `%p` *" /* L"{%s}" */);
+	wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] `%p` *" /* L"[%s] *" */);
+	wcscpy_c(szTabViewer, L"<%c.%i>[%s] `%p`" /* L"{%s}" */);
 	nTabLenMax = 20;
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
@@ -2451,6 +2451,11 @@ bool Settings::isTabsOnTaskBar()
 	if ((m_isTabsOnTaskBar == 1) || (((BYTE)m_isTabsOnTaskBar > 1) && IsWindows7))
 		return true;
 	return false;
+}
+
+bool Settings::isRClickTouchInvert()
+{
+	return gpConEmu->IsGesturesEnabled() && (isRClickSendKey == 2);
 }
 
 LPCWSTR Settings::RClickMacro()

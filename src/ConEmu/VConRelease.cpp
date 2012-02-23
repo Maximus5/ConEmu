@@ -37,6 +37,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 CVConRelease::CVConRelease()
 {
 	mn_RefCount = 1;
+	
+	#ifdef _DEBUG
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	_ASSERTE((void*)pVCon == (void*)this);
+	#endif
 }
 
 CVConRelease::~CVConRelease()
@@ -71,7 +76,12 @@ int CVConRelease::Release()
 }
 
 
-CVConGuard::CVConGuard(CVirtualConsole* &apRef)
+CVConGuard::CVConGuard()
+{
+	mp_Ref = NULL;
+}
+
+CVConGuard::CVConGuard(CVirtualConsole* apRef)
 {
 	mp_Ref = apRef;
 	if (mp_Ref)
@@ -91,8 +101,42 @@ CVConGuard::CVConGuard(CVirtualConsole* &apRef)
 	}
 }
 
-CVConGuard::~CVConGuard()
+void CVConGuard::Release()
 {
 	if (mp_Ref)
+	{
 		mp_Ref->Release();
+		mp_Ref = NULL;
+	}
+}
+
+CVConGuard::~CVConGuard()
+{
+	Release();
+}
+
+// Dereference
+CVirtualConsole* CVConGuard::operator->() const
+{
+	_ASSERTE(mp_Ref!=NULL);
+	return mp_Ref;
+}
+
+// Releases any current VCon and loads specified
+CVConGuard& CVConGuard::operator=(CVirtualConsole* apRef)
+{
+	// Release current
+	Release();
+	
+	// Attach
+	mp_Ref = apRef;
+	if (mp_Ref)
+		mp_Ref->AddRef();
+
+	return *this;
+}
+
+CVirtualConsole* CVConGuard::VCon()
+{
+	return mp_Ref;
 }

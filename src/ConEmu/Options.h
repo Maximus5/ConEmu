@@ -304,7 +304,15 @@ struct Settings
 		bool isCursorBlockInactive;
 		
 		//reg->Load(L"RightClick opens context menu", isRClickSendKey);
+		// 0 - не звать EMenu, 1 - звать всегда, 2 - звать по длинному клику
 		char isRClickSendKey;
+		//Для тачскринов - удобнее по длинному тапу показывать меню,
+		// а по двойному (Press and tap) выполнять выделение файлов
+		// Поэтому, если isRClickTouch, то "длинный"/"короткий" клик инвертируется
+		// --> isRClickSendKey==1 - звать всегда (isRClickTouchInvert не влияет)
+		// --> isRClickSendKey==2 - звать по длинному тапу (аналог простого RClick)
+		// При этом, PressAndTap всегда посылает RClick в консоль (для выделения файлов).
+		bool isRClickTouchInvert();
 		//reg->Load(L"RightClickMacro2", &sRClickMacro);
 		wchar_t *sRClickMacro;
 		LPCWSTR RClickMacro();

@@ -45,7 +45,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "options.h"
 #include "DragDrop.h"
 #include "TrayIcon.h"
-#include "ConEmuChild.h"
+#include "VConChild.h"
+#include "GestureEngine.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "tabbar.h"
@@ -66,7 +67,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
-#define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRMOUSE(s) DEBUGSTR(s)
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRIME(s) //DEBUGSTR(s)
 #define DEBUGSTRCHAR(s) //DEBUGSTR(s)
@@ -3416,6 +3417,8 @@ bool CConEmuMain::isFullScreen()
 	return mb_isFullScreen;
 }
 
+// abCorrect2Ideal==TRUE приходит из TabBarClass::UpdatePosition(),
+// это происходит при отображении/скрытии "автотабов"
 void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 {
 	if (isIconic())
@@ -3431,11 +3434,32 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 	{
 		if (!isZoomed() && !mb_isFullScreen)
 		{
-			// Выполняем всегда, даже если размер уже соответсвует...
+			// Вобщем-то интересует только X,Y
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+
+			// Пользователи жалуются на смену размера консоли
+			#if 1
+			RECT rcConsole = {}, rcCompWnd = {};
+			TODO("DoubleView: нужно с учетом видимых консолией");
+			if (mp_VActive)
+			{
+				rcConsole.right = mp_VActive->TextWidth;
+				rcConsole.bottom = mp_VActive->TextHeight;
+				rcCompWnd = CalcRect(CER_MAIN, rcConsole, CER_CONSOLE);
+				AutoSizeFont(rcCompWnd, CER_MAIN);
+			}
+			else
+			{
+				rcCompWnd = rcWnd; // не менять?
+			}
+
+			#else
+			// Выполняем всегда, даже если размер уже соответсвует...
 			AutoSizeFont(mrc_Ideal, CER_MAIN);
 			RECT rcConsole = CalcRect(CER_CONSOLE, mrc_Ideal, CER_MAIN);
 			RECT rcCompWnd = CalcRect(CER_MAIN, rcConsole, CER_CONSOLE);
+			#endif
+
 			// При показе/скрытии табов высота консоли может "прыгать"
 			// Ее нужно скорректировать. Поскольку идет реальный ресайз
 			// главного окна - OnSize вызовается автоматически
@@ -3473,6 +3497,9 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			mp_VActive->SetRedraw(TRUE);
 			mp_VActive->Redraw();
 		}
+
+		// Поправить! Может изменилось!
+		client = GetGuiClientRect();
 	}
 
 #ifdef _DEBUG
@@ -3820,6 +3847,30 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 	bool lbPosChanged = false;
 	RECT rcCurCon = {};
+
+	WARNING("DoubleView и не только: Переделать. Ресайз должен жить в ConEmuChild/VConGroup!");
+	for (size_t i = 0; i < countof(mp_VCon); i++)
+	{
+		if (mp_VCon[i] && (mp_VCon[i] != pVCon))
+		{
+			HWND hWndDC = mp_VCon[i]->GetView();
+			if (hWndDC)
+			{
+				WARNING("DoubleView и не только: Переделать. Ресайз должен жить в ConEmuChild!");
+				GetWindowRect(hWndDC, &rcCurCon);
+				MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcCurCon, 2);
+				// Тут нас интересует только X/Y
+				lbPosChanged = memcmp(&rcCurCon, &rcNewCon, sizeof(POINT))!=0;
+
+				if (lbPosChanged)
+				{
+					// Двигаем окошко DC
+					SetWindowPos(hWndDC, NULL, rcNewCon.left, rcNewCon.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+				}
+			}
+		}
+	}
+
 	HWND hWndDC = pVCon ? pVCon->GetView() : NULL;
 	if (hWndDC)
 	{
@@ -4619,10 +4670,12 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
 
 					TODO("DoubleView: показать на неактивной?");
 					// Теперь можно показать активную
-					ShowWindow(mp_VActive->GetView(), SW_SHOW);
+					mp_VActive->ShowView(SW_SHOW);
+					//ShowWindow(mp_VActive->GetView(), SW_SHOW);
 					// и спрятать деактивированную
 					if (pOldActive && (pOldActive != mp_VActive) && !pOldActive->isVisible())
-						ShowWindow(pOldActive->GetView(), SW_HIDE);
+						pOldActive->ShowView(SW_HIDE);
+						//ShowWindow(pOldActive->GetView(), SW_HIDE);
 				}
 			}
 
@@ -6666,85 +6719,105 @@ void CConEmuMain::RightClickingPaint(HDC hdc, CVirtualConsole* apVCon)
 
 	HWND hView = apVCon ? apVCon->GetView() : NULL;
 
-	if (hView && !gpSet->isDisableMouse
-		&& gpSet->isRClickSendKey > 1 && (mouse.state & MOUSE_R_LOCKED)
-		&& m_RightClickingFrames > 0 && mh_RightClickingBmp)
+	if (hView && !gpSet->isDisableMouse)
 	{
-		//WORD nRDown = GetKeyState(VK_RBUTTON);
-		//POINT ptCur; GetCursorPos(&ptCur);
-		//ScreenToClient(hView, &ptCur);
-		bool bRDown = isPressed(VK_RBUTTON);
-
-		if (bRDown)
-			//&& PtDiffTest(Rcursor, ptCur.x, ptCur.y, RCLICKAPPSDELTA))
+		if (gpSet->isRClickTouchInvert())
 		{
-			DWORD dwCurTick = TimeGetTime(); //GetTickCount();
-			DWORD dwDelta = dwCurTick - mouse.RClkTick;
+			// Длинный клик в режиме инверсии?
+			lbSucceeded = FALSE;
 
-			if (dwDelta < RCLICKAPPS_START)
-			{
-				// Пока рисовать не начали
-				lbSucceeded = TRUE;
-			}
-			// Если держали дольше 10сек - все назад
-			else if (dwDelta > RCLICKAPPSTIMEOUT_MAX/*10сек*/)
-			{
-				lbSucceeded = FALSE;
-			}
-			else
-			{
-				lbSucceeded = TRUE;
+			//if (!mb_RightClickingLSent && apVCon)
+			//{
+			//	mb_RightClickingLSent = TRUE;
+			//	// Чтобы установить курсор в панелях точно под кликом
+			//	// иначе получается некрасиво, что курсор прыгает только перед
+			//	// появлением EMenu, а до этого (пока крутится "кружок") курсор не двигается.
+			//	apVCon->RCon()->PostLeftClickSync(mouse.RClkDC);
+			//	//apVCon->RCon()->OnMouse(WM_MOUSEMOVE, 0, mouse.RClkDC.X, mouse.RClkDC.Y, true);
+			//	//WARNING("По хорошему, нужно дождаться пока мышь обработается");
+			//	//apVCon->RCon()->PostMacro(L"MsLClick");
+			//	//WARNING("!!! Заменить на CMD_LEFTCLKSYNC?");
+			//}
+		}
+		else if (gpSet->isRClickSendKey > 1 && (mouse.state & MOUSE_R_LOCKED)
+			&& m_RightClickingFrames > 0 && mh_RightClickingBmp)
+		{
+			//WORD nRDown = GetKeyState(VK_RBUTTON);
+			//POINT ptCur; GetCursorPos(&ptCur);
+			//ScreenToClient(hView, &ptCur);
+			bool bRDown = isPressed(VK_RBUTTON);
 
-				if (!mb_RightClickingLSent && apVCon)
+			if (bRDown)
+				//&& PtDiffTest(Rcursor, ptCur.x, ptCur.y, RCLICKAPPSDELTA))
+			{
+				DWORD dwCurTick = TimeGetTime(); //GetTickCount();
+				DWORD dwDelta = dwCurTick - mouse.RClkTick;
+
+				if (dwDelta < RCLICKAPPS_START)
 				{
-					mb_RightClickingLSent = TRUE;
-					// Чтобы установить курсор в панелях точно под кликом
-					// иначе получается некрасиво, что курсор прыгает только перед
-					// появлением EMenu, а до этого (пока крутится "кружок") курсор не двигается.
-					apVCon->RCon()->PostLeftClickSync(mouse.RClkDC);
-					//apVCon->RCon()->OnMouse(WM_MOUSEMOVE, 0, mouse.RClkDC.X, mouse.RClkDC.Y, true);
-					//WARNING("По хорошему, нужно дождаться пока мышь обработается");
-					//apVCon->RCon()->PostMacro(L"MsLClick");
-					//WARNING("!!! Заменить на CMD_LEFTCLKSYNC?");
+					// Пока рисовать не начали
+					lbSucceeded = TRUE;
 				}
-
-				// Прикинуть индекс фрейма
-				int nIndex = (dwDelta - RCLICKAPPS_START) * m_RightClickingFrames / (RCLICKAPPSTIMEOUT - RCLICKAPPS_START);
-
-				if (nIndex >= m_RightClickingFrames)
+				// Если держали дольше 10сек - все назад
+				else if (dwDelta > RCLICKAPPSTIMEOUT_MAX/*10сек*/)
 				{
-					nIndex = (m_RightClickingFrames-1); // рисуем последний фрейм, мышку можно отпускать
-					//-- KillTimer(ghWnd, TIMER_RCLICKPAINT); // таймер понадобится для "скрытия" кружочка после RCLICKAPPSTIMEOUT_MAX
+					lbSucceeded = FALSE;
 				}
-
-				if (hdc || (m_RightClickingCurrent != nIndex))
+				else
 				{
-					// Рисуем
-					BOOL lbSelfDC = FALSE;
+					lbSucceeded = TRUE;
 
-					if (!hdc)
+					if (!mb_RightClickingLSent && apVCon)
 					{
-						hdc = GetDC(hView); lbSelfDC = TRUE;
+						mb_RightClickingLSent = TRUE;
+						// Чтобы установить курсор в панелях точно под кликом
+						// иначе получается некрасиво, что курсор прыгает только перед
+						// появлением EMenu, а до этого (пока крутится "кружок") курсор не двигается.
+						apVCon->RCon()->PostLeftClickSync(mouse.RClkDC);
+						//apVCon->RCon()->OnMouse(WM_MOUSEMOVE, 0, mouse.RClkDC.X, mouse.RClkDC.Y, true);
+						//WARNING("По хорошему, нужно дождаться пока мышь обработается");
+						//apVCon->RCon()->PostMacro(L"MsLClick");
+						//WARNING("!!! Заменить на CMD_LEFTCLKSYNC?");
 					}
 
-					HDC hCompDC = CreateCompatibleDC(hdc);
-					HBITMAP hOld = (HBITMAP)SelectObject(hCompDC, mh_RightClickingBmp);
-					int nHalf = m_RightClickingSize.y>>1;
-					//BitBlt(hdc, Rcursor.x-nHalf, Rcursor.y-nHalf, m_RightClickingSize.y, m_RightClickingSize.y,
-					//	hCompDC, nIndex*m_RightClickingSize.y, 0, SRCCOPY);
-					BLENDFUNCTION bf = {AC_SRC_OVER,0,255,AC_SRC_ALPHA};
-					GdiAlphaBlend(hdc, Rcursor.x-nHalf, Rcursor.y-nHalf, m_RightClickingSize.y, m_RightClickingSize.y,
-					              hCompDC, nIndex*m_RightClickingSize.y, 0, m_RightClickingSize.y, m_RightClickingSize.y, bf);
+					// Прикинуть индекс фрейма
+					int nIndex = (dwDelta - RCLICKAPPS_START) * m_RightClickingFrames / (RCLICKAPPSTIMEOUT - RCLICKAPPS_START);
 
-					if (hOld && hCompDC)
-						SelectObject(hCompDC, hOld);
+					if (nIndex >= m_RightClickingFrames)
+					{
+						nIndex = (m_RightClickingFrames-1); // рисуем последний фрейм, мышку можно отпускать
+						//-- KillTimer(ghWnd, TIMER_RCLICKPAINT); // таймер понадобится для "скрытия" кружочка после RCLICKAPPSTIMEOUT_MAX
+					}
 
-					if (lbSelfDC && hdc)
-						DeleteDC(hdc);
+					if (hdc || (m_RightClickingCurrent != nIndex))
+					{
+						// Рисуем
+						BOOL lbSelfDC = FALSE;
+
+						if (!hdc)
+						{
+							hdc = GetDC(hView); lbSelfDC = TRUE;
+						}
+
+						HDC hCompDC = CreateCompatibleDC(hdc);
+						HBITMAP hOld = (HBITMAP)SelectObject(hCompDC, mh_RightClickingBmp);
+						int nHalf = m_RightClickingSize.y>>1;
+						//BitBlt(hdc, Rcursor.x-nHalf, Rcursor.y-nHalf, m_RightClickingSize.y, m_RightClickingSize.y,
+						//	hCompDC, nIndex*m_RightClickingSize.y, 0, SRCCOPY);
+						BLENDFUNCTION bf = {AC_SRC_OVER,0,255,AC_SRC_ALPHA};
+						GdiAlphaBlend(hdc, Rcursor.x-nHalf, Rcursor.y-nHalf, m_RightClickingSize.y, m_RightClickingSize.y,
+									  hCompDC, nIndex*m_RightClickingSize.y, 0, m_RightClickingSize.y, m_RightClickingSize.y, bf);
+
+						if (hOld && hCompDC)
+							SelectObject(hCompDC, hOld);
+
+						if (lbSelfDC && hdc)
+							DeleteDC(hdc);
+					}
+
+					// Запомним фрейм, что рисовали в последний раз
+					m_RightClickingCurrent = nIndex;
 				}
-
-				// Запомним фрейм, что рисовали в последний раз
-				m_RightClickingCurrent = nIndex;
 			}
 		}
 	}
@@ -6757,12 +6830,15 @@ void CConEmuMain::RightClickingPaint(HDC hdc, CVirtualConsole* apVCon)
 
 void CConEmuMain::StartRightClickingPaint()
 {
-	if (!mb_RightClickingPaint && m_RightClickingFrames > 0 && mh_RightClickingBmp)
+	if (!mb_RightClickingPaint)
 	{
-		m_RightClickingCurrent = -1;
-		mb_RightClickingPaint = TRUE;
-		mb_RightClickingLSent = FALSE;
-		SetTimer(ghWnd, TIMER_RCLICKPAINT, TIMER_RCLICKPAINT_ELAPSE, NULL);
+		if (m_RightClickingFrames > 0 && mh_RightClickingBmp)
+		{
+			m_RightClickingCurrent = -1;
+			mb_RightClickingPaint = TRUE;
+			mb_RightClickingLSent = FALSE;
+			SetTimer(ghWnd, TIMER_RCLICKPAINT, TIMER_RCLICKPAINT_ELAPSE, NULL);
+		}
 	}
 }
 
@@ -10326,6 +10402,29 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	else // Для остальных lParam содержит клиентские координаты
 		ClientToScreen(ghWnd, &ptCurScreen);
 
+#ifdef _DEBUG
+	wchar_t szDbg[128];
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI::Mouse %s at screen {%ix%i} x%08X\n",
+		(messg==WM_MOUSEMOVE) ? L"WM_MOUSEMOVE" :
+		(messg==WM_LBUTTONDOWN) ? L"WM_LBUTTONDOWN" :
+		(messg==WM_LBUTTONUP) ? L"WM_LBUTTONUP" :
+		(messg==WM_LBUTTONDBLCLK) ? L"WM_LBUTTONDBLCLK" :
+		(messg==WM_RBUTTONDOWN) ? L"WM_RBUTTONDOWN" :
+		(messg==WM_RBUTTONUP) ? L"WM_RBUTTONUP" :
+		(messg==WM_RBUTTONDBLCLK) ? L"WM_RBUTTONDBLCLK" :
+		(messg==WM_MBUTTONDOWN) ? L"WM_MBUTTONDOWN" :
+		(messg==WM_MBUTTONUP) ? L"WM_MBUTTONUP" :
+		(messg==WM_MBUTTONDBLCLK) ? L"WM_MBUTTONDBLCLK" :
+		(messg==0x020A) ? L"WM_MOUSEWHEEL" :
+		(messg==0x020B) ? L"WM_XBUTTONDOWN" :
+		(messg==0x020C) ? L"WM_XBUTTONUP" :
+		(messg==0x020D) ? L"WM_XBUTTONDBLCLK" :
+		(messg==0x020E) ? L"WM_MOUSEHWHEEL" :
+		L"UnknownMsg",
+		ptCurScreen.x,ptCurScreen.y,(DWORD)wParam);
+	DEBUGSTRMOUSE(szDbg);
+#endif
+
 	TODO("DoubleView. Хорошо бы колесико мышки перенаправлять в консоль под мышиным курором, а не в активную");
 	RECT conRect = {0}, dcRect = {0};
 	//GetWindowRect('ghWnd DC', &dcRect);
@@ -10342,14 +10441,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 
 	//enum DragPanelBorder dpb = DPB_NONE; //CConEmuMain::CheckPanelDrag(COORD crCon)
-#ifdef _DEBUG
-
+	#ifdef _DEBUG
 	if (messg == WM_MOUSEWHEEL)
 	{
 		messg = WM_MOUSEWHEEL;
 	}
-
-#endif
+	#endif
 
 	//BOOL lbMouseWasCaptured = mb_MouseCaptured;
 	if (!mb_MouseCaptured)
@@ -10396,11 +10493,6 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	if (gpSetCls->FontWidth()==0 || gpSetCls->FontHeight()==0)
 		return 0;
-
-#ifdef _DEBUG
-	wchar_t szDbg[60]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI::MouseEvent at screen {%ix%i}\n", ptCurScreen.x,ptCurScreen.y);
-	DEBUGSTRMOUSE(szDbg);
-#endif
 
 	if ((messg==WM_LBUTTONUP || messg==WM_MOUSEMOVE) && (gpConEmu->mouse.state & MOUSE_SIZING_DBLCKL))
 	{
@@ -11122,9 +11214,25 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 			DWORD dwDelta=dwCurTick-mouse.RClkTick;
 
 			// Если держали дольше .3с, но не слишком долго :)
-			if ((gpSet->isRClickSendKey==1) ||
-			        (dwDelta>RCLICKAPPSTIMEOUT/*.3сек*/ && dwDelta<RCLICKAPPSTIMEOUT_MAX/*10000*/))
+			if ((gpSet->isRClickSendKey==1)
+				|| (dwDelta>RCLICKAPPSTIMEOUT/*.3сек*/ && dwDelta<RCLICKAPPSTIMEOUT_MAX/*10000*/)
+				// Или в режиме тачскрина - длинный _тап_
+				|| (gpSet->isRClickTouchInvert() && (dwDelta<RCLICKAPPSTIMEOUT))
+				)
 			{
+				if (!mb_RightClickingLSent && pVCon)
+				{
+					mb_RightClickingLSent = TRUE;
+					// Чтобы установить курсор в панелях точно под кликом
+					// иначе получается некрасиво, что курсор прыгает только перед
+					// появлением EMenu, а до этого (пока крутится "кружок") курсор не двигается.
+					pVCon->RCon()->PostLeftClickSync(mouse.RClkDC);
+					//apVCon->RCon()->OnMouse(WM_MOUSEMOVE, 0, mouse.RClkDC.X, mouse.RClkDC.Y, true);
+					//WARNING("По хорошему, нужно дождаться пока мышь обработается");
+					//apVCon->RCon()->PostMacro(L"MsLClick");
+					//WARNING("!!! Заменить на CMD_LEFTCLKSYNC?");
+				}
+
 				//// Сначала выделить файл под курсором
 				////POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
 				//pVCon->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
@@ -13188,6 +13296,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		return TRUE;
 
 	if (gpConEmu->ProcessNcMessage(hWnd, messg, wParam, lParam, result))
+		return result;
+
+	if (gpConEmu->ProcessGestureMessage(hWnd, messg, wParam, lParam, result))
 		return result;
 		
 	//if (messg == WM_CHAR)

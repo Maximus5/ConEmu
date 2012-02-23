@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TabBar.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
-#include "ConEmuChild.h"
+#include "VConChild.h"
 #include "ConEmuPipe.h"
 #include "Macro.h"
 

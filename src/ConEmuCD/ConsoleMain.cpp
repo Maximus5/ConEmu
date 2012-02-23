@@ -5795,12 +5795,12 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 			// Ожидание, пока сработает RefreshThread
 			HANDLE hEvents[2] = {ghQuitEvent, gpSrv->hReqSizeChanged};
 			DWORD nSizeTimeout = REQSIZE_TIMEOUT;
-#ifdef _DEBUG
 
+			#ifdef _DEBUG
 			if (IsDebuggerPresent())
 				nSizeTimeout = INFINITE;
+			#endif
 
-#endif
 			dwWait = WaitForMultipleObjects(2, hEvents, FALSE, nSizeTimeout);
 
 			if (gpSrv->nRequestChangeSize > 0)
@@ -5863,6 +5863,27 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	}
 
 
+	// Minimum console size
+	int curSizeY, curSizeX;
+	wchar_t sFontName[LF_FACESIZE];
+	if (apiGetConsoleFontSize(ghConOut, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
+	{
+		int nMinY = GetSystemMetrics(SM_CYMIN) - GetSystemMetrics(SM_CYSIZEFRAME) - GetSystemMetrics(SM_CYCAPTION);
+		int nMinX = GetSystemMetrics(SM_CXMIN) - 2*GetSystemMetrics(SM_CXSIZEFRAME);
+		if ((nMinX > 0) && (nMinY > 0))
+		{
+			// Теперь прикинуть, какой размер шрифта нам нужен
+			int minSizeY = (nMinY / curSizeY);
+			int minSizeX = (nMinX / curSizeX);
+			if ((minSizeX > crNewSize.X) || (minSizeY > crNewSize.Y))
+			{
+				apiFixFontSizeForBufferSize(ghConOut, crNewSize);
+				apiGetConsoleFontSize(ghConOut, curSizeY, curSizeX, sFontName);
+			}
+		}
+	}
+
+
 	BOOL lbRc = TRUE;
 	RECT rcConPos = {0};
 	COORD crMax = GetLargestConsoleWindowSize(ghConOut);
@@ -5877,8 +5898,21 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	if ((crMax.X && crNewSize.X > crMax.X)
 		|| (crMax.Y && crNewSize.Y > crMax.Y))
 	{
-		lbRc = FALSE;
-		goto wrap;
+		if (apiFixFontSizeForBufferSize(ghConOut, crNewSize))
+		{
+			crMax = GetLargestConsoleWindowSize(ghConOut);
+			if ((crMax.X && crNewSize.X > crMax.X)
+				|| (crMax.Y && crNewSize.Y > crMax.Y))
+			{
+				lbRc = FALSE;
+				goto wrap;
+			}
+		}
+		else
+		{
+			lbRc = FALSE;
+			goto wrap;
+		}
 	}
 
 	// Делаем это ПОСЛЕ MyGetConsoleScreenBufferInfo, т.к. некоторые коррекции размера окна

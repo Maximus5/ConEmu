@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Options.h"
 #include "RealConsole.h"
-#include "ConEmuChild.h"
+#include "VConChild.h"
 
 #define MAX_COUNT_PART_BRUSHES 16*16*4
 #define MAX_SPACES 0x400
@@ -43,8 +43,8 @@ class CBackground;
 class CTaskBarGhost;
 
 class CVirtualConsole :
-	public CConEmuChild,
-	public CVConRelease
+	public CVConRelease,
+	public CConEmuChild
 {
 	private:
 		// RealConsole

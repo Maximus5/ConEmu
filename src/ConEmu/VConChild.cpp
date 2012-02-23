@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/WinObjects.h"
 #include "ConEmu.h"
-#include "ConEmuChild.h"
+#include "VConChild.h"
 #include "Options.h"
 #include "TabBar.h"
 #include "VirtualConsole.h"

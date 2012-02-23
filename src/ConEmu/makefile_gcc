@@ -5,13 +5,13 @@ SRCS =  \
 		BaseDragDrops.cpp  \
 		ConEmu.cpp         \
 		ConEmuApp.cpp      \
-		ConEmuChild.cpp    \
 		ConEmuPipe.cpp     \
 		DragDrop.cpp       \
 		DragDropData.cpp   \
 		DwmHelper.cpp      \
 		FrameHolder.cpp    \
 		GuiServer.cpp      \
+		GestureEngine.cpp  \
 		LoadImg.cpp        \
 		Macro.cpp          \
 		Options.cpp        \
@@ -30,8 +30,9 @@ SRCS =  \
 		TrayIcon.cpp       \
 		Update.cpp         \
 		UpdateSet.cpp      \
-		VConRelease.cpp \
 		VirtualConsole.cpp \
+		VConChild.cpp      \
+		VConRelease.cpp \
 		../common/Common.cpp \
 		../common/ConEmuCheck.cpp \
 		../common/Memory.cpp \

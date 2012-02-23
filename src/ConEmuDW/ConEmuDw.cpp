@@ -718,6 +718,24 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 	SHORT Y1 = ReadRegion->Top + YShift;
 	SHORT Y2 = ReadRegion->Bottom + YShift;
 	SHORT BufferShift = ReadRegion->Top + YShift;
+
+	if (Y2 >= csbi.dwSize.Y)
+	{
+		_ASSERTE((Y2 >= 0) && (Y2 < csbi.dwSize.Y));
+		Y2 = csbi.dwSize.Y - 1;
+		lbRc = FALSE; // но продолжим, запишем, сколько сможем
+	}
+
+	if ((Y1 < 0) || (Y1 >= csbi.dwSize.Y))
+	{
+		_ASSERTE((Y1 >= 0) && (Y1 < csbi.dwSize.Y));
+		if (Y1 >= csbi.dwSize.Y)
+			Y1 = csbi.dwSize.Y - 1;
+		if (Y1 < 0)
+			Y1 = 0;
+		lbRc = FALSE;
+	}
+	
 	for (rcRead.Top = Y1; rcRead.Top <= Y2; rcRead.Top++)
 	{
 		rcRead.Bottom = rcRead.Top;
@@ -848,6 +866,24 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 	SHORT Y1 = WriteRegion->Top + YShift;
 	SHORT Y2 = WriteRegion->Bottom + YShift;
 	SHORT BufferShift = WriteRegion->Top + YShift;
+
+	if (Y2 >= csbi.dwSize.Y)
+	{
+		_ASSERTE((Y2 >= 0) && (Y2 < csbi.dwSize.Y));
+		Y2 = csbi.dwSize.Y - 1;
+		lbRc = FALSE; // но продолжим, запишем, сколько сможем
+	}
+
+	if ((Y1 < 0) || (Y1 >= csbi.dwSize.Y))
+	{
+		_ASSERTE((Y1 >= 0) && (Y1 < csbi.dwSize.Y));
+		if (Y1 >= csbi.dwSize.Y)
+			Y1 = csbi.dwSize.Y - 1;
+		if (Y1 < 0)
+			Y1 = 0;
+		lbRc = FALSE;
+	}
+	
 	for (rcWrite.Top = Y1; rcWrite.Top <= Y2; rcWrite.Top++)
 	{
 		rcWrite.Bottom = rcWrite.Top;

@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/ConEmuCheck.h"
 #include "Options.h"
 #include "ConEmu.h"
-#include "ConEmuChild.h"
+#include "VConChild.h"
 #include "VirtualConsole.h"
 #include "RealConsole.h"
 #include "TabBar.h"

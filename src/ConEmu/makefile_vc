@@ -32,13 +32,13 @@ $(INTDIR)\Background.obj \
 $(INTDIR)\BaseDragDrops.obj \
 $(INTDIR)\ConEmu.obj \
 $(INTDIR)\ConEmuApp.obj \
-$(INTDIR)\ConEmuChild.obj \
 $(INTDIR)\ConEmuPipe.obj \
 $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
 $(INTDIR)\DwmHelper.obj \
 $(INTDIR)\FrameHolder.obj \
 $(INTDIR)\GuiServer.obj \
+$(INTDIR)\GestureEngine.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\Options.obj \
@@ -58,6 +58,7 @@ $(INTDIR)\TaskBarGhost.obj \
 $(INTDIR)\TrayIcon.obj \
 $(INTDIR)\Update.obj \
 $(INTDIR)\UpdateSet.obj \
+$(INTDIR)\VConChild.obj \
 $(INTDIR)\VConRelease.obj \
 $(INTDIR)\VirtualConsole.obj \
 $(INTDIR)\Common.obj \
@@ -222,11 +223,9 @@ $(INTDIR)\Background.obj: Background.cpp Background.h
 
 $(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
-$(INTDIR)\ConEmu.obj: ConEmu.cpp Version.h GuiServer.h ../common/PipeServer.h
+$(INTDIR)\ConEmu.obj: ConEmu.cpp Version.h GuiServer.h GestureEngine.h ../common/PipeServer.h
 
 $(INTDIR)\ConEmuApp.obj: ConEmuApp.cpp Version.h
-
-$(INTDIR)\ConEmuChild.obj: ConEmuChild.cpp VConRelease.h VirtualConsole.h ConEmuChild.h
 
 $(INTDIR)\ConEmuPipe.obj: ConEmuPipe.cpp
 
@@ -239,6 +238,8 @@ $(INTDIR)\DwmHelper.obj: DwmHelper.cpp DwmHelper.h
 $(INTDIR)\FrameHolder.obj: FrameHolder.cpp FrameHolder.h
 
 $(INTDIR)\GuiServer.obj: GuiServer.cpp GuiServer.h ConEmu.h RealConsole.h VirtualConsole.h
+
+$(INTDIR)\GestureEngine.obj: GestureEngine.cpp GestureEngine.h
 
 $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 
@@ -278,9 +279,11 @@ $(INTDIR)\Update.obj: Update.cpp Update.h UpdateSet.h Version.h
 
 $(INTDIR)\UpdateSet.obj: UpdateSet.cpp UpdateSet.h Version.h
 
-$(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h ConEmuChild.h
+$(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h VConChild.h
 
-$(INTDIR)\VConRelease.obj: VConRelease.cpp VConRelease.h VirtualConsole.h ConEmuChild.h
+$(INTDIR)\VConChild.obj: VConChild.cpp VConRelease.h VirtualConsole.h VConChild.h
+
+$(INTDIR)\VConRelease.obj: VConRelease.cpp VConRelease.h VirtualConsole.h VConChild.h
 
 $(INTDIR)\Common.obj: ../common/Common.cpp ../common/Common.hpp
 

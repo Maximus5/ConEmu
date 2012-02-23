@@ -3525,8 +3525,9 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 {
 	typedef BOOL (WINAPI* OnSetConsoleScreenBufferSize_t)(HANDLE hConsoleOutput, COORD dwSize);
 	ORIGINALFAST(SetConsoleScreenBufferSize);
-	BOOL lbRc = FALSE;
+	BOOL lbRc = FALSE, lbRetry = FALSE;
 	COORD crLocked;
+	DWORD dwErr = -1;
 
 	if (IsVisibleRectLocked(crLocked))
 	{
@@ -3539,7 +3540,31 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 	}
 
 	if (F(SetConsoleScreenBufferSize))
+	{
 		lbRc = F(SetConsoleScreenBufferSize)(hConsoleOutput, dwSize);
+		dwErr = GetLastError();
+
+		// The specified dimensions also cannot be less than the minimum size allowed
+		// by the system. This minimum depends on the current font size for the console
+		// (selected by the user) and the SM_CXMIN and SM_CYMIN values returned by the
+		// GetSystemMetrics function.
+		if (!lbRc && (dwErr == ERROR_INVALID_PARAMETER))
+		{
+			// Попытаться увеличить/уменьшить шрифт в консоли
+			lbRetry = apiFixFontSizeForBufferSize(hConsoleOutput, dwSize);
+
+			if (lbRetry)
+			{
+				lbRc = F(SetConsoleScreenBufferSize)(hConsoleOutput, dwSize);
+				if (lbRc)
+					dwErr = 0;
+			}
+
+			_ASSERTE(lbRc && (dwErr != ERROR_INVALID_PARAMETER));
+			if (!lbRc)
+				SetLastError(dwErr); // вернуть "ошибку"
+		}
+	}
 
 	return lbRc;
 }
