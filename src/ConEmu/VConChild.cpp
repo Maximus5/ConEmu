@@ -404,6 +404,13 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				break;
 			} // case WM_TIMER:
 
+		case WM_GESTURENOTIFY:
+		case WM_GESTURE:
+			{
+				gpConEmu->ProcessGestureMessage(hWnd, messg, wParam, lParam, result);
+				break;
+			} // case WM_GESTURE, WM_GESTURENOTIFY
+
 		default:
 
 			// Сообщение приходит из ConEmuPlugin

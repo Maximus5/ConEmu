@@ -95,8 +95,14 @@ bool CGestures::IsGesturesEnabled()
 //      lParam      message parameter (message-specific)
 bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult)
 {
-	if (!_isGestures)
+	if ((uMsg != WM_GESTURENOTIFY) && (uMsg != WM_GESTURE))
 		return false;
+
+	if (!_isGestures)
+	{
+		_ASSERTE(_isGestures);
+		return false;
+	}
 
 	if (uMsg == WM_GESTURENOTIFY)
 	{
@@ -129,10 +135,9 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 		return true;
 	}
-	else if (uMsg != WM_GESTURE)
-	{
-		return false;
-	}
+
+	// Остался только WM_GESTURE
+	_ASSERTE(uMsg==WM_GESTURE);
 
     // helper variables
     POINT ptZoomCenter;
@@ -207,7 +212,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
             k = (double)(LODWORD(gi.ullArguments))/(double)(_dwArguments);
 
             // Now we process zooming in/out of the object
-            ProcessZoom(k, ptZoomCenter.x, ptZoomCenter.y);
+            ProcessZoom(hWnd, k, ptZoomCenter.x, ptZoomCenter.y);
 
             // Now we have to store new information as a starting information 
             // for the next step in this gesture.
@@ -237,7 +242,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			if (!(gi.dwFlags & (GF_END/*|GF_INERTIA*/)))
 			{
 	            // We apply move operation of the object
-		        if (ProcessMove(_ptSecond.x-_ptFirst.x, _ptSecond.y-_ptFirst.y))
+		        if (ProcessMove(hWnd, _ptSecond.x-_ptFirst.x, _ptSecond.y-_ptFirst.y))
 				{
 					// We have to copy second point into first one to prepare
 					// for the next step of this gesture.
@@ -261,7 +266,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
             _ptFirst.y = gi.ptsLocation.y;
             ScreenToClient(hWnd, &_ptFirst);
 			// Пока угол не станет достаточным для смены таба - игнорируем
-            if (ProcessRotate(
+            if (ProcessRotate(hWnd, 
 					LODWORD(gi.ullArguments) - _dwArguments,
 					_ptFirst.x,_ptFirst.y, ((gi.dwFlags & GF_END) == GF_END)))
 			{
@@ -275,7 +280,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         _ptFirst.x = gi.ptsLocation.x;
         _ptFirst.y = gi.ptsLocation.y;
         ScreenToClient(hWnd,&_ptFirst);
-        ProcessTwoFingerTap(_ptFirst.x, _ptFirst.y, LODWORD(gi.ullArguments));
+        ProcessTwoFingerTap(hWnd, _ptFirst.x, _ptFirst.y, LODWORD(gi.ullArguments));
         break;
 
     case GID_PRESSANDTAP:
@@ -288,7 +293,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			DWORD nDelta = LODWORD(gi.ullArguments);
 			short nDeltaX = (short)LOWORD(nDelta);
 			short nDeltaY = (short)HIWORD(nDelta);
-            ProcessPressAndTap(_ptFirst.x, _ptFirst.y, nDeltaX, nDeltaY);
+            ProcessPressAndTap(hWnd, _ptFirst.x, _ptFirst.y, nDeltaX, nDeltaY);
         }
         break;
 	default:
@@ -300,36 +305,37 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
     return TRUE;
 }
 
-void CGestures::SendRClick(const LONG ldx, const LONG ldy)
+void CGestures::SendRClick(HWND hWnd, const LONG ldx, const LONG ldy)
 {
 	CVConGuard VCon = gpConEmu->ActiveCon();
 	CRealConsole* pRCon = (VCon.VCon()) ? VCon->RCon() : NULL;
 	if (pRCon)
 	{
 		POINT pt = {ldx, ldy};
-		MapWindowPoints(ghWnd, VCon->GetView(), &pt, 1);
+		if (hWnd != VCon->GetView())
+			MapWindowPoints(hWnd, VCon->GetView(), &pt, 1);
 		pRCon->OnMouse(WM_RBUTTONDOWN, MK_RBUTTON, pt.x, pt.y);
 		pRCon->OnMouse(WM_RBUTTONUP, 0, pt.x, pt.y);
 	}
 }
 
 // This function is called when press and tap gesture is recognized
-void CGestures::ProcessPressAndTap(const LONG ldx, const LONG ldy, const short nDeltaX, const short nDeltaY)
+void CGestures::ProcessPressAndTap(HWND hWnd, const LONG ldx, const LONG ldy, const short nDeltaX, const short nDeltaY)
 {
-	SendRClick(ldx, ldy);
+	SendRClick(hWnd, ldx, ldy);
 	return;
 }
 
 // This function is invoked when two finger tap gesture is recognized
 // ldx/ldy - Indicates the center of the two fingers.
-void CGestures::ProcessTwoFingerTap(const LONG ldx, const LONG ldy, const ULONG dist)
+void CGestures::ProcessTwoFingerTap(HWND hWnd, const LONG ldx, const LONG ldy, const ULONG dist)
 {
-	SendRClick(ldx, ldy);
+	SendRClick(hWnd, ldx, ldy);
 	return;
 }
 
 // This function is called constantly through duration of zoom in/out gesture
-void CGestures::ProcessZoom(const double dZoomFactor, const LONG lZx, const LONG lZy)
+void CGestures::ProcessZoom(HWND hWnd, const double dZoomFactor, const LONG lZx, const LONG lZy)
 {
 	if (dZoomFactor > 0)
 	{
@@ -358,7 +364,7 @@ void CGestures::ProcessZoom(const double dZoomFactor, const LONG lZx, const LONG
 }
 
 // This function is called throughout the duration of the panning/inertia gesture
-bool CGestures::ProcessMove(const LONG ldx, const LONG ldy)
+bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 {
 	bool lbSent = false;
 
@@ -381,7 +387,8 @@ bool CGestures::ProcessMove(const LONG ldx, const LONG ldy)
 				#endif
 
 				POINT pt = _ptBegin;
-				MapWindowPoints(ghWnd, VCon->GetView(), &pt, 1);
+				if (hWnd != VCon->GetView())
+					MapWindowPoints(hWnd, VCon->GetView(), &pt, 1);
 				
 				pRCon->OnMouse(WM_MOUSEWHEEL, MAKELPARAM(0,Delta), pt.x, pt.y, true);
 
@@ -394,7 +401,7 @@ bool CGestures::ProcessMove(const LONG ldx, const LONG ldy)
 }
 
 // This function is called throughout the duration of the rotation gesture
-bool CGestures::ProcessRotate(const LONG lAngle, const LONG lOx, const LONG lOy, bool bEnd)
+bool CGestures::ProcessRotate(HWND hWnd, const LONG lAngle, const LONG lOx, const LONG lOy, bool bEnd)
 {
 	if (!gpConEmu->mp_TabBar)
 	{

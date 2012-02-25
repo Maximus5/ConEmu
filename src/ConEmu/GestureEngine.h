@@ -42,22 +42,22 @@ public:
     virtual bool ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult);
 
     // This function is called when press and tap gesture is recognized
-    virtual void ProcessPressAndTap(const LONG ldx, const LONG ldy, const short nDeltaX, const short nDeltaY);
+    virtual void ProcessPressAndTap(HWND hWnd, const LONG ldx, const LONG ldy, const short nDeltaX, const short nDeltaY);
 
     // This function is invoked when two finger tap gesture is recognized
-    virtual void ProcessTwoFingerTap(const LONG ldx, const LONG ldy, const ULONG dist);
+    virtual void ProcessTwoFingerTap(HWND hWnd, const LONG ldx, const LONG ldy, const ULONG dist);
 
     // This function is called constantly through duration of zoom in/out gesture
-    virtual void ProcessZoom(const double dZoomFactor, const LONG lZx, const LONG lZy);
+    virtual void ProcessZoom(HWND hWnd, const double dZoomFactor, const LONG lZx, const LONG lZy);
 
     // This function is called throughout the duration of the panning/inertia gesture
-    virtual bool ProcessMove(const LONG ldx, const LONG ldy);
+    virtual bool ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy);
 
     // This function is called throughout the duration of the rotation gesture
-    virtual bool ProcessRotate(const LONG lAngle, const LONG lOx, const LONG lOy, bool bEnd);
+    virtual bool ProcessRotate(HWND hWnd, const LONG lAngle, const LONG lOx, const LONG lOy, bool bEnd);
 
 private:
-	void SendRClick(const LONG ldx, const LONG ldy);
+	void SendRClick(HWND hWnd, const LONG ldx, const LONG ldy);
 private:
 	// При Pan и прочем это первая точка, в отличие от _ptFirst не меняется
 	// в процессе перетаскивания и содержит ЭКРАННЫЕ координаты
