@@ -244,8 +244,12 @@ struct Settings
 		bool isCTSSelectText;
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
 		BYTE isCTSVkBlock; // модификатор запуска выделения мышкой
+		//reg->Load(L"CTS.VkBlockStart", isCTSVkBlockStart);
+		BYTE isCTSVkBlockStart; // кнопка начала выделения вертикального блока
 		//reg->Load(L"CTS.VkText", isCTSVkText);
 		BYTE isCTSVkText; // модификатор запуска выделения мышкой
+		//reg->Load(L"CTS.VkTextStart", isCTSVkTextStart);
+		BYTE isCTSVkTextStart; // кнопка начала выделения текстового блока
 		//reg->Load(L"CTS.ActMode", isCTSActMode);
 		BYTE isCTSActMode; // режим и модификатор разрешения действий правой и средней кнопки мышки
 		//reg->Load(L"CTS.VkAct", isCTSVkAct);
@@ -339,6 +343,8 @@ struct Settings
 		bool isSendPrintScrn;
 		//reg->Load(L"SendCtrlEsc", isSendCtrlEsc);
 		bool isSendCtrlEsc;
+		//reg->Load(L"SendAltF9", isSendAltF9);
+		bool isSendAltF9;
 		
 		//reg->Load(L"Min2Tray", isMinToTray);
 		bool isMinToTray;

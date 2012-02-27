@@ -222,8 +222,14 @@ CConEmuMain::CConEmuMain()
 	#ifdef __GNUC__
 	HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
 	GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : NULL);
-	GetLayeredWindowAttributes = (GetLayeredWindowAttributes_t)(hGdi32 ? GetProcAddress(hGdi32, "GetLayeredWindowAttributes") : NULL);
-	SetLayeredWindowAttributes = (SetLayeredWindowAttributes_t)(hGdi32 ? GetProcAddress(hGdi32, "SetLayeredWindowAttributes") : NULL);
+	#endif
+	
+	HMODULE hUser32 = GetModuleHandle(L"user32.dll");
+	// GetLayeredWindowAttributes по€вилс€ только в XP
+	_GetLayeredWindowAttributes = (GetLayeredWindowAttributes_t)(hUser32 ? GetProcAddress(hUser32, "GetLayeredWindowAttributes") : NULL);
+	#ifdef __GNUC__
+	// SetLayeredWindowAttributes есть в Win2k, только про него не знает GCC
+	SetLayeredWindowAttributes = (SetLayeredWindowAttributes_t)(hUser32 ? GetProcAddress(hUser32, "SetLayeredWindowAttributes") : NULL);
 	#endif
 	
 	//LoadVersionInfo(ms_ConEmuExe);
@@ -5146,29 +5152,35 @@ void CConEmuMain::UpdateWinHookSettings()
 		DWORD *pnHookedKeys = (DWORD*)GetProcAddress(mh_LLKeyHookDll, "gnHookedKeys");
 		if (pnHookedKeys)
 		{
+			DWORD *pn = pnHookedKeys;
 			if (gpSet->isMulti)
 			{
 				if (gpSet->icMultiNew)
-					*(pnHookedKeys++) = gpSet->icMultiNew;
+					*(pn++) = gpSet->icMultiNew;
 				if (gpSet->icMultiNext)
-					*(pnHookedKeys++) = gpSet->icMultiNext;
+					*(pn++) = gpSet->icMultiNext;
 				if (gpSet->icMultiRecreate)
-					*(pnHookedKeys++) = gpSet->icMultiRecreate;
+					*(pn++) = gpSet->icMultiRecreate;
 				if (gpSet->icMultiBuffer)
-					*(pnHookedKeys++) = gpSet->icMultiBuffer;
+					*(pn++) = gpSet->icMultiBuffer;
 				if (gpSet->icMultiClose)
-					*(pnHookedKeys++) = gpSet->icMultiClose;
+					*(pn++) = gpSet->icMultiClose;
 				if (gpSet->icMultiCmd)
-					*(pnHookedKeys++) = gpSet->icMultiCmd;
+					*(pn++) = gpSet->icMultiCmd;
 			}
 			if (gpSet->isUseWinArrows)
 			{
-				*(pnHookedKeys++) = VK_LEFT;
-				*(pnHookedKeys++) = VK_RIGHT;
-				*(pnHookedKeys++) = VK_UP;
-				*(pnHookedKeys++) = VK_DOWN;
+				*(pn++) = VK_LEFT;
+				*(pn++) = VK_RIGHT;
+				*(pn++) = VK_UP;
+				*(pn++) = VK_DOWN;
 			}
-			*pnHookedKeys = 0;
+			if (gpSet->isCTSVkBlockStart)
+				*(pn++) = gpSet->isCTSVkBlockStart;
+			if (gpSet->isCTSVkTextStart)
+				*(pn++) = gpSet->isCTSVkTextStart;
+			*pn = 0;
+			_ASSERTE((pn - pnHookedKeys) < 63);
 		}
 
 		UpdateActiveGhost(mp_VActive);
@@ -9515,7 +9527,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 	//if (gpSet->isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipMulticonChar)) {
 	if ((sb_SkipMulticonChar && (messg == WM_KEYUP || messg == WM_SYSKEYUP))
-	        //|| (wParam==' ' && gpSet->IsHostkeyPressed()) // показать системное меню
+			// Hotkeys, относ€щиес€ к мультиконсоли/табам
 	        || (gpSet->isMulti && wParam
 	            &&
 	            (wParam==gpSet->icMultiNext || wParam==gpSet->icMultiNew || wParam==gpSet->icMultiRecreate
@@ -9524,6 +9536,10 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				 || (gpSet->isUseWinArrows && (wParam == VK_LEFT || wParam == VK_RIGHT || wParam == VK_UP || wParam == VK_DOWN))
 	             || (gpSet->isUseWinNumber && (wParam==VK_F11 || wParam==VK_F12))) // KeyDown дл€ этого не проходит, но на вс€кий случай
 	            &&
+	            gpSet->IsHostkeyPressed())
+			// Hotkeys, не относ€щиес€ к мультиконсоли
+			|| ((wParam==gpSet->isCTSVkTextStart || wParam==gpSet->isCTSVkBlockStart)
+				&&
 	            gpSet->IsHostkeyPressed())
 	  )
 	{
@@ -9751,6 +9767,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 LRESULT CConEmuMain::OnKeyboardHook(WORD vk, BOOL abReverse)
 {
+	if (!vk)
+		return 0;
+	
 	// “еперь собственно обработка
 	if (vk>='1' && vk<='9')  // ##1..9
 		ConActivate(vk - '1');
@@ -9844,6 +9863,12 @@ LRESULT CConEmuMain::OnKeyboardHook(WORD vk, BOOL abReverse)
 			//	//}
 			//}
 		}
+	}
+	else if (vk == gpSet->isCTSVkTextStart || vk == gpSet->isCTSVkBlockStart)
+	{
+		// Ќачать текстовое или блоковое выделение
+		if (mp_VActive && mp_VActive->RCon())
+			mp_VActive->RCon()->StartSelection((vk == gpSet->isCTSVkTextStart));
 	}
 
 	return 0;
@@ -13022,7 +13047,7 @@ void CConEmuMain::OnTransparent()
 		BYTE nCurAlpha = 0;
 		DWORD nCurFlags = 0;
 		if (lbChanged
-			|| !GetLayeredWindowAttributes(ghWnd, NULL, &nCurAlpha, &nCurFlags)
+			|| (!_GetLayeredWindowAttributes || !(_GetLayeredWindowAttributes(ghWnd, NULL, &nCurAlpha, &nCurFlags)))
 			|| (nCurAlpha != nTransparent) || (nCurFlags != nNewFlags))
 		{
 			lbChanged = TRUE;

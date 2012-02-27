@@ -1076,7 +1076,8 @@ BOOL CShellProc::PrepareExecuteParms(
 
 		if (GetVersionEx(&osv))
 		{
-			if (osv.dwMajorVersion == 5 && (osv.dwMinorVersion == 1/*WinXP*/ || osv.dwMinorVersion == 2/*Win2k3*/))
+			// Добавил Win2k, Minor можно не проверять
+			if (osv.dwMajorVersion == 5) // && (osv.dwMinorVersion == 1/*WinXP*/ || osv.dwMinorVersion == 2/*Win2k3*/))
 			{
 				if (//(*lphStdOut == (HANDLE)0x00010001)
 					(((DWORD_PTR)*lphStdOut) >= 0x00010000)

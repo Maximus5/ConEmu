@@ -303,11 +303,13 @@ $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
 
 .PHONY: CLEAN
 CLEAN:
-	@echo copying release files
+	@echo Copying release files
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	@echo moving "$(OUTDIR)\$(OUTNAME).exe" to "$(RELEASEDIR)"
 	@move "$(OUTDIR)\$(OUTNAME).exe" $(RELEASEDIR)
+	@echo moving "$(OUTDIR)\$(OUTNAME).map" to "$(RELEASEDIR)"
 	@move "$(OUTDIR)\$(OUTNAME).map" $(RELEASEDIR)
 !ifndef NO_RELEASE_PDB
+	@echo moving "$(OUTDIR)\$(OUTNAME).pdb" to "$(RELEASEDIR)"
 	@move "$(OUTDIR)\$(OUTNAME).pdb" $(RELEASEDIR)
 !endif
-

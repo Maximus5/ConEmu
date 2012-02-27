@@ -214,6 +214,7 @@ HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMo
 BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput);
 BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
 BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
+COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput);
 INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
 HDC WINAPI OnGetDC(HWND hWnd); // user32
 int WINAPI OnReleaseDC(HWND hWnd, HDC hDC); //user32
@@ -280,6 +281,11 @@ bool InitHooksCommon()
 		{
 			(void*)OnSetConsoleScreenBufferSize,
 			"SetConsoleScreenBufferSize",
+			kernel32
+		},
+		{
+			(void*)OnGetLargestConsoleWindowSize,
+			"GetLargestConsoleWindowSize",
 			kernel32
 		},
 		#endif
@@ -1527,6 +1533,7 @@ bool CanSendMessage(HWND& hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT&
 			case WM_SIZE:
 			case WM_MOVE:
 			case WM_SHOWWINDOW:
+			case WM_SYSCOMMAND:
 				// Ёти сообщени€ - вообще игнорировать
 				return false;
 			case WM_INPUTLANGCHANGEREQUEST:
@@ -3567,6 +3574,20 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 	}
 
 	return lbRc;
+}
+
+COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
+{
+	typedef COORD (WINAPI* OnGetLargestConsoleWindowSize_t)(HANDLE hConsoleOutput);
+	ORIGINALFAST(GetLargestConsoleWindowSize);
+	COORD cr = {80,25}, crLocked = {0,0};
+	
+	if (ghConEmuWndDC && IsVisibleRectLocked(crLocked))
+		cr = crLocked;
+	else if (F(GetLargestConsoleWindowSize))
+		cr = F(GetLargestConsoleWindowSize)(hConsoleOutput);
+	
+	return cr;
 }
 
 // Ќужна дл€ "подн€ти€" консольного окна при вызове Shell операций

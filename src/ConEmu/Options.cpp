@@ -218,7 +218,7 @@ void Settings::InitSettings()
 	nMainTimerInactiveElapse = 1000;
 	nAffinity = 0; // 0 - don't change default affinity
 	isSkipFocusEvents = false;
-	isSendAltEnter = isSendAltSpace = isSendAltTab = isSendAltEsc = isSendAltPrintScrn = isSendPrintScrn = isSendCtrlEsc = false;
+	isSendAltEnter = isSendAltSpace = isSendAltTab = isSendAltEsc = isSendAltPrintScrn = isSendPrintScrn = isSendCtrlEsc = isSendAltF9 = false;
 	isMonitorConsoleLang = 3;
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
 	nCmdOutputCP = 0;
@@ -360,6 +360,7 @@ void Settings::InitSettings()
 	isConsoleTextSelection = 1; // Always
 	isCTSSelectBlock = true; isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
 	isCTSSelectText = true; isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
+	isCTSVkBlockStart = 0; isCTSVkTextStart = 0; // при желании, пользователь может назначить hotkey запуска выделения
 	isCTSActMode = 2; // BufferOnly
 	isCTSVkAct = 0; // т.к. по умолчанию - только BufferOnly, то вообще без модификаторов
 	isCTSRBtnAction = 3; // Auto (Выделения нет - Paste, Есть - Copy)
@@ -616,8 +617,10 @@ void Settings::LoadSettings()
 
 		reg->Load(L"CTS.SelectBlock", isCTSSelectBlock);
 		reg->Load(L"CTS.VkBlock", isCTSVkBlock);
+		reg->Load(L"CTS.VkBlockStart", isCTSVkBlockStart);
 		reg->Load(L"CTS.SelectText", isCTSSelectText);
 		reg->Load(L"CTS.VkText", isCTSVkText);
+		reg->Load(L"CTS.VkTextStart", isCTSVkTextStart);
 
 		reg->Load(L"CTS.ActMode", isCTSActMode); if (!isCTSActMode || isCTSActMode>2) isCTSActMode = 2;
 
@@ -706,6 +709,7 @@ void Settings::LoadSettings()
 		reg->Load(L"SendAltPrintScrn", isSendAltPrintScrn);
 		reg->Load(L"SendPrintScrn", isSendPrintScrn);
 		reg->Load(L"SendCtrlEsc", isSendCtrlEsc);
+		reg->Load(L"SendAltF9", isSendAltF9);
 		
 		reg->Load(L"Min2Tray", isMinToTray);
 		reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
@@ -1214,8 +1218,10 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
 		reg->Save(L"CTS.SelectBlock", isCTSSelectBlock);
 		reg->Save(L"CTS.VkBlock", isCTSVkBlock);
+		reg->Save(L"CTS.VkBlockStart", isCTSVkBlockStart);
 		reg->Save(L"CTS.SelectText", isCTSSelectText);
 		reg->Save(L"CTS.VkText", isCTSVkText);
+		reg->Save(L"CTS.VkTextStart", isCTSVkTextStart);
 		reg->Save(L"CTS.ActMode", isCTSActMode);
 		reg->Save(L"CTS.VkAct", isCTSVkAct);
 		reg->Save(L"CTS.RBtnAction", isCTSRBtnAction);
@@ -1247,6 +1253,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"SendAltPrintScrn", isSendAltPrintScrn);
 		reg->Save(L"SendPrintScrn", isSendPrintScrn);
 		reg->Save(L"SendCtrlEsc", isSendCtrlEsc);
+		reg->Save(L"SendAltF9", isSendAltF9);
 		reg->Save(L"Min2Tray", isMinToTray);
 		reg->Save(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
 		reg->Save(L"SafeFarClose", isSafeFarClose);

@@ -243,14 +243,17 @@ dirs:
 
 .PHONY: clean
 clean:
-	@echo copying release files
+	@echo Copying release files
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	@echo moving "$(DLLFULLNAME)" to "$(RELEASEDIR)\$(OUTNAME).dll"
 	@move $(DLLFULLNAME) $(RELEASEDIR)\$(OUTNAME).dll
 #!ifdef DEBUG
+	@echo moving "$(PDBNAME)" to "$(RELEASEDIR)\$(OUTNAME).pdb"
 	@move $(PDBNAME) $(RELEASEDIR)\$(OUTNAME).pdb
 #!else
 #	@if exist $(PDBNAME) del $(PDBNAME)
 #!endif
+	@echo moving "$(MAP)" to "$(RELEASEDIR)\$(OUTNAME).map"
 	@move $(MAP) $(RELEASEDIR)\$(OUTNAME).map
 
 

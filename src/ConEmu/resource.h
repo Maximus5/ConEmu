@@ -392,6 +392,7 @@
 #define cbSendPrintScrn                 1780
 #define cbSendCtrlEsc                   1781
 #define cbDosBoxForceConfig             1783
+#define cbSendAltF9                     1784
 #define vkMinimizeRestore               2000
 #define vkMultiNew                      2001
 #define vkMultiNext                     2002
@@ -499,6 +500,8 @@
 #define rbAdminShield                   2109
 #define rbAdminSuffix                   2110
 #define vkWinApps                       2111
+#define vkCTSVkBlockStart               2112
+#define vkCTSVkTextStart                2113
 
 // Next default values for new objects
 // 
@@ -506,7 +509,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        217
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2112
+#define _APS_NEXT_CONTROL_VALUE         2114
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

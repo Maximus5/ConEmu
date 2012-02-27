@@ -581,7 +581,9 @@ class CConEmuMain :
 		void OnTaskbarSettingsChanged();
 		#ifdef __GNUC__
 		AlphaBlend_t GdiAlphaBlend;
-		GetLayeredWindowAttributes_t GetLayeredWindowAttributes;
+		#endif
+		GetLayeredWindowAttributes_t _GetLayeredWindowAttributes;
+		#ifdef __GNUC__
 		SetLayeredWindowAttributes_t SetLayeredWindowAttributes;
 		#endif
 };

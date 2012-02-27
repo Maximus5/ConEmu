@@ -173,6 +173,8 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				L" {%i,%i}", (int)(short)LOWORD(h), (int)(short)HIWORD(h)); } \
 		wcscat_c(szDump, L")\n"); \
 		DEBUGSTR(szDump)
+#else
+	#define DUMPGEST(s)
 #endif
 
     switch (gi.dwID)

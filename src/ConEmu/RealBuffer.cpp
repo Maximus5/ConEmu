@@ -2320,8 +2320,9 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 {
 	if (anX == -1 && anY == -1)
 	{
-		anX = con.m_sbi.dwCursorPosition.X;
-		anY = con.m_sbi.dwCursorPosition.Y;
+		TODO("Доработать для режима с прокруткой");
+		anX = con.m_sbi.dwCursorPosition.X - con.m_sbi.srWindow.Left;
+		anY = con.m_sbi.dwCursorPosition.Y - con.m_sbi.srWindow.Top;
 	}
 
 	COORD cr = {anX,anY};

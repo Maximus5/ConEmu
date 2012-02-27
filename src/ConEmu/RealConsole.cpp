@@ -3326,8 +3326,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			}
 		}
 		else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
-		else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & (1<<29)
-		        && !isPressed(VK_SHIFT))
+		else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && (lParam & (1<<29))
+		        && !gpSet->isSendAltF9 && !isPressed(VK_SHIFT))
 		{
 			// AltF9
 			// Чтобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)

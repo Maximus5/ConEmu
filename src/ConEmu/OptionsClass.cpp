@@ -351,6 +351,8 @@ void CSettings::InitVars_Hotkeys()
 		{vkMultiBuffer, 0, &gpSet->icMultiBuffer},
 		{vkMultiClose, 0, &gpSet->icMultiClose},
 		{vkMultiCmd, 0, &gpSet->icMultiCmd},
+		{vkCTSVkBlockStart, 0, &gpSet->isCTSVkBlockStart}, // запуск выделения блока
+		{vkCTSVkTextStart, 0, &gpSet->isCTSVkTextStart},   // запуск выделения текста
 		// User (Modifiers)
 		{vkCTSVkBlock, 1, &gpSet->isCTSVkBlock},      // модификатор запуска выделения мышкой
 		{vkCTSVkText, 1, &gpSet->isCTSVkText},       // модификатор запуска выделения мышкой
@@ -362,7 +364,7 @@ void CSettings::InitVars_Hotkeys()
 		{vkWinAltP, 0, NULL, 'P', MAKEMODIFIER2(VK_LWIN,VK_MENU)}, // Settings
 		{vkWinAltSpace, 0, NULL, VK_SPACE, MAKEMODIFIER2(VK_LWIN,VK_MENU)}, // System menu
 		{vkWinApps, 0, NULL, VK_APPS, VK_LWIN}, // Tab menu
-		{vkAltF9, 0, NULL, VK_F9, VK_MENU}, // System menu
+		{vkAltF9, 0, NULL, VK_F9, VK_MENU}, // Maximize window
 		{vkCtrlWinAltSpace, 0, NULL, VK_SPACE, MAKEMODIFIER3(VK_CONTROL,VK_LWIN,VK_MENU)}, // Show real console
 		{vkAltEnter, 0, NULL, VK_RETURN, VK_MENU}, // Full screen
 		{vkCtrlWinEnter, 0, NULL, VK_RETURN, MAKEMODIFIER2(VK_LWIN,VK_CONTROL)},
@@ -1725,13 +1727,14 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 	               (gpSet->m_isKeyboardHooks == 1) ? BST_CHECKED :
 	               ((gpSet->m_isKeyboardHooks == 0) ? BST_INDETERMINATE : BST_UNCHECKED));
 	
-	if (gpSet->isSendAltEnter) CheckDlgButton(hKeys, cbSendAltEnter, BST_CHECKED);
-	if (gpSet->isSendAltSpace) CheckDlgButton(hKeys, cbSendAltSpace, BST_CHECKED);
-	if (gpSet->isSendAltTab) CheckDlgButton(hKeys, cbSendAltTab, BST_CHECKED);
-	if (gpSet->isSendAltEsc) CheckDlgButton(hKeys, cbSendAltEsc, BST_CHECKED);
-	if (gpSet->isSendAltPrintScrn) CheckDlgButton(hKeys, cbSendAltPrintScrn, BST_CHECKED);
-	if (gpSet->isSendPrintScrn) CheckDlgButton(hKeys, cbSendPrintScrn, BST_CHECKED);
-	if (gpSet->isSendCtrlEsc) CheckDlgButton(hKeys, cbSendCtrlEsc, BST_CHECKED);
+	CheckDlgButton(hKeys, cbSendAltEnter, gpSet->isSendAltEnter);
+	CheckDlgButton(hKeys, cbSendAltSpace, gpSet->isSendAltSpace);
+	CheckDlgButton(hKeys, cbSendAltTab, gpSet->isSendAltTab);
+	CheckDlgButton(hKeys, cbSendAltEsc, gpSet->isSendAltEsc);
+	CheckDlgButton(hKeys, cbSendAltPrintScrn, gpSet->isSendAltPrintScrn);
+	CheckDlgButton(hKeys, cbSendPrintScrn, gpSet->isSendPrintScrn);
+	CheckDlgButton(hKeys, cbSendCtrlEsc, gpSet->isSendCtrlEsc);
+	CheckDlgButton(hKeys, cbSendAltF9, gpSet->isSendAltF9);
 
 	RegisterTipsFor(hKeys);
 	return 0;
@@ -2640,6 +2643,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbSendAltSpace:
 			// хуков не требует
 			gpSet->isSendAltSpace = IsChecked(hKeys, cbSendAltSpace);
+			break;
+		case cbSendAltF9:
+			// хуков не требует
+			gpSet->isSendAltF9 = IsChecked(hKeys, cbSendAltF9);
 			break;
 			
 		case cbSendAltTab:

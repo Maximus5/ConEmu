@@ -711,7 +711,8 @@ BEGIN
     CONTROL         "Alt+Enter",cbSendAltEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,271,191,45,10
     CONTROL         "PrntScrn",cbSendPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,203,43,10
     CONTROL         "Ctrl+Esc",cbSendCtrlEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,271,203,43,10
-    CONTROL         "Alt+PrntScrn",cbSendAltPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,215,57,10
+    CONTROL         "Alt+PrScrn",cbSendAltPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,215,57,10
+    CONTROL         "Alt+F9",cbSendAltF9,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,271,215,43,10
     EDITTEXT        tGuiMacro,191,144,127,13,ES_AUTOHSCROLL | WS_DISABLED
 END
 
