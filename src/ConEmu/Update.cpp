@@ -1206,7 +1206,14 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 		{
 			DWORD dwErr = GetLastError();
 			if (mb_ManualCallMode || abPackage)
-				ReportError(L"HttpOpenRequest failed\nURL=%s\ncode=%u", asSource, dwErr);
+			{
+				// In offline mode, HttpSendRequest returns ERROR_FILE_NOT_FOUND if the resource is not found in the Internet cache.
+				ReportError(
+					(dwErr == 2)
+					? L"HttpOpenRequest failed\nURL=%s\ncode=%u, Internet is offline?"
+					: L"HttpOpenRequest failed\nURL=%s\ncode=%u"
+					, asSource, dwErr);
+			}
 			goto wrap;
 		}
 

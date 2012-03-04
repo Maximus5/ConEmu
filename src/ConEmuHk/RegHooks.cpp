@@ -42,6 +42,12 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifdef _DEBUG
+	#define DEBUGSTR(x) OutputDebugString(x)
+#else
+	#define DEBUGSTR(x) //OutputDebugString(x)
+#endif
+
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
 
@@ -323,7 +329,7 @@ bool InitHooksReg()
 	if (!pInfo || !(pInfo->isHookRegistry&1) || !*pInfo->sHiveFileName)
 		return false;
 
-	OutputDebugString(L"ConEmuHk: Preparing for registry virtualization\n");
+	DEBUGSTR(L"ConEmuHk: Preparing for registry virtualization\n");
 
 	HookItem HooksRegistry[] =
 	{
@@ -350,7 +356,7 @@ bool InitHooksReg()
 	if (lbRc)
 	{
 		PrepareHookedKeyList();
-		OutputDebugString(L"ConEmuHk: Registry virtualization prepared\n");
+		DEBUGSTR(L"ConEmuHk: Registry virtualization prepared\n");
 		// Если advapi32.dll уже загружена - можно сразу дернуть экспорты
 		if (ghAdvapi32)
 		{
@@ -361,7 +367,7 @@ bool InitHooksReg()
 	}
 	else
 	{
-		OutputDebugString(L"ConEmuHk: Registry virtualization failed!\n");
+		DEBUGSTR(L"ConEmuHk: Registry virtualization failed!\n");
 	}
 	
 #else
@@ -392,7 +398,7 @@ void DoneHooksReg()
 {
 #ifdef _DEBUG
 	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
-	OutputDebugString(L"ConEmuHk: Deinitializing registry virtualization!\n");
+	DEBUGSTR(L"ConEmuHk: Deinitializing registry virtualization!\n");
 #endif
 	if (gpRegKeyHooks)
 	{
@@ -408,7 +414,7 @@ void DoneHooksReg()
 	}
 #ifdef _DEBUG
 	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
-	OutputDebugString(L"ConEmuHk: Registry virtualization deinitialized!\n");
+	DEBUGSTR(L"ConEmuHk: Registry virtualization deinitialized!\n");
 #endif
 }
 
@@ -655,12 +661,12 @@ bool InitRegistryRoot(CESERVER_CONSOLE_MAPPING_HDR* pInfo)
 
 	if ((ghNewKeyRoot == NULL) || (ghNewKeyRoot == (HKEY)-1))
 	{
-		OutputDebugString(L"ConEmuHk: Registry virtualization failed!\n");
+		DEBUGSTR(L"ConEmuHk: Registry virtualization failed!\n");
 		return false;
 	}
 	else
 	{
-		OutputDebugString(L"ConEmuHk: Registry virtualization succeeded\n");
+		DEBUGSTR(L"ConEmuHk: Registry virtualization succeeded\n");
 	}
 
 	return true;
@@ -1023,7 +1029,7 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 	LPCWSTR pszHighlight = lpSubKey ? wcsstr(lpSubKey, L"Highlight") : NULL;
 	LPCWSTR pszGroup = lpSubKey ? wcsstr(lpSubKey, L"Group0") : NULL;
 	LPCWSTR pszFar2 = lpSubKey ? wcsstr(lpSubKey, L"Far2") : NULL;
-	OutputDebugString(szDbgMsg);
+	DEBUGSTR(szDbgMsg);
 #endif
 
 	LPCWSTR lpSubKeyTmp = lpSubKey;
@@ -1216,8 +1222,8 @@ bool CheckKeyHookedW(HKEY& hKey, LPCWSTR& lpSubKey, LPWSTR& lpTemp, RegKeyType& 
 		free(lpTemp1);
 
 #ifdef _DEBUG
-	#define PRINTREGRESULT(l,k) if (l==0) { wchar_t szDbg[1024]; msprintf(szDbg, countof(szDbg), L"ConEmuHk: KeyResult(%s)=0x%08X\n", lpSubKey ? lpSubKey : L"", (DWORD)k); OutputDebugString(szDbg); }
-	#define PRINTCLOSE(k) if (!IsPredefined(k)) { wchar_t szDbg[128]; msprintf(szDbg, countof(szDbg), L"ConEmuHk: RegClose(0x%08X)\n", (DWORD)k); OutputDebugString(szDbg); }
+	#define PRINTREGRESULT(l,k) if (l==0) { wchar_t szDbg[1024]; msprintf(szDbg, countof(szDbg), L"ConEmuHk: KeyResult(%s)=0x%08X\n", lpSubKey ? lpSubKey : L"", (DWORD)k); DEBUGSTR(szDbg); }
+	#define PRINTCLOSE(k) if (!IsPredefined(k)) { wchar_t szDbg[128]; msprintf(szDbg, countof(szDbg), L"ConEmuHk: RegClose(0x%08X)\n", (DWORD)k); DEBUGSTR(szDbg); }
 #else
 	#define PRINTREGRESULT(l,k)
 	#define PRINTCLOSE(k)

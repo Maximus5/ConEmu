@@ -91,6 +91,8 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 		iRc = -710;
 		goto wrap;
 	}
+
+	#ifdef _DEBUG
 	// strHookDllPath уже скопирован, поэтому его можно заюзать для DebugString
 	#ifdef _WIN64
 	msprintf(strHookDllPath, countof(strHookDllPath),
@@ -104,6 +106,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 		(DWORD)context.ContextFlags, (DWORD)context.Eip);
 	#endif
 	OutputDebugString(strHookDllPath);
+	#endif
 
 	//mem = ::VirtualAllocEx(pi.hProcess, NULL, memLen, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	//#ifdef _WIN64
@@ -124,6 +127,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 		goto wrap;
 	}
 
+	#ifdef _DEBUG
 	// strHookDllPath уже скопирован, поэтому его можно заюзать для DebugString
 	#ifdef _WIN64
 	msprintf(strHookDllPath, countof(strHookDllPath),
@@ -137,6 +141,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 		(DWORD)mem);
 	#endif
 	OutputDebugString(strHookDllPath);
+	#endif
 
 
 	union
@@ -258,6 +263,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 		goto wrap;
 	}
 
+	#ifdef _DEBUG
 	// strHookDllPath уже скопирован, поэтому его можно заюзать для DebugString
 	#ifdef _WIN64
 	msprintf(strHookDllPath, countof(strHookDllPath),
@@ -271,6 +277,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 		(DWORD)context.ContextFlags, (DWORD)context.Eip);
 	#endif
 	OutputDebugString(strHookDllPath);
+	#endif
 
 	if (ptrAllocated)
 		*ptrAllocated = (DWORD_PTR)mem;

@@ -57,7 +57,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <WinInet.h>
 //#pragma comment(lib, "wininet.lib")
 
-#define DebugString(x) // OutputDebugString(x)
+#ifdef _DEBUG
+#define DebugString(x) OutputDebugString(x)
+#define DebugStringA(x) OutputDebugStringA(x)
+#else
+#define DebugString(x) //OutputDebugString(x)
+#define DebugStringA(x) //OutputDebugStringA(x)
+#endif
 
 HMODULE ghOurModule = NULL; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 DWORD   gnHookMainThreadId = 0;
@@ -2666,7 +2672,7 @@ FARPROC WINAPI OnGetProcAddressWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 	int nLeft = lstrlenA(gszLastGetProcAddress);
 	msprintf(gszLastGetProcAddress+nLeft, countof(gszLastGetProcAddress)-nLeft, 
 		WIN3264TEST(" - 0x%08X\n"," - 0x%08X%08X\n"), WIN3264WSPRINT(lpfnRc));
-	OutputDebugStringA(gszLastGetProcAddress);
+	DebugStringA(gszLastGetProcAddress);
 	#endif
 
 	return lpfnRc;
@@ -2849,7 +2855,7 @@ void LogFunctionCall(LPCSTR asFunc, LPCSTR asFile, int anLine)
 	{
 		DWORD nErr = GetLastError();
 		char sFunc[128]; _wsprintfA(sFunc, SKIPLEN(countof(sFunc)) "Hook: %s\n", asFunc);
-		OutputDebugStringA(sFunc);
+		DebugStringA(sFunc);
 		SetLastError(nErr);
 	}
 	else

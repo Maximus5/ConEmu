@@ -68,7 +68,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <WinInet.h>
 //#pragma comment(lib, "wininet.lib")
 
+#ifdef _DEBUG
 #define DebugString(x) OutputDebugString(x)
+#else
+#define DebugString(x) //OutputDebugString(x)
+#endif
 
 //#ifdef _DEBUG
 //	#include <crtdbg.h>
@@ -677,7 +681,7 @@ BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LP
 	CShellProc* sp = new CShellProc();
 	sp->OnCreateProcessA(&lpApplicationName, (LPCSTR*)&lpCommandLine, &dwCreationFlags, lpStartupInfo);
 	if ((dwCreationFlags & CREATE_SUSPENDED) == 0)
-		OutputDebugString(L"CreateProcessA without CREATE_SUSPENDED Flag!\n");
+		DebugString(L"CreateProcessA without CREATE_SUSPENDED Flag!\n");
 
 
 	lbRc = F(CreateProcessA)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
@@ -719,7 +723,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	CShellProc* sp = new CShellProc();
 	sp->OnCreateProcessW(&lpApplicationName, (LPCWSTR*)&lpCommandLine, &dwCreationFlags, lpStartupInfo);
 	if ((dwCreationFlags & CREATE_SUSPENDED) == 0)
-		OutputDebugString(L"CreateProcessW without CREATE_SUSPENDED Flag!\n");
+		DebugString(L"CreateProcessW without CREATE_SUSPENDED Flag!\n");
 
 
 	lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
@@ -863,15 +867,15 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 	//
 	//	if (lpNew->lpParameters)
 	//	{
-	//		OutputDebugStringW(L"After ShellExecuteEx\n");
-	//		OutputDebugStringA(lpNew->lpParameters);
-	//		OutputDebugStringW(L"\n");
+	//		DebugStringW(L"After ShellExecuteEx\n");
+	//		DebugStringA(lpNew->lpParameters);
+	//		DebugStringW(L"\n");
 	//	}
 	//
 	//	if (lbRc && dwProcessID)
 	//	{
 	//		wchar_t szDbgMsg[128]; msprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"Process created: %u\n", dwProcessID);
-	//		OutputDebugStringW(szDbgMsg);
+	//		DebugStringW(szDbgMsg);
 	//	}
 	//
 	//#endif
@@ -2583,7 +2587,7 @@ BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 //			lpBuffer->Event.MouseEvent.dwButtonState, lpBuffer->Event.MouseEvent.dwControlKeyState, *lpNumberOfEventsRead);
 //	else
 //		lstrcpyW(szDbg, L"ConEmuHk.OnPeekConsoleInputW(Non mouse event)\n");
-//	OutputDebugStringW(szDbg);
+//	DebugStringW(szDbg);
 //#endif
 
 	return lbRc;
@@ -3209,7 +3213,7 @@ HANDLE WINAPI OnCreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeM
 		if (psz)
 		{
 			msprintf(psz, nLen, L"CreateNamedPipeW(%s)\n", lpName);
-			OutputDebugStringW(psz);
+			DebugString(psz);
 			free(psz);
 		}
 	}

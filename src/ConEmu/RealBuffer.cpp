@@ -3974,8 +3974,12 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 		else if (etr == etr_FileAndLine)
 		{
 			// В именах файлов недопустимы: "/\:|*?<>~t~r~n
-			const wchar_t* pszBreak = L"\"|*?<>\t\r\n";
+			const wchar_t* pszBreak   = L"\"|*?<>\t\r\n";
 			const wchar_t* pszSpacing = L" \t\xB7\x2192"; //B7 - режим "Show white spaces", 2192 - символ табуляции там же
+			const wchar_t* pszSeparat = L" \t:(";
+			const wchar_t* pszTermint = L":)";
+			const wchar_t* pszDigits  = L"0123456789";
+			int nColons = 0;
 			// Курсор над комментарием?
 			// Попробуем найти начало имени файла
 			while ((crFrom.X) > 0 && !wcschr(pszBreak, pChar[crFrom.X-1]))
@@ -3995,21 +3999,34 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 			{
 				goto wrap; // Fail?
 			}
+
 			// Теперь - найти конец. Считаем, что конец это двоеточие, после которого идет описание ошибки
-			// -- VC 9.0
+
+			// -- VC
 			// 1>t:\vcproject\conemu\realconsole.cpp(8104) : error C2065: 'qqq' : undeclared identifier
+			// DefResolve.cpp(18) : error C2065: 'sdgagasdhsahd' : undeclared identifier
+			// DefResolve.cpp(18): warning: note xxx
 			// -- GCC
 			// ConEmuC.cpp:49: error: 'qqq' does not name a type
-			// { // 1.c:3: 
-			bool bDigits = false, bLineNumberFound = false;
+			// 1.c:3: some message
+			// file.cpp:29:29: error
+			// -- False detects
+			// 29.11.2011 18:31:47
+
+			bool bDigits = false, bLineNumberFound = false, bWasSeparator = false;
+			// Нас на интересуют строки типа "11.05.2010 10:20:35"
+			// В имени файла должна быть хотя бы одна буква (расширение), причем английская
+			bool bExtFound = false;
+			// Поехали
 			while (((crTo.X+1) < nLen)
-				&& ((pChar[crTo.X] != L':') || (pChar[crTo.X] == L':' && wcschr(L"0123456789", pChar[crTo.X+1]))))
+				&& ((pChar[crTo.X] != L':') || (pChar[crTo.X] == L':' && wcschr(pszDigits, pChar[crTo.X+1]))))
 			{
 				if ((pChar[crTo.X] == L'/') && ((crTo.X+1) < nLen) && (pChar[crTo.X+1] == L'/'))
 				{
 					goto wrap; // Не оно (комментарий в строке)
 				}
-				if (pChar[crTo.X] >= L'0' && pChar[crTo.X] <= L'9')
+
+				if (bWasSeparator && pChar[crTo.X] >= L'0' && pChar[crTo.X] <= L'9')
 				{
 					if (bLineNumberFound)
 					{
@@ -4018,30 +4035,52 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 						crTo.X--;
 						break;
 					}
-					if (!bDigits && (crFrom.X < crTo.X) && (pChar[crTo.X-1] == L':'))
+					if (!bDigits && (crFrom.X < crTo.X) /*&& (pChar[crTo.X-1] == L':')*/)
 					{
 						bDigits = true;
 					}
 				}
 				else
 				{
-					if (pChar[crTo.X] == L':')
+					if (!bExtFound)
 					{
-						if (bDigits)
-						{
+						// Не особо заморачиваясь с точками и прочим. Просто небольшая страховка от ложных срабатываний...
+						bExtFound = (pChar[crTo.X] >= L'a' && pChar[crTo.X] <= L'z') || (pChar[crTo.X] >= L'A' && pChar[crTo.X] <= L'Z');
+					}
+
+					if (bExtFound)
+						bWasSeparator = (wcschr(pszSeparat, pChar[crTo.X]) != NULL);
+
+					if (bDigits && wcschr(pszTermint, pChar[crTo.X]) /*pChar[crTo.X] == L':'*/)
+					{
+						//if (bDigits)
+						//{
 							_ASSERTE(bLineNumberFound==false);
 							bLineNumberFound = true;
-						}
+						//}
 					}
 					bDigits = false;
+
+					if (pChar[crTo.X] == L':')
+						nColons++;
+					else if (pChar[crTo.X] == L'\\' || pChar[crTo.X] == L'/')
+						nColons = 0;
 				}
+
+				if (nColons >= 2)
+					break;
+
 				crTo.X++;
 				if (wcschr(pszBreak, pChar[crTo.X]))
 				{
 					goto wrap; // Не оно
 				}
 			}
-			if (pChar[crTo.X] != L':')
+
+			if (!bLineNumberFound && bDigits)
+				bLineNumberFound = true;
+
+			if (pChar[crTo.X] != L':' || !bLineNumberFound || (nColons > 2))
 			{
 				goto wrap;
 			}
