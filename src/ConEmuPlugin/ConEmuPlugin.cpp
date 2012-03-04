@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define MCHKHEAP
 #define DEBUGSTRMENU(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
-#define DEBUGSTRDLGEVT(s) //OutputDebugStringW(s)
+#define DEBUGSTRDLGEVT(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) DEBUGSTR(s)
 
 
@@ -862,7 +862,7 @@ void DebugInputPrint(INPUT_RECORD r)
 	//		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Unknown event type (%i)\n", r.EventType);
 	//	}
 	//}
-	OutputDebugString(szDbg);
+	DEBUGSTR(szDbg);
 }
 #endif
 
@@ -1354,7 +1354,7 @@ int WINAPI ProcessSynchroEventW(int Event,void *Param)
 
 				wchar_t szDbg[255];
 				_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"FarWindow: %s activated (was %s)\n", pszCurType, pszLastType);
-				OutputDebugStringW(szDbg);
+				DEBUGSTR(szDbg);
 				nLastType = nCurType;
 			}
 		}
@@ -1511,7 +1511,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			//TODO("перенести инициализацию фаровских callback'ов в SetStartupInfo, т.к. будет грузиться как Inject!");
 			//if (!StartupHooks(ghPluginModule)) {
 			//	_ASSERTE(FALSE);
-			//	OutputDebugString(L"!!! Can't install injects!!!\n");
+			//	DEBUGSTR(L"!!! Can't install injects!!!\n");
 			//}
 			// Check Terminal mode
 			TerminalMode = isTerminalMode();
@@ -1538,11 +1538,11 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 					if (ConEmuHwnd)
 					{
 						_ASSERTE(FALSE);
-						OutputDebugString(L"!!! Can't install injects!!!\n");
+						DEBUGSTR(L"!!! Can't install injects!!!\n");
 					}
 					else
 					{
-						OutputDebugString(L"No GUI, injects was not installed!\n");
+						DEBUGSTR(L"No GUI, injects was not installed!\n");
 					}
 				}
 			}
@@ -2135,7 +2135,7 @@ static BOOL ActivatePlugin(
 			if (!gbReqCommandWaiting)
 			{
 				// Значит плагин в основной нити все-таки активировался, подождем еще?
-				OutputDebugString(L"!!! Plugin execute timeout !!!\n");
+				DEBUGSTR(L"!!! Plugin execute timeout !!!\n");
 				nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
 			}
 
@@ -3509,11 +3509,11 @@ void CommonPluginStartup()
 		if (ConEmuHwnd)
 		{
 			_ASSERTE(FALSE);
-			OutputDebugString(L"!!! Can't install injects!!!\n");
+			DEBUGSTR(L"!!! Can't install injects!!!\n");
 		}
 		else
 		{
-			OutputDebugString(L"No GUI, injects was not installed!\n");
+			DEBUGSTR(L"No GUI, injects was not installed!\n");
 		}
 	}
 }

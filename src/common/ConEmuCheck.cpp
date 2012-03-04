@@ -743,14 +743,18 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	if (pOut->hdr.cbSize < cbRead)
 	{
 		CloseHandle(hPipe);
-		OutputDebugString(L"!!! Wrong nSize received from GUI server !!!\n");
+		if (pOut->hdr.cbSize)
+		{
+			_ASSERTE(pOut->hdr.cbSize == 0 || pOut->hdr.cbSize >= cbRead);
+			DEBUGSTR(L"!!! Wrong nSize received from GUI server !!!\n");
+		}
 		return NULL;
 	}
 
 	if (pOut->hdr.nVersion != CESERVER_REQ_VER)
 	{
 		CloseHandle(hPipe);
-		OutputDebugString(L"!!! Wrong nVersion received from GUI server !!!\n");
+		DEBUGSTR(L"!!! Wrong nVersion received from GUI server !!!\n");
 		return NULL;
 	}
 
