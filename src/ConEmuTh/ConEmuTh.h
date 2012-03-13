@@ -231,7 +231,8 @@ extern HANDLE ghDisplayThread; extern DWORD gnDisplayThreadId;
 //extern HWND ghLeftView, ghRightView;
 //extern bool gbWaitForKeySequenceEnd;
 extern DWORD gnWaitForKeySeqTick;
-extern DWORD gnFarPanelSettings, gnFarInterfaceSettings;
+extern CEFarPanelSettings gFarPanelSettings;
+extern CEFarInterfaceSettings gFarInterfaceSettings;
 //class CRgnDetect;
 //extern CRgnDetect *gpRgnDetect;
 

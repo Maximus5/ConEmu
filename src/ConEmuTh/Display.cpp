@@ -1729,8 +1729,8 @@ int CeFullPanelInfo::RegisterPanelView()
 	pvi.tColumnTitle.bConAttr = this->nFarColors[col_PanelColumnTitle];
 	pvi.tColumnTitle.nFlags = PVI_TEXT_CENTER|PVI_TEXT_SKIPSORTMODE;
 	lstrcpyW(pvi.tColumnTitle.sText, (PVM==pvm_Thumbnails) ? gsTitleThumbs : gsTitleTiles);
-	pvi.nFarInterfaceSettings = this->nFarInterfaceSettings;
-	pvi.nFarPanelSettings = this->nFarPanelSettings;
+	pvi.FarInterfaceSettings.Raw = this->FarInterfaceSettings.Raw;
+	pvi.FarPanelSettings.Raw = this->FarPanelSettings.Raw;
 	pvi.PanelRect = this->PanelRect;
 	pvi.pfnPeekPreCall.f = OnPrePeekConsole;
 	pvi.pfnPeekPostCall.f = OnPostPeekConsole;
@@ -1897,8 +1897,8 @@ int CeFullPanelInfo::UnregisterPanelView()
 	//CeFullPanelInfo* pi = abLeft ? &pviLeft : &pviRight;
 	PanelViewInit pvi = {sizeof(PanelViewInit)};
 	pvi.bLeftPanel = this->bLeftPanel;
-	pvi.nFarInterfaceSettings = this->nFarInterfaceSettings;
-	pvi.nFarPanelSettings = this->nFarPanelSettings;
+	pvi.FarInterfaceSettings.Raw = this->FarInterfaceSettings.Raw;
+	pvi.FarPanelSettings.Raw = this->FarPanelSettings.Raw;
 	pvi.PanelRect = this->PanelRect;
 	// Отрегистрироваться
 	pvi.bRegister = FALSE;

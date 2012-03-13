@@ -1966,10 +1966,10 @@ void HSV2RGB(const HSVColor& HSV, RGBColor& rgb)
 // —колько линий в области статуса (без учета рамок)
 int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 {
-	if (!(pBk->nFarPanelSettings & FPS_SHOWSTATUSLINE))
+	if (!(pBk->FarPanelSettings.ShowStatusLine))
 	{
 		// „то-то при запуске (1.7x?) иногда картинки прыгают, как будто статус сразу не нашли
-		_ASSERTE((pBk->nFarPanelSettings & FPS_SHOWSTATUSLINE) == FPS_SHOWSTATUSLINE);
+		_ASSERTE(pBk->FarPanelSettings.ShowStatusLine);
 		return 0;
 	}
 
@@ -1981,7 +1981,7 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 
 	RECT rcPanel = bLeft ? pBk->LeftPanel.rcPanelRect : pBk->RightPanel.rcPanelRect;
 		
-	if ((rcPanel.bottom-rcPanel.top) <= ((pBk->nFarPanelSettings & FPS_SHOWCOLUMNTITLES) ? 5 : 4))
+	if ((rcPanel.bottom-rcPanel.top) <= ((pBk->FarPanelSettings.ShowColumnTitles) ? 5 : 4))
 		return 1; // минимальна€ высота панели
 		
 	COORD bufSize = {(SHORT)(rcPanel.right-rcPanel.left+1),min(10,(SHORT)(rcPanel.bottom-rcPanel.top))};

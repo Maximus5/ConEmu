@@ -335,6 +335,28 @@ void LoadPanelItemInfoW995(CeFullPanelInfo* pi, INT_PTR nItem)
 	//// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
 }
 
+static void LoadFarSettingsW995(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel)
+{
+	DWORD nSet;
+
+	nSet = (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+	if (pInterface)
+	{
+		pInterface->Raw = nSet;
+		_ASSERTE(pInterface->AlwaysShowMenuBar == (int)((nSet & FIS_ALWAYSSHOWMENUBAR) != 0));
+		_ASSERTE(pInterface->ShowKeyBar == (int)((nSet & FIS_SHOWKEYBAR) != 0));
+	}
+	    
+	nSet = (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+	if (pPanel)
+	{
+		pPanel->Raw = nSet;
+		_ASSERTE(pPanel->ShowColumnTitles == (int)((nSet & FPS_SHOWCOLUMNTITLES) != 0));
+		_ASSERTE(pPanel->ShowStatusLine == (int)((nSet & FPS_SHOWSTATUSLINE) != 0));
+		_ASSERTE(pPanel->ShowSortModeLetter == (int)((nSet & FPS_SHOWSORTMODELETTER) != 0));
+	}
+}
+
 BOOL LoadPanelInfo995(BOOL abActive)
 {
 	if (!InfoW995) return FALSE;
@@ -386,10 +408,7 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	pcefpi->PanelMode = pi.ViewMode;
 	pcefpi->IsFilePanel = (pi.PanelType == PTYPE_FILEPANEL);
 	// Настройки интерфейса
-	pcefpi->nFarInterfaceSettings = gnFarInterfaceSettings =
-	                                    (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
-	pcefpi->nFarPanelSettings = gnFarPanelSettings =
-	                                (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+	LoadFarSettingsW995(&pcefpi->FarInterfaceSettings, &pcefpi->FarPanelSettings);
 	// Цвета фара
 	BYTE FarConsoleColors[0x100];
 	INT_PTR nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, FarConsoleColors);
@@ -523,12 +542,9 @@ BOOL CheckPanelSettingsW995(BOOL abSilence)
 	if (!InfoW995)
 		return FALSE;
 
-	gnFarPanelSettings =
-	    (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
-	gnFarInterfaceSettings =
-	    (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+	LoadFarSettingsW995(&gFarInterfaceSettings, &gFarPanelSettings);
 
-	if (!(gnFarPanelSettings & FPS_SHOWCOLUMNTITLES))
+	if (!(gFarPanelSettings.ShowColumnTitles))
 	{
 		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
 		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию

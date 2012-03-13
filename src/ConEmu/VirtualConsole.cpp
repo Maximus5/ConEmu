@@ -5068,9 +5068,9 @@ bool CVirtualConsole::UpdatePanelView(bool abLeftPanel, bool abOnRegister/*=fals
 
 	// Подготовить размеры
 	POINT pt[2];
-	int nTopShift = 1 + ((pp->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) ? 1 : 0); //-V112
+	int nTopShift = 1 + ((pp->FarPanelSettings.ShowColumnTitles) ? 1 : 0); //-V112
 	int nBottomShift = 0;
-	if (mp_RCon && (pp->nFarPanelSettings & 0x40/*FPS_SHOWSTATUSLINE*/))
+	if (mp_RCon && (pp->FarPanelSettings.ShowStatusLine))
 	{
 		nBottomShift = mp_RCon->GetStatusLineCount(pp->PanelRect.left) + 1;
 		if (nBottomShift < 2)
@@ -5191,7 +5191,7 @@ void CVirtualConsole::PolishPanelViews()
 		int nNFore = btNamesColor & 0xF;
 		int nNBack = (btNamesColor & 0xF0) >> 4;
 
-		if ((pp->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) && pp->tColumnTitle.nFlags) //-V112
+		if ((pp->FarPanelSettings.ShowColumnTitles) && pp->tColumnTitle.nFlags) //-V112
 		{
 			LPCWSTR pszNameTitle = pp->tColumnTitle.sText;
 			CharAttr ca; CharAttrFromConAttr(pp->tColumnTitle.bConAttr, &ca);
@@ -5199,7 +5199,7 @@ void CVirtualConsole::PolishPanelViews()
 			int nX1 = rc.left + 1;
 
 			if ((pp->tColumnTitle.nFlags & PVI_TEXT_SKIPSORTMODE)
-			        && (pp->nFarPanelSettings & 0x800/*FPS_SHOWSORTMODELETTER*/))
+			        && (pp->FarPanelSettings.ShowSortModeLetter & 0x800/*FPS_SHOWSORTMODELETTER*/))
 				nX1 += 2;
 
 			int nLineLen = rc.right - nX1;
@@ -5239,7 +5239,7 @@ void CVirtualConsole::PolishPanelViews()
 		pszLine = mpsz_ConChar+TextWidth*(rc.bottom);
 		pAttrs = mpn_ConAttrEx+TextWidth*(rc.bottom);
 
-		if ((pp->nFarPanelSettings & 0x40/*FPS_SHOWSTATUSLINE*/))
+		if ((pp->FarPanelSettings.ShowStatusLine))
 		{
 			for(x = rc.left+1; x < rc.right; x++)
 			{

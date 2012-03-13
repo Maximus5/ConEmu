@@ -4957,6 +4957,14 @@ bool CRealConsole::IsFarHyperlinkAllowed()
 		return false;
 	if (gpSet->isFarGotoEditorVk && !isPressed(gpSet->isFarGotoEditorVk))
 		return false;
+	// Мышка должна быть в пределах окна, иначе фигня получается
+	POINT ptCur = {-1,-1};
+	GetCursorPos(&ptCur);
+	RECT rcWnd = {};
+	GetWindowRect(this->GetView(), &rcWnd);
+	if (!PtInRect(&rcWnd, ptCur))
+		return false;
+	// Можно
 	return true;
 }
 

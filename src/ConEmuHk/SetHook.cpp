@@ -213,6 +213,10 @@ struct HkModuleInfo
 	struct StrAddresses
 	{
 		DWORD_PTR* ppAdr;
+		#ifdef _DEBUG
+		DWORD_PTR ppAdrCopy1, ppAdrCopy2;
+		DWORD_PTR pModulePtr, nModuleSize;
+		#endif
 		DWORD_PTR  pOld;
 		DWORD_PTR  pOur;
 		union {
@@ -344,13 +348,14 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 		{
 			if (!p->bUsed)
 			{
+				p->bUsed = TRUE; // сразу зарезервируем
 				gnHookedModules++;
+				memset(p->Addresses, 0, sizeof(p->Addresses));
 				p->nAdrUsed = 0;
 				p->Hooked = 1;
-				p->hModule = hModule;
 				lstrcpyn(p->sModuleName, sModuleName?sModuleName:L"", countof(p->sModuleName));
-				// bUsed - последним, чтобы не было проблем с другими потоками
-				p->bUsed = TRUE;
+				// hModule - последним, чтобы не было проблем с другими потоками
+				p->hModule = hModule;
 				goto done;
 			}
 			p = p->pNext;
@@ -1590,6 +1595,13 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 						{
 							bFnNeedHook[j] = true;
 							p->Addresses[j].ppAdr = &thunk->u1.Function;
+							#ifdef _DEBUG
+							p->Addresses[j].ppAdrCopy1 = (DWORD_PTR)p->Addresses[j].ppAdr;
+							p->Addresses[j].ppAdrCopy2 = (DWORD_PTR)*p->Addresses[j].ppAdr;
+							p->Addresses[j].pModulePtr = (DWORD_PTR)p->hModule;
+							IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)p->hModule + ((IMAGE_DOS_HEADER*)p->hModule)->e_lfanew);
+							p->Addresses[j].nModuleSize = nt_header->OptionalHeader.SizeOfImage;
+							#endif
 							//Для проверки, а то при UnsetHook("cscapi.dll") почему-то возникла ошибка ERROR_INVALID_PARAMETER в VirtualProtect
 							_ASSERTEX(p->hModule==Module);
 							_ASSERTEX(CheckCallbackPtr(p->hModule, 1, (FARPROC*)&p->Addresses[j].ppAdr, TRUE));
@@ -2045,8 +2057,10 @@ bool UnsetHook(HMODULE Module)
 				if (p->Addresses[i].pOur == 0)
 					continue; // Этот адрес поменять не смогли
 			
+				#ifdef _DEBUG
 				//Для проверки, а то при UnsetHook("cscapi.dll") почему-то возникла ошибка ERROR_INVALID_PARAMETER в VirtualProtect
-				_ASSERTEX(CheckCallbackPtr(p->hModule, 1, (FARPROC*)&p->Addresses[i].ppAdr, TRUE));
+				CheckCallbackPtr(p->hModule, 1, (FARPROC*)&p->Addresses[i].ppAdr, TRUE);
+				#endif
 
 				DWORD old_protect = 0xCDCDCDCD;
 				if (!VirtualProtect(p->Addresses[i].ppAdr, sizeof(*p->Addresses[i].ppAdr),

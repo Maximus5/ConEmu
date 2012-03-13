@@ -1296,7 +1296,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 	}
 	else if (!nX1 && !nY1 && !nY2 && nX2 == nWidth_1)
 	{
-		if ((mp_FarInfo->nFarInterfaceSettings & 0x10/*FIS_ALWAYSSHOWMENUBAR*/) == 0)
+		if ((mp_FarInfo->FarInterfaceSettings.AlwaysShowMenuBar) == 0)
 		{
 			DlgFlags |= FR_ACTIVEMENUBAR;
 		}
@@ -2066,12 +2066,12 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	// 1. UserScreen под ним замен€етс€ на crColorKey
 	// 2. а текст - на пробелы
 	// ѕровер€ть наличие KeyBar по настройкам (Keybar + CmdLine)
-	bShowKeyBar = (mp_FarInfo->nFarInterfaceSettings & 8/*FIS_SHOWKEYBAR*/) != 0;
+	bShowKeyBar = (mp_FarInfo->FarInterfaceSettings.ShowKeyBar) != 0;
 	nBottomLines = bShowKeyBar ? 2 : 1;
 	// ѕровер€ть наличие MenuBar по настройкам
 	// »ли может быть меню сейчас показано?
 	// 1 - при видимом сейчас или посто€нно меню
-	bAlwaysShowMenuBar = (mp_FarInfo->nFarInterfaceSettings & 0x10/*FIS_ALWAYSSHOWMENUBAR*/) != 0;
+	bAlwaysShowMenuBar = (mp_FarInfo->FarInterfaceSettings.AlwaysShowMenuBar) != 0;
 
 	if (bAlwaysShowMenuBar)
 		m_DetectedDialogs.AllFlags |= FR_MENUBAR; // ставим сразу, чтобы детектор панелей не запуталс€

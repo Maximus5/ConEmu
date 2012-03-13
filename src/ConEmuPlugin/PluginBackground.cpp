@@ -335,8 +335,8 @@ bool CPluginBackground::IsParmChanged(struct PaintBackgroundArg* p1, struct Pain
 
 	if (memcmp(&p1->rcConWorkspace, &p2->rcConWorkspace, sizeof(p1->rcConWorkspace))
 	        || memcmp(&p1->conCursor, &p2->conCursor, sizeof(p1->conCursor))
-	        || p1->nFarInterfaceSettings != p2->nFarInterfaceSettings
-	        || p1->nFarPanelSettings != p2->nFarPanelSettings)
+	        || p1->FarInterfaceSettings.Raw != p2->FarInterfaceSettings.Raw
+	        || p1->FarPanelSettings.Raw != p2->FarPanelSettings.Raw)
 		return true;
 
 	if (p1->bPanelsAllowed != p2->bPanelsAllowed)
@@ -503,8 +503,8 @@ void CPluginBackground::UpdateBackground()
 	m_Last.rcDcRight = m_Default.rcDcRight;
 	m_Last.rcConWorkspace = m_Default.rcConWorkspace;
 	m_Last.conCursor = m_Default.conCursor;
-	m_Last.nFarInterfaceSettings = m_Default.nFarInterfaceSettings;
-	m_Last.nFarPanelSettings = m_Default.nFarPanelSettings;
+	m_Last.FarInterfaceSettings.Raw = m_Default.FarInterfaceSettings.Raw;
+	m_Last.FarPanelSettings.Raw = m_Default.FarPanelSettings.Raw;
 	memmove(m_Last.nFarColors, m_Default.nFarColors, sizeof(m_Last.nFarColors));
 	m_Last.bPanelsAllowed = m_Default.bPanelsAllowed;
 	// struct tag_BkPanelInfo

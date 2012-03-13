@@ -984,6 +984,28 @@ void LoadFarColorsA(BYTE (&nFarColors)[col_LastIndex])
 	nFarColors[col_KeyBarNum] = FarConsoleColors[COL_KEYBARNUM];
 }
 
+static void LoadFarSettingsA(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel)
+{
+	DWORD nSet;
+	
+	nSet = (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+	if (pInterface)
+	{
+		pInterface->Raw = nSet;
+		_ASSERTE(pInterface->AlwaysShowMenuBar == (int)((nSet & FIS_ALWAYSSHOWMENUBAR) != 0));
+		_ASSERTE(pInterface->ShowKeyBar == (int)((nSet & FIS_SHOWKEYBAR) != 0));
+	}
+	    
+	nSet = (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+	if (pPanel)
+	{
+		pPanel->Raw = nSet;
+		_ASSERTE(pPanel->ShowColumnTitles == (int)((nSet & FPS_SHOWCOLUMNTITLES) != 0));
+		_ASSERTE(pPanel->ShowStatusLine == (int)((nSet & FPS_SHOWSTATUSLINE) != 0));
+		_ASSERTE(pPanel->ShowSortModeLetter == (int)((nSet & FPS_SHOWSORTMODELETTER) != 0));
+	}
+}
+
 BOOL ReloadFarInfoA(/*BOOL abFull*/)
 {
 	if (!InfoA || !FSFA) return FALSE;
@@ -1020,13 +1042,11 @@ BOOL ReloadFarInfoA(/*BOOL abFull*/)
 	
 	LoadFarColorsA(gpFarInfo->nFarColors);
 
-	_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
-	gpFarInfo->nFarInterfaceSettings =
-	    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
-	gpFarInfo->nFarPanelSettings =
-	    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
-	gpFarInfo->nFarConfirmationSettings =
-	    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
+	//_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
+	LoadFarSettingsA(&gpFarInfo->FarInterfaceSettings, &gpFarInfo->FarPanelSettings);
+
+	//gpFarInfo->nFarConfirmationSettings =
+	//    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
 	
 	gpFarInfo->bMacroActive = IsMacroActiveW995();
 	gpFarInfo->nMacroArea = fma_Unknown; // в Far 1.7x не поддерживается
@@ -1089,10 +1109,8 @@ void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar)
 
 	LoadFarColorsA(pFar->nFarColors);
 
-	pFar->nFarInterfaceSettings =
-	    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
-	pFar->nFarPanelSettings =
-	    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+	LoadFarSettingsA(&pFar->FarInterfaceSettings, &pFar->FarPanelSettings);
+
 	pFar->bPanelsAllowed = (0 != InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0));
 
 	if (pFar->bPanelsAllowed)

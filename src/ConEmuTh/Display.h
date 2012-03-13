@@ -44,8 +44,8 @@ struct CeFullPanelInfo
 	int nYCountFull; // тут четко, кусок иконки не допускается
 	int nYCount; // а тут допускается отображение верхней части иконки
 	//
-	DWORD nFarInterfaceSettings;
-	DWORD nFarPanelSettings;
+	CEFarInterfaceSettings FarInterfaceSettings;
+	CEFarPanelSettings FarPanelSettings;
 	BOOL  bLeftPanel, bPlugin;
 	BOOL IsFilePanel;
 	int PanelMode; // 0..9 - текущий режим панели.

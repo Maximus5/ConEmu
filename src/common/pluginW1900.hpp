@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2460
+  Plugin API for Far Manager 3.0 build 2543
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2460
+#define FARMANAGERVERSION_BUILD 2543
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -918,7 +918,6 @@ typedef BOOL (WINAPI *FARAPISHOWHELP)(
 enum ADVANCED_CONTROL_COMMANDS
 {
 	ACTL_GETFARMANAGERVERSION       = 0,
-	ACTL_GETSYSWORDDIV              = 1,
 	ACTL_WAITKEY                    = 2,
 	ACTL_GETCOLOR                   = 3,
 	ACTL_GETARRAYCOLOR              = 4,
@@ -928,14 +927,7 @@ enum ADVANCED_CONTROL_COMMANDS
 	ACTL_SETCURRENTWINDOW           = 8,
 	ACTL_COMMIT                     = 9,
 	ACTL_GETFARHWND                 = 10,
-	ACTL_GETSYSTEMSETTINGS          = 11,
-	ACTL_GETPANELSETTINGS           = 12,
-	ACTL_GETINTERFACESETTINGS       = 13,
-	ACTL_GETCONFIRMATIONS           = 14,
-	ACTL_GETDESCSETTINGS            = 15,
 	ACTL_SETARRAYCOLOR              = 16,
-	ACTL_GETPLUGINMAXREADDATA       = 17,
-	ACTL_GETDIALOGSETTINGS          = 18,
 	ACTL_REDRAWALL                  = 19,
 	ACTL_SYNCHRO                    = 20,
 	ACTL_SETPROGRESSSTATE           = 21,
@@ -948,82 +940,6 @@ enum ADVANCED_CONTROL_COMMANDS
 	ACTL_GETWINDOWTYPE              = 28,
 
 
-};
-
-enum FarSystemSettings
-{
-	FSS_DELETETORECYCLEBIN             = 0x00000002,
-	FSS_USESYSTEMCOPYROUTINE           = 0x00000004,
-	FSS_COPYFILESOPENEDFORWRITING      = 0x00000008,
-	FSS_CREATEFOLDERSINUPPERCASE       = 0x00000010,
-	FSS_SAVECOMMANDSHISTORY            = 0x00000020,
-	FSS_SAVEFOLDERSHISTORY             = 0x00000040,
-	FSS_SAVEVIEWANDEDITHISTORY         = 0x00000080,
-	FSS_USEWINDOWSREGISTEREDTYPES      = 0x00000100,
-	FSS_AUTOSAVESETUP                  = 0x00000200,
-	FSS_SCANSYMLINK                    = 0x00000400,
-};
-
-enum FarPanelSettings
-{
-	FPS_SHOWHIDDENANDSYSTEMFILES       = 0x00000001,
-	FPS_HIGHLIGHTFILES                 = 0x00000002,
-	FPS_AUTOCHANGEFOLDER               = 0x00000004,
-	FPS_SELECTFOLDERS                  = 0x00000008,
-	FPS_ALLOWREVERSESORTMODES          = 0x00000010,
-	FPS_SHOWCOLUMNTITLES               = 0x00000020,
-	FPS_SHOWSTATUSLINE                 = 0x00000040,
-	FPS_SHOWFILESTOTALINFORMATION      = 0x00000080,
-	FPS_SHOWFREESIZE                   = 0x00000100,
-	FPS_SHOWSCROLLBAR                  = 0x00000200,
-	FPS_SHOWBACKGROUNDSCREENSNUMBER    = 0x00000400,
-	FPS_SHOWSORTMODELETTER             = 0x00000800,
-};
-
-enum FarDialogSettings
-{
-	FDIS_HISTORYINDIALOGEDITCONTROLS    = 0x00000001,
-	FDIS_PERSISTENTBLOCKSINEDITCONTROLS = 0x00000002,
-	FDIS_AUTOCOMPLETEININPUTLINES       = 0x00000004,
-	FDIS_BSDELETEUNCHANGEDTEXT          = 0x00000008,
-	FDIS_DELREMOVESBLOCKS               = 0x00000010,
-	FDIS_MOUSECLICKOUTSIDECLOSESDIALOG  = 0x00000020,
-};
-
-enum FarInterfaceSettings
-{
-	FIS_CLOCKINPANELS                  = 0x00000001,
-	FIS_CLOCKINVIEWERANDEDITOR         = 0x00000002,
-	FIS_MOUSE                          = 0x00000004,
-	FIS_SHOWKEYBAR                     = 0x00000008,
-	FIS_ALWAYSSHOWMENUBAR              = 0x00000010,
-	FIS_SHOWTOTALCOPYPROGRESSINDICATOR = 0x00000100,
-	FIS_SHOWCOPYINGTIMEINFO            = 0x00000200,
-	FIS_USECTRLPGUPTOCHANGEDRIVE       = 0x00000800,
-	FIS_SHOWTOTALDELPROGRESSINDICATOR  = 0x00001000,
-};
-
-enum FarConfirmationsSettings
-{
-	FCS_COPYOVERWRITE                  = 0x00000001,
-	FCS_MOVEOVERWRITE                  = 0x00000002,
-	FCS_DRAGANDDROP                    = 0x00000004,
-	FCS_DELETE                         = 0x00000008,
-	FCS_DELETENONEMPTYFOLDERS          = 0x00000010,
-	FCS_INTERRUPTOPERATION             = 0x00000020,
-	FCS_DISCONNECTNETWORKDRIVE         = 0x00000040,
-	FCS_RELOADEDITEDFILE               = 0x00000080,
-	FCS_CLEARHISTORYLIST               = 0x00000100,
-	FCS_EXIT                           = 0x00000200,
-	FCS_OVERWRITEDELETEROFILES         = 0x00000400,
-};
-
-enum FarDescriptionSettings
-{
-	FDS_UPDATEALWAYS                   = 0x00000001,
-	FDS_UPDATEIFDISPLAYED              = 0x00000002,
-	FDS_SETHIDDEN                      = 0x00000004,
-	FDS_UPDATEREADONLY                 = 0x00000008,
 };
 
 typedef unsigned __int64 FAREJECTMEDIAFLAGS;
@@ -1179,8 +1095,6 @@ struct FarMacroFunction
 {
 	unsigned __int64 Flags;
 	const wchar_t *Name;
-	int nParam;
-	int oParam;
 	const wchar_t *Syntax;
 	const wchar_t *Description;
 };
@@ -1189,9 +1103,9 @@ struct ProcessMacroFuncInfo
 {
 	size_t StructSize;
 	const wchar_t *Name;
-	const struct FarMacroValue *Params;
+	const struct FarMacroValue *Params; // mem: Far
 	int nParams;
-	struct FarMacroValue *Results;
+	struct FarMacroValue *Results; // mem: plugin
 	int nResults;
 };
 
@@ -1207,6 +1121,14 @@ struct ProcessMacroInfo
 	enum FAR_MACROINFOTYPE Type;
 	union {
 		struct ProcessMacroFuncInfo Func;
+		struct __Info {
+			int MacroFunctionNumber;
+			const struct FarMacroFunction *Func;
+		}
+#ifndef __cplusplus
+		Info
+#endif
+		;
 	}
 #ifndef __cplusplus
 	Value
@@ -1247,7 +1169,8 @@ enum WINDOWINFO_TYPE
 typedef unsigned __int64 WINDOWINFO_FLAGS;
 static const WINDOWINFO_FLAGS
 	WIF_MODIFIED = 0x0000000000000001ULL,
-	WIF_CURRENT  = 0x0000000000000002ULL;
+	WIF_CURRENT  = 0x0000000000000002ULL,
+	WIF_MODAL    = 0x0000000000000004ULL;
 
 struct WindowInfo
 {
@@ -1268,13 +1191,13 @@ struct WindowType
 	enum WINDOWINFO_TYPE Type;
 };
 
-enum PROGRESSTATE
+enum TASKBARPROGRESSTATE
 {
-	PS_NOPROGRESS   =0x0,
-	PS_INDETERMINATE=0x1,
-	PS_NORMAL       =0x2,
-	PS_ERROR        =0x4,
-	PS_PAUSED       =0x8,
+	TBPS_NOPROGRESS   =0x0,
+	TBPS_INDETERMINATE=0x1,
+	TBPS_NORMAL       =0x2,
+	TBPS_ERROR        =0x4,
+	TBPS_PAUSED       =0x8,
 };
 
 struct ProgressValue
@@ -1435,12 +1358,12 @@ enum EDITOR_CONTROL_COMMANDS
 	ECTL_GETBOOKMARKS               = 23,
 	ECTL_TURNOFFMARKINGBLOCK        = 24,
 	ECTL_DELETEBLOCK                = 25,
-	ECTL_ADDSTACKBOOKMARK           = 26,
-	ECTL_PREVSTACKBOOKMARK          = 27,
-	ECTL_NEXTSTACKBOOKMARK          = 28,
-	ECTL_CLEARSTACKBOOKMARKS        = 29,
-	ECTL_DELETESTACKBOOKMARK        = 30,
-	ECTL_GETSTACKBOOKMARKS          = 31,
+	ECTL_ADDSESSIONBOOKMARK         = 26,
+	ECTL_PREVSESSIONBOOKMARK        = 27,
+	ECTL_NEXTSESSIONBOOKMARK        = 28,
+	ECTL_CLEARSESSIONBOOKMARKS      = 29,
+	ECTL_DELETESESSIONBOOKMARK      = 30,
+	ECTL_GETSESSIONBOOKMARKS        = 31,
 	ECTL_UNDOREDO                   = 32,
 	ECTL_GETFILENAME                = 33,
 	ECTL_DELCOLOR                   = 34,
@@ -1800,6 +1723,10 @@ enum FARSETTINGS_SUBFOLDERS
 	FSSF_FOLDERSHORTCUT_8           = 14,
 	FSSF_FOLDERSHORTCUT_9           = 15,
 	FSSF_CONFIRMATIONS              = 16,
+	FSSF_SYSTEM                     = 17,
+	FSSF_PANEL                      = 18,
+	FSSF_EDITOR                     = 19,
+	FSSF_SCREEN                     = 20,
 };
 
 enum FAR_PLUGIN_SETTINGS_LOCATION
@@ -1975,10 +1902,16 @@ typedef int (WINAPI *FARSTDLOCALSTRNICMP)(const wchar_t *s1,const wchar_t *s2,in
 
 typedef unsigned __int64 PROCESSNAME_FLAGS;
 static const PROCESSNAME_FLAGS
-	PN_CMPNAME      = 0x0000000000000000ULL,
-	PN_CMPNAMELIST  = 0x0000000000010000ULL,
-	PN_GENERATENAME = 0x0000000000020000ULL,
-	PN_SKIPPATH     = 0x0000000001000000ULL;
+	//             0xFFFF - length
+	//           0xFF0000 - mode
+	// 0xFFFFFFFFFF000000 - flags
+	PN_CMPNAME          = 0x0000000000000000ULL,
+	PN_CMPNAMELIST      = 0x0000000000010000ULL,
+	PN_GENERATENAME     = 0x0000000000020000ULL,
+	PN_CHECKMASK        = 0x0000000000030000ULL,
+
+	PN_SKIPPATH         = 0x0000000001000000ULL,
+	PN_SHOWERRORMESSAGE = 0x0000000002000000ULL;
 
 typedef size_t (WINAPI *FARSTDPROCESSNAME)(const wchar_t *param1, wchar_t *param2, size_t size, PROCESSNAME_FLAGS flags);
 
@@ -2227,8 +2160,7 @@ struct PluginInfo
 	struct PluginMenuItem PluginConfig;
 	const wchar_t *CommandPrefix;
 	/* *** чтобы не было конфликтов с оф.версией фара *** **
-	int MacroFunctionNumber;
-	const struct FarMacroFunction *MacroFunctions;
+	const wchar_t *MacroFunctions;
 	** *** чтобы не было конфликтов с оф.версией фара *** */
 };
 
@@ -2310,6 +2242,7 @@ static const OPERATION_MODES
 	OPM_DESCR      =0x0000000000000020ULL,
 	OPM_QUICKVIEW  =0x0000000000000040ULL,
 	OPM_PGDN       =0x0000000000000080ULL,
+	OPM_COMMANDS   =0x0000000000000100ULL,
 	OPM_NONE       =0;
 
 struct OpenPanelInfo
@@ -2342,6 +2275,13 @@ struct AnalyseInfo
 	void           *Buffer;
 	size_t          BufferSize;
 	OPERATION_MODES OpMode;
+};
+
+struct OpenAnalyseInfo
+{
+	size_t StructSize;
+	struct AnalyseInfo* Info;
+	HANDLE Handle;
 };
 
 struct OpenMacroInfo
@@ -2566,6 +2506,12 @@ struct ClosePanelInfo
 	HANDLE hPanel;
 };
 
+struct CloseAnalyseInfo
+{
+	size_t StructSize;
+	HANDLE Handle;
+};
+
 struct ConfigureInfo
 {
 	size_t StructSize;
@@ -2578,7 +2524,8 @@ extern "C"
 #endif
 // Exported Functions
 
-	int    WINAPI AnalyseW(const struct AnalyseInfo *Info);
+	HANDLE WINAPI AnalyseW(const struct AnalyseInfo *Info);
+	void   WINAPI CloseAnalyseW(const struct CloseAnalyseInfo *Info);
 	void   WINAPI ClosePanelW(const struct ClosePanelInfo *Info);
 	int    WINAPI CompareW(const struct CompareInfo *Info);
 	int    WINAPI ConfigureW(const struct ConfigureInfo *Info);
@@ -2602,7 +2549,7 @@ extern "C"
 	int    WINAPI ProcessPanelEventW(const struct ProcessPanelEventInfo *Info);
 	int    WINAPI ProcessHostFileW(const struct ProcessHostFileInfo *Info);
 	int    WINAPI ProcessPanelInputW(const struct ProcessPanelInputInfo *Info);
-	int    WINAPI ProcessMacroW(const struct ProcessMacroInfo *Info);
+	int    WINAPI ProcessMacroW(struct ProcessMacroInfo *Info);
 	int    WINAPI ProcessConsoleInputW(struct ProcessConsoleInputInfo *Info);
 	/*
 	int    WINAPI ProcessSynchroEventW(const struct ProcessSynchroEventInfo *Info);

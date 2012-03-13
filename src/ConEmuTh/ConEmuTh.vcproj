@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
-	Name="ConEmuTh"
+	Version="9.00"
+	Name="Far.ConEmuTh"
 	ProjectGUID="{60287D73-F658-4414-8C9B-30E1F3E78D05}"
 	RootNamespace="ConEmuTh"
 	Keyword="Win32Proj"

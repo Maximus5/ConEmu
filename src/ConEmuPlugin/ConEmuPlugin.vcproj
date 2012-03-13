@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
-	Name="ConEmuPlugin"
+	Version="9.00"
+	Name="Far.ConEmuPlugin"
 	ProjectGUID="{21152801-8744-4787-83F4-BE4564A367B4}"
 	RootNamespace="ConEmuPlugin"
 	Keyword="Win32Proj"

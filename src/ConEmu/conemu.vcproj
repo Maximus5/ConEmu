@@ -225,7 +225,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib Netapi32.lib"
-				OutputFile="C:\Tools\Utils\Far\ConEmu.exe"
+				OutputFile="C:\Tools\Utils\Far\conemu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"

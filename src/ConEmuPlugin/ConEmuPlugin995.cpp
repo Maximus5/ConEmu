@@ -1065,6 +1065,28 @@ void LoadFarColorsW995(BYTE (&nFarColors)[col_LastIndex])
 	nFarColors[col_KeyBarNum] = FarConsoleColors[COL_KEYBARNUM];
 }
 
+static void LoadFarSettingsW995(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel)
+{
+	DWORD nSet;
+
+	nSet = (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+	if (pInterface)
+	{
+		pInterface->Raw = nSet;
+		_ASSERTE(pInterface->AlwaysShowMenuBar == (int)((nSet & FIS_ALWAYSSHOWMENUBAR) != 0));
+		_ASSERTE(pInterface->ShowKeyBar == (int)((nSet & FIS_SHOWKEYBAR) != 0));
+	}
+	    
+	nSet = (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+	if (pPanel)
+	{
+		pPanel->Raw = nSet;
+		_ASSERTE(pPanel->ShowColumnTitles == (int)((nSet & FPS_SHOWCOLUMNTITLES) != 0));
+		_ASSERTE(pPanel->ShowStatusLine == (int)((nSet & FPS_SHOWSTATUSLINE) != 0));
+		_ASSERTE(pPanel->ShowSortModeLetter == (int)((nSet & FPS_SHOWSORTMODELETTER) != 0));
+	}
+}
+
 BOOL ReloadFarInfoW995(/*BOOL abFull*/)
 {
 	if (!InfoW995 || !FSFW995) return FALSE;
@@ -1101,13 +1123,11 @@ BOOL ReloadFarInfoW995(/*BOOL abFull*/)
 	
 	LoadFarColorsW995(gpFarInfo->nFarColors);
 
-	_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
-	gpFarInfo->nFarInterfaceSettings =
-	    (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
-	gpFarInfo->nFarPanelSettings =
-	    (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
-	gpFarInfo->nFarConfirmationSettings =
-	    (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
+	//_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
+	LoadFarSettingsW995(&gpFarInfo->FarInterfaceSettings, &gpFarInfo->FarPanelSettings);
+
+	//gpFarInfo->nFarConfirmationSettings =
+	//    (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
 
 	gpFarInfo->bMacroActive = IsMacroActiveW995();
 	ActlKeyMacro area = {MCMD_GETAREA};
@@ -1245,10 +1265,8 @@ void FillUpdateBackgroundW995(struct PaintBackgroundArg* pFar)
 
 	LoadFarColorsW995(pFar->nFarColors);
 
-	pFar->nFarInterfaceSettings =
-	    (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
-	pFar->nFarPanelSettings =
-	    (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+	LoadFarSettingsW995(&pFar->FarInterfaceSettings, &pFar->FarPanelSettings);
+
 	pFar->bPanelsAllowed = (0 != InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0, 0));
 
 	if (pFar->bPanelsAllowed)

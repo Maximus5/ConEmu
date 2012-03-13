@@ -102,7 +102,8 @@ SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 // *** lng resources begin ***
 wchar_t gsFolder[64], gsHardLink[64], gsSymLink[64], gsJunction[64], gsTitleThumbs[64], gsTitleTiles[64];
 // *** lng resources end ***
-DWORD gnFarPanelSettings = 0, gnFarInterfaceSettings = 0;
+CEFarPanelSettings gFarPanelSettings = {};
+CEFarInterfaceSettings gFarInterfaceSettings = {};
 
 //bool gbWaitForKeySequenceEnd = false;
 DWORD gnWaitForKeySeqTick = 0;
@@ -1030,8 +1031,8 @@ void ReloadPanelsInfo()
 	_ASSERTE(countof(p->nFarColors)==countof(gFarInfo.nFarColors) && sizeof(*p->nFarColors) == sizeof(*gFarInfo.nFarColors));
 	memmove(gFarInfo.nFarColors, p->nFarColors, sizeof(gFarInfo.nFarColors));
 
-	gFarInfo.nFarInterfaceSettings = p->nFarInterfaceSettings;
-	gFarInfo.nFarPanelSettings = p->nFarPanelSettings;
+	gFarInfo.FarInterfaceSettings.Raw = p->FarInterfaceSettings.Raw;
+	gFarInfo.FarPanelSettings.Raw = p->FarPanelSettings.Raw;
 	gFarInfo.bFarPanelAllowed = TRUE;
 	// Положения панелей
 	gFarInfo.bFarLeftPanel = pviLeft.Visible;

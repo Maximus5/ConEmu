@@ -128,7 +128,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         if (!bResult)
         {
 			dwErr = GetLastError();
-            DisplayLastError(L"Error in execution of SetGestureConfig");
+            DisplayLastError(L"Error in execution of SetGestureConfig", dwErr);
         }
 
 		lResult = ::DefWindowProc(hWnd, WM_GESTURENOTIFY, wParam, lParam);
@@ -137,19 +137,20 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	}
 
 	// Остался только WM_GESTURE
-	_ASSERTE(uMsg==WM_GESTURE);
+	MBoxAssert(uMsg==WM_GESTURE);
 
     // helper variables
     POINT ptZoomCenter;
     double k;
 
-    GESTUREINFO gi;
-    gi.cbSize = sizeof(gi);
+	GESTUREINFO gi = {sizeof(gi)};
     BOOL bResult = _GetGestureInfo((HGESTUREINFO)lParam, &gi);
 
     if (!bResult)
     {
-        _ASSERT(L"_GetGestureInfo failed!" && 0);
+        //_ASSERT(L"_GetGestureInfo failed!" && 0);
+		DWORD dwErr = GetLastError();
+        DisplayLastError(L"Error in execution of _GetGestureInfo", dwErr);
         return FALSE;
     }
 

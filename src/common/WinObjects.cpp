@@ -646,7 +646,10 @@ BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 	if (abCheckModuleInfo)
 	{
 		if (!IsModuleValid(hModule))
+		{
+			_ASSERTE("!IsModuleValid(hModule)" && 0);
 			return FALSE;
+		}
 
 		IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)hModule + ((IMAGE_DOS_HEADER*)hModule)->e_lfanew);
 

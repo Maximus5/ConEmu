@@ -580,6 +580,9 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 			InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
 			WARNING("Для получения имени нужно пользовать ECTL_GETFILENAME");
 
+			// Проверить, чего там...
+			_ASSERTE((WInfo.Flags & WIF_MODAL) == 0);
+
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 			{
 				if ((WInfo.Flags & WIF_CURRENT)) lbActiveFound = TRUE;
@@ -613,6 +616,9 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 		if (InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo))
 		{
+			// Проверить, чего там...
+			_ASSERTE((WInfo.Flags & WIF_MODAL) == 0);
+
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
 			{
 				WInfo.Pos = -1;
@@ -1131,6 +1137,48 @@ void LoadFarColorsW1900(BYTE (&nFarColors)[col_LastIndex])
 	SafeFree(pColors);
 }
 
+static int GetFarSetting(HANDLE h, size_t Root, LPCWSTR Name)
+{
+	int nValue = 0;
+	FarSettingsItem fsi = {Root, Name};
+	if (InfoW1900->SettingsControl(h, SCTL_GET, 0, &fsi))
+	{
+		_ASSERTE(fsi.Type == FST_QWORD);
+		nValue = (fsi.Number != 0);
+	}
+	else
+	{
+		_ASSERTE("InfoW1900->SettingsControl failed" && 0);
+	}
+	return nValue;
+}
+
+static void LoadFarSettingsW1900(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel)
+{
+	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+	GUID FarGuid = {};
+	FarSettingsCreate sc = {sizeof(FarSettingsCreate), FarGuid, INVALID_HANDLE_VALUE};
+	if (InfoW1900->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
+	{
+		if (pInterface)
+		{
+			memset(pInterface, 0, sizeof(*pInterface));
+			pInterface->AlwaysShowMenuBar = GetFarSetting(sc.Handle, FSSF_SCREEN, L"ShowMenuBar");
+			pInterface->ShowKeyBar = GetFarSetting(sc.Handle, FSSF_SCREEN, L"KeyBar");
+		}
+
+		if (pPanel)
+		{
+			memset(pPanel, 0, sizeof(*pPanel));
+			pPanel->ShowColumnTitles = GetFarSetting(sc.Handle, FSSF_PANEL, L"ColumnTitles");
+			pPanel->ShowStatusLine = GetFarSetting(sc.Handle, FSSF_PANEL, L"StatusLine");
+			pPanel->ShowSortModeLetter = GetFarSetting(sc.Handle, FSSF_PANEL, L"SortMode");
+		}
+
+		InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
+	}
+}
+
 BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 {
 	if (!InfoW1900 || !FSFW1900) return FALSE;
@@ -1167,13 +1215,15 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 
 	LoadFarColorsW1900(gpFarInfo->nFarColors);
 
-	_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
-	gpFarInfo->nFarInterfaceSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0, 0);
-	gpFarInfo->nFarPanelSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETPANELSETTINGS, 0, 0);
-	gpFarInfo->nFarConfirmationSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETCONFIRMATIONS, 0, 0);
+	//_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
+	//gpFarInfo->FarInterfaceSettings =
+	//    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0, 0);
+	//gpFarInfo->nFarPanelSettings =
+	//    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETPANELSETTINGS, 0, 0);
+	//gpFarInfo->nFarConfirmationSettings =
+	//    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETCONFIRMATIONS, 0, 0);
+
+	LoadFarSettingsW1900(&gpFarInfo->FarInterfaceSettings, &gpFarInfo->FarPanelSettings);
 
 	gpFarInfo->bMacroActive = IsMacroActiveW1900();
 	INT_PTR nArea = InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETAREA, 0, 0);
@@ -1319,10 +1369,8 @@ void FillUpdateBackgroundW1900(struct PaintBackgroundArg* pFar)
 
 	LoadFarColorsW1900(pFar->nFarColors);
 
-	pFar->nFarInterfaceSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0, 0);
-	pFar->nFarPanelSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETPANELSETTINGS, 0, 0);
+	LoadFarSettingsW1900(&pFar->FarInterfaceSettings, &pFar->FarPanelSettings);
+
 	pFar->bPanelsAllowed = (0 != InfoW1900->PanelControl(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0, 0));
 
 	if (pFar->bPanelsAllowed)

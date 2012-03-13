@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    83
+#define CESERVER_REQ_VER    84
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -414,6 +414,39 @@ struct ConEmuMainFont
 	DWORD nBorderFontWidth;
 };
 
+
+//DWORD nFarInterfaceSettings;
+struct CEFarInterfaceSettings
+{
+	union
+	{
+		struct
+		{
+			int Reserved1         : 3; // FIS_CLOCKINPANELS и т.п.
+			int ShowKeyBar        : 1; // FIS_SHOWKEYBAR
+			int AlwaysShowMenuBar : 1; // FIS_ALWAYSSHOWMENUBAR
+		};
+		DWORD Raw;
+	};
+};
+//DWORD nFarPanelSettings;
+struct CEFarPanelSettings
+{
+	union
+	{
+		struct
+		{
+			int Reserved1          : 5; // FPS_SHOWHIDDENANDSYSTEMFILES и т.п
+			int ShowColumnTitles   : 1; // FPS_SHOWCOLUMNTITLES
+			int ShowStatusLine     : 1; // FPS_SHOWSTATUSLINE
+			int Reserved2          : 4; // FPS_SHOWFILESTOTALINFORMATION и т.п.
+			int ShowSortModeLetter : 1; // FPS_SHOWSORTMODELETTER
+		};
+		DWORD Raw;
+	};
+};
+
+
 struct PanelViewSetMapping
 {
 	DWORD cbSize; // Struct size, на всякий случай
@@ -500,8 +533,8 @@ struct PanelViewInit
 #define PVI_COVER_CONSOLE_OVER   0x040 // Консоль целиком
 	DWORD nCoverFlags;
 	// FAR settings
-	DWORD nFarInterfaceSettings;
-	DWORD nFarPanelSettings;
+	CEFarInterfaceSettings FarInterfaceSettings;
+	CEFarPanelSettings FarPanelSettings;
 	// Координаты всей панели (левой, правой, или fullscreen)
 	RECT  PanelRect;
 	// Разнообразные текстовые затиралки
@@ -585,8 +618,8 @@ struct PaintBackgroundArg
 	// Для облегчения жизни плагинам - текущие параметры FAR
 	RECT rcConWorkspace; // Кооринаты рабочей области FAR. В FAR 2 с ключом /w верх может быть != {0,0}
 	COORD conCursor; // положение курсора, или {-1,-1} если он не видим
-	DWORD nFarInterfaceSettings; // ACTL_GETINTERFACESETTINGS
-	DWORD nFarPanelSettings; // ACTL_GETPANELSETTINGS
+	CEFarInterfaceSettings FarInterfaceSettings; // ACTL_GETINTERFACESETTINGS
+	CEFarPanelSettings FarPanelSettings; // ACTL_GETPANELSETTINGS
 	BYTE nFarColors[col_LastIndex]; // Массив цветов фара
 
 	// Инфорация о панелях
@@ -919,9 +952,11 @@ struct CEFAR_INFO_MAPPING
 	DWORD nProtocolVersion; // == CESERVER_REQ_VER
 	DWORD nFarPID, nFarTID;
 	BYTE nFarColors[col_LastIndex]; // Массив цветов фара
-	DWORD nFarInterfaceSettings;
-	DWORD nFarPanelSettings;
-	DWORD nFarConfirmationSettings;
+	//DWORD nFarInterfaceSettings;
+	CEFarInterfaceSettings FarInterfaceSettings;
+	//DWORD nFarPanelSettings;
+	CEFarPanelSettings FarPanelSettings;
+	//DWORD nFarConfirmationSettings;
 	BOOL  bFarPanelAllowed; // FCTL_CHECKPANELSEXIST
 	// Текущая область в фаре
 	CEFAR_MACRO_AREA nMacroArea;
@@ -1102,7 +1137,8 @@ struct CESERVER_REQ_GUICHANGED
 struct CESERVER_REQ_FAREDITOR
 {
 	DWORD cbSize; // страховка
-	int nLine;
+	int nLine;    // 1-based
+	int nColon;   // 1-based
 	wchar_t szFile[MAX_PATH+1];
 };
 

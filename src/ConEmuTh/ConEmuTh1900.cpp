@@ -431,6 +431,48 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, INT_PTR nItem)
 	//// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
 }
 
+static int GetFarSetting(HANDLE h, size_t Root, LPCWSTR Name)
+{
+	int nValue = 0;
+	FarSettingsItem fsi = {Root, Name};
+	if (InfoW1900->SettingsControl(h, SCTL_GET, 0, &fsi))
+	{
+		_ASSERTE(fsi.Type == FST_QWORD);
+		nValue = (fsi.Number != 0);
+	}
+	else
+	{
+		_ASSERTE("InfoW1900->SettingsControl failed" && 0);
+	}
+	return nValue;
+}
+
+static void LoadFarSettingsW1900(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel)
+{
+	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+	GUID FarGuid = {};
+	FarSettingsCreate sc = {sizeof(FarSettingsCreate), FarGuid, INVALID_HANDLE_VALUE};
+	if (InfoW1900->SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &sc))
+	{
+		if (pInterface)
+		{
+			memset(pInterface, 0, sizeof(*pInterface));
+			pInterface->AlwaysShowMenuBar = GetFarSetting(sc.Handle, FSSF_SCREEN, L"ShowMenuBar");
+			pInterface->ShowKeyBar = GetFarSetting(sc.Handle, FSSF_SCREEN, L"KeyBar");
+		}
+
+		if (pPanel)
+		{
+			memset(pPanel, 0, sizeof(*pPanel));
+			pPanel->ShowColumnTitles = GetFarSetting(sc.Handle, FSSF_PANEL, L"ColumnTitles");
+			pPanel->ShowStatusLine = GetFarSetting(sc.Handle, FSSF_PANEL, L"StatusLine");
+			pPanel->ShowSortModeLetter = GetFarSetting(sc.Handle, FSSF_PANEL, L"SortMode");
+		}
+
+		InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
+	}
+}
+
 BOOL LoadPanelInfoW1900(BOOL abActive)
 {
 	if (!InfoW1900) return FALSE;
@@ -482,10 +524,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	pcefpi->PanelMode = pi.ViewMode;
 	pcefpi->IsFilePanel = (pi.PanelType == PTYPE_FILEPANEL);
 	// Настройки интерфейса
-	pcefpi->nFarInterfaceSettings = gnFarInterfaceSettings =
-	                                    (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETINTERFACESETTINGS, 0, 0);
-	pcefpi->nFarPanelSettings = gnFarPanelSettings =
-	                                (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETPANELSETTINGS, 0, 0);
+	LoadFarSettingsW1900(&pcefpi->FarInterfaceSettings, &pcefpi->FarPanelSettings);
 
 	// Цвета фара
 	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETARRAYCOLOR, 0, NULL);
@@ -657,12 +696,9 @@ BOOL CheckPanelSettingsW1900(BOOL abSilence)
 	if (!InfoW1900)
 		return FALSE;
 
-	gnFarPanelSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETPANELSETTINGS, 0, 0);
-	gnFarInterfaceSettings =
-	    (DWORD)InfoW1900->AdvControl(&guid_ConEmuTh, ACTL_GETINTERFACESETTINGS, 0, 0);
+	LoadFarSettingsW1900(&gFarInterfaceSettings, &gFarPanelSettings);
 
-	if (!(gnFarPanelSettings & FPS_SHOWCOLUMNTITLES))
+	if (!(gFarPanelSettings.ShowColumnTitles))
 	{
 		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
 		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию

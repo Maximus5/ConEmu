@@ -1995,8 +1995,12 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 				szText[nLen] = 0;
 				nLen--;
 			}
-			while ((nLen > 0) && (szText[nLen-1] >= L'0') && (szText[nLen-1] <= L'9'))
+			while ((nLen > 0)
+				&& ((szText[nLen-1] >= L'0') && (szText[nLen-1] <= L'9'))
+					|| ((szText[nLen-1] == L',') && ((szText[nLen] >= L'0') && (szText[nLen] <= L'9'))))
+			{
 				nLen--;
+			}
 			if (nLen < 3)
 			{
 				_ASSERTE(nLen >= 3);
@@ -2005,6 +2009,10 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 			{ // 1.c:3: 
 				wchar_t* pszEnd;
 				cmd.nLine = wcstol(szText+nLen, &pszEnd, 10);
+				if (pszEnd && (*pszEnd == L',') && isDigit(*(pszEnd+1)))
+					cmd.nColon = wcstol(pszEnd+1, &pszEnd, 10);
+				if (cmd.nColon < 1)
+					cmd.nColon = 1;
 				szText[nLen-1] = 0;
 				while ((pszEnd = wcschr(szText, L'/')) != NULL)
 					*pszEnd = L'\\'; // заменить прямые слеши на обратные
@@ -2031,9 +2039,9 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 					{
 						wchar_t szMacro[96];
 						if (mp_RCon->m_FarInfo.FarVer.dwVerMajor == 1)
-							_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i\" Enter $end", cmd.nLine);
+							_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i:%i\" Enter $end", cmd.nLine, cmd.nColon);
 						else
-							_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 print(\"%i\") Enter $end", cmd.nLine);
+							_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 print(\"%i:%i\") Enter $end", cmd.nLine, cmd.nColon);
 						_ASSERTE(pVCon!=NULL);
 
 						// -- Послать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
@@ -3515,9 +3523,9 @@ void CRealBuffer::FindPanels()
 			pFar = &mp_RCon->m_FarInfo;
 			if (pFar)
 			{
-				if ((pFar->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) == 0) //-V112
+				if ((pFar->FarPanelSettings.ShowColumnTitles) == 0) //-V112
 					bFarShowColNames = FALSE;
-				if ((pFar->nFarPanelSettings & 0x40/*FPS_SHOWSTATUSLINE*/) == 0)
+				if ((pFar->FarPanelSettings.ShowStatusLine) == 0)
 					bFarShowStatus = FALSE;
 			}
 		}
@@ -3979,12 +3987,14 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 			const wchar_t* pszSeparat = L" \t:(";
 			const wchar_t* pszTermint = L":)";
 			const wchar_t* pszDigits  = L"0123456789";
+			const wchar_t* pszSlashes = L"/\\";
 			int nColons = 0;
 			// Курсор над комментарием?
 			// Попробуем найти начало имени файла
 			while ((crFrom.X) > 0 && !wcschr(pszBreak, pChar[crFrom.X-1]))
 			{
-				if ((pChar[crFrom.X] == L'/') && (crFrom.X > 1) && (pChar[crFrom.X-1] == L'/'))
+				if ((pChar[crFrom.X] == L'/') && (crFrom.X >= 1) && (pChar[crFrom.X-1] == L'/')
+					&& !((crTo.X > 1) && (pChar[crTo.X] == L':'))) // и НЕ URL адрес
 				{	
 					crFrom.X++;
 					break; // Комментарий в строке?
@@ -3995,10 +4005,15 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 					goto wrap; // Не оно
 				}
 			}
+			while (((crFrom.X+1) < nLen) && wcschr(pszSpacing, pChar[crFrom.X]))
+				crFrom.X++;
 			if (crFrom.X > crTo.X)
 			{
 				goto wrap; // Fail?
 			}
+
+			// Чтобы корректно флаги обработались (типа наличие расширения и т.п.)
+			crTo.X = crFrom.X;
 
 			// Теперь - найти конец. Считаем, что конец это двоеточие, после которого идет описание ошибки
 
@@ -4010,23 +4025,36 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 			// ConEmuC.cpp:49: error: 'qqq' does not name a type
 			// 1.c:3: some message
 			// file.cpp:29:29: error
+			// Delphi
+			// T:\VCProject\FarPlugin\$FarPlugins\MaxRusov\far-plugins-read-only\FarLib\FarCtrl.pas(1002) Error: Undeclared identifier: 'PCTL_GETPLUGININFO'
+			// FPC
+			// FarCtrl.pas(1002,49) Error: Identifier not found "PCTL_GETPLUGININFO"
+			// -- Possible?
+			// abc.py (3): some message
+			// -- URL's
+			// file://c:\temp\qqq.html
+			// http://www.farmanager.com
 			// -- False detects
 			// 29.11.2011 18:31:47
+			// C:\VC\unicode_far\macro.cpp  1251 Ln 5951/8291 Col 51 Ch 39 0043h 13:54
 
 			bool bDigits = false, bLineNumberFound = false, bWasSeparator = false;
 			// Нас на интересуют строки типа "11.05.2010 10:20:35"
 			// В имени файла должна быть хотя бы одна буква (расширение), причем английская
-			bool bExtFound = false;
+			int iExtFound = 0;
 			// Поехали
-			while (((crTo.X+1) < nLen)
-				&& ((pChar[crTo.X] != L':') || (pChar[crTo.X] == L':' && wcschr(pszDigits, pChar[crTo.X+1]))))
+			while ((crTo.X+1) < nLen)
+				//&& ((pChar[crTo.X] != L':') || (pChar[crTo.X] == L':' && wcschr(pszDigits, pChar[crTo.X+1]))))
 			{
-				if ((pChar[crTo.X] == L'/') && ((crTo.X+1) < nLen) && (pChar[crTo.X+1] == L'/'))
+				if ((pChar[crTo.X] == L'/') && ((crTo.X+1) < nLen) && (pChar[crTo.X+1] == L'/')
+					&& !((crTo.X > 1) && (pChar[crTo.X] == L':'))) // и НЕ URL адрес
 				{
 					goto wrap; // Не оно (комментарий в строке)
 				}
 
-				if (bWasSeparator && pChar[crTo.X] >= L'0' && pChar[crTo.X] <= L'9')
+				if (bWasSeparator 
+					&& ((pChar[crTo.X] >= L'0' && pChar[crTo.X] <= L'9')
+						|| (bDigits && (pChar[crTo.X] == L',')))) // FarCtrl.pas(1002,49) Error: 
 				{
 					if (bLineNumberFound)
 					{
@@ -4042,14 +4070,32 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 				}
 				else
 				{
-					if (!bExtFound)
+					if (iExtFound != 2)
 					{
-						// Не особо заморачиваясь с точками и прочим. Просто небольшая страховка от ложных срабатываний...
-						bExtFound = (pChar[crTo.X] >= L'a' && pChar[crTo.X] <= L'z') || (pChar[crTo.X] >= L'A' && pChar[crTo.X] <= L'Z');
+						if (!iExtFound)
+						{
+							if (pChar[crTo.X] == L'.')
+								iExtFound = 1;
+						}
+						else
+						{
+							// Не особо заморачиваясь с точками и прочим. Просто небольшая страховка от ложных срабатываний...
+							if ((pChar[crTo.X] >= L'a' && pChar[crTo.X] <= L'z') || (pChar[crTo.X] >= L'A' && pChar[crTo.X] <= L'Z'))
+								iExtFound = 2;
+						}
 					}
 
-					if (bExtFound)
-						bWasSeparator = (wcschr(pszSeparat, pChar[crTo.X]) != NULL);
+					if (iExtFound == 2)
+					{
+						if (wcschr(pszSlashes, pChar[crTo.X]) != NULL)
+						{
+							// Был слеш, значит расширения - еще нет
+							iExtFound = 0;
+							bWasSeparator = false;
+						}
+						else
+							bWasSeparator = (wcschr(pszSeparat, pChar[crTo.X]) != NULL);
+					}
 
 					if (bDigits && wcschr(pszTermint, pChar[crTo.X]) /*pChar[crTo.X] == L':'*/)
 					{
@@ -4057,6 +4103,7 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 						//{
 							_ASSERTE(bLineNumberFound==false);
 							bLineNumberFound = true;
+							break; // found?
 						//}
 					}
 					bDigits = false;
@@ -4080,11 +4127,12 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 			if (!bLineNumberFound && bDigits)
 				bLineNumberFound = true;
 
-			if (pChar[crTo.X] != L':' || !bLineNumberFound || (nColons > 2))
+			if ((pChar[crTo.X] != L':' && pChar[crTo.X] != L' ' && pChar[crTo.X] != L')') || !bLineNumberFound || (nColons > 2))
 			{
 				goto wrap;
 			}
-			crTo.X--;
+			if (pChar[crTo.X] != L')')
+				crTo.X--;
 			// Откатить ненужные пробелы
 			while ((crFrom.X < crTo.X) && wcschr(pszSpacing, pChar[crFrom.X]))
 				crFrom.X++;
