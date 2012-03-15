@@ -569,8 +569,9 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 
 	WindowInfo WActive = {sizeof(WActive)};
-	WInfo.Pos = -1;
+	WActive.Pos = -1;
 	bool bActiveInfo = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WActive)!=0;
+	_ASSERTE(bActiveInfo && (WActive.Flags & WIF_CURRENT));
 
 
 	for (int i = 0; i < windowCount; i++)
@@ -593,7 +594,7 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 			{
 				if ((WInfo.Flags & WIF_CURRENT))
 					lbActiveFound = TRUE;
-				else if (bActiveInfo && (WInfo.Id == WActive.Id))
+				else if (bActiveInfo && (WInfo.Type == WActive.Type) && (WInfo.Id == WActive.Id))
 				{
 					WInfo.Flags |= WIF_CURRENT;
 					lbActiveFound = TRUE;
@@ -1179,16 +1180,16 @@ static void LoadFarSettingsW1900(CEFarInterfaceSettings* pInterface, CEFarPanelS
 		if (pInterface)
 		{
 			memset(pInterface, 0, sizeof(*pInterface));
-			pInterface->AlwaysShowMenuBar = GetFarSetting(sc.Handle, FSSF_SCREEN, L"ShowMenuBar");
+			pInterface->AlwaysShowMenuBar = GetFarSetting(sc.Handle, FSSF_INTERFACE, L"ShowMenuBar");
 			pInterface->ShowKeyBar = GetFarSetting(sc.Handle, FSSF_SCREEN, L"KeyBar");
 		}
 
 		if (pPanel)
 		{
 			memset(pPanel, 0, sizeof(*pPanel));
-			pPanel->ShowColumnTitles = GetFarSetting(sc.Handle, FSSF_PANEL, L"ColumnTitles");
-			pPanel->ShowStatusLine = GetFarSetting(sc.Handle, FSSF_PANEL, L"StatusLine");
-			pPanel->ShowSortModeLetter = GetFarSetting(sc.Handle, FSSF_PANEL, L"SortMode");
+			pPanel->ShowColumnTitles = GetFarSetting(sc.Handle, FSSF_PANELLAYOUT, L"ColumnTitles");
+			pPanel->ShowStatusLine = GetFarSetting(sc.Handle, FSSF_PANELLAYOUT, L"StatusLine");
+			pPanel->ShowSortModeLetter = GetFarSetting(sc.Handle, FSSF_PANELLAYOUT, L"SortMode");
 		}
 
 		InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);

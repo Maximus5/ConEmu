@@ -1983,88 +1983,99 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 		}
 	}
 	
-	if (rc == etr_FileAndLine)
+	if ((rc == etr_FileAndLine) || (rc == etr_Url))
 	{
 		if ((messg == WM_LBUTTONDOWN) && *szText)
 		{
-			// Найти номер строки
-			CESERVER_REQ_FAREDITOR cmd = {sizeof(cmd)};
-			int nLen = lstrlen(szText)-1;
-			if (szText[nLen] == L')')
+			if (rc == etr_Url)
 			{
-				szText[nLen] = 0;
-				nLen--;
-			}
-			while ((nLen > 0)
-				&& ((szText[nLen-1] >= L'0') && (szText[nLen-1] <= L'9'))
-					|| ((szText[nLen-1] == L',') && ((szText[nLen] >= L'0') && (szText[nLen] <= L'9'))))
-			{
-				nLen--;
-			}
-			if (nLen < 3)
-			{
-				_ASSERTE(nLen >= 3);
-			}
-			else
-			{ // 1.c:3: 
-				wchar_t* pszEnd;
-				cmd.nLine = wcstol(szText+nLen, &pszEnd, 10);
-				if (pszEnd && (*pszEnd == L',') && isDigit(*(pszEnd+1)))
-					cmd.nColon = wcstol(pszEnd+1, &pszEnd, 10);
-				if (cmd.nColon < 1)
-					cmd.nColon = 1;
-				szText[nLen-1] = 0;
-				while ((pszEnd = wcschr(szText, L'/')) != NULL)
-					*pszEnd = L'\\'; // заменить прямые слеши на обратные
-				lstrcpyn(cmd.szFile, szText, countof(cmd.szFile));
-				
-				TODO("Для удобства, если лог открыт в редакторе, или пропустить мышь, или позвать макрос");
-				// Только нужно учесть, что текущий таб может быть редактором, но открыт UserScreen (CtrlO)
-				
-				// Проверить, может уже открыт таб с этим файлом?
-				LPCWSTR pszFileName = wcsrchr(cmd.szFile, L'\\');
-				if (!pszFileName) pszFileName = cmd.szFile; else pszFileName++;
-				CVirtualConsole* pVCon = NULL;
-				int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(3/*Редактор*/, pszFileName, &pVCon);
-				
-				if (liActivated == -2)
+				int iRc = (int)ShellExecute(ghWnd, L"open", szText, NULL, NULL, SW_SHOWNORMAL);
+				if (iRc <= 32)
 				{
-					// Нашли, но активировать нельзя
-					_ASSERTE(FALSE);
+					DisplayLastError(szText, iRc, MB_ICONSTOP, L"URL open failed");
 				}
-				else if (liActivated >= 0)
+			}
+			else if (rc == etr_FileAndLine)
+			{
+				// Найти номер строки
+				CESERVER_REQ_FAREDITOR cmd = {sizeof(cmd)};
+				int nLen = lstrlen(szText)-1;
+				if (szText[nLen] == L')')
 				{
-					// Нашли, активировали, нужно только на строку перейти
-					if (cmd.nLine > 0)
+					szText[nLen] = 0;
+					nLen--;
+				}
+				while ((nLen > 0)
+					&& ((szText[nLen-1] >= L'0') && (szText[nLen-1] <= L'9'))
+						|| ((szText[nLen-1] == L',') && ((szText[nLen] >= L'0') && (szText[nLen] <= L'9'))))
+				{
+					nLen--;
+				}
+				if (nLen < 3)
+				{
+					_ASSERTE(nLen >= 3);
+				}
+				else
+				{ // 1.c:3: 
+					wchar_t* pszEnd;
+					cmd.nLine = wcstol(szText+nLen, &pszEnd, 10);
+					if (pszEnd && (*pszEnd == L',') && isDigit(*(pszEnd+1)))
+						cmd.nColon = wcstol(pszEnd+1, &pszEnd, 10);
+					if (cmd.nColon < 1)
+						cmd.nColon = 1;
+					szText[nLen-1] = 0;
+					while ((pszEnd = wcschr(szText, L'/')) != NULL)
+						*pszEnd = L'\\'; // заменить прямые слеши на обратные
+					lstrcpyn(cmd.szFile, szText, countof(cmd.szFile));
+					
+					TODO("Для удобства, если лог открыт в редакторе, или пропустить мышь, или позвать макрос");
+					// Только нужно учесть, что текущий таб может быть редактором, но открыт UserScreen (CtrlO)
+					
+					// Проверить, может уже открыт таб с этим файлом?
+					LPCWSTR pszFileName = wcsrchr(cmd.szFile, L'\\');
+					if (!pszFileName) pszFileName = cmd.szFile; else pszFileName++;
+					CVirtualConsole* pVCon = NULL;
+					int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(3/*Редактор*/, pszFileName, &pVCon);
+					
+					if (liActivated == -2)
 					{
-						wchar_t szMacro[96];
-						if (mp_RCon->m_FarInfo.FarVer.dwVerMajor == 1)
-							_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i:%i\" Enter $end", cmd.nLine, cmd.nColon);
-						else
-							_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 print(\"%i:%i\") Enter $end", cmd.nLine, cmd.nColon);
-						_ASSERTE(pVCon!=NULL);
+						// Нашли, но активировать нельзя
+						_ASSERTE(FALSE);
+					}
+					else if (liActivated >= 0)
+					{
+						// Нашли, активировали, нужно только на строку перейти
+						if (cmd.nLine > 0)
+						{
+							wchar_t szMacro[96];
+							if (mp_RCon->m_FarInfo.FarVer.dwVerMajor == 1)
+								_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i:%i\" Enter $end", cmd.nLine, cmd.nColon);
+							else
+								_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 print(\"%i:%i\") Enter $end", cmd.nLine, cmd.nColon);
+							_ASSERTE(pVCon!=NULL);
 
+							// -- Послать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
+							//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
+
+							// Ок, переход на строку (макрос)
+							mp_RCon->PostMacro(szMacro, TRUE);
+						}
+					}
+					else
+					{
 						// -- Послать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
 						//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
 
-						// Ок, переход на строку (макрос)
-						mp_RCon->PostMacro(szMacro, TRUE);
+						// Prepared, можно звать плагин
+						mp_RCon->PostCommand(CMD_OPENEDITORLINE, sizeof(cmd), &cmd);
+						//CConEmuPipe pipe(mp_RCon->GetFarPID(TRUE), CONEMUREADYTIMEOUT);
+						//if (pipe.Init(_T("CRealConsole::ProcessFarHyperlink"), TRUE))
+						//{
+						//	gpConEmu->DebugStep(_T("ProcessFarHyperlink: Waiting for result (10 sec)"));
+						//	pipe.Execute(CMD_OPENEDITORLINE, &cmd, sizeof(cmd));
+						//	gpConEmu->DebugStep(NULL);
+						//}
 					}
-				}
-				else
-				{
-					// -- Послать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
-					//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
-
-					// Prepared, можно звать плагин
-					mp_RCon->PostCommand(CMD_OPENEDITORLINE, sizeof(cmd), &cmd);
-					//CConEmuPipe pipe(mp_RCon->GetFarPID(TRUE), CONEMUREADYTIMEOUT);
-					//if (pipe.Init(_T("CRealConsole::ProcessFarHyperlink"), TRUE))
-					//{
-					//	gpConEmu->DebugStep(_T("ProcessFarHyperlink: Waiting for result (10 sec)"));
-					//	pipe.Execute(CMD_OPENEDITORLINE, &cmd, sizeof(cmd));
-					//	gpConEmu->DebugStep(NULL);
-					//}
 				}
 			}
 		}
@@ -3958,6 +3969,8 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 
 	crTo = crFrom; // Initialize
 
+	COORD crMouse = crFrom; // Save
+
 	// Нужно получить строку
 	MSectionLock csData; csData.Lock(&csCON);
 	wchar_t* pChar = NULL;
@@ -3983,21 +3996,57 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 			const wchar_t* pszTermint = L":)";
 			const wchar_t* pszDigits  = L"0123456789";
 			const wchar_t* pszSlashes = L"/\\";
+			const wchar_t* pszUrl = L":/%#ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz;?@&=+$,-_.!~*'()0123456789";
+			const wchar_t* pszProtocol = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.";
+			const wchar_t* pszUrlDelim = L"\\\"<>{}[]^` \t\r\n";
 			int nColons = 0;
+			bool bUrlMode = false, bMaybeMail = false;
 			// Курсор над комментарием?
 			// Попробуем найти начало имени файла
-			while ((crFrom.X) > 0 && !wcschr(pszBreak, pChar[crFrom.X-1]))
+			const wchar_t* pszMyBreak = pszBreak;
+			while ((crFrom.X) > 0 && !wcschr(pszMyBreak, pChar[crFrom.X-1]))
 			{
-				if ((pChar[crFrom.X] == L'/') && (crFrom.X >= 1) && (pChar[crFrom.X-1] == L'/')
-					&& !((crTo.X > 1) && (pChar[crTo.X] == L':'))) // и НЕ URL адрес
-				{	
-					crFrom.X++;
-					break; // Комментарий в строке?
+				if (!bUrlMode && pChar[crFrom.X] == L'/')
+				{
+					if ((crFrom.X >= 2) && ((crFrom.X + 1) < nLen)
+						&& ((pChar[crFrom.X+1] == L'/') && (pChar[crFrom.X-1] == L':')
+							&& wcschr(pszUrl, pChar[crFrom.X-2]))) // как минимум одна буква на протокол
+					{
+						crFrom.X++;
+					}
+
+					if ((crFrom.X >= 3)
+						&& ((pChar[crFrom.X-1] == L'/') && (pChar[crFrom.X-2] == L':')
+							&& wcschr(pszUrl, pChar[crFrom.X-3]))) // как минимум одна буква на протокол
+					{
+						bUrlMode = true;
+						pszMyBreak = pszUrlDelim;
+						crTo.X = crFrom.X-2;
+						crFrom.X -= 3;
+						while ((crFrom.X > 0) && wcschr(pszProtocol, pChar[crFrom.X-1]))
+							crFrom.X--;
+						break;
+					}
+					else if ((pChar[crFrom.X] == L'/') && (crFrom.X >= 1) && (pChar[crFrom.X-1] == L'/'))
+					{	
+						crFrom.X++;
+						break; // Комментарий в строке?
+					}
 				}
 				crFrom.X--;
-				if (pChar[crFrom.X] == L':' && pChar[crFrom.X+1] != L'\\' && pChar[crFrom.X+1] != L'/')
+				if (pChar[crFrom.X] == L':')
 				{
-					goto wrap; // Не оно
+					if (pChar[crFrom.X+1] == L' ')
+					{
+						// ASM - подсвечивать нужно "test.asasm(1,1)"
+						// object.Exception@assembler.d(1239): test.asasm(1,1):
+						crFrom.X += 2;
+						break;
+					}
+					else if (pChar[crFrom.X+1] != L'\\' && pChar[crFrom.X+1] != L'/')
+					{
+						goto wrap; // Не оно
+					}
 				}
 			}
 			while (((crFrom.X+1) < nLen) && wcschr(pszSpacing, pChar[crFrom.X]))
@@ -4006,6 +4055,37 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 			{
 				goto wrap; // Fail?
 			}
+
+			// URL? (Курсор мог стоять над протоколом)
+			while ((crTo.X < nLen) && wcschr(pszProtocol, pChar[crTo.X]))
+				crTo.X++;
+			if (((crTo.X+1) < nLen) && (pChar[crTo.X] == L':'))
+			{
+				if (((crTo.X+4) < nLen) && (pChar[crTo.X+1] == L'/') && (pChar[crTo.X+2] == L'/'))
+				{
+					bUrlMode = true;
+					if (wcschr(pszUrl+2 /*пропустить ":/"*/, pChar[crTo.X+3]))
+					{
+						if (((crTo.X+4) < nLen) // типа file://c:\xxx ?
+							&& ((pChar[crTo.X+3] >= L'a' && pChar[crTo.X+3] <= L'z')
+								|| (pChar[crTo.X+3] >= L'A' && pChar[crTo.X+3] <= L'Z'))
+							&& (pChar[crTo.X+4] == L':'))
+						{
+							if (((crTo.X+5) < nLen) && (pChar[crTo.X+5] == L'\\'))
+							{
+								_ASSERTE(*pszUrlDelim == L'\\');
+								pszUrlDelim++;
+							}
+							crTo.X += 5;
+						}
+					}
+					else
+					{
+						goto wrap; // Fail
+					}
+				}
+			}
+
 
 			// Чтобы корректно флаги обработались (типа наличие расширения и т.п.)
 			crTo.X = crFrom.X;
@@ -4026,19 +4106,27 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 			// FarCtrl.pas(1002,49) Error: Identifier not found "PCTL_GETPLUGININFO"
 			// -- Possible?
 			// abc.py (3): some message
+			// ASM - подсвечивать нужно "test.asasm(1,1)"
+			// object.Exception@assembler.d(1239): test.asasm(1,1):
 			// -- URL's
 			// file://c:\temp\qqq.html
 			// http://www.farmanager.com
 			// -- False detects
 			// 29.11.2011 18:31:47
 			// C:\VC\unicode_far\macro.cpp  1251 Ln 5951/8291 Col 51 Ch 39 0043h 13:54
+			// InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
 
 			bool bDigits = false, bLineNumberFound = false, bWasSeparator = false;
 			// Нас на интересуют строки типа "11.05.2010 10:20:35"
 			// В имени файла должна быть хотя бы одна буква (расширение), причем английская
-			int iExtFound = 0;
+			int iExtFound = 0, iBracket = 0;
 			// Поехали
-			while ((crTo.X+1) < nLen)
+			if (bUrlMode)
+			{
+				while (((crTo.X+1) < nLen) && !wcschr(pszUrlDelim, pChar[crTo.X+1]))
+					crTo.X++;
+			}
+			else while ((crTo.X+1) < nLen)
 				//&& ((pChar[crTo.X] != L':') || (pChar[crTo.X] == L':' && wcschr(pszDigits, pChar[crTo.X+1]))))
 			{
 				if ((pChar[crTo.X] == L'/') && ((crTo.X+1) < nLen) && (pChar[crTo.X+1] == L'/')
@@ -4076,7 +4164,10 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 						{
 							// Не особо заморачиваясь с точками и прочим. Просто небольшая страховка от ложных срабатываний...
 							if ((pChar[crTo.X] >= L'a' && pChar[crTo.X] <= L'z') || (pChar[crTo.X] >= L'A' && pChar[crTo.X] <= L'Z'))
+							{
 								iExtFound = 2;
+								iBracket = 0;
+							}
 						}
 					}
 
@@ -4086,6 +4177,14 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 						{
 							// Был слеш, значит расширения - еще нет
 							iExtFound = 0;
+							iBracket = 0;
+							bWasSeparator = false;
+						}
+						else if (wcschr(pszSpacing, pChar[crTo.X]) && wcschr(pszSpacing, pChar[crTo.X+1]))
+						{
+							// Слишком много пробелов
+							iExtFound = 0;
+							iBracket = 0;
 							bWasSeparator = false;
 						}
 						else
@@ -4094,14 +4193,23 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 
 					if (bDigits && wcschr(pszTermint, pChar[crTo.X]) /*pChar[crTo.X] == L':'*/)
 					{
-						//if (bDigits)
-						//{
+						// Если номер строки обрамлен скобками - скобки должны быть сбалансированы
+						if ((pChar[crTo.X] != L')') || (iBracket == 1))
+						{
 							_ASSERTE(bLineNumberFound==false);
 							bLineNumberFound = true;
 							break; // found?
-						//}
+						}
 					}
 					bDigits = false;
+
+					switch (pChar[crTo.X])
+					{
+					case L'(': iBracket++; break;
+					case L')': iBracket--; break;
+					case L'/': case L'\\': iBracket = 0; break;
+					case L'@': bMaybeMail = true; break;
+					}
 
 					if (pChar[crTo.X] == L':')
 						nColons++;
@@ -4113,70 +4221,102 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 					break;
 
 				crTo.X++;
-				if (wcschr(pszBreak, pChar[crTo.X]))
+				if (wcschr(pszMyBreak, pChar[crTo.X]))
 				{
+					if (bMaybeMail)
+						break;
 					goto wrap; // Не оно
 				}
 			}
 
-			if (!bLineNumberFound && bDigits)
-				bLineNumberFound = true;
+			if (bUrlMode)
+			{
+				// Считаем, что OK
+				bMaybeMail = false;
+			}
+			else
+			{
+				if (!bLineNumberFound && bDigits)
+					bLineNumberFound = true;
 
-			if ((pChar[crTo.X] != L':' && pChar[crTo.X] != L' ' && pChar[crTo.X] != L')') || !bLineNumberFound || (nColons > 2))
-			{
-				goto wrap;
-			}
-			if (pChar[crTo.X] != L')')
-				crTo.X--;
-			// Откатить ненужные пробелы
-			while ((crFrom.X < crTo.X) && wcschr(pszSpacing, pChar[crFrom.X]))
-				crFrom.X++;
-			while ((crTo.X > crFrom.X) && wcschr(pszSpacing, pChar[crTo.X]))
-				crTo.X--;
-			if ((crFrom.X + 4) > crTo.X) // 1.c:1: //-V112
-			{
-				// Слишком коротко, считаем что не оно
-				goto wrap;
-			}
-			// Проверить, чтобы был в наличии номер строки
-			if (!(pChar[crTo.X] >= L'0' && pChar[crTo.X] <= L'9') // ConEmuC.cpp:49:
-				&& !(pChar[crTo.X] == L')' && (pChar[crTo.X-1] >= L'0' && pChar[crTo.X-1] <= L'9'))) // ConEmuC.cpp(49) :
-			{
-				goto wrap; // Номера строки нет
-			}
-			// Чтобы даты ошибочно не подсвечивать:
-			// 29.11.2011 18:31:47
-			{
-				bool bNoDigits = false;
-				for (int i = crFrom.X; i <= crTo.X; i++)
+				if (bLineNumberFound)
+					bMaybeMail = false;
+
+				if ((pChar[crTo.X] != L':' && pChar[crTo.X] != L' ' && !(pChar[crTo.X] == L')' && iBracket == 1)) || !bLineNumberFound || (nColons > 2))
 				{
-					if (pChar[i] < L'0' || pChar[i] > L'9')
-					{
-						bNoDigits = true;
-					}
+					if (!bMaybeMail)
+						goto wrap;
 				}
-				if (!bNoDigits)
+				if (bMaybeMail || (!bMaybeMail && pChar[crTo.X] != L')'))
+					crTo.X--;
+				// Откатить ненужные пробелы
+				while ((crFrom.X < crTo.X) && wcschr(pszSpacing, pChar[crFrom.X]))
+					crFrom.X++;
+				while ((crTo.X > crFrom.X) && wcschr(pszSpacing, pChar[crTo.X]))
+					crTo.X--;
+				if ((crFrom.X + 4) > crTo.X) // 1.c:1: //-V112
+				{
+					// Слишком коротко, считаем что не оно
 					goto wrap;
+				}
+				if (!bMaybeMail)
+				{
+					// Проверить, чтобы был в наличии номер строки
+					if (!(pChar[crTo.X] >= L'0' && pChar[crTo.X] <= L'9') // ConEmuC.cpp:49:
+						&& !(pChar[crTo.X] == L')' && (pChar[crTo.X-1] >= L'0' && pChar[crTo.X-1] <= L'9'))) // ConEmuC.cpp(49) :
+					{
+						goto wrap; // Номера строки нет
+					}
+					// Чтобы даты ошибочно не подсвечивать:
+					// 29.11.2011 18:31:47
+					{
+						bool bNoDigits = false;
+						for (int i = crFrom.X; i <= crTo.X; i++)
+						{
+							if (pChar[i] < L'0' || pChar[i] > L'9')
+							{
+								bNoDigits = true;
+							}
+						}
+						if (!bNoDigits)
+							goto wrap;
+					}
+					// -- уже включены // Для красивости в VC включить скобки
+					//if ((pChar[crTo.X] == L')') && (pChar[crTo.X+1] == L':'))
+					//	crTo.X++;
+				}
+			} // end "else / if (bUrlMode)"
+
+			// Check mouse pos
+			if (crMouse.X > crTo.X)
+			{
+				goto wrap;
 			}
-			// -- уже включены // Для красивости в VC включить скобки
-			//if ((pChar[crTo.X] == L')') && (pChar[crTo.X+1] == L':'))
-			//	crTo.X++;
+
 			// Ok
 			if (pszText && cchTextMax)
 			{
-				if ((crTo.X - crFrom.X + 1) >= (INT_PTR)cchTextMax)
+				int iMailTo = (bMaybeMail && !bUrlMode) ? lstrlen(L"mailto:") : 0;
+				if ((crTo.X - crFrom.X + 1 + iMailTo) >= (INT_PTR)cchTextMax)
 					goto wrap; // Недостаточно места под текст
+				if (iMailTo)
+				{
+					lstrcpyn(pszText, L"mailto:", iMailTo+1);
+					pszText += iMailTo;
+					cchTextMax -= iMailTo;
+					bUrlMode = true;
+				}
 				memmove(pszText, pChar+crFrom.X, (crTo.X - crFrom.X + 1)*sizeof(*pszText));
 				pszText[crTo.X - crFrom.X + 1] = 0;
 
 				#ifdef _DEBUG
-				if (wcsstr(pszText, L"//")!=NULL)
+				if (!bUrlMode && wcsstr(pszText, L"//")!=NULL)
 				{
 					_ASSERTE(FALSE);
 				}
 				#endif
 			}
-			result = etr;
+			result = bUrlMode ? etr_Url : etr;
 		}
 	}
 wrap:

@@ -502,16 +502,17 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 	DeleteBadTempFiles();
 
-#ifdef _WIN64
-	if (mp_Set->UpdateDownloadSetup() == 2)
-	{
-		if (mb_ManualCallMode)
-		{
-			ReportError(L"64bit versions of ConEmu may be updated with ConEmuSetup.exe only!", 0);
-		}
-		goto wrap;
-	}
-#endif
+	//120315 - OK, положим в архив и 64битный гуй
+	//#ifdef _WIN64
+	//if (mp_Set->UpdateDownloadSetup() == 2)
+	//{
+	//	if (mb_ManualCallMode)
+	//	{
+	//		ReportError(L"64bit versions of ConEmu may be updated with ConEmuSetup.exe only!", 0);
+	//	}
+	//	goto wrap;
+	//}
+	//#endif
 
 	if (!wi)
 	{

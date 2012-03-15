@@ -174,6 +174,7 @@ private:
 		etr_None = 0,
 		etr_Word = 1,
 		etr_FileAndLine = 2,
+		etr_Url = 3,
 	};
 	ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
 

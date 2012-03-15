@@ -1426,7 +1426,7 @@ void Help()
 		"     /DOSBOX -> use DosBox\n"
 #endif
 	    "\n"
-	    "When you run application from ConEmu conole, you may use\n"
+	    "When you run application from ConEmu console, you may use\n"
         "  Switch: -new_console[:bh[N]caru[:user:pwd]]\n"
         "     b - Create background tab\n"
         "     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\n"

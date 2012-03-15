@@ -457,16 +457,16 @@ static void LoadFarSettingsW1900(CEFarInterfaceSettings* pInterface, CEFarPanelS
 		if (pInterface)
 		{
 			memset(pInterface, 0, sizeof(*pInterface));
-			pInterface->AlwaysShowMenuBar = GetFarSetting(sc.Handle, FSSF_SCREEN, L"ShowMenuBar");
+			pInterface->AlwaysShowMenuBar = GetFarSetting(sc.Handle, FSSF_INTERFACE, L"ShowMenuBar");
 			pInterface->ShowKeyBar = GetFarSetting(sc.Handle, FSSF_SCREEN, L"KeyBar");
 		}
 
 		if (pPanel)
 		{
 			memset(pPanel, 0, sizeof(*pPanel));
-			pPanel->ShowColumnTitles = GetFarSetting(sc.Handle, FSSF_PANEL, L"ColumnTitles");
-			pPanel->ShowStatusLine = GetFarSetting(sc.Handle, FSSF_PANEL, L"StatusLine");
-			pPanel->ShowSortModeLetter = GetFarSetting(sc.Handle, FSSF_PANEL, L"SortMode");
+			pPanel->ShowColumnTitles = GetFarSetting(sc.Handle, FSSF_PANELLAYOUT, L"ColumnTitles");
+			pPanel->ShowStatusLine = GetFarSetting(sc.Handle, FSSF_PANELLAYOUT, L"StatusLine");
+			pPanel->ShowSortModeLetter = GetFarSetting(sc.Handle, FSSF_PANELLAYOUT, L"SortMode");
 		}
 
 		InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
