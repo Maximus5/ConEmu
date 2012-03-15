@@ -383,7 +383,7 @@ LPWSTR CConEmuMacro::FindFarWindow(LPWSTR asArgs, CRealConsole* apRCon)
 	return FindFarWindowHelper(nWindowType, pszName, apRCon);
 }
 LPWSTR CConEmuMacro::FindFarWindowHelper(
-    int anWindowType/*Panels=1, Viewer=2, Editor=3, |(Elevated=0x100), |(NotElevated=0x200)*/,
+    int anWindowType/*Panels=1, Viewer=2, Editor=3, |(Elevated=0x100), |(NotElevated=0x200), |(Modal=0x400)*/,
     LPWSTR asName, CRealConsole* apRCon)
 {
 	CRealConsole* pRCon, *pActiveRCon = NULL;

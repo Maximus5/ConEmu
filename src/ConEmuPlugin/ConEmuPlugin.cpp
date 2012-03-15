@@ -3783,7 +3783,7 @@ void InitHWND(/*HWND ahFarHwnd*/)
 		int tabCount = 0;
 		MSectionLock SC; SC.Lock(csTabs);
 		CreateTabs(1);
-		AddTab(tabCount, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0);
+		AddTab(tabCount, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
 		// Сейчас отсылать не будем - выполним, когда вызовется SetStartupInfo -> CommonStartup
 		//SendTabs(tabCount=1, TRUE);
 		SC.Unlock();
@@ -4232,7 +4232,9 @@ BOOL CreateTabs(int windowCount)
 #endif
 
 BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
-            int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified, int EditViewId)
+            int Type, LPCWSTR Name, LPCWSTR FileName,
+			int Current, int Modified, int Modal,
+			int EditViewId)
 {
 	BOOL lbCh = FALSE;
 	DEBUGSTR(L"--AddTab\n");
@@ -4292,14 +4294,16 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		}
 		
 
-		lbCh = (gpTabs->Tabs.tabs[tabCount].Current != (Current/*losingFocus*/ ? 1 : 0)/*(losingFocus ? 0 : Current)*/) ||
-		       (gpTabs->Tabs.tabs[tabCount].Type != Type) ||
-		       (gpTabs->Tabs.tabs[tabCount].Modified != Modified) ||
-		       (lstrcmp(gpTabs->Tabs.tabs[tabCount].Name, Name) != 0);
+		lbCh = (gpTabs->Tabs.tabs[tabCount].Current != (Current/*losingFocus*/ ? 1 : 0)/*(losingFocus ? 0 : Current)*/)
+		    || (gpTabs->Tabs.tabs[tabCount].Type != Type)
+		    || (gpTabs->Tabs.tabs[tabCount].Modified != Modified)
+			|| (gpTabs->Tabs.tabs[tabCount].Modal != Modal)
+		    || (lstrcmp(gpTabs->Tabs.tabs[tabCount].Name, Name) != 0);
 		// when receiving losing focus event receiver is still reported as current
 		gpTabs->Tabs.tabs[tabCount].Type = Type;
 		gpTabs->Tabs.tabs[tabCount].Current = (Current/*losingFocus*/ ? 1 : 0)/*losingFocus ? 0 : Current*/;
 		gpTabs->Tabs.tabs[tabCount].Modified = Modified;
+		gpTabs->Tabs.tabs[tabCount].Modal = Modal;
 		gpTabs->Tabs.tabs[tabCount].EditViewId = EditViewId;
 
 		if (gpTabs->Tabs.tabs[tabCount].Current != 0)

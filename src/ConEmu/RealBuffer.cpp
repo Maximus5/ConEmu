@@ -2986,7 +2986,10 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				}
 			}
 
-			if (gpSet->isTrueColorer && mp_RCon->m_TrueColorerMap.IsValid() && mp_RCon->mp_TrueColorerData)
+			if (gpSet->isTrueColorer
+				&& mp_RCon->m_TrueColorerMap.IsValid()
+				&& mp_RCon->mp_TrueColorerData
+				&& mp_RCon->isFar())
 			{
 				pcolSrc = mp_RCon->mp_TrueColorerData;
 				pcolEnd = mp_RCon->mp_TrueColorerData + mp_RCon->m_TrueColorerMap.Ptr()->bufferSize;
@@ -3353,16 +3356,8 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 		BOOL bViewerOrEditor = FALSE;
 		if (mp_RCon->GetFarPID(TRUE))
 		{
-			ConEmuTab tab;
-			if (mp_RCon->GetTab(mp_RCon->GetActiveTab(), &tab))
-			{
-				bViewerOrEditor = (tab.Type == 2 || tab.Type == 3);
-			}
-			else
-			{
-				// Не удалось получить информацию по табу??
-				_ASSERTE(FALSE);
-			}
+			int nTabType = mp_RCon->GetActiveTabType();
+			bViewerOrEditor = ((nTabType & 0xFF) == 2 || (nTabType & 0xFF) == 3);
 		}
 
 		if (!bViewerOrEditor)

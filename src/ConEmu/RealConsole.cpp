@@ -3836,6 +3836,13 @@ DWORD CRealConsole::GetFarPID(BOOL abPluginRequired/*=FALSE*/)
 	return mn_FarPID;
 }
 
+// Вызывается при запуске в консоли ComSpec
+void CRealConsole::ResetFarPID()
+{
+	mn_ProgramStatus &= ~CES_FARACTIVE;
+	mn_FarPID = 0;
+}
+
 // Вернуть PID "условно активного" процесса в консоли
 DWORD CRealConsole::GetActivePID()
 {
@@ -5683,6 +5690,47 @@ int CRealConsole::GetActiveTab()
 	return (mn_ActiveTab < nCount) ? mn_ActiveTab : 0;
 }
 
+// (Panels=1, Viewer=2, Editor=3) |(Elevated=0x100) |(NotElevated=0x200) |(Modal=0x400)
+int CRealConsole::GetActiveTabType()
+{
+	int nType = 0;
+	if (!mp_tabs)
+	{
+		nType = 1;
+	}
+	else
+	{
+		int iModal = -1;
+		for (int i = 0; i < mn_tabsCount; i++)
+		{
+			if (mp_tabs[i].Modal)
+			{
+				iModal = i;
+				break;
+			}
+		}
+
+		int iActive = (iModal != -1) ? iModal : GetActiveTab();
+		if (iActive >= 0 && iActive < mn_tabsCount)
+		{
+			nType = mp_tabs[iActive].Type;
+			if (mp_tabs[iActive].Modal)
+				nType |= 0x400;
+		}
+	}
+
+	TODO("Надо/не надо?");
+	if (isAdministrator() && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix[0]))
+	{
+		if (gpSet->bAdminShield)
+		{
+			nType |= 0x100;
+		}
+	}
+
+	return nType;
+}
+
 void CRealConsole::UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab)
 {
 	if (isAdministrator() && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix[0]))
@@ -5737,6 +5785,30 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	// На время выполнения DOS-команд - только один таб
 	if ((mn_ProgramStatus & CES_FARACTIVE) == 0 && tabIdx > 0)
 		return false;
+
+	// Есть модальный редактор/вьювер?
+	if (mn_tabsCount > 1)
+	{
+		int iModal = -1;
+		for (int i = 0; i < mn_tabsCount; i++)
+		{
+			if (mp_tabs[i].Modal)
+			{
+				iModal = i;
+				break;
+			}
+		}
+		/*
+		if (iModal != -1)
+		{
+			if (tabIdx == 0)
+				tabIdx = iModal;
+			else
+				return false; // Показываем только модальный редактор/вьювер
+			TODO("Доделать для новых табов, чтобы история не сбивалась");
+		}
+		*/
+	}
 
 	memmove(pTab, mp_tabs+tabIdx, sizeof(ConEmuTab));
 
@@ -5796,7 +5868,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 	}
 	#endif
 
-	while((pszAmp = wcschr(pszAmp, L'&')) != NULL)
+	while ((pszAmp = wcschr(pszAmp, L'&')) != NULL)
 	{
 		if (nCurLen >= (nMaxLen - 2))
 		{

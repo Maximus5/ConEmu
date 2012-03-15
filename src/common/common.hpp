@@ -802,8 +802,9 @@ struct ConEmuTab
 {
 	int  Pos;
 	int  Current;
-	int  Type; // (Panels=1, Viewer=2, Editor=3) | (Elevated=0x100)
+	int  Type; // (Panels=1, Viewer=2, Editor=3) |(Elevated=0x100) |(NotElevated=0x200) |(Modal=0x400)
 	int  Modified;
+	int  Modal;
 	int  EditViewId;
 	wchar_t Name[CONEMUTABMAX];
 	//  int  Modified;

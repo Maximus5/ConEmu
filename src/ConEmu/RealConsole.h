@@ -339,6 +339,7 @@ class CRealConsole
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
 		int  GetProcesses(ConProcess** ppPrc);
 		DWORD GetFarPID(BOOL abPluginRequired=FALSE);
+		void ResetFarPID();
 		DWORD GetActivePID();
 		DWORD GetProgramStatus();
 		DWORD GetFarStatus();
@@ -390,6 +391,7 @@ class CRealConsole
 		void SetTabs(ConEmuTab* tabs, int tabsCount);
 		int GetTabCount(BOOL abVisibleOnly = FALSE);
 		int GetActiveTab();
+		int GetActiveTabType();
 		bool GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
 		int GetModifiedEditors();
 		BOOL ActivateFarWindow(int anWndIndex);

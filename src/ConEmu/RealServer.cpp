@@ -507,6 +507,9 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 					mp_RCon->mp_RBuf->BuferModeChangeUnlock();
 				}
 			}
+
+			// Раз стартован ComSpec (cmd.exe/ConEmuC.exe/...)
+			mp_RCon->ResetFarPID();
 		}
 		else if (nStarted == sst_ServerStart)
 		{

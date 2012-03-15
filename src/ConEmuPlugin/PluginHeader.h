@@ -106,7 +106,9 @@ extern PanelViewRegInfo gPanelRegLeft, gPanelRegRight;
 BOOL CreateTabs(int windowCount);
 
 BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
-            int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified, int EditViewId);
+            int Type, LPCWSTR Name, LPCWSTR FileName,
+			int Current, int Modified, int Modal,
+			int EditViewId);
 
 void SendTabs(int tabCount, BOOL abForceSend=FALSE);
 

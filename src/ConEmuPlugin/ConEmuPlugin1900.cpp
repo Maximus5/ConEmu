@@ -566,10 +566,16 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 	int tabCount = 0;
 	BOOL lbActiveFound = FALSE;
 
+	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+
+	WindowInfo WActive = {sizeof(WActive)};
+	WInfo.Pos = -1;
+	bool bActiveInfo = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WActive)!=0;
+
+
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
-		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 		InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
 
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
@@ -580,17 +586,24 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 			InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
 			WARNING("Для получения имени нужно пользовать ECTL_GETFILENAME");
 
-			// Проверить, чего там...
-			_ASSERTE((WInfo.Flags & WIF_MODAL) == 0);
+			//// Проверить, чего там...
+			//_ASSERTE((WInfo.Flags & WIF_MODAL) == 0);
 
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 			{
-				if ((WInfo.Flags & WIF_CURRENT)) lbActiveFound = TRUE;
+				if ((WInfo.Flags & WIF_CURRENT))
+					lbActiveFound = TRUE;
+				else if (bActiveInfo && (WInfo.Id == WActive.Id))
+				{
+					WInfo.Flags |= WIF_CURRENT;
+					lbActiveFound = TRUE;
+				}
 
 				TODO("Определение ИД редактора/вьювера");
 				lbCh |= AddTab(tabCount, losingFocus, editorSave,
 				               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
-				               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), 0);
+				               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), (WInfo.Flags & WIF_MODAL),
+							   0/*WInfo.Id?*/);
 				//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
 				//	lastModifiedStateW = WInfo.Modified;
 			}
@@ -600,17 +613,19 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 	}
 
 	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
-	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == 206)
+	_ASSERTE(VE_GOTFOCUS==6);
+	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == (200+VE_GOTFOCUS))
 	{
 		lbActiveFound = TRUE;
 		lbCh |= AddTab(tabCount, losingFocus, editorSave,
 		               WTYPE_VIEWER, vi.FileName, NULL,
-		               1, 0, vi.ViewerID);
+		               1, 0, 0, vi.ViewerID);
 	}
 
 	// Скорее всего это модальный редактор (или вьювер?)
 	if (!lbActiveFound && !losingFocus)
 	{
+		_ASSERTE("Active window must be detected already!" && 0);
 		WInfo.Pos = -1;
 
 		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
@@ -632,7 +647,8 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 					TODO("Определение ИД Редактора/вьювера");
 					lbCh |= AddTab(tabCount, losingFocus, editorSave,
 					               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
-					               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), 0);
+					               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), 1/*Modal*/,
+								   0);
 				}
 			}
 			else if (WInfo.Type == WTYPE_PANELS)
