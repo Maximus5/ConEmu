@@ -263,6 +263,7 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 	CECOPYRIGHTSTRING_W /*\x00A9 2009-2011 ConEmu.Maximus5@gmail.com*/ L"\n" \
 	L"\n" \
 	L"Contributors\n" \
+	L"thecybershadow: bdf support\n" \
 	L"NightRoman: drawing optimization, BufferHeight and other fixes\n" \
 	L"dolzenko_: windows switching via GUI tabs\n" \
 	L"alex_itd: Drag'n'Drop, RightClick, AltEnter\n" \

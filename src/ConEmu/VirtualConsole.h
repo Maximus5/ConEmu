@@ -96,11 +96,11 @@ class CVirtualConsole :
 		DWORD   mn_LastBitsPixel;
 	private:
 		bool    mb_InUpdate;
-		HDC     hDC;
+		CEDC    hDC;
 		HBITMAP hBitmap;
 		HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
-		HFONT   hSelectedFont, hOldFont;
-		HFONT   mh_FontByIndex[MAX_FONT_STYLES+1]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
+		CEFONT  hSelectedFont, hOldFont;
+		CEFONT  mh_FontByIndex[MAX_FONT_STYLES+1]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
 		HFONT   mh_UCharMapFont; SMALL_RECT mrc_UCharMap;
 		wchar_t ms_LastUCharMapFont[32];
 		
@@ -251,7 +251,7 @@ class CVirtualConsole :
 		bool Update(bool abForce = false, HDC *ahDc=NULL);
 		void UpdateCursor(bool& lRes);
 		void UpdateThumbnail(bool abNoSnapshoot = FALSE);
-		void SelectFont(HFONT hNew);
+		void SelectFont(CEFONT hNew);
 		void SelectBrush(HBRUSH hNew);
 		inline bool isCharBorder(wchar_t inChar);
 		static bool isCharBorderVertical(wchar_t inChar);

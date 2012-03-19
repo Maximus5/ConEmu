@@ -6,6 +6,7 @@ SRCS =  \
 		ConEmu.cpp         \
 		ConEmuApp.cpp      \
 		ConEmuPipe.cpp     \
+		CustomFonts.cpp    \
 		DragDrop.cpp       \
 		DragDropData.cpp   \
 		DwmHelper.cpp      \
@@ -16,7 +17,7 @@ SRCS =  \
 		Macro.cpp          \
 		Options.cpp        \
 		OptionsClass.cpp   \
-        OptionsFast.cpp    \
+		OptionsFast.cpp    \
 		RealBuffer.cpp     \
 		RealConsole.cpp    \
 		RealServer.cpp     \

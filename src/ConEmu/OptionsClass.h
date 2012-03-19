@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <commctrl.h>
 
 #include "Options.h"
+#include "CustomFonts.h"
 
 class CBackground;
 struct DebugLogShellActivity;
@@ -388,7 +389,7 @@ class CSettings
 		void NeedBackgroundUpdate();
 		//CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);
 	public:
-		HFONT   mh_Font[MAX_FONT_STYLES], mh_Font2;
+		CEFONT  mh_Font[MAX_FONT_STYLES], mh_Font2;
 		TODO("По хорошему, CharWidth & CharABC нужно разделять по шрифтам - у Bold ширина может быть больше");
 		WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 		ABC     CharABC[0x10000];
@@ -446,6 +447,7 @@ class CSettings
 		BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		BOOL GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		BOOL GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
+		BOOL GetFontNameFromFile_BDF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		void UpdateConsoleMode(DWORD nMode);
 		bool AutoRecreateFont(int nFontW, int nFontH);
 		bool MacroFontSetSize(int nRelative/*0/1*/, int nValue/*1,2,...*/);
@@ -531,7 +533,7 @@ class CSettings
 		static void ShowFontErrorTip(LPCTSTR asInfo);
 		TOOLINFO tiBalloon;
 		void RegisterTipsFor(HWND hChildDlg);
-		HFONT CreateFontIndirectMy(LOGFONT *inFont);
+		CEFONT CreateFontIndirectMy(LOGFONT *inFont);
 		void RecreateFont(WORD wFromID);
 #if 0
 		// Theming
@@ -560,6 +562,7 @@ class CSettings
 		typedef struct tag_RegFont
 		{
 			BOOL    bDefault;             // Этот шрифт пользователь указал через /fontfile
+			CustomFont* pCustomFont;      // Для шрифтов, рисованных нами
 			wchar_t szFontFile[MAX_PATH]; // полный путь
 			wchar_t szFontName[32];       // Font Family
 			BOOL    bUnicode;             // Юникодный?

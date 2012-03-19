@@ -462,14 +462,14 @@ CSettings::~CSettings()
 
 	for(int i=0; i<MAX_FONT_STYLES; i++)
 	{
-		if (mh_Font[i]) { DeleteObject(mh_Font[i]); mh_Font[i] = NULL; }
+		mh_Font[i].Delete();
 
 		if (m_otm[i]) {free(m_otm[i]); m_otm[i] = NULL;}
 	}
 	
 	TODO("Очистить m_Fonts[Idx].hFonts");
 
-	if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
+	mh_Font2.Delete();
 	
 	if (gpSet->psCmd) {free(gpSet->psCmd); gpSet->psCmd = NULL;}
 
@@ -1027,6 +1027,17 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 	SetDlgItemText(hMain, tFontFace, LogFont.lfFaceName);
 	SetDlgItemText(hMain, tFontFace2, LogFont2.lfFaceName);
+
+	// Добавить шрифты рисованные ConEmu
+	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+	{
+		if (iter->pCustomFont)
+		{
+			int nIdx = SendDlgItemMessage(gpSetCls->hMain, tFontFace, CB_INSERTSTRING, 0, (LPARAM)iter->szFontName);
+			SendDlgItemMessage(gpSetCls->hMain, tFontFace, CB_SETITEMDATA, nIdx, iter->pCustomFont->IsMonospace() ? 1 : 0);
+		}
+	}
+
 	DWORD dwThId;
 	mh_EnumThread = CreateThread(0,0,EnumFontsThread,0,0,&dwThId); // хэндл закроет сама нить
 	{
@@ -6220,15 +6231,15 @@ void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WOR
 		gpConEmu->ActiveCon()->RCon()->LogString(szInfo);
 	}
 
-	HFONT hf = CreateFontIndirectMy(&LF);
+	CEFONT hf = CreateFontIndirectMy(&LF);
 
-	if (hf)
+	if (hf.IsSet())
 	{
 		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
-		HFONT hOldF = mh_Font[0];
+		CEFONT hOldF = mh_Font[0];
 		LogFont = LF;
 		mh_Font[0] = hf;
-		DeleteObject(hOldF);
+		hOldF.Delete();
 		SaveFontSizes(&LF, (mn_AutoFontWidth == -1), true);
 		gpConEmu->Update(true);
 
@@ -6314,15 +6325,15 @@ void CSettings::RecreateFont(WORD wFromID)
 		}
 	}
 
-	HFONT hf = CreateFontIndirectMy(&LF);
+	CEFONT hf = CreateFontIndirectMy(&LF);
 
-	if (hf)
+	if (hf.IsSet())
 	{
 		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
-		HFONT hOldF = mh_Font[0];
+		CEFONT hOldF = mh_Font[0];
 		LogFont = LF;
 		mh_Font[0] = hf;
-		DeleteObject(hOldF);
+		hOldF.Delete();
 		SaveFontSizes(&LF, (mn_AutoFontWidth == -1), true);
 		gpConEmu->Update(true);
 
@@ -6453,16 +6464,16 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 
 	for(int nRetry = 0; nRetry < 10; nRetry++)
 	{
-		HFONT hf = CreateFontIndirectMy(&LF);
+		CEFONT hf = CreateFontIndirectMy(&LF);
 
 		// Успешно, только если шрифт изменился, или хотели поставить абсолютный размер
-		if (hf && ((nRelative == 0) || (LF.lfHeight != LogFont.lfHeight)))
+		if (hf.IsSet() && ((nRelative == 0) || (LF.lfHeight != LogFont.lfHeight)))
 		{
 			// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
-			HFONT hOldF = mh_Font[0];
+			CEFONT hOldF = mh_Font[0];
 			LogFont = LF;
 			mh_Font[0] = hf;
-			DeleteObject(hOldF);
+			hOldF.Delete();
 			// Запомнить размер шрифта (AutoFontWidth/Height - может быть другим, он запоминается выше)
 			SaveFontSizes(&LF, false, true);
 			// Передернуть размер консоли
@@ -6487,11 +6498,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 			return true;
 		}
 
-		if (hf)
-		{
-			DeleteObject(hf);
-			hf = NULL;
-		}
+		hf.Delete();
 
 		if (nRelative == 0)
 			return 0;
@@ -6536,15 +6543,15 @@ bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 	LOGFONT LF = LogFont;
 	LF.lfWidth = nFontW;
 	LF.lfHeight = nFontH;
-	HFONT hf = CreateFontIndirectMy(&LF);
+	CEFONT hf = CreateFontIndirectMy(&LF);
 
-	if (hf)
+	if (hf.IsSet())
 	{
 		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
-		HFONT hOldF = mh_Font[0];
+		CEFONT hOldF = mh_Font[0];
 		LogFont = LF;
 		mh_Font[0] = hf;
-		DeleteObject(hOldF);
+		hOldF.Delete();
 		// Запомнить размер шрифта (AutoFontWidth/Height - может быть другим, он запоминается выше)
 		SaveFontSizes(&LF, false, true);
 		// Передернуть флажки, что шрифт поменялся
@@ -6620,11 +6627,26 @@ HFONT CSettings::CreateOtherFont(const wchar_t* asFontName)
 // void CSettings::RecreateFont(WORD wFromID)
 // -- подгонка шрифта под размер окна GUI (если включен флажок "Auto")
 // bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
-HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
+CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 {
 	//ResetFontWidth(); -- перенесено вниз, после того, как убедимся в валидности шрифта
 	//lfOutPrecision = OUT_RASTER_PRECIS,
 	szFontError[0] = 0;
+
+	// Поиск по шрифтам рисованным ConEmu
+	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
+		if (iter->pCustomFont && lstrcmp(inFont->lfFaceName, iter->szFontName)==0)
+		{
+			iter->pCustomFont->GetBoundingBox(&inFont->lfWidth, &inFont->lfHeight);
+			ResetFontWidth();
+			if (ghOpWnd)
+				UpdateTTF(!iter->pCustomFont->IsMonospace());
+			CEFONT ceFont;
+			ceFont.iType = CEFONT_CUSTOM;
+			ceFont.pCustomFont = iter->pCustomFont;
+			return ceFont;
+		}
+
 	HFONT hFont = NULL;
 	static int nRastNameLen = _tcslen(RASTER_FONTS_NAME);
 	int nRastHeight = 0, nRastWidth = 0;
@@ -6838,7 +6860,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
 		for(int s = 1; s < MAX_FONT_STYLES; s++)
 		{
-			if (mh_Font[s]) { DeleteObject(mh_Font[s]); mh_Font[s] = NULL; }
+			mh_Font[s].Delete();
 
 			if (s & AI_STYLE_BOLD)
 			{
@@ -6851,11 +6873,11 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
 			tmpFont.lfItalic = (s & AI_STYLE_ITALIC) ? !inFont->lfItalic : inFont->lfItalic;
 			tmpFont.lfUnderline = (s & AI_STYLE_UNDERLINE) ? !inFont->lfUnderline : inFont->lfUnderline;
-			mh_Font[s] = CreateFontIndirect(&tmpFont);
-			SelectObject(hDC, mh_Font[s]);
+			mh_Font[s] = CEFONT(CreateFontIndirect(&tmpFont));
+			SelectObject(hDC, mh_Font[s].hFont);
 			lbTM = GetTextMetrics(hDC, m_tm+s);
 			//_ASSERTE(lbTM);
-			lpOutl = LoadOutline(hDC, mh_Font[s]);
+			lpOutl = LoadOutline(hDC, mh_Font[s].hFont);
 
 			if (lpOutl)
 			{
@@ -6867,19 +6889,19 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
 		SelectObject(hDC, hOldF);
 
-		if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
+		mh_Font2.Delete();
 
 		//int width = gpSet->FontSizeX2 ? gpSet->FontSizeX2 : inFont->lfWidth;
 		LogFont2.lfWidth = mn_BorderFontWidth = gpSet->FontSizeX2 ? gpSet->FontSizeX2 : inFont->lfWidth;
 		LogFont2.lfHeight = abs(inFont->lfHeight);
 		// Иначе рамки прерывистыми получаются... поставил NONANTIALIASED_QUALITY
-		mh_Font2 = CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
-		                      0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
-		                      NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName);
+		mh_Font2 = CEFONT(CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
+		                             0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
+		                             NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName));
 
-		if (mh_Font2)
+		if (mh_Font2.IsSet())
 		{
-			hOldF = (HFONT)SelectObject(hDC, mh_Font2);
+			hOldF = (HFONT)SelectObject(hDC, mh_Font2.hFont);
 
 			if (GetTextFace(hDC, countof(szFontFace), szFontFace))
 			{
@@ -6901,11 +6923,11 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 					{
 						wcscpy_c(LogFont2.lfFaceName, L"Lucida Console");
 						SelectObject(hDC, hOldF);
-						DeleteObject(mh_Font2);
-						mh_Font2 = CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
-						                      0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
-						                      NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName);
-						hOldF = (HFONT)SelectObject(hDC, mh_Font2);
+						mh_Font2.Delete();
+						mh_Font2 = CEFONT(CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
+						                             0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
+						                             NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName));
+						hOldF = (HFONT)SelectObject(hDC, mh_Font2.hFont);
 						wchar_t szFontFace2[32];
 
 						if (GetTextFace(hDC, countof(szFontFace2), szFontFace2))
@@ -6927,7 +6949,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			}
 
 #ifdef _DEBUG
-			DumpFontMetrics(L"mh_Font2", hDC, mh_Font2);
+			DumpFontMetrics(L"mh_Font2", hDC, mh_Font2.hFont);
 #endif
 			SelectObject(hDC, hOldF);
 		}
@@ -7486,6 +7508,38 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 
 	// Запомним, что такое имя шрифта в системе уже есть, но зарегистрируем. Может в этом файле какие-то модификации...
 	rf.bAlreadyInSystem = lbRegistered;
+	wcscpy_c(rf.szFontFile, asFontFile);
+
+	LPCTSTR pszDot = _tcsrchr(asFontFile, _T('.'));
+	if (pszDot && lstrcmpi(pszDot, _T(".bdf"))==0)
+	{
+		rf.pCustomFont = BDF_Load(asFontFile);
+		if (!rf.pCustomFont)
+		{
+			size_t cchLen = _tcslen(asFontFile)+100;
+			wchar_t* psz=(wchar_t*)calloc(cchLen,sizeof(wchar_t));
+			_wcscpy_c(psz, cchLen, L"Can't load BDF font:\n");
+			_wcscat_c(psz, cchLen, asFontFile);
+			_wcscat_c(psz, cchLen, L"\nContinue?");
+			int nBtn = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OKCANCEL|MB_ICONSTOP);
+			free(psz);
+
+			if (nBtn == IDCANCEL)
+			{
+				mb_StopRegisterFonts = TRUE;
+				return FALSE;
+			}
+
+			return TRUE; // продолжить со следующим файлом
+		}
+
+		rf.bUnicode = rf.pCustomFont->HasUnicode();
+		rf.bHasBorders = rf.pCustomFont->HasBorders();
+
+		// Запомнить шрифт
+		m_RegFonts.push_back(rf);
+		return TRUE;
+	}
 
 	if (!AddFontResourceEx(asFontFile, FR_PRIVATE, NULL))  //ADD fontname; by Mors
 	{
@@ -7506,7 +7560,6 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		return TRUE; // продолжить со следующим файлом
 	}
 
-	wcscpy_c(rf.szFontFile, asFontFile);
 	// Теперь его нужно добавить в вектор независимо от успешности определения рамок
 	// будет нужен RemoveFontResourceEx(asFontFile, FR_PRIVATE, NULL);
 	// Определить наличие рамок и "юникодности" шрифта
@@ -7681,7 +7734,7 @@ void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
 				TCHAR* pszDot = _tcsrchr(fnd.cFileName, _T('.'));
 				// Неизвестные расширения - пропускаем
 				TODO("Register *.fon font files"); // Формат шрифта разобран в ImpEx
-				if (!pszDot || (lstrcmpi(pszDot, _T(".ttf")) && lstrcmpi(pszDot, _T(".otf")) /*&& lstrcmpi(pszDot, _T(".fon"))*/))
+				if (!pszDot || (lstrcmpi(pszDot, _T(".ttf")) && lstrcmpi(pszDot, _T(".otf")) /*&& lstrcmpi(pszDot, _T(".fon"))*/ && lstrcmpi(pszDot, _T(".bdf")) ))
 					continue;
 
 				if ((_tcslen(fnd.cFileName)+_tcslen(szFind)) >= MAX_PATH)
@@ -7716,7 +7769,10 @@ void CSettings::UnregisterFonts()
 	for(std::vector<RegFont>::iterator iter = m_RegFonts.begin();
 	        iter != m_RegFonts.end(); iter = m_RegFonts.erase(iter))
 	{
-		RemoveFontResourceEx(iter->szFontFile, FR_PRIVATE, NULL);
+		if (iter->pCustomFont)
+			delete iter->pCustomFont;
+		else
+			RemoveFontResourceEx(iter->szFontFile, FR_PRIVATE, NULL);
 	}
 }
 
@@ -7732,6 +7788,9 @@ BOOL CSettings::GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[
 
 	if (!lstrcmpi(pszDot, _T(".otf")))
 		return GetFontNameFromFile_OTF(lpszFilePath, rsFontName, rsFullFontName);
+
+	if (!lstrcmpi(pszDot, _T(".bdf")))
+		return GetFontNameFromFile_BDF(lpszFilePath, rsFontName, rsFullFontName);
 
 	TODO("*.fon files");
 
@@ -8108,6 +8167,15 @@ wrap:
 	if (f && (f != INVALID_HANDLE_VALUE))
 		CloseHandle(f);
 	return lbRc;
+}
+
+// Retrieve Family name from BDF file
+BOOL CSettings::GetFontNameFromFile_BDF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE])
+{
+	if (!BDF_GetFamilyName(lpszFilePath, rsFontName))
+		return FALSE;
+	lstrcpy(rsFullFontName, rsFontName);
+	return TRUE;
 }
 
 //void CSettings::HistoryCheck()

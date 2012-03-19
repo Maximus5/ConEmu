@@ -1505,6 +1505,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CustomFonts.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\DragDrop.cpp"
 				>
 			</File>
@@ -1684,6 +1688,10 @@
 			</File>
 			<File
 				RelativePath="..\common\defines.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CustomFonts.h"
 				>
 			</File>
 			<File

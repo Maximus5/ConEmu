@@ -841,7 +841,7 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 	//	if (!mb_PluginDetected || dwPID != mn_FarPID_PluginDetected)
 	//		dwPID = 0;
 	//}
-	_ASSERTE(sizeY <= 200);
+	_ASSERTE(sizeY <= 300);
 	/*if (!con.bBufferHeight && dwPID)
 		lbRc = SetConsoleSizePlugin(sizeX, sizeY, sizeBuffer, anCmdID);
 	else*/
@@ -1202,9 +1202,9 @@ int CRealBuffer::TextHeight()
 
 #ifdef _DEBUG
 
-	if (nRet > 150)
+	if (nRet > 200)
 	{
-		_ASSERTE(nRet<=150);
+		_ASSERTE(nRet<=200);
 	}
 
 #endif
