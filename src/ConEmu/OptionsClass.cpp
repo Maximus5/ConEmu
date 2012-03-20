@@ -6641,9 +6641,18 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			ResetFontWidth();
 			if (ghOpWnd)
 				UpdateTTF(!iter->pCustomFont->IsMonospace());
+
 			CEFONT ceFont;
 			ceFont.iType = CEFONT_CUSTOM;
 			ceFont.pCustomFont = iter->pCustomFont;
+
+			for(int i=0; i<MAX_FONT_STYLES; i++)
+			{
+				if (m_otm[i]) {free(m_otm[i]); m_otm[i] = NULL;}
+				if (i)
+					mh_Font[i] = ceFont;
+			}
+
 			return ceFont;
 		}
 
@@ -8174,6 +8183,7 @@ BOOL CSettings::GetFontNameFromFile_BDF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 {
 	if (!BDF_GetFamilyName(lpszFilePath, rsFontName))
 		return FALSE;
+	wcscat_c(rsFontName, L" [BDF]");
 	lstrcpy(rsFullFontName, rsFontName);
 	return TRUE;
 }

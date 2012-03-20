@@ -296,13 +296,13 @@ void CEDC::SetBkColor(COLORREF color)
 void CEDC::SetBkMode(int iBkMode)
 {
 	if (m_BkMode != iBkMode && m_Font.iType!=CEFONT_CUSTOM)
-		::SetBkColor(hDC, iBkMode);
+		::SetBkMode(hDC, iBkMode);
 	m_BkMode = iBkMode;
 }
 
 static COLORREF FlipChannels(COLORREF c)
 {
-	return (c >> 16) | (c & 0x00FF00) | (c << 16);
+	return (c >> 16) | (c & 0x00FF00) | ((c & 0xFF) << 16);
 }
 
 BOOL CEDC::ExtTextOut(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpString, UINT cbCount, const INT *lpDx)
