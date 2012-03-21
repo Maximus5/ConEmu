@@ -323,6 +323,12 @@ BOOL IsMacroActiveW1900()
 	return TRUE;
 }
 
+int GetMacroAreaW1900()
+{
+	int nArea = (int)InfoW1900->MacroControl(&guid_ConEmuTh, MCTL_GETAREA, 0, 0);
+	return nArea;
+}
+
 
 void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, INT_PTR nItem)
 {

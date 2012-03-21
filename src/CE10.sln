@@ -1,29 +1,31 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmu", "ConEmu\ConEmu09.vcproj", "{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmu", "ConEmu\ConEmu10.vcxproj", "{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuPlugin", "ConEmuPlugin\ConEmuPlugin09.vcproj", "{21152801-8744-4787-83F4-BE4564A367B4}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ConEmuPlugin", "ConEmuPlugin\ConEmuPlugin10.vcxproj", "{21152801-8744-4787-83F4-BE4564A367B4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuC", "ConEmuC\ConEmuC09.vcproj", "{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuC", "ConEmuC\ConEmuC10.vcxproj", "{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuTh", "ConEmuTh\ConEmuTh09.vcproj", "{60287D73-F658-4414-8C9B-30E1F3E78D05}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ConEmuTh", "ConEmuTh\ConEmuTh10.vcxproj", "{60287D73-F658-4414-8C9B-30E1F3E78D05}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuTh.gdi+", "ConEmuTh\Modules\gdip\gdip09.vcproj", "{C6CC0455-8680-4011-928C-D479F8F4C9FA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ConEmuTh.gdi+", "ConEmuTh\Modules\gdip\gdip10.vcxproj", "{C6CC0455-8680-4011-928C-D479F8F4C9FA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuTh.pe", "ConEmuTh\Modules\pe\pe09.vcproj", "{D179531C-0F06-473A-A301-7FE8976046EC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ConEmuTh.pe", "ConEmuTh\Modules\pe\pe10.vcxproj", "{D179531C-0F06-473A-A301-7FE8976046EC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuTh.ico", "ConEmuTh\Modules\ico\ico09.vcproj", "{A66F6175-6D1A-4092-A669-64E9C8C0B7D7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ConEmuTh.ico", "ConEmuTh\Modules\ico\ico10.vcxproj", "{A66F6175-6D1A-4092-A669-64E9C8C0B7D7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuLn", "ConEmuLn\ConEmuLn09.vcproj", "{64DB4963-B19E-43E2-B6A5-C659F632E655}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ConEmuLn", "ConEmuLn\ConEmuLn10.vcxproj", "{64DB4963-B19E-43E2-B6A5-C659F632E655}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuCD", "ConEmuCD\ConEmuCD09.vcproj", "{F9CB1F86-E724-4BDF-AEA3-649CCF9B0F3F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuCD", "ConEmuCD\ConEmuCD10.vcxproj", "{F9CB1F86-E724-4BDF-AEA3-649CCF9B0F3F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuHk", "ConEmuHk\ConEmuHk09.vcproj", "{525F3223-BC12-479E-8487-5FA4406461F4}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuHk", "ConEmuHk\ConEmuHk10.vcxproj", "{525F3223-BC12-479E-8487-5FA4406461F4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuDw", "ConEmuDW\ConEmuDw09.vcproj", "{0F3AA494-98BA-425A-941D-AC18C29EFC15}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ExtendedConsole", "ConEmuDW\ConEmuDw10.vcxproj", "{0F3AA494-98BA-425A-941D-AC18C29EFC15}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuBg", "ConEmuBg\ConEmuBg09.vcproj", "{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ConEmuBg", "ConEmuBg\ConEmuBg10.vcxproj", "{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3D972A47-1D21-4247-A3FB-57F58523D959}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -562,7 +562,7 @@ class CSettings
 		typedef struct tag_RegFont
 		{
 			BOOL    bDefault;             // Этот шрифт пользователь указал через /fontfile
-			CustomFont* pCustomFont;      // Для шрифтов, рисованных нами
+			CustomFontFamily* pCustom;    // Для шрифтов, рисованных нами
 			wchar_t szFontFile[MAX_PATH]; // полный путь
 			wchar_t szFontName[32];       // Font Family
 			BOOL    bUnicode;             // Юникодный?

@@ -134,7 +134,8 @@ MFileMapping<DetectedDialogs> *gpDbgDlg = NULL;
 int WINAPI _export GetMinFarVersionW(void)
 {
 	// ACTL_SYNCHRO required
-	return MAKEFARVERSION(2,0,max(1007,FAR_X_VER));
+	// build 1765: Новая команда в FARMACROCOMMAND - MCMD_GETAREA
+	return MAKEFARVERSION(2,0,1765);
 }
 
 void WINAPI _export GetPluginInfoWcmn(void *piv)
@@ -942,6 +943,23 @@ BOOL IsMacroActive()
 		lbActive = FUNC_X(IsMacroActiveW)();
 
 	return lbActive;
+}
+
+int GetMacroArea()
+{
+	int nMacroArea = 0/*MACROAREA_OTHER*/;
+
+	if (gFarVersion.dwVerMajor==1)
+	{
+		_ASSERTE(gFarVersion.dwVerMajor>1);
+		nMacroArea = 1; // в Far 1.7x не поддерживается
+	}
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		nMacroArea = FUNC_Y(GetMacroAreaW)();
+	else
+		nMacroArea = FUNC_X(GetMacroAreaW)();
+
+	return nMacroArea;
 }
 
 BOOL CheckPanelSettings(BOOL abSilence)

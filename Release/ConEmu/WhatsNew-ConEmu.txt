@@ -1,5 +1,6 @@
 ﻿[*] Еще раз табы для модальных окон (Far3).
 [*] Issue 511: Rudimentary BDF support (from thecybershadow).
+// from Maximus: выкинул тормознутый std, скорость загрузки bdf-шрифтов увеличилась вдвое.
 
 
 2012.03.15

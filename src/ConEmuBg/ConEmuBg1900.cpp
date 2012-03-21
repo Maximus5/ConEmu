@@ -300,3 +300,9 @@ bool FMatchW1900(LPCWSTR asMask, LPWSTR asPath)
 	INT_PTR iRc = FSFW1900->ProcessName(asMask, asPath, 0, PN_CMPNAME);
 	return (iRc != 0);
 }
+
+int GetMacroAreaW1900()
+{
+	int nArea = (int)InfoW1900->MacroControl(&guid_ConEmuBg, MCTL_GETAREA, 0, 0);
+	return nArea;
+}

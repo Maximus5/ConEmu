@@ -160,3 +160,11 @@ bool FMatchW995(LPCWSTR asMask, LPWSTR asPath)
 	int iRc = FSFW995->ProcessName(asMask, asPath, 0, PN_CMPNAME);
 	return (iRc != 0);
 }
+
+int GetMacroAreaW995()
+{
+	#define MCMD_GETAREA 6
+	ActlKeyMacro area = {MCMD_GETAREA};
+	int nArea = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &area);
+	return nArea;
+}

@@ -95,3 +95,6 @@ LPCWSTR FUNC_X(GetMsgW)(int aiMsg);
 bool FMatchA(LPCSTR asMask, LPSTR asPath);
 bool FUNC_Y(FMatchW)(LPCWSTR asMask, LPWSTR asPath);
 bool FUNC_X(FMatchW)(LPCWSTR asMask, LPWSTR asPath);
+int GetMacroArea();
+int FUNC_X(GetMacroAreaW)();
+int FUNC_Y(GetMacroAreaW)();

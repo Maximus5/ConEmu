@@ -1031,10 +1031,10 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	// Добавить шрифты рисованные ConEmu
 	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
 	{
-		if (iter->pCustomFont)
+		if (iter->pCustom)
 		{
-			int nIdx = SendDlgItemMessage(gpSetCls->hMain, tFontFace, CB_INSERTSTRING, 0, (LPARAM)iter->szFontName);
-			SendDlgItemMessage(gpSetCls->hMain, tFontFace, CB_SETITEMDATA, nIdx, iter->pCustomFont->IsMonospace() ? 1 : 0);
+			int nIdx = SendDlgItemMessage(gpSetCls->hMain, tFontFace, CB_ADDSTRING, 0, (LPARAM)iter->szFontName);
+			SendDlgItemMessage(gpSetCls->hMain, tFontFace, CB_SETITEMDATA, nIdx, iter->pCustom->GetFont(0,0,0,0)->IsMonospace() ? 1 : 0);
 		}
 	}
 
@@ -6635,22 +6635,31 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
 	// Поиск по шрифтам рисованным ConEmu
 	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
-		if (iter->pCustomFont && lstrcmp(inFont->lfFaceName, iter->szFontName)==0)
+		if (iter->pCustom && lstrcmp(inFont->lfFaceName, iter->szFontName)==0)
 		{
-			iter->pCustomFont->GetBoundingBox(&inFont->lfWidth, &inFont->lfHeight);
+			CustomFont* pFont = iter->pCustom->GetFont(inFont->lfHeight,
+				inFont->lfWeight >= FW_BOLD, inFont->lfItalic, inFont->lfUnderline);
+			_ASSERTE(pFont != NULL);
+			pFont->GetBoundingBox(&inFont->lfWidth, &inFont->lfHeight);
 			ResetFontWidth();
 			if (ghOpWnd)
-				UpdateTTF(!iter->pCustomFont->IsMonospace());
+				UpdateTTF(!pFont->IsMonospace());
 
 			CEFONT ceFont;
 			ceFont.iType = CEFONT_CUSTOM;
-			ceFont.pCustomFont = iter->pCustomFont;
+			ceFont.pCustomFont = pFont;
 
 			for(int i=0; i<MAX_FONT_STYLES; i++)
 			{
 				if (m_otm[i]) {free(m_otm[i]); m_otm[i] = NULL;}
 				if (i)
-					mh_Font[i] = ceFont;
+				{
+					mh_Font[i].iType = CEFONT_CUSTOM;
+					mh_Font[i].pCustomFont = iter->pCustom->GetFont(inFont->lfHeight,
+						(i & AI_STYLE_BOLD     ) ? TRUE : FALSE,
+						(i & AI_STYLE_ITALIC   ) ? TRUE : FALSE,
+						(i & AI_STYLE_UNDERLINE) ? TRUE : FALSE);
+				}
 			}
 
 			return ceFont;
@@ -7455,7 +7464,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 	}
 
 	// Проверить, может такой шрифт уже зарегистрирован в системе
-	BOOL lbRegistered = FALSE, lbOneOfFam = FALSE;
+	BOOL lbRegistered = FALSE, lbOneOfFam = FALSE; int iFamIndex = -1;
 
 	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
 	{
@@ -7463,7 +7472,10 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		if (lstrcmpi(iter->szFontName, rf.szFontName) == 0
 			|| lstrcmpi(iter->szFontName, szFullFontName) == 0)
 		{
-			lbRegistered = iter->bAlreadyInSystem; lbOneOfFam = TRUE; break;
+			lbRegistered = iter->bAlreadyInSystem;
+			lbOneOfFam = TRUE;
+			iFamIndex = iter - m_RegFonts.begin();
+			break;
 		}
 	}
 
@@ -7522,8 +7534,9 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 	LPCTSTR pszDot = _tcsrchr(asFontFile, _T('.'));
 	if (pszDot && lstrcmpi(pszDot, _T(".bdf"))==0)
 	{
-		rf.pCustomFont = BDF_Load(asFontFile);
-		if (!rf.pCustomFont)
+		WARNING("Не загружать шрифт полностью - только имена/заголовок, а то слишком накладно по времени. Загружать при первом вызове.");
+		CustomFont* pFont = BDF_Load(asFontFile);
+		if (!pFont)
 		{
 			size_t cchLen = _tcslen(asFontFile)+100;
 			wchar_t* psz=(wchar_t*)calloc(cchLen,sizeof(wchar_t));
@@ -7542,8 +7555,18 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 			return TRUE; // продолжить со следующим файлом
 		}
 
-		rf.bUnicode = rf.pCustomFont->HasUnicode();
-		rf.bHasBorders = rf.pCustomFont->HasBorders();
+		if (lbOneOfFam)
+		{
+			// Добавим в существующее семейство
+			_ASSERTE(iFamIndex >= 0);
+			m_RegFonts[iFamIndex].pCustom->AddFont(pFont);
+			return TRUE;
+		}
+
+		rf.pCustom = new CustomFontFamily();
+		rf.pCustom->AddFont(pFont);
+		rf.bUnicode = pFont->HasUnicode();
+		rf.bHasBorders = pFont->HasBorders();
 
 		// Запомнить шрифт
 		m_RegFonts.push_back(rf);
@@ -7778,8 +7801,8 @@ void CSettings::UnregisterFonts()
 	for(std::vector<RegFont>::iterator iter = m_RegFonts.begin();
 	        iter != m_RegFonts.end(); iter = m_RegFonts.erase(iter))
 	{
-		if (iter->pCustomFont)
-			delete iter->pCustomFont;
+		if (iter->pCustom)
+			delete iter->pCustom;
 		else
 			RemoveFontResourceEx(iter->szFontFile, FR_PRIVATE, NULL);
 	}

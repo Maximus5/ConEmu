@@ -2,16 +2,79 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <algorithm>
+#include <vector>
+#include "../common/WinObjects.h"
+
+// CustomFontFamily
+
+struct CustomFontFamily::Impl
+{
+	std::vector<CustomFont*> fonts;
+};
+
+void CustomFontFamily::AddFont(CustomFont* font)
+{
+	if (!pImpl)
+		pImpl = new Impl();
+	pImpl->fonts.push_back(font);
+}
+
+CustomFont* CustomFontFamily::GetFont(int iSize, BOOL bBold, BOOL bItalic, BOOL bUnderline)
+{
+	if (!pImpl)
+		return NULL;
+
+	CustomFont* pBestFont = NULL;
+	int iBestScore = 1000000000;
+
+	for (std::vector<CustomFont*>::iterator iter = pImpl->fonts.begin(); iter != pImpl->fonts.end(); ++iter)
+	{
+		int iScore = 0;	// lower is better
+		CustomFont* pFont = *iter;
+		iScore += abs(abs(iSize) - abs(pFont->GetSize()));
+		if (bBold != pFont->IsBold())
+			iScore += 1000;
+		if (bItalic != pFont->IsItalic())
+			iScore += 1000;
+		if (bUnderline != pFont->IsUnderline())
+			iScore += 1000;
+		if (!pFont->HasBorders())
+			iScore += 10000;
+		if (!pFont->HasUnicode())
+			iScore += 10000;
+		if (iScore < iBestScore)
+		{
+			pBestFont = pFont;
+			iBestScore = iScore;
+		}
+	}
+	return pBestFont;
+}
+
+CustomFontFamily::~CustomFontFamily()
+{
+	if (pImpl)
+		delete pImpl;
+}
+
+// BDFFont
 
 class BDFFont : public CustomFont
 {
 private:
 	int m_Width, m_Height;
+	BOOL m_Bold;
 
 	HDC hDC;
 	HBITMAP hBitmap; // for GDI rendering
 	bool* bpPixels;	 // for manual rendering
 	BOOL m_HasUnicode, m_HasBorders;
+
+	BDFFont()
+	{
+		m_Bold = m_HasUnicode = m_HasBorders = FALSE;
+	}
 
 	void CreateBitmap()
 	{
@@ -53,33 +116,121 @@ public:
 			delete[] bpPixels;
 	}
 
-	static BDFFont* Load(std::istream &f)
+	static void NextWord(char*& szLine, char*& szWord, char szTerm = ' ')
 	{
+		char* pszSpace = strchr(szLine, szTerm);
+		char* szNext;
+		if (!pszSpace)
+		{
+			pszSpace = szLine + strlen(szLine);
+			szNext = pszSpace;
+		}
+		else
+		{
+			szNext = pszSpace + 1;
+			*pszSpace = 0;
+		}
+		szWord = szLine;
+		szLine = szNext;
+	}
+
+	static void NextLine(char*& szLine, char*& szWord)
+	{
+		NextWord(szLine, szWord, '\n');
+	}
+
+	static char* LoadBuffer(const wchar_t* lpszFilePath, char*& pszBuf, char*& pszFileEnd)
+	{
+		HANDLE h = CreateFile(lpszFilePath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
+		if (h == INVALID_HANDLE_VALUE)
+			return NULL;
+
+		LARGE_INTEGER liSize = {};
+		if (!GetFileSizeEx(h, &liSize) || liSize.HighPart)
+		{
+			_ASSERTE("GetFileSizeEx failed" && 0);
+			CloseHandle(h);
+			return NULL;
+		}
+
+		pszBuf = (char*)malloc(liSize.LowPart+1);
+		if (!pszBuf)
+		{
+			_ASSERTE("Buffer allocation failed" && 0);
+			CloseHandle(h);
+			return NULL;
+		}
+
+		DWORD nRead = 0;
+		BOOL bRead = ReadFile(h, pszBuf, liSize.LowPart, &nRead, NULL);
+		CloseHandle(h);
+
+		if (!bRead || (nRead != liSize.LowPart))
+		{
+			_ASSERTE("BDF file read failed" && 0);
+			free(pszBuf);
+			return NULL;
+		}
+		pszBuf[nRead] = 0;
+
+		pszFileEnd = pszBuf + nRead;
+		return pszBuf;
+	}
+
+	static BDFFont* Load(const wchar_t* lpszFilePath)
+	{
+		char* pszBuf, *pszFileEnd;
+		char* pszCur = LoadBuffer(lpszFilePath, pszBuf, pszFileEnd);
+		if (!pszCur)
+			return NULL;
+
+		char* szLine;
+		char* szWord;
+		char* pszEnd;
+
+
 		BDFFont* b = new BDFFont;
-		std::string line;
 
 		int iCharIndex = -1;
 		int iXOffset, iYOffset;
 		int iCharWidth, iCharHeight, iCharXOffset, iCharYOffset;
 
-		while (f.good())
+
+		while ((pszCur < pszFileEnd) && *pszCur)
 		{
-			getline(f, line);
-			std::istringstream iss(line);
-			std::string word;
-			getline(iss, word, ' ');
-			if (word == "FONTBOUNDINGBOX")
+			NextLine(pszCur, szLine);
+			NextWord(szLine, szWord);
+			//std::istringstream iss(line);
+			//std::string word;
+			//getline(iss, word, ' ');
+			if (lstrcmpA(szWord, "WEIGHT_NAME") == 0)
 			{
-				getline(iss, word, ' '); b->m_Width = atoi(word.c_str());
-				getline(iss, word, ' '); b->m_Height = atoi(word.c_str());
-				getline(iss, word, ' '); iXOffset = atoi(word.c_str());
-				getline(iss, word, ' '); iYOffset = atoi(word.c_str());
+				//getline(iss, word);
+				NextWord(szLine, szWord);
+				//std::transform(word.begin(), word.end(), word.begin(), tolower);
+				CharLowerBuffA(szWord, lstrlenA(szWord));
+				//if (word != "\"medium\"" && word != "\"regular\"" && word != "\"normal\"")
+				if (lstrcmpA(szWord, "\"medium\"") && lstrcmpA(szWord, "\"regular\"") && lstrcmpA(szWord, "\"normal\""))
+					b->m_Bold = TRUE;
+			}
+			else
+			if (lstrcmpA(szWord, "FONTBOUNDINGBOX") == 0)
+			{
+				//getline(iss, word, ' '); b->m_Width = atoi(word.c_str());
+				//getline(iss, word, ' '); b->m_Height = atoi(word.c_str());
+				//getline(iss, word, ' '); iXOffset = atoi(word.c_str());
+				//getline(iss, word, ' '); iYOffset = atoi(word.c_str());
+				NextWord(szLine, szWord); b->m_Width = strtol(szWord, &pszEnd, 10);
+				NextWord(szLine, szWord); b->m_Height = strtol(szWord, &pszEnd, 10);
+				NextWord(szLine, szWord); iXOffset = strtol(szWord, &pszEnd, 10);
+				NextWord(szLine, szWord); iYOffset = strtol(szWord, &pszEnd, 10);
 				b->CreateBitmap();
 			}
 			else
-			if (word == "ENCODING")
+			if (lstrcmpA(szWord, "ENCODING") == 0)
 			{
-				getline(iss, word, ' '); iCharIndex = atoi(word.c_str());
+				//getline(iss, word, ' '); iCharIndex = atoi(word.c_str());
+				NextWord(szLine, szWord); iCharIndex = strtol(szWord, &pszEnd, 10);
 				if (iCharIndex > 0xFFFF)
 					iCharIndex = -1;
 				if (iCharIndex > 0xFF)
@@ -88,15 +239,19 @@ public:
 					b->m_HasBorders = TRUE;
 			}
 			else
-			if (word == "BBX")
+			if (lstrcmpA(szWord, "BBX") == 0)
 			{
-				getline(iss, word, ' '); iCharWidth = atoi(word.c_str());
-				getline(iss, word, ' '); iCharHeight = atoi(word.c_str());
-				getline(iss, word, ' '); iCharXOffset = atoi(word.c_str());
-				getline(iss, word, ' '); iCharYOffset = atoi(word.c_str());
+				//getline(iss, word, ' '); iCharWidth = atoi(word.c_str());
+				//getline(iss, word, ' '); iCharHeight = atoi(word.c_str());
+				//getline(iss, word, ' '); iCharXOffset = atoi(word.c_str());
+				//getline(iss, word, ' '); iCharYOffset = atoi(word.c_str());
+				NextWord(szLine, szWord); iCharWidth = strtol(szWord, &pszEnd, 10);
+				NextWord(szLine, szWord); iCharHeight = strtol(szWord, &pszEnd, 10);
+				NextWord(szLine, szWord); iCharXOffset = strtol(szWord, &pszEnd, 10);
+				NextWord(szLine, szWord); iCharYOffset = strtol(szWord, &pszEnd, 10);
 			}
 			else
-			if (word == "BITMAP")
+			if (lstrcmpA(szWord, "BITMAP") == 0)
 			{
 				if (iCharIndex < 0)
 					continue;
@@ -107,43 +262,93 @@ public:
 				for (int iRow=0; iRow<iCharHeight; iRow++)
 				{
 					int by = y*b->m_Width*256;
-					getline(f, line);
-					for (size_t i = 0; i+1 < line.size(); i += 2)
+					NextLine(pszCur, szLine);
+					int i = 0;
+					while (*szLine)
 					{
-						int n;
-						std::istringstream(line.substr(i, 2)) >> std::hex >> n;
+						if (!szLine[1])
+							break;
+						char szHex[3] = {szLine[0], szLine[1]};
+						int n = strtoul(szHex, &pszEnd, 16);
 						for (int bit=0; bit<8; bit++)
 						{
 							if (n & (0x80 >> bit))
 							{
-								int px = x+(i/2)*8+bit;
+								int px = x+i*8+bit;
 								SetPixel(b->hDC, px, y, 0xFFFFFF);
 								b->bpPixels[by + px] = true;
 							}
 						}
+						szLine += 2;
+						i++;
 					}
 					y++;
 				}
 			}
 		}
 
+		free(pszBuf);
+
 		return b;
 	}
 
-	static bool GetFamilyName(std::istream &f, std::string &familyName)
+	static bool GetFamilyName(const wchar_t* lpszFilePath, wchar_t (&rsFamilyName)[LF_FACESIZE])
 	{
-		std::string s;
-		static const std::string FAMILY_NAME("FAMILY_NAME \"");
-		while (f.good())
+		rsFamilyName[0] = 0;
+		char* pszBuf, *pszFileEnd, *szLine;
+		char* pszCur = LoadBuffer(lpszFilePath, pszBuf, pszFileEnd);
+		if (!pszCur)
+			return false;
+
+		//familyName.clear();
+		//std::string s;
+		//static const std::string FAMILY_NAME("FAMILY_NAME \"");
+		const char* FAMILY_NAME = "FAMILY_NAME \"";
+		int FAMILY_NAME_LEN = lstrlenA(FAMILY_NAME);
+		//static const std::string FONT("FONT ");
+		const char* FONT = "FONT ";
+		int FONT_LEN = lstrlenA(FONT);
+		char szFamilyName[LF_FACESIZE] = {};
+
+		while ((pszCur < pszFileEnd) && *pszCur)
 		{
-			getline(f, s);
-			if (s.compare(0, FAMILY_NAME.size(), FAMILY_NAME)==0)
+			NextLine(pszCur, szLine);
+			//getline(f, s);
+			//if (s.compare(0, FAMILY_NAME.size(), FAMILY_NAME)==0)
+			if (memcmp(szLine, FAMILY_NAME, FAMILY_NAME_LEN) == 0)
 			{
-				familyName = s.substr(FAMILY_NAME.size(), s.size()-1-FAMILY_NAME.size());
-				return true;
+				//familyName = s.substr(FAMILY_NAME.size(), s.size()-1-FAMILY_NAME.size());
+				lstrcpynA(szFamilyName, szLine + FAMILY_NAME_LEN, ARRAYSIZE(szFamilyName));
+				char *psz = strchr(szFamilyName, '"');
+				if (psz)
+					*psz = 0;
+				goto wrap;
+			}
+			//else
+			//if (s.compare(0, FONT.size(), FONT)==0)
+			else if (memcmp(szLine, FONT, FONT_LEN) == 0)
+			{
+				//s.erase(0, FONT.size());
+
+				//std::istringstream iss(s);
+				TODO("Убрать std::*");
+				std::istringstream iss(szLine + FONT_LEN);
+				std::string word;
+				// из строки
+				// FONT -Schumacher-Clean-Medium-R-Normal--12-120-75-75-C-60-ISO10646-1
+				// нам нужно выкусить "Clean"
+				for (int n=0; n<3; n++)
+					getline(iss, word, '-');
+				//familyName = word;
+				lstrcpynA(szFamilyName, word.c_str(), ARRAYSIZE(szFamilyName));
+
+				// Keep looking for FAMILY_NAME
 			}
 		}
-		return false;
+
+wrap:
+		MultiByteToWideChar(CP_ACP, 0, szFamilyName, -1, rsFamilyName, ARRAYSIZE(rsFamilyName));
+		return (rsFamilyName[0] != 0);
 	}
 
 	// ...
@@ -161,6 +366,28 @@ public:
 	virtual BOOL HasBorders()
 	{
 		return m_HasBorders;
+	}
+
+	virtual int GetSize()
+	{
+		long w, h;
+		GetBoundingBox(&w, &h);
+		return h;
+	}
+
+	virtual BOOL IsBold()
+	{
+		return m_Bold;
+	}
+
+	virtual BOOL IsItalic()
+	{
+		return FALSE;
+	}
+
+	virtual BOOL IsUnderline()
+	{
+		return FALSE;
 	}
 
 	virtual void GetBoundingBox(long *pX, long *pY)
@@ -219,31 +446,37 @@ public:
 	}
 };
 
+// BDF
+
 BOOL BDF_GetFamilyName(LPCTSTR lpszFilePath, wchar_t (&rsFamilyName)[LF_FACESIZE])
 {
 	std::ifstream f(lpszFilePath);
 	if (!f.is_open())
 		return FALSE;
 
-	std::string familyName;
-	if (!BDFFont::GetFamilyName(f, familyName))
-		return FALSE;
+	if (!BDFFont::GetFamilyName(lpszFilePath, rsFamilyName))
+	{
+		lstrcpyn(rsFamilyName, PointToName(lpszFilePath), LF_FACESIZE);
+		return TRUE;
+	}
 
-	if (familyName.size() >= LF_FACESIZE)
-		return FALSE;
-	std::copy(familyName.begin(), familyName.end(), rsFamilyName);
-	rsFamilyName[familyName.size()] = 0;
+	//if (familyName.size() >= LF_FACESIZE)
+	//	familyName.erase(LF_FACESIZE-1);
+	//std::copy(familyName.begin(), familyName.end(), rsFamilyName);
+	//rsFamilyName[familyName.size()] = 0;
 	return TRUE;
 }
 
 CustomFont* BDF_Load( LPCTSTR lpszFilePath )
 {
-	std::ifstream f(lpszFilePath);
-	if (!f.is_open())
-		return NULL;
-
-	return BDFFont::Load(f);
+	//std::ifstream f(lpszFilePath);
+	//if (!f.is_open())
+	//	return NULL;
+	//return BDFFont::Load(f);
+	return BDFFont::Load(lpszFilePath);
 }
+
+// CachedBrush (for CEDC)
 
 CachedSolidBrush::~CachedSolidBrush()
 {
@@ -260,6 +493,8 @@ HBRUSH CachedSolidBrush::Get(COLORREF c)
 	}
 	return m_Brush;
 }
+
+// CEDC
 
 CEFONT CEDC::SelectObject(CEFONT font)
 {

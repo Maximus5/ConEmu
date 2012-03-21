@@ -2186,21 +2186,41 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 
 	if (!abExclusive)
 	{
-		// Быстрая блокировка, не запрещающая чтение другим нитям.
-		// Запрещено только изменение (пересоздание буфера например)
-		AddRef(dwTID);
-
-		// Если другая нить уже захватила exclusive
-		if (mb_Exclusive)
+		if (!mb_Exclusive)
 		{
-			int nLeft = ReleaseRef(dwTID); // Иначе можем попасть на взаимную блокировку
-
-			if (nLeft > 0)
+			// Быстрая блокировка, не запрещающая чтение другим нитям.
+			// Запрещено только изменение (пересоздание буфера например)
+			AddRef(dwTID);
+		}
+		// Если другая нить уже захватила exclusive
+		else //if (mb_Exclusive)
+		{
+			_ASSERTEX(mb_Exclusive);
+			//int nLeft = ReleaseRef(dwTID); // Иначе можем попасть на взаимную блокировку
+			//if (nLeft > 0)
+			//{
+			//	// Нужно избегать этого. Значит выше по стеку в этой нити
+			//	// более одного раза был выполнен non exclusive lock
+			//	_ASSERTEX(nLeft == 0);
+			//}
+			#ifdef _DEBUG
+			int nInThreadLeft = 0;
+			for (int i=1; i<10; i++)
+			{
+				if (mn_LockedTID[i] == dwTID)
+				{
+					nInThreadLeft = mn_LockedCount[i];
+					break;
+				}
+			}
+			if (nInThreadLeft > 0)
 			{
 				// Нужно избегать этого. Значит выше по стеку в этой нити
 				// более одного раза был выполнен non exclusive lock
-				_ASSERTEX(nLeft == 0);
+				_ASSERTEX(nInThreadLeft == 0);
 			}
+			#endif
+
 
 			DEBUGSTR(L"!!! Failed non exclusive lock, trying to use CriticalSection\n");
 			bool lbEntered = MyEnterCriticalSection(anTimeout); // дождаться пока секцию отпустят
@@ -2213,7 +2233,7 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 				LeaveCriticalSection(&m_cs);
 		}
 	}
-	else
+	else // abExclusive
 	{
 		// Требуется Exclusive Lock
 #ifdef _DEBUG

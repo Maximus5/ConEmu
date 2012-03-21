@@ -3,6 +3,8 @@
 #include <windows.h>
 #include <crtdbg.h>
 
+// CustomFont
+
 class CustomFont
 {
 public:
@@ -10,9 +12,26 @@ public:
 	virtual BOOL HasUnicode()=0;
 	virtual BOOL HasBorders()=0;
 	virtual void GetBoundingBox(long *pX, long *pY)=0;
+	virtual int GetSize()=0;
+	virtual BOOL IsBold()=0;
+	virtual BOOL IsItalic()=0;
+	virtual BOOL IsUnderline()=0;
 	virtual void DrawText(HDC hDC, int X, int Y, LPCWSTR lpString, UINT cbCount)=0;
 	virtual void DrawText(COLORREF* pPixels, size_t iStride, COLORREF cFG, COLORREF cBG, LPCWSTR lpString, UINT cbCount)=0;
 	virtual ~CustomFont() {}
+};
+
+// CustomFontFamily
+
+class CustomFontFamily
+{
+	struct Impl;
+	Impl *pImpl;
+public:
+	CustomFontFamily() : pImpl(NULL) {}
+	~CustomFontFamily();
+	void AddFont(CustomFont* font);
+	CustomFont* GetFont(int iSize, BOOL bBold, BOOL bItalic, BOOL bUnderline);
 };
 
 // CEFONT

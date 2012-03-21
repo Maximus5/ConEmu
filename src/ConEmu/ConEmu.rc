@@ -506,7 +506,7 @@ BEGIN
     RTEXT           "Middle:",IDC_STATIC,244,62,28,8
     COMBOBOX        lbCTSMBtnAction,275,59,42,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Goto Far editor on compiler errors",IDC_STATIC,4,80,152,29
-    CONTROL         "Hilight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,92,76,8
+    CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,92,76,8
     COMBOBOX        lbFarGotoEditorVk,94,90,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Never",rbCTSNever,"Button",BS_AUTORADIOBUTTON,90,13,35,8
     GROUPBOX        "Color indexes",IDC_STATIC,263,1,60,46

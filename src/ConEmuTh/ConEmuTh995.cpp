@@ -228,6 +228,14 @@ BOOL IsMacroActiveW995()
 	return TRUE;
 }
 
+int GetMacroAreaW995()
+{
+	#define MCMD_GETAREA 6
+	ActlKeyMacro area = {MCMD_GETAREA};
+	int nArea = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &area);
+	return nArea;
+}
+
 
 void LoadPanelItemInfoW995(CeFullPanelInfo* pi, INT_PTR nItem)
 {
@@ -578,7 +586,6 @@ void GetFarRectW995(SMALL_RECT* prcFarRect)
 	}
 }
 
-// Использовать только ACTL_GETSHORTWINDOWINFO. С ней проблем с синхронизацией быть не должно
 bool CheckFarPanelsW995()
 {
 	if (!InfoW995 || !InfoW995->AdvControl) return false;
@@ -586,68 +593,40 @@ bool CheckFarPanelsW995()
 	WindowInfo wi = {-1};
 	bool lbPanelsActive = false;
 
-	if (gFarVersion.dwBuild >= 1765)
+	_ASSERTE(gFarVersion.dwBuild >= 1765);
+
+	enum FARMACROAREA
 	{
-		enum FARMACROAREA
-		{
-			MACROAREA_OTHER             = 0,
-			MACROAREA_SHELL             = 1,
-			MACROAREA_VIEWER            = 2,
-			MACROAREA_EDITOR            = 3,
-			MACROAREA_DIALOG            = 4,
-			MACROAREA_SEARCH            = 5,
-			MACROAREA_DISKS             = 6,
-			MACROAREA_MAINMENU          = 7,
-			MACROAREA_MENU              = 8,
-			MACROAREA_HELP              = 9,
-			MACROAREA_INFOPANEL         =10,
-			MACROAREA_QVIEWPANEL        =11,
-			MACROAREA_TREEPANEL         =12,
-			MACROAREA_FINDFOLDER        =13,
-			MACROAREA_USERMENU          =14,
-			MACROAREA_AUTOCOMPLETION    =15,
-		};
+		MACROAREA_OTHER             = 0,
+		MACROAREA_SHELL             = 1,
+		MACROAREA_VIEWER            = 2,
+		MACROAREA_EDITOR            = 3,
+		MACROAREA_DIALOG            = 4,
+		MACROAREA_SEARCH            = 5,
+		MACROAREA_DISKS             = 6,
+		MACROAREA_MAINMENU          = 7,
+		MACROAREA_MENU              = 8,
+		MACROAREA_HELP              = 9,
+		MACROAREA_INFOPANEL         =10,
+		MACROAREA_QVIEWPANEL        =11,
+		MACROAREA_TREEPANEL         =12,
+		MACROAREA_FINDFOLDER        =13,
+		MACROAREA_USERMENU          =14,
+		MACROAREA_AUTOCOMPLETION    =15,
+	};
 #define MCMD_GETAREA 6
-		ActlKeyMacro area = {MCMD_GETAREA};
-		INT_PTR nArea = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &area);
+	ActlKeyMacro area = {MCMD_GETAREA};
+	INT_PTR nArea = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &area);
 
-		lbPanelsActive = (nArea == MACROAREA_SHELL || nArea == MACROAREA_SEARCH);
+	lbPanelsActive = (nArea == MACROAREA_SHELL || nArea == MACROAREA_SEARCH);
 
-		//switch(nArea)
-		//{
-		//case MACROAREA_SHELL:
-		//case MACROAREA_INFOPANEL:
-		//case MACROAREA_QVIEWPANEL:
-		//case MACROAREA_TREEPANEL:
-		//	return WTYPE_PANELS;
-		//case MACROAREA_VIEWER:
-		//	return WTYPE_VIEWER;
-		//case MACROAREA_EDITOR:
-		//	return WTYPE_EDITOR;
-		//case MACROAREA_DIALOG:
-		//case MACROAREA_SEARCH:
-		//case MACROAREA_DISKS:
-		//case MACROAREA_FINDFOLDER:
-		//case MACROAREA_AUTOCOMPLETION:
-		//	return WTYPE_DIALOG;
-		//case MACROAREA_HELP:
-		//	return WTYPE_HELP;
-		//case MACROAREA_MAINMENU:
-		//case MACROAREA_MENU:
-		//case MACROAREA_USERMENU:
-		//	return WTYPE_VMENU;
-		//case MACROAREA_OTHER: // Grabber
-		//	return -1;
-		//default:
-		//	return -1;
-		//}
-	}
-	else
-	{
-		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-		INT_PTR iRc = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (LPVOID)&wi);
-		lbPanelsActive = (iRc != 0) && (wi.Type == WTYPE_PANELS);
-	}
+	//}
+	//else
+	//{
+	//	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+	//	INT_PTR iRc = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (LPVOID)&wi);
+	//	lbPanelsActive = (iRc != 0) && (wi.Type == WTYPE_PANELS);
+	//}
 	
 	return lbPanelsActive;
 }

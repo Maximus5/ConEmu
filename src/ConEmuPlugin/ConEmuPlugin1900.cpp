@@ -85,7 +85,12 @@ void WaitEndSynchroW1900();
 static wchar_t* GetPanelDir(HANDLE hPanel)
 {
 	wchar_t* pszDir = NULL;
-	size_t nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, 0, 0);
+	size_t nSize;
+	
+	PanelInfo pi = {sizeof(pi)};
+	nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELINFO, 0, &pi);
+
+	nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, 0, 0);
 
 	if (nSize)
 	{
@@ -98,7 +103,8 @@ static wchar_t* GetPanelDir(HANDLE hPanel)
 			free(pDir);
 		}
 	}
-	_ASSERTE(nSize>0);
+	_ASSERTE(nSize>0 || (pi.Flags & PFLAGS_PLUGIN));
+
 	return pszDir;
 }
 
