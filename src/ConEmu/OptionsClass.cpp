@@ -60,6 +60,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SIZE szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
 const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed raster font size. Select 'Terminal' instead of '[Raster Fonts ...]'";
 
+// “ут можно бы оставить "LF.lfHeight". ѕри выборе другого шрифта - может мен€тьс€ высота?
+// ’от€, наверное все же лучше не включать "AI", а дать пользователю задать то, что хочетс€ ему.
+#define CurFontSizeY gpSet->FontSizeY/*LF.lfHeight*/ 		
+#undef UPDATE_FONTSIZE_RECREATE
+
+
 #define TEST_FONT_WIDTH_STRING_EN L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define TEST_FONT_WIDTH_STRING_RU L"јЅ¬√ƒ≈∆«»… ЋћЌќѕ–—“”‘’÷„ЎўЏџ№Ёёя"
 
@@ -428,7 +434,7 @@ void CSettings::InitVars_Pages()
 	{
 		{tFontFace, sit_FontsAndRaster, LogFont.lfFaceName, countof(LogFont.lfFaceName)},
 		{tFontFace, sit_Fonts, LogFont2.lfFaceName, countof(LogFont2.lfFaceName)},
-		{tFontSizeY, sit_ULong, &LogFont.lfHeight, 0, sit_Byte, SettingsNS::FSizes+1, countof(SettingsNS::FSizes)-1},
+		{tFontSizeY, sit_ULong, &CurFontSizeY, 0, sit_Byte, SettingsNS::FSizes+1, countof(SettingsNS::FSizes)-1},
 		{tFontSizeX, sit_ULong, &gpSet->FontSizeX, 0, sit_Byte, SettingsNS::FSizes, countof(SettingsNS::FSizes)},
 		{tFontSizeX2, sit_ULong, &gpSet->FontSizeX2, 0, sit_Byte, SettingsNS::FSizes, countof(SettingsNS::FSizes)},
 		{tFontSizeX3, sit_ULong, &gpSet->FontSizeX3, 0, sit_Byte, SettingsNS::FSizes, countof(SettingsNS::FSizes)},
@@ -567,7 +573,9 @@ void CSettings::SettingsPreSave()
 {
 	lstrcpyn(gpSet->inFont, LogFont.lfFaceName, countof(gpSet->inFont));
 	lstrcpyn(gpSet->inFont2, LogFont2.lfFaceName, countof(gpSet->inFont2));
+	#ifdef UPDATE_FONTSIZE_RECREATE
 	gpSet->FontSizeY = LogFont.lfHeight;
+	#endif
 	gpSet->mn_LoadFontCharSet = LogFont.lfCharSet;
 	gpSet->mn_AntiAlias = LogFont.lfQuality;
 	gpSet->isBold = (LogFont.lfWeight >= FW_BOLD);
@@ -1074,7 +1082,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 		if (gpSet->isFontAutoSize) CheckDlgButton(hMain, cbFontAuto, BST_CHECKED);
 
-		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", LogFont.lfHeight);
+		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", CurFontSizeY);
 		//upToFontHeight = LogFont.lfHeight;
 		SelectStringExact(hMain, tFontSizeY, temp);
 		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeX);
@@ -6254,7 +6262,7 @@ void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WOR
 	if (ghOpWnd)
 	{
 		wchar_t szSize[10];
-		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", LF.lfHeight);
+		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", CurFontSizeY);
 		SetDlgItemText(hMain, tFontSizeY, szSize);
 		UpdateFontInfo();
 		ShowFontErrorTip(gpSetCls->szFontError);
@@ -6348,7 +6356,7 @@ void CSettings::RecreateFont(WORD wFromID)
 	if (ghOpWnd && wFromID == tFontFace)
 	{
 		wchar_t szSize[10];
-		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", LF.lfHeight);
+		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", CurFontSizeY);
 		SetDlgItemText(hMain, tFontSizeY, szSize);
 	}
 
@@ -6488,7 +6496,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 				if (hMain)
 				{
 					wchar_t temp[16];
-					_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", LogFont.lfHeight);
+					_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", CurFontSizeY);
 					SelectStringExact(hMain, tFontSizeY, temp);
 					_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeX);
 					SelectStringExact(hMain, tFontSizeX, temp);

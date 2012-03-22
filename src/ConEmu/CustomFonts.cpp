@@ -1,8 +1,37 @@
+
+/*
+Copyright (c) 2012 thecybershadow
+Copyright (c) 2012 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include "CustomFonts.h"
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <algorithm>
+//#include <fstream>
+//#include <sstream>
+//#include <string>
+//#include <algorithm>
 #include <vector>
 #include "../common/WinObjects.h"
 
@@ -67,8 +96,9 @@ private:
 	BOOL m_Bold;
 
 	HDC hDC;
-	HBITMAP hBitmap; // for GDI rendering
-	bool* bpPixels;	 // for manual rendering
+	HBITMAP hBitmap;  // for GDI rendering
+	BYTE *bpBPixels; DWORD dwStride;
+	bool *bpMPixels;  // for manual rendering
 	BOOL m_HasUnicode, m_HasBorders;
 
 	BDFFont()
@@ -100,9 +130,10 @@ private:
 		void* pvBits;
 		hBitmap = CreateDIBSection(hDC, &b.bmi, DIB_RGB_COLORS, &pvBits, NULL, 0);
 		SelectObject(hDC, hBitmap);
-		// pixels = cast(COLOR*)pvBits;
-
-		bpPixels = new bool[m_Width*256 * m_Height*256](); // TODO?
+		bpBPixels = (BYTE*)pvBits;
+		dwStride = (m_Width * 256) / 8;
+  
+		bpMPixels = new bool[m_Width*256 * m_Height*256](); // TODO?
 	}
 
 public:
@@ -112,31 +143,38 @@ public:
 			DeleteDC(hDC);
 		if (hBitmap)
 			DeleteObject(hBitmap);
-		if (bpPixels)
-			delete[] bpPixels;
+		if (bpMPixels)
+			delete[] bpMPixels;
 	}
 
-	static void NextWord(char*& szLine, char*& szWord, char szTerm = ' ')
+	static size_t NextWord(char*& szLine, char*& szWord, char szTerm = ' ')
 	{
 		char* pszSpace = strchr(szLine, szTerm);
 		char* szNext;
+		size_t nLen = 0;
 		if (!pszSpace)
 		{
-			pszSpace = szLine + strlen(szLine);
+			nLen = strlen(szLine);
+			pszSpace = szLine + nLen;
 			szNext = pszSpace;
 		}
 		else
 		{
+			nLen = pszSpace - szLine;
 			szNext = pszSpace + 1;
 			*pszSpace = 0;
 		}
 		szWord = szLine;
 		szLine = szNext;
+		return nLen;
 	}
 
-	static void NextLine(char*& szLine, char*& szWord)
+	static size_t NextLine(char*& szLine, char*& szWord)
 	{
-		NextWord(szLine, szWord, '\n');
+		size_t nLine = NextWord(szLine, szWord, '\n');
+		if (nLine && szWord[nLine-1] == '\r')
+			szWord[--nLine] = 0;
+		return nLine;
 	}
 
 	static char* LoadBuffer(const wchar_t* lpszFilePath, char*& pszBuf, char*& pszFileEnd)
@@ -275,8 +313,9 @@ public:
 							if (n & (0x80 >> bit))
 							{
 								int px = x+i*8+bit;
-								SetPixel(b->hDC, px, y, 0xFFFFFF);
-								b->bpPixels[by + px] = true;
+								//SetPixel(b->hDC, px, y, 0xFFFFFF);
+								b->bpBPixels[y * b->dwStride + (px / 8)] |= 0x80 >> (px % 8);
+								b->bpMPixels[by + px] = true;
 							}
 						}
 						szLine += 2;
@@ -295,7 +334,7 @@ public:
 	static bool GetFamilyName(const wchar_t* lpszFilePath, wchar_t (&rsFamilyName)[LF_FACESIZE])
 	{
 		rsFamilyName[0] = 0;
-		char* pszBuf, *pszFileEnd, *szLine;
+		char* pszBuf, *pszFileEnd, *szLine, *szWord;
 		char* pszCur = LoadBuffer(lpszFilePath, pszBuf, pszFileEnd);
 		if (!pszCur)
 			return false;
@@ -331,16 +370,17 @@ public:
 				//s.erase(0, FONT.size());
 
 				//std::istringstream iss(s);
-				TODO("Убрать std::*");
-				std::istringstream iss(szLine + FONT_LEN);
-				std::string word;
+				//std::istringstream iss(szLine + FONT_LEN);
+				//std::string word;
 				// из строки
 				// FONT -Schumacher-Clean-Medium-R-Normal--12-120-75-75-C-60-ISO10646-1
 				// нам нужно выкусить "Clean"
 				for (int n=0; n<3; n++)
-					getline(iss, word, '-');
+					NextWord(szLine, szWord);
+					//getline(iss, word, '-');
 				//familyName = word;
-				lstrcpynA(szFamilyName, word.c_str(), ARRAYSIZE(szFamilyName));
+				//lstrcpynA(szFamilyName, word.c_str(), ARRAYSIZE(szFamilyName));
+				lstrcpynA(szFamilyName, szWord, ARRAYSIZE(szFamilyName));
 
 				// Keep looking for FAMILY_NAME
 			}
@@ -416,7 +456,7 @@ wrap:
 			wchar_t ch = *lpString;
 			int fx = m_Width *(ch%256);
 			int fy = m_Height*(ch/256);
-			bool* pSrcPos = bpPixels + fx + m_Width*256*fy;
+			bool* pSrcPos = bpMPixels + fx + m_Width*256*fy;
 			COLORREF* pDstPos = pDstPixels;
 			if (cBG == CLR_INVALID) // transparent
 			{
@@ -450,9 +490,9 @@ wrap:
 
 BOOL BDF_GetFamilyName(LPCTSTR lpszFilePath, wchar_t (&rsFamilyName)[LF_FACESIZE])
 {
-	std::ifstream f(lpszFilePath);
-	if (!f.is_open())
-		return FALSE;
+	//std::ifstream f(lpszFilePath);
+	//if (!f.is_open())
+	//	return FALSE;
 
 	if (!BDFFont::GetFamilyName(lpszFilePath, rsFamilyName))
 	{
