@@ -110,7 +110,8 @@ LINKFLAGS=$(LINKFLAGS) /incremental:no /OPT:REF /OPT:ICF
 
 # platform-cpecific
 !ifdef X86
-CPPFLAGS=$(CPPFLAGS) /Zp4
+#Struct member alignment must be 8bytes even on x86 (Win7 API)
+CPPFLAGS=$(CPPFLAGS) /Zp8
 LINKFLAGS=$(LINKFLAGS) /machine:i386
 !elseifdef AMD64
 CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64

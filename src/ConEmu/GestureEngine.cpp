@@ -144,6 +144,13 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
     double k;
 
 	GESTUREINFO gi = {sizeof(gi)};
+	if (gi.cbSize != 48)
+	{
+		// Struct member alignment must be 8bytes even on x86
+		MBoxAssert(sizeof(GESTUREINFO)==48);
+		_isGestures = false;
+		return false;
+	}
     BOOL bResult = _GetGestureInfo((HGESTUREINFO)lParam, &gi);
 
     if (!bResult)

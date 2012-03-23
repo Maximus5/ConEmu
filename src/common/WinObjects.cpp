@@ -2913,6 +2913,138 @@ void ChangeScreenBufferSize(CONSOLE_SCREEN_BUFFER_INFO& sbi, SHORT VisibleX, SHO
 	sbi.srWindow.Bottom = min(BufferY,(sbi.srWindow.Top+VisibleY))-1;
 	sbi.srWindow.Top = max(0,(sbi.srWindow.Bottom+1-VisibleY));
 }
+
+// sbi - откуда брать данные
+// nCurWidth, nCurHeight - текущие (запомненные) высота и ширина рабочей области
+// nCurScroll - текущие (запомненные) флаги
+// pnNewWidth, pnNewHeight - результат
+// pnScroll - флаги из RealBufferScroll
+BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int nCurWidth, int nCurHeight, DWORD nCurScroll, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll)
+{
+	DWORD nScroll = rbs_None; // enum RealBufferScroll
+	int nNewWidth = 0, nNewHeight = 0;
+	
+	// Функция возвращает размер ОКНА (видимой области), то есть буфер может быть больше
+	
+	if (sbi.dwSize.X == nCurWidth)
+	{
+		nNewWidth = sbi.dwSize.X;
+	}
+	else
+	{
+		if (((nCurScroll & rbs_Horz) && (sbi.dwSize.X > nCurWidth))
+			|| (sbi.dwSize.X > EvalBufferTurnOnSize(nCurWidth)))
+		{
+			nNewWidth = sbi.srWindow.Right - sbi.srWindow.Left + 1;
+			_ASSERTE(nNewWidth <= sbi.dwSize.X);
+		}
+		else
+		{
+			nNewWidth = sbi.dwSize.X;
+		}
+	}
+	// Флаги
+	if (/*(sbi.dwSize.X > sbi.dwMaximumWindowSize.X) ||*/ (nNewWidth < sbi.dwSize.X))
+	{
+		// для проверки условий
+		//_ASSERTE((sbi.dwSize.X > sbi.dwMaximumWindowSize.X) && (nNewWidth < sbi.dwSize.X));
+		nScroll |= rbs_Horz;
+	}
+
+
+	if (sbi.dwSize.Y == nCurHeight)
+	{
+		nNewHeight = sbi.dwSize.Y;
+	}
+	else
+	{
+		if (((nCurScroll & rbs_Vert) && (sbi.dwSize.Y > nCurHeight))
+			|| (sbi.dwSize.Y > EvalBufferTurnOnSize(nCurHeight)))
+		{
+			nNewHeight = sbi.srWindow.Bottom - sbi.srWindow.Top + 1;
+		}
+		else
+		{
+			nNewHeight = sbi.dwSize.Y;
+		}
+	}
+	// Флаги
+	if (/*(sbi.dwSize.Y > sbi.dwMaximumWindowSize.Y) ||*/ (nNewHeight < sbi.dwSize.Y))
+	{
+		// для проверки условий
+		//_ASSERTE((sbi.dwSize.Y >= sbi.dwMaximumWindowSize.Y) && (nNewHeight < sbi.dwSize.Y));
+		nScroll |= rbs_Vert;
+	}
+
+	// Validation
+	if ((nNewWidth <= 0) || (nNewHeight <= 0))
+	{
+		_ASSERTE(nNewWidth>0 && nNewHeight>0);
+		return FALSE;
+	}
+	
+	// Result
+	if (pnNewWidth)
+		*pnNewWidth = nNewWidth;
+	if (pnNewHeight)
+		*pnNewHeight = nNewHeight;
+	if (pnScroll)
+		*pnScroll = nScroll;
+	
+	return TRUE;
+	
+	//BOOL lbBufferHeight = this->isScroll();
+
+	//// Проверка режимов прокрутки
+	//if (!lbBufferHeight)
+	//{
+	//	if (sbi.dwSize.Y > sbi.dwMaximumWindowSize.Y)
+	//	{
+	//		lbBufferHeight = TRUE; // однозначное включение прокрутки
+	//	}
+	//}
+
+	//if (lbBufferHeight)
+	//{
+	//	if (sbi.srWindow.Top == 0
+	//	        && sbi.dwSize.Y == (sbi.srWindow.Bottom + 1)
+	//	  )
+	//	{
+	//		lbBufferHeight = FALSE; // однозначное вЫключение прокрутки
+	//	}
+	//}
+
+	//// Теперь собственно размеры
+	//if (!lbBufferHeight)
+	//{
+	//	nNewHeight =  sbi.dwSize.Y;
+	//}
+	//else
+	//{
+	//	// Это может прийти во время смены размера
+	//	if ((sbi.srWindow.Bottom - sbi.srWindow.Top + 1) < MIN_CON_HEIGHT)
+	//		nNewHeight = con.nTextHeight;
+	//	else
+	//		nNewHeight = sbi.srWindow.Bottom - sbi.srWindow.Top + 1;
+	//}
+
+	//WARNING("Здесь нужно выполнить коррекцию, если nNewHeight велико - включить режим BufferHeight");
+
+	//if (pbBufferHeight)
+	//	*pbBufferHeight = lbBufferHeight;
+
+	//_ASSERTE(nNewWidth>=MIN_CON_WIDTH && nNewHeight>=MIN_CON_HEIGHT);
+
+	//if (!nNewWidth || !nNewHeight)
+	//{
+	//	Assert(nNewWidth && nNewHeight);
+	//	return FALSE;
+	//}
+
+	////if (nNewWidth < sbi.dwSize.X)
+	////    nNewWidth = sbi.dwSize.X;
+	//return TRUE;
+}
 #endif
 
 #ifndef CONEMU_MINIMAL

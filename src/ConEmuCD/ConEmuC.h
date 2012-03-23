@@ -525,9 +525,9 @@ extern MSection* gpcsStoredOutput;
 //
 //extern CmdInfo* gpSrv;
 
-extern COORD gcrBufferSize;
-extern BOOL  gbParmBufferSize;
-extern SHORT gnBufferHeight;
+extern COORD gcrVisibleSize;
+extern BOOL  gbParmVisibleSize, gbParmBufSize;
+extern SHORT gnBufferHeight, gnBufferWidth;
 extern wchar_t* gpszPrevConTitle;
 
 extern HANDLE ghLogSize;

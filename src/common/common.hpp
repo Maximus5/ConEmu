@@ -142,6 +142,8 @@ enum CONSOLE_KEY_ID
 	ID_CTRLESC,
 };
 
+#define EvalBufferTurnOnSize(Now) (2*Now+32)
+
 enum RealBufferScroll
 {
 	rbs_None = 0,

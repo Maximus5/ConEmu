@@ -1270,25 +1270,61 @@ int CRealBuffer::BufferHeight(uint nNewBufferHeight/*=0*/)
 	return nBufferHeight;
 }
 
-// !!! static !!!
 BOOL CRealBuffer::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll)
 {
+	TODO("Заменить на вызов ::GetConWindowSize из WinObjects.cpp");
 	DWORD nScroll = 0; // enum RealBufferScroll
-	int nNewWidth, nNewHeight;
+	int nNewWidth = 0, nNewHeight = 0;
 	
 	// Функция возвращает размер ОКНА (видимой области), то есть буфер может быть больше
 	
-	// 111125 было "nNewWidth  = sbi.dwSize.X;", но так игнорируется горизонтальная прокрутка
-	nNewWidth = sbi.srWindow.Right - sbi.srWindow.Left + 1;
-	_ASSERTE(nNewWidth <= sbi.dwSize.X);
+	int nCurWidth = TextWidth();
+	if (sbi.dwSize.X == nCurWidth)
+	{
+		nNewWidth = sbi.dwSize.X;
+	}
+	else
+	{
+		TODO("Добавить в con флажок горизонтальной прокрутки");
+		TODO("и вообще, заменить на вызов ::GetConWindowSize из WinObjects.cpp");
+		if (sbi.dwSize.X <= EvalBufferTurnOnSize(max(nCurWidth,con.crMaxSize.X)))
+		{
+			nNewWidth = sbi.dwSize.X;
+		}
+		else
+		{
+			// 111125 было "nNewWidth  = sbi.dwSize.X;", но так игнорируется горизонтальная прокрутка
+			nNewWidth = sbi.srWindow.Right - sbi.srWindow.Left + 1;
+			_ASSERTE(nNewWidth <= sbi.dwSize.X);
+		}
+	}
+	// Флаги
 	if (/*(sbi.dwSize.X > sbi.dwMaximumWindowSize.X) ||*/ (nNewWidth < sbi.dwSize.X))
 	{
 		// для проверки условий
 		//_ASSERTE((sbi.dwSize.X > sbi.dwMaximumWindowSize.X) && (nNewWidth < sbi.dwSize.X));
 		nScroll |= rbs_Horz;
 	}
-	
-	nNewHeight = sbi.srWindow.Bottom - sbi.srWindow.Top + 1;
+
+
+	int nCurHeight = TextHeight();
+	if (sbi.dwSize.Y == nCurHeight)
+	{
+		nNewHeight = sbi.dwSize.Y;
+	}
+	else
+	{
+		if ((con.bBufferHeight && (sbi.dwSize.Y > nCurHeight))
+			|| (sbi.dwSize.Y > EvalBufferTurnOnSize(nCurHeight)))
+		{
+			nNewHeight = sbi.srWindow.Bottom - sbi.srWindow.Top + 1;
+		}
+		else
+		{
+			nNewHeight = sbi.dwSize.Y;
+		}
+	}
+	// Флаги
 	if (/*(sbi.dwSize.Y > sbi.dwMaximumWindowSize.Y) ||*/ (nNewHeight < sbi.dwSize.Y))
 	{
 		// для проверки условий
@@ -1296,12 +1332,14 @@ BOOL CRealBuffer::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* p
 		nScroll |= rbs_Vert;
 	}
 
+	// Validation
 	if ((nNewWidth <= 0) || (nNewHeight <= 0))
 	{
 		Assert(nNewWidth>0 && nNewHeight>0);
 		return FALSE;
 	}
 	
+	// Result
 	if (pnNewWidth)
 		*pnNewWidth = nNewWidth;
 	if (pnNewHeight)
@@ -1747,8 +1785,10 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			DWORD nScroll;
 			if (GetConWindowSize(con.m_sbi, &nNewWidth, &nNewHeight, &nScroll))
 			{
-				if (con.bBufferHeight != (nNewHeight < con.m_sbi.dwSize.Y))
-					SetBufferHeightMode(nNewHeight < con.m_sbi.dwSize.Y);
+				//if (con.bBufferHeight != (nNewHeight < con.m_sbi.dwSize.Y))
+				BOOL lbTurnedOn = BufferHeightTurnedOn(&con.m_sbi);
+				if (con.bBufferHeight != lbTurnedOn)
+					SetBufferHeightMode(lbTurnedOn);
 
 				//  TODO("Включить прокрутку? или оно само?");
 				if (nNewWidth != con.nTextWidth || nNewHeight != con.nTextHeight)
@@ -1919,16 +1959,26 @@ BOOL CRealBuffer::BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 		// высота окна == высоте буфера,
 		lbTurnedOn = FALSE;
 	}
-	else if (con.m_sbi.dwSize.Y < (con.m_sbi.srWindow.Bottom-con.m_sbi.srWindow.Top+10))
+	else
 	{
-		// Высота окна примерно равна высоте буфера
-		lbTurnedOn = FALSE;
+		//Issue 509: Могут быть различные варианты, когда меняется ВИДИМАЯ область,
+		//           но не меняется высота буфера. В этом случае, буфер включать нельзя!
+		TODO("Тут нужно бы сравнивать не с TextHeight(), а с высотой буфера. Но она инициализируется пока только для режима с прокруткой.");
+		int nHeight = TextHeight();
+		// Высота буфера 'намного' больше высоты НАШЕГО окна
+		if (con.m_sbi.dwSize.Y > EvalBufferTurnOnSize(nHeight))
+			lbTurnedOn = TRUE;
 	}
-	else if (con.m_sbi.dwSize.Y>(con.m_sbi.srWindow.Bottom-con.m_sbi.srWindow.Top+10))
-	{
-		// Высота буфера 'намного' больше высоты окна
-		lbTurnedOn = TRUE;
-	}
+	//else if (con.m_sbi.dwSize.Y < (con.m_sbi.srWindow.Bottom-con.m_sbi.srWindow.Top+10))
+	//{
+	//	// Высота окна примерно равна высоте буфера
+	//	lbTurnedOn = FALSE;
+	//}
+	//else if (con.m_sbi.dwSize.Y>(con.m_sbi.srWindow.Bottom-con.m_sbi.srWindow.Top+10))
+	//{
+	//	// Высота буфера 'намного' больше высоты окна
+	//	lbTurnedOn = TRUE;
+	//}
 
 	// однако, если высота слишком велика для отображения в GUI окне - нужно включить BufferHeight
 	if (!lbTurnedOn)

@@ -45,7 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_EVENTS_PACK 20
 
 #ifdef _DEBUG
-#define ASSERT_UNWANTED_SIZE
+//#define ASSERT_UNWANTED_SIZE
 #else
 #undef ASSERT_UNWANTED_SIZE
 #endif
@@ -499,10 +499,10 @@ wrap:
 
 int ServerInitConsoleSize()
 {
-	if (gbParmBufferSize && gcrBufferSize.X && gcrBufferSize.Y)
+	if ((gbParmVisibleSize || gbParmBufSize) && gcrVisibleSize.X && gcrVisibleSize.Y)
 	{
 		SMALL_RECT rc = {0};
-		SetConsoleSize(gnBufferHeight, gcrBufferSize, rc, ":ServerInit.SetFromArg"); // может обломаться? если шрифт еще большой
+		SetConsoleSize(gnBufferHeight, gcrVisibleSize, rc, ":ServerInit.SetFromArg"); // может обломаться? если шрифт еще большой
 	}
 	else
 	{
@@ -513,18 +513,18 @@ int ServerInitConsoleSize()
 		{
 			gpSrv->crReqSizeNewSize = lsbi.dwSize;
 			_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
-			gcrBufferSize.X = lsbi.dwSize.X;
+			gcrVisibleSize.X = lsbi.dwSize.X;
 
 			if (lsbi.dwSize.Y > lsbi.dwMaximumWindowSize.Y)
 			{
 				// Буферный режим
-				gcrBufferSize.Y = (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1);
+				gcrVisibleSize.Y = (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1);
 				gnBufferHeight = lsbi.dwSize.Y;
 			}
 			else
 			{
 				// Режим без прокрутки!
-				gcrBufferSize.Y = lsbi.dwSize.Y;
+				gcrVisibleSize.Y = lsbi.dwSize.Y;
 				gnBufferHeight = 0;
 			}
 		}
@@ -847,7 +847,7 @@ int ServerInit(BOOL abAlternative/*=FALSE*/)
 	gpSrv->pConsole->hdr.bConsoleActive = TRUE;
 	gpSrv->pConsole->hdr.bThawRefreshThread = TRUE;
 
-	// Если указаны параметры (gbParmBufferSize && gcrBufferSize.X && gcrBufferSize.Y) - установить размер
+	// Если указаны параметры (gbParmBufferSize && gcrVisibleSize.X && gcrVisibleSize.Y) - установить размер
 	// Иначе - получить текущие размеры из консольного окна
 	ServerInitConsoleSize();
 
@@ -2025,9 +2025,9 @@ void UpdateConsoleMapHeader()
 		{
 			// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
 			// Размер может менять только пользователь ресайзом окна ConEmu
-			_ASSERTE(gcrBufferSize.X>0 && gcrBufferSize.X<=400 && gcrBufferSize.Y>0 && gcrBufferSize.Y<=300);
+			_ASSERTE(gcrVisibleSize.X>0 && gcrVisibleSize.X<=400 && gcrVisibleSize.Y>0 && gcrVisibleSize.Y<=300);
 			gpSrv->pConsole->hdr.bLockVisibleArea = TRUE;
-			gpSrv->pConsole->hdr.crLockedVisible = gcrBufferSize;
+			gpSrv->pConsole->hdr.crLockedVisible = gcrVisibleSize;
 			// Какая прокрутка допустима. Пока - любая.
 			gpSrv->pConsole->hdr.rbsAllowed = rbs_Any;
 		}
@@ -2160,7 +2160,7 @@ void CloseMapHeader()
 BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 {
 	BOOL lbChanged = FALSE;
-	_ASSERTE(gcrBufferSize.Y<200); // высота видимой области
+	_ASSERTE(gcrVisibleSize.Y<200); // высота видимой области
 	// Игнорируем горизонтальный скроллинг
 	SHORT nLeft = 0;
 	SHORT nRight = pSbi->dwSize.X - 1;
@@ -2190,7 +2190,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 	{
 		// А для 'буферного' режима позиция может быть заблокирована
 		nTop = gpSrv->nTopVisibleLine;
-		nBottom = min((pSbi->dwSize.Y-1), (gpSrv->nTopVisibleLine+gcrBufferSize.Y-1)); //-V592
+		nBottom = min((pSbi->dwSize.Y-1), (gpSrv->nTopVisibleLine+gcrVisibleSize.Y-1)); //-V592
 	}
 	else
 	{
@@ -2199,14 +2199,14 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 		if (pSbi->dwCursorPosition.Y == pSbi->srWindow.Bottom)
 		{
 			// Если курсор находится в нижней видимой строке (теоретически, это может быть единственная видимая строка)
-			nTop = pSbi->dwCursorPosition.Y - gcrBufferSize.Y + 1; // раздвигаем область вверх от курсора
+			nTop = pSbi->dwCursorPosition.Y - gcrVisibleSize.Y + 1; // раздвигаем область вверх от курсора
 		}
 		else
 		{
 			// Иначе - раздвигаем вверх (или вниз) минимально, чтобы курсор стал видим
 			if ((pSbi->dwCursorPosition.Y < pSbi->srWindow.Top) || (pSbi->dwCursorPosition.Y > pSbi->srWindow.Bottom))
 			{
-				nTop = pSbi->dwCursorPosition.Y - gcrBufferSize.Y + 1;
+				nTop = pSbi->dwCursorPosition.Y - gcrVisibleSize.Y + 1;
 			}
 		}
 
@@ -2214,7 +2214,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 		if (nTop<0) nTop = 0;
 
 		// Корректируем нижнюю границу по верхней + желаемой высоте видимой области
-		nBottom = (nTop + gcrBufferSize.Y - 1);
+		nBottom = (nTop + gcrVisibleSize.Y - 1);
 
 		// Если же расчетный низ вылезает за пределы буфера (хотя не должен бы?)
 		if (nBottom >= pSbi->dwSize.Y)
@@ -2222,7 +2222,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 			// корректируем низ
 			nBottom = pSbi->dwSize.Y - 1;
 			// и верх по желаемому размеру
-			nTop = max(0, (nBottom - gcrBufferSize.Y + 1));
+			nTop = max(0, (nBottom - gcrVisibleSize.Y + 1));
 		}
 	}
 
@@ -2265,7 +2265,10 @@ static BOOL ReadConsoleInfo()
 	// Могут возникать проблемы при закрытии ComSpec и уменьшении высоты буфера
 	MCHKHEAP;
 
-	if (!GetConsoleCursorInfo(hOut, &lci)) { gpSrv->dwCiRc = GetLastError(); if (!gpSrv->dwCiRc) gpSrv->dwCiRc = -1; }
+	if (!GetConsoleCursorInfo(hOut, &lci))
+	{
+		gpSrv->dwCiRc = GetLastError(); if (!gpSrv->dwCiRc) gpSrv->dwCiRc = -1;
+	}
 	else
 	{
 		if (gpSrv->bTelnetActive) lci.dwSize = 15;  // telnet "глючит" при нажатии Ins - меняет курсор даже когда нажат Ctrl например
@@ -2315,9 +2318,32 @@ static BOOL ReadConsoleInfo()
 	}
 	else
 	{
+		DWORD nCurScroll = (gnBufferHeight ? rbs_Vert : 0) | (gnBufferWidth ? rbs_Horz : 0);
+		DWORD nNewScroll = 0;
+		int TextWidth = 0, TextHeight = 0;
+		BOOL bSuccess = ::GetConWindowSize(lsbi, gcrVisibleSize.X, gcrVisibleSize.Y, nCurScroll, &TextWidth, &TextHeight, &nNewScroll);
+
+		// Скорректировать "видимый" буфер. Видимым считаем то, что показывается в ConEmu
+		if (bSuccess)
+		{
+			//rgn = gpSrv->sbi.srWindow;
+			if (!(nNewScroll & rbs_Horz))
+			{
+				lsbi.srWindow.Left = 0;
+				lsbi.srWindow.Right = lsbi.dwSize.X-1;
+			}
+
+			if (!(nNewScroll & rbs_Vert))
+			{
+				lsbi.srWindow.Top = 0;
+				lsbi.srWindow.Bottom = lsbi.dwSize.Y-1;
+			}
+		}
+
 		if (memcmp(&gpSrv->sbi, &lsbi, sizeof(gpSrv->sbi)))
 		{
 			_ASSERTE(lsbi.srWindow.Left == 0);
+			/*
 			//Issue 373: при запуске wmic устанавливается ШИРИНА буфера в 1500 символов
 			//           пока ConEmu не поддерживает горизонтальную прокрутку - игнорим,
 			//           будем показывать только видимую область окна
@@ -2326,6 +2352,7 @@ static BOOL ReadConsoleInfo()
 				//_ASSERTE(lsbi.srWindow.Right == (lsbi.dwSize.X - 1)); -- ругаться пока не будем
 				lsbi.dwSize.X = (lsbi.srWindow.Right - lsbi.srWindow.Left + 1);
 			}
+			*/
 
 			// Консольное приложение могло изменить размер буфера
 			if (!NTVDMACTIVE)  // НЕ при запущенном 16битном приложении - там мы все жестко фиксируем, иначе съезжает размер при закрытии 16бит
@@ -2334,7 +2361,7 @@ static BOOL ReadConsoleInfo()
 				        && lsbi.dwSize.Y == (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1)))
 				{
 					// Это значит, что прокрутки нет, и консольное приложение изменило размер буфера
-					gnBufferHeight = 0; gcrBufferSize = lsbi.dwSize;
+					gnBufferHeight = 0; gcrVisibleSize = lsbi.dwSize;
 				}
 
 				if (lsbi.dwSize.X != gpSrv->sbi.dwSize.X
@@ -2377,7 +2404,7 @@ static BOOL ReadConsoleInfo()
 	{
 		int nWndHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
 
-		if (gpSrv->sbi.dwSize.Y > (max(gcrBufferSize.Y,nWndHeight)+200)
+		if (gpSrv->sbi.dwSize.Y > (max(gcrVisibleSize.Y,nWndHeight)+200)
 		        || (gpSrv->nRequestChangeSize && gpSrv->nReqSizeBufferHeight))
 		{
 			// Приложение изменило размер буфера!
@@ -2460,16 +2487,45 @@ static BOOL ReadConsoleData()
 	CONSOLE_SCREEN_BUFFER_INFO dbgSbi = gpSrv->sbi;
 #endif
 	HANDLE hOut = NULL;
-	USHORT TextWidth=0, TextHeight=0;
+	//USHORT TextWidth=0, TextHeight=0;
 	DWORD TextLen=0;
 	COORD bufSize, bufCoord;
 	SMALL_RECT rgn;
 	DWORD nCurSize, nHdrSize;
-	_ASSERTE(gpSrv->sbi.srWindow.Left == 0);
-	_ASSERTE(gpSrv->sbi.srWindow.Right == (gpSrv->sbi.dwSize.X - 1));
-	TextWidth  = gpSrv->sbi.dwSize.X;
-	TextHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
+	// -- начинаем потихоньку горизонтальную прокрутку
+	_ASSERTE(gpSrv->sbi.srWindow.Left == 0); // этот пока оставим
+	//_ASSERTE(gpSrv->sbi.srWindow.Right == (gpSrv->sbi.dwSize.X - 1));
+	DWORD nCurScroll = (gnBufferHeight ? rbs_Vert : 0) | (gnBufferWidth ? rbs_Horz : 0);
+	DWORD nNewScroll = 0;
+	int TextWidth = 0, TextHeight = 0;
+	BOOL bSuccess = ::GetConWindowSize(gpSrv->sbi, gcrVisibleSize.X, gcrVisibleSize.Y, nCurScroll, &TextWidth, &TextHeight, &nNewScroll);
+	//TextWidth  = gpSrv->sbi.dwSize.X;
+	//TextHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
 	TextLen = TextWidth * TextHeight;
+
+	//rgn = gpSrv->sbi.srWindow;
+	if (nNewScroll & rbs_Horz)
+	{
+		rgn.Left = gpSrv->sbi.srWindow.Left;
+		rgn.Right = min(gpSrv->sbi.srWindow.Left+TextWidth,gpSrv->sbi.dwSize.X)-1;
+	}
+	else
+	{
+		rgn.Left = 0;
+		rgn.Right = gpSrv->sbi.dwSize.X-1;
+	}
+
+	if (nNewScroll & rbs_Vert)
+	{
+		rgn.Top = gpSrv->sbi.srWindow.Top;
+		rgn.Bottom = min(gpSrv->sbi.srWindow.Top+TextHeight,gpSrv->sbi.dwSize.Y)-1;
+	}
+	else
+	{
+		rgn.Top = 0;
+		rgn.Bottom = gpSrv->sbi.dwSize.Y-1;
+	}
+	
 
 	if (!TextWidth || !TextHeight)
 	{
@@ -2514,7 +2570,7 @@ static BOOL ReadConsoleData()
 	{
 		bufSize.X = TextWidth; bufSize.Y = TextHeight;
 		bufCoord.X = 0; bufCoord.Y = 0;
-		rgn = gpSrv->sbi.srWindow;
+		//rgn = gpSrv->sbi.srWindow;
 
 		if (ReadConsoleOutput(hOut, gpSrv->pConsoleDataCopy, bufSize, bufCoord, &rgn))
 			lbRc = TRUE;
@@ -2525,7 +2581,7 @@ static BOOL ReadConsoleData()
 		// Придется читать построчно
 		bufSize.X = TextWidth; bufSize.Y = 1;
 		bufCoord.X = 0; bufCoord.Y = 0;
-		rgn = gpSrv->sbi.srWindow;
+		//rgn = gpSrv->sbi.srWindow;
 		CHAR_INFO* pLine = gpSrv->pConsoleDataCopy;
 
 		for(int y = 0; y < (int)TextHeight; y++, rgn.Top++, pLine+=TextWidth)

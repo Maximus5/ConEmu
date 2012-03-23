@@ -99,7 +99,7 @@ public:
 	
 	BOOL ApplyConsoleInfo();
 	
-	static BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll);
+	BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll);
 	
 	COORD ScreenToBuffer(COORD crMouse);
 	bool ProcessFarHyperlink(UINT messg, COORD crFrom);

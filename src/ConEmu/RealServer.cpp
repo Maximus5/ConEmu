@@ -585,7 +585,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 					
 					// Интересуют реальные размеры консоли, определенные при текущему SBI
 					// 111125 - bBufferHeight заменен на nScroll (который учитывает и наличие горизонтальной прокрутки)
-					if (CRealBuffer::GetConWindowSize(pOut->StartStop.sbi, &nNewWidth, &nNewHeight, &nScroll))
+					if (mp_RCon->mp_RBuf->GetConWindowSize(pOut->StartStop.sbi, &nNewWidth, &nNewHeight, &nScroll))
 					{
 						lbNeedResizeGui = (crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight);
 

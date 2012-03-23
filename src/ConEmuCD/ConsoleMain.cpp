@@ -132,7 +132,6 @@ BOOL    gbAttachMode = FALSE; // сервер запущен НЕ из conemu.exe (а из плагина, 
 BOOL    gbAlienMode = FALSE;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
 BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
-//int       gnBufferHeight = 0;
 wchar_t* gpszRunCmd = NULL;
 BOOL    gbRunInBackgroundTab = FALSE;
 BOOL    gbRunViaCmdExe = FALSE;
@@ -167,8 +166,9 @@ MSection* gpcsStoredOutput = NULL;
 
 //CmdInfo* gpSrv = NULL;
 
-COORD gcrBufferSize = {80,25}; TODO("Переименовать gcrBufferSize в gcrVisibleSize");
-BOOL  gbParmBufferSize = FALSE;
+COORD gcrVisibleSize = {80,25}; // gcrBufferSize переименован в gcrVisibleSize
+BOOL  gbParmVisibleSize = FALSE;
+BOOL  gbParmBufSize = FALSE;
 SHORT gnBufferHeight = 0;
 SHORT gnBufferWidth = 0; // Определяется в MyGetConsoleScreenBufferInfo
 wchar_t* gpszPrevConTitle = NULL;
@@ -1813,16 +1813,17 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 			if (wcsncmp(szArg, L"/BW=", 4)==0)
 			{
-				gcrBufferSize.X = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmBufferSize = TRUE;
+				gcrVisibleSize.X = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmVisibleSize = TRUE;
 			}
 			else if (wcsncmp(szArg, L"/BH=", 4)==0)
 			{
-				gcrBufferSize.Y = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmBufferSize = TRUE;
+				gcrVisibleSize.Y = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmVisibleSize = TRUE;
 			}
 			else if (wcsncmp(szArg, L"/BZ=", 4)==0)
 			{
-				gnBufferHeight = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmBufferSize = TRUE;
+				gnBufferHeight = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmBufSize = TRUE;
 			}
+			TODO("/BX для ширины буфера?");
 		}
 		else if (wcsncmp(szArg, L"/F", 2)==0)
 		{
@@ -2754,8 +2755,9 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	gbRunInBackgroundTab = args.bBackgroundTab;
 	if (args.bBufHeight)
 	{
+		TODO("gcrBufferSize - и ширину буфера");
 		gnBufferHeight = args.nBufHeight;
-		gbParmBufferSize = TRUE;
+		gbParmBufSize = TRUE;
 	}
 
 #ifdef _DEBUG
@@ -2861,7 +2863,7 @@ void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDon
 				{
 					lbNeedVisible = TRUE;
 					// не надо наверное... // поставить "стандартный" 80x25, или то, что было передано к ком.строке
-					//SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrBufferSize, rcNil, ":Exiting");
+					//SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrVisibleSize, rcNil, ":Exiting");
 					//SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
 					//apiShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
 					EmergencyShow();
@@ -3117,9 +3119,10 @@ void SendStarted()
 		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(hOut);
 
 		// Если (для ComSpec) указан параметр "-cur_console:h<N>"
-		if (gbParmBufferSize)
+		if (gbParmBufSize)
 		{
 			pIn->StartStop.bForceBufferHeight = TRUE;
+			TODO("gcrBufferSize - и ширину буфера");
 			pIn->StartStop.nForceBufferHeight = gnBufferHeight;
 		}
 
@@ -3184,17 +3187,22 @@ void SendStarted()
 			gnServerPID = pOut->StartStopRet.dwSrvPID;
 
 			AllowSetForegroundWindow(nGuiPID);
+			TODO("gnBufferHeight->gcrBufferSize");
+			TODO("gcrBufferSize - и ширину буфера");
 			gnBufferHeight  = (SHORT)pOut->StartStopRet.nBufferHeight;
-			gcrBufferSize.X = (SHORT)pOut->StartStopRet.nWidth;
-			gcrBufferSize.Y = (SHORT)pOut->StartStopRet.nHeight;
-			gbParmBufferSize = TRUE;
+			gbParmBufSize = TRUE;
+			// gcrBufferSize переименован в gcrVisibleSize
+			gcrVisibleSize.X = (SHORT)pOut->StartStopRet.nWidth;
+			gcrVisibleSize.Y = (SHORT)pOut->StartStopRet.nHeight;
+			gbParmVisibleSize = TRUE;			
 
 			if (gnRunMode == RM_SERVER)
 			{
-				if (gpSrv->bDebuggerActive && !gnBufferHeight) gnBufferHeight = 1000;
+				// Если режим отладчика - принудительно включить прокрутку
+				if (gpSrv->bDebuggerActive && !gnBufferHeight) gnBufferHeight = 9999;
 
 				SMALL_RECT rcNil = {0};
-				SetConsoleSize(gnBufferHeight, gcrBufferSize, rcNil, "::SendStarted");
+				SetConsoleSize(gnBufferHeight, gcrVisibleSize, rcNil, "::SendStarted");
 
 				// Смена раскладки клавиатуры
 				if (pOut->StartStopRet.bNeedLangChange)
@@ -5578,12 +5586,12 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 			if (gnBufferHeight == 0)
 			{
 				//specified width and height cannot be less than the width and height of the console screen buffer's window
-				lbRc = SetConsoleScreenBufferSize(ghConOut, gcrBufferSize);
+				lbRc = SetConsoleScreenBufferSize(ghConOut, gcrVisibleSize);
 			}
 			else
 			{
 				// Начался ресайз для BufferHeight
-				COORD crHeight = {gcrBufferSize.X, gnBufferHeight};
+				COORD crHeight = {gcrVisibleSize.X, gnBufferHeight};
 				MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
 				lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
 			}
@@ -5596,9 +5604,13 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
 	lbRc = GetConsoleScreenBufferInfo(ahConOut, &csbi);
 	// Issue 373: wmic
-	if (lbRc && csbi.dwSize.X && (gnBufferWidth != csbi.dwSize.X))
+	if (lbRc)
 	{
-		gnBufferWidth = csbi.dwSize.X;
+		TODO("Его надо и из ConEmu обновлять");
+		if (csbi.dwSize.X && (gnBufferWidth != csbi.dwSize.X))
+			gnBufferWidth = csbi.dwSize.X;
+		else if (gnBufferWidth == (csbi.srWindow.Right - csbi.srWindow.Left + 1))
+			gnBufferWidth = 0;
 	}
 
 	if (GetConsoleDisplayMode(&gpSrv->dwDisplayMode) && gpSrv->dwDisplayMode)
@@ -5635,18 +5647,18 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 			if (crMax.X > 0 && crMax.X < gpSrv->crReqSizeNewSize.X)
 			{
 				gpSrv->crReqSizeNewSize.X = crMax.X;
-				TODO("Обновить gcrBufferSize");
+				TODO("Обновить gcrVisibleSize");
 				//lbNeedUpdateSrvMap = TRUE; 
 			}
 			if (crMax.Y > 0 && crMax.Y < gpSrv->crReqSizeNewSize.Y)
 			{
 				gpSrv->crReqSizeNewSize.Y = crMax.Y;
-				TODO("Обновить gcrBufferSize");
+				TODO("Обновить gcrVisibleSize");
 				//lbNeedUpdateSrvMap = TRUE;
 			}
 
 			WARNING("Пока всякую коррекцию убрал. Ибо конфликтует с gpSrv->nRequestChangeSize.");
-			//Видимо, нужно сравнивать не с gpSrv->crReqSizeNewSize, а с gcrBufferSize
+			//Видимо, нужно сравнивать не с gpSrv->crReqSizeNewSize, а с gcrVisibleSize
 #if 0
 			if (nWidth != gpSrv->crReqSizeNewSize.X && gpSrv->crReqSizeNewSize.X <= )
 			{
@@ -5918,8 +5930,8 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	// Делаем это ПОСЛЕ MyGetConsoleScreenBufferInfo, т.к. некоторые коррекции размера окна
 	// она делает ориентируясь на gnBufferHeight
 	gnBufferHeight = BufferHeight;
-	gcrBufferSize = crNewSize;
-	_ASSERTE(gcrBufferSize.Y<200);
+	gcrVisibleSize = crNewSize;
+	_ASSERTE(gcrVisibleSize.Y<200);
 	
 	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
 		UpdateConsoleMapHeader(); // Обновить pConsoleMap.crLockedVisible
@@ -6042,7 +6054,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		// Вертикальное положение - пляшем от rNewRect.Top
 		rNewRect.Left = 0;
 		rNewRect.Right = crHeight.X-1;
-		rNewRect.Bottom = min((crHeight.Y-1), (rNewRect.Top+gcrBufferSize.Y-1)); //-V592
+		rNewRect.Bottom = min((crHeight.Y-1), (rNewRect.Top+gcrVisibleSize.Y-1)); //-V592
 		_ASSERTE((rNewRect.Bottom-rNewRect.Top)<200);
 		SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);
 	}
