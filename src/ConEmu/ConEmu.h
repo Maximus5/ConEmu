@@ -194,11 +194,13 @@ class CConEmuMain :
 			bool  bIgnoreMouseMove;
 
 			COORD LClkDC, LClkCon;
-			DWORD LClkTick;
+			POINT LDblClkDC; // заполн€етс€ в PatchMouseEvent
+			DWORD LDblClkTick;
 			COORD RClkDC, RClkCon;
 			DWORD RClkTick;
 
 			// „тобы не слать в консоль бесконечные WM_MOUSEMOVE
+			UINT   lastMsg;
 			WPARAM lastMMW;
 			LPARAM lastMML;
 
@@ -305,6 +307,7 @@ class CConEmuMain :
 		BOOL mb_RightClickingPaint, mb_RightClickingLSent;
 		void StartRightClickingPaint();
 		void StopRightClickingPaint();
+		bool PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam);
 	public:
 		void RightClickingPaint(HDC hdc, CVirtualConsole* apVCon);
 		void RegisterMinRestore(bool abRegister);

@@ -107,6 +107,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RCLICKAPPSTIMEOUT_MAX 10000
 #define RCLICKAPPSDELTA 3
 
+#define TOUCH_DBLCLICK_DELTA 1000 // 1sec
+
 const wchar_t* gsHomePage = L"http://conemu-maximus5.googlecode.com";
 const wchar_t* gsReportBug = L"http://code.google.com/p/conemu-maximus5/issues/entry";
 
@@ -1449,8 +1451,21 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 		if (abTestOnly)
 			return (HRGN)1;
 
-		RECT rcScreen = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
+		ConEmuRect tFrom = mb_isFullScreen ? CER_FULLSCREEN : CER_MAXIMIZED;
+		RECT rcScreen; // = CalcRect(tFrom, MakeRect(0,0), tFrom);
 		RECT rcFrame = CalcMargins(CEM_FRAME);
+		/*
+		ConEmuRect tFrom = mb_isFullScreen ? CER_FULLSCREEN : CER_MAXIMIZED;
+		RECT rcScreen = CalcRect(tFrom, MakeRect(0,0), tFrom);
+		hRgn = CreateWindowRgn(abTestOnly, false, rcFrame.left, rcFrame.top, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
+		*/
+		HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+		MONITORINFO mi = {sizeof(mi)};
+		if (GetMonitorInfo(hMon, &mi))
+			rcScreen = mb_isFullScreen ? mi.rcMonitor : mi.rcWork;
+		else
+			rcScreen = CalcRect(tFrom, MakeRect(0,0), tFrom);
+		// rcFrame, т.к. регион ставится относительно верхнего левого угла ОКНА
 		hRgn = CreateWindowRgn(abTestOnly, false, rcFrame.left, rcFrame.top, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
 	}
 	else if (isZoomed() && !mb_InRestore)
@@ -10405,6 +10420,60 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 	return 0;
 }
 
+bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam)
+{
+	// Для этих сообщений, lParam - relative to the upper-left corner of the screen.
+	if (messg == WM_MOUSEWHEEL || messg == WM_MOUSEHWHEEL)
+		ScreenToClient(ghWnd, &ptCurClient);
+	else // Для остальных lParam содержит клиентские координаты
+		ClientToScreen(ghWnd, &ptCurScreen);
+
+	if (messg == WM_LBUTTONDBLCLK)
+	{
+		mouse.LDblClkDC = ptCurClient;
+		mouse.LDblClkTick = TimeGetTime();
+	}
+	else if ((mouse.lastMsg == WM_LBUTTONDBLCLK) && ((messg == WM_MOUSEMOVE) || (messg == WM_LBUTTONUP)))
+	{
+		// Тачпады и тачскрины.
+		// При двойном тапе может получаться следующая фигня:
+		//17:40:25.787(gui.4460) GUI::Mouse WM_ MOUSEMOVE at screen {603x239} x00000000
+		//17:40:25.787(gui.4460) GUI::Mouse WM_ LBUTTONDOWN at screen {603x239} x00000001
+		//17:40:25.787(gui.4460) GUI::Mouse WM_ LBUTTONUP at screen {603x239} x00000000
+		//17:40:25.787(gui.4460) GUI::Mouse WM_ MOUSEMOVE at screen {603x239} x00000000
+		//17:40:25.880(gui.4460) GUI::Mouse WM_ LBUTTONDBLCLK at screen {603x239} x00000001
+		//17:40:25.880(gui.4460) GUI::Mouse WM_ MOUSEMOVE at screen {598x249} x00000001
+		//17:40:25.927(gui.4460) GUI::Mouse WM_ LBUTTONUP at screen {598x249} x00000000
+		//17:40:25.927(gui.4460) GUI::Mouse WM_ MOUSEMOVE at screen {598x249} x00000000
+		// Т.е. место второго тапа немного смещено (95% случаев)
+		// В итоге, винда присылает MOUSEMOVE & LBUTTONUP для этого смещения, что нежелательно,
+		// т.к. Far, например, после двойного тапа по папке выполняет позиционирование
+		// на файл в этой папке. Как если бы после DblClick был еще один лишний Click.
+		DWORD dwDelta = TimeGetTime() - mouse.LDblClkTick;
+		if (dwDelta <= TOUCH_DBLCLICK_DELTA)
+		{
+			if (messg == WM_MOUSEMOVE)
+			{
+				if ((wParam & (MK_LBUTTON|MK_RBUTTON|MK_MBUTTON)) == MK_LBUTTON)
+				{
+					return false; // Не пропускать это событие в консоль
+				}
+			}
+			else
+			{
+				_ASSERTE(messg==WM_LBUTTONUP);
+				// А тут мы скорректируем позицию, чтобы консоль думала, что "курсор не двигался"
+				ptCurClient = mouse.LDblClkDC;
+				ptCurScreen = ptCurClient;
+				//MapWindowPoints(
+				ClientToScreen(ghWnd, &ptCurScreen);
+			}
+		}
+	}
+
+	return true;
+}
+
 LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	// кто его знает, в каких координатах оно пришло...
@@ -10421,15 +10490,13 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	//POINT ptCur = {-1, -1}; GetCursorPos(&ptCur);
 	POINT ptCurClient = {(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)};
 	POINT ptCurScreen = ptCurClient;
-	// Для этих сообщений, lParam - relative to the upper-left corner of the screen.
-	if (messg == WM_MOUSEWHEEL || messg == WM_MOUSEHWHEEL)
-		ScreenToClient(ghWnd, &ptCurClient);
-	else // Для остальных lParam содержит клиентские координаты
-		ClientToScreen(ghWnd, &ptCurScreen);
+
+	// Коррекция координат или пропуск сообщений
+	bool bSkipEvent = PatchMouseEvent(messg, ptCurClient, ptCurScreen, wParam);
 
 #ifdef _DEBUG
 	wchar_t szDbg[128];
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI::Mouse %s at screen {%ix%i} x%08X\n",
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI::Mouse %s at screen {%ix%i} x%08X%s\n",
 		(messg==WM_MOUSEMOVE) ? L"WM_MOUSEMOVE" :
 		(messg==WM_LBUTTONDOWN) ? L"WM_LBUTTONDOWN" :
 		(messg==WM_LBUTTONUP) ? L"WM_LBUTTONUP" :
@@ -10446,9 +10513,13 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		(messg==0x020D) ? L"WM_XBUTTONDBLCLK" :
 		(messg==0x020E) ? L"WM_MOUSEHWHEEL" :
 		L"UnknownMsg",
-		ptCurScreen.x,ptCurScreen.y,(DWORD)wParam);
+		ptCurScreen.x,ptCurScreen.y,(DWORD)wParam,
+		bSkipEvent ? L"" : L" - SKIPPED!");
 	DEBUGSTRMOUSE(szDbg);
 #endif
+
+	if (!bSkipEvent)
+		return 0;
 
 	TODO("DoubleView. Хорошо бы колесико мышки перенаправлять в консоль под мышиным курором, а не в активную");
 	RECT conRect = {0}, dcRect = {0};
@@ -10700,6 +10771,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		lParam = MAKELONG((short)ptCurScreen.x, (short)ptCurScreen.y);
 	else
 		lParam = MAKELONG((short)ptCurClient.x, (short)ptCurClient.y);
+
+	// Запомним последнее мышиное событие (для PatchMouseEvent)
+	mouse.lastMsg = messg;
 
 	// Теперь можно обрабатывать мышку, и если нужно - слать ее в консоль
 	if (messg == WM_MOUSEMOVE)

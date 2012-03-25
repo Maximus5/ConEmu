@@ -27,6 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define SHOWDEBUGSTR
+#include <pshpack8.h> // 8bytes must be (Gesture API)
 #include "Header.h"
 
 #define USE_DUMPGEST

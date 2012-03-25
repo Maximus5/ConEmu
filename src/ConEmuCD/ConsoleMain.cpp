@@ -45,6 +45,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #endif
 
+#define SHOWDEBUGSTR
+#define DEBUGSTRCMD(x) DEBUGSTR(x)
+#define DEBUGSTRFIN(x) DEBUGSTR(x)
+
 //#define SHOW_INJECT_MSGBOX
 
 #include "ConEmuC.h"
@@ -1133,7 +1137,7 @@ wait:
 		#ifdef _DEBUG
 		if (nWait == WAIT_OBJECT_0)
 		{
-			DEBUGSTR(L"*** FinilizeEvent was set!\n");
+			DEBUGSTRFIN(L"*** FinilizeEvent was set!\n");
 		}
 		#endif
 
@@ -3128,9 +3132,9 @@ void SendStarted()
 
 		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd started)\n",(RunMode==RM_SERVER) ? L"Server" : L"ComSpec");
 		// CECMD_CMDSTARTSTOP
-		if (gnRunMode == RM_APPLICATION)
+		if (nServerPID != gnSelfPID)
 			pOut = ExecuteSrvCmd(nServerPID, pIn, ghConWnd);
-		else
+		if (gnRunMode != RM_APPLICATION)
 			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 
 		// Ждать при ошибке открытия пайпа наверное и не нужно - все что необходимо, сервер
@@ -4713,7 +4717,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (in.hdr.nCmd == CECMD_CMDFINISHED)
 		{
 			PRINT_COMSPEC(L"CECMD_CMDFINISHED, Set height to: %i\n", crNewSize.Y);
-			DEBUGSTR(L"\n!!! CECMD_CMDFINISHED !!!\n\n");
+			DEBUGSTRCMD(L"\n!!! CECMD_CMDFINISHED !!!\n\n");
 			// Вернуть нотификатор
 			TODO("Смена режима рефреша консоли")
 			//if (gpSrv->dwWinEventThread != 0)
@@ -4722,7 +4726,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		else if (in.hdr.nCmd == CECMD_CMDSTARTED)
 		{
 			PRINT_COMSPEC(L"CECMD_CMDSTARTED, Set height to: %i\n", nBufferHeight);
-			DEBUGSTR(L"\n!!! CECMD_CMDSTARTED !!!\n\n");
+			DEBUGSTRCMD(L"\n!!! CECMD_CMDSTARTED !!!\n\n");
 			// Отключить нотификатор
 			TODO("Смена режима рефреша консоли")
 			//if (gpSrv->dwWinEventThread != 0)
@@ -5139,35 +5143,48 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		gpSrv->nProcessStartTick = GetTickCount();
 	}
 	
-	if (in.StartStop.nStarted == sst_AppStart)
+#ifdef _DEBUG
+	wchar_t szDbg[128];
+
+	switch (in.StartStop.nStarted)
+	{
+		case sst_ServerStart:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(ServerStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			break;
+		case sst_ServerStop:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(ServerStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			break;
+		case sst_ComspecStart:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(ComspecStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			break;
+		case sst_ComspecStop:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(ComspecStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			break;
+		case sst_AppStart:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(AppStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			break;
+		case sst_AppStop:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(AppStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			break;
+		case sst_App16Start:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(App16Start,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			break;
+		case sst_App16Stop:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(App16Stop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			break;
+	}
+
+	DEBUGSTRCMD(szDbg);
+#endif
+	_ASSERTE(in.StartStop.dwPID!=0);
+
+	if ((in.StartStop.nStarted == sst_ComspecStart) || (in.StartStop.nStarted == sst_AppStart))
 	{
 		// Добавить процесс в список
 		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
 		lbChanged = ProcessAdd(nPID, &CS);
-		//BOOL lbFound = FALSE;
-		//for (DWORD n = 0; n < nPrevCount; n++)
-		//{
-		//	if (gpSrv->pnProcesses[n] == nPID)
-		//	{
-		//		lbFound = TRUE;
-		//		break;
-		//	}
-		//}
-		//if (!lbFound)
-		//{
-		//	if (nPrevCount < gpSrv->nMaxProcesses)
-		//	{
-		//		CS.RelockExclusive(200);
-		//		gpSrv->pnProcesses[gpSrv->nProcessCount++] = nPID;
-		//		lbChanged = TRUE;
-		//	}
-		//	else
-		//	{
-		//		_ASSERTE(nPrevCount < gpSrv->nMaxProcesses);
-		//	}
-		//}
 	}
-	else if (in.StartStop.nStarted == sst_AppStop)
+	else if ((in.StartStop.nStarted == sst_ComspecStop) || (in.StartStop.nStarted == sst_AppStop))
 	{
 		// Удалить процесс из списка
 		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
@@ -5190,7 +5207,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	}
 	else
 	{
-		_ASSERTE(in.StartStop.nStarted==sst_AppStart || in.StartStop.nStarted==sst_AppStop);
+		_ASSERTE(in.StartStop.nStarted==sst_AppStart || in.StartStop.nStarted==sst_AppStop || in.StartStop.nStarted==sst_ComspecStart || in.StartStop.nStarted==sst_ComspecStop);
 	}
 	
 	// ***
