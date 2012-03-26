@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2546
+  Plugin API for Far Manager 3.0 build 2573
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2546
+#define FARMANAGERVERSION_BUILD 2573
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -357,24 +357,28 @@ struct FarListItem
 
 struct FarListUpdate
 {
+	size_t StructSize;
 	int Index;
 	struct FarListItem Item;
 };
 
 struct FarListInsert
 {
+	size_t StructSize;
 	int Index;
 	struct FarListItem Item;
 };
 
 struct FarListGetItem
 {
+	size_t StructSize;
 	int ItemIndex;
 	struct FarListItem Item;
 };
 
 struct FarListPos
 {
+	size_t StructSize;
 	int SelectPos;
 	int TopPos;
 };
@@ -387,6 +391,7 @@ static const FARLISTFINDFLAGS
 
 struct FarListFind
 {
+	size_t StructSize;
 	int StartIndex;
 	const wchar_t *Pattern;
 	FARLISTFINDFLAGS Flags;
@@ -395,6 +400,7 @@ struct FarListFind
 
 struct FarListDelete
 {
+	size_t StructSize;
 	int StartIndex;
 	int Count;
 };
@@ -410,6 +416,7 @@ static const FARLISTINFOFLAGS
 
 struct FarListInfo
 {
+	size_t StructSize;
 	FARLISTINFOFLAGS Flags;
 	size_t ItemsNumber;
 	int SelectPos;
@@ -421,6 +428,7 @@ struct FarListInfo
 
 struct FarListItemData
 {
+	size_t StructSize;
 	int Index;
 	size_t DataSize;
 	void *Data;
@@ -435,6 +443,7 @@ struct FarList
 
 struct FarListTitles
 {
+	size_t StructSize;
 	size_t TitleSize;
 	const wchar_t *Title;
 	size_t BottomSize;
@@ -443,6 +452,7 @@ struct FarListTitles
 
 struct FarDialogItemColors
 {
+	size_t StructSize;
 	unsigned __int64 Flags;
 	size_t ColorsCount;
 	struct FarColor* Colors;
@@ -480,6 +490,7 @@ struct FarDialogItem
 
 struct FarDialogItemData
 {
+	size_t StructSize;
 	size_t  PtrLength;
 	wchar_t *PtrData;
 };
@@ -495,6 +506,7 @@ struct FarDialogEvent
 
 struct OpenDlgPluginData
 {
+	size_t StructSize;
 	HANDLE hDlg;
 };
 
@@ -507,6 +519,7 @@ struct DialogInfo
 
 struct FarGetDialogItem
 {
+	size_t StructSize;
 	size_t Size;
 	struct FarDialogItem* Item;
 };
@@ -533,13 +546,13 @@ struct FarGetDialogItem
 
 #define DlgList_AddString(Info,hDlg,ID,Str)    Info.SendDlgMessage(hDlg,DM_LISTADDSTR,ID,(INT_PTR)Str)
 #define DlgList_GetCurPos(Info,hDlg,ID)        Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,ID,0)
-#define DlgList_SetCurPos(Info,hDlg,ID,NewPos) {struct FarListPos LPos={NewPos,-1};Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,ID,(INT_PTR)&LPos);}
+#define DlgList_SetCurPos(Info,hDlg,ID,NewPos) {struct FarListPos LPos={sizeof(FarListPos),NewPos,-1};Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,ID,(INT_PTR)&LPos);}
 #define DlgList_ClearList(Info,hDlg,ID)        Info.SendDlgMessage(hDlg,DM_LISTDELETE,ID,0)
-#define DlgList_DeleteItem(Info,hDlg,ID,Index) {struct FarListDelete FLDItem={Index,1}; Info.SendDlgMessage(hDlg,DM_LISTDELETE,ID,(INT_PTR)&FLDItem);}
+#define DlgList_DeleteItem(Info,hDlg,ID,Index) {struct FarListDelete FLDItem={sizeof(FarListDelete),Index,1}; Info.SendDlgMessage(hDlg,DM_LISTDELETE,ID,(INT_PTR)&FLDItem);}
 #define DlgList_SortUp(Info,hDlg,ID)           Info.SendDlgMessage(hDlg,DM_LISTSORT,ID,0)
 #define DlgList_SortDown(Info,hDlg,ID)         Info.SendDlgMessage(hDlg,DM_LISTSORT,ID,1)
 #define DlgList_GetItemData(Info,hDlg,ID,Index)          Info.SendDlgMessage(hDlg,DM_LISTGETDATA,ID,Index)
-#define DlgList_SetItemStrAsData(Info,hDlg,ID,Index,Str) {struct FarListItemData FLID{Index,0,Str,0}; Info.SendDlgMessage(hDlg,DM_LISTSETDATA,ID,(INT_PTR)&FLID);}
+#define DlgList_SetItemStrAsData(Info,hDlg,ID,Index,Str) {struct FarListItemData FLID{sizeof(FarListItemData),Index,0,Str,0}; Info.SendDlgMessage(hDlg,DM_LISTSETDATA,ID,(INT_PTR)&FLID);}
 
 typedef unsigned __int64 FARDIALOGFLAGS;
 static const FARDIALOGFLAGS
@@ -770,6 +783,7 @@ struct FarPanelDirectory
 #define PANEL_NONE    ((HANDLE)(-1))
 #define PANEL_ACTIVE  ((HANDLE)(-1))
 #define PANEL_PASSIVE ((HANDLE)(-2))
+#define PANEL_STOP ((HANDLE)(-1))
 
 enum FILE_CONTROL_COMMANDS
 {
@@ -973,7 +987,6 @@ static const FARKEYMACROFLAGS
 	KMFLAGS_DISABLEOUTPUT       = 0x0000000000000001,
 	KMFLAGS_NOSENDKEYSTOPLUGINS = 0x0000000000000002,
 	KMFLAGS_SILENTCHECK         = 0x0000000000000001,
-	KMFLAGS_SAVEMACRO           = 0x0000000000000004,
 	KMFLAGS_NONE                = 0;
 
 enum FARMACROSENDSTRINGCOMMAND
@@ -1329,6 +1342,7 @@ enum SYNCHRO_EVENTS
 };
 
 #define EEREDRAW_ALL    (void*)0
+#define CURRENT_EDITOR -1
 
 enum EDITOR_CONTROL_COMMANDS
 {
@@ -1356,7 +1370,6 @@ enum EDITOR_CONTROL_COMMANDS
 
 	ECTL_SETPARAM                   = 22,
 	ECTL_GETBOOKMARKS               = 23,
-	ECTL_TURNOFFMARKINGBLOCK        = 24,
 	ECTL_DELETEBLOCK                = 25,
 	ECTL_ADDSESSIONBOOKMARK         = 26,
 	ECTL_PREVSESSIONBOOKMARK        = 27,
@@ -1871,9 +1884,8 @@ typedef int (WINAPIV *FARSTDSPRINTF)(wchar_t *Buffer,const wchar_t *Format,...);
 typedef int (WINAPIV *FARSTDSNPRINTF)(wchar_t *Buffer,size_t Sizebuf,const wchar_t *Format,...);
 typedef int (WINAPIV *FARSTDSSCANF)(const wchar_t *Buffer, const wchar_t *Format,...);
 // </C&C++>
-typedef void (WINAPI *FARSTDQSORT)(void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *));
-typedef void (WINAPI *FARSTDQSORTEX)(void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *,void *userparam),void *userparam);
-typedef void   *(WINAPI *FARSTDBSEARCH)(const void *key, const void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *));
+typedef void (WINAPI *FARSTDQSORT)(void *base, size_t nelem, size_t width, int (WINAPI *fcmp)(const void *, const void *,void *userparam),void *userparam);
+typedef void   *(WINAPI *FARSTDBSEARCH)(const void *key, const void *base, size_t nelem, size_t width, int (WINAPI *fcmp)(const void *, const void *,void *userparam),void *userparam);
 typedef size_t (WINAPI *FARSTDGETFILEOWNER)(const wchar_t *Computer,const wchar_t *Name,wchar_t *Owner,size_t Size);
 typedef size_t (WINAPI *FARSTDGETNUMBEROFLINKS)(const wchar_t *Name);
 typedef int (WINAPI *FARSTDATOI)(const wchar_t *s);
@@ -2007,12 +2019,9 @@ typedef struct FarStandardFunctions
 	// </C&C++>
 	FARSTDQSORT                qsort;
 	FARSTDBSEARCH              bsearch;
-	FARSTDQSORTEX              qsortex;
 	// <C&C++>
 	FARSTDSNPRINTF             snprintf;
 	// </C&C++>
-
-	DWORD_PTR                  Reserved[8];
 
 	FARSTDLOCALISLOWER         LIsLower;
 	FARSTDLOCALISUPPER         LIsUpper;
@@ -2093,8 +2102,28 @@ struct PluginStartupInfo
 	FARAPIREGEXPCONTROL    RegExpControl;
 	FARAPIMACROCONTROL     MacroControl;
 	FARAPISETTINGSCONTROL  SettingsControl;
+	void                  *Private;
 };
 
+typedef HANDLE (WINAPI *FARAPICREATEFILE)(const wchar_t *Object,DWORD DesiredAccess,DWORD ShareMode,LPSECURITY_ATTRIBUTES SecurityAttributes,DWORD CreationDistribution,DWORD FlagsAndAttributes,HANDLE TemplateFile);
+typedef DWORD (WINAPI *FARAPIGETFILEATTRIBUTES)(const wchar_t *FileName);
+typedef BOOL (WINAPI *FARAPISETFILEATTRIBUTES)(const wchar_t *FileName,DWORD dwFileAttributes);
+typedef BOOL (WINAPI *FARAPIMOVEFILEEX)(const wchar_t *ExistingFileName,const wchar_t *NewFileName,DWORD dwFlags);
+typedef BOOL (WINAPI *FARAPIDELETEFILE)(const wchar_t *FileName);
+typedef BOOL (WINAPI *FARAPIREMOVEDIRECTORY)(const wchar_t *DirName);
+typedef BOOL (WINAPI *FARAPICREATEDIRECTORY)(const wchar_t *PathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes);
+
+struct ArclitePrivateInfo
+{
+	size_t StructSize;
+	FARAPICREATEFILE CreateFile;
+	FARAPIGETFILEATTRIBUTES GetFileAttributes;
+	FARAPISETFILEATTRIBUTES SetFileAttributes;
+	FARAPIMOVEFILEEX MoveFileEx;
+	FARAPIDELETEFILE DeleteFile;
+	FARAPIREMOVEDIRECTORY RemoveDirectory;
+	FARAPICREATEDIRECTORY CreateDirectory;
+};
 
 typedef unsigned __int64 PLUGIN_FLAGS;
 static const PLUGIN_FLAGS
@@ -2220,6 +2249,7 @@ static const OPENPANELINFO_FLAGS
 	OPIF_USEATTRHIGHLIGHTING     = 0x0000000000008000ULL,
 	OPIF_USECRC32                = 0x0000000000010000ULL,
 	OPIF_USEFREESIZE             = 0x0000000000020000ULL,
+	OPIF_SHORTCUT                = 0x0000000000040000ULL,
 	OPIF_NONE                    = 0;
 
 struct KeyBarLabel
@@ -2292,6 +2322,13 @@ struct OpenMacroInfo
 	size_t StructSize;
 	size_t Count;
 	struct FarMacroValue *Values;
+};
+
+struct OpenShortcutInfo
+{
+	size_t StructSize;
+	const wchar_t *HostFile;
+	const wchar_t *ShortcutData;
 };
 
 enum OPENFROM

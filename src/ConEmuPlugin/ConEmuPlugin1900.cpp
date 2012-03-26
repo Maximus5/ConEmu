@@ -588,12 +588,46 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 	}
 	else
 	{
+		int nTabs = 0, nModalTabs = 0;
+		bool bFound = false;
+		WindowInfo WModal, WFirst;
 		// ѕоскольку в табах диалоги не отображаютс€ - надо подменить "активное" окно
 		// т.е. предпочитаем тот таб, который был активен ранее
-		if (WLastActive.StructSize)
+		for (int i = 0; i < windowCount; i++)
 		{
-			bActiveInfo = true;
-			WActive = WLastActive;
+			WInfo.Pos = i;
+			if (InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo)
+				&& (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS))
+			{
+				if (!nTabs)
+					WFirst = WInfo;
+				nTabs++;
+				if (WInfo.Flags & WIF_MODAL)
+				{
+					nModalTabs++;
+					WModal = WInfo;
+				}
+
+				if (WLastActive.StructSize && (WInfo.Type == WLastActive.Type) && (WInfo.Id == WLastActive.Id))
+				{
+					bActiveInfo = bFound = true;
+					WActive = WInfo;
+				}
+			}
+		}
+
+		if (!bFound)
+		{
+			if (nModalTabs)
+			{
+				bActiveInfo = true;
+				WActive = WModal;
+			}
+			else if (nTabs)
+			{
+				bActiveInfo = true;
+				WActive = WFirst;
+			}
 		}
 	}
 
