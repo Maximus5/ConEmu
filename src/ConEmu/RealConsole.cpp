@@ -3143,13 +3143,6 @@ BOOL CRealConsole::isDetached()
 	return (mh_ConEmuC == NULL);
 }
 
-BOOL CRealConsole::isFar(BOOL abPluginRequired/*=FALSE*/)
-{
-	if (!this) return false;
-
-	return GetFarPID(abPluginRequired)!=0;
-}
-
 BOOL CRealConsole::isWindowVisible()
 {
 	if (!this) return FALSE;
@@ -7702,6 +7695,13 @@ BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/
 	return mp_RBuf->GetPanelRect(abRight, prc, abFull, abIncludeEdges);
 }
 
+bool CRealConsole::isFar(BOOL abPluginRequired/*=FALSE*/)
+{
+	if (!this) return false;
+
+	return GetFarPID(abPluginRequired)!=0;
+}
+
 // Проверить, включен ли в фаре режим "far /w".
 // В этом случае, буфер есть, но его прокруткой должен заниматься сам фар.
 // Комбинации типа CtrlUp, CtrlDown и мышку - тоже передавать в фар.
@@ -7711,6 +7711,32 @@ bool CRealConsole::isFarBufferSupported()
 		return false;
 
 	return (m_FarInfo.cbSize && m_FarInfo.bBufferSupport && (m_FarInfo.nFarPID == GetFarPID()));
+}
+
+bool CRealConsole::isFarKeyBarShown()
+{
+	if (!isFar())
+	{
+		TODO("KeyBar в других приложениях? hiew?");
+		return false;
+	}
+
+	bool bKeyBarShown = false;
+	const CEFAR_INFO_MAPPING* pInfo = GetFarInfo();
+	if (pInfo)
+	{
+		// Editor/Viewer
+		if (isEditor() || isViewer())
+		{
+			WARNING("Эта настройка пока не отдается!");
+			bKeyBarShown = true;
+		}
+		else
+		{
+			bKeyBarShown = (pInfo->FarInterfaceSettings.ShowKeyBar != 0);
+		}
+	}
+	return bKeyBarShown;
 }
 
 bool CRealConsole::isSelectionAllowed()

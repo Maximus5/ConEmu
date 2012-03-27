@@ -389,6 +389,7 @@ void Settings::InitSettings()
 	// изменение размера панелей мышкой
 	isDragPanel = 2; // по умолчанию сделаем чтобы драгалось макросами (вдруг у юзера на Ctrl-Left/Right/Up/Down макросы висят... как бы конфуза не получилось)
 	isDragPanelBothEdges = false; // таскать за обе рамки (правую-левой панели и левую-правой панели)
+	isKeyBarRClick = true;
 	isDebugSteps = true;
 	MCHKHEAP
 	// Thumbnails
@@ -758,6 +759,8 @@ void Settings::LoadSettings()
 		
 		reg->Load(L"DragPanel", isDragPanel); if (isDragPanel > 2) isDragPanel = 1;
 		reg->Load(L"DragPanelBothEdges", isDragPanelBothEdges);
+
+		reg->Load(L"KeyBarRClick", isKeyBarRClick);
 		
 		reg->Load(L"DebugSteps", isDebugSteps);				
 
@@ -1277,6 +1280,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"DebugSteps", isDebugSteps);
 		reg->Save(L"DragPanel", isDragPanel);
 		reg->Save(L"DragPanelBothEdges", isDragPanelBothEdges);
+		reg->Save(L"KeyBarRClick", isKeyBarRClick);
 		//reg->Save(L"GUIpb", isGUIpb);
 		reg->Save(L"Tabs", isTabs);
 		reg->Save(L"TabSelf", isTabSelf);

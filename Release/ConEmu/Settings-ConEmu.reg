@@ -270,6 +270,9 @@ REGEDIT4
 ;; Fix dashed selection with right mouse drag
 "RSelectionFix"=hex:01
 
+;; Show Popup menu for RClick on Far KeyBar
+"KeyBarRClick"=hex:01
+
 ;; Skip mouse button (left/right/middle) click, while activating ConEmu
 "MouseSkipActivation"=hex:01
 ;; Skip mouse move events, while ConEmu is not foreground window

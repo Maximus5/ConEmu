@@ -411,6 +411,7 @@ BEGIN
     CONTROL         "ASCII sort function in Far",cbFARuseASCIIsort,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,81,104,8
     CONTROL         "Right selection fix",cbRSelectionFix,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,57,81,8
     CONTROL         "No zone check",cbShellNoZoneCheck,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,69,81,8
+    CONTROL         "KeyBar RClick",cbKeyBarRClick,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,81,81,8
     CONTROL         "Disable Far flashing",cbDisableFarFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,9,81,117,8
     GROUPBOX        "Far macros",IDC_STATIC,4,97,319,77
     CONTROL         "&RightClick 4 EMenu",cbRClick,"Button",BS_AUTO3STATE | WS_TABSTOP,9,109,78,8

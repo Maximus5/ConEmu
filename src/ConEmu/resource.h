@@ -502,6 +502,7 @@
 #define vkWinApps                       2111
 #define vkCTSVkBlockStart               2112
 #define vkCTSVkTextStart                2113
+#define cbKeyBarRClick                  2114
 
 // Next default values for new objects
 // 
@@ -509,7 +510,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        217
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2114
+#define _APS_NEXT_CONTROL_VALUE         2115
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

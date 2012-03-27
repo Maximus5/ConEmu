@@ -2667,6 +2667,9 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 		WaitForSingleObject(gpSrv->hExtConsoleCommit, EXTCONCOMMIT_TIMEOUT);
 	}
 
+	if (abForceSend)
+		gpSrv->pConsole->bDataChanged = TRUE;
+
 	if (ReadConsoleInfo())
 		lbChanged = TRUE;
 
@@ -3052,7 +3055,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		            // или активна, но сам ConEmu GUI не в фокусе
 		            || (gpSrv->pConsole->hdr.bConsoleActive && !gpSrv->pConsole->hdr.bThawRefreshThread))
 		        // и не дернули событие gpSrv->hRefreshEvent
-		        && (nWait != (WAIT_OBJECT_0+1)))
+		        && (nWait != (WAIT_OBJECT_0+1))
+				&& !gpSrv->bWasReattached)
 		{
 			DWORD nCurTick = GetTickCount();
 			nDelta = nCurTick - nLastReadTick;
@@ -3104,9 +3108,20 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		/* Перечитать консоль */
 		/* ****************** */
 		if (!gpSrv->bDebuggerActive)
-			lbChanged = ReloadFullConsoleInfo(FALSE/*lbForceSend*/);
+		{
+			lbChanged = ReloadFullConsoleInfo(gpSrv->bWasReattached/*lbForceSend*/);
+			// При этом должно передернуться gpSrv->hDataReadyEvent
+			if (gpSrv->bWasReattached)
+			{
+				_ASSERTE(lbChanged);
+				_ASSERTE(gpSrv->pConsole && gpSrv->pConsole->bDataChanged);
+				gpSrv->bWasReattached = FALSE;
+			}
+		}
 		else
+		{
 			lbChanged = FALSE;
+		}
 
 		// Событие выставим ПОСЛЕ окончания перечитывания консоли
 		if (lbWasSizeChange)

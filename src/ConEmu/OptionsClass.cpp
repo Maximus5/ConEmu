@@ -1071,7 +1071,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 			SendDlgItemMessage(hMain, lbExtendFontNormalIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
 		}
 
-		if (gpSet->isExtendFonts) CheckDlgButton(hMain, cbExtendFonts, BST_CHECKED);
+		CheckDlgButton(hMain, cbExtendFonts, gpSet->isExtendFonts);
 
 		_wsprintf(temp, SKIPLEN(countof(temp))(gpSet->nFontBoldColor<16) ? L"%2i" : L"None", gpSet->nFontBoldColor);
 		SelectStringExact(hMain, lbExtendFontBoldIdx, temp);
@@ -1080,7 +1080,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 		_wsprintf(temp, SKIPLEN(countof(temp))(gpSet->nFontNormalColor<16) ? L"%2i" : L"None", gpSet->nFontNormalColor);
 		SelectStringExact(hMain, lbExtendFontNormalIdx, temp);
 
-		if (gpSet->isFontAutoSize) CheckDlgButton(hMain, cbFontAuto, BST_CHECKED);
+		CheckDlgButton(hMain, cbFontAuto, gpSet->isFontAutoSize);
 
 		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", CurFontSizeY);
 		//upToFontHeight = LogFont.lfHeight;
@@ -1285,8 +1285,7 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	#ifdef USEPORTABLEREGISTRY
 	if (gpConEmu->mb_PortableRegExist)
 	{
-		if (gpSet->isPortableReg)
-			CheckDlgButton(hWnd2, cbPortableRegistry, BST_CHECKED);
+		CheckDlgButton(hWnd2, cbPortableRegistry, gpSet->isPortableReg);
 		EnableWindow(GetDlgItem(hWnd2, bPortableRegistrySettings), FALSE); // изменение пока запрещено
 	}
 	else
@@ -1379,48 +1378,47 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 	if (!abInitial)
 		return 0;
 
-	if (gpSet->isRClickSendKey) CheckDlgButton(hWnd2, cbRClick, (gpSet->isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
+	_ASSERTE(gpSet->isRClickSendKey==0 || gpSet->isRClickSendKey==1 || gpSet->isRClickSendKey==2);
+	CheckDlgButton(hWnd2, cbRClick, gpSet->isRClickSendKey);
 	SetDlgItemText(hWnd2, tRClickMacro, gpSet->RClickMacro());
 
-	if (gpSet->isSafeFarClose) CheckDlgButton(hWnd2, cbSafeFarClose, BST_CHECKED);
+	CheckDlgButton(hWnd2, cbSafeFarClose, gpSet->isSafeFarClose);
 	SetDlgItemText(hWnd2, tSafeFarCloseMacro, gpSet->SafeFarCloseMacro());
 
 	SetDlgItemText(hWnd2, tCloseTabMacro, gpSet->TabCloseMacro());
 	
 	SetDlgItemText(hWnd2, tSaveAllMacro, gpSet->SaveAllMacro());
 
-	if (gpSet->isFARuseASCIIsort) CheckDlgButton(hWnd2, cbFARuseASCIIsort, BST_CHECKED);
+	CheckDlgButton(hWnd2, cbFARuseASCIIsort, gpSet->isFARuseASCIIsort);
 
-	if (gpSet->isShellNoZoneCheck) CheckDlgButton(hWnd2, cbShellNoZoneCheck, BST_CHECKED);
+	CheckDlgButton(hWnd2, cbShellNoZoneCheck, gpSet->isShellNoZoneCheck);
 
-	if (gpSet->isFarHourglass) CheckDlgButton(hWnd2, cbFarHourglass, BST_CHECKED);
+	CheckDlgButton(hWnd2, cbKeyBarRClick, gpSet->isKeyBarRClick);
 
-	if (gpSet->isExtendUCharMap) CheckDlgButton(hWnd2, cbExtendUCharMap, BST_CHECKED);
+	CheckDlgButton(hWnd2, cbFarHourglass, gpSet->isFarHourglass);
 
-	if (gpSet->isDragEnabled)
-	{
-		//CheckDlgButton(hWnd2, cbDragEnabled, BST_CHECKED);
-		if (gpSet->isDragEnabled & DRAG_L_ALLOWED) CheckDlgButton(hWnd2, cbDragL, BST_CHECKED);
+	CheckDlgButton(hWnd2, cbExtendUCharMap, gpSet->isExtendUCharMap);
 
-		if (gpSet->isDragEnabled & DRAG_R_ALLOWED) CheckDlgButton(hWnd2, cbDragR, BST_CHECKED);
-	}
+	CheckDlgButton(hWnd2, cbDragL, (gpSet->isDragEnabled & DRAG_L_ALLOWED) ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(hWnd2, cbDragR, (gpSet->isDragEnabled & DRAG_R_ALLOWED) ? BST_CHECKED : BST_UNCHECKED);
 
-	if (gpSet->isDropEnabled) CheckDlgButton(hWnd2, cbDropEnabled, (gpSet->isDropEnabled==1) ? BST_CHECKED : BST_INDETERMINATE);
+    _ASSERTE(gpSet->isDropEnabled==0 || gpSet->isDropEnabled==1 || gpSet->isDropEnabled==2);
+	CheckDlgButton(hWnd2, cbDropEnabled, gpSet->isDropEnabled);
 
-	if (gpSet->isDefCopy) CheckDlgButton(hWnd2, cbDnDCopy, BST_CHECKED);
+	CheckDlgButton(hWnd2, cbDnDCopy, gpSet->isDefCopy);
 
 	// Overlay
-	if (gpSet->isDragOverlay) CheckDlgButton(hWnd2, cbDragImage, (gpSet->isDragOverlay==1) ? BST_CHECKED : BST_INDETERMINATE);
+	CheckDlgButton(hWnd2, cbDragImage, gpSet->isDragOverlay);
 
-	if (gpSet->isDragShowIcons) CheckDlgButton(hWnd2, cbDragIcons, BST_CHECKED);
+	CheckDlgButton(hWnd2, cbDragIcons, gpSet->isDragShowIcons);
 
-	if (gpSet->isRSelFix)
-		CheckDlgButton(hWnd2, cbRSelectionFix, BST_CHECKED);
+	CheckDlgButton(hWnd2, cbRSelectionFix, gpSet->isRSelFix);
 
 	CheckDlgButton(hWnd2, cbDragPanel, gpSet->isDragPanel);
 	CheckDlgButton(hWnd2, cbDragPanelBothEdges, gpSet->isDragPanelBothEdges);
 
-	if (gpSet->isDisableFarFlashing) CheckDlgButton(hWnd2, cbDisableFarFlashing, gpSet->isDisableFarFlashing);
+	_ASSERTE(gpSet->isDisableFarFlashing==0 || gpSet->isDisableFarFlashing==1 || gpSet->isDisableFarFlashing==2);
+	CheckDlgButton(hWnd2, cbDisableFarFlashing, gpSet->isDisableFarFlashing);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -1735,12 +1733,9 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 		
 	SetupHotkeyChecks(hKeys);
 
-	if (gpSet->isUseWinArrows)
-		CheckDlgButton(hKeys, cbUseWinArrows, BST_CHECKED);
-	if (gpSet->isUseWinNumber)
-		CheckDlgButton(hKeys, cbUseWinNumber, BST_CHECKED);
-	if (gpSet->isUseWinTab)
-		CheckDlgButton(hKeys, cbUseWinTab, BST_CHECKED);
+	CheckDlgButton(hKeys, cbUseWinArrows, gpSet->isUseWinArrows);
+	CheckDlgButton(hKeys, cbUseWinNumber, gpSet->isUseWinNumber);
+	CheckDlgButton(hKeys, cbUseWinTab, gpSet->isUseWinTab);
 
 	CheckDlgButton(hKeys, cbInstallKeybHooks,
 	               (gpSet->m_isKeyboardHooks == 1) ? BST_CHECKED :
@@ -1940,6 +1935,8 @@ LRESULT CSettings::OnInitDialog_Views(HWND hWnd2)
 		CheckDlgButton(hWnd2, cbThumbLoadFiles, BST_CHECKED);
 	else if ((gpSet->ThSet.bLoadPreviews & 3) == 1)
 		CheckDlgButton(hWnd2, cbThumbLoadFiles, BST_INDETERMINATE);
+	else
+		CheckDlgButton(hWnd2, cbThumbLoadFiles, BST_UNCHECKED);
 
 	CheckDlgButton(hWnd2, cbThumbLoadFolders, gpSet->ThSet.bLoadFolders);
 	SetDlgItemInt(hWnd2, tThumbLoadingTimeout, gpSet->ThSet.nLoadTimeout, FALSE);
@@ -2352,6 +2349,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbShellNoZoneCheck:
 			gpSet->isShellNoZoneCheck = IsChecked(hWnd2, cbShellNoZoneCheck);
 			gpConEmu->UpdateFarSettings();
+			break;
+		case cbKeyBarRClick:
+			gpSet->isKeyBarRClick = IsChecked(hWnd2, cbKeyBarRClick);
 			break;
 		case cbDragPanel:
 			gpSet->isDragPanel = IsChecked(hWnd2, cbDragPanel);

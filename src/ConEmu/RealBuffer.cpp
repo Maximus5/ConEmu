@@ -2238,6 +2238,132 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			}
 		}
 	}
+
+	// При правом клике на KeyBar'е - показать PopupMenu с вариантами модификаторов F-клавиш
+	TODO("Пока только для Far Manager?");
+	if ((m_Type == rbt_Primary) && (gpSet->isKeyBarRClick)
+		&& ((messg == WM_RBUTTONDOWN && (crMouse.Y == (GetTextHeight() - 1)) && mp_RCon->isFarKeyBarShown())
+			|| ((messg == WM_MOUSEMOVE || messg == WM_RBUTTONUP) && con.bRClick4KeyBar)))
+	{
+		if (messg == WM_RBUTTONDOWN)
+		{
+			MSectionLock csData;
+			wchar_t* pChar = NULL;
+			int nLen = 0;
+			if (GetConsoleLine(crMouse.Y, &pChar, &nLen, &csData) && (*pChar == L'1'))
+			{
+				// Т.к. ширина баров переменная, ищем
+				int x, k, px = 0, vk = 0;
+				for (x = 1, k = 2; x < nLen; x++)
+				{
+					if (pChar[x] < L'0' || pChar[x] > L'9')
+						continue;
+					if (k <= 9)
+					{
+						if ((((int)pChar[x] - L'0') == k) && (pChar[x-1] == L' ')
+							&& (pChar[x+1] < L'0' || pChar[x+1] > L'9'))
+						{
+							if ((crMouse.X <= (x - 1)) && (crMouse.X >= px))
+							{
+								vk = VK_F1 + (k - 2);
+								break;
+							}
+							px = x - 1;
+							k++;
+						}
+					}
+					else if (k <= 12)
+					{
+						if ((pChar[x] == L'1') && (((int)pChar[x+1] - L'0') == (k-10)) && (pChar[x-1] == L' ')
+							&& (pChar[x+2] < L'0' || pChar[x+2] > L'9'))
+						{
+							if ((crMouse.X <= (x - 1)) && (crMouse.X >= px))
+							{
+								px++;
+								vk = VK_F1 + (k - 2);
+								break;
+							}
+							px = x - 1;
+							k++;
+						}
+					}
+					else
+					{
+						px++;
+						vk = VK_F12;
+						break;
+					}
+				}
+
+				if (vk)
+				{
+					con.bRClick4KeyBar = TRUE;
+					con.crRClick4KeyBar = crMouse;
+					con.ptRClick4KeyBar = mp_RCon->mp_VCon->ConsoleToClient((vk==VK_F1)?(px+1):(px+2), crMouse.Y);
+					ClientToScreen(mp_RCon->GetView(), &con.ptRClick4KeyBar);
+					con.nRClickVK = vk;
+					return true;
+				}
+			}
+		}
+		else if (messg == WM_RBUTTONUP)
+		{
+			_ASSERTE(con.bRClick4KeyBar);
+			//Run!
+			HMENU h = CreatePopupMenu();
+			DWORD nFlags[] = {0,
+				LEFT_CTRL_PRESSED, LEFT_ALT_PRESSED, SHIFT_PRESSED,
+				LEFT_CTRL_PRESSED|LEFT_ALT_PRESSED, LEFT_CTRL_PRESSED|SHIFT_PRESSED,
+				LEFT_ALT_PRESSED|SHIFT_PRESSED,
+				RIGHT_CTRL_PRESSED, RIGHT_ALT_PRESSED,
+				RIGHT_CTRL_PRESSED|RIGHT_ALT_PRESSED, RIGHT_CTRL_PRESSED|SHIFT_PRESSED,
+				RIGHT_ALT_PRESSED|SHIFT_PRESSED
+				};
+			wchar_t szText[128];
+			for (size_t i = 0; i < countof(nFlags); i++)
+			{
+				*szText = 0;
+				if (nFlags[i] & LEFT_CTRL_PRESSED)
+					wcscat_c(szText, L"Ctrl-");
+				if (nFlags[i] & LEFT_ALT_PRESSED)
+					wcscat_c(szText, L"Alt-");
+				if (nFlags[i] & RIGHT_CTRL_PRESSED)
+					wcscat_c(szText, L"RCtrl-");
+				if (nFlags[i] & RIGHT_ALT_PRESSED)
+					wcscat_c(szText, L"RAlt-");
+				if (nFlags[i] & SHIFT_PRESSED)
+					wcscat_c(szText, L"Shift-");
+				_wsprintf(szText+lstrlen(szText), SKIPLEN(8) L"F%i", (con.nRClickVK - VK_F1 + 1));
+
+				AppendMenu(h, MF_STRING|((!(i % 3)) ? MF_MENUBREAK : 0), i+1, szText);
+			}
+
+			TODO("Хорошо бы при подсветке пункта - обновлять KeyBar, показать, что он сделает...");
+			int i = TrackPopupMenu(h, TPM_LEFTALIGN|TPM_BOTTOMALIGN|TPM_NONOTIFY|TPM_RETURNCMD|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
+						con.ptRClick4KeyBar.x, con.ptRClick4KeyBar.y, 0, ghWnd, NULL);
+			DestroyMenu(h);
+
+			if ((i > 0) && (i <= (int)countof(nFlags)))
+			{
+				i--;
+				mp_RCon->PostKeyPress(con.nRClickVK, nFlags[i], 0);
+			}
+
+			//Done
+			con.bRClick4KeyBar = FALSE;
+			return true;
+		}
+		else if (messg == WM_MOUSEMOVE)
+		{
+			_ASSERTE(con.bRClick4KeyBar);
+			TODO("«Отпустить» если был сдвиг?");
+			return true; // не пропускать в консоль
+		}
+	}
+	else if (con.bRClick4KeyBar)
+	{
+		con.bRClick4KeyBar = FALSE;
+	}
 	
 	// Пропускать мышь в консоль только если буфер реальный
 	return (m_Type != rbt_Primary);
@@ -4052,9 +4178,11 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 			const wchar_t* pszSlashes = L"/\\";
 			const wchar_t* pszUrl = L":/%#ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz;?@&=+$,-_.!~*'()0123456789";
 			const wchar_t* pszProtocol = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.";
+			const wchar_t* pszEMail = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
 			const wchar_t* pszUrlDelim = L"\\\"<>{}[]^` \t\r\n";
 			int nColons = 0;
 			bool bUrlMode = false, bMaybeMail = false;
+			SHORT MailX = -1;
 			// Курсор над комментарием?
 			// Попробуем найти начало имени файла
 			const wchar_t* pszMyBreak = pszBreak;
@@ -4262,7 +4390,18 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 					case L'(': iBracket++; break;
 					case L')': iBracket--; break;
 					case L'/': case L'\\': iBracket = 0; break;
-					case L'@': bMaybeMail = true; break;
+					case L'@':
+						if (MailX != -1)
+						{
+							bMaybeMail = false;
+						}
+						else if (((crTo.X > 0) && wcschr(pszEMail, pChar[crTo.X-1]))
+							&& (((crTo.X+1) < nLen) && wcschr(pszEMail, pChar[crTo.X+1])))
+						{
+							bMaybeMail = true;
+							MailX = crTo.X;
+						}
+						break;
 					}
 
 					if (pChar[crTo.X] == L':')
@@ -4339,10 +4478,22 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 					//if ((pChar[crTo.X] == L')') && (pChar[crTo.X+1] == L':'))
 					//	crTo.X++;
 				}
+				else // bMaybeMail
+				{
+					// Для мейлов - проверяем допустимые символы (чтобы пробелов не было и прочего мусора)
+					int x = MailX - 1; _ASSERTE(x>=0);
+					while ((x > 0) && wcschr(pszEMail, pChar[x-1]))
+						x--;
+					crFrom.X = x;
+					x = MailX + 1; _ASSERTE(x<nLen);
+					while (((x+1) < nLen) && wcschr(pszEMail, pChar[x+1]))
+						x++;
+					crTo.X = x;
+				}
 			} // end "else / if (bUrlMode)"
 
-			// Check mouse pos
-			if (crMouse.X > crTo.X)
+			// Check mouse pos, it must be inside region
+			if ((crMouse.X < crFrom.X) || (crMouse.X > crTo.X))
 			{
 				goto wrap;
 			}
@@ -4350,11 +4501,13 @@ CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In
 			// Ok
 			if (pszText && cchTextMax)
 			{
+				_ASSERTE(!bMaybeMail || !bUrlMode); // Одновременно - флаги не могут быть выставлены!
 				int iMailTo = (bMaybeMail && !bUrlMode) ? lstrlen(L"mailto:") : 0;
 				if ((crTo.X - crFrom.X + 1 + iMailTo) >= (INT_PTR)cchTextMax)
 					goto wrap; // Недостаточно места под текст
 				if (iMailTo)
 				{
+					// Добавить префикс протокола
 					lstrcpyn(pszText, L"mailto:", iMailTo+1);
 					pszText += iMailTo;
 					cchTextMax -= iMailTo;

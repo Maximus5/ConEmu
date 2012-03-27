@@ -217,6 +217,11 @@ protected:
 		BOOL bInSetSize; HANDLE hInSetSize;
 		int DefaultBufferHeight;
 		BOOL bConsoleDataChanged;
+		//RClick4KeyBar
+		BOOL bRClick4KeyBar;
+		COORD crRClick4KeyBar;
+		POINT ptRClick4KeyBar;
+		int nRClickVK; // VK_F1..F12
 	} con;
 	
 protected:

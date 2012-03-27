@@ -359,6 +359,7 @@ struct SrvInfo
 	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
 	DWORD nActiveFarPID; // PID последнего активного Far
 	BOOL bWasDetached; // Выставляется в TRUE при получении CECMD_DETACHCON
+	BOOL bWasReattached; // Если TRUE - то при следующем цикле нужно передернуть ReloadFullConsoleInfo(true)
 	//
 	//HANDLE hServerThread;   DWORD dwServerThreadId; BOOL bServerTermination;
 	PipeServer<CESERVER_REQ> CmdServer;

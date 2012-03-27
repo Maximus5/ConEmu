@@ -4860,6 +4860,16 @@ BOOL cmd_Attach2Gui(CESERVER_REQ& in, CESERVER_REQ** out)
 			//
 			(*out)->dwData[0] = (DWORD)hDc; //-V205 // Дескриптор окна
 			lbRc = TRUE;
+
+			gpSrv->bWasReattached = TRUE;
+			if (gpSrv->hRefreshEvent)
+			{
+				SetEvent(gpSrv->hRefreshEvent);
+			}
+			else
+			{
+				_ASSERTE(gpSrv->hRefreshEvent!=NULL);
+			}
 		}
 	}
 	

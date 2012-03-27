@@ -1585,10 +1585,10 @@ extern BOOL gbInfoW_OK;
 HANDLE WINAPI OpenW(const struct OpenInfo *Info)
 {
 	if (!gbInfoW_OK)
-		return INVALID_HANDLE_VALUE;
+		return FALSE;
 	
 	INT_PTR Item = Info->Data;
-	if (Info->OpenFrom == OPEN_FROMMACRO)
+	if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_FROMMACRO)
 	{
 		Item = 0; // Сразу сброс
 		OpenMacroInfo* p = (OpenMacroInfo*)Info->Data;
@@ -1615,7 +1615,15 @@ HANDLE WINAPI OpenW(const struct OpenInfo *Info)
 			_ASSERTE(p->StructSize >= sizeof(*p));
 		}
 	}
-	return OpenPluginWcmn(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
+	HANDLE h = OpenPluginWcmn(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
+	if ((h == INVALID_HANDLE_VALUE) || (h == (HANDLE)-2))
+	{
+		if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_ANALYSE)
+			h = PANEL_STOP;
+		else
+			h = NULL;
+	}
+	return h;
 }
 
 int WINAPI ProcessConsoleInputW(struct ProcessConsoleInputInfo *Info)

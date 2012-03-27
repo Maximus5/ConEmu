@@ -349,14 +349,15 @@ class CRealConsole
 		LRESULT OnSetScrollPos(WPARAM wParam);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 		BOOL isConSelectMode();
+		bool isFar(BOOL abPluginRequired=FALSE);
 		bool isFarBufferSupported();
+		bool isFarKeyBarShown();
 		bool isSelectionAllowed();
 		bool isSelectionPresent();
 		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
 		void ExpandSelection(SHORT anX=-1, SHORT anY=-1);
 		bool DoSelectionCopy();
 		void DoSelectionStop();
-		BOOL isFar(BOOL abPluginRequired=FALSE);
 		void ShowConsoleOrGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show

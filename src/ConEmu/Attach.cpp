@@ -35,7 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/ConEmuCheck.h"
 
-#undef ALLOW_GUI_ATTACH
+//#undef ALLOW_GUI_ATTACH
+#define ALLOW_GUI_ATTACH
 
 /*
 
