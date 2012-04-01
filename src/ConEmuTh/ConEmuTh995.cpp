@@ -175,7 +175,8 @@ void PostMacroW995(wchar_t* asMacro)
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 }
 
-int ShowPluginMenuW995()
+int 
+ShowPluginMenuW995()
 {
 	if (!InfoW995)
 		return -1;
@@ -212,6 +213,10 @@ int ShowPluginMenuW995()
 			items[0].Flags |= MIF_SELECTED;
 		}
 	}
+
+	#ifndef _DEBUG
+	nCount--;
+	#endif
 
 	int nRc = InfoW995->Menu(InfoW995->ModuleNumber, -1,-1, 0,
 	                         FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,

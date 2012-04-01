@@ -246,6 +246,10 @@ int ShowPluginMenuA()
 		}
 	}
 
+	#ifndef _DEBUG
+	nCount--;
+	#endif
+
 	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0,
 	                      FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
 	                      InfoA->GetMsg(InfoA->ModuleNumber,2),

@@ -265,7 +265,8 @@ void PostMacroW1900(wchar_t* asMacro)
 	InfoW1900->MacroControl(&guid_ConEmuTh, MCTL_SENDSTRING, 0, &mcr);
 }
 
-int ShowPluginMenuW1900()
+int 
+ShowPluginMenuW1900()
 {
 	if (!InfoW1900)
 		return -1;
@@ -302,6 +303,10 @@ int ShowPluginMenuW1900()
 			items[0].Flags |= MIF_SELECTED;
 		}
 	}
+
+	#ifndef _DEBUG
+	nCount--;
+	#endif
 	
 	GUID lguid_TypeMenu = { /* f3e4df2c-7ecc-42db-ba2e-6f43f7cd9415 */
 	    0xf3e4df2c,
