@@ -222,6 +222,8 @@ enum RealBufferType
 	rbt_DumpScreen,
 };
 
+enum ExpandTextRangeType;
+
 #include "RealServer.h"
 
 class CRealConsole
@@ -286,6 +288,7 @@ class CRealConsole
 		void PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		void PostLeftClickSync(COORD crDC);
 		void PostConsoleEventPipe(MSG64 *pMsg);
+		void ShowKeyBarHint(WORD nID);
 	private:
 		void PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend = false);
 	public:
@@ -338,7 +341,7 @@ class CRealConsole
 		void OnServerStarted(HWND ahConWnd, DWORD anServerPID);
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
 		int  GetProcesses(ConProcess** ppPrc);
-		DWORD GetFarPID(BOOL abPluginRequired=FALSE);
+		DWORD GetFarPID(bool abPluginRequired=false);
 		void ResetFarPID();
 		DWORD GetActivePID();
 		DWORD GetProgramStatus();
@@ -349,7 +352,7 @@ class CRealConsole
 		LRESULT OnSetScrollPos(WPARAM wParam);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 		BOOL isConSelectMode();
-		bool isFar(BOOL abPluginRequired=FALSE);
+		bool isFar(bool abPluginRequired=false);
 		bool isFarBufferSupported();
 		bool isFarKeyBarShown();
 		bool isSelectionAllowed();
@@ -365,6 +368,7 @@ class CRealConsole
 		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		BOOL RecreateProcess(RConStartArgs *args);
 		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+		ExpandTextRangeType GetLastTextRangeType();
 	private:
 		BOOL GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData);
 		//enum ExpandTextRangeType
@@ -374,7 +378,7 @@ class CRealConsole
 		//	etr_FileAndLine = 2,
 		//};
 		//ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
-		bool IsFarHyperlinkAllowed();
+		bool IsFarHyperlinkAllowed(bool abFarRequired);
 		bool ProcessFarHyperlink(UINT messg, COORD crFrom);
 		void UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab);
 	public:
@@ -392,7 +396,7 @@ class CRealConsole
 		void SetTabs(ConEmuTab* tabs, int tabsCount);
 		int GetTabCount(BOOL abVisibleOnly = FALSE);
 		int GetActiveTab();
-		int GetActiveTabType();
+		CEFarWindowType GetActiveTabType();
 		bool GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
 		int GetModifiedEditors();
 		BOOL ActivateFarWindow(int anWndIndex);

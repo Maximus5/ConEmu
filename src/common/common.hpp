@@ -402,6 +402,7 @@ enum PanelViewMode
 	pvm_None = 0,
 	pvm_Thumbnails = 1,
 	pvm_Tiles = 2,
+	pvm_Icons = 4,
 	// следующий режим (если он будет) делать 4! (это bitmask)
 };
 
@@ -698,8 +699,9 @@ struct FarVersion
 		DWORD dwVer;
 		struct
 		{
-			WORD dwVerMinor;
-			WORD dwVerMajor;
+		    int Bis : 1;
+			int dwVerMinor : 15;
+			int dwVerMajor : 16;
 		};
 	};
 	DWORD dwBuild;
@@ -797,6 +799,21 @@ struct ConEmuGuiMapping
 	//wchar_t  sLogCreateProcess[MAX_PATH];
 };
 
+typedef unsigned int CEFarWindowType;
+static const CEFarWindowType
+	fwt_Any            = 0,
+	fwt_Panels         = 1,
+	fwt_Viewer         = 2,
+	fwt_Editor         = 3,
+	fwt_TypeMask       = 0x00FF,
+
+	fwt_Elevated       = 0x0100,
+	fwt_NonElevated    = 0x0200, // Аргумент для поиска окна
+	fwt_Modal          = 0x0400,
+	fwt_NonModal       = 0x0800, // Аргумент для поиска окна
+	fwt_PluginRequired = 0x1000, // Аргумент для поиска окна
+	fwt_ActivateFound  = 0x2000  // Активировать найденный таб. Аргумент для поиска окна
+	;
 
 //TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");
 #define CONEMUTABMAX 0x400
@@ -804,7 +821,7 @@ struct ConEmuTab
 {
 	int  Pos;
 	int  Current;
-	int  Type; // (Panels=1, Viewer=2, Editor=3) |(Elevated=0x100) |(NotElevated=0x200) |(Modal=0x400)
+	CEFarWindowType Type; // (Panels=1, Viewer=2, Editor=3) |(Elevated=0x100) |(NotElevated=0x200) |(Modal=0x400)
 	int  Modified;
 	int  Modal;
 	int  EditViewId;

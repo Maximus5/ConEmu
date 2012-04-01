@@ -82,6 +82,15 @@ const wchar_t gszAnalogues[32] =
 	9658, 9668, 8597, 8252,  182,  167, 9632, 8616, 8593, 8595, 8594, 8592, 8735, 8596, 9650, 9660
 };
 
+const DWORD gnKeyBarFlags[] = {0,
+	LEFT_CTRL_PRESSED, LEFT_ALT_PRESSED, SHIFT_PRESSED,
+	LEFT_CTRL_PRESSED|LEFT_ALT_PRESSED, LEFT_CTRL_PRESSED|SHIFT_PRESSED,
+	LEFT_ALT_PRESSED|SHIFT_PRESSED,
+	RIGHT_CTRL_PRESSED, RIGHT_ALT_PRESSED,
+	RIGHT_CTRL_PRESSED|RIGHT_ALT_PRESSED, RIGHT_CTRL_PRESSED|SHIFT_PRESSED,
+	RIGHT_ALT_PRESSED|SHIFT_PRESSED
+};
+
 
 CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primary*/)
 {
@@ -2008,14 +2017,21 @@ COORD CRealBuffer::ScreenToBuffer(COORD crMouse)
 	return crMouse;
 }
 
-bool CRealBuffer::ProcessFarHyperlink()
+ExpandTextRangeType CRealBuffer::GetLastTextRangeType()
 {
-	return ProcessFarHyperlink(WM_USER, mcr_LastMousePos);
+	if (!this)
+		return etr_None;
+	return con.etrLast;
+}
+
+bool CRealBuffer::ProcessFarHyperlink(UINT messg/*=WM_USER*/)
+{
+	return ProcessFarHyperlink(messg, mcr_LastMousePos);
 }
 
 bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 {
-	if (!mp_RCon->IsFarHyperlinkAllowed())
+	if (!mp_RCon->IsFarHyperlinkAllowed(false))
 		return false;
 		
 	bool lbProcessed = false;
@@ -2089,11 +2105,11 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 					LPCWSTR pszFileName = wcsrchr(cmd.szFile, L'\\');
 					if (!pszFileName) pszFileName = cmd.szFile; else pszFileName++;
 					CVirtualConsole* pVCon = NULL;
-					int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(3/*Редактор*/, pszFileName, &pVCon);
+					int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(fwt_Editor|fwt_ActivateFound|fwt_PluginRequired, pszFileName, &pVCon);
 					
 					if (liActivated == -2)
 					{
-						// Нашли, но активировать нельзя
+						// Нашли, но активировать нельзя, TabBar должен был показать всплывающую подсказку с ошибкой
 						_ASSERTE(FALSE);
 					}
 					else if (liActivated >= 0)
@@ -2112,23 +2128,32 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 							//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
 
 							// Ок, переход на строку (макрос)
-							mp_RCon->PostMacro(szMacro, TRUE);
+							pVCon->RCon()->PostMacro(szMacro, TRUE);
 						}
 					}
 					else
 					{
-						// -- Послать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
-						//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
+						CVConGuard VCon;
+						if (!gpConEmu->isFarExist(fwt_NonModal|fwt_PluginRequired, NULL, &VCon))
+						{
+							DisplayLastError(L"Available Far Manager was not found in open tabs", 0);
+						}
+						else
+						{
+							// -- Послать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
+							//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
 
-						// Prepared, можно звать плагин
-						mp_RCon->PostCommand(CMD_OPENEDITORLINE, sizeof(cmd), &cmd);
-						//CConEmuPipe pipe(mp_RCon->GetFarPID(TRUE), CONEMUREADYTIMEOUT);
-						//if (pipe.Init(_T("CRealConsole::ProcessFarHyperlink"), TRUE))
-						//{
-						//	gpConEmu->DebugStep(_T("ProcessFarHyperlink: Waiting for result (10 sec)"));
-						//	pipe.Execute(CMD_OPENEDITORLINE, &cmd, sizeof(cmd));
-						//	gpConEmu->DebugStep(NULL);
-						//}
+							// Prepared, можно звать плагин
+							VCon->RCon()->PostCommand(CMD_OPENEDITORLINE, sizeof(cmd), &cmd);
+							gpConEmu->Activate(VCon.VCon());
+							//CConEmuPipe pipe(mp_RCon->GetFarPID(TRUE), CONEMUREADYTIMEOUT);
+							//if (pipe.Init(_T("CRealConsole::ProcessFarHyperlink"), TRUE))
+							//{
+							//	gpConEmu->DebugStep(_T("ProcessFarHyperlink: Waiting for result (10 sec)"));
+							//	pipe.Execute(CMD_OPENEDITORLINE, &cmd, sizeof(cmd));
+							//	gpConEmu->DebugStep(NULL);
+							//}
+						}
 					}
 				}
 			}
@@ -2137,6 +2162,21 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 	}
 
 	return lbProcessed;
+}
+
+void CRealBuffer::ShowKeyBarHint(WORD nID)
+{
+	if ((nID > 0) && (nID <= countof(gnKeyBarFlags)))
+	{
+		// Нужен какой-то безопасный способ "обновить" кейбар, но так,
+		// чтобы не сработали макросы, назначенные на одиночные модификаторы!
+		//INPUT_RECORD r = {KEY_EVENT};
+		//r.Event.MouseEvent.dwMousePosition.X = nID;
+		//r.Event.MouseEvent.dwControlKeyState = gnKeyBarFlags[nID - 1];
+		//r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+		//mp_RCon->PostConsoleEvent(&r);
+		mp_RCon->PostKeyPress(VK_RWIN, gnKeyBarFlags[nID - 1], 0);
+	}
 }
 
 // x,y - экранные координаты
@@ -2191,6 +2231,21 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		}
 	}
 
+	// Поиск и подсветка файлов с ошибками типа
+	// .\realconsole.cpp(8104) : error ...
+	if ((con.m_sel.dwFlags == 0) && mp_RCon->IsFarHyperlinkAllowed(false))
+	{
+		if (messg == WM_MOUSEMOVE || messg == WM_LBUTTONDOWN || messg == WM_LBUTTONUP || messg == WM_LBUTTONDBLCLK)
+		{
+			if (ProcessFarHyperlink(messg, crMouse))
+			{
+				// Пускать или нет событие мыши в консоль?
+				// Лучше наверное не пускать, а то вьювер может заклинить на прокрутке, например
+				return true;
+			}
+		}
+	}
+
 	BOOL lbFarBufferSupported = mp_RCon->isFarBufferSupported();
 
 	if (con.bBufferHeight && !lbFarBufferSupported)
@@ -2209,8 +2264,10 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 				OnScroll(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN);
 			}
 		}
-		
-		TODO("WM_MOUSEHWHEEL - горизонтальная прокрутка");
+		else if (messg == WM_MOUSEHWHEEL)
+		{
+			TODO("WM_MOUSEHWHEEL - горизонтальная прокрутка");
+		}
 
 		if (!isConSelectMode())
 			return true;
@@ -2222,21 +2279,6 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		// Ручная обработка выделения, на консоль полагаться не следует...
 		OnMouseSelection(messg, wParam, x, y);
 		return true;
-	}
-
-	// Поиск и подсветка файлов с ошибками типа
-	// .\realconsole.cpp(8104) : error ...
-	if (mp_RCon->IsFarHyperlinkAllowed())
-	{
-		if (messg == WM_MOUSEMOVE || messg == WM_LBUTTONDOWN || messg == WM_LBUTTONUP || messg == WM_LBUTTONDBLCLK)
-		{
-			if (ProcessFarHyperlink(messg, crMouse))
-			{
-				// Пускать или нет событие мыши в консоль?
-				// Лучше наверное не пускать, а то вьювер может заклинить на прокрутке, например
-				return true;
-			}
-		}
 	}
 
 	// При правом клике на KeyBar'е - показать PopupMenu с вариантами модификаторов F-клавиш
@@ -2311,42 +2353,33 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			_ASSERTE(con.bRClick4KeyBar);
 			//Run!
 			HMENU h = CreatePopupMenu();
-			DWORD nFlags[] = {0,
-				LEFT_CTRL_PRESSED, LEFT_ALT_PRESSED, SHIFT_PRESSED,
-				LEFT_CTRL_PRESSED|LEFT_ALT_PRESSED, LEFT_CTRL_PRESSED|SHIFT_PRESSED,
-				LEFT_ALT_PRESSED|SHIFT_PRESSED,
-				RIGHT_CTRL_PRESSED, RIGHT_ALT_PRESSED,
-				RIGHT_CTRL_PRESSED|RIGHT_ALT_PRESSED, RIGHT_CTRL_PRESSED|SHIFT_PRESSED,
-				RIGHT_ALT_PRESSED|SHIFT_PRESSED
-				};
 			wchar_t szText[128];
-			for (size_t i = 0; i < countof(nFlags); i++)
+			for (size_t i = 0; i < countof(gnKeyBarFlags); i++)
 			{
 				*szText = 0;
-				if (nFlags[i] & LEFT_CTRL_PRESSED)
+				if (gnKeyBarFlags[i] & LEFT_CTRL_PRESSED)
 					wcscat_c(szText, L"Ctrl-");
-				if (nFlags[i] & LEFT_ALT_PRESSED)
+				if (gnKeyBarFlags[i] & LEFT_ALT_PRESSED)
 					wcscat_c(szText, L"Alt-");
-				if (nFlags[i] & RIGHT_CTRL_PRESSED)
+				if (gnKeyBarFlags[i] & RIGHT_CTRL_PRESSED)
 					wcscat_c(szText, L"RCtrl-");
-				if (nFlags[i] & RIGHT_ALT_PRESSED)
+				if (gnKeyBarFlags[i] & RIGHT_ALT_PRESSED)
 					wcscat_c(szText, L"RAlt-");
-				if (nFlags[i] & SHIFT_PRESSED)
+				if (gnKeyBarFlags[i] & SHIFT_PRESSED)
 					wcscat_c(szText, L"Shift-");
 				_wsprintf(szText+lstrlen(szText), SKIPLEN(8) L"F%i", (con.nRClickVK - VK_F1 + 1));
 
-				AppendMenu(h, MF_STRING|((!(i % 3)) ? MF_MENUBREAK : 0), i+1, szText);
+				AppendMenu(h, MF_STRING|((!(i % 4)) ? MF_MENUBREAK : 0), i+1, szText);
 			}
 
-			TODO("Хорошо бы при подсветке пункта - обновлять KeyBar, показать, что он сделает...");
-			int i = TrackPopupMenu(h, TPM_LEFTALIGN|TPM_BOTTOMALIGN|TPM_NONOTIFY|TPM_RETURNCMD|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
+			int i = gpConEmu->trackPopupMenu(tmp_KeyBar, h, TPM_LEFTALIGN|TPM_BOTTOMALIGN|/*TPM_NONOTIFY|*/TPM_RETURNCMD|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
 						con.ptRClick4KeyBar.x, con.ptRClick4KeyBar.y, 0, ghWnd, NULL);
 			DestroyMenu(h);
 
-			if ((i > 0) && (i <= (int)countof(nFlags)))
+			if ((i > 0) && (i <= (int)countof(gnKeyBarFlags)))
 			{
 				i--;
-				mp_RCon->PostKeyPress(con.nRClickVK, nFlags[i], 0);
+				mp_RCon->PostKeyPress(con.nRClickVK, gnKeyBarFlags[i], 0);
 			}
 
 			//Done
@@ -2884,15 +2917,33 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		return true;
 	}
 
-	if (messg == WM_KEYUP && wParam == mp_RCon->mn_SelectModeSkipVk)
+	if (messg == WM_KEYUP)
 	{
-		mp_RCon->mn_SelectModeSkipVk = 0; // игнорируем отпускание, поскольку нажатие было на копирование/отмену
-		return true;
+		if (wParam == mp_RCon->mn_SelectModeSkipVk)
+		{
+			mp_RCon->mn_SelectModeSkipVk = 0; // игнорируем отпускание, поскольку нажатие было на копирование/отмену
+			return true;
+		}
+		else if (gpSet->isFarGotoEditor && isKey(wParam, gpSet->isFarGotoEditorVk))
+		{
+			if (GetLastTextRangeType() != etr_None)
+			{
+				StoreLastTextRange(etr_None);
+				UpdateSelection();
+			}
+		}
 	}
 
-	if (messg == WM_KEYDOWN && mp_RCon->mn_SelectModeSkipVk)
+	if (messg == WM_KEYDOWN)
 	{
-		mp_RCon->mn_SelectModeSkipVk = 0; // при _нажатии_ любой другой клавиши - сбросить флажок (во избежание)
+		if (gpSet->isFarGotoEditor && isKey(wParam, gpSet->isFarGotoEditorVk))
+		{
+			if (ProcessFarHyperlink(WM_MOUSEMOVE))
+				UpdateSelection();
+		}
+
+		if (mp_RCon->mn_SelectModeSkipVk)
+			mp_RCon->mn_SelectModeSkipVk = 0; // при _нажатии_ любой другой клавиши - сбросить флажок (во избежание)
 	}
 
 	switch (m_Type)
@@ -2996,8 +3047,12 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	//TODO("В принципе, это можно делать не всегда, а только при изменениях");
 	int  nColorIndex = 0;
 	bool lbIsFar = (mp_RCon->GetFarPID() != 0);
-	bool lbAllowHilightFileLine = mp_RCon->IsFarHyperlinkAllowed();
-	bool bExtendColors = lbIsFar && gpSet->isExtendColors;
+	bool lbAllowHilightFileLine = mp_RCon->IsFarHyperlinkAllowed(false);
+	if (!lbAllowHilightFileLine && (con.etrLast != etr_None))
+		StoreLastTextRange(etr_None);
+	WARNING("lbIsFar - хорошо бы заменить на привязку к конкретным приложениям?");
+	// 120331 - зачем ограничивать настройку доп.цветов?
+	bool bExtendColors = /*lbIsFar &&*/ gpSet->isExtendColors;
 	BYTE nExtendColor = gpSet->nExtendColor;
 	bool bExtendFonts = lbIsFar && gpSet->isExtendFonts;
 	BYTE nFontNormalColor = gpSet->nFontNormalColor;
@@ -3172,6 +3227,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				/*if ((con.mcr_FileLineStart.X == con.mcr_FileLineEnd.X)
 					|| (con.mcr_FileLineStart.Y != mcr_LastMousePos.Y)
 					|| (con.mcr_FileLineStart.X > mcr_LastMousePos.X || con.mcr_FileLineEnd.X < mcr_LastMousePos.X))*/
+				if (mp_RCon->mp_ABuf == this)
 				{
 					ProcessFarHyperlink();
 				}
@@ -3221,11 +3277,31 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			DWORD cbLineSize = min(cbDstLineSize,cbSrcLineSize);
 			int nCharsLeft = max(0, (nWidth-con.nTextWidth));
 			//int nY, nX;
+			//120331 - Нехорошо заменять на "черный" с самого начала
 			BYTE attrBackLast = 0;
+			int nExtendStartsY = 0;
 			//int nPrevDlgBorder = -1;
+			
+			bool lbStoreBackLast = false;
+			if (bExtendColors)
+			{
+				attrBackLast = lcaTable[(*pnSrc) & 0xFF].nBackIdx;
+
+				const CEFAR_INFO_MAPPING* pFarInfo = lbIsFar ? mp_RCon->GetFarInfo() : NULL;
+				if (pFarInfo)
+				{
+					// Если в качестве цвета "расширения" выбран цвет панелей - значит
+					// пользователь просто настроил "другую" палитру для панелей фара.
+					// К сожалению, таким образом нельзя заменить только цвета для элемента под курсором.
+					if (((pFarInfo->nFarColors[col_PanelText] & 0xF0) >> 4) != nExtendColor)
+						lbStoreBackLast = true;
+					if (pFarInfo->FarInterfaceSettings.AlwaysShowMenuBar || mp_RCon->isEditor() || mp_RCon->isViewer())
+						nExtendStartsY = 1; // пропустить обработку строки меню 
+				}
+			}
 
 			// Собственно данные
-			for(nY = 0; nY < nYMax; nY++)
+			for (nY = 0; nY < nYMax; nY++)
 			{
 				if (nY == 1) lcaTable = lcaTableExt;
 
@@ -3253,14 +3329,14 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 							&& (con.m_sel.dwFlags == 0)
 							&& (nY == con.mcr_FileLineStart.Y)
 							&& (con.mcr_FileLineStart.X < con.mcr_FileLineEnd.X);
-					for(nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
+					for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
 					{
 						atr = (*pnSrc) & 0xFF; // интересут только нижний байт - там индексы цветов
 						TODO("OPTIMIZE: lca = lcaTable[atr];");
 						lca = lcaTable[atr];
 						TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
 
-						if (bExtendColors && nY)
+						if (bExtendColors && (nY >= nExtendStartsY))
 						{
 							if (lca.nBackIdx == nExtendColor)
 							{
@@ -3269,7 +3345,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 								lca.crForeColor = lca.crOrigForeColor = mp_RCon->mp_VCon->mp_Colors[lca.nForeIdx];
 								lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_VCon->mp_Colors[lca.nBackIdx];
 							}
-							else
+							else if (lbStoreBackLast)
 							{
 								attrBackLast = lca.nBackIdx; // запомним обычный цвет предыдущей ячейки
 							}
@@ -4143,7 +4219,7 @@ DWORD CRealBuffer::GetConsoleOutputCP()
 	return con.m_dwConsoleOutputCP;
 }
 
-CRealBuffer::ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, CRealBuffer::ExpandTextRangeType etr, wchar_t* pszText /*= NULL*/, size_t cchTextMax /*= 0*/)
+ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText /*= NULL*/, size_t cchTextMax /*= 0*/)
 {
 	ExpandTextRangeType result = etr_None;
 
@@ -4532,7 +4608,18 @@ wrap:
 	{
 		crFrom = crTo = MakeCoord(0,0);
 	}
+	StoreLastTextRange(result);
 	return result;
+}
+
+void CRealBuffer::StoreLastTextRange(ExpandTextRangeType etr)
+{
+	if (con.etrLast != etr)
+	{
+		if ((mp_RCon->mp_ABuf == this) && mp_RCon->isVisible())
+			gpConEmu->OnSetCursor();
+	}
+	con.etrLast = etr;
 }
 
 BOOL CRealBuffer::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/, BOOL abIncludeEdges /*= FALSE*/)

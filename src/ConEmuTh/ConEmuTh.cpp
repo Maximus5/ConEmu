@@ -83,7 +83,7 @@ DWORD gnMainThreadId = 0, gnMainThreadIdInitial = 0;
 HANDLE ghDisplayThread = NULL; DWORD gnDisplayThreadId = 0;
 //HWND ghLeftView = NULL, ghRightView = NULL;
 //wchar_t* gszRootKey = NULL;
-FarVersion gFarVersion;
+FarVersion gFarVersion = {};
 //HMODULE ghConEmuDll = NULL;
 RegisterPanelView_t gfRegisterPanelView = NULL;
 GetFarHWND2_t gfGetFarHWND2 = NULL;
@@ -190,7 +190,7 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 		//if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
 		if (FromMacro)
 		{
-			if (Item == pvm_Thumbnails || Item == pvm_Tiles)
+			if (Item == pvm_Thumbnails || Item == pvm_Tiles || Item == pvm_Icons)
 				PVM = (PanelViewMode)Item;
 		}
 	}
@@ -206,10 +206,23 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 			case 1:
 				PVM = pvm_Tiles;
 				break;
+			case 2:
+				PVM = pvm_Icons;
+				break;
 			default:
 				// Отмена
 				return;
 		}
+	}
+
+	if (PVM == pvm_Icons)
+	{
+		if ((gFarVersion.dwVerMajor < 3) || (gFarVersion.dwBuild < 2579) || !gFarVersion.Bis)
+		{
+			ShowMessage(CEBisReqForIcons, 1);
+			return;
+		}
+		TODO("CENoPlaceForIcons: Проверить чтобы было место для отображения иконок - 'M' mark в колонке 'N'");
 	}
 
 	BOOL lbRc = FALSE;

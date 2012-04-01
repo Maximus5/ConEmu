@@ -184,6 +184,7 @@ int ShowPluginMenuW995()
 	{
 		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuThumbnails)},
 		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuTiles)},
+		{/*ghConEmuRoot ? 0 :*/ MIF_DISABLE,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuIcons)},
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
 	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE);
@@ -201,6 +202,10 @@ int ShowPluginMenuW995()
 		else if (pi->PVM == pvm_Tiles)
 		{
 			items[1].Flags |= MIF_SELECTED|MIF_CHECKED;
+		}
+		else if (pi->PVM == pvm_Icons)
+		{
+			items[2].Flags |= MIF_SELECTED|MIF_CHECKED;
 		}
 		else
 		{

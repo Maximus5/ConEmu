@@ -15,6 +15,18 @@ struct CePluginPanelItem;
 
 //typedef BOOL (WINAPI* AlphaBlend_t)(HDC hdcDest, int xoriginDest, int yoriginDest, int wDest, int hDest, HDC hdcSrc, int xoriginSrc, int yoriginSrc, int wSrc, int hSrc, BLENDFUNCTION ftn);
 
+typedef UINT ImgLoadType;
+static const ImgLoadType
+	ilt_ShellSmall      = 1, // ShellIcon (16x16)
+	ilt_ShellLarge      = 2, // ShellIcon (Large)
+	ilt_ShellMask       = (ilt_ShellSmall|ilt_ShellLarge),
+	ilt_Thumbnail       = 4, // Thumbnail/preview
+	ilt_TypeMask        = (ilt_ShellMask|ilt_Thumbnail),
+	ilt_ThumbnailLoaded = 8, // Thumbnail был реально загружен, а не только извлечена информация
+	ilt_ThumbnailMask   = (ilt_Thumbnail|ilt_ThumbnailLoaded),
+	ilt_None            = 0
+;
+
 struct IMAGE_CACHE_INFO
 {
 	DWORD nAccessTick;
@@ -32,7 +44,7 @@ struct IMAGE_CACHE_INFO
 	wchar_t *lpwszFileName;
 	BOOL bVirtualItem;
 	DWORD_PTR UserData;
-	UINT PreviewLoaded;  // пытались ли уже загружать превьюшку (|1-ShellIcon, |2-Thumbnail, |4-Thumbnail был реально загружен, а не только извлечена информация)
+	ImgLoadType PreviewLoaded;  // пытались ли уже загружать превьюшку, и что удалось загрузить
 	//BOOL bPreviewExists; // и получилось ли ее загрузить реально, или в кеше только ShellIcon?
 	BOOL bIgnoreFileDescription; // ImpEx показывает в описании размер изображения, получается некрасивое дублирование
 	//int N,X,Y;
@@ -79,7 +91,7 @@ class CImgCache
 		BOOL CheckLoadDibCreated();
 		BOOL CheckDrawDibCreated();
 		//void UpdateCell(struct IMAGE_CACHE_INFO* pInfo, BOOL abLoadPreview);
-		BOOL FindInCache(CePluginPanelItem* pItem, int* pnIndex, BOOL abLoadPreview);
+		BOOL FindInCache(CePluginPanelItem* pItem, int* pnIndex, ImgLoadType aLoadType);
 		void CopyBits(COORD crSrcSize, LPBYTE lpSrc, DWORD nSrcStride, COORD crDstSize, LPBYTE lpDst);
 
 		CImgLoader *mp_ShellLoader;
@@ -109,12 +121,12 @@ class CImgCache
 		void SetCacheLocation(LPCWSTR asCachePath);
 		void Reset();
 		void Init(COLORREF acrBack);
-		BOOL RequestItem(CePluginPanelItem* pItem, BOOL abLoadPreview);
+		BOOL RequestItem(CePluginPanelItem* pItem, ImgLoadType aLoadType);
 		BOOL PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem* pItem, /*BOOL abLoadPreview,*/ LPCWSTR* ppszComments, BOOL* pbIgnoreFileDescription);
 
 	public:
 		BOOL LoadThumbnail(struct IMAGE_CACHE_INFO* pItem);
-		BOOL LoadShellIcon(struct IMAGE_CACHE_INFO* pItem);
+		BOOL LoadShellIcon(struct IMAGE_CACHE_INFO* pItem, BOOL bLargeIcon = TRUE);
 
 	protected:
 		BOOL mb_Quit;
@@ -139,12 +151,15 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 				return S_FALSE;
 			}
 
-			if (lParam == 1)
+			if (lParam == ilt_ShellSmall)
 			{
-				return gpImgCache->LoadShellIcon(pItem) ? S_OK : S_FALSE;
+				return gpImgCache->LoadShellIcon(pItem, FALSE) ? S_OK : S_FALSE;
 			}
-
-			if (lParam == 2)
+			else if (lParam == ilt_ShellLarge)
+			{
+				return gpImgCache->LoadShellIcon(pItem, TRUE) ? S_OK : S_FALSE;
+			}
+			else if (lParam == ilt_Thumbnail)
 			{
 				return gpImgCache->LoadThumbnail(pItem) ? S_OK : S_FALSE;
 			}

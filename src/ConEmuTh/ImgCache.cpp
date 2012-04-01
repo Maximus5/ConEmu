@@ -507,7 +507,7 @@ void CImgCache::Init(COLORREF acrBack)
 	//nXIconSpace = (nPreviewSize - nXIcon) >> 1;
 	//nYIconSpace = (nPreviewSize - nYIcon) >> 1;
 };
-BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, BOOL abLoadPreview)
+BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, ImgLoadType aLoadType)
 {
 	_ASSERTE(pItem && pnIndex);
 	BOOL lbReady = FALSE, lbFound = FALSE;
@@ -596,14 +596,14 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, BOOL abLoadP
 
 	if (lbReady)
 	{
-		if (abLoadPreview)
+		if (aLoadType & ilt_Thumbnail)
 		{
-			if (!(CacheInfo[i].PreviewLoaded & 2))
+			if (!(CacheInfo[i].PreviewLoaded & ilt_Thumbnail))
 				lbReady = FALSE;
 		}
 		else
 		{
-			if (!CacheInfo[i].PreviewLoaded)
+			if (CacheInfo[i].PreviewLoaded == ilt_None)
 				lbReady = FALSE;
 		}
 	}
@@ -613,7 +613,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, BOOL abLoadP
 		if (!lbFound)
 		{
 			TODO("Если потребуется обновление превьюшки/иконки - нужно таки сбрасывать соответствующие биты");
-			CacheInfo[i].PreviewLoaded = 0;
+			CacheInfo[i].PreviewLoaded = ilt_None;
 		}
 
 		//CacheInfo[i].bPreviewExists = FALSE;
@@ -627,7 +627,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, BOOL abLoadP
 
 	return lbReady;
 };
-BOOL CImgCache::RequestItem(CePluginPanelItem* pItem, BOOL abLoadPreview)
+BOOL CImgCache::RequestItem(CePluginPanelItem* pItem, ImgLoadType aLoadType)
 {
 	int nIndex = -1;
 	//if (!CheckDibCreated())
@@ -639,23 +639,26 @@ BOOL CImgCache::RequestItem(CePluginPanelItem* pItem, BOOL abLoadPreview)
 	// Если отсутствует - добавляет
 	// Если в прошлый раз загрузили только ShellIcon и сейчас просят Preview - вернет FALSE
 	// Возвращает TRUE только если картинка уже готова
-	BOOL lbReady = FindInCache(pItem, &nIndex, abLoadPreview);
+	BOOL lbReady = FindInCache(pItem, &nIndex, aLoadType);
 	_ASSERTE(nIndex>=0 && nIndex<countof(CacheInfo));
 
 	// Если нужно загрузить иконку или превьюшку (или обновить их)
 	if (!lbReady && (nIndex  >= 0))
 	{
-		//UpdateCell(CacheInfo+nIndex, abLoadPreview);
+		//UpdateCell(CacheInfo+nIndex, aLoadType);
 		if (!mp_ShellLoader)
 			mp_ShellLoader = new CImgLoader;
 
 #ifdef _DEBUG
 		wchar_t szDbg[MAX_PATH+32];
-		lstrcpy(szDbg, abLoadPreview ? L"ReqThumb: " : L"ReqShell: ");
+		lstrcpy(szDbg, (aLoadType&ilt_Thumbnail) ? L"ReqThumb: " : L"ReqShell: ");
 		lstrcpyn(szDbg+10, pItem->FindData.lpwszFileName, MAX_PATH);
 		DEBUGSTRPAINT(szDbg);
 #endif
-		mp_ShellLoader->RequestItem(false, abLoadPreview ? ePriorityNormal : ePriorityAboveNormal, CacheInfo+nIndex, abLoadPreview ? 2 : 1);
+		mp_ShellLoader->RequestItem(false,
+			(aLoadType&ilt_Thumbnail) ? ePriorityNormal : ePriorityAboveNormal,
+			CacheInfo+nIndex,
+			(aLoadType & ilt_TypeMask));
 	}
 
 	return lbReady;
@@ -688,11 +691,11 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 	//{
 	//	UpdateCell(CacheInfo+nIndex, abLoadPreview);
 	//}
-	UINT PreviewLoaded = CacheInfo[nIndex].PreviewLoaded;
+	ImgLoadType PreviewLoaded = CacheInfo[nIndex].PreviewLoaded;
 	pItem->PreviewLoaded = PreviewLoaded;
 	IMAGE_CACHE_INFO::ImageBits *pImg = NULL;
 
-	if ((PreviewLoaded & 6) == 6)
+	if ((PreviewLoaded & ilt_ThumbnailMask) == ilt_ThumbnailMask)
 	{
 		pImg = &(CacheInfo[nIndex].Preview);
 
@@ -703,7 +706,7 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 		}
 	}
 
-	if (!pImg && (PreviewLoaded & 1))
+	if (!pImg && (PreviewLoaded & ilt_ShellMask))
 	{
 		pImg = &(CacheInfo[nIndex].Icon);
 	}
@@ -789,8 +792,8 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 		}
 	}
 	// Если загруженная превьюшка МЕНЬШЕ поля отрисовки И юзер включил увеличение превьюшки
-	// и только если это действительно превьшка (6), а не ShellIcon+информация о файле
-	else if (((CacheInfo[nIndex].PreviewLoaded & 6) == 6) && gThSet.nMaxZoom>100
+	// и только если это действительно превьшка (ilt_ThumbnailMask), а не ShellIcon+информация о файле
+	else if (((CacheInfo[nIndex].PreviewLoaded & ilt_ThumbnailMask) == ilt_ThumbnailMask) && gThSet.nMaxZoom>100
 	        && (nImgSize >= 2*pImg->crSize.X && nImgSize >= 2*pImg->crSize.Y))
 	{
 		// Очистить
@@ -899,7 +902,7 @@ void CImgCache::CopyBits(COORD crSrcSize, LPBYTE lpSrc, DWORD nSrcStride, COORD 
 //		LoadShellIcon(pInfo);
 //	}
 //}
-BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem)
+BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem, BOOL bLargeIcon /*= TRUE*/)
 {
 	HICON hIcon = NULL;
 	HBITMAP hBmp = NULL;
@@ -949,7 +952,7 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem)
 	else
 	{
 		LPCWSTR pszFileName = pItem->lpwszFileName;
-		DWORD uFlags = SHGFI_ICON|SHGFI_SHELLICONSIZE|SHGFI_LARGEICON|SHGFI_USEFILEATTRIBUTES;
+		DWORD uFlags = SHGFI_ICON|(bLargeIcon?(SHGFI_LARGEICON|SHGFI_SHELLICONSIZE):SHGFI_SMALLICON)|SHGFI_USEFILEATTRIBUTES;
 
 		if (pszFileName && pItem->bVirtualItem)
 		{
@@ -1048,7 +1051,7 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem)
 	COORD crSize = {nPreviewSize,pItem->Icon.crSize.Y};
 	CopyBits(crSize, mp_LoadDibBytes, nPreviewSize*4, pItem->Icon.crSize, (LPBYTE)pItem->Icon.Pixels);
 	// ShellIcon загрузили
-	pItem->PreviewLoaded |= 1;
+	pItem->PreviewLoaded |= (bLargeIcon ? ilt_ShellLarge : ilt_ShellSmall);
 	TODO("Хорошо бы инвалидатить только соответствующий прямоугольник?");
 	CeFullPanelInfo::InvalidateAll();
 	DEBUGSTRLOAD2(L"result=OK\n");
@@ -1259,7 +1262,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 				pItem->Preview.nBits = PV.nBits; // 32 bit required!
 				pItem->Preview.ColorModel = PV.ColorModel; // One of CET_CM_xxx
 				// Запомнить, что превьюшка действительно есть
-				pItem->PreviewLoaded |= 4; //-V112
+				pItem->PreviewLoaded |= ilt_ThumbnailLoaded; //-V112
 			}
 
 			//pItem->bPreviewExists = (PV.Pixels!=NULL);
@@ -1305,9 +1308,9 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 	}
 
 	// Поставим флаг того, что превьюшку загружать ПЫТАЛИСЬ
-	pItem->PreviewLoaded |= 2;
+	pItem->PreviewLoaded |= ilt_Thumbnail;
 #ifdef _DEBUG
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"result=%s, preview=%s\n", lbThumbRc ? L"OK" : L"FAILED", (pItem->PreviewLoaded & 4) ? L"Loaded" : L"NOT loaded"); //-V112
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"result=%s, preview=%s\n", lbThumbRc ? L"OK" : L"FAILED", (pItem->PreviewLoaded & ilt_ThumbnailLoaded) ? L"Loaded" : L"NOT loaded"); //-V112
 	DEBUGSTRLOAD2(szDbg);
 #endif
 

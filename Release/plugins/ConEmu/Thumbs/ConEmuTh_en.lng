@@ -6,6 +6,8 @@
 "Thumbnails mode"
 // Panel modes
 "Tiles mode"
+// Panel modes
+"Icons mode"
 // Column titles
 "Thumbnails"
 "Tiles"
@@ -18,6 +20,8 @@
 "ConEmu PanelViews\nOld version of ConEmu plugin,\nThumbnails will not be available."
 "ConEmu PanelViews\nThumbnails are not available in plain Far.\nFar Manager was not started under ConEmu?"
 "ConEmu PanelViews\nPlugin requires checked\noption in panel settings:\n[x] Show column titles"
+"ConEmu PanelViews\nPlugin requires space for checkmark\nin panel settings (flag 'M' in 'N' columns)\OK"
+"ConEmu PanelViews\nIcons mode required\nFar 3 bis build 2579 or higher\OK"
 "ConEmu PanelViews\nCreateThread(DisplayThread) failed\nErrCode=0x%08X"
 "ConEmu PanelViews\nThread activation timeout (DisplayThread)"
 "ConEmu PanelViews\nPostThreadmessage(DisplayThread) failed\nErrCode=0x%08X"

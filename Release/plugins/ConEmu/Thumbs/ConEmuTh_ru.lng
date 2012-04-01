@@ -6,6 +6,8 @@
 "Режим эскизов"
 // Panel modes
 "Режим плитки"
+// Panel modes
+"Режим иконок"
 // Column titles
 "Эскизы"
 "Плитка"
@@ -18,6 +20,8 @@
 "ConEmu PanelViews\nОбнаружена старая версия плагина ConEmu,\nThumbnails недоступны."
 "ConEmu PanelViews\nThumbnails недоступны в 'чистом' Far.\nFar Manager был запущен без ConEmu?"
 "ConEmu PanelViews\nДля работы корректной работы плагина\nнеобходимо включить флажок в настройке панели:\n[x] Показывать заголовки колонок"
+"ConEmu PanelViews\nДля отображения иконок необходимо\nразрешить символы пометок в режимах панелей\n(добавить флаг 'M' к колонке 'N')\OK"
+"ConEmu PanelViews\nДля отображения иконок необходимоустановить\nсборку Far 3 bis build 2579 или выше\OK"
 "ConEmu PanelViews\nОшибка создания потока DisplayThread\nErrCode=0x%08X"
 "ConEmu PanelViews\nИстекло время ожидания активации DisplayThread"
 "ConEmu PanelViews\nОшибка посылки сообщения в DisplayThread\nErrCode=0x%08X"

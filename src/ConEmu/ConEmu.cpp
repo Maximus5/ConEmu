@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <lm.h>
 //#include "../common/ConEmuCheck.h"
 #include "VirtualConsole.h"
+#include "RealBuffer.h"
 #include "options.h"
 #include "DragDrop.h"
 #include "TrayIcon.h"
@@ -5730,6 +5731,16 @@ void CConEmuMain::ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags)
 	mp_Tip->HideTip();
 }
 
+void CConEmuMain::ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags)
+{
+	if (nID && (nID != MF_SEPARATOR) && !(nFlags & MF_POPUP))
+	{
+		CVirtualConsole* pVCon = ActiveCon();
+		if (pVCon && pVCon->RCon())
+			pVCon->RCon()->ShowKeyBarHint(nID);
+	}
+}
+
 void CConEmuMain::ShowSysmenu(int x, int y)
 {
 	//if (!Wnd)
@@ -7294,6 +7305,7 @@ bool CConEmuMain::isConSelectMode()
 	return false;
 }
 
+// Возвращает true если начат ShellDrag
 bool CConEmuMain::isDragging()
 {
 	if ((mouse.state & (DRAG_L_STARTED | DRAG_R_STARTED)) == 0)
@@ -7364,11 +7376,158 @@ bool CConEmuMain::isEditor()
 	return mp_VActive->RCon()->isEditor();
 }
 
-bool CConEmuMain::isFar()
+bool CConEmuMain::isFar(bool abPluginRequired/*=false*/)
 {
 	if (!mp_VActive) return false;
 
-	return mp_VActive->RCon()->isFar();
+	return mp_VActive->RCon()->isFar(abPluginRequired);
+}
+
+// Если ли фар где-то?
+bool CConEmuMain::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asName/*=NULL*/, CVConGuard* rpVCon/*=NULL*/)
+{
+	bool bFound = false, bLocked = false;
+	CVConGuard VCon;
+
+	if (rpVCon)
+		*rpVCon = NULL;
+
+	for (INT_PTR i = -1; i < (INT_PTR)countof(mp_VCon); i++)
+	{
+		if (i == -1)
+			VCon = mp_VActive;
+		else
+			VCon = mp_VCon[i];
+
+		if (VCon.VCon())
+		{
+			// Это фар?
+			CRealConsole* pRCon = VCon->RCon();
+			if (pRCon && pRCon->isFar(anWindowType & fwt_PluginRequired))
+			{
+				// Ищем что-то конкретное?
+				if (!(anWindowType & (fwt_TypeMask|fwt_Elevated|fwt_NonElevated|fwt_Modal|fwt_NonModal|fwt_ActivateFound)) && !(asName && *asName))
+				{
+					bFound = true;
+					break;
+				}
+
+				if (!(anWindowType & (fwt_TypeMask|fwt_ActivateFound)) && !(asName && *asName))
+				{
+					CEFarWindowType t = pRCon->GetActiveTabType();
+
+					// Этот Far Elevated?
+					if ((anWindowType & fwt_Elevated) && !(t & fwt_Elevated))
+						continue;
+					// В табе устанавливается флаг fwt_Elevated
+					// fwt_NonElevated используется только как аргумент поиска
+					if ((anWindowType & fwt_NonElevated) && (t & fwt_Elevated))
+						continue;
+
+					// Модальное окно?
+					WARNING("Нужно еще учитывать <модальность> заблокированным диалогом, или меню, или еще чем-либо!");
+					if ((anWindowType & fwt_Modal) && !(t & fwt_Modal))
+						continue;
+					// В табе устанавливается флаг fwt_Modal
+					// fwt_NonModal используется только как аргумент поиска
+					if ((anWindowType & fwt_NonModal) && (t & fwt_Modal))
+						continue;
+
+					bFound = true;
+					break;
+				}
+				else
+				{
+					// Нужны доп.проверки окон фара
+					ConEmuTab tab;
+					LPCWSTR pszNameOnly = asName ? PointToName(asName) : NULL;
+					if (pszNameOnly)
+					{
+						// Обработаем как обратные (в PointToName), так и прямые слеши
+						// Это может быть актуально при переходе на ошибку/гиперссылку
+						LPCWSTR pszSlash = wcsrchr(pszNameOnly, L'/');
+						if (pszSlash)
+							pszNameOnly = pszSlash+1;
+					}
+
+					for (int j = 0; !bFound; j++)
+					{
+						if (!pRCon->GetTab(j, &tab))
+							break;
+
+						if ((tab.Type & fwt_TypeMask) != (anWindowType & fwt_TypeMask))
+							continue;
+
+						// Этот Far Elevated?
+						if ((anWindowType & fwt_Elevated) && !(tab.Type & fwt_Elevated))
+							continue;
+						// В табе устанавливается флаг fwt_Elevated
+						// fwt_NonElevated используется только как аргумент поиска
+						if ((anWindowType & fwt_NonElevated) && (tab.Type & fwt_Elevated))
+							continue;
+
+						// Модальное окно?
+						WARNING("Нужно еще учитывать <модальность> заблокированным диалогом, или меню, или еще чем-либо!");
+						if ((anWindowType & fwt_Modal) && !(tab.Type & fwt_Modal))
+							continue;
+						// В табе устанавливается флаг fwt_Modal
+						// fwt_NonModal используется только как аргумент поиска
+						if ((anWindowType & fwt_NonModal) && (tab.Type & fwt_Modal))
+							continue;
+
+						// Если ищем конкретный редактор/вьювер
+						if (asName && *asName)
+						{
+							if (lstrcmpi(tab.Name, asName) == 0)
+							{
+								bFound = true;
+							}
+							else if ((pszNameOnly != asName) && (lstrcmpi(PointToName(tab.Name), pszNameOnly) == 0))
+							{
+								bFound = true;
+							}
+						}
+						else
+						{
+							bFound = true;
+						}
+
+
+						if (bFound)
+						{
+							if (anWindowType & fwt_ActivateFound)
+							{
+								if (pRCon->ActivateFarWindow(j))
+								{
+									gpConEmu->Activate(VCon.VCon());
+									bLocked = false;
+								}
+								else
+								{
+									bLocked = true;
+								}
+							}
+
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Нашли?
+	if (bFound)
+	{
+		if (rpVCon)
+		{
+			*rpVCon = VCon.VCon();
+			if (bLocked)
+				bFound = false;
+		}
+	}
+
+	return bFound;
 }
 
 bool CConEmuMain::isLBDown()
@@ -11915,11 +12074,18 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	POINT ptCur; GetCursorPos(&ptCur);
 	CVirtualConsole* pVCon = GetVConFromPoint(ptCur);
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
+	if (!pRCon)
+	{
+		// Если курсор НЕ над консолью - то курсор по умолчанию
+		DEBUGSTRSETCURSOR(L" ---> skipped, not over VCon\n");
+		return FALSE;
+	}
 
 	// В GUI режиме - не ломать курсор, заданный дочерним приложением
 	HWND hGuiClient = pRCon->GuiWnd();
-	if (pRCon && hGuiClient && !pRCon->isBufferHeight())
+	if (pRCon && hGuiClient && pRCon->isGuiVisible())
 	{
+		DEBUGSTRSETCURSOR(L" ---> skipped (TRUE), GUI App Visible\n");
 		return TRUE;
 	}
 
@@ -11966,13 +12132,19 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	HCURSOR hCur = NULL;
 	//LPCWSTR pszCurName = NULL;
 	BOOL lbMeFore = TRUE;
+	ExpandTextRangeType etr = etr_None;
 
 	if (LOWORD(lParam) == HTCLIENT && pVCon)
 	{
+		// Если начат ShellDrag
 		if (mh_DragCursor && isDragging())
 		{
 			hCur = mh_DragCursor;
 			DEBUGSTRSETCURSOR(L" ---> DragCursor\n");
+		}
+		else if ((etr = pRCon->GetLastTextRangeType()) != etr_None)
+		{
+			hCur = LoadCursor(NULL, IDC_HAND);
 		}
 		else if (mouse.state & MOUSE_DRAGPANEL_ALL)
 		{
@@ -13438,6 +13610,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			case tmp_System:
 			case tmp_VCon:
 				gpConEmu->ShowMenuHint((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
+				return 0;
+			case tmp_KeyBar:
+				gpConEmu->ShowKeyBarHint((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
 				return 0;
 			case tmp_None:
 				break;

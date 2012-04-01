@@ -72,7 +72,7 @@ extern "C" {
 
 HMODULE ghPluginModule = NULL; // ConEmuBg.dll - сам плагин
 //wchar_t* gszRootKey = NULL;
-FarVersion gFarVersion = {{0}};
+FarVersion gFarVersion = {};
 static RegisterBackground_t gfRegisterBackground = NULL;
 bool gbInStartPlugin = false;
 bool gbSetStartupInfoOk = false;

@@ -125,6 +125,13 @@ struct CeFullPanelInfo
 	                    DWORD_PTR        apUserData,
 	                    unsigned __int64 anFlags,
 	                    DWORD            anNumberOfLinks);
+	BOOL BisItem2CeItem(INT_PTR anIndex,
+	                    BOOL abLoaded,
+	                    unsigned __int64 anFlags = 0,
+	                    COLORREF acrForegroundColor = 0,
+	                    COLORREF acrBackgroundColor = 0,
+	                    int anPosX = 0, int anPosY = 0); // 1-based, relative to Far workspace
+						
 
 	/*{
 	if (ppItems) {

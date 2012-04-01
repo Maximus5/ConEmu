@@ -56,6 +56,7 @@ class CAttachDlg;
 class CRecreateDlg;
 class CToolTip;
 class CGestures;
+class CVConGuard;
 
 WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
 enum ConEmuMargins
@@ -104,6 +105,7 @@ enum TrackMenuPlace
 	tmp_System,
 	tmp_VCon,
 	tmp_Cmd,
+	tmp_KeyBar,
 };
 
 struct MsgSrvStartedArg
@@ -433,7 +435,8 @@ class CConEmuMain :
 		bool isConSelectMode();
 		bool isDragging();
 		bool isEditor();
-		bool isFar();
+		bool isFar(bool abPluginRequired=false);
+		bool isFarExist(CEFarWindowType anWindowType=fwt_Any, LPWSTR asName=NULL, CVConGuard* rpVCon=NULL);
 		bool isFilePanel(bool abPluginAllowed=false);
 		bool isFirstInstance();
 		bool isFullScreen();
@@ -487,6 +490,7 @@ class CConEmuMain :
 		void SetWaitCursor(BOOL abWait);
 		bool SetWindowMode(uint inMode, BOOL abForce = FALSE);
 		void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
+		void ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags);
 		void ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
 		virtual void ShowSysmenu(int x=-32000, int y=-32000);
 		bool SetParent(HWND hNewParent);

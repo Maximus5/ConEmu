@@ -383,64 +383,73 @@ LPWSTR CConEmuMacro::FindFarWindow(LPWSTR asArgs, CRealConsole* apRCon)
 	return FindFarWindowHelper(nWindowType, pszName, apRCon);
 }
 LPWSTR CConEmuMacro::FindFarWindowHelper(
-    int anWindowType/*Panels=1, Viewer=2, Editor=3, |(Elevated=0x100), |(NotElevated=0x200), |(Modal=0x400)*/,
+    CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3, |(Elevated=0x100), |(NotElevated=0x200), |(Modal=0x400)*/,
     LPWSTR asName, CRealConsole* apRCon)
 {
-	CRealConsole* pRCon, *pActiveRCon = NULL;
-	CVirtualConsole* pVCon;
-	ConEmuTab tab;
+	CVConGuard VCon;
 	int iFound = 0;
-	DWORD nElevateFlag = (anWindowType & 0x300);
-	pVCon = gpConEmu->ActiveCon();
+	bool bFound = gpConEmu->isFarExist(anWindowType|fwt_ActivateFound, asName, &VCon);
 
-	if (pVCon)
-		pActiveRCon = pVCon->RCon();
+	if (!bFound && VCon.VCon())
+		iFound = -1; // редактор есть, но заблокирован модальным диалогом/другим редактором
+	else if (bFound)
+		iFound = gpConEmu->IsVConValid(VCon.VCon()); //1-based
 
-	for(int i = 0; !iFound && (i < MAX_CONSOLE_COUNT); i++)
-	{
-		if (!(pVCon = gpConEmu->GetVCon(i)))
-			break;
+	//CRealConsole* pRCon, *pActiveRCon = NULL;
+	//CVirtualConsole* pVCon;
+	//ConEmuTab tab;
+	//int iFound = 0;
+	//DWORD nElevateFlag = (anWindowType & 0x300);
+	//pVCon = gpConEmu->ActiveCon();
 
-		if (!(pRCon = pVCon->RCon()) || pRCon == pActiveRCon)
-			continue;
+	//if (pVCon)
+	//	pActiveRCon = pVCon->RCon();
 
-		for(int j = 0; !iFound; j++)
-		{
-			if (!pRCon->GetTab(j, &tab))
-				break;
+	//for (int i = 0; !iFound && (i < MAX_CONSOLE_COUNT); i++)
+	//{
+	//	if (!(pVCon = gpConEmu->GetVCon(i)))
+	//		break;
 
-			// Если передали 0 - интересует любое окно
-			if (anWindowType)
-			{
-				if ((tab.Type & 0xFF) != (anWindowType & 0xFF))
-					continue;
+	//	if (!(pRCon = pVCon->RCon()) || pRCon == pActiveRCon)
+	//		continue;
 
-				if (nElevateFlag)
-				{
-					if ((nElevateFlag == 0x100) && !(tab.Type & 0x100))
-						continue;
+	//	for (int j = 0; !iFound; j++)
+	//	{
+	//		if (!pRCon->GetTab(j, &tab))
+	//			break;
 
-					if ((nElevateFlag == 0x200) && (tab.Type & 0x100))
-						continue;
-				}
-			}
+	//		// Если передали 0 - интересует любое окно
+	//		if (anWindowType)
+	//		{
+	//			if ((tab.Type & 0xFF) != (anWindowType & 0xFF))
+	//				continue;
 
-			if (lstrcmpi(tab.Name, asName) == 0)
-			{
-				if (pRCon->ActivateFarWindow(j))
-				{
-					iFound = i+1;
-					gpConEmu->Activate(pVCon);
-				}
-				else
-				{
-					iFound = -1;
-				}
+	//			if (nElevateFlag)
+	//			{
+	//				if ((nElevateFlag == 0x100) && !(tab.Type & 0x100))
+	//					continue;
 
-				break;
-			}
-		}
-	}
+	//				if ((nElevateFlag == 0x200) && (tab.Type & 0x100))
+	//					continue;
+	//			}
+	//		}
+
+	//		if (lstrcmpi(tab.Name, asName) == 0)
+	//		{
+	//			if (pRCon->ActivateFarWindow(j))
+	//			{
+	//				iFound = i+1;
+	//				gpConEmu->Activate(pVCon);
+	//			}
+	//			else
+	//			{
+	//				iFound = -1;
+	//			}
+
+	//			break;
+	//		}
+	//	}
+	//}
 
 	int cchSize = 32; //-V112
 	LPWSTR pszResult = (LPWSTR)malloc(2*cchSize);

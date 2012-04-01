@@ -123,6 +123,7 @@ void SetStartupInfoW1900(void *aInfo)
 			_ASSERTE(FarVer.Major<=0xFFFF && FarVer.Minor<=0xFFFF)
 			gFarVersion.dwVerMajor = (WORD)FarVer.Major;
 			gFarVersion.dwVerMinor = (WORD)FarVer.Minor;
+			gFarVersion.Bis = (FarVer.Stage==VS_BIS);
 		}
 		else
 		{
@@ -273,6 +274,7 @@ int ShowPluginMenuW1900()
 	{
 		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW1900->GetMsg(&guid_ConEmuTh,CEMenuThumbnails)},
 		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW1900->GetMsg(&guid_ConEmuTh,CEMenuTiles)},
+		{(ghConEmuRoot && (gFarVersion.Bis)) ? 0 : MIF_DISABLE,  InfoW1900->GetMsg(&guid_ConEmuTh,CEMenuIcons)},
 	};
 	size_t nCount = countof(items);
 	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE);
@@ -290,6 +292,10 @@ int ShowPluginMenuW1900()
 		else if (pi->PVM == pvm_Tiles)
 		{
 			items[1].Flags |= MIF_SELECTED|MIF_CHECKED;
+		}
+		else if (pi->PVM == pvm_Icons)
+		{
+			items[2].Flags |= MIF_SELECTED|MIF_CHECKED;
 		}
 		else
 		{
@@ -389,6 +395,17 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, INT_PTR nItem)
 	                   ppi->Flags,
 	                   ppi->NumberOfLinks);
 	// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
+
+	if (gFarVersion.Bis)
+	{
+		FarGetPluginPanelItemInfo gppi = {sizeof(gppi)};
+		nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELITEMINFO, (int)nItem, &gppi);
+		if (nSize)
+		{
+			pi->BisItem2CeItem(nItem, TRUE, gppi.Color.Flags, gppi.Color.ForegroundColor, gppi.Color.BackgroundColor, gppi.PosX, gppi.PosY);
+		}
+	}
+
 	//// Необходимый размер буфера для хранения элемента
 	//nSize = sizeof(CePluginPanelItem)
 	//	+(lstrlen(ppi->FileName)+1)*2

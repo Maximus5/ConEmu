@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2573
+  Plugin API for Far Manager 3.0 build 2578
 */
 
 /*
@@ -43,8 +43,8 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2573
-#define FARMANAGERVERSION_STAGE VS_RELEASE
+#define FARMANAGERVERSION_BUILD 2578
+#define FARMANAGERVERSION_STAGE VS_BIS
 
 #ifndef RC_INVOKED
 
@@ -694,6 +694,14 @@ struct FarGetPluginPanelItem
 	struct PluginPanelItem* Item;
 };
 
+struct FarGetPluginPanelItemInfo
+{
+	size_t StructSize;
+	struct FarColor Color; // Current element color
+    int    PosX; // 0-based, relative to Far workspace, -1 means 'not visible now'
+    int    PosY; // 0-based, relative to Far workspace, -1 means 'not visible now'
+};
+
 typedef unsigned __int64 PANELINFOFLAGS;
 static const PANELINFOFLAGS
 	PFLAGS_SHOWHIDDEN         = 0x0000000000000001ULL,
@@ -822,6 +830,11 @@ enum FILE_CONTROL_COMMANDS
 	FCTL_GETPANELHOSTFILE           = 32,
 	FCTL_SETCASESENSITIVESORT       = 33,
 	FCTL_GETPANELPREFIX             = 34,
+
+	#if 1
+	//Maximus5
+	FCTL_GETPANELITEMINFO           = 1001,
+	#endif
 };
 
 typedef void (WINAPI *FARAPITEXT)(
@@ -2148,6 +2161,7 @@ enum VERSION_STAGE
 	VS_ALPHA                        = 1,
 	VS_BETA                         = 2,
 	VS_RC                           = 3,
+	VS_BIS                          = 8,
 };
 
 struct VersionInfo
@@ -2170,7 +2184,7 @@ static __inline struct VersionInfo MAKEFARVERSION(DWORD Major, DWORD Minor, DWOR
 	return Info;
 }
 
-#define FARMANAGERVERSION MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR, FARMANAGERVERSION_REVISION, FARMANAGERVERSION_BUILD, FARMANAGERVERSION_STAGE)
+#define FARMANAGERVERSION MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR, FARMANAGERVERSION_REVISION, FARMANAGERVERSION_BUILD, VS_RELEASE)
 
 struct GlobalInfo
 {

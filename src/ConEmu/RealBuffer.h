@@ -46,6 +46,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define CONSOLE_MOUSE_SELECTION         0x0004   // selecting with mouse
 #endif
 
+enum ExpandTextRangeType
+{
+	etr_None = 0,
+	etr_Word = 1,
+	etr_FileAndLine = 2,
+	etr_Url = 3,
+};
+
 class CRealBuffer
 {
 public:
@@ -103,8 +111,11 @@ public:
 	
 	COORD ScreenToBuffer(COORD crMouse);
 	bool ProcessFarHyperlink(UINT messg, COORD crFrom);
-	bool ProcessFarHyperlink();
+	bool ProcessFarHyperlink(UINT messg=WM_USER);
+	ExpandTextRangeType GetLastTextRangeType();
 	
+	void ShowKeyBarHint(WORD nID);
+
 	bool OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse);
 	
 	BOOL GetRBtnDrag(COORD* pcrMouse);
@@ -169,14 +180,8 @@ private:
 	
 	bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 
-	enum ExpandTextRangeType
-	{
-		etr_None = 0,
-		etr_Word = 1,
-		etr_FileAndLine = 2,
-		etr_Url = 3,
-	};
 	ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
+	void StoreLastTextRange(ExpandTextRangeType etr);
 
 	short CheckProgressInConsole(const wchar_t* pszCurLine);
 
@@ -222,6 +227,8 @@ protected:
 		COORD crRClick4KeyBar;
 		POINT ptRClick4KeyBar;
 		int nRClickVK; // VK_F1..F12
+		// Последний etr...
+		ExpandTextRangeType etrLast;
 	} con;
 	
 protected:

@@ -854,6 +854,15 @@ BOOL CRealConsole::AttachPID(DWORD dwPID)
 //	return (mn_FlushOut == mn_FlushIn);
 //}
 
+void CRealConsole::ShowKeyBarHint(WORD nID)
+{
+	if (!this)
+		return;
+
+	if (mp_RBuf)
+		mp_RBuf->ShowKeyBarHint(nID);
+}
+
 void CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode /*= -1*/)
 {
 	if (!this)
@@ -3808,7 +3817,7 @@ bool CRealConsole::isServerCreated()
 	return (mn_ConEmuC_PID!=0);
 }
 
-DWORD CRealConsole::GetFarPID(BOOL abPluginRequired/*=FALSE*/)
+DWORD CRealConsole::GetFarPID(bool abPluginRequired/*=false*/)
 {
 	if (!this)
 		return 0;
@@ -4949,14 +4958,23 @@ BOOL CRealConsole::IsConsoleDataChanged()
 	return mb_ABufChaged || mp_ABuf->isConsoleDataChanged();
 }
 
-bool CRealConsole::IsFarHyperlinkAllowed()
+bool CRealConsole::IsFarHyperlinkAllowed(bool abFarRequired)
 {
-	if (!isFar(TRUE))
-		return false;
 	if (!gpSet->isFarGotoEditor)
 		return false;
 	if (gpSet->isFarGotoEditorVk && !isPressed(gpSet->isFarGotoEditorVk))
 		return false;
+
+	// ƒл€ открыти€ гиперссылки (http, email) фар не требуетс€
+	if (abFarRequired)
+	{
+		// ј вот чтобы открыть в редакторе файл - нужен фар и плагин
+		if (!gpConEmu->isFarExist(fwt_NonModal|fwt_PluginRequired))
+		{
+			return false;
+		}
+	}
+
 	// ћышка должна быть в пределах окна, иначе фигн€ получаетс€
 	POINT ptCur = {-1,-1};
 	GetCursorPos(&ptCur);
@@ -5684,7 +5702,7 @@ int CRealConsole::GetActiveTab()
 }
 
 // (Panels=1, Viewer=2, Editor=3) |(Elevated=0x100) |(NotElevated=0x200) |(Modal=0x400)
-int CRealConsole::GetActiveTabType()
+CEFarWindowType CRealConsole::GetActiveTabType()
 {
 	int nType = 0;
 	if (!mp_tabs)
@@ -7695,7 +7713,7 @@ BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/
 	return mp_RBuf->GetPanelRect(abRight, prc, abFull, abIncludeEdges);
 }
 
-bool CRealConsole::isFar(BOOL abPluginRequired/*=FALSE*/)
+bool CRealConsole::isFar(bool abPluginRequired/*=false*/)
 {
 	if (!this) return false;
 
@@ -8327,6 +8345,8 @@ DWORD CRealConsole::PostMacroThread(LPVOID lpParameter)
 
 void CRealConsole::PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData)
 {
+	if (!this)
+		return;
 	if (mh_PostMacroThread != NULL)
 	{
 		DWORD nWait = WaitForSingleObject(mh_PostMacroThread, 0);
@@ -8687,4 +8707,9 @@ DWORD CRealConsole::GetConsoleMode()
 {
 	/*return con.m_dwConsoleMode;*/
 	return mp_RBuf->GetConMode();
+}
+
+ExpandTextRangeType CRealConsole::GetLastTextRangeType()
+{
+	return mp_ABuf->GetLastTextRangeType();
 }

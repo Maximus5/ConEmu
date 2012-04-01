@@ -453,6 +453,7 @@ void SetStartupInfoW1900(void *aInfo)
 			_ASSERTE(FarVer.Major<=0xFFFF && FarVer.Minor<=0xFFFF)
 			gFarVersion.dwVerMajor = (WORD)FarVer.Major;
 			gFarVersion.dwVerMinor = (WORD)FarVer.Minor;
+			gFarVersion.Bis = (FarVer.Stage==VS_BIS);
 			InitRootKey();
 		}
 		else

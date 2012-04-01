@@ -50,6 +50,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "resource.h"
 #include "ImgCache.h"
 
+#pragma warning( disable : 4995 )
+#include "../common/pluginW1900.hpp"
+#pragma warning( default : 4995 )
+
 #ifdef CONEMU_LOG_FILES
 	#define DEBUGSTRPAINT(s) if (gpLogPaint) {gpLogPaint->LogString(s);} // DEBUGSTR(s)
 #else
@@ -985,14 +989,30 @@ BOOL CeFullPanelInfo::GetIndexFromWndCoord(int x, int y, INT_PTR &rnIndex)
 BOOL CeFullPanelInfo::GetConCoordFromIndex(INT_PTR nIndex, COORD& rCoord)
 {
 	BOOL lbRc = FALSE;
-	INT_PTR nCol0Index = nIndex - TopPanelItem;
 
-	if (nCol0Index >= 0 && nCol0Index <= (WorkRect.bottom - WorkRect.top))
+	if (ppItems && (nIndex >= 0) && (nIndex < ItemsNumber))
 	{
-		rCoord.X = (SHORT)WorkRect.left; rCoord.Y = (SHORT)(WorkRect.top+nCol0Index); lbRc = TRUE;
+		if (ppItems[nIndex]->BisInfo.Loaded && (ppItems[nIndex]->BisInfo.PosX > 0) && (ppItems[nIndex]->BisInfo.PosY > 0))
+		{
+			WARNING("Что должно быть при 'Far /w' ?");
+			_ASSERTE(WorkRect.top<10);
+			TODO("Проверить координаты");
+			rCoord.X = ppItems[nIndex]->BisInfo.PosX-1; rCoord.Y = ppItems[nIndex]->BisInfo.PosY-1;
+			lbRc = TRUE;
+		}
 	}
 
-	TODO("В панелях может быть более одной колонки N - можно их также обработать!");
+	if (!lbRc)
+	{
+		INT_PTR nCol0Index = nIndex - TopPanelItem;
+
+		if (nCol0Index >= 0 && nCol0Index <= (WorkRect.bottom - WorkRect.top))
+		{
+			rCoord.X = (SHORT)WorkRect.left; rCoord.Y = (SHORT)(WorkRect.top+nCol0Index);
+			lbRc = TRUE;
+		}
+	}
+
 	return lbRc;
 }
 
@@ -1003,7 +1023,24 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 	{
 		COORD crItem;
 
-		if (GetConCoordFromIndex(nIndex, crItem))
+		if (pItem->BisInfo.Loaded)
+		{
+			TODO("Для TrueColor сделать Fade!");
+
+			if (pItem->BisInfo.Flags & FCF_BG_4BIT)
+				pItemColor->crBack = gcrCurColors[pItem->BisInfo.BackgroundColor & 0xF];
+			else
+				pItemColor->crBack = pItem->BisInfo.BackgroundColor & 0xFFFFFF;
+
+			if (pItem->BisInfo.Flags & FCF_FG_4BIT)
+				pItemColor->crFore = gcrCurColors[pItem->BisInfo.ForegroundColor & 0xF];
+			else
+				pItemColor->crFore = pItem->BisInfo.ForegroundColor & 0xFFFFFF;
+
+			pItemColor->bItemColorLoaded = TRUE;
+			return;
+		}
+		else if (GetConCoordFromIndex(nIndex, crItem))
 		{
 			wchar_t c; CharAttr a;
 			//if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
@@ -1496,16 +1533,16 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 							//lstrcpy(szDbg, L"ReqS: "); lstrcpyn(szDbg+6, pItem->FindData.lpwszFileName, MAX_PATH);
 							//DEBUGSTRPAINT(szDbg);
 							//#endif
-							gpImgCache->RequestItem(pItem, FALSE/*только Shell*/);
+							gpImgCache->RequestItem(pItem, ilt_ShellLarge);
 						}
 
-						if ((gThSet.bLoadPreviews & PVM) && !(pItem->PreviewLoaded & 2))
+						if ((gThSet.bLoadPreviews & PVM) && !(pItem->PreviewLoaded & ilt_Thumbnail))
 						{
 							//#ifdef _DEBUG
 							//lstrcpy(szDbg, L"ReqT: "); lstrcpyn(szDbg+6, pItem->FindData.lpwszFileName, MAX_PATH);
 							//DEBUGSTRPAINT(szDbg);
 							//#endif
-							gpImgCache->RequestItem(pItem, TRUE/*Preview*/);
+							gpImgCache->RequestItem(pItem, ilt_Thumbnail);
 						}
 					}
 
@@ -2180,5 +2217,32 @@ BOOL CeFullPanelInfo::FarItem2CeItem(INT_PTR anIndex,
 		psz[0] = 0;
 
 	ppItems[anIndex]->pszDescription = psz;
+
+	ppItems[anIndex]->BisInfo.Loaded = FALSE;
+
+	return TRUE;
+}
+
+BOOL CeFullPanelInfo::BisItem2CeItem(INT_PTR anIndex,
+	                    BOOL abLoaded,
+	                    unsigned __int64 anFlags,
+	                    COLORREF acrForegroundColor,
+	                    COLORREF acrBackgroundColor,
+	                    int anPosX, int anPosY) // 1-based, relative to Far workspace
+{
+	_ASSERTE(pItemColors && ppItems);
+	if (!ppItems || anIndex < 0 || anIndex >= ItemsNumber)
+	{
+		_ASSERTE(!(!ppItems || anIndex < 0 || anIndex >= ItemsNumber));
+		return FALSE;
+	}
+
+	ppItems[anIndex]->BisInfo.Flags = anFlags;
+	ppItems[anIndex]->BisInfo.ForegroundColor = acrForegroundColor;
+	ppItems[anIndex]->BisInfo.BackgroundColor = acrBackgroundColor;
+	ppItems[anIndex]->BisInfo.PosX = anPosX;
+	ppItems[anIndex]->BisInfo.PosY = anPosY;
+	ppItems[anIndex]->BisInfo.Loaded = abLoaded;
+
 	return TRUE;
 }

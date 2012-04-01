@@ -61,7 +61,7 @@ class CConEmuMacro
 		static LPWSTR FindEditor(LPWSTR asArgs, CRealConsole* apRCon);
 		static LPWSTR FindViewer(LPWSTR asArgs, CRealConsole* apRCon);
 		static LPWSTR FindFarWindow(LPWSTR asArgs, CRealConsole* apRCon);
-		static LPWSTR FindFarWindowHelper(int anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon); // helper, это не макро-фукнция
+		static LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon); // helper, это не макро-фукнция
 		// Минимизировать окно (можно насильно в трей) // [int nForceToTray=0/1]
 		static LPWSTR WindowMinimize(LPWSTR asArgs, CRealConsole* apRCon);
 		// MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
