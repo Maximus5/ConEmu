@@ -425,6 +425,88 @@ REGEDIT4
 ;"PanView.RestoreOnStartup"=hex:01
 
 
+
+
+;; You may define command groups, which starts one or more consoles
+
+;[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla\CmdGroups]
+;"Count"=dword:00000002
+;
+;[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla\CmdGroups\Group1]
+;; <Shells> group, starts 3 consoles
+;;   PowerShell as Administrator,
+;;   Cmd with buffer of 9999 lines
+;;   SH
+;; Active console will be 'Cmd'
+;"Name"="Shells"
+;"Count"=dword:00000003
+;"Active"=dword:00000002
+;"Cmd1"="powershell -new_console:a"
+;"Cmd2"="cmd -new_console:h9999"
+;"Cmd3"="sh"
+;
+;[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla\CmdGroups\Group2]
+;; <Putty> is a simle alias for starting this application in ConEmu tab
+;"Name"="Putty"
+;"Count"=dword:00000001
+;"Cmd1"="C:\\Tools\\Putty\\PUTTY.EXE"
+
+
+                    
+;; You may set some settings separately by active process name
+
+;[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla\Apps]
+;"Count"=dword:00000001
+;
+;[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla\Apps\App1]
+;; List of executable names, delimited with "|"
+;"AppNames"="hiew32.exe|biew.exe"
+;; 00 - unimportant, 01 - elevated, 02 - nonelevated
+;"Elevated"=hex:00
+
+;; By process settings
+;"ExtendColors"=hex:00
+;"ExtendColorIdx"=hex:0e
+;"ExtendFonts"=hex:01
+;"ExtendFontBoldIdx"=hex:0c
+;"ExtendFontItalicIdx"=hex:0d
+;"ExtendFontNormalIdx"=hex:0f
+
+;; For example, 'Murena' color scheme
+;"ColorTable00"=dword:00000000
+;"ColorTable01"=dword:00644100
+;"ColorTable02"=dword:00008000
+;"ColorTable03"=dword:00808000
+;"ColorTable04"=dword:00000080
+;"ColorTable05"=dword:00800080
+;"ColorTable06"=dword:00008080
+;"ColorTable07"=dword:00c0c0c0
+;"ColorTable08"=dword:00808080
+;"ColorTable09"=dword:00ff0000
+;"ColorTable10"=dword:0076c587
+;"ColorTable11"=dword:00ffff00
+;"ColorTable12"=dword:00004bff
+;"ColorTable13"=dword:00d78ce6
+;"ColorTable14"=dword:0000ffff
+;"ColorTable15"=dword:00ffffff
+;"ColorTable16"=dword:00000000
+;"ColorTable17"=dword:00800000
+;"ColorTable18"=dword:00008000
+;"ColorTable19"=dword:00808000
+;"ColorTable20"=dword:00000080
+;"ColorTable21"=dword:00800080
+;"ColorTable22"=dword:00008080
+;"ColorTable23"=dword:00c0c0c0
+;"ColorTable24"=dword:00808080
+;"ColorTable25"=dword:00ff0000
+;"ColorTable26"=dword:0000ff00
+;"ColorTable27"=dword:00ffff00
+;"ColorTable28"=dword:000000ff
+;"ColorTable29"=dword:00ff00ff
+;"ColorTable30"=dword:0000ffff
+;"ColorTable31"=dword:00ffffff
+
+
 ;; Autorun does not works in the current version of ConEmu.
 ;; You may uncomment this to 'Auto run' ConEmu with any batch file or Cmd.exe call
 ;[HKEY_CURRENT_USER\Software\Microsoft\Command Processor]

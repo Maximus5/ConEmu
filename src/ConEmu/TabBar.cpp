@@ -90,6 +90,8 @@ WARNING("TB_GETIDEALSIZE - awailable on XP only, use insted TB_GETMAXSIZE");
 #define FAILED_TABBAR_TIMERID 101
 #define FAILED_TABBAR_TIMEOUT 3000
 
+#define ACTIVATE_TAB_CRITICAL 300
+
 //typedef long (WINAPI* ThemeFunction_t)();
 
 TabBarClass::TabBarClass()
@@ -428,12 +430,19 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 	if (!gpConEmu->isActive(pVCon))
 		bNeedActivate = TRUE;
 
+	DWORD nCallStart = TimeGetTime(), nCallEnd = 0;
+
 	bChangeOk = pVCon->RCon()->ActivateFarWindow(wndIndex);
 
 	if (!bChangeOk)
 	{
 		// ¬сплыть тултип с руганью - не смогли активировать
 		ShowTabError(L"This tab can't be activated now!", tabIndex);
+	}
+	else
+	{
+		nCallEnd = TimeGetTime();
+		_ASSERTE((nCallEnd - nCallStart) < ACTIVATE_TAB_CRITICAL);
 	}
 
 	// „тобы лишнее не мелькало - активируем консоль
@@ -2458,38 +2467,69 @@ void TabBarClass::OnNewConPopup()
 		pszCurCmd = gpConEmu->ActiveCon()->RCon()->GetCmd();
 
 	LPCWSTR pszHistory = gpSet->psCmdHistory;
-	int nLastID = 0;
-	//struct CmdHistory
-	//{
-	//	int nCmd;
-	//	LPCWSTR pszCmd;
-	//} History[MAX_CMD_HISTORY+1];
+	int nLastID = 0, nLastGroupID = -1;
 
-	memset(History, 0, sizeof(History));
+	memset(m_CmdPopupMenu, 0, sizeof(m_CmdPopupMenu));
+
+	//// ќбновить группы команд
+	//gpSet->LoadCmdTasks(NULL);
+
+	int nGroup = 0;
+	const Settings::CommandTasks* pGrp = NULL;
+	while ((nGroup < MAX_CMD_GROUP_SHOW) && (pGrp = gpSet->CmdTaskGet(nGroup)))
+	{
+		m_CmdPopupMenu[nLastID].nCmd = nLastID+1;
+		m_CmdPopupMenu[nLastID].pszCmd = pGrp->pszCommands;
+
+		int nMaxShort = countof(m_CmdPopupMenu[nLastID].szShort);
+		int nLen = _tcslen(pGrp->pszName);
+		if (nLen < nMaxShort)
+		{
+			lstrcpyn(m_CmdPopupMenu[nLastID].szShort, pGrp->pszName, countof(m_CmdPopupMenu[nLastID].szShort));
+		}
+		else
+		{
+			lstrcpyn(m_CmdPopupMenu[nLastID].szShort, pGrp->pszName, countof(m_CmdPopupMenu[nLastID].szShort)-1);
+			m_CmdPopupMenu[nLastID].szShort[nMaxShort-2] = /*Е*/L'\x2026';
+			m_CmdPopupMenu[nLastID].szShort[nMaxShort-1] = 0;
+		}
+
+		AppendMenu(hPopup, MF_STRING | MF_ENABLED, m_CmdPopupMenu[nLastID].nCmd, m_CmdPopupMenu[nLastID].szShort);
+		nLastID++; nGroup++;
+		nLastGroupID = nLastID;
+	}
 
 	if (pszHistory)
 	{
-		while(*pszHistory && (nLastID < MAX_CMD_HISTORY_SHOW))
+		int nCount = 0;
+		while (*pszHistory && (nCount < MAX_CMD_HISTORY_SHOW))
 		{
 			// “екущий - будет первым
 			if (!pszCurCmd || lstrcmp(pszCurCmd, pszHistory))
 			{
-				History[nLastID].nCmd = nLastID+1;
-				History[nLastID].pszCmd = pszHistory;
+				m_CmdPopupMenu[nLastID].nCmd = nLastID+1;
+				m_CmdPopupMenu[nLastID].pszCmd = pszHistory;
 				int nLen = _tcslen(pszHistory);
-				int nMaxShort = countof(History[nLastID].szShort);
+				int nMaxShort = countof(m_CmdPopupMenu[nLastID].szShort);
 				if (nLen >= nMaxShort)
 				{
-					History[nLastID].szShort[0] = /*Е*/L'\x2026';
-					_wcscpyn_c(History[nLastID].szShort+1, nMaxShort-1, pszHistory+nLen-nMaxShort+2, nMaxShort-1);
-					History[nLastID].szShort[nMaxShort-1] = 0;
+					m_CmdPopupMenu[nLastID].szShort[0] = /*Е*/L'\x2026';
+					_wcscpyn_c(m_CmdPopupMenu[nLastID].szShort+1, nMaxShort-1, pszHistory+nLen-nMaxShort+2, nMaxShort-1);
+					m_CmdPopupMenu[nLastID].szShort[nMaxShort-1] = 0;
 				}
 				else
 				{
-					_wcscpyn_c(History[nLastID].szShort, nMaxShort, pszHistory, nMaxShort);
+					_wcscpyn_c(m_CmdPopupMenu[nLastID].szShort, nMaxShort, pszHistory, nMaxShort);
 				}
-				AppendMenu(hPopup, MF_STRING | MF_ENABLED, History[nLastID].nCmd, History[nLastID].szShort);
-				nLastID++;
+
+				if (nGroup > 0)
+				{
+					nGroup = 0;
+					AppendMenu(hPopup, MF_SEPARATOR, -1, NULL);
+				}
+
+				AppendMenu(hPopup, MF_STRING | MF_ENABLED, m_CmdPopupMenu[nLastID].nCmd, m_CmdPopupMenu[nLastID].szShort);
+				nLastID++; nCount++;
 			}
 
 			pszHistory += _tcslen(pszHistory)+1;
@@ -2498,21 +2538,21 @@ void TabBarClass::OnNewConPopup()
 
 	if (pszCurCmd && *pszCurCmd)
 	{
-		History[nLastID].nCmd = nLastID+1;
-		History[nLastID].pszCmd = pszCurCmd;
+		m_CmdPopupMenu[nLastID].nCmd = nLastID+1;
+		m_CmdPopupMenu[nLastID].pszCmd = pszCurCmd;
 		int nLen = _tcslen(pszCurCmd);
-		int nMaxShort = countof(History[nLastID].szShort);
+		int nMaxShort = countof(m_CmdPopupMenu[nLastID].szShort);
 		if (nLen >= nMaxShort)
 		{
-			History[nLastID].szShort[0] = /*Е*/L'\x2026';
-			_wcscpyn_c(History[nLastID].szShort+1, nMaxShort-1, pszCurCmd+nLen-nMaxShort+2, nMaxShort-1);
-			History[nLastID].szShort[nMaxShort-1] = 0;
+			m_CmdPopupMenu[nLastID].szShort[0] = /*Е*/L'\x2026';
+			_wcscpyn_c(m_CmdPopupMenu[nLastID].szShort+1, nMaxShort-1, pszCurCmd+nLen-nMaxShort+2, nMaxShort-1);
+			m_CmdPopupMenu[nLastID].szShort[nMaxShort-1] = 0;
 		}
 		else
 		{
-			_wcscpyn_c(History[nLastID].szShort, nMaxShort, pszCurCmd, nMaxShort);
+			_wcscpyn_c(m_CmdPopupMenu[nLastID].szShort, nMaxShort, pszCurCmd, nMaxShort);
 		}
-		InsertMenu(hPopup, 0, MF_BYPOSITION|MF_ENABLED|MF_STRING, History[nLastID].nCmd, History[nLastID].szShort);
+		InsertMenu(hPopup, 0, MF_BYPOSITION|MF_ENABLED|MF_STRING, m_CmdPopupMenu[nLastID].nCmd, m_CmdPopupMenu[nLastID].szShort);
 		nLastID++;
 		InsertMenu(hPopup, 1, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
 	}
@@ -2529,7 +2569,24 @@ void TabBarClass::OnNewConPopup()
 	if (nId >= 1 && nId <= nLastID)
 	{
 		RConStartArgs con;
-		con.pszSpecialCmd = lstrdup(History[nId-1].pszCmd);
+		if (nLastGroupID > 0 && nId <= nLastGroupID)
+		{
+			const Settings::CommandTasks* pGrp = gpSet->CmdTaskGet(nId-1);
+			if (pGrp)
+			{
+				con.pszSpecialCmd = lstrdup(pGrp->pszName);
+				_ASSERTE(con.pszSpecialCmd && *con.pszSpecialCmd==L'<' && con.pszSpecialCmd[lstrlen(con.pszSpecialCmd)-1]==L'>');
+			}
+			else
+			{
+				MBoxAssert(pGrp!=NULL);
+				goto wrap;
+			}
+		}
+		else
+		{
+			con.pszSpecialCmd = lstrdup(m_CmdPopupMenu[nId-1].pszCmd);
+		}
 
 		if (isPressed(VK_SHIFT))
 		{
@@ -2546,9 +2603,10 @@ void TabBarClass::OnNewConPopup()
 		}
 
 		//—обственно, запуск
-		gpConEmu->CreateCon(&con);
+		gpConEmu->CreateCon(&con, TRUE);
 	}
 
+wrap:
 	DestroyMenu(hPopup);
 }
 
@@ -2556,10 +2614,10 @@ bool TabBarClass::OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags)
 {
 	if (mb_InNewConPopup)
 	{
-		if (nID >= 1 && nID <= countof(History) && History[nID-1].pszCmd)
+		if (nID >= 1 && nID <= countof(m_CmdPopupMenu) && m_CmdPopupMenu[nID-1].pszCmd)
 		{
-			LPCWSTR pszCmd = lstrdup(History[nID-1].pszCmd);
-			if (History[nID-1].szShort[0] && lstrcmp(pszCmd, History[nID-1].szShort))
+			LPCWSTR pszCmd = m_CmdPopupMenu[nID-1].pszCmd;
+			if (m_CmdPopupMenu[nID-1].szShort[0] && pszCmd && lstrcmp(pszCmd, m_CmdPopupMenu[nID-1].szShort))
 			{
 				POINT pt; GetCursorPos(&pt);
 				RECT rcMenuItem = {};

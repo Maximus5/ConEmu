@@ -178,6 +178,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mn_SelectModeSkipVk = 0;
 	mn_ProcessCount = 0;
 	mn_FarPID = mn_ActivePID = 0; //mn_FarInputTID = 0;
+	mn_LastProcessNamePID = 0; ms_LastProcessName[0] = 0; mn_LastAppSettingsId = -1;
 	memset(m_FarPlugPIDs, 0, sizeof(m_FarPlugPIDs)); mn_FarPlugPIDsCount = 0;
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
 	mb_SkipFarPidChange = FALSE;
@@ -209,7 +210,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mn_LastInvalidateTick = 0;
 
 	hConWnd = NULL;
-	hGuiWnd = NULL; mb_GuiExternMode = FALSE; mn_GuiWndStyle = mn_GuiWndStylEx = mn_GuiWndPID = 0;
+	hGuiWnd = NULL; mb_GuiExternMode = FALSE; mn_GuiWndStyle = mn_GuiWndStylEx = 0; setGuiWndPID(0, NULL);
 	mb_InSetFocus = FALSE; mb_InGuiAttaching = FALSE;
 	rcPreGuiWndRect = MakeRect(0,0);
 	//hFileMapping = NULL; pConsoleData = NULL;
@@ -235,7 +236,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	memset(&m_TrueColorerHeader, 0, sizeof(m_TrueColorerHeader));
 
 	//mb_PluginDetected = FALSE;
-	mn_FarPID_PluginDetected = 0; //mn_Far_PluginInputThreadId = 0;
+	mn_FarPID_PluginDetected = 0;
 	memset(&m_FarInfo, 0, sizeof(m_FarInfo));
 	lstrcpy(ms_Editor, L"edit ");
 	MultiByteToWideChar(CP_ACP, 0, "редактирование ", -1, ms_EditorRus, countof(ms_EditorRus));
@@ -1041,7 +1042,7 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 		}
 	}
 	
-	if (ghOpWnd && gpSetCls->hDebug && gpSetCls->m_ActivityLoggingType == glt_Input)
+	if (ghOpWnd && gpSetCls->mh_Tabs[gpSetCls->thi_Debug] && gpSetCls->m_ActivityLoggingType == glt_Input)
 	{
 		//INPUT_RECORD *prCopy = (INPUT_RECORD*)calloc(sizeof(INPUT_RECORD),1);
 		CESERVER_REQ_PEEKREADINFO* pCopy = (CESERVER_REQ_PEEKREADINFO*)malloc(sizeof(CESERVER_REQ_PEEKREADINFO));
@@ -1052,7 +1053,7 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 			pCopy->cPeekRead = 'S';
 			pCopy->cUnicode = 'W';
 			pCopy->Buffer[0] = *piRec;
-			PostMessage(gpSetCls->hDebug, DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
+			PostMessage(gpSetCls->mh_Tabs[gpSetCls->thi_Debug], DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
 		}
 	}
 
@@ -1642,7 +1643,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					if (pRCon->mp_VCon->Update(bForce))
 						lbNeedRedraw = true;
 				}
-				else if (gpSet->isCursorBlink && pRCon->mb_RConStartedSuccess)
+				else if (gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId())->isCursorBlink
+					&& pRCon->mb_RConStartedSuccess)
 				{
 					// ¬озможно, настало врем€ мигнуть курсором?
 					bool lbNeedBlink = false;
@@ -3852,12 +3854,69 @@ DWORD CRealConsole::GetActivePID()
 		return 0;
 
 	if (hGuiWnd)
+	{
 		return mn_GuiWndPID;
+	}
 
 	DWORD nPID = GetFarPID();
 	if (nPID)
+	{
 		return nPID;
+	}
+
 	return mn_ActivePID;
+}
+
+LPCWSTR CRealConsole::GetActiveProcessName()
+{
+	LPCWSTR pszName = NULL;
+	GetActiveAppSettingsId(&pszName);
+	return pszName;
+}
+
+int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName/*=NULL*/)
+{
+	if (!this)
+		return -1;
+
+	DWORD nPID = GetActivePID();
+	if (!nPID)
+		return -1;
+
+	if (nPID == mn_LastProcessNamePID)
+	{
+		if (ppProcessName)
+			*ppProcessName = ms_LastProcessName;
+		return mn_LastAppSettingsId;
+	}
+
+	LPCWSTR pszName = NULL;
+	if (nPID == mn_GuiWndPID)
+	{
+		pszName = ms_GuiWndProcess;
+	}
+	else
+	{
+		MSectionLock SC; SC.Lock(&csPRC);
+
+		std::vector<ConProcess>::iterator i;
+		for (i = m_Processes.begin(); i != m_Processes.end(); ++i)
+		{
+			if (i->ProcessID == nPID)
+			{
+				pszName = i->Name;
+				break;
+			}
+		}
+	}
+
+	lstrcpyn(ms_LastProcessName, pszName ? pszName : L"", countof(ms_LastProcessName));
+	mn_LastProcessNamePID = nPID;
+	mn_LastAppSettingsId = gpSet->GetAppSettingsId(pszName, isAdministrator());
+
+	if (ppProcessName)
+		*ppProcessName = ms_LastProcessName;
+	return mn_LastAppSettingsId;
 }
 
 // ќбновить статус запущенных программ
@@ -6071,7 +6130,7 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 		if (!mn_ActiveTab && (mp_ABuf && (mp_ABuf->GetDetector()->GetFlags() & FR_QSEARCH)))
 			nData[1] = TRUE;
 
-		DEBUGSTRCMD(L"GUI send CMD_SETWINDOW\n");	
+		DEBUGSTRCMD(L"GUI send CMD_SETWINDOW\n");
 		if (pipe.Execute(CMD_SETWINDOW, nData, 8))
 		{
 			DEBUGSTRCMD(L"CMD_SETWINDOW executed\n");	
@@ -6096,7 +6155,11 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 				if (cbBytesRead == (TabHdr.nTabCount*sizeof(ConEmuTab)))
 				{
 					SetTabs(tabs, TabHdr.nTabCount);
-					lbRc = TRUE;
+					if ((anWndIndex >= 0) && (anWndIndex < TabHdr.nTabCount) && (TabHdr.nTabCount > 0))
+					{
+						if (tabs[anWndIndex].Current)
+							lbRc = TRUE;
+					}
 				}
 
 				MCHKHEAP;
@@ -6109,7 +6172,9 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 			ResetEvent(mh_ApplyFinished);
 			mn_LastConsolePacketIdx--;
 			SetEvent(mh_MonitorThreadEvent);
-			nWait = WaitForSingleObject(mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
+
+			//120412 - не будем ждать. больше задержки раздражают, нежели возможное отставание в отрисовке окна
+			//nWait = WaitForSingleObject(mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
 		}
 	}
 
@@ -6794,8 +6859,20 @@ void CRealConsole::CloseTab()
 	}
 	else
 	{
-		if (CanCloseTab(TRUE))
-			PostMacro(gpSet->TabCloseMacro());
+		BOOL bCanCloseMacro = CanCloseTab(TRUE);
+		if (bCanCloseMacro && !isAlive())
+		{
+			wchar_t szInfo[255];
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+				L"Far Manager (PID=%u) is not alive.\nClose realconsole window instead of posting Macro?",
+				GetFarPID(TRUE));
+			int nBrc = MessageBox(NULL, szInfo, gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNO);
+			if (nBrc == IDYES)
+				bCanCloseMacro = FALSE;
+		}
+
+		if (bCanCloseMacro)
+			PostMacro(gpSet->TabCloseMacro(), TRUE/*async*/);
 		else
 			PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
 	}
@@ -7330,7 +7407,8 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 {
 	if (!this) return;
 
-	DWORD dwFarPID = anFarPID ? anFarPID : GetFarPID();
+	// ¬ консоли может быть активна и друга€ программа
+	DWORD dwFarPID = (mn_FarPID_PluginDetected == mn_FarPID) ? mn_FarPID : 0; // anFarPID ? anFarPID : GetFarPID();
 
 	if (!dwFarPID) return;
 
@@ -7383,6 +7461,7 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 	pSetEnvVar->bFARuseASCIIsort = gpSet->isFARuseASCIIsort;
 	pSetEnvVar->bShellNoZoneCheck = gpSet->isShellNoZoneCheck;
 	pSetEnvVar->bMonitorConsoleInput = (gpSetCls->m_ActivityLoggingType == glt_Input);
+	pSetEnvVar->bLongConsoleOutput = gpSet->AutoBufferHeight;
 	//BOOL lbNeedQuot = (wcschr(gpConEmu->ms_ConEmuCExeFull, L' ') != NULL);
 	//wchar_t* pszName = szData;
 	//lstrcpy(pszName, L"ComSpec");
@@ -7575,7 +7654,8 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 		rcPreGuiWndRect = arcPrev;
 	}
 	hGuiWnd = ahGuiWnd;
-	mn_GuiWndPID = anAppPID;
+	//mn_GuiWndPID = anAppPID;
+	setGuiWndPID(anAppPID, PointToName(asAppFileName));
 	mn_GuiWndStyle = anStyle; mn_GuiWndStylEx = anStyleEx;
 	mb_GuiExternMode = FALSE;
 
@@ -8712,4 +8792,10 @@ DWORD CRealConsole::GetConsoleMode()
 ExpandTextRangeType CRealConsole::GetLastTextRangeType()
 {
 	return mp_ABuf->GetLastTextRangeType();
+}
+
+void CRealConsole::setGuiWndPID(DWORD anPID, LPCWSTR asProcessName)
+{
+	mn_GuiWndPID = anPID;
+	lstrcpyn(ms_GuiWndProcess, asProcessName ? asProcessName : L"", countof(ms_GuiWndProcess));
 }

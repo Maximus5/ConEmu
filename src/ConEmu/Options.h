@@ -67,6 +67,7 @@ enum BackgroundOp
 #include "UpdateSet.h"
 
 class CSettings;
+class CVirtualConsole;
 
 struct Settings
 {
@@ -87,9 +88,187 @@ struct Settings
 		//bool AutoScroll;
 		
 		//reg->Load(L"AutoBufferHeight", AutoBufferHeight);
-		bool AutoBufferHeight;
+		bool AutoBufferHeight; // Long console output
 		//reg->Load(L"CmdOutputCP", nCmdOutputCP);
 		int nCmdOutputCP;
+
+	public:
+		struct ColorPalette
+		{
+			wchar_t* pszName;
+			bool bPredefined;
+
+			//reg->Load(L"ExtendColors", isExtendColors);
+			bool isExtendColors;
+			//reg->Load(L"ExtendColorIdx", nExtendColor);
+			char nExtendColor; // 0..15
+
+			COLORREF Colors[0x20];
+
+			void FreePtr()
+			{
+				SafeFree(pszName);
+                ColorPalette* p = this;
+                SafeFree(p);
+			};
+		};
+
+		struct AppSettings
+		{
+			wchar_t* AppNames; // "far.exe|far64.exe"
+			BYTE Elevated; // 00 - unimportant, 01 - elevated, 02 - nonelevated
+			
+			//const COLORREF* Palette/*[0x20]*/; // текущая палитра (Fade/не Fade)
+
+			//reg->Load(L"ExtendColors", isExtendColors);
+			bool isExtendColors;
+			//reg->Load(L"ExtendColorIdx", nExtendColor);
+			char nExtendColor; // 0..15
+
+			//reg->Load(L"ExtendFonts", isExtendFonts);
+			bool isExtendFonts;
+			//reg->Load(L"ExtendFontNormalIdx", nFontNormalColor);
+			char nFontNormalColor; // 0..15
+			//reg->Load(L"ExtendFontBoldIdx", nFontBoldColor);
+			char nFontBoldColor;   // 0..15
+			//reg->Load(L"ExtendFontItalicIdx", nFontItalicColor);
+			char nFontItalicColor; // 0..15
+
+			//reg->Load(L"CursorType", isCursorV);
+			bool isCursorV;
+			//reg->Load(L"CursorBlink", isCursorBlink);
+			bool isCursorBlink;
+			//reg->Load(L"CursorColor", isCursorColor);
+			bool isCursorColor;
+			//reg->Load(L"CursorBlockInactive", isCursorBlockInactive);
+			bool isCursorBlockInactive;
+		};
+		int GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated);
+		const AppSettings* GetAppSettings(int anAppId=-1);
+		COLORREF* GetColors(int anAppId=-1, BOOL abFade = FALSE);
+		COLORREF GetFadeColor(COLORREF cr);
+		void ResetFadeColors();
+
+		struct CommandTasks
+		{
+			size_t   cchNameMax;
+			wchar_t* pszName;
+			size_t   cchCmdMax;
+			wchar_t* pszCommands; // "\r\n" separated commands
+
+			void FreePtr()
+			{
+				SafeFree(pszName);
+				cchNameMax = 0;
+				SafeFree(pszCommands);
+				cchCmdMax = 0;
+                CommandTasks* p = this;
+                SafeFree(p);
+			};
+
+			void SetName(LPCWSTR asName, int anCmdIndex)
+			{
+				wchar_t szCmd[16];
+				if (!asName || !*asName)
+				{
+					_wsprintf(szCmd, SKIPLEN(countof(szCmd)) L"Group%i", (anCmdIndex+1));
+					asName = szCmd;
+				}
+
+				// Для простоты дальнейшей работы - имя должно быть заключено в угловые скобки
+				size_t iLen = wcslen(asName);
+
+				if (!pszName || ((iLen+2) >= cchNameMax))
+				{
+					SafeFree(pszName);
+
+					cchNameMax = iLen+16;
+					pszName = (wchar_t*)malloc(cchNameMax*sizeof(wchar_t));
+					if (!pszName)
+					{
+						_ASSERTE(pszName!=NULL);
+						return;
+					}
+				}
+
+				if (asName[0] == L'<')
+				{
+					_wcscpy_c(pszName, iLen+1, asName);
+				}
+				else
+				{
+					*pszName = L'<';
+					_wcscpy_c(pszName+1, iLen+1, asName);
+				}
+				if (asName[iLen-1] != L'>')
+					_wcscat_c(pszName, iLen+3, L">");
+			};
+
+			void SetCommands(LPCWSTR asCommands)
+			{
+				if (!asCommands)
+					asCommands = L"";
+
+				size_t iLen = wcslen(asCommands);
+
+				if (!pszCommands || (iLen >= cchCmdMax))
+				{
+					SafeFree(pszCommands);
+
+					cchCmdMax = iLen+1024;
+					pszCommands = (wchar_t*)malloc(cchCmdMax*sizeof(wchar_t));
+					if (!pszCommands)
+					{
+						_ASSERTE(pszCommands!=NULL);
+						return;
+					}
+				}
+
+				_wcscpy_c(pszCommands, cchCmdMax, asCommands);
+			};
+		};
+		const CommandTasks* CmdTaskGet(int anIndex); // 0-based, index of CmdTasks
+		void CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asCommands); // 0-based, index of CmdTasks
+		bool CmdTaskXch(int anIndex1, int anIndex2); // 0-based, index of CmdTasks
+
+		const ColorPalette* PaletteGet(int anIndex); // 0-based, index of Palettes
+		void PaletteSaveAs(LPCWSTR asName); // Save active colors to named palette
+		void PaletteDelete(LPCWSTR asName); // Delete named palette
+
+	protected:
+		AppSettings AppStd;
+		int AppCount;
+		AppSettings* Apps;
+
+		int CmdTaskCount;
+		CommandTasks** CmdTasks;
+
+		int PaletteCount;
+		ColorPalette** Palettes;
+
+		int PaletteGetIndex(LPCWSTR asName);
+		void SavePalettes(SettingsBase* reg);
+		void SortPalettes();
+
+	private:	
+		// reg->Load(L"ColorTableNN", Colors[i]);
+		COLORREF Colors[0x20];
+		COLORREF ColorsFade[0x20];
+		bool mb_FadeInitialized;
+
+		struct CEAppColors
+		{
+			COLORREF Colors[0x20];
+			COLORREF ColorsFade[0x20];
+			bool FadeInitialized;
+		} *AppColors; // [AppCount]
+
+		void LoadAppSettings(SettingsBase* reg);
+		void LoadAppSettings(SettingsBase* reg, AppSettings* pApp, COLORREF* pColors);
+		void SaveAppSettings(SettingsBase* reg, AppSettings* pApp, COLORREF* pColors);
+
+		DWORD mn_FadeMul;
+		inline BYTE GetFadeColorItem(BYTE c);
 
 	public:
 		//reg->Load(L"FontAutoSize", isFontAutoSize);
@@ -102,23 +281,8 @@ struct Settings
 		//reg->Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 		LOGFONT ConsoleFont;
 		
-		COLORREF* GetColors(BOOL abFade = FALSE);
-		COLORREF GetFadeColor(COLORREF cr);
 		bool NeedDialogDetect();
 		
-		//reg->Load(L"ExtendColors", isExtendColors);
-		bool isExtendColors;
-		//reg->Load(L"ExtendColorIdx", nExtendColor);
-		char nExtendColor; // 0..15
-		
-		//reg->Load(L"ExtendFonts", isExtendFonts);
-		bool isExtendFonts;
-		//reg->Load(L"ExtendFontNormalIdx", nFontNormalColor);
-		char nFontNormalColor; // 0..15
-		//reg->Load(L"ExtendFontBoldIdx", nFontBoldColor);
-		char nFontBoldColor;   // 0..15
-		//reg->Load(L"ExtendFontItalicIdx", nFontItalicColor);
-		char nFontItalicColor; // 0..15
 		
 		//reg->Load(L"TrueColorerSupport", isTrueColorer);
 		bool isTrueColorer;
@@ -297,15 +461,6 @@ struct Settings
 		BYTE isPartBrush25;
 		//reg->Load(L"PartBrushBlack", isPartBrushBlack);
 		BYTE isPartBrushBlack;
-		
-		//reg->Load(L"CursorType", isCursorV);
-		bool isCursorV;
-		//reg->Load(L"CursorBlink", isCursorBlink);
-		bool isCursorBlink;
-		//reg->Load(L"CursorColor", isCursorColor);
-		bool isCursorColor;
-		//reg->Load(L"CursorBlockInactive", isCursorBlockInactive);
-		bool isCursorBlockInactive;
 		
 		//reg->Load(L"RightClick opens context menu", isRClickSendKey);
 		// 0 - не звать EMenu, 1 - звать всегда, 2 - звать по длинному клику
@@ -622,7 +777,10 @@ struct Settings
 	public:
 		void LoadSettings();
 		void InitSettings();
+		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
+		void LoadPalettes(SettingsBase* reg);
 		BOOL SaveSettings(BOOL abSilent = FALSE);
+		void SaveCmdTasks(SettingsBase* reg);
 		void SaveSizePosOnExit();
 		void SaveConsoleFont();
 		void UpdateMargins(RECT arcMargins);
@@ -639,15 +797,6 @@ struct Settings
 		void GetSettingsType(wchar_t (&szType)[8], bool& ReadOnly);
 		
 	private:
-		// reg->Load(L"ColorTableNN", Colors[i]);
-		COLORREF Colors[0x20];
-		
-		bool mb_FadeInitialized;
-		
-		DWORD mn_FadeMul;
-		COLORREF ColorsFade[0x20];
-		inline BYTE GetFadeColorItem(BYTE c);
-		
 		bool TestHostkeyModifiers();
 		static BYTE CheckHostkeyModifier(BYTE vk);
 		static void ReplaceHostkey(BYTE vk, BYTE vkNew);

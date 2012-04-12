@@ -246,10 +246,12 @@ class CRealConsole
 		BOOL    mb_InSetFocus;
 		DWORD   mn_GuiWndStyle, mn_GuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
 		DWORD   mn_GuiWndPID;
+		wchar_t ms_GuiWndProcess[MAX_PATH];
 		BYTE    m_ConsoleKeyShortcuts;
 		//HANDLE  hFileMapping;
 		//CESERVER_REQ_CONINFO* pConsoleData;
 		//void CloseMapping();
+		void setGuiWndPID(DWORD anPID, LPCWSTR asProcessName);
 
 	public:
 		HWND    ConWnd();  // HWND RealConsole
@@ -344,6 +346,8 @@ class CRealConsole
 		DWORD GetFarPID(bool abPluginRequired=false);
 		void ResetFarPID();
 		DWORD GetActivePID();
+		LPCWSTR GetActiveProcessName();
+		int GetActiveAppSettingsId(LPCWSTR* ppProcessName=NULL);
 		DWORD GetProgramStatus();
 		DWORD GetFarStatus();
 		DWORD GetServerPID();
@@ -576,6 +580,9 @@ class CRealConsole
 		DWORD mn_FarPID;
 		DWORD mn_ActivePID;
 		DWORD mn_LastSetForegroundPID; // PID процесса, которому в последний раз было разрешено AllowSetForegroundWindow
+		DWORD mn_LastProcessNamePID;
+		wchar_t ms_LastProcessName[MAX_PATH];
+		int mn_LastAppSettingsId;
 		//
 		ConEmuTab* mp_tabs;
 		MSection   msc_Tabs;

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    84
+#define CESERVER_REQ_VER    85
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1276,6 +1276,7 @@ struct FAR_REQ_FARSETCHANGED
 	BOOL    bFARuseASCIIsort;
 	BOOL    bShellNoZoneCheck; // Затычка для SEE_MASK_NOZONECHECKS
 	BOOL    bMonitorConsoleInput; // при (Read/Peek)ConsoleInput(A/W) послать инфу в GUI/Settings/Debug
+	BOOL    bLongConsoleOutput; // при выполнении консольных программ из Far - увеличивать высоту буфера
 	//wchar_t szEnv[1]; // Variable length: <Name>\0<Value>\0<Name2>\0<Value2>\0\0
 };
 

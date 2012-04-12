@@ -1093,8 +1093,9 @@ BOOL CShellProc::PrepareExecuteParms(
 	// Проверяем настройку ConEmuGuiMapping.bUseInjects
 	if (!LoadGuiMapping() || !(m_SrvMapping.bUseInjects & 1))
 	{
+		// -- зависимо только от флажка "Use Injects", иначе нельзя управлять добавлением "ConEmuC.exe" из ConEmu --
 		// Настройка в ConEmu ConEmuGuiMapping.bUseInjects, или gFarMode.bFarHookMode. Иначе - сразу выходим
-		if (!gFarMode.bFarHookMode /*&& !ghAttachGuiClient*/)
+		if (!(gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput))
 		{
 			return FALSE;
 		}
@@ -1363,7 +1364,8 @@ BOOL CShellProc::PrepareExecuteParms(
 
 	_ASSERTE(mn_ImageBits!=0);
 	// Если это Фар - однозначно вставляем ConEmuC.exe
-	if ((gFarMode.bFarHookMode)
+	// -- bFarHookMode заменен на bLongConsoleOutput --
+	if ((gFarMode.bLongConsoleOutput)
 		|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хотят GUI прицепить к новуй вкладке в ConEmu, или новую консоль из GUI
 		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
 		|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 

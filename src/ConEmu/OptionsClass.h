@@ -394,7 +394,25 @@ class CSettings
 		WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 		ABC     CharABC[0x10000];
 
-		HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hViews, hInfo, hDebug, hUpdate, hSelection;
+		//HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hCmdTasks, hViews, hInfo, hDebug, hUpdate, hSelection;
+		enum TabHwndIndex {
+			thi_Main = 0,
+			thi_Ext,
+			thi_Selection,
+			thi_Far,
+			thi_Keys,
+			thi_Tabs,
+			thi_Colors,
+			thi_Tasks,
+			thi_Apps,
+			thi_Views,
+			thi_Debug,
+			thi_Update,
+			thi_Info,
+			//
+			thi_Last
+		};
+		HWND mh_Tabs[thi_Last];
 
 		//static void CenterDialog(HWND hWnd2);
 		void OnClose();
@@ -490,13 +508,19 @@ class CSettings
 		LRESULT OnInitDialog_Keys(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
 		LRESULT OnInitDialog_Color(HWND hWnd2);
+		LRESULT OnInitDialog_Tasks(HWND hWnd2, bool abForceReload);
+		LRESULT OnInitDialog_Apps(HWND hWnd2, bool abForceReload);
 		LRESULT OnInitDialog_Views(HWND hWnd2);
 		void OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...); // скопировать список шрифтов с вкладки hMain
 		LRESULT OnInitDialog_Debug(HWND hWnd2);
 		LRESULT OnInitDialog_Update(HWND hWnd2);
 		LRESULT OnInitDialog_Info(HWND hWnd2);
-		// ...
+		//
 		LRESULT OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		LRESULT OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		bool mb_IgnoreCmdGroupEdit, mb_IgnoreCmdGroupList;
+		LRESULT OnButtonClicked_Apps(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		bool mb_IgnoreAppsEdit, mb_IgnoreAppsList;
 		//LRESULT OnColorButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		//LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		
 		//LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
@@ -507,7 +531,7 @@ class CSettings
 		INT_PTR OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnSaveActivityLogFile(HWND hListView);
 		LRESULT OnActivityLogNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		void FillHotKeysList(BOOL abInitial);
+		void FillHotKeysList(HWND hWnd2, BOOL abInitial);
 		LRESULT OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
@@ -708,10 +732,11 @@ class CSettings
 		};
 		struct ConEmuSetupPages
 		{
-			int       PageID;
-			wchar_t   PageName[64];
-			HWND     *hPage;
-			HTREEITEM hTI;
+			int              PageID;    // Dialog ID
+			wchar_t          PageName[64];
+			//HWND     *hPage;
+			TabHwndIndex     PageIndex; // mh_Tabs[...]
+			HTREEITEM        hTI;
 			ConEmuSetupItem* pItems;
 		};
 		ConEmuSetupPages *m_Pages;

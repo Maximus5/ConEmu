@@ -3051,13 +3051,15 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	if (!lbAllowHilightFileLine && (con.etrLast != etr_None))
 		StoreLastTextRange(etr_None);
 	WARNING("lbIsFar - хорошо бы заменить на привязку к конкретным приложениям?");
+	const Settings::AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
+	_ASSERTE(pApp!=NULL);
 	// 120331 - зачем ограничивать настройку доп.цветов?
-	bool bExtendColors = /*lbIsFar &&*/ gpSet->isExtendColors;
-	BYTE nExtendColor = gpSet->nExtendColor;
-	bool bExtendFonts = lbIsFar && gpSet->isExtendFonts;
-	BYTE nFontNormalColor = gpSet->nFontNormalColor;
-	BYTE nFontBoldColor = gpSet->nFontBoldColor;
-	BYTE nFontItalicColor = gpSet->nFontItalicColor;
+	bool bExtendColors = /*lbIsFar &&*/ pApp->isExtendColors;
+	BYTE nExtendColor = pApp->nExtendColor;
+	bool bExtendFonts = lbIsFar && pApp->isExtendFonts;
+	BYTE nFontNormalColor = pApp->nFontNormalColor;
+	BYTE nFontBoldColor = pApp->nFontBoldColor;
+	BYTE nFontItalicColor = pApp->nFontItalicColor;
 	bool lbFade = mp_RCon->mp_VCon->isFade;
 	//BOOL bUseColorKey = gpSet->isColorKey  // Должен быть включен в настройке
 	//	&& mp_RCon->isFar(TRUE/*abPluginRequired*/) // в фаре загружен плагин (чтобы с цветами не проколоться)

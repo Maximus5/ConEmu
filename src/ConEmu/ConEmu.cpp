@@ -103,6 +103,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TIMER_RCLICKPAINT 5
 #define TIMER_RCLICKPAINT_ELAPSE 20
 
+#define HOTKEY_CTRLWINALTSPACE_ID 0x0201 // this is wParam for WM_HOTKEY
+#define HOTKEY_MINRESTORE_ID      0x1001 // this is wParam for WM_HOTKEY
+
 #define RCLICKAPPSTIMEOUT 600
 #define RCLICKAPPS_START 200 // начало отрисовки кружка вокруг курсора
 #define RCLICKAPPSTIMEOUT_MAX 10000
@@ -1374,7 +1377,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.nProtocolVersion = CESERVER_REQ_VER;
 	m_GuiInfo.hGuiWnd = ghWnd;
 	
-	m_GuiInfo.nLoggingType = (ghOpWnd && gpSetCls->hDebug) ? gpSetCls->m_ActivityLoggingType : glt_None;
+	m_GuiInfo.nLoggingType = (ghOpWnd && gpSetCls->mh_Tabs[gpSetCls->thi_Debug]) ? gpSetCls->m_ActivityLoggingType : glt_None;
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0);
 	m_GuiInfo.bUseTrueColor = gpSet->isTrueColorer;
 
@@ -3015,7 +3018,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 #endif
 
 			if (ghOpWnd)
-				CheckRadioButton(gpSetCls->hMain, rNormal, rFullScreen, rNormal);
+				CheckRadioButton(gpSetCls->mh_Tabs[gpSetCls->thi_Main], rNormal, rFullScreen, rNormal);
 
 			mb_isFullScreen = false;
 
@@ -3098,7 +3101,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				}
 
 				if (ghOpWnd)
-					CheckRadioButton(gpSetCls->hMain, rNormal, rFullScreen, rMaximized);
+					CheckRadioButton(gpSetCls->mh_Tabs[gpSetCls->thi_Main], rNormal, rFullScreen, rMaximized);
 
 				mb_isFullScreen = false;
 
@@ -3200,7 +3203,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 					                   SWP_NOZORDER);
 
 					if (ghOpWnd)
-						CheckRadioButton(gpSetCls->hMain, rNormal, rMaximized, rMaximized);
+						CheckRadioButton(gpSetCls->mh_Tabs[gpSetCls->thi_Main], rNormal, rMaximized, rMaximized);
 				}
 
 				mb_isFullScreen = false;
@@ -3301,7 +3304,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				                   SWP_NOZORDER);
 
 				if (ghOpWnd)
-					CheckRadioButton(gpSetCls->hMain, rNormal, rFullScreen, rFullScreen);
+					CheckRadioButton(gpSetCls->mh_Tabs[gpSetCls->thi_Main], rNormal, rFullScreen, rFullScreen);
 			}
 
 			if (!IsWindowVisible(ghWnd))
@@ -4640,7 +4643,7 @@ void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
 	PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon, (LPARAM)pArgs);
 }
 
-CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
+CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts /*= FALSE*/)
 {
 	_ASSERTE(args!=NULL);
 	if (!gpConEmu->isMainThread())
@@ -4651,6 +4654,26 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
 	}
 
 	CVirtualConsole* pVCon = NULL;
+
+	if (args->pszSpecialCmd && (*args->pszSpecialCmd == L'@' || *args->pszSpecialCmd == '<'))
+	{
+		if (!abAllowScripts)
+		{
+			DisplayLastError(L"Console script are not supported here!", -1);
+			return NULL;
+		}
+
+		// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
+		wchar_t* pszDataW = LoadConsoleBatch(args->pszSpecialCmd);
+		if (!pszDataW)
+			return NULL;
+
+		// GO
+		pVCon = CreateConGroup(pszDataW);
+
+		SafeFree(pszDataW);
+		return pVCon;
+	}
 
 	for (size_t i = 0; i < countof(mp_VCon); i++)
 	{
@@ -4706,6 +4729,142 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
 	}
 
 	return pVCon;
+}
+
+// Возвращает указатель на АКТИВНУЮ консоль (при создании группы)
+// apszScript содержит строки команд, разделенные \r\n
+CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript)
+{
+	CVirtualConsole* pVConResult = NULL;
+	// Поехали
+	wchar_t *pszDataW = lstrdup(apszScript);
+	wchar_t *pszLine = pszDataW;
+	wchar_t *pszNewLine = wcschr(pszLine, L'\n');
+	CVirtualConsole *pSetActive = NULL, *pVCon = NULL, *pLastVCon = NULL;
+	BOOL lbSetActive = FALSE, lbOneCreated = FALSE, lbRunAdmin = FALSE;
+
+	while (*pszLine)
+	{
+		lbSetActive = lbRunAdmin = FALSE;
+
+		while (*pszLine == L'>' || *pszLine == L'*' || *pszLine == L' ' || *pszLine == L'\t')
+		{
+			if (*pszLine == L'>') lbSetActive = TRUE;
+
+			if (*pszLine == L'*') lbRunAdmin = TRUE;
+
+			pszLine++;
+		}
+
+		if (pszNewLine)
+		{
+			*pszNewLine = 0;
+			if ((pszNewLine > pszDataW) && (*(pszNewLine-1) == L'\r'))
+				*(pszNewLine-1) = 0;
+		}
+
+		while (*pszLine == L' ') pszLine++;
+
+		if (*pszLine)
+		{
+			while (pszLine[0] == L'/')
+			{
+				if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
+				                               pszLine, 14, L"/bufferheight ", 14))
+				{
+					pszLine += 14;
+
+					while(*pszLine == L' ') pszLine++;
+
+					wchar_t* pszEnd = NULL;
+					long lBufHeight = wcstol(pszLine, &pszEnd, 10);
+					gpSetCls->SetArgBufferHeight(lBufHeight);
+
+					if (pszEnd) pszLine = pszEnd;
+				}
+
+				TODO("Когда появится ключ /mouse - добавить сюда обработку");
+
+				if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
+				                               pszLine, 5, L"/cmd ", 5))
+				{
+					pszLine += 5;
+				}
+
+				while (*pszLine == L' ') pszLine++;
+			}
+
+			if (*pszLine)
+			{
+				RConStartArgs args;
+				args.pszSpecialCmd = lstrdup(pszLine);
+				args.bRunAsAdministrator = lbRunAdmin;
+				pVCon = CreateCon(&args);
+
+				if (!pVCon)
+				{
+					DisplayLastError(L"Can't create new virtual console!");
+
+					if (!lbOneCreated)
+					{
+						//Destroy(); -- должна вызывающая функция
+						goto wrap;
+					}
+				}
+				else
+				{
+					lbOneCreated = TRUE;
+
+					pLastVCon = pVCon;
+					if (lbSetActive && !pSetActive)
+						pSetActive = pVCon;
+
+					if (GetVCon((int)countof(mp_VCon)-1))
+						break; // Больше создать не получится
+				}
+			}
+
+			// При создании группы консолей требуется обрабатывать сообщения,
+			// иначе может возникнуть блокировка запускаемого сервера
+			MSG Msg;
+			while (PeekMessage(&Msg,0,0,0,PM_REMOVE))
+			{
+				if (Msg.message == WM_QUIT)
+					goto wrap;
+
+				BOOL lbDlgMsg = isDialogMessage(Msg);
+				if (!lbDlgMsg)
+				{
+					TranslateMessage(&Msg);
+					DispatchMessage(&Msg);
+				}
+			}
+
+			if (!ghWnd || !IsWindow(ghWnd))
+				goto wrap;
+		}
+
+		if (!pszNewLine) break;
+
+		pszLine = pszNewLine+1;
+
+		if (!*pszLine) break;
+
+		while ((*pszLine == L'\r') || (*pszLine == L'\n'))
+			pszLine++; // пропустить все переводы строк
+
+		pszNewLine = wcschr(pszLine, L'\n');
+	}
+
+	if (pSetActive)
+	{
+		Activate(pSetActive);
+	}
+
+	pVConResult = (pSetActive ? pSetActive : pLastVCon);
+wrap:
+	SafeFree(pszDataW);
+	return pVConResult;
 }
 
 void CConEmuMain::CreateGhostVCon(CVirtualConsole* apVCon)
@@ -5060,9 +5219,9 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 
 		if (!mn_MinRestoreRegistered)
 		{
-			if (RegisterHotKey(ghWnd, 0x1001, nMOD, (UINT)gpSet->icMinimizeRestore))
+			if (RegisterHotKey(ghWnd, HOTKEY_MINRESTORE_ID, nMOD, (UINT)gpSet->icMinimizeRestore))
 			{
-				mn_MinRestoreRegistered = 0x1001;
+				mn_MinRestoreRegistered = HOTKEY_MINRESTORE_ID;
 				mn_MinRestore_VK = gpSet->icMinimizeRestore;
 				mn_MinRestore_MOD = nMOD;
 			}
@@ -5091,9 +5250,15 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 
 void CConEmuMain::RegisterHotKeys()
 {
+	if (isIconic())
+	{
+		UnRegisterHotKeys();
+		return;
+	}
+
 	if (!mb_HotKeyRegistered)
 	{
-		if (RegisterHotKey(ghWnd, 0x201, MOD_CONTROL|MOD_WIN|MOD_ALT, VK_SPACE))
+		if (RegisterHotKey(ghWnd, HOTKEY_CTRLWINALTSPACE_ID, MOD_CONTROL|MOD_WIN|MOD_ALT, VK_SPACE))
 		{
 			mb_HotKeyRegistered = TRUE;
 		}
@@ -5316,7 +5481,7 @@ void CConEmuMain::UnRegisterHotKeys(BOOL abFinal/*=FALSE*/)
 {
 	if (mb_HotKeyRegistered)
 	{
-		UnregisterHotKey(ghWnd, 0x201);
+		UnregisterHotKey(ghWnd, HOTKEY_CTRLWINALTSPACE_ID);
 		mb_HotKeyRegistered = FALSE;
 	}
 
@@ -5421,7 +5586,7 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
 		}
 
 		//Собственно, запуск
-		CreateCon(&args);
+		CreateCon(&args, TRUE);
 	}
 	else
 	{
@@ -5952,34 +6117,43 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 		return;
 	}
 
+	HWND hInfo = gpSetCls->mh_Tabs[gpSetCls->thi_Info];
+
 	wchar_t szNo[32], szFlags[255]; szNo[0] = szFlags[0] = 0;
 	DWORD nProgramStatus = mp_VActive->RCon()->GetProgramStatus();
 	DWORD nFarStatus = mp_VActive->RCon()->GetFarStatus();
 	if (nProgramStatus&CES_TELNETACTIVE) wcscat_c(szFlags, L"Telnet ");
-	//CheckDlgButton(gpSetCls->hInfo, cbsTelnetActive, (nProgramStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(hInfo, cbsTelnetActive, (nProgramStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
 	if (nProgramStatus&CES_NTVDM) wcscat_c(szFlags, L"16bit ");
-	//CheckDlgButton(gpSetCls->hInfo, cbsNtvdmActive, (nProgramStatus&CES_NTVDM) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(hInfo, cbsNtvdmActive, (nProgramStatus&CES_NTVDM) ? BST_CHECKED : BST_UNCHECKED);
 	if (nProgramStatus&CES_FARACTIVE) wcscat_c(szFlags, L"Far ");
-	//CheckDlgButton(gpSetCls->hInfo, cbsFarActive, (nProgramStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(hInfo, cbsFarActive, (nProgramStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
 	if (nFarStatus&CES_FILEPANEL) wcscat_c(szFlags, L"Panels ");
-	//CheckDlgButton(gpSetCls->hInfo, cbsFilePanel, (nFarStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(hInfo, cbsFilePanel, (nFarStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
 	if (nFarStatus&CES_EDITOR) wcscat_c(szFlags, L"Editor ");
-	//CheckDlgButton(gpSetCls->hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
 	if (nFarStatus&CES_VIEWER) wcscat_c(szFlags, L"Viewer ");
-	//CheckDlgButton(gpSetCls->hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
 	if (nFarStatus&CES_WASPROGRESS) wcscat_c(szFlags, L"%%Progress ");
-	//CheckDlgButton(gpSetCls->hInfo, cbsProgress, ((nFarStatus&CES_WASPROGRESS) /*|| mp_VActive->RCon()->GetProgress(NULL)>=0*/) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(hInfo, cbsProgress, ((nFarStatus&CES_WASPROGRESS) /*|| mp_VActive->RCon()->GetProgress(NULL)>=0*/) ? BST_CHECKED : BST_UNCHECKED);
 	if (nFarStatus&CES_OPER_ERROR) wcscat_c(szFlags, L"%%Error ");
-	//CheckDlgButton(gpSetCls->hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
 	_wsprintf(szNo, SKIPLEN(countof(szNo)) L"%i/%i", mp_VActive->RCon()->GetFarPID(), mp_VActive->RCon()->GetFarPID(TRUE));
-	SetDlgItemText(gpSetCls->hInfo, tsTopPID, szNo);
-	SetDlgItemText(gpSetCls->hInfo, tsRConFlags, szFlags);
+
+	if (hInfo)
+	{
+		SetDlgItemText(hInfo, tsTopPID, szNo);
+		SetDlgItemText(hInfo, tsRConFlags, szFlags);
+	}
 
 	if (!abForce)
 		return;
 
-	MCHKHEAP
-	SendDlgItemMessage(gpSetCls->hInfo, lbProcesses, LB_RESETCONTENT, 0, 0);
+	MCHKHEAP;
+
+	if (hInfo)
+		SendDlgItemMessage(hInfo, lbProcesses, LB_RESETCONTENT, 0, 0);
+
 	wchar_t temp[MAX_PATH];
 
 	for (size_t j = 0; j < countof(mp_VCon); j++)
@@ -5998,7 +6172,8 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 
 			swprintf(temp+_tcslen(temp), _T("[%i.%i] %s - PID:%i"),
 			         j+1, i, pPrc[i].Name, pPrc[i].ProcessID);
-			SendDlgItemMessage(gpSetCls->hInfo, lbProcesses, LB_ADDSTRING, 0, (LPARAM)temp);
+			if (hInfo)
+				SendDlgItemMessage(hInfo, lbProcesses, LB_ADDSTRING, 0, (LPARAM)temp);
 		}
 
 		if (pPrc) { free(pPrc); pPrc = NULL; }
@@ -6009,7 +6184,7 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 
 void CConEmuMain::UpdateCursorInfo(COORD crCursor, CONSOLE_CURSOR_INFO cInfo)
 {
-	if (!ghOpWnd || !gpSetCls->hInfo) return;
+	if (!ghOpWnd || !gpSetCls->mh_Tabs[gpSetCls->thi_Info]) return;
 
 	if (!isMainThread())
 	{
@@ -6023,7 +6198,7 @@ void CConEmuMain::UpdateCursorInfo(COORD crCursor, CONSOLE_CURSOR_INFO cInfo)
 	_wsprintf(szCursor, SKIPLEN(countof(szCursor)) _T("%ix%i, %i %s"),
 		(int)crCursor.X, (int)crCursor.Y,
 		cInfo.dwSize, cInfo.bVisible ? L"vis" : L"hid");
-	SetDlgItemText(gpSetCls->hInfo, tCursorPos, szCursor);
+	SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tCursorPos, szCursor);
 }
 
 void CConEmuMain::UpdateSizes()
@@ -6031,7 +6206,9 @@ void CConEmuMain::UpdateSizes()
 	POINT ptCur = {}; GetCursorPos(&ptCur);
 	HWND hPoint = WindowFromPoint(ptCur);
 
-	if (!ghOpWnd || !gpSetCls->hInfo)
+	HWND hInfo = gpSetCls->mh_Tabs[gpSetCls->thi_Info];
+
+	if (!ghOpWnd || !hInfo)
 	{
 		// Может курсор-сплиттер нужно убрать или поставить
 		if (hPoint && ((hPoint == ghWnd) || (GetParent(hPoint) == ghWnd)))
@@ -6062,21 +6239,21 @@ void CConEmuMain::UpdateSizes()
 	}
 	else
 	{
-		SetDlgItemText(gpSetCls->hInfo, tConSizeChr, _T("?"));
-		SetDlgItemText(gpSetCls->hInfo, tConSizePix, _T("?"));
-		SetDlgItemText(gpSetCls->hInfo, tPanelLeft, _T("?"));
-		SetDlgItemText(gpSetCls->hInfo, tPanelRight, _T("?"));
+		SetDlgItemText(hInfo, tConSizeChr, _T("?"));
+		SetDlgItemText(hInfo, tConSizePix, _T("?"));
+		SetDlgItemText(hInfo, tPanelLeft, _T("?"));
+		SetDlgItemText(hInfo, tPanelRight, _T("?"));
 	}
 
 	if (pVCon && pVCon->GetView())
 	{
 		RECT rcClient = pVCon->GetDcClientRect();
 		TCHAR szSize[32]; _wsprintf(szSize, SKIPLEN(countof(szSize)) _T("%ix%i"), rcClient.right, rcClient.bottom);
-		SetDlgItemText(gpSetCls->hInfo, tDCSize, szSize);
+		SetDlgItemText(hInfo, tDCSize, szSize);
 	}
 	else
 	{
-		SetDlgItemText(gpSetCls->hInfo, tDCSize, L"<none>");
+		SetDlgItemText(hInfo, tDCSize, L"<none>");
 	}
 }
 
@@ -6980,7 +7157,7 @@ void CConEmuMain::PaintGaps(HDC hDC)
 #else
 	nColorIdx = 0; // Black
 #endif
-	HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(isMeForeground())[nColorIdx]);
+	HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(-1, !isMeForeground())[nColorIdx]);
 
 	RECT rcClient = GetGuiClientRect(); // Клиентская часть главного окна
 
@@ -8336,6 +8513,120 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	return 0;
 }
 
+wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource)
+{
+	wchar_t* pszDataW = NULL;
+
+	if (*asSource == L'@')
+	{
+		// В качестве "команды" указан "пакетный файл" одновременного запуска нескольких консолей
+		HANDLE hFile = CreateFile(asSource+1, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+
+		if (!hFile || hFile == INVALID_HANDLE_VALUE)
+		{
+			DWORD dwErr = GetLastError();
+			wchar_t szCurDir[MAX_PATH*2]; szCurDir[0] = 0; GetCurrentDirectory(countof(szCurDir), szCurDir);
+			size_t cchMax = _tcslen(asSource)+100+_tcslen(szCurDir);
+			wchar_t* pszErrMsg = (wchar_t*)calloc(cchMax,2);
+			_wcscpy_c(pszErrMsg, cchMax, L"Can't open console batch file:\n\xAB"/*«*/);
+			_wcscat_c(pszErrMsg, cchMax, asSource+1);
+			_wcscat_c(pszErrMsg, cchMax, L"\xBB"/*»*/ L"\nCurrent directory:\n\xAB"/*«*/);
+			_wcscat_c(pszErrMsg, cchMax, szCurDir);
+			_wcscat_c(pszErrMsg, cchMax, L"\xBB"/*»*/);
+			DisplayLastError(pszErrMsg, dwErr);
+			free(pszErrMsg);
+			//Destroy(); -- must caller
+			return NULL;
+		}
+
+		DWORD nSize = GetFileSize(hFile, NULL);
+
+		if (!nSize || nSize > (1<<20))
+		{
+			DWORD dwErr = GetLastError();
+			CloseHandle(hFile);
+			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(asSource)+100,2);
+			lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n\xAB"/*«*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\xBB"/*»*/);
+			DisplayLastError(pszErrMsg, dwErr);
+			free(pszErrMsg);
+			//Destroy(); -- must caller
+			return NULL;
+		}
+
+		char* pszDataA = (char*)calloc(nSize+4,1); //-V112
+		_ASSERTE(pszDataA);
+		DWORD nRead = 0;
+		BOOL lbRead = ReadFile(hFile, pszDataA, nSize, &nRead, 0);
+		DWORD dwErr = GetLastError();
+		CloseHandle(hFile);
+
+		if (!lbRead || nRead != nSize)
+		{
+			free(pszDataA);
+			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(asSource)+100,2);
+			lstrcpy(pszErrMsg, L"Reading console batch file failed:\n\xAB"/*«*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\xBB"/*»*/);
+			DisplayLastError(pszErrMsg, dwErr);
+			free(pszErrMsg);
+			//Destroy(); -- must caller
+			return NULL;
+		}
+
+		// Опредлить код.страницу файла
+		if (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF')
+		{
+			// UTF-8 BOM
+			pszDataW = (wchar_t*)calloc(nSize+2,2);
+			_ASSERTE(pszDataW);
+			MultiByteToWideChar(CP_UTF8, 0, pszDataA+3, -1, pszDataW, nSize);
+		}
+		else if (pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE')
+		{
+			// CP-1200 BOM
+			pszDataW = lstrdup((wchar_t*)(pszDataA+2));
+			_ASSERTE(pszDataW);
+		}
+		else
+		{
+			// Plain ANSI
+			pszDataW = (wchar_t*)calloc(nSize+2,2);
+			_ASSERTE(pszDataW);
+			MultiByteToWideChar(CP_ACP, 0, pszDataA, -1, pszDataW, nSize+1);
+		}
+
+	}
+	else if (*asSource == L'<')
+	{
+		wchar_t szName[MAX_PATH]; lstrcpyn(szName, asSource, countof(szName));
+		wchar_t* psz = wcschr(szName, L'>');
+		if (psz) psz[1] = 0;
+
+		const Settings::CommandTasks* pGrp;
+		for (int i = 0; (pGrp = gpSet->CmdTaskGet(i)) != NULL; i++)
+		{
+			if (lstrcmpi(pGrp->pszName, szName) == 0)
+			{
+				pszDataW = lstrdup(pGrp->pszCommands);
+				break;
+			}
+		}
+
+		if (!pszDataW)
+		{
+			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(szName)+100,2);
+			lstrcpy(pszErrMsg, L"Command group "); lstrcat(pszErrMsg, szName); lstrcat(pszErrMsg, L" not found");
+			DisplayLastError(pszErrMsg, -1);
+			return NULL;
+		}
+
+	}
+	else
+	{
+		_ASSERTE(*asSource==L'@' || *asSource==L'<');
+	}
+
+	return pszDataW;
+}
+
 void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 {
 	if (!abRecieved)
@@ -8437,202 +8728,24 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			BOOL lbCreated = FALSE;
 			LPCWSTR pszCmd = gpSet->GetCmd();
 
-			if (*pszCmd == L'@' && !gpConEmu->mb_StartDetached)
+			if ((*pszCmd == L'@' || *pszCmd == L'<') && !gpConEmu->mb_StartDetached)
 			{
-				// В качестве "команды" указан "пакетный файл" одновременного запуска нескольких консолей
-				HANDLE hFile = CreateFile(pszCmd+1, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-
-				if (!hFile || hFile == INVALID_HANDLE_VALUE)
+				// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
+				wchar_t* pszDataW = LoadConsoleBatch(pszCmd);
+				if (!pszDataW)
 				{
-					DWORD dwErr = GetLastError();
-					wchar_t szCurDir[MAX_PATH*2]; szCurDir[0] = 0; GetCurrentDirectory(countof(szCurDir), szCurDir);
-					size_t cchMax = _tcslen(pszCmd)+100+_tcslen(szCurDir);
-					wchar_t* pszErrMsg = (wchar_t*)calloc(cchMax,2);
-					_wcscpy_c(pszErrMsg, cchMax, L"Can't open console batch file:\n\xAB"/*«*/);
-					_wcscat_c(pszErrMsg, cchMax, pszCmd+1);
-					_wcscat_c(pszErrMsg, cchMax, L"\xBB"/*»*/ L"\nCurrent directory:\n\xAB"/*«*/);
-					_wcscat_c(pszErrMsg, cchMax, szCurDir);
-					_wcscat_c(pszErrMsg, cchMax, L"\xBB"/*»*/);
-					DisplayLastError(pszErrMsg, dwErr);
-					free(pszErrMsg);
 					Destroy();
 					return;
 				}
 
-				DWORD nSize = GetFileSize(hFile, NULL);
-
-				if (!nSize || nSize > (1<<20))
+				// GO
+				if (!CreateConGroup(pszDataW))
 				{
-					DWORD dwErr = GetLastError();
-					CloseHandle(hFile);
-					wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(pszCmd)+100,2);
-					lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n\xAB"/*«*/); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"\xBB"/*»*/);
-					DisplayLastError(pszErrMsg, dwErr);
-					free(pszErrMsg);
 					Destroy();
 					return;
 				}
 
-				char* pszDataA = (char*)calloc(nSize+4,1); //-V112
-				_ASSERTE(pszDataA);
-				DWORD nRead = 0;
-				BOOL lbRead = ReadFile(hFile, pszDataA, nSize, &nRead, 0);
-				DWORD dwErr = GetLastError();
-				CloseHandle(hFile);
-
-				if (!lbRead || nRead != nSize)
-				{
-					free(pszDataA);
-					wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(pszCmd)+100,2);
-					lstrcpy(pszErrMsg, L"Reading console batch file failed:\n\xAB"/*«*/); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"\xBB"/*»*/);
-					DisplayLastError(pszErrMsg, dwErr);
-					free(pszErrMsg);
-					Destroy();
-					return;
-				}
-
-				// Опредлить код.страницу файла
-				wchar_t* pszDataW = NULL; BOOL lbNeedFreeW = FALSE;
-
-				if (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF')
-				{
-					// UTF-8 BOM
-					pszDataW = (wchar_t*)calloc(nSize+2,2); lbNeedFreeW = TRUE;
-					_ASSERTE(pszDataW);
-					MultiByteToWideChar(CP_UTF8, 0, pszDataA+3, -1, pszDataW, nSize);
-				}
-				else if (pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE')
-				{
-					// CP-1200 BOM
-					pszDataW = (wchar_t*)(pszDataA+2);
-				}
-				else
-				{
-					// Plain ANSI
-					pszDataW = (wchar_t*)calloc(nSize+2,2); lbNeedFreeW = TRUE;
-					_ASSERTE(pszDataW);
-					MultiByteToWideChar(CP_ACP, 0, pszDataA, -1, pszDataW, nSize+1);
-				}
-
-				// Поехали
-				wchar_t *pszLine = pszDataW;
-				wchar_t *pszNewLine = wcschr(pszLine, L'\r');
-				CVirtualConsole *pSetActive = NULL, *pVCon = NULL;
-				BOOL lbSetActive = FALSE, lbOneCreated = FALSE, lbRunAdmin = FALSE;
-
-				while(*pszLine)
-				{
-					lbSetActive = lbRunAdmin = FALSE;
-
-					while(*pszLine == L'>' || *pszLine == L'*' || *pszLine == L' ' || *pszLine == L'\t')
-					{
-						if (*pszLine == L'>') lbSetActive = TRUE;
-
-						if (*pszLine == L'*') lbRunAdmin = TRUE;
-
-						pszLine++;
-					}
-
-					if (pszNewLine) *pszNewLine = 0;
-
-					while(*pszLine == L' ') pszLine++;
-
-					if (*pszLine)
-					{
-						while(pszLine[0] == L'/')
-						{
-							if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
-							                               pszLine, 14, L"/bufferheight ", 14))
-							{
-								pszLine += 14;
-
-								while(*pszLine == L' ') pszLine++;
-
-								wchar_t* pszEnd = NULL;
-								long lBufHeight = wcstol(pszLine, &pszEnd, 10);
-								gpSetCls->SetArgBufferHeight(lBufHeight);
-
-								if (pszEnd) pszLine = pszEnd;
-							}
-
-							TODO("Когда появился ключ /mouse - добавить сюда обработку");
-
-							if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
-							                               pszLine, 5, L"/cmd ", 5))
-							{
-								pszLine += 5;
-							}
-
-							while(*pszLine == L' ') pszLine++;
-						}
-
-						if (*pszLine)
-						{
-							RConStartArgs args;
-							args.pszSpecialCmd = lstrdup(pszLine);
-							args.bRunAsAdministrator = lbRunAdmin;
-							pVCon = CreateCon(&args);
-
-							if (!pVCon)
-							{
-								DisplayLastError(L"Can't create new virtual console!");
-
-								if (!lbOneCreated)
-								{
-									Destroy();
-									return;
-								}
-							}
-							else
-							{
-								lbOneCreated = TRUE;
-
-								if (lbSetActive && !pSetActive)
-									pSetActive = pVCon;
-
-								if (GetVCon((int)countof(mp_VCon)-1))
-									break; // Больше создать не получится
-							}
-						}
-
-						MSG Msg;
-
-						while(PeekMessage(&Msg,0,0,0,PM_REMOVE))
-						{
-							if (Msg.message == WM_QUIT)
-								return;
-
-							BOOL lbDlgMsg = isDialogMessage(Msg);
-							if (!lbDlgMsg)
-							{
-								TranslateMessage(&Msg);
-								DispatchMessage(&Msg);
-							}
-						}
-
-						if (!ghWnd || !IsWindow(ghWnd))
-							return;
-					}
-
-					if (!pszNewLine) break;
-
-					pszLine = pszNewLine+1;
-
-					if (!*pszLine) break;
-
-					if (*pszLine == L'\n') pszLine++;
-
-					pszNewLine = wcschr(pszLine, L'\r');
-				}
-
-				if (pSetActive)
-				{
-					Activate(pSetActive);
-				}
-
-				if (pszDataW && lbNeedFreeW) free(pszDataW); pszDataW = NULL;
-
-				if (pszDataA) free(pszDataA); pszDataA = NULL;
+				SafeFree(pszDataW);
 
 				// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
 				// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
@@ -9279,8 +9392,8 @@ void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 	gpConEmu->UpdateGuiInfoMapping();
 	
 	// Заполнить цвета gpSet->ThSet.crPalette[16], gpSet->ThSet.crFadePalette[16]
-	COLORREF *pcrNormal = gpSet->GetColors(FALSE);
-	COLORREF *pcrFade = gpSet->GetColors(TRUE);
+	COLORREF *pcrNormal = gpSet->GetColors(-1, FALSE);
+	COLORREF *pcrFade = gpSet->GetColors(-1, TRUE);
 
 	for(int i=0; i<16; i++)
 	{
@@ -12464,8 +12577,12 @@ void CConEmuMain::OnDesktopMode()
 		{
 			gpSet->isDesktopMode = false;
 
-			if (ghOpWnd && gpSetCls->hExt)
-				CheckDlgButton(gpSetCls->hExt, cbDesktopMode, BST_UNCHECKED);
+			HWND hExt = gpSetCls->mh_Tabs[gpSetCls->thi_Ext];
+
+			if (ghOpWnd && hExt)
+			{
+				CheckDlgButton(hExt, cbDesktopMode, BST_UNCHECKED);
+			}
 		}
 		else
 		{
@@ -12651,14 +12768,17 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			return 0;
 			
 		case ID_ALWAYSONTOP:
-			gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
-			OnAlwaysOnTop();
-
-			if (ghOpWnd && gpSetCls->hExt)
 			{
-				CheckDlgButton(gpSetCls->hExt, cbAlwaysOnTop, gpSet->isAlwaysOnTop ? BST_CHECKED : BST_UNCHECKED);
-			}
+				gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
+				OnAlwaysOnTop();
 
+				HWND hExt = gpSetCls->mh_Tabs[gpSetCls->thi_Ext];
+
+				if (ghOpWnd && hExt)
+				{
+					CheckDlgButton(hExt, cbAlwaysOnTop, gpSet->isAlwaysOnTop ? BST_CHECKED : BST_UNCHECKED);
+				}
+			}
 			return 0;
 			
 		case ID_DUMPCONSOLE:
@@ -13855,7 +13975,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_HOTKEY:
 
 			// Ctrl+Win+Alt+Space
-			if (wParam == 0x201)
+			if (wParam == HOTKEY_CTRLWINALTSPACE_ID)
 			{
 				gpConEmu->CtrlWinAltSpace();
 			}

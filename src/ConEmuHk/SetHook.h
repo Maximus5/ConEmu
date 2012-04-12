@@ -156,11 +156,12 @@ typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
 struct HookModeFar
 {
 	DWORD cbSize;            // размер структуры
-	BOOL  bFarHookMode;      // устанавливается в TRUE из плагина ConEmu.dll
+	BOOL  bFarHookMode;      // устанавливается в TRUE из плагина ConEmu.dll !!! MUST BE FIRST BOOL !!!
 	BOOL  bFARuseASCIIsort;  // -> OnCompareStringW
 	BOOL  bShellNoZoneCheck; // -> OnShellExecuteXXX
 	BOOL  bMonitorConsoleInput; // при (Read/Peek)ConsoleInput(A/W) послать инфу в GUI/Settings/Debug
 	BOOL  bPopupMenuPos;     // при вызове EMenu показать меню в позиции мышиного курсора
+	BOOL  bLongConsoleOutput; // при выполнении консольных программ из Far - увеличивать высоту буфера
 };
 
 #if defined(EXTERNAL_HOOK_LIBRARY) && !defined(DEFINE_HOOK_MACROS)

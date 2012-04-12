@@ -81,41 +81,47 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEFAULT_FADE_HIGH 0xD0
 
 
-//struct CONEMUDEFCOLORS
-//{
-//	const wchar_t* pszTitle;
-//	DWORD dwDefColors[0x10];
-//};
-//
-//const CONEMUDEFCOLORS DefColors[] =
-//{
-//	{
-//		L"Default color scheme (Windows standard)", {
-//			0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
-//			0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
-//		}
-//	},
-//	{
-//		L"Gamma 1 (for use with dark monitors)", {
-//			0x00000000, 0x00960000, 0x0000aa00, 0x00aaaa00, 0x000000aa, 0x00800080, 0x0000aaaa, 0x00c0c0c0,
-//			0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
-//		}
-//	},
-//	{
-//		L"Murena scheme", {
-//			0x00000000, 0x00644100, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
-//			0x00808080, 0x00ff0000, 0x0076c587, 0x00ffff00, 0x00004bff, 0x00d78ce6, 0x0000ffff, 0x00ffffff
-//		}
-//	},
-//	{
-//		L"tc-maxx", {
-//			0x00000000, RGB(11,27,59), RGB(0,128,0), RGB(0,90,135), RGB(106,7,28), RGB(128,0,128), RGB(128,128,0), RGB(40,150,177),
-//			RGB(128,128,128), RGB(0,0,255), RGB(0,255,0), RGB(0,215,243), RGB(190,7,23), RGB(255,0,255), RGB(255,255,0), RGB(255,255,255)
-//		}
-//	},
-//
-//};
-extern const DWORD *dwDefColors; // = DefColors->dwDefColors;
+struct CONEMUDEFCOLORS
+{
+	const wchar_t* pszTitle;
+	DWORD dwDefColors[0x10];
+};
+
+const CONEMUDEFCOLORS DefColors[] =
+{
+	{
+		L"<Default color scheme (Windows standard)>", {
+			0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
+			0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
+		}
+	},
+	{
+		L"<Gamma 1 (for use with dark monitors)>", {
+			0x00000000, 0x00960000, 0x0000aa00, 0x00aaaa00, 0x000000aa, 0x00800080, 0x0000aaaa, 0x00c0c0c0,
+			0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
+		}
+	},
+	{
+		L"<Murena scheme>", {
+			0x00000000, 0x00644100, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
+			0x00808080, 0x00ff0000, 0x0076c587, 0x00ffff00, 0x00004bff, 0x00d78ce6, 0x0000ffff, 0x00ffffff
+		}
+	},
+	{
+		L"<tc-maxx>", {
+			0x00000000, RGB(11,27,59), RGB(0,128,0), RGB(0,90,135), RGB(106,7,28), RGB(128,0,128), RGB(128,128,0), RGB(40,150,177),
+			RGB(128,128,128), RGB(0,0,255), RGB(0,255,0), RGB(0,215,243), RGB(190,7,23), RGB(255,0,255), RGB(255,255,0), RGB(255,255,255)
+		}
+	},
+	{
+		L"<Solarized (John Doe)>", {
+			0x00362b00, 0x00423607, 0x00756e58, 0x00837b65, 0x002f32dc, 0x00c4716c, 0x00164bcb, 0x00d5e8ee,
+			0x00a1a193, 0x00d28b26, 0x00009985, 0x0098a12a, 0x00969483, 0x008236d3, 0x000089b5, 0x00e3f6fd		
+		}
+	},
+
+};
+//const DWORD *dwDefColors = DefColors[0].dwDefColors;
 //DWORD gdwLastColors[0x10] = {0};
 //BOOL  gbLastColorsOk = FALSE;
 
@@ -266,7 +272,7 @@ void Settings::InitSettings()
 			TCHAR ColorName[] = L"ColorTable00";
 			bool  lbBlackFound = false;
 
-			for(uint i = 0x10; i--;)
+			for (uint i = 0x10; i--;)
 			{
 				// L"ColorTableNN"
 				ColorName[10] = i/10 + '0';
@@ -274,14 +280,14 @@ void Settings::InitSettings()
 
 				if (!RegConColors.Load(ColorName, (LPBYTE)&(Colors[i]), sizeof(Colors[0])))
 					if (!RegConDef.Load(ColorName, (LPBYTE)&(Colors[i]), sizeof(Colors[0])))
-						Colors[i] = dwDefColors[i]; //-V108
+						Colors[i] = DefColors[0].dwDefColors[i]; //-V108
 
 				if (Colors[i] == 0)
 				{
 					if (!lbBlackFound)
 						lbBlackFound = true;
 					else if (lbBlackFound)
-						Colors[i] = dwDefColors[i]; //-V108
+						Colors[i] = DefColors[0].dwDefColors[i]; //-V108
 				}
 
 				Colors[i+0x10] = Colors[i]; // Умолчания
@@ -291,14 +297,18 @@ void Settings::InitSettings()
 			RegConColors.CloseKey();
 		}
 	}
+
 	isTrueColorer = true; // включим по умочанию, ибо Far3
-	isExtendColors = false;
-	nExtendColor = 14;
-	isExtendFonts = false;
-#ifdef _DEBUG
-	isExtendFonts = true;
-#endif
-	nFontNormalColor = 1; nFontBoldColor = 12; nFontItalicColor = 13;
+
+	AppStd.isExtendColors = false;
+	AppStd.nExtendColor = 14;
+	AppStd.isExtendFonts = false;
+	AppStd.nFontNormalColor = 1; AppStd.nFontBoldColor = 12; AppStd.nFontItalicColor = 13;
+	AppStd.isCursorV = true;
+	AppStd.isCursorBlink = true;
+	AppStd.isCursorColor = false;
+	AppStd.isCursorBlockInactive = true;
+
 	//CheckTheming(); -- сейчас - нельзя. нужно дождаться, пока главное окно будет создано
 	//mb_ThemingEnabled = (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1));
 //------------------------------------------------------------------------
@@ -353,10 +363,6 @@ void Settings::InitSettings()
 	nTabLenMax = 20;
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
-	isCursorV = true;
-	isCursorBlink = true;
-	isCursorColor = false;
-	isCursorBlockInactive = true;
 	isConsoleTextSelection = 1; // Always
 	isCTSSelectBlock = true; isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
 	isCTSSelectText = true; isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
@@ -424,6 +430,655 @@ void Settings::InitSettings()
 	UpdSet.ResetToDefaults();
 }
 
+void Settings::LoadAppSettings(SettingsBase* reg)
+{
+	BOOL lbOpened = FALSE;
+	wchar_t szAppKey[MAX_PATH+64];
+	wcscpy_c(szAppKey, gpSetCls->GetConfigPath());
+	wcscat_c(szAppKey, L"\\Apps");
+	wchar_t* pszAppKey = szAppKey+lstrlen(szAppKey);
+
+	int NewAppCount = 0;
+	AppSettings* NewApps = NULL;
+	CEAppColors* NewAppColors = NULL;
+	
+	lbOpened = reg->OpenKey(szAppKey, KEY_READ);
+	if (lbOpened)
+	{
+		reg->Load(L"Count", NewAppCount);
+		reg->CloseKey();
+	}
+
+	if (lbOpened && NewAppCount > 0)
+	{
+		NewApps = (AppSettings*)calloc(NewAppCount, sizeof(AppSettings));
+		NewAppColors = (CEAppColors*)calloc(NewAppCount, sizeof(CEAppColors));
+
+		int nSucceeded = 0;
+		for (int i = 0; i < NewAppCount; i++)
+		{
+			_wsprintf(pszAppKey, SKIPLEN(32) L"\\App%i", i+1);
+
+			lbOpened = reg->OpenKey(szAppKey, KEY_READ);
+			if (lbOpened)
+			{
+				_ASSERTE(AppStd.AppNames == NULL);
+
+				// Умолчания берем из основной ветки!
+				NewApps[nSucceeded] = AppStd;
+				memmove(NewAppColors[nSucceeded].Colors, Colors, sizeof(Colors));
+
+				reg->Load(L"AppNames", &NewApps[nSucceeded].AppNames);
+				if (NewApps[nSucceeded].AppNames && *NewApps[nSucceeded].AppNames)
+				{
+					CharLowerBuff(NewApps[nSucceeded].AppNames, lstrlen(NewApps[nSucceeded].AppNames));
+					reg->Load(L"Elevated", NewApps[nSucceeded].Elevated);
+					LoadAppSettings(reg, NewApps+nSucceeded, NewAppColors[nSucceeded].Colors);
+					nSucceeded++;
+				}
+				else
+				{
+					SafeFree(NewApps[nSucceeded].AppNames);
+				}
+				reg->CloseKey();
+			}
+		}
+		NewAppCount = nSucceeded;
+	}
+
+	int OldAppCount = this->AppCount;
+	this->AppCount = NewAppCount;	
+	AppSettings* OldApps = Apps; Apps = NewApps;
+	CEAppColors* OldAppColors = AppColors; AppColors = NewAppColors;
+	for (int i = 0; i < OldAppCount && OldApps; i++)
+	{
+		SafeFree(OldApps[i].AppNames);
+	}
+	SafeFree(OldApps);
+	SafeFree(OldAppColors);
+}
+
+void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, COLORREF* pColors)
+{
+	TCHAR ColorName[] = L"ColorTable00";
+
+	for (size_t i = countof(Colors)/*0x20*/; i--;)
+	{
+		ColorName[10] = i/10 + '0';
+		ColorName[11] = i%10 + '0';
+		reg->Load(ColorName, pColors[i]);
+	}
+
+	reg->Load(L"ExtendColors", pApp->isExtendColors);
+
+	reg->Load(L"ExtendColorIdx", pApp->nExtendColor);
+	if (pApp->nExtendColor<0 || pApp->nExtendColor>15) pApp->nExtendColor=14;
+
+	reg->Load(L"ExtendFonts", pApp->isExtendFonts);
+
+	reg->Load(L"ExtendFontNormalIdx", pApp->nFontNormalColor);
+	if (pApp->nFontNormalColor<0 || pApp->nFontNormalColor>15) pApp->nFontNormalColor=1;
+
+	reg->Load(L"ExtendFontBoldIdx", pApp->nFontBoldColor);
+	if (pApp->nFontBoldColor<0 || pApp->nFontBoldColor>15) pApp->nFontBoldColor=12;
+
+	reg->Load(L"ExtendFontItalicIdx", pApp->nFontItalicColor);
+	if (pApp->nFontItalicColor<0 || pApp->nFontItalicColor>15) pApp->nFontItalicColor=13;
+
+	reg->Load(L"CursorType", pApp->isCursorV);
+	reg->Load(L"CursorColor", pApp->isCursorColor);
+	reg->Load(L"CursorBlink", pApp->isCursorBlink);
+	reg->Load(L"CursorBlockInactive", pApp->isCursorBlockInactive);
+}
+
+void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
+{
+	bool lbDelete = false;
+	if (!reg)
+	{
+		// Если открыто окно настроек - не передергивать
+		if (!abFromOpDlg && ghOpWnd)
+		{
+			return;
+		}
+
+		reg = CreateSettings();
+		if (!reg)
+		{
+			_ASSERTE(reg!=NULL);
+			return;
+		}
+		lbDelete = true;
+	}
+
+	if (CmdTasks)
+	{
+		for (int i = 0; i < CmdTaskCount; i++)
+		{
+			if (CmdTasks[i])
+				CmdTasks[i]->FreePtr();
+		}
+		SafeFree(CmdTasks);
+	}
+
+	BOOL lbOpened = FALSE;
+	wchar_t szCmdKey[MAX_PATH+64], szVal[32];
+	wcscpy_c(szCmdKey, gpSetCls->GetConfigPath());
+	wcscat_c(szCmdKey, L"\\Tasks");
+	wchar_t* pszCmdKey = szCmdKey+lstrlen(szCmdKey);
+
+	int NewTasksCount = 0;
+	
+	lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
+	if (lbOpened)
+	{
+		reg->Load(L"Count", NewTasksCount);
+		reg->CloseKey();
+	}
+
+	if (lbOpened && NewTasksCount > 0)
+	{
+		CmdTasks = (CommandTasks**)calloc(NewTasksCount, sizeof(CommandTasks*));
+
+		int nSucceeded = 0;
+		for (int i = 0; i < NewTasksCount; i++)
+		{
+			_wsprintf(pszCmdKey, SKIPLEN(32) L"\\Task%i", i+1); // 1-based
+
+			lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
+			if (lbOpened)
+			{
+				int iCmdMax = 0, iCmdCount = 0;
+				reg->Load(L"Count", iCmdMax);
+				if (iCmdMax > 0)
+				{
+					size_t nTotalLen = 1024; // с запасом, для редактирования через интерфейс
+					wchar_t** pszCommands = (wchar_t**)calloc(iCmdMax, sizeof(wchar_t*));
+
+					for (int j = 0; j < iCmdMax; j++)
+					{
+						_wsprintf(szVal, SKIPLEN(countof(szVal)) L"Cmd%i", j+1); // 1-based
+
+						if (reg->Load(szVal, &(pszCommands[j])) && pszCommands[j] && *pszCommands[j])
+						{
+							iCmdCount++;
+							nTotalLen += _tcslen(pszCommands[j])+8; // + ">\r\n\r\n"
+						}
+						else
+							SafeFree(pszCommands[j]);
+					}
+
+					if ((iCmdCount > 0) && (nTotalLen))
+					{
+						CmdTasks[i] = (CommandTasks*)calloc(NewTasksCount, sizeof(CommandTasks));
+
+						CmdTasks[i]->cchCmdMax = nTotalLen+1;
+						CmdTasks[i]->pszCommands = (wchar_t*)malloc(CmdTasks[i]->cchCmdMax*sizeof(wchar_t));
+						if (CmdTasks[i]->pszCommands)
+						{
+							//CmdTasks[i]->nCommands = iCmdCount;
+
+							int nActive = 0;
+							reg->Load(L"Active", nActive); // 1-based
+
+							wchar_t* psz = CmdTasks[i]->pszCommands; // dest script
+							for (int k = 0; k < iCmdCount; k++)
+							{
+								if ((k+1) == nActive)
+									*(psz++) = L'>';
+
+								lstrcpy(psz, pszCommands[k]);
+								SafeFree(pszCommands[k]);
+
+								if ((k+1) < iCmdCount)
+									lstrcat(psz, L"\r\n\r\n"); // для визуальности редактирования
+
+								psz += lstrlen(psz);	
+							}
+
+							wchar_t* pszNameSet = NULL;
+							if (!reg->Load(L"Name", &pszNameSet) || !*pszNameSet)
+								SafeFree(pszNameSet);
+
+							CmdTasks[i]->SetName(pszNameSet, i);
+
+							nSucceeded++;
+						}
+					}
+
+					SafeFree(pszCommands);
+				}
+
+				reg->CloseKey();
+			}
+		}
+		CmdTaskCount = nSucceeded;
+	}
+
+	if (lbDelete)
+		delete reg;
+}
+
+void Settings::SaveCmdTasks(SettingsBase* reg)
+{
+	bool lbDelete = false;
+	if (!reg)
+	{
+		reg = CreateSettings();
+		if (!reg)
+		{
+			_ASSERTE(reg!=NULL);
+			return;
+		}
+		lbDelete = true;
+	}
+
+	BOOL lbOpened = FALSE;
+	wchar_t szCmdKey[MAX_PATH+64], szVal[32];
+	wcscpy_c(szCmdKey, gpSetCls->GetConfigPath());
+	wcscat_c(szCmdKey, L"\\Tasks");
+	wchar_t* pszCmdKey = szCmdKey+lstrlen(szCmdKey);
+
+	lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
+	if (lbOpened)
+	{
+		reg->Save(L"Count", CmdTaskCount);
+		reg->CloseKey();
+	}
+
+	if (lbOpened && CmdTasks && CmdTaskCount > 0)
+	{
+		int nSucceeded = 0;
+		for (int i = 0; i < CmdTaskCount; i++)
+		{
+			_wsprintf(pszCmdKey, SKIPLEN(32) L"\\Task%i", i+1); // 1-based
+
+			lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
+			if (lbOpened)
+			{
+				reg->Save(L"Name", CmdTasks[i]->pszName);
+
+				int iCmdCount = 0;
+				int nActive = 0; // 1-based
+				if (CmdTasks[i]->pszCommands)
+				{
+					wchar_t* pszCmd = CmdTasks[i]->pszCommands;
+					while (*pszCmd == L'\r' || *pszCmd == L'\n' || *pszCmd == L'\t' || *pszCmd == L' ')
+						pszCmd++;
+
+					while (pszCmd && *pszCmd)
+					{
+						iCmdCount++;
+
+						wchar_t* pszEnd = wcschr(pszCmd, L'\n');
+						if (pszEnd && (*(pszEnd-1) == L'\r'))
+							pszEnd--;
+						wchar_t chSave;
+						if (pszEnd)
+						{
+							chSave = *pszEnd;
+							*pszEnd = 0;
+						}
+
+						_wsprintf(szVal, SKIPLEN(countof(szVal)) L"Cmd%i", iCmdCount); // 1-based
+
+						if (*pszCmd == L'>')
+						{
+							pszCmd++;
+							nActive = iCmdCount; // 1-based
+						}
+
+						reg->Save(szVal, pszCmd);
+
+						if (pszEnd)
+							*pszEnd = chSave;
+
+						if (!pszEnd)
+							break;
+						pszCmd = pszEnd+1;
+						while (*pszCmd == L'\r' || *pszCmd == L'\n' || *pszCmd == L'\t' || *pszCmd == L' ')
+							pszCmd++;
+					}
+
+					reg->Save(L"Active", nActive); // 1-based
+				}
+				
+				reg->Save(L"Count", iCmdCount);
+
+				reg->CloseKey();
+			}
+		}
+	}
+
+	if (lbDelete)
+		delete reg;
+}
+
+void Settings::SortPalettes()
+{
+	for (int i = 0; (i+1) < PaletteCount; i++)
+	{
+		int iMin = i;
+		for (int j = (i+1); j < PaletteCount; j++)
+		{
+			if (Palettes[iMin]->bPredefined && !Palettes[j]->bPredefined)
+			{
+				continue;
+			}
+			else if (!Palettes[iMin]->bPredefined && Palettes[j]->bPredefined)
+			{
+				_ASSERTE(!(!Palettes[iMin]->bPredefined && Palettes[j]->bPredefined));
+				iMin = j;
+			}
+			else if (CSTR_GREATER_THAN == CompareString(LOCALE_USER_DEFAULT, NORM_IGNORECASE, Palettes[iMin]->pszName, -1, Palettes[j]->pszName, -1))
+			{
+				iMin = j;
+			}
+		}
+
+		if (iMin != i)
+		{
+			ColorPalette* p = Palettes[i];
+			Palettes[i] = Palettes[iMin];
+			Palettes[iMin] = p;
+		}
+	}
+}
+
+void Settings::LoadPalettes(SettingsBase* reg)
+{
+	TCHAR ColorName[] = L"ColorTable00";
+
+	bool lbDelete = false;
+	if (!reg)
+	{
+		reg = CreateSettings();
+		if (!reg)
+		{
+			_ASSERTE(reg!=NULL);
+			return;
+		}
+		lbDelete = true;
+	}
+
+	if (Palettes)
+	{
+		for (int i = 0; i < PaletteCount; i++)
+		{
+			if (Palettes[i])
+				Palettes[i]->FreePtr();
+		}
+		SafeFree(Palettes);
+	}
+	PaletteCount = 0;
+
+
+
+	BOOL lbOpened = FALSE;
+	wchar_t szColorKey[MAX_PATH+64];
+	wcscpy_c(szColorKey, gpSetCls->GetConfigPath());
+	wcscat_c(szColorKey, L"\\Colors");
+	wchar_t* pszColorKey = szColorKey + lstrlen(szColorKey);
+
+	int UserCount = 0;
+	lbOpened = reg->OpenKey(szColorKey, KEY_READ);
+	if (lbOpened)
+	{
+		reg->Load(L"Count", UserCount);
+		reg->CloseKey();
+	}
+
+	
+	// Predefined
+	Palettes = (ColorPalette**)calloc((UserCount + countof(DefColors)), sizeof(ColorPalette*));
+	for (size_t n = 0; n < countof(DefColors); n++)
+	{
+    	Palettes[n] = (ColorPalette*)calloc(1, sizeof(ColorPalette));
+    	_ASSERTE(DefColors[n].pszTitle && DefColors[n].pszTitle[0]==L'<' && DefColors[n].pszTitle[lstrlen(DefColors[n].pszTitle)-1]==L'>');
+    	Palettes[n]->pszName = lstrdup(DefColors[n].pszTitle);
+    	Palettes[n]->bPredefined = true;
+		Palettes[n]->isExtendColors = false;
+		Palettes[n]->nExtendColor = 14;
+    	_ASSERTE(countof(Palettes[n]->Colors)==0x20 && countof(DefColors[n].dwDefColors)==0x10);
+    	memmove(Palettes[n]->Colors, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
+    	// Расширения - инициализируем теми же цветами
+    	memmove(Palettes[n]->Colors+0x10, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
+	}
+	// Инициализировали "Палитрами по умолчанию"
+	PaletteCount = (int)countof(DefColors);
+
+	// User
+	for (int i = 0; i < UserCount; i++)
+	{
+		_wsprintf(pszColorKey, SKIPLEN(32) L"\\Palette%i", i+1); // 1-based
+
+		lbOpened = reg->OpenKey(szColorKey, KEY_READ);
+		if (lbOpened)
+		{
+			Palettes[PaletteCount] = (ColorPalette*)calloc(1, sizeof(ColorPalette));
+
+			reg->Load(L"Name", &Palettes[PaletteCount]->pszName);
+			reg->Load(L"ExtendColors", Palettes[PaletteCount]->isExtendColors);
+			reg->Load(L"ExtendColorIdx", Palettes[PaletteCount]->nExtendColor);
+
+			_ASSERTE(countof(Colors) == countof(Palettes[PaletteCount]->Colors));
+			for (size_t k = 0; k < countof(Palettes[PaletteCount]->Colors)/*0x20*/; k++)
+			{
+				ColorName[10] = k/10 + '0';
+				ColorName[11] = k%10 + '0';
+				reg->Load(ColorName, Palettes[PaletteCount]->Colors[k]);
+			}
+
+			PaletteCount++;
+
+			reg->CloseKey();
+		}
+	}
+
+	// sort
+	SortPalettes();
+
+	if (lbDelete)
+		delete reg;
+}
+
+void Settings::SavePalettes(SettingsBase* reg)
+{
+	TCHAR ColorName[] = L"ColorTable00";
+
+	bool lbDelete = false;
+	if (!reg)
+	{
+		reg = CreateSettings();
+		if (!reg)
+		{
+			_ASSERTE(reg!=NULL);
+			return;
+		}
+		lbDelete = true;
+	}
+
+	// sort
+	SortPalettes();
+
+	BOOL lbOpened = FALSE;
+	wchar_t szColorKey[MAX_PATH+64];
+	wcscpy_c(szColorKey, gpSetCls->GetConfigPath());
+	wcscat_c(szColorKey, L"\\Colors");
+	wchar_t* pszColorKey = szColorKey + lstrlen(szColorKey);
+
+	int UserCount = 0;
+
+	for (int i = 0; i < PaletteCount; i++)
+	{
+		if (!Palettes[i] || Palettes[i]->bPredefined)
+			continue; // Системные - не сохраняем
+
+		_wsprintf(pszColorKey, SKIPLEN(32) L"\\Palette%i", UserCount+1); // 1-based
+
+		lbOpened = reg->OpenKey(szColorKey, KEY_WRITE);
+		if (lbOpened)
+		{
+			UserCount++;
+
+			reg->Save(L"Name", Palettes[i]->pszName);
+			reg->Save(L"ExtendColors", Palettes[i]->isExtendColors);
+			reg->Save(L"ExtendColorIdx", Palettes[i]->nExtendColor);
+
+			_ASSERTE(countof(Colors) == countof(Palettes[i]->Colors));
+			for (size_t k = 0; k < countof(Palettes[i]->Colors)/*0x20*/; k++)
+			{
+				ColorName[10] = k/10 + '0';
+				ColorName[11] = k%10 + '0';
+				reg->Save(ColorName, Palettes[i]->Colors[k]);
+			}
+
+			reg->CloseKey();
+		}
+	}
+	
+	*pszColorKey = 0;
+	lbOpened = reg->OpenKey(szColorKey, KEY_WRITE);
+	if (lbOpened)
+	{
+		reg->Save(L"Count", UserCount);
+		reg->CloseKey();
+	}
+
+	if (lbDelete)
+		delete reg;
+}
+
+// 0-based, index of Palettes
+// -1 -- current palette
+const Settings::ColorPalette* Settings::PaletteGet(int anIndex)
+{
+	if (anIndex == -1)
+	{
+		static ColorPalette StdPal = {};
+		StdPal.bPredefined = false;
+		static wchar_t szCurrentScheme[64] = L"<Current color scheme>";
+		StdPal.pszName = szCurrentScheme;
+		StdPal.isExtendColors = AppStd.isExtendColors;
+		StdPal.nExtendColor = AppStd.nExtendColor;
+		_ASSERTE(sizeof(StdPal.Colors) == sizeof(this->Colors));
+		memmove(StdPal.Colors, this->Colors, sizeof(StdPal.Colors));
+		return &StdPal;
+	}
+
+	if (anIndex < -1 || anIndex >= PaletteCount || !Palettes)
+		return NULL;
+
+	return Palettes[anIndex];
+}
+
+int Settings::PaletteGetIndex(LPCWSTR asName)
+{
+	if (!Palettes || (PaletteCount < 1) || !asName)
+		return -1;
+
+	for (int i = 0; i < PaletteCount; i++)
+	{
+		if (!Palettes[i] || !Palettes[i]->pszName)
+			continue;
+
+		if (lstrcmpi(asName, Palettes[i]->pszName) == 0)
+			return i;
+	}
+
+	return -1;
+}
+
+// Save active colors to named palette
+void Settings::PaletteSaveAs(LPCWSTR asName)
+{
+	// Пользовательские палитры не могут именоваться как "<...>"
+	if (!asName || !*asName || wcspbrk(asName, L"<>"))
+	{
+		DisplayLastError(L"Invalid palette name!\nUser palette name must not contain '<' or '>' symbols.", -1, MB_ICONSTOP, asName ? asName : L"<Null>");
+		return;
+	}
+
+	int nIndex = PaletteGetIndex(asName);
+
+	// "Предопределенные" палитры перезаписывать нельзя
+	if ((nIndex != -1) && Palettes[nIndex]->bPredefined)
+		nIndex = -1;
+
+	if (nIndex == -1)
+	{
+		// Добавляем новую палитру
+		nIndex = PaletteCount;
+
+		ColorPalette** ppNew = (ColorPalette**)calloc(nIndex+1,sizeof(ColorPalette*));
+		if (!ppNew)
+		{
+			_ASSERTE(ppNew!=NULL);
+			return;
+		}
+		if ((PaletteCount > 0) && Palettes)
+		{
+			memmove(ppNew, Palettes, PaletteCount*sizeof(ColorPalette*));
+		}
+		SafeFree(Palettes);
+		Palettes = ppNew;
+
+		PaletteCount = nIndex+1;
+	}
+
+	_ASSERTE(Palettes);
+
+	if (!Palettes[nIndex])
+	{
+		Palettes[nIndex] = (ColorPalette*)calloc(1,sizeof(ColorPalette));
+		if (!Palettes[nIndex])
+		{
+			_ASSERTE(Palettes[nIndex]);
+			return;
+		}
+	}
+
+
+	// Сохранять допускается только пользовательские палитры
+	Palettes[nIndex]->bPredefined = false;
+	Palettes[nIndex]->pszName = lstrdup(asName);
+	Palettes[nIndex]->isExtendColors = AppStd.isExtendColors;
+	Palettes[nIndex]->nExtendColor = AppStd.nExtendColor;
+	_ASSERTE(sizeof(Palettes[nIndex]->Colors) == sizeof(this->Colors));
+	memmove(Palettes[nIndex]->Colors, this->Colors, sizeof(Palettes[nIndex]->Colors));
+	_ASSERTE(nIndex < PaletteCount);
+
+	// Теперь, собственно, пишем настройки
+	SavePalettes(NULL);
+}
+
+// Delete named palette
+void Settings::PaletteDelete(LPCWSTR asName)
+{
+	int nIndex = PaletteGetIndex(asName);
+
+	// "Предопределенные" палитры удалять нельзя
+	if ((nIndex == -1) || Palettes[nIndex]->bPredefined)
+		return;
+
+	// Грохнуть
+	Palettes[nIndex]->FreePtr();
+	// Сдвинуть хвост
+	for (int i = (nIndex+1); i < PaletteCount; i++)
+	{
+		Palettes[i-1] = Palettes[i];
+	}
+	// Уменьшить количество
+	if (PaletteCount > 0)
+	{
+		Palettes[PaletteCount-1] = NULL;
+		PaletteCount--;
+	}
+	
+	// Теперь, собственно, пишем настройки
+	SavePalettes(NULL);
+}
+
 void Settings::LoadSettings()
 {
 	MCHKHEAP
@@ -459,19 +1114,7 @@ void Settings::LoadSettings()
 
 	if (lbOpened)
 	{
-		TCHAR ColorName[] = L"ColorTable00";
-
-		for(uint i = countof(Colors)/*0x20*/; i--;)
-		{
-			ColorName[10] = i/10 + '0';
-			ColorName[11] = i%10 + '0';
-			reg->Load(ColorName, Colors[i]);
-		}
-
-		reg->Load(L"ExtendColors", isExtendColors);
-		reg->Load(L"ExtendColorIdx", nExtendColor);
-
-		if (nExtendColor<0 || nExtendColor>15) nExtendColor=14;
+		LoadAppSettings(reg, &AppStd, Colors);
 
 		reg->Load(L"TrueColorerSupport", isTrueColorer);
 		reg->Load(L"FadeInactive", isFadeInactive);
@@ -480,19 +1123,6 @@ void Settings::LoadSettings()
 
 		if (mn_FadeHigh <= mn_FadeLow) { mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; }
 		mn_LastFadeSrc = mn_LastFadeDst = -1;
-
-		reg->Load(L"ExtendFonts", isExtendFonts);
-		reg->Load(L"ExtendFontNormalIdx", nFontNormalColor);
-
-		if (nFontNormalColor<0 || nFontNormalColor>15) nFontNormalColor=1;
-
-		reg->Load(L"ExtendFontBoldIdx", nFontBoldColor);
-
-		if (nFontBoldColor<0 || nFontBoldColor>15) nFontBoldColor=12;
-
-		reg->Load(L"ExtendFontItalicIdx", nFontItalicColor);
-
-		if (nFontItalicColor<0 || nFontItalicColor>15) nFontItalicColor=13;
 
 		// Debugging
 		reg->Load(L"ConVisible", isConVisible);
@@ -608,11 +1238,6 @@ void Settings::LoadSettings()
 		reg->Load(L"AutoBufferHeight", AutoBufferHeight);
 		//reg->Load(L"FarSyncSize", FarSyncSize);
 		reg->Load(L"CmdOutputCP", nCmdOutputCP);
-		
-		reg->Load(L"CursorType", isCursorV);
-		reg->Load(L"CursorColor", isCursorColor);
-		reg->Load(L"CursorBlink", isCursorBlink);
-		reg->Load(L"CursorBlockInactive", isCursorBlockInactive);
 
 		reg->Load(L"ConsoleTextSelection", isConsoleTextSelection); if (isConsoleTextSelection>2) isConsoleTextSelection = 2;
 
@@ -879,6 +1504,12 @@ void Settings::LoadSettings()
 		reg->CloseKey();
 	}
 
+	LoadPalettes(reg);
+
+	LoadAppSettings(reg);
+
+	LoadCmdTasks(reg);
+
 	// сервис больше не нужен
 	delete reg;
 	reg = NULL;
@@ -906,7 +1537,8 @@ void Settings::LoadSettings()
 	}
 
 	// Передернуть палитру затенения
-	mb_FadeInitialized = false; GetColors(TRUE);
+	ResetFadeColors();
+	GetColors(-1, TRUE);
 	
 	
 
@@ -1098,35 +1730,58 @@ void Settings::UpdateMargins(RECT arcMargins)
 	delete reg;
 }
 
+void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, COLORREF* pColors)
+{
+	TCHAR ColorName[] = L"ColorTable00";
+
+	for(uint i = 0; i<countof(Colors)/*0x20*/; i++)
+	{
+		ColorName[10] = i/10 + '0';
+		ColorName[11] = i%10 + '0';
+		reg->Save(ColorName, (DWORD)pColors[i]);
+	}
+
+	reg->Save(L"ExtendColors", pApp->isExtendColors);
+	reg->Save(L"ExtendColorIdx", pApp->nExtendColor);
+
+	reg->Save(L"ExtendFonts", pApp->isExtendFonts);
+	reg->Save(L"ExtendFontNormalIdx", pApp->nFontNormalColor);
+	reg->Save(L"ExtendFontBoldIdx", pApp->nFontBoldColor);
+	reg->Save(L"ExtendFontItalicIdx", pApp->nFontItalicColor);
+
+	reg->Save(L"CursorType", pApp->isCursorV);
+	reg->Save(L"CursorColor", pApp->isCursorColor);
+	reg->Save(L"CursorBlink", pApp->isCursorBlink);
+	reg->Save(L"CursorBlockInactive", pApp->isCursorBlockInactive);
+}
+
 BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 {
+	BOOL lbRc = FALSE;
+
 	gpSetCls->SettingsPreSave();
 
 	SettingsBase* reg = CreateSettings();
 
+	// Если в реестре настройка есть, или изменилось значение
+	bool lbCurAutoRegisterFonts = isAutoRegisterFonts, lbCurAutoRegisterFontsRc = false;
+	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_READ, abSilent))
+	{
+		lbCurAutoRegisterFontsRc = reg->Load(L"AutoRegisterFonts", lbCurAutoRegisterFonts);
+		reg->CloseKey();
+	}
+
+
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE, abSilent))
 	{
 		wcscpy_c(Type, reg->Type);
-		TCHAR ColorName[] = L"ColorTable00";
 
-		for(uint i = 0; i<countof(Colors)/*0x20*/; i++)
-		{
-			ColorName[10] = i/10 + '0';
-			ColorName[11] = i%10 + '0';
-			reg->Save(ColorName, (DWORD)Colors[i]);
-		}
+		SaveAppSettings(reg, &AppStd, Colors);
 
-		reg->Save(L"ExtendColors", isExtendColors);
-		reg->Save(L"ExtendColorIdx", nExtendColor);
 		reg->Save(L"TrueColorerSupport", isTrueColorer);
 		reg->Save(L"FadeInactive", isFadeInactive);
 		reg->Save(L"FadeInactiveLow", mn_FadeLow);
 		reg->Save(L"FadeInactiveHigh", mn_FadeHigh);
-		/* таки сохраним, чтобы настройки переносить можно было */
-		reg->Save(L"ExtendFonts", isExtendFonts);
-		reg->Save(L"ExtendFontNormalIdx", nFontNormalColor);
-		reg->Save(L"ExtendFontBoldIdx", nFontBoldColor);
-		reg->Save(L"ExtendFontItalicIdx", nFontItalicColor);
 
 		/*if (!isFullScreen && !gpConEmu->isZoomed() && !gpConEmu->isIconic())
 		{
@@ -1169,9 +1824,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"KeyboardHooks", m_isKeyboardHooks);
 		reg->Save(L"FontName", inFont);
 		reg->Save(L"FontName2", inFont2);
-		bool lbTest = isAutoRegisterFonts; // Если в реестре настройка есть, или изменилось значение
 
-		if (reg->Load(L"AutoRegisterFonts", lbTest) || isAutoRegisterFonts != lbTest)
+		// Если в реестре настройка есть, или изменилось значение
+		if (lbCurAutoRegisterFontsRc || (isAutoRegisterFonts != lbCurAutoRegisterFonts))
 			reg->Save(L"AutoRegisterFonts", isAutoRegisterFonts);
 			
 		reg->Save(L"FontAutoSize", isFontAutoSize);
@@ -1214,10 +1869,6 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"DefaultBufferHeight", DefaultBufferHeight);
 		reg->Save(L"AutoBufferHeight", AutoBufferHeight);
 		reg->Save(L"CmdOutputCP", nCmdOutputCP);
-		reg->Save(L"CursorType", isCursorV);
-		reg->Save(L"CursorColor", isCursorColor);
-		reg->Save(L"CursorBlink", isCursorBlink);
-		reg->Save(L"CursorBlockInactive", isCursorBlockInactive);
 		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
 		reg->Save(L"CTS.SelectBlock", isCTSSelectBlock);
 		reg->Save(L"CTS.VkBlock", isCTSVkBlock);
@@ -1365,10 +2016,12 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 
 		/* Done */
 		reg->CloseKey();
-		delete reg;
-		//if (isTabs==1) ForceShowTabs();
-		//MessageBoxA(ghOpWnd, "Saved.", "Information", MB_ICONINFORMATION);
-		return TRUE;
+
+		/* Subsections */
+		SaveCmdTasks(reg);
+
+		/* Done */
+		lbRc = TRUE;
 	}
 
 	//}
@@ -1376,7 +2029,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 
 	// Вроде и показывать не нужно. Объект уже сам ругнулся
 	//MessageBoxA(ghOpWnd, "Failed", "Information", MB_ICONERROR);
-	return FALSE;
+	return lbRc;
 }
 
 bool Settings::isKeyboardHooks()
@@ -1944,7 +2597,8 @@ void Settings::HistoryCheck()
 
 void Settings::HistoryAdd(LPCWSTR asCmd)
 {
-	if (!asCmd || !*asCmd)
+	// Группы и так отображаются в диалоге/меню. В историю их не пишем
+	if (!asCmd || !*asCmd || (*asCmd == L'<'))
 		return;
 
 	if (psCmd && lstrcmp(psCmd, asCmd)==0)
@@ -2333,29 +2987,133 @@ bool Settings::isHideCaptionAlways()
 	return mb_HideCaptionAlways || (!mb_HideCaptionAlways && isUserScreenTransparent);
 }
 
-COLORREF* Settings::GetColors(BOOL abFade)
+int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)
 {
-	if (!abFade || !isFadeInactive)
-		return Colors;
+	if (!asExeAppName || !*asExeAppName || !Apps || (AppCount < 1))
+		return -1;
 
-	if (!mb_FadeInitialized)
+	wchar_t szLower[MAX_PATH]; lstrcpyn(szLower, asExeAppName, countof(szLower));
+	CharLowerBuff(szLower, lstrlen(szLower));
+
+	for (int i = 0; i < AppCount; i++)
 	{
+		if (Apps[i].Elevated == 1)
+		{
+			if (!abElevated)
+				continue;
+		}
+		else if (Apps[i].Elevated == 2)
+		{
+			if (abElevated)
+				continue;
+		}
+
+		wchar_t* pch = Apps[i].AppNames;
+		if (!pch || !*pch)
+		{
+			_ASSERTE(pch && *pch);
+			continue;
+		}
+
+		if (lstrcmp(pch, L"*") == 0)
+		{
+			return i;
+		}
+		
+		while (*pch)
+		{
+			wchar_t* pName = szLower;
+			while (*pName && *pch && (*pName == *pch))
+			{
+				pName++; pch++;
+			}
+
+			if (!*pName)
+			{
+				if (!*pch || (*pch == L'|'))
+					return i;
+			}
+
+			pch = wcschr(pch, L'|');
+			if (pch)
+			{
+				pch++;
+				continue; // перечислено несколько допустимых имен
+			}
+			else
+			{
+				break; // не совпало
+			}
+		}
+	}
+	
+	return -1;
+}
+
+const Settings::AppSettings* Settings::GetAppSettings(int anAppId/*=-1*/)
+{
+	if ((anAppId < 0) || (anAppId >= AppCount))
+	{
+		_ASSERTE(!((anAppId < -1) || (anAppId > AppCount))); // - иначе здесь должен быть валидный индекс для Apps/AppColors
+		if (AppStd.AppNames != NULL)
+		{
+			_ASSERTE(AppStd.AppNames == NULL);
+			AppStd.AppNames = NULL;
+		}
+		return &AppStd;
+	}
+
+	return (Apps+anAppId);
+}
+
+void Settings::ResetFadeColors()
+{
+	mn_LastFadeSrc = mn_LastFadeDst = -1;
+	mb_FadeInitialized = false;
+
+	for (int i = 0; i < AppCount; i++)
+	{
+		AppColors[i].FadeInitialized = false;
+	}
+}
+
+COLORREF* Settings::GetColors(int anAppId/*=-1*/, BOOL abFade)
+{
+	COLORREF *pColors = Colors, *pColorsFade = ColorsFade;
+	bool* pbFadeInitialized = &mb_FadeInitialized;
+	if ((anAppId >= 0) && (anAppId < AppCount))
+	{
+		_ASSERTE(countof(Colors)==countof(AppColors[anAppId].Colors) && countof(ColorsFade)==countof(AppColors[anAppId].ColorsFade));
+		pColors = AppColors[anAppId].Colors; pColorsFade = AppColors[anAppId].ColorsFade;
+		pbFadeInitialized = &AppColors[anAppId].FadeInitialized;
+	}
+
+	if (!abFade || !isFadeInactive)
+		return pColors;
+
+	if (!*pbFadeInitialized)
+	{
+		// Для ускорения, при повторных запросах, GetFadeColor кеширует результат
 		mn_LastFadeSrc = mn_LastFadeDst = -1;
+
+		// Валидация
 		if (((int)mn_FadeHigh - (int)mn_FadeLow) < 64)
 		{
 			mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH;
 		}
 
+		// Prepare
 		mn_FadeMul = mn_FadeHigh - mn_FadeLow;
-		mb_FadeInitialized = true;
+		*pbFadeInitialized = true;
 
-		for (size_t i=0; i<countof(ColorsFade); i++)
+		// Посчитать "затемненные" цвета
+		for (size_t i = 0; i < countof(ColorsFade); i++)
 		{
-			ColorsFade[i] = GetFadeColor(Colors[i]);
+			pColorsFade[i] = GetFadeColor(pColors[i]);
 		}
 	}
 
-	return ColorsFade;
+	return pColorsFade;
 }
 
 COLORREF Settings::GetFadeColor(COLORREF cr)
@@ -2368,10 +3126,11 @@ COLORREF Settings::GetFadeColor(COLORREF cr)
 
 	MYCOLORREF mcr, mcrFade = {}; mcr.color = cr;
 
-	if (!mb_FadeInitialized)
-	{
-		GetColors(TRUE);
-	}
+	//-нафиг
+	//if (!mb_FadeInitialized)
+	//{
+	//	GetColors(TRUE);
+	//}
 
 	mcrFade.rgbRed = GetFadeColorItem(mcr.rgbRed);
 	mcrFade.rgbGreen = GetFadeColorItem(mcr.rgbGreen);
@@ -2523,4 +3282,91 @@ LPCWSTR Settings::SaveAllMacroDefault()
 	// L"@F2 $If (!Editor) $Exit $End %i0=-1; F12 %cur = CurPos; Home Down %s = Menu.Select(\" * \",3,2); $While (%s > 0) $If (%s == %i0) MsgBox(\"FAR SaveAll\",\"Asterisk in menuitem for already processed window\",0x10001) $Exit $End Enter $If (Editor) F2 $If (!Editor) $Exit $End $Else $If (!Viewer) $Exit $End $End %i0 = %s; F12 %s = Menu.Select(\" * \",3,2); $End $If (Menu && Title==\"Screens\") Home $Rep (%cur-1) Down $End Enter $End $Exit"
 	static LPCWSTR pszDefaultMacro = FarSaveAllMacroDefault;
 	return pszDefaultMacro;
+}
+
+const Settings::CommandTasks* Settings::CmdTaskGet(int anIndex)
+{
+	if (!CmdTasks || (anIndex < 0) || (anIndex >= CmdTaskCount))
+		return NULL;
+	return (CmdTasks[anIndex]);
+}
+
+// anIndex - 0-based, index of CmdTasks
+// asName - имя, или NULL, если эту группу нужно удалить (хвост сдвигается вверх)
+// asCommands - список команд (скрипт)
+void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asCommands)
+{
+	if (anIndex < 0)
+	{
+		_ASSERTE(anIndex>=0);
+		return;
+	}
+
+	if (CmdTasks && (asName == NULL))
+	{
+		// Грохнуть ту, что просили
+		CmdTasks[anIndex]->FreePtr();
+		// Сдвинуть хвост
+		for (int i = (anIndex+1); i < CmdTaskCount; i++)
+		{
+			CmdTasks[i-1] = CmdTasks[i];
+		}
+		// Уменьшить количество
+		if (CmdTaskCount > 0)
+		{
+			CmdTasks[CmdTaskCount-1] = NULL;
+			CmdTaskCount--;
+		}
+		return;
+	}
+
+	if (anIndex >= CmdTaskCount)
+	{
+		CommandTasks** ppNew = (CommandTasks**)calloc(anIndex+1,sizeof(CommandTasks*));
+		if (!ppNew)
+		{
+			_ASSERTE(ppNew!=NULL);
+			return;
+		}
+		if ((CmdTaskCount > 0) && CmdTasks)
+		{
+			memmove(ppNew, CmdTasks, CmdTaskCount*sizeof(CommandTasks*));
+		}
+		SafeFree(CmdTasks);
+		CmdTasks = ppNew;
+
+		// CmdTaskCount накручивается в конце функции
+	}
+
+	if (CmdTasks[anIndex] == NULL)
+	{
+		CmdTasks[anIndex] = (CommandTasks*)calloc(1, sizeof(CommandTasks));
+		if (!CmdTasks[anIndex])
+		{
+			_ASSERTE(CmdTasks[anIndex]);
+			return;
+		}
+	}
+
+	CmdTasks[anIndex]->SetName(asName, anIndex);
+	CmdTasks[anIndex]->SetCommands(asCommands);
+
+	if (anIndex >= CmdTaskCount)
+		CmdTaskCount = anIndex+1;
+}
+
+bool Settings::CmdTaskXch(int anIndex1, int anIndex2)
+{
+	if (((anIndex1 < 0) || (anIndex1 >= CmdTaskCount))
+		|| ((anIndex2 < 0) || (anIndex2 >= CmdTaskCount))
+		|| !CmdTasks)
+	{
+		return false;
+	}
+
+	Settings::CommandTasks* p = CmdTasks[anIndex1];
+	CmdTasks[anIndex1] = CmdTasks[anIndex2];
+	CmdTasks[anIndex2] = p;
+
+	return true;
 }

@@ -501,16 +501,21 @@ BOOL CheckCreateAppWindow()
 
 BOOL gbInDisplayLastError = FALSE;
 
-int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /* =0 */, LPCWSTR asTitlte /*= NULL*/)
+int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /* =0 */, LPCWSTR asTitle /*= NULL*/)
 {
 	int nBtn = 0;
 	DWORD dw = dwError ? dwError : GetLastError();
 	wchar_t* lpMsgBuf = NULL;
+	wchar_t *out = NULL;
 	MCHKHEAP
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
-	INT_PTR nLen = _tcslen(asLabel)+64+(lpMsgBuf ? _tcslen(lpMsgBuf) : 0);
-	wchar_t *out = new wchar_t[nLen];
-	_wsprintf(out, SKIPLEN(nLen) _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
+
+	if (dw && (dw != (DWORD)-1))
+	{
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+		INT_PTR nLen = _tcslen(asLabel)+64+(lpMsgBuf ? _tcslen(lpMsgBuf) : 0);
+		out = new wchar_t[nLen];
+		_wsprintf(out, SKIPLEN(nLen) _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
+	}
 
 	if (gbMessagingStarted) apiSetForegroundWindow(ghWnd);
 
@@ -518,11 +523,13 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 
 	WARNING("!!! Заменить MessageBox на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 	BOOL lb = gbInDisplayLastError; gbInDisplayLastError = TRUE;
-	nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, out, asTitlte ? asTitlte : gpConEmu->GetLastTitle(), dwMsgFlags);
+	nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, out ? out : asLabel, asTitle ? asTitle : gpConEmu->GetLastTitle(), dwMsgFlags);
 	gbInDisplayLastError = lb;
 	MCHKHEAP
-	LocalFree(lpMsgBuf);
-	delete [] out;
+	if (lpMsgBuf)
+		LocalFree(lpMsgBuf);
+	if (out)	
+		delete [] out;
 	MCHKHEAP
 	return nBtn;
 }

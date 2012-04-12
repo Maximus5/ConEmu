@@ -89,6 +89,10 @@ bool SettingsRegistry::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 	LONG lRc = RegQueryValueEx(regMy, regName, NULL, NULL, (LPBYTE)value, &nNewSize);
 	if (lRc == ERROR_SUCCESS)
 		return true;
+	
+	// Access denied может быть, если пытаемся _читать_ из ключа, открытого на _запись_
+	_ASSERTE(lRc != ERROR_ACCESS_DENIED);
+
 	if (lRc == ERROR_MORE_DATA && nSize == sizeof(BYTE) && nNewSize == sizeof(DWORD))
 	{
 		// если тип раньше был DWORD а стал - BYTE

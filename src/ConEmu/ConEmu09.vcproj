@@ -2702,6 +2702,10 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\!ToDo.!Bugs!.txt"
+			>
+		</File>
+		<File
 			RelativePath=".\!Todo.Tablet.txt"
 			>
 		</File>

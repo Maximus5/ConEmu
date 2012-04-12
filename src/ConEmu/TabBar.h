@@ -66,7 +66,7 @@ class TabBarClass //: public CToolTip
 			int nCmd;
 			LPCWSTR pszCmd;
 			wchar_t szShort[32];
-		} History[MAX_CMD_HISTORY+1]; // структура для меню выбора команды новой консоли
+		} m_CmdPopupMenu[MAX_CMD_HISTORY+1]; // структура для меню выбора команды новой консоли
 		bool mb_InNewConPopup;
 		bool _active;
 		int _tabHeight;

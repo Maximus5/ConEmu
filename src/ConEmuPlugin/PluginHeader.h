@@ -233,6 +233,10 @@ BOOL IsMacroActiveA();
 BOOL FUNC_X(IsMacroActiveW)();
 BOOL FUNC_Y(IsMacroActiveW)();
 
+int GetMacroArea();
+int FUNC_X(GetMacroAreaW)();
+int FUNC_Y(GetMacroAreaW)();
+
 //BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
 
 void RedrawAll();

@@ -201,6 +201,8 @@ CVirtualConsole::CVirtualConsole(const RConStartArgs *args) : hDC(NULL)
 	mp_RCon = NULL; //new CRealConsole(this);
 	mp_Ghost = NULL;
 
+	mp_Set = NULL; // указатель на настройки раздел€емые по приложени€м
+
 	gpConEmu->OnVConCreated(this, args);
 
 	WARNING("скорректировать размер кучи");
@@ -225,7 +227,7 @@ CVirtualConsole::CVirtualConsole(const RConStartArgs *args) : hDC(NULL)
 	mh_FontByIndex[MAX_FONT_STYLES] = NULL; // зарезервировано дл€ 'Unicode CharMap'
 	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
 	isFade = false; isForeground = true;
-	mp_Colors = gpSet->GetColors();
+	mp_Colors = gpSet->GetColors(-1);
 	memset(&m_LeftPanelView, 0, sizeof(m_LeftPanelView));
 	memset(&m_RightPanelView, 0, sizeof(m_RightPanelView));
 	mn_ConEmuFadeMsg = /*mn_ConEmuSettingsMsg =*/ 0;
@@ -1935,7 +1937,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	isViewer = gpConEmu->isViewer();
 	isFilePanel = gpConEmu->isFilePanel(true);
 	isFade = !isForeground && gpSet->isFadeInactive;
-	mp_Colors = gpSet->GetColors(isFade);
+	mp_Colors = gpSet->GetColors(mp_RCon->GetActiveAppSettingsId(), isFade);
 	nFontHeight = gpSetCls->FontHeight();
 	nFontWidth = gpSetCls->FontWidth();
 	nFontCharSet = gpSetCls->FontCharSet();
@@ -3341,7 +3343,11 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	RECT rect;
 	bool bForeground = gpConEmu->isMeForeground();
 
-	if (!bForeground && gpSet->isCursorBlockInactive)
+	// указатель на настройки раздел€емые по приложени€м
+	if (!mp_Set)
+		mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
+
+	if (!bForeground && mp_Set->isCursorBlockInactive)
 	{
 		dwSize = 100;
 		rect.left = pix.X; /*Cursor.x * nFontWidth;*/
@@ -3349,7 +3355,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		rect.bottom = (pos.Y+1) * nFontHeight;
 		rect.top = (pos.Y * nFontHeight) /*+ 1*/;
 	}
-	else if (!gpSet->isCursorV)
+	else if (!mp_Set->isCursorV)
 	{
 		if (!gpSet->isMonospace)
 		{
@@ -3418,7 +3424,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		rect.bottom = (pos.Y+1) * nFontHeight;
 	}
 
-	//if (!gpSet->isCursorBlink) {
+	//if (!mp_Set->isCursorBlink) {
 	//	gpConEmu->m_Child->SetCaret ( 1, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top );
 	//	return;
 	//} else {
@@ -3432,7 +3438,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	// XOR режим, иначе (тем более при немигающем) курсор закрывает
 	// весь символ и его не видно
 	// 110131 ≈сли курсор мигающий - разрешим нецветной курсор дл€ AltIns в фаре
-	bool bCursorColor = gpSet->isCursorColor || (dwSize >= 40 && !gpSet->isCursorBlink);
+	bool bCursorColor = mp_Set->isCursorColor || (dwSize >= 40 && !mp_Set->isCursorBlink);
 
 	// “еперь в rect нужно отобразить курсор (XOR'ом попробуем?)
 	if (bCursorColor)
@@ -3440,7 +3446,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		HBRUSH hBr = CreateSolidBrush(0xC0C0C0);
 		HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
 
-		if (bForeground || !gpSet->isCursorBlockInactive)
+		if (bForeground || !mp_Set->isCursorBlockInactive)
 		{
 			BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, hDC, 0,0,
 			       PATINVERT);
@@ -3488,6 +3494,11 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 			return;
 		}
 	}
+
+	// указатель на настройки раздел€емые по приложени€м
+	if (!mp_Set)
+		mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
+
 	//------------------------------------------------------------------------
 	///| Drawing cursor |/////////////////////////////////////////////////////
 	//------------------------------------------------------------------------
@@ -3503,7 +3514,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	// ≈сли курсор (в консоли) видим, и находитс€ в видимой области (при прокрутке)
 	if (cinf.bVisible && isCursorValid)
 	{
-		if (!gpSet->isCursorBlink || !bForeground)
+		if (!mp_Set->isCursorBlink || !bForeground)
 		{
 			Cursor.isVisible = true; // ¬идим всегда (даже в неактивной консоли), не мигает
 
@@ -3694,7 +3705,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		HBRUSH hBr = NULL;
 		BOOL lbDelBrush = FALSE;
 		
-		COLORREF *pColors = gpSet->GetColors();
+		COLORREF *pColors = gpSet->GetColors(-1);
 		
 		if (lbGuiVisible)
 		{
@@ -4151,17 +4162,17 @@ void CVirtualConsole::UpdateInfo()
 
 	if (!mp_RCon)
 	{
-		SetDlgItemText(gpSetCls->hInfo, tConSizeChr, L"(None)");
-		SetDlgItemText(gpSetCls->hInfo, tConSizePix, L"(None)");
-		SetDlgItemText(gpSetCls->hInfo, tPanelLeft, L"(None)");
-		SetDlgItemText(gpSetCls->hInfo, tPanelRight, L"(None)");
+		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tConSizeChr, L"(None)");
+		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tConSizePix, L"(None)");
+		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tPanelLeft, L"(None)");
+		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tPanelRight, L"(None)");
 	}
 	else
 	{
 		_wsprintf(szSize, SKIPLEN(countof(szSize)) _T("%ix%i"), mp_RCon->TextWidth(), mp_RCon->TextHeight());
-		SetDlgItemText(gpSetCls->hInfo, tConSizeChr, szSize);
+		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tConSizeChr, szSize);
 		_wsprintf(szSize, SKIPLEN(countof(szSize)) _T("%ix%i"), Width, Height);
-		SetDlgItemText(gpSetCls->hInfo, tConSizePix, szSize);
+		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tConSizePix, szSize);
 		RECT rcPanel;
 		RCon()->GetPanelRect(FALSE, &rcPanel);
 
@@ -4170,7 +4181,7 @@ void CVirtualConsole::UpdateInfo()
 		else
 			wcscpy_c(szSize, L"<Absent>");
 
-		SetDlgItemText(gpSetCls->hInfo, tPanelLeft, szSize);
+		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tPanelLeft, szSize);
 		RCon()->GetPanelRect(TRUE, &rcPanel);
 
 		if (rcPanel.right>rcPanel.left)
@@ -4178,7 +4189,7 @@ void CVirtualConsole::UpdateInfo()
 		else
 			wcscpy_c(szSize, L"<Absent>");
 
-		SetDlgItemText(gpSetCls->hInfo, tPanelRight, szSize);
+		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tPanelRight, szSize);
 	}
 }
 

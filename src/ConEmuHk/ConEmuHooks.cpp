@@ -221,9 +221,11 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
 COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput);
 INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
 HDC WINAPI OnGetDC(HWND hWnd); // user32
+HDC WINAPI OnGetDCEx(HWND hWnd, HRGN hrgnClip, DWORD flags); // user32
 int WINAPI OnReleaseDC(HWND hWnd, HDC hDC); //user32
 int WINAPI OnStretchDIBits(HDC hdc, int XDest, int YDest, int nDestWidth, int nDestHeight, int XSrc, int YSrc, int nSrcWidth, int nSrcHeight, const VOID *lpBits, const BITMAPINFO *lpBitsInfo, UINT iUsage, DWORD dwRop); //gdi32
-
+BOOL WINAPI OnBitBlt(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, DWORD dwRop);
+BOOL WINAPI OnStretchBlt(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest, HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc, DWORD dwRop);
 
 
 
@@ -379,11 +381,14 @@ bool InitHooksUser32()
 		{(void*)OnDialogBoxParamW,		"DialogBoxParamW",		user32},
 		{(void*)OnSetMenu,				"SetMenu",				user32},
 		{(void*)OnGetDC,				"GetDC",				user32},
+		{(void*)OnGetDCEx,				"GetDCEx",				user32},
 		{(void*)OnReleaseDC,			"ReleaseDC",			user32},
 		/* ************************ */
 
 		/* ************************ */
 		{(void*)OnStretchDIBits,		"StretchDIBits",		gdi32},
+		{(void*)OnBitBlt,				"BitBlt",				gdi32},
+		{(void*)OnStretchBlt,			"StretchBlt",			gdi32},
 		/* ************************ */
 		{0}
 	};
@@ -725,6 +730,9 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	if ((dwCreationFlags & CREATE_SUSPENDED) == 0)
 		DebugString(L"CreateProcessW without CREATE_SUSPENDED Flag!\n");
 
+	#ifdef _DEBUG
+	SetLastError(0);
+	#endif
 
 	lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 	dwErr = GetLastError();
@@ -3628,6 +3636,21 @@ HDC WINAPI OnGetDC(HWND hWnd)
 	return hDC;
 }
 
+HDC WINAPI OnGetDCEx(HWND hWnd, HRGN hrgnClip, DWORD flags)
+{
+	typedef HDC (WINAPI* OnGetDCEx_t)(HWND hWnd, HRGN hrgnClip, DWORD flags);
+	ORIGINALFASTEX(GetDCEx,NULL);
+	HDC hDC = NULL;
+	
+	if (F(GetDCEx))
+		hDC = F(GetDCEx)(hWnd, hrgnClip, flags);
+	
+	if (hDC && ghConEmuWndDC && hWnd == ghConEmuWndDC)
+		ghTempHDC = hDC;
+	
+	return hDC;
+}
+
 int WINAPI OnReleaseDC(HWND hWnd, HDC hDC)
 {
 	typedef int (WINAPI* OnReleaseDC_t)(HWND hWnd, HDC hDC);
@@ -3675,4 +3698,95 @@ int WINAPI OnStretchDIBits(HDC hdc, int XDest, int YDest, int nDestWidth, int nD
 	}
 		
 	return iRc;
+}
+
+BOOL WINAPI OnBitBlt(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, DWORD dwRop)
+{
+	typedef int (WINAPI* OnBitBlt_t)(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, DWORD dwRop);
+	ORIGINALFASTEX(BitBlt,NULL);
+	BOOL bRc = FALSE;
+	
+	if (F(BitBlt))
+		bRc = F(BitBlt)(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, dwRop);
+
+	// Если рисуют _прямо_ на канвасе ConEmu
+	if (bRc && hdcDest && hdcDest == ghTempHDC)
+	{
+		// Уведомить GUI, что у него прямо на канвасе кто-то что-то нарисовал :)
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LOCKDC, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_LOCKDC));
+		if (pIn)
+		{
+			pIn->LockDc.hDcWnd = ghConEmuWndDC; // На всякий случай
+			pIn->LockDc.bLock = TRUE;
+			pIn->LockDc.Rect.left = nXDest;
+			pIn->LockDc.Rect.top = nYDest;
+			pIn->LockDc.Rect.right = nXDest+nWidth-1;
+			pIn->LockDc.Rect.bottom = nYDest+nHeight-1;
+
+			CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+
+			if (pOut)
+				ExecuteFreeResult(pOut);
+			ExecuteFreeResult(pIn);
+		}
+	}
+		
+	return bRc;
+}
+
+// Поддержка батчей из GdipDrawImageRectRectI
+static RECT StretchBltBatch = {};
+
+BOOL WINAPI OnStretchBlt(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest, HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc, DWORD dwRop)
+{
+	typedef int (WINAPI* OnStretchBlt_t)(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest, HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc, DWORD dwRop);
+	ORIGINALFASTEX(StretchBlt,NULL);
+	BOOL bRc = FALSE;
+
+	//#ifdef _DEBUG
+	//HWND h = WindowFromDC(hdcDest);
+	//#endif
+
+	// Если рисуют _прямо_ на канвасе ConEmu
+	if (/*bRc &&*/ hdcDest && hdcDest == ghTempHDC)
+	{
+		if (
+			(!StretchBltBatch.bottom && !StretchBltBatch.top)
+			|| (nYOriginDest <= StretchBltBatch.top)
+			|| (nXOriginDest != StretchBltBatch.left)
+			|| (StretchBltBatch.right != (nXOriginDest+nWidthDest-1))
+			|| (StretchBltBatch.bottom != (nYOriginDest-1))
+			)
+		{
+			// Сброс батча
+			StretchBltBatch.left = nXOriginDest;
+			StretchBltBatch.top = nYOriginDest;
+			StretchBltBatch.right = nXOriginDest+nWidthDest-1;
+			StretchBltBatch.bottom = nYOriginDest+nHeightDest-1;
+		}
+		else
+		{
+			StretchBltBatch.bottom = nYOriginDest+nHeightDest-1;
+		}
+
+		// Уведомить GUI, что у него прямо на канвасе кто-то что-то нарисовал :)
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LOCKDC, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_LOCKDC));
+		if (pIn)
+		{
+			pIn->LockDc.hDcWnd = ghConEmuWndDC; // На всякий случай
+			pIn->LockDc.bLock = TRUE;
+			pIn->LockDc.Rect = StretchBltBatch;
+
+			CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+
+			if (pOut)
+				ExecuteFreeResult(pOut);
+			ExecuteFreeResult(pIn);
+		}
+	}
+
+	if (F(StretchBlt))
+		bRc = F(StretchBlt)(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest, hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc, dwRop);
+
+	return bRc;
 }

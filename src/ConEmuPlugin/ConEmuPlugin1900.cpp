@@ -825,6 +825,17 @@ void SetWindowW1900(int nTab)
 		InfoW1900->AdvControl(&guid_ConEmu, ACTL_COMMIT, 0, 0);
 }
 
+DWORD WINAPI BackgroundMacroError(LPVOID lpParameter)
+{
+	wchar_t* pszMacroError = (wchar_t*)lpParameter;
+
+	MessageBox(NULL, pszMacroError, L"ConEmu plugin", MB_ICONSTOP|MB_SYSTEMMODAL);
+
+	SafeFree(pszMacroError);
+
+	return 0;
+}
+
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
 void PostMacroW1900(const wchar_t* asMacro, INPUT_RECORD* apRec)
 {
@@ -840,53 +851,168 @@ void PostMacroW1900(const wchar_t* asMacro, INPUT_RECORD* apRec)
 		asMacro ++;
 	}
 
+	wchar_t* pszMacroCopy = NULL;
+
+	//Far3 build 2576: удален $Text
+	//т.к. макросы у нас фаро-независимые - нужны танцы с бубном
+	pszMacroCopy = lstrdup(asMacro);
+	CharUpperBuff(pszMacroCopy, lstrlen(pszMacroCopy));
+	if (wcsstr(pszMacroCopy, L"$TEXT") && !InfoW1900->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, MSSC_CHECK, &mcr))
+	{
+		SafeFree(pszMacroCopy);
+		pszMacroCopy = (wchar_t*)calloc(lstrlen(asMacro)+1,sizeof(wchar_t)*2);
+		wchar_t* psz = pszMacroCopy;
+		while (*asMacro)
+		{
+			if (asMacro[0] == L'$'
+				&& (asMacro[1] == L'T' || asMacro[1] == L't')
+				&& (asMacro[2] == L'E' || asMacro[2] == L'e')
+				&& (asMacro[3] == L'X' || asMacro[3] == L'x')
+				&& (asMacro[4] == L'T' || asMacro[4] == L't'))
+			{
+				lstrcpy(psz, L"print("); psz += 6;
+
+				// Пропустить spasing-symbols
+				asMacro += 5;
+				while (*asMacro == L' ' || *asMacro == L'\t' || *asMacro == L'\r' || *asMacro == L'\n')
+					asMacro++;
+				// Копировать строку или переменную
+				if (*asMacro == L'@' && *(asMacro+1) == L'"')
+				{
+					*(psz++) = *(asMacro++); *(psz++) = *(asMacro++);
+					while (*asMacro)
+					{
+						*(psz++) = *(asMacro++);
+						if (*(asMacro-1) == L'"')
+						{
+							if (*asMacro != L'"')
+								break;
+							*(psz++) = *(asMacro++);
+						}
+					}
+				}
+				else if (*asMacro == L'"')
+				{
+					*(psz++) = *(asMacro++);
+					while (*asMacro)
+					{
+						*(psz++) = *(asMacro++);
+						if (*(asMacro-1) == L'\\' && *asMacro == L'"')
+						{
+							*(psz++) = *(asMacro++);
+						}
+						else if (*(asMacro-1) == L'"')
+						{
+							break;
+						}
+					}
+				}
+				else if (*asMacro == L'%')
+				{
+					*(psz++) = *(asMacro++);
+					while (*asMacro)
+					{
+						if (wcschr(L" \t\r\n", *asMacro))
+							break;
+						*(psz++) = *(asMacro++);
+					}
+				}
+				else
+				{
+					SafeFree(pszMacroCopy);
+					break; // ошибка
+				}
+				// закрыть скобку
+				*(psz++) = L')';
+			}
+			else
+			{
+				*(psz++) = *(asMacro++);
+			}
+		}
+
+		// Если успешно пропатчили макрос
+		if (pszMacroCopy)
+			asMacro = pszMacroCopy;
+	}
+
 	mcr.SequenceText = asMacro;
 	if (apRec)
 		mcr.AKey = *apRec;
 
-	//gFarVersion.dwBuild
-	InfoW1900->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, 0, &mcr);
-	//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
-	//  Это чаще всего проявляется при вызове меню по RClick
-	//  Если курсор на другой панели, то RClick сразу по пассивной
-	//  не вызывает отрисовку :(
-	// Перенесено в "общую" PostMacro
-	////if (!mcr.Param.PlainText.Flags) {
-	//INPUT_RECORD ir[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
-	//if (isPressed(VK_CAPITAL))
-	//	ir[0].Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
-	//if (isPressed(VK_NUMLOCK))
-	//	ir[0].Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
-	//if (isPressed(VK_SCROLL))
-	//	ir[0].Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
-	//ir[0].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-	//ir[1].Event.MouseEvent.dwControlKeyState = ir[0].Event.MouseEvent.dwControlKeyState;
-	//ir[1].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-	//ir[1].Event.MouseEvent.dwMousePosition.X = 1;
-	//ir[1].Event.MouseEvent.dwMousePosition.Y = 1;
-	//
-	////2010-01-29 попробуем STD_OUTPUT
-	////if (!ghConIn) {
-	////	ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-	////		0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	////	if (ghConIn == INVALID_HANDLE_VALUE) {
-	////		#ifdef _DEBUG
-	////		DWORD dwErr = GetLastError();
-	////		_ASSERTE(ghConIn!=INVALID_HANDLE_VALUE);
-	////		#endif
-	////		ghConIn = NULL;
-	////		return;
-	////	}
-	////}
-	//HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-	//DWORD cbWritten = 0;
-	//#ifdef _DEBUG
-	//BOOL fSuccess =
-	//#endif
-	//WriteConsoleInput(hIn/*ghConIn*/, ir, 1, &cbWritten);
-	//_ASSERTE(fSuccess && cbWritten==1);
-	////}
-	////InfoW1900->AdvControl(&guid_ConEmu,ACTL_REDRAWALL,NULL);
+	if (!InfoW1900->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, MSSC_CHECK, &mcr))
+	{
+		size_t iRcSize = InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETLASTERROR, 0, NULL);
+		MacroParseResult* Result = (MacroParseResult*)calloc(iRcSize,1);
+		if (Result)
+		{
+			Result->StructSize = sizeof(*Result);
+			InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETLASTERROR, iRcSize, Result);
+			wchar_t* pszErrText = NULL;
+			size_t cchMax = (Result->ErrSrc ? wcslen(Result->ErrSrc) : 0) + wcslen(asMacro) + 255;
+			pszErrText = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
+			_wsprintf(pszErrText, SKIPLEN(cchMax)
+				L"Error in Macro. Code: %u, Line: %u, Col: %u%s%s\n----------------------------------\n%s",
+				Result->ErrCode, (UINT)(int)Result->ErrPos.Y+1, (UINT)(int)Result->ErrPos.X+1,
+				Result->ErrSrc ? L", Hint: " : L"", Result->ErrSrc ? Result->ErrSrc : L"",
+				asMacro);
+
+			DWORD nTID;
+			HANDLE h = CreateThread(NULL, 0, BackgroundMacroError, pszErrText, 0, &nTID);
+			SafeCloseHandle(h);
+
+			SafeFree(Result);
+		}
+	}
+	else
+	{
+		//gFarVersion.dwBuild
+		InfoW1900->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, 0, &mcr);
+
+		//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
+		//  Это чаще всего проявляется при вызове меню по RClick
+		//  Если курсор на другой панели, то RClick сразу по пассивной
+		//  не вызывает отрисовку :(
+		// Перенесено в "общую" PostMacro
+		////if (!mcr.Param.PlainText.Flags) {
+		//INPUT_RECORD ir[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
+		//if (isPressed(VK_CAPITAL))
+		//	ir[0].Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
+		//if (isPressed(VK_NUMLOCK))
+		//	ir[0].Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
+		//if (isPressed(VK_SCROLL))
+		//	ir[0].Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
+		//ir[0].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+		//ir[1].Event.MouseEvent.dwControlKeyState = ir[0].Event.MouseEvent.dwControlKeyState;
+		//ir[1].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+		//ir[1].Event.MouseEvent.dwMousePosition.X = 1;
+		//ir[1].Event.MouseEvent.dwMousePosition.Y = 1;
+		//
+		////2010-01-29 попробуем STD_OUTPUT
+		////if (!ghConIn) {
+		////	ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+		////		0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+		////	if (ghConIn == INVALID_HANDLE_VALUE) {
+		////		#ifdef _DEBUG
+		////		DWORD dwErr = GetLastError();
+		////		_ASSERTE(ghConIn!=INVALID_HANDLE_VALUE);
+		////		#endif
+		////		ghConIn = NULL;
+		////		return;
+		////	}
+		////}
+		//HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+		//DWORD cbWritten = 0;
+		//#ifdef _DEBUG
+		//BOOL fSuccess =
+		//#endif
+		//WriteConsoleInput(hIn/*ghConIn*/, ir, 1, &cbWritten);
+		//_ASSERTE(fSuccess && cbWritten==1);
+		////}
+		////InfoW1900->AdvControl(&guid_ConEmu,ACTL_REDRAWALL,NULL);
+	}
+
+	SafeFree(pszMacroCopy);
 }
 
 int ShowPluginMenuW1900()
@@ -1085,6 +1211,12 @@ BOOL IsMacroActiveW1900()
 		return FALSE;
 
 	return TRUE;
+}
+
+int GetMacroAreaW1900()
+{
+	int nArea = (int)InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETAREA, 0, 0);
+	return nArea;
 }
 
 
@@ -1617,7 +1749,11 @@ HANDLE WINAPI OpenW(const struct OpenInfo *Info)
 		}
 	}
 	HANDLE h = OpenPluginWcmn(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
-	if ((h == INVALID_HANDLE_VALUE) || (h == (HANDLE)-2))
+	if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_FROMMACRO)
+	{
+		h = (HANDLE)(h != NULL);
+	}
+	else if ((h == INVALID_HANDLE_VALUE) || (h == (HANDLE)-2))
 	{
 		if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_ANALYSE)
 			h = PANEL_STOP;

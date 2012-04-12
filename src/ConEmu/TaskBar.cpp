@@ -49,6 +49,14 @@ const IID IID_ITaskbarList  = {0x56FDF342, 0xFD6D, 0x11d0, {0x95, 0x8A, 0x00, 0x
 //#endif
 //#endif
 
+/*
+Note  When an application displays a window, its taskbar button is created
+by the system. When the button is in place, the taskbar sends a
+TaskbarButtonCreated message to the window. Its value is computed by
+calling RegisterWindowMessage(L("TaskbarButtonCreated")). That message must
+be received by your application before it calls any ITaskbarList3 method.
+*/
+
 CTaskBar::CTaskBar()
 {
 	mp_TaskBar1 = NULL;

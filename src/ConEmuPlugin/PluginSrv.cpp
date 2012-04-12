@@ -538,6 +538,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 	else if (pIn->hdr.nCmd == CMD_REQTABS || pIn->hdr.nCmd == CMD_SETWINDOW)
 	{
 		MSectionLock SC; SC.Lock(csTabs, FALSE, 1000);
+		DWORD nSetWindowWait = (DWORD)-1;
 
 		if (pIn->hdr.nCmd == CMD_SETWINDOW)
 		{
@@ -551,19 +552,19 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 			}
 
 			// Пересылается 2 DWORD
-			ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->dwData);
+			BOOL bCmdRc = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->dwData);
 
 			DEBUGSTRCMD(L"Plugin: PlugServerThreadCommand: CMD_SETWINDOW waiting...\n");
 
 			WARNING("Почему для FAR1 не ждем? Есть возможность заблокироваться в 1.7 или что?");
-			if (gFarVersion.dwVerMajor >= 2)
+			if ((gFarVersion.dwVerMajor >= 2) && bCmdRc)
 			{
 				DWORD nTimeout = 2000;
 				#ifdef _DEBUG
 				if (IsDebuggerPresent()) nTimeout = 120000;
 				#endif
 				
-				WaitForSingleObject(ghSetWndSendTabsEvent, nTimeout);
+				nSetWindowWait = WaitForSingleObject(ghSetWndSendTabsEvent, nTimeout);
 			}
 
 			DEBUGSTRCMD(L"Plugin: PlugServerThreadCommand: CMD_SETWINDOW finished\n");
@@ -593,6 +594,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		gFarMode.bFARuseASCIIsort = pFarSet->bFARuseASCIIsort;
 		gFarMode.bShellNoZoneCheck = pFarSet->bShellNoZoneCheck;
 		gFarMode.bMonitorConsoleInput = pFarSet->bMonitorConsoleInput;
+		gFarMode.bLongConsoleOutput = pFarSet->bLongConsoleOutput;
 
 		if (SetFarHookMode)
 		{

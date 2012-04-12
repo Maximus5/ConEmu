@@ -310,6 +310,7 @@ class CConEmuMain :
 		void StartRightClickingPaint();
 		void StopRightClickingPaint();
 		bool PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam);
+		wchar_t* LoadConsoleBatch(LPCWSTR asSource);
 	public:
 		void RightClickingPaint(HDC hdc, CVirtualConsole* apVCon);
 		void RegisterMinRestore(bool abRegister);
@@ -408,7 +409,8 @@ class CConEmuMain :
 		bool ConActivateNext(BOOL abNext);
 		bool CorrectWindowPos(WINDOWPOS *wp);
 		//void CheckGuiBarsCreated();
-		CVirtualConsole* CreateCon(RConStartArgs *args);
+		CVirtualConsole* CreateCon(RConStartArgs *args, BOOL abAllowScripts = FALSE);
+		CVirtualConsole* CreateConGroup(LPCWSTR apszScript);
 		void CreateGhostVCon(CVirtualConsole* apVCon);
 		BOOL CreateMainWindow();
 		HRGN CreateWindowRgn(bool abTestOnly=false);

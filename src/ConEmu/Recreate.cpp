@@ -219,6 +219,18 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				}
 			}
 
+			//// Обновить группы команд
+			//gpSet->LoadCmdTasks(NULL);
+
+			int nGroup = 0;
+			const Settings::CommandTasks* pGrp = NULL;
+			while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
+			{
+				nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pGrp->pszName);
+				if (nId < 0)
+					SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pGrp->pszName);
+			}
+
 			if (pArgs->bRecreate)
 			{
 				SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);

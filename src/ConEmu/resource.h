@@ -22,6 +22,8 @@
 #define IDD_SPG_FEATURE                 154
 #define IDD_SPG_DEBUG                   155
 #define IDD_SPG_FEATURE_FAR             156
+#define IDD_SPG_CMDTASKS                157
+#define IDD_SPG_APPDISTINCT             158
 #define IDD_MORE_HIDE                   200
 #define IDD_SPG_SELECTION               204
 #define IDD_SPG_TABS                    206
@@ -503,6 +505,42 @@
 #define vkCTSVkBlockStart               2112
 #define vkCTSVkTextStart                2113
 #define cbKeyBarRClick                  2114
+#define gbCmdTasks                      2115
+#define lbCmdTasks                      2116
+#define tCmdGroupName                   2117
+#define tCmdGroupCommands               2118
+#define stCmdTasks                      2119
+#define stCmdGroupName                  2120
+#define stCmdGroupCommands              2121
+#define cbCmdTasksAdd                   2122
+#define cbColorSchemeSave               2123
+#define cbCmdTasksDel                   2124
+#define cbColorSchemeDelete             2125
+#define cbCmdTasksUp                    2126
+#define cbCmdTasksDown                  2127
+#define cbCmdGroupApp                   2128
+#define cbCmdTasksParm                  2129
+#define cbCmdTasksSave                  2130
+#define cbCmdTasksReload                2131
+#define gbAppDistinct                   2132
+#define cbCmdTasksUpdateTasks           2132
+#define cbCmdTasksUpdate                2132
+#define lbAppDistinct                   2133
+#define cbCmdTasksRecent                2133
+#define stAppDistinctName               2134
+#define gbCmdTasks7                     2134
+#define tAppDistinctName                2135
+#define cbAppDistinctAdd                2136
+#define cbAppDistinctDel                2137
+#define cbAppDistinctUp                 2138
+#define cbAppDistinctDown               2139
+#define cbAppDistinctReload             2140
+#define rbAppDistinctElevatedOn         2141
+#define rbAppDistinctElevatedOff        2142
+#define rbAppDistinctElevatedIgnore     2143
+#define IDC_CHECK1                      2144
+#define IDC_CHECK2                      2145
+#define IDC_CHECK3                      2146
 
 // Next default values for new objects
 // 
@@ -510,7 +548,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        217
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2115
+#define _APS_NEXT_CONTROL_VALUE         2147
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

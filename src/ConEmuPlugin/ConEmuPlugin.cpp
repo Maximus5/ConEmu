@@ -231,7 +231,7 @@ bool gbSynchroProhibited = false;
 bool gbInputSynchroPending = false;
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
 
-struct HookModeFar gFarMode = {sizeof(HookModeFar), TRUE};
+struct HookModeFar gFarMode = {sizeof(HookModeFar), TRUE/*bFarHookMode*/};
 extern SetFarHookMode_t SetFarHookMode;
 
 
@@ -598,6 +598,8 @@ void OnMainThreadActivated()
 	SetEvent(ghReqCommandEvent);
 }
 
+DWORD gnPeekReadCount = 0;
+
 // Вызывается только в основной нити
 // и ТОЛЬКО если фар считывает один (1) INPUT_RECORD
 void OnConsolePeekReadInput(BOOL abPeek)
@@ -614,6 +616,9 @@ void OnConsolePeekReadInput(BOOL abPeek)
 	}
 #endif
 	bool lbNeedSynchro = false;
+
+	// Для того, чтобы WaitPluginActivateion знал, живой фар, или не очень...
+	gnPeekReadCount++;
 
 	if (gpConMapInfo && gpFarInfo && gpFarInfoMapping)
 		TouchReadPeekConsoleInputs(abPeek ? 1 : 0);
@@ -2052,6 +2057,29 @@ void ExecuteSynchro()
 	}
 }
 
+static DWORD WaitPluginActivateion(DWORD nCount, HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
+{
+	DWORD nWait = WAIT_TIMEOUT;
+	if (IS_SYNCHRO_ALLOWED)
+	{
+		DWORD nPrevCount = gnPeekReadCount;
+		DWORD nTimeout = GetTickCount() + dwMilliseconds;
+		do {
+			nWait = WaitForMultipleObjects(nCount, lpHandles, bWaitAll, min(dwMilliseconds,1000));
+			if ((nWait == WAIT_TIMEOUT) && (dwMilliseconds > 1000) && (nPrevCount == gnPeekReadCount))
+			{
+				// Ждать дальше смысла видимо нет, фар не дергает (Peek/Read)Input
+				break;
+			}
+		} while (dwMilliseconds && ((dwMilliseconds == INFINITE) || (GetTickCount() > nTimeout)));
+	}
+	else
+	{
+		nWait = WaitForMultipleObjects(nCount, lpHandles, bWaitAll, dwMilliseconds);
+	}
+	return nWait;
+}
+
 // Должна вызываться ТОЛЬКО из нитей уже заблокированных семафором ghPluginSemaphore
 static BOOL ActivatePlugin(
     DWORD nCmd, LPVOID pCommandData,
@@ -2082,6 +2110,10 @@ static BOOL ActivatePlugin(
 	//if (gFarVersion.dwVerMajor = 2 && gFarVersion.dwBuild >= 1006)
 	else if (IS_SYNCHRO_ALLOWED)
 	{
+		#ifdef _DEBUG
+		int iArea = (gFarVersion.dwVerMajor>=2) ? GetMacroArea() : -1;
+		#endif
+
 		InterlockedIncrement(&gnAllowDummyMouseEvent);
 		ExecuteSynchro();
 
@@ -2095,14 +2127,14 @@ static BOOL ActivatePlugin(
 				{
 					gbUngetDummyMouseEvent = TRUE;
 					// попытаться еще раз
-					nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
+					nWait = WaitPluginActivateion(nCount, hEvents, FALSE, nTimeout);
 				}
 			}
 		}
 		else
 		{
 			// Подождать активации. Сколько ждать - может указать вызывающая функция
-			nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
+			nWait = WaitPluginActivateion(nCount, hEvents, FALSE, nTimeout);
 		}
 
 		if (gnAllowDummyMouseEvent > 0)
@@ -2120,7 +2152,7 @@ static BOOL ActivatePlugin(
 	else
 	{
 		// Подождать активации. Сколько ждать - может указать вызывающая функция
-		nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
+		nWait = WaitPluginActivateion(nCount, hEvents, FALSE, nTimeout);
 	}
 
 
@@ -2128,7 +2160,8 @@ static BOOL ActivatePlugin(
 	{
 		//110712 - если CMD_REDRAWFAR, то показывать Assert смысла мало, фар может быть занят
 		//  например чтением панелей?
-		_ASSERTE(nWait==WAIT_OBJECT_0 || (nCmd==CMD_REDRAWFAR));
+		//На CMD_SETWINDOW тоже ругаться не будем - окошко может быть заблокировано, или фар занят.
+		_ASSERTE(nWait==WAIT_OBJECT_0 || (nCmd==CMD_REDRAWFAR) || (nCmd==CMD_SETWINDOW));
 
 		if (nWait == (WAIT_OBJECT_0+1))
 		{
@@ -5786,6 +5819,23 @@ BOOL IsMacroActive()
 		lbActive = FUNC_X(IsMacroActiveW)();
 
 	return lbActive;
+}
+
+int GetMacroArea()
+{
+	int nMacroArea = 0/*MACROAREA_OTHER*/;
+
+	if (gFarVersion.dwVerMajor==1)
+	{
+		_ASSERTE(gFarVersion.dwVerMajor>1);
+		nMacroArea = 1; // в Far 1.7x не поддерживается
+	}
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		nMacroArea = FUNC_Y(GetMacroAreaW)();
+	else
+		nMacroArea = FUNC_X(GetMacroAreaW)();
+
+	return nMacroArea;
 }
 
 
