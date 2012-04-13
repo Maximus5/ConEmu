@@ -429,10 +429,10 @@ REGEDIT4
 
 ;; You may define command groups, which starts one or more consoles
 
-;[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla\CmdGroups]
+;[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla\Tasks]
 ;"Count"=dword:00000002
 ;
-;[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla\CmdGroups\Group1]
+;[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla\Tasks\Task1]
 ;; <Shells> group, starts 3 consoles
 ;;   PowerShell as Administrator,
 ;;   Cmd with buffer of 9999 lines
@@ -445,7 +445,7 @@ REGEDIT4
 ;"Cmd2"="cmd -new_console:h9999"
 ;"Cmd3"="sh"
 ;
-;[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla\CmdGroups\Group2]
+;[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla\Tasks\Task2]
 ;; <Putty> is a simle alias for starting this application in ConEmu tab
 ;"Name"="Putty"
 ;"Count"=dword:00000001

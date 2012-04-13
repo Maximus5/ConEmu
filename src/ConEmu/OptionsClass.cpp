@@ -428,7 +428,9 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_TABS,        L"Tabs",           thi_Tabs/*,    OnInitDialog_Tabs*/},
 		{IDD_SPG_COLORS,      L"Colors",         thi_Colors/*,  OnInitDialog_Color*/},
 		{IDD_SPG_CMDTASKS,    L"Tasks",          thi_Tasks/*,  OnInitDialog_CmdTasks*/},
+#ifdef _DEBUG
 		{IDD_SPG_APPDISTINCT, L"App distinct",   thi_Apps/*,  OnInitDialog_CmdTasks*/},
+#endif
 		{IDD_SPG_VIEWS,       L"Views",          thi_Views/*,   OnInitDialog_Views*/},
 		{IDD_SPG_DEBUG,       L"Debug",          thi_Debug/*,   OnInitDialog_Debug*/},
 		{IDD_SPG_UPDATE,      L"Update",         thi_Update/*,  OnInitDialog_Update*/},

@@ -949,7 +949,7 @@ void PostMacroW1900(const wchar_t* asMacro, INPUT_RECORD* apRec)
 			Result->StructSize = sizeof(*Result);
 			InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETLASTERROR, iRcSize, Result);
 			wchar_t* pszErrText = NULL;
-			size_t cchMax = (Result->ErrSrc ? wcslen(Result->ErrSrc) : 0) + wcslen(asMacro) + 255;
+			size_t cchMax = (Result->ErrSrc ? lstrlen(Result->ErrSrc) : 0) + lstrlen(asMacro) + 255;
 			pszErrText = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
 			_wsprintf(pszErrText, SKIPLEN(cchMax)
 				L"Error in Macro. Code: %u, Line: %u, Col: %u%s%s\n----------------------------------\n%s",
