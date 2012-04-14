@@ -519,7 +519,9 @@ class CSettings
 		LRESULT OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		bool mb_IgnoreCmdGroupEdit, mb_IgnoreCmdGroupList;
-		LRESULT OnButtonClicked_Apps(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		//LRESULT OnButtonClicked_Apps(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		//UINT mn_AppsEnableControlsMsg;
+		INT_PTR pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		bool mb_IgnoreAppsEdit, mb_IgnoreAppsList;
 		//LRESULT OnColorButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		//LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		

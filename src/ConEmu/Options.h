@@ -120,11 +120,14 @@ struct Settings
 			
 			//const COLORREF* Palette/*[0x20]*/; // текущая палитра (Fade/не Fade)
 
+			bool OverrideColors; // Palette+Extend
+			wchar_t szPaletteName[128];
 			//reg->Load(L"ExtendColors", isExtendColors);
 			bool isExtendColors;
 			//reg->Load(L"ExtendColorIdx", nExtendColor);
 			char nExtendColor; // 0..15
 
+			bool OverrideExtendFonts;
 			//reg->Load(L"ExtendFonts", isExtendFonts);
 			bool isExtendFonts;
 			//reg->Load(L"ExtendFontNormalIdx", nFontNormalColor);
@@ -134,6 +137,7 @@ struct Settings
 			//reg->Load(L"ExtendFontItalicIdx", nFontItalicColor);
 			char nFontItalicColor; // 0..15
 
+			bool OverrideCursor;
 			//reg->Load(L"CursorType", isCursorV);
 			bool isCursorV;
 			//reg->Load(L"CursorBlink", isCursorBlink);

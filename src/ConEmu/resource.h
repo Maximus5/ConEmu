@@ -538,9 +538,10 @@
 #define rbAppDistinctElevatedOn         2141
 #define rbAppDistinctElevatedOff        2142
 #define rbAppDistinctElevatedIgnore     2143
-#define IDC_CHECK1                      2144
-#define IDC_CHECK2                      2145
-#define IDC_CHECK3                      2146
+#define cbExtendFontsOverride           2144
+#define cbCursorOverride                2145
+#define cbColorsOverride                2146
+#define lbColorsOverride                2147
 
 // Next default values for new objects
 // 

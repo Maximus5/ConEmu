@@ -500,31 +500,49 @@ void Settings::LoadAppSettings(SettingsBase* reg)
 
 void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, COLORREF* pColors)
 {
-	TCHAR ColorName[] = L"ColorTable00";
+	// Для AppStd данные загружаются из основной ветки! В том числе и цвета (RGB[32] а не имя палитры)
+	bool bStd = (pApp == &AppStd);
 
-	for (size_t i = countof(Colors)/*0x20*/; i--;)
+	pApp->OverrideColors = bStd;
+	if (bStd)
 	{
-		ColorName[10] = i/10 + '0';
-		ColorName[11] = i%10 + '0';
-		reg->Load(ColorName, pColors[i]);
+		TCHAR ColorName[] = L"ColorTable00";
+		for (size_t i = countof(Colors)/*0x20*/; i--;)
+		{
+			ColorName[10] = i/10 + '0';
+			ColorName[11] = i%10 + '0';
+			reg->Load(ColorName, pColors[i]);
+		}
+		reg->Load(L"ExtendColors", pApp->isExtendColors);
+		reg->Load(L"ExtendColorIdx", pApp->nExtendColor);
+		if (pApp->nExtendColor<0 || pApp->nExtendColor>15) pApp->nExtendColor=14;
+	}
+	else
+	{
+		reg->Load(L"OverrideColors", pApp->OverrideColors);
+		if (!reg->Load(L"PaletteName", pApp->szPaletteName, countof(pApp->szPaletteName)))
+			pApp->szPaletteName[0] = 0;
+		const Settings::ColorPalette* pPal = PaletteGet(PaletteGetIndex(pApp->szPaletteName));
+		_ASSERTE(pPal!=NULL); // NULL не может быть. Всегда как минимум - стандартная палитра
+		pApp->isExtendColors = pPal->isExtendColors;
+		pApp->nExtendColor = pPal->nExtendColor;
+		memmove(pColors, pPal->Colors, sizeof(pPal->Colors));
 	}
 
-	reg->Load(L"ExtendColors", pApp->isExtendColors);
-
-	reg->Load(L"ExtendColorIdx", pApp->nExtendColor);
-	if (pApp->nExtendColor<0 || pApp->nExtendColor>15) pApp->nExtendColor=14;
-
+	pApp->OverrideExtendFonts = bStd;
+	if (!bStd)
+		reg->Load(L"OverrideExtendFonts", pApp->OverrideExtendFonts);
 	reg->Load(L"ExtendFonts", pApp->isExtendFonts);
-
 	reg->Load(L"ExtendFontNormalIdx", pApp->nFontNormalColor);
 	if (pApp->nFontNormalColor<0 || pApp->nFontNormalColor>15) pApp->nFontNormalColor=1;
-
 	reg->Load(L"ExtendFontBoldIdx", pApp->nFontBoldColor);
 	if (pApp->nFontBoldColor<0 || pApp->nFontBoldColor>15) pApp->nFontBoldColor=12;
-
 	reg->Load(L"ExtendFontItalicIdx", pApp->nFontItalicColor);
 	if (pApp->nFontItalicColor<0 || pApp->nFontItalicColor>15) pApp->nFontItalicColor=13;
 
+	pApp->OverrideCursor = bStd;
+	if (!bStd)
+		reg->Load(L"OverrideCursor", pApp->OverrideCursor);
 	reg->Load(L"CursorType", pApp->isCursorV);
 	reg->Load(L"CursorColor", pApp->isCursorColor);
 	reg->Load(L"CursorBlink", pApp->isCursorBlink);
@@ -974,7 +992,7 @@ const Settings::ColorPalette* Settings::PaletteGet(int anIndex)
 
 int Settings::PaletteGetIndex(LPCWSTR asName)
 {
-	if (!Palettes || (PaletteCount < 1) || !asName)
+	if (!Palettes || (PaletteCount < 1) || !asName || !*asName)
 		return -1;
 
 	for (int i = 0; i < PaletteCount; i++)
