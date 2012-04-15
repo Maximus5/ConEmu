@@ -309,17 +309,17 @@ static void LoadFarSettingsA(CEFarInterfaceSettings* pInterface, CEFarPanelSetti
 	if (pInterface)
 	{
 		pInterface->Raw = nSet;
-		_ASSERTE(pInterface->AlwaysShowMenuBar == (int)((nSet & FIS_ALWAYSSHOWMENUBAR) != 0));
-		_ASSERTE(pInterface->ShowKeyBar == (int)((nSet & FIS_SHOWKEYBAR) != 0));
+		_ASSERTE((pInterface->AlwaysShowMenuBar != 0) == ((nSet & FIS_ALWAYSSHOWMENUBAR) != 0));
+		_ASSERTE((pInterface->ShowKeyBar != 0) == ((nSet & FIS_SHOWKEYBAR) != 0));
 	}
 	    
 	nSet = (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
 	if (pPanel)
 	{
 		pPanel->Raw = nSet;
-		_ASSERTE(pPanel->ShowColumnTitles == (int)((nSet & FPS_SHOWCOLUMNTITLES) != 0));
-		_ASSERTE(pPanel->ShowStatusLine == (int)((nSet & FPS_SHOWSTATUSLINE) != 0));
-		_ASSERTE(pPanel->ShowSortModeLetter == (int)((nSet & FPS_SHOWSORTMODELETTER) != 0));
+		_ASSERTE((pPanel->ShowColumnTitles != 0) == ((nSet & FPS_SHOWCOLUMNTITLES) != 0));
+		_ASSERTE((pPanel->ShowStatusLine != 0) == ((nSet & FPS_SHOWSTATUSLINE) != 0));
+		_ASSERTE((pPanel->ShowSortModeLetter != 0) == ((nSet & FPS_SHOWSORTMODELETTER) != 0));
 	}
 }
 

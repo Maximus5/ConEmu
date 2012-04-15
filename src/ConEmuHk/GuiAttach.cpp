@@ -130,9 +130,13 @@ LRESULT CALLBACK GuiClientRetHook(int nCode, WPARAM wParam, LPARAM lParam)
 bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwStyle, DWORD& dwExStyle, HWND& hWndParent, BOOL& bAttachGui, BOOL& bStyleHidden)
 {
 	bAttachGui = FALSE;
-	
+
+#ifdef _DEBUG
 	// "!dwStyle" добавил для shell32.dll!CExecuteApplication::_CreateHiddenDDEWindow()
 	_ASSERTE(hWndParent==NULL || ghConEmuWnd == NULL || hWndParent!=ghConEmuWnd || !dwStyle);
+	STARTUPINFO si = {sizeof(si)};
+	GetStartupInfo(&si);
+#endif
 	
 	if (gbAttachGuiClient && ghConEmuWndDC)
 	{
@@ -490,6 +494,11 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 
 void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach)
 {
+#ifdef _DEBUG
+	STARTUPINFO si = {sizeof(si)};
+	GetStartupInfo(&si);
+#endif
+
 	if ((!ghAttachGuiClient) && gbAttachGuiClient && (nCmdShow >= SW_SHOWNORMAL))
 	{
 		// VLC создает несколько "подходящих" окон, но ShowWindow зовет

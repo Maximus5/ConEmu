@@ -2575,7 +2575,7 @@ void TabBarClass::OnNewConPopup()
 			if (pGrp)
 			{
 				con.pszSpecialCmd = lstrdup(pGrp->pszName);
-				_ASSERTE(con.pszSpecialCmd && *con.pszSpecialCmd==L'<' && con.pszSpecialCmd[lstrlen(con.pszSpecialCmd)-1]==L'>');
+				_ASSERTE(con.pszSpecialCmd && *con.pszSpecialCmd==TaskBracketLeft && con.pszSpecialCmd[lstrlen(con.pszSpecialCmd)-1]==TaskBracketRight);
 			}
 			else
 			{

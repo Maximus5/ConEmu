@@ -2616,7 +2616,7 @@ void Settings::HistoryCheck()
 void Settings::HistoryAdd(LPCWSTR asCmd)
 {
 	// Группы и так отображаются в диалоге/меню. В историю их не пишем
-	if (!asCmd || !*asCmd || (*asCmd == L'<'))
+	if (!asCmd || !*asCmd || (*asCmd == TaskBracketLeft))
 		return;
 
 	if (psCmd && lstrcmp(psCmd, asCmd)==0)

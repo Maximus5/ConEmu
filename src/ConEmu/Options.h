@@ -69,6 +69,9 @@ enum BackgroundOp
 class CSettings;
 class CVirtualConsole;
 
+#define TaskBracketLeft   L'{'
+#define TaskBracketRight  L'}'
+
 struct Settings
 {
 	public:
@@ -195,17 +198,20 @@ struct Settings
 					}
 				}
 
-				if (asName[0] == L'<')
+				if (asName[0] == TaskBracketLeft)
 				{
 					_wcscpy_c(pszName, iLen+1, asName);
 				}
 				else
 				{
-					*pszName = L'<';
+					*pszName = TaskBracketLeft;
 					_wcscpy_c(pszName+1, iLen+1, asName);
 				}
-				if (asName[iLen-1] != L'>')
-					_wcscat_c(pszName, iLen+3, L">");
+				if (asName[iLen-1] != TaskBracketRight)
+				{
+					iLen = wcslen(pszName);
+					pszName[iLen++] = TaskBracketRight; pszName[iLen] = 0;
+				}
 			};
 
 			void SetCommands(LPCWSTR asCommands)

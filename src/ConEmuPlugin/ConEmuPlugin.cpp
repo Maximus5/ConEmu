@@ -4283,6 +4283,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		gpTabs->Tabs.tabs[0].Type = WTYPE_PANELS;
 		gpTabs->Tabs.tabs[0].Modified = 0; // Иначе GUI может ошибочно считать, что есть несохраненные редакторы
 		gpTabs->Tabs.tabs[0].EditViewId = 0;
+		gpTabs->Tabs.tabs[0].Modal = 0;
 
 		if (!tabCount)
 			tabCount++;

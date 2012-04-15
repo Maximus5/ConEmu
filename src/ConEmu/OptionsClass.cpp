@@ -4055,8 +4055,8 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		if (pCmd)
 		{
 			_ASSERTE(pCmd->pszName && pCmd->pszCommands);
-			wchar_t* pszNoBrk = lstrdup(!pCmd->pszName ? L"" : (pCmd->pszName[0] != L'<') ? pCmd->pszName : (pCmd->pszName+1));
-			if (*pszNoBrk && (pszNoBrk[_tcslen(pszNoBrk)-1] == L'>'))
+			wchar_t* pszNoBrk = lstrdup(!pCmd->pszName ? L"" : (pCmd->pszName[0] != TaskBracketLeft) ? pCmd->pszName : (pCmd->pszName+1));
+			if (*pszNoBrk && (pszNoBrk[_tcslen(pszNoBrk)-1] == TaskBracketRight))
 				pszNoBrk[_tcslen(pszNoBrk)-1] = 0;
 			SetDlgItemText(hWnd2, tCmdGroupName, pszNoBrk);
 			SafeFree(pszNoBrk);

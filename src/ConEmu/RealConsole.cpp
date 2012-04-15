@@ -8552,7 +8552,12 @@ bool CRealConsole::Detach()
 		if (MessageBox(NULL, L"Detach console from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
 			return false;
 	
-		ShowConsole(1);
+		//ShowConsole(1); -- уберем, чтобы не мигало
+		isShowConsole = TRUE; // просто флажок взведем, чтобы не пытаться ее спрятать
+		RECT rcScreen;
+		if (GetWindowRect(mp_VCon->GetView(), &rcScreen) && hConWnd)
+			SetOtherWindowPos(hConWnd, HWND_NOTOPMOST, rcScreen.left, rcScreen.top, 0,0, SWP_NOSIZE);
+
 		// Уведомить сервер, что он больше не наш
 		CESERVER_REQ in;
 		ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR));
@@ -8562,7 +8567,16 @@ bool CRealConsole::Detach()
 		
 		gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 		
-		if (pOut) ExecuteFreeResult(pOut);
+		if (pOut)
+			ExecuteFreeResult(pOut);
+		else
+			ShowConsole(1);
+		
+		//SetLastError(0);
+		//BOOL bVisible = IsWindowVisible(hConWnd); -- проверка обламывается. Не успевает...
+		//DWORD nErr = GetLastError();
+		//if (hConWnd && !bVisible)
+		//	ShowConsole(1);
 	}
 
 	// Чтобы случайно не закрыть RealConsole?

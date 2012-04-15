@@ -4640,7 +4640,7 @@ bool CConEmuMain::ConActivate(int nCon)
 void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
 {
 	_ASSERTE((pArgs->pszStartupDir == NULL) || (*pArgs->pszStartupDir != 0));
-	PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon, (LPARAM)pArgs);
+	PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon+1, (LPARAM)pArgs);
 }
 
 CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts /*= FALSE*/)
@@ -4655,7 +4655,12 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts
 
 	CVirtualConsole* pVCon = NULL;
 
-	if (args->pszSpecialCmd && (*args->pszSpecialCmd == L'@' || *args->pszSpecialCmd == '<'))
+	if (args->pszSpecialCmd)
+		args->ProcessNewConArg();
+
+	wchar_t* pszScript = NULL, szScript[MAX_PATH];
+
+	if (args->pszSpecialCmd && (*args->pszSpecialCmd == L'@' || *args->pszSpecialCmd == TaskBracketLeft))
 	{
 		if (!abAllowScripts)
 		{
@@ -4677,6 +4682,13 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts
 
 	for (size_t i = 0; i < countof(mp_VCon); i++)
 	{
+		if (mp_VCon[i] && mp_VCon[i]->RCon() && mp_VCon[i]->RCon()->isDetached())
+		{
+			// isDetached() means, that ConEmu.exe was started with "/detached" flag
+			// so, it is safe to close "dummy" console, that was created on GUI startup
+			mp_VCon[i]->RCon()->CloseConsole();
+		}
+
 		if (!mp_VCon[i])
 		{
 			CVirtualConsole* pOldActive = mp_VActive;
@@ -8594,10 +8606,10 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource)
 		}
 
 	}
-	else if (*asSource == L'<')
+	else if (*asSource == TaskBracketLeft)
 	{
 		wchar_t szName[MAX_PATH]; lstrcpyn(szName, asSource, countof(szName));
-		wchar_t* psz = wcschr(szName, L'>');
+		wchar_t* psz = wcschr(szName, TaskBracketRight);
 		if (psz) psz[1] = 0;
 
 		const Settings::CommandTasks* pGrp;
@@ -8621,7 +8633,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource)
 	}
 	else
 	{
-		_ASSERTE(*asSource==L'@' || *asSource==L'<');
+		_ASSERTE(*asSource==L'@' || *asSource==TaskBracketLeft);
 	}
 
 	return pszDataW;
@@ -8728,7 +8740,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			BOOL lbCreated = FALSE;
 			LPCWSTR pszCmd = gpSet->GetCmd();
 
-			if ((*pszCmd == L'@' || *pszCmd == L'<') && !gpConEmu->mb_StartDetached)
+			if ((*pszCmd == L'@' || *pszCmd == TaskBracketLeft) && !gpConEmu->mb_StartDetached)
 			{
 				// ¬ качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
 				wchar_t* pszDataW = LoadConsoleBatch(pszCmd);
@@ -14344,9 +14356,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgCreateCon)
 			{
-				_ASSERTE(wParam == gpConEmu->mn_MsgCreateCon);
+				_ASSERTE(wParam == gpConEmu->mn_MsgCreateCon || wParam == (gpConEmu->mn_MsgCreateCon+1));
 				RConStartArgs *pArgs = (RConStartArgs*)lParam;
-				CVirtualConsole* pVCon = CreateCon(pArgs);
+				CVirtualConsole* pVCon = CreateCon(pArgs, (wParam == (gpConEmu->mn_MsgCreateCon+1)));
 				UNREFERENCED_PARAMETER(pVCon);
 				delete pArgs;
 				return (LRESULT)pVCon;

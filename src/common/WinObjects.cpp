@@ -3247,6 +3247,7 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize)
 }
 
 
+
 #ifndef CONEMU_MINIMAL
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName)
 {
@@ -3339,3 +3340,36 @@ void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBuffer
 	SetConsoleInfo(inConWnd, gpConsoleInfoStr);
 }
 */
+
+#ifndef CONEMU_MINIMAL
+// Evaluate default width for the font
+int EvaluateDefaultFontWidth(int inSizeY, const wchar_t *asFontName)
+{
+	if (inSizeY <= 0)
+		return 0;
+
+	int nDefaultX = inSizeY * 10 / 16; // rough
+	LOGFONT lf = {inSizeY};
+	lstrcpyn(lf.lfFaceName, asFontName ? asFontName : L"Lucida Console", countof(lf.lfFaceName));
+	HFONT hFont = CreateFontIndirect(&lf);
+	if (hFont)
+	{
+		HDC hDC = CreateCompatibleDC(NULL);
+		if (hDC)
+		{
+			HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
+			TEXTMETRIC tm = {};
+			BOOL lbTM = GetTextMetrics(hDC, &tm);
+			if (lbTM && (tm.tmAveCharWidth > 0))
+			{
+				nDefaultX = tm.tmAveCharWidth;
+			}
+			SelectObject(hDC, hOldF);
+			DeleteDC(hDC);
+		}
+		DeleteObject(hFont);
+	}
+
+	return nDefaultX;
+}
+#endif

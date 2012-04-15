@@ -790,7 +790,21 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 					if (!gbSkipWowChange) wow.Disable();
 					
 					DWORD RunImageSubsystem = 0, RunImageBits = 0, RunFileAttrs = 0;
-					if (GetImageSubsystem(szExe, RunImageSubsystem, RunImageBits, RunFileAttrs))
+					bool bSubSystem = GetImageSubsystem(szExe, RunImageSubsystem, RunImageBits, RunFileAttrs);
+
+					if (!bSubSystem)
+					{
+						// szExe may be simple "notepad", we must seek for executable...
+						wchar_t szFound[MAX_PATH+1];
+						LPWSTR pszFile = NULL;
+						// We are interesting only on ".exe" files,
+						// supposing that other executable extensions can't be GUI applications
+						DWORD n = SearchPath(NULL, szExe, L".exe", countof(szFound), szFound, &pszFile);
+						if (n && (n < countof(szFound)))
+							bSubSystem = GetImageSubsystem(szFound, RunImageSubsystem, RunImageBits, RunFileAttrs);
+					}
+
+					if (bSubSystem)
 					{
 						if (RunImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
 						{
@@ -2819,14 +2833,45 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 //    return 0;
 //}
 
+void CorrectConsolePos()
+{
+	RECT rcNew = {};
+	if (GetWindowRect(ghConWnd, &rcNew))
+	{
+		HMONITOR hMon = MonitorFromWindow(ghConWnd, MONITOR_DEFAULTTOPRIMARY);
+		MONITORINFO mi = {sizeof(mi)};
+		int nMaxX = 0, nMaxY = 0;
+		if (GetMonitorInfo(hMon, &mi))
+		{
+			int newW = (rcNew.right-rcNew.left), newH = (rcNew.bottom-rcNew.top);
+			int newX = rcNew.left, newY = rcNew.top;
+
+			if (newX < mi.rcWork.left)
+				newX = mi.rcWork.left;
+			else if (rcNew.right > mi.rcWork.right)
+				newX = max(mi.rcWork.left,(mi.rcWork.right-newW));
+
+			if (newY < mi.rcWork.top)
+				newY = mi.rcWork.top;
+			else if (rcNew.bottom > mi.rcWork.bottom)
+				newY = max(mi.rcWork.top,(mi.rcWork.bottom-newH));
+
+			if ((newX != rcNew.left) || (newY != rcNew.top))
+				SetWindowPos(ghConWnd, HWND_TOP, newX, newY,0,0, SWP_NOSIZE);
+		}
+	}
+}
+
 void EmergencyShow()
 {
 	if (ghConWnd)
 	{
+		CorrectConsolePos();
+
 		if (!IsWindowVisible(ghConWnd))
 		{
 			SetWindowPos(ghConWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-			SetWindowPos(ghConWnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
+			//SetWindowPos(ghConWnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
 			apiShowWindowAsync(ghConWnd, SW_SHOWNORMAL);
 		}
 		else
@@ -5128,6 +5173,77 @@ BOOL cmd_SetWindowRgn(CESERVER_REQ& in, CESERVER_REQ** out)
 BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
+
+	if (gOSVer.dwMajorVersion >= 6)
+	{
+		if ((gcrVisibleSize.X <= 0) && (gcrVisibleSize.Y <= 0))
+		{
+			_ASSERTE((gcrVisibleSize.X > 0) && (gcrVisibleSize.Y > 0));
+		}
+		else
+		{
+			int curSizeY, curSizeX, newSizeY, newSizeX, calcSizeY, calcSizeX;
+			wchar_t sFontName[LF_FACESIZE];
+			HANDLE hOutput = (HANDLE)ghConOut;
+
+			if (apiGetConsoleFontSize(hOutput, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
+			{
+				COORD crLargest = GetLargestConsoleWindowSize(hOutput);
+				HMONITOR hMon = MonitorFromWindow(ghConWnd, MONITOR_DEFAULTTOPRIMARY);
+				MONITORINFO mi = {sizeof(mi)};
+				int nMaxX = 0, nMaxY = 0;
+				if (GetMonitorInfo(hMon, &mi))
+				{
+					nMaxX = mi.rcWork.right - mi.rcWork.left - 2*GetSystemMetrics(SM_CXSIZEFRAME) - GetSystemMetrics(SM_CYCAPTION);
+					nMaxY = mi.rcWork.bottom - mi.rcWork.top - 2*GetSystemMetrics(SM_CYSIZEFRAME);
+				}
+				
+				if ((nMaxX > 0) && (nMaxY > 0))
+				{
+					int nFontX = nMaxX  / gcrVisibleSize.X;
+					int nFontY = nMaxY / gcrVisibleSize.Y;
+					// Too large height?
+					if (nFontY > 28)
+					{
+						nFontX = 28 * nFontX / nFontY;
+						nFontY = 28;
+					}
+
+					// Evaluate default width for the font
+					int nEvalX = EvaluateDefaultFontWidth(nFontY, sFontName);
+					if (nEvalX > 0)
+						nFontX = nEvalX;
+
+					// Look in the registry?
+					HKEY hk;
+					DWORD nRegSize = 0, nLen;
+					if (!RegOpenKeyEx(HKEY_CURRENT_USER, L"Console", 0, KEY_READ, &hk))
+					{
+						if (RegQueryValueEx(hk, L"FontSize", NULL, NULL, (LPBYTE)&nRegSize, &(nLen=sizeof(nRegSize))) || nLen!=sizeof(nRegSize))
+							nRegSize = 0;
+						RegCloseKey(hk);
+					}
+					if (!nRegSize && !RegOpenKeyEx(HKEY_CURRENT_USER, L"Console\\%SystemRoot%_system32_cmd.exe", 0, KEY_READ, &hk))
+					{
+						if (RegQueryValueEx(hk, L"FontSize", NULL, NULL, (LPBYTE)&nRegSize, &(nLen=sizeof(nRegSize))) || nLen!=sizeof(nRegSize))
+							nRegSize = 0;
+						RegCloseKey(hk);
+					}
+					if ((HIWORD(nRegSize) > curSizeY) && (HIWORD(nRegSize) < nFontY)
+						&& (LOWORD(nRegSize) > curSizeX) && (LOWORD(nRegSize) < nFontX))
+					{
+						nFontY = HIWORD(nRegSize);
+						nFontX = LOWORD(nRegSize);
+					}
+
+					if ((nFontX > curSizeX) || (nFontY > curSizeY))
+					{
+						apiSetConsoleFontSize(hOutput, nFontY, nFontX, sFontName);
+					}
+				}
+			}
+		}
+	}
 	
 	gpSrv->bWasDetached = TRUE;
 	ghConEmuWnd = NULL;
@@ -5135,6 +5251,10 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	gpSrv->dwGuiPID = 0;
 	UpdateConsoleMapHeader();
 	EmergencyShow();
+
+	int nOutSize = sizeof(CESERVER_REQ_HDR);
+	*out = ExecuteNewCmd(CECMD_DETACHCON,nOutSize);
+	lbRc = (*out != NULL);
 	
 	return lbRc;
 }
