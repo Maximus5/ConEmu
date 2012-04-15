@@ -13,10 +13,11 @@
 [*] Issue 445: Добавлена возможность создавать пользовательские 'Задачи'/'Tasks'.
     Задача - это алиас для запуска одного или более приложений в новых вкладках ConEmu.
     Их можно использовать (на примере задачи {Shells}):
-    * при запуске, указав в свойствах ярлыка: "ConEmu.exe /cmd {Shells}";
-    * указав {Shells} в поле 'Command line' страницы 'Main' окна 'Settings';
-    * при создании новой консоли через интерфейс ConEmu (`+` на тулбаре, список в Recreate-диалоге);
-    * из командной строки другой консоли: "%ConEmuBaseDir%\ConEmuC.exe" /c {Shells} -new_console.
+    * при запуске, указав в свойствах ярлыка: "ConEmu.exe /cmd {Shells}"
+    * указав {Shells} в поле 'Command line' страницы 'Main' окна 'Settings'
+    * при создании новой консоли через интерфейс ConEmu (`+` на тулбаре, список в Recreate-диалоге)
+    * из командной строки cmd.exe: "%ConEmuBaseDir%\ConEmuC.exe" /c {Shells} -new_console
+    * из командной строки far.exe: conemu:run:{Shells} -new_console
     Настройка на странице 'Tasks' окна 'Settings'.
     Задачи сохраняются в настройке (reg/xml) в подключе "Tasks".
 [*] Minor fix in debug switch "/detached".
