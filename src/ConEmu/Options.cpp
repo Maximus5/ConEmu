@@ -301,7 +301,7 @@ void Settings::InitSettings()
 	isTrueColorer = true; // включим по умочанию, ибо Far3
 
 	AppStd.isExtendColors = false;
-	AppStd.nExtendColor = 14;
+	AppStd.nExtendColorIdx = 14;
 	AppStd.isExtendFonts = false;
 	AppStd.nFontNormalColor = 1; AppStd.nFontBoldColor = 12; AppStd.nFontItalicColor = 13;
 	AppStd.isCursorV = true;
@@ -462,23 +462,25 @@ void Settings::LoadAppSettings(SettingsBase* reg)
 			lbOpened = reg->OpenKey(szAppKey, KEY_READ);
 			if (lbOpened)
 			{
-				_ASSERTE(AppStd.AppNames == NULL);
+				_ASSERTE(AppStd.AppNames == NULL && AppStd.AppNamesLwr == NULL);
 
 				// Умолчания берем из основной ветки!
 				NewApps[nSucceeded] = AppStd;
 				memmove(NewAppColors[nSucceeded].Colors, Colors, sizeof(Colors));
+				NewApps[nSucceeded].AppNames = NULL;
+				NewApps[nSucceeded].AppNamesLwr = NULL;
+				NewApps[nSucceeded].cchNameMax = 0;
 
+				// Загрузка "AppNames" - снаружи, т.к. LoadAppSettings используется и для загрузки &AppStd
 				reg->Load(L"AppNames", &NewApps[nSucceeded].AppNames);
-				if (NewApps[nSucceeded].AppNames && *NewApps[nSucceeded].AppNames)
+				if (NewApps[nSucceeded].AppNames /*&& *NewApps[nSucceeded].AppNames*/)
 				{
-					CharLowerBuff(NewApps[nSucceeded].AppNames, lstrlen(NewApps[nSucceeded].AppNames));
+					NewApps[nSucceeded].cchNameMax = wcslen(NewApps[nSucceeded].AppNames)+1;
+					NewApps[nSucceeded].AppNamesLwr = lstrdup(NewApps[nSucceeded].AppNames);
+					CharLowerBuff(NewApps[nSucceeded].AppNamesLwr, lstrlen(NewApps[nSucceeded].AppNamesLwr));
 					reg->Load(L"Elevated", NewApps[nSucceeded].Elevated);
 					LoadAppSettings(reg, NewApps+nSucceeded, NewAppColors[nSucceeded].Colors);
 					nSucceeded++;
-				}
-				else
-				{
-					SafeFree(NewApps[nSucceeded].AppNames);
 				}
 				reg->CloseKey();
 			}
@@ -492,7 +494,7 @@ void Settings::LoadAppSettings(SettingsBase* reg)
 	CEAppColors* OldAppColors = AppColors; AppColors = NewAppColors;
 	for (int i = 0; i < OldAppCount && OldApps; i++)
 	{
-		SafeFree(OldApps[i].AppNames);
+		OldApps[i].FreeApps();
 	}
 	SafeFree(OldApps);
 	SafeFree(OldAppColors);
@@ -503,7 +505,7 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	// Для AppStd данные загружаются из основной ветки! В том числе и цвета (RGB[32] а не имя палитры)
 	bool bStd = (pApp == &AppStd);
 
-	pApp->OverrideColors = bStd;
+	pApp->OverridePalette = bStd;
 	if (bStd)
 	{
 		TCHAR ColorName[] = L"ColorTable00";
@@ -514,18 +516,18 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 			reg->Load(ColorName, pColors[i]);
 		}
 		reg->Load(L"ExtendColors", pApp->isExtendColors);
-		reg->Load(L"ExtendColorIdx", pApp->nExtendColor);
-		if (pApp->nExtendColor<0 || pApp->nExtendColor>15) pApp->nExtendColor=14;
+		reg->Load(L"ExtendColorIdx", pApp->nExtendColorIdx);
+		if (pApp->nExtendColorIdx<0 || pApp->nExtendColorIdx>15) pApp->nExtendColorIdx=14;
 	}
 	else
 	{
-		reg->Load(L"OverrideColors", pApp->OverrideColors);
+		reg->Load(L"OverridePalette", pApp->OverridePalette);
 		if (!reg->Load(L"PaletteName", pApp->szPaletteName, countof(pApp->szPaletteName)))
 			pApp->szPaletteName[0] = 0;
 		const Settings::ColorPalette* pPal = PaletteGet(PaletteGetIndex(pApp->szPaletteName));
 		_ASSERTE(pPal!=NULL); // NULL не может быть. Всегда как минимум - стандартная палитра
 		pApp->isExtendColors = pPal->isExtendColors;
-		pApp->nExtendColor = pPal->nExtendColor;
+		pApp->nExtendColorIdx = pPal->nExtendColorIdx;
 		memmove(pColors, pPal->Colors, sizeof(pPal->Colors));
 	}
 
@@ -534,11 +536,11 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 		reg->Load(L"OverrideExtendFonts", pApp->OverrideExtendFonts);
 	reg->Load(L"ExtendFonts", pApp->isExtendFonts);
 	reg->Load(L"ExtendFontNormalIdx", pApp->nFontNormalColor);
-	if (pApp->nFontNormalColor<0 || pApp->nFontNormalColor>15) pApp->nFontNormalColor=1;
+	if (pApp->nFontNormalColor>15 && pApp->nFontNormalColor!=255) pApp->nFontNormalColor=1;
 	reg->Load(L"ExtendFontBoldIdx", pApp->nFontBoldColor);
-	if (pApp->nFontBoldColor<0 || pApp->nFontBoldColor>15) pApp->nFontBoldColor=12;
+	if (pApp->nFontBoldColor>15 && pApp->nFontBoldColor!=255) pApp->nFontBoldColor=12;
 	reg->Load(L"ExtendFontItalicIdx", pApp->nFontItalicColor);
-	if (pApp->nFontItalicColor<0 || pApp->nFontItalicColor>15) pApp->nFontItalicColor=13;
+	if (pApp->nFontItalicColor>15 && pApp->nFontItalicColor!=255) pApp->nFontItalicColor=13;
 
 	pApp->OverrideCursor = bStd;
 	if (!bStd)
@@ -856,7 +858,7 @@ void Settings::LoadPalettes(SettingsBase* reg)
     	Palettes[n]->pszName = lstrdup(DefColors[n].pszTitle);
     	Palettes[n]->bPredefined = true;
 		Palettes[n]->isExtendColors = false;
-		Palettes[n]->nExtendColor = 14;
+		Palettes[n]->nExtendColorIdx = 14;
     	_ASSERTE(countof(Palettes[n]->Colors)==0x20 && countof(DefColors[n].dwDefColors)==0x10);
     	memmove(Palettes[n]->Colors, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
     	// Расширения - инициализируем теми же цветами
@@ -877,7 +879,7 @@ void Settings::LoadPalettes(SettingsBase* reg)
 
 			reg->Load(L"Name", &Palettes[PaletteCount]->pszName);
 			reg->Load(L"ExtendColors", Palettes[PaletteCount]->isExtendColors);
-			reg->Load(L"ExtendColorIdx", Palettes[PaletteCount]->nExtendColor);
+			reg->Load(L"ExtendColorIdx", Palettes[PaletteCount]->nExtendColorIdx);
 
 			_ASSERTE(countof(Colors) == countof(Palettes[PaletteCount]->Colors));
 			for (size_t k = 0; k < countof(Palettes[PaletteCount]->Colors)/*0x20*/; k++)
@@ -941,7 +943,7 @@ void Settings::SavePalettes(SettingsBase* reg)
 
 			reg->Save(L"Name", Palettes[i]->pszName);
 			reg->Save(L"ExtendColors", Palettes[i]->isExtendColors);
-			reg->Save(L"ExtendColorIdx", Palettes[i]->nExtendColor);
+			reg->Save(L"ExtendColorIdx", Palettes[i]->nExtendColorIdx);
 
 			_ASSERTE(countof(Colors) == countof(Palettes[i]->Colors));
 			for (size_t k = 0; k < countof(Palettes[i]->Colors)/*0x20*/; k++)
@@ -963,8 +965,34 @@ void Settings::SavePalettes(SettingsBase* reg)
 		reg->CloseKey();
 	}
 
+	for (int k = 0; k < AppCount; k++)
+	{
+		bool bFound = false;
+		for (int i = 0; i < PaletteCount; i++)
+		{
+			if (Palettes[i]->pszName && (lstrcmpi(Apps[k].szPaletteName, Palettes[i]->pszName) == 0))
+			{
+				memmove(AppColors[k].Colors, Palettes[i]->Colors, sizeof(Palettes[i]->Colors));
+				AppColors[k].FadeInitialized = false;
+				Apps[k].isExtendColors = Palettes[i]->isExtendColors;
+				Apps[k].nExtendColorIdx = Palettes[i]->nExtendColorIdx;
+				bFound = true;
+				break;
+			}
+		}
+
+		if (!bFound)
+		{
+			Apps[k].OverridePalette = false; // нету такой палитры, будем рисовать "основной"
+		}
+	}
+
 	if (lbDelete)
+	{
 		delete reg;
+	
+		gpConEmu->Update(true);
+	}
 }
 
 // 0-based, index of Palettes
@@ -978,7 +1006,7 @@ const Settings::ColorPalette* Settings::PaletteGet(int anIndex)
 		static wchar_t szCurrentScheme[64] = L"<Current color scheme>";
 		StdPal.pszName = szCurrentScheme;
 		StdPal.isExtendColors = AppStd.isExtendColors;
-		StdPal.nExtendColor = AppStd.nExtendColor;
+		StdPal.nExtendColorIdx = AppStd.nExtendColorIdx;
 		_ASSERTE(sizeof(StdPal.Colors) == sizeof(this->Colors));
 		memmove(StdPal.Colors, this->Colors, sizeof(StdPal.Colors));
 		return &StdPal;
@@ -1061,7 +1089,7 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 	Palettes[nIndex]->bPredefined = false;
 	Palettes[nIndex]->pszName = lstrdup(asName);
 	Palettes[nIndex]->isExtendColors = AppStd.isExtendColors;
-	Palettes[nIndex]->nExtendColor = AppStd.nExtendColor;
+	Palettes[nIndex]->nExtendColorIdx = AppStd.nExtendColorIdx;
 	_ASSERTE(sizeof(Palettes[nIndex]->Colors) == sizeof(this->Colors));
 	memmove(Palettes[nIndex]->Colors, this->Colors, sizeof(Palettes[nIndex]->Colors));
 	_ASSERTE(nIndex < PaletteCount);
@@ -1748,25 +1776,69 @@ void Settings::UpdateMargins(RECT arcMargins)
 	delete reg;
 }
 
-void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, COLORREF* pColors)
+void Settings::SaveAppSettings(SettingsBase* reg)
 {
-	TCHAR ColorName[] = L"ColorTable00";
+	BOOL lbOpened = FALSE;
+	wchar_t szAppKey[MAX_PATH+64];
+	wcscpy_c(szAppKey, gpSetCls->GetConfigPath());
+	wcscat_c(szAppKey, L"\\Apps");
+	wchar_t* pszAppKey = szAppKey+lstrlen(szAppKey);
 
-	for(uint i = 0; i<countof(Colors)/*0x20*/; i++)
+	lbOpened = reg->OpenKey(szAppKey, KEY_WRITE);
+	if (lbOpened)
 	{
-		ColorName[10] = i/10 + '0';
-		ColorName[11] = i%10 + '0';
-		reg->Save(ColorName, (DWORD)pColors[i]);
+		reg->Save(L"Count", AppCount);
+		reg->CloseKey();
 	}
 
-	reg->Save(L"ExtendColors", pApp->isExtendColors);
-	reg->Save(L"ExtendColorIdx", pApp->nExtendColor);
+	for (int i = 0; i < AppCount; i++)
+	{
+		_wsprintf(pszAppKey, SKIPLEN(32) L"\\App%i", i+1);
 
+		lbOpened = reg->OpenKey(szAppKey, KEY_WRITE);
+		if (lbOpened)
+		{
+			// Загрузка "AppNames" - снаружи, т.к. LoadAppSettings используется и для загрузки &AppStd
+			reg->Save(L"AppNames", Apps[i].AppNames);
+			reg->Save(L"Elevated", Apps[i].Elevated);
+			SaveAppSettings(reg, Apps+i, NULL/*Цвета сохраняются как Имя палитры*/);
+			reg->CloseKey();
+		}
+	}
+}
+
+void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, COLORREF* pColors)
+{
+	// Для AppStd данные загружаются из основной ветки! В том числе и цвета (RGB[32] а не имя палитры)
+	bool bStd = (pApp == &AppStd);
+
+	if (bStd)
+	{
+		TCHAR ColorName[] = L"ColorTable00";
+
+		for(uint i = 0; i<countof(Colors)/*0x20*/; i++)
+		{
+			ColorName[10] = i/10 + '0';
+			ColorName[11] = i%10 + '0';
+			reg->Save(ColorName, (DWORD)pColors[i]);
+		}
+
+		reg->Save(L"ExtendColors", pApp->isExtendColors);
+		reg->Save(L"ExtendColorIdx", pApp->nExtendColorIdx);
+	}
+	else
+	{
+		reg->Save(L"OverridePalette", pApp->OverridePalette);
+		reg->Save(L"PaletteName", pApp->szPaletteName);
+	}
+
+	reg->Save(L"OverrideExtendFonts", pApp->OverrideExtendFonts);
 	reg->Save(L"ExtendFonts", pApp->isExtendFonts);
 	reg->Save(L"ExtendFontNormalIdx", pApp->nFontNormalColor);
 	reg->Save(L"ExtendFontBoldIdx", pApp->nFontBoldColor);
 	reg->Save(L"ExtendFontItalicIdx", pApp->nFontItalicColor);
 
+	reg->Save(L"OverrideCursor", pApp->OverrideCursor);
 	reg->Save(L"CursorType", pApp->isCursorV);
 	reg->Save(L"CursorColor", pApp->isCursorColor);
 	reg->Save(L"CursorBlink", pApp->isCursorBlink);
@@ -2037,6 +2109,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 
 		/* Subsections */
 		SaveCmdTasks(reg);
+		SaveAppSettings(reg);
 
 		/* Done */
 		lbRc = TRUE;
@@ -3026,7 +3099,7 @@ int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)
 				continue;
 		}
 
-		wchar_t* pch = Apps[i].AppNames;
+		wchar_t* pch = Apps[i].AppNamesLwr;
 		if (!pch || !*pch)
 		{
 			_ASSERTE(pch && *pch);
@@ -3078,7 +3151,23 @@ const Settings::AppSettings* Settings::GetAppSettings(int anAppId/*=-1*/)
 			_ASSERTE(AppStd.AppNames == NULL);
 			AppStd.AppNames = NULL;
 		}
+		if (AppStd.AppNamesLwr != NULL)
+		{
+			_ASSERTE(AppStd.AppNamesLwr == NULL);
+			AppStd.AppNamesLwr = NULL;
+		}
 		return &AppStd;
+	}
+
+	return (Apps+anAppId);
+}
+
+Settings::AppSettings* Settings::GetAppSettingsPtr(int anAppId)
+{
+	if ((anAppId < 0) || (anAppId >= AppCount))
+	{
+		_ASSERTE(!((anAppId < 0) || (anAppId > AppCount)));
+		return NULL;
 	}
 
 	return (Apps+anAppId);
@@ -3099,7 +3188,7 @@ COLORREF* Settings::GetColors(int anAppId/*=-1*/, BOOL abFade)
 {
 	COLORREF *pColors = Colors, *pColorsFade = ColorsFade;
 	bool* pbFadeInitialized = &mb_FadeInitialized;
-	if ((anAppId >= 0) && (anAppId < AppCount))
+	if ((anAppId >= 0) && (anAppId < AppCount) && Apps[anAppId].OverridePalette)
 	{
 		_ASSERTE(countof(Colors)==countof(AppColors[anAppId].Colors) && countof(ColorsFade)==countof(AppColors[anAppId].ColorsFade));
 		pColors = AppColors[anAppId].Colors; pColorsFade = AppColors[anAppId].ColorsFade;

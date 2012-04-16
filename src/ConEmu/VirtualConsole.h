@@ -338,7 +338,7 @@ class CVirtualConsole :
 		BYTE nFontCharSet;
 		BYTE nLastNormalBack;
 		//bool bExtendFonts, bExtendColors;
-		//BYTE nFontNormalColor, nFontBoldColor, nFontItalicColor, nExtendColor;
+		//BYTE nFontNormalColor, nFontBoldColor, nFontItalicColor, nExtendColorIdx;
 		struct _TransparentInfo
 		{
 			INT    nRectCount;

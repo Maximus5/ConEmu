@@ -281,7 +281,6 @@ CSettings::CSettings()
 	memset(mh_Tabs, 0, sizeof(mh_Tabs));
 	hwndTip = NULL; hwndBalloon = NULL;
 	mb_IgnoreCmdGroupEdit = mb_IgnoreCmdGroupList = false;
-	mb_IgnoreAppsEdit = mb_IgnoreAppsList = false;
 	hConFontDlg = NULL; hwndConFontBalloon = NULL; bShowConFontError = FALSE; sConFontError[0] = sDefaultConFontName[0] = 0; bConsoleFontChecked = FALSE;
 	QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
 	memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
@@ -422,15 +421,13 @@ void CSettings::InitVars_Pages()
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
 		{IDD_SPG_MAIN,        L"Main",           thi_Main/*,    OnInitDialog_Main*/},
 		{IDD_SPG_FEATURE,     L"Features",       thi_Ext/*,     OnInitDialog_Ext*/},
-		{IDD_SPG_SELECTION,   L"Text selection", thi_Selection /**/},
+		{IDD_SPG_SELECTION,   L"Text selection", thi_Selection/*OnInitDialog_Selection*/},
 		{IDD_SPG_FEATURE_FAR, L"Far Manager",    thi_Far/*,     OnInitDialog_Ext*/},
 		{IDD_SPG_KEYS,        L"Keys",           thi_Keys/*,    OnInitDialog_Keys*/},
 		{IDD_SPG_TABS,        L"Tabs",           thi_Tabs/*,    OnInitDialog_Tabs*/},
 		{IDD_SPG_COLORS,      L"Colors",         thi_Colors/*,  OnInitDialog_Color*/},
-		{IDD_SPG_CMDTASKS,    L"Tasks",          thi_Tasks/*,  OnInitDialog_CmdTasks*/},
-#ifdef _DEBUG
-		{IDD_SPG_APPDISTINCT, L"App distinct",   thi_Apps/*,  OnInitDialog_CmdTasks*/},
-#endif
+		{IDD_SPG_CMDTASKS,    L"Tasks",          thi_Tasks/*,   OnInitDialog_CmdTasks*/},
+		{IDD_SPG_APPDISTINCT, L"App distinct",   thi_Apps/*,    OnInitDialog_CmdTasks*/},
 		{IDD_SPG_VIEWS,       L"Views",          thi_Views/*,   OnInitDialog_Views*/},
 		{IDD_SPG_DEBUG,       L"Debug",          thi_Debug/*,   OnInitDialog_Debug*/},
 		{IDD_SPG_UPDATE,      L"Update",         thi_Update/*,  OnInitDialog_Update*/},
@@ -1843,9 +1840,9 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 	for(uint c = c0; c <= MAX_COLOR_EDT_ID; c++)
 		ColorSetEdit(hWnd2, c);
 
-	DWORD nVal = gpSet->AppStd.nExtendColor;
+	DWORD nVal = gpSet->AppStd.nExtendColorIdx;
 	FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
-	gpSet->AppStd.nExtendColor = nVal;
+	gpSet->AppStd.nExtendColorIdx = nVal;
 	CheckDlgButton(hWnd2, cbExtendColors, gpSet->AppStd.isExtendColors ? BST_CHECKED : BST_UNCHECKED);
 	OnButtonClicked(hWnd2, cbExtendColors, 0);
 	CheckDlgButton(hWnd2, cbTrueColorer, gpSet->isTrueColorer ? BST_CHECKED : BST_UNCHECKED);
@@ -1887,7 +1884,7 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 		if (/*(iCurPalette == 0) -- покажем последнюю, чтобы приоритет пользовательским отдать
 			&&*/ (memcmp(gLastColors.Colors, pPal->Colors, sizeof(pPal->Colors)) == 0)
 			&& (gLastColors.isExtendColors == pPal->isExtendColors)
-			&& (gLastColors.nExtendColor == pPal->nExtendColor))
+			&& (gLastColors.nExtendColorIdx == pPal->nExtendColorIdx))
 		{
 			iCurPalette = i+1;
 			bBtnEnabled = !pPal->bPredefined;
@@ -1958,8 +1955,6 @@ LRESULT CSettings::OnInitDialog_Tasks(HWND hWnd2, bool abForceReload)
 
 LRESULT CSettings::OnInitDialog_Apps(HWND hWnd2, bool abForceReload)
 {
-	mb_IgnoreAppsEdit = true;
-
 	//mn_AppsEnableControlsMsg = RegisterWindowMessage(L"ConEmu::AppsEnableControls");
 
 	if (abForceReload)
@@ -1971,77 +1966,13 @@ LRESULT CSettings::OnInitDialog_Apps(HWND hWnd2, bool abForceReload)
 		if (!(nStyles & LBS_NOTIFY))
 			SetWindowLongPtr(GetDlgItem(hWnd2, lbAppDistinct), GWL_STYLE, nStyles|LBS_NOTIFY);
 	}
+	
+	pageOpProc_Apps(hWnd2, abForceReload ? WM_INITDIALOG : mn_ActivateTabMsg, 0, 0);
 
-	const Settings::ColorPalette* pPal;
-
-	if ((pPal = gpSet->PaletteGet(-1)) != NULL)
+	if (abForceReload)
 	{
-		memmove(&gLastColors, pPal, sizeof(gLastColors));
-		if (gLastColors.pszName == NULL)
-		{
-			_ASSERTE(gLastColors.pszName!=NULL);
-			gLastColors.pszName = (wchar_t*)L"<Current color scheme>";
-		}
+		RegisterTipsFor(hWnd2);
 	}
-	else
-	{
-		EnableWindow(hWnd2, FALSE);
-		MBoxAssert(pPal && "PaletteGet(-1) failed");
-		return 0;
-	}
-
-	SendMessage(GetDlgItem(hWnd2, lbColorsOverride), CB_RESETCONTENT, 0, 0);
-	SendDlgItemMessage(hWnd2, lbColorsOverride, CB_ADDSTRING, 0, (LPARAM)gLastColors.pszName);
-	for (int i = 0; (pPal = gpSet->PaletteGet(i)) != NULL; i++)
-	{
-		SendDlgItemMessage(hWnd2, lbColorsOverride, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
-	}
-	SendDlgItemMessage(hWnd2, lbColorsOverride, CB_SETCURSEL, 0/*iCurPalette*/, 0);
-
-
-	SendMessage(GetDlgItem(hWnd2, lbExtendFontBoldIdx), CB_RESETCONTENT, 0, 0);
-	SendMessage(GetDlgItem(hWnd2, lbExtendFontItalicIdx), CB_RESETCONTENT, 0, 0);
-	SendMessage(GetDlgItem(hWnd2, lbExtendFontNormalIdx), CB_RESETCONTENT, 0, 0);
-	for (uint i=0; i < countof(SettingsNS::szColorIdx); i++)
-	{
-		//_wsprintf(temp, SKIPLEN(countof(temp))(i==16) ? L"None" : L"%2i", i);
-		SendDlgItemMessage(hWnd2, lbExtendFontBoldIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
-		SendDlgItemMessage(hWnd2, lbExtendFontItalicIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
-		SendDlgItemMessage(hWnd2, lbExtendFontNormalIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
-	}
-
-
-	// Сброс ранее загруженного списка (ListBox: lbAppDistinct)
-	SendDlgItemMessage(hWnd2, lbAppDistinct, LB_RESETCONTENT, 0,0);
-
-	//if (abForceReload)
-	//{
-	//	// Обновить группы команд
-	//	gpSet->LoadCmdTasks(NULL, true);
-	//}
-
-	int nApp = 0;
-	wchar_t szItem[1024];
-	const Settings::AppSettings* pApp = NULL;
-	while ((pApp = gpSet->GetAppSettings(nApp)) && pApp->AppNames)
-	{
-		_wsprintf(szItem, SKIPLEN(countof(szItem)) L"%i\t%s\t", nApp+1,
-			(pApp->Elevated == 1) ? L"E" : (pApp->Elevated == 2) ? L"N" : L"*");
-		int nPrefix = lstrlen(szItem);
-		lstrcpyn(szItem+nPrefix, pApp->AppNames, countof(szItem)-nPrefix);
-
-		INT_PTR iIndex = SendDlgItemMessage(hWnd2, lbAppDistinct, LB_ADDSTRING, 0, (LPARAM)szItem);
-
-		//SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETITEMDATA, iIndex, (LPARAM)pApp);
-
-		nApp++;
-	}
-
-	pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
-
-	mb_IgnoreAppsEdit = false;
-
-	RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -4145,7 +4076,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		{
 			if (wId == lbExtendIdx)
 			{
-				gpSet->AppStd.nExtendColor = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+				gpSet->AppStd.nExtendColorIdx = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
 			}
 			else if (wId==lbDefaultColors)
 			{
@@ -4207,9 +4138,9 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						InvalidateRect(GetDlgItem(hWnd2, c0+i), 0, 1);
 					}
 
-					DWORD nVal = pPal->nExtendColor;
+					DWORD nVal = pPal->nExtendColorIdx;
 					FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
-					gpSet->AppStd.nExtendColor = nVal;
+					gpSet->AppStd.nExtendColorIdx = nVal;
 					gpSet->AppStd.isExtendColors = pPal->isExtendColors;
 					CheckDlgButton(hWnd2, cbExtendColors, pPal->isExtendColors ? BST_CHECKED : BST_UNCHECKED);
 					OnButtonClicked(hWnd2, cbExtendColors, 0);
@@ -4696,9 +4627,11 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Far(hWnd2, TRUE);
 			break;
 		case IDD_SPG_KEYS:
-			bSkipSelChange = true;
+			{
+			bool lbOld = bSkipSelChange; bSkipSelChange = true;
 			gpSetCls->OnInitDialog_Keys(hWnd2, TRUE);
-			bSkipSelChange = false;
+			bSkipSelChange = lbOld;
+			}
 			break;
 		case IDD_SPG_TABS:
 			gpSetCls->OnInitDialog_Tabs(hWnd2);
@@ -4707,14 +4640,14 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Color(hWnd2);
 			break;
 		case IDD_SPG_CMDTASKS:
-			bSkipSelChange = true;
+			{
+			bool lbOld = bSkipSelChange; bSkipSelChange = true;
 			gpSetCls->OnInitDialog_Tasks(hWnd2, true);
-			bSkipSelChange = false;
+			bSkipSelChange = lbOld;
+			}
 			break;
 		case IDD_SPG_APPDISTINCT:
-			bSkipSelChange = true;
 			gpSetCls->OnInitDialog_Apps(hWnd2, true);
-			bSkipSelChange = false;
 			break;
 		case IDD_SPG_VIEWS:
 			gpSetCls->OnInitDialog_Views(hWnd2);
@@ -4750,9 +4683,11 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Far(hWnd2, FALSE);
 			break;
 		case IDD_SPG_KEYS:
-			bSkipSelChange = true;
+			{
+			bool lbOld = bSkipSelChange; bSkipSelChange = true;
 			gpSetCls->OnInitDialog_Keys(hWnd2, FALSE);
-			bSkipSelChange = false;
+			bSkipSelChange = lbOld;
+			}
 			break;
 		case IDD_SPG_TABS:    /*gpSetCls->OnInitDialog_Tabs(hWnd2);*/   break;
 		case IDD_SPG_COLORS:  /*gpSetCls->OnInitDialog_Color(hWnd2);*/  break;
@@ -4950,24 +4885,24 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			{
 				if (wParam == DBGMSG_LOG_SHELL_MAGIC)
 				{
-					bSkipSelChange = true;
+					bool lbOld = bSkipSelChange; bSkipSelChange = true;
 					DebugLogShellActivity *pShl = (DebugLogShellActivity*)lParam;
 					gpSetCls->debugLogShell(hWnd2, pShl);
-					bSkipSelChange = false;
+					bSkipSelChange = lbOld;
 				} // DBGMSG_LOG_SHELL_MAGIC
 				else if (wParam == DBGMSG_LOG_INPUT_MAGIC)
 				{
-					bSkipSelChange = true;
+					bool lbOld = bSkipSelChange; bSkipSelChange = true;
 					CESERVER_REQ_PEEKREADINFO* pInfo = (CESERVER_REQ_PEEKREADINFO*)lParam;
 					gpSetCls->debugLogInfo(hWnd2, pInfo);
-					bSkipSelChange = false;
+					bSkipSelChange = lbOld;
 				} // DBGMSG_LOG_INPUT_MAGIC
 				else if (wParam == DBGMSG_LOG_CMD_MAGIC)
 				{
-					bSkipSelChange = true;
+					bool lbOld = bSkipSelChange; bSkipSelChange = true;
 					LogCommandsData* pCmd = (LogCommandsData*)lParam;
 					gpSetCls->debugLogCommand(hWnd2, pCmd);
-					bSkipSelChange = false;
+					bSkipSelChange = lbOld;
 				} // DBGMSG_LOG_CMD_MAGIC
 			} // if (messg == DBGMSG_LOG_ID && hWnd2 == gpSetCls->hDebug)
 		} // default:
@@ -4978,7 +4913,91 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	switch (messg)
+	INT_PTR iRc = 0;
+	static bool bSkipSelChange = false, bSkipEditChange = false, bSkipEditSet = false;
+	bool bRedraw = false, bRefill = false;
+
+	if ((messg == WM_INITDIALOG) || (messg == mn_ActivateTabMsg))
+	{
+		bool lbOld = bSkipSelChange; bSkipSelChange = true;
+		bool bForceReload = (messg == WM_INITDIALOG);
+
+		if (bForceReload || !bSkipEditSet)
+		{
+			const Settings::ColorPalette* pPal;
+
+			if ((pPal = gpSet->PaletteGet(-1)) != NULL)
+			{
+				memmove(&gLastColors, pPal, sizeof(gLastColors));
+				if (gLastColors.pszName == NULL)
+				{
+					_ASSERTE(gLastColors.pszName!=NULL);
+					gLastColors.pszName = (wchar_t*)L"<Current color scheme>";
+				}
+			}
+			else
+			{
+				EnableWindow(hWnd2, FALSE);
+				MBoxAssert(pPal && "PaletteGet(-1) failed");
+				return 0;
+			}
+
+			SendMessage(GetDlgItem(hWnd2, lbColorsOverride), CB_RESETCONTENT, 0, 0);
+			SendDlgItemMessage(hWnd2, lbColorsOverride, CB_ADDSTRING, 0, (LPARAM)gLastColors.pszName);
+			for (int i = 0; (pPal = gpSet->PaletteGet(i)) != NULL; i++)
+			{
+				SendDlgItemMessage(hWnd2, lbColorsOverride, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
+			}
+			SendDlgItemMessage(hWnd2, lbColorsOverride, CB_SETCURSEL, 0/*iCurPalette*/, 0);
+
+
+			SendMessage(GetDlgItem(hWnd2, lbExtendFontBoldIdx), CB_RESETCONTENT, 0, 0);
+			SendMessage(GetDlgItem(hWnd2, lbExtendFontItalicIdx), CB_RESETCONTENT, 0, 0);
+			SendMessage(GetDlgItem(hWnd2, lbExtendFontNormalIdx), CB_RESETCONTENT, 0, 0);
+			for (uint i=0; i < countof(SettingsNS::szColorIdx); i++)
+			{
+				//_wsprintf(temp, SKIPLEN(countof(temp))(i==16) ? L"None" : L"%2i", i);
+				SendDlgItemMessage(hWnd2, lbExtendFontBoldIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
+				SendDlgItemMessage(hWnd2, lbExtendFontItalicIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
+				SendDlgItemMessage(hWnd2, lbExtendFontNormalIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
+			}
+		}
+
+		// Сброс ранее загруженного списка (ListBox: lbAppDistinct)
+		SendDlgItemMessage(hWnd2, lbAppDistinct, LB_RESETCONTENT, 0,0);
+
+		//if (abForceReload)
+		//{
+		//	// Обновить группы команд
+		//	gpSet->LoadCmdTasks(NULL, true);
+		//}
+
+		int nApp = 0;
+		wchar_t szItem[1024];
+		const Settings::AppSettings* pApp = NULL;
+		while ((pApp = gpSet->GetAppSettings(nApp)) && pApp->AppNames)
+		{
+			_wsprintf(szItem, SKIPLEN(countof(szItem)) L"%i\t%s\t", nApp+1,
+				(pApp->Elevated == 1) ? L"E" : (pApp->Elevated == 2) ? L"N" : L"*");
+			int nPrefix = lstrlen(szItem);
+			lstrcpyn(szItem+nPrefix, pApp->AppNames, countof(szItem)-nPrefix);
+
+			INT_PTR iIndex = SendDlgItemMessage(hWnd2, lbAppDistinct, LB_ADDSTRING, 0, (LPARAM)szItem);
+
+			//SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETITEMDATA, iIndex, (LPARAM)pApp);
+
+			nApp++;
+		}
+
+		bSkipSelChange = lbOld;
+
+		if (!bSkipSelChange)
+		{
+			pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
+		}
+
+	}
+	else switch (messg)
 	{
 	case WM_COMMAND:
 		{
@@ -4986,13 +5005,36 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 			{
 				BOOL bChecked;
 				WORD CB = LOWORD(wParam);
+
+				int iCur = bSkipSelChange ? -1 : (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
+				Settings::AppSettings* pApp = (iCur < 0) ? NULL : gpSet->GetAppSettingsPtr(iCur);
+				_ASSERTE((iCur<0) || (pApp && pApp->AppNames));
+
 				switch (CB)
 				{
+				case rbAppDistinctElevatedOn:
+				case rbAppDistinctElevatedOff:
+				case rbAppDistinctElevatedIgnore:
+					if (pApp)
+					{
+						pApp->Elevated = IsChecked(hWnd2, rbAppDistinctElevatedOn) ? 1
+							: IsChecked(hWnd2, rbAppDistinctElevatedOff) ? 2
+							: 0;
+						bRefill = bRedraw = true;
+					}
+					break;
+
+
 				case cbColorsOverride:
 					bChecked = IsChecked(hWnd2, CB);
 					EnableWindow(GetDlgItem(hWnd2, lbColorsOverride), bChecked);
-					//TODO: Store, when App selected
+					if (pApp)
+					{
+						pApp->OverridePalette = bChecked;
+						bRedraw = true;
+					}
 					break;
+
 				case cbCursorOverride:
 					bChecked = IsChecked(hWnd2, CB);
 					EnableWindow(GetDlgItem(hWnd2, rCursorV), bChecked);
@@ -5000,98 +5042,259 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 					EnableWindow(GetDlgItem(hWnd2, cbCursorColor), bChecked);
 					EnableWindow(GetDlgItem(hWnd2, cbCursorBlink), bChecked);
 					EnableWindow(GetDlgItem(hWnd2, cbBlockInactiveCursor), bChecked);
-					//TODO: Store, when App selected
+					if (pApp)
+					{
+						pApp->OverrideCursor = bChecked;
+						bRedraw = true;
+					}
 					break;
+				case rCursorV:
+				case rCursorH:
+					if (pApp)
+					{
+						pApp->isCursorV = IsChecked(hWnd2, rCursorV);
+						bRedraw = true;
+					}
+					break;
+				case cbCursorColor:
+					if (pApp)
+					{
+						pApp->isCursorColor = IsChecked(hWnd2, CB);
+						bRedraw = true;
+					}
+					break;
+				case cbCursorBlink:
+					if (pApp)
+					{
+						pApp->isCursorBlink = IsChecked(hWnd2, CB);
+						//if (!gpSet->AppStd.isCursorBlink) // если мигание отключается - то курсор может "замереть" в погашенном состоянии.
+						//	gpConEmu->ActiveCon()->Invalidate();
+						bRedraw = true;
+					}
+					break;
+				case cbBlockInactiveCursor:
+					if (pApp)
+					{
+						pApp->isCursorBlockInactive = IsChecked(hWnd2, CB);
+						bRedraw = true;
+					}
+					break;
+
 				case cbExtendFontsOverride:
 					bChecked = IsChecked(hWnd2, CB);
 					EnableWindow(GetDlgItem(hWnd2, cbExtendFonts), bChecked);
 					EnableWindow(GetDlgItem(hWnd2, lbExtendFontBoldIdx), bChecked);
 					EnableWindow(GetDlgItem(hWnd2, lbExtendFontItalicIdx), bChecked);
 					EnableWindow(GetDlgItem(hWnd2, lbExtendFontNormalIdx), bChecked);
-					//TODO: Store, when App selected
+					if (!bSkipSelChange)
+					{
+						pApp->OverrideExtendFonts = IsChecked(hWnd2, CB);
+						bRedraw = true;
+					}
+					break;
+				case cbExtendFonts:
+					if (pApp)
+					{
+						pApp->isExtendFonts = IsChecked(hWnd2, CB);
+						bRedraw = true;
+					}
 					break;
 				}	
-			}
+			} // if (HIWORD(wParam) == BN_CLICKED)
+			else if (HIWORD(wParam) == EN_CHANGE)
+			{
+				WORD ID = LOWORD(wParam);
+				int iCur = bSkipSelChange ? -1 : (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
+				Settings::AppSettings* pApp = (iCur < 0) ? NULL : gpSet->GetAppSettingsPtr(iCur);
+				_ASSERTE((iCur<0) || (pApp && pApp->AppNames));
+
+				if (pApp)
+				{
+					switch (ID)
+					{
+					case tAppDistinctName:
+						if (!bSkipEditChange)
+						{
+							Settings::AppSettings* pApp = gpSet->GetAppSettingsPtr(iCur);
+							if (!pApp || !pApp->AppNames)
+							{
+								_ASSERTE(!pApp && pApp->AppNames);
+							}
+							else
+							{
+								wchar_t* pszApps = NULL;
+								if (GetString(hWnd2, ID, &pszApps))
+								{
+									pApp->SetNames(pszApps);
+									bRefill = bRedraw = true;
+								}
+								SafeFree(pszApps);
+							}
+						} // tAppDistinctName
+						break;
+					}
+				}
+			} // if (HIWORD(wParam) == EN_CHANGE)
 			else if (HIWORD(wParam) == LBN_SELCHANGE)
 			{
 				WORD CB = LOWORD(wParam);
 
-				switch (CB)
+				if (CB == lbAppDistinct)
 				{
-				case lbAppDistinct:
+					if (bSkipSelChange)
+						break; // WM_COMMAND
+
+					wchar_t temp[MAX_PATH];
+					const Settings::AppSettings* pApp = NULL;
+					//while ((pApp = gpSet->GetAppSettings(nApp)) && pApp->AppNames)
+					int iCur = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
+					if (iCur >= 0)
+						pApp = gpSet->GetAppSettings(iCur);
+					if (pApp && pApp->AppNames)
 					{
-						if (mb_IgnoreAppsList)
+						if (!bSkipEditSet)
+						{
+							bool lbCur = bSkipEditChange; bSkipEditChange = true;
+							SetDlgItemText(hWnd2, tAppDistinctName, pApp->AppNames);
+							bSkipEditChange = lbCur;
+						}
+						EnableWindow(GetDlgItem(hWnd2, tAppDistinctName), TRUE);
+						EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOn), TRUE);
+						EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOff), TRUE);
+						EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedIgnore), TRUE);
+						CheckRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore,
+							(pApp->Elevated == 1) ? rbAppDistinctElevatedOn :
+							(pApp->Elevated == 2) ? rbAppDistinctElevatedOff : rbAppDistinctElevatedIgnore);
+
+						EnableWindow(GetDlgItem(hWnd2, cbExtendFontsOverride), TRUE);
+						EnableWindow(GetDlgItem(hWnd2, cbCursorOverride), TRUE);
+						EnableWindow(GetDlgItem(hWnd2, cbColorsOverride), TRUE);
+
+						CheckDlgButton(hWnd2, cbExtendFontsOverride, pApp->OverrideExtendFonts);
+						CheckDlgButton(hWnd2, cbExtendFonts, pApp->isExtendFonts);
+						_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontBoldColor<16) ? L"%2i" : L"None", pApp->nFontBoldColor);
+						SelectStringExact(hWnd2, lbExtendFontBoldIdx, temp);
+						_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontItalicColor<16) ? L"%2i" : L"None", pApp->nFontItalicColor);
+						SelectStringExact(hWnd2, lbExtendFontItalicIdx, temp);
+						_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontNormalColor<16) ? L"%2i" : L"None", pApp->nFontNormalColor);
+						SelectStringExact(hWnd2, lbExtendFontNormalIdx, temp);
+
+						CheckDlgButton(hWnd2, cbCursorOverride, pApp->OverrideCursor);
+						CheckDlgButton(hWnd2, cbCursorColor, pApp->isCursorColor);
+						CheckDlgButton(hWnd2, cbCursorBlink, pApp->isCursorBlink);
+						CheckDlgButton(hWnd2, cbBlockInactiveCursor, pApp->isCursorBlockInactive);
+						CheckRadioButton(hWnd2, rCursorV, rCursorH, pApp->isCursorV ? rCursorV : rCursorH);
+
+						CheckDlgButton(hWnd2, cbColorsOverride, pApp->OverridePalette);
+						SelectStringExact(hWnd2, lbColorsOverride, pApp->szPaletteName);
+					}
+					else
+					{
+						SetDlgItemText(hWnd2, tAppDistinctName, L"");
+						EnableWindow(GetDlgItem(hWnd2, tAppDistinctName), FALSE);
+						CheckRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore, rbAppDistinctElevatedIgnore);
+						EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOn), FALSE);
+						EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOff), FALSE);
+						EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedIgnore), FALSE);
+						
+						EnableWindow(GetDlgItem(hWnd2, cbExtendFontsOverride), FALSE);
+						EnableWindow(GetDlgItem(hWnd2, cbCursorOverride), FALSE);
+						EnableWindow(GetDlgItem(hWnd2, cbColorsOverride), FALSE);
+						CheckDlgButton(hWnd2, cbExtendFontsOverride, BST_UNCHECKED);
+						CheckDlgButton(hWnd2, cbCursorOverride, BST_UNCHECKED);
+						CheckDlgButton(hWnd2, cbColorsOverride, BST_UNCHECKED);
+					}
+					
+					bool lbOld = bSkipSelChange; bSkipSelChange = true;
+					pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbExtendFontsOverride,BN_CLICKED), 0);
+					pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbCursorOverride,BN_CLICKED), 0);
+					pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbColorsOverride,BN_CLICKED), 0);
+					bSkipSelChange = lbOld;
+				} // if (CB == lbAppDistinct)
+				else
+				{
+					int iCur = bSkipSelChange ? -1 : (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
+					Settings::AppSettings* pApp = (iCur < 0) ? NULL : gpSet->GetAppSettingsPtr(iCur);
+					_ASSERTE((iCur<0) || (pApp && pApp->AppNames));
+
+					if (pApp)
+					{
+						switch (CB)
+						{
+						case lbExtendFontBoldIdx:
+						case lbExtendFontItalicIdx:
+						case lbExtendFontNormalIdx:
+							{
+								if (CB == lbExtendFontNormalIdx)
+									pApp->nFontNormalColor = GetNumber(hWnd2, CB);
+								else if (CB == lbExtendFontBoldIdx)
+									pApp->nFontBoldColor = GetNumber(hWnd2, CB);
+								else if (CB == lbExtendFontItalicIdx)
+									pApp->nFontItalicColor = GetNumber(hWnd2, CB);
+
+								if (pApp->isExtendFonts)
+									bRedraw = true;
+							}
 							break;
 
-						wchar_t temp[MAX_PATH];
-						mb_IgnoreAppsEdit = true;
-						const Settings::AppSettings* pApp = NULL;
-						//while ((pApp = gpSet->GetAppSettings(nApp)) && pApp->AppNames)
-						int iCur = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
-						if (iCur >= 0)
-							pApp = gpSet->GetAppSettings(iCur);
-						if (pApp && pApp->AppNames)
-						{
-							SetDlgItemText(hWnd2, tAppDistinctName, pApp->AppNames);
-							EnableWindow(GetDlgItem(hWnd2, tAppDistinctName), TRUE);
-							EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOn), TRUE);
-							EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOff), TRUE);
-							EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedIgnore), TRUE);
-							CheckRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore,
-								(pApp->Elevated == 1) ? rbAppDistinctElevatedOn :
-								(pApp->Elevated == 2) ? rbAppDistinctElevatedOff : rbAppDistinctElevatedIgnore);
-
-							EnableWindow(GetDlgItem(hWnd2, cbExtendFontsOverride), TRUE);
-							EnableWindow(GetDlgItem(hWnd2, cbCursorOverride), TRUE);
-							EnableWindow(GetDlgItem(hWnd2, cbColorsOverride), TRUE);
-
-							CheckDlgButton(hWnd2, cbExtendFontsOverride, pApp->OverrideExtendFonts);
-							CheckDlgButton(hWnd2, cbExtendFonts, pApp->isExtendFonts);
-							_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontBoldColor<16) ? L"%2i" : L"None", pApp->nFontBoldColor);
-							SelectStringExact(hWnd2, lbExtendFontBoldIdx, temp);
-							_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontItalicColor<16) ? L"%2i" : L"None", pApp->nFontItalicColor);
-							SelectStringExact(hWnd2, lbExtendFontItalicIdx, temp);
-							_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontNormalColor<16) ? L"%2i" : L"None", pApp->nFontNormalColor);
-							SelectStringExact(hWnd2, lbExtendFontNormalIdx, temp);
-
-							CheckDlgButton(hWnd2, cbCursorOverride, pApp->OverrideCursor);
-							CheckDlgButton(hWnd2, cbCursorColor, pApp->isCursorColor);
-							CheckDlgButton(hWnd2, cbCursorBlink, pApp->isCursorBlink);
-							CheckDlgButton(hWnd2, cbBlockInactiveCursor, pApp->isCursorBlockInactive);
-							CheckRadioButton(hWnd2, rCursorV, rCursorH, pApp->isCursorV ? rCursorV : rCursorH);
-
-							CheckDlgButton(hWnd2, cbColorsOverride, pApp->OverrideColors);
-							SelectStringExact(hWnd2, lbColorsOverride, pApp->szPaletteName);
+						case lbColorsOverride:
+							{
+								HWND hList = GetDlgItem(hWnd2, CB);
+								INT_PTR nIdx = SendMessage(hList, CB_GETCURSEL, 0, 0);
+								if (nIdx >= 0)
+								{
+									INT_PTR nLen = SendMessage(hList, CB_GETLBTEXTLEN, nIdx, 0);
+									wchar_t* pszText = (nLen > 0) ? (wchar_t*)calloc((nLen+1),sizeof(wchar_t)) : NULL;
+									if (pszText)
+									{
+										SendMessage(hList, CB_GETLBTEXT, nIdx, (LPARAM)pszText);
+										int iPal = (nIdx == 0) ? -1 : gpSet->PaletteGetIndex(pszText);
+										if ((nIdx == 0) || (iPal >= 0))
+										{
+											lstrcpyn(pApp->szPaletteName, (nIdx == 0) ? L"" : pszText, countof(pApp->szPaletteName));
+											_ASSERTE(iCur>=0 && iCur<gpSet->AppCount && gpSet->AppColors);
+											const Settings::ColorPalette* pPal = gpSet->PaletteGet(iPal);
+											if (pPal)
+											{
+												memmove(gpSet->AppColors[iCur].Colors, pPal->Colors, sizeof(pPal->Colors));
+												pApp->isExtendColors = pPal->isExtendColors;
+												pApp->nExtendColorIdx = pPal->nExtendColorIdx;
+												gpSet->AppColors[iCur].FadeInitialized = false;
+												bRedraw = true;
+											}
+											else
+											{
+												_ASSERTE(pPal!=NULL);
+											}
+										}
+									}
+								}
+							}
+							break;
 						}
-						else
-						{
-							SetDlgItemText(hWnd2, tAppDistinctName, L"");
-							EnableWindow(GetDlgItem(hWnd2, tAppDistinctName), FALSE);
-							CheckRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore, rbAppDistinctElevatedIgnore);
-							EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOn), FALSE);
-							EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOff), FALSE);
-							EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedIgnore), FALSE);
-							
-							EnableWindow(GetDlgItem(hWnd2, cbExtendFontsOverride), FALSE);
-							EnableWindow(GetDlgItem(hWnd2, cbCursorOverride), FALSE);
-							EnableWindow(GetDlgItem(hWnd2, cbColorsOverride), FALSE);
-							CheckDlgButton(hWnd2, cbExtendFontsOverride, BST_UNCHECKED);
-							CheckDlgButton(hWnd2, cbCursorOverride, BST_UNCHECKED);
-							CheckDlgButton(hWnd2, cbColorsOverride, BST_UNCHECKED);
-						}
-						mb_IgnoreAppsEdit = false;
-
-						pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbExtendFontsOverride,BN_CLICKED), 0);
-						pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbCursorOverride,BN_CLICKED), 0);
-						pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbColorsOverride,BN_CLICKED), 0);
-					} // lbAppDistinct
-					break;
+					}
 				}
-			}
+			} // if (HIWORD(wParam) == LBN_SELCHANGE)
 		} // WM_COMMAND
 		break;
+	} // switch (messg)
+
+	if (bRedraw)
+		gpConEmu->Update(true); // в принципе, обновлять нужно если только настройки видимой консоли поменялись, но...
+
+	if (bRefill)
+	{
+		bool lbOld = bSkipSelChange; bSkipSelChange = true;
+		bool lbOldSet = bSkipEditSet; bSkipEditSet = true;
+		INT_PTR iSel = SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
+		gpSetCls->OnInitDialog_Apps(hWnd2, false);
+		SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, iSel,0);
+		bSkipSelChange = lbOld;
+		bSkipEditSet = lbOldSet;
+		bRefill = false;
 	}
-	return 0;
+
+	return iRc;
 }
 
 void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)

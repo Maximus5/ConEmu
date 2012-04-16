@@ -3054,12 +3054,12 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	const Settings::AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 	_ASSERTE(pApp!=NULL);
 	// 120331 - зачем ограничивать настройку доп.цветов?
-	bool bExtendColors = /*lbIsFar &&*/ pApp->isExtendColors;
-	BYTE nExtendColor = pApp->nExtendColor;
-	bool bExtendFonts = lbIsFar && pApp->isExtendFonts;
-	BYTE nFontNormalColor = pApp->nFontNormalColor;
-	BYTE nFontBoldColor = pApp->nFontBoldColor;
-	BYTE nFontItalicColor = pApp->nFontItalicColor;
+	bool bExtendColors = /*lbIsFar &&*/ pApp->ExtendColors();
+	BYTE nExtendColorIdx = pApp->ExtendColorIdx();
+	bool bExtendFonts = lbIsFar && pApp->ExtendFonts();
+	BYTE nFontNormalColor = pApp->FontNormalColor();
+	BYTE nFontBoldColor = pApp->FontBoldColor();
+	BYTE nFontItalicColor = pApp->FontItalicColor();
 	bool lbFade = mp_RCon->mp_VCon->isFade;
 	//BOOL bUseColorKey = gpSet->isColorKey  // Должен быть включен в настройке
 	//	&& mp_RCon->isFar(TRUE/*abPluginRequired*/) // в фаре загружен плагин (чтобы с цветами не проколоться)
@@ -3295,7 +3295,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					// Если в качестве цвета "расширения" выбран цвет панелей - значит
 					// пользователь просто настроил "другую" палитру для панелей фара.
 					// К сожалению, таким образом нельзя заменить только цвета для элемента под курсором.
-					if (((pFarInfo->nFarColors[col_PanelText] & 0xF0) >> 4) != nExtendColor)
+					if (((pFarInfo->nFarColors[col_PanelText] & 0xF0) >> 4) != nExtendColorIdx)
 						lbStoreBackLast = true;
 					if (pFarInfo->FarInterfaceSettings.AlwaysShowMenuBar || mp_RCon->isEditor() || mp_RCon->isViewer())
 						nExtendStartsY = 1; // пропустить обработку строки меню 
@@ -3340,7 +3340,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 						if (bExtendColors && (nY >= nExtendStartsY))
 						{
-							if (lca.nBackIdx == nExtendColor)
+							if (lca.nBackIdx == nExtendColorIdx)
 							{
 								lca.nBackIdx = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
 								lca.nForeIdx += 0x10;

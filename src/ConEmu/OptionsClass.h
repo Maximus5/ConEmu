@@ -168,7 +168,7 @@ class CSettings
 		//bool NeedDialogDetect();
 		//COLORREF ColorKey;
 		//bool isExtendColors;
-		//char nExtendColor;
+		//char nExtendColorIdx;
 		//bool isExtendFonts, isTrueColorer;
 		//char nFontNormalColor, nFontBoldColor, nFontItalicColor;
 
@@ -522,7 +522,6 @@ class CSettings
 		//LRESULT OnButtonClicked_Apps(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		//UINT mn_AppsEnableControlsMsg;
 		INT_PTR pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		bool mb_IgnoreAppsEdit, mb_IgnoreAppsList;
 		//LRESULT OnColorButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		//LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		
 		//LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				

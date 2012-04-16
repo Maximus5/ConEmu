@@ -1643,7 +1643,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					if (pRCon->mp_VCon->Update(bForce))
 						lbNeedRedraw = true;
 				}
-				else if (gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId())->isCursorBlink
+				else if (gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId())->CursorBlink()
 					&& pRCon->mb_RConStartedSuccess)
 				{
 					// ¬озможно, настало врем€ мигнуть курсором?
@@ -3872,6 +3872,11 @@ LPCWSTR CRealConsole::GetActiveProcessName()
 	LPCWSTR pszName = NULL;
 	GetActiveAppSettingsId(&pszName);
 	return pszName;
+}
+
+void CRealConsole::ResetActiveAppSettingsId()
+{
+	mn_LastProcessNamePID = 0;
 }
 
 int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName/*=NULL*/)
@@ -6155,7 +6160,7 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 				if (cbBytesRead == (TabHdr.nTabCount*sizeof(ConEmuTab)))
 				{
 					SetTabs(tabs, TabHdr.nTabCount);
-					if ((anWndIndex >= 0) && (anWndIndex < TabHdr.nTabCount) && (TabHdr.nTabCount > 0))
+					if ((anWndIndex >= 0) && ((DWORD)anWndIndex < TabHdr.nTabCount) && (TabHdr.nTabCount > 0))
 					{
 						if (tabs[anWndIndex].Current)
 							lbRc = TRUE;

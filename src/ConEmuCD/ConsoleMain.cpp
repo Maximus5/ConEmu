@@ -5182,7 +5182,7 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 		}
 		else
 		{
-			int curSizeY, curSizeX, newSizeY, newSizeX, calcSizeY, calcSizeX;
+			int curSizeY, curSizeX;
 			wchar_t sFontName[LF_FACESIZE];
 			HANDLE hOutput = (HANDLE)ghConOut;
 

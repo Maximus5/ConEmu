@@ -4658,7 +4658,7 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts
 	if (args->pszSpecialCmd)
 		args->ProcessNewConArg();
 
-	wchar_t* pszScript = NULL, szScript[MAX_PATH];
+	wchar_t* pszScript = NULL; //, szScript[MAX_PATH];
 
 	if (args->pszSpecialCmd && (*args->pszSpecialCmd == L'@' || *args->pszSpecialCmd == TaskBracketLeft))
 	{

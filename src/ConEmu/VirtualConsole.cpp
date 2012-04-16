@@ -1393,6 +1393,9 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	if (!this || !mp_RCon || !mp_RCon->ConWnd())
 		return false;
 
+	if (abForce)
+		mp_RCon->ResetActiveAppSettingsId();
+
 	isForce = abForce;
 
 	if (!gpConEmu->isMainThread())
@@ -1941,36 +1944,6 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	nFontHeight = gpSetCls->FontHeight();
 	nFontWidth = gpSetCls->FontWidth();
 	nFontCharSet = gpSetCls->FontCharSet();
-	//bExtendColors = gpSet->isExtendColors;
-	//nExtendColor = gpSet->nExtendColor;
-	//bExtendFonts = gpSet->isExtendFonts;
-	//nFontNormalColor = gpSet->nFontNormalColor;
-	//nFontBoldColor = gpSet->nFontBoldColor;
-	//nFontItalicColor = gpSet->nFontItalicColor;
-	//m_ForegroundColors[0x100], m_BackgroundColors[0x100];
-	//TODO("В принципе, это можно делать не всегда, а только при изменениях");
-	//int nColorIndex = 0;
-	//for (int nBack = 0; nBack <= 0xF; nBack++) {
-	//	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
-	//		m_ForegroundColors[nColorIndex] = nFore;
-	//		m_BackgroundColors[nColorIndex] = nBack;
-	//		mh_FontByIndex[nColorIndex] = gpSetCls->mh_Font;
-	//		if (bExtendFonts) {
-	//			if (nBack == nFontBoldColor) { // nFontBoldColor may be -1, тогда мы сюда не попадаем
-	//				if (nFontNormalColor != 0xFF)
-	//					m_BackgroundColors[nColorIndex] = nFontNormalColor;
-	//				mh_FontByIndex[nColorIndex] = gpSetCls->mh_FontB;
-	//			} else if (nBack == nFontItalicColor) { // nFontItalicColor may be -1, тогда мы сюда не попадаем
-	//				if (nFontNormalColor != 0xFF)
-	//					m_BackgroundColors[nColorIndex] = nFontNormalColor;
-	//				mh_FontByIndex[nColorIndex] = gpSetCls->mh_FontI;
-	//			}
-	//		}
-	//	}
-	//}
-	//winSize.X = csbi.srWindow.Right - csbi.srWindow.Left + 1; winSize.Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-	//if (winSize.X < csbi.dwSize.X)
-	//    winSize.X = csbi.dwSize.X;
 	winSize = MakeCoord(mp_RCon->TextWidth(),mp_RCon->TextHeight());
 	//csbi.dwCursorPosition.X -= csbi.srWindow.Left; -- горизонтальная прокрутка игнорируется!
 	csbi.dwCursorPosition.Y -= csbi.srWindow.Top;
@@ -3344,10 +3317,9 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	bool bForeground = gpConEmu->isMeForeground();
 
 	// указатель на настройки разделяемые по приложениям
-	if (!mp_Set)
-		mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
+	mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 
-	if (!bForeground && mp_Set->isCursorBlockInactive)
+	if (!bForeground && mp_Set->CursorBlockInactive())
 	{
 		dwSize = 100;
 		rect.left = pix.X; /*Cursor.x * nFontWidth;*/
@@ -3355,7 +3327,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		rect.bottom = (pos.Y+1) * nFontHeight;
 		rect.top = (pos.Y * nFontHeight) /*+ 1*/;
 	}
-	else if (!mp_Set->isCursorV)
+	else if (!mp_Set->CursorV())
 	{
 		if (!gpSet->isMonospace)
 		{
@@ -3424,12 +3396,6 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		rect.bottom = (pos.Y+1) * nFontHeight;
 	}
 
-	//if (!mp_Set->isCursorBlink) {
-	//	gpConEmu->m_Child->SetCaret ( 1, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top );
-	//	return;
-	//} else {
-	//	gpConEmu->m_Child->SetCaret ( -1 ); // Если был создан системный курсор - он разрушится
-	//}
 	rect.left += rcClient.left;
 	rect.right += rcClient.left;
 	rect.top += rcClient.top;
@@ -3438,7 +3404,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	// XOR режим, иначе (тем более при немигающем) курсор закрывает
 	// весь символ и его не видно
 	// 110131 Если курсор мигающий - разрешим нецветной курсор для AltIns в фаре
-	bool bCursorColor = mp_Set->isCursorColor || (dwSize >= 40 && !mp_Set->isCursorBlink);
+	bool bCursorColor = mp_Set->CursorColor() || (dwSize >= 40 && !mp_Set->CursorBlink());
 
 	// Теперь в rect нужно отобразить курсор (XOR'ом попробуем?)
 	if (bCursorColor)
@@ -3446,7 +3412,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		HBRUSH hBr = CreateSolidBrush(0xC0C0C0);
 		HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
 
-		if (bForeground || !mp_Set->isCursorBlockInactive)
+		if (bForeground || !mp_Set->CursorBlockInactive())
 		{
 			BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, hDC, 0,0,
 			       PATINVERT);
@@ -3496,8 +3462,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	}
 
 	// указатель на настройки разделяемые по приложениям
-	if (!mp_Set)
-		mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
+	mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 
 	//------------------------------------------------------------------------
 	///| Drawing cursor |/////////////////////////////////////////////////////
@@ -3514,7 +3479,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	// Если курсор (в консоли) видим, и находится в видимой области (при прокрутке)
 	if (cinf.bVisible && isCursorValid)
 	{
-		if (!mp_Set->isCursorBlink || !bForeground)
+		if (!mp_Set->CursorBlink() || !bForeground)
 		{
 			Cursor.isVisible = true; // Видим всегда (даже в неактивной консоли), не мигает
 

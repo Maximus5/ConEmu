@@ -348,6 +348,7 @@ class CRealConsole
 		DWORD GetActivePID();
 		LPCWSTR GetActiveProcessName();
 		int GetActiveAppSettingsId(LPCWSTR* ppProcessName=NULL);
+		void ResetActiveAppSettingsId();
 		DWORD GetProgramStatus();
 		DWORD GetFarStatus();
 		DWORD GetServerPID();

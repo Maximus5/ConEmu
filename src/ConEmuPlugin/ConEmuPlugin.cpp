@@ -2071,6 +2071,8 @@ static DWORD WaitPluginActivateion(DWORD nCount, HANDLE *lpHandles, BOOL bWaitAl
 				// ∆дать дальше смысла видимо нет, фар не дергает (Peek/Read)Input
 				break;
 			}
+			// ≈сли вдруг произошел облом с Syncho (почему?), дернем еще раз
+			ExecuteSynchro();
 		} while (dwMilliseconds && ((dwMilliseconds == INFINITE) || (GetTickCount() > nTimeout)));
 	}
 	else

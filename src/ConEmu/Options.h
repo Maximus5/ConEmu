@@ -103,8 +103,8 @@ struct Settings
 
 			//reg->Load(L"ExtendColors", isExtendColors);
 			bool isExtendColors;
-			//reg->Load(L"ExtendColorIdx", nExtendColor);
-			char nExtendColor; // 0..15
+			//reg->Load(L"ExtendColorIdx", nExtendColorIdx);
+			char nExtendColorIdx; // 0..15
 
 			COLORREF Colors[0x20];
 
@@ -118,37 +118,80 @@ struct Settings
 
 		struct AppSettings
 		{
+			size_t   cchNameMax;
 			wchar_t* AppNames; // "far.exe|far64.exe"
+			wchar_t* AppNamesLwr; // For internal use
 			BYTE Elevated; // 00 - unimportant, 01 - elevated, 02 - nonelevated
 			
 			//const COLORREF* Palette/*[0x20]*/; // текущая палитра (Fade/не Fade)
 
-			bool OverrideColors; // Palette+Extend
+			bool OverridePalette; // Palette+Extend
 			wchar_t szPaletteName[128];
 			//reg->Load(L"ExtendColors", isExtendColors);
 			bool isExtendColors;
-			//reg->Load(L"ExtendColorIdx", nExtendColor);
-			char nExtendColor; // 0..15
+			char ExtendColors() const { return (OverridePalette || !AppNames) ? isExtendColors : gpSet->AppStd.isExtendColors; };
+			//reg->Load(L"ExtendColorIdx", nExtendColorIdx);
+			char nExtendColorIdx; // 0..15
+			char ExtendColorIdx() const { return (OverridePalette || !AppNames) ? nExtendColorIdx : gpSet->AppStd.nExtendColorIdx; };
 
 			bool OverrideExtendFonts;
 			//reg->Load(L"ExtendFonts", isExtendFonts);
 			bool isExtendFonts;
+			bool ExtendFonts() const { return (OverrideExtendFonts || !AppNames) ? isExtendFonts : gpSet->AppStd.isExtendFonts; };
 			//reg->Load(L"ExtendFontNormalIdx", nFontNormalColor);
-			char nFontNormalColor; // 0..15
+			BYTE nFontNormalColor; // 0..15
+			BYTE FontNormalColor() const { return (OverrideExtendFonts || !AppNames) ? nFontNormalColor : gpSet->AppStd.nFontNormalColor; };
 			//reg->Load(L"ExtendFontBoldIdx", nFontBoldColor);
-			char nFontBoldColor;   // 0..15
+			BYTE nFontBoldColor;   // 0..15
+			BYTE FontBoldColor() const { return (OverrideExtendFonts || !AppNames) ? nFontBoldColor : gpSet->AppStd.nFontBoldColor; };
 			//reg->Load(L"ExtendFontItalicIdx", nFontItalicColor);
-			char nFontItalicColor; // 0..15
+			BYTE nFontItalicColor; // 0..15
+			BYTE FontItalicColor() const { return (OverrideExtendFonts || !AppNames) ? nFontItalicColor : gpSet->AppStd.nFontItalicColor; };
 
 			bool OverrideCursor;
 			//reg->Load(L"CursorType", isCursorV);
 			bool isCursorV;
+			bool CursorV() const { return (OverrideCursor || !AppNames) ? isCursorV : gpSet->AppStd.isCursorV; };
 			//reg->Load(L"CursorBlink", isCursorBlink);
 			bool isCursorBlink;
+			bool CursorBlink() const { return (OverrideCursor || !AppNames) ? isCursorBlink : gpSet->AppStd.isCursorBlink; };
 			//reg->Load(L"CursorColor", isCursorColor);
 			bool isCursorColor;
+			bool CursorColor() const { return (OverrideCursor || !AppNames) ? isCursorColor : gpSet->AppStd.isCursorColor; };
 			//reg->Load(L"CursorBlockInactive", isCursorBlockInactive);
 			bool isCursorBlockInactive;
+			bool CursorBlockInactive() const { return (OverrideCursor || !AppNames) ? isCursorBlockInactive : gpSet->AppStd.isCursorBlockInactive; };
+
+			void SetNames(LPCWSTR asAppNames)
+			{
+				size_t iLen = wcslen(asAppNames);
+
+				if (!AppNames || !AppNamesLwr || (iLen >= cchNameMax))
+				{
+					SafeFree(AppNames);
+					SafeFree(AppNamesLwr);
+
+					cchNameMax = iLen+32;
+					AppNames = (wchar_t*)malloc(cchNameMax*sizeof(wchar_t));
+					AppNamesLwr = (wchar_t*)malloc(cchNameMax*sizeof(wchar_t));
+					if (!AppNames || !AppNamesLwr)
+					{
+						_ASSERTE(AppNames!=NULL && AppNamesLwr!=NULL);
+						return;
+					}
+				}
+
+				_wcscpy_c(AppNames, iLen+1, asAppNames);
+				_wcscpy_c(AppNamesLwr, iLen+1, asAppNames);
+				CharLowerBuff(AppNamesLwr, iLen);
+			};
+
+			void FreeApps()
+			{
+				SafeFree(AppNames);
+				SafeFree(AppNamesLwr);
+				cchNameMax = 0;
+			};
 		};
 		int GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated);
 		const AppSettings* GetAppSettings(int anAppId=-1);
@@ -249,6 +292,8 @@ struct Settings
 		AppSettings AppStd;
 		int AppCount;
 		AppSettings* Apps;
+		// Для CSettings
+		AppSettings* GetAppSettingsPtr(int anAppId);
 
 		int CmdTaskCount;
 		CommandTasks** CmdTasks;
@@ -790,6 +835,7 @@ struct Settings
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadPalettes(SettingsBase* reg);
 		BOOL SaveSettings(BOOL abSilent = FALSE);
+		void SaveAppSettings(SettingsBase* reg);
 		void SaveCmdTasks(SettingsBase* reg);
 		void SaveSizePosOnExit();
 		void SaveConsoleFont();
