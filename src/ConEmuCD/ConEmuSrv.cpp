@@ -2411,9 +2411,9 @@ static BOOL ReadConsoleInfo()
 
 			if (!gpSrv->nReqSizeBufferHeight)
 			{
-				#ifdef _DEBUG
-				EmergencyShow();
-				#endif
+				//#ifdef _DEBUG
+				//EmergencyShow(ghConWnd);
+				//#endif
 				WARNING("###: Приложение изменило вертикальный размер буфера");
 				_ASSERTE(gpSrv->sbi.dwSize.Y <= 200);
 				DEBUGLOGSIZE(L"!!! gpSrv->sbi.dwSize.Y > 200 !!! in ConEmuC.ReloadConsoleInfo\n");
@@ -3085,7 +3085,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			ghConEmuWndDC = NULL;
 			gpSrv->dwGuiPID = 0;
 			UpdateConsoleMapHeader();
-			EmergencyShow();
+			EmergencyShow(ghConWnd);
 		}
 
 		// 17.12.2009 Maks - попробую убрать

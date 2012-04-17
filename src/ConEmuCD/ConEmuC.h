@@ -285,7 +285,7 @@ void CloseMapHeader();
 void UpdateConsoleMapHeader();
 BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd);
 
-void EmergencyShow();
+//void EmergencyShow();
 
 //int CreateColorerHeader();
 

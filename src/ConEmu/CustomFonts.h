@@ -31,6 +31,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <crtdbg.h>
 
+#define CE_BDF_SUFFIX L" [BDF]"
+#define CE_BDF_SUFFIX_LEN 6
+
 // CustomFont
 
 class CustomFont

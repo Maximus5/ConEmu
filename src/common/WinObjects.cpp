@@ -2365,6 +2365,7 @@ void MSectionLock::Unlock()
 {
 	if (mp_S && mb_Locked)
 	{
+		_ASSERTEX(mb_Exclusive || mp_S->mn_Locked>0);
 		mp_S->Unlock(mb_Exclusive);
 		mb_Locked = FALSE;
 	}
@@ -3373,3 +3374,154 @@ int EvaluateDefaultFontWidth(int inSizeY, const wchar_t *asFontName)
 	return nDefaultX;
 }
 #endif
+
+
+#ifndef CONEMU_MINIMAL
+void SetUserFriendlyFont(HWND hConWnd)
+{
+	OSVERSIONINFO OSVer = {sizeof(OSVer)};
+	GetVersionEx(&OSVer);
+
+	// Соответствующие функции появились только в API Vista
+	// Win2k & WinXP - доступны только хаки, что не подходит
+	if (OSVer.dwMajorVersion >= 6)
+	{
+		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+		COORD crVisibleSize = {};
+		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+		if (GetConsoleScreenBufferInfo(hOutput, &csbi))
+		{
+			crVisibleSize.X = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+			crVisibleSize.Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+		}
+
+		if ((crVisibleSize.X <= 0) && (crVisibleSize.Y <= 0))
+		{
+			_ASSERTE((crVisibleSize.X > 0) && (crVisibleSize.Y > 0));
+		}
+		else
+		{
+			int curSizeY, curSizeX;
+			wchar_t sFontName[LF_FACESIZE];
+
+			if (apiGetConsoleFontSize(hOutput, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
+			{
+				COORD crLargest = GetLargestConsoleWindowSize(hOutput);
+				HMONITOR hMon = MonitorFromWindow(hConWnd, MONITOR_DEFAULTTOPRIMARY);
+				MONITORINFO mi = {sizeof(mi)};
+				int nMaxX = 0, nMaxY = 0;
+				if (GetMonitorInfo(hMon, &mi))
+				{
+					nMaxX = mi.rcWork.right - mi.rcWork.left - 2*GetSystemMetrics(SM_CXSIZEFRAME) - GetSystemMetrics(SM_CYCAPTION);
+					nMaxY = mi.rcWork.bottom - mi.rcWork.top - 2*GetSystemMetrics(SM_CYSIZEFRAME);
+				}
+				
+				if ((nMaxX > 0) && (nMaxY > 0))
+				{
+					int nFontX = nMaxX  / crVisibleSize.X;
+					int nFontY = nMaxY / crVisibleSize.Y;
+					// Too large height?
+					if (nFontY > 28)
+					{
+						nFontX = 28 * nFontX / nFontY;
+						nFontY = 28;
+					}
+
+					// Evaluate default width for the font
+					int nEvalX = EvaluateDefaultFontWidth(nFontY, sFontName);
+					if (nEvalX > 0)
+						nFontX = nEvalX;
+
+					// Look in the registry?
+					HKEY hk;
+					DWORD nRegSize = 0, nLen;
+					if (!RegOpenKeyEx(HKEY_CURRENT_USER, L"Console", 0, KEY_READ, &hk))
+					{
+						if (RegQueryValueEx(hk, L"FontSize", NULL, NULL, (LPBYTE)&nRegSize, &(nLen=sizeof(nRegSize))) || nLen!=sizeof(nRegSize))
+							nRegSize = 0;
+						RegCloseKey(hk);
+					}
+					if (!nRegSize && !RegOpenKeyEx(HKEY_CURRENT_USER, L"Console\\%SystemRoot%_system32_cmd.exe", 0, KEY_READ, &hk))
+					{
+						if (RegQueryValueEx(hk, L"FontSize", NULL, NULL, (LPBYTE)&nRegSize, &(nLen=sizeof(nRegSize))) || nLen!=sizeof(nRegSize))
+							nRegSize = 0;
+						RegCloseKey(hk);
+					}
+					if ((HIWORD(nRegSize) > curSizeY) && (HIWORD(nRegSize) < nFontY)
+						&& (LOWORD(nRegSize) > curSizeX) && (LOWORD(nRegSize) < nFontX))
+					{
+						nFontY = HIWORD(nRegSize);
+						nFontX = LOWORD(nRegSize);
+					}
+
+					if ((nFontX > curSizeX) || (nFontY > curSizeY))
+					{
+						apiSetConsoleFontSize(hOutput, nFontY, nFontX, sFontName);
+					}
+				}
+			}
+		}
+	}
+}
+
+void CorrectConsolePos(HWND hConWnd)
+{
+	RECT rcNew = {};
+	if (GetWindowRect(hConWnd, &rcNew))
+	{
+		HMONITOR hMon = MonitorFromWindow(hConWnd, MONITOR_DEFAULTTOPRIMARY);
+		MONITORINFO mi = {sizeof(mi)};
+		int nMaxX = 0, nMaxY = 0;
+		if (GetMonitorInfo(hMon, &mi))
+		{
+			int newW = (rcNew.right-rcNew.left), newH = (rcNew.bottom-rcNew.top);
+			int newX = rcNew.left, newY = rcNew.top;
+
+			if (newX < mi.rcWork.left)
+				newX = mi.rcWork.left;
+			else if (rcNew.right > mi.rcWork.right)
+				newX = max(mi.rcWork.left,(mi.rcWork.right-newW));
+
+			if (newY < mi.rcWork.top)
+				newY = mi.rcWork.top;
+			else if (rcNew.bottom > mi.rcWork.bottom)
+				newY = max(mi.rcWork.top,(mi.rcWork.bottom-newH));
+
+			if ((newX != rcNew.left) || (newY != rcNew.top))
+				SetWindowPos(hConWnd, HWND_TOP, newX, newY,0,0, SWP_NOSIZE);
+		}
+	}
+}
+
+void EmergencyShow(HWND hConWnd)
+{
+	if (!hConWnd)
+	{
+		hConWnd = GetConsoleWindow();
+		if (IsWindowVisible(hConWnd))
+			return; // уже, делать ничего не будем
+	}
+
+	if (hConWnd)
+	{
+		SetUserFriendlyFont(hConWnd);
+
+		CorrectConsolePos(hConWnd);
+
+		if (!IsWindowVisible(hConWnd))
+		{
+			SetWindowPos(hConWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+			//SetWindowPos(hConWnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
+			apiShowWindowAsync(hConWnd, SW_SHOWNORMAL);
+		}
+		else
+		{
+			// Снять TOPMOST
+			SetWindowPos(hConWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+		}
+
+		if (!IsWindowEnabled(hConWnd))
+			EnableWindow(hConWnd, true);
+	}
+}
+#endif // #ifndef CONEMU_MINIMAL

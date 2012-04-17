@@ -4,8 +4,9 @@ ConEmu - Windows Console Emulator
 About ConEmu
 
     ConEmu-Maximus5 is a Windows console emulator with tabs, which represents
-    multiple consoles as one customizable GUI window with various features.
-    Basic application - joint use with Far Manager (FAR in Wikipedia).
+    multiple consoles and simple GUI applications as one customizable GUI window
+    with various features.
+    Basic application - joint use with Far Manager.
     Far (File and Archive) Manager is a console program for managing files and
     archives in Windows operating systems.
 
@@ -16,21 +17,29 @@ Description
 
     ConEmu starts a console program in hidden console window and provides an
     alternative customizable GUI window with various features:
-    * smooth window resizing;
-    * several panels in one window;
+    * smooth and friendly window resizing;
     * tabs for editors, viewers, panels and consoles;
-    * thumbnails and tiles in FAR manager;
+    * run simple GUI apps in tabs;
+    * easy run old DOS applications (games) in Windows 7 or 64bit OS;
+    * thumbnails and tiles in Far Manager;
     * normal, maximized and full screen window graphic modes;
     * window font anti-aliasing: standard, clear type, disabled;
-    * window fonts: family, height, width, bold, italic, etc.; 
+    * window fonts: family, height, width, bold, italic, etc.;
+    * BDF fonts limited support;
     * using normal/bold/italic fonts for different parts of console simultaneously;
+    * using 24bit colors in Far Manager 3.x;
     * cursor: standard console (horisontal) or GUI (vertical);
-    * for /BufferHeight mode: vertical scrolling using keyboard;
+    * optional settings (e.g. pallette) for selected applications;
+    * for BufferHeight mode: vertical scrolling using keyboard;
     * show full output (1K+ lines) of last command in editor/viewer;
-    * drag and drop (explorer style); 
+    * customizable Far Manager right click behaviour (long click opens context menu);
+    * drag and drop (explorer style) of files and folders in Far Manager;
+    * user friendly text and block selection;
+    * transparency and desktop mode;
+    * customizable starting tabs;
     * and more, and more... take a look at Settings dialog, WhatsNew and Settings.reg 
 
-    All settings are read from the registry or xml file (multiple
+    All settings are read from the registry or xml file (multiple named
     configurations are supported) and after that the command line parameters
     are applied. Parameters /Config and /BufferHeight are only for command
     line. Most of settings are changed only in the Settings dialog, not from
@@ -43,14 +52,11 @@ Requirements
 
 Installation
     1. Unpack all files (from appropriate "ConEmu.*.7z") to the folder,
-       containing "far.exe".
-       It's strongly recommended to use ConEmu.x64 on 64bit systems.
-       Note, if You are not using FAR manager, You may unpack files to
-       any folder.
-    2. Import to the registry FAR manager macroses, related to ConEmu.
-       Macro *.reg files are located in ConEmu.Addons directory.
-       Each macro file (*.reg) has description in header.
-       Just doubleclick choosen files in Windows Explorer to import them.
+       Note, if You are not using FAR manager, You may unpack files to any folder.
+       Warning, cause of frequent breaks of Far 3 API, it's strongly recommended
+       to use latest developer build, when you are using Far 3. 
+    2. Import Far Manager macroses, related to ConEmu. Macro files are located in
+       ConEmu.Addons directory. Each macro file has description in header.
     3. By default (started without command line params), ConEmu runs "far.exe"
        from it's home folder, or "cmd.exe" if Far Manager not found.
        Alternatively, You may specify any root command, specifying

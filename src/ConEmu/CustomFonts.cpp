@@ -35,6 +35,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include "../common/WinObjects.h"
 
+#ifdef _DEBUG
+	#define DEBUG_BDF_DRAW
+	//#undef DEBUG_BDF_DRAW
+#else
+	#undef DEBUG_BDF_DRAW
+#endif
+
 // CustomFontFamily
 
 struct CustomFontFamily::Impl
@@ -458,6 +465,9 @@ wrap:
 			int fy = m_Height*(ch/256);
 			bool* pSrcPos = bpMPixels + fx + m_Width*256*fy;
 			COLORREF* pDstPos = pDstPixels;
+			#ifdef DEBUG_BDF_DRAW
+			_ASSERTE(!IsBadWritePtr(pDstPos, m_Height*m_Width*sizeof(*pDstPos)));
+			#endif
 			if (cBG == CLR_INVALID) // transparent
 			{
 				for (int y=0; y<m_Height; y++)

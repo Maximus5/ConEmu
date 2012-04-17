@@ -2912,12 +2912,12 @@ BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
 	return lbRc;
 }
 
-void EmergencyShow()
-{
-	SetWindowPos(FarHwnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
-	apiShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
-	EnableWindow(FarHwnd, true);
-}
+//void EmergencyShow()
+//{
+//	SetWindowPos(FarHwnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
+//	apiShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
+//	EnableWindow(FarHwnd, true);
+//}
 
 static BOOL gbTryOpenMapHeader = FALSE;
 static BOOL gbStartupHooksAfterMap = FALSE;
@@ -3187,7 +3187,7 @@ VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 		// сразу переподцепимся к GUI
 		if (!Attach2Gui())
 		{
-			EmergencyShow();
+			EmergencyShow(FarHwnd);
 		}
 
 		// Сбрасываем после Attach2Gui, чтобы MonitorThreadProcW случайно
@@ -3254,7 +3254,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 
 				if (!TerminalMode && !IsWindowVisible(FarHwnd))
 				{
-					EmergencyShow();
+					EmergencyShow(FarHwnd);
 				}
 			}
 		}
@@ -3280,7 +3280,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 
 				if (!TerminalMode && !IsWindowVisible(FarHwnd))
 				{
-					EmergencyShow();
+					EmergencyShow(FarHwnd);
 				}
 			}
 		}

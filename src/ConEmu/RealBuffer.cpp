@@ -2550,19 +2550,31 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 
 void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=-1*/, BOOL abByMouse/*=FALSE*/)
 {
+	WARNING("Доработать для режима с прокруткой - выделение протяжкой, как в обычной консоли");
 	if (anX == -1 && anY == -1)
 	{
-		TODO("Доработать для режима с прокруткой");
 		anX = con.m_sbi.dwCursorPosition.X - con.m_sbi.srWindow.Left;
 		anY = con.m_sbi.dwCursorPosition.Y - con.m_sbi.srWindow.Top;
+	}
+	// Если начало выделение не видимо - ставим ближайший угол
+	if (anX < 0)
+		anX = 0;
+	else if (anX >= TextWidth())
+		anX = TextWidth()-1;
+	if (anY < 0)
+		anY = anX = 0;
+	else if (anY >= TextHeight())
+	{
+		anX = 0;
+		anY = TextHeight()-1;
 	}
 
 	COORD cr = {anX,anY};
 
-	if (cr.X<0 || cr.X>=(int)TextWidth() || cr.Y<0 || cr.Y>=(int)TextHeight())
+	if (cr.X<0 || cr.X>=TextWidth() || cr.Y<0 || cr.Y>=TextHeight())
 	{
-		_ASSERTE(cr.X>=0 && cr.X<(int)TextWidth());
-		_ASSERTE(cr.Y>=0 && cr.Y<(int)TextHeight());
+		_ASSERTE(cr.X>=0 && cr.X<TextWidth());
+		_ASSERTE(cr.Y>=0 && cr.Y<TextHeight());
 		return; // Ошибка в координатах
 	}
 

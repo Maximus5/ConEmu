@@ -559,6 +559,8 @@ class CSettings
 		TOOLINFO tiBalloon;
 		void RegisterTipsFor(HWND hChildDlg);
 		CEFONT CreateFontIndirectMy(LOGFONT *inFont);
+		bool FindCustomFont(LPCWSTR lfFaceName, int iSize, BOOL bBold, BOOL bItalic, BOOL bUnderline, CustomFontFamily** ppCustom, CustomFont** ppFont);
+		void RecreateBorderFont(const LOGFONT *inFont);
 		void RecreateFont(WORD wFromID);
 #if 0
 		// Theming
