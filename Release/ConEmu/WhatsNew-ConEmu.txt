@@ -2,7 +2,7 @@
 English: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=en
 Russian: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=ru
 
-2012.04.22
+2012.04.21
 [!] Внимание. Изменения в использовании командных процессоров.
 [*] В настройку добавлена вкладка 'ComSpec'. Туда перенесны настройки 'Long console output'.
 [*] На вкладке 'ComSpec' добавлена настройка используемого командного процессора.
