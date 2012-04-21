@@ -125,6 +125,7 @@ HANDLE  ghExitQueryEvent = NULL; int nExitQueryPlace = 0, nExitPlaceStep = 0, nE
 HANDLE  ghQuitEvent = NULL;
 bool    gbQuit = false;
 BOOL	gbInShutdown = FALSE;
+BOOL	gbInExitWaitForKey = FALSE;
 BOOL    gbCtrlBreakStopWaitingShown = FALSE;
 BOOL	gbTerminateOnCtrlBreak = FALSE;
 int     gnConfirmExitParm = 0; // 1 - CONFIRM, 2 - NOCONFIRM
@@ -1280,6 +1281,7 @@ wrap:
 			#endif
 		}
 
+		gbInExitWaitForKey = TRUE;
 		WORD vkKeys[3]; vkKeys[0] = VK_RETURN; vkKeys[1] = VK_ESCAPE; vkKeys[2] = 0;
 		ExitWaitForKey(vkKeys, pszMsg, TRUE, lbDontShowConsole);
 
@@ -2570,6 +2572,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	else
 	{
 		// Если определена ComSpecC - значит ConEmuC переопределил стандартный ComSpec
+		//WARNING("TCC/ComSpec");
 		if (!GetEnvironmentVariable(L"ComSpecC", szComSpec, MAX_PATH) || szComSpec[0] == 0)
 			if (!GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH) || szComSpec[0] == 0)
 				szComSpec[0] = 0;
@@ -2596,8 +2599,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		// ComSpec/ComSpecC не определен, используем cmd.exe
 		if (szComSpec[0] == 0)
 		{
-			if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, szComSpec, &psFilePart))
+			//WARNING("TCC/ComSpec");
+			//if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, szComSpec, &psFilePart))
+
+			LPCWSTR pszFind = GetComspecFromEnvVar(szComSpec, countof(szComSpec));
+            if (!pszFind || !wcschr(pszFind, L'\\') || !FileExists(pszFind))
 			{
+				_ASSERTE("cmd.exe not found!");
 				_printf("Can't find cmd.exe!\n");
 				return CERR_CMDEXENOTFOUND;
 			}
@@ -5386,11 +5394,6 @@ BOOL cmd_GuiChanged(CESERVER_REQ& in, CESERVER_REQ** out)
 	if (gpSrv && gpSrv->pConsole)
 	{
 		ReloadGuiSettings(&in.GuiInfo);
-		//// !!! Warning !!! Изменил здесь, поменяй и CreateMapHeader() !!!
-		//gpSrv->pConsole->hdr.nLoggingType = in.GuiInfo.nLoggingType;
-		//gpSrv->pConsole->hdr.bDosBox = in.GuiInfo.bDosBox;
-		//gpSrv->pConsole->hdr.bUseInjects = in.GuiInfo.bUseInjects;
-		//UpdateConsoleMapHeader();
 	}
 
 	return lbRc;
@@ -6476,10 +6479,15 @@ void _wprintf(LPCWSTR asBuffer)
 
 void DisableAutoConfirmExit(BOOL abFromFarPlugin)
 {
-	_ASSERTE(gnConfirmExitParm==0 || abFromFarPlugin);
-	gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
-	// менять nProcessStartTick не нужно. проверка только по флажкам
-	//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
+	// Консоль моглы быть приаттачена к GUI в тот момент, когда сервер ожидает
+	// от юзера подтверждение закрытия консоли
+	if (!gbInExitWaitForKey)
+	{
+		_ASSERTE(gnConfirmExitParm==0 || abFromFarPlugin);
+		gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
+		// менять nProcessStartTick не нужно. проверка только по флажкам
+		//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
+	}
 }
 
 //BOOL IsUserAdmin()

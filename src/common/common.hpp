@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    85
+#define CESERVER_REQ_VER    86
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -754,6 +754,37 @@ enum GuiLoggingType
 	// glt_Files, ...
 };
 
+enum ComSpecType
+{
+	cst_AutoTccCmd = 0,
+	cst_EnvVar     = 1,
+	cst_Cmd        = 2,
+	cst_Explicit   = 3,
+	//
+	cst_Last = cst_Explicit
+};
+
+enum ComSpecBits
+{
+	csb_SameOS     = 0,
+	csb_SameApp    = 1,
+	csb_x32        = 2,
+	csb_x64        = 3, // только для аргументов функций
+	//
+	csb_Last = csb_x32,
+};
+
+struct ConEmuComspec
+{
+	ComSpecType  csType;
+	ComSpecBits  csBits;
+	BOOL         isUpdateEnv;
+	wchar_t      ComspecExplicit[MAX_PATH]; // этот - хранится в настройке
+	wchar_t      Comspec32[MAX_PATH]; // развернутые, готовые к использованию
+	wchar_t      Comspec64[MAX_PATH]; // развернутые, готовые к использованию
+	//wchar_t      ComspecInitial[MAX_PATH]; // то, что было до запуска ConEmu
+};
+
 struct ConEmuGuiMapping
 {
 	DWORD    cbSize;
@@ -767,7 +798,7 @@ struct ConEmuGuiMapping
 	wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 	wchar_t  sConEmuArgs[MAX_PATH*2];
 
-	DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
+	DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть (пока не используется) доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	BOOL     bUseTrueColor; // включен флажок "TrueMod support"
 
 	/* Основной шрифт в GUI */
@@ -784,19 +815,7 @@ struct ConEmuGuiMapping
 	//wchar_t  sDosBoxExe[MAX_PATH+1]; // полный путь к DosBox.exe
 	//wchar_t  sDosBoxEnv[8192]; // команды загрузки (mount, и пр.)
 
-	//DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
-	//wchar_t  sInjectsDir[MAX_PATH+1]; // path to "conemu.dll" & "conemu.x64.dll"
-	// Для облегчения Inject-ов наверное можно сразу пути в конкретным файлам заполнить.
-	//wchar_t  sInjects32[MAX_PATH+16], sInjects64[MAX_PATH+16]; // path to "ConEmuHk.dll" & "ConEmuHk64.dll"
-	// Kernel32 загружается по фиксированному адресу, НО
-	// для 64-битной программы он один, а для 32-битной ест-но другой.
-	// Поэтому в 64-битных системых НЕОБХОДИМО пользоваться 64-битной версией ConEmu.exe
-	// которая сможет корректно определить адрес для 64-битного kernel,
-	// а адрес 32-битного kernel сможет вытащить через его экспорты.
-	//ULONGLONG ptrLoadLib32, ptrLoadLib64;
-	//// Логирование CreateProcess, ShellExecute, и прочих запускающих функций
-	//// Если пусто - не логируется
-	//wchar_t  sLogCreateProcess[MAX_PATH];
+	ConEmuComspec ComSpec;
 };
 
 typedef unsigned int CEFarWindowType;
@@ -1021,9 +1040,6 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	wchar_t  sConEmuExe[MAX_PATH+1]; // полный путь к ConEmu.exe (GUI)
 	wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 	//
-	//DWORD bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
-	//wchar_t  sConEmuDir[MAX_PATH+1];  // здесь будет лежать собственно hive
-	//wchar_t  sInjectsDir[MAX_PATH+1]; // path to "ConEmuHk.dll" & "ConEmuHk64.dll"
 	DWORD nAltServerPID;  //
 
 	// Root(!) ConEmu window
@@ -1047,6 +1063,8 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	COORD crLockedVisible;
 	// И какая прокрутка допустима
 	RealBufferScroll rbsAllowed;
+
+	ConEmuComspec ComSpec;
 };
 
 struct CESERVER_REQ_CONINFO_INFO
@@ -1278,6 +1296,7 @@ struct FAR_REQ_FARSETCHANGED
 	BOOL    bMonitorConsoleInput; // при (Read/Peek)ConsoleInput(A/W) послать инфу в GUI/Settings/Debug
 	BOOL    bLongConsoleOutput; // при выполнении консольных программ из Far - увеличивать высоту буфера
 	//wchar_t szEnv[1]; // Variable length: <Name>\0<Value>\0<Name2>\0<Value2>\0\0
+	ConEmuComspec ComSpec;
 };
 
 struct CESERVER_REQ_SETCONCP

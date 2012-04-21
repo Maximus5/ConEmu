@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_INJECT_MSGBOX
 //  #define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-//  #define SHOW_EXE_MSGBOX_NAME L"notepad.exe"
+//  #define SHOW_EXE_MSGBOX_NAME L"tcc.exe"
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
@@ -269,6 +269,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	#ifdef SHOW_EXE_MSGBOX
 		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
 		{
+			STARTUPINFO si = {sizeof(si)};
+			GetStartupInfo(&si);
+			LPCWSTR pszCmd = GetCommandLineW();
 			// GuiMessageBox еще не прокатит, ничего не инициализировано
 			HMODULE hUser = LoadLibrary(user32);
 			typedef int (WINAPI* MessageBoxW_t)(HWND hWnd,LPCTSTR lpText,LPCTSTR lpCaption,UINT uType);

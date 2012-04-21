@@ -209,6 +209,21 @@ CConEmuMain::CConEmuMain()
 	//mh_RecreatePasswFont = NULL;
 	mb_SkipOnFocus = FALSE;
 
+	// Попробуем "родное" из реестра?
+	HKEY hk;
+	ms_ComSpecInitial[0] = 0;
+	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", 0, KEY_READ, &hk))
+	{
+		DWORD nSize = sizeof(ms_ComSpecInitial)-sizeof(wchar_t);
+		if (RegQueryValueEx(hk, L"ComSpec", NULL, NULL, (LPBYTE)ms_ComSpecInitial, &nSize))
+			ms_ComSpecInitial[0] = 0;
+		RegCloseKey(hk);
+	}
+	if (!*ms_ComSpecInitial)
+	{
+		GetComspecFromEnvVar(ms_ComSpecInitial, countof(ms_ComSpecInitial));
+	}
+	_ASSERTE(*ms_ComSpecInitial);
 
 	mpsz_ConEmuArgs = NULL;
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = 0;
@@ -1372,6 +1387,12 @@ void CConEmuMain::FinalizePortableReg()
 #endif
 }
 
+void CConEmuMain::GetComSpecCopy(ConEmuComspec& ComSpec)
+{
+	_ASSERTE(m_GuiInfo.ComSpec.csType==gpSet->ComSpec.csType && m_GuiInfo.ComSpec.csBits==gpSet->ComSpec.csBits);
+	ComSpec = m_GuiInfo.ComSpec;
+}
+
 void CConEmuMain::UpdateGuiInfoMapping()
 {
 	m_GuiInfo.nProtocolVersion = CESERVER_REQ_VER;
@@ -1393,6 +1414,89 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	wcscpy_c(m_GuiInfo.sConEmuDir, ms_ConEmuExeDir);
 	wcscpy_c(m_GuiInfo.sConEmuBaseDir, ms_ConEmuBaseDir);
 	_wcscpyn_c(m_GuiInfo.sConEmuArgs, countof(m_GuiInfo.sConEmuArgs), mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(m_GuiInfo.sConEmuArgs));
+
+	// *********************
+	// *** ComSpec begin ***
+	// *********************
+	{
+		// Сначала - обработать что что поменяли (найти tcc и т.п.)
+		SetEnvVarExpanded(L"ComSpec", ms_ComSpecInitial); // т.к. функции могут ориентироваться на окружение
+		FindComspec(&gpSet->ComSpec);
+		UpdateComspec(&gpSet->ComSpec); // установит переменную окружения, если просили
+
+		// Теперь перенести в мэппинг, для информирования других процессов
+		ComSpecType csType = gpSet->ComSpec.csType;
+		ComSpecBits csBits = gpSet->ComSpec.csBits;
+		//m_GuiInfo.ComSpec.csType = gpSet->ComSpec.csType;
+		//m_GuiInfo.ComSpec.csBits = gpSet->ComSpec.csBits;
+		wchar_t szExpand[MAX_PATH] = {}, szFull[MAX_PATH] = {}, *pszFile;
+		if (csType == cst_Explicit)
+		{
+			DWORD nLen;
+			// Expand env.vars
+			if (wcschr(gpSet->ComSpec.ComspecExplicit, L'%'))
+			{
+				nLen = ExpandEnvironmentStrings(gpSet->ComSpec.ComspecExplicit, szExpand, countof(szExpand));
+				if (!nLen || (nLen>=countof(szExpand)))
+				{
+					MBoxAssert((nLen>0) && (nLen<countof(szExpand)) && "ExpandEnvironmentStrings(ComSpec)");
+					szExpand[0] = 0;
+				}
+			}
+			else
+			{
+				wcscpy_c(szExpand, gpSet->ComSpec.ComspecExplicit);
+				nLen = lstrlen(szExpand);
+			}
+			// Expand relative paths. Note. Path MUST be specified with root
+			// NOT recommended: "..\tcc\tcc.exe" this may lead to unpredictable results cause of CurrentDirectory
+			// Allowed: "%ConEmuDir%\..\tcc\tcc.exe"
+			if (*szExpand)
+			{
+				nLen = GetFullPathName(szExpand, countof(szFull), szFull, &pszFile);
+				if (!nLen || (nLen>=countof(szExpand)))
+				{
+					MBoxAssert((nLen>0) && (nLen<countof(szExpand)) && "GetFullPathName(ComSpec)");
+					szFull[0] = 0;
+				}
+				else if (!FileExists(szExpand))
+				{
+					szFull[0] = 0;
+				}
+			}
+			else
+			{
+				szFull[0] = 0;
+			}
+			wcscpy_c(m_GuiInfo.ComSpec.ComspecExplicit, szFull);
+			if (!*szFull && (csType == cst_Explicit))
+			{
+				csType = cst_AutoTccCmd;
+			}
+		}
+		//
+		if (csType == cst_Explicit)
+		{
+			_ASSERTE(*szFull);
+			wcscpy_c(m_GuiInfo.ComSpec.Comspec32, szFull);
+			wcscpy_c(m_GuiInfo.ComSpec.Comspec64, szFull);
+		}
+		else
+		{
+			wcscpy_c(m_GuiInfo.ComSpec.Comspec32, gpSet->ComSpec.Comspec32);
+			wcscpy_c(m_GuiInfo.ComSpec.Comspec64, gpSet->ComSpec.Comspec64);
+		}
+		//wcscpy_c(m_GuiInfo.ComSpec.ComspecInitial, gpConEmu->ms_ComSpecInitial);
+
+		// finalization
+		m_GuiInfo.ComSpec.csType = csType;
+		m_GuiInfo.ComSpec.csBits = csBits;
+		m_GuiInfo.ComSpec.isUpdateEnv = gpSet->ComSpec.isUpdateEnv;
+	}
+	// *******************
+	// *** ComSpec end ***
+	// *******************
+
 	
 	FillConEmuMainFont(&m_GuiInfo.MainFont);
 	
@@ -8184,19 +8288,6 @@ BOOL CConEmuMain::OnCloseQuery()
 	return TRUE; // можно
 }
 
-//// Вызывается из ConEmuC, когда он запускается в режиме ComSpec
-//LRESULT CConEmuMain::OnConEmuCmd(BOOL abStarted, HWND ahConWnd, DWORD anConEmuC_PID)
-//{
-//  for (size_t i = 0; i < countof(mp_VCon); i++) {
-//      if (mp_VCon[i] == NULL || mp_VCon[i]->RCon() == NULL) continue;
-//      if (mp_VCon[i]->RCon()->hConWnd != ahConWnd) continue;
-//
-//      return mp_VCon[i]->RCon()->OnConEmuCmd(abStarted, anConEmuC_PID);
-//  }
-//
-//  return 0;
-//}
-
 HMENU CConEmuMain::CreateDebugMenuPopup()
 {
 	HMENU hDebug = CreatePopupMenu();
@@ -10104,7 +10195,7 @@ LRESULT CConEmuMain::OnKeyboardHook(WORD vk, BOOL abReverse)
 	else if (vk == gpSet->icMultiCmd /* X */)  // Win-X
 	{
 		RConStartArgs args;
-		args.pszSpecialCmd = lstrdup(L"cmd");
+		args.pszSpecialCmd = GetComspec(&gpSet->ComSpec); //lstrdup(L"cmd");
 		CreateCon(&args);
 	}
 	else if (gpSet->isUseWinArrows && (vk == VK_LEFT || vk == VK_RIGHT || vk == VK_UP || vk == VK_DOWN))

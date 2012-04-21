@@ -596,6 +596,8 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		gFarMode.bMonitorConsoleInput = pFarSet->bMonitorConsoleInput;
 		gFarMode.bLongConsoleOutput = pFarSet->bLongConsoleOutput;
 
+		UpdateComspec(&pFarSet->ComSpec);
+
 		if (SetFarHookMode)
 		{
 			// Уведомить об изменениях библиотеку хуков (ConEmuHk.dll)

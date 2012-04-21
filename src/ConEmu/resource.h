@@ -24,6 +24,7 @@
 #define IDD_SPG_FEATURE_FAR             156
 #define IDD_SPG_CMDTASKS                157
 #define IDD_SPG_APPDISTINCT             158
+#define IDD_SPG_COMSPEC                 159
 #define IDD_MORE_HIDE                   200
 #define IDD_SPG_SELECTION               204
 #define IDD_SPG_TABS                    206
@@ -542,6 +543,22 @@
 #define cbCursorOverride                2145
 #define cbColorsOverride                2146
 #define lbColorsOverride                2147
+#define rbComspecAuto                   2148
+#define rbComspecEnvVar                 2149
+#define rbComspecCmd                    2150
+#define rbComspecExplicit               2151
+#define tComspecExplicit                2152
+#define cbComspecExplicit               2153
+#define gbCmdRun                        2154
+#define gbComspec                       2155
+#define gbComspecBits                   2156
+#define rbComspec_OSbit                 2157
+#define rbComspec_AppBit                2158
+#define rbComspec_x32                   2159
+#define cbComspecUpdateEnv              2160
+#define cbMultiLeaveOnClose             2161
+#define cbComspec                       2162
+#define cbComspecTest                   2162
 
 // Next default values for new objects
 // 
@@ -549,7 +566,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        217
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2147
+#define _APS_NEXT_CONTROL_VALUE         2163
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

@@ -136,6 +136,7 @@ class CConEmuMain :
 		wchar_t ms_ConEmuExe[MAX_PATH+1];       // полный путь к ConEmu.exe (GUI)
 		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
 		wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
+		wchar_t ms_ComSpecInitial[MAX_PATH];
 		BOOL mb_DosBoxExists;
 		// Portable Far Registry
 		BOOL mb_PortableRegExist;
@@ -161,6 +162,7 @@ class CConEmuMain :
 		//wchar_t ms_ConEmuCExeName[32];        // имя сервера (ConEmuC.exe или ConEmuC64.exe) -- на удаление
 		wchar_t ms_ConEmuCurDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
 		wchar_t *mpsz_ConEmuArgs;    // Аргументы
+		void GetComSpecCopy(ConEmuComspec& ComSpec);
 	private:
 		ConEmuGuiMapping m_GuiInfo;
 		MFileMapping<ConEmuGuiMapping> m_GuiInfoMapping;

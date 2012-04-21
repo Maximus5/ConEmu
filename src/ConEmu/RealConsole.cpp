@@ -780,7 +780,7 @@ BOOL CRealConsole::AttachPID(DWORD dwPID)
 
 		if (/*dwErr==0x1F || dwErr==6 &&*/ dwPID == -1)
 		{
-			// Если ConEmu запускается из FAR'а батником - то родительский процесс - CMD.EXE, а он уже скорее всего закрыт. то есть подцепиться не удастся
+			// Если ConEmu запускается из FAR'а батником - то родительский процесс - CMD.EXE/TCC.EXE, а он уже скорее всего закрыт. то есть подцепиться не удастся
 			HWND hConsole = FindWindowEx(NULL,NULL,_T("ConsoleWindowClass"),NULL);
 
 			if (hConsole && IsWindowVisible(hConsole))
@@ -1344,7 +1344,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 				if (!nCurFarPID)
 				{
-					// Возможно, сменился FAR (возврат из cmd.exe, или вложенного фара)
+					// Возможно, сменился FAR (возврат из cmd.exe/tcc.exe, или вложенного фара)
 					DWORD nPID = pRCon->GetFarPID(FALSE);
 
 					if (nPID)
@@ -1895,10 +1895,6 @@ BOOL CRealConsole::StartProcess()
 	while (nStep <= 2)
 	{
 		MCHKHEAP;
-		/*if (!*gpSet->GetCmd()) {
-		    gpSet->psCurCmd = lstrdup(gpSet->Buffer Height == 0 ? _T("far") : _T("cmd"));
-		    nStep ++;
-		}*/
 		MCHKHEAP;
 		LPCWSTR lpszCmd = NULL;
 
@@ -3988,9 +3984,9 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 		++iter;
 	}
 
-	TODO("Однако, наверное cmd.exe может быть запущен и в 'фоне'? Например из Update");
+	TODO("Однако, наверное cmd.exe/tcc.exe может быть запущен и в 'фоне'? Например из Update");
 
-	if (bIsCmd && bIsFar)  // Если в консоли запущен cmd.exe - значит (скорее всего?) фар выполняет команду
+	if (bIsCmd && bIsFar)  // Если в консоли запущен cmd.exe/tcc.exe - значит (скорее всего?) фар выполняет команду
 	{
 		bIsFar = false; dwFarPID = 0;
 	}
@@ -4229,7 +4225,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 
 								memset(&cp, 0, sizeof(cp));
 								cp.ProcessID = PID[i]; cp.ParentPID = p.th32ParentProcessID;
-								ProcessCheckName(cp, p.szExeFile); //far, telnet, cmd, conemuc, и пр.
+								ProcessCheckName(cp, p.szExeFile); //far, telnet, cmd, tcc, conemuc, и пр.
 								cp.Alive = true;
 								cp.inConsole = true;
 								SPRC.RelockExclusive(300); // Заблокировать, если это еще не сделано
@@ -4253,7 +4249,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 								// пометить, что сменился список (определилось имя процесса)
 								if (!bProcessChanged) bProcessChanged = TRUE;
 
-								//far, telnet, cmd, conemuc, и пр.
+								//far, telnet, cmd, tcc, conemuc, и пр.
 								ProcessCheckName(*iter, p.szExeFile);
 								// запомнить родителя
 								iter->ParentPID = p.th32ParentProcessID;
@@ -4329,6 +4325,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 	ConPrc.IsTelnet = lstrcmpi(ConPrc.Name, _T("telnet.exe"))==0;
 	TODO("Тут главное не промахнуться, и не посчитать корневой conemuc, из которого запущен сам FAR, или который запустил плагин, чтобы GUI прицепился к этой консоли");
 	ConPrc.IsCmd = lstrcmpi(ConPrc.Name, _T("cmd.exe"))==0
+	               || lstrcmpi(ConPrc.Name, _T("tcc.exe"))==0
 	               || lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0
 	               || lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0;
 	ConPrc.NameChecked = true;
@@ -7467,6 +7464,9 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 	pSetEnvVar->bShellNoZoneCheck = gpSet->isShellNoZoneCheck;
 	pSetEnvVar->bMonitorConsoleInput = (gpSetCls->m_ActivityLoggingType == glt_Input);
 	pSetEnvVar->bLongConsoleOutput = gpSet->AutoBufferHeight;
+
+	gpConEmu->GetComSpecCopy(pSetEnvVar->ComSpec);
+
 	//BOOL lbNeedQuot = (wcschr(gpConEmu->ms_ConEmuCExeFull, L' ') != NULL);
 	//wchar_t* pszName = szData;
 	//lstrcpy(pszName, L"ComSpec");

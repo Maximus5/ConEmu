@@ -32,6 +32,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PIPEBUFSIZE 4096
 #endif
 
+#undef _GetTime
+#if !defined(_DEBUG)
+	#define _GetTime GetTickCount
+	//#pragma message("--PipeServer.h in Release mode")
+#elif defined(__GNUC__)
+	#define _GetTime GetTickCount
+	//#pragma message("--PipeServer.h in __GNUC__ mode")
+#else
+	#define _GetTime timeGetTime
+	#pragma comment(lib, "winmm.lib")
+	//#pragma message("--PipeServer.h in _DEBUG mode")
+#endif
+
 // struct - для того, чтобы выделять память простым calloc. "new" не прокатывает, т.к. Crt может быть не инициализирован (ConEmuHk).
 
 // Класс предполагает, что первый DWORD в (T*) это размер передаваемого блока в байтах!
@@ -41,10 +54,19 @@ struct PipeServer
 	protected:
 		enum PipeState
 		{
-			CONNECTING_STATE = 0,
-			READING_STATE = 1,
-			WRITING_STATE = 2,
-			ERROR_STATE = 3,
+			STARTING_STATE = 0,
+			STARTED_STATE,
+			CREATEPIPE_STATE,
+			PIPECREATED_STATE,
+			CONNECTING_STATE,
+			WAITCLIENT_STATE,
+			READING_STATE,
+			WRITING_STATE,
+			DISCONNECTING_STATE,
+			DISCONNECTED_STATE,
+			CLOSING_STATE,
+			CLOSED_STATE,
+			TERMINATED_STATE,
 		};
 		struct PipeInst
 		{
@@ -57,6 +79,8 @@ struct PipeServer
 			BOOL   bDelayedWrite;
 			BOOL   fWriteSuccess;
 			DWORD  dwWriteErr;
+
+			DWORD  nTerminateDelay, nTerminateDelay1, nTerminateDelay2, nTerminateDelay3;
 
 			BOOL   bBreakConnection;
 			
@@ -110,6 +134,7 @@ struct PipeServer
 			// Server thread.
 			HANDLE hThread;
 			DWORD nThreadId;
+			HANDLE hThreadEnd;
 		};
 	protected:
 		bool mb_Initialized;
@@ -180,389 +205,6 @@ struct PipeServer
 			}
 		}
 
-		//#if 0
-		//		// Overlapped, доделать
-		//		// ConnectToNewClient(HANDLE, LPOVERLAPPED)
-		//		// This function is called to start an overlapped connect operation.
-		//		// It returns TRUE if an operation is pending or FALSE if the
-		//		// connection has been completed.
-		//		BOOL ConnectToNewClient(PipeInst* pPipe)
-		//		{
-		//			BOOL fConnected;
-		//			DWORD dwErr = 0;
-		//			pPipe->fPendingIO = FALSE;
-		//			pPipe->cbReadSize = 0;
-		//			pPipe->dwState = ERROR_STATE;
-		//			// Start an overlapped connection for this pipe instance.
-		//			fConnected = ConnectNamedPipe(pPipe->hPipeInst, &pPipe->oOverlap);
-		//			dwErr = GetLastError();
-		//
-		//			// Overlapped ConnectNamedPipe should return zero.
-		//			if (fConnected)
-		//			{
-		//				DumpError(pPipe, L"ConnectNamedPipe failed with 0x%08X", FALSE);
-		//
-		//				if (!mb_Terminate)
-		//					Sleep(100);
-		//			}
-		//			else
-		//			{
-		//				switch(dwErr)
-		//				{
-		//						// The overlapped connection in progress.
-		//					case ERROR_IO_PENDING:
-		//						pPipe->fPendingIO = TRUE;
-		//						pPipe->dwState = CONNECTING_STATE;
-		//						break;
-		//						// Client is already connected, so signal an event.
-		//					case ERROR_PIPE_CONNECTED:
-		//						pPipe->dwState = READING_STATE;
-		//						SetEvent(pPipe->oOverlap.hEvent);
-		//						break;
-		//						// If an error occurs during the connect operation...
-		//					default:
-		//						DumpError(pPipe, L"ConnectNamedPipe failed with 0x%08X", FALSE);
-		//
-		//						if (!mb_Terminate)
-		//							Sleep(100);
-		//				}
-		//			}
-		//
-		//			return pPipe->fPendingIO;
-		//		}
-		//#endif
-		//
-		//#if 0
-		//		// Overlapped, доделать
-		//		int InitPipes()
-		//		{
-		//			if (mb_Initialized)
-		//			{
-		//				_ASSERTEX(mb_Initialized==FALSE);
-		//				return -1000;
-		//			}
-		//
-		//			memset(m_Pipes, 0, sizeof(m_Pipes));
-		//
-		//			// The initial loop creates several instances of a named pipe
-		//			// along with an event object for each instance.  An
-		//			// overlapped ConnectNamedPipe operation is started for
-		//			// each instance.
-		//
-		//			for (int i = 0; i < MaxCount; i++)
-		//			{
-		//				m_Pipes[i].pServer = this;
-		//
-		//				// Create an event object for this instance.
-		//
-		//				if (m_Pipes[i].hEvent == NULL)
-		//					m_Pipes[i].hEvent = CreateEvent(
-		//					                        NULL,    // default security attribute
-		//					                        TRUE,    // manual-reset(!) event
-		//					                        TRUE,    // initial state = signaled
-		//					                        NULL);   // unnamed event object
-		//
-		//				if (m_Pipes[i].hEvent == NULL)
-		//				{
-		//					DumpError(pPipe, L"CreateEvent failed with 0x%08X");
-		//					return -(100+i);
-		//				}
-		//
-		//				m_Pipes[i].oOverlap.hEvent = m_Pipes[i].hEvent;
-		//				_ASSERTEX(LocalSecurity()!=NULL);
-		//				int InstanceCount = RELEASEDEBUGTEST(PIPE_UNLIMITED_INSTANCES,MaxCount);
-		//				m_Pipes[i].hPipeInst = CreateNamedPipeW(
-		//				                           ms_PipeName,            // pipe name
-		//				                           PIPE_ACCESS_DUPLEX |    // read/write access
-		//				                           FILE_FLAG_OVERLAPPED,   // overlapped mode
-		//				                           PIPE_TYPE_MESSAGE |     // message-type pipe
-		//				                           PIPE_READMODE_MESSAGE | // message-read mode
-		//				                           PIPE_WAIT,              // blocking mode
-		//				                           InstanceCount,          // number of instances
-		//				                           sizeof(T),              // output buffer size
-		//				                           sizeof(T),              // input buffer size
-		//				                           0,                      // client time-out
-		//				                           LocalSecurity());     // default security attributes
-		//
-		//				if (m_Pipes[i].hPipeInst == INVALID_HANDLE_VALUE)
-		//				{
-		//					DumpError(pPipe, L"CreateNamedPipe failed with 0x%08X");
-		//					return -(200+i);
-		//				}
-		//
-		//				// Call the subroutine to connect to the new client and update state
-		//				ConnectToNewClient(m_Pipes+i);
-		//			}
-		//
-		//			mb_Initialized = TRUE;
-		//			return 0;
-		//		}
-		//#endif
-		//
-		//#if 0
-		//		// Overlapped, доделать
-		//		
-		//		// DisconnectAndReconnect(PipeInst*)
-		//		// This function is called when an error occurs or when the client
-		//		// closes its handle to the pipe. Disconnect from this client, then
-		//		// call ConnectNamedPipe to wait for another client to connect.
-		//		void DisconnectAndReconnect(PipeInst* pPipe)
-		//		{
-		//			pPipe->cbReadSize = 0;
-		//
-		//			// Disconnect the pipe instance
-		//			if (!DisconnectNamedPipe(pPipe->hPipeInst))
-		//			{
-		//				DumpError(pPipe, L"DisconnectNamedPipe failed with 0x%08X", FALSE);
-		//			}
-		//
-		//			pPipe->dwState = ERROR_STATE;
-		//			// Call a subroutine to connect to the new client and update state
-		//			ConnectToNewClient(pPipe);
-		//		}
-		//#endif
-		//
-		//#if 0
-		//		int GetAnswerToRequest(PipeInst* pPipe)
-		//		{
-		//			if (!mfn_PipeServerCommand(pPipe->ptrRequest, &pPipe->ptrReply, &pPipe->cbReplySize, &pPipe->cbMaxReplySize, m_lParam))
-		//			{
-		//				if ((pPipe->ptrReply == NULL) || (pPipe->cbMaxReplySize < sizeof(DWORD)))
-		//				{
-		//					if (pPipe->ptrReply) free(pPipe->ptrReply);
-		//
-		//					pPipe->cbMaxReplySize = (DWORD)max(sizeof(DWORD),sizeof(T));
-		//					pPipe->ptrReply = (T*)malloc(pPipe->cbMaxReplySize);
-		//					*((DWORD*)pPipe->ptrReply) = 0;
-		//					pPipe->cbReplySize = sizeof(DWORD);
-		//				}
-		//			}
-		//
-		//			return pPipe->cbReplySize;
-		//		}
-		//#endif
-		//
-		//#if 0
-		//		// Overlapped, доделать
-		//		
-		//		int PipeServerWork(PipeInst* pPipe)
-		//		{
-		//			DWORD i, dwWait, cbRet, cbRead, dwErr;
-		//			int nToRead;
-		//			BOOL fSuccess;
-		//			HANDLE hEvents[2] = {pPipe->hEvent, mh_TermEvent};
-		//			_ASSERTEX(hEvents[1] != NULL);
-		//			pPipe->cbReadSize = 0;
-		//
-		//			while (!mb_Terminate)
-		//			{
-		//				// Wait for the event object to be signaled, indicating
-		//				// completion of an overlapped read, write, or
-		//				// connect operation.
-		//				dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
-		//
-		//				if (mb_Terminate)
-		//				{
-		//					// значит что затребовано завершение сервера
-		//					return -1;
-		//				}
-		//
-		//				// Get the result if the operation was pending.
-		//				if (pPipe->fPendingIO)
-		//				{
-		//					fSuccess = GetOverlappedResult(
-		//					               pPipe->hPipeInst, // handle to pipe
-		//					               &pPipe->oOverlap, // OVERLAPPED structure
-		//					               &cbRet,           // bytes transferred
-		//					               FALSE);           // do not wait
-		//
-		//					switch(pPipe->dwState)
-		//					{
-		//							// Pending connect operation
-		//						case CONNECTING_STATE:
-		//
-		//							if (!fSuccess)
-		//							{
-		//								DumpError(pPipe, L"Error while connecting 0x%08X", FALSE);
-		//								DisconnectAndReconnect(pPipe);
-		//								continue;
-		//							}
-		//
-		//							pPipe->dwState = READING_STATE;
-		//							pPipe->cbReadSize = 0;
-		//							break;
-		//							// Pending read operation
-		//						case READING_STATE:
-		//
-		//							if (!fSuccess || (cbRet == 0))
-		//							{
-		//								DisconnectAndReconnect(pPipe);
-		//								continue;
-		//							}
-		//
-		//							pPipe->cbReadSize += cbRet;
-		//							nToRead = (*((DWORD*)pPipe->ptrRequest)) - pPipe->cbReadSize;
-		//
-		//							if (nToRead <= 0)
-		//							{
-		//								// Если считаны _все_ данные
-		//								pPipe->dwState = WRITING_STATE;
-		//							}
-		//
-		//							break;
-		//							// Pending write operation
-		//						case WRITING_STATE:
-		//							// Write operation finished, reconnect
-		//							TODO("Тут можно было бы не переподключаться, если при инициализации указан «фиксированный коннект»");
-		//							// Фиксированный коннект может использоваться не всегда.
-		//							// Например, он допустим для Pipe консольного ввода
-		//							// (сервер-ConEmuC, клиент-ConEmu, меняться не могут, разве что после Detach/Attach)
-		//							DisconnectAndReconnect(pPipe);
-		//							continue;
-		//						default:
-		//						{
-		//							// Invalid pipe state
-		//							_ASSERTEX(pPipe->dwState<=WRITING_STATE);
-		//							pPipe->dwState = ERROR_STATE;
-		//						}
-		//					}
-		//				}
-		//
-		//				// The pipe state determines which operation to do next.
-		//
-		//				// READING_STATE:
-		//				// The pipe instance is connected to the client
-		//				// and is ready to read a request from the client.
-		//				if (pPipe->dwState == READING_STATE)
-		//				{
-		//					//if (pPipe->ptrRequest == NULL)
-		//					//{
-		//					//	pPipe->ptrRequest = (T*)malloc(sizeof(T));
-		//					//	pPipe->cbMaxReadSize = sizeof(T);
-		//					//}
-		//					if (pPipe->cbReadSize == 0)
-		//					{
-		//						nToRead = sizeof(T);
-		//					}
-		//					else
-		//					{
-		//						nToRead = (*((DWORD*)pPipe->ptrRequest)) - pPipe->cbReadSize;
-		//					}
-		//
-		//					if (nToRead <= 0)
-		//					{
-		//						_ASSERTEX(nToRead > 0);
-		//						DisconnectAndReconnect(pPipe);
-		//						continue;
-		//					}
-		//
-		//					// Allocate read buffer
-		//					if ((nToRead + pPipe->cbReadSize) >= pPipe->cbMaxReadSize)
-		//					{
-		//						pPipe->cbMaxReadSize = (nToRead + pPipe->cbReadSize) + 0x100;
-		//						T* ptrNew = (T*)malloc(pPipe->cbMaxReadSize);
-		//
-		//						if (pPipe->ptrRequest)
-		//						{
-		//							if (pPipe->cbReadSize)
-		//								memmove(ptrNew, pPipe->ptrRequest, pPipe->cbReadSize);
-		//
-		//							free(pPipe->ptrRequest);
-		//						}
-		//
-		//						pPipe->ptrRequest = ptrNew;
-		//					}
-		//
-		//					// Quering next input block
-		//					_ASSERTEX(pPipe->cbMaxReadSize > pPipe->cbReadSize);
-		//					fSuccess = ReadFile(
-		//					               pPipe->hPipeInst,
-		//					               ((LPBYTE)pPipe->ptrRequest) + pPipe->cbReadSize,
-		//					               nToRead,
-		//					               &cbRead,
-		//					               &pPipe->oOverlap);
-		//
-		//					// The read operation completed successfully (w/o pending).
-		//					if (fSuccess && (cbRead != 0))
-		//					{
-		//						pPipe->fPendingIO = FALSE;
-		//						pPipe->cbReadSize += cbRead;
-		//						nToRead = (*((DWORD*)pPipe->ptrRequest)) - pPipe->cbReadSize;
-		//
-		//						if (nToRead > 0)
-		//							continue; // требуется дочитать данные
-		//
-		//						pPipe->dwState = WRITING_STATE;
-		//					}
-		//					else
-		//					{
-		//						// The read operation is still pending.
-		//						dwErr = GetLastError();
-		//
-		//						if (!fSuccess && (dwErr == ERROR_IO_PENDING))
-		//						{
-		//							pPipe->fPendingIO = TRUE;
-		//							continue;
-		//						}
-		//
-		//						// An error occurred; disconnect from the client.
-		//						DumpError(pPipe, L"Error while reading 0x%08X", FALSE);
-		//						DisconnectAndReconnect(pPipe);
-		//						continue;
-		//					}
-		//				}
-		//
-		//				// WRITING_STATE:
-		//				// The request was successfully read from the client.
-		//				// Get the reply data and write it to the client.
-		//				if (pPipe->dwState == WRITING_STATE)
-		//				{
-		//					GetAnswerToRequest(pPipe);
-		//					fSuccess = WriteFile(
-		//					               pPipe->hPipeInst,
-		//					               pPipe->ptrReply,
-		//					               pPipe->cbReplySize,
-		//					               &cbRet,
-		//					               &pPipe->oOverlap);
-		//
-		//					// The write operation completed successfully (w/o pending).
-		//					if (fSuccess /*&& (cbRet == pPipe->cbToWrite)*/)
-		//					{
-		//						_ASSERTEX(cbRet == pPipe->cbToWrite);
-		//						DisconnectAndReconnect(pPipe);
-		//						continue;
-		//					}
-		//
-		//					// The write operation is still pending.
-		//					dwErr = GetLastError();
-		//
-		//					if (!fSuccess && (dwErr == ERROR_IO_PENDING))
-		//					{
-		//						pPipe->fPendingIO = TRUE;
-		//						continue;
-		//					}
-		//
-		//					// An error occurred; disconnect from the client.
-		//					DumpError(pPipe, L"Write pipe failed 0x%08X", FALSE);
-		//					pPipe->dwState = ERROR_STATE;
-		//				}
-		//
-		//				_ASSERTEX(pPipe->dwState<=ERROR_STATE);
-		//
-		//				if (mb_Terminate)
-		//				{
-		//					// Server termination requested, exiting
-		//					return 0;
-		//				}
-		//
-		//				DisconnectAndReconnect(pPipe);
-		//			}
-		//
-		//			// Exiting
-		//			return mb_Terminate ? 0 : -1;
-		//		}
-		//#endif
-
 		int WaitOverlapped(PipeInst* pPipe, DWORD* pcbDataSize)
 		{
 			BOOL fSuccess = FALSE;
@@ -576,7 +218,14 @@ struct PipeServer
 				if (nWait == WAIT_OBJECT_0)
 				{
 					_ASSERTEX(mb_Terminate==true);
+					DWORD t1 = _GetTime();
+					TODO("Подозрение на длительную обработку");
+					pPipe->dwState = DISCONNECTING_STATE;
 					DisconnectNamedPipe(pPipe->hPipeInst);
+					pPipe->dwState = DISCONNECTED_STATE;
+					DWORD t2 = _GetTime();
+					pPipe->nTerminateDelay1 = (t2 - t1);
+					pPipe->nTerminateDelay += pPipe->nTerminateDelay1;
 					return 0; // Завершение сервера
 				}
 				else if (nWait == (WAIT_OBJECT_0+1))
@@ -614,12 +263,17 @@ struct PipeServer
 				}
 
 				// Force client disconnect (error on server side)
+				pPipe->dwState = DISCONNECTING_STATE;
 				DisconnectNamedPipe(pPipe->hPipeInst);
+				pPipe->dwState = DISCONNECTED_STATE;
 				// Wait a little
-				Sleep(10);
+				if (!mb_Terminate)
+					Sleep(10);
 				// Next
+				pPipe->dwState = CLOSING_STATE;
 				CloseHandle(pPipe->hPipeInst);
 				pPipe->hPipeInst = NULL;
+				pPipe->dwState = CLOSED_STATE;
 				return 2; // ошибка, пробуем еще раз
 			}
 
@@ -871,7 +525,17 @@ struct PipeServer
 						PIPE_WAIT;                  // Blocking mode is enabled.
 
 					_ASSERTEX(mlp_Sec!=NULL);
+					pPipe->dwState = CREATEPIPE_STATE;
 					pPipe->hPipeInst = CreateNamedPipeW(ms_PipeName, dwOpenMode, dwPipeMode, InstanceCount, nOutSize, nInSize, 0, mlp_Sec);
+					pPipe->dwState = PIPECREATED_STATE;
+
+					// Сервер закрывается?
+					if (mb_Terminate)
+					{
+						if (mb_Overlapped)
+							ReleaseSemaphore(hWait[1], 1, NULL);
+						break;
+					}
 
 					if ((pPipe->hPipeInst == INVALID_HANDLE_VALUE) || (pPipe->hPipeInst == NULL))
 					{
@@ -907,6 +571,7 @@ struct PipeServer
 				// the function returns a nonzero value. If the function
 				// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
 				SetLastError(0);
+				pPipe->dwState = CONNECTING_STATE;
 				fConnected = ConnectNamedPipe(pPipe->hPipeInst, mb_Overlapped ? &pPipe->oOverlap : NULL);
 				pPipe->dwConnErr = GetLastError();
 				//? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED);
@@ -948,10 +613,16 @@ struct PipeServer
 					// Wait for overlapped connection
 					_ASSERTEX(pPipe->hPipeInst && (pPipe->hPipeInst!=INVALID_HANDLE_VALUE));
 					int nOverRc = (pPipe->dwConnErr == ERROR_PIPE_CONNECTED) ? 1 : WaitOverlapped(pPipe, &cbOver);
+					
+					DWORD t1 = _GetTime();
 					ReleaseSemaphore(hWait[1], 1, NULL);
+					DWORD t2 = _GetTime();
+
 					if (nOverRc == 0)
 					{
 						_ASSERTEX(mb_Terminate==true);
+						pPipe->nTerminateDelay2 = (t2 - t1);
+						pPipe->nTerminateDelay += pPipe->nTerminateDelay2;
 						break; // Завершение сервера
 					}
 					else if (nOverRc == 1)
@@ -978,11 +649,15 @@ struct PipeServer
 					}
 					else
 					{
+						pPipe->dwState = DISCONNECTING_STATE;
 						DisconnectNamedPipe(pPipe->hPipeInst);
+						pPipe->dwState = DISCONNECTED_STATE;
 						// В каких случаях это может возникнуть? Нужно ли закрывать хэндл, или можно переподключиться?
 						_ASSERTEX(fConnected!=FALSE);
+						pPipe->dwState = CLOSING_STATE;
 						CloseHandle(pPipe->hPipeInst);
 						pPipe->hPipeInst = NULL;
+						pPipe->dwState = CLOSED_STATE;
 					}
 				} // end - !mb_Overlapped
 			} // Цикл ожидания подключения while (!mb_Terminate)
@@ -1019,6 +694,10 @@ struct PipeServer
 			// with that client, and the loop is repeated.
 			hWait[0] = mh_TermEvent;
 			hWait[1] = mh_ServerSemaphore;
+
+			// debuging purposes
+			pPipe->dwState = STARTING_STATE;
+			pPipe->nTerminateDelay = pPipe->nTerminateDelay1 = pPipe->nTerminateDelay2 = pPipe->nTerminateDelay3 = 0;
 			
 			_ASSERTEX(!mb_Overlapped || pPipe->hEvent != NULL);
 			_ASSERTEX(pPipe->hPipeInst == NULL);
@@ -1043,6 +722,7 @@ struct PipeServer
 				// Сервер закрывается?
 				if (mb_Terminate)
 				{
+					DWORD t1 = _GetTime();
 					// Всегда чего-нибудь ответить в пайп, а то ошибка (Pipe was closed) у клиента возникает
 					if (pPipe->hPipeInst)
 					{
@@ -1054,9 +734,14 @@ struct PipeServer
 							//FlushFileBuffers(pPipe->hPipeInst);
 						}
 						//DisconnectNamedPipe(hPipe);
+						pPipe->dwState = CLOSING_STATE;
 						CloseHandle(pPipe->hPipeInst);
 						pPipe->hPipeInst = NULL;
+						pPipe->dwState = CLOSED_STATE;
 					}
+					DWORD t2 = _GetTime();
+					pPipe->nTerminateDelay3 = (t2 - t1);
+					pPipe->nTerminateDelay += pPipe->nTerminateDelay3;
 					return 0;
 				}
 				
@@ -1163,7 +848,9 @@ struct PipeServer
 					// FlushFileBuffers уже вызван, т.е. клиент данные не потеряет
 					// А вот вызов CloseHandle перед DisconnectNamedPipe может привести к ошибке 231
 					// (All pipe instances are busy) при следующей попытке CreateNamedPipe
+					pPipe->dwState = DISCONNECTING_STATE;
 					DisconnectNamedPipe(pPipe->hPipeInst);
+					pPipe->dwState = DISCONNECTED_STATE;
 				}
 
 				TODO("Vozmogno, v kakih-to sluchajah nujno zakryt' pipe handle");
@@ -1174,8 +861,10 @@ struct PipeServer
 
 			if (pPipe->hPipeInst && (pPipe->hPipeInst != INVALID_HANDLE_VALUE))
 			{
+				pPipe->dwState = CLOSING_STATE;
 				CloseHandle(pPipe->hPipeInst);
 				pPipe->hPipeInst = NULL;
+				pPipe->dwState = CLOSED_STATE;
 			}
 
 			return 0;
@@ -1203,9 +892,11 @@ struct PipeServer
 			}
 
 			_ASSERTEX(pPipe->hThread == NULL);
+			_ASSERTEX(pPipe->hThreadEnd == NULL);
 
 			pPipe->pServer = this;
 			pPipe->nThreadId = 0;
+			pPipe->hThreadEnd = CreateEvent(NULL, TRUE, FALSE, NULL);
 			pPipe->hThread = CreateThread(NULL, 0, _PipeServerThread, pPipe, 0, &pPipe->nThreadId);
 			if (pPipe->hThread == NULL)
 			{
@@ -1220,17 +911,25 @@ struct PipeServer
 		};
 		static DWORD WINAPI _PipeServerThread(LPVOID lpvParam)
 		{
-			DWORD nResult = 0;
+			DWORD nResult = 101;
 			PipeInst* pPipe = (PipeInst*)lpvParam;
 			_ASSERTEX(pPipe!=NULL && pPipe->pServer!=NULL);
 
-			if (pPipe->pServer->mb_Terminate)
+			pPipe->dwState = STARTED_STATE;
+
+			if (!pPipe->pServer->mb_Terminate)
 			{
-				return 100;
+				// Working method
+				nResult = pPipe->pServer->PipeServerThread(pPipe);
 			}
 
-			// Working method
-			nResult = pPipe->pServer->PipeServerThread(pPipe);
+			pPipe->dwState = TERMINATED_STATE;
+			
+			// Force thread termination cause of unknown attached dll's.
+			if (pPipe->pServer->mb_Terminate)
+			{
+				TerminateThread(GetCurrentThread(), 100);
+			}
 			return nResult;
 		};
 	//public:
@@ -1392,26 +1091,46 @@ struct PipeServer
 			{
 				if (m_Pipes[i].hThread)
 				{
-					nWait = WaitForSingleObject(m_Pipes[i].hThread, 250);
+					DWORD nTimeout = 250;
+					#ifdef _DEBUG
+						nTimeout = 5000;
+					#endif
+
+					HANDLE hEvt[2] = {m_Pipes[i].hThread, m_Pipes[i].hThreadEnd};
+					nWait = (m_Pipes[i].dwState == STARTING_STATE) ? WAIT_FAILED : WaitForMultipleObjects(countof(hEvt), hEvt, FALSE, nTimeout);
 
 					if (nWait != WAIT_OBJECT_0)
 					{
 						#ifdef _DEBUG
-						SuspendThread(m_Pipes[i].hThread);
-						_ASSERTEX(nWait == WAIT_OBJECT_0 && ("Ожидание завершения пайпа"));
-						ResumeThread(m_Pipes[i].hThread);
+							if (m_Pipes[i].dwState != STARTING_STATE)
+							{
+								SuspendThread(m_Pipes[i].hThread);
+								_ASSERTEX(nWait == WAIT_OBJECT_0 && ("Ожидание завершения пайпа"));
+								ResumeThread(m_Pipes[i].hThread);
+							}
 						#endif
+
 						TerminateThread(m_Pipes[i].hThread, 100);
 					}
 
 					CloseHandle(m_Pipes[i].hThread);
 					m_Pipes[i].hThread = NULL;
 				}
+				if (m_Pipes[i].hThreadEnd)
+				{
+					CloseHandle(m_Pipes[i].hThreadEnd);
+					m_Pipes[i].hThreadEnd = NULL;
+				}
 
 				if (m_Pipes[i].hPipeInst && (m_Pipes[i].hPipeInst != INVALID_HANDLE_VALUE))
 				{
+					m_Pipes[i].dwState = DISCONNECTING_STATE;
 					DisconnectNamedPipe(m_Pipes[i].hPipeInst);
+					m_Pipes[i].dwState = DISCONNECTED_STATE;
+
+					m_Pipes[i].dwState = CLOSING_STATE;
 					CloseHandle(m_Pipes[i].hPipeInst);
+					m_Pipes[i].dwState = CLOSED_STATE;
 				}
 				m_Pipes[i].hPipeInst = NULL;
 				

@@ -686,8 +686,9 @@ BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LP
 	CShellProc* sp = new CShellProc();
 	sp->OnCreateProcessA(&lpApplicationName, (LPCSTR*)&lpCommandLine, &dwCreationFlags, lpStartupInfo);
 	if ((dwCreationFlags & CREATE_SUSPENDED) == 0)
+	{
 		DebugString(L"CreateProcessA without CREATE_SUSPENDED Flag!\n");
-
+	}
 
 	lbRc = F(CreateProcessA)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 	dwErr = GetLastError();
@@ -728,7 +729,9 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	CShellProc* sp = new CShellProc();
 	sp->OnCreateProcessW(&lpApplicationName, (LPCWSTR*)&lpCommandLine, &dwCreationFlags, lpStartupInfo);
 	if ((dwCreationFlags & CREATE_SUSPENDED) == 0)
+	{
 		DebugString(L"CreateProcessW without CREATE_SUSPENDED Flag!\n");
+	}
 
 	#ifdef _DEBUG
 	SetLastError(0);

@@ -89,7 +89,12 @@ BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int nCurWidth, int 
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
 int EvaluateDefaultFontWidth(int inSizeY, const wchar_t *asFontName);
 void EmergencyShow(HWND hConWnd);
+void FindComspec(ConEmuComspec* pOpt); // используется в GUI при загрузке настроек
+void UpdateComspec(ConEmuComspec* pOpt);
+void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue);
 #endif
+LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits = csb_SameOS);
+wchar_t* GetComspec(const ConEmuComspec* pOpt);
 
 BOOL apiGetConsoleFontSize(HANDLE hOutput, int &SizeY, int &SizeX, wchar_t (&rsFontName)[LF_FACESIZE]); //Vista+ only!
 BOOL apiSetConsoleFontSize(HANDLE hOutput, int inSizeY, int inSizeX, const wchar_t *asFontName); //Vista+ only!

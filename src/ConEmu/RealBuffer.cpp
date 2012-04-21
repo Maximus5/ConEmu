@@ -2038,7 +2038,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 	
 	//if (messg == WM_MOUSEMOVE || messg == WM_LBUTTONDOWN || messg == WM_LBUTTONUP || messg == WM_LBUTTONDBLCLK)
 	//{
-	COORD crStart = crFrom, crEnd = crFrom;
+	COORD crStart = MakeCoord(crFrom.X - con.m_sbi.srWindow.Left, crFrom.Y - con.m_sbi.srWindow.Top);
+	COORD crEnd = crStart;
 	wchar_t szText[MAX_PATH+10];
 	ExpandTextRangeType rc = ExpandTextRange(crStart, crEnd, etr_FileAndLine, szText, countof(szText));
 	if (memcmp(&crStart, &con.mcr_FileLineStart, sizeof(crStart)) != 0
@@ -2105,6 +2106,12 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 					LPCWSTR pszFileName = wcsrchr(cmd.szFile, L'\\');
 					if (!pszFileName) pszFileName = cmd.szFile; else pszFileName++;
 					CVirtualConsole* pVCon = NULL;
+
+					//// —брос подчерка, а то при возврате в консоль,
+					//// когда модификатор уже отпущен, остает артефакт...
+					//StoreLastTextRange(etr_None);
+					//UpdateSelection();
+
 					int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(fwt_Editor|fwt_ActivateFound|fwt_PluginRequired, pszFileName, &pVCon);
 					
 					if (liActivated == -2)
@@ -2112,47 +2119,43 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 						// Ќашли, но активировать нельз€, TabBar должен был показать всплывающую подсказку с ошибкой
 						_ASSERTE(FALSE);
 					}
-					else if (liActivated >= 0)
-					{
-						// Ќашли, активировали, нужно только на строку перейти
-						if (cmd.nLine > 0)
-						{
-							wchar_t szMacro[96];
-							if (mp_RCon->m_FarInfo.FarVer.dwVerMajor == 1)
-								_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i:%i\" Enter $end", cmd.nLine, cmd.nColon);
-							else
-								_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 print(\"%i:%i\") Enter $end", cmd.nLine, cmd.nColon);
-							_ASSERTE(pVCon!=NULL);
-
-							// -- ѕослать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
-							//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
-
-							// ќк, переход на строку (макрос)
-							pVCon->RCon()->PostMacro(szMacro, TRUE);
-						}
-					}
 					else
 					{
-						CVConGuard VCon;
-						if (!gpConEmu->isFarExist(fwt_NonModal|fwt_PluginRequired, NULL, &VCon))
+						if (liActivated >= 0)
 						{
-							DisplayLastError(L"Available Far Manager was not found in open tabs", 0);
+							// Ќашли, активировали, нужно только на строку перейти
+							if (cmd.nLine > 0)
+							{
+								wchar_t szMacro[96];
+								if (mp_RCon->m_FarInfo.FarVer.dwVerMajor == 1)
+									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i:%i\" Enter $end", cmd.nLine, cmd.nColon);
+								else
+									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 print(\"%i:%i\") Enter $end", cmd.nLine, cmd.nColon);
+								_ASSERTE(pVCon!=NULL);
+
+								// -- ѕослать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
+								//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
+
+								// ќк, переход на строку (макрос)
+								pVCon->RCon()->PostMacro(szMacro, TRUE);
+							}
 						}
 						else
 						{
-							// -- ѕослать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
-							//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
+							CVConGuard VCon;
+							if (!gpConEmu->isFarExist(fwt_NonModal|fwt_PluginRequired, NULL, &VCon))
+							{
+								DisplayLastError(L"Available Far Manager was not found in open tabs", 0);
+							}
+							else
+							{
+								// -- ѕослать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
+								//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
 
-							// Prepared, можно звать плагин
-							VCon->RCon()->PostCommand(CMD_OPENEDITORLINE, sizeof(cmd), &cmd);
-							gpConEmu->Activate(VCon.VCon());
-							//CConEmuPipe pipe(mp_RCon->GetFarPID(TRUE), CONEMUREADYTIMEOUT);
-							//if (pipe.Init(_T("CRealConsole::ProcessFarHyperlink"), TRUE))
-							//{
-							//	gpConEmu->DebugStep(_T("ProcessFarHyperlink: Waiting for result (10 sec)"));
-							//	pipe.Execute(CMD_OPENEDITORLINE, &cmd, sizeof(cmd));
-							//	gpConEmu->DebugStep(NULL);
-							//}
+								// Prepared, можно звать плагин
+								VCon->RCon()->PostCommand(CMD_OPENEDITORLINE, sizeof(cmd), &cmd);
+								gpConEmu->Activate(VCon.VCon());
+							}
 						}
 					}
 				}
@@ -4630,10 +4633,15 @@ void CRealBuffer::StoreLastTextRange(ExpandTextRangeType etr)
 {
 	if (con.etrLast != etr)
 	{
+		con.etrLast = etr;
+		//if (etr == etr_None)
+		//{
+		//	con.mcr_FileLineStart = con.mcr_FileLineEnd = MakeCoord(0,0);
+		//}
+
 		if ((mp_RCon->mp_ABuf == this) && mp_RCon->isVisible())
 			gpConEmu->OnSetCursor();
 	}
-	con.etrLast = etr;
 }
 
 BOOL CRealBuffer::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/, BOOL abIncludeEdges /*= FALSE*/)

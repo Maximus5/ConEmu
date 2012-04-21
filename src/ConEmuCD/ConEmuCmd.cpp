@@ -156,6 +156,7 @@ int ComspecInit()
 
 	//110202 - comspec более не переопределяется
 	//if (GetEnvironmentVariable(L"ComSpecC", szComSpec, MAX_PATH) && szComSpec[0] != 0)
+	WARNING("TCC/ComSpec");
 	if (GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH) && szComSpec[0] != 0)
 	{
 		//// Только если это (случайно) не conemuc.exe
@@ -179,6 +180,7 @@ int ComspecInit()
 	}
 	else
 	{
+		WARNING("TCC/ComSpec");
 		pszComSpecName = L"cmd.exe";
 	}
 

@@ -194,7 +194,7 @@ class CSettings
 		//LPTSTR psCurCmd;
 	private:
 		/* 'Default' command line (if nor Registry, nor /cmd specified) */
-		WCHAR  szDefCmd[16];
+		WCHAR  szDefCmd[MAX_PATH];
 	public:
 		/* "Active" command line */
 		//LPCTSTR GetCmd();
@@ -398,6 +398,7 @@ class CSettings
 		enum TabHwndIndex {
 			thi_Main = 0,
 			thi_Ext,
+			thi_Comspec,
 			thi_Selection,
 			thi_Far,
 			thi_Keys,
@@ -503,6 +504,7 @@ class CSettings
 		// OnInitDialogPage_t: IDD_SPG_MAIN, è ò.ä.
 		LRESULT OnInitDialog_Main(HWND hWnd2);
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
+		LRESULT OnInitDialog_Comspec(HWND hWnd2);
 		LRESULT OnInitDialog_Selection(HWND hWnd2);
 		LRESULT OnInitDialog_Far(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Keys(HWND hWnd2, BOOL abInitial);

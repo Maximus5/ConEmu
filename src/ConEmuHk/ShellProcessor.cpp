@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShellProcessor.h"
 #include "Injects.h"
 #include "GuiAttach.h"
+#include "../common/WinObjects.h"
 
 #ifndef SEE_MASK_NOZONECHECKS
 #define SEE_MASK_NOZONECHECKS 0x800000
@@ -339,7 +340,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		return FALSE;
 
 	BOOL lbRc = FALSE;
-	size_t cchComspec = MAX_PATH+20;
+	//size_t cchComspec = MAX_PATH+20;
 	wchar_t *szComspec = NULL;
 	size_t cchConEmuC = MAX_PATH+16;
 	wchar_t *szConEmuC = NULL; // ConEmuC64.exe
@@ -448,29 +449,32 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		}
 	}
 
-	szComspec = (wchar_t*)calloc(cchComspec,sizeof(*szComspec));
-	if (!szComspec)
+	//szComspec = (wchar_t*)calloc(cchComspec,sizeof(*szComspec));
+	szComspec = GetComspec(&m_SrvMapping.ComSpec);
+	if (!szComspec || !*szComspec)
 	{
-		_ASSERTE(szComspec);
+		_ASSERTE(szComspec && *szComspec);
 		goto wrap;
 	}
-	if (GetEnvironmentVariable(L"ComSpec", szComspec, (DWORD)cchComspec))
-	{
-		// Не должен быть (даже случайно) ConEmuC.exe
-		const wchar_t* pszName = PointToName(szComspec);
-		if (!pszName || !lstrcmpi(pszName, L"ConEmuC.exe") || !lstrcmpi(pszName, L"ConEmuC64.exe"))
-			szComspec[0] = 0;
-	}
-	// Если не удалось определить через переменную окружения - пробуем обычный "cmd.exe" из System32
-	if (szComspec[0] == 0)
-	{
-		int n = GetWindowsDirectory(szComspec, MAX_PATH);
-		if (n > 0 && n < MAX_PATH)
-		{
-			// Добавить \System32\cmd.exe
-			wcscat_c(szComspec, (szComspec[n-1] == L'\\') ? L"System32\\cmd.exe" : L"\\System32\\cmd.exe");
-		}
-	}
+
+	//if (GetEnvironmentVariable(L"ComSpec", szComspec, (DWORD)cchComspec))
+	//{
+	//	// Не должен быть (даже случайно) ConEmuC.exe
+	//	const wchar_t* pszName = PointToName(szComspec);
+	//	if (!pszName || !lstrcmpi(pszName, L"ConEmuC.exe") || !lstrcmpi(pszName, L"ConEmuC64.exe"))
+	//		szComspec[0] = 0;
+	//}
+	//// Если не удалось определить через переменную окружения - пробуем обычный "cmd.exe" из System32
+	//if (szComspec[0] == 0)
+	//{
+	//	int n = GetWindowsDirectory(szComspec, MAX_PATH);
+	//	if (n > 0 && n < MAX_PATH)
+	//	{
+	//		// Добавить \System32\cmd.exe
+	//		WARNING("TCC/ComSpec");
+	//		wcscat_c(szComspec, (szComspec[n-1] == L'\\') ? L"System32\\cmd.exe" : L"\\System32\\cmd.exe");
+	//	}
+	//}
 
 	// Если удалось определить "ComSpec"
 	if (asParam)
@@ -586,11 +590,37 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 			// cmd.exe /c echo.exe -> можно и поискать
 			if (ms_ExeTmp[0] && (wcschr(ms_ExeTmp, L'.') || wcschr(ms_ExeTmp, L'\\')))
 			{
-				DWORD nCheckSybsystem = 0, nCheckBits = 0;
-				if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem, nCheckBits, nFileAttrs))
+				bool bSkip = false;
+				LPCWSTR pszExeName = PointToName(ms_ExeTmp);
+				// По хорошему, нужно с полным путем проверять,
+				// но если кто-то положил гуевый cmd.exe - ССЗБ
+				if (lstrcmpi(pszExeName, L"cmd.exe") == 0)
 				{
-					ImageSubsystem = nCheckSybsystem;
-					ImageBits = nCheckBits;
+					ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+					switch (m_SrvMapping.ComSpec.csBits)
+					{
+					case csb_SameOS:
+						ImageBits = IsWindows64() ? 64 : 32;
+						break;
+					case csb_x32:
+						ImageBits = 32;
+						break;
+					default:
+					//case csb_SameApp:
+						ImageBits = WIN3264TEST(32,64);
+						break;
+					}
+					bSkip = true;
+				}
+				
+				if (!bSkip)
+				{
+					DWORD nCheckSybsystem = 0, nCheckBits = 0;
+					if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem, nCheckBits, nFileAttrs))
+					{
+						ImageSubsystem = nCheckSybsystem;
+						ImageBits = nCheckBits;
+					}
 				}
 			}
 		}

@@ -95,6 +95,8 @@ struct Settings
 		//reg->Load(L"CmdOutputCP", nCmdOutputCP);
 		int nCmdOutputCP;
 
+		ConEmuComspec ComSpec;
+
 	public:
 		struct ColorPalette
 		{
@@ -782,7 +784,7 @@ struct Settings
 		DWORD nAffinity;
 
 		//reg->Load(L"UseInjects", isUseInjects);
-		bool isUseInjects;
+		bool isUseInjects; // 0 - off, 1 - always. Note, Root process is infiltrated always.
 		//reg->Load(L"PortableReg", isPortableReg);
 		bool isPortableReg;
 

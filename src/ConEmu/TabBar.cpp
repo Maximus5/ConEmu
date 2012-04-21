@@ -2671,7 +2671,7 @@ int TabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** p
 	INT_PTR V, I;
 	int tabIdx = 0;
 	ConEmuTab tab = {0};
-	for(V = 0; V < MAX_CONSOLE_COUNT && nTab == -1; V++)
+	for (V = 0; V < MAX_CONSOLE_COUNT && nTab == -1; V++)
 	{
 		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
 
@@ -2687,14 +2687,14 @@ int TabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** p
 
 		CRealConsole *pRCon = pVCon->RCon();
 
-		for(I = 0; TRUE; I++)
+		for (I = 0; TRUE; I++)
 		{
 			if (!pRCon->GetTab(I, &tab))
 				break;
-			if (tab.Type == anType)
+			if (tab.Type == (anType & fwt_TypeMask))
 			{
 				LPCWSTR pszName = PointToName(tab.Name);
-				if (pszName && lstrcmpi(pszName, asName) == 0)
+				if ((pszName && (lstrcmpi(pszName, asName) == 0)) || (lstrcmpi(tab.Name, asName) == 0))
 				{
 					nTab = tabIdx;
 					break;

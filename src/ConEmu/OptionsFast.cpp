@@ -147,7 +147,8 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 					gpSet->m_isKeyboardHooks = IsDlgButtonChecked(hDlg, cbUseKeyboardHooksFast) ? 1 : 2;
 
 					/* Inject ConEmuHk.dll */
-					gpSet->isUseInjects = (IsDlgButtonChecked(hDlg, cbInjectConEmuHkFast) == BST_CHECKED);
+					gpSet->isUseInjects = IsDlgButtonChecked(hDlg, cbInjectConEmuHkFast);
+					//if (gpSet->isUseInjects > BST_INDETERMINATE) gpSet->isUseInjects = BST_CHECKED;
 
 					/* Auto Update settings */
 					gpSet->UpdSet.isUpdateCheckOnStartup = (IsDlgButtonChecked(hDlg, cbEnableAutoUpdateFast) == BST_CHECKED);

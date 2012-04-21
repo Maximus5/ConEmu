@@ -62,6 +62,7 @@ BEGIN
     cbMonospace             "Check it for non proportional (monospaced) fonts, 3d state means - center symbols in the cells"
     cbMultiCon              "Turn on MultiConsole\n(several consoles in one ConEmu, alternative console)\nConEmu restart required"
 	cbMultiIterate          "Iterate opened Far windows with «Host-key»+Number"
+	cbMultiLeaveOnClose     "Don't close ConEmu window after last tab was closed"
     cbNewConfirm            "Confirm new console creation.\nYou may change cmd line for it, or turn on 'Run as...' feature.\nEven if unchecked, You may hold 'Shift' to display dialog."
     cbPortableRegistry      "Enable portable mode for Far manager"
     cbRClick                "Off - all RClicks passed to console\nOn - EMenu called instead of RClick\n3s - Short RClick passed, Long RClick -> EMenu\nWarning! This may conflict with RDrag"

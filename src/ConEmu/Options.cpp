@@ -1176,6 +1176,9 @@ void Settings::LoadSettings()
 		
 		
 		reg->Load(L"UseInjects", isUseInjects);
+		//if (isUseInjects > BST_INDETERMINATE)
+		//	isUseInjects = BST_CHECKED;
+
 		#ifdef USEPORTABLEREGISTRY
 		reg->Load(L"PortableReg", isPortableReg);
 		#endif
@@ -1284,6 +1287,21 @@ void Settings::LoadSettings()
 		reg->Load(L"AutoBufferHeight", AutoBufferHeight);
 		//reg->Load(L"FarSyncSize", FarSyncSize);
 		reg->Load(L"CmdOutputCP", nCmdOutputCP);
+
+		BYTE nVal = ComSpec.csType;
+		reg->Load(L"ComSpec.Type", nVal);
+		if (nVal <= cst_Last) ComSpec.csType = (ComSpecType)nVal;
+		nVal = ComSpec.csBits;
+		reg->Load(L"ComSpec.Bits", nVal);
+		if (nVal <= csb_Last) ComSpec.csBits = (ComSpecBits)nVal;
+		nVal = ComSpec.isUpdateEnv;
+		reg->Load(L"ComSpec.UpdateEnv", nVal);
+		ComSpec.isUpdateEnv = (nVal != 0);
+		reg->Load(L"ComSpec.Path", ComSpec.ComspecExplicit, countof(ComSpec.ComspecExplicit));
+		//-- wcscpy_c(ComSpec.ComspecInitial, gpConEmu->ms_ComSpecInitial);
+		// Обработать 32/64 (найти tcc.exe и т.п.)
+		FindComspec(&ComSpec);
+		UpdateComspec(&ComSpec);
 
 		reg->Load(L"ConsoleTextSelection", isConsoleTextSelection); if (isConsoleTextSelection>2) isConsoleTextSelection = 2;
 
@@ -1959,6 +1977,10 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"DefaultBufferHeight", DefaultBufferHeight);
 		reg->Save(L"AutoBufferHeight", AutoBufferHeight);
 		reg->Save(L"CmdOutputCP", nCmdOutputCP);
+		reg->Save(L"ComSpec.Type", (BYTE)ComSpec.csType);
+		reg->Save(L"ComSpec.Bits", (BYTE)ComSpec.csBits);
+		reg->Save(L"ComSpec.UpdateEnv", (bool)ComSpec.isUpdateEnv);
+		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
 		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
 		reg->Save(L"CTS.SelectBlock", isCTSSelectBlock);
 		reg->Save(L"CTS.VkBlock", isCTSVkBlock);
@@ -2647,15 +2669,17 @@ LPCTSTR Settings::GetCmd()
 			//// Пока тупо - если far.exe > 1200K - считаем, что это Far2
 			//wcscat_c(szFar, (nFarSize>1228800) ? L"\" /w" : L"\"");
 			wcscat_c(szFar, L"\"");
+
+			// Finally - Result
+			psCurCmd = lstrdup(szFar);
 		}
 		else
 		{
 			// Если Far.exe не найден рядом с ConEmu - запустить cmd.exe
-			wcscpy_c(szFar, L"cmd");
+			psCurCmd = GetComspec(&ComSpec);
+			//wcscpy_c(szFar, L"cmd");
 		}
 
-		// Finally - Result
-		psCurCmd = lstrdup(szFar);
 	}
 	else
 	{

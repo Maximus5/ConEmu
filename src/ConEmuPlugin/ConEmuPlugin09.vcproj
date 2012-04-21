@@ -1347,7 +1347,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="shlwapi.lib version.lib"
+				AdditionalDependencies="shlwapi.lib version.lib winmm.lib"
 				OutputFile="\Far3\Plugins\ConEmu\ConEmu.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.release.def"

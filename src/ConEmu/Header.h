@@ -45,11 +45,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Memory.h"
 
 #ifdef __GNUC__
-#define TimeGetTime GetTickCount
 #define wmemmove_s(d,ds,s,ss) wmemmove(d,s,ss)
 #define SecureZeroMemory(p,s) memset(p,0,s)
-#else
-#define TimeGetTime timeGetTime
+#endif
+
+#ifndef TimeGetTime
+	#ifdef __GNUC__
+		#define TimeGetTime GetTickCount
+	#else
+		#define TimeGetTime timeGetTime
+	#endif
 #endif
 
 #ifdef KL_MEM
@@ -241,7 +246,7 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 #define pHelp \
 	L"Console emulation program.\n" \
 	L"Home page: http://conemu-maximus5.googlecode.com\n\n" \
-	L"By default this program launches \"Far.exe\" (if exists) or \"cmd.exe\".\n" \
+	L"By default this program launches \"Far.exe\" (if exists) or \"cmd.exe\"/\"tcc.exe\".\n" \
 	L"\n" \
 	L"Command line switches:\n" \
 	L"/? - This help screen.\n" \
@@ -252,7 +257,7 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 	L"/font <fontname> - Specify the font name.\n" \
 	L"/size <fontsize> - Specify the font size.\n" \
 	L"/fontfile <fontfilename> - Loads fonts from file.\n" \
-	L"/BufferHeight <lines> - may be used with cmd.exe\n" \
+	L"/BufferHeight <lines> - may be used with cmd.exe/tcc.exe\n" \
 	/* L"/Attach [PID] - intercept console of specified process\n" */ \
 	L"\n" \
 	L"/cmd <commandline>|@<commandfile> - Command line to start. This must be the last used switch.\n" \

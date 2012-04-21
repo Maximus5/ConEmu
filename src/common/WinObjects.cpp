@@ -34,8 +34,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 	//#define WARN_NEED_CMD
 	#undef WARN_NEED_CMD
+	//#define SHOW_COMSPEC_CHANGE
+	#undef SHOW_COMSPEC_CHANGE
 #else
 	#undef WARN_NEED_CMD
+	#undef SHOW_COMSPEC_CHANGE
 #endif
 
 #ifndef TTS_BALLOON
@@ -717,17 +720,7 @@ void RemoveOldComSpecC()
 		if (szRealComSpec[0] == 0)
 		{
 			//\system32\cmd.exe
-			if (GetWindowsDirectoryW(szRealComSpec, MAX_PATH-19))
-			{
-				int nLen = lstrlenW(szRealComSpec);
-				if (szRealComSpec[nLen-1] != L'\\')
-					wcscat_c(szRealComSpec, L"\\");
-				wcscat_c(szRealComSpec, L"system32\\cmd.exe");
-			}
-			else
-			{
-				wcscpy_c(szRealComSpec, L"c:\\windows\\system32\\cmd.exe");
-			}
+			GetComspecFromEnvVar(szRealComSpec, countof(szRealComSpec));
 		}
 
 		SetEnvironmentVariable(L"ComSpec", szRealComSpec);
@@ -1056,7 +1049,8 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 #pragma warning(disable : 6400)
 #endif
 
-	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0)
+	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0
+		|| lstrcmpiW(pwszCopy, L"tcc")==0 || lstrcmpiW(pwszCopy, L"tcc.exe")==0)
 	{
 		rbRootIsCmdExe = TRUE; // уже должен быть выставлен, но проверим
 		rbAlwaysConfirmExit = TRUE; rbAutoDisableConfirmExit = FALSE;
@@ -2015,7 +2009,7 @@ MSection::~MSection()
 };
 void MSection::ThreadTerminated(DWORD dwTID)
 {
-	for(int i=1; i<10; i++)
+	for (int i=1; i<countof(mn_LockedTID); i++)
 	{
 		if (mn_LockedTID[i] == dwTID)
 		{
@@ -2032,12 +2026,25 @@ void MSection::ThreadTerminated(DWORD dwTID)
 };
 void MSection::AddRef(DWORD dwTID)
 {
+	#ifdef _DEBUG
+	if (mn_Locked == 0)
+	{
+		int dbgCurLockCount = 0;
+		for (int d=1; d<countof(mn_LockedCount); d++)
+			dbgCurLockCount += mn_LockedCount[d];
+		if (dbgCurLockCount != 0)
+		{
+			_ASSERTEX(dbgCurLockCount==0);
+		}
+	}
+	#endif
+
 	mn_Locked ++; // увеличиваем счетчик nonexclusive locks
 	_ASSERTEX(mn_Locked>0);
 	ResetEvent(mh_ReleaseEvent); // На всякий случай сбросим Event
 	int j = -1; // будет -2, если ++ на существующий, иначе - +1 на пустой
 
-	for(int i=1; i<10; i++)
+	for (int i=1; i<countof(mn_LockedTID); i++)
 	{
 		if (mn_LockedTID[i] == dwTID)
 		{
@@ -2045,12 +2052,19 @@ void MSection::AddRef(DWORD dwTID)
 			j = -2;
 			break;
 		}
-		else if (j == -1 && mn_LockedTID[i] == 0)
+	}
+
+	if (j == -1)
+	{
+		for (int i=1; i<countof(mn_LockedTID); i++)
 		{
-			mn_LockedTID[i] = dwTID;
-			mn_LockedCount[i] ++;
-			j = i;
-			break;
+			if (mn_LockedTID[i] == 0)
+			{
+				mn_LockedTID[i] = dwTID;
+				mn_LockedCount[i] ++;
+				j = i;
+				break;
+			}
 		}
 	}
 
@@ -2064,15 +2078,19 @@ int MSection::ReleaseRef(DWORD dwTID)
 	_ASSERTEX(mn_Locked>0);
 	int nInThreadLeft = 0;
 
-	if (mn_Locked > 0) mn_Locked --;
+	if (mn_Locked > 0)
+		mn_Locked --;
 
 	if (mn_Locked == 0)
+	{
 		SetEvent(mh_ReleaseEvent); // Больше nonexclusive locks не осталось
+	}
 
-	for(int i=1; i<10; i++)
+	for (int i=1; i<countof(mn_LockedTID); i++)
 	{
 		if (mn_LockedTID[i] == dwTID)
 		{
+			_ASSERTEX(mn_LockedCount[i] > 0);
 			mn_LockedCount[i] --;
 
 			if ((nInThreadLeft = mn_LockedCount[i]) == 0)
@@ -2082,6 +2100,19 @@ int MSection::ReleaseRef(DWORD dwTID)
 		}
 	}
 
+	if (mn_Locked == 0)
+	{
+		#ifdef _DEBUG
+		int dbgCurLockCount = 0;
+		for (int d=1; d<countof(mn_LockedCount); d++)
+			dbgCurLockCount += mn_LockedCount[d];
+		if (dbgCurLockCount != 0)
+		{
+			_ASSERTEX(dbgCurLockCount==0);
+		}
+		#endif
+	}
+
 	return nInThreadLeft;
 };
 void MSection::WaitUnlocked(DWORD dwTID, DWORD anTimeout)
@@ -2089,7 +2120,7 @@ void MSection::WaitUnlocked(DWORD dwTID, DWORD anTimeout)
 	DWORD dwStartTick = GetTickCount();
 	int nSelfCount = 0;
 
-	for(int i=1; i<10; i++)
+	for (int i=1; i<countof(mn_LockedTID); i++)
 	{
 		if (mn_LockedTID[i] == dwTID)
 		{
@@ -2205,7 +2236,7 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 			//}
 			#ifdef _DEBUG
 			int nInThreadLeft = 0;
-			for (int i=1; i<10; i++)
+			for (int i=1; i<countof(mn_LockedTID); i++)
 			{
 				if (mn_LockedTID[i] == dwTID)
 				{
@@ -2226,7 +2257,7 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 			bool lbEntered = MyEnterCriticalSection(anTimeout); // дождаться пока секцию отпустят
 			// mb_Exclusive может быть выставлен, если сейчас другая нить пытается выполнить exclusive lock
 			_ASSERTEX(!mb_Exclusive); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
-			AddRef(dwTID); // Возвращаем блокировку
+			AddRef(dwTID); // накрутить счетчик
 
 			// Но поскольку нам нужен только nonexclusive lock
 			if (lbEntered)
@@ -2270,7 +2301,7 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 		mb_Exclusive = TRUE; // Флаг могла сбросить другая нить, выполнившая Leave
 		_ASSERTEX(mn_LockedTID[0] == 0 && mn_LockedCount[0] == 0);
 		mn_LockedTID[0] = dwTID;
-		mn_LockedCount[0] ++;
+		mn_LockedCount[0] ++; // на [0] mn_Locked не распространяется
 
 		/*if (abRelockExclusive) {
 			ReleaseRef(dwTID); // Если до этого был nonexclusive lock
@@ -2299,7 +2330,7 @@ void MSection::Unlock(BOOL abExclusive)
 		mn_UnlockedExclusiveTID = dwTID;
 		#endif
 		mb_Exclusive = FALSE; mn_TID = 0;
-		mn_LockedTID[0] = 0; mn_LockedCount[0] --;
+		mn_LockedTID[0] = 0; mn_LockedCount[0] --; // на [0] mn_Locked не распространяется
 		LeaveCriticalSection(&m_cs);
 	}
 	else
@@ -3524,4 +3555,372 @@ void EmergencyShow(HWND hConWnd)
 			EnableWindow(hConWnd, true);
 	}
 }
+
+// используется в GUI при загрузке настроек
+void FindComspec(ConEmuComspec* pOpt)
+{
+	if (!pOpt)
+		return;
+
+	pOpt->Comspec32[0] = 0;
+	pOpt->Comspec64[0] = 0;
+
+	// Ищем tcc.exe
+	if (pOpt->csType == cst_AutoTccCmd)
+	{
+		HKEY hk;
+		BOOL bWin64 = IsWindows64(NULL);
+
+		// [HKEY_LOCAL_MACHINE\SOFTWARE\JP Software\Take Command 13.0]
+		// @="\"C:\\Program Files\\JPSoft\\TCMD13\\tcmd.exe\""
+		for (int b = 0; b <= 1; b++)
+		{
+			// b==0 - 32bit, b==1 - 64bit
+			if (b && !bWin64)
+				continue;
+			bool bFound = false;
+			DWORD nOpt = (b == 0) ? (bWin64 ? KEY_WOW64_32KEY : 0) : (bWin64 ? KEY_WOW64_64KEY : 0);
+			if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\JP Software", 0, KEY_READ|nOpt, &hk))
+			{
+				wchar_t szName[MAX_PATH+1]; DWORD nLen;
+				for (DWORD n = 0; !bFound && !RegEnumKeyEx(hk, n, szName, &(nLen = countof(szName)-1), 0,0,0,0); n++)
+				{
+					HKEY hk2;
+					if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
+					{
+	                    wchar_t szPath[MAX_PATH+1] = {}; DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
+						if (!RegQueryValueExW(hk2, NULL, NULL, NULL, (LPBYTE)szPath, &nSize) && *szPath)
+						{
+							wchar_t* psz, *pszEnd;
+							if (szPath[0] == L'"')
+							{
+								psz = szPath + 1;
+								pszEnd = wcschr(psz, L'"');
+								if (pszEnd)
+									*pszEnd = 0;
+							}
+							else
+							{
+								psz = szPath;
+							}
+							pszEnd = wcsrchr(psz, L'\\');
+							if (!pszEnd || lstrcmpi(pszEnd, L"\\tcmd.exe") || !FileExists(psz))
+								continue;
+							lstrcpyn(pszEnd+1, L"tcc.exe", 8);
+							if (FileExists(psz))
+							{
+								bFound = true;
+								if (b == 0)
+                                	wcscpy_c(pOpt->Comspec32, psz);
+                            	else
+                                	wcscpy_c(pOpt->Comspec64, psz);
+							}
+						}
+						RegCloseKey(hk2);
+					}
+				} //  for, подключи
+				RegCloseKey(hk);
+			} // L"SOFTWARE\\JP Software"
+		} // for (int b = 0; b <= 1; b++)
+
+		// Если установлен TCMD - предпочтительно использовать именно его, независимо от битности
+		if (*pOpt->Comspec32 && !*pOpt->Comspec64)
+			wcscpy_c(pOpt->Comspec64, pOpt->Comspec32);
+		else if (*pOpt->Comspec64 && !*pOpt->Comspec32)
+			wcscpy_c(pOpt->Comspec32, pOpt->Comspec64);
+
+		// [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{16A21882-4138-4ADA-A390-F62DC27E4504}]
+		// "DisplayVersion"="13.04.60"
+		// "Publisher"="JP Software"
+		// "DisplayName"="Take Command 13.0"
+		// или
+		// "DisplayName"="TCC/LE 13.0"
+		// и наконец
+		// "InstallLocation"="C:\\Program Files\\JPSoft\\TCMD13\\"
+		for (int b = 0; b <= 1; b++)
+		{
+			// b==0 - 32bit, b==1 - 64bit
+			if (b && !bWin64)
+				continue;
+			if (((b == 0) ? *pOpt->Comspec32 : *pOpt->Comspec64))
+				continue; // этот уже нашелся в TCMD
+
+			bool bFound = false;
+			DWORD nOpt = (b == 0) ? (bWin64 ? KEY_WOW64_32KEY : 0) : (bWin64 ? KEY_WOW64_64KEY : 0);
+			if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", 0, KEY_READ|nOpt, &hk))
+			{
+				wchar_t szName[MAX_PATH+1]; DWORD nLen;
+				for (DWORD n = 0; !bFound && !RegEnumKeyEx(hk, n, szName, &(nLen = countof(szName)-1), 0,0,0,0); n++)
+				{
+					if (*szName != L'{')
+						continue;
+					HKEY hk2;
+					if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
+					{
+	                    wchar_t szPath[MAX_PATH+1] = {}; DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
+						if (!RegQueryValueExW(hk2, L"Publisher", NULL, NULL, (LPBYTE)szPath, &nSize)
+							&& !lstrcmpi(szPath, L"JP Software"))
+						{
+							nSize = (countof(szPath)-12)*sizeof(szPath[0]);
+							if (!RegQueryValueExW(hk2, L"InstallLocation", NULL, NULL, (LPBYTE)szPath, &nSize)
+								&& *szPath)
+							{
+								wchar_t* psz, *pszEnd;
+								if (szPath[0] == L'"')
+								{
+									psz = szPath + 1;
+									pszEnd = wcschr(psz, L'"');
+									if (pszEnd)
+										*pszEnd = 0;
+								}
+								else
+								{
+									psz = szPath;
+								}
+								if (*psz)
+								{
+									pszEnd = psz+lstrlen(psz);
+									if (*(pszEnd-1) != L'\\')
+										*(pszEnd++) = L'\\';
+									lstrcpyn(pszEnd, L"tcc.exe", 8);
+									if (FileExists(psz))
+									{
+										bFound = true;
+										if (b == 0)
+		                                	wcscpy_c(pOpt->Comspec32, psz);
+		                                else
+		                                	wcscpy_c(pOpt->Comspec64, psz);
+									}
+								}
+							}
+						}
+						RegCloseKey(hk2);
+					}
+				} // for, подключи
+				RegCloseKey(hk);
+			} // L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+		} // for (int b = 0; b <= 1; b++)
+
+		if (!*pOpt->Comspec32 && !*pOpt->Comspec64)
+		{
+			// Попытаться "в лоб"
+			const wchar_t* pszTcmd  = L"C:\\Program Files\\JPSoft\\TCMD13\\tcc.exe";
+			const wchar_t* pszTccLe = L"C:\\Program Files\\JPSoft\\TCCLE13\\tcc.exe";
+			if (FileExists(pszTcmd))
+				wcscpy_c(pOpt->Comspec32, pszTcmd);
+			else if (FileExists(pszTccLe))
+				wcscpy_c(pOpt->Comspec32, pszTccLe);
+		}
+
+		if (*pOpt->Comspec32 && !*pOpt->Comspec64)
+			wcscpy_c(pOpt->Comspec64, pOpt->Comspec32);
+		else if (*pOpt->Comspec64 && !*pOpt->Comspec32)
+			wcscpy_c(pOpt->Comspec32, pOpt->Comspec64);
+	} // if (pOpt->csType == cst_AutoTccCmd)
+
+	// С поиском tcc закончили. Теперь, если pOpt->Comspec32/pOpt->Comspec64 остались не заполнены
+	// нужно сначала попытаться обработать переменную окружения ComSpec, а потом - просто "cmd.exe"
+	if (!*pOpt->Comspec32)
+		GetComspecFromEnvVar(pOpt->Comspec32, countof(pOpt->Comspec32), csb_x32);
+	if (!*pOpt->Comspec64)
+		GetComspecFromEnvVar(pOpt->Comspec64, countof(pOpt->Comspec64), csb_x64);
+}
+
+void UpdateComspec(ConEmuComspec* pOpt)
+{
+	if (!pOpt)
+	{
+		_ASSERTE(pOpt!=NULL);
+		return;
+	}
+
+	if (pOpt->isUpdateEnv)
+	{
+		//if (pOpt->csType == cst_AutoTccCmd) -- always, if isUpdateEnv
+		{
+			LPCWSTR pszNew = NULL;
+			switch (pOpt->csBits)
+			{
+			case csb_SameOS:
+				pszNew = IsWindows64(NULL) ? pOpt->Comspec64 : pOpt->Comspec32;
+				break;
+			case csb_SameApp:
+				pszNew = WIN3264TEST(pOpt->Comspec32,pOpt->Comspec64);
+				break;
+			case csb_x32:
+				pszNew = pOpt->Comspec32;
+				break;
+			default:
+				_ASSERTE(pOpt->csBits==csb_SameOS || pOpt->csBits==csb_SameApp || pOpt->csBits==csb_x32);
+				pszNew = NULL;
+			}
+			if (pszNew && *pszNew)
+			{
+				#ifdef SHOW_COMSPEC_CHANGE
+				wchar_t szCurrent[MAX_PATH]; GetEnvironmentVariable(L"ComSpec", szCurrent, countof(szCurrent));
+				if (lstrcmpi(szCurrent, pszNew))
+				{
+					wchar_t szMsg[MAX_PATH*4], szProc[MAX_PATH] = {}, szPid[MAX_PATH];
+					GetModuleFileName(NULL, szProc, countof(szProc));
+					_wsprintf(szPid, SKIPLEN(countof(szPid))
+						L"PID=%u, '%s'", GetCurrentProcessId(), PointToName(szProc));
+					_wsprintf(szMsg, SKIPLEN(countof(szMsg))
+						L"Changing %%ComSpec%% in %s\nCur=%s\nNew=%s",
+						szPid , szCurrent, pszNew);
+					MessageBox(NULL, szMsg, szPid, MB_SYSTEMMODAL);
+				}
+				#endif
+
+				_ASSERTE(wcschr(pszNew, L'%')==NULL);
+				SetEnvVarExpanded(L"ComSpec", pszNew);
+			}
+		}
+	}
+}
+
+void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue)
+{
+	if (!asName || !*asName || !asValue || !*asValue)
+	{
+		_ASSERTE(asName && *asName && asValue && *asValue);
+		return;
+	}
+
+	DWORD cchMax = MAX_PATH;
+	wchar_t *pszTemp = (wchar_t*)malloc(cchMax*sizeof(*pszTemp));
+	if (wcschr(asValue, L'%'))
+	{
+		DWORD n = ExpandEnvironmentStrings(asValue, pszTemp, cchMax);
+		if (n > cchMax)
+		{
+			cchMax = n+1;
+			free(pszTemp);
+			pszTemp = (wchar_t*)malloc(cchMax*sizeof(*pszTemp));
+			n = ExpandEnvironmentStrings(asValue, pszTemp, cchMax);
+		}
+		if (n && n <= cchMax)
+			asValue = pszTemp;
+	}
+
+	SetEnvironmentVariable(asName, asValue);
+
+	SafeFree(pszTemp);
+}
 #endif // #ifndef CONEMU_MINIMAL
+
+LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits/* = csb_SameOS*/)
+{
+	if (!pszComspec || (cchMax < MAX_PATH))
+	{
+		_ASSERTE(pszComspec && (cchMax >= MAX_PATH));
+		return NULL;
+	}
+
+	*pszComspec = 0;
+	BOOL bWin64 = IsWindows64(NULL);
+
+	if (!((Bits == csb_x32) || (Bits == csb_x64)))
+	{
+		if (GetEnvironmentVariable(L"ComSpec", pszComspec, cchMax))
+		{
+			// Не должен быть (даже случайно) ConEmuC.exe
+			const wchar_t* pszName = PointToName(pszComspec);
+			if (!pszName || !lstrcmpi(pszName, L"ConEmuC.exe") || !lstrcmpi(pszName, L"ConEmuC64.exe")
+				|| !FileExists(pszComspec)) // ну и существовать должен
+			{
+				pszComspec[0] = 0;
+			}
+		}
+	}
+
+	// Если не удалось определить через переменную окружения - пробуем обычный "cmd.exe" из System32
+	if (pszComspec[0] == 0)
+	{
+		int n = GetWindowsDirectory(pszComspec, cchMax - 20);
+		if (n > 0 && (((DWORD)n) < (cchMax - 20)))
+		{
+			// Добавить \System32\cmd.exe
+
+			// Warning! 'c:\Windows\SysNative\cmd.exe' не прокатит, т.к. доступен
+			// только для 32битных приложений. А нам нужно в общем виде.
+			// Если из 32битного нужно запустить 64битный cmd.exe - нужно выключать редиректор.
+
+			if (!bWin64 || (Bits != csb_x32))
+			{
+				_wcscat_c(pszComspec, cchMax, (pszComspec[n-1] == L'\\') ? L"System32\\cmd.exe" : L"\\System32\\cmd.exe");
+			}
+			else
+			{
+				_wcscat_c(pszComspec, cchMax, (pszComspec[n-1] == L'\\') ? L"SysWOW64\\cmd.exe" : L"\\SysWOW64\\cmd.exe");
+			}
+		}
+	}
+
+	if (pszComspec[0] && !FileExists(pszComspec))
+	{
+		_ASSERTE("Comspec not found! File not exists!");
+		pszComspec[0] = 0;
+	}
+
+	// Last chance
+	if (pszComspec[0] == 0)
+	{
+		_ASSERTE(pszComspec[0] != 0); // Уже должен был быть определен
+		//lstrcpyn(pszComspec, L"cmd.exe", cchMax);
+		wchar_t *psFilePart;
+		DWORD n = SearchPathW(NULL, L"cmd.exe", NULL, cchMax, pszComspec, &psFilePart);
+		if (!n || (n >= cchMax))
+			_wcscpy_c(pszComspec, cchMax, L"cmd.exe");
+	}
+
+	return pszComspec;
+}
+
+// Найти "ComSpec" и вернуть lstrdup на него
+wchar_t* GetComspec(const ConEmuComspec* pOpt)
+{
+	wchar_t* pszComSpec = NULL;
+
+	if (pOpt)
+	{
+		if ((pOpt->csType == cst_Explicit) && *pOpt->ComspecExplicit)
+		{
+			pszComSpec = lstrdup(pOpt->ComspecExplicit);
+		}
+
+		if (!pszComSpec && (pOpt->csBits == csb_SameOS))
+		{
+			BOOL bWin64 = IsWindows64(NULL);
+			if (bWin64 ? *pOpt->Comspec64 : *pOpt->Comspec32)
+				pszComSpec = lstrdup(bWin64 ? pOpt->Comspec64 : pOpt->Comspec32);
+		}
+
+		if (!pszComSpec && (pOpt->csBits == csb_SameApp))
+		{
+			BOOL bWin64 = WIN3264TEST(FALSE,TRUE);
+			if (bWin64 ? *pOpt->Comspec64 : *pOpt->Comspec32)
+				pszComSpec = lstrdup(bWin64 ? pOpt->Comspec64 : pOpt->Comspec32);
+		}
+
+		if (!pszComSpec)
+		{
+			BOOL bWin64 = (pOpt->csBits != csb_x32);
+			if (bWin64 ? *pOpt->Comspec64 : *pOpt->Comspec32)
+				pszComSpec = lstrdup(bWin64 ? pOpt->Comspec64 : pOpt->Comspec32);
+		}
+	}
+	else
+	{
+		_ASSERTE(pOpt && "pOpt должен быть передан, по идее");
+	}
+
+	if (!pszComSpec)
+	{
+		wchar_t szComSpec[MAX_PATH];
+		pszComSpec = lstrdup(GetComspecFromEnvVar(szComSpec, countof(szComSpec)));
+	}
+
+	// Уже должно быть хоть что-то
+	_ASSERTE(pszComSpec && *pszComSpec);
+	return pszComSpec;
+}

@@ -354,35 +354,25 @@ extern DWORD gnConsoleModeFlags;
 struct SrvInfo
 {
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
-	HWND hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
-	BOOL bDebuggerActive, bDebuggerRequestDump; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
+	HWND   hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
+	BOOL   bDebuggerActive, bDebuggerRequestDump; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
 	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
-	DWORD nActiveFarPID; // PID последнего активного Far
-	BOOL bWasDetached; // Выставляется в TRUE при получении CECMD_DETACHCON
-	BOOL bWasReattached; // Если TRUE - то при следующем цикле нужно передернуть ReloadFullConsoleInfo(true)
+	DWORD  nActiveFarPID; // PID последнего активного Far
+	BOOL   bWasDetached; // Выставляется в TRUE при получении CECMD_DETACHCON
+	BOOL   bWasReattached; // Если TRUE - то при следующем цикле нужно передернуть ReloadFullConsoleInfo(true)
 	//
-	//HANDLE hServerThread;   DWORD dwServerThreadId; BOOL bServerTermination;
 	PipeServer<CESERVER_REQ> CmdServer;
 	HANDLE hRefreshThread;  DWORD dwRefreshThread;  BOOL bRefreshTermination;
-	//#ifdef USE_WINEVENT_SRV
-	//HANDLE hWinEventThread; DWORD dwWinEventThread; BOOL bWinEventTermination;
-	//#endif
-	//HANDLE hInputThread;    DWORD dwInputThreadId;
-	//HANDLE hInputPipeThread; DWORD dwInputPipeThreadId; BOOL bInputPipeTermination; // Needed in Vista & administrator
 	PipeServer<MSG64> InputServer;
-	//HANDLE hGetDataPipeThread; DWORD dwGetDataPipeThreadId; BOOL bGetDataPipeTermination;
 	PipeServer<CESERVER_REQ> DataServer;
 	//
 	OSVERSIONINFO osv;
 	BOOL bReopenHandleAllowed;
-	//UINT nMsgHookEnableDisable;
 	UINT nMaxFPS;
 	//
 	MSection *csProc;
-	//CRITICAL_SECTION csConBuf;
 	// Список процессов нам нужен, чтобы определить, когда консоль уже не нужна.
 	// Например, запустили FAR, он запустил Update, FAR перезапущен...
-	//std::vector<DWORD> nProcesses;
 	UINT nProcessCount, nMaxProcesses;
 	DWORD *pnProcesses, *pnProcessesGet, *pnProcessesCopy, nProcessStartTick;
 	DWORD dwProcessLastCheckTick;
@@ -395,16 +385,10 @@ struct SrvInfo
 	wchar_t szGetDataPipe[MAX_PATH], szDataReadyEvent[64];
 	HANDLE /*hInputPipe,*/ hQueryPipe/*, hGetDataPipe*/;
 	//
-	//HANDLE hFileMapping, hFileMappingData;
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *pConsoleMap;
-	//CESERVER_CONSOLE_MAPPING_HDR *pConsoleInfo;  // Mapping
-	//CESERVER_REQ_CONINFO_DATA *pConsoleData; // Mapping
 	ConEmuGuiMapping guiSettings;
 	CESERVER_REQ_CONINFO_FULL *pConsole;
-	//CESERVER_CONSOLE_MAPPING_HDR *pConsoleInfoCopy;  // Local (Alloc)
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
-	//DWORD nConsoleDataSize;
-//	DWORD nFarInfoLastIdx;
 	// Input
 	HANDLE hInputThread, hInputEvent; DWORD dwInputThread; BOOL bInputTermination;
 	int nInputQueue, nMaxInputQueue;
@@ -419,13 +403,6 @@ struct SrvInfo
 	//
 	HANDLE hConEmuGuiAttached;
 	HWINEVENTHOOK /*hWinHook,*/ hWinHookStartEnd; //BOOL bWinHookAllow; int nWinHookMode;
-	//BOOL bContentsChanged; // Первое чтение параметров должно быть ПОЛНЫМ
-	//wchar_t* psChars;
-	//WORD* pnAttrs;
-	//DWORD nBufCharCount;  // максимальный размер (объем выделенной памяти)
-	//DWORD nOneBufferSize; // размер для отсылки в GUI (текущий размер)
-	//WORD* ptrLineCmp;
-	//DWORD nLineCmpSize;
 	DWORD dwCiRc; CONSOLE_CURSOR_INFO ci; // GetConsoleCursorInfo
 	DWORD dwConsoleCP, dwConsoleOutputCP, dwConsoleMode;
 	DWORD dwSbiRc; CONSOLE_SCREEN_BUFFER_INFO sbi; // MyGetConsoleScreenBufferInfo
@@ -434,7 +411,6 @@ struct SrvInfo
 	SHORT nTopVisibleLine; // Прокрутка в GUI может быть заблокирована. Если -1 - без блокировки, используем текущее значение
 	SHORT nVisibleHeight;  // По идее, должен быть равен (gcrBufferSize.Y). Это гарантированное количество строк psChars & pnAttrs
 	DWORD nMainTimerElapse;
-	//BOOL  bConsoleActive;
 	HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
 	HANDLE hRefreshDoneEvent; // ServerMode, выставляется после hRefreshEvent
 	HANDLE hDataReadyEvent; // Флаг, что в сервере есть изменения (GUI должен перечитать данные)
@@ -450,25 +426,10 @@ struct SrvInfo
 	LPCSTR sReqSizeLabel;
 	HANDLE hReqSizeChanged;
 	//
-	//HANDLE hChangingSize; // FALSE на время смены размера консоли
-	//CRITICAL_ SECTION csChangeSize; DWORD ncsTChangeSize;
-	//MSection cChangeSize;
 	HANDLE hAllowInputEvent; BOOL bInSyncResize;
-	//BOOL  bNeedFullReload;  // Нужен полный скан консоли
-	//BOOL  bForceFullSend; // Необходимо отослать ПОЛНОЕ содержимое консоли, а не только измененное
-	//BOOL  bRequestPostFullReload; // Во время чтения произошел ресайз - нужно запустить повторный цикл!
-	//DWORD nLastUpdateTick; // Для FORCE_REDRAW_FIX
-	DWORD nLastPacketID; // ИД пакета для отправки в GUI
-	// Если меняется только один символ... (но перечитаем всю линию)
-	//BOOL bCharChangedSet;
-	//CESERVER_CHAR CharChanged; CRITICAL_SECTION csChar;
-
-	// Буфер для отсылки в консоль
-	//DWORD nChangedBufferSize;
-	//CESERVER_CHAR *pChangedBuffer;
-
-	// Сохранненый Output последнего cmd...
 	//
+	DWORD nLastPacketID; // ИД пакета для отправки в GUI
+
 	// Keyboard layout name
 	wchar_t szKeybLayout[KL_NAMELENGTH+1];
 

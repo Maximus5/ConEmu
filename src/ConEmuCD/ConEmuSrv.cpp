@@ -181,6 +181,8 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 	{
 		gbLogProcess = (gpSrv->guiSettings.nLoggingType == glt_Processes);
 
+		UpdateComspec(&gpSrv->guiSettings.ComSpec);
+
 		SetEnvironmentVariableW(L"ConEmuDir", gpSrv->guiSettings.sConEmuDir);
 		SetEnvironmentVariableW(L"ConEmuBaseDir", gpSrv->guiSettings.sConEmuBaseDir);
 
@@ -199,10 +201,13 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 			gpSrv->pConsole->hdr.bDosBox = gpSrv->guiSettings.bDosBox;
 			gpSrv->pConsole->hdr.bUseInjects = gpSrv->guiSettings.bUseInjects;
 			gpSrv->pConsole->hdr.bUseTrueColor = gpSrv->guiSettings.bUseTrueColor;
-		
+
 			// Обновить пути к ConEmu
 			wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
 			wcscpy_c(gpSrv->pConsole->hdr.sConEmuBaseDir, gpSrv->guiSettings.sConEmuBaseDir);
+
+			// И настройки командного процессора
+			gpSrv->pConsole->hdr.ComSpec = gpSrv->guiSettings.ComSpec;
 
 			// Проверить, нужно ли реестр хукать
 			gpSrv->pConsole->hdr.isHookRegistry = gpSrv->guiSettings.isHookRegistry;
@@ -1939,35 +1944,9 @@ int CreateMapHeader()
 	if (ghConEmuWnd) // если уже известен - тогда можно
 		ReloadGuiSettings(NULL);
 
-	//// В момент Create GuiSettings скорее всего еще не загружены, потом обновятся в ReloadGuiSettings()
-	//if (gpSrv->guiSettings.cbSize)
-	//{
-	//	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings() !!!
-	//	gpSrv->pConsole->hdr.nLoggingType = gpSrv->guiSettings.nLoggingType;
-	//	gpSrv->pConsole->hdr.bDosBox = gpSrv->guiSettings.bDosBox;
-	//	gpSrv->pConsole->hdr.bUseInjects = gpSrv->guiSettings.bUseInjects;
-
-	//	gpSrv->pConsole->hdr.bHookRegistry = gpSrv->guiSettings.bHookRegistry;
-	//	wcscpy_c(gpSrv->pConsole->hdr.sHiveFileName, gpSrv->guiSettings.sHiveFileName);
-	//	//gpSrv->pConsole->hdr.hMountRoot = gpSrv->guiSettings.hMountRoot;
-	//	wcscpy_c(gpSrv->pConsole->hdr.sMountKey, gpSrv->guiSettings.sMountKey);
-	//
-	//	wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
-	//	wcscpy_c(gpSrv->pConsole->hdr.sConEmuBaseDir, gpSrv->guiSettings.sConEmuBaseDir);
-	//	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings() !!!
-	//}
-	//else
-	//{
-	//	_ASSERTE(gpSrv->guiSettings.cbSize!=0);
-	//	// -- calloc, не требуется
-	//	//gpSrv->pConsole->hdr.sConEmuExe[0] = gpSrv->pConsole->hdr.sConEmuBaseDir[0] = 0;
-	//}
-
-	//gpSrv->pConsole->hdr.hConEmuWnd = ghConEmuWnd; -- обновляет UpdateConsoleMapHeader
 	//WARNING! В начале структуры info идет CESERVER_REQ_HDR для унификации общения через пайпы
 	gpSrv->pConsole->info.cmd.cbSize = sizeof(gpSrv->pConsole->info); // Пока тут - только размер заголовка
 	gpSrv->pConsole->info.hConWnd = ghConWnd; _ASSERTE(ghConWnd!=NULL);
-	//gpSrv->pConsole->info.nGuiPID = gpSrv->dwGuiPID;
 	gpSrv->pConsole->info.crMaxSize = crMax;
 	
 	// Проверять, нужно ли реестр хукать, будем в конце ServerInit
