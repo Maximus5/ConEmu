@@ -409,7 +409,7 @@ class CConEmuMain :
 		enum DragPanelBorder CheckPanelDrag(COORD crCon);
 		bool ConActivate(int nCon);
 		bool ConActivateNext(BOOL abNext);
-		bool CorrectWindowPos(WINDOWPOS *wp);
+		//bool CorrectWindowPos(WINDOWPOS *wp);
 		//void CheckGuiBarsCreated();
 		CVirtualConsole* CreateCon(RConStartArgs *args, BOOL abAllowScripts = FALSE);
 		CVirtualConsole* CreateConGroup(LPCWSTR apszScript);
@@ -495,6 +495,7 @@ class CConEmuMain :
 		bool SetWindowMode(uint inMode, BOOL abForce = FALSE);
 		void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
 		void ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags);
+		BOOL ShowWindow(int anCmdShow);
 		void ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
 		virtual void ShowSysmenu(int x=-32000, int y=-32000);
 		bool SetParent(HWND hNewParent);

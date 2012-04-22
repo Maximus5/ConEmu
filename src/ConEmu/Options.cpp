@@ -439,8 +439,8 @@ void Settings::LoadAppSettings(SettingsBase* reg)
 	wchar_t* pszAppKey = szAppKey+lstrlen(szAppKey);
 
 	int NewAppCount = 0;
-	AppSettings* NewApps = NULL;
-	CEAppColors* NewAppColors = NULL;
+	AppSettings** NewApps = NULL;
+	CEAppColors** NewAppColors = NULL;
 	
 	lbOpened = reg->OpenKey(szAppKey, KEY_READ);
 	if (lbOpened)
@@ -451,8 +451,8 @@ void Settings::LoadAppSettings(SettingsBase* reg)
 
 	if (lbOpened && NewAppCount > 0)
 	{
-		NewApps = (AppSettings*)calloc(NewAppCount, sizeof(AppSettings));
-		NewAppColors = (CEAppColors*)calloc(NewAppCount, sizeof(CEAppColors));
+		NewApps = (AppSettings**)calloc(NewAppCount, sizeof(*NewApps));
+		NewAppColors = (CEAppColors**)calloc(NewAppCount, sizeof(*NewAppColors));
 
 		int nSucceeded = 0;
 		for (int i = 0; i < NewAppCount; i++)
@@ -464,22 +464,25 @@ void Settings::LoadAppSettings(SettingsBase* reg)
 			{
 				_ASSERTE(AppStd.AppNames == NULL && AppStd.AppNamesLwr == NULL);
 
+				NewApps[nSucceeded] = (AppSettings*)malloc(sizeof(AppSettings));
+				NewAppColors[nSucceeded] = (CEAppColors*)calloc(1,sizeof(CEAppColors));
+
 				// Умолчания берем из основной ветки!
-				NewApps[nSucceeded] = AppStd;
-				memmove(NewAppColors[nSucceeded].Colors, Colors, sizeof(Colors));
-				NewApps[nSucceeded].AppNames = NULL;
-				NewApps[nSucceeded].AppNamesLwr = NULL;
-				NewApps[nSucceeded].cchNameMax = 0;
+				*NewApps[nSucceeded] = AppStd;
+				memmove(NewAppColors[nSucceeded]->Colors, Colors, sizeof(Colors));
+				NewApps[nSucceeded]->AppNames = NULL;
+				NewApps[nSucceeded]->AppNamesLwr = NULL;
+				NewApps[nSucceeded]->cchNameMax = 0;
 
 				// Загрузка "AppNames" - снаружи, т.к. LoadAppSettings используется и для загрузки &AppStd
-				reg->Load(L"AppNames", &NewApps[nSucceeded].AppNames);
-				if (NewApps[nSucceeded].AppNames /*&& *NewApps[nSucceeded].AppNames*/)
+				reg->Load(L"AppNames", &NewApps[nSucceeded]->AppNames);
+				if (NewApps[nSucceeded]->AppNames /*&& *NewApps[nSucceeded]->AppNames*/)
 				{
-					NewApps[nSucceeded].cchNameMax = wcslen(NewApps[nSucceeded].AppNames)+1;
-					NewApps[nSucceeded].AppNamesLwr = lstrdup(NewApps[nSucceeded].AppNames);
-					CharLowerBuff(NewApps[nSucceeded].AppNamesLwr, lstrlen(NewApps[nSucceeded].AppNamesLwr));
-					reg->Load(L"Elevated", NewApps[nSucceeded].Elevated);
-					LoadAppSettings(reg, NewApps+nSucceeded, NewAppColors[nSucceeded].Colors);
+					NewApps[nSucceeded]->cchNameMax = wcslen(NewApps[nSucceeded]->AppNames)+1;
+					NewApps[nSucceeded]->AppNamesLwr = lstrdup(NewApps[nSucceeded]->AppNames);
+					CharLowerBuff(NewApps[nSucceeded]->AppNamesLwr, lstrlen(NewApps[nSucceeded]->AppNamesLwr));
+					reg->Load(L"Elevated", NewApps[nSucceeded]->Elevated);
+					LoadAppSettings(reg, NewApps[nSucceeded], NewAppColors[nSucceeded]->Colors);
 					nSucceeded++;
 				}
 				reg->CloseKey();
@@ -489,12 +492,17 @@ void Settings::LoadAppSettings(SettingsBase* reg)
 	}
 
 	int OldAppCount = this->AppCount;
-	this->AppCount = NewAppCount;	
-	AppSettings* OldApps = Apps; Apps = NewApps;
-	CEAppColors* OldAppColors = AppColors; AppColors = NewAppColors;
+	this->AppCount = NewAppCount;
+	AppSettings** OldApps = Apps; Apps = NewApps;
+	CEAppColors** OldAppColors = AppColors; AppColors = NewAppColors;
 	for (int i = 0; i < OldAppCount && OldApps; i++)
 	{
-		OldApps[i].FreeApps();
+		if (OldApps[i])
+		{
+			OldApps[i]->FreeApps();
+			SafeFree(OldApps[i]);
+		}
+		SafeFree(OldAppColors[i]);
 	}
 	SafeFree(OldApps);
 	SafeFree(OldAppColors);
@@ -970,12 +978,12 @@ void Settings::SavePalettes(SettingsBase* reg)
 		bool bFound = false;
 		for (int i = 0; i < PaletteCount; i++)
 		{
-			if (Palettes[i]->pszName && (lstrcmpi(Apps[k].szPaletteName, Palettes[i]->pszName) == 0))
+			if (Palettes[i]->pszName && (lstrcmpi(Apps[k]->szPaletteName, Palettes[i]->pszName) == 0))
 			{
-				memmove(AppColors[k].Colors, Palettes[i]->Colors, sizeof(Palettes[i]->Colors));
-				AppColors[k].FadeInitialized = false;
-				Apps[k].isExtendColors = Palettes[i]->isExtendColors;
-				Apps[k].nExtendColorIdx = Palettes[i]->nExtendColorIdx;
+				memmove(AppColors[k]->Colors, Palettes[i]->Colors, sizeof(Palettes[i]->Colors));
+				AppColors[k]->FadeInitialized = false;
+				Apps[k]->isExtendColors = Palettes[i]->isExtendColors;
+				Apps[k]->nExtendColorIdx = Palettes[i]->nExtendColorIdx;
 				bFound = true;
 				break;
 			}
@@ -983,7 +991,7 @@ void Settings::SavePalettes(SettingsBase* reg)
 
 		if (!bFound)
 		{
-			Apps[k].OverridePalette = false; // нету такой палитры, будем рисовать "основной"
+			Apps[k]->OverridePalette = false; // нету такой палитры, будем рисовать "основной"
 		}
 	}
 
@@ -1817,9 +1825,9 @@ void Settings::SaveAppSettings(SettingsBase* reg)
 		if (lbOpened)
 		{
 			// Загрузка "AppNames" - снаружи, т.к. LoadAppSettings используется и для загрузки &AppStd
-			reg->Save(L"AppNames", Apps[i].AppNames);
-			reg->Save(L"Elevated", Apps[i].Elevated);
-			SaveAppSettings(reg, Apps+i, NULL/*Цвета сохраняются как Имя палитры*/);
+			reg->Save(L"AppNames", Apps[i]->AppNames);
+			reg->Save(L"Elevated", Apps[i]->Elevated);
+			SaveAppSettings(reg, Apps[i], NULL/*Цвета сохраняются как Имя палитры*/);
 			reg->CloseKey();
 		}
 	}
@@ -3112,18 +3120,18 @@ int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)
 
 	for (int i = 0; i < AppCount; i++)
 	{
-		if (Apps[i].Elevated == 1)
+		if (Apps[i]->Elevated == 1)
 		{
 			if (!abElevated)
 				continue;
 		}
-		else if (Apps[i].Elevated == 2)
+		else if (Apps[i]->Elevated == 2)
 		{
 			if (abElevated)
 				continue;
 		}
 
-		wchar_t* pch = Apps[i].AppNamesLwr;
+		wchar_t* pch = Apps[i]->AppNamesLwr;
 		if (!pch || !*pch)
 		{
 			_ASSERTE(pch && *pch);
@@ -3183,18 +3191,106 @@ const Settings::AppSettings* Settings::GetAppSettings(int anAppId/*=-1*/)
 		return &AppStd;
 	}
 
-	return (Apps+anAppId);
+	return Apps[anAppId];
 }
 
-Settings::AppSettings* Settings::GetAppSettingsPtr(int anAppId)
+Settings::AppSettings* Settings::GetAppSettingsPtr(int anAppId, BOOL abCreateNew /*= FALSE*/)
 {
+	if ((anAppId == AppCount) && abCreateNew)
+	{
+		_ASSERTE(gpConEmu->isMainThread());
+		int NewAppCount = AppCount+1;
+		AppSettings** NewApps = (AppSettings**)calloc(NewAppCount, sizeof(*NewApps));
+		CEAppColors** NewAppColors = (CEAppColors**)calloc(NewAppCount, sizeof(*NewAppColors));
+		if (!NewApps || !NewAppColors)
+		{
+			_ASSERTE(NewApps && NewAppColors);
+			return NULL;
+		}
+		if (Apps && (AppCount > 0))
+		{
+			memmove(NewApps, Apps, AppCount*sizeof(*NewApps));
+			memmove(NewAppColors, AppColors, AppCount*sizeof(*NewAppColors));
+		}
+		AppSettings** pOld = Apps;
+		CEAppColors** pOldColors = AppColors;
+		Apps = NewApps;
+		AppColors = NewAppColors;
+		SafeFree(pOld);
+		SafeFree(pOldColors);
+		
+		Apps[anAppId] = (AppSettings*)calloc(1,sizeof(AppSettings));
+		AppColors[anAppId] = (CEAppColors*)calloc(1,sizeof(CEAppColors));
+
+		if (!Apps[anAppId] || !AppColors[anAppId])
+		{
+			_ASSERTE(Apps[anAppId]!=NULL && AppColors[anAppId]!=NULL);
+			return NULL;
+		}
+		Apps[anAppId]->cchNameMax = MAX_PATH;
+		Apps[anAppId]->AppNames = (wchar_t*)calloc(Apps[anAppId]->cchNameMax,sizeof(wchar_t));
+		Apps[anAppId]->AppNamesLwr = (wchar_t*)calloc(Apps[anAppId]->cchNameMax,sizeof(wchar_t));
+
+		AppCount = NewAppCount;
+	}
+
 	if ((anAppId < 0) || (anAppId >= AppCount))
 	{
 		_ASSERTE(!((anAppId < 0) || (anAppId > AppCount)));
 		return NULL;
 	}
 
-	return (Apps+anAppId);
+	return Apps[anAppId];
+}
+
+void Settings::AppSettingsDelete(int anAppId)
+{
+	_ASSERTE(gpConEmu->isMainThread())
+	if (!Apps || !AppColors || (anAppId < 0) || (anAppId >= AppCount))
+	{
+		_ASSERTE(Apps && AppColors && (anAppId >= 0) && (anAppId < AppCount));
+		return;
+	}
+
+	AppSettings* pOld = Apps[anAppId];
+	CEAppColors* pOldClr = AppColors[anAppId];
+
+	for (int i = anAppId+1; i < AppCount; i++)
+	{
+		Apps[i-1] = Apps[i];
+		AppColors[i-1] = AppColors[i];
+	}
+
+	_ASSERTE(AppCount>0);
+	AppCount--;
+
+	if (pOld)
+	{
+		pOld->FreeApps();
+		free(pOld);
+	}
+	SafeFree(pOldClr);
+}
+
+// 0-based, index of Apps
+bool Settings::AppSettingsXch(int anIndex1, int anIndex2)
+{
+	if (((anIndex1 < 0) || (anIndex1 >= AppCount))
+		|| ((anIndex2 < 0) || (anIndex2 >= AppCount))
+		|| !CmdTasks)
+	{
+		return false;
+	}
+
+	AppSettings* p = Apps[anIndex1];
+	Apps[anIndex1] = Apps[anIndex2];
+	Apps[anIndex2] = p;
+
+	CEAppColors* pClr = AppColors[anIndex1];
+	AppColors[anIndex1] = AppColors[anIndex2];
+	AppColors[anIndex2] = pClr;
+
+	return true;
 }
 
 void Settings::ResetFadeColors()
@@ -3204,7 +3300,7 @@ void Settings::ResetFadeColors()
 
 	for (int i = 0; i < AppCount; i++)
 	{
-		AppColors[i].FadeInitialized = false;
+		AppColors[i]->FadeInitialized = false;
 	}
 }
 
@@ -3212,11 +3308,11 @@ COLORREF* Settings::GetColors(int anAppId/*=-1*/, BOOL abFade)
 {
 	COLORREF *pColors = Colors, *pColorsFade = ColorsFade;
 	bool* pbFadeInitialized = &mb_FadeInitialized;
-	if ((anAppId >= 0) && (anAppId < AppCount) && Apps[anAppId].OverridePalette)
+	if ((anAppId >= 0) && (anAppId < AppCount) && Apps[anAppId]->OverridePalette)
 	{
-		_ASSERTE(countof(Colors)==countof(AppColors[anAppId].Colors) && countof(ColorsFade)==countof(AppColors[anAppId].ColorsFade));
-		pColors = AppColors[anAppId].Colors; pColorsFade = AppColors[anAppId].ColorsFade;
-		pbFadeInitialized = &AppColors[anAppId].FadeInitialized;
+		_ASSERTE(countof(Colors)==countof(AppColors[anAppId]->Colors) && countof(ColorsFade)==countof(AppColors[anAppId]->ColorsFade));
+		pColors = AppColors[anAppId]->Colors; pColorsFade = AppColors[anAppId]->ColorsFade;
+		pbFadeInitialized = &AppColors[anAppId]->FadeInitialized;
 	}
 
 	if (!abFade || !isFadeInactive)

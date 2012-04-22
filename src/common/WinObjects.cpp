@@ -3461,7 +3461,12 @@ void SetUserFriendlyFont(HWND hConWnd)
 					// Evaluate default width for the font
 					int nEvalX = EvaluateDefaultFontWidth(nFontY, sFontName);
 					if (nEvalX > 0)
-						nFontX = nEvalX;
+					{
+						if ((nEvalX > nFontX) && (nFontX > 0))
+							nFontY = nFontX * nFontY / nEvalX;
+						else
+							nFontX = nEvalX;
+					}
 
 					// Look in the registry?
 					HKEY hk;

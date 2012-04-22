@@ -2969,8 +2969,38 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 		gpSetCls->UpdatePos(mrc_StoredNormalRect.left, mrc_StoredNormalRect.top);
 
 		if (mp_VActive)
-			gpSetCls->UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
+		{
+			// При ресайзе через окно настройки - mp_VActive еще не перерисовался
+			// так что и TextWidth/TextHeight не обновился
+			//-- gpSetCls->UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
+			if (mp_VActive->RCon())
+			{
+				gpSetCls->UpdateSize(mp_VActive->RCon()->TextWidth(), mp_VActive->RCon()->TextHeight());
+			}
+		}
 	}
+}
+
+BOOL CConEmuMain::ShowWindow(int anCmdShow)
+{
+#ifdef _DEBUG
+	STARTUPINFO si = {sizeof(si)};
+	GetStartupInfo(&si);
+#endif
+
+	BOOL lbRc = apiShowWindow(ghWnd, anCmdShow);
+
+	if (anCmdShow == SW_SHOWNORMAL)
+	{
+		if (((gpSet->isHideCaption || gpSet->isHideCaptionAlways()) && isZoomed()))
+		{
+			// Если в свойствах ярлыка указано "Maximized"/"Iconic" - то первый ShowWindow ИГНОРИРУЕТСЯ
+			_ASSERTE(si.wShowWindow == SW_SHOWMAXIMIZED);
+			lbRc = apiShowWindow(ghWnd, anCmdShow);
+		}
+	}
+
+	return lbRc;
 }
 
 bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
@@ -3054,7 +3084,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 
 			if (isIconic() || (isZoomed() && !mb_MaximizedHideCaption))
 			{
-				//apiShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
+				//apiShow Window(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
 				mb_IgnoreSizeChange = TRUE;
 
 				if (gpSet->isDesktopMode)
@@ -3078,7 +3108,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				{
 					if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("ShowWindow(SW_SHOWNORMAL)");
 
-					apiShowWindow(ghWnd, SW_SHOWNORMAL);
+					ShowWindow(SW_SHOWNORMAL);
 				}
 
 				//RePaint();
@@ -3127,7 +3157,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			mb_isFullScreen = false;
 
 			if (!IsWindowVisible(ghWnd))
-				apiShowWindow(ghWnd, SW_SHOWNORMAL);
+				ShowWindow(SW_SHOWNORMAL);
 
 #ifdef _DEBUG
 			GetWindowPlacement(ghWnd, &wpl);
@@ -3136,7 +3166,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			// Если это во время загрузки - то до первого ShowWindow - isIconic возвращает FALSE
 			if (isIconic() || isZoomed())
 			{
-				apiShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
+				ShowWindow(SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
 				// что-то после AltF9, AltF9 уголки остаются не срезанными...
 				//hRgn = CreateWindowRgn();
 				//SetWindowRgn(ghWnd, hRgn, TRUE);
@@ -3178,7 +3208,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 					InvalidateAll();
 					if (!gpSet->isDesktopMode)
 					{
-						apiShowWindow(ghWnd, SW_SHOWMAXIMIZED);
+						ShowWindow(SW_SHOWMAXIMIZED);
 					}
 					else
 					{
@@ -3212,7 +3242,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				if (!IsWindowVisible(ghWnd))
 				{
 					mb_IgnoreSizeChange = TRUE;
-					apiShowWindow(ghWnd, SW_SHOWMAXIMIZED);
+					ShowWindow(SW_SHOWMAXIMIZED);
 					mb_IgnoreSizeChange = FALSE;
 
 					if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("OnSize(-1).3");
@@ -3248,7 +3278,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 					ptFullScreenSize.x = GetSystemMetrics(SM_CXSCREEN)+rcShift.left+rcShift.right;
 					ptFullScreenSize.y = GetSystemMetrics(SM_CYSCREEN)+rcShift.top+rcShift.bottom;
 					// которые нужно уточнить для текущего монитора!
-					MONITORINFO mi; memset(&mi, 0, sizeof(mi)); mi.cbSize = sizeof(mi);
+					MONITORINFO mi = {sizeof(mi)};
 					HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
 
 					if (hMon)
@@ -3269,7 +3299,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 
 						if ((dwStyle & WS_MINIMIZE))
 						{
-							apiShowWindow(ghWnd, SW_SHOWNORMAL);
+							ShowWindow(SW_SHOWNORMAL);
 						}
 
 						if ((dwStyle & (WS_MINIMIZE|WS_MAXIMIZE)) != 0)
@@ -3278,7 +3308,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 							SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
 						}
 
-						//apiShowWindow(ghWnd, SW_SHOWNORMAL);
+						//ShowWindow(SW_SHOWNORMAL);
 						// Сбросить
 						_ASSERTE(mb_MaximizedHideCaption);
 						mb_IgnoreSizeChange = FALSE;
@@ -3315,7 +3345,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				if (!IsWindowVisible(ghWnd))
 				{
 					mb_IgnoreSizeChange = TRUE;
-					apiShowWindow(ghWnd, SW_SHOWNORMAL);
+					ShowWindow(SW_SHOWNORMAL);
 					mb_IgnoreSizeChange = FALSE;
 
 					if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("OnSize(-1).3");
@@ -3372,7 +3402,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				if (isIconic() || isZoomed())
 				{
 					mb_IgnoreSizeChange = TRUE;
-					apiShowWindow(ghWnd, SW_SHOWNORMAL);
+					ShowWindow(SW_SHOWNORMAL);
 
 					// Сбросить
 					if (mb_MaximizedHideCaption)
@@ -3414,7 +3444,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			if (!IsWindowVisible(ghWnd))
 			{
 				mb_IgnoreSizeChange = TRUE;
-				apiShowWindow(ghWnd, SW_SHOWNORMAL);
+				ShowWindow(SW_SHOWNORMAL);
 				mb_IgnoreSizeChange = FALSE;
 
 				if (pRCon && gpSetCls->isAdvLogging) pRCon->LogString("OnSize(-1).3");
@@ -3857,10 +3887,29 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 	}
 }
 
-bool CConEmuMain::CorrectWindowPos(WINDOWPOS *wp)
-{
-	return false;
-}
+//bool CConEmuMain::CorrectWindowPos(WINDOWPOS *wp)
+//{
+//	bool lbChanged = false;
+//
+//	// wp->flags != (SWP_NOMOVE|SWP_NOSIZE)
+//	if ((gpSet->isHideCaption || gpSet->isHideCaptionAlways()) && ((wp->flags&3)!=3) && isZoomed())
+//	{
+//		RECT rcShift = CalcMargins(CEM_FRAME);
+//		MONITORINFO mi = {sizeof(mi)};
+//		HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+//
+//		if ((wp->x != (-rcShift.left+mi.rcWork.left)) || (wp->y != (-rcShift.top+mi.rcWork.top)))
+//		{
+//			wp->x = (-rcShift.left+mi.rcWork.left);
+//			wp->y = (-rcShift.top+mi.rcWork.top);
+//			TODO("Наверное и окошко подвинуть нада?");
+//			lbChanged = true;
+//		}
+//
+//		//ptFullScreenSize.x,ptFullScreenSize.y,
+//	}
+//	return lbChanged;
+//}
 
 LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight)
 {
@@ -4153,7 +4202,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	// Если нужно поправить параметры DWM
 	gpConEmu->ExtendWindowFrame();
 
-	static int WindowPosStackCount = 0;
+	//static int WindowPosStackCount = 0;
 	WINDOWPOS *p = (WINDOWPOS*)lParam;
 	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 
@@ -4168,24 +4217,25 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGED ({%i-%i}x{%i-%i} Flags=0x%08X), style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
 	DEBUGSTRSIZE(szDbg);
-	WindowPosStackCount++;
+	//WindowPosStackCount++;
 
-	if (WindowPosStackCount == 1)
-	{
-		#ifdef _DEBUG
-		bool bNoMove = (p->flags & SWP_NOMOVE); 
-		bool bNoSize = (p->flags & SWP_NOSIZE);
-		#endif
+	//if (WindowPosStackCount == 1)
+	//{
+	//	#ifdef _DEBUG
+	//	bool bNoMove = (p->flags & SWP_NOMOVE); 
+	//	bool bNoSize = (p->flags & SWP_NOSIZE);
+	//	#endif
 
-		if (gpConEmu->CorrectWindowPos(p))
-		{
-			MoveWindow(ghWnd, p->x, p->y, p->cx, p->cy, TRUE);
-		}
-	}
+	//	if (gpConEmu->CorrectWindowPos(p))
+	//	{
+	//		MoveWindow(ghWnd, p->x, p->y, p->cx, p->cy, TRUE);
+	//	}
+	//}
 
 	// Иначе могут не вызваться события WM_SIZE/WM_MOVE
 	result = DefWindowProc(hWnd, uMsg, wParam, lParam);
-	WindowPosStackCount--;
+
+	//WindowPosStackCount--;
 
 	if (hWnd == ghWnd /*&& ghOpWnd*/)  //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
 	{
@@ -12693,12 +12743,12 @@ void CConEmuMain::OnDesktopMode()
 			GetWindowThreadProcessId(mh_ShellWindow, &mn_ShellWindowPID);
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 			MapWindowPoints(NULL, mh_ShellWindow, (LPPOINT)&rcWnd, 2);
-			//apiShowWindow(ghWnd, SW_HIDE);
+			//ShowWindow(SW_HIDE);
 			//SetWindowPos(ghWnd, NULL, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
 			SetParent(mh_ShellWindow);
 			SetWindowPos(ghWnd, NULL, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
 			SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-			//apiShowWindow(ghWnd, SW_SHOW);
+			//ShowWindow(SW_SHOW);
 #ifdef _DEBUG
 			RECT rcNow; GetWindowRect(ghWnd, &rcNow);
 #endif
@@ -13570,7 +13620,7 @@ void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *ar
 		mp_VActive = apVCon;
 
 		// Теперь можно показать созданную консоль
-		ShowWindow(mp_VActive->GetView(), SW_SHOW);
+		apiShowWindow(mp_VActive->GetView(), SW_SHOW);
 	}
 }
 

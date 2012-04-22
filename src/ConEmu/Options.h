@@ -293,9 +293,11 @@ struct Settings
 	protected:
 		AppSettings AppStd;
 		int AppCount;
-		AppSettings* Apps;
+		AppSettings** Apps;
 		// Äëÿ CSettings
-		AppSettings* GetAppSettingsPtr(int anAppId);
+		AppSettings* GetAppSettingsPtr(int anAppId, BOOL abCreateNew = FALSE);
+		void AppSettingsDelete(int anAppId);
+		bool AppSettingsXch(int anIndex1, int anIndex2); // 0-based, index of Apps
 
 		int CmdTaskCount;
 		CommandTasks** CmdTasks;
@@ -318,7 +320,7 @@ struct Settings
 			COLORREF Colors[0x20];
 			COLORREF ColorsFade[0x20];
 			bool FadeInitialized;
-		} *AppColors; // [AppCount]
+		} **AppColors; // [AppCount]
 
 		void LoadAppSettings(SettingsBase* reg);
 		void LoadAppSettings(SettingsBase* reg, AppSettings* pApp, COLORREF* pColors);

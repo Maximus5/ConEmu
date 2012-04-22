@@ -1326,6 +1326,7 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2)
 {
 	CheckDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
 	wchar_t sz[16];
+	TODO("Ќадо бы увеличить, но нужно сервер допиливать");
 	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
 	SetDlgItemText(hWnd2, tLongOutputHeight, _ltow(gpSet->DefaultBufferHeight, sz, 10));
 	EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
@@ -1348,6 +1349,7 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2)
 	CheckRadioButton(hWnd2, rbComspecAuto, rbComspecExplicit, rbComspecAuto+gpSet->ComSpec.csType);
 
 	SetDlgItemText(hWnd2, tComspecExplicit, gpSet->ComSpec.ComspecExplicit);
+	SendDlgItemMessage(hWnd2, tComspecExplicit, EM_SETLIMITTEXT, countof(gpSet->ComSpec.ComspecExplicit)-1, 0);
 
 	_ASSERTE((rbComspec_OSbit+csb_SameApp)==rbComspec_AppBit && (rbComspec_OSbit+csb_x32)==rbComspec_x32);
 	CheckRadioButton(hWnd2, rbComspec_OSbit, rbComspec_x32, rbComspec_OSbit+gpSet->ComSpec.csBits);
@@ -2402,8 +2404,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 				if (GetOpenFileName(&ofn))
 				{
+					bool bChanged = (lstrcmp(gpSet->ComSpec.ComspecExplicit, temp)!=0);
 					SetDlgItemText(hWnd2, tComspecExplicit, temp);
-					if (lstrcmp(gpSet->ComSpec.ComspecExplicit, temp))
+					if (bChanged)
 					{
 						wcscpy_c(gpSet->ComSpec.ComspecExplicit, temp);
 						gpSet->ComSpec.csType = cst_Explicit;
@@ -3374,7 +3377,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
         	OnInitDialog_Tasks(hWnd2, false);
 
         	int iCount = (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCOUNT, 0,0);
-        	SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, max(iCur,(iCount-1)), 0);
+        	SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
         	OnComboBox(hWnd2, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
 
 		} // cbCmdTasksDel
@@ -5113,6 +5116,84 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 
 				switch (CB)
 				{
+				case cbAppDistinctAdd:
+					{
+						int iCount = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0);
+						Settings::AppSettings* pNew = gpSet->GetAppSettingsPtr(iCount, TRUE);
+						UNREFERENCED_PARAMETER(pNew);
+
+						bool lbOld = bSkipSelChange; bSkipSelChange = true;
+
+        				OnInitDialog_Apps(hWnd2, false);
+
+        				SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, iCount, 0);
+
+						bSkipSelChange = lbOld;
+
+        				pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
+					} // cbAppDistinctAdd
+					break;
+
+				case cbAppDistinctDel:
+					{
+						int iCur = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
+						if (iCur < 0)
+							break;
+
+						const Settings::AppSettings* p = gpSet->GetAppSettingsPtr(iCur);
+						if (!p)
+            				break;
+
+						if (MessageBox(ghOpWnd, L"Delete application?", p->AppNames, MB_YESNO|MB_ICONQUESTION) != IDYES)
+            				break;
+
+        				gpSet->AppSettingsDelete(iCur);
+
+						bool lbOld = bSkipSelChange; bSkipSelChange = true;
+
+        				OnInitDialog_Apps(hWnd2, false);
+
+        				int iCount = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0);
+						bSkipSelChange = lbOld;
+        				SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
+        				pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
+
+					} // cbAppDistinctDel
+					break;
+
+				case cbAppDistinctUp:
+				case cbAppDistinctDown:
+					{
+						int iCur, iChg;
+						iCur = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
+						if (iCur < 0)
+							break;
+						if (CB == cbAppDistinctUp)
+						{
+							if (!iCur)
+								break;
+            				iChg = iCur - 1;
+        				}
+        				else
+        				{
+        					iChg = iCur + 1;
+        					if (iChg >= (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0))
+        						break;
+        				}
+
+        				if (!gpSet->AppSettingsXch(iCur, iChg))
+        					break;
+
+						bool lbOld = bSkipSelChange; bSkipSelChange = true;
+
+        				OnInitDialog_Apps(hWnd2, false);
+
+						bSkipSelChange = lbOld;
+
+        				SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, iChg, 0);
+					} // cbAppDistinctUp, cbAppDistinctDown
+					break;
+
 				case rbAppDistinctElevatedOn:
 				case rbAppDistinctElevatedOff:
 				case rbAppDistinctElevatedIgnore:
@@ -5357,10 +5438,10 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 											const Settings::ColorPalette* pPal = gpSet->PaletteGet(iPal);
 											if (pPal)
 											{
-												memmove(gpSet->AppColors[iCur].Colors, pPal->Colors, sizeof(pPal->Colors));
+												memmove(gpSet->AppColors[iCur]->Colors, pPal->Colors, sizeof(pPal->Colors));
 												pApp->isExtendColors = pPal->isExtendColors;
 												pApp->nExtendColorIdx = pPal->nExtendColorIdx;
-												gpSet->AppColors[iCur].FadeInitialized = false;
+												gpSet->AppColors[iCur]->FadeInitialized = false;
 												bRedraw = true;
 											}
 											else

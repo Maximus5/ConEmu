@@ -1376,6 +1376,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 							mrc_LeftPanel = sr;  // левая или полноэкранная
 
 						DlgFlags |= nPossible;
+						bFindExterior = false;
 
 						// Может все панели уже нашли?
 						if ((nPossible & FR_FULLPANEL))

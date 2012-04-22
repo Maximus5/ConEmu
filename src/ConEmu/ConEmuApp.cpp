@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //	#define SHOW_STARTED_MSGBOX
+//  #define WAIT_STARTED_DEBUGGER
 #endif
 
 #define DEBUGSTRMOVE(s) //DEBUGSTR(s)
@@ -1018,10 +1019,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //		'ÿ', (wchar_t)0x44F, 0x44F, L"End");
 //#endif
 
-#ifdef SHOW_STARTED_MSGBOX
+#if defined(SHOW_STARTED_MSGBOX)
 	wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Conemu started, PID=%i", GetCurrentProcessId());
 	MessageBox(NULL, GetCommandLineW(), szTitle, MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+#elif defined(WAIT_STARTED_DEBUGGER)
+	while (!IsDebuggerPresent())
+		Sleep(250);
+	int nDbg = IsDebuggerPresent();
 #else
+
 #ifdef _DEBUG
 
 	if (_tcsstr(GetCommandLine(), L"/debugi"))

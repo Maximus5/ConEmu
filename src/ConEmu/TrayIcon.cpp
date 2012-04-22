@@ -127,7 +127,7 @@ void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
 	AddTrayIcon(); // добавит или обновит tooltip
 	if (IsWindowVisible(ghWnd))
 	{
-		apiShowWindow(ghWnd, SW_HIDE);
+		gpConEmu->ShowWindow(SW_HIDE);
 	}
 	HMENU hMenu = gpConEmu->GetSystemMenu(/*ghWnd, false*/);
 	SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_RESTORE_NAME);
@@ -146,7 +146,7 @@ void TrayIcon::RestoreWindowFromTray(BOOL abIconOnly /*= FALSE*/)
 {
 	if (!abIconOnly)
 	{
-		apiShowWindow(ghWnd, SW_SHOW);
+		gpConEmu->ShowWindow(SW_SHOW);
 		apiSetForegroundWindow(ghWnd);
 	}
 	//EnableMenuItem(GetSystemMenu(ghWnd, false), ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
