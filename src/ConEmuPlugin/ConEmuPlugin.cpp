@@ -235,6 +235,74 @@ struct HookModeFar gFarMode = {sizeof(HookModeFar), TRUE/*bFarHookMode*/};
 extern SetFarHookMode_t SetFarHookMode;
 
 
+PluginAndMenuCommands gpPluginMenu[menu_Last] = 
+{
+	{CEMenuEditOutput, menu_EditConsoleOutput, pcc_EditConsoleOutput},
+	{CEMenuViewOutput, menu_ViewConsoleOutput, pcc_ViewConsoleOutput},
+	{0, menu_Separator1}, // Separator
+	{CEMenuShowHideTabs, menu_SwitchTabVisible, pcc_SwitchTabVisible},
+	{CEMenuNextTab, menu_SwitchTabNext, pcc_SwitchTabNext},
+	{CEMenuPrevTab, menu_SwitchTabPrev, pcc_SwitchTabPrev},
+	{CEMenuCommitTab, menu_SwitchTabCommit, pcc_SwitchTabCommit},
+	{CEMenuShowTabsList, menu_ShowTabsList},
+	{0, menu_Separator2},
+	{CEMenuGuiMacro, menu_ConEmuMacro}, // должен вызываться "по настоящему", а не через callplugin
+	{0, menu_Separator3},
+	{CEMenuAttach, menu_AttachToConEmu, pcc_AttachToConEmu},
+	{0, menu_Separator4},
+	{CEMenuDebug, menu_StartDebug, pcc_StartDebug},
+};
+bool pcc_Selected(PluginMenuCommands nMenuID)
+{
+	bool bSelected = false;
+	switch (nMenuID)
+	{
+	case menu_EditConsoleOutput:
+		if (ConEmuHwnd && IsWindow(ConEmuHwnd))
+			bSelected = true;
+		break;
+	case menu_AttachToConEmu:
+		if (!((ConEmuHwnd && IsWindow(ConEmuHwnd)) || IsTerminalMode()))
+			bSelected = true;
+		break;
+	case menu_ViewConsoleOutput:
+	case menu_SwitchTabVisible:
+	case menu_SwitchTabNext:
+	case menu_SwitchTabPrev:
+	case menu_SwitchTabCommit:
+	case menu_ConEmuMacro:
+	case menu_StartDebug:
+		break;
+	}
+	return bSelected;
+}
+bool pcc_Disabled(PluginMenuCommands nMenuID)
+{
+	bool bDisabled = false;
+	switch (nMenuID)
+	{
+	case menu_AttachToConEmu:
+		if ((ConEmuHwnd && IsWindow(ConEmuHwnd)) || IsTerminalMode())
+			bDisabled = true;
+		break;
+	case menu_StartDebug:
+		if (IsDebuggerPresent() || IsTerminalMode())
+			bDisabled = true;
+		break;
+	case menu_EditConsoleOutput:
+	case menu_ViewConsoleOutput:
+	case menu_SwitchTabVisible:
+	case menu_SwitchTabNext:
+	case menu_SwitchTabPrev:
+	case menu_SwitchTabCommit:
+	case menu_ConEmuMacro:
+		if (!ConEmuHwnd || !IsWindow(ConEmuHwnd))
+			bDisabled = true;
+		break;
+	}
+	return bDisabled;
+}
+
 
 
 void WINAPI GetPluginInfoWcmn(void *piv)
@@ -313,7 +381,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 	else
 	{
 		//if (!gbCmdCallObsolete) {
-		INT_PTR nID = -1; // выбор из меню
+		INT_PTR nID = pcc_None; // выбор из меню
 
 		//if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
 		if (FromMacro)
@@ -355,7 +423,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 				return INVALID_HANDLE_VALUE;
 			}
 
-			if (Item >= 1 && Item <= 8)
+			if (Item >= pcc_First && Item <= pcc_Last)
 			{
 				nID = Item; // Будет сразу выполнена команда
 			}
@@ -381,7 +449,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 			}
 		}
 
-		ShowPluginMenu((int)nID);
+		ShowPluginMenu((PluginCallCommands)nID);
 		//} else {
 		//	gbCmdCallObsolete = FALSE;
 		//}
@@ -5234,25 +5302,9 @@ void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec)
 }
 
 
-void ShowPluginMenu(int nID /*= -1*/)
+void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 {
 	int nItem = -1;
-
-	enum {
-		menu_EditConsoleOutput = 0,
-		menu_ViewConsoleOutput,
-		menu_Separator1,
-		menu_SwitchTabVisible,
-		menu_SwitchTabNext,
-		menu_SwitchTabPrev,
-		menu_SwitchTabCommit,
-		menu_Separator2,
-		menu_ConEmuMacro, // должен вызываться "по настоящему", а не через callplugin
-		menu_Separator3,
-		menu_AttachToConEmu,
-		menu_Separator4,
-		menu_StartDebug,
-	};
 
 	if (!FarHwnd)
 	{
@@ -5268,48 +5320,54 @@ void ShowPluginMenu(int nID /*= -1*/)
 
 	CheckConEmuDetached();
 
-	if (nID != -1)
+	if (nCallID != pcc_None)
 	{
 		// Команды CallPlugin
-		switch (nID)
+		for (size_t i = 0; i < countof(gpPluginMenu); i++)
 		{
-		case 1:
-			nItem = menu_EditConsoleOutput; break;
-		case 2:
-			nItem = menu_ViewConsoleOutput; break;
-		case 3:
-			nItem = menu_SwitchTabVisible; break;
-		case 4:
-			nItem = menu_SwitchTabNext; break;
-		case 5:
-			nItem = menu_SwitchTabPrev; break;
-		case 6:
-			nItem = menu_SwitchTabCommit; break;
-		case 7:
-			nItem = menu_AttachToConEmu; break;
-		case 8:
-			nItem = menu_StartDebug; break;
-		default:
-			_ASSERTE(nID>=1 && nID<=8);
-			break;
+			if (gpPluginMenu[i].CallID == nCallID)
+			{
+				nItem = gpPluginMenu[i].MenuID;
+				break;
+			}
 		}
+		_ASSERTE(nItem!=-1);
 
 		SHOWDBGINFO(L"*** ShowPluginMenu used default item\n");
 	}
-	else if (gFarVersion.dwVerMajor==1)
-	{
-		SHOWDBGINFO(L"*** calling ShowPluginMenuA\n");
-		nItem = ShowPluginMenuA();
-	}
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-	{
-		SHOWDBGINFO(L"*** calling ShowPluginMenuWY\n");
-		nItem = FUNC_Y(ShowPluginMenuW)();
-	}
 	else
 	{
-		SHOWDBGINFO(L"*** calling ShowPluginMenuWX\n");
-		nItem = FUNC_X(ShowPluginMenuW)();
+		ConEmuPluginMenuItem items[menu_Last] = {};
+		int nCount = menu_Last; //sizeof(items)/sizeof(items[0]);
+		_ASSERTE(nCount == countof(gpPluginMenu));
+		for (int i = 0; i < nCount; i++)
+		{
+			if (!gpPluginMenu[i].LangID)
+			{
+				items[i].Separator = true;
+				continue;
+			}
+			_ASSERTE(i == gpPluginMenu[i].MenuID);
+			items[i].Selected = pcc_Selected((PluginMenuCommands)i);
+			items[i].Disabled = pcc_Disabled((PluginMenuCommands)i);
+			items[i].MsgID = gpPluginMenu[i].LangID;
+		}
+
+		if (gFarVersion.dwVerMajor==1)
+		{
+			SHOWDBGINFO(L"*** calling ShowPluginMenuA\n");
+			nItem = ShowPluginMenuA(items, nCount);
+		}
+		else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		{
+			SHOWDBGINFO(L"*** calling ShowPluginMenuWY\n");
+			nItem = FUNC_Y(ShowPluginMenuW)(items, nCount);
+		}
+		else
+		{
+			SHOWDBGINFO(L"*** calling ShowPluginMenuWX\n");
+			nItem = FUNC_X(ShowPluginMenuW)(items, nCount);
+		}
 	}
 
 	if (nItem < 0)
@@ -5323,7 +5381,7 @@ void ShowPluginMenu(int nID /*= -1*/)
 	SHOWDBGINFO(szInfo);
 #endif
 
-	switch(nItem)
+	switch (nItem)
 	{
 		case menu_EditConsoleOutput:
 		case menu_ViewConsoleOutput:
@@ -5367,13 +5425,108 @@ void ShowPluginMenu(int nID /*= -1*/)
 		case menu_SwitchTabPrev:
 		case menu_SwitchTabCommit:
 		{
-			CESERVER_REQ in, *pOut = NULL;
-			ExecutePrepareCmd(&in, CECMD_TABSCMD, sizeof(CESERVER_REQ_HDR)+1);
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_TABSCMD, sizeof(CESERVER_REQ_HDR)+sizeof(pIn->Data));
 			// Data[0] <== enum ConEmuTabCommand
-			in.Data[0] = nItem - menu_SwitchTabVisible;
-			pOut = ExecuteGuiCmd(FarHwnd, &in, FarHwnd);
+			switch (nItem)
+			{
+			case menu_SwitchTabVisible: // Показать/спрятать табы
+				pIn->Data[0] = ctc_ShowHide; break;
+			case menu_SwitchTabNext:
+				pIn->Data[0] = ctc_SwitchNext; break;
+			case menu_SwitchTabPrev:
+				pIn->Data[0] = ctc_SwitchPrev; break;
+			case menu_SwitchTabCommit:
+				pIn->Data[0] = ctc_SwitchCommit; break;
+			default:
+				_ASSERTE(nItem==menu_SwitchTabVisible); // неизвестная команда!
+				pIn->Data[0] = ctc_ShowHide;
+			}
 
+			CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 			if (pOut) ExecuteFreeResult(pOut);
+		} break;
+		case menu_ShowTabsList:
+		{
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETALLTABS, sizeof(CESERVER_REQ_HDR));
+			CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+			if (pOut && (pOut->GetAllTabs.Count > 0))
+			{
+				int nMenuRc = -1;
+
+				int Count = pOut->GetAllTabs.Count;
+				int AllCount = Count + pOut->GetAllTabs.Tabs[Count-1].ConsoleIdx;
+				ConEmuPluginMenuItem* pItems = (ConEmuPluginMenuItem*)calloc(AllCount,sizeof(*pItems));
+				if (pItems)
+				{
+					int nLastConsole = 0;
+					for (int i = 0, k = 0; i < Count; i++, k++)
+					{
+						if (nLastConsole != pOut->GetAllTabs.Tabs[i].ConsoleIdx)
+						{
+							pItems[k++].Separator = true;
+							nLastConsole = pOut->GetAllTabs.Tabs[i].ConsoleIdx;
+						}
+						_ASSERTE(k < AllCount);
+						pItems[k].Selected = (pOut->GetAllTabs.Tabs[i].ActiveConsole && pOut->GetAllTabs.Tabs[i].ActiveTab);
+						pItems[k].Checked = pOut->GetAllTabs.Tabs[i].ActiveTab;
+						pItems[k].Disabled = pOut->GetAllTabs.Tabs[i].Disabled;
+						pItems[k].MsgText = pOut->GetAllTabs.Tabs[i].Title;
+						pItems[k].UserData = i;
+					}
+					if (gFarVersion.dwVerMajor==1)
+						nMenuRc = ShowPluginMenuA(pItems, AllCount);
+					else if (gFarVersion.dwBuild>=FAR_Y_VER)
+						nMenuRc = FUNC_Y(ShowPluginMenuW)(pItems, AllCount);
+					else
+						nMenuRc = FUNC_X(ShowPluginMenuW)(pItems, AllCount);
+
+					if ((nMenuRc >= 0) && (nMenuRc < AllCount))
+					{
+						nMenuRc = pItems[nMenuRc].UserData;
+
+						if (pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole && !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
+						{
+							DWORD nTab = pOut->GetAllTabs.Tabs[nMenuRc].TabIdx;
+							switch (GetMacroArea())
+							{
+							case MACROAREA_SHELL:
+							case MACROAREA_SEARCH:
+							case MACROAREA_INFOPANEL:
+							case MACROAREA_QVIEWPANEL:
+							case MACROAREA_TREEPANEL:
+								gnPluginOpenFrom = OPEN_FILEPANEL;
+								break;
+							case MACROAREA_EDITOR:
+								gnPluginOpenFrom = OPEN_EDITOR;
+								break;
+							case MACROAREA_VIEWER:
+								gnPluginOpenFrom = OPEN_VIEWER;
+								break;
+							default:
+								gnPluginOpenFrom = -1;
+							}
+							ProcessCommand(CMD_SETWINDOW, FALSE, &nTab);
+						}
+						else if (!pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole || !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
+						{
+							CESERVER_REQ* pActIn = ExecuteNewCmd(CECMD_ACTIVATETAB, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+							pActIn->dwData[0] = pOut->GetAllTabs.Tabs[nMenuRc].ConsoleIdx;
+							pActIn->dwData[1] = pOut->GetAllTabs.Tabs[nMenuRc].TabIdx;
+							CESERVER_REQ* pActOut = ExecuteGuiCmd(FarHwnd, pActIn, FarHwnd);
+							ExecuteFreeResult(pActOut);
+							ExecuteFreeResult(pActIn);
+						}
+					}
+
+					SafeFree(pItems);
+				}
+				ExecuteFreeResult(pOut);
+			}
+			else
+			{
+				ShowMessage(CEGetAllTabsFailed, 1);
+			}
+			ExecuteFreeResult(pIn);
 		} break;
 		case menu_ConEmuMacro: // Execute GUI macro (gialog)
 		{

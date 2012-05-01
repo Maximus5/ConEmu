@@ -133,7 +133,7 @@ BOOL    gbAlwaysConfirmExit = FALSE;
 BOOL	gbAutoDisableConfirmExit = FALSE; // если корневой процесс проработал достаточно (10 сек) - будет сброшен gbAlwaysConfirmExit
 BOOL    gbRootAliveLess10sec = FALSE; // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
 int     gbRootWasFoundInCon = 0;
-BOOL    gbAttachMode = FALSE; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console)
+BOOL    gbAttachMode = FALSE; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console, или /GUIATTACH)
 BOOL    gbAlienMode = FALSE;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
 BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
@@ -193,10 +193,10 @@ extern "C" {
 #endif
 
 //extern UINT_PTR gfnLoadLibrary;
-UINT gnMsgActivateCon = 0;
+//UINT gnMsgActivateCon = 0;
 UINT gnMsgSwitchCon = 0;
 UINT gnMsgHookedKey = 0;
-UINT gnMsgConsoleHookedKey = 0;
+//UINT gnMsgConsoleHookedKey = 0;
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
@@ -244,10 +244,10 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			
 			//#ifndef TESTLINK
 			gpLocalSecurity = LocalSecurity();
-			gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
+			//gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 			gnMsgSwitchCon = RegisterWindowMessage(CONEMUMSG_SWITCHCON);
 			gnMsgHookedKey = RegisterWindowMessage(CONEMUMSG_HOOKEDKEY);
-			gnMsgConsoleHookedKey = RegisterWindowMessage(CONEMUMSG_CONSOLEHOOKEDKEY);
+			//gnMsgConsoleHookedKey = RegisterWindowMessage(CONEMUMSG_CONSOLEHOOKEDKEY);
 			//#endif
 			//wchar_t szSkipEventName[128];
 			//_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
@@ -634,6 +634,8 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 
 	if ((iRc = ParseCommandLine(GetCommandLineW()/*, &gpszRunCmd, &gbRunInBackgroundTab*/)) != 0)
 		goto wrap;
+
+	_ASSERTE(!gpSrv->hRootProcessGui || (((DWORD)gpSrv->hRootProcessGui)!=0xCCCCCCCC && IsWindow(gpSrv->hRootProcessGui)));
 
 	//#ifdef _DEBUG
 	//CreateLogSizeFile();
@@ -1600,7 +1602,27 @@ int CheckAttachProcess()
 	BOOL lbArgsFailed = FALSE;
 	wchar_t szFailMsg[512]; szFailMsg[0] = 0;
 
-	if (pfnGetConsoleProcessList==NULL)
+	if (gpSrv->hRootProcessGui)
+	{
+		if (!IsWindow(gpSrv->hRootProcessGui))
+		{
+			_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach of GUI application was requested,\n"
+				L"but required HWND(0x%08X) not found!", (DWORD)gpSrv->hRootProcessGui);
+			lbArgsFailed = TRUE;
+		}
+		else
+		{
+			DWORD nPid; GetWindowThreadProcessId(gpSrv->hRootProcessGui, &nPid);
+			if (!gpSrv->dwRootProcess || (gpSrv->dwRootProcess != nPid))
+			{
+				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach of GUI application was requested,\n"
+					L"but PID(%u) of HWND(0x%08X) does not match Root(%u)!",
+					nPid, (DWORD)gpSrv->hRootProcessGui, gpSrv->dwRootProcess);
+				lbArgsFailed = TRUE;
+			}
+		}
+	}
+	else if (pfnGetConsoleProcessList==NULL)
 	{
 		wcscpy_c(szFailMsg, L"Attach to GUI was requested, but required WinXP or higher!");
 		lbArgsFailed = TRUE;
@@ -1737,6 +1759,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 	gnRunMode = RM_UNDEFINED;
 
+	BOOL lbAttachGuiApp = FALSE;
+
 	while ((iRc = NextArg(&asCmdLine, szArg, &pszArgStarts)) == 0)
 	{
 		xf_check();
@@ -1781,6 +1805,25 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			#endif
 
 			gbAttachMode = TRUE;
+			gnRunMode = RM_SERVER;
+		}
+		else if (wcsncmp(szArg, L"/GUIATTACH=", 11)==0)
+		{
+			#if defined(SHOW_ATTACH_MSGBOX)
+			if (!IsDebuggerPresent())
+			{
+				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i) /GUIATTACH", gnSelfPID);
+				const wchar_t* pszCmdLine = GetCommandLineW();
+				MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
+			}
+			#endif
+
+			gbAttachMode = TRUE;
+			lbAttachGuiApp = TRUE;
+			wchar_t* pszEnd;
+			HWND hAppWnd = (HWND)wcstoul(szArg+11, &pszEnd, 16);
+			if (IsWindow(hAppWnd))
+				gpSrv->hRootProcessGui = hAppWnd;
 			gnRunMode = RM_SERVER;
 		}
 		else if (wcscmp(szArg, L"/NOCMD")==0)
@@ -5480,28 +5523,28 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 		wchar_t szInfo[MAX_PATH*2];
 
 		// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
-		if (gpSrv->hRootProcessGui == NULL)
+		if (gbAttachMode || (gpSrv->hRootProcessGui == NULL))
 		{
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GUI application (PID=%u) was attached to ConEmu:\n%s\n",
 				in.AttachGuiApp.nPID, in.AttachGuiApp.sAppFileName);
 			_wprintf(szInfo);
 		}
 
-		if (in.AttachGuiApp.hWindow && (gpSrv->hRootProcessGui != in.AttachGuiApp.hWindow))
+		if (in.AttachGuiApp.hAppWindow && (gbAttachMode || (gpSrv->hRootProcessGui != in.AttachGuiApp.hAppWindow)))
 		{
 			wchar_t szTitle[MAX_PATH];
-			GetWindowText(in.AttachGuiApp.hWindow, szTitle, countof(szTitle));
-			_wsprintf(szInfo,  SKIPLEN(countof(szInfo)) L"\nWindow (x%08X) was attached to ConEmu:\n%s\n", (DWORD)in.AttachGuiApp.hWindow, szTitle);
+			GetWindowText(in.AttachGuiApp.hAppWindow, szTitle, countof(szTitle));
+			_wsprintf(szInfo,  SKIPLEN(countof(szInfo)) L"\nWindow (x%08X) was attached to ConEmu:\n%s\n", (DWORD)in.AttachGuiApp.hAppWindow, szTitle);
 			_wprintf(szInfo);
 		}
 
-		if (in.AttachGuiApp.hWindow == NULL)
+		if (in.AttachGuiApp.hAppWindow == NULL)
 		{
 			gpSrv->hRootProcessGui = (HWND)-1;
 		}
 		else
 		{
-			gpSrv->hRootProcessGui = in.AttachGuiApp.hWindow;
+			gpSrv->hRootProcessGui = in.AttachGuiApp.hAppWindow;
 		}
 		// Смысла в подтверждении нет - GUI приложение в консоль ничего не выводит
 		gbAlwaysConfirmExit = FALSE;

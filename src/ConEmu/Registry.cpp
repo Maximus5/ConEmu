@@ -198,25 +198,122 @@ SettingsXML::~SettingsXML()
 	CloseKey();
 }
 
-bool SettingsXML::IsXmlAllowed()
+IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size_t cchErrMax /*= 0*/)
 {
 	HRESULT hr;
 	IXMLDOMDocument* pFile = NULL;
+	static HMODULE hMsXml3 = NULL;
+	typedef HRESULT (__stdcall* DllGetClassObject_t)(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
+	static DllGetClassObject_t lpfnGetClassObject = NULL;
+	wchar_t szDllErr[128] = {};
+
 	hr = CoInitialize(NULL);
-	hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, //-V519
-	                      IID_IXMLDOMDocument, (void**)&pFile);
+
+	// Если в прошлый раз обломались, и загрузили "msxml3.dll" - то и не дергаться
+	if (hMsXml3 && (hMsXml3 != (HMODULE)INVALID_HANDLE_VALUE))
+		hr = REGDB_E_CLASSNOTREG;
+	else
+		hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, //-V519
+							  IID_IXMLDOMDocument, (void**)&pFile);
+
+	// Если msxml3.dll (Msxml2.DOMDocument.3.0) не зарегистрирована - будет такая ошибка
+	if (FAILED(hr)) // (hr == REGDB_E_CLASSNOTREG)
+	{
+		HRESULT hFact;
+		// Попробовать грузануть ее ручками
+		if (!hMsXml3)
+		{
+			wchar_t szDll[MAX_PATH+16];
+
+			_wsprintf(szDll, SKIPLEN(countof(szDll)) L"%s\\msxml3.dll", gpConEmu->ms_ConEmuExeDir);
+			hMsXml3 = LoadLibrary(szDll);
+			hFact = hMsXml3 ? 0 : (HRESULT)GetLastError();
+
+			if (!hMsXml3 
+				&& (((DWORD)hFact) == ERROR_MOD_NOT_FOUND
+					|| ((DWORD)hFact) == ERROR_BAD_EXE_FORMAT
+					|| ((DWORD)hFact) == ERROR_FILE_NOT_FOUND))
+			{
+				_wsprintf(szDll, SKIPLEN(countof(szDll)) L"%s\\msxml3.dll", gpConEmu->ms_ConEmuBaseDir);
+				hMsXml3 = LoadLibrary(szDll);
+				hFact = hMsXml3 ? 0 : (HRESULT)GetLastError();
+			}
+
+			if (!hMsXml3)
+			{
+				hMsXml3 = (HMODULE)INVALID_HANDLE_VALUE;
+				_wsprintf(szDllErr, SKIPLEN(countof(szDllErr)) L"\nLoadLibrary(\"msxml3.dll\") failed\nErrCode=0x%08X", (DWORD)hFact);
+			}
+		}
+
+		if (hMsXml3 && (hMsXml3 != (HMODULE)INVALID_HANDLE_VALUE))
+		{
+			if (!lpfnGetClassObject)
+				lpfnGetClassObject = (DllGetClassObject_t)GetProcAddress(hMsXml3, "DllGetClassObject");
+
+			if (!lpfnGetClassObject)
+			{
+				hFact = (HRESULT)GetLastError();
+				_wsprintf(szDllErr, SKIPLEN(countof(szDllErr)) L"\nGetProcAddress(\"DllGetClassObject\") failed\nErrCode=0x%08X", (DWORD)hFact);
+			}
+			else
+			{
+				IClassFactory* pFact = NULL;
+				hFact = lpfnGetClassObject(CLSID_DOMDocument30, IID_IClassFactory, (void**)&pFact);
+				if (SUCCEEDED(hFact) && pFact)
+				{
+					hFact = pFact->CreateInstance(NULL, IID_IXMLDOMDocument, (void**)&pFile);
+					if (SUCCEEDED(hFact))
+						hr = hFact;
+					else
+						_wsprintf(szDllErr, SKIPLEN(countof(szDllErr)) L"\nCreateInstance(IID_IXMLDOMDocument) failed\nErrCode=0x%08X", (DWORD)hFact);
+					pFact->Release();
+				}
+				else
+				{
+					_wsprintf(szDllErr, SKIPLEN(countof(szDllErr)) L"\nGetClassObject(CLSID_DOMDocument30) failed\nErrCode=0x%08X", (DWORD)hFact);
+				}
+			}
+		}
+	}
 
 	if (FAILED(hr) || !pFile)
 	{
-		wchar_t szErr[255];
-		_wsprintf(szErr, SKIPLEN(countof(szErr))
-		          L"XML setting file will be not used.\n\nCan't create IID_IXMLDOMDocument!\nErrCode=0x%08X", (DWORD)hr);
-		MBoxA(szErr);
-		return false;
+		wchar_t szErr[512];
+		bool bShowError = (pszErr == NULL);
+		if (pszErr == NULL)
+		{
+			pszErr = szErr; cchErrMax = countof(szErr);
+		}
+		_wsprintf(pszErr, SKIPLEN(cchErrMax)
+		          L"XML setting file can not be used!\n"
+				  L"Dynamic libraries 'msxml3.dll'/'msxml3r.dll' was not found!\n\n"
+				  L"Can't create IID_IXMLDOMDocument!\n"
+				  L"ErrCode=0x%08X %s", (DWORD)hr, szDllErr);
+
+		if (bShowError)
+		{
+			static bool bWarned = false;
+			if (!bWarned)
+			{
+				// Не задалбывать пользователя ошибками. Один раз - и хватит
+				bWarned = true;
+				MBoxError(szErr);
+			}
+		}
+
+		return NULL;
 	}
 
-	pFile->Release();
-	return true;
+	return pFile;
+}
+
+bool SettingsXML::IsXmlAllowed()
+{
+	IXMLDOMDocument* pFile = CreateDomDocument();
+	if (pFile)
+		pFile->Release();
+	return (pFile != NULL);
 }
 
 bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
@@ -287,13 +384,13 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 
 	SAFETRY
 	{
-		hr = CoInitialize(NULL);
-		hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER,
-		IID_IXMLDOMDocument, (void**)&mp_File);
+		_ASSERTE(mp_File == NULL);
+		mp_File = CreateDomDocument(szErr, countof(szErr));
 
 		if (FAILED(hr) || !mp_File)
 		{
-			_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create IID_IXMLDOMDocument!\nErrCode=0x%08X", (DWORD)hr);
+			//Ошибка уже в szErr
+			//_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create IID_IXMLDOMDocument!\nErrCode=0x%08X", (DWORD)hr);
 			goto wrap;
 		}
 

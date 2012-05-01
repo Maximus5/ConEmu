@@ -318,6 +318,11 @@ CRealConsole::~CRealConsole()
 	//}
 }
 
+CVirtualConsole* CRealConsole::VCon()
+{
+	return this ? mp_VCon : NULL;
+}
+
 BOOL CRealConsole::PreCreate(RConStartArgs *args)
 //(BOOL abDetached, LPCWSTR asNewCmd /*= NULL*/, , BOOL abAsAdmin /*= FALSE*/)
 {
@@ -1130,7 +1135,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	BOOL lbChildProcessCreated = FALSE;
 	CRealConsole* pRCon = (CRealConsole*)lpParameter;
 
-	BOOL bDetached = pRCon->m_Args.bDetached;
+	BOOL bDetached = pRCon->m_Args.bDetached && !pRCon->mb_ProcessRestarted && !pRCon->mn_InRecreate;
 
 	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...");
 
@@ -2126,7 +2131,7 @@ BOOL CRealConsole::StartProcess()
 
 				//mp_sei->nShow = gpSet->isConVisible ? SW_SHOWNORMAL : SW_HIDE;
 				mp_sei->nShow = SW_SHOWMINIMIZED;
-				SetConStatus(L"Starting root process as user...");
+				SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...");
 				lbRc = gpConEmu->GuiShellExecuteEx(mp_sei, TRUE);
 				// ошибку покажем дальше
 				dwLastError = GetLastError();
@@ -2154,6 +2159,15 @@ BOOL CRealConsole::StartProcess()
 		}
 		else
 		{
+			if (InRecreate())
+			{
+				m_Args.bDetached = TRUE;
+				_ASSERTE(mh_ConEmuC==NULL);
+				SafeCloseHandle(mh_ConEmuC);
+				_ASSERTE(isDetached());
+				SetConStatus(L"Recreate console failed");
+			}
+
 			//Box("Cannot execute the command.");
 			//DWORD dwLastError = GetLastError();
 			DEBUGSTRPROC(L"CreateProcess failed\n");
@@ -2170,17 +2184,17 @@ BOOL CRealConsole::StartProcess()
 			nErrLen += _tcslen(pszErr);
 			TCHAR* psz = (TCHAR*)Alloc(nErrLen+100,sizeof(TCHAR));
 			int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
-			_wcscpy_c(psz, nErrLen, _T("Cannot execute the command.\r\n"));
-			_wcscat_c(psz, nErrLen, psCurCmd); _wcscat_c(psz, nErrLen, _T("\r\n"));
+			_wcscpy_c(psz, nErrLen, _T("Command execution failed\n\n"));
+			_wcscat_c(psz, nErrLen, psCurCmd); _wcscat_c(psz, nErrLen, _T("\n\n"));
 			_wcscat_c(psz, nErrLen, pszErr);
 
 			if (m_Args.pszSpecialCmd == NULL)
 			{
-				if (psz[_tcslen(psz)-1]!=_T('\n')) _wcscat_c(psz, nErrLen, _T("\r\n"));
+				if (psz[_tcslen(psz)-1]!=_T('\n')) _wcscat_c(psz, nErrLen, _T("\n"));
 
 				if (!gpSet->psCurCmd && StrStrI(gpSet->GetCmd(), gpSetCls->GetDefaultCmd())==NULL)
 				{
-					_wcscat_c(psz, nErrLen, _T("\r\n\r\n"));
+					_wcscat_c(psz, nErrLen, _T("\n\n"));
 					_wcscat_c(psz, nErrLen, _T("Do You want to simply start "));
 					_wcscat_c(psz, nErrLen, gpSetCls->GetDefaultCmd());
 					_wcscat_c(psz, nErrLen, _T("?"));
@@ -2201,7 +2215,14 @@ BOOL CRealConsole::StartProcess()
 				if (gpConEmu->isValid(pVCon))
 				{
 					mb_InCreateRoot = FALSE;
-					CloseConsole();
+					if (InRecreate())
+					{
+						TODO("Поставить флаг Detached?");
+					}
+					else
+					{
+						CloseConsole(false, false);
+					}
 				}
 				else
 				{
@@ -3225,7 +3246,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	}
 	#endif
 
-	// Проверим, может клавишу обработает сам буфер?
+	// Проверим, может клавишу обработает сам буфер (выделение текста кнопками, если оно уже начато и т.п.)?
+	// Сами HotKeys буфер не обрабатывает
 	if (mp_ABuf->OnKeyboard(hWnd, messg, wParam, lParam, pszChars))
 		return;
 
@@ -3260,93 +3282,85 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				if (/*isPressed(VK_MENU) &&*/ !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
 				{
 					PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
-					//TODO("Вынести в отдельную функцию типа SendKeyPress(VK_TAB,0x22,'\x09')");
-					//INPUT_RECORD r = {KEY_EVENT};
-					//
-					////WARNING("По хорошему, нужно не TAB посылать, а то если открыт QuickSearch - он закроется а фар перескочит на другую панель");
-					//
-					//r.Event.KeyEvent.bKeyDown = TRUE;
-					//r.Event.KeyEvent.wVirtualKeyCode = VK_TAB;
-					//r.Event.KeyEvent.wVirtualScanCode = MapVirtualKey(VK_TAB, 0/*MAPVK_VK_TO_VSC*/);
-					//r.Event.KeyEvent.dwControlKeyState = 0x22;
-					//r.Event.KeyEvent.uChar.UnicodeChar = 9;
-					//PostConsoleEvent(&r);
-					//
-					////On Keyboard(hConWnd, WM_KEYUP, VK_TAB, 0);
-					//r.Event.KeyEvent.bKeyDown = FALSE;
-					//r.Event.KeyEvent.dwControlKeyState = 0x22; // было 0x20
-					//PostConsoleEvent(&r);
 				}
 			}
+			// Continue!
+		}
+		
+		// Hotkey?
+		if (((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST))
+		{
+			// Такие коды с клавиатуры приходить не должны, а то для "мышки" ничего не останется
+			_ASSERTE(!(((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST)));
+		}
+		else if (gpConEmu->ProcessHotKey(messg, wParam, lParam, pszChars, this))
+		{
+			// Yes, Skip
+			return;
 		}
 
 		//if (messg == WM_SYSKEYDOWN)
 		//    if (wParam == VK_INSERT && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/)
 		//        mb_ConsoleSelectMode = true;
-		static bool isSkipNextAltUp = false;
+		//static bool isSkipNextAltUp = false;
 
-		if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & (1<<29)
-		        && !isPressed(VK_SHIFT))
-		{
-			if (gpSet->isSendAltEnter)
-			{
-				INPUT_RECORD r = {KEY_EVENT};
-				//On Keyboard(hConWnd, WM_KEYDOWN, VK_MENU, 0); -- Alt слать не нужно - он уже послан
-				WARNING("А надо ли так заморачиваться?");
-				//On Keyboard(hConWnd, WM_KEYDOWN, VK_RETURN, 0);
-				r.Event.KeyEvent.bKeyDown = TRUE;
-				r.Event.KeyEvent.wRepeatCount = 1;
-				r.Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
-				r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_RETURN, 0/*MAPVK_VK_TO_VSC*/);
-				r.Event.KeyEvent.dwControlKeyState = NUMLOCK_ON|LEFT_ALT_PRESSED /*0x22*/;
-				r.Event.KeyEvent.uChar.UnicodeChar = pszChars[0];
-				PostConsoleEvent(&r);
-				//On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
-				r.Event.KeyEvent.bKeyDown = FALSE;
-				r.Event.KeyEvent.dwControlKeyState = NUMLOCK_ON;
-				PostConsoleEvent(&r);
-				//On Keyboard(hConWnd, WM_KEYUP, VK_MENU, 0); -- Alt слать не нужно - он будет послан сам позже
-			}
-			else
-			{
-				//if (isPressed(VK_SHIFT))
-				//    return;
-				gpConEmu->OnAltEnter();
-				isSkipNextAltUp = true;
-			}
-		}
-		//AltSpace - показать системное меню
-		else if (!gpSet->isSendAltSpace && (messg == WM_SYSKEYDOWN || messg == WM_SYSKEYUP)
-		        && wParam == VK_SPACE && lParam & (1<<29) && !isPressed(VK_SHIFT))
-		{
-			// Нада, или системное меню будет недоступно
-			if (messg == WM_SYSKEYUP)  // Только по UP, чтобы не "булькало"
-			{
-				gpConEmu->ShowSysmenu();
-			}
-		}
-		else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
-		else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && (lParam & (1<<29))
-		        && !gpSet->isSendAltF9 && !isPressed(VK_SHIFT))
-		{
-			// AltF9
-			// Чтобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
-			if (gpSet->isFixAltOnAltTab)
-				PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
-
-			//INPUT_RECORD r = {KEY_EVENT};
-			//r.Event.KeyEvent.bKeyDown = TRUE;
-			//r.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
-			//r.Event.KeyEvent.wVirtualScanCode = MapVirtualKey(VK_CONTROL, 0/*MAPVK_VK_TO_VSC*/);
-			//r.Event.KeyEvent.dwControlKeyState = 0x2A;
-			//r.Event.KeyEvent.wRepeatCount = 1;
-			//PostConsoleEvent(&r);
-			//r.Event.KeyEvent.bKeyDown = FALSE;
-			//r.Event.KeyEvent.dwControlKeyState = 0x22;
-			//PostConsoleEvent(&r);
-			//gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(gpConEmu->mb_isFullScreen&&gpConEmu->isWndNotFSMaximized)) ? rNormal : rMaximized);
-			gpConEmu->OnAltF9(TRUE);
-		}
+		//if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & (1<<29)
+		//        && !isPressed(VK_SHIFT))
+		//{
+		//	if (gpSet->isSendAltEnter)
+		//	{
+		//		#if 0
+		//		INPUT_RECORD r = {KEY_EVENT};
+		//		//On Keyboard(hConWnd, WM_KEYDOWN, VK_MENU, 0); -- Alt слать не нужно - он уже послан
+		//		WARNING("А надо ли так заморачиваться?");
+		//		//On Keyboard(hConWnd, WM_KEYDOWN, VK_RETURN, 0);
+		//		r.Event.KeyEvent.bKeyDown = TRUE;
+		//		r.Event.KeyEvent.wRepeatCount = 1;
+		//		r.Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
+		//		r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_RETURN, 0/*MAPVK_VK_TO_VSC*/);
+		//		r.Event.KeyEvent.dwControlKeyState = NUMLOCK_ON|LEFT_ALT_PRESSED /*0x22*/;
+		//		r.Event.KeyEvent.uChar.UnicodeChar = pszChars[0];
+		//		PostConsoleEvent(&r);
+		//		//On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
+		//		r.Event.KeyEvent.bKeyDown = FALSE;
+		//		r.Event.KeyEvent.dwControlKeyState = NUMLOCK_ON;
+		//		PostConsoleEvent(&r);
+		//		//On Keyboard(hConWnd, WM_KEYUP, VK_MENU, 0); -- Alt слать не нужно - он будет послан сам позже
+		//		#endif
+		//		_ASSERTE(pszChars[0]==13);
+		//		PostKeyPress(VK_RETURN, LEFT_ALT_PRESSED, pszChars[0]);
+		//	}
+		//	else
+		//	{
+		//		// Чтобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
+		//		if (gpSet->isFixAltOnAltTab)
+		//			PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
+		//		// Change fullscreen mode
+		//		gpConEmu->OnAltEnter();
+		//		//isSkipNextAltUp = true;
+		//	}
+		//}
+		////AltSpace - показать системное меню
+		//else if (!gpSet->isSendAltSpace && (messg == WM_SYSKEYDOWN || messg == WM_SYSKEYUP)
+		//        && wParam == VK_SPACE && lParam & (1<<29) && !isPressed(VK_SHIFT))
+		//{
+		//	// Нада, или системное меню будет недоступно
+		//	if (messg == WM_SYSKEYUP)  // Только по UP, чтобы не "булькало"
+		//	{
+		//		gpConEmu->ShowSysmenu();
+		//	}
+		//}
+		//else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
+		//else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && (lParam & (1<<29))
+		//        && !gpSet->isSendAltF9 && !isPressed(VK_SHIFT))
+		//{
+		//	// AltF9
+		//	// Чтобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
+		//	if (gpSet->isFixAltOnAltTab)
+		//		PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
+		//	// Maximize/Restore
+		//	gpConEmu->OnAltF9(TRUE);
+		//}
 		// *** Not send to console ***
 		else if (GuiWnd())
 		{
@@ -3736,6 +3750,11 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc)
 
 			return 1; // Чтобы во время Recreate GUI не захлопнулся
 		}
+	}
+	
+	if (isDetached())
+	{
+		return 1; // Чтобы GUI не захлопнулся
 	}
 
 	// Если хотят узнать только количество процессов
@@ -4622,6 +4641,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 	//OpenColorMapping();
 	mb_ProcessRestarted = FALSE; // Консоль запущена
 	mb_InCloseConsole = FALSE;
+	m_Args.bDetached = FALSE;
 	ZeroStruct(m_ServerClosing);
 	if (mn_InRecreate>=1)
 		mn_InRecreate = 0; // корневой процесс успешно пересоздался
@@ -4894,9 +4914,9 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	if (!this)
 		return false;
 
-	_ASSERTE(hConWnd && mh_ConEmuC);
+	_ASSERTE((hConWnd && mh_ConEmuC) || isDetached());
 
-	if (!hConWnd || !mh_ConEmuC)
+	if ((!hConWnd || !mh_ConEmuC) && !isDetached())
 	{
 		Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
 		return false; // консоль пока не создана?
@@ -4948,7 +4968,15 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 		return false;
 	}
 
-	CloseConsole();
+	if (isDetached())
+	{
+		_ASSERTE(mn_InRecreate && mn_ProcessCount == 0 && !mb_ProcessRestarted);
+		RecreateProcessStart();
+	}
+	else
+	{
+		CloseConsole(false, false);
+	}
 	// mb_InCloseConsole сбросим после того, как появится новое окно!
 	//mb_InCloseConsole = FALSE;
 	//if (con.pConChar && con.pConAttr)
@@ -5023,7 +5051,8 @@ bool CRealConsole::IsFarHyperlinkAllowed(bool abFarRequired)
 {
 	if (!gpSet->isFarGotoEditor)
 		return false;
-	if (gpSet->isFarGotoEditorVk && !isPressed(gpSet->isFarGotoEditorVk))
+	//if (gpSet->isFarGotoEditorVk && !isPressed(gpSet->isFarGotoEditorVk))
+	if (!gpSet->IsModifierPressed(vkFarGotoEditorVk, true))
 		return false;
 
 	// Для открытия гиперссылки (http, email) фар не требуется
@@ -5859,9 +5888,9 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 		return false;
 
 	// Есть модальный редактор/вьювер?
+	int iModal = -1;
 	if (mn_tabsCount > 1)
 	{
-		int iModal = -1;
 		for (int i = 0; i < mn_tabsCount; i++)
 		{
 			if (mp_tabs[i].Modal)
@@ -5955,6 +5984,9 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 			pszAmp += 2;
 		}
 	}
+
+	if ((iModal != -1) && (tabIdx != iModal))
+		pTab->Type |= fwt_Disabled;
 
 	UpdateTabFlags(pTab);
 
@@ -6664,6 +6696,17 @@ bool CRealConsole::isConsoleClosing()
 
 void CRealConsole::CloseConsoleWindow()
 {
+	if (gpSet->isCloseConsoleConfirm)
+	{
+		BOOL b = gbDontEnable; gbDontEnable = TRUE;
+		//int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+		int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, hGuiWnd ? L"Confirm closing window?" : L"Confirm closing console window?", Title, MB_ICONEXCLAMATION|MB_YESNO);
+		gbDontEnable = b;
+
+		if (nBtn != IDYES)
+			return;
+	}
+
 	mb_InCloseConsole = TRUE;
 	if (hGuiWnd)
 	{
@@ -6675,11 +6718,22 @@ void CRealConsole::CloseConsoleWindow()
 	}
 }
 
-void CRealConsole::CloseConsole(BOOL abForceTerminate /* = FALSE */)
+void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 {
 	if (!this) return;
 
 	_ASSERTE(!mb_ProcessRestarted);
+
+	if (abConfirm && gpSet->isCloseConsoleConfirm)
+	{
+		BOOL b = gbDontEnable; gbDontEnable = TRUE;
+		//int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+		int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, L"Confirm closing console?", Title, MB_ICONEXCLAMATION|MB_YESNO);
+		gbDontEnable = b;
+
+		if (nBtn != IDYES)
+			return;
+	}
 
 	// Сброс background
 	CESERVER_REQ_SETBACKGROUND BackClear = {};
@@ -7658,6 +7712,8 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	{
 		rcPreGuiWndRect = arcPrev;
 	}
+	// ahGuiWnd может быть на первом этапе, когда ConEmuHk уведомляет - запустился GUI процесс
+	_ASSERTE((hGuiWnd==NULL && ahGuiWnd==NULL) || (ahGuiWnd && IsWindow(ahGuiWnd))); // Проверить, чтобы мусор не пришел...
 	hGuiWnd = ahGuiWnd;
 	//mn_GuiWndPID = anAppPID;
 	setGuiWndPID(anAppPID, PointToName(asAppFileName));
@@ -7678,7 +7734,9 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	ExecutePrepareCmd(&In, CECMD_ATTACHGUIAPP, nSize);
 
 	In.AttachGuiApp.nFlags = anFlags;
-	In.AttachGuiApp.hWindow = ahGuiWnd;
+	In.AttachGuiApp.hConEmuWnd = ghWnd;
+	In.AttachGuiApp.hConEmuWndDC = GetView();
+	In.AttachGuiApp.hAppWindow = ahGuiWnd;
 	In.AttachGuiApp.nPID = anAppPID;
 	if (asAppFileName)
 		wcscpy_c(In.AttachGuiApp.sAppFileName, asAppFileName);
@@ -8550,7 +8608,7 @@ bool CRealConsole::Detach()
 		// Сбросить переменные, чтобы гуй закрыть не пыталось
 		hGuiWnd = NULL;
 		// Закрыть консоль
-		CloseConsole(FALSE);
+		CloseConsole(false, false);
 	}
 	else
 	{
@@ -8614,9 +8672,14 @@ const CEFAR_INFO_MAPPING* CRealConsole::GetFarInfo()
 	return ms_NameTitle;
 }*/
 
-BOOL CRealConsole::InCreateRoot()
+bool CRealConsole::InCreateRoot()
 {
-	return (mb_InCreateRoot && !mn_ConEmuC_PID);
+	return (this && mb_InCreateRoot && !mn_ConEmuC_PID);
+}
+
+bool CRealConsole::InRecreate()
+{
+	return (this && mb_ProcessRestarted);
 }
 
 // Можно ли к этой консоли прицепить GUI приложение
@@ -8817,4 +8880,28 @@ void CRealConsole::setGuiWndPID(DWORD anPID, LPCWSTR asProcessName)
 {
 	mn_GuiWndPID = anPID;
 	lstrcpyn(ms_GuiWndProcess, asProcessName ? asProcessName : L"", countof(ms_GuiWndProcess));
+}
+
+void CRealConsole::CtrlWinAltSpace()
+{
+	if (!this)
+	{
+		return;
+	}
+
+	static DWORD dwLastSpaceTick = 0;
+
+	if ((dwLastSpaceTick-GetTickCount())<1000)
+	{
+		//if (hWnd == ghWnd DC) MBoxA(_T("Space bounce recieved from DC")) else
+		//if (hWnd == ghWnd) MBoxA(_T("Space bounce recieved from MainWindow")) else
+		//if (hWnd == gpConEmu->m_Back->mh_WndBack) MBoxA(_T("Space bounce recieved from BackWindow")) else
+		//if (hWnd == gpConEmu->m_Back->mh_WndScroll) MBoxA(_T("Space bounce recieved from ScrollBar")) else
+		MBoxA(_T("Space bounce recieved from unknown window"));
+		return;
+	}
+
+	dwLastSpaceTick = GetTickCount();
+	//MBox(L"CtrlWinAltSpace: Toggle");
+	ShowConsoleOrGuiClient(-1); // Toggle visibility
 }

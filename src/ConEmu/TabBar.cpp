@@ -470,9 +470,9 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 	return pVCon;
 }
 
-LRESULT TabBarClass::TabHitTest()
+LRESULT TabBarClass::TabHitTest(bool abForce /*= false*/)
 {
-	if ((gpSet->isHideCaptionAlways() || gpConEmu->mb_isFullScreen || (gpConEmu->isZoomed() && gpSet->isHideCaption))
+	if ((abForce || gpSet->isHideCaptionAlways() || gpConEmu->mb_isFullScreen || (gpConEmu->isZoomed() && gpSet->isHideCaption))
 	        && gpSet->isTabs)
 	{
 		if (gpConEmu->mp_TabBar->IsTabsShown())
@@ -530,10 +530,12 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 		case WM_LBUTTONDOWN: case WM_LBUTTONUP: case WM_LBUTTONDBLCLK:
 		/*case WM_RBUTTONDOWN:*/ case WM_RBUTTONUP: //case WM_RBUTTONDBLCLK:
 
-			if ((gpSet->isHideCaptionAlways() || gpConEmu->mb_isFullScreen || (gpConEmu->isZoomed() && gpSet->isHideCaption))
-			        && gpSet->isTabs)
+			if (((uMsg == WM_RBUTTONUP)
+					|| gpSet->isHideCaptionAlways() || gpConEmu->mb_isFullScreen
+					|| (gpConEmu->isZoomed() && gpSet->isHideCaption))
+				&& gpSet->isTabs)
 			{
-				if (TabHitTest()==HTCAPTION)
+				if (TabHitTest(true)==HTCAPTION)
 				{
 					POINT ptScr; GetCursorPos(&ptScr);
 					lParam = MAKELONG(ptScr.x,ptScr.y);
@@ -1370,7 +1372,7 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 	else if (wParam == TID_CREATE_CON)
 	{
-		gpConEmu->Recreate(FALSE, gpSet->isMultiNewConfirm);
+		gpConEmu->Recreate(FALSE, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 	}
 	else if (wParam == TID_BUFFERHEIGHT)
 	{
@@ -2339,6 +2341,8 @@ BOOL TabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 			SwitchNext(lbAltPressed);
 		else
 			SwitchPrev(lbAltPressed);
+
+		return TRUE;
 	}
 	else if (mb_InKeySwitching && messg == WM_KEYDOWN && !lbAltPressed
 	        && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT))
@@ -2348,9 +2352,11 @@ BOOL TabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 		BOOL bForward = (wParam == VK_RIGHT || wParam == VK_DOWN);
 		Switch(bForward);
 		gpSet->isTabRecent = bRecent;
+
+		return TRUE;
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 void TabBarClass::SetRedraw(BOOL abEnableRedraw)

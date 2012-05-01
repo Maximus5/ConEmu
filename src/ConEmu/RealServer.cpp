@@ -982,7 +982,7 @@ CESERVER_REQ* CRealServer::cmdTabsCmd(LPVOID pInst, CESERVER_REQ* pIn, UINT nDat
 	DEBUGSTRCMD(L"GUI recieved CECMD_TABSCMD\n");
 	_ASSERTE(nDataSize>=1);
 	DWORD nTabCmd = pIn->Data[0];
-	gpConEmu->TabCommand(nTabCmd);
+	gpConEmu->TabCommand((ConEmuTabCommand)nTabCmd);
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
 
 	return pOut;
@@ -1322,6 +1322,57 @@ CESERVER_REQ* CRealServer::cmdLockDc(LPVOID pInst, CESERVER_REQ* pIn, UINT nData
 	return pOut;
 }
 
+CESERVER_REQ* CRealServer::cmdGetAllTabs(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	CESERVER_REQ* pOut = NULL;
+
+	DEBUGSTRCMD(L"GUI recieved CECMD_GETALLTABS\n");
+
+	CESERVER_REQ_GETALLTABS::TabInfo* pTabs = NULL;
+	size_t cchCount = CConEmuCtrl::GetOpenedTabs(pTabs);
+
+	if (cchCount && pTabs)
+	{
+		size_t RetSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GETALLTABS)+((cchCount-1)*sizeof(CESERVER_REQ_GETALLTABS::TabInfo));
+		pOut = ExecuteNewCmd(pIn->hdr.nCmd, RetSize);
+		if (pOut)
+		{
+			pOut->GetAllTabs.Count = cchCount;
+			memmove(pOut->GetAllTabs.Tabs, pTabs, cchCount*sizeof(*pTabs));
+		}
+	}
+	else
+	{
+		pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GETALLTABS));
+	}
+	SafeFree(pTabs);
+	
+	return pOut;
+}
+
+CESERVER_REQ* CRealServer::cmdActivateTab(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	CESERVER_REQ* pOut = NULL;
+
+	DEBUGSTRCMD(L"GUI recieved CECMD_ACTIVATETAB\n");
+	
+	BOOL lbTabOk = FALSE;
+	if (nDataSize >= 2*sizeof(DWORD))
+	{
+		CVirtualConsole *pVCon = gpConEmu->GetVCon(pIn->dwData[0]);
+		if (pVCon && pVCon->RCon())
+		{
+			lbTabOk = pVCon->RCon()->ActivateFarWindow(pIn->dwData[1]);
+		}
+		gpConEmu->ConActivate(pIn->dwData[0]);
+	}
+	
+	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+	if (pOut)
+		pOut->dwData[0] = lbTabOk;
+	return pOut;
+}
+
 //CESERVER_REQ* CRealServer::cmdAssert(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 //{
 //	CESERVER_REQ* pOut = NULL;
@@ -1473,49 +1524,73 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 
 	//  } else
 
-	if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP)
+	switch (pIn->hdr.nCmd)
+	{
+	case CECMD_CMDSTARTSTOP:
 		pOut = pRSrv->cmdStartStop(pInst, pIn, nDataSize);
+		break;
 	//else if (pIn->hdr.nCmd == CECMD_GETGUIHWND)
 	//	pOut = pRSrv->cmdGetGuiHwnd(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_TABSCHANGED)
+	case CECMD_TABSCHANGED:
 		pOut = pRSrv->cmdTabsChanged(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_GETOUTPUTFILE)
+		break;
+	case CECMD_GETOUTPUTFILE:
 		pOut = pRSrv->cmdGetOutputFile(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_GUIMACRO)
+		break;
+	case CECMD_GUIMACRO:
 		pOut = pRSrv->cmdGuiMacro(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_LANGCHANGE)
+		break;
+	case CECMD_LANGCHANGE:
 		pOut = pRSrv->cmdLangChange(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_TABSCMD)
+		break;
+	case CECMD_TABSCMD:
 		pOut = pRSrv->cmdTabsCmd(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_RESOURCES)
+		break;
+	case CECMD_RESOURCES:
 		pOut = pRSrv->cmdResources(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_SETFOREGROUND)
+		break;
+	case CECMD_SETFOREGROUND:
 		pOut = pRSrv->cmdSetForeground(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_FLASHWINDOW)
+		break;
+	case CECMD_FLASHWINDOW:
 		pOut = pRSrv->cmdFlashWindow(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_REGPANELVIEW)
+		break;
+	case CECMD_REGPANELVIEW:
 		pOut = pRSrv->cmdRegPanelView(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_SETBACKGROUND)
+		break;
+	case CECMD_SETBACKGROUND:
 		pOut = pRSrv->cmdSetBackground(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_ACTIVATECON)
+		break;
+	case CECMD_ACTIVATECON:
 		pOut = pRSrv->cmdActivateCon(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_ONCREATEPROC)
+		break;
+	case CECMD_ONCREATEPROC:
 		pOut = pRSrv->cmdOnCreateProc(pInst, pIn, nDataSize);
+		break;
 	//else if (pIn->hdr.nCmd == CECMD_NEWCONSOLE)
 	//	pOut = pRSrv->cmdNewConsole(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_PEEKREADINFO)
+	case CECMD_PEEKREADINFO:
 		pOut = pRSrv->cmdOnPeekReadInput(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_KEYSHORTCUTS)
+		break;
+	case CECMD_KEYSHORTCUTS:
 		pOut = pRSrv->cmdOnSetConsoleKeyShortcuts(pInst, pIn, nDataSize);
-	else if (pIn->hdr.nCmd == CECMD_ALIVE)
+		break;
+	case CECMD_ALIVE:
 		pOut = ExecuteNewCmd(CECMD_ALIVE, sizeof(CESERVER_REQ_HDR));
+		break;
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
-	else if (pIn->hdr.nCmd == CECMD_LOCKDC)
+	case CECMD_LOCKDC:
 		pOut = pRSrv->cmdLockDc(pInst, pIn, nDataSize);
+		break;
+	case CECMD_GETALLTABS:
+		pOut = pRSrv->cmdGetAllTabs(pInst, pIn, nDataSize);
+		break;
+	case CECMD_ACTIVATETAB:
+		pOut = pRSrv->cmdActivateTab(pInst, pIn, nDataSize);
+		break;
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(pInst, pIn, nDataSize);
-	else
-	{
+	default:
 		// Неизвестная команда
 		_ASSERTE(pIn->hdr.nCmd == CECMD_CMDSTARTSTOP);
 

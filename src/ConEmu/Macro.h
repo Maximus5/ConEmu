@@ -38,7 +38,8 @@ class CRealConsole;
 class CConEmuMacro
 {
 	public:
-		CConEmuMacro();
+		// Вообще не используется, все статическое
+		CConEmuMacro() {};
 		~CConEmuMacro() {};
 	public:
 		// Общая функция, для обработки любого известного макроса
@@ -48,6 +49,7 @@ class CConEmuMacro
 		static LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString);
 		static LPWSTR GetNextArg(LPWSTR& rsArguments, LPWSTR& rsArg);
 		static LPWSTR GetNextInt(LPWSTR& rsArguments, int& rnValue);
+		static void SkipWhiteSpaces(LPWSTR& rsString);
 	public:
 		// Теперь - собственно макросы
 
@@ -70,6 +72,8 @@ class CConEmuMacro
 		static LPWSTR FontSetSize(LPWSTR asArgs, CRealConsole* apRCon);
 		// Изменить имя основного шрифта. string
 		static LPWSTR FontSetName(LPWSTR asArgs, CRealConsole* apRCon);
-		// ShellExecute
+		// Shell (ShellExecute)
 		static LPWSTR Shell(LPWSTR asArgs, CRealConsole* apRCon);
+		// Tabs
+		static LPWSTR Tab(LPWSTR asArgs, CRealConsole* apRCon);
 };

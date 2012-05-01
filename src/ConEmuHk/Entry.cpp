@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_INJECT_MSGBOX
 //  #define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-//  #define SHOW_EXE_MSGBOX_NAME L"tcc.exe"
+//  #define SHOW_EXE_MSGBOX_NAME L"far.exe"
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
@@ -437,66 +437,83 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	else if (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
 	{
 		DWORD dwConEmuHwnd = 0;
+		BOOL  bAttachExistingWindow = FALSE;
 		wchar_t szVar[64], *psz;
-		if (GetEnvironmentVariable(L"ConEmuHWND", szVar, countof(szVar)))
+		ConEmuGuiMapping* GuiMapping = (ConEmuGuiMapping*)calloc(1,sizeof(*GuiMapping));
+		if (GuiMapping && LoadGuiMapping(gnSelfPID, *GuiMapping))
 		{
-			if (szVar[0] == L'0' && szVar[1] == L'x')
-			{
-				dwConEmuHwnd = wcstoul(szVar+2, &psz, 16);
-				if (!user->isWindow((HWND)dwConEmuHwnd))
-					dwConEmuHwnd = 0;
-				else if (!user->getClassNameW((HWND)dwConEmuHwnd, szVar, countof(szVar)))
-					dwConEmuHwnd = 0;
-				else if (lstrcmp(szVar, VirtualConsoleClassMain) != 0)
-					dwConEmuHwnd = 0;
-			}
+			gnGuiPID = GuiMapping->nGuiPID;
+			ghConEmuWnd = GuiMapping->hGuiWnd;
+			bAttachExistingWindow = gbAttachGuiClient = TRUE;
+			//ghAttachGuiClient = 
 		}
-		
-		if (dwConEmuHwnd)
+		SafeFree(GuiMapping);
+
+		// Если аттачим существующее окно - таб в ConEmu еще не готов
+		if (!bAttachExistingWindow)
 		{
-			// Предварительное уведомление ConEmu GUI, что запущено GUI приложение
-			// и оно может "захотеть во вкладку ConEmu".
-			DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
-			CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(nSize);
-			ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
-			pIn->AttachGuiApp.nPID = GetCurrentProcessId();
-			GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
-			pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
-
-			wchar_t szGuiPipeName[128];
-			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", dwConEmuHwnd);
-			
-			CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 1000, NULL);
-
-			free(pIn);
-
-			if (pOut)
+			if (!dwConEmuHwnd && GetEnvironmentVariable(L"ConEmuHWND", szVar, countof(szVar)))
 			{
-				if (pOut->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
+				if (szVar[0] == L'0' && szVar[1] == L'x')
 				{
-					if (pOut->AttachGuiApp.nFlags & agaf_Success)
-					{
-						user->allowSetForegroundWindow(pOut->hdr.nSrcPID); // PID ConEmu.
-						_ASSERTEX(gnGuiPID==0 || gnGuiPID==pOut->hdr.nSrcPID);
-						gnGuiPID = pOut->hdr.nSrcPID;
-						ghConEmuWnd = (HWND)dwConEmuHwnd;
-						_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
-						ghConEmuWndDC = pOut->AttachGuiApp.hWindow;
-						ghConWnd = pOut->AttachGuiApp.hSrvConWnd;
-						_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
-						grcConEmuClient = pOut->AttachGuiApp.rcWindow;
-						gnServerPID = pOut->AttachGuiApp.nPID;
-						if (pOut->AttachGuiApp.hkl)
-						{
-							LONG_PTR hkl = (LONG_PTR)(LONG)pOut->AttachGuiApp.hkl;
-							BOOL lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != NULL;
-							UNREFERENCED_PARAMETER(lbRc);
-						}
-						OnConWndChanged(ghConWnd);
-						gbAttachGuiClient = TRUE;
-					}
+					dwConEmuHwnd = wcstoul(szVar+2, &psz, 16);
+					if (!user->isWindow((HWND)dwConEmuHwnd))
+						dwConEmuHwnd = 0;
+					else if (!user->getClassNameW((HWND)dwConEmuHwnd, szVar, countof(szVar)))
+						dwConEmuHwnd = 0;
+					else if (lstrcmp(szVar, VirtualConsoleClassMain) != 0)
+						dwConEmuHwnd = 0;
 				}
-				ExecuteFreeResult(pOut);
+			}
+			
+			if (dwConEmuHwnd)
+			{
+				// Предварительное уведомление ConEmu GUI, что запущено GUI приложение
+				// и оно может "захотеть во вкладку ConEmu".
+				DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
+				CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(nSize);
+				ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
+				pIn->AttachGuiApp.nPID = GetCurrentProcessId();
+				GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
+				pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
+
+				wchar_t szGuiPipeName[128];
+				msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", dwConEmuHwnd);
+				
+				CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 1000, NULL);
+
+				free(pIn);
+
+				if (pOut)
+				{
+					if (pOut->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
+					{
+						if (pOut->AttachGuiApp.nFlags & agaf_Success)
+						{
+							user->allowSetForegroundWindow(pOut->hdr.nSrcPID); // PID ConEmu.
+							_ASSERTEX(gnGuiPID==0 || gnGuiPID==pOut->hdr.nSrcPID);
+							gnGuiPID = pOut->hdr.nSrcPID;
+							//ghConEmuWnd = (HWND)dwConEmuHwnd;
+							_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
+							_ASSERTE(pOut->AttachGuiApp.hConEmuWnd==(HWND)dwConEmuHwnd);
+							ghConEmuWnd = pOut->AttachGuiApp.hConEmuWnd;
+							ghConEmuWndDC = pOut->AttachGuiApp.hConEmuWndDC;
+							ghConWnd = pOut->AttachGuiApp.hSrvConWnd;
+							_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
+							grcConEmuClient = pOut->AttachGuiApp.rcWindow;
+							gnServerPID = pOut->AttachGuiApp.nPID;
+							if (pOut->AttachGuiApp.hkl)
+							{
+								LONG_PTR hkl = (LONG_PTR)(LONG)pOut->AttachGuiApp.hkl;
+								BOOL lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != NULL;
+								UNREFERENCED_PARAMETER(lbRc);
+							}
+							OnConWndChanged(ghConWnd);
+							gbAttachGuiClient = TRUE;
+						}
+					}
+					ExecuteFreeResult(pOut);
+				}
 			}
 		}
 	}
@@ -1249,7 +1266,17 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 	switch (pCmd->hdr.nCmd)
 	{
 	case CECMD_ATTACHGUIAPP:
-		TODO("При 'внешнем' аттаче инициированном юзером из ConEmu");
+		{
+			// При 'внешнем' аттаче инициированном юзером из ConEmu
+			_ASSERTEX(pCmd->AttachGuiApp.hConEmuWnd && ghConEmuWnd==pCmd->AttachGuiApp.hConEmuWnd);
+			//ghConEmuWndDC = pOut->AttachGuiApp.hConEmuWndDC; -- еще нету
+			AttachGuiWindow(pCmd->AttachGuiApp.hAppWindow);
+			// Результат
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
+			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize);
+			if (lbRc)
+				ppReply->dwData[0] = (DWORD)ghAttachGuiClient;
+		} // CECMD_ATTACHGUIAPP
 		break;
 	case CECMD_SETFOCUS:
 		break;
@@ -1263,7 +1290,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize);
 			if (lbRc)
 				ppReply->dwData[0] = lbFRc;
-		}
+		} // CECMD_CTRLBREAK
 		break;
 	case CECMD_SETGUIEXTERN:
 		if (ghAttachGuiClient)
@@ -1273,7 +1300,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize);
 			if (lbRc)
 				ppReply->dwData[0] = gbGuiClientExternMode;
-		}
+		} // CECMD_SETGUIEXTERN
 		break;
 	case CECMD_LANGCHANGE:
 		{
@@ -1286,12 +1313,12 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				ppReply->dwData[0] = lbRc;
 				ppReply->dwData[1] = nErrCode;
 			}
-		}
+		} // CECMD_LANGCHANGE
 		break;
 	case CECMD_STARTSERVER:
 		{
 			int nErrCode = -1;
-			wchar_t szSelf[MAX_PATH+16], *pszNamePtr, szArgs[64];
+			wchar_t szSelf[MAX_PATH+16], *pszNamePtr, szArgs[128];
 			PROCESS_INFORMATION pi = {};
 			STARTUPINFO si = {sizeof(si)};
 
@@ -1299,7 +1326,19 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			{
 				// Запускаем сервер той же битности, что и текущий процесс
 				_wcscpy_c(pszNamePtr, 16, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
-				_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /GID=%u /ATTACH /PID=%u", pCmd->NewServer.nPID, GetCurrentProcessId());
+				if (gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_GUI)
+				{
+					_ASSERTEX(pCmd->NewServer.hAppWnd!=0);
+					_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /GID=%u /GUIATTACH=%08X /PID=%u",
+							pCmd->NewServer.nPID, (DWORD)pCmd->NewServer.hAppWnd, GetCurrentProcessId());
+					gbAttachGuiClient = TRUE;
+				}
+				else
+				{
+					_ASSERTEX(pCmd->NewServer.hAppWnd==0);
+					_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /GID=%u /ATTACH /PID=%u",
+						pCmd->NewServer.nPID, GetCurrentProcessId());
+				}
 				lbRc = CreateProcess(szSelf, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 				if (lbRc)
 				{
@@ -1320,7 +1359,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				ppReply->dwData[0] = pi.dwProcessId;
 				ppReply->dwData[1] = (DWORD)nErrCode;
 			}
-		}
+		} // CECMD_STARTSERVER
 		break;
 	}
 	

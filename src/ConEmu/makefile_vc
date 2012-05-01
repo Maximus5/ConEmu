@@ -32,6 +32,7 @@ $(INTDIR)\Background.obj \
 $(INTDIR)\BaseDragDrops.obj \
 $(INTDIR)\ConEmu.obj \
 $(INTDIR)\ConEmuApp.obj \
+$(INTDIR)\ConEmuCtrl.obj \
 $(INTDIR)\ConEmuPipe.obj \
 $(INTDIR)\CustomFonts.obj \
 $(INTDIR)\DragDrop.obj \
@@ -228,6 +229,8 @@ $(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDr
 $(INTDIR)\ConEmu.obj: ConEmu.cpp Version.h GuiServer.h GestureEngine.h ../common/PipeServer.h
 
 $(INTDIR)\ConEmuApp.obj: ConEmuApp.cpp Version.h
+
+$(INTDIR)\ConEmuCtrl.obj: ConEmuCtrl.cpp ConEmuCtrl.h
 
 $(INTDIR)\ConEmuPipe.obj: ConEmuPipe.cpp
 

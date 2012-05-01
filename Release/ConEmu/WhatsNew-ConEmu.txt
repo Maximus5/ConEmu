@@ -2,6 +2,41 @@
 English: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=en
 Russian: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=ru
 
+TODO: Описать GUI Macro "Tab"
+TODO: Размножить ConEmu.TabList.fml для Far2/Far1
+TODO: Добавить ConEmu.TabList.fml в инсталлятор
+
+****
+
+[!] Warning! «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder!
+
+****
+
+[!] Полностью переделана обработка HotKeys.
+    * Понятия «HostKey» больше нет.
+    * Для всех (почти) клавиш можно назначить собственный модификатор.
+    * Исключение - системные комбинации, активация консоли по номеру (общий модификатор) и управление размером окна (общий модификатор).
+    * Теперь можно использовать «клавиши» WheelUp, WheelDown, WheelLeft, WheelRight (колесо мышки).
+[!] Чтобы в корне не маячили и не мешали фару при работе вне ConEmu - ExtendedConsole пененесен в подпапку.
+[+] Теперь можно настроить до 32-х GUI Macro, привязав их к HotKeys.
+    По умолчанию, CtrlWheelUp/CtrlWheelDown меняет размер шрифта.
+[%] В префиксе "ConEmu:run:" теперь можно использовать переменные окружения.
+    Например, для файлов "*.cpp,*.hpp" настроить такую ассоциацию (e.g. AltF4):
+    ConEmu:Run:"%FARHOME%\Tools\Notepad++\notepad++.exe" -new_console "!\!.!"
+[+] Опциональное подтверждение закрытия консоли из ConEmu (Features -> Confirm close console).
+[+] Portable: Рядом с ConEmu.exe можно положить файлы MsXml3.dll и MsXml3r.dll чтобы не возникало
+    проблем с xml-конфигурацией в Live сборках и в Win2k. Регистрировать MsXml3.dll не нужно.
+    Рекомендуется брать файлы MsXml3.dll и MsXml3r.dll из Windows XP.
+[*] Немного доработано пересоздание консоли.
+[*] Не срабатывал Shift для пунктов меню 'Restart', 'Restart as', 'New console'.
+[*] Меню (системное или для таба) всегда всплывает при RClick на табах.
+[+] GUI Apps in tabs: теперь работает пункт меню 'Attach...'
+[+] GUI Macro: "Tab(<Cmd>[,<Parm>])"
+    TODO: Description coming
+[+] Keyboard: 'Show opened tabs list (does not work in Far - use macro instead)'. Default - F12.
+[+] ConEmu plugin: команда в меню плагина - 'Show all tabs list', макрос 'ConEmu.TabList.fml'
+
+
 2012.04.22
 [*] Issue 527: Правим ошибки в детекторе панелей.
 [%] Глюк размера при старте, если 'Hide caption' и режим 'Maximized' в ярлыке.

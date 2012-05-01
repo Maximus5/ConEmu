@@ -685,7 +685,7 @@ LRESULT CTaskBarGhost::OnClose()
 	//SetWindowLongPtr(_hwnd, GWLP_USERDATA, 0);
 	//DestroyWindow(mh_Ghost);
 
-	mp_VCon->RCon()->CloseConsole();
+	mp_VCon->RCon()->CloseConsole(false, true);
 
 	return 0;
 }

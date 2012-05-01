@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Injects.h"
 #include "GuiAttach.h"
 #include "../common/WinObjects.h"
+#include "UserImp.h"
 
 #ifndef SEE_MASK_NOZONECHECKS
 #define SEE_MASK_NOZONECHECKS 0x800000
@@ -187,13 +188,14 @@ char* CShellProc::wcs2str(const wchar_t* pwsz, UINT anCP)
 
 BOOL CShellProc::LoadGuiMapping()
 {
-	if (!m_SrvMapping.cbSize || (m_SrvMapping.hConEmuWnd && !IsWindow(m_SrvMapping.hConEmuWnd)))
+	_ASSERTEX(user);
+	if (!m_SrvMapping.cbSize || (m_SrvMapping.hConEmuWnd && !user->isWindow(m_SrvMapping.hConEmuWnd)))
 	{
 		if (!::LoadSrvMapping(ghConWnd, m_SrvMapping))
 			return FALSE;
 	}
 
-	if (!m_SrvMapping.hConEmuWnd || !IsWindow(m_SrvMapping.hConEmuWnd))
+	if (!m_SrvMapping.hConEmuWnd || !user->isWindow(m_SrvMapping.hConEmuWnd))
 		return FALSE;
 
 	return TRUE;

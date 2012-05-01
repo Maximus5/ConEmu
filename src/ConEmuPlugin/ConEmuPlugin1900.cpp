@@ -461,6 +461,10 @@ void SetStartupInfoW1900(void *aInfo)
 			_ASSERTE(FarVer.Major == 3);
 		}
 	}
+
+	// Коды должны совпадать с Far2, а то menu_ShowTabsList надо будет переписывать
+	_ASSERTE(MACROAREA_SHELL==1 && MACROAREA_SEARCH==5 && MACROAREA_INFOPANEL==10 && MACROAREA_QVIEWPANEL==11);
+	_ASSERTE(MACROAREA_TREEPANEL==12 && OPEN_FILEPANEL==7 && MACROAREA_EDITOR==3 && MACROAREA_VIEWER==2);
 }
 
 DWORD GetEditorModifiedStateW1900()
@@ -1015,31 +1019,46 @@ void PostMacroW1900(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	SafeFree(pszMacroCopy);
 }
 
-int ShowPluginMenuW1900()
+int ShowPluginMenuW1900(ConEmuPluginMenuItem* apItems, int Count)
 {
 	if (!InfoW1900)
 		return -1;
 
-	FarMenuItem items[] =
+	//FarMenuItem items[] =
+	//{
+	//	{ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE,  InfoW1900->GetMsg(&guid_ConEmu,CEMenuEditOutput)},
+	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW1900->GetMsg(&guid_ConEmu,CEMenuViewOutput)},
+	//	{MIF_SEPARATOR},
+	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW1900->GetMsg(&guid_ConEmu,CEMenuShowHideTabs)},
+	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW1900->GetMsg(&guid_ConEmu,CEMenuNextTab)},
+	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW1900->GetMsg(&guid_ConEmu,CEMenuPrevTab)},
+	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW1900->GetMsg(&guid_ConEmu,CEMenuCommitTab)},
+	//	{MIF_SEPARATOR},
+	//	{0,                                        InfoW1900->GetMsg(&guid_ConEmu,CEMenuGuiMacro)},
+	//	{MIF_SEPARATOR},
+	//	{ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED,  InfoW1900->GetMsg(&guid_ConEmu,CEMenuAttach)},
+	//	{MIF_SEPARATOR},
+	//	//#ifdef _DEBUG
+	//	//{0, L"&~. Raise exception"},
+	//	//#endif
+	//	{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW1900->GetMsg(&guid_ConEmu,CEMenuDebug)},
+	//};
+
+	FarMenuItem* items = (FarMenuItem*)calloc(Count, sizeof(*items));
+	for (int i = 0; i < Count; i++)
 	{
-		{ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE,  InfoW1900->GetMsg(&guid_ConEmu,CEMenuEditOutput)},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW1900->GetMsg(&guid_ConEmu,CEMenuViewOutput)},
-		{MIF_SEPARATOR},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW1900->GetMsg(&guid_ConEmu,CEMenuShowHideTabs)},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW1900->GetMsg(&guid_ConEmu,CEMenuNextTab)},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW1900->GetMsg(&guid_ConEmu,CEMenuPrevTab)},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW1900->GetMsg(&guid_ConEmu,CEMenuCommitTab)},
-		{MIF_SEPARATOR},
-		{0,                                        InfoW1900->GetMsg(&guid_ConEmu,CEMenuGuiMacro)},
-		{MIF_SEPARATOR},
-		{ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED,  InfoW1900->GetMsg(&guid_ConEmu,CEMenuAttach)},
-		{MIF_SEPARATOR},
-		//#ifdef _DEBUG
-		//{0, L"&~. Raise exception"},
-		//#endif
-		{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW1900->GetMsg(&guid_ConEmu,CEMenuDebug)},
-	};
-	int nCount = sizeof(items)/sizeof(items[0]);
+		if (apItems[i].Separator)
+		{
+			items[i].Flags = MIF_SEPARATOR;
+			continue;
+		}
+		items[i].Flags	= (apItems[i].Disabled ? MIF_DISABLE : 0)
+						| (apItems[i].Selected ? MIF_SELECTED : 0)
+						| (apItems[i].Checked  ? MIF_CHECKED : 0)
+						;
+		items[i].Text = apItems[i].MsgText ? apItems[i].MsgText : InfoW1900->GetMsg(&guid_ConEmu, apItems[i].MsgID);
+	}
+
 	GUID lguid_Menu = { /* 2dc6b821-fd8e-4165-adcf-a4eda7b44e8e */
 	    0x2dc6b821,
 	    0xfd8e,
@@ -1049,17 +1068,8 @@ int ShowPluginMenuW1900()
 	int nRc = InfoW1900->Menu(&guid_ConEmu, &lguid_Menu, -1,-1, 0,
 	                         FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
 	                         InfoW1900->GetMsg(&guid_ConEmu,CEPluginName),
-	                         NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
-	//#ifdef _DEBUG
-	//if (nRc == (nCount - 2))
-	//{
-	//	// Вызвать исключение для проверки отладчика
-	//	LPVOID ptrSrc;
-	//	wchar_t szDst[MAX_PATH];
-	//	ptrSrc = NULL;
-	//	memmove(szDst, ptrSrc, sizeof(szDst));
-	//}
-	//#endif
+	                         NULL, NULL, NULL, NULL, (FarMenuItem*)items, Count);
+	SafeFree(items);
 	return nRc;
 }
 
@@ -1238,6 +1248,7 @@ bool LoadPluginW1900(wchar_t* pszPluginPath)
 bool RunExternalProgramW1900(wchar_t* pszCommand)
 {
 	wchar_t strTemp[MAX_PATH+1];
+	wchar_t *pszExpand = NULL;
 
 	if (!pszCommand || !*pszCommand)
 	{
@@ -1253,6 +1264,26 @@ bool RunExternalProgramW1900(wchar_t* pszCommand)
 			return false;
 
 		pszCommand = strTemp;
+	}
+	else if (wcschr(pszCommand, L'%'))
+	{
+		DWORD cchMax = countof(strTemp);
+		pszExpand = strTemp;
+		DWORD nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
+		if (nExpLen)
+		{
+			if (nExpLen > cchMax)
+			{
+				cchMax = nExpLen + 32;
+				pszExpand = (wchar_t*)calloc(cchMax,sizeof(*pszExpand));
+				nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
+			}
+			
+			if (nExpLen && (nExpLen <= cchMax))
+			{
+				pszCommand = pszExpand;
+			}
+		}
 	}
 
 	wchar_t *pszCurDir = GetPanelDir(INVALID_HANDLE_VALUE);
@@ -1276,6 +1307,7 @@ bool RunExternalProgramW1900(wchar_t* pszCommand)
 		InfoW1900->PanelControl(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
 	InfoW1900->AdvControl(&guid_ConEmu,ACTL_REDRAWALL,0, 0);
 	free(pszCurDir); //pszCurDir = NULL;
+	if (pszExpand && (pszExpand != strTemp)) free(pszExpand);
 	return TRUE;
 }
 

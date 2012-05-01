@@ -3575,100 +3575,40 @@ void FindComspec(ConEmuComspec* pOpt)
 	{
 		HKEY hk;
 		BOOL bWin64 = IsWindows64(NULL);
+		wchar_t szPath[MAX_PATH+1];
 
-		// [HKEY_LOCAL_MACHINE\SOFTWARE\JP Software\Take Command 13.0]
-		// @="\"C:\\Program Files\\JPSoft\\TCMD13\\tcmd.exe\""
-		for (int b = 0; b <= 1; b++)
+		// Если tcc.exe положили в папку с ConEmuC.exe берем его?
+		DWORD nExpand = ExpandEnvironmentStrings(L"%ConEmuBaseDir%\tcc.exe", szPath, countof(szPath));
+		if (nExpand && (nExpand < countof(szPath)))
 		{
-			// b==0 - 32bit, b==1 - 64bit
-			if (b && !bWin64)
-				continue;
-			bool bFound = false;
-			DWORD nOpt = (b == 0) ? (bWin64 ? KEY_WOW64_32KEY : 0) : (bWin64 ? KEY_WOW64_64KEY : 0);
-			if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\JP Software", 0, KEY_READ|nOpt, &hk))
+			if (FileExists(szPath))
 			{
-				wchar_t szName[MAX_PATH+1]; DWORD nLen;
-				for (DWORD n = 0; !bFound && !RegEnumKeyEx(hk, n, szName, &(nLen = countof(szName)-1), 0,0,0,0); n++)
-				{
-					HKEY hk2;
-					if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
-					{
-	                    wchar_t szPath[MAX_PATH+1] = {}; DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
-						if (!RegQueryValueExW(hk2, NULL, NULL, NULL, (LPBYTE)szPath, &nSize) && *szPath)
-						{
-							wchar_t* psz, *pszEnd;
-							if (szPath[0] == L'"')
-							{
-								psz = szPath + 1;
-								pszEnd = wcschr(psz, L'"');
-								if (pszEnd)
-									*pszEnd = 0;
-							}
-							else
-							{
-								psz = szPath;
-							}
-							pszEnd = wcsrchr(psz, L'\\');
-							if (!pszEnd || lstrcmpi(pszEnd, L"\\tcmd.exe") || !FileExists(psz))
-								continue;
-							lstrcpyn(pszEnd+1, L"tcc.exe", 8);
-							if (FileExists(psz))
-							{
-								bFound = true;
-								if (b == 0)
-                                	wcscpy_c(pOpt->Comspec32, psz);
-                            	else
-                                	wcscpy_c(pOpt->Comspec64, psz);
-							}
-						}
-						RegCloseKey(hk2);
-					}
-				} //  for, подключи
-				RegCloseKey(hk);
-			} // L"SOFTWARE\\JP Software"
-		} // for (int b = 0; b <= 1; b++)
+				wcscpy_c(pOpt->Comspec32, szPath);
+				wcscpy_c(pOpt->Comspec64, szPath);
+			}
+		}
 
-		// Если установлен TCMD - предпочтительно использовать именно его, независимо от битности
-		if (*pOpt->Comspec32 && !*pOpt->Comspec64)
-			wcscpy_c(pOpt->Comspec64, pOpt->Comspec32);
-		else if (*pOpt->Comspec64 && !*pOpt->Comspec32)
-			wcscpy_c(pOpt->Comspec32, pOpt->Comspec64);
-
-		// [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{16A21882-4138-4ADA-A390-F62DC27E4504}]
-		// "DisplayVersion"="13.04.60"
-		// "Publisher"="JP Software"
-		// "DisplayName"="Take Command 13.0"
-		// или
-		// "DisplayName"="TCC/LE 13.0"
-		// и наконец
-		// "InstallLocation"="C:\\Program Files\\JPSoft\\TCMD13\\"
-		for (int b = 0; b <= 1; b++)
+		if (!*pOpt->Comspec32 || !*pOpt->Comspec64)
 		{
-			// b==0 - 32bit, b==1 - 64bit
-			if (b && !bWin64)
-				continue;
-			if (((b == 0) ? *pOpt->Comspec32 : *pOpt->Comspec64))
-				continue; // этот уже нашелся в TCMD
-
-			bool bFound = false;
-			DWORD nOpt = (b == 0) ? (bWin64 ? KEY_WOW64_32KEY : 0) : (bWin64 ? KEY_WOW64_64KEY : 0);
-			if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", 0, KEY_READ|nOpt, &hk))
+			// [HKEY_LOCAL_MACHINE\SOFTWARE\JP Software\Take Command 13.0]
+			// @="\"C:\\Program Files\\JPSoft\\TCMD13\\tcmd.exe\""
+			for (int b = 0; b <= 1; b++)
 			{
-				wchar_t szName[MAX_PATH+1]; DWORD nLen;
-				for (DWORD n = 0; !bFound && !RegEnumKeyEx(hk, n, szName, &(nLen = countof(szName)-1), 0,0,0,0); n++)
+				// b==0 - 32bit, b==1 - 64bit
+				if (b && !bWin64)
+					continue;
+				bool bFound = false;
+				DWORD nOpt = (b == 0) ? (bWin64 ? KEY_WOW64_32KEY : 0) : (bWin64 ? KEY_WOW64_64KEY : 0);
+				if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\JP Software", 0, KEY_READ|nOpt, &hk))
 				{
-					if (*szName != L'{')
-						continue;
-					HKEY hk2;
-					if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
+					wchar_t szName[MAX_PATH+1]; DWORD nLen;
+					for (DWORD n = 0; !bFound && !RegEnumKeyEx(hk, n, szName, &(nLen = countof(szName)-1), 0,0,0,0); n++)
 					{
-	                    wchar_t szPath[MAX_PATH+1] = {}; DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
-						if (!RegQueryValueExW(hk2, L"Publisher", NULL, NULL, (LPBYTE)szPath, &nSize)
-							&& !lstrcmpi(szPath, L"JP Software"))
+						HKEY hk2;
+						if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
 						{
-							nSize = (countof(szPath)-12)*sizeof(szPath[0]);
-							if (!RegQueryValueExW(hk2, L"InstallLocation", NULL, NULL, (LPBYTE)szPath, &nSize)
-								&& *szPath)
+							memset(szPath, 0, sizeof(szPath)); DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
+							if (!RegQueryValueExW(hk2, NULL, NULL, NULL, (LPBYTE)szPath, &nSize) && *szPath)
 							{
 								wchar_t* psz, *pszEnd;
 								if (szPath[0] == L'"')
@@ -3682,33 +3622,112 @@ void FindComspec(ConEmuComspec* pOpt)
 								{
 									psz = szPath;
 								}
-								if (*psz)
+								pszEnd = wcsrchr(psz, L'\\');
+								if (!pszEnd || lstrcmpi(pszEnd, L"\\tcmd.exe") || !FileExists(psz))
+									continue;
+								lstrcpyn(pszEnd+1, L"tcc.exe", 8);
+								if (FileExists(psz))
 								{
-									pszEnd = psz+lstrlen(psz);
-									if (*(pszEnd-1) != L'\\')
-										*(pszEnd++) = L'\\';
-									lstrcpyn(pszEnd, L"tcc.exe", 8);
-									if (FileExists(psz))
+									bFound = true;
+									if (b == 0)
+                                		wcscpy_c(pOpt->Comspec32, psz);
+                            		else
+                                		wcscpy_c(pOpt->Comspec64, psz);
+								}
+							}
+							RegCloseKey(hk2);
+						}
+					} //  for, подключи
+					RegCloseKey(hk);
+				} // L"SOFTWARE\\JP Software"
+			} // for (int b = 0; b <= 1; b++)
+
+			// Если установлен TCMD - предпочтительно использовать именно его, независимо от битности
+			if (*pOpt->Comspec32 && !*pOpt->Comspec64)
+				wcscpy_c(pOpt->Comspec64, pOpt->Comspec32);
+			else if (*pOpt->Comspec64 && !*pOpt->Comspec32)
+				wcscpy_c(pOpt->Comspec32, pOpt->Comspec64);
+		}
+
+		if (!*pOpt->Comspec32 || !*pOpt->Comspec64)
+		{
+			// [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{16A21882-4138-4ADA-A390-F62DC27E4504}]
+			// "DisplayVersion"="13.04.60"
+			// "Publisher"="JP Software"
+			// "DisplayName"="Take Command 13.0"
+			// или
+			// "DisplayName"="TCC/LE 13.0"
+			// и наконец
+			// "InstallLocation"="C:\\Program Files\\JPSoft\\TCMD13\\"
+			for (int b = 0; b <= 1; b++)
+			{
+				// b==0 - 32bit, b==1 - 64bit
+				if (b && !bWin64)
+					continue;
+				if (((b == 0) ? *pOpt->Comspec32 : *pOpt->Comspec64))
+					continue; // этот уже нашелся в TCMD
+
+				bool bFound = false;
+				DWORD nOpt = (b == 0) ? (bWin64 ? KEY_WOW64_32KEY : 0) : (bWin64 ? KEY_WOW64_64KEY : 0);
+				if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", 0, KEY_READ|nOpt, &hk))
+				{
+					wchar_t szName[MAX_PATH+1]; DWORD nLen;
+					for (DWORD n = 0; !bFound && !RegEnumKeyEx(hk, n, szName, &(nLen = countof(szName)-1), 0,0,0,0); n++)
+					{
+						if (*szName != L'{')
+							continue;
+						HKEY hk2;
+						if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
+						{
+							wchar_t szPath[MAX_PATH+1] = {}; DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
+							if (!RegQueryValueExW(hk2, L"Publisher", NULL, NULL, (LPBYTE)szPath, &nSize)
+								&& !lstrcmpi(szPath, L"JP Software"))
+							{
+								nSize = (countof(szPath)-12)*sizeof(szPath[0]);
+								if (!RegQueryValueExW(hk2, L"InstallLocation", NULL, NULL, (LPBYTE)szPath, &nSize)
+									&& *szPath)
+								{
+									wchar_t* psz, *pszEnd;
+									if (szPath[0] == L'"')
 									{
-										bFound = true;
-										if (b == 0)
-		                                	wcscpy_c(pOpt->Comspec32, psz);
-		                                else
-		                                	wcscpy_c(pOpt->Comspec64, psz);
+										psz = szPath + 1;
+										pszEnd = wcschr(psz, L'"');
+										if (pszEnd)
+											*pszEnd = 0;
+									}
+									else
+									{
+										psz = szPath;
+									}
+									if (*psz)
+									{
+										pszEnd = psz+lstrlen(psz);
+										if (*(pszEnd-1) != L'\\')
+											*(pszEnd++) = L'\\';
+										lstrcpyn(pszEnd, L"tcc.exe", 8);
+										if (FileExists(psz))
+										{
+											bFound = true;
+											if (b == 0)
+		                                		wcscpy_c(pOpt->Comspec32, psz);
+											else
+		                                		wcscpy_c(pOpt->Comspec64, psz);
+										}
 									}
 								}
 							}
+							RegCloseKey(hk2);
 						}
-						RegCloseKey(hk2);
-					}
-				} // for, подключи
-				RegCloseKey(hk);
-			} // L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
-		} // for (int b = 0; b <= 1; b++)
+					} // for, подключи
+					RegCloseKey(hk);
+				} // L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+			} // for (int b = 0; b <= 1; b++)
+		}
 
+		// Попытаться "в лоб" из "Program Files"
 		if (!*pOpt->Comspec32 && !*pOpt->Comspec64)
 		{
-			// Попытаться "в лоб"
+			
 			const wchar_t* pszTcmd  = L"C:\\Program Files\\JPSoft\\TCMD13\\tcc.exe";
 			const wchar_t* pszTccLe = L"C:\\Program Files\\JPSoft\\TCCLE13\\tcc.exe";
 			if (FileExists(pszTcmd))

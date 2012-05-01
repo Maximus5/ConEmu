@@ -4648,7 +4648,7 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 				gpConEmu->OnVConTerminated(this);
 			break;
 		case IDM_TERMINATEPRC:
-			mp_RCon->CloseConsole(TRUE);
+			mp_RCon->CloseConsole(true, false);
 			break;
 		case IDM_TERMINATECON:
 			mp_RCon->CloseConsoleWindow();
@@ -4658,7 +4658,7 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 
 			if (gpConEmu->isActive(this))
 			{
-				gpConEmu->Recreate(TRUE, FALSE, (nCmd==IDM_RESTARTAS));
+				gpConEmu->Recreate(TRUE, isPressed(VK_SHIFT), (nCmd==IDM_RESTARTAS));
 			}
 			else
 			{
@@ -4667,7 +4667,7 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 
 			break;
 		case ID_NEWCONSOLE:
-			gpConEmu->Recreate(FALSE, gpSet->isMultiNewConfirm);
+			gpConEmu->Recreate(FALSE, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			break;
 		case IDM_ATTACHTO:
 			gpConEmu->OnSysCommand(ghWnd, IDM_ATTACHTO, 0);

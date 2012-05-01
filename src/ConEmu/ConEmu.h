@@ -106,6 +106,7 @@ enum TrackMenuPlace
 	tmp_VCon,
 	tmp_Cmd,
 	tmp_KeyBar,
+	tmp_TabsList,
 };
 
 struct MsgSrvStartedArg
@@ -122,12 +123,14 @@ struct MsgSrvStartedArg
 #include "FrameHolder.h"
 #include "GuiServer.h"
 #include "GestureEngine.h"
+#include "ConEmuCtrl.h"
 
 class CConEmuMain :
 	public CDwmHelper,
 	public CTaskBar,
 	public CFrameHolder,
-	public CGestures
+	public CGestures,
+	public CConEmuCtrl
 {
 	public:
 		//HMODULE mh_Psapi;
@@ -163,15 +166,17 @@ class CConEmuMain :
 		wchar_t ms_ConEmuCurDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
 		wchar_t *mpsz_ConEmuArgs;    // Аргументы
 		void GetComSpecCopy(ConEmuComspec& ComSpec);
+		void CreateGuiAttachMapping(DWORD nGuiAppPID);
 	private:
 		ConEmuGuiMapping m_GuiInfo;
 		MFileMapping<ConEmuGuiMapping> m_GuiInfoMapping;
+		MFileMapping<ConEmuGuiMapping> m_GuiAttachMapping;
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
 	public:
 		//CConEmuChild *m_Child;
 		//CConEmuBack  *m_Back;
-		CConEmuMacro *m_Macro;
+		//CConEmuMacro *m_Macro;
 		TabBarClass *mp_TabBar;
 		CToolTip *mp_Tip;
 		//POINT cwShift; // difference between window size and client area size for main ConEmu window
@@ -319,8 +324,9 @@ class CConEmuMain :
 		void RegisterHoooks();
 		void UnRegisterHoooks(BOOL abFinal=FALSE);
 		void UpdateWinHookSettings();
-	protected:
 		void CtrlWinAltSpace();
+	protected:
+		friend class CConEmuCtrl;
 		//BOOL LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode);
 		//DWORD_PTR mn_CurrentKeybLayout;
 		// Registered messages
@@ -339,9 +345,10 @@ class CConEmuMain :
 		UINT mn_MsgUpdateTabs; // = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 		UINT mn_MsgOldCmdVer; BOOL mb_InShowOldCmdVersion;
 		UINT mn_MsgTabCommand;
-		UINT mn_MsgTabSwitchFromHook; BOOL mb_InWinTabSwitch; // = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
+		UINT mn_MsgTabSwitchFromHook; /*BOOL mb_InWinTabSwitch;*/ // = RegisterWindowMessage(CONEMUMSG_SWITCHCON);
+		//WARNING!!! mb_InWinTabSwitch - перенести в Keys!
 		UINT mn_MsgWinKeyFromHook;
-		UINT mn_MsgConsoleHookedKey;
+		//UINT mn_MsgConsoleHookedKey;
 		UINT mn_MsgSheelHook;
 		UINT mn_ShellExecuteEx;
 		UINT mn_PostConsoleResize;
@@ -352,7 +359,7 @@ class CConEmuMain :
 		UINT mn_MsgInitInactiveDC;
 		//UINT mn_MsgSetForeground;
 		UINT mn_MsgFlashWindow; // = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
-		UINT mn_MsgActivateCon; // = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
+		//UINT mn_MsgActivateCon; // = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 		UINT mn_MsgUpdateProcDisplay;
 		//UINT wmInputLangChange;
 		UINT mn_MsgAutoSizeFont;
@@ -394,6 +401,7 @@ class CConEmuMain :
 		CVirtualConsole* ActiveCon();
 		BOOL Activate(CVirtualConsole* apVCon);
 		int ActiveConNum(); // 0-based
+		int GetConCount(); // количество открытых консолей
 		static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 		void AskChangeBufferHeight();
 		BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
@@ -515,7 +523,7 @@ class CConEmuMain :
 		void SyncNtvdm();
 		void SyncWindowToConsole();
 		void SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout);
-		void TabCommand(UINT nTabCmd);
+		//void TabCommand(UINT nTabCmd);
 		BOOL TrackMouse();
 		int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, RECT *prcRect);
 		void Update(bool isForce = false);
@@ -554,7 +562,7 @@ class CConEmuMain :
 		void OnInfo_ReportBug();
 		LRESULT OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam);
 		LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-		LRESULT OnKeyboardHook(WORD vk, BOOL abReverse);
+		LRESULT OnKeyboardHook(DWORD VkMod);
 		LRESULT OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayoutName);

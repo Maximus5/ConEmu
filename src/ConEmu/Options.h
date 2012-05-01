@@ -72,6 +72,95 @@ class CVirtualConsole;
 #define TaskBracketLeft   L'{'
 #define TaskBracketRight  L'}'
 
+#define CEHOTKEY_MODMASK    0xFFFFFF00
+#define CEHOTKEY_NUMHOSTKEY 0xFFFFFF00
+#define CEHOTKEY_ARRHOSTKEY 0xFEFEFE00
+#define CEHOTKEY_NOMOD      0x80808000
+
+enum ConEmuHotKeyType
+{
+	chk_User = 0, // обычный настраиваемый hotkey
+	chk_Modifier, // для драга, например
+	chk_NumHost,  // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
+	chk_ArrHost,  // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
+	chk_System,   // predefined hotkeys, ненастраиваемые (пока?)
+	chk_Global,   // globally registered hotkey
+	chk_Macro,    // GUI Macro
+};
+
+// Уехал в common.hpp
+//enum ConEmuModifiers
+//{
+//	// Для удобства, в младшем байте VkMod хранится VK кнопки
+//	cvk_VK_MASK  = 0x000000FF,
+//
+//	// Модификаторы, которые юзер просил различать, правый или левый
+//	cvk_LCtrl    = 0x00000100,
+//	cvk_RCtrl    = 0x00000200,
+//	cvk_LAlt     = 0x00000400,
+//	cvk_RAlt     = 0x00000800,
+//	cvk_LShift   = 0x00001000,
+//	cvk_RShift   = 0x00002000,
+//
+//	// Если без разницы, правый или левый
+//	cvk_Ctrl     = 0x00010000,
+//	cvk_Alt      = 0x00020000,
+//	cvk_Shift    = 0x00040000,
+//	cvk_Win      = 0x00080000,
+//	cvk_Apps     = 0x00100000,
+//
+//	// Маска всех с учетом правый/левый
+//	cvk_DISTINCT = cvk_LCtrl|cvk_RCtrl|cvk_LAlt|cvk_RAlt|cvk_LShift|cvk_RShift|cvk_Win|cvk_Apps,
+//	// Маска вообще всех допустимых флагов, за исключением самого VK
+//	cvk_ALLMASK  = 0xFFFFFF00,
+//};
+
+struct ConEmuHotKey
+{
+	int DescrLangID;
+	
+	ConEmuHotKeyType HkType; // 0 - hotkey, 1 - modifier (для драга, например), 2 - system hotkey (настройка nMultiHotkeyModifier)
+
+	bool*   Enabled;
+	wchar_t Name[64];
+	
+	//// User. Если NULL - значит системный, не изменяемый
+	//union
+	//{
+	//	DWORD* VkModPtr; // (HkType==chk_User, chk_Hostkey, chk_System, chk_Global)
+	//	BYTE*  ModPtr;   // (HkType==chk_Modifier)
+	//};
+	
+	DWORD VkMod;
+
+    bool (WINAPI *fkey)(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-обработали, false-пропустить в консоль
+	bool OnKeyUp; // Некоторые комбинации нужно обрабатывать "на отпускание" (показ диалогов, меню, ...)
+
+	wchar_t* GuiMacro;
+
+	// Internal
+	size_t cchGuiMacroMax;
+
+	bool CanChangeVK() const
+	{
+		//chk_System - пока не настраивается
+		if (HkType==chk_User || HkType==chk_Global || HkType==chk_Macro)
+		{
+			return true;
+		}
+		return false;
+	};
+
+	void Free()
+	{
+		SafeFree(GuiMacro);
+	};
+};
+
+// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
+#define ConEmuSkipHotKey ((ConEmuHotKey*)INVALID_HANDLE_VALUE)
+
+
 struct Settings
 {
 	public:
@@ -84,6 +173,8 @@ struct Settings
 	public:
 
 		wchar_t Type[16]; // Информационно: L"[reg]" или L"[xml]"
+
+		bool IsConfigNew; // true, если конфигурация новая
 
 		//reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);
 		int DefaultBufferHeight;
@@ -466,17 +557,17 @@ struct Settings
 		//reg->Load(L"CTS.SelectText", isCTSSelectText);
 		bool isCTSSelectText;
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
-		BYTE isCTSVkBlock; // модификатор запуска выделения мышкой
-		//reg->Load(L"CTS.VkBlockStart", isCTSVkBlockStart);
-		BYTE isCTSVkBlockStart; // кнопка начала выделения вертикального блока
+		//BYTE isCTSVkBlock; // модификатор запуска выделения мышкой
+		//reg->Load(L"CTS.VkBlockStart", vmCTSVkBlockStart);
+		//DWORD vmCTSVkBlockStart; // кнопка начала выделения вертикального блока
 		//reg->Load(L"CTS.VkText", isCTSVkText);
-		BYTE isCTSVkText; // модификатор запуска выделения мышкой
-		//reg->Load(L"CTS.VkTextStart", isCTSVkTextStart);
-		BYTE isCTSVkTextStart; // кнопка начала выделения текстового блока
+		//BYTE isCTSVkText; // модификатор запуска выделения мышкой
+		//reg->Load(L"CTS.VkTextStart", vmCTSVkTextStart);
+		//DWORD vmCTSVkTextStart; // кнопка начала выделения текстового блока
 		//reg->Load(L"CTS.ActMode", isCTSActMode);
 		BYTE isCTSActMode; // режим и модификатор разрешения действий правой и средней кнопки мышки
 		//reg->Load(L"CTS.VkAct", isCTSVkAct);
-		BYTE isCTSVkAct; // режим и модификатор разрешения действий правой и средней кнопки мышки
+		//BYTE isCTSVkAct; // режим и модификатор разрешения действий правой и средней кнопки мышки
 		//reg->Load(L"CTS.RBtnAction", isCTSRBtnAction);
 		BYTE isCTSRBtnAction; // 0-off, 1-copy, 2-paste
 		//reg->Load(L"CTS.MBtnAction", isCTSMBtnAction);
@@ -486,9 +577,9 @@ struct Settings
 		//reg->Load(L"FarGotoEditor", isFarGotoEditor);
 		bool isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
-		BYTE isFarGotoEditorVk; // Клавиша-модификатор для isFarGotoEditor
+		//BYTE isFarGotoEditorVk; // Клавиша-модификатор для isFarGotoEditor
 		
-		bool isModifierPressed(DWORD vk);
+		bool IsModifierPressed(int nDescrID, bool bAllowEmpty);
 		//bool isSelectionModifierPressed();
 		//typedef struct tag_CharRanges
 		//{
@@ -577,9 +668,9 @@ struct Settings
 		//reg->Load(L"DndDrop", isDropEnabled);
 		BYTE isDropEnabled;
 		//reg->Load(L"DndLKey", nLDragKey);
-		BYTE nLDragKey;
+		//BYTE nLDragKey;
 		//reg->Load(L"DndRKey", nRDragKey);
-		BYTE nRDragKey; // Был DWORD
+		//BYTE nRDragKey; // Был DWORD
 		//reg->Load(L"DefCopy", isDefCopy);
 		bool isDefCopy;
 		//reg->Load(L"DragOverlay", isDragOverlay);
@@ -689,27 +780,38 @@ struct Settings
 		RECT rcTabMargins;
 		//reg->Load(L"TabFrame", isTabFrame);
 		bool isTabFrame;
-		
-		//reg->Load(L"MinimizeRestore", icMinimizeRestore);
-		BYTE icMinimizeRestore;
+
+		//reg->Load(L"MinimizeRestore", vmMinimizeRestore);
+		//DWORD vmMinimizeRestore;
 		//reg->Load(L"Multi", isMulti);
 		bool isMulti;
 		private:
-		//reg->Load(L"Multi.Modifier", nMultiHotkeyModifier); TestHostkeyModifiers();
-		DWORD nMultiHotkeyModifier;
+		//reg->Load(L"Multi.Modifier", nHostkeyModifier); TestHostkeyModifiers();
+		DWORD nHostkeyNumberModifier; // Используется для 0..9, WinSize
+		//reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); TestHostkeyModifiers();
+		DWORD nHostkeyArrowModifier; // Используется для WinSize
+		//
+		//bool  LoadVkMod(SettingsBase* reg, const wchar_t *regName, DWORD &VkMod, DWORD Default);
+		static DWORD SetModifier(DWORD VkMod, BYTE Mod/*VK*/, bool Xor=true);
 		public:
-		//reg->Load(L"Multi.NewConsole", icMultiNew);
-		BYTE icMultiNew;
-		//reg->Load(L"Multi.Next", icMultiNext);
-		BYTE icMultiNext;
-		//reg->Load(L"Multi.Recreate", icMultiRecreate);
-		BYTE icMultiRecreate;
-		//reg->Load(L"Multi.Buffer", icMultiBuffer);
-		BYTE icMultiBuffer;
-		//reg->Load(L"Multi.Close", icMultiClose);
-		BYTE icMultiClose;
-		//reg->Load(L"Multi.CmdKey", icMultiCmd);
-		BYTE icMultiCmd;
+		//reg->Load(L"Multi.NewConsole", vmMultiNew);
+		//DWORD vmMultiNew;
+		//reg->Load(L"Multi.NewConsoleShift", vmMultiNewShift);
+		//DWORD vmMultiNewShift; // Default - vmMultiNew+Shift
+		//reg->Load(L"Multi.Next", vmMultiNext);
+		//DWORD vmMultiNext;
+		//reg->Load(L"Multi.NextShift", vmMultiNextShift);
+		//DWORD vmMultiNextShift;
+		//reg->Load(L"Multi.Recreate", vmMultiRecreate);
+		//DWORD vmMultiRecreate;
+		//reg->Load(L"Multi.Buffer", vmMultiBuffer);
+		//DWORD vmMultiBuffer;
+		//reg->Load(L"Multi.Close", vmMultiClose);
+		//DWORD vmMultiClose;
+		//reg->Load(L"Multi.CloseConfirm", isCloseConsoleConfirm);
+		bool isCloseConsoleConfirm;
+		//reg->Load(L"Multi.CmdKey", vmMultiCmd);
+		//DWORD vmMultiCmd;
 		//reg->Load(L"Multi.AutoCreate", isMultiAutoCreate);
 		bool isMultiAutoCreate;
 		//reg->Load(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
@@ -731,11 +833,22 @@ struct Settings
 		//reg->Load(L"ShellNoZoneCheck", isShellNoZoneCheck);
 		bool isShellNoZoneCheck;
 		
-		bool IsHostkey(WORD vk);
-		bool IsHostkeySingle(WORD vk);
-		bool IsHostkeyPressed();
-		WORD GetPressedHostkey();
-		UINT GetHostKeyMod(); // набор флагов MOD_xxx для RegisterHotKey
+		static DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
+		//bool IsHostkey(WORD vk);
+		//bool IsHostkeySingle(WORD vk);
+		//bool IsHostkeyPressed();
+		//WORD GetPressedHostkey();
+		static DWORD GetModifier(DWORD VkMod, int idx/*1..3*/); // Вернуть назначенные модификаторы
+		static DWORD GetHotkey(DWORD VkMod); // Извлечь сам VK
+		static DWORD GetHotKeyMod(DWORD VkMod); // набор флагов MOD_xxx для RegisterHotKey
+		static bool  HasModifier(DWORD VkMod, BYTE Mod/*VK*/);
+		DWORD GetHotkeyById(int nDescrID);
+		bool IsHotkey(int nDescrID);
+		void SetHotkeyById(int nDescrID, DWORD VkMod);
+	private:
+		void LoadHotkeys(SettingsBase* reg);
+		void SaveHotkeys(SettingsBase* reg);
+	public:
 
 		/* *** Заголовки табов *** */
 		//reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
@@ -834,6 +947,7 @@ struct Settings
 		HotGuiMacro Macros[24];
 		
 	public:
+		ConEmuHotKey* AllocateHotkeys();
 		void LoadSettings();
 		void InitSettings();
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
@@ -857,15 +971,14 @@ struct Settings
 		void GetSettingsType(wchar_t (&szType)[8], bool& ReadOnly);
 		
 	private:
-		bool TestHostkeyModifiers();
-		static BYTE CheckHostkeyModifier(BYTE vk);
-		static void ReplaceHostkey(BYTE vk, BYTE vkNew);
-		static void AddHostkey(BYTE vk);
-		static void TrimHostkeys();
-		static bool MakeHostkeyModifier();
-		static BYTE HostkeyCtrlId2Vk(WORD nID);
-		BYTE mn_HostModOk[15], mn_HostModSkip[15];
-		bool isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR);
+		void TestHostkeyModifiers(DWORD& nHostMod);
+		//static BYTE CheckHostkeyModifier(BYTE vk);
+		//static void ReplaceHostkey(BYTE vk, BYTE vkNew);
+		//static void AddHostkey(BYTE vk);
+		//static void TrimHostkeys();
+		//static bool MakeHostkeyModifier();
+		//BYTE mn_HostModOk[15], mn_HostModSkip[15];
+		//bool isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR);
 	private:
 		struct CEFontRange
 		{

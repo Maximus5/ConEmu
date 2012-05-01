@@ -102,7 +102,7 @@ class TabBarClass //: public CToolTip
 		static WNDPROC _defaultToolProc;
 		static LRESULT CALLBACK ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		static WNDPROC _defaultReBarProc;
-		static LRESULT TabHitTest();
+		static LRESULT TabHitTest(bool abForce = false);
 
 		//typedef union tag_FAR_WND_ID {
 		//	struct {

@@ -407,6 +407,14 @@ BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2)
 
 wchar_t* GetDlgItemText(HWND hDlg, WORD nID)
 {
+	wchar_t* pszText = NULL;
+	size_t cchMax = 0;
+	GetDlgItemText(hDlg, nID, cchMax, pszText);
+	return pszText;
+}
+
+size_t GetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText)
+{
 	HWND hEdit;
 
 	if (nID)
@@ -418,21 +426,44 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID)
 		return NULL;
 
 	//
-	wchar_t* psz = NULL;
 	int nLen = GetWindowTextLength(hEdit);
 
 	if (nLen > 0)
 	{
-		psz = (wchar_t*)calloc(nLen+1,2);
-
-		if (psz)
+		if (!pszText || (((UINT)nLen) >= cchMax))
 		{
-			psz[0] = 0;
-			GetWindowText(hEdit, psz, nLen+1);
+			SafeFree(pszText);
+			cchMax = nLen+32;
+			pszText = (wchar_t*)calloc(cchMax,sizeof(*pszText));
+			_ASSERTE(pszText);
+		}
+		
+
+		if (pszText)
+		{
+			pszText[0] = 0;
+			GetWindowText(hEdit, pszText, nLen+1);
 		}
 	}
+	else
+	{
+		_ASSERTE(nLen == 0);
+		nLen = 0;
 
-	return psz;
+		if (pszText)
+			*pszText = 0;
+	}
+
+	return nLen;
+}
+
+bool isKey(DWORD wp,DWORD vk)
+{
+	bool bEq = ((wp==vk)
+		|| ((vk==VK_LSHIFT||vk==VK_RSHIFT)&&wp==VK_SHIFT)
+		|| ((vk==VK_LCONTROL||vk==VK_RCONTROL)&&wp==VK_CONTROL)
+		|| ((vk==VK_LMENU||vk==VK_RMENU)&&wp==VK_MENU));
+	return bEq;
 }
 
 

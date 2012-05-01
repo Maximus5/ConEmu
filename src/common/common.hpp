@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    86
+#define CESERVER_REQ_VER    88
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -122,13 +122,20 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CONEMUMSG_PNLVIEWFADE L"ConEmuTh::Fade"
 #define CONEMUMSG_PNLVIEWSETTINGS L"ConEmuTh::Settings"
 
+// Команды из плагина ConEmu и для GUI Macro
 enum ConEmuTabCommand
 {
-	// 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
+	// Эти команды приходят из плагина ConEmu
 	ctc_ShowHide = 0,
-	ctc_SwitchNext = 1,
-	ctc_SwitchPrev = 2,
-	ctc_SwitchCommit = 3,
+	ctc_SwitchCommit = 1,
+	ctc_SwitchNext = 2,
+	ctc_SwitchPrev = 3,
+	// Далее идут параметры только для GUI Macro
+	ctc_SwitchDirect = 4,
+	ctc_SwitchRecent = 5,
+	ctc_SwitchConsoleDirect = 6,
+	ctc_ActivateConsole = 7,
+	ctc_ShowTabsList = 8,
 };
 
 enum CONSOLE_KEY_ID
@@ -230,6 +237,8 @@ const CECMD
 	CECMD_STARTSERVER    = 54, // CESERVER_REQ_START. Запустить в консоли ConEmuC.exe в режиме сервера
 	CECMD_LOCKDC         = 55, // CESERVER_REQ_LOCKDC
 	CECMD_REGEXTCONSOLE  = 56, // CESERVER_REQ_REGEXTCON. Регистрация процесса, использующего ExtendedConsole.dll
+	CECMD_GETALLTABS     = 57, // CESERVER_REQ_GETALLTABS. Вернуть список всех табов, для показа в Far и использовании в макросах.
+	CECMD_ACTIVATETAB    = 58, // dwData[0]=0-based Console, dwData[1]=0-based Tab
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -259,10 +268,49 @@ const CECMD
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
 
+// Console Undocumented
 #define MOD_LALT         0x0010
 #define MOD_RALT         0x0020
 #define MOD_LCONTROL     0x0040
 #define MOD_RCONTROL     0x0080
+
+enum ConEmuModifiers
+{
+	// Для удобства, в младшем байте VkMod хранится VK кнопки
+	cvk_VK_MASK  = 0x000000FF,
+
+	// Модификаторы, которые юзер просил различать, правый или левый
+	cvk_LCtrl    = 0x00000100,
+	cvk_RCtrl    = 0x00000200,
+	cvk_LAlt     = 0x00000400,
+	cvk_RAlt     = 0x00000800,
+	cvk_LShift   = 0x00001000,
+	cvk_RShift   = 0x00002000,
+
+	// Если без разницы, правый или левый
+	cvk_Ctrl     = 0x00010000,
+	cvk_Alt      = 0x00020000,
+	cvk_Shift    = 0x00040000,
+	cvk_Win      = 0x00080000,
+	cvk_Apps     = 0x00100000,
+
+	// Маска всех с учетом правый/левый
+	cvk_DISTINCT = cvk_LCtrl|cvk_RCtrl|cvk_LAlt|cvk_RAlt|cvk_LShift|cvk_RShift|cvk_Win|cvk_Apps,
+	cvk_CtrlAny  = cvk_Ctrl|cvk_LCtrl|cvk_RCtrl,
+	cvk_AltAny   = cvk_Alt|cvk_LAlt|cvk_RAlt,
+	cvk_ShiftAny = cvk_Shift|cvk_LShift|cvk_RShift,
+	// Маска вообще всех допустимых флагов, за исключением самого VK
+	cvk_ALLMASK  = 0xFFFFFF00,
+};
+
+// ConEmu internal virtual key codes
+#define VK_WHEEL_UP    0xD0
+#define VK_WHEEL_DOWN  0xD1
+#define VK_WHEEL_LEFT  0xD2
+#define VK_WHEEL_RIGHT 0xD3
+//
+#define VK_WHEEL_FIRST VK_WHEEL_UP
+#define VK_WHEEL_LAST  VK_WHEEL_RIGHT
 
 
 //// Команды FAR плагина
@@ -790,6 +838,7 @@ struct ConEmuGuiMapping
 	DWORD    cbSize;
 	DWORD    nProtocolVersion; // == CESERVER_REQ_VER
 	HWND2    hGuiWnd; // основное (корневое) окно ConEmu
+	DWORD    nGuiPID; // PID ConEmu.exe
 	
 	DWORD    nLoggingType; // enum GuiLoggingType
 	
@@ -831,7 +880,8 @@ static const CEFarWindowType
 	fwt_Modal          = 0x0400,
 	fwt_NonModal       = 0x0800, // Аргумент для поиска окна
 	fwt_PluginRequired = 0x1000, // Аргумент для поиска окна
-	fwt_ActivateFound  = 0x2000  // Активировать найденный таб. Аргумент для поиска окна
+	fwt_ActivateFound  = 0x2000, // Активировать найденный таб. Аргумент для поиска окна
+	fwt_Disabled       = 0x4000  // Таб заблокирован другим модальным табом (или диалогом?)
 	;
 
 //TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");
@@ -1180,6 +1230,21 @@ struct CESERVER_REQ_FAREDITOR
 	wchar_t szFile[MAX_PATH+1];
 };
 
+// CECMD_GETALLTABS. Вернуть список всех открытых табов
+struct CESERVER_REQ_GETALLTABS
+{
+	int Count;
+	struct TabInfo
+	{
+		bool    ActiveConsole;
+		bool    ActiveTab;
+		bool    Disabled;
+		int     ConsoleIdx; // 0-based
+		int     TabIdx;     // 0-based
+		wchar_t Title[MAX_PATH]; // Если не влезет - то и фиг с ним
+	} Tabs[1]; // Variable length
+};
+
 enum StartStopType
 {
 	sst_ServerStart  = 0,
@@ -1407,7 +1472,9 @@ struct CESERVER_REQ_ATTACHGUIAPP
 	DWORD nFlags;
 	DWORD nPID;
 	DWORD hkl;
-	HWND2 hWindow;  // NULL - проверка можно ли, HWND - когда создан
+	HWND2 hConEmuWnd;   // Root
+	HWND2 hConEmuWndDC; // DC Window
+	HWND2 hAppWindow;   // NULL - проверка можно ли, HWND - когда создан
 	HWND2 hSrvConWnd;
 	RECT  rcWindow; // координаты
 	DWORD nStyle, nStyleEx;
@@ -1439,8 +1506,9 @@ struct MyAssertInfo
 // CECMD_STARTSERVER
 struct CESERVER_REQ_START
 {
-	DWORD nPID;   // In-GuiPID, Out-NewServerPID
-	DWORD nValue; // Error codes
+	DWORD nPID;    // In-GuiPID, Out-NewServerPID
+	HWND2 hAppWnd; // Hooked application window
+	DWORD nValue;  // Error codes
 };
 
 // CECMD_LOCKDC
@@ -1498,6 +1566,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_START NewServer;
 		CESERVER_REQ_LOCKDC LockDc;
 		CESERVER_REQ_REGEXTCON RegExtCon;
+		CESERVER_REQ_GETALLTABS GetAllTabs;
 	};
 };
 

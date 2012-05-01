@@ -759,61 +759,69 @@ void PostMacroA(char* asMacro, INPUT_RECORD* apRec)
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 }
 
-int ShowPluginMenuA()
+int ShowPluginMenuA(ConEmuPluginMenuItem* apItems, int Count)
 {
 	if (!InfoA)
 		return -1;
 
-	FarMenuItemEx items[] =
+	//FarMenuItemEx items[] =
+	//{
+	//	{MIF_USETEXTPTR|(ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE)},
+	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+	//	{MIF_SEPARATOR},
+	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+	//	{MIF_SEPARATOR},
+	//	{MIF_USETEXTPTR|0},
+	//	{MIF_SEPARATOR},
+	//	{MIF_USETEXTPTR|(ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED)},
+	//	{MIF_SEPARATOR},
+	//	//#ifdef _DEBUG
+	//	//		{MIF_USETEXTPTR},
+	//	//#endif
+	//	{MIF_USETEXTPTR|(IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0)}
+	//};
+	//items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuEditOutput);
+	//items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuViewOutput);
+	//items[3].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuShowHideTabs);
+	//items[4].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuNextTab);
+	//items[5].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuPrevTab);
+	//items[6].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuCommitTab);
+	//items[8].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuGuiMacro);
+	//items[10].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuAttach);
+	////#ifdef _DEBUG
+	////items[10].Text.TextPtr = "&~. Raise exception";
+	////items[11].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuDebug);
+	////#else
+	//items[12].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuDebug);
+	////#endif
+	//int nCount = sizeof(items)/sizeof(items[0]);
+
+	FarMenuItemEx* items = (FarMenuItemEx*)calloc(Count, sizeof(*items));
+	for (int i = 0; i < Count; i++)
 	{
-		{MIF_USETEXTPTR|(ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE)},
-		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-		{MIF_SEPARATOR},
-		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-		{MIF_SEPARATOR},
-		{MIF_USETEXTPTR|0},
-		{MIF_SEPARATOR},
-		{MIF_USETEXTPTR|(ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED)},
-		{MIF_SEPARATOR},
-		//#ifdef _DEBUG
-		//		{MIF_USETEXTPTR},
-		//#endif
-		{MIF_USETEXTPTR|(IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0)}
-	};
-	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuEditOutput);
-	items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuViewOutput);
-	items[3].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuShowHideTabs);
-	items[4].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuNextTab);
-	items[5].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuPrevTab);
-	items[6].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuCommitTab);
-	items[8].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuGuiMacro);
-	items[10].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuAttach);
-	//#ifdef _DEBUG
-	//items[10].Text.TextPtr = "&~. Raise exception";
-	//items[11].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuDebug);
-	//#else
-	items[12].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuDebug);
-	//#endif
-	int nCount = sizeof(items)/sizeof(items[0]);
+		if (apItems[i].Separator)
+		{
+			items[i].Flags = MIF_SEPARATOR;
+			continue;
+		}
+		items[i].Flags	= (apItems[i].Disabled ? MIF_DISABLE : 0)
+						| (apItems[i].Selected ? MIF_SELECTED : 0)
+						| (apItems[i].Checked  ? MIF_CHECKED : 0)
+						;
+		if (apItems[i].MsgText)
+			WideCharToMultiByte(CP_OEMCP, 0, apItems[i].MsgText, -1, items[i].Text.Text, countof(items[i].Text.Text), 0,0);
+		else
+			items[i].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber, apItems[i].MsgID);
+	}
+
 	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0,
 	                      FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
 	                      InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName),
-	                      NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
-#ifdef _DEBUG
-
-	if (nRc == (nCount - 2))
-	{
-		// Вызвать исключение для проверки отладчика
-		LPVOID ptrSrc;
-		wchar_t szDst[MAX_PATH];
-		ptrSrc = NULL;
-		memmove(szDst, ptrSrc, sizeof(szDst));
-	}
-
-#endif
+	                      NULL, NULL, NULL, NULL, (FarMenuItem*)items, Count);
+	SafeFree(items);
 	return nRc;
 }
 
@@ -897,7 +905,7 @@ bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
 
 bool RunExternalProgramA(char* pszCommand)
 {
-	char strTemp[MAX_PATH+1];;
+	char strTemp[MAX_PATH+1];
 
 	if (!pszCommand || !*pszCommand)
 	{
@@ -916,6 +924,29 @@ bool RunExternalProgramA(char* pszCommand)
 	if (!pwszCommand)
 		return TRUE;
 	MultiByteToWideChar(CP_OEMCP, 0, pszCommand, nLen, pwszCommand, nLen);
+
+	if (wcschr(pwszCommand, L'%'))
+	{
+		DWORD cchMax = nLen + MAX_PATH;
+		wchar_t* pszExpand = (wchar_t*)calloc(cchMax,sizeof(*pszExpand));
+		DWORD nExpLen = ExpandEnvironmentStrings(pwszCommand, pszExpand, cchMax);
+		if (nExpLen)
+		{
+			if (nExpLen > cchMax)
+			{
+				cchMax = nExpLen + 32;
+				pszExpand = (wchar_t*)realloc(pszExpand, cchMax*sizeof(*pszExpand));
+				nExpLen = ExpandEnvironmentStrings(pwszCommand, pszExpand, cchMax);
+			}
+			
+			if (nExpLen && (nExpLen <= cchMax))
+			{
+				free(pwszCommand);
+				pwszCommand = pszExpand;
+			}
+		}
+	}
+
 	
 	bool bSilent = (wcsstr(pwszCommand, L"-new_console") != NULL);
 	

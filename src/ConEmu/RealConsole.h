@@ -267,6 +267,8 @@ class CRealConsole
 		CRealConsole(CVirtualConsole* apVCon);
 		~CRealConsole();
 
+		CVirtualConsole* VCon();
+
 		BYTE GetConsoleKeyShortcuts() { return this ? m_ConsoleKeyShortcuts : 0; };
 
 		BOOL PreInit(BOOL abCreateBuffers=TRUE);
@@ -366,6 +368,7 @@ class CRealConsole
 		void ExpandSelection(SHORT anX=-1, SHORT anY=-1);
 		bool DoSelectionCopy();
 		void DoSelectionStop();
+		void CtrlWinAltSpace();
 		void ShowConsoleOrGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
@@ -407,7 +410,7 @@ class CRealConsole
 		BOOL ActivateFarWindow(int anWndIndex);
 		DWORD CanActivateFarWindow(int anWndIndex);
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
-		void CloseConsole(BOOL abForceTerminate = FALSE);
+		void CloseConsole(bool abForceTerminate, bool abConfirm);
 		void CloseConsoleWindow();
 		BOOL CanCloseTab(BOOL abPluginRequired = FALSE);
 		void CloseTab();
@@ -462,7 +465,8 @@ class CRealConsole
 		bool Detach();
 		void AdminDuplicate();
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
-		BOOL InCreateRoot();
+		bool InCreateRoot();
+		bool InRecreate(); 
 		BOOL GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID);
 		//LPCWSTR GetLngNameTime();
 		void ShowPropertiesDialog();

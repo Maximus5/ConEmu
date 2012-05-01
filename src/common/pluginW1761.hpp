@@ -1111,7 +1111,29 @@ enum FARMACROCOMMAND
 	MCMD_CHECKMACRO        = 4,
 	#endif
 	MCMD_GETSTATE          = 5,
+	MCMD_GETAREA           = 6,
 };
+
+enum FARMACROAREA
+{
+	MACROAREA_OTHER             = 0,
+	MACROAREA_SHELL             = 1,
+	MACROAREA_VIEWER            = 2,
+	MACROAREA_EDITOR            = 3,
+	MACROAREA_DIALOG            = 4,
+	MACROAREA_SEARCH            = 5,
+	MACROAREA_DISKS             = 6,
+	MACROAREA_MAINMENU          = 7,
+	MACROAREA_MENU              = 8,
+	MACROAREA_HELP              = 9,
+	MACROAREA_INFOPANEL         =10,
+	MACROAREA_QVIEWPANEL        =11,
+	MACROAREA_TREEPANEL         =12,
+	MACROAREA_FINDFOLDER        =13,
+	MACROAREA_USERMENU          =14,
+	MACROAREA_AUTOCOMPLETION    =15,
+};
+
 
 enum FARMACROSTATE
 {

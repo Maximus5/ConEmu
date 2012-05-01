@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include "ConEmuC.h"
+#include "GuiHooks.h"
 
 
 #if defined(__GNUC__)
@@ -48,7 +49,7 @@ extern "C" {
 	__declspec(dllexport) DWORD gnVkWinFix = 0xF0;
 	__declspec(dllexport) BOOL  gbWinTabHook = FALSE;
 	__declspec(dllexport) BYTE  gnConsoleKeyShortcuts = 0;
-	__declspec(dllexport) DWORD gnHookedKeys[64] = {};
+	__declspec(dllexport) DWORD gnHookedKeys[HookedKeysMaxCount] = {};
 	__declspec(dllexport) HWND  ghKeyHookConEmuRoot = NULL;
 	__declspec(dllexport) HWND  ghActiveGhost = NULL;
 #if defined(__GNUC__)
@@ -56,10 +57,10 @@ extern "C" {
 #endif
 
 
-extern UINT gnMsgActivateCon; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
-extern UINT gnMsgSwitchCon;
-extern UINT gnMsgHookedKey;
-extern UINT gnMsgConsoleHookedKey;
+//extern UINT gnMsgActivateCon;      // RegisterWindowMessage(CONEMUMSG_ACTIVATECON)
+extern UINT gnMsgSwitchCon;        // RegisterWindowMessage(CONEMUMSG_SWITCHCON)
+extern UINT gnMsgHookedKey;        // RegisterWindowMessage(CONEMUMSG_HOOKEDKEY)
+//extern UINT gnMsgConsoleHookedKey; // RegisterWindowMessage(CONEMUMSG_CONSOLEHOOKEDKEY)
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
@@ -99,6 +100,29 @@ DWORD gnSkipVkModCode = 0;
 WPARAM gnSkipVkMessage = 0;
 DWORD gnSkipVkKeyCode = 0;
 
+DWORD LoadPressedMods()
+{
+	DWORD lMods = 0;
+
+	if (isPressed(VK_LCONTROL))
+		lMods |= cvk_LCtrl|cvk_Ctrl;
+	if (isPressed(VK_RCONTROL))
+		lMods |= cvk_RCtrl|cvk_Ctrl;
+	if (isPressed(VK_LMENU))
+		lMods |= cvk_LAlt|cvk_Alt;
+	if (isPressed(VK_RMENU))
+		lMods |= cvk_RAlt|cvk_Alt;
+	if (isPressed(VK_LSHIFT))
+		lMods |= cvk_LShift|cvk_Shift;
+	if (isPressed(VK_RSHIFT))
+		lMods |= cvk_RShift|cvk_Shift;
+	if (isPressed(VK_LWIN) || isPressed(VK_RWIN))
+		lMods |= cvk_Win;
+	if (isPressed(VK_APPS))
+		lMods |= cvk_Apps;
+
+	return lMods;
+}
 
 LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 {
@@ -120,21 +144,45 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 		DEBUGSTRHOOK(szKH);
 #endif
 
-		if (((wParam == WM_KEYDOWN) || (wParam == WM_SYSKEYDOWN)) && ghKeyHookConEmuRoot)
+		if ((pKB->vkCode >= VK_WHEEL_FIRST) && (pKB->vkCode <= VK_WHEEL_LAST))
 		{
+			// Такие коды с клавиатуры приходить не должны, а то для "мышки" ничего не останется
+			_ASSERTE(!((pKB->vkCode >= VK_WHEEL_FIRST) && (pKB->vkCode <= VK_WHEEL_LAST)));
+		}
+		else if (((wParam == WM_KEYDOWN) || (wParam == WM_SYSKEYDOWN)) && ghKeyHookConEmuRoot)
+		{
+			WPARAM lMods = 0; BOOL bModsLoaded = FALSE;
 			BOOL lbHooked = FALSE, lbConsoleKey = FALSE;
 			if ((wParam == WM_KEYDOWN))
 			{
-				if (pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9') /*|| pKB->vkCode == (int)' '*/
-					lbHooked = TRUE;
-				else if (gbWinTabHook && pKB->vkCode == VK_TAB)
+				//if (pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9') /*|| pKB->vkCode == (int)' '*/
+				//	lbHooked = TRUE;
+				//else
+				if (gbWinTabHook && pKB->vkCode == VK_TAB)
 					lbHooked = TRUE;
 				else
 				{
 					for (size_t i = 0; i < countof(gnHookedKeys); i++)
 					{
-						if (gnHookedKeys[i] == pKB->vkCode)
+						// gnHookedKeys теперь содержит VkMod, а не просто VK
+						if ((gnHookedKeys[i] & 0xFF) == pKB->vkCode)
 						{
+							if (!bModsLoaded)
+								lMods = LoadPressedMods();
+
+							bool bCurr, bNeed;
+
+							bCurr = ((lMods & cvk_Win) != 0);		bNeed = ((gnHookedKeys[i] & cvk_Win) != 0);
+							if (bCurr != bNeed) continue;
+							bCurr = ((lMods & cvk_Apps) != 0);		bNeed = ((gnHookedKeys[i] & cvk_Apps) != 0);
+							if (bCurr != bNeed) continue;
+							bCurr = ((lMods & cvk_CtrlAny) != 0);	bNeed = ((gnHookedKeys[i] & cvk_CtrlAny) != 0);
+							if (bCurr != bNeed) continue;
+							bCurr = ((lMods & cvk_AltAny) != 0);	bNeed = ((gnHookedKeys[i] & cvk_AltAny) != 0);
+							if (bCurr != bNeed) continue;
+							bCurr = ((lMods & cvk_ShiftAny) != 0);	bNeed = ((gnHookedKeys[i] & cvk_ShiftAny) != 0);
+							if (bCurr != bNeed) continue;
+
 							lbHooked = TRUE;
 							break;
 						}
@@ -195,26 +243,17 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 			{
 				BOOL lbLeftWin = isPressed(VK_LWIN);
 				BOOL lbRightWin = isPressed(VK_RWIN);
-				BOOL lbShiftPressed = isPressed(VK_SHIFT);
+				//BOOL lbShiftPressed = isPressed(VK_SHIFT);
 
 				if (IsWindow(ghKeyHookConEmuRoot))
 				{
+					if (!bModsLoaded)
+						lMods = LoadPressedMods();
+
 					if (lbConsoleKey)
 					{
-						LPARAM lMods = 0;
-						if (isPressed(VK_LCONTROL))
-							lMods |= MOD_LCONTROL|MOD_CONTROL;
-						if (isPressed(VK_RCONTROL))
-							lMods |= MOD_RCONTROL|MOD_CONTROL;
-						if (isPressed(VK_LMENU))
-							lMods |= MOD_LALT|MOD_ALT;
-						if (isPressed(VK_RMENU))
-							lMods |= MOD_RALT|MOD_ALT;
-						if (lbShiftPressed)
-							lMods |= MOD_SHIFT;
-						if (lbLeftWin || lbRightWin)
-							lMods |= MOD_WIN;
-						PostMessage(ghKeyHookConEmuRoot, gnMsgConsoleHookedKey, pKB->vkCode, lMods);
+						PostMessage(ghKeyHookConEmuRoot, gnMsgHookedKey, (pKB->vkCode & cvk_VK_MASK)|lMods, 0);
+
 						gnSkipVkModCode = 0;
 						gnSkipVkKeyCode = pKB->vkCode;
 						gnSkipVkMessage = wParam;
@@ -228,16 +267,17 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 					{
 						if (pKB->vkCode == VK_TAB)
 						{
-							PostMessage(ghKeyHookConEmuRoot, gnMsgSwitchCon, lbShiftPressed, 0);
+							PostMessage(ghKeyHookConEmuRoot, gnMsgSwitchCon, (pKB->vkCode & cvk_VK_MASK)|lMods, 0);
 						}
-						else if (pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9')
-						{
-							DWORD nConNumber = (pKB->vkCode == (UINT)'0') ? 10 : (pKB->vkCode - (UINT)'0');
-							PostMessage(ghKeyHookConEmuRoot, gnMsgActivateCon, nConNumber, 0);
-						}
+						//else if (pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9')
+						//{
+						//	//DWORD nConNumber = (pKB->vkCode == (UINT)'0') ? 10 : (pKB->vkCode - (UINT)'0');
+						//	//PostMessage(ghKeyHookConEmuRoot, gnMsgActivateCon, nConNumber, 0);
+						//	PostMessage(ghKeyHookConEmuRoot, gnMsgActivateCon, pKB->vkCode, 0);
+						//}
 						else
 						{
-							PostMessage(ghKeyHookConEmuRoot, gnMsgHookedKey, pKB->vkCode, lbShiftPressed);
+							PostMessage(ghKeyHookConEmuRoot, gnMsgHookedKey, (pKB->vkCode & cvk_VK_MASK)|lMods, 0);
 						}
 						gnSkipVkModCode = lbLeftWin ? VK_LWIN : lbRightWin ? VK_RWIN : 0;
 						gnSkipVkKeyCode = pKB->vkCode;

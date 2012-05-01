@@ -212,11 +212,6 @@ extern "C" {
 #endif
 
 
-void ShowPluginMenu(int nID = -1);
-int ShowPluginMenuA();
-int FUNC_Y(ShowPluginMenuW)();
-int FUNC_X(ShowPluginMenuW)();
-
 BOOL EditOutputA(LPCWSTR asFileName, BOOL abView);
 BOOL FUNC_Y(EditOutputW)(LPCWSTR asFileName, BOOL abView);
 BOOL FUNC_X(EditOutputW)(LPCWSTR asFileName, BOOL abView);
@@ -312,3 +307,69 @@ VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs);
 #else
 #define SHOWDBGINFO(x)
 #endif
+
+enum PluginCallCommands
+{
+	pcc_None = 0,
+	//
+	pcc_EditConsoleOutput = 1,
+	pcc_ViewConsoleOutput = 2,
+	pcc_SwitchTabVisible = 3,
+	pcc_SwitchTabNext = 4,
+	pcc_SwitchTabPrev = 5,
+	pcc_SwitchTabCommit = 6,
+	pcc_AttachToConEmu = 7,
+	pcc_StartDebug = 8,
+	//
+	pcc_First = 1,
+	pcc_Last = pcc_StartDebug,
+};
+
+enum PluginMenuCommands
+{
+	menu_EditConsoleOutput = 0,
+	menu_ViewConsoleOutput,
+	menu_Separator1,
+	menu_SwitchTabVisible,
+	menu_SwitchTabNext,
+	menu_SwitchTabPrev,
+	menu_SwitchTabCommit,
+	menu_ShowTabsList,
+	menu_Separator2,
+	menu_ConEmuMacro, // должен вызываться "по настоящему", а не через callplugin
+	menu_Separator3,
+	menu_AttachToConEmu,
+	menu_Separator4,
+	menu_StartDebug,
+	//
+	menu_Last = (menu_StartDebug+1)
+};
+
+struct PluginAndMenuCommands
+{
+	int LangID; // ID для GetMsg
+	PluginMenuCommands MenuID; // по сути - индекс в векторе
+	PluginCallCommands CallID; // ID для CallPlugin
+};
+
+struct ConEmuPluginMenuItem
+{
+	bool    Separator;
+	bool    Selected;
+	bool    Disabled;
+	bool    Checked;
+
+	int     MsgID;
+	LPCWSTR MsgText;
+
+	INT_PTR UserData;
+};
+
+extern PluginAndMenuCommands gpPluginMenu[menu_Last];
+bool pcc_Selected(PluginMenuCommands nMenuID);
+bool pcc_Disabled(PluginMenuCommands nMenuID);
+
+void ShowPluginMenu(PluginCallCommands nCallID = pcc_None);
+int ShowPluginMenuA(ConEmuPluginMenuItem* apItems, int Count);
+int FUNC_Y(ShowPluginMenuW)(ConEmuPluginMenuItem* apItems, int Count);
+int FUNC_X(ShowPluginMenuW)(ConEmuPluginMenuItem* apItems, int Count);

@@ -249,117 +249,10 @@ class CSettings
 		
 		BYTE isMonospaceSelected; // 0 - proportional, 1 - monospace, 2 - forcemonospace
 	public:
-		//bool isKeyboardHooks();
-		//bool isCharBorder(wchar_t inChar);
-		//BYTE isPartBrush75, isPartBrush50, isPartBrush25, isPartBrushBlack;
-		//bool isCursorV;
-		//bool isCursorBlink;
-		//bool isCursorColor;
-		//bool isCursorBlockInactive;
-		//char isRClickSendKey;
-		//wchar_t *sRClickMacro;
-		//bool isSafeFarClose;
-		//wchar_t *sSafeFarCloseMacro;
-		//bool isSendAltEnter;
-		//bool isSendAltSpace;
-		//bool isSendAltTab, isSendAltEsc, isSendAltPrintScrn, isSendPrintScrn, isSendCtrlEsc;
-		//bool isMinToTray;
-		//bool isAlwaysShowTrayIcon;
-		//bool isForceMonospace, isProportional;
-		//BYTE isMonospace, isMonospaceSelected; // 0 - proportional, 1 - monospace, 2 - forcemonospace
-		//bool isUpdConHandle;
-		//bool isRSelFix;
-		//Drag
-		//BYTE isDragEnabled;
-		//BYTE isDropEnabled;
-		//BYTE nLDragKey, nRDragKey; // Ѕыл DWORD
-		//bool isDefCopy;
-		//BYTE isDragOverlay;
-		//bool isDragShowIcons;
-		//BYTE isDragPanel; // изменение размера панелей мышкой
-		//bool
-		//bool isDebugSteps;
-		//bool isEnhanceGraphics; // Progressbars and scrollbars (pseudographics)
-		//bool isFadeInactive;
-		//DWORD nFadeInactiveMask;
-		//char isTabs; bool isTabSelf, isTabRecent, isTabLazy, isTabsInCaption;
-
-		// Tab theme properties
-		//int ilDragHeight;
-
-	//private:
-	//	char m_isTabsOnTaskBar;
-	public:
-		//bool isTabsOnTaskBar();
-		//wchar_t sTabFontFace[LF_FACESIZE]; DWORD nTabFontCharSet; int nTabFontHeight;
-		//wchar_t *sTabCloseMacro;
-		//wchar_t *sSaveAllMacro;
-		//int nToolbarAddSpace;
-		//DWORD wndWidth, wndHeight, ntvdmHeight; // в символах
-		//int wndX, wndY; // в пиксел€х
-		//bool wndCascade;
-		//bool isAutoSaveSizePos;
-	//private:
-	//	// ѕри закрытии окна крестиком - сохран€ть только один раз,
-	//	// а то размер может в процессе закрыти€ консолей изменитьс€
-	//	bool mb_SizePosAutoSaved;
-	public:
-		//DWORD nSlideShowElapse;
-		//DWORD nIconID;
-		//bool isTryToCenter;
-		//BYTE isAlwaysShowScrollbar;
-		//RECT rcTabMargins;
-		//bool isTabFrame;
-		//BYTE icMinimizeRestore;
-		//bool isMulti;
-		//BYTE icMultiNew, icMultiNext, icMultiRecreate, icMultiBuffer, icMultiClose, icMultiCmd;
-		//bool isMultiAutoCreate, isMultiLeaveOnClose, isMultiIterate;
-		//bool IsHostkey(WORD vk);
-		//bool IsHostkeySingle(WORD vk);
-		//bool IsHostkeyPressed();
-		//WORD GetPressedHostkey();
-		//UINT GetHostKeyMod(); // набор флагов MOD_xxx дл€ RegisterHotKey
-		//bool isMultiNewConfirm, isUseWinNumber, isUseWinTab, isUseWinArrows;
-		//bool isFARuseASCIIsort, isFixAltOnAltTab, isShellNoZoneCheck;
-
-		// «аголовки табов
-		//WCHAR szTabConsole[32];
-		//WCHAR szTabEditor[32];
-		//WCHAR szTabEditorModified[32];
-		//WCHAR szTabViewer[32];
-		//DWORD nTabLenMax;
-
-		//bool isVisualizer;
-		//char nVizNormal, nVizFore, nVizTab, nVizEOL, nVizEOF;
-		//wchar_t cVizTab, cVizEOL, cVizEOF;
-
 		char isAllowDetach;
-		//bool isCreateAppWindow;
-		//bool NeedCreateAppWindow();
-		/*bool isScrollTitle;
-		DWORD ScrollTitleLen;*/
-		//wchar_t szAdminTitleSuffix[64]; //" (Admin)"
-		//bool bAdminShield, bHideInactiveConsoleTabs;
-
-		//DWORD nMainTimerElapse; // периодичность, с которой из консоли считываетс€ текст
-		//DWORD nMainTimerInactiveElapse; // периодичность при неактивности
-		//bool isAdvLangChange; // в ¬исте без ConIme в самой консоли не мен€етс€ €зык, пока не послать WM_SETFOCUS. Ќо при этом исчезает диалог быстрого поиска
-		//bool isSkipFocusEvents;
-		//bool isLangChangeWsPlugin;
-		//char isMonitorConsoleLang;
-		//bool isSleepInBackground;
-
-		//DWORD nAffinity;
-
-		//bool isUseInjects;
-		//bool isPortableReg;
 
 		// Debugging - "c:\\temp\\ConEmuVCon-%i-%i.dat"
 		BYTE isAdvLogging;
-		//wchar_t szDumpPackets[MAX_PATH];
-		// Debugging
-		//bool isConVisible; // isLockRealConsolePos;
-		//DWORD nConInMode;
 		
 		//
 		enum GuiLoggingType m_ActivityLoggingType;
@@ -617,9 +510,9 @@ class CSettings
 		//static void ReplaceHostkey(BYTE vk, BYTE vkNew);
 		//static void AddHostkey(BYTE vk);
 		//static void TrimHostkeys();
-		void SetupHotkeyChecks(HWND hWnd2);
+		//void SetupHotkeyChecks(HWND hWnd2);
 		//static bool MakeHostkeyModifier();
-		static BYTE HostkeyCtrlId2Vk(WORD nID);
+		//static BYTE HostkeyCtrlId2Vk(WORD nID);
 		//DWORD nMultiHotkeyModifier;
 		//BYTE mn_HostModOk[15], mn_HostModSkip[15];
 		//bool isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR);
@@ -628,28 +521,17 @@ class CSettings
 		static void CenterMoreDlg(HWND hWnd2);
 		static bool IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight);
 	private:
-		struct ConEmuHotKeys
-		{
-			int  DescrLangID;
-			
-			int  Type; // 0 - hotkey, 1 - modifier (дл€ драга, например)
-			
-			// User
-			BYTE* VkPtr; // ≈сли NULL - значит системный, не измен€емый
-			
-			// System or default
-			BYTE Vk;
-			DWORD Modifier; // System only, дл€ "User" - используетс€ "HostKey"
-			
-			TODO("—юда можно бы еще добавить инфу на какой странице и как его настраивать");
-
-			// Internal
-
-		};
-		#define MAKEMODIFIER2(vk1,vk2) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)
-		#define MAKEMODIFIER3(vk1,vk2,vk3) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)|(((DWORD)vk3&0xFF)<<16)
-		ConEmuHotKeys *m_HotKeys;
-		ConEmuHotKeys *mp_ActiveHotKey;
+		DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0) { return Settings::MakeHotKey(Vk, vkMod1, vkMod2, vkMod3); };
+		//#define MAKEMODIFIER2(vk1,vk2) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)
+		//#define MAKEMODIFIER3(vk1,vk2,vk3) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)|(((DWORD)vk3&0xFF)<<16)
+		ConEmuHotKey *m_HotKeys;
+		ConEmuHotKey *mp_ActiveHotKey;
+		friend struct Settings;
+	public:
+		const ConEmuHotKey* GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealConsole* pRCon);
+		bool HasSingleWinHotkey();
+		void UpdateWinHookSettings(HMODULE hLLKeyHookDll);
+	private:
 
 		enum KeyListColumns
 		{

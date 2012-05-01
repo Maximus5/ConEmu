@@ -52,27 +52,6 @@ struct FarStandardFunctions *FSFW995=NULL;
 
 void WaitEndSynchroW995();
 
-enum FARMACROAREA
-{
-	MACROAREA_OTHER             = 0,
-	MACROAREA_SHELL             = 1,
-	MACROAREA_VIEWER            = 2,
-	MACROAREA_EDITOR            = 3,
-	MACROAREA_DIALOG            = 4,
-	MACROAREA_SEARCH            = 5,
-	MACROAREA_DISKS             = 6,
-	MACROAREA_MAINMENU          = 7,
-	MACROAREA_MENU              = 8,
-	MACROAREA_HELP              = 9,
-	MACROAREA_INFOPANEL         =10,
-	MACROAREA_QVIEWPANEL        =11,
-	MACROAREA_TREEPANEL         =12,
-	MACROAREA_FINDFOLDER        =13,
-	MACROAREA_USERMENU          =14,
-	MACROAREA_AUTOCOMPLETION    =15,
-};
-#define MCMD_GETAREA 6
-
 
 static wchar_t* GetPanelDir(HANDLE hPanel)
 {
@@ -757,45 +736,52 @@ void PostMacroW995(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	////InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,NULL);
 }
 
-int ShowPluginMenuW995()
+int ShowPluginMenuW995(ConEmuPluginMenuItem* apItems, int Count)
 {
 	if (!InfoW995)
 		return -1;
 
-	FarMenuItemEx items[] =
+	//FarMenuItemEx items[] =
+	//{
+	//	{ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuEditOutput)},
+	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuViewOutput)},
+	//	{MIF_SEPARATOR},
+	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuShowHideTabs)},
+	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuNextTab)},
+	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuPrevTab)},
+	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuCommitTab)},
+	//	{MIF_SEPARATOR},
+	//	{0,                                        InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuGuiMacro)},
+	//	{MIF_SEPARATOR},
+	//	{ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuAttach)},
+	//	{MIF_SEPARATOR},
+	//	//#ifdef _DEBUG
+	//	//{0, L"&~. Raise exception"},
+	//	//#endif
+	//	{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuDebug)},
+	//};
+	//int nCount = sizeof(items)/sizeof(items[0]);
+
+	FarMenuItemEx* items = (FarMenuItemEx*)calloc(Count, sizeof(*items));
+	for (int i = 0; i < Count; i++)
 	{
-		{ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuEditOutput)},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuViewOutput)},
-		{MIF_SEPARATOR},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuShowHideTabs)},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuNextTab)},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuPrevTab)},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuCommitTab)},
-		{MIF_SEPARATOR},
-		{0,                                        InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuGuiMacro)},
-		{MIF_SEPARATOR},
-		{ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuAttach)},
-		{MIF_SEPARATOR},
-		//#ifdef _DEBUG
-		//{0, L"&~. Raise exception"},
-		//#endif
-		{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuDebug)},
-	};
-	int nCount = sizeof(items)/sizeof(items[0]);
+		if (apItems[i].Separator)
+		{
+			items[i].Flags = MIF_SEPARATOR;
+			continue;
+		}
+		items[i].Flags	= (apItems[i].Disabled ? MIF_DISABLE : 0)
+						| (apItems[i].Selected ? MIF_SELECTED : 0)
+						| (apItems[i].Checked  ? MIF_CHECKED : 0)
+						;
+		items[i].Text = apItems[i].MsgText ? apItems[i].MsgText : InfoW995->GetMsg(InfoW995->ModuleNumber, apItems[i].MsgID);
+	}
+
 	int nRc = InfoW995->Menu(InfoW995->ModuleNumber, -1,-1, 0,
 	                         FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
 	                         InfoW995->GetMsg(InfoW995->ModuleNumber,CEPluginName),
-	                         NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
-	//#ifdef _DEBUG
-	//if (nRc == (nCount - 2))
-	//{
-	//	// Вызвать исключение для проверки отладчика
-	//	LPVOID ptrSrc;
-	//	wchar_t szDst[MAX_PATH];
-	//	ptrSrc = NULL;
-	//	memmove(szDst, ptrSrc, sizeof(szDst));
-	//}
-	//#endif
+	                         NULL, NULL, NULL, NULL, (FarMenuItem*)items, Count);
+	SafeFree(items);
 	return nRc;
 }
 
@@ -971,6 +957,7 @@ bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
 bool RunExternalProgramW995(wchar_t* pszCommand)
 {
 	wchar_t strTemp[MAX_PATH+1];
+	wchar_t *pszExpand = NULL;
 
 	if (!pszCommand || !*pszCommand)
 	{
@@ -981,6 +968,26 @@ bool RunExternalProgramW995(wchar_t* pszCommand)
 			return false;
 
 		pszCommand = strTemp;
+	}
+	else if (wcschr(pszCommand, L'%'))
+	{
+		DWORD cchMax = countof(strTemp);
+		pszExpand = strTemp;
+		DWORD nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
+		if (nExpLen)
+		{
+			if (nExpLen > cchMax)
+			{
+				cchMax = nExpLen + 32;
+				pszExpand = (wchar_t*)calloc(cchMax,sizeof(*pszExpand));
+				nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
+			}
+			
+			if (nExpLen && (nExpLen <= cchMax))
+			{
+				pszCommand = pszExpand;
+			}
+		}
 	}
 
 	wchar_t *pszCurDir = NULL;
@@ -1016,6 +1023,7 @@ bool RunExternalProgramW995(wchar_t* pszCommand)
 		InfoW995->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
 	InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,0);
 	free(pszCurDir); //pszCurDir = NULL;
+	if (pszExpand && (pszExpand != strTemp)) free(pszExpand);
 	return TRUE;
 }
 

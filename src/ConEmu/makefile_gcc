@@ -5,6 +5,7 @@ SRCS =  \
 		BaseDragDrops.cpp  \
 		ConEmu.cpp         \
 		ConEmuApp.cpp      \
+		ConEmuCtrl.cpp     \
 		ConEmuPipe.cpp     \
 		CustomFonts.cpp    \
 		DragDrop.cpp       \

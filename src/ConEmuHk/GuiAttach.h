@@ -15,3 +15,4 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach);
 void OnPostShowGuiClientWindow(HWND hWnd, int nCmdShow);
 bool OnSetGuiClientWindowPos(HWND hWnd, HWND hWndInsertAfter, int &X, int &Y, int &cx, int &cy, UINT uFlags);
 void SetGuiExternMode(BOOL abUseExternMode);
+void AttachGuiWindow(HWND hOurWindow);

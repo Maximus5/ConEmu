@@ -65,6 +65,7 @@ public:
 	HHOOK    setWindowsHookExW(int idHook, HOOKPROC lpfn, HINSTANCE hMod, DWORD dwThreadId);
 	BOOL     unhookWindowsHookEx(HHOOK hhk);
 	int      mapWindowPoints(HWND hWndFrom, HWND hWndTo, LPPOINT lpPoints, UINT cPoints);
+	UINT     registerWindowMessageW(LPCWSTR lpString);
 
 	
 private:
@@ -130,6 +131,8 @@ private:
 	unhookWindowsHookEx_t unhookWindowsHookEx_f;
 	typedef int      (WINAPI* mapWindowPoints_t)(HWND hWndFrom, HWND hWndTo, LPPOINT lpPoints, UINT cPoints);
 	mapWindowPoints_t mapWindowPoints_f;
+	typedef UINT     (WINAPI* registerWindowMessageW_t)(LPCWSTR lpString);
+	registerWindowMessageW_t registerWindowMessageW_f;
 };
 
 extern UserImp* user;

@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LoadImg.h"
 #include "../ConEmuPlugin/FarDefaultMacros.h"
 #include "OptionsFast.h"
+#include "../ConEmuCD/GuiHooks.h"
 #include "version.h"
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
@@ -212,10 +213,18 @@ void Settings::InitSettings()
 ///| Moved from CVirtualConsole |/////////////////////////////////////////
 //------------------------------------------------------------------------
 	isAutoRegisterFonts = true;
-	isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A';
-	icMinimizeRestore = 'C';
-	icMultiClose = 0/*VK_DELETE*/; icMultiCmd = 'X'; isMultiAutoCreate = false; isMultiLeaveOnClose = false; isMultiIterate = true;
-	isMultiNewConfirm = true; isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
+	nHostkeyNumberModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyNumberModifier);
+	nHostkeyArrowModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyArrowModifier);
+	isMulti = true;
+	//vmMultiNew = 'W' | (nMultiHotkeyModifier << 8);
+	//vmMultiNext = 'Q' | (nMultiHotkeyModifier << 8);
+	//vmMultiRecreate = 192/*VK_тильда*/ | (nMultiHotkeyModifier << 8);
+	//vmMultiBuffer = 'A' | (nMultiHotkeyModifier << 8);
+	//vmMinimizeRestore = 'C' | (nMultiHotkeyModifier << 8);
+	//vmMultiClose = VK_DELETE | (nMultiHotkeyModifier << 8);
+	//vmMultiCmd = 'X' | (nMultiHotkeyModifier << 8);
+	isMultiAutoCreate = false; isMultiLeaveOnClose = false; isMultiIterate = true;
+	isMultiNewConfirm = true; isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false;
 	m_isKeyboardHooks = 0;
 	isFARuseASCIIsort = false; isFixAltOnAltTab = false; isShellNoZoneCheck = false;
 	isFadeInactive = true; mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; mb_FadeInitialized = false;
@@ -306,7 +315,7 @@ void Settings::InitSettings()
 	AppStd.nFontNormalColor = 1; AppStd.nFontBoldColor = 12; AppStd.nFontItalicColor = 13;
 	AppStd.isCursorV = true;
 	AppStd.isCursorBlink = true;
-	AppStd.isCursorColor = false;
+	AppStd.isCursorColor = true;
 	AppStd.isCursorBlockInactive = true;
 
 	//CheckTheming(); -- сейчас - нельзя. нужно дождаться, пока главное окно будет создано
@@ -364,15 +373,16 @@ void Settings::InitSettings()
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
 	isConsoleTextSelection = 1; // Always
-	isCTSSelectBlock = true; isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
-	isCTSSelectText = true; isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
-	isCTSVkBlockStart = 0; isCTSVkTextStart = 0; // при желании, пользователь может назначить hotkey запуска выделения
+	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
+	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
+	//vmCTSVkBlockStart = 0; // при желании, пользователь может назначить hotkey запуска выделения
+	//vmCTSVkTextStart = 0;  // при желании, пользователь может назначить hotkey запуска выделения
 	isCTSActMode = 2; // BufferOnly
-	isCTSVkAct = 0; // т.к. по умолчанию - только BufferOnly, то вообще без модификаторов
+	//isCTSVkAct = 0; // т.к. по умолчанию - только BufferOnly, то вообще без модификаторов
 	isCTSRBtnAction = 3; // Auto (Выделения нет - Paste, Есть - Copy)
 	isCTSMBtnAction = 0; // <None>
 	isCTSColorIndex = 0xE0;
-	isFarGotoEditor = true; isFarGotoEditorVk = VK_LCONTROL;
+	isFarGotoEditor = true; //isFarGotoEditorVk = VK_LCONTROL;
 	isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
 	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
@@ -390,7 +400,7 @@ void Settings::InitSettings()
 	isFarHourglass = true; nFarHourglassDelay = 500;
 	isDisableFarFlashing = false; isDisableAllFlashing = false;
 	isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1; isDefCopy = true;
-	nLDragKey = 0; nRDragKey = VK_LCONTROL;
+	//nLDragKey = 0; nRDragKey = VK_LCONTROL;
 	isDragOverlay = 1; isDragShowIcons = true;
 	// изменение размера панелей мышкой
 	isDragPanel = 2; // по умолчанию сделаем чтобы драгалось макросами (вдруг у юзера на Ctrl-Left/Right/Up/Down макросы висят... как бы конфуза не получилось)
@@ -1133,6 +1143,196 @@ void Settings::PaletteDelete(LPCWSTR asName)
 	SavePalettes(NULL);
 }
 
+//bool Settings::LoadVkMod(SettingsBase* reg, const wchar_t *regName, DWORD &VkMod, DWORD Default)
+//{
+//	bool lb = reg->Load(regName, VkMod);
+//
+//	if (!lb)
+//	{
+//		VkMod = Default;
+//	}
+//	else
+//	{
+//		// Если успешно загрузили,
+//		// Это НЕ 0 (0 - значит HotKey не задан)
+//		// И это не DWORD (для HotKey без модификатора - пишется CEHOTKEY_NOMOD)
+//		// Т.к. раньше был Byte - нужно добавить nHostkeyModifier
+//		if (VkMod && ((VkMod & CEHOTKEY_MODMASK) == 0))
+//		{
+//			_ASSERTE(nHostkeyModifier!=0);
+//			VkMod |= (nHostkeyModifier << 8);
+//		}
+//	}
+//
+//	return lb;
+//}
+
+DWORD Settings::SetModifier(DWORD VkMod, BYTE Mod, bool Xor/*=true*/)
+{
+	DWORD AllMod = VkMod & CEHOTKEY_MODMASK;
+	if ((VkMod == CEHOTKEY_NUMHOSTKEY) || (VkMod == CEHOTKEY_ARRHOSTKEY))
+	{
+		// Низя
+		_ASSERTE(!((VkMod == CEHOTKEY_NUMHOSTKEY) || (VkMod == CEHOTKEY_ARRHOSTKEY)));
+		return VkMod;
+	}
+
+	if (AllMod == CEHOTKEY_NOMOD)
+		AllMod = 0;
+
+	bool Processed = false;
+
+	// Младший байт - VK. Старшие три - модификаторы. Их и трогаем
+	for (int i = 1; i <= 3; i++)
+	{
+		DWORD vkExist = GetModifier(VkMod, i);
+		if (isKey(vkExist,Mod) || isKey(Mod,vkExist))
+		{
+			Processed = true;
+
+			if (Xor)
+			{
+				switch (i)
+				{
+				case 1:
+					AllMod = (GetModifier(VkMod, 2)<<8) | (GetModifier(VkMod, 3)<<16);
+					break;
+				case 2:
+					AllMod = (GetModifier(VkMod, 1)<<8) | (GetModifier(VkMod, 3)<<16);
+					break;
+				case 3:
+					AllMod = (GetModifier(VkMod, 1)<<8) | (GetModifier(VkMod, 2)<<16);
+					break;
+				}
+			}
+			else if (vkExist != Mod)
+			{
+				// Например, заменить LShift на Shift
+				switch (i)
+				{
+				case 1:
+					AllMod = (VkMod & 0xFFFF0000) | (Mod << 8);
+					break;
+				case 2:
+					AllMod = (VkMod & 0xFF00FF00) | (Mod << 16);
+					break;
+				case 3:
+					AllMod = (VkMod & 0x00FFFF00) | (Mod << 24);
+					break;
+				}
+			}
+
+			break;
+		}
+	}
+	//if (GetModifier(VkMod, 1) == Mod)
+	//{
+	//	AllMod = (GetModifier(VkMod, 2)<<8) | (GetModifier(VkMod, 3)<<16);
+	//	Processed = true;
+	//}
+	//else if (GetModifier(VkMod, 2) == Mod)
+	//{
+	//	AllMod = (GetModifier(VkMod, 1)<<8) | (GetModifier(VkMod, 3)<<16);
+	//	Processed = true;
+	//}
+	//else if (GetModifier(VkMod, 3) == Mod)
+	//{
+	//	AllMod = (GetModifier(VkMod, 1)<<8) | (GetModifier(VkMod, 2)<<16);
+	//	Processed = true;
+	//}
+	
+	if (!Processed)
+	{
+		DWORD AddMod = 0;
+		
+		if (!GetModifier(VkMod, 1))
+			AddMod = (((DWORD)Mod) << 8);
+		else if (!GetModifier(VkMod, 2))
+			AddMod = (((DWORD)Mod) << 16);
+		else if (!GetModifier(VkMod, 3))
+			AddMod = (((DWORD)Mod) << 24);
+		else
+		{
+			// Иначе - некуда модификатор пихать, а так уже три
+			_ASSERTE(GetModifier(VkMod, 3) == 0);
+		}
+
+		if (AddMod != 0)
+			AllMod |= AddMod;
+	}
+
+	// Нельзя сбрасывать единственный модификатор
+	if (!AllMod)
+	{
+		_ASSERTE(AllMod!=0);
+	}
+	else
+	{
+		VkMod = GetHotkey(VkMod) | AllMod;
+	}
+
+	return VkMod;
+}
+
+DWORD Settings::GetModifier(DWORD VkMod, int idx)
+{
+	DWORD Mod = VkMod & CEHOTKEY_MODMASK;
+	if ((Mod == CEHOTKEY_NOMOD) || (Mod == 0))
+	{
+		_ASSERTE(((VkMod & CEHOTKEY_MODMASK) != 0) || (VkMod == 0));
+		return 0;
+	}
+	else if (Mod == CEHOTKEY_NUMHOSTKEY)
+	{
+		// Только для цифирок!
+		WARNING("CConEmuCtrl:: Убрать пережиток F11/F12");
+		_ASSERTE((((VkMod & 0xFF)>='0' && ((VkMod & 0xFF)<='9'))) || ((VkMod & 0xFF)==VK_F11 || (VkMod & 0xFF)==VK_F12));
+		Mod = (gpSet->nHostkeyNumberModifier << 8);
+	}
+	else if (Mod == CEHOTKEY_ARRHOSTKEY)
+	{
+		// Только для стрелок!
+		_ASSERTE(((VkMod & 0xFF)==VK_LEFT) || ((VkMod & 0xFF)==VK_RIGHT) || ((VkMod & 0xFF)==VK_UP) || ((VkMod & 0xFF)==VK_DOWN));
+		Mod = (gpSet->nHostkeyArrowModifier << 8);
+	}
+
+	switch (idx)
+	{
+	case 1:
+		Mod = ((Mod & 0xFF00) >> 8);
+		break;
+	case 2:
+		Mod = ((Mod & 0xFF0000) >> 16);
+		break;
+	case 3:
+		Mod = ((Mod & 0xFF000000) >> 24);
+		break;
+	default:
+		_ASSERTE(idx==1 || idx==2 || idx==3);
+		Mod = 0;
+	}
+
+	if (Mod == VK_RWIN)
+	{
+		_ASSERTE(Mod != VK_RWIN); // Храниться должен LWIN
+		Mod = VK_LWIN;
+	}
+
+	return Mod;
+}
+
+bool Settings::HasModifier(DWORD VkMod, BYTE Mod/*VK*/)
+{
+	if (Mod && ((GetModifier(VkMod, 1) == Mod) || (GetModifier(VkMod, 2) == Mod) || (GetModifier(VkMod, 3) == Mod)))
+		return true;
+	return false;
+}
+
+DWORD Settings::GetHotkey(DWORD VkMod)
+{
+	return (VkMod & 0xFF);
+}
+
 void Settings::LoadSettings()
 {
 	MCHKHEAP
@@ -1164,6 +1364,16 @@ void Settings::LoadSettings()
 	{
 		lbOpened = reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ);
 		lbNeedCreateVanilla = lbOpened;
+	}
+
+	if (lbNeedCreateVanilla)
+	{
+		IsConfigNew = true;
+		TODO("Здесь можно включить настройки, которые должны включаться только для новых конфигураций!");
+	}
+	else
+	{
+		IsConfigNew = false;
 	}
 
 	if (lbOpened)
@@ -1223,21 +1433,23 @@ void Settings::LoadSettings()
 		reg->Load(L"CmdLine", &psCmd);
 		reg->Load(L"CmdLineHistory", &psCmdHistory); nCmdHistorySize = 0; HistoryCheck();
 		reg->Load(L"Multi", isMulti);
-		reg->Load(L"Multi.Modifier", nMultiHotkeyModifier); TestHostkeyModifiers();
-		reg->Load(L"Multi.NewConsole", icMultiNew);
-		reg->Load(L"Multi.Next", icMultiNext);
-		reg->Load(L"Multi.Recreate", icMultiRecreate);
-		reg->Load(L"Multi.Close", icMultiClose);
-		reg->Load(L"Multi.CmdKey", icMultiCmd);
+		//LoadVkMod(reg, L"Multi.NewConsole", vmMultiNew, vmMultiNew);
+		//LoadVkMod(reg, L"Multi.NewConsoleShift", vmMultiNewShift, SetModifier(vmMultiNew,VK_SHIFT, true/*Xor*/));
+		//LoadVkMod(reg, L"Multi.Next", vmMultiNext, vmMultiNext);
+		//LoadVkMod(reg, L"Multi.NextShift", vmMultiNextShift, SetModifier(vmMultiNext,VK_SHIFT, true/*Xor*/));
+		//LoadVkMod(reg, L"Multi.Recreate", vmMultiRecreate, vmMultiRecreate);
+		//LoadVkMod(reg, L"Multi.Close", vmMultiClose, vmMultiClose);
+		reg->Load(L"Multi.CloseConfirm", isCloseConsoleConfirm);
+		//LoadVkMod(reg, L"Multi.CmdKey", vmMultiCmd, vmMultiCmd);
 		reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);
-		reg->Load(L"Multi.Buffer", icMultiBuffer);
+		//LoadVkMod(reg, L"Multi.Buffer", vmMultiBuffer, vmMultiBuffer);
 		reg->Load(L"Multi.UseArrows", isUseWinArrows);
 		reg->Load(L"Multi.UseNumbers", isUseWinNumber);
 		reg->Load(L"Multi.UseWinTab", isUseWinTab);
 		reg->Load(L"Multi.AutoCreate", isMultiAutoCreate);
 		reg->Load(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
 		reg->Load(L"Multi.Iterate", isMultiIterate);
-		reg->Load(L"MinimizeRestore", icMinimizeRestore);
+		//LoadVkMod(reg, L"MinimizeRestore", vmMinimizeRestore, vmMinimizeRestore);
 
 		reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 
@@ -1314,15 +1526,15 @@ void Settings::LoadSettings()
 		reg->Load(L"ConsoleTextSelection", isConsoleTextSelection); if (isConsoleTextSelection>2) isConsoleTextSelection = 2;
 
 		reg->Load(L"CTS.SelectBlock", isCTSSelectBlock);
-		reg->Load(L"CTS.VkBlock", isCTSVkBlock);
-		reg->Load(L"CTS.VkBlockStart", isCTSVkBlockStart);
+		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
+		//LoadVkMod(reg, L"CTS.VkBlockStart", vmCTSVkBlockStart, vmCTSVkBlockStart);
 		reg->Load(L"CTS.SelectText", isCTSSelectText);
-		reg->Load(L"CTS.VkText", isCTSVkText);
-		reg->Load(L"CTS.VkTextStart", isCTSVkTextStart);
+		//reg->Load(L"CTS.VkText", isCTSVkText);
+		//LoadVkMod(reg, L"CTS.VkTextStart", vmCTSVkTextStart, vmCTSVkTextStart);
 
 		reg->Load(L"CTS.ActMode", isCTSActMode); if (!isCTSActMode || isCTSActMode>2) isCTSActMode = 2;
 
-		reg->Load(L"CTS.VkAct", isCTSVkAct);
+		//reg->Load(L"CTS.VkAct", isCTSVkAct);
 
 		reg->Load(L"CTS.RBtnAction", isCTSRBtnAction); if (isCTSRBtnAction>3) isCTSRBtnAction = 0;
 
@@ -1331,7 +1543,7 @@ void Settings::LoadSettings()
 		reg->Load(L"CTS.ColorIndex", isCTSColorIndex); if ((isCTSColorIndex & 0xF) == ((isCTSColorIndex & 0xF0)>>4)) isCTSColorIndex = 0xE0;
 		
 		reg->Load(L"FarGotoEditor", isFarGotoEditor);
-		reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
+		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
 
 		if (!reg->Load(L"FixFarBorders", isFixFarBorders))
 			reg->Load(L"Experimental", isFixFarBorders); //очень старое имя настройки
@@ -1447,8 +1659,8 @@ void Settings::LoadSettings()
 		
 		reg->Load(L"Dnd", isDragEnabled);
 		isDropEnabled = (BYTE)(isDragEnabled ? 1 : 0); // ранее "DndDrop" не было, поэтому ставим default
-		reg->Load(L"DndLKey", nLDragKey);
-		reg->Load(L"DndRKey", nRDragKey);
+		//reg->Load(L"DndLKey", nLDragKey);
+		//reg->Load(L"DndRKey", nRDragKey);
 		reg->Load(L"DndDrop", isDropEnabled);
 		reg->Load(L"DefCopy", isDefCopy);
 		reg->Load(L"DragOverlay", isDragOverlay);
@@ -1571,6 +1783,9 @@ void Settings::LoadSettings()
 		reg->Load(L"Update.DownloadPath", &UpdSet.szUpdateDownloadPath);
 		reg->Load(L"Update.LeavePackages", UpdSet.isUpdateLeavePackages);
 		reg->Load(L"Update.PostUpdateCmd", &UpdSet.szUpdatePostUpdateCmd);
+
+		/* Hotkeys */
+		LoadHotkeys(reg);
 
 		/* Done */
 		reg->CloseKey();
@@ -1921,21 +2136,23 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 			reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
 
 		reg->Save(L"Multi", isMulti);
-		reg->Save(L"Multi.Modifier", nMultiHotkeyModifier);
-		reg->Save(L"Multi.NewConsole", icMultiNew);
-		reg->Save(L"Multi.Next", icMultiNext);
-		reg->Save(L"Multi.Recreate", icMultiRecreate);
-		reg->Save(L"Multi.Close", icMultiClose);
-		reg->Save(L"Multi.CmdKey", icMultiCmd);
+		//reg->Save(L"Multi.NewConsole", vmMultiNew);
+		//reg->Save(L"Multi.NewConsoleShift", vmMultiNewShift);
+		//reg->Save(L"Multi.Next", vmMultiNext);
+		//reg->Save(L"Multi.NextShift", vmMultiNextShift);
+		//reg->Save(L"Multi.Recreate", vmMultiRecreate);
+		//reg->Save(L"Multi.Close", vmMultiClose);
+		reg->Save(L"Multi.CloseConfirm", isCloseConsoleConfirm);
+		//reg->Save(L"Multi.CmdKey", vmMultiCmd);
 		reg->Save(L"Multi.NewConfirm", isMultiNewConfirm);
-		reg->Save(L"Multi.Buffer", icMultiBuffer);
+		//reg->Save(L"Multi.Buffer", vmMultiBuffer);
 		reg->Save(L"Multi.UseArrows", isUseWinArrows);
 		reg->Save(L"Multi.UseNumbers", isUseWinNumber);
 		reg->Save(L"Multi.UseWinTab", isUseWinTab);
 		reg->Save(L"Multi.AutoCreate", isMultiAutoCreate);
 		reg->Save(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
 		reg->Save(L"Multi.Iterate", isMultiIterate);
-		reg->Save(L"MinimizeRestore", icMinimizeRestore);
+		//reg->Save(L"MinimizeRestore", vmMinimizeRestore);
 		_ASSERTE(m_isKeyboardHooks!=0);
 		reg->Save(L"KeyboardHooks", m_isKeyboardHooks);
 		reg->Save(L"FontName", inFont);
@@ -1991,19 +2208,19 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
 		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
 		reg->Save(L"CTS.SelectBlock", isCTSSelectBlock);
-		reg->Save(L"CTS.VkBlock", isCTSVkBlock);
-		reg->Save(L"CTS.VkBlockStart", isCTSVkBlockStart);
+		//reg->Save(L"CTS.VkBlock", isCTSVkBlock);
+		//reg->Save(L"CTS.VkBlockStart", vmCTSVkBlockStart);
 		reg->Save(L"CTS.SelectText", isCTSSelectText);
-		reg->Save(L"CTS.VkText", isCTSVkText);
-		reg->Save(L"CTS.VkTextStart", isCTSVkTextStart);
+		//reg->Save(L"CTS.VkText", isCTSVkText);
+		//reg->Save(L"CTS.VkTextStart", vmCTSVkTextStart);
 		reg->Save(L"CTS.ActMode", isCTSActMode);
-		reg->Save(L"CTS.VkAct", isCTSVkAct);
+		//reg->Save(L"CTS.VkAct", isCTSVkAct);
 		reg->Save(L"CTS.RBtnAction", isCTSRBtnAction);
 		reg->Save(L"CTS.MBtnAction", isCTSMBtnAction);
 		reg->Save(L"CTS.ColorIndex", isCTSColorIndex);
 		
 		reg->Save(L"FarGotoEditor", isFarGotoEditor);
-		reg->Save(L"FarGotoEditorVk", isFarGotoEditorVk);
+		//reg->Save(L"FarGotoEditorVk", isFarGotoEditorVk);
 		
 		reg->Save(L"FixFarBorders", isFixFarBorders);
 		{
@@ -2042,8 +2259,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"FarHourglass", isFarHourglass);
 		reg->Save(L"FarHourglassDelay", nFarHourglassDelay);
 		reg->Save(L"Dnd", isDragEnabled);
-		reg->Save(L"DndLKey", nLDragKey);
-		reg->Save(L"DndRKey", nRDragKey);
+		//reg->Save(L"DndLKey", nLDragKey);
+		//reg->Save(L"DndRKey", nRDragKey);
 		reg->Save(L"DndDrop", isDropEnabled);
 		reg->Save(L"DefCopy", isDefCopy);
 		reg->Save(L"DragOverlay", isDragOverlay);
@@ -2133,6 +2350,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"Update.DownloadPath", UpdSet.szUpdateDownloadPath);
 		reg->Save(L"Update.LeavePackages", UpdSet.isUpdateLeavePackages);
 		reg->Save(L"Update.PostUpdateCmd", UpdSet.szUpdatePostUpdateCmd);
+
+		/* Hotkeys */
+		SaveHotkeys(reg);
 
 		/* Done */
 		reg->CloseKey();
@@ -2246,281 +2466,342 @@ bool Settings::isKeyboardHooks()
 //	return (UpdSet.isUpdateUseBuilds != 0);
 //}
 
-bool Settings::IsHostkey(WORD vk)
-{
-	for(int i=0; i < 15 && mn_HostModOk[i]; i++)
-		if (mn_HostModOk[i] == vk)
-			return true;
-
-	return false;
-}
+//bool Settings::IsHostkey(WORD vk)
+//{
+//	for(int i=0; i < 15 && mn_HostModOk[i]; i++)
+//		if (mn_HostModOk[i] == vk)
+//			return true;
+//
+//	return false;
+//}
 
 // Если есть vk - заменить на vkNew
-void Settings::ReplaceHostkey(BYTE vk, BYTE vkNew)
+//void Settings::ReplaceHostkey(BYTE vk, BYTE vkNew)
+//{
+//	for(int i = 0; i < 15; i++)
+//	{
+//		if (gpSet->mn_HostModOk[i] == vk)
+//		{
+//			gpSet->mn_HostModOk[i] = vkNew;
+//			return;
+//		}
+//	}
+//}
+
+//void Settings::AddHostkey(BYTE vk)
+//{
+//	for(int i = 0; i < 15; i++)
+//	{
+//		if (gpSet->mn_HostModOk[i] == vk)
+//			break; // уже есть
+//
+//		if (!gpSet->mn_HostModOk[i])
+//		{
+//			gpSet->mn_HostModOk[i] = vk; // добавить
+//			break;
+//		}
+//	}
+//}
+
+//BYTE Settings::CheckHostkeyModifier(BYTE vk)
+//{
+//	// Если передан VK_NULL
+//	if (!vk)
+//		return 0;
+//
+//	switch(vk)
+//	{
+//		case VK_LWIN: case VK_RWIN:
+//
+//			if (gpSet->IsHostkey(VK_RWIN))
+//				ReplaceHostkey(VK_RWIN, VK_LWIN);
+//
+//			vk = VK_LWIN; // Сохраняем только Левый-Win
+//			break;
+//		case VK_APPS:
+//			break; // Это - ок
+//		case VK_LSHIFT:
+//
+//			if (gpSet->IsHostkey(VK_RSHIFT) || gpSet->IsHostkey(VK_SHIFT))
+//			{
+//				vk = VK_SHIFT;
+//				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
+//			}
+//
+//			break;
+//		case VK_RSHIFT:
+//
+//			if (gpSet->IsHostkey(VK_LSHIFT) || gpSet->IsHostkey(VK_SHIFT))
+//			{
+//				vk = VK_SHIFT;
+//				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
+//			}
+//
+//			break;
+//		case VK_SHIFT:
+//
+//			if (gpSet->IsHostkey(VK_LSHIFT))
+//				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
+//			else if (gpSet->IsHostkey(VK_RSHIFT))
+//				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
+//
+//			break;
+//		case VK_LMENU:
+//
+//			if (gpSet->IsHostkey(VK_RMENU) || gpSet->IsHostkey(VK_MENU))
+//			{
+//				vk = VK_MENU;
+//				ReplaceHostkey(VK_RMENU, VK_MENU);
+//			}
+//
+//			break;
+//		case VK_RMENU:
+//
+//			if (gpSet->IsHostkey(VK_LMENU) || gpSet->IsHostkey(VK_MENU))
+//			{
+//				vk = VK_MENU;
+//				ReplaceHostkey(VK_LMENU, VK_MENU);
+//			}
+//
+//			break;
+//		case VK_MENU:
+//
+//			if (gpSet->IsHostkey(VK_LMENU))
+//				ReplaceHostkey(VK_LMENU, VK_MENU);
+//			else if (gpSet->IsHostkey(VK_RMENU))
+//				ReplaceHostkey(VK_RMENU, VK_MENU);
+//
+//			break;
+//		case VK_LCONTROL:
+//
+//			if (gpSet->IsHostkey(VK_RCONTROL) || gpSet->IsHostkey(VK_CONTROL))
+//			{
+//				vk = VK_CONTROL;
+//				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
+//			}
+//
+//			break;
+//		case VK_RCONTROL:
+//
+//			if (gpSet->IsHostkey(VK_LCONTROL) || gpSet->IsHostkey(VK_CONTROL))
+//			{
+//				vk = VK_CONTROL;
+//				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
+//			}
+//
+//			break;
+//		case VK_CONTROL:
+//
+//			if (gpSet->IsHostkey(VK_LCONTROL))
+//				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
+//			else if (gpSet->IsHostkey(VK_RCONTROL))
+//				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
+//
+//			break;
+//	}
+//
+//	// Добавить в список входящих в Host
+//	AddHostkey(vk);
+//	// Вернуть (возможно измененный) VK
+//	return vk;
+//}
+
+void Settings::TestHostkeyModifiers(DWORD& nHostMod)
 {
-	for(int i = 0; i < 15; i++)
+	//memset(mn_HostModOk, 0, sizeof(mn_HostModOk));
+	//memset(mn_HostModSkip, 0, sizeof(mn_HostModSkip));
+
+	if (!nHostMod)
 	{
-		if (gpSet->mn_HostModOk[i] == vk)
+		nHostMod = VK_LWIN;
+	}
+	else
+	{
+		BYTE vk, vkList[3] = {};
+		int i = 0;
+		DWORD nTest = nHostMod;
+		while (nTest && (i < 3))
 		{
-			gpSet->mn_HostModOk[i] = vkNew;
-			return;
+			vk = (nTest & 0xFF);
+			nTest = nTest >> 8;
+
+			switch (vk)
+			{
+			case 0:
+				break;
+			case VK_LWIN: case VK_RWIN:
+				if (vkList[0]!=VK_LWIN && vkList[1]!=VK_LWIN && vkList[2]!=VK_LWIN)
+					vkList[i++] = vk;
+				break;
+			case VK_APPS:
+				if (vkList[0]!=VK_APPS && vkList[1]!=VK_APPS && vkList[2]!=VK_APPS)
+					vkList[i++] = vk;
+				break;
+			case VK_LCONTROL:
+			case VK_RCONTROL:
+			case VK_CONTROL:
+				for (int k = 0; k < 3; k++)
+				{
+					if (vkList[k]==VK_LCONTROL || vkList[k]==VK_RCONTROL || vkList[k]==VK_CONTROL)
+					{
+						vkList[k] = VK_CONTROL;
+						vk = 0;
+						break;
+					}
+				}
+				if (vk)
+					vkList[i++] = vk;
+				break;
+			case VK_LMENU:
+			case VK_RMENU:
+			case VK_MENU:
+				for (int k = 0; k < 3; k++)
+				{
+					if (vkList[k]==VK_LMENU || vkList[k]==VK_RMENU || vkList[k]==VK_MENU)
+					{
+						vkList[k] = VK_MENU;
+						vk = 0;
+						break;
+					}
+				}
+				if (vk)
+					vkList[i++] = vk;
+				break;
+			case VK_LSHIFT:
+			case VK_RSHIFT:
+			case VK_SHIFT:
+				for (int k = 0; k < 3; k++)
+				{
+					if (vkList[k]==VK_LSHIFT || vkList[k]==VK_RSHIFT || vkList[k]==VK_SHIFT)
+					{
+						vkList[k] = VK_SHIFT;
+						vk = 0;
+						break;
+					}
+				}
+				if (vk)
+					vkList[i++] = vk;
+				break;
+			}
 		}
+
+		nHostMod = (((DWORD)vkList[0]))
+			| (((DWORD)vkList[1]) << 8)
+			| (((DWORD)vkList[2]) << 16);
 	}
 }
 
-void Settings::AddHostkey(BYTE vk)
-{
-	for(int i = 0; i < 15; i++)
-	{
-		if (gpSet->mn_HostModOk[i] == vk)
-			break; // уже есть
+//bool Settings::MakeHostkeyModifier()
+//{
+//	bool lbChanged = false;
+//	// Сформировать (возможно скорректированную) маску HostKey
+//	DWORD nNew = 0;
+//
+//	if (gpSet->mn_HostModOk[0])
+//		nNew |= gpSet->mn_HostModOk[0];
+//
+//	if (gpSet->mn_HostModOk[1])
+//		nNew |= ((DWORD)(gpSet->mn_HostModOk[1])) << 8;
+//
+//	if (gpSet->mn_HostModOk[2])
+//		nNew |= ((DWORD)(gpSet->mn_HostModOk[2])) << 16;
+//
+//	if (gpSet->mn_HostModOk[3])
+//		nNew |= ((DWORD)(gpSet->mn_HostModOk[3])) << 24;
+//
+//	TODO("!!! Добавить в mn_HostModSkip те VK, которые отсутствуют в mn_HostModOk");
+//
+//	if (gpSet->nMultiHotkeyModifier != nNew)
+//	{
+//		gpSet->nMultiHotkeyModifier = nNew;
+//		lbChanged = true;
+//	}
+//
+//	return lbChanged;
+//}
 
-		if (!gpSet->mn_HostModOk[i])
-		{
-			gpSet->mn_HostModOk[i] = vk; // добавить
-			break;
-		}
-	}
-}
+//// Оставить в mn_HostModOk только 3 VK
+//void Settings::TrimHostkeys()
+//{
+//	if (gpSet->mn_HostModOk[0] == 0)
+//		return;
+//
+//	int i = 0;
+//
+//	while (++i < 15 && gpSet->mn_HostModOk[i])
+//		;
+//
+//	// Если вдруг задали более 3-х модификаторов - обрезать, оставив 3 последних
+//	if (i > 3)
+//	{
+//		if (i >= (int)countof(gpSet->mn_HostModOk))
+//		{
+//			_ASSERTE(i < countof(gpSet->mn_HostModOk));
+//			i = countof(gpSet->mn_HostModOk) - 1;
+//		}
+//		memmove(gpSet->mn_HostModOk, gpSet->mn_HostModOk+i-3, 3); //-V112
+//	}
+//
+//	memset(gpSet->mn_HostModOk+3, 0, sizeof(gpSet->mn_HostModOk)-3);
+//}
 
-BYTE Settings::CheckHostkeyModifier(BYTE vk)
-{
-	// Если передан VK_NULL
-	if (!vk)
-		return 0;
+//bool Settings::isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR)
+//{
+//	if (vk == vkC)
+//	{
+//		bool bLeft  = isPressed(vkL);
+//		bool bRight = isPressed(vkR);
+//
+//		if (bLeft && !bRight)
+//			return (nMultiHotkeyModifier == vkL);
+//
+//		if (bRight && !bLeft)
+//			return (nMultiHotkeyModifier == vkR);
+//
+//		// нажатие обоих шифтов - игнорируем
+//		return false;
+//	}
+//
+//	if (vk == vkL)
+//		return (nMultiHotkeyModifier == vkL);
+//
+//	if (vk == vkR)
+//		return (nMultiHotkeyModifier == vkR);
+//
+//	return false;
+//}
 
-	switch(vk)
-	{
-		case VK_LWIN: case VK_RWIN:
-
-			if (gpSet->IsHostkey(VK_RWIN))
-				ReplaceHostkey(VK_RWIN, VK_LWIN);
-
-			vk = VK_LWIN; // Сохраняем только Левый-Win
-			break;
-		case VK_APPS:
-			break; // Это - ок
-		case VK_LSHIFT:
-
-			if (gpSet->IsHostkey(VK_RSHIFT) || gpSet->IsHostkey(VK_SHIFT))
-			{
-				vk = VK_SHIFT;
-				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
-			}
-
-			break;
-		case VK_RSHIFT:
-
-			if (gpSet->IsHostkey(VK_LSHIFT) || gpSet->IsHostkey(VK_SHIFT))
-			{
-				vk = VK_SHIFT;
-				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
-			}
-
-			break;
-		case VK_SHIFT:
-
-			if (gpSet->IsHostkey(VK_LSHIFT))
-				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
-			else if (gpSet->IsHostkey(VK_RSHIFT))
-				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
-
-			break;
-		case VK_LMENU:
-
-			if (gpSet->IsHostkey(VK_RMENU) || gpSet->IsHostkey(VK_MENU))
-			{
-				vk = VK_MENU;
-				ReplaceHostkey(VK_RMENU, VK_MENU);
-			}
-
-			break;
-		case VK_RMENU:
-
-			if (gpSet->IsHostkey(VK_LMENU) || gpSet->IsHostkey(VK_MENU))
-			{
-				vk = VK_MENU;
-				ReplaceHostkey(VK_LMENU, VK_MENU);
-			}
-
-			break;
-		case VK_MENU:
-
-			if (gpSet->IsHostkey(VK_LMENU))
-				ReplaceHostkey(VK_LMENU, VK_MENU);
-			else if (gpSet->IsHostkey(VK_RMENU))
-				ReplaceHostkey(VK_RMENU, VK_MENU);
-
-			break;
-		case VK_LCONTROL:
-
-			if (gpSet->IsHostkey(VK_RCONTROL) || gpSet->IsHostkey(VK_CONTROL))
-			{
-				vk = VK_CONTROL;
-				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
-			}
-
-			break;
-		case VK_RCONTROL:
-
-			if (gpSet->IsHostkey(VK_LCONTROL) || gpSet->IsHostkey(VK_CONTROL))
-			{
-				vk = VK_CONTROL;
-				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
-			}
-
-			break;
-		case VK_CONTROL:
-
-			if (gpSet->IsHostkey(VK_LCONTROL))
-				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
-			else if (gpSet->IsHostkey(VK_RCONTROL))
-				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
-
-			break;
-	}
-
-	// Добавить в список входящих в Host
-	AddHostkey(vk);
-	// Вернуть (возможно измененный) VK
-	return vk;
-}
-
-bool Settings::TestHostkeyModifiers()
-{
-	memset(mn_HostModOk, 0, sizeof(mn_HostModOk));
-	memset(mn_HostModSkip, 0, sizeof(mn_HostModSkip));
-
-	if (!nMultiHotkeyModifier)
-		nMultiHotkeyModifier = VK_LWIN;
-
-	BYTE vk;
-	vk = (nMultiHotkeyModifier & 0xFF);
-	CheckHostkeyModifier(vk);
-	vk = (nMultiHotkeyModifier & 0xFF00) >> 8;
-	CheckHostkeyModifier(vk);
-	vk = (nMultiHotkeyModifier & 0xFF0000) >> 16;
-	CheckHostkeyModifier(vk);
-	vk = (nMultiHotkeyModifier & 0xFF000000) >> 24;
-	CheckHostkeyModifier(vk);
-	// Однако, допустимо не более 3-х клавиш (больше смысла не имеет)
-	TrimHostkeys();
-	// Сформировать (возможно скорректированную) маску HostKey
-	bool lbChanged = MakeHostkeyModifier();
-	return lbChanged;
-}
-
-bool Settings::MakeHostkeyModifier()
-{
-	bool lbChanged = false;
-	// Сформировать (возможно скорректированную) маску HostKey
-	DWORD nNew = 0;
-
-	if (gpSet->mn_HostModOk[0])
-		nNew |= gpSet->mn_HostModOk[0];
-
-	if (gpSet->mn_HostModOk[1])
-		nNew |= ((DWORD)(gpSet->mn_HostModOk[1])) << 8;
-
-	if (gpSet->mn_HostModOk[2])
-		nNew |= ((DWORD)(gpSet->mn_HostModOk[2])) << 16;
-
-	if (gpSet->mn_HostModOk[3])
-		nNew |= ((DWORD)(gpSet->mn_HostModOk[3])) << 24;
-
-	TODO("!!! Добавить в mn_HostModSkip те VK, которые отсутствуют в mn_HostModOk");
-
-	if (gpSet->nMultiHotkeyModifier != nNew)
-	{
-		gpSet->nMultiHotkeyModifier = nNew;
-		lbChanged = true;
-	}
-
-	return lbChanged;
-}
-
-// Оставить в mn_HostModOk только 3 VK
-void Settings::TrimHostkeys()
-{
-	if (gpSet->mn_HostModOk[0] == 0)
-		return;
-
-	int i = 0;
-
-	while (++i < 15 && gpSet->mn_HostModOk[i])
-		;
-
-	// Если вдруг задали более 3-х модификаторов - обрезать, оставив 3 последних
-	if (i > 3)
-	{
-		if (i >= (int)countof(gpSet->mn_HostModOk))
-		{
-			_ASSERTE(i < countof(gpSet->mn_HostModOk));
-			i = countof(gpSet->mn_HostModOk) - 1;
-		}
-		memmove(gpSet->mn_HostModOk, gpSet->mn_HostModOk+i-3, 3); //-V112
-	}
-
-	memset(gpSet->mn_HostModOk+3, 0, sizeof(gpSet->mn_HostModOk)-3);
-}
-
-bool Settings::isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR)
-{
-	if (vk == vkC)
-	{
-		bool bLeft  = isPressed(vkL);
-		bool bRight = isPressed(vkR);
-
-		if (bLeft && !bRight)
-			return (nMultiHotkeyModifier == vkL);
-
-		if (bRight && !bLeft)
-			return (nMultiHotkeyModifier == vkR);
-
-		// нажатие обоих шифтов - игнорируем
-		return false;
-	}
-
-	if (vk == vkL)
-		return (nMultiHotkeyModifier == vkL);
-
-	if (vk == vkR)
-		return (nMultiHotkeyModifier == vkR);
-
-	return false;
-}
-
-bool Settings::IsHostkeySingle(WORD vk)
-{
-	if (nMultiHotkeyModifier > 0xFF)
-		return false; // в Host-комбинации больше одной клавиши
-
-	if (vk == VK_LWIN || vk == VK_RWIN)
-		return (nMultiHotkeyModifier == VK_LWIN);
-
-	if (vk == VK_APPS)
-		return (nMultiHotkeyModifier == VK_APPS);
-
-	if (vk == VK_SHIFT || vk == VK_LSHIFT || vk == VK_RSHIFT)
-		return isHostkeySingleLR(vk, VK_SHIFT, VK_LSHIFT, VK_RSHIFT);
-
-	if (vk == VK_CONTROL || vk == VK_LCONTROL || vk == VK_RCONTROL)
-		return isHostkeySingleLR(vk, VK_CONTROL, VK_LCONTROL, VK_RCONTROL);
-
-	if (vk == VK_MENU || vk == VK_LMENU || vk == VK_RMENU)
-		return isHostkeySingleLR(vk, VK_MENU, VK_LMENU, VK_RMENU);
-
-	return false;
-}
+//bool Settings::IsHostkeySingle(WORD vk)
+//{
+//	if (nMultiHotkeyModifier > 0xFF)
+//		return false; // в Host-комбинации больше одной клавиши
+//
+//	if (vk == VK_LWIN || vk == VK_RWIN)
+//		return (nMultiHotkeyModifier == VK_LWIN);
+//
+//	if (vk == VK_APPS)
+//		return (nMultiHotkeyModifier == VK_APPS);
+//
+//	if (vk == VK_SHIFT || vk == VK_LSHIFT || vk == VK_RSHIFT)
+//		return isHostkeySingleLR(vk, VK_SHIFT, VK_LSHIFT, VK_RSHIFT);
+//
+//	if (vk == VK_CONTROL || vk == VK_LCONTROL || vk == VK_RCONTROL)
+//		return isHostkeySingleLR(vk, VK_CONTROL, VK_LCONTROL, VK_RCONTROL);
+//
+//	if (vk == VK_MENU || vk == VK_LMENU || vk == VK_RMENU)
+//		return isHostkeySingleLR(vk, VK_MENU, VK_LMENU, VK_RMENU);
+//
+//	return false;
+//}
 
 // набор флагов MOD_xxx для RegisterHotKey
-UINT Settings::GetHostKeyMod()
+DWORD Settings::GetHotKeyMod(DWORD VkMod)
 {
-	UINT nMOD = 0;
+	DWORD nMOD = 0;
 
-	for(int i=0; i < 15 && mn_HostModOk[i]; i++)
+	for (int i = 1; i <= 3; i++)
 	{
-		switch(mn_HostModOk[i])
+		switch (GetModifier(VkMod,i))
 		{
 			case VK_LWIN: case VK_RWIN:
 				nMOD |= MOD_WIN;
@@ -2538,76 +2819,108 @@ UINT Settings::GetHostKeyMod()
 	}
 
 	if (!nMOD)
+	{
+		_ASSERTE(nMOD!=0);
 		nMOD = MOD_WIN;
+	}
 
 	return nMOD;
 }
 
-WORD Settings::GetPressedHostkey()
+DWORD Settings::MakeHotKey(BYTE Vk, BYTE vkMod1/*=0*/, BYTE vkMod2/*=0*/, BYTE vkMod3/*=0*/)
 {
-	_ASSERTE(mn_HostModOk[0]!=0);
-
-	if (mn_HostModOk[0] == VK_LWIN)
+	DWORD vkHotKey = Vk;
+	if (!vkMod1 && !vkMod2 && !vkMod3)
 	{
-		if (isPressed(VK_LWIN))
-			return VK_LWIN;
-
-		if (isPressed(VK_RWIN))
-			return VK_RWIN;
+		vkHotKey |= CEHOTKEY_NOMOD;
 	}
-
-	if (!isPressed(mn_HostModOk[0]))
+	else
 	{
-		_ASSERT(FALSE);
-		return 0;
-	}
-
-	// Для правых-левых - возвращаем общий, т.к. именно он приходит в WM_KEYUP
-	if (mn_HostModOk[0] == VK_LSHIFT || mn_HostModOk[0] == VK_RSHIFT)
-		return VK_SHIFT;
-
-	if (mn_HostModOk[0] == VK_LMENU || mn_HostModOk[0] == VK_RMENU)
-		return VK_MENU;
-
-	if (mn_HostModOk[0] == VK_LCONTROL || mn_HostModOk[0] == VK_RCONTROL)
-		return VK_CONTROL;
-
-	return mn_HostModOk[0];
-}
-
-bool Settings::IsHostkeyPressed()
-{
-	if (mn_HostModOk[0] == 0)
-	{
-		_ASSERTE(mn_HostModOk[0]!=0);
-		mn_HostModOk[0] = VK_LWIN;
-		return isPressed(VK_LWIN) || isPressed(VK_RWIN);
-	}
-
-	// Не более 3-х модификаторов + кнопка
-	_ASSERTE(mn_HostModOk[4] == 0);
-	for(int i = 0; i < 4 && mn_HostModOk[i]; i++) //-V112
-	{
-		if (mn_HostModOk[i] == VK_LWIN)
+		int iShift = 8;
+		if (vkMod1)
 		{
-			if (!(isPressed(VK_LWIN) || isPressed(VK_RWIN)))
-				return false;
+			vkHotKey |= (vkMod1<<iShift);
+			iShift += 8;
 		}
-		else if (!isPressed(mn_HostModOk[i]))
+		if (vkMod2)
 		{
-			return false;
+			vkHotKey |= (vkMod2<<iShift);
+			iShift += 8;
+		}
+		if (vkMod3)
+		{
+			vkHotKey |= (vkMod3<<iShift);
+			iShift += 8;
 		}
 	}
-
-	// Не более 3-х модификаторов + кнопка
-	for(int j = 0; j < 4 && mn_HostModSkip[j]; j++) //-V112
-	{
-		if (isPressed(mn_HostModSkip[j]))
-			return false;
-	}
-
-	return true;
+	return vkHotKey;
 }
+
+//WORD Settings::GetPressedHostkey()
+//{
+//	_ASSERTE(mn_HostModOk[0]!=0);
+//
+//	if (mn_HostModOk[0] == VK_LWIN)
+//	{
+//		if (isPressed(VK_LWIN))
+//			return VK_LWIN;
+//
+//		if (isPressed(VK_RWIN))
+//			return VK_RWIN;
+//	}
+//
+//	if (!isPressed(mn_HostModOk[0]))
+//	{
+//		_ASSERT(FALSE);
+//		return 0;
+//	}
+//
+//	// Для правых-левых - возвращаем общий, т.к. именно он приходит в WM_KEYUP
+//	if (mn_HostModOk[0] == VK_LSHIFT || mn_HostModOk[0] == VK_RSHIFT)
+//		return VK_SHIFT;
+//
+//	if (mn_HostModOk[0] == VK_LMENU || mn_HostModOk[0] == VK_RMENU)
+//		return VK_MENU;
+//
+//	if (mn_HostModOk[0] == VK_LCONTROL || mn_HostModOk[0] == VK_RCONTROL)
+//		return VK_CONTROL;
+//
+//	return mn_HostModOk[0];
+//}
+
+//bool Settings::IsHostkeyPressed()
+//{
+//	if (mn_HostModOk[0] == 0)
+//	{
+//		_ASSERTE(mn_HostModOk[0]!=0);
+//		mn_HostModOk[0] = VK_LWIN;
+//		return isPressed(VK_LWIN) || isPressed(VK_RWIN);
+//	}
+//
+//	// Не более 3-х модификаторов + кнопка
+//	_ASSERTE(mn_HostModOk[4] == 0);
+//	for(int i = 0; i < 4 && mn_HostModOk[i]; i++) //-V112
+//	{
+//		if (mn_HostModOk[i] == VK_LWIN)
+//		{
+//			if (!(isPressed(VK_LWIN) || isPressed(VK_RWIN)))
+//				return false;
+//		}
+//		else if (!isPressed(mn_HostModOk[i]))
+//		{
+//			return false;
+//		}
+//	}
+//
+//	// Не более 3-х модификаторов + кнопка
+//	for(int j = 0; j < 4 && mn_HostModSkip[j]; j++) //-V112
+//	{
+//		if (isPressed(mn_HostModSkip[j]))
+//			return false;
+//	}
+//
+//	return true;
+//}
 
 LPCTSTR Settings::GetCmd()
 {
@@ -3084,19 +3397,23 @@ void Settings::GetSettingsType(wchar_t (&szType)[8], bool& ReadOnly)
 		if (hFile != INVALID_HANDLE_VALUE)
 		{
 			CloseHandle(hFile); hFile = NULL;
-			pszType = L"[xml]";
-			// Проверим, сможем ли мы в него записать
-			hFile = CreateFile(pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-			                   NULL, OPEN_EXISTING, 0, 0);
 
-			if (hFile != INVALID_HANDLE_VALUE)
+			if (SettingsXML::IsXmlAllowed())
 			{
-				CloseHandle(hFile); hFile = NULL; // OK
-			}
-			else
-			{
-				//EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
-				ReadOnly = true;
+				pszType = L"[xml]";
+				// Проверим, сможем ли мы в него записать
+				hFile = CreateFile(pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+				                   NULL, OPEN_EXISTING, 0, 0);
+
+				if (hFile != INVALID_HANDLE_VALUE)
+				{
+					CloseHandle(hFile); hFile = NULL; // OK
+				}
+				else
+				{
+					//EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
+					ReadOnly = true;
+				}
 			}
 		}
 	}
@@ -3399,13 +3716,19 @@ bool Settings::NeedDialogDetect()
 	//return (isUserScreenTransparent || !isMonospace);
 }
 
-bool Settings::isModifierPressed(DWORD vk)
+bool Settings::IsModifierPressed(int nDescrID, bool bAllowEmpty)
 {
+	DWORD vk = GetHotkey(GetHotkeyById(nDescrID));
+
 	// если НЕ 0 - должен быть нажат
 	if (vk)
 	{
 		if (!isPressed(vk))
 			return false;
+	}
+	else if (!bAllowEmpty)
+	{
+		return false;
 	}
 
 	// но другие модификаторы нажаты быть не должны!
@@ -3596,4 +3919,277 @@ bool Settings::CmdTaskXch(int anIndex1, int anIndex2)
 	CmdTasks[anIndex2] = p;
 
 	return true;
+}
+
+DWORD Settings::GetHotkeyById(int nDescrID)
+{
+	if (!gpSetCls || !gpSetCls->m_HotKeys)
+	{
+		_ASSERTE(gpSetCls && gpSetCls->m_HotKeys);
+		return 0;
+	}
+
+	static int iLastFound = -1;
+
+	for (int j = -1;; j++)
+	{
+		int i = j;
+
+		if (j == -1)
+		{
+			if (iLastFound == -1)
+				continue;
+			else
+				i = iLastFound;
+		}
+
+		if (!gpSetCls->m_HotKeys[i].DescrLangID)
+			break;
+
+		if (gpSetCls->m_HotKeys[i].DescrLangID == nDescrID)
+		{
+			iLastFound = i;
+			DWORD VkMod = gpSetCls->m_HotKeys[i].VkMod;
+			if (gpSetCls->m_HotKeys[i].HkType == chk_Modifier)
+			{
+				_ASSERTE(VkMod == GetHotkey(VkMod));
+				VkMod = GetHotkey(VkMod); // младший байт
+			}
+			return VkMod;
+		}
+	}
+
+	return 0;
+}
+
+bool Settings::IsHotkey(int nDescrID)
+{
+	DWORD nVk = GetHotkey(GetHotkeyById(nDescrID));
+	return (nVk != 0);
+}
+
+void Settings::SetHotkeyById(int nDescrID, DWORD VkMod)
+{
+	if (!gpSetCls || !gpSetCls->m_HotKeys)
+	{
+		_ASSERTE(gpSetCls && gpSetCls->m_HotKeys);
+		return;
+	}
+
+	for (int i = 0; gpSetCls->m_HotKeys[i].DescrLangID; i++)
+	{
+		if (gpSetCls->m_HotKeys[i].DescrLangID == nDescrID)
+		{
+			gpSetCls->m_HotKeys[i].VkMod = VkMod;
+			break;
+		}
+	}
+}
+
+void Settings::LoadHotkeys(SettingsBase* reg)
+{
+	if (!gpSetCls || !gpSetCls->m_HotKeys)
+	{
+		_ASSERTE(gpSetCls && gpSetCls->m_HotKeys);
+		return;
+	}
+
+	reg->Load(L"Multi.Modifier", nHostkeyNumberModifier); TestHostkeyModifiers(nHostkeyNumberModifier);
+	nHostkeyArrowModifier = nHostkeyArrowModifier; // Умолчание - то же что и "Multi.Modifier"
+	reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); TestHostkeyModifiers(nHostkeyArrowModifier);
+
+	wchar_t szMacroName[80];
+
+	for (int i = 0; gpSetCls->m_HotKeys[i].DescrLangID; i++)
+	{
+		if (!*gpSetCls->m_HotKeys[i].Name)
+			continue;
+		
+		// Эти модификаторы раньше в настройке не сохранялись, для совместимости - добавляем VK_SHIFT к предыдущей
+		switch (gpSetCls->m_HotKeys[i].DescrLangID)
+		{
+		case vkMultiNewShift:
+			_ASSERTE(gpSetCls->m_HotKeys[i-1].DescrLangID == vkMultiNew);
+			gpSetCls->m_HotKeys[i].VkMod = SetModifier(gpSetCls->m_HotKeys[i-1].VkMod,VK_SHIFT, true/*Xor*/);
+			break;
+		case vkMultiNextShift:
+			_ASSERTE(gpSetCls->m_HotKeys[i-1].DescrLangID == vkMultiNext);
+			gpSetCls->m_HotKeys[i].VkMod = SetModifier(gpSetCls->m_HotKeys[i-1].VkMod,VK_SHIFT, true/*Xor*/);
+			break;
+		}
+
+		_ASSERTE(gpSetCls->m_HotKeys[i].HkType != chk_NumHost);
+		_ASSERTE(gpSetCls->m_HotKeys[i].HkType != chk_ArrHost);
+		_ASSERTE(gpSetCls->m_HotKeys[i].HkType != chk_System);
+
+		reg->Load(gpSetCls->m_HotKeys[i].Name, gpSetCls->m_HotKeys[i].VkMod);
+
+		if (gpSetCls->m_HotKeys[i].HkType == chk_Macro)
+		{
+			wcscpy_c(szMacroName, gpSetCls->m_HotKeys[i].Name);
+			wcscat_c(szMacroName, L".Text");
+			reg->Load(szMacroName, &gpSetCls->m_HotKeys[i].GuiMacro);
+		}
+	}
+}
+
+void Settings::SaveHotkeys(SettingsBase* reg)
+{
+	if (!gpSetCls || !gpSetCls->m_HotKeys)
+	{
+		_ASSERTE(gpSetCls && gpSetCls->m_HotKeys);
+		return;
+	}
+
+	reg->Save(L"Multi.Modifier", nHostkeyNumberModifier);
+	reg->Save(L"Multi.ArrowsModifier", nHostkeyArrowModifier);
+
+	wchar_t szMacroName[80];
+
+	for (int i = 0; gpSetCls->m_HotKeys[i].DescrLangID; i++)
+	{
+		if (!*gpSetCls->m_HotKeys[i].Name)
+			continue;
+		
+		if ((gpSetCls->m_HotKeys[i].HkType == chk_Modifier)
+			|| (gpSetCls->m_HotKeys[i].HkType == chk_NumHost)
+			|| (gpSetCls->m_HotKeys[i].HkType == chk_ArrHost))
+		{
+			_ASSERTE(gpSetCls->m_HotKeys[i].VkMod == (gpSetCls->m_HotKeys[i].VkMod & 0xFF));
+			BYTE Mod = (BYTE)(gpSetCls->m_HotKeys[i].VkMod & 0xFF);
+			reg->Save(gpSetCls->m_HotKeys[i].Name, Mod);
+		}
+		else
+		{
+			reg->Save(gpSetCls->m_HotKeys[i].Name, gpSetCls->m_HotKeys[i].VkMod);
+
+			if (gpSetCls->m_HotKeys[i].HkType == chk_Macro)
+			{
+				wcscpy_c(szMacroName, gpSetCls->m_HotKeys[i].Name);
+				wcscat_c(szMacroName, L".Text");
+				reg->Save(szMacroName, gpSetCls->m_HotKeys[i].GuiMacro);
+			}
+		}
+	}
+}
+
+ConEmuHotKey* Settings::AllocateHotkeys()
+{
+	// Горячие клавиши
+
+	TODO("Дополнить системные комбинации");
+	WARNING("У gpSet->nLDragKey,gpSet->nRDragKey был тип DWORD");
+
+	WARNING("ConEmuHotKey: Убрать нафиг все ссылки на переменные, обработка будет прозрачная, а нажатость chk_Modifier можно по DescrLangID определять");
+
+	//static const wchar_t szGuiMacroIncreaseFont[] = L"FontSetSize(1,2)";
+	//static const wchar_t szGuiMacroDecreaseFont[] = L"FontSetSize(1,-2)";
+
+	ConEmuHotKey HotKeys[] =
+	{
+		// User (Keys, Global)
+		{vkMinimizeRestore,chk_Global, NULL,   L"MinimizeRestore",       /*&vmMinimizeRestore,*/ MakeHotKey('C',VK_LWIN), CConEmuCtrl::key_MinimizeRestore},
+		// User (Keys)
+		{vkMultiNew,       chk_User, &isMulti, L"Multi.NewConsole",      /*&vmMultiNew,*/ MakeHotKey('W',VK_LWIN), CConEmuCtrl::key_MultiNew},
+		{vkMultiNewShift,  chk_User, &isMulti, L"Multi.NewConsoleShift", /*&vmMultiNewShift,*/ MakeHotKey('W',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNewShift},
+		{vkMultiNext,      chk_User, &isMulti, L"Multi.Next",            /*&vmMultiNext,*/ MakeHotKey('Q',VK_LWIN), CConEmuCtrl::key_MultiNext},
+		{vkMultiNextShift, chk_User, &isMulti, L"Multi.NextShift",       /*&vmMultiNextShift,*/ MakeHotKey('Q',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNextShift},
+		{vkMultiRecreate,  chk_User, &isMulti, L"Multi.Recreate",        /*&vmMultiRecreate,*/ MakeHotKey(192/*VK_тильда*/,VK_LWIN), CConEmuCtrl::key_MultiRecreate},
+		{vkMultiBuffer,    chk_User, &isMulti, L"Multi.Buffer",          /*&vmMultiBuffer,*/ MakeHotKey('A',VK_LWIN), CConEmuCtrl::key_MultiBuffer},
+		{vkMultiClose,     chk_User, &isMulti, L"Multi.Close",           /*&vmMultiClose,*/ MakeHotKey(VK_DELETE,VK_LWIN), CConEmuCtrl::key_MultiClose},
+		{vkMultiCmd,       chk_User, &isMulti, L"Multi.CmdKey",          /*&vmMultiCmd,*/ MakeHotKey('X',VK_LWIN), CConEmuCtrl::key_MultiCmd},
+		{vkCTSVkBlockStart,chk_User, NULL,     L"CTS.VkBlockStart",      /*&vmCTSVkBlockStart,*/ 0, CConEmuCtrl::key_CTSVkBlockStart}, // запуск выделения блока
+		{vkCTSVkTextStart, chk_User, NULL,     L"CTS.VkTextStart",       /*&vmCTSVkTextStart,*/ 0, CConEmuCtrl::key_CTSVkTextStart},   // запуск выделения текста
+		{vkShowTabsList,   chk_User, NULL,     L"Multi.ShowTabsList",    MakeHotKey(VK_F12), CConEmuCtrl::key_ShowTabsList},
+		// GUI Macros
+		{vkGuMacro01,      chk_Macro, NULL,    L"KeyMacro01", MakeHotKey(VK_WHEEL_UP,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,2)")},
+		{vkGuMacro02,      chk_Macro, NULL,    L"KeyMacro02", MakeHotKey(VK_WHEEL_DOWN,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,-2)")},
+		{vkGuMacro03,      chk_Macro, NULL,    L"KeyMacro03", MakeHotKey(VK_F12,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Tabs(8)")},
+		{vkGuMacro04,      chk_Macro, NULL,    L"KeyMacro04", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro05,      chk_Macro, NULL,    L"KeyMacro05", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro06,      chk_Macro, NULL,    L"KeyMacro06", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro07,      chk_Macro, NULL,    L"KeyMacro07", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro08,      chk_Macro, NULL,    L"KeyMacro08", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro09,      chk_Macro, NULL,    L"KeyMacro09", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro10,      chk_Macro, NULL,    L"KeyMacro10", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro11,      chk_Macro, NULL,    L"KeyMacro11", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro12,      chk_Macro, NULL,    L"KeyMacro12", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro13,      chk_Macro, NULL,    L"KeyMacro13", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro14,      chk_Macro, NULL,    L"KeyMacro14", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro15,      chk_Macro, NULL,    L"KeyMacro15", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro16,      chk_Macro, NULL,    L"KeyMacro16", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro17,      chk_Macro, NULL,    L"KeyMacro17", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro18,      chk_Macro, NULL,    L"KeyMacro18", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro19,      chk_Macro, NULL,    L"KeyMacro19", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro20,      chk_Macro, NULL,    L"KeyMacro20", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro21,      chk_Macro, NULL,    L"KeyMacro21", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro22,      chk_Macro, NULL,    L"KeyMacro22", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro23,      chk_Macro, NULL,    L"KeyMacro23", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro24,      chk_Macro, NULL,    L"KeyMacro24", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro25,      chk_Macro, NULL,    L"KeyMacro25", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro26,      chk_Macro, NULL,    L"KeyMacro26", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro27,      chk_Macro, NULL,    L"KeyMacro27", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro28,      chk_Macro, NULL,    L"KeyMacro28", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro29,      chk_Macro, NULL,    L"KeyMacro29", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro30,      chk_Macro, NULL,    L"KeyMacro30", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro31,      chk_Macro, NULL,    L"KeyMacro31", 0, CConEmuCtrl::key_GuiMacro},
+		{vkGuMacro32,      chk_Macro, NULL,    L"KeyMacro32", 0, CConEmuCtrl::key_GuiMacro},
+		// User (Modifiers)
+		{vkCTSVkBlock,     chk_Modifier, NULL, L"CTS.VkBlock",     /*(DWORD*)&isCTSVkBlock,*/ VK_LMENU},      // модификатор запуска выделения мышкой
+		{vkCTSVkText,      chk_Modifier, NULL, L"CTS.VkText",      /*(DWORD*)&isCTSVkText,*/ VK_LSHIFT},       // модификатор запуска выделения мышкой
+		{vkCTSVkAct,       chk_Modifier, NULL, L"CTS.VkAct",       /*(DWORD*)&isCTSVkAct,*/ 0},        // модификатор разрешения действий правой и средней кнопки мышки
+		{vkFarGotoEditorVk,chk_Modifier, NULL, L"FarGotoEditorVk", /*(DWORD*)&isFarGotoEditorVk,*/ VK_LCONTROL}, // модификатор для isFarGotoEditor
+		{vkLDragKey,       chk_Modifier, NULL, L"DndLKey",         /*(DWORD*)&nLDragKey,*/ 0},         // модификатор драга левой кнопкой
+		{vkRDragKey,       chk_Modifier, NULL, L"DndRKey",         /*(DWORD*)&nRDragKey,*/ VK_LCONTROL},         // модификатор драга правой кнопкой
+		// System (predefined, fixed)
+		{vkWinAltP,        chk_System, NULL, L"", MakeHotKey('P',VK_LWIN,VK_MENU), CConEmuCtrl::key_Settings, true/*OnKeyUp*/}, // Settings
+		{vkWinAltSpace,    chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_LWIN,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
+		{vkWinApps,        chk_System, NULL, L"", MakeHotKey(VK_APPS,VK_LWIN), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
+		{vkAltF9,          chk_System, NULL, L"", MakeHotKey(VK_F9,VK_MENU), CConEmuCtrl::key_AltF9}, // Maximize window
+		{vkCtrlWinAltSpace,chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_CONTROL,VK_LWIN,VK_MENU), CConEmuCtrl::key_ShowRealConsole}, // Show real console
+		{vkAltEnter,       chk_System, NULL, L"", MakeHotKey(VK_RETURN,VK_MENU), CConEmuCtrl::key_AltEnter}, // Full screen
+		{vkCtrlWinEnter,   chk_System, NULL, L"", MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL), CConEmuCtrl::key_FullScreen},
+		{vkAltSpace,       chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
+		{vkCtrlUp,         chk_System, NULL, L"", MakeHotKey(VK_UP,VK_CONTROL), CConEmuCtrl::key_BufferScrollUp}, // Buffer scroll
+		{vkCtrlDown,       chk_System, NULL, L"", MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_BufferScrollDown}, // Buffer scroll
+		{vkCtrlPgUp,       chk_System, NULL, L"", MakeHotKey(VK_PRIOR,VK_CONTROL), CConEmuCtrl::key_BufferScrollPgUp}, // Buffer scroll
+		{vkCtrlPgDn,       chk_System, NULL, L"", MakeHotKey(VK_NEXT,VK_CONTROL), CConEmuCtrl::key_BufferScrollPgDn}, // Buffer scroll
+		{vkCtrlTab,        chk_System, NULL, L"", MakeHotKey(VK_TAB,VK_CONTROL), CConEmuCtrl::key_CtrlTab}, // Tab switch
+		{vkCtrlShiftTab,   chk_System, NULL, L"", MakeHotKey(VK_TAB,VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_CtrlShiftTab}, // Tab switch
+		{vkCtrlTab_Left,   chk_System, NULL, L"", MakeHotKey(VK_LEFT,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Prev}, // Tab switch
+		{vkCtrlTab_Up,     chk_System, NULL, L"", MakeHotKey(VK_UP,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Prev}, // Tab switch
+		{vkCtrlTab_Right,  chk_System, NULL, L"", MakeHotKey(VK_RIGHT,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Next}, // Tab switch
+		{vkCtrlTab_Down,   chk_System, NULL, L"", MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Next}, // Tab switch
+		{vkPicViewSlide,   chk_System, NULL, L"", MakeHotKey(VK_PAUSE), CConEmuCtrl::key_PicViewSlideshow, true/*OnKeyUp*/}, // Slideshow in PicView2
+		{vkPicViewSlower,  chk_System, NULL, L"", MakeHotKey(0xbd/* -_ */), CConEmuCtrl::key_PicViewSlideshow}, // Slideshow in PicView2
+		{vkPicViewFaster,  chk_System, NULL, L"", MakeHotKey(0xbb/* =+ */), CConEmuCtrl::key_PicViewSlideshow}, // Slideshow in PicView2
+		// Все что ниже - было привязано к "HostKey"
+		// Надо бы дать настроить модификатор, а сами кнопки - не трогать
+		{vkWinLeft,    chk_ArrHost, &isUseWinArrows, L"", VK_LEFT|CEHOTKEY_ARRHOSTKEY,  CConEmuCtrl::key_WinWidthDec},  // Decrease window width
+		{vkWinRight,   chk_ArrHost, &isUseWinArrows, L"", VK_RIGHT|CEHOTKEY_ARRHOSTKEY, CConEmuCtrl::key_WinWidthInc},  // Increase window width
+		{vkWinUp,      chk_ArrHost, &isUseWinArrows, L"", VK_UP|CEHOTKEY_ARRHOSTKEY,    CConEmuCtrl::key_WinHeightDec}, // Decrease window height
+		{vkWinDown,    chk_ArrHost, &isUseWinArrows, L"", VK_DOWN|CEHOTKEY_ARRHOSTKEY,  CConEmuCtrl::key_WinHeightDec}, // Increase window height
+		// Console activate by number
+		{vkConsole_1,  chk_NumHost, &isUseWinNumber, L"", '1'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_2,  chk_NumHost, &isUseWinNumber, L"", '2'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_3,  chk_NumHost, &isUseWinNumber, L"", '3'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_4,  chk_NumHost, &isUseWinNumber, L"", '4'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_5,  chk_NumHost, &isUseWinNumber, L"", '5'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_6,  chk_NumHost, &isUseWinNumber, L"", '6'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_7,  chk_NumHost, &isUseWinNumber, L"", '7'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_8,  chk_NumHost, &isUseWinNumber, L"", '8'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_9,  chk_NumHost, &isUseWinNumber, L"", '9'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_10, chk_NumHost, &isUseWinNumber, L"", '0'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
+		{vkConsole_11, chk_NumHost, &isUseWinNumber, L"", VK_F11|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // Для WinF11 & WinF12 приходят только WM_KEYUP || WM_SYSKEYUP)
+		{vkConsole_12, chk_NumHost, &isUseWinNumber, L"", VK_F12|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // Для WinF11 & WinF12 приходят только WM_KEYUP || WM_SYSKEYUP)
+		// End
+		{},
+	};
+	// Чтобы не возникло проблем с инициализацией хуков (для обработки Win+<key>)
+	_ASSERTE(countof(HotKeys)<(HookedKeysMaxCount-1));
+	WARNING("ConEmuHotKey: VK_F11 & VK_F12 - убрать нафиг. Сделать нормальный выбор по двум цифрам, да и до 99 консолей расширить");
+	ConEmuHotKey* pKeys = (ConEmuHotKey*)malloc(sizeof(HotKeys));
+	_ASSERTE(pKeys!=NULL);
+	memmove(pKeys, HotKeys, sizeof(HotKeys));
+	return pKeys;
 }

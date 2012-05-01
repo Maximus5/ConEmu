@@ -2205,8 +2205,8 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		// ≈сли выделение еще не начато, но удерживаетс€ модификатор - игнорировать WM_MOUSEMOVE
 		if (messg == WM_MOUSEMOVE && !con.m_sel.dwFlags)
 		{
-			if ((gpSet->isCTSSelectBlock && gpSet->isCTSVkBlock && gpSet->isModifierPressed(gpSet->isCTSVkBlock))
-				|| (gpSet->isCTSSelectText && gpSet->isCTSVkText && gpSet->isModifierPressed(gpSet->isCTSVkText)))
+			if ((gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, false))
+				|| (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, false)))
 			{
 				// ѕропустить, пользователь собираетс€ начать выделение, не посылать движение мыши в консоль
 				return true;
@@ -2216,7 +2216,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		if (((gpSet->isCTSRBtnAction == 2) || ((gpSet->isCTSRBtnAction == 3) && !isSelectionPresent()))
 				&& (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP)
 		        && ((gpSet->isCTSActMode == 2 && mp_RCon->isBufferHeight() && !mp_RCon->isFarBufferSupported())
-		            || (gpSet->isCTSActMode == 1 && (!gpSet->isCTSVkAct || gpSet->isModifierPressed(gpSet->isCTSVkAct)))))
+		            || (gpSet->isCTSActMode == 1 && gpSet->IsModifierPressed(vkCTSVkAct, true))))
 		{
 			if (messg == WM_RBUTTONUP) mp_RCon->Paste();
 
@@ -2226,7 +2226,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		if (((gpSet->isCTSMBtnAction == 2) || ((gpSet->isCTSMBtnAction == 3) && !isSelectionPresent()))
 				&& (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONUP)
 		        && ((gpSet->isCTSActMode == 2 && mp_RCon->isBufferHeight() && !mp_RCon->isFarBufferSupported())
-		            || (gpSet->isCTSActMode == 1 && (!gpSet->isCTSVkAct || gpSet->isModifierPressed(gpSet->isCTSVkAct)))))
+		            || (gpSet->isCTSActMode == 1 && gpSet->IsModifierPressed(vkCTSVkAct, true))))
 		{
 			if (messg == WM_MBUTTONUP) mp_RCon->Paste();
 
@@ -2446,13 +2446,13 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		}
 		else
 		{
-			if (gpSet->isCTSSelectBlock && gpSet->isModifierPressed(gpSet->isCTSVkBlock))
+			if (gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, true))
 			{
-				lbStreamSelection = FALSE; vkMod = gpSet->isCTSVkBlock; // OK
+				lbStreamSelection = FALSE; vkMod = gpSet->GetHotkeyById(vkCTSVkBlock); // OK
 			}
-			else if (gpSet->isCTSSelectText && gpSet->isModifierPressed(gpSet->isCTSVkText))
+			else if (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, true))
 			{
-				lbStreamSelection = TRUE; vkMod = gpSet->isCTSVkText; // OK
+				lbStreamSelection = TRUE; vkMod = gpSet->GetHotkeyById(vkCTSVkText); // OK
 			}
 			else
 			{
@@ -2939,7 +2939,7 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			mp_RCon->mn_SelectModeSkipVk = 0; // игнорируем отпускание, поскольку нажатие было на копирование/отмену
 			return true;
 		}
-		else if (gpSet->isFarGotoEditor && isKey(wParam, gpSet->isFarGotoEditorVk))
+		else if (gpSet->isFarGotoEditor && isKey(wParam, gpSet->GetHotkeyById(vkFarGotoEditorVk)))
 		{
 			if (GetLastTextRangeType() != etr_None)
 			{
@@ -2951,7 +2951,7 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	if (messg == WM_KEYDOWN)
 	{
-		if (gpSet->isFarGotoEditor && isKey(wParam, gpSet->isFarGotoEditorVk))
+		if (gpSet->isFarGotoEditor && isKey(wParam, gpSet->GetHotkeyById(vkFarGotoEditorVk)))
 		{
 			if (ProcessFarHyperlink(WM_MOUSEMOVE))
 				UpdateSelection();

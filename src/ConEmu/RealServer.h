@@ -76,5 +76,7 @@ protected:
 	CESERVER_REQ* cmdOnPeekReadInput(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdOnSetConsoleKeyShortcuts(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdLockDc(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+	CESERVER_REQ* cmdGetAllTabs(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+	CESERVER_REQ* cmdActivateTab(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	//CESERVER_REQ* cmdAssert(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 };

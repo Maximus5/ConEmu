@@ -68,6 +68,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 HMODULE ghOurModule = NULL; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 DWORD   gnHookMainThreadId = 0;
 
+extern HWND    ghConWnd;      // RealConsole
+
 extern BOOL gbDllStopCalled;
 
 #ifdef _DEBUG
@@ -2474,12 +2476,40 @@ HMODULE WINAPI OnLoadLibraryAExp(const char* lpFileName)
 HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const wchar_t* lpFileName)
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
-	HMODULE module = ((OnLoadLibraryW_t)lpfn)(lpFileName);
+	HMODULE module = NULL;
+
+	// Спрятать ExtendedConsole.dll с глаз долой, в сервисную папку "ConEmu"
+	if (lpFileName 
+		&& ((lstrcmpiW(lpFileName, L"ExtendedConsole.dll") == 0)
+			|| lstrcmpiW(lpFileName, L"ExtendedConsole64.dll") == 0))
+	{
+		CESERVER_CONSOLE_MAPPING_HDR *Info = (CESERVER_CONSOLE_MAPPING_HDR*)calloc(1,sizeof(*Info));
+		if (Info && ::LoadSrvMapping(ghConWnd, *Info))
+		{
+			size_t cchMax = countof(Info->sConEmuBaseDir)+64;
+			wchar_t* pszFullPath = (wchar_t*)calloc(cchMax,sizeof(*pszFullPath));
+			if (pszFullPath)
+			{
+				_wcscpy_c(pszFullPath, cchMax, Info->sConEmuBaseDir);
+				_wcscat_c(pszFullPath, cchMax, WIN3264TEST(L"\\ExtendedConsole.dll",L"\\ExtendedConsole64.dll"));
+
+				module = ((OnLoadLibraryW_t)lpfn)(pszFullPath);
+
+				SafeFree(pszFullPath);
+			}
+		}
+		SafeFree(Info);
+	}
+	
+	if (!module)
+		module = ((OnLoadLibraryW_t)lpfn)(lpFileName);
 	DWORD dwLoadErrCode = GetLastError();
 
 	if (gbHooksTemporaryDisabled)
 		return module;
 
+	// Больше не требуется. Загрузка ExtendedConsole обработана выше
+#if 0
 	// Far 3 x64 все равно пытается загрузить L"ExtendedConsole.dll" вместо L"ExtendedConsole64.dll"
 	#ifdef _WIN64
 	if (!module)
@@ -2494,6 +2524,7 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 		}
 	}
 	#endif
+#endif
 
 	
 	if (PrepareNewModule(module, NULL, lpFileName))

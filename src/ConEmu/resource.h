@@ -35,6 +35,7 @@
 #define IDD_ATTACHDLG                   212
 #define IDD_SPG_UPDATE                  214
 #define IDD_FAST_CONFIG                 215
+#define IDD_FIND                        217
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -240,14 +241,6 @@
 #define bRealConsoleSettings            1608
 #define bDropSettings                   1609
 #define bSaveSettings                   1610
-#define cbHostWin                       1611
-#define cbHostApps                      1612
-#define cbHostLCtrl                     1613
-#define cbHostRCtrl                     1614
-#define cbHostLAlt                      1615
-#define cbHostRAlt                      1616
-#define cbHostLShift                    1617
-#define cbHostRShift                    1618
 #define cbHandleFarDetach               1619
 #define cbPortableRegistry              1621
 #define tCursorPos                      1622
@@ -559,14 +552,73 @@
 #define cbMultiLeaveOnClose             2161
 #define cbComspec                       2162
 #define cbComspecTest                   2162
+#define gbFeatureMisc                   2163
+#define gbFeatureAppear                 2164
+#define gbFeatureCaption                2165
+#define gbFeatureClipboard              2166
+#define cbClipCtrlIns                   2167
+#define cbClipShiftIns                  2168
+#define cbClipCtrlC                     2169
+#define cbClipCtrlV                     2170
+#define cbClipConfirmPaste              2171
+#define cbClipboardOverride             2172
+#define tFindText                       2173
+#define cbFindWholeWords                2174
+#define cbFindMatchCase                 2175
+#define cbFindFreezeConsole             2176
+#define cbFindNext                      2177
+#define cbFindPrev                      2178
+#define cbFindClose                     2179
+#define cbCloseConsoleConfirm           2179
+#define gbKeyModifiers                  2180
+#define vkPicViewSlide                  2181
+#define vkPicViewSlower                 2182
+#define vkPicViewFaster                 2183
+#define lbHotKeyMod1                    2186
+#define lbHotKeyMod2                    2187
+#define lbHotKeyMod3                    2188
+#define stGuiMacro                      2189
+#define vkGuMacro01                     2190
+#define vkGuMacro02                     2191
+#define vkGuMacro03                     2192
+#define vkGuMacro04                     2193
+#define vkGuMacro05                     2194
+#define vkGuMacro06                     2195
+#define vkGuMacro07                     2196
+#define vkGuMacro08                     2197
+#define vkGuMacro09                     2198
+#define vkGuMacro10                     2199
+#define vkGuMacro11                     2200
+#define vkGuMacro12                     2201
+#define vkGuMacro13                     2202
+#define vkGuMacro14                     2203
+#define vkGuMacro15                     2204
+#define vkGuMacro16                     2205
+#define vkGuMacro17                     2206
+#define vkGuMacro18                     2207
+#define vkGuMacro19                     2208
+#define vkGuMacro20                     2209
+#define vkGuMacro21                     2210
+#define vkGuMacro22                     2211
+#define vkGuMacro23                     2212
+#define vkGuMacro24                     2213
+#define vkGuMacro25                     2214
+#define vkGuMacro26                     2215
+#define vkGuMacro27                     2216
+#define vkGuMacro28                     2217
+#define vkGuMacro29                     2218
+#define vkGuMacro30                     2219
+#define vkGuMacro31                     2220
+#define vkGuMacro32                     2221
+#define vkShowTabsList                  2222
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        217
+#define _APS_NEXT_RESOURCE_VALUE        218
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2163
+#define _APS_NEXT_CONTROL_VALUE         2223
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

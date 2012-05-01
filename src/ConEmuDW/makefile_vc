@@ -3,7 +3,7 @@
 
 NAME=ConEmuDw
 DIRNAME=$(NAME)
-RELEASEDIR=..\..\Release
+RELEASEDIR=..\..\Release\ConEmu
 
 !include ../makefile_vc_defs
 
@@ -238,6 +238,10 @@ clean:
 #!endif
 	@echo move $(MAP) $(RELEASEDIR)\$(OUTNAME).map
 	@move $(MAP) $(RELEASEDIR)\$(OUTNAME).map
+#Remove from old locations
+	if exist "$(RELEASEDIR)\..\$(OUTNAME).dll" del "$(RELEASEDIR)\..\$(OUTNAME).dll"
+	if exist "$(RELEASEDIR)\..\$(OUTNAME).map" del "$(RELEASEDIR)\..\$(OUTNAME).map"
+	if exist "$(RELEASEDIR)\..\$(OUTNAME).pdb" del "$(RELEASEDIR)\..\$(OUTNAME).pdb"
 
 
 

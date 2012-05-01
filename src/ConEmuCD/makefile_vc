@@ -252,7 +252,7 @@ clean:
 
 $(OBJDIR)\ConsoleMain.obj: ConsoleMain.cpp ../common/PipeServer.h
 
-$(OBJDIR)\GuiHooks.obj: GuiHooks.cpp
+$(OBJDIR)\GuiHooks.obj: GuiHooks.cpp GuiHooks.h
 
 $(OBJDIR)\RegPrepare.obj: RegPrepare.cpp
 

@@ -625,6 +625,11 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	si.dwFlags = STARTF_USESHOWWINDOW;
 	si.wShowWindow = SW_HIDE;
 
+	if (anType == apt_Gui)
+	{
+		gpConEmu->CreateGuiAttachMapping(anPID);
+	}
+
 	hProcTest = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ, FALSE, anPID);
 	if (hProcTest == NULL)
 	{
@@ -675,6 +680,11 @@ DoExecute:
 	// Теперь можно дернуть созданный в удаленном процессе пайп для запуска в той консоли сервера.
 	pIn = ExecuteNewCmd(CECMD_STARTSERVER, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_START));
 	pIn->NewServer.nPID = GetCurrentProcessId();
+	if (anType == apt_Gui)
+	{
+		_ASSERTE(ahAttachWnd && IsWindow(ahAttachWnd));
+		pIn->NewServer.hAppWnd = ahAttachWnd;
+	}
 	pOut = ExecuteCmd(szPipe, pIn, 500, ghWnd);
 	if (!pOut || (pOut->hdr.cbSize < pIn->hdr.cbSize) || (pOut->dwData[0] == 0))
 	{

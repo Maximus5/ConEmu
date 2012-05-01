@@ -952,6 +952,36 @@ int ServerInit(BOOL abAlternative/*=FALSE*/)
 	// Обновить переменные окружения и мэппинг консоли (по ConEmuGuiMapping)
 	// т.к. в момент CreateMapHeader ghConEmu еще был неизвестен
 	ReloadGuiSettings(NULL);
+
+	// Если мы аттачим существующее GUI окошко
+	if (gbNoCreateProcess && gbAttachMode && gpSrv->hRootProcessGui)
+	{
+		// Его нужно дернуть, чтобы инициализировать цикл аттача во вкладку ConEmu
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACHGUIAPP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP));
+		_ASSERTE(((DWORD)gpSrv->hRootProcessGui)!=0xCCCCCCCC);
+		_ASSERTE(IsWindow(ghConEmuWnd));
+		_ASSERTE(IsWindow(ghConEmuWndDC));
+		_ASSERTE(IsWindow(gpSrv->hRootProcessGui));
+		pIn->AttachGuiApp.hConEmuWnd = ghConEmuWnd;
+		pIn->AttachGuiApp.hConEmuWndDC = ghConEmuWndDC;
+		pIn->AttachGuiApp.hAppWindow = gpSrv->hRootProcessGui;
+		pIn->AttachGuiApp.hSrvConWnd = ghConWnd;
+		wchar_t szPipe[MAX_PATH];
+		_ASSERTE(gpSrv->dwRootProcess!=0);
+		_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEHOOKSPIPENAME, L".", gpSrv->dwRootProcess);
+		CESERVER_REQ* pOut = ExecuteCmd(szPipe, pIn, 500, ghConWnd);
+		if (!pOut 
+			|| (pOut->hdr.cbSize < (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)))
+			|| (pOut->dwData[0] != (DWORD)gpSrv->hRootProcessGui))
+		{
+			iRc = CERR_ATTACH_NO_GUIWND;
+		}
+		ExecuteFreeResult(pOut);
+		ExecuteFreeResult(pIn);
+		if (iRc != 0)
+			goto wrap;
+	}
+
 wrap:
 	return iRc;
 }
