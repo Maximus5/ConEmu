@@ -289,7 +289,7 @@ bool CConEmuCtrl::key_TabMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 // pRCon may be NULL
 bool CConEmuCtrl::key_AltF9(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
-	if (!gpSet->isSendAltF9)
+	if (gpSet->isSendAltF9)
 		return false;
 
 	if (TestOnly)
@@ -314,7 +314,7 @@ bool CConEmuCtrl::key_ShowRealConsole(DWORD VkMod, bool TestOnly, const ConEmuHo
 // pRCon may be NULL
 bool CConEmuCtrl::key_AltEnter(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
-	if (!gpSet->isSendAltEnter)
+	if (gpSet->isSendAltEnter)
 		return false;
 
 	if (TestOnly)
