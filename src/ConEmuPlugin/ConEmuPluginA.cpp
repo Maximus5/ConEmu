@@ -812,9 +812,14 @@ int ShowPluginMenuA(ConEmuPluginMenuItem* apItems, int Count)
 						| (apItems[i].Checked  ? MIF_CHECKED : 0)
 						;
 		if (apItems[i].MsgText)
+		{
 			WideCharToMultiByte(CP_OEMCP, 0, apItems[i].MsgText, -1, items[i].Text.Text, countof(items[i].Text.Text), 0,0);
+		}
 		else
+		{
 			items[i].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber, apItems[i].MsgID);
+			items[i].Flags |= MIF_USETEXTPTR;
+		}
 	}
 
 	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0,

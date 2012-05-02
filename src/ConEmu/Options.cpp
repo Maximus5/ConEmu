@@ -4024,6 +4024,19 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 
 		reg->Load(gpSetCls->m_HotKeys[i].Name, gpSetCls->m_HotKeys[i].VkMod);
 
+		if (gpSetCls->m_HotKeys[i].HkType != chk_Modifier)
+		{
+			// Если это НЕ 0 (0 - значит HotKey не задан)
+			// И это не DWORD (для HotKey без модификатора - пишется CEHOTKEY_NOMOD)
+			// Т.к. раньше был Byte - нужно добавить nHostkeyModifier
+			if (gpSetCls->m_HotKeys[i].VkMod && ((gpSetCls->m_HotKeys[i].VkMod & CEHOTKEY_MODMASK) == 0))
+			{
+				// Добавляем тот модификатор, который был раньше общий
+				_ASSERTE(nHostkeyNumberModifier!=0);
+				gpSetCls->m_HotKeys[i].VkMod |= (nHostkeyNumberModifier << 8);
+			}
+		}
+
 		if (gpSetCls->m_HotKeys[i].HkType == chk_Macro)
 		{
 			wcscpy_c(szMacroName, gpSetCls->m_HotKeys[i].Name);
