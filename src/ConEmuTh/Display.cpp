@@ -1046,7 +1046,9 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 			//if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
 			WARNING("Если в этой позиции - диалог, то получение цвета будет некорректным!");
 
-			if (gpRgnDetect->GetCharAttr(crItem.X, crItem.Y, c, a))
+			// Перым может идти "Optional marking character", его цвет нас не интересует
+			// Если перым идет символ пометки (NM в настройках панелей) - это не страшно
+			if (gpRgnDetect->GetCharAttr(crItem.X+1, crItem.Y, c, a))
 			{
 				pItemColor->crBack = gcrCurColors[a.nBackIdx];
 				pItemColor->crFore = gcrCurColors[a.nForeIdx];

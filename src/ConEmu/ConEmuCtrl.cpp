@@ -799,6 +799,40 @@ bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 	return true;
 }
 
+bool CConEmuCtrl::key_PasteText(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (!pRCon || pRCon->isFar())
+		return false;
+
+	return key_PasteTextAllApp(VkMod, TestOnly, hk, pRCon);
+}
+
+bool CConEmuCtrl::key_PasteTextAllApp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	PRAGMA_ERROR("Доделать");
+	//TODO: Хорошо бы слямзить из ClipFixer кусочек по корректировке текста. Настройка?
+}
+
+bool CConEmuCtrl::key_PasteFirstLine(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (!pRCon || pRCon->isFar())
+		return false;
+
+	return key_PasteFirstLineAllApp(VkMod, TestOnly, hk, pRCon);
+}
+
+bool CConEmuCtrl::key_PasteFirstLineAllApp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	PRAGMA_ERROR("Доделать");
+	//TODO: Хорошо бы слямзить из ClipFixer кусочек по корректировке текста. Настройка?
+}
+
 
 /* ************* Service functions ************* */
 

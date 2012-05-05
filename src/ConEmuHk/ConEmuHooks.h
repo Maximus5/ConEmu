@@ -81,3 +81,7 @@ enum ConEmuHkDllState
 extern ConEmuHkDllState gnDllState;
 extern int gnDllThreadCount;
 extern BOOL gbDllStopCalled;
+
+int __stdcall RequestLocalServer();
+struct AnnotationHeader;
+extern AnnotationHeader* gpAnnotationHeader;

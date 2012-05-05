@@ -5,13 +5,15 @@ Russian: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=ru
 TODO: Описать GUI Macro "Tab"
 TODO: Размножить ConEmu.TabList.fml для Far2/Far1
 TODO: Добавить ConEmu.TabList.fml в инсталлятор
+TODO: Написать в FAQ про расширенные цвета. 1) TrueColor (Far3/Far2), 2) расширение за счет фона, 3) собственная палитра приложения
 
 ****
 
-[!] Warning! «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder!
+[!] Warning! «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 
 ****
 
+[!] Issue 65: Для корректной работы приложений, использующих SetConsoleActiveScreenBuffer (telnet.exe и т.п.) требуется включить флажок «Inject ConEmuHk».
 [!] Чтобы в корне не маячили и не мешали фару при работе вне ConEmu - ExtendedConsole пененесен в подпапку.
 [!] Полностью переделана обработка HotKeys.
     * Понятия «HostKey» больше нет.
@@ -35,6 +37,7 @@ TODO: Добавить ConEmu.TabList.fml в инсталлятор
     TODO: Description coming
 [+] Keyboard: 'Show opened tabs list (does not work in Far - use macro instead)'. Default - F12.
 [+] ConEmu plugin: команда в меню плагина - 'Show all tabs list', макрос 'ConEmu.TabList.fml'
+[%] Issue 530: Ошибка в цветах Thumbnails/Tiles при включенном «Optional marking character».
 
 
 2012.04.22

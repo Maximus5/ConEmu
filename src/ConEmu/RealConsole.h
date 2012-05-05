@@ -355,6 +355,8 @@ class CRealConsole
 		DWORD GetFarStatus();
 		DWORD GetServerPID();
 		bool isServerCreated();
+		bool isServerAvailable();
+		bool isServerClosing();
 		LRESULT OnScroll(int nDirection);
 		LRESULT OnSetScrollPos(WPARAM wParam);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
@@ -473,10 +475,22 @@ class CRealConsole
 
 	protected:
 		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
-		DWORD mn_ConEmuC_PID/*, mn_ConEmuC_Input_TID*/; HANDLE mh_ConEmuC, mh_ConEmuCInput;
-		/*HANDLE mh_CreateRootEvent;*/ BOOL mb_InCreateRoot;
+
+		// Сервер и альтернативный сервер
+		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
+		DWORD mn_AltSrv_PID;  HANDLE mh_AltSrv;
+		HANDLE mh_SwitchActiveServer, mh_ActiveServerSwitched;
+		bool mb_SwitchActiveServer;
+		bool InitAltServer(DWORD nAltServerPID, HANDLE hAltServer);
+		bool ReopenServerPipes();
+
+		// Пайп консольного ввода
+		wchar_t ms_ConEmuCInput_Pipe[MAX_PATH];
+		HANDLE mh_ConInputPipe; // wsprintf(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID)
+		
+		BOOL mb_InCreateRoot;
 		BOOL mb_UseOnlyPipeInput;
-		TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
+		TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
 		//TCHAR ms_ConEmuC_DataReady[64]; HANDLE mh_ConEmuC_DataReady;
 		void InitNames();
 		// Текущий заголовок консоли и его значение для сравнения (для определения изменений)

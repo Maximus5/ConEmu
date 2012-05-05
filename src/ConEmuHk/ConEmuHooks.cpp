@@ -32,8 +32,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 	//#define TRAP_ON_MOUSE_0x0
 	#undef TRAP_ON_MOUSE_0x0
+	#undef LOG_GETANCESTOR
 #else
 	#undef TRAP_ON_MOUSE_0x0
+	#undef LOG_GETANCESTOR
 #endif
 
 // Иначе не опередяется GetConsoleAliases (хотя он должен быть доступен в Win2k)
@@ -60,6 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShellProcessor.h"
 #include "UserImp.h"
 #include "GuiAttach.h"
+#include "../common/ConsoleAnnotation.h"
 
 #undef isPressed
 #define isPressed(inp) ((user->getKeyState(inp) & 0x8000) == 0x8000)
@@ -101,6 +104,8 @@ extern DWORD   gnGuiPID;
 HDC ghTempHDC = NULL;
 GetConsoleWindow_T gfGetRealConsoleWindow = NULL;
 extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
+extern HANDLE ghCurrentOutBuffer;
+HANDLE ghStdOutHandle = NULL;
 /* ************ Globals for SetHook ************ */
 
 /* ************ Globals for Far Hooks ************ */
@@ -171,6 +176,12 @@ BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect);
 BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint);
 BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+
+HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
+LPVOID WINAPI OnMapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap);
+BOOL WINAPI OnUnmapViewOfFile(LPCVOID lpBaseAddress);
+BOOL WINAPI OnCloseHandle(HANDLE hObject);
+
 #ifdef _DEBUG
 HANDLE WINAPI OnCreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 #endif
@@ -259,6 +270,10 @@ bool InitHooksCommon()
 		/* ************************ */
 		{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
 		{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
+		{(void*)OnOpenFileMappingW,		"OpenFileMappingW",		kernel32},
+		{(void*)OnMapViewOfFile,		"MapViewOfFile",		kernel32},
+		{(void*)OnUnmapViewOfFile,		"UnmapViewOfFile",		kernel32},
+		{(void*)OnCloseHandle,			"CloseHandle",			kernel32},
 		/* ************************ */
 		#ifndef HOOKS_COMMON_PROCESS_ONLY
 		{(void*)OnGetConsoleAliasesW,	"GetConsoleAliasesW",	kernel32},
@@ -755,6 +770,111 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	return lbRc;
 }
 
+HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
+{
+	typedef HANDLE (WINAPI* OnOpenFileMappingW_t)(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
+	ORIGINALFAST(OpenFileMappingW);
+	BOOL bMainThread = FALSE; // поток не важен
+	HANDLE hRc = FALSE;
+
+	WARNING("Перенести обработку AnnotationShareName в хуки");
+#if 0
+	if (ghConEmuWndDC && lpName && *lpName)
+	{
+		/**
+		* Share name to search for
+		* Two replacements:
+		*   %d sizeof(AnnotationInfo) - compatibility/versioning field.
+		*   %d console window handle
+		*/
+		wchar_t szTrueColorMap[64];
+		// #define  L"Console_annotationInfo_%x_%x"
+		msprintf(szTrueColorMap, countof(szTrueColorMap), AnnotationShareName, (DWORD)sizeof(AnnotationInfo), ghConEmuWndDC);
+		// При попытке открыть мэппинг для TrueColor - перейти в режим локального сервера
+		if (lstrcmpi(lpName, szTrueColorMap) == 0)
+		{
+			if (RequestLocalServer() == 0)
+			{
+				if (gpAnnotationHeader)
+				{
+					hRc = (HANDLE)gpAnnotationHeader;
+					goto wrap;
+				}
+				else
+				{
+					_ASSERTE(gpAnnotationHeader!=NULL && "Перенести обработку AnnotationShareName в хуки");
+				}
+			}
+		}
+	}
+#endif
+
+	hRc = F(OpenFileMappingW)(dwDesiredAccess, bInheritHandle, lpName);
+
+#if 0
+wrap:
+#endif
+	return hRc;
+}
+
+LPVOID WINAPI OnMapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap)
+{
+	typedef LPVOID (WINAPI* OnMapViewOfFile_t)(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap);
+	ORIGINALFAST(MapViewOfFile);
+	BOOL bMainThread = FALSE; // поток не важен
+	LPVOID ptr = NULL;
+
+	if (gpAnnotationHeader && (hFileMappingObject == (HANDLE)gpAnnotationHeader))
+	{
+		_ASSERTE(!dwFileOffsetHigh && !dwFileOffsetLow && !dwNumberOfBytesToMap);
+		ptr = gpAnnotationHeader;
+	}
+	else
+	{
+		ptr = F(MapViewOfFile)(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
+	}
+
+	return ptr;
+}
+
+BOOL WINAPI OnUnmapViewOfFile(LPCVOID lpBaseAddress)
+{
+	typedef BOOL (WINAPI* OnUnmapViewOfFile_t)(LPCVOID lpBaseAddress);
+	ORIGINALFAST(UnmapViewOfFile);
+	BOOL bMainThread = FALSE; // поток не важен
+    BOOL lbRc = FALSE;
+
+	if (gpAnnotationHeader && (lpBaseAddress == gpAnnotationHeader))
+	{
+		lbRc = TRUE;
+	}
+	else
+	{
+    	lbRc = F(UnmapViewOfFile)(lpBaseAddress);
+	}
+
+    return lbRc;
+}
+
+BOOL WINAPI OnCloseHandle(HANDLE hObject)
+{
+	typedef BOOL (WINAPI* OnCloseHandle_t)(HANDLE hObject);
+	ORIGINALFAST(CloseHandle);
+	BOOL bMainThread = FALSE; // поток не важен
+	BOOL lbRc = FALSE;
+
+	if (gpAnnotationHeader && (hObject == (HANDLE)gpAnnotationHeader))
+	{
+		lbRc = TRUE;
+	}
+	else
+	{
+		lbRc = F(CloseHandle)(hObject);
+	}
+
+	return lbRc;
+}
+
 
 
 BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, CONST RECT * prcRect)
@@ -1242,7 +1362,7 @@ HWND WINAPI OnGetAncestor(HWND hWnd, UINT gaFlags)
 	ORIGINALFASTEX(GetAncestor,NULL);
 	HWND lhRc = NULL;
 
-#ifdef _DEBUG
+	#ifdef LOG_GETANCESTOR
 	if (ghAttachGuiClient)
 	{
 		wchar_t szInfo[1024];
@@ -1250,7 +1370,7 @@ HWND WINAPI OnGetAncestor(HWND hWnd, UINT gaFlags)
 		lstrcat(szInfo, L"\n");
 		DebugString(szInfo);
 	}
-#endif
+	#endif
 
 	//if (ghConEmuWndDC && hWnd == ghConEmuWndDC)
 	//{
@@ -1258,12 +1378,13 @@ HWND WINAPI OnGetAncestor(HWND hWnd, UINT gaFlags)
 	//}
 	if (ghConEmuWndDC)
 	{
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		if ((GetKeyState(VK_CAPITAL) & 1))
 		{
 			int nDbg = 0;
 		}
-#endif
+		#endif
+
 		if (ghAttachGuiClient)
 		{
 			// Обмануть GUI-клиента, пусть он думает, что он "сверху"
@@ -3485,6 +3606,9 @@ HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMo
 	if ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) != (FILE_SHARE_READ|FILE_SHARE_WRITE))
 		dwShareMode |= (FILE_SHARE_READ|FILE_SHARE_WRITE);
 
+	if (!ghStdOutHandle)
+		ghStdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+
 	HANDLE h = INVALID_HANDLE_VALUE;
 	if (F(CreateConsoleScreenBuffer))
 		h = F(CreateConsoleScreenBuffer)(dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlags, lpScreenBufferData);
@@ -3496,6 +3620,9 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 	typedef BOOL (WINAPI* OnSetConsoleActiveScreenBuffer_t)(HANDLE hConsoleOutput);
 	ORIGINALFAST(SetConsoleActiveScreenBuffer);
 
+	if (!ghStdOutHandle)
+		ghStdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+
 #ifdef _DEBUG
 	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 	h = GetStdHandle(STD_INPUT_HANDLE);
@@ -3505,6 +3632,13 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 	BOOL lbRc = FALSE;
 	if (F(SetConsoleActiveScreenBuffer))
 		lbRc = F(SetConsoleActiveScreenBuffer)(hConsoleOutput);
+
+	if (lbRc && (ghCurrentOutBuffer || (hConsoleOutput != ghStdOutHandle)))
+	{
+		ghCurrentOutBuffer = hConsoleOutput;
+		RequestLocalServer();
+	}
+	
 	return lbRc;
 }
 

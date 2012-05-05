@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
+//	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
 //  #define SHOW_COMSPEC_STARTED_MSGBOX
 //  #define SHOW_SERVER_STARTED_MSGBOX
@@ -56,6 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/execute.h"
 #include "../ConEmuHk/Injects.h"
 #include "../common/RConStartArgs.h"
+#include "../common/ConsoleAnnotation.h"
 #include "TokenHelper.h"
 
 
@@ -495,23 +497,25 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 
 #if defined(__GNUC__)
 extern "C" {
-	int __stdcall ConsoleMain2(BOOL abAlternative);
+	int __stdcall ConsoleMain2(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/);
 };
 #endif
 
+int CreateColorerHeader();
+
 // Main entry point for ConEmuC.exe
-int __stdcall ConsoleMain2(BOOL abAlternative)
+int __stdcall ConsoleMain2(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 {
 	TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
 	
-	WARNING("После создания AltServer - проверить в ConEmuCD все условия на RM_SERVER!!!");
-	_ASSERTE(abAlternative==FALSE);
+	//WARNING("После создания AltServer - проверить в ConEmuCD все условия на RM_SERVER!!!");
+	//_ASSERTE(anWorkMode==FALSE);
 
 	//#ifdef _DEBUG
 	//InitializeCriticalSection(&gcsHeap);
 	//#endif
 
-	if (!abAlternative)
+	if (!anWorkMode)
 	{
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT);
@@ -632,8 +636,27 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 	nExitPlaceStep = 50;
 	xf_check();
 
-	if ((iRc = ParseCommandLine(GetCommandLineW()/*, &gpszRunCmd, &gbRunInBackgroundTab*/)) != 0)
+	if (anWorkMode)
+	{
+		// Alternative mode
+		_ASSERTE(anWorkMode==1); // может еще и 2 появится - для StandAloneGui
+		_ASSERTE(gnRunMode == RM_UNDEFINED);
+		gnRunMode = RM_ALTSERVER;
+		gbAttachMode = TRUE;
+		gnConfirmExitParm = 2;
+		gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
+		gbNoCreateProcess = TRUE;
+		gbAlienMode = TRUE;
+		gpSrv->dwRootProcess = GetCurrentProcessId();
+		gpSrv->hRootProcess = GetCurrentProcess();
+		//gpSrv->dwGuiPID = ...;
+		gpszRunCmd = (wchar_t*)calloc(1,2);
+		CreateColorerHeader();
+	}
+	else if ((iRc = ParseCommandLine(GetCommandLineW()/*, &gpszRunCmd, &gbRunInBackgroundTab*/)) != 0)
+	{
 		goto wrap;
+	}
 
 	_ASSERTE(!gpSrv->hRootProcessGui || (((DWORD)gpSrv->hRootProcessGui)!=0xCCCCCCCC && IsWindow(gpSrv->hRootProcessGui)));
 
@@ -644,7 +667,7 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 	xf_check();
 #ifdef SHOW_SERVER_STARTED_MSGBOX
 
-	if ((gnRunMode == RM_SERVER) && !IsDebuggerPresent())
+	if ((gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER) && !IsDebuggerPresent())
 	{
 		wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC [Server] started (PID=%i)", gnSelfPID);
 		const wchar_t* pszCmdLine = GetCommandLineW();
@@ -690,7 +713,7 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 	// Дескрипторы
 	//ghConOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 	//            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	if (gnRunMode == RM_SERVER)
+	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
 	{
 		if ((HANDLE)ghConOut == INVALID_HANDLE_VALUE)
 		{
@@ -720,9 +743,10 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 	/* ******************************** */
 	/* *** "Режимная" инициализация *** */
 	/* ******************************** */
-	if (gnRunMode == RM_SERVER)
+	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
 	{
-		if ((iRc = ServerInit(abAlternative)) != 0)
+		_ASSERTE(anWorkMode == (gnRunMode == RM_ALTSERVER));
+		if ((iRc = ServerInit(anWorkMode)) != 0)
 		{
 			nExitPlaceStep = 250;
 			goto wrap;
@@ -761,6 +785,7 @@ int __stdcall ConsoleMain2(BOOL abAlternative)
 	}
 	else
 	{
+		_ASSERTE(gnRunMode != RM_ALTSERVER);
 		nExitPlaceStep = 350;
 #ifdef _DEBUG
 
@@ -1107,7 +1132,13 @@ wait:
 	xf_validate(NULL);
 #endif
 
-	if (gnRunMode == RM_SERVER)
+	if (gnRunMode == RM_ALTSERVER)
+	{
+		// Поскольку мы крутимся в этом же процессе - то завершения ждать глупо. Здесь другое поведение
+		iRc = 0;
+		goto AltServerDone;
+	} // (gnRunMode == RM_ALTSERVER)
+	else if (gnRunMode == RM_SERVER)
 	{
 		nExitPlaceStep = 550;
 		// По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
@@ -1158,7 +1189,7 @@ wait:
 		}
 		#endif
 
-	}
+	} // (gnRunMode == RM_SERVER)
 	else
 	{
 		nExitPlaceStep = 600;
@@ -1195,7 +1226,7 @@ wait:
 		#ifdef _DEBUG
 		xf_validate(NULL);
 		#endif
-	}
+	} // (gnRunMode == RM_COMSPEC)
 
 	/* ************************* */
 	/* *** Завершение работы *** */
@@ -1382,6 +1413,66 @@ wrap:
 		free(gpSrv);
 		gpSrv = NULL;
 	}
+AltServerDone:
+	return iRc;
+}
+
+int __stdcall RequestLocalServer(/*[OUT]*/AnnotationHeader** ppAnnotation, /*[IN]*/HANDLE* ppOutBuffer)
+{
+	_ASSERTE(ppAnnotation!=NULL);
+	if (ppAnnotation)
+	{
+		*ppAnnotation = NULL;
+	}
+
+	int iRc = 0;
+
+	// Хэндл обновим сразу
+	ghConOut.SetBufferPtr(ppOutBuffer);
+	
+	if (gnRunMode != RM_ALTSERVER)
+	{
+		#ifdef SHOW_ALTERNATIVE_MSGBOX
+		if (!IsDebuggerPresent())
+		{
+			char szMsg[128]; msprintf(szMsg, countof(szMsg), "AltServer: ConEmuCD*.dll loaded, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+			MessageBoxA(NULL, szMsg, "ConEmu AltServer" WIN3264TEST(""," x64"), 0);
+		}
+		#endif
+
+		_ASSERTE(gpSrv == NULL);
+		_ASSERTE(gnRunMode == RM_UNDEFINED);
+
+		HWND hConEmu = GetConEmuHWND(TRUE);
+		if (!hConEmu || !IsWindow(hConEmu))
+		{
+			iRc = CERR_GUI_NOT_FOUND;
+			goto wrap;
+		}
+
+		// Инициализировать gcrVisibleSize и прочие переменные
+		CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+		// MyGetConsoleScreenBufferInfo пользовать нельзя - оно gpSrv и gnRunMode хочет
+		if (GetConsoleScreenBufferInfo(ghConOut, &sbi))
+		{
+			gcrVisibleSize.X = sbi.srWindow.Right - sbi.srWindow.Left + 1;
+			gcrVisibleSize.Y = sbi.srWindow.Bottom - sbi.srWindow.Top + 1;
+			// В этот момент по идее буфер (прокрутка) должен быть выключен
+			_ASSERTE(sbi.dwSize.X == gcrVisibleSize.X);
+			_ASSERTE(sbi.dwSize.Y == gcrVisibleSize.Y);
+			gbParmVisibleSize = FALSE;
+			gnBufferHeight = (sbi.dwSize.Y == gcrVisibleSize.Y) ? 0 : sbi.dwSize.Y;
+			gnBufferWidth = (sbi.dwSize.X == gcrVisibleSize.X) ? 0 : sbi.dwSize.X;
+			gbParmBufSize = (gnBufferHeight != 0);
+		}
+		_ASSERTE(gcrVisibleSize.X>0 && gcrVisibleSize.X<=400 && gcrVisibleSize.Y>0 && gcrVisibleSize.Y<=300);
+
+		iRc = ConsoleMain2(TRUE);
+	}
+
+	TODO("Инициализация TrueColor буфера");
+
+wrap:
 	return iRc;
 }
 
@@ -3145,6 +3236,8 @@ void SendStarted()
 		{
 		case RM_SERVER:
 			pIn->StartStop.nStarted = sst_ServerStart; break;
+		case RM_ALTSERVER:
+			pIn->StartStop.nStarted = sst_AltServerStart; break;
 		case RM_COMSPEC:
 			pIn->StartStop.nStarted = sst_ComspecStart; break;
 		default:
@@ -3158,9 +3251,29 @@ void SendStarted()
 		pIn->StartStop.nImageBits = 32;
 		#endif
 		TODO("Ntvdm/DosBox -> 16");
+		if ((gnRunMode == RM_ALTSERVER) || (gnRunMode == RM_SERVER))
+		{
+			if (nGuiPID == 0)
+			{
+				_ASSERTE((nGuiPID != 0) || (gnRunMode == RM_SERVER));
+			}
+			else
+			{
+				HANDLE hGui = OpenProcess(PROCESS_DUP_HANDLE, FALSE, nGuiPID);
+				if (hGui)
+				{
+					HANDLE hDup = NULL;
+					DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(), hGui, &hDup, MY_PROCESS_ALL_ACCESS, FALSE, 0);
+
+					pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)hDup;
+
+					CloseHandle(hGui);
+				}
+			}
+		}
 
 		//pIn->StartStop.dwInputTID = (gnRunMode == RM_SERVER) ? gpSrv->dwInputThreadId : 0;
-		if (gnRunMode == RM_SERVER)
+		if ((gnRunMode == RM_SERVER) || (gnRunMode == RM_ALTSERVER))
 			pIn->StartStop.bUserIsAdmin = IsUserAdmin();
 
 		// Перед запуском 16бит приложений нужно подресайзить консоль...
@@ -3208,7 +3321,7 @@ void SendStarted()
 		// НЕ MyGet..., а то можем заблокироваться...
 		HANDLE hOut = NULL;
 
-		if (gnRunMode == RM_SERVER)
+		if ((gnRunMode == RM_SERVER) || (gnRunMode == RM_ALTSERVER))
 			hOut = (HANDLE)ghConOut;
 		else
 			hOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -3228,12 +3341,20 @@ void SendStarted()
 			pIn->StartStop.nForceBufferHeight = gnBufferHeight;
 		}
 
-		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd started)\n",(RunMode==RM_SERVER) ? L"Server" : L"ComSpec");
+		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd started)\n", (RunMode==RM_SERVER) ? L"Server" : (RunMode==RM_ALTSERVER) ? L"AltServer" : L"ComSpec");
+
 		// CECMD_CMDSTARTSTOP
 		if (nServerPID != gnSelfPID)
+		{
+			WARNING("Optimize!!!");
 			pOut = ExecuteSrvCmd(nServerPID, pIn, ghConWnd);
+		}
+
 		if (gnRunMode != RM_APPLICATION)
+		{
+			WARNING("Optimize!!!");
 			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+		}
 
 		// Ждать при ошибке открытия пайпа наверное и не нужно - все что необходимо, сервер
 		// уже передал в ServerInit, а ComSpec - не критично
@@ -3254,7 +3375,7 @@ void SendStarted()
 		//		_ASSERTE(pOut != NULL);
 		//	}
 		//}
-		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd finished)\n",(RunMode==RM_SERVER) ? L"Server" : L"ComSpec");
+		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd finished)\n",(RunMode==RM_SERVER) ? L"Server" : (RunMode==RM_ALTSERVER) ? L"AltServer" : L"ComSpec");
 
 		if (pOut)
 		{
@@ -3272,7 +3393,7 @@ void SendStarted()
 				#endif
 			}
 
-			if (gnRunMode == RM_SERVER)
+			if ((gnRunMode == RM_SERVER) || (gnRunMode == RM_ALTSERVER))
 			{
 				if (gpSrv)
 				{
@@ -3294,24 +3415,30 @@ void SendStarted()
 			gnBufferHeight  = (SHORT)pOut->StartStopRet.nBufferHeight;
 			gbParmBufSize = TRUE;
 			// gcrBufferSize переименован в gcrVisibleSize
+			_ASSERTE(pOut->StartStopRet.nWidth && pOut->StartStopRet.nHeight);
 			gcrVisibleSize.X = (SHORT)pOut->StartStopRet.nWidth;
 			gcrVisibleSize.Y = (SHORT)pOut->StartStopRet.nHeight;
 			gbParmVisibleSize = TRUE;			
 
-			if (gnRunMode == RM_SERVER)
+			if ((gnRunMode == RM_SERVER) || (gnRunMode == RM_ALTSERVER))
 			{
 				// Если режим отладчика - принудительно включить прокрутку
-				if (gpSrv->bDebuggerActive && !gnBufferHeight) gnBufferHeight = 9999;
+				if (gpSrv->bDebuggerActive && !gnBufferHeight)
+				{
+					_ASSERTE(gnRunMode != RM_ALTSERVER);
+					gnBufferHeight = 9999;
+				}
 
 				SMALL_RECT rcNil = {0};
 				SetConsoleSize(gnBufferHeight, gcrVisibleSize, rcNil, "::SendStarted");
 
 				// Смена раскладки клавиатуры
-				if (pOut->StartStopRet.bNeedLangChange)
+				if ((gnRunMode != RM_ALTSERVER) && pOut->StartStopRet.bNeedLangChange)
 				{
-#ifndef INPUTLANGCHANGE_SYSCHARSET
-#define INPUTLANGCHANGE_SYSCHARSET 0x0001
-#endif
+					#ifndef INPUTLANGCHANGE_SYSCHARSET
+					#define INPUTLANGCHANGE_SYSCHARSET 0x0001
+					#endif
+
 					WPARAM wParam = INPUTLANGCHANGE_SYSCHARSET;
 					TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
 					LPARAM lParam = (LPARAM)(DWORD_PTR)pOut->StartStopRet.NewConsoleLang;
@@ -3358,6 +3485,8 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 		switch (gnRunMode)
 		{
 		case RM_SERVER:
+		case RM_ALTSERVER:
+			_ASSERTE(gnRunMode != RM_ALTSERVER); // проверить
 			pIn->StartStop.nStarted = sst_ServerStop; break;
 		case RM_COMSPEC:
 			pIn->StartStop.nStarted = sst_ComspecStop; break;
@@ -5318,6 +5447,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	
 	UINT nPrevCount = gpSrv->nProcessCount;
 	BOOL lbChanged = FALSE;
+
 	_ASSERTE(in.StartStop.dwPID!=0);
 	DWORD nPID = in.StartStop.dwPID;
 
@@ -5333,6 +5463,9 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		case sst_ServerStart:
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(ServerStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			break;
+		case sst_AltServerStart:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(AltServerStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_ServerStop:
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(ServerStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
@@ -5361,7 +5494,12 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 #endif
 	_ASSERTE(in.StartStop.dwPID!=0);
 
-	if ((in.StartStop.nStarted == sst_ComspecStart) || (in.StartStop.nStarted == sst_AppStart))
+	if (in.StartStop.nStarted == sst_AltServerStart)
+	{
+		_ASSERTE(in.StartStop.nStarted != sst_AltServerStart);
+		WARNING("Перевести нить монитора в режим ожидания завершения AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer");
+	}
+	else if ((in.StartStop.nStarted == sst_ComspecStart) || (in.StartStop.nStarted == sst_AppStart))
 	{
 		// Добавить процесс в список
 		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
@@ -5386,6 +5524,11 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 				gpSrv->pnProcesses[nChange] = gpSrv->pnProcesses[n];
 			}
 			nChange++;
+		}
+		// Если это закрылся AltServer
+		if (nPID == gpSrv->dwAltServerPID)
+		{
+			WARNING("Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer");
 		}
 	}
 	else

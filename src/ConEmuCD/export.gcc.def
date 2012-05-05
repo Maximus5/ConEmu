@@ -7,8 +7,13 @@ EXPORTS
 	HandlerRoutine=HandlerRoutine@4
 	MountVirtualHive=MountVirtualHive@24
 	UnMountVirtualHive=UnMountVirtualHive@12
+	RequestLocalServer=RequestLocalServer@8
 
 ; LLKeyHooks (ConEmu GUI)
 	ghKeyHook
 	gnVkWinFix
+	gbWinTabHook
+	gnConsoleKeyShortcuts
+	gnHookedKeys
 	ghKeyHookConEmuRoot
+	ghActiveGhost

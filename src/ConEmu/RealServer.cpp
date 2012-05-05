@@ -143,148 +143,6 @@ void CRealServer::Stop(bool abDeinitialize/*=false*/)
 	SafeCloseHandle(mh_GuiAttached);
 }
 
-//DWORD CRealServer::RConServerThread(LPVOID lpvParam)
-//{
-//	CRealConsole *pRCon = (CRealConsole*)lpvParam;
-//	CVirtualConsole *pVCon = pRCon->mp_VCon;
-//	BOOL fConnected = FALSE;
-//	DWORD dwErr = 0;
-//	HANDLE hPipe = NULL;
-//	HANDLE hWait[2] = {NULL,NULL};
-//	DWORD dwTID = GetCurrentThreadId();
-//	MCHKHEAP
-//	_ASSERTE(pVCon!=NULL);
-//	_ASSERTE(pRCon->hConWnd!=NULL);
-//	_ASSERTE(pRCon->ms_VConServer_Pipe[0]!=0);
-//	_ASSERTE(pRCon->mh_ServerSemaphore!=NULL);
-//	_ASSERTE(pRCon->mh_TermEvent!=NULL);
-//	//swprintf_c(pRCon->ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)pRCon->hConWnd); //был mp_RCon->mn_ConEmuC_PID
-//	// The main loop creates an instance of the named pipe and
-//	// then waits for a client to connect to it. When the client
-//	// connects, a thread is created to handle communications
-//	// with that client, and the loop is repeated.
-//	hWait[0] = pRCon->mh_TermEvent;
-//	hWait[1] = pRCon->mh_ServerSemaphore;
-//	MCHKHEAP
-//
-//	// Пока не затребовано завершение консоли
-//	do
-//	{
-//		while(!fConnected)
-//		{
-//			_ASSERTE(hPipe == NULL);
-//			// !!! Переносить проверку семафора ПОСЛЕ Create NamedPipe нельзя, т.к. в этом случае
-//			//     нити дерутся и клиент не может подцепиться к серверу
-//			// Дождаться разрешения семафора, или закрытия консоли
-//			dwErr = WaitForMultipleObjects(2, hWait, FALSE, INFINITE);
-//
-//			if (dwErr == WAIT_OBJECT_0)
-//			{
-//				return 0; // Консоль закрывается
-//			}
-//
-//			MCHKHEAP
-//
-//			for(int i=0; i<MAX_SERVER_THREADS; i++)
-//			{
-//				if (pRCon->mn_RConServerThreadsId[i] == dwTID)
-//				{
-//					pRCon->mh_ActiveRConServerThread = pRCon->mh_RConServerThreads[i]; break;
-//				}
-//			}
-//
-//			_ASSERTE(gpLocalSecurity);
-//			hPipe = Create NamedPipe(
-//			            pRCon->ms_VConServer_Pipe, // pipe name
-//			            PIPE_ACCESS_DUPLEX,       // read/write access
-//			            PIPE_TYPE_MESSAGE |       // message type pipe
-//			            PIPE_READMODE_MESSAGE |   // message-read mode
-//			            PIPE_WAIT,                // blocking mode
-//			            PIPE_UNLIMITED_INSTANCES, // max. instances
-//			            PIPEBUFSIZE,              // output buffer size
-//			            PIPEBUFSIZE,              // input buffer size
-//			            0,                        // client time-out
-//			            gpLocalSecurity);          // default security attribute
-//			MCHKHEAP
-//
-//			if (hPipe == INVALID_HANDLE_VALUE)
-//			{
-//				dwErr = GetLastError();
-//				_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
-//				//DisplayLastError(L"Create NamedPipe failed");
-//				hPipe = NULL;
-//				// Разрешить этой или другой нити создать серверный пайп
-//				ReleaseSemaphore(hWait[1], 1, NULL);
-//				//Sleep(50);
-//				continue;
-//			}
-//
-//			MCHKHEAP
-//
-//			// Чтобы ConEmuC знал, что серверный пайп готов
-//			if (pRCon->mh_GuiAttached)
-//			{
-//				SetEvent(pRCon->mh_GuiAttached);
-//				SafeCloseHandle(pRCon->mh_GuiAttached);
-//			}
-//
-//			// Wait for the client to connect; if it succeeds,
-//			// the function returns a nonzero value. If the function
-//			// returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
-//			fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED);
-//			MCHKHEAP
-//			// сразу разрешить другой нити принять вызов
-//			ReleaseSemaphore(hWait[1], 1, NULL);
-//
-//			// Консоль закрывается!
-//			if (WaitForSingleObject(hWait[0], 0) == WAIT_OBJECT_0)
-//			{
-//				//FlushFileBuffers(hPipe); -- это не нужно, мы ничего не возвращали
-//				//DisconnectNamedPipe(hPipe);
-//				SafeCloseHandle(hPipe);
-//				return 0;
-//			}
-//
-//			MCHKHEAP
-//
-//			if (fConnected)
-//				break;
-//			else
-//				SafeCloseHandle(hPipe);
-//		}
-//
-//		if (fConnected)
-//		{
-//			// сразу сбросим, чтобы не забыть
-//			fConnected = FALSE;
-//			//// разрешить другой нити принять вызов //2009-08-28 перенесено сразу после ConnectNamedPipe
-//			//ReleaseSemaphore(hWait[1], 1, NULL);
-//			MCHKHEAP
-//
-//			if (gpConEmu->isValid(pVCon))
-//			{
-//				_ASSERTE(pVCon==pRCon->mp_VCon);
-//				pRCon->ServerThreadCommand(hPipe);    // При необходимости - записывает в пайп результат сама
-//			}
-//			else
-//			{
-//				_ASSERTE(FALSE);
-//				// Проблема. VirtualConsole закрыта, а нить еще не завершилась! хотя должна была...
-//				SafeCloseHandle(hPipe);
-//				return 1;
-//			}
-//		}
-//
-//		MCHKHEAP
-//		FlushFileBuffers(hPipe);
-//		//DisconnectNamedPipe(hPipe);
-//		SafeCloseHandle(hPipe);
-//	} // Перейти к открытию нового instance пайпа
-//	while(WaitForSingleObject(pRCon->mh_TermEvent, 0) != WAIT_OBJECT_0);
-//
-//	return 0;
-//}
-
 CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET));
@@ -299,6 +157,9 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	{
 		case sst_ServerStart:
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ServerStart,%i,PID=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID);
+			break;
+		case sst_AltServerStart:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(AltServerStart,%i,PID=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID);
 			break;
 		case sst_ServerStop:
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ServerStop,%i,PID=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID);
@@ -331,6 +192,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	BOOL bRunViaCmdExe = pIn->StartStop.bRootIsCmdExe;
 	BOOL bUserIsAdmin = pIn->StartStop.bUserIsAdmin;
 	BOOL lbWasBuffer = pIn->StartStop.bWasBufferHeight;
+	HANDLE hServerProcessHandle = (HANDLE)(DWORD_PTR)pIn->StartStop.hServerProcessHandle;
 	//DWORD nInputTID = pIn->StartStop.dwInputTID;
 	_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
 	//pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
@@ -369,7 +231,30 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	}
 
 
-	if (nStarted == sst_ServerStart || nStarted == sst_ComspecStart)
+	if (nStarted == sst_AltServerStart)
+	{
+		// Перейти в режим AltServer, переоткрыть m_GetDataPipe
+		_ASSERTE(pIn->hdr.nSrcPID == nPID);
+		mp_RCon->InitAltServer(nPID, hServerProcessHandle);
+
+		// В принципе, альт. сервер уже все знает, но вернем...
+		pOut->StartStopRet.hWnd = ghWnd;
+		pOut->StartStopRet.hWndDC = mp_RCon->mp_VCon->GetView();
+		pOut->StartStopRet.dwPID = GetCurrentProcessId();
+		if (lbWasBuffer != mp_RCon->isBufferHeight())
+		{
+			mp_RCon->mp_RBuf->BuferModeChangeLock();
+			mp_RCon->mp_RBuf->SetBufferHeightMode(lbWasBuffer, TRUE); // Сразу меняем, иначе команда неправильно сформируется
+			//mp_RCon->mp_RBuf->SetConsoleSize(mp_RCon->mp_RBuf->GetTextWidth()/*con.m_sbi.dwSize.X*/, mp_RCon->mp_RBuf->TextHeight(), pOut->StartStopRet.nBufferHeight, CECMD_CMDSTARTED);
+			mp_RCon->mp_RBuf->BuferModeChangeUnlock();
+		}
+		pOut->StartStopRet.bWasBufferHeight = mp_RCon->isBufferHeight();
+		pOut->StartStopRet.nBufferHeight = pOut->StartStopRet.bWasBufferHeight ? pIn->StartStop.sbi.dwSize.Y : 0;
+		pOut->StartStopRet.nWidth = mp_RCon->mp_RBuf->GetBufferWidth()/*con.m_sbi.dwSize.X*/;
+		pOut->StartStopRet.nHeight = mp_RCon->mp_RBuf->TextHeight()/*con.m_sbi.dwSize.Y*/;
+
+	}
+	else if (nStarted == sst_ServerStart || nStarted == sst_ComspecStart)
 	{
 		if (nStarted == sst_ServerStart)
 		{
@@ -415,7 +300,16 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		pOut->StartStopRet.hWnd = ghWnd;
 		pOut->StartStopRet.hWndDC = mp_RCon->mp_VCon->GetView();
 		pOut->StartStopRet.dwPID = GetCurrentProcessId();
-		pOut->StartStopRet.dwSrvPID = mp_RCon->mn_ConEmuC_PID;
+		if (nStarted == sst_ServerStart)
+		{
+			_ASSERTE(mp_RCon->mn_MainSrv_PID == pIn->hdr.nSrcPID);
+			pOut->StartStopRet.dwSrvPID = mp_RCon->mn_MainSrv_PID;
+		}
+		else
+		{
+			_ASSERTE(nStarted == sst_ComspecStart);
+			pOut->StartStopRet.dwSrvPID = mp_RCon->GetServerPID();
+		}
 		pOut->StartStopRet.bNeedLangChange = FALSE;
 
 		if (nStarted == sst_ServerStart)
@@ -560,6 +454,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	else if (nStarted == sst_ServerStop || nStarted == sst_ComspecStop)
 	{
 		// ServerStop вроде не приходит - посылается CECMD_SRVSTARTSTOP в ConEmuWnd
+		// Может быть для AltServer???
 		_ASSERTE(nStarted != sst_ServerStop);
 
 		// 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
@@ -1399,7 +1294,7 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 //	DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
 //	BOOL fSuccess = FALSE;
 //#ifdef _DEBUG
-//	HANDLE lhConEmuC = mh_ConEmuC;
+//	HANDLE lhConEmuC = mh_MainSrv;
 //#endif
 //	MCHKHEAP;
 //	// Send a message to the pipe server and read the response.
@@ -1418,10 +1313,10 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 //		//DWORD dwWait = WaitForSingleObject ( mh_TermEvent, 0 );
 //		//if (dwWait == WAIT_OBJECT_0) return;
 //		//Sleep(1000);
-//		//if (lhConEmuC != mh_ConEmuC)
+//		//if (lhConEmuC != mh_MainSrv)
 //		//	dwWait = WAIT_OBJECT_0;
 //		//else
-//		//	dwWait = WaitForSingleObject ( mh_ConEmuC, 0 );
+//		//	dwWait = WaitForSingleObject ( mh_MainSrv, 0 );
 //		//if (dwWait == WAIT_OBJECT_0) return;
 //		//_ASSERTE("ReadFile(pipe) failed"==NULL);
 //#endif

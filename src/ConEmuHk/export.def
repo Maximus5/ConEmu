@@ -7,3 +7,4 @@ EXPORTS
 	SetFarHookMode
 	GetRealConsoleWindow
 	GetLoadLibraryW
+	RequestLocalServer

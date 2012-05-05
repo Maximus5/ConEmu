@@ -172,12 +172,14 @@ class MConHandle
 		BOOL      mb_OpenFailed;
 		DWORD     mn_LastError;
 		DWORD     mn_StdMode;
+		HANDLE*   mpp_OutBuffer; // Устанавливается при SetConsoleActiveScreenBuffer
 
 	public:
 		operator const HANDLE();
 
 	public:
 		void Close();
+		void SetBufferPtr(HANDLE* ppOutBuffer);
 
 	public:
 		MConHandle(LPCWSTR asName);

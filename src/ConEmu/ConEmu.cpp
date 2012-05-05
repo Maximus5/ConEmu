@@ -5417,10 +5417,11 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 
 		if (!mn_MinRestoreRegistered)
 		{
-			if (RegisterHotKey(ghWnd, HOTKEY_MINRESTORE_ID, nMOD, (UINT)gpSet->GetHotkeyById(vkMinimizeRestore)))
+			UINT vk = gpSet->GetHotkey(gpSet->GetHotkeyById(vkMinimizeRestore));
+			if (RegisterHotKey(ghWnd, HOTKEY_MINRESTORE_ID, nMOD, vk))
 			{
 				mn_MinRestoreRegistered = HOTKEY_MINRESTORE_ID;
-				mn_MinRestore_VK = gpSet->GetHotkeyById(vkMinimizeRestore);
+				mn_MinRestore_VK = vk;
 				mn_MinRestore_MOD = nMOD;
 			}
 			else if (isFirstInstance())
@@ -6677,9 +6678,6 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			&& (idChild == CONSOLE_APPLICATION_16BIT)))
 		return;
 
-	//BOOL lbProcessed = FALSE, lbWaitingExist = FALSE;
-	//for (int k = 0; k < 2 && !lbProcessed; k++)
-	//{
 	for (size_t i = 0; i < countof(gpConEmu->mp_VCon); i++)
 	{
 		if (!gpConEmu->mp_VCon[i]) continue;
@@ -6689,19 +6687,6 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 		if (gpConEmu->mp_VCon[i]->RCon()->isDetached() || !gpConEmu->mp_VCon[i]->RCon()->isServerCreated())
 			continue;
 
-		//if (!k && gpConEmu->mp_VCon[i]->RCon()->InCreateRoot())
-		//{
-		//	lbWaitingExist = TRUE;
-		//	continue;
-		//}
-		//LONG nSrvPID = (LONG)gpConEmu->mp_VCon[i]->RCon()->GetServerPID();
-		//#ifdef _DEBUG
-		//if (nSrvPID == 0)
-		//{
-		//	_ASSERTE(nSrvPID != 0);
-		//}
-		//#endif
-
 		HWND hRConWnd = gpConEmu->mp_VCon[i]->RCon()->ConWnd();
 		if (hRConWnd == hwnd)
 		{
@@ -6709,70 +6694,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			gpConEmu->mp_VCon[i]->RCon()->OnDosAppStartStop(sst, idChild);
 			break;
 		}
-
-		//if (
-		//    (hRConWnd == hwnd) ||
-		//    (hRConWnd == NULL && anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == nSrvPID)
-		//)
-		//{
-		//	gpConEmu->mp_VCon[i]->RCon()->OnWinEvent(anEvent, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
-		//	lbProcessed = TRUE;
-		//	break;
-		//}
 	}
-
-	//if (!lbWaitingExist)
-	//	break;
-	//if (!lbProcessed)
-	//	Sleep(100);
-	//}
-
-	//// Если событие "Запущен процесс" пришло ДО того, как в VirtualConsole определился
-	//// хэндл консольного окна - передать событие в тот VirtualConsole, в котором
-	//// mn_ConEmuC_PID == idObject
-	//if (!lbProcessed && anEvent == EVENT_CONSOLE_START_APPLICATION && idObject) {
-	//    // Warning. В принципе, за время выполнения этой процедуры mp_VCon[i]->hConWnd мог уже проинициализироваться
-	//    for (size_t i = 0; i < countof(mp_VCon); i++) {
-	//        if (!gpConEmu->mp_VCon[i]) continue;
-	//        if (gpConEmu->mp_VCon[i]->RCon()->ConWnd() == hwnd ||
-	//            gpConEmu->mp_VCon[i]->RCon()->GetServerPID() == (DWORD)idObject)
-	//        {
-	//            gpConEmu->mp_VCon[i]->RCon()->OnWinEvent(anEvent, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
-	//            lbProcessed = TRUE;
-	//            break;
-	//        }
-	//    }
-	//}
-	//switch(anEvent)
-	//{
-	//case EVENT_CONSOLE_START_APPLICATION:
-	//    //#pragma message("Win2k: CONSOLE_APPLICATION_16BIT")
-	//    if (idChild == CONSOLE_APPLICATION_16BIT) {
-	//        DWORD ntvdmPID = idObject;
-	//        for (size_t i=0; i<gpConEmu->m_Processes.size(); i++) {
-	//            DWORD dwPID = gpConEmu->m_Processes[i].ProcessID;
-	//            if (dwPID == ntvdmPID) {
-	//                gpConEmu->mn_ActiveStatus |= CES_NTVDM;
-	//                //TODO: их могут запускать и в разных консолях...
-	//                SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
-	//            }
-	//        }
-	//    }
-	//    break;
-	//case EVENT_CONSOLE_END_APPLICATION:
-	//    if (idChild == CONSOLE_APPLICATION_16BIT) {
-	//        DWORD ntvdmPID = idObject;
-	//        for (size_t i=0; i<gpConEmu->m_Processes.size(); i++) {
-	//            DWORD dwPID = gpConEmu->m_Processes[i].ProcessID;
-	//            if (dwPID == ntvdmPID) {
-	//                gpConEmu->gbPostUpdateWindowSize = true;
-	//                gpConEmu->mn_ActiveStatus &= ~CES_NTVDM;
-	//                SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-	//            }
-	//        }
-	//    }
-	//    break;
-	//}
 }
 #endif
 
@@ -8331,7 +8253,17 @@ HMENU CConEmuMain::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 					}
 					else
 					{
-						lstrcpyn(szText, tab.Name/*.Ptr()*/, nMaxStrLen-1);
+						int nCurLen = lstrlen(szText);
+						_ASSERTE((nCurLen+10)<nMaxStrLen);
+						if ((tab.Type & fwt_TypeMask) == fwt_Panels)
+						{
+							lstrcpyn(szText+nCurLen, tab.Name/*.Ptr()*/, nMaxStrLen-1-nCurLen);
+						}
+						else
+						{
+							szText[nCurLen++] = L'\x2026'; szText[nCurLen] = 0;
+							lstrcpyn(szText+nCurLen, tab.Name+nLen-nMaxStrLen, nMaxStrLen-1-nCurLen);
+						}
 						wcscat_c(szText, L"\x2026"); //...
 					}
 					AppendMenu(h, MF_STRING|nAddFlags, MAKELONG(R+1, V+1), szText);
@@ -9821,7 +9753,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 #if 0
 	// Прокрутка в "буферном" режиме
-	PRAGMA_ERROR("->CConEmuCtrl");
+	("->CConEmuCtrl");
 	if ((messg == WM_KEYDOWN || messg == WM_KEYUP) &&
 	    (wParam == VK_DOWN || wParam == VK_UP || wParam == VK_NEXT || wParam == VK_PRIOR) &&
 	    (isPressed(VK_CONTROL)))
@@ -9852,7 +9784,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	//CtrlWinAltSpace
 	WARNING("В висте, блин, не приходим сообщение на первое нажатие Space. Только на второе???");
 
-	PRAGMA_ERROR("->CConEmuCtrl");
+	("->CConEmuCtrl");
 	if (messg == WM_KEYDOWN && wParam == VK_SPACE && isPressed(VK_CONTROL) && isPressed(VK_LWIN) && isPressed(VK_MENU))
 	{
 		CtrlWinAltSpace();
@@ -9860,7 +9792,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	}
 
 	// Tabs
-	PRAGMA_ERROR("->CConEmuCtrl");
+	("->CConEmuCtrl");
 	if (/*gpSet->isTabs &&*/ gpSet->isTabSelf &&  /*gpConEmu->mp_TabBar->IsShown() &&*/
 	                        (
 	                            ((messg == WM_KEYDOWN || messg == WM_KEYUP)
@@ -9899,7 +9831,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	TODO("gpSet->nMultiHotkeyModifier - байты содержат VK_[L|R]CONTROL, VK_[L|R]MENU, VK_[L|R]SHIFT, VK_APPS, VK_LWIN");
 	TODO("gpSet->icMultiBuffer - хоткей для включения-отключения режима буфера - AskChangeBufferHeight()");
 
-	PRAGMA_ERROR("->CConEmuCtrl");
+	("->CConEmuCtrl");
 	//if (gpSet->isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipMulticonChar)) {
 	if ((sb_SkipMulticonChar && (messg == WM_KEYUP || messg == WM_SYSKEYUP))
 			// Hotkeys, относящиеся к мультиконсоли/табам
@@ -9976,7 +9908,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		}
 	}
 
-	PRAGMA_ERROR("Нужно переделать, т.к. Hostkey убирается");
+	("Нужно переделать, т.к. Hostkey убирается");
 	if (gpSet->IsHostkeySingle(wParam) /*|| (wParam == VK_APPS && gpSet->IsHostkey(VK_APPS))*/)
 	{
 		if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN)
@@ -10039,7 +9971,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			&& ((isPressed(VK_MENU) && !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
 				|| (!isPressed(VK_MENU) && isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))))
 		{
-			PRAGMA_ERROR("->CConEmuCtrl");
+			("->CConEmuCtrl");
 			if (messg == WM_SYSKEYUP)
 			{
 				//Win-Alt-Space
@@ -10052,7 +9984,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			&& (!isPressed(VK_MENU) && !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
 			)
 		{
-			PRAGMA_ERROR("->CConEmuCtrl");
+			("->CConEmuCtrl");
 			if (messg == WM_KEYUP)
 			{
 				//Win-Apps
@@ -10068,7 +10000,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		// WinAltEnter зарезервиновано 7-кой под запуск MediaPlayer, поэтому - "Ctrl-Win-Enter"
 		else if (wParam == VK_RETURN && isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_SHIFT))
 		{
-			PRAGMA_ERROR("->CConEmuCtrl");
+			("->CConEmuCtrl");
 			if (messg == WM_KEYUP)
 			{
 				OnAltEnter();
@@ -10078,7 +10010,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		}
 		else if (wParam == 'P' && isPressed(VK_MENU) && !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
 		{
-			PRAGMA_ERROR("->CConEmuCtrl");
+			("->CConEmuCtrl");
 			if (messg == WM_SYSKEYUP)
 				OnSysCommand(ghWnd, ID_SETTINGS, 0);
 

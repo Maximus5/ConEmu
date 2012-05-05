@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_INJECT_MSGBOX
 //  #define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-//  #define SHOW_EXE_MSGBOX_NAME L"far.exe"
+//  #define SHOW_EXE_MSGBOX_NAME L"Buf32.exe"
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
@@ -68,6 +68,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UserImp.h"
 #include "GuiAttach.h"
 #include "Injects.h"
+#include "../ConEmuCD/ExitCodes.h"
+#include "../common/ConsoleAnnotation.h"
 
 
 #if defined(__GNUC__)
@@ -136,6 +138,12 @@ BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
 DWORD   gnImageSubsystem = 0;
 DWORD   gnImageBits = WIN3264TEST(32,64); //-V112
+
+HMODULE ghSrvDll = NULL;
+typedef int (__stdcall* RequestLocalServer_t)(AnnotationHeader** ppAnnotation, HANDLE* ppOutBuffer);
+RequestLocalServer_t ghRequestLocalServer = NULL;
+AnnotationHeader* gpAnnotationHeader = NULL;
+HANDLE ghCurrentOutBuffer = NULL; // Устанавливается при SetConsoleActiveScreenBuffer
 
 //MSection *gpHookCS = NULL;
 
@@ -1396,3 +1404,46 @@ int main()
 	return 0;
 }
 #endif
+
+int __stdcall RequestLocalServer()
+{
+	int iRc = CERR_SRVLOADFAILED;
+
+	if (!ghSrvDll || !ghRequestLocalServer)
+	{
+		LPCWSTR pszSrvName = WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll");
+
+		if (!ghSrvDll)
+		{
+			ghRequestLocalServer = NULL;
+			ghSrvDll = GetModuleHandle(pszSrvName);
+		}
+
+		if (!ghSrvDll)
+		{
+			wchar_t *pszSlash, szFile[MAX_PATH+1] = {};
+
+			GetModuleFileName(ghOurModule, szFile, MAX_PATH);
+			pszSlash = wcsrchr(szFile, L'\\');
+			if (!pszSlash)
+				goto wrap;
+			pszSlash[1] = 0;
+			wcscat_c(szFile, pszSrvName);
+
+			ghSrvDll = LoadLibrary(szFile);
+			if (!ghSrvDll)
+				goto wrap;
+		}
+
+		ghRequestLocalServer = (RequestLocalServer_t)GetProcAddress(ghSrvDll, "RequestLocalServer");
+	}
+
+	if (!ghRequestLocalServer)
+		goto wrap;
+
+	_ASSERTE(CheckCallbackPtr(ghSrvDll, 1, (FARPROC*)&ghRequestLocalServer, TRUE));
+
+	iRc = ghRequestLocalServer(&gpAnnotationHeader, &ghCurrentOutBuffer);
+wrap:
+	return iRc;
+}

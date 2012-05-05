@@ -463,7 +463,7 @@ BOOL ServerInitConsoleMode()
 	return bConRc;
 }
 
-int ServerInitCheckExisting(BOOL abAlternative)
+int ServerInitCheckExisting(bool abAlternative)
 {
 	int iRc = 0;
 	CESERVER_CONSOLE_MAPPING_HDR test = {};
@@ -674,7 +674,7 @@ int ServerInitGuiTab()
 
 
 // Создать необходимые события и нити
-int ServerInit(BOOL abAlternative/*=FALSE*/)
+int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 {
 	int iRc = 0;
 	DWORD dwErr = 0;
@@ -738,13 +738,16 @@ int ServerInit(BOOL abAlternative/*=FALSE*/)
 		SetEvent(ghFarInExecuteEvent);
 	#endif
 
+	_ASSERTE(anWorkMode!=2); // Для StandAloneGui - проверить
+
 	if (ghConEmuWndDC == NULL)
 	{
-		_ASSERTE(!abAlternative || ghConEmuWndDC!=NULL);
+		// Что должно быть в AltServer режиме?
+		_ASSERTE((anWorkMode==0) || ghConEmuWndDC!=NULL);
 	}
 	else
 	{
-		iRc = ServerInitCheckExisting(abAlternative);
+		iRc = ServerInitCheckExisting((anWorkMode==1));
 		if (iRc != 0)
 			goto wrap;
 	}
@@ -902,7 +905,7 @@ int ServerInit(BOOL abAlternative/*=FALSE*/)
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
 
-	if (gbAttachMode)
+	if ((gnRunMode == RM_SERVER) && gbAttachMode)
 	{
 		iRc = ServerInitAttach2Gui();
 		if (iRc != 0)
@@ -2011,7 +2014,7 @@ void UpdateConsoleMapHeader()
 {
 	if (gpSrv && gpSrv->pConsole)
 	{
-		if (gnRunMode == RM_SERVER)
+		if (gnRunMode == RM_SERVER) // !!! RM_ALTSERVER - ниже !!!
 		{
 			if (ghConEmuWndDC && (!gpSrv->pColorerMapping || (gpSrv->pConsole->hdr.hConEmuWnd != ghConEmuWndDC)))
 			{
@@ -2030,6 +2033,7 @@ void UpdateConsoleMapHeader()
 		{
 			gpSrv->pConsole->hdr.nAltServerPID = GetCurrentProcessId();
 		}
+
 		if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
 		{
 			// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
@@ -2125,7 +2129,7 @@ int CreateColorerHeader()
 	{
 		//pHdr->struct_size = sizeof(AnnotationHeader);
 		//pHdr->bufferSize = nMapCells;
-		_ASSERTE(pHdr->locked == 0 && pHdr->flushCounter == 0);
+		_ASSERTE((gnRunMode == RM_ALTSERVER) || (pHdr->locked == 0 && pHdr->flushCounter == 0));
 		//pHdr->locked = 0;
 		//pHdr->flushCounter = 0;
 		gpSrv->ColorerHdr = *pHdr;
@@ -2424,8 +2428,11 @@ static BOOL ReadConsoleInfo()
 				//EmergencyShow(ghConWnd);
 				//#endif
 				WARNING("###: Приложение изменило вертикальный размер буфера");
-				_ASSERTE(gpSrv->sbi.dwSize.Y <= 200);
-				DEBUGLOGSIZE(L"!!! gpSrv->sbi.dwSize.Y > 200 !!! in ConEmuC.ReloadConsoleInfo\n");
+				if (gpSrv->sbi.dwSize.Y > 200)
+				{
+					//_ASSERTE(gpSrv->sbi.dwSize.Y <= 200);
+					DEBUGLOGSIZE(L"!!! gpSrv->sbi.dwSize.Y > 200 !!! in ConEmuC.ReloadConsoleInfo\n");
+				}
 				gpSrv->nReqSizeBufferHeight = gpSrv->sbi.dwSize.Y;
 			}
 
@@ -2722,225 +2729,6 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 
 
 
-//#ifdef USE_WINEVENT_SRV
-//DWORD WINAPI WinEventThread(LPVOID lpvParam)
-//{
-//	//DWORD dwErr = 0;
-//	//HANDLE hStartedEvent = (HANDLE)lpvParam;
-//	// На всякий случай
-//	gpSrv->dwWinEventThread = GetCurrentThreadId();
-//	// По умолчанию - ловим только StartStop.
-//	// При появлении в консоли FAR'а - включим все события
-//	//gpSrv->bWinHookAllow = TRUE; gpSrv->nWinHookMode = 1;
-//	//HookWinEvents ( TRUE );
-//	_ASSERTE(gpSrv->hWinHookStartEnd==NULL);
-//	// "Ловим" (Start/End)
-//	gpSrv->hWinHookStartEnd = SetWinEventHook(
-//	                           //EVENT_CONSOLE_LAYOUT, -- к сожалению, EVENT_CONSOLE_LAYOUT кроме реакции на смену буфера
-//	                           //                      -- "ловит" и все scroll & resize & focus, а их может быть ОЧЕНЬ много
-//	                           //                      -- так что для детектирования смены буфера это не подходит
-//	                           EVENT_CONSOLE_START_APPLICATION,
-//	                           EVENT_CONSOLE_END_APPLICATION,
-//	                           NULL, (WINEVENTPROC)WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
-//
-//	if (!gpSrv->hWinHookStartEnd)
-//	{
-//		PRINT_COMSPEC(L"!!! HookWinEvents(StartEnd) FAILED, ErrCode=0x%08X\n", GetLastError());
-//		return 1; // Не удалось установить хук, смысла в этой нити нет, выходим
-//	}
-//
-//	PRINT_COMSPEC(L"WinEventsHook(StartEnd) was enabled\n", 0);
-//	//
-//	//SetEvent(hStartedEvent); hStartedEvent = NULL; // здесь он более не требуется
-//	MSG lpMsg;
-//
-//	//while (GetMessage(&lpMsg, NULL, 0, 0)) -- заменил на Peek чтобы блокировок нити избежать
-//	while(TRUE)
-//	{
-//		if (!PeekMessage(&lpMsg, 0,0,0, PM_REMOVE))
-//		{
-//			Sleep(10);
-//			continue;
-//		}
-//
-//		// 	if (lpMsg.message == gpSrv->nMsgHookEnableDisable) {
-//		// 		gpSrv->bWinHookAllow = (lpMsg.wParam != 0);
-//		//HookWinEvents ( gpSrv->bWinHookAllow ? gpSrv->nWinHookMode : 0 );
-//		// 		continue;
-//		// 	}
-//		MCHKHEAP;
-//
-//		if (lpMsg.message == WM_QUIT)
-//		{
-//			//          lbQuit = TRUE;
-//			break;
-//		}
-//
-//		TranslateMessage(&lpMsg);
-//		DispatchMessage(&lpMsg);
-//		MCHKHEAP;
-//	}
-//
-//	// Закрыть хук
-//	//HookWinEvents ( FALSE );
-//	if (/*abEnabled == -1 &&*/ gpSrv->hWinHookStartEnd)
-//	{
-//		UnhookWinEvent(gpSrv->hWinHookStartEnd); gpSrv->hWinHookStartEnd = NULL;
-//		PRINT_COMSPEC(L"WinEventsHook(StartEnd) was disabled\n", 0);
-//	}
-//
-//	MCHKHEAP;
-//	return 0;
-//}
-//#endif
-
-//#ifdef USE_WINEVENT_SRV
-////Minimum supported client Windows 2000 Professional
-////Minimum supported server Windows 2000 Server
-//void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
-//{
-//	if (hwnd != ghConWnd)
-//	{
-//		// если это не наше окно - выходим
-//		return;
-//	}
-//
-//	//BOOL bNeedConAttrBuf = FALSE;
-//	//CESERVER_CHAR ch = {{0,0}};
-//#ifdef _DEBUG
-//	WCHAR szDbg[128];
-//#endif
-//	nExitPlaceThread = 1000;
-//
-//	switch(anEvent)
-//	{
-//		case EVENT_CONSOLE_START_APPLICATION:
-//			//A new console process has started.
-//			//The idObject parameter contains the process identifier of the newly created process.
-//			//If the application is a 16-bit application, the idChild parameter is CONSOLE_APPLICATION_16BIT and idObject is the process identifier of the NTVDM session associated with the console.
-//#ifdef _DEBUG
-//#ifndef WIN64
-//			_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
-//#endif
-//			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_START_APPLICATION(PID=%i%s)\n", idObject,
-//			          (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
-//			DEBUGSTR(szDbg);
-//#endif
-//
-//			if ((((DWORD)idObject) != gnSelfPID) && !nExitQueryPlace)
-//			{
-//				CheckProcessCount(TRUE);
-//				/*
-//				EnterCriticalSection(&gpSrv->csProc);
-//				gpSrv->nProcesses.push_back(idObject);
-//				LeaveCriticalSection(&gpSrv->csProc);
-//				*/
-//#ifndef WIN64
-//				_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
-//
-//				// Не во всех случаях приходит: (idChild == CONSOLE_APPLICATION_16BIT)
-//				// Похоже что не приходит тогда, когда 16бит (или DOS) приложение сразу
-//				// закрывается после выдачи на экран ошибки например.
-//				if (idChild == CONSOLE_APPLICATION_16BIT)
-//				{
-//					if (ghLogSize)
-//					{
-//						char szInfo[64]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "NTVDM started, PID=%i", idObject);
-//						LogSize(NULL, szInfo);
-//					}
-//
-//					gpSrv->bNtvdmActive = TRUE;
-//					gpSrv->nNtvdmPID = idObject;
-//					SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
-//					// Тут менять высоту уже нельзя... смена размера не доходит до 16бит приложения...
-//					// Возможные значения высоты - 25/28/50 строк. При старте - обычно 28
-//					// Ширина - только 80 символов
-//				}
-//
-//#endif
-//				//
-//				//HANDLE hIn = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-//				//                  0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-//				//if (hIn != INVALID_HANDLE_VALUE) {
-//				//  HANDLE hOld = ghConIn;
-//				//  ghConIn = hIn;
-//				//  SafeCloseHandle(hOld);
-//				//}
-//			}
-//
-//			nExitPlaceThread = 1000;
-//			return; // обновление экрана не требуется
-//		case EVENT_CONSOLE_END_APPLICATION:
-//			//A console process has exited.
-//			//The idObject parameter contains the process identifier of the terminated process.
-//#ifdef _DEBUG
-//			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_END_APPLICATION(PID=%i%s)\n", idObject,
-//			          (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
-//			DEBUGSTR(szDbg);
-//#endif
-//
-//			if (((DWORD)idObject) != gnSelfPID)
-//			{
-//				CheckProcessCount(TRUE);
-//#ifndef WIN64
-//				_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
-//
-//				if (idChild == CONSOLE_APPLICATION_16BIT)
-//				{
-//					if (ghLogSize)
-//					{
-//						char szInfo[64]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "NTVDM stopped, PID=%i", idObject);
-//						LogSize(NULL, szInfo);
-//					}
-//
-//					//DWORD ntvdmPID = idObject;
-//					//dwActiveFlags &= ~CES_NTVDM;
-//					gpSrv->bNtvdmActive = FALSE;
-//					//TODO: возможно стоит прибить процесс NTVDM?
-//					SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-//				}
-//
-//#endif
-//				//
-//				//HANDLE hIn = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-//				//                  0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-//				//if (hIn != INVALID_HANDLE_VALUE) {
-//				//  HANDLE hOld = ghConIn;
-//				//  ghConIn = hIn;
-//				//  SafeCloseHandle(hOld);
-//				//}
-//			}
-//
-//			nExitPlaceThread = 1000;
-//			return; // обновление экрана не требуется
-//		case EVENT_CONSOLE_LAYOUT: //0x4005
-//		{
-//			//The console layout has changed.
-//			//EVENT_CONSOLE_LAYOUT, -- к сожалению, EVENT_CONSOLE_LAYOUT кроме реакции на смену буфера
-//			//                      -- "ловит" и все scroll & resize & focus, а их может быть ОЧЕНЬ много
-//			//                      -- так что для детектирования смены буфера это не подходит
-//#ifdef _DEBUG
-//			DEBUGSTR(L"EVENT_CONSOLE_LAYOUT\n");
-//#endif
-//		}
-//		nExitPlaceThread = 1000;
-//		return; // Обновление по событию в нити
-//	}
-//
-//	nExitPlaceThread = 1000;
-//}
-//#endif
-
-
-
-
-
-
-
-
-
-
-
 
 
 DWORD WINAPI RefreshThread(LPVOID lpvParam)
@@ -2955,13 +2743,13 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	//BOOL  bForceRefreshSetSize = FALSE; // После изменения размера нужно сразу перечитать консоль без задержек
 	BOOL lbWasSizeChange = FALSE;
 
-	while(TRUE)
+	while (TRUE)
 	{
 		nWait = WAIT_TIMEOUT;
 		//lbForceSend = FALSE;
 		MCHKHEAP;
 
-		// Alwas update con handle, мягкий вариант
+		// Always update con handle, мягкий вариант
 		if ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT)
 		{
 			WARNING("!!! В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!");

@@ -1685,7 +1685,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 	nConNo = nConNo;
 	#endif
 
-	if (mp_RCon->m_ServerClosing.nServerPID && mp_RCon->m_ServerClosing.nServerPID == mp_RCon->mn_ConEmuC_PID)
+	if (!mp_RCon->isServerAvailable())
 	{
 		// Сервер уже закрывается. попытка считать данные из консоли может привести к зависанию!
 		SetEvent(mp_RCon->mh_ApplyFinished);
@@ -1702,9 +1702,9 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 	}
 	else if (!mp_RCon->m_GetDataPipe.Transact(&cmd, sizeof(cmd), (const CESERVER_REQ_HDR**)&pInfo) || !pInfo)
 	{
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		MBoxA(mp_RCon->m_GetDataPipe.GetErrorText());
-#endif
+		#endif
 	}
 	else if (pInfo->cmd.cbSize < sizeof(CESERVER_REQ_CONINFO_INFO))
 	{

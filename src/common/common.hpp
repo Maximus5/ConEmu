@@ -1247,18 +1247,19 @@ struct CESERVER_REQ_GETALLTABS
 
 enum StartStopType
 {
-	sst_ServerStart  = 0,
-	sst_ServerStop   = 1,
-	sst_ComspecStart = 2,
-	sst_ComspecStop  = 3,
-	sst_AppStart     = 4,
-	sst_AppStop      = 5,
-	sst_App16Start   = 6,
-	sst_App16Stop    = 7,
+	sst_ServerStart    = 0,
+	sst_AltServerStart = 1,
+	sst_ServerStop     = 2,
+	sst_ComspecStart   = 3,
+	sst_ComspecStop    = 4,
+	sst_AppStart       = 5,
+	sst_AppStop        = 6,
+	sst_App16Start     = 7,
+	sst_App16Stop      = 8,
 };
 struct CESERVER_REQ_STARTSTOP
 {
-	DWORD nStarted; // StartStopType
+	StartStopType nStarted;
 	HWND2 hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
 	DWORD dwPID; //, dwInputTID;
 	DWORD nSubSystem; // 255 для DOS программ, 0x100 - аттач из FAR плагина
@@ -1662,6 +1663,7 @@ extern ShutdownConsole_t OnShutdownConsole;
 // targeted by your application (for example, #define _WIN32_WINNT _WIN32_WINNT_WINXP).
 #undef PROCESS_ALL_ACCESS
 #define PROCESS_ALL_ACCESS "PROCESS_ALL_ACCESS"
+#define MY_PROCESS_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0xFFF)
 
 // This must be the end line
 #endif // _COMMON_HEADER_HPP_

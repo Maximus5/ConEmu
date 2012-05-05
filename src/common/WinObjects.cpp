@@ -1661,6 +1661,7 @@ MConHandle::MConHandle(LPCWSTR asName)
 	mn_StdMode = 0;
 	mb_OpenFailed = FALSE; mn_LastError = 0;
 	mh_Handle = INVALID_HANDLE_VALUE;
+	mpp_OutBuffer = NULL;
 	lstrcpynW(ms_Name, asName, 9);
 	/*
 	FAR2 последний
@@ -1763,8 +1764,18 @@ MConHandle::~MConHandle()
 	Close();
 };
 
+void MConHandle::SetBufferPtr(HANDLE* ppOutBuffer)
+{
+	mpp_OutBuffer = ppOutBuffer;
+}
+
 MConHandle::operator const HANDLE()
 {
+	if (mpp_OutBuffer && *mpp_OutBuffer && (*mpp_OutBuffer != INVALID_HANDLE_VALUE))
+	{
+		return *mpp_OutBuffer;
+	}
+
 	if (mh_Handle == INVALID_HANDLE_VALUE)
 	{
 		if (mn_StdMode)
@@ -1830,6 +1841,12 @@ MConHandle::operator const HANDLE()
 
 void MConHandle::Close()
 {
+	// Если установлен указатель на хэндл буфера - закрывать не будем
+	if (mpp_OutBuffer && *mpp_OutBuffer && (*mpp_OutBuffer != INVALID_HANDLE_VALUE))
+	{
+		return;
+	}
+
 	if (mh_Handle != INVALID_HANDLE_VALUE)
 	{
 		if (mn_StdMode)

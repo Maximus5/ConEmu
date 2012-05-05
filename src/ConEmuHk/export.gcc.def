@@ -5,3 +5,4 @@ EXPORTS
 	SetHookCallbacks=SetHookCallbacks@24
 	SetLoadLibraryCallback=SetLoadLibraryCallback@12
 	SetFarHookMode=SetFarHookMode@4
+	RequestLocalServer=RequestLocalServer@0
