@@ -30,19 +30,26 @@ LINK_OBJS = \
 $(INTDIR)\Attach.obj \
 $(INTDIR)\Background.obj \
 $(INTDIR)\BaseDragDrops.obj \
+$(INTDIR)\Common.obj \
 $(INTDIR)\ConEmu.obj \
 $(INTDIR)\ConEmuApp.obj \
+$(INTDIR)\ConEmuCheck.obj \
 $(INTDIR)\ConEmuCtrl.obj \
 $(INTDIR)\ConEmuPipe.obj \
 $(INTDIR)\CustomFonts.obj \
 $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
 $(INTDIR)\DwmHelper.obj \
+$(INTDIR)\Execute.obj \
 $(INTDIR)\FrameHolder.obj \
-$(INTDIR)\GuiServer.obj \
 $(INTDIR)\GestureEngine.obj \
+$(INTDIR)\GuiServer.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
+$(INTDIR)\MAssert.obj \
+$(INTDIR)\Memory.obj \
+$(INTDIR)\MSecurity.obj \
+$(INTDIR)\MStrSafe.obj \
 $(INTDIR)\Options.obj \
 $(INTDIR)\OptionsClass.obj \
 $(INTDIR)\OptionsFast.obj \
@@ -52,6 +59,7 @@ $(INTDIR)\RealConsole.obj \
 $(INTDIR)\RealServer.obj \
 $(INTDIR)\Recreate.obj \
 $(INTDIR)\Registry.obj \
+$(INTDIR)\RgnDetect.obj \
 $(INTDIR)\ScreenDump.obj \
 $(INTDIR)\TabBar.obj \
 $(INTDIR)\TabID.obj \
@@ -63,13 +71,6 @@ $(INTDIR)\UpdateSet.obj \
 $(INTDIR)\VConChild.obj \
 $(INTDIR)\VConRelease.obj \
 $(INTDIR)\VirtualConsole.obj \
-$(INTDIR)\Common.obj \
-$(INTDIR)\ConEmuCheck.obj \
-$(INTDIR)\MAssert.obj \
-$(INTDIR)\Memory.obj \
-$(INTDIR)\MSecurity.obj \
-$(INTDIR)\MStrSafe.obj \
-$(INTDIR)\RgnDetect.obj \
 $(INTDIR)\WinObjects.obj
 
 
@@ -226,9 +227,13 @@ $(INTDIR)\Background.obj: Background.cpp Background.h
 
 $(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
+$(INTDIR)\Common.obj: ../common/Common.cpp ../common/Common.hpp
+
 $(INTDIR)\ConEmu.obj: ConEmu.cpp Version.h GuiServer.h GestureEngine.h ../common/PipeServer.h
 
 $(INTDIR)\ConEmuApp.obj: ConEmuApp.cpp Version.h
+
+$(INTDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp
 
 $(INTDIR)\ConEmuCtrl.obj: ConEmuCtrl.cpp ConEmuCtrl.h
 
@@ -242,15 +247,25 @@ $(INTDIR)\DragDropData.obj: DragDropData.cpp BaseDragDrops.h DragDrop.h DragDrop
 
 $(INTDIR)\DwmHelper.obj: DwmHelper.cpp DwmHelper.h
 
+$(INTDIR)\Execute.obj: ../common/execute.cpp ../common/execute.h
+
 $(INTDIR)\FrameHolder.obj: FrameHolder.cpp FrameHolder.h
 
-$(INTDIR)\GuiServer.obj: GuiServer.cpp GuiServer.h ConEmu.h RealConsole.h VirtualConsole.h
-
 $(INTDIR)\GestureEngine.obj: GestureEngine.cpp GestureEngine.h
+
+$(INTDIR)\GuiServer.obj: GuiServer.cpp GuiServer.h ConEmu.h RealConsole.h VirtualConsole.h
 
 $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 
 $(INTDIR)\Macro.obj: Macro.cpp Macro.h
+
+$(INTDIR)\MAssert.obj: ../common/MAssert.cpp
+
+$(INTDIR)\Memory.obj: ../common/Memory.cpp
+
+$(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
+
+$(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
 $(INTDIR)\Options.obj: Options.cpp Options.h UpdateSet.h Version.h
 
@@ -270,6 +285,8 @@ $(INTDIR)\Recreate.obj: Recreate.cpp Recreate.h
 
 $(INTDIR)\Registry.obj: Registry.cpp Registry.h
 
+$(INTDIR)\RgnDetect.obj: ../common/RgnDetect.cpp
+
 $(INTDIR)\ScreenDump.obj: ScreenDump.cpp
 
 $(INTDIR)\TabBar.obj: TabBar.cpp
@@ -286,25 +303,11 @@ $(INTDIR)\Update.obj: Update.cpp Update.h UpdateSet.h Version.h
 
 $(INTDIR)\UpdateSet.obj: UpdateSet.cpp UpdateSet.h Version.h
 
-$(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h VConChild.h
-
 $(INTDIR)\VConChild.obj: VConChild.cpp VConRelease.h VirtualConsole.h VConChild.h
 
 $(INTDIR)\VConRelease.obj: VConRelease.cpp VConRelease.h VirtualConsole.h VConChild.h
 
-$(INTDIR)\Common.obj: ../common/Common.cpp ../common/Common.hpp
-
-$(INTDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp
-
-$(INTDIR)\Memory.obj: ../common/Memory.cpp
-
-$(INTDIR)\MAssert.obj: ../common/MAssert.cpp
-
-$(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
-
-$(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
-
-$(INTDIR)\RgnDetect.obj: ../common/RgnDetect.cpp
+$(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h VConChild.h
 
 $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
 

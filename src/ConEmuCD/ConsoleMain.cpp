@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
-//	#define SHOW_ALTERNATIVE_MSGBOX
+	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
 //  #define SHOW_COMSPEC_STARTED_MSGBOX
 //  #define SHOW_SERVER_STARTED_MSGBOX
@@ -1417,18 +1417,22 @@ AltServerDone:
 	return iRc;
 }
 
-int __stdcall RequestLocalServer(/*[OUT]*/AnnotationHeader** ppAnnotation, /*[IN]*/HANDLE* ppOutBuffer)
+int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 {
-	_ASSERTE(ppAnnotation!=NULL);
-	if (ppAnnotation)
+	int iRc = 0;
+	if (!Parm || (Parm->StructSize != sizeof(*Parm)))
 	{
-		*ppAnnotation = NULL;
+		iRc = CERR_CARGUMENT;
+		goto wrap;
 	}
 
-	int iRc = 0;
+	Parm->pAnnotation = NULL;
 
 	// Хэндл обновим сразу
-	ghConOut.SetBufferPtr(ppOutBuffer);
+	if (Parm->Flags & slsf_SetOutHandle)
+	{
+		ghConOut.SetBufferPtr(Parm->ppConOutBuffer);
+	}
 	
 	if (gnRunMode != RM_ALTSERVER)
 	{
@@ -1470,7 +1474,7 @@ int __stdcall RequestLocalServer(/*[OUT]*/AnnotationHeader** ppAnnotation, /*[IN
 		iRc = ConsoleMain2(TRUE);
 	}
 
-	TODO("Инициализация TrueColor буфера");
+	TODO("Инициализация TrueColor буфера - Parm->ppAnnotation");
 
 wrap:
 	return iRc;
@@ -2662,7 +2666,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 	// Команды вида: C:\Windows\SysNative\reg.exe Query "HKCU\Software\Far2"|find "Far"
 	// Для них нельзя отключать редиректор (wow.Disable()), иначе SysNative будет недоступен
-	if (IsWindows64(NULL))
+	if (IsWindows64())
 	{
 		LPCWSTR pszTest = asCmdLine;
 		wchar_t szApp[MAX_PATH+1];
@@ -3218,6 +3222,10 @@ void SendStarted()
 			return; // Режим ComSpec, но сервера нет, соответственно, в GUI ничего посылать не нужно
 		}
 	}
+	else
+	{
+		nGuiPID = gpSrv->dwGuiPID;
+	}
 
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
 	int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
@@ -3251,26 +3259,6 @@ void SendStarted()
 		pIn->StartStop.nImageBits = 32;
 		#endif
 		TODO("Ntvdm/DosBox -> 16");
-		if ((gnRunMode == RM_ALTSERVER) || (gnRunMode == RM_SERVER))
-		{
-			if (nGuiPID == 0)
-			{
-				_ASSERTE((nGuiPID != 0) || (gnRunMode == RM_SERVER));
-			}
-			else
-			{
-				HANDLE hGui = OpenProcess(PROCESS_DUP_HANDLE, FALSE, nGuiPID);
-				if (hGui)
-				{
-					HANDLE hDup = NULL;
-					DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(), hGui, &hDup, MY_PROCESS_ALL_ACCESS, FALSE, 0);
-
-					pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)hDup;
-
-					CloseHandle(hGui);
-				}
-			}
-		}
 
 		//pIn->StartStop.dwInputTID = (gnRunMode == RM_SERVER) ? gpSrv->dwInputThreadId : 0;
 		if ((gnRunMode == RM_SERVER) || (gnRunMode == RM_ALTSERVER))
@@ -3344,14 +3332,26 @@ void SendStarted()
 		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd started)\n", (RunMode==RM_SERVER) ? L"Server" : (RunMode==RM_ALTSERVER) ? L"AltServer" : L"ComSpec");
 
 		// CECMD_CMDSTARTSTOP
-		if (nServerPID != gnSelfPID)
+		if (nServerPID && (nServerPID != gnSelfPID))
 		{
+			_ASSERTE(nServerPID!=0 || gnRunMode==RM_SERVER);
+			if ((gnRunMode == RM_ALTSERVER) || (gnRunMode == RM_SERVER))
+			{
+				pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)DuplicateProcessHandle(nServerPID);
+			}
+
 			WARNING("Optimize!!!");
 			pOut = ExecuteSrvCmd(nServerPID, pIn, ghConWnd);
 		}
 
 		if (gnRunMode != RM_APPLICATION)
 		{
+			_ASSERTE(nGuiPID!=0 || gnRunMode==RM_SERVER);
+			if ((gnRunMode == RM_ALTSERVER) || (gnRunMode == RM_SERVER))
+			{
+				pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)DuplicateProcessHandle(nGuiPID);
+			}
+
 			WARNING("Optimize!!!");
 			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 		}
@@ -5496,8 +5496,15 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if (in.StartStop.nStarted == sst_AltServerStart)
 	{
-		_ASSERTE(in.StartStop.nStarted != sst_AltServerStart);
-		WARNING("Перевести нить монитора в режим ожидания завершения AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer");
+		// Перевести нить монитора в режим ожидания завершения AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer
+		_ASSERTE(in.StartStop.hServerProcessHandle!=0);
+		if (gpSrv->hAltServer && (gpSrv->hAltServer != (HANDLE)(DWORD_PTR)in.StartStop.hServerProcessHandle))
+		{
+			gpSrv->dwAltServerPID = 0;
+			SafeCloseHandle(gpSrv->hAltServer);
+		}
+		gpSrv->hAltServer = (HANDLE)(DWORD_PTR)in.StartStop.hServerProcessHandle;
+		gpSrv->dwAltServerPID = in.StartStop.dwPID;
 	}
 	else if ((in.StartStop.nStarted == sst_ComspecStart) || (in.StartStop.nStarted == sst_AppStart))
 	{
@@ -5529,6 +5536,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (nPID == gpSrv->dwAltServerPID)
 		{
 			WARNING("Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer");
+			_ASSERTE(nPID != gpSrv->dwAltServerPID);
 		}
 	}
 	else

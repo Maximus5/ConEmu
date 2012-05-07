@@ -693,7 +693,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_MAIN,        L"Main",           thi_Main/*,    OnInitDialog_Main*/},
 		{IDD_SPG_FEATURE,     L"Features",       thi_Ext/*,     OnInitDialog_Ext*/},
 		{IDD_SPG_COMSPEC,     L"ComSpec",        thi_Comspec/*, OnInitDialog_Comspec*/},
-		{IDD_SPG_SELECTION,   L"Text selection", thi_Selection/*OnInitDialog_Selection*/},
+		{IDD_SPG_SELECTION,   L"Mark & Paste",   thi_Selection/*OnInitDialog_Selection*/},
 		{IDD_SPG_FEATURE_FAR, L"Far Manager",    thi_Far/*,     OnInitDialog_Ext*/},
 		{IDD_SPG_KEYS,        L"Keys",           thi_Keys/*,    OnInitDialog_Keys*/},
 		{IDD_SPG_TABS,        L"Tabs",           thi_Tabs/*,    OnInitDialog_Tabs*/},
@@ -1660,6 +1660,13 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 	CheckDlgButton(hWnd2, cbFarGotoEditor, gpSet->isFarGotoEditor);
 	VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
 	FillListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+
+	//PRAGMA_ERROR("Доделать настройку");
+	CheckDlgButton(hWnd2, cbClipShiftIns, gpSet->AppStd.isPasteAllLines);
+	CheckDlgButton(hWnd2, cbClipCtrlV, gpSet->AppStd.isPasteFirstLine);
+	CheckDlgButton(hWnd2, cbClipConfirmEnter, gpSet->isPasteConfirmEnter);
+	CheckDlgButton(hWnd2, cbClipConfirmLimit, (gpSet->nPasteConfirmLonger!=0));
+	SetDlgItemInt(hWnd2, tClipConfirmLimit, gpSet->nPasteConfirmLonger, FALSE);
 
 	// тултипы
 	RegisterTipsFor(hWnd2);
@@ -10429,7 +10436,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 						sei.hwnd = hWnd2;
 						sei.fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NOASYNC;
 						sei.lpVerb = L"runas";
-						sei.lpFile = gpConEmu->ms_ConEmuCExeFull;
+						sei.lpFile = WIN3264TEST(gpConEmu->ms_ConEmuC32Full,gpConEmu->ms_ConEmuC64Full);
 						_wsprintf(szCommandLine, SKIPLEN(countof(szCommandLine)) L" \"/REGCONFONT=%s\"", szFaceName);
 						sei.lpParameters = szCommandLine;
 						sei.lpDirectory = gpConEmu->ms_ConEmuCurDir;

@@ -12,8 +12,8 @@ SRCS =  \
 		DragDropData.cpp   \
 		DwmHelper.cpp      \
 		FrameHolder.cpp    \
-		GuiServer.cpp      \
 		GestureEngine.cpp  \
+		GuiServer.cpp      \
 		LoadImg.cpp        \
 		Macro.cpp          \
 		Options.cpp        \
@@ -32,16 +32,17 @@ SRCS =  \
 		TrayIcon.cpp       \
 		Update.cpp         \
 		UpdateSet.cpp      \
-		VirtualConsole.cpp \
 		VConChild.cpp      \
-		VConRelease.cpp \
-		../common/Common.cpp \
-		../common/ConEmuCheck.cpp \
-		../common/Memory.cpp \
-		../common/MSecurity.cpp \
-		../common/MStrSafe.cpp \
-		../common/RConStartArgs.cpp  \
-		../common/RgnDetect.cpp \
+		VConRelease.cpp    \
+		VirtualConsole.cpp \
+		../common/Common.cpp        \
+		../common/ConEmuCheck.cpp   \
+		../common/execute.cpp       \
+		../common/Memory.cpp        \
+		../common/MSecurity.cpp     \
+		../common/MStrSafe.cpp      \
+		../common/RConStartArgs.cpp \
+		../common/RgnDetect.cpp     \
         ../common/WinObjects.cpp
 
 USERLIBS = -lversion -lshlwapi -loleaut32 -lNetapi32 -lwinmm

@@ -390,12 +390,12 @@ BEGIN
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,24,89,8
     CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,36,89,8
     CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,48,76,8
-    PUSHBUTTON      "...",bDosBoxSettings,210,47,13,11
-    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,13,74,8
+    PUSHBUTTON      "...",bDosBoxSettings,212,47,13,11
+    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,13,74,8
     PUSHBUTTON      "...",bRealConsoleSettings,306,12,13,11
-    CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,24,91,8
-    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,36,91,8
-    CONTROL         "Portable registry",cbPortableRegistry,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,48,75,8
+    CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,24,87,8
+    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,36,87,8
+    CONTROL         "Portable registry",cbPortableRegistry,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,48,75,8
     PUSHBUTTON      "...",bPortableRegistrySettings,306,47,13,11,WS_DISABLED
     GROUPBOX        "Appearence",gbFeatureAppear,4,64,319,61
     CONTROL         "Enhance progress- and scrollbars",cbEnhanceGraphics,
@@ -410,8 +410,8 @@ BEGIN
     CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,110,89,8
     CONTROL         "Ignore telnet cursor size",cbIgnoreTelnetCursorSize,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,110,91,8
-    CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,227,74,91,8
-    CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,86,89,8
+    CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,231,74,87,8
+    CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,86,87,8
     CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,153,91,8
     GROUPBOX        "Caption options",gbFeatureCaption,4,126,319,44
     RTEXT           "Frame width:",IDC_STATIC,219,137,54,8
@@ -420,13 +420,7 @@ BEGIN
     EDITTEXT        tHideCaptionAlwaysFrame,277,135,40,12,ES_AUTOHSCROLL
     EDITTEXT        tHideCaptionAlwaysDelay,183,151,40,12,ES_AUTOHSCROLL
     EDITTEXT        tHideCaptionAlwaysDissapear,277,151,40,12,ES_AUTOHSCROLL
-    GROUPBOX        "Handle clipboard hotkeys (excepting Far Manager and GUI applications)",gbFeatureClipboard,4,171,319,30
-    CONTROL         "Ctrl+Ins",cbClipCtrlIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,185,44,8
-    CONTROL         "Shift+Ins",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,57,185,51,8
-    CONTROL         "Ctrl+C",cbClipCtrlC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,107,185,37,8
-    CONTROL         "Ctrl+V",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,147,185,37,8
-    CONTROL         "Confirm paste multiline text",cbClipConfirmPaste,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,202,184,117,10
-    CONTROL         "Confirm close console",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,98,91,8
+    CONTROL         "Confirm close console",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,98,87,8
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235
@@ -572,18 +566,25 @@ BEGIN
     COMBOBOX        lbCTSBackIdx,293,28,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Mouse button actions",IDC_STATIC,4,48,319,31
     CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,62,11,8
-    COMBOBOX        lbCTSActAlways,25,59,51,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Buffer only (cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,82,62,82,8
-    RTEXT           "Right:",IDC_STATIC,174,62,24,8
+    COMBOBOX        lbCTSActAlways,22,59,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,76,62,100,8
+    RTEXT           "Right:",IDC_STATIC,175,62,24,8
     COMBOBOX        lbCTSRBtnAction,201,59,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Middle:",IDC_STATIC,244,62,28,8
+    RTEXT           "Middle:",IDC_STATIC,245,62,28,8
     COMBOBOX        lbCTSMBtnAction,275,59,42,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Goto Far editor on compiler errors",IDC_STATIC,4,80,152,29
-    CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,92,76,8
-    COMBOBOX        lbFarGotoEditorVk,94,90,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Goto Far editor on compiler errors",IDC_STATIC,4,129,152,29
+    CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,141,76,8
+    COMBOBOX        lbFarGotoEditorVk,94,139,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Never",rbCTSNever,"Button",BS_AUTORADIOBUTTON,90,13,35,8
     GROUPBOX        "Color indexes",IDC_STATIC,263,1,60,46
     LTEXT           "Select text in console:",IDC_STATIC,12,13,72,8
+    GROUPBOX        "Handle pasting text (excepting Far Manager and GUI applications)",gbFeatureClipboard,4,83,319,42
+    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,95,117,8
+    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,96,91,8
+    CONTROL         "Confirm <Enter> keypress",cbClipConfirmEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,109,117,8
+    CONTROL         "Confirm pasting more than",cbClipConfirmLimit,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,109,105,8
+    EDITTEXT        tClipConfirmLimit,246,108,40,12,ES_AUTOHSCROLL
+    CTEXT           "chars",stClipConfirmLimit,292,109,22,8
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235
@@ -911,14 +912,11 @@ BEGIN
     GROUPBOX        "",IDC_STATIC,110,115,208,30
     CONTROL         "Color palette override",cbColorsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,114,87,10
     COMBOBOX        lbColorsOverride,116,126,194,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "",IDC_STATIC,110,149,208,43
-    CONTROL         "Ctrl+Ins",cbClipCtrlIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,163,44,8
-    CONTROL         "Shift+Ins",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,161,163,51,8
-    CONTROL         "Ctrl+C",cbClipCtrlC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,211,163,37,8
-    CONTROL         "Ctrl+V",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,253,163,37,8
-    CONTROL         "Confirm paste multiline text",cbClipConfirmPaste,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,176,117,10
-    CONTROL         "Handle clipboard hotkeys (excepting GUI applications)",cbClipboardOverride,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,148,192,10
+    GROUPBOX        "",IDC_STATIC,110,149,208,29
+    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,163,102,8
+    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,219,163,95,8
+    CONTROL         "Handle pasting text (excepting Far and GUI applications)",cbClipboardOverride,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,148,197,10
 END
 
 
@@ -949,11 +947,6 @@ BEGIN
         RIGHTMARGIN, 124
         TOPMARGIN, 4
         BOTTOMMARGIN, 50
-    END
-
-    IDD_SPG_SELECTION, DIALOG
-    BEGIN
-        BOTTOMMARGIN, 216
     END
 
     IDD_SPG_VIEWS, DIALOG

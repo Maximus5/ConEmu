@@ -4,8 +4,8 @@ Russian: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=ru
 
 TODO: Описать GUI Macro "Tab"
 TODO: Размножить ConEmu.TabList.fml для Far2/Far1
-TODO: Добавить ConEmu.TabList.fml в инсталлятор
 TODO: Написать в FAQ про расширенные цвета. 1) TrueColor (Far3/Far2), 2) расширение за счет фона, 3) собственная палитра приложения
+TODO: Clipboard
 
 ****
 
@@ -38,6 +38,14 @@ TODO: Написать в FAQ про расширенные цвета. 1) TrueC
 [+] Keyboard: 'Show opened tabs list (does not work in Far - use macro instead)'. Default - F12.
 [+] ConEmu plugin: команда в меню плагина - 'Show all tabs list', макрос 'ConEmu.TabList.fml'
 [%] Issue 530: Ошибка в цветах Thumbnails/Tiles при включенном «Optional marking character».
+[*] Вкладка настроек 'Text selection' переименована в 'Mark & Paste'.
+[+] Для консольных приложений (кроме Far) ConEmu теперь может самостоятельно обрабатывать
+    вставку текста из буфера обмена. По умолчанию, Ctrl+V вставляет первую строку содержимого
+    буфера, а Shift+Ins вставляет текст полностью (генерируя нажатия <Enter> для перевода строк).
+    Можно настроить подтверждение вставки многострочного текста (при вставке нескольких строк
+    из буфера в ком.строку cmd.exe нажатия <Enter> могут привести к нежелательному исполнению команд).
+    Можно настроить подтверждение вставки длинного текста (по умолчанию 1000 символов).
+[+] На вкладках 'Mark & Paste' и 'App distinct' добавлена настройка вставки из буфера обмена.
 
 
 2012.04.22

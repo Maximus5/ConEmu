@@ -82,6 +82,7 @@ extern ConEmuHkDllState gnDllState;
 extern int gnDllThreadCount;
 extern BOOL gbDllStopCalled;
 
-int __stdcall RequestLocalServer();
+int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
 struct AnnotationHeader;
 extern AnnotationHeader* gpAnnotationHeader;
+extern HANDLE ghCurrentOutBuffer;

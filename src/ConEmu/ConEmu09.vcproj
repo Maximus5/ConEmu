@@ -714,7 +714,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib Netapi32.lib"
-				OutputFile="Z:\ConEmu.exe"
+				OutputFile="Z:\ConEmu\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
@@ -1525,6 +1525,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\execute.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FrameHolder.cpp"
 				>
 			</File>
@@ -1712,6 +1716,10 @@
 			</File>
 			<File
 				RelativePath=".\DwmHelper.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\execute.h"
 				>
 			</File>
 			<File

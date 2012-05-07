@@ -2733,13 +2733,14 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 
 DWORD WINAPI RefreshThread(LPVOID lpvParam)
 {
-	DWORD nWait = 0; //, dwConWait = 0;
+	DWORD nWait = 0, nAltWait = 0;
 	HANDLE hEvents[2] = {ghQuitEvent, gpSrv->hRefreshEvent};
 	DWORD nDelta = 0;
 	DWORD nLastReadTick = 0; //GetTickCount();
 	DWORD nLastConHandleTick = GetTickCount();
 	BOOL  /*lbEventualChange = FALSE,*/ /*lbForceSend = FALSE,*/ lbChanged = FALSE; //, lbProcessChanged = FALSE;
 	DWORD dwTimeout = 10; // периодичность чтения информации об окне (размеров, курсора,...)
+	DWORD dwAltTimeout = 100;
 	//BOOL  bForceRefreshSetSize = FALSE; // После изменения размера нужно сразу перечитать консоль без задержек
 	BOOL lbWasSizeChange = FALSE;
 
@@ -2749,8 +2750,11 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//lbForceSend = FALSE;
 		MCHKHEAP;
 
+		nAltWait = gpSrv->hAltServer ? WaitForSingleObject(gpSrv->hAltServer, dwAltTimeout) : WAIT_OBJECT_0;
+
 		// Always update con handle, мягкий вариант
-		if ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT)
+		// 120507 - Если крутится альт.сервер - то игнорировать
+		if (!nAltWait && ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT))
 		{
 			WARNING("!!! В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!");
 
@@ -2774,8 +2778,17 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//		SetEvent(gpSrv->hLockRefreshReady);
 		//}
 
+		#ifdef _DEBUG
+		if (nAltWait == WAIT_TIMEOUT)
+		{
+			// Если крутится альт.сервер - то запрос на изменение размера сюда приходить НЕ ДОЛЖЕН
+			_ASSERTE(!gpSrv->nRequestChangeSize);
+		}
+		#endif
+
 		// Из другой нити поступил запрос на изменение размера консоли
-		if (gpSrv->nRequestChangeSize)
+		// 120507 - Если крутится альт.сервер - то игнорировать
+		if (!nAltWait && gpSrv->nRequestChangeSize)
 		{
 			// AVP гундит... да вроде и не нужно
 			//DWORD dwSusp = 0, dwSuspErr = 0;
@@ -2895,7 +2908,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//}
 
 		// Если можем - проверим текущую раскладку в консоли
-		if (!gpSrv->bDebuggerActive)
+		// 120507 - Если крутится альт.сервер - то игнорировать
+		if (!nAltWait && !gpSrv->bDebuggerActive)
 		{
 			if (pfnGetConsoleKeyboardLayoutName)
 				CheckKeyboardLayout();
@@ -2904,7 +2918,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		/* ****************** */
 		/* Перечитать консоль */
 		/* ****************** */
-		if (!gpSrv->bDebuggerActive)
+		// 120507 - Если крутится альт.сервер - то игнорировать
+		if (!nAltWait && !gpSrv->bDebuggerActive)
 		{
 			lbChanged = ReloadFullConsoleInfo(gpSrv->bWasReattached/*lbForceSend*/);
 			// При этом должно передернуться gpSrv->hDataReadyEvent

@@ -556,11 +556,9 @@
 #define gbFeatureAppear                 2164
 #define gbFeatureCaption                2165
 #define gbFeatureClipboard              2166
-#define cbClipCtrlIns                   2167
 #define cbClipShiftIns                  2168
-#define cbClipCtrlC                     2169
 #define cbClipCtrlV                     2170
-#define cbClipConfirmPaste              2171
+#define cbClipConfirmEnter              2171
 #define cbClipboardOverride             2172
 #define tFindText                       2173
 #define cbFindWholeWords                2174
@@ -611,6 +609,11 @@
 #define vkGuMacro31                     2220
 #define vkGuMacro32                     2221
 #define vkShowTabsList                  2222
+#define vkPasteText                     2223
+#define vkPasteFirstLine                2224
+#define cbClipConfirmLimit              2225
+#define tClipConfirmLimit               2226
+#define stClipConfirmLimit              2227
 
 // Next default values for new objects
 // 
@@ -618,7 +621,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        218
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2223
+#define _APS_NEXT_CONTROL_VALUE         2228
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

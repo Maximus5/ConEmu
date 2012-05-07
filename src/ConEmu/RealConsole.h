@@ -287,17 +287,17 @@ class CRealConsole
 		DWORD mn_FlushIn, mn_FlushOut;
 	public:
 		COORD ScreenToBuffer(COORD crMouse);
-		void PostConsoleEvent(INPUT_RECORD* piRec);
-		void PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
-		void PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
-		void PostLeftClickSync(COORD crDC);
-		void PostConsoleEventPipe(MSG64 *pMsg);
+		bool PostConsoleEvent(INPUT_RECORD* piRec);
+		bool PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
+		bool PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
+		bool PostLeftClickSync(COORD crDC);
+		bool PostConsoleEventPipe(MSG64 *pMsg);
 		void ShowKeyBarHint(WORD nID);
 	private:
 		void PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend = false);
 	public:
 		BOOL OpenConsoleEventPipe();
-		LRESULT PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam);
+		bool PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam);
 		BOOL ShowOtherWindow(HWND hWnd, int swShow, BOOL abAsync=TRUE);
 		BOOL SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
 		BOOL SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground);
@@ -418,7 +418,7 @@ class CRealConsole
 		void CloseTab();
 		bool isConsoleClosing();
 		void OnServerClosing(DWORD anSrvPID);
-		void Paste();
+		void Paste(bool abFirstLineOnly = false);
 		void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
 		void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
 		bool isActive();
@@ -684,7 +684,7 @@ class CRealConsole
 		void CloseMapHeader();
 		BOOL ApplyConsoleInfo();
 		BOOL mb_DataChanged;
-		void OnServerStarted();
+		void OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle);
 		void OnRConStartedSuccess();
 		BOOL mb_RConStartedSuccess;
 		//

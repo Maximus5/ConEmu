@@ -140,8 +140,8 @@ DWORD   gnImageSubsystem = 0;
 DWORD   gnImageBits = WIN3264TEST(32,64); //-V112
 
 HMODULE ghSrvDll = NULL;
-typedef int (__stdcall* RequestLocalServer_t)(AnnotationHeader** ppAnnotation, HANDLE* ppOutBuffer);
-RequestLocalServer_t ghRequestLocalServer = NULL;
+//typedef int (__stdcall* RequestLocalServer_t)(AnnotationHeader** ppAnnotation, HANDLE* ppOutBuffer);
+RequestLocalServer_t gfRequestLocalServer = NULL;
 AnnotationHeader* gpAnnotationHeader = NULL;
 HANDLE ghCurrentOutBuffer = NULL; // Устанавливается при SetConsoleActiveScreenBuffer
 
@@ -1405,17 +1405,23 @@ int main()
 }
 #endif
 
-int __stdcall RequestLocalServer()
+int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 {
 	int iRc = CERR_SRVLOADFAILED;
+	if (!Parm || (Parm->StructSize != sizeof(*Parm)))
+	{
+		iRc = CERR_CARGUMENT;
+		goto wrap;
+	}
+	//RequestLocalServerParm Parm = {(DWORD)sizeof(Parm)};
 
-	if (!ghSrvDll || !ghRequestLocalServer)
+	if (!ghSrvDll || !gfRequestLocalServer)
 	{
 		LPCWSTR pszSrvName = WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll");
 
 		if (!ghSrvDll)
 		{
-			ghRequestLocalServer = NULL;
+			gfRequestLocalServer = NULL;
 			ghSrvDll = GetModuleHandle(pszSrvName);
 		}
 
@@ -1435,15 +1441,16 @@ int __stdcall RequestLocalServer()
 				goto wrap;
 		}
 
-		ghRequestLocalServer = (RequestLocalServer_t)GetProcAddress(ghSrvDll, "RequestLocalServer");
+		gfRequestLocalServer = (RequestLocalServer_t)GetProcAddress(ghSrvDll, "RequestLocalServer");
 	}
 
-	if (!ghRequestLocalServer)
+	if (!gfRequestLocalServer)
 		goto wrap;
 
-	_ASSERTE(CheckCallbackPtr(ghSrvDll, 1, (FARPROC*)&ghRequestLocalServer, TRUE));
+	_ASSERTE(CheckCallbackPtr(ghSrvDll, 1, (FARPROC*)&gfRequestLocalServer, TRUE));
 
-	iRc = ghRequestLocalServer(&gpAnnotationHeader, &ghCurrentOutBuffer);
+	//iRc = gfRequestLocalServer(&gpAnnotationHeader, &ghCurrentOutBuffer);
+	iRc = gfRequestLocalServer(Parm);
 wrap:
 	return iRc;
 }

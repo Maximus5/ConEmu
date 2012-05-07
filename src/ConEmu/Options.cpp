@@ -317,6 +317,8 @@ void Settings::InitSettings()
 	AppStd.isCursorBlink = true;
 	AppStd.isCursorColor = true;
 	AppStd.isCursorBlockInactive = true;
+	AppStd.isPasteAllLines = true;
+	AppStd.isPasteFirstLine = true;
 
 	//CheckTheming(); -- сейчас - нельзя. нужно дождаться, пока главное окно будет создано
 	//mb_ThemingEnabled = (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1));
@@ -382,6 +384,8 @@ void Settings::InitSettings()
 	isCTSRBtnAction = 3; // Auto (Выделения нет - Paste, Есть - Copy)
 	isCTSMBtnAction = 0; // <None>
 	isCTSColorIndex = 0xE0;
+	isPasteConfirmEnter = true;
+	nPasteConfirmLonger = 1000;
 	isFarGotoEditor = true; //isFarGotoEditorVk = VK_LCONTROL;
 	isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
 	ilDragHeight = 10;
@@ -567,6 +571,12 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	reg->Load(L"CursorColor", pApp->isCursorColor);
 	reg->Load(L"CursorBlink", pApp->isCursorBlink);
 	reg->Load(L"CursorBlockInactive", pApp->isCursorBlockInactive);
+
+	pApp->OverrideClipboard = bStd;
+	if (!bStd)
+		reg->Load(L"OverrideClipboard", pApp->OverrideClipboard);
+	reg->Load(L"ClipboardAllLines", pApp->isPasteAllLines);
+	reg->Load(L"ClipboardFirstLine", pApp->isPasteFirstLine);
 }
 
 void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
@@ -1541,6 +1551,9 @@ void Settings::LoadSettings()
 		reg->Load(L"CTS.MBtnAction", isCTSMBtnAction); if (isCTSMBtnAction>3) isCTSMBtnAction = 0;
 
 		reg->Load(L"CTS.ColorIndex", isCTSColorIndex); if ((isCTSColorIndex & 0xF) == ((isCTSColorIndex & 0xF0)>>4)) isCTSColorIndex = 0xE0;
+
+		reg->Load(L"ClipboardConfirmEnter", isPasteConfirmEnter);
+		reg->Load(L"ClipboardConfirmLonger", nPasteConfirmLonger);
 		
 		reg->Load(L"FarGotoEditor", isFarGotoEditor);
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
@@ -2073,17 +2086,24 @@ void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 		reg->Save(L"PaletteName", pApp->szPaletteName);
 	}
 
-	reg->Save(L"OverrideExtendFonts", pApp->OverrideExtendFonts);
+	if (!bStd)
+		reg->Save(L"OverrideExtendFonts", pApp->OverrideExtendFonts);
 	reg->Save(L"ExtendFonts", pApp->isExtendFonts);
 	reg->Save(L"ExtendFontNormalIdx", pApp->nFontNormalColor);
 	reg->Save(L"ExtendFontBoldIdx", pApp->nFontBoldColor);
 	reg->Save(L"ExtendFontItalicIdx", pApp->nFontItalicColor);
 
-	reg->Save(L"OverrideCursor", pApp->OverrideCursor);
+	if (!bStd)
+		reg->Save(L"OverrideCursor", pApp->OverrideCursor);
 	reg->Save(L"CursorType", pApp->isCursorV);
 	reg->Save(L"CursorColor", pApp->isCursorColor);
 	reg->Save(L"CursorBlink", pApp->isCursorBlink);
 	reg->Save(L"CursorBlockInactive", pApp->isCursorBlockInactive);
+
+	if (!bStd)
+		reg->Save(L"OverrideClipboard", pApp->OverrideClipboard);
+	reg->Save(L"ClipboardAllLines", pApp->isPasteAllLines);
+	reg->Save(L"ClipboardFirstLine", pApp->isPasteFirstLine);
 }
 
 BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
@@ -2219,6 +2239,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"CTS.MBtnAction", isCTSMBtnAction);
 		reg->Save(L"CTS.ColorIndex", isCTSColorIndex);
 		
+		reg->Save(L"ClipboardConfirmEnter", isPasteConfirmEnter);
+		reg->Save(L"ClipboardConfirmLonger", nPasteConfirmLonger);
+
 		reg->Save(L"FarGotoEditor", isFarGotoEditor);
 		//reg->Save(L"FarGotoEditorVk", isFarGotoEditorVk);
 		
@@ -4111,9 +4134,11 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkMultiBuffer,    chk_User, &isMulti, L"Multi.Buffer",          /*&vmMultiBuffer,*/ MakeHotKey('A',VK_LWIN), CConEmuCtrl::key_MultiBuffer},
 		{vkMultiClose,     chk_User, &isMulti, L"Multi.Close",           /*&vmMultiClose,*/ MakeHotKey(VK_DELETE,VK_LWIN), CConEmuCtrl::key_MultiClose},
 		{vkMultiCmd,       chk_User, &isMulti, L"Multi.CmdKey",          /*&vmMultiCmd,*/ MakeHotKey('X',VK_LWIN), CConEmuCtrl::key_MultiCmd},
-		{vkCTSVkBlockStart,chk_User, NULL,     L"CTS.VkBlockStart",      /*&vmCTSVkBlockStart,*/ 0, CConEmuCtrl::key_CTSVkBlockStart}, // запуск выделения блока
-		{vkCTSVkTextStart, chk_User, NULL,     L"CTS.VkTextStart",       /*&vmCTSVkTextStart,*/ 0, CConEmuCtrl::key_CTSVkTextStart},   // запуск выделения текста
-		{vkShowTabsList,   chk_User, NULL,     L"Multi.ShowTabsList",    MakeHotKey(VK_F12), CConEmuCtrl::key_ShowTabsList},
+		{vkCTSVkBlockStart,chk_User,  NULL,    L"CTS.VkBlockStart",      /*&vmCTSVkBlockStart,*/ 0, CConEmuCtrl::key_CTSVkBlockStart}, // запуск выделения блока
+		{vkCTSVkTextStart, chk_User,  NULL,    L"CTS.VkTextStart",       /*&vmCTSVkTextStart,*/ 0, CConEmuCtrl::key_CTSVkTextStart},   // запуск выделения текста
+		{vkShowTabsList,   chk_User,  NULL,    L"Multi.ShowTabsList",    MakeHotKey(VK_F12), CConEmuCtrl::key_ShowTabsList},
+		{vkPasteText,      chk_User,  NULL,    L"ClipboardVkAllLines",   MakeHotKey(VK_INSERT,VK_SHIFT), CConEmuCtrl::key_PasteText},
+		{vkPasteFirstLine, chk_User,  NULL,    L"ClipboardVkFirstLine",  MakeHotKey('V',VK_CONTROL), CConEmuCtrl::key_PasteFirstLine},
 		// GUI Macros
 		{vkGuMacro01,      chk_Macro, NULL,    L"KeyMacro01", MakeHotKey(VK_WHEEL_UP,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,2)")},
 		{vkGuMacro02,      chk_Macro, NULL,    L"KeyMacro02", MakeHotKey(VK_WHEEL_DOWN,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,-2)")},

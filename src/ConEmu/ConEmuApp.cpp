@@ -30,9 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <commctrl.h>
 #include "../common/ConEmuCheck.h"
-#ifdef _DEBUG
-#include "../common/execute.cpp"
-#endif
+#include "../common/execute.h"
 #include "Options.h"
 #include "ConEmu.h"
 #include "TaskBar.h"

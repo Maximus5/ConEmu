@@ -160,8 +160,9 @@ class CConEmuMain :
 	public:
 		LPWSTR ConEmuXml();
 		wchar_t ms_ConEmuChm[MAX_PATH+1];       // полный путь к chm-файлу (help)
-		//wchar_t ms_ConEmuCExe[MAX_PATH+12];     // полный путь к серверу (ConEmuC.exe) с короткими именами (для ComSpec)
-		wchar_t ms_ConEmuCExeFull[MAX_PATH+12]; // полный путь к серверу (ConEmuC.exe) с длинными именами
+		wchar_t ms_ConEmuC32Full[MAX_PATH+12];  // полный путь к серверу (ConEmuC.exe) с длинными именами
+		wchar_t ms_ConEmuC64Full[MAX_PATH+12];  // полный путь к серверу (ConEmuC64.exe) с длинными именами
+		LPCWSTR ConEmuCExeFull(LPCWSTR asCmdLine=NULL);
 		//wchar_t ms_ConEmuCExeName[32];        // имя сервера (ConEmuC.exe или ConEmuC64.exe) -- на удаление
 		wchar_t ms_ConEmuCurDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
 		wchar_t *mpsz_ConEmuArgs;    // Аргументы

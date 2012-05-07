@@ -418,7 +418,7 @@ public:
 		}
 		IsWow64Process_f = (IsWow64Process_t)(hKernel ? GetProcAddress(hKernel, "IsWow64Process") : NULL);
 		
-		mb_Is64BitOs = IsWindows64(NULL);
+		mb_Is64BitOs = IsWindows64();
 		
 		LoadPerfData();
 	}

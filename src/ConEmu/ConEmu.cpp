@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LoadImg.h"
 #include "../ConEmuCD/RegPrepare.h"
 #include "../ConEmuCD/GuiHooks.h"
+#include "../common/execute.h"
 //#ifdef __GNUC__
 #include "ShObjIdl_Part.h"
 //#endif
@@ -229,7 +230,7 @@ CConEmuMain::CConEmuMain()
 	mpsz_ConEmuArgs = NULL;
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = 0;
 	//ms_ConEmuCExe[0] = 
-	ms_ConEmuCExeFull[0] = 0;
+	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
 	ms_ConEmuXml[0] = ms_ConEmuChm[0] = 0;
 	//ms_ConEmuCExeName[0] = 0;
 	wchar_t *pszSlash = NULL;
@@ -253,7 +254,7 @@ CConEmuMain::CConEmuMain()
 	// SetLayeredWindowAttributes есть в Win2k, только про него не знает GCC
 	SetLayeredWindowAttributes = (SetLayeredWindowAttributes_t)(hUser32 ? GetProcAddress(hUser32, "SetLayeredWindowAttributes") : NULL);
 	#endif
-	
+
 	//LoadVersionInfo(ms_ConEmuExe);
 	// Папка программы
 	wcscpy_c(ms_ConEmuExeDir, ms_ConEmuExe);
@@ -327,15 +328,21 @@ CConEmuMain::CConEmuMain()
 		}
 	}
 
-	wcscpy_c(ms_ConEmuCExeFull, ms_ConEmuBaseDir);
-	pszSlash = ms_ConEmuCExeFull + _tcslen(ms_ConEmuCExeFull);
-#ifdef WIN64
-	lstrcpy(pszSlash, L"\\ConEmuC64.exe");
-
-	if (!FileExists(ms_ConEmuCExeFull))
-#endif
+	wcscpy_c(ms_ConEmuC32Full, ms_ConEmuBaseDir);
+	wcscat_c(ms_ConEmuC32Full, L"\\ConEmuC.exe");
+	if (IsWindows64())
 	{
-		lstrcpy(pszSlash, L"\\ConEmuC.exe");
+		wcscpy_c(ms_ConEmuC64Full, ms_ConEmuBaseDir);
+		wcscat_c(ms_ConEmuC64Full, L"\\ConEmuC64.exe");
+		// Проверяем наличие
+		if (!FileExists(ms_ConEmuC64Full))
+			wcscpy_c(ms_ConEmuC64Full, ms_ConEmuC32Full);
+		else if (!FileExists(ms_ConEmuC32Full))
+			wcscpy_c(ms_ConEmuC32Full, ms_ConEmuC64Full);
+	}
+	else
+	{
+		wcscpy_c(ms_ConEmuC64Full, ms_ConEmuC32Full);
 	}
 
 	//// Если ConEmu.exe запущен с сетевого ресурса -  Сетевые пути не менять
@@ -495,7 +502,7 @@ bool CConEmuMain::CheckRequiredFiles()
 	};
 	
 	wchar_t szRequired[128], szRecommended[128]; szRequired[0] = szRecommended[0] = 0;
-	bool isWin64 = IsWindows64(NULL);
+	bool isWin64 = IsWindows64();
 	int  nExeBits = WIN3264TEST(32,64);
 
 	wcscpy_c(szPath, ms_ConEmuBaseDir);
@@ -579,6 +586,116 @@ LPWSTR CConEmuMain::ConEmuXml()
 	}
 
 	return ms_ConEmuXml;
+}
+
+LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
+{
+	// Если OS - 32битная или в папке ConEmu был найден только один из "серверов"
+	if (!IsWindows64() || !lstrcmp(ms_ConEmuC32Full, ms_ConEmuC64Full))
+	{
+		// Сразу вернуть
+		return ms_ConEmuC32Full;
+	}
+
+	LPCWSTR pszServer = ms_ConEmuC32Full;
+	bool lbCmd = false, lbFound = false;
+	int Bits = IsWindows64() ? 64 : 32;
+
+	if (!asCmdLine || !*asCmdLine)
+	{
+		// Если строка запуска не указана - считаем, что запускается ComSpec
+		lbCmd = true;
+	}
+	else
+	{
+		// Проверить битность asCmdLine во избежание лишних запусков серверов для Inject
+		// и корректной битности запускаемого процессора по настройке
+		wchar_t szTemp[MAX_PATH+1], szExpand[MAX_PATH+1];
+		if (!FileExists(asCmdLine))
+		{
+			const wchar_t *psz = asCmdLine;
+			if (NextArg(&psz, szTemp) == 0)
+				asCmdLine = szTemp;
+		}
+		else
+		{
+			lbFound = true;
+		}
+
+		if (wcschr(asCmdLine, L'%'))
+		{
+			DWORD nLen = ExpandEnvironmentStrings(asCmdLine, szExpand, countof(szExpand));
+			if (nLen && (nLen < countof(szExpand)))
+				asCmdLine = szExpand;
+		}
+
+		// Если путь указан полностью - берем битность из него, иначе - проверяем "на cmd"
+		if ((lstrcmpi(asCmdLine, L"cmd") == 0) || (lstrcmpi(asCmdLine, L"cmd.exe") == 0))
+		{
+			lbCmd = true;
+		}
+		else
+		{
+			LPCWSTR pszExt = PointToExt(asCmdLine);
+			if (pszExt && (lstrcmpi(pszExt, L".exe") != 0) && (lstrcmpi(pszExt, L".com") != 0))
+			{
+				// Если указано расширение, и это не .exe и не .com - считаем, что запуск через ComProcessor
+				lbCmd = true;
+			}
+			else
+			{
+				wchar_t szFind[MAX_PATH+1];
+				wcscpy_c(szFind, asCmdLine);
+				CharUpperBuff(szFind, lstrlen(szFind));
+				// По хорошему, нужно бы проверить еще и начало на соответствие в "%WinDir%". Но это не критично.
+				if (wcsstr(szFind, L"\\SYSNATIVE\\") || wcsstr(szFind, L"\\SYSWOW64\\"))
+				{
+					// Если "SysNative" - считаем что 32-bit, иначе, 64-битный сервер просто "не увидит" эту папку
+					// С "SysWow64" все понятно, там только 32-битное
+					Bits = 32;
+				}
+				else
+				{
+					MWow64Disable wow; wow.Disable();
+					DWORD ImageSubsystem = 0, ImageBits = 0, FileAttrs = 0;
+					lbFound = GetImageSubsystem(asCmdLine, ImageSubsystem, ImageBits, FileAttrs);
+					// Если не нашли и путь не был указан
+					if (!lbFound && !wcschr(asCmdLine, L'\\'))
+					{
+						// попытаемся найти
+						wchar_t *pszFilePart;
+						DWORD nLen = SearchPath(NULL, asCmdLine, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
+						if (!nLen)
+						{
+							wchar_t szRoot[MAX_PATH+1];
+							wcscpy_c(szRoot, ms_ConEmuExeDir);
+							wchar_t* pszSlash = wcsrchr(szRoot, L'\\');
+							if (pszSlash)
+								*pszSlash = 0;
+							nLen = SearchPath(szRoot, asCmdLine, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
+						}
+						if (nLen && (nLen < countof(szFind)))
+						{
+							lbFound = GetImageSubsystem(szFind, ImageSubsystem, ImageBits, FileAttrs);
+						}
+					}
+
+					if (lbFound)
+						Bits = ImageBits;
+				}
+			}
+		}
+	}
+
+	if (lbCmd)
+	{
+		if (gpSet->ComSpec.csBits == csb_SameApp)
+			Bits = WIN3264TEST(32,64);
+		else if (gpSet->ComSpec.csBits == csb_x32)
+			Bits = 32;
+	}
+
+	return (Bits == 64) ? ms_ConEmuC64Full : ms_ConEmuC32Full;
 }
 
 BOOL CConEmuMain::Init()
@@ -6097,6 +6214,7 @@ void CConEmuMain::ShowSysmenu(int x, int y)
 		PostMessage(ghWnd, WM_SYSCOMMAND, (WPARAM)command, 0);
 }
 
+// Запуск отладки текущего GUI
 void CConEmuMain::StartDebugLogConsole()
 {
 	if (IsDebuggerPresent())
@@ -6104,7 +6222,7 @@ void CConEmuMain::StartDebugLogConsole()
 
 	// Create process, with flag /Attach GetCurrentProcessId()
 	// Sleep for sometimes, try InitHWND(hConWnd); several times
-	WCHAR  szExe[0x200] = {0};
+	WCHAR  szExe[MAX_PATH*2] = {0};
 	BOOL lbRc = FALSE;
 	//DWORD nLen = 0;
 	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
@@ -6113,7 +6231,7 @@ void CConEmuMain::StartDebugLogConsole()
 	DWORD dwSelfPID = GetCurrentProcessId();
 	// "/ATTACH" - низя, а то заблокируемся при попытке подключения к "отлаживаемому" GUI
 	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%u /BW=80 /BH=25 /BZ=%u",
-	          ms_ConEmuCExeFull, dwSelfPID, LONGOUTPUTHEIGHT_MAX);
+	          WIN3264TEST(ms_ConEmuC32Full,ms_ConEmuC64Full), dwSelfPID, LONGOUTPUTHEIGHT_MAX);
 
 	#ifdef _DEBUG
 	if (MessageBox(NULL, szExe, L"StartDebugLogConsole", MB_OKCANCEL|MB_SYSTEMMODAL) != IDOK)
@@ -6157,8 +6275,10 @@ void CConEmuMain::StartDebugActiveProcess()
 	DWORD dwSelfPID = GetCurrentProcessId();
 	int W = pRCon->TextWidth();
 	int H = pRCon->TextHeight();
+	int nBits = GetProcessBits(dwPID);
+	LPCWSTR pszServer = (nBits == 64) ? ms_ConEmuC64Full : ms_ConEmuC32Full;
 	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%i /BW=%i /BH=%i /BZ=%u /ROOT \"%s\" /DEBUGPID=%i ",
-		ms_ConEmuCExeFull, dwSelfPID, W, H, LONGOUTPUTHEIGHT_MAX, ms_ConEmuCExeFull, dwPID);
+		pszServer, dwSelfPID, W, H, LONGOUTPUTHEIGHT_MAX, pszServer, dwPID);
 
 	#ifdef _DEBUG
 	if (MessageBox(NULL, szExe, L"StartDebugLogConsole", MB_OKCANCEL|MB_SYSTEMMODAL) != IDOK)

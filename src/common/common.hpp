@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    88
+#define CESERVER_REQ_VER    89
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1644,6 +1644,27 @@ void CommonShutdown();
 
 typedef void(WINAPI* ShutdownConsole_t)();
 extern ShutdownConsole_t OnShutdownConsole;
+
+
+struct RequestLocalServerParm;
+struct AnnotationHeader;
+typedef int (WINAPI* RequestLocalServer_t)(/*[IN/OUT]*/RequestLocalServerParm* Parm);
+typedef void (WINAPI* ExtendedConsoleCommit_t)();
+typedef DWORD RequestLocalServerFlags;
+const RequestLocalServerFlags
+	slsf_SetOutHandle     = 1,
+	slsf_RequestTrueColor = 2,
+	slsf_None             = 0;
+struct RequestLocalServerParm
+{
+	DWORD     StructSize;
+	RequestLocalServerFlags Flags;
+	/*[IN]*/  HANDLE* ppConOutBuffer;
+	/*[OUT]*/ AnnotationHeader* pAnnotation;
+	/*[OUT]*/ RequestLocalServer_t fRequestLocalServer;
+	/*[OUT]*/ ExtendedConsoleCommit_t fExtendedConsoleCommit;
+};
+
 
 #ifndef _CRT_WIDE
 #define __CRT_WIDE(_String) L ## _String

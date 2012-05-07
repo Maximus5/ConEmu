@@ -66,7 +66,8 @@ BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
 BOOL IsFilePath(LPCWSTR asFilePath);
 BOOL IsUserAdmin();
 BOOL GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
-BOOL IsWindows64(BOOL *pbIsWow64Process = NULL);
+BOOL IsWindows64();
+int GetProcessBits(DWORD nPID, HANDLE hProcess = NULL);
 BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo);
 bool IsModuleValid(HMODULE module);
 
@@ -84,6 +85,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 
 
 #ifndef CONEMU_MINIMAL
+HANDLE DuplicateProcessHandle(DWORD anTargetPID);
 void ChangeScreenBufferSize(CONSOLE_SCREEN_BUFFER_INFO& sbi, SHORT VisibleX, SHORT VisibleY, SHORT BufferX, SHORT BufferY);
 BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int nCurWidth, int nCurHeight, DWORD nCurScroll, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll);
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);

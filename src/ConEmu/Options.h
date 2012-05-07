@@ -255,6 +255,15 @@ struct Settings
 			bool isCursorBlockInactive;
 			bool CursorBlockInactive() const { return (OverrideCursor || !AppNames) ? isCursorBlockInactive : gpSet->AppStd.isCursorBlockInactive; };
 
+			bool OverrideClipboard;
+			//reg->Load(L"ClipboardAllLines", isPasteAllLines);
+			bool isPasteAllLines;
+			bool PasteAllLines() const { return (OverrideClipboard || !AppNames) ? isPasteAllLines : gpSet->AppStd.isPasteAllLines; };
+			//reg->Load(L"ClipboardFirstLine", isPasteFirstLine);
+			bool isPasteFirstLine;
+			bool PasteFirstLine() const { return (OverrideClipboard || !AppNames) ? isPasteFirstLine : gpSet->AppStd.isPasteFirstLine; };
+
+
 			void SetNames(LPCWSTR asAppNames)
 			{
 				size_t iLen = wcslen(asAppNames);
@@ -574,6 +583,10 @@ struct Settings
 		BYTE isCTSMBtnAction; // 0-off, 1-copy, 2-paste
 		//reg->Load(L"CTS.ColorIndex", isCTSColorIndex);
 		BYTE isCTSColorIndex;
+		//reg->Load(L"ClipboardConfirmEnter", isPasteConfirmEnter);
+		bool isPasteConfirmEnter;
+		//reg->Load(L"ClipboardConfirmLonger", nPasteConfirmLonger);
+		DWORD nPasteConfirmLonger;
 		//reg->Load(L"FarGotoEditor", isFarGotoEditor);
 		bool isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);

@@ -75,7 +75,7 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	szUpdateExeCmdLineDef = lstrdup(L"\"%1\" /p:%3 /qr");
 	SafeFree(szUpdateExeCmdLine);
 
-	wchar_t* pszArcPath = NULL; BOOL bWin64 = IsWindows64(NULL);
+	wchar_t* pszArcPath = NULL; BOOL bWin64 = IsWindows64();
 	for (int i = 0; !(pszArcPath && *pszArcPath) && (i <= 5); i++)
 	{
 		SettingsRegistry regArc;

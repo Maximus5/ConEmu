@@ -542,10 +542,14 @@ Cleanup:
 
 typedef BOOL (WINAPI* IsWow64Process_t)(HANDLE hProcess, PBOOL Wow64Process);
 
-// pbIsWow64Process <- TRUE, если 32битный процесс запущен в 64битной ОС
-BOOL IsWindows64(BOOL *pbIsWow64Process/* = NULL */)
+// Проверить битность OS
+BOOL IsWindows64()
 {
-	BOOL is64bitOs = FALSE, isWow64process = FALSE;
+	static BOOL is64bitOs = FALSE, isOsChecked = FALSE;
+	if (isOsChecked)
+		return is64bitOs;
+
+	BOOL isWow64process = FALSE;
 #ifdef WIN64
 	is64bitOs = TRUE; isWow64process = FALSE;
 #else
@@ -571,10 +575,46 @@ BOOL IsWindows64(BOOL *pbIsWow64Process/* = NULL */)
 	is64bitOs = isWow64process;
 #endif
 
-	if (pbIsWow64Process)
-		*pbIsWow64Process = isWow64process;
-
+	isOsChecked = TRUE;
 	return is64bitOs;
+}
+
+// Check running process bits - 32/64
+int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
+{
+	int ImageBits = WIN3264TEST(32,64); //-V112
+
+	typedef BOOL (WINAPI* IsWow64Process_t)(HANDLE, PBOOL);
+	static IsWow64Process_t IsWow64Process_f = NULL;
+
+	if (!IsWow64Process_f)
+	{
+		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+		if (hKernel)
+		{
+			IsWow64Process_f = (IsWow64Process_t)GetProcAddress(hKernel, "IsWow64Process");
+		}
+	}
+
+	if (IsWow64Process_f)
+	{
+		HANDLE h = hProcess ? hProcess : hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, nPID);
+
+		BOOL bWow64 = FALSE;
+		if (IsWow64Process_f(h, &bWow64) && !bWow64)
+		{
+			ImageBits = 64;
+		}
+		else
+		{
+			ImageBits = 32;
+		}
+
+		if (h && (h != hProcess))
+			CloseHandle(h);
+	}
+
+	return ImageBits;
 }
 
 // Проверить, валиден ли модуль?
@@ -2952,6 +2992,26 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 #endif
 
 #ifndef CONEMU_MINIMAL
+HANDLE DuplicateProcessHandle(DWORD anTargetPID)
+{
+	HANDLE hDup = NULL;
+	if (anTargetPID == 0)
+	{
+		_ASSERTEX(anTargetPID != 0);
+	}
+	else
+	{
+		HANDLE hTarget = OpenProcess(PROCESS_DUP_HANDLE, FALSE, anTargetPID);
+		if (hTarget)
+		{
+			DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(), hTarget, &hDup, MY_PROCESS_ALL_ACCESS, FALSE, 0);
+
+			CloseHandle(hTarget);
+		}
+	}
+	return hDup;
+}
+
 void ChangeScreenBufferSize(CONSOLE_SCREEN_BUFFER_INFO& sbi, SHORT VisibleX, SHORT VisibleY, SHORT BufferX, SHORT BufferY)
 {
 	_ASSERTE(BufferX>=VisibleX && VisibleX && BufferY>=VisibleY && VisibleY);
@@ -3591,7 +3651,7 @@ void FindComspec(ConEmuComspec* pOpt)
 	if (pOpt->csType == cst_AutoTccCmd)
 	{
 		HKEY hk;
-		BOOL bWin64 = IsWindows64(NULL);
+		BOOL bWin64 = IsWindows64();
 		wchar_t szPath[MAX_PATH+1];
 
 		// Если tcc.exe положили в папку с ConEmuC.exe берем его?
@@ -3783,7 +3843,7 @@ void UpdateComspec(ConEmuComspec* pOpt)
 			switch (pOpt->csBits)
 			{
 			case csb_SameOS:
-				pszNew = IsWindows64(NULL) ? pOpt->Comspec64 : pOpt->Comspec32;
+				pszNew = IsWindows64() ? pOpt->Comspec64 : pOpt->Comspec32;
 				break;
 			case csb_SameApp:
 				pszNew = WIN3264TEST(pOpt->Comspec32,pOpt->Comspec64);
@@ -3858,7 +3918,7 @@ LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits
 	}
 
 	*pszComspec = 0;
-	BOOL bWin64 = IsWindows64(NULL);
+	BOOL bWin64 = IsWindows64();
 
 	if (!((Bits == csb_x32) || (Bits == csb_x64)))
 	{
@@ -3931,7 +3991,7 @@ wchar_t* GetComspec(const ConEmuComspec* pOpt)
 
 		if (!pszComSpec && (pOpt->csBits == csb_SameOS))
 		{
-			BOOL bWin64 = IsWindows64(NULL);
+			BOOL bWin64 = IsWindows64();
 			if (bWin64 ? *pOpt->Comspec64 : *pOpt->Comspec32)
 				pszComSpec = lstrdup(bWin64 ? pOpt->Comspec64 : pOpt->Comspec32);
 		}
@@ -3965,3 +4025,4 @@ wchar_t* GetComspec(const ConEmuComspec* pOpt)
 	_ASSERTE(pszComSpec && *pszComSpec);
 	return pszComSpec;
 }
+

@@ -77,7 +77,7 @@ CAttachDlg::CAttachDlg()
 	, mh_AttachHWND(NULL)
 	, mp_ProcessData(NULL)
 {
-	mb_IsWin64 = IsWindows64(NULL);
+	mb_IsWin64 = IsWindows64();
 }
 
 CAttachDlg::~CAttachDlg()

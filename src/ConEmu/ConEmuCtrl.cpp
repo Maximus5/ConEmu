@@ -809,11 +809,19 @@ bool CConEmuCtrl::key_PasteText(DWORD VkMod, bool TestOnly, const ConEmuHotKey* 
 
 bool CConEmuCtrl::key_PasteTextAllApp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
+	// Если это GUI App in Tab - пусть само
+	if (!pRCon || pRCon->GuiWnd())
+		return false;
+
+	const Settings::AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId);
+	if (!pApp->PasteAllLines())
+		return false;
+
 	if (TestOnly)
 		return true;
 
-	PRAGMA_ERROR("Доделать");
-	//TODO: Хорошо бы слямзить из ClipFixer кусочек по корректировке текста. Настройка?
+	pRCon->Paste(false);
+	return true;
 }
 
 bool CConEmuCtrl::key_PasteFirstLine(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
@@ -826,11 +834,19 @@ bool CConEmuCtrl::key_PasteFirstLine(DWORD VkMod, bool TestOnly, const ConEmuHot
 
 bool CConEmuCtrl::key_PasteFirstLineAllApp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
+	// Если это GUI App in Tab - пусть само
+	if (!pRCon || pRCon->GuiWnd())
+		return false;
+
+	const Settings::AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId);
+	if (!pApp->PasteFirstLine())
+		return false;
+
 	if (TestOnly)
 		return true;
 
-	PRAGMA_ERROR("Доделать");
-	//TODO: Хорошо бы слямзить из ClipFixer кусочек по корректировке текста. Настройка?
+	pRCon->Paste(true);
+	return true;
 }
 
 

@@ -548,14 +548,12 @@ struct CachedImage
 		}
 		if (hDc)
 		{
-			WARNING("Исключение CloseHandle в Background");
-			CloseHandle(hDc);
+			DeleteDC(hDc);
 			hDc = NULL;
 		}
 		if (hBmp)
 		{
-			WARNING("Исключение CloseHandle в Background");
-			CloseHandle(hBmp);
+			DeleteObject(hBmp);
 			hBmp = NULL;
 		}
 		

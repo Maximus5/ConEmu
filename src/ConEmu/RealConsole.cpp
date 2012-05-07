@@ -869,14 +869,42 @@ void CRealConsole::ShowKeyBarHint(WORD nID)
 		mp_RBuf->ShowKeyBarHint(nID);
 }
 
-void CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode /*= -1*/)
+bool CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode /*= -1*/)
 {
 	if (!this)
-		return;
+		return false;
+
+	if (!vkKey && !dwControlState && wch)
+	{
+		USHORT vk = VkKeyScan(wch);
+		if (vk && (vk != 0xFFFF))
+		{
+			vkKey = (vk & 0xFF);
+			vk = vk >> 8;
+			if ((vk & 7) == 6)
+			{
+				// For keyboard layouts that use the right-hand ALT key as a shift
+				// key (for example, the French keyboard layout), the shift state is
+				// represented by the value 6, because the right-hand ALT key is
+				// converted internally into CTRL+ALT.
+				dwControlState |= SHIFT_PRESSED;
+			}
+			else
+			{
+				if (vk & 1)
+					dwControlState |= SHIFT_PRESSED;
+				if (vk & 2)
+					dwControlState |= LEFT_CTRL_PRESSED;
+				if (vk & 4)
+					dwControlState |= LEFT_ALT_PRESSED;
+			}
+		}
+	}
 
 	if (ScanCode == -1)
 		ScanCode = MapVirtualKey(vkKey, 0/*MAPVK_VK_TO_VSC*/);
 
+	bool lbPress, lbDepress;
 	INPUT_RECORD r = {KEY_EVENT};
 	r.Event.KeyEvent.bKeyDown = TRUE;
 	r.Event.KeyEvent.wRepeatCount = 1;
@@ -885,16 +913,17 @@ void CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, i
 	r.Event.KeyEvent.uChar.UnicodeChar = wch;
 	r.Event.KeyEvent.dwControlKeyState = dwControlState;
 	TODO("Может нужно в dwControlKeyState применять модификатор, если он и есть vkKey?");
-	PostConsoleEvent(&r);
+	lbPress = PostConsoleEvent(&r);
 	r.Event.KeyEvent.bKeyDown = FALSE;
 	r.Event.KeyEvent.dwControlKeyState = dwControlState;
-	PostConsoleEvent(&r);
+	lbDepress = PostConsoleEvent(&r);
+	return (lbPress && lbDepress);
 }
 
-void CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode /*= -1*/)
+bool CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode /*= -1*/)
 {
 	if (!this)
-		return;
+		return false;
 
 	if (ScanCode == -1)
 		ScanCode = MapVirtualKey(vkKey, 0/*MAPVK_VK_TO_VSC*/);
@@ -906,23 +935,26 @@ void CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int 
 	r.Event.KeyEvent.wVirtualScanCode = ScanCode;
 	r.Event.KeyEvent.uChar.UnicodeChar = wch;
 	r.Event.KeyEvent.dwControlKeyState = dwControlState;
-	PostConsoleEvent(&r);
+	bool lbOk = PostConsoleEvent(&r);
+	return lbOk;
 }
 
-void CRealConsole::PostLeftClickSync(COORD crDC)
+bool CRealConsole::PostLeftClickSync(COORD crDC)
 {
 	if (!this)
 	{
 		_ASSERTE(this!=NULL);
+		return false;
 	}
 
 	DWORD nFarPID = GetFarPID();
 	if (!nFarPID)
 	{
 		_ASSERTE(nFarPID!=NULL);
-		return;
+		return false;
 	}
 
+	bool lbOk = false;
 	COORD crMouse = ScreenToBuffer(mp_VCon->ClientToConsole(crDC.X, crDC.Y));
 	CConEmuPipe pipe(nFarPID, CONEMUREADYTIMEOUT);
 
@@ -936,17 +968,26 @@ void CRealConsole::PostLeftClickSync(COORD crDC)
 		{
 			LogString("pipe.Execute(CMD_LEFTCLKSYNC) failed");
 		}
+		else
+		{
+			lbOk = true;
+		}
 
 		gpConEmu->DebugStep(NULL);
 	}
+
+	return lbOk;
 }
 
-void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
+bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 {
-	if (!this) return;
+	if (!this)
+		return false;
 
 	if (mn_MainSrv_PID == 0 || !m_ConsoleMap.IsValid())
-		return; // Сервер еще не стартовал. События будут пропущены...
+		return false; // Сервер еще не стартовал. События будут пропущены...
+
+	bool lbRc = false;
 
 	// Если GUI-режим - все посылаем в окно, в консоль ничего не нужно
 	if (hGuiWnd)
@@ -961,9 +1002,12 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 				wParam = piRec->Event.KeyEvent.uChar.UnicodeChar;
 
 			if (wParam || lParam)
+			{
 				PostConsoleMessage(hGuiWnd, msg, wParam, lParam);
+			}
 		}
-		return;
+
+		return lbRc;
 	}
 
 	//DWORD dwTID = 0;
@@ -1071,15 +1115,15 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 
 		_ASSERTE(msg.message!=0);
 		//if (mb_UseOnlyPipeInput) {
-		PostConsoleEventPipe(&msg);
-#ifdef _DEBUG
+		lbRc = PostConsoleEventPipe(&msg);
 
+		#ifdef _DEBUG
 		if (gbInSendConEvent)
 		{
 			_ASSERTE(!gbInSendConEvent);
 		}
+		#endif
 
-#endif
 		//} else
 		//// ERROR_INVALID_THREAD_ID == 1444 (0x5A4)
 		//// On Vista PostThreadMessage failed with code 5, if target process created 'As administrator'
@@ -1101,6 +1145,8 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 	{
 		gpConEmu->DebugStep(L"ConEmu: PackInputRecord failed!");
 	}
+
+	return lbRc;
 }
 
 //DWORD CRealConsole::InputThread(LPVOID lpParameter)
@@ -1954,7 +2000,7 @@ BOOL CRealConsole::StartProcess()
 		psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 		_ASSERTE(psCurCmd);
 		_wcscpy_c(psCurCmd, nLen, L"\"");
-		_wcscat_c(psCurCmd, nLen, gpConEmu->ms_ConEmuCExeFull);
+		_wcscat_c(psCurCmd, nLen, gpConEmu->ConEmuCExeFull(lpszCmd));
 		//lstrcat(psCurCmd, L"\\");
 		//lstrcpy(psCurCmd, gpConEmu->ms_ConEmuCExeName);
 		_wcscat_c(psCurCmd, nLen, L"\" ");
@@ -2789,9 +2835,10 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 	return FALSE;
 }
 
-void CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
+bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
 {
 	DWORD dwErr = 0; //, dwMode = 0;
+	bool lbOk = false;
 	BOOL fSuccess = FALSE;
 #ifdef _DEBUG
 
@@ -2808,7 +2855,7 @@ void CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
 	if (dwExitCode!=STILL_ACTIVE)
 	{
 		//DisplayLastError(L"ConEmuC was terminated");
-		return;
+		return false;
 	}
 
 	TODO("Если пайп с таким именем не появится в течении 10 секунд (минуты?) - закрыть VirtualConsole показав ошибку");
@@ -2817,7 +2864,7 @@ void CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
 	{
 		// Try to open a named pipe; wait for it, if necessary.
 		if (!OpenConsoleEventPipe())
-			return;
+			return false;
 
 		//int nSteps = 10;
 		//while ((nSteps--) > 0)
@@ -2910,7 +2957,11 @@ void CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
 	_ASSERTE(pMsg->cbSize==dwSize);
 	fSuccess = WriteFile(mh_ConInputPipe, pMsg, dwSize, &dwWritten, NULL);
 
-	if (!fSuccess)
+	if (fSuccess)
+	{
+		lbOk = true;
+	}
+	else
 	{
 		dwErr = GetLastError();
 
@@ -2928,16 +2979,19 @@ void CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
 					fSuccess = WriteFile(mh_ConInputPipe, pMsg, dwSize, &dwWritten, NULL);
 
 					if (fSuccess)
+					{
+						lbOk = true;
 						goto wrap; // таки ОК
+					}
 				}
 			}
 
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			//DisplayLastError(L"Can't send console event (pipe)", dwErr);
 			wchar_t szDbg[128];
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Can't send console event (pipe)", dwErr);
 			gpConEmu->DebugStep(szDbg);
-#endif
+			#endif
 		}
 
 		goto wrap;
@@ -2945,11 +2999,13 @@ void CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
 
 wrap:
 	gbInSendConEvent = FALSE;
+
+	return lbOk;
 }
 
-LRESULT CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
+bool CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
-	LRESULT lRc = 0;
+	BOOL lbOk = FALSE;
 	bool bNeedCmd = isAdministrator() || (m_Args.pszUserName != NULL);
 
 	if (nMsg == WM_INPUTLANGCHANGE || nMsg == WM_INPUTLANGCHANGEREQUEST)
@@ -2971,7 +3027,7 @@ LRESULT CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LP
 
 	if (!bNeedCmd)
 	{
-		POSTMESSAGE(hWnd/*hConWnd*/, nMsg, wParam, lParam, FALSE);
+		lbOk = POSTMESSAGE(hWnd/*hConWnd*/, nMsg, wParam, lParam, FALSE);
 	}
 	else
 	{
@@ -2990,10 +3046,14 @@ LRESULT CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LP
 
 		gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
-		if (pOut) ExecuteFreeResult(pOut);
+		if (pOut)
+		{
+			lbOk = TRUE;
+			ExecuteFreeResult(pOut);
+		}
 	}
 
-	return lRc;
+	return (lbOk != FALSE);
 }
 
 void CRealConsole::StopSignal()
@@ -3930,6 +3990,12 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID, HANDLE hAltServer)
 
 bool CRealConsole::ReopenServerPipes()
 {
+	// переоткрыть event изменений в консоли
+	m_ConDataChanged.InitName(CEDATAREADYEVENT, mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID);
+	if (m_ConDataChanged.Open() == NULL)
+	{
+		_ASSERTE(FALSE && "m_ConDataChanged.Open() != NULL");
+	}
 	// переоткрыть m_GetDataPipe
 	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID);
 	bool bOpened = m_GetDataPipe.Open();
@@ -4684,8 +4750,22 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
 //	}
 //}
 
-void CRealConsole::OnServerStarted()
+void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle)
 {
+	_ASSERTE(anServerPID && (anServerPID == mn_MainSrv_PID));
+	if (ahServerHandle != NULL)
+	{
+		if (mh_MainSrv == NULL)
+		{
+			// В принципе, это может быть, если сервер запущен "извне"
+			mh_MainSrv = ahServerHandle;
+		}
+		else
+		{
+			SafeCloseHandle(ahServerHandle); // не нужен, у нас уже есть дескриптор процесса сервера
+		}
+	}
+
 	//if (!mp_ConsoleInfo)
 	if (!m_ConsoleMap.IsValid())
 	{
@@ -6687,19 +6767,23 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 	PostConsoleMessage(hConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, (LPARAM)dwNewKeyboardLayout);
 }
 
-void CRealConsole::Paste()
+void CRealConsole::Paste(bool abFirstLineOnly /*= false*/)
 {
-	if (!this) return;
+	if (!this)
+		return;
 
-	if (!hConWnd) return;
+	if (!hConWnd)
+		return;
 
-	PRAGMA_ERROR("Обработать самим и предупредить о 1) наличии \r\n; 2) слишком большом тексте (по настройкам)");
+	WARNING("warning: Обработать самим и предупредить о 1) наличии \r\n; 2) слишком большом тексте (по настройкам)");
+	WARNING("warning: Хорошо бы слямзить из ClipFixer кусочек по корректировке текста. Настройка?");
 
-#ifndef RCON_INTERNAL_PASTE
-	// Можно так
+#if 0
+	// Не будем пользоваться встроенным WinConsole функционалом. Мало контроля.
 	PostConsoleMessage(hConWnd, WM_COMMAND, SC_PASTE_SECRET, 0);
-#endif
-#ifdef RCON_INTERNAL_PASTE
+#else
+
+	wchar_t* pszBuf = NULL;
 
 	// А можно и через наш сервер
 	if (!OpenClipboard(NULL))
@@ -6707,66 +6791,128 @@ void CRealConsole::Paste()
 		MBox(_T("Can't open PC clipboard"));
 		return;
 	}
-
-	HGLOBAL hglb = GetClipboardData(CF_UNICODETEXT);
-
-	if (!hglb)
+	else
 	{
-		CloseClipboard();
-		MBox(_T("Can't get CF_UNICODETEXT"));
-		return;
-	}
+		HGLOBAL hglb = GetClipboardData(CF_UNICODETEXT);
 
-	wchar_t* lptstr = (wchar_t*)GlobalLock(hglb);
+		if (!hglb)
+		{
+			CloseClipboard();
+			MBox(_T("Can't get CF_UNICODETEXT"));
+			return;
+		}
 
-	if (!lptstr)
-	{
-		CloseClipboard();
-		MBox(_T("Can't lock CF_UNICODETEXT"));
-		return;
+		LPCWSTR lptstr = (LPCWSTR)GlobalLock(hglb);
+
+		if (!lptstr)
+		{
+			CloseClipboard();
+			MBox(_T("Can't lock CF_UNICODETEXT"));
+			return;
+		}
+		if (!*lptstr)
+		{
+			// Text is empty
+			return;
+		}
+
+		pszBuf = lstrdup(lptstr);
+		if (!pszBuf)
+		{
+			MBoxAssert(pszBuf && "lstrdup(lptstr) = NULL");
+			return;
+		}
 	}
 
 	// Теперь сформируем пакет
-	size_t nLen = _tcslen(lptstr);
+	wchar_t szMsg[128];
+	LPCWSTR pszEnd = pszBuf + _tcslen(pszBuf);
 
-	if (nLen>0)
+	// Смотрим первую строку / наличие второй
+	wchar_t* pszRN = wcspbrk(pszBuf, L"\r\n");
+	if (pszRN && (pszRN < pszEnd))
 	{
-		if (nLen>127)
+		if (abFirstLineOnly)
 		{
-			TCHAR szMsg[128]; _wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Clipboard length is %i chars!\nContinue?", nLen);
-
-			if (MessageBox(ghWnd, szMsg, gpConEmu->GetTitle(), MB_OKCANCEL) != IDOK)
-			{
-				GlobalUnlock(hglb);
-				CloseClipboard();
-				return;
-			}
+			*pszRN = 0; // буфер наш, что хотим - то и делаем )
+			pszEnd = pszRN;
 		}
-
-		INPUT_RECORD r = {KEY_EVENT};
-
-		// Отправить в консоль все символы из: lptstr
-		while (*lptstr)
+		else if (gpSet->isPasteConfirmEnter)
 		{
-			r.Event.KeyEvent.bKeyDown = TRUE;
-			r.Event.KeyEvent.uChar.UnicodeChar = *lptstr;
-			r.Event.KeyEvent.wRepeatCount = 1; //TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
-			r.Event.KeyEvent.wVirtualKeyCode = 0;
-			//r.Event.KeyEvent.wVirtualScanCode = ((DWORD)lParam & 0xFF0000) >> 16; // 16-23 - Specifies the scan code. The value depends on the OEM.
-			// 24 - Specifies whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-			// 29 - Specifies the context code. The value is 1 if the ALT key is held down while the key is pressed; otherwise, the value is 0.
-			// 30 - Specifies the previous key state. The value is 1 if the key is down before the message is sent, or it is 0 if the key is up.
-			// 31 - Specifies the transition state. The value is 1 if the key is being released, or it is 0 if the key is being pressed.
-			//r.Event.KeyEvent.dwControlKeyState = 0;
-			PostConsoleEvent(&r);
-			// И сразу посылаем отпускание
-			r.Event.KeyEvent.bKeyDown = FALSE;
-			PostConsoleEvent(&r);
+			wcscpy_c(szMsg, L"Pasting text involves <Enter> keypress!\nContinue?");
+
+			if (MessageBox(ghWnd, szMsg, GetTitle(), MB_OKCANCEL) != IDOK)
+			{
+				goto wrap;
+			}
 		}
 	}
 
-	GlobalUnlock(hglb);
-	CloseClipboard();
+	if (gpSet->nPasteConfirmLonger && ((pszEnd - pszBuf) > gpSet->nPasteConfirmLonger))
+	{
+		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Pasting text length is %u chars!\nContinue?", (DWORD)(pszEnd - pszBuf));
+
+		if (MessageBox(ghWnd, szMsg, GetTitle(), MB_OKCANCEL) != IDOK)
+		{
+			goto wrap;
+		}
+	}
+
+	//INPUT_RECORD r = {KEY_EVENT};
+
+	// Отправить в консоль все символы из: lptstr
+	for (wchar_t* pch = pszBuf; pch < pszEnd; pch++)
+	{
+		_ASSERTE(*pch); // оно ASCIIZ
+
+		if (pch[0] == L'\r' && pch[1] == L'\n')
+		{
+			pch++; // "\r\n" - слать "\n"
+			if (pch[1] == L'\n')
+				pch++; // buggy line returns "\r\n\n"
+		}
+
+		// "слать" в консоль '\r' а не '\n' чтобы "Enter" нажался.
+		if (pch[0] == L'\n')
+		{
+			*pch = L'\r'; // буфер наш, что хотим - то и делаем
+		}
+
+
+		// функция сама разберется что посылать
+		while (!PostKeyPress(0, 0, *pch))
+		{
+			wcscpy_c(szMsg, L"Key press sending failed!\nTry again?");
+
+			if (MessageBox(ghWnd, szMsg, GetTitle(), MB_RETRYCANCEL) != IDRETRY)
+			{
+				goto wrap;
+			}
+
+			// try again
+		}
+
+
+		#if 0
+		r.Event.KeyEvent.bKeyDown = TRUE;
+		r.Event.KeyEvent.uChar.UnicodeChar = *pch;
+		r.Event.KeyEvent.wRepeatCount = 1; //TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
+		r.Event.KeyEvent.wVirtualKeyCode = 0;
+		//r.Event.KeyEvent.wVirtualScanCode = ((DWORD)lParam & 0xFF0000) >> 16; // 16-23 - Specifies the scan code. The value depends on the OEM.
+		// 24 - Specifies whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
+		// 29 - Specifies the context code. The value is 1 if the ALT key is held down while the key is pressed; otherwise, the value is 0.
+		// 30 - Specifies the previous key state. The value is 1 if the key is down before the message is sent, or it is 0 if the key is up.
+		// 31 - Specifies the transition state. The value is 1 if the key is being released, or it is 0 if the key is being pressed.
+		//r.Event.KeyEvent.dwControlKeyState = 0;
+		PostConsoleEvent(&r);
+		// И сразу посылаем отпускание
+		r.Event.KeyEvent.bKeyDown = FALSE;
+		PostConsoleEvent(&r);
+		#endif
+	}
+
+wrap:
+	SafeFree(pszBuf);
 #endif
 }
 

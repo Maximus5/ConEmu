@@ -207,6 +207,8 @@ BEGIN
     vkMultiNext             "Switch next console"
     vkMultiNextShift        "Switch previous console"
     vkMultiRecreate         "Recreate active console"
+	vkPasteText             "Paste clipboard contents (does not work in Far)"
+	vkPasteFirstLine        "Paste first line of clipboard contents (does not work in Far)"
     vkRDragKey              "RDrag modifier"
 	vkShowTabsList          "Show opened tabs list (does not work in Far - use macro instead)"
     vkWinAltP               "Show Settings dialog"

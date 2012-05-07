@@ -793,6 +793,7 @@ HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPC
 		// При попытке открыть мэппинг для TrueColor - перейти в режим локального сервера
 		if (lstrcmpi(lpName, szTrueColorMap) == 0)
 		{
+			//TODO: параметры
 			if (RequestLocalServer() == 0)
 			{
 				if (gpAnnotationHeader)
@@ -3624,9 +3625,9 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 		ghStdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 #ifdef _DEBUG
-	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-	h = GetStdHandle(STD_INPUT_HANDLE);
-	h = GetStdHandle(STD_ERROR_HANDLE);
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE hIn  = GetStdHandle(STD_INPUT_HANDLE);
+	HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
 #endif
 
 	BOOL lbRc = FALSE;
@@ -3636,7 +3637,8 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 	if (lbRc && (ghCurrentOutBuffer || (hConsoleOutput != ghStdOutHandle)))
 	{
 		ghCurrentOutBuffer = hConsoleOutput;
-		RequestLocalServer();
+		RequestLocalServerParm Parm = {(DWORD)sizeof(Parm), slsf_SetOutHandle, &ghCurrentOutBuffer};
+		RequestLocalServer(&Parm);
 	}
 	
 	return lbRc;
