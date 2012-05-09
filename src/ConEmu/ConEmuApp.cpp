@@ -26,7 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include <commctrl.h>
 #include "../common/ConEmuCheck.h"
@@ -331,6 +331,18 @@ void DebugLogFile(LPCSTR asMessage)
 		WriteFile(hLogFile, asMessage, lstrlenA(asMessage), &dwSize, NULL);
 		CloseHandle(hLogFile);
 	}
+}
+BOOL POSTMESSAGE(HWND h,UINT m,WPARAM w,LPARAM l,BOOL extra)
+{
+	MCHKHEAP;
+	DebugLogMessage(h,m,w,l,TRUE,extra);
+	return PostMessage(h,m,w,l);
+}
+LRESULT SENDMESSAGE(HWND h,UINT m,WPARAM w,LPARAM l)
+{
+	MCHKHEAP;
+	DebugLogMessage(h,m,w,l,FALSE,FALSE);
+	return SendMessage(h,m,w,l);
 }
 #endif
 #ifdef _DEBUG

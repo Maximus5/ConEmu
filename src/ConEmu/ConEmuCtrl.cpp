@@ -26,6 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include "ConEmu.h"
 #include "ConEmuCtrl.h"
@@ -36,9 +37,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 
 
+const ConEmuHotKey* ConEmuSkipHotKey = ((ConEmuHotKey*)INVALID_HANDLE_VALUE);
+
+
 CConEmuCtrl::CConEmuCtrl()
 {
 	mb_InWinTabSwitch = mb_InCtrlTabSwitch = FALSE;
+	dwControlKeyState = 0;
+	bWin = bApps = bCaps = bNum = bScroll = bLAlt = bRAlt = bLCtrl = bRCtrl = bLShift = bRShift = false;
+	m_SkippedMsg = 0; m_SkippedMsgWParam = 0; m_SkippedMsgLParam = 0;
+	mb_LastSingleModifier = FALSE;
+	mn_LastSingleModifier = mn_SingleModifierFixKey = mn_SingleModifierFixState = 0;
 }
 
 CConEmuCtrl::~CConEmuCtrl()
@@ -73,23 +82,82 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkMod, bool bKeyDown, const
 	return pHotKey;
 }
 
+void CConEmuCtrl::UpdateControlKeyState()
+{
+	bCaps = (1 & (WORD)GetKeyState(VK_CAPITAL)) == 1;
+	bNum = (1 & (WORD)GetKeyState(VK_NUMLOCK)) == 1;
+	bScroll = (1 & (WORD)GetKeyState(VK_SCROLL)) == 1;
+	bWin = isPressed(VK_LWIN) || isPressed(VK_RWIN);
+	bApps = isPressed(VK_APPS);
+	bLAlt = isPressed(VK_LMENU);
+	bRAlt = isPressed(VK_RMENU);
+	bLCtrl = isPressed(VK_LCONTROL);
+	bRCtrl = isPressed(VK_RCONTROL);
+	bLShift = isPressed(VK_LSHIFT);
+	bRShift = isPressed(VK_RSHIFT);
+
+	DWORD ControlKeyState = 0;
+
+	//if (((DWORD)lParam & (DWORD)(1 << 24)) != 0)
+	//	r.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
+
+	if (bCaps)
+		ControlKeyState |= CAPSLOCK_ON;
+
+	if (bNum)
+		ControlKeyState |= NUMLOCK_ON;
+
+	if (bScroll)
+		ControlKeyState |= SCROLLLOCK_ON;
+
+	if (bLAlt)
+		ControlKeyState |= LEFT_ALT_PRESSED;
+
+	if (bRAlt)
+		ControlKeyState |= RIGHT_ALT_PRESSED;
+
+	if (bLCtrl)
+		ControlKeyState |= LEFT_CTRL_PRESSED;
+
+	if (bRCtrl)
+		ControlKeyState |= RIGHT_CTRL_PRESSED;
+
+	if (bLShift || bRShift)
+		ControlKeyState |= SHIFT_PRESSED;
+
+	dwControlKeyState = ControlKeyState;
+}
+
+// lParam - из сообщений WM_KEYDOWN/WM_SYSKEYDOWN/...
+DWORD CConEmuCtrl::GetControlKeyState(LPARAM lParam)
+{
+	return dwControlKeyState | ((((DWORD)lParam & (DWORD)(1 << 24)) != 0) ? ENHANCED_KEY : 0);
+}
+
 // true - запретить передачу в консоль, сами обработали
 // pRCon may be NULL, pszChars may be NULL
-bool CConEmuCtrl::ProcessHotKey(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, CRealConsole* pRCon)
+bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, CRealConsole* pRCon)
 {
+	_ASSERTE((messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN) || (messg == WM_KEYUP || messg == WM_SYSKEYUP));
+
 	WARNING("CConEmuCtrl:: Наверное нужно еще какие-то пляски с бубном при отпускании хоткеев");
 	WARNING("CConEmuCtrl:: Ибо в CConEmuMain::OnKeyboard была запутанная логика с sm_SkipSingleHostkey, sw_SkipSingleHostkey, sl_SkipSingleHostkey");
 
-	DWORD vk = (DWORD)(wParam & 0xFF);
+	// Обновить и подготовить "r.Event.KeyEvent.dwControlKeyState"
+	UpdateControlKeyState();
 
-	if ((messg == WM_KEYUP) || (messg == WM_SYSKEYUP))
+	DWORD vk = (DWORD)(wParam & 0xFF);
+	bool bKeyDown = (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN);
+	bool bKeyUp = (messg == WM_KEYUP || messg == WM_SYSKEYUP);
+
+	if (bKeyUp)
 	{
 		if ((mb_InWinTabSwitch && (vk == VK_RWIN || vk == VK_LWIN))
 			|| (mb_InCtrlTabSwitch && (vk == VK_CONTROL || vk == VK_LCONTROL || vk == VK_RCONTROL)))
 		{
 			mb_InWinTabSwitch = mb_InCtrlTabSwitch = FALSE;
 			gpConEmu->TabCommand(ctc_SwitchCommit);
-			WARNING("CConEmuCtrl:: В фар отпускание кнопки таки пропустим");
+			WARNING("CConEmuCtrl:: В фар отпускание кнопки таки пропустим?");
 		}
 	}
 
@@ -99,37 +167,136 @@ bool CConEmuCtrl::ProcessHotKey(UINT messg, WPARAM wParam, LPARAM lParam, const 
 		|| vk == VK_CONTROL || vk == VK_LCONTROL || vk == VK_RCONTROL
 		|| vk == VK_MENU || vk == VK_LMENU || vk == VK_RMENU)
 	{
+		if (pRCon)
+		{
+			// Однако, если это был одиночный обработанный модификатор - его нужно "пофиксить",
+			// чтобы на его отпускание не выполнился Far-макрос например
+			if (bKeyUp)
+			{
+				FixSingleModifier(vk, pRCon);
+			}
+			else
+			{
+				_ASSERTE(bKeyDown);
+				int ModCount = 0;
+				if (bLAlt) ModCount++;
+				if (bRAlt) ModCount++;
+				if (bLCtrl) ModCount++;
+				if (bRCtrl) ModCount++;
+				if (bLShift || bRShift) ModCount++;
+
+				if ((ModCount == 1) && (vk != VK_APPS) && (vk != VK_LWIN))
+				{
+					mb_LastSingleModifier = FALSE;
+					mn_LastSingleModifier = 
+						(vk == VK_LMENU || vk == VK_RMENU || vk == VK_MENU) ? VK_MENU :
+						(vk == VK_LCONTROL || vk == VK_RCONTROL || vk == VK_CONTROL) ? VK_CONTROL :
+						(vk == VK_LSHIFT || vk == VK_RSHIFT || vk == VK_SHIFT) ? VK_SHIFT : 0;
+
+					if (!mn_LastSingleModifier)
+					{
+						// Win и прочие модификаторы здесь не интересуют
+					}
+					else
+					{
+						mn_SingleModifierFixState = dwControlKeyState;
+						switch (mn_LastSingleModifier)
+						{
+						case VK_MENU:
+							mn_SingleModifierFixKey = VK_MENU;
+							mn_SingleModifierFixState |= (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED);
+							break;
+						case VK_CONTROL:
+							mn_SingleModifierFixKey = VK_CONTROL;
+							mn_SingleModifierFixState |= (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED);
+							break;
+						case VK_SHIFT:
+							mn_SingleModifierFixKey = VK_MENU;
+							mn_SingleModifierFixState |= RIGHT_ALT_PRESSED;
+							break;
+						}
+					}
+				}
+				else if (ModCount > 1)
+				{
+					// Больше не нужно
+					mb_LastSingleModifier = FALSE;
+					mn_LastSingleModifier = mn_SingleModifierFixKey = mn_SingleModifierFixState = 0;
+				}
+			}
+		}
 		return false;
 	}
 
 	DWORD nState = 0;
 
-	if (isPressed(VK_LWIN) || isPressed(VK_RWIN))
+	if (bWin)
 		nState |= cvk_Win;
 
-	if ((vk != VK_APPS) && isPressed(VK_APPS))
+	if ((vk != VK_APPS) && bApps)
 		nState |= cvk_Apps;
 
-	if (isPressed(VK_LCONTROL))
+	if (bLCtrl)
 		nState |= cvk_LCtrl|cvk_Ctrl;
-	if (isPressed(VK_RCONTROL))
+	if (bRCtrl)
 		nState |= cvk_RCtrl|cvk_Ctrl;
 
-	if (isPressed(VK_LMENU))
+	if (bLAlt)
 		nState |= cvk_LAlt|cvk_Alt;
-	if (isPressed(VK_RMENU))
+	if (bRAlt)
 		nState |= cvk_RAlt|cvk_Alt;
 
-	if (isPressed(VK_LSHIFT))
+	if (bLShift)
 		nState |= cvk_LShift|cvk_Shift;
-	if (isPressed(VK_RSHIFT))
+	if (bRShift)
 		nState |= cvk_RShift|cvk_Shift;
 
 	DWORD VkMod = nState | vk;
+	
+	if (bKeyDown)
+		m_SkippedMsg = 0;
 
-	const ConEmuHotKey* pHotKey = ProcessHotKey(VkMod, (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN), pszChars, pRCon);
+	const ConEmuHotKey* pHotKey = ProcessHotKey(VkMod, bKeyDown, pszChars, pRCon);
+
+	// Для "одиночных"
+	if (pHotKey && mn_LastSingleModifier)
+	{
+		mb_LastSingleModifier = TRUE;
+	}
+	else if (!pHotKey && !(nState & (cvk_Ctrl|cvk_Alt|cvk_Shift)))
+	{
+		if (bKeyDown)
+		{
+			// Раз мы попали сюда - значит сам Apps у нас не хоткей, но может быть модификатором?
+			if ((vk == VK_APPS) && gpSet->isModifierExist(vk))
+			{
+				m_SkippedMsg = messg; m_SkippedMsgWParam = wParam; m_SkippedMsgLParam = lParam;
+				// Откладываем либо до
+				// *) нажатия другой кнопки, не перхватываемой нами (например Apps+U)
+				// *) отпускания самого Apps
+				return ConEmuSkipHotKey;
+			}
+		}
+		else if ((vk == VK_APPS) && m_SkippedMsg && pRCon)
+		{
+			// Отпускается Apps. Сначала нужно "дослать" в консоль ее нажатие
+			pRCon->ProcessKeyboard(m_SkippedMsg, m_SkippedMsgWParam, m_SkippedMsgLParam, NULL);
+		}
+	}
 
 	return (pHotKey != NULL);
+}
+
+void CConEmuCtrl::FixSingleModifier(DWORD Vk, CRealConsole* pRCon)
+{
+	if (pRCon && gpSet->isFixAltOnAltTab)
+	{
+		if (mn_LastSingleModifier && ((Vk == 0) || (mb_LastSingleModifier && (Vk == mn_LastSingleModifier))))
+			pRCon->PostKeyPress(mn_SingleModifierFixKey, mn_SingleModifierFixState, 0);
+	}
+	// Больше не нужно
+	mb_LastSingleModifier = FALSE;
+	mn_LastSingleModifier = mn_SingleModifierFixKey = mn_SingleModifierFixState = 0;
 }
 
 // User (Keys)
@@ -813,7 +980,7 @@ bool CConEmuCtrl::key_PasteTextAllApp(DWORD VkMod, bool TestOnly, const ConEmuHo
 	if (!pRCon || pRCon->GuiWnd())
 		return false;
 
-	const Settings::AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId);
+	const Settings::AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
 	if (!pApp->PasteAllLines())
 		return false;
 
@@ -838,7 +1005,7 @@ bool CConEmuCtrl::key_PasteFirstLineAllApp(DWORD VkMod, bool TestOnly, const Con
 	if (!pRCon || pRCon->GuiWnd())
 		return false;
 
-	const Settings::AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId);
+	const Settings::AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
 	if (!pApp->PasteFirstLine())
 		return false;
 

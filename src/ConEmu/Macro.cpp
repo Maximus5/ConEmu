@@ -27,6 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
 #include "Header.h"
@@ -140,6 +141,8 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 			pszResult = IsRealVisible(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"IsConsoleActive"))
 			pszResult = IsConsoleActive(asMacro, apRCon);
+		else if (!lstrcmpi(szFunction, L"Paste"))
+			pszResult = Paste(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Shell") || !lstrcmpi(szFunction, L"ShellExecute"))
 			pszResult = Shell(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Tab") || !lstrcmpi(szFunction, L"Tabs") || !lstrcmpi(szFunction, L"TabControl"))
@@ -577,6 +580,40 @@ LPWSTR CConEmuMacro::FontSetName(LPWSTR asArgs, CRealConsole* apRCon)
 	return lstrdup(L"InvalidArg");
 }
 
+// Paste (<Cmd>[,"<Text>"])
+LPWSTR CConEmuMacro::Paste(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	int nCommand = 0;
+	LPWSTR pszText = NULL;
+
+	if (!apRCon)
+		return lstrdup(L"InvalidArg");
+
+	if (GetNextInt(asArgs, nCommand))
+	{
+		if (!(nCommand == 0 || nCommand == 1))
+		{
+			return lstrdup(L"InvalidArg");
+		}
+
+		if (GetNextString(asArgs, pszText))
+		{
+			if (!*pszText)
+				return lstrdup(L"InvalidArg");
+		}
+		else
+		{
+			pszText = NULL;
+		}
+
+		apRCon->Paste((nCommand==1), pszText);
+
+		return lstrdup(L"OK");
+	}
+
+	return lstrdup(L"InvalidArg");
+}
+
 // ShellExecute
 // <oper>,<app>[,<parm>[,<dir>[,<showcmd>]]]
 LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
@@ -663,7 +700,7 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 		}
 	}
 
-	return lstrdup(L"InvalidArg");	
+	return lstrdup(L"InvalidArg");
 }
 
 // TabControl

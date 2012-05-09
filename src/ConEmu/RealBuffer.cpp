@@ -32,7 +32,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 //#define ALLOWUSEFARSYNCHRO
 
@@ -2883,6 +2883,7 @@ BOOL CRealBuffer::isSelfSelectMode()
 	return (con.m_sel.dwFlags != 0);
 }
 
+// pszChars may be NULL
 bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars)
 {
 	// Обработка Left/Right/Up/Down при выделении

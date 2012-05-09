@@ -158,7 +158,7 @@ struct ConEmuHotKey
 };
 
 // Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
-#define ConEmuSkipHotKey ((ConEmuHotKey*)INVALID_HANDLE_VALUE)
+extern const ConEmuHotKey* ConEmuSkipHotKey; // = ((ConEmuHotKey*)INVALID_HANDLE_VALUE)
 
 
 struct Settings
@@ -804,8 +804,6 @@ struct Settings
 		//reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); TestHostkeyModifiers();
 		DWORD nHostkeyArrowModifier; // Используется для WinSize
 		//
-		//bool  LoadVkMod(SettingsBase* reg, const wchar_t *regName, DWORD &VkMod, DWORD Default);
-		static DWORD SetModifier(DWORD VkMod, BYTE Mod/*VK*/, bool Xor=true);
 		public:
 		//reg->Load(L"Multi.NewConsole", vmMultiNew);
 		//DWORD vmMultiNew;
@@ -846,21 +844,44 @@ struct Settings
 		//reg->Load(L"ShellNoZoneCheck", isShellNoZoneCheck);
 		bool isShellNoZoneCheck;
 		
+
+	public:
+		/* ************************ */
+		/* ************************ */
+		/* *** Hotkeys/Hostkeys *** */
+		/* ************************ */
+		/* ************************ */
+
+		// VkMod = LOBYTE - VK, старшие три байта - модификаторы (тоже VK)
+
+		// Задать или сбросить модификатор в VkMod
+		static DWORD SetModifier(DWORD VkMod, BYTE Mod/*VK*/, bool Xor=true);
+		// Сервисная функция для инициализации. Формирует готовый VkMod
 		static DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
-		//bool IsHostkey(WORD vk);
-		//bool IsHostkeySingle(WORD vk);
-		//bool IsHostkeyPressed();
-		//WORD GetPressedHostkey();
-		static DWORD GetModifier(DWORD VkMod, int idx/*1..3*/); // Вернуть назначенные модификаторы
-		static DWORD GetHotkey(DWORD VkMod); // Извлечь сам VK
-		static DWORD GetHotKeyMod(DWORD VkMod); // набор флагов MOD_xxx для RegisterHotKey
+		// Вернуть назначенные модификаторы (idx = 1..3). Возвращает 0 (нету) или VK
+		static DWORD GetModifier(DWORD VkMod, int idx/*1..3*/);
+		// Извлечь сам VK
+		static DWORD GetHotkey(DWORD VkMod);
+		// набор флагов MOD_xxx для RegisterHotKey
+		static DWORD GetHotKeyMod(DWORD VkMod);
+		// Есть ли в этом (VkMod) хоткее - модификатор Mod (VK)
 		static bool  HasModifier(DWORD VkMod, BYTE Mod/*VK*/);
+		// Вернуть заданный VkMod, или 0 если не задан. nDescrID = vkXXX (e.g. vkMinimizeRestore)
 		DWORD GetHotkeyById(int nDescrID);
+		// Проверить, задан ли этот hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore)
 		bool IsHotkey(int nDescrID);
+		// Установить новый hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore).
 		void SetHotkeyById(int nDescrID, DWORD VkMod);
+		// Проверить, есть ли хоткеи с назначенным одиночным модификатором
+		bool isModifierExist(BYTE Mod/*VK*/, bool abStrictSingle = false);
+		// Есть ли такой хоткей или модификатор (актуально для VK_APPS)
+		bool isKeyOrModifierExist(BYTE Mod/*VK*/);
 	private:
 		void LoadHotkeys(SettingsBase* reg);
 		void SaveHotkeys(SettingsBase* reg);
+		// nHostMod в младших 3-х байтах может содержать VK (модификаторы).
+		// Функция проверяет, чтобы они не дублировались
+		void TestHostkeyModifiers(DWORD& nHostMod);
 	public:
 
 		/* *** Заголовки табов *** */
@@ -983,15 +1004,6 @@ struct Settings
 		
 		void GetSettingsType(wchar_t (&szType)[8], bool& ReadOnly);
 		
-	private:
-		void TestHostkeyModifiers(DWORD& nHostMod);
-		//static BYTE CheckHostkeyModifier(BYTE vk);
-		//static void ReplaceHostkey(BYTE vk, BYTE vkNew);
-		//static void AddHostkey(BYTE vk);
-		//static void TrimHostkeys();
-		//static bool MakeHostkeyModifier();
-		//BYTE mn_HostModOk[15], mn_HostModSkip[15];
-		//bool isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR);
 	private:
 		struct CEFontRange
 		{

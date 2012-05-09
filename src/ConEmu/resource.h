@@ -495,7 +495,7 @@
 #define tTabFontCharset                 2108
 #define rbAdminShield                   2109
 #define rbAdminSuffix                   2110
-#define vkWinApps                       2111
+#define vkAppsSpace                     2111
 #define vkCTSVkBlockStart               2112
 #define vkCTSVkTextStart                2113
 #define cbKeyBarRClick                  2114

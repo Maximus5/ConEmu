@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // cbFARuseASCIIsort, cbFixAltOnAltTab
 
+#define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
 #include "Header.h"
@@ -446,7 +447,7 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 		return NULL;
 	}
 
-	ConEmuHotKey* p = NULL;
+	const ConEmuHotKey* p = NULL;
 
 	DWORD nState = (VkMod & cvk_ALLMASK);
 
@@ -1661,7 +1662,6 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 	VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
 	FillListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 
-	//PRAGMA_ERROR("Доделать настройку");
 	CheckDlgButton(hWnd2, cbClipShiftIns, gpSet->AppStd.isPasteAllLines);
 	CheckDlgButton(hWnd2, cbClipCtrlV, gpSet->AppStd.isPasteFirstLine);
 	CheckDlgButton(hWnd2, cbClipConfirmEnter, gpSet->isPasteConfirmEnter);
@@ -2023,9 +2023,10 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			ConEmuHotKey* pk = NULL;
 			if (ListView_GetItem(hList, &lvi))
 				pk = (ConEmuHotKey*)lvi.lParam;
-			if (pk && !(pk->DescrLangID && (pk->VkMod || pk->HkType == chk_Macro)))
+			if (pk && !(pk->DescrLangID /*&& (pk->VkMod || pk->HkType == chk_Macro)*/))
 			{
-				_ASSERTE(pk->DescrLangID && (pk->VkMod || pk->HkType == chk_Macro));
+				//_ASSERTE(pk->DescrLangID && (pk->VkMod || pk->HkType == chk_Macro));
+				_ASSERTE(pk->DescrLangID);
 				pk = NULL;
 			}
 			mp_ActiveHotKey = pk;
@@ -3624,6 +3625,27 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCTSTextSelection:
 			gpSet->isCTSSelectText = IsChecked(hWnd2,CB);
 			break;
+		case cbClipShiftIns:
+			gpSet->AppStd.isPasteAllLines = IsChecked(hWnd2,CB);
+			break;
+		case cbClipCtrlV:
+			gpSet->AppStd.isPasteFirstLine = IsChecked(hWnd2,CB);
+			break;
+		case cbClipConfirmEnter:
+			gpSet->isPasteConfirmEnter = IsChecked(hWnd2,CB);
+			break;
+		case cbClipConfirmLimit:
+			if (IsChecked(hWnd2,CB))
+			{
+				gpSet->nPasteConfirmLonger = gpSet->nPasteConfirmLonger ? gpSet->nPasteConfirmLonger : 200;
+			}
+			else
+			{
+				gpSet->nPasteConfirmLonger = 0;
+			}
+			SetDlgItemInt(hWnd2, tClipConfirmLimit, gpSet->nPasteConfirmLonger, FALSE);
+			EnableWindow(GetDlgItem(hWnd2, tClipConfirmLimit), (gpSet->nPasteConfirmLonger != 0));
+			break;
 		case cbFarGotoEditor:
 			gpSet->isFarGotoEditor = IsChecked(hWnd2,CB);
 			break;
@@ -4231,6 +4253,20 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		GetString(hWnd2, tSaveAllMacro, &gpSet->sSaveAllMacro, gpSet->SaveAllMacroDefault());
 		break;
 	} // case tSaveAllMacro:
+
+	case tClipConfirmLimit:
+	{
+		BOOL lbValOk = FALSE;
+		gpSet->nPasteConfirmLonger = GetDlgItemInt(hWnd2, tClipConfirmLimit, &lbValOk, FALSE);
+		if (IsChecked(hWnd2, cbClipConfirmLimit) != (gpSet->nPasteConfirmLonger!=0))
+			CheckDlgButton(hWnd2, cbClipConfirmLimit, (gpSet->nPasteConfirmLonger!=0));
+		if (lbValOk && (gpSet->nPasteConfirmLonger == 0))
+		{
+			SetFocus(GetDlgItem(hWnd2, cbClipConfirmLimit));
+			EnableWindow(GetDlgItem(hWnd2, tClipConfirmLimit), FALSE);
+		}
+		break;
+	} // case tClipConfirmLimit:
 
 	
 	/* *** Update settings *** */
@@ -5869,6 +5905,30 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 						bRedraw = true;
 					}
 					break;
+
+
+				case cbClipboardOverride:
+					bChecked = IsChecked(hWnd2, CB);
+					EnableWindow(GetDlgItem(hWnd2, cbClipShiftIns), bChecked);
+					EnableWindow(GetDlgItem(hWnd2, cbClipCtrlV), bChecked);
+					if (!bSkipSelChange)
+					{
+						pApp->OverrideClipboard = IsChecked(hWnd2, CB);
+					}
+					break;
+				case cbClipShiftIns:
+					if (pApp)
+					{
+						pApp->isPasteAllLines = IsChecked(hWnd2, CB);
+					}
+					break;
+				case cbClipCtrlV:
+					if (pApp)
+					{
+						pApp->isPasteFirstLine = IsChecked(hWnd2, CB);
+					}
+					break;
+
 				}	
 			} // if (HIWORD(wParam) == BN_CLICKED)
 			else if (HIWORD(wParam) == EN_CHANGE)
@@ -5939,6 +5999,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 						EnableWindow(GetDlgItem(hWnd2, cbExtendFontsOverride), TRUE);
 						EnableWindow(GetDlgItem(hWnd2, cbCursorOverride), TRUE);
 						EnableWindow(GetDlgItem(hWnd2, cbColorsOverride), TRUE);
+						EnableWindow(GetDlgItem(hWnd2, cbClipboardOverride), TRUE);
 
 						CheckDlgButton(hWnd2, cbExtendFontsOverride, pApp->OverrideExtendFonts);
 						CheckDlgButton(hWnd2, cbExtendFonts, pApp->isExtendFonts);
@@ -5957,6 +6018,10 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 
 						CheckDlgButton(hWnd2, cbColorsOverride, pApp->OverridePalette);
 						SelectStringExact(hWnd2, lbColorsOverride, pApp->szPaletteName);
+
+						CheckDlgButton(hWnd2, cbClipboardOverride, pApp->OverrideClipboard);
+						CheckDlgButton(hWnd2, cbClipShiftIns, pApp->isPasteAllLines);
+						CheckDlgButton(hWnd2, cbClipCtrlV, pApp->isPasteFirstLine);
 					}
 					else
 					{
@@ -5970,15 +6035,22 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 						EnableWindow(GetDlgItem(hWnd2, cbExtendFontsOverride), FALSE);
 						EnableWindow(GetDlgItem(hWnd2, cbCursorOverride), FALSE);
 						EnableWindow(GetDlgItem(hWnd2, cbColorsOverride), FALSE);
+						EnableWindow(GetDlgItem(hWnd2, cbClipboardOverride), FALSE);
+
 						CheckDlgButton(hWnd2, cbExtendFontsOverride, BST_UNCHECKED);
 						CheckDlgButton(hWnd2, cbCursorOverride, BST_UNCHECKED);
 						CheckDlgButton(hWnd2, cbColorsOverride, BST_UNCHECKED);
+
+						CheckDlgButton(hWnd2, cbClipboardOverride, BST_UNCHECKED);
+						CheckDlgButton(hWnd2, cbClipShiftIns, BST_UNCHECKED);
+						CheckDlgButton(hWnd2, cbClipCtrlV, BST_UNCHECKED);
 					}
 					
 					bool lbOld = bSkipSelChange; bSkipSelChange = true;
 					pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbExtendFontsOverride,BN_CLICKED), 0);
 					pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbCursorOverride,BN_CLICKED), 0);
 					pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbColorsOverride,BN_CLICKED), 0);
+					pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbClipboardOverride,BN_CLICKED), 0);
 					bSkipSelChange = lbOld;
 				} // if (CB == lbAppDistinct)
 				else

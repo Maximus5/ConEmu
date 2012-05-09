@@ -26,6 +26,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define HIDE_USE_EXCEPTION_INFO
+
 #define AssertCantActivate(x) //MBoxAssert(x)
 
 #define SHOWDEBUGSTR
@@ -3348,18 +3350,10 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	// Проверим, может клавишу обработает сам буфер (выделение текста кнопками, если оно уже начато и т.п.)?
 	// Сами HotKeys буфер не обрабатывает
 	if (mp_ABuf->OnKeyboard(hWnd, messg, wParam, lParam, pszChars))
+	{
 		return;
+	}
 
-
-	//// Обработка Left/Right/Up/Down при выделении
-	//if (messg == WM_KEYDOWN
-	//        && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)
-	//            || (wParam == VK_LEFT) || (wParam == VK_RIGHT) || (wParam == VK_UP) || (wParam == VK_DOWN))
-	//   )
-	//{
-	//	if (mp_ABuf->OnKeyboard(hWnd, messg, wParam, lParam, pszChars))
-	//		return;
-	//}
 	
 	WARNING("Тут кое-что нехорошо. Некоторые кнопки нужно обрабатывать раньше.");
 	// Например, AltEnter может посылаться в консоль, а может и "менять FullScreen" (в последнем случае его наверное нужно обработать)
@@ -3392,74 +3386,11 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			// Такие коды с клавиатуры приходить не должны, а то для "мышки" ничего не останется
 			_ASSERTE(!(((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST)));
 		}
-		else if (gpConEmu->ProcessHotKey(messg, wParam, lParam, pszChars, this))
+		else if (gpConEmu->ProcessHotKeyMsg(messg, wParam, lParam, pszChars, this))
 		{
 			// Yes, Skip
 			return;
 		}
-
-		//if (messg == WM_SYSKEYDOWN)
-		//    if (wParam == VK_INSERT && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/)
-		//        mb_ConsoleSelectMode = true;
-		//static bool isSkipNextAltUp = false;
-
-		//if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & (1<<29)
-		//        && !isPressed(VK_SHIFT))
-		//{
-		//	if (gpSet->isSendAltEnter)
-		//	{
-		//		#if 0
-		//		INPUT_RECORD r = {KEY_EVENT};
-		//		//On Keyboard(hConWnd, WM_KEYDOWN, VK_MENU, 0); -- Alt слать не нужно - он уже послан
-		//		WARNING("А надо ли так заморачиваться?");
-		//		//On Keyboard(hConWnd, WM_KEYDOWN, VK_RETURN, 0);
-		//		r.Event.KeyEvent.bKeyDown = TRUE;
-		//		r.Event.KeyEvent.wRepeatCount = 1;
-		//		r.Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
-		//		r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_RETURN, 0/*MAPVK_VK_TO_VSC*/);
-		//		r.Event.KeyEvent.dwControlKeyState = NUMLOCK_ON|LEFT_ALT_PRESSED /*0x22*/;
-		//		r.Event.KeyEvent.uChar.UnicodeChar = pszChars[0];
-		//		PostConsoleEvent(&r);
-		//		//On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
-		//		r.Event.KeyEvent.bKeyDown = FALSE;
-		//		r.Event.KeyEvent.dwControlKeyState = NUMLOCK_ON;
-		//		PostConsoleEvent(&r);
-		//		//On Keyboard(hConWnd, WM_KEYUP, VK_MENU, 0); -- Alt слать не нужно - он будет послан сам позже
-		//		#endif
-		//		_ASSERTE(pszChars[0]==13);
-		//		PostKeyPress(VK_RETURN, LEFT_ALT_PRESSED, pszChars[0]);
-		//	}
-		//	else
-		//	{
-		//		// Чтобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
-		//		if (gpSet->isFixAltOnAltTab)
-		//			PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
-		//		// Change fullscreen mode
-		//		gpConEmu->OnAltEnter();
-		//		//isSkipNextAltUp = true;
-		//	}
-		//}
-		////AltSpace - показать системное меню
-		//else if (!gpSet->isSendAltSpace && (messg == WM_SYSKEYDOWN || messg == WM_SYSKEYUP)
-		//        && wParam == VK_SPACE && lParam & (1<<29) && !isPressed(VK_SHIFT))
-		//{
-		//	// Нада, или системное меню будет недоступно
-		//	if (messg == WM_SYSKEYUP)  // Только по UP, чтобы не "булькало"
-		//	{
-		//		gpConEmu->ShowSysmenu();
-		//	}
-		//}
-		//else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
-		//else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && (lParam & (1<<29))
-		//        && !gpSet->isSendAltF9 && !isPressed(VK_SHIFT))
-		//{
-		//	// AltF9
-		//	// Чтобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
-		//	if (gpSet->isFixAltOnAltTab)
-		//		PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
-		//	// Maximize/Restore
-		//	gpConEmu->OnAltF9(TRUE);
-		//}
 		// *** Not send to console ***
 		else if (GuiWnd())
 		{
@@ -3473,144 +3404,117 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				return;
 			}
 
-			INPUT_RECORD r = {KEY_EVENT};
-			WORD nCaps = 1 & (WORD)GetKeyState(VK_CAPITAL);
-			WORD nNum = 1 & (WORD)GetKeyState(VK_NUMLOCK);
-			WORD nScroll = 1 & (WORD)GetKeyState(VK_SCROLL);
-			WORD nLAlt = 0x8000 & (WORD)GetKeyState(VK_LMENU);
-			WORD nRAlt = 0x8000 & (WORD)GetKeyState(VK_RMENU);
-			WORD nLCtrl = 0x8000 & (WORD)GetKeyState(VK_LCONTROL);
-			WORD nRCtrl = 0x8000 & (WORD)GetKeyState(VK_RCONTROL);
-			WORD nShift = 0x8000 & (WORD)GetKeyState(VK_SHIFT);
-			//if (messg == WM_CHAR || messg == WM_SYSCHAR) {
-			//    if (((WCHAR)wParam) <= 32 || mn_LastVKeyPressed == 0)
-			//        return; // это уже обработано
-			//    r.Event.KeyEvent.bKeyDown = TRUE;
-			//    r.Event.KeyEvent.uChar.UnicodeChar = (WCHAR)wParam;
-			//    r.Event.KeyEvent.wRepeatCount = 1; TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
-			//    r.Event.KeyEvent.wVirtualKeyCode = mn_LastVKeyPressed;
-			//} else {
-			mn_LastVKeyPressed = wParam & 0xFFFF;
-			////PostConsoleMessage(hConWnd, messg, wParam, lParam, FALSE);
-			//if ((wParam >= VK_F1 && wParam <= /*VK_F24*/ VK_SCROLL) || wParam <= 32 ||
-			//    (wParam >= VK_LSHIFT/*0xA0*/ && wParam <= /*VK_RMENU=0xA5*/ 0xB7 /*=VK_LAUNCH_APP2*/) ||
-			//    (wParam >= VK_LWIN/*0x5B*/ && wParam <= VK_APPS/*0x5D*/) ||
-			//    /*(wParam >= VK_NUMPAD0 && wParam <= VK_DIVIDE) ||*/ //TODO:
-			//    (wParam >= VK_PRIOR/*0x21*/ && wParam <= VK_HELP/*0x2F*/) ||
-			//    nLCtrl || nRCtrl ||
-			//    ((nLAlt || nRAlt) && !(nLCtrl || nRCtrl || nShift) && (wParam >= VK_NUMPAD0/*0x60*/ && wParam <= VK_NUMPAD9/*0x69*/)) || // Ввод Alt-цифры при включенном NumLock
-			//    FALSE)
-			//{
-			r.Event.KeyEvent.wRepeatCount = 1; TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
-			r.Event.KeyEvent.wVirtualKeyCode = mn_LastVKeyPressed;
-			r.Event.KeyEvent.uChar.UnicodeChar = pszChars[0];
-			//if (!nLCtrl && !nRCtrl) {
-			//    if (wParam == VK_ESCAPE || wParam == VK_RETURN || wParam == VK_BACK || wParam == VK_TAB || wParam == VK_SPACE
-			//        || FALSE)
-			//        r.Event.KeyEvent.uChar.UnicodeChar = wParam;
-			//}
-			//    mn_LastVKeyPressed = 0; // чтобы не обрабатывать WM_(SYS)CHAR
-			//} else {
-			//    return;
-			//}
-			r.Event.KeyEvent.bKeyDown = (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN);
-			//}
-			r.Event.KeyEvent.wVirtualScanCode = ((DWORD)lParam & 0xFF0000) >> 16; // 16-23 - Specifies the scan code. The value depends on the OEM.
-			// 24 - Specifies whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-			// 29 - Specifies the context code. The value is 1 if the ALT key is held down while the key is pressed; otherwise, the value is 0.
-			// 30 - Specifies the previous key state. The value is 1 if the key is down before the message is sent, or it is 0 if the key is up.
-			// 31 - Specifies the transition state. The value is 1 if the key is being released, or it is 0 if the key is being pressed.
-			r.Event.KeyEvent.dwControlKeyState = 0;
-
-			if (((DWORD)lParam & (DWORD)(1 << 24)) != 0)
-				r.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
-
-			if ((nCaps & 1) == 1)
-				r.Event.KeyEvent.dwControlKeyState |= CAPSLOCK_ON;
-
-			if ((nNum & 1) == 1)
-				r.Event.KeyEvent.dwControlKeyState |= NUMLOCK_ON;
-
-			if ((nScroll & 1) == 1)
-				r.Event.KeyEvent.dwControlKeyState |= SCROLLLOCK_ON;
-
-			if (nLAlt & 0x8000)
-				r.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
-
-			if (nRAlt & 0x8000)
-				r.Event.KeyEvent.dwControlKeyState |= RIGHT_ALT_PRESSED;
-
-			if (nLCtrl & 0x8000)
-				r.Event.KeyEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
-
-			if (nRCtrl & 0x8000)
-				r.Event.KeyEvent.dwControlKeyState |= RIGHT_CTRL_PRESSED;
-
-			if (nShift & 0x8000)
-				r.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
-
-#ifdef _DEBUG
-
-			if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
-			        r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
-			{
-				DEBUGSTRINPUT(L"  ---  F11 sending\n");
-			}
-
-#endif
-
-			// -- заменено на перехват функции ScreenToClient
-			//// Сделано (пока) только чтобы текстовое EMenu активировалось по центру консоли,
-			//// а не в положении мыши (что смотрится отвратно - оно может сплющиться до 2-3 строк).
-			//// Только при скрытой консоли.
-			//RemoveFromCursor();
-
-			if (mn_FarPID && mn_FarPID != mn_LastSetForegroundPID)
-			{
-				//DWORD dwFarPID = GetFarPID();
-				//if (dwFarPID)
-				AllowSetForegroundWindow(mn_FarPID);
-				mn_LastSetForegroundPID = mn_FarPID;
-			}
-
-			PostConsoleEvent(&r);
-
-			// нажатие клавиши может трансформироваться в последовательность нескольких символов...
-			/*
-			The expected behaviour would be (as it is in a cmd.exe session):
-			- hit "^" -> see nothing
-			- hit "^" again -> see ^^
-			- hit "^" again -> see nothing
-			- hit "^" again -> see ^^
-
-			Alternatively:
-			- hit "^" -> see nothing
-			- hit any other alpha-numeric key, e.g. "k" -> see "^k"
-			*/
-			for(int i = 1; pszChars[i]; i++)
-			{
-				r.Event.KeyEvent.uChar.UnicodeChar = pszChars[i];
-				PostConsoleEvent(&r);
-			}
-
-			//if (messg == WM_CHAR || messg == WM_SYSCHAR) {
-			//    // И сразу посылаем отпускание
-			//    r.Event.KeyEvent.bKeyDown = FALSE;
-			//    PostConsoleEvent(&r);
-			//}
+			// А теперь собственно отсылка в консоль
+			ProcessKeyboard(messg, wParam, lParam, pszChars);
 		}
 	}
-	/*if (IsDebuggerPresent()) {
-	    if (hWnd ==ghWnd)
-	        DEBUGSTRINPUT(L"   focused ghWnd\n"); else
-	    if (hWnd ==hConWnd)
-	        DEBUGSTRINPUT(L"   focused hConWnd\n"); else
-	    if (hWnd =='ghWnd DC')
-	        DEBUGSTRINPUT(L"   focused 'ghWnd DC'\n");
-	    else
-	        DEBUGSTRINPUT(L"   focused UNKNOWN\n");
-	}*/
 	return;
+}
+
+// pszChars may be NULL
+void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars)
+{
+	INPUT_RECORD r = {KEY_EVENT};
+
+	WORD nCaps = 1 & (WORD)GetKeyState(VK_CAPITAL);
+	WORD nNum = 1 & (WORD)GetKeyState(VK_NUMLOCK);
+	WORD nScroll = 1 & (WORD)GetKeyState(VK_SCROLL);
+	WORD nLAlt = 0x8000 & (WORD)GetKeyState(VK_LMENU);
+	WORD nRAlt = 0x8000 & (WORD)GetKeyState(VK_RMENU);
+	WORD nLCtrl = 0x8000 & (WORD)GetKeyState(VK_LCONTROL);
+	WORD nRCtrl = 0x8000 & (WORD)GetKeyState(VK_RCONTROL);
+	WORD nShift = 0x8000 & (WORD)GetKeyState(VK_SHIFT);
+
+	//if (messg == WM_CHAR || messg == WM_SYSCHAR) {
+	//    if (((WCHAR)wParam) <= 32 || mn_LastVKeyPressed == 0)
+	//        return; // это уже обработано
+	//    r.Event.KeyEvent.bKeyDown = TRUE;
+	//    r.Event.KeyEvent.uChar.UnicodeChar = (WCHAR)wParam;
+	//    r.Event.KeyEvent.wRepeatCount = 1; TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
+	//    r.Event.KeyEvent.wVirtualKeyCode = mn_LastVKeyPressed;
+	//} else {
+
+	mn_LastVKeyPressed = wParam & 0xFFFF;
+
+	////PostConsoleMessage(hConWnd, messg, wParam, lParam, FALSE);
+	//if ((wParam >= VK_F1 && wParam <= /*VK_F24*/ VK_SCROLL) || wParam <= 32 ||
+	//    (wParam >= VK_LSHIFT/*0xA0*/ && wParam <= /*VK_RMENU=0xA5*/ 0xB7 /*=VK_LAUNCH_APP2*/) ||
+	//    (wParam >= VK_LWIN/*0x5B*/ && wParam <= VK_APPS/*0x5D*/) ||
+	//    /*(wParam >= VK_NUMPAD0 && wParam <= VK_DIVIDE) ||*/ //TODO:
+	//    (wParam >= VK_PRIOR/*0x21*/ && wParam <= VK_HELP/*0x2F*/) ||
+	//    nLCtrl || nRCtrl ||
+	//    ((nLAlt || nRAlt) && !(nLCtrl || nRCtrl || nShift) && (wParam >= VK_NUMPAD0/*0x60*/ && wParam <= VK_NUMPAD9/*0x69*/)) || // Ввод Alt-цифры при включенном NumLock
+	//    FALSE)
+	//{
+
+	TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
+	r.Event.KeyEvent.wRepeatCount = 1;
+	r.Event.KeyEvent.wVirtualKeyCode = mn_LastVKeyPressed;
+	r.Event.KeyEvent.uChar.UnicodeChar = pszChars ? pszChars[0] : 0;
+
+	//if (!nLCtrl && !nRCtrl) {
+	//    if (wParam == VK_ESCAPE || wParam == VK_RETURN || wParam == VK_BACK || wParam == VK_TAB || wParam == VK_SPACE
+	//        || FALSE)
+	//        r.Event.KeyEvent.uChar.UnicodeChar = wParam;
+	//}
+	//    mn_LastVKeyPressed = 0; // чтобы не обрабатывать WM_(SYS)CHAR
+	//} else {
+	//    return;
+	//}
+	r.Event.KeyEvent.bKeyDown = (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN);
+	//}
+	r.Event.KeyEvent.wVirtualScanCode = ((DWORD)lParam & 0xFF0000) >> 16; // 16-23 - Specifies the scan code. The value depends on the OEM.
+	// 24 - Specifies whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
+	// 29 - Specifies the context code. The value is 1 if the ALT key is held down while the key is pressed; otherwise, the value is 0.
+	// 30 - Specifies the previous key state. The value is 1 if the key is down before the message is sent, or it is 0 if the key is up.
+	// 31 - Specifies the transition state. The value is 1 if the key is being released, or it is 0 if the key is being pressed.
+
+	r.Event.KeyEvent.dwControlKeyState = gpConEmu->GetControlKeyState(lParam);
+
+	#ifdef _DEBUG
+	if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
+	        r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
+	{
+		DEBUGSTRINPUT(L"  ---  F11 sending\n");
+	}
+	#endif
+
+	// -- заменено на перехват функции ScreenToClient
+	//// Сделано (пока) только чтобы текстовое EMenu активировалось по центру консоли,
+	//// а не в положении мыши (что смотрится отвратно - оно может сплющиться до 2-3 строк).
+	//// Только при скрытой консоли.
+	//RemoveFromCursor();
+
+	if (mn_FarPID && mn_FarPID != mn_LastSetForegroundPID)
+	{
+		//DWORD dwFarPID = GetFarPID();
+		//if (dwFarPID)
+		AllowSetForegroundWindow(mn_FarPID);
+		mn_LastSetForegroundPID = mn_FarPID;
+	}
+
+	PostConsoleEvent(&r);
+
+	// нажатие клавиши может трансформироваться в последовательность нескольких символов...
+	if (pszChars && pszChars[0] && pszChars[1])
+	{
+		/*
+		The expected behaviour would be (as it is in a cmd.exe session):
+		- hit "^" -> see nothing
+		- hit "^" again -> see ^^
+		- hit "^" again -> see nothing
+		- hit "^" again -> see ^^
+
+		Alternatively:
+		- hit "^" -> see nothing
+		- hit any other alpha-numeric key, e.g. "k" -> see "^k"
+		*/
+		for (int i = 1; pszChars[i]; i++)
+		{
+			r.Event.KeyEvent.uChar.UnicodeChar = pszChars[i];
+			PostConsoleEvent(&r);
+		}
+	}
 }
 
 void CRealConsole::OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -6767,7 +6671,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 	PostConsoleMessage(hConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, (LPARAM)dwNewKeyboardLayout);
 }
 
-void CRealConsole::Paste(bool abFirstLineOnly /*= false*/)
+void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NULL*/)
 {
 	if (!this)
 		return;
@@ -6785,42 +6689,51 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/)
 
 	wchar_t* pszBuf = NULL;
 
-	// А можно и через наш сервер
-	if (!OpenClipboard(NULL))
+	if (asText != NULL)
 	{
-		MBox(_T("Can't open PC clipboard"));
-		return;
+		if (!*asText)
+			return;
+		pszBuf = lstrdup(asText);
 	}
 	else
 	{
-		HGLOBAL hglb = GetClipboardData(CF_UNICODETEXT);
-
-		if (!hglb)
+		// А можно и через наш сервер
+		if (!OpenClipboard(NULL))
 		{
-			CloseClipboard();
-			MBox(_T("Can't get CF_UNICODETEXT"));
+			MBox(_T("Can't open PC clipboard"));
 			return;
 		}
-
-		LPCWSTR lptstr = (LPCWSTR)GlobalLock(hglb);
-
-		if (!lptstr)
+		else
 		{
-			CloseClipboard();
-			MBox(_T("Can't lock CF_UNICODETEXT"));
-			return;
-		}
-		if (!*lptstr)
-		{
-			// Text is empty
-			return;
-		}
+			HGLOBAL hglb = GetClipboardData(CF_UNICODETEXT);
 
-		pszBuf = lstrdup(lptstr);
-		if (!pszBuf)
-		{
-			MBoxAssert(pszBuf && "lstrdup(lptstr) = NULL");
-			return;
+			if (!hglb)
+			{
+				CloseClipboard();
+				MBox(_T("Can't get CF_UNICODETEXT"));
+				return;
+			}
+
+			LPCWSTR lptstr = (LPCWSTR)GlobalLock(hglb);
+
+			if (!lptstr)
+			{
+				CloseClipboard();
+				MBox(_T("Can't lock CF_UNICODETEXT"));
+				return;
+			}
+			if (!*lptstr)
+			{
+				// Text is empty
+				return;
+			}
+
+			pszBuf = lstrdup(lptstr);
+			if (!pszBuf)
+			{
+				MBoxAssert(pszBuf && "lstrdup(lptstr) = NULL");
+				return;
+			}
 		}
 	}
 
@@ -6848,7 +6761,7 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/)
 		}
 	}
 
-	if (gpSet->nPasteConfirmLonger && ((pszEnd - pszBuf) > gpSet->nPasteConfirmLonger))
+	if (gpSet->nPasteConfirmLonger && ((size_t)(pszEnd - pszBuf) > (size_t)gpSet->nPasteConfirmLonger))
 	{
 		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Pasting text length is %u chars!\nContinue?", (DWORD)(pszEnd - pszBuf));
 

@@ -94,14 +94,14 @@ WARNING("WIN64 was not defined");
 #endif
 
 #ifdef USE_SEH
-	#if defined(_MSC_VER)
+	#if defined(_MSC_VER) && !defined(HIDE_USE_EXCEPTION_INFO)
 	#pragma message ("Compiling USING exception handler")
 	#endif
 
 	#define SAFETRY   __try
 	#define SAFECATCH __except(EXCEPTION_EXECUTE_HANDLER)
 #else
-	#if defined(_MSC_VER)
+	#if defined(_MSC_VER) && !defined(HIDE_USE_EXCEPTION_INFO)
 	#pragma message ("Compiling NOT using exception handler")
 	#endif
 

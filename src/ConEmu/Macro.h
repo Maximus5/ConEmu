@@ -53,27 +53,29 @@ class CConEmuMacro
 	public:
 		// Теперь - собственно макросы
 
-		// Проверка, есть ли ConEmu GUI. Функцию мог бы и сам плагин обработать, но для "общности" возвращаем "Yes" здесь
-		static LPWSTR IsConEmu(LPWSTR asArgs, CRealConsole* apRCon);
-		// Проверка, видима ли RealConsole
-		static LPWSTR IsRealVisible(LPWSTR asArgs, CRealConsole* apRCon);
-		// Проверка, активна ли RealConsole
-		static LPWSTR IsConsoleActive(LPWSTR asArgs, CRealConsole* apRCon);
 		// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
 		static LPWSTR FindEditor(LPWSTR asArgs, CRealConsole* apRCon);
 		static LPWSTR FindViewer(LPWSTR asArgs, CRealConsole* apRCon);
 		static LPWSTR FindFarWindow(LPWSTR asArgs, CRealConsole* apRCon);
 		static LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon); // helper, это не макро-фукнция
-		// Минимизировать окно (можно насильно в трей) // [int nForceToTray=0/1]
-		static LPWSTR WindowMinimize(LPWSTR asArgs, CRealConsole* apRCon);
-		// MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
-		static LPWSTR MsgBox(LPWSTR asArgs, CRealConsole* apRCon);
-		// Изменить размер шрифта. int nRelative, int N
-		static LPWSTR FontSetSize(LPWSTR asArgs, CRealConsole* apRCon);
 		// Изменить имя основного шрифта. string
 		static LPWSTR FontSetName(LPWSTR asArgs, CRealConsole* apRCon);
+		// Изменить размер шрифта. int nRelative, int N
+		static LPWSTR FontSetSize(LPWSTR asArgs, CRealConsole* apRCon);
+		// Проверка, есть ли ConEmu GUI. Функцию мог бы и сам плагин обработать, но для "общности" возвращаем "Yes" здесь
+		static LPWSTR IsConEmu(LPWSTR asArgs, CRealConsole* apRCon);
+		// Проверка, активна ли RealConsole
+		static LPWSTR IsConsoleActive(LPWSTR asArgs, CRealConsole* apRCon);
+		// Проверка, видима ли RealConsole
+		static LPWSTR IsRealVisible(LPWSTR asArgs, CRealConsole* apRCon);
+		// MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
+		static LPWSTR MsgBox(LPWSTR asArgs, CRealConsole* apRCon);
+		// Paste (<Cmd>[,"<Text>"])
+		static LPWSTR Paste(LPWSTR asArgs, CRealConsole* apRCon);
 		// Shell (ShellExecute)
 		static LPWSTR Shell(LPWSTR asArgs, CRealConsole* apRCon);
 		// Tabs
 		static LPWSTR Tab(LPWSTR asArgs, CRealConsole* apRCon);
+		// Минимизировать окно (можно насильно в трей) // [int nForceToTray=0/1]
+		static LPWSTR WindowMinimize(LPWSTR asArgs, CRealConsole* apRCon);
 };

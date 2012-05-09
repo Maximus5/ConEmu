@@ -26,9 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#pragma once
-
+#define HIDE_USE_EXCEPTION_INFO
 #include "header.h"
 #include "UpdateSet.h"
 #include "ConEmu.h"

@@ -26,6 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define HIDE_USE_EXCEPTION_INFO
 #ifdef _DEBUG
 //  #define SHOW_GUIATTACH_START
 #endif
@@ -9326,7 +9327,9 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	if (!lbSetFocus)
 	{
-		gpConEmu->mp_TabBar->SwitchRollback();
+		if (mp_VActive)
+			FixSingleModifier(0, mp_VActive->RCon());
+		mp_TabBar->SwitchRollback();
 		UnRegisterHotKeys();
 	}
 	else if (!mb_HotKeyRegistered)
@@ -9631,7 +9634,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	}
 
 	WORD bVK = (WORD)(wParam & 0xFF);
-#ifdef _DEBUG
+
+	#ifdef _DEBUG
 	wchar_t szDebug[255];
 	_wsprintf(szDebug, SKIPLEN(countof(szDebug)) L"%s(VK=0x%02X, Scan=%i, lParam=0x%08X)\n",
 	          (messg == WM_KEYDOWN) ? L"WM_KEYDOWN" :
@@ -9641,7 +9645,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	          L"<Unknown Message> ",
 	          bVK, ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
 	DEBUGSTRKEY(szDebug);
-#endif
+	#endif
+
 #if 1
 	// Works fine, but need to cache last pressed key, cause of need them in WM_KEYUP (send char to console)
 	wchar_t szTranslatedChars[16] = {0};
@@ -9695,10 +9700,10 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 	if (!GetKeyboardState(m_KeybStates))
 	{
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		DWORD dwErr = GetLastError();
 		_ASSERTE(FALSE);
-#endif
+		#endif
 		static bool sbErrShown = false;
 
 		if (!sbErrShown)
@@ -9790,282 +9795,6 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	if (messg == WM_KEYDOWN && !mb_HotKeyRegistered)
 		RegisterHotKeys(); // Win и прочее
 
-#if 0
-	if ((messg == WM_KEYUP) && (wParam == VK_RWIN || wParam == VK_LWIN) && mb_InWinTabSwitch && gpSet->isUseWinTab)
-	{
-		mb_InWinTabSwitch = FALSE;
-		TabCommand(ctc_SwitchCommit);
-		WARNING("CConEmuCtrl:: Не пускать в консоль? или отдать в CConEmuCtrl::ProcessHotKey?");
-	}
-#endif
-
-#if 0
-	if (messg == WM_KEYDOWN || messg == WM_KEYUP)
-	{
-		if ((messg == WM_KEYUP) && (wParam == VK_RWIN || wParam == VK_LWIN) && mb_InWinTabSwitch && gpSet->isUseWinTab)
-		{
-			mb_InWinTabSwitch = FALSE;
-			TabCommand(ctc_SwitchCommit);
-		}
-
-		if (wParam == VK_PAUSE && !isPressed(VK_CONTROL))
-		{
-			// SlideShow в PicView2 подзадержался
-			if (isPictureView() /*&& !IsWindowUnicode(hPictureView)*/)
-			{
-				bool lbAllowed = true;
-				if (IsWindowUnicode(hPictureView))
-				{
-					// На будущее, если будет "встроенный" SlideShow - вернуть на это сообщение TRUE
-					UINT nMsg = RegisterWindowMessage(L"PicView:HasSlideShow");
-					DWORD_PTR nRc = 0;
-					LRESULT lRc = SendMessageTimeout(hPictureView, nMsg, 0,0, SMTO_NORMAL, 1000, &nRc);
-					if (!lRc || nRc == TRUE)
-						lbAllowed = false;
-				}
-
-				if (lbAllowed)
-				{
-					if (messg == WM_KEYUP)
-					{
-						bPicViewSlideShow = !bPicViewSlideShow;
-
-						if (bPicViewSlideShow)
-						{
-							if (gpSet->nSlideShowElapse<=500) gpSet->nSlideShowElapse=500;
-
-							dwLastSlideShowTick = GetTickCount() - gpSet->nSlideShowElapse;
-						}
-					}
-
-					return 0;
-				}
-			}
-		}
-		else if (bPicViewSlideShow)
-		{
-			//KillTimer(hWnd, 3);
-			if (wParam==0xbd/* -_ */ || wParam==0xbb/* =+ */)
-			{
-				if (messg == WM_KEYDOWN)
-				{
-					if (wParam==0xbb)
-					{
-						gpSet->nSlideShowElapse = 1.2 * gpSet->nSlideShowElapse;
-					}
-					else
-					{
-						gpSet->nSlideShowElapse = gpSet->nSlideShowElapse / 1.2;
-
-						if (gpSet->nSlideShowElapse<=500) gpSet->nSlideShowElapse=500;
-					}
-				}
-
-				return 0;
-			}
-			else
-			{
-				bPicViewSlideShow = false; // отмена слайдшоу
-			}
-		}
-	}
-#endif
-
-#if 0
-	// Прокрутка в "буферном" режиме
-	("->CConEmuCtrl");
-	if ((messg == WM_KEYDOWN || messg == WM_KEYUP) &&
-	    (wParam == VK_DOWN || wParam == VK_UP || wParam == VK_NEXT || wParam == VK_PRIOR) &&
-	    (isPressed(VK_CONTROL)))
-	{
-		if (gpConEmu->mp_VActive && gpConEmu->mp_VActive->RCon()
-				&& gpConEmu->mp_VActive->RCon()->isBufferHeight()
-				&& !gpConEmu->mp_VActive->RCon()->isFarBufferSupported())
-		{
-			if (messg != WM_KEYDOWN || !mp_VActive)
-				return 0;
-
-			switch(wParam)
-			{
-				case VK_DOWN:
-					return mp_VActive->RCon()->OnScroll(SB_LINEDOWN);
-				case VK_UP:
-					return mp_VActive->RCon()->OnScroll(SB_LINEUP);
-				case VK_NEXT:
-					return mp_VActive->RCon()->OnScroll(SB_PAGEDOWN);
-				case VK_PRIOR:
-					return mp_VActive->RCon()->OnScroll(SB_PAGEUP);
-			}
-
-			return 0;
-		}
-	}
-
-	//CtrlWinAltSpace
-	WARNING("В висте, блин, не приходим сообщение на первое нажатие Space. Только на второе???");
-
-	("->CConEmuCtrl");
-	if (messg == WM_KEYDOWN && wParam == VK_SPACE && isPressed(VK_CONTROL) && isPressed(VK_LWIN) && isPressed(VK_MENU))
-	{
-		CtrlWinAltSpace();
-		return 0;
-	}
-
-	// Tabs
-	("->CConEmuCtrl");
-	if (/*gpSet->isTabs &&*/ gpSet->isTabSelf &&  /*gpConEmu->mp_TabBar->IsShown() &&*/
-	                        (
-	                            ((messg == WM_KEYDOWN || messg == WM_KEYUP)
-	                             && (wParam == VK_TAB
-	                                 || (gpConEmu->mp_TabBar->IsInSwitch()
-	                                     && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT))))
-	                            //|| (messg == WM_CHAR && wParam == VK_TAB)
-	                        ))
-	{
-		//2010-01-19 почему-то был закоментарен !isPressed(VK_MENU), в итоге в FAR не проваливалось кнопкосочетание для детача
-		if (isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_LWIN) && !isPressed(VK_RWIN))
-		{
-			if (gpConEmu->mp_TabBar->OnKeyboard(messg, wParam, lParam))
-				return 0;
-		}
-	}
-
-	// !!! Запрос на переключение мог быть инициирован из плагина
-	//WARNING!!! VK_TAB должен оставаться системным не изменяемым. Иначе тут все полетит.
-	if (messg == WM_KEYUP && (wParam == VK_CONTROL || wParam == VK_LCONTROL || wParam == VK_RCONTROL))
-	{
-		/*&& gpConEmu->mp_TabBar->IsShown()*/
-		if (gpSet->isTabSelf || (gpSet->isTabLazy && gpConEmu->mp_TabBar->IsInSwitch()))
-		{
-			gpConEmu->mp_TabBar->SwitchCommit(); // Если переключения не было - ничего не делает
-			// В фар отпускание кнопки таки пропустим
-		}
-	}
-
-	// MultiConsole
-	static bool sb_SkipMulticonChar = false;
-	static DWORD sn_SkipMulticonVk[2] = {0,0};
-	static bool sb_SkipSingleHostkey = false;
-	static UINT sm_SkipSingleHostkey; static WPARAM sw_SkipSingleHostkey; static LPARAM sl_SkipSingleHostkey;
-	//bool lbLWin = false, lbRWin = false;
-	TODO("gpSet->nMultiHotkeyModifier - байты содержат VK_[L|R]CONTROL, VK_[L|R]MENU, VK_[L|R]SHIFT, VK_APPS, VK_LWIN");
-	TODO("gpSet->icMultiBuffer - хоткей для включения-отключения режима буфера - AskChangeBufferHeight()");
-
-	("->CConEmuCtrl");
-	//if (gpSet->isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipMulticonChar)) {
-	if ((sb_SkipMulticonChar && (messg == WM_KEYUP || messg == WM_SYSKEYUP))
-			// Hotkeys, относящиеся к мультиконсоли/табам
-	        || (gpSet->isMulti && wParam
-	            &&
-	            (wParam==gpSet->icMultiNext || wParam==gpSet->icMultiNew || wParam==gpSet->icMultiRecreate
-	             || wParam==gpSet->icMultiClose || wParam==gpSet->icMultiCmd
-	             || (gpSet->isUseWinNumber && (wParam>='0' && wParam<='9')) // активировать консоль по номеру
-				 || (gpSet->isUseWinArrows && (wParam == VK_LEFT || wParam == VK_RIGHT || wParam == VK_UP || wParam == VK_DOWN))
-	             || (gpSet->isUseWinNumber && (wParam==VK_F11 || wParam==VK_F12))) // KeyDown для этого не проходит, но на всякий случай
-	            &&
-	            gpSet->IsHostkeyPressed())
-			// Hotkeys, не относящиеся к мультиконсоли
-			|| ((wParam==gpSet->isCTSVkTextStart || wParam==gpSet->isCTSVkBlockStart)
-				&&
-	            gpSet->IsHostkeyPressed())
-	  )
-	{
-		if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN /*&& (lbLWin || lbRWin) && (wParam != VK_LWIN && wParam != VK_RWIN)*/)
-		{
-			// -- это только что проверено
-			//if (wParam==gpSet->icMultiNext || wParam==gpSet->icMultiNew || wParam==gpSet->icMultiRecreate
-			//        || wParam==gpSet->icMultiClose || wParam==gpSet->icMultiCmd
-			//        || (gpSet->isUseWinNumber && wParam>='0' && wParam<='9')
-			//        || (gpSet->isUseWinArrows && (wParam == VK_LEFT || wParam == VK_RIGHT || wParam == VK_UP || wParam == VK_DOWN))
-			//        || (gpSet->isUseWinNumber && (wParam==VK_F11 || wParam==VK_F12)) // KeyDown для этого не проходит, но на всякий случай
-			//  )
-			{
-				// Запомнить, что не нужно пускать в консоль
-				sb_SkipMulticonChar = true;
-				sn_SkipMulticonVk[0] = gpSet->GetPressedHostkey(); // lbLWin ? VK_LWIN : VK_RWIN;
-				sn_SkipMulticonVk[1] = lParam & 0xFF0000; // Specifies the scan code. The value depends on the OEM.
-				// И в консоль не слать модификатор
-				sb_SkipSingleHostkey = false;
-
-				LRESULT lKeyRc = OnKeyboardHook(LOWORD(wParam), isPressed(VK_SHIFT));
-
-
-				return lKeyRc;
-			}
-
-			//} else if (messg == WM_CHAR) {
-			//    if (sn_SkipMulticonVk[1] == (lParam & 0xFF0000))
-			//        return 0; // не пропускать букву в консоль
-		}
-		else if (messg == WM_KEYUP || messg == WM_SYSKEYUP)
-		{
-			//if (wParam == ' ')
-			//{
-			//	ShowSysmenu();
-			//	return 0;
-			//} else
-			if (/*(lbLWin || lbRWin) &&*/ (wParam==VK_F11 || wParam==VK_F12))
-			{
-				ConActivate(wParam - VK_F11 + 10);
-				return 0;
-				//} else if (wParam == VK_LWIN || wParam == VK_RWIN) {
-			}
-			else if (sn_SkipMulticonVk[1] == (lParam & 0xFF0000))
-			{
-				sn_SkipMulticonVk[1] = 0;
-				sb_SkipMulticonChar = (sn_SkipMulticonVk[0] != 0) || (sn_SkipMulticonVk[1] != 0);
-				return 0;
-			}
-			else //if (gpSet->IsHostkey(wParam)) {
-			{
-				if (sn_SkipMulticonVk[0] == wParam)
-				{
-					sn_SkipMulticonVk[0] = 0;
-					sb_SkipMulticonChar = (sn_SkipMulticonVk[0] != 0) || (sn_SkipMulticonVk[1] != 0);
-					return 0;
-				}
-			}
-		}
-	}
-
-	("Нужно переделать, т.к. Hostkey убирается");
-	if (gpSet->IsHostkeySingle(wParam) /*|| (wParam == VK_APPS && gpSet->IsHostkey(VK_APPS))*/)
-	{
-		if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN)
-		{
-			sb_SkipSingleHostkey = true; sm_SkipSingleHostkey = messg; sw_SkipSingleHostkey = wParam; sl_SkipSingleHostkey = lParam;
-			// Если после нее не будет нажат Hotkey - пошлем в консоль
-			return 0;
-		}
-	}
-
-	if (sb_SkipSingleHostkey && mp_VActive)
-	{
-		/*if (wParam != VK_APPS)*/
-		{
-			sb_SkipSingleHostkey = false; // Однократно
-
-			if (mp_VActive->RCon())
-			{
-				mp_VActive->RCon()->OnKeyboard(hWnd, sm_SkipSingleHostkey, sw_SkipSingleHostkey, sl_SkipSingleHostkey, L"");
-			}
-		}
-	}
-
-	// После хоткея создания консоли - KEYUP мог "уйти" в открытый диалог,
-	// поэтому чистим "игнорируемые" кнопки при любом следующем нажатии
-	if (sb_SkipMulticonChar && (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN))
-	{
-		sn_SkipMulticonVk[0] = sn_SkipMulticonVk[1] = 0;
-		sb_SkipMulticonChar = false;
-	}
-
-	if (sb_SkipSingleHostkey && (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN))
-	{
-		sb_SkipSingleHostkey = false;
-	}
-#endif
-
 	_ASSERTE(messg != WM_CHAR && messg != WM_SYSCHAR);
 
 	// Теперь обработаем некоторые "общие" хоткеи
@@ -10084,75 +9813,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			bEscPressed = false;
 	}
 
-#if 0
-	if (isPressed(VK_LWIN) || isPressed(VK_RWIN))
-	{
-		if (wParam == ' ' 
-			&& ((isPressed(VK_MENU) && !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
-				|| (!isPressed(VK_MENU) && isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))))
-		{
-			("->CConEmuCtrl");
-			if (messg == WM_SYSKEYUP)
-			{
-				//Win-Alt-Space
-				ShowSysmenu();
-			}
-
-			return 0;
-		}
-		else if (wParam == VK_APPS
-			&& (!isPressed(VK_MENU) && !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
-			)
-		{
-			("->CConEmuCtrl");
-			if (messg == WM_KEYUP)
-			{
-				//Win-Apps
-				if (mp_VActive)
-				{
-					POINT ptCur = CalcTabMenuPos(mp_VActive);
-					mp_VActive->ShowPopupMenu(ptCur);
-				}
-			}
-			
-			return 0;
-		}
-		// WinAltEnter зарезервиновано 7-кой под запуск MediaPlayer, поэтому - "Ctrl-Win-Enter"
-		else if (wParam == VK_RETURN && isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_SHIFT))
-		{
-			("->CConEmuCtrl");
-			if (messg == WM_KEYUP)
-			{
-				OnAltEnter();
-			}
-
-			return 0;
-		}
-		else if (wParam == 'P' && isPressed(VK_MENU) && !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
-		{
-			("->CConEmuCtrl");
-			if (messg == WM_SYSKEYUP)
-				OnSysCommand(ghWnd, ID_SETTINGS, 0);
-
-			return 0;
-		}
-
-		TODO("Обработать другие комбинации. WinAltEnter, WinAltF9");
-		TODO("Возможно WinAltEnter вообще нужно регистрить глобально в системе, чтобы иметь Emergency popup?");
-	}
-#endif
-
 	// Теперь - можно переслать в консоль
 	if (mp_VActive && mp_VActive->RCon())
 	{
-		//#ifdef _DEBUG
-		//if (wParam == VK_LEFT) {
-		//	if (messg == WM_KEYDOWN)
-		//		OutputDebugString(L"VK_LEFT pressed\n");
-		//	else if (messg == WM_KEYUP)
-		//		OutputDebugString(L"VK_LEFT released\n");
-		//}
-		//#endif
 		mp_VActive->RCon()->OnKeyboard(hWnd, messg, wParam, lParam, szTranslatedChars);
 	}
 	else if (((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST))
@@ -10163,7 +9826,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	else
 	{
 		// Если вдруг активной консоли нету (вообще?) но клавиши обработать все-равно нада
-		ProcessHotKey(messg, wParam, lParam, szTranslatedChars, NULL);
+		ProcessHotKeyMsg(messg, wParam, lParam, szTranslatedChars, NULL);
 	}
 
 	return 0;
@@ -10183,109 +9846,6 @@ LRESULT CConEmuMain::OnKeyboardHook(DWORD VkMod)
 	}
 
 	return 0;
-	
-	//// Теперь собственно обработка
-	//if (vk>='1' && vk<='9')  // ##1..9
-	//	ConActivate(vk - '1');
-	//else if (vk=='0')  // #10.
-	//	ConActivate(9);
-	//else if (vk == gpSet->icMultiNext /* L'Q' */)  // Win-Q
-	//{
-	//	if (abReverse)
-	//	{
-	//		if (gpSet->IsHostkey(VK_SHIFT))
-	//			abReverse = false;
-//
-	//		//else if (!isPressed(VK_LSHIFT) || !isPressed(VK_RSHIFT)) -- не помню что хотел сказать, но это сбрасывало lbReverse
-	//		//	lbReverse = false;
-	//	}
-//
-	//	ConActivateNext(abReverse ? FALSE : TRUE);
-	//}
-	//else if (vk == gpSet->icMultiNew /* L'W' */)  // Win-W
-	//{
-	//	// Создать новую консоль
-	//	Recreate(FALSE, gpSet->isMultiNewConfirm);
-	//}
-	//else if (vk == gpSet->icMultiRecreate /* L'~' */)  // Win-~
-	//{
-	//	Recreate(TRUE, TRUE);
-	//}
-	//else if (vk == gpSet->icMultiClose /* Del */)  // Win-Del
-	//{
-	//	if (mp_VActive && mp_VActive->RCon())
-	//		mp_VActive->RCon()->CloseConsole(false, true);
-	//}
-	//else if (vk == gpSet->icMultiCmd /* X */)  // Win-X
-	//{
-	//	RConStartArgs args;
-	//	args.pszSpecialCmd = GetComspec(&gpSet->ComSpec); //lstrdup(L"cmd");
-	//	CreateCon(&args);
-	//}
-	//else if (gpSet->isUseWinArrows && (vk == VK_LEFT || vk == VK_RIGHT || vk == VK_UP || vk == VK_DOWN))
-	//{
-	//	if (mb_isFullScreen || isZoomed() || isIconic())
-	//	{
-	//		// ничего не делать
-	//	}
-	//	else
-	//	{
-	//		CVirtualConsole* pVCon = ActiveCon();
-	//		RECT rcWindow = {};
-	//		if (GetWindowRect(ghWnd, &rcWindow))
-	//		{
-	//			RECT rcMon = CalcRect(CER_MONITOR, rcWindow, CER_MONITOR, pVCon);
-	//			int nX = gpSetCls->FontWidth();
-	//			int nY = gpSetCls->FontHeight();
-	//			if (vk == VK_LEFT)
-	//			{
-	//				rcWindow.right = rcWindow.right - nX;
-	//			}
-	//			else if (vk == VK_RIGHT)
-	//			{
-	//				if ((rcWindow.right + nX) < rcMon.right)
-	//					rcWindow.right = rcWindow.right + nX;
-	//			}
-	//			else if (vk == VK_UP)
-	//			{	
-	//			rcWindow.bottom = rcWindow.bottom - nY;
-	//			}
-	//			else if (vk == VK_DOWN)
-	//			{
-	//				if ((rcWindow.bottom + nY) < rcMon.bottom)
-	//					rcWindow.bottom = rcWindow.bottom + nY;
-	//			}
-	//			
-	//			if (rcWindow.right > rcWindow.left && rcWindow.bottom > rcWindow.top)
-	//			{
-	//				MoveWindow(ghWnd, rcWindow.left, rcWindow.top,
-	//		           (rcWindow.right - rcWindow.left), (rcWindow.bottom - rcWindow.top), 1);
-	//			}
-	//		}
-	//		//
-	//		//CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
-	//		//if (pRCon)
-	//		//{
-	//		//	
-	//		//	//if (!pRCon->GuiWnd())
-	//		//	//{
-	//		//	//	
-	//		//	//}
-	//		//	//else
-	//		//	//{
-	//		//	//	// Ресайз в ГУИ режиме
-	//		//	//}
-	//		//}
-	//	}
-	//}
-	//else if (vk == gpSet->isCTSVkTextStart || vk == gpSet->isCTSVkBlockStart)
-	//{
-	//	// Начать текстовое или блоковое выделение
-	//	if (mp_VActive && mp_VActive->RCon())
-	//		mp_VActive->RCon()->StartSelection((vk == gpSet->isCTSVkTextStart));
-	//}
-//
-	//return 0;
 }
 
 void CConEmuMain::OnConsoleKey(WORD vk, LPARAM Mods)
@@ -10944,9 +10504,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		else if (messg == 0x020E/*WM_MOUSEHWHEEL*/)
 			vk =  (((short)(WORD)HIWORD(wParam)) > 0) ? VK_WHEEL_RIGHT : VK_WHEEL_LEFT; // Если MSDN не врет - проверить не на чем
 
-		// Зовем "виртуальное" кнопочное нажатие
-		if (vk && ProcessHotKey(WM_KEYDOWN, vk, 0, NULL, pRCon))
+		// Зовем "виртуальное" кнопочное нажатие (если назначено)
+		if (vk && ProcessHotKeyMsg(WM_KEYDOWN, vk, 0, NULL, pRCon))
 		{
+			// назначено, в консоль не пропускаем
 			return 0;
 		}
 	}
@@ -14400,32 +13961,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				OnAltF9(TRUE);
 				return 0;
 			}
-			#if 0
-			else if (messg == gpConEmu->mn_MsgActivateCon)
-			{
-				// Это у нас приходит от LLKeyHook
-				if (wParam >= 1 && wParam <= countof(mp_VCon))
-				{
-					gpConEmu->ProcessHotKey(WM_KEYDOWN, wParam, 0, 0, 0);
-					//gpConEmu->ConActivate((int)(wParam-1));
-				}
-
-				//if (gpSet->IsHostkeySingle(VK_LWIN))
-				//{
-				//	return gpConEmu->LowLevelKeyHook((UINT)wParam, (UINT)lParam);
-				//}
-				return 0;
-				//} else if (messg == gpConEmu->mn_MsgPostSetBackground) {
-				//	if (isValid((CVirtualConsole*)wParam))
-				//	{
-				//		((CVirtualConsole*)wParam)->SetBackgroundImageData((CESERVER_REQ_SETBACKGROUND*)lParam);
-				//	} else {
-				//		// Поскольку консоль уже была закрыта - нужно просто освободить данные
-				//		CESERVER_REQ_SETBACKGROUND* p = (CESERVER_REQ_SETBACKGROUND*)lParam;
-				//		free(p);
-				//	}
-			}
-			#endif
 			else if (messg == gpConEmu->mn_MsgInitInactiveDC)
 			{
 				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;

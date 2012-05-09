@@ -1,4 +1,5 @@
 
+#define HIDE_USE_EXCEPTION_INFO
 //#include "StdAfx.h"
 #include <shlobj.h>
 #include <tchar.h>

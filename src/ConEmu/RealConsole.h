@@ -323,6 +323,7 @@ class CRealConsole
 	public:
 		//BOOL FlushInputQueue(DWORD nTimeout = 500);
 		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
+		void ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false);
 		void OnFocus(BOOL abFocused);
@@ -418,7 +419,7 @@ class CRealConsole
 		void CloseTab();
 		bool isConsoleClosing();
 		void OnServerClosing(DWORD anSrvPID);
-		void Paste(bool abFirstLineOnly = false);
+		void Paste(bool abFirstLineOnly = false, LPCWSTR asText = NULL);
 		void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
 		void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
 		bool isActive();

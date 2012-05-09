@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // cbFARuseASCIIsort, cbFixAltOnAltTab
 
+#define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
 #include "Header.h"
@@ -385,7 +386,7 @@ void Settings::InitSettings()
 	isCTSMBtnAction = 0; // <None>
 	isCTSColorIndex = 0xE0;
 	isPasteConfirmEnter = true;
-	nPasteConfirmLonger = 1000;
+	nPasteConfirmLonger = 200;
 	isFarGotoEditor = true; //isFarGotoEditorVk = VK_LCONTROL;
 	isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
 	ilDragHeight = 10;
@@ -1153,30 +1154,7 @@ void Settings::PaletteDelete(LPCWSTR asName)
 	SavePalettes(NULL);
 }
 
-//bool Settings::LoadVkMod(SettingsBase* reg, const wchar_t *regName, DWORD &VkMod, DWORD Default)
-//{
-//	bool lb = reg->Load(regName, VkMod);
-//
-//	if (!lb)
-//	{
-//		VkMod = Default;
-//	}
-//	else
-//	{
-//		// Если успешно загрузили,
-//		// Это НЕ 0 (0 - значит HotKey не задан)
-//		// И это не DWORD (для HotKey без модификатора - пишется CEHOTKEY_NOMOD)
-//		// Т.к. раньше был Byte - нужно добавить nHostkeyModifier
-//		if (VkMod && ((VkMod & CEHOTKEY_MODMASK) == 0))
-//		{
-//			_ASSERTE(nHostkeyModifier!=0);
-//			VkMod |= (nHostkeyModifier << 8);
-//		}
-//	}
-//
-//	return lb;
-//}
-
+// Задать или сбросить модификатор в VkMod
 DWORD Settings::SetModifier(DWORD VkMod, BYTE Mod, bool Xor/*=true*/)
 {
 	DWORD AllMod = VkMod & CEHOTKEY_MODMASK;
@@ -1284,6 +1262,7 @@ DWORD Settings::SetModifier(DWORD VkMod, BYTE Mod, bool Xor/*=true*/)
 	return VkMod;
 }
 
+// // Вернуть назначенные модификаторы (idx = 1..3). Возвращает 0 (нету) или VK
 DWORD Settings::GetModifier(DWORD VkMod, int idx)
 {
 	DWORD Mod = VkMod & CEHOTKEY_MODMASK;
@@ -1331,6 +1310,7 @@ DWORD Settings::GetModifier(DWORD VkMod, int idx)
 	return Mod;
 }
 
+// Есть ли в этом (VkMod) хоткее - модификатор Mod (VK)
 bool Settings::HasModifier(DWORD VkMod, BYTE Mod/*VK*/)
 {
 	if (Mod && ((GetModifier(VkMod, 1) == Mod) || (GetModifier(VkMod, 2) == Mod) || (GetModifier(VkMod, 3) == Mod)))
@@ -1338,6 +1318,7 @@ bool Settings::HasModifier(DWORD VkMod, BYTE Mod/*VK*/)
 	return false;
 }
 
+// Извлечь сам VK
 DWORD Settings::GetHotkey(DWORD VkMod)
 {
 	return (VkMod & 0xFF);
@@ -2447,188 +2428,8 @@ bool Settings::isKeyboardHooks()
 	return (m_isKeyboardHooks == 1);
 }
 
-//bool Settings::CheckUpdatesWanted()
-//{
-//	if (UpdSet.isUpdateUseBuilds == 0)
-//	{
-//		int nBtn = MessageBox(NULL,
-//			L"Do you want to enable automatic updates? \n\n"
-//			L"You may change settings on 'Update' page of Settings dialog later"
-//			, gpConEmu->GetDefaultTitle(), MB_YESNOCANCEL|MB_ICONQUESTION);
-//
-//		if (nBtn == IDCANCEL)
-//		{
-//			return false;
-//		}
-//
-//		UpdSet.isUpdateCheckOnStartup = (nBtn == IDYES);
-//		UpdSet.isUpdateCheckHourly = false;
-//		UpdSet.isUpdateConfirmDownload = true;
-//		UpdSet.isUpdateUseBuilds = 2;
-//
-//		SettingsBase* reg = CreateSettings();
-//		if (!reg)
-//		{
-//			_ASSERTE(reg!=NULL);
-//		}
-//		else
-//		{
-//			if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
-//			{
-//				reg->Save(L"Update.CheckOnStartup", UpdSet.isUpdateCheckOnStartup);
-//				reg->Save(L"Update.CheckHourly", UpdSet.isUpdateCheckHourly);
-//				reg->Save(L"Update.ConfirmDownload", UpdSet.isUpdateConfirmDownload);
-//				reg->Save(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds);
-//				reg->CloseKey();
-//			}
-//
-//			delete reg;
-//		}
-//	}
-//
-//	return (UpdSet.isUpdateUseBuilds != 0);
-//}
-
-//bool Settings::IsHostkey(WORD vk)
-//{
-//	for(int i=0; i < 15 && mn_HostModOk[i]; i++)
-//		if (mn_HostModOk[i] == vk)
-//			return true;
-//
-//	return false;
-//}
-
-// Если есть vk - заменить на vkNew
-//void Settings::ReplaceHostkey(BYTE vk, BYTE vkNew)
-//{
-//	for(int i = 0; i < 15; i++)
-//	{
-//		if (gpSet->mn_HostModOk[i] == vk)
-//		{
-//			gpSet->mn_HostModOk[i] = vkNew;
-//			return;
-//		}
-//	}
-//}
-
-//void Settings::AddHostkey(BYTE vk)
-//{
-//	for(int i = 0; i < 15; i++)
-//	{
-//		if (gpSet->mn_HostModOk[i] == vk)
-//			break; // уже есть
-//
-//		if (!gpSet->mn_HostModOk[i])
-//		{
-//			gpSet->mn_HostModOk[i] = vk; // добавить
-//			break;
-//		}
-//	}
-//}
-
-//BYTE Settings::CheckHostkeyModifier(BYTE vk)
-//{
-//	// Если передан VK_NULL
-//	if (!vk)
-//		return 0;
-//
-//	switch(vk)
-//	{
-//		case VK_LWIN: case VK_RWIN:
-//
-//			if (gpSet->IsHostkey(VK_RWIN))
-//				ReplaceHostkey(VK_RWIN, VK_LWIN);
-//
-//			vk = VK_LWIN; // Сохраняем только Левый-Win
-//			break;
-//		case VK_APPS:
-//			break; // Это - ок
-//		case VK_LSHIFT:
-//
-//			if (gpSet->IsHostkey(VK_RSHIFT) || gpSet->IsHostkey(VK_SHIFT))
-//			{
-//				vk = VK_SHIFT;
-//				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
-//			}
-//
-//			break;
-//		case VK_RSHIFT:
-//
-//			if (gpSet->IsHostkey(VK_LSHIFT) || gpSet->IsHostkey(VK_SHIFT))
-//			{
-//				vk = VK_SHIFT;
-//				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
-//			}
-//
-//			break;
-//		case VK_SHIFT:
-//
-//			if (gpSet->IsHostkey(VK_LSHIFT))
-//				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
-//			else if (gpSet->IsHostkey(VK_RSHIFT))
-//				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
-//
-//			break;
-//		case VK_LMENU:
-//
-//			if (gpSet->IsHostkey(VK_RMENU) || gpSet->IsHostkey(VK_MENU))
-//			{
-//				vk = VK_MENU;
-//				ReplaceHostkey(VK_RMENU, VK_MENU);
-//			}
-//
-//			break;
-//		case VK_RMENU:
-//
-//			if (gpSet->IsHostkey(VK_LMENU) || gpSet->IsHostkey(VK_MENU))
-//			{
-//				vk = VK_MENU;
-//				ReplaceHostkey(VK_LMENU, VK_MENU);
-//			}
-//
-//			break;
-//		case VK_MENU:
-//
-//			if (gpSet->IsHostkey(VK_LMENU))
-//				ReplaceHostkey(VK_LMENU, VK_MENU);
-//			else if (gpSet->IsHostkey(VK_RMENU))
-//				ReplaceHostkey(VK_RMENU, VK_MENU);
-//
-//			break;
-//		case VK_LCONTROL:
-//
-//			if (gpSet->IsHostkey(VK_RCONTROL) || gpSet->IsHostkey(VK_CONTROL))
-//			{
-//				vk = VK_CONTROL;
-//				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
-//			}
-//
-//			break;
-//		case VK_RCONTROL:
-//
-//			if (gpSet->IsHostkey(VK_LCONTROL) || gpSet->IsHostkey(VK_CONTROL))
-//			{
-//				vk = VK_CONTROL;
-//				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
-//			}
-//
-//			break;
-//		case VK_CONTROL:
-//
-//			if (gpSet->IsHostkey(VK_LCONTROL))
-//				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
-//			else if (gpSet->IsHostkey(VK_RCONTROL))
-//				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
-//
-//			break;
-//	}
-//
-//	// Добавить в список входящих в Host
-//	AddHostkey(vk);
-//	// Вернуть (возможно измененный) VK
-//	return vk;
-//}
-
+// nHostMod в младших 3-х байтах может содержать VK (модификаторы).
+// Функция проверяет, чтобы они не дублировались
 void Settings::TestHostkeyModifiers(DWORD& nHostMod)
 {
 	//memset(mn_HostModOk, 0, sizeof(mn_HostModOk));
@@ -2714,109 +2515,6 @@ void Settings::TestHostkeyModifiers(DWORD& nHostMod)
 	}
 }
 
-//bool Settings::MakeHostkeyModifier()
-//{
-//	bool lbChanged = false;
-//	// Сформировать (возможно скорректированную) маску HostKey
-//	DWORD nNew = 0;
-//
-//	if (gpSet->mn_HostModOk[0])
-//		nNew |= gpSet->mn_HostModOk[0];
-//
-//	if (gpSet->mn_HostModOk[1])
-//		nNew |= ((DWORD)(gpSet->mn_HostModOk[1])) << 8;
-//
-//	if (gpSet->mn_HostModOk[2])
-//		nNew |= ((DWORD)(gpSet->mn_HostModOk[2])) << 16;
-//
-//	if (gpSet->mn_HostModOk[3])
-//		nNew |= ((DWORD)(gpSet->mn_HostModOk[3])) << 24;
-//
-//	TODO("!!! Добавить в mn_HostModSkip те VK, которые отсутствуют в mn_HostModOk");
-//
-//	if (gpSet->nMultiHotkeyModifier != nNew)
-//	{
-//		gpSet->nMultiHotkeyModifier = nNew;
-//		lbChanged = true;
-//	}
-//
-//	return lbChanged;
-//}
-
-//// Оставить в mn_HostModOk только 3 VK
-//void Settings::TrimHostkeys()
-//{
-//	if (gpSet->mn_HostModOk[0] == 0)
-//		return;
-//
-//	int i = 0;
-//
-//	while (++i < 15 && gpSet->mn_HostModOk[i])
-//		;
-//
-//	// Если вдруг задали более 3-х модификаторов - обрезать, оставив 3 последних
-//	if (i > 3)
-//	{
-//		if (i >= (int)countof(gpSet->mn_HostModOk))
-//		{
-//			_ASSERTE(i < countof(gpSet->mn_HostModOk));
-//			i = countof(gpSet->mn_HostModOk) - 1;
-//		}
-//		memmove(gpSet->mn_HostModOk, gpSet->mn_HostModOk+i-3, 3); //-V112
-//	}
-//
-//	memset(gpSet->mn_HostModOk+3, 0, sizeof(gpSet->mn_HostModOk)-3);
-//}
-
-//bool Settings::isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR)
-//{
-//	if (vk == vkC)
-//	{
-//		bool bLeft  = isPressed(vkL);
-//		bool bRight = isPressed(vkR);
-//
-//		if (bLeft && !bRight)
-//			return (nMultiHotkeyModifier == vkL);
-//
-//		if (bRight && !bLeft)
-//			return (nMultiHotkeyModifier == vkR);
-//
-//		// нажатие обоих шифтов - игнорируем
-//		return false;
-//	}
-//
-//	if (vk == vkL)
-//		return (nMultiHotkeyModifier == vkL);
-//
-//	if (vk == vkR)
-//		return (nMultiHotkeyModifier == vkR);
-//
-//	return false;
-//}
-
-//bool Settings::IsHostkeySingle(WORD vk)
-//{
-//	if (nMultiHotkeyModifier > 0xFF)
-//		return false; // в Host-комбинации больше одной клавиши
-//
-//	if (vk == VK_LWIN || vk == VK_RWIN)
-//		return (nMultiHotkeyModifier == VK_LWIN);
-//
-//	if (vk == VK_APPS)
-//		return (nMultiHotkeyModifier == VK_APPS);
-//
-//	if (vk == VK_SHIFT || vk == VK_LSHIFT || vk == VK_RSHIFT)
-//		return isHostkeySingleLR(vk, VK_SHIFT, VK_LSHIFT, VK_RSHIFT);
-//
-//	if (vk == VK_CONTROL || vk == VK_LCONTROL || vk == VK_RCONTROL)
-//		return isHostkeySingleLR(vk, VK_CONTROL, VK_LCONTROL, VK_RCONTROL);
-//
-//	if (vk == VK_MENU || vk == VK_LMENU || vk == VK_RMENU)
-//		return isHostkeySingleLR(vk, VK_MENU, VK_LMENU, VK_RMENU);
-//
-//	return false;
-//}
-
 // набор флагов MOD_xxx для RegisterHotKey
 DWORD Settings::GetHotKeyMod(DWORD VkMod)
 {
@@ -2850,6 +2548,7 @@ DWORD Settings::GetHotKeyMod(DWORD VkMod)
 	return nMOD;
 }
 
+// Сервисная функция для инициализации. Формирует готовый VkMod
 DWORD Settings::MakeHotKey(BYTE Vk, BYTE vkMod1/*=0*/, BYTE vkMod2/*=0*/, BYTE vkMod3/*=0*/)
 {
 	DWORD vkHotKey = Vk;
@@ -3944,6 +3643,8 @@ bool Settings::CmdTaskXch(int anIndex1, int anIndex2)
 	return true;
 }
 
+// Вернуть заданный VkMod, или 0 если не задан
+// nDescrID = vkXXX (e.g. vkMinimizeRestore)
 DWORD Settings::GetHotkeyById(int nDescrID)
 {
 	if (!gpSetCls || !gpSetCls->m_HotKeys)
@@ -3956,24 +3657,28 @@ DWORD Settings::GetHotkeyById(int nDescrID)
 
 	for (int j = -1;; j++)
 	{
-		int i = j;
+		ConEmuHotKey *ppHK;
 
 		if (j == -1)
 		{
 			if (iLastFound == -1)
 				continue;
 			else
-				i = iLastFound;
+				ppHK = (gpSetCls->m_HotKeys + iLastFound);
+		}
+		else
+		{
+			ppHK = (gpSetCls->m_HotKeys + j);
 		}
 
-		if (!gpSetCls->m_HotKeys[i].DescrLangID)
+		if (!ppHK->DescrLangID)
 			break;
 
-		if (gpSetCls->m_HotKeys[i].DescrLangID == nDescrID)
+		if (ppHK->DescrLangID == nDescrID)
 		{
-			iLastFound = i;
-			DWORD VkMod = gpSetCls->m_HotKeys[i].VkMod;
-			if (gpSetCls->m_HotKeys[i].HkType == chk_Modifier)
+			iLastFound = (int)(ppHK - gpSetCls->m_HotKeys);
+			DWORD VkMod = ppHK->VkMod;
+			if (ppHK->HkType == chk_Modifier)
 			{
 				_ASSERTE(VkMod == GetHotkey(VkMod));
 				VkMod = GetHotkey(VkMod); // младший байт
@@ -3985,12 +3690,17 @@ DWORD Settings::GetHotkeyById(int nDescrID)
 	return 0;
 }
 
+// Проверить, задан ли этот hotkey
+// nDescrID = vkXXX (e.g. vkMinimizeRestore)
 bool Settings::IsHotkey(int nDescrID)
 {
 	DWORD nVk = GetHotkey(GetHotkeyById(nDescrID));
 	return (nVk != 0);
 }
 
+// Установить новый hotkey
+// nDescrID = vkXXX (e.g. vkMinimizeRestore)
+// VkMod = LOBYTE - VK, старшие три байта - модификаторы (тоже VK)
 void Settings::SetHotkeyById(int nDescrID, DWORD VkMod)
 {
 	if (!gpSetCls || !gpSetCls->m_HotKeys)
@@ -3999,14 +3709,71 @@ void Settings::SetHotkeyById(int nDescrID, DWORD VkMod)
 		return;
 	}
 
-	for (int i = 0; gpSetCls->m_HotKeys[i].DescrLangID; i++)
+	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
 	{
-		if (gpSetCls->m_HotKeys[i].DescrLangID == nDescrID)
+		if (ppHK->DescrLangID == nDescrID)
 		{
-			gpSetCls->m_HotKeys[i].VkMod = VkMod;
+			ppHK->VkMod = VkMod;
 			break;
 		}
 	}
+}
+
+bool Settings::isModifierExist(BYTE Mod/*VK*/, bool abStrictSingle /*= false*/)
+{
+	if (!gpSetCls || !gpSetCls->m_HotKeys)
+	{
+		_ASSERTE(gpSetCls && gpSetCls->m_HotKeys);
+		return false;
+	}
+
+	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
+	{
+		if (ppHK->VkMod == 0)
+			continue;
+
+		if (ppHK->HkType == chk_Modifier)
+		{
+			if (GetHotkey(ppHK->VkMod) == Mod)
+				return true;
+		}
+		else if (!abStrictSingle)
+		{
+			if (HasModifier(ppHK->VkMod, Mod))
+				return true;
+		}
+		else
+		{
+			if ((GetModifier(ppHK->VkMod, 1) == Mod) && !GetModifier(ppHK->VkMod, 2))
+				return true;
+		}
+	}
+
+	return false;
+}
+
+// Есть ли такой хоткей или модификатор (актуально для VK_APPS)
+bool Settings::isKeyOrModifierExist(BYTE Mod/*VK*/)
+{
+	if (!gpSetCls || !gpSetCls->m_HotKeys)
+	{
+		_ASSERTE(gpSetCls && gpSetCls->m_HotKeys);
+		return false;
+	}
+
+	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
+	{
+		if (ppHK->VkMod == 0)
+			continue;
+
+		if (ppHK->HkType == chk_Modifier)
+			continue; // эти не рассматриваем
+
+		if ((GetHotkey(ppHK->VkMod) == Mod) || HasModifier(ppHK->VkMod, Mod))
+			return true;
+	}
+
+	return false;
 }
 
 void Settings::LoadHotkeys(SettingsBase* reg)
@@ -4023,48 +3790,48 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 
 	wchar_t szMacroName[80];
 
-	for (int i = 0; gpSetCls->m_HotKeys[i].DescrLangID; i++)
+	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
 	{
-		if (!*gpSetCls->m_HotKeys[i].Name)
+		if (!*ppHK->Name)
 			continue;
 		
 		// Эти модификаторы раньше в настройке не сохранялись, для совместимости - добавляем VK_SHIFT к предыдущей
-		switch (gpSetCls->m_HotKeys[i].DescrLangID)
+		switch (ppHK->DescrLangID)
 		{
 		case vkMultiNewShift:
-			_ASSERTE(gpSetCls->m_HotKeys[i-1].DescrLangID == vkMultiNew);
-			gpSetCls->m_HotKeys[i].VkMod = SetModifier(gpSetCls->m_HotKeys[i-1].VkMod,VK_SHIFT, true/*Xor*/);
+			_ASSERTE((*(ppHK-1)).DescrLangID == vkMultiNew);
+			ppHK->VkMod = SetModifier((*(ppHK-1)).VkMod,VK_SHIFT, true/*Xor*/);
 			break;
 		case vkMultiNextShift:
-			_ASSERTE(gpSetCls->m_HotKeys[i-1].DescrLangID == vkMultiNext);
-			gpSetCls->m_HotKeys[i].VkMod = SetModifier(gpSetCls->m_HotKeys[i-1].VkMod,VK_SHIFT, true/*Xor*/);
+			_ASSERTE((*(ppHK-1)).DescrLangID == vkMultiNext);
+			ppHK->VkMod = SetModifier((*(ppHK-1)).VkMod,VK_SHIFT, true/*Xor*/);
 			break;
 		}
 
-		_ASSERTE(gpSetCls->m_HotKeys[i].HkType != chk_NumHost);
-		_ASSERTE(gpSetCls->m_HotKeys[i].HkType != chk_ArrHost);
-		_ASSERTE(gpSetCls->m_HotKeys[i].HkType != chk_System);
+		_ASSERTE(ppHK->HkType != chk_NumHost);
+		_ASSERTE(ppHK->HkType != chk_ArrHost);
+		_ASSERTE(ppHK->HkType != chk_System);
 
-		reg->Load(gpSetCls->m_HotKeys[i].Name, gpSetCls->m_HotKeys[i].VkMod);
+		reg->Load(ppHK->Name, ppHK->VkMod);
 
-		if (gpSetCls->m_HotKeys[i].HkType != chk_Modifier)
+		if (ppHK->HkType != chk_Modifier)
 		{
 			// Если это НЕ 0 (0 - значит HotKey не задан)
 			// И это не DWORD (для HotKey без модификатора - пишется CEHOTKEY_NOMOD)
 			// Т.к. раньше был Byte - нужно добавить nHostkeyModifier
-			if (gpSetCls->m_HotKeys[i].VkMod && ((gpSetCls->m_HotKeys[i].VkMod & CEHOTKEY_MODMASK) == 0))
+			if (ppHK->VkMod && ((ppHK->VkMod & CEHOTKEY_MODMASK) == 0))
 			{
 				// Добавляем тот модификатор, который был раньше общий
 				_ASSERTE(nHostkeyNumberModifier!=0);
-				gpSetCls->m_HotKeys[i].VkMod |= (nHostkeyNumberModifier << 8);
+				ppHK->VkMod |= (nHostkeyNumberModifier << 8);
 			}
 		}
 
-		if (gpSetCls->m_HotKeys[i].HkType == chk_Macro)
+		if (ppHK->HkType == chk_Macro)
 		{
-			wcscpy_c(szMacroName, gpSetCls->m_HotKeys[i].Name);
+			wcscpy_c(szMacroName, ppHK->Name);
 			wcscat_c(szMacroName, L".Text");
-			reg->Load(szMacroName, &gpSetCls->m_HotKeys[i].GuiMacro);
+			reg->Load(szMacroName, &ppHK->GuiMacro);
 		}
 	}
 }
@@ -4082,28 +3849,28 @@ void Settings::SaveHotkeys(SettingsBase* reg)
 
 	wchar_t szMacroName[80];
 
-	for (int i = 0; gpSetCls->m_HotKeys[i].DescrLangID; i++)
+	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
 	{
-		if (!*gpSetCls->m_HotKeys[i].Name)
+		if (!*ppHK->Name)
 			continue;
 		
-		if ((gpSetCls->m_HotKeys[i].HkType == chk_Modifier)
-			|| (gpSetCls->m_HotKeys[i].HkType == chk_NumHost)
-			|| (gpSetCls->m_HotKeys[i].HkType == chk_ArrHost))
+		if ((ppHK->HkType == chk_Modifier)
+			|| (ppHK->HkType == chk_NumHost)
+			|| (ppHK->HkType == chk_ArrHost))
 		{
-			_ASSERTE(gpSetCls->m_HotKeys[i].VkMod == (gpSetCls->m_HotKeys[i].VkMod & 0xFF));
-			BYTE Mod = (BYTE)(gpSetCls->m_HotKeys[i].VkMod & 0xFF);
-			reg->Save(gpSetCls->m_HotKeys[i].Name, Mod);
+			_ASSERTE(ppHK->VkMod == (ppHK->VkMod & 0xFF));
+			BYTE Mod = (BYTE)(ppHK->VkMod & 0xFF);
+			reg->Save(ppHK->Name, Mod);
 		}
 		else
 		{
-			reg->Save(gpSetCls->m_HotKeys[i].Name, gpSetCls->m_HotKeys[i].VkMod);
+			reg->Save(ppHK->Name, ppHK->VkMod);
 
-			if (gpSetCls->m_HotKeys[i].HkType == chk_Macro)
+			if (ppHK->HkType == chk_Macro)
 			{
-				wcscpy_c(szMacroName, gpSetCls->m_HotKeys[i].Name);
+				wcscpy_c(szMacroName, ppHK->Name);
 				wcscat_c(szMacroName, L".Text");
-				reg->Save(szMacroName, gpSetCls->m_HotKeys[i].GuiMacro);
+				reg->Save(szMacroName, ppHK->GuiMacro);
 			}
 		}
 	}
@@ -4182,7 +3949,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		// System (predefined, fixed)
 		{vkWinAltP,        chk_System, NULL, L"", MakeHotKey('P',VK_LWIN,VK_MENU), CConEmuCtrl::key_Settings, true/*OnKeyUp*/}, // Settings
 		{vkWinAltSpace,    chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_LWIN,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
-		{vkWinApps,        chk_System, NULL, L"", MakeHotKey(VK_APPS,VK_LWIN), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
+		{vkAppsSpace,      chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_APPS), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
 		{vkAltF9,          chk_System, NULL, L"", MakeHotKey(VK_F9,VK_MENU), CConEmuCtrl::key_AltF9}, // Maximize window
 		{vkCtrlWinAltSpace,chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_CONTROL,VK_LWIN,VK_MENU), CConEmuCtrl::key_ShowRealConsole}, // Show real console
 		{vkAltEnter,       chk_System, NULL, L"", MakeHotKey(VK_RETURN,VK_MENU), CConEmuCtrl::key_AltEnter}, // Full screen

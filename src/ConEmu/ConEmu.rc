@@ -915,8 +915,8 @@ BEGIN
     GROUPBOX        "",IDC_STATIC,110,149,208,29
     CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,163,102,8
     CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,219,163,95,8
-    CONTROL         "Handle pasting text (excepting Far and GUI applications)",cbClipboardOverride,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,148,197,10
+    CONTROL         "Pasting text override (excepting Far and GUI applications)",cbClipboardOverride,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,148,202,10
 END
 
 

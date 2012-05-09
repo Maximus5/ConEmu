@@ -56,7 +56,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
     * commonly abbreviated RLM
 */
 
-
+#define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 #ifdef _DEBUG
 //#define SHOWDEBUGSTEPS

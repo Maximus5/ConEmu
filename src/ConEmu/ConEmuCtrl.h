@@ -30,14 +30,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct ConEmuHotKey;
 
+// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
+extern const ConEmuHotKey* ConEmuSkipHotKey; // = ((ConEmuHotKey*)INVALID_HANDLE_VALUE)
+
+
 class CConEmuCtrl
 {
 public:
 	CConEmuCtrl();
 	virtual ~CConEmuCtrl();
 
-	bool ProcessHotKey(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, CRealConsole* pRCon);
+	bool ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, CRealConsole* pRCon);
 	const ConEmuHotKey* ProcessHotKey(DWORD VkMod, bool bKeyDown, const wchar_t *pszChars, CRealConsole* pRCon);
+
+	void UpdateControlKeyState();
+	DWORD GetControlKeyState(LPARAM lParam);
+
+	void FixSingleModifier(DWORD Vk, CRealConsole* pRCon);
 
 	static void TabCommand(ConEmuTabCommand nTabCmd);
 	static size_t GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs);
@@ -45,6 +54,18 @@ public:
 protected:
 	BOOL mb_InWinTabSwitch;
 	BOOL mb_InCtrlTabSwitch;
+
+private:
+	DWORD dwControlKeyState;
+	bool bWin, bApps;
+	bool bCaps, bNum, bScroll;
+	bool bLAlt, bRAlt;
+	bool bLCtrl, bRCtrl;
+	bool bLShift, bRShift;
+	DWORD mn_LastSingleModifier, mn_SingleModifierFixKey, mn_SingleModifierFixState;
+	BOOL mb_LastSingleModifier;
+
+	UINT m_SkippedMsg; WPARAM m_SkippedMsgWParam; LPARAM m_SkippedMsgLParam;
 
 public:
 	// true-обработали, false-пропустить в консоль
