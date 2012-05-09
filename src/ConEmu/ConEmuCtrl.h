@@ -51,6 +51,11 @@ public:
 	static void TabCommand(ConEmuTabCommand nTabCmd);
 	static size_t GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs);
 
+	static void DoFindText(int nDirection, CRealConsole* pRCon = NULL);
+
+	void SkipOneAppsRelease(bool abSkip);
+
+
 protected:
 	BOOL mb_InWinTabSwitch;
 	BOOL mb_InCtrlTabSwitch;
@@ -66,6 +71,10 @@ private:
 	BOOL mb_LastSingleModifier;
 
 	UINT m_SkippedMsg; WPARAM m_SkippedMsgWParam; LPARAM m_SkippedMsgLParam;
+
+	static bool mb_SkipOneAppsRelease;
+	static HHOOK mh_SkipOneAppsRelease;
+	static LRESULT CALLBACK SkipOneAppsReleaseHook(int code, WPARAM wParam, LPARAM lParam);
 
 public:
 	// true-обработали, false-пропустить в консоль
@@ -110,6 +119,8 @@ public:
 	static bool WINAPI key_PasteTextAllApp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_PasteFirstLine(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_PasteFirstLineAllApp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
+	// Find text
+	static bool WINAPI key_FindTextDlg(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 
 public:
 	// Все что ниже - было привязано к "HostKey"

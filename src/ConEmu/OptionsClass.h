@@ -429,8 +429,14 @@ class CSettings
 		LRESULT OnActivityLogNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		void FillHotKeysList(HWND hWnd2, BOOL abInitial);
 		LRESULT OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		static int CALLBACK HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
+	public:
+		void FindTextDialog();
+		static INT_PTR CALLBACK findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		void UpdateFindDlgAlpha(bool abForce = false);
+		HWND mh_FindDlg;
 	private:
 		bool GetColorById(WORD nID, COLORREF* color);
 		bool SetColorById(WORD nID, COLORREF color);
@@ -581,8 +587,6 @@ class CSettings
 		};
 		void debugLogCommand(HWND hWnd2, LogCommandsData* apData);
 		
-		static void GetVkKeyName(BYTE vk, wchar_t (&szName)[128]);
-
 		enum ConEmuSetupItemType
 		{
 			sit_Bool      = 1,

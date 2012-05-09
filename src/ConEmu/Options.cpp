@@ -413,6 +413,11 @@ void Settings::InitSettings()
 	isKeyBarRClick = true;
 	isDebugSteps = true;
 	MCHKHEAP
+	FindOptions.bMatchCase = false;
+	FindOptions.bMatchWholeWords = false;
+	FindOptions.bFreezeConsole = true;
+	FindOptions.bHighlightAll = true;
+	FindOptions.bTransparent = true;
 	// Thumbnails
 	memset(&ThSet, 0, sizeof(ThSet));
 	ThSet.cbSize = sizeof(ThSet);
@@ -1318,6 +1323,179 @@ bool Settings::HasModifier(DWORD VkMod, BYTE Mod/*VK*/)
 	return false;
 }
 
+// Вернуть имя модификатора (типа "Apps+Space")
+LPCWSTR Settings::GetHotkeyName(const ConEmuHotKey* ppHK, wchar_t (&szFull)[128])
+{
+	wchar_t szName[32];
+	szFull[0] = 0;
+
+	DWORD VkMod = 0;
+	
+	switch (ppHK->HkType)
+	{
+	case chk_Global:
+	case chk_User:
+		VkMod = ppHK->VkMod;
+		break;
+	case chk_Macro:
+		VkMod = ppHK->VkMod;
+		break;
+	case chk_Modifier:
+		VkMod = ppHK->VkMod;
+		break;
+	case chk_NumHost:
+		_ASSERTE((ppHK->VkMod & CEHOTKEY_MODMASK) == CEHOTKEY_NUMHOSTKEY);
+		VkMod = (ppHK->VkMod & 0xFF) | (gpSet->nHostkeyNumberModifier << 8);
+		break;
+	case chk_ArrHost:
+		_ASSERTE((ppHK->VkMod & CEHOTKEY_MODMASK) == CEHOTKEY_ARRHOSTKEY);
+		VkMod = (ppHK->VkMod & 0xFF) | (gpSet->nHostkeyArrowModifier << 8);
+		break;
+	case chk_System:
+		VkMod = ppHK->VkMod;
+		break;
+	default:
+		// Неизвестный тип!
+		_ASSERTE(ppHK->HkType == chk_User);
+		VkMod = 0;
+	}
+
+	if (GetHotkey(VkMod) == 0)
+	{
+		szFull[0] = 0; // Поле "Кнопка" оставляем пустым
+	}
+	else if (ppHK->HkType != chk_Modifier)
+	{
+		for (int k = 1; k <= 3; k++)
+		{
+			DWORD vk = (ppHK->HkType == chk_Modifier) ? VkMod : GetModifier(VkMod, k);
+			if (vk)
+			{
+				GetVkKeyName(vk, szName);
+				if (szFull[0])
+					wcscat_c(szFull, L"+");
+				wcscat_c(szFull, szName);
+			}
+		}
+	}
+	
+	szName[0] = 0;
+	GetVkKeyName(GetHotkey(VkMod), szName);
+	
+	if (szName[0])
+	{
+		if (szFull[0])
+			wcscat_c(szFull, L"+");
+		wcscat_c(szFull, szName);
+	}
+	else
+	{
+		wcscpy_c(szFull, L"<None>");
+	}
+
+	return szFull;
+}
+
+void Settings::GetVkKeyName(BYTE vk, wchar_t (&szName)[32])
+{
+	szName[0] = 0;
+
+	switch (vk)
+	{
+	case 0:
+		break;
+	case VK_LWIN:
+	case VK_RWIN:
+		wcscat_c(szName, L"Win"); break;
+	case VK_CONTROL:
+		wcscat_c(szName, L"Ctrl"); break;
+	case VK_LCONTROL:
+		wcscat_c(szName, L"LCtrl"); break;
+	case VK_RCONTROL:
+		wcscat_c(szName, L"RCtrl"); break;
+	case VK_MENU:
+		wcscat_c(szName, L"Alt"); break;
+	case VK_LMENU:
+		wcscat_c(szName, L"LAlt"); break;
+	case VK_RMENU:
+		wcscat_c(szName, L"RAlt"); break;
+	case VK_SHIFT:
+		wcscat_c(szName, L"Shift"); break;
+	case VK_LSHIFT:
+		wcscat_c(szName, L"LShift"); break;
+	case VK_RSHIFT:
+		wcscat_c(szName, L"RShift"); break;
+	case VK_APPS:
+		wcscat_c(szName, L"Apps"); break;
+	case VK_LEFT:
+		wcscat_c(szName, L"Left"); break;
+	case VK_RIGHT:
+		wcscat_c(szName, L"Right"); break;
+	case VK_UP:
+		wcscat_c(szName, L"Up"); break;
+	case VK_DOWN:
+		wcscat_c(szName, L"Down"); break;
+	case VK_PRIOR:
+		wcscat_c(szName, L"PgUp"); break;
+	case VK_NEXT:
+		wcscat_c(szName, L"PgDn"); break;
+	case VK_SPACE:
+		wcscat_c(szName, L"Space"); break;
+	case VK_TAB:
+		wcscat_c(szName, L"Tab"); break;
+	case VK_ESCAPE:
+		wcscat_c(szName, L"Esc"); break;
+	case VK_INSERT:
+		wcscat_c(szName, L"Insert"); break;
+	case VK_DELETE:
+		wcscat_c(szName, L"Delete"); break;
+	case VK_HOME:
+		wcscat_c(szName, L"Home"); break;
+	case VK_END:
+		wcscat_c(szName, L"End"); break;
+	case VK_PAUSE:
+		wcscat_c(szName, L"Pause"); break;
+	case VK_RETURN:
+		wcscat_c(szName, L"Enter"); break;
+	case VK_BACK:
+		wcscat_c(szName, L"Backspace"); break;
+	case 0xbd:
+		wcscat_c(szName, L"-_"); break;
+	case 0xbb:
+		wcscat_c(szName, L"+="); break;
+
+	case VK_WHEEL_UP:
+		wcscat_c(szName, L"WheelUp"); break;
+	case VK_WHEEL_DOWN:
+		wcscat_c(szName, L"WheelDown"); break;
+	case VK_WHEEL_LEFT:
+		wcscat_c(szName, L"WheelLeft"); break;
+	case VK_WHEEL_RIGHT:
+		wcscat_c(szName, L"WheelRight"); break;
+
+	default:
+		if (vk >= VK_F1 && vk <= VK_F24)
+		{
+			_wsprintf(szName, SKIPLEN(countof(szName)) L"F%u", (DWORD)vk-VK_F1+1);
+		}
+		else if ((vk >= (BYTE)'A' && vk <= (BYTE)'Z') || (vk >= (BYTE)'0' && vk <= (BYTE)'9'))
+		{
+			szName[0] = vk;
+			szName[1] = 0;
+		}
+		else
+		{
+			szName[0] = MapVirtualKey(vk, MAPVK_VK_TO_CHAR);
+			szName[1] = 0;
+			//BYTE States[256] = {};
+			//// Скорее всго не сработает
+			//if (!ToUnicode(vk, 0, States, szName, countof(szName), 0))
+			//	_wsprintf(szName, SKIPLEN(countof(szName)) L"<%u>", (DWORD)vk);
+			// есть еще if (!GetKeyNameText((LONG)(DWORD)*m_HotKeys[i].VkPtr, szName, countof(szName)))
+		}
+	}
+}
+
 // Извлечь сам VK
 DWORD Settings::GetHotkey(DWORD VkMod)
 {
@@ -1740,6 +1918,15 @@ void Settings::LoadSettings()
 
 		reg->Load(L"DisableAllFlashing", isDisableAllFlashing); if (isDisableAllFlashing>2) isDisableAllFlashing = 2;
 
+		/* FindText: bMatchCase, bMatchWholeWords, bFreezeConsole, bHighlightAll */
+		reg->Load(L"FindText", &FindOptions.pszText);
+		reg->Load(L"FindMatchCase", FindOptions.bMatchCase);
+		reg->Load(L"FindMatchWholeWords", FindOptions.bMatchWholeWords);
+		reg->Load(L"FindFreezeConsole", FindOptions.bFreezeConsole);
+		reg->Load(L"FindHighlightAll", FindOptions.bHighlightAll);
+		reg->Load(L"FindTransparent", FindOptions.bTransparent);
+
+
 		/* *********** Thumbnails and Tiles ************* */
 		reg->Load(L"PanView.BackColor", ThSet.crBackground.RawColor);
 
@@ -1992,6 +2179,36 @@ void Settings::SaveConsoleFont()
 	}
 
 	delete reg;
+}
+
+void Settings::SaveFindOptions(SettingsBase* reg/* = NULL*/)
+{
+	bool bDelete = (reg == NULL);
+	if (!reg)
+	{
+		reg = CreateSettings();
+		if (!reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE, TRUE))
+		{
+			delete reg;
+			return;
+		}
+	}
+	
+	reg->Save(L"FindText", FindOptions.pszText);
+	reg->Save(L"FindMatchCase", FindOptions.bMatchCase);
+	reg->Save(L"FindMatchWholeWords", FindOptions.bMatchWholeWords);
+#if 0
+	// пока не работает - не сохраняем
+	reg->Save(L"FindFreezeConsole", FindOptions.bFreezeConsole);
+	reg->Save(L"FindHighlightAll", FindOptions.bHighlightAll);
+#endif
+	reg->Save(L"FindTransparent", FindOptions.bTransparent);
+
+	if (bDelete)
+	{
+		reg->CloseKey();
+		delete reg;
+	}
 }
 
 void Settings::UpdateMargins(RECT arcMargins)
@@ -2321,6 +2538,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"SleepInBackground", isSleepInBackground);
 		reg->Save(L"DisableFarFlashing", isDisableFarFlashing);
 		reg->Save(L"DisableAllFlashing", isDisableAllFlashing);
+		/* FindText: bMatchCase, bMatchWholeWords, bFreezeConsole, bHighlightAll */
+		SaveFindOptions(reg);
 		/* *********** Thumbnails and Tiles ************* */
 		reg->Save(L"PanView.BackColor", ThSet.crBackground.RawColor);
 		reg->Save(L"PanView.PFrame", ThSet.nPreviewFrame);
@@ -3906,6 +4125,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkShowTabsList,   chk_User,  NULL,    L"Multi.ShowTabsList",    MakeHotKey(VK_F12), CConEmuCtrl::key_ShowTabsList},
 		{vkPasteText,      chk_User,  NULL,    L"ClipboardVkAllLines",   MakeHotKey(VK_INSERT,VK_SHIFT), CConEmuCtrl::key_PasteText},
 		{vkPasteFirstLine, chk_User,  NULL,    L"ClipboardVkFirstLine",  MakeHotKey('V',VK_CONTROL), CConEmuCtrl::key_PasteFirstLine},
+		{vkFindTextDlg,    chk_User,  NULL,    L"FindTextKey",           MakeHotKey('F',VK_APPS), CConEmuCtrl::key_FindTextDlg},
 		// GUI Macros
 		{vkGuMacro01,      chk_Macro, NULL,    L"KeyMacro01", MakeHotKey(VK_WHEEL_UP,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,2)")},
 		{vkGuMacro02,      chk_Macro, NULL,    L"KeyMacro02", MakeHotKey(VK_WHEEL_DOWN,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,-2)")},

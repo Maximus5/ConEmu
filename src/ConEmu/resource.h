@@ -614,6 +614,12 @@
 #define cbClipConfirmLimit              2225
 #define tClipConfirmLimit               2226
 #define stClipConfirmLimit              2227
+#define IDC_CHECK1                      2228
+#define cbFindHighlightAll              2228
+#define gbFindText                      2229
+#define vkFindTextDlg                   2230
+#define IDC_CHECK2                      2232
+#define cbFindTransparent               2232
 
 // Next default values for new objects
 // 
@@ -621,7 +627,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        218
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2228
+#define _APS_NEXT_CONTROL_VALUE         2233
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

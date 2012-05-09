@@ -34,8 +34,6 @@ protected:
 	HWND   mh_Dlg;
 	int    mn_DlgRc;
 	RConStartArgs* mp_Args;
-	static HHOOK mh_RecreateDlgKeyHook;
-	static BOOL mb_SkipAppsInRecreate;
 public:
 	CRecreateDlg();
 	~CRecreateDlg();
@@ -44,7 +42,6 @@ public:
 	HWND GetHWND();
 	void Close();
 	
-	static LRESULT CALLBACK RecreateDlgKeyHook(int code, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
 };

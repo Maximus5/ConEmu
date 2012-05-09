@@ -2551,6 +2551,142 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	return false;
 }
 
+void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensitive, bool abWholeWords)
+{
+	bool bFound = false;
+	COORD crStart = {}, crEnd = {};
+
+	WARNING("TODO: bFindNext");
+	WARNING("Доработать для режима с прокруткой");
+	if (con.pConChar && asText && *asText)
+	{
+		int nFindLen = lstrlen(asText);
+		LPCWSTR pszFrom = con.pConChar;
+		size_t nWidth = this->GetTextWidth();
+		size_t nHeight = this->GetTextHeight();
+		LPCWSTR pszEnd = pszFrom + (nWidth * nHeight);
+		const wchar_t* szWordDelim = L"~!%^&*()+|{}:\"<>?`-=\\[];',./";
+		LPCWSTR pszFound = NULL;
+		int nStepMax = 0;
+
+		if (nDirection > 1)
+			nDirection = 1;
+		else if (nDirection < -1)
+			nDirection = -1;
+
+		if (isSelectionPresent())
+		{
+			size_t nFrom = con.m_sel.srSelection.Left + (con.m_sel.srSelection.Top * nWidth);
+			if (nDirection >= 0)
+			{
+				if ((nFrom + nDirection) >= (nWidth * nHeight))
+					goto done; // считаем, что не нашли
+				pszFrom += (nFrom + nDirection);
+			}
+			else if (nDirection < 0)
+			{
+				pszEnd = pszFrom + nFrom;
+			}
+			nStepMax = 1;
+		}
+
+		for (int i = 0; i <= nStepMax; i++)
+		{
+			while (pszFrom && (pszFrom < pszEnd) && *pszFrom)
+			{
+				if (abCaseSensitive)
+					pszFrom = StrStr(pszFrom, asText);
+				else
+					pszFrom = StrStrI(pszFrom, asText);
+
+				if (pszFrom)
+				{
+					if (abWholeWords)
+					{
+						#define isWordDelim(ch) (!ch || (wcschr(szWordDelim,ch)!=NULL) || (ch>=0x2100 && ch<0x2800) || (ch<=32))
+						if (pszFrom > con.pConChar)
+						{
+							if (!isWordDelim(*(pszFrom-1)))
+							{
+								pszFrom++;
+								continue;
+							}
+						}
+						if (!isWordDelim(pszFrom[nFindLen]))
+						{
+							pszFrom++;
+							continue;
+						}
+					}
+
+					if (nDirection < 0)
+					{
+						if (pszFrom < pszEnd)
+						{
+							pszFound = pszFrom;
+							pszFrom++;
+							bFound = true;
+							continue;
+						}
+						else
+						{
+							pszFrom = NULL;
+						}
+					}
+					bFound = true;
+					break; // OK, подходит
+				}
+			}
+
+			if ((nDirection < 0) && bFound && pszFound)
+			{
+				pszFrom = pszFound;
+			}
+			if (pszFrom && bFound)
+				break;
+
+			if (nStepMax)
+			{
+				pszFrom = con.pConChar;
+				pszEnd = pszFrom + (nWidth * nHeight);
+			}
+		}
+
+
+		if (pszFrom && bFound)
+		{
+			// Нашли
+			size_t nCharIdx = (pszFrom - con.pConChar);
+			// хм... тут бы на ширину буфера ориентироваться, а не видимой области...
+			if (nCharIdx < (nWidth*nHeight))
+			{
+				bFound = true;
+				crStart.Y = nCharIdx / nWidth;
+				crStart.X = nCharIdx - (nWidth * crStart.Y);
+				crEnd.Y = (nCharIdx + nFindLen - 1) / nWidth;
+				crEnd.X = (nCharIdx + nFindLen - 1) - (nWidth * crEnd.Y);
+			}
+		}
+	}
+
+done:
+	if (!bFound)
+	{
+		DoSelectionStop();
+	}
+	else
+	{
+		con.m_sel.dwFlags = CONSOLE_SELECTION_IN_PROGRESS | CONSOLE_TEXT_SELECTION;
+		con.m_sel.dwSelectionAnchor = crStart;
+		con.m_sel.srSelection.Left = crStart.X;
+		con.m_sel.srSelection.Top = crStart.Y;
+		con.m_sel.srSelection.Right = crEnd.X;
+		con.m_sel.srSelection.Bottom = crEnd.Y;
+	}
+
+	UpdateSelection();
+}
+
 void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=-1*/, BOOL abByMouse/*=FALSE*/)
 {
 	WARNING("Доработать для режима с прокруткой - выделение протяжкой, как в обычной консоли");

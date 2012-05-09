@@ -273,6 +273,7 @@ CSettings::CSettings()
 		//gpConEmu->OnPanelViewSettingsChanged(FALSE);
 	}
 
+	mh_FindDlg = NULL;
 	
 	// Теперь установим умолчания настроек	
 	gpSet->InitSettings();
@@ -1737,106 +1738,6 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 	return 0;
 }
 
-void CSettings::GetVkKeyName(BYTE vk, wchar_t (&szName)[128])
-{
-	szName[0] = 0;
-
-	switch (vk)
-	{
-	case 0:
-		break;
-	case VK_LWIN:
-	case VK_RWIN:
-		wcscat_c(szName, L"Win"); break;
-	case VK_CONTROL:
-		wcscat_c(szName, L"Ctrl"); break;
-	case VK_LCONTROL:
-		wcscat_c(szName, L"LCtrl"); break;
-	case VK_RCONTROL:
-		wcscat_c(szName, L"RCtrl"); break;
-	case VK_MENU:
-		wcscat_c(szName, L"Alt"); break;
-	case VK_LMENU:
-		wcscat_c(szName, L"LAlt"); break;
-	case VK_RMENU:
-		wcscat_c(szName, L"RAlt"); break;
-	case VK_SHIFT:
-		wcscat_c(szName, L"Shift"); break;
-	case VK_LSHIFT:
-		wcscat_c(szName, L"LShift"); break;
-	case VK_RSHIFT:
-		wcscat_c(szName, L"RShift"); break;
-	case VK_APPS:
-		wcscat_c(szName, L"Apps"); break;
-	case VK_LEFT:
-		wcscat_c(szName, L"Left"); break;
-	case VK_RIGHT:
-		wcscat_c(szName, L"Right"); break;
-	case VK_UP:
-		wcscat_c(szName, L"Up"); break;
-	case VK_DOWN:
-		wcscat_c(szName, L"Down"); break;
-	case VK_PRIOR:
-		wcscat_c(szName, L"PgUp"); break;
-	case VK_NEXT:
-		wcscat_c(szName, L"PgDn"); break;
-	case VK_SPACE:
-		wcscat_c(szName, L"Space"); break;
-	case VK_TAB:
-		wcscat_c(szName, L"Tab"); break;
-	case VK_ESCAPE:
-		wcscat_c(szName, L"Esc"); break;
-	case VK_INSERT:
-		wcscat_c(szName, L"Insert"); break;
-	case VK_DELETE:
-		wcscat_c(szName, L"Delete"); break;
-	case VK_HOME:
-		wcscat_c(szName, L"Home"); break;
-	case VK_END:
-		wcscat_c(szName, L"End"); break;
-	case VK_PAUSE:
-		wcscat_c(szName, L"Pause"); break;
-	case VK_RETURN:
-		wcscat_c(szName, L"Enter"); break;
-	case VK_BACK:
-		wcscat_c(szName, L"Backspace"); break;
-	case 0xbd:
-		wcscat_c(szName, L"-_"); break;
-	case 0xbb:
-		wcscat_c(szName, L"+="); break;
-
-	case VK_WHEEL_UP:
-		wcscat_c(szName, L"WheelUp"); break;
-	case VK_WHEEL_DOWN:
-		wcscat_c(szName, L"WheelDown"); break;
-	case VK_WHEEL_LEFT:
-		wcscat_c(szName, L"WheelLeft"); break;
-	case VK_WHEEL_RIGHT:
-		wcscat_c(szName, L"WheelRight"); break;
-
-	default:
-		if (vk >= VK_F1 && vk <= VK_F24)
-		{
-			_wsprintf(szName, SKIPLEN(countof(szName)) L"F%u", (DWORD)vk-VK_F1+1);
-		}
-		else if ((vk >= (BYTE)'A' && vk <= (BYTE)'Z') || (vk >= (BYTE)'0' && vk <= (BYTE)'9'))
-		{
-			szName[0] = vk;
-			szName[1] = 0;
-		}
-		else
-		{
-			szName[0] = MapVirtualKey(vk, MAPVK_VK_TO_CHAR);
-			szName[1] = 0;
-			//BYTE States[256] = {};
-			//// Скорее всго не сработает
-			//if (!ToUnicode(vk, 0, States, szName, countof(szName), 0))
-			//	_wsprintf(szName, SKIPLEN(countof(szName)) L"<%u>", (DWORD)vk);
-			// есть еще if (!GetKeyNameText((LONG)(DWORD)*m_HotKeys[i].VkPtr, szName, countof(szName)))
-		}
-	}
-}
-
 void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 {
 	if (!m_HotKeys)
@@ -1853,23 +1754,53 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 	}
 
 
-	wchar_t szName[128], szFull[512];
+	wchar_t szName[128], szDescr[512];
 	//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
 	LVITEM lvi = {LVIF_TEXT|LVIF_STATE|LVIF_PARAM};
 	lvi.state = 0;
 	lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
 	lvi.pszText = szName;
-	for (size_t i = 0; m_HotKeys[i].DescrLangID; i++)
+	const ConEmuHotKey *ppHK = NULL;
+	const ConEmuHotKey *ppNext = m_HotKeys;
+	int ItemsCount = (int)ListView_GetItemCount(hList);
+	int nItem = -1; // если -1 то будет добавлен новый
+	//for (size_t i = 0; m_HotKeys[i].DescrLangID; i++)
+	while (TRUE)
 	{
-		//wcscpy_c(szName, (m_HotKeys[i].Type == 1) ? L"Modifier" : m_HotKeys[i].VkPtr ? L"User" : L"System");
-		switch (m_HotKeys[i].HkType)
+		if (abInitial)
+		{
+			ppHK = ppNext; ppNext++;
+			if (!ppHK->DescrLangID)
+				break; // кончились
+			nItem = -1; // если -1 то будет добавлен новый
+		}
+		else
+		{
+			nItem++; // на старте было "-1"
+			if (nItem >= ItemsCount)
+				break; // кончились
+			LVITEM lvf = {LVIF_PARAM, nItem};
+			if (!ListView_GetItem(hList, &lvf))
+			{
+				_ASSERTE(ListView_GetItem(hList, &lvf));
+				break;
+			}
+			ppHK = (const ConEmuHotKey*)lvf.lParam;
+			if (!ppHK || !ppHK->DescrLangID)
+			{
+				_ASSERTE(ppHK && ppHK->DescrLangID);
+				break;
+			}
+		}
+
+		switch (ppHK->HkType)
 		{
 		case chk_Global:
 			wcscpy_c(szName, L"Global"); break;
 		case chk_User:
 			wcscpy_c(szName, L"User"); break;
 		case chk_Macro:
-			_wsprintf(szName, SKIPLEN(countof(szName)) L"Macro %02i", m_HotKeys[i].DescrLangID-vkGuMacro01+1); break;
+			_wsprintf(szName, SKIPLEN(countof(szName)) L"Macro %02i", ppHK->DescrLangID-vkGuMacro01+1); break;
 		case chk_Modifier:
 			wcscpy_c(szName, L"Modifier"); break;
 		case chk_NumHost:
@@ -1879,119 +1810,40 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 			wcscpy_c(szName, L"System"); break;
 		default:
 			// Неизвестный тип!
-			_ASSERTE(m_HotKeys[i].HkType == chk_User);
-			wcscpy_c(szName, L"???");
+			_ASSERTE(ppHK->HkType == chk_User);
+			//wcscpy_c(szName, L"???");
+			continue;
 		}
-		int nItem = -1;
-		if (!abInitial)
-		{
-			int Items = (int)ListView_GetItemCount(hList);
-			for (int j = 0; j < Items; j++)
-			{
-				LVITEM lvf = {LVIF_PARAM, j};
-				if (!ListView_GetItem(hList, &lvf))
-				{
-					_ASSERTE(ListView_GetItem(hList, &lvf));
-					break;
-				}
-				if (lvf.lParam == (LPARAM)(m_HotKeys+i))
-				{
-					nItem = j;
-					break;
-				}
-			}
-			_ASSERTE(nItem!=-1);
-		}
+		
 		if (nItem == -1)
 		{
-			lvi.iItem = i + 1; // в конец
-			lvi.lParam = (LPARAM)(m_HotKeys+i);
+			lvi.iItem = ItemsCount + 1; // в конец
+			lvi.lParam = (LPARAM)(m_HotKeys+ItemsCount);
 			nItem = ListView_InsertItem(hList, &lvi);
+			//_ASSERTE(nItem==ItemsCount && nItem>=0);
+			ItemsCount++;
 		}
 		if (abInitial)
 		{
 			ListView_SetItemState(hList, nItem, 0, LVIS_SELECTED|LVIS_FOCUSED);
 		}
 		
-		szFull[0] = 0;
+		gpSet->GetHotkeyName(ppHK, szName);
 
-		DWORD VkMod = 0;
+		ListView_SetItemText(hList, nItem, klc_Hotkey, szName);
 		
-		switch (m_HotKeys[i].HkType)
+		if (ppHK->HkType == chk_Macro)
 		{
-		case chk_Global:
-		case chk_User:
-			VkMod = m_HotKeys[i].VkMod;
-			break;
-		case chk_Macro:
-			VkMod = m_HotKeys[i].VkMod;
-			break;
-		case chk_Modifier:
-			VkMod = m_HotKeys[i].VkMod;
-			break;
-		case chk_NumHost:
-			_ASSERTE((m_HotKeys[i].VkMod & CEHOTKEY_MODMASK) == CEHOTKEY_NUMHOSTKEY);
-			VkMod = (m_HotKeys[i].VkMod & 0xFF) | (gpSet->nHostkeyNumberModifier << 8);
-			break;
-		case chk_ArrHost:
-			_ASSERTE((m_HotKeys[i].VkMod & CEHOTKEY_MODMASK) == CEHOTKEY_ARRHOSTKEY);
-			VkMod = (m_HotKeys[i].VkMod & 0xFF) | (gpSet->nHostkeyArrowModifier << 8);
-			break;
-		case chk_System:
-			VkMod = m_HotKeys[i].VkMod;
-			break;
-		default:
-			// Неизвестный тип!
-			_ASSERTE(m_HotKeys[i].HkType == chk_User);
-			VkMod = 0;
-		}
-
-		if (gpSet->GetHotkey(VkMod) == 0)
-		{
-			szFull[0] = 0; // Поле "Кнопка" оставляем пустым
-		}
-		else if (m_HotKeys[i].HkType != chk_Modifier)
-		{
-			for (int k = 1; k <= 3; k++)
-			{
-				DWORD vk = (m_HotKeys[i].HkType == chk_Modifier) ? VkMod : gpSet->GetModifier(VkMod, k);
-				if (vk)
-				{
-					GetVkKeyName(vk, szName);
-					if (szFull[0])
-						wcscat_c(szFull, L"-");
-					wcscat_c(szFull, szName);
-				}
-			}
-		}
-		
-		szName[0] = 0;
-		GetVkKeyName(gpSet->GetHotkey(VkMod), szName);
-		
-		if (szName[0])
-		{
-			if (szFull[0])
-				wcscat_c(szFull, L"-");
-			wcscat_c(szFull, szName);
-		}
-		else
-		{
-			wcscpy_c(szFull, L"<None>");
-		}
-		ListView_SetItemText(hList, nItem, klc_Hotkey, szFull);
-		
-		if (m_HotKeys[i].HkType == chk_Macro)
-		{
-			LPCWSTR pszMacro = m_HotKeys[i].GuiMacro;
+			LPCWSTR pszMacro = ppHK->GuiMacro;
 			if (!pszMacro || !*pszMacro)
 				pszMacro = L"<Not set>";
 			ListView_SetItemText(hList, nItem, klc_Desc, (wchar_t*)pszMacro);
 		}
 		else
 		{
-			if (!LoadString(g_hInstance, m_HotKeys[i].DescrLangID, szName, countof(szName)))
-				_wsprintf(szName, SKIPLEN(countof(szName)) L"%i", m_HotKeys[i].DescrLangID);
-			ListView_SetItemText(hList, nItem, klc_Desc, szName);
+			if (!LoadString(g_hInstance, ppHK->DescrLangID, szDescr, countof(szDescr)))
+				_wsprintf(szDescr, SKIPLEN(countof(szDescr)) L"%i", ppHK->DescrLangID);
+			ListView_SetItemText(hList, nItem, klc_Desc, szDescr);
 		}
 	}
 
@@ -2158,8 +2010,87 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			}
 		} //LVN_ITEMCHANGED
 		break;
+
+	case LVN_COLUMNCLICK:
+		{
+			LPNMLISTVIEW pnmv = (LPNMLISTVIEW)lParam;
+			ListView_SortItems(GetDlgItem(hWnd2, lbConEmuHotKeys), HotkeysCompare, pnmv->iSubItem);
+		} // LVN_COLUMNCLICK
+		break;
 	}
 	return 0;
+}
+
+int CSettings::HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+{
+	int nCmp = 0;
+	ConEmuHotKey* pHk1 = (ConEmuHotKey*)lParam1;
+	ConEmuHotKey* pHk2 = (ConEmuHotKey*)lParam2;
+
+	if (pHk1 && pHk1->DescrLangID && pHk2 && pHk2->DescrLangID)
+	{
+		switch (lParamSort)
+		{
+		case 0:
+			// Type
+			nCmp =
+				(pHk1->HkType < pHk2->HkType) ? -1 :
+				(pHk1->HkType > pHk2->HkType) ? 1 :
+				(pHk1 < pHk2) ? -1 :
+				(pHk1 > pHk2) ? 1 :
+				0;
+			break;
+
+		case 1:
+			// Hotkey
+			{
+				wchar_t szFull1[128]; gpSet->GetHotkeyName(pHk1, szFull1);
+				wchar_t szFull2[128]; gpSet->GetHotkeyName(pHk2, szFull2);
+				nCmp = lstrcmp(szFull1, szFull2);
+				if (nCmp == 0)
+					nCmp = (pHk1 < pHk2) ? -1 : (pHk1 > pHk2) ? 1 : 0;
+			}
+			break;
+
+		case 2:
+			// Description
+			{
+				LPCWSTR pszDescr1, pszDescr2;
+				wchar_t szBuf1[512], szBuf2[512];
+
+				if (pHk1->HkType == chk_Macro)
+				{
+					pszDescr1 = (pHk1->GuiMacro && *pHk1->GuiMacro) ? pHk1->GuiMacro : L"<Not set>";
+				}
+				else
+				{
+					if (!LoadString(g_hInstance, pHk1->DescrLangID, szBuf1, countof(szBuf1)))
+						_wsprintf(szBuf1, SKIPLEN(countof(szBuf1)) L"%i", pHk1->DescrLangID);
+					pszDescr1 = szBuf1;
+				}
+
+				if (pHk2->HkType == chk_Macro)
+				{
+					pszDescr2 = (pHk2->GuiMacro && *pHk2->GuiMacro) ? pHk2->GuiMacro : L"<Not set>";
+				}
+				else
+				{
+					if (!LoadString(g_hInstance, pHk2->DescrLangID, szBuf2, countof(szBuf2)))
+						_wsprintf(szBuf2, SKIPLEN(countof(szBuf2)) L"%i", pHk2->DescrLangID);
+					pszDescr2 = szBuf2;
+				}
+
+				nCmp = lstrcmpi(pszDescr1, pszDescr2);
+				if (nCmp == 0)
+					nCmp = (pHk1 < pHk2) ? -1 : (pHk1 > pHk2) ? 1 : 0;
+			}
+			break;
+		default:
+			nCmp = (pHk1 < pHk2) ? -1 : (pHk1 > pHk2) ? 1 : 0;
+		}
+	}
+
+	return nCmp;
 }
 
 LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
@@ -10814,4 +10745,179 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 	MCHKHEAP
 	return TRUE;
 	UNREFERENCED_PARAMETER(lpntm);
+}
+
+
+void CSettings::FindTextDialog()
+{
+	if (mh_FindDlg && IsWindow(mh_FindDlg))
+	{
+		SetForegroundWindow(mh_FindDlg);
+		return;
+	}
+
+	CRealConsole* pRCon = gpConEmu->ActiveCon() ? gpConEmu->ActiveCon()->RCon() : NULL;
+
+	// Создаем диалог поиска только для консольных приложений
+	if (!pRCon || (pRCon->GuiWnd() && !pRCon->isBufferHeight()) || !pRCon->GetView())
+	{
+		//DisplayLastError(L"No RealConsole, nothing to find");
+		return;
+	}
+
+	gpConEmu->SkipOneAppsRelease(true);
+	
+	mh_FindDlg = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_FIND), ghWnd, findTextProc, NULL/*Param*/);
+	if (!mh_FindDlg)
+	{
+		DisplayLastError(L"Can't create Find text dialog", GetLastError());
+	}
+}
+
+void CSettings::UpdateFindDlgAlpha(bool abForce)
+{
+	if (!mh_FindDlg)
+		return;
+
+	int nAlpha = 255;
+
+	if (gpSet->FindOptions.bTransparent)
+	{
+		POINT ptCur = {}; GetCursorPos(&ptCur);
+		RECT rcWnd = {}; GetWindowRect(mh_FindDlg, &rcWnd);
+
+		nAlpha = PtInRect(&rcWnd, ptCur) ? 254 : DEFAULT_FINDDLG_ALPHA;
+	}
+
+	static int nWasAlpha;
+	if (!abForce && (nWasAlpha == nAlpha))
+		return;
+
+	nWasAlpha = nAlpha;
+	gpConEmu->SetTransparent(mh_FindDlg, nAlpha);
+}
+
+INT_PTR CSettings::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	switch (messg)
+	{
+		case WM_INITDIALOG:
+		{
+			gpSetCls->mh_FindDlg = hWnd2;
+			SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+			SendMessage(hWnd2, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+			
+			#if 0
+			//if (IsDebuggerPresent())
+			if (!gpSet->isAlwaysOnTop)
+				SetWindowPos(hWnd2, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+			#endif
+
+			CRealConsole* pRCon = gpConEmu->ActiveCon() ? gpConEmu->ActiveCon()->RCon() : NULL;
+			RECT rcWnd = {}; GetWindowRect(pRCon->GetView(), &rcWnd);
+			SetWindowPos(hWnd2, gpSet->isAlwaysOnTop ? HWND_TOPMOST : HWND_TOP,
+				rcWnd.left+gpSet->FontSizeY, rcWnd.top+gpSet->FontSizeY, 0,0,
+				SWP_NOSIZE);
+			gpSetCls->UpdateFindDlgAlpha(true);
+			SetTimer(hWnd2, 101, 1000, NULL);
+
+			SetClassLongPtr(hWnd2, GCLP_HICON, (LONG_PTR)hClassIcon);
+			SetDlgItemText(hWnd2, tFindText, gpSet->FindOptions.pszText ? gpSet->FindOptions.pszText : L"");
+			CheckDlgButton(hWnd2, cbFindMatchCase, gpSet->FindOptions.bMatchCase);
+			CheckDlgButton(hWnd2, cbFindWholeWords, gpSet->FindOptions.bMatchWholeWords);
+			CheckDlgButton(hWnd2, cbFindFreezeConsole, gpSet->FindOptions.bFreezeConsole);
+			#if 0
+			CheckDlgButton(hWnd2, cbFindHighlightAll, gpSet->FindOptions.bHighlightAll);
+			#endif
+			CheckDlgButton(hWnd2, cbFindTransparent, gpSet->FindOptions.bTransparent);
+
+			if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
+				SendDlgItemMessage(hWnd2, tFindText, EM_SETSEL, 0, lstrlen(gpSet->FindOptions.pszText));
+
+			// Зовем всегда, чтобы инициализировать буфер для поиска как минимум
+			gpConEmu->DoFindText(0);
+			break;
+		}
+
+		//case WM_SYSCOMMAND:
+		//	if (LOWORD(wParam) == ID_ALWAYSONTOP)
+		//	{
+		//		BOOL lbOnTopNow = GetWindowLong(ghOpWnd, GWL_EXSTYLE) & WS_EX_TOPMOST;
+		//		SetWindowPos(ghOpWnd, lbOnTopNow ? HWND_NOTOPMOST : HWND_TOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
+		//		CheckMenuItem(GetSystemMenu(ghOpWnd, FALSE), ID_ALWAYSONTOP, MF_BYCOMMAND |
+		//		              (lbOnTopNow ? MF_UNCHECKED : MF_CHECKED));
+		//		SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, 0);
+		//		return 1;
+		//	}
+		//	break;
+
+		case WM_MOUSEMOVE:
+		case WM_NCMOUSEMOVE:
+		case WM_TIMER:
+			gpSetCls->UpdateFindDlgAlpha();
+			break;
+
+		case WM_COMMAND:
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				int nDirection = 0;
+
+				switch (LOWORD(wParam))
+				{
+				case IDCANCEL:
+					DestroyWindow(hWnd2);
+					break;
+				case cbFindMatchCase:
+					gpSet->FindOptions.bMatchCase = IsChecked(hWnd2, cbFindMatchCase);
+					break;
+				case cbFindWholeWords:
+					gpSet->FindOptions.bMatchWholeWords = IsChecked(hWnd2, cbFindWholeWords);
+					break;
+				case cbFindFreezeConsole:
+					gpSet->FindOptions.bFreezeConsole = IsChecked(hWnd2, cbFindFreezeConsole);
+					break;
+				case cbFindHighlightAll:
+					gpSet->FindOptions.bHighlightAll = IsChecked(hWnd2, cbFindHighlightAll);
+					break;
+				case cbFindTransparent:
+					gpSet->FindOptions.bTransparent = IsChecked(hWnd2, cbFindTransparent);
+					gpSetCls->UpdateFindDlgAlpha(true);
+					return 0;
+				case cbFindNext:
+					nDirection = 1;
+					break;
+				case cbFindPrev:
+					nDirection = -1;
+					break;
+				default:
+					return 0;
+				}
+
+				if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
+					gpConEmu->DoFindText(nDirection);
+			}
+			else if (HIWORD(wParam) == EN_CHANGE || HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
+			{
+				GetDlgItemText(hWnd2, tFindText, gpSet->FindOptions.cchTextMax, gpSet->FindOptions.pszText);
+				if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
+					gpConEmu->DoFindText(0);
+			}
+			break;
+
+		case WM_CLOSE:
+			DestroyWindow(hWnd2);
+			break;
+
+		case WM_DESTROY:
+			KillTimer(hWnd2, 101);
+			gpSetCls->mh_FindDlg = NULL;
+			gpSet->SaveFindOptions();
+			gpConEmu->SkipOneAppsRelease(false);
+			break;
+
+		default:
+			return 0;
+	}
+
+	return 0;
 }

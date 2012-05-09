@@ -36,9 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "../common/WinObjects.h"
 
-HHOOK CRecreateDlg::mh_RecreateDlgKeyHook = NULL;
-BOOL CRecreateDlg::mb_SkipAppsInRecreate = FALSE;
-
 CRecreateDlg::CRecreateDlg()
 	: mh_Dlg(NULL)
 	, mn_DlgRc(0)
@@ -80,13 +77,7 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 	BOOL b = gbDontEnable;
 	gbDontEnable = TRUE;
 
-	if (isPressed(VK_APPS))
-	{
-		// Игнорировать одно следующее VK_APPS
-		mb_SkipAppsInRecreate = TRUE;
-		if (!mh_RecreateDlgKeyHook)
-			mh_RecreateDlgKeyHook = SetWindowsHookEx(WH_GETMESSAGE, RecreateDlgKeyHook, NULL, GetCurrentThreadId());
-	}
+	gpConEmu->SkipOneAppsRelease(true);
 
 	//if (!gpConEmu->mh_RecreatePasswFont)
 	//{
@@ -108,11 +99,7 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 	//	gpConEmu->mh_RecreatePasswFont = NULL;
 	//}
 
-	if (mh_RecreateDlgKeyHook)
-	{
-		UnhookWindowsHookEx(mh_RecreateDlgKeyHook);
-		mh_RecreateDlgKeyHook = NULL;
-	}
+	gpConEmu->SkipOneAppsRelease(false);
 
 	gbDontEnable = b;
 	return mn_DlgRc;
@@ -129,26 +116,6 @@ void CRecreateDlg::Close()
 		}
 		mh_Dlg = NULL;
 	}
-}
-
-LRESULT CRecreateDlg::RecreateDlgKeyHook(int code, WPARAM wParam, LPARAM lParam)
-{
-	if (code >= 0)
-	{
-		if (mb_SkipAppsInRecreate && lParam)
-		{
-			LPMSG pMsg = (LPMSG)lParam;
-
-			if (pMsg->message == WM_CONTEXTMENU)
-			{
-				pMsg->message = WM_NULL;
-				mb_SkipAppsInRecreate = FALSE;
-				return FALSE; // Skip one Apps
-			}
-		}
-	}
-
-	return CallNextHookEx(mh_RecreateDlgKeyHook, code, wParam, lParam);
 }
 
 INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)

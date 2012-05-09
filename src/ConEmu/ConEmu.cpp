@@ -7893,7 +7893,8 @@ bool CConEmuMain::isMeForeground(bool abRealAlso)
 		isMe = (h != NULL)
 			&& (((h == ghWnd) || (h == ghOpWnd)
 				|| (mp_AttachDlg && (mp_AttachDlg->GetHWND() == h)))
-			|| (mp_RecreateDlg && (mp_RecreateDlg->GetHWND() == h)));
+			|| (mp_RecreateDlg && (mp_RecreateDlg->GetHWND() == h)))
+			|| (gpSetCls->mh_FindDlg == h);
 
 		if (h && !isMe && abRealAlso)
 		{
@@ -8522,6 +8523,8 @@ HMENU CConEmuMain::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKTEXT, _T("Mar&k text"));
 		AppendMenu(hMenu, MF_STRING | (lbSelectionExist?MF_ENABLED:MF_GRAYED), ID_CON_COPY, _T("Cop&y"));
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_PASTE, _T("&Paste"));
+		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_FIND, _T("&Find text..."));
 	}
 	else
 	{
@@ -8529,6 +8532,7 @@ HMENU CConEmuMain::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		EnableMenuItem(hMenu, ID_CON_MARKTEXT, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
 		EnableMenuItem(hMenu, ID_CON_COPY, MF_BYCOMMAND | (lbSelectionExist?MF_ENABLED:MF_GRAYED));
 		EnableMenuItem(hMenu, ID_CON_PASTE, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
+		EnableMenuItem(hMenu, ID_CON_FIND, MF_BYCOMMAND | (lbEnabled?MF_ENABLED:MF_GRAYED));
 	}
 	
 	return hMenu;
@@ -10826,6 +10830,8 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 
 	mouse.lastMMW=wParam; mouse.lastMML=lParam;
 
+	gpSetCls->UpdateFindDlgAlpha();
+
 	// мог не сброситься, проверим
 	if (isSizing())
 	{
@@ -12447,7 +12453,11 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		case ID_CON_PASTE:
 			mp_VActive->RCon()->Paste();
 			return 0;
-			
+
+		case ID_CON_FIND:
+			gpSetCls->FindTextDialog();
+			return 0;
+
 		case ID_CON_COPY:
 			mp_VActive->RCon()->DoSelectionCopy();
 			return 0;
@@ -13076,22 +13086,43 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::OnTransparent()
 {
-	TODO("CConEmuMain::OnTransparentColorKey()");
-	BOOL bNeedRedrawOp = FALSE;
-	UINT nTransparent = max(MIN_ALPHA_VALUE,gpSet->nTransparent);
-	DWORD dwExStyle = GetWindowLongPtr(ghWnd, GWL_EXSTYLE);
-	BOOL lbChanged = FALSE;
+	UINT nAlpha = max(MIN_ALPHA_VALUE,min(gpSet->nTransparent,255));
+	if ((nAlpha < 255) && isPictureView())
+		nAlpha = 255;
 
-	if (nTransparent >= 255 /*&& !gpSet->isColorKey*/ || isPictureView())
+	// return true - when state was changes
+	if (SetTransparent(ghWnd, nAlpha))
+	{
+		OnSetCursor();
+	}
+}
+
+// return true - when state was changes
+bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/)
+{
+	#ifdef __GNUC__
+	if (!SetLayeredWindowAttributes)
+	{
+		_ASSERTE(SetLayeredWindowAttributes!=NULL);
+		return false;
+	}
+	#endif
+
+	BOOL bNeedRedrawOp = FALSE;
+	UINT nTransparent = max(MIN_ALPHA_VALUE,min(anAlpha,255));
+	DWORD dwExStyle = GetWindowLongPtr(ahWnd, GWL_EXSTYLE);
+	bool lbChanged = false;
+
+	if (nTransparent >= 255)
 	{
 		// Прозрачность отключается (полностью непрозрачный)
-		//SetLayeredWindowAttributes(ghWnd, 0, 255, LWA_ALPHA);
+		//SetLayeredWindowAttributes(ahWnd, 0, 255, LWA_ALPHA);
 		if ((dwExStyle & WS_EX_LAYERED) == WS_EX_LAYERED)
 		{
 			dwExStyle &= ~WS_EX_LAYERED;
-			SetLayeredWindowAttributes(ghWnd, 0, 255, LWA_ALPHA);
-			SetWindowLongPtr(ghWnd, GWL_EXSTYLE, dwExStyle);
-			lbChanged = TRUE;
+			SetLayeredWindowAttributes(ahWnd, 0, 255, LWA_ALPHA);
+			SetWindowLongPtr(ahWnd, GWL_EXSTYLE, dwExStyle);
+			lbChanged = true;
 		}
 	}
 	else
@@ -13099,9 +13130,9 @@ void CConEmuMain::OnTransparent()
 		if ((dwExStyle & WS_EX_LAYERED) == 0)
 		{
 			dwExStyle |= WS_EX_LAYERED;
-			SetWindowLongPtr(ghWnd, GWL_EXSTYLE, dwExStyle);
+			SetWindowLongPtr(ahWnd, GWL_EXSTYLE, dwExStyle);
 			bNeedRedrawOp = TRUE;
-			lbChanged = TRUE;
+			lbChanged = true;
 		}
 
 		DWORD nNewFlags = LWA_ALPHA;
@@ -13109,29 +13140,30 @@ void CConEmuMain::OnTransparent()
 		BYTE nCurAlpha = 0;
 		DWORD nCurFlags = 0;
 		if (lbChanged
-			|| (!_GetLayeredWindowAttributes || !(_GetLayeredWindowAttributes(ghWnd, NULL, &nCurAlpha, &nCurFlags)))
+			|| (!_GetLayeredWindowAttributes || !(_GetLayeredWindowAttributes(ahWnd, NULL, &nCurAlpha, &nCurFlags)))
 			|| (nCurAlpha != nTransparent) || (nCurFlags != nNewFlags))
 		{
-			lbChanged = TRUE;
-			SetLayeredWindowAttributes(ghWnd, 0, nTransparent, nNewFlags);
+			lbChanged = true;
+			SetLayeredWindowAttributes(ahWnd, 0, nTransparent, nNewFlags);
 		}
 
 		// После смены стиля (не было альфа - появилась альфа) измененное окно "выносится наверх"
 		// и принудительно перерисовывается. Если в этот момент видим диалог настроек - он затирается.
-		if (bNeedRedrawOp && ghOpWnd)
+		if (bNeedRedrawOp)
 		{
-			// Ask the window and its children to repaint
-			RedrawWindow(ghOpWnd,
-			             NULL,
-			             NULL,
-			             RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN);
+			HWND hWindows[] = {ghOpWnd, (mp_AttachDlg ? mp_AttachDlg->GetHWND() : NULL), gpSetCls->mh_FindDlg};
+			for (size_t i = 0; i < countof(hWindows); i++)
+			{
+				if (hWindows[i] && (hWindows[i] != ahWnd) && IsWindow(hWindows[i]))
+				{
+					// Ask the window and its children to repaint
+					RedrawWindow(hWindows[i], NULL, NULL, RDW_ERASE|RDW_INVALIDATE|RDW_FRAME|RDW_ALLCHILDREN);
+				}
+			}
 		}
 	}
 
-	if (lbChanged)
-	{
-		OnSetCursor();
-	}
+	return lbChanged;
 }
 
 // Вызовем UpdateScrollPos для АКТИВНОЙ консоли
@@ -13351,6 +13383,12 @@ BOOL CConEmuMain::isDialogMessage(MSG &Msg)
 	}
 
 	if (!lbDlgMsg && mp_AttachDlg && (hDlg = mp_AttachDlg->GetHWND()))
+	{
+		if (IsWindow(hDlg))
+			lbDlgMsg = IsDialogMessage(hDlg, &Msg);
+	}
+
+	if (!lbDlgMsg && (hDlg = gpSetCls->mh_FindDlg))
 	{
 		if (IsWindow(hDlg))
 			lbDlgMsg = IsDialogMessage(hDlg, &Msg);

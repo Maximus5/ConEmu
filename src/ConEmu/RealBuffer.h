@@ -122,6 +122,7 @@ public:
 	void SetRBtnDrag(BOOL abRBtnDrag, const COORD* pcrMouse = NULL);
 
 	bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
+	void MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensitive, bool abWholeWords);
 	void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
 	void ExpandSelection(SHORT anX=-1, SHORT anY=-1);
 	void DoSelectionStop();

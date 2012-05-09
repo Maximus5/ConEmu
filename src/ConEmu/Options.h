@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CONEMU_ROOT_KEY L"Software\\ConEmu"
 
 #define MIN_ALPHA_VALUE 40
+#define DEFAULT_FINDDLG_ALPHA 180
 #define MAX_FONT_STYLES 8  //normal/(bold|italic|underline)
 #define MAX_FONT_GROUPS 20 // Main, Borders, Japan, Cyrillic, ...
 
@@ -159,6 +160,18 @@ struct ConEmuHotKey
 
 // Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
 extern const ConEmuHotKey* ConEmuSkipHotKey; // = ((ConEmuHotKey*)INVALID_HANDLE_VALUE)
+
+
+struct FindTextOptions
+{
+	size_t   cchTextMax;
+	wchar_t* pszText;
+	bool     bMatchCase;
+	bool     bMatchWholeWords;
+	bool     bFreezeConsole;
+	bool     bHighlightAll;
+	bool     bTransparent;
+};
 
 
 struct Settings
@@ -843,6 +856,9 @@ struct Settings
 		bool isFixAltOnAltTab;
 		//reg->Load(L"ShellNoZoneCheck", isShellNoZoneCheck);
 		bool isShellNoZoneCheck;
+
+		// FindText: bMatchCase, bMatchWholeWords, bFreezeConsole, bHighlightAll;
+		FindTextOptions FindOptions;
 		
 
 	public:
@@ -860,6 +876,9 @@ struct Settings
 		static DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
 		// Вернуть назначенные модификаторы (idx = 1..3). Возвращает 0 (нету) или VK
 		static DWORD GetModifier(DWORD VkMod, int idx/*1..3*/);
+		// Вернуть имя модификатора (типа "Apps+Space")
+		static LPCWSTR GetHotkeyName(const ConEmuHotKey* ppHK, wchar_t (&szFull)[128]);
+		static void GetVkKeyName(BYTE vk, wchar_t (&szName)[32]);
 		// Извлечь сам VK
 		static DWORD GetHotkey(DWORD VkMod);
 		// набор флагов MOD_xxx для RegisterHotKey
@@ -991,6 +1010,7 @@ struct Settings
 		void SaveCmdTasks(SettingsBase* reg);
 		void SaveSizePosOnExit();
 		void SaveConsoleFont();
+		void SaveFindOptions(SettingsBase* reg = NULL);
 		void UpdateMargins(RECT arcMargins);
 	public:
 		void HistoryCheck();

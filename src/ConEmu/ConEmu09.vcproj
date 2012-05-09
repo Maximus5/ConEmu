@@ -1819,10 +1819,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
 				RelativePath="..\common\RgnDetect.h"
 				>
 			</File>
@@ -2694,6 +2690,10 @@
 			</File>
 			<File
 				RelativePath=".\hsplit.cur"
+				>
+			</File>
+			<File
+				RelativePath=".\resource.h"
 				>
 			</File>
 			<File

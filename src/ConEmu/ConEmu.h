@@ -603,6 +603,9 @@ class CConEmuMain :
 		#ifdef __GNUC__
 		AlphaBlend_t GdiAlphaBlend;
 		#endif
+
+		// return true - when state was changes
+		bool SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/);
 		GetLayeredWindowAttributes_t _GetLayeredWindowAttributes;
 		#ifdef __GNUC__
 		SetLayeredWindowAttributes_t SetLayeredWindowAttributes;

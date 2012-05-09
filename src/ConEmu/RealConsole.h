@@ -371,6 +371,7 @@ class CRealConsole
 		void ExpandSelection(SHORT anX=-1, SHORT anY=-1);
 		bool DoSelectionCopy();
 		void DoSelectionStop();
+		void DoFindText(int nDirection);
 		void CtrlWinAltSpace();
 		void ShowConsoleOrGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show

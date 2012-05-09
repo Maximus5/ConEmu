@@ -50,46 +50,6 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Dialog
-//
-
-IDD_FIND DIALOGEX 0, 0, 196, 73
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Find text"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    LTEXT           "&Find text:",IDC_STATIC,7,7,77,8
-    EDITTEXT        tFindText,7,19,182,13,ES_AUTOHSCROLL
-    CONTROL         "Match &case",cbFindMatchCase,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,37,52,8
-    CONTROL         "&Whole words",cbFindWholeWords,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,67,37,52,8
-    CONTROL         "&Freeze console",cbFindFreezeConsole,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,127,37,62,8
-    DEFPUSHBUTTON   "&Next",cbFindNext,29,52,50,14
-    PUSHBUTTON      "&Previous",cbFindPrev,83,52,50,14
-    PUSHBUTTON      "Close",IDCANCEL,139,52,50,14
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
-BEGIN
-    IDD_FIND, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 167
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 66
-    END
-END
-#endif    // APSTUDIO_INVOKED
-
 #endif    // Russian resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -107,6 +67,22 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 // Dialog
 //
+
+IDD_FIND DIALOGEX 0, 0, 196, 79
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Find text"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "&Find options",gbFindText,5,2,188,55
+    EDITTEXT        tFindText,11,13,176,13,ES_AUTOHSCROLL
+    CONTROL         "Match &case",cbFindMatchCase,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,30,81,8
+    CONTROL         "Match &whole words",cbFindWholeWords,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,30,90,8
+    CONTROL         "&Freeze console",cbFindFreezeConsole,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,99,42,81,8
+    CONTROL         "&Highlight all matches",cbFindHighlightAll,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,6,63,79,8
+    DEFPUSHBUTTON   "&Next",cbFindNext,143,60,50,14
+    PUSHBUTTON      "&Previous",cbFindPrev,89,60,50,14
+    CONTROL         "&Transparent",cbFindTransparent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,81,8
+END
 
 IDD_ATTACHDLG DIALOGEX 0, 0, 318, 185
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME

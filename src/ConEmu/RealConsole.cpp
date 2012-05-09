@@ -2707,6 +2707,11 @@ bool CRealConsole::DoSelectionCopy()
 	return mp_ABuf->DoSelectionCopy();
 }
 
+void CRealConsole::DoFindText(int nDirection)
+{
+	mp_ABuf->MarkFindText(nDirection, gpSet->FindOptions.pszText, gpSet->FindOptions.bMatchCase, gpSet->FindOptions.bMatchWholeWords);
+}
+
 BOOL CRealConsole::OpenConsoleEventPipe()
 {
 	if (mh_ConInputPipe && mh_ConInputPipe!=INVALID_HANDLE_VALUE)

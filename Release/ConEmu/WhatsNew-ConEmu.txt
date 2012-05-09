@@ -9,6 +9,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
+2012.05.09
+[%] Issue 534: ConEmuSetup: Строка с путем по умолчанию для 64 битной версии выводится сразу после 32 битной.
+[+] Поиск текста в консоли. Hotkey Apps+F или Edit -> Find text.
+
+
 2012.05.08
 [!] Issue 65: Для корректной работы приложений, использующих SetConsoleActiveScreenBuffer (telnet.exe и т.п.) требуется включить флажок «Inject ConEmuHk».
 [!] Чтобы в корне не маячили и не мешали фару при работе вне ConEmu - ExtendedConsole пененесен в подпапку.

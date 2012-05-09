@@ -39,6 +39,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 const ConEmuHotKey* ConEmuSkipHotKey = ((ConEmuHotKey*)INVALID_HANDLE_VALUE);
 
+bool CConEmuCtrl::mb_SkipOneAppsRelease = false;
+HHOOK CConEmuCtrl::mh_SkipOneAppsRelease = NULL;
+
 
 CConEmuCtrl::CConEmuCtrl()
 {
@@ -1125,4 +1128,76 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 		}
 	}
 	return cchCount;
+}
+
+bool CConEmuCtrl::key_FindTextDlg(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	// Если это GUI App in Tab - само
+	if (!pRCon || (pRCon->GuiWnd() && !pRCon->isBufferHeight()))
+		return false;
+	if (TestOnly)
+		return true;
+
+	gpSetCls->FindTextDialog();
+	return true;
+}
+
+void CConEmuCtrl::DoFindText(int nDirection, CRealConsole* pRCon /*= NULL*/)
+{
+	if (!pRCon)
+	{
+		pRCon = gpConEmu->ActiveCon() ? gpConEmu->ActiveCon()->RCon() : NULL;
+		if (!pRCon)
+			return;
+	}
+
+	pRCon->DoFindText(nDirection);
+}
+
+void CConEmuCtrl::SkipOneAppsRelease(bool abSkip)
+{
+	if (abSkip)
+	{
+		if (isPressed(VK_APPS))
+		{
+			// Игнорировать одно следующее VK_APPS
+			mb_SkipOneAppsRelease = true;
+			if (!mh_SkipOneAppsRelease)
+				mh_SkipOneAppsRelease = SetWindowsHookEx(WH_GETMESSAGE, SkipOneAppsReleaseHook, NULL, GetCurrentThreadId());
+		}
+		else
+		{
+			abSkip = false;
+		}
+	}
+
+	if (!abSkip)
+	{
+		if (mh_SkipOneAppsRelease)
+		{
+			UnhookWindowsHookEx(mh_SkipOneAppsRelease);
+			mh_SkipOneAppsRelease = NULL;
+			mb_SkipOneAppsRelease = false;
+		}
+	}
+}
+
+LRESULT CConEmuCtrl::SkipOneAppsReleaseHook(int code, WPARAM wParam, LPARAM lParam)
+{
+	if (code >= 0)
+	{
+		if (mb_SkipOneAppsRelease && lParam)
+		{
+			LPMSG pMsg = (LPMSG)lParam;
+
+			if (pMsg->message == WM_CONTEXTMENU)
+			{
+				pMsg->message = WM_NULL;
+				mb_SkipOneAppsRelease = false;
+				return FALSE; // Skip one Apps
+			}
+		}
+	}
+
+	return CallNextHookEx(mh_SkipOneAppsRelease, code, wParam, lParam);
 }
