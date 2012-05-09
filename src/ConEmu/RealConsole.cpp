@@ -62,6 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
+#define DEBUGSTRALTSRV(s) DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -3899,16 +3900,48 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID, HANDLE hAltServer)
 
 bool CRealConsole::ReopenServerPipes()
 {
+	DWORD nSrvPID = mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID;
+
 	// переоткрыть event изменений в консоли
-	m_ConDataChanged.InitName(CEDATAREADYEVENT, mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID);
+	m_ConDataChanged.InitName(CEDATAREADYEVENT, nSrvPID);
 	if (m_ConDataChanged.Open() == NULL)
 	{
 		_ASSERTE(FALSE && "m_ConDataChanged.Open() != NULL");
 	}
+
 	// переоткрыть m_GetDataPipe
-	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID);
+	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", nSrvPID);
 	bool bOpened = m_GetDataPipe.Open();
 	_ASSERTE(bOpened);
+
+	// обновить имя "серверного" пайпа
+	_wsprintf(ms_ConEmuC_Pipe, SKIPLEN(countof(ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", nSrvPID);
+
+	bool bActive = isActive();
+
+	UpdateServerActive(bActive);
+
+#ifdef _DEBUG
+	wchar_t szDbgInfo[512]; szDbgInfo[0] = 0;
+
+	MSectionLock SC; SC.Lock(&csPRC);
+	std::vector<ConProcess>::iterator i;
+	for (i = m_Processes.begin(); i != m_Processes.end(); ++i)
+	{
+		if (i->ProcessID == nSrvPID)
+		{
+			_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"==> Active server changed to '%s' PID=%u\n", i->Name, nSrvPID);
+			break;
+		}
+	}
+	SC.Unlock();
+
+	if (!*szDbgInfo)
+		_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"==> Active server changed to PID=%u\n", nSrvPID);
+
+	DEBUGSTRALTSRV(szDbgInfo);
+#endif
+
 	return bOpened;
 }
 
@@ -5612,10 +5645,11 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 	// Если FALSE - сервер увеличивает интервал опроса консоли (GUI теряет фокус)
 	mb_ThawRefreshThread = abFocus || !gpSet->isSleepInBackground;
 
+
+	BOOL lbNeedChange = FALSE;
 	// Разрешит "заморозку" серверной нити и обновит hdr.bConsoleActive в мэппинге
 	if (m_ConsoleMap.IsValid() && ms_ConEmuC_Pipe[0])
 	{
-		BOOL lbNeedChange = FALSE;
 		BOOL lbActive = isActive();
 
 		if ((BOOL)m_ConsoleMap.Ptr()->bConsoleActive == lbActive
@@ -5631,6 +5665,10 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 		if (lbNeedChange)
 			UpdateServerActive(lbActive);
 	}
+
+#ifdef _DEBUG
+	DEBUGSTRALTSRV(L"--> Updating active was skipped\n");
+#endif
 
 	mb_InSetFocus = FALSE;
 }
@@ -5656,13 +5694,20 @@ void CRealConsole::UpdateServerActive(BOOL abActive)
 			pIn->dwData[1] = mb_ThawRefreshThread;
 			//ExecutePrepareCmd(&lIn.hdr, CECMD_ONACTIVATION, lIn.hdr.cbSize);
 			DWORD dwTickStart = timeGetTime();
-			// Таймаут, чтобы не зависнуть
+			WARNING("Таймаут, чтобы не зависнуть");
 			fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, 500);
 			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_ConEmuC_Pipe, pOut);
 		}
 		ExecuteFreeResult(pIn);
 		ExecuteFreeResult(pOut);
 	}
+
+#ifdef _DEBUG
+	wchar_t szDbgInfo[512];
+	_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"--> Updating active(%i) and thaw(%i) %s: %s\n",
+		abActive, mb_ThawRefreshThread, fSuccess ? L"OK" : L"Failed!", ms_ConEmuC_Pipe+18);
+	DEBUGSTRALTSRV(szDbgInfo);
+#endif
 }
 
 void CRealConsole::UpdateScrollInfo()

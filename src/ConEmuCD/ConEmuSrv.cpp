@@ -2753,17 +2753,14 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		nAltWait = gpSrv->hAltServer ? WaitForSingleObject(gpSrv->hAltServer, dwAltTimeout) : WAIT_OBJECT_0;
 
 		// Always update con handle, мягкий вариант
+		// !!! В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ. В итоге, буфер вывода telnet'а схлопывается! !!!
 		// 120507 - Если крутится альт.сервер - то игнорировать
-		if (!nAltWait && ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT))
+		if (gpSrv->bReopenHandleAllowed
+			&& !nAltWait
+			&& ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT))
 		{
-			WARNING("!!! В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!");
-
-			// В итоге, буфер вывода telnet'а схлопывается!
-			if (gpSrv->bReopenHandleAllowed)
-			{
-				ghConOut.Close();
-				nLastConHandleTick = GetTickCount();
-			}
+			ghConOut.Close();
+			nLastConHandleTick = GetTickCount();
 		}
 
 		//// Попытка поправить CECMD_SETCONSOLECP
@@ -2855,6 +2852,13 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//lbEventualChange = (nWait == (WAIT_OBJECT_0+1))/* || lbProcessChanged*/;
 		//lbForceSend = (nWait == (WAIT_OBJECT_0+1));
 
+		BOOL bThaw = TRUE; // Если FALSE - снизить нагрузку на conhost
+		if (gpSrv->pConsole->hdr.bConsoleActive && gpSrv->pConsoleMap)
+		{
+			if (gpSrv->pConsoleMap->IsValid())
+				bThaw = gpSrv->pConsoleMap->Ptr()->bThawRefreshThread;
+		}
+
 		// Чтобы не грузить процессор неактивными консолями спим, если
 		// только что не было затребовано изменение размера консоли
 		if (!lbWasSizeChange
@@ -2863,7 +2867,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		        // Консоль не активна
 		        && (!gpSrv->pConsole->hdr.bConsoleActive
 		            // или активна, но сам ConEmu GUI не в фокусе
-		            || (gpSrv->pConsole->hdr.bConsoleActive && !gpSrv->pConsole->hdr.bThawRefreshThread))
+		            || (gpSrv->pConsole->hdr.bConsoleActive && !bThaw))
 		        // и не дернули событие gpSrv->hRefreshEvent
 		        && (nWait != (WAIT_OBJECT_0+1))
 				&& !gpSrv->bWasReattached)

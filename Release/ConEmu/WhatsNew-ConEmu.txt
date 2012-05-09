@@ -9,9 +9,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
-2012.05.09
+2012.05.09a
 [%] Issue 534: ConEmuSetup: Строка с путем по умолчанию для 64 битной версии выводится сразу после 32 битной.
 [+] Поиск текста в консоли. Hotkey Apps+F или Edit -> Find text.
+[%] Telnet and 'Sleep in background' bugfix.
 
 
 2012.05.08

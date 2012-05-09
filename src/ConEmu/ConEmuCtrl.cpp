@@ -206,12 +206,12 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 						switch (mn_LastSingleModifier)
 						{
 						case VK_MENU:
-							mn_SingleModifierFixKey = VK_MENU;
-							mn_SingleModifierFixState |= (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED);
+							mn_SingleModifierFixKey = VK_CONTROL;
+							mn_SingleModifierFixState |= (LEFT_CTRL_PRESSED);
 							break;
 						case VK_CONTROL:
-							mn_SingleModifierFixKey = VK_CONTROL;
-							mn_SingleModifierFixState |= (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED);
+							mn_SingleModifierFixKey = VK_MENU;
+							mn_SingleModifierFixState |= (RIGHT_ALT_PRESSED);
 							break;
 						case VK_SHIFT:
 							mn_SingleModifierFixKey = VK_MENU;
