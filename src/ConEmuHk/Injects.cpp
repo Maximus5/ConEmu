@@ -39,6 +39,8 @@ extern HMODULE ghOurModule;
 UINT_PTR gfnLoadLibrary = 0;
 //extern HMODULE ghPsApi;
 
+HANDLE ghSkipSetThreadContextForThread = NULL;
+
 // ѕроверить, что gfnLoadLibrary лежит в пределах модул€ hKernel!
 UINT_PTR GetLoadLibraryAddress()
 {

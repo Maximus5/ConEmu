@@ -33,7 +33,10 @@ struct UserImp
 {
 public:
 	BOOL     loadExports(BOOL abAllowLoadLibrary);
+	BOOL     loadExportsFrom(HMODULE hModule);
 	void     setAllowLoadLibrary();
+	bool     isUser32(HMODULE hModule);
+	bool     isExportsLoaded();
 
 public:
 	BOOL     allowSetForegroundWindow(DWORD dwProcessId);

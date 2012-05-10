@@ -12,7 +12,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 2012.05.10
 [%] ConEmu internal paste locks clipboard.
 [*] Пример макроса: ConEmu\Far1_reg\TabList.reg
-[%] AnsiCon вызываел падение в cmd/tcc.
+[%] AnsiCon вызывал падение в cmd/tcc.
 
 
 2012.05.09a

@@ -6747,44 +6747,52 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 	}
 	else
 	{
-		// А можно и через наш сервер
+		HGLOBAL hglb = NULL;
+		LPCWSTR lptstr = NULL;
+		wchar_t szErr[128] = {}; DWORD nErrCode = 0;
+
+		// из буфера обмена
 		if (!OpenClipboard(NULL))
 		{
-			MBox(_T("Can't open PC clipboard"));
-			return;
+			nErrCode = GetLastError();
+			wcscpy_c(szErr, L"Can't open Windows clipboard");
+		}
+		else if ((hglb = GetClipboardData(CF_UNICODETEXT)) == NULL)
+		{
+			nErrCode = GetLastError();
+			wcscpy_c(szErr, L"Can't get CF_UNICODETEXT");
+		}
+		else if ((lptstr = (LPCWSTR)GlobalLock(hglb)) == NULL)
+		{
+			nErrCode = GetLastError();
+			wcscpy_c(szErr, L"Can't lock CF_UNICODETEXT");
 		}
 		else
 		{
-			HGLOBAL hglb = GetClipboardData(CF_UNICODETEXT);
-
-			if (!hglb)
-			{
-				CloseClipboard();
-				MBox(_T("Can't get CF_UNICODETEXT"));
-				return;
-			}
-
-			LPCWSTR lptstr = (LPCWSTR)GlobalLock(hglb);
-
-			if (!lptstr)
-			{
-				CloseClipboard();
-				MBox(_T("Can't lock CF_UNICODETEXT"));
-				return;
-			}
-			if (!*lptstr)
-			{
-				// Text is empty
-				return;
-			}
-
 			pszBuf = lstrdup(lptstr);
-			if (!pszBuf)
-			{
-				MBoxAssert(pszBuf && "lstrdup(lptstr) = NULL");
-				return;
-			}
+			GlobalUnlock(hglb);
 		}
+
+		// Done
+		CloseClipboard();
+
+		if (!pszBuf && *szErr)
+		{
+			DisplayLastError(szErr, nErrCode);
+			return;
+		}
+	}
+
+	if (!pszBuf)
+	{
+		MBoxAssert(pszBuf && "lstrdup(lptstr) = NULL");
+		return;
+	}
+	else if (!*pszBuf)
+	{
+		// Если текст "пустой" то и делать ничего не надо
+		SafeFree(pszBuf);
+		return;
 	}
 
 	// Теперь сформируем пакет

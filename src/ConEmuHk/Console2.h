@@ -5,6 +5,8 @@
 
 //////////////////////////////////////////////////////////////////////////////
 
+extern HANDLE ghSkipSetThreadContextForThread;
+
 int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/*32/64*/, LPCWSTR apszHookDllPath, DWORD_PTR* ptrAllocated, DWORD* pnAllocated)
 {
 	int         iRc = -1000;
@@ -262,6 +264,8 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 		iRc = -732;
 		goto wrap;
 	}
+
+	ghSkipSetThreadContextForThread = pi.hThread;
 
 	#ifdef _DEBUG
 	// strHookDllPath уже скопирован, поэтому его можно заюзать для DebugString

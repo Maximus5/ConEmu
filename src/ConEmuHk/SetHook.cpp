@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/MArray.h"
 #include "ShellProcessor.h"
 #include "SetHook.h"
+#include "UserImp.h"
 
 //#include <WinInet.h>
 //#pragma comment(lib, "wininet.lib")
@@ -2844,6 +2845,11 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMOD
 
 BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 {
+	if (user->isUser32(hModule))
+	{
+		// нельзя, иначе пойдут ошибки доступа
+		return FALSE;
+	}
 	typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
 	ORIGINALFAST(FreeLibrary);
 	return OnFreeLibraryWork((FARPROC)F(FreeLibrary), ph, FALSE, hModule);

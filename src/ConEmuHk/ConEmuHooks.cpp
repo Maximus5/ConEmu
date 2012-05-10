@@ -177,6 +177,9 @@ BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint);
 BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
+extern HANDLE ghSkipSetThreadContextForThread;
+BOOL WINAPI OnSetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext);
+
 HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
 LPVOID WINAPI OnMapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap);
 BOOL WINAPI OnUnmapViewOfFile(LPCVOID lpBaseAddress);
@@ -274,6 +277,7 @@ bool InitHooksCommon()
 		{(void*)OnMapViewOfFile,		"MapViewOfFile",		kernel32},
 		{(void*)OnUnmapViewOfFile,		"UnmapViewOfFile",		kernel32},
 		{(void*)OnCloseHandle,			"CloseHandle",			kernel32},
+		{(void*)OnSetThreadContext,		"SetThreadContext",		kernel32},
 		/* ************************ */
 		#ifndef HOOKS_COMMON_PROCESS_ONLY
 		{(void*)OnGetConsoleAliasesW,	"GetConsoleAliasesW",	kernel32},
@@ -873,10 +877,31 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 		lbRc = F(CloseHandle)(hObject);
 	}
 
+	if (ghSkipSetThreadContextForThread == hObject)
+		ghSkipSetThreadContextForThread = NULL;
+
 	return lbRc;
 }
 
+BOOL WINAPI OnSetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext)
+{
+	typedef BOOL (WINAPI* OnSetThreadContext_t)(HANDLE hThread, CONST CONTEXT *lpContext);
+	ORIGINALFAST(SetThreadContext);
+	BOOL bMainThread = FALSE; // поток не важен
+	BOOL lbRc = FALSE;
 
+	if (ghSkipSetThreadContextForThread && (hThread == ghSkipSetThreadContextForThread))
+	{
+		lbRc = FALSE;
+		SetLastError(ERROR_INVALID_HANDLE);
+	}
+	else
+	{
+		lbRc = F(SetThreadContext)(hThread, lpContext);
+	}
+
+	return lbRc;
+}
 
 BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, CONST RECT * prcRect)
 {
