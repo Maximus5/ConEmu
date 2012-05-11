@@ -62,7 +62,7 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	szUpdateVerLocation = NULL;
 	isUpdateCheckOnStartup = false;
 	isUpdateCheckHourly = false;
-	isUpdateConfirmDownload = true;
+	isUpdateConfirmDownload = true; // true-Show MessageBox, false-notify via TSA only
 	isUpdateUseBuilds = 0; // 0-спросить пользователя при первом запуске, 1-stable only, 2-latest
 	isUpdateUseProxy = false;
 	szUpdateProxy = szUpdateProxyUser = szUpdateProxyPassword = NULL; // "Server:port"
@@ -231,10 +231,40 @@ bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])
 		}
 		break;
 	case 2:
-		if (!*UpdateArcCmdLine())
 		{
-			wcscpy_c(szReason, L"Update.ArcCmdLine is not specified");
-			return false; // Не указана строка запуска архиватора
+			LPCWSTR pszCmd = UpdateArcCmdLine();
+			if (!*pszCmd)
+			{
+				wcscpy_c(szReason, L"Update.ArcCmdLine is not specified");
+				return false; // Не указана строка запуска архиватора
+			}
+			wchar_t szExe[MAX_PATH+1] = {};
+			NextArg(&pszCmd, szExe);
+			pszCmd = PointToName(szExe);
+			if (!pszCmd || !*pszCmd)
+			{
+				wcscpy_c(szReason, L"Update.ArcCmdLine is invalid");
+				return false; // Ошибка в строке запуска архиватора
+			}
+			if ((lstrcmpi(pszCmd, L"WinRar.exe") == 0) || (lstrcmpi(pszCmd, L"Rar.exe") == 0) || (lstrcmpi(pszCmd, L"UnRar.exe") == 0))
+			{
+				// Issue 537: AutoUpdate to the version 120509x64 unpacks to the wrong folder
+				HKEY hk;
+				DWORD nSubFolder = 0;
+				if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\WinRAR\\Extraction\\Profile", 0, KEY_READ, &hk))
+				{
+					DWORD nSize = sizeof(nSubFolder);
+					if (0 != RegQueryValueEx(hk, L"UnpToSubfolders", NULL, NULL, (LPBYTE)&nSubFolder, &nSize))
+						nSubFolder = 0;
+					RegCloseKey(hk);
+				}
+
+				if (nSubFolder)
+				{
+					wcscpy_c(szReason, L"Update.ArcCmdLine: Unwanted option\n[HKLM\\Software\\WinRAR\\Extraction\\Profile]\n\"UnpToSubfolders\"=1");
+					return false; // Ошибка в настройке архиватора
+				}
+			}
 		}
 		break;
 	default:

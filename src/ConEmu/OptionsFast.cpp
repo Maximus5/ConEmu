@@ -155,7 +155,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 					if (bCheckUpdate)
 					{	// ѕри первом запуске - умолчани€ параметров
 						gpSet->UpdSet.isUpdateCheckHourly = false;
-						gpSet->UpdSet.isUpdateConfirmDownload = true;
+						gpSet->UpdSet.isUpdateConfirmDownload = true; // true-Show MessageBox, false-notify via TSA only
 					}
 					gpSet->UpdSet.isUpdateUseBuilds = IsDlgButtonChecked(hDlg, rbAutoUpdateStableFast) ? 1 : 2;
 

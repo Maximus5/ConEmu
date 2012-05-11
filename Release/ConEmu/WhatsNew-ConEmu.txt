@@ -15,6 +15,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [%] В диалоге создания новой консоли при запуске группы (Tasks) игнорировался флажок 'Run as adminstrator'.
 [%] Issue 538: Неверные иконки в Thumbnails/Tiles в корне архивов.
 [%] Issue 539: Некорректная отрисовка Thumbnails/Tiles поверх панели QView (Ctrl+Q) или Info (Ctrl+L).
+[+] Issue 532: Опция 'Show TSA balloon' (влияет только на автоматический режим проверки).
 
 
 2012.05.10

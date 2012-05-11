@@ -2600,7 +2600,7 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2)
 	
 	CheckDlgButton(hWnd2, cbUpdateCheckOnStartup, p->isUpdateCheckOnStartup);
 	CheckDlgButton(hWnd2, cbUpdateCheckHourly, p->isUpdateCheckHourly);
-	CheckDlgButton(hWnd2, cbUpdateConfirmDownload, p->isUpdateConfirmDownload);
+	CheckDlgButton(hWnd2, cbUpdateConfirmDownload, !p->isUpdateConfirmDownload);
 	CheckRadioButton(hWnd2, rbUpdateStableOnly, rbUpdateLatestAvailable, (p->isUpdateUseBuilds==1) ? rbUpdateStableOnly : rbUpdateLatestAvailable);
 	CheckRadioButton(hWnd2, rbUpdateUseExe, rbUpdateUseArc, (p->UpdateDownloadSetup()==1) ? rbUpdateUseExe : rbUpdateUseArc);
 	
@@ -3615,7 +3615,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->UpdSet.isUpdateCheckHourly = IsChecked(hWnd2, CB);
 			break;
 		case cbUpdateConfirmDownload:
-			gpSet->UpdSet.isUpdateConfirmDownload = IsChecked(hWnd2, CB);
+			gpSet->UpdSet.isUpdateConfirmDownload = (IsChecked(hWnd2, CB) == BST_UNCHECKED);
 			break;
 		case rbUpdateStableOnly:
 		case rbUpdateLatestAvailable:

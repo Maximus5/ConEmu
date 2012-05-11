@@ -31,6 +31,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TRAY_ITEM_HIDE_NAME     L"Hide to &TSA"
 #define TRAY_ITEM_RESTORE_NAME  L"Restore from &TSA"
 
+enum TrayIconMsgSource
+{
+	tsa_Source_None = 0,
+	tsa_Source_Updater,
+};
+
 class TrayIcon
 {
 	private:
@@ -43,6 +49,9 @@ class TrayIcon
 
 		bool mb_InHidingToTray;
 		bool mb_WindowInTray;
+		TrayIconMsgSource m_MsgSource;
+		bool mb_SecondTimeoutMsg;
+		DWORD mn_BalloonShowTick;
 
 	public:
 		bool isWindowInTray() { return mb_WindowInTray; }
@@ -52,6 +61,7 @@ class TrayIcon
 		TrayIcon();
 		~TrayIcon();
 
+		void ShowTrayIcon(LPCTSTR asInfoTip = NULL, TrayIconMsgSource aMsgSource = tsa_Source_None);
 		void HideWindowToTray(LPCTSTR asInfoTip = NULL);
 		void RestoreWindowFromTray(BOOL abIconOnly = FALSE);
 		void LoadIcon(HWND inWnd, int inIconResource);

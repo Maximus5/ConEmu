@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UpdateSet.h"
 #include "Options.h"
 #include "ConEmu.h"
+#include "TrayIcon.h"
 #include "version.h"
 
 CConEmuUpdate* gpUpd = NULL;
@@ -344,7 +345,7 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 	{
 		wchar_t szErrMsg[255]; wcscpy_c(szErrMsg, L"Updates are not enabled in ConEmu settings\n");
 		wcscat_c(szErrMsg, szReason);
-		DisplayLastError(szErrMsg, 0);
+		DisplayLastError(szErrMsg, -1);
 		return;
 	}
 
@@ -1519,20 +1520,50 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 		return false;
 	}
 
-	bool lbRc;
+	bool lbRc = false;
 	wchar_t* pszMsg = NULL;
 	size_t cchMax;
 
 	switch (step)
 	{
 	case us_ConfirmDownload:
-		cchMax = _tcslen(asParm)+255;
-		pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
-		_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\n%s\nDownload?",
-			(mp_Set->isUpdateUseBuilds==1) ? L"stable" : L"developer",
-			ms_NewVersion, asParm ? asParm : L"");
-		m_UpdateStep = step;
-		lbRc = QueryConfirmationInt(pszMsg);
+		{
+			cchMax = _tcslen(asParm)+255;
+			pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
+
+			if (mb_ManualCallMode == 2)
+			{
+				lbRc = true;
+			}
+			else if (mp_Set->isUpdateConfirmDownload || mb_ManualCallMode)
+			{
+				wchar_t* pszDup = lstrdup(asParm);
+				wchar_t* pszFile = pszDup ? wcsrchr(pszDup, L'/') : NULL;
+				if (pszFile)
+				{
+					pszFile[1] = 0;
+					pszFile = (wchar_t*)(asParm + (pszFile - pszDup + 1));
+					asParm = pszDup;
+				}
+
+				_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\n\n%s\n%s\n\nDownload?",
+					(mp_Set->isUpdateUseBuilds==1) ? L"stable" : L"developer",
+					ms_NewVersion, asParm ? asParm : L"", pszFile ? pszFile : L"");
+				SafeFree(pszDup);
+
+				m_UpdateStep = step;
+				lbRc = QueryConfirmationInt(pszMsg);
+			}
+			else
+			{
+				_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\nClick here to download",
+					(mp_Set->isUpdateUseBuilds==1) ? L"stable" : L"developer",
+					ms_NewVersion);
+				Icon.ShowTrayIcon(pszMsg, tsa_Source_Updater);
+
+				lbRc = false;
+			}
+		}
 		break;
 	case us_ConfirmUpdate:
 		cchMax = 512;

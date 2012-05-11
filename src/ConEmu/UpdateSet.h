@@ -38,7 +38,7 @@ public:
 	
 	bool isUpdateCheckOnStartup;
 	bool isUpdateCheckHourly;
-	bool isUpdateConfirmDownload;
+	bool isUpdateConfirmDownload; // true-Show MessageBox, false-notify via TSA only
 	BYTE isUpdateUseBuilds; // 0-спросить пользователя при первом запуске, 1-stable only, 2-latest
 	BYTE isUpdateDownloadSetup; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
 	BYTE isSetupDetected; // 0-пока не проверялся, 1-установлено через Installer, пути совпали, 2-Installer не запускался
