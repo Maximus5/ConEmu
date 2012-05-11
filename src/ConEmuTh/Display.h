@@ -86,7 +86,7 @@ struct CeFullPanelInfo
 
 
 	int RegisterPanelView();
-	int UnregisterPanelView();
+	int UnregisterPanelView(bool abHideOnly=false);
 	void Close();
 	HWND CreateView();
 	BOOL ReallocItems(INT_PTR anCount);

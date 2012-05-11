@@ -693,6 +693,7 @@ void CSettings::InitVars_Pages()
 	{
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
 		{IDD_SPG_MAIN,        L"Main",           thi_Main/*,    OnInitDialog_Main*/},
+		{IDD_SPG_STARTUP,     L"Startup",        thi_Startup/*, OnInitDialog_Startup*/},
 		{IDD_SPG_FEATURE,     L"Features",       thi_Ext/*,     OnInitDialog_Ext*/},
 		{IDD_SPG_COMSPEC,     L"ComSpec",        thi_Comspec/*, OnInitDialog_Comspec*/},
 		{IDD_SPG_SELECTION,   L"Mark & Paste",   thi_Selection/*OnInitDialog_Selection*/},
@@ -874,10 +875,17 @@ void CSettings::SettingsPreSave()
 		SafeFree(gpSet->sTabCloseMacro);
 	if (gpSet->sSaveAllMacro && lstrcmp(gpSet->sSaveAllMacro, gpSet->SaveAllMacroDefault()) == 0)
 		SafeFree(gpSet->sSaveAllMacro);
-	
-	if (ghOpWnd && IsWindow(mh_Tabs[thi_Main]))
+
+	ApplyStartupOptions();
+}
+
+void CSettings::ApplyStartupOptions()
+{
+	if (ghOpWnd && IsWindow(mh_Tabs[thi_Startup]))
 	{
-		GetString(mh_Tabs[thi_Main], tCmdLine, &gpSet->psCmd);
+		GetString(mh_Tabs[thi_Startup], tCmdLine, &gpSet->psCmd);
+
+		//TODO: пендюрки всякие, типа "Auto save/restore open tabs", "Far editor/viewer also"
 	}
 }
 
@@ -1398,7 +1406,6 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	//}
 	
 	MCHKHEAP
-	SetDlgItemText(hWnd2, tCmdLine, gpSet->psCmd ? gpSet->psCmd : L"");
 	SetDlgItemText(hWnd2, tBgImage, gpSet->sBgImage);
 	//CheckDlgButton(hWnd2, rBgSimple, BST_CHECKED);
 
@@ -1450,6 +1457,8 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	CheckDlgButton(hWnd2, cbCursorBlink, gpSet->AppStd.isCursorBlink);
 
 	CheckDlgButton(hWnd2, cbBlockInactiveCursor, gpSet->AppStd.isCursorBlockInactive);
+
+	CheckDlgButton(hWnd2, cbCursorIgnoreSize, gpSet->AppStd.isCursorIgnoreSize);
 
 	CheckRadioButton(hWnd2, rCursorV, rCursorH, gpSet->AppStd.isCursorV ? rCursorV : rCursorH);
 
@@ -1510,6 +1519,17 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	CheckDlgButton(hWnd2, cbAutoSaveSizePos, gpSet->isAutoSaveSizePos);
 
 	mn_LastChangingFontCtrlId = 0;
+	RegisterTipsFor(hWnd2);
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Startup(HWND hWnd2, BOOL abInitial)
+{
+	CheckRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp);
+
+	//TODO: Пендюрки разные...
+	SetDlgItemText(hWnd2, tCmdLine, gpSet->psCmd ? gpSet->psCmd : L"");
+
 	RegisterTipsFor(hWnd2);
 	return 0;
 }
@@ -3067,6 +3087,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbBlockInactiveCursor:
 			gpSet->AppStd.isCursorBlockInactive = IsChecked(hWnd2, cbBlockInactiveCursor);
+			gpConEmu->ActiveCon()->Invalidate();
+			break;
+		case cbCursorIgnoreSize:
+			gpSet->AppStd.isCursorIgnoreSize = IsChecked(hWnd2, cbCursorIgnoreSize);
 			gpConEmu->ActiveCon()->Invalidate();
 			break;
 		case bBgImage:
@@ -4990,6 +5014,8 @@ void CSettings::Dialog()
 
 void CSettings::OnClose()
 {
+	ApplyStartupOptions();
+
 	if (gpSet->isTabs==1) gpConEmu->ForceShowTabs(TRUE); else if (gpSet->isTabs==0) gpConEmu->ForceShowTabs(FALSE); else
 
 	gpConEmu->mp_TabBar->Update();
@@ -5268,6 +5294,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_MAIN:
 			gpSetCls->OnInitDialog_Main(hWnd2);
 			break;
+		case IDD_SPG_STARTUP:
+			gpSetCls->OnInitDialog_Startup(hWnd2, TRUE);
+			break;
 		case IDD_SPG_FEATURE:
 			gpSetCls->OnInitDialog_Ext(hWnd2);
 			break;
@@ -5331,6 +5360,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		switch (((ConEmuSetupPages*)lParam)->PageID)
 		{
 		case IDD_SPG_MAIN:    /*gpSetCls->OnInitDialog_Main(hWnd2);*/   break;
+		case IDD_SPG_STARTUP:
+			gpSetCls->OnInitDialog_Startup(hWnd2, FALSE);
+			break;
 		case IDD_SPG_FEATURE: /*gpSetCls->OnInitDialog_Ext(hWnd2);*/    break;
 		case IDD_SPG_COMSPEC: /*gpSetCls->OnInitDialog_Comspec(hWnd2);*/break;
 		case IDD_SPG_SELECTION: /*gpSetCls->OnInitDialog_Selection(hWnd2);*/    break;
@@ -5779,6 +5811,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 					EnableWindow(GetDlgItem(hWnd2, cbCursorColor), bChecked);
 					EnableWindow(GetDlgItem(hWnd2, cbCursorBlink), bChecked);
 					EnableWindow(GetDlgItem(hWnd2, cbBlockInactiveCursor), bChecked);
+					EnableWindow(GetDlgItem(hWnd2, cbCursorIgnoreSize), bChecked);
 					if (pApp)
 					{
 						pApp->OverrideCursor = bChecked;
@@ -5813,6 +5846,13 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 					if (pApp)
 					{
 						pApp->isCursorBlockInactive = IsChecked(hWnd2, CB);
+						bRedraw = true;
+					}
+					break;
+				case cbCursorIgnoreSize:
+					if (pApp)
+					{
+						pApp->isCursorIgnoreSize = IsChecked(hWnd2, CB);
 						bRedraw = true;
 					}
 					break;
@@ -5942,10 +5982,11 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 						SelectStringExact(hWnd2, lbExtendFontNormalIdx, temp);
 
 						CheckDlgButton(hWnd2, cbCursorOverride, pApp->OverrideCursor);
+						CheckRadioButton(hWnd2, rCursorV, rCursorH, pApp->isCursorV ? rCursorV : rCursorH);
 						CheckDlgButton(hWnd2, cbCursorColor, pApp->isCursorColor);
 						CheckDlgButton(hWnd2, cbCursorBlink, pApp->isCursorBlink);
 						CheckDlgButton(hWnd2, cbBlockInactiveCursor, pApp->isCursorBlockInactive);
-						CheckRadioButton(hWnd2, rCursorV, rCursorH, pApp->isCursorV ? rCursorV : rCursorH);
+						CheckDlgButton(hWnd2, cbCursorIgnoreSize, pApp->isCursorIgnoreSize);
 
 						CheckDlgButton(hWnd2, cbColorsOverride, pApp->OverridePalette);
 						SelectStringExact(hWnd2, lbColorsOverride, pApp->szPaletteName);

@@ -956,12 +956,15 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem, BOOL bLargeIcon /*
 
 		if (pszFileName && pItem->bVirtualItem)
 		{
-			LPCWSTR pszSlash = wcsrchr(pszFileName, L'\\');
+			pszFileName = PointToName(pszFileName);
+			if (!pszFileName || !*pszFileName)
+				pszFileName = L"File";
 
-			if (pszSlash)
-				pszFileName = pszSlash+1;
-			else
-				pszFileName = L"";
+			//LPCWSTR pszSlash = wcsrchr(pszFileName, L'\\');
+			//if (pszSlash)
+			//	pszFileName = pszSlash+1;
+			//else
+			//	pszFileName = L"";
 		}
 		else
 		{

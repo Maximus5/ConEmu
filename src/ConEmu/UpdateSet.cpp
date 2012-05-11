@@ -73,6 +73,7 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	szUpdateExeCmdLineDef = lstrdup(L"\"%1\" /p:%3 /qr");
 	SafeFree(szUpdateExeCmdLine);
 
+	bool bWinRar = false;
 	wchar_t* pszArcPath = NULL; BOOL bWin64 = IsWindows64();
 	for (int i = 0; !(pszArcPath && *pszArcPath) && (i <= 5); i++)
 	{
@@ -81,29 +82,44 @@ void ConEmuUpdateSettings::ResetToDefaults()
 		{
 		case 0:
 			if (regArc.OpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\7-Zip", KEY_READ|(bWin64?KEY_WOW64_32KEY:0)))
+			{
 				regArc.Load(L"Path", &pszArcPath);
+			}
 			break;
 		case 1:
 			if (bWin64 && regArc.OpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\7-Zip", KEY_READ|KEY_WOW64_64KEY))
+			{
 				regArc.Load(L"Path", &pszArcPath);
+			}
 			break;
 		case 2:
 			if (regArc.OpenKey(HKEY_CURRENT_USER, L"SOFTWARE\\7-Zip", KEY_READ))
+			{
 				regArc.Load(L"Path", &pszArcPath);
+			}
 			break;
 		case 3:
 			if (regArc.OpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\WinRAR", KEY_READ|(bWin64?KEY_WOW64_32KEY:0)))
+			{
+				bWinRar = true;
 				regArc.Load(L"exe32", &pszArcPath);
+			}
 			break;
 		case 4:
 			if (bWin64 && regArc.OpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\WinRAR", KEY_READ|KEY_WOW64_64KEY))
+			{
+				bWinRar = true;
 				regArc.Load(L"exe64", &pszArcPath);
+			}
 			break;
 		case 5:
 			if (regArc.OpenKey(HKEY_CURRENT_USER, L"SOFTWARE\\WinRAR", KEY_READ))
 			{
+				bWinRar = true;
 				if (!regArc.Load(L"exe32", &pszArcPath) && bWin64)
+				{
 					regArc.Load(L"exe64", &pszArcPath);
+				}
 			}
 			break;
 		}
@@ -120,9 +136,17 @@ void ConEmuUpdateSettings::ResetToDefaults()
 		if (szUpdateArcCmdLineDef)
 		{
 			if (pszExt && lstrcmpi(pszExt, L".exe") == 0)
+			{
+				_ASSERTE(bWinRar==true);
+				//Issue 537: old WinRAR beta's fails
+				//_wsprintf(szUpdateArcCmdLineDef, SKIPLEN(cchMax) L"\"%s\" x -y \"%%1\"%s", pszArcPath, bWinRar ? L" \"%%2\\\"" : L"");
 				_wsprintf(szUpdateArcCmdLineDef, SKIPLEN(cchMax) L"\"%s\" x -y \"%%1\"", pszArcPath);
+			}
 			else
+			{
+				_ASSERTE(bWinRar==false);
 				_wsprintf(szUpdateArcCmdLineDef, SKIPLEN(cchMax) L"\"%s\\7zg.exe\" x -y \"%%1\"", pszArcPath);
+			}
 		}
 	}
 	SafeFree(pszArcPath);

@@ -433,6 +433,19 @@ bool CConEmuCtrl::key_Settings(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 }
 
 // pRCon may be NULL
+bool CConEmuCtrl::key_AltSpace(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (gpSet->isSendAltSpace)
+		return false;
+
+	if (TestOnly)
+		return true;
+
+	gpConEmu->ShowSysmenu();
+	return true;
+}
+
+// pRCon may be NULL
 bool CConEmuCtrl::key_SystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
@@ -1084,7 +1097,7 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 			continue;
 
 		ConEmuTab tab;
-		wchar_t szModified[4];
+		wchar_t szMark[6];
 		for (int T = 0; pRCon->GetTab(T, &tab); T++)
 		{
 			if (cchCount >= cchMax)
@@ -1106,19 +1119,29 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 			pTabs[cchCount].TabIdx = T;
 
 			// Text
-			wcscpy_c(szModified, tab.Modified ? L" * " : L"   ");
+			//wcscpy_c(szMark, tab.Modified ? L" * " : L"   ");
+			switch ((tab.Type & fwt_TypeMask))
+			{
+				case fwt_Editor:
+					wcscpy_c(szMark, tab.Modified ? L" * " : L" E "); break;
+				case fwt_Viewer:
+					wcscpy_c(szMark, L" V "); break;
+				default:
+					wcscpy_c(szMark, L"   ");
+			}
+				
 			if (V == nActiveCon)
 			{
-				if (T < 9)
-					_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/&%i]%s", V+1, T+1, szModified);
-				else if (T == 9)
-					_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/1&0]%s", V+1, szModified);
+				if (T <= 9)
+					_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/&%i]%s", V+1, T, szMark);
+				//else if (T == 9)
+				//	_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/1&0]%s", V+1, szMark);
 				else
-					_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/%i]%s", V+1, T+1, szModified);
+					_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/%i]%s", V+1, T, szMark);
 			}
 			else
 			{
-				_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/%i]%s", V+1, T+1, szModified);
+				_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/%i]%s", V+1, T, szMark);
 			}
 
 			int nCurLen = lstrlen(pTabs[cchCount].Title);

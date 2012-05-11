@@ -367,7 +367,7 @@ BOOL LoadPanelInfoA(BOOL abActive)
 	pcefpi->ItemsNumber = pi.ItemsNumber; //-V101
 	pcefpi->CurrentItem = pi.CurrentItem; //-V101
 	pcefpi->TopPanelItem = pi.TopPanelItem; //-V101
-	pcefpi->Visible = pi.Visible;
+	pcefpi->Visible = (pi.PanelType == PTYPE_FILEPANEL) && pi.Visible;
 	pcefpi->ShortNames = pi.ShortNames;
 	pcefpi->Focus = pi.Focus;
 	pcefpi->Flags = pi.Flags; // CEPANELINFOFLAGS

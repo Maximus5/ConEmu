@@ -3005,9 +3005,12 @@ BOOL CRealBuffer::isConSelectMode()
 	if (con.m_sel.dwFlags != 0)
 		return true;
 
-	// В Фаре может быть активен граббер (AltIns)
-	if (con.m_ci.dwSize >= 40)  // Попробуем его определять по высоте курсора.
-		return true;
+	if ((this == mp_RCon->mp_RBuf) && mp_RCon->isFar())
+	{
+		// В Фаре может быть активен граббер (AltIns)
+		if (con.m_ci.dwSize >= 40)  // Попробуем его определять по высоте курсора.
+			return true;
+	}
 
 	return false;
 }
@@ -4236,17 +4239,30 @@ void CRealBuffer::ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
 	// то курсор нужно переключить в половину знакоместа!
 	if (isSelectionPresent())
 	{
+		TODO("А может ну его, эту половину знакоместа? Или по настройке?");
 		if (ci->dwSize < 50)
 			ci->dwSize = 50;
+	}
+	else
+	{
+		const Settings::AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
+		if (pApp->CursorIgnoreSize())
+			ci->dwSize = 15;
 	}
 }
 
 void CRealBuffer::GetCursorInfo(COORD* pcr, CONSOLE_CURSOR_INFO* pci)
 {
 	if (pcr)
+	{
 		*pcr = con.m_sbi.dwCursorPosition;
+	}
+
 	if (pci)
-		*pci = con.m_ci;
+	{
+		//*pci = con.m_ci;
+		ConsoleCursorInfo(pci);
+	}
 }
 
 void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)

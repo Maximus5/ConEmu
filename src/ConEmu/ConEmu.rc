@@ -166,8 +166,24 @@ BEGIN
     CONTROL         "Stretch",rBgStretch,"Button",BS_AUTORADIOBUTTON,249,179,39,10
     CONTROL         "Tile",rBgTile,"Button",BS_AUTORADIOBUTTON,291,179,26,10
     CTEXT           "x",IDC_STATIC,221,77,8,8
-    GROUPBOX        "Command Line",IDC_STATIC,4,197,319,30
-    EDITTEXT        tCmdLine,9,208,307,12,ES_AUTOHSCROLL
+END
+
+IDD_SPG_STARTUP DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Startup options",IDC_STATIC,4,1,319,115
+    CONTROL         "Command line",rbStartSingleApp,"Button",BS_AUTORADIOBUTTON,9,15,290,8
+    EDITTEXT        tCmdLine,20,25,296,12,ES_AUTOHSCROLL | WS_DISABLED
+    CONTROL         "Tasks file",rbStartTasksFile,"Button",BS_AUTORADIOBUTTON,9,40,290,8
+    EDITTEXT        tStartTasksFile,20,50,296,12,ES_AUTOHSCROLL | WS_DISABLED
+    CONTROL         "Specified named task",rbStartSavedTask,"Button",BS_AUTORADIOBUTTON,9,65,290,8
+    COMBOBOX        lbStartNamedTask,20,75,296,59,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Auto save/restore opened tabs",rbStartLastTabs,"Button",BS_AUTORADIOBUTTON,9,90,290,8
+    CONTROL         "Far folders also",cbStartFarRestoreFolders,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,20,101,90,8
+    CONTROL         "Far editors/viewers also",cbStartFarRestoreEditors,
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,110,101,100,8
 END
 
 IDD_SPG_COLORS DIALOGEX 0, 0, 328, 235
@@ -373,7 +389,7 @@ BEGIN
     CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,36,87,8
     CONTROL         "Portable registry",cbPortableRegistry,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,48,75,8
     PUSHBUTTON      "...",bPortableRegistrySettings,306,47,13,11,WS_DISABLED
-    GROUPBOX        "Appearence",gbFeatureAppear,4,64,319,61
+    GROUPBOX        "Appearance",gbFeatureAppear,4,64,319,61
     CONTROL         "Enhance progress- and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,74,119,8
     CONTROL         "Enhance buttons and -boxes",cbEnhanceButtons,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,86,119,8
@@ -384,8 +400,7 @@ BEGIN
     CONTROL         "Center console",cbTryToCenter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,86,89,8
     CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,98,89,8
     CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,110,89,8
-    CONTROL         "Ignore telnet cursor size",cbIgnoreTelnetCursorSize,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,110,91,8
+    CONTROL         "Ignore console cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,110,119,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,231,74,87,8
     CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,86,87,8
     CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,153,91,8
@@ -416,7 +431,7 @@ BEGIN
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,9,42,178,8
     CONTROL         "%ComSpec% (env.var.)",rbComspecEnvVar,"Button",BS_AUTORADIOBUTTON,189,42,98,8
     CONTROL         "cmd",rbComspecCmd,"Button",BS_AUTORADIOBUTTON,290,42,31,8
-    CONTROL         "Excplicit executable (env.var. of ConEmu.exe allowed)",rbComspecExplicit,
+    CONTROL         "Explicit executable (env.var. of ConEmu.exe allowed)",rbComspecExplicit,
                     "Button",BS_AUTORADIOBUTTON,9,55,308,8
     EDITTEXT        tComspecExplicit,19,66,283,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",cbComspecExplicit,306,66,13,11
@@ -554,7 +569,7 @@ BEGIN
     CONTROL         "Never",rbCTSNever,"Button",BS_AUTORADIOBUTTON,90,13,35,8
     GROUPBOX        "Color indexes",IDC_STATIC,263,1,60,46
     LTEXT           "Select text in console:",IDC_STATIC,12,13,72,8
-    GROUPBOX        "Handle pasting text (excepting Far Manager and GUI applications)",gbFeatureClipboard,4,83,319,42
+    GROUPBOX        "Handle pasting text (not in Far Manager or GUI applications)",gbFeatureClipboard,4,83,319,42
     CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,95,117,8
     CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,96,91,8
     CONTROL         "Confirm <Enter> keypress",cbClipConfirmEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,109,117,8
@@ -611,7 +626,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Far Panel Views",IDC_STATIC,4,1,319,198
+    GROUPBOX        "Far Panel Views",IDC_STATIC,4,1,319,212
     GROUPBOX        "Thumbnails mode",IDC_STATIC,9,12,308,49
     RTEXT           "Label font:",IDC_STATIC,12,27,40,8
     COMBOBOX        tThumbsFontName,57,25,116,76,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
@@ -686,7 +701,7 @@ BEGIN
     LTEXT           "Supported extensions:",IDC_STATIC,8,236,78,8,NOT WS_VISIBLE | WS_DISABLED
     CONTROL         "Preview frame",cbThumbPreviewBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,118,147,62,10
     CONTROL         "Current item frame",cbThumbSelectionBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,221,147,77,10
-    PUSHBUTTON      "&Apply",bApplyViewSettings,3,202,50,14
+    PUSHBUTTON      "&Apply",bApplyViewSettings,9,195,50,14
     CONTROL         "Restore on Far startup",cbThumbRestoreOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,214,134,101,10
 END
 
@@ -872,27 +887,31 @@ BEGIN
     CONTROL         "Non elevated",rbAppDistinctElevatedOff,"Button",BS_AUTORADIOBUTTON,163,15,61,8
     CONTROL         "Elevation don't matter",rbAppDistinctElevatedIgnore,
                     "Button",BS_AUTORADIOBUTTON,227,15,90,8
-    GROUPBOX        "",IDC_STATIC,110,60,102,50
+    GROUPBOX        "",IDC_STATIC,110,60,208,29
     CONTROL         "Extend fonts override",cbExtendFontsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,60,86,10
-    CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,75,91,10
-    COMBOBOX        lbExtendFontBoldIdx,116,90,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbExtendFontItalicIdx,148,90,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbExtendFontNormalIdx,180,90,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "",IDC_STATIC,216,60,101,50
-    CONTROL         "Cursor override",cbCursorOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,60,66,10
-    CONTROL         "&Vertical",rCursorV,"Button",BS_AUTORADIOBUTTON | WS_GROUP,222,72,40,8
-    CONTROL         "&Horizontal",rCursorH,"Button",BS_AUTORADIOBUTTON,265,72,46,8
-    CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,84,33,8
-    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,266,84,42,8
-    CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,96,84,8
-    GROUPBOX        "",IDC_STATIC,110,115,208,30
-    CONTROL         "Color palette override",cbColorsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,114,87,10
-    COMBOBOX        lbColorsOverride,116,126,194,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "",IDC_STATIC,110,149,208,29
-    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,163,102,8
-    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,219,163,95,8
-    CONTROL         "Pasting text override (excepting Far and GUI applications)",cbClipboardOverride,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,148,202,10
+    CONTROL         "Extend",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,73,33,10
+    COMBOBOX        lbExtendFontBoldIdx,174,71,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontItalicIdx,224,71,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontNormalIdx,284,71,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "",IDC_STATIC,111,92,208,40
+    CONTROL         "Cursor override",cbCursorOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,92,66,10
+    CONTROL         "&Vertical",rCursorV,"Button",BS_AUTORADIOBUTTON | WS_GROUP,116,105,40,8
+    CONTROL         "&Horizontal",rCursorH,"Button",BS_AUTORADIOBUTTON,158,105,48,8
+    CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,105,40,8
+    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,251,105,63,8
+    CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,118,91,8
+    CONTROL         "Ignore console cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,118,104,8
+    GROUPBOX        "",IDC_STATIC,110,136,208,30
+    CONTROL         "Color palette override",cbColorsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,135,87,10
+    COMBOBOX        lbColorsOverride,116,147,194,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "",IDC_STATIC,110,170,208,29
+    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,184,102,8
+    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,219,184,95,8
+    CONTROL         "Pasting text override (not in Far or GUI applications)",cbClipboardOverride,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,169,187,10
+    RTEXT           "Italic:",stExtendFontItalicIdx,202,73,21,8
+    RTEXT           "Replace:",stExtendFontNormalIdx,251,73,32,8
+    RTEXT           "Bold:",stExtendFontBoldIdx,154,74,19,8
 END
 
 

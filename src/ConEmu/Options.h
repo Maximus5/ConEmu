@@ -267,6 +267,9 @@ struct Settings
 			//reg->Load(L"CursorBlockInactive", isCursorBlockInactive);
 			bool isCursorBlockInactive;
 			bool CursorBlockInactive() const { return (OverrideCursor || !AppNames) ? isCursorBlockInactive : gpSet->AppStd.isCursorBlockInactive; };
+			//reg->Load(L"CursorIgnoreSize", isCursorIgnoreSize);
+			bool isCursorIgnoreSize;
+			bool CursorIgnoreSize() const { return (OverrideCursor || !AppNames) ? isCursorIgnoreSize : gpSet->AppStd.isCursorIgnoreSize; };
 
 			bool OverrideClipboard;
 			//reg->Load(L"ClipboardAllLines", isPasteAllLines);

@@ -182,6 +182,7 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 
 	pi->OurTopPanelItem = pi->TopPanelItem;
 	HWND lhView = pi->hView; // (pi->bLeftPanel) ? ghLeftView : ghRightView;
+	BOOL lbWasVisible = pi->Visible;
 	PanelViewMode PVM = pvm_None;
 
 	// В Far2 плагин можно позвать через callplugin(...)
@@ -230,7 +231,7 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 	DWORD dwMode = pvm_None; //PanelViewMode
 
 	// Если View не создан, или смена режима
-	if ((lhView == NULL) || (PVM != pi->PVM))
+	if ((lhView == NULL) || (!lbWasVisible && pi->Visible) || (PVM != pi->PVM))
 	{
 		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
 		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
@@ -1073,19 +1074,19 @@ void ReloadPanelsInfo()
 
 	if (pviLeft.hView)
 	{
-		if (bLeftVisible && pviLeft.Visible)
+		if ((bLeftVisible != pviLeft.Visible)
+			|| memcmp(&rcLeft, &pviLeft.PanelRect, sizeof(RECT)))
 		{
-			if (memcmp(&rcLeft, &pviLeft.PanelRect, sizeof(RECT)))
-				pviLeft.RegisterPanelView();
+			pviLeft.RegisterPanelView();
 		}
 	}
 
 	if (pviRight.hView)
 	{
-		if (bRightVisible && pviRight.Visible)
+		if ((bRightVisible != pviRight.Visible)
+			|| memcmp(&rcRight, &pviRight.PanelRect, sizeof(RECT)))
 		{
-			if (memcmp(&rcRight, &pviRight.PanelRect, sizeof(RECT)))
-				pviRight.RegisterPanelView();
+			pviRight.RegisterPanelView();
 		}
 	}
 }

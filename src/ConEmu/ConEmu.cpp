@@ -4976,7 +4976,7 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts
 			return NULL;
 
 		// GO
-		pVCon = CreateConGroup(pszDataW);
+		pVCon = CreateConGroup(pszDataW, args->bRunAsAdministrator);
 
 		SafeFree(pszDataW);
 		return pVCon;
@@ -5047,7 +5047,7 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts
 
 // Возвращает указатель на АКТИВНУЮ консоль (при создании группы)
 // apszScript содержит строки команд, разделенные \r\n
-CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript)
+CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, BOOL abForceAsAdmin /*= FALSE*/)
 {
 	CVirtualConsole* pVConResult = NULL;
 	// Поехали
@@ -5059,7 +5059,8 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript)
 
 	while (*pszLine)
 	{
-		lbSetActive = lbRunAdmin = FALSE;
+		lbSetActive = FALSE;
+		lbRunAdmin = abForceAsAdmin;
 
 		while (*pszLine == L'>' || *pszLine == L'*' || *pszLine == L' ' || *pszLine == L'\t')
 		{

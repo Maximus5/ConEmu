@@ -293,6 +293,12 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			SetWindowLong(hwnd, WINDOW_LONG_FADE, 1); // Fade == false
 			return 0; //continue creation
 		}
+		#ifdef _DEBUG
+		case WM_SHOWWINDOW:
+		{
+			break;
+		}
+		#endif
 		case WM_PAINT:
 		{
 			CeFullPanelInfo* pi = (CeFullPanelInfo*)GetWindowLongPtr(hwnd, GWLP_USERDATA); //-V204
@@ -1438,14 +1444,14 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	//	nCurrentItem = -1;
 	MSectionLock CS;
 
-	if (CS.Lock(pSection, FALSE, 1000))
+	if (Visible && CS.Lock(pSection, FALSE, 1000))
 	{
 		// Пока - рисуем в три шага
 		// 0. Подготовка элементов (получить цвет текста элемента из консоли)
 		// 1. отрисовка просто иконок (что вернет SHGetFileInfo), на этом шаге
 		//    формируется очередь запроса превьюшек.
 		// -- 2. отрисовка превьюшек (для тех элементов, у которых их удалось получить)
-		for(int nStep = 0; !gbCancelAll && nStep <= 1; nStep++)
+		for (int nStep = 0; !gbCancelAll && nStep <= 1; nStep++)
 		{
 			//if (nStep == 2)
 			//{
@@ -1763,7 +1769,7 @@ int CeFullPanelInfo::RegisterPanelView()
 	//CeFullPanelInfo* pi = abLeft ? &pviLeft : &pviRight;
 	PanelViewInit pvi = {sizeof(PanelViewInit)};
 	pvi.bLeftPanel = this->bLeftPanel;
-	pvi.bVisible = TRUE;
+	pvi.bVisible = this->Visible; //было TRUE
 	pvi.nCoverFlags = PVI_COVER_NORMAL;
 	pvi.tColumnTitle.bConAttr = this->nFarColors[col_PanelColumnTitle];
 	pvi.tColumnTitle.nFlags = PVI_TEXT_CENTER|PVI_TEXT_SKIPSORTMODE;
@@ -1914,7 +1920,7 @@ void CeFullPanelInfo::Close()
 
 // может вызываться из любой нити
 // --- // Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
-int CeFullPanelInfo::UnregisterPanelView()
+int CeFullPanelInfo::UnregisterPanelView(bool abHideOnly/*=false*/)
 {
 	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
 	if (!CheckConEmu() || !gfRegisterPanelView)
@@ -1943,8 +1949,17 @@ int CeFullPanelInfo::UnregisterPanelView()
 	pvi.bRegister = FALSE;
 	pvi.hWnd = this->hView;
 	int nRc = gfRegisterPanelView(&pvi);
-	// Закрыть окно (по WM_CLOSE окно само должно послать WM_QUIT если оно единственное)
-	PostMessage(this->hView, WM_CLOSE, 0, 0);
+
+	if (abHideOnly)
+	{
+		ShowWindowAsync(this->hView, SW_HIDE);
+	}
+	else
+	{
+		// Закрыть окно (по WM_CLOSE окно само должно послать WM_QUIT если оно единственное)
+		PostMessage(this->hView, WM_CLOSE, 0, 0);
+	}
+
 	return nRc;
 }
 

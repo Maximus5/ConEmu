@@ -4762,7 +4762,7 @@ bool CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 
 	if (ppvi->bRegister)
 	{
-		_ASSERTE(ppvi->bVisible);
+		//_ASSERTE(ppvi->bVisible); -- допустимо. ¬ременное скрытие, например, при Ctrl+L
 
 		// ѕри повторной регистрации - не дергатьс€
 		if (!lbPrevRegistered)
@@ -4893,6 +4893,12 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 			pp->hWnd = NULL;
 
 		pp->bVisible = FALSE;
+		return FALSE;
+	}
+	else if (!pp->bVisible || !pp->bRegister)
+	{
+		if (IsWindowVisible(pp->hWnd))
+			mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
 		return FALSE;
 	}
 

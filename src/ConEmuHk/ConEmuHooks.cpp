@@ -781,8 +781,6 @@ HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPC
 	BOOL bMainThread = FALSE; // поток не важен
 	HANDLE hRc = FALSE;
 
-	WARNING("Перенести обработку AnnotationShareName в хуки");
-#if 0
 	if (ghConEmuWndDC && lpName && *lpName)
 	{
 		/**
@@ -797,28 +795,26 @@ HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPC
 		// При попытке открыть мэппинг для TrueColor - перейти в режим локального сервера
 		if (lstrcmpi(lpName, szTrueColorMap) == 0)
 		{
-			//TODO: параметры
-			if (RequestLocalServer() == 0)
+			RequestLocalServerParm Parm = {(DWORD)sizeof(Parm), slsf_RequestTrueColor};
+			if (RequestLocalServer(&Parm) == 0)
 			{
-				if (gpAnnotationHeader)
+				if (Parm.pAnnotation)
 				{
-					hRc = (HANDLE)gpAnnotationHeader;
+					gpAnnotationHeader = Parm.pAnnotation;
+					hRc = (HANDLE)Parm.pAnnotation;
 					goto wrap;
 				}
 				else
 				{
-					_ASSERTE(gpAnnotationHeader!=NULL && "Перенести обработку AnnotationShareName в хуки");
+					WARNING("Перенести обработку AnnotationShareName в хуки");
 				}
 			}
 		}
 	}
-#endif
 
 	hRc = F(OpenFileMappingW)(dwDesiredAccess, bInheritHandle, lpName);
 
-#if 0
 wrap:
-#endif
 	return hRc;
 }
 

@@ -9,6 +9,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
+[*] Changed default unpack command for WinRar auto update.
+[*] 'Ignore console cursor size' instead of not worked 'Ignore telnet cursor size'. Option exists in 'App distinct' also.
+[%] Поломалась опция 'Send Alt+Space to console' (вкладка 'Keys').
+[%] В диалоге создания новой консоли при запуске группы (Tasks) игнорировался флажок 'Run as adminstrator'.
+[%] Issue 538: Неверные иконки в Thumbnails/Tiles в корне архивов.
+[%] Issue 539: Некорректная отрисовка Thumbnails/Tiles поверх панели QView (Ctrl+Q) или Info (Ctrl+L).
+
+
 2012.05.10
 [%] ConEmu internal paste locks clipboard.
 [*] Пример макроса: ConEmu\Far1_reg\TabList.reg

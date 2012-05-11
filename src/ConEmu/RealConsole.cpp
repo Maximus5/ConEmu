@@ -3253,16 +3253,6 @@ BOOL CRealConsole::isBufferHeight()
 BOOL CRealConsole::isConSelectMode()
 {
 	if (!this || !mp_ABuf) return false;
-	
-	// Когда будут доп.буферы - в них нужно убедиться, что курсор ставится "нормальный", чтобы его с Фар.граббером не путать.
-	#ifdef _DEBUG
-	if (mp_ABuf != mp_RBuf)
-	{
-		CONSOLE_CURSOR_INFO ci;
-		mp_ABuf->GetCursorInfo(NULL, &ci);
-		_ASSERTE(ci.dwSize < 40);
-	}
-	#endif
 
 	return mp_ABuf->isConSelectMode();
 }

@@ -25,6 +25,7 @@
 #define IDD_SPG_CMDTASKS                157
 #define IDD_SPG_APPDISTINCT             158
 #define IDD_SPG_COMSPEC                 159
+#define IDD_SPG_STARTUP                 160
 #define IDD_MORE_HIDE                   200
 #define IDD_SPG_SELECTION               204
 #define IDD_SPG_TABS                    206
@@ -274,7 +275,7 @@
 #define tRunAsUser                      1652
 #define tRunAsPassword                  1653
 #define cbSafeFarClose                  1654
-#define cbIgnoreTelnetCursorSize        1655
+#define cbCursorIgnoreSize              1655
 #define rbCurrentUser                   1656
 #define rbAnotherUser                   1657
 #define tThumbsFontName                 1659
@@ -614,12 +615,22 @@
 #define cbClipConfirmLimit              2225
 #define tClipConfirmLimit               2226
 #define stClipConfirmLimit              2227
-#define IDC_CHECK1                      2228
 #define cbFindHighlightAll              2228
 #define gbFindText                      2229
 #define vkFindTextDlg                   2230
-#define IDC_CHECK2                      2232
 #define cbFindTransparent               2232
+#define rbStartSingleApp                2233
+#define rbStartTasksFile                2234
+#define rbStartSavedTask                2235
+#define rbStartLastTabs                 2236
+#define cbStartFarRestoreFolders        2237
+#define cbStartFarRestoreEditors        2238
+#define tStartTasksFile                 2239
+#define lbStartNamedTask                2240
+#define stExtendFontBoldIdx             2241
+#define stExtendFontItalicIdx           2242
+#define st1ExtendFontNormalIdx          2243
+#define stExtendFontNormalIdx           2243
 
 // Next default values for new objects
 // 
@@ -627,7 +638,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        218
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2233
+#define _APS_NEXT_CONTROL_VALUE         2244
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

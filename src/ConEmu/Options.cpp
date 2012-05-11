@@ -318,6 +318,7 @@ void Settings::InitSettings()
 	AppStd.isCursorBlink = true;
 	AppStd.isCursorColor = true;
 	AppStd.isCursorBlockInactive = true;
+	AppStd.isCursorIgnoreSize = false;
 	AppStd.isPasteAllLines = true;
 	AppStd.isPasteFirstLine = true;
 
@@ -577,6 +578,7 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	reg->Load(L"CursorColor", pApp->isCursorColor);
 	reg->Load(L"CursorBlink", pApp->isCursorBlink);
 	reg->Load(L"CursorBlockInactive", pApp->isCursorBlockInactive);
+	reg->Load(L"CursorIgnoreSize", pApp->isCursorIgnoreSize);
 
 	pApp->OverrideClipboard = bStd;
 	if (!bStd)
@@ -2297,6 +2299,7 @@ void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	reg->Save(L"CursorColor", pApp->isCursorColor);
 	reg->Save(L"CursorBlink", pApp->isCursorBlink);
 	reg->Save(L"CursorBlockInactive", pApp->isCursorBlockInactive);
+	reg->Save(L"CursorIgnoreSize", pApp->isCursorIgnoreSize);
 
 	if (!bStd)
 		reg->Save(L"OverrideClipboard", pApp->OverrideClipboard);
@@ -4174,7 +4177,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkCtrlWinAltSpace,chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_CONTROL,VK_LWIN,VK_MENU), CConEmuCtrl::key_ShowRealConsole}, // Show real console
 		{vkAltEnter,       chk_System, NULL, L"", MakeHotKey(VK_RETURN,VK_MENU), CConEmuCtrl::key_AltEnter}, // Full screen
 		{vkCtrlWinEnter,   chk_System, NULL, L"", MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL), CConEmuCtrl::key_FullScreen},
-		{vkAltSpace,       chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
+		{vkAltSpace,       chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_MENU), CConEmuCtrl::key_AltSpace, true/*OnKeyUp*/}, // System menu
 		{vkCtrlUp,         chk_System, NULL, L"", MakeHotKey(VK_UP,VK_CONTROL), CConEmuCtrl::key_BufferScrollUp}, // Buffer scroll
 		{vkCtrlDown,       chk_System, NULL, L"", MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_BufferScrollDown}, // Buffer scroll
 		{vkCtrlPgUp,       chk_System, NULL, L"", MakeHotKey(VK_PRIOR,VK_CONTROL), CConEmuCtrl::key_BufferScrollPgUp}, // Buffer scroll

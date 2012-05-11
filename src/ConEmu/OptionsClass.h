@@ -290,6 +290,7 @@ class CSettings
 		//HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hCmdTasks, hViews, hInfo, hDebug, hUpdate, hSelection;
 		enum TabHwndIndex {
 			thi_Main = 0,
+			thi_Startup,
 			thi_Ext,
 			thi_Comspec,
 			thi_Selection,
@@ -354,6 +355,7 @@ class CSettings
 		void RegisterFonts();
 	private:
 		void RegisterFontsInt(LPCWSTR asFromDir);
+		void ApplyStartupOptions();
 	public:
 		void UnregisterFonts();
 		BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
@@ -396,6 +398,7 @@ class CSettings
 		LRESULT OnInitDialog();
 		// OnInitDialogPage_t: IDD_SPG_MAIN, è ò.ä.
 		LRESULT OnInitDialog_Main(HWND hWnd2);
+		LRESULT OnInitDialog_Startup(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
 		LRESULT OnInitDialog_Comspec(HWND hWnd2);
 		LRESULT OnInitDialog_Selection(HWND hWnd2);

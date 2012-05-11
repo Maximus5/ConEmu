@@ -421,7 +421,7 @@ class CConEmuMain :
 		//bool CorrectWindowPos(WINDOWPOS *wp);
 		//void CheckGuiBarsCreated();
 		CVirtualConsole* CreateCon(RConStartArgs *args, BOOL abAllowScripts = FALSE);
-		CVirtualConsole* CreateConGroup(LPCWSTR apszScript);
+		CVirtualConsole* CreateConGroup(LPCWSTR apszScript, BOOL abForceAsAdmin = FALSE);
 		void CreateGhostVCon(CVirtualConsole* apVCon);
 		BOOL CreateMainWindow();
 		HRGN CreateWindowRgn(bool abTestOnly=false);
