@@ -261,7 +261,7 @@ bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])
 
 				if (nSubFolder)
 				{
-					wcscpy_c(szReason, L"Update.ArcCmdLine: Unwanted option\n[HKLM\\Software\\WinRAR\\Extraction\\Profile]\n\"UnpToSubfolders\"=1");
+					wcscpy_c(szReason, L"Update.ArcCmdLine: Unwanted option\n[HKCU\\Software\\WinRAR\\Extraction\\Profile]\n\"UnpToSubfolders\"=1");
 					return false; // Ошибка в настройке архиватора
 				}
 			}
