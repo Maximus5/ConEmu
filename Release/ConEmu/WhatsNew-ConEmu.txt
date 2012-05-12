@@ -13,10 +13,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [*] 'Ignore console cursor size' instead of not worked 'Ignore telnet cursor size'. Option exists in 'App distinct' also.
 [%] Поломалась опция 'Send Alt+Space to console' (вкладка 'Keys').
 [%] В диалоге создания новой консоли при запуске группы (Tasks) игнорировался флажок 'Run as adminstrator'.
+[+] Issue 532: Опция 'Show TSA balloon' (влияет только на автоматический режим проверки).
+[*] Issue 537: Проверяем опцию WinRar: [HKCU\Software\WinRAR\Extraction\Profile] "UnpToSubfolders"
 [%] Issue 538: Неверные иконки в Thumbnails/Tiles в корне архивов.
 [%] Issue 539: Некорректная отрисовка Thumbnails/Tiles поверх панели QView (Ctrl+Q) или Info (Ctrl+L).
-[*] Issue 537: Проверяем опцию WinRar: [HKCU\Software\WinRAR\Extraction\Profile] "UnpToSubfolders"
-[+] Issue 532: Опция 'Show TSA balloon' (влияет только на автоматический режим проверки).
+[+] Разрешен Shell Drop файлов в редактор и диалоги. Drop, естественно, в виде вставки текста (имен/путей перетаскиваемых файлов).
+[%] Еще раз 'Sleep in background' bugfix. 
 
 
 2012.05.10

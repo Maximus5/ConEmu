@@ -1,5 +1,6 @@
 NAME = ConEmuHk
 SRCS = Entry.cpp \
+       Ansi.cpp \
        ConEmuHooks.cpp \
        Injects.cpp \
        RegHooks.cpp \

@@ -2853,10 +2853,16 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//lbForceSend = (nWait == (WAIT_OBJECT_0+1));
 
 		BOOL bThaw = TRUE; // Если FALSE - снизить нагрузку на conhost
-		if (gpSrv->pConsole->hdr.bConsoleActive && gpSrv->pConsoleMap)
+		BOOL bConsoleActive = TRUE;
+		WARNING("gpSrv->pConsole->hdr.bConsoleActive и gpSrv->pConsole->hdr.bThawRefreshThread могут быть неактуальными!");
+		//if (gpSrv->pConsole->hdr.bConsoleActive && gpSrv->pConsoleMap)
 		{
 			if (gpSrv->pConsoleMap->IsValid())
-				bThaw = gpSrv->pConsoleMap->Ptr()->bThawRefreshThread;
+			{
+				CESERVER_CONSOLE_MAPPING_HDR* p = gpSrv->pConsoleMap->Ptr();
+				bThaw = p->bThawRefreshThread;
+				bConsoleActive = p->bConsoleActive;
+			}
 		}
 
 		// Чтобы не грузить процессор неактивными консолями спим, если
@@ -2865,9 +2871,9 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		        // не требуется принудительное перечитывание
 		        && !gpSrv->bForceConsoleRead
 		        // Консоль не активна
-		        && (!gpSrv->pConsole->hdr.bConsoleActive
+		        && (!bConsoleActive
 		            // или активна, но сам ConEmu GUI не в фокусе
-		            || (gpSrv->pConsole->hdr.bConsoleActive && !bThaw))
+		            || (bConsoleActive && !bThaw))
 		        // и не дернули событие gpSrv->hRefreshEvent
 		        && (nWait != (WAIT_OBJECT_0+1))
 				&& !gpSrv->bWasReattached)

@@ -27,6 +27,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#ifdef _DEBUG
+	#define HOOK_ANSI_SEQUENCES
+#else
+	#uncde HOOK_ANSI_SEQUENCES
+#endif
+
+
 #define DROP_SETCP_ON_WIN2K3R2
 
 #ifdef _DEBUG
@@ -106,6 +113,7 @@ GetConsoleWindow_T gfGetRealConsoleWindow = NULL;
 extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
 extern HANDLE ghCurrentOutBuffer;
 HANDLE ghStdOutHandle = NULL;
+extern HANDLE ghLastAnsiCapable, ghLastAnsiNotCapable;
 /* ************ Globals for SetHook ************ */
 
 /* ************ Globals for Far Hooks ************ */
@@ -241,7 +249,11 @@ int WINAPI OnStretchDIBits(HDC hdc, int XDest, int YDest, int nDestWidth, int nD
 BOOL WINAPI OnBitBlt(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, DWORD dwRop);
 BOOL WINAPI OnStretchBlt(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest, HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc, DWORD dwRop);
 
-
+#ifdef HOOK_ANSI_SEQUENCES
+BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
+BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
+BOOL WINAPI OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+#endif
 
 
 bool InitHooksCommon()
@@ -267,6 +279,13 @@ bool InitHooksCommon()
 		{(void*)OnReadConsoleInputA,	"ReadConsoleInputA",	kernel32},
 		{(void*)OnWriteConsoleInputA,	"WriteConsoleInputA",	kernel32},
 		{(void*)OnWriteConsoleInputW,	"WriteConsoleInputW",	kernel32},
+		/* ANSI Escape Sequences SUPPORT */
+		#ifdef HOOK_ANSI_SEQUENCES
+		{(void*)OnWriteFile,			"WriteFile",  			kernel32},
+		{(void*)OnWriteConsoleA,		"WriteConsoleA",  		kernel32},
+		{(void*)OnWriteConsoleW,		"WriteConsoleW",  		kernel32},
+		#endif
+		/* Others console functions */
 		{(void*)OnSetConsoleTextAttribute, "SetConsoleTextAttribute", kernel32},
 		{(void*)OnSetConsoleKeyShortcuts, "SetConsoleKeyShortcuts", kernel32},
 		#endif
@@ -863,6 +882,15 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 	ORIGINALFAST(CloseHandle);
 	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
+
+	if (ghLastAnsiCapable && (ghLastAnsiCapable == hObject))
+	{
+		ghLastAnsiCapable = NULL;
+	}
+	if (ghLastAnsiNotCapable && (ghLastAnsiNotCapable == hObject))
+	{
+		ghLastAnsiNotCapable = NULL;
+	}
 
 	if (gpAnnotationHeader && (hObject == (HANDLE)gpAnnotationHeader))
 	{
@@ -3112,8 +3140,11 @@ BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes)
 	// что оно делает со своей консолью
 	if ((ghAttachGuiClient == NULL) && !gbAttachGuiClient && (wAttributes != 7))
 	{
-		// Что-то в некоторых случаях сбивается цвет вывода для printf
-		_ASSERTE("SetConsoleTextAttribute" && (wAttributes==0x07));
+		//// Что-то в некоторых случаях сбивается цвет вывода для printf
+		//_ASSERTE("SetConsoleTextAttribute" && (wAttributes==0x07));
+		wchar_t szDbgInfo[128];
+		msprintf(szDbgInfo, countof(szDbgInfo), L"PID=%u, SetConsoleTextAttribute=0x%02X(%u)\n", GetCurrentProcessId(), (int)wAttributes, (int)wAttributes);
+		DebugString(szDbgInfo);
 	}
 	#endif
 

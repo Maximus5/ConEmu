@@ -887,19 +887,30 @@ void CDragDropData::RetrieveDragToInfo()
 	if (!pRCon)
 		return;
 
+	CEFarWindowType tabType = pRCon->GetActiveTabType();
 	DWORD nFarPID = pRCon->GetFarPID(TRUE);
+
 	if (nFarPID == 0)
 	{
 		// 
-		m_pfpi = (ForwardedPanelInfo*)calloc(sizeof(ForwardedPanelInfo)+sizeof(WCHAR)*2, 1);
+		m_pfpi = (ForwardedPanelInfo*)calloc(sizeof(ForwardedPanelInfo), 1);
+		m_pfpi->NoFarConsole = TRUE;
 		m_pfpi->ActiveRect.right = pRCon->TextWidth() - 1;
 		m_pfpi->ActiveRect.bottom = pRCon->TextHeight() - 1;
-		m_pfpi->NoFarConsole = TRUE;
-		m_pfpi->ActivePathShift = sizeof(ForwardedPanelInfo);
-		m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
-		m_pfpi->PassivePathShift = sizeof(ForwardedPanelInfo)+sizeof(wchar_t);
-		m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
-		m_pfpi->pszActivePath[0] = L'*';
+		wcscpy_c(m_pfpi->szDummy, L"*");
+		m_pfpi->pszActivePath = m_pfpi->szDummy;
+		m_pfpi->pszPassivePath = m_pfpi->szDummy+1;
+		m_pfpi->ActivePathShift = (int)(((LPBYTE)m_pfpi->pszActivePath) - ((LPBYTE)m_pfpi));
+		m_pfpi->PassivePathShift = (int)(((LPBYTE)m_pfpi->pszPassivePath) - ((LPBYTE)m_pfpi));
+		//m_pfpi->ActivePathShift = sizeof(ForwardedPanelInfo);
+		//m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
+		//m_pfpi->PassivePathShift = sizeof(ForwardedPanelInfo)+sizeof(wchar_t);
+		//m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
+		//m_pfpi->pszActivePath[0] = L'*';
+	}
+	else if (!pRCon->isAlive())
+	{
+		gpConEmu->DebugStep(_T("DnD: Far is not alive, drop disabled"));
 	}
 	else
 	{
@@ -918,23 +929,38 @@ void CDragDropData::RetrieveDragToInfo()
 
 				if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
 				{
-					if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo))
+					if ((DWORD)cbStructSize>=sizeof(ForwardedPanelInfo))
 					{
 						m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
 						pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
-						m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
-						//Slash на конце нам не нужен
-						int nPathLen = lstrlenW(m_pfpi->pszActivePath);
 
-						if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
-							m_pfpi->pszActivePath[nPathLen-1] = 0;
+						if (m_pfpi->NoFarConsole)
+						{
+							TODO("Здесь можно бы получать координаты диалога/полей/редактора, чтобы бросать только в него...");
+							m_pfpi->ActiveRect.right = pRCon->TextWidth() - 1;
+							m_pfpi->ActiveRect.bottom = pRCon->TextHeight() - 1;
+							wcscpy_c(m_pfpi->szDummy, L"*");
+							m_pfpi->pszActivePath = m_pfpi->szDummy;
+							m_pfpi->pszPassivePath = m_pfpi->szDummy+1;
+							m_pfpi->ActivePathShift = (int)(((LPBYTE)m_pfpi->pszActivePath) - ((LPBYTE)m_pfpi));
+							m_pfpi->PassivePathShift = (int)(((LPBYTE)m_pfpi->pszPassivePath) - ((LPBYTE)m_pfpi));
+						}
+						else
+						{
+							m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
+							//Slash на конце нам не нужен
+							int nPathLen = lstrlenW(m_pfpi->pszActivePath);
 
-						m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
-						//Slash на конце нам не нужен
-						nPathLen = lstrlenW(m_pfpi->pszPassivePath);
+							if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
+								m_pfpi->pszActivePath[nPathLen-1] = 0;
 
-						if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
-							m_pfpi->pszPassivePath[nPathLen-1] = 0;
+							m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
+							//Slash на конце нам не нужен
+							nPathLen = lstrlenW(m_pfpi->pszPassivePath);
+
+							if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
+								m_pfpi->pszPassivePath[nPathLen-1] = 0;
+						}
 					}
 				}
 			}

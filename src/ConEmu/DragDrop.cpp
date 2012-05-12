@@ -1099,6 +1099,15 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 	if (!pRCon)
 		return S_FALSE;
 
+	BOOL bNoFarConsole = m_pfpi->NoFarConsole;
+	BOOL bDontAddSpace = FALSE;
+
+	if (bNoFarConsole && pRCon->isFar(true) /*&& pRCon->isAlive()*/)
+	{
+		bNoFarConsole = FALSE; // таки послать макросом (это может быть редактор или диалог)
+		bDontAddSpace = TRUE;
+	}
+
 	size_t cchMacro = MAX_DROP_PATH*2+50;
 	wchar_t *szMacro = (wchar_t*)malloc(cchMacro*sizeof(*szMacro));
 	size_t cchData = MAX_DROP_PATH*2+10;
@@ -1128,7 +1137,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		//}
 		INT_PTR nLen = _tcslen(psz);
 
-		if (!m_pfpi->NoFarConsole)
+		if (!bNoFarConsole)
 		{
 
 			while (nLen>0 && *psz)
@@ -1150,13 +1159,13 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		}
 		else
 		{
-			_ASSERTE(m_pfpi->NoFarConsole);
+			_ASSERTE(bNoFarConsole);
 		}
 
 		if ((psz = wcschr(pszText, L' ')) != NULL)
 		{
 			// Имя нужно окавычить
-			if (!m_pfpi->NoFarConsole)
+			if (!bNoFarConsole)
 			{
 				*(--pszText) = L'\"';
 				*(--pszText) = L'\\';
@@ -1169,10 +1178,10 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 			}
 		}
 
-		if (!m_pfpi->NoFarConsole)
+		if (!bNoFarConsole)
 			_wcscat_c(szMacro, cchMacro, L"\"");
 
-		if (!m_pfpi->NoFarConsole && (lbAddGoto || lbAddEdit || lbAddView))
+		if (!bNoFarConsole && (lbAddGoto || lbAddEdit || lbAddView))
 		{
 			if (lbAddGoto)
 				_wcscat_c(szMacro, cchMacro, L"goto:");
@@ -1186,31 +1195,35 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 			lbAddGoto = FALSE; lbAddEdit = FALSE; lbAddView = FALSE;
 		}
 
-		if (!m_pfpi->NoFarConsole)
+		if (!bNoFarConsole)
 		{
 			_wcscat_c(szMacro, cchMacro, pszText);
-			_wcscat_c(szMacro, cchMacro, L" \"");
+			_wcscat_c(szMacro, cchMacro, bDontAddSpace ? L"\"" : L" \"");
 			gpConEmu->PostMacro(szMacro);
 		}
 		else
 		{
 			psz = pszText;
-			INPUT_RECORD r = {KEY_EVENT};
+			//INPUT_RECORD r = {KEY_EVENT};
 			while (*psz)
 			{
-				r.Event.KeyEvent.bKeyDown = TRUE;
-				r.Event.KeyEvent.wRepeatCount = 1;
-				r.Event.KeyEvent.uChar.UnicodeChar = *(psz++);
-				pRCon->PostConsoleEvent(&r);
-				r.Event.KeyEvent.bKeyDown = FALSE;
-				pRCon->PostConsoleEvent(&r);
+				pRCon->PostKeyPress(0, 0, *(psz++));
+				//r.Event.KeyEvent.bKeyDown = TRUE;
+				//r.Event.KeyEvent.wRepeatCount = 1;
+				//r.Event.KeyEvent.uChar.UnicodeChar = *(psz++);
+				//pRCon->PostConsoleEvent(&r);
+				//r.Event.KeyEvent.bKeyDown = FALSE;
+				//pRCon->PostConsoleEvent(&r);
 			}
-			r.Event.KeyEvent.bKeyDown = TRUE;
-			r.Event.KeyEvent.wRepeatCount = 1;
-			r.Event.KeyEvent.uChar.UnicodeChar = L' ';
-			pRCon->PostConsoleEvent(&r);
-			r.Event.KeyEvent.bKeyDown = FALSE;
-			pRCon->PostConsoleEvent(&r);
+
+			if (!bDontAddSpace)
+				pRCon->PostKeyPress(0, 0, L' ');
+			//r.Event.KeyEvent.bKeyDown = TRUE;
+			//r.Event.KeyEvent.wRepeatCount = 1;
+			//r.Event.KeyEvent.uChar.UnicodeChar = L' ';
+			//pRCon->PostConsoleEvent(&r);
+			//r.Event.KeyEvent.bKeyDown = FALSE;
+			//pRCon->PostConsoleEvent(&r);
 		}
 
 		if (((i + 1) < iQuantity)

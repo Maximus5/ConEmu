@@ -143,6 +143,14 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 						nLen = 8;
 						pszSrc += 3;
 					}
+					else if (pszSrc[0] == L'0' && pszSrc[1] == L'2' && (pszSrc[2] == L'X' || pszSrc[2] == L'x'))
+					{
+						if (pszSrc[2] == L'x')
+							cBase = L'a';
+						memmove(szValue, L"00", 4);
+						nLen = 2;
+						pszSrc += 3;
+					}
 					else if (pszSrc[0] == L'X' || pszSrc[0] == L'x')
 					{
 						if (pszSrc[0] == L'x')

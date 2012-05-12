@@ -923,6 +923,7 @@ struct ForwardedPanelInfo
 	int ActivePathShift; // сдвиг в этой структуре в байтах
 	int PassivePathShift; // сдвиг в этой структуре в байтах
 	BOOL NoFarConsole;
+	wchar_t szDummy[2];
 	union //x64 ready
 	{
 		WCHAR* pszActivePath/*[MAX_PATH+1]*/; //-V117

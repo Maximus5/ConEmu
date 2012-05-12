@@ -307,28 +307,50 @@ void ProcessDragToW995()
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
 
-	WindowInfo WInfo;
-	WInfo.Pos = 0;
+	WindowInfo WInfo = {};
+	//WInfo.Pos = 0;
+	WInfo.Pos = -1; // попробуем работать в диалогах и редакторе
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 
 	if (!WInfo.Current)
 	{
-		//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 		int ItemsCount=0;
-
-		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);
 		if (gpCmdRet==NULL)
 			OutDataAlloc(sizeof(ItemsCount));
-
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
 
+	int nStructSize;
+
+	if ((WInfo.Type == WTYPE_DIALOG) || (WInfo.Type == WTYPE_EDITOR))
+	{
+		// разрешить дроп в виде текста
+		ForwardedPanelInfo DlgInfo = {};
+		DlgInfo.NoFarConsole = TRUE;
+		nStructSize = sizeof(DlgInfo);
+		if (gpCmdRet==NULL)
+			OutDataAlloc(nStructSize+sizeof(nStructSize));
+		OutDataWrite(&nStructSize, sizeof(nStructSize));
+		OutDataWrite(&DlgInfo, nStructSize);
+		return;
+	}
+	else if (WInfo.Type != WTYPE_PANELS)
+	{
+		// Иначе - дроп не разрешен
+		int ItemsCount=0;
+		if (gpCmdRet==NULL)
+			OutDataAlloc(sizeof(ItemsCount));
+		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
+		return;
+	}
+
+	nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
+
 	//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	PanelInfo PAInfo = {}, PPInfo = {};
 	ForwardedPanelInfo *pfpi=NULL;
-	int nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
 	//ZeroMemory(&fpi, sizeof(fpi));
 	BOOL lbAOK = FALSE, lbPOK = FALSE;
 	WCHAR *szPDir = NULL;

@@ -43,6 +43,7 @@ RC_NAME = ConEmuHk
 LINK_OBJS = \
 $(OBJDIR)\Entry.obj \
 $(OBJDIR)\Injects.obj \
+$(OBJDIR)\Ansi.obj \
 $(OBJDIR)\ConEmuHooks.obj \
 $(OBJDIR)\RegHooks.obj \
 $(OBJDIR)\execute.obj \
@@ -267,6 +268,8 @@ $(OBJDIR)\Common.obj: ../common/Common.cpp
 $(OBJDIR)\ConEmuHk.obj: ConEmuHk.cpp
 
 $(OBJDIR)\ConEmuCmd.obj: ConEmuCmd.cpp
+
+$(OBJDIR)\Ansi.obj: Ansi.cpp
 
 $(OBJDIR)\ConEmuHooks.obj: ConEmuHooks.cpp
 

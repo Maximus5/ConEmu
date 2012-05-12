@@ -1552,6 +1552,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Ansi.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuHooks.cpp"
 				>
 			</File>
