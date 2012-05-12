@@ -2470,6 +2470,10 @@ void TabBarClass::OnNewConPopup()
 	HMENU hPopup = CreatePopupMenu();
 	LPCWSTR pszCurCmd = NULL;
 
+#ifdef _DEBUG
+	PRAGMA_ERROR("Добавить два пункта <Create dialog...> и <Setup tasks...>");
+#endif
+
 	if (gpConEmu->ActiveCon() && gpConEmu->ActiveCon()->RCon())
 		pszCurCmd = gpConEmu->ActiveCon()->RCon()->GetCmd();
 

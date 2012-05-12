@@ -621,7 +621,7 @@
 #define cbFindTransparent               2232
 #define rbStartSingleApp                2233
 #define rbStartTasksFile                2234
-#define rbStartSavedTask                2235
+#define rbStartNamedTask                2235
 #define rbStartLastTabs                 2236
 #define cbStartFarRestoreFolders        2237
 #define cbStartFarRestoreEditors        2238
@@ -631,6 +631,8 @@
 #define stExtendFontItalicIdx           2242
 #define st1ExtendFontNormalIdx          2243
 #define stExtendFontNormalIdx           2243
+#define cbCmdLine                       2244
+#define cbStartTasksFile                2245
 
 // Next default values for new objects
 // 
@@ -638,7 +640,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        218
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2244
+#define _APS_NEXT_CONTROL_VALUE         2245
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

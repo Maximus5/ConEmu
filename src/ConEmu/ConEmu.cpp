@@ -4962,7 +4962,7 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts
 
 	wchar_t* pszScript = NULL; //, szScript[MAX_PATH];
 
-	if (args->pszSpecialCmd && (*args->pszSpecialCmd == L'@' || *args->pszSpecialCmd == TaskBracketLeft))
+	if (args->pszSpecialCmd && (*args->pszSpecialCmd == CmdFilePrefix || *args->pszSpecialCmd == TaskBracketLeft))
 	{
 		if (!abAllowScripts)
 		{
@@ -8647,7 +8647,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource)
 {
 	wchar_t* pszDataW = NULL;
 
-	if (*asSource == L'@')
+	if (*asSource == CmdFilePrefix)
 	{
 		// ¬ качестве "команды" указан "пакетный файл" одновременного запуска нескольких консолей
 		HANDLE hFile = CreateFile(asSource+1, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
@@ -8724,7 +8724,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource)
 		}
 
 	}
-	else if (*asSource == TaskBracketLeft)
+	else if ((*asSource == TaskBracketLeft) || (lstrcmp(asSource, AutoStartTaskName) == 0))
 	{
 		wchar_t szName[MAX_PATH]; lstrcpyn(szName, asSource, countof(szName));
 		wchar_t* psz = wcschr(szName, TaskBracketRight);
@@ -8751,7 +8751,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource)
 	}
 	else
 	{
-		_ASSERTE(*asSource==L'@' || *asSource==TaskBracketLeft);
+		_ASSERTE(*asSource==CmdFilePrefix || *asSource==TaskBracketLeft);
 	}
 
 	return pszDataW;
@@ -8858,7 +8858,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			BOOL lbCreated = FALSE;
 			LPCWSTR pszCmd = gpSet->GetCmd();
 
-			if ((*pszCmd == L'@' || *pszCmd == TaskBracketLeft) && !gpConEmu->mb_StartDetached)
+			if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft) && !gpConEmu->mb_StartDetached)
 			{
 				// ¬ качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
 				wchar_t* pszDataW = LoadConsoleBatch(pszCmd);

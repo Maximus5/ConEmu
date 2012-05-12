@@ -4247,7 +4247,7 @@ void CRealBuffer::ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
 	{
 		const Settings::AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 		if (pApp->CursorIgnoreSize())
-			ci->dwSize = 15;
+			ci->dwSize = 25;
 	}
 }
 

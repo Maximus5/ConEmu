@@ -761,11 +761,11 @@ CSettings::~CSettings()
 
 	mh_Font2.Delete();
 	
-	if (gpSet->psCmd) {free(gpSet->psCmd); gpSet->psCmd = NULL;}
+	//if (gpSet->psCmd) {free(gpSet->psCmd); gpSet->psCmd = NULL;}
 
-	if (gpSet->psCmdHistory) {free(gpSet->psCmdHistory); gpSet->psCmdHistory = NULL;}
+	//if (gpSet->psCmdHistory) {free(gpSet->psCmdHistory); gpSet->psCmdHistory = NULL;}
 
-	if (gpSet->psCurCmd) {free(gpSet->psCurCmd); gpSet->psCurCmd = NULL;}
+	//if (gpSet->psCurCmd) {free(gpSet->psCurCmd); gpSet->psCurCmd = NULL;}
 
 #if 0
 	if (mh_Uxtheme!=NULL) { FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL; }
@@ -883,7 +883,8 @@ void CSettings::ApplyStartupOptions()
 {
 	if (ghOpWnd && IsWindow(mh_Tabs[thi_Startup]))
 	{
-		GetString(mh_Tabs[thi_Startup], tCmdLine, &gpSet->psCmd);
+		//GetString(mh_Tabs[thi_Startup], tCmdLine, &gpSet->psStartSingleApp);
+		ResetCmdArg();
 
 		//TODO: пендюрки всякие, типа "Auto save/restore open tabs", "Far editor/viewer also"
 	}
@@ -1458,8 +1459,6 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 	CheckDlgButton(hWnd2, cbBlockInactiveCursor, gpSet->AppStd.isCursorBlockInactive);
 
-	CheckDlgButton(hWnd2, cbCursorIgnoreSize, gpSet->AppStd.isCursorIgnoreSize);
-
 	CheckRadioButton(hWnd2, rCursorV, rCursorH, gpSet->AppStd.isCursorV ? rCursorV : rCursorH);
 
 	// 3d state - force center symbols in cells
@@ -1525,13 +1524,137 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Startup(HWND hWnd2, BOOL abInitial)
 {
-	CheckRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp);
+	CheckRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp+gpSet->nStartType);
 
-	//TODO: Пендюрки разные...
-	SetDlgItemText(hWnd2, tCmdLine, gpSet->psCmd ? gpSet->psCmd : L"");
+	SetDlgItemText(hWnd2, tCmdLine, gpSet->psStartSingleApp ? gpSet->psStartSingleApp : L"");
+
+	// Признак "командного файла" - лидирующая @, в диалоге - не показываем
+	SetDlgItemText(hWnd2, tStartTasksFile, gpSet->psStartTasksFile ? (*gpSet->psStartTasksFile == CmdFilePrefix ? (gpSet->psStartTasksFile+1) : gpSet->psStartTasksFile) : L"");
+
+	int nGroup = 0;
+	const Settings::CommandTasks* pGrp = NULL;
+	SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_RESETCONTENT, 0,0);
+	while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
+		SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
+	SelectStringExact(hWnd2, lbStartNamedTask, gpSet->psStartTasksName ? gpSet->psStartTasksName : L"");
+
+	pageOpProc_Start(hWnd2, WM_COMMAND, rbStartSingleApp+gpSet->nStartType, 0);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
+}
+
+INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	INT_PTR iRc = 0;
+
+	switch (messg)
+	{
+	case WM_COMMAND:
+		{
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				{
+					WORD CB = LOWORD(wParam);
+					switch (CB)
+					{
+					case rbStartSingleApp:
+					case rbStartTasksFile:
+					case rbStartNamedTask:
+					case rbStartLastTabs:
+						gpSet->nStartType = (CB - rbStartSingleApp);
+						//
+						EnableWindow(GetDlgItem(hWnd2, tCmdLine), (CB == rbStartSingleApp));
+						EnableWindow(GetDlgItem(hWnd2, cbCmdLine), (CB == rbStartSingleApp));
+						//
+						EnableWindow(GetDlgItem(hWnd2, tStartTasksFile), (CB == rbStartTasksFile));
+						EnableWindow(GetDlgItem(hWnd2, cbStartTasksFile), (CB == rbStartTasksFile));
+						//
+						EnableWindow(GetDlgItem(hWnd2, lbStartNamedTask), (CB == rbStartNamedTask));
+						//
+						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreFolders), (CB == rbStartLastTabs));
+						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreEditors), (CB == rbStartLastTabs));
+						break;
+					case cbCmdLine:
+					case cbStartTasksFile:
+						{
+							wchar_t temp[MAX_PATH+1], edt[MAX_PATH];
+							if (!GetDlgItemText(hWnd2, (CB==cbCmdLine)?tCmdLine:tStartTasksFile, edt, countof(edt)))
+								edt[0] = 0;
+							ExpandEnvironmentStrings(edt, temp, countof(temp));
+							OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+							ofn.lStructSize=sizeof(ofn);
+							ofn.hwndOwner = ghOpWnd;
+							if (CB==cbCmdLine)
+							{
+								ofn.lpstrFilter = L"Executables (*.exe)\0*.exe\0All files (*.*)\0*.*\0\0";
+								ofn.lpstrTitle = L"Choose application";
+							}
+							else
+							{
+								ofn.lpstrFilter = L"Text files (*.txt)\0*.txt\0All files (*.*)\0*.*\0\0";
+								ofn.lpstrTitle = L"Choose command file";
+							}
+							ofn.lpstrFile = temp;
+							ofn.nMaxFile = countof(temp);
+							ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+										| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
+
+							if (GetOpenFileName(&ofn))
+							{
+								SetDlgItemText(hWnd2, (CB==cbCmdLine)?tCmdLine:tStartTasksFile, temp);
+							}
+						}
+						break;
+					}
+				} // BN_CLICKED
+				break;
+			case EN_CHANGE:
+				{
+					switch (LOWORD(wParam))
+					{
+					case tCmdLine:
+						GetString(hWnd2, tCmdLine, &gpSet->psStartSingleApp);
+						break;
+					case tStartTasksFile:
+						{
+							wchar_t* psz = NULL;
+							INT_PTR nLen = GetString(hWnd2, tStartTasksFile, &psz);
+							if ((nLen <= 0) || !psz || !*psz)
+							{
+								SafeFree(gpSet->psStartTasksFile);
+							}
+							else
+							{
+								LPCWSTR pszName = (*psz == CmdFilePrefix) ? (psz+1) : psz;
+								SafeFree(gpSet->psStartTasksFile);
+								gpSet->psStartTasksFile = (wchar_t*)calloc(nLen+2,sizeof(*gpSet->psStartTasksFile));
+								*gpSet->psStartTasksFile = CmdFilePrefix;
+								_wcscpy_c(gpSet->psStartTasksFile+1, nLen+1, pszName);
+							}
+							SafeFree(psz);
+						}
+						break;
+					}
+				} // EN_CHANGE
+				break;
+			case CBN_SELCHANGE:
+				{
+					switch (LOWORD(wParam))
+					{
+					case lbStartNamedTask:
+						GetSelectedString(hWnd2, lbStartNamedTask, &gpSet->psStartTasksName);
+						break;
+					}
+				}
+				break;
+			}
+		} // WM_COMMAND
+		break;
+	}
+
+	return iRc;
 }
 
 LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
@@ -1612,6 +1735,8 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
+
+	CheckDlgButton(hWnd2, cbCursorIgnoreSize, gpSet->AppStd.isCursorIgnoreSize);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -5400,6 +5525,10 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		// У многих контролов ИД дублируются с другими вкладками.
 		return gpSetCls->pageOpProc_Apps(hWnd2, messg, wParam, lParam);
 	}
+	else if (gpSetCls->mh_Tabs[thi_Startup] && (hWnd2 == gpSetCls->mh_Tabs[thi_Startup]))
+	{
+		return gpSetCls->pageOpProc_Start(hWnd2, messg, wParam, lParam);
+	}
 	else
 	// All other messages
 	switch (messg)
@@ -8221,6 +8350,53 @@ INT_PTR CSettings::GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCW
 	return nLen;
 }
 
+INT_PTR CSettings::GetSelectedString(HWND hParent, WORD nListCtrlId, wchar_t** ppszStr)
+{
+	INT_PTR nCur = SendDlgItemMessage(hParent, nListCtrlId, CB_GETCURSEL, 0, 0);
+	INT_PTR nLen = (nCur >= 0) ? SendDlgItemMessage(hParent, nListCtrlId, CB_GETLBTEXTLEN, nCur, 0) : -1;
+	if (!ppszStr)
+		return nLen;
+	
+	if (nLen<=0)
+	{
+		if (*ppszStr) {free(*ppszStr); *ppszStr = NULL;}
+	}
+	else
+	{
+		wchar_t* pszNew = (TCHAR*)calloc(nLen+1, sizeof(TCHAR));
+		if (!pszNew)
+		{
+			_ASSERTE(pszNew!=NULL);
+		}
+		else
+		{
+			SendDlgItemMessage(hParent, nListCtrlId, CB_GETLBTEXT, nCur, (LPARAM)pszNew);
+
+			if (*ppszStr)
+			{
+				if (lstrcmp(*ppszStr, pszNew) == 0)
+				{
+					free(pszNew);
+					return nLen; // Изменений не было
+				}
+			}
+
+			if (nLen > (*ppszStr ? (INT_PTR)_tcslen(*ppszStr) : 0))
+			{
+				if (*ppszStr) free(*ppszStr);
+				*ppszStr = pszNew; pszNew = NULL;
+			}
+			else
+			{
+				_wcscpy_c(*ppszStr, nLen+1, pszNew);
+				SafeFree(pszNew);
+			}
+		}
+	}
+	
+	return nLen;
+}
+
 int CSettings::SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 {
 	if (!hParent)  // был ghOpWnd. теперь может быть вызван и для других диалогов!
@@ -8311,18 +8487,13 @@ LPCTSTR CSettings::GetDefaultCmd()
 	return szDefCmd;
 }
 
+// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
+// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
 void CSettings::ResetCmdArg()
 {
 	SingleInstanceArg = false;
 	// Сбросить нужно только gpSet->psCurCmd, gpSet->psCmd не меняется - загружается только из настройки
 	SafeFree(gpSet->psCurCmd);
-	//SettingsBase* reg = CreateSettings();
-	//if (reg->OpenKey(Config, KEY_READ))
-	//{
-	//	reg->Load(L"CmdLine", &gpSet->psCmd);
-	//    reg->CloseKey();
-	//}
-	//delete reg;
 }
 
 //LPCTSTR CSettings::GetCmd()

@@ -175,15 +175,17 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Startup options",IDC_STATIC,4,1,319,115
     CONTROL         "Command line",rbStartSingleApp,"Button",BS_AUTORADIOBUTTON,9,15,290,8
-    EDITTEXT        tCmdLine,20,25,296,12,ES_AUTOHSCROLL | WS_DISABLED
+    EDITTEXT        tCmdLine,21,25,278,12,ES_AUTOHSCROLL | WS_DISABLED
     CONTROL         "Tasks file",rbStartTasksFile,"Button",BS_AUTORADIOBUTTON,9,40,290,8
-    EDITTEXT        tStartTasksFile,20,50,296,12,ES_AUTOHSCROLL | WS_DISABLED
-    CONTROL         "Specified named task",rbStartSavedTask,"Button",BS_AUTORADIOBUTTON,9,65,290,8
-    COMBOBOX        lbStartNamedTask,20,75,296,59,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        tStartTasksFile,21,50,278,12,ES_AUTOHSCROLL | WS_DISABLED
+    CONTROL         "Specified named task",rbStartNamedTask,"Button",BS_AUTORADIOBUTTON,9,65,290,8
+    COMBOBOX        lbStartNamedTask,21,75,296,59,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Auto save/restore opened tabs",rbStartLastTabs,"Button",BS_AUTORADIOBUTTON,9,90,290,8
-    CONTROL         "Far folders also",cbStartFarRestoreFolders,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,20,101,90,8
+    CONTROL         "Far folders also",cbStartFarRestoreFolders,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,21,101,90,8
     CONTROL         "Far editors/viewers also",cbStartFarRestoreEditors,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,110,101,100,8
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,111,101,100,8
+    PUSHBUTTON      "...",cbCmdLine,303,25,15,13,WS_DISABLED
+    PUSHBUTTON      "...",cbStartTasksFile,303,49,15,13,WS_DISABLED
 END
 
 IDD_SPG_COLORS DIALOGEX 0, 0, 328, 235
@@ -876,8 +878,8 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Application distinct settings",gbAppDistinct,4,1,319,230
     LISTBOX         lbAppDistinct,9,12,93,196,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
-    LTEXT           "Console application names, delimited by ""|""\ne.g. ""Hiew.exe|Cmd.exe""",stAppDistinctName,111,26,207,16
-    EDITTEXT        tAppDistinctName,109,44,208,12,ES_AUTOHSCROLL
+    LTEXT           "Executables, delimited by ""|"", e.g. ""tcc.exe|cmd.exe"":",stAppDistinctName,111,26,207,8
+    EDITTEXT        tAppDistinctName,109,36,208,12,ES_AUTOHSCROLL
     PUSHBUTTON      "+",cbAppDistinctAdd,9,212,17,14
     PUSHBUTTON      "-",cbAppDistinctDel,27,212,17,14
     PUSHBUTTON      "Up",cbAppDistinctUp,47,212,27,14
@@ -887,31 +889,31 @@ BEGIN
     CONTROL         "Non elevated",rbAppDistinctElevatedOff,"Button",BS_AUTORADIOBUTTON,163,15,61,8
     CONTROL         "Elevation don't matter",rbAppDistinctElevatedIgnore,
                     "Button",BS_AUTORADIOBUTTON,227,15,90,8
-    GROUPBOX        "",IDC_STATIC,110,60,208,29
-    CONTROL         "Extend fonts override",cbExtendFontsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,60,86,10
-    CONTROL         "Extend",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,73,33,10
-    COMBOBOX        lbExtendFontBoldIdx,174,71,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbExtendFontItalicIdx,224,71,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbExtendFontNormalIdx,284,71,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "",IDC_STATIC,111,92,208,40
-    CONTROL         "Cursor override",cbCursorOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,92,66,10
-    CONTROL         "&Vertical",rCursorV,"Button",BS_AUTORADIOBUTTON | WS_GROUP,116,105,40,8
-    CONTROL         "&Horizontal",rCursorH,"Button",BS_AUTORADIOBUTTON,158,105,48,8
-    CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,105,40,8
-    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,251,105,63,8
-    CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,118,91,8
-    CONTROL         "Ignore console cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,118,104,8
-    GROUPBOX        "",IDC_STATIC,110,136,208,30
-    CONTROL         "Color palette override",cbColorsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,135,87,10
-    COMBOBOX        lbColorsOverride,116,147,194,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "",IDC_STATIC,110,170,208,29
-    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,184,102,8
-    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,219,184,95,8
+    GROUPBOX        "",IDC_STATIC,110,51,208,29
+    CONTROL         "Extend fonts override",cbExtendFontsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,51,86,8
+    CONTROL         "Extend",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,64,33,10
+    COMBOBOX        lbExtendFontBoldIdx,174,62,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontItalicIdx,224,62,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontNormalIdx,284,62,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "",IDC_STATIC,110,81,208,40
+    CONTROL         "Cursor override",cbCursorOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,81,66,8
+    CONTROL         "&Vertical",rCursorV,"Button",BS_AUTORADIOBUTTON | WS_GROUP,116,94,40,8
+    CONTROL         "&Horizontal",rCursorH,"Button",BS_AUTORADIOBUTTON,158,94,48,8
+    CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,94,40,8
+    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,251,94,63,8
+    CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,107,91,8
+    CONTROL         "Ignore console cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,107,104,8
+    GROUPBOX        "",IDC_STATIC,110,123,208,30
+    CONTROL         "Color palette override",cbColorsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,123,87,8
+    COMBOBOX        lbColorsOverride,116,134,194,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "",IDC_STATIC,110,154,208,29
+    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,168,102,8
+    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,219,168,95,8
     CONTROL         "Pasting text override (not in Far or GUI applications)",cbClipboardOverride,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,169,187,10
-    RTEXT           "Italic:",stExtendFontItalicIdx,202,73,21,8
-    RTEXT           "Replace:",stExtendFontNormalIdx,251,73,32,8
-    RTEXT           "Bold:",stExtendFontBoldIdx,154,74,19,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,154,187,8
+    RTEXT           "Italic:",stExtendFontItalicIdx,202,64,21,8
+    RTEXT           "Replace:",stExtendFontNormalIdx,251,64,32,8
+    RTEXT           "Bold:",stExtendFontBoldIdx,154,65,19,8
 END
 
 

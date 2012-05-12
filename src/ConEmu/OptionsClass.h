@@ -420,6 +420,7 @@ class CSettings
 		//LRESULT OnButtonClicked_Apps(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		//UINT mn_AppsEnableControlsMsg;
 		INT_PTR pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+		INT_PTR pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		//LRESULT OnColorButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		//LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		
 		//LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
@@ -481,6 +482,7 @@ class CSettings
 		static int IsChecked(HWND hParent, WORD nCtrlId);
 		static int GetNumber(HWND hParent, WORD nCtrlId);
 		static INT_PTR GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCWSTR asNoDefault = NULL);
+		static INT_PTR GetSelectedString(HWND hParent, WORD nListCtrlId, wchar_t** ppszStr);
 		static int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 		static int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 		BOOL mb_TabHotKeyRegistered;

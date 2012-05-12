@@ -70,8 +70,10 @@ enum BackgroundOp
 class CSettings;
 class CVirtualConsole;
 
+#define CmdFilePrefix     L'@'
 #define TaskBracketLeft   L'{'
 #define TaskBracketRight  L'}'
+#define AutoStartTaskName L"<Startup>"
 
 #define CEHOTKEY_MODMASK    0xFFFFFF00
 #define CEHOTKEY_NUMHOSTKEY 0xFFFFFF00
@@ -494,9 +496,20 @@ struct Settings
 		//nCmdHistorySize = 0; HistoryCheck();
 		DWORD nCmdHistorySize;
 
-		/* *** Command Line (Registry) *** */
-		//reg->Load(L"CmdLine", &psCmd);
-		LPTSTR psCmd;
+		/* *** Startup options *** */
+		//reg->Load(L"StartType", nStartType);
+		BYTE nStartType;
+		//reg->Load(L"CmdLine", &psStartSingleApp);
+		LPTSTR psStartSingleApp;
+		//reg->Load(L"StartTasksFile", &psStartTasksFile);
+		LPTSTR psStartTasksFile;
+		//reg->Load(L"StartTasksName", &psStartTasksName);
+		LPTSTR psStartTasksName;
+		//reg->Load(L"StartFarFolders", isStartFarFolders);
+		bool isStartFarFolders;
+		//reg->Load(L"StartFarEditors", isStartFarEditors);
+		bool isStartFarEditors;
+
 		
 		/* Command Line ("/cmd" arg) */
 		LPTSTR psCurCmd;

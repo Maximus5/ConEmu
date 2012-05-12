@@ -2271,6 +2271,8 @@ static BOOL ReadConsoleInfo()
 	DWORD ldwConsoleCP=0, ldwConsoleOutputCP=0, ldwConsoleMode=0;
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // MyGetConsoleScreenBufferInfo
 	HANDLE hOut = (HANDLE)ghConOut;
+	//HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+	//DWORD nConInMode = 0;
 
 	if (hOut == INVALID_HANDLE_VALUE)
 		hOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -2284,7 +2286,12 @@ static BOOL ReadConsoleInfo()
 	}
 	else
 	{
-		if (gpSrv->bTelnetActive) lci.dwSize = 15;  // telnet "глючит" при нажатии Ins - меняет курсор даже когда нажат Ctrl например
+		TODO("Нифига не реагирует на режим вставки в cmd.exe, видимо, GetConsoleMode можно получить только в cmd.exe");
+		//if (gpSrv->bTelnetActive) lci.dwSize = 15;  // telnet "глючит" при нажатии Ins - меняет курсор даже когда нажат Ctrl например
+		//GetConsoleMode(hIn, &nConInMode);
+		//GetConsoleMode(hOut, &nConInMode);
+		//if (GetConsoleMode(hIn, &nConInMode) && !(nConInMode & ENABLE_INSERT_MODE) && (lci.dwSize < 50))
+		//	lci.dwSize = 50;
 
 		gpSrv->dwCiRc = 0;
 

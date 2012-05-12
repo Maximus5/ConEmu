@@ -180,17 +180,19 @@ Settings::Settings()
 
 void Settings::ReleasePointers()
 {
-	if (sTabCloseMacro) {free(sTabCloseMacro); sTabCloseMacro = NULL;}
+	SafeFree(sTabCloseMacro);
 	
-	if (sSafeFarCloseMacro) {free(sSafeFarCloseMacro); sSafeFarCloseMacro = NULL;}
+	SafeFree(sSafeFarCloseMacro);
 
-	if (sSaveAllMacro) {free(sSaveAllMacro); sSaveAllMacro = NULL;}
+	SafeFree(sSaveAllMacro);
 
-	if (sRClickMacro) {free(sRClickMacro); sRClickMacro = NULL;}
+	SafeFree(sRClickMacro);
 	
-	if (psCmd) {free(psCmd); psCmd = NULL;}
-	if (psCurCmd) {free(psCurCmd); psCurCmd = NULL;}
-	if (psCmdHistory) {free(psCmdHistory); psCmdHistory = NULL;}
+	SafeFree(psStartSingleApp);
+	SafeFree(psStartTasksFile);
+	SafeFree(psStartTasksName);
+	SafeFree(psCurCmd);
+	SafeFree(psCmdHistory);
 	
 	UpdSet.FreePointers();
 }
@@ -1601,7 +1603,25 @@ void Settings::LoadSettings()
 			
 			
 			
-		reg->Load(L"CmdLine", &psCmd);
+		bool bCmdLine = reg->Load(L"CmdLine", &psStartSingleApp);
+		reg->Load(L"StartTasksFile", &psStartTasksFile);
+		reg->Load(L"StartTasksName", &psStartTasksName);
+		reg->Load(L"StartFarFolders", isStartFarFolders);
+		reg->Load(L"StartFarEditors", isStartFarEditors);
+		if (!reg->Load(L"StartType", nStartType) && bCmdLine)
+		{
+			if (*psStartSingleApp == CmdFilePrefix)
+				nStartType = 1;
+			else if (*psStartSingleApp == TaskBracketLeft)
+				nStartType = 2;
+		}
+		// Check
+		if (nStartType > (rbStartLastTabs - rbStartSingleApp))
+		{
+			_ASSERTE(nStartType <= (rbStartLastTabs - rbStartSingleApp));
+			nStartType = 0;
+		}
+
 		reg->Load(L"CmdLineHistory", &psCmdHistory); nCmdHistorySize = 0; HistoryCheck();
 		reg->Load(L"Multi", isMulti);
 		//LoadVkMod(reg, L"Multi.NewConsole", vmMultiNew, vmMultiNew);
@@ -2351,7 +2371,13 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		#endif
 		
 		//reg->Save(L"LockRealConsolePos", isLockRealConsolePos);
-		reg->Save(L"CmdLine", psCmd);
+
+		reg->Save(L"StartType", nStartType);
+		reg->Save(L"CmdLine", psStartSingleApp);
+		reg->Save(L"StartTasksFile", psStartTasksFile);
+		reg->Save(L"StartTasksName", psStartTasksName);
+		reg->Save(L"StartFarFolders", isStartFarFolders);
+		reg->Save(L"StartFarEditors", isStartFarEditors);
 
 		if (psCmdHistory)
 			reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
@@ -2871,8 +2897,21 @@ LPCTSTR Settings::GetCmd()
 	if (psCurCmd && *psCurCmd)
 		return psCurCmd;
 
-	if (psCmd && *psCmd)
-		return psCmd;
+	switch (nStartType)
+	{
+	case 0:
+		if (psStartSingleApp && *psStartSingleApp)
+			return psStartSingleApp;
+		break;
+	case 1:
+		if (psStartTasksFile && *psStartTasksFile)
+			return psStartTasksFile;
+		break;
+	case 2:
+		if (psStartTasksName && *psStartTasksName)
+			return psStartTasksName;
+		break;
+	}
 
 	SafeFree(psCurCmd); // впринципе, эта строка скорее всего не нужна, но на всякий случай...
 	// Хорошо бы более корректно определить версию фара, но это не всегда просто
@@ -2981,7 +3020,11 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 	if (!asCmd || !*asCmd || (*asCmd == TaskBracketLeft))
 		return;
 
-	if (psCmd && lstrcmp(psCmd, asCmd)==0)
+	if (psStartSingleApp && lstrcmp(psStartSingleApp, asCmd)==0)
+		return;
+	if (psStartTasksFile && lstrcmp(psStartTasksFile, asCmd)==0)
+		return;
+	if (psStartTasksName && lstrcmp(psStartTasksName, asCmd)==0)
 		return;
 
 	if (psCurCmd && lstrcmp(psCurCmd, asCmd)==0)
