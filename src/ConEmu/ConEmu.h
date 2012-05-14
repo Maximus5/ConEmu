@@ -107,6 +107,7 @@ enum TrackMenuPlace
 	tmp_Cmd,
 	tmp_KeyBar,
 	tmp_TabsList,
+	tmp_PasteCmdLine,
 };
 
 struct MsgSrvStartedArg

@@ -598,6 +598,7 @@ const wchar_t* ExcludedModules[MAX_EXCLUDED_MODULES] =
 	L"mssign32.dll",
 	L"crypt32.dll",
 	L"uxtheme.dll", // подозрение на exception на некоторых Win7 & Far3 (Bugs\2012\120124\Info.txt, пункт 3)
+	WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"),
 	/*
 	// test
 	L"twext.dll",

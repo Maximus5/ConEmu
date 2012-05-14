@@ -29,4 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 BITMAPFILEHEADER* LoadImageEx(LPCWSTR asImgPath, BY_HANDLE_FILE_INFORMATION& inf);
+bool SaveImageEx(LPCWSTR asImgPath, HBITMAP hBitmap);
+bool SaveImageEx(LPCWSTR asImgPath, LPBYTE pBmpData, DWORD cbBmpDataSize);
+int GetCodecClsid(const WCHAR* format, CLSID* pClsid);
 void LoadImageFinalize();

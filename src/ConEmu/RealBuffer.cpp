@@ -592,7 +592,11 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 #endif
 	DWORD dwTickStart = timeGetTime();
 	// С таймаутом
-	fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, 500);
+	DWORD nCallTimeout = 500;
+#ifdef _DEBUG
+	nCallTimeout = 30000;
+#endif
+	fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);
 	gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, mp_RCon->ms_ConEmuC_Pipe, pOut);
 
 	if (!fSuccess || dwRead<(DWORD)nOutSize)
@@ -656,7 +660,11 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					ResetEvent(mp_RCon->mh_ApplyFinished);
 					mp_RCon->mn_LastConsolePacketIdx--;
 					SetEvent(mp_RCon->mh_MonitorThreadEvent);
-					nWait = WaitForSingleObject(mp_RCon->mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
+					DWORD nWaitTimeout = SETSYNCSIZEAPPLYTIMEOUT;
+					#ifdef _DEBUG
+					nWaitTimeout = 30000;
+					#endif
+					nWait = WaitForSingleObject(mp_RCon->mh_ApplyFinished, nWaitTimeout);
 					COORD crDebugCurSize = con.m_sbi.dwSize;
 
 					if (crDebugCurSize.X != sizeX)

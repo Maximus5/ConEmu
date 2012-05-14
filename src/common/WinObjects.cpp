@@ -113,6 +113,8 @@ BOOL apiSetForegroundWindow(HWND ahWnd)
 #endif
 
 #ifndef CONEMU_MINIMAL
+// If the window was previously visible, the return value is nonzero. 
+// If the window was previously hidden, the return value is zero. 
 BOOL apiShowWindow(HWND ahWnd, int anCmdShow)
 {
 #ifdef _DEBUG

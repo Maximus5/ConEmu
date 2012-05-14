@@ -55,6 +55,7 @@ extern HWND ghWnd, ghConWnd, /*ghWnd DC,*/ ghOpWnd, ghWndApp;
 extern BOOL gbMessagingStarted, gbDontEnable;
 //extern TabBarClass TabBar;
 extern OSVERSIONINFO gOSVer;
+extern WORD gnOsVer;
 //extern SECURITY_ATTRIBUTES* gpLocalSecurity;
 extern BOOL gbDebugLogStarted;
 extern BOOL gbDebugShowRects;

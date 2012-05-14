@@ -400,7 +400,7 @@ struct Settings
 				_wcscpy_c(pszCommands, cchCmdMax, asCommands);
 			};
 		};
-		const CommandTasks* CmdTaskGet(int anIndex); // 0-based, index of CmdTasks
+		const CommandTasks* CmdTaskGet(int anIndex); // 0-based, index of CmdTasks. "-1" == autosaved task
 		void CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asCommands); // 0-based, index of CmdTasks
 		bool CmdTaskXch(int anIndex1, int anIndex2); // 0-based, index of CmdTasks
 
@@ -419,9 +419,14 @@ struct Settings
 
 		int CmdTaskCount;
 		CommandTasks** CmdTasks;
+		CommandTasks* StartupTask;
+		bool LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex);
+		bool SaveCmdTask(SettingsBase* reg, CommandTasks* pTask);
+		void FreeCmdTasks();
 
 		int PaletteCount;
 		ColorPalette** Palettes;
+		void FreePalettes();
 
 		int PaletteGetIndex(LPCWSTR asName);
 		void SavePalettes(SettingsBase* reg);
@@ -443,6 +448,8 @@ struct Settings
 		void LoadAppSettings(SettingsBase* reg);
 		void LoadAppSettings(SettingsBase* reg, AppSettings* pApp, COLORREF* pColors);
 		void SaveAppSettings(SettingsBase* reg, AppSettings* pApp, COLORREF* pColors);
+
+		void FreeApps(int NewAppCount = 0, AppSettings** NewApps = NULL, Settings::CEAppColors** NewAppColors = NULL);
 
 		DWORD mn_FadeMul;
 		inline BYTE GetFadeColorItem(BYTE c);
@@ -498,7 +505,7 @@ struct Settings
 
 		/* *** Startup options *** */
 		//reg->Load(L"StartType", nStartType);
-		BYTE nStartType;
+		BYTE nStartType; // 0-cmd line, 1-cmd task file, 2-named task, 3-auto saved task
 		//reg->Load(L"CmdLine", &psStartSingleApp);
 		LPTSTR psStartSingleApp;
 		//reg->Load(L"StartTasksFile", &psStartTasksFile);
@@ -715,6 +722,8 @@ struct Settings
 		//BYTE nRDragKey; // Áûë DWORD
 		//reg->Load(L"DefCopy", isDefCopy);
 		bool isDefCopy;
+		//reg->Load(L"DropUseMenu", isDropUseMenu);
+		BYTE isDropUseMenu;
 		//reg->Load(L"DragOverlay", isDragOverlay);
 		bool isDragOverlay;
 		//reg->Load(L"DragShowIcons", isDragShowIcons);

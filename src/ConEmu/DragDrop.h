@@ -47,7 +47,7 @@ class CDragDrop :
 		virtual HRESULT __stdcall DragLeave(void);
 		void Drag(BOOL abClickNeed, COORD crMouseDC);
 		//IDataObject *mp_DataObject;
-		bool mb_selfdrag;
+		//bool mb_selfdrag;
 		//ForwardedPanelInfo *m_pfpi;
 		HRESULT CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR lpszDesc);
 		//BOOL InDragDrop();
@@ -55,6 +55,7 @@ class CDragDrop :
 		//BOOL IsDragStarting() {return FALSE;};
 		//BOOL ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) { return FALSE;};
 	protected:
+		HRESULT DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
 		//BOOL mb_DragDropRegistered;
 		//void RetrieveDragToInfo();
 		//ITEMIDLIST m_DesktopID;

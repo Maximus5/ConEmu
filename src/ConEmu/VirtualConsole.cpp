@@ -127,7 +127,7 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #endif
 
 #ifdef _DEBUG
-#define DUMPDC(f) if (mb_DebugDumpDC) DumpImage(hDC, Width, Height, f);
+#define DUMPDC(f) if (mb_DebugDumpDC) DumpImage(hDC, NULL, Width, Height, f);
 #else
 #define DUMPDC(f)
 #endif
@@ -829,7 +829,7 @@ bool CVirtualConsole::Dump(LPCWSTR asFile)
 		return FALSE;
 	
 	// Она сделает снимок нашего буфера (hDC) в png файл
-	DumpImage(hDC, Width, Height, asFile);
+	DumpImage(hDC, NULL, Width, Height, asFile);
 	HANDLE hFile = CreateFile(asFile, GENERIC_WRITE, FILE_SHARE_READ,
 	                          NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -1030,7 +1030,7 @@ void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight)
 #ifdef _DEBUG
 	BOOL lbDump = FALSE;
 
-	if (lbDump) DumpImage(hBgDc, bgBmpSize.X, bgBmpSize.Y, L"F:\\bgtemp.png");
+	if (lbDump) DumpImage(hBgDc, NULL, bgBmpSize.X, bgBmpSize.Y, L"F:\\bgtemp.png");
 
 #endif
 

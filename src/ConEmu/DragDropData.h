@@ -34,8 +34,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define UNLOCKED_DRAG
 #undef UNLOCKED_DRAG
-//#define PERSIST_OVL
-#undef PERSIST_OVL
+
+#define USE_DROP_HELPER
+
+//#ifdef _DEBUG
+#define PERSIST_OVL
+//#else
+//#undef PERSIST_OVL
+//#endif
 
 #define MSG_STARTDRAG (WM_APP+10)
 
@@ -81,6 +87,9 @@ class CDragDropData
 		// Support for background D&D
 		BOOL IsDragStarting();
 		BOOL ForwardMessage(UINT messg, WPARAM wParam, LPARAM lParam);
+		void OnTaskbarCreated();
+	public:
+		bool mb_selfdrag;
 	private:
 		//wchar_t *mpsz_DraggedPath; // ASCIIZZ
 		int RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar_t** ppszDraggedPath, UINT* pnFilesCount);
@@ -95,6 +104,10 @@ class CDragDropData
 		CDataObject *mp_DataObject;
 		ForwardedPanelInfo *m_pfpi;
 		BOOL mb_DragDropRegistered;
+		#ifdef USE_DROP_HELPER
+		IDropTargetHelper* mp_TargetHelper;
+		#endif
+		bool UseTargetHelper(bool abSelfDrag);
 	protected:
 		ITEMIDLIST m_DesktopID;
 		void EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile = NULL);
@@ -105,13 +118,15 @@ class CDragDropData
 		//int m_iBPP;
 		static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		BOOL CreateDragImageWindow();
+		bool AllocDragImageBits();
 		void DestroyDragImageWindow();
 		BOOL LoadDragImageBits(IDataObject * pDataObject);
 		BOOL CreateDragImageBits(IDataObject * pDataObject);
-		DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
+		DragImageBits* CreateDragImageBits(wchar_t* pszFiles, bool abForceToTop = true);
 		BOOL DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY);
 		void DestroyDragImageBits();
 		void MoveDragWindow(BOOL abVisible=TRUE);
+		void MoveDragWindowToTop();
 		//DragImageBits m_ImgInfo;
 		//LPBYTE mp_ImgData;
 		DragImageBits *mp_Bits;

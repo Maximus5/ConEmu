@@ -1184,6 +1184,9 @@ void TabBarClass::UpdateToolbarPos()
 	{
 		SIZE sz;
 		SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+		// В Win2k имеет место быть глюк вычисления размера (разделители)
+		if ((gOSVer.dwMajorVersion == 5) && (gOSVer.dwMinorVersion == 0))
+			sz.cx += 14;
 
 		if (mh_Rebar)
 		{
@@ -1305,7 +1308,11 @@ LRESULT TabBarClass::OnNotify(LPNMHDR nmhdr)
 	if (nmhdr->code == TBN_DROPDOWN
 	        && (mh_Toolbar && (nmhdr->hwndFrom == mh_Toolbar)))
 	{
-		OnNewConPopup();
+		LPNMTOOLBAR pBtn = (LPNMTOOLBAR)nmhdr;
+		if (pBtn->iItem == TID_CREATE_CON)
+		{
+			OnNewConPopup();
+		}
 		return TBDDRET_DEFAULT;
 	}
 
@@ -1373,7 +1380,10 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 	else if (wParam == TID_CREATE_CON)
 	{
-		gpConEmu->Recreate(FALSE, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+		if (gpConEmu->IsGesturesEnabled())
+			OnNewConPopup();
+		else
+			gpConEmu->Recreate(FALSE, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 	}
 	else if (wParam == TID_BUFFERHEIGHT)
 	{
@@ -1606,7 +1616,7 @@ HWND TabBarClass::CreateToolbar()
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	btn.fsStyle = BTNS_BUTTON;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
-#ifdef _DEBUG
+#if 0
 	// Show copying state
 	btn.iBitmap = nCopyBmp; btn.idCommand = TID_COPYING;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
@@ -2470,15 +2480,12 @@ void TabBarClass::OnNewConPopup()
 	HMENU hPopup = CreatePopupMenu();
 	LPCWSTR pszCurCmd = NULL;
 
-#ifdef _DEBUG
-	PRAGMA_ERROR("Добавить два пункта <Create dialog...> и <Setup tasks...>");
-#endif
-
 	if (gpConEmu->ActiveCon() && gpConEmu->ActiveCon()->RCon())
 		pszCurCmd = gpConEmu->ActiveCon()->RCon()->GetCmd();
 
 	LPCWSTR pszHistory = gpSet->psCmdHistory;
-	int nLastID = 0, nLastGroupID = -1;
+	int nFirstID = 0, nLastID = 0, nFirstGroupID = 0, nLastGroupID = 0;
+	int nCreateID = 0, nSetupID = 0;
 
 	memset(m_CmdPopupMenu, 0, sizeof(m_CmdPopupMenu));
 
@@ -2508,10 +2515,18 @@ void TabBarClass::OnNewConPopup()
 		AppendMenu(hPopup, MF_STRING | MF_ENABLED, m_CmdPopupMenu[nLastID].nCmd, m_CmdPopupMenu[nLastID].szShort);
 		nLastID++; nGroup++;
 		nLastGroupID = nLastID;
+		if (!nFirstGroupID)
+			nFirstGroupID = nLastID;
 	}
 
-	if (pszHistory)
+	nSetupID = ++nLastID;
+	AppendMenu(hPopup, MF_STRING | MF_ENABLED, nSetupID, L"Setup tasks...");
+
+	nFirstID = nLastID+1;
+
+	if (pszHistory && *pszHistory)
 	{
+		bool bSeparator = false;
 		int nCount = 0;
 		while (*pszHistory && (nCount < MAX_CMD_HISTORY_SHOW))
 		{
@@ -2533,9 +2548,9 @@ void TabBarClass::OnNewConPopup()
 					_wcscpyn_c(m_CmdPopupMenu[nLastID].szShort, nMaxShort, pszHistory, nMaxShort);
 				}
 
-				if (nGroup > 0)
+				if (!bSeparator)
 				{
-					nGroup = 0;
+					bSeparator = true;
 					AppendMenu(hPopup, MF_SEPARATOR, -1, NULL);
 				}
 
@@ -2565,7 +2580,9 @@ void TabBarClass::OnNewConPopup()
 		}
 		InsertMenu(hPopup, 0, MF_BYPOSITION|MF_ENABLED|MF_STRING, m_CmdPopupMenu[nLastID].nCmd, m_CmdPopupMenu[nLastID].szShort);
 		nLastID++;
-		InsertMenu(hPopup, 1, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
+		nCreateID = ++nLastID;
+		InsertMenu(hPopup, 0, MF_BYPOSITION|MF_ENABLED|MF_STRING, nCreateID, L"New console dialog...");
+		InsertMenu(hPopup, 2, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
 	}
 
 	RECT rcBtnRect = {0};
@@ -2577,12 +2594,20 @@ void TabBarClass::OnNewConPopup()
 	mb_InNewConPopup = false;
 	//gpConEmu->mp_Tip->HideTip();
 	
-	if (nId >= 1 && nId <= nLastID)
+	if (nId == nCreateID)
+	{
+		gpConEmu->Recreate(FALSE, TRUE);
+	}
+	else if (nId == nSetupID)
+	{
+		CSettings::Dialog(IDD_SPG_CMDTASKS);
+	}
+	else if (nId >= 1 && nId <= nLastID)
 	{
 		RConStartArgs con;
 		if (nLastGroupID > 0 && nId <= nLastGroupID)
 		{
-			const Settings::CommandTasks* pGrp = gpSet->CmdTaskGet(nId-1);
+			const Settings::CommandTasks* pGrp = gpSet->CmdTaskGet(nId-nFirstGroupID);
 			if (pGrp)
 			{
 				con.pszSpecialCmd = lstrdup(pGrp->pszName);
@@ -2594,7 +2619,7 @@ void TabBarClass::OnNewConPopup()
 				goto wrap;
 			}
 		}
-		else
+		else if (nId >= nFirstID)
 		{
 			con.pszSpecialCmd = lstrdup(m_CmdPopupMenu[nId-1].pszCmd);
 		}

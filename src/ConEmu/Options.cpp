@@ -193,6 +193,15 @@ void Settings::ReleasePointers()
 	SafeFree(psStartTasksName);
 	SafeFree(psCurCmd);
 	SafeFree(psCmdHistory);
+
+	FreeCmdTasks();
+	CmdTaskCount = 0;
+	
+	FreePalettes();
+	PaletteCount = 0;
+
+	FreeApps();
+	AppStd.FreeApps();
 	
 	UpdSet.FreePointers();
 }
@@ -407,7 +416,7 @@ void Settings::InitSettings()
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
 	isFarHourglass = true; nFarHourglassDelay = 500;
 	isDisableFarFlashing = false; isDisableAllFlashing = false;
-	isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1; isDefCopy = true;
+	isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1; isDefCopy = true; isDropUseMenu = 2;
 	//nLDragKey = 0; nRDragKey = VK_LCONTROL;
 	isDragOverlay = 1; isDragShowIcons = true;
 	// изменение размера панелей мышкой
@@ -451,6 +460,25 @@ void Settings::InitSettings()
 	/* *** AutoUpdate *** */
 	_ASSERTE(UpdSet.szUpdateVerLocation==NULL); // Уже должен был быть вызван ReleasePointers
 	UpdSet.ResetToDefaults();
+}
+
+void Settings::FreeApps(int NewAppCount, AppSettings** NewApps, Settings::CEAppColors** NewAppColors)
+{
+	int OldAppCount = this->AppCount;
+	this->AppCount = NewAppCount;
+	AppSettings** OldApps = Apps; Apps = NewApps;
+	CEAppColors** OldAppColors = AppColors; AppColors = NewAppColors;
+	for (int i = 0; i < OldAppCount && OldApps; i++)
+	{
+		if (OldApps[i])
+		{
+			OldApps[i]->FreeApps();
+			SafeFree(OldApps[i]);
+		}
+		SafeFree(OldAppColors[i]);
+	}
+	SafeFree(OldApps);
+	SafeFree(OldAppColors);
 }
 
 void Settings::LoadAppSettings(SettingsBase* reg)
@@ -514,21 +542,7 @@ void Settings::LoadAppSettings(SettingsBase* reg)
 		NewAppCount = nSucceeded;
 	}
 
-	int OldAppCount = this->AppCount;
-	this->AppCount = NewAppCount;
-	AppSettings** OldApps = Apps; Apps = NewApps;
-	CEAppColors** OldAppColors = AppColors; AppColors = NewAppColors;
-	for (int i = 0; i < OldAppCount && OldApps; i++)
-	{
-		if (OldApps[i])
-		{
-			OldApps[i]->FreeApps();
-			SafeFree(OldApps[i]);
-		}
-		SafeFree(OldAppColors[i]);
-	}
-	SafeFree(OldApps);
-	SafeFree(OldAppColors);
+	FreeApps();
 }
 
 void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, COLORREF* pColors)
@@ -589,6 +603,25 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	reg->Load(L"ClipboardFirstLine", pApp->isPasteFirstLine);
 }
 
+void Settings::FreeCmdTasks()
+{
+	if (CmdTasks)
+	{
+		for (int i = 0; i < CmdTaskCount; i++)
+		{
+			if (CmdTasks[i])
+				CmdTasks[i]->FreePtr();
+		}
+		SafeFree(CmdTasks);
+	}
+
+	if (StartupTask)
+	{
+		StartupTask->FreePtr();
+		SafeFree(StartupTask);
+	}
+}
+
 void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 {
 	bool lbDelete = false;
@@ -609,18 +642,10 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 		lbDelete = true;
 	}
 
-	if (CmdTasks)
-	{
-		for (int i = 0; i < CmdTaskCount; i++)
-		{
-			if (CmdTasks[i])
-				CmdTasks[i]->FreePtr();
-		}
-		SafeFree(CmdTasks);
-	}
+	FreeCmdTasks();
 
 	BOOL lbOpened = FALSE;
-	wchar_t szCmdKey[MAX_PATH+64], szVal[32];
+	wchar_t szCmdKey[MAX_PATH+64];
 	wcscpy_c(szCmdKey, gpSetCls->GetConfigPath());
 	wcscat_c(szCmdKey, L"\\Tasks");
 	wchar_t* pszCmdKey = szCmdKey+lstrlen(szCmdKey);
@@ -646,66 +671,8 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 			lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
 			if (lbOpened)
 			{
-				int iCmdMax = 0, iCmdCount = 0;
-				reg->Load(L"Count", iCmdMax);
-				if (iCmdMax > 0)
-				{
-					size_t nTotalLen = 1024; // с запасом, для редактирования через интерфейс
-					wchar_t** pszCommands = (wchar_t**)calloc(iCmdMax, sizeof(wchar_t*));
-
-					for (int j = 0; j < iCmdMax; j++)
-					{
-						_wsprintf(szVal, SKIPLEN(countof(szVal)) L"Cmd%i", j+1); // 1-based
-
-						if (reg->Load(szVal, &(pszCommands[j])) && pszCommands[j] && *pszCommands[j])
-						{
-							iCmdCount++;
-							nTotalLen += _tcslen(pszCommands[j])+8; // + ">\r\n\r\n"
-						}
-						else
-							SafeFree(pszCommands[j]);
-					}
-
-					if ((iCmdCount > 0) && (nTotalLen))
-					{
-						CmdTasks[i] = (CommandTasks*)calloc(NewTasksCount, sizeof(CommandTasks));
-
-						CmdTasks[i]->cchCmdMax = nTotalLen+1;
-						CmdTasks[i]->pszCommands = (wchar_t*)malloc(CmdTasks[i]->cchCmdMax*sizeof(wchar_t));
-						if (CmdTasks[i]->pszCommands)
-						{
-							//CmdTasks[i]->nCommands = iCmdCount;
-
-							int nActive = 0;
-							reg->Load(L"Active", nActive); // 1-based
-
-							wchar_t* psz = CmdTasks[i]->pszCommands; // dest script
-							for (int k = 0; k < iCmdCount; k++)
-							{
-								if ((k+1) == nActive)
-									*(psz++) = L'>';
-
-								lstrcpy(psz, pszCommands[k]);
-								SafeFree(pszCommands[k]);
-
-								if ((k+1) < iCmdCount)
-									lstrcat(psz, L"\r\n\r\n"); // для визуальности редактирования
-
-								psz += lstrlen(psz);	
-							}
-
-							wchar_t* pszNameSet = NULL;
-							if (!reg->Load(L"Name", &pszNameSet) || !*pszNameSet)
-								SafeFree(pszNameSet);
-
-							CmdTasks[i]->SetName(pszNameSet, i);
-
-							nSucceeded++;
-						}
-					}
-
-					SafeFree(pszCommands);
-				}
+				if (LoadCmdTask(reg, CmdTasks[i], i))
+					nSucceeded++;
 
 				reg->CloseKey();
 			}
@@ -715,6 +682,74 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 
 	if (lbDelete)
 		delete reg;
+}
+
+bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
+{
+	bool lbRc = false;
+	wchar_t szVal[32];
+	int iCmdMax = 0, iCmdCount = 0;
+
+	if (reg->Load(L"Count", iCmdMax) && (iCmdMax > 0))
+	{
+		size_t nTotalLen = 1024; // с запасом, для редактирования через интерфейс
+		wchar_t** pszCommands = (wchar_t**)calloc(iCmdMax, sizeof(wchar_t*));
+
+		for (int j = 0; j < iCmdMax; j++)
+		{
+			_wsprintf(szVal, SKIPLEN(countof(szVal)) L"Cmd%i", j+1); // 1-based
+
+			if (reg->Load(szVal, &(pszCommands[j])) && pszCommands[j] && *pszCommands[j])
+			{
+				iCmdCount++;
+				nTotalLen += _tcslen(pszCommands[j])+8; // + ">\r\n\r\n"
+			}
+			else
+				SafeFree(pszCommands[j]);
+		}
+
+		if ((iCmdCount > 0) && (nTotalLen))
+		{
+			pTask = (CommandTasks*)calloc(1, sizeof(CommandTasks));
+
+			pTask->cchCmdMax = nTotalLen+1;
+			pTask->pszCommands = (wchar_t*)malloc(pTask->cchCmdMax*sizeof(wchar_t));
+			if (pTask->pszCommands)
+			{
+				//pTask->nCommands = iCmdCount;
+
+				int nActive = 0;
+				reg->Load(L"Active", nActive); // 1-based
+
+				wchar_t* psz = pTask->pszCommands; // dest script
+				for (int k = 0; k < iCmdCount; k++)
+				{
+					if ((k+1) == nActive)
+						*(psz++) = L'>';
+
+					lstrcpy(psz, pszCommands[k]);
+					SafeFree(pszCommands[k]);
+
+					if ((k+1) < iCmdCount)
+						lstrcat(psz, L"\r\n\r\n"); // для визуальности редактирования
+
+					psz += lstrlen(psz);	
+				}
+
+				wchar_t* pszNameSet = NULL;
+				if (!reg->Load(L"Name", &pszNameSet) || !*pszNameSet)
+					SafeFree(pszNameSet);
+
+				pTask->SetName(pszNameSet, iIndex);
+
+				lbRc = true;
+			}
+		}
+
+		SafeFree(pszCommands);
+	}
+
+	return lbRc;
 }
 
 void Settings::SaveCmdTasks(SettingsBase* reg)
@@ -732,7 +767,7 @@ void Settings::SaveCmdTasks(SettingsBase* reg)
 	}
 
 	BOOL lbOpened = FALSE;
-	wchar_t szCmdKey[MAX_PATH+64], szVal[32];
+	wchar_t szCmdKey[MAX_PATH+64];
 	wcscpy_c(szCmdKey, gpSetCls->GetConfigPath());
 	wcscat_c(szCmdKey, L"\\Tasks");
 	wchar_t* pszCmdKey = szCmdKey+lstrlen(szCmdKey);
@@ -754,54 +789,7 @@ void Settings::SaveCmdTasks(SettingsBase* reg)
 			lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
 			if (lbOpened)
 			{
-				reg->Save(L"Name", CmdTasks[i]->pszName);
-
-				int iCmdCount = 0;
-				int nActive = 0; // 1-based
-				if (CmdTasks[i]->pszCommands)
-				{
-					wchar_t* pszCmd = CmdTasks[i]->pszCommands;
-					while (*pszCmd == L'\r' || *pszCmd == L'\n' || *pszCmd == L'\t' || *pszCmd == L' ')
-						pszCmd++;
-
-					while (pszCmd && *pszCmd)
-					{
-						iCmdCount++;
-
-						wchar_t* pszEnd = wcschr(pszCmd, L'\n');
-						if (pszEnd && (*(pszEnd-1) == L'\r'))
-							pszEnd--;
-						wchar_t chSave;
-						if (pszEnd)
-						{
-							chSave = *pszEnd;
-							*pszEnd = 0;
-						}
-
-						_wsprintf(szVal, SKIPLEN(countof(szVal)) L"Cmd%i", iCmdCount); // 1-based
-
-						if (*pszCmd == L'>')
-						{
-							pszCmd++;
-							nActive = iCmdCount; // 1-based
-						}
-
-						reg->Save(szVal, pszCmd);
-
-						if (pszEnd)
-							*pszEnd = chSave;
-
-						if (!pszEnd)
-							break;
-						pszCmd = pszEnd+1;
-						while (*pszCmd == L'\r' || *pszCmd == L'\n' || *pszCmd == L'\t' || *pszCmd == L' ')
-							pszCmd++;
-					}
-
-					reg->Save(L"Active", nActive); // 1-based
-				}
-				
-				reg->Save(L"Count", iCmdCount);
+				SaveCmdTask(reg, CmdTasks[i]);
 
 				reg->CloseKey();
 			}
@@ -810,6 +798,63 @@ void Settings::SaveCmdTasks(SettingsBase* reg)
 
 	if (lbDelete)
 		delete reg;
+}
+
+bool Settings::SaveCmdTask(SettingsBase* reg, CommandTasks* pTask)
+{
+	bool lbRc = false;
+	int iCmdCount = 0;
+	int nActive = 0; // 1-based
+	wchar_t szVal[32];
+
+	reg->Save(L"Name", pTask->pszName);
+
+	if (pTask->pszCommands)
+	{
+		wchar_t* pszCmd = pTask->pszCommands;
+		while (*pszCmd == L'\r' || *pszCmd == L'\n' || *pszCmd == L'\t' || *pszCmd == L' ')
+			pszCmd++;
+
+		while (pszCmd && *pszCmd)
+		{
+			iCmdCount++;
+
+			wchar_t* pszEnd = wcschr(pszCmd, L'\n');
+			if (pszEnd && (*(pszEnd-1) == L'\r'))
+				pszEnd--;
+			wchar_t chSave;
+			if (pszEnd)
+			{
+				chSave = *pszEnd;
+				*pszEnd = 0;
+			}
+
+			_wsprintf(szVal, SKIPLEN(countof(szVal)) L"Cmd%i", iCmdCount); // 1-based
+
+			if (*pszCmd == L'>')
+			{
+				pszCmd++;
+				nActive = iCmdCount; // 1-based
+			}
+
+			reg->Save(szVal, pszCmd);
+
+			if (pszEnd)
+				*pszEnd = chSave;
+
+			if (!pszEnd)
+				break;
+			pszCmd = pszEnd+1;
+			while (*pszCmd == L'\r' || *pszCmd == L'\n' || *pszCmd == L'\t' || *pszCmd == L' ')
+				pszCmd++;
+		}
+
+		reg->Save(L"Active", nActive); // 1-based
+	}
+	
+	reg->Save(L"Count", iCmdCount);
+
+	return lbRc;
 }
 
 void Settings::SortPalettes()
@@ -843,6 +888,20 @@ void Settings::SortPalettes()
 	}
 }
 
+void Settings::FreePalettes()
+{
+	if (Palettes)
+	{
+		for (int i = 0; i < PaletteCount; i++)
+		{
+			if (Palettes[i])
+				Palettes[i]->FreePtr();
+		}
+		SafeFree(Palettes);
+	}
+	PaletteCount = 0;
+}
+
 void Settings::LoadPalettes(SettingsBase* reg)
 {
 	TCHAR ColorName[] = L"ColorTable00";
@@ -859,17 +918,8 @@ void Settings::LoadPalettes(SettingsBase* reg)
 		lbDelete = true;
 	}
 
-	if (Palettes)
-	{
-		for (int i = 0; i < PaletteCount; i++)
-		{
-			if (Palettes[i])
-				Palettes[i]->FreePtr();
-		}
-		SafeFree(Palettes);
-	}
-	PaletteCount = 0;
 
+	FreePalettes();
 
 
 	BOOL lbOpened = FALSE;
@@ -1857,6 +1907,7 @@ void Settings::LoadSettings()
 		//reg->Load(L"DndRKey", nRDragKey);
 		reg->Load(L"DndDrop", isDropEnabled);
 		reg->Load(L"DefCopy", isDefCopy);
+		reg->Load(L"DropUseMenu", isDropUseMenu);
 		reg->Load(L"DragOverlay", isDragOverlay);
 		reg->Load(L"DragShowIcons", isDragShowIcons);
 		
@@ -2513,6 +2564,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		//reg->Save(L"DndRKey", nRDragKey);
 		reg->Save(L"DndDrop", isDropEnabled);
 		reg->Save(L"DefCopy", isDefCopy);
+		reg->Save(L"DropUseMenu", isDropUseMenu);
 		reg->Save(L"DragOverlay", isDragOverlay);
 		reg->Save(L"DragShowIcons", isDragShowIcons);
 		reg->Save(L"DebugSteps", isDebugSteps);
@@ -3823,8 +3875,16 @@ LPCWSTR Settings::SaveAllMacroDefault()
 
 const Settings::CommandTasks* Settings::CmdTaskGet(int anIndex)
 {
+	if (anIndex == -1)
+	{
+		_ASSERTE(StartupTask!=NULL);
+		// Создать!
+		return StartupTask;
+	}
+
 	if (!CmdTasks || (anIndex < 0) || (anIndex >= CmdTaskCount))
 		return NULL;
+
 	return (CmdTasks[anIndex]);
 }
 

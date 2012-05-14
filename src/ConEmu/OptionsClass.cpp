@@ -1524,32 +1524,52 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Startup(HWND hWnd2, BOOL abInitial)
 {
-	CheckRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp+gpSet->nStartType);
+	pageOpProc_Start(hWnd2, WM_INITDIALOG, 0, abInitial);
 
-	SetDlgItemText(hWnd2, tCmdLine, gpSet->psStartSingleApp ? gpSet->psStartSingleApp : L"");
-
-	// Признак "командного файла" - лидирующая @, в диалоге - не показываем
-	SetDlgItemText(hWnd2, tStartTasksFile, gpSet->psStartTasksFile ? (*gpSet->psStartTasksFile == CmdFilePrefix ? (gpSet->psStartTasksFile+1) : gpSet->psStartTasksFile) : L"");
-
-	int nGroup = 0;
-	const Settings::CommandTasks* pGrp = NULL;
-	SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_RESETCONTENT, 0,0);
-	while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
-		SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
-	SelectStringExact(hWnd2, lbStartNamedTask, gpSet->psStartTasksName ? gpSet->psStartTasksName : L"");
-
-	pageOpProc_Start(hWnd2, WM_COMMAND, rbStartSingleApp+gpSet->nStartType, 0);
-
-	RegisterTipsFor(hWnd2);
+	if (abInitial)
+		RegisterTipsFor(hWnd2);
 	return 0;
 }
 
 INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	INT_PTR iRc = 0;
+	const wchar_t* csNoTask = L"<None>";
+	#define MSG_SHOWTASKCONTENTS (WM_USER+64)
 
 	switch (messg)
 	{
+	case WM_INITDIALOG:
+		{
+			BOOL bInitial = (lParam != 0);
+
+			CheckRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp+gpSet->nStartType);
+
+			SetDlgItemText(hWnd2, tCmdLine, gpSet->psStartSingleApp ? gpSet->psStartSingleApp : L"");
+
+			// Признак "командного файла" - лидирующая @, в диалоге - не показываем
+			SetDlgItemText(hWnd2, tStartTasksFile, gpSet->psStartTasksFile ? (*gpSet->psStartTasksFile == CmdFilePrefix ? (gpSet->psStartTasksFile+1) : gpSet->psStartTasksFile) : L"");
+
+			int nGroup = 0;
+			const Settings::CommandTasks* pGrp = NULL;
+			SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_RESETCONTENT, 0,0);
+			SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_ADDSTRING, 0, (LPARAM)csNoTask);
+			while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
+				SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
+			if (SelectStringExact(hWnd2, lbStartNamedTask, gpSet->psStartTasksName ? gpSet->psStartTasksName : L"") <= 0)
+			{
+				if (gpSet->nStartType == (rbStartNamedTask - rbStartSingleApp))
+				{
+					// 0 -- csNoTask
+					// Задачи с таким именем больше нет - прыгаем на "Командную строку"
+					gpSet->nStartType = 0;
+					CheckRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp);
+				}
+			}
+
+			pageOpProc_Start(hWnd2, WM_COMMAND, rbStartSingleApp+gpSet->nStartType, 0);
+		}
+		break;
 	case WM_COMMAND:
 		{
 			switch (HIWORD(wParam))
@@ -1575,6 +1595,11 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 						//
 						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreFolders), (CB == rbStartLastTabs));
 						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreEditors), (CB == rbStartLastTabs));
+						// 
+						EnableWindow(GetDlgItem(hWnd2, stCmdGroupCommands), (CB == rbStartNamedTask) || (CB == rbStartLastTabs));
+						EnableWindow(GetDlgItem(hWnd2, tCmdGroupCommands), (CB == rbStartNamedTask) || (CB == rbStartLastTabs));
+						// Task source
+						pageOpProc_Start(hWnd2, MSG_SHOWTASKCONTENTS, CB, 0);
 						break;
 					case cbCmdLine:
 					case cbStartTasksFile:
@@ -1644,13 +1669,60 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 					switch (LOWORD(wParam))
 					{
 					case lbStartNamedTask:
-						GetSelectedString(hWnd2, lbStartNamedTask, &gpSet->psStartTasksName);
+						{
+							wchar_t* pszName = NULL;
+							GetSelectedString(hWnd2, lbStartNamedTask, &pszName);
+							if (pszName)
+							{
+								if (lstrcmp(pszName, csNoTask) != 0)
+								{
+									SafeFree(gpSet->psStartTasksName);
+									gpSet->psStartTasksName = pszName;
+								}
+							}
+							else
+							{
+								SafeFree(pszName);
+								// Задачи с таким именем больше нет - прыгаем на "Командную строку"
+								gpSet->nStartType = 0;
+								CheckRadioButton(hWnd2, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp);
+								pageOpProc_Start(hWnd2, WM_COMMAND, rbStartSingleApp+gpSet->nStartType, 0);
+							}
+
+							// Показать содержимое задачи
+							pageOpProc_Start(hWnd2, MSG_SHOWTASKCONTENTS, gpSet->nStartType+rbStartSingleApp, 0);
+						}
 						break;
 					}
 				}
 				break;
 			}
 		} // WM_COMMAND
+		break;
+	case MSG_SHOWTASKCONTENTS:
+		if ((wParam == rbStartLastTabs) || (wParam == rbStartNamedTask))
+		{
+			if ((gpSet->nStartType == (rbStartLastTabs-rbStartSingleApp)) || (gpSet->nStartType == (rbStartNamedTask-rbStartSingleApp)))
+			{
+				int nIdx = -2;
+				if (gpSet->nStartType == (rbStartLastTabs-rbStartSingleApp))
+				{
+					nIdx = -1;
+				}
+				else
+				{
+					nIdx = SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_GETCURSEL, 0, 0) - 1;
+					if (nIdx == -1)
+						nIdx = -2;
+				}
+				const Settings::CommandTasks* pTask = (nIdx >= -1) ? gpSet->CmdTaskGet(nIdx) : NULL;
+				SetDlgItemText(hWnd2, tCmdGroupCommands, pTask ? pTask->pszCommands : L"");
+			}
+			else
+			{
+				SetDlgItemText(hWnd2, tCmdGroupCommands, L"");
+			}
+		}
 		break;
 	}
 
@@ -1865,6 +1937,8 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 	CheckDlgButton(hWnd2, cbDropEnabled, gpSet->isDropEnabled);
 
 	CheckDlgButton(hWnd2, cbDnDCopy, gpSet->isDefCopy);
+
+	CheckDlgButton(hWnd2, cbDropUseMenu, gpSet->isDropUseMenu);
 
 	// Overlay
 	CheckDlgButton(hWnd2, cbDragImage, gpSet->isDragOverlay);
@@ -3118,6 +3192,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbDnDCopy:
 			gpSet->isDefCopy = IsChecked(hWnd2, cbDnDCopy) == BST_CHECKED;
+			break;
+		case cbDropUseMenu:
+			gpSet->isDropUseMenu = IsChecked(hWnd2, cbDropUseMenu);
 			break;
 		case cbDragImage:
 			gpSet->isDragOverlay = IsChecked(hWnd2, cbDragImage);
@@ -5116,25 +5193,47 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 	return 0;
 }
 
-void CSettings::Dialog()
+void CSettings::Dialog(int IdShowPage /*= 0*/)
 {
-	SetCursor(LoadCursor(NULL,IDC_WAIT));
-
-	// Сначала обновить DC, чтобы некрасивостей не было
-	gpConEmu->UpdateWindowChild(NULL);
-
-	//2009-05-03. DialogBox создает МОДАЛЬНЫЙ диалог, а нам нужен НЕмодальный
-	HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, wndOpProc);
-
-	if (!hOpt)
+	if (!ghOpWnd || !IsWindow(ghOpWnd))
 	{
-		DisplayLastError(L"Can't create settings dialog!");
+		SetCursor(LoadCursor(NULL,IDC_WAIT));
+
+		// Сначала обновить DC, чтобы некрасивостей не было
+		gpConEmu->UpdateWindowChild(NULL);
+
+		//2009-05-03. DialogBox создает МОДАЛЬНЫЙ диалог, а нам нужен НЕмодальный
+		HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, wndOpProc);
+
+		if (!hOpt)
+		{
+			DisplayLastError(L"Can't create settings dialog!");
+			goto wrap;
+		}
+		else
+		{
+			_ASSERTE(ghOpWnd == hOpt);
+			ghOpWnd = hOpt;
+		}
 	}
-	else
+
+	apiShowWindow(ghOpWnd, SW_SHOWNORMAL);
+
+	if (IdShowPage != 0)
 	{
-		apiShowWindow(hOpt, SW_SHOWNORMAL);
-		SetFocus(hOpt);
+		for (size_t i = 0; gpSetCls->m_Pages[i].PageID; i++)
+		{
+			if (gpSetCls->m_Pages[i].PageID == IdShowPage)
+			{
+				PostMessage(GetDlgItem(ghOpWnd, tvSetupCategories), TVM_SELECTITEM, TVGN_CARET, (LPARAM)gpSetCls->m_Pages[i].hTI);
+				break;
+			}
+		}
 	}
+
+	SetFocus(ghOpWnd);
+wrap:
+	return;
 }
 
 void CSettings::OnClose()

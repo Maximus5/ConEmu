@@ -12437,17 +12437,6 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			return 0;
 			
 		case ID_SETTINGS:
-
-			if (ghOpWnd && IsWindow(ghOpWnd))
-			{
-				if (!apiShowWindow(ghOpWnd, SW_SHOWNORMAL))
-					DisplayLastError(L"Can't show settings window");
-
-				SetFocus(ghOpWnd);
-				break; // ј то открывались несколько окон диалогов :)
-			}
-
-			//DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SPG_MAIN), 0, Settings::wndOpProc);
 			CSettings::Dialog();
 			return 0;
 			
@@ -14086,6 +14075,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			else if (messg == gpConEmu->mn_MsgTaskBarCreated)
 			{
 				Icon.OnTaskbarCreated();
+				if (mp_DragDrop)
+					mp_DragDrop->OnTaskbarCreated();
 			}
 
 			//else if (messg == gpConEmu->mn_MsgCmdStarted || messg == gpConEmu->mn_MsgCmdStopped) {

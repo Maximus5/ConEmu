@@ -343,7 +343,7 @@ class CSettings
 		static int CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
 		static int CALLBACK EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
 		//void UpdateMargins(RECT arcMargins);
-		static void Dialog();
+		static void Dialog(int IdShowPage = 0);
 		void UpdatePos(int x, int y);
 		void UpdateSize(UINT w, UINT h);
 		void UpdateTTF(BOOL bNewTTF);

@@ -86,6 +86,7 @@ const TCHAR *const gsClassNameApp = VirtualConsoleClassApp;
 
 
 OSVERSIONINFO gOSVer = {};
+WORD gnOsVer = 0x500;
 
 
 #ifdef MSGLOGGER
@@ -1020,6 +1021,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
 	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
 	GetVersionEx(&gOSVer);
+	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
 	HeapInitialize();
 	RemoveOldComSpecC();
 	gpSetCls = new CSettings;

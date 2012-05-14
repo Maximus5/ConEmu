@@ -1260,7 +1260,7 @@ wrap:
 		GetExitCodeProcess(pi.hProcess, &gnExitCode);
 
 	if (!gbInShutdown  // только если юзер не нажал крестик в заголовке окна, или не удался /ATTACH (чтобы в консоль не гадить)
-	        && ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE)
+	        && ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE && !(gnRunMode!=RM_SERVER && iRc==CERR_CREATEPROCESS))
 	            || gbAlwaysConfirmExit)
 	  )
 	{
@@ -6132,7 +6132,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	DWORD dwCurThId = GetCurrentThreadId();
 	DWORD dwWait = 0;
 
-	if (gnRunMode == RM_SERVER)
+	if ((gnRunMode == RM_SERVER) || (gnRunMode == RM_ALTSERVER))
 	{
 		// Запомним то, что последний раз установил сервер. пригодится
 		gpSrv->nReqSizeBufferHeight = BufferHeight;

@@ -46,6 +46,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define StringCbCopy(d,cbd,s) lstrcpynW(d,s,cbd)
 #endif
 
+#define DRAGBITSCLASS L"ConEmuDragBits"
+#define DRAGBITSTITLE L"ConEmuDragBits"
+
 #define MAX_OVERLAY_WIDTH    300
 #define MAX_OVERLAY_HEIGHT   300
 #define OVERLAY_ALPHA        0xAA
@@ -55,6 +58,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTROVL(s) //DEBUGSTR(s)
 #define DEBUGSTRBACK(s) //DEBUGSTR(s)
+
+#ifdef _DEBUG
+	#define DEBUG_DUMP_IMAGE
+	//#undef DEBUG_DUMP_IMAGE
+#else
+	#undef DEBUG_DUMP_IMAGE
+#endif
 
 //#define MSG_STARTDRAG (WM_APP+10)
 
@@ -78,10 +88,22 @@ CDragDropData::CDragDropData()
 	/* Unlocked drag support */
 	mb_DragStarting = FALSE;
 	ms_SourceClass[0] = 0; mh_SourceClass = NULL;
+	#ifdef USE_DROP_HELPER
+	mp_TargetHelper = NULL;
+	#endif
+	mb_selfdrag = false;
 }
 
 CDragDropData::~CDragDropData()
 {
+	#ifdef USE_DROP_HELPER
+	if (mp_TargetHelper)
+	{
+		mp_TargetHelper->Release();
+		mp_TargetHelper = NULL;
+	}
+	#endif
+
 	DestroyDragImageBits();
 	DestroyDragImageWindow();
 
@@ -92,19 +114,14 @@ BOOL CDragDropData::Register()
 {
 	BOOL lbRc = FALSE;
 	HRESULT hr = S_OK;
+
 #ifdef UNLOCKED_DRAG
 	// Инициалиция для Drag
 	InitialCreateSource();
 	// Окно создаем сразу, чтобы фокус никуда не уходил в процессе
 	CreateDragImageWindow();
-	//hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
-	//if (pHelper) {
-	//	hr = pHelper->QueryInterface(__uuidof(mp_SourceHelper), (void**)&mp_SourceHelper);
-	//	hr = pHelper->QueryInterface(__uuidof(mp_TargetHelper), (void**)&mp_TargetHelper);
-	//	pHelper->Release();
-	//	pHelper = NULL;
-	//}
 #endif
+
 	_ASSERTE(gpConEmu->mp_DragDrop);
 	hr = RegisterDragDrop(ghWnd, gpConEmu->mp_DragDrop);
 
@@ -118,9 +135,47 @@ BOOL CDragDropData::Register()
 		mb_DragDropRegistered = TRUE;
 	}
 
+#ifdef PERSIST_OVL
+	CreateDragImageWindow();
+#endif
+
+#ifdef USE_DROP_HELPER
+	// Helper (drag image)
+	IUnknown* pHelper = NULL;
+	hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
+	if (pHelper)
+	{
+		//	hr = pHelper->QueryInterface(__uuidof(mp_SourceHelper), (void**)&mp_SourceHelper);
+		hr = pHelper->QueryInterface(__uuidof(mp_TargetHelper), (void**)&mp_TargetHelper);
+		pHelper->Release();
+		pHelper = NULL;
+	}
+#endif
+
 	lbRc = TRUE;
 wrap:
 	return lbRc;
+}
+
+bool CDragDropData::UseTargetHelper(bool abSelfDrag)
+{
+	bool lbCanUseHelper = false;
+	
+	#ifdef USE_DROP_HELPER
+	if (gnOsVer >= 0x601/*Windows7*/)
+	{
+		// в Windows 7 вроде бы только при включенном Aero (Glass) работают DragImage
+		// или это при включении "Classic Theme"?
+		//if (!gpConEmu->IsDwm())
+		if (!gpConEmu->IsThemed())
+			return false;
+	}
+
+    if (mp_TargetHelper && !abSelfDrag)
+    	lbCanUseHelper = true;
+    #endif
+
+    return lbCanUseHelper;
 }
 
 // -1 - ошибка
@@ -972,7 +1027,7 @@ void CDragDropData::RetrieveDragToInfo()
 
 BOOL CDragDropData::CreateDragImageBits(IDataObject * pDataObject)
 {
-	DEBUGSTROVL(L"CreateDragImageBits(IDataObject) - NOT IMPLEMENTED\n");
+	MBoxAssert(L"CreateDragImageBits(IDataObject) - NOT IMPLEMENTED\n");
 	return FALSE;
 }
 
@@ -993,8 +1048,21 @@ typedef struct tag_MyRgbQuad
 } MyRgbQuad;
 #include <poppack.h>
 
+bool CDragDropData::AllocDragImageBits()
+{
+	if (mp_Bits)
+	{
+		_ASSERTE(mp_Bits==NULL);
+		SafeFree(mp_Bits);
+	}
+
+	mp_Bits = (DragImageBits*)calloc(sizeof(DragImageBits),1);
+
+	return (mp_Bits!=NULL);
+}
+
 // Result Must be GlobalAlloc'ed
-DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
+DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles, bool abForceToTop /*= true*/)
 {
 	if (!pszFiles)
 	{
@@ -1009,6 +1077,15 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 #else
 	DestroyDragImageWindow();
 #endif
+
+#if 0
+	if (abForceToTop)
+	{
+		MoveDragWindowToTop();
+		SetForegroundWindow(ghWnd);
+	}
+#endif
+
 	DEBUGSTROVL(L"CreateDragImageBits()\n");
 	DragImageBits* pBits = NULL;
 	HDC hScreenDC = ::GetDC(0);
@@ -1025,7 +1102,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 		// GetTextExtentPoint32 почему-то портит DC, поэтому ширину получим сначала
 		wchar_t *psz = pszFiles; int nFilesCol = 0;
 
-		while(*psz)
+		while (*psz)
 		{
 			SIZE sz = {0};
 			LPCWSTR pszText = wcsrchr(psz, L'\\');
@@ -1070,24 +1147,24 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 		SetBkMode(hDrawDC, OPAQUE);
 		// DC может быть испорчен (почему?), поэтому лучше почистим его
 		RECT rcFill = MakeRect(MAX_OVERLAY_WIDTH,MAX_OVERLAY_HEIGHT);
+
 #ifdef PERSIST_OVL
 		HBRUSH hBr = CreateSolidBrush(OVERLAY_COLOR);
 		FillRect(hDrawDC, &rcFill, hBr);
 		DeleteObject(hBr);
 #else
-#ifdef _DEBUG
-		FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH/*WHITE_BRUSH*/));
-#else
-		FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH));
+		#ifdef _DEBUG
+			FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH/*WHITE_BRUSH*/));
+		#else
+			FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH));
+		#endif
 #endif
-#endif
-		//DumpImage(hDrawDC, MAX_OVERLAY_WIDTH, nMaxY, L"F:\\Dump.bmp");
 		psz = pszFiles;
 		int nFileIdx = 0, nColMaxY = 0, nAllFiles = 0;
 		nMaxX = 0;
 		int nFirstColWidth = 0;
 
-		while(*psz)
+		while (*psz)
 		{
 			if (!DrawImageBits(hDrawDC, psz, &nMaxX, nX, &nColMaxY))
 				break; // вышли за пределы MAX_OVERLAY_WIDTH x MAX_OVERLAY_HEIGHT (по высоте)
@@ -1124,9 +1201,10 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 
 		SelectObject(hDrawDC, hOldF);
 		GdiFlush();
-#ifdef _DEBUG
-		DumpImage(hDrawDC, MAX_OVERLAY_WIDTH, nMaxY, L"F:\\Dump.bmp");
-#endif
+
+		#ifdef DEBUG_DUMP_IMAGE
+		DumpImage(hDrawDC, NULL, MAX_OVERLAY_WIDTH, nMaxY, L"T:\\DragDump.bmp");
+		#endif
 
 		if (nLineX>2 && nMaxY>2)
 		{
@@ -1171,9 +1249,9 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 						u32 nCurBlend = 0xAA, nAllBlend = 0xAA;
 #endif
 
-						for(int y = 0; y < nMaxY; y++)
+						for (int y = 0; y < nMaxY; y++)
 						{
-							for(int x = 0; x < nLineX; x++)
+							for (int x = 0; x < nLineX; x++)
 							{
 								pRGB->rgbBlue = *(pSrc++);
 								pRGB->rgbGreen = *(pSrc++);
@@ -1185,7 +1263,8 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 
 									if (pRGB->dwValue == OVERLAY_COLOR)
 									{
-										pRGB->dwValue = 0;
+										WARNING("OVERLAY_COLOR?");
+										//pRGB->dwValue = 0;
 									}
 									else
 									{
@@ -1204,9 +1283,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 							}
 						}
 
-						mp_Bits = (DragImageBits*)calloc(sizeof(DragImageBits)/*+(nCount-1)*4*/,1);
-
-						if (mp_Bits)
+						if (AllocDragImageBits())
 						{
 							*mp_Bits = *pDst;
 							pBits = pDst; pDst = NULL; //OK
@@ -1313,8 +1390,16 @@ BOOL CDragDropData::DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int
 
 BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 {
+	if (UseTargetHelper(false))
+		return false;
+
+#ifdef PERSIST_OVL
+	if (mh_Overlapped && mp_Bits)
+		return FALSE; // уже
+#else
 	if (/*mb_selfdrag ||*/ mh_Overlapped)
 		return FALSE; // уже
+#endif
 
 	DestroyDragImageBits();
 #ifdef PERSIST_OVL
@@ -1389,16 +1474,14 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 
 	if (nInfoSize != nReqSize && nInfoSize != nReqSize2 /*|| (nInfoSize - nReqSize) > 32*/)
 	{
-#ifdef _DEBUG
-
+		#ifdef _DEBUG
 		if (!IsDebuggerPresent())
 		{
 			_ASSERT(nInfoSize == nReqSize); // Неизвестный формат?
 			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"DragImageBits unknown format? (nInfoSize=%u) != (nReqSize=%u)", (DWORD)nInfoSize, (DWORD)nReqSize);
 			gpConEmu->DebugStep(szDbg, TRUE);
 		}
-
-#endif
+		#endif
 
 		if ((nReqSize < 16) || (nInfoSize < nReqSize) || (nInfoSize - nReqSize) > 8)
 		{
@@ -1412,10 +1495,8 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 		nShift = 8;
 
 	BOOL lbRc = FALSE;
-	//int nCount = pInfo->nWidth * pInfo->nHeight;
-	mp_Bits = (DragImageBits*)calloc(sizeof(DragImageBits)/*+(nCount-1)*4*/,1);
 
-	if (mp_Bits)
+	if (AllocDragImageBits())
 	{
 		*mp_Bits = *pInfo;
 		//memmove(mp_Bits->pix, pInfo->pix, nCount*4);
@@ -1444,11 +1525,35 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 				int cbSize = pInfo->nWidth * pInfo->nHeight * sizeof(RGBQUAD);
 				memmove(pDst, ((LPBYTE)pInfo->pix)+nShift, cbSize);
 				GdiFlush();
-#ifdef _DEBUG
+
+
+				#ifdef PERSIST_OVL
+				MyRgbQuad *pRGB = (MyRgbQuad*)pDst;
+                int nMaxY = (bih.biHeight > 0) ? bih.biHeight : -bih.biHeight;
+                int nMaxX = bih.biWidth;
+				for (int y = 0; y < nMaxY; y++)
+				{
+					for (int x = 0; x < nMaxX; x++)
+					{
+						if (pRGB->rgbAlpha <= 10)
+						{
+							pRGB->dwValue = OVERLAY_COLOR;
+						}
+						pRGB++;
+					}
+				}
+				#endif
+
+
+				#ifdef _DEBUG
 				int nBits = GetDeviceCaps(mh_BitsDC, BITSPIXEL);
 				//_ASSERTE(nBits == 32);
-#endif
+				#endif
 				lbRc = TRUE;
+
+				#ifdef DEBUG_DUMP_IMAGE
+				DumpImage(&bih, pDst, L"T:\\DropDump.bmp");
+				#endif
 			}
 		}
 
@@ -1500,7 +1605,6 @@ void CDragDropData::DestroyDragImageBits()
 BOOL CDragDropData::CreateDragImageWindow()
 {
 	DEBUGSTROVL(L"CreateDragImageWindow()\n");
-#define DRAGBITSCLASS L"ConEmuDragBits"
 	static BOOL bClassRegistered = FALSE;
 
 	if (!bClassRegistered)
@@ -1531,20 +1635,23 @@ BOOL CDragDropData::CreateDragImageWindow()
 	_ASSERTE(mh_Overlapped==NULL);
 	int nWidth = MAX_OVERLAY_WIDTH, nHeight = MAX_OVERLAY_HEIGHT;
 	UNREFERENCED_PARAMETER(nWidth); UNREFERENCED_PARAMETER(nHeight);
+
+	HWND hParent = ghWnd;
+	//hParent = GetForegroundWindow();
 	
 	// |WS_BORDER|WS_SYSMENU - создает проводник. попробуем?
 	//2009-08-20 [+] WS_EX_NOACTIVATE
 #ifdef PERSIST_OVL
 	mh_Overlapped = CreateWindowEx(
 	                    WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_NOACTIVATE,
-	                    DRAGBITSCLASS, L"Drag", WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|WS_SYSMENU,
+	                    DRAGBITSCLASS, DRAGBITSTITLE, WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS/*|WS_BORDER|WS_SYSMENU*/,
 	                    -32000, -32000, nWidth, nHeight,
-	                    ghWnd, NULL, g_hInstance, (LPVOID)this);
+	                    hParent, NULL, g_hInstance, (LPVOID)(CDragDropData*)this);
 #else
 	mh_Overlapped = CreateWindowEx(
 	                    WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_NOACTIVATE,
-	                    DRAGBITSCLASS, L"Drag", WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|WS_SYSMENU,
-	                    0, 0, mp_Bits->nWidth, mp_Bits->nHeight, ghWnd, NULL, g_hInstance, (LPVOID)this);
+	                    DRAGBITSCLASS, DRAGBITSTITLE, WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|WS_SYSMENU,
+	                    0, 0, mp_Bits->nWidth, mp_Bits->nHeight, hParent, NULL, g_hInstance, (LPVOID)(CDragDropData*)this);
 #endif
 
 	if (!mh_Overlapped)
@@ -1558,11 +1665,26 @@ BOOL CDragDropData::CreateDragImageWindow()
 		return NULL;
 	}
 
-#ifdef PERSIST_OVL
+	#ifdef PERSIST_OVL
 	SetLayeredWindowAttributes(mh_Overlapped, OVERLAY_COLOR, OVERLAY_ALPHA, LWA_COLORKEY|LWA_ALPHA);
-#endif
+	#endif
+
+	MoveDragWindowToTop();
+
 	MoveDragWindow(FALSE);
 	return TRUE;
+}
+
+void CDragDropData::OnTaskbarCreated()
+{
+	if (mh_Overlapped)
+		MoveDragWindowToTop();
+}
+
+void CDragDropData::MoveDragWindowToTop()
+{
+	if (mh_Overlapped)
+		SetWindowPos(mh_Overlapped, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 }
 
 void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
@@ -1574,6 +1696,7 @@ void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 	}
 
 	DEBUGSTRBACK(L"MoveDragWindow()\n");
+
 #ifdef PERSIST_OVL
 
 	if (abVisible && !mh_BitsDC)
@@ -1620,11 +1743,9 @@ void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 	p.x -= mp_Bits->nXCursor; p.y -= mp_Bits->nYCursor;
 	POINT p2 = {0, 0};
 	SIZE  sz = {mp_Bits->nWidth,mp_Bits->nHeight};
-#ifdef _DEBUG
-	BOOL bRet =
-#endif
-	    UpdateLayeredWindow(mh_Overlapped, NULL, &p, &sz, mh_BitsDC, &p2, 0,
+	BOOL bRet = UpdateLayeredWindow(mh_Overlapped, NULL, &p, &sz, mh_BitsDC, &p2, 0,
 	                        &bf, ULW_ALPHA /*ULW_OPAQUE*/);
+	UNREFERENCED_PARAMETER(bRet);
 	//_ASSERTE(bRet);
 	//apiSetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
 #endif
@@ -1664,7 +1785,7 @@ LRESULT CDragDropData::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPA
 #ifdef PERSIST_OVL
 	else if (messg == WM_PAINT)
 	{
-		CDragDrop *pDrag = (CDragDrop*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		CDragDropData *pDrag = (CDragDropData*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 		if (pDrag)
 		{
@@ -1721,7 +1842,7 @@ BOOL CDragDropData::InDragDrop()
 #endif
 
 	//!!! mh_Overlapped теперь всегда создается!
-	if (mp_DataObject /*|| mh_Overlapped*/)
+	if (mp_DataObject /*|| mh_Overlapped*/ || mb_DragWithinNow)
 		return TRUE;
 
 	return FALSE;
@@ -1729,6 +1850,7 @@ BOOL CDragDropData::InDragDrop()
 
 void CDragDropData::DragFeedBack(DWORD dwEffect)
 {
+	HRESULT hrHelper; UNREFERENCED_PARAMETER(hrHelper);
 #ifdef _DEBUG
 	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"DragFeedBack(%i)\n", (int)dwEffect);
 	DEBUGSTRBACK(szDbg);
@@ -1737,32 +1859,51 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 	// Drop или отмена драга, когда источник - ConEmu
 	if (dwEffect == (DWORD)-1)
 	{
+		#ifdef USE_DROP_HELPER
+		if (UseTargetHelper(mb_selfdrag))
+			mp_TargetHelper->DragLeave();
+		#endif
+
 		mb_DragWithinNow = FALSE;
 #ifdef PERSIST_OVL
 		MoveDragWindow(FALSE);
 #else
 		DestroyDragImageWindow();
 #endif
+		DestroyDragImageBits();
 		gpConEmu->SetDragCursor(NULL);
-	}
-	else if (dwEffect == DROPEFFECT_NONE)
-	{
-		MoveDragWindow(FALSE);
 	}
 	else
 	{
-		if (!mh_Overlapped && mp_Bits)
+		#ifdef USE_DROP_HELPER
+		if (UseTargetHelper(mb_selfdrag))
 		{
-#ifdef PERSIST_OVL
-			//CreateDragImageWindow(); -- должно быть создано при запуске ConEmu
-			_ASSERTE(mh_Overlapped!=NULL);
-#else
-			CreateDragImageWindow();
-#endif
+			POINT ppt = {}; GetCursorPos(&ppt);
+			hrHelper = mp_TargetHelper->DragOver(&ppt, dwEffect);
 		}
+		#endif
 
-		if (mh_Overlapped)
-			MoveDragWindow();
+		if (dwEffect == DROPEFFECT_NONE)
+		{
+			MoveDragWindow(FALSE);
+		}
+		else
+		{
+			if (!mh_Overlapped && mp_Bits)
+			{
+				#ifdef PERSIST_OVL
+				//CreateDragImageWindow(); -- должно быть создано при запуске ConEmu
+				_ASSERTE(mh_Overlapped!=NULL);
+				#else
+				CreateDragImageWindow();
+				#endif
+			}
+
+			if (mh_Overlapped)
+			{
+				MoveDragWindow(!UseTargetHelper(mb_selfdrag));
+			}
+		}
 	}
 
 	//2009-08-20
@@ -1914,7 +2055,8 @@ DWORD CDragDropData::DragThread(LPVOID lpParameter)
 	//CoInitialize();
 	OleInitialize(NULL);
 	pds->hWnd = CreateWindowEx(WS_EX_TOOLWINDOW, pds->pDrag->ms_SourceClass, L"ConEmu Drag Source",
-	                           WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, (HINSTANCE)g_hInstance, pds);
+	                           WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+	                           NULL, NULL, (HINSTANCE)g_hInstance, pds);
 
 	if (pds->hWnd == NULL)
 	{
