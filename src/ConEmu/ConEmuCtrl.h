@@ -48,8 +48,10 @@ public:
 
 	void FixSingleModifier(DWORD Vk, CRealConsole* pRCon);
 
-	static void TabCommand(ConEmuTabCommand nTabCmd);
+	static void TabCommand(ConEmuTabCommand nTabCmd); // ctc_ShowHide, ctc_SwitchNext, и т.п.
 	static size_t GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs);
+
+	static void ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /*= TPM_CENTERALIGN|TPM_VCENTERALIGN*/);
 
 	static void DoFindText(int nDirection, CRealConsole* pRCon = NULL);
 
@@ -59,6 +61,9 @@ public:
 protected:
 	BOOL mb_InWinTabSwitch;
 	BOOL mb_InCtrlTabSwitch;
+
+	UINT mn_DoubleKeyConsoleNum; // Предыдущий VK
+	void ResetDoubleKeyConsoleNum(CRealConsole* pRCon = NULL);
 
 private:
 	DWORD dwControlKeyState;

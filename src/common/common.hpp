@@ -58,12 +58,13 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CES_NTVDM 0x10
 #define CEC_INITTITLE       L"ConEmu"
 
-#define VirtualConsoleClass L"VirtualConsoleClass"
-#define VirtualConsoleClassMain L"VirtualConsoleClass"
-#define VirtualConsoleClassApp L"VirtualConsoleClassApp"
+#define VirtualConsoleClass L"VirtualConsoleClass" // окно отрисовки
+#define VirtualConsoleClassMain L"VirtualConsoleClass" // главное окно
+#define VirtualConsoleClassApp L"VirtualConsoleClassApp" // специальный Popup (не используется)
 //#define VirtualConsoleClassBack L"VirtualConsoleClassBack"
 //#define VirtualConsoleClassScroll L"VirtualConsoleClassScroll"
 #define VirtualConsoleClassGhost L"VirtualConsoleClassGhost"
+#define ConEmuPanelViewClass L"ConEmuPanelView"
 
 #define CECOPYRIGHTSTRING_A "Copyright (c) 2009-2012, ConEmu.Maximus5@gmail.com"
 #define CECOPYRIGHTSTRING_W L"\x00A9 2009-2012 ConEmu.Maximus5@gmail.com"
@@ -121,6 +122,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CONEMUMSG_CONSOLEHOOKEDKEY L"ConEmuMain::ConsoleHookedKey"
 #define CONEMUMSG_PNLVIEWFADE L"ConEmuTh::Fade"
 #define CONEMUMSG_PNLVIEWSETTINGS L"ConEmuTh::Settings"
+#define PNLVIEWMAPCOORD_TIMEOUT 1000
+#define CONEMUMSG_PNLVIEWMAPCOORD L"ConEmuTh::MapCoords"
 
 // Команды из плагина ConEmu и для GUI Macro
 enum ConEmuTabCommand
@@ -1649,7 +1652,9 @@ extern ShutdownConsole_t OnShutdownConsole;
 
 struct RequestLocalServerParm;
 struct AnnotationHeader;
+struct AnnotationInfo;
 typedef int (WINAPI* RequestLocalServer_t)(/*[IN/OUT]*/RequestLocalServerParm* Parm);
+typedef BOOL (WINAPI* ExtendedConsoleWriteText_t)(HANDLE hConsoleOutput, const AnnotationInfo* Attributes, const wchar_t* Buffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
 typedef void (WINAPI* ExtendedConsoleCommit_t)();
 typedef DWORD RequestLocalServerFlags;
 const RequestLocalServerFlags
@@ -1663,6 +1668,7 @@ struct RequestLocalServerParm
 	/*[IN]*/  HANDLE* ppConOutBuffer;
 	/*[OUT]*/ AnnotationHeader* pAnnotation;
 	/*[OUT]*/ RequestLocalServer_t fRequestLocalServer;
+	/*[OUT]*/ ExtendedConsoleWriteText_t fExtendedConsoleWriteText;
 	/*[OUT]*/ ExtendedConsoleCommit_t fExtendedConsoleCommit;
 };
 

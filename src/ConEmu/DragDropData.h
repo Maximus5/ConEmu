@@ -106,6 +106,7 @@ class CDragDropData
 		BOOL mb_DragDropRegistered;
 		#ifdef USE_DROP_HELPER
 		IDropTargetHelper* mp_TargetHelper;
+		bool mb_TargetHelperFailed;
 		#endif
 		bool UseTargetHelper(bool abSelfDrag);
 	protected:

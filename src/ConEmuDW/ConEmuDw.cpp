@@ -107,6 +107,13 @@ void CloseBuffers();
 bool gbInitialized = false;
 bool gbFarBufferMode = false; // true, если Far запущен с ключом "/w"
 
+struct {
+	bool WasSet;
+	WORD CONColor;
+	FarColor FARColor;
+	AnnotationInfo CEColor;
+} gCurrentAttr;
+
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
@@ -439,16 +446,27 @@ BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 	SMALL_RECT srWork = {};
 	HANDLE h;
 	if (!GetBufferInfo(h, csbi, srWork))
+	{
+		gCurrentAttr.WasSet = false;
 		return FALSE;
+	}
 
 	// Что-то в некоторых случаях сбивается цвет вывода для printf
-	_ASSERTE("GetTextAttributes" && ((csbi.wAttributes & 0xFF) == 0x07));
-		
-	//TODO: Вообще-то нужно бы возвращать то, что задано в SetTextAttributes?
-	Attributes->Flags = FCF_FG_4BIT|FCF_BG_4BIT;
-	Attributes->ForegroundColor = (csbi.wAttributes & 0xF);
-	Attributes->BackgroundColor = (csbi.wAttributes & 0xF0) >> 4;
-	
+	//_ASSERTE("GetTextAttributes" && ((csbi.wAttributes & 0xFF) == 0x07));
+
+	TODO("По хорошему, gCurrentAttr нада ветвить по разным h");
+	if (gCurrentAttr.WasSet && (csbi.wAttributes == gCurrentAttr.CONColor))
+	{
+		*Attributes = gCurrentAttr.FARColor;
+	}
+	else
+	{
+		gCurrentAttr.WasSet = false;
+		Attributes->Flags = FCF_FG_4BIT|FCF_BG_4BIT;
+		Attributes->ForegroundColor = (csbi.wAttributes & 0xF);
+		Attributes->BackgroundColor = (csbi.wAttributes & 0xF0) >> 4;
+	}
+
 	return TRUE;
 	
 	//WORD nDefReadBuf[1024];
@@ -539,6 +557,13 @@ BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 //TODO: по printf/std::cout/WriteConsole, без явного указания цвета.
 BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 {
+	if (!Attributes)
+	{
+		// ConEmu internals: сбросить запомненный "атрибут"
+		gCurrentAttr.WasSet = false;
+		return TRUE;
+	}
+
 	BOOL lbTrueColor = CheckBuffers();
 	UNREFERENCED_PARAMETER(lbTrueColor);
 
@@ -642,8 +667,12 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 	
 	SetConsoleTextAttribute(h, n);
 	
-	TODO("Можно бы запомнить, что WriteConsole должен писать атрибутом t");
-	UNREFERENCED_PARAMETER(t);
+	TODO("По хорошему, gCurrentAttr нада ветвить по разным h");
+	// запомнить, что WriteConsole должен писать атрибутом "t"
+	gCurrentAttr.WasSet = true;
+	gCurrentAttr.CONColor = n;
+	gCurrentAttr.FARColor = *Attributes;
+	gCurrentAttr.CEColor = t;
 	
 	//if (pnWriteAttr != nDefWriteBuf)
 	//	free(pnWriteAttr);
@@ -998,6 +1027,131 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 
 	return lbRc;
 }
+
+BOOL WINAPI WriteText(HANDLE hConsoleOutput, const AnnotationInfo* Attributes, const wchar_t* Buffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
+{
+	// Ограничение Short - на функции WriteConsoleOutput
+	if (!Buffer || !nNumberOfCharsToWrite || (nNumberOfCharsToWrite >= 0x8000))
+		return FALSE;
+
+	BOOL lbRc = FALSE;
+
+	TODO("Отвязаться от координат видимой области");
+
+	FarColor FarAttributes = {};
+	GetTextAttributes(&FarAttributes);
+
+	if (Attributes)
+	{
+		if (Attributes->bk_valid)
+		{
+			FarAttributes.Flags &= ~FCF_BG_4BIT;
+			FarAttributes.BackgroundColor = Attributes->bk_color;
+		}
+
+		if (Attributes->fg_valid)
+		{
+			FarAttributes.Flags &= ~FCF_FG_4BIT;
+			FarAttributes.ForegroundColor = Attributes->fg_color;
+		}
+
+		// Bold
+		if (Attributes->style & AI_STYLE_BOLD)
+			FarAttributes.Flags |= FCF_FG_BOLD;
+		else
+			FarAttributes.Flags &= ~FCF_FG_BOLD;
+
+		// Italic
+		if (Attributes->style & AI_STYLE_ITALIC)
+			FarAttributes.Flags |= FCF_FG_ITALIC;
+		else
+			FarAttributes.Flags &= ~FCF_FG_ITALIC;
+
+		// Underline
+		if (Attributes->style & AI_STYLE_UNDERLINE)
+			FarAttributes.Flags |= FCF_FG_UNDERLINE;
+		else
+			FarAttributes.Flags &= ~FCF_FG_UNDERLINE;
+	}
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	SMALL_RECT srWork = {};
+	HANDLE h;
+	if (!GetBufferInfo(h, csbi, srWork))
+		return FALSE;
+
+	FAR_CHAR_INFO* lpFarBuffer = (FAR_CHAR_INFO*)malloc(nNumberOfCharsToWrite * sizeof(*lpFarBuffer));
+	if (!lpFarBuffer)
+		return FALSE;
+
+	TODO("Обработка символов \t\n\r?");
+
+	FAR_CHAR_INFO* lp = lpFarBuffer;
+	for (DWORD i = 0; i < nNumberOfCharsToWrite; ++i, ++Buffer, ++lp)
+	{
+		lp->Char = *Buffer;
+		lp->Attributes = FarAttributes;
+	}
+
+	//const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion
+	COORD BufferSize = {(SHORT)nNumberOfCharsToWrite, 1};
+	COORD BufferCoord = {0,0};
+	SMALL_RECT WriteRegion = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, csbi.dwCursorPosition.X+(SHORT)nNumberOfCharsToWrite-1, csbi.dwCursorPosition.Y};
+	if (WriteRegion.Right >= csbi.dwSize.X)
+	{
+		_ASSERTE(WriteRegion.Right < csbi.dwSize.X);
+		WriteRegion.Right = csbi.dwSize.X - 1;
+	}
+	if (WriteRegion.Right > WriteRegion.Left)
+	{
+		return FALSE;
+	}
+	lbRc = WriteOutput(lpFarBuffer, BufferSize, BufferCoord, &WriteRegion);
+
+	free(lpFarBuffer);
+
+	// Обновить позицию курсора
+	_ASSERTE((csbi.dwCursorPosition.X+(int)nNumberOfCharsToWrite-1) < csbi.dwSize.X);
+	csbi.dwCursorPosition.X = (SHORT)max((csbi.dwSize.X-1),(csbi.dwCursorPosition.X+(int)nNumberOfCharsToWrite-1));
+	SetConsoleCursorPosition(h, csbi.dwCursorPosition);
+
+	#if 0
+	typedef BOOL (WINAPI* WriteConsoleW_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
+	static WriteConsoleW_t fnWriteConsoleW = NULL;
+	typedef FARPROC (WINAPI* GetWriteConsoleW_t)();
+
+	if (!fnWriteConsoleW)
+	{
+		HANDLE hHooks = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+		if (hHooks)
+		{
+			GetWriteConsoleW_t getf = (GetWriteConsoleW_t)GetProcAddress(hHooks, "GetWriteConsoleW");
+			if (!getf)
+			{
+				_ASSERTE(getf!=NULL);
+				return FALSE;
+			}
+
+			fnWriteConsoleW = (WriteConsoleW_t)getf();
+			if (!fnWriteConsoleW)
+			{
+				_ASSERTE(fnWriteConsoleW!=NULL);
+				return FALSE;
+			}
+		}
+
+		if (!fnWriteConsoleW)
+		{
+			fnWriteConsoleW = WriteConsole;
+		}
+	}
+	
+	lbRc = fnWriteConsoleW(hConsoleOutput, Buffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten,NULL);
+	#endif
+
+	return lbRc;
+}
+
 
 BOOL WINAPI Commit()
 {

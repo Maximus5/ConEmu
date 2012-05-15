@@ -542,7 +542,7 @@ void Settings::LoadAppSettings(SettingsBase* reg)
 		NewAppCount = nSucceeded;
 	}
 
-	FreeApps();
+	FreeApps(NewAppCount, NewApps, NewAppColors);
 }
 
 void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, COLORREF* pColors)
@@ -1325,6 +1325,7 @@ DWORD Settings::SetModifier(DWORD VkMod, BYTE Mod, bool Xor/*=true*/)
 DWORD Settings::GetModifier(DWORD VkMod, int idx)
 {
 	DWORD Mod = VkMod & CEHOTKEY_MODMASK;
+
 	if ((Mod == CEHOTKEY_NOMOD) || (Mod == 0))
 	{
 		_ASSERTE(((VkMod & CEHOTKEY_MODMASK) != 0) || (VkMod == 0));
@@ -1334,7 +1335,7 @@ DWORD Settings::GetModifier(DWORD VkMod, int idx)
 	{
 		// Только для цифирок!
 		WARNING("CConEmuCtrl:: Убрать пережиток F11/F12");
-		_ASSERTE((((VkMod & 0xFF)>='0' && ((VkMod & 0xFF)<='9'))) || ((VkMod & 0xFF)==VK_F11 || (VkMod & 0xFF)==VK_F12));
+		_ASSERTE((((VkMod & 0xFF)>='0' && ((VkMod & 0xFF)<='9'))) /*((VkMod & 0xFF)==VK_F11 || (VkMod & 0xFF)==VK_F12)*/);
 		Mod = (gpSet->nHostkeyNumberModifier << 8);
 	}
 	else if (Mod == CEHOTKEY_ARRHOSTKEY)
@@ -4311,14 +4312,14 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkConsole_8,  chk_NumHost, &isUseWinNumber, L"", '8'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
 		{vkConsole_9,  chk_NumHost, &isUseWinNumber, L"", '9'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
 		{vkConsole_10, chk_NumHost, &isUseWinNumber, L"", '0'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
-		{vkConsole_11, chk_NumHost, &isUseWinNumber, L"", VK_F11|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // Для WinF11 & WinF12 приходят только WM_KEYUP || WM_SYSKEYUP)
-		{vkConsole_12, chk_NumHost, &isUseWinNumber, L"", VK_F12|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // Для WinF11 & WinF12 приходят только WM_KEYUP || WM_SYSKEYUP)
+		//{vkConsole_11, chk_NumHost, &isUseWinNumber, L"", VK_F11|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // Для WinF11 & WinF12 приходят только WM_KEYUP || WM_SYSKEYUP)
+		//{vkConsole_12, chk_NumHost, &isUseWinNumber, L"", VK_F12|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // Для WinF11 & WinF12 приходят только WM_KEYUP || WM_SYSKEYUP)
 		// End
 		{},
 	};
 	// Чтобы не возникло проблем с инициализацией хуков (для обработки Win+<key>)
 	_ASSERTE(countof(HotKeys)<(HookedKeysMaxCount-1));
-	WARNING("ConEmuHotKey: VK_F11 & VK_F12 - убрать нафиг. Сделать нормальный выбор по двум цифрам, да и до 99 консолей расширить");
+	//WARNING("ConEmuHotKey: VK_F11 & VK_F12 - убрать нафиг. Сделать нормальный выбор по двум цифрам, да и до 99 консолей расширить");
 	ConEmuHotKey* pKeys = (ConEmuHotKey*)malloc(sizeof(HotKeys));
 	_ASSERTE(pKeys!=NULL);
 	memmove(pKeys, HotKeys, sizeof(HotKeys));

@@ -4573,9 +4573,12 @@ COORD CVirtualConsole::FindOpaqueCell()
 
 // Показать контекстное меню для ТЕКУЩЕЙ закладки консоли
 // ptCur - экранные координаты
-void CVirtualConsole::ShowPopupMenu(POINT ptCur)
+void CVirtualConsole::ShowPopupMenu(POINT ptCur, DWORD Align /* = TPM_LEFTALIGN */)
 {
 	BOOL lbNeedCreate = (mh_PopupMenu == NULL);
+
+	if (!Align)
+		Align = TPM_LEFTALIGN;
 
 	// Создать или обновить enable/disable
 	mh_PopupMenu = gpConEmu->CreateVConPopupMenu(this, mh_PopupMenu, TRUE, mh_TerminatePopup);
@@ -4624,7 +4627,7 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 	//EnableMenuItem(mh_PopupMenu, IDM_SAVEALL, MF_BYCOMMAND | (lbHaveModified ? MF_ENABLED : MF_GRAYED));
 	
 	int nCmd = gpConEmu->trackPopupMenu(tmp_VCon, mh_PopupMenu,
-	                          TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
+	                          Align | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
 	                          ptCur.x, ptCur.y, 0, ghWnd, NULL);
 
 	if (!nCmd)
@@ -5832,4 +5835,9 @@ void CVirtualConsole::OnTaskbarFocus()
 {
 	if (mp_Ghost)
 		mp_Ghost->ActivateTaskbar();
+}
+
+HDC CVirtualConsole::GetIntDC()
+{
+	return hDC;
 }

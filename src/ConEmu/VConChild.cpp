@@ -561,6 +561,13 @@ LRESULT CConEmuChild::OnPaint()
 			mh_LastGuiChild = pVCon->RCon() ? pVCon->RCon()->GuiWnd() : NULL;
 		}
 
+		bool bRightClickingPaint = gpConEmu->isRightClickingPaint() && gpConEmu->isActive(pVCon);
+		if (bRightClickingPaint)
+		{
+			// Скрыть окошко с "кружочком"
+			gpConEmu->RightClickingPaint((HDC)INVALID_HANDLE_VALUE, pVCon);
+		}
+
 		PAINTSTRUCT ps;
 		HDC hDc = BeginPaint(mh_WndDC, &ps);
 		UNREFERENCED_PARAMETER(hDc);
@@ -568,10 +575,10 @@ LRESULT CConEmuChild::OnPaint()
 		RECT rcClient = pVCon->GetDcClientRect();
 		pVCon->Paint(ps.hdc, rcClient);
 
-		if (gpConEmu->isRightClickingPaint() && gpConEmu->isActive(pVCon))
+		if (bRightClickingPaint)
 		{
 			// Нарисует кружочек, или сбросит таймер, если кнопку отпустили
-			gpConEmu->RightClickingPaint(ps.hdc, pVCon);
+			gpConEmu->RightClickingPaint(pVCon->GetIntDC()/*ps.hdc*/, pVCon);
 		}
 
 		EndPaint(mh_WndDC, &ps);

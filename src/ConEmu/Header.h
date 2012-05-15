@@ -64,7 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 // Array sizes
-#define MAX_CONSOLE_COUNT 12
+#define MAX_CONSOLE_COUNT 30
 
 
 #include "globals.h"

@@ -50,9 +50,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRCMD(s) DEBUGSTR(s)
 #define DEBUGSTRDRAW(s) DEBUGSTR(s)
-#define DEBUGSTRINPUT(s) //DEBUGSTR(s)
+#define DEBUGSTRINPUT(s) DEBUGSTR(s)
 #define DEBUGSTRWHEEL(s) DEBUGSTR(s)
-#define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
+#define DEBUGSTRINPUTPIPE(s) DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPROC(s) DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
@@ -60,7 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRLOG(s) //OutputDebugStringA(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
-#define DEBUGSTRTABS(s) DEBUGSTR(s)
+#define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRALTSRV(s) DEBUGSTR(s)
 
@@ -5536,7 +5536,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	WARNING("Не работало обновление заголовка");
 	gpConEmu->UpdateTitle();
 	UpdateScrollInfo();
-	gpConEmu->mp_TabBar->OnConsoleActivated(nNewNum+1/*, isBufferHeight()*/);
+	gpConEmu->mp_TabBar->OnConsoleActivated(nNewNum/*, isBufferHeight()*/);
 	gpConEmu->mp_TabBar->Update();
 	gpConEmu->OnBufferHeight();
 	gpConEmu->UpdateProcessDisplay(TRUE);
@@ -5642,18 +5642,19 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 	{
 		BOOL lbActive = isActive();
 
-		if ((BOOL)m_ConsoleMap.Ptr()->bConsoleActive == lbActive
-		     && (BOOL)m_ConsoleMap.Ptr()->bThawRefreshThread == mb_ThawRefreshThread)
-		{
-			lbNeedChange = FALSE;
-		}
-		else
-		{
-			lbNeedChange = TRUE;
-		}
+		// -- Проверки убираем. Overhead небольшой, а проблем огрести можно (например, мэппинг обновиться не успел)
+		//if ((BOOL)m_ConsoleMap.Ptr()->bConsoleActive == lbActive
+		//     && (BOOL)m_ConsoleMap.Ptr()->bThawRefreshThread == mb_ThawRefreshThread)
+		//{
+		//	lbNeedChange = FALSE;
+		//}
+		//else
+		//{
+		//	lbNeedChange = TRUE;
+		//}
+		//if (lbNeedChange)
 
-		if (lbNeedChange)
-			UpdateServerActive(lbActive);
+		UpdateServerActive(lbActive);
 	}
 
 #ifdef _DEBUG

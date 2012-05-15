@@ -315,13 +315,15 @@ class CConEmuMain :
 		HBITMAP mh_RightClickingBmp; HDC mh_RightClickingDC;
 		POINT m_RightClickingSize; // {384 x 16} 24 фрейма, считаем, что четверть отведенного времени прошла до начала показа
 		int m_RightClickingFrames, m_RightClickingCurrent;
-		BOOL mb_RightClickingPaint, mb_RightClickingLSent;
+		BOOL mb_RightClickingPaint, mb_RightClickingLSent, mb_RightClickingRegistered;
 		void StartRightClickingPaint();
 		void StopRightClickingPaint();
+		static LRESULT CALLBACK RightClickingProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		HWND mh_RightClickingWnd;
 		bool PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam);
 		wchar_t* LoadConsoleBatch(LPCWSTR asSource);
 	public:
-		void RightClickingPaint(HDC hdc, CVirtualConsole* apVCon);
+		void RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon);
 		void RegisterMinRestore(bool abRegister);
 		void RegisterHoooks();
 		void UnRegisterHoooks(BOOL abFinal=FALSE);
@@ -373,6 +375,7 @@ class CConEmuMain :
 		UINT mn_MsgCreateCon;
 		UINT mn_MsgRequestUpdate;
 		UINT mn_MsgTaskBarCreated;
+		UINT mn_MsgPanelViewMapCoord;
 
 		//
 		virtual void OnUseGlass(bool abEnableGlass);

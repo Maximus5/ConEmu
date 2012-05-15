@@ -444,6 +444,11 @@ HMODULE WINAPI OnLoadLibraryExWExp(const WCHAR* lpFileName, HANDLE hFile, DWORD 
 BOOL WINAPI OnFreeLibraryExp(HMODULE hModule);
 #endif
 
+#ifdef HOOK_ANSI_SEQUENCES
+BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
+#endif
+
+
 #ifdef HOOK_ERROR_PROC
 DWORD WINAPI OnGetLastError();
 VOID WINAPI OnSetLastError(DWORD dwErrCode);
@@ -458,6 +463,7 @@ const char *szLoadLibraryW = "LoadLibraryW";
 const char *szLoadLibraryExA = "LoadLibraryExA";
 const char *szLoadLibraryExW = "LoadLibraryExW";
 const char *szFreeLibrary = "FreeLibrary";
+const char *szWriteConsoleW = "WriteConsoleW";
 #ifdef HOOK_ERROR_PROC
 const char *szGetLastError = "GetLastError";
 const char *szSetLastError = "SetLastError";
@@ -475,6 +481,9 @@ enum HookLibFuncs
 	hlfLoadLibraryExA,
 	hlfLoadLibraryExW,
 	hlfFreeLibrary,
+	#ifdef HOOK_ANSI_SEQUENCES
+	hlfWriteConsoleW,
+	#endif
 	#endif
 
 	//#ifdef HOOK_ERROR_PROC
@@ -515,6 +524,9 @@ void InitKernelFuncs()
 	SETFUNC(ghKernel32, hlfLoadLibraryExA, OnLoadLibraryExAExp, szLoadLibraryExA);
 	SETFUNC(ghKernel32, hlfLoadLibraryExW, OnLoadLibraryExWExp, szLoadLibraryExW);
 	SETFUNC(ghKernel32, hlfFreeLibrary, OnFreeLibraryExp, szFreeLibrary);
+	#ifdef HOOK_ANSI_SEQUENCES
+	SETFUNC(ghKernel32, hlfWriteConsoleW, OnWriteConsoleW, szWriteConsoleW);
+	#endif
 	#endif
 	//#ifdef HOOK_ERROR_PROC
 	//SETFUNC(eGetLastError,
@@ -654,6 +666,24 @@ FARPROC WINAPI GetLoadLibraryW()
 
 	HookItem* ph;
 	return (FARPROC)GetOriginalAddress(OnLoadLibraryW, LoadLibraryW, FALSE, &ph);
+}
+
+FARPROC WINAPI GetWriteConsoleW()
+{
+	#ifndef HOOKEXPADDRESSONLY
+	if (gKernelFuncs[hlfWriteConsoleW].OldAddress)
+	{
+		return (FARPROC)gKernelFuncs[hlfWriteConsoleW].OldAddress;
+	}
+	_ASSERTEX(gKernelFuncs[hlfWriteConsoleW].OldAddress!=NULL);
+	#endif
+
+	#ifdef HOOK_ANSI_SEQUENCES
+	HookItem* ph;
+	return (FARPROC)GetOriginalAddress(OnWriteConsoleW, WriteConsoleW, FALSE, &ph);
+	#else
+	return (FARPROC)WriteConsoleW;
+	#endif
 }
 
 CInFuncCall::CInFuncCall()

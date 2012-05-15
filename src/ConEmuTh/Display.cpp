@@ -71,7 +71,7 @@ static ATOM hClass = NULL;
 //LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //DWORD WINAPI DisplayThread(LPVOID lpvParam);
 //void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi);
-const wchar_t gsDisplayClassName[] = L"ConEmuPanelView";
+const wchar_t gsDisplayClassName[] = ConEmuPanelViewClass;
 HANDLE ghCreateEvent = NULL;
 //extern HICON ghUpIcon;
 int gnCreateViewError = 0;
@@ -82,7 +82,7 @@ BOOL gbCancelAll = FALSE;
 //extern COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors;
 //extern bool gbFadeColors;
 //extern bool gbFarPanelsReady;
-UINT gnConEmuFadeMsg = 0, gnConEmuSettingsMsg = 0;
+UINT gnConEmuFadeMsg = 0, gnConEmuSettingsMsg = 0, gnMapCoordMsg = 0;
 //extern CRgnDetect *gpRgnDetect;
 //extern CEFAR_INFO_MAPPING gFarInfo;
 //extern DWORD gnRgnDetectFlags;
@@ -471,6 +471,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 					gcrCurColors = gbFadeColors ? gThSet.crFadePalette : gThSet.crPalette;
 					//Inva lidateRect(hwnd, NULL, FALSE); -- не требуетс€
 				}
+				return 0;
 			}
 			else if (uMsg == gnConEmuSettingsMsg)
 			{
@@ -502,6 +503,37 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 					if (pviRight.hView)
 						pviRight.OnSettingsChanged(TRUE);
 				}
+				return 0;
+			}
+			else if (uMsg == gnMapCoordMsg)
+			{
+				CeFullPanelInfo* pi = (CeFullPanelInfo*)GetWindowLongPtr(hwnd, GWLP_USERDATA); //-V204
+				_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
+				_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
+				INT_PTR nIndex; COORD crCon;
+
+				if (pi->GetIndexFromWndCoord(LOWORD(wParam), HIWORD(wParam), nIndex))
+				{
+					if (!pi->GetConCoordFromIndex(nIndex, crCon))
+					{
+						return -1;
+					}
+
+					RECT rcClient = {0};
+
+					if (!GetClientRect(pi->hView, &rcClient) || !rcClient.right || !rcClient.bottom)
+						return -1;
+
+					POINT pt;
+					pt.x = (crCon.X - pi->WorkRect.left) * rcClient.right / (pi->WorkRect.right - pi->WorkRect.left + 1);
+					pt.y = (crCon.Y - pi->WorkRect.top) * rcClient.bottom / (pi->WorkRect.bottom - pi->WorkRect.top + 1);
+					MapWindowPoints(hwnd, ghConEmuRoot, &pt, 1);
+					pt.x++; pt.y++;
+					
+					return MAKELPARAM(pt.x, pt.y);
+				}
+
+				return -1;
 			}
 	}
 
@@ -516,6 +548,7 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 	_ASSERTE(gpImgCache);
 	gnConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWFADE);
 	gnConEmuSettingsMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWSETTINGS);
+	gnMapCoordMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWMAPCOORD);
 
 	// ¬ыставл€ем событие, что нить готова
 	if (hReady)

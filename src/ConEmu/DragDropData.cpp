@@ -90,6 +90,7 @@ CDragDropData::CDragDropData()
 	ms_SourceClass[0] = 0; mh_SourceClass = NULL;
 	#ifdef USE_DROP_HELPER
 	mp_TargetHelper = NULL;
+	mb_TargetHelperFailed = false;
 	#endif
 	mb_selfdrag = false;
 }
@@ -141,15 +142,17 @@ BOOL CDragDropData::Register()
 
 #ifdef USE_DROP_HELPER
 	// Helper (drag image)
-	IUnknown* pHelper = NULL;
-	hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
-	if (pHelper)
-	{
-		//	hr = pHelper->QueryInterface(__uuidof(mp_SourceHelper), (void**)&mp_SourceHelper);
-		hr = pHelper->QueryInterface(__uuidof(mp_TargetHelper), (void**)&mp_TargetHelper);
-		pHelper->Release();
-		pHelper = NULL;
-	}
+	mb_TargetHelperFailed = false;
+	// ќтносительно длительна€ операци€, будем выполн€ть при необходимости
+	//IUnknown* pHelper = NULL;
+	//hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
+	//if (pHelper)
+	//{
+	//	//	hr = pHelper->QueryInterface(__uuidof(mp_SourceHelper), (void**)&mp_SourceHelper);
+	//	hr = pHelper->QueryInterface(__uuidof(mp_TargetHelper), (void**)&mp_TargetHelper);
+	//	pHelper->Release();
+	//	pHelper = NULL;
+	//}
 #endif
 
 	lbRc = TRUE;
@@ -159,6 +162,12 @@ wrap:
 
 bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 {
+	if (mb_TargetHelperFailed)
+	{
+		// ≈сли один раз helper обломалс€ - второй не просить
+		return false;
+	}
+
 	bool lbCanUseHelper = false;
 	
 	#ifdef USE_DROP_HELPER
@@ -171,8 +180,31 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 			return false;
 	}
 
-    if (mp_TargetHelper && !abSelfDrag)
-    	lbCanUseHelper = true;
+    //if (mp_TargetHelper && !abSelfDrag)
+    //	lbCanUseHelper = true;
+
+	HRESULT hr = S_FALSE;
+
+	if (!abSelfDrag)
+	{
+		if (!mp_TargetHelper)
+		{
+			IUnknown* pHelper = NULL;
+			HRESULT hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
+			if (pHelper)
+			{
+				//	hr = pHelper->QueryInterface(__uuidof(mp_SourceHelper), (void**)&mp_SourceHelper);
+				hr = pHelper->QueryInterface(__uuidof(mp_TargetHelper), (void**)&mp_TargetHelper);
+				pHelper->Release();
+				pHelper = NULL;
+			}
+		}
+
+		if (!mp_TargetHelper)
+			mb_TargetHelperFailed = true;
+		else
+			lbCanUseHelper = true;
+	}
     #endif
 
     return lbCanUseHelper;

@@ -160,12 +160,13 @@ class TabBarClass //: public CToolTip
 		void UpdatePosition();
 		void UpdateTabFont();
 		void UpdateWidth();
-		void OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/);
+		void OnConsoleActivated(int nConNumber); //0-based
 		void UpdateToolConsoles(bool abForcePos=false);
 		void OnCaptionHidden();
 		void OnWindowStateChanged();
 		void OnBufferHeight(BOOL abBufferHeight);
 		LRESULT OnNotify(LPNMHDR nmhdr);
+		void OnChooseTabPopup();
 		void OnNewConPopup();
 		void OnCommand(WPARAM wParam, LPARAM lParam);
 		void OnMouse(int message, int x, int y);

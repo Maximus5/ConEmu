@@ -7,5 +7,6 @@ EXPORTS
 	ClearExtraRegions
 	ReadOutput
 	WriteOutput
+	WriteText
 	Commit
 	GetColorDialog

@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #define DEBUGSTRMOVE(s) //DEBUGSTR(s)
+#define DEBUGSTRTIMER(s) //DEBUGSTR(s)
 
 WARNING("Заменить все MBoxAssert, _ASSERT, _ASSERTE на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 
@@ -806,8 +807,20 @@ void MessageLoop()
 	MSG Msg = {NULL};
 	gbMessagingStarted = TRUE;
 
+#ifdef _DEBUG
+	wchar_t szDbg[128];
+#endif
+
 	while (GetMessage(&Msg, NULL, 0, 0))
 	{
+		#ifdef _DEBUG
+		if (Msg.message == WM_TIMER)
+		{
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_TIMER(0x%08X,%u)\n", (DWORD)Msg.hwnd, Msg.wParam);
+			DEBUGSTRTIMER(szDbg);
+		}
+		#endif
+
 		BOOL lbDlgMsg = FALSE;
 
 		if (gpConEmu)

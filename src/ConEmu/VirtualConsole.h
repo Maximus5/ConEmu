@@ -94,6 +94,9 @@ class CVirtualConsole :
 		bool    mb_RequiredForceUpdate; // Сменился шрифт, например...
 		bool    isForce; // а это - сейчас (устанавливается по аргументу в Update)
 		DWORD   mn_LastBitsPixel;
+	protected:
+		friend class CConEmuChild;
+		HDC GetIntDC();
 	private:
 		bool    mb_InUpdate;
 		CEDC    hDC;
@@ -281,7 +284,7 @@ class CVirtualConsole :
 		static void ClearPartBrushes();
 		HRGN GetExclusionRgn(bool abTestOnly=false);
 		COORD FindOpaqueCell();
-		void ShowPopupMenu(POINT ptCur);
+		void ShowPopupMenu(POINT ptCur, DWORD Align = TPM_LEFTALIGN);
 		void ExecPopupMenuCmd(int nCmd);
 		bool RegisterPanelView(PanelViewInit* ppvi);
 		void OnPanelViewSettingsChanged();

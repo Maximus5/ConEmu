@@ -72,6 +72,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) DEBUGSTR(s)
+#define DEBUGSTRRCLICK(s) DEBUGSTR(s)
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRIME(s) //DEBUGSTR(s)
 #define DEBUGSTRCHAR(s) //DEBUGSTR(s)
@@ -83,6 +84,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #define DEBUGSTRFOREGROUND(s) //DEBUGSTR(s)
 #define DEBUGSTRLLKB(s) //DEBUGSTR(s)
+#define DEBUGSTRTIMER(s) //DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -181,6 +183,7 @@ CConEmuMain::CConEmuMain()
 	//mh_DwmApi = NULL; DwmIsCompositionEnabled = NULL;
 	mh_RightClickingBmp = NULL; mh_RightClickingDC = NULL; mb_RightClickingPaint = mb_RightClickingLSent = FALSE;
 	m_RightClickingSize.x = m_RightClickingSize.y = m_RightClickingFrames = 0; m_RightClickingCurrent = -1;
+	mh_RightClickingWnd = NULL; mb_RightClickingRegistered = FALSE;
 	mb_WaitCursor = FALSE;
 	//mb_InTrackSysMenu = FALSE;
 	mn_TrackMenuPlace = tmp_None;
@@ -480,6 +483,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgCreateCon = ++nAppMsg;
 	mn_MsgRequestUpdate = ++nAppMsg;
 	mn_MsgTaskBarCreated = RegisterWindowMessage(L"TaskbarCreated");
+	mn_MsgPanelViewMapCoord = RegisterWindowMessage(CONEMUMSG_PNLVIEWMAPCOORD);
 	//// В Win7x64 WM_INPUTLANGCHANGEREQUEST не приходит (по крайней мере при переключении мышкой)
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 
@@ -7085,8 +7089,16 @@ bool CConEmuMain::isRightClickingPaint()
 	return (bool)mb_RightClickingPaint;
 }
 
-void CConEmuMain::RightClickingPaint(HDC hdc, CVirtualConsole* apVCon)
+void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 {
+	//TODO: Если меняется PanelView - то "под кружочком" останется старый кусок
+	if (hdcIntVCon == (HDC)INVALID_HANDLE_VALUE)
+	{
+		//if (mh_RightClickingWnd)
+		//	apiShowWindow(mh_RightClickingWnd, SW_HIDE);
+		return;
+	}
+
 	BOOL lbSucceeded = FALSE;
 
 	if (!apVCon)
@@ -7097,12 +7109,18 @@ void CConEmuMain::RightClickingPaint(HDC hdc, CVirtualConsole* apVCon)
 
 	HWND hView = apVCon ? apVCon->GetView() : NULL;
 
-	if (hView && !gpSet->isDisableMouse)
+	if (!hView || gpSet->isDisableMouse)
+	{
+		DEBUGSTRRCLICK(L"RightClickingPaint: !hView || gpSet->isDisableMouse\n");
+	}
+	else
 	{
 		if (gpSet->isRClickTouchInvert())
 		{
 			// Длинный клик в режиме инверсии?
 			lbSucceeded = FALSE;
+
+			DEBUGSTRRCLICK(L"RightClickingPaint: gpSet->isRClickTouchInvert()\n");
 
 			//if (!mb_RightClickingLSent && apVCon)
 			//{
@@ -7167,36 +7185,87 @@ void CConEmuMain::RightClickingPaint(HDC hdc, CVirtualConsole* apVCon)
 						//-- KillTimer(ghWnd, TIMER_RCLICKPAINT); // таймер понадобится для "скрытия" кружочка после RCLICKAPPSTIMEOUT_MAX
 					}
 
-					if (hdc || (m_RightClickingCurrent != nIndex))
+					#ifdef _DEBUG
+					wchar_t szDbg[128];
+					_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"RightClickingPaint: Delta=%u, nIndex=%u, {%ix%i}\n", dwDelta, nIndex, Rcursor.x, Rcursor.y);
+					DEBUGSTRRCLICK(szDbg);
+					#endif
+
+					//if (hdcIntVCon || (m_RightClickingCurrent != nIndex))
 					{
 						// Рисуем
-						BOOL lbSelfDC = FALSE;
+						HDC hdcSelf = NULL;
+						const wchar_t szRightClickingClass[] = L"ConEmu_RightClicking";
+						//BOOL lbSelfDC = FALSE;
 
-						if (!hdc)
+						if (!mb_RightClickingRegistered)
 						{
-							hdc = GetDC(hView); lbSelfDC = TRUE;
+							WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_OWNDC, CConEmuMain::RightClickingProc, 0, 0,
+							                 g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW),
+							                 NULL, NULL, szRightClickingClass, NULL};
+							if (!RegisterClassEx(&wc))
+							{
+								DisplayLastError(L"Regitser class failed");
+							}
+							else
+							{
+								mb_RightClickingRegistered = TRUE;
+							}
 						}
 
-						HDC hCompDC = CreateCompatibleDC(hdc);
-						HBITMAP hOld = (HBITMAP)SelectObject(hCompDC, mh_RightClickingBmp);
 						int nHalf = m_RightClickingSize.y>>1;
-						//BitBlt(hdc, Rcursor.x-nHalf, Rcursor.y-nHalf, m_RightClickingSize.y, m_RightClickingSize.y,
-						//	hCompDC, nIndex*m_RightClickingSize.y, 0, SRCCOPY);
-						BLENDFUNCTION bf = {AC_SRC_OVER,0,255,AC_SRC_ALPHA};
-						GdiAlphaBlend(hdc, Rcursor.x-nHalf, Rcursor.y-nHalf, m_RightClickingSize.y, m_RightClickingSize.y,
-									  hCompDC, nIndex*m_RightClickingSize.y, 0, m_RightClickingSize.y, m_RightClickingSize.y, bf);
 
-						if (hOld && hCompDC)
-							SelectObject(hCompDC, hOld);
+						if (mb_RightClickingRegistered && (!mh_RightClickingWnd || !IsWindow(mh_RightClickingWnd)))
+						{
+							POINT pt = {Rcursor.x-nHalf, Rcursor.y-nHalf};
+							MapWindowPoints(hView, ghWnd, &pt, 1);
+							mh_RightClickingWnd = CreateWindow(szRightClickingClass, L"",
+								WS_VISIBLE|WS_CHILD|WS_DISABLED|WS_CLIPSIBLINGS|WS_CLIPCHILDREN,
+                                pt.x, pt.y, m_RightClickingSize.y, m_RightClickingSize.y,
+                                ghWnd, (HMENU)9999, g_hInstance, NULL);
+							SetWindowPos(mh_RightClickingWnd, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+						}
+						else
+						{
+							if (!IsWindowVisible(mh_RightClickingWnd))
+								apiShowWindow(mh_RightClickingWnd, SW_SHOWNORMAL);
+						}
 
-						if (lbSelfDC && hdc)
-							DeleteDC(hdc);
+						if (mh_RightClickingWnd && ((hdcSelf = GetDC(mh_RightClickingWnd)) != NULL))
+						{
+							DEBUGSTRRCLICK(L"RightClickingPaint: Painting...\n");
+
+							HDC hCompDC = CreateCompatibleDC(hdcSelf);
+							HBITMAP hOld = (HBITMAP)SelectObject(hCompDC, mh_RightClickingBmp);
+
+							BLENDFUNCTION bf = {AC_SRC_OVER,0,255,AC_SRC_ALPHA};
+
+							if (hdcIntVCon)
+							{
+								// Если меняется содержимое консоли - его нужно "обновить" и в нашем "окошке" с кружочком
+								BitBlt(hdcSelf, 0, 0, m_RightClickingSize.y, m_RightClickingSize.y,
+									hdcIntVCon, Rcursor.x-nHalf, Rcursor.y-nHalf, SRCCOPY);
+							}
+
+							GdiAlphaBlend(hdcSelf, 0, 0, m_RightClickingSize.y, m_RightClickingSize.y,
+								  hCompDC, nIndex*m_RightClickingSize.y, 0, m_RightClickingSize.y, m_RightClickingSize.y, bf);
+
+							if (hOld && hCompDC)
+								SelectObject(hCompDC, hOld);
+
+							//if (/*lbSelfDC &&*/ hdcSelf)
+							DeleteDC(hdcSelf);
+						}
 					}
 
 					// Запомним фрейм, что рисовали в последний раз
 					m_RightClickingCurrent = nIndex;
 				}
 			}
+		}
+		else
+		{
+			DEBUGSTRRCLICK(L"RightClickingPaint: Condition failed\n");
 		}
 	}
 
@@ -7222,6 +7291,14 @@ void CConEmuMain::StartRightClickingPaint()
 
 void CConEmuMain::StopRightClickingPaint()
 {
+	DEBUGSTRRCLICK(L"StopRightClickingPaint\n");
+
+	if (mh_RightClickingWnd)
+	{
+		DestroyWindow(mh_RightClickingWnd);
+		mh_RightClickingWnd = NULL;
+	}
+
 	if (mb_RightClickingPaint)
 	{
 		mb_RightClickingPaint = FALSE;
@@ -7230,6 +7307,30 @@ void CConEmuMain::StopRightClickingPaint()
 		m_RightClickingCurrent = -1;
 		Invalidate(ActiveCon());
 	}
+}
+
+// Смысл этого окошка в том, чтобы отрисоваться поверх возможного PanelView
+LRESULT CConEmuMain::RightClickingProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	switch (messg)
+	{
+	case WM_CREATE:
+		return 0; // allow
+	case WM_PAINT:
+		{
+			// Если этого не сделать - в очереди "зависнет" WM_PAINT
+			PAINTSTRUCT ps = {};
+			BeginPaint(hWnd, &ps);
+			//RECT rcClient; GetClientRect(hWnd, &rcClient);
+			//FillRect(ps.hdc, &rcClient, (HBRUSH)GetStockObject(WHITE_BRUSH));
+			EndPaint(hWnd, &ps);
+		}
+		return 0;
+	case WM_ERASEBKGND:
+		return 0;
+	}
+
+	return ::DefWindowProc(hWnd, messg, wParam, lParam);
 }
 
 void CConEmuMain::OnPaintClient(HDC hdc, int width, int height)
@@ -7584,7 +7685,7 @@ CVirtualConsole* CConEmuMain::GetVCon(int nIdx)
 }
 
 // 0 - такой консоли нет
-// 1..12 - "номер" консоли (1 based)
+// 1..MAX_CONSOLE_COUNT - "номер" консоли (1 based!)
 int CConEmuMain::IsVConValid(CVirtualConsole* apVCon)
 {
 	if (!apVCon)
@@ -8806,6 +8907,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 	}
 	else
 	{
+		HWND hCurForeground = GetForegroundWindow();
+
 		HRESULT hr = S_OK;
 		hr = OleInitialize(NULL);  // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
 		//CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -8815,6 +8918,9 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		if (gpSet->IsHotkey(vkMinimizeRestore))
 			RegisterMinRestore(true);
 
+		RegisterHotKeys();
+
+		//TODO: Возможно, стоит отложить запуск секунд на 5, чтобы не мешать инициализации?
 		if (gpSet->UpdSet.isUpdateCheckOnStartup)
 			CheckUpdates(FALSE); // Не показывать сообщение "You are using latest available version"
 
@@ -8840,6 +8946,24 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 		if (gpSet->isShowBgImage)
 			gpSetCls->LoadBackgroundFile(gpSet->sBgImage);
+
+		// Перенес перед созданием консоли, чтобы не блокировать SendMessage
+		// (mp_DragDrop->Register() может быть относительно длительной операцией)
+		if (!mp_DragDrop)
+		{
+			// было 'ghWnd DC'. Попробуем на главное окно, было бы удобно
+			// "бросать" на таб (с автоматической активацией консоли)
+			mp_DragDrop = new CDragDrop();
+
+			if (!mp_DragDrop->Register())
+			{
+				CDragDrop *p = mp_DragDrop; mp_DragDrop = NULL;
+				delete p;
+			}
+		}
+
+		// Может быть в настройке указано - всегда показывать иконку в TSA
+		Icon.SettingsChanged();
 
 		if (mp_VActive == NULL || !gpConEmu->mb_StartDetached)  // Консоль уже может быть создана, если пришел Attach из ConEmuC
 		{
@@ -8889,7 +9013,9 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 			if (!lbCreated)
 			{
-				RConStartArgs args; args.bDetached = gpConEmu->mb_StartDetached;
+				RConStartArgs args;
+				args.bDetached = gpConEmu->mb_StartDetached;
+
 				if (!args.bDetached)
 					args.pszSpecialCmd = lstrdup(gpSet->GetCmd());
 
@@ -8902,10 +9028,12 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			}
 		}
 
-		if (gpConEmu->mb_StartDetached) gpConEmu->mb_StartDetached = FALSE;  // действует только на первую консоль
+		if (gpConEmu->mb_StartDetached)
+			gpConEmu->mb_StartDetached = FALSE;  // действует только на первую консоль
 
-		// Может быть в настройке указано - всегда показывать иконку в TSA
-		Icon.SettingsChanged();
+		//// Может быть в настройке указано - всегда показывать иконку в TSA
+		//Icon.SettingsChanged();
+
 		//if (!mp_TaskBar2)
 		//{
 		//	// В PostCreate это выполняется дольше всего. По идее мешать не должно,
@@ -8930,31 +9058,37 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		//	hr = mp_TaskBar2->QueryInterface(IID_ITaskbarList3, (void**)&mp_TaskBar3);
 		//}
 
-		if (!mp_DragDrop)
-		{
-			// было 'ghWnd DC'. Попробуем на главное окно, было бы удобно
-			// "бросать" на таб (с автоматической активацией консоли)
-			mp_DragDrop = new CDragDrop();
+		//if (!mp_DragDrop)
+		//{
+		//	// было 'ghWnd DC'. Попробуем на главное окно, было бы удобно
+		//	// "бросать" на таб (с автоматической активацией консоли)
+		//	mp_DragDrop = new CDragDrop();
 
-			if (!mp_DragDrop->Register())
-			{
-				CDragDrop *p = mp_DragDrop; mp_DragDrop = NULL;
-				delete p;
-			}
-		}
+		//	if (!mp_DragDrop->Register())
+		//	{
+		//		CDragDrop *p = mp_DragDrop; mp_DragDrop = NULL;
+		//		delete p;
+		//	}
+		//}
 
 		//TODO terst
 		WARNING("Если консоль не создана - handler не установится!")
 		//SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
-		apiSetForegroundWindow(ghWnd);
-		RegisterHotKeys();
+		
+		// Если фокус был у нас - вернуть его (на всякий случай, вдруг RealConsole какая забрала
+		if (hCurForeground == ghWnd)
+		{
+			apiSetForegroundWindow(ghWnd);
+		}
+
+		//RegisterHotKeys();
 		//SetParent(GetParent(GetShellWindow()));
 		UINT n = SetTimer(ghWnd, TIMER_MAIN_ID, 500/*gpSet->nMainTimerElapse*/, NULL);
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		DWORD dw = GetLastError();
-#endif
-		n = 0;
+		#endif
 		n = SetTimer(ghWnd, TIMER_CONREDRAW_ID, CON_REDRAW_TIMOUT*2, NULL);
+		UNREFERENCED_PARAMETER(n);
 	}
 }
 
@@ -10391,6 +10525,41 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 		ScreenToClient(ghWnd, &ptCurClient);
 	else // Для остальных lParam содержит клиентские координаты
 		ClientToScreen(ghWnd, &ptCurScreen);
+
+	if (mb_MouseCaptured)
+	{
+		HWND hChild = ::ChildWindowFromPointEx(ghWnd, ptCurClient, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
+		if (hChild && (hChild != ghWnd)) // Это должна быть VCon
+		{
+			#ifdef _DEBUG
+			wchar_t szClass[128]; GetClassName(hChild, szClass, countof(szClass));
+			_ASSERTE(lstrcmp(szClass, VirtualConsoleClass)==0 && "This must be VCon DC window");
+			#endif
+
+			// Если активны PanelView - они могут транслировать координаты
+			POINT ptVConCoord = ptCurClient;
+			::MapWindowPoints(ghWnd, hChild, &ptVConCoord, 1);
+			HWND hPanelView = ::ChildWindowFromPointEx(hChild, ptVConCoord, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
+			if (hPanelView && (hPanelView != hChild))
+			{
+				#ifdef _DEBUG
+				GetClassName(hPanelView, szClass, countof(szClass));
+				_ASSERTE(lstrcmp(szClass, ConEmuPanelViewClass)==0 && "This must be Thumbnail or Tile window");
+				#endif
+
+				::MapWindowPoints(hChild, hPanelView, &ptVConCoord, 1);
+
+				DWORD_PTR lRc = (DWORD_PTR)-1;
+				if (SendMessageTimeout(hPanelView, mn_MsgPanelViewMapCoord, MAKELPARAM(ptVConCoord.x,ptVConCoord.y), 0, SMTO_NORMAL, PNLVIEWMAPCOORD_TIMEOUT, &lRc) && (lRc != (DWORD_PTR)-1))
+				{
+					ptCurClient.x = LOWORD(lRc);
+					ptCurClient.y = HIWORD(lRc);
+					ptCurScreen = ptCurClient;
+					ClientToScreen(ghWnd, &ptCurScreen);
+				}
+			}
+		}
+	}
 
 	if (messg == WM_LBUTTONDBLCLK)
 	{
@@ -12819,6 +12988,12 @@ WARNING("Частота хождения таймера в винде оставляет желать... нужно от него изба
 LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
+
+#ifdef _DEBUG
+	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"ConEmu:MainTimer(%u)\n", wParam);
+	DEBUGSTRTIMER(szDbg);
+#endif
+
 	//if (mb_InTimer) return 0; // чтобы ненароком два раза в одно событие не вошел (хотя не должен)
 	mb_InTimer = TRUE;
 	//result = gpConEmu->OnTimer(wParam, lParam);
@@ -13328,7 +13503,7 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 	//
 	gpConEmu->mp_TabBar->Update(); // Иначе не будет обновлены закладки
 	// А теперь можно обновить активную закладку
-	gpConEmu->mp_TabBar->OnConsoleActivated(ActiveConNum()+1/*, FALSE*/);
+	gpConEmu->mp_TabBar->OnConsoleActivated(ActiveConNum()/*, FALSE*/);
 	return 0;
 }
 
@@ -13863,7 +14038,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					DWORD nRecvDur = pArg->timeRecv - pArg->timeStart;
 					DWORD nProcDur = pArg->timeFin - pArg->timeRecv;
 					
-					#define MSGSTARTED_TIMEOUT 250
+					#define MSGSTARTED_TIMEOUT 10000
 					if ((nRecvDur > MSGSTARTED_TIMEOUT) || (nProcDur > MSGSTARTED_TIMEOUT))
 					{
 						_ASSERTE((nRecvDur <= MSGSTARTED_TIMEOUT) && (nProcDur <= MSGSTARTED_TIMEOUT));

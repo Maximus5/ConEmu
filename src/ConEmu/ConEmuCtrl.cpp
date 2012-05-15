@@ -51,6 +51,7 @@ CConEmuCtrl::CConEmuCtrl()
 	m_SkippedMsg = 0; m_SkippedMsgWParam = 0; m_SkippedMsgLParam = 0;
 	mb_LastSingleModifier = FALSE;
 	mn_LastSingleModifier = mn_SingleModifierFixKey = mn_SingleModifierFixState = 0;
+	mn_DoubleKeyConsoleNum = 0;
 }
 
 CConEmuCtrl::~CConEmuCtrl()
@@ -60,6 +61,10 @@ CConEmuCtrl::~CConEmuCtrl()
 // pRCon may be NULL, pszChars may be NULL
 const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkMod, bool bKeyDown, const wchar_t *pszChars, CRealConsole* pRCon)
 {
+	UINT vk = gpSet->GetHotkey(VkMod);
+	if (!(vk >= '0' && vk <= '9'))
+		ResetDoubleKeyConsoleNum();
+
 	const ConEmuHotKey* pHotKey = gpSetCls->GetHotKeyInfo(VkMod, bKeyDown, pRCon);
 
 	if (pHotKey && (pHotKey != ConEmuSkipHotKey))
@@ -152,6 +157,24 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 	DWORD vk = (DWORD)(wParam & 0xFF);
 	bool bKeyDown = (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN);
 	bool bKeyUp = (messg == WM_KEYUP || messg == WM_SYSKEYUP);
+
+	if (mn_DoubleKeyConsoleNum && (!(vk >= '0' && vk <= '9')))
+	{
+		//if (!(vk >= '0' && vk <= '9'))
+		//	ResetDoubleKeyConsoleNum();
+
+		int nNewIdx = -1;
+		// попытка активации одной кнопкой
+		if (mn_DoubleKeyConsoleNum>='1' && mn_DoubleKeyConsoleNum<='9')
+			nNewIdx = mn_DoubleKeyConsoleNum - '1';
+		else if (mn_DoubleKeyConsoleNum=='0')
+			nNewIdx = 9;
+
+		ResetDoubleKeyConsoleNum();
+
+		if (nNewIdx >= 0)
+			gpConEmu->ConActivate(nNewIdx);
+	}
 
 	if (bKeyUp)
 	{
@@ -779,6 +802,12 @@ bool CConEmuCtrl::key_WinHeightInc(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 }
 
 
+void CConEmuCtrl::ResetDoubleKeyConsoleNum(CRealConsole* pRCon)
+{
+	if (mn_DoubleKeyConsoleNum)
+		mn_DoubleKeyConsoleNum = 0;
+}
+
 // Console activate by number
 // pRCon may be NULL
 bool CConEmuCtrl::key_ConsoleNum(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
@@ -786,14 +815,47 @@ bool CConEmuCtrl::key_ConsoleNum(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 	if (TestOnly)
 		return true;
 
-	WARNING("VK_F11 & VK_F12 - Переделать на обычную цифровую двухкнопочную активацию...");
+	int nNewIdx = -1;
 
-	if ((VkMod & 0xFF)>='1' && (VkMod & 0xFF)<='9')
-		gpConEmu->ConActivate((VkMod & 0xFF) - '1');
-	else if ((VkMod & 0xFF)=='0')
-		gpConEmu->ConActivate(9);
-	else if ((VkMod & 0xFF)==VK_F11 || (VkMod & 0xFF)==VK_F12)
-		gpConEmu->ConActivate(10+((VkMod & 0xFF)-VK_F11));
+	if (gpConEmu->GetVCon(10))
+	{
+		// цифровая двухкнопочная активация, если уже больше 9-и консолей открыто
+		if (gpConEmu->mn_DoubleKeyConsoleNum)
+		{
+			if ((VkMod & 0xFF)>='0' && (VkMod & 0xFF)<='9')
+			{
+				nNewIdx = (((VkMod & 0xFF) - '0') + ((gpConEmu->mn_DoubleKeyConsoleNum - '0')*10)) - 1; // 0-based
+			}
+
+			gpConEmu->ResetDoubleKeyConsoleNum(pRCon);
+		}
+		else
+		{
+			// Запомнить первую цифру
+			if ((VkMod & 0xFF)>='0' && (VkMod & 0xFF)<='9')
+			{
+				gpConEmu->mn_DoubleKeyConsoleNum = (VkMod & 0xFF);
+			}
+			else
+			{
+				_ASSERTE((VkMod & 0xFF)>='0' && (VkMod & 0xFF)<='9');
+			}
+		}
+	}
+	else
+	{
+		if ((VkMod & 0xFF)>='1' && (VkMod & 0xFF)<='9')
+			nNewIdx = (VkMod & 0xFF) - '1';
+		else if ((VkMod & 0xFF)=='0')
+			nNewIdx = 9;
+		//else if ((VkMod & 0xFF)==VK_F11 || (VkMod & 0xFF)==VK_F12)
+		//	gpConEmu->ConActivate(10+((VkMod & 0xFF)-VK_F11));
+
+		gpConEmu->ResetDoubleKeyConsoleNum(pRCon);
+	}
+
+	if (nNewIdx >= 0)
+		gpConEmu->ConActivate(nNewIdx);
 
 	return true;
 }
@@ -893,6 +955,37 @@ bool CConEmuCtrl::key_GuiMacro(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 	return true;
 }
 
+void CConEmuCtrl::ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /*= TPM_CENTERALIGN|TPM_VCENTERALIGN*/)
+{
+	HMENU hPopup = gpConEmu->CreateVConListPopupMenu(NULL, abFirstTabOnly);
+
+	if (!Align)
+		Align = TPM_LEFTALIGN|TPM_TOPALIGN;
+
+	int nTab = gpConEmu->trackPopupMenu(tmp_TabsList, hPopup, Align|TPM_RETURNCMD,
+		pt.x, pt.y, 0, ghWnd, NULL);
+
+	if (nTab >= IDM_VCON_FIRST && nTab <= IDM_VCON_LAST)
+	{
+		int nNewV = ((int)HIWORD(nTab))-1;
+		int nNewR = ((int)LOWORD(nTab))-1;
+		
+		CVirtualConsole* pVCon = gpConEmu->GetVCon(nNewV);
+		if (pVCon)
+		{
+			CRealConsole* pRCon = pVCon->RCon();
+			if (pRCon)
+			{
+				pRCon->ActivateFarWindow(nNewR);
+			}
+			if (!gpConEmu->isActive(pVCon))
+				gpConEmu->Activate(pVCon);
+		}
+	}
+
+	DestroyMenu(hPopup);
+}
+
 // Все параметры могут быть NULL - вызов из GuiMacro
 bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
@@ -906,7 +999,7 @@ bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 		if (TestOnly)
 			return true;
 
-		HMENU hPopup = gpConEmu->CreateVConListPopupMenu(NULL, FALSE);
+		//HMENU hPopup = gpConEmu->CreateVConListPopupMenu(NULL, FALSE);
 
 		RECT rcWnd = {};
 		if (pRCon)
@@ -919,27 +1012,29 @@ bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 			MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcWnd, 2);
 		}
 
-		int x = (rcWnd.left+rcWnd.right)/2, y = (rcWnd.top+rcWnd.bottom)/2;
-		int nTab = gpConEmu->trackPopupMenu(tmp_TabsList, hPopup, TPM_CENTERALIGN|TPM_VCENTERALIGN|TPM_RETURNCMD,
-			x, y, 0, ghWnd, NULL);
+		POINT pt = {(rcWnd.left+rcWnd.right)/2, (rcWnd.top+rcWnd.bottom)/2};
 
-		if (nTab >= IDM_VCON_FIRST && nTab <= IDM_VCON_LAST)
-		{
-			int nNewV = ((int)HIWORD(nTab))-1;
-			int nNewR = ((int)LOWORD(nTab))-1;
-			
-			CVirtualConsole* pVCon = gpConEmu->GetVCon(nNewV);
-			if (pVCon)
-			{
-				CRealConsole* pRCon = pVCon->RCon();
-				if (pRCon)
-				{
-					pRCon->ActivateFarWindow(nNewR);
-				}
-				if (!gpConEmu->isActive(pVCon))
-					gpConEmu->Activate(pVCon);
-			}
-		}
+		ChooseTabFromMenu(FALSE, pt, TPM_CENTERALIGN|TPM_VCENTERALIGN);
+
+		//int nTab = gpConEmu->trackPopupMenu(tmp_TabsList, hPopup, TPM_CENTERALIGN|TPM_VCENTERALIGN|TPM_RETURNCMD,
+		//	x, y, 0, ghWnd, NULL);
+		//if (nTab >= IDM_VCON_FIRST && nTab <= IDM_VCON_LAST)
+		//{
+		//	int nNewV = ((int)HIWORD(nTab))-1;
+		//	int nNewR = ((int)LOWORD(nTab))-1;
+		//	
+		//	CVirtualConsole* pVCon = gpConEmu->GetVCon(nNewV);
+		//	if (pVCon)
+		//	{
+		//		CRealConsole* pRCon = pVCon->RCon();
+		//		if (pRCon)
+		//		{
+		//			pRCon->ActivateFarWindow(nNewR);
+		//		}
+		//		if (!gpConEmu->isActive(pVCon))
+		//			gpConEmu->Activate(pVCon);
+		//	}
+		//}
 
 		//CESERVER_REQ_GETALLTABS::TabInfo* pTabs = NULL;
 		//int Count = (int)CConEmuCtrl::GetOpenedTabs(pTabs);
@@ -969,9 +1064,7 @@ bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 		//	pItems[k].MsgText = pOut->GetAllTabs.Tabs[i].Title;
 		//	pItems[k].UserData = i;
 		//}
-
-
-		DestroyMenu(hPopup);
+		//DestroyMenu(hPopup);
 	}
 
 	//int AllCount = Count + pTabs[Count-1].ConsoleIdx;
