@@ -9,10 +9,25 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
+2012.05.15
+[%] В предыдущей сборке отвалилась загрузка 'App distinct'.
+[*] Максимальное количество поддерживаемых консолей увеличено до 30-и (дальше кнопки лень рисовать).
+[*] На тулбаре отображается 'кнопка' только для активной консоли, а не для всех открытых (как раньше).
+    При клике на кнопку - отображается меню выбора запущенных консолей/табов.
+[*] Активация с клавиатуры - цифрами.
+    Win+F11 и Win+F12 больше не занимаются активацией консолей.
+    Если консолей меньше 11-и, все как раньше.
+    Если больше - то допускаются однокнопочные и двухкнопочные активации. Например:
+    «Win(down) 1 5» - активирует 15-ю консоль;
+    «Win(down) 1 Win(up)» - активиует 1-ю консоль.
+[%] Еще раз 'Sleep in background' bugfix. 
+[%] Issue 541: В режиме эскизов некорректно выделяются файлы правой кнопкой мыши.
+
+
 2012.05.14
-[%] Issue 543, Issue 544: Fixing bugs of unlucky version :)
-[%] Issue 56: Catch focus on drag over.
-[+] Drag&Drop: Menu on drop in Far command line.
+[%] Issue 543, Issue 544: Правим баги несчастливой версии :)
+[%] Issue 56: При драге поверх окна ConEmu больше не забирается фокус.
+[+] Drag&Drop: При дропе файлов в ком.строку Far - отображается контекстное меню (Paste/Goto/Edit/View).
 [*] Drag&Drop: Internal changes in overlay image.
 
 
