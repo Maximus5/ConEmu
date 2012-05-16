@@ -9,6 +9,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
+
+[+] Новые ключи ConEmu.exe
+    /min - запустить свернутым;
+    /tsa - сворачивать в TSA (чтобы свернуть в TSA при запуске используйте вместе с /min);
+    /icon "<file>" - откуда брать иконку, <file> может быть exe, dll или ico.
+[*] Обновлен диалог 'About'.
+
+
 2012.05.15
 [%] В предыдущей сборке отвалилась загрузка 'App distinct'.
 [*] Максимальное количество поддерживаемых консолей увеличено до 30-и (дальше кнопки лень рисовать).

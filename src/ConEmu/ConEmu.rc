@@ -918,6 +918,19 @@ BEGIN
     RTEXT           "Bold:",stExtendFontBoldIdx,154,65,19,8
 END
 
+IDD_ABOUT DIALOGEX 0, 0, 316, 205
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,259,187,50,14
+    ICON            IDI_ICON1,IDC_STATIC,7,7,20,20,WS_DISABLED
+    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,302,16
+    EDITTEXT        tAboutText,7,50,302,131,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
+    LTEXT           "Console emulation program. Visit home page:",stConEmuAbout,42,7,267,8
+    LTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,41,18,268,8,SS_NOTIFY
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -975,6 +988,14 @@ BEGIN
         RIGHTMARGIN, 319
         TOPMARGIN, 3
         BOTTOMMARGIN, 226
+    END
+
+    IDD_ABOUT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 309
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 178
     END
 END
 #endif    // APSTUDIO_INVOKED

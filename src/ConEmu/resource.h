@@ -37,6 +37,7 @@
 #define IDD_SPG_UPDATE                  214
 #define IDD_FAST_CONFIG                 215
 #define IDD_FIND                        217
+#define IDD_ABOUT                       218
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -634,14 +635,19 @@
 #define cbCmdLine                       2244
 #define cbStartTasksFile                2245
 #define cbDropUseMenu                   2246
+#define stConEmuIcon                    2247
+#define tbAboutTabs                     2248
+#define tAboutText                      2249
+#define stConEmuAbout                   2250
+#define stConEmuUrl                     2251
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        218
+#define _APS_NEXT_RESOURCE_VALUE        219
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2247
+#define _APS_NEXT_CONTROL_VALUE         2252
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

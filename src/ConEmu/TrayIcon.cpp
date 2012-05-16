@@ -173,7 +173,11 @@ void TrayIcon::RestoreWindowFromTray(BOOL abIconOnly /*= FALSE*/)
 {
 	if (!abIconOnly)
 	{
-		gpConEmu->ShowWindow(SW_SHOW);
+		gpConEmu->SetWindowMode(gpConEmu->WindowMode);
+
+		if (!IsWindowVisible(ghWnd))
+			gpConEmu->ShowWindow(SW_SHOW);
+
 		apiSetForegroundWindow(ghWnd);
 	}
 

@@ -471,6 +471,7 @@ int ServerInitCheckExisting(bool abAlternative)
 	BOOL lbExist = LoadSrvMapping(ghConWnd, test);
 	if (abAlternative == FALSE)
 	{
+		_ASSERTE(gnRunMode==RM_SERVER);
 		// Îñíîâíîé ñåğâåğ! Ìıïïèíã êîíñîëè ïî èäåå ñîçäàí åùå áûòü íå äîëæåí!
 		// İòî äîëæíî áûòü îøèáêà - ïîïûòêà çàïóñêà âòîğîãî ñåğâåğà â òîé æå êîíñîëè!
 		if (lbExist)
@@ -494,8 +495,19 @@ int ServerInitCheckExisting(bool abAlternative)
 	}
 	else
 	{
+		_ASSERTE(gnRunMode==RM_ALTSERVER);
 		// Ïî èäåå, â êîíñîëè äîëæåí áûòü _æèâîé_ ñåğâåğ.
 		_ASSERTE(lbExist && test.nServerPID != 0);
+		if (test.nServerPID == 0)
+		{
+			iRc = CERR_MAINSRV_NOT_FOUND;
+			goto wrap;
+		}
+		else
+		{
+			gpSrv->dwMainServerPID = test.nServerPID;
+			gpSrv->hMainServer = OpenProcess(SYNCHRONIZE|PROCESS_QUERY_INFORMATION, FALSE, test.nServerPID);
+		}
 	}
 
 wrap:
@@ -672,12 +684,40 @@ int ServerInitGuiTab()
 	return iRc;
 }
 
+bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer)
+{
+	// Ïåğåâåñòè íèòü ìîíèòîğà â ğåæèì îæèäàíèÿ çàâåğøåíèÿ AltServer, èíèöèàëèçèğîâàòü gpSrv->dwAltServerPID, gpSrv->hAltServer
+	if (gpSrv->hAltServer && (gpSrv->hAltServer != hAltServer))
+	{
+		gpSrv->dwAltServerPID = 0;
+		SafeCloseHandle(gpSrv->hAltServer);
+	}
+
+	if (hAltServer == NULL)
+	{
+		hAltServer = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, nPID);
+		if (hAltServer == NULL)
+			hAltServer = OpenProcess(SYNCHRONIZE|PROCESS_QUERY_INFORMATION, FALSE, nPID);
+	}
+
+	gpSrv->hAltServer = hAltServer;
+	gpSrv->dwAltServerPID = nPID;
+
+	return (hAltServer != NULL);
+}
 
 // Ñîçäàòü íåîáõîäèìûå ñîáûòèÿ è íèòè
 int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 {
 	int iRc = 0;
 	DWORD dwErr = 0;
+
+	if (anWorkMode == 0)
+	{
+		gpSrv->dwMainServerPID = GetCurrentProcessId();
+		gpSrv->hMainServer = GetCurrentProcess();
+	}
+
 	// Ñğàçó ïîïûòàåìñÿ ïîñòàâèòü îêíó êîíñîëè ôëàã "OnTop"
 	SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	gpSrv->osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -692,9 +732,19 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	else
 		gpSrv->bReopenHandleAllowed = TRUE;
 
-	if (!gnConfirmExitParm)
+	if (anWorkMode == 0)
 	{
-		gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = TRUE;
+		if (!gnConfirmExitParm)
+		{
+			gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = TRUE;
+		}
+	}
+	else
+	{
+		_ASSERTE(anWorkMode==1 && gnRunMode==RM_ALTSERVER);
+		// Ïî èäåå, âêëş÷åíû áûòü íå äîëæíû, íî óáåäèìñÿ
+		_ASSERTE(!gbAlwaysConfirmExit);
+		gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
 	}
 
 	_ASSERTE(gpcsStoredOutput==NULL && gpStoredOutput==NULL);
@@ -704,7 +754,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 
 	// Øğèôò â êîíñîëè íóæíî ìåíÿòü â ñàìîì íà÷àëå, èíà÷å ìîãóò áûòü ïğîáëåìû ñ óñòàíîâêîé ğàçìåğà êîíñîëè
-	if (!gpSrv->bDebuggerActive && !gbNoCreateProcess)
+	if ((anWorkMode == 0) && !gpSrv->bDebuggerActive && !gbNoCreateProcess)
 		//&& (!gbNoCreateProcess || (gbAttachMode && gbNoCreateProcess && gpSrv->dwRootProcess))
 		//)
 	{
@@ -715,8 +765,10 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 
 	// Âêëş÷èòü ïî óìîë÷àíèş âûäåëåíèå ìûøüş
-	if (!gbNoCreateProcess && gbConsoleModeFlags /*&& !(gbParmBufferSize && gnBufferHeight == 0)*/)
+	if ((anWorkMode == 0) && !gbNoCreateProcess && gbConsoleModeFlags /*&& !(gbParmBufferSize && gnBufferHeight == 0)*/)
+	{
 		ServerInitConsoleMode();
+	}
 
 	//2009-08-27 Ïåğåíåñ ñíèçó
 	if (!gpSrv->hConEmuGuiAttached)
@@ -742,7 +794,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 
 	if (ghConEmuWndDC == NULL)
 	{
-		// ×òî äîëæíî áûòü â AltServer ğåæèìå?
+		// â AltServer ğåæèìå HWND óæå äîëæåí áûòü èçâåñòåí
 		_ASSERTE((anWorkMode==0) || ghConEmuWndDC!=NULL);
 	}
 	else
@@ -1962,7 +2014,9 @@ int CreateMapHeader()
 	gpSrv->pConsole->hdr.crMaxConSize = crMax;
 	gpSrv->pConsole->hdr.bDataReady = FALSE;
 	gpSrv->pConsole->hdr.hConWnd = ghConWnd; _ASSERTE(ghConWnd!=NULL);
-	gpSrv->pConsole->hdr.nServerPID = GetCurrentProcessId();
+	_ASSERTE(gpSrv->dwMainServerPID!=0);
+	gpSrv->pConsole->hdr.nServerPID = gpSrv->dwMainServerPID;
+	gpSrv->pConsole->hdr.nAltServerPID = (gnRunMode==RM_ALTSERVER) ? GetCurrentProcessId() : gpSrv->dwAltServerPID;
 	gpSrv->pConsole->hdr.nGuiPID = gpSrv->dwGuiPID;
 	gpSrv->pConsole->hdr.hConEmuRoot = ghConEmuWnd;
 	gpSrv->pConsole->hdr.hConEmuWnd = ghConEmuWndDC;
@@ -2031,6 +2085,24 @@ void UpdateConsoleMapHeader()
 		}
 		else if (gnRunMode == RM_ALTSERVER)
 		{
+			DWORD nCurServerInMap = 0;
+			if (gpSrv->pConsoleMap && gpSrv->pConsoleMap->IsValid())
+				nCurServerInMap = gpSrv->pConsoleMap->Ptr()->nServerPID;
+
+			_ASSERTE(gpSrv->pConsole->hdr.nServerPID && (gpSrv->pConsole->hdr.nServerPID == gpSrv->dwMainServerPID));
+			if (nCurServerInMap && (nCurServerInMap != gpSrv->dwMainServerPID))
+			{
+				if (IsMainServerPID(nCurServerInMap))
+				{
+					// Ñòğàííî, îñíîâíîé ñåğâåğ ñìåíèëñÿ?
+					_ASSERTE((nCurServerInMap == gpSrv->dwMainServerPID) && "Main server was changed?");
+					CloseHandle(gpSrv->hMainServer);
+					gpSrv->dwMainServerPID = nCurServerInMap;
+					gpSrv->hMainServer = OpenProcess(SYNCHRONIZE|PROCESS_QUERY_INFORMATION, FALSE, nCurServerInMap);
+				}
+			}
+
+			gpSrv->pConsole->hdr.nServerPID = gpSrv->dwMainServerPID;
 			gpSrv->pConsole->hdr.nAltServerPID = GetCurrentProcessId();
 		}
 
@@ -2049,6 +2121,12 @@ void UpdateConsoleMapHeader()
 		gpSrv->pConsole->hdr.hConEmuWnd = ghConEmuWndDC;
 		_ASSERTE(gpSrv->pConsole->hdr.hConEmuRoot==NULL || gpSrv->pConsole->hdr.nGuiPID!=0);
 		gpSrv->pConsole->hdr.nActiveFarPID = gpSrv->nActiveFarPID;
+
+		if (gnRunMode != RM_SERVER && gnRunMode != RM_ALTSERVER)
+		{
+			_ASSERTE(gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER);
+			return;
+		}
 
 		if (gpSrv->pConsoleMap)
 		{
@@ -2453,7 +2531,9 @@ static BOOL ReadConsoleInfo()
 
 	// Ëó÷øå âñåãäà äåëàòü, ÷òîáû äàííûå áûëè ãàğàíòèğîâàííî àêòóàëüíûå
 	gpSrv->pConsole->hdr.hConWnd = gpSrv->pConsole->info.hConWnd = ghConWnd;
-	gpSrv->pConsole->hdr.nServerPID = GetCurrentProcessId();
+	_ASSERTE(gpSrv->dwMainServerPID!=0);
+	gpSrv->pConsole->hdr.nServerPID = gpSrv->dwMainServerPID;
+	gpSrv->pConsole->hdr.nAltServerPID = (gnRunMode==RM_ALTSERVER) ? GetCurrentProcessId() : gpSrv->dwAltServerPID;
 	//gpSrv->pConsole->info.nInputTID = gpSrv->dwInputThreadId;
 	gpSrv->pConsole->info.nReserved0 = 0;
 	gpSrv->pConsole->info.dwCiSize = sizeof(gpSrv->ci);

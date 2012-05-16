@@ -279,6 +279,9 @@ int ParseCommandLine(LPCWSTR asCmdLine /*, wchar_t** psNewCmd, BOOL* pbRunInBack
 void Help();
 void DosBoxHelp();
 void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
+bool IsMainServerPID(DWORD nPID);
+
+bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer);
 
 int CreateMapHeader();
 void CloseMapHeader();
@@ -354,6 +357,7 @@ extern DWORD gnConsoleModeFlags;
 struct SrvInfo
 {
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
+	HANDLE hMainServer; DWORD dwMainServerPID;
 	HANDLE hAltServer; DWORD dwAltServerPID;
 	HWND   hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
 	BOOL   bDebuggerActive, bDebuggerRequestDump; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;

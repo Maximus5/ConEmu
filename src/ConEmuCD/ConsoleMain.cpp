@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
 //  #define SHOW_COMSPEC_STARTED_MSGBOX
-//  #define SHOW_SERVER_STARTED_MSGBOX
+//	#define SHOW_SERVER_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
 //  #define SHOW_INJECT_MSGBOX
@@ -3028,6 +3028,20 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 //	}
 //}
 
+// ѕроверить, что nPID это "ConEmuC.exe" или "ConEmuC64.exe"
+bool IsMainServerPID(DWORD nPID)
+{
+	PROCESSENTRY32 Info;
+	if (!GetProcessInfo(nPID, &Info))
+		return false;
+	if ((lstrcmpi(Info.szExeFile, L"ConEmuC.exe") == 0)
+		|| (lstrcmpi(Info.szExeFile, L"ConEmuC64.exe") == 0))
+	{
+		return true;
+	}
+	return false;
+}
+
 void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole)
 {
 	// „тобы ошибку было нормально видно
@@ -5103,6 +5117,18 @@ BOOL cmd_Attach2Gui(CESERVER_REQ& in, CESERVER_REQ** out)
 BOOL cmd_FarLoaded(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
+
+	#if 0
+	wchar_t szDbg[512], szExe[MAX_PATH], szTitle[512];
+	GetModuleFileName(NULL, szExe, countof(szExe));
+	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"cmd_FarLoaded: %s", PointToName(szExe));
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg))
+		L"cmd_FarLoaded was received\nServerPID=%u, name=%s\nFarPID=%u\nRootPID=%u\nDisablingConfirm=%s",
+		GetCurrentProcessId(), PointToName(szExe), in.hdr.nSrcPID, gpSrv->dwRootProcess,
+		((gbAutoDisableConfirmExit || (gnConfirmExitParm == 1)) && gpSrv->dwRootProcess == in.dwData[0]) ? L"YES" :
+		gbAlwaysConfirmExit ? L"AlreadyOFF" : L"NO");
+	MessageBox(NULL, szDbg, szTitle, MB_SYSTEMMODAL);
+	#endif
 	
 	// gnConfirmExitParm==1 получаетс€, когда консоль запускалась через "-new_console"
 	// ≈сли плагин фара загрузилс€ - думаю можно отключить подтверждение закрыти€ консоли
@@ -5447,6 +5473,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	_ASSERTE(in.StartStop.dwPID!=0);
 	DWORD nPID = in.StartStop.dwPID;
+	DWORD nPrevAltServerPID = gpSrv->dwAltServerPID;
 
 	if (!gpSrv->nProcessStartTick && (gpSrv->dwRootProcess == in.StartStop.dwPID))
 	{
@@ -5495,13 +5522,8 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		// ѕеревести нить монитора в режим ожидани€ завершени€ AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer
 		_ASSERTE(in.StartStop.hServerProcessHandle!=0);
-		if (gpSrv->hAltServer && (gpSrv->hAltServer != (HANDLE)(DWORD_PTR)in.StartStop.hServerProcessHandle))
-		{
-			gpSrv->dwAltServerPID = 0;
-			SafeCloseHandle(gpSrv->hAltServer);
-		}
-		gpSrv->hAltServer = (HANDLE)(DWORD_PTR)in.StartStop.hServerProcessHandle;
-		gpSrv->dwAltServerPID = in.StartStop.dwPID;
+
+		AltServerWasStarted(in.StartStop.dwPID, (HANDLE)(DWORD_PTR)in.StartStop.hServerProcessHandle);
 	}
 	else if ((in.StartStop.nStarted == sst_ComspecStart) || (in.StartStop.nStarted == sst_AppStart))
 	{
@@ -5560,6 +5582,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		(*out)->StartStopRet.nWidth = gpSrv->sbi.dwSize.X;
 		(*out)->StartStopRet.nHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
 		(*out)->StartStopRet.dwSrvPID = GetCurrentProcessId();
+		(*out)->StartStopRet.dwPrevAltServerPID = nPrevAltServerPID;
 
 		lbRc = TRUE;
 	}

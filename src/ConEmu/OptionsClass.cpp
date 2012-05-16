@@ -1732,6 +1732,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 {
 	CheckDlgButton(hWnd2, cbMinToTray, gpSet->isMinToTray);
+	EnableWindow(GetDlgItem(hWnd2, cbMinToTray), !gpConEmu->ForceMinimizeToTray);
 
 	CheckDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
 

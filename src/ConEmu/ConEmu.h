@@ -141,6 +141,7 @@ class CConEmuMain :
 		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
 		wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 		wchar_t ms_ComSpecInitial[MAX_PATH];
+		wchar_t *mps_IconPath;
 		BOOL mb_DosBoxExists;
 		// Portable Far Registry
 		BOOL mb_PortableRegExist;
@@ -186,6 +187,7 @@ class CConEmuMain :
 		//DWORD gnLastProcessCount;
 		//uint cBlinkNext;
 		DWORD WindowMode, change2WindowMode;
+		bool WindowStartMinimized, ForceMinimizeToTray;
 		bool mb_isFullScreen;
 		BOOL mb_ExternalHidden;
 		//HANDLE hPipe;
@@ -381,6 +383,12 @@ class CConEmuMain :
 		virtual void OnUseGlass(bool abEnableGlass);
 		virtual void OnUseTheming(bool abEnableTheming);
 		virtual void OnUseDwm(bool abEnableDwm);
+
+		//
+		void InitCommCtrls();
+		bool mb_CommCtrlsInitialized;
+		HWND mh_AboutDlg;
+		static INT_PTR CALLBACK aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 
 	public:
 		DWORD CheckProcesses();

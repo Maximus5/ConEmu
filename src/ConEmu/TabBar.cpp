@@ -1019,7 +1019,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	DEBUGSTRTABS(szDbg);
 #endif
 
-	for(I = tabIdx; I < nCurCount; I++)
+	for (I = tabIdx; I < nCurCount; I++)
 	{
 #ifdef _DEBUG
 		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"   Deleting tab=%i\n", I+1);

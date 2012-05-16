@@ -2726,7 +2726,7 @@ bool Settings::isKeyboardHooks()
 	//	}
 	//}
 
-	return (m_isKeyboardHooks == 1);
+	return (m_isKeyboardHooks == 0) || (m_isKeyboardHooks == 1);
 }
 
 // nHostMod в младших 3-х байтах может содержать VK (модификаторы).

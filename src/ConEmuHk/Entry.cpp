@@ -1238,7 +1238,7 @@ void SendStopped()
 
 		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(hOut);
 
-		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
+		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd, TRUE/*bAsyncNoResult*/);
 
 		ExecuteFreeResult(pIn); pIn = NULL;
 		

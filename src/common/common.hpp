@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    89
+#define CESERVER_REQ_VER    90
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1333,6 +1333,7 @@ struct CESERVER_REQ_STARTSTOPRET
 	DWORD dwPID; // при возврате в консоль - PID ConEmu.exe
 	DWORD nBufferHeight, nWidth, nHeight;
 	DWORD dwSrvPID;
+	DWORD dwPrevAltServerPID;
 	BOOL  bNeedLangChange;
 	u64   NewConsoleLang;
 	// Используется при CECMD_ATTACH2GUI

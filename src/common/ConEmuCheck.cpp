@@ -540,7 +540,7 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(enum CmdOnCreateType aCmd,
 }
 
 // Forward
-CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner);
+//CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner);
 
 // Выполнить в GUI (в CRealConsole)
 CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner)
@@ -584,7 +584,7 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner)
 }
 
 // Выполнить в ConEmuC
-CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner)
+CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult)
 {
 	wchar_t szGuiPipeName[128];
 
@@ -594,7 +594,7 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner
 	DWORD nLastErr = GetLastError();
 	//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	msprintf(szGuiPipeName, countof(szGuiPipeName), CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
-	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
+	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner, bAsyncNoResult);
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
 	return lpRet;
 }
@@ -623,7 +623,7 @@ CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, const CESERVER_REQ* pIn, HWND hOwner)
 //WARNING!!!
 //   Эта процедура не может получить с сервера более 600 байт данных!
 // В заголовке hOwner в дебаге может быть отображена ошибка
-CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner)
+CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult)
 {
 	CESERVER_REQ* pOut = NULL;
 	HANDLE hPipe = NULL;
@@ -711,26 +711,38 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	//}
 	_ASSERTE(pIn->hdr.nSrcThreadId==GetCurrentThreadId());
 
-
-	WARNING("При Overlapped часто виснет в этом месте.");
-
-	// Send a message to the pipe server and read the response.
-	fSuccess = TransactNamedPipe(
-	               hPipe,                  // pipe handle
-	               (LPVOID)pIn,            // message to server
-	               pIn->hdr.cbSize,         // message length
-	               cbReadBuf,              // buffer to receive reply
-	               sizeof(cbReadBuf),      // size of read buffer
-	               &cbRead,                // bytes read
-	               NULL);                  // not overlapped
-	dwErr = GetLastError();
-	//CloseHandle(hPipe);
-
-	if (!fSuccess && (dwErr != ERROR_MORE_DATA))
+	if (bAsyncNoResult)
 	{
-		//_ASSERTE(fSuccess || (dwErr == ERROR_MORE_DATA));
-		CloseHandle(hPipe);
+		// Если нас не интересует возврат и нужно сразу вернуться
+		fSuccess = WriteFile(hPipe, pIn, pIn->hdr.cbSize, &cbRead, NULL);
+		#ifdef _DEBUG
+		dwErr = GetLastError();
+		_ASSERTE(fSuccess && (cbRead == pIn->hdr.cbSize));
+		#endif
 		return NULL;
+	}
+	else
+	{
+		WARNING("При Overlapped часто виснет в этом месте.");
+
+		// Send a message to the pipe server and read the response.
+		fSuccess = TransactNamedPipe(
+					   hPipe,                  // pipe handle
+					   (LPVOID)pIn,            // message to server
+					   pIn->hdr.cbSize,         // message length
+					   cbReadBuf,              // buffer to receive reply
+					   sizeof(cbReadBuf),      // size of read buffer
+					   &cbRead,                // bytes read
+					   NULL);                  // not overlapped
+		dwErr = GetLastError();
+		//CloseHandle(hPipe);
+
+		if (!fSuccess && (dwErr != ERROR_MORE_DATA))
+		{
+			//_ASSERTE(fSuccess || (dwErr == ERROR_MORE_DATA));
+			CloseHandle(hPipe);
+			return NULL;
+		}
 	}
 
 	if (cbRead < sizeof(CESERVER_REQ_HDR))

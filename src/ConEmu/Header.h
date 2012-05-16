@@ -245,39 +245,6 @@ size_t GetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText);
 ///| Global variables |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
-#define pHelp \
-	L"Console emulation program.\n" \
-	L"Home page: http://conemu-maximus5.googlecode.com\n\n" \
-	L"By default this program launches \"Far.exe\" (if exists) or \"cmd.exe\"/\"tcc.exe\".\n" \
-	L"\n" \
-	L"Command line switches:\n" \
-	L"/? - This help screen.\n" \
-	L"/config <configname> - Use alternative named configuration\n" \
-	L"/ct - Clear Type anti-aliasing.\n" \
-	L"/fs | /max - (Full screen) | (Maximized) mode.\n" \
-	L"/multi | /nomulti - enable or disable multiconsole features\n" \
-	L"/font <fontname> - Specify the font name.\n" \
-	L"/size <fontsize> - Specify the font size.\n" \
-	L"/fontfile <fontfilename> - Loads fonts from file.\n" \
-	L"/BufferHeight <lines> - may be used with cmd.exe/tcc.exe\n" \
-	/* L"/Attach [PID] - intercept console of specified process\n" */ \
-	L"\n" \
-	L"/cmd <commandline>|@<commandfile> - Command line to start. This must be the last used switch.\n" \
-	L"\n" \
-	L"Command line examples:\n" \
-	L"ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd Far.exe /w\n" \
-	L"\n" \
-	L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\n" \
-	CECOPYRIGHTSTRING_W /*\x00A9 2009-2011 ConEmu.Maximus5@gmail.com*/ L"\n" \
-	L"\n" \
-	L"Contributors\n" \
-	L"thecybershadow: bdf support\n" \
-	L"NightRoman: drawing optimization, BufferHeight and other fixes\n" \
-	L"dolzenko_: windows switching via GUI tabs\n" \
-	L"alex_itd: Drag'n'Drop, RightClick, AltEnter\n" \
-	L"Mors: loading font from file."
-
-
 //#include "VirtualConsole.h"
 //#include "options.h"
 //#include "DragDrop.h"

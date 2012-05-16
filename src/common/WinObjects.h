@@ -70,6 +70,8 @@ BOOL IsWindows64();
 int GetProcessBits(DWORD nPID, HANDLE hProcess = NULL);
 BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo);
 bool IsModuleValid(HMODULE module);
+typedef struct tagPROCESSENTRY32W PROCESSENTRY32W;
+bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
 
 void RemoveOldComSpecC();
 const wchar_t* PointToName(const wchar_t* asFullPath);

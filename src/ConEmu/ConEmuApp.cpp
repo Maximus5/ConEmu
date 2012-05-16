@@ -1101,7 +1101,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//pVCon = NULL;
 	//bool setParentDisabled=false;
 	bool ClearTypePrm = false;
-	bool FontPrm = false; TCHAR* FontVal = NULL; //wchar_t szTempFontFam[MAX_PATH];
+	bool FontPrm = false; TCHAR* FontVal = NULL;
+	bool IconPrm = false;
 	bool SizePrm = false; LONG SizeVal = 0;
 	bool BufferHeightPrm = false; int BufferHeightVal = 0;
 	bool ConfigPrm = false; TCHAR* ConfigVal = NULL;
@@ -1366,6 +1367,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				WindowModeVal = rMaximized; WindowPrm = true;
 			}
+			else if (!klstricmp(curCommand, _T("/min")))
+			{
+				gpConEmu->WindowStartMinimized = true;
+			}
+			else if (!klstricmp(curCommand, _T("/tsa")) || !klstricmp(curCommand, _T("/tray")))
+			{
+				gpConEmu->ForceMinimizeToTray = true;
+			}
+			else if (!klstricmp(curCommand, _T("/icon")) && i + 1 < params)
+			{
+				curCommand += _tcslen(curCommand) + 1; i++;
+
+				if (!IconPrm && *curCommand)
+				{
+					IconPrm = true;
+					gpConEmu->mps_IconPath = lstrdup(curCommand);
+				}
+			}
 			else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0")  || !klstricmp(curCommand, L"/log1"))
 			{
 				gpSetCls->isAdvLogging = 1;
@@ -1441,7 +1460,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else if (!klstricmp(curCommand, _T("/?")))
 			{
-				MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);
+				//MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);
+				gpConEmu->OnInfo_About();
 				free(cmdLine);
 				return -1; // NightRoman
 			}

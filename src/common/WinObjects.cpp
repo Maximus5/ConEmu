@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "MAssert.h"
 #include "WinObjects.h"
+#include <TlHelp32.h>
 
 #ifdef _DEBUG
 	//#define WARN_NEED_CMD
@@ -617,6 +618,32 @@ int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
 	}
 
 	return ImageBits;
+}
+
+bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info)
+{
+	bool bFound = false;
+	if (Info)
+		memset(Info, 0, sizeof(*Info));
+	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (h && (h != INVALID_HANDLE_VALUE))
+	{
+		PROCESSENTRY32 PI = {sizeof(PI)};
+		if (Process32First(h, &PI))
+		{
+			do {
+				if (PI.th32ProcessID == nPID)
+				{
+					*Info = PI;
+					bFound = true;
+					break;
+				}
+			} while (Process32Next(h, &PI));
+		}
+
+		CloseHandle(h);
+	}
+	return bFound;
 }
 
 // Проверить, валиден ли модуль?

@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define REGPREPARE_EXTERNAL
 
 #include "Header.h"
+#include "About.h"
 #include <Tlhelp32.h>
 #include <Shlobj.h>
 //#include <lm.h>
@@ -131,6 +132,9 @@ CConEmuMain::CConEmuMain()
 	//gOSVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	//GetVersionEx(&gOSVer);
 
+	mb_CommCtrlsInitialized = false;
+	mh_AboutDlg = NULL;
+
 	//HeapInitialize(); - уже
 	//#define D(N) (1##N-100)
 	_wsprintf(ms_ConEmuVer, SKIPLEN(countof(ms_ConEmuVer)) L"ConEmu %02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
@@ -138,7 +142,8 @@ CConEmuMain::CConEmuMain()
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
 	mn_MainThreadId = GetCurrentThreadId();
 	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
-	WindowMode=rNormal; mb_PassSysCommand = false; change2WindowMode = -1;
+	WindowMode = rNormal; WindowStartMinimized = false; ForceMinimizeToTray = false;
+	mb_PassSysCommand = false; change2WindowMode = -1;
 	mb_isFullScreen = false;
 	mb_ExternalHidden = FALSE;
 	memset(&mrc_StoredNormalRect, 0, sizeof(mrc_StoredNormalRect));
@@ -214,6 +219,8 @@ CConEmuMain::CConEmuMain()
 	m_GuiInfo.cbSize = sizeof(m_GuiInfo);
 	//mh_RecreatePasswFont = NULL;
 	mb_SkipOnFocus = FALSE;
+
+	mps_IconPath = NULL;
 
 	// Попробуем "родное" из реестра?
 	HKEY hk;
@@ -703,6 +710,19 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 	return (Bits == 64) ? ms_ConEmuC64Full : ms_ConEmuC32Full;
 }
 
+void CConEmuMain::InitCommCtrls()
+{
+	if (mb_CommCtrlsInitialized)
+		return;
+
+	INITCOMMONCONTROLSEX icex;
+	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	icex.dwICC   = ICC_COOL_CLASSES|ICC_BAR_CLASSES|ICC_TAB_CLASSES|ICC_PROGRESS_CLASS;
+	InitCommonControlsEx(&icex);
+
+	mb_CommCtrlsInitialized = true;
+}
+
 BOOL CConEmuMain::Init()
 {
 	_ASSERTE(mp_TabBar == NULL);
@@ -712,12 +732,10 @@ BOOL CConEmuMain::Init()
 	if (gpSet->nAffinity)
 		SetProcessAffinityMask(GetCurrentProcess(), gpSet->nAffinity);
 
+	InitCommCtrls();
+
 	//SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 	//SetThreadAffinityMask(GetCurrentThread(), 1);
-	INITCOMMONCONTROLSEX icex;
-	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-	icex.dwICC   = ICC_COOL_CLASSES|ICC_BAR_CLASSES|ICC_TAB_CLASSES|ICC_PROGRESS_CLASS;
-	InitCommonControlsEx(&icex);
 	/*DWORD dwErr = 0;
 	HMODULE hInf = LoadLibrary(L"infis.dll");
 	if (!hInf)
@@ -3296,9 +3314,9 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			if (!IsWindowVisible(ghWnd))
 				ShowWindow(SW_SHOWNORMAL);
 
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			GetWindowPlacement(ghWnd, &wpl);
-#endif
+			#endif
 
 			// Если это во время загрузки - то до первого ShowWindow - isIconic возвращает FALSE
 			if (isIconic() || isZoomed())
@@ -4403,6 +4421,12 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		GetWindowRect(ghWnd, &gpConEmu->mrc_WndPosOnPicView);
 	}
 
+	// Если окошко сворачивалось кнопками Win+Down (Win7) то SC_MINIMIZE не приходит
+	if ((gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray) && isIconic() && IsWindowVisible(ghWnd))
+	{
+		Icon.HideWindowToTray();
+	}
+
 	return result;
 }
 
@@ -5345,29 +5369,55 @@ void CConEmuMain::LoadIcons()
 	if (hClassIcon)
 		return; // Уже загружены
 
-	TCHAR szIconPath[MAX_PATH] = {0};
-	lstrcpyW(szIconPath, ms_ConEmuExe);
-	TCHAR *lpszExt = _tcsrchr(szIconPath, _T('.'));
+	wchar_t *lpszExt = NULL;
+	wchar_t szIconPath[MAX_PATH] = {};
 
-	if (!lpszExt)
+	if (gpConEmu->mps_IconPath)
 	{
-		szIconPath[0] = 0;
+		if (FileExists(gpConEmu->mps_IconPath))
+		{
+			wcscpy_c(szIconPath, gpConEmu->mps_IconPath);
+		}
+		else
+		{
+			wchar_t* pszFilePart;
+			DWORD n = SearchPath(NULL, gpConEmu->mps_IconPath, NULL, countof(szIconPath), szIconPath, &pszFilePart);
+			if (!n || (n >= countof(szIconPath)))
+				szIconPath[0] = 0;
+		}
 	}
 	else
 	{
-		_tcscpy(lpszExt, _T(".ico"));
-		DWORD dwAttr = GetFileAttributes(szIconPath);
+		lstrcpyW(szIconPath, ms_ConEmuExe);
+		lpszExt = (wchar_t*)PointToExt(szIconPath);
 
-		if (dwAttr==(DWORD)-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
-			szIconPath[0]=0;
+		if (!lpszExt)
+		{
+			szIconPath[0] = 0;
+		}
+		else
+		{
+			_tcscpy(lpszExt, _T(".ico"));
+			if (!FileExists(szIconPath))
+				szIconPath[0]=0;
+		}
 	}
 
 	if (szIconPath[0])
 	{
-		hClassIcon = (HICON)LoadImage(0, szIconPath, IMAGE_ICON,
-		                              GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
-		hClassIconSm = (HICON)LoadImage(0, szIconPath, IMAGE_ICON,
-		                                GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
+		lpszExt = (wchar_t*)PointToExt(szIconPath);
+
+		if (lpszExt && (lstrcmpi(lpszExt, L".ico") == 0))
+		{
+			hClassIcon = (HICON)LoadImage(0, szIconPath, IMAGE_ICON,
+			                              GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
+			hClassIconSm = (HICON)LoadImage(0, szIconPath, IMAGE_ICON,
+			                                GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
+        }
+        else
+        {
+        	ExtractIconEx(szIconPath, 0, &hClassIcon, &hClassIconSm, 1);
+        }
 	}
 
 	if (!hClassIcon)
@@ -8877,6 +8927,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			OnDesktopMode();
 
 		SetWindowMode(WindowMode);
+
 		PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
 
 		if (!mh_RightClickingBmp)
@@ -9076,9 +9127,16 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		//SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
 		
 		// Если фокус был у нас - вернуть его (на всякий случай, вдруг RealConsole какая забрала
-		if (hCurForeground == ghWnd)
+		if ((hCurForeground == ghWnd) && !WindowStartMinimized)
 		{
 			apiSetForegroundWindow(ghWnd);
+		}
+
+		if (WindowStartMinimized)
+		{
+			if (IsWindowVisible(ghWnd) && !isIconic())
+				PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+			WindowStartMinimized = false;
 		}
 
 		//RegisterHotKeys();
@@ -12364,6 +12422,9 @@ void CConEmuMain::OnDesktopMode()
 {
 	if (!this) return;
 
+	if (WindowStartMinimized || ForceMinimizeToTray)
+		return;
+
 #ifndef CHILD_DESK_MODE
 	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
 	DWORD dwNewStyleEx = dwStyleEx;
@@ -12492,25 +12553,182 @@ void CConEmuMain::OnDesktopMode()
 #endif
 }
 
+INT_PTR CConEmuMain::aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	static struct {LPCWSTR Title; LPCWSTR Text;} Pages[] =
+	{
+		{L"About", pAbout},
+		{L"Command line", pCmdLine},
+		{L"Contributors", pAboutContributors},
+		{L"License", pAboutLicense},
+	};
+
+	switch (messg)
+	{
+		case WM_INITDIALOG:
+		{
+			gpConEmu->mh_AboutDlg = hWnd2;
+
+			WCHAR szTitle[255];
+			LPCWSTR pszBits = WIN3264TEST(L"x86",L"x64");
+			LPCWSTR pszDebug = L"";
+			#ifdef _DEBUG
+			pszDebug = L"[DEBUG] ";
+			#endif
+			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%02u%02u%02u%s %s%s)", 
+				(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), pszDebug, pszBits);
+			SetWindowText(hWnd2, szTitle);
+
+			if (hClassIcon)
+			{
+				SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+				SendMessage(hWnd2, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+				SetClassLongPtr(hWnd2, GCLP_HICON, (LONG_PTR)hClassIcon);
+			}
+
+			SetDlgItemText(hWnd2, stConEmuAbout, pAboutTitle);
+			SetDlgItemText(hWnd2, stConEmuUrl, gsHomePage);
+
+			HWND hTab = GetDlgItem(hWnd2, tbAboutTabs);
+
+			for (size_t i = 0; i < countof(Pages); i++)
+			{
+				TCITEM tie = {};
+				tie.mask = TCIF_TEXT;
+				tie.pszText = (LPWSTR)Pages[i].Title;
+				TabCtrl_InsertItem(hTab, i, &tie);
+			}
+
+			SetDlgItemText(hWnd2, tAboutText, Pages[0].Text);
+
+			break;
+		}
+
+		case WM_CTLCOLORSTATIC:
+			if (GetDlgItem(hWnd2, stConEmuUrl) == (HWND)lParam)
+			{
+				SetTextColor((HDC)wParam, GetSysColor(COLOR_HOTLIGHT));
+				HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
+				SetBkMode((HDC)wParam, TRANSPARENT);
+				return (INT_PTR)hBrush;
+			}
+			else
+			{
+				SetTextColor((HDC)wParam, GetSysColor(COLOR_WINDOWTEXT));
+				HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
+				SetBkMode((HDC)wParam, TRANSPARENT);
+				return (INT_PTR)hBrush;
+			}
+			break;
+
+		case WM_SETCURSOR:
+			{
+				if (((HWND)wParam) == GetDlgItem(hWnd2, stConEmuUrl))
+				{
+					SetCursor(LoadCursor(NULL, IDC_HAND));
+					SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, TRUE);
+					return TRUE;
+				}
+				return FALSE;
+			}
+			break;
+
+		case WM_COMMAND:
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				switch (LOWORD(wParam))
+				{
+					case IDOK:
+					case IDCANCEL:
+					case IDCLOSE:
+						aboutProc(hWnd2, WM_CLOSE, 0, 0);
+						return 1;
+					case stConEmuUrl:
+						gpConEmu->OnInfo_HomePage();
+						return 1;
+				}
+			}
+			break;
+
+		case WM_NOTIFY:
+		{
+			LPNMHDR nmhdr = (LPNMHDR)lParam;
+			if ((nmhdr->code == TCN_SELCHANGE) && (nmhdr->idFrom == tbAboutTabs))
+			{
+				int iPage = TabCtrl_GetCurSel(nmhdr->hwndFrom);
+				if ((iPage >= 0) && (iPage < countof(Pages)))
+					SetDlgItemText(hWnd2, tAboutText, Pages[iPage].Text);
+			}
+			break;
+		}
+
+		case WM_CLOSE:
+			//if (ghWnd == NULL)
+			EndDialog(hWnd2, IDOK);
+			//else
+			//	DestroyWindow(hWnd2);
+			break;
+
+		case WM_DESTROY:
+			gpConEmu->mh_AboutDlg = NULL;
+			break;
+
+		default:
+			return FALSE;
+	}
+
+	return FALSE;
+}
+
 void CConEmuMain::OnInfo_About()
 {
-	WCHAR szTitle[255];
-	LPCWSTR pszBits = WIN3264TEST(L"x86",L"x64");
-	LPCWSTR pszDebug = L"";
-	#ifdef _DEBUG
-	pszDebug = L"[DEBUG] ";
-	#endif
+	InitCommCtrls();
 
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%02u%02u%02u%s %s%s)", 
-		(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), pszDebug, pszBits);
+	bool bOk = false;
 
-	BOOL b = gbDontEnable; gbDontEnable = TRUE;
-	MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance, pHelp, szTitle,
-		MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), NULL, NULL, LANG_NEUTRAL
-	};
-	MessageBoxIndirectW(&mb);
-	//MessageBoxW(ghWnd, pHelp, szTitle, MB_ICONQUESTION);
-	gbDontEnable = b;
+	//if (ghWnd)
+	//{
+	//	HWND hAbout = NULL;
+	//	if (mh_AboutDlg && IsWindow(mh_AboutDlg))
+	//	{
+	//		hAbout = mh_AboutDlg;
+	//		apiShowWindow(hAbout, SW_SHOWNORMAL);
+	//		SetFocus(hAbout);
+	//	}
+	//	else
+	//	{
+	//		hAbout = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), NULL, aboutProc);
+	//	}
+	//	bOk = (hAbout != NULL);
+	//}
+	//else
+	{
+		BOOL b = gbDontEnable; gbDontEnable = TRUE;
+		INT_PTR iRc = DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), ghWnd, aboutProc);
+		gbDontEnable = b;
+		bOk = (iRc != 0 && iRc != -1);
+	}
+
+	if (!bOk)
+	{
+		WCHAR szTitle[255];
+		LPCWSTR pszBits = WIN3264TEST(L"x86",L"x64");
+		LPCWSTR pszDebug = L"";
+		#ifdef _DEBUG
+		pszDebug = L"[DEBUG] ";
+		#endif
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%02u%02u%02u%s %s%s)", 
+			(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), pszDebug, pszBits);
+		BOOL b = gbDontEnable; gbDontEnable = TRUE;
+		MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance,
+			pAbout,
+			szTitle,
+			MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), NULL, NULL, LANG_NEUTRAL
+		};
+		MessageBoxIndirectW(&mb);
+		//MessageBoxW(ghWnd, pHelp, szTitle, MB_ICONQUESTION);
+		gbDontEnable = b;
+	}
 }
 
 void CConEmuMain::OnInfo_Help()
@@ -12929,7 +13147,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					apiSetForegroundWindow(ghWnd);
 			}
 
-			if (gpSet->isMinToTray)
+			if (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
 			{
 				Icon.HideWindowToTray();
 				break;
