@@ -1281,10 +1281,12 @@ struct CESERVER_REQ_STARTSTOP
 	DWORD nForceBufferHeight;
 	// Только при аттаче. Может быть NULL-ом
 	u64   hServerProcessHandle;
+	// При завершении
+	DWORD nPrevAltServerPID;
 	// Для информации и удобства (GetModuleFileName(0))
 	wchar_t sModuleName[MAX_PATH+1];
 	// Reserved
-	DWORD nReserved0[19];
+	DWORD nReserved0[18];
 	// Create background tab, when attaching new console
 	BOOL bRunInBackgroundTab;
 	// CmdLine
