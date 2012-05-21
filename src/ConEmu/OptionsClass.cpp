@@ -946,7 +946,9 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 		LogFont.lfWidth = mn_FontWidth = gpSet->FontSizeX;
 	}
 
-	LogFont.lfQuality = (anQuality!=-1) ? ANTIALIASED_QUALITY : gpSet->mn_AntiAlias;
+	_ASSERTE(anQuality==-1 || anQuality==NONANTIALIASED_QUALITY || anQuality==ANTIALIASED_QUALITY || anQuality==CLEARTYPE_NATURAL_QUALITY);
+
+	LogFont.lfQuality = (anQuality!=-1) ? anQuality : gpSet->mn_AntiAlias;
 	LogFont.lfWeight = gpSet->isBold ? FW_BOLD : FW_NORMAL;
 	LogFont.lfCharSet = gpSet->mn_LoadFontCharSet;
 	LogFont.lfItalic = gpSet->isItalic;

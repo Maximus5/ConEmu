@@ -28,11 +28,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#ifdef _DEBUG
-	#define HOOK_ANSI_SEQUENCES
-#else
-	#undef HOOK_ANSI_SEQUENCES
-#endif
+//#ifdef _DEBUG
+//#define HOOK_ANSI_SEQUENCES
+//#else
+//	#undef HOOK_ANSI_SEQUENCES
+//#endif
 
 #ifndef ORIGINALSHOWCALL
 	#ifdef _DEBUG
@@ -129,6 +129,7 @@ struct HookItem
 	const void*     NewAddress;
 	const char*     Name;
 	const wchar_t*  DllName;
+	char DllNameA[32];
 	
 	//HookExeOnly     ExeOnly;    // Some functions must be separated for Far.exe and Plugins
 	//const wchar_t*  ModuleOnly; // others - only for the one module.

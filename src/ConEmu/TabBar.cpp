@@ -1469,15 +1469,16 @@ void TabBarClass::OnMouse(int message, int x, int y)
 
 			if (pVCon)
 			{
+				CVConGuard guard(pVCon);
 				BOOL lbCtrlPressed = isPressed(VK_CONTROL);
 
 				if (message == WM_RBUTTONUP && !lbCtrlPressed)
 				{
-					pVCon->ShowPopupMenu(ptCur);
+					guard->ShowPopupMenu(ptCur);
 				}
 				else
 				{
-					pVCon->RCon()->CloseTab();
+					guard->RCon()->CloseTab();
 					//if (pVCon->RCon()->GetFarPID())
 					//{
 					//	pVCon->RCon()->PostMacro(gpSet->sTabCloseMacro ? gpSet->sTabCloseMacro : L"F10");
@@ -1490,6 +1491,9 @@ void TabBarClass::OnMouse(int message, int x, int y)
 					//	//gpConEmu->Recreate(TRUE, TRUE);
 					//}
 				}
+
+				// борьба с оптимизатором в релизе
+				gpConEmu->isValid(pVCon);
 			}
 		}
 	}
@@ -2591,15 +2595,24 @@ void TabBarClass::OnNewConPopup()
 		m_CmdPopupMenu[nLastID].nCmd = nLastID+1;
 		m_CmdPopupMenu[nLastID].pszCmd = pGrp->pszCommands;
 
-		int nMaxShort = countof(m_CmdPopupMenu[nLastID].szShort);
+		if (nGroup < 9)
+			_wsprintf(m_CmdPopupMenu[nLastID].szShort, SKIPLEN(countof(m_CmdPopupMenu[nLastID].szShort)) L"&%i: ", nGroup+1);
+		else if (nGroup == 9)
+			wcscpy_c(m_CmdPopupMenu[nLastID].szShort, L"1&0: ");
+		else
+			m_CmdPopupMenu[nLastID].szShort[0] = 0;
+
+		int nCurLen = _tcslen(m_CmdPopupMenu[nLastID].szShort);
+
+		int nMaxShort = countof(m_CmdPopupMenu[nLastID].szShort); // wchar_t szShort[32];
 		int nLen = _tcslen(pGrp->pszName);
-		if (nLen < nMaxShort)
+		if ((nLen+nCurLen) < nMaxShort)
 		{
-			lstrcpyn(m_CmdPopupMenu[nLastID].szShort, pGrp->pszName, countof(m_CmdPopupMenu[nLastID].szShort));
+			lstrcpyn(m_CmdPopupMenu[nLastID].szShort+nCurLen, pGrp->pszName, countof(m_CmdPopupMenu[nLastID].szShort)-nCurLen);
 		}
 		else
 		{
-			lstrcpyn(m_CmdPopupMenu[nLastID].szShort, pGrp->pszName, countof(m_CmdPopupMenu[nLastID].szShort)-1);
+			lstrcpyn(m_CmdPopupMenu[nLastID].szShort+nCurLen, pGrp->pszName, countof(m_CmdPopupMenu[nLastID].szShort)-1-nCurLen);
 			m_CmdPopupMenu[nLastID].szShort[nMaxShort-2] = /*Е*/L'\x2026';
 			m_CmdPopupMenu[nLastID].szShort[nMaxShort-1] = 0;
 		}
@@ -2678,8 +2691,19 @@ void TabBarClass::OnNewConPopup()
 	}
 
 	RECT rcBtnRect = {0};
-	SendMessage(mh_Toolbar, TB_GETRECT, TID_CREATE_CON, (LPARAM)&rcBtnRect);
-	MapWindowPoints(mh_Toolbar, NULL, (LPPOINT)&rcBtnRect, 2);
+	if (IsTabsShown())
+	{
+		SendMessage(mh_Toolbar, TB_GETRECT, TID_CREATE_CON, (LPARAM)&rcBtnRect);
+		MapWindowPoints(mh_Toolbar, NULL, (LPPOINT)&rcBtnRect, 2);
+	}
+	else
+	{
+		GetClientRect(ghWnd, &rcBtnRect);
+		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcBtnRect, 2);
+		rcBtnRect.left = rcBtnRect.right;
+		rcBtnRect.bottom = rcBtnRect.top;
+	}
+
 	mb_InNewConPopup = true;
 	int nId = gpConEmu->trackPopupMenu(tmp_Cmd, hPopup, TPM_RIGHTALIGN|TPM_TOPALIGN|TPM_RETURNCMD/*|TPM_NONOTIFY*/,
 	                         rcBtnRect.right,rcBtnRect.bottom, 0, ghWnd, NULL);

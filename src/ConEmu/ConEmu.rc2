@@ -204,6 +204,7 @@ BEGIN
     vkMultiCmd              "Create new «cmd.exe» console"
     vkMultiNew              "Create new console"
     vkMultiNewShift         "Create new console (alter «Create confirmation»)"
+    vkMultiNewPopup         "Show create new console popup menu"
     vkMultiNext             "Switch next console"
     vkMultiNextShift        "Switch previous console"
     vkMultiRecreate         "Recreate active console"

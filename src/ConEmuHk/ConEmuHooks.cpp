@@ -243,11 +243,18 @@ int WINAPI OnStretchDIBits(HDC hdc, int XDest, int YDest, int nDestWidth, int nD
 BOOL WINAPI OnBitBlt(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, DWORD dwRop);
 BOOL WINAPI OnStretchBlt(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest, HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc, DWORD dwRop);
 
-#ifdef HOOK_ANSI_SEQUENCES
+//#ifdef HOOK_ANSI_SEQUENCES
 BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 BOOL WINAPI OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
+BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
+BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
+BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
+#ifdef _DEBUG
+BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode);
 #endif
+//#endif
 
 
 bool InitHooksCommon()
@@ -274,11 +281,26 @@ bool InitHooksCommon()
 		{(void*)OnWriteConsoleInputA,	"WriteConsoleInputA",	kernel32},
 		{(void*)OnWriteConsoleInputW,	"WriteConsoleInputW",	kernel32},
 		/* ANSI Escape Sequences SUPPORT */
-		#ifdef HOOK_ANSI_SEQUENCES
+		//#ifdef HOOK_ANSI_SEQUENCES
 		{(void*)OnWriteFile,			"WriteFile",  			kernel32},
 		{(void*)OnWriteConsoleA,		"WriteConsoleA",  		kernel32},
 		{(void*)OnWriteConsoleW,		"WriteConsoleW",  		kernel32},
+		{(void*)OnScrollConsoleScreenBufferA,
+										"ScrollConsoleScreenBufferA",
+																kernel32},
+		{(void*)OnScrollConsoleScreenBufferW,
+										"ScrollConsoleScreenBufferW",
+																kernel32},
+		{(void*)OnWriteConsoleOutputCharacterA,
+										"WriteConsoleOutputCharacterA",
+																kernel32},
+		{(void*)OnWriteConsoleOutputCharacterW,
+										"WriteConsoleOutputCharacterW",
+																kernel32},
+		#ifdef _DEBUG
+		{(void*)OnSetConsoleMode,		"SetConsoleMode",  		kernel32},
 		#endif
+		//#endif
 		/* Others console functions */
 		{(void*)OnSetConsoleTextAttribute, "SetConsoleTextAttribute", kernel32},
 		{(void*)OnSetConsoleKeyShortcuts, "SetConsoleKeyShortcuts", kernel32},

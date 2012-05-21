@@ -143,6 +143,7 @@ CConEmuMain::CConEmuMain()
 	mn_MainThreadId = GetCurrentThreadId();
 	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
 	WindowMode = rNormal; WindowStartMinimized = false; ForceMinimizeToTray = false;
+	DisableAutoUpdate = false;
 	mb_PassSysCommand = false; change2WindowMode = -1;
 	mb_isFullScreen = false;
 	mb_ExternalHidden = FALSE;
@@ -3138,13 +3139,14 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 
 BOOL CConEmuMain::ShowWindow(int anCmdShow)
 {
-#ifdef _DEBUG
+#if 0
 	STARTUPINFO si = {sizeof(si)};
 	GetStartupInfo(&si);
 #endif
 
 	BOOL lbRc = apiShowWindow(ghWnd, anCmdShow);
 
+#if 0
 	if (anCmdShow == SW_SHOWNORMAL)
 	{
 		if (((gpSet->isHideCaption || gpSet->isHideCaptionAlways()) && isZoomed()))
@@ -3154,6 +3156,7 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow)
 			lbRc = apiShowWindow(ghWnd, anCmdShow);
 		}
 	}
+#endif
 
 	return lbRc;
 }
@@ -8910,6 +8913,9 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource)
 
 void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 {
+	// First ShowWindow forced to use nCmdShow. This may be weird...
+	SkipOneShowWindow();
+
 	if (!abRecieved)
 	{
 		//if (gpConEmu->WindowMode == rFullScreen || gpConEmu->WindowMode == rMaximized) {
@@ -8960,10 +8966,12 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 	{
 		HWND hCurForeground = GetForegroundWindow();
 
-		HRESULT hr = S_OK;
-		hr = OleInitialize(NULL);  // как бы попробовать включать Ole только во врем€ драга. кажетс€ что из-за него глючит переключалка €зыка
+		//-- ѕеренесено в Taskbar_Init();
+		//HRESULT hr = S_OK;
+		//hr = OleInitialize(NULL);  // как бы попробовать включать Ole только во врем€ драга. кажетс€ что из-за него глючит переключалка €зыка
 		//CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
+		// ћожет быть уже вызван в SkipOneShowWindow, а может и нет
 		Taskbar_Init();
 
 		if (gpSet->IsHotkey(vkMinimizeRestore))
@@ -8972,7 +8980,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		RegisterHotKeys();
 
 		//TODO: ¬озможно, стоит отложить запуск секунд на 5, чтобы не мешать инициализации?
-		if (gpSet->UpdSet.isUpdateCheckOnStartup)
+		if (gpSet->UpdSet.isUpdateCheckOnStartup && !DisableAutoUpdate)
 			CheckUpdates(FALSE); // Ќе показывать сообщение "You are using latest available version"
 
 		//SetWindowRgn(ghWnd, CreateWindowRgn(), TRUE);
@@ -10576,15 +10584,17 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayout
 	return 0;
 }
 
-bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam)
+bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam, bool& isPrivate)
 {
+	isPrivate = false;
+
 	// ƒл€ этих сообщений, lParam - relative to the upper-left corner of the screen.
 	if (messg == WM_MOUSEWHEEL || messg == WM_MOUSEHWHEEL)
 		ScreenToClient(ghWnd, &ptCurClient);
 	else // ƒл€ остальных lParam содержит клиентские координаты
 		ClientToScreen(ghWnd, &ptCurScreen);
 
-	if (mb_MouseCaptured)
+	if (mb_MouseCaptured || (messg == WM_LBUTTONDOWN))
 	{
 		HWND hChild = ::ChildWindowFromPointEx(ghWnd, ptCurClient, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
 		if (hChild && (hChild != ghWnd)) // Ёто должна быть VCon
@@ -10600,20 +10610,26 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 			HWND hPanelView = ::ChildWindowFromPointEx(hChild, ptVConCoord, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
 			if (hPanelView && (hPanelView != hChild))
 			{
-				#ifdef _DEBUG
-				GetClassName(hPanelView, szClass, countof(szClass));
-				_ASSERTE(lstrcmp(szClass, ConEmuPanelViewClass)==0 && "This must be Thumbnail or Tile window");
-				#endif
+				// LClick пропускать в консоль нельз€, чтобы не возникало глюков с позиционированием по клику...
+				isPrivate = (messg == WM_LBUTTONDOWN);
 
-				::MapWindowPoints(hChild, hPanelView, &ptVConCoord, 1);
-
-				DWORD_PTR lRc = (DWORD_PTR)-1;
-				if (SendMessageTimeout(hPanelView, mn_MsgPanelViewMapCoord, MAKELPARAM(ptVConCoord.x,ptVConCoord.y), 0, SMTO_NORMAL, PNLVIEWMAPCOORD_TIMEOUT, &lRc) && (lRc != (DWORD_PTR)-1))
+				if (mb_MouseCaptured)
 				{
-					ptCurClient.x = LOWORD(lRc);
-					ptCurClient.y = HIWORD(lRc);
-					ptCurScreen = ptCurClient;
-					ClientToScreen(ghWnd, &ptCurScreen);
+					#ifdef _DEBUG
+					GetClassName(hPanelView, szClass, countof(szClass));
+					_ASSERTE(lstrcmp(szClass, ConEmuPanelViewClass)==0 && "This must be Thumbnail or Tile window");
+					#endif
+
+					::MapWindowPoints(hChild, hPanelView, &ptVConCoord, 1);
+
+					DWORD_PTR lRc = (DWORD_PTR)-1;
+					if (SendMessageTimeout(hPanelView, mn_MsgPanelViewMapCoord, MAKELPARAM(ptVConCoord.x,ptVConCoord.y), 0, SMTO_NORMAL, PNLVIEWMAPCOORD_TIMEOUT, &lRc) && (lRc != (DWORD_PTR)-1))
+					{
+						ptCurClient.x = LOWORD(lRc);
+						ptCurClient.y = HIWORD(lRc);
+						ptCurScreen = ptCurClient;
+						ClientToScreen(ghWnd, &ptCurScreen);
+					}
 				}
 			}
 		}
@@ -10683,7 +10699,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	POINT ptCurScreen = ptCurClient;
 
 	//  оррекци€ координат или пропуск сообщений
-	bool bSkipEvent = PatchMouseEvent(messg, ptCurClient, ptCurScreen, wParam);
+	bool isPrivate = false;
+	bool bSkipEvent = PatchMouseEvent(messg, ptCurClient, ptCurScreen, wParam, isPrivate);
 
 #ifdef _DEBUG
 	wchar_t szDbg[128];
@@ -11039,9 +11056,13 @@ fin:
 	// ptCurClient уже преобразован в клиентские (относительно hView) координаты
 	mouse.lastMMW=wParam; mouse.lastMML=MAKELPARAM(ptCurClient.x, ptCurClient.y);
 	
-	// “еперь осталось послать событие в консоль
-	if (pRCon)
-		pRCon->OnMouse(messg, wParam, ptCurClient.x, ptCurClient.y);
+	// LClick из PanelViews пропускать в консоль нельз€, чтобы не возникало глюков с позиционированием по клику...
+	if (!isPrivate)
+	{
+		// “еперь осталось послать событие в консоль
+		if (pRCon)
+			pRCon->OnMouse(messg, wParam, ptCurClient.x, ptCurClient.y);
+	}
 
 	return 0;
 }

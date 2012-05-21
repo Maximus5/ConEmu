@@ -281,7 +281,7 @@ void DosBoxHelp();
 void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
 bool IsMainServerPID(DWORD nPID);
 
-bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer);
+bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw = false);
 
 int CreateMapHeader();
 void CloseMapHeader();
@@ -358,7 +358,8 @@ struct SrvInfo
 {
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
 	HANDLE hMainServer; DWORD dwMainServerPID;
-	HANDLE hAltServer; DWORD dwAltServerPID;
+	HANDLE hAltServer; DWORD dwAltServerPID; DWORD dwPrevAltServerPID;
+	HANDLE hFreezeRefreshThread;
 	HWND   hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
 	BOOL   bDebuggerActive, bDebuggerRequestDump; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
 	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)

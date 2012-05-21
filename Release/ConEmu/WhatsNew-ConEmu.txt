@@ -10,11 +10,20 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[*] ConEmu is mentioned in Wikipedia: http://en.wikipedia.org/wiki/Comparison_of_file_managers#cite_ref-20
+[%] Issue 551: Updater, Failure to create a valid unpack command line for downloaded 7z package.
 [+] Новые ключи ConEmu.exe
     /min - запустить свернутым;
     /tsa - сворачивать в TSA (чтобы свернуть в TSA при запуске используйте вместе с /min);
-    /icon "<file>" - откуда брать иконку, <file> может быть exe, dll или ico.
+    /icon "<file>" - откуда брать иконку, <file> может быть exe, dll или ico;
+    /noupdate - отключить автоматическую проверку обновления при старте.
 [*] Обновлен диалог 'About'.
+[+] New shortcut 'Win+N': Show create new console popup menu.
+[%] Исключение при уменьшении размера шрифта в Maximized режиме.
+[+] Добавлены три системных палитры: Standard VGA, Terminal.app, xterm.
+[%] Правки в Injects.
+[+] Ansi.
+[%] Fast configuration dialog incorrect size, when ConEmu starts maximized (shortcut property).
 
 
 2012.05.15
@@ -27,7 +36,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
     Если консолей меньше 11-и, все как раньше.
     Если больше - то допускаются однокнопочные и двухкнопочные активации. Например:
     «Win(down) 1 5» - активирует 15-ю консоль;
-    «Win(down) 1 Win(up)» - активиует 1-ю консоль.
+    «Win(down) 1 Win(up)» - активирует 1-ю консоль.
 [%] Еще раз 'Sleep in background' bugfix. 
 [%] Issue 541: В режиме эскизов некорректно выделяются файлы правой кнопкой мыши.
 

@@ -33,6 +33,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 BOOL CreateMainWindow();
 BOOL CheckCreateAppWindow();
 
+void SkipOneShowWindow();
+
 int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine);
 
 #ifdef MSGLOGGER

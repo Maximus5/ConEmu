@@ -27,62 +27,58 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <windows.h>
-#include "defines.h"
-#include "ConsoleAnnotation.h"
-#include "ConEmuColors3.h"
-#include "common.hpp"
-#include "ConEmuCheck.h"
-#include "UnicodeChars.h"
-#include "version.h"
+#include "../common/defines.h"
+#include "../common/common.hpp"
+#include "../common/ConEmuCheck.h"
+#include "../common/UnicodeChars.h"
+#include "../ConEmu/version.h"
 #include "ExtConsole.h"
-#include "resource.h"
+#include "../common/ConEmuColors3.h"
 
 #define MSG_TITLE "ConEmu writer"
 #define MSG_INVALID_CONEMU_VER "Unsupported ConEmu version detected!\nRequired version: " CONEMUVERS "\nConsole writer'll works in 4bit mode"
 #define MSG_TRUEMOD_DISABLED   "«Colorer TrueMod support» is not checked in the ConEmu settings\nConsole writer'll works in 4bit mode"
 #define MSG_NO_TRUEMOD_BUFFER  "TrueMod support not enabled in the ConEmu settings\nConsole writer'll works in 4bit mode"
 
+TODO("Отвязаться от координат видимой области");
 
-static HWND    ghExtConEmuWndDC = NULL; // VirtualCon. инициализируется в CheckBuffers()
+extern HMODULE ghOurModule; // Must be defined and initialized in DllMain
 
+HWND ghExtConEmuWndDC = NULL; // VirtualCon. инициализируется в ExtCheckBuffers()
 
-///* extern для MAssert, Здесь НЕ используется */
-///* */       HWND ghConEmuWnd = NULL;      /* */
-///* extern для MAssert, Здесь НЕ используется */
+extern HWND ghConWnd;      // Console window
+extern HWND ghConEmuWnd;   // Root! window
+extern HWND ghConEmuWndDC; // ConEmu DC window
 
-#ifdef USE_COMMIT_EVENT
-HWND    ghRealConWnd = NULL;
-bool    gbBatchStarted = false;
-HANDLE  ghBatchEvent = NULL;
-DWORD   gnBatchRegPID = 0;
-#endif
 
 CESERVER_CONSOLE_MAPPING_HDR SrvMapping = {};
 
 AnnotationHeader* gpTrueColor = NULL;
 HANDLE ghTrueColor = NULL;
-BOOL CheckBuffers(bool abWrite = false);
-void CloseBuffers();
 
 bool gbInitialized = false;
-bool gbFarBufferMode = false; // true, если Far запущен с ключом "/w"
+//bool gbFarBufferMode = false; // true, если Far запущен с ключом "/w"
+
+WORD defConForeIdx = 7;
+WORD defConBackIdx = 0;
+
+typedef BOOL (WINAPI* WriteConsoleW_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 
 struct ExtCurrentAttr
 {
 	bool  WasSet;
 	bool  Reserved1;
+
 	WORD  CONColor;
-	
-	#ifdef _WIN64
-	DWORD Reserved2;
-	#endif
+	WORD  CONForeIdx;
+	WORD  CONBackIdx;
 
 	ConEmuColor CEColor;
 	AnnotationInfo AIColor;
 } gExtCurrentAttr;
 
 
-bool isCharSpace(wchar_t inChar)
+static bool isCharSpace(wchar_t inChar)
 {
 	// Сюда пихаем все символы, которые можно отрисовать пустым фоном (как обычный пробел)
 	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0 
@@ -92,7 +88,7 @@ bool isCharSpace(wchar_t inChar)
 }
 
 
-BOOL GetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWork)
+static BOOL ExtGetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWork)
 {
 	_ASSERTE(gbInitialized);
 	
@@ -100,7 +96,7 @@ BOOL GetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWo
 	if (!GetConsoleScreenBufferInfo(h, &csbi))
 		return FALSE;
 	
-	if (gbFarBufferMode)
+	//if (gbFarBufferMode)
 	{
 		// Фар занимает нижнюю часть консоли. Прилеплен к левому краю
 		SHORT nWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
@@ -110,13 +106,13 @@ BOOL GetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWo
 		srWork.Top = csbi.dwSize.Y - nHeight;
 		srWork.Bottom = csbi.dwSize.Y - 1;
 	}
-	else
+	/*else
 	{
 		// Фар занимает все поле консоли
 		srWork.Left = srWork.Top = 0;
 		srWork.Right = csbi.dwSize.X - 1;
 		srWork.Bottom = csbi.dwSize.Y - 1;
-	}
+	}*/
 	
 	if (srWork.Left < 0 || srWork.Top < 0 || srWork.Left > srWork.Right || srWork.Top > srWork.Bottom)
 	{
@@ -127,7 +123,7 @@ BOOL GetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWo
 	return TRUE;
 }
 
-BOOL CheckBuffers(bool abWrite /*= false*/)
+static BOOL ExtCheckBuffers()
 {
 	if (!gbInitialized)
 	{
@@ -138,38 +134,26 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 			SHORT nWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
 			SHORT nHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 			_ASSERTE((nWidth <= csbi.dwSize.X) && (nHeight <= csbi.dwSize.Y));
-			gbFarBufferMode = (nWidth < csbi.dwSize.X) || (nHeight < csbi.dwSize.Y);
+			//gbFarBufferMode = (nWidth < csbi.dwSize.X) || (nHeight < csbi.dwSize.Y);
 			gbInitialized = true;
 		}
 	}
 
-	//TODO: Проверить, не изменился ли HWND консоли?
-	//111101 - зовем именно GetConsoleWindow. Если она перехвачена - вернет как раз то окно, которое нам требуется
-	HWND hCon = /*GetConsoleWindow(); */ GetConEmuHWND(0);
-	if (!hCon)
+	if (!ghConEmuWndDC)
 	{
-		CloseBuffers();
+		ExtCloseBuffers();
 		SetLastError(E_HANDLE);
 		return FALSE;
 	}
-	if (hCon != ghExtConEmuWndDC)
+
+	if (ghConEmuWndDC != ghExtConEmuWndDC)
 	{
-		#ifdef _DEBUG
-		// Функция GetConsoleWindow должна быть перехвачена в ConEmuHk, проверим
-		ghExtConEmuWndDC = GetConsoleWindow();
-		_ASSERTE(ghExtConEmuWndDC == hCon);
-		#endif
+		ghExtConEmuWndDC = ghConEmuWndDC;
+		ExtCloseBuffers();
 
-		ghExtConEmuWndDC = hCon;
-		CloseBuffers();
-
-		#ifdef USE_COMMIT_EVENT
-		ghRealConWnd = GetConEmuHWND(2);
-		#endif
-		
 		//TODO: Пока работаем "по-старому", через буфер TrueColor. Переделать, он не оптимален
 		wchar_t szMapName[128];
-		wsprintf(szMapName, AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)hCon); //-V205
+		wsprintf(szMapName, AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)ghExtConEmuWndDC); //-V205
 		ghTrueColor = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName);
 		if (!ghTrueColor)
 		{
@@ -182,69 +166,19 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 			ghTrueColor = NULL;
 			return FALSE;
 		}
-		
-		#ifdef USE_COMMIT_EVENT
-		if (!LoadSrvMapping(ghRealConWnd, SrvMapping))
-		{
-			CloseBuffers();
-			SetLastError(E_HANDLE);
-			return FALSE;
-		}
-		#endif
 	}
 	if (gpTrueColor)
 	{
 		if (!gpTrueColor->locked)
 		{
-			//TODO: Сбросить флаги валидности ячеек?
 			gpTrueColor->locked = TRUE;
 		}
-		
-		#ifdef USE_COMMIT_EVENT
-		if (!gbBatchStarted)
-		{
-			gbBatchStarted = true;
-			
-			if (!ghBatchEvent)
-				ghBatchEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-				
-			if (ghBatchEvent)
-			{
-				ResetEvent(ghBatchEvent);
-				
-				// Если еще не регистрировались...
-				if (!gnBatchRegPID || gnBatchRegPID != SrvMapping.nServerPID)
-				{
-					gnBatchRegPID = SrvMapping.nServerPID;
-					CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_REGEXTCONSOLE, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_REGEXTCON));
-					if (pIn)
-					{
-						HANDLE hServer = OpenProcess(PROCESS_DUP_HANDLE, FALSE, gnBatchRegPID);
-						if (hServer)
-						{
-							HANDLE hDupEvent = NULL;
-							if (DuplicateHandle(GetCurrentProcess(), ghBatchEvent, hServer, &hDupEvent, 0, FALSE, DUPLICATE_SAME_ACCESS))
-							{
-								pIn->RegExtCon.hCommitEvent = hDupEvent;
-								CESERVER_REQ* pOut = ExecuteSrvCmd(gnBatchRegPID, pIn, ghRealConWnd);
-								if (pOut)
-									ExecuteFreeResult(pOut);
-							}
-							CloseHandle(hServer);
-						}
-						ExecuteFreeResult(pIn);
-					}
-				}
-				
-			}
-		}
-		#endif
 	}
 	
 	return (gpTrueColor!=NULL);
 }
 
-void CloseBuffers()
+void ExtCloseBuffers()
 {
 	if (gpTrueColor)
 	{
@@ -263,17 +197,29 @@ void CloseBuffers()
 // То, что задаётся командой color в cmd.exe.
 // То, что будет использовано если в консоль просто писать 
 // по printf/std::cout/WriteConsole, без явного указания цвета.
-BOOL WINAPI GetTextAttributes(ConEmuColor* Attributes)
+BOOL ExtGetAttributes(ExtAttributesParm* Info)
 {
-	BOOL lbTrueColor = CheckBuffers();
+	if (!Info)
+	{
+		_ASSERTE(Info!=NULL);
+		SetLastError(E_INVALIDARG);
+		return FALSE;
+	}
+
+	BOOL lbTrueColor = ExtCheckBuffers();
 	UNREFERENCED_PARAMETER(lbTrueColor);
 	
+	HANDLE h = Info->ConsoleOutput;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	SMALL_RECT srWork = {};
-	HANDLE h;
-	if (!GetBufferInfo(h, csbi, srWork))
+	if (!ExtGetBufferInfo(h, csbi, srWork))
 	{
+		_ASSERTE(FALSE && "ExtGetBufferInfo failed in ExtGetAttributes");
 		gExtCurrentAttr.WasSet = false;
+		gExtCurrentAttr.CEColor.Flags = CECF_NONE;
+		gExtCurrentAttr.CEColor.ForegroundColor = defConForeIdx;
+		gExtCurrentAttr.CEColor.BackgroundColor = defConBackIdx;
+		memset(&gExtCurrentAttr.AIColor, 0, sizeof(gExtCurrentAttr.AIColor));
 		return FALSE;
 	}
 
@@ -283,97 +229,66 @@ BOOL WINAPI GetTextAttributes(ConEmuColor* Attributes)
 	TODO("По хорошему, gExtCurrentAttr нада ветвить по разным h");
 	if (gExtCurrentAttr.WasSet && (csbi.wAttributes == gExtCurrentAttr.CONColor))
 	{
-		*Attributes = gExtCurrentAttr.AIColor;
+		Info->Attributes = gExtCurrentAttr.CEColor;
 	}
 	else
 	{
 		gExtCurrentAttr.WasSet = false;
-		Attributes->Flags = FCF_FG_4BIT|FCF_BG_4BIT;
-		Attributes->ForegroundColor = (csbi.wAttributes & 0xF);
-		Attributes->BackgroundColor = (csbi.wAttributes & 0xF0) >> 4;
+		memset(&gExtCurrentAttr.CEColor, 0, sizeof(gExtCurrentAttr.CEColor));
+		memset(&gExtCurrentAttr.AIColor, 0, sizeof(gExtCurrentAttr.AIColor));
+
+		Info->Attributes.Flags = CECF_NONE;
+		Info->Attributes.ForegroundColor = CONFORECOLOR(csbi.wAttributes);
+		Info->Attributes.BackgroundColor = CONBACKCOLOR(csbi.wAttributes);
 	}
 
 	return TRUE;
-	
-	//WORD nDefReadBuf[1024];
-	//WORD *pnReadAttr = NULL;
-	//int nBufWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-	//int nBufHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-	//int nBufCount  = nBufWidth*nBufHeight;
-	//if (nBufWidth <= countof(nDefReadBuf))
-	//	pnReadAttr = nDefReadBuf;
-	//else
-	//	pnReadAttr = (WORD*)calloc(nBufCount,sizeof(*pnReadAttr));
-	//if (!pnReadAttr)
-	//{
-	//	SetLastError(E_OUTOFMEMORY);
-	//	return FALSE;
-	//}
-	//
-	//BOOL lbRc = TRUE;
-	//COORD cr = {csbi.srWindow.Left, csbi.srWindow.Top};
-	//DWORD nRead;
-//
-	//AnnotationInfo* pTrueColor = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
-	//AnnotationInfo* pTrueColorEnd = pTrueColor ? (pTrueColor + gpTrueColor->bufferSize) : NULL;
-//
-	//for (;cr.Y <= csbi.srWindow.Bottom;cr.Y++)
-	//{
-	//	BOOL lbRead = ReadConsoleOutputAttribute(h, pnReadAttr, nBufWidth, cr, &nRead) && (nRead == nBufWidth);
-//
-	//	FarColor clr = {};
-	//	WORD* pn = pnReadAttr;
-	//	for (int X = 0; X < nBufWidth; X++, pn++)
-	//	{
-	//		clr.Flags = 0;
-//
-	//		if (pTrueColor && pTrueColor >= pTrueColorEnd)
-	//		{
-	//			_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd);
-	//			pTrueColor = NULL; // Выделенный буфер оказался недостаточным
-	//		}
-	//		
-	//		if (pTrueColor)
-	//		{
-	//			DWORD Style = pTrueColor->style;
-	//			if (Style & AI_STYLE_BOLD)
-	//				clr.Flags |= FCF_FG_BOLD;
-	//			if (Style & AI_STYLE_ITALIC)
-	//				clr.Flags |= FCF_FG_ITALIC;
-	//			if (Style & AI_STYLE_UNDERLINE)
-	//				clr.Flags |= FCF_FG_UNDERLINE;
-	//		}
-//
-	//		if (pTrueColor && pTrueColor->fg_valid)
-	//		{
-	//			clr.ForegroundColor = pTrueColor->fg_color;
-	//		}
-	//		else
-	//		{
-	//			clr.Flags |= FCF_FG_4BIT;
-	//			clr.ForegroundColor = lbRead ? ((*pn) & 0xF) : 7;
-	//		}
-//
-	//		if (pTrueColor && pTrueColor->bk_valid)
-	//		{
-	//			clr.BackgroundColor = pTrueColor->bk_color;
-	//		}
-	//		else
-	//		{
-	//			clr.Flags |= FCF_BG_4BIT;
-	//			clr.BackgroundColor = lbRead ? (((*pn) & 0xF0) >> 4) : 0;
-	//		}
-//
-	//		//*(Attributes++) = clr; -- <G|S>etTextAttributes должны ожидать указатель на ОДИН FarColor.
-	//		if (pTrueColor)
-	//			pTrueColor++;
-	//	}
-	//}
-	//
-	//if (pnReadAttr != nDefReadBuf)
-	//	free(pnReadAttr);
-	
-	//return lbRc;
+}
+
+static void ExtPrepareColor(const ConEmuColor& Attributes, AnnotationInfo& t, WORD& n)
+{
+	//-- zeroing must be done by calling function
+	//memset(&t, 0, sizeof(t)); n = 0;
+
+	WORD f = 0;
+	CECOLORFLAGS Flags = Attributes.Flags;
+
+	if (Flags & CECF_FG_BOLD)
+		f |= AI_STYLE_BOLD;
+	if (Flags & CECF_FG_ITALIC)
+		f |= AI_STYLE_ITALIC;
+	if (Flags & CECF_FG_UNDERLINE)
+		f |= AI_STYLE_UNDERLINE;
+	t.style = f;
+
+	DWORD nForeColor, nBackColor;
+	if (Flags & CECF_FG_24BIT)
+	{
+		//n |= 0x07;
+		nForeColor = Attributes.ForegroundColor & 0x00FFFFFF;
+		Far3Color::Color2FgIndex(nForeColor, n);
+		t.fg_color = nForeColor;
+		t.fg_valid = TRUE;
+	}
+	else
+	{
+		nForeColor = -1;
+		n |= (WORD)INDEXVALUE(Attributes.ForegroundColor);
+		t.fg_valid = FALSE;
+	}
+
+	if (Flags & CECF_BG_24BIT)
+	{
+		nBackColor = Attributes.BackgroundColor & 0x00FFFFFF;
+		Far3Color::Color2BgIndex(nBackColor, nBackColor==nForeColor, n);
+		t.bk_color = nBackColor;
+		t.bk_valid = TRUE;
+	}
+	else
+	{
+		n |= (WORD)(INDEXVALUE(Attributes.BackgroundColor)<<4);
+		t.bk_valid = FALSE;
+	}
 }
 
 // Это это "цвет по умолчанию".
@@ -381,72 +296,30 @@ BOOL WINAPI GetTextAttributes(ConEmuColor* Attributes)
 // То, что задаётся командой color в cmd.exe.
 // То, что будет использовано если в консоль просто писать 
 // по printf/std::cout/WriteConsole, без явного указания цвета.
-BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
+BOOL ExtSetAttributes(const ExtAttributesParm* Info)
 {
-	if (!Attributes)
+	if (!Info)
 	{
 		// ConEmu internals: сбросить запомненный "атрибут"
 		gExtCurrentAttr.WasSet = false;
 		return TRUE;
 	}
 
-	BOOL lbTrueColor = CheckBuffers();
+	BOOL lbTrueColor = ExtCheckBuffers();
 	UNREFERENCED_PARAMETER(lbTrueColor);
 
+	HANDLE h = Info->ConsoleOutput;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	SMALL_RECT srWork = {};
-	HANDLE h;
-	if (!GetBufferInfo(h, csbi, srWork))
+	if (!ExtGetBufferInfo(h, csbi, srWork))
 		return FALSE;
 	
 	BOOL lbRc = TRUE;
 	
-	#ifdef _DEBUG
-	AnnotationInfo* pTrueColor = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
-	AnnotationInfo* pTrueColorEnd = pTrueColor ? (pTrueColor + gpTrueColor->bufferSize) : NULL;
-	#endif
-
-	// <G|S>etTextAttributes должны ожидать указатель на ОДИН FarColor.
+	// <G|S>etTextAttributes должны ожидать указатель на ОДИН ConEmuColor.
 	AnnotationInfo t = {};
-	WORD n = 0, f = 0;
-	unsigned __int64 Flags = Attributes->Flags;
-
-	if (Flags & FCF_FG_BOLD)
-		f |= AI_STYLE_BOLD;
-	if (Flags & FCF_FG_ITALIC)
-		f |= AI_STYLE_ITALIC;
-	if (Flags & FCF_FG_UNDERLINE)
-		f |= AI_STYLE_UNDERLINE;
-	t.style = f;
-
-	DWORD nForeColor, nBackColor;
-	if (Flags & FCF_FG_4BIT)
-	{
-		nForeColor = -1;
-		n |= (WORD)(Attributes->ForegroundColor & 0xF);
-		t.fg_valid = FALSE;
-	}
-	else
-	{
-		//n |= 0x07;
-		nForeColor = Attributes->ForegroundColor & 0x00FFFFFF;
-		Far3Color::Color2FgIndex(nForeColor, n);
-		t.fg_color = nForeColor;
-		t.fg_valid = TRUE;
-	}
-
-	if (Flags & FCF_BG_4BIT)
-	{
-		n |= (WORD)(Attributes->BackgroundColor & 0xF)<<4;
-		t.bk_valid = FALSE;
-	}
-	else
-	{
-		nBackColor = Attributes->BackgroundColor & 0x00FFFFFF;
-		Far3Color::Color2BgIndex(nBackColor, nBackColor==nForeColor, n);
-		t.bk_color = nBackColor;
-		t.bk_valid = TRUE;
-	}
+	WORD n = 0;
+	ExtPrepareColor(Info->Attributes, t, n);
 	
 	SetConsoleTextAttribute(h, n);
 	
@@ -454,51 +327,285 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 	// запомнить, что WriteConsole должен писать атрибутом "t"
 	gExtCurrentAttr.WasSet = true;
 	gExtCurrentAttr.CONColor = n;
-	gExtCurrentAttr.CEColor = *Attributes;
+	gExtCurrentAttr.CONForeIdx = CONFORECOLOR(n);
+	gExtCurrentAttr.CONBackIdx = CONBACKCOLOR(n);
+	gExtCurrentAttr.CEColor = Info->Attributes;
 	gExtCurrentAttr.AIColor = t;
 	
 	return lbRc;
 }
 
-BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion)
+void ConEmuCharBuffer::Inc(size_t Cells /*= 1*/)
 {
-	BOOL lbTrueColor = CheckBuffers(true);
-	UNREFERENCED_PARAMETER(lbTrueColor);
-	/*
-	struct FAR_CHAR_INFO
+	switch (BufferType)
 	{
-		WCHAR Char;
-		struct FarColor Attributes;
-	};
-	typedef struct _CHAR_INFO {
-	  union {
-	    WCHAR UnicodeChar;
-	    CHAR AsciiChar;
-	  } Char;
-	  WORD  Attributes;
-	}CHAR_INFO, *PCHAR_INFO;
-	BOOL WINAPI WriteConsoleOutput(
-	  __in     HANDLE hConsoleOutput,
-	  __in     const CHAR_INFO *lpBuffer,
-	  __in     COORD dwBufferSize,
-	  __in     COORD dwBufferCoord,
-	  __inout  PSMALL_RECT lpWriteRegion
-	);
-	*/
+	case (int)ewtf_FarClr:
+		FARBuffer += Cells;
+		break;
+	case (int)ewtf_CeClr:
+		CEBuffer += Cells;
+		CEColor += Cells;
+		break;
+	case (int)ewtf_AiClr:
+		CEBuffer += Cells;
+		AIColor += Cells;
+		break;
 
+	#ifdef _DEBUG
+	default:
+		_ASSERTE(BufferType==(int)ewtf_FarClr && "Invalid type specified!");
+	#endif
+	};
+};
+
+
+#if 0
+// ConEmuCharBuffer Buffer, BufferSize, BufferCoord, Region
+BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
+{
+	if (!Info || (Info->StructSize < sizeof(*Info)))
+	{
+		_ASSERTE(Info!=NULL && (Info->StructSize >= sizeof(*Info)));
+		SetLastError(E_INVALIDARG);
+		return FALSE;
+	}
+
+	BOOL lbTrueColor = ExtCheckBuffers();
+	UNREFERENCED_PARAMETER(lbTrueColor);
+
+	HANDLE h = Info->ConsoleOutput;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	SMALL_RECT srWork = {};
-	HANDLE h;
-	if (!GetBufferInfo(h, csbi, srWork))
+	if (!ExtGetBufferInfo(h, csbi, srWork))
+		return FALSE;
+
+	CHAR_INFO cDefReadBuf[1024];
+	CHAR_INFO *pcReadBuf = NULL;
+	int nWindowWidth  = srWork.Right - srWork.Left + 1;
+	if (Info->BufferSize.X <= (int)countof(cDefReadBuf))
+		pcReadBuf = cDefReadBuf;
+	else
+		pcReadBuf = (CHAR_INFO*)calloc(Info->BufferSize.X,sizeof(*pcReadBuf));
+	if (!pcReadBuf)
+	{
+		SetLastError(E_OUTOFMEMORY);
+		return FALSE;
+	}
+
+	BOOL lbRc = TRUE;
+
+	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
+	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL;
+	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (Info->Region.Top /*- srWork.Top*/)) : NULL);
+
+	int nBufferType = (int)(Info->Flags & ewtf_Mask);
+
+	ConEmuCharBuffer BufEnd = {};
+	BufEnd.BufferType = nBufferType;
+	switch (nBufferType)
+	{
+	case (int)ewtf_FarClr:
+		BufEnd.FARBuffer = Info->Buffer.FARBuffer + (Info->BufferSize.X * Info->BufferSize.Y); //-V104;
+		break;
+	case (int)ewtf_CeClr:
+	case (int)ewtf_AiClr:
+		BufEnd.CEBuffer = BufEnd.CEBuffer = Info->Buffer.CEBuffer + (Info->BufferSize.X * Info->BufferSize.Y); //-V104;
+		break;
+	default:
+		_ASSERTE(nBufferType==(int)ewtf_FarClr && "Invalid type specified!");
+		SetLastError(E_INVALIDARG);
+		return FALSE;
+	};
+	
+
+	SMALL_RECT rcRead = Info->Region;
+	COORD MyBufferSize = {Info->BufferSize.X, 1};
+	COORD MyBufferCoord = {Info->BufferCoord.X, 0};
+	SHORT YShift = /*gbFarBufferMode ?*/ (csbi.dwSize.Y - (srWork.Bottom - srWork.Top + 1)) /*: 0*/;
+	SHORT Y1 = Info->Region.Top + YShift;
+	SHORT Y2 = Info->Region.Bottom + YShift;
+	SHORT BufferShift = Info->Region.Top + YShift;
+
+	if (Y2 >= csbi.dwSize.Y)
+	{
+		_ASSERTE((Y2 >= 0) && (Y2 < csbi.dwSize.Y));
+		Y2 = csbi.dwSize.Y - 1;
+		lbRc = FALSE; // но продолжим, запишем, сколько сможем
+	}
+
+	if ((Y1 < 0) || (Y1 >= csbi.dwSize.Y))
+	{
+		_ASSERTE((Y1 >= 0) && (Y1 < csbi.dwSize.Y));
+		if (Y1 >= csbi.dwSize.Y)
+			Y1 = csbi.dwSize.Y - 1;
+		if (Y1 < 0)
+			Y1 = 0;
+		lbRc = FALSE;
+	}
+	
+	for (rcRead.Top = Y1; rcRead.Top <= Y2; rcRead.Top++)
+	{
+		rcRead.Bottom = rcRead.Top;
+		BOOL lbRead = ReadConsoleOutputW(h, pcReadBuf, MyBufferSize, MyBufferCoord, &rcRead);
+
+		CHAR_INFO* pc = pcReadBuf + Info->BufferCoord.X;
+		ConEmuCharBuffer BufPtr = Info->Buffer;
+		BufPtr.Inc((rcRead.Top - BufferShift + Info->BufferCoord.Y)*Info->BufferSize.X + Info->BufferCoord.X); //-V104
+		//FAR_CHAR_INFO* pFar = Buffer + (rcRead.Top - BufferShift + Info->BufferCoord.Y)*Info->BufferSize.X + Info->BufferCoord.X;
+		AnnotationInfo* pTrueColor = (pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? (pTrueColorLine + Info->Region.Left) : NULL;
+
+		for (int X = rcRead.Left; X <= rcRead.Right; X++, pc++, BufPtr.Inc())
+		{
+			if (BufPtr.RAW >= BufEnd.RAW)
+			{
+				_ASSERTE(BufPtr.RAW < BufEnd.RAW);
+				break;
+			}
+
+			if (pTrueColor && pTrueColor >= pTrueColorEnd)
+			{
+				_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd);
+				pTrueColor = NULL; // Выделенный буфер оказался недостаточным
+			}
+
+			switch (nBufferType)
+			{
+			case (int)ewtf_FarClr:
+				{
+					FAR_CHAR_INFO chr = {lbRead ? pc->Char.UnicodeChar : L' '};
+
+					if (pTrueColor)
+					{
+						DWORD Style = pTrueColor->style;
+						if (Style & AI_STYLE_BOLD)
+							chr.Attributes.Flags |= FCF_FG_BOLD;
+						if (Style & AI_STYLE_ITALIC)
+							chr.Attributes.Flags |= FCF_FG_ITALIC;
+						if (Style & AI_STYLE_UNDERLINE)
+							chr.Attributes.Flags |= FCF_FG_UNDERLINE;
+					}
+					
+					if (pTrueColor && pTrueColor->fg_valid)
+					{
+						chr.Attributes.ForegroundColor = pTrueColor->fg_color;
+					}
+					else
+					{
+						chr.Attributes.Flags |= FCF_FG_4BIT;
+						chr.Attributes.ForegroundColor = lbRead ? CONFORECOLOR(pc->Attributes) : defConForeIdx;
+					}
+
+					if (pTrueColor && pTrueColor->bk_valid)
+					{
+						chr.Attributes.BackgroundColor = pTrueColor->bk_color;
+					}
+					else
+					{
+						chr.Attributes.Flags |= FCF_BG_4BIT;
+						chr.Attributes.BackgroundColor = lbRead ? CONBACKCOLOR(pc->Attributes) : defConBackIdx;
+					}
+
+					*BufPtr.FARBuffer = chr;
+
+				} // ewtf_FarClr
+				break;
+
+			case (int)ewtf_CeClr:
+				{
+					*BufPtr.CEBuffer = *pc;
+
+					ConEmuColor clr = {};
+
+					if (pTrueColor)
+					{
+						DWORD Style = pTrueColor->style;
+						if (Style & AI_STYLE_BOLD)
+							clr.Flags |= CECF_FG_BOLD;
+						if (Style & AI_STYLE_ITALIC)
+							clr.Flags |= CECF_FG_ITALIC;
+						if (Style & AI_STYLE_UNDERLINE)
+							clr.Flags |= CECF_FG_UNDERLINE;
+					}
+					
+					if (pTrueColor && pTrueColor->fg_valid)
+					{
+						clr.Flags |= CECF_FG_24BIT;
+						clr.ForegroundColor = pTrueColor->fg_color;
+					}
+					else
+					{
+						clr.ForegroundColor = lbRead ? CONFORECOLOR(pc->Attributes) : defConForeIdx;
+					}
+
+					if (pTrueColor && pTrueColor->bk_valid)
+					{
+						clr.Flags |= CECF_BG_24BIT;
+						clr.BackgroundColor = pTrueColor->bk_color;
+					}
+					else
+					{
+						clr.BackgroundColor = lbRead ? CONBACKCOLOR(pc->Attributes) : defConBackIdx;
+					}
+
+					*BufPtr.CEColor = clr;
+
+				} // ewtf_CeClr
+				break;
+
+			case (int)ewtf_AiClr:
+				{
+					*BufPtr.CEBuffer = *pc;
+
+					if (pTrueColor)
+						*BufPtr.AIColor = *pTrueColor;
+					else
+						memset(BufPtr.AIColor, 0, sizeof(*BufPtr.AIColor));
+
+				} // ewtf_AiClr
+				break;
+			};
+
+			if (pTrueColor)
+				pTrueColor++;
+		}
+
+		if (pTrueColorLine)
+			pTrueColorLine += nWindowWidth; //-V102
+	}
+
+	if (pcReadBuf != cDefReadBuf)
+		free(pcReadBuf);
+
+	return lbRc;
+}
+
+
+// ConEmuCharBuffer Buffer, BufferSize, BufferCoord, Region
+BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
+{
+	if (!Info || (Info->StructSize < sizeof(*Info)))
+	{
+		_ASSERTE(Info!=NULL && (Info->StructSize >= sizeof(*Info)));
+		SetLastError(E_INVALIDARG);
+		return FALSE;
+	}
+
+	BOOL lbTrueColor = ExtCheckBuffers();
+	UNREFERENCED_PARAMETER(lbTrueColor);
+
+	HANDLE h = Info->ConsoleOutput;
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	SMALL_RECT srWork = {};
+	if (!ExtGetBufferInfo(h, csbi, srWork))
 		return FALSE;
 
 	CHAR_INFO cDefWriteBuf[1024];
 	CHAR_INFO *pcWriteBuf = NULL;
 	int nWindowWidth  = srWork.Right - srWork.Left + 1;
-	if (BufferSize.X <= (int)countof(cDefWriteBuf))
+	if (Info->BufferSize.X <= (int)countof(cDefWriteBuf))
 		pcWriteBuf = cDefWriteBuf;
 	else
-		pcWriteBuf = (CHAR_INFO*)calloc(BufferSize.X,sizeof(*pcWriteBuf));
+		pcWriteBuf = (CHAR_INFO*)calloc(Info->BufferSize.X,sizeof(*pcWriteBuf));
 	if (!pcWriteBuf)
 	{
 		SetLastError(E_OUTOFMEMORY);
@@ -509,15 +616,17 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
-	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (WriteRegion->Top /*- srWork.Top*/)) : NULL); //-V104
+	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (Info->Region.Top /*- srWork.Top*/)) : NULL); //-V104
 
-	SMALL_RECT rcWrite = *WriteRegion;
-	COORD MyBufferSize = {BufferSize.X, 1};
-	COORD MyBufferCoord = {BufferCoord.X, 0};
-	SHORT YShift = gbFarBufferMode ? (csbi.dwSize.Y - (srWork.Bottom - srWork.Top + 1)) : 0;
-	SHORT Y1 = WriteRegion->Top + YShift;
-	SHORT Y2 = WriteRegion->Bottom + YShift;
-	SHORT BufferShift = WriteRegion->Top + YShift;
+	int nBufferType = (int)(Info->Flags & ewtf_Mask);
+
+	SMALL_RECT rcWrite = Info->Region;
+	COORD MyBufferSize = {Info->BufferSize.X, 1};
+	COORD MyBufferCoord = {Info->BufferCoord.X, 0};
+	SHORT YShift = /*gbFarBufferMode ?*/ (csbi.dwSize.Y - (srWork.Bottom - srWork.Top + 1)) /*: 0*/;
+	SHORT Y1 = Info->Region.Top + YShift;
+	SHORT Y2 = Info->Region.Bottom + YShift;
+	SHORT BufferShift = Info->Region.Top + YShift;
 
 	if (Y2 >= csbi.dwSize.Y)
 	{
@@ -540,14 +649,15 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 	{
 		rcWrite.Bottom = rcWrite.Top;
 
-		CHAR_INFO* pc = pcWriteBuf + BufferCoord.X;
-		const FAR_CHAR_INFO* pFar = Buffer + (rcWrite.Top - BufferShift + BufferCoord.Y)*BufferSize.X + BufferCoord.X; //-V104
-		AnnotationInfo* pTrueColor = (pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? (pTrueColorLine + WriteRegion->Left) : NULL;
+		CHAR_INFO* pc = pcWriteBuf + Info->BufferCoord.X;
+		ConEmuCharBuffer BufPtr = Info->Buffer;
+		BufPtr.Inc((rcWrite.Top - BufferShift + Info->BufferCoord.Y)*Info->BufferSize.X + Info->BufferCoord.X); //-V104
+		//const FAR_CHAR_INFO* pFar = Buffer + (rcWrite.Top - BufferShift + Info->BufferCoord.Y)*Info->BufferSize.X + Info->BufferCoord.X; //-V104
+		AnnotationInfo* pTrueColor = (pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? (pTrueColorLine + Info->Region.Left) : NULL;
 
-		for (int X = rcWrite.Left; X <= rcWrite.Right; X++, pc++, pFar++)
+
+		for (int X = rcWrite.Left; X <= rcWrite.Right; X++, pc++, BufPtr.Inc())
 		{
-			pc->Char.UnicodeChar = pFar->Char;
-
 			if (pTrueColor && pTrueColor >= pTrueColorEnd)
 			{
 				#ifdef _DEBUG
@@ -555,32 +665,93 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 				if (!bBufferAsserted)
 				{
 					bBufferAsserted = true;
-					_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd);
+					_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd && "Allocated buffer was not enough");
 				}
 				#endif
 				pTrueColor = NULL; // Выделенный буфер оказался недостаточным
 			}
-			
+
+			bool Bold = false, Italic = false, Underline = false;
+			bool Fore24bit = false, Back24bit = false;
+			DWORD ForegroundColor = 0, BackgroundColor = 0;
+
+			// go
+			switch (nBufferType)
+			{
+			case (int)ewtf_FarClr:
+				{
+					pc->Char.UnicodeChar = BufPtr.FARBuffer->Char;
+
+					unsigned __int64 Flags = BufPtr.FARBuffer->Attributes.Flags;
+					
+					Bold = (Flags & FCF_FG_BOLD) != 0;
+					Italic = (Flags & FCF_FG_ITALIC) != 0;
+					Underline = (Flags & FCF_FG_UNDERLINE) != 0;
+
+					Fore24bit = (Flags & FCF_FG_4BIT) == 0;
+					Back24bit = (Flags & FCF_BG_4BIT) == 0;
+
+					ForegroundColor = BufPtr.FARBuffer->Attributes.ForegroundColor & (Fore24bit ? COLORMASK : INDEXMASK);
+					BackgroundColor = BufPtr.FARBuffer->Attributes.BackgroundColor & (Back24bit ? COLORMASK : INDEXMASK);
+				}
+				break;
+
+			case (int)ewtf_CeClr:
+				{
+					pc->Char.UnicodeChar = BufPtr.CEBuffer->Char.UnicodeChar;
+
+					unsigned __int64 Flags = BufPtr.CEColor->Flags;
+					
+					Bold = (Flags & CECF_FG_BOLD) != 0;
+					Italic = (Flags & CECF_FG_ITALIC) != 0;
+					Underline = (Flags & CECF_FG_UNDERLINE) != 0;
+
+					Fore24bit = (Flags & CECF_FG_24BIT) != 0;
+					Back24bit = (Flags & CECF_BG_24BIT) != 0;
+
+					ForegroundColor = BufPtr.CEColor->ForegroundColor & (Fore24bit ? COLORMASK : INDEXMASK);
+					BackgroundColor = BufPtr.CEColor->BackgroundColor & (Back24bit ? COLORMASK : INDEXMASK);
+				}
+				break;
+
+			case (int)ewtf_AiClr:
+				{
+					pc->Char.UnicodeChar = BufPtr.CEBuffer->Char.UnicodeChar;
+
+					unsigned int Flags = BufPtr.AIColor->style;
+
+					Bold = (Flags & AI_STYLE_BOLD) != 0;
+					Italic = (Flags & AI_STYLE_ITALIC) != 0;
+					Underline = (Flags & AI_STYLE_UNDERLINE) != 0;
+
+					Fore24bit = BufPtr.AIColor->fg_valid != 0;
+					Back24bit = BufPtr.AIColor->bk_valid != 0;
+
+					ForegroundColor = Fore24bit ? BufPtr.AIColor->fg_color : CONFORECOLOR(BufPtr.CEBuffer->Attributes);
+					BackgroundColor = Back24bit ? BufPtr.AIColor->bk_color : CONBACKCOLOR(BufPtr.CEBuffer->Attributes);
+				}
+				break;
+			}
+
 			WORD n = 0, f = 0;
-			unsigned __int64 Flags = pFar->Attributes.Flags;
-			BOOL Fore4bit = (Flags & FCF_FG_4BIT);
 			
 			if (pTrueColor)
 			{
-				if (Flags & FCF_FG_BOLD)
+				if (Bold)
 					f |= AI_STYLE_BOLD;
-				if (Flags & FCF_FG_ITALIC)
+				if (Italic)
 					f |= AI_STYLE_ITALIC;
-				if (Flags & FCF_FG_UNDERLINE)
+				if (Underline)
 					f |= AI_STYLE_UNDERLINE;
 				pTrueColor->style = f;
 			}
 
 			DWORD nForeColor, nBackColor;
-			if (Fore4bit)
+			if (!Fore24bit)
 			{
 				nForeColor = -1;
-				n |= (WORD)(pFar->Attributes.ForegroundColor & 0xF);
+				_ASSERTE(ForegroundColor<=INDEXMASK);
+				n |= (WORD)ForegroundColor;
 				if (pTrueColor)
 				{
 					pTrueColor->fg_valid = FALSE;
@@ -589,7 +760,7 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 			else
 			{
 				//n |= 0x07;
-				nForeColor = pFar->Attributes.ForegroundColor & 0x00FFFFFF;
+				nForeColor = ForegroundColor;
 				Far3Color::Color2FgIndex(nForeColor, n);
 				if (pTrueColor)
 				{
@@ -598,12 +769,13 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 				}
 			}
 			
-			if (Flags & FCF_BG_4BIT)
+			if (!Back24bit)
 			{
 				nBackColor = -1;
-				WORD bk = (WORD)(pFar->Attributes.BackgroundColor & 0xF);
+				_ASSERTE(BackgroundColor<=INDEXMASK);
+				WORD bk = (WORD)BackgroundColor;
 				// Коррекция яркости, если подобранные индексы совпали
-				if (n == bk && !Fore4bit && !isCharSpace(pFar->Char))
+				if (n == bk && Fore24bit && !isCharSpace(BufPtr.FARBuffer->Char))
 				{
 					if (n & 8)
 						bk ^= 8;
@@ -619,7 +791,7 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 			}
 			else
 			{
-				nBackColor = pFar->Attributes.BackgroundColor & 0x00FFFFFF;
+				nBackColor = BackgroundColor;
 				Far3Color::Color2BgIndex(nBackColor, nForeColor==nBackColor, n);
 				if (pTrueColor)
 				{
@@ -627,11 +799,11 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 					pTrueColor->bk_valid = TRUE;
 				}
 			}
-			
-			
-			
+
+			// Apply color (console, 4bit)
 			pc->Attributes = n;
 
+			// Done
 			if (pTrueColor)
 				pTrueColor++;
 		}
@@ -645,139 +817,595 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 			pTrueColorLine += nWindowWidth; //-V102
 	}
 
+	PRAGMA_ERROR("Не забыть накрутить индекс в AnnotationInfo");
+
+	// Commit по флагу
+	if (Info->Flags & ewtf_Commit)
+	{
+		ExtCommitParm c = {sizeof(c), Info->ConsoleOutput};
+		ExtCommit(&c);
+	}
+
 	if (pcWriteBuf != cDefWriteBuf)
 		free(pcWriteBuf);
 
 	return lbRc;
 }
+#endif
 
-BOOL WINAPI WriteText(HANDLE hConsoleOutput, const AnnotationInfo* Attributes, const wchar_t* Buffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
+BOOL WINAPI apiWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved, WriteConsoleW_t lpfn = NULL)
 {
-	// Ограничение Short - на функции WriteConsoleOutput
-	if (!Buffer || !nNumberOfCharsToWrite || (nNumberOfCharsToWrite >= 0x8000))
-		return FALSE;
-
 	BOOL lbRc = FALSE;
 
-	TODO("Отвязаться от координат видимой области");
-
-	FarColor FarAttributes = {};
-	GetTextAttributes(&FarAttributes);
-
-	if (Attributes)
-	{
-		if (Attributes->bk_valid)
-		{
-			FarAttributes.Flags &= ~FCF_BG_4BIT;
-			FarAttributes.BackgroundColor = Attributes->bk_color;
-		}
-
-		if (Attributes->fg_valid)
-		{
-			FarAttributes.Flags &= ~FCF_FG_4BIT;
-			FarAttributes.ForegroundColor = Attributes->fg_color;
-		}
-
-		// Bold
-		if (Attributes->style & AI_STYLE_BOLD)
-			FarAttributes.Flags |= FCF_FG_BOLD;
-		else
-			FarAttributes.Flags &= ~FCF_FG_BOLD;
-
-		// Italic
-		if (Attributes->style & AI_STYLE_ITALIC)
-			FarAttributes.Flags |= FCF_FG_ITALIC;
-		else
-			FarAttributes.Flags &= ~FCF_FG_ITALIC;
-
-		// Underline
-		if (Attributes->style & AI_STYLE_UNDERLINE)
-			FarAttributes.Flags |= FCF_FG_UNDERLINE;
-		else
-			FarAttributes.Flags &= ~FCF_FG_UNDERLINE;
-	}
-
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	SMALL_RECT srWork = {};
-	HANDLE h;
-	if (!GetBufferInfo(h, csbi, srWork))
-		return FALSE;
-
-	FAR_CHAR_INFO* lpFarBuffer = (FAR_CHAR_INFO*)malloc(nNumberOfCharsToWrite * sizeof(*lpFarBuffer));
-	if (!lpFarBuffer)
-		return FALSE;
-
-	TODO("Обработка символов \t\n\r?");
-
-	FAR_CHAR_INFO* lp = lpFarBuffer;
-	for (DWORD i = 0; i < nNumberOfCharsToWrite; ++i, ++Buffer, ++lp)
-	{
-		lp->Char = *Buffer;
-		lp->Attributes = FarAttributes;
-	}
-
-	//const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion
-	COORD BufferSize = {(SHORT)nNumberOfCharsToWrite, 1};
-	COORD BufferCoord = {0,0};
-	SMALL_RECT WriteRegion = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, csbi.dwCursorPosition.X+(SHORT)nNumberOfCharsToWrite-1, csbi.dwCursorPosition.Y};
-	if (WriteRegion.Right >= csbi.dwSize.X)
-	{
-		_ASSERTE(WriteRegion.Right < csbi.dwSize.X);
-		WriteRegion.Right = csbi.dwSize.X - 1;
-	}
-	if (WriteRegion.Right > WriteRegion.Left)
-	{
-		return FALSE;
-	}
-	lbRc = WriteOutput(lpFarBuffer, BufferSize, BufferCoord, &WriteRegion);
-
-	free(lpFarBuffer);
-
-	// Обновить позицию курсора
-	_ASSERTE((csbi.dwCursorPosition.X+(int)nNumberOfCharsToWrite-1) < csbi.dwSize.X);
-	csbi.dwCursorPosition.X = (SHORT)max((csbi.dwSize.X-1),(csbi.dwCursorPosition.X+(int)nNumberOfCharsToWrite-1));
-	SetConsoleCursorPosition(h, csbi.dwCursorPosition);
-
-	#if 0
-	typedef BOOL (WINAPI* WriteConsoleW_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 	static WriteConsoleW_t fnWriteConsoleW = NULL;
-	typedef FARPROC (WINAPI* GetWriteConsoleW_t)();
 
 	if (!fnWriteConsoleW)
 	{
-		HANDLE hHooks = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
-		if (hHooks)
+		if (lpfn)
 		{
-			GetWriteConsoleW_t getf = (GetWriteConsoleW_t)GetProcAddress(hHooks, "GetWriteConsoleW");
-			if (!getf)
+			fnWriteConsoleW = lpfn;
+		}
+		else
+		{
+			HMODULE hHooks = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+			if (hHooks && (hHooks != ghOurModule))
 			{
-				_ASSERTE(getf!=NULL);
-				return FALSE;
+				typedef FARPROC (WINAPI* GetWriteConsoleW_t)();
+				GetWriteConsoleW_t getf = (GetWriteConsoleW_t)GetProcAddress(hHooks, "GetWriteConsoleW");
+				if (!getf)
+				{
+					_ASSERTE(getf!=NULL);
+					return FALSE;
+				}
+
+				fnWriteConsoleW = (WriteConsoleW_t)getf();
+				if (!fnWriteConsoleW)
+				{
+					_ASSERTE(fnWriteConsoleW!=NULL);
+					return FALSE;
+				}
 			}
 
-			fnWriteConsoleW = (WriteConsoleW_t)getf();
 			if (!fnWriteConsoleW)
 			{
-				_ASSERTE(fnWriteConsoleW!=NULL);
-				return FALSE;
+				fnWriteConsoleW = WriteConsoleW;
 			}
-		}
-
-		if (!fnWriteConsoleW)
-		{
-			fnWriteConsoleW = WriteConsole;
 		}
 	}
 	
-	lbRc = fnWriteConsoleW(hConsoleOutput, Buffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten,NULL);
-	#endif
+	lbRc = fnWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
+	
+	return lbRc;
+}
+
+
+static BOOL IntWriteText(HANDLE h, SHORT x, SHORT ForceDumpX,
+						 const wchar_t *pFrom, DWORD cchWrite,
+						 AnnotationInfo* pTrueColorLine, AnnotationInfo* pTrueColorEnd,
+						 const AnnotationInfo& AIColor,
+						 WriteConsoleW_t lpfn = NULL)
+{
+	// Вывод расширенных атрибутов (если нужно и можно)
+	if (pTrueColorLine)
+	{
+		AnnotationInfo* pTrueColor = pTrueColorLine + x;
+
+		for (SHORT x1 = x; x1 <= ForceDumpX; x1++)
+		{
+			if (pTrueColor >= pTrueColorEnd)
+			{
+				#ifdef _DEBUG
+				static bool bBufferAsserted = false;
+				if (!bBufferAsserted)
+				{
+					bBufferAsserted = true;
+					_ASSERTE(pTrueColor && pTrueColor < pTrueColorEnd && "Allocated buffer was not enough");
+				}
+				#endif
+				pTrueColor = NULL; // Выделенный буфер оказался недостаточным
+				break;
+			}
+			
+			*(pTrueColor++) = AIColor;
+		}
+	}
+
+	// Вывод в консоль "текста"
+	DWORD nWritten = 0;
+	BOOL lbRc = apiWriteConsoleW(h, pFrom, cchWrite, &nWritten, NULL, lpfn);
 
 	return lbRc;
 }
 
 
-BOOL WINAPI Commit()
+// wchar_t* Buffer, NumberOfCharsToWrite
+BOOL ExtWriteText(ExtWriteTextParm* Info)
 {
+	if (!Info || (Info->StructSize < sizeof(*Info)))
+	{
+		_ASSERTE(Info!=NULL && (Info->StructSize >= sizeof(*Info)));
+		SetLastError(E_INVALIDARG);
+		return FALSE;
+	}
+
+	_ASSERTE((Info->Private==NULL) || (Info->Private==(void*)WriteConsoleW));
+
+	// Проверка аргументов
+	if (!Info->ConsoleOutput || !Info->Buffer || !Info->NumberOfCharsToWrite)
+	{
+		_ASSERTE(Info->ConsoleOutput && Info->Buffer && Info->NumberOfCharsToWrite);
+		SetLastError(E_INVALIDARG);
+		return FALSE;
+	}
+
+	BOOL lbTrueColor = ExtCheckBuffers();
+	UNREFERENCED_PARAMETER(lbTrueColor);
+
+	HANDLE h = Info->ConsoleOutput;
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	SMALL_RECT srWork = {};
+	if (!ExtGetBufferInfo(h, csbi, srWork))
+		return FALSE;
+
+	bool bWrap = true, bVirtualWrap = false;;
+	SHORT WrapAtCol = csbi.dwSize.X; // 1-based
+
+	if ((Info->Flags & ewtf_WrapAt))
+	{
+		if ((Info->WrapAtCol > 0) && (Info->WrapAtCol < WrapAtCol))
+		{
+			WrapAtCol = Info->WrapAtCol;
+			bVirtualWrap = true;
+		}
+	}
+	else
+	{
+		DWORD Mode = 0;
+		GetConsoleMode(h, &Mode);
+		bWrap = (Mode & ENABLE_WRAP_AT_EOL_OUTPUT) != 0;
+	}
+
+	_ASSERTE(srWork.Bottom == (csbi.dwSize.Y - 1));
+	// Размер TrueColor буфера
+	SHORT nWindowWidth  = srWork.Right - srWork.Left + 1;
+	SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1;
+	SHORT YShift = csbi.dwCursorPosition.Y - srWork.Top;
+
+	BOOL lbRc = TRUE;
+
+
+	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
+	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
+	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * YShift) : NULL); //-V104
+
+	// пока только "текущим" выбранным цветом
+	_ASSERTE((Info->Flags & ewtf_Current) == ewtf_Current);
+
+	// Current attributes
+	AnnotationInfo AIColor = {};
+	ExtAttributesParm DefClr = {sizeof(DefClr), h};
+	ExtGetAttributes(&DefClr);
+	WORD DefConColor = 0;
+	ExtPrepareColor(DefClr.Attributes, AIColor, DefConColor);
+
+	// go
+	const wchar_t *pFrom = Info->Buffer;
+	const wchar_t *pEnd = pFrom + Info->NumberOfCharsToWrite;
+
+
+	const wchar_t *pCur = pFrom;
+	SHORT x = csbi.dwCursorPosition.X, y = csbi.dwCursorPosition.Y; // 0-based
+	SHORT x2 = x, y2 = y;
+
+	TODO("Тут может быть засада - если другие приложения в это же время выводят в консоль - будет драка...");
+	for (; pCur < pEnd; pCur++)
+	{
+		// Учитывать
+		// bWrap - при выводе в последнюю колонку консоли - переводить курсор, если последняя строка - делать скролл
+
+		/*
+		if (csbi.dwCursorPosition.X > nMaxCursorPos)
+		{
+			// т.к. тут текущую позицию курсора затирать не нужно (наверное?)
+			// это может быть только в том случае, если курсор попал "за правую границу"
+			// например, сначала вывели длинную строку, а потом ограничили правый край
+			csbi.dwCursorPosition.X++;
+			PadAndScroll(hConsoleOutput, csbi);
+		}
+		*/
+
+		SHORT ForceDumpX = 0;
+		bool BS = false;
+
+		// Обработка символов, которые двигают курсор
+		switch (*pCur)
+		{
+		case L'\t':
+			x2 = ((x2 + 7) >> 3) << 3;
+			// like normal char...
+			if (x2 >= WrapAtCol)
+			{
+				ForceDumpX = min(x2, WrapAtCol)-1;
+			}
+			break;
+		case L'\r':
+			ForceDumpX = x2;
+			x2 = 0;
+			break;
+		case L'\n':
+			ForceDumpX = x2;
+			x2 = 0; y2++;
+			_ASSERTE(bWrap);
+			break;
+		case 7:
+			//Beep (no spacing)
+			break;
+		case 8:
+			//BS
+			if (x2>x)
+				ForceDumpX = x2;
+			if (x2>0)
+				x2--;
+			BS = true;
+			break;
+		default:
+			// Просто буква.
+			// В real-консоли вроде бы не может быть non-spacing символов, кроме выше-обработанных
+			x2++;
+			// like '\t'
+			if (x2 >= WrapAtCol)
+			{
+				ForceDumpX = min(x2, WrapAtCol)-1;
+			}
+		}
+
+		
+		if (ForceDumpX)
+		{
+			// Вывод расширенных атрибутов (если нужно и можно) и собственно текста
+			// Включая символ pCur
+			lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom + 1),
+						(pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? pTrueColorLine : NULL,
+						 pTrueColorEnd, AIColor, (WriteConsoleW_t)Info->Private);
+
+			// Update processed pos
+			pFrom = pCur + 1;
+		}
+
+		// После BS - сменить "начальную" координату
+		if (BS)
+			x = x2;
+
+		// При смене строки
+		if (y2 > y)
+		{
+			_ASSERTE(bWrap && "для !Wrap - доделать");
+			if (y2 >= csbi.dwSize.Y)
+			{
+				// Экран прокрутился на одну строку вверх
+				
+				// расширенный буфер - прокрутить
+				_ASSERTE((y-y2) == -1); // Должен быть сдвиг на одну строку
+				ExtScrollScreenParm Shift = {sizeof(Shift), essf_ExtOnly, h, y-y2, DefClr.Attributes, L' '};
+				ExtScrollScreen(&Shift);
+
+				// координату - "отмотать" (она как бы не изменилась)
+				y2 = csbi.dwSize.Y - 1;
+			}
+			else if (pTrueColorLine)
+			{
+				// Перейти на следующую строку в расширенном буфере
+				pTrueColorLine += nWindowWidth; //-V102
+			}
+			y = y2;
+		}
+	}
+
+	if (pCur > pFrom)
+	{
+		// НЕ включая символ pCur
+		SHORT ForceDumpX = (x2 > x) ? (min(x2, WrapAtCol)-1) : 0;
+		lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom),
+					 (pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? pTrueColorLine : NULL,
+					 pTrueColorEnd, AIColor, (WriteConsoleW_t)Info->Private);
+	}
+
+
+	// накрутить индекс в AnnotationInfo
+	if (gpTrueColor)
+	{
+		gpTrueColor->flushCounter++;
+	}
+
+	// Commit по флагу
+	if (Info->Flags & ewtf_Commit)
+	{
+		ExtCommitParm c = {sizeof(c), Info->ConsoleOutput};
+		ExtCommit(&c);
+	}
+
+	if (lbRc)
+		Info->NumberOfCharsWritten = Info->NumberOfCharsToWrite;
+
+	return lbRc;
+}
+
+BOOL ExtFillOutput(ExtFillOutputParm* Info)
+{
+	if (!Info || !Info->Flags || !Info->Count)
+	{
+		_ASSERTE(Info && Info->Flags && Info->Count);
+		return FALSE;
+	}
+
+	BOOL lbRc = TRUE, b;
+	DWORD nWritten;
+
+	BOOL lbTrueColor = ExtCheckBuffers();
+	UNREFERENCED_PARAMETER(lbTrueColor);
+
+	HANDLE h = Info->ConsoleOutput;
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	SMALL_RECT srWork = {};
+	if (!ExtGetBufferInfo(h, csbi, srWork))
+		return FALSE;
+
+	_ASSERTE(srWork.Bottom == (csbi.dwSize.Y - 1));
+	// Размер TrueColor буфера
+	SHORT nWindowWidth  = srWork.Right - srWork.Left + 1;
+	SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1;
+	//SHORT YShift = csbi.dwCursorPosition.Y - srWork.Top;
+
+	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
+	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
+	//AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * YShift) : NULL); //-V104
+
+
+
+	if (Info->Flags & efof_Attribute)
+	{
+		if (Info->Flags & efof_Current)
+		{
+			ExtAttributesParm DefClr = {sizeof(DefClr), h};
+			ExtGetAttributes(&DefClr);
+			Info->FillAttr = DefClr.Attributes;
+		}
+
+		AnnotationInfo t = {};
+		WORD n = 0;
+		ExtPrepareColor(Info->FillAttr, t, n);
+
+		if (gpTrueColor)
+		{
+			SHORT Y1 = Info->Coord.Y;
+			DWORD nEndCell = Info->Coord.X + (Info->Coord.Y * csbi.dwSize.X) + Info->Count;
+			SHORT Y2 = (SHORT)(nEndCell / csbi.dwSize.X);
+			SHORT X2 = (SHORT)(nEndCell % csbi.dwSize.X);
+			TODO("Проверить конец буфера");
+			DWORD nMaxLines = gpTrueColor->bufferSize / nWindowWidth;
+			if (Y2 >= (int)(srWork.Top + nMaxLines))
+			{
+				Y2 = (SHORT)(srWork.Top + nMaxLines - 1);
+				X2 = nWindowWidth;
+			}
+
+			for (SHORT y = max(Y1, srWork.Top); y <= Y2; y++)
+			{
+				SHORT xMax = (y == Y2) ? X2 : nWindowWidth;
+				SHORT xMin = (y == Y1) ? Info->Coord.X : 0;
+				AnnotationInfo* pTrueColor = pTrueColorStart + nWindowWidth * y + xMin; //-V104
+				for (SHORT x = xMin; x < xMax; x++)
+				{
+					*(pTrueColor++) = t;
+				}
+				_ASSERTE(pTrueColor <= pTrueColorEnd);
+			}
+		}
+
+		b = FillConsoleOutputAttribute(h, n, Info->Count, Info->Coord, &nWritten);
+		lbRc &= b;
+	}
+
+	if (Info->Flags & efof_Character)
+	{
+		b = FillConsoleOutputCharacter(h, Info->FillChar ? Info->FillChar : L' ', Info->Count, Info->Coord, &nWritten);
+		lbRc &= b;
+	}
+
+	// Commit по флагу
+	if (Info->Flags & ewtf_Commit)
+	{
+		ExtCommitParm c = {sizeof(c), h};
+		ExtCommit(&c);
+	}
+
+	return lbRc;
+}
+
+BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
+{
+	BOOL lbTrueColor = ExtCheckBuffers();
+	UNREFERENCED_PARAMETER(lbTrueColor);
+
+	HANDLE h = Info->ConsoleOutput;
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	SMALL_RECT srWork = {};
+	if (!ExtGetBufferInfo(h, csbi, srWork))
+		return FALSE;
+
+	BOOL lbRc = TRUE;
+	CHAR_INFO Buf[200];
+	CHAR_INFO* pBuf = (csbi.dwSize.X <= countof(Buf)) ? Buf : (CHAR_INFO*)malloc(csbi.dwSize.X*sizeof(*pBuf));
+	COORD crSize = {csbi.dwSize.X,1};
+	COORD cr0 = {};
+	SMALL_RECT rcRgn = {0,0,csbi.dwSize.X-1,0};
+	int nDir = Info->Dir;
+
+	if (!pBuf)
+		return FALSE;
+
+
+	// Размер TrueColor буфера
+	SHORT nWindowWidth  = srWork.Right - srWork.Left + 1;
+	SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1;
+
+	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
+	//AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
+
+	if (Info->Flags & essf_Current)
+	{
+		ExtAttributesParm DefClr = {sizeof(DefClr), h};
+		ExtGetAttributes(&DefClr);
+		Info->FillAttr = DefClr.Attributes;
+	}
+
+	if (Info->Flags & essf_Pad)
+	{
+		_ASSERTE(Info->Dir == -1);
+		nDir = -1;
+
+		// Пробелами добивать? Хотя вроде и не нужно. Это при "виртуальном" врапе на заданную границу зовется.
+
+		/*
+		COORD crFrom = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y};
+		nCount = csbi.dwSize.X - csbi.dwCursorPosition.X;
+
+		ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput,
+			Info->FillAttr, Info->FillChar, crFrom, nCount};
+		lbRc = ExtFillOutput(&f);
+
+		if (lbRc)
+			nDir = -1;
+		*/
+	}
+
+
+	// Go
+	if (nDir < 0)
+	{
+		// Scroll whole page up by n (default 1) lines. New lines are added at the bottom.
+		if (gpTrueColor)
+		{
+			int nMaxCell = min(nWindowWidth * nWindowHeight,gpTrueColor->bufferSize);
+			int nRows = nMaxCell / nWindowWidth;
+			if (nRows > (-nDir))
+			{
+				memmove(pTrueColorStart, pTrueColorStart+(-nDir*nWindowWidth), (nRows * nWindowWidth * sizeof(*pTrueColorStart)));
+				if (Info->Flags & essf_ExtOnly)
+				{
+					TODO("Чем заливать");
+					AnnotationInfo AIInfo = {};
+					for (int i = (nWindowHeight+nDir)*nWindowWidth; i < nMaxCell; i++)
+					{
+						pTrueColorStart[i] = AIInfo;
+					}
+				}
+			}
+		}
+
+		if (!(Info->Flags & essf_ExtOnly))
+		{
+			TODO("ScrollConsoleScreenBuffer");
+			for (SHORT y = 0, y1 = -nDir; y1 < csbi.dwSize.Y; y++, y1++)
+			{
+				rcRgn.Top = rcRgn.Bottom = y1;
+				if (ReadConsoleOutputW(Info->ConsoleOutput, pBuf, crSize, cr0, &rcRgn))
+				{
+					rcRgn.Top = rcRgn.Bottom = y;
+					WriteConsoleOutputW(Info->ConsoleOutput, pBuf, crSize, cr0, &rcRgn);
+				}
+			}
+
+			while (nDir < 0)
+			{
+				cr0.Y = csbi.dwSize.Y - 1 + nDir;
+				ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput, Info->FillAttr, Info->FillChar, cr0, csbi.dwSize.X};
+				ExtFillOutput(&f);
+				//FillConsoleOutputAttribute(Info->ConsoleOutput, GetDefaultTextAttr(), csbi.dwSize.X, cr0, &nCount);
+				//FillConsoleOutputCharacter(Info->ConsoleOutput, L' ', csbi.dwSize.X, cr0, &nCount);
+				++nDir;
+			}
+		}
+	}
+	else if (nDir > 0)
+	{
+		// Scroll whole page down by n (default 1) lines. New lines are added at the top.
+		if (gpTrueColor)
+		{
+			int nMaxCell = min(nWindowWidth * nWindowHeight,gpTrueColor->bufferSize);
+			int nRows = nMaxCell / nWindowWidth;
+			if (nRows > nDir)
+			{
+				memmove(pTrueColorStart+(nDir*nWindowWidth), pTrueColorStart, (nRows * nWindowWidth * sizeof(*pTrueColorStart)));
+				if (Info->Flags & essf_ExtOnly)
+				{
+					TODO("Чем заливать");
+					AnnotationInfo AIInfo = {};
+					for (int i = (nDir*nWindowWidth)-1; i > 0; i--)
+					{
+						pTrueColorStart[i] = AIInfo;
+					}
+				}
+			}
+		}
+
+		if (!(Info->Flags & essf_ExtOnly))
+		{
+			TODO("ScrollConsoleScreenBuffer");
+			for (SHORT y = csbi.dwSize.Y - nDir - 1, y1 = csbi.dwSize.Y - 1; y >= 0; y--, y1--)
+			{
+				rcRgn.Top = rcRgn.Bottom = y;
+				if (ReadConsoleOutputW(Info->ConsoleOutput, pBuf, crSize, cr0, &rcRgn))
+				{
+					rcRgn.Top = rcRgn.Bottom = y1;
+					WriteConsoleOutputW(Info->ConsoleOutput, pBuf, crSize, cr0, &rcRgn);
+				}
+			}
+
+			while (nDir > 0)
+			{
+				cr0.Y = nDir - 1;
+				ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput, Info->FillAttr, Info->FillChar, cr0, csbi.dwSize.X};
+				ExtFillOutput(&f);
+				//FillConsoleOutputAttribute(Info->ConsoleOutput, GetDefaultTextAttr(), csbi.dwSize.X, cr0, &nCount);
+				//FillConsoleOutputCharacter(Info->ConsoleOutput, L' ', csbi.dwSize.X, cr0, &nCount);
+				--nDir;
+			}
+		}
+	}
+
+	// накрутить индекс в AnnotationInfo
+	if (gpTrueColor)
+	{
+		gpTrueColor->flushCounter++;
+	}
+
+	// Commit по флагу
+	if (Info->Flags & essf_Commit)
+	{
+		ExtCommitParm c = {sizeof(c), Info->ConsoleOutput};
+		ExtCommit(&c);
+	}
+
+	if (pBuf != Buf)
+		free(pBuf);
+
+	return lbRc;
+}
+
+
+
+BOOL ExtCommit(ExtCommitParm* Info)
+{
+	if (!Info)
+	{
+		_ASSERTE(Info!=NULL);
+		SetLastError(E_INVALIDARG);
+		return FALSE;
+	}
+
+	TODO("ExtCommit: Info->ConsoleOutput");
+
 	// Если буфер не был создан - то и передергивать нечего
 	if (gpTrueColor != NULL)
 	{
@@ -787,13 +1415,6 @@ BOOL WINAPI Commit()
 			gpTrueColor->locked = FALSE;
 		}
 	}
-	
-	#ifdef USE_COMMIT_EVENT
-	// "Отпустить" сервер
-	if (ghBatchEvent)
-		SetEvent(ghBatchEvent);
-	gbBatchStarted = false;
-	#endif
-	
-	return TRUE; //TODO: А чего возвращать-то?
+
+	return TRUE;
 }

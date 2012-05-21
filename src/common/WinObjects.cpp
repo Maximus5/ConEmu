@@ -2258,7 +2258,7 @@ bool MSection::MyEnterCriticalSection(DWORD anTimeout)
 	{
 		Sleep(10);
 
-		while(!TryEnterCriticalSection(&m_cs))
+		while (!TryEnterCriticalSection(&m_cs))
 		{
 			Sleep(10);
 			DEBUGSTR(L"TryEnterCriticalSection failed!!!\n");

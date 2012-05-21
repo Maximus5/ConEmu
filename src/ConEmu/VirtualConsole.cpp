@@ -83,6 +83,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRCOORD(s) //DEBUGSTR(s)
+#define DEBUGSTRFAIL(s) DEBUGSTR(s)
 
 // WARNING("не появляются табы во второй консоли");
 WARNING("На предыдущей строке символы под курсором прыгают влево");
@@ -2471,6 +2472,12 @@ void CVirtualConsole::UpdateText()
 	        ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
 	        pos += nFontHeight, row++)
 	{
+		if (row >= (int)TextHeight)
+		{
+			//_ASSERTE(row < (int)TextHeight);
+			DEBUGSTRFAIL(L"############ _ASSERTE(row < (int)TextHeight) #############\n");
+			break;
+		}
 		//2009-09-25. Некоторые (старые?) программы умудряются засунуть в консоль символы (ASC<32)
 		//            их нужно заменить на юникодные аналоги
 		//{
@@ -4575,6 +4582,7 @@ COORD CVirtualConsole::FindOpaqueCell()
 // ptCur - экранные координаты
 void CVirtualConsole::ShowPopupMenu(POINT ptCur, DWORD Align /* = TPM_LEFTALIGN */)
 {
+	CVConGuard guard(this);
 	BOOL lbNeedCreate = (mh_PopupMenu == NULL);
 
 	if (!Align)
@@ -4641,7 +4649,9 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 	if (!this)
 		return;
 
-	switch(nCmd)
+	CVConGuard guard(this);
+
+	switch (nCmd)
 	{
 		case IDM_CLOSE:
 			mp_RCon->CloseTab();

@@ -504,7 +504,7 @@ extern "C" {
 int CreateColorerHeader();
 
 // Main entry point for ConEmuC.exe
-int __stdcall ConsoleMain2(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
+int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserved*/)
 {
 	TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
 	
@@ -1427,6 +1427,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	}
 
 	Parm->pAnnotation = NULL;
+	Parm->Flags &= ~slsf_PrevAltServerPID;
 
 	// Хэндл обновим сразу
 	if (Parm->Flags & slsf_SetOutHandle)
@@ -1469,6 +1470,18 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 		_ASSERTE(gcrVisibleSize.X>0 && gcrVisibleSize.X<=400 && gcrVisibleSize.Y>0 && gcrVisibleSize.Y<=300);
 
 		iRc = ConsoleMain2(TRUE);
+
+		if ((iRc == 0) && gpSrv && gpSrv->dwPrevAltServerPID)
+		{
+			Parm->Flags |= slsf_PrevAltServerPID;
+			Parm->nPrevAltServerPID = gpSrv->dwPrevAltServerPID;
+		}
+	}
+
+	// Если поток RefreshThread был "заморожен" при запуске другого сервера
+	if (gpSrv->hFreezeRefreshThread)
+	{
+		SetEvent(gpSrv->hFreezeRefreshThread);
 	}
 
 	TODO("Инициализация TrueColor буфера - Parm->ppAnnotation");
@@ -3238,7 +3251,7 @@ void SendStarted()
 		nGuiPID = gpSrv->dwGuiPID;
 	}
 
-	CESERVER_REQ *pIn = NULL, *pOut = NULL;
+	CESERVER_REQ *pIn = NULL, *pOut = NULL, *pSrvOut = NULL;
 	int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
 	pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP, nSize);
 
@@ -3345,14 +3358,25 @@ void SendStarted()
 		// CECMD_CMDSTARTSTOP
 		if (nServerPID && (nServerPID != gnSelfPID))
 		{
-			_ASSERTE(nServerPID!=0 || gnRunMode==RM_SERVER);
+			_ASSERTE(nServerPID!=0 && (gnRunMode==RM_ALTSERVER || gnRunMode==RM_COMSPEC));
 			if ((gnRunMode == RM_ALTSERVER) || (gnRunMode == RM_SERVER))
 			{
 				pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)DuplicateProcessHandle(nServerPID);
 			}
 
 			WARNING("Optimize!!!");
-			pOut = ExecuteSrvCmd(nServerPID, pIn, ghConWnd);
+			pSrvOut = ExecuteSrvCmd(nServerPID, pIn, ghConWnd);
+			if (gnRunMode == RM_ALTSERVER)
+			{
+				if (pSrvOut && (pSrvOut->DataSize() >= sizeof(CESERVER_REQ_STARTSTOPRET)))
+				{
+					gpSrv->dwPrevAltServerPID = pSrvOut->StartStopRet.dwPrevAltServerPID;
+				}
+				else
+				{
+					_ASSERTE(pSrvOut && (pSrvOut->DataSize() >= sizeof(CESERVER_REQ_STARTSTOPRET)));
+				}
+			}
 		}
 
 		if (gnRunMode != RM_APPLICATION)
@@ -3471,7 +3495,7 @@ void SendStarted()
 			TODO("Если он запущен как COMSPEC - то к GUI никакого отношения иметь не должен");
 			//if (rNewWindow.Right >= crNewSize.X) // размер был уменьшен за счет полосы прокрутки
 			//    rNewWindow.Right = crNewSize.X-1;
-			ExecuteFreeResult(pOut); pOut = NULL;
+			ExecuteFreeResult(pOut); //pOut = NULL;
 			//gnBufferHeight = nNewBufferHeight;
 		}
 		else
@@ -3479,7 +3503,8 @@ void SendStarted()
 			gbNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
 		}
 
-		ExecuteFreeResult(pIn); pIn = NULL;
+		ExecuteFreeResult(pIn);
+		ExecuteFreeResult(pSrvOut);
 	}
 }
 
@@ -5552,10 +5577,25 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			nChange++;
 		}
 		// Если это закрылся AltServer
-		if (nPID == gpSrv->dwAltServerPID)
+		if (gpSrv->dwAltServerPID && (nPID == gpSrv->dwAltServerPID)
+			|| (in.StartStop.nPrevAltServerPID && !gpSrv->dwAltServerPID))
 		{
-			WARNING("Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer");
-			_ASSERTE(nPID != gpSrv->dwAltServerPID);
+			//_ASSERTE(nPID != gpSrv->dwAltServerPID);
+			if (in.StartStop.nPrevAltServerPID)
+			{
+				// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
+				// Активировать альтернативный сервер (повторно), отпустить его нити чтения
+				AltServerWasStarted(in.StartStop.nPrevAltServerPID, NULL, true);
+			}
+			else
+			{
+				gpSrv->dwAltServerPID = 0;
+				SafeCloseHandle(gpSrv->hAltServer);
+			}
+		}
+		else
+		{
+			_ASSERTE(in.StartStop.nPrevAltServerPID==0);
 		}
 	}
 	else
@@ -5582,7 +5622,10 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		(*out)->StartStopRet.nWidth = gpSrv->sbi.dwSize.X;
 		(*out)->StartStopRet.nHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
 		(*out)->StartStopRet.dwSrvPID = GetCurrentProcessId();
-		(*out)->StartStopRet.dwPrevAltServerPID = nPrevAltServerPID;
+		if (in.StartStop.nStarted == sst_AltServerStart)
+		{
+			(*out)->StartStopRet.dwPrevAltServerPID = nPrevAltServerPID;
+		}
 
 		lbRc = TRUE;
 	}
@@ -5593,6 +5636,8 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 BOOL cmd_SetFarPID(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
+
+	WARNING("***ALT*** не нужно звать ConEmuC, если вызывающий процесс уже альт.сервер");
 
 	gpSrv->nActiveFarPID = in.hdr.nSrcPID;
 	UpdateConsoleMapHeader();
@@ -5775,6 +5820,45 @@ BOOL cmd_RegExtConsole(CESERVER_REQ& in, CESERVER_REQ** out)
 	return TRUE;
 }
 
+BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = FALSE;
+	DWORD nPrevAltServer = 0;
+
+	if (!gpSrv)
+	{
+		_ASSERTE(gpSrv!=NULL);
+	}
+	else
+	{
+		// dwData[0]=1-Freeze, 0-Thaw; dwData[1]=New Alt server PID
+		if (in.dwData[0] == 1)
+		{
+			if (!gpSrv->hFreezeRefreshThread)
+				gpSrv->hFreezeRefreshThread = CreateEvent(NULL, TRUE, FALSE, NULL);
+			ResetEvent(gpSrv->hFreezeRefreshThread);
+		}
+		else
+		{
+			if (gpSrv->hFreezeRefreshThread)
+				SetEvent(gpSrv->hFreezeRefreshThread);
+		}
+
+		lbRc = TRUE;
+	}
+
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD)*2;
+	*out = ExecuteNewCmd(CECMD_FREEZEALTSRV, nOutSize);
+
+	if (*out != NULL)
+	{
+		(*out)->dwData[0] = lbRc;
+		(*out)->dwData[1] = nPrevAltServer; // Reserved
+	}
+
+	return TRUE;
+}
+
 BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -5900,6 +5984,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_REGEXTCONSOLE:
 		{
 			lbRc = cmd_RegExtConsole(in, out);
+		} break;
+		case CECMD_FREEZEALTSRV:
+		{
+			lbRc = cmd_FreezeAltServer(in, out);
 		} break;
 	}
 

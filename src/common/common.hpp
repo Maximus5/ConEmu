@@ -124,6 +124,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CONEMUMSG_PNLVIEWSETTINGS L"ConEmuTh::Settings"
 #define PNLVIEWMAPCOORD_TIMEOUT 1000
 #define CONEMUMSG_PNLVIEWMAPCOORD L"ConEmuTh::MapCoords"
+//#define CONEMUMSG_PNLVIEWLBTNDOWN L"ConEmuTh::LBtnDown"
 
 // Команды из плагина ConEmu и для GUI Macro
 enum ConEmuTabCommand
@@ -242,6 +243,7 @@ const CECMD
 	CECMD_REGEXTCONSOLE  = 56, // CESERVER_REQ_REGEXTCON. Регистрация процесса, использующего ExtendedConsole.dll
 	CECMD_GETALLTABS     = 57, // CESERVER_REQ_GETALLTABS. Вернуть список всех табов, для показа в Far и использовании в макросах.
 	CECMD_ACTIVATETAB    = 58, // dwData[0]=0-based Console, dwData[1]=0-based Tab
+	CECMD_FREEZEALTSRV   = 59, // dwData[0]=1-Freeze, 0-Thaw; dwData[1]=New Alt server PID
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1576,6 +1578,8 @@ struct CESERVER_REQ
 		CESERVER_REQ_REGEXTCON RegExtCon;
 		CESERVER_REQ_GETALLTABS GetAllTabs;
 	};
+
+	DWORD DataSize() { return this ? (hdr.cbSize - sizeof(hdr)) : 0; };
 };
 
 
@@ -1663,6 +1667,7 @@ typedef DWORD RequestLocalServerFlags;
 const RequestLocalServerFlags
 	slsf_SetOutHandle     = 1,
 	slsf_RequestTrueColor = 2,
+	slsf_PrevAltServerPID = 4,
 	slsf_None             = 0;
 struct RequestLocalServerParm
 {
@@ -1673,6 +1678,7 @@ struct RequestLocalServerParm
 	/*[OUT]*/ RequestLocalServer_t fRequestLocalServer;
 	/*[OUT]*/ ExtendedConsoleWriteText_t fExtendedConsoleWriteText;
 	/*[OUT]*/ ExtendedConsoleCommit_t fExtendedConsoleCommit;
+	/*[OUT]*/ DWORD nPrevAltServerPID;
 };
 
 

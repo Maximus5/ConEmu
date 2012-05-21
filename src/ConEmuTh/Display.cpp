@@ -82,7 +82,7 @@ BOOL gbCancelAll = FALSE;
 //extern COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors;
 //extern bool gbFadeColors;
 //extern bool gbFarPanelsReady;
-UINT gnConEmuFadeMsg = 0, gnConEmuSettingsMsg = 0, gnMapCoordMsg = 0;
+UINT gnConEmuFadeMsg = 0, gnConEmuSettingsMsg = 0, gnMapCoordMsg = 0; //, gnConEmuLBtnDown = 0;
 //extern CRgnDetect *gpRgnDetect;
 //extern CEFAR_INFO_MAPPING gFarInfo;
 //extern DWORD gnRgnDetectFlags;
@@ -393,11 +393,18 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 					//	ExecuteInMainThread(pCmd);
 					//}
 
-					// RClick пропустить дальше
-					if (uMsg != WM_RBUTTONDOWN)
+					//// RClick пропустить дальше
+					//if (uMsg != WM_RBUTTONDOWN)
+					//{
+					//	return 0;
+					//}
+
+					// LClick пропускать в консоль нельзя, чтобы не возникало глюков с позиционированием по клику...
+					/*if (uMsg == WM_LBUTTONDOWN)
 					{
-						return 0;
-					}
+						_ASSERTE(gnConEmuLBtnDown!=0);
+						uMsg = gnConEmuLBtnDown;
+					}*/
 				}
 
 				//else if (uMsg == WM_LBUTTONUP || uMsg == WM_RBUTTONUP)
@@ -549,6 +556,7 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 	gnConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWFADE);
 	gnConEmuSettingsMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWSETTINGS);
 	gnMapCoordMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWMAPCOORD);
+	//gnConEmuLBtnDown = RegisterWindowMessage(CONEMUMSG_PNLVIEWLBTNDOWN);
 
 	// Выставляем событие, что нить готова
 	if (hReady)

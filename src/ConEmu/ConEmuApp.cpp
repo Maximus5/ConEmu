@@ -542,6 +542,86 @@ BOOL CheckCreateAppWindow()
 	return TRUE;
 }
 
+LRESULT CALLBACK SkipShowWindowProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 0;
+	//static UINT nMsgBtnCreated = 0;
+
+	switch (messg)
+	{
+	case WM_PAINT:
+		{
+			PAINTSTRUCT ps = {};
+			BeginPaint(hWnd, &ps);
+			EndPaint(hWnd, &ps);
+		}
+		return 0;
+
+	case WM_ERASEBKGND:
+		return TRUE;
+
+	//default:
+	//	if (!nMsgBtnCreated)
+	//	{
+	//		nMsgBtnCreated = RegisterWindowMessage(L"TaskbarButtonCreated");
+	//	}
+
+	//	if (messg == nMsgBtnCreated)
+	//	{
+	//		gpConEmu->Taskbar_DeleteTabXP(hWnd);
+	//	}
+	}
+
+	result = DefWindowProc(hWnd, messg, wParam, lParam);
+	return result;
+}
+
+void SkipOneShowWindow()
+{
+	static bool bProcessed = false;
+	if (bProcessed)
+		return; // уже
+	bProcessed = true;
+
+	STARTUPINFO si = {sizeof(si)};
+	GetStartupInfo(&si);
+	if (si.wShowWindow == SW_SHOWNORMAL)
+		return; // финты не требуются
+
+	const wchar_t szSkipClass[] = L"ConEmuSkipShowWindow";
+	WNDCLASSEX wc = {sizeof(WNDCLASSEX), 0, SkipShowWindowProc, 0, 0,
+	                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
+	                 NULL /*(HBRUSH)COLOR_BACKGROUND*/,
+	                 NULL, szSkipClass, hClassIconSm
+	                };// | CS_DROPSHADOW
+
+	if (!RegisterClassEx(&wc))
+		return;
+
+	gpConEmu->Taskbar_Init();
+
+	//ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gpSet->wndX, gpSet->wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+	DWORD style = WS_OVERLAPPED | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+	int nWidth=100, nHeight=100, nX = -32000, nY = -32000;
+	DWORD exStyle = WS_EX_TOOLWINDOW;
+	HWND hSkip = CreateWindowEx(exStyle, szSkipClass, L"", style, nX, nY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+
+	if (hSkip)
+	{
+		HRGN hRgn = CreateRectRgn(0,0,1,1);
+		SetWindowRgn(hSkip, hRgn, FALSE);
+
+		ShowWindow(hSkip, SW_SHOWNORMAL);
+		gpConEmu->Taskbar_DeleteTabXP(hSkip);
+		DestroyWindow(hSkip);
+	}
+
+	// Класс более не нужен
+	UnregisterClass(szSkipClass, g_hInstance);
+
+	return;
+}
+
 
 BOOL gbInDisplayLastError = FALSE;
 
@@ -1100,7 +1180,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #endif
 	//pVCon = NULL;
 	//bool setParentDisabled=false;
-	bool ClearTypePrm = false;
+	bool ClearTypePrm = false; LONG ClearTypeVal = CLEARTYPE_NATURAL_QUALITY;
 	bool FontPrm = false; TCHAR* FontVal = NULL;
 	bool IconPrm = false;
 	bool SizePrm = false; LONG SizeVal = 0;
@@ -1231,9 +1311,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				gpConEmu->mb_StartDetached = TRUE;
 			}
-			else if (!klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype")))
+			else if (!klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype"))
+				|| !klstricmp(curCommand, _T("/ct0")) || !klstricmp(curCommand, _T("/ct1")) || !klstricmp(curCommand, _T("/ct2")))
 			{
 				ClearTypePrm = true;
+				switch (curCommand[3])
+				{
+				case L'0':
+					ClearTypeVal = NONANTIALIASED_QUALITY; break;
+				case L'1':
+					ClearTypeVal = ANTIALIASED_QUALITY; break;
+				default:
+					ClearTypeVal = CLEARTYPE_NATURAL_QUALITY;
+				}
 			}
 			// имя шрифта
 			else if (!klstricmp(curCommand, _T("/font")) && i + 1 < params)
@@ -1375,6 +1465,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				gpConEmu->ForceMinimizeToTray = true;
 			}
+			else if (!klstricmp(curCommand, _T("/noupdate")))
+			{
+				gpConEmu->DisableAutoUpdate = true;
+			}
 			else if (!klstricmp(curCommand, _T("/icon")) && i + 1 < params)
 			{
 				curCommand += _tcslen(curCommand) + 1; i++;
@@ -1489,6 +1583,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 100;
 	}
 
+
 //------------------------------------------------------------------------
 ///| load settings and apply parameters |/////////////////////////////////
 //------------------------------------------------------------------------
@@ -1528,6 +1623,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		if (nCmdShow == SW_SHOWMAXIMIZED)
 			gpConEmu->WindowMode = rMaximized;
+		else if (nCmdShow == SW_SHOWMINIMIZED || nCmdShow == SW_SHOWMINNOACTIVE)
+			gpConEmu->WindowStartMinimized = true;
 	}
 	else
 	{
@@ -1615,7 +1712,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gpSetCls->InitFont(
 	    FontPrm ? FontVal : NULL,
 	    SizePrm ? SizeVal : -1,
-	    ClearTypePrm ? CLEARTYPE_NATURAL_QUALITY : -1
+	    ClearTypePrm ? ClearTypeVal : -1
 	);
 
 ///////////////////////////////////

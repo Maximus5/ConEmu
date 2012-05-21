@@ -65,6 +65,7 @@ CTaskBar::CTaskBar()
 	mp_TaskBar3 = NULL;
 	mp_TaskBar4 = NULL;
 	mh_Shield = NULL;
+	mb_OleInitalized = false;
 }
 
 CTaskBar::~CTaskBar()
@@ -79,6 +80,12 @@ CTaskBar::~CTaskBar()
 void CTaskBar::Taskbar_Init()
 {
 	HRESULT hr = S_OK;
+
+	if (!mb_OleInitalized)
+	{
+		hr = OleInitialize(NULL);  // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
+		mb_OleInitalized = SUCCEEDED(hr);
+	}
 
 	if (!mp_TaskBar1)
 	{
@@ -245,8 +252,9 @@ HRESULT CTaskBar::Taskbar_DeleteTabXP(HWND hBtn)
 {
 	HRESULT hr;
 
-	// 111127 на Vista тоже кнопку "убирать" нужно
-	_ASSERTE(gpConEmu && (gOSVer.dwMajorVersion <= 5 || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)));
+	// -- SkipShowWindowProc
+	//// 111127 на Vista тоже кнопку "убирать" нужно
+	//_ASSERTE(gpConEmu && (gOSVer.dwMajorVersion <= 5 || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)));
 
 	if (mp_TaskBar1)
 	{

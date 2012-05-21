@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsFast.h"
 #include "ConEmu.h"
+#include "ConEmuApp.h"
 
 static bool bCheckHooks, bCheckUpdate, bCheckIme;
 // Если файл конфигурации пуст, то после вызова CheckOptionsFast
@@ -310,6 +311,9 @@ void CheckOptionsFast(LPCWSTR asTitle, bool abCreatingVanilla /*= false*/)
 
 	if (bCheckHooks || bCheckUpdate || bCheckIme)
 	{
+		// First ShowWindow forced to use nCmdShow. This may be weird...
+		SkipOneShowWindow();
+
 		DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_FAST_CONFIG), NULL, CheckOptionsFastProc, (LPARAM)asTitle);
 	}
 }

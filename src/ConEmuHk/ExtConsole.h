@@ -28,6 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../common/ConsoleAnnotation.h"
+#include "../common/pluginW1900.hpp"
+
 typedef unsigned __int64 CECOLORFLAGS;
 static const CECOLORFLAGS
 	CECF_FG_24BIT      = 0x0000000000000001ULL,
@@ -37,7 +40,7 @@ static const CECOLORFLAGS
 	CECF_FG_BOLD       = 0x1000000000000000ULL,
 	CECF_FG_ITALIC     = 0x2000000000000000ULL,
 	CECF_FG_UNDERLINE  = 0x4000000000000000ULL,
-	CECF_STYLEMASK     = FCF_FG_BOLD|FCF_FG_ITALIC|FCF_FG_UNDERLINE,
+	CECF_STYLEMASK     = CECF_FG_BOLD|CECF_FG_ITALIC|CECF_FG_UNDERLINE,
 
 	CECF_NONE          = 0;
 
@@ -48,9 +51,172 @@ struct ConEmuColor
 	COLORREF BackgroundColor;
 };
 
-#define INDEXMASK 0x0000000f
-#define COLORMASK 0x00ffffff
+#if 0
+#define INDEXMASK 0x0000000F
+#define COLORMASK 0x00FFFFFF
 
 #define INDEXVALUE(x) ((x)&INDEXMASK)
 #define COLORVALUE(x) ((x)&COLORMASK)
+#endif
 
+#define CONFORECOLOR(x) ((x & 0xF))
+#define CONBACKCOLOR(x) ((x & 0xF0)>>4)
+
+struct ExtAttributesParm
+{
+	size_t StructSize;
+	HANDLE ConsoleOutput;
+	ConEmuColor Attributes;
+};
+
+BOOL ExtGetAttributes(ExtAttributesParm* Info);
+BOOL ExtSetAttributes(const ExtAttributesParm* Info);
+
+
+typedef unsigned __int64 EXTREADWRITEFLAGS;
+static const EXTREADWRITEFLAGS
+	ewtf_FarClr  = 0x0000000000000001ULL,
+	ewtf_CeClr   = 0x0000000000000002ULL,
+	ewtf_AiClr   = 0x0000000000000003ULL,
+	ewtf_Mask    = ewtf_FarClr|ewtf_CeClr|ewtf_AiClr,
+
+	ewtf_Current = 0x0000000000000010ULL, // Use current color (may be extended) selected in console
+
+	ewtf_WrapAt  = 0x0000000000000020ULL, // Force wrap at specific position (WrapAtCol)
+
+	ewtf_Commit  = 0x0000000000000100ULL, // Only for Write functions
+	ewtf_None    = 0x0000000000000000ULL;
+
+struct ExtWriteTextParm
+{
+	size_t StructSize;
+	EXTREADWRITEFLAGS Flags;
+	HANDLE ConsoleOutput;
+	union
+	{
+		FarColor FARColor;
+		ConEmuColor CEColor;
+		AnnotationInfo AIColor;
+	};
+	const wchar_t* Buffer;
+	DWORD NumberOfCharsToWrite;
+	DWORD NumberOfCharsWritten;
+	SHORT WrapAtCol; // 1-based. Used only when ewtf_WrapAt specified
+	void* Private;   // ConEmu private usage !!! Must be NULL !!!
+};
+
+BOOL ExtWriteText(ExtWriteTextParm* Info);
+
+union ConEmuCharBuffer
+{
+	LPBYTE RAW;
+	FAR_CHAR_INFO* FARBuffer;
+	struct
+	{
+		CHAR_INFO* CEBuffer;
+		union
+		{
+			ConEmuColor* CEColor;
+			AnnotationInfo* AIColor;
+		};
+	};
+	int BufferType; // ewtf_Mask
+
+	void Inc(size_t Cells = 1);
+};
+
+struct ExtReadWriteOutputParm
+{
+	size_t StructSize;
+	EXTREADWRITEFLAGS Flags;
+	HANDLE ConsoleOutput;
+	// Where
+	COORD BufferSize;
+	COORD BufferCoord;
+	SMALL_RECT Region;
+	// What
+	ConEmuCharBuffer Buffer;
+};
+
+BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info);
+
+BOOL WINAPI ExtWriteOutput(ExtReadWriteOutputParm* Info);
+
+
+
+
+#if 0
+typedef unsigned __int64 EXTSETTEXTMODEFLAGS;
+static const EXTSETTEXTMODEFLAGS
+	estm_Clipping = 0x0000000000000001ULL, // wrap when cursor beyond dwSize.X instead of BufferWidth
+	estm_None     = 0x0000000000000000ULL;
+
+struct ExtSetTextMode
+{
+	size_t StructSize;
+	EXTSETTEXTMODEFLAGS Flags;
+	COORD dwSize;
+};
+#endif
+
+typedef unsigned __int64 EXTFILLOUTPUTFLAGS;
+static const EXTFILLOUTPUTFLAGS
+	efof_Attribute = 0x0000000000000001ULL, // FillConsoleOutputAttribute
+	efof_Character = 0x0000000000000002ULL, // FillConsoleOutputCharacter
+
+	efof_Current   = 0x0000000000000010ULL, // Use current color (may be extended) selected in console
+
+	efof_None      = 0x0000000000000000ULL;
+
+struct ExtFillOutputParm
+{
+	size_t StructSize;
+	EXTFILLOUTPUTFLAGS Flags;
+	HANDLE ConsoleOutput;
+	// Fill region with
+	ConEmuColor FillAttr;
+	wchar_t FillChar;
+	// Where
+	COORD Coord;
+	DWORD Count;
+};
+
+BOOL ExtFillOutput(ExtFillOutputParm* Info);
+
+typedef unsigned __int64 EXTSCROLLSCREENFLAGS;
+static const EXTSCROLLSCREENFLAGS
+	essf_Pad      = 0x0000000000000001ULL, // pad with spaces to right edge first
+	essf_ExtOnly  = 0x0000000000000002ULL, // scroll extended attrs only (don't touch real console text/attr)
+
+	essf_Current = 0x0000000000000010ULL, // Use current color (may be extended) selected in console
+
+	essf_Commit   = 0x0000000000000100ULL,
+	essf_None     = 0x0000000000000000ULL;
+
+struct ExtScrollScreenParm
+{
+	size_t StructSize;
+	EXTSCROLLSCREENFLAGS Flags;
+	HANDLE ConsoleOutput;
+
+	// (Dir < 0) - Scroll whole page up by n (default 1) lines. New lines are added at the bottom.
+	// (Dir > 0) - Scroll whole page down by n (default 1) lines. New lines are added at the top.
+	INT_PTR Dir;
+
+	// Fill regions with
+	ConEmuColor FillAttr;
+	wchar_t FillChar;
+};
+
+BOOL ExtScrollScreen(ExtScrollScreenParm* Info);
+
+
+struct ExtCommitParm
+{
+	size_t StructSize;
+	HANDLE ConsoleOutput;
+};
+
+BOOL ExtCommit(ExtCommitParm* Info);
+
+void ExtCloseBuffers();

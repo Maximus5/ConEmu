@@ -132,7 +132,7 @@ int main(
 	}
 
 	// Main dll entry point for Server & ComSpec
-	iRc = lfConsoleMain2(FALSE/*abAlternative*/);
+	iRc = lfConsoleMain2(0/*WorkMode*/);
 	// Exiting
 	gfHandlerRoutine = NULL;
 	FreeLibrary(hConEmu);

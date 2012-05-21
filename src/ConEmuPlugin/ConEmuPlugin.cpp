@@ -703,6 +703,7 @@ void OnConsolePeekReadInput(BOOL abPeek)
 
 			if (nMapPID == 0 || nMapPID != gnSelfPID)
 			{
+				WARNING("***ALT*** не нужно звать ConEmuC, если текущий процесс уже альт.сервер");
 				bNeedReload = true;
 				dwLastTickCount = GetTickCount();
 				CESERVER_REQ_HDR in;

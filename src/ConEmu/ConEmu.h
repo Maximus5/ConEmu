@@ -188,6 +188,7 @@ class CConEmuMain :
 		//uint cBlinkNext;
 		DWORD WindowMode, change2WindowMode;
 		bool WindowStartMinimized, ForceMinimizeToTray;
+		bool DisableAutoUpdate;
 		bool mb_isFullScreen;
 		BOOL mb_ExternalHidden;
 		//HANDLE hPipe;
@@ -322,7 +323,7 @@ class CConEmuMain :
 		void StopRightClickingPaint();
 		static LRESULT CALLBACK RightClickingProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		HWND mh_RightClickingWnd;
-		bool PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam);
+		bool PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam, bool& isPrivate);
 		wchar_t* LoadConsoleBatch(LPCWSTR asSource);
 	public:
 		void RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon);

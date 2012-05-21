@@ -684,8 +684,24 @@ int ServerInitGuiTab()
 	return iRc;
 }
 
-bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer)
+bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw)
 {
+	_ASSERTE(nPID!=0);
+
+	if (gpSrv->dwAltServerPID && (gpSrv->dwAltServerPID != nPID))
+	{
+		// Остановить старый (текущий) сервер
+		CESERVER_REQ* pFreezeIn = ExecuteNewCmd(CECMD_FREEZEALTSRV, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+		if (pFreezeIn)
+		{
+			pFreezeIn->dwData[0] = 1;
+			pFreezeIn->dwData[1] = nPID;
+			CESERVER_REQ* pFreezeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pFreezeIn, ghConWnd);
+			ExecuteFreeResult(pFreezeIn);
+			ExecuteFreeResult(pFreezeOut);
+		}
+	}
+
 	// Перевести нить монитора в режим ожидания завершения AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer
 	if (gpSrv->hAltServer && (gpSrv->hAltServer != hAltServer))
 	{
@@ -697,11 +713,31 @@ bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer)
 	{
 		hAltServer = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, nPID);
 		if (hAltServer == NULL)
+		{
 			hAltServer = OpenProcess(SYNCHRONIZE|PROCESS_QUERY_INFORMATION, FALSE, nPID);
+			if (hAltServer == NULL)
+			{
+				return false;
+			}
+		}
 	}
 
 	gpSrv->hAltServer = hAltServer;
 	gpSrv->dwAltServerPID = nPID;
+
+	if (ForceThaw)
+	{
+		// Отпустить новый сервер (который раньше замораживался)
+		CESERVER_REQ* pFreezeIn = ExecuteNewCmd(CECMD_FREEZEALTSRV, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+		if (pFreezeIn)
+		{
+			pFreezeIn->dwData[0] = 0;
+			pFreezeIn->dwData[1] = 0;
+			CESERVER_REQ* pFreezeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pFreezeIn, ghConWnd);
+			ExecuteFreeResult(pFreezeIn);
+			ExecuteFreeResult(pFreezeOut);
+		}
+	}
 
 	return (hAltServer != NULL);
 }
@@ -2066,6 +2102,8 @@ wrap:
 
 void UpdateConsoleMapHeader()
 {
+	WARNING("***ALT*** не нужно обновлять мэппинг одновременно и в сервере и в альт.сервере");
+
 	if (gpSrv && gpSrv->pConsole)
 	{
 		if (gnRunMode == RM_SERVER) // !!! RM_ALTSERVER - ниже !!!
@@ -2820,7 +2858,7 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 
 DWORD WINAPI RefreshThread(LPVOID lpvParam)
 {
-	DWORD nWait = 0, nAltWait = 0;
+	DWORD nWait = 0, nAltWait = 0, nFreezeWait = 0;
 	HANDLE hEvents[2] = {ghQuitEvent, gpSrv->hRefreshEvent};
 	DWORD nDelta = 0;
 	DWORD nLastReadTick = 0; //GetTickCount();
@@ -2830,6 +2868,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	DWORD dwAltTimeout = 100;
 	//BOOL  bForceRefreshSetSize = FALSE; // После изменения размера нужно сразу перечитать консоль без задержек
 	BOOL lbWasSizeChange = FALSE;
+	BOOL bThaw = TRUE; // Если FALSE - снизить нагрузку на conhost
+	BOOL bConsoleActive = TRUE;
 
 	while (TRUE)
 	{
@@ -2837,7 +2877,26 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//lbForceSend = FALSE;
 		MCHKHEAP;
 
-		nAltWait = gpSrv->hAltServer ? WaitForSingleObject(gpSrv->hAltServer, dwAltTimeout) : WAIT_OBJECT_0;
+		if (gpSrv->hFreezeRefreshThread)
+		{
+			HANDLE hFreeze[2] = {gpSrv->hFreezeRefreshThread, ghQuitEvent};
+			nFreezeWait = WaitForMultipleObjects(countof(hFreeze), hFreeze, FALSE, INFINITE);
+			if (nFreezeWait == (WAIT_OBJECT_0+1))
+				break; // затребовано заверешение потока
+		}
+
+		// проверка альтернативного сервера
+		if (gpSrv->hAltServer)
+		{
+			HANDLE hAltWait[2] = {gpSrv->hAltServer, ghQuitEvent};
+			nAltWait = WaitForMultipleObjects(countof(hAltWait), hAltWait, FALSE, dwAltTimeout);
+			if (nAltWait == (WAIT_OBJECT_0+1))
+				break; // затребовано заверешение потока
+		}
+		else
+		{
+			nAltWait = WAIT_OBJECT_0;
+		}
 
 		// Always update con handle, мягкий вариант
 		// !!! В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ. В итоге, буфер вывода telnet'а схлопывается! !!!
@@ -2939,18 +2998,20 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//lbEventualChange = (nWait == (WAIT_OBJECT_0+1))/* || lbProcessChanged*/;
 		//lbForceSend = (nWait == (WAIT_OBJECT_0+1));
 
-		BOOL bThaw = TRUE; // Если FALSE - снизить нагрузку на conhost
-		BOOL bConsoleActive = TRUE;
 		WARNING("gpSrv->pConsole->hdr.bConsoleActive и gpSrv->pConsole->hdr.bThawRefreshThread могут быть неактуальными!");
 		//if (gpSrv->pConsole->hdr.bConsoleActive && gpSrv->pConsoleMap)
+		//{
+		if (gpSrv->pConsoleMap->IsValid())
 		{
-			if (gpSrv->pConsoleMap->IsValid())
-			{
-				CESERVER_CONSOLE_MAPPING_HDR* p = gpSrv->pConsoleMap->Ptr();
-				bThaw = p->bThawRefreshThread;
-				bConsoleActive = p->bConsoleActive;
-			}
+			CESERVER_CONSOLE_MAPPING_HDR* p = gpSrv->pConsoleMap->Ptr();
+			bThaw = p->bThawRefreshThread;
+			bConsoleActive = p->bConsoleActive;
 		}
+		else
+		{
+			bThaw = bConsoleActive = TRUE;
+		}
+		//}
 
 		// Чтобы не грузить процессор неактивными консолями спим, если
 		// только что не было затребовано изменение размера консоли

@@ -38,21 +38,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"––––––––––––––––––––––\r\n" \
 	L"ConEmu.exe /cmd Far.exe /w\r\n" \
 	L"ConEmu.exe /font \"Lucida Console\" /size 16 /bufferheight 9999 /cmd powershell\r\n" \
-	L"ConEmu.exe /config Hiew /cmd \"C:\\Tools\\HIEW32.EXE\"\r\n" \
+	L"ConEmu.exe /config \"Hiew\" /cmd \"C:\\Tools\\HIEW32.EXE\"\r\n" \
 	L"ConEmu.exe /cmd {Shells}\r\n" \
+	L"ConEmu.exe /tsa /min /icon \"cmd.exe\" /cmd cmd /c dir c:\\ /s\r\n" \
 	L"\r\n" \
 	L"By default (started without args) this program launches \"Far.exe\", \"tcc.exe\" or \"cmd.exe\" (which can be found).\r\n" \
 	L"\r\n" \
 	L"Command line switches:\r\n" \
 	L"/? - This help screen.\r\n" \
-	L"/config <configname> - Use alternative named configuration\r\n" \
-	L"/fs | /max - (Full screen) | (Maximized) mode.\r\n" \
-	L"/multi | /nomulti - enable or disable multiconsole features\r\n" \
+	L"/config <configname> - Use alternative named configuration.\r\n" \
+	L"/fs | /max | /min - (Full screen), (Maximized) or (Minimized) mode.\r\n" \
+	L"/tsa - Override (enable) minimize to taskbar status area.\r\n" \
+	L"/icon <file> - Take icon from file (exe, dll, ico).\r\n" \
+	L"/multi | /nomulti - Enable or disable multiconsole features.\r\n" \
+	L"/single - New console will be started in new tab of existing ConEmu.\r\n" \
+	L"/noupdate - Disable automatic checking for updates on startup\r\n" \
+	L"/ct[0|1] - Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - cleartype.\r\n" \
 	L"/font <fontname> - Specify the font name.\r\n" \
-	L"/single  - New console will be started in new tab of existing ConEmu\r\n" \
 	L"/size <fontsize> - Specify the font size.\r\n" \
 	L"/fontfile <fontfilename> - Loads fonts from file.\r\n" \
-	L"/BufferHeight <lines> - may be used with cmd.exe/tcc.exe\r\n" \
+	L"/BufferHeight <lines> - Set console buffer height.\r\n" \
+	L"/Log[1|2] - Used to create debug log files.\r\n" \
 	/* L"/Attach [PID] - intercept console of specified process\n" */ \
 	L"/cmd <commandline>|@<taskfile>|{taskname} - Command line to start. This must be the last used switch.\r\n" \
 	L"\r\n" \

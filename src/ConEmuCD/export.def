@@ -7,7 +7,7 @@ EXPORTS
 	HandlerRoutine
 	MountVirtualHive
 	UnMountVirtualHive
-	RequestLocalServer
+	PrivateEntry=RequestLocalServer
 
 ; LLKeyHooks (ConEmu GUI)
 	ghKeyHook

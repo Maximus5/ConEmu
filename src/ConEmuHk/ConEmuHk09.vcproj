@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuHk"
 	ProjectGUID="{525F3223-BC12-479E-8487-5FA4406461F4}"
 	RootNamespace="ConEmuHk"
@@ -1480,6 +1480,10 @@
 				>
 			</File>
 			<File
+				RelativePath="ExtConsole.h"
+				>
+			</File>
+			<File
 				RelativePath=".\GuiAttach.h"
 				>
 			</File>
@@ -1544,15 +1548,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\Ansi.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\common\Common.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\common\ConEmuCheck.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Ansi.cpp"
 				>
 			</File>
 			<File
@@ -1569,6 +1573,10 @@
 			</File>
 			<File
 				RelativePath=".\export.def"
+				>
+			</File>
+			<File
+				RelativePath="ExtConsole.cpp"
 				>
 			</File>
 			<File

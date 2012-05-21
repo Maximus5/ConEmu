@@ -46,7 +46,8 @@ $(OBJDIR)\Injects.obj \
 $(OBJDIR)\Ansi.obj \
 $(OBJDIR)\ConEmuHooks.obj \
 $(OBJDIR)\RegHooks.obj \
-$(OBJDIR)\execute.obj \
+$(OBJDIR)\Execute.obj \
+$(OBJDIR)\ExtConsole.obj \
 $(OBJDIR)\SetHook.obj \
 $(OBJDIR)\ShellProcessor.obj \
 $(OBJDIR)\WinObjects.obj \
@@ -277,7 +278,9 @@ $(OBJDIR)\RegHooks.obj: RegHooks.cpp
 
 $(OBJDIR)\ConEmuSrv.obj: ConEmuSrv.cpp
 
-$(OBJDIR)\execute.obj: ../common/execute.cpp ../common/execute.h
+$(OBJDIR)\Execute.obj: ../common/Execute.cpp ../common/Execute.h
+
+$(OBJDIR)\ExtConsole.obj: ExtConsole.cpp ExtConsole.h
 
 $(OBJDIR)\SetHook.obj: SetHook.cpp SetHook.h
 

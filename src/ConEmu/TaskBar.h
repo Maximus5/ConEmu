@@ -67,6 +67,7 @@ protected:
 	ITaskbarList2 *mp_TaskBar2; // WinXP
 	ITaskbarList  *mp_TaskBar1; // Win2k
 	HICON mh_Shield;
+	bool  mb_OleInitalized;
 public:
 	CTaskBar();
 	virtual ~CTaskBar();

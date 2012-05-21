@@ -824,9 +824,13 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 					pszMacro = szPID;
 					break;
 				default:
-					// Недопустимый управляющий символ
-					_ASSERTE(*pSrc==L'%');
+					// Недопустимый управляющий символ, это может быть переменная окружения
 					pszMacro = NULL;
+					pSrc--;
+					if (s)
+						*(pDst++) = L'%';
+					else
+						cchCmdMax++;
 				}
 
 				if (pszMacro)

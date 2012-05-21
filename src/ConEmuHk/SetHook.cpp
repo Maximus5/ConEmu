@@ -444,9 +444,9 @@ HMODULE WINAPI OnLoadLibraryExWExp(const WCHAR* lpFileName, HANDLE hFile, DWORD 
 BOOL WINAPI OnFreeLibraryExp(HMODULE hModule);
 #endif
 
-#ifdef HOOK_ANSI_SEQUENCES
+//#ifdef HOOK_ANSI_SEQUENCES
 BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-#endif
+//#endif
 
 
 #ifdef HOOK_ERROR_PROC
@@ -481,9 +481,9 @@ enum HookLibFuncs
 	hlfLoadLibraryExA,
 	hlfLoadLibraryExW,
 	hlfFreeLibrary,
-	#ifdef HOOK_ANSI_SEQUENCES
+	//#ifdef HOOK_ANSI_SEQUENCES
 	hlfWriteConsoleW,
-	#endif
+	//#endif
 	#endif
 
 	//#ifdef HOOK_ERROR_PROC
@@ -524,9 +524,9 @@ void InitKernelFuncs()
 	SETFUNC(ghKernel32, hlfLoadLibraryExA, OnLoadLibraryExAExp, szLoadLibraryExA);
 	SETFUNC(ghKernel32, hlfLoadLibraryExW, OnLoadLibraryExWExp, szLoadLibraryExW);
 	SETFUNC(ghKernel32, hlfFreeLibrary, OnFreeLibraryExp, szFreeLibrary);
-	#ifdef HOOK_ANSI_SEQUENCES
+	//#ifdef HOOK_ANSI_SEQUENCES
 	SETFUNC(ghKernel32, hlfWriteConsoleW, OnWriteConsoleW, szWriteConsoleW);
-	#endif
+	//#endif
 	#endif
 	//#ifdef HOOK_ERROR_PROC
 	//SETFUNC(eGetLastError,
@@ -678,12 +678,12 @@ FARPROC WINAPI GetWriteConsoleW()
 	_ASSERTEX(gKernelFuncs[hlfWriteConsoleW].OldAddress!=NULL);
 	#endif
 
-	#ifdef HOOK_ANSI_SEQUENCES
+	//#ifdef HOOK_ANSI_SEQUENCES
 	HookItem* ph;
 	return (FARPROC)GetOriginalAddress(OnWriteConsoleW, WriteConsoleW, FALSE, &ph);
-	#else
-	return (FARPROC)WriteConsoleW;
-	#endif
+	//#else
+	//return (FARPROC)WriteConsoleW;
+	//#endif
 }
 
 CInFuncCall::CInFuncCall()
@@ -817,6 +817,9 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	// Для добавленных в gpHooks функций определить "оригинальный" адрес экспорта
 	for (i = 0; gpHooks[i].NewAddress; i++)
 	{
+		if (gpHooks[i].DllNameA[0] == 0)
+			WideCharToMultiByte(CP_ACP, 0, gpHooks[i].DllName, -1, gpHooks[i].DllNameA, (int)countof(gpHooks[i].DllNameA), 0,0);
+
 		if (!gpHooks[i].OldAddress)
 		{
 			// Сейчас - не загружаем
@@ -835,7 +838,9 @@ bool __stdcall InitHooks(HookItem* apHooks)
 			}
 			else
 			{
+				WARNING("Тут часто возвращается XXXStub вместо самой функции!");
 				gpHooks[i].OldAddress = (void*)GetProcAddress(mod, gpHooks[i].Name);
+
 				if (gpHooks[i].OldAddress == NULL)
 				{
 					_ASSERTE(gpHooks[i].OldAddress != NULL);
@@ -1004,7 +1009,7 @@ bool IsModuleExcluded(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW)
 	if (lbResource)
 		return true;
 
-	// Возможно, имеет смысл игнорировать системные библиотеки вида
+	// игнорировать системные библиотеки вида
     // API-MS-Win-Core-Util-L1-1-0.dll
 	if (asModuleA)
 	{
@@ -1442,6 +1447,15 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 	bool res = false;
 	size_t i;
 
+	//api-ms-win-core-libraryloader-l1-1-1.dll
+	//api-ms-win-core-console-l1-1-0.dll
+	//...
+	char szCore[18];
+	const char szCorePrefix[] = "api-ms-win-core-";
+	const int nCorePrefLen = lstrlenA(szCorePrefix);
+	_ASSERTE((nCorePrefLen+1)<countof(szCore));
+	bool lbIsCodeModule = false;
+
 	//_ASSERTEX(lstrcmpi(asModule, L"dsound.dll"));
 	
 	SAFETRY
@@ -1453,9 +1467,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 				break;
 
 			//DebugString( ToTchar( (char*)Module + Import[i].Name ) );
-			#ifdef _DEBUG
 			char* mod_name = (char*)Module + Import[i].Name;
-			#endif
 			DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
 			DWORD_PTR rvaIAT = Import[i].FirstThunk; //-V101
 
@@ -1487,6 +1499,14 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 			size_t f, s, j;
 			for (s = 0; s <= 1; s++)
 			{
+				if (s)
+				{
+					thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaIAT, nt_header, (PBYTE)Module);
+					thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaINT, nt_header, (PBYTE)Module);
+					lstrcpynA(szCore, mod_name, nCorePrefLen+1);
+					lbIsCodeModule = (lstrcmpiA(szCore, szCorePrefix) == 0);
+				}
+
 				for (f = 0;; thunk++, thunkO++, f++)
 				{
 					//111127 - ..\GIT\lib\perl5\site_perl\5.8.8\msys\auto\SVN\_Core\_Core.dll
@@ -1526,8 +1546,8 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 						////}
 
 						
-						// стоит искать имя функции не только для EXE, но и для всех dll?
-						if (s /*bExecutable*/)
+						// искать имя функции
+						if (s)
 						{
 							if (!IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal))
 							{
@@ -1587,6 +1607,12 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 							}
 							else
 							{
+								// Имя модуля
+								if ((lstrcmpiA(mod_name, gpHooks[j].DllNameA) != 0)
+									&& !(lbIsCodeModule && (gpHooks[j].DllName == kernel32)))
+									// Имя модуля не соответствует
+									continue;
+
 								// Проверяем, имя функции совпадает с перехватываемыми?
 								if (lstrcmpA(pszFuncName, gpHooks[j].Name))
 									continue;
@@ -1594,6 +1620,7 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 
 							if (!abForceHooks)
 							{
+								//_ASSERTEX(abForceHooks);
 								continue; // запрещен перехват, если текущий адрес в модуле НЕ совпадает с оригинальным экспортом!
 							}
 							else if (bExecutable && !gpHooks[j].ExeOldAddress)
@@ -1603,6 +1630,9 @@ bool SetHookPrep(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool bExec
 								// Про Anamorphosis несколько устарело. При включенном "Inject ConEmuHk"
 								// хуки ставятся сразу при запуске процесса.
 								// Но, теоретически, кто-то может успеть раньше, или флажок "Inject" выключен.
+
+								// Также это может быть в новой архитектуре Win7 ("api-ms-win-core-..." и др.)
+
 								gpHooks[j].ExeOldAddress = (void*)thunk->u1.Function;
 							}
 						}

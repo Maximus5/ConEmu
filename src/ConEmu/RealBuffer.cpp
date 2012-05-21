@@ -3401,7 +3401,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			if (gpSet->isTrueColorer
 				&& mp_RCon->m_TrueColorerMap.IsValid()
 				&& mp_RCon->mp_TrueColorerData
-				&& mp_RCon->isFar())
+				/*&& mp_RCon->isFar()*/)
 			{
 				pcolSrc = mp_RCon->mp_TrueColorerData;
 				pcolEnd = mp_RCon->mp_TrueColorerData + mp_RCon->m_TrueColorerMap.Ptr()->bufferSize;
@@ -3409,7 +3409,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				WARNING("Если far/w - pcolSrc нужно поднять вверх, bStartUseColorData=TRUE, bUseColorData=FALSE");
 				if (con.bBufferHeight)
 				{
-					if (!mp_RCon->isFarBufferSupported())
+					if (mp_RCon->isFar() && !mp_RCon->isFarBufferSupported())
 					{
 						bUseColorData = FALSE;
 					}

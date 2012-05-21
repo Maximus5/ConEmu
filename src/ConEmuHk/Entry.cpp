@@ -28,10 +28,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после загрузки модуля показать MessageBox, чтобы прицепиться дебаггером
-//  #define SHOW_STARTED_MSGBOX
-//  #define SHOW_INJECT_MSGBOX
-//  #define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-//  #define SHOW_EXE_MSGBOX_NAME L"Far.exe"
+//	#define SHOW_STARTED_MSGBOX
+//	#define SHOW_INJECT_MSGBOX
+	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
+	#define SHOW_EXE_MSGBOX_NAME L"vimd.exe"
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
@@ -130,6 +130,7 @@ extern HHOOK ghGuiClientRetHook;
 
 DWORD   gnSelfPID = 0;
 DWORD   gnServerPID = 0;
+DWORD   gnPrevAltServerPID = 0;
 DWORD   gnGuiPID = 0;
 HWND    ghConWnd = NULL; // Console window
 HWND    ghConEmuWnd = NULL; // Root! window
@@ -142,6 +143,7 @@ DWORD   gnImageBits = WIN3264TEST(32,64); //-V112
 HMODULE ghSrvDll = NULL;
 //typedef int (__stdcall* RequestLocalServer_t)(AnnotationHeader** ppAnnotation, HANDLE* ppOutBuffer);
 RequestLocalServer_t gfRequestLocalServer = NULL;
+TODO("AnnotationHeader* gpAnnotationHeader");
 AnnotationHeader* gpAnnotationHeader = NULL;
 HANDLE ghCurrentOutBuffer = NULL; // Устанавливается при SetConsoleActiveScreenBuffer
 
@@ -1229,6 +1231,7 @@ void SendStopped()
 		pIn->StartStop.dwPID = gnSelfPID;
 		pIn->StartStop.nSubSystem = gnImageSubsystem;
 		pIn->StartStop.bWasBufferHeight = gbWasBufferHeight;
+		pIn->StartStop.nPrevAltServerPID = gnPrevAltServerPID;
 
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -1441,7 +1444,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 				goto wrap;
 		}
 
-		gfRequestLocalServer = (RequestLocalServer_t)GetProcAddress(ghSrvDll, "RequestLocalServer");
+		gfRequestLocalServer = (RequestLocalServer_t)GetProcAddress(ghSrvDll, "PrivateEntry");
 	}
 
 	if (!gfRequestLocalServer)
@@ -1451,6 +1454,11 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 
 	//iRc = gfRequestLocalServer(&gpAnnotationHeader, &ghCurrentOutBuffer);
 	iRc = gfRequestLocalServer(Parm);
+
+	if  ((iRc == 0) && (Parm->Flags & slsf_PrevAltServerPID))
+	{
+		gnPrevAltServerPID = Parm->nPrevAltServerPID;
+	}
 wrap:
 	return iRc;
 }
