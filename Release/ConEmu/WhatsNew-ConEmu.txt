@@ -10,7 +10,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
-[*] ConEmu is mentioned in Wikipedia: http://en.wikipedia.org/wiki/Comparison_of_file_managers#cite_ref-20
+[+] Win+A - альтернативная консоль.
+    При выполнении в фаре - показывает вывод последней команды.
+    Иначе - замораживает текущее состояние всех консоли (весь буфер, с прокруткой).
+    Закрыть альтернативную консоль - повторным Win+A или Esc.
+[+] Win+S - включение/отключение прокрутки (BufferHeight). Игнорируется в Win7.
+[*] Новая кнопка на тулбаре для Win+S.
 [%] Issue 551: Updater, Failure to create a valid unpack command line for downloaded 7z package.
 [+] Новые ключи ConEmu.exe
     /min - запустить свернутым;
@@ -30,6 +35,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
     в самый низ ("echo [9999;1H")
 [%] Fast configuration dialog incorrect size, when ConEmu starts maximized (shortcut property).
 [%] Исправлена некорректная отрисовка при включении флажка 'Auto' на вкладке 'Main' в Maximized режиме.
+
+
+2012.05.20
+[*] ConEmu is mentioned in Wikipedia: http://en.wikipedia.org/wiki/Comparison_of_file_managers#cite_ref-20
 
 
 2012.05.15

@@ -218,6 +218,8 @@ void CreateLogSizeFile(int nLevel);
 void LogSize(COORD* pcrSize, LPCSTR pszLabel);
 void LogString(LPCSTR asText);
 void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo=NULL);
+BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RECT& rgn);
+BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn);
 
 
 #if defined(__GNUC__)

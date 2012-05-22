@@ -396,6 +396,15 @@ bool CConEmuCtrl::key_MultiRecreate(DWORD VkMod, bool TestOnly, const ConEmuHotK
 }
 
 // pRCon may be NULL
+bool CConEmuCtrl::key_AlternativeBuffer(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+	gpConEmu->AskChangeAlternative();
+	return true;
+}
+
+// pRCon may be NULL
 bool CConEmuCtrl::key_MultiBuffer(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)

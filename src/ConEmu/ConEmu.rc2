@@ -199,6 +199,7 @@ BEGIN
 	vkFindTextDlg           "Find text in active console"
     vkLDragKey              "LDrag modifier"
     vkMinimizeRestore       "Minimize/Restore"
+    vkMultiAltCon           "Show alternative console (last command output)"
     vkMultiBuffer           "Switch bufferheight mode"
     vkMultiClose            "Close active console"
     vkMultiCmd              "Create new «cmd.exe» console"

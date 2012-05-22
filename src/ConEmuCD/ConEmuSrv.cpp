@@ -795,8 +795,11 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		SetWindowPos(ghConWnd, NULL, 0, 0, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 	}
 
-	// ѕодготовить буфер дл€ 
-	CmdOutputStore(true);
+	// ѕодготовить буфер дл€ длинного вывода
+	// RM_SERVER - создать и считать текущее содержимое консоли
+	// RM_ALTSERVER - только создать (по факту - выполн€етс€ открытие созданного в RM_SERVER)
+	_ASSERTE(gnRunMode==RM_SERVER || gnRunMode==RM_ALTSERVER);
+	CmdOutputStore((gnRunMode!=RM_SERVER)/*abCreateOnly*/);
 	#if 0
 	_ASSERTE(gpcsStoredOutput==NULL && gpStoredOutput==NULL);
 	if (!gpcsStoredOutput)
@@ -1579,7 +1582,7 @@ bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAP*& p
 
 	COORD crMaxSize = GetLargestConsoleWindowSize(ghConOut);
 	DWORD cchOneBufferSize = lsbi.dwSize.X * lsbi.dwSize.Y; // „итаем всю консоль целиком!
-	DWORD cchMaxBufferSize = max(pHdr->MaxCellCount,(DWORD)(9999 * max(max(lsbi.dwSize.X,crMaxSize.X),200)));
+	DWORD cchMaxBufferSize = max(pHdr->MaxCellCount,(DWORD)(lsbi.dwSize.Y * (lsbi.dwSize.X+100)));
 
 
 	bool lbNeedRecreate = false; // требуетс€ новый или больший, или сменилс€ индекс (создан в другом сервере)
@@ -1649,6 +1652,8 @@ bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAP*& p
 		gpSrv->pStoredOutputItem->CloseMap();
 		return false;
 	}
+
+	pHdr->info = lsbi;
 
 wrap:
 	if (!pData || (pData->hdr.nVersion != CESERVER_REQ_VER) || (pData->hdr.cbSize <= sizeof(CESERVER_CONSAVE_MAP)))

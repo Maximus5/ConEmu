@@ -280,7 +280,8 @@ class CRealConsole
 
 		BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZESYNC);
 	private:
-		bool SetActiveBuffer(CRealBuffer* aBuffer);
+		bool SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEvent = true);
+		bool LoadAlternativeConsole();
 		BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	private:
 		//void SendConsoleEvent(INPUT_RECORD* piRec);
@@ -331,6 +332,7 @@ class CRealConsole
 		void StopSignal();
 		void StopThread(BOOL abRecreating=FALSE);
 		BOOL isBufferHeight();
+		BOOL isAlternative();
 		HWND isPictureView(BOOL abIgnoreNonModal=FALSE);
 		BOOL isWindowVisible();
 		LPCTSTR GetTitle();

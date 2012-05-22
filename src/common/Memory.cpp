@@ -99,7 +99,8 @@ void * __cdecl xf_malloc
 	xf_dump_chk();
 	#endif
 
-	xf_mem_block* p = (xf_mem_block*)HeapAlloc(ghHeap, 0, _Size+sizeof(xf_mem_block)+8);
+	size_t nTotalSize = _Size+sizeof(xf_mem_block)+8;
+	xf_mem_block* p = (xf_mem_block*)HeapAlloc(ghHeap, 0, nTotalSize);
 	if (p)
 	{
 		p->bBlockUsed = TRUE;
@@ -140,7 +141,8 @@ void * __cdecl xf_calloc
 	xf_dump_chk();
 	#endif
 
-	xf_mem_block* p = (xf_mem_block*)HeapAlloc(ghHeap, HEAP_ZERO_MEMORY, _Count*_Size+sizeof(xf_mem_block)+8);
+	size_t nTotalSize = _Count*_Size+sizeof(xf_mem_block)+8;
+	xf_mem_block* p = (xf_mem_block*)HeapAlloc(ghHeap, HEAP_ZERO_MEMORY, nTotalSize);
 	if (p)
 	{
 		p->bBlockUsed = TRUE;

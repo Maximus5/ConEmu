@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    91
+#define CESERVER_REQ_VER    92
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -189,7 +189,7 @@ typedef DWORD CECMD;
 const CECMD
 //	CECMD_CONSOLEINFO    = 1,
 	CECMD_CONSOLEDATA    = 2,
-//	CECMD_SETSIZE        = 3,
+	CECMD_CONSOLEFULL    = 3,
 	CECMD_CMDSTARTSTOP   = 4, // CESERVER_REQ_STARTSTOP //-V112
 //	CECMD_GETGUIHWND     = 5, // GUI_CMD, In = {}, Out = {dwData[0]==ghWnd, dwData[1]==ConEmuDcWindow
 //	CECMD_RECREATE       = 6,
@@ -982,11 +982,13 @@ struct CESERVER_CHAR
 struct CESERVER_CONSAVE_MAPHDR
 {
 	CESERVER_REQ_HDR hdr;    // Для унификации
+	CONSOLE_SCREEN_BUFFER_INFO info; // чтобы знать текущий размер текущего буфера
 	DWORD   MaxCellCount;
 	int     CurrentIndex;
 	wchar_t sCurrentMap[64]; // CECONOUTPUTITEMNAME
 };
 
+//CECMD_CONSOLEFULL
 //CECONOUTPUTITEMNAME L"ConEmuLastOutputMapping.%08X.%u" // --> CESERVER_CONSAVE_MAP ( %X == (DWORD)ghConWnd, %u = CESERVER_CONSAVE_MAPHDR.nCurrentIndex )
 struct CESERVER_CONSAVE_MAP
 {

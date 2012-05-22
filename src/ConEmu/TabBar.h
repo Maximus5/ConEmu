@@ -165,6 +165,7 @@ class TabBarClass //: public CToolTip
 		void OnCaptionHidden();
 		void OnWindowStateChanged();
 		void OnBufferHeight(BOOL abBufferHeight);
+		void OnAlternative(BOOL abAlternative);
 		LRESULT OnNotify(LPNMHDR nmhdr);
 		void OnChooseTabPopup();
 		void OnNewConPopup();

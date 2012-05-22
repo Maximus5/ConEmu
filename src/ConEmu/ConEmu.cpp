@@ -2072,6 +2072,7 @@ void CConEmuMain::AskChangeBufferHeight()
 	if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1)
 		return;
 
+	CVConGuard guard(pVCon);
 
 	BOOL lbBufferHeight = pRCon->isBufferHeight();
 
@@ -2112,6 +2113,33 @@ void CConEmuMain::AskChangeBufferHeight()
 		ResetEvent(hFarInExecuteEvent);
 	#endif
 
+	// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
+	OnBufferHeight();
+}
+
+void CConEmuMain::AskChangeAlternative()
+{
+	CVirtualConsole *pVCon = ActiveCon();
+	CRealConsole *pRCon = pVCon->RCon();
+	if (!pRCon || pRCon->GuiWnd())
+	{
+		return;
+	}
+
+	CVConGuard guard(pVCon);
+
+	// Переключиться на альтернативный/основной буфер
+	RealBufferType CurBuffer = pRCon->GetActiveBufferType();
+	if (CurBuffer == rbt_Primary)
+	{
+		pRCon->SetActiveBuffer(rbt_Alternative);
+	}
+	else
+	{
+		pRCon->SetActiveBuffer(rbt_Primary);
+	}
+
+	// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
 	OnBufferHeight();
 }
 
@@ -8375,6 +8403,7 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 }
 #endif
 
+// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
 void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 {
 	if (!isMainThread())
@@ -8384,8 +8413,12 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 	}
 
 	BOOL lbBufferHeight = mp_VActive->RCon()->isBufferHeight();
+	BOOL lbAlternative = mp_VActive->RCon()->isAlternative();
+
 	TrackMouse(); // спрятать или показать прокрутку, если над ней мышка
+
 	mp_TabBar->OnBufferHeight(lbBufferHeight);
+	mp_TabBar->OnAlternative(lbAlternative);
 }
 
 

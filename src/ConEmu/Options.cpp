@@ -4247,7 +4247,8 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkMultiNext,      chk_User, &isMulti, L"Multi.Next",            /*&vmMultiNext,*/ MakeHotKey('Q',VK_LWIN), CConEmuCtrl::key_MultiNext},
 		{vkMultiNextShift, chk_User, &isMulti, L"Multi.NextShift",       /*&vmMultiNextShift,*/ MakeHotKey('Q',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNextShift},
 		{vkMultiRecreate,  chk_User, &isMulti, L"Multi.Recreate",        /*&vmMultiRecreate,*/ MakeHotKey(192/*VK_тильда*/,VK_LWIN), CConEmuCtrl::key_MultiRecreate},
-		{vkMultiBuffer,    chk_User, &isMulti, L"Multi.Buffer",          /*&vmMultiBuffer,*/ MakeHotKey('A',VK_LWIN), CConEmuCtrl::key_MultiBuffer},
+		{vkMultiAltCon,    chk_User,  NULL,    L"Multi.AltCon",          /*&vmMultiBuffer,*/ MakeHotKey('A',VK_LWIN), CConEmuCtrl::key_AlternativeBuffer},
+		{vkMultiBuffer,    chk_User,  NULL,    L"Multi.Scroll",          MakeHotKey('S',VK_LWIN), CConEmuCtrl::key_MultiBuffer},
 		{vkMultiClose,     chk_User, &isMulti, L"Multi.Close",           /*&vmMultiClose,*/ MakeHotKey(VK_DELETE,VK_LWIN), CConEmuCtrl::key_MultiClose},
 		{vkMultiCmd,       chk_User, &isMulti, L"Multi.CmdKey",          /*&vmMultiCmd,*/ MakeHotKey('X',VK_LWIN), CConEmuCtrl::key_MultiCmd},
 		{vkCTSVkBlockStart,chk_User,  NULL,    L"CTS.VkBlockStart",      /*&vmCTSVkBlockStart,*/ 0, CConEmuCtrl::key_CTSVkBlockStart}, // запуск выделения блока

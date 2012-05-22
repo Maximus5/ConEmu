@@ -30,10 +30,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
-	#define SHOW_ALTERNATIVE_MSGBOX
+//	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
 //  #define SHOW_COMSPEC_STARTED_MSGBOX
-	#define SHOW_SERVER_STARTED_MSGBOX
+//	#define SHOW_SERVER_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
 //  #define SHOW_INJECT_MSGBOX
@@ -1361,6 +1361,10 @@ wrap:
 	{
 		ComspecDone(iRc);
 		//MessageBox(0,L"Comspec done...",L"ConEmuC",0);
+	}
+	else if (gnRunMode == RM_APPLICATION)
+	{
+		SendStopped();
 	}
 
 	/* ************************** */
@@ -5861,6 +5865,57 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 	return TRUE;
 }
 
+BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = FALSE;
+	DWORD nPrevAltServer = 0;
+
+	// В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!
+	// В итоге, буфер вывода telnet'а схлопывается!
+	if (gpSrv->bReopenHandleAllowed)
+	{
+		ghConOut.Close();
+	}
+
+	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+	// !!! Нас интересует реальное положение дел в консоли,
+	//     а не скорректированное функцией MyGetConsoleScreenBufferInfo
+	if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi))
+	{
+		//CS.RelockExclusive();
+		//SafeFree(gpStoredOutput);
+		return FALSE; // Не смогли получить информацию о консоли...
+	}
+
+	CESERVER_CONSAVE_MAP* pData = NULL;
+	size_t cbReplySize = sizeof(CESERVER_CONSAVE_MAP) + (lsbi.dwSize.X * lsbi.dwSize.Y * sizeof(pData->Data[0]));
+	*out = ExecuteNewCmd(CECMD_CONSOLEFULL, cbReplySize);
+
+	if ((*out) != NULL)
+	{
+		pData = (CESERVER_CONSAVE_MAP*)*out;
+		COORD BufSize = {lsbi.dwSize.X, lsbi.dwSize.Y};
+		SMALL_RECT ReadRect = {0, 0, lsbi.dwSize.X-1, lsbi.dwSize.Y-1};
+
+		lbRc = MyReadConsoleOutput(ghConOut, pData->Data, BufSize, ReadRect);
+
+		if (lbRc)
+		{
+			pData->Succeeded = lbRc;
+			pData->MaxCellCount = lsbi.dwSize.X * lsbi.dwSize.Y;
+			static DWORD nLastFullIndex;
+			pData->CurrentIndex = ++nLastFullIndex;
+			pData->info = lsbi;
+			// Еще раз считать информацию по консоли (курсор положение и прочее...)
+			// За время чтения данных - они могли прокрутиться вверх
+			if (GetConsoleScreenBufferInfo(ghConOut, &lsbi))
+				pData->info = lsbi;
+		}
+	}
+
+	return lbRc;
+}
+
 BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -5992,6 +6047,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_FREEZEALTSRV:
 		{
 			lbRc = cmd_FreezeAltServer(in, out);
+		} break;
+		case CECMD_CONSOLEFULL:
+		{
+			lbRc = cmd_LoadFullConsoleData(in, out);
 		} break;
 	}
 

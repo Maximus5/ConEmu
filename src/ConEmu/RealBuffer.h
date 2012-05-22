@@ -54,6 +54,8 @@ enum ExpandTextRangeType
 	etr_Url = 3,
 };
 
+#include "Options.h"
+
 class CRealBuffer
 {
 public:
@@ -64,6 +66,10 @@ public:
 public:
 	void DumpConsole(HANDLE ahFile);
 	bool LoadDumpConsole(LPCWSTR asDumpFile);
+
+	bool LoadAlternativeConsole(int iMode = 0);
+
+	void ReleaseMem();
 	
 	BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	void SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY);
@@ -102,7 +108,7 @@ public:
 	void BuferModeChangeUnlock();
 	BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 
-	LRESULT OnScroll(int nDirection);
+	LRESULT OnScroll(int nDirection, short nTrackPos = -1);
 	LRESULT OnSetScrollPos(WPARAM wParam);
 	
 	BOOL ApplyConsoleInfo();
@@ -173,6 +179,7 @@ private:
 	BOOL InitBuffers(DWORD OneBufferSize);
 	BOOL CheckBufferSize();
 	BOOL LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
+	bool LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, const CHAR_INFO* pData, DWORD cchMaxCellCount);
 
 	// координаты панелей в символах
 	RECT mr_LeftPanel, mr_RightPanel, mr_LeftPanelFull, mr_RightPanelFull; BOOL mb_LeftPanel, mb_RightPanel;
@@ -185,6 +192,8 @@ private:
 	void StoreLastTextRange(ExpandTextRangeType etr);
 
 	short CheckProgressInConsole(const wchar_t* pszCurLine);
+
+	void PrepareColorTable(bool bExtendFonts, CharAttr (&lcaTableExt)[0x100], CharAttr (&lcaTableOrg)[0x100], const Settings::AppSettings* pApp = NULL);
 
 protected:
 	CRealConsole* mp_RCon;

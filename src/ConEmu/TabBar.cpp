@@ -74,7 +74,8 @@ enum ToolbarCommandIdx
 {
 	TID_ACTIVE_NUMBER = 1,
 	TID_CREATE_CON,
-	TID_BUFFERHEIGHT,
+	TID_ALTERNATIVE,
+	TID_SCROLL,
 	TID_MINIMIZE,
 	TID_MAXIMIZE,
 	TID_APPCLOSE,
@@ -87,7 +88,7 @@ enum ToolbarMainBitmapIdx
 	BID_FIST_CON = 0,
 	BID_LAST_CON = (MAX_CONSOLE_COUNT-1),
 	BID_NEWCON_IDX,
-	BID_BUFHEIGHT_IDX,
+	BID_ALTERNATIVE_IDX,
 	BID_MINIMIZE_IDX,
 	BID_MAXIMIZE_IDX,
 	BID_RESTORE_IDX,
@@ -743,20 +744,6 @@ bool TabBarClass::IsTabsShown()
 	return _active && IsWindowVisible(mh_Tabbar);
 }
 
-//BOOL TabBarClass::IsAllowed()
-//{
-//    BOOL lbTabsAllowed = TRUE;
-//    TODO("пока убрал");
-//    //if (gpConEmu->BufferHeight) {
-//        CVirtualConsole* pCon = gpConEmu->ActiveCon();
-//        if (!pCon)
-//            lbTabsAllowed = FALSE;
-//        else
-//            lbTabsAllowed = !pCon->RCon()->isBufferHeight();
-//    //}
-//    return lbTabsAllowed;
-//}
-
 void TabBarClass::Activate()
 {
 	if (!mh_Rebar)
@@ -1303,11 +1290,18 @@ LRESULT TabBarClass::OnNotify(LPNMHDR nmhdr)
 		{
 			lstrcpyn(pDisp->pszText, _T("Create new console"), pDisp->cchTextMax);
 		}
-		else if (pDisp->iItem == TID_BUFFERHEIGHT)
+		else if (pDisp->iItem == TID_ALTERNATIVE)
 		{
 			BOOL lbPressed = (SendMessage(mh_Toolbar, TB_GETSTATE, pDisp->iItem, 0) & TBSTATE_CHECKED) == TBSTATE_CHECKED;
 			lstrcpyn(pDisp->pszText,
-			         lbPressed ? L"BufferHeight mode is ON" : L"BufferHeight mode is off",
+			         lbPressed ? L"Alternative mode is ON (console freezed)" : L"Alternative mode is off",
+			         pDisp->cchTextMax);
+		}
+		else if (pDisp->iItem == TID_SCROLL)
+		{
+			BOOL lbPressed = (SendMessage(mh_Toolbar, TB_GETSTATE, pDisp->iItem, 0) & TBSTATE_CHECKED) == TBSTATE_CHECKED;
+			lstrcpyn(pDisp->pszText,
+			         lbPressed ? L"BufferHeight mode is ON (scrolling enabled)" : L"BufferHeight mode is off",
 			         pDisp->cchTextMax);
 		}
 		else if (pDisp->iItem == TID_MINIMIZE)
@@ -1416,9 +1410,14 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 		else
 			gpConEmu->Recreate(FALSE, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 	}
-	else if (wParam == TID_BUFFERHEIGHT)
+	else if (wParam == TID_ALTERNATIVE)
 	{
-		SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_BUFFERHEIGHT, gpConEmu->ActiveCon()->RCon()->isBufferHeight());
+		SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_ALTERNATIVE, gpConEmu->ActiveCon()->RCon()->isAlternative());
+		gpConEmu->AskChangeAlternative();
+	}
+	else if (wParam == TID_SCROLL)
+	{
+		SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_SCROLL, gpConEmu->ActiveCon()->RCon()->isBufferHeight());
 		gpConEmu->AskChangeBufferHeight();
 	}
 	else if (wParam == TID_MINIMIZE)
@@ -1641,7 +1640,14 @@ void TabBarClass::OnBufferHeight(BOOL abBufferHeight)
 {
 	if (!mh_Toolbar) return;
 
-	SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_BUFFERHEIGHT, abBufferHeight);
+	SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_SCROLL, abBufferHeight);
+}
+
+void TabBarClass::OnAlternative(BOOL abAlternative)
+{
+	if (!mh_Toolbar) return;
+
+	SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_ALTERNATIVE, abAlternative);
 }
 
 HWND TabBarClass::CreateToolbar()
@@ -1664,7 +1670,7 @@ HWND TabBarClass::CreateToolbar()
 	SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(14,14));
 
 	TBADDBITMAP bmp = {g_hInstance,IDB_MAIN_TOOLBAR};
-	int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, BID_TOOLBAR_LAST_IDX/*TID_BUFFERHEIGHT*/, (LPARAM)&bmp);
+	int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, BID_TOOLBAR_LAST_IDX, (LPARAM)&bmp);
 	_ASSERTE(BID_TOOLBAR_LAST_IDX==37);
 	
 	bmp.nID = IDB_COPY;
@@ -1673,6 +1679,14 @@ HWND TabBarClass::CreateToolbar()
 	_ASSERTE(nCopyBmp == BID_TOOLBAR_LAST_IDX);
 	if (nCopyBmp < BID_TOOLBAR_LAST_IDX)
 		nCopyBmp = BID_TOOLBAR_LAST_IDX;
+
+	bmp.nID = IDB_SCROLL;
+	int nScrollBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
+	// Должен 38 возвращать
+	_ASSERTE(nScrollBmp == (BID_TOOLBAR_LAST_IDX+1));
+	if (nScrollBmp < (BID_TOOLBAR_LAST_IDX+1))
+		nScrollBmp = BID_TOOLBAR_LAST_IDX+1;
+		
 
 	//buttons
 	TBBUTTON btn = {0, 0, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP};
@@ -1709,8 +1723,12 @@ HWND TabBarClass::CreateToolbar()
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
 #endif
 	// Buffer height mode
-	btn.iBitmap = nFirst + BID_BUFHEIGHT_IDX; btn.idCommand = TID_BUFFERHEIGHT; btn.fsState = TBSTATE_ENABLED;
+	btn.iBitmap = nFirst + BID_ALTERNATIVE_IDX; btn.idCommand = TID_ALTERNATIVE; btn.fsState = TBSTATE_ENABLED;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+	// Show copying state
+	btn.iBitmap = nScrollBmp; btn.idCommand = TID_SCROLL;
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+	// Separator before min/max/close
 	sep.fsState |= TBSTATE_HIDDEN; sep.idCommand = TID_MINIMIZE_SEP;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep);
 	// Min,Max,Close

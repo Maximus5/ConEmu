@@ -418,6 +418,7 @@ class CConEmuMain :
 		int GetConCount(); // количество открытых консолей
 		static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 		void AskChangeBufferHeight();
+		void AskChangeAlternative();
 		BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
 		void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
@@ -556,7 +557,7 @@ class CConEmuMain :
 		void OnMinimizeRestore();
 		void OnAlwaysOnTop();
 		void OnAlwaysShowScrollbar();
-		void OnBufferHeight(); //BOOL abBufferHeight);
+		void OnBufferHeight();
 		LRESULT OnClose(HWND hWnd);
 		BOOL OnCloseQuery();
 		//BOOL mb_InConsoleResize;

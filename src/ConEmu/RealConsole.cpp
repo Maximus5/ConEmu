@@ -203,9 +203,9 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	
 	mp_RBuf = new CRealBuffer(this);
 	_ASSERTE(mp_RBuf!=NULL);
-	mp_ABuf = mp_RBuf;
 	mp_EBuf = NULL;
 	mp_SBuf = NULL;
+	SetActiveBuffer(mp_RBuf);
 	mb_ABufChaged = false;
 	
 	mn_LastInactiveRgnCheck = 0;
@@ -472,10 +472,37 @@ bool CRealConsole::LoadDumpConsole(LPCWSTR asDumpFile)
 	
 	if (!mp_SBuf->LoadDumpConsole(asDumpFile))
 	{
+		SetActiveBuffer(mp_RBuf);
 		return false;
 	}
 	
-	mp_ABuf = mp_SBuf;
+	SetActiveBuffer(mp_SBuf);
+	
+	return true;
+}
+
+bool CRealConsole::LoadAlternativeConsole()
+{
+	if (!this)
+		return false;
+	
+	if (!mp_SBuf)
+	{
+		mp_SBuf = new CRealBuffer(this, rbt_Alternative);
+		if (!mp_SBuf)
+		{
+			_ASSERTE(mp_SBuf!=NULL);
+			return false;
+		}
+	}
+	
+	if (!mp_SBuf->LoadAlternativeConsole())
+	{
+		SetActiveBuffer(mp_RBuf);
+		return false;
+	}
+	
+	SetActiveBuffer(mp_SBuf);
 	
 	return true;
 }
@@ -491,6 +518,17 @@ bool CRealConsole::SetActiveBuffer(RealBufferType aBufferType)
 	case rbt_Primary:
 		lbRc = SetActiveBuffer(mp_RBuf);
 		break;
+
+	case rbt_Alternative:
+		if (GetActiveBufferType() != rbt_Primary)
+		{
+			lbRc = true; // уже НЕ основной буфер. Не меняем
+			break;
+		}
+
+		lbRc = LoadAlternativeConsole();
+		break;
+
 	default:
 		// Другие тут пока не поддерживаются
 		_ASSERTE(aBufferType==rbt_Primary);
@@ -502,22 +540,39 @@ bool CRealConsole::SetActiveBuffer(RealBufferType aBufferType)
 	return lbRc;
 }
 
-bool CRealConsole::SetActiveBuffer(CRealBuffer* aBuffer)
+bool CRealConsole::SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEvent /*= true*/)
 {
 	if (!this)
 		return false;
+	
 	if (!aBuffer || (aBuffer != mp_RBuf && aBuffer != mp_EBuf && aBuffer != mp_SBuf))
 	{
 		_ASSERTE(aBuffer && (aBuffer == mp_RBuf || aBuffer == mp_EBuf || aBuffer == mp_SBuf));
 		return false;
 	}
+
+	CRealBuffer* pOldBuffer = mp_ABuf;
 	
-	mp_ABuf = mp_RBuf;
+	mp_ABuf = aBuffer;
 	mb_ABufChaged = true;
 	
-	// Передернуть нить MonitorThread
-	SetEvent(mh_MonitorThreadEvent);
-	
+	if (isActive())
+	{
+		// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
+		gpConEmu->OnBufferHeight();
+	}
+
+	if (mh_MonitorThreadEvent && abTouchMonitorEvent)
+	{
+		// Передернуть нить MonitorThread
+		SetEvent(mh_MonitorThreadEvent);
+	}
+
+	if (pOldBuffer && (pOldBuffer == mp_SBuf))
+	{
+		mp_SBuf->ReleaseMem();
+	}
+
 	return true;
 }
 
@@ -1664,6 +1719,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				BOOL lbVisible = ::IsWindowVisible(pRCon->hGuiWnd);
 				if (lbVisible != bGuiVisible)
 				{
+					// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
 					gpConEmu->OnBufferHeight();
 					bGuiVisible = lbVisible;
 				}
@@ -3252,6 +3308,18 @@ BOOL CRealConsole::isBufferHeight()
 	return mp_ABuf->isScroll();
 }
 
+// TRUE - если консоль "заморожена" (альтернативный буфер)
+BOOL CRealConsole::isAlternative()
+{
+	if (!this)
+		return FALSE;
+
+	if (hGuiWnd)
+		return FALSE;
+	
+	return (mp_ABuf && (mp_ABuf != mp_RBuf));
+}
+
 BOOL CRealConsole::isConSelectMode()
 {
 	if (!this || !mp_ABuf) return false;
@@ -3399,6 +3467,12 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			if (gpConEmu->isInImeComposition())
 			{
 				// Сейчас ввод работает на окно IME и не должен попадать в консоль!
+				return;
+			}
+
+			if (GetActiveBufferType() != rbt_Primary)
+			{
+				// Пропускать кнопки в консоль только если буфер реальный
 				return;
 			}
 
@@ -5542,6 +5616,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	UpdateScrollInfo();
 	gpConEmu->mp_TabBar->OnConsoleActivated(nNewNum/*, isBufferHeight()*/);
 	gpConEmu->mp_TabBar->Update();
+	// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
 	gpConEmu->OnBufferHeight();
 	gpConEmu->UpdateProcessDisplay(TRUE);
 	//gpSet->NeedBackgroundUpdate(); -- 111105 плагиновые подложки теперь в VCon, а файловая - все равно общая, дергать не нужно
@@ -6451,7 +6526,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 		return FALSE;
 	}
 
-	DWORD cchMaxBufferSize = pHdr->MaxCellCount;
+	DWORD cchMaxBufferSize = min(pHdr->MaxCellCount, (DWORD)(pHdr->info.dwSize.X * pHdr->info.dwSize.Y));
 
 	StoredOutputItem.InitName(pHdr->sCurrentMap); //-V205
 	size_t nMaxSize = sizeof(*pData) + cchMaxBufferSize * sizeof(pData->Data[0]);
@@ -7846,7 +7921,10 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 
 	// Ставим после "hGuiWnd = ahGuiWnd", т.к. для гуй-приложений логика кнопки другая.
 	if (isActive())
+	{
+		// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
 		gpConEmu->OnBufferHeight();
+	}
 	
 	// Уведомить сервер (ConEmuC), что создано GUI подключение
 	DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);

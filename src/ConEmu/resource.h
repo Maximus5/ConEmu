@@ -9,6 +9,7 @@
 #define IDB_SHIELD                      102
 #define IDB_RIGHTCLICKING               103
 #define IDB_COPY                        104
+#define IDB_SCROLL                      105
 #define IDC_COPY                        120
 #define IDC_LINK                        121
 #define IDC_MOVE                        122
@@ -642,6 +643,7 @@
 #define stConEmuUrl                     2251
 #define vkMultiNewPopup                 2252
 #define cbProcessAnsi                   2253
+#define vkMultiAltCon                   2254
 
 // Next default values for new objects
 // 
@@ -649,7 +651,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        219
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2254
+#define _APS_NEXT_CONTROL_VALUE         2255
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

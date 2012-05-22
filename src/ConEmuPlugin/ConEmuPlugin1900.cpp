@@ -103,7 +103,8 @@ static wchar_t* GetPanelDir(HANDLE hPanel)
 			free(pDir);
 		}
 	}
-	_ASSERTE(nSize>0 || (pi.Flags & PFLAGS_PLUGIN));
+	// допустимо во время закрытия фара, если это был редактор
+	//_ASSERTE(nSize>0 || (pi.Flags & PFLAGS_PLUGIN));
 
 	return pszDir;
 }

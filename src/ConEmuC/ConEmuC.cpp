@@ -135,7 +135,7 @@ int main(
 	iRc = lfConsoleMain2(0/*WorkMode*/);
 	// Exiting
 	gfHandlerRoutine = NULL;
-	FreeLibrary(hConEmu);
+	//FreeLibrary(hConEmu); -- Shutdown Server/Comspec уже выполнен
 	ExitProcess(iRc);
 	return iRc;
 }
