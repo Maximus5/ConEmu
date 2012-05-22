@@ -1776,6 +1776,8 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	CheckDlgButton(hWnd2, cbUseInjects, gpSet->isUseInjects);
 
+	CheckDlgButton(hWnd2, cbProcessAnsi, gpSet->isProcessAnsi);
+
 	CheckDlgButton(hWnd2, cbDosBox, gpConEmu->mb_DosBoxExists);
 	// изменение пока запрещено
 	// или чтобы ругнуться, если DosBox не установлен
@@ -3370,6 +3372,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbUseInjects:
 			gpSet->isUseInjects = IsChecked(hWnd2, cbUseInjects);
 			//if (gpSet->isUseInjects > BST_INDETERMINATE) gpSet->isUseInjects = BST_CHECKED;
+			gpConEmu->OnGlobalSettingsChanged();
+			break;
+		case cbProcessAnsi:
+			gpSet->isProcessAnsi = IsChecked(hWnd2, cbProcessAnsi);
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
 		case cbPortableRegistry:

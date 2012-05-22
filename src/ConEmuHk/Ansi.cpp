@@ -48,6 +48,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef isPressed
 #define isPressed(inp) ((user->getKeyState(inp) & 0x8000) == 0x8000)
 
+#define ANSI_MAP_CHECK_TIMEOUT 1000
+
 #ifdef _DEBUG
 #define DebugString(x) OutputDebugString(x)
 #else
@@ -216,17 +218,27 @@ bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL)
 		return false;
 
 	bool  bOk = false;
-	DWORD Mode = 0;
-	//BOOL  Processed = FALSE;
+	DWORD Mode = 0, nErrCode = 0;
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 
-	WARNING("GetConsoleMode не подходит, т.к. он проверяет и ConIn & ConOut");
+	// GetConsoleMode не совсем подходит, т.к. он проверяет и ConIn & ConOut
+	// Поэтому, добавляем	
 	if (GetConsoleMode(hFile, &Mode))
 	{
-		if (pMode)
-			*pMode = Mode;
-		//Processed = (Mode & ENABLE_PROCESSED_OUTPUT);
-		ghLastAnsiCapable = hFile;
-		bOk = true;
+		if (!GetConsoleScreenBufferInfo(hFile, &csbi))
+		{
+			nErrCode = GetLastError();
+			_ASSERTE(nErrCode == ERROR_INVALID_HANDLE);
+			ghLastAnsiNotCapable = hFile;
+		}
+		else
+		{
+			if (pMode)
+				*pMode = Mode;
+			//Processed = (Mode & ENABLE_PROCESSED_OUTPUT);
+			ghLastAnsiCapable = hFile;
+			bOk = true;
+		}
 	}
 	else
 	{
@@ -236,14 +248,45 @@ bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL)
 	return bOk;
 }
 
-bool IsAnsiCapable(HANDLE hFile)
+bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL)
 {
+	bool bAnsi = false;
 	DWORD Mode = 0;
-	if (!IsOutputHandle(hFile, &Mode))
-		return false;
+	bool bIsOut = IsOutputHandle(hFile, &Mode);
 
-	bool bAnsi = ((Mode & ENABLE_PROCESSED_OUTPUT) == ENABLE_PROCESSED_OUTPUT);
-	bAnsi = true;
+	if (bIsOut)
+	{
+		bAnsi = ((Mode & ENABLE_PROCESSED_OUTPUT) == ENABLE_PROCESSED_OUTPUT);
+		bAnsi = true;
+
+		
+		if (bAnsi)
+		{
+			static DWORD nLastCheck = 0;
+			static bool bAnsiAllowed = true;
+
+			if (nLastCheck || ((GetTickCount() - nLastCheck) > ANSI_MAP_CHECK_TIMEOUT))
+			{
+				CESERVER_CONSOLE_MAPPING_HDR* pMap = (CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(CESERVER_CONSOLE_MAPPING_HDR));
+				if (pMap)
+				{
+					if (!::LoadSrvMapping(ghConWnd, *pMap) || !pMap->bProcessAnsi)
+						bAnsiAllowed = false;
+					else
+						bAnsiAllowed = true;
+
+					free(pMap);
+				}
+				nLastCheck = GetTickCount();
+			}
+
+			if (!bAnsiAllowed)
+				bAnsi = false;
+		}
+	}
+
+	if (bIsConsoleOutput)
+		*bIsConsoleOutput = bIsOut;
 
 	return bAnsi;
 }
@@ -377,6 +420,7 @@ BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 	ExtWriteTextParm wrt = {sizeof(wrt), ewtf_None, hConsoleOutput};
+	bool bIsConOut = false;
 
 	#ifdef DUMP_WRITECONSOLE_LINES
 	wchar_t szDbg[120], *pch;
@@ -392,7 +436,7 @@ BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 	DebugString(szDbg);
 	#endif
 
-	if (lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput))
+	if (lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput, &bIsConOut))
 	{
 		if (gnPrevAnsiPart || gDisplayOpt.WrapWasSet)
 		{
@@ -416,15 +460,20 @@ BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 		}
 	}
 
-
-	//lbRc = F(WriteConsoleW)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
-	wrt.Flags = ewtf_Current|ewtf_Commit;
-	wrt.Buffer = (const wchar_t*)lpBuffer;
-	wrt.NumberOfCharsToWrite = nNumberOfCharsToWrite;
-	wrt.Private = F(WriteConsoleW);
-	lbRc = ExtWriteText(&wrt);
-	if (lbRc && lpNumberOfCharsWritten)
-		*lpNumberOfCharsWritten = wrt.NumberOfCharsWritten;
+	if (!bIsConOut)
+	{
+		lbRc = F(WriteConsoleW)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
+	}
+	else
+	{
+		wrt.Flags = ewtf_Current|ewtf_Commit;
+		wrt.Buffer = (const wchar_t*)lpBuffer;
+		wrt.NumberOfCharsToWrite = nNumberOfCharsToWrite;
+		wrt.Private = F(WriteConsoleW);
+		lbRc = ExtWriteText(&wrt);
+		if (lbRc && lpNumberOfCharsWritten)
+			*lpNumberOfCharsWritten = wrt.NumberOfCharsWritten;
+	}
 	goto wrap;
 
 ansidone:
@@ -445,6 +494,7 @@ struct AnsiEscCode
 	int      ArgC;
 	int      ArgV[16];
 	LPCWSTR  ArgSZ; // Reserved for key mapping
+	size_t   cchArgSZ;
 
 #ifdef _DEBUG
 	LPCWSTR  pszEscStart;
@@ -533,7 +583,7 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 						continue; // invalid code
 					
 					// Теперь идут параметры.
-					++lpBuffer;
+					++lpBuffer; // переместим указатель на первый символ ЗА CSI (после '[')
 					
 					switch (Code.Second)
 					{
@@ -541,6 +591,7 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 						// Standard
 						Code.Skip = 0;
 						Code.ArgSZ = NULL;
+						Code.cchArgSZ = 0;
 						{
 							int nValue = 0, nDigits = 0;
 							LPCWSTR pszSaveStart = lpBuffer;
@@ -613,9 +664,11 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 						// ESC ] R                 reset palette
 
 						// ConEmu specific
-						// ESC ] @ ms ST           Sleep. ms - milliseconds
+						// ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
+						// ESC ] 9 ; 2 ; txt ST          Show GUI MessageBox ( txt ) for dubug purposes
 
 						Code.ArgSZ = lpBuffer;
+						Code.cchArgSZ = 0;
 						//Code.Skip = Code.Second;
 
 						while (lpBuffer < lpEnd)
@@ -623,9 +676,17 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 							if ((lpBuffer[0] == 7) ||
 								((lpBuffer[0] == 27) && ((lpBuffer + 1) < lpEnd) && (lpBuffer[1] == L'\\')))
 							{
-								Code.Action = *Code.ArgSZ;
+								Code.Action = *Code.ArgSZ; // первый символ последовательности
+								Code.cchArgSZ = (lpBuffer - Code.ArgSZ);
 								lpStart = lpSaveStart;
-								lpEnd = lpBuffer + ((lpBuffer[0] == 27) ? 2 : 1);
+								if (lpBuffer[0] == 27)
+								{
+									lpEnd = lpBuffer + 2;
+								}
+								else
+								{
+									lpEnd = lpBuffer + 1;
+								}
 								iRc = 1;
 								goto wrap;
 							}
@@ -640,6 +701,7 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 						// Неизвестный код, обрабатываем по общим правилам
 						Code.Skip = Code.Second;
 						Code.ArgSZ = lpBuffer;
+						Code.cchArgSZ = 0;
 						while (lpBuffer < lpEnd)
 						{
 							if (((wc = *lpBuffer) >= 64) && (wc <= 126))
@@ -697,6 +759,7 @@ wrap:
 
 BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir)
 {
+	TODO("Define scrolling region");
 	ExtScrollScreenParm scrl = {sizeof(scrl), essf_Current|essf_Commit, hConsoleOutput, nDir, {}, L' '};
 	BOOL lbRc = ExtScrollScreen(&scrl);
 	return lbRc;
@@ -896,6 +959,57 @@ void DumpUnknownEscape(LPCWSTR buf, size_t cchLen)
 #else
 #define DumpUnknownEscape(buf,cchLen)
 #endif
+
+// ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
+void DoSleep(LPCWSTR asMS)
+{
+	const wchar_t* psz = asMS;
+	wchar_t wc;
+	int ms = 0;
+	while (((wc = *(psz++)) >= L'0') && (wc <= L'9'))
+		ms = (ms * 10) + (int)(wc - L'0');
+	if (!ms)
+		ms = 100;
+	else if (ms > 10000)
+		ms = 10000;
+	// Delay
+	Sleep(ms);
+}
+
+// ESC ] 9 ; 2 ; "txt" ST          Show GUI MessageBox ( txt ) for dubug purposes
+void DoMessage(LPCWSTR asMsg, INT_PTR cchLen)
+{
+	if (cchLen < 0)
+	{
+		_ASSERTE(cchLen >= 0);
+		cchLen = 0;
+	}
+	if (cchLen > 1)
+	{
+		if ((asMsg[0] == L'"') && (asMsg[cchLen-1] == L'"'))
+		{
+			asMsg++;
+			cchLen -= 2;
+		}
+	}
+	wchar_t* pszText = (wchar_t*)malloc((cchLen+1)*sizeof(*pszText));
+
+	if (pszText)
+	{
+		if (cchLen > 0)
+			wmemmove(pszText, asMsg, cchLen);
+		pszText[cchLen] = 0;
+
+		wchar_t szExe[MAX_PATH] = {};
+		GetModuleFileName(NULL, szExe, countof(szExe));
+		wchar_t szTitle[MAX_PATH+64];
+		msprintf(szTitle, countof(szTitle), L"PID=%u, %s", GetCurrentProcessId(), PointToName(szExe));
+
+		GuiMessageBox(ghConEmuWnd, pszText, szTitle, MB_ICONINFORMATION|MB_SYSTEMMODAL);
+		
+		free(pszText);
+	}
+}
 
 BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
 {
@@ -1126,13 +1240,26 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 								} // case L'K':
 								break;
 
+							case L'r':
+								//\027[Pt;Pbr
+								//
+								//Pt is the number of the top line of the scrolling region;
+								//Pb is the number of the bottom line of the scrolling region 
+								// and must be greater than Pt.
+								//(The default for Pt is line 1, the default for Pb is the end 
+								// of the screen)
+								_ASSERTE(FALSE && "Define scrolling region");
+								break;
+
 							case L'S':
 								// Scroll whole page up by n (default 1) lines. New lines are added at the bottom.
+								TODO("Define scrolling region");
 								ScrollScreen(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? -Code.ArgV[0] : -1);
 								break;
 
 							case L'T':
 								// Scroll whole page down by n (default 1) lines. New lines are added at the top.
+								TODO("Define scrolling region");
 								ScrollScreen(hConsoleOutput, (Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1);
 								break;
 
@@ -1370,21 +1497,20 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 
 							switch (*Code.ArgSZ)
 							{
-							case L'@':
+							case L'9':
 								// ConEmu specific
-								// ESC ] @ ms ST           Sleep. ms - milliseconds
+								// ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
+								// ESC ] 9 ; 2 ; "txt" ST          Show GUI MessageBox ( txt ) for dubug purposes
+								if (Code.ArgSZ[1] == L';')
 								{
-									const wchar_t* psz = Code.ArgSZ+1;
-									wchar_t wc;
-									int ms = 0;
-									while (((wc = *(psz++)) >= L'0') && (wc <= L'9'))
-										ms = (ms * 10) + (int)(wc - L'0');
-									if (!ms)
-										ms = 100;
-									else if (ms > 10000)
-										ms = 10000;
-									// Delay
-									Sleep(ms);
+									if (Code.ArgSZ[2] == L'1' && Code.ArgSZ[3] == L';')
+									{
+										DoSleep(Code.ArgSZ+4);
+									}
+									else if (Code.ArgSZ[2] == L'2' && Code.ArgSZ[3] == L';')
+									{
+										DoMessage(Code.ArgSZ+4, Code.cchArgSZ - 4);
+									}
 								}
 								break;
 

@@ -201,6 +201,7 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 			gpSrv->pConsole->hdr.bDosBox = gpSrv->guiSettings.bDosBox;
 			gpSrv->pConsole->hdr.bUseInjects = gpSrv->guiSettings.bUseInjects;
 			gpSrv->pConsole->hdr.bUseTrueColor = gpSrv->guiSettings.bUseTrueColor;
+			gpSrv->pConsole->hdr.bProcessAnsi = gpSrv->guiSettings.bProcessAnsi;
 
 			// Обновить пути к ConEmu
 			wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
@@ -783,12 +784,6 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
 	}
 
-	_ASSERTE(gpcsStoredOutput==NULL && gpStoredOutput==NULL);
-	if (!gpcsStoredOutput)
-	{
-		gpcsStoredOutput = new MSection;
-	}
-
 	// Шрифт в консоли нужно менять в самом начале, иначе могут быть проблемы с установкой размера консоли
 	if ((anWorkMode == 0) && !gpSrv->bDebuggerActive && !gbNoCreateProcess)
 		//&& (!gbNoCreateProcess || (gbAttachMode && gbNoCreateProcess && gpSrv->dwRootProcess))
@@ -799,6 +794,17 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		// Issue 274: Окно реальной консоли позиционируется в неудобном месте
 		SetWindowPos(ghConWnd, NULL, 0, 0, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 	}
+
+	// Подготовить буфер для 
+	CmdOutputStore(true);
+	#if 0
+	_ASSERTE(gpcsStoredOutput==NULL && gpStoredOutput==NULL);
+	if (!gpcsStoredOutput)
+	{
+		gpcsStoredOutput = new MSection;
+	}
+	#endif
+
 
 	// Включить по умолчанию выделение мышью
 	if ((anWorkMode == 0) && !gbNoCreateProcess && gbConsoleModeFlags /*&& !(gbParmBufferSize && gnBufferHeight == 0)*/)
@@ -1350,12 +1356,22 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	//gpSrv->bWinHookAllow = FALSE; gpSrv->nWinHookMode = 0;
 	//HookWinEvents ( -1 );
 
+	if (gpSrv->pStoredOutputItem)
+	{
+		SafeDelete(gpSrv->pStoredOutputItem);
+	}
+	if (gpSrv->pStoredOutputHdr)
+	{
+		SafeDelete(gpSrv->pStoredOutputHdr);
+	}
+	#if 0
 	{
 		MSectionLock CS; CS.Lock(gpcsStoredOutput, TRUE);
 		SafeFree(gpStoredOutput);
 		CS.Unlock();
 		SafeDelete(gpcsStoredOutput);
 	}
+	#endif
 
 	SafeFree(gpSrv->pszAliases);
 
@@ -1407,10 +1423,108 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	}
 }
 
+// Консоль любит глючить, при попытках запроса более определенного количества ячеек.
+// MAX_CONREAD_SIZE подобрано экспериментально
+BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RECT& rgn)
+{
+	BOOL lbRc = FALSE;
+
+	size_t nBufWidth = bufSize.X;
+	int nWidth = (rgn.Right - rgn.Left + 1);
+	int nHeight = (rgn.Bottom - rgn.Top + 1);
+	int nCurSize = nWidth * nHeight;
+
+	_ASSERTE(bufSize.X >= nWidth);
+	_ASSERTE(bufSize.Y >= nHeight);
+	_ASSERTE(rgn.Top>=0 && rgn.Bottom>=rgn.Top);
+	_ASSERTE(rgn.Left>=0 && rgn.Right>=rgn.Left);
+
+	COORD bufCoord = {0,0};
+
+	if (nCurSize <= MAX_CONREAD_SIZE)
+	{
+		if (ReadConsoleOutputW(hOut, pData, bufSize, bufCoord, &rgn))
+			lbRc = TRUE;
+	}
+
+	if (!lbRc)
+	{
+		// Придется читать построчно
+		
+		// Теоретически - можно и блоками, но оверхед очень маленький, а велик
+		// шанс обломаться, если консоль "глючит". Поэтому построчно...
+
+		//bufSize.X = TextWidth;
+		bufSize.Y = 1;
+		bufCoord.X = 0; bufCoord.Y = 0;
+		//rgn = gpSrv->sbi.srWindow;
+
+		int Y1 = rgn.Top;
+		int Y2 = rgn.Bottom;
+
+		CHAR_INFO* pLine = pData;
+		for (int y = Y1; y <= Y2; y++, rgn.Top++, pLine+=nBufWidth)
+		{
+			rgn.Bottom = rgn.Top;
+			lbRc = ReadConsoleOutputW(hOut, pLine, bufSize, bufCoord, &rgn);
+		}
+	}
+
+	return lbRc;
+}
+
+// Консоль любит глючить, при попытках запроса более определенного количества ячеек.
+// MAX_CONREAD_SIZE подобрано экспериментально
+BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn)
+{
+	BOOL lbRc = FALSE;
+
+	size_t nBufWidth = bufSize.X;
+	int nWidth = (rgn.Right - rgn.Left + 1);
+	int nHeight = (rgn.Bottom - rgn.Top + 1);
+	int nCurSize = nWidth * nHeight;
+
+	_ASSERTE(bufSize.X >= nWidth);
+	_ASSERTE(bufSize.Y >= nHeight);
+	_ASSERTE(rgn.Top>=0 && rgn.Bottom>=rgn.Top);
+	_ASSERTE(rgn.Left>=0 && rgn.Right>=rgn.Left);
+
+	COORD bufCoord = crBufPos;
+
+	if (nCurSize <= MAX_CONREAD_SIZE)
+	{
+		if (WriteConsoleOutputW(hOut, pData, bufSize, bufCoord, &rgn))
+			lbRc = TRUE;
+	}
+
+	if (!lbRc)
+	{
+		// Придется читать построчно
+		
+		// Теоретически - можно и блоками, но оверхед очень маленький, а велик
+		// шанс обломаться, если консоль "глючит". Поэтому построчно...
+
+		//bufSize.X = TextWidth;
+		bufSize.Y = 1;
+		bufCoord.X = 0; bufCoord.Y = 0;
+		//rgn = gpSrv->sbi.srWindow;
+
+		int Y1 = rgn.Top;
+		int Y2 = rgn.Bottom;
+
+		CHAR_INFO* pLine = pData;
+		for (int y = Y1; y <= Y2; y++, rgn.Top++, pLine+=nBufWidth)
+		{
+			rgn.Bottom = rgn.Top;
+			lbRc = WriteConsoleOutputW(hOut, pLine, bufSize, bufCoord, &rgn);
+		}
+	}
+
+	return lbRc;
+}
 
 
-// Сохранить данные ВСЕЙ консоли в gpStoredOutput
-void CmdOutputStore()
+bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAP*& pData)
 {
 	// В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!
 	// В итоге, буфер вывода telnet'а схлопывается!
@@ -1419,55 +1533,182 @@ void CmdOutputStore()
 		ghConOut.Close();
 	}
 
-	WARNING("А вот это нужно бы делать в RefreshThread!!!");
-	DEBUGSTR(L"--- CmdOutputStore begin\n");
-	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
-
-	MSectionLock CS; CS.Lock(gpcsStoredOutput, FALSE);
 
 	// !!! Нас интересует реальное положение дел в консоли,
 	//     а не скорректированное функцией MyGetConsoleScreenBufferInfo
 	if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi))
 	{
-		CS.RelockExclusive();
-		SafeFree(gpStoredOutput);
-
-		return; // Не смогли получить информацию о консоли...
+		//CS.RelockExclusive();
+		//SafeFree(gpStoredOutput);
+		return false; // Не смогли получить информацию о консоли...
 	}
 
-	int nOneBufferSize = lsbi.dwSize.X * lsbi.dwSize.Y * 2; // Читаем всю консоль целиком!
 
-	// Если требуется увеличение размера выделенной памяти
-	if (gpStoredOutput)
+	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
+
+	if (!gpSrv->pStoredOutputHdr)
 	{
-		if (gpStoredOutput->hdr.cbMaxOneBufferSize < (DWORD)nOneBufferSize)
+		gpSrv->pStoredOutputHdr = new MFileMapping<CESERVER_CONSAVE_MAPHDR>;
+		gpSrv->pStoredOutputHdr->InitName(CECONOUTPUTNAME, (DWORD)ghConWnd); //-V205
+		if (!(pHdr = gpSrv->pStoredOutputHdr->Create()))
 		{
-			CS.RelockExclusive();
-			SafeFree(gpStoredOutput);
+			_ASSERTE(FALSE && "Failed to create mapping: CESERVER_CONSAVE_MAPHDR");
+			gpSrv->pStoredOutputHdr->CloseMap();
+			return false;
+		}
+
+		ExecutePrepareCmd(&pHdr->hdr, 0, sizeof(*pHdr));
+	}
+	else
+	{
+		if (!(pHdr = gpSrv->pStoredOutputHdr->Ptr()))
+		{
+			_ASSERTE(FALSE && "Failed to get mapping Ptr: CESERVER_CONSAVE_MAPHDR");
+			gpSrv->pStoredOutputHdr->CloseMap();
+			return false;
 		}
 	}
 
-	if (gpStoredOutput == NULL)
+	WARNING("А вот это нужно бы делать в RefreshThread!!!");
+	DEBUGSTR(L"--- CmdOutputStore begin\n");
+
+	//MSectionLock CS; CS.Lock(gpcsStoredOutput, FALSE);
+
+	pData = NULL;
+
+
+	COORD crMaxSize = GetLargestConsoleWindowSize(ghConOut);
+	DWORD cchOneBufferSize = lsbi.dwSize.X * lsbi.dwSize.Y; // Читаем всю консоль целиком!
+	DWORD cchMaxBufferSize = max(pHdr->MaxCellCount,(DWORD)(9999 * max(max(lsbi.dwSize.X,crMaxSize.X),200)));
+
+
+	bool lbNeedRecreate = false; // требуется новый или больший, или сменился индекс (создан в другом сервере)
+	bool lbNeedReopen = (gpSrv->pStoredOutputItem == NULL);
+	// Warning! Мэппинг уже мог быть создан другим сервером.
+	if (!pHdr->CurrentIndex || (pHdr->MaxCellCount < cchOneBufferSize))
 	{
-		CS.RelockExclusive();
-		// Выделяем память: заголовок + буфер текста (на атрибуты забьем)
-		gpStoredOutput = (CESERVER_CONSAVE*)calloc(sizeof(CESERVER_CONSAVE_HDR)+nOneBufferSize,1);
-		_ASSERTE(gpStoredOutput!=NULL);
+		pHdr->CurrentIndex++;
+		lbNeedRecreate = true;
+	}
+	DWORD nNewIndex = pHdr->CurrentIndex;
 
-		if (gpStoredOutput == NULL)
-			return; // Не смогли выделить память
-
-		gpStoredOutput->hdr.cbMaxOneBufferSize = nOneBufferSize;
+	// Проверить, если мэппинг уже открывался ранее, может его нужно переоткрыть - сменился индекс (создан в другом сервере)
+	if (!lbNeedRecreate && gpSrv->pStoredOutputItem)
+	{
+		if (!gpSrv->pStoredOutputItem->IsValid()
+			|| (nNewIndex != gpSrv->pStoredOutputItem->Ptr()->CurrentIndex))
+		{
+			lbNeedReopen = lbNeedRecreate = true;
+		}
 	}
 
-	// Запомнить sbi
-	//memmove(&gpStoredOutput->hdr.sbi, &lsbi, sizeof(lsbi));
-	gpStoredOutput->hdr.sbi = lsbi;
-	// Теперь читаем данные
-	COORD coord = {0,0};
-	DWORD nbActuallyRead = 0;
-	DWORD nReadLen = lsbi.dwSize.X * lsbi.dwSize.Y;
+	if (lbNeedRecreate
+		|| (!gpSrv->pStoredOutputItem)
+		|| (pHdr->MaxCellCount < cchOneBufferSize))
+	{
+		if (!gpSrv->pStoredOutputItem)
+		{
+			gpSrv->pStoredOutputItem = new MFileMapping<CESERVER_CONSAVE_MAP>;
+			_ASSERTE(lbNeedReopen);
+			lbNeedReopen = true;
+		}
 
+		if (!lbNeedRecreate && pHdr->MaxCellCount)
+		{
+			_ASSERTE(pHdr->MaxCellCount >= cchOneBufferSize);
+			cchMaxBufferSize = pHdr->MaxCellCount;
+		}
+
+		if (lbNeedReopen || !gpSrv->pStoredOutputItem->IsValid())
+		{
+			LPCWSTR pszName = gpSrv->pStoredOutputItem->InitName(CECONOUTPUTITEMNAME, (DWORD)ghConWnd, nNewIndex); //-V205
+			DWORD nMaxSize = sizeof(*pData) + cchMaxBufferSize * sizeof(pData->Data[0]);
+
+			if (!(pData = gpSrv->pStoredOutputItem->Create(nMaxSize)))
+			{
+				_ASSERTE(FALSE && "Failed to create item mapping: CESERVER_CONSAVE_MAP");
+				gpSrv->pStoredOutputItem->CloseMap();
+				pHdr->sCurrentMap[0] = 0; // сброс, если был ранее назначен
+				return false;
+			}
+
+			ExecutePrepareCmd(&pData->hdr, 0, nMaxSize);
+			// Save current mapping
+			pData->CurrentIndex = nNewIndex;
+			pData->MaxCellCount = cchMaxBufferSize;
+			pHdr->MaxCellCount = cchMaxBufferSize;
+			wcscpy_c(pHdr->sCurrentMap, pszName);
+
+			goto wrap;
+		}
+	}
+
+	if (!(pData = gpSrv->pStoredOutputItem->Ptr()))
+	{
+		_ASSERTE(FALSE && "Failed to get item mapping Ptr: CESERVER_CONSAVE_MAP");
+		gpSrv->pStoredOutputItem->CloseMap();
+		return false;
+	}
+
+wrap:
+	if (!pData || (pData->hdr.nVersion != CESERVER_REQ_VER) || (pData->hdr.cbSize <= sizeof(CESERVER_CONSAVE_MAP)))
+	{
+		_ASSERTE(pData && (pData->hdr.nVersion == CESERVER_REQ_VER) && (pData->hdr.cbSize > sizeof(CESERVER_CONSAVE_MAP)));
+		gpSrv->pStoredOutputItem->CloseMap();
+		return false;
+	}
+
+	return (pData != NULL);
+}
+
+// Сохранить данные ВСЕЙ консоли в gpStoredOutput
+void CmdOutputStore(bool abCreateOnly /*= false*/)
+{
+	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+	CESERVER_CONSAVE_MAP* pData = NULL;
+	if (!CmdOutputOpenMap(lsbi, pData))
+		return;
+
+	// Запомнить/обновить sbi
+	pData->info = lsbi;
+
+	if (abCreateOnly)
+		return;
+
+	//// Если требуется увеличение размера выделенной памяти
+	//if (gpStoredOutput)
+	//{
+	//	if (gpStoredOutput->hdr.cbMaxOneBufferSize < (DWORD)nOneBufferSize)
+	//	{
+	//		CS.RelockExclusive();
+	//		SafeFree(gpStoredOutput);
+	//	}
+	//}
+
+	//if (gpStoredOutput == NULL)
+	//{
+	//	CS.RelockExclusive();
+	//	// Выделяем память: заголовок + буфер текста (на атрибуты забьем)
+	//	gpStoredOutput = (CESERVER_CONSAVE*)calloc(sizeof(CESERVER_CONSAVE_HDR)+nOneBufferSize,1);
+	//	_ASSERTE(gpStoredOutput!=NULL);
+
+	//	if (gpStoredOutput == NULL)
+	//		return; // Не смогли выделить память
+
+	//	gpStoredOutput->hdr.cbMaxOneBufferSize = nOneBufferSize;
+	//}
+
+	//// Запомнить sbi
+	////memmove(&gpStoredOutput->hdr.sbi, &lsbi, sizeof(lsbi));
+	//gpStoredOutput->hdr.sbi = lsbi;
+
+	// Теперь читаем данные
+	COORD BufSize = {lsbi.dwSize.X, lsbi.dwSize.Y};
+	SMALL_RECT ReadRect = {0, 0, lsbi.dwSize.X-1, lsbi.dwSize.Y-1};
+
+	pData->Succeeded = MyReadConsoleOutput(ghConOut, pData->Data, BufSize, ReadRect);
+
+#if 0
 	// [Roman Kuzmin]
 	// In FAR Manager source code this is mentioned as "fucked method". Yes, it is.
 	// Functions ReadConsoleOutput* fail if requested data size exceeds their buffer;
@@ -1479,8 +1720,9 @@ void CmdOutputStore()
 	// cases is not that difficult to develop but it will be increased complexity and
 	// overhead often for nothing, not sure that we really should use it.
 
-	if (!ReadConsoleOutputCharacter(ghConOut, gpStoredOutput->Data, nReadLen, coord, &nbActuallyRead)
-	        || (nbActuallyRead != nReadLen))
+	if ((nReadLen > MAX_CONREAD_SIZE)
+		!ReadConsoleOutput(ghConOut, pData->Data, BufSize, coord, &nbActuallyRead)
+		|| (nbActuallyRead != nReadLen))
 	{
 		DEBUGSTR(L"--- Full block read failed: read line by line\n");
 		wchar_t* ConCharNow = gpStoredOutput->Data;
@@ -1492,16 +1734,53 @@ void CmdOutputStore()
 			ConCharNow += lsbi.dwSize.X;
 		}
 	}
+#endif
 
 	DEBUGSTR(L"--- CmdOutputStore end\n");
 }
 
 void CmdOutputRestore()
 {
+	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+	CESERVER_CONSAVE_MAP* pData = NULL;
+	if (!CmdOutputOpenMap(lsbi, pData))
+		return;
+
+	if (lsbi.srWindow.Top > 0)
+	{
+		_ASSERTE(lsbi.srWindow.Top == 0 && "Upper left corner of window expected");
+		return;
+	}
+
+	if (lsbi.dwSize.Y <= (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1))
+	{
+		// There is no scroller in window
+		// Nothing to do
+		return;
+	}
+
+	CHAR_INFO chrFill = {};
+	chrFill.Attributes = lsbi.wAttributes;
+	chrFill.Char.UnicodeChar = L' ';
+
+	SMALL_RECT rcTop = {0,0, lsbi.dwSize.X-1, lsbi.srWindow.Bottom};
+	COORD crMoveTo = {0, lsbi.dwSize.Y - 1 - lsbi.srWindow.Bottom};
+	if (!ScrollConsoleScreenBuffer(ghConOut, &rcTop, NULL, crMoveTo, &chrFill))
+	{
+		return;
+	}
+
+	SMALL_RECT rcBottom = {0, crMoveTo.Y, lsbi.srWindow.Right, lsbi.dwSize.Y-1};
+	SetConsoleWindowInfo(ghConOut, TRUE, &rcBottom);
+
+	COORD crNewPos = {lsbi.dwCursorPosition.X, lsbi.dwCursorPosition.Y + crMoveTo.Y};
+	SetConsoleCursorPosition(ghConOut, crNewPos);
+
+#if 0
 	MSectionLock CS; CS.Lock(gpcsStoredOutput, TRUE);
 	if (gpStoredOutput)
 	{
-		TODO("Восстановить текст скрытой (прокрученной вверх) части консоли");
+		
 		// Учесть, что ширина консоли могла измениться со времени выполнения предыдущей команды.
 		// Сейчас у нас в верхней части консоли может оставаться кусочек предыдущего вывода (восстановил FAR).
 		// 1) Этот кусочек нужно считать
@@ -1510,6 +1789,36 @@ void CmdOutputRestore()
 		// 4) восстановить оставшуюся часть консоли. Учесть, что фар может
 		//    выполнять некоторые команды сам и курсор вообще-то мог несколько уехать...
 	}
+#endif
+
+	// Восстановить текст скрытой (прокрученной вверх) части консоли
+	// Учесть, что ширина консоли могла измениться со времени выполнения предыдущей команды.
+	// Сейчас у нас в верхней части консоли может оставаться кусочек предыдущего вывода (восстановил FAR).
+	// 1) Этот кусочек нужно считать
+	// 2) Скопировать в нижнюю часть консоли (до которой докрутилась предыдущая команда)
+	// 3) прокрутить консоль до предыдущей команды (куда мы только что скопировали данные сверху)
+	// 4) восстановить оставшуюся часть консоли. Учесть, что фар может
+	//    выполнять некоторые команды сам и курсор вообще-то мог несколько уехать...
+
+
+	WARNING("Попытаться подобрать те строки, которые НЕ нужно выводить в консоль");
+	// из-за прокрутки консоли самим фаром, некоторые строки могли уехать вверх.
+
+
+	CONSOLE_SCREEN_BUFFER_INFO storedSbi = pData->info;
+
+	SHORT nStoredHeight = min(storedSbi.srWindow.Top,rcBottom.Top);
+	if (nStoredHeight < 1)
+	{
+		// Nothing to restore?
+		return;
+	}
+
+	COORD crOldBufSize = pData->info.dwSize; // Может быть шире или уже чем текущая консоль!
+	SMALL_RECT rcWrite = {0,rcBottom.Top-nStoredHeight,min(crOldBufSize.X,lsbi.dwSize.X)-1,rcBottom.Top-1};
+	COORD crBufPos = {0, storedSbi.srWindow.Top-nStoredHeight};
+
+	MyWriteConsoleOutput(ghConOut, pData->Data, crOldBufSize, crBufPos, rcWrite);
 }
 
 static BOOL CALLBACK FindConEmuByPidProc(HWND hwnd, LPARAM lParam)
@@ -2087,7 +2396,13 @@ int CreateMapHeader()
 
 	gpSrv->pConsoleMap->InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
 
-	if (!gpSrv->pConsoleMap->Create())
+	BOOL lbCreated;
+	if (gnRunMode == RM_SERVER)
+		lbCreated = (gpSrv->pConsoleMap->Create() != NULL);
+	else
+		lbCreated = (gpSrv->pConsoleMap->Open() != NULL);
+
+	if (!lbCreated)
 	{
 		_wprintf(gpSrv->pConsoleMap->GetErrorText());
 		delete gpSrv->pConsoleMap; gpSrv->pConsoleMap = NULL;
@@ -2160,7 +2475,8 @@ void UpdateConsoleMapHeader()
 		_ASSERTE(gpSrv->pConsole->hdr.hConEmuRoot==NULL || gpSrv->pConsole->hdr.nGuiPID!=0);
 		gpSrv->pConsole->hdr.nActiveFarPID = gpSrv->nActiveFarPID;
 
-		if (gnRunMode != RM_SERVER && gnRunMode != RM_ALTSERVER)
+		// Нельзя альт.серверу мэппинг менять - подерутся
+		if (gnRunMode != RM_SERVER /*&& gnRunMode != RM_ALTSERVER*/)
 		{
 			_ASSERTE(gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER);
 			return;

@@ -232,7 +232,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi);
 WARNING("Вместо GetConsoleScreenBufferInfo нужно использовать MyGetConsoleScreenBufferInfo!");
 BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc);
 //void EnlargeRegion(CESERVER_CHAR_HDR& rgn, const COORD crNew);
-void CmdOutputStore();
+void CmdOutputStore(bool abCreateOnly = false);
 void CmdOutputRestore();
 //LPVOID Alloc(size_t nCount, size_t nSize);
 //void Free(LPVOID ptr);
@@ -391,6 +391,9 @@ struct SrvInfo
 	wchar_t szGetDataPipe[MAX_PATH], szDataReadyEvent[64];
 	HANDLE /*hInputPipe,*/ hQueryPipe/*, hGetDataPipe*/;
 	//
+	MFileMapping<CESERVER_CONSAVE_MAPHDR> *pStoredOutputHdr;
+	MFileMapping<CESERVER_CONSAVE_MAP> *pStoredOutputItem;
+	//
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *pConsoleMap;
 	ConEmuGuiMapping guiSettings;
 	CESERVER_REQ_CONINFO_FULL *pConsole;
@@ -469,10 +472,10 @@ extern SrvInfo *gpSrv;
 #define USER_ACTIVITY ((gnBufferHeight == 0) || ((GetTickCount() - gpSrv->dwLastUserTick) <= USER_IDLE_TIMEOUT))
 
 
-#pragma pack(push, 1)
-extern CESERVER_CONSAVE* gpStoredOutput;
-#pragma pack(pop)
-extern MSection* gpcsStoredOutput;
+//#pragma pack(push, 1)
+//extern CESERVER_CONSAVE* gpStoredOutput;
+//#pragma pack(pop)
+//extern MSection* gpcsStoredOutput;
 
 //typedef struct tag_CmdInfo
 //{

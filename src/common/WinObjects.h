@@ -247,7 +247,7 @@ class MFileMapping
 		}
 		#endif
 	public:
-		void InitName(const wchar_t *aszTemplate,DWORD Parm1=0,DWORD Parm2=0)
+		LPCWSTR InitName(const wchar_t *aszTemplate,DWORD Parm1=0,DWORD Parm2=0)
 		{
 			if (mh_Mapping) CloseMap();
 
@@ -257,6 +257,7 @@ class MFileMapping
 			//#else
 			//			msprintf(ms_MapName, SKIPLEN(countof(ms_MapName)) aszTemplate, Parm1, Parm2);
 			//#endif
+			return ms_MapName;
 		};
 		void ClosePtr()
 		{

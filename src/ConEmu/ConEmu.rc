@@ -417,6 +417,7 @@ BEGIN
     EDITTEXT        tHideCaptionAlwaysDelay,183,151,40,12,ES_AUTOHSCROLL
     EDITTEXT        tHideCaptionAlwaysDissapear,277,151,40,12,ES_AUTOHSCROLL
     CONTROL         "Confirm close console",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,98,87,8
+    CONTROL         "ANSI X3.64 / 256color",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,110,87,8
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235

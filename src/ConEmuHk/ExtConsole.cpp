@@ -57,6 +57,7 @@ AnnotationHeader* gpTrueColor = NULL;
 HANDLE ghTrueColor = NULL;
 
 bool gbInitialized = false;
+DWORD gnInitializeErrCode = 0;
 //bool gbFarBufferMode = false; // true, если Far запущен с ключом "/w"
 
 WORD defConForeIdx = 7;
@@ -92,7 +93,12 @@ static BOOL ExtGetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_
 {
 	_ASSERTE(gbInitialized);
 	
-	h = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (!h)
+	{
+		_ASSERTE(h!=NULL);
+		h = GetStdHandle(STD_OUTPUT_HANDLE);
+	}
+
 	if (!GetConsoleScreenBufferInfo(h, &csbi))
 		return FALSE;
 	
@@ -123,13 +129,22 @@ static BOOL ExtGetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_
 	return TRUE;
 }
 
-static BOOL ExtCheckBuffers()
+static BOOL ExtCheckBuffers(HANDLE h)
 {
+	if (!h)
+	{
+		_ASSERTE(h!=NULL);
+		h = GetStdHandle(STD_OUTPUT_HANDLE);
+	}
+
 	if (!gbInitialized)
 	{
-		HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-		if (GetConsoleScreenBufferInfo(h, &csbi))
+		if (!GetConsoleScreenBufferInfo(h, &csbi))
+		{
+			gnInitializeErrCode = GetLastError();
+		}
+		else
 		{
 			SHORT nWidth  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
 			SHORT nHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
@@ -206,7 +221,7 @@ BOOL ExtGetAttributes(ExtAttributesParm* Info)
 		return FALSE;
 	}
 
-	BOOL lbTrueColor = ExtCheckBuffers();
+	BOOL lbTrueColor = ExtCheckBuffers(Info->ConsoleOutput);
 	UNREFERENCED_PARAMETER(lbTrueColor);
 	
 	HANDLE h = Info->ConsoleOutput;
@@ -305,7 +320,7 @@ BOOL ExtSetAttributes(const ExtAttributesParm* Info)
 		return TRUE;
 	}
 
-	BOOL lbTrueColor = ExtCheckBuffers();
+	BOOL lbTrueColor = ExtCheckBuffers(Info->ConsoleOutput);
 	UNREFERENCED_PARAMETER(lbTrueColor);
 
 	HANDLE h = Info->ConsoleOutput;
@@ -396,7 +411,8 @@ BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL;
-	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (Info->Region.Top /*- srWork.Top*/)) : NULL);
+	PRAGMA_ERROR("Заменить на INT_PTR nLinePosition");
+	//AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (Info->Region.Top /*- srWork.Top*/)) : NULL);
 
 	int nBufferType = (int)(Info->Flags & ewtf_Mask);
 
@@ -616,7 +632,8 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
-	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (Info->Region.Top /*- srWork.Top*/)) : NULL); //-V104
+	PRAGMA_ERROR("Заменить на INT_PTR nLinePosition");
+	//AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (Info->Region.Top /*- srWork.Top*/)) : NULL); //-V104
 
 	int nBufferType = (int)(Info->Flags & ewtf_Mask);
 
@@ -938,7 +955,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		return FALSE;
 	}
 
-	BOOL lbTrueColor = ExtCheckBuffers();
+	BOOL lbTrueColor = ExtCheckBuffers(Info->ConsoleOutput);
 	UNREFERENCED_PARAMETER(lbTrueColor);
 
 	HANDLE h = Info->ConsoleOutput;
@@ -976,7 +993,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
-	AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * YShift) : NULL); //-V104
+	//AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * YShift) : NULL); //-V104
+	INT_PTR nLinePosition = nWindowWidth * YShift;
 
 	// пока только "текущим" выбранным цветом
 	_ASSERTE((Info->Flags & ewtf_Current) == ewtf_Current);
@@ -1065,8 +1083,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			// Вывод расширенных атрибутов (если нужно и можно) и собственно текста
 			// Включая символ pCur
 			lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom + 1),
-						(pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? pTrueColorLine : NULL,
-						 pTrueColorEnd, AIColor, (WriteConsoleW_t)Info->Private);
+						(pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
+						(pTrueColorEnd), AIColor, (WriteConsoleW_t)Info->Private);
 
 			// Update processed pos
 			pFrom = pCur + 1;
@@ -1092,10 +1110,11 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				// координату - "отмотать" (она как бы не изменилась)
 				y2 = csbi.dwSize.Y - 1;
 			}
-			else if (pTrueColorLine)
+			else //if (pTrueColorLine)
 			{
 				// Перейти на следующую строку в расширенном буфере
-				pTrueColorLine += nWindowWidth; //-V102
+				nLinePosition += nWindowWidth;
+				//pTrueColorLine += nWindowWidth; //-V102
 			}
 			y = y2;
 		}
@@ -1106,8 +1125,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		// НЕ включая символ pCur
 		SHORT ForceDumpX = (x2 > x) ? (min(x2, WrapAtCol)-1) : 0;
 		lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom),
-					 (pTrueColorLine && (pTrueColorLine >= pTrueColorStart)) ? pTrueColorLine : NULL,
-					 pTrueColorEnd, AIColor, (WriteConsoleW_t)Info->Private);
+					 (pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
+					 (pTrueColorEnd), AIColor, (WriteConsoleW_t)Info->Private);
 	}
 
 
@@ -1141,7 +1160,7 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 	BOOL lbRc = TRUE, b;
 	DWORD nWritten;
 
-	BOOL lbTrueColor = ExtCheckBuffers();
+	BOOL lbTrueColor = ExtCheckBuffers(Info->ConsoleOutput);
 	UNREFERENCED_PARAMETER(lbTrueColor);
 
 	HANDLE h = Info->ConsoleOutput;
@@ -1193,7 +1212,14 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 			{
 				SHORT xMax = (y == Y2) ? X2 : nWindowWidth;
 				SHORT xMin = (y == Y1) ? Info->Coord.X : 0;
-				AnnotationInfo* pTrueColor = pTrueColorStart + nWindowWidth * y + xMin; //-V104
+				TODO("Адресация полной консоли, а не только видимой части...");
+				INT_PTR nShift = nWindowWidth * (y - srWork.Top) + xMin;
+				if (nShift < 0)
+				{
+					_ASSERTE((nWindowWidth * (y - srWork.Top) + xMin) > 0);
+					continue;
+				}
+				AnnotationInfo* pTrueColor = pTrueColorStart + nShift;
 				for (SHORT x = xMin; x < xMax; x++)
 				{
 					*(pTrueColor++) = t;
@@ -1222,9 +1248,12 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 	return lbRc;
 }
 
+
 BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 {
-	BOOL lbTrueColor = ExtCheckBuffers();
+	TODO("!!!scrolling region!!!");
+
+	BOOL lbTrueColor = ExtCheckBuffers(Info->ConsoleOutput);
 	UNREFERENCED_PARAMETER(lbTrueColor);
 
 	HANDLE h = Info->ConsoleOutput;
@@ -1239,7 +1268,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 	COORD crSize = {csbi.dwSize.X,1};
 	COORD cr0 = {};
 	SMALL_RECT rcRgn = {0,0,csbi.dwSize.X-1,0};
-	int nDir = Info->Dir;
+	int nDir = (int)Info->Dir;
 
 	if (!pBuf)
 		return FALSE;
@@ -1316,14 +1345,16 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 				}
 			}
 
-			while (nDir < 0)
+			if (nDir < 0)
 			{
-				cr0.Y = csbi.dwSize.Y - 1 + nDir;
-				ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput, Info->FillAttr, Info->FillChar, cr0, csbi.dwSize.X};
+				cr0.Y = max(0,(csbi.dwSize.Y - 1 + nDir));
+				int nLines = csbi.dwSize.Y - cr0.Y;
+				ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput,
+					Info->FillAttr, Info->FillChar, cr0, csbi.dwSize.X * nLines};
 				ExtFillOutput(&f);
 				//FillConsoleOutputAttribute(Info->ConsoleOutput, GetDefaultTextAttr(), csbi.dwSize.X, cr0, &nCount);
 				//FillConsoleOutputCharacter(Info->ConsoleOutput, L' ', csbi.dwSize.X, cr0, &nCount);
-				++nDir;
+				//++nDir;
 			}
 		}
 	}
@@ -1362,14 +1393,15 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 				}
 			}
 
-			while (nDir > 0)
+			if (nDir > 0)
 			{
-				cr0.Y = nDir - 1;
-				ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput, Info->FillAttr, Info->FillChar, cr0, csbi.dwSize.X};
+				cr0.Y = 0;
+				ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput,
+					Info->FillAttr, Info->FillChar, cr0, csbi.dwSize.X * nDir};
 				ExtFillOutput(&f);
 				//FillConsoleOutputAttribute(Info->ConsoleOutput, GetDefaultTextAttr(), csbi.dwSize.X, cr0, &nCount);
 				//FillConsoleOutputCharacter(Info->ConsoleOutput, L' ', csbi.dwSize.X, cr0, &nCount);
-				--nDir;
+				//--nDir;
 			}
 		}
 	}

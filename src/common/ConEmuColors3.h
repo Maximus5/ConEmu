@@ -44,7 +44,7 @@ public:
 		for (size_t i = 0; i < countof(StdPalette); i++)
 		{
 			if (Color == StdPalette[i])
-				return i;
+				return (int)i;
 		}
 		return -1;
 	}

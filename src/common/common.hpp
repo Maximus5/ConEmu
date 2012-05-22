@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    90
+#define CESERVER_REQ_VER    91
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -87,12 +87,14 @@ typedef struct _CONSOLE_SELECTION_INFO
 // Mapping name formats
 #define CEGUIINFOMAPNAME    L"ConEmuGuiInfoMapping.%u" // --> ConEmuGuiMapping            ( % == dwGuiProcessId )
 #define CECONMAPNAME        L"ConEmuFileMapping.%08X"  // --> CESERVER_CONSOLE_MAPPING_HDR ( % == (DWORD)ghConWnd )
-#define CECONMAPNAME_A      "ConEmuFileMapping.%08X"   // --> CESERVER_CONSOLE_MAPPING_HDR ( % == (DWORD)ghConWnd ) simplifying ansi
+#define CECONMAPNAME_A       "ConEmuFileMapping.%08X"  // --> CESERVER_CONSOLE_MAPPING_HDR ( % == (DWORD)ghConWnd ) simplifying ansi
 #define CEFARMAPNAME        L"ConEmuFarMapping.%u"     // --> CEFAR_INFO_MAPPING               ( % == nFarPID )
 #define CECONVIEWSETNAME    L"ConEmuViewSetMapping.%u" // --> PanelViewSetMapping
 //#ifdef _DEBUG
 #define CEPANELDLGMAPNAME   L"ConEmuPanelViewDlgsMapping.%u" // -> DetectedDialogs     ( % == nFarPID )
 //#endif
+#define CECONOUTPUTNAME     L"ConEmuLastOutputMapping.%08X"    // --> CESERVER_CONSAVE_MAPHDR ( %X == (DWORD)ghConWnd )
+#define CECONOUTPUTITEMNAME L"ConEmuLastOutputMapping.%08X.%u" // --> CESERVER_CONSAVE_MAP ( %X == (DWORD)ghConWnd, %u = CESERVER_CONSAVE_MAPHDR.nCurrentIndex )
 
 #define CEDATAREADYEVENT    L"ConEmuSrvDataReady.%u"
 #define CEFARALIVEEVENT     L"ConEmuFarAliveEvent.%u"
@@ -195,7 +197,7 @@ const CECMD
 	CECMD_CMDSTARTED     = 8, // == CECMD_SETSIZE + восстановить содержимое консоли (запустился comspec)
 	CECMD_CMDFINISHED    = 9, // == CECMD_SETSIZE + сохранить содержимое консоли (завершился comspec)
 	CECMD_GETOUTPUTFILE  = 10, // Записать вывод последней консольной программы во временный файл и вернуть его имя
-	CECMD_GETOUTPUT      = 11,
+//	CECMD_GETOUTPUT      = 11,
 	CECMD_LANGCHANGE     = 12,
 	CECMD_NEWCMD         = 13, // CESERVER_REQ_NEWCMD, Запустить в этом экземпляре новую консоль с переданной командой (используется при SingleInstance и -new_console). Выполняется в GUI!
 	CECMD_TABSCMD        = 14, // enum ConEmuTabCommand: 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
@@ -854,6 +856,7 @@ struct ConEmuGuiMapping
 
 	DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть (пока не используется) доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	BOOL     bUseTrueColor; // включен флажок "TrueMod support"
+	BOOL     bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
 
 	/* Основной шрифт в GUI */
 	struct ConEmuMainFont MainFont;
@@ -951,7 +954,7 @@ struct CESERVER_REQ_HDR
 {
 	DWORD   cbSize;     // Не size_t(!), а именно DWORD, т.к. пакетами обмениваются и 32<->64 бит между собой.
 	CECMD   nCmd;       // DWORD
-	DWORD   nVersion;
+	DWORD   nVersion;   // CESERVER_REQ_VER
 	DWORD   nSrcThreadId;
 	DWORD   nSrcPID;
 	DWORD   nCreateTick;
@@ -975,17 +978,28 @@ struct CESERVER_CHAR
 	WORD  data[2];  // variable(!) length
 };
 
-struct CESERVER_CONSAVE_HDR
+//CECONOUTPUTNAME     L"ConEmuLastOutputMapping.%08X"    // --> CESERVER_CONSAVE_MAPHDR ( %X == (DWORD)ghConWnd )
+struct CESERVER_CONSAVE_MAPHDR
 {
-	CESERVER_REQ_HDR hdr; // Заполняется только перед отсылкой в плагин
-	CONSOLE_SCREEN_BUFFER_INFO sbi;
-	DWORD cbMaxOneBufferSize;
+	CESERVER_REQ_HDR hdr;    // Для унификации
+	DWORD   MaxCellCount;
+	int     CurrentIndex;
+	wchar_t sCurrentMap[64]; // CECONOUTPUTITEMNAME
 };
 
-struct CESERVER_CONSAVE
+//CECONOUTPUTITEMNAME L"ConEmuLastOutputMapping.%08X.%u" // --> CESERVER_CONSAVE_MAP ( %X == (DWORD)ghConWnd, %u = CESERVER_CONSAVE_MAPHDR.nCurrentIndex )
+struct CESERVER_CONSAVE_MAP
 {
-	CESERVER_CONSAVE_HDR hdr;
-	wchar_t Data[1];
+	CESERVER_REQ_HDR hdr; // Для унификации
+	CONSOLE_SCREEN_BUFFER_INFO info;
+	
+	DWORD MaxCellCount;
+	int   CurrentIndex;
+	BOOL  Succeeded;
+
+	TODO("Store TrueColor buffer?");
+
+	CHAR_INFO Data[1];
 };
 
 
@@ -1107,6 +1121,7 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	BOOL  bDosBox; // DosBox установлен, можно пользоваться
 	DWORD bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	BOOL  bUseTrueColor; // включен флажок "TrueMod support"
+	BOOL  bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
 	
 	// Перехват реестра
 	DWORD   isHookRegistry; // bitmask. 1 - supported, 2 - current

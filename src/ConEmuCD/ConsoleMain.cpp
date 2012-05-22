@@ -30,10 +30,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
-//	#define SHOW_ALTERNATIVE_MSGBOX
+	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
 //  #define SHOW_COMSPEC_STARTED_MSGBOX
-//	#define SHOW_SERVER_STARTED_MSGBOX
+	#define SHOW_SERVER_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
 //  #define SHOW_INJECT_MSGBOX
@@ -166,10 +166,10 @@ OSVERSIONINFO gOSVer;
 
 SrvInfo* gpSrv = NULL;
 
-#pragma pack(push, 1)
-CESERVER_CONSAVE* gpStoredOutput = NULL;
-#pragma pack(pop)
-MSection* gpcsStoredOutput = NULL;
+//#pragma pack(push, 1)
+//CESERVER_CONSAVE* gpStoredOutput = NULL;
+//#pragma pack(pop)
+//MSection* gpcsStoredOutput = NULL;
 
 //CmdInfo* gpSrv = NULL;
 
@@ -5077,6 +5077,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+#if 0
 BOOL cmd_GetOutput(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -5103,6 +5104,7 @@ BOOL cmd_GetOutput(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	return lbRc;
 }
+#endif
 
 BOOL cmd_Attach2Gui(CESERVER_REQ& in, CESERVER_REQ** out)
 {
@@ -5896,10 +5898,12 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			lbRc = cmd_SetSizeXXX_CmdStartedFinished(in, out);
 		} break;
+		#if 0
 		case CECMD_GETOUTPUT:
 		{
 			lbRc = cmd_GetOutput(in, out);
 		} break;
+		#endif
 		case CECMD_ATTACH2GUI:
 		{
 			lbRc = cmd_Attach2Gui(in, out);

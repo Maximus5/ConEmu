@@ -93,6 +93,7 @@ class CVirtualConsole :
 		bool    mb_IsForceUpdate; // Это устанавливается в InitDC, чтобы случайно isForce не потерялся
 		bool    mb_RequiredForceUpdate; // Сменился шрифт, например...
 		bool    isForce; // а это - сейчас (устанавливается по аргументу в Update)
+		bool    isFontSizeChanged;
 		DWORD   mn_LastBitsPixel;
 	protected:
 		friend class CConEmuChild;
@@ -102,6 +103,7 @@ class CVirtualConsole :
 		CEDC    hDC;
 		HBITMAP hBitmap;
 		HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
+		HBRUSH  CreateBackBrush(bool bGuiVisible, bool& rbNonSystem);
 		CEFONT  hSelectedFont, hOldFont;
 		CEFONT  mh_FontByIndex[MAX_FONT_STYLES+1]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
 		HFONT   mh_UCharMapFont; SMALL_RECT mrc_UCharMap;

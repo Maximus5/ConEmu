@@ -354,7 +354,7 @@ class CRealConsole
 		void ResetActiveAppSettingsId();
 		DWORD GetProgramStatus();
 		DWORD GetFarStatus();
-		DWORD GetServerPID();
+		DWORD GetServerPID(bool bMainOnly = false);
 		bool isServerCreated();
 		bool isServerAvailable();
 		bool isServerClosing();
@@ -492,7 +492,7 @@ class CRealConsole
 		
 		BOOL mb_InCreateRoot;
 		BOOL mb_UseOnlyPipeInput;
-		TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
+		TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_MainSrv_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
 		//TCHAR ms_ConEmuC_DataReady[64]; HANDLE mh_ConEmuC_DataReady;
 		void InitNames();
 		// Текущий заголовок консоли и его значение для сравнения (для определения изменений)

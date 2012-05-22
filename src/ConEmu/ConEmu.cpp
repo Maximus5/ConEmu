@@ -1557,6 +1557,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.nLoggingType = (ghOpWnd && gpSetCls->mh_Tabs[gpSetCls->thi_Debug]) ? gpSetCls->m_ActivityLoggingType : glt_None;
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0);
 	m_GuiInfo.bUseTrueColor = gpSet->isTrueColorer;
+	m_GuiInfo.bProcessAnsi = (gpSet->isProcessAnsi ? 1 : 0);
 
 	mb_DosBoxExists = CheckDosBoxExists();
 	m_GuiInfo.bDosBox = mb_DosBoxExists;

@@ -724,6 +724,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 	HEAPVAL
 	hSelectedFont = NULL;
 
+	bool lbRc = false;
+
 	// Это может быть, если отключена буферизация (debug) и вывод идет сразу на экран
 	if (!abNoDc)
 	{
@@ -795,10 +797,16 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 		}
 
 		ReleaseDC(0, hScreenDC);
-		return hBitmap!=NULL;
+		lbRc = (hBitmap!=NULL);
+		goto wrap;
 	}
 
-	return true;
+	lbRc = true;
+wrap:
+	// сбросим, уже не требуется
+	isFontSizeChanged = false;
+
+	return lbRc;
 }
 
 void CVirtualConsole::DumpConsole()
@@ -1942,6 +1950,8 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	isFilePanel = gpConEmu->isFilePanel(true);
 	isFade = !isForeground && gpSet->isFadeInactive;
 	mp_Colors = gpSet->GetColors(mp_RCon->GetActiveAppSettingsId(), isFade);
+	if ((nFontHeight != gpSetCls->FontHeight()) || (nFontWidth != gpSetCls->FontWidth()))
+		isFontSizeChanged = true;
 	nFontHeight = gpSetCls->FontHeight();
 	nFontWidth = gpSetCls->FontWidth();
 	nFontCharSet = gpSetCls->FontCharSet();
@@ -1959,7 +1969,8 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	}
 
 	// Первая инициализация, или смена размера
-	BOOL lbSizeChanged = (hDC == NULL) || (TextWidth != (uint)winSize.X || TextHeight != (uint)winSize.Y);
+	BOOL lbSizeChanged = (hDC == NULL) || (TextWidth != (uint)winSize.X || TextHeight != (uint)winSize.Y)
+		|| isFontSizeChanged; // или смена шрифта ('Auto' на 'Main')
 #ifdef _DEBUG
 	COORD dbgWinSize = winSize;
 	COORD dbgTxtSize = {TextWidth,TextHeight};
@@ -2466,6 +2477,30 @@ void CVirtualConsole::UpdateText()
 	//mh_FontByIndex[0] = gpSetCls->mh_Font; mh_FontByIndex[1] = gpSetCls->mh_FontB; mh_FontByIndex[2] = gpSetCls->mh_FontI; mh_FontByIndex[3] = gpSetCls->mh_FontBI;
 	CEFONT hFont = gpSetCls->mh_Font[0];
 	CEFONT hFont2 = gpSetCls->mh_Font2;
+
+	_ASSERTE(((TextWidth * nFontWidth) >= Width));
+#if 0
+	if (((TextHeight * nFontHeight) < Height) || ((TextWidth * nFontWidth) < Width))
+	{
+		bool lbDelBrush = false;
+		HBRUSH hBr = CreateBackBrush(false, lbDelBrush);
+
+		if (nFontHeight && (TextHeight * nFontHeight) < Height)
+		{
+			RECT rcFill = {0, TextHeight * nFontHeight, Width, Height};
+			FillRect(hDC, &rcFill, hBr);
+		}
+
+		if (nFontWidth && ((TextWidth * nFontWidth) < Width))
+		{
+			RECT rcFill = {TextWidth * nFontWidth, 0, Width, Height};
+			FillRect(hDC, &rcFill, hBr);
+		}
+
+		if (lbDelBrush)
+			DeleteObject(hBr);
+	}
+#endif
 
 	//BUGBUG: хорошо бы отрисовывать последнюю строку, даже если она чуть не влазит
 	for(; pos <= nMaxPos;
@@ -3178,6 +3213,18 @@ void CVirtualConsole::UpdateText()
 		}
 	}
 
+	if ((pos > nMaxPos) && (pos < (int)Height))
+	{
+		bool lbDelBrush = false;
+		HBRUSH hBr = CreateBackBrush(false, lbDelBrush);
+
+		RECT rcFill = {0, pos, Width, Height};
+		FillRect(hDC, &rcFill, hBr);
+
+		if (lbDelBrush)
+			DeleteObject(hBr);
+	}
+
 	free(nDX);
 
 	return;
@@ -3613,6 +3660,32 @@ void CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWid
 	}
 }
 
+HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem)
+{
+	HBRUSH hBr = NULL;
+	
+	if (bGuiVisible)
+	{
+		hBr = GetSysColorBrush(COLOR_APPWORKSPACE);
+		rbNonSystem = false;
+	}
+	else
+	{
+		COLORREF *pColors = gpSet->GetColors(-1);
+
+		// Залить цветом 0
+		int nBackColorIdx = 0; // Black
+		#ifdef _DEBUG
+		nBackColorIdx = 2; // Green
+		#endif
+		
+		hBr = CreateSolidBrush(pColors[nBackColorIdx]);
+		rbNonSystem = (hBr != NULL);
+	}
+
+	return hBr;
+}
+
 // hdc - это DC родительского окна (ghWnd)
 // rcClient - это место, куда нужно "положить" битмап. может быть произвольным!
 void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
@@ -3673,32 +3746,11 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 		// Сброс блокировки, если была
 		LockDcRect(false);
-		
-		HBRUSH hBr = NULL;
-		BOOL lbDelBrush = FALSE;
-		
+
 		COLORREF *pColors = gpSet->GetColors(-1);
 		
-		if (lbGuiVisible)
-		{
-			hBr = GetSysColorBrush(COLOR_APPWORKSPACE);
-			//hBr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
-			//lbDelBrush = (hBr != NULL);
-		}
-		else
-		{
-			// Залить цветом 0
-			int nBackColorIdx = 0; // Black
-			#ifdef _DEBUG
-			nBackColorIdx = 2; // Green
-			#endif
-			
-			hBr = CreateSolidBrush(pColors[nBackColorIdx]);
-			lbDelBrush = (hBr != NULL);
-		}
-		//RECT rcClient; Get ClientRect('ghWnd DC', &rcClient);
-		//PAINTSTRUCT ps;
-		//HDC hPaintDc = BeginPaint('ghWnd DC', &ps);
+		bool lbDelBrush = false;
+		HBRUSH hBr = CreateBackBrush(lbGuiVisible, lbDelBrush);
 		
 		//#ifndef SKIP_ALL_FILLRECT
 		FillRect(hPaintDc, &rcClient, hBr);

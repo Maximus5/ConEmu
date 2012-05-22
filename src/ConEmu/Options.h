@@ -978,6 +978,8 @@ struct Settings
 
 		//reg->Load(L"UseInjects", isUseInjects);
 		bool isUseInjects; // 0 - off, 1 - always. Note, Root process is infiltrated always.
+		//reg->Load(L"ProcessAnsi", isProcessAnsi);
+		bool isProcessAnsi; // ANSI X3.64 & XTerm-256-colors Support
 		//reg->Load(L"PortableReg", isPortableReg);
 		bool isPortableReg;
 

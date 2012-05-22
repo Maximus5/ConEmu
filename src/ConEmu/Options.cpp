@@ -387,6 +387,7 @@ void Settings::InitSettings()
 	isAutoSaveSizePos = false; mb_SizePosAutoSaved = false;
 	isConVisible = false; //isLockRealConsolePos = false;
 	isUseInjects = true;
+	isProcessAnsi = true;
 	#ifdef USEPORTABLEREGISTRY
 	isPortableReg = true; // включено по умолчанию, DEBUG
 	#else
@@ -1638,6 +1639,8 @@ void Settings::LoadSettings()
 		//if (isUseInjects > BST_INDETERMINATE)
 		//	isUseInjects = BST_CHECKED;
 
+		reg->Load(L"ProcessAnsi", isProcessAnsi);
+
 		#ifdef USEPORTABLEREGISTRY
 		reg->Load(L"PortableReg", isPortableReg);
 		#endif
@@ -2434,6 +2437,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ConInMode", nConInMode);
 		
 		reg->Save(L"UseInjects", isUseInjects);
+
+		reg->Save(L"ProcessAnsi", isProcessAnsi);
 
 		#ifdef USEPORTABLEREGISTRY
 		reg->Save(L"PortableReg", isPortableReg);
