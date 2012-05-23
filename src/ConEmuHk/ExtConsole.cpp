@@ -1015,6 +1015,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	SHORT x = csbi.dwCursorPosition.X, y = csbi.dwCursorPosition.Y; // 0-based
 	SHORT x2 = x, y2 = y;
 
+	Info->ScrolledRowsUp = 0;
+
 	TODO("Тут может быть засада - если другие приложения в это же время выводят в консоль - будет драка...");
 	for (; pCur < pEnd; pCur++)
 	{
@@ -1106,6 +1108,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				_ASSERTE((y-y2) == -1); // Должен быть сдвиг на одну строку
 				ExtScrollScreenParm Shift = {sizeof(Shift), essf_ExtOnly, h, y-y2, DefClr.Attributes, L' '};
 				ExtScrollScreen(&Shift);
+
+				Info->ScrolledRowsUp++;
 
 				// координату - "отмотать" (она как бы не изменилась)
 				y2 = csbi.dwSize.Y - 1;

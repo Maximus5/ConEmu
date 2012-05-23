@@ -5883,7 +5883,7 @@ BOOL StartDebugger()
 	si.cb = sizeof(si);
 	DWORD dwSelfPID = GetCurrentProcessId();
 
-	if ((nLen = GetEnvironmentVariableW(L"ConEmuBaseDir", szConEmuC, MAX_PATH-16)) < 1)
+	if ((nLen = GetEnvironmentVariableW(ENV_CONEMUBASEDIR_VAR_W, szConEmuC, MAX_PATH-16)) < 1)
 	{
 		ShowMessage(CECantDebugNotEnvVar,1); // "ConEmu plugin\nEnvironment variable 'ConEmuBaseDir' not defined\nDebugger is not available\nOK"
 		return FALSE; // Облом

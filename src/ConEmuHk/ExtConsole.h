@@ -102,6 +102,7 @@ struct ExtWriteTextParm
 	DWORD NumberOfCharsToWrite;
 	DWORD NumberOfCharsWritten;
 	SHORT WrapAtCol; // 1-based. Used only when ewtf_WrapAt specified
+	SHORT ScrolledRowsUp; // При достижении нижней границы экрана происходит скролл
 	void* Private;   // ConEmu private usage !!! Must be NULL !!!
 };
 

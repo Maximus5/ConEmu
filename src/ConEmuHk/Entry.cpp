@@ -147,6 +147,8 @@ TODO("AnnotationHeader* gpAnnotationHeader");
 AnnotationHeader* gpAnnotationHeader = NULL;
 HANDLE ghCurrentOutBuffer = NULL; // Устанавливается при SetConsoleActiveScreenBuffer
 
+bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL);
+
 //MSection *gpHookCS = NULL;
 
 
@@ -178,8 +180,11 @@ CESERVER_CONSOLE_MAPPING_HDR* gpConInfo = NULL;
 
 CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 {
+	static bool bLastAnsi = false;
+	bool bAnsi = false;
+
 	if (gpConInfo && !abForceRecreate)
-		return gpConInfo;
+		goto wrap;
 	
 	if (!gpConMap || abForceRecreate)
 	{
@@ -188,7 +193,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 		if (!gpConMap)
 		{
 			gpConInfo = NULL;
-			return NULL;
+			goto wrap;
 		}
 		gpConMap->InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
 	}
@@ -224,6 +229,13 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 		gpConMap = NULL;
 	}
 	
+wrap:
+	bAnsi = ((gpConInfo != NULL) && (gpConInfo->bProcessAnsi != FALSE));
+	if (abForceRecreate || (bLastAnsi != bAnsi))
+	{
+		bLastAnsi = bAnsi;
+		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");
+	}
 	return gpConInfo;
 }
 
@@ -462,7 +474,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		// Если аттачим существующее окно - таб в ConEmu еще не готов
 		if (!bAttachExistingWindow)
 		{
-			if (!dwConEmuHwnd && GetEnvironmentVariable(L"ConEmuHWND", szVar, countof(szVar)))
+			if (!dwConEmuHwnd && GetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, szVar, countof(szVar)))
 			{
 				if (szVar[0] == L'0' && szVar[1] == L'x')
 				{

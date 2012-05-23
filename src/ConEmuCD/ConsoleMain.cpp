@@ -5916,6 +5916,39 @@ BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_SetFullScreen(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = FALSE;
+	//ghConOut
+
+	typedef BOOL (WINAPI* SetConsoleDisplayMode_t)(HANDLE, DWORD, PCOORD);
+	SetConsoleDisplayMode_t _SetConsoleDisplayMode = (SetConsoleDisplayMode_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "SetConsoleDisplayMode");
+
+	size_t cbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_CONSOLEFULL, cbReplySize);
+
+	if ((*out) != NULL)
+	{
+		if (!_SetConsoleDisplayMode)
+		{
+			(*out)->FullScreenRet.bSucceeded = FALSE;
+			(*out)->FullScreenRet.nErrCode = ERROR_INVALID_FUNCTION;
+		}
+		else
+		{
+			(*out)->FullScreenRet.bSucceeded = _SetConsoleDisplayMode(ghConOut, CONSOLE_FULLSCREEN_MODE, &(*out)->FullScreenRet.crNewSize);
+			if (!(*out)->FullScreenRet.bSucceeded)
+				(*out)->FullScreenRet.nErrCode = GetLastError();
+		}
+	}
+	else
+	{
+		lbRc = FALSE;
+	}
+
+	return lbRc;
+}
+
 BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -6051,6 +6084,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_CONSOLEFULL:
 		{
 			lbRc = cmd_LoadFullConsoleData(in, out);
+		} break;
+		case CECMD_SETFULLSCREEN:
+		{
+			lbRc = cmd_SetFullScreen(in, out);
 		} break;
 	}
 

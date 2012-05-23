@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
+#define DEBUGSTRCURSORPOS(s) DEBUGSTR(s)
 
 #define Free SafeFree
 #define Alloc calloc
@@ -431,8 +432,8 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	con.m_sbi.dwMaximumWindowSize = con.crMaxSize; //dump.crSize;
 	con.nTextWidth = nX/*dump.crSize.X*/;
 	con.nTextHeight = nY/*dump.crSize.Y*/;
-	con.nBufferHeight = dump.crSize.Y;
-	con.bBufferHeight = TRUE;
+	con.bBufferHeight = (dump.crSize.Y > (int)nY);
+	con.nBufferHeight = con.bBufferHeight ? dump.crSize.Y : 0;
 	TODO("Горизонтальная прокрутка");
 	
 	//dump.NeedApply = TRUE;
@@ -647,7 +648,11 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	pIn->SetSize.size.X = sizeX;
 	pIn->SetSize.size.Y = sizeY;
 	TODO("nTopVisibleLine должен передаваться при скролле, а не при ресайзе!");
+	#ifdef SHOW_AUTOSCROLL
 	pIn->SetSize.nSendTopLine = (gpSetCls->AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
+	#else
+	pIn->SetSize.nSendTopLine = mp_RCon->InScroll() ? con.nTopVisibleLine : -1;
+	#endif
 	pIn->SetSize.rcWindow = rect;
 	pIn->SetSize.dwFarPID = (con.bBufferHeight && !mp_RCon->isFarBufferSupported()) ? 0 : mp_RCon->GetFarPID(TRUE);
 
@@ -1911,7 +1916,44 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 					gpConEmu->UpdateCursorInfo(pInfo->sbi.dwCursorPosition, pInfo->ci);
 			}
 
-			con.m_sbi = pInfo->sbi;
+			#ifdef _DEBUG
+			wchar_t szCursorDbg[255]; szCursorDbg[0] = 0;
+			if (pInfo->sbi.dwCursorPosition.X != con.m_sbi.dwCursorPosition.X || pInfo->sbi.dwCursorPosition.Y != con.m_sbi.dwCursorPosition.Y)
+				_wsprintf(szCursorDbg, SKIPLEN(countof(szCursorDbg)) L"CursorPos changed to %ux%u. ", pInfo->sbi.dwCursorPosition.X, pInfo->sbi.dwCursorPosition.Y);
+			else
+				_wsprintf(szCursorDbg, SKIPLEN(countof(szCursorDbg)) L"CursorPos is %ux%u. ", pInfo->sbi.dwCursorPosition.X, pInfo->sbi.dwCursorPosition.Y);
+			#endif
+
+			CONSOLE_SCREEN_BUFFER_INFO lsbi = pInfo->sbi;
+			// Если мышкой тащат ползунок скроллера - не менять TopVisible
+			if (mp_RCon->InScroll())
+			{
+				UINT nY = lsbi.srWindow.Bottom - lsbi.srWindow.Top;
+				lsbi.srWindow.Top = max(0,min(con.nTopVisibleLine,lsbi.dwSize.Y-nY-1));
+				lsbi.srWindow.Bottom = lsbi.srWindow.Top + nY;
+				#ifdef _DEBUG
+				int l = lstrlen(szCursorDbg);
+				_wsprintf(szCursorDbg+l, SKIPLEN(countof(szCursorDbg)-l) L"Visible rect locked to {%ux%u-%ux%u). ", lsbi.srWindow.Left, lsbi.srWindow.Top, lsbi.srWindow.Right, lsbi.srWindow.Bottom);
+				#endif
+			}
+			#ifdef _DEBUG
+			else if (memcmp(&pInfo->sbi.srWindow, &con.m_sbi.srWindow, sizeof(con.m_sbi.srWindow)))
+			{
+				if (pInfo->sbi.dwCursorPosition.X != con.m_sbi.dwCursorPosition.X || pInfo->sbi.dwCursorPosition.Y != con.m_sbi.dwCursorPosition.Y)
+				{
+					int l = lstrlen(szCursorDbg);
+					_wsprintf(szCursorDbg+l, SKIPLEN(countof(szCursorDbg)-l) L"Visible rect changed to {%ux%u-%ux%u). ", pInfo->sbi.srWindow.Left, pInfo->sbi.srWindow.Top, pInfo->sbi.srWindow.Right, pInfo->sbi.srWindow.Bottom);
+				}
+			}
+
+			if (szCursorDbg[0])
+			{
+				wcscat_c(szCursorDbg, L"\n");
+				DEBUGSTRCURSORPOS(szCursorDbg);
+			}
+			#endif
+
+			con.m_sbi = lsbi;
 
 			DWORD nScroll;
 			if (GetConWindowSize(con.m_sbi, &nNewWidth, &nNewHeight, &nScroll))
@@ -1935,8 +1977,15 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 				}
 			}
 
+
+			#ifdef SHOW_AUTOSCROLL
 			if (gpSetCls->AutoScroll)
 				con.nTopVisibleLine = con.m_sbi.srWindow.Top;
+			#else
+			// Если мышкой тащат ползунок скроллера - не менять TopVisible
+			if (!mp_RCon->InScroll())
+				con.nTopVisibleLine = con.m_sbi.srWindow.Top;
+			#endif
 
 			MCHKHEAP
 		}

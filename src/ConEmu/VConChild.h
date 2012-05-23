@@ -54,6 +54,7 @@ class CConEmuChild
 		void SetRedraw(BOOL abRedrawEnabled);
 
 		void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
+		bool InScroll();
 		
 		void CheckPostRedraw();
 

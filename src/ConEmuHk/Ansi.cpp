@@ -94,9 +94,13 @@ struct DisplayParm
 	BOOL Text256;          // 38
     int  BackColor;        // 40-47,48,49
     BOOL Back256;          // 48
+} gDisplayParm = {};
+
+struct DisplayCursorPos
+{
     // Internal
     COORD StoredCursorPos;
-} gDisplayParm = {};
+} gDisplayCursor = {};
 
 struct DisplayOpt
 {
@@ -131,10 +135,14 @@ void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 {
 	WARNING("Ёту фнуку нужно дергать при смене буферов, закрытии дескрипторов, и т.п.");
 
-	if (bReset)
+	if (bReset || !gDisplayParm.WasSet)
 	{
-		memset(&gDisplayParm, 0, sizeof(gDisplayParm));
-		gDisplayParm.TextColor = GetDefaultTextAttr();
+		if (bReset)
+			memset(&gDisplayParm, 0, sizeof(gDisplayParm));
+
+		WORD nDefColors = GetDefaultTextAttr();
+		gDisplayParm.TextColor = CONFORECOLOR(nDefColors);
+		gDisplayParm.BackColor = CONBACKCOLOR(nDefColors);
 	}
 
 	if (bApply)
@@ -252,12 +260,33 @@ bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL)
 {
 	bool bAnsi = false;
 	DWORD Mode = 0;
-	bool bIsOut = IsOutputHandle(hFile, &Mode);
+	bool bIsOut = false;
+
+	if ((hFile == INVALID_HANDLE_VALUE) && (((HANDLE)bIsConsoleOutput) == INVALID_HANDLE_VALUE))
+	{
+		// ѕроверка настроек на старте
+		bIsOut = true;
+		Mode = ENABLE_PROCESSED_OUTPUT;
+	}
+	else
+	{
+		bIsOut = IsOutputHandle(hFile, &Mode);
+	}
 
 	if (bIsOut)
 	{
 		bAnsi = ((Mode & ENABLE_PROCESSED_OUTPUT) == ENABLE_PROCESSED_OUTPUT);
-		bAnsi = true;
+		if (!bAnsi)
+		{
+			#ifdef _DEBUG
+			HANDLE hIn  = GetStdHandle(STD_INPUT_HANDLE);
+			HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+			HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
+			#endif
+			// √де-то по дороге между "cmd /c test.cmd", "pause" в нем и "WriteConsole"
+			// слетает ENABLE_PROCESSED_OUTPUT, поэтому пока обрабатываем всегда.
+			bAnsi = true;
+		}
 
 		
 		if (bAnsi)
@@ -267,15 +296,18 @@ bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL)
 
 			if (nLastCheck || ((GetTickCount() - nLastCheck) > ANSI_MAP_CHECK_TIMEOUT))
 			{
-				CESERVER_CONSOLE_MAPPING_HDR* pMap = (CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(CESERVER_CONSOLE_MAPPING_HDR));
+				CESERVER_CONSOLE_MAPPING_HDR* pMap = GetConMap();
+				//	(CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(CESERVER_CONSOLE_MAPPING_HDR));
 				if (pMap)
 				{
-					if (!::LoadSrvMapping(ghConWnd, *pMap) || !pMap->bProcessAnsi)
-						bAnsiAllowed = false;
-					else
-						bAnsiAllowed = true;
+					//if (!::LoadSrvMapping(ghConWnd, *pMap) || !pMap->bProcessAnsi)
+					//	bAnsiAllowed = false;
+					//else
+					//	bAnsiAllowed = true;
 
-					free(pMap);
+					bAnsiAllowed = ((pMap != NULL) && (pMap->bProcessAnsi != FALSE));
+
+					//free(pMap);
 				}
 				nLastCheck = GetTickCount();
 			}
@@ -413,13 +445,45 @@ BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpChar
 	return lbRc;
 }
 
+BOOL WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit = FALSE)
+{
+	BOOL lbRc = FALSE;
+	DWORD /*nWritten = 0,*/ nTotalWritten = 0;
+
+	ExtWriteTextParm write = {sizeof(write), ewtf_Current, hConsoleOutput};
+	write.Private = _WriteConsoleW;
+
+	if (gDisplayOpt.WrapWasSet && (gDisplayOpt.WrapAt > 0))
+	{
+		write.Flags |= ewtf_WrapAt;
+		write.WrapAtCol = gDisplayOpt.WrapAt;
+	}
+
+	//lbRc = _WriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nTotalWritten, NULL);
+	write.Buffer = lpBuffer;
+	write.NumberOfCharsToWrite = nNumberOfCharsToWrite;
+	
+	lbRc = ExtWriteText(&write);
+	if (lbRc)
+	{
+		if (write.NumberOfCharsWritten)
+			nTotalWritten += write.NumberOfCharsWritten;
+		if (write.ScrolledRowsUp > 0)
+			gDisplayCursor.StoredCursorPos.Y = max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)write.ScrolledRowsUp));
+	}
+
+	if (lpNumberOfCharsWritten)
+		*lpNumberOfCharsWritten = nTotalWritten;
+
+	return lbRc;
+}
 
 BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
 {
 	ORIGINALFAST(WriteConsoleW);
 	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
-	ExtWriteTextParm wrt = {sizeof(wrt), ewtf_None, hConsoleOutput};
+	//ExtWriteTextParm wrt = {sizeof(wrt), ewtf_None, hConsoleOutput};
 	bool bIsConOut = false;
 
 	#ifdef DUMP_WRITECONSOLE_LINES
@@ -466,13 +530,19 @@ BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 	}
 	else
 	{
-		wrt.Flags = ewtf_Current|ewtf_Commit;
-		wrt.Buffer = (const wchar_t*)lpBuffer;
-		wrt.NumberOfCharsToWrite = nNumberOfCharsToWrite;
-		wrt.Private = F(WriteConsoleW);
-		lbRc = ExtWriteText(&wrt);
-		if (lbRc && lpNumberOfCharsWritten)
-			*lpNumberOfCharsWritten = wrt.NumberOfCharsWritten;
+		lbRc = WriteText(F(WriteConsoleW), hConsoleOutput, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, TRUE);
+		//wrt.Flags = ewtf_Current|ewtf_Commit;
+		//wrt.Buffer = (const wchar_t*)lpBuffer;
+		//wrt.NumberOfCharsToWrite = nNumberOfCharsToWrite;
+		//wrt.Private = F(WriteConsoleW);
+		//lbRc = ExtWriteText(&wrt);
+		//if (lbRc)
+		//{
+		//	if (lpNumberOfCharsWritten)
+		//		*lpNumberOfCharsWritten = wrt.NumberOfCharsWritten;
+		//	if (wrt.ScrolledRowsUp > 0)
+		//		gDisplayCursor.StoredCursorPos.Y = max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)wrt.ScrolledRowsUp));
+		//}
 	}
 	goto wrap;
 
@@ -861,81 +931,6 @@ BOOL PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi)
 	return lbRc;
 }
 
-BOOL WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
-{
-	BOOL lbRc = FALSE;
-	DWORD /*nWritten = 0,*/ nTotalWritten = 0;
-
-	ExtWriteTextParm write = {sizeof(write), ewtf_Current, hConsoleOutput};
-	write.Private = _WriteConsoleW;
-
-	if (gDisplayOpt.WrapWasSet && (gDisplayOpt.WrapAt > 0))
-	{
-		write.Flags |= ewtf_WrapAt;
-		write.WrapAtCol = gDisplayOpt.WrapAt;
-	}
-
-#if 0
-	if (lpBuffer && nNumberOfCharsToWrite && gDisplayOpt.WrapWasSet && (gDisplayOpt.WrapAt > 0))
-	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-		if (GetConsoleScreenBufferInfo(hConsoleOutput, &csbi) && (gDisplayOpt.WrapAt < csbi.dwSize.X))
-		{
-			WARNING("’орошо бы и размеры табул€ций учитывать!");
-
-			DWORD nToWrite;
-			SHORT nMaxCursorPos = gDisplayOpt.WrapAt - 1;
-
-			// ѕеред первым выводом - добить пробелами
-			if (csbi.dwCursorPosition.X > nMaxCursorPos)
-			{
-				// т.к. тут текущую позицию курсора затирать не нужно (наверное?)
-				// это может быть только в том случае, если курсор попал "за правую границу"
-				// например, сначала вывели длинную строку, а потом ограничили правый край
-				csbi.dwCursorPosition.X++;
-				PadAndScroll(hConsoleOutput, csbi);
-			}
-
-			while (nNumberOfCharsToWrite)
-			{
-				nToWrite = min(nNumberOfCharsToWrite, (DWORD)(gDisplayOpt.WrapAt-csbi.dwCursorPosition.X));
-				//if (!(lbRc = _WriteConsoleW(hConsoleOutput, lpBuffer, nToWrite, &nWritten, NULL)))
-				write.Buffer = lpBuffer;
-				write.NumberOfCharsToWrite = nToWrite;
-				if (!(lbRc = ExtWriteText(&write)))
-					break;
-				nNumberOfCharsToWrite -= nToWrite;
-				nTotalWritten += write.NumberOfCharsWritten;
-				lpBuffer += write.NumberOfCharsWritten;
-
-				// ≈сли коснулись "кра€" - добить пробелами
-				if (GetConsoleScreenBufferInfo(hConsoleOutput, &csbi) && (csbi.dwCursorPosition.X > nMaxCursorPos))
-				{
-					PadAndScroll(hConsoleOutput, csbi);
-				}
-			}
-
-			// OK
-			goto wrap;
-		}
-	}
-#endif
-
-	//lbRc = _WriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nTotalWritten, NULL);
-	write.Buffer = lpBuffer;
-	write.NumberOfCharsToWrite = nNumberOfCharsToWrite;
-	
-	lbRc = ExtWriteText(&write);
-	if (lbRc && write.NumberOfCharsWritten)
-		nTotalWritten += write.NumberOfCharsWritten;
-
-//wrap:
-	if (lpNumberOfCharsWritten)
-		*lpNumberOfCharsWritten = nTotalWritten;
-
-	return lbRc;
-}
-
 #ifdef DUMP_UNKNOWN_ESCAPES
 void DumpUnknownEscape(LPCWSTR buf, size_t cchLen)
 {
@@ -1018,8 +1013,8 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 	AnsiEscCode Code = {};
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 
-	ExtWriteTextParm write = {sizeof(write), ewtf_Current, hConsoleOutput};
-	write.Private = _WriteConsoleW;
+	//ExtWriteTextParm write = {sizeof(write), ewtf_Current, hConsoleOutput};
+	//write.Private = _WriteConsoleW;
 
 	while (lpBuffer < lpEnd)
 	{
@@ -1042,13 +1037,21 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 
 				DWORD nWrite = (DWORD)(lpStart - lpBuffer);
 				//lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
-				write.Buffer = lpBuffer;
-				write.NumberOfCharsToWrite = nWrite;
-				lbRc = ExtWriteText(&write);
+				lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
 				if (!lbRc)
 					goto wrap;
-				else if (lpNumberOfCharsWritten)
-					*lpNumberOfCharsWritten = write.NumberOfCharsWritten;
+				//write.Buffer = lpBuffer;
+				//write.NumberOfCharsToWrite = nWrite;
+				//lbRc = ExtWriteText(&write);
+				//if (!lbRc)
+				//	goto wrap;
+				//else
+				//{
+				//	if (lpNumberOfCharsWritten)
+				//		*lpNumberOfCharsWritten = write.NumberOfCharsWritten;
+				//	if (write.ScrolledRowsUp > 0)
+				//		gDisplayCursor.StoredCursorPos.Y = max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)write.ScrolledRowsUp));
+				//}
 			}
 
 			if (iEsc == 1)
@@ -1070,12 +1073,12 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 							case L's':
 								// Save cursor position (can not be nested)
 								if (GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
-									gDisplayParm.StoredCursorPos = csbi.dwCursorPosition;
+									gDisplayCursor.StoredCursorPos = csbi.dwCursorPosition;
 								break;
 
 							case L'u':
 								// Restore cursor position
-								SetConsoleCursorPosition(hConsoleOutput, gDisplayParm.StoredCursorPos);
+								SetConsoleCursorPosition(hConsoleOutput, gDisplayCursor.StoredCursorPos);
 								break;
 
 							case L'H': // Set cursor position (1-based)
@@ -1539,13 +1542,21 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 
 				DWORD nWrite = (DWORD)(lpNext - lpBuffer);
 				//lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
-				write.Buffer = lpBuffer;
-				write.NumberOfCharsToWrite = nWrite;
-				lbRc = ExtWriteText(&write);
+				lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
 				if (!lbRc)
 					goto wrap;
-				else if (lpNumberOfCharsWritten)
-					*lpNumberOfCharsWritten = write.NumberOfCharsWritten;
+				//write.Buffer = lpBuffer;
+				//write.NumberOfCharsToWrite = nWrite;
+				//lbRc = ExtWriteText(&write);
+				//if (!lbRc)
+				//	goto wrap;
+				//else
+				//{
+				//	if (lpNumberOfCharsWritten)
+				//		*lpNumberOfCharsWritten = write.NumberOfCharsWritten;
+				//	if (write.ScrolledRowsUp > 0)
+				//		gDisplayCursor.StoredCursorPos.Y = max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)write.ScrolledRowsUp));
+				//}
 			}
 		}
 

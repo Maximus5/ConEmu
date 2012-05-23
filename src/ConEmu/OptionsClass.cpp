@@ -237,7 +237,10 @@ CSettings::CSettings()
 	isAdvLogging = 0;
 	m_ActivityLoggingType = glt_None; mn_ActivityCmdStartTick = 0;
 	bForceBufferHeight = false; nForceBufferHeight = 1000; /* устанавливается в true, из ком.строки /BufferHeight */
+
+	#ifdef SHOW_AUTOSCROLL
 	AutoScroll = true;
+	#endif
 	
 	// Шрифты
 	//memset(m_Fonts, 0, sizeof(m_Fonts));

@@ -64,7 +64,11 @@ class CSettings
 
 		//int DefaultBufferHeight;
 		bool bForceBufferHeight; int nForceBufferHeight;
+
+		#ifdef SHOW_AUTOSCROLL
 		bool AutoScroll;
+		#endif
+
 		//bool AutoBufferHeight;
 		//bool FarSyncSize;
 		//int nCmdOutputCP;

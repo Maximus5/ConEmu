@@ -3266,6 +3266,14 @@ void CRealConsole::Box(LPCTSTR szText)
 	MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
 }
 
+bool CRealConsole::InScroll()
+{
+	if (!this || !mp_VCon || !isBufferHeight())
+		return false;
+
+	return mp_VCon->InScroll();
+}
+
 BOOL CRealConsole::isGuiVisible()
 {
 	if (!this)
@@ -5292,6 +5300,31 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		mb_ABufChaged = false; // סבנמסטל
 
 	mp_ABuf->GetConsoleData(pChar, pAttr, nWidth, nHeight);
+}
+
+bool CRealConsole::SetFullScreen()
+{
+	DWORD nServerPID;
+	if (!this || ((nServerPID = GetServerPID()) == 0))
+		return false;
+
+	COORD crNewSize = {};
+	bool lbRc = false;
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETFULLSCREEN, sizeof(CESERVER_REQ_HDR));
+	if (pIn)
+	{
+		CESERVER_REQ* pOut = ExecuteSrvCmd(nServerPID, pIn, ghWnd);
+		if (pOut && pOut->DataSize() >= sizeof(CESERVER_REQ_FULLSCREEN))
+		{
+			lbRc = (pOut->FullScreenRet.bSucceeded != 0);
+			if (lbRc)
+				crNewSize = pOut->FullScreenRet.crNewSize;
+		}
+		ExecuteFreeResult(pOut);
+		ExecuteFreeResult(pIn);
+	}
+	TODO("crNewSize");
+	return lbRc;
 }
 
 //#define PICVIEWMSG_SHOWWINDOW (WM_APP + 6)

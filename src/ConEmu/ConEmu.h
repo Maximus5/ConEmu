@@ -312,7 +312,7 @@ class CConEmuMain :
 		HMODULE LoadConEmuCD();
 		void RegisterHotKeys();
 		void UnRegisterHotKeys(BOOL abFinal=FALSE);
-		int mn_MinRestoreRegistered; UINT mn_MinRestore_VK, mn_MinRestore_MOD;
+		//int mn_MinRestoreRegistered; UINT mn_MinRestore_VK, mn_MinRestore_MOD;
 		//HMODULE mh_DwmApi;
 		//FDwmIsCompositionEnabled DwmIsCompositionEnabled;
 		HBITMAP mh_RightClickingBmp; HDC mh_RightClickingDC;
@@ -555,6 +555,7 @@ class CConEmuMain :
 		void OnAltEnter();
 		void OnAltF9(BOOL abPosted=FALSE);
 		void OnMinimizeRestore();
+		void OnForcedFullScreen(bool bSet = true);
 		void OnAlwaysOnTop();
 		void OnAlwaysShowScrollbar();
 		void OnBufferHeight();

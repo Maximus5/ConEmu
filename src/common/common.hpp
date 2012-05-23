@@ -69,6 +69,17 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECOPYRIGHTSTRING_A "Copyright (c) 2009-2012, ConEmu.Maximus5@gmail.com"
 #define CECOPYRIGHTSTRING_W L"\x00A9 2009-2012 ConEmu.Maximus5@gmail.com"
 
+// EnvVars
+#define ENV_CONEMUDIR_VAR_A  "ConEmuDir"
+#define ENV_CONEMUDIR_VAR_W L"ConEmuDir"
+#define ENV_CONEMUBASEDIR_VAR_A  "ConEmuBaseDir"
+#define ENV_CONEMUBASEDIR_VAR_W L"ConEmuBaseDir"
+#define ENV_CONEMUHWND_VAR_A  "ConEmuHWND"
+#define ENV_CONEMUHWND_VAR_W L"ConEmuHWND"
+#define ENV_CONEMUANSI_VAR_A  "ConEmuANSI"
+#define ENV_CONEMUANSI_VAR_W L"ConEmuANSI"
+
+
 //#define CE_CURSORUPDATE     L"ConEmuCursorUpdate%u" // ConEmuC_PID - изменился курсор (размер или выделение). положение курсора отслеживает GUI
 
 // Pipe name formats
@@ -246,6 +257,7 @@ const CECMD
 	CECMD_GETALLTABS     = 57, // CESERVER_REQ_GETALLTABS. Вернуть список всех табов, для показа в Far и использовании в макросах.
 	CECMD_ACTIVATETAB    = 58, // dwData[0]=0-based Console, dwData[1]=0-based Tab
 	CECMD_FREEZEALTSRV   = 59, // dwData[0]=1-Freeze, 0-Thaw; dwData[1]=New Alt server PID
+	CECMD_SETFULLSCREEN  = 60, // SetConsoleDisplayMode(CONSOLE_FULLSCREEN_MODE) -> CESERVER_REQ_FULLSCREEN
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1552,6 +1564,13 @@ struct CESERVER_REQ_REGEXTCON
 	HANDLE2 hCommitEvent;
 };
 
+struct CESERVER_REQ_FULLSCREEN
+{
+	BOOL  bSucceeded;
+	DWORD nErrCode;
+	COORD crNewSize;
+};
+
 struct CESERVER_REQ
 {
 	CESERVER_REQ_HDR hdr;
@@ -1594,6 +1613,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_LOCKDC LockDc;
 		CESERVER_REQ_REGEXTCON RegExtCon;
 		CESERVER_REQ_GETALLTABS GetAllTabs;
+		CESERVER_REQ_FULLSCREEN FullScreenRet;
 	};
 
 	DWORD DataSize() { return this ? (hdr.cbSize - sizeof(hdr)) : 0; };

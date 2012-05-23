@@ -332,7 +332,7 @@ bool CConEmuCtrl::key_MinimizeRestore(DWORD VkMod, bool TestOnly, const ConEmuHo
 	if (TestOnly)
 		return true;
 	// Должно обрабатываться через WM_HOTKEY
-	_ASSERTE("CConEmuCtrl::key_MinimizeRestore");
+	_ASSERTE(FALSE && "CConEmuCtrl::key_MinimizeRestore");
 	gpConEmu->OnMinimizeRestore();
 	return true;
 }
@@ -422,6 +422,18 @@ bool CConEmuCtrl::key_MultiClose(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 		return true;
 
 	pRCon->CloseConsole(false, true);
+	return true;
+}
+
+// pRCon may be NULL
+bool CConEmuCtrl::key_TerminateProcess(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (!pRCon)
+		return false;
+	if (TestOnly)
+		return true;
+
+	pRCon->CloseConsole(true, false);
 	return true;
 }
 
@@ -580,6 +592,18 @@ bool CConEmuCtrl::key_AltEnter(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 
 
 	gpConEmu->OnAltEnter();
+	return true;
+}
+
+// pRCon may be NULL
+bool CConEmuCtrl::key_ForcedFullScreen(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	// Должно обрабатываться через WM_HOTKEY
+	_ASSERTE(FALSE && "CConEmuCtrl::key_ForcesFullScreen");
+	gpConEmu->OnForcedFullScreen();
 	return true;
 }
 

@@ -183,15 +183,15 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 
 		UpdateComspec(&gpSrv->guiSettings.ComSpec);
 
-		SetEnvironmentVariableW(L"ConEmuDir", gpSrv->guiSettings.sConEmuDir);
-		SetEnvironmentVariableW(L"ConEmuBaseDir", gpSrv->guiSettings.sConEmuBaseDir);
+		SetEnvironmentVariableW(ENV_CONEMUDIR_VAR_W, gpSrv->guiSettings.sConEmuDir);
+		SetEnvironmentVariableW(ENV_CONEMUBASEDIR_VAR_W, gpSrv->guiSettings.sConEmuBaseDir);
 
 		// Не будем ставить сами, эту переменную заполняет Gui при своем запуске
 		// соответственно, переменная наследуется серверами
 		//SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
 
 		wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
-		SetEnvironmentVariableW(L"ConEmuHWND", szHWND);
+		SetEnvironmentVariableW(ENV_CONEMUHWND_VAR_W, szHWND);
 
 		if (gpSrv->pConsole)
 		{
@@ -799,7 +799,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	// RM_SERVER - создать и считать текущее содержимое консоли
 	// RM_ALTSERVER - только создать (по факту - выполняется открытие созданного в RM_SERVER)
 	_ASSERTE(gnRunMode==RM_SERVER || gnRunMode==RM_ALTSERVER);
-	CmdOutputStore((gnRunMode!=RM_SERVER)/*abCreateOnly*/);
+	CmdOutputStore(true/*abCreateOnly*/);
 	#if 0
 	_ASSERTE(gpcsStoredOutput==NULL && gpStoredOutput==NULL);
 	if (!gpcsStoredOutput)
@@ -1527,8 +1527,11 @@ BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& 
 }
 
 
-bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAP*& pData)
+bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData)
 {
+	pHdr = NULL;
+	pData = NULL;
+
 	// В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!
 	// В итоге, буфер вывода telnet'а схлопывается!
 	if (gpSrv->bReopenHandleAllowed)
@@ -1546,8 +1549,6 @@ bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAP*& p
 		return false; // Не смогли получить информацию о консоли...
 	}
 
-
-	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
 
 	if (!gpSrv->pStoredOutputHdr)
 	{
@@ -1577,7 +1578,6 @@ bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAP*& p
 
 	//MSectionLock CS; CS.Lock(gpcsStoredOutput, FALSE);
 
-	pData = NULL;
 
 
 	COORD crMaxSize = GetLargestConsoleWindowSize(ghConOut);
@@ -1653,8 +1653,6 @@ bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAP*& p
 		return false;
 	}
 
-	pHdr->info = lsbi;
-
 wrap:
 	if (!pData || (pData->hdr.nVersion != CESERVER_REQ_VER) || (pData->hdr.cbSize <= sizeof(CESERVER_CONSAVE_MAP)))
 	{
@@ -1670,12 +1668,22 @@ wrap:
 void CmdOutputStore(bool abCreateOnly /*= false*/)
 {
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
 	CESERVER_CONSAVE_MAP* pData = NULL;
-	if (!CmdOutputOpenMap(lsbi, pData))
+
+	if (!CmdOutputOpenMap(lsbi, pHdr, pData))
 		return;
 
-	// Запомнить/обновить sbi
-	pData->info = lsbi;
+	if (!pHdr || !pData)
+	{
+		_ASSERTE(pHdr && pData);
+		return;
+	}
+
+	if (!pHdr->info.dwSize.Y || !abCreateOnly)
+		pHdr->info = lsbi;
+	if (!pData->info.dwSize.Y || !abCreateOnly)
+		pData->info = lsbi;
 
 	if (abCreateOnly)
 		return;
@@ -1710,6 +1718,9 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 	// Теперь читаем данные
 	COORD BufSize = {lsbi.dwSize.X, lsbi.dwSize.Y};
 	SMALL_RECT ReadRect = {0, 0, lsbi.dwSize.X-1, lsbi.dwSize.Y-1};
+
+	// Запомнить/обновить sbi
+	pData->info = lsbi;
 
 	pData->Succeeded = MyReadConsoleOutput(ghConOut, pData->Data, BufSize, ReadRect);
 
@@ -1746,9 +1757,12 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 
 void CmdOutputRestore()
 {
+	WARNING("Переделать/доделать CmdOutputRestore");
+#if 0
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
 	CESERVER_CONSAVE_MAP* pData = NULL;
-	if (!CmdOutputOpenMap(lsbi, pData))
+	if (!CmdOutputOpenMap(lsbi, pHdr, pData))
 		return;
 
 	if (lsbi.srWindow.Top > 0)
@@ -1824,6 +1838,7 @@ void CmdOutputRestore()
 	COORD crBufPos = {0, storedSbi.srWindow.Top-nStoredHeight};
 
 	MyWriteConsoleOutput(ghConOut, pData->Data, crOldBufSize, crBufPos, rcWrite);
+#endif
 }
 
 static BOOL CALLBACK FindConEmuByPidProc(HWND hwnd, LPARAM lParam)

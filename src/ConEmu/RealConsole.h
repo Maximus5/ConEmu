@@ -299,6 +299,7 @@ class CRealConsole
 	public:
 		BOOL OpenConsoleEventPipe();
 		bool PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam);
+		bool SetFullScreen();
 		BOOL ShowOtherWindow(HWND hWnd, int swShow, BOOL abAsync=TRUE);
 		BOOL SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
 		BOOL SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground);
@@ -331,6 +332,7 @@ class CRealConsole
 
 		void StopSignal();
 		void StopThread(BOOL abRecreating=FALSE);
+		bool InScroll();
 		BOOL isBufferHeight();
 		BOOL isAlternative();
 		HWND isPictureView(BOOL abIgnoreNonModal=FALSE);

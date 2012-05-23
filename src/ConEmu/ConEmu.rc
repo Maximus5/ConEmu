@@ -549,7 +549,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Text selection with mouse",IDC_STATIC,4,1,319,46
+    GROUPBOX        "Text selection",IDC_STATIC,4,1,319,61
     CONTROL         "Always",rbCTSAlways,"Button",BS_AUTORADIOBUTTON,131,13,38,8
     CONTROL         "Buffer only (cmd.exe)",rbCTSBufferOnly,"Button",BS_AUTORADIOBUTTON,173,13,85,8
     CONTROL         "Block selection",cbCTSBlockSelection,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,30,59,8
@@ -558,29 +558,36 @@ BEGIN
     COMBOBOX        lbCTSTextSelection,201,28,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Text:",IDC_STATIC,269,14,22,8
     COMBOBOX        lbCTSForeIdx,293,11,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Back:",IDC_STATIC,269,30,22,8
-    COMBOBOX        lbCTSBackIdx,293,28,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Mouse button actions",IDC_STATIC,4,48,319,31
-    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,62,11,8
-    COMBOBOX        lbCTSActAlways,22,59,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,76,62,100,8
-    RTEXT           "Right:",IDC_STATIC,175,62,24,8
-    COMBOBOX        lbCTSRBtnAction,201,59,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Middle:",IDC_STATIC,245,62,28,8
-    COMBOBOX        lbCTSMBtnAction,275,59,42,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Goto Far editor on compiler errors",IDC_STATIC,4,129,152,29
-    CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,141,76,8
-    COMBOBOX        lbFarGotoEditorVk,94,139,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Back:",IDC_STATIC,269,47,22,8
+    COMBOBOX        lbCTSBackIdx,293,45,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Mouse button actions",IDC_STATIC,4,66,319,31
+    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,80,11,8
+    COMBOBOX        lbCTSActAlways,22,77,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,76,80,100,8
+    RTEXT           "Right:",IDC_STATIC,175,80,24,8
+    COMBOBOX        lbCTSRBtnAction,201,77,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Middle:",IDC_STATIC,245,80,28,8
+    COMBOBOX        lbCTSMBtnAction,275,77,42,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Goto Far editor on compiler errors",IDC_STATIC,4,147,319,45
+    CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,159,76,8
+    COMBOBOX        lbFarGotoEditorVk,94,157,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Never",rbCTSNever,"Button",BS_AUTORADIOBUTTON,90,13,35,8
-    GROUPBOX        "Color indexes",IDC_STATIC,263,1,60,46
+    GROUPBOX        "Color indexes",IDC_STATIC,263,1,60,61
     LTEXT           "Select text in console:",IDC_STATIC,12,13,72,8
-    GROUPBOX        "Handle pasting text (not in Far Manager or GUI applications)",gbFeatureClipboard,4,83,319,42
-    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,95,117,8
-    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,96,91,8
-    CONTROL         "Confirm <Enter> keypress",cbClipConfirmEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,109,117,8
-    CONTROL         "Confirm pasting more than",cbClipConfirmLimit,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,109,105,8
-    EDITTEXT        tClipConfirmLimit,246,108,40,12,ES_AUTOHSCROLL
-    CTEXT           "chars",stClipConfirmLimit,292,109,22,8
+    GROUPBOX        "Handle pasting text (not in Far Manager or GUI applications)",gbFeatureClipboard,4,101,319,42
+    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,113,117,8
+    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,114,91,8
+    CONTROL         "Confirm <Enter> keypress",cbClipConfirmEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,127,117,8
+    CONTROL         "Confirm pasting more than",cbClipConfirmLimit,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,127,105,8
+    EDITTEXT        tClipConfirmLimit,246,126,40,12,ES_AUTOHSCROLL
+    CTEXT           "chars",stClipConfirmLimit,292,127,22,8
+    EDITTEXT        tGotoEditorCmd,11,173,287,13,ES_AUTOHSCROLL | WS_DISABLED
+    RTEXT           "External editor, when Far not started:",stGotoEditorCmd,158,160,139,8,WS_DISABLED
+    CONTROL         "Freeze console contents before selection (may cause small lag)",cbCTSFreezeBeforeSelect,
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,11,47,245,8
+    RTEXT           "Find:",IDC_STATIC,269,30,22,8,WS_DISABLED
+    COMBOBOX        lbCTSFindIdx,293,28,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "...",bGotoEditorCmd,301,173,16,12,WS_DISABLED
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235

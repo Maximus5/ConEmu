@@ -262,6 +262,7 @@
 #define lbCTSForeIdx                    1636
 #define lbCTSBackIdx                    1637
 #define tTabConsole                     1638
+#define lbCTSFindIdx                    1638
 #define tTabEditor                      1639
 #define tTabViewer                      1640
 #define tTabEditorMod                   1641
@@ -644,6 +645,13 @@
 #define vkMultiNewPopup                 2252
 #define cbProcessAnsi                   2253
 #define vkMultiAltCon                   2254
+#define tGotoEditorCmd                  2255
+#define stGotoEditorCmd                 2256
+#define cbCTSFreezeBeforeSelect         2257
+#define bGotoEditor                     2259
+#define bGotoEditorCmd                  2259
+#define vkForceFullScreen               2260
+#define vkTerminateApp                  2261
 
 // Next default values for new objects
 // 
@@ -651,7 +659,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        219
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2255
+#define _APS_NEXT_CONTROL_VALUE         2262
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

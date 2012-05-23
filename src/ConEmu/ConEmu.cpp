@@ -110,7 +110,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TIMER_RCLICKPAINT_ELAPSE 20
 
 #define HOTKEY_CTRLWINALTSPACE_ID 0x0201 // this is wParam for WM_HOTKEY
-#define HOTKEY_MINRESTORE_ID      0x1001 // this is wParam for WM_HOTKEY
+#define HOTKEY_GLOBAL_START      0x1001 // this is wParam for WM_HOTKEY
 
 #define RCLICKAPPSTIMEOUT 600
 #define RCLICKAPPS_START 200 // начало отрисовки кружка вокруг курсора
@@ -122,6 +122,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 const wchar_t* gsHomePage = L"http://conemu-maximus5.googlecode.com";
 const wchar_t* gsReportBug = L"http://code.google.com/p/conemu-maximus5/issues/entry";
 
+static struct RegisteredHotKeys
+{
+	int DescrID;
+	int RegisteredID; // wParam для WM_HOTKEY
+	UINT VK, MOD;     // чтобы на изменение реагировать
+}
+gRegisteredHotKeys[] = {
+	{vkMinimizeRestore},
+	{vkForceFullScreen},
+};
 
 CConEmuMain::CConEmuMain()
 {
@@ -182,7 +192,7 @@ CConEmuMain::CConEmuMain()
 	mb_InRestore = FALSE;
 	mb_MouseCaptured = FALSE;
 	mb_HotKeyRegistered = FALSE;
-	mn_MinRestoreRegistered = 0; mn_MinRestore_VK = mn_MinRestore_MOD = 0;
+	//mn_MinRestoreRegistered = 0; mn_MinRestore_VK = mn_MinRestore_MOD = 0;
 	mh_LLKeyHookDll = NULL;
 	mph_HookedGhostWnd = NULL;
 	mh_LLKeyHook = NULL;
@@ -308,8 +318,8 @@ CConEmuMain::CConEmuMain()
 	}
 
 	// Добавить в окружение переменную с папкой к ConEmu.exe
-	SetEnvironmentVariable(L"ConEmuDir", ms_ConEmuExeDir);
-	SetEnvironmentVariable(L"ConEmuBaseDir", ms_ConEmuBaseDir);
+	SetEnvironmentVariable(ENV_CONEMUDIR_VAR_W, ms_ConEmuExeDir);
+	SetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, ms_ConEmuBaseDir);
 	// переменная "ConEmuArgs" заполняется в ConEmuApp.cpp:PrepareCommandLine
 
 	// Ищем файл портабельных настроек. Сначала пробуем в BaseDir
@@ -994,8 +1004,10 @@ HMENU CConEmuMain::GetSystemMenu(BOOL abInitial /*= FALSE*/)
 		InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
 			ID_ALWAYSONTOP, _T("Al&ways on top"));
+		#ifdef SHOW_AUTOSCROLL
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSetCls->AutoScroll ? MF_CHECKED : 0),
 			ID_AUTOSCROLL, _T("Auto scro&ll"));
+		#endif
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, IDM_ATTACHTO, _T("Attach t&o..."));
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_NEWCONSOLE, _T("&New console..."));
@@ -3203,6 +3215,11 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 
 	if (inMode == rFullScreen && gpSet->isDesktopMode)
 		inMode = (mb_isFullScreen || isZoomed()) ? rNormal : rMaximized; // FullScreen на Desktop-е невозможен
+
+	if ((inMode != rFullScreen) && mb_isFullScreen)
+	{
+		OnForcedFullScreen(false);
+	}
 
 #ifdef _DEBUG
 	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
@@ -5607,48 +5624,60 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 {
 	if (abRegister)
 	{
-		//if (!gpSet->vmMinimizeRestore)
-		if (!gpSet->IsHotkey(vkMinimizeRestore))
-			return; // не просили
-
-		UINT nMOD = gpSet->GetHotKeyMod(gpSet->GetHotkeyById(vkMinimizeRestore));
-
-		if (mn_MinRestoreRegistered
-		        && (mn_MinRestore_VK != gpSet->GetHotkeyById(vkMinimizeRestore) || nMOD != mn_MinRestore_MOD))
+		for (size_t i = 0; i < countof(gRegisteredHotKeys); i++)
 		{
-			UnregisterHotKey(ghWnd, mn_MinRestoreRegistered);
-			mn_MinRestoreRegistered = 0;
-		}
+			//if (!gpSet->vmMinimizeRestore)
 
-		if (!mn_MinRestoreRegistered)
-		{
-			UINT vk = gpSet->GetHotkey(gpSet->GetHotkeyById(vkMinimizeRestore));
-			if (RegisterHotKey(ghWnd, HOTKEY_MINRESTORE_ID, nMOD, vk))
+			DWORD VkMod = gpSet->GetHotkeyById(gRegisteredHotKeys[i].DescrID);
+			UINT vk = gpSet->GetHotkey(VkMod);
+			if (!vk)
+				continue;  // не просили
+			UINT nMOD = gpSet->GetHotKeyMod(VkMod);
+
+			if (gRegisteredHotKeys[i].RegisteredID
+					&& ((gRegisteredHotKeys[i].VK != vk) || (gRegisteredHotKeys[i].MOD != nMOD)))
 			{
-				mn_MinRestoreRegistered = HOTKEY_MINRESTORE_ID;
-				mn_MinRestore_VK = vk;
-				mn_MinRestore_MOD = nMOD;
+				UnregisterHotKey(ghWnd, gRegisteredHotKeys[i].RegisteredID);
+				gRegisteredHotKeys[i].RegisteredID = 0;
 			}
-			else if (isFirstInstance())
+
+			if (!gRegisteredHotKeys[i].RegisteredID)
 			{
-				// -- При одновременном запуске двух копий - велики шансы, что они подерутся
-				// -- наверное вообще не будем показывать ошибку
-				// -- кроме того, isFirstInstance() не работает, если копия ConEmu.exe запущена под другим юзером
-#ifdef _DEBUG
-				wchar_t szErr[128]; DWORD dwErr = GetLastError();
-				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't register Minimize/Restore hotkey, ErrCode=0x%08X", dwErr);
-				//MBoxA(szErr);
-#endif
+				if (RegisterHotKey(ghWnd, HOTKEY_GLOBAL_START+i, nMOD, vk))
+				{
+					gRegisteredHotKeys[i].RegisteredID = HOTKEY_GLOBAL_START+i;
+					gRegisteredHotKeys[i].VK = vk;
+					gRegisteredHotKeys[i].MOD = nMOD;
+				}
+				else if (isFirstInstance())
+				{
+					// -- При одновременном запуске двух копий - велики шансы, что они подерутся
+					// -- наверное вообще не будем показывать ошибку
+					// -- кроме того, isFirstInstance() не работает, если копия ConEmu.exe запущена под другим юзером
+					#ifdef _DEBUG
+					wchar_t szErr[128]; DWORD dwErr = GetLastError();
+					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't register Minimize/Restore hotkey, ErrCode=0x%08X", dwErr);
+					//MBoxA(szErr);
+					#endif
+				}
 			}
 		}
 	}
 	else
 	{
-		if (mn_MinRestoreRegistered)
+		for (size_t i = 0; i < countof(gRegisteredHotKeys); i++)
 		{
-			UnregisterHotKey(ghWnd, mn_MinRestoreRegistered);
-			mn_MinRestoreRegistered = 0;
+			if (gRegisteredHotKeys[i].RegisteredID)
+			{
+				UnregisterHotKey(ghWnd, gRegisteredHotKeys[i].RegisteredID);
+				gRegisteredHotKeys[i].RegisteredID = 0;
+			}
 		}
+		//if (mn_MinRestoreRegistered)
+		//{
+		//	UnregisterHotKey(ghWnd, mn_MinRestoreRegistered);
+		//	mn_MinRestoreRegistered = 0;
+		//}
 	}
 }
 
@@ -7884,8 +7913,7 @@ bool CConEmuMain::isFirstInstance()
 			mb_ConEmuAliveOwned = TRUE;
 
 			// Этот экземпляр становится "Основным" (другой, ранее бывший основным, был закрыт)
-			if (gpSet->IsHotkey(vkMinimizeRestore))
-				RegisterMinRestore(true);
+			RegisterMinRestore(true);
 		}
 	}
 
@@ -9008,8 +9036,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		// Может быть уже вызван в SkipOneShowWindow, а может и нет
 		Taskbar_Init();
 
-		if (gpSet->IsHotkey(vkMinimizeRestore))
-			RegisterMinRestore(true);
+		RegisterMinRestore(true);
 
 		RegisterHotKeys();
 
@@ -9853,6 +9880,83 @@ void CConEmuMain::OnMinimizeRestore()
 		{
 			PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 		}
+	}
+}
+
+void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
+{
+	static bool bWasSetTopMost = false;
+
+	if (!bSet)
+	{
+		// Снять флаг "OnTop", вернуть нормальные приоритеты процессам
+		if (bWasSetTopMost)
+		{
+			gpSet->isAlwaysOnTop = false;
+			OnAlwaysOnTop();
+			bWasSetTopMost = false;
+		}
+		return;
+	}
+
+	TODO("Пока глюкавит - не открываем");
+#if 0
+	// определить возможность перейти в текстовый FullScreen
+	if (!IsWindows64())
+	{
+		//BOOL WINAPI SetConsoleDisplayMode(HANDLE hConsoleOutput, DWORD dwFlags, PCOORD lpNewScreenBufferDimensions);
+		if (mp_VActive && mp_VActive->RCon())
+		{
+			if (!isIconic())
+				SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+
+			CVConGuard guard(mp_VActive);
+			if (mp_VActive->RCon()->SetFullScreen())
+				return;
+
+			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+		}
+	}
+#endif
+
+
+	if (gpSet->isDesktopMode)
+	{
+		DisplayLastError(L"Can't set FullScreen in DesktopMode", -1);
+		return;
+	}
+
+	TODO("Поднять приоритет процессов");
+	
+	// Установить AlwaysOnTop
+	if (!gpSet->isAlwaysOnTop)
+	{
+		gpSet->isAlwaysOnTop = true;
+		OnAlwaysOnTop();
+		bWasSetTopMost = true;
+	}
+
+	if (!isMeForeground())
+	{
+		if (isIconic())
+		{
+			if (Icon.isWindowInTray() || !IsWindowVisible(ghWnd))
+				Icon.RestoreWindowFromTray();
+			else
+				SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+		}
+		else
+		{
+			//SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+		}
+	}
+
+	SetWindowMode(rFullScreen);
+
+	if (!isMeForeground())
+	{
+		SwitchToThisWindow(ghWnd, FALSE);
 	}
 }
 
@@ -12899,11 +13003,13 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			mp_VActive->RCon()->StartSelection(LOWORD(wParam) == ID_CON_MARKTEXT);
 			return 0;
 			
+		#ifdef SHOW_AUTOSCROLL
 		case ID_AUTOSCROLL:
 			gpSetCls->AutoScroll = !gpSetCls->AutoScroll;
 			CheckMenuItem(gpConEmu->GetSystemMenu(), ID_AUTOSCROLL, MF_BYCOMMAND |
 			              (gpSetCls->AutoScroll ? MF_CHECKED : MF_UNCHECKED));
 			return 0;
+		#endif
 			
 		case ID_ALWAYSONTOP:
 			{
@@ -14151,10 +14257,30 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				gpConEmu->CtrlWinAltSpace();
 			}
-			// vmMinimizeRestore -> Win+C
-			else if (gpConEmu->mn_MinRestoreRegistered && (int)wParam == gpConEmu->mn_MinRestoreRegistered)
+			else
 			{
-				gpConEmu->OnMinimizeRestore();
+				//// vmMinimizeRestore -> Win+C
+				//else if (gpConEmu->mn_MinRestoreRegistered && (int)wParam == gpConEmu->mn_MinRestoreRegistered)
+				//{
+				//	gpConEmu->OnMinimizeRestore();
+				//}
+
+				for (size_t i = 0; i < countof(gRegisteredHotKeys); i++)
+				{
+					if (gRegisteredHotKeys[i].RegisteredID && ((int)wParam == gRegisteredHotKeys[i].RegisteredID))
+					{
+						switch (gRegisteredHotKeys[i].DescrID)
+						{
+						case vkMinimizeRestore:
+							gpConEmu->OnMinimizeRestore();
+							break;
+						case vkForceFullScreen:
+							gpConEmu->OnForcedFullScreen(true);
+							break;
+						}
+						break;
+					}
+				}
 			}
 
 			return 0;

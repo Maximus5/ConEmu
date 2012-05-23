@@ -45,9 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)
 
-WARNING("!!! На время скроллирования необходимо установить AutoScroll в TRUE, а при отпускании ползунка - вернуть старое значение!");
-TODO("И вообще, скроллинг нужно передавать через pipe");
-
 //#define SCROLLHIDE_TIMER_ID 1726
 #define TIMER_SCROLL_SHOW         3201
 #define TIMER_SCROLL_SHOW_DELAY   1000
@@ -289,11 +286,25 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		case WM_VSCROLL:
 			// Вся обработка в родителе
 			{
-				if (messg == WM_VSCROLL)
+				switch (messg)
 				{
-					if (LOWORD(wParam) == SB_THUMBTRACK)
-						pVCon->mb_VTracking = TRUE;
-					pVCon->RCon()->OnSetScrollPos(wParam);
+					case WM_VSCROLL:
+						switch (LOWORD(wParam))
+						{
+						case SB_THUMBTRACK:
+						case SB_THUMBPOSITION:
+							pVCon->mb_VTracking = TRUE;
+							break;
+						case SB_ENDSCROLL:
+							pVCon->mb_VTracking = FALSE;
+							break;
+						}
+						pVCon->RCon()->OnSetScrollPos(wParam);
+						break;
+
+					case WM_LBUTTONUP:
+						pVCon->mb_VTracking = FALSE;
+						break;
 				}
 
 				POINT pt = {LOWORD(lParam),HIWORD(lParam)};
@@ -886,6 +897,17 @@ BOOL CConEmuChild::CheckMouseOverScroll()
 BOOL CConEmuChild::CheckScrollAutoPopup()
 {
 	return mb_ScrollAutoPopup;
+}
+
+bool CConEmuChild::InScroll()
+{
+	if (mb_VTracking)
+	{
+		if (!isPressed(VK_LBUTTON))
+			mb_VTracking = FALSE;
+	}
+
+	return (mb_VTracking != FALSE);
 }
 
 void CConEmuChild::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight)

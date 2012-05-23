@@ -4240,6 +4240,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 	{
 		// User (Keys, Global)
 		{vkMinimizeRestore,chk_Global, NULL,   L"MinimizeRestore",       /*&vmMinimizeRestore,*/ MakeHotKey('C',VK_LWIN), CConEmuCtrl::key_MinimizeRestore},
+		{vkForceFullScreen,chk_Global, NULL,   L"ForcedFullScreen",      /*&vmMinimizeRestore,*/ MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL,VK_MENU), CConEmuCtrl::key_ForcedFullScreen},
 		// User (Keys)
 		{vkMultiNew,       chk_User, &isMulti, L"Multi.NewConsole",      /*&vmMultiNew,*/ MakeHotKey('W',VK_LWIN), CConEmuCtrl::key_MultiNew},
 		{vkMultiNewShift,  chk_User, &isMulti, L"Multi.NewConsoleShift", /*&vmMultiNewShift,*/ MakeHotKey('W',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNewShift},
@@ -4250,6 +4251,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkMultiAltCon,    chk_User,  NULL,    L"Multi.AltCon",          /*&vmMultiBuffer,*/ MakeHotKey('A',VK_LWIN), CConEmuCtrl::key_AlternativeBuffer},
 		{vkMultiBuffer,    chk_User,  NULL,    L"Multi.Scroll",          MakeHotKey('S',VK_LWIN), CConEmuCtrl::key_MultiBuffer},
 		{vkMultiClose,     chk_User, &isMulti, L"Multi.Close",           /*&vmMultiClose,*/ MakeHotKey(VK_DELETE,VK_LWIN), CConEmuCtrl::key_MultiClose},
+		{vkTerminateApp,   chk_User,  NULL,    L"TerminateProcessKey",   MakeHotKey(VK_DELETE,VK_LWIN,VK_SHIFT), CConEmuCtrl::key_TerminateProcess},
 		{vkMultiCmd,       chk_User, &isMulti, L"Multi.CmdKey",          /*&vmMultiCmd,*/ MakeHotKey('X',VK_LWIN), CConEmuCtrl::key_MultiCmd},
 		{vkCTSVkBlockStart,chk_User,  NULL,    L"CTS.VkBlockStart",      /*&vmCTSVkBlockStart,*/ 0, CConEmuCtrl::key_CTSVkBlockStart}, // запуск выделения блока
 		{vkCTSVkTextStart, chk_User,  NULL,    L"CTS.VkTextStart",       /*&vmCTSVkTextStart,*/ 0, CConEmuCtrl::key_CTSVkTextStart},   // запуск выделения текста

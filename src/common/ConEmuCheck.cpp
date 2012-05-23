@@ -1048,11 +1048,11 @@ void SetConEmuEnvVar(HWND hConEmuWnd)
 		// Установить переменную среды с дескриптором окна
 		wchar_t szVar[16];
 		msprintf(szVar, countof(szVar), L"0x%08X", (DWORD)hConEmuWnd); //-V205
-		SetEnvironmentVariable(L"ConEmuHWND", szVar);
+		SetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, szVar);
 	}
 	else
 	{
-		SetEnvironmentVariable(L"ConEmuHWND", NULL);
+		SetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, NULL);
 	}
 }
 

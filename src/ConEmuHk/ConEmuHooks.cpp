@@ -255,6 +255,13 @@ BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpChar
 BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode);
 #endif
 //#endif
+DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
+DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
+#if 0
+LPCH WINAPI OnGetEnvironmentStringsA();
+#endif
+LPWCH WINAPI OnGetEnvironmentStringsW();
+
 
 
 bool InitHooksCommon()
@@ -349,6 +356,12 @@ bool InitHooksCommon()
 			kernel32
 		},
 		#endif
+		{(void*)OnGetEnvironmentVariableA, "GetEnvironmentVariableA", kernel32},
+		{(void*)OnGetEnvironmentVariableW, "GetEnvironmentVariableW", kernel32},
+		#if 0
+		{(void*)OnGetEnvironmentStringsA,  "GetEnvironmentStringsA",  kernel32},
+		#endif
+		{(void*)OnGetEnvironmentStringsW,  "GetEnvironmentStringsW",  kernel32},
 		/* ************************ */
 		{(void*)OnGetCurrentConsoleFont, "GetCurrentConsoleFont", kernel32},
 		{(void*)OnGetConsoleFontSize,    "GetConsoleFontSize",    kernel32},
@@ -3651,6 +3664,78 @@ COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont)
 	}
 
 	return cr;
+}
+
+void CheckVariables()
+{
+	// Пока что он проверяет и меняет только ENV_CONEMUANSI_VAR_W ("ConEmuANSI")
+	GetConMap(FALSE);
+}
+
+DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
+{
+	typedef DWORD (WINAPI* OnGetEnvironmentVariableA_t)(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
+	ORIGINALFAST(GetEnvironmentVariableA);
+	BOOL bMainThread = FALSE; // поток не важен
+
+	if (lpName && (
+			(lstrcmpiA(lpName, ENV_CONEMUANSI_VAR_A) == 0)
+			|| (lstrcmpiA(lpName, ENV_CONEMUHWND_VAR_A) == 0)
+			|| (lstrcmpiA(lpName, ENV_CONEMUDIR_VAR_A) == 0)
+			|| (lstrcmpiA(lpName, ENV_CONEMUBASEDIR_VAR_A) == 0)
+		))
+	{
+		CheckVariables();
+	}
+
+	BOOL lbRc = F(GetEnvironmentVariableA)(lpName, lpBuffer, nSize);
+	return lbRc;
+}
+
+DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
+{
+	typedef DWORD (WINAPI* OnGetEnvironmentVariableW_t)(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
+	ORIGINALFAST(GetEnvironmentVariableW);
+	BOOL bMainThread = FALSE; // поток не важен
+
+	if (lpName && (
+			(lstrcmpiW(lpName, ENV_CONEMUANSI_VAR_W) == 0)
+			|| (lstrcmpiW(lpName, ENV_CONEMUHWND_VAR_W) == 0)
+			|| (lstrcmpiW(lpName, ENV_CONEMUDIR_VAR_W) == 0)
+			|| (lstrcmpiW(lpName, ENV_CONEMUBASEDIR_VAR_W) == 0)
+		))
+	{
+		CheckVariables();
+	}
+
+	BOOL lbRc = F(GetEnvironmentVariableW)(lpName, lpBuffer, nSize);
+	return lbRc;
+}
+
+#if 0
+LPCH WINAPI OnGetEnvironmentStringsA()
+{
+	typedef LPCH (WINAPI* OnGetEnvironmentStringsA_t)();
+	ORIGINALFAST(GetEnvironmentStringsA);
+	BOOL bMainThread = FALSE; // поток не важен
+
+	CheckVariables();
+
+	LPCH lpRc = F(GetEnvironmentStringsA)();
+	return lpRc;
+}
+#endif
+
+LPWCH WINAPI OnGetEnvironmentStringsW()
+{
+	typedef LPWCH (WINAPI* OnGetEnvironmentStringsW_t)();
+	ORIGINALFAST(GetEnvironmentStringsW);
+	BOOL bMainThread = FALSE; // поток не важен
+
+	CheckVariables();
+
+	LPWCH lpRc = F(GetEnvironmentStringsW)();
+	return lpRc;
 }
 
 BOOL IsVisibleRectLocked(COORD& crLocked)
