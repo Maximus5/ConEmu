@@ -9,6 +9,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
+2012.05.23a
+[%] Issue 554: Исправлена обработка ^[#G (ANSI X3.64).
+
+
 2012.05.23
 [*] Из системного меню убран пункт 'Auto scroll'. Если нужно поставить консоль 'на паузу' - Win+A (альтернативный буфер).
 [+] Ctrl+Win+Alt+Enter - принудительная активация ConEmu в FullScreen. Как и Win+C, настраиваемый хоткей срабатывает из любого приложения.
