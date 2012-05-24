@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define DROP_SETCP_ON_WIN2K3R2
+//#define SHOWDEBUGSTR -- специально отключено, CONEMU_MINIMAL, OutputDebugString могут нарушать работу процессов
 
 #ifdef _DEBUG
 	//#define TRAP_ON_MOUSE_0x0
@@ -72,11 +73,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <WinInet.h>
 //#pragma comment(lib, "wininet.lib")
 
+
 #ifdef _DEBUG
 #define DebugString(x) OutputDebugString(x)
+#define DebugStringConSize(x) OutputDebugString(x)
 #else
 #define DebugString(x) //OutputDebugString(x)
+#define DebugStringConSize(x)
 #endif
+
 
 //#ifdef _DEBUG
 //	#include <crtdbg.h>
@@ -3805,24 +3810,50 @@ BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const 
 	SMALL_RECT tmp;
 	COORD crLocked;
 
-	if (lpConsoleWindow && IsVisibleRectLocked(crLocked))
+	#ifdef _DEBUG
+	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+	BOOL lbSbi = GetConsoleScreenBufferInfo(hConsoleOutput, &sbi);
+	UNREFERENCED_PARAMETER(lbSbi);
+
+	wchar_t szDbgSize[512];
+	msprintf(szDbgSize, countof(szDbgSize), L"SetConsoleWindowInfo(%08X, %s, {%ix%i}-{%ix%i}), Current={%ix%i}, Wnd={%ix%i}-{%ix%i}\n",
+		(DWORD)hConsoleOutput, bAbsolute ? L"ABS" : L"REL",
+		lpConsoleWindow->Left, lpConsoleWindow->Top, lpConsoleWindow->Right, lpConsoleWindow->Bottom,
+		sbi.dwSize.X, sbi.dwSize.Y,
+		sbi.srWindow.Left, sbi.srWindow.Top, sbi.srWindow.Right, sbi.srWindow.Bottom);
+	DebugStringConSize(szDbgSize);
+	#endif
+
+	BOOL lbLocked = IsVisibleRectLocked(crLocked);
+
+	if (lpConsoleWindow && lbLocked)
 	{
 		tmp = *lpConsoleWindow;
-		// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
-		// Размер может менять только пользователь ресайзом окна ConEmu
-		if ((tmp.Right - tmp.Left + 1) != crLocked.X)
+		if (((tmp.Right - tmp.Left + 1) != crLocked.X) || ((tmp.Bottom - tmp.Top + 1) != crLocked.Y))
 		{
-			if (!bAbsolute)
-				tmp.Left = 0;
-			tmp.Right = tmp.Left + crLocked.X - 1;
-			lpConsoleWindow = &tmp;
-		}
-		if ((tmp.Bottom - tmp.Top + 1) != crLocked.Y)
-		{
-			if (!bAbsolute)
-				tmp.Top = 0;
-			tmp.Bottom = tmp.Top + crLocked.Y - 1;
-			lpConsoleWindow = &tmp;
+			
+			// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
+			// Размер может менять только пользователь ресайзом окна ConEmu
+			if ((tmp.Right - tmp.Left + 1) != crLocked.X)
+			{
+				if (!bAbsolute)
+					tmp.Left = 0;
+				tmp.Right = tmp.Left + crLocked.X - 1;
+				lpConsoleWindow = &tmp;
+			}
+			if ((tmp.Bottom - tmp.Top + 1) != crLocked.Y)
+			{
+				if (!bAbsolute)
+					tmp.Top = 0;
+				tmp.Bottom = tmp.Top + crLocked.Y - 1;
+				lpConsoleWindow = &tmp;
+			}
+
+			#ifdef _DEBUG
+			msprintf(szDbgSize, countof(szDbgSize), L"---> IsVisibleRectLocked, lpConsoleWindow was patched {%ix%i}-{%ix%i}\n",
+				tmp.Left, tmp.Top, tmp.Right, tmp.Bottom);
+			DebugStringConSize(szDbgSize);
+			#endif
 		}
 	}
 
@@ -3840,7 +3871,21 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 	COORD crLocked;
 	DWORD dwErr = -1;
 
-	if (IsVisibleRectLocked(crLocked))
+	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+	BOOL lbSbi = GetConsoleScreenBufferInfo(hConsoleOutput, &sbi);
+	UNREFERENCED_PARAMETER(lbSbi);
+
+	#ifdef _DEBUG
+	wchar_t szDbgSize[512];
+	msprintf(szDbgSize, countof(szDbgSize), L"SetConsoleScreenBufferSize(%08X, {%ix%i}), Current={%ix%i}, Wnd={%ix%i}\n",
+		(DWORD)hConsoleOutput, dwSize.X, dwSize.Y, sbi.dwSize.X, sbi.dwSize.Y,
+		sbi.srWindow.Right-sbi.srWindow.Left+1, sbi.srWindow.Bottom-sbi.srWindow.Top+1);
+	DebugStringConSize(szDbgSize);
+	#endif
+
+	BOOL lbLocked = IsVisibleRectLocked(crLocked);
+
+	if (lbLocked && ((crLocked.X > dwSize.X) || (crLocked.Y > dwSize.Y)))
 	{
 		// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
 		// Размер может менять только пользователь ресайзом окна ConEmu
@@ -3848,6 +3893,12 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 			dwSize.X = crLocked.X;
 		if (crLocked.Y > dwSize.Y)
 			dwSize.Y = crLocked.Y;
+
+		#ifdef _DEBUG
+		msprintf(szDbgSize, countof(szDbgSize), L"---> IsVisibleRectLocked, dwSize was patched {%ix%i}\n",
+			dwSize.X, dwSize.Y);
+		DebugStringConSize(szDbgSize);
+		#endif
 	}
 
 	if (F(SetConsoleScreenBufferSize))

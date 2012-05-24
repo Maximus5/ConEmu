@@ -281,7 +281,7 @@ class CRealConsole
 		BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZESYNC);
 	private:
 		bool SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEvent = true);
-		bool LoadAlternativeConsole();
+		bool LoadAlternativeConsole(bool abForceLoadCurrent = false);
 		BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	private:
 		//void SendConsoleEvent(INPUT_RECORD* piRec);
@@ -376,6 +376,7 @@ class CRealConsole
 		bool DoSelectionCopy();
 		void DoSelectionStop();
 		void DoFindText(int nDirection);
+		void DoEndFindText();
 		void CtrlWinAltSpace();
 		void ShowConsoleOrGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show

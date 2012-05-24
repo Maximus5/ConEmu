@@ -35,7 +35,11 @@ class CTaskBarGhost
 protected:
 	static ATOM mh_Class;
 	HWND mh_Ghost;
-	SIZE m_TabSize;
+	struct {
+		POINT VConSize;   // то, что было раньше в самом m_TabSize(cx/cy)
+		POINT BitmapSize; // размер сформированной превьюшки
+		RECT  UsedRect;   // Если VConSize < BitmapSize - то VCon "центрируется", UsedRect - где оно отрисовано
+	} m_TabSize;
 	HBITMAP mh_Snap;
 	BITMAPINFO mbmi_Snap;
 	PBYTE mpb_DS;
@@ -52,6 +56,7 @@ protected:
 	HBITMAP CreateThumbnail(int nWidth, int nHeight);
 	bool CalcThumbnailSize(int nWidth, int nHeight, int &nShowWidth, int &nShowHeight);
 	void UpdateGhostSize();
+	void GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, POINT* pPtSize, POINT* pPtViewSize);
 
 	// Обработка сообщений
 	LRESULT OnClose();

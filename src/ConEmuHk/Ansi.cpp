@@ -1131,7 +1131,7 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 										break;
 									case L'G':
 										// Moves the cursor to column n.
-										crNewPos.X = (Code.ArgC > 0) ? Code.ArgV[0] : 0;
+										crNewPos.X = (Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0;
 										break;
 									#ifdef _DEBUG
 									default:

@@ -77,7 +77,7 @@ BEGIN
     EDITTEXT        tFindText,11,13,176,13,ES_AUTOHSCROLL
     CONTROL         "Match &case",cbFindMatchCase,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,30,81,8
     CONTROL         "Match &whole words",cbFindWholeWords,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,30,90,8
-    CONTROL         "&Freeze console",cbFindFreezeConsole,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,99,42,81,8
+    CONTROL         "&Freeze console",cbFindFreezeConsole,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,42,81,8
     CONTROL         "&Highlight all matches",cbFindHighlightAll,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,6,63,79,8
     DEFPUSHBUTTON   "&Next",cbFindNext,143,60,50,14
     PUSHBUTTON      "&Previous",cbFindPrev,89,60,50,14
@@ -584,7 +584,7 @@ BEGIN
     EDITTEXT        tGotoEditorCmd,11,173,287,13,ES_AUTOHSCROLL | WS_DISABLED
     RTEXT           "External editor, when Far not started:",stGotoEditorCmd,158,160,139,8,WS_DISABLED
     CONTROL         "Freeze console contents before selection (may cause small lag)",cbCTSFreezeBeforeSelect,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,11,47,245,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,47,245,8
     RTEXT           "Find:",IDC_STATIC,269,30,22,8,WS_DISABLED
     COMBOBOX        lbCTSFindIdx,293,28,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "...",bGotoEditorCmd,301,173,16,12,WS_DISABLED

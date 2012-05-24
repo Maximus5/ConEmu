@@ -1313,6 +1313,18 @@ void CConEmuCtrl::DoFindText(int nDirection, CRealConsole* pRCon /*= NULL*/)
 	pRCon->DoFindText(nDirection);
 }
 
+void CConEmuCtrl::DoEndFindText(CRealConsole* pRCon /*= NULL*/)
+{
+	if (!pRCon)
+	{
+		pRCon = gpConEmu->ActiveCon() ? gpConEmu->ActiveCon()->RCon() : NULL;
+		if (!pRCon)
+			return;
+	}
+
+	pRCon->DoEndFindText();
+}
+
 void CConEmuCtrl::SkipOneAppsRelease(bool abSkip)
 {
 	if (abSkip)

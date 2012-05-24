@@ -54,6 +54,7 @@ public:
 	static void ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /*= TPM_CENTERALIGN|TPM_VCENTERALIGN*/);
 
 	static void DoFindText(int nDirection, CRealConsole* pRCon = NULL);
+	static void DoEndFindText(CRealConsole* pRCon = NULL);
 
 	void SkipOneAppsRelease(bool abSkip);
 

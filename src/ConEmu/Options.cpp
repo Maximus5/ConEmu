@@ -406,6 +406,7 @@ void Settings::InitSettings()
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
 	isConsoleTextSelection = 1; // Always
+	isCTSFreezeBeforeSelect = false;
 	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
 	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
 	//vmCTSVkBlockStart = 0; // при желании, пользователь может назначить hotkey запуска выделения
@@ -1787,6 +1788,7 @@ void Settings::LoadSettings()
 
 		reg->Load(L"ConsoleTextSelection", isConsoleTextSelection); if (isConsoleTextSelection>2) isConsoleTextSelection = 2;
 
+		reg->Load(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		reg->Load(L"CTS.SelectBlock", isCTSSelectBlock);
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
 		//LoadVkMod(reg, L"CTS.VkBlockStart", vmCTSVkBlockStart, vmCTSVkBlockStart);
@@ -2528,6 +2530,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ComSpec.UpdateEnv", (bool)ComSpec.isUpdateEnv);
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
 		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
+		reg->Save(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		reg->Save(L"CTS.SelectBlock", isCTSSelectBlock);
 		//reg->Save(L"CTS.VkBlock", isCTSVkBlock);
 		//reg->Save(L"CTS.VkBlockStart", vmCTSVkBlockStart);

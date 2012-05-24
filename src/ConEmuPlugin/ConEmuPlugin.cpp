@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRDLGEVT(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) DEBUGSTR(s)
+#define DEBUGSTRACTIVATE(s) DEBUGSTR(s)
 
 
 //#include <stdio.h>
@@ -2131,18 +2132,49 @@ static DWORD WaitPluginActivateion(DWORD nCount, HANDLE *lpHandles, BOOL bWaitAl
 	DWORD nWait = WAIT_TIMEOUT;
 	if (IS_SYNCHRO_ALLOWED)
 	{
+		DWORD nStepWait = 1000;
 		DWORD nPrevCount = gnPeekReadCount;
-		DWORD nTimeout = GetTickCount() + dwMilliseconds;
+
+		#ifdef _DEBUG
+		if (IsDebuggerPresent())
+		{
+			nStepWait = 30000;
+			if (dwMilliseconds && (dwMilliseconds < 60000))
+				dwMilliseconds = 60000;
+		}
+		#endif
+
+		DWORD nStartTick = GetTickCount(), nCurrentTick = 0;
+		DWORD nTimeout = nStartTick + dwMilliseconds;
 		do {
-			nWait = WaitForMultipleObjects(nCount, lpHandles, bWaitAll, min(dwMilliseconds,1000));
-			if ((nWait == WAIT_TIMEOUT) && (dwMilliseconds > 1000) && (nPrevCount == gnPeekReadCount))
+			nWait = WaitForMultipleObjects(nCount, lpHandles, bWaitAll, min(dwMilliseconds,nStepWait));
+			if (((nWait >= WAIT_OBJECT_0) && (nWait < (WAIT_OBJECT_0+nCount))) || (nWait != WAIT_TIMEOUT))
+			{
+				_ASSERTE((nWait >= WAIT_OBJECT_0) && (nWait < (WAIT_OBJECT_0+nCount)));
+				break; // Succeded
+			}
+
+			nCurrentTick = GetTickCount();
+
+			if ((nWait == WAIT_TIMEOUT) && (nPrevCount == gnPeekReadCount) && (dwMilliseconds > 1000)
+				#ifdef _DEBUG
+				&& (!IsDebuggerPresent() || (nCurrentTick > (nStartTick + nStepWait)))
+				#endif
+				)
 			{
 				// Ждать дальше смысла видимо нет, фар не дергает (Peek/Read)Input
 				break;
 			}
 			// Если вдруг произошел облом с Syncho (почему?), дернем еще раз
 			ExecuteSynchro();
-		} while (dwMilliseconds && ((dwMilliseconds == INFINITE) || (GetTickCount() > nTimeout)));
+		} while (dwMilliseconds && ((dwMilliseconds == INFINITE) || (nCurrentTick <= nTimeout)));
+
+		#ifdef _DEBUG
+		if (nWait == WAIT_TIMEOUT)
+		{
+			DEBUGSTRACTIVATE(L"ConEmu plugin activation failed");
+		}
+		#endif
 	}
 	else
 	{
@@ -2170,7 +2202,10 @@ static BOOL ActivatePlugin(
 	DEBUGSTRMENU(L"*** Waiting for plugin activation\n");
 
 	if (nCmd == CMD_REDRAWFAR || nCmd == CMD_FARPOST)
+	{
+		WARNING("Оптимизировать!");
 		nTimeout = min(1000,nTimeout); // чтобы не зависало при попытке ресайза, если фар не отзывается.
+	}
 
 	if (gbSynchroProhibited)
 	{

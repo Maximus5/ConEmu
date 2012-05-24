@@ -481,7 +481,7 @@ bool CRealConsole::LoadDumpConsole(LPCWSTR asDumpFile)
 	return true;
 }
 
-bool CRealConsole::LoadAlternativeConsole()
+bool CRealConsole::LoadAlternativeConsole(bool abForceLoadCurrent /*= false*/)
 {
 	if (!this)
 		return false;
@@ -496,7 +496,7 @@ bool CRealConsole::LoadAlternativeConsole()
 		}
 	}
 	
-	if (!mp_SBuf->LoadAlternativeConsole())
+	if (!mp_SBuf->LoadAlternativeConsole(abForceLoadCurrent ? 2 : 1))
 	{
 		SetActiveBuffer(mp_RBuf);
 		return false;
@@ -931,6 +931,9 @@ bool CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, i
 {
 	if (!this)
 		return false;
+
+	// Может приходить запрос на отсылку даже если текущий буфер НЕ rbt_Primary,
+	// например, при начале выделения и автоматическом переключении на альтернативный буфер
 
 	if (!vkKey && !dwControlState && wch)
 	{
@@ -2767,7 +2770,38 @@ bool CRealConsole::DoSelectionCopy()
 
 void CRealConsole::DoFindText(int nDirection)
 {
+	if (!this)
+		return;
+
+	if (gpSet->FindOptions.bFreezeConsole)
+	{
+		if (mp_ABuf->m_Type == rbt_Primary)
+		{
+			if (LoadAlternativeConsole(true) && (mp_ABuf->m_Type != rbt_Primary))
+			{
+				mp_ABuf->m_Type = rbt_Find;
+			}
+		}
+	}
+	else
+	{
+		if (mp_ABuf && (mp_ABuf->m_Type == rbt_Find))
+		{
+			SetActiveBuffer(rbt_Primary);
+		}
+	}
 	mp_ABuf->MarkFindText(nDirection, gpSet->FindOptions.pszText, gpSet->FindOptions.bMatchCase, gpSet->FindOptions.bMatchWholeWords);
+}
+
+void CRealConsole::DoEndFindText()
+{
+	if (!this)
+		return;
+
+	if (mp_ABuf && (mp_ABuf->m_Type == rbt_Find))
+	{
+		SetActiveBuffer(rbt_Primary);
+	}
 }
 
 BOOL CRealConsole::OpenConsoleEventPipe()

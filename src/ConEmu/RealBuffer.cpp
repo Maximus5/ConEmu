@@ -162,6 +162,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	//pszDumpTitle = pszText;
 	//pszRN = wcschr(pszDumpTitle, L'\r');
 	
+	con.m_sel.dwFlags = 0;
 	dump.Close();
 
 	if (!asDumpFile || !*asDumpFile)
@@ -501,6 +502,7 @@ bool CRealBuffer::LoadAlternativeConsole(int iMode /*= 0*/)
 {
 	bool lbRc = false;
 	
+	con.m_sel.dwFlags = 0;
 	dump.Close();
 
 	if (iMode == 0)
@@ -1170,7 +1172,8 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 	
 	#ifdef _DEBUG
 	DWORD dwCurThId = GetCurrentThreadId();
-	_ASSERTE(mp_RCon->mn_MonitorThreadID==0 || dwCurThId==mp_RCon->mn_MonitorThreadID || ((m_Type==rbt_DumpScreen || m_Type==rbt_Alternative) && gpConEmu->isMainThread()));
+	_ASSERTE(mp_RCon->mn_MonitorThreadID==0 || dwCurThId==mp_RCon->mn_MonitorThreadID
+		|| ((m_Type==rbt_DumpScreen || m_Type==rbt_Alternative || m_Type==rbt_Selection || m_Type==rbt_Find) && gpConEmu->isMainThread()));
 	#endif
 
 	BOOL lbRc = FALSE;
@@ -1996,6 +1999,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		{
 			// Это может случиться во время пересоздания консоли (когда фар падал)
 			// или при изменении параметров экрана (Aero->Standard)
+			// или при закрытии фара (он "восстанавливает" размер консоли)
 			_ASSERTE(nNewWidth == pInfo->crWindow.X && nNewHeight == pInfo->crWindow.Y);
 			// 10
 			//DWORD MaxBufferSize = pInfo->nCurDataMaxSize;
@@ -2631,32 +2635,10 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		con.m_sel.dwFlags |= ((DWORD)vkMod) << 24;
 
 		// Если дошли сюда - значит или модификатор нажат, или из меню выделение запустили
-		StartSelection(lbStreamSelection, cr.X, cr.Y, TRUE);
+		StartSelection(lbStreamSelection, cr.X, cr.Y, TRUE, WM_LBUTTONDOWN);
 
-		/*
-		-- Это нужно делать после окончания выделения, иначе фар сбрасывает UserScreen из редактора
-		if (vkMod)
-		{
-			// Но чтобы ФАР не запустил макрос (если есть макро на RAlt например...)
-			if (vkMod == VK_CONTROL || vkMod == VK_LCONTROL || vkMod == VK_RCONTROL)
-				PostKeyPress(VK_SHIFT, LEFT_CTRL_PRESSED, 0);
-			else if (vkMod == VK_MENU || vkMod == VK_LMENU || vkMod == VK_RMENU)
-				PostKeyPress(VK_SHIFT, LEFT_ALT_PRESSED, 0);
-			else
-				PostKeyPress(VK_CONTROL, SHIFT_PRESSED, 0);
+		//WARNING!!! После StartSelection - ничего не делать! Мог смениться буфер!
 
-			// "Отпустить" в консоли модификатор
-			PostKeyUp(vkMod, 0, 0);
-		}
-		*/
-
-		//con.m_sel.dwFlags = CONSOLE_SELECTION_IN_PROGRESS|CONSOLE_MOUSE_SELECTION;
-		//
-		//con.m_sel.dwSelectionAnchor = cr;
-		//con.m_sel.srSelection.Left = con.m_sel.srSelection.Right = cr.X;
-		//con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
-		//
-		//UpdateSelection();
 		return true;
 	}
 	else if (messg == WM_LBUTTONDBLCLK)
@@ -2669,10 +2651,9 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		ExpandTextRange(crFrom/*[In/Out]*/, crTo/*[Out]*/, etr_Word);
 		
 		// Выполнить выделение
-		StartSelection(lbStreamSelection, crFrom.X, crFrom.Y, TRUE);
-		if (crTo.X != crFrom.X)
-			ExpandSelection(crTo.X, crTo.Y);
-		con.m_sel.dwFlags |= CONSOLE_DBLCLICK_SELECTION;
+		StartSelection(lbStreamSelection, crFrom.X, crFrom.Y, TRUE, WM_LBUTTONDBLCLK, (crTo.X != crFrom.X) ? &crTo : NULL);
+
+		//WARNING!!! После StartSelection - ничего не делать! Мог смениться буфер!
 		return true;
 	}
 	else if ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) && (messg == WM_MOUSEMOVE || messg == WM_LBUTTONUP))
@@ -2722,15 +2703,32 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 {
 	bool bFound = false;
 	COORD crStart = {}, crEnd = {};
+	LPCWSTR pszFrom = NULL, pszDataStart = NULL;
+	size_t nWidth = 0, nHeight = 0;
+
+	if (m_Type == rbt_Primary)
+	{
+		pszDataStart = pszFrom = con.pConChar;
+		nWidth = this->GetTextWidth();
+		nHeight = this->GetTextHeight();
+		_ASSERTE(pszFrom[nWidth*nHeight] == 0); // Должно быть ASCIIZ
+	}
+	else if (dump.pszBlock1)
+	{
+		WARNING("Доработать для режима с прокруткой");
+		nWidth = dump.crSize.X;
+		nHeight = dump.crSize.Y;
+		_ASSERTE(dump.pszBlock1[nWidth*nHeight] == 0); // Должно быть ASCIIZ
+
+		pszDataStart = pszFrom = dump.pszBlock1 + con.m_sbi.srWindow.Top * nWidth;
+		nHeight = min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1));
+	}
 
 	WARNING("TODO: bFindNext");
-	WARNING("Доработать для режима с прокруткой");
-	if (con.pConChar && asText && *asText)
+	
+	if (pszFrom && asText && *asText && nWidth && nHeight)
 	{
 		int nFindLen = lstrlen(asText);
-		LPCWSTR pszFrom = con.pConChar;
-		size_t nWidth = this->GetTextWidth();
-		size_t nHeight = this->GetTextHeight();
 		LPCWSTR pszEnd = pszFrom + (nWidth * nHeight);
 		const wchar_t* szWordDelim = L"~!%^&*()+|{}:\"<>?`-=\\[];',./";
 		LPCWSTR pszFound = NULL;
@@ -2823,8 +2821,8 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 		if (pszFrom && bFound)
 		{
 			// Нашли
-			size_t nCharIdx = (pszFrom - con.pConChar);
-			// хм... тут бы на ширину буфера ориентироваться, а не видимой области...
+			size_t nCharIdx = (pszFrom - pszDataStart);
+			WARNING("тут бы на ширину буфера ориентироваться, а не видимой области...");
 			if (nCharIdx < (nWidth*nHeight))
 			{
 				bFound = true;
@@ -2854,8 +2852,28 @@ done:
 	UpdateSelection();
 }
 
-void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=-1*/, BOOL abByMouse/*=FALSE*/)
+void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=-1*/, BOOL abByMouse/*=FALSE*/, UINT anFromMsg/*=0*/, COORD *pcrTo/*=NULL*/)
 {
+	if (!(con.m_sel.dwFlags & (CONSOLE_BLOCK_SELECTION|CONSOLE_TEXT_SELECTION)) && gpSet->isCTSFreezeBeforeSelect)
+	{
+		if (m_Type == rbt_Primary)
+		{
+			if (mp_RCon->LoadAlternativeConsole(true) && (mp_RCon->mp_ABuf != this))
+			{
+				// Сменился буфер (переключились на альтернативную консоль)
+				// Поэтому дальнейшие действия - в этом буфере
+
+				DoSelectionStop();
+
+				_ASSERTE(mp_RCon->mp_ABuf->m_Type==rbt_Alternative);
+				mp_RCon->mp_ABuf->m_Type = rbt_Selection; // Изменить, чтобы по завершении выделения - буфер закрыть
+
+				mp_RCon->mp_ABuf->StartSelection(abTextMode, anX, anY, abByMouse, anFromMsg);
+				return;
+			}
+		}
+	}
+
 	WARNING("Доработать для режима с прокруткой - выделение протяжкой, как в обычной консоли");
 	if (anX == -1 && anY == -1)
 	{
@@ -2898,6 +2916,13 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	con.m_sel.srSelection.Left = con.m_sel.srSelection.Right = cr.X;
 	con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
 	UpdateSelection();
+
+	if (anFromMsg == WM_LBUTTONDBLCLK)
+	{
+		if (pcrTo)
+			ExpandSelection(pcrTo->X, pcrTo->Y);
+		con.m_sel.dwFlags |= CONSOLE_DBLCLICK_SELECTION;
+	}
 }
 
 void CRealBuffer::ExpandSelection(SHORT anX/*=-1*/, SHORT anY/*=-1*/)
@@ -3069,13 +3094,30 @@ bool CRealBuffer::DoSelectionCopy()
 	{
 		for(int Y = 0; Y <= nSelHeight; Y++)
 		{
-			wchar_t* pszCon = con.pConChar + con.nTextWidth*(Y+con.m_sel.srSelection.Top) + con.m_sel.srSelection.Left;
+			wchar_t* pszCon = NULL;
+
+			if (m_Type == rbt_Primary)
+			{
+				pszCon = con.pConChar + con.nTextWidth*(Y+con.m_sel.srSelection.Top) + con.m_sel.srSelection.Left;
+			}
+			else if (dump.pszBlock1 && (Y < dump.crSize.Y))
+			{
+				WARNING("Проверить для режима с прокруткой!");
+				pszCon = dump.pszBlock1 + dump.crSize.X*(Y+con.m_sel.srSelection.Top) + con.m_sel.srSelection.Left;
+			}
+
 			int nMaxX = nSelWidth - 1;
 
-			//while (nMaxX > 0 && (pszCon[nMaxX] == ucSpace || pszCon[nMaxX] == ucNoBreakSpace))
-			//	nMaxX--; // отрезать хвостовые пробелы - зачем их в буфер копировать?
-			for(int X = 0; X <= nMaxX; X++)
-				*(pch++) = *(pszCon++);
+			if (pszCon)
+			{
+				for(int X = 0; X <= nMaxX; X++)
+					*(pch++) = *(pszCon++);
+			}
+			else
+			{
+				wmemset(pch, L' ', nSelWidth);
+				pch += nSelWidth;
+			}
 
 			// Добавить перевод строки
 			if (Y < nSelHeight)
@@ -3101,8 +3143,17 @@ bool CRealBuffer::DoSelectionCopy()
 		{
 			nX1 = (Y == 0) ? con.m_sel.srSelection.Left : 0;
 			nX2 = (Y == nSelHeight) ? con.m_sel.srSelection.Right : (con.nTextWidth-1);
-			wchar_t* pszCon = con.pConChar + con.nTextWidth*(Y+con.m_sel.srSelection.Top) + nX1;
-			//int nMaxX = nSelWidth - 1;
+			wchar_t* pszCon = NULL;
+			
+			if (m_Type == rbt_Primary)
+			{
+				pszCon = con.pConChar + con.nTextWidth*(Y+con.m_sel.srSelection.Top) + nX1;
+			}
+			else  if (dump.pszBlock1 && (Y < dump.crSize.Y))
+			{
+				WARNING("Проверить для режима с прокруткой!");
+				pszCon = dump.pszBlock1 + dump.crSize.X*(Y+con.m_sel.srSelection.Top) + nX1;
+			}
 
 			for(int X = nX1; X <= nX2; X++)
 				*(pch++) = *(pszCon++);
@@ -3150,7 +3201,16 @@ bool CRealBuffer::DoSelectionCopy()
 	if (Result)
 	{
 		DoSelectionStop(); // con.m_sel.dwFlags = 0;
-		UpdateSelection(); // обновить на экране
+		
+		if (m_Type == rbt_Selection)
+		{
+			mp_RCon->SetActiveBuffer(rbt_Primary);
+			// Сразу на выход!
+		}
+		else
+		{
+			UpdateSelection(); // обновить на экране
+		}
 	}
 
 	return Result;
@@ -3208,8 +3268,18 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 			mp_RCon->mn_SelectModeSkipVk = wParam;
 			DoSelectionStop(); // con.m_sel.dwFlags = 0;
-			//mb_ConsoleSelectMode = false;
-			UpdateSelection(); // обновить на экране
+
+			if (m_Type == rbt_Selection)
+			{
+				mp_RCon->SetActiveBuffer(rbt_Primary);
+				// Сразу на выход!
+				return true;
+			}
+			else
+			{
+				//mb_ConsoleSelectMode = false;
+				UpdateSelection(); // обновить на экране
+			}
 		}
 		else
 		{
@@ -3228,6 +3298,7 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			if (!bShift)
 			{
 				BOOL lbStreamSelection = (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION)) == CONSOLE_TEXT_SELECTION;
+				// Выделение уже было начато. Просто выделяем с нового начала.
 				StartSelection(lbStreamSelection, cr.X,cr.Y);
 			}
 			else
@@ -3272,10 +3343,16 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	{
 	case rbt_DumpScreen:
 	case rbt_Alternative:
+	case rbt_Selection:
+	case rbt_Find:
 		if (messg == WM_KEYUP)
 		{
 			if (wParam == VK_ESCAPE)
 			{
+				if ((m_Type == rbt_Find) && gpSetCls->mh_FindDlg && IsWindow(gpSetCls->mh_FindDlg))
+				{
+					break; // Пока висит диалог поиска - буфер не закрывать!
+				}
 				mp_RCon->SetActiveBuffer(rbt_Primary);
 			}
 		}
@@ -3459,7 +3536,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	wchar_t  *pszDst = pChar;
 	CharAttr *pcaDst = pAttr;
 
-	if ((m_Type == rbt_DumpScreen) || (m_Type == rbt_Alternative))
+	if ((m_Type == rbt_DumpScreen) || (m_Type == rbt_Alternative) || (m_Type == rbt_Selection) || (m_Type == rbt_Find))
 	{
 		bDataValid = true;
 		nXMax = min(nWidth, dump.crSize.X);

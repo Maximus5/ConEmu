@@ -1866,6 +1866,7 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 		(gpSet->isConsoleTextSelection == 0) ? rbCTSNever :
 		(gpSet->isConsoleTextSelection == 1) ? rbCTSAlways : rbCTSBufferOnly);
 
+	CheckDlgButton(hWnd2, cbCTSFreezeBeforeSelect, gpSet->isCTSFreezeBeforeSelect);
 	CheckDlgButton(hWnd2, cbCTSBlockSelection, gpSet->isCTSSelectBlock);
 	DWORD VkMod = gpSet->GetHotkeyById(vkCTSVkBlock);
 	FillListBoxByte(hWnd2, lbCTSBlockSelection, SettingsNS::szKeys, SettingsNS::nKeys, VkMod);
@@ -3787,6 +3788,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case rbCTSActAlways: case rbCTSActBufferOnly:
 			gpSet->isCTSActMode = (CB==rbCTSActAlways) ? 1 : 2;
+			break;
+		case cbCTSFreezeBeforeSelect:
+			gpSet->isCTSFreezeBeforeSelect = IsChecked(hWnd2,CB);
 			break;
 		case cbCTSBlockSelection:
 			gpSet->isCTSSelectBlock = IsChecked(hWnd2,CB);
@@ -11187,9 +11191,10 @@ INT_PTR CSettings::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 
 				switch (LOWORD(wParam))
 				{
+				case IDCLOSE:
 				case IDCANCEL:
 					DestroyWindow(hWnd2);
-					break;
+					return 0;
 				case cbFindMatchCase:
 					gpSet->FindOptions.bMatchCase = IsChecked(hWnd2, cbFindMatchCase);
 					break;
@@ -11236,6 +11241,7 @@ INT_PTR CSettings::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 			gpSetCls->mh_FindDlg = NULL;
 			gpSet->SaveFindOptions();
 			gpConEmu->SkipOneAppsRelease(false);
+			gpConEmu->DoEndFindText();
 			break;
 
 		default:
