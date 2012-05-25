@@ -519,6 +519,8 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	{
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT);
+		WARNING("Этот атрибут нужно задавать в настройках GUI!");
+		SetConsoleTextAttribute(hOut, 7);
 	}
 
 
