@@ -50,8 +50,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConChild.h"
 #include "ConEmuPipe.h"
 #include "Macro.h"
+#include "Status.h"
 
-#define DEBUGSTRDRAW(s) DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
@@ -64,7 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
-#define DEBUGSTRCURSORPOS(s) DEBUGSTR(s)
+#define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
 
 #define Free SafeFree
 #define Alloc calloc
@@ -933,6 +933,12 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 		con.nBufferHeight = sizeBuffer;
 		con.bBufferHeight = (sizeBuffer != 0);
 		ChangeScreenBufferSize(con.m_sbi, sizeX, sizeY, sizeX, sizeBuffer ? sizeBuffer : sizeY);
+
+		if (mp_RCon->isActive())
+		{
+			gpConEmu->mp_Status->OnConsoleChanged(&con.m_sbi, &con.m_ci);
+		}
+
 		return TRUE;
 	}
 
@@ -986,15 +992,21 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 	con.bInSetSize = FALSE; SetEvent(con.hInSetSize);
 	HEAPVAL;
 
-	if (lbRc && mp_RCon->isActive() && !mp_RCon->isNtvdm())
+	if (lbRc && mp_RCon->isActive())
 	{
-		// update size info
-		//if (!gpConEmu->mb_isFullScreen && !gpConEmu->isZoomed() && !gpConEmu->isIconic())
-		if (gpConEmu->isWindowNormal())
+		if (!mp_RCon->isNtvdm())
 		{
-			int nHeight = TextHeight();
-			gpSetCls->UpdateSize(sizeX, nHeight);
+			// update size info
+			//if (!gpConEmu->mb_isFullScreen && !gpConEmu->isZoomed() && !gpConEmu->isIconic())
+			if (gpConEmu->isWindowNormal())
+			{
+				int nHeight = TextHeight();
+				gpSetCls->UpdateSize(sizeX, nHeight);
+			}
 		}
+
+		// -- должно срабатывать при ApplyData
+		//gpConEmu->UpdateStatusBar();
 	}
 
 	HEAPVAL;
@@ -1915,8 +1927,8 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			{
 				lbChanged = TRUE;
 
-				if (mp_RCon->isActive())
-					gpConEmu->UpdateCursorInfo(pInfo->sbi.dwCursorPosition, pInfo->ci);
+				//if (mp_RCon->isActive())
+				//	gpConEmu->UpdateCursorInfo(&pInfo->sbi, pInfo->sbi.dwCursorPosition, pInfo->ci);
 			}
 
 			#ifdef _DEBUG
@@ -2444,7 +2456,10 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		}
 
 		if (!isConSelectMode())
-			return true;
+		{
+			// Пропустить в консоль, если это НЕ Far
+			return (m_Type != rbt_Primary);
+		}
 	}
 
 	//if (isConSelectMode()) -- это неправильно. она реагирует и на фаровский граббер (чтобы D&D не взлетал)

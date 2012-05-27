@@ -425,6 +425,9 @@ struct PipeServer
 		
 		int PipeServerWrite(PipeInst* pPipe, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, BOOL bDelayed=FALSE)
 		{
+			if (pPipe->bBreakConnection)
+				return 0;
+
 			BOOL fWriteSuccess = FALSE, fSuccess;
 			DWORD dwErr = 0;
 
@@ -667,6 +670,9 @@ struct PipeServer
 		
 		BOOL WriteDummyAnswer(PipeInst* pPipe)
 		{
+			if (pPipe->bBreakConnection)
+				return FALSE;
+
 			BOOL fWriteSuccess = FALSE;
 			DWORD cbSize = mn_DummyAnswerSize, cbWritten;
 			_ASSERTEX(cbSize >= sizeof(DWORD) && cbSize <= sizeof(T));
@@ -795,6 +801,17 @@ struct PipeServer
 						if (mfn_PipeServerCommand(pPipe, pPipe->ptrRequest, /*OUT&*/pPipe->ptrReply,
 									/*OUT&*/pPipe->cbReplySize, /*OUT&*/pPipe->cbMaxReplySize, m_lParam))
 						{
+							#ifdef _DEBUG
+							{
+								CESERVER_REQ_HDR* ph = (CESERVER_REQ_HDR*)pPipe->ptrRequest;
+								if ((ph->cbSize >= sizeof(CESERVER_REQ_HDR))
+									&& (ph->nVersion == CESERVER_REQ_VER)
+									&& (ph->bAsync))
+								{
+									_ASSERTEX(pPipe->bBreakConnection && "Break connection on anysc!");
+								}
+							}
+							#endif
 							// Если данные вернули (могли сами в пайп ответить)
 							if (!mb_InputOnly && pPipe->ptrReply && pPipe->cbReplySize)
 							{

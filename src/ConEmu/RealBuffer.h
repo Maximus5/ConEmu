@@ -155,7 +155,7 @@ public:
 	
 	bool isSelectionAllowed();
 	bool isSelectionPresent();
-	
+	bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 	
 	void ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
 	void ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
@@ -186,7 +186,6 @@ private:
 	
 	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 	
-	bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 
 	ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
 	void StoreLastTextRange(ExpandTextRangeType etr);

@@ -432,6 +432,8 @@ struct Settings
 		void SavePalettes(SettingsBase* reg);
 		void SortPalettes();
 
+		void SaveStatusSettings(SettingsBase* reg);
+
 	private:	
 		// reg->Load(L"ColorTableNN", Colors[i]);
 		COLORREF Colors[0x20];
@@ -496,6 +498,10 @@ struct Settings
 		u8 nTransparent;
 		//reg->Load(L"UserScreenTransparent", isUserScreenTransparent);
 		bool isUserScreenTransparent;
+		//reg->Load(L"ColorKeyTransparent", isColorKeyTransparent);
+		bool isColorKeyTransparent;
+		//reg->Load(L"ColorKeyValue", nColorKeyValue);
+		DWORD nColorKeyValue;
 
 		/* *** Command Line History (from start dialog) *** */
 		//reg->Load(L"CmdLineHistory", &psCmdHistory);
@@ -556,9 +562,9 @@ struct Settings
 		//reg->Load(L"FontSizeX3", FontSizeX3);
 		DWORD FontSizeX3; // ширина знакоместа при моноширном режиме (не путать с FontSizeX2)
 		
-		//bool isFullScreen;
+		
 		//reg->Load(L"HideCaption", isHideCaption);
-		bool isHideCaption;
+		bool isHideCaption; // Hide caption when maximized
 		protected:
 		//reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
 		bool mb_HideCaptionAlways;
@@ -758,6 +764,27 @@ struct Settings
 		//mn_LastFadeSrc = mn_LastFadeDst = -1;		
 		COLORREF mn_LastFadeDst;
 		public:
+
+		//reg->Load(L"StatusBar.Show", isStatusBarShow);
+		bool isStatusBarShow;
+		//reg->Load(L"StatusFontFace", sStatusFontFace, countof(sStatusFontFace));
+		wchar_t sStatusFontFace[LF_FACESIZE];
+		//reg->Load(L"StatusFontCharSet", nStatusFontCharSet);
+		DWORD nStatusFontCharSet;
+		//reg->Load(L"StatusFontHeight", nStatusFontHeight);
+		int nStatusFontHeight;
+		int StatusBarFontHeight() { return max(4,nStatusFontHeight); };
+		int StatusBarHeight() { return StatusBarFontHeight()+2; };
+		//reg->Load(L"StatusBar.Color.Back", nStatusBarBack);
+		DWORD nStatusBarBack;
+		//reg->Load(L"StatusBar.Color.Light", nStatusBarLight);
+		DWORD nStatusBarLight;
+		//reg->Load(L"StatusBar.Color.Dark", nStatusBarDark);
+		DWORD nStatusBarDark;
+		//reg->Load(L"StatusBar.HideColumns", nHideStatusColumns);
+		bool isStatusColumnHidden[64]; // _ASSERTE(countof(isStatusColumnHidden)<csi_Last);
+		//дл€ информации, чтобы сохранить изменени€ при выходе
+		bool mb_StatusSettingsWasChanged;
 		
 		//reg->Load(L"Tabs", isTabs);
 		char isTabs;
@@ -913,7 +940,7 @@ struct Settings
 		// ≈сть ли в этом (VkMod) хоткее - модификатор Mod (VK)
 		static bool  HasModifier(DWORD VkMod, BYTE Mod/*VK*/);
 		// ¬ернуть заданный VkMod, или 0 если не задан. nDescrID = vkXXX (e.g. vkMinimizeRestore)
-		DWORD GetHotkeyById(int nDescrID);
+		DWORD GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK = NULL);
 		// ѕроверить, задан ли этот hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore)
 		bool IsHotkey(int nDescrID);
 		// ”становить новый hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore).

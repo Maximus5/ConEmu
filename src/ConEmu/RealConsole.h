@@ -36,14 +36,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEFINE_EXIT_DESC
 #include "../ConEmuCD/ExitCodes.h"
 
-#define CES_CMDACTIVE 0x01
-#define CES_TELNETACTIVE 0x02
-#define CES_FARACTIVE 0x04
-#define CES_CONALTERNATIVE 0x08
-#define CES_PROGRAMS (0x0F)
+#define CES_CMDACTIVE      0x01
+#define CES_TELNETACTIVE   0x02
+#define CES_FARACTIVE      0x04
+#define CES_FARINSTACK     0x08
+//#define CES_CONALTERNATIVE 0x08
+//#define CES_PROGRAMS (0x0F)
 
 //#define CES_NTVDM 0x10 -- common.hpp
-#define CES_PROGRAMS2 0xFF
+//#define CES_PROGRAMS2 0xFF
 
 #define CES_FILEPANEL      0x0001
 #define CES_FARPANELS      0x000F // на будущее, должен содержать все возможные флаги возможных панелей
@@ -236,6 +237,7 @@ class CRealConsole
 		uint TextWidth();
 		uint TextHeight();
 		uint BufferHeight(uint nNewBufferHeight=0);
+		uint BufferWidth();
 
 	private:
 		HWND    hConWnd;
@@ -351,7 +353,10 @@ class CRealConsole
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
 		int  GetProcesses(ConProcess** ppPrc);
 		DWORD GetFarPID(bool abPluginRequired=false);
-		void ResetFarPID();
+		void SetFarPID(DWORD nFarPID);
+		void SetFarPluginPID(DWORD nFarPluginPID);
+		void SetProgramStatus(DWORD nNewProgramStatus);
+		void SetFarStatus(DWORD nNewFarStatus);
 		DWORD GetActivePID();
 		LPCWSTR GetActiveProcessName();
 		int GetActiveAppSettingsId(LPCWSTR* ppProcessName=NULL);
@@ -368,6 +373,7 @@ class CRealConsole
 		BOOL isConSelectMode();
 		bool isFar(bool abPluginRequired=false);
 		bool isFarBufferSupported();
+		bool isFarInStack();
 		bool isFarKeyBarShown();
 		bool isSelectionAllowed();
 		bool isSelectionPresent();
@@ -605,6 +611,7 @@ class CRealConsole
 		//
 		DWORD mn_FarPID;
 		DWORD mn_ActivePID;
+		void SetActivePID(DWORD anNewPID);
 		DWORD mn_LastSetForegroundPID; // PID процесса, которому в последний раз было разрешено AllowSetForegroundWindow
 		DWORD mn_LastProcessNamePID;
 		wchar_t ms_LastProcessName[MAX_PATH];

@@ -47,14 +47,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConChild.h"
 #include "ConEmuPipe.h"
 #include "Macro.h"
+#include "Status.h"
 
-#define DEBUGSTRCMD(s) DEBUGSTR(s)
-#define DEBUGSTRDRAW(s) DEBUGSTR(s)
-#define DEBUGSTRINPUT(s) DEBUGSTR(s)
-#define DEBUGSTRWHEEL(s) DEBUGSTR(s)
-#define DEBUGSTRINPUTPIPE(s) DEBUGSTR(s)
+#define DEBUGSTRCMD(s) //DEBUGSTR(s)
+#define DEBUGSTRDRAW(s) //DEBUGSTR(s)
+#define DEBUGSTRINPUT(s) //DEBUGSTR(s)
+#define DEBUGSTRWHEEL(s) //DEBUGSTR(s)
+#define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
-#define DEBUGSTRPROC(s) DEBUGSTR(s)
+#define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCON(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
@@ -496,7 +497,7 @@ bool CRealConsole::LoadAlternativeConsole(bool abForceLoadCurrent /*= false*/)
 		}
 	}
 	
-	if (!mp_SBuf->LoadAlternativeConsole(abForceLoadCurrent ? 2 : 1))
+	if (!mp_SBuf->LoadAlternativeConsole(abForceLoadCurrent ? 2 : 0))
 	{
 		SetActiveBuffer(mp_RBuf);
 		return false;
@@ -606,7 +607,9 @@ void CRealConsole::SyncGui2Window(RECT* prcClient)
 		else
 			rcClient = gpConEmu->GetGuiClientRect();
 
-		RECT rcGui = gpConEmu->CalcRect(CER_WORKSPACE, rcClient, CER_MAINCLIENT, mp_VCon);
+		// Окошко гуевого приложения нужно разместить поверх области, отведенной под наш VCon.
+		// Но! тут нужна вся область, без отрезания прокруток и округлений размеров под знакоместо
+		RECT rcGui = gpConEmu->CalcRect(CER_BACK, rcClient, CER_MAINCLIENT, mp_VCon);
 		OffsetRect(&rcGui, -rcGui.left, -rcGui.top);
 		DWORD dwExStyle = GetWindowLong(hGuiWnd, GWL_EXSTYLE);
 		DWORD dwStyle = GetWindowLong(hGuiWnd, GWL_STYLE);
@@ -668,22 +671,6 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	
 	if (hGuiWnd && !mb_GuiExternMode)
 		SyncGui2Window(&rcClient);
-	//{
-	//	RECT rcGui = gpConEmu->CalcRect(CER_WORKSPACE, rcClient, CER_MAINCLIENT, mp_VCon);
-	//	OffsetRect(&rcGui, -rcGui.left, -rcGui.top);
-	//	DWORD dwExStyle = GetWindowLong(hGuiWnd, GWL_EXSTYLE);
-	//	DWORD dwStyle = GetWindowLong(hGuiWnd, GWL_STYLE);
-	//	CorrectGuiChildRect(dwStyle, dwExStyle, rcGui);
-	//	RECT rcCur = {};
-	//	GetWindowRect(hGuiWnd, &rcCur);
-	//	MapWindowPoints(NULL, GetView(), (LPPOINT)&rcCur, 2);
-	//	if (memcmp(&rcCur, &rcGui, sizeof(RECT)) != 0)
-	//	{
-	//		// Через команду пайпа, а то если он "под админом" будет Access denied
-	//		SetOtherWindowPos(hGuiWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
-	//			SWP_ASYNCWINDOWPOS|SWP_NOACTIVATE);
-	//	}
-	//}
 
 	// Меняем активный буфер (пусть даже и виртуальный...)
 	mp_ABuf->SyncConsole2Window(newCon.right, newCon.bottom);
@@ -1503,7 +1490,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 						{
 							if (pRCon->m_FarPlugPIDs[i] == nPID)
 							{
-								pRCon->mn_FarPID_PluginDetected = nCurFarPID = nPID;
+								nCurFarPID = nPID;
+								pRCon->SetFarPluginPID(nCurFarPID);
 								break;
 							}
 						}
@@ -1539,7 +1527,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 									pRCon->m_FarPlugPIDs[i] = 0;
 							}
 
-							pRCon->mn_FarPID_PluginDetected = 0;
+							pRCon->SetFarPluginPID(0);
 						}
 					}
 
@@ -2491,7 +2479,9 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	// Если консоль в режиме с прокруткой - не посылать мышь в консоль
 	// Иначе получаются казусы. Если во время выполнения команды (например "dir c: /s")
 	// успеть дернуть мышкой - то при возврате в ФАР сразу пойдет фаровский драг
-	if (isBufferHeight() && !lbFarBufferSupported)
+	// -- if (isBufferHeight() && !lbFarBufferSupported)
+	// -- заменено на сброс мышиных событий в ConEmuHk при завершении консольного приложения
+	if (isFarInStack() && !gpSet->isUseInjects)
 		return;
 
 	PostMouseEvent(messg, wParam, crMouse, abForceSend);
@@ -3266,7 +3256,10 @@ void CRealConsole::StopThread(BOOL abRecreating)
 	{
 		hConWnd = NULL;
 		mn_MainSrv_PID = 0;
-		mn_FarPID = mn_ActivePID = mn_FarPID_PluginDetected = 0;
+		SetFarPID(0);
+		SetFarPluginPID(0);
+		SetActivePID(0);
+		//mn_FarPID = mn_ActivePID = mn_FarPID_PluginDetected = 0;
 		mn_LastSetForegroundPID = 0;
 		//mn_ConEmuC_Input_TID = 0;
 		SafeCloseHandle(mh_MainSrv);
@@ -4004,6 +3997,9 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID, HANDLE hAltServer)
 	mb_SwitchActiveServer = false;
 	bOk = (nWait == WAIT_OBJECT_0);
 
+	if (isActive())
+		gpConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
+
 	return bOk;
 }
 
@@ -4028,6 +4024,9 @@ bool CRealConsole::ReopenServerPipes()
 	_wsprintf(ms_MainSrv_Pipe, SKIPLEN(countof(ms_MainSrv_Pipe)) CESERVERPIPENAME, L".", mn_MainSrv_PID);
 
 	bool bActive = isActive();
+
+	if (bActive)
+		gpConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
 
 	UpdateServerActive(bActive);
 
@@ -4081,11 +4080,36 @@ DWORD CRealConsole::GetFarPID(bool abPluginRequired/*=false*/)
 	return mn_FarPID;
 }
 
-// Вызывается при запуске в консоли ComSpec
-void CRealConsole::ResetFarPID()
+void CRealConsole::SetProgramStatus(DWORD nNewProgramStatus)
 {
-	mn_ProgramStatus &= ~CES_FARACTIVE;
-	mn_FarPID = 0;
+	mn_ProgramStatus = nNewProgramStatus;
+}
+
+void CRealConsole::SetFarStatus(DWORD nNewFarStatus)
+{
+	mn_FarStatus = nNewFarStatus;
+}
+
+// Вызывается при запуске в консоли ComSpec
+void CRealConsole::SetFarPID(DWORD nFarPID)
+{
+	if (nFarPID)
+	{
+		if ((mn_ProgramStatus & (CES_FARACTIVE|CES_FARINSTACK)) != (CES_FARACTIVE|CES_FARINSTACK))
+			SetProgramStatus(mn_ProgramStatus|CES_FARACTIVE|CES_FARINSTACK);
+	}
+	else
+	{
+		if (mn_ProgramStatus & CES_FARACTIVE)
+			SetProgramStatus(mn_ProgramStatus & ~CES_FARACTIVE);
+	}
+
+	mn_FarPID = nFarPID;
+}
+
+void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
+{
+	mn_FarPID_PluginDetected = nFarPluginPID;
 }
 
 // Вернуть PID "условно активного" процесса в консоли
@@ -4165,6 +4189,19 @@ int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName/*=NULL*/)
 	return mn_LastAppSettingsId;
 }
 
+void CRealConsole::SetActivePID(DWORD anNewPID)
+{
+	if (mn_ActivePID != anNewPID)
+	{
+		mn_ActivePID = anNewPID;
+
+		if (isActive())
+		{
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+		}
+	}
+}
+
 // Обновить статус запущенных программ
 // Возвращает TRUE если сменился статус (Far/не Far)
 BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
@@ -4231,12 +4268,15 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 
 	TODO("Однако, наверное cmd.exe/tcc.exe может быть запущен и в 'фоне'? Например из Update");
 
+	DWORD nNewProgramStatus = 0;
+
+	if (bIsFar) // сначала - ставим флаг "InStack", т.к. ниже флаг фара может быть сброшен из-за bIsCmd
+		nNewProgramStatus |= CES_FARINSTACK;
+
 	if (bIsCmd && bIsFar)  // Если в консоли запущен cmd.exe/tcc.exe - значит (скорее всего?) фар выполняет команду
 	{
 		bIsFar = false; dwFarPID = 0;
 	}
-
-	DWORD nNewProgramStatus = 0;
 
 	if (bIsFar)
 		nNewProgramStatus |= CES_FARACTIVE;
@@ -4256,7 +4296,7 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 		nNewProgramStatus |= CES_NTVDM;
 
 	if (mn_ProgramStatus != nNewProgramStatus)
-		mn_ProgramStatus = nNewProgramStatus;
+		SetProgramStatus(nNewProgramStatus);
 
 	mn_ProcessCount = m_Processes.size();
 
@@ -4274,7 +4314,7 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	mn_FarPID = dwFarPID;
 	
 	if (mn_ActivePID != dwActivePID)
-		mn_ActivePID = dwActivePID;
+		SetActivePID(dwActivePID);
 
 	//if (!dwFarPID)
 	//	mn_FarPID_PluginDetected = 0;
@@ -5238,7 +5278,7 @@ BOOL CRealConsole::RecreateProcessStart()
 
 		if ((mn_ProgramStatus & CES_NTVDM) == CES_NTVDM)
 		{
-			mn_ProgramStatus = 0; mb_IgnoreCmdStop = FALSE;
+			SetProgramStatus(0); mb_IgnoreCmdStop = FALSE;
 
 			// При пересоздании сбрасывается 16битный режим, нужно отресайзится
 			if (!PreInit())
@@ -5246,7 +5286,7 @@ BOOL CRealConsole::RecreateProcessStart()
 		}
 		else
 		{
-			mn_ProgramStatus = 0; mb_IgnoreCmdStop = FALSE;
+			SetProgramStatus(0); mb_IgnoreCmdStop = FALSE;
 		}
 
 		StopThread(TRUE/*abRecreate*/);
@@ -5645,6 +5685,8 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	//	mp_ConsoleInfo->bConsoleActive = TRUE;
 	//}
 
+	gpConEmu->mp_Status->OnActiveVConChanged(nNewNum, this);
+
 	if ((gOSVer.dwMajorVersion > 6) || ((gOSVer.dwMajorVersion == 6) && (gOSVer.dwMinorVersion >= 1)))
 		gpConEmu->Taskbar_SetShield(isAdministrator());
 
@@ -5860,6 +5902,9 @@ void CRealConsole::UpdateScrollInfo()
 	}
 
 	CVConGuard guard(mp_VCon);
+
+	UpdateCursorInfo();
+
 
 	WARNING("DoubleView: заменить static на member");
 	static SHORT nLastHeight = 0, nLastWndHeight = 0, nLastTop = 0;
@@ -7212,6 +7257,12 @@ uint CRealConsole::TextHeight()
 	return mp_ABuf->TextHeight();
 }
 
+uint CRealConsole::BufferWidth()
+{
+	TODO("CRealConsole::BufferWidth()");
+	return TextWidth();
+}
+
 uint CRealConsole::BufferHeight(uint nNewBufferHeight/*=0*/)
 {
 	return mp_ABuf->BufferHeight(nNewBufferHeight);
@@ -7354,13 +7405,12 @@ void CRealConsole::CheckFarStates()
 
 	if (nNewState != nLastState)
 	{
-#ifdef _DEBUG
-
+		#ifdef _DEBUG
 		if ((nNewState & CES_FILEPANEL) == 0)
 			nNewState = nNewState;
+		#endif
 
-#endif
-		mn_FarStatus = nNewState;
+		SetFarStatus(nNewState);
 		gpConEmu->UpdateProcessDisplay(FALSE);
 	}
 }
@@ -8128,6 +8178,14 @@ bool CRealConsole::isFar(bool abPluginRequired/*=false*/)
 	return GetFarPID(abPluginRequired)!=0;
 }
 
+bool CRealConsole::isFarInStack()
+{
+	if (mn_FarPID || mn_FarPID_PluginDetected || (mn_ProgramStatus & CES_FARINSTACK))
+		return true;
+
+	return false;
+}
+
 // Проверить, включен ли в фаре режим "far /w".
 // В этом случае, буфер есть, но его прокруткой должен заниматься сам фар.
 // Комбинации типа CtrlUp, CtrlDown и мышку - тоже передавать в фар.
@@ -8177,6 +8235,16 @@ bool CRealConsole::isSelectionPresent()
 	if (!this)
 		return false;
 	return mp_ABuf->isSelectionPresent();
+}
+
+bool CRealConsole::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
+{
+	if (!isSelectionPresent())
+	{
+		memset(sel, 0, sizeof(*sel));
+		return false;
+	}
+	return mp_ABuf->GetConsoleSelectionInfo(sel);
 }
 
 void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
@@ -8587,6 +8655,11 @@ bool CRealConsole::isAlive()
 
 LPCWSTR CRealConsole::GetConStatus()
 {
+	if (!this)
+	{
+		_ASSERTE(this);
+		return NULL;
+	}
 	if (hGuiWnd)
 		return NULL;
 	return ms_ConStatus;
@@ -8611,11 +8684,19 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus)
 
 void CRealConsole::UpdateCursorInfo()
 {
-	if (!this) return;
+	if (!this)
+		return;
 
-	COORD cr; CONSOLE_CURSOR_INFO ci;
-	mp_RBuf->GetCursorInfo(&cr, &ci);
-	gpConEmu->UpdateCursorInfo(cr, ci);
+	if (!isActive())
+		return;
+
+	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+	CONSOLE_CURSOR_INFO ci = {};
+	//mp_RBuf->GetCursorInfo(&cr, &ci);
+	mp_ABuf->ConsoleCursorInfo(&ci);
+	mp_ABuf->ConsoleScreenBufferInfo(&sbi);
+	
+	gpConEmu->UpdateCursorInfo(&sbi, sbi.dwCursorPosition, ci);
 }
 
 bool CRealConsole::isNeedCursorDraw()

@@ -207,6 +207,7 @@ BEGIN
     vkMultiNew              "Create new console"
     vkMultiNewShift         "Create new console (alter «Create confirmation»)"
     vkMultiNewPopup         "Show create new console popup menu"
+	vkMultiNewAttach        "Attach existing Console or GUI application"
     vkMultiNext             "Switch next console"
     vkMultiNextShift        "Switch previous console"
     vkMultiRecreate         "Recreate active console"

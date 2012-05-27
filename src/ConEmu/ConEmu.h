@@ -57,8 +57,8 @@ class CRecreateDlg;
 class CToolTip;
 class CGestures;
 class CVConGuard;
+class CStatus;
 
-WARNING("ѕроверить, чтобы DC нормально центрировалось после удалени€ CEM_BACK");
 enum ConEmuMargins
 {
 	// –азница между размером всего окна и клиентской области окна (рамка + заголовок)
@@ -68,8 +68,11 @@ enum ConEmuMargins
 	CEM_TABACTIVATE = 0x1002,   // ѕринудительно считать, что таб есть (при включении таба)
 	CEM_TABDEACTIVATE = 0x2002, // ѕринудительно считать, что таба нет (при отключении таба)
 	CEM_TAB_MASK = (CEM_TAB|CEM_TABACTIVATE|CEM_TABDEACTIVATE),
-	// ≈сли полоса прокрутки всегда видна - то ее ширины
-	CEM_SCROLL = 0x0004,
+	CEM_SCROLL = 0x0004, // ≈сли полоса прокрутки всегда (!!!) видна - то ее ширина/высота
+	CEM_STATUS = 0x0008, // ¬ысота строки статуса
+	// ћаска дл€ получени€ всех отступов
+	CEM_ALL_MARGINS = CEM_FRAME|CEM_TAB|CEM_SCROLL|CEM_STATUS,
+	CEM_CLIENT_MARGINS = CEM_TAB|CEM_SCROLL|CEM_STATUS,
 };
 
 enum ConEmuRect
@@ -78,8 +81,8 @@ enum ConEmuRect
 	// ƒалее все координаты считаютс€ относительно клиенсткой области {0,0}
 	CER_MAINCLIENT, // клиентска€ область главного окна (Ѕ≈« отрезани€ табов, прокруток, DoubleView и прочего. ÷еликом)
 	CER_TAB,        // положение контрола с закладками (всего)
-	CER_BACK,       // положение окна с фоном
-	CER_WORKSPACE,  // пока - то же что и CER_BACK, но при DoubleView CER_BACK может быть меньше
+	CER_WORKSPACE,  // рабоча€ область ConEmu. ¬ ней располагаютс€ VCon/GUI apps. Ќо после DoubleView будет ЅќЋ№Ў≈ чем CER_BACK, т.к. это все видимые VCon.
+	CER_BACK,       // область, отведенна€ под VCon. “ут нужна вс€ область, без отрезани€ прокруток и округлений размеров под знакоместо
 	CER_SCROLL,     // положение полосы прокрутки
 	CER_DC,         // положение окна отрисовки
 	CER_CONSOLE,    // !!! _ размер в символах _ !!!
@@ -108,6 +111,7 @@ enum TrackMenuPlace
 	tmp_KeyBar,
 	tmp_TabsList,
 	tmp_PasteCmdLine,
+	tmp_StatusBarCols,
 };
 
 struct MsgSrvStartedArg
@@ -125,6 +129,7 @@ struct MsgSrvStartedArg
 #include "GuiServer.h"
 #include "GestureEngine.h"
 #include "ConEmuCtrl.h"
+
 
 class CConEmuMain :
 	public CDwmHelper,
@@ -181,12 +186,14 @@ class CConEmuMain :
 		//CConEmuBack  *m_Back;
 		//CConEmuMacro *m_Macro;
 		TabBarClass *mp_TabBar;
+		CStatus *mp_Status;
 		CToolTip *mp_Tip;
 		//POINT cwShift; // difference between window size and client area size for main ConEmu window
 		POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
 		//DWORD gnLastProcessCount;
 		//uint cBlinkNext;
-		DWORD WindowMode, change2WindowMode;
+		DWORD WindowMode;        // rNormal/rMaximized/rFullScreen
+		DWORD change2WindowMode; // -1/rNormal/rMaximized/rFullScreen
 		bool WindowStartMinimized, ForceMinimizeToTray;
 		bool DisableAutoUpdate;
 		bool mb_isFullScreen;
@@ -403,7 +410,7 @@ class CConEmuMain :
 		CVirtualConsole* GetVCon(int nIdx);
 		int IsVConValid(CVirtualConsole* apVCon);
 		CVirtualConsole* GetVConFromPoint(POINT ptScreen);
-		void UpdateCursorInfo(COORD crCursor, CONSOLE_CURSOR_INFO cInfo);
+		void UpdateCursorInfo(const CONSOLE_SCREEN_BUFFER_INFO* psbi, COORD crCursor, CONSOLE_CURSOR_INFO cInfo);
 		void UpdateProcessDisplay(BOOL abForce);
 		void UpdateSizes();
 
@@ -550,6 +557,7 @@ class CConEmuMain :
 		void UpdateWindowRgn(int anX=-1, int anY=-1, int anWndWidth=-1, int anWndHeight=-1);
 		static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		BOOL isDialogMessage(MSG &Msg);
+		LPCWSTR MenuAccel(int DescrID, LPCWSTR asText);
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		void OnAltEnter();
@@ -620,7 +628,7 @@ class CConEmuMain :
 		#endif
 
 		// return true - when state was changes
-		bool SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/);
+		bool SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColorKey = false, COLORREF acrColorKey = 0);
 		GetLayeredWindowAttributes_t _GetLayeredWindowAttributes;
 		#ifdef __GNUC__
 		SetLayeredWindowAttributes_t SetLayeredWindowAttributes;

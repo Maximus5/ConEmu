@@ -301,6 +301,7 @@ class CSettings
 			thi_Far,
 			thi_Keys,
 			thi_Tabs,
+			thi_Status,
 			thi_Colors,
 			thi_Tasks,
 			thi_Apps,
@@ -409,6 +410,7 @@ class CSettings
 		LRESULT OnInitDialog_Far(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Keys(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
+		LRESULT OnInitDialog_Status(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Color(HWND hWnd2);
 		LRESULT OnInitDialog_Tasks(HWND hWnd2, bool abForceReload);
 		LRESULT OnInitDialog_Apps(HWND hWnd2, bool abForceReload);

@@ -206,6 +206,11 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 
 	POINT PtOffset = {}, PtViewOffset = {}, PtSize = {}, PtViewSize = {};
 	GetPreviewPosSize(&PtOffset, &PtViewOffset, &PtSize, &PtViewSize);
+	if (PtSize.x<=0 || PtSize.y<=0 || PtViewSize.x<=0 || PtViewSize.y<=0)
+	{
+		_ASSERTE(!(PtSize.x<=0 || PtSize.y<=0 || PtViewSize.x<=0 || PtViewSize.y<=0));
+		return FALSE;
+	}
 
 	if (mh_Snap)
 	{
@@ -736,10 +741,11 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 {
 	POINT ptOffset = {};
 
-	RECT rcMain = {0}; GetWindowRect(ghWnd, &rcMain);
-
-	// размер всей рабочей области (но Ѕ≈« табов, прокруток, статусов)
-	RECT rcWork = gpConEmu->CalcRect(CER_BACK, rcMain, CER_MAIN, mp_VCon/*хот€ VCon и не важен, нужен полный размер*/);
+	//RECT rcMain = gpConEmu->CalcRect(CER_MAIN);
+	//// размер всей рабочей области (но Ѕ≈« табов, прокруток, статусов)
+	//RECT rcWork = gpConEmu->CalcRect(CER_WORKSPACE, rcMain, CER_MAIN, mp_VCon/*хот€ VCon и не важен, нужен полный размер*/);
+	RECT rcWork = gpConEmu->CalcRect(CER_WORKSPACE, mp_VCon/*хот€ VCon и не важен, нужен полный размер*/);
+	_ASSERTE(rcWork.right>rcWork.left && rcWork.bottom>rcWork.top);
 
 	//RECT rcView = {0};
 	HWND hView = mp_VCon->GetView();
@@ -760,14 +766,27 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 	//POINT ptViewOffset = MakePoint(szSize.x - (rcView.right-rcView.left), szSize.y - (rcView.bottom-rcView.top));
 	POINT ptViewOffset = MakePoint(max(0,(szSize.x - ptViewSize.x)), max(0,(szSize.y - ptViewSize.y)));
 
-	//TODO("ѕроверить, учитываетс€ ли DWM и проча€ фигн€ с шириной рамок");
-	ptOffset.x = rcWork.left - rcMain.left;
-	ptOffset.y = rcWork.top - rcMain.top;
-	if (!gpConEmu->isIconic())
+	ptOffset = MakePoint(rcWork.left, rcWork.top);
+	if ((gpConEmu->WindowMode == rFullScreen)
+		|| ((gpConEmu->WindowMode == rMaximized) && (gpSet->isHideCaptionAlways() || gpSet->isHideCaption)))
 	{
-		ptOffset.x -= GetSystemMetrics(SM_CXFRAME);
-		ptOffset.y -= GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
+		// ‘инт ушами, т.к. в этих режимах идет принудительный сдвиг
+		ptOffset.x += GetSystemMetrics(SM_CXFRAME);
+		ptOffset.y += GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
 	}
+	//if (!gpConEmu->isIconic())
+	//{
+	//	//	ptOffset.x += GetSystemMetrics(SM_CXFRAME);
+	//	//	ptOffset.y += GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
+	//}
+	////TODO("ѕроверить, учитываетс€ ли DWM и проча€ фигн€ с шириной рамок");
+	//ptOffset.x = rcWork.left - rcMain.left;
+	//ptOffset.y = rcWork.top - rcMain.top;
+	//if (!gpConEmu->isIconic())
+	//{
+	//	ptOffset.x -= GetSystemMetrics(SM_CXFRAME);
+	//	ptOffset.y -= GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
+	//}
 
 	if (pPtOffset)
 		*pPtOffset = ptOffset;

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    92
+#define CESERVER_REQ_VER    93
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -965,13 +965,15 @@ struct ForwardedFileInfo
 struct CESERVER_REQ_HDR
 {
 	DWORD   cbSize;     // Не size_t(!), а именно DWORD, т.к. пакетами обмениваются и 32<->64 бит между собой.
-	CECMD   nCmd;       // DWORD
 	DWORD   nVersion;   // CESERVER_REQ_VER
+	BOOL    bAsync;     // не посылать "ответ", сразу закрыть пайп
+	CECMD   nCmd;       // DWORD
 	DWORD   nSrcThreadId;
 	DWORD   nSrcPID;
 	DWORD   nCreateTick;
 	DWORD   nBits;      // битность вызывающего процесса
 	DWORD   nLastError; // последний GetLastError() при отправке пакета
+	DWORD   Pad1;
 	u64     hModule;
 };
 

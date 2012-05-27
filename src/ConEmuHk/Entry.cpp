@@ -31,7 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 //	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-//	#define SHOW_EXE_MSGBOX_NAME L"cmd.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"timex.exe"
+	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
@@ -70,6 +71,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Injects.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/ConsoleAnnotation.h"
+
+
+#ifdef SHOW_EXE_TIMINGS
+DWORD gnLastShowExeTick = 0;
+#define print_timings(s) if (gbShowExeMsgBox) { \
+	DWORD w, nCurTick = GetTickCount(); \
+	msprintf(szTimingMsg, countof(szTimingMsg), L">>> %s >>> %u >>> %s\n", SHOW_EXE_MSGBOX_NAME, (nCurTick - gnLastShowExeTick), s); \
+	WriteConsoleW(hTimingHandle, szTimingMsg, lstrlen(szTimingMsg), &w, NULL); \
+	gnLastShowExeTick = nCurTick; \
+	}
+#else
+#define print_timings(s)
+#endif
 
 
 #if defined(__GNUC__)
@@ -275,12 +289,12 @@ void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 PipeServer<CESERVER_REQ> *gpHookServer = NULL;
 #endif
 
+#ifdef _DEBUG
+bool gbShowExeMsgBox = false;
+#endif
+
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
-	InitializeHookedModules();
-
-	//HANDLE hStartedEvent = (HANDLE)apParm;
-
 	#ifdef _DEBUG
 		wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
 		if (!GetModuleFileName(NULL, szModule, MAX_PATH+1))
@@ -288,8 +302,25 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		const wchar_t* pszName = PointToName(szModule);
 	#endif
 
-	#ifdef SHOW_EXE_MSGBOX
+	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
+		wchar_t szTimingMsg[512]; HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
+		{
+			gbShowExeMsgBox = true;
+		}
+	#endif
+
+
+	// *******************  begin  *********************
+
+	print_timings(L"DllStart: InitializeHookedModules");
+	InitializeHookedModules();
+
+	//HANDLE hStartedEvent = (HANDLE)apParm;
+
+
+	#if defined(SHOW_EXE_MSGBOX)
+		if (gbShowExeMsgBox)
 		{
 			STARTUPINFO si = {sizeof(si)};
 			GetStartupInfo(&si);
@@ -357,6 +388,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	// Открыть мэппинг консоли и попытаться получить HWND GUI, PID сервера, и пр...
 	if (ghConWnd)
 	{
+		print_timings(L"OnConWndChanged");
 		OnConWndChanged(ghConWnd);
 		//GetConMap();
 	}
@@ -379,6 +411,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//	InitializeConsoleInputSemaphore();
 	//}
 
+
+	print_timings(L"GetImageSubsystem");
+
 	
 	// Необходимо определить битность и тип (CUI/GUI) процесса, в который нас загрузили
 	gnImageBits = WIN3264TEST(32,64);
@@ -395,6 +430,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	
 #ifdef USE_PIPE_SERVER
 	_ASSERTEX(gpHookServer==NULL);
+	print_timings(L"gpHookServer");
 	gpHookServer = (PipeServer<CESERVER_REQ>*)calloc(1,sizeof(*gpHookServer));
 	if (gpHookServer)
 	{
@@ -430,6 +466,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	WARNING("Попробовать не ломиться в мэппинг, а взять все из переменной ConEmuData");
 	if (ghConWnd)
 	{
+		print_timings(L"CShellProc");
 		CShellProc* sp = new CShellProc;
 		if (sp)
 		{
@@ -458,6 +495,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 	else if (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
 	{
+		print_timings(L"IMAGE_SUBSYSTEM_WINDOWS_GUI");
 		DWORD dwConEmuHwnd = 0;
 		BOOL  bAttachExistingWindow = FALSE;
 		wchar_t szVar[64], *psz;
@@ -560,7 +598,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		//{
 		#endif
 
+		print_timings(L"StartupHooks");
 		gbHooksWasSet = StartupHooks(ghOurModule);
+		print_timings(L"StartupHooks - done");
 
 		#ifdef _DEBUG
 		//}
@@ -569,6 +609,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		// Если NULL - значит это "Detached" консольный процесс, посылать "Started" в сервер смысла нет
 		if (ghConWnd != NULL)
 		{
+			print_timings(L"SendStarted");
 			SendStarted();
 
 			//#ifdef _DEBUG
@@ -598,6 +639,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	
 	//if (hStartedEvent)
 	//	SetEvent(hStartedEvent);
+
+	print_timings(L"DllStart - done");
 	
 	return 0;
 }
@@ -619,8 +662,58 @@ void DllThreadClose()
 }
 #endif
 
+void FlushMouseEvents()
+{
+	if (ghConWnd)
+	{
+		HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+		DWORD nTotal = 0;
+		if (GetNumberOfConsoleInputEvents(h, &nTotal) && nTotal)
+		{
+			INPUT_RECORD *pr = (INPUT_RECORD*)calloc(nTotal, sizeof(*pr));
+			if (pr && PeekConsoleInput(h, pr, nTotal, &nTotal) && nTotal)
+			{
+				bool bHasMouse = false;
+				DWORD j = 0;
+				for (DWORD i = 0; i < nTotal; i++)
+				{
+					if (pr[i].EventType == MOUSE_EVENT)
+					{
+						bHasMouse = true;
+						continue;
+					}
+					else
+					{
+						if (i > j)
+							pr[j] = pr[i];
+						j++;
+					}
+				}
+
+				// Если были мышиные события - сбросить их
+				if (bHasMouse)
+				{
+					if (FlushConsoleInputBuffer(h))
+					{
+						// Но если были НЕ мышиные - вернуть их в буфер
+						if (j > 0)
+						{
+							WriteConsoleInput(h, pr, j, &nTotal);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 void DllStop()
 {
+	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
+		wchar_t szTimingMsg[512]; HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	#endif
+
+	print_timings(L"DllStop");
 	//gbDllStopCalled = TRUE; -- в конце
 
 	#ifdef HOOK_USE_DLLTHREAD
@@ -637,9 +730,20 @@ void DllStop()
 	free(szModule);
 	#endif
 
+	// 120528 - Очистить буфер от мышиных событий, иначе получаются казусы.
+	// Если во время выполнения команды (например "dir c: /s")
+	// успеть дернуть мышкой - то при возврате в ФАР сразу пойдет фаровский драг
+	if (ghConWnd)
+	{
+		print_timings(L"FlushMouseEvents");
+		FlushMouseEvents();
+	}
+
+
 #ifdef USE_PIPE_SERVER
 	if (gpHookServer)
 	{
+		print_timings(L"StopPipeServer");
 		gpHookServer->StopPipeServer();
 		free(gpHookServer);
 		gpHookServer = NULL;
@@ -648,11 +752,15 @@ void DllStop()
 	
 	#ifdef _DEBUG
 	if (ghGuiClientRetHook)
+	{
+		print_timings(L"unhookWindowsHookEx");
 		user->unhookWindowsHookEx(ghGuiClientRetHook);
+	}
 	#endif
 
 	if (/*!gbSkipInjects &&*/ gbHooksWasSet)
 	{
+		print_timings(L"ShutdownHooks");
 		gbHooksWasSet = FALSE;
 		// Завершить работу с реестром
 		DoneHooksReg();
@@ -662,11 +770,13 @@ void DllStop()
 
 	//if (gnRunMode == RM_APPLICATION)
 	//{
+	print_timings(L"SendStopped");
 	SendStopped();
 	//}
 
 	if (gpConMap)
 	{
+		print_timings(L"gpConMap->CloseMap");
 		gpConMap->CloseMap();
 		gpConInfo = NULL;
 		delete gpConMap;
@@ -674,6 +784,7 @@ void DllStop()
 	}
 	
 	//#ifndef TESTLINK
+	print_timings(L"CommonShutdown");
 	CommonShutdown();
 
 	//if (gpHookCS)
@@ -683,6 +794,7 @@ void DllStop()
 	//	delete p;
 	//}
 
+	print_timings(L"FinalizeHookedModules");
 	FinalizeHookedModules();
 
 #ifndef _DEBUG
@@ -698,6 +810,7 @@ void DllStop()
 	#endif
 
 	gbDllStopCalled = TRUE;
+	print_timings(L"DllStop - Done");
 }
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
@@ -965,66 +1078,6 @@ WARNING("Попробовать SendStarted пыполнять не из DllMain, а запустить фоновую ни
 
 void SendStarted()
 {
-	//static bool bSent = false;
-	//
-	//if (bSent)
-	//	return; // отсылать только один раз
-	//
-	////crNewSize = gpSrv->sbi.dwSize;
-	////_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
-	//HWND hConWnd = GetConsoleWindow();
-	//
-	//if (!gnSelfPID)
-	//{
-	//	_ASSERTE(gnSelfPID!=0);
-	//	gnSelfPID = GetCurrentProcessId();
-	//}
-
-	//if (!hConWnd)
-	//{
-	//	// Это Detached консоль. Скорее всего запущен вместо COMSPEC
-	//	_ASSERTE(gnRunMode == RM_COMSPEC);
-	//	gbNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
-	//	return;
-	//}
-	//
-	//_ASSERTE(hConWnd == ghConWnd);
-	//ghConWnd = hConWnd;
-
-	//DWORD nServerPID = 0, nGuiPID = 0;
-
-	// Для ComSpec-а сразу можно проверить, а есть-ли сервер в этой консоли...
-	//if (gnRunMode /*== RM_COMSPEC*/ > RM_SERVER)
-	//{
-
-	//MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConsoleMap;
-	//ConsoleMap.InitName(CECONMAPNAME, (DWORD)ghConWnd);
-	//const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo = ConsoleMap.Open();
-
-	////WCHAR sHeaderMapName[64];
-	////StringCchPrintf(sHeaderMapName, countof(sHeaderMapName), CECONMAPNAME, (DWORD)hConWnd);
-	////HANDLE hFileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, sHeaderMapName);
-	////if (hFileMapping) {
-	////	const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo
-	////		= (CESERVER_CONSOLE_MAPPING_HDR*)MapViewOfFile(hFileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
-	//if (pConsoleInfo)
-	//{
-	//	gnServerPID = pConsoleInfo->nServerPID;
-	//	gnGuiPID = pConsoleInfo->nGuiPID;
-
-	//	//if (pConsoleInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
-	//	//{
-	//	//	if (pConsoleInfo->nLogLevel)
-	//	//		CreateLogSizeFile(pConsoleInfo->nLogLevel);
-	//	//}
-
-	//	//UnmapViewOfFile(pConsoleInfo);
-	//	ConsoleMap.CloseMap();
-	//}
-
-	//	CloseHandle(hFileMapping);
-	//}
-
 	if (gnServerPID == 0)
 	{
 		gbNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
@@ -1043,176 +1096,43 @@ void SendStarted()
 		LPCWSTR pszFileName = wcsrchr(pIn->StartStop.sModuleName, L'\\');
 		#endif
 
-		//// Cmd/Srv режим начат
-		//switch (gnRunMode)
-		//{
-		//case RM_SERVER:
-		//	pIn->StartStop.nStarted = sst_ServerStart; break;
-		//case RM_COMSPEC:
-		//	pIn->StartStop.nStarted = sst_ComspecStart; break;
-		//default:
 		pIn->StartStop.nStarted = sst_AppStart;
-		//}
 		pIn->StartStop.hWnd = ghConWnd;
 		pIn->StartStop.dwPID = gnSelfPID;
 		pIn->StartStop.nImageBits = WIN3264TEST(32,64);
-		//TODO("Ntvdm/DosBox -> 16");
-
-		////pIn->StartStop.dwInputTID = (gnRunMode == RM_SERVER) ? gpSrv->dwInputThreadId : 0;
-		//if (gnRunMode == RM_SERVER)
-		//	pIn->StartStop.bUserIsAdmin = IsUserAdmin();
-
-		//// Перед запуском 16бит приложений нужно подресайзить консоль...
-		//gnImageSubsystem = 0;
-		//LPCWSTR pszTemp = gpszRunCmd;
-		//wchar_t lsRoot[MAX_PATH+1] = {0};
-		//
-		//if (gnRunMode == RM_SERVER && gpSrv->bDebuggerActive)
-		//{
-		//	// "Отладчик"
-		//	gnImageSubsystem = 0x101;
-		//	gbRootIsCmdExe = TRUE; // Чтобы буфер появился
-		//}
-		//else if (/*!gpszRunCmd &&*/ gbAttachFromFar)
-		//{
-		//	// Аттач из фар-плагина
-		//	gnImageSubsystem = 0x100;
-		//}
-		//else if (gpszRunCmd && ((0 == NextArg(&pszTemp, lsRoot))))
-		//{
-		//	PRINT_COMSPEC(L"Starting: <%s>", lsRoot);
-		//
-		//	DWORD nImageFileAttr = 0;
-		//	if (!GetImageSubsystem(lsRoot, gnImageSubsystem, gnImageBits, nImageFileAttr))
-		//		gnImageSubsystem = 0;
-		//
-		//	PRINT_COMSPEC(L", Subsystem: <%i>\n", gnImageSubsystem);
-		//	PRINT_COMSPEC(L"  Args: %s\n", pszTemp);
-		//}
-		//else
-		//{
-
-		// -- уже, в DllStart
-		//// Необходимо определить битность и тип (CUI/GUI) процесса, в который нас загрузили
-		//GetImageSubsystem(gnImageSubsystem, gnImageBits);
 
 		pIn->StartStop.nSubSystem = gnImageSubsystem;
 		//pIn->StartStop.bRootIsCmdExe = gbRootIsCmdExe; //2009-09-14
 		// НЕ MyGet..., а то можем заблокироваться...
-		HANDLE hOut = NULL;
+		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-		//if (gnRunMode == RM_SERVER)
-		//	hOut = (HANDLE)ghConOut;
-		//else
-		hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-
-		//DWORD dwErr1 = 0;
-		//BOOL lbRc1 =
 		GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
+		gbWasBufferHeight = (pIn->StartStop.sbi.dwSize.Y > (pIn->StartStop.sbi.srWindow.Bottom - pIn->StartStop.sbi.srWindow.Top + 100));
 
 		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(hOut);
 
-		//if (!lbRc1) dwErr1 = GetLastError();
-		//
-		//PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd started)\n",(RunMode==RM_SERVER) ? L"Server" : L"ComSpec");
-		//// CECMD_CMDSTARTSTOP
-		//if (gnRunMode == RM_APPLICATION)
-		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
-		//else
-		//	pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 
-		// Ждать при ошибке открытия пайпа наверное и не нужно - все что необходимо, сервер
-		// уже передал в ServerInit, а ComSpec - не критично
-		//if (!pOut) {
-		//	// При старте консоли GUI может не успеть создать командные пайпы, т.к.
-		//	// их имена основаны на дескрипторе консольного окна, а его заранее GUI не знает
-		//	// Поэтому нужно чуть-чуть подождать, пока GUI поймает событие
-		//	// (anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID)
-		//	DWORD dwStart = GetTickCount(), dwDelta = 0;
-		//	while (!gbInShutdown && dwDelta < GUIREADY_TIMEOUT) {
-		//		Sleep(10);
-		//		pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-		//		if (pOut) break;
-		//		dwDelta = GetTickCount() - dwStart;
-		//	}
-		//	if (!pOut) {
-		//		// Возможно под отладчиком, или скорее всего GUI свалился
-		//		_ASSERTE(pOut != NULL);
-		//	}
-		//}
-		//PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd finished)\n",(RunMode==RM_SERVER) ? L"Server" : L"ComSpec");
+		BOOL bAsync = FALSE;
+		if (ghConWnd && (gnGuiPID != 0) && (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI))
+			bAsync = TRUE;
 
-		if (pOut)
+		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd, bAsync);
+
+
+		if (bAsync || pOut)
 		{
-			//bSent = true;
-			gbWasBufferHeight = pOut->StartStopRet.bWasBufferHeight;
-			gnGuiPID = pOut->StartStopRet.dwPID;
-			ghConEmuWnd = pOut->StartStopRet.hWnd;
-			_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
-			ghConEmuWndDC = pOut->StartStopRet.hWndDC;
-			_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
-			//if (gnRunMode == RM_SERVER)
-			//{
-			//	if (gpSrv)
-			//	{
-			//		gpSrv->bWasDetached = FALSE;
-			//	}
-			//	else
-			//	{
-			//		_ASSERTE(gpSrv!=NULL);
-			//	}
-			//}
+			if (pOut)
+			{
+				gbWasBufferHeight = pOut->StartStopRet.bWasBufferHeight;
+				gnGuiPID = pOut->StartStopRet.dwPID;
+				ghConEmuWnd = pOut->StartStopRet.hWnd;
+				_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
+				ghConEmuWndDC = pOut->StartStopRet.hWndDC;
+				_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 
-			//UpdateConsoleMapHeader();
-
-			gnServerPID = pOut->StartStopRet.dwSrvPID;
-
-			
-			// -- не будем этого пока делать, сервер консоли уже обо все позаботился
-			//AllowSetForegroundWindow(gnGuiPID);
-
-
-			//gnBufferHeight  = (SHORT)pOut->StartStopRet.nBufferHeight;
-			//gcrBufferSize.X = (SHORT)pOut->StartStopRet.nWidth;
-			//gcrBufferSize.Y = (SHORT)pOut->StartStopRet.nHeight;
-			//gbParmBufferSize = TRUE;
-
-			//if (gnRunMode == RM_SERVER)
-			//{
-			//	if (gpSrv->bDebuggerActive && !gnBufferHeight) gnBufferHeight = 1000;
-			//
-			//	SMALL_RECT rcNil = {0};
-			//	SetConsoleSize(gnBufferHeight, gcrBufferSize, rcNil, "::SendStarted");
-			//
-			//	// Смена раскладки клавиатуры
-			//	if (pOut->StartStopRet.bNeedLangChange)
-			//	{
-			//#ifndef INPUTLANGCHANGE_SYSCHARSET
-			//#define INPUTLANGCHANGE_SYSCHARSET 0x0001
-			//#endif
-			//		WPARAM wParam = INPUTLANGCHANGE_SYSCHARSET;
-			//		TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
-			//		LPARAM lParam = (LPARAM)(DWORD_PTR)pOut->StartStopRet.NewConsoleLang;
-			//		SendMessage(ghConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, lParam);
-			//	}
-			//}
-			//else
-			//{
-			//	// Может так получиться, что один COMSPEC запущен из другого.
-			//	// 100628 - неактуально. COMSPEC сбрасывается в cmd.exe
-			//	//if (bAlreadyBufferHeight)
-			//	//	gpSrv->bNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе - прокрутка должна остаться
-			//gbWasBufferHeight = bAlreadyBufferHeight;
-			//}
-
-			//nNewBufferHeight = ((DWORD*)(pOut->Data))[0];
-			//crNewSize.X = (SHORT)((DWORD*)(pOut->Data))[1];
-			//crNewSize.Y = (SHORT)((DWORD*)(pOut->Data))[2];
-			//TODO("Если он запущен как COMSPEC - то к GUI никакого отношения иметь не должен");
-			//if (rNewWindow.Right >= crNewSize.X) // размер был уменьшен за счет полосы прокрутки
-			//    rNewWindow.Right = crNewSize.X-1;
-			ExecuteFreeResult(pOut); pOut = NULL;
-			//gnBufferHeight = nNewBufferHeight;
+				gnServerPID = pOut->StartStopRet.dwSrvPID;
+				ExecuteFreeResult(pOut); pOut = NULL;
+			}
 		}
 		else
 		{

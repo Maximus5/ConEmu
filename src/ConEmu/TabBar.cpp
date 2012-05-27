@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "TrayIcon.h"
 #include "VConChild.h"
+#include "Status.h"
 
 WARNING("!!! Запустили far, открыли edit, перешли в панель, открыли второй edit, ESC, ни одна вкладка не активна");
 // Более того, если есть еще одна консоль - активной станет первая вкладка следующей НЕАКТИВНОЙ консоли
@@ -788,6 +789,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		RequestPostUpdate();
 		return;
 	}
+
+	gpConEmu->mp_Status->UpdateStatusBar();
 
 	mb_PostUpdateCalled = FALSE;
 #ifdef _DEBUG
@@ -2589,7 +2592,7 @@ void TabBarClass::OnChooseTabPopup()
 	gpConEmu->ChooseTabFromMenu(FALSE, pt, TPM_RIGHTALIGN|TPM_TOPALIGN);
 }
 
-void TabBarClass::OnNewConPopup()
+void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 {
 	HMENU hPopup = CreatePopupMenu();
 	LPCWSTR pszCurCmd = NULL;
@@ -2709,7 +2712,16 @@ void TabBarClass::OnNewConPopup()
 	}
 
 	RECT rcBtnRect = {0};
-	if (IsTabsShown())
+	DWORD nAlign = TPM_RIGHTALIGN|TPM_TOPALIGN;
+
+	if (ptWhere)
+	{
+		rcBtnRect.left = ptWhere->x;
+		rcBtnRect.bottom = ptWhere->y;
+		if (nFlags)
+			nAlign = nFlags;
+	}
+	else if (IsTabsShown())
 	{
 		SendMessage(mh_Toolbar, TB_GETRECT, TID_CREATE_CON, (LPARAM)&rcBtnRect);
 		MapWindowPoints(mh_Toolbar, NULL, (LPPOINT)&rcBtnRect, 2);
@@ -2723,7 +2735,7 @@ void TabBarClass::OnNewConPopup()
 	}
 
 	mb_InNewConPopup = true;
-	int nId = gpConEmu->trackPopupMenu(tmp_Cmd, hPopup, TPM_RIGHTALIGN|TPM_TOPALIGN|TPM_RETURNCMD/*|TPM_NONOTIFY*/,
+	int nId = gpConEmu->trackPopupMenu(tmp_Cmd, hPopup, nAlign|TPM_RETURNCMD/*|TPM_NONOTIFY*/,
 	                         rcBtnRect.right,rcBtnRect.bottom, 0, ghWnd, NULL);
 	mb_InNewConPopup = false;
 	//gpConEmu->mp_Tip->HideTip();

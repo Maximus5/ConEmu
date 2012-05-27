@@ -32,6 +32,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define SHOWDEBUGSTR -- специально отключено, CONEMU_MINIMAL, OutputDebugString могут нарушать работу процессов
 
 #ifdef _DEBUG
+#define SHOWCREATEPROCESSTICK
+#else
+#undef SHOWCREATEPROCESSTICK
+#endif
+
+#ifdef _DEBUG
 	//#define TRAP_ON_MOUSE_0x0
 	#undef TRAP_ON_MOUSE_0x0
 	#undef LOG_GETANCESTOR
@@ -72,6 +78,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //110131 попробуем просто добвавить ее в ExcludedModules
 //#include <WinInet.h>
 //#pragma comment(lib, "wininet.lib")
+
+
+#ifdef _DEBUG
+extern bool gbShowExeMsgBox;
+extern DWORD gnLastShowExeTick;
+#define force_print_timings(s) { \
+	DWORD w, nCurTick = GetTickCount(); \
+	msprintf(szTimingMsg, countof(szTimingMsg), L">>> PID=%u >>> %u >>> %s\n", GetCurrentProcessId(), (nCurTick - gnLastShowExeTick), s); \
+	WriteConsoleW(hTimingHandle, szTimingMsg, lstrlen(szTimingMsg), &w, NULL); \
+	gnLastShowExeTick = nCurTick; \
+	}
+#define print_timings(s) if (gbShowExeMsgBox) { force_print_timings(s); }
+#else
+#define print_timings(s)
+#endif
 
 
 #ifdef _DEBUG
@@ -638,6 +659,8 @@ BOOL StartupHooks(HMODULE ahOurDll)
 		user->getClassNameW(ghConWnd, sClass, countof(sClass));
 		_ASSERTE(lstrcmp(sClass, L"ConsoleWindowClass") == 0);
 	}
+
+	wchar_t szTimingMsg[512]; HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif
 
 	// -- ghConEmuWnd уже должен быть установлен в DllMain!!!
@@ -677,9 +700,15 @@ BOOL StartupHooks(HMODULE ahOurDll)
 
 	// Реестр
 	InitHooksReg();
+
+	print_timings(L"SetAllHooks");
 	
 	// Теперь можно обработать модули
-	return SetAllHooks(ahOurDll, NULL, TRUE);
+	bool lbRc = SetAllHooks(ahOurDll, NULL, TRUE);
+
+	print_timings(L"SetAllHooks - done");
+
+	return lbRc;
 }
 
 
@@ -809,12 +838,25 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	SetLastError(0);
 	#endif
 
+	#ifdef SHOWCREATEPROCESSTICK
+	wchar_t szTimingMsg[512]; HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	force_print_timings(L"CreateProcessW");
+	#endif
+
 	lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 	dwErr = GetLastError();
+
+	#ifdef SHOWCREATEPROCESSTICK
+	force_print_timings(L"CreateProcessW - done");
+	#endif
 
 	// Если lbParamsChanged == TRUE - об инжектах позаботится ConEmuC.exe
 	sp->OnCreateProcessFinished(lbRc, lpProcessInformation);
 	delete sp;
+
+	#ifdef SHOWCREATEPROCESSTICK
+	force_print_timings(L"OnCreateProcessFinished - done");
+	#endif
 
 
 	if (ph && ph->PostCallBack)

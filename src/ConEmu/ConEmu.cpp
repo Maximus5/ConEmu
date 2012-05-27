@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Recreate.h"
 #include "Update.h"
 #include "LoadImg.h"
+#include "Status.h"
 #include "../ConEmuCD/RegPrepare.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../common/execute.h"
@@ -72,8 +73,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
-#define DEBUGSTRMOUSE(s) DEBUGSTR(s)
-#define DEBUGSTRRCLICK(s) DEBUGSTR(s)
+#define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRRCLICK(s) //DEBUGSTR(s)
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRIME(s) //DEBUGSTR(s)
 #define DEBUGSTRCHAR(s) //DEBUGSTR(s)
@@ -149,6 +150,7 @@ CConEmuMain::CConEmuMain()
 	//#define D(N) (1##N-100)
 	_wsprintf(ms_ConEmuVer, SKIPLEN(countof(ms_ConEmuVer)) L"ConEmu %02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
 	mp_TabBar = NULL; /*m_Macro = NULL;*/ mp_Tip = NULL;
+	mp_Status = new CStatus;
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
 	mn_MainThreadId = GetCurrentThreadId();
 	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
@@ -812,7 +814,7 @@ RECT CConEmuMain::GetDefaultRect()
 	COORD conSize; conSize.X=gpSet->wndWidth; conSize.Y=gpSet->wndHeight;
 	//int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
 	//int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + (gpSet->isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
-	RECT rcFrameMargin = CalcMargins(CEM_FRAME);
+	RECT rcFrameMargin = CalcMargins(CEM_FRAME|CEM_SCROLL|CEM_STATUS);
 	int nShiftX = rcFrameMargin.left + rcFrameMargin.right;
 	int nShiftY = rcFrameMargin.top + rcFrameMargin.bottom;
 	// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
@@ -1008,9 +1010,9 @@ HMENU CConEmuMain::GetSystemMenu(BOOL abInitial /*= FALSE*/)
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSetCls->AutoScroll ? MF_CHECKED : 0),
 			ID_AUTOSCROLL, _T("Auto scro&ll"));
 		#endif
-		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
-		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, IDM_ATTACHTO, _T("Attach t&o..."));
-		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_NEWCONSOLE, _T("&New console..."));
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, MenuAccel(vkWinAltP,L"S&ettings..."));
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, IDM_ATTACHTO, MenuAccel(vkMultiNewAttach,L"Attach t&o..."));
+		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNew,L"&New console..."));
 	}
 
 	return hwndMain;
@@ -1898,16 +1900,8 @@ CConEmuMain::~CConEmuMain()
 	_ASSERTE(ghWnd==NULL || !IsWindow(ghWnd));
 	//ghWnd = NULL;
 
-	if (mp_AttachDlg)
-	{
-		delete mp_AttachDlg;
-		mp_AttachDlg = NULL;
-	}
-	if (mp_RecreateDlg)
-	{
-		delete mp_RecreateDlg;
-		mp_RecreateDlg = NULL;
-	}
+	SafeDelete(mp_AttachDlg);
+	SafeDelete(mp_RecreateDlg);
 
 	for (size_t i = 0; i < countof(mp_VCon); i++)
 	{
@@ -1934,28 +1928,18 @@ CConEmuMain::~CConEmuMain()
 	//	mh_PopupHook = NULL;
 	//}
 
-	if (mp_DragDrop)
-	{
-		delete mp_DragDrop;
-		mp_DragDrop = NULL;
-	}
+	SafeDelete(mp_DragDrop);
 
 	//if (ProgressBars) {
 	//    delete ProgressBars;
 	//    ProgressBars = NULL;
 	//}
 
-	if (mp_TabBar)
-	{
-		delete mp_TabBar;
-		mp_TabBar = NULL;
-	}
+	SafeDelete(mp_TabBar);
 
-	if (mp_Tip)
-	{
-		delete mp_Tip;
-		mp_Tip = NULL;
-	}
+	SafeDelete(mp_Tip);
+
+	SafeDelete(mp_Status);
 
 	//if (m_Child)
 	//{
@@ -2164,6 +2148,9 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* a
 	if (!apVCon)
 		apVCon = gpConEmu->mp_VActive;
 
+	WARNING("CEM_SCROLL вообще удалить?");
+	WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
+
 	RECT rc = {};
 
 	// Разница между размером всего окна и клиентской области окна (рамка + заголовок)
@@ -2276,6 +2263,12 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* a
 		rc.right += GetSystemMetrics(SM_CXVSCROLL);
 	}
 
+	if ((mg & ((DWORD)CEM_STATUS)) && gpSet->isStatusBarShow)
+	{
+		TODO("Завистмость от темы/шрифта");
+		rc.bottom += gpSet->StatusBarHeight();
+	}
+
 	return rc;
 }
 
@@ -2287,7 +2280,10 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 	{
 		WINDOWPLACEMENT wpl = {sizeof(wpl)};
 		GetWindowPlacement(ghWnd, &wpl);
+		
 		TODO("Если окно было свернуто из Maximized состояние? Нужно брать не rcNormalPosition а Maximized?");
+		_ASSERTE(WindowMode!=rMaximized);
+
 		rcMain = wpl.rcNormalPosition;
 	}
 	else
@@ -2309,6 +2305,12 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 	RECT rcShift = MakeRect(0,0);
 	enum ConEmuRect tFromNow = tFrom;
 
+	// tTabAction обязан включать и флаг CEM_TAB
+	_ASSERTE((tTabAction & CEM_TAB)==CEM_TAB);
+
+	WARNING("CEM_SCROLL вообще удалить?");
+	WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
+
 	if (!pVCon)
 		pVCon = gpConEmu->mp_VActive;
 
@@ -2326,14 +2328,16 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		}
 	}
 
-	switch(tFrom)
+	switch (tFrom)
 	{
 		case CER_MAIN: // switch (tFrom)
 			// Нужно отнять отступы рамки и заголовка!
 		{
+			// Это может быть, если сделали GetWindowRect для ghWnd, когда он isIconic!
+			_ASSERTE((rc.left!=-32000 && rc.right!=-32000) && "Use CalcRect(CER_MAIN) instead of GetWindowRect() while IsIconic!");
 			rcShift = CalcMargins(CEM_FRAME);
-			rc.right = (rFrom.right-rFrom.left) - (rcShift.left+rcShift.right);
-			rc.bottom = (rFrom.bottom-rFrom.top) - (rcShift.top+rcShift.bottom);
+			rc.right = (rc.right-rc.left) - (rcShift.left+rcShift.right);
+			rc.bottom = (rc.bottom-rc.top) - (rcShift.top+rcShift.bottom);
 			rc.left = 0;
 			rc.top = 0; // Получили клиентскую область
 			tFromNow = CER_MAINCLIENT;
@@ -2350,13 +2354,13 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			//MBoxAssert(!(rFrom.left || rFrom.top));
 			TODO("DoubleView");
 
-			switch(tWhat)
+			switch (tWhat)
 			{
 				case CER_MAIN:
 				{
 					//rcShift = CalcMargins(CEM_BACK);
 					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
-					rcShift = CalcMargins(tTabAction|CEM_FRAME|CEM_SCROLL);
+					rcShift = CalcMargins(tTabAction|CEM_ALL_MARGINS);
 					AddMargins(rc, rcShift, TRUE/*abExpand*/);
 					//rcShift = CalcMargins(CEM_FRAME);
 					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
@@ -2384,14 +2388,14 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 				} break;
 				case CER_WORKSPACE:
 				{
-					WARNING("CER_WORKSPACE - не сделано вообще");
+					WARNING("Это tFrom. CER_WORKSPACE - не поддерживается (пока?)");
 					_ASSERTE(tWhat!=CER_WORKSPACE);
 				} break;
 				case CER_BACK:
 				{
 					//rcShift = CalcMargins(CEM_BACK);
 					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
-					rcShift = CalcMargins(tTabAction);
+					rcShift = CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
 					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
 					rc.top += rcShift.top; rc.bottom += rcShift.top;
 					_ASSERTE(rcShift.left == 0 && rcShift.right == 0 && rcShift.bottom == 0);
@@ -2466,7 +2470,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 
 	// если мы дошли сюда - значит tFrom==CER_MAINCLIENT
 
-	switch(tWhat)
+	switch (tWhat)
 	{
 		case CER_TAB: // switch (tWhat)
 		{
@@ -2474,13 +2478,13 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		} break;
 		case CER_WORKSPACE: // switch (tWhat)
 		{
-			rcShift = CalcMargins(tTabAction|CEM_SCROLL);
+			rcShift = CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
 			AddMargins(rc, rcShift);
 		} break;
 		case CER_BACK: // switch (tWhat)
 		{
 			TODO("DoubleView");
-			rcShift = CalcMargins(tTabAction|CEM_SCROLL);
+			rcShift = CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
 			AddMargins(rc, rcShift);
 		} break;
 		case CER_SCROLL: // switch (tWhat)
@@ -2497,7 +2501,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			if (tFromNow == CER_MAINCLIENT)
 			{
 				// Учесть высоту закладок (табов)
-				rcShift = CalcMargins(tTabAction|CEM_SCROLL);
+				rcShift = CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
 				AddMargins(rc, rcShift);
 			}
 			else if (tFromNow == CER_BACK || tFromNow == CER_WORKSPACE)
@@ -4446,6 +4450,8 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		if (!gpConEmu->mb_IgnoreSizeChange && !gpConEmu->isFullScreen() && !gpConEmu->isZoomed() && !gpConEmu->isIconic())
 		{
 			RECT rc; GetWindowRect(ghWnd, &rc);
+			mp_Status->OnWindowReposition(&rc);
+
 			//gpSet->UpdatePos(rc.left, rc.top);
 			gpConEmu->StoreNormalRect(&rc);
 
@@ -4463,6 +4469,10 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			//		ActiveCon()->RCon()->SyncConsole2Window(FALSE, &rcWnd);
 			//	}
 			//}
+		}
+		else
+		{
+			mp_Status->OnWindowReposition(NULL);
 		}
 	}
 	else if (gpConEmu->hPictureView)
@@ -6539,8 +6549,13 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 	MCHKHEAP
 }
 
-void CConEmuMain::UpdateCursorInfo(COORD crCursor, CONSOLE_CURSOR_INFO cInfo)
+void CConEmuMain::UpdateCursorInfo(const CONSOLE_SCREEN_BUFFER_INFO* psbi, COORD crCursor, CONSOLE_CURSOR_INFO cInfo)
 {
+	if (psbi)
+		mp_Status->OnConsoleChanged(psbi, &cInfo);
+	else
+		mp_Status->OnCursorChanged(&crCursor, &cInfo);
+
 	if (!ghOpWnd || !gpSetCls->mh_Tabs[gpSetCls->thi_Info]) return;
 
 	if (!isMainThread())
@@ -7534,7 +7549,8 @@ void CConEmuMain::PaintGaps(HDC hDC)
 #endif
 	HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(-1, !isMeForeground())[nColorIdx]);
 
-	RECT rcClient = GetGuiClientRect(); // Клиентская часть главного окна
+	//RECT rcClient = GetGuiClientRect(); // Клиентская часть главного окна
+	RECT rcClient = CalcRect(CER_WORKSPACE);
 
 	HWND hView = mp_VActive ? mp_VActive->GetView() : NULL;
 
@@ -8440,8 +8456,17 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 		return;
 	}
 
-	BOOL lbBufferHeight = mp_VActive->RCon()->isBufferHeight();
-	BOOL lbAlternative = mp_VActive->RCon()->isAlternative();
+	CVConGuard guard(mp_VActive);
+	BOOL lbBufferHeight = FALSE;
+	BOOL lbAlternative = FALSE;
+
+	if (mp_VActive)
+	{
+		mp_Status->OnConsoleBufferChanged(guard->RCon());
+
+		lbBufferHeight = guard->RCon()->isBufferHeight();
+		lbAlternative = guard->RCon()->isAlternative();
+	}
 
 	TrackMouse(); // спрятать или показать прокрутку, если над ней мышка
 
@@ -8521,7 +8546,7 @@ BOOL CConEmuMain::OnCloseQuery()
 HMENU CConEmuMain::CreateDebugMenuPopup()
 {
 	HMENU hDebug = CreatePopupMenu();
-	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, _T("&Real console"));
+	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, MenuAccel(vkCtrlWinAltSpace,L"&Real console"));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump screen..."));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_LOADDUMPCONSOLE, _T("&Load screen dump..."));
@@ -8656,18 +8681,18 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_CLOSE,     L"&Close");
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_DETACH,    L"Detach");
-		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATECON, L"&Console");
+		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATECON, MenuAccel(vkMultiClose,L"&Console"));
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
-		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEPRC, L"&Active process");
+		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEPRC, MenuAccel(vkTerminateApp,L"&Active process"));
 		AppendMenu(hMenu, MF_POPUP | MF_ENABLED, (UINT_PTR)hTerminate, L"&Terminate");
 		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
-		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTART,   L"&Restart");
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTART,   MenuAccel(vkMultiRecreate,L"&Restart"));
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RESTARTAS, L"Restart as...");
 		if (abAddNew)
 		{
 			AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
-			AppendMenu(hMenu, MF_STRING | MF_ENABLED, ID_NEWCONSOLE, L"New console...");
-			AppendMenu(hMenu, MF_STRING | MF_ENABLED, IDM_ATTACHTO,  L"Attach to...");
+			AppendMenu(hMenu, MF_STRING | MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNew,L"New console..."));
+			AppendMenu(hMenu, MF_STRING | MF_ENABLED, IDM_ATTACHTO,  MenuAccel(vkMultiNewAttach,L"Attach to..."));
 		}
 		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_SAVE,      L"&Save");
@@ -8736,12 +8761,12 @@ HMENU CConEmuMain::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 	if (!hMenu)
 	{	
 		hMenu = CreatePopupMenu();
-		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKBLOCK, _T("Mark &block"));
-		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKTEXT, _T("Mar&k text"));
+		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKBLOCK, MenuAccel(vkCTSVkBlockStart,L"Mark &block"));
+		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_MARKTEXT, MenuAccel(vkCTSVkTextStart,L"Mar&k text"));
 		AppendMenu(hMenu, MF_STRING | (lbSelectionExist?MF_ENABLED:MF_GRAYED), ID_CON_COPY, _T("Cop&y"));
 		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_PASTE, _T("&Paste"));
 		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
-		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_FIND, _T("&Find text..."));
+		AppendMenu(hMenu, MF_STRING | (lbEnabled?MF_ENABLED:MF_GRAYED), ID_CON_FIND, MenuAccel(vkFindTextDlg,L"&Find text..."));
 	}
 	else
 	{
@@ -10155,6 +10180,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		else
 			bEscPressed = false;
 	}
+	
+	if ((wParam == VK_CAPITAL) || (wParam == VK_NUMLOCK) || (wParam == VK_SCROLL))
+		mp_Status->OnKeyboardChanged();
 
 	// Теперь - можно переслать в консоль
 	if (mp_VActive && mp_VActive->RCon())
@@ -10516,6 +10544,9 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	}
 
 	m_ActiveKeybLayout = (DWORD_PTR)lParam;
+
+	mp_Status->OnKeyboardChanged();
+
 	//  if (isFar() && gpSet->isLangChangeWsPlugin)
 	//  {
 	//   //LONG lLastLang = GetWindowLong ( ghWnd DC, GWL_LANGCHANGE );
@@ -10838,7 +10869,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	// Коррекция координат или пропуск сообщений
 	bool isPrivate = false;
-	bool bSkipEvent = PatchMouseEvent(messg, ptCurClient, ptCurScreen, wParam, isPrivate);
+	bool bContinue = PatchMouseEvent(messg, ptCurClient, ptCurScreen, wParam, isPrivate);
 
 #ifdef _DEBUG
 	wchar_t szDbg[128];
@@ -10860,12 +10891,19 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		(messg==0x020E) ? L"WM_MOUSEHWHEEL" :
 		L"UnknownMsg",
 		ptCurScreen.x,ptCurScreen.y,(DWORD)wParam,
-		bSkipEvent ? L"" : L" - SKIPPED!");
+		bContinue ? L"" : L" - SKIPPED!");
 	DEBUGSTRMOUSE(szDbg);
 #endif
 
-	if (!bSkipEvent)
+	// Обработать клики на StatusBar
+	LRESULT lRc = 0;
+	if (mp_Status->ProcessStatusMessage(hWnd, messg, wParam, lParam, ptCurClient, lRc))
+		return lRc;
+
+	if (!bContinue)
 		return 0;
+
+
 
 	TODO("DoubleView. Хорошо бы колесико мышки перенаправлять в консоль под мышиным курором, а не в активную");
 	RECT conRect = {0}, dcRect = {0};
@@ -12274,7 +12312,8 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 #endif
 
 	POINT ptCur; GetCursorPos(&ptCur);
-	CVirtualConsole* pVCon = GetVConFromPoint(ptCur);
+	// Если сейчас идет trackPopupMenu - то на выход
+	CVirtualConsole* pVCon = (mn_TrackMenuPlace == tmp_None) ? GetVConFromPoint(ptCur) : NULL;
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
 	if (!pRCon)
 	{
@@ -13420,6 +13459,9 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 			}
 
 			bool bForeground = isMeForeground();
+
+			mp_Status->OnTimer();
+
 			CheckProcesses();
 			TODO("Теперь это условие не работает. 1 - раньше это был сам ConEmu.exe");
 
@@ -13631,18 +13673,24 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 void CConEmuMain::OnTransparent()
 {
 	UINT nAlpha = max(MIN_ALPHA_VALUE,min(gpSet->nTransparent,255));
-	if ((nAlpha < 255) && isPictureView())
-		nAlpha = 255;
+	bool bColorKey = gpSet->isColorKeyTransparent;
+	if (((nAlpha < 255) || bColorKey) && isPictureView())
+	{
+		nAlpha = 255; bColorKey = false;
+	}
 
 	// return true - when state was changes
-	if (SetTransparent(ghWnd, nAlpha))
+	if (SetTransparent(ghWnd, nAlpha, bColorKey, gpSet->nColorKeyValue))
 	{
-		OnSetCursor();
+		if (mn_TrackMenuPlace == tmp_None)
+		{
+			OnSetCursor();
+		}
 	}
 }
 
 // return true - when state was changes
-bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/)
+bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColorKey /*= false*/, COLORREF acrColorKey /*= 0*/)
 {
 	#ifdef __GNUC__
 	if (!SetLayeredWindowAttributes)
@@ -13657,7 +13705,10 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/)
 	DWORD dwExStyle = GetWindowLongPtr(ahWnd, GWL_EXSTYLE);
 	bool lbChanged = false;
 
-	if (nTransparent >= 255)
+	if (ahWnd == ghWnd)
+		mp_Status->OnTransparency();
+
+	if ((nTransparent >= 255) && !abColorKey)
 	{
 		// Прозрачность отключается (полностью непрозрачный)
 		//SetLayeredWindowAttributes(ahWnd, 0, 255, LWA_ALPHA);
@@ -13679,16 +13730,19 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/)
 			lbChanged = true;
 		}
 
-		DWORD nNewFlags = LWA_ALPHA;
+		DWORD nNewFlags = ((nTransparent < 255) ? LWA_ALPHA : 0) | (abColorKey ? LWA_COLORKEY : 0);
 
 		BYTE nCurAlpha = 0;
 		DWORD nCurFlags = 0;
+		COLORREF nCurColorKey = 0;
+
 		if (lbChanged
-			|| (!_GetLayeredWindowAttributes || !(_GetLayeredWindowAttributes(ahWnd, NULL, &nCurAlpha, &nCurFlags)))
-			|| (nCurAlpha != nTransparent) || (nCurFlags != nNewFlags))
+			|| (!_GetLayeredWindowAttributes || !(_GetLayeredWindowAttributes(ahWnd, &nCurColorKey, &nCurAlpha, &nCurFlags)))
+			|| (nCurAlpha != nTransparent) || (nCurFlags != nNewFlags)
+			|| (abColorKey && (nCurColorKey != acrColorKey)))
 		{
 			lbChanged = true;
-			SetLayeredWindowAttributes(ahWnd, 0, nTransparent, nNewFlags);
+			SetLayeredWindowAttributes(ahWnd, acrColorKey, nTransparent, nNewFlags);
 		}
 
 		// После смены стиля (не было альфа - появилась альфа) измененное окно "выносится наверх"
@@ -13941,6 +13995,33 @@ BOOL CConEmuMain::isDialogMessage(MSG &Msg)
 	return lbDlgMsg;
 }
 
+LPCWSTR CConEmuMain::MenuAccel(int DescrID, LPCWSTR asText)
+{
+	if (!asText || !*asText)
+	{
+		_ASSERTE(asText!=NULL);
+		return L"";
+	}
+
+	static wchar_t szTemp[255];
+	wchar_t szKey[128] = {};
+	
+	const ConEmuHotKey* pHK = NULL;
+	DWORD VkMod = gpSet->GetHotkeyById(DescrID, &pHK);
+	if (!VkMod || !pHK)
+		return asText;
+
+	gpSet->GetHotkeyName(pHK, szKey);
+	if (!*szKey)
+		return asText;
+	int nLen = lstrlen(szKey);
+	lstrcpyn(szTemp, asText, countof(szTemp)-nLen-4);
+	wcscat_c(szTemp, L"\t");
+	wcscat_c(szTemp, szKey);
+
+	return szTemp;
+}
+
 LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
@@ -14011,6 +14092,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				return 0;
 			case tmp_KeyBar:
 				gpConEmu->ShowKeyBarHint((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
+				return 0;
+			case tmp_StatusBarCols:
+				gpConEmu->mp_Status->ProcessMenuHighlight((HMENU)lParam, LOWORD(wParam), HIWORD(wParam));
 				return 0;
 			case tmp_None:
 				break;
@@ -14372,7 +14456,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				COORD cr; cr.X = LOWORD(wParam); cr.Y = HIWORD(wParam);
 				CONSOLE_CURSOR_INFO ci; ci.dwSize = LOWORD(lParam); ci.bVisible = HIWORD(lParam);
-				gpConEmu->UpdateCursorInfo(cr, ci);
+				gpConEmu->UpdateCursorInfo(NULL, cr, ci);
 				return 0;
 			}
 			else if (messg == gpConEmu->mn_MsgSetWindowMode)

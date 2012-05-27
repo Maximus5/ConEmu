@@ -297,22 +297,25 @@ BEGIN
     CONTROL         "Extend foreground colors with background",cbExtendColors,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,81,161,10
     COMBOBOX        lbExtendIdx,192,79,45,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Graphic enhancement",IDC_STATIC,4,172,319,54
+    GROUPBOX        "Graphic enhancement",IDC_STATIC,4,172,319,57
     LTEXT           "Schemes:",IDC_STATIC,7,159,35,8
     COMBOBOX        lbDefaultColors,47,157,171,59,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "",slTransparent,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,70,184,210,12
-    RTEXT           "Opaque",IDC_STATIC,284,184,31,8
+    CONTROL         "",slTransparent,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,70,185,210,12
+    RTEXT           "Opaque",IDC_STATIC,284,185,31,8
     CONTROL         "«User screen» transparency",cbUserScreenTransparent,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,199,108,9
-    CONTROL         "Transparent",cbTransparent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,185,54,9
-    CONTROL         "Colorer TrueMod support",cbTrueColorer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,212,97,9
-    CONTROL         "Fade contents when inactive",cbFadeInactive,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,117,199,108,9
-    RTEXT           "Low:",IDC_STATIC,225,199,19,8
-    EDITTEXT        tFadeLow,249,198,22,12,ES_AUTOHSCROLL
-    RTEXT           "High:",IDC_STATIC,273,199,22,8
-    EDITTEXT        tFadeHigh,299,198,20,12,ES_AUTOHSCROLL
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,189,200,129,8
+    CONTROL         "Transparent",cbTransparent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,185,54,8
+    CONTROL         "TrueMod (24bit color) support",cbTrueColorer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,189,215,129,8
+    CONTROL         "Fade when inactive",cbFadeInactive,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,215,78,8
+    RTEXT           "Low:",IDC_STATIC,87,215,19,8
+    EDITTEXT        tFadeLow,109,213,22,12,ES_AUTOHSCROLL
+    RTEXT           "High:",IDC_STATIC,136,215,20,8
+    EDITTEXT        tFadeHigh,158,213,20,12,ES_AUTOHSCROLL
     PUSHBUTTON      "Save",cbColorSchemeSave,221,156,50,14,WS_DISABLED
     PUSHBUTTON      "Delete...",cbColorSchemeDelete,273,156,50,14,WS_DISABLED
+    LTEXT           "",c38,158,198,20,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc38,109,198,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    CONTROL         "«Color key» transparency",cbColorKeyTransparent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,200,97,8
 END
 
 IDD_SETTINGS DIALOGEX 0, 0, 405, 260
@@ -378,46 +381,48 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Miscellaneous options",gbFeatureMisc,4,1,319,62
-    CONTROL         "Skip mouse click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,117,8
-    CONTROL         "Skip mouse in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,24,117,8
-    CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,36,89,8
-    CONTROL         "Fix Alt on AltTab/AltF9",cbFixAltOnAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,48,117,8
-    CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,13,89,8
-    CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,24,89,8
-    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,36,89,8
-    CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,48,76,8
-    PUSHBUTTON      "...",bDosBoxSettings,212,47,13,11
-    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,13,74,8
-    PUSHBUTTON      "...",bRealConsoleSettings,306,12,13,11
-    CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,24,87,8
-    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,36,87,8
-    CONTROL         "Portable registry",cbPortableRegistry,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,48,75,8
-    PUSHBUTTON      "...",bPortableRegistrySettings,306,47,13,11,WS_DISABLED
-    GROUPBOX        "Appearance",gbFeatureAppear,4,64,319,61
+    GROUPBOX        "Miscellaneous options",gbFeatureMisc,4,31,319,62
+    CONTROL         "Skip click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,14,97,8
+    CONTROL         "Skip in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,14,87,8
+    CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,54,89,8
+    CONTROL         "Fix Alt on AltTab/AltF9",cbFixAltOnAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,78,117,8
+    CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,43,89,8
+    CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,54,89,8
+    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,43,89,8
+    CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,66,76,8
+    PUSHBUTTON      "...",bDosBoxSettings,90,64,13,11
+    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,43,74,8
+    PUSHBUTTON      "...",bRealConsoleSettings,306,42,13,11
+    CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,78,87,8
+    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,54,87,8
+    CONTROL         "Portable registry",cbPortableRegistry,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,66,75,8
+    PUSHBUTTON      "...",bPortableRegistrySettings,207,65,13,11,WS_DISABLED
+    GROUPBOX        "Appearance",gbFeatureAppear,4,94,319,62
     CONTROL         "Enhance progress- and scrollbars",cbEnhanceGraphics,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,74,119,8
-    CONTROL         "Enhance buttons and -boxes",cbEnhanceButtons,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,86,119,8
-    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,137,117,8
-    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,137,79,8
-    CONTROL         "Always show scrollbar",cbAlwaysShowScrollbar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,98,100,8
-    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,74,89,8
-    CONTROL         "Center console",cbTryToCenter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,86,89,8
-    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,98,89,8
-    CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,110,89,8
-    CONTROL         "Ignore console cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,110,119,8
-    CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,231,74,87,8
-    CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,86,87,8
-    CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,153,91,8
-    GROUPBOX        "Caption options",gbFeatureCaption,4,126,319,44
-    RTEXT           "Frame width:",IDC_STATIC,219,137,54,8
-    RTEXT           "Appear delay:",IDC_STATIC,129,153,50,8
-    RTEXT           "Disappear:",IDC_STATIC,230,153,43,8
-    EDITTEXT        tHideCaptionAlwaysFrame,277,135,40,12,ES_AUTOHSCROLL
-    EDITTEXT        tHideCaptionAlwaysDelay,183,151,40,12,ES_AUTOHSCROLL
-    EDITTEXT        tHideCaptionAlwaysDissapear,277,151,40,12,ES_AUTOHSCROLL
-    CONTROL         "Confirm close console",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,98,87,8
-    CONTROL         "ANSI X3.64 / 256color",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,110,87,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,105,119,8
+    CONTROL         "Enhance buttons and -boxes",cbEnhanceButtons,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,117,119,8
+    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,169,117,8
+    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,169,79,8
+    CONTROL         "Always show scrollbar",cbAlwaysShowScrollbar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,129,100,8
+    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,105,89,8
+    CONTROL         "Center console",cbTryToCenter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,117,89,8
+    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,129,89,8
+    CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,141,89,8
+    CONTROL         "Ignore console cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,141,119,8
+    CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,231,105,87,8
+    CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,117,87,8
+    CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,185,91,8
+    GROUPBOX        "Caption options",gbFeatureCaption,4,158,319,44
+    RTEXT           "Frame width:",IDC_STATIC,219,169,54,8
+    RTEXT           "Appear delay:",IDC_STATIC,129,185,50,8
+    RTEXT           "Disappear:",IDC_STATIC,230,185,43,8
+    EDITTEXT        tHideCaptionAlwaysFrame,277,167,40,12,ES_AUTOHSCROLL
+    EDITTEXT        tHideCaptionAlwaysDelay,183,183,40,12,ES_AUTOHSCROLL
+    EDITTEXT        tHideCaptionAlwaysDissapear,277,183,40,12,ES_AUTOHSCROLL
+    CONTROL         "Confirm close console",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,129,87,8
+    CONTROL         "ANSI X3.64 / 256color",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,141,87,8
+    GROUPBOX        "Mouse options",IDC_STATIC,4,1,319,28
+    CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,119,8
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235
@@ -631,6 +636,53 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,143,155,8
     CONTROL         "Admin shield",rbAdminShield,"Button",BS_AUTORADIOBUTTON,167,96,55,8
     CONTROL         "suffix",rbAdminSuffix,"Button",BS_AUTORADIOBUTTON,223,96,34,8
+END
+
+IDD_SPG_STATUSBAR DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "",IDC_STATIC,4,1,319,198
+    RTEXT           "Name:",IDC_STATIC,14,24,25,8
+    COMBOBOX        tStatusFontFace,44,22,115,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    CTEXT           "x",IDC_STATIC,164,24,8,8
+    COMBOBOX        tStatusFontHeight,176,22,29,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Charset:",IDC_STATIC,209,24,36,8
+    COMBOBOX        tStatusFontCharset,250,22,60,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Show status bar",cbShowStatusBar,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,1,75,8
+    CONTROL         "Active console / total count",cbStatusActiveVCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,77,123,8
+    CONTROL         "ConEmu window position",cbStatusWindowPos,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,89,123,8
+    CONTROL         "ConEmu window size",cbStatusWindowSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,101,123,8
+    CONTROL         "Active console buffer",cbStatusActiveBuffer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,137,123,8
+    CONTROL         "Console visible rectangle",cbStatusConsolePos,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,77,123,8
+    CONTROL         "Console visible size",cbStatusConsoleSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,89,123,8
+    CONTROL         "Console buffer size",cbStatusBufferSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,101,123,8
+    CONTROL         "Console cursor column",cbStatusCursorX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,113,123,8
+    CONTROL         "Console cursor row",cbStatusCursorY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,125,123,8
+    CONTROL         "Console cursor size / visibility",cbStatusCursorSize,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,137,123,8
+    CONTROL         "Console cursor information",cbStatusCursorInfo,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,149,123,8
+    CONTROL         "Console server PID",cbStatusServer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,149,123,8
+    RTEXT           "Back:",IDC_STATIC,17,41,22,8
+    LTEXT           "",c35,92,40,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc35,44,40,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    RTEXT           "Light:",IDC_STATIC,109,41,31,8
+    LTEXT           "",c36,193,40,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc36,145,40,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    RTEXT           "Dark:",IDC_STATIC,222,41,23,8
+    LTEXT           "",c37,298,40,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc37,250,40,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    GROUPBOX        "Font and color",IDC_STATIC,9,12,307,46
+    GROUPBOX        "Enabled columns",IDC_STATIC,9,63,307,129
+    CONTROL         "ConEmu window client area",cbStatusWindowClient,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,113,123,8
+    CONTROL         "ConEmu window work area",cbStatusWindowWorkspace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,125,123,8
+    CONTROL         "Caps",cbStatusCapsLock,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,161,31,8
+    CONTROL         "Transparency",cbStatusTransparency,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,161,123,8
+    CONTROL         "Num",cbStatusNumLock,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,57,161,29,8
+    CONTROL         "Scroll",cbStatusScrlLock,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,89,161,34,8
+    CONTROL         "Current input locale identifier",cbStatusInputLang,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,173,123,8
 END
 
 IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319
@@ -954,6 +1006,11 @@ BEGIN
         RIGHTMARGIN, 314
         TOPMARGIN, 4
         BOTTOMMARGIN, 181
+    END
+
+    IDD_SPG_COLORS, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 234
     END
 
     IDD_SPG_INFO, DIALOG

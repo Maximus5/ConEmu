@@ -25,6 +25,7 @@ SRCS =  \
 		Recreate.cpp       \
 		Registry.cpp       \
 		ScreenDump.cpp     \
+		Status.cpp         \
 		TabBar.cpp         \
 		TabID.cpp          \
 		TaskBar.cpp        \

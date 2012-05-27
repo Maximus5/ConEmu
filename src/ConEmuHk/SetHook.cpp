@@ -1795,15 +1795,14 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 	if (!gpHooks)
 		return false;
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	wchar_t szHookProc[128];
 	for (int i = 0; gpHooks[i].NewAddress; i++)
 	{
 		msprintf(szHookProc, countof(szHookProc), L"## %S -> 0x%08X (exe: 0x%X)\n", gpHooks[i].Name, (DWORD)gpHooks[i].NewAddress, (DWORD)gpHooks[i].ExeOldAddress);
 		DebugString(szHookProc);
 	}
-
-#endif
+	#endif
 
 	// Запомнить aszExcludedModules
 	if (aszExcludedModules)

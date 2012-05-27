@@ -405,7 +405,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			}
 
 			// Раз стартован ComSpec (cmd.exe/ConEmuC.exe/...)
-			mp_RCon->ResetFarPID();
+			mp_RCon->SetFarPID(0);
 		}
 		else if (nStarted == sst_ServerStart)
 		{

@@ -718,6 +718,12 @@ void CConEmuChild::Invalidate()
 	if (mb_DisableRedraw)
 		return; // Иначе, при автотабах начинаются глюки
 
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+
+	//if (gpConEmu->isActive(pVCon))
+	//	gpConEmu->mp_Status->UpdateStatusBar();
+
+
 	// Здесь нужно invalidate'ить и GAPS !!!
 	// Иначе при запуске "conemu.exe /max" - gaps остаются зелеными, что означает потенциальную проблему
 
@@ -730,13 +736,6 @@ void CConEmuChild::Invalidate()
 	if (mh_WndDC)
 	{
 		DEBUGSTRDRAW(L" +++ Invalidate on DC window called\n");
-		//RECT rcClient; Get ClientRect('ghWnd DC', &rcClient);
-		//MapWindowPoints('ghWnd DC', ghWnd, (LPPOINT)&rcClient, 2);
-		//InvalidateRect(ghWnd, &rcClient, FALSE);
-
-		//RECT rcMainClient; Get ClientRect(ghWnd, &rcMainClient);
-		//RECT rcClient = gpConEmu->CalcRect(CER_BACK, rcMainClient, CER_MAINCLIENT);
-		//InvalidateRect(ghWnd, &rcClient, FALSE);
 		
 		if (!m_LockDc.bLocked)
 		{

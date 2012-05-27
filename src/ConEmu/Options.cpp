@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/ConEmuCheck.h"
 #include "Options.h"
 #include "ConEmu.h"
+#include "Status.h"
 #include "VConChild.h"
 #include "VirtualConsole.h"
 #include "RealConsole.h"
@@ -367,6 +368,8 @@ void Settings::InitSettings()
 	//isColorKey = false;
 	//ColorKey = RGB(1,1,1);
 	isUserScreenTransparent = false;
+	isColorKeyTransparent = false;
+	nColorKeyValue = RGB(1,1,1);
 	isFixFarBorders = 1; isEnhanceGraphics = true; isEnhanceButtons = false;
 	isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
 	isPartBrushBlack = 32; //-V112
@@ -419,6 +422,22 @@ void Settings::InitSettings()
 	isPasteConfirmEnter = true;
 	nPasteConfirmLonger = 200;
 	isFarGotoEditor = true; //isFarGotoEditorVk = VK_LCONTROL;
+
+	isStatusBarShow = true;
+	nStatusBarBack = RGB(64,64,64);
+	nStatusBarLight = RGB(255,255,255);
+	nStatusBarDark = RGB(160,160,160);
+	wcscpy_c(sStatusFontFace, L"Tahoma"); nStatusFontCharSet = ANSI_CHARSET; nStatusFontHeight = 14;
+	//nHideStatusColumns = ces_CursorInfo;
+	memset(isStatusColumnHidden, 0, sizeof(isStatusColumnHidden));
+	// выставим те колонки, которые не нужны "юзеру" по умолчанию
+	isStatusColumnHidden[csi_InputLocale] = true;
+	isStatusColumnHidden[csi_WindowPos] = true;
+	isStatusColumnHidden[csi_WindowSize] = true;
+	isStatusColumnHidden[csi_WindowClient] = true;
+	isStatusColumnHidden[csi_WindowWork] = true;
+	isStatusColumnHidden[csi_CursorInfo] = true;
+
 	isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
 	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
@@ -1915,6 +1934,10 @@ void Settings::LoadSettings()
 		//reg->Load(L"UseColorKey", isColorKey);
 		//reg->Load(L"ColorKey", ColorKey);
 		reg->Load(L"UserScreenTransparent", isUserScreenTransparent);
+
+		reg->Load(L"ColorKeyTransparent", isColorKeyTransparent);
+		reg->Load(L"ColorKeyValue", nColorKeyValue); nColorKeyValue = nColorKeyValue & 0xFFFFFF;
+
 		
 		//reg->Load(L"Update Console handle", isUpdConHandle);
 		reg->Load(L"DisableMouse", isDisableMouse);
@@ -1941,6 +1964,26 @@ void Settings::LoadSettings()
 		
 		reg->Load(L"DebugSteps", isDebugSteps);				
 
+		mb_StatusSettingsWasChanged = false;
+		reg->Load(L"StatusBar.Show", isStatusBarShow);
+		reg->Load(L"StatusFontFace", sStatusFontFace, countof(sStatusFontFace));
+		reg->Load(L"StatusFontCharSet", nStatusFontCharSet);
+		reg->Load(L"StatusFontHeight", nStatusFontHeight); nStatusFontHeight = max(4,nStatusFontHeight);
+		reg->Load(L"StatusBar.Color.Back", nStatusBarBack);
+		reg->Load(L"StatusBar.Color.Light", nStatusBarLight);
+		reg->Load(L"StatusBar.Color.Dark", nStatusBarDark);
+		_ASSERTE(countof(isStatusColumnHidden)>csi_Last);
+		_ASSERTE(csi_Info==0);
+		//reg->Load(L"StatusBar.HideColumns", nHideStatusColumns);
+		for (int i = csi_Info; i < csi_Last; i++)
+		{
+			LPCWSTR pszName = gpConEmu->mp_Status->GetSettingName((CEStatusItems)i);
+			if (pszName)
+				reg->Load(pszName, isStatusColumnHidden[i]);
+			else
+				isStatusColumnHidden[i] = false;
+		}
+
 		//reg->Load(L"GUIpb", isGUIpb);
 		reg->Load(L"Tabs", isTabs);
 		reg->Load(L"TabSelf", isTabSelf);
@@ -1952,7 +1995,7 @@ void Settings::LoadSettings()
 
 		reg->Load(L"TabFontFace", sTabFontFace, countof(sTabFontFace));
 		reg->Load(L"TabFontCharSet", nTabFontCharSet);
-		reg->Load(L"TabFontHeight", nTabFontHeight);
+		reg->Load(L"TabFontHeight", nTabFontHeight); nTabFontHeight = max(4,nTabFontHeight);
 
 		if (!reg->Load(L"SaveAllEditors", &sSaveAllMacro) || (sSaveAllMacro && !*sSaveAllMacro)) { SafeFree(sSaveAllMacro); }
 
@@ -2233,7 +2276,7 @@ BOOL Settings::FontRangeSave(SettingsBase* reg, int Idx)
 
 void Settings::SaveSizePosOnExit()
 {
-	if (!this || !isAutoSaveSizePos)
+	if (!this || !(isAutoSaveSizePos || mb_StatusSettingsWasChanged))
 		return;
 
 	// При закрытии окна крестиком - сохранять только один раз,
@@ -2246,13 +2289,30 @@ void Settings::SaveSizePosOnExit()
 
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
 	{
-		reg->Save(L"ConWnd Width", wndWidth);
-		reg->Save(L"ConWnd Height", wndHeight);
-		reg->Save(L"16bit Height", ntvdmHeight);
-		reg->Save(L"ConWnd X", wndX);
-		reg->Save(L"ConWnd Y", wndY);
-		reg->Save(L"Cascaded", wndCascade);
-		reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
+		if (isAutoSaveSizePos)
+		{
+			reg->Save(L"ConWnd Width", wndWidth);
+			reg->Save(L"ConWnd Height", wndHeight);
+			reg->Save(L"16bit Height", ntvdmHeight);
+			reg->Save(L"ConWnd X", wndX);
+			reg->Save(L"ConWnd Y", wndY);
+			reg->Save(L"Cascaded", wndCascade);
+			reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
+		}
+
+		if (mb_StatusSettingsWasChanged)
+			SaveStatusSettings(reg);
+		//{
+		//	mb_StatusSettingsWasChanged = false;
+		//	reg->Save(L"StatusBar.Show", isStatusBarShow);
+		//	for (int i = csi_Info; i < csi_Last; i++)
+		//	{
+		//		LPCWSTR pszName = gpConEmu->mp_Status->GetSettingName((CEStatusItems)i);
+		//		if (pszName)
+		//			reg->Save(pszName, isStatusColumnHidden[i]);
+		//	}
+		//}
+
 		reg->CloseKey();
 	}
 
@@ -2401,6 +2461,24 @@ void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	reg->Save(L"ClipboardFirstLine", pApp->isPasteFirstLine);
 }
 
+void Settings::SaveStatusSettings(SettingsBase* reg)
+{
+	mb_StatusSettingsWasChanged = false;
+	reg->Save(L"StatusBar.Show", isStatusBarShow);
+	reg->Save(L"StatusFontFace", sStatusFontFace);
+	reg->Save(L"StatusFontCharSet", nStatusFontCharSet);
+	reg->Save(L"StatusFontHeight", nStatusFontHeight);
+	reg->Save(L"StatusBar.Color.Back", nStatusBarBack);
+	reg->Save(L"StatusBar.Color.Light", nStatusBarLight);
+	reg->Save(L"StatusBar.Color.Dark", nStatusBarDark);
+	for (int i = csi_Info; i < csi_Last; i++)
+	{
+		LPCWSTR pszName = gpConEmu->mp_Status->GetSettingName((CEStatusItems)i);
+		if (pszName)
+			reg->Save(pszName, isStatusColumnHidden[i]);
+	}
+}
+
 BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 {
 	BOOL lbRc = FALSE;
@@ -2509,6 +2587,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		//reg->Save(L"UseColorKey", isColorKey);		
 		//reg->Save(L"ColorKey", ColorKey);		
 		reg->Save(L"UserScreenTransparent", isUserScreenTransparent);		
+		reg->Save(L"ColorKeyTransparent", isColorKeyTransparent);
+		reg->Save(L"ColorKeyValue", nColorKeyValue);
 		DWORD saveMode = (ghWnd == NULL) 
 					? gpConEmu->WindowMode
 					: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal);
@@ -2598,6 +2678,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"DragPanelBothEdges", isDragPanelBothEdges);
 		reg->Save(L"KeyBarRClick", isKeyBarRClick);
 		//reg->Save(L"GUIpb", isGUIpb);
+		SaveStatusSettings(reg);
 		reg->Save(L"Tabs", isTabs);
 		reg->Save(L"TabSelf", isTabSelf);
 		reg->Save(L"TabLazy", isTabLazy);
@@ -3996,7 +4077,7 @@ bool Settings::CmdTaskXch(int anIndex1, int anIndex2)
 
 // Вернуть заданный VkMod, или 0 если не задан
 // nDescrID = vkXXX (e.g. vkMinimizeRestore)
-DWORD Settings::GetHotkeyById(int nDescrID)
+DWORD Settings::GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK)
 {
 	if (!gpSetCls || !gpSetCls->m_HotKeys)
 	{
@@ -4008,32 +4089,35 @@ DWORD Settings::GetHotkeyById(int nDescrID)
 
 	for (int j = -1;; j++)
 	{
-		ConEmuHotKey *ppHK;
+		ConEmuHotKey *pHK;
 
 		if (j == -1)
 		{
 			if (iLastFound == -1)
 				continue;
 			else
-				ppHK = (gpSetCls->m_HotKeys + iLastFound);
+				pHK = (gpSetCls->m_HotKeys + iLastFound);
 		}
 		else
 		{
-			ppHK = (gpSetCls->m_HotKeys + j);
+			pHK = (gpSetCls->m_HotKeys + j);
 		}
 
-		if (!ppHK->DescrLangID)
+		if (!pHK->DescrLangID)
 			break;
 
-		if (ppHK->DescrLangID == nDescrID)
+		if (pHK->DescrLangID == nDescrID)
 		{
-			iLastFound = (int)(ppHK - gpSetCls->m_HotKeys);
-			DWORD VkMod = ppHK->VkMod;
-			if (ppHK->HkType == chk_Modifier)
+			iLastFound = (int)(pHK - gpSetCls->m_HotKeys);
+			DWORD VkMod = pHK->VkMod;
+			if (pHK->HkType == chk_Modifier)
 			{
 				_ASSERTE(VkMod == GetHotkey(VkMod));
 				VkMod = GetHotkey(VkMod); // младший байт
 			}
+
+			if (ppHK)
+				*ppHK = pHK;
 			return VkMod;
 		}
 	}
@@ -4248,6 +4332,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkMultiNew,       chk_User, &isMulti, L"Multi.NewConsole",      /*&vmMultiNew,*/ MakeHotKey('W',VK_LWIN), CConEmuCtrl::key_MultiNew},
 		{vkMultiNewShift,  chk_User, &isMulti, L"Multi.NewConsoleShift", /*&vmMultiNewShift,*/ MakeHotKey('W',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNewShift},
 		{vkMultiNewPopup,  chk_User, &isMulti, L"Multi.NewConsolePopup", /*&vmMultiNew,*/ MakeHotKey('N',VK_LWIN), CConEmuCtrl::key_MultiNewPopup},
+		{vkMultiNewAttach, chk_User, &isMulti, L"Multi.NewAttach",       MakeHotKey('G',VK_LWIN), CConEmuCtrl::key_MultiNewAttach, true/*OnKeyUp*/},
 		{vkMultiNext,      chk_User, &isMulti, L"Multi.Next",            /*&vmMultiNext,*/ MakeHotKey('Q',VK_LWIN), CConEmuCtrl::key_MultiNext},
 		{vkMultiNextShift, chk_User, &isMulti, L"Multi.NextShift",       /*&vmMultiNextShift,*/ MakeHotKey('Q',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNextShift},
 		{vkMultiRecreate,  chk_User, &isMulti, L"Multi.Recreate",        /*&vmMultiRecreate,*/ MakeHotKey(192/*VK_тильда*/,VK_LWIN), CConEmuCtrl::key_MultiRecreate},

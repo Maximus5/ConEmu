@@ -311,6 +311,7 @@ void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, size_t cbSize)
 		return;
 
 	pHdr->nCmd = nCmd;
+	pHdr->bAsync = FALSE; // сброс
 	pHdr->nSrcThreadId = GetCurrentThreadId();
 	pHdr->nSrcPID = GetCurrentProcessId();
 	// Обмен данными идет и между 32bit & 64bit процессами, размеры __int64 недопустимы
@@ -540,10 +541,10 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(enum CmdOnCreateType aCmd,
 }
 
 // Forward
-//CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner);
+//CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner);
 
 // Выполнить в GUI (в CRealConsole)
-CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner)
+CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner)
 {
 	wchar_t szGuiPipeName[128];
 
@@ -584,7 +585,7 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner)
 }
 
 // Выполнить в ConEmuC
-CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult)
+CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult)
 {
 	wchar_t szGuiPipeName[128];
 
@@ -595,12 +596,13 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner
 	//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	msprintf(szGuiPipeName, countof(szGuiPipeName), CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner, bAsyncNoResult);
+	_ASSERTE(pIn->hdr.bAsync == bAsyncNoResult);
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
 	return lpRet;
 }
 
 // Выполнить в ConEmuHk
-CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, const CESERVER_REQ* pIn, HWND hOwner)
+CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner)
 {
 	wchar_t szGuiPipeName[128];
 
@@ -623,7 +625,7 @@ CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, const CESERVER_REQ* pIn, HWND hOwner)
 //WARNING!!!
 //   Эта процедура не может получить с сервера более 600 байт данных!
 // В заголовке hOwner в дебаге может быть отображена ошибка
-CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult)
+CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult)
 {
 	CESERVER_REQ* pOut = NULL;
 	HANDLE hPipe = NULL;
@@ -637,6 +639,8 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 		_ASSERTE(pIn && szGuiPipeName);
 		return NULL;
 	}
+
+	pIn->hdr.bAsync = bAsyncNoResult;
 
 	_ASSERTE(pIn->hdr.nSrcPID && pIn->hdr.nSrcThreadId);
 	_ASSERTE(pIn->hdr.cbSize >= sizeof(pIn->hdr));

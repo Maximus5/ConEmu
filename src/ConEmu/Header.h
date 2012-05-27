@@ -199,13 +199,13 @@ LRESULT SENDMESSAGE(HWND h,UINT m,WPARAM w,LPARAM l);
 extern BOOL gbInDisplayLastError;
 int DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0, DWORD dwMsgFlags = 0, LPCWSTR asTitle = NULL);
 
-COORD /*__forceinline*/ MakeCoord(int W,int H);
+COORD /*__forceinline*/ MakeCoord(int X,int Y);
 //{
 //	COORD rc; rc.X=W; rc.Y=H;
 //	return rc;
 //}
 
-POINT /*__forceinline*/ MakePoint(int W,int H);
+POINT /*__forceinline*/ MakePoint(int X,int Y);
 
 RECT /*__forceinline*/ MakeRect(int W,int H);
 //{

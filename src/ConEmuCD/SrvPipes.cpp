@@ -123,7 +123,8 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 			//SendConsoleEvent(&r, 1);
 			if (!WriteInputQueue(&r))
 			{
-				_ASSERTE(FALSE);
+				DWORD nErrCode = GetLastError(); UNREFERENCED_PARAMETER(nErrCode);
+				_ASSERTE(FALSE && "Input buffer overflow?");
 				WARNING("Если буфер переполнен - ждать? Хотя если будем ждать здесь - может повиснуть GUI на записи в pipe...");
 			}
 		}
@@ -158,6 +159,9 @@ BOOL WINAPI CmdServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppR
 		gpSrv->CmdServer.BreakConnection(pInst);
 		return FALSE;
 	}
+
+	if (pIn->hdr.bAsync)
+		gpSrv->CmdServer.BreakConnection(pInst);
 
 	if (ProcessSrvCommand(*pIn, &pOut))
 	{

@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Background.h"
 #include "TrayIcon.h"
 #include "LoadImg.h"
+#include "Status.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "version.h"
 
@@ -703,6 +704,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_FEATURE_FAR, L"Far Manager",    thi_Far/*,     OnInitDialog_Ext*/},
 		{IDD_SPG_KEYS,        L"Keys",           thi_Keys/*,    OnInitDialog_Keys*/},
 		{IDD_SPG_TABS,        L"Tabs",           thi_Tabs/*,    OnInitDialog_Tabs*/},
+		{IDD_SPG_STATUSBAR,   L"Status bar",     thi_Status,/*  OnInitDialog_Status*/},
 		{IDD_SPG_COLORS,      L"Colors",         thi_Colors/*,  OnInitDialog_Color*/},
 		{IDD_SPG_CMDTASKS,    L"Tasks",          thi_Tasks/*,   OnInitDialog_CmdTasks*/},
 		{IDD_SPG_APPDISTINCT, L"App distinct",   thi_Apps/*,    OnInitDialog_CmdTasks*/},
@@ -1176,6 +1178,8 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 			PostMessage(gpSetCls->mh_Tabs[thi_Views], gpSetCls->mn_MsgLoadFontFromMain, 0, 0);
 		if (gpSetCls->mh_Tabs[thi_Tabs])
 			PostMessage(gpSetCls->mh_Tabs[thi_Tabs], gpSetCls->mn_MsgLoadFontFromMain, 0, 0);
+		if (gpSetCls->mh_Tabs[thi_Status])
+			PostMessage(gpSetCls->mh_Tabs[thi_Status], gpSetCls->mn_MsgLoadFontFromMain, 0, 0);
 	}
 
 	return 0;
@@ -1753,8 +1757,8 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	CheckDlgButton(hWnd2, cbFixAltOnAltTab, gpSet->isFixAltOnAltTab);
 
+	CheckDlgButton(hWnd2, cbEnableMouse, !gpSet->isDisableMouse);
 	CheckDlgButton(hWnd2, cbSkipActivation, gpSet->isMouseSkipActivation);
-
 	CheckDlgButton(hWnd2, cbSkipMove, gpSet->isMouseSkipMoving);
 
 	CheckDlgButton(hWnd2, cbMonitorConsoleLang, gpSet->isMonitorConsoleLang);
@@ -2456,6 +2460,49 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	return 0;
 }
 
+LRESULT CSettings::OnInitDialog_Status(HWND hWnd2, bool abInitial)
+{
+	SetDlgItemText(hWnd2, tStatusFontFace, gpSet->sStatusFontFace);
+
+	if (gpSetCls->mh_EnumThread == NULL)  // Если шрифты уже считаны
+		OnInitDialog_CopyFonts(hWnd2, tStatusFontFace, 0); // можно скопировать список с вкладки mh_Tabs[thi_Main]
+
+	DWORD nVal = gpSet->nStatusFontHeight;
+	FillListBoxInt(hWnd2, tStatusFontHeight, SettingsNS::FSizesSmall, nVal);
+
+	FillListBoxCharSet(hWnd2, tStatusFontCharset, gpSet->nStatusFontCharSet);
+
+	// Colors
+	for(uint c = c35; c <= c37; c++)
+		ColorSetEdit(hWnd2, c);
+
+
+	CheckDlgButton(hWnd2, cbShowStatusBar, gpSet->isStatusBarShow);
+	CheckDlgButton(hWnd2, cbStatusActiveVCon, !gpSet->isStatusColumnHidden[csi_ActiveVCon]);
+	CheckDlgButton(hWnd2, cbStatusWindowPos, !gpSet->isStatusColumnHidden[csi_WindowPos]);
+	CheckDlgButton(hWnd2, cbStatusWindowSize, !gpSet->isStatusColumnHidden[csi_WindowSize]);
+	CheckDlgButton(hWnd2, cbStatusActiveBuffer, !gpSet->isStatusColumnHidden[csi_ActiveBuffer]);
+	CheckDlgButton(hWnd2, cbStatusConsolePos, !gpSet->isStatusColumnHidden[csi_ConsolePos]);
+	CheckDlgButton(hWnd2, cbStatusConsoleSize, !gpSet->isStatusColumnHidden[csi_ConsoleSize]);
+	CheckDlgButton(hWnd2, cbStatusBufferSize, !gpSet->isStatusColumnHidden[csi_BufferSize]);
+	CheckDlgButton(hWnd2, cbStatusCursorX, !gpSet->isStatusColumnHidden[csi_CursorX]);
+	CheckDlgButton(hWnd2, cbStatusCursorY, !gpSet->isStatusColumnHidden[csi_CursorY]);
+	CheckDlgButton(hWnd2, cbStatusCursorSize, !gpSet->isStatusColumnHidden[csi_CursorSize]);
+	CheckDlgButton(hWnd2, cbStatusCursorInfo, !gpSet->isStatusColumnHidden[csi_CursorInfo]);
+	CheckDlgButton(hWnd2, cbStatusServer, !gpSet->isStatusColumnHidden[csi_Server]);
+	CheckDlgButton(hWnd2, cbStatusWindowClient, !gpSet->isStatusColumnHidden[csi_WindowClient]);
+	CheckDlgButton(hWnd2, cbStatusWindowWorkspace, !gpSet->isStatusColumnHidden[csi_WindowWork]);
+	CheckDlgButton(hWnd2, cbStatusCapsLock, !gpSet->isStatusColumnHidden[csi_CapsLock]);
+	CheckDlgButton(hWnd2, cbStatusTransparency, !gpSet->isStatusColumnHidden[csi_Transparency]);
+	CheckDlgButton(hWnd2, cbStatusNumLock, !gpSet->isStatusColumnHidden[csi_NumLock]);
+	CheckDlgButton(hWnd2, cbStatusScrlLock, !gpSet->isStatusColumnHidden[csi_ScrollLock]);
+	CheckDlgButton(hWnd2, cbStatusInputLang, !gpSet->isStatusColumnHidden[csi_InputLocale]);
+
+
+	RegisterTipsFor(hWnd2);
+	return 0;
+}
+
 LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 {
 	#if 0
@@ -2471,6 +2518,8 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 
 	for(uint c = c0; c <= MAX_COLOR_EDT_ID; c++)
 		ColorSetEdit(hWnd2, c);
+	// +Color key
+	ColorSetEdit(hWnd2, c38);
 
 	DWORD nVal = gpSet->AppStd.nExtendColorIdx;
 	FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
@@ -2533,6 +2582,7 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 	SendDlgItemMessage(hWnd2, slTransparent, TBM_SETPOS  , (WPARAM) true, (LPARAM) gpSet->nTransparent);
 	CheckDlgButton(hWnd2, cbTransparent, (gpSet->nTransparent!=255) ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(hWnd2, cbUserScreenTransparent, gpSet->isUserScreenTransparent ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(hWnd2, cbColorKeyTransparent, gpSet->isColorKeyTransparent);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -3251,6 +3301,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbRSelectionFix:
 			gpSet->isRSelFix = IsChecked(hWnd2, cbRSelectionFix);
 			break;
+		case cbEnableMouse:
+			gpSet->isDisableMouse = IsChecked(hWnd2, cbEnableMouse) ? false : true;
+			break;
 		case cbSkipActivation:
 			gpSet->isMouseSkipActivation = IsChecked(hWnd2, cbSkipActivation);
 			break;
@@ -3777,6 +3830,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				gpConEmu->OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
 				gpConEmu->UpdateWindowRgn();
 			} break;
+		case cbColorKeyTransparent:
+			{
+				gpSet->isColorKeyTransparent = IsChecked(hWnd2, cbColorKeyTransparent);
+				gpConEmu->OnTransparent();
+			} break;
 
 
 		/* *** Text selections options *** */
@@ -3823,6 +3881,90 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isFarGotoEditor = IsChecked(hWnd2,CB);
 			break;
 		/* *** Text selections options *** */
+
+
+		/* *** Status bar options *** */
+		case cbShowStatusBar:
+			gpSet->isStatusBarShow = IsChecked(hWnd2,CB);
+			gpConEmu->OnSize();
+			break;
+		case cbStatusActiveVCon:
+			gpSet->isStatusColumnHidden[csi_ActiveVCon] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusWindowPos:
+			gpSet->isStatusColumnHidden[csi_WindowPos] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusWindowSize:
+			gpSet->isStatusColumnHidden[csi_WindowSize] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusActiveBuffer:
+			gpSet->isStatusColumnHidden[csi_ActiveBuffer] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusConsolePos:
+			gpSet->isStatusColumnHidden[csi_ConsolePos] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusConsoleSize:
+			gpSet->isStatusColumnHidden[csi_ConsoleSize] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusBufferSize:
+			gpSet->isStatusColumnHidden[csi_BufferSize] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusCursorX:
+			gpSet->isStatusColumnHidden[csi_CursorX] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusCursorY:
+			gpSet->isStatusColumnHidden[csi_CursorY] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusCursorSize:
+			gpSet->isStatusColumnHidden[csi_CursorSize] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusCursorInfo:
+			gpSet->isStatusColumnHidden[csi_CursorInfo] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusServer:
+			gpSet->isStatusColumnHidden[csi_Server] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusWindowClient:
+			gpSet->isStatusColumnHidden[csi_WindowClient] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusWindowWorkspace:
+			gpSet->isStatusColumnHidden[csi_WindowWork] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusCapsLock:
+			gpSet->isStatusColumnHidden[csi_CapsLock] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusTransparency:
+			gpSet->isStatusColumnHidden[csi_Transparency] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusNumLock:
+			gpSet->isStatusColumnHidden[csi_NumLock] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusScrlLock:
+			gpSet->isStatusColumnHidden[csi_ScrollLock] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		case cbStatusInputLang:
+			gpSet->isStatusColumnHidden[csi_InputLocale] = !IsChecked(hWnd2,CB);
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+			break;
+		/* *** Status bar options *** */
 
 
 		/* *** Update settings *** */
@@ -4011,6 +4153,20 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					// done
 				}
 			} // else if (CB >= c32 && CB <= c34)
+			else if (CB >= c35 && CB <= c37)
+			{
+				if (ColorEditDialog(hWnd2, CB))
+				{
+					gpConEmu->mp_Status->UpdateStatusBar(true);
+				}
+			} // if (CB >= c35 && CB <= c37)
+			else if (CB == c38)
+			{
+				if (ColorEditDialog(hWnd2, CB))
+				{
+					gpConEmu->OnTransparent();
+				}
+			} // if (CB == c38)
 			else if (CB >= c0 && CB <= MAX_COLOR_EDT_ID)
 			{
 				if (ColorEditDialog(hWnd2, CB))
@@ -4565,7 +4721,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				}
 			}
 			
-			if (TB >= tc32 && TB <= tc34)
+			if (TB >= tc32 && TB <= tc38)
 			{
 				COLORREF color = 0;
 
@@ -4614,6 +4770,22 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						if (TB >= tc0 && TB <= tc31)
 							gpConEmu->Update(true);
 
+						InvalidateRect(GetDlgItem(hWnd2, TB - (tc0-c0)), 0, 1);
+					}
+				}
+			}
+		} // else if (hWnd2 == mh_Tabs[thi_Colors])
+		else if (hWnd2 == mh_Tabs[thi_Status])
+		{
+			COLORREF color = 0;
+			
+			if ((TB >= tc35 && TB <= tc37)
+				&& GetColorById(TB - (tc0-c0), &color))
+			{
+				if (GetColorRef(hWnd2, TB, &color))
+				{
+					if (SetColorById(TB - (tc0-c0), color))
+					{
 						InvalidateRect(GetDlgItem(hWnd2, TB - (tc0-c0)), 0, 1);
 					}
 				}
@@ -4857,6 +5029,45 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		gpConEmu->mp_TabBar->UpdateTabFont();
 		break;
 	} // tTabFontFace, tTabFontHeight, tTabFontCharset
+
+	case tStatusFontFace:
+	case tStatusFontHeight:
+	case tStatusFontCharset:
+	{
+		if (HIWORD(wParam) == CBN_EDITCHANGE)
+		{
+			switch (wId)
+			{
+			case tStatusFontFace:
+				GetDlgItemText(hWnd2, wId, gpSet->sStatusFontFace, countof(gpSet->sStatusFontFace)); break;
+			case tStatusFontHeight:
+				gpSet->nStatusFontHeight = GetNumber(hWnd2, wId); break;
+			}
+			gpConEmu->mp_Status->UpdateStatusFont();
+		}
+		else if (HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+
+			switch (wId)
+			{
+			case tStatusFontFace:
+				SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->sStatusFontFace);
+				break;
+			case tStatusFontHeight:
+				if (nSel >= 0 && nSel < (INT_PTR)countof(SettingsNS::FSizesSmall))
+					gpSet->nStatusFontHeight = SettingsNS::FSizesSmall[nSel];
+				break;
+			case tStatusFontCharset:
+				if (nSel >= 0 && nSel < (INT_PTR)countof(SettingsNS::nCharSets))
+					gpSet->nStatusFontCharSet = SettingsNS::nCharSets[nSel];
+				else
+					gpSet->nStatusFontCharSet = DEFAULT_CHARSET;
+			}
+			gpConEmu->mp_Status->UpdateStatusFont();
+		}
+		break;
+	} // tStatusFontFace, tStatusFontHeight, tStatusFontCharset
 
 	case lbCmdTasks:
 	{
@@ -5461,7 +5672,8 @@ INT_PTR CSettings::OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 {
 	DWORD wID = wParam;
 
-	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName || wID == tTabFontFace)
+	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName
+		|| wID == tTabFontFace || wID == tStatusFontFace)
 	{
 		MEASUREITEMSTRUCT *pItem = (MEASUREITEMSTRUCT*)lParam;
 		pItem->itemHeight = 15; //pItem->itemHeight;
@@ -5474,7 +5686,8 @@ INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 {
 	DWORD wID = wParam;
 
-	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName || wID == tTabFontFace)
+	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName
+		|| wID == tTabFontFace || wID == tStatusFontFace)
 	{
 		DRAWITEMSTRUCT *pItem = (DRAWITEMSTRUCT*)lParam;
 		wchar_t szText[128]; szText[0] = 0;
@@ -5559,6 +5772,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_TABS:
 			gpSetCls->OnInitDialog_Tabs(hWnd2);
 			break;
+		case IDD_SPG_STATUSBAR:
+			gpSetCls->OnInitDialog_Status(hWnd2, true);
+			break;
 		case IDD_SPG_COLORS:
 			gpSetCls->OnInitDialog_Color(hWnd2);
 			break;
@@ -5617,6 +5833,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			}
 			break;
 		case IDD_SPG_TABS:    /*gpSetCls->OnInitDialog_Tabs(hWnd2);*/   break;
+		case IDD_SPG_STATUSBAR:
+			gpSetCls->OnInitDialog_Status(hWnd2, false);
+			break;
 		case IDD_SPG_COLORS:  /*gpSetCls->OnInitDialog_Color(hWnd2);*/  break;
 		case IDD_SPG_CMDTASKS:
 			gpSetCls->OnInitDialog_Tasks(hWnd2, false);
@@ -5690,7 +5909,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			{
 				WORD wID = GetDlgCtrlID((HWND)lParam);
 
-				if ((wID >= c0 && wID <= MAX_COLOR_EDT_ID) || (wID >= c32 && wID <= c34))
+				if ((wID >= c0 && wID <= MAX_COLOR_EDT_ID) || (wID >= c32 && wID <= c38))
 					return gpSetCls->ColorCtlStatic(hWnd2, wID, (HWND)lParam);
 
 				return 0;
@@ -5769,6 +5988,8 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 					gpSetCls->OnInitDialog_CopyFonts(hWnd2, tThumbsFontName, tTilesFontName, 0);
 				else if (hWnd2 == gpSetCls->mh_Tabs[thi_Tabs])
 					gpSetCls->OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0);
+				else if (hWnd2 == gpSetCls->mh_Tabs[thi_Status])
+					gpSetCls->OnInitDialog_CopyFonts(hWnd2, tStatusFontFace, 0);
 					
 			}
 			else if (messg == gpSetCls->mn_MsgUpdateCounter)
@@ -9928,7 +10149,7 @@ INT_PTR CSettings::ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem)
 			{
 				cr = ptc->ColorRGB;
 			}
-		}
+		} // if (c >= c32 && c <= c34)
 		else
 		{
 			gpSetCls->GetColorById(c, &cr);
@@ -9943,35 +10164,79 @@ INT_PTR CSettings::ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem)
 
 bool CSettings::GetColorById(WORD nID, COLORREF* color)
 {
-	if (nID <= c31)
-		*color = gpSet->Colors[nID - c0];
-	else if (nID == c32)
+	switch (nID)
+	{
+	case c32:
 		*color = gpSet->ThSet.crBackground.ColorRGB;
-	else if (nID == c33)
+		break;
+	case c33:
 		*color = gpSet->ThSet.crPreviewFrame.ColorRGB;
-	else if (nID == c34)
+		break;
+	case c34:
 		*color = gpSet->ThSet.crSelectFrame.ColorRGB;
-	else
-		return false;
+		break;
+	case c35:
+		*color = gpSet->nStatusBarBack;
+		break;
+	case c36:
+		*color = gpSet->nStatusBarLight;
+		break;
+	case c37:
+		*color = gpSet->nStatusBarDark;
+		break;
+	case c38:
+		*color = gpSet->nColorKeyValue;
+		break;
 
+	default:
+		if (nID <= c31)
+			*color = gpSet->Colors[nID - c0];
+		else
+			return false;
+	}
+	
 	return true;
 }
 
 bool CSettings::SetColorById(WORD nID, COLORREF color)
 {
-	if (nID <= c31)
+	switch (nID)
 	{
-		gpSet->Colors[nID - c0] = color;
-		gpSet->mb_FadeInitialized = false;
-	}
-	else if (nID == c32)
+	case c32:
 		gpSet->ThSet.crBackground.ColorRGB = color;
-	else if (nID == c33)
+		break;
+	case c33:
 		gpSet->ThSet.crPreviewFrame.ColorRGB = color;
-	else if (nID == c34)
+		break;
+	case c34:
 		gpSet->ThSet.crSelectFrame.ColorRGB = color;
-	else
-		return false;
+		break;
+	case c35:
+		gpSet->nStatusBarBack = color;
+		gpConEmu->mp_Status->UpdateStatusBar(true);
+		break;
+	case c36:
+		gpSet->nStatusBarLight = color;
+		gpConEmu->mp_Status->UpdateStatusBar(true);
+		break;
+	case c37:
+		gpSet->nStatusBarDark = color;
+		gpConEmu->mp_Status->UpdateStatusBar(true);
+		break;
+	case c38:
+		gpSet->nColorKeyValue = color;
+		gpConEmu->OnTransparent();
+		break;
+
+	default:
+		if (nID <= c31)
+		{
+			gpSet->Colors[nID - c0] = color;
+			gpSet->mb_FadeInitialized = false;
+		}
+		else
+			return false;
+	}
 
 	return true;
 }
@@ -10112,7 +10377,8 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 		else
 		{
 			RECT rcWnd, rcWork; GetClientRect(ghWnd, &rcWnd);
-			rcWork = gpConEmu->CalcRect(CER_WORKSPACE, rcWnd, CER_MAINCLIENT);
+			WARNING("DoubleView: тут непонятно, какой и чей размер, видимо, нужно ветвиться, и хранить Background в самих VCon");
+			rcWork = gpConEmu->CalcRect(CER_BACK, rcWnd, CER_MAINCLIENT);
 
 			// Смотрим дальше
 			if (gpSet->bgOperation == eStretch)

@@ -1609,6 +1609,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Status.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TabBar.cpp"
 				>
 			</File>
@@ -1658,6 +1662,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\About.h"
+				>
+			</File>
 			<File
 				RelativePath=".\Attach.h"
 				>
@@ -1824,6 +1832,10 @@
 			</File>
 			<File
 				RelativePath=".\ScreenDump.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Status.h"
 				>
 			</File>
 			<File

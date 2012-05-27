@@ -61,6 +61,7 @@ $(INTDIR)\Recreate.obj \
 $(INTDIR)\Registry.obj \
 $(INTDIR)\RgnDetect.obj \
 $(INTDIR)\ScreenDump.obj \
+$(INTDIR)\Status.obj \
 $(INTDIR)\TabBar.obj \
 $(INTDIR)\TabID.obj \
 $(INTDIR)\TaskBar.obj \
@@ -288,6 +289,8 @@ $(INTDIR)\Registry.obj: Registry.cpp Registry.h
 $(INTDIR)\RgnDetect.obj: ../common/RgnDetect.cpp
 
 $(INTDIR)\ScreenDump.obj: ScreenDump.cpp
+
+$(INTDIR)\Status.obj: Status.cpp
 
 $(INTDIR)\TabBar.obj: TabBar.cpp
 

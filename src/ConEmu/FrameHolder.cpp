@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FrameHolder.h"
 #include "ConEmu.h"
 #include "Options.h"
+#include "Status.h"
 
 #ifdef _DEBUG
 static int _nDbgStep = 0; wchar_t _szDbg[512];
@@ -507,6 +508,18 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, BOOL abForceGetDc)
 	hdc = BeginPaint(hWnd, &ps);
 
 	GetClientRect(hWnd, &wr);
+
+	if (gpSet->isStatusBarShow)
+	{
+		int nHeight = gpSet->StatusBarHeight();
+		if (nHeight < (wr.bottom - wr.top))
+		{
+			RECT rcStatus = {wr.left, wr.bottom - nHeight, wr.right, wr.bottom};
+			gpConEmu->mp_Status->PaintStatus(hdc, rcStatus);
+			wr.bottom = rcStatus.top;
+		}
+	}
+
 	cr = wr;
 
 	if (gpConEmu->DrawType() == fdt_Aero)

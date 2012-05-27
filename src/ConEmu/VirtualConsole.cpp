@@ -3732,18 +3732,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 	}
 #endif
 
-	//else if (!mpsz_ConChar || !mpn_ConAttrEx)
-	//	lbSimpleBlack = TRUE;
 	if (lbSimpleBlack)
 	{
-		//RECT rcWndClient; Get ClientRect(ghWnd, &rcWndClient);
-		//RECT rcCalcCon = gpConEmu->CalcRect(CER_BACK, rcWndClient, CER_MAINCLIENT);
-		//RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
-		//rcClient = gpConEmu->CalcRect(CER_BACK, rcCon, CER_CONSOLE);
-
-		//// Заливка без полос прокруток
-		//::GetClientRect(mh_WndDC, &rcClient);
-
 		// Сброс блокировки, если была
 		LockDcRect(false);
 
@@ -4716,7 +4706,8 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 			mp_RCon->CloseConsole(true, false);
 			break;
 		case IDM_TERMINATECON:
-			mp_RCon->CloseConsoleWindow();
+			//mp_RCon->CloseConsoleWindow();
+			mp_RCon->CloseConsole(false, true);
 			break;
 		case IDM_RESTART:
 		case IDM_RESTARTAS:

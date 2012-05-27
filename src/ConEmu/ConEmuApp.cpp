@@ -380,27 +380,27 @@ void   _free(LPVOID ptr) {
 */
 
 
-COORD /*__forceinline*/ MakeCoord(int W,int H)
+COORD /*__forceinline*/ MakeCoord(int X,int Y)
 {
-	COORD rc; rc.X=W; rc.Y=H;
-	return rc;
+	COORD cr = {(SHORT)X,(SHORT)Y};
+	return cr;
 }
 
-POINT /*__forceinline*/ MakePoint(int W,int H)
+POINT /*__forceinline*/ MakePoint(int X,int Y)
 {
-	POINT rc; rc.x=W; rc.y=H;
-	return rc;
+	POINT pt = {X,Y};
+	return pt;
 }
 
 RECT /*__forceinline*/ MakeRect(int W,int H)
 {
-	RECT rc; rc.left=0; rc.top=0; rc.right=W; rc.bottom=H;
+	RECT rc = {0,0,W,H};
 	return rc;
 }
 
 RECT /*__forceinline*/ MakeRect(int X1, int Y1,int X2,int Y2)
 {
-	RECT rc; rc.left=X1; rc.top=Y1; rc.right=X2; rc.bottom=Y2;
+	RECT rc = {X1,Y1,X2,Y2};
 	return rc;
 }
 

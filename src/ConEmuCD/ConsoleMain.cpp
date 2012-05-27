@@ -5907,11 +5907,19 @@ BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
 			pData->MaxCellCount = lsbi.dwSize.X * lsbi.dwSize.Y;
 			static DWORD nLastFullIndex;
 			pData->CurrentIndex = ++nLastFullIndex;
-			pData->info = lsbi;
+
 			// Еще раз считать информацию по консоли (курсор положение и прочее...)
 			// За время чтения данных - они могли прокрутиться вверх
-			if (GetConsoleScreenBufferInfo(ghConOut, &lsbi))
-				pData->info = lsbi;
+			CONSOLE_SCREEN_BUFFER_INFO lsbi2 = {{0,0}};
+			if (GetConsoleScreenBufferInfo(ghConOut, &lsbi2))
+			{
+				// Обновим только курсор, а то юзер может получить черный экран, вместо ожидаемого тектса
+				// Если во время "dir c:\ /s" запросить AltConsole - получаем черный экран.
+				// Смысл в том, что пока читали строки НИЖЕ курсора - экран уже убежал.
+				lsbi.dwCursorPosition = lsbi2.dwCursorPosition;
+			}
+
+			pData->info = lsbi;
 		}
 	}
 

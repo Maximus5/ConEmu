@@ -168,7 +168,7 @@ class TabBarClass //: public CToolTip
 		void OnAlternative(BOOL abAlternative);
 		LRESULT OnNotify(LPNMHDR nmhdr);
 		void OnChooseTabPopup();
-		void OnNewConPopup();
+		void OnNewConPopup(POINT* ptWhere = NULL, DWORD nFlags = 0);
 		void OnCommand(WPARAM wParam, LPARAM lParam);
 		void OnMouse(int message, int x, int y);
 		// Переключение табов
