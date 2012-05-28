@@ -9,6 +9,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
+2012.05.27a
+[%] Не сохранялись изменения режима окна (Normal/Maximized/Full screen), если перед 'Save settings' не была нажата 'Apply'.
+[%] Некорректные подсказки для пунктов меню настройки Status bar.
+
+
 2012.05.27
 [%] Мышиные события не попадали в консольные приложения (кроме Far) при включенной прокрутке.
 [+] 'Settings' -> 'Features' -> 'Mouse options' -> 'Enable mouse'. По умолчанию включено.
