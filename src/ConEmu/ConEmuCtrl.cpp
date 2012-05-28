@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "TabBar.h"
 #include "VirtualConsole.h"
+#include "ScreenDump.h"
 
 
 const ConEmuHotKey* ConEmuSkipHotKey = ((ConEmuHotKey*)INVALID_HANDLE_VALUE);
@@ -1381,4 +1382,40 @@ LRESULT CConEmuCtrl::SkipOneAppsReleaseHook(int code, WPARAM wParam, LPARAM lPar
 	}
 
 	return CallNextHookEx(mh_SkipOneAppsRelease, code, wParam, lParam);
+}
+
+bool CConEmuCtrl::key_Screenshot(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	MakeScreenshot();
+	return true;
+}
+
+void CConEmuCtrl::MakeScreenshot()
+{
+	BOOL lbRc = FALSE;
+	HDC hScreen = NULL;
+	RECT rcWnd = {};
+	HWND hWnd = GetForegroundWindow();
+
+	if (!hWnd)
+	{
+		DisplayLastError(L"GetForegroundWindow() == NULL");
+		return;
+	}
+
+	GetWindowRect(hWnd, &rcWnd);
+
+	hScreen = GetDC(NULL);
+
+	lbRc = DumpImage(hScreen, NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, NULL);
+
+	if (!lbRc)
+	{
+		DisplayLastError(L"Creating screenshot failed!");
+	}
+
+	ReleaseDC(NULL, hScreen);
 }

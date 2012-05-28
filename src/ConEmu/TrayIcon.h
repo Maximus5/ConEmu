@@ -35,6 +35,7 @@ enum TrayIconMsgSource
 {
 	tsa_Source_None = 0,
 	tsa_Source_Updater,
+	tsa_Config_Error,
 };
 
 class TrayIcon
@@ -52,6 +53,7 @@ class TrayIcon
 		TrayIconMsgSource m_MsgSource;
 		bool mb_SecondTimeoutMsg;
 		DWORD mn_BalloonShowTick;
+		HWND mh_Balloon;
 
 	public:
 		bool isWindowInTray() { return mb_WindowInTray; }

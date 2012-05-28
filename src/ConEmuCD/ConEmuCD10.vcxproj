@@ -818,6 +818,7 @@
     <ClInclude Include="..\common\defines.h" />
     <ClInclude Include="..\common\Execute.h" />
     <ClInclude Include="ExitCodes.h" />
+    <ClInclude Include="GuiHooks.h" />
     <ClInclude Include="..\ConEmuHk\Injects.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MSecurity.h" />

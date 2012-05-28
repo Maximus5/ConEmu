@@ -263,7 +263,8 @@ class CConEmuMain :
 
 		//CProgressBars *ProgressBars;
 		HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_TerminateVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu
-		TCHAR Title[MAX_TITLE_SIZE+192], TitleCmp[MAX_TITLE_SIZE+192]; //, MultiTitle[MAX_TITLE_SIZE+30];
+		TCHAR Title[MAX_TITLE_SIZE+192]; //, TitleCmp[MAX_TITLE_SIZE+192]; //, MultiTitle[MAX_TITLE_SIZE+30];
+		TCHAR TitleTemplate[128];
 		short mn_Progress;
 		//LPTSTR GetTitleStart();
 		BOOL mb_InTimer;
@@ -406,6 +407,7 @@ class CConEmuMain :
 		LPCWSTR GetDefaultTitle(); // вернуть ms_ConEmuVer
 		LPCTSTR GetLastTitle(bool abUseDefault=true);
 		LPCTSTR GetVConTitle(int nIdx);
+		void SetTitleTemplate(LPCWSTR asTemplate);
 		int GetActiveVCon();
 		CVirtualConsole* GetVCon(int nIdx);
 		int IsVConValid(CVirtualConsole* apVCon);

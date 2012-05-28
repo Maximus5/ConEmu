@@ -9,6 +9,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
+[+] ConEmu.exe: параметр /title "Template". В заголовке окна будет отображаться фиксированный текст, а не заголовок активной консоли. В "Template" можно использовать переменные окружения.
+[+] Диалог 'Create new console': в системном меню добавлен пункт 'Reset command history...'.
+[+] Win+H: Make screenshot of active ConEmu window.
+
+
 2012.05.27a
 [%] Не сохранялись изменения режима окна (Normal/Maximized/Full screen), если перед 'Save settings' не была нажата 'Apply'.
 [%] Некорректные подсказки для пунктов меню настройки Status bar.

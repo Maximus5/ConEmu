@@ -107,6 +107,10 @@ CEMenuCommitTab
 "&6. Отобразить закладку"
 "&6. Switch tab commit"
 
+CEMenuShowTabsList
+"&T. Показать список табов"
+"&T. Show all tabs list"
+
 CEMenuGuiMacro
 "&~. Выполнить макрос ConEmu"
 "&~. Execute ConEmu macro"
@@ -171,8 +175,8 @@ CECantStartServer
 "Can't start console server process (ConEmuC.exe)"
 
 CECantStartServer2
-"Не удалось запустить процесс сервера консоли (ConEmuC.exe)\nGetModuleFileName failed"
-"Can't start console server process (ConEmuC.exe)\nGetModuleFileName failed"
+"Не удалось найти файл сервера консоли (ConEmuC.exe)"
+"Can't find console server file (ConEmuC.exe)"
 
 CECantStartServer3
 "Не удалось запустить процесс сервера консоли (ConEmuC.exe)\nConEmuC.exe не найден"
@@ -189,3 +193,43 @@ CEShellExecuteException
 CEColorMappingCreateError
 "При попытке создать секцию для AnnotationInfo произошла ошибка.\nФункции TrueMod будут недоступны.\n"
 "Createing AnnotationInfo section failed.\nTrueMod function will be unavailable.\n"
+
+# ошибка CECMD_GETALLTABS
+CEGetAllTabsFailed
+"ConEmu plugin\nНе удалось получить инфорацию об открытых табах!\nOK"
+"ConEmu plugin\nCan't retrieve opened tabs information!\nOK"
+
+# ошибка выполнения CESERVER_REQ *pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+CEBkError_ExecFailed
+"ConEmu plugin\nНе удалось выполнить команду CECMD_SETBACKGROUND"
+"ConEmu plugin\nCECMD_SETBACKGROUND command execution failed"
+
+# esbr_InvalidArg
+CEBkError_InvalidArg
+"ConEmu plugin\nInvalid *RegisterBackgroundArg"
+"ConEmu plugin\nInvalid *RegisterBackgroundArg"
+
+# esbr_PluginForbidden
+CEBkError_PluginForbidden
+"ConEmu plugin\n\Флажок \"Allow plugins\" выключен в настройках ConEmu (вкладка \"Main\")"
+"ConEmu plugin\n\"Allow plugins\" unchecked in ConEmu settings (\"Main\" page)"
+
+# esbr_ConEmuInShutdown
+CEBkError_ConEmuInShutdown
+"ConEmu plugin\nConsole is closing. This is not an error, just information"
+"ConEmu plugin\nConsole is closing. This is not an error, just information"
+
+# esbr_Unexpected
+CEBkError_Unexpected
+"ConEmu plugin\nUnexpected error in ConEmu"
+"ConEmu plugin\nUnexpected error in ConEmu"
+
+# esbr_InvalidArgSize
+CEBkError_InvalidArgSize
+"ConEmu plugin\nInvalid RegisterBackgroundArg.cbSize"
+"ConEmu plugin\nInvalid RegisterBackgroundArg.cbSize"
+
+# esbr_InvalidArgProc
+CEBkError_InvalidArgProc
+"ConEmu plugin\nInvalid RegisterBackgroundArg.PaintConEmuBackground"
+"ConEmu plugin\nInvalid RegisterBackgroundArg.PaintConEmuBackground"

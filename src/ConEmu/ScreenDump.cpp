@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //WARNING("GdiPlus is XP Only");
 
-BOOL LoadScreen(HDC hScreen, int anWidth, int anHeight, LPBYTE* pScreen, DWORD *dwSize)
+BOOL LoadScreen(HDC hScreen, int anX, int anY, int anWidth, int anHeight, LPBYTE* pScreen, DWORD *dwSize)
 {
 	*pScreen = NULL;
 	*dwSize = 0;
@@ -97,11 +97,11 @@ BOOL LoadScreen(HDC hScreen, int anWidth, int anHeight, LPBYTE* pScreen, DWORD *
 	if (lbHasAlpha)
 	{
 		BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-		bRc = GdiAlphaBlend(hMem, 0,0,iWidth,iHeight, hScreen, 0,0,iWidth,iHeight, bf);
+		bRc = GdiAlphaBlend(hMem, 0,0,iWidth,iHeight, hScreen, anX, anY, iWidth,iHeight, bf);
 	}
 	else
 	{
-		bRc = BitBlt(hMem, 0,0,iWidth,iHeight, hScreen, 0,0, SRCCOPY);
+		bRc = BitBlt(hMem, 0,0,iWidth,iHeight, hScreen, anX, anY, SRCCOPY);
 	}
 
 	BITMAPFILEHEADER bfh;
@@ -111,7 +111,7 @@ BOOL LoadScreen(HDC hScreen, int anWidth, int anHeight, LPBYTE* pScreen, DWORD *
 	bfh.bfReserved2=0;
 	bfh.bfOffBits=sizeof(BITMAPFILEHEADER)+iHdrSize;
 	*dwSize = sizeof(bfh)+iHdrSize+iMemSize;
-	*pScreen = (LPBYTE)LocalAlloc(LPTR, *dwSize);
+	*pScreen = (LPBYTE)calloc(*dwSize,1);
 	BOOL lbRc = FALSE;
 
 	if (*pScreen)
@@ -173,17 +173,24 @@ BOOL LoadScreen(HDC hScreen, int anWidth, int anHeight, LPBYTE* pScreen, DWORD *
 
 
 
-BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anWidth, int anHeight, LPCWSTR pszFile)
+BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int anHeight, LPCWSTR pszFile)
 {
 	BOOL lbRc = FALSE;
 	LPBYTE pScreen = NULL;
 	DWORD cbOut = 0;
 
-	wchar_t szFile[MAX_PATH+1];
-	lstrcpynW(szFile, pszFile, MAX_PATH);
-	wchar_t* pszDot = wcsrchr(szFile, L'.');
+	wchar_t* pszDot = NULL;
+	wchar_t szFile[MAX_PATH+1] = {};
 
-#ifdef PNGDUMP
+	if (pszFile)
+	{
+		lstrcpynW(szFile, pszFile, MAX_PATH);
+		pszDot = wcsrchr(szFile, L'.');
+	}
+
+
+	#ifdef PNGDUMP
+	// Если передали готовый hBitmap - сохранить сразу
 	if (pszDot)
 		lstrcpyW(pszDot, L".png");
 
@@ -191,18 +198,52 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anWidth, int anHeight, LPCWSTR 
 	{
 		return TRUE;
 	}
-#endif
+	#endif
 
-	if (!LoadScreen(hScreen, anWidth, anHeight, &pScreen, &cbOut))
+
+	// иначе - снять копию с hScreen
+	if (!LoadScreen(hScreen, anX, anY, anWidth, anHeight, &pScreen, &cbOut))
 		return FALSE;
 
-#ifdef PNGDUMP
+	if (!*szFile)
+	{
+		//static wchar_t szLastDumpFile[MAX_PATH];
+        SYSTEMTIME st; GetLocalTime(&st);
+        _wsprintf(szFile, SKIPLEN(countof(szFile)) L"%02u%02u%02u%02u%02u%02u",
+        	st.wYear%100, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+
+		OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+		ofn.lStructSize=sizeof(ofn);
+		ofn.hwndOwner = ghWnd;
+		#ifdef PNGDUMP
+		ofn.lpstrFilter = L"PNG (*.png)\0*.png\0JPEG (*.jpg)\0*.jpg\0BMP (*.bmp)\0*.bmp\0\0";
+		ofn.lpstrDefExt = L"png";
+		#else
+		ofn.lpstrFilter = L"BMP (*.bmp)\0*.bmp\0\0";
+		ofn.lpstrDefExt = L"bmp";
+		#endif
+		ofn.nFilterIndex = 1;
+		ofn.lpstrFile = szFile;
+		ofn.nMaxFile = countof(szFile);
+		ofn.lpstrTitle = L"Save screenshot";
+		ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+		        | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
+		if (!GetSaveFileName(&ofn))
+		{
+			lbRc = TRUE; // чтобы не ругалось...
+		    goto wrap;
+	    }
+		//wcscpy_c(szFile, szLastDumpFile);
+	}
+
+	#ifdef PNGDUMP
 	if (SaveImageEx(szFile, pScreen, cbOut))
 	{
-		LocalFree(pScreen);
-		return TRUE;
+		lbRc = TRUE;
+        goto wrap;
 	}
-#endif
+	#endif
+
 
 	if (pScreen && cbOut)
 	{
@@ -223,11 +264,16 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anWidth, int anHeight, LPCWSTR 
 				CloseHandle(hFile);
 			}
 		}
-
-		LocalFree(pScreen);
 	}
 
-	return TRUE;
+wrap:
+	SafeFree(pScreen);
+	return lbRc;
+}
+
+BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anWidth, int anHeight, LPCWSTR pszFile)
+{
+	return DumpImage(hScreen, hBitmap, 0, 0, anWidth, anHeight, pszFile);
 }
 
 BOOL DumpImage(BITMAPINFOHEADER* pHdr, LPVOID pBits, LPCWSTR pszFile)

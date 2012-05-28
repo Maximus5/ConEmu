@@ -367,8 +367,18 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"SCRL");
 				break;
 			case csi_InputLocale:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", (DWORD)mhk_Locale);
-				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
+				// чтобы не задавали вопросов, нафига дублируется.
+				if (LOWORD((DWORD)mhk_Locale) == HIWORD((DWORD)mhk_Locale))
+				{
+					_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%04X", LOWORD((DWORD)mhk_Locale));
+					wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFF");
+				}
+				else
+				{
+					_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", (DWORD)mhk_Locale);
+					wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
+				}
+				
 				break;
 
 			default:

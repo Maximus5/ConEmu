@@ -345,7 +345,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>C:\Far3\ExtendedConsole.dll</OutputFile>
+      <OutputFile>C:\Far3\ConEmu\ExtendedConsole.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -379,7 +379,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>.\Test\Console64.dll</OutputFile>
+      <OutputFile>.\Test\ConEmu\ExtendedConsole64.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -414,7 +414,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>../common/libCRT.lib;chkstk.obj;kernel32.lib;user32.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>..\..\Release\ExtendedConsole.dll</OutputFile>
+      <OutputFile>..\..\Release\ConEmu\ExtendedConsole.dll</OutputFile>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -452,7 +452,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>../common/libCRT64.lib;chkstk.obj;kernel32.lib;user32.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>..\..\Release\ExtendedConsole64.dll</OutputFile>
+      <OutputFile>..\..\Release\ConEmu\ExtendedConsole64.dll</OutputFile>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -485,7 +485,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\Console.dll</OutputFile>
+      <OutputFile>E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmu\ExtendedConsole.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -519,7 +519,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\Console64.dll</OutputFile>
+      <OutputFile>E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmu\ExtendedConsole64.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -550,7 +550,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>Z:\ExtendedConsole.dll</OutputFile>
+      <OutputFile>Z:\ConEmu\ExtendedConsole.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -584,7 +584,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>Z:\ExtendedConsole64.dll</OutputFile>
+      <OutputFile>Z:\ConEmu\ExtendedConsole64.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -615,7 +615,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\ExtendedConsole.dll</OutputFile>
+      <OutputFile>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\ConEmu\ExtendedConsole.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -649,7 +649,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\ExtendedConsole64.dll</OutputFile>
+      <OutputFile>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\ConEmu\ExtendedConsole64.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -683,7 +683,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>..\..\Release.PDB\Console.dll</OutputFile>
+      <OutputFile>..\..\Release.PDB\ConEmu\ExtendedConsole.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -719,7 +719,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>..\..\Release.PDB\Console64.dll</OutputFile>
+      <OutputFile>..\..\Release.PDB\ConEmu\ExtendedConsole64.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -752,7 +752,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>\Far3\Console.dll</OutputFile>
+      <OutputFile>\Far3\ConEmu\ExtendedConsole.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -789,7 +789,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>..\..\Release\Console64.dll</OutputFile>
+      <OutputFile>..\..\Release\ConEmu\ExtendedConsole64.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -822,7 +822,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ExtendedConsole.dll</OutputFile>
+      <OutputFile>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\ExtendedConsole.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -856,7 +856,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>\Far3\Console64.dll</OutputFile>
+      <OutputFile>\Far3\ConEmu\ExtendedConsole64.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -891,7 +891,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>\Far3\ExtendedConsole.dll</OutputFile>
+      <OutputFile>\Far3\ConEmu\ExtendedConsole.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -928,7 +928,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>\Far3\ExtendedConsole64.dll</OutputFile>
+      <OutputFile>\Far3\ConEmu\ExtendedConsole64.dll</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>

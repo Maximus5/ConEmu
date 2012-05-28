@@ -949,6 +949,8 @@ struct Settings
 		bool isModifierExist(BYTE Mod/*VK*/, bool abStrictSingle = false);
 		// Есть ли такой хоткей или модификатор (актуально для VK_APPS)
 		bool isKeyOrModifierExist(BYTE Mod/*VK*/);
+		// Проверить на дубли
+		void CheckHotkeyUnique();
 	private:
 		void LoadHotkeys(SettingsBase* reg);
 		void SaveHotkeys(SettingsBase* reg);

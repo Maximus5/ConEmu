@@ -217,6 +217,7 @@ BEGIN
 	vkPicViewSlide          "PicView Far plugin: Slideshow start"
 	vkPicViewSlower         "PicView Far plugin: Slideshow slower"
     vkRDragKey              "RDrag modifier"
+	vkScreenshot            "Make screenshot of active window"
 	vkShowTabsList          "Show opened tabs list (does not work in Far - use macro instead)"
 	vkTerminateApp          "Terminate active process in current console"
     vkWinAltP               "Show Settings dialog"

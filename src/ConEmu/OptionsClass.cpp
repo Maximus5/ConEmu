@@ -820,6 +820,7 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 		wcscpy_c(ConfigPath, CONEMU_ROOT_KEY L"\\.Vanilla");
 		ConfigName[0] = 0;
 	}
+	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, ConfigName);
 }
 
 void CSettings::SettingsLoaded()
@@ -2080,6 +2081,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 	}
 
 	//ListView_SetSelectionMark(hList, -1);
+	gpSet->CheckHotkeyUnique();
 }
 
 LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
@@ -4921,7 +4923,15 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				GetListBoxByte(hWnd2, wId, SettingsNS::szKeysHot, SettingsNS::nKeysHot, vk);
 				SendDlgItemMessage(hWnd2, hkHotKeySelect, HKM_SETHOTKEY, vk|(vk==VK_DELETE ? (HOTKEYF_EXT<<8) : 0), 0);
-				mp_ActiveHotKey->VkMod = ((DWORD)vk) | (CEHOTKEY_MODMASK & mp_ActiveHotKey->VkMod);
+				DWORD nMod = (CEHOTKEY_MODMASK & mp_ActiveHotKey->VkMod);
+				if (nMod == 0)
+				{
+					// Если модификатора вообще не было - ставим Win
+					BYTE b = VK_LWIN;
+					FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
+					nMod = (VK_LWIN << 8);
+				}
+				mp_ActiveHotKey->VkMod = ((DWORD)vk) | nMod;
 			}
 			else if (mp_ActiveHotKey->HkType == chk_Modifier)
 			{

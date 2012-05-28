@@ -67,8 +67,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	//CECOPYRIGHTSTRING_W /*\x00A9 2009-2011 ConEmu.Maximus5@gmail.com*/ L"\r\n" \
 
 #define pAboutContributors \
-	L"Special Thanks\r\n" \
-	L"––––––––––––––––––––––\r\n" \
 	L"Thanks to all testers and reporters! You help to make the ConEmu better.\r\n" \
 	L"\r\n" \
 	L"Special Thanks\r\n" \

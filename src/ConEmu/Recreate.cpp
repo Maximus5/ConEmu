@@ -121,6 +121,7 @@ void CRecreateDlg::Close()
 INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 #define UM_USER_CONTROLS (WM_USER+121)
+#define UM_FILL_CMDLIST (WM_USER+122)
 
 	CRecreateDlg* pDlg = NULL;
 	if (messg == WM_INITDIALOG)
@@ -160,51 +161,43 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			//#ifdef _DEBUG
 			//SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 			//#endif
+
+			SendMessage(hDlg, UM_FILL_CMDLIST, TRUE, 0);
 			
 			RConStartArgs* pArgs = pDlg->mp_Args;
 			_ASSERTE(pArgs);
-
 			LPCWSTR pszCmd = pArgs->pszSpecialCmd
 			                 ? pArgs->pszSpecialCmd
 			                 : gpConEmu->ActiveCon()->RCon()->GetCmd();
-			int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszCmd);
-
-			if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszCmd);
-
+			//int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszCmd);
+			//if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszCmd);
 			LPCWSTR pszSystem = gpSet->GetCmd();
-
-			if (pszSystem != pszCmd && (pszSystem && pszCmd && (lstrcmpi(pszSystem, pszCmd) != 0)))
-			{
-				nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszSystem);
-
-				if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, pArgs->pszSpecialCmd ? -1 : 0, (LPARAM)pszSystem);
-			}
-
-			LPCWSTR pszHistory = gpSet->HistoryGet();
-
-			if (pszHistory)
-			{
-				while (*pszHistory)
-				{
-					nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszHistory);
-					if (nId < 0)
-						SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pszHistory);
-
-					pszHistory += _tcslen(pszHistory)+1;
-				}
-			}
-
-			//// Обновить группы команд
-			//gpSet->LoadCmdTasks(NULL);
-
-			int nGroup = 0;
-			const Settings::CommandTasks* pGrp = NULL;
-			while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
-			{
-				nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pGrp->pszName);
-				if (nId < 0)
-					SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pGrp->pszName);
-			}
+			//if (pszSystem != pszCmd && (pszSystem && pszCmd && (lstrcmpi(pszSystem, pszCmd) != 0)))
+			//{
+			//	nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszSystem);
+			//	if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, pArgs->pszSpecialCmd ? -1 : 0, (LPARAM)pszSystem);
+			//}
+			//LPCWSTR pszHistory = gpSet->HistoryGet();
+			//if (pszHistory)
+			//{
+			//	while (*pszHistory)
+			//	{
+			//		nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszHistory);
+			//		if (nId < 0)
+			//			SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pszHistory);
+			//		pszHistory += _tcslen(pszHistory)+1;
+			//	}
+			//}
+			////// Обновить группы команд
+			////gpSet->LoadCmdTasks(NULL);
+			//int nGroup = 0;
+			//const Settings::CommandTasks* pGrp = NULL;
+			//while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
+			//{
+			//	nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pGrp->pszName);
+			//	if (nId < 0)
+			//		SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pGrp->pszName);
+			//}
 
 			if (pArgs->bRecreate)
 			{
@@ -376,6 +369,59 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		//	}
 
 		//	return 0;
+
+		case UM_FILL_CMDLIST:
+		{
+			RConStartArgs* pArgs = pDlg->mp_Args;
+			_ASSERTE(pArgs);
+
+			LPCWSTR pszCmd = pArgs->pszSpecialCmd
+			                 ? pArgs->pszSpecialCmd
+			                 : gpConEmu->ActiveCon()->RCon()->GetCmd();
+			int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszCmd);
+
+			if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszCmd);
+
+			LPCWSTR pszSystem = gpSet->GetCmd();
+
+			if (pszSystem != pszCmd && (pszSystem && pszCmd && (lstrcmpi(pszSystem, pszCmd) != 0)))
+			{
+				nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszSystem);
+
+				if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, pArgs->pszSpecialCmd ? -1 : 0, (LPARAM)pszSystem);
+			}
+
+			if (wParam)
+			{
+				LPCWSTR pszHistory = gpSet->HistoryGet();
+
+				if (pszHistory)
+				{
+					while (*pszHistory)
+					{
+						nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszHistory);
+						if (nId < 0)
+							SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pszHistory);
+
+						pszHistory += _tcslen(pszHistory)+1;
+					}
+				}
+			}
+
+			//// Обновить группы команд
+			//gpSet->LoadCmdTasks(NULL);
+
+			int nGroup = 0;
+			const Settings::CommandTasks* pGrp = NULL;
+			while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
+			{
+				nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pGrp->pszName);
+				if (nId < 0)
+					SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pGrp->pszName);
+			}
+		}
+		return 0;
+
 		case UM_USER_CONTROLS:
 		{
 			if (SendDlgItemMessage(hDlg, rbCurrentUser, BM_GETCHECK, 0, 0))
@@ -425,12 +471,21 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetFocus(GetDlgItem(hDlg, tRunAsUser));
 		}
 		return 0;
+
 		case WM_SYSCOMMAND:
 			if (LOWORD(wParam) == ID_RESETCMDHISTORY)
 			{
 				if (IDYES == MessageBox(hDlg, L"Clear command history?", gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2))
 				{
-
+                	gpSet->HistoryReset();
+                	wchar_t* pszCmd = GetDlgItemText(hDlg, IDC_RESTART_CMD);
+                	SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_RESETCONTENT, 0,0);
+                	SendMessage(hDlg, UM_FILL_CMDLIST, FALSE, 0);
+                	if (pszCmd)
+                	{
+                		SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
+                		free(pszCmd);
+                	}
 				}
 				SetWindowLongPtr(hDlg, DWLP_MSGRESULT, 0);
 				return 1;

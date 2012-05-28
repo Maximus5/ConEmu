@@ -401,10 +401,14 @@ void Settings::InitSettings()
 	nIconID = IDI_ICON1;
 	isRClickSendKey = 2;
 	sRClickMacro = NULL;
-	wcscpy_c(szTabConsole, L"<%c> %s `%p`" /*L "%s [%c]" */);
-	wcscpy_c(szTabEditor, L"<%c.%i>{%s} `%p`" /* L"[%s]" */);
-	wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] `%p` *" /* L"[%s] *" */);
-	wcscpy_c(szTabViewer, L"<%c.%i>[%s] `%p`" /* L"{%s}" */);
+	//wcscpy_c(szTabConsole, L"<%c> %s `%p`" /*L "%s [%c]" */);
+	//wcscpy_c(szTabEditor, L"<%c.%i>{%s} `%p`" /* L"[%s]" */);
+	//wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] `%p` *" /* L"[%s] *" */);
+	//wcscpy_c(szTabViewer, L"<%c.%i>[%s] `%p`" /* L"{%s}" */);
+	wcscpy_c(szTabConsole, L"<%c> %s");
+	wcscpy_c(szTabEditor, L"<%c.%i>{%s}");
+	wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] *");
+	wcscpy_c(szTabViewer, L"<%c.%i>[%s]");
 	nTabLenMax = 20;
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
@@ -4172,6 +4176,8 @@ void Settings::SetHotkeyById(int nDescrID, DWORD VkMod)
 			break;
 		}
 	}
+
+	CheckHotkeyUnique();
 }
 
 bool Settings::isModifierExist(BYTE Mod/*VK*/, bool abStrictSingle /*= false*/)
@@ -4291,6 +4297,66 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 	}
 }
 
+void Settings::CheckHotkeyUnique()
+{
+	// Проверка уникальности
+	wchar_t* pszFailMsg = NULL;
+	for (ConEmuHotKey *ppHK1 = gpSetCls->m_HotKeys; ppHK1[0].DescrLangID && ppHK1[1].DescrLangID; ++ppHK1)
+	{
+		if ((ppHK1->HkType == chk_Modifier) || (ppHK1->VkMod == 0))
+			continue;
+		// Некоторые хоткеи имеют "локальное" действие
+		if ((ppHK1->DescrLangID == vkCtrlTab_Left)
+			|| (ppHK1->DescrLangID == vkCtrlTab_Up)
+			|| (ppHK1->DescrLangID == vkCtrlTab_Right)
+			|| (ppHK1->DescrLangID == vkCtrlTab_Down))
+			continue;
+		
+		for (ConEmuHotKey *ppHK2 = ppHK1+1; ppHK2[0].DescrLangID; ++ppHK2)
+		{
+			if ((ppHK2->HkType == chk_Modifier) || (ppHK2->VkMod == 0))
+				continue;
+			// Некоторые хоткеи имеют "локальное" действие
+			if ((ppHK2->DescrLangID == vkCtrlTab_Left)
+				|| (ppHK2->DescrLangID == vkCtrlTab_Up)
+				|| (ppHK2->DescrLangID == vkCtrlTab_Right)
+				|| (ppHK2->DescrLangID == vkCtrlTab_Down))
+				continue;
+
+			if (ppHK1->VkMod == ppHK2->VkMod)
+			{
+				wchar_t szDescr1[512], szDescr2[512], szKey[128];
+
+				if (ppHK1->HkType == chk_Macro)
+					_wsprintf(szDescr1, SKIPLEN(countof(szDescr1)) L"Macro %02i", ppHK1->DescrLangID-vkGuMacro01+1);
+				else if (!LoadString(g_hInstance, ppHK1->DescrLangID, szDescr1, countof(szDescr1)))
+					_wsprintf(szDescr1, SKIPLEN(countof(szDescr1)) L"%i", ppHK1->DescrLangID);
+
+				if (ppHK2->HkType == chk_Macro)
+					_wsprintf(szDescr2, SKIPLEN(countof(szDescr2)) L"Macro %02i", ppHK2->DescrLangID-vkGuMacro01+1);
+				else if (!LoadString(g_hInstance, ppHK2->DescrLangID, szDescr2, countof(szDescr2)))
+					_wsprintf(szDescr2, SKIPLEN(countof(szDescr2)) L"%i", ppHK2->DescrLangID);
+
+				GetHotkeyName(ppHK1, szKey);
+
+				int nAllLen = lstrlen(szDescr1) + lstrlen(szDescr2) + lstrlen(szKey) + 256;
+				pszFailMsg = (wchar_t*)malloc(nAllLen*sizeof(*pszFailMsg));
+				_wsprintf(pszFailMsg, SKIPLEN(nAllLen)
+					L"Hotkey <%s> is not unique\n%s\n%s",
+					szKey, szDescr1, szDescr2);
+
+				goto wrap;
+			}
+		}
+	}
+wrap:
+	if (pszFailMsg)
+	{
+		Icon.ShowTrayIcon(pszFailMsg, tsa_Config_Error);
+		free(pszFailMsg);
+	}
+}
+
 void Settings::SaveHotkeys(SettingsBase* reg)
 {
 	if (!gpSetCls || !gpSetCls->m_HotKeys)
@@ -4367,6 +4433,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkPasteText,      chk_User,  NULL,    L"ClipboardVkAllLines",   MakeHotKey(VK_INSERT,VK_SHIFT), CConEmuCtrl::key_PasteText},
 		{vkPasteFirstLine, chk_User,  NULL,    L"ClipboardVkFirstLine",  MakeHotKey('V',VK_CONTROL), CConEmuCtrl::key_PasteFirstLine},
 		{vkFindTextDlg,    chk_User,  NULL,    L"FindTextKey",           MakeHotKey('F',VK_APPS), CConEmuCtrl::key_FindTextDlg},
+		{vkScreenshot,     chk_User,  NULL,    L"ScreenshotKey",         MakeHotKey('H',VK_LWIN), CConEmuCtrl::key_Screenshot/*, true/ *OnKeyUp*/},
 		// GUI Macros
 		{vkGuMacro01,      chk_Macro, NULL,    L"KeyMacro01", MakeHotKey(VK_WHEEL_UP,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,2)")},
 		{vkGuMacro02,      chk_Macro, NULL,    L"KeyMacro02", MakeHotKey(VK_WHEEL_DOWN,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,-2)")},

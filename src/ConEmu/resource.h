@@ -687,6 +687,7 @@
 #define cbColorKeyTransparent           2312
 #define cbEnableMouse                   2313
 #define vkMultiNewAttach                2314
+#define vkScreenshot                    2315
 
 // Next default values for new objects
 // 
@@ -694,7 +695,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        219
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2315
+#define _APS_NEXT_CONTROL_VALUE         2316
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

@@ -892,9 +892,11 @@
     <ClCompile Include="Background.cpp" />
     <ClCompile Include="BaseDragDrops.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
+    <ClCompile Include="..\common\execute.cpp" />
     <ClCompile Include="ConEmu.cpp" />
     <ClCompile Include="ConEmuApp.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
+    <ClCompile Include="ConEmuCtrl.cpp" />
     <ClCompile Include="ConEmuPipe.cpp" />
     <ClCompile Include="CustomFonts.cpp" />
     <ClCompile Include="DragDrop.cpp" />
@@ -920,6 +922,7 @@
     <ClCompile Include="Registry.cpp" />
     <ClCompile Include="..\common\RgnDetect.cpp" />
     <ClCompile Include="ScreenDump.cpp" />
+    <ClCompile Include="Status.cpp" />
     <ClCompile Include="TabBar.cpp" />
     <ClCompile Include="TabID.cpp" />
     <ClCompile Include="TaskBar.cpp" />
@@ -937,9 +940,11 @@
     <ClInclude Include="Background.h" />
     <ClInclude Include="BaseDragDrops.h" />
     <ClInclude Include="..\common\common.hpp" />
+    <ClInclude Include="..\common\execute.hpp" />
     <ClInclude Include="ConEmu.h" />
     <ClInclude Include="ConEmuApp.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
+    <ClInclude Include="ConEmuCtrl.h" />
     <ClInclude Include="ConEmuPipe.h" />
     <ClInclude Include="..\common\ConsoleAnnotation.h" />
     <ClInclude Include="CustomFonts.h" />
@@ -952,6 +957,7 @@
     <ClInclude Include="GestureEngine.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="GuiServer.h" />
+    <ClInclude Include="..\ConEmuCD\GuiHooks.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="kl_parts.h" />
     <ClInclude Include="LoadImg.h" />
@@ -973,6 +979,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="..\common\RgnDetect.h" />
     <ClInclude Include="ScreenDump.h" />
+    <ClInclude Include="Status.h" />
     <ClInclude Include="TabBar.h" />
     <ClInclude Include="TabID.h" />
     <ClInclude Include="TaskBar.h" />

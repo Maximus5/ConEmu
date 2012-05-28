@@ -489,6 +489,7 @@ class CRealConsole
 	protected:
 		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
 
+		void SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv);
 		// Сервер и альтернативный сервер
 		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
 		DWORD mn_AltSrv_PID;  HANDLE mh_AltSrv;

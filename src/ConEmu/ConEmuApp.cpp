@@ -1552,6 +1552,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					ConfigVal = curCommand;
 				}
 			}
+			else if (!klstricmp(curCommand, _T("/Title")) && i + 1 < params)
+			{
+				curCommand += _tcslen(curCommand) + 1; i++;
+
+				const int maxTitleNameLen = 127;
+				int nLen = _tcslen(curCommand);
+
+				if (nLen > maxTitleNameLen)
+				{
+					int nCchSize = nLen+100;
+					wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
+					_wsprintf(psz, SKIPLEN(nCchSize) L"Too long /Title name (%i chars).\r\n", nLen);
+					_wcscat_c(psz, nCchSize, curCommand);
+					MBoxA(psz);
+					free(psz); free(cmdLine);
+					return 100;
+				}
+
+				gpConEmu->SetTitleTemplate(curCommand);
+			}
 			else if (!klstricmp(curCommand, _T("/?")))
 			{
 				//MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);

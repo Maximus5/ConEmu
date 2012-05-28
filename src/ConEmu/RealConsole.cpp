@@ -776,8 +776,11 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	//}
 	SetHwnd(ahConWnd);
 	ProcessUpdate(&anConemuC_PID, 1);
-	mh_MainSrv = hProcess;
-	mn_MainSrv_PID = anConemuC_PID;
+	
+	//mh_MainSrv = hProcess;
+	//mn_MainSrv_PID = anConemuC_PID;
+	SetMainSrvPID(anConemuC_PID, hProcess);
+
 	CreateLogFiles();
 	// Инициализировать имена пайпов, событий, мэппингов и т.п.
 	InitNames();
@@ -2119,7 +2122,8 @@ BOOL CRealConsole::StartProcess()
 					//	, NULL, m_Args.pszStartupDir, &si, &pi))
 				{
 					lbRc = TRUE;
-					mn_MainSrv_PID = pi.dwProcessId;
+					//mn_MainSrv_PID = pi.dwProcessId;
+					SetMainSrvPID(pi.dwProcessId, NULL);
 				}
 				else
 				{
@@ -2168,7 +2172,8 @@ BOOL CRealConsole::StartProcess()
 						                        , NULL, m_Args.pszStartupDir, &si, &pi))
 						{
 							lbRc = TRUE;
-							mn_MainSrv_PID = pi.dwProcessId;
+							//mn_MainSrv_PID = pi.dwProcessId;
+							SetMainSrvPID(pi.dwProcessId, NULL);
 						}
 
 						CloseHandle(hTokenRest); hTokenRest = NULL;
@@ -2199,7 +2204,8 @@ BOOL CRealConsole::StartProcess()
 				}
 				else
 				{
-					mn_MainSrv_PID = pi.dwProcessId;
+					//mn_MainSrv_PID = pi.dwProcessId;
+					SetMainSrvPID(pi.dwProcessId, NULL);
 				}
 			}
 
@@ -2387,8 +2393,10 @@ BOOL CRealConsole::StartProcess()
 	//TODO: а делать ли это?
 	SafeCloseHandle(pi.hThread); pi.hThread = NULL;
 	//CloseHandle(pi.hProcess); pi.hProcess = NULL;
-	mn_MainSrv_PID = pi.dwProcessId;
-	mh_MainSrv = pi.hProcess; pi.hProcess = NULL;
+	SetMainSrvPID(pi.dwProcessId, pi.hProcess);
+	//mn_MainSrv_PID = pi.dwProcessId;
+	//mh_MainSrv = pi.hProcess;
+	pi.hProcess = NULL;
 
 	if (!m_Args.bRunAsAdministrator)
 	{
@@ -3255,14 +3263,22 @@ void CRealConsole::StopThread(BOOL abRecreating)
 	if (abRecreating)
 	{
 		hConWnd = NULL;
-		mn_MainSrv_PID = 0;
+
+		// Servers
+		_ASSERTE((mh_AltSrv==NULL && !mn_AltSrv_PID) && "AltServer was not terminated?");
+		SafeCloseHandle(mh_AltSrv);
+		mn_AltSrv_PID = 0;
+		SafeCloseHandle(mh_MainSrv);
+		//mn_MainSrv_PID = 0;
+		SetMainSrvPID(0, NULL);
+
 		SetFarPID(0);
 		SetFarPluginPID(0);
 		SetActivePID(0);
+
 		//mn_FarPID = mn_ActivePID = mn_FarPID_PluginDetected = 0;
 		mn_LastSetForegroundPID = 0;
 		//mn_ConEmuC_Input_TID = 0;
-		SafeCloseHandle(mh_MainSrv);
 		SafeCloseHandle(mh_ConInputPipe);
 		m_ConDataChanged.Close();
 		m_GetDataPipe.Close();
@@ -3961,6 +3977,18 @@ DWORD CRealConsole::GetServerPID(bool bMainOnly /*= false*/)
 	}
 
 	return (mn_AltSrv_PID && !bMainOnly) ? mn_AltSrv_PID : mn_MainSrv_PID;
+}
+
+void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
+{
+	_ASSERTE((mh_MainSrv==NULL || mh_MainSrv==ahMainSrv) && "mh_MainSrv must be closed before!");
+	_ASSERTE((anMainSrvPID!=0 || mn_AltSrv_PID==0) && "AltServer must be closed before!");
+
+	mh_MainSrv = ahMainSrv;
+	mn_MainSrv_PID = anMainSrvPID;
+
+	if (isActive())
+		gpConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
 }
 
 bool CRealConsole::InitAltServer(DWORD nAltServerPID, HANDLE hAltServer)
@@ -4850,7 +4878,8 @@ void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle)
 		if (mh_MainSrv == NULL)
 		{
 			// В принципе, это может быть, если сервер запущен "извне"
-			mh_MainSrv = ahServerHandle;
+			SetMainSrvPID(mn_MainSrv_PID, ahServerHandle);
+			//mh_MainSrv = ahServerHandle;
 		}
 		else
 		{

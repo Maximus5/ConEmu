@@ -249,21 +249,21 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
-    <OutDir>.\Test\</OutDir>
+    <OutDir>.\Test\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
-    <TargetName>Console64</TargetName>
+    <TargetName>ExtendedConsole64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>..\..\Release\</OutDir>
+    <OutDir>..\..\Release\ConEmu\</OutDir>
     <IntDir>$(SolutionDir)\_VCBUILD\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>ExtendedConsole</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\..\Release\</OutDir>
+    <OutDir>..\..\Release\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ExtendedConsole64</TargetName>
     <TargetExt>.dll</TargetExt>
@@ -272,14 +272,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">
     <OutDir>E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
-    <TargetName>Console</TargetName>
+    <TargetName>ExtendedConsole</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">
     <OutDir>E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
-    <TargetName>Console64</TargetName>
+    <TargetName>ExtendedConsole64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
@@ -299,7 +299,7 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">
-    <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\</OutDir>
+    <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ExtendedConsole</TargetName>
     <TargetExt>.dll</TargetExt>
@@ -307,42 +307,42 @@
     <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">
-    <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\</OutDir>
+    <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ExtendedConsole64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_PDB|Win32'">
-    <OutDir>..\..\Release.PDB\</OutDir>
+    <OutDir>..\..\Release.PDB\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
-    <TargetName>Console</TargetName>
+    <TargetName>ExtendedConsole</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_PDB|x64'">
-    <OutDir>..\..\Release.PDB\</OutDir>
+    <OutDir>..\..\Release.PDB\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
-    <TargetName>Console64</TargetName>
+    <TargetName>ExtendedConsole64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">
-    <OutDir>\Far3\</OutDir>
+    <OutDir>\Far3\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
-    <TargetName>Console</TargetName>
+    <TargetName>ExtendedConsole</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|x64'">
-    <OutDir>..\..\Release\</OutDir>
+    <OutDir>..\..\Release\ConEmu\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <TargetName>Console64</TargetName>
+    <TargetName>ExtendedConsole64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">
-    <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\</OutDir>
+    <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ExtendedConsole</TargetName>
     <TargetExt>.dll</TargetExt>
@@ -350,14 +350,14 @@
     <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">
-    <OutDir>\Far3\</OutDir>
+    <OutDir>\Far3\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
-    <TargetName>Console64</TargetName>
+    <TargetName>ExtendedConsole64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">
-    <OutDir>\Far3\</OutDir>
+    <OutDir>\Far3\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ExtendedConsole</TargetName>
     <TargetExt>.dll</TargetExt>
@@ -365,7 +365,7 @@
     <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
-    <OutDir>\Far3\</OutDir>
+    <OutDir>\Far3\ConEmu\</OutDir>
     <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <TargetName>ExtendedConsole64</TargetName>
     <TargetExt>.dll</TargetExt>

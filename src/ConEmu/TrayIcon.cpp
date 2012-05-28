@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NIN_BALLOONUSERCLICK    (WM_USER + 5)
 #endif
 
-#define MY_BALLOON_TICK 500
+#define MY_BALLOON_TICK 2000
 
 TrayIcon Icon;
 
@@ -59,6 +59,7 @@ TrayIcon::TrayIcon()
 	//mn_SysItemId[3] = SC_SIZE;
 	//mn_SysItemId[4] = SC_MOVE;
 	//memset(mn_SysItemState, 0, sizeof(mn_SysItemState));
+	mh_Balloon = NULL;
 }
 
 TrayIcon::~TrayIcon()
@@ -114,6 +115,7 @@ void TrayIcon::RemoveTrayIcon()
 		mb_SecondTimeoutMsg = false; mn_BalloonShowTick = 0;
 		Shell_NotifyIcon(NIM_DELETE, &IconData);
 		mb_WindowInTray = false;
+		mh_Balloon = NULL;
 	}
 }
 
@@ -232,7 +234,10 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 	{
 		case WM_LBUTTONUP:
 		case NIN_BALLOONUSERCLICK:
-			DEBUGSTRICON((lParam==WM_LBUTTONUP) ? L"TSA: WM_LBUTTONUP\n" : L"TSA: NIN_BALLOONUSERCLICK\n");
+			#ifdef _DEBUG
+			_wsprintf(szMsg, SKIPLEN(countof(szMsg)) (lParam==WM_LBUTTONUP) ? L"TSA: WM_LBUTTONUP(%i,0x%08X)\n" : L"TSA: NIN_BALLOONUSERCLICK(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
+			DEBUGSTRICON(szMsg);
+			#endif
 			Icon.RestoreWindowFromTray();
 			if (m_MsgSource == tsa_Source_Updater)
 			{
@@ -241,12 +246,16 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case NIN_BALLOONSHOW:
+			#ifdef _DEBUG
+			_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"TSA: NIN_BALLOONSHOW(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
+			DEBUGSTRICON(szMsg);
+			#endif
 			mn_BalloonShowTick = GetTickCount();
 			break;
 		case NIN_BALLOONTIMEOUT:
 			{
 				#ifdef _DEBUG
-				_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"NIN_BALLOONTIMEOUT(%i)\n", (int)wParam);
+				_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"TSA: NIN_BALLOONTIMEOUT(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
 				DEBUGSTRICON(szMsg);
 				#endif
 
@@ -256,7 +265,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 					Icon.RestoreWindowFromTray(TRUE);
 					m_MsgSource = tsa_Source_None;
 				}
-				else if (!mb_SecondTimeoutMsg)
+				else if (!mb_SecondTimeoutMsg && (mn_BalloonShowTick && ((GetTickCount() - mn_BalloonShowTick) > MY_BALLOON_TICK)))
 				{
 					mb_SecondTimeoutMsg = true;
 				}
@@ -264,7 +273,10 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			break;
 		case WM_RBUTTONUP:
 		{
-			DEBUGSTRICON((lParam==WM_LBUTTONUP) ? L"TSA: WM_LBUTTONUP\n" : L"TSA: WM_RBUTTONUP\n");
+			#ifdef _DEBUG
+			_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"TSA: WM_RBUTTONUP(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
+			DEBUGSTRICON(szMsg);
+			#endif
 			POINT mPos;
 			GetCursorPos(&mPos);
 			apiSetForegroundWindow(ghWnd);
@@ -275,7 +287,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
 	#ifdef _DEBUG
 	default:
-		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"TrayIcon::OnTryIcon(wParam=%i, lParam=0x%04X)\n", (int)wParam, (DWORD)lParam);
+		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"TSA: OnTryIcon(uMsg, wParam=%i, lParam=0x%04X)\n", messg, (int)wParam, (DWORD)lParam);
 		DEBUGSTRICON(szMsg);
 	#endif
 	}

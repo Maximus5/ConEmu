@@ -148,7 +148,11 @@ CConEmuMain::CConEmuMain()
 
 	//HeapInitialize(); - уже
 	//#define D(N) (1##N-100)
+
 	_wsprintf(ms_ConEmuVer, SKIPLEN(countof(ms_ConEmuVer)) L"ConEmu %02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
+	LPCWSTR pszBuild = wcschr(ms_ConEmuVer, L' ');
+	pszBuild = pszBuild ? (pszBuild + 1) : ms_ConEmuVer;
+
 	mp_TabBar = NULL; /*m_Macro = NULL;*/ mp_Tip = NULL;
 	mp_Status = new CStatus;
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
@@ -177,7 +181,8 @@ CConEmuMain::CConEmuMain()
 	//ProgressBars = NULL;
 	//cBlinkShift=0;
 	mh_DebugPopup = mh_EditPopup = mh_ActiveVConPopup = mh_TerminateVConPopup = mh_VConListPopup = mh_HelpPopup = NULL;
-	Title[0] = 0; TitleCmp[0] = 0; /*MultiTitle[0] = 0;*/ mn_Progress = -1;
+	Title[0] = 0; //TitleCmp[0] = 0; /*MultiTitle[0] = 0;*/ mn_Progress = -1;
+	TitleTemplate[0] = 0;
 	mb_InTimer = FALSE;
 	//mb_InClose = FALSE;
 	//memset(m_ProcList, 0, 1000*sizeof(DWORD));
@@ -322,6 +327,8 @@ CConEmuMain::CConEmuMain()
 	// Добавить в окружение переменную с папкой к ConEmu.exe
 	SetEnvironmentVariable(ENV_CONEMUDIR_VAR_W, ms_ConEmuExeDir);
 	SetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, ms_ConEmuBaseDir);
+	SetEnvironmentVariable(ENV_CONEMUANSI_BUILD_W, pszBuild);
+	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, L"");
 	// переменная "ConEmuArgs" заполняется в ConEmuApp.cpp:PrepareCommandLine
 
 	// Ищем файл портабельных настроек. Сначала пробуем в BaseDir
@@ -5385,6 +5392,11 @@ LPCWSTR CConEmuMain::GetDefaultTitle()
 	return ms_ConEmuVer;
 }
 
+void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
+{
+	lstrcpyn(TitleTemplate, asTemplate ? asTemplate : L"", countof(TitleTemplate));
+}
+
 LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync)
 {
 	LRESULT lRc = 0;
@@ -6642,8 +6654,20 @@ void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
 
 	LPCTSTR pszNewTitle = NULL;
 
-	if (mp_VActive && mp_VActive->RCon())
-		pszNewTitle = mp_VActive->RCon()->GetTitle();
+	if (TitleTemplate[0] != 0)
+	{
+		DWORD n = ExpandEnvironmentStrings(TitleTemplate, Title, countof(Title));
+		if (n && (n < countof(Title)))
+			pszNewTitle = Title;
+		else
+			pszNewTitle = GetDefaultTitle();
+	}
+
+	if (!pszNewTitle)
+	{
+		if (mp_VActive && mp_VActive->RCon())
+			pszNewTitle = mp_VActive->RCon()->GetTitle();
+	}
 
 	if (!pszNewTitle)
 	{
@@ -6652,7 +6676,11 @@ void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
 		pszNewTitle = GetDefaultTitle();
 	}
 
-	lstrcpyn(Title, pszNewTitle, countof(Title));
+
+	if (pszNewTitle && (pszNewTitle != Title))
+		lstrcpyn(Title, pszNewTitle, countof(Title));
+
+
 	// SetWindowText(ghWnd, psTitle) вызывается здесь
 	// Там же обновится L"[%i/%i] " если несколько консолей а табы отключены
 	UpdateProgress(/*TRUE*/);
@@ -8548,6 +8576,7 @@ HMENU CConEmuMain::CreateDebugMenuPopup()
 	HMENU hDebug = CreatePopupMenu();
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, MenuAccel(vkCtrlWinAltSpace,L"&Real console"));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
+	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_SCREENSHOT, MenuAccel(vkScreenshot,L"Make &screenshot..."));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump screen..."));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_LOADDUMPCONSOLE, _T("&Load screen dump..."));
 	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGGUI, _T("Debug &log (GUI)"));
@@ -9109,6 +9138,10 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 		// Может быть в настройке указано - всегда показывать иконку в TSA
 		Icon.SettingsChanged();
+
+		// Проверка уникальности хоткеев
+		gpSet->CheckHotkeyUnique();
+
 
 		if (mp_VActive == NULL || !gpConEmu->mb_StartDetached)  // Консоль уже может быть создана, если пришел Attach из ConEmuC
 		{
@@ -13068,6 +13101,11 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 			if (mp_VActive)
 				mp_VActive->DumpConsole();
+
+			return 0;
+
+		case ID_SCREENSHOT:
+			CConEmuCtrl::MakeScreenshot();
 
 			return 0;
 

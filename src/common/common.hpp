@@ -78,6 +78,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMUHWND_VAR_W L"ConEmuHWND"
 #define ENV_CONEMUANSI_VAR_A  "ConEmuANSI"
 #define ENV_CONEMUANSI_VAR_W L"ConEmuANSI"
+#define ENV_CONEMUANSI_BUILD_W L"ConEmuBuild"
+#define ENV_CONEMUANSI_CONFIG_W L"ConEmuConfig"
 
 
 //#define CE_CURSORUPDATE     L"ConEmuCursorUpdate%u" // ConEmuC_PID - изменился курсор (размер или выделение). положение курсора отслеживает GUI
