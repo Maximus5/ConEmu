@@ -1071,6 +1071,7 @@ struct Settings
 	public:
 		void HistoryCheck();
 		void HistoryAdd(LPCWSTR asCmd);
+		void HistoryReset();
 		LPCWSTR HistoryGet();
 		//void UpdateConsoleMode(DWORD nMode);
 		//BOOL CheckConIme();

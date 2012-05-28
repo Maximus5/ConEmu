@@ -148,6 +148,13 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
 
+			HMENU hSysMenu = GetSystemMenu(hDlg, FALSE);
+			InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+			InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED
+					   | ((GetWindowLong(ghOpWnd,GWL_EXSTYLE)&WS_EX_TOPMOST) ? MF_CHECKED : 0),
+					   ID_RESETCMDHISTORY, _T("Reset command history..."));
+
+
 			SendDlgItemMessage(hDlg, tRunAsPassword, WM_SETFONT, (LPARAM)(HFONT)GetStockObject(DEFAULT_GUI_FONT), 0);
 
 			//#ifdef _DEBUG
@@ -418,6 +425,18 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetFocus(GetDlgItem(hDlg, tRunAsUser));
 		}
 		return 0;
+		case WM_SYSCOMMAND:
+			if (LOWORD(wParam) == ID_RESETCMDHISTORY)
+			{
+				if (IDYES == MessageBox(hDlg, L"Clear command history?", gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2))
+				{
+
+				}
+				SetWindowLongPtr(hDlg, DWLP_MSGRESULT, 0);
+				return 1;
+			}
+			break;
+
 		case WM_COMMAND:
 
 			if (HIWORD(wParam) == BN_CLICKED)

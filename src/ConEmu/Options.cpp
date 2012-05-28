@@ -3173,6 +3173,26 @@ void Settings::HistoryCheck()
 	}
 }
 
+void Settings::HistoryReset()
+{
+	SafeFree(psCmdHistory);
+	psCmdHistory = (wchar_t*)calloc(2,2);
+	nCmdHistorySize = 0;
+
+	// И сразу сохранить в настройках
+	SettingsBase* reg = CreateSettings();
+
+	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+	{
+		HEAPVAL;
+		reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
+		HEAPVAL;
+		reg->CloseKey();
+	}
+
+	delete reg;
+}
+
 void Settings::HistoryAdd(LPCWSTR asCmd)
 {
 	// Группы и так отображаются в диалоге/меню. В историю их не пишем
