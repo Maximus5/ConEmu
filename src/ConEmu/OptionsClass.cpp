@@ -2894,6 +2894,7 @@ LRESULT CSettings::OnInitDialog_Info(HWND hWnd2)
 
 LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 {
+	_ASSERTE(hWnd2!=NULL);
 	WORD CB = LOWORD(wParam);
 
 	switch (CB)
@@ -2912,8 +2913,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				bool isShiftPressed = isPressed(VK_SHIFT);
 
-				if (IsWindowEnabled(GetDlgItem(mh_Tabs[thi_Main], cbApplyPos)))  // были изменения в полях размера/положения
-					OnButtonClicked(NULL, cbApplyPos, 0);
+				// были изменения в полях размера/положения?
+				if (mh_Tabs[thi_Main] && IsWindowEnabled(GetDlgItem(mh_Tabs[thi_Main], cbApplyPos)))
+					OnButtonClicked(mh_Tabs[thi_Main], cbApplyPos, 0);
 
 				if (gpSet->SaveSettings())
 				{
@@ -4342,6 +4344,7 @@ BOOL CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 
 LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 {
+	_ASSERTE(hWnd2!=NULL);
 	if (mb_IgnoreEditChanged)
 		return 0;
 
@@ -4826,6 +4829,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 {
+	_ASSERTE(hWnd2!=NULL);
 	WORD wId = LOWORD(wParam);
 	
 	switch (wId)
@@ -8601,8 +8605,15 @@ void CSettings::DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINET
 int CSettings::IsChecked(HWND hParent, WORD nCtrlId)
 {
 #ifdef _DEBUG
-	HWND hChild = GetDlgItem(hParent, nCtrlId);
-	_ASSERTE(hChild!=NULL);
+	if (!hParent)
+	{
+		_ASSERTE(hParent!=NULL);
+	}
+	else
+	{
+		HWND hChild = GetDlgItem(hParent, nCtrlId);
+		_ASSERTE(hChild!=NULL);
+	}
 #endif
 	// Аналог IsDlgButtonChecked
 	int nChecked = SendDlgItemMessage(hParent, nCtrlId, BM_GETCHECK, 0, 0);
@@ -10079,6 +10090,7 @@ bool CSettings::CheckTheming()
 
 void CSettings::ColorSetEdit(HWND hWnd2, WORD c)
 {
+	_ASSERTE(hWnd2!=NULL);
 	WORD tc = (tc0-c0) + c;
 	SendDlgItemMessage(hWnd2, tc, EM_SETLIMITTEXT, 11, 0);
 	COLORREF cr = 0;
@@ -10090,6 +10102,7 @@ void CSettings::ColorSetEdit(HWND hWnd2, WORD c)
 
 bool CSettings::ColorEditDialog(HWND hWnd2, WORD c)
 {
+	_ASSERTE(hWnd2!=NULL);
 	bool bChanged = false;
 	COLORREF color = 0;
 	GetColorById(c, &color);

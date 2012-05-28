@@ -3964,6 +3964,10 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 					dwErr = 0;
 			}
 
+			// Иногда при закрытии Far возникает ERROR_INVALID_PARAMETER
+			// при этом, szDbgSize:
+			// SetConsoleScreenBufferSize(0000000C, {80x1000}), Current={94x33}, Wnd={94x33}
+			// т.е. коррекция не выполнялась
 			_ASSERTE(lbRc && (dwErr != ERROR_INVALID_PARAMETER));
 			if (!lbRc)
 				SetLastError(dwErr); // вернуть "ошибку"
