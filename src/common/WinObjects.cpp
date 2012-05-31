@@ -2113,9 +2113,9 @@ void MSection::ThreadTerminated(DWORD dwTID)
 void MSection::AddRef(DWORD dwTID)
 {
 	#ifdef _DEBUG
+	int dbgCurLockCount = 0;
 	if (mn_Locked == 0)
 	{
-		int dbgCurLockCount = 0;
 		for (int d=1; d<countof(mn_LockedCount); d++)
 			dbgCurLockCount += mn_LockedCount[d];
 		if (dbgCurLockCount != 0)

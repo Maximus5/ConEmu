@@ -1554,6 +1554,27 @@ ExportFunc Far3Func[] =
 BOOL gbExitFarCalled = FALSE;
 void ExitFarCmn();
 
+void ShutdownPluginStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
+{
+#ifdef _DEBUG
+	static int nDbg = 0;
+	if (!nDbg)
+		nDbg = IsDebuggerPresent() ? 1 : 2;
+	if (nDbg != 1)
+		return;
+	wchar_t szFull[512];
+	msprintf(szFull, countof(szFull), L"%u:ConEmuP:PID=%u:TID=%u: ",
+		GetTickCount(), GetCurrentProcessId(), GetCurrentThreadId());
+	if (asInfo)
+	{
+		int nLen = lstrlen(szFull);
+		msprintf(szFull+nLen, countof(szFull)-nLen, asInfo, nParm1, nParm2, nParm3, nParm4);
+	}
+	lstrcat(szFull, L"\n");
+	OutputDebugString(szFull);
+#endif
+}
+
 
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
@@ -1624,6 +1645,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		}
 		break;
 		case DLL_PROCESS_DETACH:
+			ShutdownPluginStep(L"DLL_PROCESS_DETACH");
+
 			if (!gbExitFarCalled)
 			{
 				_ASSERTE(gbExitFarCalled == TRUE);
@@ -1667,6 +1690,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			}
 
 			HeapDeinitialize();
+
+			ShutdownPluginStep(L"DLL_PROCESS_DETACH - done");
 			break;
 	}
 
@@ -4659,6 +4684,7 @@ void NotifyConEmuUnloaded()
 
 void StopThread(void)
 {
+	ShutdownPluginStep(L"StopThread");
 	#ifdef _DEBUG
 	LPCVOID lpPtrConInfo = gpConMapInfo;
 	#endif
@@ -4666,6 +4692,8 @@ void StopThread(void)
 	//LPVOID lpPtrColorInfo = gpColorerInfo; gpColorerInfo = NULL;
 	gbBgPluginsAllowed = FALSE;
 	NotifyConEmuUnloaded();
+
+	ShutdownPluginStep(L"...ClosingTabs");
 	CloseTabs();
 
 	//if (hEventCmd[CMD_EXIT])
@@ -4680,7 +4708,10 @@ void StopThread(void)
 	//	PostThreadMessage(gnInputThreadId, WM_QUIT, 0, 0);
 	//}
 
+	ShutdownPluginStep(L"...Stopping server");
 	PlugServerStop();
+
+	ShutdownPluginStep(L"...Finalizing");
 
 	SafeCloseHandle(ghPluginSemaphore);
 
@@ -4771,6 +4802,7 @@ void StopThread(void)
 	//CloseColorerHeader();
 
 	CommonShutdown();
+	ShutdownPluginStep(L"StopThread - done");
 }
 
 
@@ -4938,14 +4970,19 @@ int WINAPI ProcessDialogEventW(int Event, void *Param)
 
 void ExitFarCmn()
 {
+	ShutdownPluginStep(L"ExitFarCmn");
 	// Плагин выгружается, Вызывать Syncho больше нельзя
 	gbSynchroProhibited = true;
 	ShutdownHooks();
 	StopThread();
+
+	ShutdownPluginStep(L"ExitFarCmn - done");
 }
 
 void   WINAPI ExitFARW(void)
 {
+	ShutdownPluginStep(L"ExitFARW");
+
 	ExitFarCmn();
 
 	if (gbInfoW_OK)
@@ -4957,6 +4994,8 @@ void   WINAPI ExitFARW(void)
 	}
 
 	gbExitFarCalled = TRUE;
+
+	ShutdownPluginStep(L"ExitFARW - done");
 }
 
 void WINAPI ExitFARW3(void*)

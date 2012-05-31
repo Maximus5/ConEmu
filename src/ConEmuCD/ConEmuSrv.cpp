@@ -675,7 +675,7 @@ int ServerInitGuiTab()
 		DWORD t2 = timeGetTime(), tDur = t2-t1;
 		if (tDur > GUIATTACHEVENT_TIMEOUT)
 		{
-			_ASSERTE(tDur <= GUIATTACHEVENT_TIMEOUT);
+			_ASSERTE((tDur <= GUIATTACHEVENT_TIMEOUT) && "GUI tab creation take more than 250ms");
 		}
 		#endif
 	}
@@ -2714,20 +2714,21 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 
 
 
-static BOOL ReadConsoleInfo()
+static int ReadConsoleInfo()
 {
-	BOOL lbRc = TRUE;
+	//int liRc = 1;
 	BOOL lbChanged = gpSrv->pConsole->bDataChanged; // Если что-то еще не отослали - сразу TRUE
 	//CONSOLE_SELECTION_INFO lsel = {0}; // GetConsoleSelectionInfo
 	CONSOLE_CURSOR_INFO lci = {0}; // GetConsoleCursorInfo
 	DWORD ldwConsoleCP=0, ldwConsoleOutputCP=0, ldwConsoleMode=0;
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // MyGetConsoleScreenBufferInfo
 	HANDLE hOut = (HANDLE)ghConOut;
+	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	//HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	//DWORD nConInMode = 0;
 
 	if (hOut == INVALID_HANDLE_VALUE)
-		hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		hOut = hStdOut;
 
 	// Могут возникать проблемы при закрытии ComSpec и уменьшении высоты буфера
 	MCHKHEAP;
@@ -2783,10 +2784,13 @@ static BOOL ReadConsoleInfo()
 
 	if (!MyGetConsoleScreenBufferInfo(hOut, &lsbi))
 	{
+		DWORD dwErr = GetLastError();
+		_ASSERTE(FALSE && "ReadConsole::MyGetConsoleScreenBufferInfo failed");
 
-		gpSrv->dwSbiRc = GetLastError(); if (!gpSrv->dwSbiRc) gpSrv->dwSbiRc = -1;
+		gpSrv->dwSbiRc = dwErr; if (!gpSrv->dwSbiRc) gpSrv->dwSbiRc = -1;
 
-		lbRc = FALSE;
+		//liRc = -1;
+		return -1;
 	}
 	else
 	{
@@ -2945,7 +2949,7 @@ static BOOL ReadConsoleInfo()
 	//if (lbChanged) {
 	//	//gpSrv->pConsole->bChanged = TRUE;
 	//}
-	return lbChanged;
+	return lbChanged ? 1 : 0;
 }
 
 // !! test test !!
@@ -3147,41 +3151,49 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 	if (abForceSend)
 		gpSrv->pConsole->bDataChanged = TRUE;
 
-	if (ReadConsoleInfo())
-		lbChanged = TRUE;
-
-	if (ReadConsoleData())
-		lbChanged = lbDataChanged = TRUE;
-
-	if (lbChanged && !gpSrv->pConsole->hdr.bDataReady)
+	int iInfoRc = ReadConsoleInfo();
+	if (iInfoRc == -1)
 	{
-		gpSrv->pConsole->hdr.bDataReady = TRUE;
+		lbChanged = FALSE;
 	}
-
-	if (memcmp(&(gpSrv->pConsole->hdr), gpSrv->pConsoleMap->Ptr(), gpSrv->pConsole->hdr.cbSize))
+	else
 	{
-		lbChanged = TRUE;
-		//gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
-		UpdateConsoleMapHeader();
-	}
+		if (iInfoRc == 1)
+			lbChanged = TRUE;
 
-	if (lbChanged)
-	{
-		// Накрутить счетчик и Tick
-		//gpSrv->pConsole->bChanged = TRUE;
-		//if (lbDataChanged)
-		gpSrv->pConsole->info.nPacketId++;
-		gpSrv->pConsole->info.nSrvUpdateTick = GetTickCount();
+		if (ReadConsoleData())
+			lbChanged = lbDataChanged = TRUE;
 
-		if (gpSrv->hDataReadyEvent)
-			SetEvent(gpSrv->hDataReadyEvent);
+		if (lbChanged && !gpSrv->pConsole->hdr.bDataReady)
+		{
+			gpSrv->pConsole->hdr.bDataReady = TRUE;
+		}
 
-		//if (nPacketID == gpSrv->pConsole->info.nPacketId) {
-		//	gpSrv->pConsole->info.nPacketId++;
-		//	TODO("Можно заменить на multimedia tick");
-		//	gpSrv->pConsole->info.nSrvUpdateTick = GetTickCount();
-		//	//			gpSrv->nFarInfoLastIdx = gpSrv->pConsole->info.nFarInfoIdx;
-		//}
+		if (memcmp(&(gpSrv->pConsole->hdr), gpSrv->pConsoleMap->Ptr(), gpSrv->pConsole->hdr.cbSize))
+		{
+			lbChanged = TRUE;
+			//gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
+			UpdateConsoleMapHeader();
+		}
+
+		if (lbChanged)
+		{
+			// Накрутить счетчик и Tick
+			//gpSrv->pConsole->bChanged = TRUE;
+			//if (lbDataChanged)
+			gpSrv->pConsole->info.nPacketId++;
+			gpSrv->pConsole->info.nSrvUpdateTick = GetTickCount();
+
+			if (gpSrv->hDataReadyEvent)
+				SetEvent(gpSrv->hDataReadyEvent);
+
+			//if (nPacketID == gpSrv->pConsole->info.nPacketId) {
+			//	gpSrv->pConsole->info.nPacketId++;
+			//	TODO("Можно заменить на multimedia tick");
+			//	gpSrv->pConsole->info.nSrvUpdateTick = GetTickCount();
+			//	//			gpSrv->nFarInfoLastIdx = gpSrv->pConsole->info.nFarInfoIdx;
+			//}
+		}
 	}
 
 	return lbChanged;

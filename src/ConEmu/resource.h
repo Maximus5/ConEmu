@@ -8,8 +8,9 @@
 #define IDB_MAIN_TOOLBAR                101
 #define IDB_SHIELD                      102
 #define IDB_RIGHTCLICKING               103
-#define IDB_COPY                        104
-#define IDB_SCROLL                      105
+#define IDB_SCROLL                      104
+#define IDB_COPY4                       105
+#define IDB_COPY24                      106
 #define IDC_COPY                        120
 #define IDC_LINK                        121
 #define IDC_MOVE                        122
@@ -251,6 +252,7 @@
 #define cbHideInactiveConTabs           1642
 #define tTabLenMax                      1643
 #define cbHideInactiveConTabs2          1644
+#define tTabPanels                      1644
 #define lbCTSActAlways                  1645
 #define cbAdminShield                   1646
 #define tAdminSuffix                    1647
@@ -502,12 +504,8 @@
 #define cbCmdTasksParm                  2129
 #define cbCmdTasksSave                  2130
 #define cbCmdTasksReload                2131
-#define gbAppDistinct                   2132
-#define cbCmdTasksUpdateTasks           2132
-#define cbCmdTasksUpdate                2132
-#define lbAppDistinct                   2133
-#define cbCmdTasksRecent                2133
-#define stAppDistinctName               2134
+#define cbCmdTaskbarTasks               2132
+#define cbCmdTaskbarCommands            2133
 #define gbCmdTasks7                     2134
 #define tAppDistinctName                2135
 #define cbAppDistinctAdd                2136
@@ -688,6 +686,11 @@
 #define cbEnableMouse                   2313
 #define vkMultiNewAttach                2314
 #define vkScreenshot                    2315
+#define tTabSkipWords                   2316
+#define gbAppDistinct                   2317
+#define lbAppDistinct                   2318
+#define stAppDistinctName               2319
+#define cbCmdTaskbarUpdate              2320
 
 // Next default values for new objects
 // 
@@ -695,7 +698,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        219
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2316
-#define _APS_NEXT_SYMED_VALUE           110
+#define _APS_NEXT_CONTROL_VALUE         2321
+#define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

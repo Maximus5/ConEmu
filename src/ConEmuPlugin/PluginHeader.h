@@ -373,3 +373,5 @@ void ShowPluginMenu(PluginCallCommands nCallID = pcc_None);
 int ShowPluginMenuA(ConEmuPluginMenuItem* apItems, int Count);
 int FUNC_Y(ShowPluginMenuW)(ConEmuPluginMenuItem* apItems, int Count);
 int FUNC_X(ShowPluginMenuW)(ConEmuPluginMenuItem* apItems, int Count);
+
+void ShutdownPluginStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);

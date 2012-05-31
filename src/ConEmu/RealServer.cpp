@@ -143,6 +143,8 @@ void CRealServer::Stop(bool abDeinitialize/*=false*/)
 	}
 	
 	SafeCloseHandle(mh_GuiAttached);
+
+	ShutdownGuiStep(L"Real server stopped");
 }
 
 CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
@@ -158,31 +160,31 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	switch(nStarted)
 	{
 		case sst_ServerStart:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ServerStart,%i,PID=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ServerStart,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_AltServerStart:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(AltServerStart,%i,PID=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(AltServerStart,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_ServerStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ServerStop,%i,PID=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ServerStop,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_ComspecStart:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ComspecStart,%i,PID=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ComspecStart,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_ComspecStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ComspecStop,%i,PID=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ComspecStop,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_AppStart:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(AppStart,%i,PID=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(AppStart,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_AppStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(AppStop,%i,PID=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(AppStop,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_App16Start:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(App16Start,%i,PID=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(App16Start,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_App16Stop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(App16Stop,%i,PID=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(App16Stop,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 	}
 

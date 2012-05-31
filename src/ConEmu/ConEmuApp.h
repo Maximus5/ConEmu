@@ -35,6 +35,8 @@ BOOL CheckCreateAppWindow();
 
 void SkipOneShowWindow();
 
+void UpdateWin7TaskList(bool bForce);
+
 int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine);
 
 #ifdef MSGLOGGER

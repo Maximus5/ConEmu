@@ -149,9 +149,10 @@ CConEmuMain::CConEmuMain()
 	//HeapInitialize(); - уже
 	//#define D(N) (1##N-100)
 
-	_wsprintf(ms_ConEmuVer, SKIPLEN(countof(ms_ConEmuVer)) L"ConEmu %02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
-	LPCWSTR pszBuild = wcschr(ms_ConEmuVer, L' ');
-	pszBuild = pszBuild ? (pszBuild + 1) : ms_ConEmuVer;
+	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L"%02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
+	wcscpy_c(ms_ConEmuDefTitle, L"ConEmu ");
+	wcscat_c(ms_ConEmuDefTitle, ms_ConEmuBuild);
+	wcscat_c(ms_ConEmuDefTitle, WIN3264TEST(L" x86",L" x64"));
 
 	mp_TabBar = NULL; /*m_Macro = NULL;*/ mp_Tip = NULL;
 	mp_Status = new CStatus;
@@ -327,7 +328,7 @@ CConEmuMain::CConEmuMain()
 	// Добавить в окружение переменную с папкой к ConEmu.exe
 	SetEnvironmentVariable(ENV_CONEMUDIR_VAR_W, ms_ConEmuExeDir);
 	SetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, ms_ConEmuBaseDir);
-	SetEnvironmentVariable(ENV_CONEMUANSI_BUILD_W, pszBuild);
+	SetEnvironmentVariable(ENV_CONEMUANSI_BUILD_W, ms_ConEmuBuild);
 	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, L"");
 	// переменная "ConEmuArgs" заполняется в ConEmuApp.cpp:PrepareCommandLine
 
@@ -5389,7 +5390,7 @@ DWORD_PTR CConEmuMain::GetActiveKeyboardLayout()
 
 LPCWSTR CConEmuMain::GetDefaultTitle()
 {
-	return ms_ConEmuVer;
+	return ms_ConEmuDefTitle;
 }
 
 void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
@@ -6564,7 +6565,7 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 void CConEmuMain::UpdateCursorInfo(const CONSOLE_SCREEN_BUFFER_INFO* psbi, COORD crCursor, CONSOLE_CURSOR_INFO cInfo)
 {
 	if (psbi)
-		mp_Status->OnConsoleChanged(psbi, &cInfo);
+		mp_Status->OnConsoleChanged(psbi, &cInfo, false);
 	else
 		mp_Status->OnCursorChanged(&crCursor, &cInfo);
 
@@ -7828,11 +7829,12 @@ int CConEmuMain::GetActiveVCon()
 	return -1;
 }
 
-CVirtualConsole* CConEmuMain::GetVCon(int nIdx)
+// bFromCycle = true, для перебора в циклах (например, в CSettings::UpdateWinHookSettings), чтобы не вылезали ассерты
+CVirtualConsole* CConEmuMain::GetVCon(int nIdx, bool bFromCycle /*= false*/)
 {
 	if (nIdx < 0 || nIdx >= (int)countof(mp_VCon))
 	{
-		_ASSERTE(nIdx>=0 && nIdx<(int)countof(mp_VCon));
+		_ASSERTE((nIdx>=0 && nIdx<(int)countof(mp_VCon) || (bFromCycle && nIdx==(int)countof(mp_VCon))));
 		return NULL;
 	}
 
@@ -8386,7 +8388,17 @@ bool CConEmuMain::isProcessCreated()
 bool CConEmuMain::isSizing()
 {
 	// Юзер тащит мышкой рамку окна
-	return (mouse.state & MOUSE_SIZING_BEGIN) == MOUSE_SIZING_BEGIN;
+	if ((mouse.state & MOUSE_SIZING_BEGIN) != MOUSE_SIZING_BEGIN)
+		return false;
+
+	// могло не сброситься, проверим
+	if (!isPressed(VK_LBUTTON))
+	{
+		mouse.state &= ~MOUSE_SIZING_BEGIN;
+		return false;
+	}
+
+	return true;
 }
 
 // Сюда может придти только LOWORD от HKL
@@ -8605,7 +8617,7 @@ HMENU CConEmuMain::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 			;
 	}
 	
-	for (int V = 0; (pVCon = GetVCon(V))!=NULL; V++)
+	for (int V = 0; (pVCon = GetVCon(V, true))!=NULL; V++)
 	{
 		if ((lbActiveVCon = isActive(pVCon)))
 			nActiveCmd = MAKELONG(1, V+1);
@@ -9266,6 +9278,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			WindowStartMinimized = false;
 		}
 
+		UpdateWin7TaskList(false);
+
 		//RegisterHotKeys();
 		//SetParent(GetParent(GetShellWindow()));
 		UINT n = SetTimer(ghWnd, TIMER_MAIN_ID, 500/*gpSet->nMainTimerElapse*/, NULL);
@@ -9324,7 +9338,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	}
 
 	//120122 - Теперь через PipeServer
-	m_GuiServer.Stop();
+	m_GuiServer.Stop(true);
 
 
 	for (size_t i = 0; i < countof(mp_VCon); i++)
@@ -9664,18 +9678,23 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (mp_VActive && mp_VActive->RCon())
 		mp_VActive->RCon()->OnGuiFocused(lbSetFocus, (messg == WM_ACTIVATEAPP));
 
-	if (gpSet->isFadeInactive && mp_VActive)
+	if (gpSet->isFadeInactive)
 	{
-		bool bForeground = lbSetFocus || isMeForeground();
-		bool bLastFade = (mp_VActive!=NULL) ? mp_VActive->mb_LastFadeFlag : false;
-		bool bNewFade = (gpSet->isFadeInactive && !bForeground && !isPictureView());
-
-		if (bLastFade != bNewFade)
+		if (mp_VActive)
 		{
-			if (mp_VActive) mp_VActive->mb_LastFadeFlag = bNewFade;
+			bool bForeground = lbSetFocus || isMeForeground();
+			bool bLastFade = (mp_VActive!=NULL) ? mp_VActive->mb_LastFadeFlag : false;
+			bool bNewFade = (gpSet->isFadeInactive && !bForeground && !isPictureView());
 
-			mp_VActive->Invalidate();
+			if (bLastFade != bNewFade)
+			{
+				if (mp_VActive) mp_VActive->mb_LastFadeFlag = bNewFade;
+
+				mp_VActive->Invalidate();
+			}
 		}
+
+		mp_Status->UpdateStatusBar(true);
 	}
 
 	if (lbSetFocus && mp_VActive && gpSet->isTabsOnTaskBar())
@@ -11291,11 +11310,7 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 	gpSetCls->UpdateFindDlgAlpha();
 
 	// мог не сброситься, проверим
-	if (isSizing())
-	{
-		if (!isPressed(VK_LBUTTON))
-			mouse.state &= ~MOUSE_SIZING_BEGIN;
-	}
+	isSizing();
 
 	// 18.03.2009 Maks - Если уже тащим - мышь не слать
 	if (isDragging())
@@ -13837,6 +13852,8 @@ void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *ar
 
 void CConEmuMain::OnAllVConClosed()
 {
+	ShutdownGuiStep(L"AllVConClosed");
+
 	OnAllGhostClosed();
 
 	Taskbar_SetShield(false);
@@ -13902,9 +13919,12 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 
 	if (!abPosted)
 	{
+		ShutdownGuiStep(L"OnVConTerminated - repost");
 		PostMessage(ghWnd, mn_MsgVConTerminated, 0, (LPARAM)apVCon);
 		return 0;
 	}
+
+	ShutdownGuiStep(L"OnVConTerminated");
 
 	for (size_t i = 0; i < countof(mp_VCon); i++)
 	{
@@ -13975,6 +13995,13 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 	gpConEmu->mp_TabBar->Update(); // Иначе не будет обновлены закладки
 	// А теперь можно обновить активную закладку
 	gpConEmu->mp_TabBar->OnConsoleActivated(ActiveConNum()/*, FALSE*/);
+
+	ShutdownGuiStep(L"OnVConTerminated - done");
+
+	// Передернуть главный таймер, а то GUI долго думает, если ни одной консоли уже не осталось
+	if (mp_VCon[0] == NULL)
+		OnTimer(TIMER_MAIN_ID, 0);
+
 	return 0;
 }
 
@@ -14481,6 +14508,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == gpConEmu->mn_MsgMyDestroy)
 			{
+				ShutdownGuiStep(L"DestroyWindow");
 				//gpConEmu->OnDestroy(hWnd);
 				DestroyWindow(hWnd);
 				return 0;

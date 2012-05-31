@@ -1059,14 +1059,12 @@ bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
 	BOOL lbLockHooksSection = FALSE;
 	while (!(lbLockHooksSection = apCS->Lock(gpHookCS, TRUE, 10000)))
 	{
-#ifdef _DEBUG
-
+		#ifdef _DEBUG
 		if (!IsDebuggerPresent())
 		{
 			_ASSERTE(lbLockHooksSection);
 		}
-
-#endif
+		#endif
 
 		if (gbInCommonShutdown)
 			return false;
@@ -2849,8 +2847,20 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMOD
 	BOOL lbModulePre = IsModuleValid(hModule); // GetModuleFileName(hModule, szModule, countof(szModule));
 #endif
 
-	lbRc = ((OnFreeLibrary_t)lpfn)(hModule);
-	DWORD dwFreeErrCode = GetLastError();
+	DWORD dwFreeErrCode = 0;
+
+	MSectionLock CS;
+	if (!LockHooks(hModule, L"free", &CS))
+	{
+		lbRc = FALSE;
+		dwFreeErrCode = E_UNEXPECTED;
+	}
+	else
+	{
+		lbRc = ((OnFreeLibrary_t)lpfn)(hModule);
+		dwFreeErrCode = GetLastError();
+		CS.Unlock();
+	}
 
 	// Далее только если !LDR_IS_RESOURCE
 	if (lbRc && !lbResource && !gbDllStopCalled)

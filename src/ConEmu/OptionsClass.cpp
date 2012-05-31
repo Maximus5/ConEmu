@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/ConEmuCheck.h"
 #include "Options.h"
 #include "ConEmu.h"
+#include "ConEmuApp.h"
 #include "ConEmuCtrl.h"
 #include "VConChild.h"
 #include "VirtualConsole.h"
@@ -589,7 +590,7 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 		CVirtualConsole* pVCon;
 		for (size_t i = 0;; i++)
 		{
-			pVCon = gpConEmu->GetVCon(i);
+			pVCon = gpConEmu->GetVCon(i, true);
 			if (!pVCon)
 				break;
 			nNewValue |= pVCon->RCon()->GetConsoleKeyShortcuts();
@@ -2450,6 +2451,8 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	//	CheckDlgButton(hTabs, cbUseWinNumber, BST_CHECKED);
 
 	SetDlgItemText(hWnd2, tTabConsole, gpSet->szTabConsole);
+	SetDlgItemText(hWnd2, tTabSkipWords, gpSet->szTabSkipWords);
+	SetDlgItemText(hWnd2, tTabPanels, gpSet->szTabPanels);
 	SetDlgItemText(hWnd2, tTabViewer, gpSet->szTabViewer);
 	SetDlgItemText(hWnd2, tTabEditor, gpSet->szTabEditor);
 	SetDlgItemText(hWnd2, tTabEditorMod, gpSet->szTabEditorModified);
@@ -2632,6 +2635,10 @@ LRESULT CSettings::OnInitDialog_Tasks(HWND hWnd2, bool abForceReload)
 	OnComboBox(hWnd2, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
 
 	mb_IgnoreCmdGroupEdit = false;
+
+	CheckDlgButton(hWnd2, cbCmdTaskbarTasks, gpSet->isStoreTaskbarkTasks);
+	CheckDlgButton(hWnd2, cbCmdTaskbarCommands, gpSet->isStoreTaskbarCommands);
+	EnableWindow(GetDlgItem(hWnd2, cbCmdTaskbarUpdate), (gnOsVer >= 0x601));
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -4070,6 +4077,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCmdGroupApp:
 		case cbCmdTasksParm:
 		case cbCmdTasksReload:
+		case cbCmdTaskbarTasks:
+		case cbCmdTaskbarCommands:
+		case cbCmdTaskbarUpdate:
 			return OnButtonClicked_Tasks(hWnd2, wParam, lParam);
 		/* *** Command groups *** */
 
@@ -4308,6 +4318,16 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 			OnInitDialog_Tasks(hWnd2, true);
 		} // cbCmdTasksReload
 		break;
+
+	case cbCmdTaskbarTasks:
+		gpSet->isStoreTaskbarkTasks = IsChecked(hWnd2, CB);
+		break;
+	case cbCmdTaskbarCommands:
+		gpSet->isStoreTaskbarCommands = IsChecked(hWnd2, CB);
+		break;
+	case cbCmdTaskbarUpdate:
+		UpdateWin7TaskList(true);
+		break;
 	}
 
 	return 0;
@@ -4515,8 +4535,15 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	} // case hkHotKeySelect:
-		
+
+	case tTabSkipWords:
+	{
+		GetDlgItemText(hWnd2, TB, gpSet->szTabSkipWords, countof(gpSet->szTabSkipWords));
+		gpConEmu->mp_TabBar->Update(TRUE);
+		break;
+	}
 	case tTabConsole:
+	case tTabPanels:
 	case tTabViewer:
 	case tTabEditor:
 	case tTabEditorMod:
@@ -4527,10 +4554,12 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		{
 			temp[31] = 0; // страховка
 
-			if (wcsstr(temp, L"%s"))
+			if (wcsstr(temp, L"%s") || wcsstr(temp, L"%n"))
 			{
 				if (TB == tTabConsole)
 					wcscpy_c(gpSet->szTabConsole, temp);
+				else if (TB == tTabPanels)
+					wcscpy_c(gpSet->szTabPanels, temp);
 				else if (TB == tTabViewer)
 					wcscpy_c(gpSet->szTabViewer, temp);
 				else if (TB == tTabEditor)

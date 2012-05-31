@@ -117,6 +117,8 @@ private:
 
 	bool ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly);
 
+	bool isSettingsOpened();
+
 public:
 	CStatus();
 	virtual ~CStatus();
@@ -127,7 +129,7 @@ public:
 
 	void OnTimer();
 	void OnWindowReposition(const RECT* prcNew = NULL);
-	void OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CONSOLE_CURSOR_INFO* pci);
+	void OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CONSOLE_CURSOR_INFO* pci, bool bForceUpdate);
 	void OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, int nMaxX = 0, int nMaxY = 0);
 	void OnConsoleBufferChanged(CRealConsole* pRCon);
 	void OnActiveVConChanged(int nIndex/*0-based*/, CRealConsole* pRCon);

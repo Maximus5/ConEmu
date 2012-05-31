@@ -715,6 +715,8 @@ int WINAPI _export ProcessDialogEvent(int Event, void *Param)
 
 void   WINAPI _export ExitFAR(void)
 {
+	ShutdownPluginStep(L"ExitFAR");
+
 	ExitFarCmn();
 	//ShutdownHooks();
 	//StopThread();
@@ -732,6 +734,8 @@ void   WINAPI _export ExitFAR(void)
 	}
 
 	gbExitFarCalled = TRUE;
+
+	ShutdownPluginStep(L"ExitFAR - done");
 }
 
 int ShowMessageA(int aiMsg, int aiButtons)

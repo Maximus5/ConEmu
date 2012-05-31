@@ -141,7 +141,8 @@ class CConEmuMain :
 	public:
 		//HMODULE mh_Psapi;
 		//FGetModuleFileNameEx GetModuleFileNameEx;
-		wchar_t ms_ConEmuVer[32];               // Название с версией, например "ConEmu 110117"
+		wchar_t ms_ConEmuDefTitle[32];          // Название с версией, например "ConEmu 110117"
+		wchar_t ms_ConEmuBuild[16];             // номер сборки, например "110117"
 		wchar_t ms_ConEmuExe[MAX_PATH+1];       // полный путь к ConEmu.exe (GUI)
 		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
 		wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
@@ -409,7 +410,7 @@ class CConEmuMain :
 		LPCTSTR GetVConTitle(int nIdx);
 		void SetTitleTemplate(LPCWSTR asTemplate);
 		int GetActiveVCon();
-		CVirtualConsole* GetVCon(int nIdx);
+		CVirtualConsole* GetVCon(int nIdx, bool bFromCycle = false);
 		int IsVConValid(CVirtualConsole* apVCon);
 		CVirtualConsole* GetVConFromPoint(POINT ptScreen);
 		void UpdateCursorInfo(const CONSOLE_SCREEN_BUFFER_INFO* psbi, COORD crCursor, CONSOLE_CURSOR_INFO cInfo);

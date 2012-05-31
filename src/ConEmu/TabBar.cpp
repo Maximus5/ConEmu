@@ -1676,14 +1676,31 @@ HWND TabBarClass::CreateToolbar()
 	int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, BID_TOOLBAR_LAST_IDX, (LPARAM)&bmp);
 	_ASSERTE(BID_TOOLBAR_LAST_IDX==37);
 	
-	bmp.nID = IDB_COPY;
+	//DWORD nLoadErr = 0;
+	if (gnOsVer >= 0x600)
+	{
+		bmp.hInst = g_hInstance;
+		bmp.nID = IDB_COPY24;
+	}
+	else
+	{
+		bmp.hInst = NULL;
+		COLORMAP colorMap = {RGB(255,0,0),GetSysColor(COLOR_BTNFACE)};
+		bmp.nID = (UINT_PTR)CreateMappedBitmap(g_hInstance, IDB_COPY4, 0, &colorMap, 1);
+		//bmp.nID = (UINT_PTR)LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_COPY24), IMAGE_BITMAP, 0,0, LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
+		//nLoadErr = GetLastError();
+	}
 	int nCopyBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
 	// Должен 37 возвращать
 	_ASSERTE(nCopyBmp == BID_TOOLBAR_LAST_IDX);
 	if (nCopyBmp < BID_TOOLBAR_LAST_IDX)
 		nCopyBmp = BID_TOOLBAR_LAST_IDX;
 
-	bmp.nID = IDB_SCROLL;
+	{
+		bmp.hInst = NULL;
+		COLORMAP colorMap = {0xC0C0C0,GetSysColor(COLOR_BTNFACE)};
+		bmp.nID = (UINT_PTR)CreateMappedBitmap(g_hInstance, IDB_SCROLL, 0, &colorMap, 1);
+	}
 	int nScrollBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
 	// Должен 38 возвращать
 	_ASSERTE(nScrollBmp == (BID_TOOLBAR_LAST_IDX+1));
@@ -1719,7 +1736,7 @@ HWND TabBarClass::CreateToolbar()
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	btn.fsStyle = BTNS_BUTTON;
 	//SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
-#if 0
+#if 0 //defined(_DEBUG)
 	// Show copying state
 	btn.iBitmap = nCopyBmp; btn.idCommand = TID_COPYING;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
@@ -1988,16 +2005,22 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	int nMaxLen = 0; //gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
 	int origLength = 0; //_tcslen(tFileName);
 
+	CRealConsole* pRCon = apVCon ? apVCon->RCon() : NULL;
+	bool bIsFar = pRCon ? pRCon->isFar() : false;
+
+
 	if (pTab->Name[0]==0 || (pTab->Type & 0xFF) == 1/*WTYPE_PANELS*/)
 	{
 		//_tcscpy(szFormat, _T("%s"));
-		lstrcpyn(szFormat, gpSet->szTabConsole, countof(szFormat));
+		lstrcpyn(szFormat, bIsFar ? gpSet->szTabPanels : gpSet->szTabConsole, countof(szFormat));
 		nMaxLen = gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
 
 		if (pTab->Name[0] == 0)
 		{
-#ifdef _DEBUG
-			// Это должно случаться ТОЛЬКО при инициализации GUI
+			// Это может случаться при инициализации GUI или закрытии консоли
+			#if 0
+			_ASSERTE(!bIsFar);
+			
 			int nTabCount = GetItemCount();
 
 			if (nTabCount>0 && gpConEmu->ActiveCon()!=NULL)
@@ -2005,14 +2028,47 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 				//_ASSERTE(pTab->Name[0] != 0);
 				nTabCount = nTabCount;
 			}
+			#endif
 
-#endif
 			//100930 - нельзя. GetLastTitle() вернет текущую консоль, а pTab может быть из любой консоли!
 			// -- _tcscpy(pTab->Name, gpConEmu->GetLastTitle()); //isFar() ? gpSet->szTabPanels : gpSet->pszTabConsole);
 			_tcscpy(pTab->Name, gpConEmu->GetDefaultTitle());
 		}
 
 		lstrcpyn(fileName, pTab->Name, countof(fileName));
+		if (gpSet->szTabSkipWords[0])
+		{
+			LPCWSTR pszWord = gpSet->szTabSkipWords;
+			while (pszWord && *pszWord)
+			{
+				LPCWSTR pszNext = wcschr(pszWord, L'|');
+				if (!pszNext) pszNext = pszWord + _tcslen(pszWord);
+				
+				int nLen = (int)(pszNext - pszWord);
+				if (nLen > 0)
+				{
+					lstrcpyn(dummy, pszWord, min((int)countof(dummy),(nLen+1)));
+					wchar_t* pszFound;
+					while ((pszFound = wcsstr(fileName, dummy)) != NULL)
+					{
+						size_t nLeft = _tcslen(pszFound);
+						if (nLeft <= (size_t)nLen)
+						{
+							*pszFound = NULL;
+							break;
+						}
+						else
+						{
+							wmemmove(pszFound, pszFound+(size_t)nLen, nLeft - nLen + 1);
+						}
+					}
+				}
+
+				if (!*pszNext)
+					break;
+				pszWord = pszNext + 1;
+			}
+		}
 		origLength = _tcslen(fileName);
 		//if (origLength>6) {
 		//    // Чтобы в заголовке было что-то вроде "{C:\Program Fil...- Far"
@@ -2038,9 +2094,14 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 				lstrcpyn(szFormat, gpSet->szTabEditor, countof(szFormat));
 		}
 		else if ((pTab->Type & 0xFF) == 2/*WTYPE_VIEWER*/)
+		{
 			lstrcpyn(szFormat, gpSet->szTabViewer, countof(szFormat));
+		}
 		else
-			lstrcpyn(szFormat, gpSet->szTabConsole, countof(szFormat));
+		{
+			_ASSERTE(FALSE && "Must be processed in previous branch");
+			lstrcpyn(szFormat, bIsFar ? gpSet->szTabPanels : gpSet->szTabConsole, countof(szFormat));
+		}
 	}
 
 	// restrict length
@@ -2098,7 +2159,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 		pszFmt = _T("%s");
 	*pszDst = 0;
 	
-	TCHAR szTmp[16];
+	TCHAR szTmp[64];
 	
 	while (*pszFmt && pszDst < pszEnd)
 	{
@@ -2133,6 +2194,13 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 							_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%u"), iCon);
 						else
 							wcscpy_c(szTmp, _T("?"));
+						pszText = szTmp;
+					}
+					break;
+				case _T('n'): case _T('N'):
+					{
+						pszText = pRCon ? pRCon->GetActiveProcessName() : NULL;
+						wcscpy_c(szTmp, (pszText && *pszText) ? pszText : L"?");
 						pszText = szTmp;
 					}
 					break;

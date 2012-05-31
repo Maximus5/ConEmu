@@ -250,9 +250,11 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 		mn_BmpSize.cx = nStatusWidth; mn_BmpSize.cy = nStatusHeight;
 	}
 
-	COLORREF crBack = gpSet->nStatusBarBack;
-	COLORREF crText = gpSet->nStatusBarLight;
-	COLORREF crDash = gpSet->nStatusBarDark;
+	bool lbFade = gpSet->isFadeInactive && !gpConEmu->isMeForeground(true);
+
+	COLORREF crBack = lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarBack) : gpSet->nStatusBarBack;
+	COLORREF crText = lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarLight) : gpSet->nStatusBarLight;
+	COLORREF crDash = lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarDark) : gpSet->nStatusBarDark;
 
 	HBRUSH hBr = CreateSolidBrush(crBack);
 	//HPEN hLight = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
@@ -339,11 +341,16 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 					LPCWSTR pszName = pRCon->GetActiveProcessName();
 					if (nPID)
 					{
-						_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)) _T("%s:%u"), (pszName && *pszName) ? pszName : L"???", nPID);
-						//CharLowerBuff(m_Items[nDrawCount].sText, lstrlen(m_Items[nDrawCount].sText));
+						TODO("Показать все дерево запущенных процессов");
+						wchar_t* psz = m_Items[nDrawCount].sText;
+						int nCchLeft = countof(m_Items[nDrawCount].sText);
+						lstrcpyn(psz, (pszName && *pszName) ? pszName : L"???", 64);
+						int nCurLen = lstrlen(psz);
+						_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u « %s%s"), 
+							nPID, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x86",L"x64"));
 					}
 					else
-						lstrcpyn(m_Items[nDrawCount].sText, (pszTmp && *pszTmp) ? pszTmp : gsReady, countof(m_Items[nDrawCount].sText));
+						lstrcpyn(m_Items[nDrawCount].sText, gsReady, countof(m_Items[nDrawCount].sText));
 				}
 				else
 				{
@@ -731,6 +738,9 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 void CStatus::ShowStatusSetupMenu()
 {
+	if (isSettingsOpened())
+		return;
+
 	mb_InPopupMenu = true;
 
 	HMENU hPopup = CreatePopupMenu();
@@ -774,11 +784,18 @@ void CStatus::ShowStatusSetupMenu()
 		}
 	}
 
+	AppendMenu(hPopup, MF_SEPARATOR, 0, L"");
+	AppendMenu(hPopup, MF_STRING, (int)countof(gStatusCols)+1, L"Setup...");
+
 	mb_InSetupMenu = true;
 	int nCmd = gpConEmu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_LEFTALIGN|TPM_RETURNCMD, ptCur.x, ptCur.y, 0, ghWnd, NULL);
 	mb_InSetupMenu = false;
 
-	if ((nCmd >= 1) && (nCmd <= countof(gStatusCols)))
+	if (nCmd == ((int)countof(gStatusCols)+1))
+	{
+		CSettings::Dialog(IDD_SPG_STATUSBAR);
+	}
+	else if ((nCmd >= 1) && (nCmd <= countof(gStatusCols)))
 	{
 		if (nCmd == 1)
 		{
@@ -878,7 +895,10 @@ void CStatus::OnWindowReposition(const RECT *prcNew)
 	OnDataChanged(Changed, countof(Changed), true);
 }
 
-void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CONSOLE_CURSOR_INFO* pci)
+// bForceUpdate надо ставить в true, после изменения размеров консоли! Чтобы при ресайзе
+// актуальные данные показывать. Другие значения (скролл и курсор) можно и с задержкой
+// отображать, чтобы лишнюю нагрузку не создавать.
+void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CONSOLE_CURSOR_INFO* pci, bool bForceUpdate)
 {
 	bool bValid = (psbi != NULL);
 
@@ -926,7 +946,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 	}
 
 	CEStatusItems Changed[] = {csi_ConsolePos, csi_ConsoleSize, csi_BufferSize};
-	OnDataChanged(Changed, countof(Changed));
+	OnDataChanged(Changed, countof(Changed), bForceUpdate);
 }
 
 void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, int nMaxX /*= 0*/, int nMaxY /*= 0*/)
@@ -993,7 +1013,7 @@ void CStatus::OnConsoleBufferChanged(CRealConsole* pRCon)
 	RealBufferType tBuffer = pRCon ? pRCon->GetActiveBufferType() : rbt_Undefined;
 	TODO("isBufferWidth");
 	bool bIsScroll = pRCon ? pRCon->isBufferHeight() : false;
-	wchar_t cScroll = 0x2195; // Up/Down arrow
+	wchar_t cScroll = (gnOsVer>=0x0601/*Windows7*/) ? 0x2195 : L']'/*WinXP has not arrows*/; // Up/Down arrow
 
 	wcscpy_c(m_Values[csi_ActiveBuffer].sText, 
 			(tBuffer == rbt_Primary) ? L"PRI" :
@@ -1046,12 +1066,12 @@ void CStatus::OnActiveVConChanged(int nIndex/*0-based*/, CRealConsole* pRCon)
 		CONSOLE_CURSOR_INFO ci = {};
 		pRCon->GetConsoleScreenBufferInfo(&sbi);
 		pRCon->GetConsoleCursorInfo(&ci);
-		OnConsoleChanged(&sbi, &ci);
+		OnConsoleChanged(&sbi, &ci, false);
 	}
 	else
 	{
 		OnServerChanged(0, 0);
-		OnConsoleChanged(NULL, NULL);
+		OnConsoleChanged(NULL, NULL, false);
 	}
 
 	// Чтобы уж точно обновилось - как минимум, меняется PID активного процесса
@@ -1237,14 +1257,22 @@ bool CStatus::ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly)
 	return bSelected;
 }
 
-void CStatus::ShowTransparencyMenu(POINT pt)
+bool CStatus::isSettingsOpened()
 {
 	if (ghOpWnd && IsWindow(ghOpWnd))
 	{
 		gpSetCls->Dialog();
 		MessageBox(ghOpWnd, L"Close settings dialog first, please.", gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION);
-		return;
+		return true;
 	}
+
+	return false;
+}
+
+void CStatus::ShowTransparencyMenu(POINT pt)
+{
+	if (isSettingsOpened())
+		return;
 
 	mb_InPopupMenu = true;
 	HMENU hPopup = CreatePopupMenu();

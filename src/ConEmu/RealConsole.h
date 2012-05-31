@@ -490,6 +490,7 @@ class CRealConsole
 		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
 
 		void SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv);
+		void SetAltSrvPID(DWORD anAltSrvPID, HANDLE ahAltSrv);
 		// Сервер и альтернативный сервер
 		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
 		DWORD mn_AltSrv_PID;  HANDLE mh_AltSrv;
@@ -526,6 +527,7 @@ class CRealConsole
 		BOOL AttachPID(DWORD dwPID);
 		BOOL StartProcess();
 		BOOL StartMonitorThread();
+		void SetMonitorThreadEvent();
 		BOOL mb_NeedStartProcess;
 
 		// Нить наблюдения за консолью

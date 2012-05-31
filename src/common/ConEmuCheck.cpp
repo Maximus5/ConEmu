@@ -176,14 +176,43 @@ LPCWSTR ModuleName(LPCWSTR asDefault)
 	return szFile;
 }
 
-HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule)
+HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule, DWORD nServerPID)
 {
 	HANDLE hPipe = NULL;
 	DWORD dwErr = 0, dwMode = 0;
 	BOOL fSuccess = FALSE;
 	DWORD dwStartTick = GetTickCount();
 	int nTries = 2;
+	DWORD nOpenPipeTimeout = EXECUTE_CMD_OPENPIPE_TIMEOUT;
+
 	_ASSERTE(LocalSecurity()!=NULL);
+
+#ifdef _DEBUG
+	BOOL lbServerIsDebugged = FALSE;
+	// WinXP SP1 и выше
+	typedef BOOL (WINAPI* CheckRemoteDebuggerPresent_t)(HANDLE hProcess, PBOOL pbDebuggerPresent);
+	static CheckRemoteDebuggerPresent_t _CheckRemoteDebuggerPresent = NULL;
+	if (nServerPID)
+	{
+		if (!_CheckRemoteDebuggerPresent)
+			_CheckRemoteDebuggerPresent = (CheckRemoteDebuggerPresent_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "CheckRemoteDebuggerPresent");
+		
+		if (_CheckRemoteDebuggerPresent)
+		{
+			HANDLE hProcess = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, nServerPID);
+			if (hProcess)
+			{
+				BOOL lb = FALSE;
+
+				if (_CheckRemoteDebuggerPresent(hProcess, &lb) && lb)
+					lbServerIsDebugged = TRUE;
+
+				CloseHandle(hProcess);
+			}
+		}
+	}
+#endif
+
 
 	// Try to open a named pipe; wait for it, if necessary.
 	while (1)
@@ -218,7 +247,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		}
 
 		// Сделаем так, чтобы хотя бы пару раз он попробовал повторить
-		if ((nTries <= 0) && (GetTickCount() - dwStartTick) > EXECUTE_CMD_OPENPIPE_TIMEOUT)
+		if ((nTries <= 0) && (GetTickCount() - dwStartTick) > nOpenPipeTimeout)
 		{
 			//if (pszErr)
 			{
@@ -323,6 +352,7 @@ void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, size_t cbSize)
 	pHdr->hModule = ghWorkingModule;
 	pHdr->nBits = WIN3264TEST(32,64);
 	pHdr->nLastError = GetLastError();
+	pHdr->IsDebugging = IsDebuggerPresent();
 }
 
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, size_t nSize)
@@ -570,7 +600,7 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner)
 		{
 			if (lpRet)
 			{
-				_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT || (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP && nDelta <= EXECUTE_CMD_WARN_TIMEOUT2));
+				_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT || lpRet->hdr.IsDebugging || (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP && nDelta <= EXECUTE_CMD_WARN_TIMEOUT2));
 			}
 			else
 			{
@@ -587,15 +617,15 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner)
 // Выполнить в ConEmuC
 CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult)
 {
-	wchar_t szGuiPipeName[128];
+	wchar_t szPipeName[128];
 
 	if (!dwSrvPID)
 		return NULL;
 
 	DWORD nLastErr = GetLastError();
-	//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
-	msprintf(szGuiPipeName, countof(szGuiPipeName), CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
-	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner, bAsyncNoResult);
+	//_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
+	msprintf(szPipeName, countof(szPipeName), CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
+	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, 1000, hOwner, bAsyncNoResult, dwSrvPID);
 	_ASSERTE(pIn->hdr.bAsync == bAsyncNoResult);
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
 	return lpRet;
@@ -604,15 +634,15 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL
 // Выполнить в ConEmuHk
 CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner)
 {
-	wchar_t szGuiPipeName[128];
+	wchar_t szPipeName[128];
 
 	if (!dwHkPID)
 		return NULL;
 
 	DWORD nLastErr = GetLastError();
-	//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
-	msprintf(szGuiPipeName, countof(szGuiPipeName), CEHOOKSPIPENAME, L".", (DWORD)dwHkPID);
-	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
+	//_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
+	msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", (DWORD)dwHkPID);
+	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, 1000, hOwner);
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
 	return lpRet;
 }
@@ -625,7 +655,7 @@ CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner)
 //WARNING!!!
 //   Эта процедура не может получить с сервера более 600 байт данных!
 // В заголовке hOwner в дебаге может быть отображена ошибка
-CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult)
+CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult, DWORD nServerPID)
 {
 	CESERVER_REQ* pOut = NULL;
 	HANDLE hPipe = NULL;
@@ -634,9 +664,9 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD 
 	BOOL fSuccess = FALSE;
 	DWORD cbRead = 0, /*dwMode = 0,*/ dwErr = 0;
 
-	if (!pIn || !szGuiPipeName)
+	if (!pIn || !szPipeName)
 	{
-		_ASSERTE(pIn && szGuiPipeName);
+		_ASSERTE(pIn && szPipeName);
 		return NULL;
 	}
 
@@ -644,7 +674,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD 
 
 	_ASSERTE(pIn->hdr.nSrcPID && pIn->hdr.nSrcThreadId);
 	_ASSERTE(pIn->hdr.cbSize >= sizeof(pIn->hdr));
-	hPipe = ExecuteOpenPipe(szGuiPipeName, szErr, NULL/*Сюда хорошо бы имя модуля подкрутить*/);
+	hPipe = ExecuteOpenPipe(szPipeName, szErr, NULL/*Сюда хорошо бы имя модуля подкрутить*/, nServerPID);
 
 	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE)
 	{
@@ -674,7 +704,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD 
 	//while (1)
 	//{
 	//	hPipe = CreateFile(
-	//		szGuiPipeName,  // pipe name
+	//		szPipeName,  // pipe name
 	//		GENERIC_READ |  // read and write access
 	//		GENERIC_WRITE,
 	//		0,              // no sharing
@@ -695,7 +725,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD 
 	//	}
 	//
 	//	// All pipe instances are busy, so wait for 1 second.
-	//	if (!WaitNamedPipe(szGuiPipeName, nWaitPipe) )
+	//	if (!WaitNamedPipe(szPipeName, nWaitPipe) )
 	//	{
 	//		return NULL;
 	//	}

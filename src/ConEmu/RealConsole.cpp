@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRALTSRV(s) DEBUGSTR(s)
+#define DEBUGSTRSTOP(s) DEBUGSTR(s)
 
 // »ногда не отрисовываетс€ диалог поиска полностью - только бежит текуща€ сканируема€ директори€.
 // »ногда диалог отрисовалс€, но часть до текста "..." отсутствует
@@ -206,7 +207,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	_ASSERTE(mp_RBuf!=NULL);
 	mp_EBuf = NULL;
 	mp_SBuf = NULL;
-	SetActiveBuffer(mp_RBuf);
+	SetActiveBuffer(mp_RBuf, false);
 	mb_ABufChaged = false;
 	
 	mn_LastInactiveRgnCheck = 0;
@@ -566,7 +567,7 @@ bool CRealConsole::SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEven
 	if (mh_MonitorThreadEvent && abTouchMonitorEvent)
 	{
 		// ѕередернуть нить MonitorThread
-		SetEvent(mh_MonitorThreadEvent);
+		SetMonitorThreadEvent();
 	}
 
 	if (pOldBuffer && (pOldBuffer == mp_SBuf))
@@ -810,7 +811,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	pRet->Font.inSizeX = gpSet->ConsoleFont.lfWidth;
 	lstrcpy(pRet->Font.sFontName, gpSet->ConsoleFont.lfFaceName);
 	// ѕередернуть нить MonitorThread
-	SetEvent(mh_MonitorThreadEvent);
+	SetMonitorThreadEvent();
 	return TRUE;
 }
 
@@ -1341,15 +1342,30 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			if (pRCon->mh_AltSrv == hAltServerHandle)
 			{
 				pRCon->mh_AltSrv = NULL;
-				pRCon->mn_AltSrv_PID = 0;
+				pRCon->SetAltSrvPID(0, NULL);
 			}
 			SafeCloseHandle(hAltServerHandle);
 			hEvents[IDEVENT_SERVERPH] = pRCon->mh_MainSrv;
 
-			pRCon->ReopenServerPipes();
-
-			// ћен€ем nWait, т.к. основной сервер еще не закрылс€ (консоль жива)
-			nWait = IDEVENV_MONITORTHREADEVENT;
+			if (pRCon->mb_InCloseConsole && pRCon->mh_MainSrv && (WaitForSingleObject(pRCon->mh_MainSrv, 0) == WAIT_OBJECT_0))
+			{
+				ShutdownGuiStep(L"AltServer and MainServer are closed");
+				// ѕодтверждаем nWait, основной сервер закрылс€
+				nWait = IDEVENT_SERVERPH;
+			}
+			else
+			{
+				ShutdownGuiStep(L"AltServer closed, executing ReopenServerPipes");
+				if (pRCon->ReopenServerPipes())
+				{
+					// ћен€ем nWait, т.к. основной сервер еще не закрылс€ (консоль жива)
+					nWait = IDEVENV_MONITORTHREADEVENT;
+				}
+				else
+				{
+					ShutdownGuiStep(L"ReopenServerPipes failed, exiting from MonitorThread");
+				}
+			}
 		}
 
 		if (nWait == IDEVENT_TERM || nWait == IDEVENT_SERVERPH)
@@ -1632,8 +1648,15 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					// если сменилс€ статус (Far/не Far) - перерисовать на вс€кий случай, 
 					// чтобы после возврата из батника, гарантированно отрисовалось в режиме фара
 					_ASSERTE(pRCon->mp_RBuf==pRCon->mp_ABuf);
-					if (pRCon->mp_RBuf->ApplyConsoleInfo())
+					if (pRCon->mb_InCloseConsole && pRCon->mh_MainSrv && (WaitForSingleObject(pRCon->mh_MainSrv, 0) == WAIT_OBJECT_0))
+					{
+						// ќсновной сервер закрылс€ (консоль закрыта), идем на выход
+						break;
+					}
+					else if (pRCon->mp_RBuf->ApplyConsoleInfo())
+					{
 						lbForceUpdate = true;
+					}
 				}
 			}
 
@@ -1860,7 +1883,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 	if (nWait == IDEVENT_SERVERPH)
 	{
-		DEBUGSTRPROC(L"### ConEmuC.exe was terminated\n");
+		//ShutdownGuiStep(L"### Server was terminated\n");
 		DWORD nExitCode = 999;
 		GetExitCodeProcess(pRCon->mh_MainSrv, &nExitCode);
 		wchar_t szErrInfo[255];
@@ -1871,6 +1894,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			nExitCode);
 		if (nExitCode == 0xC000013A)
 			wcscat_c(szErrInfo, L" (by Ctrl+C)");
+
+		ShutdownGuiStep(szErrInfo);
+
 		//if (nExitCode >= CERR_FIRSTEXITCODE && nExitCode <= CERR_LASTEXITCODE)
 		//{
 		//}
@@ -1886,6 +1912,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			pRCon->SetConStatus(szErrInfo);
 		}
 	}
+
+	ShutdownGuiStep(L"StopSignal");
 
 	pRCon->StopSignal();
 	// 2010-08-03 - перенес в StopThread, чтобы не задерживать закрытие Ё“ќ… нити
@@ -1927,7 +1955,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	//}
 	// Finalize
 	//SafeCloseHandle(pRCon->mh_MonitorThread);
-	DEBUGSTRPROC(L"Leaving MonitorThread\n");
+	ShutdownGuiStep(L"Leaving MonitorThread\n");
 	return 0;
 }
 
@@ -1939,6 +1967,17 @@ BOOL CRealConsole::PreInit(BOOL abCreateBuffers/*=TRUE*/)
 	MCHKHEAP;
 	
 	return mp_RBuf->PreInit();
+}
+
+void CRealConsole::SetMonitorThreadEvent()
+{
+	if (!this)
+	{
+		_ASSERTE(this);
+		return;
+	}
+
+	SetEvent(mh_MonitorThreadEvent);
 }
 
 BOOL CRealConsole::StartMonitorThread()
@@ -3139,7 +3178,8 @@ bool CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 		
 		DWORD dwTickStart = timeGetTime();
 		
-		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+		// сообщени€ рассылаем только через главный сервер. альтернативный (приложение) может висеть
+		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), &in, ghWnd);
 
 		gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
@@ -3267,10 +3307,11 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		// Servers
 		_ASSERTE((mh_AltSrv==NULL && !mn_AltSrv_PID) && "AltServer was not terminated?");
 		SafeCloseHandle(mh_AltSrv);
-		mn_AltSrv_PID = 0;
+		SetAltSrvPID(0, NULL);
+		//mn_AltSrv_PID = 0;
 		SafeCloseHandle(mh_MainSrv);
-		//mn_MainSrv_PID = 0;
 		SetMainSrvPID(0, NULL);
+		//mn_MainSrv_PID = 0;
 
 		SetFarPID(0);
 		SetFarPluginPID(0);
@@ -3991,6 +4032,13 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 		gpConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
 }
 
+void CRealConsole::SetAltSrvPID(DWORD anAltSrvPID, HANDLE ahAltSrv)
+{
+	_ASSERTE((mh_AltSrv==NULL || mh_AltSrv==ahAltSrv) && "mh_AltSrv must be closed before!");
+	mh_AltSrv = ahAltSrv;
+	mn_AltSrv_PID = anAltSrvPID;
+}
+
 bool CRealConsole::InitAltServer(DWORD nAltServerPID, HANDLE hAltServer)
 {
 	bool bOk = false;
@@ -4001,9 +4049,12 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID, HANDLE hAltServer)
 
 	ResetEvent(mh_ActiveServerSwitched);
 
+	// mh_AltSrv должен закрытьс€ в MonitorThread!
 	HANDLE hOldAltServer = mh_AltSrv;
-	mn_AltSrv_PID = nAltServerPID;
-	mh_AltSrv = hAltServer;
+	mh_AltSrv = NULL;
+	//mn_AltSrv_PID = nAltServerPID;
+	//mh_AltSrv = hAltServer;
+	SetAltSrvPID(nAltServerPID, hAltServer);
 
 	SetEvent(mh_SwitchActiveServer);
 	mb_SwitchActiveServer = true;
@@ -4015,7 +4066,7 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID, HANDLE hAltServer)
 	nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, 1000);
 	if (nWait == WAIT_TIMEOUT)
 	{
-		_ASSERTE(nWait == WAIT_OBJECT_0);
+		_ASSERTE((nWait == WAIT_OBJECT_0) && "Switching Monitor thread to altarnative server takes more than 1000ms");
 	}
 	#endif
 
@@ -4034,18 +4085,26 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID, HANDLE hAltServer)
 bool CRealConsole::ReopenServerPipes()
 {
 	DWORD nSrvPID = mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID;
+	HANDLE hSrvHandle = (nSrvPID == mn_MainSrv_PID) ? mh_MainSrv : mh_AltSrv;
 
 	// переоткрыть event изменений в консоли
 	m_ConDataChanged.InitName(CEDATAREADYEVENT, nSrvPID);
 	if (m_ConDataChanged.Open() == NULL)
 	{
-		_ASSERTE(FALSE && "m_ConDataChanged.Open() != NULL");
+		bool bSrvClosed = (WaitForSingleObject(hSrvHandle, 0) == WAIT_OBJECT_0);
+		Assert(mb_InCloseConsole && "m_ConDataChanged.Open() != NULL");
+		return false;
 	}
 
 	// переоткрыть m_GetDataPipe
 	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", nSrvPID);
 	bool bOpened = m_GetDataPipe.Open();
-	_ASSERTE(bOpened);
+	if (!bOpened)
+	{
+		bool bSrvClosed = (WaitForSingleObject(hSrvHandle, 0) == WAIT_OBJECT_0);
+		Assert((bOpened || mb_InCloseConsole) && "m_GetDataPipe.Open() failed");
+		return false;
+	}
 
 	// обновить им€ "серверного" пайпа
 	_wsprintf(ms_ConEmuC_Pipe, SKIPLEN(countof(ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", nSrvPID);
@@ -4681,7 +4740,7 @@ BOOL CRealConsole::WaitConsoleSize(int anWaitSize, DWORD nTimeout)
 			break;
 		}
 
-		SetEvent(mh_MonitorThreadEvent);
+		SetMonitorThreadEvent();
 		Sleep(10);
 		nDelta = GetTickCount() - nStart;
 	}
@@ -5744,10 +5803,20 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
 	//if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
-	if ((gpSet->isMonitorConsoleLang & 2) == 2)  // ќдин Layout на все консоли
-		SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gpConEmu->GetActiveKeyboardLayout());
-	else if (mp_RBuf->GetKeybLayout() && (gpSet->isMonitorConsoleLang & 1) == 1)  // —ледить за Layout'ом в консоли
+	if ((gpSet->isMonitorConsoleLang & 2) == 2)
+	{
+		// ќдин Layout на все консоли
+		// Ќо нет смысла дергать сервер, если в нем и так выбран "правильный" layout
+		if (gpConEmu->GetActiveKeyboardLayout() != mp_RBuf->GetKeybLayout())
+		{
+			SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gpConEmu->GetActiveKeyboardLayout());
+		}
+	}
+	else if (mp_RBuf->GetKeybLayout() && (gpSet->isMonitorConsoleLang & 1) == 1)
+	{
+		// —ледить за Layout'ом в консоли
 		gpConEmu->SwitchKeyboardLayout(mp_RBuf->GetKeybLayout());
+	}
 
 	WARNING("Ќе работало обновление заголовка");
 	gpConEmu->UpdateTitle();
@@ -6559,7 +6628,7 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 			// » MonitorThread, чтобы он получил новое содержимое
 			ResetEvent(mh_ApplyFinished);
 			mn_LastConsolePacketIdx--;
-			SetEvent(mh_MonitorThreadEvent);
+			SetMonitorThreadEvent();
 
 			//120412 - не будем ждать. больше задержки раздражают, нежели возможное отставание в отрисовке окна
 			//nWait = WaitForSingleObject(mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
@@ -6579,7 +6648,7 @@ BOOL CRealConsole::IsConsoleThread()
 
 void CRealConsole::SetForceRead()
 {
-	SetEvent(mh_MonitorThreadEvent);
+	SetMonitorThreadEvent();
 }
 
 // ¬ызываетс€ из TabBar->ConEmu
@@ -7071,6 +7140,8 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 			return;
 	}
 
+	ShutdownGuiStep(L"Closing console window");
+
 	// —брос background
 	CESERVER_REQ_SETBACKGROUND BackClear = {};
 	bool lbCleared = false;
@@ -7126,7 +7197,9 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 			if ((nPrcCount > 0) && pPrc)
 			{
 				DWORD nActivePID = GetActivePID();
-				DWORD dwServerPID = GetServerPID();
+				// ѕусть TerminateProcess зовет главный сервер (ConEmuC.exe),
+				// альтернативный может закрыватьс€, или не отвечать...
+				DWORD dwServerPID = GetServerPID(true);
 				if (nActivePID && dwServerPID)
 				{
 					wchar_t szActive[64] = {};
@@ -8207,10 +8280,19 @@ bool CRealConsole::isFar(bool abPluginRequired/*=false*/)
 	return GetFarPID(abPluginRequired)!=0;
 }
 
+// ƒолжна вернуть true, если из фара что-то было запущено
+// ≈сли активный процесс и есть far - то false
 bool CRealConsole::isFarInStack()
 {
 	if (mn_FarPID || mn_FarPID_PluginDetected || (mn_ProgramStatus & CES_FARINSTACK))
+	{
+		if (mn_ActivePID && (mn_ActivePID == mn_FarPID || mn_ActivePID == mn_FarPID))
+		{
+			return false;
+		}
+
 		return true;
+	}
 
 	return false;
 }
@@ -8912,6 +8994,9 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 
 	if (abAsync)
 	{
+		if (mb_InCloseConsole)
+			ShutdownGuiStep(L"PostMacro, creating thread");
+
 		if (mh_PostMacroThread != NULL)
 		{
 			DWORD nWait = WaitForSingleObject(mh_PostMacroThread, 0);
@@ -8945,8 +9030,11 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		return;
 	}
 
+	if (mb_InCloseConsole)
+		ShutdownGuiStep(L"PostMacro, calling pipe");
+
 #ifdef _DEBUG
-	DEBUGSTRMACRO(asMacro); OutputDebugStringW(L"\n");
+	DEBUGSTRMACRO(asMacro); DEBUGSTRMACRO(L"\n");
 #endif
 	CConEmuPipe pipe(nPID, CONEMUREADYTIMEOUT);
 
@@ -8957,6 +9045,9 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		pipe.Execute(CMD_POSTMACRO, asMacro, (_tcslen(asMacro)+1)*2);
 		gpConEmu->DebugStep(NULL);
 	}
+
+	if (mb_InCloseConsole)
+		ShutdownGuiStep(L"PostMacro, done");
 }
 
 bool CRealConsole::Detach()

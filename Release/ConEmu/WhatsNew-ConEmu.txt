@@ -9,9 +9,20 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
+[+] Windows 7 и выше. Поддержка Jump list, в секцию 'Tasks' ConEmu может добавить свои 'Predefined tasks' и команды из истории.
+    Наполнение Jump list занимает некоторое время, поэтому на вкладке 'Tasks' добавлена кнопка 'Update Now!'.
 [+] ConEmu.exe: параметр /title "Template". В заголовке окна будет отображаться фиксированный текст, а не заголовок активной консоли. В "Template" можно использовать переменные окружения.
 [+] Диалог 'Create new console': в системном меню добавлен пункт 'Reset command history...'.
 [+] Win+H: Make screenshot of active ConEmu window.
+[+] Tabs: Раздельные шаблоны для панелей (Far) и других консольных приложений.
+[+] Tabs: Для консольных приложений (кроме Far) можно настроить список слов, исключаемых из заголовка. Надоел префикс 'Administrator:' при запуске консоли 'под админом' в Win7.
+[*] Убираем задержки закрытия ConEmu.
+[%] В некоторых случаях не появлялись Shell-диалоги (при запуске файлов, выборе пунктов контекстного EMenu).
+[*] Minor change in (isMonitorConsoleLang == 2).
+[*] На Status bar тоже действует 'Fade when inactive'.
+[%] В историю не попадала команда, указанная через '/cmd' при запуске ConEmu.exe.
+[%] Issue 561: В некоторых случаях ConEmuHk64.dll вызывала падение консольного приложения.
+[%] Issue 564: События мыши не посылались в консоль при отключенном флажке 'Inject ConEmuHk'.
 
 
 2012.05.27a

@@ -975,7 +975,7 @@ struct CESERVER_REQ_HDR
 	DWORD   nCreateTick;
 	DWORD   nBits;      // битность вызывающего процесса
 	DWORD   nLastError; // последний GetLastError() при отправке пакета
-	DWORD   Pad1;
+	DWORD   IsDebugging;
 	u64     hModule;
 };
 

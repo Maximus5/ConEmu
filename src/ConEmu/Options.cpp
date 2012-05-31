@@ -406,6 +406,8 @@ void Settings::InitSettings()
 	//wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] `%p` *" /* L"[%s] *" */);
 	//wcscpy_c(szTabViewer, L"<%c.%i>[%s] `%p`" /* L"{%s}" */);
 	wcscpy_c(szTabConsole, L"<%c> %s");
+	wcscpy_c(szTabSkipWords, L"Administrator:|Администратор:");
+	wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
 	wcscpy_c(szTabEditor, L"<%c.%i>{%s}");
 	wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] *");
 	wcscpy_c(szTabViewer, L"<%c.%i>[%s]");
@@ -1716,6 +1718,8 @@ void Settings::LoadSettings()
 			_ASSERTE(nStartType <= (rbStartLastTabs - rbStartSingleApp));
 			nStartType = 0;
 		}
+		reg->Load(L"StoreTaskbarkTasks", isStoreTaskbarkTasks);
+		reg->Load(L"StoreTaskbarCommands", isStoreTaskbarCommands);
 
 		reg->Load(L"CmdLineHistory", &psCmdHistory); nCmdHistorySize = 0; HistoryCheck();
 		reg->Load(L"Multi", isMulti);
@@ -2015,13 +2019,9 @@ void Settings::LoadSettings()
 		
 		
 		reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
-		//WCHAR* pszVert = wcschr(szTabPanels, L'|');
-		//if (!pszVert) {
-		//    if (_tcslen(szTabPanels)>54) szTabPanels[54] = 0;
-		//    pszVert = szTabPanels + _tcslen(szTabPanels);
-		//    wcscpy_c(pszVert+1, L"Console");
-		//}
-		//*pszVert = 0; pszTabConsole = pszVert+1;
+		reg->Load(L"TabSkipWords", szTabSkipWords, countof(szTabSkipWords));
+		wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
+		reg->Load(L"TabPanels", szTabPanels, countof(szTabPanels));
 		reg->Load(L"TabEditor", szTabEditor, countof(szTabEditor));
 		reg->Load(L"TabEditorModified", szTabEditorModified, countof(szTabEditorModified));
 		reg->Load(L"TabViewer", szTabViewer, countof(szTabViewer));
@@ -2537,6 +2537,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"StartFarFolders", isStartFarFolders);
 		reg->Save(L"StartFarEditors", isStartFarEditors);
 
+		reg->Save(L"StoreTaskbarkTasks", isStoreTaskbarkTasks);
+		reg->Save(L"StoreTaskbarCommands", isStoreTaskbarCommands);
+
 		if (psCmdHistory)
 			reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
 
@@ -2697,6 +2700,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"TabMargins", rcTabMargins);
 		reg->Save(L"ToolbarAddSpace", nToolbarAddSpace);
 		reg->Save(L"TabConsole", szTabConsole);
+		reg->Save(L"TabSkipWords", szTabSkipWords);
+		reg->Save(L"TabPanels", szTabPanels);
 		reg->Save(L"TabEditor", szTabEditor);
 		reg->Save(L"TabEditorModified", szTabEditorModified);
 		reg->Save(L"TabViewer", szTabViewer);

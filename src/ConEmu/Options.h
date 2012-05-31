@@ -523,6 +523,11 @@ struct Settings
 		//reg->Load(L"StartFarEditors", isStartFarEditors);
 		bool isStartFarEditors;
 
+		//reg->Load(L"StoreTaskbarkTasks", isStoreTaskbarkTasks);
+		bool isStoreTaskbarkTasks;
+		//reg->Load(L"StoreTaskbarCommands", isStoreTaskbarCommands);
+		bool isStoreTaskbarCommands;
+
 		
 		/* Command Line ("/cmd" arg) */
 		LPTSTR psCurCmd;
@@ -962,6 +967,10 @@ struct Settings
 		/* *** Заголовки табов *** */
 		//reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
 		WCHAR szTabConsole[32];
+		//reg->Load(L"TabSkipWords", szTabSkipWords, countof(szTabSkipWords));
+		WCHAR szTabSkipWords[255];
+		//reg->Load(L"TabPanels", szTabPanels, countof(szTabPanels));
+		WCHAR szTabPanels[32];
 		//reg->Load(L"TabEditor", szTabEditor, countof(szTabEditor));
 		WCHAR szTabEditor[32];
 		//reg->Load(L"TabEditorModified", szTabEditorModified, countof(szTabEditorModified));

@@ -31,11 +31,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 //	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"timex.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"far.exe"
 	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
+
+
+#undef SHOW_SHUTDOWN_STEPS
+#ifdef _DEBUG
+	#define SHOW_SHUTDOWN_STEPS
+#endif
+
 
 #ifdef _DEBUG
 	//#define UseDebugExceptionFilter
@@ -182,6 +189,32 @@ void __stdcall _chkstk()
 	return;
 }
 */
+
+#ifdef SHOW_SHUTDOWN_STEPS
+static int gnDbgPresent = 0;
+void ShutdownStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0)
+{
+	if (!gnDbgPresent)
+		gnDbgPresent = IsDebuggerPresent() ? 1 : 2;
+	if (gnDbgPresent != 1)
+		return;
+	wchar_t szFull[512];
+	msprintf(szFull, countof(szFull), L"%u:ConEmuH:PID=%u:TID=%u: ",
+		GetTickCount(), GetCurrentProcessId(), GetCurrentThreadId());
+	if (asInfo)
+	{
+		int nLen = lstrlen(szFull);
+		msprintf(szFull+nLen, countof(szFull)-nLen, asInfo, nParm1, nParm2, nParm3, nParm4);
+	}
+	lstrcat(szFull, L"\n");
+	OutputDebugString(szFull);
+}
+#else
+void ShutdownStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0)
+{
+}
+#endif
+
 
 #ifdef HOOK_USE_DLLTHREAD
 HANDLE ghStartThread = NULL;
@@ -897,6 +930,11 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		break;
 		case DLL_THREAD_DETACH:
 		{
+			#ifdef SHOW_SHUTDOWN_STEPS
+			gnDbgPresent = 0;
+			ShutdownStep(L"DLL_THREAD_DETACH");
+			#endif
+
 			if (gbHooksWasSet)
 				DoneHooksRegThread();
 			// DLL_PROCESS_DETACH зовется как выяснилось не всегда
@@ -907,11 +945,13 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 				DllStop();
 			}
 			gnDllThreadCount--;
+			ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", gnDllThreadCount);
 		}
 		break;
 		
 		case DLL_PROCESS_DETACH:
 		{
+			ShutdownStep(L"DLL_PROCESS_DETACH");
 			gnDllState = ds_DllProcessDetach;
 			if (gbHooksWasSet)
 				lbAllow = FALSE; // Иначе свалимся, т.к. FreeLibrary перехвачена
@@ -924,6 +964,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			}
 			// -- free не нужен, т.к. уже вызван HeapDeinitialize()
 			//free(user);
+			ShutdownStep(L"DLL_PROCESS_DETACH done");
 		}
 		break;
 	}

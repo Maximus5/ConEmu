@@ -33,8 +33,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 #define SHOWCREATEPROCESSTICK
+#define SHOWCREATEBUFFERINFO
 #else
 #undef SHOWCREATEPROCESSTICK
+#undef SHOWCREATEBUFFERINFO
 #endif
 
 #ifdef _DEBUG
@@ -71,6 +73,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UserImp.h"
 #include "GuiAttach.h"
 #include "../common/ConsoleAnnotation.h"
+
+/* Forward declarations */
+BOOL IsVisibleRectLocked(COORD& crLocked);
+void PatchDialogParentWnd(HWND& hWndParent);
+
 
 #undef isPressed
 #define isPressed(inp) ((user->getKeyState(inp) & 0x8000) == 0x8000)
@@ -255,7 +262,6 @@ BOOL WINAPI OnGetCurrentConsoleFont(HANDLE hConsoleOutput, BOOL bMaximumWindow, 
 COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont);
 HWND WINAPI OnGetActiveWindow();
 BOOL WINAPI OnSetMenu(HWND hWnd, HMENU hMenu);
-BOOL IsVisibleRectLocked(COORD& crLocked);
 HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
 BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput);
 BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
@@ -3804,6 +3810,13 @@ HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMo
 	typedef HANDLE(WINAPI* OnCreateConsoleScreenBuffer_t)(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
 	ORIGINALFAST(CreateConsoleScreenBuffer);
 
+	#ifdef SHOWCREATEBUFFERINFO
+	wchar_t szDebugInfo[255];
+	msprintf(szDebugInfo, countof(szDebugInfo), L"CreateConsoleScreenBuffer(0x%X,0x%X,0x%X,0x%X,0x%X)",
+		dwDesiredAccess, dwShareMode, (DWORD)(DWORD_PTR)lpSecurityAttributes, dwFlags, (DWORD)(DWORD_PTR)lpScreenBufferData);
+		
+	#endif
+
 	if ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) != (FILE_SHARE_READ|FILE_SHARE_WRITE))
 		dwShareMode |= (FILE_SHARE_READ|FILE_SHARE_WRITE);
 
@@ -3813,6 +3826,12 @@ HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMo
 	HANDLE h = INVALID_HANDLE_VALUE;
 	if (F(CreateConsoleScreenBuffer))
 		h = F(CreateConsoleScreenBuffer)(dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlags, lpScreenBufferData);
+
+#ifdef SHOWCREATEBUFFERINFO
+	msprintf(szDebugInfo+lstrlen(szDebugInfo), 32, L"=0x%X", (DWORD)(DWORD_PTR)h);
+	GuiMessageBox(ghConEmuWnd, szDebugInfo, L"ConEmuHk", MB_SETFOREGROUND|MB_SYSTEMMODAL);
+#endif
+
 	return h;
 }
 
@@ -3836,6 +3855,13 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 
 	if (lbRc && (ghCurrentOutBuffer || (hConsoleOutput != ghStdOutHandle)))
 	{
+#ifdef SHOWCREATEBUFFERINFO
+		CONSOLE_SCREEN_BUFFER_INFO lsbi = {};
+		BOOL lbTest = GetConsoleScreenBufferInfo(hConsoleOutput, &lsbi);
+		DWORD nErrCode = GetLastError();
+		_ASSERTE(lbTest && lsbi.dwSize.Y && "GetConsoleScreenBufferInfo(hConsoleOutput) failed");
+#endif
+
 		ghCurrentOutBuffer = hConsoleOutput;
 		RequestLocalServerParm Parm = {(DWORD)sizeof(Parm), slsf_SetOutHandle, &ghCurrentOutBuffer};
 		RequestLocalServer(&Parm);
@@ -3991,6 +4017,18 @@ COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 	return cr;
 }
 
+void PatchDialogParentWnd(HWND& hWndParent)
+{
+	WARNING("Проверить все перехваты диалогов (A/W). По идее, надо менять hWndParent, а то диалоги прячутся");
+	// Re: conemu + emenu/{Run Sandboxed} замораживает фар
+
+	if (ghConEmuWndDC)
+	{
+		if (!hWndParent || !user->isWindowVisible(hWndParent))
+			hWndParent = ghConEmuWnd;
+	}
+}
+
 // Нужна для "поднятия" консольного окна при вызове Shell операций
 INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
@@ -4002,6 +4040,8 @@ INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HW
 	{
 		// Необходимо "поднять" наверх консольное окно, иначе Shell-овский диалог окажется ПОД ConEmu
 		GuiSetForeground(hWndParent ? hWndParent : ghConWnd);
+		// bugreport from Andrey Budko: conemu + emenu/{Run Sandboxed} замораживает фар
+		PatchDialogParentWnd(hWndParent);
 	}
 
 	if (F(DialogBoxParamW))

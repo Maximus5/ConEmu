@@ -776,7 +776,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					//}
 					ResetEvent(mp_RCon->mh_ApplyFinished);
 					mp_RCon->mn_LastConsolePacketIdx--;
-					SetEvent(mp_RCon->mh_MonitorThreadEvent);
+					mp_RCon->SetMonitorThreadEvent();
 					DWORD nWaitTimeout = SETSYNCSIZEAPPLYTIMEOUT;
 					#ifdef _DEBUG
 					nWaitTimeout = 30000;
@@ -936,7 +936,7 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 
 		if (mp_RCon->isActive())
 		{
-			gpConEmu->mp_Status->OnConsoleChanged(&con.m_sbi, &con.m_ci);
+			gpConEmu->mp_Status->OnConsoleChanged(&con.m_sbi, &con.m_ci, true);
 		}
 
 		return TRUE;

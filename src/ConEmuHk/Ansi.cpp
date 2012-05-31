@@ -143,6 +143,7 @@ void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 		WORD nDefColors = GetDefaultTextAttr();
 		gDisplayParm.TextColor = CONFORECOLOR(nDefColors);
 		gDisplayParm.BackColor = CONBACKCOLOR(nDefColors);
+		gDisplayParm.WasSet = TRUE;
 	}
 
 	if (bApply)
@@ -423,8 +424,11 @@ BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpChara
 	ORIGINALFAST(WriteConsoleOutputCharacterA);
 	BOOL bMainThread = FALSE; // поток не важен
 
-	ExtFillOutputParm fll = {sizeof(fll), efof_Attribute|efof_Current, hConsoleOutput, {}, 0, dwWriteCoord, nLength};
-	ExtFillOutput(&fll);
+	if (gDisplayParm.WasSet)
+	{
+		ExtFillOutputParm fll = {sizeof(fll), efof_Attribute|efof_Current, hConsoleOutput, {}, 0, dwWriteCoord, nLength};
+		ExtFillOutput(&fll);
+	}
 	
 	BOOL lbRc = F(WriteConsoleOutputCharacterA)(hConsoleOutput, lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
 
@@ -437,8 +441,11 @@ BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpChar
 	ORIGINALFAST(WriteConsoleOutputCharacterW);
 	BOOL bMainThread = FALSE; // поток не важен
 
-	ExtFillOutputParm fll = {sizeof(fll), efof_Attribute|efof_Current, hConsoleOutput, {}, 0, dwWriteCoord, nLength};
-	ExtFillOutput(&fll);
+	if (gDisplayParm.WasSet)
+	{
+		ExtFillOutputParm fll = {sizeof(fll), efof_Attribute|efof_Current, hConsoleOutput, {}, 0, dwWriteCoord, nLength};
+		ExtFillOutput(&fll);
+	}
 	
 	BOOL lbRc = F(WriteConsoleOutputCharacterW)(hConsoleOutput, lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
 

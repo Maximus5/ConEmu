@@ -796,6 +796,8 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 
 void ExitFARW1900(void)
 {
+	ShutdownPluginStep(L"ExitFARW1900");
+
 	WaitEndSynchroW1900();
 
 	if (InfoW1900)
@@ -809,6 +811,8 @@ void ExitFARW1900(void)
 		free(FSFW1900);
 		FSFW1900=NULL;
 	}
+
+	ShutdownPluginStep(L"ExitFARW1900 - done");
 }
 
 int ShowMessageW1900(int aiMsg, int aiButtons)

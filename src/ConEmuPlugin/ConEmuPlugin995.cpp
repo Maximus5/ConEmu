@@ -646,6 +646,8 @@ bool UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 
 void ExitFARW995(void)
 {
+	ShutdownPluginStep(L"ExitFARW995");
+
 	WaitEndSynchroW995();
 
 	if (InfoW995)
@@ -659,6 +661,8 @@ void ExitFARW995(void)
 		free(FSFW995);
 		FSFW995=NULL;
 	}
+
+	ShutdownPluginStep(L"ExitFARW995 - done");
 }
 
 int ShowMessageW995(int aiMsg, int aiButtons)

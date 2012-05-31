@@ -199,6 +199,8 @@ LRESULT SENDMESSAGE(HWND h,UINT m,WPARAM w,LPARAM l);
 extern BOOL gbInDisplayLastError;
 int DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0, DWORD dwMsgFlags = 0, LPCWSTR asTitle = NULL);
 
+void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
+
 COORD /*__forceinline*/ MakeCoord(int X,int Y);
 //{
 //	COORD rc; rc.X=W; rc.Y=H;

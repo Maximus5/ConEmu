@@ -29,6 +29,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include <commctrl.h>
+#include <shobjidl.h>
+#include <shlobj.h>
+#include <propkey.h>
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
 #include "Options.h"
@@ -365,6 +368,29 @@ int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
 }
 int MDEBUG_CHK = TRUE;
 #endif
+
+
+void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
+{
+#ifdef _DEBUG
+	static int nDbg = 0;
+	if (!nDbg)
+		nDbg = IsDebuggerPresent() ? 1 : 2;
+	if (nDbg != 1)
+		return;
+	wchar_t szFull[512];
+	msprintf(szFull, countof(szFull), L"%u:ConEmuG:PID=%u:TID=%u: ",
+		GetTickCount(), GetCurrentProcessId(), GetCurrentThreadId());
+	if (asInfo)
+	{
+		int nLen = lstrlen(szFull);
+		msprintf(szFull+nLen, countof(szFull)-nLen, asInfo, nParm1, nParm2, nParm3, nParm4);
+	}
+	lstrcat(szFull, L"\n");
+	OutputDebugString(szFull);
+#endif
+}
+
 
 /* Используются как extern в ConEmuCheck.cpp */
 /*
@@ -1108,6 +1134,388 @@ void ResetConman()
 	}
 }
 
+// Creates a CLSID_ShellLink to insert into the Tasks section of the Jump List.  This type of Jump
+// List item allows the specification of an explicit command line to execute the task.
+HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszTitle, IShellLink **ppsl)
+{
+	if ((!pszArguments || !*pszArguments) && (!pszTitle || !*pszTitle))
+	{
+		return E_INVALIDARG;
+	}
+
+	wchar_t* pszBuf = NULL;
+	if (!pszArguments || !*pszArguments)
+	{
+		size_t cchMax = _tcslen(pszTitle) + 6;
+		pszBuf = (wchar_t*)malloc(cchMax*sizeof(*pszBuf));
+		if (!pszBuf)
+			return E_UNEXPECTED;
+
+		_wcscpy_c(pszBuf, cchMax, L"/cmd ");
+		_wcscat_c(pszBuf, cchMax, pszTitle);
+		pszArguments = pszBuf;
+	}
+
+    IShellLink *psl;
+    HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&psl));
+    if (SUCCEEDED(hr))
+    {
+        // Determine our executable's file path so the task will execute this application
+        WCHAR szAppPath[MAX_PATH];
+        if (GetModuleFileName(NULL, szAppPath, ARRAYSIZE(szAppPath)))
+        {
+			TODO("Взять иконку из запускаемого exe-шника");
+			psl->SetIconLocation(szAppPath, 0);
+            hr = psl->SetPath(szAppPath);
+
+			DWORD n = GetCurrentDirectory(countof(szAppPath), szAppPath);
+			if (n && (n < countof(szAppPath)))
+				psl->SetWorkingDirectory(szAppPath);
+
+            if (SUCCEEDED(hr))
+            {
+                hr = psl->SetArguments(pszArguments);
+                if (SUCCEEDED(hr))
+                {
+                    // The title property is required on Jump List items provided as an IShellLink
+                    // instance.  This value is used as the display name in the Jump List.
+                    IPropertyStore *pps;
+                    hr = psl->QueryInterface(IID_PPV_ARGS(&pps));
+                    if (SUCCEEDED(hr))
+                    {
+						PROPVARIANT propvar = {VT_BSTR};
+						//hr = InitPropVariantFromString(pszTitle, &propvar);
+						propvar.bstrVal = ::SysAllocString(pszTitle);
+                        hr = pps->SetValue(PKEY_Title, propvar);
+                        if (SUCCEEDED(hr))
+                        {
+                            hr = pps->Commit();
+                            if (SUCCEEDED(hr))
+                            {
+                                hr = psl->QueryInterface(IID_PPV_ARGS(ppsl));
+                            }
+                        }
+						//PropVariantClear(&propvar);
+						::SysFreeString(propvar.bstrVal);
+                        pps->Release();
+                    }
+                }
+            }
+        }
+        else
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+        }
+        psl->Release();
+    }
+
+    if (pszBuf)
+    	free(pszBuf);
+    return hr;
+}
+
+// The Tasks category of Jump Lists supports separator items.  These are simply IShellLink instances
+// that have the PKEY_AppUserModel_IsDestListSeparator property set to TRUE.  All other values are
+// ignored when this property is set.
+HRESULT _CreateSeparatorLink(IShellLink **ppsl)
+{
+    IPropertyStore *pps;
+    HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pps));
+    if (SUCCEEDED(hr))
+    {
+		PROPVARIANT propvar = {VT_BOOL};
+        //hr = InitPropVariantFromBoolean(TRUE, &propvar);
+		propvar.boolVal = VARIANT_TRUE;
+        hr = pps->SetValue(PKEY_AppUserModel_IsDestListSeparator, propvar);
+        if (SUCCEEDED(hr))
+        {
+            hr = pps->Commit();
+            if (SUCCEEDED(hr))
+            {
+                hr = pps->QueryInterface(IID_PPV_ARGS(ppsl));
+            }
+        }
+        //PropVariantClear(&propvar);
+        pps->Release();
+    }
+    return hr;
+}
+
+void UpdateWin7TaskList(bool bForce)
+{
+	// Добаляем Tasks, они есть только в Win7+
+	if (gnOsVer < 0x601)
+		return;
+
+	// -- т.к. работа с TaskList занимает некоторое время - обновление будет делать только по запросу
+	//if (!bForce && !gpSet->isStoreTaskbarkTasks && !gpSet->isStoreTaskbarCommands)
+	if (!bForce)
+		return; // сохранять не просили
+
+	LPCWSTR pszTasks[32] = {};
+	LPCWSTR pszHistory[32] = {};
+	LPCWSTR pszCurCmd = NULL, pszCurCmdTitle = NULL;
+	size_t nTasksCount = 0, nHistoryCount = 0;
+
+
+	if (gpSet->isStoreTaskbarCommands)
+	{
+		// gpConEmu->mpsz_ConEmuArgs хранит аргументы с "/cmd"
+		pszCurCmd = SkipNonPrintable(gpConEmu->mpsz_ConEmuArgs);
+		pszCurCmdTitle = pszCurCmd;
+		if (pszCurCmdTitle && (*pszCurCmdTitle == L'/'))
+		{
+			if (StrCmpNI(pszCurCmdTitle, L"/cmd ", 5) == 0)
+			{
+				pszCurCmdTitle = SkipNonPrintable(pszCurCmdTitle+5);
+			}
+		}
+		if (!pszCurCmdTitle || !*pszCurCmdTitle)
+		{
+			pszCurCmd = pszCurCmdTitle = NULL;
+		}
+
+		// Теперь команды из истории
+		LPCWSTR pszCommand = gpSet->HistoryGet();
+		while (*pszCommand && (nHistoryCount < countof(pszHistory)))
+		{
+			// Текущую - к pszCommand не добавляем. Ее в конец
+			if (!pszCurCmdTitle || (lstrcmpi(pszCurCmdTitle, pszCommand) != 0))
+			{
+				pszHistory[nHistoryCount++] = pszCommand;
+			}
+			pszCommand += _tcslen(pszCommand)+1;
+		}
+
+		if (pszCurCmdTitle)
+			nHistoryCount++;
+	}
+
+	if (gpSet->isStoreTaskbarkTasks)
+	{
+		int nGroup = 0;
+		const Settings::CommandTasks* pGrp = NULL;
+		while ((pGrp = gpSet->CmdTaskGet(nGroup++)) && (nTasksCount < countof(pszTasks)))
+		{
+			if (pGrp->pszName && *pGrp->pszName)
+			{
+				pszTasks[nTasksCount++] = pGrp->pszName;
+			}
+		}
+	}
+
+
+	bool lbRc = false;
+
+    // The visible categories are controlled via the ICustomDestinationList interface.  If not customized,
+    // applications will get the Recent category by default.
+    ICustomDestinationList *pcdl = NULL;
+    HRESULT hr = CoCreateInstance(CLSID_DestinationList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pcdl));
+    if (FAILED(hr) || !pcdl)
+    {
+    	DisplayLastError(L"ICustomDestinationList create failed", (DWORD)hr);
+    }
+    else
+    {
+		UINT cMinSlots = 0;
+		IObjectArray *poaRemoved = NULL;
+		hr = pcdl->BeginList(&cMinSlots, IID_PPV_ARGS(&poaRemoved));
+		if (FAILED(hr))
+		{
+			DisplayLastError(L"pcdl->BeginList failed", (DWORD)hr);
+		}
+		else
+		{
+			if (cMinSlots < 3)
+				cMinSlots = 3;
+
+			// Вся история и все команды - скорее всего в TaskList не поместятся. Нужно подрезать.
+			if (cMinSlots < (nTasksCount + nHistoryCount + (pszCurCmdTitle ? 1 : 0)))
+			{
+				// Минимум одну позицию - оставить под историю/текущую команду
+				if (nTasksCount && (cMinSlots < (nTasksCount + 1)))
+				{
+					nTasksCount = cMinSlots-1;
+					if (nTasksCount < countof(pszTasks))
+						pszTasks[nTasksCount] = NULL;
+				}
+
+				if ((nTasksCount + (pszCurCmdTitle ? 1 : 0)) >= cMinSlots)
+                	nHistoryCount = 0;
+                else
+                	nHistoryCount = cMinSlots - (nTasksCount + (pszCurCmdTitle ? 1 : 0));
+
+                if (nHistoryCount < countof(pszHistory))
+                	pszHistory[nHistoryCount] = NULL;
+			}
+
+			IObjectCollection *poc = NULL;
+			hr = CoCreateInstance(CLSID_EnumerableObjectCollection, NULL, CLSCTX_INPROC, IID_PPV_ARGS(&poc));
+			if (FAILED(hr) || !poc)
+			{
+				DisplayLastError(L"IObjectCollection create failed", (DWORD)hr);
+			}
+			else
+			{
+				IShellLink * psl = NULL;
+				bool bNeedSeparator = false;
+
+				// Если просили - добавляем наши внутренние "Tasks"
+				if (SUCCEEDED(hr) && gpSet->isStoreTaskbarkTasks && nTasksCount)
+				{
+					for (size_t i = 0; (i < countof(pszTasks)) && pszTasks[i]; i++)
+					{
+						hr = _CreateShellLink(NULL, pszTasks[i], &psl);
+
+						if (SUCCEEDED(hr))
+						{
+							hr = poc->AddObject(psl);
+							psl->Release();
+							if (SUCCEEDED(hr))
+								bNeedSeparator = true;
+						}
+
+						if (FAILED(hr))
+						{
+							DisplayLastError(L"Add task (CmdGroup) failed", (DWORD)hr);
+							break;
+						}
+					}
+				}
+
+				// И команды из истории
+				if (SUCCEEDED(hr) && gpSet->isStoreTaskbarCommands && (nHistoryCount || pszCurCmdTitle))
+				{
+					if (bNeedSeparator)
+					{
+						bNeedSeparator = false; // один раз
+						hr = _CreateSeparatorLink(&psl);
+						if (SUCCEEDED(hr))
+						{
+							hr = poc->AddObject(psl);
+							psl->Release();
+						}
+					}
+
+					if (SUCCEEDED(hr) && pszCurCmdTitle)
+					{
+						hr = _CreateShellLink(pszCurCmd, pszCurCmdTitle, &psl);
+
+						if (SUCCEEDED(hr))
+						{
+							hr = poc->AddObject(psl);
+							psl->Release();
+						}
+
+						if (FAILED(hr))
+						{
+							DisplayLastError(L"Add task (pszCurCmd) failed", (DWORD)hr);
+						}
+					}
+
+					for (size_t i = 0; SUCCEEDED(hr) && (i < countof(pszHistory)) && pszHistory[i]; i++)
+					{
+						hr = _CreateShellLink(NULL, pszHistory[i], &psl);
+
+						if (SUCCEEDED(hr))
+						{
+							hr = poc->AddObject(psl);
+							psl->Release();
+						}
+
+						if (FAILED(hr))
+						{
+							DisplayLastError(L"Add task (pszHistory) failed", (DWORD)hr);
+							break;
+						}
+					}
+				}
+
+
+				if (SUCCEEDED(hr))
+				{
+					IObjectArray * poa = NULL;
+					hr = poc->QueryInterface(IID_PPV_ARGS(&poa));
+					if (FAILED(hr) || !poa)
+					{
+						DisplayLastError(L"poc->QueryInterface(IID_PPV_ARGS(&poa)) failed", (DWORD)hr);
+					}
+					else
+					{
+						// Add the tasks to the Jump List. Tasks always appear in the canonical "Tasks"
+						// category that is displayed at the bottom of the Jump List, after all other
+						// categories.
+						hr = pcdl->AddUserTasks(poa);
+						if (FAILED(hr))
+						{
+							DisplayLastError(L"pcdl->AddUserTasks(poa) failed", (DWORD)hr);
+						}
+						else
+						{
+							// Commit the list-building transaction.
+							hr = pcdl->CommitList();
+							if (FAILED(hr))
+							{
+								DisplayLastError(L"pcdl->CommitList() failed", (DWORD)hr);
+							}
+							else
+							{
+								MessageBox(ghOpWnd, L"Taskbar jump list was updated successfully", gpConEmu->GetDefaultTitle(), MB_ICONINFORMATION);
+							}
+						}
+						poa->Release();
+					}
+				}
+				poc->Release();
+			}
+
+			if (poaRemoved)
+				poaRemoved->Release();
+		}
+
+        pcdl->Release();
+    }
+
+
+
+    // В Win7 можно также показывать в JumpList "документы" (ярлыки, пути, и т.п.)
+    // Но это не то... Похоже, чтобы добавить такой "путь" в Recent/Frequent list
+    // нужно создавать физический файл (например, с расширением ".conemu"),
+    // и (!) регистрировать для него обработчиком conemu.exe
+	#if 0
+	//SHAddToRecentDocs(SHARD_PATHW, pszTemp);
+
+	//HRESULT hres;
+	//IShellLink* phsl = NULL;
+	//// Get a pointer to the IShellLink interface. 
+	//hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, 
+	//					   IID_IShellLink, (LPVOID*)&phsl); 
+	//if (SUCCEEDED(hres))
+	//{
+	//	STARTUPINFO si = {sizeof(si)};
+	//	GetStartupInfo(&si);
+	//	if (!si.wShowWindow)
+	//		si.wShowWindow = SW_SHOWNORMAL;
+
+	//	phsl->SetPath(gpConEmu->ms_ConEmuExe);
+	//	phsl->SetDescription(pszTemp);
+	//	phsl->SetArguments(pszTemp);
+	//	phsl->SetShowCmd(si.wShowWindow);
+
+	//	DWORD n = GetCurrentDirectory(countof(szExe), szExe);
+	//	if (n && (n < countof(szExe)))
+	//		phsl->SetWorkingDirectory(szExe);
+	//}
+
+	//if (phsl)
+	//{
+	//	//_ASSERTE(SHARD_SHELLITEM == 0x00000008L);
+	//	SHAddToRecentDocs(0x00000008L/*SHARD_SHELLITEM*/, phsl);
+	//	phsl->Release();
+	//}
+	#endif
+}
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -1133,6 +1541,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gpLocalSecurity = LocalSecurity();
 #ifdef _DEBUG
 	gAllowAssertThread = am_Thread;
+
+	//wchar_t szDbg[64];
+	//msprintf(szDbg, countof(szDbg), L"xx=0x%X.", 0);
 #endif
 
 //#ifdef _DEBUG
@@ -1165,7 +1576,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #else
 
 #ifdef _DEBUG
-
 	if (_tcsstr(GetCommandLine(), L"/debugi"))
 	{
 		if (!IsDebuggerPresent()) _ASSERT(FALSE);
@@ -1176,8 +1586,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			if (!IsDebuggerPresent()) MBoxA(L"Conemu started");
 		}
-
 #endif
+
 	//pVCon = NULL;
 	//bool setParentDisabled=false;
 	bool ClearTypePrm = false; LONG ClearTypeVal = CLEARTYPE_NATURAL_QUALITY;
@@ -1217,6 +1627,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	TCHAR *psUnknown = NULL;
 	uint  params = 0;
 
+	// [OUT] params = (uint)-1, если в первый аргумент не начинается с '/'
+	// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe", 
+	// а не такая "ConEmu.exe /cmd c:\tools\far.exe", 
 	if (!PrepareCommandLine(/*OUT*/cmdLine, /*OUT*/cmdNew, /*OUT*/params))
 		return 100;
 
@@ -1676,8 +2089,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		wchar_t* pszReady = NULL;
 		int nLen = _tcslen(cmdNew)+1;
 
+		// params = (uint)-1, если в первый аргумент не начинается с '/'
+		// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe"
 		if (params == (uint)-1)
 		{
+			// В GetCmd() может быть прописан путь к фару.
+			// Тогда, если в проводнике набросили, например, txt файл
+			// на иконку ConEmu, этот наброшенный путь прилепится
+			// к строке запуска фара.
 			pszDefCmd = gpSet->GetCmd();
 			_ASSERTE(pszDefCmd && *pszDefCmd);
 			nLen += 3 + _tcslen(pszDefCmd);
@@ -1701,6 +2120,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			lstrcpy(pszReady, cmdNew);
 		}
+
+		// Запомним в истории!
+		gpSet->HistoryAdd(pszReady);
 
 		MCHKHEAP
 		SafeFree(gpSet->psCurCmd); // могло быть создано в gpSet->GetCmd()
@@ -1817,6 +2239,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 	MessageLoop();
+	ShutdownGuiStep(L"MessageLoop terminated");
 //------------------------------------------------------------------------
 ///| Deinitialization |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
@@ -1850,6 +2273,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		delete gpUpd;
 		gpUpd = NULL;
 	}
+
+	ShutdownGuiStep(L"Gui terminated");
 
 	// Нельзя. Еще живут глобальные объекты
 	//HeapDeinitialize();

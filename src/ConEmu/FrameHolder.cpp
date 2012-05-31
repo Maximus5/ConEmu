@@ -206,6 +206,10 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			DBGFUNCTION(L"WM_NCMOUSEHOVER \n"); break;
 		}
 		#endif
+
+		if ((uMsg == WM_NCMOUSEMOVE) || (uMsg == WM_NCLBUTTONUP))
+			gpConEmu->isSizing(); // могло не сброситься, проверим
+
 		RedrawLock();
 		lbRc = gpConEmu->mp_TabBar->ProcessTabMouseEvent(hWnd, uMsg, wParam, lParam, lResult);
 		RedrawUnlock();

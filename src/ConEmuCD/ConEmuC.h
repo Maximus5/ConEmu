@@ -29,6 +29,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+
+#undef SHOW_SHUTDOWNSRV_STEPS
+#ifdef _DEBUG
+	#define SHOW_SHUTDOWNSRV_STEPS
+#endif
+
+
 #ifdef _DEBUG
 // Раскомментировать для вывода в консоль информации режима Comspec
 #define PRINT_COMSPEC(f,a) //wprintf(f,a)
@@ -76,6 +83,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include <Shlwapi.h>
 #include <Tlhelp32.h>
+
+void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 
 
 /*  Global  */
@@ -387,7 +396,7 @@ struct SrvInfo
 #ifndef WIN64
 	BOOL bNtvdmActive; DWORD nNtvdmPID;
 #endif
-	BOOL bTelnetActive;
+	//BOOL bTelnetActive;
 	//
 	wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH], szQueryname[MAX_PATH];
 	wchar_t szGetDataPipe[MAX_PATH], szDataReadyEvent[64];

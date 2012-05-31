@@ -1670,6 +1670,11 @@ BOOL CDragDropData::CreateDragImageWindow()
 
 	HWND hParent = ghWnd;
 	//hParent = GetForegroundWindow();
+
+#ifdef _DEBUG
+	#undef DRAGBITSTITLE
+	#define DRAGBITSTITLE gpConEmu->ms_ConEmuExe
+#endif
 	
 	// |WS_BORDER|WS_SYSMENU - создает проводник. попробуем?
 	//2009-08-20 [+] WS_EX_NOACTIVATE

@@ -26,6 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#undef VALIDATE_AND_DELAY_ON_TERMINATE
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
@@ -39,6 +40,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_INJECT_MSGBOX
 //	#define SHOW_ATTACH_MSGBOX
 //  #define SHOW_ROOT_STARTED
+
+//	#define VALIDATE_AND_DELAY_ON_TERMINATE
+
 #elif defined(__GNUC__)
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
@@ -186,6 +190,27 @@ wchar_t* wpszLogSizeFile = NULL;
 
 BOOL gbInRecreateRoot = FALSE;
 
+
+void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
+{
+#ifdef SHOW_SHUTDOWNSRV_STEPS
+	static int nDbg = 0;
+	if (!nDbg)
+		nDbg = IsDebuggerPresent() ? 1 : 2;
+	if (nDbg != 1)
+		return;
+	wchar_t szFull[512];
+	msprintf(szFull, countof(szFull), L"%u:ConEmuC:PID=%u:TID=%u: ",
+		GetTickCount(), GetCurrentProcessId(), GetCurrentThreadId());
+	if (asInfo)
+	{
+		int nLen = lstrlen(szFull);
+		msprintf(szFull+nLen, countof(szFull)-nLen, asInfo, nParm1, nParm2, nParm3, nParm4);
+	}
+	lstrcat(szFull, L"\n");
+	OutputDebugString(szFull);
+#endif
+}
 
 
 #if defined(__GNUC__)
@@ -413,13 +438,14 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		break;
 		case DLL_PROCESS_DETACH:
 		{
+			ShutdownSrvStep(L"DLL_PROCESS_DETACH");
 			//if (!gbSkipInjects && gbHooksWasSet)
 			//{
 			//	gbHooksWasSet = FALSE;
 			//	ShutdownHooks();
 			//}
 
-			if (gnRunMode == RM_APPLICATION)
+			if ((gnRunMode == RM_APPLICATION) /*|| (gnRunMode == RM_ALTSERVER)*/)
 			{
 				SendStopped();
 			}
@@ -436,6 +462,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			//	ghHeap = NULL;
 			//}
 			HeapDeinitialize();
+
+			ShutdownSrvStep(L"DLL_PROCESS_DETACH done");
 		}
 		break;
 	}
@@ -519,8 +547,11 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	{
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT);
+
 		WARNING("Этот атрибут нужно задавать в настройках GUI!");
+		#if 0
 		SetConsoleTextAttribute(hOut, 7);
+		#endif
 	}
 
 
@@ -1148,19 +1179,18 @@ wait:
 
 		if (!gpSrv->bDebuggerActive)
 		{
-#ifdef _DEBUG
-
+			#ifdef _DEBUG
 			while(nWait == WAIT_TIMEOUT)
 			{
 				nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, 100);
 				// Что-то при загрузке компа иногда все-таки не дожидается, когда процесс в консоли появится
 				_ASSERTE(!(gbCtrlBreakStopWaitingShown && (nWait != WAIT_TIMEOUT)));
 			}
-
-#else
+			#else
 			nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, INFINITE);
 			_ASSERTE(!(gbCtrlBreakStopWaitingShown && (nWait != WAIT_TIMEOUT)));
-#endif
+			#endif
+			ShutdownSrvStep(L"ghExitQueryEvent was set");
 		}
 		else
 		{
@@ -1173,6 +1203,7 @@ wait:
 			//	nWait = WaitForSingleObject(ghExitQueryEvent, 0);
 			//}
 			//gbAlwaysConfirmExit = TRUE;
+			ShutdownSrvStep(L"DebuggerThread terminated");
 		}
 
 		#ifdef _DEBUG
@@ -1187,7 +1218,7 @@ wait:
 		#ifdef _DEBUG
 		if (nWait == WAIT_OBJECT_0)
 		{
-			DEBUGSTRFIN(L"*** FinilizeEvent was set!\n");
+			DEBUGSTRFIN(L"*** FinalizeEvent was set!\n");
 		}
 		#endif
 
@@ -1235,22 +1266,26 @@ wait:
 	/* ************************* */
 	iRc = 0;
 wrap:
-#ifdef _DEBUG
+	ShutdownSrvStep(L"Finalizing.1");
+
+	#ifdef VALIDATE_AND_DELAY_ON_TERMINATE
 	// Проверка кучи
 	xf_validate(NULL);
 	// Отлов изменения высоты буфера
 	if (gnRunMode == RM_SERVER)
 		Sleep(1000);
-#endif
+	#endif
+
 	// К сожалению, HandlerRoutine может быть еще не вызван, поэтому
 	// в самой процедуре ExitWaitForKey вставлена проверка флага gbInShutdown
 	PRINT_COMSPEC(L"Finalizing. gbInShutdown=%i\n", gbInShutdown);
 #ifdef SHOW_STARTED_MSGBOX
 	MessageBox(GetConEmuHWND(2), L"Finalizing", (gnRunMode == RM_SERVER) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
 #endif
-#ifdef _DEBUG
+
+	#ifdef VALIDATE_AND_DELAY_ON_TERMINATE
 	xf_validate(NULL);
-#endif
+	#endif
 
 	if (iRc == CERR_GUIMACRO_SUCCEEDED)
 		iRc = 0;
@@ -1260,6 +1295,8 @@ wrap:
 		GetExitCodeProcess(gpSrv->hRootProcess, &gnExitCode);
 	else if (pi.hProcess)
 		GetExitCodeProcess(pi.hProcess, &gnExitCode);
+
+	ShutdownSrvStep(L"Finalizing.2");
 
 	if (!gbInShutdown  // только если юзер не нажал крестик в заголовке окна, или не удался /ATTACH (чтобы в консоль не гадить)
 	        && ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE && !(gnRunMode!=RM_SERVER && iRc==CERR_CREATEPROCESS))
@@ -1344,6 +1381,8 @@ wrap:
 	// Завершение RefreshThread, InputThread, ServerThread
 	if (ghQuitEvent) SetEvent(ghQuitEvent);
 
+	ShutdownSrvStep(L"Finalizing.3");
+
 #ifdef _DEBUG
 	xf_validate(NULL);
 #endif
@@ -1368,6 +1407,8 @@ wrap:
 	{
 		SendStopped();
 	}
+
+	ShutdownSrvStep(L"Finalizing.4");
 
 	/* ************************** */
 	/* *** "Общее" завершение *** */
@@ -1400,6 +1441,8 @@ wrap:
 
 	CommonShutdown();
 
+	ShutdownSrvStep(L"Finalizing.5");
+
 	// -> DllMain
 	//if (ghHeap)
 	//{
@@ -1420,6 +1463,7 @@ wrap:
 		gpSrv = NULL;
 	}
 AltServerDone:
+	ShutdownSrvStep(L"Finalizing done");
 	return iRc;
 }
 
@@ -1475,7 +1519,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 		}
 		_ASSERTE(gcrVisibleSize.X>0 && gcrVisibleSize.X<=400 && gcrVisibleSize.Y>0 && gcrVisibleSize.Y<=300);
 
-		iRc = ConsoleMain2(TRUE);
+		iRc = ConsoleMain2(1/*0-Server&ComSpec,1-AltServer,2-Reserved*/);
 
 		if ((iRc == 0) && gpSrv && gpSrv->dwPrevAltServerPID)
 		{
@@ -3754,9 +3798,11 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 		}
 	}
 
-	if (abChanged)
+#ifndef WIN64
+	// Найти "ntvdm.exe"
+	if (abChanged && !gpSrv->nNtvdmPID && !IsWindows64())
 	{
-		BOOL lbFarExists = FALSE, lbTelnetExist = FALSE;
+		//BOOL lbFarExists = FALSE, lbTelnetExist = FALSE;
 
 		if (gpSrv->nProcessCount > 1)
 		{
@@ -3775,45 +3821,40 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 							if (prc.th32ProcessID != gnSelfPID
 							        && prc.th32ProcessID == gpSrv->pnProcesses[i])
 							{
-								if (lstrcmpiW(prc.szExeFile, L"far.exe")==0)
-								{
-									lbFarExists = TRUE;
-									//if (gpSrv->nProcessCount <= 2) // нужно проверить и ntvdm
-									//	break; // возможно, в консоли еще есть и telnet?
-								}
+								//if ((lstrcmpiW(prc.szExeFile, L"far.exe") == 0)
+								//	|| (lstrcmpiW(prc.szExeFile, L"far64.exe") == 0)
+								//)
+								//{
+								//	lbFarExists = TRUE;
+								//	//if (gpSrv->nProcessCount <= 2) // нужно проверить и ntvdm
+								//	//	break; // возможно, в консоли еще есть и telnet?
+								//}
 
-								#ifndef WIN64
-								else if (!gpSrv->nNtvdmPID && lstrcmpiW(prc.szExeFile, L"ntvdm.exe")==0)
+								//#ifndef WIN64
+								//else
+								if (!gpSrv->nNtvdmPID && lstrcmpiW(prc.szExeFile, L"ntvdm.exe")==0)
 								{
 									gpSrv->nNtvdmPID = prc.th32ProcessID;
+									break;
 								}
-								#endif
+								//#endif
 
-								// 23.04.2010 Maks - telnet нужно определять, т.к. у него проблемы с Ins и курсором
-								else if (lstrcmpiW(prc.szExeFile, L"telnet.exe")==0)
-								{
-									lbTelnetExist = TRUE;
-								}
-
-								// Во время работы Telnet тоже нужно ловить все события!
-								//2009-12-28 убрал. все должно быть само...
-								//if (lstrcmpiW(prc.szExeFile, L"telnet.exe")==0) {
-								//	// сразу хэндлы передернуть
-								//	ghConIn.Close(); ghConOut.Close();
-								//	//gpSrv->bWinHookAllow = TRUE; // Попробуем разрешить события для телнета
-								//	lbFarExists = TRUE; lbTelnetExist = TRUE; break;
+								//// 23.04.2010 Maks - telnet нужно определять, т.к. у него проблемы с Ins и курсором
+								//else if (lstrcmpiW(prc.szExeFile, L"telnet.exe")==0)
+								//{
+								//	lbTelnetExist = TRUE;
 								//}
 							}
 						}
 
-						if (lbFarExists && lbTelnetExist
-							#ifndef WIN64
-						        && gpSrv->nNtvdmPID
-							#endif
-						    )
-						{
-							break; // чтобы условие выхода внятнее было
-						}
+						//if (lbFarExists && lbTelnetExist
+						//	#ifndef WIN64
+						//        && gpSrv->nNtvdmPID
+						//	#endif
+						//    )
+						//{
+						//	break; // чтобы условие выхода внятнее было
+						//}
 					}
 					while(Process32Next(hSnap, &prc));
 				}
@@ -3822,20 +3863,9 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 			}
 		}
 
-		gpSrv->bTelnetActive = lbTelnetExist;
-		//if (gpSrv->nProcessCount >= 2
-		//	&& ( (gpSrv->hWinHook == NULL && gpSrv->bWinHookAllow) || (gpSrv->hWinHook != NULL) )
-		//    )
-		//{
-		//	if (lbFarExists) gpSrv->nWinHookMode = 2; else gpSrv->nWinHookMode = 1;
-		//
-		// 			if (lbFarExists && gpSrv->hWinHook == NULL && gpSrv->bWinHookAllow) {
-		// 				HookWinEvents(2);
-		// 			} else if (!lbFarExists && gpSrv->hWinHook) {
-		// 				HookWinEvents(0);
-		// 			}
-		//}
+		//gpSrv->bTelnetActive = lbTelnetExist;
 	}
+#endif
 
 	gpSrv->dwProcessLastCheckTick = GetTickCount();
 
@@ -3889,7 +3919,7 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 
 	// Процессов в консоли не осталось?
 #ifndef WIN64
-
+	WARNING("gpSrv->bNtvdmActive нигде не устанавливается");
 	if (gpSrv->nProcessCount == 2 && !gpSrv->bNtvdmActive && gpSrv->nNtvdmPID)
 	{
 		// Возможно было запущено 16битное приложение, а ntvdm.exe не выгружается при его закрытии
@@ -3901,8 +3931,8 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 			PostMessage(ghConWnd, WM_CLOSE, 0, 0);
 		}
 	}
-
 #endif
+
 	WARNING("Если в консоли ДО этого были процессы - все условия вида 'gpSrv->nProcessCount == 1' обломаются");
 
 	// Пример - запускаемся из фара. Количество процессов ИЗНАЧАЛЬНО - 5
@@ -3950,6 +3980,7 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 
 			if (!nExitQueryPlace) nExitQueryPlace = 2+(nExitPlaceStep+nExitPlaceThread);
 
+			ShutdownSrvStep(L"All processes are terminated, SetEvent(ghExitQueryEvent)");
 			SetEvent(ghExitQueryEvent);
 		}
 	}
@@ -5551,12 +5582,17 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 #endif
 	_ASSERTE(in.StartStop.dwPID!=0);
 
+	DWORD nAltServerWasStarted = 0; HANDLE hAltServerWasStarted = NULL; bool ForceThawAltServer = false;
+
 	if (in.StartStop.nStarted == sst_AltServerStart)
 	{
 		// Перевести нить монитора в режим ожидания завершения AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer
 		_ASSERTE(in.StartStop.hServerProcessHandle!=0);
 
-		AltServerWasStarted(in.StartStop.dwPID, (HANDLE)(DWORD_PTR)in.StartStop.hServerProcessHandle);
+		nAltServerWasStarted = in.StartStop.dwPID;
+		hAltServerWasStarted = (HANDLE)(DWORD_PTR)in.StartStop.hServerProcessHandle;
+		//ForceThawAltServer = false;
+		//AltServerWasStarted(in.StartStop.dwPID, (HANDLE)(DWORD_PTR)in.StartStop.hServerProcessHandle);
 	}
 	else if ((in.StartStop.nStarted == sst_ComspecStart) || (in.StartStop.nStarted == sst_AppStart))
 	{
@@ -5593,7 +5629,10 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			{
 				// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
 				// Активировать альтернативный сервер (повторно), отпустить его нити чтения
-				AltServerWasStarted(in.StartStop.nPrevAltServerPID, NULL, true);
+				nAltServerWasStarted = in.StartStop.nPrevAltServerPID;
+				hAltServerWasStarted = NULL;
+				ForceThawAltServer = true;
+				//AltServerWasStarted(in.StartStop.nPrevAltServerPID, NULL, true);
 			}
 			else
 			{
@@ -5616,6 +5655,12 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		ProcessCountChanged(TRUE, nPrevCount, &CS);
 	CS.Unlock();
 	// ***
+
+	// После Unlock-а, зовем функцию
+	if (nAltServerWasStarted)
+	{
+		AltServerWasStarted(nAltServerWasStarted, hAltServerWasStarted, ForceThawAltServer);
+	}
 
 	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
 	*out = ExecuteNewCmd(CECMD_CMDSTARTSTOP,nOutSize);
@@ -5850,6 +5895,16 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			if (gpSrv->hFreezeRefreshThread)
 				SetEvent(gpSrv->hFreezeRefreshThread);
+
+			if (gnRunMode == RM_ALTSERVER)
+			{
+				// Уведомить GUI, что альт.сервер снова в работе!
+				SendStarted();
+			}
+			else
+			{
+				_ASSERTE(gnRunMode == RM_ALTSERVER);
+			}
 		}
 
 		lbRc = TRUE;

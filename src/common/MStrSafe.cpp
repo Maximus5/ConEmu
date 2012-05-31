@@ -180,7 +180,7 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 						nLen = (int)(pszValue - szValue);
 						if (!nLen)
 						{
-							*pszValue = L'0';
+							*(pszValue++) = L'0';
 							nLen = 1;
 						}
 					}

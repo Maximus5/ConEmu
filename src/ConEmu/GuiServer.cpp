@@ -74,6 +74,8 @@ void CGuiServer::Stop(bool abDeinitialize/*=false*/)
 	//120122 - Теперь через PipeServer
 	if (mp_GuiServer)
 	{
+		ShutdownGuiStep(L"mp_GuiServer->StopPipeServer");
+
 		mp_GuiServer->StopPipeServer();
 
 		if (abDeinitialize)
@@ -81,42 +83,9 @@ void CGuiServer::Stop(bool abDeinitialize/*=false*/)
 			free(mp_GuiServer);
 			mp_GuiServer = NULL;
 		}
+
+		ShutdownGuiStep(L"mp_GuiServer->StopPipeServer - done");
 	}
-	
-	//if (mh_GuiServerThread)
-	//{
-	//	SetEvent(mh_GuiServerThreadTerminate);
-	//	wchar_t szServerPipe[MAX_PATH];
-	//	_ASSERTE(ghWnd!=NULL);
-	//	_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghWnd); //-V205
-	//	HANDLE hPipe = CreateFile(szServerPipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
-	//
-	//	if (hPipe == INVALID_HANDLE_VALUE)
-	//	{
-	//		DEBUGSTR(L"All pipe instances closed?\n");
-	//	}
-	//	else
-	//	{
-	//		DEBUGSTR(L"Waiting server pipe thread\n");
-	//#ifdef _DEBUG
-	//		DWORD dwWait =
-	//#endif
-	//		    WaitForSingleObject(mh_GuiServerThread, 200); // пытаемся дождаться, пока нить завершится
-	//		// Просто закроем пайп - его нужно было передернуть
-	//		CloseHandle(hPipe);
-	//		hPipe = INVALID_HANDLE_VALUE;
-	//	}
-	//
-	//	// Если нить еще не завершилась - прибить
-	//	if (WaitForSingleObject(mh_GuiServerThread,0) != WAIT_OBJECT_0)
-	//	{
-	//		DEBUGSTR(L"### Terminating mh_ServerThread\n");
-	//		TerminateThread(mh_GuiServerThread,0);
-	//	}
-	//
-	//	SafeCloseHandle(mh_GuiServerThread);
-	//	SafeCloseHandle(mh_GuiServerThreadTerminate);
-	//}
 }
 
 //// Эта функция пайп не закрывает!
