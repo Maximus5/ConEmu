@@ -1410,7 +1410,7 @@ void CConEmuCtrl::MakeScreenshot()
 
 	hScreen = GetDC(NULL);
 
-	lbRc = DumpImage(hScreen, NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, NULL);
+	lbRc = DumpImage(hScreen, NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, NULL, FALSE/*NoTransparency, 24bit*/);
 
 	if (!lbRc)
 	{

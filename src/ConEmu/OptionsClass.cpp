@@ -3665,7 +3665,6 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rbActivityInput:
 		case rbActivityCmd:
 			{
-				//PRAGMA_ERROR("m_ActivityLoggingType");
 				HWND hList = GetDlgItem(hWnd2, lbActivityLog);
 				//HWND hDetails = GetDlgItem(hWnd2, lbActivityDetails);
 				gpSetCls->m_ActivityLoggingType =
@@ -10622,122 +10621,6 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 		lRes = true;
 	}
 	
-	//HANDLE hFile = CreateFile(exPath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
-	//if (hFile != INVALID_HANDLE_VALUE)
-	//{
-	//	BY_HANDLE_FILE_INFORMATION inf = {0};
-	//	//LARGE_INTEGER nFileSize;
-	//	//if (GetFileSizeEx(hFile, &nFileSize) && nFileSize.HighPart == 0
-	//	if (GetFileInformationByHandle(hFile, &inf) && inf.nFileSizeHigh == 0
-	//	        && inf.nFileSizeLow >= (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO))) //-V119
-	//	{
-	//		pBkImgData = (BITMAPFILEHEADER*)malloc(inf.nFileSizeLow);
-	//		if (pBkImgData && ReadFile(hFile, pBkImgData, inf.nFileSizeLow, &inf.nFileSizeLow, NULL))
-	//		{
-	//			char *pBuf = (char*)pBkImgData;
-	//			if (pBuf[0] == 'B' && pBuf[1] == 'M' && *(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
-	//			{
-	//				ftBgModified = inf.ftLastWriteTime;
-	//				nBgModifiedTick = GetTickCount();
-	//				NeedBackgroundUpdate();
-	//				_ASSERTE(gpConEmu->isMainThread());
-	//				//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
-	//				SafeFree(mp_BgImgData);
-	//				isBackgroundImageValid = true;
-	//				mp_BgImgData = pBkImgData;
-	//				lRes = true;
-	//			}
-	//		}
-	//	}
-	//	SafeCloseHandle(hFile);
-	//}
-
-	//klFile file;
-	//if (file.Open(exPath))
-	//{
-	//    char File[101];
-	//    file.Read(File, 100);
-	//    char *pBuf = File;
-	//    if (pBuf[0] == 'B' && pBuf[1] == 'M' && *(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
-	//        //if (*(u16*)pBuf == 'MB' && *(u32*)(pBuf + 0x0A) >= 0x36)
-	//    {
-	//
-	//    	PRAGMA_ERROR("Перенести код в Settings::CreateBackgroundImage и переделать на AlphaBlend");
-	//
-	//        const HDC hScreenDC = GetDC(0);
-	//        HDC hNewBgDc = CreateCompatibleDC(hScreenDC);
-	//        HBITMAP hNewBgBitmap;
-	//        if (hNewBgDc)
-	//        {
-	//            if ((hNewBgBitmap = (HBITMAP)LoadImage(NULL, exPath, IMAGE_BITMAP,0,0,LR_LOADFROMFILE)) != NULL)
-	//            {
-	//                if (hBgBitmap) { DeleteObject(hBgBitmap); hBgBitmap=NULL; }
-	//                if (hBgDc) { DeleteDC(hBgDc); hBgDc=NULL; }
-	//                hBgDc = hNewBgDc;
-	//                hBgBitmap = hNewBgBitmap;
-	//                if (SelectObject(hBgDc, hBgBitmap))
-	//                {
-	//                    isBackgroundImageValid = true;
-	//                    bgBmp.X = *(u32*)(pBuf + 0x12);
-	//                    bgBmp.Y = *(i32*)(pBuf + 0x16);
-	//                    // Ровняем на границу 4-х пикселов (WinXP SP2)
-	//                    int nCxFixed = ((bgBmp.X+3)>>2)<<2;
-	//                    if (klstricmp(gpSet->sBgImage, inPath))
-	//                    {
-	//                        lRes = true;
-	//                        _tcscpy(gpSet->sBgImage, inPath);
-	//                    }
-	//                    struct bColor
-	//                    {
-	//                        u8 b;
-	//                        u8 g;
-	//                        u8 r;
-	//                    };
-	//                    MCHKHEAP
-	//                        //GetDIBits памяти не хватает
-	//                    bColor *bArray = new bColor[(nCxFixed+10) * bgBmp.Y];
-	//                    MCHKHEAP
-	//                    BITMAPINFO bInfo; memset(&bInfo, 0, sizeof(bInfo));
-	//                    bInfo.bmiHeader.biSize = sizeof(BITMAPINFO);
-	//                    bInfo.bmiHeader.biWidth = nCxFixed/*bgBmp.X*/;
-	//                    bInfo.bmiHeader.biHeight = bgBmp.Y;
-	//                    bInfo.bmiHeader.biPlanes = 1;
-	//                    bInfo.bmiHeader.biBitCount = 24;
-	//                    bInfo.bmiHeader.biCompression = BI_RGB;
-	//                    MCHKHEAP
-	//                    if (!GetDIBits(hBgDc, hBgBitmap, 0, bgBmp.Y, bArray, &bInfo, DIB_RGB_COLORS))
-	//                        //MBoxA(L"!"); //Maximus5 - Да, это очень информативно
-	//                        MBoxA(L"!GetDIBits");
-	//                    MCHKHEAP
-	//                    for (int y=0; y<bgBmp.Y; y++)
-	//                    {
-	//                        int i = y*nCxFixed;
-	//                        for (int x=0; x<bgBmp.X; x++, i++)
-	//                        //for (int i = 0; i < bgBmp.X * bgBmp.Y; i++)
-	//                        {
-	//                            bArray[i].r = klMulDivU32(bArray[i].r, gpSet->bgImageDarker, 255);
-	//                            bArray[i].g = klMulDivU32(bArray[i].g, gpSet->bgImageDarker, 255);
-	//                            bArray[i].b = klMulDivU32(bArray[i].b, gpSet->bgImageDarker, 255);
-	//                        }
-	//                    }
-	//                    MCHKHEAP
-	//                    if (!SetDIBits(hBgDc, hBgBitmap, 0, bgBmp.Y, bArray, &bInfo, DIB_RGB_COLORS))
-	//                        MBoxA(L"!SetDIBits");
-	//                    MCHKHEAP
-	//                    delete[] bArray;
-	//                    MCHKHEAP
-	//                }
-	//            }
-	//            else
-	//                DeleteDC(hNewBgDc);
-	//        }
-	//        ReleaseDC(0, hScreenDC);
-	//    } else {
-	//        if (abShowErrors)
-	//            MBoxA(L"Only BMP files supported as background!");
-	//    }
-	//    file.Close();
-	//}
 	return lRes;
 }
 
@@ -10745,11 +10628,6 @@ void CSettings::NeedBackgroundUpdate()
 {
 	mb_NeedBgUpdate = TRUE;
 }
-
-//CBackground* CSettings::CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData)
-//{
-//	PRAGMA_ERROR("Доделать Settings::CreateBackgroundImage");
-//}
 
 // общая функция
 void CSettings::ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout)

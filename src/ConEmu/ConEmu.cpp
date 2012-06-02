@@ -161,6 +161,7 @@ CConEmuMain::CConEmuMain()
 	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
 	WindowMode = rNormal; WindowStartMinimized = false; ForceMinimizeToTray = false;
 	DisableAutoUpdate = false;
+	DisableKeybHooks = false;
 	mb_PassSysCommand = false; change2WindowMode = -1;
 	mb_isFullScreen = false;
 	mb_ExternalHidden = FALSE;
@@ -238,6 +239,7 @@ CConEmuMain::CConEmuMain()
 	m_GuiInfo.cbSize = sizeof(m_GuiInfo);
 	//mh_RecreatePasswFont = NULL;
 	mb_SkipOnFocus = FALSE;
+	mb_CloseGuiConfirmed = false;
 
 	mps_IconPath = NULL;
 
@@ -8534,9 +8536,14 @@ LRESULT CConEmuMain::OnClose(HWND hWnd)
 	return 0;
 }
 
+bool CConEmuMain::isCloseConfirmed()
+{
+	return gpSet->isCloseConsoleConfirm ? mb_CloseGuiConfirmed : true;
+}
+
 BOOL CConEmuMain::OnCloseQuery()
 {
-	int nEditors = 0, nProgress = 0, i;
+	int nEditors = 0, nProgress = 0, i, nConsoles = 0;
 
 	for (i = ((int)countof(mp_VCon)-1); i >= 0; i--)
 	{
@@ -8545,6 +8552,8 @@ BOOL CConEmuMain::OnCloseQuery()
 
 		if (mp_VCon[i] && (pRCon = mp_VCon[i]->RCon())!=NULL)
 		{
+			nConsoles++;
+
 			// Прогрессы (копирование, удаление, и т.п.)
 			if (pRCon->GetProgress(NULL) != -1)
 				nProgress ++;
@@ -8557,20 +8566,27 @@ BOOL CConEmuMain::OnCloseQuery()
 		}
 	}
 
-	if (nProgress || nEditors)
+	if (nProgress || nEditors || (gpSet->isCloseConsoleConfirm && nConsoles))
 	{
 		wchar_t szText[255], *pszText;
-		wcscpy_c(szText, L"Close confirmation.\r\n\r\n"); pszText = szText+_tcslen(szText);
+		//wcscpy_c(szText, L"Close confirmation.\r\n\r\n");
+		_wsprintf(szText, SKIPLEN(countof(szText)) L"About to close %u console%s.\r\n\r\n", nConsoles, (nConsoles>1)?L"s":L"");
+		pszText = szText+_tcslen(szText);
 
 		if (nProgress) { _wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", nProgress); pszText += _tcslen(pszText); }
 
 		if (nEditors) { _wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", nEditors); pszText += _tcslen(pszText); }
 
-		lstrcpy(pszText, L"\r\nProceed with shutdown?");
+		lstrcpy(pszText, L"\r\nProceed with close ConEmu?");
 		int nBtn = MessageBoxW(ghWnd, szText, GetDefaultTitle(), MB_OKCANCEL|MB_ICONEXCLAMATION);
 
 		if (nBtn != IDOK)
+		{
+			mb_CloseGuiConfirmed = false;
 			return FALSE; // не закрывать
+		}
+
+		mb_CloseGuiConfirmed = true;
 	}
 
 	#ifdef _DEBUG
@@ -13841,6 +13857,8 @@ LRESULT CConEmuMain::OnUpdateScrollInfo(BOOL abPosted/* = FALSE*/)
 // Чтобы при создании ПЕРВОЙ консоли на экране сразу можно было что-то нарисовать
 void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args)
 {
+	mb_CloseGuiConfirmed = false; // сброс
+
 	if (!mp_VActive || (mb_CreatingActive && !args->bBackgroundTab))
 	{
 		mp_VActive = apVCon;

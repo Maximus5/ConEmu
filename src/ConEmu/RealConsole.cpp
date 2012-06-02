@@ -69,8 +69,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
 
-//PRAGMA_ERROR("При попытке компиляции F:\\VCProject\\FarPlugin\\PPCReg\\compile.cmd - Enter в консоль не прошел");
-
 WARNING("В каждой VCon создать буфер BYTE[256] для хранения распознанных клавиш (Ctrl,...,Up,PgDn,Add,и пр.");
 WARNING("Нераспознанные можно помещать в буфер {VKEY,wchar_t=0}, в котором заполнять последний wchar_t по WM_CHAR/WM_SYSCHAR");
 WARNING("При WM_(SYS)CHAR помещать wchar_t в начало, в первый незанятый VKEY");
@@ -109,6 +107,10 @@ static BOOL gbInSendConEvent = FALSE;
 
 
 wchar_t CRealConsole::ms_LastRConStatus[80] = {};
+
+const wchar_t gsCloseGui[] = L"Confirm closing current window?";
+const wchar_t gsCloseCon[] = L"Confirm closing console window?";
+const wchar_t gsCloseAny[] = L"Confirm closing console?";
 
 //static bool gbInTransparentAssert = false;
 
@@ -155,7 +157,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	//mh_InputThread = NULL; mn_InputThreadID = 0;
 	mp_sei = NULL;
 	mn_MainSrv_PID = 0; mh_MainSrv = NULL;
-	mn_AltSrv_PID = 0;  mh_AltSrv = NULL;
+	mn_AltSrv_PID = 0;  //mh_AltSrv = NULL;
 	mb_SwitchActiveServer = false;
 	mh_SwitchActiveServer = CreateEvent(NULL,FALSE,FALSE,NULL);
 	mh_ActiveServerSwitched = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -193,6 +195,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
 	mb_SkipFarPidChange = FALSE;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
+	CloseConfirmReset();
 	mn_LastSetForegroundPID = 0;
 	
 	m_RConServer.Init(this);
@@ -291,7 +294,7 @@ CRealConsole::~CRealConsole()
 
 		
 	SafeCloseHandle(mh_MainSrv); mn_MainSrv_PID = 0;
-	SafeCloseHandle(mh_AltSrv);  mn_AltSrv_PID = 0;
+	/*SafeCloseHandle(mh_AltSrv);*/  mn_AltSrv_PID = 0;
 	SafeCloseHandle(mh_SwitchActiveServer); mb_SwitchActiveServer = false;
 	SafeCloseHandle(mh_ActiveServerSwitched);
 	SafeCloseHandle(mh_ConInputPipe);
@@ -801,7 +804,8 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	pRet->nBufferHeight = bCurBufHeight ? lsbi.dwSize.Y : 0;
 	pRet->nWidth = rcCon.right;
 	pRet->nHeight = rcCon.bottom;
-	pRet->dwSrvPID = anConemuC_PID;
+	pRet->dwMainSrvPID = anConemuC_PID;
+	pRet->dwAltSrvPID = 0;
 	pRet->bNeedLangChange = TRUE;
 	TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
 	pRet->NewConsoleLang = gpConEmu->GetActiveKeyboardLayout();
@@ -1282,7 +1286,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	hEvents[IDEVENV_MONITORTHREADEVENT] = pRCon->mh_MonitorThreadEvent; // Использовать, чтобы вызвать Update & Invalidate
 	hEvents[IDEVENT_SWITCHSRV] = pRCon->mh_SwitchActiveServer;
 	hEvents[IDEVENT_SERVERPH] = pRCon->mh_MainSrv;
-	HANDLE hAltServerHandle = NULL;
+	//HANDLE hAltServerHandle = NULL;
 
 	DWORD  nEvents = countof(hEvents);
 
@@ -1335,38 +1339,38 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, nTimeout);
 		_ASSERTE(nWait!=(DWORD)-1);
 
-		if ((nWait == IDEVENT_SERVERPH) && (hEvents[IDEVENT_SERVERPH] != pRCon->mh_MainSrv))
-		{
-			// Закрылся альт.сервер, переключиться на основной
-			_ASSERTE(pRCon->mh_MainSrv!=NULL);
-			if (pRCon->mh_AltSrv == hAltServerHandle)
-			{
-				pRCon->mh_AltSrv = NULL;
-				pRCon->SetAltSrvPID(0, NULL);
-			}
-			SafeCloseHandle(hAltServerHandle);
-			hEvents[IDEVENT_SERVERPH] = pRCon->mh_MainSrv;
+		//if ((nWait == IDEVENT_SERVERPH) && (hEvents[IDEVENT_SERVERPH] != pRCon->mh_MainSrv))
+		//{
+		//	// Закрылся альт.сервер, переключиться на основной
+		//	_ASSERTE(pRCon->mh_MainSrv!=NULL);
+		//	if (pRCon->mh_AltSrv == hAltServerHandle)
+		//	{
+		//		pRCon->mh_AltSrv = NULL;
+		//		pRCon->SetAltSrvPID(0, NULL);
+		//	}
+		//	SafeCloseHandle(hAltServerHandle);
+		//	hEvents[IDEVENT_SERVERPH] = pRCon->mh_MainSrv;
 
-			if (pRCon->mb_InCloseConsole && pRCon->mh_MainSrv && (WaitForSingleObject(pRCon->mh_MainSrv, 0) == WAIT_OBJECT_0))
-			{
-				ShutdownGuiStep(L"AltServer and MainServer are closed");
-				// Подтверждаем nWait, основной сервер закрылся
-				nWait = IDEVENT_SERVERPH;
-			}
-			else
-			{
-				ShutdownGuiStep(L"AltServer closed, executing ReopenServerPipes");
-				if (pRCon->ReopenServerPipes())
-				{
-					// Меняем nWait, т.к. основной сервер еще не закрылся (консоль жива)
-					nWait = IDEVENV_MONITORTHREADEVENT;
-				}
-				else
-				{
-					ShutdownGuiStep(L"ReopenServerPipes failed, exiting from MonitorThread");
-				}
-			}
-		}
+		//	if (pRCon->mb_InCloseConsole && pRCon->mh_MainSrv && (WaitForSingleObject(pRCon->mh_MainSrv, 0) == WAIT_OBJECT_0))
+		//	{
+		//		ShutdownGuiStep(L"AltServer and MainServer are closed");
+		//		// Подтверждаем nWait, основной сервер закрылся
+		//		nWait = IDEVENT_SERVERPH;
+		//	}
+		//	else
+		//	{
+		//		ShutdownGuiStep(L"AltServer closed, executing ReopenServerPipes");
+		//		if (pRCon->ReopenServerPipes())
+		//		{
+		//			// Меняем nWait, т.к. основной сервер еще не закрылся (консоль жива)
+		//			nWait = IDEVENV_MONITORTHREADEVENT;
+		//		}
+		//		else
+		//		{
+		//			ShutdownGuiStep(L"ReopenServerPipes failed, exiting from MonitorThread");
+		//		}
+		//	}
+		//}
 
 		if (nWait == IDEVENT_TERM || nWait == IDEVENT_SERVERPH)
 		{
@@ -1380,9 +1384,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 		if ((nWait == IDEVENT_SWITCHSRV) || pRCon->mb_SwitchActiveServer)
 		{
-			hAltServerHandle = pRCon->mh_AltSrv;
-			_ASSERTE(hAltServerHandle!=NULL);
-			hEvents[IDEVENT_SERVERPH] = hAltServerHandle ? hAltServerHandle : pRCon->mh_MainSrv;
+			//hAltServerHandle = pRCon->mh_AltSrv;
+			//_ASSERTE(hAltServerHandle!=NULL);
+			//hEvents[IDEVENT_SERVERPH] = hAltServerHandle ? hAltServerHandle : pRCon->mh_MainSrv;
 
 			pRCon->ReopenServerPipes();
 
@@ -1555,7 +1559,6 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 				bool bAlive = false;
 
-				//PRAGMA_ERROR("Переделать на мэппинг для mp_FarInfo");
 				//if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
 				if (nCurFarPID && pRCon->m_FarInfo.cbSize && pRCon->m_FarAliveEvent.Open())
 				{
@@ -2034,6 +2037,7 @@ BOOL CRealConsole::StartProcess()
 	}
 
 	//ResetEvent(mh_CreateRootEvent);
+	CloseConfirmReset();
 	mb_InCreateRoot = TRUE;
 	mb_InCloseConsole = FALSE;
 	ZeroStruct(m_ServerClosing);
@@ -3305,9 +3309,9 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		hConWnd = NULL;
 
 		// Servers
-		_ASSERTE((mh_AltSrv==NULL && !mn_AltSrv_PID) && "AltServer was not terminated?");
-		SafeCloseHandle(mh_AltSrv);
-		SetAltSrvPID(0, NULL);
+		_ASSERTE((mn_AltSrv_PID==0) && "AltServer was not terminated?");
+		//SafeCloseHandle(mh_AltSrv);
+		SetAltSrvPID(0/*, NULL*/);
 		//mn_AltSrv_PID = 0;
 		SafeCloseHandle(mh_MainSrv);
 		SetMainSrvPID(0, NULL);
@@ -4032,29 +4036,26 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 		gpConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
 }
 
-void CRealConsole::SetAltSrvPID(DWORD anAltSrvPID, HANDLE ahAltSrv)
+void CRealConsole::SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/)
 {
-	_ASSERTE((mh_AltSrv==NULL || mh_AltSrv==ahAltSrv) && "mh_AltSrv must be closed before!");
-	mh_AltSrv = ahAltSrv;
+	//_ASSERTE((mh_AltSrv==NULL || mh_AltSrv==ahAltSrv) && "mh_AltSrv must be closed before!");
+	//mh_AltSrv = ahAltSrv;
 	mn_AltSrv_PID = anAltSrvPID;
 }
 
-bool CRealConsole::InitAltServer(DWORD nAltServerPID, HANDLE hAltServer)
+bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 {
+	// nAltServerPID may be 0, hAltServer вообще убрать
 	bool bOk = false;
-
-	// В принципе, тут может быть INVALID_HANDLE_VALUE
-	// если вдруг GUI под админом, а консоль - под юзером (разве что приаттаченная?)
-	_ASSERTE(hAltServer!=NULL);
 
 	ResetEvent(mh_ActiveServerSwitched);
 
-	// mh_AltSrv должен закрыться в MonitorThread!
-	HANDLE hOldAltServer = mh_AltSrv;
-	mh_AltSrv = NULL;
-	//mn_AltSrv_PID = nAltServerPID;
-	//mh_AltSrv = hAltServer;
-	SetAltSrvPID(nAltServerPID, hAltServer);
+	//// mh_AltSrv должен закрыться в MonitorThread!
+	//HANDLE hOldAltServer = mh_AltSrv;
+	//mh_AltSrv = NULL;
+	////mn_AltSrv_PID = nAltServerPID;
+	////mh_AltSrv = hAltServer;
+	SetAltSrvPID(nAltServerPID/*, hAltServer*/);
 
 	SetEvent(mh_SwitchActiveServer);
 	mb_SwitchActiveServer = true;
@@ -4063,7 +4064,7 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID, HANDLE hAltServer)
 	DWORD nWait = WAIT_TIMEOUT;
 
 	#ifdef _DEBUG
-	nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, 1000);
+	nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, 5000);
 	if (nWait == WAIT_TIMEOUT)
 	{
 		_ASSERTE((nWait == WAIT_OBJECT_0) && "Switching Monitor thread to altarnative server takes more than 1000ms");
@@ -4073,6 +4074,7 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID, HANDLE hAltServer)
 	if (nWait == WAIT_TIMEOUT)
 		nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, INFINITE);
 
+	_ASSERTE(mb_SwitchActiveServer==false && "Must be dropped by MonitorThread");
 	mb_SwitchActiveServer = false;
 	bOk = (nWait == WAIT_OBJECT_0);
 
@@ -4085,7 +4087,7 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID, HANDLE hAltServer)
 bool CRealConsole::ReopenServerPipes()
 {
 	DWORD nSrvPID = mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID;
-	HANDLE hSrvHandle = (nSrvPID == mn_MainSrv_PID) ? mh_MainSrv : mh_AltSrv;
+	HANDLE hSrvHandle = mh_MainSrv; // (nSrvPID == mn_MainSrv_PID) ? mh_MainSrv : mh_AltSrv;
 
 	// переоткрыть event изменений в консоли
 	m_ConDataChanged.InitName(CEDATAREADYEVENT, nSrvPID);
@@ -5329,6 +5331,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	//DWORD nWait = 0;
 	mb_ProcessRestarted = FALSE;
 	mn_InRecreate = GetTickCount();
+	CloseConfirmReset();
 
 	if (!mn_InRecreate)
 	{
@@ -5351,6 +5354,8 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	//{
 	//	wmemset((wchar_t*)con.pConAttr, 7, con.nTextWidth * con.nTextHeight);
 	//}
+
+	CloseConfirmReset();
 	SetConStatus(L"Restarting process...");
 	return true;
 }
@@ -5768,10 +5773,6 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	mp_VCon->OnAlwaysShowScrollbar();
 	// Чтобы все в одном месте было
 	OnGuiFocused(TRUE, TRUE);
-	//if (mp_ConsoleInfo) {
-	//	PRAGMA_ERROR("Смену флажка нужно делать через команду сервера");
-	//	mp_ConsoleInfo->bConsoleActive = TRUE;
-	//}
 
 	gpConEmu->mp_Status->OnActiveVConChanged(nNewNum, this);
 
@@ -5873,11 +5874,6 @@ void CRealConsole::OnDeactivate(int nNewNum)
 
 	// Чтобы все в одном месте было
 	OnGuiFocused(FALSE);
-	//if (mp_ConsoleInfo) {
-	//	PRAGMA_ERROR("Смену флажка нужно делать через команду сервера");
-	//	mp_ConsoleInfo->bConsoleActive = FALSE;
-	//}
-	//if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_NORMAL);
 
 	gpConEmu->setFocus();
 }
@@ -7099,18 +7095,40 @@ bool CRealConsole::isConsoleClosing()
 	return false;
 }
 
+void CRealConsole::CloseConfirmReset()
+{
+	mn_CloseConfirmedTick = 0;
+	mb_CloseFarMacroPosted = false;
+}
+
+bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation)
+{
+	if (!gpSet->isCloseConsoleConfirm)
+		return true;
+
+	if (gpConEmu->isCloseConfirmed())
+		return true;
+
+	BOOL b = gbDontEnable; gbDontEnable = TRUE;
+	//int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+	int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL,
+		asConfirmation ? asConfirmation : gsCloseAny, Title, MB_ICONEXCLAMATION|MB_YESNO);
+	gbDontEnable = b;
+
+	if (nBtn != IDYES)
+	{
+		CloseConfirmReset();
+		return false;
+	}
+
+	mn_CloseConfirmedTick = GetTickCount();
+	return true;
+}
+
 void CRealConsole::CloseConsoleWindow()
 {
-	if (gpSet->isCloseConsoleConfirm)
-	{
-		BOOL b = gbDontEnable; gbDontEnable = TRUE;
-		//int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
-		int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, hGuiWnd ? L"Confirm closing window?" : L"Confirm closing console window?", Title, MB_ICONEXCLAMATION|MB_YESNO);
-		gbDontEnable = b;
-
-		if (nBtn != IDYES)
-			return;
-	}
+	if (!isCloseConfirmed(hGuiWnd ? gsCloseGui : gsCloseCon))
+		return;
 
 	mb_InCloseConsole = TRUE;
 	if (hGuiWnd)
@@ -7129,16 +7147,18 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 
 	_ASSERTE(!mb_ProcessRestarted);
 
-	if (abConfirm && gpSet->isCloseConsoleConfirm)
+	if (abConfirm)
 	{
-		BOOL b = gbDontEnable; gbDontEnable = TRUE;
-		//int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
-		int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, L"Confirm closing console?", Title, MB_ICONEXCLAMATION|MB_YESNO);
-		gbDontEnable = b;
-
-		if (nBtn != IDYES)
+		if (!isCloseConfirmed(gsCloseAny))
 			return;
 	}
+	#ifdef _DEBUG
+	else
+	{
+		// при вызове из RecreateProcess, SC_SYSCLOSE (там уже спросили)
+		abConfirm = abConfirm;
+	}
+	#endif
 
 	ShutdownGuiStep(L"Closing console window");
 
@@ -7320,10 +7340,13 @@ void CRealConsole::CloseTab()
 
 	if (GuiWnd())
 	{
+		if (!isCloseConfirmed(gsCloseGui))
+			return;
 		PostConsoleMessage(GuiWnd(), WM_CLOSE, 0, 0);
 	}
 	else
 	{
+		// Проверить, можно ли послать макрос, чтобы закрыть таб (фар/не фар)?
 		BOOL bCanCloseMacro = CanCloseTab(TRUE);
 		if (bCanCloseMacro && !isAlive())
 		{
@@ -7331,9 +7354,21 @@ void CRealConsole::CloseTab()
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 				L"Far Manager (PID=%u) is not alive.\nClose realconsole window instead of posting Macro?",
 				GetFarPID(TRUE));
-			int nBrc = MessageBox(NULL, szInfo, gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNO);
-			if (nBrc == IDYES)
+			int nBrc = MessageBox(NULL, szInfo, gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+			switch (nBrc)
+			{
+			case IDCANCEL:
+				// Отмена
+				return;
+			case IDYES:
 				bCanCloseMacro = FALSE;
+				break;
+			}
+		}
+		else if (!isCloseConfirmed(gsCloseCon))
+		{
+			// Отмена
+			return;
 		}
 
 		if (bCanCloseMacro)
@@ -8666,7 +8701,7 @@ BOOL CRealConsole::OpenMapHeader(BOOL abFromAttach)
 		{
 			_ASSERTE(m_ConsoleMap.Ptr()->nGuiPID == GetCurrentProcessId());
 			WARNING("Наверное нужно будет передать в сервер код GUI процесса? В каком случае так может получиться?");
-			//PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
+			// Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти
 		}
 	}
 

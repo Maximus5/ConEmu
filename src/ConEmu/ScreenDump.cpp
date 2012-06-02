@@ -42,11 +42,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //WARNING("GdiPlus is XP Only");
 
-BOOL LoadScreen(HDC hScreen, int anX, int anY, int anWidth, int anHeight, LPBYTE* pScreen, DWORD *dwSize)
+BOOL LoadScreen(HDC hScreen, int anX, int anY, int anWidth, int anHeight, LPBYTE* pScreen, DWORD *dwSize, bool PreserveTransparency=true)
 {
 	*pScreen = NULL;
 	*dwSize = 0;
-	int iBitPerPixel = 32;
+	int iBitPerPixel = PreserveTransparency ? 32 : 24;
 	int iHdrSize = sizeof(BITMAPINFOHEADER);
 	int iScrWidth = anWidth;
 	int iScrHeight= anHeight;
@@ -173,7 +173,7 @@ BOOL LoadScreen(HDC hScreen, int anX, int anY, int anWidth, int anHeight, LPBYTE
 
 
 
-BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int anHeight, LPCWSTR pszFile)
+BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int anHeight, LPCWSTR pszFile, bool PreserveTransparency/*=true*/)
 {
 	BOOL lbRc = FALSE;
 	LPBYTE pScreen = NULL;
@@ -202,7 +202,7 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int 
 
 
 	// иначе - снять копию с hScreen
-	if (!LoadScreen(hScreen, anX, anY, anWidth, anHeight, &pScreen, &cbOut))
+	if (!LoadScreen(hScreen, anX, anY, anWidth, anHeight, &pScreen, &cbOut, PreserveTransparency))
 		return FALSE;
 
 	if (!*szFile)

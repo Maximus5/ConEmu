@@ -2117,7 +2117,10 @@ void MSection::AddRef(DWORD dwTID)
 	if (mn_Locked == 0)
 	{
 		for (int d=1; d<countof(mn_LockedCount); d++)
+		{
+			_ASSERTE(mn_LockedCount[d]>=0);
 			dbgCurLockCount += mn_LockedCount[d];
+		}
 		if (dbgCurLockCount != 0)
 		{
 			_ASSERTEX(dbgCurLockCount==0);
@@ -2134,6 +2137,7 @@ void MSection::AddRef(DWORD dwTID)
 	{
 		if (mn_LockedTID[i] == dwTID)
 		{
+			_ASSERTE(mn_LockedCount[i]>=0);
 			mn_LockedCount[i] ++;
 			j = -2;
 			break;
@@ -2147,6 +2151,7 @@ void MSection::AddRef(DWORD dwTID)
 			if (mn_LockedTID[i] == 0)
 			{
 				mn_LockedTID[i] = dwTID;
+				_ASSERTE(mn_LockedCount[i]>=0);
 				mn_LockedCount[i] ++;
 				j = i;
 				break;
@@ -2176,8 +2181,14 @@ int MSection::ReleaseRef(DWORD dwTID)
 	{
 		if (mn_LockedTID[i] == dwTID)
 		{
-			_ASSERTEX(mn_LockedCount[i] > 0);
-			mn_LockedCount[i] --;
+			if (mn_LockedCount[i] > 0)
+			{
+				mn_LockedCount[i] --;
+			}
+			else
+			{
+				_ASSERTEX(mn_LockedCount[i] > 0);
+			}
 
 			if ((nInThreadLeft = mn_LockedCount[i]) == 0)
 				mn_LockedTID[i] = 0; // Иначе при динамически создаваемых нитях - 10 будут в момент использованы
@@ -2191,7 +2202,10 @@ int MSection::ReleaseRef(DWORD dwTID)
 		#ifdef _DEBUG
 		int dbgCurLockCount = 0;
 		for (int d=1; d<countof(mn_LockedCount); d++)
+		{
+			_ASSERTEX(mn_LockedCount[d]>=0);
 			dbgCurLockCount += mn_LockedCount[d];
+		}
 		if (dbgCurLockCount != 0)
 		{
 			_ASSERTEX(dbgCurLockCount==0);
@@ -2210,6 +2224,7 @@ void MSection::WaitUnlocked(DWORD dwTID, DWORD anTimeout)
 	{
 		if (mn_LockedTID[i] == dwTID)
 		{
+			_ASSERTEX(mn_LockedCount[i]>=0);
 			nSelfCount = mn_LockedCount[i];
 			break;
 		}
@@ -2326,6 +2341,7 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 			{
 				if (mn_LockedTID[i] == dwTID)
 				{
+					_ASSERTEX(mn_LockedCount[i]>=0);
 					nInThreadLeft = mn_LockedCount[i];
 					break;
 				}
@@ -2416,7 +2432,15 @@ void MSection::Unlock(BOOL abExclusive)
 		mn_UnlockedExclusiveTID = dwTID;
 		#endif
 		mb_Exclusive = FALSE; mn_TID = 0;
-		mn_LockedTID[0] = 0; mn_LockedCount[0] --; // на [0] mn_Locked не распространяется
+		mn_LockedTID[0] = 0;
+		if (mn_LockedCount[0] > 0)
+		{
+			mn_LockedCount[0] --; // на [0] mn_Locked не распространяется
+		}
+		else
+		{
+			_ASSERTEX(mn_LockedCount[0]>0);
+		}
 		LeaveCriticalSection(&m_cs);
 	}
 	else

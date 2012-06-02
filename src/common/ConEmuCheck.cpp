@@ -176,14 +176,15 @@ LPCWSTR ModuleName(LPCWSTR asDefault)
 	return szFile;
 }
 
-HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule, DWORD nServerPID)
+// nTimeout - таймаут подключения
+HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule, DWORD nServerPID, DWORD nTimeout)
 {
 	HANDLE hPipe = NULL;
 	DWORD dwErr = 0, dwMode = 0;
 	BOOL fSuccess = FALSE;
 	DWORD dwStartTick = GetTickCount();
-	int nTries = 2;
-	DWORD nOpenPipeTimeout = EXECUTE_CMD_OPENPIPE_TIMEOUT;
+	int nTries = 10;
+	DWORD nOpenPipeTimeout = nTimeout ? max(nTimeout,EXECUTE_CMD_OPENPIPE_TIMEOUT) : EXECUTE_CMD_OPENPIPE_TIMEOUT;
 
 	_ASSERTE(LocalSecurity()!=NULL);
 
@@ -237,7 +238,8 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 			{
 				// All pipe instances are busy, so wait for 500 ms.
 				WaitNamedPipe(szPipeName, 500);
-				nTries--;
+				// -- 120602 раз они заняты (но живы), то будем ждать, пока не освободятся
+				//nTries--;
 				continue;
 			}
 			else
@@ -650,12 +652,13 @@ CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner)
 //Arguments:
 //   hConWnd - Хэндл КОНСОЛЬНОГО окна (по нему формируется имя пайпа для GUI)
 //   pIn     - выполняемая команда
+//   nTimeout- таймаут подключения
 //Returns:
 //   CESERVER_REQ. Его необходимо освободить через free(...);
 //WARNING!!!
 //   Эта процедура не может получить с сервера более 600 байт данных!
 // В заголовке hOwner в дебаге может быть отображена ошибка
-CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult, DWORD nServerPID)
+CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult, DWORD nServerPID, DWORD nTimeout)
 {
 	CESERVER_REQ* pOut = NULL;
 	HANDLE hPipe = NULL;
@@ -674,7 +677,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 
 	_ASSERTE(pIn->hdr.nSrcPID && pIn->hdr.nSrcThreadId);
 	_ASSERTE(pIn->hdr.cbSize >= sizeof(pIn->hdr));
-	hPipe = ExecuteOpenPipe(szPipeName, szErr, NULL/*Сюда хорошо бы имя модуля подкрутить*/, nServerPID);
+	hPipe = ExecuteOpenPipe(szPipeName, szErr, NULL/*Сюда хорошо бы имя модуля подкрутить*/, nServerPID, nTimeout);
 
 	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE)
 	{

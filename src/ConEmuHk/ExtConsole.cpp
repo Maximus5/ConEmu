@@ -411,7 +411,7 @@ BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL);
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL;
-	PRAGMA_ERROR("Заменить на INT_PTR nLinePosition");
+	PRAGMA _ERROR("Заменить на INT_PTR nLinePosition");
 	//AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (Info->Region.Top /*- srWork.Top*/)) : NULL);
 
 	int nBufferType = (int)(Info->Flags & ewtf_Mask);
@@ -632,7 +632,7 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
-	PRAGMA_ERROR("Заменить на INT_PTR nLinePosition");
+	PRAGMA _ERROR("Заменить на INT_PTR nLinePosition");
 	//AnnotationInfo* pTrueColorLine = (AnnotationInfo*)(pTrueColorStart ? (pTrueColorStart + nWindowWidth * (Info->Region.Top /*- srWork.Top*/)) : NULL); //-V104
 
 	int nBufferType = (int)(Info->Flags & ewtf_Mask);
@@ -834,7 +834,7 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 			pTrueColorLine += nWindowWidth; //-V102
 	}
 
-	PRAGMA_ERROR("Не забыть накрутить индекс в AnnotationInfo");
+	PRAGMA _ERROR("Не забыть накрутить индекс в AnnotationInfo");
 
 	// Commit по флагу
 	if (Info->Flags & ewtf_Commit)

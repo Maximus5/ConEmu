@@ -427,6 +427,8 @@ class CRealConsole
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
 		void CloseConsole(bool abForceTerminate, bool abConfirm);
 		void CloseConsoleWindow();
+		bool isCloseConfirmed(LPCWSTR asConfirmation);
+		void CloseConfirmReset();
 		BOOL CanCloseTab(BOOL abPluginRequired = FALSE);
 		void CloseTab();
 		bool isConsoleClosing();
@@ -490,13 +492,13 @@ class CRealConsole
 		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
 
 		void SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv);
-		void SetAltSrvPID(DWORD anAltSrvPID, HANDLE ahAltSrv);
+		void SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/);
 		// Сервер и альтернативный сервер
 		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
-		DWORD mn_AltSrv_PID;  HANDLE mh_AltSrv;
+		DWORD mn_AltSrv_PID;  //HANDLE mh_AltSrv;
 		HANDLE mh_SwitchActiveServer, mh_ActiveServerSwitched;
 		bool mb_SwitchActiveServer;
-		bool InitAltServer(DWORD nAltServerPID, HANDLE hAltServer);
+		bool InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/);
 		bool ReopenServerPipes();
 
 		// Пайп консольного ввода
@@ -651,6 +653,8 @@ class CRealConsole
 		DWORD mn_InRecreate; // Tick, когда начали пересоздание
 		BOOL mb_ProcessRestarted;
 		BOOL mb_InCloseConsole;
+		DWORD mn_CloseConfirmedTick;
+		bool mb_CloseFarMacroPosted;
 		// Логи
 		BYTE m_UseLogs;
 		HANDLE mh_LogInput; wchar_t *mpsz_LogInputFile/*, *mpsz_LogPackets*/; //UINT mn_LogPackets;

@@ -154,42 +154,44 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	//
 	DWORD nStarted = pIn->StartStop.nStarted;
 	HWND  hWnd     = (HWND)pIn->StartStop.hWnd;
+
 #ifdef _DEBUG
 	wchar_t szDbg[128];
 
-	switch(nStarted)
+	switch (nStarted)
 	{
 		case sst_ServerStart:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ServerStart,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
+		case sst_ServerStop:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+				(nStarted==sst_ServerStart)?L"ServerStart":L"ServerStop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_AltServerStart:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(AltServerStart,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
-			break;
-		case sst_ServerStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ServerStop,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
+		case sst_AltServerStop:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+				(nStarted==sst_AltServerStart)?L"AltServerStart":L"AltServerStop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_ComspecStart:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ComspecStart,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
-			break;
 		case sst_ComspecStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(ComspecStop,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+				(nStarted==sst_ComspecStart)?L"ComspecStart":L"ComspecStop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_AppStart:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(AppStart,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
-			break;
 		case sst_AppStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(AppStop,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+				(nStarted==sst_AppStart)?L"AppStart":L"AppStop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_App16Start:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(App16Start,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
-			break;
 		case sst_App16Stop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(App16Stop,%i,PID=%u,From=%u)\n", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+				(nStarted==sst_App16Start)?L"App16Start":L"App16Stop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
+		default:
+			_ASSERTE(nStarted==sst_ServerStart && "Unknown start code");
 	}
 
 	DEBUGSTRCMD(szDbg);
 #endif
+
 	_ASSERTE(pIn->StartStop.dwPID!=0);
 	DWORD nPID     = pIn->StartStop.dwPID;
 	DWORD nSubSystem = pIn->StartStop.nSubSystem;
@@ -235,11 +237,13 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	}
 
 
-	if (nStarted == sst_AltServerStart)
+	if ((nStarted == sst_AltServerStart) || (nStarted == sst_AltServerStop))
 	{
 		// Перейти в режим AltServer, переоткрыть m_GetDataPipe
-		_ASSERTE(pIn->hdr.nSrcPID == nPID);
-		mp_RCon->InitAltServer(nPID, hServerProcessHandle);
+		// -- команда старта альп.сервера должна приходить из главного сервера
+		_ASSERTE(pIn->StartStop.dwPID == nPID && nPID != pIn->hdr.nSrcPID && pIn->hdr.nSrcPID == mp_RCon->mn_MainSrv_PID);
+		// Если процесс запущен под другим логином - передать хэндл (hServerProcessHandle) не получится
+		mp_RCon->InitAltServer(nPID/*, hServerProcessHandle*/);
 
 		// В принципе, альт. сервер уже все знает, но вернем...
 		pOut->StartStopRet.hWnd = ghWnd;
@@ -307,12 +311,15 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		if (nStarted == sst_ServerStart)
 		{
 			_ASSERTE(mp_RCon->mn_MainSrv_PID == pIn->hdr.nSrcPID);
-			pOut->StartStopRet.dwSrvPID = mp_RCon->mn_MainSrv_PID;
+			pOut->StartStopRet.dwMainSrvPID = mp_RCon->mn_MainSrv_PID;
+			pOut->StartStopRet.dwAltSrvPID = mp_RCon->mn_AltSrv_PID;
 		}
 		else
 		{
 			_ASSERTE(nStarted == sst_ComspecStart);
-			pOut->StartStopRet.dwSrvPID = mp_RCon->GetServerPID();
+			//pOut->StartStopRet.dwSrvPID = mp_RCon->GetServerPID();
+			pOut->StartStopRet.dwMainSrvPID = mp_RCon->mn_MainSrv_PID;
+			pOut->StartStopRet.dwAltSrvPID = mp_RCon->mn_AltSrv_PID;
 		}
 		pOut->StartStopRet.bNeedLangChange = FALSE;
 
@@ -402,6 +409,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 					mp_RCon->mp_RBuf->BuferModeChangeLock();
 					mp_RCon->mp_RBuf->SetBufferHeightMode((pOut->StartStopRet.nBufferHeight != 0), TRUE); // Сразу меняем, иначе команда неправильно сформируется
 					mp_RCon->mp_RBuf->SetConsoleSize(mp_RCon->mp_RBuf->GetTextWidth()/*con.m_sbi.dwSize.X*/, mp_RCon->mp_RBuf->TextHeight(), pOut->StartStopRet.nBufferHeight, CECMD_CMDSTARTED);
+					WARNING("Переделать! Размер нужно просто вернуть в сервер, а он сам разберется");
 					mp_RCon->mp_RBuf->BuferModeChangeUnlock();
 				}
 			}
@@ -518,7 +526,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 				// что не соответствует желаемому размеру при выходе из 16бит. Консоль нужно подресайзить
 				// поз размер окна. Это сделает OnWinEvent.
 				//SetBufferHeightMode(FALSE, TRUE);
-				//PRAGMA_ERROR("Если не вызвать CECMD_CMDFINISHED не включатся WinEvents");
+				//WARNING("Если не вызвать CECMD_CMDFINISHED не включатся WinEvents");
 				mp_RCon->mb_IgnoreCmdStop = FALSE; // наверное сразу сбросим, две подряд прийти не могут
 				DEBUGSTRCMD(L"16 bit application TERMINATED (aquired from CECMD_CMDFINISHED)\n");
 
@@ -581,7 +589,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			
 			#ifdef _DEBUG
 			#ifdef WIN64
-			//				PRAGMA_ERROR("Есть подозрение, что после этого на Win7 x64 приходит старый пакет с буферной высотой и возникает уже некорректная синхронизация размера!");
+			//				WARNING("Есть подозрение, что после этого на Win7 x64 приходит старый пакет с буферной высотой и возникает уже некорректная синхронизация размера!");
 			#endif
 			#endif
 			// может nChange2TextWidth, nChange2TextHeight нужно использовать?
@@ -1137,7 +1145,7 @@ CESERVER_REQ* CRealServer::cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT
 	if (pIn->OnCreateProc.nImageBits > 0)
 	{
 		TODO("!!! DosBox allowed?");
-		_ASSERTE(lbDos==FALSE); //PRAGMA_ERROR("Зачем (lbDos && FALSE)?");
+		_ASSERTE(lbDos==FALSE); //WARNING("Зачем (lbDos && FALSE)?");
 		
 		if (gpSet->AutoBufferHeight // LongConsoleOutput
 			|| (lbDos && FALSE)) // DosBox!!!

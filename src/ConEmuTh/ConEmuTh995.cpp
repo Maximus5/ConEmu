@@ -319,7 +319,7 @@ void LoadPanelItemInfoW995(CeFullPanelInfo* pi, INT_PTR nItem)
 	//}
 	//
 	//// Лучше сбросить, чтобы мусор не оставался, да и поля в стуктуру могут добавляться, чтобы не забылось...
-	//PRAGMA_ERROR("Если содержимое полей не менялось (атрибуты размеры и пр.), то не обнулять структуру!");
+	//Если содержимое полей не менялось (атрибуты размеры и пр.), то не обнулять структуру!
 	//// Иначе сбрасываются цвета элементов...
 	//memset(((LPBYTE)pi->ppItems[nItem])+sizeof(pi->ppItems[nItem]->cbSize), 0, pi->ppItems[nItem]->cbSize-sizeof(pi->ppItems[nItem]->cbSize));
 	//

@@ -2795,6 +2795,10 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 
 bool Settings::isKeyboardHooks()
 {
+	// Если хуки запрещены ключом "/nokeyhooks"
+	if (gpConEmu->DisableKeybHooks)
+		return false;
+
 	//// Нужно и для WinXP, но только в "локальном" режиме
 	//if (gOSVer.dwMajorVersion < 6)
 	//{

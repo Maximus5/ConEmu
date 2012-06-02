@@ -489,11 +489,6 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 #endif
 
-	//#ifndef SKIP_GETIMAGESUBSYSTEM_ONLOAD
-	//GetImageSubsystem(nImageSubsystem,nImageBits);
-	//#else
-	//PRAGMA_ERROR("error: Подцепление гуевого приложения как вкладки в ConEmu работать не будет");
-	//#endif
 	
 
 	WARNING("Попробовать не ломиться в мэппинг, а взять все из переменной ConEmuData");
@@ -1171,7 +1166,7 @@ void SendStarted()
 				ghConEmuWndDC = pOut->StartStopRet.hWndDC;
 				_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 
-				gnServerPID = pOut->StartStopRet.dwSrvPID;
+				gnServerPID = pOut->StartStopRet.dwMainSrvPID;
 				ExecuteFreeResult(pOut); pOut = NULL;
 			}
 		}
@@ -1204,7 +1199,7 @@ void SendStopped()
 		pIn->StartStop.dwPID = gnSelfPID;
 		pIn->StartStop.nSubSystem = gnImageSubsystem;
 		pIn->StartStop.bWasBufferHeight = gbWasBufferHeight;
-		pIn->StartStop.nPrevAltServerPID = gnPrevAltServerPID;
+		pIn->StartStop.nOtherPID = gnPrevAltServerPID;
 
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 

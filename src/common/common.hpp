@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    93
+#define CESERVER_REQ_VER    94
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1289,12 +1289,13 @@ enum StartStopType
 	sst_ServerStart    = 0,
 	sst_AltServerStart = 1,
 	sst_ServerStop     = 2,
-	sst_ComspecStart   = 3,
-	sst_ComspecStop    = 4,
-	sst_AppStart       = 5,
-	sst_AppStop        = 6,
-	sst_App16Start     = 7,
-	sst_App16Stop      = 8,
+	sst_AltServerStop  = 3,
+	sst_ComspecStart   = 4,
+	sst_ComspecStop    = 5,
+	sst_AppStart       = 6,
+	sst_AppStop        = 7,
+	sst_App16Start     = 8,
+	sst_App16Stop      = 9,
 };
 struct CESERVER_REQ_STARTSTOP
 {
@@ -1317,7 +1318,7 @@ struct CESERVER_REQ_STARTSTOP
 	// Только при аттаче. Может быть NULL-ом
 	u64   hServerProcessHandle;
 	// При завершении
-	DWORD nPrevAltServerPID;
+	DWORD nOtherPID; // Для RM_COMSPEC - PID завершенного процесса (при sst_ComspecStop)
 	// Для информации и удобства (GetModuleFileName(0))
 	wchar_t sModuleName[MAX_PATH+1];
 	// Reserved
@@ -1369,7 +1370,8 @@ struct CESERVER_REQ_STARTSTOPRET
 	HWND2 hWndDC;
 	DWORD dwPID; // при возврате в консоль - PID ConEmu.exe
 	DWORD nBufferHeight, nWidth, nHeight;
-	DWORD dwSrvPID;
+	DWORD dwMainSrvPID;
+	DWORD dwAltSrvPID;
 	DWORD dwPrevAltServerPID;
 	BOOL  bNeedLangChange;
 	u64   NewConsoleLang;

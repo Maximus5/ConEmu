@@ -93,8 +93,6 @@ WARNING("√люк с частичной отрисовкой экрана часто по€вл€етс€ при Alt-F7, Enter. 
 // »ногда не отрисовываетс€ диалог поиска полностью - только бежит текуща€ сканируема€ директори€.
 // »ногда диалог отрисовалс€, но часть до текста "..." отсутствует
 
-//PRAGMA_ERROR("ѕри попытке компил€ции F:\\VCProject\\FarPlugin\\PPCReg\\compile.cmd - Enter в консоль не прошел");
-
 WARNING("¬ каждой VCon создать буфер BYTE[256] дл€ хранени€ распознанных клавиш (Ctrl,...,Up,PgDn,Add,и пр.");
 WARNING("Ќераспознанные можно помещать в буфер {VKEY,wchar_t=0}, в котором заполн€ть последний wchar_t по WM_CHAR/WM_SYSCHAR");
 WARNING("ѕри WM_(SYS)CHAR помещать wchar_t в начало, в первый незан€тый VKEY");
@@ -2359,7 +2357,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 		}
 		else
 		{
-			//PRAGMA_ERROR("доделать ветку");
+			TODO("доделать ветку");
 			while (++j < (int)TextWidth)
 			{
 				attr = ConAttrLine+j;

@@ -122,7 +122,8 @@ BOOL    gbTerminateOnExit = FALSE;
 HWND    ghConWnd = NULL;
 HWND    ghConEmuWnd = NULL; // Root! window
 HWND    ghConEmuWndDC = NULL; // ConEmu DC window
-DWORD   gnServerPID = 0;
+DWORD   gnMainServerPID = 0;
+DWORD   gnAltServerPID = 0;
 BOOL    gbLogProcess = FALSE;
 BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
@@ -308,7 +309,10 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 								ghConEmuWndDC = pInfo->hConEmuWnd;
 						}
 						if (pInfo->nServerPID && pInfo->nServerPID != gnSelfPID)
-							gnServerPID = pInfo->nServerPID;
+						{
+							gnMainServerPID = pInfo->nServerPID;
+							gnAltServerPID = pInfo->nAltServerPID;
+						}
 
 						gbLogProcess = (pInfo->nLoggingType == glt_Processes);
 						if (gbLogProcess)
@@ -445,10 +449,17 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			//	ShutdownHooks();
 			//}
 
-			if ((gnRunMode == RM_APPLICATION) /*|| (gnRunMode == RM_ALTSERVER)*/)
+
+			if ((gnRunMode == RM_APPLICATION) || (gnRunMode == RM_ALTSERVER))
 			{
 				SendStopped();
 			}
+			//else if (gnRunMode == RM_ALTSERVER)
+			//{
+			//	WARNING("RM_ALTSERVER тоже должен посылать уведомление в главный сервер о своем завершении");
+			//	// Но пока - оставим, для отладки ситуации, когда процесс завершается аварийно (Kill).
+			//	_ASSERTE(gnRunMode != RM_ALTSERVER && "AltServer must inform MainServer about self-termination");
+			//}
 
 			//#ifndef TESTLINK
 			CommonShutdown();
@@ -566,9 +577,14 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	}
 
 	gpSrv = (SrvInfo*)calloc(sizeof(SrvInfo),1);
-	if (gpSrv && ghConEmuWnd)
+	if (gpSrv)
 	{
-		GetWindowThreadProcessId(ghConEmuWnd, &gpSrv->dwGuiPID);
+		gpSrv->AltServers.Init();
+
+		if (ghConEmuWnd)
+		{
+			GetWindowThreadProcessId(ghConEmuWnd, &gpSrv->dwGuiPID);
+		}
 	}
 
 	RemoveOldComSpecC();
@@ -1146,15 +1162,12 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			}
 		}
 	}
-	else
+	else if (gnRunMode == RM_COMSPEC)
 	{
 		// В режиме ComSpec нас интересует завершение ТОЛЬКО дочернего процесса
-		//wchar_t szEvtName[128];
-		//
-		//_wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) CESIGNAL_C, pi.dwProcessId);
-		//ghCtrlCEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
-		//_wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) CESIGNAL_BREAK, pi.dwProcessId);
-		//ghCtrlBreakEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
+		_ASSERTE(pi.dwProcessId!=0);
+		gpSrv->dwRootProcess = pi.dwProcessId;
+		gpSrv->dwRootThread = pi.dwThreadId;
 	}
 
 	/* *************************** */
@@ -3225,6 +3238,25 @@ void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDon
 
 
 
+// Используется в режиме RM_APPLICATION, чтобы не тормозить основной поток (жалобы на замедление запуска программ из батников)
+DWORD gnSendStartedThread = 0;
+HANDLE ghSendStartedThread = NULL;
+DWORD WINAPI SendStartedThreadProc(LPVOID lpParameter)
+{
+	_ASSERTE(gnMainServerPID!=0 && gnMainServerPID!=GetCurrentProcessId() && "Main server PID must be determined!");
+
+	CESERVER_REQ *pIn = (CESERVER_REQ*)lpParameter;
+	_ASSERTE(pIn && (pIn->hdr.cbSize>=sizeof(pIn->hdr)) && (pIn->hdr.nCmd==CECMD_CMDSTARTSTOP));
+
+	// Сам результат не интересует
+	CESERVER_REQ *pSrvOut = ExecuteSrvCmd(gnMainServerPID, pIn, ghConWnd, TRUE/*async*/);
+
+	ExecuteFreeResult(pSrvOut);
+	ExecuteFreeResult(pIn);
+
+	return 0;
+}
+
 
 
 void SendStarted()
@@ -3257,7 +3289,7 @@ void SendStarted()
 	_ASSERTE(hConWnd == ghConWnd);
 	ghConWnd = hConWnd;
 
-	DWORD nServerPID = 0, nGuiPID = 0;
+	DWORD nMainServerPID = 0, nAltServerPID = 0, nGuiPID = 0;
 
 	// Для ComSpec-а сразу можно проверить, а есть-ли сервер в этой консоли...
 	if (gnRunMode /*== RM_COMSPEC*/ > RM_SERVER)
@@ -3274,7 +3306,8 @@ void SendStarted()
 		//		= (CESERVER_CONSOLE_MAPPING_HDR*)MapViewOfFile(hFileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
 		if (pConsoleInfo)
 		{
-			nServerPID = pConsoleInfo->nServerPID;
+			nMainServerPID = pConsoleInfo->nServerPID;
+			nAltServerPID = pConsoleInfo->nAltServerPID;
 			nGuiPID = pConsoleInfo->nGuiPID;
 
 			if (pConsoleInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
@@ -3290,7 +3323,7 @@ void SendStarted()
 		//	CloseHandle(hFileMapping);
 		//}
 
-		if (nServerPID == 0)
+		if (nMainServerPID == 0)
 		{
 			gbNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
 			return; // Режим ComSpec, но сервера нет, соответственно, в GUI ничего посылать не нужно
@@ -3406,6 +3439,69 @@ void SendStarted()
 		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd started)\n", (RunMode==RM_SERVER) ? L"Server" : (RunMode==RM_ALTSERVER) ? L"AltServer" : L"ComSpec");
 
 		// CECMD_CMDSTARTSTOP
+		if (gnRunMode == RM_SERVER)
+		{
+			_ASSERTE(nGuiPID!=0 && gnRunMode==RM_SERVER);
+			pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)DuplicateProcessHandle(nGuiPID);
+
+			// послать CECMD_CMDSTARTSTOP/sst_ServerStart в GUI
+			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+		}
+		else if (gnRunMode == RM_ALTSERVER)
+		{
+			// Подготовить хэндл своего процесса для MainServer
+			pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)DuplicateProcessHandle(nMainServerPID);
+
+			pSrvOut = ExecuteSrvCmd(nMainServerPID, pIn, ghConWnd);
+
+			// MainServer должен был вернуть PID предыдущего AltServer (если он был)
+			if (pSrvOut && (pSrvOut->DataSize() >= sizeof(CESERVER_REQ_STARTSTOPRET)))
+			{
+				gpSrv->dwPrevAltServerPID = pSrvOut->StartStopRet.dwPrevAltServerPID;
+			}
+			else
+			{
+				_ASSERTE(pSrvOut && (pSrvOut->DataSize() >= sizeof(CESERVER_REQ_STARTSTOPRET)) && "StartStopRet.dwPrevAltServerPID expected");
+			}
+		}
+		else if (gnRunMode == RM_APPLICATION)
+		{
+			if (nMainServerPID == 0)
+			{
+				_ASSERTE(nMainServerPID && "Main Server must be detected already!");
+			}
+			else
+			{
+				// Сразу запомнить в глобальной переменной PID сервера
+				gnMainServerPID = nMainServerPID;
+				gnAltServerPID = nAltServerPID;
+				// чтобы не тормозить основной поток (жалобы на замедление запуска программ из батников)
+				ghSendStartedThread = CreateThread(NULL, 0, SendStartedThreadProc, pIn, 0, &gnSendStartedThread);
+	  			DWORD nErrCode = ghSendStartedThread ? 0 : GetLastError();
+	  			if (ghSendStartedThread == NULL)
+	  			{
+	  				_ASSERTE(ghSendStartedThread && L"SendStartedThreadProc creation failed!")
+					pSrvOut = ExecuteSrvCmd(nMainServerPID, pIn, ghConWnd);
+	  			}
+	  			else
+	  			{
+	  				pIn = NULL; // Освободит сама SendStartedThreadProc
+	  			}
+  			}
+  			_ASSERTE(pOut == NULL); // нада
+		}
+		else
+		{
+			WARNING("TODO: Может быть это тоже в главный сервер посылать?");
+			_ASSERTE(nGuiPID!=0 && gnRunMode==RM_COMSPEC);
+
+			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+			// pOut должен содержать инфу, что должен сделать ComSpec
+			// при завершении (вернуть высоту буфера)
+			_ASSERTE(pOut!=NULL && "Prev buffer size must be returned!");
+		}
+
+		#if 0
 		if (nServerPID && (nServerPID != gnSelfPID))
 		{
 			_ASSERTE(nServerPID!=0 && (gnRunMode==RM_ALTSERVER || gnRunMode==RM_COMSPEC));
@@ -3415,6 +3511,7 @@ void SendStarted()
 			}
 
 			WARNING("Optimize!!!");
+			WARNING("Async");
 			pSrvOut = ExecuteSrvCmd(nServerPID, pIn, ghConWnd);
 			if (gnRunMode == RM_ALTSERVER)
 			{
@@ -3428,7 +3525,14 @@ void SendStarted()
 				}
 			}
 		}
+		else
+		{
+			_ASSERTE(gnRunMode==RM_SERVER && (nServerPID && (nServerPID != gnSelfPID)) && "nServerPID MUST be known already!");
+		}
+		#endif
 
+		#if 0
+		WARNING("Только для RM_SERVER. Все остальные должны докладываться главному серверу, а уж он разберется");
 		if (gnRunMode != RM_APPLICATION)
 		{
 			_ASSERTE(nGuiPID!=0 || gnRunMode==RM_SERVER);
@@ -3440,29 +3544,26 @@ void SendStarted()
 			WARNING("Optimize!!!");
 			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 		}
+		#endif
 
-		// Ждать при ошибке открытия пайпа наверное и не нужно - все что необходимо, сервер
-		// уже передал в ServerInit, а ComSpec - не критично
-		//if (!pOut) {
-		//	// При старте консоли GUI может не успеть создать командные пайпы, т.к.
-		//	// их имена основаны на дескрипторе консольного окна, а его заранее GUI не знает
-		//	// Поэтому нужно чуть-чуть подождать, пока GUI поймает событие
-		//	// (anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID)
-		//	DWORD dwStart = GetTickCount(), dwDelta = 0;
-		//	while (!gbInShutdown && dwDelta < GUIREADY_TIMEOUT) {
-		//		Sleep(10);
-		//		pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-		//		if (pOut) break;
-		//		dwDelta = GetTickCount() - dwStart;
-		//	}
-		//	if (!pOut) {
-		//		// Возможно под отладчиком, или скорее всего GUI свалился
-		//		_ASSERTE(pOut != NULL);
-		//	}
-		//}
+
+		
+		
 		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd finished)\n",(RunMode==RM_SERVER) ? L"Server" : (RunMode==RM_ALTSERVER) ? L"AltServer" : L"ComSpec");
 
-		if (pOut)
+		if (pOut == NULL)
+		{
+			if (gnRunMode != RM_COMSPEC)
+			{
+				// для RM_APPLICATION будет pOut==NULL?
+				_ASSERTE(gnRunMode == RM_ALTSERVER);
+			}
+			else
+			{
+				gbNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
+			}
+		}
+		else
 		{
 			bSent = true;
 			BOOL  bAlreadyBufferHeight = pOut->StartStopRet.bWasBufferHeight;
@@ -3492,7 +3593,9 @@ void SendStarted()
 
 			UpdateConsoleMapHeader();
 
-			gnServerPID = pOut->StartStopRet.dwSrvPID;
+			_ASSERTE(gnMainServerPID==0 || gnMainServerPID==pOut->StartStopRet.dwMainSrvPID);
+			gnMainServerPID = pOut->StartStopRet.dwMainSrvPID;
+			gnAltServerPID = pOut->StartStopRet.dwAltSrvPID;
 
 			AllowSetForegroundWindow(nGuiPID);
 			TODO("gnBufferHeight->gcrBufferSize");
@@ -3547,11 +3650,8 @@ void SendStarted()
 			//    rNewWindow.Right = crNewSize.X-1;
 			ExecuteFreeResult(pOut); //pOut = NULL;
 			//gnBufferHeight = nNewBufferHeight;
-		}
-		else
-		{
-			gbNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
-		}
+
+		} // (pOut != NULL)
 
 		ExecuteFreeResult(pIn);
 		ExecuteFreeResult(pSrvOut);
@@ -3560,22 +3660,51 @@ void SendStarted()
 
 CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 {
+	if (ghSendStartedThread)
+	{
+		_ASSERTE(gnRunMode!=RM_COMSPEC);
+		// Чуть-чуть подождать, может все-таки успеет?
+		DWORD nWait = WaitForSingleObject(ghSendStartedThread, 50);
+		if (nWait == WAIT_TIMEOUT)
+		{
+			#ifndef __GNUC__
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
+			#endif
+			TerminateThread(ghSendStartedThread, 100);    // раз корректно не хочет...
+			#ifndef __GNUC__
+			#pragma warning( pop )
+			#endif
+		}
+
+		HANDLE h = ghSendStartedThread; ghSendStartedThread = NULL;
+		CloseHandle(h);
+	}
+	else
+	{
+		_ASSERTE(gnRunMode!=RM_APPLICATION);
+	}
+
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
 	int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
 	pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP,nSize);
 
 	if (pIn)
 	{
-		// По идее, sst_ServerStop не посылается
-		_ASSERTE(gnRunMode != RM_SERVER);
 		switch (gnRunMode)
 		{
 		case RM_SERVER:
+			// По идее, sst_ServerStop не посылается
+			_ASSERTE(gnRunMode != RM_SERVER);
+			pIn->StartStop.nStarted = sst_ServerStop;
+			break;
 		case RM_ALTSERVER:
-			_ASSERTE(gnRunMode != RM_ALTSERVER); // проверить
-			pIn->StartStop.nStarted = sst_ServerStop; break;
+			pIn->StartStop.nStarted = sst_AltServerStop;
+			break;
 		case RM_COMSPEC:
-			pIn->StartStop.nStarted = sst_ComspecStop; break;
+			pIn->StartStop.nStarted = sst_ComspecStop;
+			pIn->StartStop.nOtherPID = gpSrv->dwRootProcess;
+			break;
 		default:
 			pIn->StartStop.nStarted = sst_AppStop;
 		}
@@ -3613,15 +3742,28 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 
 		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
 
-		PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd started)\n",0);
-		if (gnRunMode == RM_APPLICATION)
+		if ((gnRunMode == RM_APPLICATION) || (gnRunMode == RM_ALTSERVER))
 		{
-			if (gnServerPID != 0)
-				pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
+			if (gnMainServerPID == 0)
+			{
+				_ASSERTE(gnMainServerPID!=0 && "MainServer PID must be determined");
+			}
+			else
+			{
+				pIn->StartStop.nOtherPID = (gnRunMode == RM_ALTSERVER) ? gpSrv->dwPrevAltServerPID : 0;
+				pOut = ExecuteSrvCmd(gnMainServerPID, pIn, ghConWnd);
+			}
 		}
 		else
+		{
+			PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd started)\n",0);
+			WARNING("Это надо бы совместить, но пока - нужно сначала передернуть главный сервер!");
+			pOut = ExecuteSrvCmd(gnMainServerPID, pIn, ghConWnd);
+			_ASSERTE(pOut!=NULL);
+			ExecuteFreeResult(pOut);
 			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-		PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd finished)\n",0);
+			PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd finished)\n",0);
+		}
 
 		ExecuteFreeResult(pIn); pIn = NULL;
 	}
@@ -4026,6 +4168,39 @@ BOOL ProcessAdd(DWORD nPID, MSectionLock *pCS /*= NULL*/)
 	
 	return lbChanged;
 }
+
+BOOL ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS /*= NULL*/)
+{
+	BOOL lbChanged = FALSE;
+
+	MSectionLock CS;
+	if ((pCS == NULL) && (gpSrv->csProc != NULL))
+	{
+		pCS = &CS;
+		CS.Lock(gpSrv->csProc);
+	}
+
+	// Удалить процесс из списка
+	_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
+	DWORD nChange = 0;
+	for (DWORD n = 0; n < nPrevCount; n++)
+	{
+		if (gpSrv->pnProcesses[n] == nPID)
+		{
+			pCS->RelockExclusive(200);
+			lbChanged = TRUE;
+			gpSrv->nProcessCount--;
+			continue;
+		}
+		if (lbChanged)
+		{
+			gpSrv->pnProcesses[nChange] = gpSrv->pnProcesses[n];
+		}
+		nChange++;
+	}
+
+	return lbChanged;
+}	
 
 BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 {
@@ -5558,6 +5733,9 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		case sst_ServerStop:
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(ServerStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
+		case sst_AltServerStop:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(AltServerStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			break;
 		case sst_ComspecStart:
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(ComspecStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
@@ -5576,13 +5754,23 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		case sst_App16Stop:
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(App16Stop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
+		default:
+			_ASSERTE(in.StartStop.nStarted==sst_ServerStart && "Unknown StartStop code!");
 	}
 
 	DEBUGSTRCMD(szDbg);
 #endif
 	_ASSERTE(in.StartStop.dwPID!=0);
 
-	DWORD nAltServerWasStarted = 0; HANDLE hAltServerWasStarted = NULL; bool ForceThawAltServer = false;
+
+	// Переменные, чтобы позвать функцию AltServerWasStarted после отпускания CS.Unlock()
+	bool AltServerChanged = false;
+	DWORD nAltServerWasStarted = 0;
+	DWORD nCurAltServerPID = gpSrv->dwAltServerPID;
+	HANDLE hAltServerWasStarted = NULL;
+	bool ForceThawAltServer = false;
+	AltServerInfo info = {};
+
 
 	if (in.StartStop.nStarted == sst_AltServerStart)
 	{
@@ -5591,58 +5779,61 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		nAltServerWasStarted = in.StartStop.dwPID;
 		hAltServerWasStarted = (HANDLE)(DWORD_PTR)in.StartStop.hServerProcessHandle;
+		AltServerChanged = true;
 		//ForceThawAltServer = false;
 		//AltServerWasStarted(in.StartStop.dwPID, (HANDLE)(DWORD_PTR)in.StartStop.hServerProcessHandle);
 	}
-	else if ((in.StartStop.nStarted == sst_ComspecStart) || (in.StartStop.nStarted == sst_AppStart))
+	else if ((in.StartStop.nStarted == sst_ComspecStart)
+			|| (in.StartStop.nStarted == sst_AppStart))
 	{
 		// Добавить процесс в список
 		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
 		lbChanged = ProcessAdd(nPID, &CS);
 	}
-	else if ((in.StartStop.nStarted == sst_ComspecStop) || (in.StartStop.nStarted == sst_AppStop))
+	else if ((in.StartStop.nStarted == sst_AltServerStop)
+			|| (in.StartStop.nStarted == sst_ComspecStop)
+			|| (in.StartStop.nStarted == sst_AppStop))
 	{
 		// Удалить процесс из списка
 		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
-		DWORD nChange = 0;
-		for (DWORD n = 0; n < nPrevCount; n++)
-		{
-			if (gpSrv->pnProcesses[n] == nPID)
-			{
-				CS.RelockExclusive(200);
-				lbChanged = TRUE;
-				gpSrv->nProcessCount--;
-				continue;
-			}
-			if (lbChanged)
-			{
-				gpSrv->pnProcesses[nChange] = gpSrv->pnProcesses[n];
-			}
-			nChange++;
-		}
+		lbChanged = ProcessRemove(nPID, nPrevCount, &CS);
+
+		DWORD nAltPID = (in.StartStop.nStarted == sst_ComspecStop) ? in.StartStop.nOtherPID : nPID;
+
 		// Если это закрылся AltServer
-		if (gpSrv->dwAltServerPID && (nPID == gpSrv->dwAltServerPID)
-			|| (in.StartStop.nPrevAltServerPID && !gpSrv->dwAltServerPID))
+		if (nAltPID && gpSrv->AltServers.Get(nAltPID, &info, true/*Remove*/))
 		{
-			//_ASSERTE(nPID != gpSrv->dwAltServerPID);
-			if (in.StartStop.nPrevAltServerPID)
+			_ASSERTE(in.StartStop.nStarted==sst_ComspecStop || in.StartStop.nOtherPID==info.nPrevPID);
+			// Сначала проверяем, не текущий ли альт.сервер закрывается
+			if (gpSrv->dwAltServerPID && (nAltPID == gpSrv->dwAltServerPID))
 			{
-				// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
-				// Активировать альтернативный сервер (повторно), отпустить его нити чтения
-				nAltServerWasStarted = in.StartStop.nPrevAltServerPID;
-				hAltServerWasStarted = NULL;
-				ForceThawAltServer = true;
-				//AltServerWasStarted(in.StartStop.nPrevAltServerPID, NULL, true);
+				// Поскольку текущий сервер завершается - то сразу сбросим PID (его морозить уже не нужно)
+				gpSrv->dwAltServerPID = 0;
+				// Переключаемся на "старый" (если был)
+				if (info.nPrevPID)
+				{
+					_ASSERTE(info.hPrev!=NULL);
+					// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
+					// Активировать альтернативный сервер (повторно), отпустить его нити чтения
+					AltServerChanged = true;
+					nAltServerWasStarted = info.nPrevPID;
+					hAltServerWasStarted = info.hPrev;
+					ForceThawAltServer = true;
+					//AltServerWasStarted(in.StartStop.nPrevAltServerPID, NULL, true);
+				}
+				else
+				{
+					_ASSERTE(info.hPrev==NULL);
+					AltServerChanged = true;
+					// Уведомить ГУЙ!
+					//gpSrv->dwAltServerPID = 0;
+					//SafeCloseHandle(gpSrv->hAltServer);
+				}
 			}
 			else
 			{
-				gpSrv->dwAltServerPID = 0;
-				SafeCloseHandle(gpSrv->hAltServer);
-			}
-		}
-		else
-		{
-			_ASSERTE(in.StartStop.nPrevAltServerPID==0);
+				_ASSERTE((nPID == gpSrv->dwAltServerPID) && "Expected active alt.server!");
+            }
 		}
 	}
 	else
@@ -5657,9 +5848,52 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	// ***
 
 	// После Unlock-а, зовем функцию
-	if (nAltServerWasStarted)
+	if (AltServerChanged)
 	{
-		AltServerWasStarted(nAltServerWasStarted, hAltServerWasStarted, ForceThawAltServer);
+		if (nAltServerWasStarted)
+		{
+			AltServerWasStarted(nAltServerWasStarted, hAltServerWasStarted, ForceThawAltServer);
+		}
+		else if (nCurAltServerPID && (nPID == nCurAltServerPID))
+		{
+			if (gpSrv->hAltServerChanged)
+			{
+				// Чтобы не подраться между потоками - закрывать хэндл только в RefreshThread
+				gpSrv->hCloseAltServer = gpSrv->hAltServer;
+				gpSrv->dwAltServerPID = 0;
+				gpSrv->hAltServer = NULL;
+				// В RefreshThread ожидание хоть и небольшое (100мс), но лучше передернуть
+				SetEvent(gpSrv->hAltServerChanged);
+			}
+			else
+			{
+				gpSrv->dwAltServerPID = 0;
+				SafeCloseHandle(gpSrv->hAltServer);
+				_ASSERTE(gpSrv->hAltServerChanged!=NULL);
+			}
+		}
+
+		CESERVER_REQ *pGuiIn = NULL, *pGuiOut = NULL;
+		int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
+		pGuiIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP, nSize);
+
+		if (!pGuiIn)
+		{
+			_ASSERTE(pGuiIn!=NULL && "Memory allocation failed");
+		}
+		else
+		{
+			pGuiIn->StartStop = in.StartStop;
+			pGuiIn->StartStop.dwPID = nAltServerWasStarted;
+			pGuiIn->StartStop.hServerProcessHandle = NULL; // для GUI смысла не имеет
+			pGuiIn->StartStop.nStarted = nAltServerWasStarted ? sst_AltServerStart : sst_AltServerStop;
+
+			pGuiOut = ExecuteGuiCmd(ghConWnd, pGuiIn, ghConWnd);
+
+			_ASSERTE(pGuiOut!=NULL && "Can not switch GUI to alt server?"); // успешное выполнение?
+			ExecuteFreeResult(pGuiIn);
+			ExecuteFreeResult(pGuiOut);
+		}
 	}
 
 	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
@@ -5674,7 +5908,9 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		(*out)->StartStopRet.nBufferHeight = gnBufferHeight;
 		(*out)->StartStopRet.nWidth = gpSrv->sbi.dwSize.X;
 		(*out)->StartStopRet.nHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
-		(*out)->StartStopRet.dwSrvPID = GetCurrentProcessId();
+		_ASSERTE(gnRunMode==RM_SERVER);
+		(*out)->StartStopRet.dwMainSrvPID = GetCurrentProcessId();
+		(*out)->StartStopRet.dwAltSrvPID = gpSrv->dwAltServerPID;
 		if (in.StartStop.nStarted == sst_AltServerStart)
 		{
 			(*out)->StartStopRet.dwPrevAltServerPID = nPrevAltServerPID;

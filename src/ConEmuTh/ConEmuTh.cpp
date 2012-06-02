@@ -1807,12 +1807,8 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 						//	UngetBufferInput(n-1, p);
 						//}
 					}
-
-					//end: if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT)
-					//PRAGMA_ERROR("!!!");
-					//p++; continue;
 				}
-			}
+			} //end: if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_PRIOR || vk == VK_NEXT)
 
 			//end: if (p->EventType == KEY_EVENT)
 		}

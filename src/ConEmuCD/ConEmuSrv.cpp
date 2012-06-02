@@ -689,27 +689,6 @@ bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw)
 {
 	_ASSERTE(nPID!=0);
 
-	if (gpSrv->dwAltServerPID && (gpSrv->dwAltServerPID != nPID))
-	{
-		// Остановить старый (текущий) сервер
-		CESERVER_REQ* pFreezeIn = ExecuteNewCmd(CECMD_FREEZEALTSRV, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
-		if (pFreezeIn)
-		{
-			pFreezeIn->dwData[0] = 1;
-			pFreezeIn->dwData[1] = nPID;
-			CESERVER_REQ* pFreezeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pFreezeIn, ghConWnd);
-			ExecuteFreeResult(pFreezeIn);
-			ExecuteFreeResult(pFreezeOut);
-		}
-	}
-
-	// Перевести нить монитора в режим ожидания завершения AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer
-	if (gpSrv->hAltServer && (gpSrv->hAltServer != hAltServer))
-	{
-		gpSrv->dwAltServerPID = 0;
-		SafeCloseHandle(gpSrv->hAltServer);
-	}
-
 	if (hAltServer == NULL)
 	{
 		hAltServer = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, nPID);
@@ -723,8 +702,48 @@ bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw)
 		}
 	}
 
+	if (gpSrv->dwAltServerPID && (gpSrv->dwAltServerPID != nPID))
+	{
+		// Остановить старый (текущий) сервер
+		CESERVER_REQ* pFreezeIn = ExecuteNewCmd(CECMD_FREEZEALTSRV, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+		if (pFreezeIn)
+		{
+			pFreezeIn->dwData[0] = 1;
+			pFreezeIn->dwData[1] = nPID;
+			CESERVER_REQ* pFreezeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pFreezeIn, ghConWnd);
+			ExecuteFreeResult(pFreezeIn);
+			ExecuteFreeResult(pFreezeOut);
+		}
+
+		// Если для nPID не было назначно "предыдущего" альт.сервера
+		if (!gpSrv->AltServers.Get(nPID, NULL))
+		{
+			// нужно сохранить параметры этого предыдущего (пусть даже и пустые)
+			AltServerInfo info = {nPID};
+			info.hPrev = gpSrv->hAltServer; // may be NULL
+			info.nPrevPID = gpSrv->dwAltServerPID; // may be 0
+			gpSrv->AltServers.Set(nPID, info);
+		}
+	}
+
+
+	// Перевести нить монитора в режим ожидания завершения AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer
+
+	//if (gpSrv->hAltServer && (gpSrv->hAltServer != hAltServer))
+	//{
+	//	gpSrv->dwAltServerPID = 0;
+	//	SafeCloseHandle(gpSrv->hAltServer);
+	//}
+
 	gpSrv->hAltServer = hAltServer;
 	gpSrv->dwAltServerPID = nPID;
+
+	if (gpSrv->hAltServerChanged)
+	{
+		// В RefreshThread ожидание хоть и небольшое (100мс), но лучше передернуть
+		SetEvent(gpSrv->hAltServerChanged);
+	}
+
 
 	if (ForceThaw)
 	{
@@ -1092,10 +1111,10 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	gbQuit = true;
 	gbTerminateOnExit = FALSE;
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	// Проверить, не вылезло ли Assert-ов в других потоках
 	MyAssertShutdown();
-#endif
+	#endif
 
 	// На всякий случай - выставим событие
 	if (ghExitQueryEvent)
@@ -1117,12 +1136,13 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 			UpdateConsoleMapHeader();
 		}
 
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		int nCurProcCount = gpSrv->nProcessCount;
 		DWORD nCurProcs[20];
 		memmove(nCurProcs, gpSrv->pnProcesses, min(nCurProcCount,20)*sizeof(DWORD));
 		_ASSERTE(nCurProcCount <= 1);
-#endif
+		#endif
+
 		wchar_t szServerPipe[MAX_PATH];
 		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd); //-V205
 		CESERVER_REQ In, Out; DWORD dwRead = 0;
@@ -1141,73 +1161,12 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		gpSrv->bDebuggerActive = FALSE;
 	}
 
-	//// Пошлем события сразу во все нити, а потом будем ждать
-	//#ifdef USE_WINEVENT_SRV
-	//if (gpSrv->dwWinEventThread && gpSrv->hWinEventThread)
-	//	PostThreadMessage(gpSrv->dwWinEventThread, WM_QUIT, 0, 0);
-	//#endif
 
-	//if (gpSrv->dwInputThreadId && gpSrv->hInputThread)
-	//	PostThreadMessage(gpSrv->dwInputThreadId, WM_QUIT, 0, 0);
-	// Передернуть пайп серверной нити
-	//HANDLE hPipe = CreateFile(gpSrv->szPipename,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
-
-	//if (hPipe == INVALID_HANDLE_VALUE)
-	//{
-	//	DEBUGSTR(L"All pipe instances closed?\n");
-	//}
-
-	//// Передернуть нить ввода
-	//if (gpSrv->hInputPipe && gpSrv->hInputPipe != INVALID_HANDLE_VALUE)
-	//{
-	//	//DWORD dwSize = 0;
-	//	//BOOL lbRc = WriteFile(gpSrv->hInputPipe, &dwSize, sizeof(dwSize), &dwSize, NULL);
-	//	/*BOOL lbRc = DisconnectNamedPipe(gpSrv->hInputPipe);
-	//	CloseHandle(gpSrv->hInputPipe);
-	//	gpSrv->hInputPipe = NULL;*/
-	//	TODO("Нифига не работает, похоже нужно на Overlapped переходить");
-	//}
-
-	//HANDLE hInputPipe = CreateFile(gpSrv->szInputname,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
-	//if (hInputPipe == INVALID_HANDLE_VALUE) {
-	//	DEBUGSTR(L"Input pipe was not created?\n");
-	//} else {
-	//	MSG msg = {NULL}; msg.message = 0xFFFF; DWORD dwOut = 0;
-	//	WriteFile(hInputPipe, &msg, sizeof(msg), &dwOut, 0);
-	//}
-
-	//#ifdef USE_WINEVENT_SRV
-	//// Закрываем дескрипторы и выходим
-	//if (/*gpSrv->dwWinEventThread &&*/ gpSrv->hWinEventThread)
-	//{
-	//	// Подождем немножко, пока нить сама завершится
-	//	if (WaitForSingleObject(gpSrv->hWinEventThread, 500) != WAIT_OBJECT_0)
-	//	{
-	//		gbTerminateOnExit = gpSrv->bWinEventTermination = TRUE;
-	//		#ifdef _DEBUG
-	//			// Проверить, не вылезло ли Assert-ов в других потоках
-	//			MyAssertShutdown();
-	//		#endif
-
-	//		#ifndef __GNUC__
-	//		#pragma warning( push )
-	//		#pragma warning( disable : 6258 )
-	//		#endif
-	//		TerminateThread(gpSrv->hWinEventThread, 100);    // раз корректно не хочет...
-	//		#ifndef __GNUC__
-	//		#pragma warning( pop )
-	//		#endif
-	//	}
-
-	//	SafeCloseHandle(gpSrv->hWinEventThread);
-	//	//gpSrv->dwWinEventThread = 0; -- не будем чистить ИД, Для истории
-	//}
-	//#endif
 
 	if (gpSrv->hInputThread)
 	{
 		// Подождем немножко, пока нить сама завершится
-		WARNING("Не завершается");
+		WARNING("Не завершается?");
 
 		if (WaitForSingleObject(gpSrv->hInputThread, 500) != WAIT_OBJECT_0)
 		{
@@ -1234,84 +1193,15 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	// Пайп консольного ввода
 	if (gpSrv)
 		gpSrv->InputServer.StopPipeServer();
-	//if (gpSrv->hInputPipeThread)
-	//{
-	//	// Подождем немножко, пока нить сама завершится
-	//	if (WaitForSingleObject(gpSrv->hInputPipeThread, 50) != WAIT_OBJECT_0)
-	//	{
-	//		gbTerminateOnExit = gpSrv->bInputPipeTermination = TRUE;
-	//		#ifdef _DEBUG
-	//			// Проверить, не вылезло ли Assert-ов в других потоках
-	//			MyAssertShutdown();
-	//		#endif
-	//#ifndef __GNUC__
-	//#pragma warning( push )
-	//#pragma warning( disable : 6258 )
-	//#endif
-	//		TerminateThread(gpSrv->hInputPipeThread, 100);    // раз корректно не хочет...
-	//#ifndef __GNUC__
-	//#pragma warning( pop )
-	//#endif
-	//	}
-	//
-	//	SafeCloseHandle(gpSrv->hInputPipeThread);
-	//	//gpSrv->dwInputPipeThreadId = 0; -- не будем чистить ИД, Для истории
-	//}
 
 	//SafeCloseHandle(gpSrv->hInputPipe);
 	SafeCloseHandle(gpSrv->hInputEvent);
 
 	if (gpSrv)
 		gpSrv->DataServer.StopPipeServer();
-	//if (gpSrv->hGetDataPipeThread)
-	//{
-	//	// Подождем немножко, пока нить сама завершится
-	//	TODO("Сама нить не завершится. Нужно либо делать overlapped, либо что-то пихать в нить");
-	//	//if (WaitForSingleObject(gpSrv->hGetDataPipeThread, 50) != WAIT_OBJECT_0)
-	//	{
-	//		gbTerminateOnExit = gpSrv->bGetDataPipeTermination = TRUE;
-	//		#ifdef _DEBUG
-	//			// Проверить, не вылезло ли Assert-ов в других потоках
-	//			MyAssertShutdown();
-	//		#endif
-	//#ifndef __GNUC__
-	//#pragma warning( push )
-	//#pragma warning( disable : 6258 )
-	//#endif
-	//		TerminateThread(gpSrv->hGetDataPipeThread, 100);    // раз корректно не хочет...
-	//#ifndef __GNUC__
-	//#pragma warning( pop )
-	//#endif
-	//	}
-	//	SafeCloseHandle(gpSrv->hGetDataPipeThread);
-	//	gpSrv->dwGetDataPipeThreadId = 0;
-	//}
 
 	if (gpSrv)
 		gpSrv->CmdServer.StopPipeServer();
-	//if (gpSrv->hServerThread)
-	//{
-	//	// Подождем немножко, пока нить сама завершится
-	//	if (WaitForSingleObject(gpSrv->hServerThread, 500) != WAIT_OBJECT_0)
-	//	{
-	//		gbTerminateOnExit = gpSrv->bServerTermination = TRUE;
-	//		#ifdef _DEBUG
-	//			// Проверить, не вылезло ли Assert-ов в других потоках
-	//			MyAssertShutdown();
-	//		#endif
-	//#ifndef __GNUC__
-	//#pragma warning( push )
-	//#pragma warning( disable : 6258 )
-	//#endif
-	//		TerminateThread(gpSrv->hServerThread, 100);    // раз корректно не хочет...
-	//#ifndef __GNUC__
-	//#pragma warning( pop )
-	//#endif
-	//	}
-	//	SafeCloseHandle(gpSrv->hServerThread);
-	//}
-
-	//SafeCloseHandle(hPipe);
 
 	if (gpSrv->hRefreshThread)
 	{
@@ -1337,20 +1227,13 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		SafeCloseHandle(gpSrv->hRefreshThread);
 	}
 
-	if (gpSrv->hRefreshEvent)
-	{
-		SafeCloseHandle(gpSrv->hRefreshEvent);
-	}
+	SafeCloseHandle(gpSrv->hAltServerChanged);
 
-	if (gpSrv->hRefreshDoneEvent)
-	{
-		SafeCloseHandle(gpSrv->hRefreshDoneEvent);
-	}
+	SafeCloseHandle(gpSrv->hRefreshEvent);
 
-	if (gpSrv->hDataReadyEvent)
-	{
-		SafeCloseHandle(gpSrv->hDataReadyEvent);
-	}
+	SafeCloseHandle(gpSrv->hRefreshDoneEvent);
+
+	SafeCloseHandle(gpSrv->hDataReadyEvent);
 
 	//if (gpSrv->hChangingSize) {
 	//    SafeCloseHandle(gpSrv->hChangingSize);
@@ -1359,14 +1242,8 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	//gpSrv->bWinHookAllow = FALSE; gpSrv->nWinHookMode = 0;
 	//HookWinEvents ( -1 );
 
-	if (gpSrv->pStoredOutputItem)
-	{
-		SafeDelete(gpSrv->pStoredOutputItem);
-	}
-	if (gpSrv->pStoredOutputHdr)
-	{
-		SafeDelete(gpSrv->pStoredOutputHdr);
-	}
+	SafeDelete(gpSrv->pStoredOutputItem);
+	SafeDelete(gpSrv->pStoredOutputHdr);
 	#if 0
 	{
 		MSectionLock CS; CS.Lock(gpcsStoredOutput, TRUE);
@@ -1388,42 +1265,20 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	SafeCloseHandle(gpSrv->hRootProcess);
 	SafeCloseHandle(gpSrv->hRootThread);
 
-	if (gpSrv->csProc)
-	{
-		//WARNING("БЛОКИРОВКА! Иногда зависает при закрытии консоли");
-		//Перекрыл new & delete, посмотрим
-		delete gpSrv->csProc;
-		gpSrv->csProc = NULL;
-	}
+	SafeDelete(gpSrv->csProc);
 
-	if (gpSrv->pnProcesses)
-	{
-		free(gpSrv->pnProcesses); gpSrv->pnProcesses = NULL;
-	}
+	SafeFree(gpSrv->pnProcesses);
 
-	if (gpSrv->pnProcessesGet)
-	{
-		free(gpSrv->pnProcessesGet); gpSrv->pnProcessesGet = NULL;
-	}
+	SafeFree(gpSrv->pnProcessesGet);
 
-	if (gpSrv->pnProcessesCopy)
-	{
-		free(gpSrv->pnProcessesCopy); gpSrv->pnProcessesCopy = NULL;
-	}
+	SafeFree(gpSrv->pnProcessesCopy);
 
-	if (gpSrv->pInputQueue)
-	{
-		free(gpSrv->pInputQueue); gpSrv->pInputQueue = NULL;
-	}
+	SafeFree(gpSrv->pInputQueue);
 
 	CloseMapHeader();
 
 	//SafeCloseHandle(gpSrv->hColorerMapping);
-	if (gpSrv->pColorerMapping)
-	{
-		delete gpSrv->pColorerMapping;
-		gpSrv->pColorerMapping = NULL;
-	}
+	SafeDelete(gpSrv->pColorerMapping);
 }
 
 // Консоль любит глючить, при попытках запроса более определенного количества ячеек.
@@ -3236,14 +3091,46 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		// проверка альтернативного сервера
 		if (gpSrv->hAltServer)
 		{
-			HANDLE hAltWait[2] = {gpSrv->hAltServer, ghQuitEvent};
+			if (!gpSrv->hAltServerChanged)
+				gpSrv->hAltServerChanged = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+			HANDLE hAltWait[3] = {gpSrv->hAltServer, gpSrv->hAltServerChanged, ghQuitEvent};
 			nAltWait = WaitForMultipleObjects(countof(hAltWait), hAltWait, FALSE, dwAltTimeout);
-			if (nAltWait == (WAIT_OBJECT_0+1))
-				break; // затребовано заверешение потока
+
+			if ((nAltWait == (WAIT_OBJECT_0+0)) || (nAltWait == (WAIT_OBJECT_0+1)))
+			{
+				// Смена сервера
+				nAltWait = WAIT_OBJECT_0;
+			}
+			else if (nAltWait == (WAIT_OBJECT_0+2))
+			{
+				// затребовано заверешение потока
+				break;
+			}
+			#ifdef _DEBUG
+			else
+			{
+            	// Неожиданный результат WaitForMultipleObjects
+				_ASSERTE(nAltWait==WAIT_OBJECT_0 || nAltWait==WAIT_TIMEOUT);
+			}
+			#endif
 		}
 		else
 		{
 			nAltWait = WAIT_OBJECT_0;
+		}
+
+		if (gpSrv->hCloseAltServer)
+		{
+			// Чтобы не подраться между потоками - закрывать хэндл только здесь
+			if (gpSrv->hCloseAltServer != gpSrv->hAltServer)
+			{
+				SafeCloseHandle(gpSrv->hCloseAltServer);
+			}
+			else
+			{
+				gpSrv->hCloseAltServer = NULL;
+			}
 		}
 
 		// Always update con handle, мягкий вариант

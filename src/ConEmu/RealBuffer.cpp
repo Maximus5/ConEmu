@@ -1867,9 +1867,6 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			{
 				_ASSERTE(nMapGuiPID == nPID);
 			}
-
-			//PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
-			//mp_ConsoleInfo->nGuiPID = nPID;
 		}
 
 #ifdef _DEBUG
@@ -3602,7 +3599,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			//    TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
 			//    //_ASSERTE(*con.pConChar!=ucBoxDblVert);
 			//    memmove(pChar, con.pConChar, cbDstBufSize);
-			//    PRAGMA_ERROR("Это заменить на for");
+			//    WARNING("Это заменить на for");
 			//    memmove(pAttr, con.pConAttr, cbDstBufSize);
 		}
 		else

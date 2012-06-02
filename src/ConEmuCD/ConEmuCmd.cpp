@@ -254,7 +254,7 @@ void ComspecDone(int aiRc)
 			{
 				xf_dump_chk();
 
-				if (gnServerPID)
+				if (gnMainServerPID)
 				{
 					MCHKHEAP;
 					CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SAVEALIASES,sizeof(CESERVER_REQ_HDR)+nPostAliasSize);
@@ -264,7 +264,7 @@ void ComspecDone(int aiRc)
 						MCHKHEAP;
 						memmove(pIn->Data, pszPostAliases, nPostAliasSize);
 						MCHKHEAP;
-						CESERVER_REQ* pOut = ExecuteSrvCmd(gnServerPID, pIn, GetConEmuHWND(2));
+						CESERVER_REQ* pOut = ExecuteSrvCmd(gnMainServerPID, pIn, GetConEmuHWND(2));
 						MCHKHEAP;
 
 						if (pOut) ExecuteFreeResult(pOut);
@@ -310,9 +310,10 @@ void ComspecDone(int aiRc)
 	HANDLE hOut1 = NULL, hOut2 = NULL;
 	BOOL lbRc1 = FALSE, lbRc2 = FALSE;
 	CONSOLE_SCREEN_BUFFER_INFO sbi1 = {{0,0}}, sbi2 = {{0,0}};
-#ifdef _DEBUG
+
+	#ifdef _DEBUG
 	HWND hWndCon = GetConEmuHWND(2);
-#endif
+	#endif
 
 	// Тут нужна реальная, а не скорректированная информация!
 	if (!gbNonGuiMode)
@@ -327,13 +328,14 @@ void ComspecDone(int aiRc)
 	}
 
 	//PRAGMA_ERROR("Размер должен возвращать сам GUI, через серверный ConEmuC!");
-#ifdef SHOW_STARTED_MSGBOX
+	#ifdef SHOW_STARTED_MSGBOX
 	MessageBox(GetConEmuHWND(2), L"ConEmuC (comspec mode) is about to TERMINATE", L"ConEmuC.ComSpec", 0);
-#endif
-#ifdef _DEBUG
+	#endif
+
+	#ifdef _DEBUG
 	xf_dump_chk();
 	xf_validate(NULL);
-#endif
+	#endif
 
 	if (!gbNonGuiMode)
 	{
@@ -366,15 +368,14 @@ void ComspecDone(int aiRc)
 		if (!gbWasBufferHeight)
 		{
 			lbRc2 = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &sbi2);
-#ifdef _DEBUG
 
+			#ifdef _DEBUG
 			if (sbi2.dwSize.Y > 200)
 			{
 				wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i)", GetCurrentProcessId());
 				MessageBox(NULL, L"BufferHeight was not turned OFF", szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL);
 			}
-
-#endif
+			#endif
 
 			if (lbRc1 && lbRc2 && sbi2.dwSize.Y == sbi1.dwSize.Y)
 			{

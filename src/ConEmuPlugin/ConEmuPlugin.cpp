@@ -2345,7 +2345,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		bReqMainThread = FALSE;
 	}
 
-	//PRAGMA_ERROR("Это нужно делать только тогда, когда семафор уже заблокирован!");
+	//Это нужно делать только тогда, когда семафор уже заблокирован!
 	//if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; }
 	//gpData = NULL; gpCursor = NULL;
 	WARNING("Тут нужно сделать проверку содержимого консоли");

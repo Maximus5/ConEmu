@@ -9,6 +9,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
+
+2012.06.02
+[!] Internal interprocess communication changes.
 [+] Windows 7 и выше. Поддержка Jump list, в секцию 'Tasks' ConEmu может добавить свои 'Predefined tasks' и команды из истории.
     Наполнение Jump list занимает некоторое время, поэтому на вкладке 'Tasks' добавлена кнопка 'Update Now!'.
 [+] ConEmu.exe: параметр /title "Template". В заголовке окна будет отображаться фиксированный текст, а не заголовок активной консоли. В "Template" можно использовать переменные окружения.
@@ -23,6 +26,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [%] В историю не попадала команда, указанная через '/cmd' при запуске ConEmu.exe.
 [%] Issue 561: В некоторых случаях ConEmuHk64.dll вызывала падение консольного приложения.
 [%] Issue 564: События мыши не посылались в консоль при отключенном флажке 'Inject ConEmuHk'.
+[*] Изменения подтверждения закрытия табов. При закрытии ConEmu 'крестиком' запрос отображается один раз (на все консоли).
 
 
 2012.05.27a

@@ -93,7 +93,8 @@ extern DWORD   gnSelfPID;
 extern HWND    ghConWnd;
 extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
-extern DWORD   gnServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
+extern DWORD   gnMainServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
+extern DWORD   gnAltServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
 extern BOOL    gbLogProcess; // (pInfo->nLoggingType == glt_Processes)
 extern BOOL    gbWasBufferHeight;
 extern BOOL    gbNonGuiMode;
@@ -364,12 +365,24 @@ extern DWORD gnConsoleModeFlags;
 #endif
 
 #include "../common/PipeServer.h"
+#include "../common/MMap.h"
+
+struct AltServerInfo
+{
+	DWORD  nPID; // Для информации
+	HANDLE hPrev;
+	DWORD  nPrevPID;
+};
 
 struct SrvInfo
 {
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
 	HANDLE hMainServer; DWORD dwMainServerPID;
-	HANDLE hAltServer; DWORD dwAltServerPID; DWORD dwPrevAltServerPID;
+
+	HANDLE hAltServer, hCloseAltServer, hAltServerChanged;
+	DWORD dwAltServerPID; DWORD dwPrevAltServerPID;
+	MMap<DWORD,AltServerInfo> AltServers;
+
 	HANDLE hFreezeRefreshThread;
 	HWND   hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
 	BOOL   bDebuggerActive, bDebuggerRequestDump; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;

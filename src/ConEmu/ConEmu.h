@@ -197,6 +197,7 @@ class CConEmuMain :
 		DWORD change2WindowMode; // -1/rNormal/rMaximized/rFullScreen
 		bool WindowStartMinimized, ForceMinimizeToTray;
 		bool DisableAutoUpdate;
+		bool DisableKeybHooks;
 		bool mb_isFullScreen;
 		BOOL mb_ExternalHidden;
 		//HANDLE hPipe;
@@ -270,6 +271,7 @@ class CConEmuMain :
 		//LPTSTR GetTitleStart();
 		BOOL mb_InTimer;
 		BOOL mb_ProcessCreated, mb_WorkspaceErasedOnClose; //DWORD mn_StartTick;
+		bool mb_CloseGuiConfirmed;
 		#ifndef _WIN64
 		HWINEVENTHOOK mh_WinHook; //, mh_PopupHook;
 		static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
@@ -469,6 +471,7 @@ class CConEmuMain :
 		void UpdateWindowChild(CVirtualConsole* apVCon);
 		bool isActive(CVirtualConsole* apVCon);
 		bool isChildWindow();
+		bool isCloseConfirmed();
 		bool isConSelectMode();
 		bool isDragging();
 		bool isEditor();

@@ -1882,6 +1882,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				gpConEmu->DisableAutoUpdate = true;
 			}
+			else if (!klstricmp(curCommand, _T("/nokeyhooks")))
+			{
+				gpConEmu->DisableKeybHooks = true;
+			}
 			else if (!klstricmp(curCommand, _T("/icon")) && i + 1 < params)
 			{
 				curCommand += _tcslen(curCommand) + 1; i++;

@@ -721,26 +721,11 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	size_t i, j;
 	bool skip;
 
-	//if (!ghHookMutex)
-	//{
-	//	wchar_t* szMutexName = (wchar_t*)malloc(MAX_PATH*2);
-	//	msprintf(szMutexName, MAX_PATH, CEHOOKLOCKMUTEX, GetCurrentProcessId());
-	//	ghHookMutex = CreateMutexW(NULL, FALSE, szMutexName);
-	//	_ASSERTE(ghHookMutex != NULL);
-	//	free(szMutexName);
-	//}
 	if (!gpHookCS)
 	{
 		gpHookCS = new MSection;
 	}
 
-	//_ASSERTE(gpHookedModules!=NULL && gpHookedModulesSection!=NULL);
-	//PRAGMA_ERROR("Доделать gpHookedModules");
-	//if (!gpHookedModules)
-	//{
-	//	gpHookedModulesSection = (CRITICAL_SECTION*)calloc(1,sizeof(*gpHookedModulesSection));
-	//	gpHookedModules = new MArray<HkModuleInfo>;
-	//}
 
 	if (gpHooks == NULL)
 	{
@@ -1290,10 +1275,6 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 	if (!Module)
 		Module = hExecutable;
 		
-	//#ifdef NDEBUG
-	//	PRAGMA_ERROR("Один модуль обрабатывать ОДИН раз");
-	//#endif
-
 	// Если он уже хукнут - не проверять больше ничего
 	HkModuleInfo* p = IsHookedModule(Module);
 	if (p)
