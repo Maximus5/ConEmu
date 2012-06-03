@@ -442,6 +442,7 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_WindowSize] = true;
 	isStatusColumnHidden[csi_WindowClient] = true;
 	isStatusColumnHidden[csi_WindowWork] = true;
+	isStatusColumnHidden[csi_ConEmuPID] = true;
 	isStatusColumnHidden[csi_CursorInfo] = true;
 
 	isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
@@ -786,6 +787,16 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 
 				pTask->SetName(pszNameSet, iIndex);
 
+				if (!reg->Load(L"GuiArgs", &pTask->pszGuiArgs) || !*pTask->pszGuiArgs)
+				{
+					pTask->cchGuiArgMax = 0;
+					SafeFree(pTask->pszGuiArgs);
+				}
+				else
+				{
+					pTask->cchGuiArgMax = _tcslen(pTask->pszGuiArgs)+1;
+				}
+
 				lbRc = true;
 			}
 		}
@@ -852,6 +863,7 @@ bool Settings::SaveCmdTask(SettingsBase* reg, CommandTasks* pTask)
 	wchar_t szVal[32];
 
 	reg->Save(L"Name", pTask->pszName);
+	reg->Save(L"GuiArgs", pTask->pszGuiArgs);
 
 	if (pTask->pszCommands)
 	{
@@ -4031,7 +4043,7 @@ const Settings::CommandTasks* Settings::CmdTaskGet(int anIndex)
 // anIndex - 0-based, index of CmdTasks
 // asName - имя, или NULL, если эту группу нужно удалить (хвост сдвигается вверх)
 // asCommands - список команд (скрипт)
-void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asCommands)
+void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR asCommands)
 {
 	if (anIndex < 0)
 	{
@@ -4086,6 +4098,7 @@ void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asCommands)
 	}
 
 	CmdTasks[anIndex]->SetName(asName, anIndex);
+	CmdTasks[anIndex]->SetGuiArg(asGuiArgs);
 	CmdTasks[anIndex]->SetCommands(asCommands);
 
 	if (anIndex >= CmdTaskCount)
@@ -4312,7 +4325,7 @@ void Settings::CheckHotkeyUnique()
 	wchar_t* pszFailMsg = NULL;
 	for (ConEmuHotKey *ppHK1 = gpSetCls->m_HotKeys; ppHK1[0].DescrLangID && ppHK1[1].DescrLangID; ++ppHK1)
 	{
-		if ((ppHK1->HkType == chk_Modifier) || (ppHK1->VkMod == 0))
+		if ((ppHK1->HkType == chk_Modifier) || (GetHotkey(ppHK1->VkMod) == 0))
 			continue;
 		// Некоторые хоткеи имеют "локальное" действие
 		if ((ppHK1->DescrLangID == vkCtrlTab_Left)
@@ -4323,7 +4336,7 @@ void Settings::CheckHotkeyUnique()
 		
 		for (ConEmuHotKey *ppHK2 = ppHK1+1; ppHK2[0].DescrLangID; ++ppHK2)
 		{
-			if ((ppHK2->HkType == chk_Modifier) || (ppHK2->VkMod == 0))
+			if ((ppHK2->HkType == chk_Modifier) || (GetHotkey(ppHK2->VkMod) == 0))
 				continue;
 			// Некоторые хоткеи имеют "локальное" действие
 			if ((ppHK2->DescrLangID == vkCtrlTab_Left)

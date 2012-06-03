@@ -36,13 +36,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if !defined(_DEBUG)
 	#define _GetTime GetTickCount
 	//#pragma message("--PipeServer.h in Release mode")
+	#define PipeOutputDbg(x)
 #elif defined(__GNUC__)
 	#define _GetTime GetTickCount
 	//#pragma message("--PipeServer.h in __GNUC__ mode")
+	#define PipeOutputDbg(x)
 #else
 	#define _GetTime timeGetTime
 	#pragma comment(lib, "winmm.lib")
 	//#pragma message("--PipeServer.h in _DEBUG mode")
+	#define PipeOutputDbg(x) OutputDebugStringW(x)
 #endif
 
 // struct - для того, чтобы выделять память простым calloc. "new" не прокатывает, т.к. Crt может быть не инициализирован (ConEmuHk).
@@ -201,7 +204,7 @@ struct PipeServer
 				msprintf(sText, countof(sText), L"PipeServerError, PID=%u, TID=%u\n  %s\n  %s\n",
 				                GetCurrentProcessId(), GetCurrentThreadId(),
 				                pPipe->sErrorMsg, ms_PipeName);
-				OutputDebugStringW(sText);
+				PipeOutputDbg(sText);
 			}
 		}
 
@@ -211,10 +214,15 @@ struct PipeServer
 			// Wait for overlapped connection
 			HANDLE hConnWait[2] = {mh_TermEvent, pPipe->hEvent};
 			DWORD nWait = (DWORD)-1, dwErr = (DWORD)-1, dwErrT = (DWORD)-1;
-			DWORD nTimeout = RELEASEDEBUGTEST(1000,30000);
+			DWORD nTimeout = 1000; //RELEASEDEBUGTEST(1000,30000);
+			DWORD nStartTick = GetTickCount();
+			DWORD nDuration = 0, nMaxConnectDuration = 10000;
+
 			while (!mb_Terminate)
 			{
 				nWait = WaitForMultipleObjects(2, hConnWait, FALSE, nTimeout);
+				nDuration = (GetTickCount() - nStartTick);
+
 				if (nWait == WAIT_OBJECT_0)
 				{
 					_ASSERTEX(mb_Terminate==true);
@@ -251,10 +259,32 @@ struct PipeServer
 						return 1; // OK, клиент подключился
 
 					if (dwErrT == ERROR_IO_INCOMPLETE)
-						continue;
+					{
+						if ((pPipe->dwState == CONNECTING_STATE) && (nDuration > nMaxConnectDuration))
+						{
+							// 120603. В принципе, это штатная ситуация, если ни одного запроса на
+							// подключение не было. Но было зафиксировано странное зависание клиента
+							// при попытке подключения к пайпу с MaxCount=1. Пайп вроде был живой
+							// и свободный, но тем не менее, на клиенте все время возвращалась
+							// ошибка ERROR_PIPE_BUSY.
+							//
+							//_ASSERTEX((nDuration <= nMaxConnectDuration) && "Unknown problem, waiting for connection");
+						}
+						else
+						{
+							continue;
+						}
+					}
 
-					_ASSERTEX(dwErrT == ERROR_IO_INCOMPLETE);
-					DumpError(pPipe, L"PipeServerThread:GetOverlappedResult failed with 0x%08X", FALSE);
+					if (dwErrT == ERROR_IO_INCOMPLETE)
+					{
+						// просто пересоздать пайп?
+					}
+					else
+					{
+						_ASSERTEX(dwErrT == ERROR_IO_INCOMPLETE);
+						DumpError(pPipe, L"PipeServerThread:GetOverlappedResult failed with 0x%08X", FALSE);
+					}
 				}
 				else
 				{
@@ -638,7 +668,8 @@ struct PipeServer
 					else
 					{
 						// Проверить, какие коды ошибок? Может быть нужно CloseHandle дернуть?
-						_ASSERTEX(nOverRc==1);
+						// 120603 - см. комментарий на ERROR_IO_INCOMPLETE
+						_ASSERTEX(nOverRc==1 || (nOverRc==2 && pPipe->hPipeInst==NULL && pPipe->dwConnErr==ERROR_IO_PENDING && pPipe->dwState==CLOSED_STATE));
 						continue; // ошибка, пробуем еще раз
 					}
 				} // end - mb_Overlapped

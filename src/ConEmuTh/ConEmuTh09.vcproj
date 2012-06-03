@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="Far.ConEmuTh"
 	ProjectGUID="{60287D73-F658-4414-8C9B-30E1F3E78D05}"
 	RootNamespace="ConEmuTh"
@@ -1435,7 +1435,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="F:\Utils\FAR\Far2x64\Plugins\ConEmu\Thumbs\ConEmuTh.x64.dll"
+				OutputFile="\Far3\Plugins\ConEmu\Thumbs\ConEmuTh.x64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

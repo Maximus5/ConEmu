@@ -1711,6 +1711,7 @@ const RequestLocalServerFlags
 	slsf_SetOutHandle     = 1,
 	slsf_RequestTrueColor = 2,
 	slsf_PrevAltServerPID = 4,
+	slsf_AltServerStopped = 8,
 	slsf_None             = 0;
 struct RequestLocalServerParm
 {

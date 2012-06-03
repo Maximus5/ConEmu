@@ -30,8 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  Раскомментировать, чтобы сразу после загрузки модуля показать MessageBox, чтобы прицепиться дебаггером
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
-//	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"far.exe"
+	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
+	#define SHOW_EXE_MSGBOX_NAME L"EchoX.exe"
 	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -375,6 +375,15 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		}
 	#endif
 	
+	#ifdef _DEBUG
+	{
+		wchar_t szCpInfo[128];
+		DWORD nCP = GetConsoleOutputCP();
+		_wsprintf(szCpInfo, SKIPLEN(countof(szCpInfo)) L"Current Output CP = %u", nCP);
+		print_timings(szCpInfo);
+	}
+	#endif
+
 	// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
 	// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
 	//HMODULE hKernel = ::GetModuleHandle(L"kernel32.dll");
@@ -568,7 +577,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				wchar_t szGuiPipeName[128];
 				msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", dwConEmuHwnd);
 				
-				CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 1000, NULL);
+				CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 10000, NULL);
 
 				free(pIn);
 
@@ -1385,6 +1394,13 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 		goto wrap;
 	}
 	//RequestLocalServerParm Parm = {(DWORD)sizeof(Parm)};
+
+	if (Parm->Flags & slsf_AltServerStopped)
+	{
+		iRc = 0;
+		// SendStopped посылается из DllStop!
+		goto wrap;
+	}
 
 	if (!ghSrvDll || !gfRequestLocalServer)
 	{

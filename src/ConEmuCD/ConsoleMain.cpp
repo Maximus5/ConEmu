@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 #define DEBUGSTRCMD(x) DEBUGSTR(x)
 #define DEBUGSTRFIN(x) DEBUGSTR(x)
+#define DEBUGSTRCP(x) DEBUGSTR(x)
 
 //#define SHOW_INJECT_MSGBOX
 
@@ -653,37 +654,49 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	// PID
 	gnSelfPID = GetCurrentProcessId();
 	gdwMainThreadId = GetCurrentThreadId();
-#ifdef _DEBUG
 
+
+	#ifdef _DEBUG
 	if (ghConWnd)
 	{
 		// Это событие дергается в отладочной (мной поправленной) версии фара
 		wchar_t szEvtName[64]; _wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) L"FARconEXEC:%08X", (DWORD)ghConWnd);
 		ghFarInExecuteEvent = CreateEvent(0, TRUE, FALSE, szEvtName);
 	}
+	#endif
 
-#endif
-#if defined(SHOW_STARTED_MSGBOX) || defined(SHOW_COMSPEC_STARTED_MSGBOX)
 
+	#if defined(SHOW_STARTED_MSGBOX) || defined(SHOW_COMSPEC_STARTED_MSGBOX)
 	if (!IsDebuggerPresent())
 	{
 		wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC Loaded (PID=%i)", gnSelfPID);
 		const wchar_t* pszCmdLine = GetCommandLineW();
 		MessageBox(NULL,pszCmdLine,szTitle,0);
 	}
+	#endif
 
-#endif
-#ifdef SHOW_STARTED_ASSERT
 
+	#ifdef SHOW_STARTED_ASSERT
 	if (!IsDebuggerPresent())
 	{
 		_ASSERT(FALSE);
 	}
+	#endif
 
-#endif
+
 	PRINT_COMSPEC(L"ConEmuC started: %s\n", GetCommandLineW());
 	nExitPlaceStep = 50;
 	xf_check();
+
+	#ifdef _DEBUG
+	{
+		wchar_t szCpInfo[128];
+		DWORD nCP = GetConsoleOutputCP();
+		_wsprintf(szCpInfo, SKIPLEN(countof(szCpInfo)) L"Current Output CP = %u\n", nCP);
+		DEBUGSTRCP(szCpInfo);
+	}
+	#endif
+
 
 	if (anWorkMode)
 	{
@@ -1388,7 +1401,7 @@ wrap:
 		_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
 		if (!nExitQueryPlace) nExitQueryPlace = 11+(nExitPlaceStep+nExitPlaceThread);
 
-		SetEvent(ghExitQueryEvent);
+		SetTerminateEvent();
 	}
 
 	// Завершение RefreshThread, InputThread, ServerThread
@@ -3258,6 +3271,11 @@ DWORD WINAPI SendStartedThreadProc(LPVOID lpParameter)
 }
 
 
+void SetTerminateEvent()
+{
+	SetEvent(ghExitQueryEvent);
+}
+
 
 void SendStarted()
 {
@@ -3660,6 +3678,21 @@ void SendStarted()
 
 CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 {
+	int iHookRc = -1;
+	if (gnRunMode == RM_ALTSERVER)
+	{
+		// сообщение о завершении будет посылать ConEmuHk.dll
+		HMODULE hHooks = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+		RequestLocalServer_t fRequestLocalServer = (RequestLocalServer_t)(hHooks ? GetProcAddress(hHooks, "RequestLocalServer") : NULL);
+		if (fRequestLocalServer)
+		{
+			RequestLocalServerParm Parm = {sizeof(Parm), slsf_AltServerStopped};
+			iHookRc = fRequestLocalServer(&Parm);
+		}
+		_ASSERTE((iHookRc == 0) && "SendStopped must be sent from ConEmuHk.dll");
+		return NULL;
+	}
+
 	if (ghSendStartedThread)
 	{
 		_ASSERTE(gnRunMode!=RM_COMSPEC);
@@ -4123,7 +4156,7 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 			if (!nExitQueryPlace) nExitQueryPlace = 2+(nExitPlaceStep+nExitPlaceThread);
 
 			ShutdownSrvStep(L"All processes are terminated, SetEvent(ghExitQueryEvent)");
-			SetEvent(ghExitQueryEvent);
+			SetTerminateEvent();
 		}
 	}
 }
@@ -4293,7 +4326,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 
 			if (!nExitQueryPlace) nExitQueryPlace = 1+(nExitPlaceStep+nExitPlaceThread);
 
-			SetEvent(ghExitQueryEvent);
+			SetTerminateEvent();
 			return TRUE;
 		}
 
@@ -4465,7 +4498,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 
 	if (!nExitQueryPlace) nExitQueryPlace = 3+(nExitPlaceStep+nExitPlaceThread);
 
-	SetEvent(ghExitQueryEvent);
+	SetTerminateEvent();
 	return 0;
 }
 
@@ -7001,7 +7034,7 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 				//if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(gpSrv->dwRootProcess);
 				//gpSrv->bDebuggerActive = FALSE;
 				//gbInShutdown = TRUE;
-				SetEvent(ghExitQueryEvent);
+				SetTerminateEvent();
 			}
 			else
 			{

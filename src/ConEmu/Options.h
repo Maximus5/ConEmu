@@ -323,6 +323,8 @@ struct Settings
 		{
 			size_t   cchNameMax;
 			wchar_t* pszName;
+			size_t   cchGuiArgMax;
+			wchar_t* pszGuiArgs;
 			size_t   cchCmdMax;
 			wchar_t* pszCommands; // "\r\n" separated commands
 
@@ -330,6 +332,8 @@ struct Settings
 			{
 				SafeFree(pszName);
 				cchNameMax = 0;
+				SafeFree(pszGuiArgs);
+				cchGuiArgMax = 0;
 				SafeFree(pszCommands);
 				cchCmdMax = 0;
                 CommandTasks* p = this;
@@ -377,6 +381,29 @@ struct Settings
 				}
 			};
 
+			void SetGuiArg(LPCWSTR asGuiArg)
+			{
+				if (!asGuiArg)
+					asGuiArg = L"";
+
+				size_t iLen = wcslen(asGuiArg);
+
+				if (!pszGuiArgs || (iLen >= cchGuiArgMax))
+				{
+					SafeFree(pszGuiArgs);
+
+					cchGuiArgMax = iLen+256;
+					pszGuiArgs = (wchar_t*)malloc(cchGuiArgMax*sizeof(wchar_t));
+					if (!pszGuiArgs)
+					{
+						_ASSERTE(pszGuiArgs!=NULL);
+						return;
+					}
+				}
+
+				_wcscpy_c(pszGuiArgs, cchGuiArgMax, asGuiArg);
+			};
+
 			void SetCommands(LPCWSTR asCommands)
 			{
 				if (!asCommands)
@@ -401,7 +428,7 @@ struct Settings
 			};
 		};
 		const CommandTasks* CmdTaskGet(int anIndex); // 0-based, index of CmdTasks. "-1" == autosaved task
-		void CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asCommands); // 0-based, index of CmdTasks
+		void CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR asCommands); // 0-based, index of CmdTasks
 		bool CmdTaskXch(int anIndex1, int anIndex2); // 0-based, index of CmdTasks
 
 		const ColorPalette* PaletteGet(int anIndex); // 0-based, index of Palettes

@@ -183,8 +183,12 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 	DWORD dwErr = 0, dwMode = 0;
 	BOOL fSuccess = FALSE;
 	DWORD dwStartTick = GetTickCount();
-	int nTries = 10;
+	DWORD nSleepError = 10;
+	int nTries = 10; // допустимое количество обломов, отличных от ERROR_PIPE_BUSY. после каждого - Sleep(nSleepError);
 	DWORD nOpenPipeTimeout = nTimeout ? max(nTimeout,EXECUTE_CMD_OPENPIPE_TIMEOUT) : EXECUTE_CMD_OPENPIPE_TIMEOUT;
+	BOOL bWaitPipeRc = FALSE;
+	DWORD nWaitPipeErr = 0;
+	DWORD nDuration = 0;
 
 	_ASSERTE(LocalSecurity()!=NULL);
 
@@ -226,18 +230,22 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		            OPEN_EXISTING,  // opens existing pipe
 		            0,              // default attributes
 		            NULL);          // no template file
+		dwErr = GetLastError();
 
 		// Break if the pipe handle is valid.
 		if (hPipe != INVALID_HANDLE_VALUE)
 			break; // OK, открыли
 
-		dwErr = GetLastError();
+		nDuration = GetTickCount() - dwStartTick;
+
 		if (dwErr == ERROR_PIPE_BUSY)
 		{
-			if (nTries > 0)
+			if ((nTries > 0) && (nDuration < nOpenPipeTimeout))
 			{
 				// All pipe instances are busy, so wait for 500 ms.
-				WaitNamedPipe(szPipeName, 500);
+				bWaitPipeRc = WaitNamedPipe(szPipeName, 500);
+				nWaitPipeErr = GetLastError();
+				UNREFERENCED_PARAMETER(bWaitPipeRc); UNREFERENCED_PARAMETER(nWaitPipeErr);
 				// -- 120602 раз они заняты (но живы), то будем ждать, пока не освободятся
 				//nTries--;
 				continue;
@@ -249,7 +257,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		}
 
 		// Сделаем так, чтобы хотя бы пару раз он попробовал повторить
-		if ((nTries <= 0) && (GetTickCount() - dwStartTick) > nOpenPipeTimeout)
+		if ((nTries <= 0) || (nDuration > nOpenPipeTimeout))
 		{
 			//if (pszErr)
 			{
@@ -266,7 +274,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		// Может быть пайп еще не создан (в процессе срабатывания семафора)
 		if (dwErr == ERROR_FILE_NOT_FOUND)
 		{
-			Sleep(10);
+			Sleep(nSleepError);
 			continue;
 		}
 
@@ -617,7 +625,7 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner)
 }
 
 // Выполнить в ConEmuC
-CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult)
+CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult, DWORD nTimeout /*= 0*/)
 {
 	wchar_t szPipeName[128];
 
@@ -627,7 +635,7 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL
 	DWORD nLastErr = GetLastError();
 	//_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	msprintf(szPipeName, countof(szPipeName), CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
-	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, 1000, hOwner, bAsyncNoResult, dwSrvPID);
+	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, nTimeout, hOwner, bAsyncNoResult, dwSrvPID);
 	_ASSERTE(pIn->hdr.bAsync == bAsyncNoResult);
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
 	return lpRet;
@@ -658,7 +666,7 @@ CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner)
 //WARNING!!!
 //   Эта процедура не может получить с сервера более 600 байт данных!
 // В заголовке hOwner в дебаге может быть отображена ошибка
-CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult, DWORD nServerPID, DWORD nTimeout)
+CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult, DWORD nServerPID)
 {
 	CESERVER_REQ* pOut = NULL;
 	HANDLE hPipe = NULL;
@@ -677,7 +685,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 
 	_ASSERTE(pIn->hdr.nSrcPID && pIn->hdr.nSrcThreadId);
 	_ASSERTE(pIn->hdr.cbSize >= sizeof(pIn->hdr));
-	hPipe = ExecuteOpenPipe(szPipeName, szErr, NULL/*Сюда хорошо бы имя модуля подкрутить*/, nServerPID, nTimeout);
+	hPipe = ExecuteOpenPipe(szPipeName, szErr, NULL/*Сюда хорошо бы имя модуля подкрутить*/, nServerPID, nWaitPipe);
 
 	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE)
 	{

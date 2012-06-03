@@ -1136,23 +1136,66 @@ void ResetConman()
 
 // Creates a CLSID_ShellLink to insert into the Tasks section of the Jump List.  This type of Jump
 // List item allows the specification of an explicit command line to execute the task.
-HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszTitle, IShellLink **ppsl)
+HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle, IShellLink **ppsl)
 {
 	if ((!pszArguments || !*pszArguments) && (!pszTitle || !*pszTitle))
 	{
 		return E_INVALIDARG;
 	}
 
+	LPCWSTR pszConfig = gpSetCls->GetConfigName();
+	if (pszConfig && !*pszConfig)
+		pszConfig = NULL;
+
 	wchar_t* pszBuf = NULL;
 	if (!pszArguments || !*pszArguments)
 	{
-		size_t cchMax = _tcslen(pszTitle) + 6;
+		size_t cchMax = _tcslen(pszTitle)
+			+ (pszPrefix ? _tcslen(pszPrefix) : 0)
+			+ (pszConfig ? _tcslen(pszConfig) : 0)
+			+ 32;
+
 		pszBuf = (wchar_t*)malloc(cchMax*sizeof(*pszBuf));
 		if (!pszBuf)
 			return E_UNEXPECTED;
 
-		_wcscpy_c(pszBuf, cchMax, L"/cmd ");
+		pszBuf[0] = 0;
+		if (pszPrefix)
+		{
+			_wcscat_c(pszBuf, cchMax, pszPrefix);
+			_wcscat_c(pszBuf, cchMax, L" ");
+		}
+		if (pszConfig)
+		{
+			_wcscat_c(pszBuf, cchMax, L"/config \"");
+			_wcscat_c(pszBuf, cchMax, pszConfig);
+			_wcscat_c(pszBuf, cchMax, L"\" ");
+		}
+		_wcscat_c(pszBuf, cchMax, L"/cmd ");
 		_wcscat_c(pszBuf, cchMax, pszTitle);
+		pszArguments = pszBuf;
+	}
+	else if (pszPrefix)
+	{
+		size_t cchMax = _tcslen(pszArguments)
+			+ _tcslen(pszPrefix)
+			+ (pszConfig ? _tcslen(pszConfig) : 0)
+			+ 32;
+		pszBuf = (wchar_t*)malloc(cchMax*sizeof(*pszBuf));
+		if (!pszBuf)
+			return E_UNEXPECTED;
+
+		pszBuf[0] = 0;
+		_wcscat_c(pszBuf, cchMax, pszPrefix);
+		_wcscat_c(pszBuf, cchMax, L" ");
+		if (pszConfig)
+		{
+			_wcscat_c(pszBuf, cchMax, L"/config \"");
+			_wcscat_c(pszBuf, cchMax, pszConfig);
+			_wcscat_c(pszBuf, cchMax, L"\" ");
+		}
+		_wcscat_c(pszBuf, cchMax, L"/cmd ");
+		_wcscat_c(pszBuf, cchMax, pszArguments);
 		pszArguments = pszBuf;
 	}
 
@@ -1164,9 +1207,54 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszTitle, IShellLink **ppsl
         WCHAR szAppPath[MAX_PATH];
         if (GetModuleFileName(NULL, szAppPath, ARRAYSIZE(szAppPath)))
         {
-			TODO("Взять иконку из запускаемого exe-шника");
-			psl->SetIconLocation(szAppPath, 0);
             hr = psl->SetPath(szAppPath);
+
+			// Иконка
+			wchar_t szIcon[MAX_PATH+1], szTmp[MAX_PATH+1]; szIcon[0] = 0; szTmp[0] = 0;
+			LPCWSTR pszTemp = pszArguments, pszIcon = NULL;
+			wchar_t* pszBatch = NULL;
+			while (NextArg(&pszTemp, szTmp) == 0)
+			{
+				if (lstrcmpi(szTmp, L"/icon") == 0)
+				{
+					if (NextArg(&pszTemp, szTmp) == 0)
+						pszIcon = szTmp;
+					break;
+				}
+				else if (lstrcmpi(szTmp, L"/cmd") == 0)
+				{
+					if ((*pszTemp == CmdFilePrefix)
+						|| (*pszTemp == TaskBracketLeft) || (lstrcmp(pszTemp, AutoStartTaskName) == 0))
+					{
+						pszBatch = gpConEmu->LoadConsoleBatch(pszTemp);
+					}
+
+					if (pszBatch)
+					{
+						pszTemp = pszBatch;
+					}
+
+					if (NextArg(&pszTemp, szTmp) == 0)
+						pszIcon = szTmp;
+					break;
+				}
+			}
+			if (pszIcon && *pszIcon)
+			{
+				DWORD n;
+				wchar_t* pszFilePart;
+				n = GetFullPathName(szTmp, countof(szIcon), szIcon, &pszFilePart);
+				if (!n || (n >= countof(szIcon)) || !FileExists(szIcon))
+				{
+					n = SearchPath(NULL, pszIcon, NULL, countof(szIcon), szIcon, &pszFilePart);
+					if (!n || (n >= countof(szIcon)))
+						n = SearchPath(NULL, pszIcon, L".exe", countof(szIcon), szIcon, &pszFilePart);
+					if (!n || (n >= countof(szIcon)))
+						szIcon[0] = 0;
+				}
+			}
+			SafeFree(pszBatch);
+			psl->SetIconLocation(szIcon[0] ? szIcon : szAppPath, 0);
 
 			DWORD n = GetCurrentDirectory(countof(szAppPath), szAppPath);
 			if (n && (n < countof(szAppPath)))
@@ -1252,7 +1340,10 @@ void UpdateWin7TaskList(bool bForce)
 	if (!bForce)
 		return; // сохранять не просили
 
+	SetCursor(LoadCursor(NULL, IDC_WAIT));
+
 	LPCWSTR pszTasks[32] = {};
+	LPCWSTR pszTasksPrefix[32] = {};
 	LPCWSTR pszHistory[32] = {};
 	LPCWSTR pszCurCmd = NULL, pszCurCmdTitle = NULL;
 	size_t nTasksCount = 0, nHistoryCount = 0;
@@ -1299,6 +1390,7 @@ void UpdateWin7TaskList(bool bForce)
 		{
 			if (pGrp->pszName && *pGrp->pszName)
 			{
+				pszTasksPrefix[nTasksCount] = pGrp->pszGuiArgs;
 				pszTasks[nTasksCount++] = pGrp->pszName;
 			}
 		}
@@ -1365,7 +1457,7 @@ void UpdateWin7TaskList(bool bForce)
 				{
 					for (size_t i = 0; (i < countof(pszTasks)) && pszTasks[i]; i++)
 					{
-						hr = _CreateShellLink(NULL, pszTasks[i], &psl);
+						hr = _CreateShellLink(NULL, pszTasksPrefix[i], pszTasks[i], &psl);
 
 						if (SUCCEEDED(hr))
 						{
@@ -1399,7 +1491,7 @@ void UpdateWin7TaskList(bool bForce)
 
 					if (SUCCEEDED(hr) && pszCurCmdTitle)
 					{
-						hr = _CreateShellLink(pszCurCmd, pszCurCmdTitle, &psl);
+						hr = _CreateShellLink(pszCurCmd, NULL, pszCurCmdTitle, &psl);
 
 						if (SUCCEEDED(hr))
 						{
@@ -1415,7 +1507,7 @@ void UpdateWin7TaskList(bool bForce)
 
 					for (size_t i = 0; SUCCEEDED(hr) && (i < countof(pszHistory)) && pszHistory[i]; i++)
 					{
-						hr = _CreateShellLink(NULL, pszHistory[i], &psl);
+						hr = _CreateShellLink(NULL, NULL, pszHistory[i], &psl);
 
 						if (SUCCEEDED(hr))
 						{
@@ -1514,6 +1606,8 @@ void UpdateWin7TaskList(bool bForce)
 	//	phsl->Release();
 	//}
 	#endif
+
+	SetCursor(LoadCursor(NULL, IDC_ARROW));
 }
 
 
@@ -1949,7 +2043,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				curCommand += _tcslen(curCommand) + 1; i++;
 
-				if (!ConfigPrm)
+				//if (!ConfigPrm) -- используем последний из параметров, если их несколько
 				{
 					ConfigPrm = true;
 					const int maxConfigNameLen = 127;

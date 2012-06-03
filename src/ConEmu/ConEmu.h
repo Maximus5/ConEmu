@@ -335,8 +335,8 @@ class CConEmuMain :
 		static LRESULT CALLBACK RightClickingProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		HWND mh_RightClickingWnd;
 		bool PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam, bool& isPrivate);
-		wchar_t* LoadConsoleBatch(LPCWSTR asSource);
 	public:
+		wchar_t* LoadConsoleBatch(LPCWSTR asSource);
 		void RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon);
 		void RegisterMinRestore(bool abRegister);
 		void RegisterHoooks();

@@ -4205,7 +4205,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 		{
 			int iCount = (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCOUNT, 0,0);
 			if (!gpSet->CmdTaskGet(iCount))
-				gpSet->CmdTaskSet(iCount, L"", L"");
+				gpSet->CmdTaskSet(iCount, L"", L"", L"");
 
         	OnInitDialog_Tasks(hWnd2, false);
 
@@ -4227,7 +4227,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
             if (MessageBox(ghOpWnd, L"Delete command group?", p->pszName, MB_YESNO|MB_ICONQUESTION) != IDYES)
             	break;
 
-        	gpSet->CmdTaskSet(iCur, NULL, NULL);
+        	gpSet->CmdTaskSet(iCur, NULL, NULL, NULL);
 
         	OnInitDialog_Tasks(hWnd2, false);
 
@@ -4658,6 +4658,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 	/* *** Command groups *** */
 	case tCmdGroupName:
+	case tCmdGroupGuiArg:
 	case tCmdGroupCommands:
 		{
 			if (mb_IgnoreCmdGroupEdit)
@@ -4668,23 +4669,27 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				break;
 
 			HWND hName = GetDlgItem(hWnd2, tCmdGroupName);
+			HWND hGuiArg = GetDlgItem(hWnd2, tCmdGroupGuiArg);
 			HWND hCmds = GetDlgItem(hWnd2, tCmdGroupCommands);
 			size_t nNameLen = GetWindowTextLength(hName);
 			wchar_t *pszName = (wchar_t*)calloc(nNameLen+1,sizeof(wchar_t));
+			size_t nGuiLen = GetWindowTextLength(hGuiArg);
+			wchar_t *pszGuiArgs = (wchar_t*)calloc(nGuiLen+1,sizeof(wchar_t));
 			size_t nCmdsLen = GetWindowTextLength(hCmds);
 			wchar_t *pszCmds = (wchar_t*)calloc(nCmdsLen+1,sizeof(wchar_t));
 
 			if (pszName && pszCmds)
 			{
 				GetWindowText(hName, pszName, (int)(nNameLen+1));
+				GetWindowText(hGuiArg, pszGuiArgs, (int)(nGuiLen+1));
 				GetWindowText(hCmds, pszCmds, (int)(nCmdsLen+1));
 
-				gpSet->CmdTaskSet(iCur, pszName, pszCmds);
+				gpSet->CmdTaskSet(iCur, pszName, pszGuiArgs, pszCmds);
 
 				mb_IgnoreCmdGroupList = true;
-	        	OnInitDialog_Tasks(hWnd2, false);
-	        	SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iCur, 0);
-	        	mb_IgnoreCmdGroupList = false;
+        		OnInitDialog_Tasks(hWnd2, false);
+        		SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iCur, 0);
+        		mb_IgnoreCmdGroupList = false;
 			}
 
 			SafeFree(pszName);
@@ -5129,8 +5134,10 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				pszNoBrk[_tcslen(pszNoBrk)-1] = 0;
 			SetDlgItemText(hWnd2, tCmdGroupName, pszNoBrk);
 			SafeFree(pszNoBrk);
+			SetDlgItemText(hWnd2, tCmdGroupGuiArg, pCmd->pszGuiArgs ? pCmd->pszGuiArgs : L"");
 			SetDlgItemText(hWnd2, tCmdGroupCommands, pCmd->pszCommands ? pCmd->pszCommands : L"");
 			EnableWindow(GetDlgItem(hWnd2, tCmdGroupName), TRUE);
+			EnableWindow(GetDlgItem(hWnd2, tCmdGroupGuiArg), TRUE);
 			EnableWindow(GetDlgItem(hWnd2, tCmdGroupCommands), TRUE);
 			EnableWindow(GetDlgItem(hWnd2, cbCmdGroupApp), TRUE);
 			EnableWindow(GetDlgItem(hWnd2, cbCmdTasksParm), FALSE); // not still working
@@ -5138,8 +5145,10 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		else
 		{
 			SetDlgItemText(hWnd2, tCmdGroupName, L"");
+			SetDlgItemText(hWnd2, tCmdGroupGuiArg, L"");
 			SetDlgItemText(hWnd2, tCmdGroupCommands, L"");
 			EnableWindow(GetDlgItem(hWnd2, tCmdGroupName), FALSE);
+			EnableWindow(GetDlgItem(hWnd2, tCmdGroupGuiArg), FALSE);
 			EnableWindow(GetDlgItem(hWnd2, tCmdGroupCommands), FALSE);
 			EnableWindow(GetDlgItem(hWnd2, cbCmdGroupApp), FALSE);
 			EnableWindow(GetDlgItem(hWnd2, cbCmdTasksParm), FALSE);

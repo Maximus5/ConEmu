@@ -1088,7 +1088,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		wchar_t szPipe[MAX_PATH];
 		_ASSERTE(gpSrv->dwRootProcess!=0);
 		_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEHOOKSPIPENAME, L".", gpSrv->dwRootProcess);
-		CESERVER_REQ* pOut = ExecuteCmd(szPipe, pIn, 500, ghConWnd);
+		CESERVER_REQ* pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, ghConWnd);
 		if (!pOut 
 			|| (pOut->hdr.cbSize < (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)))
 			|| (pOut->dwData[0] != (DWORD)gpSrv->hRootProcessGui))
@@ -1122,7 +1122,7 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
 		if (!nExitQueryPlace) nExitQueryPlace = 10+(nExitPlaceStep+nExitPlaceThread);
 
-		SetEvent(ghExitQueryEvent);
+		SetTerminateEvent();
 	}
 
 	if (ghQuitEvent) SetEvent(ghQuitEvent);

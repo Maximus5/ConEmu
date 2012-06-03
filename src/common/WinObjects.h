@@ -409,13 +409,18 @@ class MPipe
 		T_IN m_In; // для справки...
 		T_OUT* mp_Out; DWORD mn_OutSize, mn_MaxOutSize;
 		T_OUT m_Tmp;
-		//DWORD mdw_Timeout;
+		DWORD mn_ErrCode;
+		void SaveErrorCode(DWORD nCode)
+		{
+			mn_ErrCode = nCode;
+		};
 	public:
 		MPipe()
 		{
 			ms_PipeName[0] = ms_Module[0] = 0;
 			mh_Pipe = NULL; memset(&m_In, 0, sizeof(m_In));
 			mp_Out = NULL; mn_OutSize = mn_MaxOutSize = 0;
+			mn_ErrCode = 0;
 			mh_Heap = GetProcessHeap();
 			_ASSERTE(mh_Heap!=NULL);
 		};
@@ -499,20 +504,23 @@ class MPipe
 				*rpOut = mp_Out;
 			}
 
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			DWORD nStartTick = GetTickCount();
-#endif
+			#endif
+
 			WARNING("BLOKIROVKA! Inogda zavisaet pri zakrytii konsoli");
 			fSuccess = TransactNamedPipe(mh_Pipe, (LPVOID)apIn, anInSize, ptrOut, cbReadBuf, &cbRead, NULL);
 			dwErr = fSuccess ? 0 : GetLastError();
-#ifdef _DEBUG
+			SaveErrorCode(dwErr);
+
+			#ifdef _DEBUG
 			DWORD nEndTick = GetTickCount();
 			DWORD nDelta = nEndTick - nStartTick;
 			if (nDelta >= TRANSACT_WARN_TIMEOUT && !IsDebuggerPresent())
 			{
 				_ASSERTE(nDelta <= TRANSACT_WARN_TIMEOUT);
 			}
-#endif
+			#endif
 
 			if (!fSuccess && dwErr == ERROR_BROKEN_PIPE)
 			{
@@ -529,7 +537,7 @@ class MPipe
 				if (anInSize >= sizeof(CESERVER_REQ_HDR))
 					nCmd = ((CESERVER_REQ_HDR*)apIn)->nCmd;
 
-				msprintf(ms_Error, countof(ms_Error), L"%s: TransactNamedPipe failed, Cmd=%i, ErrCode = 0x%08X!", ms_Module, nCmd, dwErr);
+				msprintf(ms_Error, countof(ms_Error), L"%s: TransactNamedPipe failed, Cmd=%i, ErrCode=%u!", ms_Module, nCmd, dwErr);
 				Close(); // Поскольку произошла неизвестная ошибка - пайп лучше закрыть (чтобы потом переоткрыть)
 				return FALSE;
 			}
@@ -608,6 +616,7 @@ class MPipe
 					//WARNING: Если в буфере пайпа данных меньше чем nAllSize - повиснем!
 					fSuccess = ReadFile(mh_Pipe, ptrData, nAllSize, &cbRead, NULL);
 					dwErr = fSuccess ? 0 : GetLastError();
+					SaveErrorCode(dwErr);
 
 					// Exit if an error other than ERROR_MORE_DATA occurs.
 					if (!fSuccess && (dwErr != ERROR_MORE_DATA))
@@ -633,6 +642,7 @@ class MPipe
 					//	while (1) {
 					//		fSuccess = ReadFile( mh_Pipe, cbTemp, 512, &cbRead, NULL);
 					//		dwErr = GetLastError();
+					//		SaveErrorCode(dwErr);
 					//		// Exit if an error other than ERROR_MORE_DATA occurs.
 					//		if ( !fSuccess && (dwErr != ERROR_MORE_DATA))
 					//			break;
@@ -648,6 +658,10 @@ class MPipe
 		LPCWSTR GetErrorText()
 		{
 			return ms_Error;
+		};
+		DWORD GetErrorCode()
+		{
+			return mn_ErrCode;
 		};
 };
 

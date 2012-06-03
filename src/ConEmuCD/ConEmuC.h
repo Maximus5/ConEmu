@@ -86,6 +86,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 
+void SetTerminateEvent();
+
 
 /*  Global  */
 extern DWORD   gnSelfPID;

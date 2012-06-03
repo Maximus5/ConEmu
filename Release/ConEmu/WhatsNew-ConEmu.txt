@@ -10,6 +10,15 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.06.03
+[!] Internal interprocess communication changes.
+[*] Status bar. Добавлена колонка 'ConEmu GUI PID'.
+[%] Issue 566: Hotkey <<None>> is not unique.
+[+] На вкладке 'Tasks' окна 'Settings' добавлено поле 'ConEmu arguments for Jump list'.
+    Здесь можно указать доп.параметры для запуска с панели задач (Tasks, Jump list).
+    Например: /icon "cmd.exe"
+
+
 2012.06.02
 [!] Internal interprocess communication changes.
 [+] Windows 7 и выше. Поддержка Jump list, в секцию 'Tasks' ConEmu может добавить свои 'Predefined tasks' и команды из истории.

@@ -126,6 +126,10 @@ static struct StatusColInfo {
 						L"Cursor information",
 						L"Col x Row, Height (visible|hidden): Console cursor, 0-based"},
 
+	{csi_ConEmuPID,		L"StatusBar.Hide.ConEmuPID",
+						L"ConEmu GUI PID",
+						L"ConEmu GUI PID"},
+
 	{csi_Server,		L"StatusBar.Hide.Srv",
 						L"Console server PID",
 						L"Server PID / AltServer PID"},
@@ -195,6 +199,8 @@ CStatus::CStatus()
 		_ASSERTE(m_Values[j].sHelp && m_Values[j].sName && m_Values[j].sSettingName);
 	}
 	#endif
+
+	_wsprintf(m_Values[csi_ConEmuPID].sText, SKIPLEN(countof(m_Values[csi_ConEmuPID].sText)) L"%u", GetCurrentProcessId());
 
 	// Init some values
 	OnTransparency();
@@ -738,7 +744,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 void CStatus::ShowStatusSetupMenu()
 {
-	if (isSettingsOpened())
+	if (isSettingsOpened(IDD_SPG_STATUSBAR))
 		return;
 
 	mb_InPopupMenu = true;
@@ -1257,12 +1263,13 @@ bool CStatus::ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly)
 	return bSelected;
 }
 
-bool CStatus::isSettingsOpened()
+bool CStatus::isSettingsOpened(UINT nOpenPageID)
 {
 	if (ghOpWnd && IsWindow(ghOpWnd))
 	{
-		gpSetCls->Dialog();
-		MessageBox(ghOpWnd, L"Close settings dialog first, please.", gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION);
+		gpSetCls->Dialog(nOpenPageID);
+		if (!nOpenPageID)
+			MessageBox(ghOpWnd, L"Close settings dialog first, please.", gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION);
 		return true;
 	}
 
@@ -1271,7 +1278,7 @@ bool CStatus::isSettingsOpened()
 
 void CStatus::ShowTransparencyMenu(POINT pt)
 {
-	if (isSettingsOpened())
+	if (isSettingsOpened(IDD_SPG_COLORS))
 		return;
 
 	mb_InPopupMenu = true;

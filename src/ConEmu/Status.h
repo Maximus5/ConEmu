@@ -52,6 +52,7 @@ enum CEStatusItems
 	csi_CursorY,
 	csi_CursorSize,
 	csi_CursorInfo,
+	csi_ConEmuPID,
 	csi_Server,
 	csi_Transparency,
 
@@ -117,7 +118,7 @@ private:
 
 	bool ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly);
 
-	bool isSettingsOpened();
+	bool isSettingsOpened(UINT nOpenPageID = 0);
 
 public:
 	CStatus();

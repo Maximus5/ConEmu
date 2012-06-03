@@ -691,6 +691,9 @@
 #define lbAppDistinct                   2318
 #define stAppDistinctName               2319
 #define cbCmdTaskbarUpdate              2320
+#define cbStatusGuiPID                  2321
+#define tCmdGroupGuiArg                 2322
+#define stCmdGroupGuiArg                2323
 
 // Next default values for new objects
 // 
@@ -698,7 +701,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        219
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2321
+#define _APS_NEXT_CONTROL_VALUE         2324
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

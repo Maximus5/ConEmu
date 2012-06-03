@@ -3107,7 +3107,8 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
 
 		if (!isConsoleClosing())
 		{
-			if (dwErr == 0x000000E8/*The pipe is being closed.*/)
+			if (dwErr == ERROR_NO_DATA/*0x000000E8*//*The pipe is being closed.*/
+				|| dwErr == ERROR_PIPE_NOT_CONNECTED/*No process is on the other end of the pipe.*/)
 			{
 				fSuccess = GetExitCodeProcess(mh_MainSrv, &dwExitCode);
 

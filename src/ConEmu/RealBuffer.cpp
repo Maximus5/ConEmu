@@ -1841,7 +1841,14 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 	else if (!mp_RCon->m_GetDataPipe.Transact(&cmd, sizeof(cmd), (const CESERVER_REQ_HDR**)&pInfo) || !pInfo)
 	{
 		#ifdef _DEBUG
-		MBoxA(mp_RCon->m_GetDataPipe.GetErrorText());
+		if (mp_RCon->m_GetDataPipe.GetErrorCode() == ERROR_PIPE_NOT_CONNECTED)
+		{
+			int nDbg = ERROR_PIPE_NOT_CONNECTED;
+		}
+		else
+		{
+			MBoxA(mp_RCon->m_GetDataPipe.GetErrorText());
+		}
 		#endif
 	}
 	else if (pInfo->cmd.cbSize < sizeof(CESERVER_REQ_CONINFO_INFO))
