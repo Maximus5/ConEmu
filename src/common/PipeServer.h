@@ -62,7 +62,7 @@ struct PipeServer
 			CREATEPIPE_STATE,
 			PIPECREATED_STATE,
 			CONNECTING_STATE,
-			WAITCLIENT_STATE,
+			CONNECTED_STATE,
 			READING_STATE,
 			WRITING_STATE,
 			DISCONNECTING_STATE,
@@ -75,6 +75,10 @@ struct PipeServer
 		{
 			// Common
 			HANDLE hPipeInst; // Pipe Handle
+
+			#ifdef _DEBUG
+			BOOL   bFlagged;
+			#endif
 
 			DWORD  dwConnErr;
 			DWORD  dwConnWait;
@@ -208,6 +212,35 @@ struct PipeServer
 			}
 		}
 
+		void _Disconnect(PipeInst* pPipe, bool bDisconnect, bool bClose, bool bDelayBeforeClose = true)
+		{
+			if (!pPipe->hPipeInst || (pPipe->hPipeInst == INVALID_HANDLE_VALUE))
+			{
+				return;
+			}
+
+			if (bDisconnect)
+			{
+				pPipe->dwState = DISCONNECTING_STATE;
+				DisconnectNamedPipe(pPipe->hPipeInst);
+				pPipe->dwState = DISCONNECTED_STATE;
+			}
+
+			if (bClose)
+			{
+				// Wait a little
+				if (bDelayBeforeClose && !mb_Terminate)
+				{
+					Sleep(10);
+				}
+
+				pPipe->dwState = CLOSING_STATE;
+				CloseHandle(pPipe->hPipeInst);
+				pPipe->hPipeInst = NULL;
+				pPipe->dwState = CLOSED_STATE;
+			}
+		}
+
 		int WaitOverlapped(PipeInst* pPipe, DWORD* pcbDataSize)
 		{
 			BOOL fSuccess = FALSE;
@@ -228,9 +261,7 @@ struct PipeServer
 					_ASSERTEX(mb_Terminate==true);
 					DWORD t1 = _GetTime();
 					TODO("Подозрение на длительную обработку");
-					pPipe->dwState = DISCONNECTING_STATE;
-					DisconnectNamedPipe(pPipe->hPipeInst);
-					pPipe->dwState = DISCONNECTED_STATE;
+					_Disconnect(pPipe, true, false);
 					DWORD t2 = _GetTime();
 					pPipe->nTerminateDelay1 = (t2 - t1);
 					pPipe->nTerminateDelay += pPipe->nTerminateDelay1;
@@ -293,17 +324,7 @@ struct PipeServer
 				}
 
 				// Force client disconnect (error on server side)
-				pPipe->dwState = DISCONNECTING_STATE;
-				DisconnectNamedPipe(pPipe->hPipeInst);
-				pPipe->dwState = DISCONNECTED_STATE;
-				// Wait a little
-				if (!mb_Terminate)
-					Sleep(10);
-				// Next
-				pPipe->dwState = CLOSING_STATE;
-				CloseHandle(pPipe->hPipeInst);
-				pPipe->hPipeInst = NULL;
-				pPipe->dwState = CLOSED_STATE;
+				_Disconnect(pPipe, true, true);
 				return 2; // ошибка, пробуем еще раз
 			}
 
@@ -314,6 +335,7 @@ struct PipeServer
 		{
 			if (mb_Overlapped)
 				ResetEvent(pPipe->hEvent);
+			pPipe->dwState = READING_STATE;
 			
 			int nOverRc;
 			DWORD cbRead = 0, dwErr = 0, cbWholeSize = 0;
@@ -359,17 +381,6 @@ struct PipeServer
 				//DEBUGSTRPROC(L"!!! ReadFile(pipe) failed - console in close?\n");
 				return FALSE;
 			}
-
-			//if (in.hdr.nVersion != CESERVER_REQ_VER)
-			//{
-			//	gConEmu.ShowOldCmdVersion(in.hdr.nCmd, in.hdr.nVersion, in.hdr.nSrcPID==GetServerPID() ? 1 : 0);
-			//	return FALSE;
-			//}
-			//_ASSERTEX(in.hdr.cbSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
-			//if (cbRead < sizeof(CESERVER_REQ_HDR) || /*in.hdr.cbSize < cbRead ||*/ in.hdr.nVersion != CESERVER_REQ_VER) {
-			//	//CloseHandle(hPipe);
-			//	return;
-			//}
 			
 			cbWholeSize = In[0];
 
@@ -463,6 +474,7 @@ struct PipeServer
 
 			if (mb_Overlapped)
 				ResetEvent(pPipe->hEvent);
+			pPipe->dwState = WRITING_STATE;
 
 			pPipe->bDelayedWrite = bDelayed;
 			
@@ -595,8 +607,6 @@ struct PipeServer
 				{
 					mb_ReadyCalled = TRUE;
 					mfn_PipeServerReady(pPipe, m_lParam);
-					//SetEvent(pRCon->mh_GuiAttached);
-					//SafeCloseHandle(pRCon->mh_GuiAttached);
 				}
 
 				_ASSERTEX(pPipe->hPipeInst && (pPipe->hPipeInst!=INVALID_HANDLE_VALUE));
@@ -662,6 +672,7 @@ struct PipeServer
 					{
 						// OK, клиент подключился
 						lbRc = true;
+						pPipe->dwState = CONNECTED_STATE;
 						bNeedReply = TRUE;
 						break;
 					}
@@ -679,19 +690,15 @@ struct PipeServer
 					{
 						// OK, Выйти из цикла ожидания подключения, перейти к чтению
 						lbRc = true;
+						pPipe->dwState = CONNECTED_STATE;
 						break;
 					}
 					else
 					{
-						pPipe->dwState = DISCONNECTING_STATE;
-						DisconnectNamedPipe(pPipe->hPipeInst);
-						pPipe->dwState = DISCONNECTED_STATE;
 						// В каких случаях это может возникнуть? Нужно ли закрывать хэндл, или можно переподключиться?
 						_ASSERTEX(fConnected!=FALSE);
-						pPipe->dwState = CLOSING_STATE;
-						CloseHandle(pPipe->hPipeInst);
-						pPipe->hPipeInst = NULL;
-						pPipe->dwState = CLOSED_STATE;
+
+						_Disconnect(pPipe, true, true);
 					}
 				} // end - !mb_Overlapped
 			} // Цикл ожидания подключения while (!mb_Terminate)
@@ -770,11 +777,8 @@ struct PipeServer
 							// Function does not return until the client process has read all the data.
 							//FlushFileBuffers(pPipe->hPipeInst);
 						}
-						//DisconnectNamedPipe(hPipe);
-						pPipe->dwState = CLOSING_STATE;
-						CloseHandle(pPipe->hPipeInst);
-						pPipe->hPipeInst = NULL;
-						pPipe->dwState = CLOSED_STATE;
+
+						_Disconnect(pPipe, false, true);
 					}
 					DWORD t2 = _GetTime();
 					pPipe->nTerminateDelay3 = (t2 - t1);
@@ -896,9 +900,7 @@ struct PipeServer
 					// FlushFileBuffers уже вызван, т.е. клиент данные не потеряет
 					// А вот вызов CloseHandle перед DisconnectNamedPipe может привести к ошибке 231
 					// (All pipe instances are busy) при следующей попытке CreateNamedPipe
-					pPipe->dwState = DISCONNECTING_STATE;
-					DisconnectNamedPipe(pPipe->hPipeInst);
-					pPipe->dwState = DISCONNECTED_STATE;
+					_Disconnect(pPipe, true, false);
 				}
 
 				TODO("Vozmogno, v kakih-to sluchajah nujno zakryt' pipe handle");
@@ -909,10 +911,7 @@ struct PipeServer
 
 			if (pPipe->hPipeInst && (pPipe->hPipeInst != INVALID_HANDLE_VALUE))
 			{
-				pPipe->dwState = CLOSING_STATE;
-				CloseHandle(pPipe->hPipeInst);
-				pPipe->hPipeInst = NULL;
-				pPipe->dwState = CLOSED_STATE;
+				_Disconnect(pPipe, false, true, false);
 			}
 
 			return 0;
@@ -1172,13 +1171,7 @@ struct PipeServer
 
 				if (m_Pipes[i].hPipeInst && (m_Pipes[i].hPipeInst != INVALID_HANDLE_VALUE))
 				{
-					m_Pipes[i].dwState = DISCONNECTING_STATE;
-					DisconnectNamedPipe(m_Pipes[i].hPipeInst);
-					m_Pipes[i].dwState = DISCONNECTED_STATE;
-
-					m_Pipes[i].dwState = CLOSING_STATE;
-					CloseHandle(m_Pipes[i].hPipeInst);
-					m_Pipes[i].dwState = CLOSED_STATE;
+					_Disconnect(&(m_Pipes[i]), true, true, false);
 				}
 				m_Pipes[i].hPipeInst = NULL;
 				
