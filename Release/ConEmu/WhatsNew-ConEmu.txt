@@ -10,6 +10,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.06.04
+[%] Error «Can't free hooks in module ...» в ConEmuHk.dll
+[%] Issue 557: Assertion в RealBuffer.cpp
+[%] Issue 568: При первом вызове 'View console output' (в плагине Far) вьювер переключался в dump-режим
+[%] В некоторых случаях после завершения консольной команды в Far возникал exception
+
+
 2012.06.03
 [!] Internal interprocess communication changes.
 [*] Status bar. Добавлена колонка 'ConEmu GUI PID'.

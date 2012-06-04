@@ -2830,17 +2830,19 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMOD
 
 	DWORD dwFreeErrCode = 0;
 
-	MSectionLock CS;
-	if (!LockHooks(hModule, L"free", &CS))
+	// for unlocking CS
 	{
-		lbRc = FALSE;
-		dwFreeErrCode = E_UNEXPECTED;
-	}
-	else
-	{
-		lbRc = ((OnFreeLibrary_t)lpfn)(hModule);
-		dwFreeErrCode = GetLastError();
-		CS.Unlock();
+		MSectionLock CS;
+		if (gpHookCS->isLockedExclusive() || LockHooks(hModule, L"free", &CS))
+		{
+			lbRc = ((OnFreeLibrary_t)lpfn)(hModule);
+			dwFreeErrCode = GetLastError();
+		}
+		else
+		{
+			lbRc = FALSE;
+			dwFreeErrCode = E_UNEXPECTED;
+		}
 	}
 
 	// Далее только если !LDR_IS_RESOURCE

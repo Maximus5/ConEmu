@@ -3819,6 +3819,9 @@ HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMo
 	if ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) != (FILE_SHARE_READ|FILE_SHARE_WRITE))
 		dwShareMode |= (FILE_SHARE_READ|FILE_SHARE_WRITE);
 
+	if ((dwDesiredAccess & (GENERIC_READ|GENERIC_WRITE)) != (GENERIC_READ|GENERIC_WRITE))
+		dwDesiredAccess |= (GENERIC_READ|GENERIC_WRITE);
+
 	if (!ghStdOutHandle)
 		ghStdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 

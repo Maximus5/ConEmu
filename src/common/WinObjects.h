@@ -128,6 +128,7 @@ class MSection
 		~MSection();
 	public:
 		void ThreadTerminated(DWORD dwTID);
+		bool isLockedExclusive();
 	protected:
 		void AddRef(DWORD dwTID);
 		int ReleaseRef(DWORD dwTID);

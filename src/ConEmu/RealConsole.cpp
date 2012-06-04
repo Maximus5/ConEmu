@@ -6762,7 +6762,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 		CHAR_INFO* ptrEnd = ptrCur + cchMaxCount;
 
 		//if (pOut->hdr.nVersion == CESERVER_REQ_VER && nWidth && nHeight && (pwszCur < pwszEnd))
-		if (nWidth && nHeight)
+		if (nWidth && nHeight && pData->Succeeded)
 		{
 			DWORD dwWritten;
 			char *pszAnsi = NULL;

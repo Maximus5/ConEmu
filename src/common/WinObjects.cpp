@@ -2448,6 +2448,16 @@ void MSection::Unlock(BOOL abExclusive)
 		ReleaseRef(dwTID);
 	}
 };
+bool MSection::isLockedExclusive()
+{
+	if (!this || !mb_Exclusive)
+		return false;
+	DWORD nTID = GetCurrentThreadId();
+	if (mn_LockedTID[0] != nTID)
+		return false;
+	_ASSERTEX(mn_LockedCount[0] > 0);
+	return (mn_LockedCount[0] > 0);
+};
 
 
 #ifndef CONEMU_MINIMAL
