@@ -111,6 +111,8 @@ wchar_t CRealConsole::ms_LastRConStatus[80] = {};
 const wchar_t gsCloseGui[] = L"Confirm closing current window?";
 const wchar_t gsCloseCon[] = L"Confirm closing console window?";
 const wchar_t gsCloseAny[] = L"Confirm closing console?";
+const wchar_t gsCloseEditor[] = L"Confirm closing Far editor?";
+const wchar_t gsCloseViewer[] = L"Confirm closing Far viewer?";
 
 //static bool gbInTransparentAssert = false;
 
@@ -5585,7 +5587,7 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 			
 			DWORD dwTickStart = timeGetTime();
 			
-			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), &in, ghWnd);
 			
 			gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
@@ -7366,10 +7368,20 @@ void CRealConsole::CloseTab()
 				break;
 			}
 		}
-		else if (!isCloseConfirmed(gsCloseCon))
+		
+		if (bCanCloseMacro)
 		{
-			// Отмена
-			return;
+			CEFarWindowType tabtype = GetActiveTabType();
+			LPCWSTR pszConfirmText =
+				(tabtype & fwt_Editor) ? gsCloseEditor :
+				(tabtype & fwt_Viewer) ? gsCloseViewer :
+				gsCloseCon;
+
+			if (!isCloseConfirmed(pszConfirmText))
+			{
+				// Отмена
+				return;
+			}
 		}
 
 		if (bCanCloseMacro)

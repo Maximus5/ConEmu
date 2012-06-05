@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Include>
+<!-- special -->
+	<?define Guid.UpgradeCode = "2EA0C87C-FB80-4AC6-A350-C4AFDED1156D" ?>
+	<?define Guid.CEInstallDir = "158160B7-CB6C-432E-87B2-34A6CBCBA74B" ?>
+	<!--<?define Guid.CEExtConsoleDir = "CF450D06-0693-4BDA-B371-8FEE10E969B6" ?>-->
+	<?define Guid.CEFarPluginsDir = "DBF32130-1154-47E7-AFC8-66696A454AF0" ?>
+<!-- shortcuts -->
+	<?define Guid.ConEmuStartShortcut = "79D7ABA3-EA5E-4FBF-97F0-54EFA3F8F693" ?>
+	<?define Guid.ConEmuStartShortcut64 = "F63F516D-5914-497B-B7A9-F93C9F0EFF1C" ?>
+	<?define Guid.ConEmuStartShortcutFolder = "611EC4A0-A5D0-4A06-84DE-90A3C7D8330B" ?>
+	<?define Guid.ConEmuDesktopShortcut = "266865EE-E9E7-4C94-B0DF-B29FDD869CF2" ?>
+	<?define Guid.ConEmuDesktopShortcut64 = "0FDAA0DF-0A91-4D44-BC2F-B6F2DC4B7AC2" ?>
+	<?define Guid.ConEmuDesktopShortcutFolder = "53CA844B-378F-4610-B114-01EF28318CBA" ?>
+	<?define Guid.KeyEventsShortcut = "CD976A83-D185-4EA7-97D0-D8DCF25DB907" ?>
+	<?define Guid.UninstallShortcut = "F5313B41-E74B-4755-994F-83FBD73170D6" ?>
+<!-- files -->
+	<?define Guid.ConEmuGui32 = "3E4FD75C-548C-49D2-A3E2-3EFD628397F3" ?>
+	<?define Guid.ConEmuGui64 = "E0B367B7-8938-4868-BA6E-F21B74EF7A3F" ?>
+	<?define Guid.ConEmuLicense = "87671587-C205-4C00-B03C-013D4E8E1F67" ?>
+	<!-- Console Server and Hooks -->
+	<?define Guid.ConEmuC.exe = "34DF3722-C1D7-4A0B-AA16-956B879E2257" ?>
+	<?define Guid.ConEmuC64.exe = "D5B9153B-1585-400A-8907-7CE2636BBBB9" ?>
+	<?define Guid.ConEmuCD.dll = "3900A291-830A-451D-A22A-D1CD2D4C9B2F" ?>
+	<?define Guid.ConEmuCD64.dll = "A7C4D44C-33AF-448F-8339-43F5112C55BC" ?>
+	<?define Guid.ConEmuHk.dll = "A55A4388-D4B4-4A70-BE8C-F8D688FFE6EF" ?>
+	<?define Guid.ConEmuHk64.dll = "A504F1FA-E874-4507-B455-D0D0C6B5F663" ?>
+	<!-- ExtendedConsole for Far3 -->
+	<?define Guid.ExtendedConsole.dll = "08C2EFBF-5BA4-4B76-AE08-46F14ED73969" ?>
+	<?define Guid.ExtendedConsole64.dll = "8736FBE0-7655-4F1E-BFA2-E179BEB825CD" ?>
+	<!-- Cmd Extensions -->
+	<?define Guid.Attach.cmd = "5255BEE7-5CC4-461A-A996-468C453A7C6D" ?>
+	<?define Guid.Cmd_Autorun.cmd = "E4DDDE2E-D547-480A-BA5A-67B5FDE011A3" ?>
+	<?define Guid.Command_Processor.reg = "59CD0952-7C04-476D-9AF6-9C285E5241F1" ?>
+	<?define Guid.Command_Processor_Off.reg = "156ABF33-83DC-4705-8D34-061C2837AC8E" ?>
+	<!-- DosBox -->
+	<?define Guid.DosBox_Sample.conf = "27BFC7A9-5683-40C5-94FB-E7B0E683B9B1" ?>
+	<!-- Portable Reg -->
+	<?define Guid.Portable.Readme.txt = "3D955465-8F97-47BA-AFD5-381BAB9772A5" ?>
+	<!-- Documentation -->
+	<?define Guid.About_ConEmu.txt = "05C59A00-A73B-4527-894B-904EAAFD54C3" ?>
+	<?define Guid.Portable.txt = "1589A431-DAC3-4425-90A4-FE53AA586210" ?>
+	<?define Guid.ConEmu_Sample.xml = "27A0B635-02BB-4091-B865-9BC9BBB49E2C" ?>
+	<?define Guid.FAQ_ConEmu.txt = "921CBC29-757E-4707-BD93-282A8C0F5595" ?>
+	<?define Guid.Settings_ConEmu.reg = "9D4C38CF-2626-4562-9277-CFEB978793D9" ?>
+	<?define Guid.WhatsNew_ConEmu.txt = "D5E97C65-34FF-4983-9288-D28D0993A003" ?>
+    <!-- ConEmu.Addons directory -->
+	<?define Guid.FarHereInstall.cmd = "836AC116-3E84-42AA-B7EB-1A013710D5D8" ?>
+	<?define Guid.FarHereUninstall.cmd = "8F35ABDB-1A5F-4FD6-B1BB-55E6F1688A2E" ?>
+	<?define Guid.FarHere.dat = "6B4C41A6-1A19-4884-8425-E7C68224A107" ?>
+
+	<?define Guid.CtrlO.fml3 = "67AC2D04-1D0F-4DB2-ABFB-E16D4B718825" ?>
+	<?define Guid.CtrlShiftT.fml3 = "3EE0946A-8EFB-4E9F-AEEB-1C025D9E7D4D" ?>
+	<?define Guid.ShiftEnter.fml3 = "9C49C3C8-7D82-4A60-B895-7DFD5DE4E690" ?>
+	<?define Guid.TabList.fml3 = "4AA8D12F-8A0D-40FE-89F7-C29A2EEEED73" ?>
+	<?define Guid.Editor.fml3 = "2AB80782-FECE-416D-A478-910E64FC6911" ?>
+	<?define Guid.FontSize.fml3 = "4C8BEE8E-D6CA-47AE-A2F4-878245E03F1F" ?>
+	<?define Guid.Thumbnails.fml3 = "178844B2-9CC2-4BA1-9859-BF7B93DA5EB9" ?>
+	<?define Guid.Thumbnails_KeyBar.xml3 = "3FDB154C-D821-457F-918C-A999DA60CAEC" ?>
+	<?define Guid.Editor.MsRClick.fml3 = "47660C9F-3D4B-4D2E-B18C-8128CF946087" ?>
+
+	<?define Guid.ConEmu.fml = "31D767FE-4A7E-4207-83BC-BE0996BC325B" ?>
+	<?define Guid.ConEmu.Editor.fml = "5F09D48F-5BE0-4FB2-9AD4-7521CD16A0FA" ?>
+	<?define Guid.ConEmu.FontSize.fml = "CB167887-7408-4C50-BCF6-B9F723E5503B" ?>
+	<?define Guid.ConEmu.ShiftEnter.fml = "9BB9D706-8276-4E60-A706-89136F75E8EA" ?>
+	<?define Guid.ConEmu.TabList.fml = "34D5E427-719E-412F-BF8A-5AD45664F629" ?>
+
+	<?define Guid.AltEnter_Exec.reg2 = "F8CAA20A-6483-419A-8795-9BF4AA63DE50" ?>
+	<?define Guid.AltEnter_Props.reg2 = "7AE06B5C-8FC4-4C63-AA65-23A8AC290870" ?>
+	<?define Guid.CtrlAltD.reg2 = "2EFCE811-87FB-40C5-8BF3-C6AB25668C5D" ?>
+	<?define Guid.CtrlO.reg2 = "CADCB9BF-A657-4CBC-ADE0-8578D0421778" ?>
+	<?define Guid.CtrlO_View.reg2 = "7B142DCA-5041-4DE2-96E8-D7782F93FADC" ?>
+	<?define Guid.CtrlShiftT.reg2 = "8CB44F0B-D4D3-44B8-B9F3-22E3DEA68A7A" ?>
+	<?define Guid.FAR_AutoAttach.reg2 = "36CBEB74-058D-4BCE-AD33-71AA6AA16606" ?>
+	<?define Guid.ShiftEnter.reg2 = "FA7AFA6A-8485-4DB7-9E57-283C764DB27A" ?>
+	<?define Guid.Thumbnails.reg2 = "D023A4F0-62A1-48D2-A952-4B597A63D9E2" ?>
+	<?define Guid.Thumbnails_KeyBar.reg2 = "93FFA1D7-C659-44A3-A172-90CC454455EB" ?>
+	<?define Guid.UCharMap.reg2 = "231AF272-6EB5-40D3-8BA4-C806757EB27E" ?>
+	<?define Guid.FontSize.reg2 = "9AC34AA1-B9B2-4236-BE9F-C14D2F0B7A78" ?>
+
+	<?define Guid.AltEnter_Exec.reg1 = "DA399F62-64FB-4599-B652-F3B906F3FBD2" ?>
+	<?define Guid.AltEnter_Props.reg1 = "A27A1178-1E89-43C4-966A-6AB64AA29C13" ?>
+	<?define Guid.CtrlAltD.reg1 = "2F4B9C82-46C8-4990-BA08-55DB181F3587" ?>
+	<?define Guid.CtrlO.reg1 = "D6246C69-6993-47B3-99A3-5EF10034C78A" ?>
+	<?define Guid.CtrlO_View.reg1 = "62862833-3ABE-42F4-BBCD-DCE2C0B0838C" ?>
+	<?define Guid.CtrlShiftT.reg1 = "A08A8899-A353-4924-86D6-F31104C9298D" ?>
+	<?define Guid.FAR_AutoAttach.reg1 = "1CDA047D-19B1-4DFD-A8BA-5678E7512E5E" ?>
+	<?define Guid.ShiftEnter.reg1 = "5FA7E5A9-C681-45C0-AEB6-C0969B535CC1" ?>
+	<?define Guid.TabList.reg1 = "3F5C99BD-93EC-4C14-8497-9EDD8A8A734D" ?>
+	<?define Guid.Thumbnails.reg1 = "6E3E0899-5707-4D53-B696-5C5A6A129AAB" ?>
+	<?define Guid.Thumbnails_KeyBar.reg1 = "E1A678AE-055E-4F0F-9A5E-E0EEDD0C2290" ?>
+	<?define Guid.FontSize.reg1 = "BA329C93-9213-41C0-8F2E-59C6190A47D8" ?>
+
+	<?define Guid.CallPlugin.txt = "AD76AC9B-8734-4062-85F5-550A1B8DB8AD" ?>
+	<?define Guid.Disable_ConIme.reg = "8CB0AC7F-C11F-4608-BCBD-7E7E00733087" ?>
+	
+	<?define Guid.AnsiColors16.ans = "5E6CA67A-6EBD-4103-A36B-82DD4ADD45F2" ?>
+	<?define Guid.AnsiColors256.ans = "225399DB-2D24-4F5A-A202-A583F3CDD4D5" ?>
+
+	<?define Guid.Blues16.bmp = "4DA5C1F8-896C-4093-A5FA-C5CBD3A80886" ?>
+	<?define Guid.Greys16.bmp = "75FA9FEC-61E6-4E45-B8E5-BD1A96214B28" ?>
+	<?define Guid.Lines16.bmp = "4C6FAA67-90AA-4744-B83E-A54F483F0C4F" ?>
+	<?define Guid.Lines16a.bmp = "6F7715A2-5920-4FAC-9413-08871A78F890" ?>
+	<?define Guid.Lines18.bmp = "A3FE6946-0247-4CEC-88BC-31757AAF8BCD" ?>
+	<?define Guid.Lines18a.bmp = "6EB5584A-25B5-42A7-8D44-DBDA685EE6C8" ?>
+	<!-- KeyEvents -->
+	<?define Guid.KeyEvents.exe = "8EA1FA7F-BD16-4A6C-B72B-FE9DE1E63B67" ?>
+	<?define Guid.KeyEvents.cpp = "3BBEF127-A539-4EB0-9986-25D627C153A4" ?>
+	<?define Guid.KeyEvents.rc = "B11BA1CA-DC75-4ECD-929F-B005C0158B3B" ?>
+	<?define Guid.KeyEvents.h = "6FFD2AE4-9FD1-454B-8498-EC3CD3A8CCCA" ?>
+	<?define Guid.KeyEvents.makefile_gcc = "AADD46CD-AF3A-4D9E-82D3-F4F10C85B80E" ?>
+	<!-- Far Plugins for ConEmu -->
+	<?define Guid.PluginReadme.txt = "7A972F86-2784-4E9B-A9F7-EBF802F23AD1" ?>
+	<?define Guid.ConEmu.dll = "97DF7998-6071-4587-81BB-D76247E14D8F" ?>
+	<?define Guid.ConEmu.map = "3695B14F-1469-4C5B-8E95-059E49FFA6B6" ?>
+	<?define Guid.ConEmu.x64.dll = "112D086E-D8C9-482A-AD95-5AF6DF705972" ?>
+	<?define Guid.ConEmu.x64.map = "40EDD282-C11C-4811-993C-88A7EF350B0C" ?>
+	<?define Guid.ConEmuPlugin_en.lng = "A62F3B97-8C29-4106-A135-11E276636B91" ?>
+	<?define Guid.ConEmuPlugin_ru.lng = "2BE19638-58B5-4D93-BC66-2A6EB8DF48AC" ?>
+    <?define Guid.ConEmuBg.dll = "458C4FCB-70A7-46B9-9D97-438F8088F039" ?>
+    <?define Guid.ConEmuBg.map = "D9548CD5-DB44-4AE2-BF7E-449EEFB300CB" ?>
+    <?define Guid.ConEmuBg.x64.dll = "C4617B1A-49FD-453C-BB7D-9009F782A48E" ?>
+    <?define Guid.ConEmuBg.x64.map = "057FCB7A-35BE-470A-9395-AB7E7E571689" ?>
+    <?define Guid.ConEmuBg_en.lng = "54640488-84AD-42F5-AC16-96FCA732C67E" ?>
+    <?define Guid.ConEmuBg_ru.lng = "77F9E5E8-BA21-4572-95C2-ABDE62AE3182" ?>
+    <?define Guid.Background.xml = "47280354-E60A-42C8-A188-88A735AA5E56" ?>
+    <?define Guid.archive.png = "2859AB21-C974-4CA1-9CB6-F12C71E8A6B9" ?>
+    <?define Guid.caution.png = "3A510950-3391-4E61-AF31-06E4F565804D" ?>
+    <?define Guid.database.png = "1E6349FA-2834-403A-89A8-4B23C3C3BA61" ?>
+    <?define Guid.downloads.png = "958571C2-82A0-4FFB-8C23-AC804AD9588B" ?>
+    <?define Guid.drive_cdrom.png = "6409A028-E800-455E-B258-F0919929F40B" ?>
+    <?define Guid.drive_cloud.png = "4A129C24-40D0-4D8C-BCA7-F98EF7D12173" ?>
+    <?define Guid.drive_fixed.png = "D53AEE46-21FC-4710-9C10-F24B1479C655" ?>
+    <?define Guid.drive_network.png = "2E41E5AB-1A69-4827-9D52-417AD94D804C" ?>
+    <?define Guid.drive_ramdisk.png = "1CABE0C0-9745-42BB-BE78-0F1548B07603" ?>
+    <?define Guid.drive_removable.png = "33CEAAD0-F9E7-4DAD-825A-B4CCDC50C77D" ?>
+    <?define Guid.dropbox.png = "5437B811-0177-450B-8CB9-F79060979400" ?>
+    <?define Guid.globe.png = "F37E42FA-6743-410F-96E7-4C1835DACBF8" ?>
+    <?define Guid.music.png = "15FA6575-C792-4C6E-BC91-62BB0189E5EE" ?>
+    <?define Guid.network.png = "44E96C72-D760-493E-88F2-0311EB2FB081" ?>
+    <?define Guid.plugin.png = "356491A0-6FC4-4443-96B1-67C61CBA554B" ?>
+    <?define Guid.recycle.png = "10CAB623-75F8-47B7-9DFA-97A88B497F3C" ?>
+    <?define Guid.science.png = "52C2A222-CC79-447E-83EB-F7E1E767C370" ?>
+    <?define Guid.trash.png = "A714886C-CB68-402D-9195-04E579C14D6C" ?>
+	<?define Guid.ConEmuLn.dll = "B6F209D8-D142-433E-93A5-F4CE2F316DCD" ?>
+	<?define Guid.ConEmuLn.map = "E5DD3B26-B43A-441B-9AFA-612C8898FF51" ?>
+	<?define Guid.ConEmuLn.x64.dll = "9A965601-2717-4993-8DE2-40EB6BF169C1" ?>
+	<?define Guid.ConEmuLn.x64.map = "035EC63D-163C-4562-A834-41E230D2F40D" ?>
+	<?define Guid.ConEmuLn_en.lng = "2C1E3131-F0EC-4C20-A6E4-1890C86052C2" ?>
+	<?define Guid.ConEmuLn_ru.lng = "8F894DC7-BE86-4108-9A6A-FD99B710A622" ?>
+	<?define Guid.ConEmuTh.dll = "2DF35F9E-6E77-4619-AC59-D22A108F2C3B" ?>
+	<?define Guid.ConEmuTh.map = "4C44BAF5-5A71-46FF-80FB-B67D4677FB3B" ?>
+	<?define Guid.ConEmuTh.x64.dll = "A0C1B2EE-F1F1-4E12-8030-3FA18D150AB8" ?>
+	<?define Guid.ConEmuTh.x64.map = "C9EC4FD1-21BB-44DB-BC27-D17DEA8A0176" ?>
+	<?define Guid.ConEmuTh_en.lng = "F51E9839-E98A-44BA-8FC3-AF03C577B299" ?>
+	<?define Guid.ConEmuTh_ru.lng = "A25BF66E-91ED-4794-9401-62B81C5F2DAB" ?>
+	<?define Guid.gdi.t32 = "8DA8C7F0-7ACC-4992-918A-366D61911669" ?>
+	<?define Guid.gdi.t32.map = "25F9D114-B60C-44E7-944E-59DE200BC5FF" ?>
+	<?define Guid.gdi.t64 = "67A5B0CC-01E7-4D21-8780-D3A3C3EFDEB9" ?>
+	<?define Guid.gdi.t64.map = "7DBF7A6D-C1CC-417E-AE3A-D501258BBBB1" ?>
+	<?define Guid.ico.t32 = "D0A5FD3B-0C4D-4FAE-B1AE-CA69E2ABA7BC" ?>
+	<?define Guid.ico.t32.map = "D9BD7DB4-08B2-4907-AF22-0A5B1B1D5296" ?>
+	<?define Guid.ico.t64 = "8976EB7E-C222-4E1C-97BA-96760103074C" ?>
+	<?define Guid.ico.t64.map = "ABB88D8B-C00F-4098-9F54-75FAD4B6EC38" ?>
+	<?define Guid.pe.t32 = "853C8878-5A0E-44DA-AE13-3F6C819BF492" ?>
+	<?define Guid.pe.t32.map = "6BCDB4D0-BA92-4F34-820F-B7E149C3D17D" ?>
+	<?define Guid.pe.t64 = "F8E752D5-4757-4A28-B787-514A22529B23" ?>
+	<?define Guid.pe.t64.map = "CF8D1FBE-7F47-4EA3-9032-D8669FBF5F61" ?>
+
+</Include>

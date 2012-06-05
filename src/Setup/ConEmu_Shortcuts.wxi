@@ -40,7 +40,7 @@
     </Component>-->
     <Component Id="UninstallShortcut" Guid="$(var.Guid.UninstallShortcut)">
       <Shortcut Id="UninstallShortcut"
-                Name="Uninstall ConEmu"
+                Name="Uninstall ConEmu $(var.Platform)"
                 Target="[System64Folder]msiexec.exe"
                 Arguments="/x [ProductCode]"
                 Description="Uninstalls My Application" />

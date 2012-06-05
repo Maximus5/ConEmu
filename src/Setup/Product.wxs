@@ -3,13 +3,34 @@
 
   <!-- Накрутить этот номер, чтобы заблокировать Downgrade/Upgrade с другой "версией" инсталлятора -->
   <?define  MajorVersion = '11' ?>
-
   <?include Version.wxi ?>
-  <?include ConEmu_Guids.wxi ?>
 
-  <?define RegKey = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ConEmu" ?>
-  <?define CEInstallDir = "InstallDir" ?>
-  <?define CEFarPluginsDir = "FarPluginsDir" ?>
+  <?include ConEmu_Guids_$(var.Platform).wxi ?>
+
+  <?define RegKeyOld = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ConEmu" ?>
+  <?define RegKey = "SOFTWARE\ConEmu" ?>
+
+  <?if $(var.Platform) = x86 ?>
+    <?define Win64 = "no" ?>
+    <?define GuiWin32 = "1" ?>
+    <?define GuiWin64 = "2" ?>
+    <?define ProgramFiles = "ProgramFilesFolder" ?>
+    <?define CEInstallDir = "InstallDir" ?>
+    <!--<?define CEExtConsoleDir = "ExtConsoleDir" ?>-->
+    <?define CEFarPluginsDir = "FarPluginsDir" ?>
+    <?define FarInstallDir = "InstallDir" ?>
+  <?endif?>
+  <?if $(var.Platform) = x64 ?>
+    <?define Win64 = "yes" ?>
+    <?define GuiWin32 = "2" ?>
+    <?define GuiWin64 = "1" ?>
+    <?define ProgramFiles = "ProgramFiles64Folder" ?>
+    <?define CEInstallDir = "InstallDir_x64" ?>
+    <!--<?define CEExtConsoleDir = "ExtConsoleDir_x64" ?>-->
+    <?define CEFarPluginsDir = "FarPluginsDir_x64" ?>
+    <?define FarInstallDir = "InstallDir_x64" ?>
+  <?endif?>
+
 
   <Product Id="*" Name="ConEmu $(var.ConEmuVerS)" Version="$(var.Version)"
            Language="1033" Manufacturer="ConEmu-Maximus5" UpgradeCode="$(var.Guid.UpgradeCode)">
@@ -17,7 +38,7 @@
              Compressed="yes" Description="ConEmu-Maximus5 $(var.ConEmuVerS)"
              InstallerVersion="200" Languages="1033" Manufacturer="ConEmu-Maximus5"
              InstallScope="perMachine"
-             Platform="x86" />
+             Platform="$(var.Platform)" />
 
     <!-- Upgrade and install conditions -->
     <?include ConEmu_Conditions.wxi ?>
@@ -37,26 +58,9 @@
     <WixVariable Id="WixUISupportPerUser" Value="0" />
 
     <Property Id="ApplicationFolderName" Value="ConEmu" />
-    <Property Id="APPLICATIONFOLDER">
-      <RegistrySearch Id="CEInstallDir" Root="HKLM" Key="$(var.RegKey)" Name="$(var.CEInstallDir)" Type="directory" />
-    </Property>
+	<?include ConEmu_RegKeys.wxi ?>
     <!--<Property Id="CONEMUBASEDIR"/>-->
     <!--<Property Id="CONEMUADDONSDIR"/>-->
-    <Property Id="FARMANAGERFOLDER">
-      <RegistrySearch Id="FarInstallDir" Root="HKLM" Key="Software\Far2" Name="InstallDir" Type="directory" />
-    </Property>
-    <Property Id="FARMANAGERFOLDERUSER">
-      <RegistrySearch Id="FarInstallDirUser" Root="HKCU" Key="Software\Far2" Name="InstallDir" Type="directory" />
-    </Property>
-    <Property Id="FARMANAGERFOLDER1">
-      <RegistrySearch Id="FarInstallDir1" Root="HKLM" Key="Software\Far" Name="InstallDir" Type="directory" />
-    </Property>
-    <Property Id="FARMANAGERFOLDERUSER1">
-      <RegistrySearch Id="FarInstallDirUser1" Root="HKCU" Key="Software\Far" Name="InstallDir" Type="directory" />
-    </Property>
-    <Property Id="FARPLUGINSCONEMU">
-      <RegistrySearch Id="CEFarPluginsDir" Root="HKLM" Key="$(var.RegKey)" Name="$(var.CEFarPluginsDir)" Type="directory" />
-    </Property>
     <Property Id="WixAppFolder" Value="WixPerMachineFolder" />
     <Property Id="WIXUI_INSTALLDIR" Value="APPLICATIONFOLDER" /> <!-- необходимо для WixUI_FeatureTree -->
     <!--<UIRef Id="WixUI_InstallDir" />-->
@@ -66,15 +70,19 @@
     <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg">1</Publish>
     -->
 
-    <CustomAction Id="SetConEmuInstallDirFarM" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDER]" Execute="firstSequence" />
-    <CustomAction Id="SetConEmuInstallDirFarU" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDERUSER]" Execute="firstSequence" />
-    <!--
-    <CustomAction Id="SetConEmuInstallDir" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDER]" Execute="firstSequence" />
-    <CustomAction Id="UpdateFeatureState" BinaryKey="CustomActions.dll" DllEntry="UpdateFeatureState" />
-    -->
+	<?include ConEmu_DefaultPathActions.wxi ?>
 
     <Binary Id="CustomActions.dll" SourceFile="CustomActions.dll" />
     <CustomAction Id="UpdateFeatureState" BinaryKey="CustomActions.dll" DllEntry="UpdateFeatureState" />
+
+    <!--
+    <CustomAction Id="SetInstallText" Property="InstallText" Value="Install" />
+    <CustomAction Id="SetUpgradeText" Property="InstallText" Value="Upgrade" />
+    <CustomAction Id="SetDowngradeText" Property="InstallText" Value="Downgrade" />
+    <CustomAction Id="SetWelcomeInstallText" Property="WelcomeInstallText" Value="The Setup Wizard will install [ProductName] on your computer." />
+    <CustomAction Id="SetWelcomeUpgradeText" Property="WelcomeInstallText" Value="The Setup Wizard will upgrade [ProductName] on your computer." />
+    <CustomAction Id="SetWelcomeDowngradeText" Property="WelcomeInstallText" Value="The Setup Wizard will downgrade [ProductName] on your computer." />
+    -->
 
     <!--
     <Binary Id="vbs.vbs" SourceFile="vbs.vbs" />
@@ -83,10 +91,10 @@
 
     <!--
         <Property Id="USERINSTALLDIR">
-            <RegistrySearch Id="UserInstallDir" Root="HKCU" Key="Software\Far2" Name="InstallDir" Type="directory" />
+            <RegistrySearch Id="UserInstallDir" Root="HKCU" Key="Software\Far2" Name="$(var.FarInstallDir)" Type="directory" />
         </Property>
         <Property Id="INSTALLDIR">
-            <RegistrySearch Id="InstallDir" Root="HKLM" Key="Software\Far2" Name="InstallDir" Type="directory" />
+            <RegistrySearch Id="InstallDir" Root="HKLM" Key="Software\Far2" Name="$(var.FarInstallDir)" Type="directory" />
         </Property>
     -->
 
@@ -94,7 +102,7 @@
     <CustomAction Id="SetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[INSTALLDIR]"/>
     -->
 
-    <Media Id="1" Cabinet="data.cab" EmbedCab="yes" />
+    <Media Id="1" Cabinet="ConEmu.cab" CompressionLevel="high" EmbedCab="no" />
 
     <?include ConEmu_Directories.wxi ?>
 
@@ -128,19 +136,25 @@
     </UI>
         <InstallExecuteSequence>
             <!-- Эти операции выполняются "под админом" после завершения настройки параметров -->
-            <Custom Action="SetConEmuInstallDirFarM" After="AppSearch">FARMANAGERFOLDER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
-            <Custom Action="SetConEmuInstallDirFarU" After="SetConEmuInstallDirFarM">FARMANAGERFOLDERUSER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
-            <!--<Custom Action="SetConEmuInstallDir" After="SetConEmuInstallDirFarU">FARMANAGERFOLDER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>-->
+            <?include ConEmu_DefaultPathOrder.wxi ?>
+
             <Custom Action="UpdateFeatureState" Before="InstallValidate" />
             <RemoveExistingProducts After="InstallInitialize"/>
         </InstallExecuteSequence>
         <InstallUISequence>
-            <Custom Action="SetConEmuInstallDirFarM" After="AppSearch">FARMANAGERFOLDER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
-            <Custom Action="SetConEmuInstallDirFarU" After="SetConEmuInstallDirFarM">FARMANAGERFOLDERUSER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
-            <!--<Custom Action="SetConEmuInstallDir" After="AppSearch">FARMANAGERFOLDER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>-->
+            <?include ConEmu_DefaultPathOrder.wxi ?>
+
             <!--<Custom Action="UpdateFeatureState" Before="InstallValidate" />-->
             <!-- <Custom Action="UpdateFeatureState" Before="ExecuteAction"/> -->
             <!-- <Custom Action="UpdateFeatureState" After="CustomizeDlg"/> -->
+            <!--
+            <Custom Action="SetInstallText" After="FindRelatedProducts">NOT UPGRADE AND NOT DOWNGRADE</Custom>
+            <Custom Action="SetUpgradeText" After="FindRelatedProducts">UPGRADE</Custom>
+            <Custom Action="SetDowngradeText" After="FindRelatedProducts">DOWNGRADE</Custom>
+            <Custom Action="SetWelcomeInstallText" After="FindRelatedProducts">NOT UPGRADE AND NOT DOWNGRADE</Custom>
+            <Custom Action="SetWelcomeUpgradeText" After="FindRelatedProducts">UPGRADE</Custom>
+            <Custom Action="SetWelcomeDowngradeText" After="FindRelatedProducts">DOWNGRADE</Custom>
+            -->
         </InstallUISequence>
         <AdminUISequence>
         </AdminUISequence>

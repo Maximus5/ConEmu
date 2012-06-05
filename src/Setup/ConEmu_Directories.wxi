@@ -2,21 +2,34 @@
 <Include>
 
   <Directory Id="TARGETDIR" Name="SourceDir">
-    <Directory Id="ProgramFilesFolder">
+    <Directory Id="$(var.ProgramFiles)">
       <!-- Папка в "Program Files". TODO: Заменить на Far2? -->
       <Directory Id="APPLICATIONFOLDER" Name="ConEmu">
-        <Component Id="CEInstallDir" Guid="$(var.Guid.CEInstallDir)">
+        <Component Id="CEInstallDir" Guid="$(var.Guid.CEInstallDir)" Win64="$(var.Win64)">
           <RegistryValue Root="HKMU" Key="$(var.RegKey)" Name="$(var.CEInstallDir)" Value="[APPLICATIONFOLDER]" Type="string" KeyPath="yes" />
         </Component>
         <Directory Id="CONEMUBASEDIR" Name="ConEmu">
-          <Directory Id="CONEMUADDONSDIR" Name="ConEmu.Addons"/>
+          <Directory Id="CONEMUADDONSDIR" Name="Addons"/>
+          <Directory Id="ConEmuFar1Reg" Name="Far1_reg"/>
+          <Directory Id="ConEmuFar2Fml" Name="Far2_fml"/>
+          <Directory Id="ConEmuFar2Reg" Name="Far2_reg"/>
+          <Directory Id="ConEmuFar3Fml" Name="Far3_fml"/>
           <Directory Id="KeyEventsDir" Name="KeyEvents"/>
+          <Directory Id="DosBox" Name="DosBox"/>
+          <!--
+          <Directory Id="Portable" Name="Portable"/>
+          -->
         </Directory>
       </Directory>
+      <!--<Directory Id="EXTCONSOLEFOLDER" Name="Far Manager">
+        <Component Id="CEExtConsoleDir" Guid="$(var.Guid.CEExtConsoleDir)" Win64="$(var.Win64)">
+          <RegistryValue Root="HKMU" Key="$(var.RegKey)" Name="$(var.CEExtConsoleDir)" Value="[EXTCONSOLEFOLDER]" Type="string" KeyPath="yes" />
+        </Component>
+      </Directory>-->
       <Directory Id="FARMANAGERFOLDER" Name="ConEmu">
         <Directory Id="FarPluginsFolder" Name="Plugins">
           <Directory Id="FARPLUGINSCONEMU" Name="ConEmu">
-            <Component Id="CEFarPluginsDir" Guid="$(var.Guid.CEFarPluginsDir)">
+            <Component Id="CEFarPluginsDir" Guid="$(var.Guid.CEFarPluginsDir)" Win64="$(var.Win64)">
               <RegistryValue Root="HKMU" Key="$(var.RegKey)" Name="$(var.CEFarPluginsDir)" Value="[FARPLUGINSCONEMU]" Type="string" KeyPath="yes" />
             </Component>
           </Directory>

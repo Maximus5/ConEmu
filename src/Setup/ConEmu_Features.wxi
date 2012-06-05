@@ -10,12 +10,12 @@
     <Feature Id="FConEmuGui" AllowAdvertise="no" Display="collapse" Absent="disallow" Level="1"
              Title="ConEmu GUI"
              Description="Graphical part of ConEmu (ConEmu.exe or ConEmu64.exe)">
-      <Feature Id="FConEmuGui32" AllowAdvertise="no" Level="1"
+      <Feature Id="FConEmuGui32" AllowAdvertise="no" Level="$(var.GuiWin32)"
                Title="32-bit version"
                Description="Graphical part of ConEmu (ConEmu.exe, 32-bit version)">
         <ComponentRef Id="ConEmuGui32" />
       </Feature>
-      <Feature Id="FConEmuGui64" AllowAdvertise="no" Level="2"
+      <Feature Id="FConEmuGui64" AllowAdvertise="no" Level="$(var.GuiWin64)"
                Title="64-bit version"
                Description="Graphical part of ConEmu (ConEmu64.exe, 64-bit version)">
         <ComponentRef Id="ConEmuGui64" />
@@ -27,21 +27,30 @@
              Description="ConEmuC.exe, ConEmuHk.dll, and other required files">
       <Feature Id="FConEmuBase32" AllowAdvertise="no" Absent="disallow" Level="1"
                Title="32-bit version"
-               Description="ConEmuC.exe and ConEmuHk.dll">
+               Description="ConEmuC.exe, ConEmuCD.dll, ConEmuHk.dll">
         <ComponentRef Id="ConEmuC.exe" />
+        <ComponentRef Id="ConEmuCD.dll" />
         <ComponentRef Id="ConEmuHk.dll" />
       </Feature>
       <Feature Id="FConEmuBase64" AllowAdvertise="no" Level="1"
                Title="64-bit version"
-               Description="ConEmuC64.exe and ConEmuHk64.dll">
+               Description="ConEmuC64.exe, ConEmuCD64.dll, ConEmuHk64.dll">
         <ComponentRef Id="ConEmuC64.exe" />
+        <ComponentRef Id="ConEmuCD64.dll" />
         <ComponentRef Id="ConEmuHk64.dll" />
+      </Feature>
+      <!-- RGB Console for Far3 -->
+      <Feature Id="FExtendedConsole" AllowAdvertise="no" Title="Far3 ExtendedConsole" Level="1"
+               Description="RGB support for Far3">
+        <ComponentRef Id="ExtendedConsole.dll"/>
+        <ComponentRef Id="ExtendedConsole64.dll"/>
       </Feature>
     </Feature>
     <!-- Cmd Extensions -->
     <Feature Id="FConEmuCmdExt" AllowAdvertise="no" Title="Cmd extensions" Level="1"
              Description="Attach.cmd - sample batch for attaching any console window to ConEmu,
 Cmd_Autorun.cmd - install or uninstall automatic attach of cmd.exe to ConEmu (and sample reg-files)">
+      <!--<ComponentRef Id="CEExtConsoleDir" />-->
       <ComponentRef Id="Attach.cmd" />
       <ComponentRef Id="Cmd_Autorun.cmd" />
       <ComponentRef Id="Command_Processor.reg" />
@@ -51,6 +60,7 @@ Cmd_Autorun.cmd - install or uninstall automatic attach of cmd.exe to ConEmu (an
     <Feature Id="FConEmuDocs" AllowAdvertise="no" Title="Documentation" Level="1"
              Description="WhatsNew-ConEmu.txt, FAQ-ConEmu.txt, ConEmu_Sample.xml, and other information">
       <ComponentRef Id="About_ConEmu.txt" />
+      <ComponentRef Id="Portable.txt" />
       <ComponentRef Id="ConEmu_Sample.xml" />
       <ComponentRef Id="FAQ_ConEmu.txt" />
       <ComponentRef Id="Settings_ConEmu.reg" />
@@ -69,25 +79,60 @@ Cmd_Autorun.cmd - install or uninstall automatic attach of cmd.exe to ConEmu (an
         <ComponentRef Id="FarHereUninstall.cmd"/>
         <ComponentRef Id="FarHere.dat"/>
       </Feature>
-      <Feature Id="FConEmuAddonsMacroFml" AllowAdvertise="no" Title="Sample macros (*.fml)" Level="1"
+      <Feature Id="FConEmuAddonsMacroReg3" AllowAdvertise="no" Title="Far3 macros (*.reg)" Level="1"
+               Description="Sample macros (in reg-files), useful with ConEmu">
+        <ComponentRef Id="CtrlO.fml3"/>
+        <ComponentRef Id="CtrlShiftT.fml3"/>
+        <ComponentRef Id="Editor.fml3"/>
+        <ComponentRef Id="FontSize.fml3"/>
+        <ComponentRef Id="ShiftEnter.fml3"/>
+        <ComponentRef Id="TabList.fml3"/>
+        <ComponentRef Id="Thumbnails.fml3"/>
+        <ComponentRef Id="Thumbnails_KeyBar.xml3"/>
+        <ComponentRef Id="Editor.MsRClick.fml3"/>
+      </Feature>
+      <Feature Id="FConEmuAddonsMacroFml" AllowAdvertise="no" Title="Far2 macros (*.fml)" Level="1"
                Description="Sample macros (in fml-files), useful with ConEmu">
         <ComponentRef Id="ConEmu.fml"/>
+        <ComponentRef Id="ConEmu.Editor.fml"/>
+        <ComponentRef Id="ConEmu.FontSize.fml"/>
+        <ComponentRef Id="ConEmu.ShiftEnter.fml"/>
+        <ComponentRef Id="ConEmu.TabList.fml"/>
       </Feature>
-      <Feature Id="FConEmuAddonsMacroReg" AllowAdvertise="no" Title="Sample macros (*.reg)" Level="1"
+      <Feature Id="FConEmuAddonsMacroReg2" AllowAdvertise="no" Title="Far2 macros (*.reg)" Level="1"
                Description="Sample macros (in reg-files), useful with ConEmu">
-        <ComponentRef Id="AltEnter_Exec.reg"/>
-        <ComponentRef Id="AltEnter_Props.reg"/>
-        <ComponentRef Id="CtrlAltD.reg"/>
-        <ComponentRef Id="CtrlO.reg"/>
-        <ComponentRef Id="CtrlO_View.reg"/>
-        <ComponentRef Id="CtrlShiftT.reg"/>
-        <ComponentRef Id="Disable_ConIme.reg"/>
-        <ComponentRef Id="FAR_AutoAttach.reg"/>
-        <ComponentRef Id="ShiftEnter.reg"/>
-        <ComponentRef Id="Thumbnails.reg"/>
-        <ComponentRef Id="Thumbnails_KeyBar.reg"/>
-        <ComponentRef Id="UCharMap.reg"/>
-        <ComponentRef Id="CallPlugin.txt"/>
+        <ComponentRef Id="AltEnter_Exec.reg2"/>
+        <ComponentRef Id="AltEnter_Props.reg2"/>
+        <ComponentRef Id="CtrlAltD.reg2"/>
+        <ComponentRef Id="CtrlO.reg2"/>
+        <ComponentRef Id="CtrlO_View.reg2"/>
+        <ComponentRef Id="CtrlShiftT.reg2"/>
+        <ComponentRef Id="FAR_AutoAttach.reg2"/>
+        <ComponentRef Id="ShiftEnter.reg2"/>
+        <ComponentRef Id="Thumbnails.reg2"/>
+        <ComponentRef Id="Thumbnails_KeyBar.reg2"/>
+        <ComponentRef Id="UCharMap.reg2"/>
+        <ComponentRef Id="FontSize.reg2"/>
+      </Feature>
+      <Feature Id="FConEmuAddonsMacroReg1" AllowAdvertise="no" Title="Far1 macros (*.reg)" Level="1"
+               Description="Sample macros (in reg-files), useful with ConEmu">
+        <ComponentRef Id="AltEnter_Exec.reg1"/>
+        <ComponentRef Id="AltEnter_Props.reg1"/>
+        <ComponentRef Id="CtrlAltD.reg1"/>
+        <ComponentRef Id="CtrlO.reg1"/>
+        <ComponentRef Id="CtrlO_View.reg1"/>
+        <ComponentRef Id="CtrlShiftT.reg1"/>
+        <ComponentRef Id="FAR_AutoAttach.reg1"/>
+        <ComponentRef Id="ShiftEnter.reg1"/>
+        <ComponentRef Id="TabList.reg1"/>
+        <ComponentRef Id="Thumbnails.reg1"/>
+        <ComponentRef Id="Thumbnails_KeyBar.reg1"/>
+        <ComponentRef Id="FontSize.reg1"/>
+      </Feature>
+      <Feature Id="FConEmuAnsiSamples" AllowAdvertise="no" Title="ANSI X3.64 exapmles" Level="1"
+               Description="Sample ANSI X3.64 files">
+        <ComponentRef Id="AnsiColors16.ans"/>
+        <ComponentRef Id="AnsiColors256.ans"/>
       </Feature>
       <Feature Id="FConEmuAddonsBackground" AllowAdvertise="no" Title="Background images" Level="1"
                Description="Sample background images">
@@ -98,6 +143,21 @@ Cmd_Autorun.cmd - install or uninstall automatic attach of cmd.exe to ConEmu (an
         <ComponentRef Id="Lines18.bmp"/>
         <ComponentRef Id="Lines18a.bmp"/>
       </Feature>
+      <Feature Id="FConEmuAddonsMisc" AllowAdvertise="no" Title="Miscellaneous" Level="1"
+               Description="Disable_ConIme.reg, CallPlugin.txt, etc.">
+        <ComponentRef Id="Disable_ConIme.reg"/>
+        <ComponentRef Id="CallPlugin.txt"/>
+      </Feature>
+      <Feature Id="FDosBox" AllowAdvertise="no" Title="DosBox" Level="1"
+               Description="Sample DosBox configuration file">
+        <ComponentRef Id="DosBox_Sample.conf"/>
+      </Feature>
+      <!--
+      <Feature Id="FPortable" AllowAdvertise="no" Title="Portable registry" Level="1"
+               Description="How to enable portable registry for console applications">
+        <ComponentRef Id="Portable_Readme.txt"/>
+      </Feature>
+      -->
     </Feature>
     <!-- Troubleshooting -->
     <Feature Id="FSupportTools" AllowAdvertise="no" Title="Tools" Level="1" Display="collapse"
@@ -107,6 +167,8 @@ Cmd_Autorun.cmd - install or uninstall automatic attach of cmd.exe to ConEmu (an
                Description="Keyboard and mouse troubleshooting utility">
         <ComponentRef Id="KeyEvents.exe"/>
         <ComponentRef Id="KeyEvents.cpp"/>
+        <ComponentRef Id="KeyEvents.rc"/>
+        <ComponentRef Id="KeyEvents.h"/>
         <ComponentRef Id="KeyEvents.makefile_gcc"/>
       </Feature>
     </Feature>
@@ -116,12 +178,38 @@ Cmd_Autorun.cmd - install or uninstall automatic attach of cmd.exe to ConEmu (an
            ConfigurableDirectory="FARPLUGINSCONEMU"
            Description="Far Manager Plugins: ConEmu, PanelViews, Underlines">
     <ComponentRef Id="CEFarPluginsDir" />
+    <ComponentRef Id="PluginReadme.txt"/>
     <ComponentRef Id="ConEmu.dll"/>
     <ComponentRef Id="ConEmu.map"/>
     <ComponentRef Id="ConEmu.x64.dll"/>
     <ComponentRef Id="ConEmu.x64.map"/>
     <ComponentRef Id="ConEmuPlugin_en.lng"/>
     <ComponentRef Id="ConEmuPlugin_ru.lng"/>
+    <ComponentRef Id="ConEmuBg.dll"/>
+    <ComponentRef Id="ConEmuBg.map"/>
+    <ComponentRef Id="ConEmuBg.x64.dll"/>
+    <ComponentRef Id="ConEmuBg.x64.map"/>
+    <ComponentRef Id="ConEmuBg_en.lng"/>
+    <ComponentRef Id="ConEmuBg_ru.lng"/>
+    <ComponentRef Id="Background.xml"/>
+    <ComponentRef Id="archive.png"/>
+    <ComponentRef Id="caution.png"/>
+    <ComponentRef Id="database.png"/>
+    <ComponentRef Id="downloads.png"/>
+    <ComponentRef Id="drive_cdrom.png"/>
+    <ComponentRef Id="drive_cloud.png"/>
+    <ComponentRef Id="drive_fixed.png"/>
+    <ComponentRef Id="drive_network.png"/>
+    <ComponentRef Id="drive_ramdisk.png"/>
+    <ComponentRef Id="drive_removable.png"/>
+    <ComponentRef Id="dropbox.png"/>
+    <ComponentRef Id="globe.png"/>
+    <ComponentRef Id="music.png"/>
+    <ComponentRef Id="network.png"/>
+    <ComponentRef Id="plugin.png"/>
+    <ComponentRef Id="recycle.png"/>
+    <ComponentRef Id="science.png"/>
+    <ComponentRef Id="trash.png"/>
     <ComponentRef Id="ConEmuLn.dll"/>
     <ComponentRef Id="ConEmuLn.map"/>
     <ComponentRef Id="ConEmuLn.x64.dll"/>

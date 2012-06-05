@@ -5595,11 +5595,34 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 BOOL cmd_SetWindowPos(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
-	
-	SetWindowPos(in.SetWndPos.hWnd, in.SetWndPos.hWndInsertAfter,
+	BOOL lbWndRc = FALSE, lbShowRc = FALSE;
+	DWORD nErrCode[2] = {};
+
+	lbWndRc = SetWindowPos(in.SetWndPos.hWnd, in.SetWndPos.hWndInsertAfter,
 	             in.SetWndPos.X, in.SetWndPos.Y, in.SetWndPos.cx, in.SetWndPos.cy,
 	             in.SetWndPos.uFlags);
+	nErrCode[0] = lbWndRc ? 0 : GetLastError();
+
+	if ((in.SetWndPos.uFlags & SWP_SHOWWINDOW) && !IsWindowVisible(in.SetWndPos.hWnd))
+	{
+		lbShowRc = ShowWindowAsync(in.SetWndPos.hWnd, SW_SHOW);
+		nErrCode[1] = lbShowRc ? 0 : GetLastError();
+	}
 	
+	// Результат
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD)*4;
+	*out = ExecuteNewCmd(CECMD_SETWINDOWPOS,nOutSize);
+
+	if (*out != NULL)
+	{
+		(*out)->dwData[0] = lbWndRc;
+		(*out)->dwData[1] = nErrCode[0];
+		(*out)->dwData[2] = lbShowRc;
+		(*out)->dwData[3] = nErrCode[1];
+
+		lbRc = TRUE;
+	}
+
 	return lbRc;
 }
 
