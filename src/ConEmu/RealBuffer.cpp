@@ -179,7 +179,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	}
 	if (!GetFileSizeEx(hFile, &liSize) || !liSize.LowPart || liSize.HighPart)
 	{
-		DisplayLastError(L"Invalid dump file size", 0);
+		DisplayLastError(L"Invalid dump file size", -1);
 		goto wrap;
 	}
 	
@@ -204,7 +204,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	pszRN = wcschr(pszDumpTitle, L'\r');
 	if (!pszRN)
 	{
-		DisplayLastError(L"Dump file invalid format (title)", 0);
+		DisplayLastError(L"Dump file invalid format (title)", -1);
 		goto wrap;
 	}
 	*pszRN = 0;
@@ -212,7 +212,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 
 	if (wcsncmp(pszSize, L"Size: ", 6))
 	{
-		DisplayLastError(L"Dump file invalid format (Size start)", 0);
+		DisplayLastError(L"Dump file invalid format (Size start)", -1);
 		goto wrap;
 	}
 
@@ -220,7 +220,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 
 	if (!pszRN)
 	{
-		DisplayLastError(L"Dump file invalid format (Size line end)", 0);
+		DisplayLastError(L"Dump file invalid format (Size line end)", -1);
 		goto wrap;
 	}
 
@@ -234,7 +234,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 
 	if (!pszRN || *pszRN!=L'x')
 	{
-		DisplayLastError(L"Dump file invalid format (Size.X)", 0);
+		DisplayLastError(L"Dump file invalid format (Size.X)", -1);
 		goto wrap;
 	}
 
@@ -245,7 +245,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 
 	if (!pszRN || (*pszRN!=L' ' && *pszRN!=L'\r'))
 	{
-		DisplayLastError(L"Dump file invalid format (Size.Y)", 0);
+		DisplayLastError(L"Dump file invalid format (Size.Y)", -1);
 		goto wrap;
 	}
 
@@ -263,7 +263,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 
 			if (!pszRN || *pszRN!=L'x')
 			{
-				DisplayLastError(L"Dump file invalid format (Cursor)", 0);
+				DisplayLastError(L"Dump file invalid format (Cursor)", -1);
 				goto wrap;
 			}
 
@@ -291,7 +291,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	
 	if (!dump.Block1)
 	{
-		DisplayLastError(L"Dump file invalid format (Block1)", 0);
+		DisplayLastError(L"Dump file invalid format (Block1)", -1);
 		goto wrap;
 	}
 	
@@ -1741,45 +1741,15 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	WORD* lpAttr = con.pConAttr;
 	CONSOLE_SELECTION_INFO sel;
 	bool bSelectionPresent = GetConsoleSelectionInfo(&sel);
-#ifdef __GNUC__
+	UNREFERENCED_PARAMETER(bSelectionPresent);
 
-	if (bSelectionPresent) bSelectionPresent = bSelectionPresent;  // чтобы GCC не ругался
+	if (mp_RCon->mb_ResetStatusOnConsoleReady)
+	{
+		mp_RCon->mb_ResetStatusOnConsoleReady = false;
+		mp_RCon->ms_ConStatus[0] = 0;
+	}
 
-#endif
-	//const CESERVER_REQ_CONINFO_DATA* pData = NULL;
-	//CESERVER_REQ_HDR cmd; ExecutePrepareCmd(&cmd, CECMD_CONSOLEDATA, sizeof(cmd));
-	//DWORD nOutSize = 0;
-	//if (!mp_RCon->m_GetDataPipe.Transact(&cmd, sizeof(cmd), (const CESERVER_REQ_HDR**)&pData, &nOutSize) || !pData) {
-	//	#ifdef _DEBUG
-	//	MBoxA(mp_RCon->m_GetDataPipe.GetErrorText());
-	//	#endif
-	//	return FALSE;
-	//} else
-	//if (pData->cmd.cbSize < sizeof(CESERVER_REQ_CONINFO_DATA)) {
-	//	_ASSERTE(pData->cmd.cbSize >= sizeof(CESERVER_REQ_CONINFO_DATA));
-	//	return FALSE;
-	//}
-	mp_RCon->ms_ConStatus[0] = 0;
-	//SAFETRY {
-	//	// Теоретически, может возникнуть исключение при чтении? когда размер резко увеличивается (maximize)
-	//	con.pCmp->crBufSize = mp_ConsoleData->crBufSize;
-	//	if ((int)CharCount > (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y)) {
-	//		_ASSERTE((int)CharCount <= (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y));
-	//		CharCount = (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y);
-	//	}
-	//	memmove(con.pCmp->Buf, mp_ConsoleData->Buf, CharCount*sizeof(CHAR_INFO));
-	//	MCHKHEAP;
-	//} SAFECATCH {
-	//	_ASSERT(FALSE);
-	//}
-	// Проверка размера!
-	//DWORD nHdrSize = (((LPBYTE)pData->Buf)) - ((LPBYTE)pData);
-	//DWORD nCalcCount = (pData->cmd.cbSize - nHdrSize) / sizeof(CHAR_INFO);
-	//if (nCalcCount != CharCount) {
-	//	_ASSERTE(nCalcCount == CharCount);
-	//	if (nCalcCount < CharCount)
-	//		CharCount = nCalcCount;
-	//}
+
 	lbScreenChanged = memcmp(con.pDataCmp, pData, CharCount*sizeof(CHAR_INFO));
 
 	if (lbScreenChanged)
@@ -2216,6 +2186,23 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg/*=WM_USER*/)
 	return ProcessFarHyperlink(messg, mcr_LastMousePos);
 }
 
+bool CRealBuffer::LookupFilePath(LPCWSTR asFileOrPath, wchar_t* pszPath, size_t cchPathMax)
+{
+	_ASSERTE(pszPath!=NULL && asFileOrPath!=NULL && cchPathMax>=MAX_PATH);
+
+	lstrcpyn(pszPath, asFileOrPath, (int)cchPathMax);
+
+	TODO("Проверка наличия собственно полного пути");
+	TODO("попытка склейки с текущим путем в приложении");
+	TODO("попытка поиска файла в подпапках текущего пути");
+	TODO("Коррекция регистра символов, чтобы левота в историю фара не попадала");
+
+	if (FileExists(pszPath))
+		return true;
+
+	return false;
+}
+
 bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 {
 	if (!mp_RCon->IsFarHyperlinkAllowed(false))
@@ -2284,7 +2271,9 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 					szText[nLen-1] = 0;
 					while ((pszEnd = wcschr(szText, L'/')) != NULL)
 						*pszEnd = L'\\'; // заменить прямые слеши на обратные
-					lstrcpyn(cmd.szFile, szText, countof(cmd.szFile));
+
+					//lstrcpyn(cmd.szFile, szText, countof(cmd.szFile));
+					LookupFilePath(szText/*name from console*/, cmd.szFile/*full path*/, countof(cmd.szFile));
 					
 					TODO("Для удобства, если лог открыт в редакторе, или пропустить мышь, или позвать макрос");
 					// Только нужно учесть, что текущий таб может быть редактором, но открыт UserScreen (CtrlO)
@@ -2332,7 +2321,36 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 							CVConGuard VCon;
 							if (!gpConEmu->isFarExist(fwt_NonModal|fwt_PluginRequired, NULL, &VCon))
 							{
-								DisplayLastError(L"Available Far Manager was not found in open tabs", 0);
+								if (gpSet->sFarGotoEditor && *gpSet->sFarGotoEditor)
+								{
+									wchar_t szRow[32], szCol[32];
+									_wsprintf(szRow, SKIPLEN(countof(szRow)) L"%u", cmd.nLine);
+									_wsprintf(szCol, SKIPLEN(countof(szCol)) L"%u", cmd.nColon);
+									//LPCWSTR pszVar[] = {L"%1", L"%2", L"%3"};
+									LPCWSTR pszVal[] = {szRow, szCol, cmd.szFile};
+									//_ASSERTE(countof(pszVar)==countof(pszVal));
+									wchar_t* pszCmd = ExpandMacroValues(gpSet->sFarGotoEditor, pszVal, countof(pszVal));
+									if (!pszCmd)
+									{
+										DisplayLastError(L"Invalid command specified in «External editor»", -1);
+									}
+									else
+									{
+										RConStartArgs args;
+										args.pszSpecialCmd = pszCmd; pszCmd = NULL;
+										args.pszStartupDir = mp_RCon->m_Args.pszStartupDir ? lstrdup(mp_RCon->m_Args.pszStartupDir) : NULL;
+										args.bRunAsAdministrator = mp_RCon->m_Args.bRunAsAdministrator;
+										args.bForceUserDialog = mp_RCon->m_Args.bRunAsRestricted || (mp_RCon->m_Args.pszUserName != NULL);
+										args.bBufHeight = TRUE;
+										//args.eConfirmation = RConStartArgs::eConfNever;
+
+										gpConEmu->CreateCon(&args);
+									}
+								}
+								else
+								{
+									DisplayLastError(L"Available Far Manager was not found in open tabs", -1);
+								}
 							}
 							else
 							{
@@ -3939,7 +3957,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	}
 
 	// Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
-	if (mp_RCon->ms_ConStatus[0])
+	if (!gpSet->isStatusBarShow && mp_RCon->ms_ConStatus[0])
 	{
 		int nLen = _tcslen(mp_RCon->ms_ConStatus);
 		wmemcpy(pChar, mp_RCon->ms_ConStatus, nLen);

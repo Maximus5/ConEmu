@@ -74,8 +74,16 @@ class CConEmuMacro
 		static LPWSTR Paste(LPWSTR asArgs, CRealConsole* apRCon);
 		// Shell (ShellExecute)
 		static LPWSTR Shell(LPWSTR asArgs, CRealConsole* apRCon);
+		// Status
+		static LPWSTR Status(LPWSTR asArgs, CRealConsole* apRCon);
 		// Tabs
 		static LPWSTR Tab(LPWSTR asArgs, CRealConsole* apRCon);
+		// Fullscreen
+		static LPWSTR WindowFullscreen(LPWSTR asArgs, CRealConsole* apRCon);
+		// Maximize
+		static LPWSTR WindowMaximize(LPWSTR asArgs, CRealConsole* apRCon);
 		// Минимизировать окно (можно насильно в трей) // [int nForceToTray=0/1]
 		static LPWSTR WindowMinimize(LPWSTR asArgs, CRealConsole* apRCon);
+		// Вернуть текущий статус: NOR/MAX/FS/MIN/TSA
+		static LPWSTR WindowMode(LPWSTR asArgs, CRealConsole* apRCon);
 };

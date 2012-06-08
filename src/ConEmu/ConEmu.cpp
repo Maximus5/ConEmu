@@ -69,7 +69,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#endif
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
@@ -1015,7 +1015,7 @@ HMENU CConEmuMain::GetSystemMenu(BOOL abInitial /*= FALSE*/)
 		// --------------------
 		InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
-			ID_ALWAYSONTOP, _T("Al&ways on top"));
+			ID_ALWAYSONTOP, MenuAccel(vkAlwaysOnTop,L"Al&ways on top"));
 		#ifdef SHOW_AUTOSCROLL
 		InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSetCls->AutoScroll ? MF_CHECKED : 0),
 			ID_AUTOSCROLL, _T("Auto scro&ll"));
@@ -4283,6 +4283,8 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 		}
 	}
 
+	InvalidateGaps();
+
 	if (mn_InResize>0)
 		mn_InResize--;
 
@@ -4346,73 +4348,80 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 				wndSizeRect.bottom += (nHeight-1)/2;
 			}
 
+			bool bNeedFixSize = gpSet->isIntegralSize();
+
 			// Рассчитать желаемый размер консоли
 			//srctWindow = ConsoleSizeFromWindow(&wndSizeRect, true /* frameIncluded */);
 			AutoSizeFont(wndSizeRect, CER_MAIN);
 			srctWindow = CalcRect(CER_CONSOLE, wndSizeRect, CER_MAIN);
 
 			// Минимально допустимые размеры консоли
-			if (srctWindow.right<28) srctWindow.right=28;
-
-			if (srctWindow.bottom<9)  srctWindow.bottom=9;
-
-			/*if ((srctWindowLast.X != srctWindow.X
-			    || srctWindowLast.Y != srctWindow.Y)
-			    && !mb_FullWindowDrag)
+			if (srctWindow.right<28)
 			{
-			    SetConsoleWindowSize(srctWindow, true);
-			    srctWindowLast = srctWindow;
-			}*/
-			//RECT consoleRect = ConsoleOffsetRect();
-			//wndSizeRect = WindowSizeFromConsole(srctWindow, true /* rectInWindow */);
-			calcRect = CalcRect(CER_MAIN, srctWindow, CER_CONSOLE);
-			restrictRect.right = pRect->left + calcRect.right;
-			restrictRect.bottom = pRect->top + calcRect.bottom;
-			restrictRect.left = pRect->right - calcRect.right;
-			restrictRect.top = pRect->bottom - calcRect.bottom;
-
-			switch(wParam)
-			{
-				case WMSZ_RIGHT:
-				case WMSZ_BOTTOM:
-				case WMSZ_BOTTOMRIGHT:
-					pRect->right = restrictRect.right;
-					pRect->bottom = restrictRect.bottom;
-					break;
-				case WMSZ_LEFT:
-				case WMSZ_TOP:
-				case WMSZ_TOPLEFT:
-					pRect->left = restrictRect.left;
-					pRect->top = restrictRect.top;
-					break;
-				case WMSZ_TOPRIGHT:
-					pRect->right = restrictRect.right;
-					pRect->top = restrictRect.top;
-					break;
-				case WMSZ_BOTTOMLEFT:
-					pRect->left = restrictRect.left;
-					pRect->bottom = restrictRect.bottom;
-					break;
+				srctWindow.right=28;
+				bNeedFixSize = true;
 			}
 
+			if (srctWindow.bottom<9)
+			{
+				srctWindow.bottom=9;
+				bNeedFixSize = true;
+			}
+
+
+			if (bNeedFixSize)
+			{
+				calcRect = CalcRect(CER_MAIN, srctWindow, CER_CONSOLE);
+				restrictRect.right = pRect->left + calcRect.right;
+				restrictRect.bottom = pRect->top + calcRect.bottom;
+				restrictRect.left = pRect->right - calcRect.right;
+				restrictRect.top = pRect->bottom - calcRect.bottom;
+
+				switch(wParam)
+				{
+					case WMSZ_RIGHT:
+					case WMSZ_BOTTOM:
+					case WMSZ_BOTTOMRIGHT:
+						pRect->right = restrictRect.right;
+						pRect->bottom = restrictRect.bottom;
+						break;
+					case WMSZ_LEFT:
+					case WMSZ_TOP:
+					case WMSZ_TOPLEFT:
+						pRect->left = restrictRect.left;
+						pRect->top = restrictRect.top;
+						break;
+					case WMSZ_TOPRIGHT:
+						pRect->right = restrictRect.right;
+						pRect->top = restrictRect.top;
+						break;
+					case WMSZ_BOTTOMLEFT:
+						pRect->left = restrictRect.left;
+						pRect->bottom = restrictRect.bottom;
+						break;
+				}
+			}
+
+			// При смене размера (пока ничего не делаем)
 			if ((pRect->right - pRect->left) != (rcCurrent.right - rcCurrent.left)
 			        || (pRect->bottom - pRect->top) != (rcCurrent.bottom - rcCurrent.top))
 			{
 				// Сразу подресайзить консоль, чтобы при WM_PAINT можно было отрисовать уже готовые данные
 				TODO("DoubleView");
 				//ActiveCon()->RCon()->SyncConsole2Window(FALSE, pRect);
-#ifdef _DEBUG
+				#ifdef _DEBUG
 				wchar_t szSize[255]; _wsprintf(szSize, SKIPLEN(countof(szSize)) L"New window size (X=%i, Y=%i, W=%i, H=%i); Current size (X=%i, Y=%i, W=%i, H=%i)\n",
 				                               pRect->left, pRect->top, (pRect->right-pRect->left), (pRect->bottom-pRect->top),
 				                               rcCurrent.left, rcCurrent.top, (rcCurrent.right-rcCurrent.left), (rcCurrent.bottom-rcCurrent.top));
 				DEBUGSTRSIZE(szSize);
-#endif
+				#endif
 			}
 		}
 
 	return result;
 }
 
+// Про IntegralSize - смотреть CConEmuMain::OnSizing
 LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0; // DefWindowProc зовется в середине функции
@@ -4499,6 +4508,7 @@ LRESULT CConEmuMain::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	return result;
 }
 
+// Про IntegralSize - смотреть CConEmuMain::OnSizing
 LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
@@ -7562,6 +7572,61 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 }
 #endif
 
+void CConEmuMain::InvalidateGaps()
+{
+	if (isIconic())
+		return;
+
+	int iRc = SIMPLEREGION;
+
+	RECT rc = {};
+	GetClientRect(ghWnd, &rc);
+	HRGN h = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+
+	TODO("DoubleView");
+	if (mp_TabBar->GetRebarClientRect(&rc))
+	{
+		HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+		iRc = CombineRgn(h, h, h2, RGN_DIFF);
+		DeleteObject(h2);
+
+		if (iRc == NULLREGION)
+			goto wrap;
+	}
+
+	if (mp_Status->GetStatusBarClientRect(&rc))
+	{
+		HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+		CombineRgn(h, h, h2, RGN_DIFF);
+		DeleteObject(h2);
+
+		if (iRc == NULLREGION)
+			goto wrap;
+	}
+
+	// Теперь - VConsole (все видимые!)
+	{
+		TODO("DoubleView");
+		TODO("Заменить на Background, когда будет");
+		HWND hView = mp_VActive ? mp_VActive->GetView() : NULL;
+		if (hView && GetWindowRect(hView, &rc))
+		{
+			MapWindowPoints(NULL, ghWnd, (LPPOINT)&rc, 2);
+			HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+			CombineRgn(h, h, h2, RGN_DIFF);
+			DeleteObject(h2);
+
+			if (iRc == NULLREGION)
+				goto wrap;
+		}
+	}
+
+	InvalidateRgn(ghWnd, h, FALSE);
+
+wrap:
+	DeleteObject(h);
+}
+
 void CConEmuMain::PaintGaps(HDC hDC)
 {
 	bool lbReleaseDC = false;
@@ -8566,7 +8631,7 @@ BOOL CConEmuMain::OnCloseQuery()
 		}
 	}
 
-	if (nProgress || nEditors || (gpSet->isCloseConsoleConfirm && nConsoles))
+	if (nProgress || nEditors || (gpSet->isCloseConsoleConfirm && (nConsoles > 1)))
 	{
 		wchar_t szText[255], *pszText;
 		//wcscpy_c(szText, L"Close confirmation.\r\n\r\n");
@@ -8852,7 +8917,7 @@ HMENU CConEmuMain::CreateHelpMenuPopup()
 		AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
 
 	AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);	
-	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About"));
+	AppendMenu(hHelp, MF_STRING | MF_ENABLED, ID_ABOUT, MenuAccel(vkWinAltA,L"&About"));
 	
 	return hHelp;
 }
@@ -12821,6 +12886,9 @@ INT_PTR CConEmuMain::aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 	{
 		{L"About", pAbout},
 		{L"Command line", pCmdLine},
+		{L"Macro", pGuiMacro},
+		{L"Console", pConsoleHelpFull},
+		{L"DosBox", pDosBoxHelpFull},
 		{L"Contributors", pAboutContributors},
 		{L"License", pAboutLicense},
 	};
@@ -12863,7 +12931,9 @@ INT_PTR CConEmuMain::aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 
 			SetDlgItemText(hWnd2, tAboutText, Pages[0].Text);
 
-			break;
+			SetFocus(hTab);
+
+			return FALSE;
 		}
 
 		case WM_CTLCOLORSTATIC:
@@ -12966,6 +13036,7 @@ void CConEmuMain::OnInfo_About()
 	//else
 	{
 		BOOL b = gbDontEnable; gbDontEnable = TRUE;
+		// Модальный?
 		INT_PTR iRc = DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), ghWnd, aboutProc);
 		gbDontEnable = b;
 		bOk = (iRc != 0 && iRc != -1);

@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SHOWDEBUGSTR
 
+#undef TEST_REFRESH_DELAYED
+
 #include "ConEmuC.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/Execute.h"
@@ -3314,7 +3316,34 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		// 120507 - Если крутится альт.сервер - то игнорировать
 		if (!nAltWait && !gpSrv->bDebuggerActive)
 		{
-			lbChanged = ReloadFullConsoleInfo(gpSrv->bWasReattached/*lbForceSend*/);
+			bool lbReloadNow = true;
+			#if defined(TEST_REFRESH_DELAYED)
+			static DWORD nDbgTick = 0;
+			const DWORD nMax = 1000;
+			HANDLE hOut = (HANDLE)ghConOut;
+			DWORD nWaitOut = WaitForSingleObject(hOut, 0);
+			DWORD nCurTick = GetTickCount();
+			if ((nWaitOut == WAIT_OBJECT_0) || (nCurTick - nDbgTick) >= nMax)
+			{
+				nDbgTick = nCurTick;
+			}
+			else
+			{
+				lbReloadNow = false;
+				lbChanged = FALSE;
+			}
+			//ShutdownSrvStep(L"ReloadFullConsoleInfo begin");
+			#endif
+			
+			if (lbReloadNow)
+			{
+				lbChanged = ReloadFullConsoleInfo(gpSrv->bWasReattached/*lbForceSend*/);
+			}
+
+			#if defined(TEST_REFRESH_DELAYED)
+			//ShutdownSrvStep(L"ReloadFullConsoleInfo end (%u,%u)", (int)lbReloadNow, (int)lbChanged);
+			#endif
+
 			// При этом должно передернуться gpSrv->hDataReadyEvent
 			if (gpSrv->bWasReattached)
 			{

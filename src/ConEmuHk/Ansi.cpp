@@ -418,17 +418,20 @@ BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 	return lbRc;
 }
 
+TODO("По хорошему, после WriteConsoleOutputAttributes тоже нужно делать efof_ResetExt");
+// Но пока можно это проигнорировать, большинство (?) программ, используюет ее в связке
+// WriteConsoleOutputAttributes/WriteConsoleOutputCharacter
+
 BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
 {
 	typedef BOOL (WINAPI* OnWriteConsoleOutputCharacterA_t)(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
 	ORIGINALFAST(WriteConsoleOutputCharacterA);
 	BOOL bMainThread = FALSE; // поток не важен
 
-	if (gDisplayParm.WasSet)
-	{
-		ExtFillOutputParm fll = {sizeof(fll), efof_Attribute|efof_Current, hConsoleOutput, {}, 0, dwWriteCoord, nLength};
-		ExtFillOutput(&fll);
-	}
+	ExtFillOutputParm fll = {sizeof(fll),
+		efof_Attribute|(gDisplayParm.WasSet ? efof_Current : efof_ResetExt),
+		hConsoleOutput, {}, 0, dwWriteCoord, nLength};
+	ExtFillOutput(&fll);
 	
 	BOOL lbRc = F(WriteConsoleOutputCharacterA)(hConsoleOutput, lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
 
@@ -441,11 +444,10 @@ BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpChar
 	ORIGINALFAST(WriteConsoleOutputCharacterW);
 	BOOL bMainThread = FALSE; // поток не важен
 
-	if (gDisplayParm.WasSet)
-	{
-		ExtFillOutputParm fll = {sizeof(fll), efof_Attribute|efof_Current, hConsoleOutput, {}, 0, dwWriteCoord, nLength};
-		ExtFillOutput(&fll);
-	}
+	ExtFillOutputParm fll = {sizeof(fll),
+		efof_Attribute|(gDisplayParm.WasSet ? efof_Current : efof_ResetExt),
+		hConsoleOutput, {}, 0, dwWriteCoord, nLength};
+	ExtFillOutput(&fll);
 	
 	BOOL lbRc = F(WriteConsoleOutputCharacterW)(hConsoleOutput, lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
 

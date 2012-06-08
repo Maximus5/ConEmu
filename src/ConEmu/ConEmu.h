@@ -503,6 +503,7 @@ class CConEmuMain :
 		//bool LoadVersionInfo(wchar_t* pFullPath);
 		RECT MapRect(RECT rFrom, BOOL bFrame2Client);
 		//void PaintCon(HDC hPaintDC);
+		void InvalidateGaps();
 		void PaintGaps(HDC hDC);
 		void PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
 		void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);

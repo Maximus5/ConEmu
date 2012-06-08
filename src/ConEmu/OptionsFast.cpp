@@ -59,7 +59,12 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 				SetWindowText(hDlg, szTitle);
 			}
 
-			CheckDlgButton(hDlg, cbUseKeyboardHooksFast, gpSet->isKeyboardHooks());
+			CheckDlgButton(hDlg, cbUseKeyboardHooksFast, gpSet->isKeyboardHooks(true));
+
+			// Debug purposes only. ConEmu.exe switch "/nokeyhooks"
+			#ifdef _DEBUG
+			EnableWindow(GetDlgItem(hDlg, cbUseKeyboardHooksFast), !gpConEmu->DisableKeybHooks);
+			#endif
 
 			CheckDlgButton(hDlg, cbInjectConEmuHkFast, gpSet->isUseInjects);
 

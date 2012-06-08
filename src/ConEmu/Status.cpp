@@ -589,15 +589,16 @@ void CStatus::UpdateStatusBar(bool abForce /*= false*/)
 			return; // обновится по следующему таймеру
 	}
 
-	RECT rcClient = gpConEmu->GetGuiClientRect();
+	InvalidateStatusBar();
+}
 
-	int nHeight = gpSet->StatusBarHeight();
-	if (nHeight >= (rcClient.bottom - rcClient.top))
+void CStatus::InvalidateStatusBar()
+{
+	RECT rcClient = {};
+	if (!GetStatusBarClientRect(&rcClient))
 		return;
 
-	rcClient.top = rcClient.bottom - 1 - nHeight;
 	InvalidateRect(ghWnd, &rcClient, FALSE);
-	//mb_Invalidated = true;
 }
 
 void CStatus::OnTimer()
@@ -1379,4 +1380,22 @@ void CStatus::UpdateStatusFont()
 
 	UpdateStatusBar(true);
 	gpConEmu->OnSize();
+}
+
+// Прямоугольник в клиентских координатах ghWnd!
+bool CStatus::GetStatusBarClientRect(RECT* rc)
+{
+	if (!gpSet->isStatusBarShow)
+		return false;
+
+	RECT rcClient = gpConEmu->GetGuiClientRect();
+
+	int nHeight = gpSet->StatusBarHeight();
+	if (nHeight >= (rcClient.bottom - rcClient.top))
+		return false;
+
+	rcClient.top = rcClient.bottom - 1 - nHeight;
+
+	*rc = rcClient;
+	return true;
 }

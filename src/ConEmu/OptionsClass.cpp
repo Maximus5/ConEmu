@@ -1894,6 +1894,7 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 	CheckDlgButton(hWnd2, cbFarGotoEditor, gpSet->isFarGotoEditor);
 	VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
 	FillListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+	SetDlgItemText(hWnd2, tGotoEditorCmd, gpSet->sFarGotoEditor);
 
 	CheckDlgButton(hWnd2, cbClipShiftIns, gpSet->AppStd.isPasteAllLines);
 	CheckDlgButton(hWnd2, cbClipCtrlV, gpSet->AppStd.isPasteFirstLine);
@@ -4082,6 +4083,29 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			return OnButtonClicked_Tasks(hWnd2, wParam, lParam);
 		/* *** Command groups *** */
 
+		case bGotoEditorCmd:
+			{
+				wchar_t szPath[MAX_PATH+1] = {};
+				wchar_t szInitialDir[MAX_PATH+1]; GetCurrentDirectory(countof(szInitialDir), szInitialDir);
+				lstrcpyn(szPath, gpSet->sFarGotoEditor, countof(szPath));
+				OPENFILENAME ofn = {sizeof(ofn)};
+				ofn.hwndOwner = ghOpWnd;
+				ofn.lpstrFilter = L"Executables (*.exe)\0*.exe\0\0";
+				ofn.nFilterIndex = 1;
+				ofn.lpstrFile = szPath;
+				ofn.nMaxFile = countof(szPath);
+				ofn.lpstrInitialDir = szInitialDir;
+				ofn.lpstrTitle = L"Choose file editor";
+				ofn.lpstrDefExt = L"exe";
+				ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+					| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY;
+
+				if (GetSaveFileName(&ofn))
+				{
+					SetDlgItemText(hWnd2, tGotoEditorCmd, szPath);
+				}
+			}
+			break;
 
 		default:
 		{
@@ -4325,6 +4349,12 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 		gpSet->isStoreTaskbarCommands = IsChecked(hWnd2, CB);
 		break;
 	case cbCmdTaskbarUpdate:
+		if (!gpSet->SaveCmdTasks(NULL))
+		{
+			LPCWSTR pszMsg = L"Can't save task list to settings!\r\nJump list may be not working!\r\nUpdate Windows 7 task list now?";
+			if (MessageBox(ghOpWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
+				break; // Обновлять таскбар не будем
+		}
 		UpdateWin7TaskList(true);
 		break;
 	}
@@ -4705,6 +4735,14 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		{
 			GetDlgItemText(hWnd2, tGuiMacro, mp_ActiveHotKey->cchGuiMacroMax, mp_ActiveHotKey->GuiMacro);
 			FillHotKeysList(hWnd2, FALSE);
+		}
+		break;
+
+
+	case tGotoEditorCmd:
+		{
+			size_t cchMax = gpSet->sFarGotoEditor ? (lstrlen(gpSet->sFarGotoEditor)+1) : 0;
+			GetDlgItemText(hWnd2, tGotoEditorCmd, cchMax, gpSet->sFarGotoEditor);
 		}
 		break;
 

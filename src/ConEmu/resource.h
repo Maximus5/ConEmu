@@ -694,6 +694,11 @@
 #define cbStatusGuiPID                  2321
 #define tCmdGroupGuiArg                 2322
 #define stCmdGroupGuiArg                2323
+#define vkWinAltA                       2324
+#define vkShowStatusBar                 2325
+#define vkShowTabBar                    2326
+#define vkAlwaysOnTop                   2327
+#define vkScreenshotFull                2328
 
 // Next default values for new objects
 // 
@@ -701,7 +706,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        219
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2324
+#define _APS_NEXT_CONTROL_VALUE         2329
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

@@ -488,6 +488,17 @@ bool CConEmuCtrl::key_CTSVkTextStart(DWORD VkMod, bool TestOnly, const ConEmuHot
 
 // System (predefined, fixed)
 // pRCon may be NULL
+bool CConEmuCtrl::key_About(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+	//KeyUp!
+	gpConEmu->OnInfo_About();
+	return true;
+}
+
+// System (predefined, fixed)
+// pRCon may be NULL
 bool CConEmuCtrl::key_Settings(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
@@ -1046,6 +1057,8 @@ bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 	if (pRCon && pRCon->GetFarPID(true))
 	{
 		TODO("Переделать на команду сервера");
+		//if (TestOnly)
+		//	return true;
 		return false;
 	}
 	else
@@ -1129,6 +1142,37 @@ bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 	return true;
 }
 
+bool CConEmuCtrl::key_ShowStatusBar(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	gpConEmu->StatusCommand(csc_ShowHide);
+
+	return true;
+}
+
+bool CConEmuCtrl::key_ShowTabBar(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	gpConEmu->TabCommand(ctc_ShowHide);
+
+	return true;
+}
+
+bool CConEmuCtrl::key_AlwaysOnTop(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
+	gpConEmu->OnAlwaysOnTop();
+
+	return true;
+}
+
 bool CConEmuCtrl::key_PasteText(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon || pRCon->isFar())
@@ -1181,6 +1225,29 @@ bool CConEmuCtrl::key_PasteFirstLineAllApp(DWORD VkMod, bool TestOnly, const Con
 
 
 /* ************* Service functions ************* */
+
+void CConEmuCtrl::StatusCommand(ConEmuStatusCommand nStatusCmd, int IntParm, LPCWSTR StrParm, CRealConsole* pRCon)
+{
+	switch (nStatusCmd)
+	{
+	case csc_ShowHide:
+		if (IntParm == 1)
+			gpSet->isStatusBarShow = true;
+		else if (IntParm == 2)
+			gpSet->isStatusBarShow = false;
+		else
+			gpSet->isStatusBarShow = !gpSet->isStatusBarShow;
+		gpConEmu->OnSize();
+		break;
+
+	case csc_SetStatusText:
+		if (pRCon)
+		{
+			pRCon->SetConStatus(StrParm ? StrParm : L"");
+		}
+		break;
+	}
+}
 
 void CConEmuCtrl::TabCommand(ConEmuTabCommand nTabCmd)
 {
@@ -1393,7 +1460,16 @@ bool CConEmuCtrl::key_Screenshot(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 	return true;
 }
 
-void CConEmuCtrl::MakeScreenshot()
+bool CConEmuCtrl::key_ScreenshotFull(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	MakeScreenshot(true);
+	return true;
+}
+
+void CConEmuCtrl::MakeScreenshot(bool abFullscreen /*= false*/)
 {
 	BOOL lbRc = FALSE;
 	HDC hScreen = NULL;
@@ -1406,7 +1482,30 @@ void CConEmuCtrl::MakeScreenshot()
 		return;
 	}
 
-	GetWindowRect(hWnd, &rcWnd);
+	if (!abFullscreen)
+	{
+		GetWindowRect(hWnd, &rcWnd);
+		TODO("Отрезать края при Zoomed/Fullscreen?");
+
+		if ((hWnd != ghWnd) && (gnOsVer == 0x601) && gpConEmu->IsGlass())
+		{
+			rcWnd.top -= 5;
+			rcWnd.left -= 5;
+			rcWnd.right += 3;
+			rcWnd.bottom += 5;
+		}
+	}
+	else
+	{
+		HMONITOR hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+		MONITORINFO mi = {sizeof(mi)};
+		if (!GetMonitorInfo(hMon, &mi))
+		{
+			DisplayLastError(L"GetMonitorInfo() failed");
+			return;
+		}
+		rcWnd = mi.rcMonitor;
+	}
 
 	hScreen = GetDC(NULL);
 

@@ -667,6 +667,8 @@ struct Settings
 		bool isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
 		//BYTE isFarGotoEditorVk; // Клавиша-модификатор для isFarGotoEditor
+		//reg->Load(L"FarGotoEditor", sFarGotoEditor);
+		wchar_t* sFarGotoEditor; // Команда запуска редактора
 		
 		bool IsModifierPressed(int nDescrID, bool bAllowEmpty);
 		//bool isSelectionModifierPressed();
@@ -686,7 +688,7 @@ struct Settings
 		//reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 		BYTE m_isKeyboardHooks;
 	public:
-		bool isKeyboardHooks();
+		bool isKeyboardHooks(bool abNoDisable = false);
 
 		//bool CheckUpdatesWanted();
 
@@ -874,6 +876,9 @@ struct Settings
 		bool wndCascade;
 		//reg->Load(L"AutoSaveSizePos", isAutoSaveSizePos);
 		bool isAutoSaveSizePos;
+
+		bool isIntegralSize();
+
 	private:
 		// При закрытии окна крестиком - сохранять только один раз,
 		// а то размер может в процессе закрытия консолей измениться
@@ -1101,7 +1106,7 @@ struct Settings
 		void LoadPalettes(SettingsBase* reg);
 		BOOL SaveSettings(BOOL abSilent = FALSE);
 		void SaveAppSettings(SettingsBase* reg);
-		void SaveCmdTasks(SettingsBase* reg);
+		bool SaveCmdTasks(SettingsBase* reg);
 		void SaveSizePosOnExit();
 		void SaveConsoleFont();
 		void SaveFindOptions(SettingsBase* reg = NULL);

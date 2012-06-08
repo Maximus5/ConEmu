@@ -155,6 +155,7 @@ class TabBarClass //: public CToolTip
 		void Deactivate();
 		void RePaint();
 		//void Update(ConEmuTab* tabs, int tabsCount);
+		bool GetRebarClientRect(RECT* rc);
 		void Update(BOOL abPosted=FALSE);
 		BOOL NeedPostUpdate();
 		void UpdatePosition();

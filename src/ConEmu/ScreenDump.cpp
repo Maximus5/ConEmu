@@ -48,7 +48,7 @@ BOOL LoadScreen(HDC hScreen, int anX, int anY, int anWidth, int anHeight, LPBYTE
 	*dwSize = 0;
 	int iBitPerPixel = PreserveTransparency ? 32 : 24;
 	int iHdrSize = sizeof(BITMAPINFOHEADER);
-	int iScrWidth = anWidth;
+	int iScrWidth = (anWidth+3)>>2<<2;
 	int iScrHeight= anHeight;
 	int iWidth = iScrWidth;
 	int iHeight= iScrHeight;
@@ -185,7 +185,7 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int 
 	if (pszFile)
 	{
 		lstrcpynW(szFile, pszFile, MAX_PATH);
-		pszDot = wcsrchr(szFile, L'.');
+		pszDot = (wchar_t*)PointToExt(szFile);
 	}
 
 
@@ -228,7 +228,7 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int 
 		ofn.lpstrTitle = L"Save screenshot";
 		ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
 		        | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
-		if (!GetSaveFileName(&ofn))
+		if (!GetSaveFileName(&ofn) || ((pszDot = (wchar_t*)PointToExt(szFile)) == NULL))
 		{
 			lbRc = TRUE; // чтобы не ругалось...
 		    goto wrap;

@@ -31,6 +31,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #include "MStrSafe.h"
 
+// Используется в ConEmuC.exe, и для минимизации кода
+// менеджер памяти тут использоваться не должен!
+#undef malloc
+#define malloc "malloc"
+#undef calloc
+#define calloc "calloc"
+
+
 LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 {
 	va_list argptr;

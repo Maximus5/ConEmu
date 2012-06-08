@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRINPUTWRITEALL(s) //DEBUGSTR(s) // *** WriteConsoleInput(Write=
 #define DEBUGSTRINPUTWRITEFAIL(s) DEBUGSTR(s) // ### WriteConsoleInput(Write=
 
-BOOL ProcessInputMessage(MSG64 &msg, INPUT_RECORD &r)
+BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 {
 	memset(&r, 0, sizeof(r));
 	BOOL lbOk = FALSE;

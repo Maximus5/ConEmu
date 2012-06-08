@@ -172,6 +172,8 @@ public:
 	BOOL isLeftPanel();
 	BOOL isRightPanel();
 
+	bool LookupFilePath(LPCWSTR asFileOrPath, wchar_t* pszPath, size_t cchPathMax);
+
 	const CRgnDetect* GetDetector();
 	
 private:

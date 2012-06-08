@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    94
+#define CESERVER_REQ_VER    95
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -155,6 +155,12 @@ enum ConEmuTabCommand
 	ctc_SwitchConsoleDirect = 6,
 	ctc_ActivateConsole = 7,
 	ctc_ShowTabsList = 8,
+};
+
+enum ConEmuStatusCommand
+{
+	csc_ShowHide = 0,
+	csc_SetStatusText = 1,
 };
 
 enum CONSOLE_KEY_ID
@@ -428,10 +434,13 @@ struct HANDLE2
 struct MSG64
 {
 	DWORD cbSize;
-	UINT  message;
-	HWND2 hwnd;
-	u64   wParam;
-	u64   lParam;
+	DWORD nCount;
+	struct MsgStr {
+		UINT  message;
+		HWND2 hwnd;
+		u64   wParam;
+		u64   lParam;
+	} msg[1];
 };
 
 struct ThumbColor
@@ -1692,8 +1701,8 @@ struct CESERVER_REQ
 int NextArg(const wchar_t** asCmdLine, wchar_t (&rsArg)[MAX_PATH+1], const wchar_t** rsArgStart=NULL);
 int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsArgStart=NULL);
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
-BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg);
-BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec);
+BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64::MsgStr* pMsg);
+BOOL UnpackInputRecord(const MSG64::MsgStr* piMsg, INPUT_RECORD* pRec);
 void CommonShutdown();
 
 typedef void(WINAPI* ShutdownConsole_t)();

@@ -48,6 +48,8 @@ public:
 
 	void FixSingleModifier(DWORD Vk, CRealConsole* pRCon);
 
+	static void StatusCommand(ConEmuStatusCommand nStatusCmd, int IntParm = 0, LPCWSTR StrParm = NULL, CRealConsole* pRCon = NULL); // csc_ShowHide, csc_SetStatusText
+
 	static void TabCommand(ConEmuTabCommand nTabCmd); // ctc_ShowHide, ctc_SwitchNext, è ò.ï.
 	static size_t GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs);
 
@@ -58,7 +60,7 @@ public:
 
 	void SkipOneAppsRelease(bool abSkip);
 
-	static void MakeScreenshot();
+	static void MakeScreenshot(bool abFullscreen = false);
 
 protected:
 	BOOL mb_InWinTabSwitch;
@@ -103,7 +105,12 @@ public:
 	static bool WINAPI key_CTSVkBlockStart(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_CTSVkTextStart(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_Screenshot(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
+	static bool WINAPI key_ScreenshotFull(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
+	static bool WINAPI key_ShowStatusBar(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
+	static bool WINAPI key_ShowTabBar(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
+	static bool WINAPI key_AlwaysOnTop(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	// System (predefined, fixed)
+	static bool WINAPI key_About(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_Settings(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_AltSpace(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_SystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);

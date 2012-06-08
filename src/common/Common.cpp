@@ -163,7 +163,7 @@ int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsAr
 	return 0;
 }
 
-BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg)
+BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64::MsgStr* pMsg)
 {
 	if (!pMsg || !piRec)
 	{
@@ -171,8 +171,8 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg)
 		return FALSE;
 	}
 
-	memset(pMsg, 0, sizeof(MSG64));
-	pMsg->cbSize = sizeof(*pMsg);
+	memset(pMsg, 0, sizeof(*pMsg));
+	//pMsg->cbSize = sizeof(*pMsg);
 
 	UINT nMsg = 0; WPARAM wParam = 0; LPARAM lParam = 0;
 
@@ -240,7 +240,7 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64* pMsg)
 	return TRUE;
 }
 
-BOOL UnpackInputRecord(const MSG64* piMsg, INPUT_RECORD* pRec)
+BOOL UnpackInputRecord(const MSG64::MsgStr* piMsg, INPUT_RECORD* pRec)
 {
 	if (!piMsg || !pRec)
 	{

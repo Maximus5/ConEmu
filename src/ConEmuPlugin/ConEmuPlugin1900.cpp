@@ -606,6 +606,8 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 	WindowInfo WActive = {sizeof(WActive)};
 	WActive.Pos = -1;
 	bool bActiveInfo = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WActive)!=0;
+	// Если фар запущен с ключом "/e" (как standalone редактор) - будет ассерт при первой попытке 
+	// считать информацию об окне (редактор еще не создан?, а панелей вообще нет)
 	_ASSERTE(bActiveInfo && (WActive.Flags & WIF_CURRENT));
 	static WindowInfo WLastActive;
 

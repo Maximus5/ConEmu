@@ -867,6 +867,90 @@ const wchar_t* Unquote(wchar_t* asPath)
 	return (asPath+1);
 }
 
+wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount)
+{
+	wchar_t* pszCommand = NULL;
+	size_t cchCmdMax = 0;
+
+	// «амена %1 и т.п.
+	for (int s = 0; s < 2; s++)
+	{
+		// Ќа первом шаге - считаем требуемый размер под pszCommand, на втором - формируем команду
+		if (s)
+		{
+			if (!cchCmdMax)
+			{
+				//ReportError(L"Invalid %s update command (%s)", (mp_Set->UpdateDownloadSetup()==1) ? L"exe" : L"arc", pszFormat, 0);
+				goto wrap;
+			}
+			pszCommand = (wchar_t*)malloc((cchCmdMax+1)*sizeof(wchar_t));
+		}
+
+		wchar_t* pDst = pszCommand;
+		
+		for (LPCWSTR pSrc = pszFormat; *pSrc; pSrc++)
+		{
+			LPCWSTR pszMacro = NULL;
+
+			switch (*pSrc)
+			{
+			case L'%':
+				pSrc++;
+
+				if (*pSrc == L'%')
+				{
+					pszMacro = L"%";
+				}
+				else if ((*pSrc >= L'1') && (*pSrc <= L'9'))
+				{
+					size_t n = (size_t)(int)(*pSrc - L'1');
+					if (nValCount > n)
+					{
+						pszMacro = pszValues[n];
+					}
+				}
+				else
+				{
+					// Ќедопустимый управл€ющий символ, это может быть переменна€ окружени€
+					pszMacro = NULL;
+					pSrc--;
+					if (s)
+						*(pDst++) = L'%';
+					else
+						cchCmdMax++;
+				}
+
+				if (pszMacro)
+				{
+					size_t cchLen = lstrlenW(pszMacro);
+					if (s)
+					{
+						_wcscpy_c(pDst, cchLen+1, pszMacro);
+						pDst += cchLen;
+					}
+					else
+					{
+						cchCmdMax += cchLen;
+					}
+				}
+				break; // end of '%'
+
+			default:
+				if (s)
+					*(pDst++) = *pSrc;
+				else
+					cchCmdMax++;
+			}
+		}
+		if (s)
+			*pDst = 0;
+	}
+
+wrap:
+	return pszCommand;
+}
+
+
 
 #ifndef __GNUC__
 #pragma warning( push )
@@ -2123,7 +2207,7 @@ void MSection::AddRef(DWORD dwTID)
 		}
 		if (dbgCurLockCount != 0)
 		{
-			_ASSERTEX(dbgCurLockCount==0);
+			_ASSERTEX(dbgCurLockCount==0 || mn_Locked);
 		}
 	}
 	#endif

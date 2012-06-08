@@ -120,6 +120,8 @@ private:
 
 	bool isSettingsOpened(UINT nOpenPageID = 0);
 
+	void InvalidateStatusBar();
+
 public:
 	CStatus();
 	virtual ~CStatus();
@@ -142,6 +144,8 @@ public:
 	void ProcessMenuHighlight(HMENU hMenu, WORD nID, WORD nFlags);
 
 	LPCWSTR GetSettingName(CEStatusItems nID);
+
+	bool GetStatusBarClientRect(RECT* rc);
 
 	void UpdateStatusFont();
 };

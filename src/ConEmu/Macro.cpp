@@ -129,8 +129,14 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 			pszResult = FindViewer(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"FindFarWindow"))
 			pszResult = FindFarWindow(asMacro, apRCon);
+		else if (!lstrcmpi(szFunction, L"WindowFullscreen"))
+			pszResult = WindowFullscreen(asMacro, apRCon);
+		else if (!lstrcmpi(szFunction, L"WindowMaximize"))
+			pszResult = WindowMaximize(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"WindowMinimize"))
 			pszResult = WindowMinimize(asMacro, apRCon);
+		else if (!lstrcmpi(szFunction, L"WindowMode"))
+			pszResult = WindowMode(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"MsgBox"))
 			pszResult = MsgBox(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"FontSetSize"))
@@ -147,6 +153,8 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 			pszResult = Shell(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Tab") || !lstrcmpi(szFunction, L"Tabs") || !lstrcmpi(szFunction, L"TabControl"))
 			pszResult = Tab(asMacro, apRCon);
+		else if (!lstrcmpi(szFunction, L"Status") || !lstrcmpi(szFunction, L"StatusBar") || !lstrcmpi(szFunction, L"StatusControl"))
+			pszResult = Status(asMacro, apRCon);
 		else
 			pszResult = NULL; // Неизвестная функция
 
@@ -489,9 +497,31 @@ LPWSTR CConEmuMacro::FindFarWindowHelper(
 	return pszResult;
 }
 
+// Fullscreen
+LPWSTR CConEmuMacro::WindowFullscreen(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	LPWSTR pszRc = WindowMode(NULL, NULL);
+
+	gpConEmu->OnAltEnter();
+
+	return pszRc;
+}
+
+// Fullscreen
+LPWSTR CConEmuMacro::WindowMaximize(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	LPWSTR pszRc = WindowMode(NULL, NULL);
+
+	gpConEmu->OnAltF9();
+
+	return pszRc;
+}
+
 // Минимизировать окно (можно насильно в трей) // [int nForceToTray=0/1]
 LPWSTR CConEmuMacro::WindowMinimize(LPWSTR asArgs, CRealConsole* apRCon)
 {
+	LPWSTR pszRc = WindowMode(NULL, NULL);
+
 	int nForceToTray = 0;
 	GetNextInt(asArgs, nForceToTray);
 
@@ -500,7 +530,59 @@ LPWSTR CConEmuMacro::WindowMinimize(LPWSTR asArgs, CRealConsole* apRCon)
 	else
 		PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 
-	return lstrdup(L"OK");
+	return pszRc;
+}
+
+// Вернуть текущий статус: NORMAL/MAXIMIZED/FULLSCREEN/MINIMIZED
+// Или установить новый
+LPWSTR CConEmuMacro::WindowMode(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	LPCWSTR pszRc = NULL;
+	LPWSTR pszMode = NULL;
+
+	LPCWSTR sFS  = L"FS";
+	LPCWSTR sMAX = L"MAX";
+	LPCWSTR sMIN = L"MIN";
+	LPCWSTR sTSA = L"TSA";
+	LPCWSTR sNOR = L"NOR";
+
+	if (asArgs && GetNextString(asArgs, pszMode))
+	{
+		if (lstrcmpi(pszMode, sFS) == 0)
+		{
+			pszRc = sFS;
+			gpConEmu->SetWindowMode(rFullScreen);
+		}
+		else if (lstrcmpi(pszMode, sMAX) == 0)
+		{
+			pszRc = sMAX;
+			gpConEmu->SetWindowMode(rMaximized);
+		}
+		else if (lstrcmpi(pszMode, sMIN) == 0)
+		{
+			pszRc = sMIN;
+			PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+		}
+		else if (lstrcmpi(pszMode, sTSA) == 0)
+		{
+			pszRc = sTSA;
+			Icon.HideWindowToTray();
+		}
+		else //if (lstrcmpi(pszMode, sNOR) == 0)
+		{
+			pszRc = sNOR;
+			gpConEmu->SetWindowMode(rNormal);
+		}
+	}
+
+	pszRc = pszRc ? pszRc :
+		!IsWindowVisible(ghWnd) ? sTSA :
+		gpConEmu->isFullScreen() ? sFS :
+		gpConEmu->isZoomed() ? sMAX :
+		gpConEmu->isIconic() ? sMIN :
+		sNOR;
+
+	return lstrdup(pszRc);
 }
 
 // MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
@@ -701,6 +783,38 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 	}
 
 	return lstrdup(L"InvalidArg");
+}
+
+// Status(0[,<Parm>]) - Show/Hide status bar, Parm=1 - Show, Parm=2 - Hide
+// Status(1[,"<Text>"]) - Set status bar text
+LPWSTR CConEmuMacro::Status(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	LPWSTR pszResult = NULL;
+	int nStatusCmd = 0;
+	int nParm = 0;
+	LPWSTR pszText = NULL;
+
+	if (!GetNextInt(asArgs, nStatusCmd))
+		nStatusCmd = 0;
+
+	switch (nStatusCmd)
+	{
+	case csc_ShowHide:
+		GetNextInt(asArgs, nParm);
+		gpConEmu->StatusCommand(csc_ShowHide, nParm);
+		pszResult = lstrdup(L"OK");
+		break;
+	case csc_SetStatusText:
+		if (apRCon)
+		{
+			GetNextString(asArgs, pszText);
+			gpConEmu->StatusCommand(csc_ShowHide, 0, pszText, apRCon);
+			pszResult = lstrdup(L"OK");
+		}
+		break;
+	}
+
+	return pszResult ? pszResult : lstrdup(L"InvalidArg");
 }
 
 // TabControl

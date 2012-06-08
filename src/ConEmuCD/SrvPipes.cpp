@@ -103,33 +103,65 @@ bool DataServerStart()
 // Bodies
 BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
-	if (pCmd && pCmd->message)
+	if (!pCmd || !pCmd->nCount || (pCmd->cbSize < sizeof(*pCmd)))
 	{
+		_ASSERTE(pCmd && pCmd->nCount && (pCmd->cbSize < sizeof(*pCmd)));
+	}
+	else
+	{
+		_ASSERTE(pCmd->cbSize == (sizeof(*pCmd)+(pCmd->nCount-1)*sizeof(pCmd->msg[0])));
+
 		#ifdef _DEBUG
-		switch (pCmd->message)
-		{
-		case WM_KEYDOWN: case WM_SYSKEYDOWN: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key down\n"); break;
-		case WM_KEYUP: case WM_SYSKEYUP: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key up\n"); break;
-		default: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved input\n");
-		}
+		wchar_t* pszPasting = (wchar_t*)malloc((pCmd->nCount+1)*sizeof(wchar_t));
+		if (pszPasting)
+			*pszPasting = 0;
+		wchar_t* pszDbg = pszPasting;
 		#endif
 
-		INPUT_RECORD r;
-
-		// Некорректные события - отсеиваются,
-		// некоторые события (CtrlC/CtrlBreak) не пишутся в буферном режиме
-		if (ProcessInputMessage(*pCmd, r))
+		for (DWORD i = 0; i < pCmd->nCount; i++)
 		{
-			//SendConsoleEvent(&r, 1);
-			if (!WriteInputQueue(&r))
+			// При посылке массовых нажатий клавиш (вставка из буфера)
+			// очередь может "не успевать"
+			if (i & 16)
+				Sleep(10);
+
+			#ifdef _DEBUG
+			switch (pCmd->msg[i].message)
 			{
-				DWORD nErrCode = GetLastError(); UNREFERENCED_PARAMETER(nErrCode);
-				_ASSERTE(FALSE && "Input buffer overflow?");
-				WARNING("Если буфер переполнен - ждать? Хотя если будем ждать здесь - может повиснуть GUI на записи в pipe...");
+			case WM_KEYDOWN: case WM_SYSKEYDOWN: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key down\n"); break;
+			case WM_KEYUP: case WM_SYSKEYUP: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key up\n"); break;
+			default: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved input\n");
 			}
+			#endif
+
+			INPUT_RECORD r;
+
+			// Некорректные события - отсеиваются,
+			// некоторые события (CtrlC/CtrlBreak) не пишутся в буферном режиме
+			if (ProcessInputMessage(pCmd->msg[i], r))
+			{
+				//SendConsoleEvent(&r, 1);
+				if (!WriteInputQueue(&r))
+				{
+					DWORD nErrCode = GetLastError(); UNREFERENCED_PARAMETER(nErrCode);
+					_ASSERTE(FALSE && "Input buffer overflow?");
+					WARNING("Если буфер переполнен - ждать? Хотя если будем ждать здесь - может повиснуть GUI на записи в pipe...");
+				}
+				#ifdef _DEBUG
+				else if (pszDbg && (r.EventType == KEY_EVENT) && r.Event.KeyEvent.bKeyDown)
+				{
+					*(pszDbg++) = r.Event.KeyEvent.uChar.UnicodeChar;
+					*pszDbg = 0;
+				}
+				#endif
+			}
+
+			MCHKHEAP;
 		}
 
-		MCHKHEAP;
+		#ifdef _DEBUG
+		SafeFree(pszPasting);
+		#endif
 	}
 
 	return FALSE; // Inbound only

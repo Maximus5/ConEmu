@@ -166,6 +166,7 @@ static const EXTFILLOUTPUTFLAGS
 	efof_Character = 0x0000000000000002ULL, // FillConsoleOutputCharacter
 
 	efof_Current   = 0x0000000000000010ULL, // Use current color (may be extended) selected in console
+	efof_ResetExt  = 0x0000000000000020ULL, // Reset extended attributes
 
 	efof_None      = 0x0000000000000000ULL;
 

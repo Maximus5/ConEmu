@@ -428,6 +428,7 @@ void Settings::InitSettings()
 	isPasteConfirmEnter = true;
 	nPasteConfirmLonger = 200;
 	isFarGotoEditor = true; //isFarGotoEditorVk = VK_LCONTROL;
+	sFarGotoEditor = lstrdup(L"far.exe /e%1:%2 \"%3\"");
 
 	isStatusBarShow = true;
 	nStatusBarBack = RGB(64,64,64);
@@ -505,6 +506,17 @@ void Settings::InitSettings()
 	/* *** AutoUpdate *** */
 	_ASSERTE(UpdSet.szUpdateVerLocation==NULL); // Уже должен был быть вызван ReleasePointers
 	UpdSet.ResetToDefaults();
+}
+
+// true - не допускать Gaps в Normal режиме. Подгонять размер окна точно под консоль.
+bool Settings::isIntegralSize()
+{
+	#ifdef _DEBUG
+	if ((1 & (WORD)GetKeyState(VK_NUMLOCK)) == 0)
+		return false;
+	#endif
+
+	return true;
 }
 
 void Settings::FreeApps(int NewAppCount, AppSettings** NewApps, Settings::CEAppColors** NewAppColors)
@@ -807,7 +819,7 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 	return lbRc;
 }
 
-void Settings::SaveCmdTasks(SettingsBase* reg)
+bool Settings::SaveCmdTasks(SettingsBase* reg)
 {
 	bool lbDelete = false;
 	if (!reg)
@@ -816,11 +828,12 @@ void Settings::SaveCmdTasks(SettingsBase* reg)
 		if (!reg)
 		{
 			_ASSERTE(reg!=NULL);
-			return;
+			return false;
 		}
 		lbDelete = true;
 	}
 
+	bool lbRc = false;
 	BOOL lbOpened = FALSE;
 	wchar_t szCmdKey[MAX_PATH+64];
 	wcscpy_c(szCmdKey, gpSetCls->GetConfigPath());
@@ -830,6 +843,7 @@ void Settings::SaveCmdTasks(SettingsBase* reg)
 	lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
 	if (lbOpened)
 	{
+		lbRc = true;
 		reg->Save(L"Count", CmdTaskCount);
 		reg->CloseKey();
 	}
@@ -842,7 +856,11 @@ void Settings::SaveCmdTasks(SettingsBase* reg)
 			_wsprintf(pszCmdKey, SKIPLEN(32) L"\\Task%i", i+1); // 1-based
 
 			lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
-			if (lbOpened)
+			if (!lbOpened)
+			{
+				lbRc = false;
+			}
+			else
 			{
 				SaveCmdTask(reg, CmdTasks[i]);
 
@@ -853,11 +871,13 @@ void Settings::SaveCmdTasks(SettingsBase* reg)
 
 	if (lbDelete)
 		delete reg;
+
+	return lbRc;
 }
 
 bool Settings::SaveCmdTask(SettingsBase* reg, CommandTasks* pTask)
 {
-	bool lbRc = false;
+	bool lbRc = true;
 	int iCmdCount = 0;
 	int nActive = 0; // 1-based
 	wchar_t szVal[32];
@@ -1849,6 +1869,7 @@ void Settings::LoadSettings()
 		reg->Load(L"ClipboardConfirmLonger", nPasteConfirmLonger);
 		
 		reg->Load(L"FarGotoEditor", isFarGotoEditor);
+		reg->Load(L"FarGotoEditor", &sFarGotoEditor);
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
 
 		if (!reg->Load(L"FixFarBorders", isFixFarBorders))
@@ -2646,6 +2667,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ClipboardConfirmLonger", nPasteConfirmLonger);
 
 		reg->Save(L"FarGotoEditor", isFarGotoEditor);
+		reg->Save(L"FarGotoEditor", sFarGotoEditor);
 		//reg->Save(L"FarGotoEditorVk", isFarGotoEditorVk);
 		
 		reg->Save(L"FixFarBorders", isFixFarBorders);
@@ -2805,10 +2827,10 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 	return lbRc;
 }
 
-bool Settings::isKeyboardHooks()
+bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/)
 {
 	// Если хуки запрещены ключом "/nokeyhooks"
-	if (gpConEmu->DisableKeybHooks)
+	if (gpConEmu->DisableKeybHooks && !abNoDisable)
 		return false;
 
 	//// Нужно и для WinXP, но только в "локальном" режиме
@@ -4456,6 +4478,10 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkPasteFirstLine, chk_User,  NULL,    L"ClipboardVkFirstLine",  MakeHotKey('V',VK_CONTROL), CConEmuCtrl::key_PasteFirstLine},
 		{vkFindTextDlg,    chk_User,  NULL,    L"FindTextKey",           MakeHotKey('F',VK_APPS), CConEmuCtrl::key_FindTextDlg},
 		{vkScreenshot,     chk_User,  NULL,    L"ScreenshotKey",         MakeHotKey('H',VK_LWIN), CConEmuCtrl::key_Screenshot/*, true/ *OnKeyUp*/},
+		{vkScreenshotFull, chk_User,  NULL,    L"ScreenshotFullKey",     MakeHotKey('H',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_ScreenshotFull/*, true/ *OnKeyUp*/},
+		{vkShowStatusBar,  chk_User,  NULL,    L"ShowStatusBarKey",      MakeHotKey('S',VK_APPS), CConEmuCtrl::key_ShowStatusBar},
+		{vkShowTabBar,     chk_User,  NULL,    L"ShowTabBarKey",         MakeHotKey('T',VK_APPS), CConEmuCtrl::key_ShowTabBar},
+		{vkAlwaysOnTop,    chk_User,  NULL,    L"AlwaysOnTopKey",        0, CConEmuCtrl::key_AlwaysOnTop},
 		// GUI Macros
 		{vkGuMacro01,      chk_Macro, NULL,    L"KeyMacro01", MakeHotKey(VK_WHEEL_UP,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,2)")},
 		{vkGuMacro02,      chk_Macro, NULL,    L"KeyMacro02", MakeHotKey(VK_WHEEL_DOWN,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,-2)")},
@@ -4497,6 +4523,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkLDragKey,       chk_Modifier, NULL, L"DndLKey",         /*(DWORD*)&nLDragKey,*/ 0},         // модификатор драга левой кнопкой
 		{vkRDragKey,       chk_Modifier, NULL, L"DndRKey",         /*(DWORD*)&nRDragKey,*/ VK_LCONTROL},         // модификатор драга правой кнопкой
 		// System (predefined, fixed)
+		{vkWinAltA,        chk_System, NULL, L"", MakeHotKey('A',VK_LWIN,VK_MENU), CConEmuCtrl::key_About, true/*OnKeyUp*/}, // Settings
 		{vkWinAltP,        chk_System, NULL, L"", MakeHotKey('P',VK_LWIN,VK_MENU), CConEmuCtrl::key_Settings, true/*OnKeyUp*/}, // Settings
 		{vkWinAltSpace,    chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_LWIN,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
 		{vkAppsSpace,      chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_APPS), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu

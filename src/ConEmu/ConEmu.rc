@@ -573,9 +573,6 @@ BEGIN
     COMBOBOX        lbCTSRBtnAction,201,77,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Middle:",IDC_STATIC,245,80,28,8
     COMBOBOX        lbCTSMBtnAction,275,77,42,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Goto Far editor on compiler errors",IDC_STATIC,4,147,319,45
-    CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,159,76,8
-    COMBOBOX        lbFarGotoEditorVk,94,157,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Never",rbCTSNever,"Button",BS_AUTORADIOBUTTON,90,13,35,8
     GROUPBOX        "Color indexes",IDC_STATIC,263,1,60,61
     LTEXT           "Select text in console:",IDC_STATIC,12,13,72,8
@@ -586,13 +583,16 @@ BEGIN
     CONTROL         "Confirm pasting more than",cbClipConfirmLimit,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,127,105,8
     EDITTEXT        tClipConfirmLimit,246,126,40,12,ES_AUTOHSCROLL
     CTEXT           "chars",stClipConfirmLimit,292,127,22,8
-    EDITTEXT        tGotoEditorCmd,11,173,287,13,ES_AUTOHSCROLL | WS_DISABLED
-    RTEXT           "External editor, when Far not started:",stGotoEditorCmd,158,160,139,8,WS_DISABLED
     CONTROL         "Freeze console contents before selection (may cause small lag)",cbCTSFreezeBeforeSelect,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,47,245,8
     RTEXT           "Find:",IDC_STATIC,269,30,22,8,WS_DISABLED
     COMBOBOX        lbCTSFindIdx,293,28,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "...",bGotoEditorCmd,301,173,16,12,WS_DISABLED
+    GROUPBOX        "Goto Far editor on compiler errors",IDC_STATIC,4,147,319,45
+    CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,159,76,8
+    COMBOBOX        lbFarGotoEditorVk,94,157,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "External editor, when Far not started:",stGotoEditorCmd,158,160,139,8
+    EDITTEXT        tGotoEditorCmd,11,173,287,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",bGotoEditorCmd,301,173,16,12
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235

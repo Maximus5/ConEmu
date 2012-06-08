@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../ConEmuCD/ConsoleHelp.h"
+
 //L"Console emulation program.\r\n" \
 //L"Home page: http://conemu-maximus5.googlecode.com\r\n" \
 //L"http://code.google.com/p/conemu-maximus5/wiki/Command_Line\r\n"\
@@ -113,3 +115,73 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	CECOPYRIGHTSTRING_W /*\x00A9 2009-2011 ConEmu.Maximus5@gmail.com*/ L"\r\n" \
 	L"\r\n" \
 	L"Read more online: http://code.google.com/p/conemu-maximus5/wiki/ConEmu\r\n"
+
+
+#define pConsoleHelpFull \
+	pConsoleHelp
+
+#define pDosBoxHelpFull \
+	L"ConEmu supports DosBox, read more online:\r\n" \
+	L"http://code.google.com/p/conemu-maximus5/wiki/DosBox\r\n" \
+	L"––––––––––––––––––––––\r\n" \
+	pDosBoxHelp
+
+#define pGuiMacro \
+	L"Sort of simple macro language, read more online:\r\n" \
+	L"http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
+	L"––––––––––––––––––––––\r\n" \
+    L"FindEditor(\"<FullEditFileName>\")\r\n" \
+    L"FindViewer(\"<FullViewerFileName>\")\r\n" \
+    L"FindFarWindow(<WindowType>,\"<WindowTitle>\")\r\n" \
+    L"  - Returns \"Found:<index of RealConsole>\", \"Blocked\", or \"NotFound\"\r\n" \
+    L"     <WindowType> is number from Far Manager enum WINDOWINFO_TYPE\r\n" \
+    L"FontSetName(\"<FontFaceName>\"[,FontHeight[,FontWidth]])\r\n" \
+    L"  - Change font face name and (optionally) height/width.\r\n" \
+    L"FontSetSize(Relative,N)\r\n" \
+    L"  - Change font height in the ConEmu window\r\n" \
+    L"     Relative==0: N - required font height in points\r\n" \
+    L"     Relative==1: N (+-1, +-2) - increase/decrease font height\r\n" \
+    L"     returns - \"OK\", or \"InvalidArg\"\r\n" \
+    L"IsConEmu\r\n" \
+    L"  - Returns \"Yes\" when console was started under !ConEmu\r\n" \
+    L"IsConsoleActive\r\n" \
+    L"  - Check, is RealConsole active or not, \"Yes\"/\"No\"\r\n" \
+    L"IsRealVisible\r\n" \
+    L"  - Check, is RealConsole visible or not, \"Yes\"/\"No\"\r\n" \
+    L"MsgBox(\"<Text>\",\"<Title>\",<ButtonType>)\r\n" \
+    L"  - Show modal GUI MessageBox, returns clicked button name (\"Ok\", \"Cancel\", \"Retry\", etc.),\r\n" \
+    L"     ButtonType (number) is from Windows SDK.\r\n" \
+    L"Paste(<Cmd>[,\"<Text>\"])\r\n" \
+    L"  - When <Text> is omitted - paste from Windows clipboard, otherwise - paste specified text\r\n" \
+    L"     Cmd==0: paste all lines\r\n" \
+    L"     Cmd==1: paste first line\r\n" \
+    L"Shell(\"<Verb>\",\"<File>\"[,\"<Parms>\"[,\"<Dir>\"[,<ShowCmd>]]])\r\n" \
+    L"  - Verb can be \"open\", \"print\" and so on, or special value \"new_console\",\r\n" \
+    L"     which starts File in the new tab of ConEmu window. Examples:\r\n" \
+    L"        Shell(\"open\",\"cmd.exe\",\"/k\")\r\n" \
+    L"        Shell(\"\",\"\",\"cmd.exe /k -new_console:b\"),\r\n" \
+    L"        Shell(\"new_console:b\",\"\",\"cmd.exe /k\")\r\n" \
+    L"Tab(<Cmd>[,<Parm>])\r\n" \
+    L"  - Control ConEmu tabs\r\n" \
+    L"     Cmd==0 - show/hide tabs\r\n" \
+    L"     Cmd==1 - commit lazy changes\r\n" \
+    L"     Cmd==2 - switch next (eq. CtrlTab)\r\n" \
+    L"     Cmd==3 - switch prev (eq. CtrlShiftTab)\r\n" \
+    L"     Cmd==4 - switch tab direct (no recent mode), Parm=(1,-1)\r\n" \
+    L"     Cmd==5 - switch tab recent, Parm=(1,-1)\r\n" \
+    L"     Cmd==6 - switch console direct (no recent mode), Parm=(1,-1)\r\n" \
+    L"     Cmd==7 - activate console by number, Parm=(1-based console index)\r\n" \
+    L"     Cmd==8 - show tabs list menu (indiffirent Far/Not Far)\r\n" \
+    L"WindowFullscreen()\r\n" \
+    L"  - Switch fullscreen window mode\r\n" \
+    L"     returns previous window mode\r\n" \
+    L"WindowMaximize()\r\n" \
+    L"  - Switch maximized window mode\r\n" \
+    L"     returns previous window mode\r\n" \
+    L"WindowMinimize() or WindowMinimize(1)\r\n" \
+    L"  - Minimize ConEmu window (\"1\" means \"minimize to the TSA\")\r\n" \
+    L"     returns previous window mode\r\n" \
+    L"WindowMode([\"<Mode>\"])\r\n" \
+    L"  - Returns or set current window mode\r\n" \
+    L"     \"NOR\", \"MAX\", \"FS\", \"MIN\", \"TSA\"\r\n" \
+    L""

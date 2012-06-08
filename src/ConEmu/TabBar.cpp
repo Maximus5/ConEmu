@@ -1200,7 +1200,7 @@ void TabBarClass::UpdateToolbarPos()
 		SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
 		// В Win2k имеет место быть глюк вычисления размера (разделители)
 		if ((gOSVer.dwMajorVersion == 5) && (gOSVer.dwMinorVersion == 0))
-			sz.cx += 14;
+			sz.cx += 26;
 
 		if (mh_Rebar)
 		{
@@ -2989,6 +2989,19 @@ void TabBarClass::UpdateTabFont()
 	if (mh_TabFont)
 		DeleteObject(mh_TabFont);
 	mh_TabFont = hFont;
+}
+
+// Прямоугольник в клиентских координатах ghWnd!
+bool TabBarClass::GetRebarClientRect(RECT* rc)
+{
+	if (!IsTabsShown())
+		return false;
+
+	HWND hWnd = mh_Rebar ? mh_Rebar : mh_Tabbar;
+	GetWindowRect(hWnd, rc);
+	MapWindowPoints(NULL, ghWnd, (LPPOINT)rc, 2);
+
+	return true;
 }
 
 void TabBarClass::GetActiveTabRect(RECT* rcTab)

@@ -294,9 +294,11 @@ class CRealConsole
 		bool PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		bool PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		bool PostLeftClickSync(COORD crDC);
-		bool PostConsoleEventPipe(MSG64 *pMsg);
+		bool PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount = 1);
 		void ShowKeyBarHint(WORD nID);
 	private:
+		bool PostString(wchar_t* pszChars, size_t cchCount);
+		void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD& rDown, INPUT_RECORD& rUp);
 		void PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend = false);
 	public:
 		BOOL OpenConsoleEventPipe();
@@ -476,6 +478,7 @@ class CRealConsole
 		void SetForceRead();
 		//DWORD WaitEndUpdate(DWORD dwTimeout=1000);
 		LPCWSTR GetConStatus();
+		void SetConStatus(LPCWSTR asStatus, bool abResetOnConsoleReady = false, bool abDontUpdate = false);
 		static wchar_t ms_LastRConStatus[80];
 		void UpdateCursorInfo();
 		bool isNeedCursorDraw();
@@ -736,7 +739,8 @@ class CRealConsole
 		HWND FindPicViewFrom(HWND hFrom);
 		//
 		wchar_t ms_ConStatus[80];
-		void SetConStatus(LPCWSTR asStatus);
+		bool mb_ResetStatusOnConsoleReady;
+		//
 		bool isCharBorderVertical(WCHAR inChar);
 		bool isCharBorderLeftVertical(WCHAR inChar);
 		bool isCharBorderHorizontal(WCHAR inChar);

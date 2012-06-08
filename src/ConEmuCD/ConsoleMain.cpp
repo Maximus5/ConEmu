@@ -64,6 +64,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RConStartArgs.h"
 #include "../common/ConsoleAnnotation.h"
 #include "TokenHelper.h"
+#include "ConsoleHelp.h"
+#include "UnicodeTest.h"
 
 
 #ifdef __GNUC__
@@ -1325,19 +1327,38 @@ wrap:
 	ShutdownSrvStep(L"Finalizing.2");
 
 	if (!gbInShutdown  // только если юзер не нажал крестик в заголовке окна, или не удалс€ /ATTACH (чтобы в консоль не гадить)
-	        && ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE && !(gnRunMode!=RM_SERVER && iRc==CERR_CREATEPROCESS))
-	            || gbAlwaysConfirmExit)
+	        && ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE
+					&& iRc!=CERR_UNICODE_CHK_FAILED && iRc!=CERR_UNICODE_CHK_OKAY
+					&& !(gnRunMode!=RM_SERVER && iRc==CERR_CREATEPROCESS))
+				|| gbAlwaysConfirmExit)
 	  )
 	{
 		BOOL lbProcessesLeft = FALSE, lbDontShowConsole = FALSE;
+		DWORD nProcesses[10] = {};
+		DWORD nProcCount = -1;
 
 		if (pfnGetConsoleProcessList)
 		{
-			DWORD nProcesses[10];
-			DWORD nProcCount = pfnGetConsoleProcessList(nProcesses, 10);
+			// консоль может не успеть среагировать на "закрытие" корневого процесса
+			nProcCount = pfnGetConsoleProcessList(nProcesses, 10);
 
 			if (nProcCount > 1)
-				lbProcessesLeft = TRUE;
+			{
+				DWORD nValid = 0;
+				for (DWORD i = 0; i < nProcCount; i++)
+				{
+					if ((nProcesses[i] != gpSrv->dwRootProcess)
+						#ifndef WIN64
+						&& (nProcesses[i] != gpSrv->nNtvdmPID)
+						#endif
+						)
+					{
+						nValid++;
+					}
+				}
+
+				lbProcessesLeft = (nValid > 1);
+			}
 		}
 
 		LPCWSTR pszMsg = NULL;
@@ -1382,6 +1403,9 @@ wrap:
 		gbInExitWaitForKey = TRUE;
 		WORD vkKeys[3]; vkKeys[0] = VK_RETURN; vkKeys[1] = VK_ESCAPE; vkKeys[2] = 0;
 		ExitWaitForKey(vkKeys, pszMsg, TRUE, lbDontShowConsole);
+
+		UNREFERENCED_PARAMETER(nProcCount);
+		UNREFERENCED_PARAMETER(nProcesses[0]);
 
 		if (iRc == CERR_PROCESSTIMEOUT)
 		{
@@ -1594,81 +1618,84 @@ void PrintDebugInfo()
 void Help()
 {
 	PrintVersion();
-	_printf(
-	    "This is a console part of ConEmu product.\n"
-	    "Usage: ConEmuC [switches] [/U | /A] /C <command line, passed to %%COMSPEC%%>\n"
-	    "   or: ConEmuC [switches] /ROOT <program with arguments, far.exe for example>\n"
-	    "   or: ConEmuC /ATTACH /NOCMD\n"
-		"   or: ConEmuC /ATTACH /[FAR]PID=<PID>\n"
-	    "   or: ConEmuC /GUIMACRO <ConEmu GUI macro command>\n"
-		"   or: ConEmuC /DEBUGPID=<Debugging PID>\n"
-#ifdef _DEBUG
-		"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\n"
-#endif
-	    "   or: ConEmuC /?\n"
-	    "Switches:\n"
-	    "     /[NO]CONFIRM    - [don't] confirm closing console on program termination\n"
-	    "     /ATTACH         - auto attach to ConEmu GUI\n"
-	    "     /NOCMD          - attach current (existing) console to GUI\n"
-		"     /[FAR]PID=<PID> - use <PID> as root process\n"
-	    "     /B{W|H|Z}       - define window width, height and buffer height\n"
-#ifdef _DEBUG
-		"     /BW=<WndX> /BH=<WndY> /BZ=<BufY>\n"
-#endif
-	    "     /F{N|W|H}    - define console font name, width, height\n"
-#ifdef _DEBUG
-		"     /FN=<ConFontName> /FH=<FontHeight> /FW=<FontWidth>\n"
-#endif
-	    "     /LOG[N]      - create (debug) log file, N is number from 0 to 3\n"
-#ifdef _DEBUG
-		"     /CINMODE==<hex:gnConsoleModeFlags>\n"
-		"     /HIDE -> gbForceHideConWnd=TRUE\n"
-		"     /GID=<ConEmu.exe PID>\n"
-		"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\n"
-		"     /INJECT=PID{10}\n"
-		"     /DOSBOX -> use DosBox\n"
-#endif
-	    "\n"
-	    "When you run application from ConEmu console, you may use\n"
-        "  Switch: -new_console[:abch[N]rx[N]y[N]u[:user:pwd]]\n"
-        "     a - RunAs shell verb (as Admin on Vista+, login/passw in Win2k and WinXP)\n"
-        "     b - Create background tab\n"
-        "     c - force enable 'Press Enter or Esc to close console' (default)\n"
-        "     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\n"
-        "     l - lock console size, do not sync it to ConEmu window\n"
-        "     n - disable 'Press Enter or Esc to close console'\n"
-        "     r - run as restricted user\n"
-        "     x<width>, y<height> - change size of visible area, use with 'l'\n"
-        "     u - ConEmu choose user dialog\n"
-        "     u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST OPTION\n"
-        "  Warning: Option 'Inject ConEmuHk' must be enabled in ConEmu settings!\n"
-        "  Example: dir \"-new_console:bh9999c\" c:\\ /s\n");
+	_wprintf(pConsoleHelp);
+	
+	//_printf(
+	//	    "This is a console part of ConEmu product.\n"
+	//	    "Usage: ConEmuC [switches] [/U | /A] /C <command line, passed to %%COMSPEC%%>\n"
+	//	    "   or: ConEmuC [switches] /ROOT <program with arguments, far.exe for example>\n"
+	//	    "   or: ConEmuC /ATTACH /NOCMD\n"
+	//		"   or: ConEmuC /ATTACH /[FAR]PID=<PID>\n"
+	//	    "   or: ConEmuC /GUIMACRO <ConEmu GUI macro command>\n"
+	//		"   or: ConEmuC /DEBUGPID=<Debugging PID>\n"
+	//#ifdef _DEBUG
+	//		"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\n"
+	//#endif
+	//	    "   or: ConEmuC /?\n"
+	//	    "Switches:\n"
+	//	    "     /[NO]CONFIRM    - [don't] confirm closing console on program termination\n"
+	//	    "     /ATTACH         - auto attach to ConEmu GUI\n"
+	//	    "     /NOCMD          - attach current (existing) console to GUI\n"
+	//		"     /[FAR]PID=<PID> - use <PID> as root process\n"
+	//	    "     /B{W|H|Z}       - define window width, height and buffer height\n"
+	//#ifdef _DEBUG
+	//		"     /BW=<WndX> /BH=<WndY> /BZ=<BufY>\n"
+	//#endif
+	//	    "     /F{N|W|H}    - define console font name, width, height\n"
+	//#ifdef _DEBUG
+	//		"     /FN=<ConFontName> /FH=<FontHeight> /FW=<FontWidth>\n"
+	//#endif
+	//	    "     /LOG[N]      - create (debug) log file, N is number from 0 to 3\n"
+	//#ifdef _DEBUG
+	//		"     /CINMODE==<hex:gnConsoleModeFlags>\n"
+	//		"     /HIDE -> gbForceHideConWnd=TRUE\n"
+	//		"     /GID=<ConEmu.exe PID>\n"
+	//		"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\n"
+	//		"     /INJECT=PID{10}\n"
+	//		"     /DOSBOX -> use DosBox\n"
+	//#endif
+	//	    "\n"
+	//	    "When you run application from ConEmu console, you may use\n"
+	//        "  Switch: -new_console[:abch[N]rx[N]y[N]u[:user:pwd]]\n"
+	//        "     a - RunAs shell verb (as Admin on Vista+, login/passw in Win2k and WinXP)\n"
+	//        "     b - Create background tab\n"
+	//        "     c - force enable 'Press Enter or Esc to close console' (default)\n"
+	//        "     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\n"
+	//        "     l - lock console size, do not sync it to ConEmu window\n"
+	//        "     n - disable 'Press Enter or Esc to close console'\n"
+	//        "     r - run as restricted user\n"
+	//        "     x<width>, y<height> - change size of visible area, use with 'l'\n"
+	//        "     u - ConEmu choose user dialog\n"
+	//        "     u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST OPTION\n"
+	//        "  Warning: Option 'Inject ConEmuHk' must be enabled in ConEmu settings!\n"
+	//        "  Example: dir \"-new_console:bh9999c\" c:\\ /s\n");
 }
 
 void DosBoxHelp()
 {
-	_printf(
-		"Starting DosBox, You may use following default combinations in DosBox window\n"
-		"ALT-ENTER     Switch to full screen and back.\n"
-		"ALT-PAUSE     Pause emulation (hit ALT-PAUSE again to continue).\n"
-		"CTRL-F1       Start the keymapper.\n"
-		"CTRL-F4       Change between mounted floppy/CD images. Update directory cache \n"
-		"              for all drives.\n"
-		"CTRL-ALT-F5   Start/Stop creating a movie of the screen. (avi video capturing)\n"
-		"CTRL-F5       Save a screenshot. (PNG format)\n"
-		"CTRL-F6       Start/Stop recording sound output to a wave file.\n"
-		"CTRL-ALT-F7   Start/Stop recording of OPL commands. (DRO format)\n"
-		"CTRL-ALT-F8   Start/Stop the recording of raw MIDI commands.\n"
-		"CTRL-F7       Decrease frameskip.\n"
-		"CTRL-F8       Increase frameskip.\n"
-		"CTRL-F9       Kill DOSBox.\n"
-		"CTRL-F10      Capture/Release the mouse.\n"
-		"CTRL-F11      Slow down emulation (Decrease DOSBox Cycles).\n"
-		"CTRL-F12      Speed up emulation (Increase DOSBox Cycles).\n"
-		"ALT-F12       Unlock speed (turbo button/fast forward).\n"
-		"F11, ALT-F11  (machine=cga) change tint in NTSC output modes\n"
-		"F11           (machine=hercules) cycle through amber, green, white colouring\n"
-	);
+	_wprintf(pDosBoxHelp);
+	//_printf(
+	//	"Starting DosBox, You may use following default combinations in DosBox window\n"
+	//	"ALT-ENTER     Switch to full screen and back.\n"
+	//	"ALT-PAUSE     Pause emulation (hit ALT-PAUSE again to continue).\n"
+	//	"CTRL-F1       Start the keymapper.\n"
+	//	"CTRL-F4       Change between mounted floppy/CD images. Update directory cache \n"
+	//	"              for all drives.\n"
+	//	"CTRL-ALT-F5   Start/Stop creating a movie of the screen. (avi video capturing)\n"
+	//	"CTRL-F5       Save a screenshot. (PNG format)\n"
+	//	"CTRL-F6       Start/Stop recording sound output to a wave file.\n"
+	//	"CTRL-ALT-F7   Start/Stop recording of OPL commands. (DRO format)\n"
+	//	"CTRL-ALT-F8   Start/Stop the recording of raw MIDI commands.\n"
+	//	"CTRL-F7       Decrease frameskip.\n"
+	//	"CTRL-F8       Increase frameskip.\n"
+	//	"CTRL-F9       Kill DOSBox.\n"
+	//	"CTRL-F10      Capture/Release the mouse.\n"
+	//	"CTRL-F11      Slow down emulation (Decrease DOSBox Cycles).\n"
+	//	"CTRL-F12      Speed up emulation (Increase DOSBox Cycles).\n"
+	//	"ALT-F12       Unlock speed (turbo button/fast forward).\n"
+	//	"F11, ALT-F11  (machine=cga) change tint in NTSC output modes\n"
+	//	"F11           (machine=hercules) cycle through amber, green, white colouring\n"
+	//);
 }
 
 void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=NULL*/)
@@ -1901,6 +1928,60 @@ int CheckAttachProcess()
 	}
 
 	return 0; // OK
+}
+
+// ¬озвращает CERR_UNICODE_CHK_OKAY, если консоль поддерживает отображение
+// юникодных символов. »наче - CERR_UNICODE_CHK_FAILED
+int CheckUnicodeFont()
+{
+	int iRc = CERR_UNICODE_CHK_FAILED;
+
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	
+
+	wchar_t szText[80] = UnicodeTestString;
+	wchar_t szCheck[80] = L"";
+	wchar_t szTitle[64], szMessage[256];
+	BOOL bInfo = FALSE, bWrite = FALSE, bRead = FALSE, bCheck = FALSE;
+	DWORD nLen = lstrlen(szText), nWrite = 0, nRead = 0, nErr = 0;
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+
+	if ((bInfo = GetConsoleScreenBufferInfo(hOut, &csbi)) != FALSE)
+	{
+		if (((bWrite = WriteConsoleOutputCharacterW(hOut, szText, nLen, csbi.dwCursorPosition, &nWrite)) != FALSE)
+			&& (nWrite == nLen))
+		{
+			if (((bRead = ReadConsoleOutputCharacterW(hOut, szCheck, nLen, csbi.dwCursorPosition, &nRead)) != FALSE)
+				&& (nRead == nLen))
+			{
+				bCheck = (memcmp(szText, szCheck, nLen*sizeof(szText[0])) == 0);
+				if (bCheck)
+				{
+					iRc = CERR_UNICODE_CHK_OKAY;
+				}
+			}
+		}
+	}
+
+	if (!bRead)
+	{
+		nErr = GetLastError();
+		
+		wchar_t szMinor[2] = {MVV_4a[0], 0};
+        _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu %02u%02u%02u%s %s",
+        	MVV_1, MVV_2, MVV_3, szMinor, WIN3264TEST(L"x86",L"x64"));
+		_wsprintf(szMessage, SKIPLEN(countof(szTitle)) L"Unicode is not supported in this console!\r\n\r\n"
+			L"Check: %s\r\nRead: %s\r\n\r\n"
+			L"TechInfo: %u,%u,%u,%u,%u,%u",
+			szText, szCheck,
+			nErr, bInfo, bWrite, nWrite, bRead, nRead);
+		MessageBoxW(NULL, szMessage, szTitle, MB_ICONEXCLAMATION|MB_ICONERROR);
+	}
+
+	LPCWSTR pszText = bCheck ? L"\r\nUnicode check succeeded\r\n" : L"\r\nUnicode check FAILED!\r\n";
+	WriteConsoleW(hOut, pszText, lstrlen(pszText), &nWrite, NULL);
+
+	return iRc;
 }
 
 // –азбор параметров командной строки
@@ -2145,12 +2226,12 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 		else if (wcsncmp(szArg, L"/SETHOOKS=", 10) == 0)
 		{
-#ifdef SHOW_INJECT_MSGBOX
+			#ifdef SHOW_INJECT_MSGBOX
 			wchar_t szDbgMsg[128], szTitle[128];
 			swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
 			swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s\nConEmuHk, PID=%u", szArg, GetCurrentProcessId());
 			MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-#endif
+			#endif
 			gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
 			gnRunMode = RM_SETHOOK64;
 			LPWSTR pszNext = szArg+10;
@@ -2291,6 +2372,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpi(szArg, L"/DOSBOX")==0)
 		{
 			gbUseDosBox = TRUE;
+		}
+		else if (lstrcmpi(szArg, L"/CHECKUNICODE")==0)
+		{
+			return CheckUnicodeFont();
 		}
 		// ѕосле этих аргументов - идет то, что передаетс€ в COMSPEC (CreateProcess)!
 		//if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0 || wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0) {

@@ -10,6 +10,19 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.06.08
+[+] Добавлена страничка: http://code.google.com/p/conemu-maximus5/wiki/RoadMap
+[%] В некоторых случаях по краям консоли оставался мусор.
+[*] Уточнение подтверждения закрытия консоли.
+[+] GuiMacro: WindowFullscreen, WindowMaximize, WindowMode, Status.
+[+] Keys: Always on Top, Show/hide status bar (Apps+S), Show/hide tab bar (Apps+T), About (Win+Alt+A).
+[+] About: В диалог добавлены вкладки с информацией по параметрам ConEmuC, -new_console и GuiMacro.
+[+] На вкладке «Mark & Paste» добавлено ком.строка запуска внешнего редактора, значение по умолчанию: far.exe /e%1:%2 "%3"
+[*] Уточнение снятия скриншотов (Win+H). Добавлен Win+Shift+H - скриншот экрана.
+[%] Issue 570: Pasting into iPython (in fact, any console app except Far) does not work as expected.
+[%] Issue 558: Some more color anomalies.
+
+
 2012.06.04
 [%] Error «Can't free hooks in module ...» в ConEmuHk.dll
 [%] Issue 557: Assertion в RealBuffer.cpp

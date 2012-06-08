@@ -119,7 +119,7 @@ const wchar_t gsCloseViewer[] = L"Confirm closing Far viewer?";
 CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 {
 	MCHKHEAP;
-	SetConStatus(L"Initializing ConEmu..");
+	SetConStatus(L"Initializing ConEmu..", true, true);
 	mp_VCon = apVCon;
 	HWND hView = apVCon->GetView();
 	if (!hView)
@@ -924,11 +924,92 @@ void CRealConsole::ShowKeyBarHint(WORD nID)
 		mp_RBuf->ShowKeyBarHint(nID);
 }
 
+// !!! Функция может менять буфер pszChars! !!! Private !!!
+bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
+{
+	if (!pszChars || !cchCount)
+	{
+		_ASSERTE(pszChars && cchCount);
+		return false;
+	}
+
+	wchar_t* pszEnd = pszChars + cchCount;
+	INPUT_RECORD r[2];
+	MSG64* pirChars = (MSG64*)malloc(sizeof(MSG64)+cchCount*2*sizeof(MSG64::MsgStr));
+	if (!pirChars)
+	{
+		Box(L"Can't allocate (INPUT_RECORD* pirChars)!");
+		return false;
+	}
+
+	bool lbRc = false;
+	//wchar_t szMsg[128];
+
+	size_t cchSucceeded = 0;
+	MSG64::MsgStr* pir = pirChars->msg;
+	for (wchar_t* pch = pszChars; pch < pszEnd; pch++, pir+=2)
+	{
+		_ASSERTE(*pch); // оно ASCIIZ
+
+		if (pch[0] == L'\r' && pch[1] == L'\n')
+		{
+			pch++; // "\r\n" - слать "\n"
+			if (pch[1] == L'\n')
+				pch++; // buggy line returns "\r\n\n"
+		}
+
+		// "слать" в консоль '\r' а не '\n' чтобы "Enter" нажался.
+		if (pch[0] == L'\n')
+		{
+			*pch = L'\r'; // буфер наш, что хотим - то и делаем
+		}
+
+		TranslateKeyPress(0, 0, *pch, -1, r[0], r[1]);
+		PackInputRecord(r, pir);
+		PackInputRecord(r+1, pir+1);
+		cchSucceeded += 2;
+
+		//// функция сама разберется что посылать
+		//while (!PostKeyPress(0, 0, *pch))
+		//{
+		//	wcscpy_c(szMsg, L"Key press sending failed!\nTry again?");
+
+		//	if (MessageBox(ghWnd, szMsg, GetTitle(), MB_RETRYCANCEL) != IDRETRY)
+		//	{
+		//		goto wrap;
+		//	}
+
+		//	// try again
+		//}
+	}
+
+	if (cchSucceeded)
+		lbRc = PostConsoleEventPipe(pirChars, cchSucceeded);
+
+	if (!lbRc)
+		MBox(L"Key press sending failed!");
+
+	//lbRc = true;
+	//wrap:
+	free(pirChars);
+	return lbRc;
+}
+
 bool CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode /*= -1*/)
 {
 	if (!this)
 		return false;
 
+	INPUT_RECORD r[2] = {{KEY_EVENT},{KEY_EVENT}};
+	TranslateKeyPress(vkKey, dwControlState, wch, ScanCode, r[0], r[1]);
+
+	bool lbPress = PostConsoleEvent(r);
+	bool lbDepress = lbPress && PostConsoleEvent(r+1);
+	return (lbPress && lbDepress);
+}
+
+void CRealConsole::TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD& rDown, INPUT_RECORD& rUp)
+{
 	// Может приходить запрос на отсылку даже если текущий буфер НЕ rbt_Primary,
 	// например, при начале выделения и автоматическом переключении на альтернативный буфер
 
@@ -962,7 +1043,6 @@ bool CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, i
 	if (ScanCode == -1)
 		ScanCode = MapVirtualKey(vkKey, 0/*MAPVK_VK_TO_VSC*/);
 
-	bool lbPress, lbDepress;
 	INPUT_RECORD r = {KEY_EVENT};
 	r.Event.KeyEvent.bKeyDown = TRUE;
 	r.Event.KeyEvent.wRepeatCount = 1;
@@ -970,12 +1050,13 @@ bool CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, i
 	r.Event.KeyEvent.wVirtualScanCode = ScanCode;
 	r.Event.KeyEvent.uChar.UnicodeChar = wch;
 	r.Event.KeyEvent.dwControlKeyState = dwControlState;
+	rDown = r;
+
 	TODO("Может нужно в dwControlKeyState применять модификатор, если он и есть vkKey?");
-	lbPress = PostConsoleEvent(&r);
+
 	r.Event.KeyEvent.bKeyDown = FALSE;
 	r.Event.KeyEvent.dwControlKeyState = dwControlState;
-	lbDepress = PostConsoleEvent(&r);
-	return (lbPress && lbDepress);
+	rUp = r;
 }
 
 bool CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode /*= -1*/)
@@ -1164,14 +1245,14 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 		}
 	}
 
-	MSG64 msg = {sizeof(msg)};
+	MSG64 msg = {sizeof(msg), 1};
 
-	if (PackInputRecord(piRec, &msg))
+	if (PackInputRecord(piRec, msg.msg))
 	{
 		if (m_UseLogs>=2)
 			LogInput(piRec);
 
-		_ASSERTE(msg.message!=0);
+		_ASSERTE(msg.msg[0].message!=0);
 		//if (mb_UseOnlyPipeInput) {
 		lbRc = PostConsoleEventPipe(&msg);
 
@@ -1181,23 +1262,6 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 			_ASSERTE(!gbInSendConEvent);
 		}
 		#endif
-
-		//} else
-		//// ERROR_INVALID_THREAD_ID == 1444 (0x5A4)
-		//// On Vista PostThreadMessage failed with code 5, if target process created 'As administrator'
-		//if (!PostThreadMessage(dwTID, msg.message, msg.wParam, msg.lParam)) {
-		//	DWORD dwErr = GetLastError();
-		//	if (dwErr == ERROR_ACCESS_DENIED/*5*/) {
-		//		mb_UseOnlyPipeInput = TRUE;
-		//		PostConsoleEventPipe(&msg);
-		//	} else if (dwErr == ERROR_INVALID_THREAD_ID/*1444*/) {
-		//		// In shutdown?
-		//	} else {
-		//		wchar_t szErr[100];
-		//		swprintf_c(szErr, L"ConEmu: PostThreadMessage(%i) failed, code=0x%08X", dwTID, dwErr);
-		//		gpConEmu->DebugStep(szErr);
-		//	}
-		//}
 	}
 	else
 	{
@@ -1241,7 +1305,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 	BOOL bDetached = pRCon->m_Args.bDetached && !pRCon->mb_ProcessRestarted && !pRCon->mn_InRecreate;
 
-	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...");
+	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...", true);
 
 	if (pRCon->mb_NeedStartProcess)
 	{
@@ -1991,9 +2055,9 @@ BOOL CRealConsole::StartMonitorThread()
 	_ASSERTE(mh_MonitorThread==NULL);
 	//_ASSERTE(mh_InputThread==NULL);
 	//_ASSERTE(mb_Detached || mh_MainSrv!=NULL); -- процесс теперь запускаем в MonitorThread
-	SetConStatus(L"Initializing ConEmu...");
+	SetConStatus(L"Initializing ConEmu...", true);
 	mh_MonitorThread = CreateThread(NULL, 0, MonitorThread, (LPVOID)this, 0, &mn_MonitorThreadID);
-	SetConStatus(L"Initializing ConEmu....");
+	SetConStatus(L"Initializing ConEmu....", true);
 
 	//mh_InputThread = CreateThread(NULL, 0, InputThread, (LPVOID)this, 0, &mn_InputThreadID);
 
@@ -2019,7 +2083,7 @@ BOOL CRealConsole::StartProcess()
 	}
 
 	BOOL lbRc = FALSE;
-	SetConStatus(L"Preparing process startup line...");
+	SetConStatus(L"Preparing process startup line...", true);
 
 	// Для валидации объектов
 	CVirtualConsole* pVCon = mp_VCon;
@@ -2154,7 +2218,7 @@ BOOL CRealConsole::StartProcess()
 		if (!m_Args.bRunAsAdministrator)
 		{
 			LockSetForegroundWindow(LSFW_LOCK);
-			SetConStatus(L"Starting root process...");
+			SetConStatus(L"Starting root process...", true);
 
 			if (m_Args.pszUserName != NULL)
 			{
@@ -2316,7 +2380,7 @@ BOOL CRealConsole::StartProcess()
 
 				//mp_sei->nShow = gpSet->isConVisible ? SW_SHOWNORMAL : SW_HIDE;
 				mp_sei->nShow = SW_SHOWMINIMIZED;
-				SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...");
+				SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", true);
 				lbRc = gpConEmu->GuiShellExecuteEx(mp_sei, TRUE);
 				// ошибку покажем дальше
 				dwLastError = GetLastError();
@@ -2977,8 +3041,14 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 	return FALSE;
 }
 
-bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
+bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount /*= 1*/)
 {
+	if (!pMsg || !cchCount)
+	{
+		_ASSERTE(pMsg && (cchCount>0));
+		return false;
+	}
+
 	DWORD dwErr = 0; //, dwMode = 0;
 	bool lbOk = false;
 	BOOL fSuccess = FALSE;
@@ -3081,9 +3151,9 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
 	//    //DisplayLastError(L"ConEmuC was terminated");
 	//    return;
 	//}
-#ifdef _DEBUG
 
-	switch(pMsg->message)
+	#ifdef _DEBUG
+	switch (pMsg->msg[0].message)
 	{
 		case WM_KEYDOWN: case WM_SYSKEYDOWN:
 			DEBUGSTRINPUTPIPE(L"ConEmu: Sending key down\n"); break;
@@ -3092,11 +3162,14 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg)
 		default:
 			DEBUGSTRINPUTPIPE(L"ConEmu: Sending input\n");
 	}
+	#endif
 
-#endif
 	gbInSendConEvent = TRUE;
-	DWORD dwSize = sizeof(MSG64), dwWritten;
-	_ASSERTE(pMsg->cbSize==dwSize);
+	DWORD dwSize = sizeof(MSG64)+(cchCount-1)*sizeof(MSG64::MsgStr), dwWritten;
+	//_ASSERTE(pMsg->cbSize==dwSize);
+	pMsg->cbSize = dwSize;
+	pMsg->nCount = cchCount;
+
 	fSuccess = WriteFile(mh_ConInputPipe, pMsg, dwSize, &dwWritten, NULL);
 
 	if (fSuccess)
@@ -3803,7 +3876,7 @@ void CRealConsole::OnServerStarted(HWND ahConWnd, DWORD anServerPID)
 	// Окошко консоли скорее всего еще не инициализировано
 	if (hConWnd == NULL)
 	{
-		SetConStatus(L"Waiting for console server...");
+		SetConStatus(L"Waiting for console server...", true);
 		SetHwnd(ahConWnd);
 	}
 }
@@ -6906,7 +6979,6 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 	if (!hConWnd)
 		return;
 
-	WARNING("warning: Обработать самим и предупредить о 1) наличии \r\n; 2) слишком большом тексте (по настройкам)");
 	WARNING("warning: Хорошо бы слямзить из ClipFixer кусочек по корректировке текста. Настройка?");
 
 #if 0
@@ -7008,55 +7080,14 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 
 	//INPUT_RECORD r = {KEY_EVENT};
 
-	// Отправить в консоль все символы из: lptstr
-	for (wchar_t* pch = pszBuf; pch < pszEnd; pch++)
+	// Отправить в консоль все символы из: pszBuf
+	if (pszEnd > pszBuf)
 	{
-		_ASSERTE(*pch); // оно ASCIIZ
-
-		if (pch[0] == L'\r' && pch[1] == L'\n')
-		{
-			pch++; // "\r\n" - слать "\n"
-			if (pch[1] == L'\n')
-				pch++; // buggy line returns "\r\n\n"
-		}
-
-		// "слать" в консоль '\r' а не '\n' чтобы "Enter" нажался.
-		if (pch[0] == L'\n')
-		{
-			*pch = L'\r'; // буфер наш, что хотим - то и делаем
-		}
-
-
-		// функция сама разберется что посылать
-		while (!PostKeyPress(0, 0, *pch))
-		{
-			wcscpy_c(szMsg, L"Key press sending failed!\nTry again?");
-
-			if (MessageBox(ghWnd, szMsg, GetTitle(), MB_RETRYCANCEL) != IDRETRY)
-			{
-				goto wrap;
-			}
-
-			// try again
-		}
-
-
-		#if 0
-		r.Event.KeyEvent.bKeyDown = TRUE;
-		r.Event.KeyEvent.uChar.UnicodeChar = *pch;
-		r.Event.KeyEvent.wRepeatCount = 1; //TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
-		r.Event.KeyEvent.wVirtualKeyCode = 0;
-		//r.Event.KeyEvent.wVirtualScanCode = ((DWORD)lParam & 0xFF0000) >> 16; // 16-23 - Specifies the scan code. The value depends on the OEM.
-		// 24 - Specifies whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-		// 29 - Specifies the context code. The value is 1 if the ALT key is held down while the key is pressed; otherwise, the value is 0.
-		// 30 - Specifies the previous key state. The value is 1 if the key is down before the message is sent, or it is 0 if the key is up.
-		// 31 - Specifies the transition state. The value is 1 if the key is being released, or it is 0 if the key is being pressed.
-		//r.Event.KeyEvent.dwControlKeyState = 0;
-		PostConsoleEvent(&r);
-		// И сразу посылаем отпускание
-		r.Event.KeyEvent.bKeyDown = FALSE;
-		PostConsoleEvent(&r);
-		#endif
+		PostString(pszBuf, pszEnd-pszBuf);
+	}
+	else
+	{
+		_ASSERTE(pszEnd > pszBuf);
 	}
 
 wrap:
@@ -7367,22 +7398,31 @@ void CRealConsole::CloseTab()
 				bCanCloseMacro = FALSE;
 				break;
 			}
-		}
-		
-		if (bCanCloseMacro)
-		{
-			CEFarWindowType tabtype = GetActiveTabType();
-			LPCWSTR pszConfirmText =
-				(tabtype & fwt_Editor) ? gsCloseEditor :
-				(tabtype & fwt_Viewer) ? gsCloseViewer :
-				gsCloseCon;
 
-			if (!isCloseConfirmed(pszConfirmText))
+			if (bCanCloseMacro)
+			{
+				CEFarWindowType tabtype = GetActiveTabType();
+				LPCWSTR pszConfirmText =
+					((tabtype & fwt_TypeMask) == fwt_Editor) ? gsCloseEditor :
+					((tabtype & fwt_TypeMask) == fwt_Viewer) ? gsCloseViewer :
+					gsCloseCon;
+
+				if (!isCloseConfirmed(pszConfirmText))
+				{
+					// Отмена
+					return;
+				}
+			}
+		}
+		else
+		{
+			if (!isCloseConfirmed(gsCloseCon))
 			{
 				// Отмена
 				return;
 			}
 		}
+
 
 		if (bCanCloseMacro)
 			PostMacro(gpSet->TabCloseMacro(), TRUE/*async*/);
@@ -8824,20 +8864,26 @@ LPCWSTR CRealConsole::GetConStatus()
 	return ms_ConStatus;
 }
 
-void CRealConsole::SetConStatus(LPCWSTR asStatus)
+void CRealConsole::SetConStatus(LPCWSTR asStatus, bool abResetOnConsoleReady /*= false*/, bool abDontUpdate /*= false*/)
 {
 	lstrcpyn(ms_ConStatus, asStatus ? asStatus : L"", countof(ms_ConStatus));
+	mb_ResetStatusOnConsoleReady = abResetOnConsoleReady;
+
 	lstrcpyn(CRealConsole::ms_LastRConStatus, ms_ConStatus, countof(CRealConsole::ms_LastRConStatus));
 
-	if (isActive())
+	if (!abDontUpdate && isActive())
 	{
-		// Нехорошо звать длительные функции из вызывающихся при инициализации
-		//if (mp_VCon->Update(true))
-		mp_VCon->Invalidate();
+		// Обновить статусную строку, если она показана
+		if (gpSet->isStatusBarShow)
+		{
+			gpConEmu->mp_Status->UpdateStatusBar(true);
+		}
+		else if (!abDontUpdate)
+		{
+			mp_VCon->Update(true);
+		}
 
-		//gpConEmu->Update(true);
-		//if (mp_VCon->Update(false))
-		//	gpConEmu->m_Child->Redraw();
+		mp_VCon->Invalidate();
 	}
 }
 

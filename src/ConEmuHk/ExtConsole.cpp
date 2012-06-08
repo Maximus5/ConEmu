@@ -1193,6 +1193,14 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 			ExtGetAttributes(&DefClr);
 			Info->FillAttr = DefClr.Attributes;
 		}
+		else if (Info->Flags & efof_ResetExt)
+		{
+			Info->FillAttr.Flags = CECF_NONE;
+			// Цвет - без разницы. Будут сброшены только расширенные атрибуты,
+			// реальный цвет в консоли оставляем без изменений
+			Info->FillAttr.ForegroundColor = 7;
+			Info->FillAttr.BackgroundColor = 0;
+		}
 
 		AnnotationInfo t = {};
 		WORD n = 0;
@@ -1232,8 +1240,11 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 			}
 		}
 
-		b = FillConsoleOutputAttribute(h, n, Info->Count, Info->Coord, &nWritten);
-		lbRc &= b;
+		if (!(Info->Flags & efof_ResetExt))
+		{
+			b = FillConsoleOutputAttribute(h, n, Info->Count, Info->Coord, &nWritten);
+			lbRc &= b;
+		}
 	}
 
 	if (Info->Flags & efof_Character)

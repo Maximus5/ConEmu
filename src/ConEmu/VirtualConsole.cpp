@@ -3744,6 +3744,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		FillRect(hPaintDc, &rcClient, hBr);
 		//#endif
 		
+		TODO("Переделать на StatusBar, если gpSet->isStatusBarShow");
 		if (!lbGuiVisible)
 		{
 			CEDC cePaintDc(hPaintDc);
