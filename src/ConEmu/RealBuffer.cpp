@@ -64,7 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
-#define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
+#define DEBUGSTRCURSORPOS(s) DEBUGSTR(s)
 
 #define Free SafeFree
 #define Alloc calloc
@@ -1305,7 +1305,13 @@ SHORT CRealBuffer::GetBufferPosX()
 
 SHORT CRealBuffer::GetBufferPosY()
 {
-	_ASSERTE(con.nTopVisibleLine==con.m_sbi.srWindow.Top);
+#ifdef _DEBUG
+	if (con.nTopVisibleLine!=con.m_sbi.srWindow.Top)
+	{
+		TODO("Пока не переделал скролл на пайп - данные могут приходить немного с запаздываением");
+		_ASSERTE(con.nTopVisibleLine==con.m_sbi.srWindow.Top || mp_RCon->InScroll());
+	}
+#endif
 	return con.nTopVisibleLine;
 }
 
@@ -1922,7 +1928,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 				lsbi.srWindow.Bottom = lsbi.srWindow.Top + nY;
 				#ifdef _DEBUG
 				int l = lstrlen(szCursorDbg);
-				_wsprintf(szCursorDbg+l, SKIPLEN(countof(szCursorDbg)-l) L"Visible rect locked to {%ux%u-%ux%u). ", lsbi.srWindow.Left, lsbi.srWindow.Top, lsbi.srWindow.Right, lsbi.srWindow.Bottom);
+				_wsprintf(szCursorDbg+l, SKIPLEN(countof(szCursorDbg)-l) L"Visible rect locked to {%ux%u-%ux%u), Top=%u. ", lsbi.srWindow.Left, lsbi.srWindow.Top, lsbi.srWindow.Right, lsbi.srWindow.Bottom, con.nTopVisibleLine);
 				#endif
 			}
 			#ifdef _DEBUG
@@ -5262,15 +5268,43 @@ LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/)
 {
 	if (!this) return 0;
 
+	int nVisible = GetTextHeight();
+
 	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
 	if (m_Type == rbt_Primary)
 	{
+		if ((nDirection != SB_THUMBTRACK) && (nDirection != SB_THUMBPOSITION))
+			nTrackPos = 0;
+		if (nTrackPos < 0)
+			nTrackPos = con.m_sbi.srWindow.Top;
+
+		WPARAM wParm = MAKELONG(nDirection,nTrackPos);
 		WARNING("Переделать в команду пайпа");
-		mp_RCon->PostConsoleMessage(mp_RCon->hConWnd, WM_VSCROLL, nDirection, NULL);
+
+		mp_RCon->PostConsoleMessage(mp_RCon->hConWnd, WM_VSCROLL, wParm, NULL);
+
+		if ((nDirection == SB_THUMBTRACK) || (nDirection == SB_THUMBPOSITION))
+		{
+			_ASSERTE(nTrackPos>=0);
+			int nVisible = GetTextHeight();
+
+			if (nTrackPos < 0)
+				nTrackPos = 0;
+			else if ((nTrackPos + nVisible) >= con.m_sbi.dwSize.Y)
+				nTrackPos = con.m_sbi.dwSize.Y - nVisible;
+
+			// Обновим Top, иначе курсор отрисовывается в неправильном месте
+			con.m_sbi.srWindow.Top = nTrackPos;
+			con.m_sbi.srWindow.Bottom = nTrackPos + nVisible - 1;
+			con.nTopVisibleLine = nTrackPos;
+
+			////mp_RCon->mp_VCon->Invalidate();
+			//mp_RCon->mb_DataChanged = TRUE; // Переменная используется внутри класса
+			//con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
+		}
 	}
 	else
 	{
-		int nVisible = GetTextHeight();
 		SHORT nNewTop = con.m_sbi.srWindow.Top;
 
 		switch (nDirection)
@@ -5292,7 +5326,7 @@ LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/)
 		case SB_THUMBTRACK:
 		case SB_THUMBPOSITION:
 			{
-				_ASSERTE(nTrackPos>=0)
+				_ASSERTE(nTrackPos>=0);
 
 				if (nTrackPos < 0)
 					nTrackPos = 0;
@@ -5333,15 +5367,7 @@ LRESULT CRealBuffer::OnSetScrollPos(WPARAM wParam)
 	if (!this) return 0;
 
 	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
-	if (m_Type == rbt_Primary)
-	{
-		TODO("Переделать в команду пайпа"); // не критично. если консоль под админом - сообщение посылается через пайп в сервер, а он уже пересылает в консоль
-		mp_RCon->PostConsoleMessage(mp_RCon->hConWnd, WM_VSCROLL, wParam, NULL);
-	}
-	else
-	{
-		OnScroll(LOWORD(wParam),HIWORD(wParam));
-	}
+	OnScroll(LOWORD(wParam),HIWORD(wParam));
 	return 0;
 }
 

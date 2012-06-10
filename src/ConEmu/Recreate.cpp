@@ -199,7 +199,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			//		SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pGrp->pszName);
 			//}
 
-			if (pArgs->bRecreate)
+			if (pArgs->aRecreate == cra_RecreateTab)
 			{
 				SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
 				SetDlgItemText(hDlg, IDC_STARTUP_DIR, gpConEmu->ActiveCon()->RCon()->GetDir());
@@ -223,7 +223,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			lstrcpy(szRbCaption, L"Run as current &user: "); lstrcat(szRbCaption, szCurUser);
 			SetDlgItemText(hDlg, rbCurrentUser, szRbCaption);
 
-			if (pArgs->bRecreate && gpConEmu->ActiveCon()->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted))
+			if ((pArgs->aRecreate == cra_RecreateTab) && gpConEmu->ActiveCon()->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted))
 			{
 				nChecked = rbAnotherUser;
 
@@ -292,19 +292,35 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
 
 			RECT rcBtnBox = {0};
-			if (pArgs->bRecreate)
+			if (pArgs->aRecreate == cra_RecreateTab)
 			{
 				//GCC hack. иначе не собирается
 				SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "About to recreate console");
 				SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
 				// Выровнять флажок по кнопке
 				GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
+				// Спрятать флажок "New window"
+				ShowWindow(GetDlgItem(hDlg, cbRunInNewWindow), SW_HIDE);
 				lbRc = TRUE;
 			}
 			else
 			{
 				//GCC hack. иначе не собирается
-				SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "Create new console");
+				SetDlgItemTextA(hDlg, IDC_RESTART_MSG,  "Create new console");
+
+				CheckDlgButton(hDlg, cbRunInNewWindow, (pArgs->aRecreate == cra_CreateWindow) ? BST_CHECKED : BST_UNCHECKED);
+				//if (pArgs->aRecreate == cra_CreateWindow)
+				//{
+				//	SetWindowText(hDlg, L"ConEmu - Create new window");
+				//	//GCC hack. иначе не собирается
+				//	SetDlgItemTextA(hDlg, IDC_RESTART_MSG,  "Create new window");
+				//}
+				//else
+				//{
+				//	//GCC hack. иначе не собирается
+				//	SetDlgItemTextA(hDlg, IDC_RESTART_MSG,  "Create new console");
+				//}
+
 				SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_QUESTION), 0);
 				POINT pt = {0,0};
 				MapWindowPoints(GetDlgItem(hDlg, IDC_TERMINATE), hDlg, &pt, 1);
@@ -327,6 +343,15 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				pt.y = rcBtnBox.top + ((rcBtnBox.bottom-rcBtnBox.top) - (rcBox.bottom-rcBox.top))/2;
 				SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 				SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
+			}
+
+			if (pArgs->aRecreate != cra_RecreateTab)
+			{
+				POINT pt = {};
+				MapWindowPoints(GetDlgItem(hDlg, cbRunAsAdmin), hDlg, &pt, 1);
+				RECT rcBox2; GetWindowRect(GetDlgItem(hDlg, cbRunInNewWindow), &rcBox2);
+				SetWindowPos(GetDlgItem(hDlg, cbRunInNewWindow), NULL,
+					pt.x-(rcBox2.right-rcBox2.left), pt.y, 0,0, SWP_NOSIZE);
 			}
 
 			RECT rect;
@@ -623,6 +648,13 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						pArgs->pszStartupDir = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
 						// Vista+ (As Admin...)
 						pArgs->bRunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
+						if (pArgs->aRecreate != cra_RecreateTab)
+						{
+							if (SendDlgItemMessage(hDlg, cbRunInNewWindow, BM_GETCHECK, 0, 0))
+								pArgs->aRecreate = cra_CreateWindow;
+							else
+								pArgs->aRecreate = cra_CreateTab;
+						}
 						pDlg->mn_DlgRc = IDC_START;
 						EndDialog(hDlg, IDC_START);
 						return 1;

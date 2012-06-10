@@ -83,6 +83,32 @@ int main(
 		MessageBox(NULL,pszCmdLine,szTitle,0);
 	}
 	#endif
+
+#ifdef _DEBUG
+	typedef struct _UNICODE_STRING {
+		USHORT Length;
+		USHORT MaximumLength;
+		PWSTR  Buffer;
+	} UNICODE_STRING;
+	UNICODE_STRING str = {};
+	WCHAR buf[MAX_PATH];
+	str.Buffer = (PWSTR)(((((DWORD_PTR)buf)+7)>>3)<<3);
+	lstrcpy(str.Buffer, L"kernel32.dll");
+	str.Length = lstrlen(str.Buffer)*2;
+	str.MaximumLength = str.Length+2;
+
+	typedef LONG (__stdcall* LdrGetDllHandleByName_t)(UNICODE_STRING* BaseDllName, UNICODE_STRING* FullDllName, PVOID *DllHandle);
+	HMODULE hNtDll = LoadLibrary(L"ntdll.dll");
+	HMODULE hKernel = GetModuleHandle(str.Buffer);
+	LdrGetDllHandleByName_t LdrGetDllHandleByName_f = (LdrGetDllHandleByName_t)GetProcAddress(hNtDll, "LdrGetDllHandleByName");
+	LONG ntStatus = -1; LPBYTE ptrProc = NULL;
+	if (LdrGetDllHandleByName_f)
+	{
+		DWORD_PTR nShift = ((LPBYTE)GetProcAddress(hKernel,"LoadLibraryW")) - (LPBYTE)hKernel;
+		ntStatus = LdrGetDllHandleByName_f(&str, NULL, (PVOID*)&ptrProc);
+		ptrProc += 0x12345;
+	}
+#endif
 	
 	//wchar_t szSkipEventName[128];
 	//_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());

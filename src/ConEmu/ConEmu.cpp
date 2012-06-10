@@ -4969,7 +4969,7 @@ bool CConEmuMain::ConActivate(int nCon)
 			if (gpSet->isMultiAutoCreate)
 			{
 				// —оздать новую default-консоль
-				Recreate(FALSE, FALSE, FALSE);
+				RecreateAction(cra_CreateTab/*FALSE*/, FALSE, FALSE);
 				return true; // создана нова€ консоль
 			}
 
@@ -5922,26 +5922,32 @@ void CConEmuMain::CtrlWinAltSpace()
 // abRecreate: TRUE - пересоздать текущую, FALSE - создать новую
 // abConfirm:  TRUE - показать диалог подтверждени€
 // abRunAs:    TRUE - под админом
-void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
+void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, BOOL abRunAs)
 {
 	FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
 	FlashWindowEx(&fl); // ѕри многократных создани€х мигать начинает...
 	RConStartArgs args;
-	args.bRecreate = abRecreate;
+	args.aRecreate = aRecreate;
 	args.bRunAsAdministrator = abRunAs;
 
 	WARNING("ѕри переходе на новую обработку кнопок больше не нужно");
 	//if (!abConfirm && isPressed(VK_SHIFT))
 	//	abConfirm = TRUE;
 
-	if (!abRecreate)
+	if ((args.aRecreate == cra_CreateTab) || (args.aRecreate == cra_CreateWindow))
 	{
 		// —оздать новую консоль
-		BOOL lbSlotFound = FALSE;
+		BOOL lbSlotFound = (args.aRecreate == cra_CreateWindow);
 
-		for (size_t i = 0; i < countof(mp_VCon); i++)
+		if (args.aRecreate == cra_CreateWindow)
+			abConfirm = TRUE;
+
+		if (args.aRecreate == cra_CreateTab)
 		{
-			if (!mp_VCon[i]) { lbSlotFound = TRUE; break; }
+			for (size_t i = 0; i < countof(mp_VCon); i++)
+			{
+				if (!mp_VCon[i]) { lbSlotFound = TRUE; break; }
+			}
 		}
 
 		if (!lbSlotFound)
@@ -5974,8 +5980,82 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
 			mp_VActive->Redraw();
 		}
 
-		//—обственно, запуск
-		CreateCon(&args, TRUE);
+		if (args.aRecreate == cra_CreateTab)
+		{
+			//—обственно, запуск
+			CreateCon(&args, TRUE);
+		}
+		else
+		{
+			_ASSERTE(args.pszSpecialCmd && *args.pszSpecialCmd);
+			LPCWSTR pszCmd = args.pszSpecialCmd ? args.pszSpecialCmd : gpSet->GetCmd();
+			if (!pszCmd || !pszCmd)
+			{
+				_ASSERTE(pszCmd && *pszCmd);
+			}
+			else
+			{
+				// Start new ConEmu.exe process with choosen arguments...
+				STARTUPINFO si = {sizeof(si)};
+				PROCESS_INFORMATION pi = {};
+				wchar_t* pszCmdLine = NULL;
+				LPCWSTR pszConfig = gpSetCls->GetConfigName();
+				size_t cchMaxLen = _tcslen(ms_ConEmuExe)
+					+ _tcslen(pszCmd)
+					+ (pszConfig ? (_tcslen(pszConfig) + 32) : 0)
+					+ 128; // на вс€кие флажки и -new_console
+				if ((pszCmdLine = (wchar_t*)malloc(cchMaxLen*sizeof(*pszCmdLine))) == NULL)
+				{
+					_ASSERTE(pszCmdLine);
+				}
+				else
+				{
+					pszCmdLine[0] = L'"'; pszCmdLine[1] = 0;
+					_wcscat_c(pszCmdLine, cchMaxLen, ms_ConEmuExe);
+					_wcscat_c(pszCmdLine, cchMaxLen, L"\" ");
+					if (pszConfig && *pszConfig)
+					{
+						_wcscat_c(pszCmdLine, cchMaxLen, L"/config \"");
+						_wcscat_c(pszCmdLine, cchMaxLen, pszConfig);
+						_wcscat_c(pszCmdLine, cchMaxLen, L"\" ");
+					}
+					_wcscat_c(pszCmdLine, cchMaxLen, L"/cmd ");
+					_wcscat_c(pszCmdLine, cchMaxLen, pszCmd);
+					if (args.bRunAsAdministrator || args.bRunAsRestricted || args.pszUserName)
+					{
+						if (args.bRunAsAdministrator)
+							_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:a");
+						else if (args.bRunAsRestricted)
+							_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:r");
+						//else if (args.pszUserName)
+						//{
+						//	_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:u:");
+						//	_wcscat_c(pszCmdLine, cchMaxLen, args.pszUserName);
+						//}
+					}
+
+					BOOL bStart;
+					if (!args.bRunAsAdministrator && !args.bRunAsRestricted && (args.pszUserName && *args.pszUserName))
+						bStart = CreateProcessWithLogonW(args.pszUserName, args.pszDomain, args.szUserPassword,
+					                           LOGON_WITH_PROFILE, NULL, pszCmdLine,
+					                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
+					                           , NULL, args.pszStartupDir, &si, &pi);
+					else
+						bStart = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, args.pszStartupDir, &si, &pi);
+
+					if (!bStart)
+					{
+						DWORD nErr = GetLastError();
+						DisplayLastError(pszCmdLine, nErr, MB_ICONSTOP, L"Failed to start new ConEmu window");
+					}
+					else
+					{
+						SafeCloseHandle(pi.hProcess);
+						SafeCloseHandle(pi.hThread);
+					}
+				}
+			}
+		}
 	}
 	else
 	{
@@ -7583,8 +7663,9 @@ void CConEmuMain::InvalidateGaps()
 	GetClientRect(ghWnd, &rc);
 	HRGN h = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
 
+	#if 0
 	TODO("DoubleView");
-	if (mp_TabBar->GetRebarClientRect(&rc))
+	if ((iRc != NULLREGION) && mp_TabBar->GetRebarClientRect(&rc))
 	{
 		HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
 		iRc = CombineRgn(h, h, h2, RGN_DIFF);
@@ -7594,7 +7675,7 @@ void CConEmuMain::InvalidateGaps()
 			goto wrap;
 	}
 
-	if (mp_Status->GetStatusBarClientRect(&rc))
+	if ((iRc != NULLREGION) && mp_Status->GetStatusBarClientRect(&rc))
 	{
 		HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
 		CombineRgn(h, h, h2, RGN_DIFF);
@@ -7603,8 +7684,10 @@ void CConEmuMain::InvalidateGaps()
 		if (iRc == NULLREGION)
 			goto wrap;
 	}
+	#endif
 
 	// “еперь - VConsole (все видимые!)
+	if (iRc != NULLREGION)
 	{
 		TODO("DoubleView");
 		TODO("«аменить на Background, когда будет");
@@ -7613,7 +7696,7 @@ void CConEmuMain::InvalidateGaps()
 		{
 			MapWindowPoints(NULL, ghWnd, (LPPOINT)&rc, 2);
 			HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
-			CombineRgn(h, h, h2, RGN_DIFF);
+			iRc = CombineRgn(h, h, h2, RGN_DIFF);
 			DeleteObject(h2);
 
 			if (iRc == NULLREGION)
@@ -7658,98 +7741,140 @@ void CConEmuMain::PaintGaps(HDC hDC)
 	{
 		TODO("DoubleView: заливать с учетом, что видимых окон - два, и может быть промежуток между ними");
 
-		//RECT rcMargins = CalcMargins(CEM_TAB); // ќткусить площадь, зан€тую строкой табов
-		//AddMargins(rcClient, rcMargins, FALSE);
-		//// Ќа старте при /max - ghWnd DC еще не изменил свое положение
-		////RECT offsetRect; Get ClientRect(ghWnd DC, &offsetRect);
-		//RECT rcWndClient; Get ClientRect(ghWnd, &rcWndClient);
-		//RECT rcCalcCon = gpConEmu->CalcRect(CER_BACK, rcWndClient, CER_MAINCLIENT);
-		//RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
-		// -- работает не правильно - не учитывает центрирование в Maximized
-		//RECT offsetRect = gpConEmu->CalcRect(CER_BACK, rcCon, CER_CONSOLE);
-		/*
-		RECT rcClient = {0};
-		if (ghWnd DC) {
-			Get ClientRect(ghWnd DC, &rcClient);
-			MapWindowPoints(ghWnd DC, ghWnd, (LPPOINT)&rcClient, 2);
-		}
-		*/
-		RECT dcSize = CalcRect(CER_DC, rcClient, CER_MAINCLIENT);
-		RECT client = CalcRect(CER_DC, rcClient, CER_MAINCLIENT, NULL, &dcSize);
-		WARNING("¬ынести в CalcRect");
-		RECT offsetRect; memset(&offsetRect,0,sizeof(offsetRect));
+		int iRc = SIMPLEREGION;
 
-		if (mp_VActive && mp_VActive->Width && mp_VActive->Height)
+		RECT rc = {};
+		GetClientRect(ghWnd, &rc);
+		HRGN h = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+
+		TODO("DoubleView");
+		if ((iRc != NULLREGION) && mp_TabBar->GetRebarClientRect(&rc))
 		{
-			if ((gpSet->isTryToCenter && (isZoomed() || mb_isFullScreen))
-					|| isNtvdm())
+			HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+			iRc = CombineRgn(h, h, h2, RGN_DIFF);
+			DeleteObject(h2);
+		}
+
+		if ((iRc != NULLREGION) && mp_Status->GetStatusBarClientRect(&rc))
+		{
+			HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+			CombineRgn(h, h, h2, RGN_DIFF);
+			DeleteObject(h2);
+		}
+
+		// “еперь - VConsole (все видимые!)
+		if (iRc != NULLREGION)
+		{
+			TODO("DoubleView");
+			TODO("«аменить на Background, когда будет");
+			HWND hView = mp_VActive ? mp_VActive->GetView() : NULL;
+			if (hView && GetWindowRect(hView, &rc))
 			{
-				offsetRect.left = (client.right+client.left-(int)mp_VActive->Width)/2;
-				offsetRect.top = (client.bottom+client.top-(int)mp_VActive->Height)/2;
+				MapWindowPoints(NULL, ghWnd, (LPPOINT)&rc, 2);
+				HRGN h2 = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+				iRc = CombineRgn(h, h, h2, RGN_DIFF);
+				DeleteObject(h2);
 			}
-
-			if (offsetRect.left<client.left) offsetRect.left=client.left;
-
-			if (offsetRect.top<client.top) offsetRect.top=client.top;
-
-			offsetRect.right = offsetRect.left + mp_VActive->Width;
-			offsetRect.bottom = offsetRect.top + mp_VActive->Height;
-
-			if (offsetRect.right>client.right) offsetRect.right=client.right;
-
-			if (offsetRect.bottom>client.bottom) offsetRect.bottom=client.bottom;
-		}
-		else
-		{
-			offsetRect = client;
 		}
 
-		// paint gaps between console and window client area with first color
-		RECT rect;
-		//TODO:!!!
-		// top
-		rect = rcClient;
-		rect.bottom = offsetRect.top;
+		if (iRc != NULLREGION)
+			FillRgn(hDC, h, hBrush);
 
-		if (!IsRectEmpty(&rect))
-			FillRect(hDC, &rect, hBrush);
+		DeleteObject(h);
 
-		#ifdef _DEBUG
-		//GdiFlush();
-		#endif
-		// right
-		rect.left = offsetRect.right;
-		rect.bottom = rcClient.bottom;
+		////RECT rcMargins = CalcMargins(CEM_TAB); // ќткусить площадь, зан€тую строкой табов
+		////AddMargins(rcClient, rcMargins, FALSE);
+		////// Ќа старте при /max - ghWnd DC еще не изменил свое положение
+		//////RECT offsetRect; Get ClientRect(ghWnd DC, &offsetRect);
+		////RECT rcWndClient; Get ClientRect(ghWnd, &rcWndClient);
+		////RECT rcCalcCon = gpConEmu->CalcRect(CER_BACK, rcWndClient, CER_MAINCLIENT);
+		////RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcCalcCon, CER_BACK);
+		//// -- работает не правильно - не учитывает центрирование в Maximized
+		////RECT offsetRect = gpConEmu->CalcRect(CER_BACK, rcCon, CER_CONSOLE);
+		///*
+		//RECT rcClient = {0};
+		//if (ghWnd DC) {
+		//	Get ClientRect(ghWnd DC, &rcClient);
+		//	MapWindowPoints(ghWnd DC, ghWnd, (LPPOINT)&rcClient, 2);
+		//}
+		//*/
+		//RECT dcSize = CalcRect(CER_DC, rcClient, CER_MAINCLIENT);
+		//RECT client = CalcRect(CER_DC, rcClient, CER_MAINCLIENT, NULL, &dcSize);
+		//WARNING("¬ынести в CalcRect");
+		//RECT offsetRect; memset(&offsetRect,0,sizeof(offsetRect));
 
-		if (!IsRectEmpty(&rect))
-			FillRect(hDC, &rect, hBrush);
+		//if (mp_VActive && mp_VActive->Width && mp_VActive->Height)
+		//{
+		//	if ((gpSet->isTryToCenter && (isZoomed() || mb_isFullScreen))
+		//			|| isNtvdm())
+		//	{
+		//		offsetRect.left = (client.right+client.left-(int)mp_VActive->Width)/2;
+		//		offsetRect.top = (client.bottom+client.top-(int)mp_VActive->Height)/2;
+		//	}
 
-		#ifdef _DEBUG
-		//GdiFlush();
-		#endif
-		// left
-		rect.left = 0;
-		rect.right = offsetRect.left;
-		rect.bottom = rcClient.bottom;
+		//	if (offsetRect.left<client.left) offsetRect.left=client.left;
 
-		if (!IsRectEmpty(&rect))
-			FillRect(hDC, &rect, hBrush);
+		//	if (offsetRect.top<client.top) offsetRect.top=client.top;
 
-		#ifdef _DEBUG
-		//GdiFlush();
-		#endif
-		// bottom
-		rect.left = 0;
-		rect.right = rcClient.right;
-		rect.top = offsetRect.bottom;
-		rect.bottom = rcClient.bottom;
+		//	offsetRect.right = offsetRect.left + mp_VActive->Width;
+		//	offsetRect.bottom = offsetRect.top + mp_VActive->Height;
 
-		if (!IsRectEmpty(&rect))
-			FillRect(hDC, &rect, hBrush);
+		//	if (offsetRect.right>client.right) offsetRect.right=client.right;
 
-		#ifdef _DEBUG
-		//GdiFlush();
-		#endif
+		//	if (offsetRect.bottom>client.bottom) offsetRect.bottom=client.bottom;
+		//}
+		//else
+		//{
+		//	offsetRect = client;
+		//}
+
+		//// paint gaps between console and window client area with first color
+		//RECT rect;
+		////TODO:!!!
+		//// top
+		//rect = rcClient;
+		//rect.bottom = offsetRect.top;
+
+		//if (!IsRectEmpty(&rect))
+		//	FillRect(hDC, &rect, hBrush);
+
+		//#ifdef _DEBUG
+		////GdiFlush();
+		//#endif
+		//// right
+		//rect.left = offsetRect.right;
+		//rect.bottom = rcClient.bottom;
+
+		//if (!IsRectEmpty(&rect))
+		//	FillRect(hDC, &rect, hBrush);
+
+		//#ifdef _DEBUG
+		////GdiFlush();
+		//#endif
+		//// left
+		//rect.left = 0;
+		//rect.right = offsetRect.left;
+		//rect.bottom = rcClient.bottom;
+
+		//if (!IsRectEmpty(&rect))
+		//	FillRect(hDC, &rect, hBrush);
+
+		//#ifdef _DEBUG
+		////GdiFlush();
+		//#endif
+		//// bottom
+		//rect.left = 0;
+		//rect.right = rcClient.right;
+		//rect.top = offsetRect.bottom;
+		//rect.bottom = rcClient.bottom;
+
+		//if (!IsRectEmpty(&rect))
+		//	FillRect(hDC, &rect, hBrush);
+
+		//#ifdef _DEBUG
+		////GdiFlush();
+		//#endif
+
 		DeleteObject(hBrush);
 	}
 
@@ -13147,7 +13272,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		case ID_NEWCONSOLE:
 			// —оздать новую консоль
-			Recreate(FALSE, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+			RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			return 0;
 			
 		case IDM_ATTACHTO:
@@ -14899,7 +15024,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 			if (messg)
 			{
-				if (messg == WM_CONTEXTMENU)
+				// 0x0313 - Undocumented. When you right-click on a taskbar button,
+				// Windows sends an undocumented message ($0313) to the corresponding
+				// application window. The WPARAM is unused (zero) and the
+				// LPARAM contains the mouse position in screen coordinates, in the usual
+				// format. By default, WindowProc handles this message by popping up the
+				// system menu at the given coordinates.
+				if ((messg == WM_CONTEXTMENU) || (messg == 0x0313))
 				{
 					mn_TrackMenuPlace = tmp_System;
 					mp_Tip->HideTip();
@@ -14907,7 +15038,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 
-				if (messg == WM_CONTEXTMENU)
+				if ((messg == WM_CONTEXTMENU) || (messg == 0x0313))
 				{
 					mn_TrackMenuPlace = tmp_None;
 					mp_Tip->HideTip();

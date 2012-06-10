@@ -161,6 +161,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     L"        Shell(\"open\",\"cmd.exe\",\"/k\")\r\n" \
     L"        Shell(\"\",\"\",\"cmd.exe /k -new_console:b\"),\r\n" \
     L"        Shell(\"new_console:b\",\"\",\"cmd.exe /k\")\r\n" \
+    L"Status(0[,<Parm>])\r\n" \
+    L"  - Show/Hide status bar, Parm=1 - Show, Parm=2 - Hide\r\n" \
+    L"Status(1[,\"<Text>\"])\r\n" \
+    L"  - Set status bar text\r\n" \
     L"Tab(<Cmd>[,<Parm>])\r\n" \
     L"  - Control ConEmu tabs\r\n" \
     L"     Cmd==0 - show/hide tabs\r\n" \

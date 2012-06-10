@@ -533,6 +533,7 @@ BEGIN
     EDITTEXT        tRunAsPassword,205,112,91,13,ES_PASSWORD | ES_AUTOHSCROLL
     ICON            "ConEmu.ico",IDC_RESTART_ICON,6,141,20,20
     CONTROL         "&Run as administrator",cbRunAsAdmin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,61,149,82,8
+    CONTROL         "New &window",cbRunInNewWindow,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,149,60,8
     CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,129,157,8
 END
 

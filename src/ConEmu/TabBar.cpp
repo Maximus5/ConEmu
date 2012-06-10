@@ -713,7 +713,7 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 				nTestIdx = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_CREATE_CON, 0);
 				if (nIdx == nTestIdx)
 				{
-					gpConEmu->Recreate(FALSE, TRUE);
+					gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, TRUE);
 				}
 			}
 
@@ -1411,7 +1411,7 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (gpConEmu->IsGesturesEnabled())
 			OnNewConPopup();
 		else
-			gpConEmu->Recreate(FALSE, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+			gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 	}
 	else if (wParam == TID_ALTERNATIVE)
 	{
@@ -2810,7 +2810,7 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 	
 	if (nId == nCreateID)
 	{
-		gpConEmu->Recreate(FALSE, TRUE);
+		gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, TRUE);
 	}
 	else if (nId == nSetupID)
 	{

@@ -67,7 +67,9 @@ BOOL UserImp::loadExports(BOOL abAllowLoadLibrary)
 
 BOOL UserImp::loadExportsFrom(HMODULE hModule)
 {
-	if (bUserLoaded)
+	// bUserLoaded - то что LoadLibrary(L"user32.dll") дернули
+	// а вот функции - еще могли и не загружать
+	if (bUserLoaded && isWindow_f)
 		return TRUE;
 
 	BOOL lbRc = FALSE;

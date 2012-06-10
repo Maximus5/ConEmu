@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_SERVER_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 //  #define SHOW_STARTED_PRINT
-//  #define SHOW_INJECT_MSGBOX
+//	#define SHOW_INJECT_MSGBOX
 //	#define SHOW_ATTACH_MSGBOX
 //  #define SHOW_ROOT_STARTED
 
@@ -974,12 +974,14 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			//""F:\VCProject\FarPlugin\ConEmu\Bugs\DOS\TURBO.EXE ""
 			TODO("При выполнении DOS приложений - VirtualAllocEx(hProcess, обламывается!");
 			TODO("В принципе - завелось, но в сочетании с Anamorphosis получается странное зацикливание far->conemu->anamorph->conemu");
-#ifdef SHOW_INJECT_MSGBOX
+
+			#ifdef SHOW_INJECT_MSGBOX
 			wchar_t szDbgMsg[128], szTitle[128];
 			swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
 			swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC, PID=%u\nInjecting hooks into PID=%u", GetCurrentProcessId(), pi.dwProcessId);
 			MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-#endif
+			#endif
+
 			//BOOL gbLogProcess = FALSE;
 			//TODO("Получить из мэппинга glt_Process");
 			//#ifdef _DEBUG
@@ -1013,6 +1015,11 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 				ghDosBoxProcess = pi.hProcess; gnDosBoxPID = pi.dwProcessId;
 				//ProcessAdd(pi.dwProcessId);
 			}
+
+			#ifdef SHOW_INJECT_MSGBOX
+			wcscat_c(szDbgMsg, L"\nPress OK to resume hooked process");
+			MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+			#endif
 
 			// Отпустить процесс (это корневой процесс консоли, например far.exe)
 			ResumeThread(pi.hThread);

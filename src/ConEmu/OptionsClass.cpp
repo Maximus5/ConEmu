@@ -3896,8 +3896,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 		/* *** Status bar options *** */
 		case cbShowStatusBar:
-			gpSet->isStatusBarShow = IsChecked(hWnd2,CB);
-			gpConEmu->OnSize();
+			gpConEmu->StatusCommand(csc_ShowHide, IsChecked(hWnd2,CB) ? 1 : 2);
+			//gpSet->isStatusBarShow = IsChecked(hWnd2,CB);
+			//gpConEmu->OnSize();
 			break;
 		case cbStatusActiveVCon:
 			gpSet->isStatusColumnHidden[csi_ActiveVCon] = !IsChecked(hWnd2,CB);

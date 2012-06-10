@@ -28,6 +28,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+enum RecreateActionParm
+{
+	cra_CreateTab    = 0,
+	cra_RecreateTab  = 1,
+	cra_CreateWindow = 2,
+};
+
 struct RConStartArgs
 {
 	BOOL     bDetached;
@@ -49,7 +56,7 @@ struct RConStartArgs
  		eConfNever = 2,
  	} eConfirmation;
 	
-	BOOL     bRecreate; // Информационно и для CRecreateDlg
+	RecreateActionParm aRecreate; // Информационно и для CRecreateDlg
 
 	RConStartArgs();
 	~RConStartArgs();

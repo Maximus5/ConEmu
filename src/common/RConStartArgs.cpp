@@ -38,7 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RConStartArgs::RConStartArgs()
 {
-	bDetached = bRunAsAdministrator = bRunAsRestricted = bRecreate = bForceUserDialog = bBackgroundTab = FALSE;
+	bDetached = bRunAsAdministrator = bRunAsRestricted = bForceUserDialog = bBackgroundTab = FALSE;
+	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = /*pszUserPassword =*/ NULL;
 	bBufHeight = FALSE; nBufHeight = 0;
 	eConfirmation = eConfDefault;

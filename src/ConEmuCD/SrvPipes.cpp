@@ -122,7 +122,7 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 		{
 			// ѕри посылке массовых нажатий клавиш (вставка из буфера)
 			// очередь может "не успевать"
-			if (i & 16)
+			if (i && (i & 16))
 				Sleep(10);
 
 			#ifdef _DEBUG

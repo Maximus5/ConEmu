@@ -1329,7 +1329,7 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 	//DWORD nHookMutexWait = WaitForSingleObject(ghHookMutex, 10000);
 
 	MSectionLock CS;
-	if (!LockHooks(Module, L"install", &CS))
+	if (!gpHookCS->isLockedExclusive() && !LockHooks(Module, L"install", &CS))
 		return false;
 
 	if (!p)
@@ -2077,7 +2077,7 @@ bool UnsetHook(HMODULE Module)
 		return false;
 
 	MSectionLock CS;
-	if (!LockHooks(Module, L"uninstall", &CS))
+	if (!gpHookCS->isLockedExclusive() && !LockHooks(Module, L"uninstall", &CS))
 		return false;
 
 	HkModuleInfo* p = IsHookedModule(Module);

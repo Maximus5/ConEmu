@@ -699,6 +699,8 @@
 #define vkShowTabBar                    2326
 #define vkAlwaysOnTop                   2327
 #define vkScreenshotFull                2328
+#define vkMultiNewWnd                   2329
+#define cbRunInNewWindow                2330
 
 // Next default values for new objects
 // 
@@ -706,7 +708,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        219
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2329
+#define _APS_NEXT_CONTROL_VALUE         2331
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

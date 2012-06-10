@@ -344,7 +344,7 @@ bool CConEmuCtrl::key_MultiNew(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 	if (TestOnly)
 		return true;
 	// Создать новую консоль
-	gpConEmu->Recreate(FALSE, gpSet->isMultiNewConfirm);
+	gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm);
 	return true;
 }
 
@@ -354,7 +354,7 @@ bool CConEmuCtrl::key_MultiNewShift(DWORD VkMod, bool TestOnly, const ConEmuHotK
 	if (TestOnly)
 		return true;
 	// Создать новую консоль
-	gpConEmu->Recreate(FALSE, TRUE/*Confirm*/);
+	gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, TRUE/*Confirm*/);
 	return true;
 }
 
@@ -365,6 +365,16 @@ bool CConEmuCtrl::key_MultiNewPopup(DWORD VkMod, bool TestOnly, const ConEmuHotK
 		return true;
 	// Создать новую консоль
 	gpConEmu->mp_TabBar->OnNewConPopup();
+	return true;
+}
+
+// pRCon may be NULL
+bool CConEmuCtrl::key_MultiNewWindow(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+	// Создать новую консоль
+	gpConEmu->RecreateAction(cra_CreateWindow, TRUE/*Confirm*/);
 	return true;
 }
 
@@ -402,7 +412,7 @@ bool CConEmuCtrl::key_MultiRecreate(DWORD VkMod, bool TestOnly, const ConEmuHotK
 	if (TestOnly)
 		return true;
 	// Подтверждение на закрытие/пересоздание консоли
-	gpConEmu->Recreate(TRUE, TRUE);
+	gpConEmu->RecreateAction(cra_RecreateTab/*TRUE*/, TRUE);
 	return true;
 }
 
@@ -1238,6 +1248,7 @@ void CConEmuCtrl::StatusCommand(ConEmuStatusCommand nStatusCmd, int IntParm, LPC
 		else
 			gpSet->isStatusBarShow = !gpSet->isStatusBarShow;
 		gpConEmu->OnSize();
+		gpConEmu->InvalidateGaps();
 		break;
 
 	case csc_SetStatusText:
@@ -1482,11 +1493,17 @@ void CConEmuCtrl::MakeScreenshot(bool abFullscreen /*= false*/)
 		return;
 	}
 
+	HMONITOR hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+	MONITORINFO mi = {sizeof(mi)};
+	if (!GetMonitorInfo(hMon, &mi))
+	{
+		DisplayLastError(L"GetMonitorInfo() failed");
+		return;
+	}
+
 	if (!abFullscreen)
 	{
 		GetWindowRect(hWnd, &rcWnd);
-		TODO("Отрезать края при Zoomed/Fullscreen?");
-
 		if ((hWnd != ghWnd) && (gnOsVer == 0x601) && gpConEmu->IsGlass())
 		{
 			rcWnd.top -= 5;
@@ -1494,16 +1511,18 @@ void CConEmuCtrl::MakeScreenshot(bool abFullscreen /*= false*/)
 			rcWnd.right += 3;
 			rcWnd.bottom += 5;
 		}
+
+		// Отрезать края при Zoomed/Fullscreen
+		RECT rcVisible = {};
+		if (!IntersectRect(&rcVisible, &rcWnd, gpConEmu->isFullScreen() ? &mi.rcMonitor : &mi.rcWork))
+		{
+			DisplayLastError(L"Window out of monitor rectangle");
+			return;
+		}
+		rcWnd = rcVisible;
 	}
 	else
 	{
-		HMONITOR hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
-		MONITORINFO mi = {sizeof(mi)};
-		if (!GetMonitorInfo(hMon, &mi))
-		{
-			DisplayLastError(L"GetMonitorInfo() failed");
-			return;
-		}
 		rcWnd = mi.rcMonitor;
 	}
 

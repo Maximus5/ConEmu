@@ -515,7 +515,7 @@ class CConEmuMain :
 		void PostDisplayRConError(CRealConsole* mp_VCon, wchar_t* pszErrMsg);
 		//void PostSetBackground(CVirtualConsole* apVCon, CESERVER_REQ_SETBACKGROUND* apImgData);
 		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
-		void Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs = FALSE);
+		void RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, BOOL abRunAs = FALSE);
 		int RecreateDlg(RConStartArgs* apArg);
 		void RePaint();
 		bool ReportUpdateConfirmation();

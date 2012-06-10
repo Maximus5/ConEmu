@@ -806,9 +806,10 @@ void CStatus::ShowStatusSetupMenu()
 	{
 		if (nCmd == 1)
 		{
-			gpSet->isStatusBarShow = !gpSet->isStatusBarShow;
-			// Должна справиться с reposition элементов
-			gpConEmu->OnSize();
+			gpConEmu->StatusCommand(csc_ShowHide);
+			//gpSet->isStatusBarShow = !gpSet->isStatusBarShow;
+			//// Должна справиться с reposition элементов
+			//gpConEmu->OnSize();
 		}
 		else
 		{
@@ -1380,6 +1381,7 @@ void CStatus::UpdateStatusFont()
 
 	UpdateStatusBar(true);
 	gpConEmu->OnSize();
+	gpConEmu->InvalidateGaps();
 }
 
 // Прямоугольник в клиентских координатах ghWnd!
@@ -1394,7 +1396,7 @@ bool CStatus::GetStatusBarClientRect(RECT* rc)
 	if (nHeight >= (rcClient.bottom - rcClient.top))
 		return false;
 
-	rcClient.top = rcClient.bottom - 1 - nHeight;
+	rcClient.top = rcClient.bottom /*- 1*/ - nHeight;
 
 	*rc = rcClient;
 	return true;

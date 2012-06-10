@@ -4456,12 +4456,13 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 	ConEmuHotKey HotKeys[] =
 	{
 		// User (Keys, Global)
-		{vkMinimizeRestore,chk_Global, NULL,   L"MinimizeRestore",       /*&vmMinimizeRestore,*/ MakeHotKey('C',VK_LWIN), CConEmuCtrl::key_MinimizeRestore},
-		{vkForceFullScreen,chk_Global, NULL,   L"ForcedFullScreen",      /*&vmMinimizeRestore,*/ MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL,VK_MENU), CConEmuCtrl::key_ForcedFullScreen},
+		{vkMinimizeRestore,chk_Global, NULL,   L"MinimizeRestore",       MakeHotKey('C',VK_LWIN), CConEmuCtrl::key_MinimizeRestore},
+		{vkForceFullScreen,chk_Global, NULL,   L"ForcedFullScreen",      MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL,VK_MENU), CConEmuCtrl::key_ForcedFullScreen},
 		// User (Keys)
-		{vkMultiNew,       chk_User, &isMulti, L"Multi.NewConsole",      /*&vmMultiNew,*/ MakeHotKey('W',VK_LWIN), CConEmuCtrl::key_MultiNew},
-		{vkMultiNewShift,  chk_User, &isMulti, L"Multi.NewConsoleShift", /*&vmMultiNewShift,*/ MakeHotKey('W',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNewShift},
-		{vkMultiNewPopup,  chk_User, &isMulti, L"Multi.NewConsolePopup", /*&vmMultiNew,*/ MakeHotKey('N',VK_LWIN), CConEmuCtrl::key_MultiNewPopup},
+		{vkMultiNew,       chk_User, &isMulti, L"Multi.NewConsole",      MakeHotKey('W',VK_LWIN), CConEmuCtrl::key_MultiNew},
+		{vkMultiNewShift,  chk_User, &isMulti, L"Multi.NewConsoleShift", MakeHotKey('W',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNewShift},
+		{vkMultiNewPopup,  chk_User, &isMulti, L"Multi.NewConsolePopup", MakeHotKey('N',VK_LWIN), CConEmuCtrl::key_MultiNewPopup},
+		{vkMultiNewWnd,    chk_User, &isMulti, L"Multi.NewWindow",       0, CConEmuCtrl::key_MultiNewWindow},
 		{vkMultiNewAttach, chk_User, &isMulti, L"Multi.NewAttach",       MakeHotKey('G',VK_LWIN), CConEmuCtrl::key_MultiNewAttach, true/*OnKeyUp*/},
 		{vkMultiNext,      chk_User, &isMulti, L"Multi.Next",            /*&vmMultiNext,*/ MakeHotKey('Q',VK_LWIN), CConEmuCtrl::key_MultiNext},
 		{vkMultiNextShift, chk_User, &isMulti, L"Multi.NextShift",       /*&vmMultiNextShift,*/ MakeHotKey('Q',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MultiNextShift},

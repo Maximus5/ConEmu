@@ -174,8 +174,8 @@ CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
 
 	if (args->bForceUserDialog)
 	{
-		_ASSERTE(args->bRecreate==FALSE);
-		args->bRecreate = FALSE;
+		_ASSERTE(args->aRecreate!=cra_RecreateTab);
+		args->aRecreate = cra_CreateTab;
 
 		int nRc = gpConEmu->RecreateDlg(args);
 		if (nRc != IDC_START)
@@ -4713,7 +4713,7 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 
 			if (gpConEmu->isActive(this))
 			{
-				gpConEmu->Recreate(TRUE, isPressed(VK_SHIFT), (nCmd==IDM_RESTARTAS));
+				gpConEmu->RecreateAction(cra_RecreateTab/*TRUE*/, isPressed(VK_SHIFT), (nCmd==IDM_RESTARTAS));
 			}
 			else
 			{
@@ -4722,7 +4722,7 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 
 			break;
 		case ID_NEWCONSOLE:
-			gpConEmu->Recreate(FALSE, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+			gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 			break;
 		case IDM_ATTACHTO:
 			gpConEmu->OnSysCommand(ghWnd, IDM_ATTACHTO, 0);

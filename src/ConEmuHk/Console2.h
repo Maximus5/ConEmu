@@ -7,12 +7,22 @@
 
 extern HANDLE ghSkipSetThreadContextForThread;
 
-int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/*32/64*/, LPCWSTR apszHookDllPath, DWORD_PTR* ptrAllocated, DWORD* pnAllocated)
+struct InjectHookFunctions
+{
+	HMODULE  hKernel;
+	UINT_PTR fnLoadLibrary;
+	// Win7+
+	HMODULE  hNtDll;
+	UINT_PTR fnLdrGetDllHandleByName;
+};
+
+int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fnLoadLibrary*/, int ImageBits/*32/64*/, LPCWSTR apszHookDllPath, DWORD_PTR* ptrAllocated, DWORD* pnAllocated)
 {
 	int         iRc = -1000;
 	CONTEXT		context = {};
 	void*		mem		 = NULL;
 	size_t		memLen	 = 0;
+	size_t		pstrLen  = 54; // UNICODE_STRING ( "kernel32.dll" )
 	size_t		codeSize = 0;
 	BYTE* 		code	 = NULL;
 	wchar_t 	strHookDllPath[MAX_PATH*2] = {};
@@ -24,6 +34,10 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 	// starting a 64-bit process
 	LPCWSTR		pszDllName = L"\\ConEmuHk64.dll";
 #endif
+	//OSVERSIONINFO osv = {sizeof(osv)};
+	//GetVersionEx(&osv);
+	//DWORD nOsVer = (osv.dwMajorVersion << 8) | (osv.dwMinorVersion & 0xFF);
+
 
 	if (ptrAllocated)
 		*ptrAllocated = NULL;
@@ -39,8 +53,28 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 		goto wrap;
 	}
 
+	//UINT_PTR fnGetDllByName = 0;
+	DWORD_PTR nLoadLibraryProcShift = 0;
+	//HMODULE hNtDll, hKernel;
+	//if (nOsVer >= 0x0602)
+	if (pfn->fnLdrGetDllHandleByName)
+	{
+		//hNtDll = GetModuleHandle(L"ntdll.dll");
+		//fnGetDllByName = (UINT_PTR)GetProcAddress(hNtDll, "LdrGetDllHandleByName");
+		//CheckCallbackPtr(hNtDll, 1, (FARPROC*)&fnGetDllByName, TRUE);
+		//hKernel = GetModuleHandle(L"kernel32.dll");
+		//nProcShift = ((LPBYTE)fnLoadLibrary) - (LPBYTE)hKernel;
+		nLoadLibraryProcShift = ((LPBYTE)pfn->fnLoadLibrary) - (LPBYTE)pfn->hKernel;
+		if (nLoadLibraryProcShift != (DWORD)nLoadLibraryProcShift)
+		{
+			_ASSERTE(nLoadLibraryProcShift == (DWORD)nLoadLibraryProcShift);
+			iRc = -814;
+			goto wrap;
+		}
+	}
+
 	// Адрес пути к ConEmuHk64 нужно выровнять на 8 байт!
-	codeSize = 96;
+	codeSize = 136;
 #else
 
 	if (ImageBits != 32)
@@ -71,9 +105,26 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 		goto wrap;
 	}
 
-	code = (BYTE*)malloc(codeSize + memLen);
+	code = (BYTE*)malloc(codeSize + memLen + pstrLen);
 	memmove(code + codeSize, strHookDllPath, memLen);
-	memLen += codeSize;
+
+	typedef struct _UNICODE_STRING {
+		USHORT Length;
+		USHORT MaximumLength;
+		#ifdef _WIN64
+		DWORD  Pad;
+		#endif
+		PWSTR  Buffer;
+	} USTR, *PUSTR;
+	PUSTR pStr = (PUSTR)((((DWORD_PTR)(code + codeSize + memLen + 7))>>3)<<3);
+	pStr->Length = 24; pStr->MaximumLength = 26;
+	#ifdef _WIN64
+	pStr->Pad = 0;
+	#endif
+	pStr->Buffer = (PWSTR)(((LPBYTE)pStr)+16); // адрес будет обновлен после VirtualAlloc
+	memmove(pStr->Buffer, L"kernel32.dll", pStr->MaximumLength);
+
+	memLen = codeSize + memLen + pstrLen;
 
 	// Query current context of suspended process	
 	context.ContextFlags = CONTEXT_FULL;
@@ -129,6 +180,8 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 		goto wrap;
 	}
 
+	pStr->Buffer = (PWSTR)(((LPBYTE)mem) + (((LPBYTE)pStr->Buffer) - code));
+
 	#ifdef _DEBUG
 	// strHookDllPath уже скопирован, поэтому его можно заюзать для DebugString
 	#ifdef _WIN64
@@ -146,6 +199,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 	#endif
 
 
+
 	union
 	{
 		PBYTE  pB; //-V117
@@ -154,58 +208,90 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 	} ip;
 	ip.pB = code;
 #ifdef _WIN64
-	/* 0x00 */ *ip.pL++ = context.Rip;
-	/* 0x08 */ *ip.pL++ = fnLoadLibrary;
-	/* 0x10 */ *ip.pB++ = 0x9C;					// pushfq
-	/* 0x11 */ *ip.pB++ = 0x50;					// push  rax
-	/* 0x12 */ *ip.pB++ = 0x51;					// push  rcx
-	/* 0x13 */ *ip.pB++ = 0x52;					// push  rdx
-	/* 0x14 */ *ip.pB++ = 0x53;					// push  rbx
-	/* 0x15 */ *ip.pB++ = 0x55;					// push  rbp
-	/* 0x16 */ *ip.pB++ = 0x56;					// push  rsi
-	/* 0x17 */ *ip.pB++ = 0x57;					// push  rdi
-	/* 0x18 */ *ip.pB++ = 0x41; *ip.pB++ = 0x50;	// push  r8
-	/* 0x1A */ *ip.pB++ = 0x41; *ip.pB++ = 0x51;	// push  r9
-	/* 0x1C */ *ip.pB++ = 0x41; *ip.pB++ = 0x52;	// push  r10
-	/* 0x1E */ *ip.pB++ = 0x41; *ip.pB++ = 0x53;	// push  r11
-	/* 0x20 */ *ip.pB++ = 0x41; *ip.pB++ = 0x54;	// push  r12
-	/* 0x22 */ *ip.pB++ = 0x41; *ip.pB++ = 0x55;	// push  r13
-	/* 0x24 */ *ip.pB++ = 0x41; *ip.pB++ = 0x56;	// push  r14
-	/* 0x26 */ *ip.pB++ = 0x41; *ip.pB++ = 0x57;	// push  r15
-	/* 0x28 */ *ip.pB++ = 0x48;					// sub   rsp, 40
-	/* 0x29 */ *ip.pB++ = 0x83;
-	/* 0x2A */ *ip.pB++ = 0xEC;
-	/* 0x2B */ *ip.pB++ = 0x28;
-	/* 0x2C */ *ip.pB++ = 0x48;					// lea	 ecx, "path\to\our.dll"
-	/* 0x2D */ *ip.pB++ = 0x8D;
-	/* 0x2E */ *ip.pB++ = 0x0D;
-	/* 0x2F */ *ip.pI++ = 45;
-	/* 0x33 */ *ip.pB++ = 0xFF;					// call  LoadLibraryW
-	/* 0x34 */ *ip.pB++ = 0x15;
-	/* 0x35 */ *ip.pI++ = -49;
-	/* 0x39 */ *ip.pB++ = 0x48;					// add   rsp, 40
-	/* 0x3A */ *ip.pB++ = 0x83;
-	/* 0x3B */ *ip.pB++ = 0xC4;
-	/* 0x3C */ *ip.pB++ = 0x28;
-	/* 0x3D */ *ip.pB++ = 0x41; *ip.pB++ = 0x5F;	// pop   r15
-	/* 0x3F */ *ip.pB++ = 0x41; *ip.pB++ = 0x5E;	// pop   r14
-	/* 0x41 */ *ip.pB++ = 0x41; *ip.pB++ = 0x5D;	// pop   r13
-	/* 0x43 */ *ip.pB++ = 0x41; *ip.pB++ = 0x5C;	// pop   r12
-	/* 0x45 */ *ip.pB++ = 0x41; *ip.pB++ = 0x5B;	// pop   r11
-	/* 0x47 */ *ip.pB++ = 0x41; *ip.pB++ = 0x5A;	// pop   r10
-	/* 0x49 */ *ip.pB++ = 0x41; *ip.pB++ = 0x59;	// pop   r9
-	/* 0x4B */ *ip.pB++ = 0x41; *ip.pB++ = 0x58;	// pop   r8
-	/* 0x4D */ *ip.pB++ = 0x5F;					// pop	 rdi
-	/* 0x4E */ *ip.pB++ = 0x5E;					// pop	 rsi
-	/* 0x4F */ *ip.pB++ = 0x5D;					// pop	 rbp
-	/* 0x50 */ *ip.pB++ = 0x5B;					// pop	 rbx
-	/* 0x51 */ *ip.pB++ = 0x5A;					// pop	 rdx
-	/* 0x52 */ *ip.pB++ = 0x59;					// pop	 rcx
-	/* 0x53 */ *ip.pB++ = 0x58;					// pop	 rax
-	/* 0x54 */ *ip.pB++ = 0x9D;					// popfq
-	/* 0x55 */ *ip.pB++ = 0xff;					// jmp	 Rip
-	/* 0x56 */ *ip.pB++ = 0x25;
-	/* 0x57 */ *ip.pI++ = -91;
+	*ip.pL++ = context.Rip;          // адрес возврата
+	*ip.pL++ = pfn->fnLdrGetDllHandleByName ? pfn->fnLdrGetDllHandleByName : pfn->fnLoadLibrary;        // адрес вызываемой процедуры
+	*ip.pB++ = 0x9C;					// pushfq
+	*ip.pB++ = 0x50;					// push  rax
+	*ip.pB++ = 0x51;					// push  rcx
+	*ip.pB++ = 0x52;					// push  rdx
+	*ip.pB++ = 0x53;					// push  rbx
+	*ip.pB++ = 0x55;					// push  rbp
+	*ip.pB++ = 0x56;					// push  rsi
+	*ip.pB++ = 0x57;					// push  rdi
+	*ip.pB++ = 0x41; *ip.pB++ = 0x50;	// push  r8
+	*ip.pB++ = 0x41; *ip.pB++ = 0x51;	// push  r9
+	*ip.pB++ = 0x41; *ip.pB++ = 0x52;	// push  r10
+	*ip.pB++ = 0x41; *ip.pB++ = 0x53;	// push  r11
+	*ip.pB++ = 0x41; *ip.pB++ = 0x54;	// push  r12
+	*ip.pB++ = 0x41; *ip.pB++ = 0x55;	// push  r13
+	*ip.pB++ = 0x41; *ip.pB++ = 0x56;	// push  r14
+	*ip.pB++ = 0x41; *ip.pB++ = 0x57;	// push  r15
+	*ip.pB++ = 0x48;					// sub   rsp, 40
+	*ip.pB++ = 0x83;
+	*ip.pB++ = 0xEC;
+	*ip.pB++ = 0x28;
+
+	// Due to ASLR of Kernel32.dll in Windows 8 RC x64 we need this workaround
+	// JIC expanded to Windows 7 too.
+	if (pfn->fnLdrGetDllHandleByName)
+	{
+	*ip.pB++ = 0x4C;					// lea	       r8,&ptrProc
+	*ip.pB++ = 0x8D;
+	*ip.pB++ = 0x05;
+	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- указатель на адрес процедуры (code+8) [OUT]
+	*ip.pB++ = 0x33;                    // xor         rdx,rdx 
+	*ip.pB++ = 0xD2;
+	*ip.pB++ = 0x48;                    // lea         rcx,&UNICODE_STRING
+	*ip.pB++ = 0x8D;
+	*ip.pB++ = 0x0D;
+	*ip.pI++ = (int)(((LPBYTE)pStr) - ip.pB - 4); // &UNICODE_STRING
+	*ip.pB++ = 0xFF;					// call  LdrGetDllHandleByName
+	*ip.pB++ = 0x15;
+	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- указатель на адрес процедуры (code+8)
+	//
+	*ip.pB++ = 0x48;                    // mov         rax,&ProcAddress
+	*ip.pB++ = 0x8B;
+	*ip.pB++ = 0x05;
+	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- указатель на адрес процедуры (code+8)
+	*ip.pB++ = 0x48;                    // add         rax,nProcShift
+	*ip.pB++ = 0x05;
+	*ip.pI++ = (DWORD)nLoadLibraryProcShift;
+	*ip.pB++ = 0x48;                    // mov         &ProcAddress,rax
+	*ip.pB++ = 0x89;
+	*ip.pB++ = 0x05;
+	*ip.pI++ = -(int)(ip.pB - code + 4 - 8);    // -- указатель на адрес процедуры (code+8)
+	}
+
+	*ip.pB++ = 0x48;					// lea	 rcx, "path\to\our.dll"
+	*ip.pB++ = 0x8D;
+	*ip.pB++ = 0x0D;
+	*ip.pI++ = (int)(codeSize + code - ip.pB - 4); // 45; -- указатель на "path\to\our.dll"
+	*ip.pB++ = 0xFF;					// call  LoadLibraryW
+	*ip.pB++ = 0x15;
+	*ip.pI++ = -(int)(ip.pB - code + 4 - 8); // -49; -- указатель на адрес процедуры (code+8)
+	*ip.pB++ = 0x48;					// add   rsp, 40
+	*ip.pB++ = 0x83;
+	*ip.pB++ = 0xC4;
+	*ip.pB++ = 0x28;
+	*ip.pB++ = 0x41; *ip.pB++ = 0x5F;	// pop   r15
+	*ip.pB++ = 0x41; *ip.pB++ = 0x5E;	// pop   r14
+	*ip.pB++ = 0x41; *ip.pB++ = 0x5D;	// pop   r13
+	*ip.pB++ = 0x41; *ip.pB++ = 0x5C;	// pop   r12
+	*ip.pB++ = 0x41; *ip.pB++ = 0x5B;	// pop   r11
+	*ip.pB++ = 0x41; *ip.pB++ = 0x5A;	// pop   r10
+	*ip.pB++ = 0x41; *ip.pB++ = 0x59;	// pop   r9
+	*ip.pB++ = 0x41; *ip.pB++ = 0x58;	// pop   r8
+	*ip.pB++ = 0x5F;					// pop	 rdi
+	*ip.pB++ = 0x5E;					// pop	 rsi
+	*ip.pB++ = 0x5D;					// pop	 rbp
+	*ip.pB++ = 0x5B;					// pop	 rbx
+	*ip.pB++ = 0x5A;					// pop	 rdx
+	*ip.pB++ = 0x59;					// pop	 rcx
+	*ip.pB++ = 0x58;					// pop	 rax
+	*ip.pB++ = 0x9D;					// popfq
+	*ip.pB++ = 0xff;					// jmp	 Rip
+	*ip.pB++ = 0x25;
+	*ip.pI++ = -(int)(ip.pB - code + 4); // -91;
 	/* 0x5B */
 
 	context.Rip = (UINT_PTR)mem + 16;	// начало (иструкция pushfq)
@@ -218,7 +304,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, UINT_PTR fnLoadLibrary, int ImageBits/
 	*ip.pI++ = (UINT_PTR)mem + codeSize;
 	*ip.pB++ = 0xe8;			// call  LoadLibraryW
 	TODO("???");
-	*ip.pI++ = (UINT_PTR)fnLoadLibrary - ((UINT_PTR)mem + (ip.pB+4 - code));
+	*ip.pI++ = (UINT_PTR)pfn->fnLoadLibrary - ((UINT_PTR)mem + (ip.pB+4 - code));
 	*ip.pB++ = 0x61;			// popa
 	*ip.pB++ = 0x9d;			// popf
 	*ip.pB++ = 0xc3;			// ret

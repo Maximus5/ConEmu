@@ -28,11 +28,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после загрузки модуля показать MessageBox, чтобы прицепиться дебаггером
-//	#define SHOW_STARTED_MSGBOX
+	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
-	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"EchoX.exe"
-	#define SHOW_EXE_TIMINGS
+//	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
+//	#define SHOW_EXE_MSGBOX_NAME L"tcc.exe"
+//	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
@@ -80,12 +80,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 
 
-#ifdef SHOW_EXE_TIMINGS
+#if defined(_DEBUG) || defined(SHOW_EXE_TIMINGS)
 DWORD gnLastShowExeTick = 0;
+#endif
+
+#ifdef SHOW_EXE_TIMINGS
 #define print_timings(s) if (gbShowExeMsgBox) { \
 	DWORD w, nCurTick = GetTickCount(); \
 	msprintf(szTimingMsg, countof(szTimingMsg), L">>> %s >>> %u >>> %s\n", SHOW_EXE_MSGBOX_NAME, (nCurTick - gnLastShowExeTick), s); \
-	WriteConsoleW(hTimingHandle, szTimingMsg, lstrlen(szTimingMsg), &w, NULL); \
+	OnWriteConsoleW(hTimingHandle, szTimingMsg, lstrlen(szTimingMsg), &w, NULL); \
 	gnLastShowExeTick = nCurTick; \
 	}
 #else

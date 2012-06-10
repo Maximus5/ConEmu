@@ -1445,6 +1445,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\ConEmuHk\Console2.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\defines.h"
 				>
 			</File>

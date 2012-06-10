@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern HMODULE ghOurModule;
 UINT_PTR gfnLoadLibrary = 0;
+UINT_PTR gfnLdrGetDllHandleByName = 0;
 //extern HMODULE ghPsApi;
 
 HANDLE ghSkipSetThreadContextForThread = NULL;
@@ -71,7 +72,7 @@ UINT_PTR GetLoadLibraryAddress()
 		fnLoadLibrary = (UINT_PTR)::GetProcAddress(hKernel, "LoadLibraryW");
 	}
 
-	// Функция должна быть изменно в Kernel32.dll (а не в какой либо другой библиотеке, мало ли кто захукал...)
+	// Функция должна быть именно в Kernel32.dll (а не в какой либо другой библиотеке, мало ли кто захукал...)
 	if (!CheckCallbackPtr(hKernel, 1, (FARPROC*)&fnLoadLibrary, TRUE))
 	{
 		// _ASSERTE уже был
@@ -80,6 +81,32 @@ UINT_PTR GetLoadLibraryAddress()
 
 	gfnLoadLibrary = fnLoadLibrary;
 	return fnLoadLibrary;
+}
+
+UINT_PTR GetLdrGetDllHandleByNameAddress()
+{
+	if (gfnLdrGetDllHandleByName)
+		return gfnLdrGetDllHandleByName;
+
+	UINT_PTR fnLdrGetDllHandleByName = 0;
+	HMODULE hNtDll = ::GetModuleHandle(L"ntdll.dll");
+	if (!hNtDll || LDR_IS_RESOURCE(hNtDll))
+	{
+		_ASSERTE(hNtDll&& !LDR_IS_RESOURCE(hNtDll));
+		return 0;
+	}
+
+	fnLdrGetDllHandleByName = (UINT_PTR)::GetProcAddress(hNtDll, "LdrGetDllHandleByName");
+
+	// Функция должна быть именно в ntdll.dll (а не в какой либо другой библиотеке, мало ли кто захукал...)
+	if (!CheckCallbackPtr(hNtDll, 1, (FARPROC*)&fnLdrGetDllHandleByName, TRUE))
+	{
+		// _ASSERTE уже был
+		return 0;
+	}
+
+	gfnLdrGetDllHandleByName = fnLdrGetDllHandleByName;
+	return fnLdrGetDllHandleByName;
 }
 
 // The handle must have the PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION, PROCESS_VM_OPERATION, PROCESS_VM_WRITE, and PROCESS_VM_READ
@@ -106,12 +133,37 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 #endif
 	// для проверки IsWow64Process
 	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+	HMODULE hNtDll = NULL;
 	int iFindAddress = 0;
 	//bool lbInj = false;
 	//UINT_PTR fnLoadLibrary = NULL;
 	//DWORD fLoadLibrary = 0;
 	DWORD nErrCode = 0, nWait = 0;
 	int SelfImageBits = WIN3264TEST(32,64);
+	OSVERSIONINFO osv = {sizeof(osv)};
+	GetVersionEx(&osv);
+	DWORD nOsVer = (osv.dwMajorVersion << 8) | (osv.dwMinorVersion & 0xFF);
+
+	if (!hKernel)
+	{
+		iRc = -510;
+		goto wrap;
+	}
+	if (!nOsVer)
+	{
+		iRc = -511;
+		goto wrap;
+	}
+	if (nOsVer >= 0x0601)
+	{
+		hNtDll = GetModuleHandle(L"ntdll.dll");
+		// Windows7 +
+		if (!hNtDll)
+		{
+			iRc = -512;
+			goto wrap;
+		}
+	}
 
 	// Процесс не был стартован, или уже завершился
 	nWait = WaitForSingleObject(pi.hProcess, 0);
@@ -292,6 +344,12 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 			iRc = -503;
 			goto wrap;
 		}
+		else if ((nOsVer >= 0x0601) && !GetLdrGetDllHandleByNameAddress())
+		{
+			_ASSERTE(gfnLdrGetDllHandleByName!=NULL);
+			iRc = -514;
+			goto wrap;
+		}
 		else
 		{
 			// -- не имеет смысла. процесс еще "не отпущен", поэтому CreateToolhelp32Snapshot(TH32CS_SNAPMODULE) обламывается
@@ -309,9 +367,16 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 			//		goto wrap;
 			//	}
 			//}
-		
+
+			// ??? Сначала нужно проверить, может есть проблема с адресами (ASLR) ???
+			//-- ReadProcessMemory возвращает ошибку 299, и cch_dos_read==0, так что не катит...
+			//IMAGE_DOS_HEADER dos_hdr = {}; SIZE_T cch_dos_read = 0;
+			//BOOL bRead = ::ReadProcessMemory(pi.hProcess, (LPVOID)(DWORD_PTR)hKernel, &dos_hdr, sizeof(dos_hdr), &cch_dos_read);
+
 			DWORD_PTR ptrAllocated = NULL; DWORD nAllocated = 0;
-			iRc = InjectHookDLL(pi, gfnLoadLibrary, ImageBits, szPluginPath, &ptrAllocated, &nAllocated);
+			//iRc = bRead ? InjectHookDLL(pi, gfnLoadLibrary, ImageBits, szPluginPath, &ptrAllocated, &nAllocated) : -1000;
+			InjectHookFunctions fnArg = {hKernel, gfnLoadLibrary, hNtDll, gfnLdrGetDllHandleByName};
+			iRc = InjectHookDLL(pi, &fnArg, ImageBits, szPluginPath, &ptrAllocated, &nAllocated);
 
 			if (abLogProcess || (iRc !=0 ))
 			{
