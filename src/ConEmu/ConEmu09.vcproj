@@ -2762,6 +2762,10 @@
 			>
 		</File>
 		<File
+			RelativePath=".\!ToDo.Hooks.txt"
+			>
+		</File>
+		<File
 			RelativePath=".\!Todo.Tablet.txt"
 			>
 		</File>
