@@ -10,6 +10,16 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[+] В поставку добавлен пример «ColorPrompt.cmd». Запустите его в cmd.exe или tcc.exe для смены цвета текста command prompt на желтый.
+[+] Новые аргументы для ConEmu.exe - /ShowHide и /ShowHideTSA.
+    Если ConEmu не запущено - запускает (с возможно указанным /cmd ...),
+    если окно ConEmu уже открыто - сворачивает его или прячет в TSA.
+    Действие похоже на глобально регистрируемый хоткей (Win+C), но этот хоткей не работает,
+    если ConEmu не был запущен. А с ключами - можно настроить ярлык на рабочем столе.
+[+] Аргумент ConEmu.exe: /dir "Folder". Аналог Working folder, задаваемый в свойствах ярлыка.
+[+] Параметр «Quake style slide down» на вкладке «Features». Пример настройки в «ConEmu\ConEmu_Tilda.xml».
+
+
 2012.06.08
 [%] Коррекция Injects для Windows 8 RC.
 [+] Issue 571: В диалоге подтверждения создания консоли добавлен флажок «New window».

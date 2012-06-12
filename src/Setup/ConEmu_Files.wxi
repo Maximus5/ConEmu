@@ -52,6 +52,9 @@
       <Component Id="Cmd_Autorun.cmd" Guid="$(var.Guid.Cmd_Autorun.cmd)" Win64="$(var.Win64)">
         <File Id="Cmd_Autorun.cmd" Source="..\..\Release\ConEmu\Cmd_Autorun.cmd"  KeyPath="yes" />
       </Component>
+      <Component Id="ColorPrompt.cmd" Guid="$(var.Guid.ColorPrompt.cmd)" Win64="$(var.Win64)">
+        <File Id="ColorPrompt.cmd" Source="..\..\Release\ConEmu\ColorPrompt.cmd"  KeyPath="yes" />
+      </Component>
       <Component Id="Command_Processor.reg" Guid="$(var.Guid.Command_Processor.reg)" Win64="$(var.Win64)">
         <File Id="Command_Processor.reg" Source="..\..\Release\ConEmu\Command Processor.reg"  KeyPath="yes" />
       </Component>
@@ -68,6 +71,9 @@
       </Component>
       <Component Id="ConEmu_Sample.xml" Guid="$(var.Guid.ConEmu_Sample.xml)" Win64="$(var.Win64)">
         <File Id="ConEmu_Sample.xml" Source="..\..\Release\ConEmu\ConEmu_Sample.xml"  KeyPath="yes" />
+      </Component>
+      <Component Id="ConEmu_Tilde.xml" Guid="$(var.Guid.ConEmu_Tilde.xml)" Win64="$(var.Win64)">
+        <File Id="ConEmu_Tilde.xml" Source="..\..\Release\ConEmu\ConEmu_Tilde.xml"  KeyPath="yes" />
       </Component>
       <Component Id="FAQ_ConEmu.txt" Guid="$(var.Guid.FAQ_ConEmu.txt)" Win64="$(var.Win64)">
         <File Id="FAQ_ConEmu.txt" Source="..\..\Release\ConEmu\FAQ-ConEmu.txt"  KeyPath="yes" />

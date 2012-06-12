@@ -411,8 +411,8 @@ BEGIN
     CONTROL         "Ignore console cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,141,119,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,231,105,87,8
     CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,117,87,8
-    CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,185,91,8
-    GROUPBOX        "Caption options",gbFeatureCaption,4,158,319,44
+    CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,208,91,8
+    GROUPBOX        "Caption and border options",gbFeatureCaption,4,158,319,44
     RTEXT           "Frame width:",IDC_STATIC,219,169,54,8
     RTEXT           "Appear delay:",IDC_STATIC,129,185,50,8
     RTEXT           "Disappear:",IDC_STATIC,230,185,43,8
@@ -423,6 +423,7 @@ BEGIN
     CONTROL         "ANSI X3.64 / 256color",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,141,87,8
     GROUPBOX        "Mouse options",IDC_STATIC,4,1,319,28
     CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,119,8
+    CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,185,117,8
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235
@@ -938,7 +939,7 @@ BEGIN
     CONTROL         "Add commands from history, too",cbCmdTaskbarCommands,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,215,123,8
     PUSHBUTTON      "Update Now!",cbCmdTaskbarUpdate,259,211,58,14
-    LTEXT           "ConEmu arguments for Jump list (e.g. /icon ""cmd.exe""):",stCmdGroupGuiArg,111,44,208,8
+    LTEXT           "ConEmu arguments for Jump list (/icon ""cmd.exe"" or /dir ""C:\\""):",stCmdGroupGuiArg,111,44,208,8
     EDITTEXT        tCmdGroupGuiArg,110,54,208,12,ES_AUTOHSCROLL
 END
 

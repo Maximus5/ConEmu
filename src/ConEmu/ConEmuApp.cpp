@@ -91,6 +91,8 @@ const TCHAR *const gsClassNameApp = VirtualConsoleClassApp;
 
 OSVERSIONINFO gOSVer = {};
 WORD gnOsVer = 0x500;
+bool gbIsWine = false;
+wchar_t gsLucidaConsole[32] = L"Lucida Console"; // gbIsWine ? L"Liberation Mono" : L"Lucida Console"
 
 
 #ifdef MSGLOGGER
@@ -1619,6 +1621,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
 	HeapInitialize();
 	RemoveOldComSpecC();
+
+	HKEY hk1 = NULL, hk2 = NULL;
+	if (!RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Wine", 0, KEY_READ, &hk1)
+		&& !RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Wine", 0, KEY_READ, &hk2))
+		gbIsWine = true; // В общем случае, на флажок ориентироваться нельзя. Это для информации.
+	if (hk1) RegCloseKey(hk1);
+	if (hk2) RegCloseKey(hk2);
+	if (gbIsWine)
+		wcscpy_c(gsLucidaConsole, L"Liberation Mono");
+
 	gpSetCls = new CSettings;
 	gpConEmu = new CConEmuMain;
 	/*int nCmp;
@@ -1697,6 +1709,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool VisPrm = false, VisValue = false;
 	//bool SingleInstance = false;
 	gpSetCls->SingleInstanceArg = false;
+	gpSetCls->SingleInstanceShowHide = sih_None;
 	//gpConEmu->cBlinkShift = GetCaretBlinkTime()/15;
 	//memset(&gOSVer, 0, sizeof(gOSVer));
 	//gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
@@ -1990,6 +2003,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					gpConEmu->mps_IconPath = lstrdup(curCommand);
 				}
 			}
+			else if (!klstricmp(curCommand, _T("/dir")) && i + 1 < params)
+			{
+				curCommand += _tcslen(curCommand) + 1; i++;
+
+				if (*curCommand)
+				{
+					SetCurrentDirectory(curCommand);
+				}
+			}
 			else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0")  || !klstricmp(curCommand, L"/log1"))
 			{
 				gpSetCls->isAdvLogging = 1;
@@ -2005,6 +2027,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			else if (!klstricmp(curCommand, _T("/single")))
 			{
 				gpSetCls->SingleInstanceArg = true;
+			}
+			else if (!klstricmp(curCommand, _T("/showhide")) || !klstricmp(curCommand, _T("/showhideTSA")))
+			{
+				gpSetCls->SingleInstanceArg = true;
+				gpSetCls->SingleInstanceShowHide = !klstricmp(curCommand, _T("/showhide"))
+					? sih_ShowMinimize : sih_ShowHideTSA;
 			}
 			//else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
 			//{
@@ -2260,14 +2288,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (gpSetCls->SingleInstanceArg)
 	{
 		// При запуске серии закладок из cmd файла второму экземпляру лучше чуть-чуть подождать
-		Sleep(1000);
+		if (gpSetCls->SingleInstanceShowHide == sih_None)
+			Sleep(1000); // чтобы успело "появиться" главное окно ConEmu
+
 		// Поехали
 		DWORD dwStart = GetTickCount();
 
-		while(!gpConEmu->isFirstInstance())
+		while (!gpConEmu->isFirstInstance())
 		{
 			if (gpConEmu->RunSingleInstance())
 				return 0; // командная строка успешно запущена в существующем экземпляре
+
+			// Если передать не удалось (может первый экземпляр еще в процессе инициализации?)
+			Sleep(250);
 
 			// Если ожидание длится более 10 секунд - запускаемся самостоятельно
 			if ((GetTickCount() - dwStart) > 10*1000)

@@ -52,6 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LoadImg.h"
 #include "Status.h"
 #include "../ConEmuCD/GuiHooks.h"
+#include "../ConEmuCD/ExitCodes.h"
 #include "version.h"
 
 //#define CONEMU_ROOT_KEY L"Software\\ConEmu"
@@ -284,6 +285,7 @@ CSettings::CSettings()
 	gpSet->InitSettings();
 	
 	SingleInstanceArg = false;
+	SingleInstanceShowHide = sih_None;
 	mb_StopRegisterFonts = FALSE;
 	mb_IgnoreEditChanged = FALSE;
 	mb_IgnoreTtfChange = TRUE;
@@ -938,7 +940,7 @@ void CSettings::ApplyStartupOptions()
 
 void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
 {
-	lstrcpyn(LogFont.lfFaceName, (asFontName && *asFontName) ? asFontName : (*gpSet->inFont) ? gpSet->inFont : L"Lucida Console", countof(LogFont.lfFaceName));
+	lstrcpyn(LogFont.lfFaceName, (asFontName && *asFontName) ? asFontName : (*gpSet->inFont) ? gpSet->inFont : gsLucidaConsole, countof(LogFont.lfFaceName));
 	if ((asFontName && *asFontName) || *gpSet->inFont)
 		mb_Name1Ok = TRUE;
 		
@@ -960,7 +962,7 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 	LogFont.lfCharSet = gpSet->mn_LoadFontCharSet;
 	LogFont.lfItalic = gpSet->isItalic;
 	
-	lstrcpyn(LogFont2.lfFaceName, (*gpSet->inFont2) ? gpSet->inFont2 : L"Lucida Console", countof(LogFont2.lfFaceName));
+	lstrcpyn(LogFont2.lfFaceName, (*gpSet->inFont2) ? gpSet->inFont2 : gsLucidaConsole, countof(LogFont2.lfFaceName));
 	if (*gpSet->inFont2)
 		mb_Name2Ok = TRUE;
 	
@@ -1813,6 +1815,7 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	ShowWindow(GetDlgItem(hWnd2, cbTabsInCaption), SW_HIDE);
 	#endif
 
+	CheckDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle);
 
 	CheckDlgButton(hWnd2, cbHideCaption, gpSet->isHideCaption);
 
@@ -3181,6 +3184,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbAlwaysShowTrayIcon:
 			gpSet->isAlwaysShowTrayIcon = IsChecked(hWnd2, cbAlwaysShowTrayIcon);
 			Icon.SettingsChanged();
+			break;
+		case cbQuakeStyle:
+			gpSet->isQuakeStyle = IsChecked(hWnd2, cbQuakeStyle);
 			break;
 		case cbHideCaption:
 			gpSet->isHideCaption = IsChecked(hWnd2, cbHideCaption);
@@ -8263,7 +8269,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 				          L"Failed to create border font!\nRequested: %s\nCreated: ", LogFont2.lfFaceName);
 
 				// Если запрашивалась Люцида - оставляем (хотя это уже облом, должна быть)
-				if (lstrcmpi(LogFont2.lfFaceName, L"Lucida Console") == 0)
+				if (lstrcmpi(LogFont2.lfFaceName, gsLucidaConsole) == 0)
 				{
 					// только запомним что было реально создано
 					lstrcpyn(LogFont2.lfFaceName, szFontFace, countof(LogFont2.lfFaceName));
@@ -8271,7 +8277,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 				else
 				{
 					// Иначе - пробуем создать Люциду (нам нужен шрифт с рамками)
-					wcscpy_c(LogFont2.lfFaceName, L"Lucida Console");
+					wcscpy_c(LogFont2.lfFaceName, gsLucidaConsole);
 					SelectObject(hDC, hOldF);
 					mh_Font2.Delete();
 
@@ -10811,6 +10817,59 @@ bool CSettings::CheckConsoleFontFast()
 			gpSetCls->nConFontError |= ConFontErr_NonRegistry;
 	}
 
+	BOOL bCheckStarted = FALSE;
+	DWORD nCheckResult = -1;
+	DWORD nCheckWait = -1;
+
+	if ((gpSetCls->nConFontError & ConFontErr_NonRegistry)
+		|| (gbIsWine && gpSetCls->nConFontError))
+	{
+		wchar_t szCmd[MAX_PATH+64] = L"\"";
+		wcscat_c(szCmd, gpConEmu->ms_ConEmuBaseDir);
+		wchar_t* psz = szCmd + _tcslen(szCmd);
+		_wcscpy_c(psz, 64, L"\\ConEmuC.exe");
+		if (IsWindows64() && !FileExists(szCmd+1))
+		{
+			_wcscpy_c(psz, 64, L"\\ConEmuC64.exe");
+		}
+		wcscat_c(szCmd, L"\" /CheckUnicode");
+
+		PROCESS_INFORMATION pi = {};
+		STARTUPINFO si = {sizeof(si)};
+		si.dwFlags = STARTF_USESHOWWINDOW;
+		si.wShowWindow = SW_HIDE; //RELEASEDEBUGTEST(SW_HIDE,SW_SHOW);
+
+		#if 0
+		AllocConsole();
+		#endif
+
+		bCheckStarted = CreateProcess(NULL, szCmd, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+		if (bCheckStarted)
+		{
+			nCheckWait = WaitForSingleObject(pi.hProcess, 5000);
+			if (nCheckWait == WAIT_OBJECT_0)
+			{
+				GetExitCodeProcess(pi.hProcess, &nCheckResult);
+
+				if (nCheckResult == CERR_UNICODE_CHK_OKAY)
+				{
+					gpSetCls->nConFontError = 0;
+				}
+			}
+			else
+			{
+				TerminateProcess(pi.hProcess, 100);
+			}
+
+			#if 0
+			wchar_t szDbg[1024];
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Cmd:\n%s\nExitCode=%i", szCmd, nCheckResult);
+			MBoxA(szDbg);
+			FreeConsole();
+			#endif
+		}
+	}
+
 	bConsoleFontChecked = (gpSetCls->nConFontError == 0);
 	return bConsoleFontChecked;
 }
@@ -10957,7 +11016,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 				{
 					if (!gpSetCls->bConsoleFontChecked)
 					{
-						wcscpy_c(gpSet->ConsoleFont.lfFaceName, gpSetCls->sDefaultConFontName[0] ? gpSetCls->sDefaultConFontName : L"Lucida Console");
+						wcscpy_c(gpSet->ConsoleFont.lfFaceName, gpSetCls->sDefaultConFontName[0] ? gpSetCls->sDefaultConFontName : gsLucidaConsole);
 						gpSet->ConsoleFont.lfHeight = 5; gpSet->ConsoleFont.lfWidth = 3;
 					}
 

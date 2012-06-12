@@ -107,52 +107,43 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 	{
 		case CECMD_NEWCMD:
 		{
-			// Приходит из другой копии ConEmu.exe, когда она запущена с ключом /single
+			// Приходит из другой копии ConEmu.exe, когда она запущена с ключом /single, /showhide, /showhideTSA
 			DEBUGSTR(L"GUI recieved CECMD_NEWCMD\n");
-			//pIn->Data[0] = FALSE;
-			//pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + 1;
 
-			if (gpConEmu->isIconic())
-				SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+			//if (gpConEmu->isIconic())
+			//	SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+			//apiSetForegroundWindow(ghWnd);
 
-			apiSetForegroundWindow(ghWnd);
-			WARNING("");
-			RConStartArgs *pArgs = new RConStartArgs;
-			pArgs->pszSpecialCmd = lstrdup(pIn->NewCmd.szCommand);
-			if (pIn->NewCmd.szCurDir[0] == 0)
+			gpConEmu->OnMinimizeRestore(pIn->NewCmd.ShowHide);
+
+			// Может быть пусто
+			if ((pIn->NewCmd.ShowHide == sih_None) && pIn->NewCmd.szCommand[0])
 			{
-				_ASSERTE(pIn->NewCmd.szCurDir[0] != 0);
+				RConStartArgs *pArgs = new RConStartArgs;
+				pArgs->pszSpecialCmd = lstrdup(pIn->NewCmd.szCommand);
+				if (pIn->NewCmd.szCurDir[0] == 0)
+				{
+					_ASSERTE(pIn->NewCmd.szCurDir[0] != 0);
+				}
+				else
+				{
+					pArgs->pszStartupDir = lstrdup(pIn->NewCmd.szCurDir);
+				}
+
+				gpConEmu->PostCreateCon(pArgs);
 			}
 			else
 			{
-				pArgs->pszStartupDir = lstrdup(pIn->NewCmd.szCurDir);
+				_ASSERTE(pIn->NewCmd.ShowHide==sih_ShowMinimize || pIn->NewCmd.ShowHide==sih_ShowHideTSA || pIn->NewCmd.ShowHide==sih_Show);
 			}
-
-			gpConEmu->PostCreateCon(pArgs);
 
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(BYTE);
 			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize);
 			if (lbRc)
+			{
 				ppReply->Data[0] = TRUE;
+			}
 
-			//pIn->Data[0] = TRUE;
-
-			///*
-			//CVirtualConsole* pVCon = CreateCon(&args);
-
-			//if (pVCon)
-			//{
-			//	pIn->Data[0] = TRUE;
-			//}
-			//*/
-
-			//// Отправляем
-			//fSuccess = WriteFile(
-			//               hPipe,        // handle to pipe
-			//               pIn,         // buffer to write from
-			//               pIn->hdr.cbSize,  // number of bytes to write
-			//               &cbWritten,   // number of bytes written
-			//               NULL);        // not overlapped I/O
 			break;
 		} //CECMD_NEWCMD
 

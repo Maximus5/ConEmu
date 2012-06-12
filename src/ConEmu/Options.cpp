@@ -286,8 +286,8 @@ void Settings::InitSettings()
 	/*LogFont.lfQuality =*/ mn_AntiAlias = ANTIALIASED_QUALITY;
 	//LogFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
 	inFont[0] = inFont2[0] = 0;
-	//wcscpy_c(inFont, L"Lucida Console");
-	//wcscpy_c(inFont2, L"Lucida Console");
+	//wcscpy_c(inFont, gsLucidaConsole);
+	//wcscpy_c(inFont2, gsLucidaConsole);
 	//mb_Name1Ok = FALSE; mb_Name2Ok = FALSE;
 	isTryToCenter = false;
 	isAlwaysShowScrollbar = 2;
@@ -300,7 +300,7 @@ void Settings::InitSettings()
 	
 	ConsoleFont.lfHeight = 5;
 	ConsoleFont.lfWidth = 3;
-	wcscpy_c(ConsoleFont.lfFaceName, L"Lucida Console");
+	wcscpy_c(ConsoleFont.lfFaceName, gsLucidaConsole);
 	
 	{
 		SettingsRegistry RegConColors, RegConDef;
@@ -381,12 +381,14 @@ void Settings::InitSettings()
 	wndWidth = 80;
 	WindowMode = rNormal;
 	//isFullScreen = false;
-	isHideCaption = mb_HideCaptionAlways = false;
+	isHideCaption = mb_HideCaptionAlways = isQuakeStyle = false;
 	nHideCaptionAlwaysFrame = 1; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
 	isDesktopMode = false;
 	isAlwaysOnTop = false;
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
-	wndX = 0; wndY = 0; wndCascade = true;
+	RECT rcWork = {}; SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
+	wndX = rcWork.left; wndY = rcWork.top;
+	wndCascade = true;
 	isAutoSaveSizePos = false; mb_SizePosAutoSaved = false;
 	isConVisible = false; //isLockRealConsolePos = false;
 	isUseInjects = true;
@@ -511,6 +513,9 @@ void Settings::InitSettings()
 // true - не допускать Gaps в Normal режиме. Подгонять размер окна точно под консоль.
 bool Settings::isIntegralSize()
 {
+	if (isQuakeStyle)
+		return false;
+
 	#ifdef _DEBUG
 	if ((1 & (WORD)GetKeyState(VK_NUMLOCK)) == 0)
 		return false;
@@ -1788,6 +1793,7 @@ void Settings::LoadSettings()
 		reg->Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 		
 		reg->Load(L"WindowMode", WindowMode); if (WindowMode!=rFullScreen && WindowMode!=rMaximized && WindowMode!=rNormal) WindowMode = rNormal;
+		reg->Load(L"QuakeStyle", isQuakeStyle);
 		reg->Load(L"HideCaption", isHideCaption);
 		// грузим именно в mb_HideCaptionAlways, т.к. прозрачность сбивает темы в заголовке, поэтому возврат идет через isHideCaptionAlways()
 		reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
@@ -2633,6 +2639,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 					? gpConEmu->WindowMode
 					: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal);
 		reg->Save(L"WindowMode", saveMode);
+		reg->Save(L"QuakeStyle", isQuakeStyle);
 		reg->Save(L"HideCaption", isHideCaption);
 		reg->Save(L"HideCaptionAlways", mb_HideCaptionAlways);
 		reg->Save(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
@@ -2993,11 +3000,14 @@ DWORD Settings::GetHotKeyMod(DWORD VkMod)
 		}
 	}
 
+#if 0
+	// User want - user get
 	if (!nMOD)
 	{
 		_ASSERTE(nMOD!=0);
 		nMOD = MOD_WIN;
 	}
+#endif
 
 	return nMOD;
 }
@@ -3637,7 +3647,7 @@ void Settings::GetSettingsType(wchar_t (&szType)[8], bool& ReadOnly)
 
 bool Settings::isHideCaptionAlways()
 {
-	return mb_HideCaptionAlways || (!mb_HideCaptionAlways && isUserScreenTransparent);
+	return mb_HideCaptionAlways || (!mb_HideCaptionAlways && isUserScreenTransparent) || isQuakeStyle;
 }
 
 int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)

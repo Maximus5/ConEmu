@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    95
+#define CESERVER_REQ_VER    96
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1245,9 +1245,18 @@ struct CESERVER_REQ_RETSIZE
 	CONSOLE_SCREEN_BUFFER_INFO SetSizeRet;
 };
 
+enum SingleInstanceShowHideType
+{
+	sih_None = 0,
+	sih_ShowMinimize = 1,
+	sih_ShowHideTSA = 2,
+	sih_Show = 3,
+};
+
 struct CESERVER_REQ_NEWCMD // CECMD_NEWCMD
 {
 	HWND2   hFromConWnd;
+	SingleInstanceShowHideType ShowHide;
 	wchar_t szCurDir[MAX_PATH];
 	// Внимание! Может содержать параметр -new_console. GUI его должен вырезать перед запуском сервера!
 	wchar_t szCommand[1]; // На самом деле - variable_size !!!

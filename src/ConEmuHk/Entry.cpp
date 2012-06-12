@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //  –аскомментировать, чтобы сразу после загрузки модул€ показать MessageBox, чтобы прицепитьс€ дебаггером
-	#define SHOW_STARTED_MSGBOX
+//	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 //	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
 //	#define SHOW_EXE_MSGBOX_NAME L"tcc.exe"

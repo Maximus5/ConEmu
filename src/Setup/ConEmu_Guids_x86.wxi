@@ -31,6 +31,7 @@
 	<!-- Cmd Extensions -->
 	<?define Guid.Attach.cmd = "A3007778-A4CE-4E61-BED5-B5A31B638549" ?>
 	<?define Guid.Cmd_Autorun.cmd = "FFA943E1-0E3A-4B97-A142-1678CFE82935" ?>
+	<?define Guid.ColorPrompt.cmd = "318DFA50-3987-4ABC-A3F5-524F963BA5BE" ?>
 	<?define Guid.Command_Processor.reg = "24F69FDE-C0DD-48C4-AAFF-ECB2146F6E32" ?>
 	<?define Guid.Command_Processor_Off.reg = "DA4661C7-FD43-4A42-8EF0-1A0FC7CC2978" ?>
 	<!-- DosBox -->
@@ -41,6 +42,7 @@
 	<?define Guid.About_ConEmu.txt = "A94A790E-7698-45BA-9027-B6F55401BC35" ?>
 	<?define Guid.Portable.txt = "B94B2B1C-E779-428F-A19F-4016D81FF7B5" ?>
 	<?define Guid.ConEmu_Sample.xml = "7A6EF08A-844C-426B-86D6-B87691213B6D" ?>
+	<?define Guid.ConEmu_Tilde.xml = "D9FF2CAD-2C93-4C92-AA3A-44559064C57B" ?>
 	<?define Guid.FAQ_ConEmu.txt = "676732CF-706D-4CD4-A119-608650ED1858" ?>
 	<?define Guid.Settings_ConEmu.reg = "75608193-1D79-4E7A-A0A0-3A274B11706E" ?>
 	<?define Guid.WhatsNew_ConEmu.txt = "3C56F1F9-4A06-4D48-906C-F8CE71FDA032" ?>

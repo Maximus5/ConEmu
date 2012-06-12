@@ -49,19 +49,22 @@
     <!-- Cmd Extensions -->
     <Feature Id="FConEmuCmdExt" AllowAdvertise="no" Title="Cmd extensions" Level="1"
              Description="Attach.cmd - sample batch for attaching any console window to ConEmu,
+ColorPrompt.cmd - change text color of command prompt,
 Cmd_Autorun.cmd - install or uninstall automatic attach of cmd.exe to ConEmu (and sample reg-files)">
       <!--<ComponentRef Id="CEExtConsoleDir" />-->
       <ComponentRef Id="Attach.cmd" />
       <ComponentRef Id="Cmd_Autorun.cmd" />
+      <ComponentRef Id="ColorPrompt.cmd" />
       <ComponentRef Id="Command_Processor.reg" />
       <ComponentRef Id="Command_Processor_Off.reg" />
     </Feature>
     <!-- Documentation -->
     <Feature Id="FConEmuDocs" AllowAdvertise="no" Title="Documentation" Level="1"
-             Description="WhatsNew-ConEmu.txt, FAQ-ConEmu.txt, ConEmu_Sample.xml, and other information">
+             Description="WhatsNew-ConEmu.txt, FAQ-ConEmu.txt, ConEmu_Sample.xml, ConEmu_Tilde.xml and other information">
       <ComponentRef Id="About_ConEmu.txt" />
       <ComponentRef Id="Portable.txt" />
       <ComponentRef Id="ConEmu_Sample.xml" />
+      <ComponentRef Id="ConEmu_Tilde.xml" />
       <ComponentRef Id="FAQ_ConEmu.txt" />
       <ComponentRef Id="Settings_ConEmu.reg" />
       <ComponentRef Id="WhatsNew_ConEmu.txt" />

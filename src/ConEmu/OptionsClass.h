@@ -60,6 +60,7 @@ class CSettings
 		wchar_t szFontError[512];
 
 		bool SingleInstanceArg;
+		SingleInstanceShowHideType SingleInstanceShowHide;
 		void ResetCmdArg();
 
 		//int DefaultBufferHeight;

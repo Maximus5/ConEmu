@@ -834,7 +834,42 @@ RECT CConEmuMain::GetDefaultRect()
 	          + ((gpSet->isTabs == 1) ? (gpSet->rcTabMargins.top+gpSet->rcTabMargins.bottom) : 0);
 	rcWnd = MakeRect(gpSet->wndX, gpSet->wndY, gpSet->wndX+nWidth, gpSet->wndY+nHeight);
 
-	if (gpSet->wndCascade)
+	if (gpSet->isQuakeStyle)
+	{
+		HMONITOR hMon;
+		POINT pt = {gpSet->wndX+2*nShiftX,gpSet->wndY+2*nShiftY};
+		if (ghWnd)
+		{
+			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+			pt.x = (rcWnd.left+rcWnd.right)/2;
+			pt.y = (rcWnd.top+rcWnd.bottom)/2;
+		}
+		hMon = MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
+
+		MONITORINFO mi = {sizeof(mi)};
+		if (!GetMonitorInfo(hMon, &mi))
+			SystemParametersInfo(SPI_GETWORKAREA, 0, &mi.rcWork, 0);
+
+		// Если успешно - подгоняем по экрану
+		if (mi.rcWork.right > mi.rcWork.left)
+		{
+			rcWnd.left = mi.rcWork.left - rcFrameMargin.left;
+			rcWnd.right = mi.rcWork.right + rcFrameMargin.right;
+			rcWnd.top = mi.rcWork.top - rcFrameMargin.top;
+			rcWnd.bottom = rcWnd.top + nHeight;
+
+			ptFullScreenSize.x = rcWnd.right - rcWnd.left + 1;
+			ptFullScreenSize.y = mi.rcMonitor.bottom - mi.rcMonitor.top + nShiftY;
+
+			RECT rcCon = CalcRect(CER_CONSOLE, rcWnd, CER_MAIN);
+			if (rcCon.right)
+				gpSet->wndWidth = rcCon.right;
+
+			gpSet->wndX = rcWnd.left;
+			gpSet->wndY = rcWnd.top;
+		}
+	}
+	else if (gpSet->wndCascade)
 	{
 		RECT rcScreen = MakeRect(800,600);
 		int nMonitors = GetSystemMetrics(SM_CMONITORS);
@@ -1137,6 +1172,10 @@ BOOL CConEmuMain::CreateMainWindow()
 		mrc_Ideal = GetDefaultRect();
 		nWidth = mrc_Ideal.right - mrc_Ideal.left;
 		nHeight = mrc_Ideal.bottom - mrc_Ideal.top;
+	}
+	else
+	{
+		_ASSERTE(gpSet->wndWidth && gpSet->wndHeight);
 	}
 
 	//if (gpConEmu->WindowMode == rMaximized) style |= WS_MAXIMIZE;
@@ -5913,6 +5952,41 @@ void CConEmuMain::UnRegisterHoooks(BOOL abFinal/*=FALSE*/)
 	}
 }
 
+// Обработка WM_HOTKEY
+void CConEmuMain::OnWmHotkey(WPARAM wParam)
+{
+	// Ctrl+Win+Alt+Space
+	if (wParam == HOTKEY_CTRLWINALTSPACE_ID)
+	{
+		CtrlWinAltSpace();
+	}
+	else
+	{
+		//// vmMinimizeRestore -> Win+C
+		//else if (gpConEmu->mn_MinRestoreRegistered && (int)wParam == gpConEmu->mn_MinRestoreRegistered)
+		//{
+		//	gpConEmu->OnMinimizeRestore();
+		//}
+
+		for (size_t i = 0; i < countof(gRegisteredHotKeys); i++)
+		{
+			if (gRegisteredHotKeys[i].RegisteredID && ((int)wParam == gRegisteredHotKeys[i].RegisteredID))
+			{
+				switch (gRegisteredHotKeys[i].DescrID)
+				{
+				case vkMinimizeRestore:
+					OnMinimizeRestore();
+					break;
+				case vkForceFullScreen:
+					OnForcedFullScreen(true);
+					break;
+				}
+				break;
+			}
+		}
+	}
+}
+
 void CConEmuMain::CtrlWinAltSpace()
 {
 	if (mp_VActive && mp_VActive->RCon())
@@ -6116,23 +6190,24 @@ BOOL CConEmuMain::RunSingleInstance()
 	BOOL lbAccepted = FALSE;
 	LPCWSTR lpszCmd = gpSet->GetCmd();
 
-	if (lpszCmd && *lpszCmd)
+	if ((lpszCmd && *lpszCmd) || (gpSetCls->SingleInstanceShowHide != sih_None))
 	{
 		HWND ConEmuHwnd = FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
 
 		if (ConEmuHwnd)
 		{
 			CESERVER_REQ *pIn = NULL, *pOut = NULL;
-			int nCmdLen = lstrlenW(lpszCmd);
+			int nCmdLen = lpszCmd ? lstrlenW(lpszCmd) : 1;
 			int nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_NEWCMD) + (nCmdLen*sizeof(wchar_t));
 
 			pIn = ExecuteNewCmd(CECMD_NEWCMD, nSize);
 
 			if (pIn)
 			{
+				pIn->NewCmd.ShowHide = gpSetCls->SingleInstanceShowHide;
 				GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
 
-				lstrcpyW(pIn->NewCmd.szCommand, lpszCmd);
+				lstrcpyW(pIn->NewCmd.szCommand, lpszCmd ? lpszCmd : L"");
 				DWORD dwPID = 0;
 
 				if (GetWindowThreadProcessId(ConEmuHwnd, &dwPID))
@@ -9974,7 +10049,7 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	//pInfo->ptMinTrackSize.y = srctWindow.Y * (gpSet->Log Font.lfHeight ? gpSet->Log Font.lfHeight : 6)
 	//  + p.y + shiftRect.top + shiftRect.bottom;
 
-	if (mb_isFullScreen)
+	if (mb_isFullScreen || gpSet->isQuakeStyle)
 	{
 		if (pInfo->ptMaxTrackSize.x < ptFullScreenSize.x)
 			pInfo->ptMaxTrackSize.x = ptFullScreenSize.x;
@@ -10144,25 +10219,71 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 	gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(mb_isFullScreen/*&&gpConEmu->isWndNotFSMaximized*/)) ? rNormal : rMaximized);
 }
 
-void CConEmuMain::OnMinimizeRestore()
+void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= sih_None*/)
 {
-	if (isMeForeground())
+	bool bIsForeground = isMeForeground();
+	bool bIsIconic = isIconic();
+
+	// 1. Функция вызывается при нажатии глобально регистрируемого хоткея
+	//    Win+C  -->  ShowHideType = sih_None
+	// 2. При вызове из другого приложения 
+	//    аргумент /single  --> ShowHideType = sih_Show
+	// 3. При вызове из дрегого приложения
+	//    аргумент /showhide     --> ShowHideType = sih_ShowMinimize
+	//    аргумент /showhideTSA  --> ShowHideType = sih_ShowHideTSA
+	SingleInstanceShowHideType cmd = sih_None;
+
+	if (ShowHideType == sih_Show)
 	{
+		cmd = sih_Show;
+	}
+	else if ((ShowHideType == sih_ShowMinimize) || (ShowHideType == sih_ShowHideTSA))
+	{
+		if (bIsForeground)
+		{
+			// если видимо - спрятать
+			cmd = ShowHideType;
+		}
+		else
+		{
+			// Иначе - показать
+			cmd = sih_Show;
+		}
+	}
+	else
+	{
+		_ASSERTE(ShowHideType == sih_None);
+		// Иначе - прячем/показываем в зависимости от текущей видимости
+		if (IsWindowVisible(ghWnd) && (bIsForeground || !bIsIconic)) // (!bIsIconic) - окошко развернуто, надо свернуть
+			cmd = sih_ShowMinimize;
+		else
+			cmd = sih_Show;
+	}
+
+	// Поехали
+
+	if (cmd == sih_Show)
+	{
+		if (Icon.isWindowInTray() || !IsWindowVisible(ghWnd))
+			Icon.RestoreWindowFromTray();
+		else if (bIsIconic)
+			PostMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+
+		apiSetForegroundWindow(ghWnd);
+	}
+	else if (cmd == sih_ShowHideTSA)
+	{
+		// Явно попросили в TSA спрятать
+		Icon.HideWindowToTray();
+	}
+	else if (cmd == sih_ShowMinimize)
+	{
+		// SC_MINIMIZE сам обработает (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
 		PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 	}
 	else
 	{
-		if (isIconic())
-		{
-			if (Icon.isWindowInTray() || !IsWindowVisible(ghWnd))
-				Icon.RestoreWindowFromTray();
-			else
-				PostMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
-		}
-		else
-		{
-			PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
-		}
+		_ASSERTE(FALSE && "cmd must be determined!");
 	}
 }
 
@@ -14593,6 +14714,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;
+
 		case WM_NCLBUTTONDBLCLK:
 			gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL; // чтобы в консоль не провалился LBtnUp если окошко развернется
 
@@ -14602,51 +14724,22 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 
 			break;
-		case WM_NCRBUTTONUP:
 
+		case WM_NCRBUTTONUP:
 			if (wParam == HTCLOSE)
 			{
 				Icon.HideWindowToTray();
 			}
-
 			break;
+
 		case WM_TRAYNOTIFY:
 			result = Icon.OnTryIcon(hWnd, messg, wParam, lParam);
 			break;
+
 		case WM_HOTKEY:
-
-			// Ctrl+Win+Alt+Space
-			if (wParam == HOTKEY_CTRLWINALTSPACE_ID)
-			{
-				gpConEmu->CtrlWinAltSpace();
-			}
-			else
-			{
-				//// vmMinimizeRestore -> Win+C
-				//else if (gpConEmu->mn_MinRestoreRegistered && (int)wParam == gpConEmu->mn_MinRestoreRegistered)
-				//{
-				//	gpConEmu->OnMinimizeRestore();
-				//}
-
-				for (size_t i = 0; i < countof(gRegisteredHotKeys); i++)
-				{
-					if (gRegisteredHotKeys[i].RegisteredID && ((int)wParam == gRegisteredHotKeys[i].RegisteredID))
-					{
-						switch (gRegisteredHotKeys[i].DescrID)
-						{
-						case vkMinimizeRestore:
-							gpConEmu->OnMinimizeRestore();
-							break;
-						case vkForceFullScreen:
-							gpConEmu->OnForcedFullScreen(true);
-							break;
-						}
-						break;
-					}
-				}
-			}
-
+			gpConEmu->OnWmHotkey(wParam);
 			return 0;
+
 		case WM_SETCURSOR:
 			result = gpConEmu->OnSetCursor(wParam, lParam);
 

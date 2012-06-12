@@ -341,6 +341,7 @@ class CConEmuMain :
 		void RegisterMinRestore(bool abRegister);
 		void RegisterHoooks();
 		void UnRegisterHoooks(BOOL abFinal=FALSE);
+		void OnWmHotkey(WPARAM wParam);
 		void UpdateWinHookSettings();
 		void CtrlWinAltSpace();
 	protected:
@@ -569,7 +570,7 @@ class CConEmuMain :
 	public:
 		void OnAltEnter();
 		void OnAltF9(BOOL abPosted=FALSE);
-		void OnMinimizeRestore();
+		void OnMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
 		void OnForcedFullScreen(bool bSet = true);
 		void OnAlwaysOnTop();
 		void OnAlwaysShowScrollbar();

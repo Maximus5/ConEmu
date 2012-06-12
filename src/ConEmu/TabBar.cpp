@@ -1199,7 +1199,7 @@ void TabBarClass::UpdateToolbarPos()
 		SIZE sz;
 		SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
 		// В Win2k имеет место быть глюк вычисления размера (разделители)
-		if ((gOSVer.dwMajorVersion == 5) && (gOSVer.dwMinorVersion == 0))
+		if ((gOSVer.dwMajorVersion == 5) && (gOSVer.dwMinorVersion == 0) && !gbIsWine)
 			sz.cx += 26;
 
 		if (mh_Rebar)

@@ -597,6 +597,8 @@ struct Settings
 		
 		//reg->Load(L"HideCaption", isHideCaption);
 		bool isHideCaption; // Hide caption when maximized
+		//reg->Load(L"QuakeStyle", isQuakeStyle);
+		bool isQuakeStyle;
 		protected:
 		//reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
 		bool mb_HideCaptionAlways;
