@@ -1370,14 +1370,17 @@ void UpdateWin7TaskList(bool bForce)
 
 		// Теперь команды из истории
 		LPCWSTR pszCommand = gpSet->HistoryGet();
-		while (*pszCommand && (nHistoryCount < countof(pszHistory)))
+		if (pszCommand)
 		{
-			// Текущую - к pszCommand не добавляем. Ее в конец
-			if (!pszCurCmdTitle || (lstrcmpi(pszCurCmdTitle, pszCommand) != 0))
+			while (*pszCommand && (nHistoryCount < countof(pszHistory)))
 			{
-				pszHistory[nHistoryCount++] = pszCommand;
+				// Текущую - к pszCommand не добавляем. Ее в конец
+				if (!pszCurCmdTitle || (lstrcmpi(pszCurCmdTitle, pszCommand) != 0))
+				{
+					pszHistory[nHistoryCount++] = pszCommand;
+				}
+				pszCommand += _tcslen(pszCommand)+1;
 			}
-			pszCommand += _tcslen(pszCommand)+1;
 		}
 
 		if (pszCurCmdTitle)

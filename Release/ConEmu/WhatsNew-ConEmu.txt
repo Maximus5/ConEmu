@@ -18,6 +18,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
     если ConEmu не был запущен. А с ключами - можно настроить ярлык на рабочем столе.
 [+] Аргумент ConEmu.exe: /dir "Folder". Аналог Working folder, задаваемый в свойствах ярлыка.
 [+] Параметр «Quake style slide down» на вкладке «Features». Пример настройки в «ConEmu\ConEmu_Tilda.xml».
+[%] Issue 576: Trap when updating Jump Lists/Task while history is empty.
 
 
 2012.06.08
