@@ -2832,17 +2832,18 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMOD
 
 	// for unlocking CS
 	{
-		MSectionLock CS;
-		if (gpHookCS->isLockedExclusive() || LockHooks(hModule, L"free", &CS))
+		//-- Locking is inadmissible. One FreeLibrary may cause another FreeLibrary in _different_ thread. 
+		//MSectionLock CS;
+		//if (gpHookCS->isLockedExclusive() || LockHooks(hModule, L"free", &CS))
 		{
 			lbRc = ((OnFreeLibrary_t)lpfn)(hModule);
 			dwFreeErrCode = GetLastError();
 		}
-		else
-		{
-			lbRc = FALSE;
-			dwFreeErrCode = E_UNEXPECTED;
-		}
+		//else
+		//{
+		//	lbRc = FALSE;
+		//	dwFreeErrCode = E_UNEXPECTED;
+		//}
 	}
 
 	// Далее только если !LDR_IS_RESOURCE

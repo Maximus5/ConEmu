@@ -173,6 +173,7 @@ class CConEmuMain :
 		LPCWSTR ConEmuCExeFull(LPCWSTR asCmdLine=NULL);
 		//wchar_t ms_ConEmuCExeName[32];        // имя сервера (ConEmuC.exe или ConEmuC64.exe) -- на удаление
 		wchar_t ms_ConEmuCurDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
+		void RefreshConEmuCurDir();
 		wchar_t *mpsz_ConEmuArgs;    // Аргументы
 		void GetComSpecCopy(ConEmuComspec& ComSpec);
 		void CreateGuiAttachMapping(DWORD nGuiAppPID);
@@ -182,6 +183,7 @@ class CConEmuMain :
 		MFileMapping<ConEmuGuiMapping> m_GuiAttachMapping;
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
+		int mn_QuakePercent; // 0 - отключен
 	public:
 		//CConEmuChild *m_Child;
 		//CConEmuBack  *m_Back;

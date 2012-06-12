@@ -2013,6 +2013,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				if (*curCommand)
 				{
 					SetCurrentDirectory(curCommand);
+					gpConEmu->RefreshConEmuCurDir();
 				}
 			}
 			else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0")  || !klstricmp(curCommand, L"/log1"))

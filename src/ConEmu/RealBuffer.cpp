@@ -4685,7 +4685,20 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 		else if (etr == etr_FileAndLine)
 		{
 			// В именах файлов недопустимы: "/\:|*?<>~t~r~n
-			const wchar_t* pszBreak   = L"\"|*?<>\t\r\n";
+			const wchar_t  pszBreak[] = {
+								/*недопустимые в FS*/
+								L'\"', '|', '*', '?', '<', '>', '\t', '\r', '\n', 
+								/*для простоты - учитываем и рамки*/
+								ucArrowUp, ucArrowDown, ucDnScroll, ucUpScroll,
+								ucBox100, ucBox75, ucBox50, ucBox25,
+								ucBoxDblVert, ucBoxSinglVert, ucBoxDblVertSinglRight, ucBoxDblVertSinglLeft,
+								ucBoxDblDownRight, ucBoxDblDownLeft, ucBoxDblUpRight,
+								ucBoxDblUpLeft, ucBoxSinglDownRight, ucBoxSinglDownLeft, ucBoxSinglUpRight,
+								ucBoxSinglUpLeft, ucBoxSinglDownDblHorz, ucBoxSinglUpDblHorz, ucBoxDblDownDblHorz,
+								ucBoxDblUpDblHorz, ucBoxSinglDownHorz, ucBoxSinglUpHorz, ucBoxDblDownSinglHorz,
+								ucBoxDblUpSinglHorz, ucBoxDblVertRight, ucBoxDblVertLeft, 
+								ucBoxSinglVertRight, ucBoxSinglVertLeft, ucBoxDblVertHorz
+								};
 			const wchar_t* pszSpacing = L" \t\xB7\x2192"; //B7 - режим "Show white spaces", 2192 - символ табуляции там же
 			const wchar_t* pszSeparat = L" \t:(";
 			const wchar_t* pszTermint = L":)";
@@ -4870,7 +4883,12 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 
 					if (iExtFound == 2)
 					{
-						if (wcschr(pszSlashes, pChar[crTo.X]) != NULL)
+						if (pChar[crTo.X] == L'.')
+						{
+							iExtFound = 1;
+							iBracket = 0;
+						}
+						else if (wcschr(pszSlashes, pChar[crTo.X]) != NULL)
 						{
 							// Был слеш, значит расширения - еще нет
 							iExtFound = 0;
@@ -4888,10 +4906,19 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 							bWasSeparator = (wcschr(pszSeparat, pChar[crTo.X]) != NULL);
 					}
 
+					// Расчитано на закрывающие : или )
+					_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==0);
 					if (bDigits && wcschr(pszTermint, pChar[crTo.X]) /*pChar[crTo.X] == L':'*/)
 					{
 						// Если номер строки обрамлен скобками - скобки должны быть сбалансированы
-						if ((pChar[crTo.X] != L')') || (iBracket == 1))
+						if (((pChar[crTo.X] == L':')
+								&& (wcschr(pszSpacing, pChar[crTo.X+1])
+									|| wcschr(pszDigits, pChar[crTo.X+1])))
+						|| ((pChar[crTo.X] == L')') && (iBracket == 1)
+								&& ((pChar[crTo.X+1] == L':')
+									|| wcschr(pszSpacing, pChar[crTo.X+1])
+									|| wcschr(pszDigits, pChar[crTo.X+1])))
+							)
 						{
 							_ASSERTE(bLineNumberFound==false);
 							bLineNumberFound = true;

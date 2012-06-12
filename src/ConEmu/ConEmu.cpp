@@ -160,6 +160,7 @@ CConEmuMain::CConEmuMain()
 	mn_MainThreadId = GetCurrentThreadId();
 	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
 	WindowMode = rNormal; WindowStartMinimized = false; ForceMinimizeToTray = false;
+	mn_QuakePercent = 0; // 0 - отключен
 	DisableAutoUpdate = false;
 	DisableKeybHooks = false;
 	mb_PassSysCommand = false; change2WindowMode = -1;
@@ -422,16 +423,7 @@ CConEmuMain::CConEmuMain()
 	//}
 	//wcscpy(ms_ConEmuCExeName, pszSlash);
 	// Запомнить текущую папку (на момент запуска)
-	DWORD nDirLen = GetCurrentDirectory(MAX_PATH, ms_ConEmuCurDir);
-
-	if (!nDirLen || nDirLen>MAX_PATH)
-	{
-		ms_ConEmuCurDir[0] = 0;
-	}
-	else if (ms_ConEmuCurDir[nDirLen-1] == L'\\')
-	{
-		ms_ConEmuCurDir[nDirLen-1] = 0; // пусть будет БЕЗ слеша, для однообразия с ms_ConEmuExeDir
-	}
+	RefreshConEmuCurDir();
 
 	
 	// DosBox (единственный способ запуска Dos-приложений в 64-битных OS)
@@ -518,6 +510,21 @@ CConEmuMain::CConEmuMain()
 	//wmInputLangChange = WM_INPUTLANGCHANGE;
 
 	InitFrameHolder();
+}
+
+void CConEmuMain::RefreshConEmuCurDir()
+{
+	// Запомнить текущую папку (на момент запуска)
+	DWORD nDirLen = GetCurrentDirectory(MAX_PATH, ms_ConEmuCurDir);
+
+	if (!nDirLen || nDirLen>MAX_PATH)
+	{
+		ms_ConEmuCurDir[0] = 0;
+	}
+	else if (ms_ConEmuCurDir[nDirLen-1] == L'\\')
+	{
+		ms_ConEmuCurDir[nDirLen-1] = 0; // пусть будет БЕЗ слеша, для однообразия с ms_ConEmuExeDir
+	}
 }
 
 bool CConEmuMain::CheckRequiredFiles()
@@ -1823,6 +1830,13 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				RECT rcClient = GetGuiClientRect();
 				RECT rcFrame = CalcMargins(CEM_FRAME);
 				_ASSERTE(!rcClient.left && !rcClient.top);
+
+				if (gpSet->isQuakeStyle && (mn_QuakePercent > 0))
+				{
+					int nQuakeHeight = (rcClient.bottom - rcClient.top + 1) * mn_QuakePercent / 100;
+					rcClient.bottom = min(rcClient.bottom, (rcClient.top+nQuakeHeight));
+				}
+
 				hRgn = CreateWindowRgn(abTestOnly, gpSetCls->CheckTheming() && mp_TabBar->IsTabsShown(),
 				                       rcFrame.left-gpSet->nHideCaptionAlwaysFrame,
 				                       rcFrame.top-gpSet->nHideCaptionAlwaysFrame,
@@ -4567,12 +4581,24 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	#endif
 	
 	// Если у нас режим скрытия заголовка (при максимизации)
-	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && (change2WindowMode == (DWORD)-1) && mb_MaximizedHideCaption && isZoomed())
+	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE))
+		&& (change2WindowMode == (DWORD)-1)
+		&& (mb_MaximizedHideCaption || gpSet->isQuakeStyle))
 	{
-		// Нужно скорректировать размеры, а то при смене разрешения монитора (в частности при повороте экрана) глюки лезут
-		p->flags |= (SWP_NOSIZE|SWP_NOMOVE);
-		// И обновить размер насильно
-		SetWindowMode(rMaximized, TRUE);
+		if (isZoomed())
+		{
+			// Нужно скорректировать размеры, а то при смене разрешения монитора (в частности при повороте экрана) глюки лезут
+			p->flags |= (SWP_NOSIZE|SWP_NOMOVE);
+			// И обновить размер насильно
+			SetWindowMode(rMaximized, TRUE);
+		}
+		else if (gpSet->isQuakeStyle)
+		{
+			RECT rc = GetDefaultRect();
+			p->x = rc.left;
+			p->y = rc.top;
+			p->cx = rc.right - rc.left + 1;
+		}
 	}
 
 	//if (gpSet->isDontMinimize) {
@@ -4606,6 +4632,13 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 				pVCon->RCon()->SyncConsole2Window(FALSE, &rcWnd);
 		}
 	}
+
+#if 0
+	if (!(p->flags & SWP_NOMOVE) && gpSet->isQuakeStyle && (p->y > -30))
+	{
+		int nDbg = 0;
+	}
+#endif
 
 	/*
 	-- DWM, Glass --
@@ -10261,29 +10294,71 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	}
 
 	// Поехали
+	int nQuakeMin = 10;
+	int nQuakeShift = 10;
+	int nQuakeDelay = 20;
 
 	if (cmd == sih_Show)
 	{
+		if (gpSet->isQuakeStyle && !isMouseOverFrame())
+		{
+			mn_QuakePercent = nQuakeMin;
+			UpdateWindowRgn();
+		}
+		else
+			mn_QuakePercent = 0;
+
 		if (Icon.isWindowInTray() || !IsWindowVisible(ghWnd))
 			Icon.RestoreWindowFromTray();
 		else if (bIsIconic)
 			PostMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 
 		apiSetForegroundWindow(ghWnd);
-	}
-	else if (cmd == sih_ShowHideTSA)
-	{
-		// Явно попросили в TSA спрятать
-		Icon.HideWindowToTray();
-	}
-	else if (cmd == sih_ShowMinimize)
-	{
-		// SC_MINIMIZE сам обработает (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
-		PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+
+		if (gpSet->isQuakeStyle && !isMouseOverFrame())
+		{
+			while (mn_QuakePercent < 100)
+			{
+				mn_QuakePercent += nQuakeShift;
+				UpdateWindowRgn();
+				RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
+				Sleep(nQuakeDelay);
+			}
+			if (mn_QuakePercent != 100)
+			{
+				mn_QuakePercent = 100;
+				UpdateWindowRgn();
+			}
+		}
+		mn_QuakePercent = 0; // 0 - отключен
 	}
 	else
 	{
-		_ASSERTE(FALSE && "cmd must be determined!");
+		_ASSERTE(((cmd == sih_ShowHideTSA) || (cmd == sih_ShowMinimize)) && "cmd must be determined!");
+		if (gpSet->isQuakeStyle && !isMouseOverFrame())
+		{
+			mn_QuakePercent = 100 - nQuakeShift;
+			while (mn_QuakePercent > 0)
+			{
+				UpdateWindowRgn();
+				RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
+				Sleep(nQuakeDelay);
+				mn_QuakePercent -= nQuakeShift;
+			}
+		}
+		mn_QuakePercent = 0; // 0 - отключен
+
+
+		if (cmd == sih_ShowHideTSA)
+		{
+			// Явно попросили в TSA спрятать
+			Icon.HideWindowToTray();
+		}
+		else if (cmd == sih_ShowMinimize)
+		{
+			// SC_MINIMIZE сам обработает (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
+			PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+		}
 	}
 }
 
@@ -14557,7 +14632,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 #ifdef _DEBUG
 			DWORD_PTR dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SIZE (Type:%i, {%i-%i}) style=0x%08X\n", (DWORD)wParam, LOWORD(lParam), HIWORD(lParam), (DWORD)dwStyle);
+			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SIZE (Type:%i, {%i, %i}) style=0x%08X\n", (DWORD)wParam, LOWORD(lParam), HIWORD(lParam), (DWORD)dwStyle);
 			DEBUGSTRSIZE(szDbg);
 #endif
 
@@ -14571,7 +14646,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_MOVE:
 		{
 #ifdef _DEBUG
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_MOVE ({%i-%i})\n", (int)(SHORT)LOWORD(lParam), (int)(SHORT)HIWORD(lParam));
+			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_MOVE ({%i, %i})\n", (int)(SHORT)LOWORD(lParam), (int)(SHORT)HIWORD(lParam));
 			DEBUGSTRSIZE(szDbg);
 #endif
 		} break;

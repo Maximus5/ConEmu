@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-	Rename this file to "ConEmu.xml" to enable Quake/Tilde mode.
--->
 <key name="Software">
 	<key name="ConEmu">
-		<key name=".Vanilla" modified="2012-06-12 04:15:08">
+		<key name=".Vanilla" modified="2012-06-12 13:38:59">
 			<value name="KeyboardHooks" type="hex" data="01"/>
 			<value name="UseInjects" type="hex" data="01"/>
 			<value name="Update.CheckOnStartup" type="hex" data="00"/>
@@ -174,7 +171,7 @@
 			<value name="DragPanel" type="hex" data="02"/>
 			<value name="DragPanelBothEdges" type="hex" data="00"/>
 			<value name="KeyBarRClick" type="hex" data="01"/>
-			<value name="StatusBar.Show" type="hex" data="01"/>
+			<value name="StatusBar.Show" type="hex" data="00"/>
 			<value name="StatusFontFace" type="string" data="Tahoma"/>
 			<value name="StatusFontCharSet" type="dword" data="00000000"/>
 			<value name="StatusFontHeight" type="dword" data="0000000e"/>
@@ -201,7 +198,7 @@
 			<value name="StatusBar.Hide.ConEmuPID" type="hex" data="01"/>
 			<value name="StatusBar.Hide.Srv" type="hex" data="00"/>
 			<value name="StatusBar.Hide.Transparency" type="hex" data="00"/>
-			<value name="Tabs" type="hex" data="00"/>
+			<value name="Tabs" type="hex" data="02"/>
 			<value name="TabSelf" type="hex" data="01"/>
 			<value name="TabLazy" type="hex" data="01"/>
 			<value name="TabRecent" type="hex" data="01"/>
@@ -227,7 +224,7 @@
 			<value name="TryToCenter" type="hex" data="00"/>
 			<value name="ShowScrollbar" type="hex" data="02"/>
 			<value name="IconID" type="dword" data="00000001"/>
-			<value name="ConWnd Width" type="dword" data="0000007f"/>
+			<value name="ConWnd Width" type="dword" data="00000080"/>
 			<value name="ConWnd Height" type="dword" data="0000000e"/>
 			<value name="16bit Height" type="dword" data="00000000"/>
 			<value name="ConWnd X" type="dword" data="fffffff8"/>
@@ -386,10 +383,10 @@
 			<value name="FarGotoEditorVk" type="hex" data="a2"/>
 			<value name="DndLKey" type="hex" data="00"/>
 			<value name="DndRKey" type="hex" data="a2"/>
-				<key name="Tasks" modified="2012-06-12 04:10:22">
+				<key name="Tasks" modified="2012-06-12 13:38:59">
 				<value name="Count" type="dword" data="00000000"/>
 			</key>
-				<key name="Apps" modified="2012-06-12 04:10:22">
+				<key name="Apps" modified="2012-06-12 13:38:59">
 				<value name="Count" type="dword" data="00000000"/>
 			</key>
 			<value name="QuakeStyle" type="hex" data="01"/>
