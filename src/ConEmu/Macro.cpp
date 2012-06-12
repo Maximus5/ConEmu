@@ -153,6 +153,8 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 			pszResult = Shell(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Tab") || !lstrcmpi(szFunction, L"Tabs") || !lstrcmpi(szFunction, L"TabControl"))
 			pszResult = Tab(asMacro, apRCon);
+		else if (!lstrcmpi(szFunction, L"Task"))
+			pszResult = Task(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Status") || !lstrcmpi(szFunction, L"StatusBar") || !lstrcmpi(szFunction, L"StatusControl"))
 			pszResult = Status(asMacro, apRCon);
 		else
@@ -673,7 +675,7 @@ LPWSTR CConEmuMacro::Paste(LPWSTR asArgs, CRealConsole* apRCon)
 
 	if (GetNextInt(asArgs, nCommand))
 	{
-		if (!(nCommand == 0 || nCommand == 1))
+		if (!(nCommand == 0 || nCommand == 1 || nCommand == 2 || nCommand == 3))
 		{
 			return lstrdup(L"InvalidArg");
 		}
@@ -688,7 +690,10 @@ LPWSTR CConEmuMacro::Paste(LPWSTR asArgs, CRealConsole* apRCon)
 			pszText = NULL;
 		}
 
-		apRCon->Paste((nCommand==1), pszText);
+		bool bFirstLineOnly = (nCommand & 1) != 0;
+		bool bNoConfirm = (nCommand & 2) != 0;
+
+		apRCon->Paste(bFirstLineOnly, pszText, bNoConfirm);
 
 		return lstrdup(L"OK");
 	}
@@ -713,49 +718,70 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 				pszDir = NULL;
 			else if (!GetNextInt(asArgs, nShowCmd))
 				nShowCmd = SW_SHOWNORMAL;
+
+			bool bNewTaskGroup = false;
+
+			if (*pszFile == CmdFilePrefix || *pszFile == TaskBracketLeft)
+			{
+				wchar_t* pszDataW = gpConEmu->LoadConsoleBatch(pszFile);
+				if (pszDataW)
+				{
+					bNewTaskGroup = true;
+					SafeFree(pszDataW);
+				}
+			}
 			
-			bool bNewOper = (wmemcmp(pszOper, L"new_console", 11) == 0);
+			bool bNewOper = bNewTaskGroup || (wmemcmp(pszOper, L"new_console", 11) == 0);
+
 			if (bNewOper || (pszParm && wcsstr(pszParm, L"-new_console")))
 			{
 				size_t nAllLen;
 				RConStartArgs *pArgs = new RConStartArgs;
-				
-				nAllLen = _tcslen(pszFile) + (pszParm ? _tcslen(pszParm) : 0) + 16;
-				
-				if (bNewOper)
+
+				if (bNewTaskGroup)
 				{
-					size_t nOperLen = _tcslen(pszOper);
-					if ((nOperLen > 11) && (pszOper[11] == L':'))
-						nAllLen += (nOperLen + 6);
-					else
-						bNewOper = false;
+					_ASSERTE(pszParm==NULL || *pszParm==0);
+					pArgs->pszSpecialCmd = lstrdup(pszFile);
 				}
-				
-				pArgs->pszSpecialCmd = (wchar_t*)malloc(nAllLen*sizeof(wchar_t));
-				
-				if (*pszFile != L'"')
+				else
 				{
-					pArgs->pszSpecialCmd[0] = L'"';
-					_wcscpy_c(pArgs->pszSpecialCmd+1, nAllLen-1, pszFile);
-					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L"\" ");
-				}
-				else if (*pszFile)
-				{
-					_wcscpy_c(pArgs->pszSpecialCmd, nAllLen, pszFile);
-					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" ");
-				}
-				
-				if (pszParm && *pszParm)
-				{
-					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, pszParm);
-				}
-				
-				// Параметры запуска консоли могли передать в первом аргуементе (например "new_console:b")
-				if (bNewOper)
-				{
-					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" \"-");
-					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, pszOper);
-					_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L"\"");
+					nAllLen = _tcslen(pszFile) + (pszParm ? _tcslen(pszParm) : 0) + 16;
+					
+					if (bNewOper)
+					{
+						size_t nOperLen = _tcslen(pszOper);
+						if ((nOperLen > 11) && (pszOper[11] == L':'))
+							nAllLen += (nOperLen + 6);
+						else
+							bNewOper = false;
+					}
+					
+					pArgs->pszSpecialCmd = (wchar_t*)malloc(nAllLen*sizeof(wchar_t));
+					
+					if (*pszFile != L'"')
+					{
+						pArgs->pszSpecialCmd[0] = L'"';
+						_wcscpy_c(pArgs->pszSpecialCmd+1, nAllLen-1, pszFile);
+						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L"\" ");
+					}
+					else if (*pszFile)
+					{
+						_wcscpy_c(pArgs->pszSpecialCmd, nAllLen, pszFile);
+						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" ");
+					}
+					
+					if (pszParm && *pszParm)
+					{
+						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, pszParm);
+					}
+					
+					// Параметры запуска консоли могли передать в первом аргуементе (например "new_console:b")
+					if (bNewOper)
+					{
+						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" \"-");
+						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, pszOper);
+						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L"\"");
+					}
 				}
 				
 				if (pszDir)
@@ -923,4 +949,63 @@ LPWSTR CConEmuMacro::Tab(LPWSTR asArgs, CRealConsole* apRCon)
 	}
 
 	return pszResult ? pszResult : lstrdup(L"InvalidArg");
+}
+
+// Task(Index)
+// Task("Name")
+LPWSTR CConEmuMacro::Task(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	LPCWSTR pszResult = NULL;
+	LPCWSTR pszName = NULL, pszDir = NULL;
+	wchar_t* pszBuf = NULL;
+	int nTaskIndex = 0;
+
+	if (*asArgs == L'"')
+	{
+		LPWSTR pszArg = NULL;
+		if (GetNextString(asArgs, pszArg))
+		{
+			if (*pszArg && (*pszArg != TaskBracketLeft))
+			{
+				size_t cchMax = _tcslen(pszArg)+3;
+				pszBuf = (wchar_t*)malloc(cchMax*sizeof(*pszBuf));
+				if (pszBuf)
+				{
+					*pszBuf = TaskBracketLeft;
+					_wcscpy_c(pszBuf+1, cchMax-1, pszArg);
+					pszBuf[cchMax-2] = TaskBracketRight;
+					pszBuf[cchMax-1] = 0;
+					pszName = pszBuf;
+				}
+			}
+			else
+			{
+				pszName = pszBuf;
+			}
+		}
+	}
+	else
+	{
+		if (GetNextInt(asArgs, nTaskIndex) && (nTaskIndex > 0))
+		{
+			const Settings::CommandTasks* pTask = gpSet->CmdTaskGet(nTaskIndex - 1);
+			if (pTask)
+				pszName = pTask->pszName;
+		}
+	}
+
+	if (pszName && *pszName)
+	{
+		RConStartArgs *pArgs = new RConStartArgs;
+		pArgs->pszSpecialCmd = lstrdup(pszName);
+
+		if (pszDir)
+			pArgs->pszStartupDir = lstrdup(pszDir);
+
+		gpConEmu->PostCreateCon(pArgs);
+
+		pszResult = L"OK";
+	}
+
+	return pszResult ? lstrdup(pszResult) : lstrdup(L"InvalidArg");
 }

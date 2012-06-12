@@ -3848,7 +3848,7 @@ COLORREF* Settings::GetColors(int anAppId/*=-1*/, BOOL abFade)
 {
 	COLORREF *pColors = Colors, *pColorsFade = ColorsFade;
 	bool* pbFadeInitialized = &mb_FadeInitialized;
-	if ((anAppId >= 0) && (anAppId < AppCount) && Apps[anAppId]->OverridePalette)
+	if ((anAppId >= 0) && (anAppId < AppCount) && Apps[anAppId]->OverridePalette && Apps[anAppId]->szPaletteName[0])
 	{
 		_ASSERTE(countof(Colors)==countof(AppColors[anAppId]->Colors) && countof(ColorsFade)==countof(AppColors[anAppId]->ColorsFade));
 		pColors = AppColors[anAppId]->Colors; pColorsFade = AppColors[anAppId]->ColorsFade;

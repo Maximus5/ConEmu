@@ -92,7 +92,7 @@ extern DWORD gnLastShowExeTick;
 #define force_print_timings(s) { \
 	DWORD w, nCurTick = GetTickCount(); \
 	msprintf(szTimingMsg, countof(szTimingMsg), L">>> PID=%u >>> %u >>> %s\n", GetCurrentProcessId(), (nCurTick - gnLastShowExeTick), s); \
-	/*OnWriteConsoleW(hTimingHandle, szTimingMsg, lstrlen(szTimingMsg), &w, NULL);*/ \
+	/*OnWriteConsoleW(hTimingHandle, szTimingMsg, lstrlen(szTimingMsg), &w, NULL);*/ UNREFERENCED_PARAMETER(w); \
 	gnLastShowExeTick = nCurTick; \
 	}
 #define print_timings(s) if (gbShowExeMsgBox) { force_print_timings(s); }

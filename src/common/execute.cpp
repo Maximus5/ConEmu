@@ -68,8 +68,23 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 	ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
 	ImageBits = 0;
 	FileAttrs = (DWORD)-1;
+	wchar_t* pszExpand = NULL;
 	// Пытаться в UNC? Хотя сам CreateProcess UNC не поддерживает, так что смысла пока нет
 	HANDLE hModuleFile = CreateFile(FileName,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
+
+	// Переменные окружения
+	if ((hModuleFile == INVALID_HANDLE_VALUE) && FileName && wcschr(FileName, L'%'))
+	{
+		pszExpand = ExpandEnvStr(FileName);
+		if (pszExpand)
+		{
+			hModuleFile = CreateFile(pszExpand,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
+			if (hModuleFile != INVALID_HANDLE_VALUE)
+			{
+				FileName = pszExpand;
+			}
+		}
+	}
 
 #if 0
 	// Если не указан путь к файлу - попробовать найти его в %PATH%
@@ -102,7 +117,8 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 			CloseHandle(hModuleFile);
 			ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
 			ImageBits = IsWindows64() ? 64 : 32; //-V112
-			return true;
+			Result = true;
+			goto wrap;
 		}
 
 		if (ReadFile(hModuleFile,&DOSHeader,sizeof(DOSHeader),&ReadSize,NULL))
@@ -216,6 +232,8 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 	{
 		// ошибка открытия
 	}*/
+wrap:
+	SafeFree(pszExpand);
 	return Result;
 }
 

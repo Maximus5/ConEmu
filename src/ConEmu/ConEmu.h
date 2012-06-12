@@ -160,6 +160,7 @@ class CConEmuMain :
 		wchar_t ms_PortableTempDir[MAX_PATH];
 		HKEY mh_PortableRoot; // Это открытый ключ
 		bool PreparePortableReg();
+		bool mb_UpdateJumpListOnStartup;
 	private:
 		BOOL CheckDosBoxExists();
 		void CheckPortableReg();
@@ -450,7 +451,7 @@ class CConEmuMain :
 		//bool CorrectWindowPos(WINDOWPOS *wp);
 		//void CheckGuiBarsCreated();
 		CVirtualConsole* CreateCon(RConStartArgs *args, BOOL abAllowScripts = FALSE);
-		CVirtualConsole* CreateConGroup(LPCWSTR apszScript, BOOL abForceAsAdmin = FALSE);
+		CVirtualConsole* CreateConGroup(LPCWSTR apszScript, BOOL abForceAsAdmin = FALSE, LPCWSTR asStartupDir = NULL);
 		void CreateGhostVCon(CVirtualConsole* apVCon);
 		BOOL CreateMainWindow();
 		HRGN CreateWindowRgn(bool abTestOnly=false);
@@ -590,7 +591,7 @@ class CConEmuMain :
 		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 		void OnHideCaption();
-		void OnInfo_About();
+		void OnInfo_About(LPCWSTR asPageName = NULL);
 		void OnInfo_Help();
 		void OnInfo_HomePage();
 		void OnInfo_ReportBug();

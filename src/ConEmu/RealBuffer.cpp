@@ -64,7 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
-#define DEBUGSTRCURSORPOS(s) DEBUGSTR(s)
+#define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
 
 #define Free SafeFree
 #define Alloc calloc
@@ -3053,9 +3053,33 @@ bool CRealBuffer::DoSelectionCopy()
 		return false;
 	}
 
-	if (!con.pConChar)
+	LPCWSTR pszDataStart = NULL;
+	int nTextWidth = 0, nTextHeight = 0;
+
+	if (m_Type == rbt_Primary)
 	{
-		MBoxAssert(con.pConChar != NULL);
+		pszDataStart = con.pConChar;
+		nTextWidth = this->GetTextWidth();
+		nTextHeight = this->GetTextHeight();
+		_ASSERTE(pszDataStart[nTextWidth*nTextHeight] == 0); // Должно быть ASCIIZ
+	}
+	else if (dump.pszBlock1)
+	{
+		WARNING("Доработать для режима с прокруткой");
+		nTextWidth = dump.crSize.X;
+		nTextHeight = dump.crSize.Y;
+		//nTextWidth = this->GetTextWidth();
+		//nTextHeight = this->GetTextHeight();
+		_ASSERTE(dump.pszBlock1[nTextWidth*nTextHeight] == 0); // Должно быть ASCIIZ
+
+		pszDataStart = dump.pszBlock1 + con.m_sbi.srWindow.Top * nTextWidth;
+		nTextHeight = min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1));
+	}
+
+	//if (!con.pConChar)
+	if (!pszDataStart || !nTextWidth || !nTextHeight)
+	{
+		MBoxAssert(pszDataStart != NULL);
 		return false;
 	}
 
@@ -3065,7 +3089,7 @@ bool CRealBuffer::DoSelectionCopy()
 	BOOL lbStreamMode = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
 	int nSelWidth = con.m_sel.srSelection.Right - con.m_sel.srSelection.Left;
 	int nSelHeight = con.m_sel.srSelection.Bottom - con.m_sel.srSelection.Top;
-	int nTextWidth = con.nTextWidth;
+	//int nTextWidth = con.nTextWidth;
 
 	//if (nSelWidth<0 || nSelHeight<0)
 	if (con.m_sel.srSelection.Left > (con.m_sel.srSelection.Right+(con.m_sel.srSelection.Bottom-con.m_sel.srSelection.Top)*nTextWidth))
@@ -3137,16 +3161,16 @@ bool CRealBuffer::DoSelectionCopy()
 	{
 		for(int Y = 0; Y <= nSelHeight; Y++)
 		{
-			wchar_t* pszCon = NULL;
+			LPCWSTR pszCon = NULL;
 
 			if (m_Type == rbt_Primary)
 			{
 				pszCon = con.pConChar + con.nTextWidth*(Y+con.m_sel.srSelection.Top) + con.m_sel.srSelection.Left;
 			}
-			else if (dump.pszBlock1 && (Y < dump.crSize.Y))
+			else if (pszDataStart && (Y < nTextHeight))
 			{
 				WARNING("Проверить для режима с прокруткой!");
-				pszCon = dump.pszBlock1 + dump.crSize.X*(Y+con.m_sel.srSelection.Top) + con.m_sel.srSelection.Left;
+				pszCon = pszDataStart + dump.crSize.X*(Y+con.m_sel.srSelection.Top) + con.m_sel.srSelection.Left;
 			}
 
 			int nMaxX = nSelWidth - 1;
@@ -3186,16 +3210,16 @@ bool CRealBuffer::DoSelectionCopy()
 		{
 			nX1 = (Y == 0) ? con.m_sel.srSelection.Left : 0;
 			nX2 = (Y == nSelHeight) ? con.m_sel.srSelection.Right : (con.nTextWidth-1);
-			wchar_t* pszCon = NULL;
+			LPCWSTR pszCon = NULL;
 			
 			if (m_Type == rbt_Primary)
 			{
 				pszCon = con.pConChar + con.nTextWidth*(Y+con.m_sel.srSelection.Top) + nX1;
 			}
-			else  if (dump.pszBlock1 && (Y < dump.crSize.Y))
+			else if (pszDataStart && (Y < nTextHeight))
 			{
 				WARNING("Проверить для режима с прокруткой!");
-				pszCon = dump.pszBlock1 + dump.crSize.X*(Y+con.m_sel.srSelection.Top) + nX1;
+				pszCon = pszDataStart + dump.crSize.X*(Y+con.m_sel.srSelection.Top) + nX1;
 			}
 
 			for(int X = nX1; X <= nX2; X++)

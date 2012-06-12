@@ -701,8 +701,9 @@
 #define vkScreenshotFull                2328
 #define vkMultiNewWnd                   2329
 #define cbRunInNewWindow                2330
-#define IDC_CHECK1                      2333
 #define cbQuakeStyle                    2333
+#define IDC_BUTTON1                     2334
+#define cbGuiMacroHelp                  2334
 
 // Next default values for new objects
 // 
@@ -710,7 +711,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        219
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2334
+#define _APS_NEXT_CONTROL_VALUE         2335
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

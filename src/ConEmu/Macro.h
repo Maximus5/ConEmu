@@ -78,6 +78,8 @@ class CConEmuMacro
 		static LPWSTR Status(LPWSTR asArgs, CRealConsole* apRCon);
 		// Tabs
 		static LPWSTR Tab(LPWSTR asArgs, CRealConsole* apRCon);
+		// Task
+		static LPWSTR Task(LPWSTR asArgs, CRealConsole* apRCon);
 		// Fullscreen
 		static LPWSTR WindowFullscreen(LPWSTR asArgs, CRealConsole* apRCon);
 		// Maximize

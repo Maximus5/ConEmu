@@ -79,9 +79,11 @@ const char* PointToName(const char* asFileOrPath);
 const wchar_t* PointToExt(const wchar_t* asFullPath);
 const wchar_t* Unquote(wchar_t* asPath);
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount);
+wchar_t* ExpandEnvStr(LPCWSTR pszCommand);
 
-BOOL IsExecutable(LPCWSTR aszFilePathName);
-BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1],
+BOOL IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars = NULL);
+BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQuot,
+			   wchar_t (&szExe)[MAX_PATH+1],
 			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit);
 
 //BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1]);

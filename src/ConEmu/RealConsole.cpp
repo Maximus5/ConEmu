@@ -5850,6 +5850,8 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	// Чтобы все в одном месте было
 	OnGuiFocused(TRUE, TRUE);
 
+	gpConEmu->InvalidateGaps();
+
 	gpConEmu->mp_Status->OnActiveVConChanged(nNewNum, this);
 
 	if ((gOSVer.dwMajorVersion > 6) || ((gOSVer.dwMajorVersion == 6) && (gOSVer.dwMinorVersion >= 1)))
@@ -6971,7 +6973,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 	PostConsoleMessage(hConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, (LPARAM)dwNewKeyboardLayout);
 }
 
-void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NULL*/)
+void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NULL*/, bool abNoConfirm /*= false*/)
 {
 	if (!this)
 		return;
@@ -7057,7 +7059,7 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 			*pszRN = 0; // буфер наш, что хотим - то и делаем )
 			pszEnd = pszRN;
 		}
-		else if (gpSet->isPasteConfirmEnter)
+		else if (gpSet->isPasteConfirmEnter && !abNoConfirm)
 		{
 			wcscpy_c(szMsg, L"Pasting text involves <Enter> keypress!\nContinue?");
 
@@ -7068,7 +7070,7 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 		}
 	}
 
-	if (gpSet->nPasteConfirmLonger && ((size_t)(pszEnd - pszBuf) > (size_t)gpSet->nPasteConfirmLonger))
+	if (gpSet->nPasteConfirmLonger && !abNoConfirm && ((size_t)(pszEnd - pszBuf) > (size_t)gpSet->nPasteConfirmLonger))
 	{
 		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Pasting text length is %u chars!\nContinue?", (DWORD)(pszEnd - pszBuf));
 

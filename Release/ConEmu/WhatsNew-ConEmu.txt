@@ -9,7 +9,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
-
+2012.06.12
 [+] В поставку добавлен пример «ColorPrompt.cmd». Запустите его в cmd.exe или tcc.exe для смены цвета текста command prompt на желтый.
 [+] Новые аргументы для ConEmu.exe - /ShowHide и /ShowHideTSA.
     Если ConEmu не запущено - запускает (с возможно указанным /cmd ...),
@@ -19,9 +19,20 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [+] Аргумент ConEmu.exe: /dir "Folder". Аналог Working folder, задаваемый в свойствах ярлыка.
 [+] Параметр «Quake style slide down» на вкладке «Features». Пример настройки в «ConEmu\ConEmu_Tilda.xml».
 [%] Issue 576: Trap when updating Jump Lists/Task while history is empty.
+[%] Не работал Copy из альтернативной консоли (Win+A).
+[%] Issue 584: App distinct color palette not working.
+[%] Issue 576: ConEmu.exe /updatejumplist.
+[%] When Maximized, check/uncheck «Hide caption always» losed caption.
+[+] GuiMacro.
+    Paste(2[,"<Text>"]) - paste all lines, without confirmations
+    Paste(3[,"<Text>"]) - paste first line, without confirmations
+    Task(Index) - start task with 1-based index
+    Task("Name") - start task with specified name
+[+] В диалоге настроек для GuiMacro (вкладка Keys) работают "\\", "\r", "\n", "\t".
+    Теперь можно задать что-то вроде «Paste(2,"exit\n")» для выхода из cmd.exe
 
 
-2012.06.08
+2012.06.09
 [%] Коррекция Injects для Windows 8 RC.
 [+] Issue 571: В диалоге подтверждения создания консоли добавлен флажок «New window».
     Если указывается «Another user», то под выбранным аккаунтом запускается сам ConEmu.exe.

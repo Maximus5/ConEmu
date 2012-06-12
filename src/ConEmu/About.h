@@ -155,6 +155,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     L"  - When <Text> is omitted - paste from Windows clipboard, otherwise - paste specified text\r\n" \
     L"     Cmd==0: paste all lines\r\n" \
     L"     Cmd==1: paste first line\r\n" \
+    L"     Cmd==2: paste all lines, without confirmations\r\n" \
+    L"     Cmd==3: paste first line, without confirmations\r\n" \
     L"Shell(\"<Verb>\",\"<File>\"[,\"<Parms>\"[,\"<Dir>\"[,<ShowCmd>]]])\r\n" \
     L"  - Verb can be \"open\", \"print\" and so on, or special value \"new_console\",\r\n" \
     L"     which starts File in the new tab of ConEmu window. Examples:\r\n" \
@@ -176,6 +178,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     L"     Cmd==6 - switch console direct (no recent mode), Parm=(1,-1)\r\n" \
     L"     Cmd==7 - activate console by number, Parm=(1-based console index)\r\n" \
     L"     Cmd==8 - show tabs list menu (indiffirent Far/Not Far)\r\n" \
+    L"Task(Index)\r\n" \
+    L"  - start task with 1-based index\r\n" \
+    L"Task(\"Name\")\r\n" \
+	L"  - start task with specified name\r\n" \
     L"WindowFullscreen()\r\n" \
     L"  - Switch fullscreen window mode\r\n" \
     L"     returns previous window mode\r\n" \

@@ -449,11 +449,11 @@ wchar_t* GetDlgItemText(HWND hDlg, WORD nID)
 {
 	wchar_t* pszText = NULL;
 	size_t cchMax = 0;
-	GetDlgItemText(hDlg, nID, cchMax, pszText);
+	MyGetDlgItemText(hDlg, nID, cchMax, pszText);
 	return pszText;
 }
 
-size_t GetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText)
+size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText, bool bEscapes /*= false*/)
 {
 	HWND hEdit;
 
@@ -483,6 +483,43 @@ size_t GetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText)
 		{
 			pszText[0] = 0;
 			GetWindowText(hEdit, pszText, nLen+1);
+
+			if (bEscapes)
+			{
+				wchar_t* pszSrc = wcschr(pszText, L'\\');
+				if (pszSrc)
+				{
+					wchar_t* pszDst = pszSrc;
+					while (*pszSrc)
+					{
+						if (*pszSrc == L'\\')
+						{
+							// -- Must be the same set in MySetDlgItemText
+							switch (pszSrc[1])
+							{
+							case L'\\':
+								*(pszDst++) = L'\\';
+								pszSrc += 2;
+								continue;
+							case L'r':
+								*(pszDst++) = L'\r';
+								pszSrc += 2;
+								continue;
+							case L'n':
+								*(pszDst++) = L'\n';
+								pszSrc += 2;
+								continue;
+							case L't':
+								*(pszDst++) = L'\t';
+								pszSrc += 2;
+								continue;
+							}
+						}
+						*(pszDst++) = *(pszSrc++);
+					}
+					*pszDst = 0;
+				}
+			}
 		}
 	}
 	else
@@ -495,6 +532,58 @@ size_t GetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText)
 	}
 
 	return nLen;
+}
+
+BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString, bool bEscapes /*= false*/)
+{
+	wchar_t* pszBuf = NULL;
+
+	// -- Must be the same set in MyGetDlgItemText
+	if (lpString && bEscapes && wcspbrk(lpString, L"\r\n\t\\"))
+	{
+		pszBuf = (wchar_t*)malloc((_tcslen(lpString)*2+1)*sizeof(*pszBuf));
+		if (!pszBuf)
+		{
+			MBoxAssert(pszBuf && "Memory allocation failed");
+			return FALSE;
+		}
+		wchar_t* pszDst = pszBuf;
+		LPCWSTR pszSrc = lpString;
+		while (*pszSrc)
+		{
+			switch (*pszSrc)
+			{
+				case L'\\':
+					*(pszDst++) = L'\\';
+					*(pszDst++) = L'\\';
+					pszSrc++;
+					continue;
+				case L'\r':
+					*(pszDst++) = L'\\';
+					*(pszDst++) = L'r';
+					pszSrc++;
+					continue;
+				case L'\n':
+					*(pszDst++) = L'\\';
+					*(pszDst++) = L'n';
+					pszSrc++;
+					continue;
+				case L'\t':
+					*(pszDst++) = L'\\';
+					*(pszDst++) = L't';
+					pszSrc++;
+					continue;
+			}
+			*(pszDst++) = *(pszSrc++);
+		}
+		*pszDst = 0;
+		lpString = pszBuf;
+	}
+
+	BOOL lbRc = SetDlgItemText(hDlg, nIDDlgItem, lpString);
+
+	SafeFree(pszBuf);
+	return lbRc;
 }
 
 bool isKey(DWORD wp,DWORD vk)
@@ -2015,6 +2104,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					SetCurrentDirectory(curCommand);
 					gpConEmu->RefreshConEmuCurDir();
 				}
+			}
+			else if (!klstricmp(curCommand, _T("/updatejumplist")))
+			{
+				gpConEmu->mb_UpdateJumpListOnStartup = true;
 			}
 			else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0")  || !klstricmp(curCommand, L"/log1"))
 			{

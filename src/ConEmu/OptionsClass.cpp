@@ -2211,7 +2211,8 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		HWND hMacro = GetDlgItem(hWnd2, tGuiMacro);
 		EnableWindow(hMacro, (mp_ActiveHotKey!=NULL));
 		SendMessage(hMacro, EM_SETREADONLY, !bMacroEnabled, 0);
-		SetDlgItemText(hWnd2, tGuiMacro, pszDescription);
+		MySetDlgItemText(hWnd2, tGuiMacro, pszDescription, bMacroEnabled);
+		EnableWindow(GetDlgItem(hWnd2, cbGuiMacroHelp), (mp_ActiveHotKey!=NULL) && bMacroEnabled);
 		if (!bHotKeyEnabled)
 			SendMessage(hHk, HKM_SETHOTKEY, 0, 0);
 		if (!bKeyListEnabled)
@@ -3201,6 +3202,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			}
 
 			gpConEmu->OnHideCaption();
+			apiSetForegroundWindow(ghOpWnd);
 			break;
 		//case bHideCaptionSettings:
 		//	DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_HIDE), ghOpWnd, hideOpProc);
@@ -3516,6 +3518,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbMultiLeaveOnClose:
 			gpSet->isMultiLeaveOnClose = IsChecked(hWnd2, cbMultiLeaveOnClose);
+			break;
+
+		case cbGuiMacroHelp:
+			gpConEmu->OnInfo_About(L"Macro");
 			break;
 			
 		case cbUseWinArrows:
@@ -4740,7 +4746,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tGuiMacro:
 		if (mp_ActiveHotKey && (mp_ActiveHotKey->HkType == chk_Macro))
 		{
-			GetDlgItemText(hWnd2, tGuiMacro, mp_ActiveHotKey->cchGuiMacroMax, mp_ActiveHotKey->GuiMacro);
+			MyGetDlgItemText(hWnd2, tGuiMacro, mp_ActiveHotKey->cchGuiMacroMax, mp_ActiveHotKey->GuiMacro, true);
 			FillHotKeysList(hWnd2, FALSE);
 		}
 		break;
@@ -4749,7 +4755,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tGotoEditorCmd:
 		{
 			size_t cchMax = gpSet->sFarGotoEditor ? (lstrlen(gpSet->sFarGotoEditor)+1) : 0;
-			GetDlgItemText(hWnd2, tGotoEditorCmd, cchMax, gpSet->sFarGotoEditor);
+			MyGetDlgItemText(hWnd2, tGotoEditorCmd, cchMax, gpSet->sFarGotoEditor);
 		}
 		break;
 
@@ -11529,7 +11535,7 @@ INT_PTR CSettings::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 			}
 			else if (HIWORD(wParam) == EN_CHANGE || HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
 			{
-				GetDlgItemText(hWnd2, tFindText, gpSet->FindOptions.cchTextMax, gpSet->FindOptions.pszText);
+				MyGetDlgItemText(hWnd2, tFindText, gpSet->FindOptions.cchTextMax, gpSet->FindOptions.pszText);
 				if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
 					gpConEmu->DoFindText(0);
 			}

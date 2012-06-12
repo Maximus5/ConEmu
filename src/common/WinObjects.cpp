@@ -950,27 +950,70 @@ wrap:
 	return pszCommand;
 }
 
+wchar_t* ExpandEnvStr(LPCWSTR pszCommand)
+{
+	if (!pszCommand || !*pszCommand)
+		return NULL;
+
+	DWORD cchMax = MAX_PATH*2;
+	wchar_t* pszExpand = (wchar_t*)malloc(cchMax*sizeof(*pszExpand));
+	if (pszExpand)
+	{
+		pszExpand[0] = 0;
+
+		DWORD nExp = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
+		if (nExp && (nExp < cchMax) && *pszExpand)
+			return pszExpand;
+
+		SafeFree(pszExpand);
+	}
+	return NULL;
+}
+
 
 
 #ifndef __GNUC__
 #pragma warning( push )
 #pragma warning(disable : 6400)
 #endif
-BOOL IsExecutable(LPCWSTR aszFilePathName)
+BOOL IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars /*= NULL*/)
 {
 #ifndef __GNUC__
 #pragma warning( push )
 #pragma warning(disable : 6400)
 #endif
-	LPCWSTR pwszDot = wcsrchr(aszFilePathName, L'.');
 
-	if (pwszDot)  // Если указан .exe или .com файл
+	wchar_t* pszExpand = NULL;
+
+	for (int i = 0; i <= 1; i++)
 	{
-		if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0)
+		LPCWSTR pwszDot = PointToExt(aszFilePathName);
+
+		if (pwszDot)  // Если указан .exe или .com файл
 		{
-			if (FileExists(aszFilePathName))
-				return TRUE;
+			if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0)
+			{
+				if (FileExists(aszFilePathName))
+					return TRUE;
+			}
 		}
+
+		if (!i && wcschr(aszFilePathName, L'%'))
+		{
+			pszExpand = ExpandEnvStr(aszFilePathName);
+			if (!pszExpand)
+				break;
+			aszFilePathName = pszExpand;
+		}
+	}
+
+	if (rsExpandedVars)
+	{
+		*rsExpandedVars = pszExpand; pszExpand = NULL;
+	}
+	else
+	{
+		SafeFree(pszExpand);
 	}
 
 	return FALSE;
@@ -983,7 +1026,8 @@ BOOL IsExecutable(LPCWSTR aszFilePathName)
 // кроме того, если команда содержит "?" или "*" - тоже не пытаться.
 const wchar_t* gsInternalCommands = L"ACTIVATE\0ALIAS\0ASSOC\0ATTRIB\0BEEP\0BREAK\0CALL\0CDD\0CHCP\0COLOR\0COPY\0DATE\0DEFAULT\0DEL\0DELAY\0DESCRIBE\0DETACH\0DIR\0DIRHISTORY\0DIRS\0DRAWBOX\0DRAWHLINE\0DRAWVLINE\0ECHO\0ECHOERR\0ECHOS\0ECHOSERR\0ENDLOCAL\0ERASE\0ERRORLEVEL\0ESET\0EXCEPT\0EXIST\0EXIT\0FFIND\0FOR\0FREE\0FTYPE\0GLOBAL\0GOTO\0HELP\0HISTORY\0IF\0IFF\0INKEY\0INPUT\0KEYBD\0KEYS\0LABEL\0LIST\0LOG\0MD\0MEMORY\0MKDIR\0MOVE\0MSGBOX\0NOT\0ON\0OPTION\0PATH\0PAUSE\0POPD\0PROMPT\0PUSHD\0RD\0REBOOT\0REN\0RENAME\0RMDIR\0SCREEN\0SCRPUT\0SELECT\0SET\0SETDOS\0SETLOCAL\0SHIFT\0SHRALIAS\0START\0TEE\0TIME\0TIMER\0TITLE\0TOUCH\0TREE\0TRUENAME\0TYPE\0UNALIAS\0UNSET\0VER\0VERIFY\0VOL\0VSCRPUT\0WINDOW\0Y\0\0";
 
-BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[MAX_PATH+1],
+BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQuot,
+			   wchar_t (&szExe)[MAX_PATH+1],
 			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit)
 {
 	_ASSERTE(asCmdLine && *asCmdLine);
@@ -1062,11 +1106,20 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 			}
 
 			LPCWSTR pwszQ = pwszCopy + 1 + lstrlen(szExe);
+			wchar_t* pszExpand = NULL;
 
-			if (*pwszQ != L'"' && IsExecutable(szExe))
+			if (*pwszQ != L'"' && IsExecutable(szExe, &pszExpand))
 			{
 				pwszCopy ++; // отбрасываем
 				lbFirstWasGot = TRUE;
+
+				if (pszExpand)
+				{
+					lstrcpyn(szExe, pszExpand, countof(szExe));
+					SafeFree(pszExpand);
+					if (rsArguments)
+						*rsArguments = pwszQ;
+				}
 
 				if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
 			}
@@ -1080,7 +1133,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 		// 17.10.2010 - поддержка переданного исполняемого файла без параметров, но с пробелами в пути
 		LPCWSTR pchEnd = pwszCopy + lstrlenW(pwszCopy);
 
-		while(pchEnd > pwszCopy && *(pchEnd-1) == L' ') pchEnd--;
+		while (pchEnd > pwszCopy && *(pchEnd-1) == L' ') pchEnd--;
 
 		if ((pchEnd - pwszCopy) < MAX_PATH)
 		{
@@ -1088,7 +1141,27 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 			szExe[(pchEnd - pwszCopy)] = 0;
 
 			if (!FileExists(szExe))
-				szExe[0] = 0;
+			{
+				bool bFound = false;
+				// Переменные окружения
+				if (wcschr(szExe, L'%'))
+				{
+					wchar_t* pszExpand = ExpandEnvStr(szExe);
+					if (pszExpand)
+						lstrcpyn(szExe, pszExpand, countof(szExe));
+					SafeFree(pszExpand);
+
+					if (FileExists(szExe))
+					{
+						if (rsArguments)
+							*rsArguments = pchEnd;
+						bFound = true;
+					}
+				}
+
+				if (!bFound)
+					szExe[0] = 0;
+			}
 		}
 
 		if (szExe[0] == 0)
@@ -1100,6 +1173,22 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot, wchar_t (&szExe)[
 				_ASSERTE(FALSE);
 				#endif
 				return TRUE;
+			}
+
+			if (wcschr(szExe, L'%') && !FileExists(szExe))
+			{
+				bool bFound = false;
+				// Переменные окружения
+				wchar_t* pszExpand = ExpandEnvStr(szExe);
+				if (pszExpand && FileExists(pszExpand))
+				{
+					lstrcpyn(szExe, pszExpand, countof(szExe));
+					SafeFree(pszExpand);
+
+					if (rsArguments)
+						*rsArguments = pwszCopy;
+					bFound = true;
+				}
 			}
 		}
 	}

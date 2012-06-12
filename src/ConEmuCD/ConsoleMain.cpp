@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //  –аскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепитьс€ дебаггером
-//  #define SHOW_STARTED_MSGBOX
+//	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
 //  #define SHOW_COMSPEC_STARTED_MSGBOX
@@ -2812,6 +2812,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		//    gbRunViaCmdExe = FALSE; // командным процессором выступает сам ConEmuC (серверный режим)
 	}
 
+	LPCWSTR pszArguments4EnvVar = NULL;
+
 	if (gnRunMode == RM_COMSPEC && (!asCmdLine || !*asCmdLine))
 	{
 		if (gpSrv->bK)
@@ -2831,7 +2833,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	{
 		BOOL bAlwaysConfirmExit = gbAlwaysConfirmExit, bAutoDisableConfirmExit = gbAutoDisableConfirmExit;
 
-		gbRunViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot, szExeTest, gbRootIsCmdExe, bAlwaysConfirmExit, bAutoDisableConfirmExit);
+		gbRunViaCmdExe = IsNeedCmd(asCmdLine, &pszArguments4EnvVar, &lbNeedCutStartEndQuot, szExeTest, 
+			gbRootIsCmdExe, bAlwaysConfirmExit, bAutoDisableConfirmExit);
 
 		if (gnConfirmExitParm == 0)
 		{
@@ -2884,6 +2887,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	if (!gbRunViaCmdExe)
 	{
 		nCmdLine += 1; // только место под 0
+		if (pszArguments4EnvVar && *szExeTest)
+			nCmdLine += lstrlen(szExeTest)+3;
 	}
 	else
 	{
@@ -2940,7 +2945,24 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	}
 
 	// это нужно дл€ смены заголовка консоли. при необходимости COMSPEC впишем ниже, после смены
-	_wcscpy_c(gpszRunCmd, nCchLen, asCmdLine);
+	if (pszArguments4EnvVar && *szExeTest && !gbRunViaCmdExe)
+	{
+		gpszRunCmd[0] = L'"';
+		_wcscat_c(gpszRunCmd, nCchLen, szExeTest);
+		if (*pszArguments4EnvVar)
+		{
+			_wcscat_c(gpszRunCmd, nCchLen, L"\" ");
+			_wcscat_c(gpszRunCmd, nCchLen, pszArguments4EnvVar);
+		}
+		else
+		{
+			_wcscat_c(gpszRunCmd, nCchLen, L"\"");
+		}
+	}
+	else
+	{
+		_wcscpy_c(gpszRunCmd, nCchLen, asCmdLine);
+	}
 	// !!! gpszRunCmd может помен€тьс€ ниже!
 
 	// —меним заголовок консоли

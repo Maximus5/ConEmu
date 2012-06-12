@@ -435,7 +435,7 @@ class CRealConsole
 		void CloseTab();
 		bool isConsoleClosing();
 		void OnServerClosing(DWORD anSrvPID);
-		void Paste(bool abFirstLineOnly = false, LPCWSTR asText = NULL);
+		void Paste(bool abFirstLineOnly = false, LPCWSTR asText = NULL, bool abNoConfirm = false);
 		void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
 		void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
 		bool isActive();

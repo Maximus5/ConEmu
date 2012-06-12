@@ -241,6 +241,7 @@ CConEmuMain::CConEmuMain()
 	//mh_RecreatePasswFont = NULL;
 	mb_SkipOnFocus = FALSE;
 	mb_CloseGuiConfirmed = false;
+	mb_UpdateJumpListOnStartup = false;
 
 	mps_IconPath = NULL;
 
@@ -3473,7 +3474,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 					goto wrap;
 				}
 
-				if (!isZoomed())
+				if (mb_MaximizedHideCaption || !::IsZoomed(ghWnd))
 				{
 					mb_IgnoreSizeChange = TRUE;
 					InvalidateAll();
@@ -5155,7 +5156,7 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts
 			return NULL;
 
 		// GO
-		pVCon = CreateConGroup(pszDataW, args->bRunAsAdministrator);
+		pVCon = CreateConGroup(pszDataW, args->bRunAsAdministrator, args->pszStartupDir);
 
 		SafeFree(pszDataW);
 		return pVCon;
@@ -5226,7 +5227,7 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts
 
 // Возвращает указатель на АКТИВНУЮ консоль (при создании группы)
 // apszScript содержит строки команд, разделенные \r\n
-CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, BOOL abForceAsAdmin /*= FALSE*/)
+CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, BOOL abForceAsAdmin /*= FALSE*/, LPCWSTR asStartupDir /*= NULL*/)
 {
 	CVirtualConsole* pVConResult = NULL;
 	// Поехали
@@ -5292,6 +5293,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, BOOL abForceAsA
 			{
 				RConStartArgs args;
 				args.pszSpecialCmd = lstrdup(pszLine);
+				args.pszStartupDir = (asStartupDir && *asStartupDir) ? lstrdup(asStartupDir) : NULL;
 				args.bRunAsAdministrator = lbRunAdmin;
 				pVCon = CreateCon(&args);
 
@@ -6732,31 +6734,36 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 	MCHKHEAP;
 
 	if (hInfo)
+	{
 		SendDlgItemMessage(hInfo, lbProcesses, LB_RESETCONTENT, 0, 0);
 
-	wchar_t temp[MAX_PATH];
+		wchar_t temp[MAX_PATH];
 
-	for (size_t j = 0; j < countof(mp_VCon); j++)
-	{
-		if (mp_VCon[j] == NULL) continue;
-
-		ConProcess* pPrc = NULL;
-		int nCount = mp_VCon[j]->RCon()->GetProcesses(&pPrc);
-
-		for(int i=0; i<nCount; i++)
+		for (size_t j = 0; j < countof(mp_VCon); j++)
 		{
-			if (mp_VCon[j] == mp_VActive)
-				_tcscpy(temp, _T("(*) "));
-			else
-				temp[0] = 0;
+			if (mp_VCon[j] == NULL) continue;
 
-			swprintf(temp+_tcslen(temp), _T("[%i.%i] %s - PID:%i"),
-			         j+1, i, pPrc[i].Name, pPrc[i].ProcessID);
-			if (hInfo)
-				SendDlgItemMessage(hInfo, lbProcesses, LB_ADDSTRING, 0, (LPARAM)temp);
+			ConProcess* pPrc = NULL;
+			int nCount = mp_VCon[j]->RCon()->GetProcesses(&pPrc);
+
+			if (pPrc && (nCount > 0))
+			{
+				for (int i=0; i<nCount; i++)
+				{
+					if (mp_VCon[j] == mp_VActive)
+						_tcscpy(temp, _T("(*) "));
+					else
+						temp[0] = 0;
+
+					swprintf(temp+_tcslen(temp), _T("[%i.%i] %s - PID:%i"),
+							 j+1, i, pPrc[i].Name, pPrc[i].ProcessID);
+					if (hInfo)
+						SendDlgItemMessage(hInfo, lbProcesses, LB_ADDSTRING, 0, (LPARAM)temp);
+				}
+
+				SafeFree(pPrc);
+			}
 		}
-
-		if (pPrc) { free(pPrc); pPrc = NULL; }
 	}
 
 	MCHKHEAP
@@ -7828,13 +7835,13 @@ void CConEmuMain::PaintGaps(HDC hDC)
 		lbReleaseDC = true;
 	}
 
-	int
-#ifdef _DEBUG
-	nColorIdx = 1; // Blue
-#else
-	nColorIdx = 0; // Black
-#endif
-	HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(-1, !isMeForeground())[nColorIdx]);
+	int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
+	int nAppId = -1;
+	if (mp_VActive && mp_VActive->RCon())
+	{
+		nAppId = mp_VActive->RCon()->GetActiveAppSettingsId();
+	}
+	HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(nAppId, !isMeForeground())[nColorIdx]);
 
 	//RECT rcClient = GetGuiClientRect(); // Клиентская часть главного окна
 	RECT rcClient = CalcRect(CER_WORKSPACE);
@@ -9592,7 +9599,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			WindowStartMinimized = false;
 		}
 
-		UpdateWin7TaskList(false);
+		UpdateWin7TaskList(mb_UpdateJumpListOnStartup);
+		mb_UpdateJumpListOnStartup = false;
 
 		//RegisterHotKeys();
 		//SetParent(GetParent(GetShellWindow()));
@@ -10082,7 +10090,7 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	//pInfo->ptMinTrackSize.y = srctWindow.Y * (gpSet->Log Font.lfHeight ? gpSet->Log Font.lfHeight : 6)
 	//  + p.y + shiftRect.top + shiftRect.bottom;
 
-	if (mb_isFullScreen || gpSet->isQuakeStyle)
+	if (mb_isFullScreen || gpSet->isQuakeStyle || mb_MaximizedHideCaption)
 	{
 		if (pInfo->ptMaxTrackSize.x < ptFullScreenSize.x)
 			pInfo->ptMaxTrackSize.x = ptFullScreenSize.x;
@@ -10272,7 +10280,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	}
 	else if ((ShowHideType == sih_ShowMinimize) || (ShowHideType == sih_ShowHideTSA))
 	{
-		if (bIsForeground)
+		if (IsWindowVisible(ghWnd) && (bIsForeground || !bIsIconic))
 		{
 			// если видимо - спрятать
 			cmd = ShowHideType;
@@ -13220,6 +13228,13 @@ INT_PTR CConEmuMain::aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 		{
 			gpConEmu->mh_AboutDlg = hWnd2;
 
+			if ((ghOpWnd && IsWindow(ghOpWnd)) || (WS_EX_TOPMOST & GetWindowLongPtr(ghWnd, GWL_EXSTYLE)))
+			{
+				SetWindowPos(hWnd2, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+			}
+
+			LPCWSTR pszActivePage = (LPCWSTR)lParam;
+
 			WCHAR szTitle[255];
 			LPCWSTR pszBits = WIN3264TEST(L"x86",L"x64");
 			LPCWSTR pszDebug = L"";
@@ -13241,6 +13256,7 @@ INT_PTR CConEmuMain::aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 			SetDlgItemText(hWnd2, stConEmuUrl, gsHomePage);
 
 			HWND hTab = GetDlgItem(hWnd2, tbAboutTabs);
+			size_t nPage = 0;
 
 			for (size_t i = 0; i < countof(Pages); i++)
 			{
@@ -13248,9 +13264,21 @@ INT_PTR CConEmuMain::aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 				tie.mask = TCIF_TEXT;
 				tie.pszText = (LPWSTR)Pages[i].Title;
 				TabCtrl_InsertItem(hTab, i, &tie);
+
+				if (pszActivePage && (lstrcmpi(pszActivePage, Pages[i].Title) == 0))
+					nPage = i;
 			}
 
-			SetDlgItemText(hWnd2, tAboutText, Pages[0].Text);
+			SetDlgItemText(hWnd2, tAboutText, Pages[nPage].Text);
+
+			if (nPage != 0)
+			{
+				TabCtrl_SetCurSel(hTab, (int)nPage);
+			}
+			else
+			{
+				_ASSERTE(pszActivePage==NULL && "Unknown page name?");
+			}
 
 			SetFocus(hTab);
 
@@ -13333,7 +13361,7 @@ INT_PTR CConEmuMain::aboutProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 	return FALSE;
 }
 
-void CConEmuMain::OnInfo_About()
+void CConEmuMain::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 {
 	InitCommCtrls();
 
@@ -13357,8 +13385,9 @@ void CConEmuMain::OnInfo_About()
 	//else
 	{
 		BOOL b = gbDontEnable; gbDontEnable = TRUE;
+		HWND hParent = (ghOpWnd && IsWindowVisible(ghOpWnd)) ? ghOpWnd : ghWnd;
 		// Модальный?
-		INT_PTR iRc = DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), ghWnd, aboutProc);
+		INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), hParent, aboutProc, (LPARAM)asPageName);
 		gbDontEnable = b;
 		bOk = (iRc != 0 && iRc != -1);
 	}
