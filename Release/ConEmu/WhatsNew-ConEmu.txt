@@ -9,15 +9,31 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 «ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder! Delete old files from old locations, if you are not using installer.
 *****************
 
+2012.06.13
+[%] При удалении задачи, назначенной в Startup, ConEmu переставал запускаться.
+[%] 120612: При выполнении команды с "-new_console" ConEmu минимизировался.
+[+] Меню таба (Rename tab) и Apps+R - переименовать активный таб. Для Far - пока можно переименовать только «Панели».
+[+] Для фоновой картинки добавлена опция UpRight.
+[%] Issue 590: Изменена обработка Ctrl+C/Ctrl+Break.
+[*] Some Quake style improvements.
+
+
 2012.06.12
-[+] В поставку добавлен пример «ColorPrompt.cmd». Запустите его в cmd.exe или tcc.exe для смены цвета текста command prompt на желтый.
+[+] В поставку добавлен пример «ColorPrompt.cmd». Запустите его в cmd.exe или tcc.exe
+    для смены цвета текста command prompt на желтый.
 [+] Новые аргументы для ConEmu.exe - /ShowHide и /ShowHideTSA.
     Если ConEmu не запущено - запускает (с возможно указанным /cmd ...),
     если окно ConEmu уже открыто - сворачивает его или прячет в TSA.
     Действие похоже на глобально регистрируемый хоткей (Win+C), но этот хоткей не работает,
     если ConEmu не был запущен. А с ключами - можно настроить ярлык на рабочем столе.
 [+] Аргумент ConEmu.exe: /dir "Folder". Аналог Working folder, задаваемый в свойствах ярлыка.
-[+] Параметр «Quake style slide down» на вкладке «Features». Пример настройки в «ConEmu\ConEmu_Tilda.xml».
+[+] Параметр «Quake style slide down» на вкладке «Features».
+    Пример настройки в «ConEmu\ConEmu_Tilda.xml».
+    Если вы хотите что-то типа этого
+    http://tech-bytes.co.uk/2008/05/23/a-quake-style-console-for-your-gnome-desktop/
+    переименуйте «ConEmu_Tilde.xml» в «ConEmu.xml»,
+    при загрузке компьютера запустите !ConEmu с ключом /min,
+    и вы получите «выезжающую» консоль по тильде.
 [%] Issue 576: Trap when updating Jump Lists/Task while history is empty.
 [%] Не работал Copy из альтернативной консоли (Win+A).
 [%] Issue 584: App distinct color palette not working.

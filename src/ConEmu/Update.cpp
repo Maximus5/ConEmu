@@ -435,9 +435,8 @@ bool CConEmuUpdate::ShowConfirmation()
 		ms_LastErrorInfo = NULL;
 		SC.Unlock();
 
-		BOOL b = gbDontEnable; gbDontEnable = FALSE;
+		DontEnable de;
 		int iBtn = MessageBox(NULL, pszConfirm, ms_DefaultTitle, MB_ICONQUESTION|MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_YESNO);
-		gbDontEnable = b;
 
 		SafeFree(pszConfirm);
 

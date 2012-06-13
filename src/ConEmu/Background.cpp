@@ -122,7 +122,7 @@ bool CBackground::CreateField(int anWidth, int anHeight)
 bool CBackground::FillBackground(
     const BITMAPFILEHEADER* apBkImgData, // Содержимое *.bmp файла
     LONG X, LONG Y, LONG Width, LONG Height, // Куда нужно положить картинку
-    BackgroundOp Operation,              // {eUpLeft = 0, eStretch = 1, eTile = 2}
+    BackgroundOp Operation,              // {eUpLeft = 0, eStretch = 1, eTile = 2, eUpRight = 4}
     bool abFade)                         // затемнение картинки, когда ConEmu НЕ в фокусе
 {
 	if (!hBgDc)
@@ -213,7 +213,7 @@ bool CBackground::FillBackground(
 					//}
 				}
 
-				if (Operation == eUpLeft)
+				if ((Operation == eUpLeft) || (Operation == eUpRight))
 				{
 					int W = klMin(Width,pHdr->biWidth); int H = klMin(Height,pHdr->biHeight);
 

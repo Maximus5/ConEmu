@@ -114,6 +114,9 @@ const wchar_t gsCloseAny[] = L"Confirm closing console?";
 const wchar_t gsCloseEditor[] = L"Confirm closing Far editor?";
 const wchar_t gsCloseViewer[] = L"Confirm closing Far viewer?";
 
+#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
+#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
+
 //static bool gbInTransparentAssert = false;
 
 CRealConsole::CRealConsole(CVirtualConsole* apVCon)
@@ -137,6 +140,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mn_tabsCount = 0; ms_PanelTitle[0] = 0; mn_ActiveTab = 0;
 	mn_MaxTabs = 20; mb_TabsWasChanged = FALSE;
 	mp_tabs = (ConEmuTab*)Alloc(mn_MaxTabs, sizeof(ConEmuTab));
+	ms_RenameFirstTab[0] = 0;
 	_ASSERTE(mp_tabs!=NULL);
 	//memset(&m_PacketQueue, 0, sizeof(m_PacketQueue));
 	mn_FlushIn = mn_FlushOut = 0;
@@ -1223,6 +1227,63 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 	}
 	else if (piRec->EventType == KEY_EVENT)
 	{
+#if 0
+		if (piRec->Event.KeyEvent.uChar.UnicodeChar == 3/*'^C'*/
+			&& (piRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS)
+			&& ((piRec->Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
+				== (piRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
+			&& !isFar()
+			)
+		{
+			if (piRec->Event.KeyEvent.bKeyDown)
+			{
+				lbRc = PostConsoleMessage(hConWnd, piRec->Event.KeyEvent.bKeyDown ? WM_KEYDOWN : WM_KEYUP,
+					piRec->Event.KeyEvent.wVirtualKeyCode, 0);
+			}
+			else
+			{
+				lbRc = true;
+			}
+
+			goto wrap;
+#if 0
+			if (piRec->Event.KeyEvent.bKeyDown)
+			{
+				bool bGenerated = false;
+				DWORD nActivePID = GetActivePID();
+				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_CTRLBREAK, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+				if (pIn)
+				{
+					pIn->dwData[0] = CTRL_C_EVENT;
+					pIn->dwData[1] = 0;
+
+					CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
+					if (pOut)
+					{
+						if (pOut->DataSize() >= sizeof(DWORD))
+							bGenerated = (pOut->dwData[0] != 0);
+
+						ExecuteFreeResult(pOut);
+					}
+					ExecuteFreeResult(pIn);
+				}
+
+				if (bGenerated)
+				{
+					lbRc = true;
+					goto wrap;
+				}
+			}
+			else
+			{
+				TODO("Только если было обработано?");
+				lbRc = true;
+				goto wrap;
+			}
+#endif
+		}
+#endif
+
 		if (!piRec->Event.KeyEvent.wRepeatCount)
 		{
 			_ASSERTE(piRec->Event.KeyEvent.wRepeatCount!=0);
@@ -1245,29 +1306,33 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 		}
 	}
 
-	MSG64 msg = {sizeof(msg), 1};
-
-	if (PackInputRecord(piRec, msg.msg))
+	// ***
 	{
-		if (m_UseLogs>=2)
-			LogInput(piRec);
+		MSG64 msg = {sizeof(msg), 1};
 
-		_ASSERTE(msg.msg[0].message!=0);
-		//if (mb_UseOnlyPipeInput) {
-		lbRc = PostConsoleEventPipe(&msg);
-
-		#ifdef _DEBUG
-		if (gbInSendConEvent)
+		if (PackInputRecord(piRec, msg.msg))
 		{
-			_ASSERTE(!gbInSendConEvent);
+			if (m_UseLogs>=2)
+				LogInput(piRec);
+
+			_ASSERTE(msg.msg[0].message!=0);
+			//if (mb_UseOnlyPipeInput) {
+			lbRc = PostConsoleEventPipe(&msg);
+
+			#ifdef _DEBUG
+			if (gbInSendConEvent)
+			{
+				_ASSERTE(!gbInSendConEvent);
+			}
+			#endif
 		}
-		#endif
-	}
-	else
-	{
-		gpConEmu->DebugStep(L"ConEmu: PackInputRecord failed!");
+		else
+		{
+			gpConEmu->DebugStep(L"ConEmu: PackInputRecord failed!");
+		}
 	}
 
+wrap:
 	return lbRc;
 }
 
@@ -6236,6 +6301,100 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 	}
 }
 
+INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	CRealConsole* pRCon = NULL;
+	if (messg == WM_INITDIALOG)
+		pRCon = (CRealConsole*)lParam;
+	else
+		pRCon = (CRealConsole*)GetWindowLongPtr(hDlg, DWLP_USER);
+
+	switch (messg)
+	{
+		case WM_INITDIALOG:
+		{
+			_ASSERTE(pRCon!=NULL);
+			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)pRCon);
+
+			HWND hEdit = GetDlgItem(hDlg, tNewTabName);
+
+			int nLen = 0;
+			if (pRCon->ms_RenameFirstTab[0])
+			{
+				nLen = lstrlen(pRCon->ms_RenameFirstTab);
+				SetWindowText(hEdit, pRCon->ms_RenameFirstTab);
+			}
+			else
+			{
+				ConEmuTab tab = {};
+				if (pRCon->GetTab(0, &tab))
+				{
+					nLen = lstrlen(tab.Name);
+					SetWindowText(hEdit, tab.Name);
+				}
+			}
+
+			SendMessage(hEdit, EM_SETSEL, 0, nLen);
+
+			SetFocus(hEdit);
+
+			return FALSE;
+		}
+
+		case WM_COMMAND:
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				switch (LOWORD(wParam))
+				{
+					case IDOK:
+						{
+							wchar_t* pszNew = GetDlgItemText(hDlg, tNewTabName);
+							lstrcpyn(pRCon->ms_RenameFirstTab, pszNew ? pszNew : L"", countof(pRCon->ms_RenameFirstTab));
+							SafeFree(pszNew);
+							EndDialog(hDlg, IDOK);
+							return TRUE;
+						}
+					case IDCANCEL:
+					case IDCLOSE:
+						renameProc(hDlg, WM_CLOSE, 0, 0);
+						return TRUE;
+				}
+			}
+			break;
+
+		case WM_CLOSE:
+			EndDialog(hDlg, IDCANCEL);
+			break;
+
+		case WM_DESTROY:
+			break;
+
+		default:
+			return FALSE;
+	}
+
+	return FALSE;
+}
+
+void CRealConsole::DoRenameTab()
+{
+	if (!this)
+		return;
+
+	if (GetActiveTab() > 0)
+	{
+		MBox(L"Only first tab of console can be renamed in current version");
+		return;
+	}
+
+	DontEnable de;
+	INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RENAMETAB), ghWnd, renameProc, (LPARAM)this);
+	if (iRc == IDOK)
+	{
+		gpConEmu->mp_TabBar->Update();
+	}
+}
+
 int CRealConsole::GetTabCount(BOOL abVisibleOnly /*= FALSE*/)
 {
 	if (!this)
@@ -6372,7 +6531,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 		{
 			pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
 			int nMaxLen = min(countof(TitleFull) , countof(pTab->Name));
-			lstrcpyn(pTab->Name, TitleFull, nMaxLen);
+			lstrcpyn(pTab->Name, ms_RenameFirstTab[0] ? ms_RenameFirstTab : TitleFull, nMaxLen);
 			UpdateTabFlags(pTab);
 			return true;
 		}
@@ -6410,11 +6569,17 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 
 	memmove(pTab, mp_tabs+tabIdx, sizeof(ConEmuTab));
 
+	// Rename tab. Пока только первый (панель/cmd/powershell/...)
+	if ((tabIdx == 0) && ms_RenameFirstTab[0])
+	{
+		lstrcpyn(pTab->Name, ms_RenameFirstTab, countof(pTab->Name));
+	}
+
 	// Если панель единственная - точно показываем заголовок консоли
 	if (((mn_tabsCount == 1) || (mn_ProgramStatus & CES_FARACTIVE) == 0) && pTab->Type == 1)
 	{
 		// И есть заголовок консоли
-		if (TitleFull[0])  
+		if (TitleFull[0] && (ms_RenameFirstTab[0] == 0))  
 		{
 			int nMaxLen = min(countof(TitleFull) , countof(pTab->Name));
 			lstrcpyn(pTab->Name, TitleFull, nMaxLen);
@@ -7145,11 +7310,13 @@ bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation)
 	if (gpConEmu->isCloseConfirmed())
 		return true;
 
-	BOOL b = gbDontEnable; gbDontEnable = TRUE;
-	//int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
-	int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL,
-		asConfirmation ? asConfirmation : gsCloseAny, Title, MB_ICONEXCLAMATION|MB_YESNO);
-	gbDontEnable = b;
+	int nBtn = 0;
+	{
+		DontEnable de;
+		//nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+		nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL,
+			asConfirmation ? asConfirmation : gsCloseAny, Title, MB_ICONEXCLAMATION|MB_YESNO);
+	}
 
 	if (nBtn != IDYES)
 	{
@@ -7280,10 +7447,12 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 						L"Kill active process '%s' PID=%u?",
 						//hGuiWnd ? L"active program" : L"RealConsole",
 						szActive, nActivePID);
-					BOOL b = gbDontEnable; gbDontEnable = TRUE;
-					//int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
-					int nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNO);
-					gbDontEnable = b;
+					int nBtn = 0;
+					{
+						DontEnable de;
+						//nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+						nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNO);
+					}
 
 					//if (nBtn == IDCANCEL)
 					//{

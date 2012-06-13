@@ -980,7 +980,7 @@ LPWSTR CConEmuMacro::Task(LPWSTR asArgs, CRealConsole* apRCon)
 			}
 			else
 			{
-				pszName = pszBuf;
+				pszName = pszArg;
 			}
 		}
 	}

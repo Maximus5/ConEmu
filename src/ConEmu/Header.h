@@ -126,9 +126,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_CMD_HISTORY_SHOW 16
 #define MAX_CMD_GROUP_SHOW 16
 
-#define MBox(rt) {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, Title, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION); gbDontEnable = b; }
-#define MBoxA(rt) {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, _T("ConEmu"), /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION); gbDontEnable = b; }
-#define MBoxError(rt) {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, _T("ConEmu"), /*MB_SYSTEMMODAL |*/ MB_ICONSTOP); gbDontEnable = b; }
+int MessageBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND hParent = NULL);
+
+#define MBox(rt) MessageBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION, Title) // {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, Title, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION); gbDontEnable = b; }
+#define MBoxA(rt) MessageBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION, NULL) // {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, _T("ConEmu"), /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION); gbDontEnable = b; }
+#define MBoxError(rt) MessageBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONSTOP, NULL) // {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, _T("ConEmu"), /*MB_SYSTEMMODAL |*/ MB_ICONSTOP); gbDontEnable = b; }
 
 //#define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; StringCchPrintf(szAMsg, countof(szAMsg), _T("Assertion (%s) at\n%s:%i"), _T(#V), _T(__FILE__), __LINE__); MBoxA(szAMsg); }
 #define MBoxAssert(V) _ASSERTE(V)

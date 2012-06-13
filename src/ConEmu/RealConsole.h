@@ -406,8 +406,8 @@ class CRealConsole
 		bool IsFarHyperlinkAllowed(bool abFarRequired);
 		bool ProcessFarHyperlink(UINT messg, COORD crFrom);
 		void UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab);
+		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
-		
 		BOOL IsConsoleDataChanged();
 		void OnActivate(int nNewNum, int nOldNum);
 		void OnDeactivate(int nNewNum);
@@ -419,6 +419,7 @@ class CRealConsole
 		BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 		void UpdateScrollInfo();
 		void SetTabs(ConEmuTab* tabs, int tabsCount);
+		void DoRenameTab();
 		int GetTabCount(BOOL abVisibleOnly = FALSE);
 		int GetActiveTab();
 		CEFarWindowType GetActiveTabType();
@@ -626,6 +627,7 @@ class CRealConsole
 		int mn_LastAppSettingsId;
 		//
 		ConEmuTab* mp_tabs;
+		wchar_t    ms_RenameFirstTab[128];
 		MSection   msc_Tabs;
 		int mn_tabsCount, mn_MaxTabs, mn_ActiveTab;
 		BOOL mb_TabsWasChanged;

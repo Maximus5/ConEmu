@@ -214,6 +214,7 @@ CConEmuMain::CConEmuMain()
 	//mb_InTrackSysMenu = FALSE;
 	mn_TrackMenuPlace = tmp_None;
 	mb_LastRgnWasNull = TRUE;
+	mb_LockWindowRgn = FALSE;
 	mb_CaptionWasRestored = FALSE; mb_ForceShowFrame = FALSE;
 	mh_CursorWait = LoadCursor(NULL, IDC_WAIT);
 	mh_CursorArrow = LoadCursor(NULL, IDC_ARROW);
@@ -1825,20 +1826,29 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 		// Normal
 		if (gpSet->isHideCaptionAlways())
 		{
-			if (!isMouseOverFrame())
+			if ((mn_QuakePercent != 0) || !isMouseOverFrame())
 			{
 				// Рамка невидима (мышка не над рамкой или заголовком)
 				RECT rcClient = GetGuiClientRect();
 				RECT rcFrame = CalcMargins(CEM_FRAME);
 				_ASSERTE(!rcClient.left && !rcClient.top);
 
+				bool bRoundTitle = gpSetCls->CheckTheming() && mp_TabBar->IsTabsShown();
+
 				if (gpSet->isQuakeStyle && (mn_QuakePercent > 0))
 				{
-					int nQuakeHeight = (rcClient.bottom - rcClient.top + 1) * mn_QuakePercent / 100;
+					int nPercent = (mn_QuakePercent > 100) ? 100 : (mn_QuakePercent == 1) ? 0 : mn_QuakePercent;
+					int nQuakeHeight = (rcClient.bottom - rcClient.top + 1) * nPercent / 100;
+					if (nQuakeHeight < 1)
+					{
+						nQuakeHeight = 1; // иначе регион не применится
+						rcClient.right = rcClient.left + 1;
+					}
 					rcClient.bottom = min(rcClient.bottom, (rcClient.top+nQuakeHeight));
+					bRoundTitle = false;
 				}
 
-				hRgn = CreateWindowRgn(abTestOnly, gpSetCls->CheckTheming() && mp_TabBar->IsTabsShown(),
+				hRgn = CreateWindowRgn(abTestOnly, bRoundTitle,
 				                       rcFrame.left-gpSet->nHideCaptionAlwaysFrame,
 				                       rcFrame.top-gpSet->nHideCaptionAlwaysFrame,
 				                       rcClient.right+2*gpSet->nHideCaptionAlwaysFrame,
@@ -2136,12 +2146,15 @@ void CConEmuMain::AskChangeBufferHeight()
 
 	BOOL lbBufferHeight = pRCon->isBufferHeight();
 
-	BOOL b = gbDontEnable; gbDontEnable = TRUE;
-	int nBtn = MessageBox(ghWnd, lbBufferHeight ?
+	int nBtn = 0;
+
+	{
+		DontEnable de;
+		nBtn = MessageBox(ghWnd, lbBufferHeight ?
 						  L"Do You want to turn bufferheight OFF?" :
 						  L"Do You want to turn bufferheight ON?",
 						  GetDefaultTitle(), MB_ICONQUESTION|MB_OKCANCEL);
-	gbDontEnable = b;
+	}
 
 	if (nBtn != IDOK) return;
 
@@ -5498,9 +5511,7 @@ LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL ab
 	else
 	{
 		/*if (IsDebuggerPresent()) { -- не требуется. был баг с памятью
-			BOOL b = gbDontEnable; gbDontEnable = TRUE;
 			int nBtn = MessageBox(ghWnd, L"Debugger active!\nShellExecuteEx(runas) my fails, when VC IDE\ncatches Microsoft C++ exceptions.\nContinue?", GetDefaultTitle(), MB_ICONASTERISK|MB_YESNO|MB_DEFBUTTON2);
-			gbDontEnable = b;
 			if (nBtn != IDYES)
 				return (FALSE);
 		}*/
@@ -6079,10 +6090,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 		{
 			int nRc = RecreateDlg(&args);
 
-			//BOOL b = gbDontEnable;
-			//gbDontEnable = TRUE;
 			//int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, Recreate DlgProc, (LPARAM)&args);
-			//gbDontEnable = b;
 			if (nRc != IDC_START)
 				return;
 
@@ -6179,10 +6187,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 			{
 				int nRc = RecreateDlg(&args);
 
-				//BOOL b = gbDontEnable;
-				//gbDontEnable = TRUE;
 				//int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, Recreate DlgProc, (LPARAM)&args);
-				//gbDontEnable = b;
 				if (nRc == IDC_TERMINATE)
 				{
 					mp_VActive->RCon()->CloseConsole(true, false);
@@ -7029,6 +7034,9 @@ void CConEmuMain::UpdateProgress()
 
 void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth/*=-1*/, int anWndHeight/*=-1*/)
 {
+	if (mb_LockWindowRgn)
+		return;
+
 	HRGN hRgn = NULL;
 
 	//if (gpSet->isHideCaptionAlways) {
@@ -9043,6 +9051,7 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_CLOSE,     L"&Close");
 		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_DETACH,    L"Detach");
+		AppendMenu(hMenu, MF_STRING | MF_ENABLED,     IDM_RENAMETAB, MenuAccel(vkRenameTab,L"Rena&me tab"));
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATECON, MenuAccel(vkMultiClose,L"&Console"));
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEPRC, MenuAccel(vkTerminateApp,L"&Active process"));
@@ -9079,6 +9088,7 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 
 		EnableMenuItem(hMenu, IDM_CLOSE, MF_BYCOMMAND | (lbCanCloseTab ? MF_ENABLED : MF_GRAYED));
 		EnableMenuItem(hMenu, IDM_DETACH, MF_BYCOMMAND | MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_RENAMETAB, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATECON, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRC, MF_BYCOMMAND | MF_ENABLED);
 		EnableMenuItem(hMenu, IDM_RESTART, MF_BYCOMMAND | MF_ENABLED);
@@ -9091,6 +9101,7 @@ HMENU CConEmuMain::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 	{
 		EnableMenuItem(hMenu, IDM_CLOSE, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hMenu, IDM_DETACH, MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_RENAMETAB, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATECON, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRC, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hMenu, IDM_RESTART, MF_BYCOMMAND | MF_GRAYED);
@@ -9343,11 +9354,23 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource)
 			}
 		}
 
-		if (!pszDataW)
+		if (!pszDataW || !*pszDataW)
 		{
-			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(szName)+100,2);
-			lstrcpy(pszErrMsg, L"Command group "); lstrcat(pszErrMsg, szName); lstrcat(pszErrMsg, L" not found");
-			DisplayLastError(pszErrMsg, -1);
+			size_t cchMax = _tcslen(szName)+100;
+			wchar_t* pszErrMsg = (wchar_t*)calloc(cchMax,sizeof(*pszErrMsg));
+			_wsprintf(pszErrMsg, SKIPLEN(cchMax) L"Command group %s %s!\nStart default shell?",
+				szName, pszDataW ? L"is empty" : L"not found");
+
+			int nBtn = MessageBox(pszErrMsg, MB_YESNO|MB_ICONEXCLAMATION);
+
+			SafeFree(pszErrMsg);
+			SafeFree(pszDataW);
+
+			if (nBtn != IDNO)
+			{
+				LPCWSTR pszDefCmd = gpSetCls->GetDefaultCmd();
+				return lstrdup(pszDefCmd);
+			}
 			return NULL;
 		}
 
@@ -9441,9 +9464,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 		if (!gpSetCls->CheckConsoleFontFast())
 		{
-			gbDontEnable = TRUE;
+			DontEnable de;
 			gpSetCls->EditConsoleFont(ghWnd);
-			gbDontEnable = FALSE;
 		}
 		
 		// Если в ключе [HKEY_CURRENT_USER\Console] будут левые значения - то в Win7 могут
@@ -10000,7 +10022,15 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (mp_VActive && mp_VActive->RCon())
 		mp_VActive->RCon()->OnGuiFocused(lbSetFocus, (messg == WM_ACTIVATEAPP));
 
-	if (gpSet->isFadeInactive)
+	if (gpSet->isQuakeStyle == 2)
+	{
+		bool bForeground = lbSetFocus || isMeForeground();
+		if (!bForeground)
+		{
+			OnMinimizeRestore(sih_HideTSA);
+		}
+	}
+	else if (gpSet->isFadeInactive)
 	{
 		if (mp_VActive)
 		{
@@ -10262,6 +10292,11 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 
 void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= sih_None*/)
 {
+	static bool bInFunction = false;
+	if (bInFunction)
+		return;
+	bInFunction = true;
+
 	bool bIsForeground = isMeForeground();
 	bool bIsIconic = isIconic();
 
@@ -10274,16 +10309,23 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	//    аргумент /showhideTSA  --> ShowHideType = sih_ShowHideTSA
 	SingleInstanceShowHideType cmd = sih_None;
 
+	if (ShowHideType == sih_None)
+	{
+		// По настройкам
+		ShowHideType = (gpSet->isMinToTray || gpSet->isQuakeStyle) ? sih_ShowHideTSA : sih_ShowMinimize;
+	}
+
+	// Go
 	if (ShowHideType == sih_Show)
 	{
 		cmd = sih_Show;
 	}
-	else if ((ShowHideType == sih_ShowMinimize) || (ShowHideType == sih_ShowHideTSA))
+	else if ((ShowHideType == sih_ShowMinimize) || (ShowHideType == sih_ShowHideTSA) || (ShowHideType == sih_HideTSA))
 	{
-		if (IsWindowVisible(ghWnd) && (bIsForeground || !bIsIconic))
+		if ((IsWindowVisible(ghWnd) && (bIsForeground || !bIsIconic)) || (ShowHideType == sih_HideTSA))
 		{
 			// если видимо - спрятать
-			cmd = ShowHideType;
+			cmd = (ShowHideType == sih_HideTSA) ? sih_ShowHideTSA : ShowHideType;
 		}
 		else
 		{
@@ -10293,20 +10335,24 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	}
 	else
 	{
-		_ASSERTE(ShowHideType == sih_None);
-		// Иначе - прячем/показываем в зависимости от текущей видимости
+		_ASSERTE(ShowHideType == sih_SetForeground);
+		// Иначе - показываем (в зависимости от текущей видимости)
 		if (IsWindowVisible(ghWnd) && (bIsForeground || !bIsIconic)) // (!bIsIconic) - окошко развернуто, надо свернуть
-			cmd = sih_ShowMinimize;
+			cmd = sih_SetForeground;
 		else
 			cmd = sih_Show;
 	}
 
 	// Поехали
-	int nQuakeMin = 10;
+	int nQuakeMin = 1;
 	int nQuakeShift = 10;
 	int nQuakeDelay = 20;
 
-	if (cmd == sih_Show)
+	if (cmd == sih_SetForeground)
+	{
+		apiSetForegroundWindow(ghWnd);
+	}
+	else if (cmd == sih_Show)
 	{
 		if (gpSet->isQuakeStyle && !isMouseOverFrame())
 		{
@@ -10317,9 +10363,15 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			mn_QuakePercent = 0;
 
 		if (Icon.isWindowInTray() || !IsWindowVisible(ghWnd))
+		{
+			mb_LockWindowRgn = TRUE;
 			Icon.RestoreWindowFromTray();
+			mb_LockWindowRgn = FALSE;
+		}
 		else if (bIsIconic)
+		{
 			PostMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+		}
 
 		apiSetForegroundWindow(ghWnd);
 
@@ -10343,9 +10395,9 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	else
 	{
 		_ASSERTE(((cmd == sih_ShowHideTSA) || (cmd == sih_ShowMinimize)) && "cmd must be determined!");
-		if (gpSet->isQuakeStyle && !isMouseOverFrame())
+		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
 		{
-			mn_QuakePercent = 100 - nQuakeShift;
+			mn_QuakePercent = 100 + nQuakeMin - nQuakeShift;
 			while (mn_QuakePercent > 0)
 			{
 				UpdateWindowRgn();
@@ -10359,8 +10411,10 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 		if (cmd == sih_ShowHideTSA)
 		{
+			mb_LockWindowRgn = TRUE;
 			// Явно попросили в TSA спрятать
 			Icon.HideWindowToTray();
+			mb_LockWindowRgn = FALSE;
 		}
 		else if (cmd == sih_ShowMinimize)
 		{
@@ -10368,6 +10422,8 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 		}
 	}
+
+	bInFunction = false;
 }
 
 void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
@@ -13384,11 +13440,10 @@ void CConEmuMain::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 	//}
 	//else
 	{
-		BOOL b = gbDontEnable; gbDontEnable = TRUE;
+		DontEnable de;
 		HWND hParent = (ghOpWnd && IsWindowVisible(ghOpWnd)) ? ghOpWnd : ghWnd;
 		// Модальный?
 		INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), hParent, aboutProc, (LPARAM)asPageName);
-		gbDontEnable = b;
 		bOk = (iRc != 0 && iRc != -1);
 	}
 
@@ -13402,7 +13457,7 @@ void CConEmuMain::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 		#endif
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%02u%02u%02u%s %s%s)", 
 			(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), pszDebug, pszBits);
-		BOOL b = gbDontEnable; gbDontEnable = TRUE;
+		DontEnable de;
 		MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance,
 			pAbout,
 			szTitle,
@@ -13410,7 +13465,6 @@ void CConEmuMain::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 		};
 		MessageBoxIndirectW(&mb);
 		//MessageBoxW(ghWnd, pHelp, szTitle, MB_ICONQUESTION);
-		gbDontEnable = b;
 	}
 }
 

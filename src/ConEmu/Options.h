@@ -61,6 +61,7 @@ enum BackgroundOp
 	eUpLeft = 0,
 	eStretch = 1,
 	eTile = 2,
+	eUpRight = 3,
 };
 
 #define BgImageColorsDefaults (1|2)
@@ -598,7 +599,7 @@ struct Settings
 		//reg->Load(L"HideCaption", isHideCaption);
 		bool isHideCaption; // Hide caption when maximized
 		//reg->Load(L"QuakeStyle", isQuakeStyle);
-		bool isQuakeStyle;
+		BYTE isQuakeStyle;
 		protected:
 		//reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
 		bool mb_HideCaptionAlways;

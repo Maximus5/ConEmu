@@ -202,6 +202,11 @@ CVirtualConsole::CVirtualConsole(const RConStartArgs *args) : hDC(NULL)
 
 	mp_Set = NULL; // указатель на настройки разделяемые по приложениям
 
+	#ifdef __GNUC__
+	HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
+	GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : NULL);
+	#endif
+
 	gpConEmu->OnVConCreated(this, args);
 
 	WARNING("скорректировать размер кучи");
@@ -1032,46 +1037,69 @@ bool CVirtualConsole::isCharSpace(wchar_t inChar)
 	return isSpace;
 }
 
-void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight)
+void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight, COLORREF crBack)
 {
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	BOOL lbDump = FALSE;
-
 	if (lbDump) DumpImage(hBgDc, NULL, bgBmpSize.X, bgBmpSize.Y, L"F:\\bgtemp.png");
+	#endif
 
-#endif
-
-	if (bgBmpSize.X>inX && bgBmpSize.Y>inY)
-		BitBlt(hDC, inX, inY, inWidth, inHeight, hBgDc, inX, inY, SRCCOPY);
-
-	if (bgBmpSize.X<(inX+inWidth) || bgBmpSize.Y<(inY+inHeight))
+	if (gpSet->bgOperation == eUpRight)
 	{
+		HBRUSH hBr = NULL;
+		#if 0
+		hBr = PartBrush(L' ', crBack, 0);
+		#else
 		if (hBrush0 == NULL)
 		{
 			hBrush0 = CreateSolidBrush(mp_Colors[0]);
 			SelectBrush(hBrush0);
 		}
+		hBr = hBrush0;
+		#endif
 
-		RECT rect = {max(inX,bgBmpSize.X), inY, inX+inWidth, inY+inHeight};
-#ifndef SKIP_ALL_FILLRECT
+		RECT rect = {inX, inY, inX+inWidth, inY+inHeight};
+		FillRect(hDC, &rect, hBr);
 
-		if (!IsRectEmpty(&rect))
-			FillRect(hDC, &rect, hBrush0);
-
-#endif
-
-		if (bgBmpSize.X>inX)
+		int xShift = max(0,(Width - bgBmpSize.X));
+		if (bgBmpSize.X>(inX-xShift) && bgBmpSize.Y>inY)
 		{
-			rect.left = inX; rect.top = max(inY,bgBmpSize.Y); rect.right = bgBmpSize.X;
-#ifndef SKIP_ALL_FILLRECT
+			//BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
+			BitBlt(hDC, inX, inY, inWidth, inHeight, hBgDc, inX-xShift, inY, SRCCOPY);
+			//GdiAlphaBlend(hDC, inX, inY, inWidth, inHeight, hBgDc, inX-xShift, inY, inWidth, inHeight, bf);
+		}
+	}
+	else
+	{
+		if (bgBmpSize.X>inX && bgBmpSize.Y>inY)
+			BitBlt(hDC, inX, inY, inWidth, inHeight, hBgDc, inX, inY, SRCCOPY);
 
+		// Заливка цветом (там где нет картинки)
+		if ((bgBmpSize.X < (inX+inWidth)) || (bgBmpSize.Y < (inY+inHeight)))
+		{
+			if (hBrush0 == NULL)
+			{
+				hBrush0 = CreateSolidBrush(mp_Colors[0]);
+				SelectBrush(hBrush0);
+			}
+
+			RECT rect = {max(inX,bgBmpSize.X), inY, inX+inWidth, inY+inHeight};
+
+			#ifndef SKIP_ALL_FILLRECT
 			if (!IsRectEmpty(&rect))
 				FillRect(hDC, &rect, hBrush0);
+			#endif
 
-#endif
+			if (bgBmpSize.X>inX)
+			{
+				rect.left = inX; rect.top = max(inY,bgBmpSize.Y); rect.right = bgBmpSize.X;
+
+				#ifndef SKIP_ALL_FILLRECT
+				if (!IsRectEmpty(&rect))
+					FillRect(hDC, &rect, hBrush0);
+				#endif
+			}
 		}
-
-		//DeleteObject(hBrush);
 	}
 }
 
@@ -2196,6 +2224,8 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 
 void CVirtualConsole::Update_CheckAndFill()
 {
+#if 0
+	WARNING("Пока не используется!");
 	// pointers
 	wchar_t* ConCharLine = mpsz_ConChar;
 	CharAttr* ConAttrLine = mpn_ConAttrEx;
@@ -2258,6 +2288,7 @@ void CVirtualConsole::Update_CheckAndFill()
 			}
 		}
 	}
+#endif
 }
 
 // Разбор строки на составляющие (возвращает true, если есть ячейки с НЕ основным фоном)
@@ -2745,11 +2776,12 @@ void CVirtualConsole::UpdateText()
 
 					if (gbNoDblBuffer) GdiFlush();
 
+					const CharAttr PrevAttr = ConAttrLine[j-1];
+
 					// Если не отрисовка фона картинкой
 					if (!(drawImage && ISBGIMGCOLOR(attr.nBackIdx)))
 					{
 						//BYTE PrevAttrFore = attrFore, PrevAttrBack = attrBack;
-						const CharAttr PrevAttr = ConAttrLine[j-1];
 						wchar_t PrevC = ConCharLine[j-1];
 
 						//GetCharAttr(PrevC, PrevAttr, PrevC, PrevAttrFore, PrevAttrBack);
@@ -2800,7 +2832,7 @@ void CVirtualConsole::UpdateText()
 					}
 					else if (drawImage)
 					{
-						BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+						BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, PrevAttr.crBackColor);
 					} HEAPVAL
 
 					if (gbNoDblBuffer) GdiFlush();
@@ -2879,7 +2911,7 @@ void CVirtualConsole::UpdateText()
 				}
 				else if (drawImage)
 				{
-					BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+					BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, attr.crBackColor);
 					lbImgDrawn = TRUE;
 				}
 
@@ -3098,7 +3130,7 @@ void CVirtualConsole::UpdateText()
 				}
 				else if (drawImage)
 				{
-					BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+					BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, attr.crBackColor);
 					lbImgDrawn = TRUE;
 				}
 
@@ -4700,6 +4732,9 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 		case IDM_DETACH:
 			if (mp_RCon->Detach())
 				gpConEmu->OnVConTerminated(this);
+			break;
+		case IDM_RENAMETAB:
+			mp_RCon->DoRenameTab();
 			break;
 		case IDM_TERMINATEPRC:
 			mp_RCon->CloseConsole(true, false);

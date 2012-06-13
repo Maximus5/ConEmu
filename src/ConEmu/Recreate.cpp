@@ -74,8 +74,7 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 		return IDCANCEL;
 	}
 	
-	BOOL b = gbDontEnable;
-	gbDontEnable = TRUE;
+	DontEnable de;
 
 	gpConEmu->SkipOneAppsRelease(true);
 
@@ -101,7 +100,6 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 
 	gpConEmu->SkipOneAppsRelease(false);
 
-	gbDontEnable = b;
 	return mn_DlgRc;
 }
 

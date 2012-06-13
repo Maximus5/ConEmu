@@ -178,9 +178,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     L"     Cmd==6 - switch console direct (no recent mode), Parm=(1,-1)\r\n" \
     L"     Cmd==7 - activate console by number, Parm=(1-based console index)\r\n" \
     L"     Cmd==8 - show tabs list menu (indiffirent Far/Not Far)\r\n" \
-    L"Task(Index)\r\n" \
+    L"Task(Index[,\"Dir\"])\r\n" \
     L"  - start task with 1-based index\r\n" \
-    L"Task(\"Name\")\r\n" \
+    L"Task(\"Name\"[,\"Dir\"])\r\n" \
 	L"  - start task with specified name\r\n" \
     L"WindowFullscreen()\r\n" \
     L"  - Switch fullscreen window mode\r\n" \

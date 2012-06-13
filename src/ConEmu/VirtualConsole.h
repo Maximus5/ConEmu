@@ -206,6 +206,11 @@ class CVirtualConsole :
 		UINT mn_ConEmuSettingsMsg;
 
 		void CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr);
+
+		#ifdef __GNUC__
+		AlphaBlend_t GdiAlphaBlend;
+		#endif
+
 	public:
 		const PanelViewInit* GetPanelView(bool abLeftPanel);
 
@@ -266,7 +271,7 @@ class CVirtualConsole :
 		static bool isCharScroll(wchar_t inChar);
 		static bool isCharNonSpacing(wchar_t inChar);
 		static bool isCharSpace(wchar_t inChar);
-		void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
+		void BlitPictureTo(int inX, int inY, int inWidth, int inHeight, COLORREF crBack);
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
 		void Paint(HDC hPaintDc, RECT rcClient);

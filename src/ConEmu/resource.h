@@ -41,6 +41,7 @@
 #define IDD_FAST_CONFIG                 215
 #define IDD_FIND                        217
 #define IDD_ABOUT                       218
+#define IDD_RENAMETAB                   219
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -662,9 +663,6 @@
 #define cbEnhanceGraphics               2289
 #define tFontSizeX3                     2290
 #define bBgImage                        2291
-#define rBgUpLeft                       2292
-#define rBgStretch                      2293
-#define rBgTile                         2294
 #define tWndX                           2295
 #define tWndY                           2296
 #define cbPosFixed                      2297
@@ -702,16 +700,21 @@
 #define vkMultiNewWnd                   2329
 #define cbRunInNewWindow                2330
 #define cbQuakeStyle                    2333
-#define IDC_BUTTON1                     2334
 #define cbGuiMacroHelp                  2334
+#define vkRenameTab                     2335
+#define stNewTabName                    2336
+#define tNewTabName                     2337
+#define stPlacement                     2338
+#define stBgPlacement                   2338
+#define lbBgPlacement                   2339
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        219
+#define _APS_NEXT_RESOURCE_VALUE        220
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2335
+#define _APS_NEXT_CONTROL_VALUE         2340
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

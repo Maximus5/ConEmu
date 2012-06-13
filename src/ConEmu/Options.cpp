@@ -752,6 +752,34 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 	wchar_t szVal[32];
 	int iCmdMax = 0, iCmdCount = 0;
 
+	wchar_t* pszNameSet = NULL;
+	if (!reg->Load(L"Name", &pszNameSet) || !*pszNameSet)
+	{
+		SafeFree(pszNameSet);
+		goto wrap;
+	}
+
+	pTask = (CommandTasks*)calloc(1, sizeof(CommandTasks));
+	if (!pTask)
+	{
+		SafeFree(pszNameSet);
+		goto wrap;
+	}
+
+	pTask->SetName(pszNameSet, iIndex);
+
+	if (!reg->Load(L"GuiArgs", &pTask->pszGuiArgs) || !*pTask->pszGuiArgs)
+	{
+		pTask->cchGuiArgMax = 0;
+		SafeFree(pTask->pszGuiArgs);
+	}
+	else
+	{
+		pTask->cchGuiArgMax = _tcslen(pTask->pszGuiArgs)+1;
+	}
+
+	lbRc = true;
+
 	if (reg->Load(L"Count", iCmdMax) && (iCmdMax > 0))
 	{
 		size_t nTotalLen = 1024; // с запасом, для редактирования через интерфейс
@@ -772,8 +800,6 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 
 		if ((iCmdCount > 0) && (nTotalLen))
 		{
-			pTask = (CommandTasks*)calloc(1, sizeof(CommandTasks));
-
 			pTask->cchCmdMax = nTotalLen+1;
 			pTask->pszCommands = (wchar_t*)malloc(pTask->cchCmdMax*sizeof(wchar_t));
 			if (pTask->pszCommands)
@@ -797,30 +823,13 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 
 					psz += lstrlen(psz);	
 				}
-
-				wchar_t* pszNameSet = NULL;
-				if (!reg->Load(L"Name", &pszNameSet) || !*pszNameSet)
-					SafeFree(pszNameSet);
-
-				pTask->SetName(pszNameSet, iIndex);
-
-				if (!reg->Load(L"GuiArgs", &pTask->pszGuiArgs) || !*pTask->pszGuiArgs)
-				{
-					pTask->cchGuiArgMax = 0;
-					SafeFree(pTask->pszGuiArgs);
-				}
-				else
-				{
-					pTask->cchGuiArgMax = _tcslen(pTask->pszGuiArgs)+1;
-				}
-
-				lbRc = true;
 			}
 		}
 
 		SafeFree(pszCommands);
 	}
 
+wrap:
 	return lbRc;
 }
 
@@ -1971,7 +1980,8 @@ void Settings::LoadSettings()
 		reg->Load(L"bgImageColors", nBgImageColors);
 		if (!nBgImageColors) nBgImageColors = (DWORD)-1; //1|2 == BgImageColorsDefaults;
 		reg->Load(L"bgOperation", bgOperation);
-		if (bgOperation!=eUpLeft && bgOperation!=eStretch && bgOperation!=eTile) bgOperation = 0;
+		if (bgOperation!=eUpLeft && bgOperation!=eStretch && bgOperation!=eTile && bgOperation!=eUpRight)
+			bgOperation = eUpLeft;
 		reg->Load(L"bgPluginAllowed", isBgPluginAllowed);
 		if (isBgPluginAllowed!=0 && isBgPluginAllowed!=1 && isBgPluginAllowed!=2) isBgPluginAllowed = 1;
 
@@ -4479,7 +4489,8 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkMultiRecreate,  chk_User, &isMulti, L"Multi.Recreate",        /*&vmMultiRecreate,*/ MakeHotKey(192/*VK_тильда*/,VK_LWIN), CConEmuCtrl::key_MultiRecreate},
 		{vkMultiAltCon,    chk_User,  NULL,    L"Multi.AltCon",          /*&vmMultiBuffer,*/ MakeHotKey('A',VK_LWIN), CConEmuCtrl::key_AlternativeBuffer},
 		{vkMultiBuffer,    chk_User,  NULL,    L"Multi.Scroll",          MakeHotKey('S',VK_LWIN), CConEmuCtrl::key_MultiBuffer},
-		{vkMultiClose,     chk_User, &isMulti, L"Multi.Close",           /*&vmMultiClose,*/ MakeHotKey(VK_DELETE,VK_LWIN), CConEmuCtrl::key_MultiClose},
+		{vkMultiClose,     chk_User, &isMulti, L"Multi.Close",           MakeHotKey(VK_DELETE,VK_LWIN), CConEmuCtrl::key_MultiClose},
+		{vkRenameTab,      chk_User, &isMulti, L"Multi.Rename",          MakeHotKey('R',VK_APPS), CConEmuCtrl::key_RenameTab, true/*OnKeyUp*/},
 		{vkTerminateApp,   chk_User,  NULL,    L"TerminateProcessKey",   MakeHotKey(VK_DELETE,VK_LWIN,VK_SHIFT), CConEmuCtrl::key_TerminateProcess},
 		{vkMultiCmd,       chk_User, &isMulti, L"Multi.CmdKey",          /*&vmMultiCmd,*/ MakeHotKey('X',VK_LWIN), CConEmuCtrl::key_MultiCmd},
 		{vkCTSVkBlockStart,chk_User,  NULL,    L"CTS.VkBlockStart",      /*&vmCTSVkBlockStart,*/ 0, CConEmuCtrl::key_CTSVkBlockStart}, // запуск выделения блока

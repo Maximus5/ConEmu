@@ -144,6 +144,8 @@ Settings::ColorPalette gLastColors = {};
 
 namespace SettingsNS
 {
+	const WCHAR* szBgOper[] = {L"UpLeft", L"UpRight", L"Stretch", L"Tile"};
+	const DWORD  nBgOper[] =  {eUpLeft,   eUpRight,   eStretch,   eTile};
 	const WCHAR* szKeys[] = {L"<None>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
 	const DWORD  nKeys[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
 	const WCHAR* szModifiers[] = {L" ", L"Win",  L"Apps",  L"Ctrl", L"LCtrl", L"RCtrl",           L"Alt", L"LAlt", L"RAlt",     L"Shift", L"LShift", L"RShift"};
@@ -256,6 +258,7 @@ CSettings::CSettings()
 	mb_ThemingEnabled = (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1));
 	//isFullScreen = false;
 	isMonospaceSelected = 0;
+	ZeroStruct(m_QuakePrevSize);
 	
 	// Ќекоторые вещи нужно делать вне InitSettings, т.к. она может быть
 	// вызвана потом из интерфейса диалога настроек
@@ -705,7 +708,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_COMSPEC,     L"ComSpec",        thi_Comspec/*, OnInitDialog_Comspec*/},
 		{IDD_SPG_SELECTION,   L"Mark & Paste",   thi_Selection/*OnInitDialog_Selection*/},
 		{IDD_SPG_FEATURE_FAR, L"Far Manager",    thi_Far/*,     OnInitDialog_Ext*/},
-		{IDD_SPG_KEYS,        L"Keys",           thi_Keys/*,    OnInitDialog_Keys*/},
+		{IDD_SPG_KEYS,        L"Keys & Macro",   thi_Keys/*,    OnInitDialog_Keys*/},
 		{IDD_SPG_TABS,        L"Tabs",           thi_Tabs/*,    OnInitDialog_Tabs*/},
 		{IDD_SPG_STATUSBAR,   L"Status bar",     thi_Status,/*  OnInitDialog_Status*/},
 		{IDD_SPG_COLORS,      L"Colors",         thi_Colors/*,  OnInitDialog_Color*/},
@@ -1454,7 +1457,10 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	SetDlgItemText(hWnd2, tDarker, tmp);
 	SendDlgItemMessage(hWnd2, slDarker, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(0, 255));
 	SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
-	CheckDlgButton(hWnd2, rBgUpLeft+(UINT)gpSet->bgOperation, BST_CHECKED);
+	
+	//CheckDlgButton(hWnd2, rBgUpLeft+(UINT)gpSet->bgOperation, BST_CHECKED);
+	BYTE b = gpSet->bgOperation;
+	FillListBoxByte(hWnd2, lbBgPlacement, SettingsNS::szBgOper, SettingsNS::nBgOper, b);
 
 	CheckDlgButton(hWnd2, cbBgAllowPlugin, BST(gpSet->isBgPluginAllowed));
 
@@ -3158,6 +3164,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 			} // cbBgImage
 			break;
+#if 0
 		case rBgUpLeft:
 		case rBgStretch:
 		case rBgTile:
@@ -3165,6 +3172,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
 			gpConEmu->Update(true);
 			break;
+#endif
 		case cbBgAllowPlugin:
 			gpSet->isBgPluginAllowed = IsChecked(hWnd2, cbBgAllowPlugin);
 			NeedBackgroundUpdate();
@@ -3187,7 +3195,47 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			Icon.SettingsChanged();
 			break;
 		case cbQuakeStyle:
-			gpSet->isQuakeStyle = IsChecked(hWnd2, cbQuakeStyle);
+			{
+				gpSet->isQuakeStyle = IsChecked(hWnd2, cbQuakeStyle);
+
+				if (gpSet->isHideCaptionAlways())
+				{
+					CheckDlgButton(hWnd2, cbHideCaptionAlways, BST_CHECKED);
+					TODO("показать тултип, что скрытие об€зательно при прозрачности");
+				}
+
+				DWORD nNewWindowMode = rNormal;
+
+				if (gpSet->isQuakeStyle)
+				{
+					m_QuakePrevSize.bWasSaved = true;
+					m_QuakePrevSize.wndWidth = gpSet->wndWidth;
+					m_QuakePrevSize.wndHeight = gpSet->wndHeight;
+					m_QuakePrevSize.wndX = gpSet->wndX;
+					m_QuakePrevSize.wndY = gpSet->wndY;
+					m_QuakePrevSize.nFrame = gpSet->nHideCaptionAlwaysFrame;
+					m_QuakePrevSize.WindowMode = gpConEmu->WindowMode;
+					gpSet->nHideCaptionAlwaysFrame = 0;
+				}
+				else if (m_QuakePrevSize.bWasSaved)
+				{
+					gpSet->wndWidth = m_QuakePrevSize.wndWidth;
+					gpSet->wndHeight = m_QuakePrevSize.wndHeight;
+					gpSet->wndX = m_QuakePrevSize.wndX;
+					gpSet->wndY = m_QuakePrevSize.wndY;
+					gpSet->nHideCaptionAlwaysFrame = m_QuakePrevSize.nFrame;
+					nNewWindowMode = m_QuakePrevSize.WindowMode;
+				}
+
+				RECT rcWnd = gpConEmu->GetDefaultRect();
+				gpConEmu->SetWindowMode(nNewWindowMode);
+
+				gpConEmu->OnHideCaption();
+
+				SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
+
+				apiSetForegroundWindow(ghOpWnd);
+			}
 			break;
 		case cbHideCaption:
 			gpSet->isHideCaption = IsChecked(hWnd2, cbHideCaption);
@@ -4261,10 +4309,29 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
             if (!p)
             	break;
 
-            if (MessageBox(ghOpWnd, L"Delete command group?", p->pszName, MB_YESNO|MB_ICONQUESTION) != IDYES)
+			bool bIsStartup = false;
+			if (gpSet->psStartTasksName && p->pszName && (lstrcmpi(gpSet->psStartTasksName, p->pszName) == 0))
+				bIsStartup = true;
+
+			size_t cchMax = (p->pszName ? _tcslen(p->pszName) : 0) + 200;
+			wchar_t* pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
+			if (!pszMsg)
+				break;
+
+			_wsprintf(pszMsg, SKIPLEN(cchMax) L"%sDelete command group %s?",
+				bIsStartup ? L"Warning! You about to delete startup task!\n\n" : L"",
+				p->pszName ? p->pszName : L"{???}");
+
+			int nBtn = MessageBox(pszMsg, MB_YESNO|(bIsStartup ? MB_ICONEXCLAMATION : MB_ICONQUESTION), NULL, ghOpWnd);
+			SafeFree(pszMsg);
+
+            if (nBtn != IDYES)
             	break;
 
         	gpSet->CmdTaskSet(iCur, NULL, NULL, NULL);
+
+			if (bIsStartup && gpSet->psStartTasksName)
+				*gpSet->psStartTasksName = 0;
 
         	OnInitDialog_Tasks(hWnd2, false);
 
@@ -4941,6 +5008,16 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
+	case lbBgPlacement:
+	{
+		BYTE bg = 0;
+		GetListBoxByte(hWnd2,lbBgPlacement,SettingsNS::szBgOper,SettingsNS::nBgOper,bg);
+		gpSet->bgOperation = bg;
+		gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
+		gpConEmu->Update(true);
+		break;
+	}
+
 	case lbLDragKey:
 	{
 		BYTE VkMod = 0;
@@ -5179,7 +5256,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			pCmd = gpSet->CmdTaskGet(iCur);
 		if (pCmd)
 		{
-			_ASSERTE(pCmd->pszName && pCmd->pszCommands);
+			_ASSERTE(pCmd->pszName);
 			wchar_t* pszNoBrk = lstrdup(!pCmd->pszName ? L"" : (pCmd->pszName[0] != TaskBracketLeft) ? pCmd->pszName : (pCmd->pszName+1));
 			if (*pszNoBrk && (pszNoBrk[_tcslen(pszNoBrk)-1] == TaskBracketRight))
 				pszNoBrk[_tcslen(pszNoBrk)-1] = 0;
@@ -10481,7 +10558,7 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 	// -- здесь - всегда только файлова€ подложка
 	//if (!mb_WasVConBgImage)
 	{
-		if (gpSet->bgOperation == eUpLeft)
+		if ((gpSet->bgOperation == eUpLeft) || (gpSet->bgOperation == eUpRight))
 		{
 			// MemoryDC создаетс€ всегда по размеру картинки, т.е. изменение размера окна - игнорируетс€
 		}

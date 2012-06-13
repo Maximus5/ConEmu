@@ -288,6 +288,7 @@ class CConEmuMain :
 		//BOOL mb_InTrackSysMenu; -> mn_TrackMenuPlace
 		TrackMenuPlace mn_TrackMenuPlace;
 		BOOL mb_LastRgnWasNull;
+		BOOL mb_LockWindowRgn;
 		BOOL mb_CaptionWasRestored; // заголовок восстановлен на время ресайза
 		BOOL mb_ForceShowFrame;     // восстановить заголовок по таймауту
 		//wchar_t *mpsz_RecreateCmd;

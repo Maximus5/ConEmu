@@ -1251,6 +1251,8 @@ enum SingleInstanceShowHideType
 	sih_ShowMinimize = 1,
 	sih_ShowHideTSA = 2,
 	sih_Show = 3,
+	sih_SetForeground = 4,
+	sih_HideTSA = 5,
 };
 
 struct CESERVER_REQ_NEWCMD // CECMD_NEWCMD

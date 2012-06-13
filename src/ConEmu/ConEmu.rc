@@ -161,11 +161,9 @@ BEGIN
     LTEXT           "Replace color indexes:",IDC_STATIC,10,178,77,8
     EDITTEXT        tBgImageColors,88,176,43,12,ES_AUTOHSCROLL
     CONTROL         "Allow plugins",cbBgAllowPlugin,"Button",BS_AUTO3STATE | WS_TABSTOP,141,178,57,10
-    GROUPBOX        "Placement",IDC_STATIC,204,170,119,24
-    CONTROL         "UpLeft",rBgUpLeft,"Button",BS_AUTORADIOBUTTON | WS_GROUP,210,179,36,10
-    CONTROL         "Stretch",rBgStretch,"Button",BS_AUTORADIOBUTTON,249,179,39,10
-    CONTROL         "Tile",rBgTile,"Button",BS_AUTORADIOBUTTON,291,179,26,10
     CTEXT           "x",IDC_STATIC,221,77,8,8
+    RTEXT           "Placement:",stBgPlacement,213,177,50,8
+    COMBOBOX        lbBgPlacement,267,175,48,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_SPG_STARTUP DIALOGEX 0, 0, 328, 235
@@ -411,7 +409,7 @@ BEGIN
     CONTROL         "Ignore console cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,141,119,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,231,105,87,8
     CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,117,87,8
-    CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,208,91,8
+    CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,232,220,91,8
     GROUPBOX        "Caption and border options",gbFeatureCaption,4,158,319,44
     RTEXT           "Frame width:",IDC_STATIC,219,169,54,8
     RTEXT           "Appear delay:",IDC_STATIC,129,185,50,8
@@ -1002,6 +1000,18 @@ BEGIN
     LTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,50,18,268,8,SS_NOTIFY
 END
 
+IDD_RENAMETAB DIALOGEX 0, 0, 187, 54
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
+EXSTYLE WS_EX_TOPMOST
+CAPTION "Rename tab"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,76,34,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,130,34,50,14
+    LTEXT           "&New tab name (clear to revert):",stNewTabName,7,6,173,8
+    EDITTEXT        tNewTabName,7,17,173,12,ES_AUTOHSCROLL
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1072,6 +1082,14 @@ BEGIN
         RIGHTMARGIN, 318
         TOPMARGIN, 7
         BOTTOMMARGIN, 178
+    END
+
+    IDD_RENAMETAB, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 180
+        TOPMARGIN, 6
+        BOTTOMMARGIN, 48
     END
 END
 #endif    // APSTUDIO_INVOKED

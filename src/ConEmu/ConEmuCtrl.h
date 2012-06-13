@@ -41,7 +41,7 @@ public:
 	virtual ~CConEmuCtrl();
 
 	bool ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, CRealConsole* pRCon);
-	const ConEmuHotKey* ProcessHotKey(DWORD VkMod, bool bKeyDown, const wchar_t *pszChars, CRealConsole* pRCon);
+	const ConEmuHotKey* ProcessHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars, CRealConsole* pRCon);
 
 	void UpdateControlKeyState();
 	DWORD GetControlKeyState(LPARAM lParam);
@@ -136,6 +136,7 @@ public:
 	static bool WINAPI key_GuiMacro(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	// Tabs list
 	static bool WINAPI key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
+	static bool WINAPI key_RenameTab(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	// Clipboard
 	static bool WINAPI key_PasteText(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_PasteTextAllApp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);

@@ -53,6 +53,20 @@ extern CConEmuMain *gpConEmu;
 //extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
 extern HWND ghWnd, ghConWnd, /*ghWnd DC,*/ ghOpWnd, ghWndApp;
 extern BOOL gbMessagingStarted, gbDontEnable;
+class DontEnable
+{
+private:
+	BOOL b;
+public:
+	DontEnable()
+	{
+		b = gbDontEnable; gbDontEnable = TRUE;
+	};
+	~DontEnable()
+	{
+		gbDontEnable = b;
+	};
+};
 //extern TabBarClass TabBar;
 extern OSVERSIONINFO gOSVer;
 extern WORD gnOsVer;

@@ -947,9 +947,8 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		if (((i + 1) < iQuantity)
 		        && (GetTickCount() - dwStartTick) >= OPER_TIMEOUT)
 		{
-			BOOL b = gbDontEnable; gbDontEnable = TRUE;
+			DontEnable de;
 			int nBtn = MessageBox(ghWnd, L"Drop operation is too long. Continue?", gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION);
-			gbDontEnable = b;
 
 			if (nBtn != IDYES) break;
 
@@ -1267,7 +1266,7 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 		}
 		else if (hr == 7 || hr == ERROR_CANCELLED || hr == NOERROR)
 		{
-			MBoxA(_T("Shell operation was cancelled"))
+			MBoxA(_T("Shell operation was cancelled"));
 		}
 		else
 		{
@@ -1593,10 +1592,12 @@ void CDragDrop::ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownErr
 	wchar_t* pszMsg = (wchar_t*)calloc((nLen+256),sizeof(wchar_t));
 	lstrcpy(pszMsg, sUnknownError);
 	lstrcpy(pszMsg+nLen, L"\n\nPress 'Retry' to create report for developer");
-	BOOL b = gbDontEnable; gbDontEnable = TRUE;
-	int nBtn = (int)MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(),
+	int nBtn = 0;
+	{
+		DontEnable de;
+		nBtn = (int)MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(),
 	                           MB_SYSTEMMODAL|MB_ICONINFORMATION|MB_RETRYCANCEL|MB_DEFBUTTON2);
-	gbDontEnable = b;
+	}
 	free(pszMsg);
 
 	if (nBtn != IDRETRY)

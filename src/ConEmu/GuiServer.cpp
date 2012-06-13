@@ -114,7 +114,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			//	SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 			//apiSetForegroundWindow(ghWnd);
 
-			gpConEmu->OnMinimizeRestore(pIn->NewCmd.ShowHide);
+			gpConEmu->OnMinimizeRestore((pIn->NewCmd.ShowHide == sih_None) ? sih_SetForeground : pIn->NewCmd.ShowHide);
 
 			// Может быть пусто
 			if ((pIn->NewCmd.ShowHide == sih_None) && pIn->NewCmd.szCommand[0])

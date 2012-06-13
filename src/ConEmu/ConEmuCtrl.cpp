@@ -60,18 +60,18 @@ CConEmuCtrl::~CConEmuCtrl()
 }
 
 // pRCon may be NULL, pszChars may be NULL
-const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkMod, bool bKeyDown, const wchar_t *pszChars, CRealConsole* pRCon)
+const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars, CRealConsole* pRCon)
 {
-	UINT vk = gpSet->GetHotkey(VkMod);
+	UINT vk = gpSet->GetHotkey(VkState);
 	if (!(vk >= '0' && vk <= '9'))
 		ResetDoubleKeyConsoleNum();
 
-	const ConEmuHotKey* pHotKey = gpSetCls->GetHotKeyInfo(VkMod, bKeyDown, pRCon);
+	const ConEmuHotKey* pHotKey = gpSetCls->GetHotKeyInfo(VkState, bKeyDown, pRCon);
 
 	if (pHotKey && (pHotKey != ConEmuSkipHotKey))
 	{
 		// „тобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
-		if (((VkMod & cvk_ALLMASK) == cvk_LAlt) || ((VkMod & cvk_ALLMASK) == cvk_RAlt))
+		if (((VkState & cvk_ALLMASK) == cvk_LAlt) || ((VkState & cvk_ALLMASK) == cvk_RAlt))
 		{
 			if (pRCon && gpSet->isFixAltOnAltTab)
 				pRCon->PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
@@ -80,7 +80,14 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkMod, bool bKeyDown, const
 		// “еперь собственно действие
 		if (pHotKey->fkey)
 		{
-			pHotKey->fkey(VkMod, false, pHotKey, pRCon);
+			bool bApps = (VkState & cvk_Apps) == cvk_Apps;
+			if (bApps)
+				gpConEmu->SkipOneAppsRelease(true);
+
+			pHotKey->fkey(VkState, false, pHotKey, pRCon);
+
+			if (bApps)
+				gpConEmu->SkipOneAppsRelease(false);
 		}
 		else
 		{
@@ -1148,6 +1155,19 @@ bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 	//if (pItems)
 	//{
 	//}
+
+	return true;
+}
+
+bool CConEmuCtrl::key_RenameTab(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	if (pRCon)
+	{
+		pRCon->DoRenameTab();
+	}
 
 	return true;
 }

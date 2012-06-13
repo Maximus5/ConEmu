@@ -163,6 +163,14 @@ class CSettings
 		void SaveFontSizes(LOGFONT *pCreated, bool bAuto, bool bSendChanges);
 		LPOUTLINETEXTMETRIC LoadOutline(HDC hDC, HFONT hFont);
 		void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);
+	private:
+		struct {
+			bool bWasSaved;
+			DWORD wndWidth, wndHeight; // Консоль
+			DWORD wndX, wndY; // GUI
+			DWORD nFrame;
+			DWORD WindowMode;
+		} m_QuakePrevSize;
 	public:
 		//bool isFontAutoSize;
 		//bool isAutoRegisterFonts;
