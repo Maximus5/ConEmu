@@ -62,6 +62,8 @@ enum BackgroundOp
 	eStretch = 1,
 	eTile = 2,
 	eUpRight = 3,
+	eDownLeft = 4,
+	eDownRight = 5,
 };
 
 #define BgImageColorsDefaults (1|2)
@@ -512,7 +514,7 @@ struct Settings
 		//reg->Load(L"bgImageColors", nBgImageColors);
 		DWORD nBgImageColors;
 		//reg->Load(L"bgOperation", bgOperation);
-		char bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2}
+		char bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
 		//reg->Load(L"bgPluginAllowed", isBgPluginAllowed);
 		char isBgPluginAllowed;
 		

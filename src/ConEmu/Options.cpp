@@ -1980,8 +1980,12 @@ void Settings::LoadSettings()
 		reg->Load(L"bgImageColors", nBgImageColors);
 		if (!nBgImageColors) nBgImageColors = (DWORD)-1; //1|2 == BgImageColorsDefaults;
 		reg->Load(L"bgOperation", bgOperation);
-		if (bgOperation!=eUpLeft && bgOperation!=eStretch && bgOperation!=eTile && bgOperation!=eUpRight)
+		if (bgOperation!=eUpLeft && bgOperation!=eUpRight
+			&& bgOperation!=eDownLeft && bgOperation!=eDownRight
+			&& bgOperation!=eStretch && bgOperation!=eTile)
+		{
 			bgOperation = eUpLeft;
+		}
 		reg->Load(L"bgPluginAllowed", isBgPluginAllowed);
 		if (isBgPluginAllowed!=0 && isBgPluginAllowed!=1 && isBgPluginAllowed!=2) isBgPluginAllowed = 1;
 

@@ -1044,7 +1044,9 @@ void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight,
 	if (lbDump) DumpImage(hBgDc, NULL, bgBmpSize.X, bgBmpSize.Y, L"F:\\bgtemp.png");
 	#endif
 
-	if (gpSet->bgOperation == eUpRight)
+	if ((gpSet->bgOperation == eUpRight)
+		|| (gpSet->bgOperation == eDownLeft)
+		|| (gpSet->bgOperation == eDownRight))
 	{
 		HBRUSH hBr = NULL;
 		#if 0
@@ -1061,11 +1063,12 @@ void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight,
 		RECT rect = {inX, inY, inX+inWidth, inY+inHeight};
 		FillRect(hDC, &rect, hBr);
 
-		int xShift = max(0,(Width - bgBmpSize.X));
-		if (bgBmpSize.X>(inX-xShift) && bgBmpSize.Y>inY)
+		int xShift = ((gpSet->bgOperation == eUpRight) || (gpSet->bgOperation == eDownRight)) ? max(0,(Width - bgBmpSize.X)) : 0;
+		int yShift = ((gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight)) ? max(0,(Height - bgBmpSize.Y)) : 0;
+		if (bgBmpSize.X>(inX-xShift) && bgBmpSize.Y>(inY-yShift))
 		{
 			//BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-			BitBlt(hDC, inX, inY, inWidth, inHeight, hBgDc, inX-xShift, inY, SRCCOPY);
+			BitBlt(hDC, inX, inY, inWidth, inHeight, hBgDc, inX-xShift, inY-yShift, SRCCOPY);
 			//GdiAlphaBlend(hDC, inX, inY, inWidth, inHeight, hBgDc, inX-xShift, inY, inWidth, inHeight, bf);
 		}
 	}

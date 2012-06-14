@@ -462,7 +462,7 @@ BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
 	for (rcRead.Top = Y1; rcRead.Top <= Y2; rcRead.Top++)
 	{
 		rcRead.Bottom = rcRead.Top;
-		BOOL lbRead = ReadConsoleOutputW(h, pcReadBuf, MyBufferSize, MyBufferCoord, &rcRead);
+		BOOL lbRead = MyReadConsoleOutputW(h, pcReadBuf, MyBufferSize, MyBufferCoord, &rcRead);
 
 		CHAR_INFO* pc = pcReadBuf + Info->BufferCoord.X;
 		ConEmuCharBuffer BufPtr = Info->Buffer;

@@ -1288,6 +1288,12 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RECT& rgn)
 {
 	BOOL lbRc = FALSE;
+	static bool bDBCS = false, bDBCS_Checked = false;
+	if (!bDBCS_Checked)
+	{
+		bDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0);
+		bDBCS_Checked = true;
+	}
 
 	size_t nBufWidth = bufSize.X;
 	int nWidth = (rgn.Right - rgn.Left + 1);
@@ -1301,7 +1307,7 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 
 	COORD bufCoord = {0,0};
 
-	if (nCurSize <= MAX_CONREAD_SIZE)
+	if (!bDBCS && (nCurSize <= MAX_CONREAD_SIZE))
 	{
 		if (ReadConsoleOutputW(hOut, pData, bufSize, bufCoord, &rgn))
 			lbRc = TRUE;
@@ -1323,10 +1329,49 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 		int Y2 = rgn.Bottom;
 
 		CHAR_INFO* pLine = pData;
-		for (int y = Y1; y <= Y2; y++, rgn.Top++, pLine+=nBufWidth)
+		if (!bDBCS)
 		{
-			rgn.Bottom = rgn.Top;
-			lbRc = ReadConsoleOutputW(hOut, pLine, bufSize, bufCoord, &rgn);
+			for (int y = Y1; y <= Y2; y++, rgn.Top++, pLine+=nBufWidth)
+			{
+				rgn.Bottom = rgn.Top;
+				lbRc = ReadConsoleOutputW(hOut, pLine, bufSize, bufCoord, &rgn);
+			}
+		}
+		else
+		{
+			DWORD nAttrsMax = bufSize.X;
+			DWORD nCharsMax = nAttrsMax*4; // максимум там вроде на некоторых CP - 4 байта
+			wchar_t* pszChars = (wchar_t*)malloc(nCharsMax*sizeof(*pszChars));
+			WORD* pnAttrs = (WORD*)malloc(bufSize.X*sizeof(*pnAttrs));
+			if (pszChars && pnAttrs)
+			{
+				COORD crRead = {rgn.Left,Y1};
+				DWORD nChars, nAttrs;
+				CHAR_INFO* pLine = pData;
+				for (; crRead.Y <= Y2; crRead.Y++, pLine+=nBufWidth)
+				{
+					rgn.Bottom = rgn.Top;
+					
+					lbRc = ReadConsoleOutputCharacterW(hOut, pszChars, nCharsMax, crRead, &nChars)
+						&& ReadConsoleOutputAttribute(hOut, pnAttrs, bufSize.X, crRead, &nAttrs);
+
+					if (lbRc)
+					{
+						CHAR_INFO* p = pLine;
+						wchar_t* psz = pszChars;
+						WORD* pn = pnAttrs;
+						int i = nAttrsMax;
+						while ((i--) > 0)
+						{
+							p->Attributes = *(pn++);
+							p->Char.UnicodeChar = *(psz++);
+							p++;
+						}
+					}
+				}
+			}
+			SafeFree(pszChars);
+			SafeFree(pnAttrs);
 		}
 	}
 
@@ -2827,7 +2872,7 @@ static BOOL ReadConsoleData()
 	HANDLE hOut = NULL;
 	//USHORT TextWidth=0, TextHeight=0;
 	DWORD TextLen=0;
-	COORD bufSize, bufCoord;
+	COORD bufSize; //, bufCoord;
 	SMALL_RECT rgn;
 	DWORD nCurSize, nHdrSize;
 	// -- начинаем потихоньку горизонтальную прокрутку
@@ -2904,30 +2949,31 @@ static BOOL ReadConsoleData()
 
 	lbRc = FALSE;
 
-	if (nCurSize <= MAX_CONREAD_SIZE)
+	//if (nCurSize <= MAX_CONREAD_SIZE)
 	{
 		bufSize.X = TextWidth; bufSize.Y = TextHeight;
-		bufCoord.X = 0; bufCoord.Y = 0;
+		//bufCoord.X = 0; bufCoord.Y = 0;
 		//rgn = gpSrv->sbi.srWindow;
 
-		if (ReadConsoleOutput(hOut, gpSrv->pConsoleDataCopy, bufSize, bufCoord, &rgn))
+		//if (ReadConsoleOutput(hOut, gpSrv->pConsoleDataCopy, bufSize, bufCoord, &rgn))
+		if (MyReadConsoleOutput(hOut, gpSrv->pConsoleDataCopy, bufSize, rgn))
 			lbRc = TRUE;
 	}
 
-	if (!lbRc)
-	{
-		// Придется читать построчно
-		bufSize.X = TextWidth; bufSize.Y = 1;
-		bufCoord.X = 0; bufCoord.Y = 0;
-		//rgn = gpSrv->sbi.srWindow;
-		CHAR_INFO* pLine = gpSrv->pConsoleDataCopy;
+	//if (!lbRc)
+	//{
+	//	// Придется читать построчно
+	//	bufSize.X = TextWidth; bufSize.Y = 1;
+	//	bufCoord.X = 0; bufCoord.Y = 0;
+	//	//rgn = gpSrv->sbi.srWindow;
+	//	CHAR_INFO* pLine = gpSrv->pConsoleDataCopy;
 
-		for(int y = 0; y < (int)TextHeight; y++, rgn.Top++, pLine+=TextWidth)
-		{
-			rgn.Bottom = rgn.Top;
-			ReadConsoleOutput(hOut, pLine, bufSize, bufCoord, &rgn);
-		}
-	}
+	//	for(int y = 0; y < (int)TextHeight; y++, rgn.Top++, pLine+=TextWidth)
+	//	{
+	//		rgn.Bottom = rgn.Top;
+	//		ReadConsoleOutput(hOut, pLine, bufSize, bufCoord, &rgn);
+	//	}
+	//}
 
 	// низя - он уже установлен в максимальное значение
 	//gpSrv->pConsoleDataCopy->crBufSize.X = TextWidth;

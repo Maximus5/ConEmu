@@ -1947,15 +1947,29 @@ int CheckUnicodeFont()
 	
 
 	wchar_t szText[80] = UnicodeTestString;
-	wchar_t szCheck[80] = L"";
-	wchar_t szMessage[512];
+	CHAR_INFO cWrite[80], cRead[80] = {};
+	WORD aWrite[80], aRead[80] = {};
+	wchar_t sAttrWrite[80] = {}, sAttrRead[80] = {}, sAttrBlock[80] = {};
+	wchar_t szInfo[1024]; DWORD nTmp;
+	wchar_t szCheck[80] = L"", szBlock[80] = L"";
 	BOOL bInfo = FALSE, bWrite = FALSE, bRead = FALSE, bCheck = FALSE;
 	DWORD nLen = lstrlen(szText), nWrite = 0, nRead = 0, nErr = 0;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	_ASSERTE(nLen<=35); // ниже на 2 буфер множится
 
-	wchar_t szFontInfo[255]; DWORD nTmp;
-	msprintf(szFontInfo, countof(szFontInfo), L"OS Version: %u.%u.%u (%u:%s)\n", gOSVer.dwMajorVersion, gOSVer.dwMinorVersion, gOSVer.dwBuildNumber, gOSVer.dwPlatformId, gOSVer.szCSDVersion);
-	WriteConsoleW(hOut, szFontInfo, lstrlen(szFontInfo), &nTmp, NULL);
+	wchar_t szMinor[2] = {MVV_4a[0], 0};
+	//msprintf не умеет "%02u"
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+		L"ConEmu %02u%02u%02u%s %s\r\n"
+		L"OS Version: %u.%u.%u (%u:%s)\r\n",
+		MVV_1, MVV_2, MVV_3, szMinor, WIN3264TEST(L"x86",L"x64"),
+		gOSVer.dwMajorVersion, gOSVer.dwMinorVersion, gOSVer.dwBuildNumber, gOSVer.dwPlatformId, gOSVer.szCSDVersion);
+	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+
+	msprintf(szInfo, countof(szInfo), L"SM_IMMENABLED=%u, SM_DBCSENABLED=%u\r\n",
+		GetSystemMetrics(SM_IMMENABLED), GetSystemMetrics(SM_DBCSENABLED));
+	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+
 	struct FONT_INFOEX
 	{
 		ULONG cbSize;
@@ -1970,35 +1984,78 @@ int CheckUnicodeFont()
 	GetCurrentConsoleFontEx_t _GetCurrentConsoleFontEx = (GetCurrentConsoleFontEx_t)(hKernel ? GetProcAddress(hKernel,"GetCurrentConsoleFontEx") : NULL);
 	if (!_GetCurrentConsoleFontEx)
 	{
-		lstrcpyn(szFontInfo, L"Console font info: Not available\n", countof(szFontInfo));
+		lstrcpyn(szInfo, L"Console font info: Not available\r\n", countof(szInfo));
 	}
 	else
 	{
 		FONT_INFOEX info = {sizeof(info)};
 		if (!_GetCurrentConsoleFontEx(hOut, FALSE, &info))
 		{
-			msprintf(szFontInfo, countof(szFontInfo), L"Console font info: Failed, code=%u\n", GetLastError());
+			msprintf(szInfo, countof(szInfo), L"Console font info: Failed, code=%u\r\n", GetLastError());
 		}
 		else
 		{
-			msprintf(szFontInfo, countof(szFontInfo), L"Console font info: %u, {%ux%u}, %u, %u, \"%s\"\n",
+			info.FaceName[LF_FACESIZE-1] = 0;
+			msprintf(szInfo, countof(szInfo), L"Console font info: %u, {%ux%u}, %u, %u, \"%s\"\r\n",
 				info.nFont, info.dwFontSize.X, info.dwFontSize.Y, info.FontFamily, info.FontWeight,
 				info.FaceName);
 		}
 	}
-	WriteConsoleW(hOut, szFontInfo, lstrlen(szFontInfo), &nTmp, NULL);
-	msprintf(szFontInfo, countof(szFontInfo), L"SM_IMMENABLED=%u, SM_DBCSENABLED=%u\n",
-		GetSystemMetrics(SM_IMMENABLED), GetSystemMetrics(SM_DBCSENABLED));
-	WriteConsoleW(hOut, szFontInfo, lstrlen(szFontInfo), &nTmp, NULL);
+	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+
+	DWORD nCP = GetConsoleCP();
+	DWORD nOutCP = GetConsoleOutputCP();
+	CPINFOEX cpinfo = {};
+
+	msprintf(szInfo, countof(szInfo), L"ConsoleCP=%u, ConsoleOutputCP=%u\r\n", nCP, nOutCP);
+	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+
+	for (UINT i = 0; i <= 1; i++)
+	{
+		if (i && (nOutCP == nCP))
+			break;
+
+		if (!GetCPInfoEx(i ? nOutCP : nCP, 0, &cpinfo))
+		{
+			msprintf(szInfo, countof(szInfo), L"GetCPInfoEx(%u) failed, code=%u\r\n", nCP, GetLastError());
+		}
+		else
+		{
+			msprintf(szInfo, countof(szInfo),
+				L"CP%u: Max=%u "
+				L"Def=x%02X,x%02X UDef=x%X\r\n"
+				L"  Lead=x%02X,x%02X,x%02X,x%02X,x%02X,x%02X,x%02X,x%02X,x%02X,x%02X,x%02X,x%02X\r\n"
+				L"  Name=\"%s\"\r\n",
+				cpinfo.CodePage, cpinfo.MaxCharSize,
+				cpinfo.DefaultChar[0], cpinfo.DefaultChar[1], cpinfo.UnicodeDefaultChar,
+				cpinfo.LeadByte[0], cpinfo.LeadByte[1], cpinfo.LeadByte[2], cpinfo.LeadByte[3], cpinfo.LeadByte[4], cpinfo.LeadByte[5],
+				cpinfo.LeadByte[6], cpinfo.LeadByte[7], cpinfo.LeadByte[8], cpinfo.LeadByte[9], cpinfo.LeadByte[10], cpinfo.LeadByte[11],
+				cpinfo.CodePageName);
+		}
+		WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+    }
+
+
+    WriteConsoleW(hOut, L"\r\nCheck ", 8, &nTmp, NULL);
 
 
 	if ((bInfo = GetConsoleScreenBufferInfo(hOut, &csbi)) != FALSE)
 	{
-		if (((bWrite = WriteConsoleOutputCharacterW(hOut, szText, nLen, csbi.dwCursorPosition, &nWrite)) != FALSE)
-			&& (nWrite == nLen))
+		for (DWORD i = 0; i < nLen; i++)
 		{
-			if (((bRead = ReadConsoleOutputCharacterW(hOut, szCheck, nLen, csbi.dwCursorPosition, &nRead)) != FALSE)
-				&& (nRead == nLen))
+			cWrite[i].Char.UnicodeChar = szText[i];
+			aWrite[i] = 10 + (i % 6);
+			cWrite[i].Attributes = aWrite[i];
+			msprintf(sAttrWrite+i, 2, L"%X", aWrite[i]);
+		}
+
+		COORD crSize = {(SHORT)nLen,1}, cr0 = {0,0};
+		SMALL_RECT rcWrite = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, csbi.dwCursorPosition.X+(SHORT)nLen-1, csbi.dwCursorPosition.Y};
+		if ((bWrite = WriteConsoleOutputCharacterW(hOut, szText, nLen, csbi.dwCursorPosition, &nWrite)) != FALSE)
+        //if ((bWrite = WriteConsoleOutputW(hOut, cWrite, crSize, cr0, &rcWrite)) != FALSE)
+		{
+			if (((bRead = ReadConsoleOutputCharacterW(hOut, szCheck, nLen*2, csbi.dwCursorPosition, &nRead)) != FALSE)
+				/*&& (nRead == nLen)*/)
 			{
 				bCheck = (memcmp(szText, szCheck, nLen*sizeof(szText[0])) == 0);
 				if (bCheck)
@@ -2006,35 +2063,59 @@ int CheckUnicodeFont()
 					iRc = CERR_UNICODE_CHK_OKAY;
 				}
 			}
+
+			if (ReadConsoleOutputAttribute(hOut, aRead, nLen, csbi.dwCursorPosition, &nTmp))
+			{
+				for (UINT i = 0; i < nTmp; i++)
+				{
+					msprintf(sAttrRead+i, 2, L"%X", aRead[i] & 0xF);
+				}
+			}
+
+			COORD crBufSize = {(SHORT)sizeof(cRead),1};
+			SMALL_RECT rcRead = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, csbi.dwCursorPosition.X+(SHORT)nLen*2, csbi.dwCursorPosition.Y};
+			if (ReadConsoleOutputW(hOut, cRead, crBufSize, cr0, &rcRead))
+			{
+				for (UINT i = 0; i < nTmp; i++)
+				{
+					szBlock[i] = cRead[i].Char.UnicodeChar;
+					msprintf(sAttrBlock+i, 2, L"%X", cRead[i].Attributes & 0xF);
+				}
+			}
 		}
 	}
 
-	if (!bRead)
+	//if (!bRead || !bCheck)
 	{
 		nErr = GetLastError();
 		
-		wchar_t szMinor[2] = {MVV_4a[0], 0};
-		msprintf(szMessage, countof(szMessage),
-			L"\r\n"
-			L"ConEmu %02u%02u%02u%s %s\r\n"
-			L"Unicode is not supported in this console!\r\n\r\n"
-			L"Check: %s\r\nRead: %s\r\n\r\n"
-			L"TechInfo: %u,%u,%u,%u,%u,%u\r\n",
-			MVV_1, MVV_2, MVV_3, szMinor, WIN3264TEST(L"x86",L"x64"),
-			szText, szCheck,
-			nErr, bInfo, bWrite, nWrite, bRead, nRead);
-		//MessageBoxW(NULL, szMessage, szTitle, MB_ICONEXCLAMATION|MB_ICONERROR);
+		msprintf(szInfo, countof(szInfo),
+			L"\r\n" // чтобы не затереть сам текст
+			L"Text: %s\r\n"
+			L"Read: %s\r\n"
+			L"Blck: %s\r\n"
+			L"Attr: %s\r\n"
+			L"Read: %s\r\n"
+			L"Blck: %s\r\n"
+			L"Info: %u,%u,%u,%u,%u,%u\r\n"
+			L"\r\n%s\r\n",
+			szText, szCheck, szBlock, sAttrWrite, sAttrRead, sAttrBlock,
+			nErr, bInfo, bWrite, nWrite, bRead, nRead,
+			bCheck ? L"Unicode check succeeded" :
+			bRead ? L"Unicode check FAILED!" : L"Unicode is not supported in this console!"
+			);
+		//MessageBoxW(NULL, szInfo, szTitle, MB_ICONEXCLAMATION|MB_ICONERROR);
 	}
-	else
-	{
-		lstrcpyn(szMessage, L"\r\nUnicode check succeeded\r\n", countof(szMessage));
-	}
+	//else
+	//{
+	//	lstrcpyn(szInfo, L"\r\nUnicode check succeeded\r\n", countof(szInfo));
+	//}
 
-	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
-	WriteConsoleW(hOut, szCheck, nRead, &nTmp, NULL);
+	//WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
+	//WriteConsoleW(hOut, szCheck, nRead, &nTmp, NULL);
 
 	//LPCWSTR pszText = bCheck ? L"\r\nUnicode check succeeded\r\n" : L"\r\nUnicode check FAILED!\r\n";
-	WriteConsoleW(hOut, szMessage, lstrlen(szMessage), &nWrite, NULL);
+	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nWrite, NULL);
 
 	return iRc;
 }

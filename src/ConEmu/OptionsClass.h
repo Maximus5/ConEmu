@@ -290,7 +290,7 @@ class CSettings
 	public:
 		bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
 		bool PollBackgroundFile(); // true, если файл изменен
-		bool /*LoadImageFrom*/LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
+		bool LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
 		bool IsBackgroundEnabled(CVirtualConsole* apVCon);
 		void NeedBackgroundUpdate();
 		//CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);

@@ -144,8 +144,8 @@ Settings::ColorPalette gLastColors = {};
 
 namespace SettingsNS
 {
-	const WCHAR* szBgOper[] = {L"UpLeft", L"UpRight", L"Stretch", L"Tile"};
-	const DWORD  nBgOper[] =  {eUpLeft,   eUpRight,   eStretch,   eTile};
+	const WCHAR* szBgOper[] = {L"UpLeft", L"UpRight", L"DownLeft", L"DownRight", L"Stretch", L"Tile"};
+	const DWORD  nBgOper[] =  {eUpLeft,   eUpRight,   eDownLeft,   eDownRight,   eStretch,   eTile};
 	const WCHAR* szKeys[] = {L"<None>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
 	const DWORD  nKeys[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
 	const WCHAR* szModifiers[] = {L" ", L"Win",  L"Apps",  L"Ctrl", L"LCtrl", L"RCtrl",           L"Alt", L"LAlt", L"RAlt",     L"Shift", L"LShift", L"RShift"};
@@ -10558,7 +10558,8 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 	// -- здесь - всегда только файловая подложка
 	//if (!mb_WasVConBgImage)
 	{
-		if ((gpSet->bgOperation == eUpLeft) || (gpSet->bgOperation == eUpRight))
+		if ((gpSet->bgOperation == eUpLeft) || (gpSet->bgOperation == eUpRight)
+			|| (gpSet->bgOperation == eDownLeft) || (gpSet->bgOperation == eDownRight))
 		{
 			// MemoryDC создается всегда по размеру картинки, т.е. изменение размера окна - игнорируется
 		}
@@ -10655,7 +10656,7 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 
 				if (!lMaxBgWidth || !lMaxBgHeight)
 				{
-					// Сюда мы можем попасть только в случае eUpLeft
+					// Сюда мы можем попасть только в случае eUpLeft/eUpRight/eDownLeft/eDownRight
 					lMaxBgWidth = pBmp->biWidth;
 					lMaxBgHeight = pBmp->biHeight;
 				}
@@ -10714,7 +10715,6 @@ bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 	}
 }
 
-TODO("LoadImage может загрузить и jpg, а ручное преобразование лучше заменить на AlphaBlend");
 bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 {
 	//_ASSERTE(gpConEmu->isMainThread());

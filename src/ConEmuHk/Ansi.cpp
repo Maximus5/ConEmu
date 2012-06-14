@@ -868,7 +868,7 @@ BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir)
 		for (SHORT y = 0, y1 = -nDir; y1 < csbi.dwSize.Y; y++, y1++)
 		{
 			rcRgn.Top = rcRgn.Bottom = y1;
-			if (ReadConsoleOutputW(hConsoleOutput, pBuf, crSize, cr0, &rcRgn))
+			if (MyReadConsoleOutputW(hConsoleOutput, pBuf, crSize, cr0, &rcRgn))
 			{
 				rcRgn.Top = rcRgn.Bottom = y;
 				WriteConsoleOutputW(hConsoleOutput, pBuf, crSize, cr0, &rcRgn);
@@ -889,7 +889,7 @@ BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir)
 		for (SHORT y = csbi.dwSize.Y - nDir - 1, y1 = csbi.dwSize.Y - 1; y >= 0; y--, y1--)
 		{
 			rcRgn.Top = rcRgn.Bottom = y;
-			if (ReadConsoleOutputW(hConsoleOutput, pBuf, crSize, cr0, &rcRgn))
+			if (MyReadConsoleOutputW(hConsoleOutput, pBuf, crSize, cr0, &rcRgn))
 			{
 				rcRgn.Top = rcRgn.Bottom = y1;
 				WriteConsoleOutputW(hConsoleOutput, pBuf, crSize, cr0, &rcRgn);

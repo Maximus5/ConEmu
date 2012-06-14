@@ -213,7 +213,8 @@ bool CBackground::FillBackground(
 					//}
 				}
 
-				if ((Operation == eUpLeft) || (Operation == eUpRight))
+				if ((Operation == eUpLeft) || (Operation == eUpRight)
+					|| (Operation == eDownLeft) || (Operation == eDownRight))
 				{
 					int W = klMin(Width,pHdr->biWidth); int H = klMin(Height,pHdr->biHeight);
 
