@@ -1948,10 +1948,49 @@ int CheckUnicodeFont()
 
 	wchar_t szText[80] = UnicodeTestString;
 	wchar_t szCheck[80] = L"";
-	wchar_t szTitle[64], szMessage[256];
+	wchar_t szMessage[512];
 	BOOL bInfo = FALSE, bWrite = FALSE, bRead = FALSE, bCheck = FALSE;
 	DWORD nLen = lstrlen(szText), nWrite = 0, nRead = 0, nErr = 0;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+
+	wchar_t szFontInfo[255]; DWORD nTmp;
+	msprintf(szFontInfo, countof(szFontInfo), L"OS Version: %u.%u.%u (%u:%s)\n", gOSVer.dwMajorVersion, gOSVer.dwMinorVersion, gOSVer.dwBuildNumber, gOSVer.dwPlatformId, gOSVer.szCSDVersion);
+	WriteConsoleW(hOut, szFontInfo, lstrlen(szFontInfo), &nTmp, NULL);
+	struct FONT_INFOEX
+	{
+		ULONG cbSize;
+		DWORD nFont;
+		COORD dwFontSize;
+		UINT  FontFamily;
+		UINT  FontWeight;
+		WCHAR FaceName[LF_FACESIZE];
+	};
+	typedef BOOL (WINAPI* GetCurrentConsoleFontEx_t)(HANDLE hConsoleOutput, BOOL bMaximumWindow, FONT_INFOEX* lpConsoleCurrentFontEx);
+	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+	GetCurrentConsoleFontEx_t _GetCurrentConsoleFontEx = (GetCurrentConsoleFontEx_t)(hKernel ? GetProcAddress(hKernel,"GetCurrentConsoleFontEx") : NULL);
+	if (!_GetCurrentConsoleFontEx)
+	{
+		lstrcpyn(szFontInfo, L"Console font info: Not available\n", countof(szFontInfo));
+	}
+	else
+	{
+		FONT_INFOEX info = {sizeof(info)};
+		if (!_GetCurrentConsoleFontEx(hOut, FALSE, &info))
+		{
+			msprintf(szFontInfo, countof(szFontInfo), L"Console font info: Failed, code=%u\n", GetLastError());
+		}
+		else
+		{
+			msprintf(szFontInfo, countof(szFontInfo), L"Console font info: %u, {%ux%u}, %u, %u, \"%s\"\n",
+				info.nFont, info.dwFontSize.X, info.dwFontSize.Y, info.FontFamily, info.FontWeight,
+				info.FaceName);
+		}
+	}
+	WriteConsoleW(hOut, szFontInfo, lstrlen(szFontInfo), &nTmp, NULL);
+	msprintf(szFontInfo, countof(szFontInfo), L"SM_IMMENABLED=%u, SM_DBCSENABLED=%u\n",
+		GetSystemMetrics(SM_IMMENABLED), GetSystemMetrics(SM_DBCSENABLED));
+	WriteConsoleW(hOut, szFontInfo, lstrlen(szFontInfo), &nTmp, NULL);
+
 
 	if ((bInfo = GetConsoleScreenBufferInfo(hOut, &csbi)) != FALSE)
 	{
@@ -1975,18 +2014,27 @@ int CheckUnicodeFont()
 		nErr = GetLastError();
 		
 		wchar_t szMinor[2] = {MVV_4a[0], 0};
-        _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu %02u%02u%02u%s %s",
-        	MVV_1, MVV_2, MVV_3, szMinor, WIN3264TEST(L"x86",L"x64"));
-		_wsprintf(szMessage, SKIPLEN(countof(szTitle)) L"Unicode is not supported in this console!\r\n\r\n"
+		msprintf(szMessage, countof(szMessage),
+			L"\r\n"
+			L"ConEmu %02u%02u%02u%s %s\r\n"
+			L"Unicode is not supported in this console!\r\n\r\n"
 			L"Check: %s\r\nRead: %s\r\n\r\n"
-			L"TechInfo: %u,%u,%u,%u,%u,%u",
+			L"TechInfo: %u,%u,%u,%u,%u,%u\r\n",
+			MVV_1, MVV_2, MVV_3, szMinor, WIN3264TEST(L"x86",L"x64"),
 			szText, szCheck,
 			nErr, bInfo, bWrite, nWrite, bRead, nRead);
-		MessageBoxW(NULL, szMessage, szTitle, MB_ICONEXCLAMATION|MB_ICONERROR);
+		//MessageBoxW(NULL, szMessage, szTitle, MB_ICONEXCLAMATION|MB_ICONERROR);
+	}
+	else
+	{
+		lstrcpyn(szMessage, L"\r\nUnicode check succeeded\r\n", countof(szMessage));
 	}
 
-	LPCWSTR pszText = bCheck ? L"\r\nUnicode check succeeded\r\n" : L"\r\nUnicode check FAILED!\r\n";
-	WriteConsoleW(hOut, pszText, lstrlen(pszText), &nWrite, NULL);
+	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
+	WriteConsoleW(hOut, szCheck, nRead, &nTmp, NULL);
+
+	//LPCWSTR pszText = bCheck ? L"\r\nUnicode check succeeded\r\n" : L"\r\nUnicode check FAILED!\r\n";
+	WriteConsoleW(hOut, szMessage, lstrlen(szMessage), &nWrite, NULL);
 
 	return iRc;
 }

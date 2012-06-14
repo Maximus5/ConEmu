@@ -7176,7 +7176,7 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 		else if ((hglb = GetClipboardData(CF_UNICODETEXT)) == NULL)
 		{
 			nErrCode = GetLastError();
-			wcscpy_c(szErr, L"Can't get CF_UNICODETEXT");
+			wcscpy_c(szErr, L"Clipboard does not contains text.\nNothing to paste.");
 		}
 		else if ((lptstr = (LPCWSTR)GlobalLock(hglb)) == NULL)
 		{
