@@ -633,7 +633,7 @@ int ServerInitGuiTab()
 
 		#ifdef _DEBUG
 		DWORD dwErr = GetLastError(), nEndTick = timeGetTime(), nDelta = nEndTick - nStartTick;
-		if (!lbCallRc || nDelta >= EXECUTE_CMD_WARN_TIMEOUT)
+		if (lbCallRc && (nDelta >= EXECUTE_CMD_WARN_TIMEOUT))
 		{
 			if (!IsDebuggerPresent())
 			{
@@ -648,7 +648,18 @@ int ServerInitGuiTab()
 		{
 			dwErr = GetLastError();
 			#ifdef _DEBUG
+			if (gbIsWine)
+			{
+				wchar_t szDbgMsg[512], szTitle[128];
+				GetModuleFileName(NULL, szDbgMsg, countof(szDbgMsg));
+				msprintf(szTitle, countof(szTitle), L"%s: PID=%u", PointToName(szDbgMsg), gnSelfPID);
+				msprintf(szDbgMsg, countof(szDbgMsg), L"CallNamedPipe(%s)\nFailed, code=%u, RC=%u, hWndDC=x%08X", szServerPipe, dwErr, lbCallRc, (DWORD)Out.StartStopRet.hWndDC);
+				MessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+			}
+			else
+			{
 			_ASSERTEX(lbCallRc && Out.StartStopRet.hWndDC);
+			}
 			SetLastError(dwErr);
 			#endif
 		}
@@ -764,6 +775,15 @@ bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw)
 	return (hAltServer != NULL);
 }
 
+DWORD WINAPI SetOemCpProc(LPVOID lpParameter)
+{
+	UINT nCP = (UINT)(DWORD_PTR)lpParameter;
+	SetConsoleCP(nCP);
+	SetConsoleOutputCP(nCP);
+	return 0;
+}
+
+
 // Создать необходимые события и нити
 int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 {
@@ -774,10 +794,39 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	{
 		gpSrv->dwMainServerPID = GetCurrentProcessId();
 		gpSrv->hMainServer = GetCurrentProcess();
+
+		_ASSERTE(gnRunMode==RM_SERVER);
+
+		if (gbIsDBCS)
+		{
+			UINT nOemCP = GetOEMCP();
+			UINT nConCP = GetConsoleOutputCP();
+			if (nConCP != nOemCP)
+			{
+				DWORD nTID;
+				HANDLE h = CreateThread(NULL, 0, SetOemCpProc, (LPVOID)nOemCP, 0, &nTID);
+				if (h && (h != INVALID_HANDLE_VALUE))
+				{
+					DWORD nWait = WaitForSingleObject(h, 5000);
+					if (nWait != WAIT_OBJECT_0)
+					{
+						_ASSERTE(nWait==WAIT_OBJECT_0 && "SetOemCpProc HUNGS!!!");
+						TerminateThread(h, 100);
+					}
+					CloseHandle(h);
+				}
+			}
+		}
 	}
 
 	// Сразу попытаемся поставить окну консоли флаг "OnTop"
+	#ifdef _DEBUG
+	if (!gbIsWine)
+	#endif
+	{
 	SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+	}
+
 	gpSrv->osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	GetVersionEx(&gpSrv->osv);
 
@@ -1340,7 +1389,7 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 		else
 		{
 			DWORD nAttrsMax = bufSize.X;
-			DWORD nCharsMax = nAttrsMax*4; // максимум там вроде на некоторых CP - 4 байта
+			DWORD nCharsMax = nAttrsMax/* *4 */; // -- максимум там вроде на некоторых CP - 4 байта
 			wchar_t* pszChars = (wchar_t*)malloc(nCharsMax*sizeof(*pszChars));
 			WORD* pnAttrs = (WORD*)malloc(bufSize.X*sizeof(*pnAttrs));
 			if (pszChars && pnAttrs)
@@ -1360,12 +1409,24 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 						CHAR_INFO* p = pLine;
 						wchar_t* psz = pszChars;
 						WORD* pn = pnAttrs;
-						int i = nAttrsMax;
-						while ((i--) > 0)
+						//int i = nAttrsMax;
+						//while ((i--) > 0)
+						//{
+						//	p->Attributes = *(pn++);
+						//	p->Char.UnicodeChar = *(psz++);
+						//	p++;
+						//}
+						size_t x1 = min(nChars,nAttrsMax);
+						size_t x2 = nAttrsMax;
+						for (size_t i = 0; i < x1; ++i, ++p)
 						{
 							p->Attributes = *(pn++);
 							p->Char.UnicodeChar = *(psz++);
-							p++;
+						}
+						for (size_t i = x1; i < x2; ++i, ++p)
+						{
+							p->Attributes = *(pn++);
+							p->Char.UnicodeChar = L' ';
 						}
 					}
 				}
@@ -1482,7 +1543,7 @@ bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*
 
 
 
-	COORD crMaxSize = GetLargestConsoleWindowSize(ghConOut);
+	COORD crMaxSize = MyGetLargestConsoleWindowSize(ghConOut);
 	DWORD cchOneBufferSize = lsbi.dwSize.X * lsbi.dwSize.Y; // Читаем всю консоль целиком!
 	DWORD cchMaxBufferSize = max(pHdr->MaxCellCount,(DWORD)(lsbi.dwSize.Y * lsbi.dwSize.X));
 
@@ -2060,7 +2121,7 @@ HWND Attach2Gui(DWORD nTimeout)
 		_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
 	}
 
-	pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(hOut);
+	pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
 
 //LoopFind:
 	// В обычном "серверном" режиме шрифт уже установлен, а при аттаче
@@ -2214,13 +2275,25 @@ int CreateMapHeader()
 	_ASSERTE(gpSrv->pConsoleMap == NULL);
 	_ASSERTE(gpSrv->pConsoleDataCopy == NULL);
 	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-	COORD crMax = GetLargestConsoleWindowSize(h);
+	COORD crMax = MyGetLargestConsoleWindowSize(h);
 
 	if (crMax.X < 80 || crMax.Y < 25)
 	{
 #ifdef _DEBUG
 		DWORD dwErr = GetLastError();
-		_ASSERTE(crMax.X >= 80 && crMax.Y >= 25);
+		if (gbIsWine)
+		{
+			wchar_t szDbgMsg[512], szTitle[128];
+			szDbgMsg[0] = 0;
+			GetModuleFileName(NULL, szDbgMsg, countof(szDbgMsg));
+			msprintf(szTitle, countof(szTitle), L"%s: PID=%u", PointToName(szDbgMsg), GetCurrentProcessId());
+			msprintf(szDbgMsg, countof(szDbgMsg), L"GetLargestConsoleWindowSize failed -> {%ix%i}, Code=%u", crMax.X, crMax.Y, dwErr);
+			MessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+		}
+		else
+		{
+			_ASSERTE(crMax.X >= 80 && crMax.Y >= 25);
+		}
 #endif
 
 		if (crMax.X < 80) crMax.X = 80;
@@ -2433,7 +2506,7 @@ int CreateColorerHeader()
 		return 0;
 	}
 
-	//COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
+	//COORD crMaxSize = MyGetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
 	//nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * 2;
 	//nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
 

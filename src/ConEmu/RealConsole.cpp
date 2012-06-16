@@ -1334,7 +1334,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 		}
 	}
 
-wrap:
+//wrap:
 	return lbRc;
 }
 
@@ -3013,17 +3013,17 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 			               NULL,     // don't set maximum bytes
 			               NULL);    // don't set maximum time
 
-			if (!fSuccess)
+			if (!fSuccess /*&& !gbIsWine*/)
 			{
 				DEBUGSTRINPUT(L" - FAILED!\n");
 				dwErr = GetLastError();
-				SafeCloseHandle(mh_ConInputPipe);
+				//SafeCloseHandle(mh_ConInputPipe);
 
 				//if (!IsDebuggerPresent())
-				if (!isConsoleClosing())
+				if (!isConsoleClosing() && !gbIsWine)
 					DisplayLastError(L"SetNamedPipeHandleState failed", dwErr);
 
-				return FALSE;
+				//return FALSE;
 			}
 
 			return TRUE;
@@ -4989,10 +4989,20 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
 		//apiShowWindow(hConWnd, SW_SHOWNORMAL);
 		//if (setParent) SetParent(hConWnd, 0);
 		RECT rcCon, rcWnd; GetWindowRect(hConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
+		RECT rcShift = gpConEmu->CalcMargins(CEM_STATUS|CEM_SCROLL|CEM_FRAME,mp_VCon);
+		rcWnd.right -= rcShift.right;
+		rcWnd.bottom -= rcShift.bottom;
 		//if (!IsDebuggerPresent())
 		TODO("Скорректировать позицию так, чтобы не вылезло за экран");
 
-		if (SetOtherWindowPos(hConWnd, HWND_TOPMOST,
+		HWND hInsertAfter = HWND_TOPMOST;
+
+		#ifdef _DEBUG
+		if (gbIsWine)
+			hInsertAfter = HWND_TOP;
+		#endif
+
+		if (SetOtherWindowPos(hConWnd, hInsertAfter,
 			rcWnd.right-rcCon.right+rcCon.left, rcWnd.bottom-rcCon.bottom+rcCon.top,
 			0,0, SWP_NOSIZE|SWP_SHOWWINDOW))
 		{
@@ -5012,7 +5022,14 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
 
 				if ((dwExStyle & WS_EX_TOPMOST) == 0)
 				{
-					SetOtherWindowPos(hConWnd, HWND_TOPMOST,
+					HWND hInsertAfter = HWND_TOPMOST;
+
+					#ifdef _DEBUG
+					if (gbIsWine)
+						hInsertAfter = HWND_TOP;
+					#endif
+
+					SetOtherWindowPos(hConWnd, hInsertAfter,
 						0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 				}
 			}
@@ -5181,6 +5198,8 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 		ghConWnd = hConWnd;
 		// Чтобы можно было найти хэндл окна по хэндлу консоли
 		SetWindowLongPtr(ghWnd, GWLP_USERDATA, (LONG_PTR)hConWnd);
+		// StatusBar
+		gpConEmu->mp_Status->OnActiveVConChanged(gpConEmu->ActiveConNum(), this);
 	}
 }
 

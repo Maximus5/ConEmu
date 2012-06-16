@@ -3006,7 +3006,7 @@ BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
 //	SHORT nWidth = nNewWidth; if (nWidth</*4*/MIN_CON_WIDTH) nWidth = /*4*/MIN_CON_WIDTH;
 //	SHORT nHeight = nNewHeight; if (nHeight</*3*/MIN_CON_HEIGHT) nHeight = /*3*/MIN_CON_HEIGHT;
 //	MConHandle hConOut ( L"CONOUT$" );
-//	COORD crMax = GetLargestConsoleWindowSize(hConOut);
+//	COORD crMax = MyGetLargestConsoleWindowSize(hConOut);
 //	if (crMax.X && nWidth > crMax.X) nWidth = crMax.X;
 //	if (crMax.Y && nHeight > crMax.Y) nHeight = crMax.Y;
 //
@@ -3134,7 +3134,7 @@ void CloseMapHeader();
 //	//		CloseHandle(ghColorMappingOld); ghColorMappingOld = NULL;
 //	//	}
 //	//#endif
-//	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
+//	COORD crMaxSize = MyGetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
 //	nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * 2;
 //	if (gnColorMappingMaxCells > nMapCells)
 //		nMapCells = gnColorMappingMaxCells;

@@ -463,6 +463,9 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_WindowWork] = true;
 	isStatusColumnHidden[csi_ConEmuPID] = true;
 	isStatusColumnHidden[csi_CursorInfo] = true;
+	isStatusColumnHidden[csi_ConEmuHWND] = true;
+	isStatusColumnHidden[csi_ConEmuView] = true;
+	isStatusColumnHidden[csi_ServerHWND] = true;
 
 	isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
 	ilDragHeight = 10;

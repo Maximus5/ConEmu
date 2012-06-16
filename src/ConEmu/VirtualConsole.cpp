@@ -2510,6 +2510,9 @@ void CVirtualConsole::UpdateText()
 	CEFONT hFont = gpSetCls->mh_Font[0];
 	CEFONT hFont2 = gpSetCls->mh_Font2;
 
+	// 120616 - Chinese - off?
+	bool bFixFrameCoord = !gbIsDBCS || mp_RCon->isFar();
+
 	_ASSERTE(((TextWidth * nFontWidth) >= Width));
 #if 0
 	if (((TextHeight * nFontHeight) < Height) || ((TextWidth * nFontWidth) < Width))
@@ -2674,7 +2677,8 @@ void CVirtualConsole::UpdateText()
 			HEAPVAL
 
 			// корректировка лидирующих пробелов и рамок
-			if (bProportional && (c==ucBoxDblHorz || c==ucBoxSinglHorz))
+			// 120616 - Chinese - off
+			if (bProportional && bFixFrameCoord && (c==ucBoxDblHorz || c==ucBoxSinglHorz))
 			{
 				lbS1 = true; nS11 = nS12 = j;
 
@@ -2711,7 +2715,7 @@ void CVirtualConsole::UpdateText()
 			hDC.SetTextColor(attr.crForeColor);
 
 			// корректировка положения вертикальной рамки (Coord.X>0)
-			if (bProportional && j)
+			if (bProportional && j && bFixFrameCoord)
 			{
 				HEAPVAL;
 				DWORD nPrevX = ConCharXLine[j-1];

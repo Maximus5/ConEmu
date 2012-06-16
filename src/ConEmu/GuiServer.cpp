@@ -34,6 +34,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "../common/PipeServer.h"
 
+#ifdef _DEBUG
+//	#define ALLOW_WINE_MSG
+#else
+	#undef ALLOW_WINE_MSG
+#endif
+
 CGuiServer::CGuiServer()
 {
 	//mn_GuiServerThreadId = 0; mh_GuiServerThread = NULL; mh_GuiServerThreadTerminate = NULL;
@@ -56,8 +62,13 @@ bool CGuiServer::Start()
 	mp_GuiServer->SetOverlapped(true);
 	mp_GuiServer->SetLoopCommands(false);
 	mp_GuiServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
+
+	PipeServer<CESERVER_REQ>::PipeServerConnected_t lpfnOnConnected = NULL;
+#ifdef _DEBUG
+	lpfnOnConnected = CGuiServer::OnGuiServerConnected;
+#endif
 	
-	if (!mp_GuiServer->StartPipeServer(ms_ServerPipe, NULL, LocalSecurity(), GuiServerCommand, GuiServerFree))
+	if (!mp_GuiServer->StartPipeServer(ms_ServerPipe, NULL, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, NULL))
 	{
 		// Ошибка уже показана
 		return false;
@@ -102,6 +113,16 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 	UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
 	#endif
 	// Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
+
+	#ifdef ALLOW_WINE_MSG
+	if (gbIsWine)
+	{
+		wchar_t szMsg[128];
+		msprintf(szMsg, countof(szMsg), L"CGuiServer::GuiServerCommand.\nGUI TID=%u\nSrcPID=%u, SrcTID=%u, Cmd=%u",
+			GetCurrentThreadId(), pIn->hdr.nSrcPID, pIn->hdr.nSrcThreadId, pIn->hdr.nCmd);
+		MessageBox(szMsg, MB_ICONINFORMATION);
+	}
+	#endif
 
 	switch (pIn->hdr.nCmd)
 	{
@@ -454,3 +475,18 @@ void CGuiServer::GuiServerFree(CESERVER_REQ* pReply, LPARAM lParam)
 {
 	ExecuteFreeResult(pReply);
 }
+
+#ifdef _DEBUG
+BOOL CGuiServer::OnGuiServerConnected(LPVOID pInst, LPARAM lParam)
+{
+	#ifdef ALLOW_WINE_MSG
+	if (gbIsWine)
+	{
+		wchar_t szMsg[128];
+		msprintf(szMsg, countof(szMsg), L"CGuiServer::OnGuiServerConnected.\nGUI TID=%u", GetCurrentThreadId());
+		MessageBox(szMsg, MB_ICONINFORMATION);
+	}
+	#endif
+	return TRUE;
+}
+#endif

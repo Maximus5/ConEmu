@@ -4013,9 +4013,24 @@ COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 	COORD cr = {80,25}, crLocked = {0,0};
 	
 	if (ghConEmuWndDC && IsVisibleRectLocked(crLocked))
+	{
 		cr = crLocked;
-	else if (F(GetLargestConsoleWindowSize))
-		cr = F(GetLargestConsoleWindowSize)(hConsoleOutput);
+	}
+	else
+	{
+		if (F(GetLargestConsoleWindowSize))
+		{
+			cr = F(GetLargestConsoleWindowSize)(hConsoleOutput);
+		}
+
+		// Wine BUG
+		//if (!cr.X || !cr.Y)
+		if ((cr.X == 80 && cr.Y == 24) && IsWine())
+		{
+			cr.X = 255;
+			cr.Y = 255;
+		}
+	}
 	
 	return cr;
 }

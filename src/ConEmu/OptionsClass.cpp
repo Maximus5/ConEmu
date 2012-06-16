@@ -171,6 +171,17 @@ namespace SettingsNS
 		L"GB 2312", L"Greek", L"Hebrew", L"Hangul", L"Johab", L"Mac", L"OEM", L"Russian", L"Shiftjis",
 		L"Symbol", L"Thai", L"Turkish", L"Vietnamese"
 	};
+	const struct StatusBarIds { CEStatusItems stItem; UINT nDlgID; } StatusItems[] = 
+	{
+		{csi_ActiveVCon, cbStatusActiveVCon}, {csi_CapsLock, cbStatusCapsLock}, {csi_NumLock, cbStatusNumLock},
+		{csi_ScrollLock, cbStatusScrlLock}, {csi_InputLocale, cbStatusInputLang}, {csi_WindowPos, cbStatusWindowPos},
+		{csi_WindowSize, cbStatusWindowSize}, {csi_WindowClient, cbStatusWindowClient}, {csi_WindowWork, cbStatusWindowWorkspace},
+		{csi_ActiveBuffer, cbStatusActiveBuffer}, {csi_ConsolePos, cbStatusConsolePos}, {csi_ConsoleSize, cbStatusConsoleSize},
+		{csi_BufferSize, cbStatusBufferSize}, {csi_CursorX, cbStatusCursorX}, {csi_CursorY, cbStatusCursorY},
+		{csi_CursorSize, cbStatusCursorSize}, {csi_CursorInfo, cbStatusCursorInfo}, {csi_ConEmuPID, cbStatusGuiPID},
+		{csi_ConEmuHWND, cbStatusGuiHwnd}, {csi_ConEmuView, cbStatusViewHwnd}, {csi_Server, cbStatusServer},
+		{csi_ServerHWND, cbStatusRealHwnd}, {csi_Transparency, cbStatusTransparency}
+	};
 };
 
 #define FillListBox(hDlg,nDlgID,Items,Values,Value) \
@@ -2498,31 +2509,15 @@ LRESULT CSettings::OnInitDialog_Status(HWND hWnd2, bool abInitial)
 	FillListBoxCharSet(hWnd2, tStatusFontCharset, gpSet->nStatusFontCharSet);
 
 	// Colors
-	for(uint c = c35; c <= c37; c++)
+	for (uint c = c35; c <= c37; c++)
 		ColorSetEdit(hWnd2, c);
 
 
 	CheckDlgButton(hWnd2, cbShowStatusBar, gpSet->isStatusBarShow);
-	CheckDlgButton(hWnd2, cbStatusActiveVCon, !gpSet->isStatusColumnHidden[csi_ActiveVCon]);
-	CheckDlgButton(hWnd2, cbStatusWindowPos, !gpSet->isStatusColumnHidden[csi_WindowPos]);
-	CheckDlgButton(hWnd2, cbStatusWindowSize, !gpSet->isStatusColumnHidden[csi_WindowSize]);
-	CheckDlgButton(hWnd2, cbStatusActiveBuffer, !gpSet->isStatusColumnHidden[csi_ActiveBuffer]);
-	CheckDlgButton(hWnd2, cbStatusConsolePos, !gpSet->isStatusColumnHidden[csi_ConsolePos]);
-	CheckDlgButton(hWnd2, cbStatusConsoleSize, !gpSet->isStatusColumnHidden[csi_ConsoleSize]);
-	CheckDlgButton(hWnd2, cbStatusBufferSize, !gpSet->isStatusColumnHidden[csi_BufferSize]);
-	CheckDlgButton(hWnd2, cbStatusCursorX, !gpSet->isStatusColumnHidden[csi_CursorX]);
-	CheckDlgButton(hWnd2, cbStatusCursorY, !gpSet->isStatusColumnHidden[csi_CursorY]);
-	CheckDlgButton(hWnd2, cbStatusCursorSize, !gpSet->isStatusColumnHidden[csi_CursorSize]);
-	CheckDlgButton(hWnd2, cbStatusCursorInfo, !gpSet->isStatusColumnHidden[csi_CursorInfo]);
-	CheckDlgButton(hWnd2, cbStatusServer, !gpSet->isStatusColumnHidden[csi_Server]);
-	CheckDlgButton(hWnd2, cbStatusWindowClient, !gpSet->isStatusColumnHidden[csi_WindowClient]);
-	CheckDlgButton(hWnd2, cbStatusWindowWorkspace, !gpSet->isStatusColumnHidden[csi_WindowWork]);
-	CheckDlgButton(hWnd2, cbStatusCapsLock, !gpSet->isStatusColumnHidden[csi_CapsLock]);
-	CheckDlgButton(hWnd2, cbStatusTransparency, !gpSet->isStatusColumnHidden[csi_Transparency]);
-	CheckDlgButton(hWnd2, cbStatusNumLock, !gpSet->isStatusColumnHidden[csi_NumLock]);
-	CheckDlgButton(hWnd2, cbStatusScrlLock, !gpSet->isStatusColumnHidden[csi_ScrollLock]);
-	CheckDlgButton(hWnd2, cbStatusInputLang, !gpSet->isStatusColumnHidden[csi_InputLocale]);
-
+	for (size_t i = 0; i < countof(SettingsNS::StatusItems); i++)
+	{
+		CheckDlgButton(hWnd2, SettingsNS::StatusItems[i].nDlgID, !gpSet->isStatusColumnHidden[SettingsNS::StatusItems[i].stItem]);
+	}
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -3966,90 +3961,6 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		/* *** Text selections options *** */
 
 
-		/* *** Status bar options *** */
-		case cbShowStatusBar:
-			gpConEmu->StatusCommand(csc_ShowHide, IsChecked(hWnd2,CB) ? 1 : 2);
-			//gpSet->isStatusBarShow = IsChecked(hWnd2,CB);
-			//gpConEmu->OnSize();
-			break;
-		case cbStatusActiveVCon:
-			gpSet->isStatusColumnHidden[csi_ActiveVCon] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusWindowPos:
-			gpSet->isStatusColumnHidden[csi_WindowPos] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusWindowSize:
-			gpSet->isStatusColumnHidden[csi_WindowSize] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusActiveBuffer:
-			gpSet->isStatusColumnHidden[csi_ActiveBuffer] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusConsolePos:
-			gpSet->isStatusColumnHidden[csi_ConsolePos] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusConsoleSize:
-			gpSet->isStatusColumnHidden[csi_ConsoleSize] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusBufferSize:
-			gpSet->isStatusColumnHidden[csi_BufferSize] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusCursorX:
-			gpSet->isStatusColumnHidden[csi_CursorX] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusCursorY:
-			gpSet->isStatusColumnHidden[csi_CursorY] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusCursorSize:
-			gpSet->isStatusColumnHidden[csi_CursorSize] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusCursorInfo:
-			gpSet->isStatusColumnHidden[csi_CursorInfo] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusServer:
-			gpSet->isStatusColumnHidden[csi_Server] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusWindowClient:
-			gpSet->isStatusColumnHidden[csi_WindowClient] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusWindowWorkspace:
-			gpSet->isStatusColumnHidden[csi_WindowWork] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusCapsLock:
-			gpSet->isStatusColumnHidden[csi_CapsLock] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusTransparency:
-			gpSet->isStatusColumnHidden[csi_Transparency] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusNumLock:
-			gpSet->isStatusColumnHidden[csi_NumLock] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusScrlLock:
-			gpSet->isStatusColumnHidden[csi_ScrollLock] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		case cbStatusInputLang:
-			gpSet->isStatusColumnHidden[csi_InputLocale] = !IsChecked(hWnd2,CB);
-			gpConEmu->mp_Status->UpdateStatusBar(true);
-			break;
-		/* *** Status bar options *** */
-
 
 		/* *** Update settings *** */
 		case cbUpdateCheckOnStartup:
@@ -4285,6 +4196,27 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					gpConEmu->Update(true);
 				}
 			} // else if (CB >= c0 && CB <= MAX_COLOR_EDT_ID)
+			else if (hWnd2 && (hWnd2 == mh_Tabs[thi_Status]))
+			{
+				/* *** Status bar options *** */
+				if (CB == cbShowStatusBar)
+				{
+					gpConEmu->StatusCommand(csc_ShowHide, IsChecked(hWnd2,CB) ? 1 : 2);
+				}
+				else
+				{
+					for (size_t i = 0; i < countof(SettingsNS::StatusItems); i++)
+					{
+						if (CB == SettingsNS::StatusItems[i].nDlgID)
+						{
+							gpSet->isStatusColumnHidden[SettingsNS::StatusItems[i].stItem] = !IsChecked(hWnd2,CB);
+							gpConEmu->mp_Status->UpdateStatusBar(true);
+							break;
+						}
+					}
+				}
+				/* *** Status bar options *** */
+			} // else if (hWnd2 && (hWnd2 == mh_Tabs[thi_Status]))
 
 		} // default:
 	}
@@ -5658,9 +5590,14 @@ void CSettings::OnClose()
 {
 	ApplyStartupOptions();
 
-	if (gpSet->isTabs==1) gpConEmu->ForceShowTabs(TRUE); else if (gpSet->isTabs==0) gpConEmu->ForceShowTabs(FALSE); else
-
+	if (gpSet->isTabs==1)
+		gpConEmu->ForceShowTabs(TRUE);
+	else if (gpSet->isTabs==0)
+		gpConEmu->ForceShowTabs(FALSE);
+	//else
+	
 	gpConEmu->mp_TabBar->Update();
+	gpConEmu->UpdateWindowRgn();
 
 	gpConEmu->OnPanelViewSettingsChanged();
 	//gpConEmu->UpdateGuiInfoMapping();

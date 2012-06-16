@@ -1157,7 +1157,7 @@ void SendStarted()
 		GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
 		gbWasBufferHeight = (pIn->StartStop.sbi.dwSize.Y > (pIn->StartStop.sbi.srWindow.Bottom - pIn->StartStop.sbi.srWindow.Top + 100));
 
-		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(hOut);
+		pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
 
 
 		BOOL bAsync = FALSE;
@@ -1219,7 +1219,7 @@ void SendStopped()
 		// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
 		GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
 
-		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(hOut);
+		pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
 
 		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd, TRUE/*bAsyncNoResult*/);
 
@@ -1241,7 +1241,7 @@ HWND WINAPI GetRealConsoleWindow()
 	HWND hConWnd = gfGetRealConsoleWindow ? gfGetRealConsoleWindow() : NULL; //GetConsoleWindow();
 #ifdef _DEBUG
 	wchar_t sClass[64]; user->getClassNameW(hConWnd, sClass, countof(sClass));
-	_ASSERTEX(hConWnd==NULL || lstrcmp(sClass, L"ConsoleWindowClass")==0);
+	_ASSERTEX(hConWnd==NULL || isConsoleClass(sClass));
 #endif
 	return hConWnd;
 }

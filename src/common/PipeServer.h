@@ -143,6 +143,9 @@ struct PipeServer
 			DWORD nThreadId;
 			HANDLE hThreadEnd;
 		};
+	public:
+		typedef BOOL (WINAPI* PipeServerConnected_t)(LPVOID pInst, LPARAM lParam);
+		typedef BOOL (WINAPI* PipeServerCommand_t)(LPVOID pInst, T* pCmd, T* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 	protected:
 		bool mb_Initialized;
 		bool mb_Terminate;
@@ -163,12 +166,10 @@ struct PipeServer
 		
 		// Сервером получена команда. Выполнить, вернуть результат.
 		// Для облегчения жизни - сервер кеширует данные, калбэк может использовать ту же память (*pcbMaxReplySize)
-		typedef BOOL (WINAPI* PipeServerCommand_t)(LPVOID pInst, T* pCmd, T* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 		PipeServerCommand_t mfn_PipeServerCommand;
 		
 		// Вызывается после подключения клиента к серверному пайпу, но перед PipeServerRead и PipeServerCommand_t
 		// (которых может быть много на одном подключении)
-		typedef BOOL (WINAPI* PipeServerConnected_t)(LPVOID pInst, LPARAM lParam);
 		PipeServerConnected_t mfn_PipeServerConnected;
 		// Уведомление, что клиент отвалился (или его отавалили). Вызывается только если был mfn_PipeServerConnected
 		PipeServerConnected_t mfn_PipeServerDisconnected;

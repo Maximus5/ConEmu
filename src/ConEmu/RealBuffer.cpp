@@ -1854,8 +1854,12 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 
 #ifdef _DEBUG
 		HWND hWnd = pInfo->hConWnd;
-		_ASSERTE(hWnd!=NULL);
-		_ASSERTE(hWnd==mp_RCon->hConWnd);
+		if (!hWnd || (hWnd != mp_RCon->hConWnd))
+		{
+			// Wine bug ? Incomplete packet?
+			_ASSERTE(hWnd!=NULL);
+			_ASSERTE(hWnd==mp_RCon->hConWnd);
+		}
 #endif
 		//if (mp_RCon->hConWnd != hWnd) {
 		//    SetHwnd ( hWnd ); -- низя. Maps уже созданы!

@@ -66,6 +66,8 @@ BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
 BOOL IsFilePath(LPCWSTR asFilePath);
 BOOL IsUserAdmin();
 BOOL GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
+bool IsWine();
+bool IsDbcs();
 BOOL IsWindows64();
 int GetProcessBits(DWORD nPID, HANDLE hProcess = NULL);
 BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo);
@@ -88,6 +90,8 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 
 //BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1]);
 
+
+COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput);
 
 #ifndef CONEMU_MINIMAL
 HANDLE DuplicateProcessHandle(DWORD anTargetPID);

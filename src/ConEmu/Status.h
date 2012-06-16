@@ -53,7 +53,10 @@ enum CEStatusItems
 	csi_CursorSize,
 	csi_CursorInfo,
 	csi_ConEmuPID,
+	csi_ConEmuHWND,
+	csi_ConEmuView,
 	csi_Server,
+	csi_ServerHWND,
 	csi_Transparency,
 
 	//

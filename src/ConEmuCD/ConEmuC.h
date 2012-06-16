@@ -492,6 +492,10 @@ struct SrvInfo
 };
 
 extern SrvInfo *gpSrv;
+extern OSVERSIONINFO gOSVer;
+extern WORD gnOsVer;
+extern bool gbIsWine;
+extern bool gbIsDBCS;
 
 #define USER_IDLE_TIMEOUT ((DWORD)1000)
 #define CHECK_IDLE_TIMEOUT 250 /* 1000 / 4 */

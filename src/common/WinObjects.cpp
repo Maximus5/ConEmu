@@ -542,6 +542,26 @@ Cleanup:
 #endif
 
 
+bool IsWine()
+{
+#ifdef _DEBUG
+//	return true;
+#endif
+	bool bIsWine = false;
+	HKEY hk1 = NULL, hk2 = NULL;
+	if (!RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Wine", 0, KEY_READ, &hk1)
+		&& !RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Wine", 0, KEY_READ, &hk2))
+		bIsWine = true; // В общем случае, на флажок ориентироваться нельзя. Это для информации.
+	if (hk1) RegCloseKey(hk1);
+	if (hk2) RegCloseKey(hk2);
+	return bIsWine;
+}
+
+bool IsDbcs()
+{
+	bool bIsDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0);
+	return bIsDBCS;
+}
 
 typedef BOOL (WINAPI* IsWow64Process_t)(HANDLE hProcess, PBOOL Wow64Process);
 
@@ -3148,7 +3168,23 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	// We'll fail, if console was created by other process
 	if (dwConsoleOwnerPid != dwCurProcId)
 	{
-		_ASSERTE(dwConsoleOwnerPid == dwCurProcId);
+		#ifdef _DEBUG
+		// Wine related
+		PROCESSENTRY32W pi = {};
+		GetProcessInfo(dwConsoleOwnerPid, &pi);
+		if (lstrcmpi(pi.szExeFile, L"wineconsole.exe")!=0)
+		{
+			wchar_t szDbgMsg[512], szTitle[128];
+			szDbgMsg[0] = 0;
+			GetModuleFileName(NULL, szDbgMsg, countof(szDbgMsg));
+			msprintf(szTitle, countof(szTitle), L"%s: PID=%u", PointToName(szDbgMsg), GetCurrentProcessId());
+			msprintf(szDbgMsg, countof(szDbgMsg), L"GetWindowThreadProcessId()\nPID=%u, TID=%u, %s\n%s",
+				dwConsoleOwnerPid, dwConsoleThreadId,
+				pi.szExeFile, szTitle);
+			MessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+		}
+		//_ASSERTE(dwConsoleOwnerPid == dwCurProcId);
+		#endif
 		return FALSE;
 	}
 
@@ -3226,6 +3262,20 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	return TRUE;
 }
 #endif
+
+COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
+{
+	COORD crMax = GetLargestConsoleWindowSize(hConsoleOutput);
+	DWORD dwErr = (crMax.X && crMax.Y) ? 0 : GetLastError();
+	// Wine BUG
+	//if (!crMax.X || !crMax.Y)
+	if ((crMax.X == 80 && crMax.Y == 24) && IsWine())
+	{
+		crMax.X = 255;
+		crMax.Y = 255;
+	}
+	return crMax;
+}
 
 #ifndef CONEMU_MINIMAL
 HANDLE DuplicateProcessHandle(DWORD anTargetPID)
@@ -3521,7 +3571,7 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize)
 	if (dwSize.Y > 0 && dwSize.X > 0
 		&& GetConsoleScreenBufferInfo(hOutput, &csbi))
 	{
-		COORD crLargest = GetLargestConsoleWindowSize(hOutput);
+		COORD crLargest = MyGetLargestConsoleWindowSize(hOutput);
 		int nMaxX = GetSystemMetrics(SM_CXFULLSCREEN);
 		int nMaxY = GetSystemMetrics(SM_CYFULLSCREEN);
 
@@ -3750,7 +3800,7 @@ void SetUserFriendlyFont(HWND hConWnd)
 
 			if (apiGetConsoleFontSize(hOutput, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
 			{
-				COORD crLargest = GetLargestConsoleWindowSize(hOutput);
+				COORD crLargest = MyGetLargestConsoleWindowSize(hOutput);
 				HMONITOR hMon = MonitorFromWindow(hConWnd, MONITOR_DEFAULTTOPRIMARY);
 				MONITORINFO mi = {sizeof(mi)};
 				int nMaxX = 0, nMaxY = 0;

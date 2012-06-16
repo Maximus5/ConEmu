@@ -328,6 +328,11 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		//}
 	}
 
+#ifdef _DEBUG
+	DWORD nCurState = 0, nCurInstances = 0;
+	BOOL bCurState = GetNamedPipeHandleState(hPipe, &nCurState, &nCurInstances, NULL, NULL, NULL, 0);
+#endif
+
 	// The pipe connected; change to message-read mode.
 	dwMode = PIPE_READMODE_MESSAGE;
 	fSuccess = SetNamedPipeHandleState(
@@ -336,6 +341,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 	               NULL,     // don't set maximum bytes
 	               NULL);    // don't set maximum time
 
+#if 0
 	if (!fSuccess)
 	{
 		dwErr = GetLastError();
@@ -344,10 +350,26 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		{
 			msprintf(szErr, countof(szErr), L"%s.%u: SetNamedPipeHandleState(%s) failed, code=0x%08X",
 			          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
+			#ifdef _DEBUG
+			int nCurLen = lstrlen(szErr);
+			msprintf(szErr+nCurLen, countof(szErr)-nCurLen, L"\nCurState: %u,x%08X,%u", bCurState, nCurState, nCurInstances);
+			#endif
 		}
 		CloseHandle(hPipe);
+
+#ifdef _DEBUG
+		if (gbPipeDebugBoxes)
+		{
+			szDbgMsg[0] = 0;
+			GetModuleFileName(NULL, szDbgMsg, countof(szDbgMsg));
+			msprintf(szTitle, countof(szTitle), L"%s: PID=%u", PointToName(szDbgMsg), GetCurrentProcessId());
+			::MessageBox(NULL, szErr, szTitle, MB_SYSTEMMODAL);
+		}
+#endif
+
 		return NULL;
 	}
+#endif
 
 	return hPipe;
 }

@@ -1727,16 +1727,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HeapInitialize();
 	RemoveOldComSpecC();
 
-	HKEY hk1 = NULL, hk2 = NULL;
-	if (!RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Wine", 0, KEY_READ, &hk1)
-		&& !RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Wine", 0, KEY_READ, &hk2))
-		gbIsWine = true; // В общем случае, на флажок ориентироваться нельзя. Это для информации.
-	if (hk1) RegCloseKey(hk1);
-	if (hk2) RegCloseKey(hk2);
+	gbIsWine = IsWine(); // В общем случае, на флажок ориентироваться нельзя. Это для информации.
 	if (gbIsWine)
 		wcscpy_c(gsDefGuiFont, L"Liberation Mono");
 
-	gbIsDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0);
+	gbIsDBCS = IsDbcs();
 	if (gbIsDBCS)
 	{
 		HKEY hk = NULL;

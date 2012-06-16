@@ -11,6 +11,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 [+] 'Quake style slide down' third state - auto hide on lose focus.
 [+] 'Auto copy' on 'Mark & Paste' - copy selected text immediately on left mouse button up (when selecting with mouse).
+[+] 'Main' settings page redesigned.
+[+] Chinese improvments.
+[*] Some Wine related fixes.
 
 
 2012.06.14

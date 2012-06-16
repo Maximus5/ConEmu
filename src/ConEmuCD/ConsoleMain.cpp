@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_INJECT_MSGBOX
 //	#define SHOW_ATTACH_MSGBOX
 //  #define SHOW_ROOT_STARTED
+	#define WINE_PRINT_PROC_INFO
 
 //	#define VALIDATE_AND_DELAY_ON_TERMINATE
 
@@ -170,6 +171,9 @@ BOOL  gbSkipWowChange = FALSE;
 BOOL  gbConsoleModeFlags = TRUE;
 DWORD gnConsoleModeFlags = 0; //(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
 OSVERSIONINFO gOSVer;
+WORD gnOsVer = 0x500;
+bool gbIsWine = false;
+bool gbIsDBCS = false;
 
 
 SrvInfo* gpSrv = NULL;
@@ -634,14 +638,13 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	memset(&gOSVer, 0, sizeof(gOSVer));
 	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
 	GetVersionEx(&gOSVer);
+	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
+
+	gbIsWine = IsWine(); // В общем случае, на флажок ориентироваться нельзя. Это для информации.
+	gbIsDBCS = IsDbcs();
+
 	gpLocalSecurity = LocalSecurity();
 	HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
-
-	if (hKernel)
-	{
-		pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress(hKernel, "GetConsoleKeyboardLayoutNameW");
-		pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress(hKernel, "GetConsoleProcessList");
-	}
 
 	// Хэндл консольного окна
 	ghConWnd = GetConEmuHWND(2);
@@ -656,6 +659,30 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	// PID
 	gnSelfPID = GetCurrentProcessId();
 	gdwMainThreadId = GetCurrentThreadId();
+
+
+	DWORD nCurrentPIDCount = 0, nCurrentPIDs[64] = {};
+	if (hKernel)
+	{
+		pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress(hKernel, "GetConsoleKeyboardLayoutNameW");
+		pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress(hKernel, "GetConsoleProcessList");
+		if (pfnGetConsoleProcessList)
+		{
+			SetLastError(0);
+			nCurrentPIDCount = pfnGetConsoleProcessList(nCurrentPIDs, countof(nCurrentPIDs));
+			// Wine bug
+			if (!nCurrentPIDCount)
+			{
+				DWORD nErr = GetLastError();
+				_ASSERTE(nCurrentPIDCount || gbIsWine);
+				wchar_t szDbgMsg[512], szFile[MAX_PATH] = {};
+				GetModuleFileName(NULL, szFile, countof(szFile));
+				msprintf(szDbgMsg, countof(szDbgMsg), L"%s: PID=%u: GetConsoleProcessList failed, code=%u\r\n", PointToName(szFile), gnSelfPID, nErr);
+				_wprintf(szDbgMsg);
+				pfnGetConsoleProcessList = NULL;
+			}
+		}
+	}
 
 
 	#ifdef _DEBUG
@@ -727,6 +754,15 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	{
 		// отладка для Wine
 		gbPipeDebugBoxes = true;
+		if (gbIsWine)
+		{
+			wchar_t szMsg[128];
+			msprintf(szMsg, countof(szMsg), L"ConEmuC Started, Wine detected\r\nConHWND=x%08X(%u), PID=%u\r\nCmdLine: ",
+				(DWORD)ghConWnd, (DWORD)ghConWnd, gnSelfPID);
+			_wprintf(szMsg);
+			_wprintf(GetCommandLineW());
+			_wprintf(L"\r\n");
+		}
 	}
 #endif
 
@@ -737,16 +773,18 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	//#endif
 	nExitPlaceStep = 100;
 	xf_check();
-#ifdef SHOW_SERVER_STARTED_MSGBOX
 
+
+	#ifdef SHOW_SERVER_STARTED_MSGBOX
 	if ((gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER) && !IsDebuggerPresent())
 	{
 		wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC [Server] started (PID=%i)", gnSelfPID);
 		const wchar_t* pszCmdLine = GetCommandLineW();
 		MessageBox(NULL,pszCmdLine,szTitle,0);
 	}
+	#endif
 
-#endif
+
 	/* ***************************** */
 	/* *** "Общая" инициализация *** */
 	/* ***************************** */
@@ -3708,7 +3746,7 @@ void SendStarted()
 
 		if (!lbRc1) dwErr1 = GetLastError();
 
-		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(hOut);
+		pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
 
 		// Если (для ComSpec) указан параметр "-cur_console:h<N>"
 		if (gbParmBufSize)
@@ -4037,7 +4075,7 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 			GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &pIn->StartStop.sbi);
 		}
 
-		pIn->StartStop.crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
+		pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
 
 		if ((gnRunMode == RM_APPLICATION) || (gnRunMode == RM_ALTSERVER))
 		{
@@ -4499,12 +4537,34 @@ BOOL ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS /*= NULL*/)
 	return lbChanged;
 }	
 
+#ifdef _DEBUG
+void DumpProcInfo(LPCWSTR sLabel, DWORD nCount, DWORD* pPID)
+{
+#ifdef WINE_PRINT_PROC_INFO
+	DWORD nErr = GetLastError();
+	wchar_t szDbgMsg[255];
+	msprintf(szDbgMsg, countof(szDbgMsg), L"%s: Err=%u, Count=%u:", sLabel ? sLabel : L"", nErr, nCount);
+	nCount = min(nCount,10);
+	for (DWORD i = 0; pPID && (i < nCount); i++)
+	{
+		int nLen = lstrlen(szDbgMsg);
+		msprintf(szDbgMsg+nLen, countof(szDbgMsg)-nLen, L" %u", pPID[i]);
+	}
+	wcscat_c(szDbgMsg, L"\r\n");
+	_wprintf(szDbgMsg);
+#endif
+}
+#define DUMP_PROC_INFO(s,n,p) //DumpProcInfo(s,n,p)
+#else
+#define DUMP_PROC_INFO(s,n,p)
+#endif
+
 BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 {
 	//static DWORD dwLastCheckTick = GetTickCount();
 	UINT nPrevCount = gpSrv->nProcessCount;
 #ifdef _DEBUG
-	DWORD nCurProcessesDbg[128]; // для отладки, получение текущего состояния консоли
+	DWORD nCurProcessesDbg[128] = {}; // для отладки, получение текущего состояния консоли
 	DWORD nPrevProcessedDbg[128] = {}; // для отладки, запомнить предыдущее состояние консоли
 	if (gpSrv->pnProcesses && gpSrv->nProcessCount)
 		memmove(nPrevProcessedDbg, gpSrv->pnProcesses, min(countof(nPrevProcessedDbg),gpSrv->nProcessCount)*sizeof(*gpSrv->pnProcesses));
@@ -4545,7 +4605,142 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		return FALSE;
 	}
 
-	if (!pfnGetConsoleProcessList || gpSrv->hRootProcessGui)
+	#ifdef _DEBUG
+	bool bDumpProcInfo = gbIsWine;
+	#endif
+
+	bool bProcFound = false;
+
+	if (pfnGetConsoleProcessList && gpSrv->hRootProcessGui)
+	{
+		WARNING("Переделать, как-то слишком сложно получается");
+		DWORD nCurCount = 0;
+		nCurCount = pfnGetConsoleProcessList(gpSrv->pnProcessesGet, gpSrv->nMaxProcesses);
+		#ifdef _DEBUG
+		SetLastError(0);
+		int nCurCountDbg = pfnGetConsoleProcessList(nCurProcessesDbg, countof(nCurProcessesDbg));
+		DUMP_PROC_INFO(L"WinXP mode", nCurCountDbg, nCurProcessesDbg);
+		#endif
+		lbChanged = gpSrv->nProcessCount != nCurCount;
+
+		bProcFound = (nCurCount > 0);
+
+		if (nCurCount == 0)
+		{
+			_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
+
+			// Это значит в Win7 свалился conhost.exe
+			//if ((gnOsVer >= 0x601) && !gbIsWine)
+			{
+				#ifdef _DEBUG
+				DWORD dwErr = GetLastError();
+				#endif
+				gpSrv->nProcessCount = 1;
+				SetEvent(ghQuitEvent);
+
+				if (!nExitQueryPlace) nExitQueryPlace = 1+(nExitPlaceStep+nExitPlaceThread);
+
+				SetTerminateEvent();
+				return TRUE;
+			}
+		}
+		else
+		{
+			if (nCurCount > gpSrv->nMaxProcesses)
+			{
+				DWORD nSize = nCurCount + 100;
+				DWORD* pnPID = (DWORD*)calloc(nSize, sizeof(DWORD));
+
+				if (pnPID)
+				{
+					CS.RelockExclusive(200);
+					nCurCount = pfnGetConsoleProcessList(pnPID, nSize);
+
+					if (nCurCount > 0 && nCurCount <= nSize)
+					{
+						free(gpSrv->pnProcessesGet);
+						gpSrv->pnProcessesGet = pnPID; pnPID = NULL;
+						free(gpSrv->pnProcesses);
+						gpSrv->pnProcesses = (DWORD*)calloc(nSize, sizeof(DWORD));
+						_ASSERTE(nExitQueryPlace == 0 || nCurCount == 1);
+						gpSrv->nProcessCount = nCurCount;
+						gpSrv->nMaxProcesses = nSize;
+					}
+
+					if (pnPID)
+						free(pnPID);
+				}
+			}
+			
+			// PID-ы процессов в консоли могут оказаться перемешаны. Нас же интересует gnSelfPID на первом месте
+			gpSrv->pnProcesses[0] = gnSelfPID;
+			DWORD nCorrect = 1, nMax = gpSrv->nMaxProcesses, nDosBox = 0;
+			if (gbUseDosBox)
+			{
+				if (ghDosBoxProcess && WaitForSingleObject(ghDosBoxProcess, 0) == WAIT_TIMEOUT)
+				{
+					gpSrv->pnProcesses[nCorrect++] = gnDosBoxPID;
+					nDosBox = 1;
+				}
+				else if (ghDosBoxProcess)
+				{
+					ghDosBoxProcess = NULL;
+				}
+			}
+			for (DWORD n = 0; n < nCurCount && nCorrect < nMax; n++)
+			{
+				if (gpSrv->pnProcessesGet[n] != gnSelfPID)
+				{
+					if (gpSrv->pnProcesses[nCorrect] != gpSrv->pnProcessesGet[n])
+					{
+						gpSrv->pnProcesses[nCorrect] = gpSrv->pnProcessesGet[n];
+						lbChanged = TRUE;
+					}
+					nCorrect++;
+				}
+			}
+			nCurCount += nDosBox;
+
+
+			if (nCurCount < gpSrv->nMaxProcesses)
+			{
+				// Сбросить в 0 ячейки со старыми процессами
+				_ASSERTE(gpSrv->nProcessCount < gpSrv->nMaxProcesses);
+
+				if (nCurCount < gpSrv->nProcessCount)
+				{
+					UINT nSize = sizeof(DWORD)*(gpSrv->nProcessCount - nCurCount);
+					memset(gpSrv->pnProcesses + nCurCount, 0, nSize);
+				}
+
+				_ASSERTE(nCurCount>0);
+				_ASSERTE(nExitQueryPlace == 0 || nCurCount == 1);
+				gpSrv->nProcessCount = nCurCount;
+			}
+
+			if (!lbChanged)
+			{
+				UINT nSize = sizeof(DWORD)*min(gpSrv->nMaxProcesses,START_MAX_PROCESSES);
+
+				#ifdef _DEBUG
+				_ASSERTE(!IsBadWritePtr(gpSrv->pnProcessesCopy,nSize));
+				_ASSERTE(!IsBadWritePtr(gpSrv->pnProcesses,nSize));
+				#endif
+
+				lbChanged = memcmp(gpSrv->pnProcessesCopy, gpSrv->pnProcesses, nSize) != 0;
+				MCHKHEAP;
+
+				if (lbChanged)
+					memmove(gpSrv->pnProcessesCopy, gpSrv->pnProcesses, nSize);
+
+				MCHKHEAP;
+			}
+		}
+	}
+
+	// Wine related
+	//if (!pfnGetConsoleProcessList || gpSrv->hRootProcessGui)
+	if (!bProcFound)
 	{
 		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
 		gpSrv->pnProcesses[0] = gnSelfPID;
@@ -4566,122 +4761,8 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 				gpSrv->nProcessCount = 2;
 			}
 		}
-	}
-	else
-	{
-		WARNING("Переделать, как-то слишком сложно получается");
-		DWORD nCurCount = 0;
-		nCurCount = pfnGetConsoleProcessList(gpSrv->pnProcessesGet, gpSrv->nMaxProcesses);
-		#ifdef _DEBUG
-		int nCurCountDbg = pfnGetConsoleProcessList(nCurProcessesDbg, countof(nCurProcessesDbg));
-		#endif
-		lbChanged = gpSrv->nProcessCount != nCurCount;
 
-		if (nCurCount == 0)
-		{
-			_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
-
-			// Это значит в Win7 свалился conhost.exe
-			#ifdef _DEBUG
-			DWORD dwErr = GetLastError();
-			#endif
-			gpSrv->nProcessCount = 1;
-			SetEvent(ghQuitEvent);
-
-			if (!nExitQueryPlace) nExitQueryPlace = 1+(nExitPlaceStep+nExitPlaceThread);
-
-			SetTerminateEvent();
-			return TRUE;
-		}
-
-		if (nCurCount > gpSrv->nMaxProcesses)
-		{
-			DWORD nSize = nCurCount + 100;
-			DWORD* pnPID = (DWORD*)calloc(nSize, sizeof(DWORD));
-
-			if (pnPID)
-			{
-				CS.RelockExclusive(200);
-				nCurCount = pfnGetConsoleProcessList(pnPID, nSize);
-
-				if (nCurCount > 0 && nCurCount <= nSize)
-				{
-					free(gpSrv->pnProcessesGet);
-					gpSrv->pnProcessesGet = pnPID; pnPID = NULL;
-					free(gpSrv->pnProcesses);
-					gpSrv->pnProcesses = (DWORD*)calloc(nSize, sizeof(DWORD));
-					_ASSERTE(nExitQueryPlace == 0 || nCurCount == 1);
-					gpSrv->nProcessCount = nCurCount;
-					gpSrv->nMaxProcesses = nSize;
-				}
-
-				if (pnPID)
-					free(pnPID);
-			}
-		}
-		
-		// PID-ы процессов в консоли могут оказаться перемешаны. Нас же интересует gnSelfPID на первом месте
-		gpSrv->pnProcesses[0] = gnSelfPID;
-		DWORD nCorrect = 1, nMax = gpSrv->nMaxProcesses, nDosBox = 0;
-		if (gbUseDosBox)
-		{
-			if (ghDosBoxProcess && WaitForSingleObject(ghDosBoxProcess, 0) == WAIT_TIMEOUT)
-			{
-				gpSrv->pnProcesses[nCorrect++] = gnDosBoxPID;
-				nDosBox = 1;
-			}
-			else if (ghDosBoxProcess)
-			{
-				ghDosBoxProcess = NULL;
-			}
-		}
-		for (DWORD n = 0; n < nCurCount && nCorrect < nMax; n++)
-		{
-			if (gpSrv->pnProcessesGet[n] != gnSelfPID)
-			{
-				if (gpSrv->pnProcesses[nCorrect] != gpSrv->pnProcessesGet[n])
-				{
-					gpSrv->pnProcesses[nCorrect] = gpSrv->pnProcessesGet[n];
-					lbChanged = TRUE;
-				}
-				nCorrect++;
-			}
-		}
-		nCurCount += nDosBox;
-
-
-		if (nCurCount < gpSrv->nMaxProcesses)
-		{
-			// Сбросить в 0 ячейки со старыми процессами
-			_ASSERTE(gpSrv->nProcessCount < gpSrv->nMaxProcesses);
-
-			if (nCurCount < gpSrv->nProcessCount)
-			{
-				UINT nSize = sizeof(DWORD)*(gpSrv->nProcessCount - nCurCount);
-				memset(gpSrv->pnProcesses + nCurCount, 0, nSize);
-			}
-
-			_ASSERTE(nCurCount>0);
-			_ASSERTE(nExitQueryPlace == 0 || nCurCount == 1);
-			gpSrv->nProcessCount = nCurCount;
-		}
-
-		if (!lbChanged)
-		{
-			UINT nSize = sizeof(DWORD)*min(gpSrv->nMaxProcesses,START_MAX_PROCESSES);
-#ifdef _DEBUG
-			_ASSERTE(!IsBadWritePtr(gpSrv->pnProcessesCopy,nSize));
-			_ASSERTE(!IsBadWritePtr(gpSrv->pnProcesses,nSize));
-#endif
-			lbChanged = memcmp(gpSrv->pnProcessesCopy, gpSrv->pnProcesses, nSize) != 0;
-			MCHKHEAP;
-
-			if (lbChanged)
-				memmove(gpSrv->pnProcessesCopy, gpSrv->pnProcesses, nSize);
-
-			MCHKHEAP;
-		}
-
+		DUMP_PROC_INFO(L"Win2k mode", gpSrv->nProcessCount, gpSrv->pnProcesses);
 	}
 
 	gpSrv->dwProcessLastCheckTick = GetTickCount();
@@ -5950,7 +6031,7 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	//		if (apiGetConsoleFontSize(hOutput, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
 	//		{
-	//			COORD crLargest = GetLargestConsoleWindowSize(hOutput);
+	//			COORD crLargest = MyGetLargestConsoleWindowSize(hOutput);
 	//			HMONITOR hMon = MonitorFromWindow(ghConWnd, MONITOR_DEFAULTTOPRIMARY);
 	//			MONITORINFO mi = {sizeof(mi)};
 	//			int nMaxX = 0, nMaxY = 0;
@@ -6817,7 +6898,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		// Размер буфера - могут менять, но не менее чем текущая видимая область
 		if (gpSrv && !gpSrv->nRequestChangeSize && (gpSrv->crReqSizeNewSize.X > 0) && (gpSrv->crReqSizeNewSize.Y > 0))
 		{
-			COORD crMax = GetLargestConsoleWindowSize(ghConOut);
+			COORD crMax = MyGetLargestConsoleWindowSize(ghConOut);
 			// Это может случиться, если пользователь резко уменьшил разрешение экрана
 			if (crMax.X > 0 && crMax.X < gpSrv->crReqSizeNewSize.X)
 			{
@@ -6936,6 +7017,65 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	//CSCS.Unlock();
 #ifdef _DEBUG
 #endif
+
+	if (lbRc && gbIsDBCS && csbi.dwSize.X && csbi.dwCursorPosition.X)
+	{
+		// Issue 577: Chinese display error on Chinese
+		// -- GetConsoleScreenBufferInfo возвращает координаты курсора в DBCS, а нам нужен wchar_t !!!
+		DWORD nCP = GetConsoleOutputCP();
+		if ((nCP != CP_UTF8) && (nCP != CP_UTF7))
+		{
+			static CPINFOEX cpinfo = {};
+			static char szLeads[256] = {};
+			if (cpinfo.CodePage != nCP)
+			{
+				if (!GetCPInfoEx(nCP, 0, &cpinfo) || (cpinfo.MaxCharSize <= 1))
+				{
+					ZeroStruct(szLeads);
+				}
+				else
+				{
+					int c = 0;
+					_ASSERTE(countof(cpinfo.LeadByte)>=10);
+					for (int i = 0; (i < 5) && cpinfo.LeadByte[i*2]; i++)
+					{
+						BYTE c1 = cpinfo.LeadByte[i*2];
+						BYTE c2 = cpinfo.LeadByte[i*2+1];
+						for (BYTE j = c1; (j <= c2) && (c < 254); j++, c++)
+						{
+							szLeads[c] = j;
+						}
+					}
+					_ASSERTE(c && c <= 128);
+					szLeads[c] = 0;
+				}
+			}
+
+			if (*szLeads && (cpinfo.MaxCharSize > 1))
+			{
+				_ASSERTE(cpinfo.MaxCharSize==2); // может быть 4?
+				char szLine[512];
+				COORD crRead = {0, csbi.dwCursorPosition.Y};
+				DWORD nRead = 0, cchMax = min((int)countof(szLine)-1, csbi.dwSize.X*cpinfo.MaxCharSize);
+				if (ReadConsoleOutputCharacterA(ahConOut, szLine, cchMax, crRead, &nRead) && nRead)
+				{
+					_ASSERTE(nRead<((int)countof(szLine)-1));
+					szLine[nRead] = 0;
+					char* pszEnd = szLine+min((int)nRead,csbi.dwCursorPosition.X);
+					char* psz = szLine;
+					int nXShift = 0;
+					while (((psz = strpbrk(psz, szLeads)) != NULL) && (psz < pszEnd))
+					{
+						nXShift++;
+						psz += cpinfo.MaxCharSize;
+					}
+					_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
+					apsc->dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
+				}
+			}
+		}
+	}
+
 	return lbRc;
 }
 
@@ -7073,7 +7213,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 
 	BOOL lbRc = TRUE;
 	RECT rcConPos = {0};
-	COORD crMax = GetLargestConsoleWindowSize(ghConOut);
+	COORD crMax = MyGetLargestConsoleWindowSize(ghConOut);
 
 	// Если размер превышает допустимый - лучше ничего не делать,
 	// иначе получается неприятный эффект при попытке AltEnter:
@@ -7087,7 +7227,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	{
 		if (apiFixFontSizeForBufferSize(ghConOut, crNewSize))
 		{
-			crMax = GetLargestConsoleWindowSize(ghConOut);
+			crMax = MyGetLargestConsoleWindowSize(ghConOut);
 			if ((crMax.X && crNewSize.X > crMax.X)
 				|| (crMax.Y && crNewSize.Y > crMax.Y))
 			{

@@ -130,9 +130,21 @@ static struct StatusColInfo {
 						L"ConEmu GUI PID",
 						L"ConEmu GUI PID"},
 
+	{csi_ConEmuHWND,	L"StatusBar.Hide.ConEmuHWND",
+						L"ConEmu GUI HWND",
+						L"ConEmu GUI HWND"},
+
+	{csi_ConEmuView,	L"StatusBar.Hide.ConEmuView",
+						L"ConEmu GUI View HWND",
+						L"ConEmu GUI View HWND"},
+
 	{csi_Server,		L"StatusBar.Hide.Srv",
 						L"Console server PID",
 						L"Server PID / AltServer PID"},
+
+	{csi_ServerHWND,	L"StatusBar.Hide.SrvHWND",
+						L"Console server HWND",
+						L"Server HWND"},
 
 	{csi_Transparency,	L"StatusBar.Hide.Transparency",
 						L"Transparency",
@@ -768,16 +780,25 @@ void CStatus::ShowStatusSetupMenu()
 		}
 	}
 
-	for (int i = 1; i <= (int)countof(gStatusCols); i++)
+	int nBreak = (countof(m_Items) + 1) / 2;
+
+	for (int i = 2; i <= (int)countof(gStatusCols); i++)
 	{
-		if (i == 1)
+		DWORD nBreakFlag = 0;
+		if ((nBreak--) < 0)
 		{
-			AppendMenu(hPopup, MF_STRING|(gpSet->isStatusBarShow ? MF_CHECKED : MF_UNCHECKED), i, gStatusCols[i-1].sName);
-			AppendMenu(hPopup, MF_SEPARATOR, 0, L"");
+			nBreak = (countof(m_Items) + 1) / 2;
+			nBreakFlag = MF_MENUBREAK;
 		}
-		else
+
+		//if (i == 1)
+		//{
+		//	AppendMenu(hPopup, MF_STRING|(gpSet->isStatusBarShow ? MF_CHECKED : MF_UNCHECKED), i, gStatusCols[i-1].sName);
+		//	AppendMenu(hPopup, MF_SEPARATOR, 0, L"");
+		//}
+		//else
 		{
-			AppendMenu(hPopup, MF_STRING|((gpSet->isStatusColumnHidden[gStatusCols[i-1].nID]) ? MF_UNCHECKED : MF_CHECKED), i, gStatusCols[i-1].sName);
+			AppendMenu(hPopup, MF_STRING|nBreakFlag|((gpSet->isStatusColumnHidden[gStatusCols[i-1].nID]) ? MF_UNCHECKED : MF_CHECKED), i, gStatusCols[i-1].sName);
 		}
 
 		// m_Items содержит только видимые элементы, поэтому индексы не совпадают
@@ -792,6 +813,7 @@ void CStatus::ShowStatusSetupMenu()
 	}
 
 	AppendMenu(hPopup, MF_SEPARATOR, 0, L"");
+	AppendMenu(hPopup, MF_STRING|(gpSet->isStatusBarShow ? MF_CHECKED : MF_UNCHECKED), 1, gStatusCols[0].sName);
 	AppendMenu(hPopup, MF_STRING, (int)countof(gStatusCols)+1, L"Setup...");
 
 	mb_InSetupMenu = true;
@@ -875,6 +897,11 @@ void CStatus::OnWindowReposition(const RECT *prcNew)
 
 		GetWindowRect(ghWnd, &rcTmp);
 	}
+
+	// csi_ConEmuHWND
+	_wsprintf(m_Values[csi_ConEmuHWND].sText, SKIPLEN(countof(m_Values[csi_ConEmuHWND].sText)-1)
+		L"x%08X(%u)", (DWORD)ghWnd, (DWORD)ghWnd);
+	wcscpy_c(m_Values[csi_ConEmuHWND].szFormat, m_Values[csi_ConEmuHWND].sText);
 
 	// csi_WindowPos
 	_wsprintf(m_Values[csi_WindowPos].sText, SKIPLEN(countof(m_Values[csi_WindowPos].sText)-1)
@@ -1064,6 +1091,8 @@ void CStatus::OnActiveVConChanged(int nIndex/*0-based*/, CRealConsole* pRCon)
 
 	OnConsoleBufferChanged(pRCon);
 
+	HWND hView = NULL, hCon = NULL;
+
 	if (pRCon)
 	{
 		DWORD nMainServerPID = pRCon->isServerCreated() ? pRCon->GetServerPID(true) : 0;
@@ -1075,12 +1104,25 @@ void CStatus::OnActiveVConChanged(int nIndex/*0-based*/, CRealConsole* pRCon)
 		pRCon->GetConsoleScreenBufferInfo(&sbi);
 		pRCon->GetConsoleCursorInfo(&ci);
 		OnConsoleChanged(&sbi, &ci, false);
+
+		hView = pRCon->GetView();
+		hCon = pRCon->ConWnd();
 	}
 	else
 	{
 		OnServerChanged(0, 0);
 		OnConsoleChanged(NULL, NULL, false);
 	}
+
+	// csi_ConEmuView
+	_wsprintf(m_Values[csi_ConEmuView].sText, SKIPLEN(countof(m_Values[csi_ConEmuView].sText)-1)
+		L"x%08X(%u)", (DWORD)hView, (DWORD)hView);
+	wcscpy_c(m_Values[csi_ConEmuView].szFormat, m_Values[csi_ConEmuView].sText);
+
+	// csi_ServerHWND
+	_wsprintf(m_Values[csi_ServerHWND].sText, SKIPLEN(countof(m_Values[csi_ServerHWND].sText)-1)
+		L"x%08X(%u)", (DWORD)hCon, (DWORD)hCon);
+	wcscpy_c(m_Values[csi_ServerHWND].szFormat, m_Values[csi_ServerHWND].sText);
 
 	// Чтобы уж точно обновилось - как минимум, меняется PID активного процесса
 	UpdateStatusBar(true);
