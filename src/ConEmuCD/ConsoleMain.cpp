@@ -722,6 +722,14 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		goto wrap;
 	}
 
+#ifdef _DEBUG
+	if (gnRunMode == RM_SERVER)
+	{
+		// отладка для Wine
+		gbPipeDebugBoxes = true;
+	}
+#endif
+
 	_ASSERTE(!gpSrv->hRootProcessGui || (((DWORD)gpSrv->hRootProcessGui)!=0xCCCCCCCC && IsWindow(gpSrv->hRootProcessGui)));
 
 	//#ifdef _DEBUG
@@ -1199,6 +1207,14 @@ wait:
 #ifdef _DEBUG
 	xf_validate(NULL);
 #endif
+
+#ifdef _DEBUG
+	if (gnRunMode == RM_SERVER)
+	{
+		gbPipeDebugBoxes = false;
+	}
+#endif
+
 
 	if (gnRunMode == RM_ALTSERVER)
 	{
@@ -1966,8 +1982,13 @@ int CheckUnicodeFont()
 		gOSVer.dwMajorVersion, gOSVer.dwMinorVersion, gOSVer.dwBuildNumber, gOSVer.dwPlatformId, gOSVer.szCSDVersion);
 	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
 
-	msprintf(szInfo, countof(szInfo), L"SM_IMMENABLED=%u, SM_DBCSENABLED=%u\r\n",
-		GetSystemMetrics(SM_IMMENABLED), GetSystemMetrics(SM_DBCSENABLED));
+	msprintf(szInfo, countof(szInfo), L"SM_IMMENABLED=%u, SM_DBCSENABLED=%u, ACP=%u, OEMCP=%u\r\n",
+		GetSystemMetrics(SM_IMMENABLED), GetSystemMetrics(SM_DBCSENABLED), GetACP(), GetOEMCP());
+	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+
+	msprintf(szInfo, countof(szInfo), L"ConHWND=0x%08X, Class=\"", (DWORD)ghConWnd);
+	GetClassName(ghConWnd, szInfo+lstrlen(szInfo), 255);
+	lstrcpyn(szInfo+lstrlen(szInfo), L"\"\r\n", 4);
 	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
 
 	struct FONT_INFOEX

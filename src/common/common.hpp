@@ -66,6 +66,11 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define VirtualConsoleClassGhost L"VirtualConsoleClassGhost"
 #define ConEmuPanelViewClass L"ConEmuPanelView"
 
+#define RealConsoleClass L"ConsoleWindowClass"
+#define WineConsoleClass L"WineConsoleClass"
+#define isConsoleClass(sClass) (lstrcmp(sClass, RealConsoleClass)==0 || lstrcmp(sClass, WineConsoleClass)==0)
+
+
 #define CECOPYRIGHTSTRING_A "Copyright (c) 2009-2012, ConEmu.Maximus5@gmail.com"
 #define CECOPYRIGHTSTRING_W L"\x00A9 2009-2012 ConEmu.Maximus5@gmail.com"
 

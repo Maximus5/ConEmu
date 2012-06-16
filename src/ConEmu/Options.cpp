@@ -268,13 +268,18 @@ void Settings::InitSettings()
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
 	nCmdOutputCP = 0;
 
+	bool bIsDbcs = (GetSystemMetrics(SM_DBCSENABLED) != 0);
+
 	//WARNING("InitSettings() может вызываться из интерфейса настройки, не промахнуться с хэндлами");
 	//// Шрифты
 	//memset(m_Fonts, 0, sizeof(m_Fonts));
 	////TODO: OLD - на переделку
 	//memset(&LogFont, 0, sizeof(LogFont));
 	//memset(&LogFont2, 0, sizeof(LogFont2));
-	/*LogFont.lfHeight = mn_FontHeight =*/ FontSizeY = 16;
+	/*LogFont.lfHeight = mn_FontHeight =*/
+	FontSizeY = 16;
+	//Issue 577: Для иероглифов - сделаем "пошире", а то глифы в консоль не влезут...
+	FontSizeX3 = bIsDbcs ? 15 : 0;
 	//LogFont.lfWidth = mn_FontWidth = FontSizeX = mn_BorderFontWidth = 0;
 	//FontSizeX2 = 0; FontSizeX3 = 0;
 	//LogFont.lfEscapement = LogFont.lfOrientation = 0;
@@ -293,14 +298,17 @@ void Settings::InitSettings()
 	isAlwaysShowScrollbar = 2;
 	isTabFrame = true;
 	//isForceMonospace = false; isProportional = false;
-	isMonospace = 1;
+	
+	//Issue 577: Для иероглифов - по умолчанию отключим моноширность
+	isMonospace = bIsDbcs ? 0 : 1;
+
 	isMinToTray = false; isAlwaysShowTrayIcon = false;
 	memset(&rcTabMargins, 0, sizeof(rcTabMargins));
 	//isFontAutoSize = false; mn_AutoFontWidth = mn_AutoFontHeight = -1;
 	
 	ConsoleFont.lfHeight = 5;
 	ConsoleFont.lfWidth = 3;
-	wcscpy_c(ConsoleFont.lfFaceName, gsLucidaConsole);
+	wcscpy_c(ConsoleFont.lfFaceName, gsDefConFont);
 	
 	{
 		SettingsRegistry RegConColors, RegConDef;
@@ -387,7 +395,14 @@ void Settings::InitSettings()
 	isAlwaysOnTop = false;
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
 	RECT rcWork = {}; SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
-	wndX = rcWork.left; wndY = rcWork.top;
+	if (gbIsWine)
+	{
+		wndX = max(90,rcWork.left); wndY = max(90,rcWork.top);
+	}
+	else
+	{
+		wndX = rcWork.left; wndY = rcWork.top;
+	}
 	wndCascade = true;
 	isAutoSaveSizePos = false; mb_SizePosAutoSaved = false;
 	isConVisible = false; //isLockRealConsolePos = false;
@@ -417,6 +432,7 @@ void Settings::InitSettings()
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
 	isConsoleTextSelection = 1; // Always
+	isCTSAutoCopy = false;
 	isCTSFreezeBeforeSelect = false;
 	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
 	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
@@ -1732,7 +1748,7 @@ void Settings::LoadSettings()
 		reg->Load(L"FontBold", isBold);
 		reg->Load(L"FontItalic", isItalic);
 
-		if (!reg->Load(L"Monospace", isMonospace))
+		if (!reg->Load(L"Monospace", isMonospace) && !GetSystemMetrics(SM_DBCSENABLED))
 		{
 			// Compatibility. Пережитки прошлого, загрузить по "старым" именам параметров
 			bool bForceMonospace = false, bProportional = false;
@@ -1862,6 +1878,7 @@ void Settings::LoadSettings()
 
 		reg->Load(L"ConsoleTextSelection", isConsoleTextSelection); if (isConsoleTextSelection>2) isConsoleTextSelection = 2;
 
+		reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
 		reg->Load(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		reg->Load(L"CTS.SelectBlock", isCTSSelectBlock);
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
@@ -2671,6 +2688,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ComSpec.UpdateEnv", (bool)ComSpec.isUpdateEnv);
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
 		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
+		reg->Save(L"CTS.AutoCopy", isCTSAutoCopy);
 		reg->Save(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		reg->Save(L"CTS.SelectBlock", isCTSSelectBlock);
 		//reg->Save(L"CTS.VkBlock", isCTSVkBlock);

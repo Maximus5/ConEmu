@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "ExtConsole.h"
 #include "../common/ConEmuColors3.h"
+#include "../common/WinObjects.h"
 
 #define MSG_TITLE "ConEmu writer"
 #define MSG_INVALID_CONEMU_VER "Unsupported ConEmu version detected!\nRequired version: " CONEMUVERS "\nConsole writer'll works in 4bit mode"
@@ -945,7 +946,12 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		return FALSE;
 	}
 
-	_ASSERTE((Info->Private==NULL) || (Info->Private==(void*)WriteConsoleW));
+#ifdef _DEBUG
+	static HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+	// в x64 получилось, что Info->Private указывает на собственно функцию,
+	// а WriteConsoleW - на заглушку/трамплин
+	_ASSERTE((Info->Private==NULL) || (Info->Private==(void*)WriteConsoleW || CheckCallbackPtr(hKernel, 1, (FARPROC*)&Info->Private, TRUE)));
+#endif
 
 	// Проверка аргументов
 	if (!Info->ConsoleOutput || !Info->Buffer || !Info->NumberOfCharsToWrite)

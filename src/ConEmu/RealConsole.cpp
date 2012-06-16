@@ -845,7 +845,9 @@ BOOL CRealConsole::AttachPID(DWORD dwPID)
 		if (/*dwErr==0x1F || dwErr==6 &&*/ dwPID == -1)
 		{
 			// Если ConEmu запускается из FAR'а батником - то родительский процесс - CMD.EXE/TCC.EXE, а он уже скорее всего закрыт. то есть подцепиться не удастся
-			HWND hConsole = FindWindowEx(NULL,NULL,_T("ConsoleWindowClass"),NULL);
+			HWND hConsole = FindWindowEx(NULL,NULL,RealConsoleClass,NULL);
+			if (!hConsole)
+				hConsole = FindWindowEx(NULL,NULL,WineConsoleClass,NULL);
 
 			if (hConsole && IsWindowVisible(hConsole))
 			{

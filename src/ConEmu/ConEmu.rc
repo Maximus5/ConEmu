@@ -162,8 +162,8 @@ BEGIN
     EDITTEXT        tBgImageColors,88,176,43,12,ES_AUTOHSCROLL
     CONTROL         "Allow plugins",cbBgAllowPlugin,"Button",BS_AUTO3STATE | WS_TABSTOP,141,178,57,10
     CTEXT           "x",IDC_STATIC,221,77,8,8
-    RTEXT           "Placement:",stBgPlacement,213,177,50,8
-    COMBOBOX        lbBgPlacement,267,175,48,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Placement:",stBgPlacement,200,177,50,8
+    COMBOBOX        lbBgPlacement,254,175,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_SPG_STARTUP DIALOGEX 0, 0, 328, 235
@@ -421,7 +421,7 @@ BEGIN
     CONTROL         "ANSI X3.64 / 256color",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,141,87,8
     GROUPBOX        "Mouse options",IDC_STATIC,4,1,319,28
     CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,119,8
-    CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,185,117,8
+    CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTO3STATE | WS_TABSTOP,10,185,117,8
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235
@@ -583,8 +583,8 @@ BEGIN
     CONTROL         "Confirm pasting more than",cbClipConfirmLimit,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,127,105,8
     EDITTEXT        tClipConfirmLimit,246,126,40,12,ES_AUTOHSCROLL
     CTEXT           "chars",stClipConfirmLimit,292,127,22,8
-    CONTROL         "Freeze console contents before selection (may cause small lag)",cbCTSFreezeBeforeSelect,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,47,245,8
+    CONTROL         "Freeze console contents (may cause small lag)",cbCTSFreezeBeforeSelect,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,78,47,178,8
     RTEXT           "Find:",IDC_STATIC,269,30,22,8,WS_DISABLED
     COMBOBOX        lbCTSFindIdx,293,28,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Goto Far editor on compiler errors",IDC_STATIC,4,147,319,45
@@ -593,6 +593,7 @@ BEGIN
     RTEXT           "External editor, when Far not started:",stGotoEditorCmd,158,160,139,8
     EDITTEXT        tGotoEditorCmd,11,173,287,13,ES_AUTOHSCROLL
     PUSHBUTTON      "...",bGotoEditorCmd,301,173,16,12
+    CONTROL         "Auto copy",cbCTSAutoCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,47,59,8
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235

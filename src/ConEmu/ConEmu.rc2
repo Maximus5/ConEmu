@@ -25,6 +25,8 @@ BEGIN
     cbBgImage               "Show background image instead standard\ncolors #0 and #1 (black and blue)\n3d state - don't draw in viewer/editor"
     cbBlockInactiveCursor   "Draw empty rectangle cursor while ConEmu has no focus"
     cbBold                  "Main font weight"
+    cbCTSAutoCopy           "Copy immediately on left mouse button up (when selecting with mouse)"
+    cbCTSFreezeBeforeSelect "Freeze console contents before selection (may cause small lag)"
     cbCursorBlink           "When 'Blinking' is ON - cursor blinks\nwith standard cursor blink rate."
     cbCursorColor           "ON - cursor emulates console behaviour (sort of colors inversion)\nOFF - cursor is white (color#15) on dark backgrounds,\nand black (color#0) on light backgrounds"
     cbDebugSteps            "Show some debug information in ConEmu title\nI.e. plugin communication steps."

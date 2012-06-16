@@ -298,7 +298,15 @@ CSettings::CSettings()
 	memset(mh_Tabs, 0, sizeof(mh_Tabs));
 	hwndTip = NULL; hwndBalloon = NULL;
 	mb_IgnoreCmdGroupEdit = mb_IgnoreCmdGroupList = false;
-	hConFontDlg = NULL; hwndConFontBalloon = NULL; bShowConFontError = FALSE; sConFontError[0] = sDefaultConFontName[0] = 0; bConsoleFontChecked = FALSE;
+	hConFontDlg = NULL; hwndConFontBalloon = NULL; bShowConFontError = FALSE; sConFontError[0] = 0; bConsoleFontChecked = FALSE;
+	if (gbIsDBCS)
+	{
+		wcscpy_c(sDefaultConFontName, gsDefConFont);
+	}
+	else
+	{
+		sDefaultConFontName[0] = 0;
+	}
 	QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
 	memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
 	memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
@@ -943,7 +951,7 @@ void CSettings::ApplyStartupOptions()
 
 void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
 {
-	lstrcpyn(LogFont.lfFaceName, (asFontName && *asFontName) ? asFontName : (*gpSet->inFont) ? gpSet->inFont : gsLucidaConsole, countof(LogFont.lfFaceName));
+	lstrcpyn(LogFont.lfFaceName, (asFontName && *asFontName) ? asFontName : (*gpSet->inFont) ? gpSet->inFont : gsDefGuiFont, countof(LogFont.lfFaceName));
 	if ((asFontName && *asFontName) || *gpSet->inFont)
 		mb_Name1Ok = TRUE;
 		
@@ -965,7 +973,7 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 	LogFont.lfCharSet = gpSet->mn_LoadFontCharSet;
 	LogFont.lfItalic = gpSet->isItalic;
 	
-	lstrcpyn(LogFont2.lfFaceName, (*gpSet->inFont2) ? gpSet->inFont2 : gsLucidaConsole, countof(LogFont2.lfFaceName));
+	lstrcpyn(LogFont2.lfFaceName, (*gpSet->inFont2) ? gpSet->inFont2 : gsDefGuiFont, countof(LogFont2.lfFaceName));
 	if (*gpSet->inFont2)
 		mb_Name2Ok = TRUE;
 	
@@ -1881,6 +1889,7 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 		(gpSet->isConsoleTextSelection == 0) ? rbCTSNever :
 		(gpSet->isConsoleTextSelection == 1) ? rbCTSAlways : rbCTSBufferOnly);
 
+	CheckDlgButton(hWnd2, cbCTSAutoCopy, gpSet->isCTSAutoCopy);
 	CheckDlgButton(hWnd2, cbCTSFreezeBeforeSelect, gpSet->isCTSFreezeBeforeSelect);
 	CheckDlgButton(hWnd2, cbCTSBlockSelection, gpSet->isCTSSelectBlock);
 	DWORD VkMod = gpSet->GetHotkeyById(vkCTSVkBlock);
@@ -3920,6 +3929,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbCTSFreezeBeforeSelect:
 			gpSet->isCTSFreezeBeforeSelect = IsChecked(hWnd2,CB);
+			break;
+		case cbCTSAutoCopy:
+			gpSet->isCTSAutoCopy = IsChecked(hWnd2,CB);
 			break;
 		case cbCTSBlockSelection:
 			gpSet->isCTSSelectBlock = IsChecked(hWnd2,CB);
@@ -7626,7 +7638,11 @@ void CSettings::UpdateSize(UINT w, UINT h)
 // Был вроде Issue, да и не всегда моноширность правильно определяется (DejaVu Sans Mono)
 void CSettings::UpdateTTF(BOOL bNewTTF)
 {
-	if (mb_IgnoreTtfChange) return;
+	if (mb_IgnoreTtfChange)
+		return;
+
+	if (GetSystemMetrics(SM_DBCSENABLED) != 0)
+		return;
 	
 	if (!bNewTTF)
 	{
@@ -8352,7 +8368,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 				          L"Failed to create border font!\nRequested: %s\nCreated: ", LogFont2.lfFaceName);
 
 				// Если запрашивалась Люцида - оставляем (хотя это уже облом, должна быть)
-				if (lstrcmpi(LogFont2.lfFaceName, gsLucidaConsole) == 0)
+				if (lstrcmpi(LogFont2.lfFaceName, gsDefGuiFont) == 0)
 				{
 					// только запомним что было реально создано
 					lstrcpyn(LogFont2.lfFaceName, szFontFace, countof(LogFont2.lfFaceName));
@@ -8360,7 +8376,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 				else
 				{
 					// Иначе - пробуем создать Люциду (нам нужен шрифт с рамками)
-					wcscpy_c(LogFont2.lfFaceName, gsLucidaConsole);
+					wcscpy_c(LogFont2.lfFaceName, gsDefGuiFont);
 					SelectObject(hDC, hOldF);
 					mh_Font2.Delete();
 
@@ -10960,10 +10976,40 @@ bool CSettings::CheckConsoleFontFast()
 bool CSettings::CheckConsoleFont(HWND ahDlg)
 {
 	gpSetCls->nConFontError = ConFontErr_NonSystem|ConFontErr_NonRegistry;
-	// Сначала загрузить имена шрифтов, установленных в систему
-	HDC hdc = GetDC(NULL);
-	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumConFamCallBack, (LPARAM) ahDlg);
-	DeleteDC(hdc);
+	bool bLoaded = false;
+
+	if (ahDlg && (GetSystemMetrics(SM_DBCSENABLED) != 0))
+	{
+		// Chinese
+		HKEY hk = NULL;
+		if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont", 0, KEY_READ, &hk))
+		{
+			DWORD dwIndex = 0;
+			wchar_t szName[255], szValue[255] = {};
+			DWORD cchName = countof(szName), cbData = sizeof(szValue)-2, dwType;
+			while (!RegEnumValue(hk, dwIndex++, szName, &cchName, NULL, &dwType, (LPBYTE)szValue, &cbData))
+			{
+            	if ((dwType == REG_DWORD) && *szName && *szValue)
+            	{
+            		SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM)szValue);
+            		bLoaded = true;
+            	}
+
+				// Next
+				cchName = countof(szName); cbData = sizeof(szValue);
+				ZeroStruct(szValue);
+			}
+			RegCloseKey(hk);
+		}
+	}
+
+	if (!bLoaded)
+	{
+		// Сначала загрузить имена шрифтов, установленных в систему
+		HDC hdc = GetDC(NULL);
+		EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumConFamCallBack, (LPARAM) ahDlg);
+		DeleteDC(hdc);
+	}
 
 	// Показать текущий шрифт
 	if (ahDlg)
@@ -11099,7 +11145,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 				{
 					if (!gpSetCls->bConsoleFontChecked)
 					{
-						wcscpy_c(gpSet->ConsoleFont.lfFaceName, gpSetCls->sDefaultConFontName[0] ? gpSetCls->sDefaultConFontName : gsLucidaConsole);
+						wcscpy_c(gpSet->ConsoleFont.lfFaceName, gpSetCls->sDefaultConFontName[0] ? gpSetCls->sDefaultConFontName : gsDefConFont);
 						gpSet->ConsoleFont.lfHeight = 5; gpSet->ConsoleFont.lfWidth = 3;
 					}
 

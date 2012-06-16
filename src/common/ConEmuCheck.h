@@ -101,3 +101,7 @@ HWND myGetConsoleWindow();
 
 extern SECURITY_ATTRIBUTES* gpLocalSecurity;
 extern u64 ghWorkingModule;
+
+#ifdef _DEBUG
+extern bool gbPipeDebugBoxes;
+#endif

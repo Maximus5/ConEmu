@@ -260,7 +260,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			GetWindowText(hFind, szTitle, countof(szTitle));
 
 			#ifndef ALLOW_GUI_ATTACH
-			if (lstrcmp(szClass, L"ConsoleWindowClass") != 0)
+			if (!isConsoleClass(szClass))
 				return TRUE;
 			#endif
 
@@ -377,7 +377,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			_wsprintf(szHwnd, SKIPLEN(countof(szHwnd)) L"0x%08X", (DWORD)(((DWORD_PTR)hFind) & (DWORD)-1));
 			ListView_SetItemText(hList, nItem, alc_HWND, szHwnd);
 
-			wcscpy_c(szType, (lstrcmp(szClass, L"ConsoleWindowClass") == 0) ? szTypeCon : szTypeGui);
+			wcscpy_c(szType, isConsoleClass(szClass) ? szTypeCon : szTypeGui);
 			ListView_SetItemText(hList, nItem, alc_File, szExeName);
 			ListView_SetItemText(hList, nItem, alc_Path, szExePathName);
 			ListView_SetItemText(hList, nItem, alc_Type, szType);

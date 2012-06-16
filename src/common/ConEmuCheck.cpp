@@ -39,6 +39,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 u64 ghWorkingModule = 0;
 
+#ifdef _DEBUG
+bool gbPipeDebugBoxes = false;
+#endif
+
 //#ifdef _DEBUG
 //	#include <crtdbg.h>
 //#else
@@ -186,9 +190,12 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 	DWORD nSleepError = 10;
 	int nTries = 10; // допустимое количество обломов, отличных от ERROR_PIPE_BUSY. после каждого - Sleep(nSleepError);
 	DWORD nOpenPipeTimeout = nTimeout ? max(nTimeout,EXECUTE_CMD_OPENPIPE_TIMEOUT) : EXECUTE_CMD_OPENPIPE_TIMEOUT;
-	BOOL bWaitPipeRc = FALSE;
+	BOOL bWaitPipeRc = FALSE, bWaitCalled = FALSE;
 	DWORD nWaitPipeErr = 0;
 	DWORD nDuration = 0;
+#ifdef _DEBUG
+	wchar_t szDbgMsg[512], szTitle[128];
+#endif
 
 	_ASSERTE(LocalSecurity()!=NULL);
 
@@ -236,12 +243,26 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		if (hPipe != INVALID_HANDLE_VALUE)
 			break; // OK, открыли
 
+#ifdef _DEBUG
+		if (gbPipeDebugBoxes)
+		{
+			szDbgMsg[0] = 0;
+			GetModuleFileName(NULL, szDbgMsg, countof(szDbgMsg));
+			msprintf(szTitle, countof(szTitle), L"%s: PID=%u", PointToName(szDbgMsg), GetCurrentProcessId());
+			msprintf(szDbgMsg, countof(szDbgMsg), L"Can't open pipe, ErrCode=%u\n%s\nWait: %u,%u,%u", dwErr, szPipeName, bWaitCalled, bWaitPipeRc, nWaitPipeErr);
+			int nBtn = ::MessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL|MB_RETRYCANCEL);
+			if (nBtn == IDCANCEL)
+				return NULL;
+		}
+#endif
+
 		nDuration = GetTickCount() - dwStartTick;
 
 		if (dwErr == ERROR_PIPE_BUSY)
 		{
 			if ((nTries > 0) && (nDuration < nOpenPipeTimeout))
 			{
+				bWaitCalled = TRUE;
 				// All pipe instances are busy, so wait for 500 ms.
 				bWaitPipeRc = WaitNamedPipe(szPipeName, 500);
 				nWaitPipeErr = GetLastError();
@@ -930,7 +951,7 @@ HWND myGetConsoleWindow()
 		wchar_t sClass[64];
 		if (hConWnd)
 			GetClassName_f(hConWnd, sClass, countof(sClass));
-		_ASSERTE(hConWnd==NULL || lstrcmp(sClass, L"ConsoleWindowClass")==0);
+		_ASSERTE(hConWnd==NULL || isConsoleClass(sClass));
 		#if 0
 		if (lstrcmp(sClass, VirtualConsoleClass) == 0)
 		{

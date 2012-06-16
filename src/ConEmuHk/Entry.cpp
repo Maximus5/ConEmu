@@ -299,7 +299,7 @@ void OnConWndChanged(HWND ahNewConWnd)
 		if (user)
 		{
 			wchar_t sClass[64]; user->getClassNameW(ahNewConWnd, sClass, countof(sClass));
-			_ASSERTEX(lstrcmp(sClass, L"ConsoleWindowClass")==0);
+			_ASSERTEX(isConsoleClass(sClass));
 		}
 		#endif
 

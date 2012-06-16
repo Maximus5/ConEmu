@@ -2684,6 +2684,18 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 
 		return true;
 	}
+	else if ((messg == WM_LBUTTONUP) && gpSet->isCTSAutoCopy && (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION))
+	{
+		if (isSelectionPresent())
+		{
+			DoSelectionCopy();
+		}
+		else
+		{
+			_ASSERTE(FALSE && "how it can be?");
+			DoSelectionStop();
+		}
+	}
 	else if (messg == WM_LBUTTONDBLCLK)
 	{
 		// Выделить слово под курсором (как в обычной консоли)

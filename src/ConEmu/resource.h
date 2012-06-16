@@ -707,6 +707,8 @@
 #define stPlacement                     2338
 #define stBgPlacement                   2338
 #define lbBgPlacement                   2339
+#define IDC_CHECK1                      2340
+#define cbCTSAutoCopy                   2340
 
 // Next default values for new objects
 // 
@@ -714,7 +716,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        220
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2340
+#define _APS_NEXT_CONTROL_VALUE         2341
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

@@ -92,7 +92,9 @@ const TCHAR *const gsClassNameApp = VirtualConsoleClassApp;
 OSVERSIONINFO gOSVer = {};
 WORD gnOsVer = 0x500;
 bool gbIsWine = false;
-wchar_t gsLucidaConsole[32] = L"Lucida Console"; // gbIsWine ? L"Liberation Mono" : L"Lucida Console"
+bool gbIsDBCS = false;
+wchar_t gsDefGuiFont[32] = L"Lucida Console"; // gbIsWine ? L"Liberation Mono" : L"Lucida Console"
+wchar_t gsDefConFont[32] = L"Lucida Console"; // DBCS ? L"Liberation Mono" : L"Lucida Console"
 
 
 #ifdef MSGLOGGER
@@ -1732,7 +1734,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (hk1) RegCloseKey(hk1);
 	if (hk2) RegCloseKey(hk2);
 	if (gbIsWine)
-		wcscpy_c(gsLucidaConsole, L"Liberation Mono");
+		wcscpy_c(gsDefGuiFont, L"Liberation Mono");
+
+	gbIsDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0);
+	if (gbIsDBCS)
+	{
+		HKEY hk = NULL;
+		DWORD nOemCP = GetOEMCP();
+		if (nOemCP && !RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont", 0, KEY_READ, &hk))
+		{
+			wchar_t szName[64]; _wsprintf(szName, SKIPLEN(countof(szName)) L"%u", nOemCP);
+			wchar_t szVal[64] = {}; DWORD cbSize = sizeof(szVal)-2;
+			if (!RegQueryValueEx(hk, szName, NULL, NULL, (LPBYTE)szVal, &cbSize) && *szVal)
+			{
+				if (*szVal == L'*')
+				{
+					lstrcpyn(gsDefConFont, szVal+1, countof(gsDefConFont));
+				}
+				else
+				{
+					lstrcpyn(gsDefConFont, szVal, countof(gsDefConFont));
+				}
+			}
+			RegCloseKey(hk);
+		}
+	}
+
 
 	gpSetCls = new CSettings;
 	gpConEmu = new CConEmuMain;
@@ -2012,16 +2039,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 								// Если на самом верху НЕ консоль - это может быть панель проводника,
 								// или другое плавающее окошко... Поищем ВЕРХНЮЮ консоль
-								if (_tcscmp(sClass, _T("ConsoleWindowClass"))!=0)
+								if (isConsoleClass(sClass))
 								{
-									_tcscpy(sClass, _T("ConsoleWindowClass"));
-									hCon = FindWindow(_T("ConsoleWindowClass"), NULL);
+									wcscpy_c(sClass, RealConsoleClass);
+									hCon = FindWindow(RealConsoleClass, NULL);
+									if (!hCon)
+										hCon = FindWindow(WineConsoleClass, NULL);
 
 									if (!hCon)
 										return 100;
 								}
 
-								if (_tcscmp(sClass, _T("ConsoleWindowClass"))==0)
+								if (isConsoleClass(sClass))
 								{
 									// перебрать все ConEmu, может кто-то уже подцеплен?
 									HWND hEmu = NULL;

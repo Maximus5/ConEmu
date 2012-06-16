@@ -662,7 +662,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	if (ghConWnd)
 	{
 		user->getClassNameW(ghConWnd, sClass, countof(sClass));
-		_ASSERTE(lstrcmp(sClass, L"ConsoleWindowClass") == 0);
+		_ASSERTE(isConsoleClass(sClass));
 	}
 
 	wchar_t szTimingMsg[512]; HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -1567,7 +1567,8 @@ int WINAPI OnGetClassNameA(HWND hWnd, LPSTR lpClassName, int nMaxCount)
 	int iRc = 0;
 	if (ghConEmuWndDC && hWnd == ghConEmuWndDC && lpClassName)
 	{
-		lstrcpynA(lpClassName, "ConsoleWindowClass", nMaxCount);
+		//lstrcpynA(lpClassName, RealConsoleClass, nMaxCount);
+		WideCharToMultiByte(CP_ACP, 0, RealConsoleClass, -1, lpClassName, nMaxCount, 0,0);
 		iRc = lstrlenA(lpClassName);
 	}
 	else if (F(GetClassNameA))
@@ -1581,7 +1582,7 @@ int WINAPI OnGetClassNameW(HWND hWnd, LPWSTR lpClassName, int nMaxCount)
 	int iRc = 0;
 	if (ghConEmuWndDC && hWnd == ghConEmuWndDC && lpClassName)
 	{
-		lstrcpynW(lpClassName, L"ConsoleWindowClass", nMaxCount);
+		lstrcpynW(lpClassName, RealConsoleClass, nMaxCount);
 		iRc = lstrlenW(lpClassName);
 	}
 	else if (F(GetClassNameW))

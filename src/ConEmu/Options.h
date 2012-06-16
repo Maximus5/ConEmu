@@ -640,6 +640,8 @@ struct Settings
 		/* *** Text selection *** */
 		//reg->Load(L"ConsoleTextSelection", isConsoleTextSelection);
 		BYTE isConsoleTextSelection;
+		//reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
+		bool isCTSAutoCopy;
 		//reg->Load(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		bool isCTSFreezeBeforeSelect;
 		//reg->Load(L"CTS.SelectBlock", isCTSSelectBlock);

@@ -71,7 +71,9 @@ public:
 extern OSVERSIONINFO gOSVer;
 extern WORD gnOsVer;
 extern bool gbIsWine;
-extern wchar_t gsLucidaConsole[32];
+extern bool gbIsDBCS;
+extern wchar_t gsDefGuiFont[32];
+extern wchar_t gsDefConFont[32];
 //extern SECURITY_ATTRIBUTES* gpLocalSecurity;
 extern BOOL gbDebugLogStarted;
 extern BOOL gbDebugShowRects;
