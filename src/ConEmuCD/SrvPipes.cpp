@@ -122,8 +122,11 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 		{
 			// ѕри посылке массовых нажатий клавиш (вставка из буфера)
 			// очередь может "не успевать"
-			if (i && (i & 64))
+			if (i && !(i & 31))
+			{
+				WriteInputQueue(NULL, TRUE);
 				Sleep(10);
+			}
 
 			#ifdef _DEBUG
 			switch (pCmd->msg[i].message)
@@ -141,7 +144,7 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 			if (ProcessInputMessage(pCmd->msg[i], r))
 			{
 				//SendConsoleEvent(&r, 1);
-				if (!WriteInputQueue(&r))
+				if (!WriteInputQueue(&r, FALSE))
 				{
 					DWORD nErrCode = GetLastError(); UNREFERENCED_PARAMETER(nErrCode);
 					_ASSERTE(FALSE && "Input buffer overflow?");
@@ -158,6 +161,8 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 
 			MCHKHEAP;
 		}
+
+		WriteInputQueue(NULL, TRUE);
 
 		#ifdef _DEBUG
 		SafeFree(pszPasting);

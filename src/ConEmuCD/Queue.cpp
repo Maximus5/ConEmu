@@ -31,10 +31,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s) // ConEmuC: Recieved key... / ConEmuC: Recieved input
 #define DEBUGSTRINPUTEVENT(s) //DEBUGSTR(s) // SetEvent(gpSrv->hInputEvent)
-#define DEBUGLOGINPUT(s) DEBUGSTR(s) // ConEmuC.MouseEvent(X=
-#define DEBUGSTRINPUTWRITE(s) DEBUGSTR(s) // *** ConEmuC.MouseEvent(X=
+#define DEBUGLOGINPUT(s) //DEBUGSTR(s) // ConEmuC.MouseEvent(X=
+#define DEBUGSTRINPUTWRITE(s) //DEBUGSTR(s) // *** ConEmuC.MouseEvent(X=
 #define DEBUGSTRINPUTWRITEALL(s) //DEBUGSTR(s) // *** WriteConsoleInput(Write=
-#define DEBUGSTRINPUTWRITEFAIL(s) DEBUGSTR(s) // ### WriteConsoleInput(Write=
+#define DEBUGSTRINPUTWRITEFAIL(s) //DEBUGSTR(s) // ### WriteConsoleInput(Write=
 
 BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 {
@@ -220,8 +220,22 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 //	return 0;
 //}
 
-BOOL WriteInputQueue(const INPUT_RECORD *pr)
+
+// gpSrv->nMaxInputQueue = CE_MAX_INPUT_QUEUE_BUFFER;
+BOOL WriteInputQueue(const INPUT_RECORD *pr, BOOL bSetEvent /*= TRUE*/)
 {
+	// Передернуть буфер (записать в консоль то, что накопилось)
+	if (pr == NULL)
+	{
+		if (bSetEvent)
+		{
+			DEBUGSTRINPUTEVENT(L"SetEvent(gpSrv->hInputEvent)\n");
+			SetEvent(gpSrv->hInputEvent);
+		}
+		return TRUE;
+	}
+
+
 	INPUT_RECORD* pNext = gpSrv->pInputQueueWrite;
 
 	// Проверяем, есть ли свободное место в буфере
@@ -241,8 +255,12 @@ BOOL WriteInputQueue(const INPUT_RECORD *pr)
 	if (gpSrv->pInputQueueWrite >= gpSrv->pInputQueueEnd)
 		gpSrv->pInputQueueWrite = gpSrv->pInputQueue;
 
-	DEBUGSTRINPUTEVENT(L"SetEvent(gpSrv->hInputEvent)\n");
-	SetEvent(gpSrv->hInputEvent);
+	// Могут писать "пачку", тогда подождать ее окончания
+	if (bSetEvent)
+	{
+		DEBUGSTRINPUTEVENT(L"SetEvent(gpSrv->hInputEvent)\n");
+		SetEvent(gpSrv->hInputEvent);
+	}
 
 	// Подвинуть указатель чтения, если до этого буфер был пуст
 	if (gpSrv->pInputQueueRead == gpSrv->pInputQueueEnd)
@@ -507,6 +525,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 
 
 	DWORD cbWritten = 0;
+
 #ifdef _DEBUG
 	wchar_t szDbg[255];
 	for (UINT i = 0; i < nCount; i++)
@@ -542,8 +561,12 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	}
 	SetLastError(0);
 #endif
+
+
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
 	fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
+
+
 #ifdef _DEBUG
 	DWORD dwErr = GetLastError();
 	if (!fSuccess || (nCount != cbWritten))

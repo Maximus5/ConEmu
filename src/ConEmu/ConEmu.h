@@ -534,7 +534,7 @@ class CConEmuMain :
 		void SetDragCursor(HCURSOR hCur);
 		void SetSkipOnFocus(BOOL abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);
-		bool SetWindowMode(uint inMode, BOOL abForce = FALSE);
+		bool SetWindowMode(uint inMode, BOOL abForce = FALSE, BOOL abFirstShow = FALSE);
 		void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
 		void ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags);
 		BOOL ShowWindow(int anCmdShow);

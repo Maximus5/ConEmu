@@ -108,9 +108,9 @@ void TrayIcon::AddTrayIcon()
 	}
 }
 
-void TrayIcon::RemoveTrayIcon()
+void TrayIcon::RemoveTrayIcon(bool bForceRemove /*= false*/)
 {
-	if (mb_WindowInTray)
+	if (mb_WindowInTray && (bForceRemove || (m_MsgSource == tsa_Source_None)))
 	{
 		mb_SecondTimeoutMsg = false; mn_BalloonShowTick = 0;
 		Shell_NotifyIcon(NIM_DELETE, &IconData);
@@ -121,12 +121,21 @@ void TrayIcon::RemoveTrayIcon()
 
 void TrayIcon::UpdateTitle()
 {
-	if (!mb_WindowInTray || !IconData.hIcon)
+	// Добавил tsa_Source_None. Если висит Balloon с сообщением,
+	// то нет смысла обновлять тултип, он все-равно не виден...
+	if (!mb_WindowInTray || !IconData.hIcon || (m_MsgSource != tsa_Source_None))
 		return;
 
 	// это тултип, который появляется при наведении курсора мышки
-	GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
-	Shell_NotifyIcon(NIM_MODIFY, &IconData);
+	wchar_t szTitle[128] = {};
+	GetWindowText(ghWnd, szTitle, countof(szTitle));
+	if (*IconData.szInfo || *IconData.szInfoTitle || lstrcmp(szTitle, IconData.szTip))
+	{
+		IconData.szInfo[0] = 0;
+		IconData.szInfoTitle[0] = 0;
+		lstrcpyn(IconData.szTip, szTitle, countof(IconData.szTip));
+		Shell_NotifyIcon(NIM_MODIFY, &IconData);
+	}
 }
 
 void TrayIcon::ShowTrayIcon(LPCTSTR asInfoTip /*= NULL*/, TrayIconMsgSource aMsgSource /*= tsa_Source_None*/)
@@ -197,6 +206,8 @@ void TrayIcon::RestoreWindowFromTray(BOOL abIconOnly /*= FALSE*/)
 
 	if (!gpSet->isAlwaysShowTrayIcon)
 		RemoveTrayIcon();
+	else
+		UpdateTitle();
 }
 
 void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
@@ -262,8 +273,8 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 				if (mb_SecondTimeoutMsg
 					|| (mn_BalloonShowTick && ((GetTickCount() - mn_BalloonShowTick) > MY_BALLOON_TICK)))
 				{
-					Icon.RestoreWindowFromTray(TRUE);
 					m_MsgSource = tsa_Source_None;
+					Icon.RestoreWindowFromTray(TRUE);
 				}
 				else if (!mb_SecondTimeoutMsg && (mn_BalloonShowTick && ((GetTickCount() - mn_BalloonShowTick) > MY_BALLOON_TICK)))
 				{

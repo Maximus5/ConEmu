@@ -2161,6 +2161,8 @@ BOOL CRealConsole::StartProcess()
 			return FALSE;
 	}
 
+	HWND hSetForeground = (gpConEmu->isIconic() || !IsWindowVisible(ghWnd)) ? GetForegroundWindow() : ghWnd;
+
 	mb_UseOnlyPipeInput = FALSE;
 
 	if (mp_sei)
@@ -2462,7 +2464,7 @@ BOOL CRealConsole::StartProcess()
 				AllowSetForegroundWindow(pi.dwProcessId);
 			}
 
-			apiSetForegroundWindow(ghWnd);
+			apiSetForegroundWindow(hSetForeground);
 			DEBUGSTRPROC(L"CreateProcess OK\n");
 			lbRc = TRUE;
 			/*if (!AttachPID(pi.dwProcessId)) {

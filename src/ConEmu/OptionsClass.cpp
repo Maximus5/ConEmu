@@ -3200,6 +3200,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbQuakeStyle:
 			{
+				BYTE bPrevStyle = gpSet->isQuakeStyle;
 				gpSet->isQuakeStyle = IsChecked(hWnd2, cbQuakeStyle);
 
 				if (gpSet->isHideCaptionAlways())
@@ -3208,9 +3209,15 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					TODO("показать тултип, что скрытие обязательно при прозрачности");
 				}
 
+				if (gpSet->isQuakeStyle)
+				{
+					gpSet->isTryToCenter = true;
+					CheckDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
+				}
+
 				DWORD nNewWindowMode = rNormal;
 
-				if (gpSet->isQuakeStyle)
+				if (gpSet->isQuakeStyle && !bPrevStyle)
 				{
 					m_QuakePrevSize.bWasSaved = true;
 					m_QuakePrevSize.wndWidth = gpSet->wndWidth;
@@ -3221,7 +3228,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					m_QuakePrevSize.WindowMode = gpConEmu->WindowMode;
 					gpSet->nHideCaptionAlwaysFrame = 0;
 				}
-				else if (m_QuakePrevSize.bWasSaved)
+				else if (!gpSet->isQuakeStyle && m_QuakePrevSize.bWasSaved)
 				{
 					gpSet->wndWidth = m_QuakePrevSize.wndWidth;
 					gpSet->wndHeight = m_QuakePrevSize.wndHeight;

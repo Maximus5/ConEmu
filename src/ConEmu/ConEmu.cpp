@@ -1835,16 +1835,19 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 
 				bool bRoundTitle = gpSetCls->CheckTheming() && mp_TabBar->IsTabsShown();
 
-				if (gpSet->isQuakeStyle && (mn_QuakePercent > 0))
+				if (gpSet->isQuakeStyle)
 				{
-					int nPercent = (mn_QuakePercent > 100) ? 100 : (mn_QuakePercent == 1) ? 0 : mn_QuakePercent;
-					int nQuakeHeight = (rcClient.bottom - rcClient.top + 1) * nPercent / 100;
-					if (nQuakeHeight < 1)
+					if (mn_QuakePercent > 0)
 					{
-						nQuakeHeight = 1; // иначе регион не применитс€
-						rcClient.right = rcClient.left + 1;
+						int nPercent = (mn_QuakePercent > 100) ? 100 : (mn_QuakePercent == 1) ? 0 : mn_QuakePercent;
+						int nQuakeHeight = (rcClient.bottom - rcClient.top + 1) * nPercent / 100;
+						if (nQuakeHeight < 1)
+						{
+							nQuakeHeight = 1; // иначе регион не применитс€
+							rcClient.right = rcClient.left + 1;
+						}
+						rcClient.bottom = min(rcClient.bottom, (rcClient.top+nQuakeHeight));
 					}
-					rcClient.bottom = min(rcClient.bottom, (rcClient.top+nQuakeHeight));
 					bRoundTitle = false;
 				}
 
@@ -3283,7 +3286,7 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow)
 	return lbRc;
 }
 
-bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
+bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFirstShow /*= FALSE*/)
 {
 	if (inMode != rNormal && inMode != rMaximized && inMode != rFullScreen)
 		inMode = rNormal; // ошибка загрузки настроек?
@@ -3420,10 +3423,10 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			// 2010-02-14 ѕроверку делаем “ќЋ№ ќ при загрузке настроек и включенном каскаде
 			//// ѕараметры именно такие, результат - просто подгонка rcNew под рабочую область текущего монитора
 			//rcNew = CalcRect(CER_CORRECTED, rcNew, CER_MAXIMIZED);
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			WINDOWPLACEMENT wpl; memset(&wpl,0,sizeof(wpl)); wpl.length = sizeof(wpl);
 			GetWindowPlacement(ghWnd, &wpl);
-#endif
+			#endif
 
 			if (pRCon && gpSetCls->isAdvLogging)
 			{
@@ -3432,9 +3435,9 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			}
 
 			SetWindowPos(ghWnd, NULL, rcNew.left, rcNew.top, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top, SWP_NOZORDER);
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			GetWindowPlacement(ghWnd, &wpl);
-#endif
+			#endif
 
 			if (ghOpWnd)
 				CheckRadioButton(gpSetCls->mh_Tabs[gpSetCls->thi_Main], rNormal, rFullScreen, rNormal);
@@ -3442,14 +3445,16 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			mb_isFullScreen = false;
 
 			if (!IsWindowVisible(ghWnd))
-				ShowWindow(SW_SHOWNORMAL);
+			{
+				ShowWindow((abFirstShow && WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL);
+			}
 
 			#ifdef _DEBUG
 			GetWindowPlacement(ghWnd, &wpl);
 			#endif
 
 			// ≈сли это во врем€ загрузки - то до первого ShowWindow - isIconic возвращает FALSE
-			if (isIconic() || isZoomed())
+			if (!(abFirstShow && WindowStartMinimized) && (isIconic() || isZoomed()))
 			{
 				ShowWindow(SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочетс€...
 				// что-то после AltF9, AltF9 уголки остаютс€ не срезанными...
@@ -4284,7 +4289,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 		else
 		{
 			// »наче - "консольную" область возможно придетс€ отцентрировать (по настройке)
-			if ((gpSet->isTryToCenter && (isZoomed() || mb_isFullScreen))
+			if ((gpSet->isTryToCenter && (isZoomed() || mb_isFullScreen || gpSet->isQuakeStyle))
 					|| isNtvdm())
 			{
 				rcNewCon.left = (client.right + client.left - (int)pVCon->Width)/2;
@@ -4596,8 +4601,9 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	
 	// ≈сли у нас режим скрыти€ заголовка (при максимизации)
 	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE))
-		&& (change2WindowMode == (DWORD)-1)
-		&& (mb_MaximizedHideCaption || gpSet->isQuakeStyle))
+		&& (gpSet->isQuakeStyle ||
+			((change2WindowMode == (DWORD)-1)
+			&& (mb_MaximizedHideCaption))))
 	{
 		if (isZoomed())
 		{
@@ -5748,7 +5754,8 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 		{
 			//if (!gpSet->vmMinimizeRestore)
 
-			DWORD VkMod = gpSet->GetHotkeyById(gRegisteredHotKeys[i].DescrID);
+			const ConEmuHotKey* pHk = NULL;
+			DWORD VkMod = gpSet->GetHotkeyById(gRegisteredHotKeys[i].DescrID, &pHk);
 			UINT vk = gpSet->GetHotkey(VkMod);
 			if (!vk)
 				continue;  // не просили
@@ -5774,11 +5781,14 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 					// -- ѕри одновременном запуске двух копий - велики шансы, что они подерутс€
 					// -- наверное вообще не будем показывать ошибку
 					// -- кроме того, isFirstInstance() не работает, если копи€ ConEmu.exe запущена под другим юзером
-					#ifdef _DEBUG
-					wchar_t szErr[128]; DWORD dwErr = GetLastError();
-					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't register Minimize/Restore hotkey, ErrCode=0x%08X", dwErr);
-					//MBoxA(szErr);
-					#endif
+					wchar_t szErr[255]; DWORD dwErr = GetLastError();
+					wchar_t szKey[128]; gpSet->GetHotkeyName(pHk, szKey);
+					_wsprintf(szErr, SKIPLEN(countof(szErr))
+						L"Can't register Minimize/Restore hotkey\n%s"
+						L"%s, ErrCode=%u", 
+						(dwErr == 1409) ? L"Hotkey already registered by another App\n" : L"",
+						szKey, dwErr);
+					Icon.ShowTrayIcon(szErr, tsa_Config_Error);
 				}
 			}
 		}
@@ -7928,7 +7938,7 @@ void CConEmuMain::PaintGaps(HDC hDC)
 
 		//if (mp_VActive && mp_VActive->Width && mp_VActive->Height)
 		//{
-		//	if ((gpSet->isTryToCenter && (isZoomed() || mb_isFullScreen))
+		//	if ((gpSet->isTryToCenter && (isZoomed() || mb_isFullScreen || gpSet->isQuakeStyle))
 		//			|| isNtvdm())
 		//	{
 		//		offsetRect.left = (client.right+client.left-(int)mp_VActive->Width)/2;
@@ -9404,7 +9414,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		if (gpSet->isDesktopMode)
 			OnDesktopMode();
 
-		SetWindowMode(WindowMode);
+		SetWindowMode(WindowMode, FALSE, TRUE);
 
 		PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
 
@@ -9718,7 +9728,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	//    delete ProgressBars;
 	//    ProgressBars = NULL;
 	//}
-	Icon.RemoveTrayIcon();
+	Icon.RemoveTrayIcon(true);
 
 	Taskbar_Release();
 	//if (mp_TaskBar3)
@@ -14338,8 +14348,13 @@ void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *ar
 	{
 		mp_VActive = apVCon;
 
-		// “еперь можно показать созданную консоль
-		apiShowWindow(mp_VActive->GetView(), SW_SHOW);
+		HWND hWndDC = mp_VActive->GetView();
+		if (hWndDC != NULL)
+		{
+			_ASSERTE(hWndDC==NULL && "Called from constructor, NULL expected");
+			// “еперь можно показать созданную консоль
+			apiShowWindow(mp_VActive->GetView(), SW_SHOW);
+		}
 	}
 }
 

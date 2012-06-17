@@ -4501,7 +4501,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 	ConEmuHotKey HotKeys[] =
 	{
 		// User (Keys, Global)
-		{vkMinimizeRestore,chk_Global, NULL,   L"MinimizeRestore",       MakeHotKey('C',VK_LWIN), CConEmuCtrl::key_MinimizeRestore},
+		{vkMinimizeRestore,chk_Global, NULL,   L"MinimizeRestore",       MakeHotKey('C',VK_LWIN,VK_SHIFT), CConEmuCtrl::key_MinimizeRestore},
 		{vkForceFullScreen,chk_Global, NULL,   L"ForcedFullScreen",      MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL,VK_MENU), CConEmuCtrl::key_ForcedFullScreen},
 		// User (Keys)
 		{vkMultiNew,       chk_User, &isMulti, L"Multi.NewConsole",      MakeHotKey('W',VK_LWIN), CConEmuCtrl::key_MultiNew},

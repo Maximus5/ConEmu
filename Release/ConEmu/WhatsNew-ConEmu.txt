@@ -10,10 +10,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 [+] 'Quake style slide down' third state - auto hide on lose focus.
-[+] 'Auto copy' on 'Mark & Paste' - copy selected text immediately on left mouse button up (when selecting with mouse).
+[%] Не перехватывать фокус при запуске, если запускаемся с ключом "/min".
+[+] Issue 599: 'Auto copy' on 'Mark & Paste' - copy selected text immediately on left mouse button up (when selecting with mouse).
+[%] Issue 599, Issue 570: Small lags removed, when pastings long text from clipboard.
 [+] 'Main' settings page redesigned.
 [+] Chinese improvments.
-[*] Some Wine related fixes.
+[*] Some Wine related fixes, but still not working ;)
+[*] При невозможности зарегистрировать глобальный хоткей (Minimize/Restore) выдается сообщение в области уведомлений.
+[*] Умолчание для Minimize/Restore - Win+Shift+C.
 
 
 2012.06.14

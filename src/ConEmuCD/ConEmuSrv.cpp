@@ -973,7 +973,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 
 	SetThreadPriority(gpSrv->hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
-	gpSrv->nMaxInputQueue = 255;
+	gpSrv->nMaxInputQueue = CE_MAX_INPUT_QUEUE_BUFFER;
 	gpSrv->pInputQueue = (INPUT_RECORD*)calloc(gpSrv->nMaxInputQueue, sizeof(INPUT_RECORD));
 	gpSrv->pInputQueueEnd = gpSrv->pInputQueue+gpSrv->nMaxInputQueue;
 	gpSrv->pInputQueueWrite = gpSrv->pInputQueue;
