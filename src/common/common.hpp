@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    96
+#define CESERVER_REQ_VER    97
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -271,6 +271,7 @@ const CECMD
 	CECMD_ACTIVATETAB    = 58, // dwData[0]=0-based Console, dwData[1]=0-based Tab
 	CECMD_FREEZEALTSRV   = 59, // dwData[0]=1-Freeze, 0-Thaw; dwData[1]=New Alt server PID
 	CECMD_SETFULLSCREEN  = 60, // SetConsoleDisplayMode(CONSOLE_FULLSCREEN_MODE) -> CESERVER_REQ_FULLSCREEN
+	CECMD_MOUSECLICK     = 61, // wData[0]=cr.X, wData[1]=cr.Y - обработка клика, если консоль в ReadConsoleW
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,

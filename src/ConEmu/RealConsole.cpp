@@ -204,6 +204,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mb_SkipFarPidChange = FALSE;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
 	CloseConfirmReset();
+	mb_WasSendClickToReadCon = false;
 	mn_LastSetForegroundPID = 0;
 	
 	m_RConServer.Init(this);
@@ -2667,6 +2668,41 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	
 	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
 		return; // ¬ консоль не пересылать, событие обработал "сам буфер"
+
+	if (messg == WM_LBUTTONDOWN)
+	{
+		DWORD nActivePID = GetActivePID();
+		if (nActivePID && !isFar() && (mp_ABuf->m_Type == rbt_Primary))
+		{
+			mb_WasSendClickToReadCon = false; // сначала - сброс
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_MOUSECLICK, sizeof(CESERVER_REQ_HDR)+2*sizeof(WORD));
+			if (pIn)
+			{
+				pIn->wData[0] = crMouse.X;
+				pIn->wData[1] = crMouse.Y;
+
+				CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
+				if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
+				{
+					mb_WasSendClickToReadCon = (pOut->dwData[0] != 0);
+				}
+				ExecuteFreeResult(pOut);
+				ExecuteFreeResult(pIn);
+			}
+
+			if (mb_WasSendClickToReadCon)
+				return; // уже клик обработали (перемещение текствого курсора в ReadConsoleW)
+		}
+		else
+		{
+			mb_WasSendClickToReadCon = false;
+		}
+	}
+	else if (messg == WM_LBUTTONUP && mb_WasSendClickToReadCon)
+	{
+		mb_WasSendClickToReadCon = false;
+		return; // однократно, клик пропускаем
+	}
 
 	// ≈сли юзер запретил посылку мышиных событий в консоль
 	if (gpSet->isDisableMouse)

@@ -86,3 +86,18 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
 struct AnnotationHeader;
 extern AnnotationHeader* gpAnnotationHeader;
 extern HANDLE ghCurrentOutBuffer;
+
+struct ReadConsoleInfo
+{
+	HANDLE hConsoleInput;
+	DWORD InReadConsoleTID;
+	DWORD LastReadConsoleTID;
+	HANDLE hConsoleInput2;
+	DWORD LastReadConsoleInputTID;
+	BOOL  bIsUnicode;
+	COORD crStartCursorPos;
+	DWORD nConInMode;
+	DWORD nConOutMode;
+};
+extern struct ReadConsoleInfo gReadConsoleInfo;
+BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos);

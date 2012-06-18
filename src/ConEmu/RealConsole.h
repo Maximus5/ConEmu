@@ -663,6 +663,7 @@ class CRealConsole
 		BOOL mb_InCloseConsole;
 		DWORD mn_CloseConfirmedTick;
 		bool mb_CloseFarMacroPosted;
+		bool mb_WasSendClickToReadCon;
 		// Логи
 		BYTE m_UseLogs;
 		HANDLE mh_LogInput; wchar_t *mpsz_LogInputFile/*, *mpsz_LogPackets*/; //UINT mn_LogPackets;

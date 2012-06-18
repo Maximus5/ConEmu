@@ -339,7 +339,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	#endif
 
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
-		wchar_t szTimingMsg[512]; HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
+		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
 		{
 			gbShowExeMsgBox = true;
@@ -750,7 +751,8 @@ void FlushMouseEvents()
 void DllStop()
 {
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
-		wchar_t szTimingMsg[512]; HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
+		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	#endif
 
 	print_timings(L"DllStop");
@@ -1305,6 +1307,22 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				ppReply->dwData[1] = nErrCode;
 			}
 		} // CECMD_LANGCHANGE
+		break;
+	case CECMD_MOUSECLICK:
+		{
+			BOOL bProcessed = FALSE;
+			if (gReadConsoleInfo.InReadConsoleTID || gReadConsoleInfo.LastReadConsoleInputTID)
+			{
+				bProcessed = OnReadConsoleClick(pCmd->wData[0], pCmd->wData[1]);
+			}
+
+			lbRc = TRUE;
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD);
+			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
+			{
+				ppReply->dwData[0] = bProcessed;
+			}
+		} // CECMD_MOUSECLICK
 		break;
 	case CECMD_STARTSERVER:
 		{

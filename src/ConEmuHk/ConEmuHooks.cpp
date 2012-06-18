@@ -145,6 +145,7 @@ extern HANDLE ghLastAnsiCapable, ghLastAnsiNotCapable;
 /* ************ Globals for Far Hooks ************ */
 struct HookModeFar gFarMode = {sizeof(HookModeFar)};
 
+struct ReadConsoleInfo gReadConsoleInfo = {};
 
 int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
 //
@@ -187,6 +188,8 @@ BOOL WINAPI OnSetForegroundWindow(HWND hWnd);
 HWND WINAPI OnGetForegroundWindow();
 int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
 DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName);
+BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl);
+BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl);
 BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents);
 BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
@@ -312,6 +315,8 @@ bool InitHooksCommon()
 		//{(void*)OnPeekConsoleInputAx,	"PeekConsoleInputA",	kernel32},
 		//{(void*)OnReadConsoleInputWx,	"ReadConsoleInputW",	kernel32},
 		//{(void*)OnReadConsoleInputAx,	"ReadConsoleInputA",	kernel32},
+		{(void*)OnReadConsoleW,			"ReadConsoleW",			kernel32},
+		{(void*)OnReadConsoleA,			"ReadConsoleA",			kernel32},
 		{(void*)OnPeekConsoleInputW,	"PeekConsoleInputW",	kernel32},
 		{(void*)OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32},
 		{(void*)OnReadConsoleInputW,	"ReadConsoleInputW",	kernel32},
@@ -2512,6 +2517,166 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 }
 
 
+void OnReadConsoleStart(BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
+{
+	if (gReadConsoleInfo.InReadConsoleTID)
+		gReadConsoleInfo.LastReadConsoleTID = gReadConsoleInfo.InReadConsoleTID;
+
+	bool bCatch = false;
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD nConIn = 0, nConOut = 0;
+	if (GetConsoleScreenBufferInfo(hConOut, &csbi)
+		&& GetConsoleMode(hConsoleInput, &nConIn) && GetConsoleMode(hConOut, &nConOut))
+	{
+		if ((nConIn & ENABLE_ECHO_INPUT) && (nConIn & ENABLE_LINE_INPUT))
+		{
+			bCatch = true;
+			gReadConsoleInfo.InReadConsoleTID = GetCurrentThreadId();
+			gReadConsoleInfo.bIsUnicode = bUnicode;
+			gReadConsoleInfo.hConsoleInput = hConsoleInput;
+			gReadConsoleInfo.crStartCursorPos = csbi.dwCursorPosition;
+			gReadConsoleInfo.nConInMode = nConIn;
+			gReadConsoleInfo.nConOutMode = nConOut;
+		}
+	}
+	
+	if (!bCatch)
+	{
+		gReadConsoleInfo.InReadConsoleTID = 0;
+	}
+}
+
+void OnReadConsoleEnd(BOOL bSucceeded, BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
+{
+	if (gReadConsoleInfo.InReadConsoleTID)
+	{
+		gReadConsoleInfo.LastReadConsoleTID = gReadConsoleInfo.InReadConsoleTID;
+		gReadConsoleInfo.InReadConsoleTID = 0;
+
+		TODO("ќтослать в ConEmu считанную строку!");
+	}
+}
+
+BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos)
+{
+	if (!gReadConsoleInfo.InReadConsoleTID && !gReadConsoleInfo.LastReadConsoleInputTID)
+		return FALSE;
+
+	TODO("“ут бы нужно еще учитывать, что консоль могла прокрутитьс€ вверх на несколько строк, если был ENABLE_WRAP_AT_EOL_OUTPUT");
+	TODO("≈ще интересно, что будет, если координата начала вдруг окажетс€ за пределами буфера (типа сузили окно, и курсор уехал)");
+
+	BOOL lbRc = FALSE, lbWrite = FALSE;
+    int nChars = 0;
+    DWORD nWritten = 0, nConInMode = 0;
+
+	HANDLE hConIn = gReadConsoleInfo.InReadConsoleTID ? gReadConsoleInfo.hConsoleInput : gReadConsoleInfo.hConsoleInput2;
+	if (!hConIn)
+		return FALSE;
+
+	if (!gReadConsoleInfo.InReadConsoleTID && gReadConsoleInfo.LastReadConsoleInputTID)
+	{
+		// ѕроверить, может программа мышь сама обрабатывает?
+		if (!GetConsoleMode(hConIn, &nConInMode))
+			return FALSE;
+		if ((nConInMode & ENABLE_MOUSE_INPUT) == ENABLE_MOUSE_INPUT)
+			return FALSE; // –азрешить обрабатывать самой программе
+	}
+
+	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	if (GetConsoleScreenBufferInfo(hConOut, &csbi) && csbi.dwSize.X && csbi.dwSize.Y)
+	{
+		lbRc = TRUE;
+
+		nChars = (csbi.dwSize.X * (yPos - csbi.dwCursorPosition.Y))
+			+ (xPos - csbi.dwCursorPosition.X);
+
+		if (nChars != 0)
+		{
+			int nCount = (nChars < 0) ? (-nChars) : nChars;
+			bool bHomeEnd = false;
+			if (nCount > (csbi.dwSize.X * (csbi.srWindow.Bottom - csbi.srWindow.Top)))
+			{
+				bHomeEnd = true;
+				nCount = 1;
+			}
+
+			INPUT_RECORD* pr = (INPUT_RECORD*)calloc((size_t)nCount,sizeof(*pr));
+			if (pr != NULL)
+			{
+				WORD vk = bHomeEnd ? ((nChars < 0) ? VK_HOME : VK_END) :
+					((nChars < 0) ? VK_LEFT : VK_RIGHT);
+				HKL hkl = GetKeyboardLayout(gReadConsoleInfo.InReadConsoleTID ? gReadConsoleInfo.InReadConsoleTID : gReadConsoleInfo.LastReadConsoleInputTID);
+				WORD sc = MapVirtualKeyEx(vk, MAPVK_VK_TO_VSC, hkl);
+				if (!sc)
+				{
+					sc = (vk == VK_LEFT)  ? 0x4B :
+						 (vk == VK_RIGHT) ? 0x4D :
+						 (vk == VK_HOME)  ? 0x47 :
+						 (vk == VK_RIGHT) ? 0x4F : 0;
+				}
+
+				for (int i = 0; i < nCount; i++)
+				{
+					pr[i].EventType = KEY_EVENT;
+					pr[i].Event.KeyEvent.bKeyDown = TRUE;
+					pr[i].Event.KeyEvent.wRepeatCount = 1;
+					pr[i].Event.KeyEvent.wVirtualKeyCode = vk;
+					pr[i].Event.KeyEvent.wVirtualScanCode = sc;
+					pr[i].Event.KeyEvent.dwControlKeyState = ENHANCED_KEY;
+				}
+
+				while (nCount > 0)
+				{
+					lbWrite = WriteConsoleInputW(hConIn, pr, min(nCount,256), &nWritten);
+					if (!lbWrite || !nWritten)
+						break;
+					nCount -= nWritten;
+				}
+
+				free(pr);
+			}
+		}
+	}
+
+	return lbRc;
+}
+
+BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
+{
+	typedef BOOL (WINAPI* OnReadConsoleA_t)(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl);
+	SUPPRESSORIGINALSHOWCALL;
+	ORIGINAL(ReadConsoleA);
+	BOOL lbRc = FALSE;
+
+	OnReadConsoleStart(FALSE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+
+	lbRc = F(ReadConsoleA)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+
+	OnReadConsoleEnd(lbRc, FALSE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+
+	return lbRc;
+}
+
+BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
+{
+	typedef BOOL (WINAPI* OnReadConsoleW_t)(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl);
+	SUPPRESSORIGINALSHOWCALL;
+	ORIGINAL(ReadConsoleW);
+	BOOL lbRc = FALSE;
+
+	OnReadConsoleStart(TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+
+	lbRc = F(ReadConsoleW)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+
+	OnReadConsoleEnd(lbRc, TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+
+	return lbRc;
+}
+
+
 BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents)
 {
 	typedef BOOL (WINAPI* OnGetNumberOfConsoleInputEvents_t)(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents);
@@ -2713,6 +2878,11 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 	}
 #endif
 
+	DWORD nCurrentTID = GetCurrentThreadId();
+
+	gReadConsoleInfo.LastReadConsoleInputTID = nCurrentTID;
+	gReadConsoleInfo.hConsoleInput2 = hConsoleInput;
+
 	if (!gFarMode.bFarHookMode || !gFarMode.bMonitorConsoleInput || !nRead || !lpBuffer)
 		return;
 		
@@ -2728,7 +2898,7 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 		pIn->PeekReadInfo.cPeekRead = acPeekRead;
 		pIn->PeekReadInfo.cUnicode = acUnicode;
 		pIn->PeekReadInfo.h = hConsoleInput;
-		pIn->PeekReadInfo.nTID = GetCurrentThreadId();
+		pIn->PeekReadInfo.nTID = nCurrentTID;
 		pIn->PeekReadInfo.nPID = GetCurrentProcessId();
 		pIn->PeekReadInfo.bMainThread = (pIn->PeekReadInfo.nTID == gnHookMainThreadId);
 		memmove(pIn->PeekReadInfo.Buffer, lpBuffer, nRead*sizeof(INPUT_RECORD));
