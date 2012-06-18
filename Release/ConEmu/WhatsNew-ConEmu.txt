@@ -10,6 +10,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.06.17a
+[%] Задержка при активации ConEmu с открытым Far 3.
+[%] В Putty не проходили события от колеса мышки.
+[%] В 120617 поломался аттач GUI приложений.
+
+
 2012.06.17
 [+] 'Quake style slide down' third state - auto hide on lose focus.
 [%] Не перехватывать фокус при запуске, если запускаемся с ключом "/min".

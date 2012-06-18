@@ -175,6 +175,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	ms_MainSrv_Pipe[0] = 0; ms_ConEmuC_Pipe[0] = 0; ms_ConEmuCInput_Pipe[0] = 0; ms_VConServer_Pipe[0] = 0;
 	mh_TermEvent = CreateEvent(NULL,TRUE/*MANUAL - используется в нескольких нитях!*/,FALSE,NULL); ResetEvent(mh_TermEvent);
 	mh_MonitorThreadEvent = CreateEvent(NULL,TRUE,FALSE,NULL); //2009-09-09 Поставил Manual. Нужно для определения, что можно убирать флаг Detached
+	mh_UpdateServerActiveEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+	mb_UpdateServerActive = FALSE;
 	mh_ApplyFinished = CreateEvent(NULL,TRUE,FALSE,NULL);
 	//mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	//WARNING("mh_Sync2WindowEvent убрать");
@@ -1405,7 +1407,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	enum
 	{
 		IDEVENT_TERM = 0,           // Завершение нити/консоли/conemu
-		IDEVENV_MONITORTHREADEVENT, // Используется, чтобы вызвать Update & Invalidate
+		IDEVENT_MONITORTHREADEVENT, // Используется, чтобы вызвать Update & Invalidate
+		IDEVENT_UPDATESERVERACTIVE, // Дернуть pRCon->UpdateServerActive()
 		IDEVENT_SWITCHSRV,          // пришел запрос от альт.сервера переключиться на него
 		IDEVENT_SERVERPH,           // ConEmuC.exe process handle (server)
 		EVENTS_COUNT
@@ -1416,7 +1419,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	_ASSERTE(EVENTS_COUNT==countof(hEvents)); // проверить размерность
 
 	hEvents[IDEVENT_TERM] = pRCon->mh_TermEvent;
-	hEvents[IDEVENV_MONITORTHREADEVENT] = pRCon->mh_MonitorThreadEvent; // Использовать, чтобы вызвать Update & Invalidate
+	hEvents[IDEVENT_MONITORTHREADEVENT] = pRCon->mh_MonitorThreadEvent; // Использовать, чтобы вызвать Update & Invalidate
+	hEvents[IDEVENT_UPDATESERVERACTIVE] = pRCon->mh_UpdateServerActiveEvent; // Дернуть pRCon->UpdateServerActive()
 	hEvents[IDEVENT_SWITCHSRV] = pRCon->mh_SwitchActiveServer;
 	hEvents[IDEVENT_SERVERPH] = pRCon->mh_MainSrv;
 	//HANDLE hAltServerHandle = NULL;
@@ -1496,7 +1500,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		//		if (pRCon->ReopenServerPipes())
 		//		{
 		//			// Меняем nWait, т.к. основной сервер еще не закрылся (консоль жива)
-		//			nWait = IDEVENV_MONITORTHREADEVENT;
+		//			nWait = IDEVENT_MONITORTHREADEVENT;
 		//		}
 		//		else
 		//		{
@@ -1528,11 +1532,19 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			SetEvent(pRCon->mh_ActiveServerSwitched);
 		}
 
-		// Это событие теперь ManualReset
-		if (nWait == IDEVENV_MONITORTHREADEVENT
-		        || WaitForSingleObject(hEvents[IDEVENV_MONITORTHREADEVENT],0) == WAIT_OBJECT_0)
+		if (nWait == IDEVENT_UPDATESERVERACTIVE)
 		{
-			ResetEvent(hEvents[IDEVENV_MONITORTHREADEVENT]);
+			BOOL lb = pRCon->mb_UpdateServerActive;
+			pRCon->UpdateServerActive(lb, TRUE);
+			if (lb == pRCon->mb_UpdateServerActive)
+				ResetEvent(pRCon->mh_UpdateServerActiveEvent);
+		}
+
+		// Это событие теперь ManualReset
+		if (nWait == IDEVENT_MONITORTHREADEVENT
+		        || WaitForSingleObject(hEvents[IDEVENT_MONITORTHREADEVENT],0) == WAIT_OBJECT_0)
+		{
+			ResetEvent(hEvents[IDEVENT_MONITORTHREADEVENT]);
 
 			// Сюда мы попадаем, например, при запуске новой консоли "Под админом", когда GUI НЕ "Под админом"
 			// В начале нити (pRCon->mh_MainSrv == NULL), если запуск идет через ShellExecuteEx(runas)
@@ -4262,7 +4274,7 @@ bool CRealConsole::ReopenServerPipes()
 	if (bActive)
 		gpConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
 
-	UpdateServerActive(bActive);
+	UpdateServerActive(bActive, TRUE);
 
 #ifdef _DEBUG
 	wchar_t szDbgInfo[512]; szDbgInfo[0] = 0;
@@ -6114,9 +6126,19 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 
 // Обновить в сервере флаги Active & ThawRefreshThread,
 // а заодно заставить перечитать содержимое консоли (если abActive == TRUE)
-void CRealConsole::UpdateServerActive(BOOL abActive)
+void CRealConsole::UpdateServerActive(BOOL abActive, BOOL abImmediate /*= FALSE*/)
 {
 	if (!this) return;
+
+	mb_UpdateServerActive = abActive;
+
+	DWORD nTID = GetCurrentThreadId();
+	if (!abImmediate && (mn_MonitorThreadID && (nTID != mn_MonitorThreadID)))
+	{
+		_ASSERTE(mh_UpdateServerActiveEvent!=NULL);
+		SetEvent(mh_UpdateServerActiveEvent);
+		return;
+	}
 
 	BOOL fSuccess = FALSE;
 
@@ -6886,7 +6908,7 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 
 			pipe.Close();
 			// Теперь нужно передернуть сервер, чтобы он перечитал содержимое консоли
-			UpdateServerActive(TRUE);
+			UpdateServerActive(TRUE, TRUE);
 			// И MonitorThread, чтобы он получил новое содержимое
 			ResetEvent(mh_ApplyFinished);
 			mn_LastConsolePacketIdx--;

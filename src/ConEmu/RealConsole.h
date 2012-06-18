@@ -413,7 +413,7 @@ class CRealConsole
 		void OnDeactivate(int nNewNum);
 		void ShowHideViews(BOOL abShow);
 		void OnGuiFocused(BOOL abFocus, BOOL abForceChild = FALSE);
-		void UpdateServerActive(BOOL abActive);
+		void UpdateServerActive(BOOL abActive, BOOL abImmediate = FALSE);
 		BOOL CheckBufferSize();
 		//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
 		BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
@@ -539,11 +539,14 @@ class CRealConsole
 		// Нить наблюдения за консолью
 		static DWORD WINAPI MonitorThread(LPVOID lpParameter);
 		HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
+		HANDLE mh_MonitorThreadEvent;
+		HANDLE mh_UpdateServerActiveEvent;
+		BOOL mb_UpdateServerActive;
 		// Для пересылки событий ввода в консоль
 		//static DWORD WINAPI InputThread(LPVOID lpParameter);
 		//HANDLE mh_InputThread; DWORD mn_InputThreadID;
 
-		HANDLE mh_TermEvent, mh_MonitorThreadEvent, mh_ApplyFinished;
+		HANDLE mh_TermEvent, mh_ApplyFinished;
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
 		//wchar_t* ms_SpecialCmd;

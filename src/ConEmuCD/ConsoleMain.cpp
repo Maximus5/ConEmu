@@ -666,22 +666,6 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	{
 		pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress(hKernel, "GetConsoleKeyboardLayoutNameW");
 		pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress(hKernel, "GetConsoleProcessList");
-		if (pfnGetConsoleProcessList)
-		{
-			SetLastError(0);
-			nCurrentPIDCount = pfnGetConsoleProcessList(nCurrentPIDs, countof(nCurrentPIDs));
-			// Wine bug
-			if (!nCurrentPIDCount)
-			{
-				DWORD nErr = GetLastError();
-				_ASSERTE(nCurrentPIDCount || gbIsWine);
-				wchar_t szDbgMsg[512], szFile[MAX_PATH] = {};
-				GetModuleFileName(NULL, szFile, countof(szFile));
-				msprintf(szDbgMsg, countof(szDbgMsg), L"%s: PID=%u: GetConsoleProcessList failed, code=%u\r\n", PointToName(szFile), gnSelfPID, nErr);
-				_wprintf(szDbgMsg);
-				pfnGetConsoleProcessList = NULL;
-			}
-		}
 	}
 
 
@@ -830,6 +814,23 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			dwErr = GetLastError();
 			_printf("CreateFile(CONOUT$) failed, ErrCode=0x%08X\n", dwErr);
 			iRc = CERR_CONOUTFAILED; goto wrap;
+		}
+
+		if (pfnGetConsoleProcessList)
+		{
+			SetLastError(0);
+			nCurrentPIDCount = pfnGetConsoleProcessList(nCurrentPIDs, countof(nCurrentPIDs));
+			// Wine bug
+			if (!nCurrentPIDCount)
+			{
+				DWORD nErr = GetLastError();
+				_ASSERTE(nCurrentPIDCount || gbIsWine);
+				wchar_t szDbgMsg[512], szFile[MAX_PATH] = {};
+				GetModuleFileName(NULL, szFile, countof(szFile));
+				msprintf(szDbgMsg, countof(szDbgMsg), L"%s: PID=%u: GetConsoleProcessList failed, code=%u\r\n", PointToName(szFile), gnSelfPID, nErr);
+				_wprintf(szDbgMsg);
+				pfnGetConsoleProcessList = NULL;
+			}
 		}
 	}
 
@@ -4611,7 +4612,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 
 	bool bProcFound = false;
 
-	if (pfnGetConsoleProcessList && gpSrv->hRootProcessGui)
+	if (pfnGetConsoleProcessList && (gpSrv->hRootProcessGui == NULL))
 	{
 		WARNING("Переделать, как-то слишком сложно получается");
 		DWORD nCurCount = 0;
