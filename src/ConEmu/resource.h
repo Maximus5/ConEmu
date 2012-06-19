@@ -29,6 +29,7 @@
 #define IDD_SPG_COMSPEC                 159
 #define IDD_SPG_STARTUP                 160
 #define IDD_SPG_STATUSBAR               161
+#define IDD_SPG_APPDISTINCT2            162
 #define IDD_MORE_HIDE                   200
 #define IDD_SPG_SELECTION               204
 #define IDD_SPG_TABS                    206
@@ -710,8 +711,17 @@
 #define cbCTSAutoCopy                   2340
 #define cbStatusGuiHwnd                 2341
 #define cbStatusViewHwnd                2342
-#define IDC_CHECK3                      2343
 #define cbStatusRealHwnd                2343
+#define cbCTSClickPromptPosition        2344
+#define lbCTSClickPromptPosition        2345
+#define vkCTSVkPromptClk                2346
+#define cbPromptOverride                2348
+#define cbBgImageOverride               2350
+#define tAppDistinctHolder              2353
+#define tScrollAppearDelay              2354
+#define tScrollDisappearDelay           2355
+#define tPadSize                        2356
+#define stAppDistinctBottom             2357
 
 // Next default values for new objects
 // 
@@ -719,7 +729,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        220
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2344
+#define _APS_NEXT_CONTROL_VALUE         2358
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

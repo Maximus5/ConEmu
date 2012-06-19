@@ -78,6 +78,12 @@ class CVirtualConsole;
 #define TaskBracketRight  L'}'
 #define AutoStartTaskName L"<Startup>"
 
+#define SCROLLBAR_DELAY_MIN 100
+#define SCROLLBAR_DELAY_MAX 15000
+
+#define CENTERCONSOLEPAD_MIN 0
+#define CENTERCONSOLEPAD_MAX 64
+
 #define CEHOTKEY_MODMASK    0xFFFFFF00
 #define CEHOTKEY_NUMHOSTKEY 0xFFFFFF00
 #define CEHOTKEY_ARRHOSTKEY 0xFEFEFE00
@@ -648,6 +654,8 @@ struct Settings
 		bool isCTSSelectBlock;
 		//reg->Load(L"CTS.SelectText", isCTSSelectText);
 		bool isCTSSelectText;
+		//reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
+		BYTE isCTSClickPromptPosition; // & vkCTSVkPromptClk
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
 		//BYTE isCTSVkBlock; // модификатор запуска выделения мышкой
 		//reg->Load(L"CTS.VkBlockStart", vmCTSVkBlockStart);
@@ -670,11 +678,11 @@ struct Settings
 		bool isPasteConfirmEnter;
 		//reg->Load(L"ClipboardConfirmLonger", nPasteConfirmLonger);
 		DWORD nPasteConfirmLonger;
-		//reg->Load(L"FarGotoEditor", isFarGotoEditor);
+		//reg->Load(L"FarGotoEditorOpt", isFarGotoEditor);
 		bool isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
 		//BYTE isFarGotoEditorVk; // Клавиша-модификатор для isFarGotoEditor
-		//reg->Load(L"FarGotoEditor", sFarGotoEditor);
+		//reg->Load(L"FarGotoEditorPath", sFarGotoEditor);
 		wchar_t* sFarGotoEditor; // Команда запуска редактора
 		
 		bool IsModifierPressed(int nDescrID, bool bAllowEmpty);
@@ -897,8 +905,14 @@ struct Settings
 		DWORD nIconID;
 		//reg->Load(L"TryToCenter", isTryToCenter);
 		bool isTryToCenter;
+		//reg->Load(L"CenterConsolePad", nCenterConsolePad);
+		DWORD nCenterConsolePad;
 		//reg->Load(L"ShowScrollbar", isAlwaysShowScrollbar); if (isAlwaysShowScrollbar > 2) isAlwaysShowScrollbar = 2;
 		BYTE isAlwaysShowScrollbar;
+		//reg->Load(L"ScrollBarAppearDelay", nScrollBarAppearDelay);
+		DWORD nScrollBarAppearDelay;
+		//reg->Load(L"ScrollBarDisappearDelay", nScrollBarDisappearDelay);
+		DWORD nScrollBarDisappearDelay;
 		
 		//reg->Load(L"TabMargins", rcTabMargins);
 		RECT rcTabMargins;

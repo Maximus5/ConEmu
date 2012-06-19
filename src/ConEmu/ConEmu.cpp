@@ -2338,6 +2338,14 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* a
 	//	rc.bottom -= (rcDC.bottom - rcWnd.bottom - rcFrameTab.bottom);
 	//}
 
+	if ((mg & ((DWORD)CEM_PAD)) && gpSet->isTryToCenter)
+	{
+		rc.left += gpSet->nCenterConsolePad;
+		rc.top += gpSet->nCenterConsolePad;
+		rc.right += gpSet->nCenterConsolePad;
+		rc.bottom += gpSet->nCenterConsolePad;
+	}
+
 	if ((mg & ((DWORD)CEM_SCROLL)) && (gpSet->isAlwaysShowScrollbar == 1))
 	{
 		rc.right += GetSystemMetrics(SM_CXVSCROLL);
@@ -14585,7 +14593,7 @@ LPCWSTR CConEmuMain::MenuAccel(int DescrID, LPCWSTR asText)
 	
 	const ConEmuHotKey* pHK = NULL;
 	DWORD VkMod = gpSet->GetHotkeyById(DescrID, &pHK);
-	if (!VkMod || !pHK)
+	if (!gpSet->GetHotkey(VkMod) || !pHK)
 		return asText;
 
 	gpSet->GetHotkeyName(pHK, szKey);

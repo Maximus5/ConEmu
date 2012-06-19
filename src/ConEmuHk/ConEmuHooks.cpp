@@ -140,6 +140,7 @@ extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
 extern HANDLE ghCurrentOutBuffer;
 HANDLE ghStdOutHandle = NULL;
 extern HANDLE ghLastAnsiCapable, ghLastAnsiNotCapable;
+HANDLE ghLastConInHandle = NULL, ghLastNotConInHandle = NULL;
 /* ************ Globals for SetHook ************ */
 
 /* ************ Globals for Far Hooks ************ */
@@ -188,6 +189,7 @@ BOOL WINAPI OnSetForegroundWindow(HWND hWnd);
 HWND WINAPI OnGetForegroundWindow();
 int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
 DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName);
+BOOL WINAPI OnReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
 BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl);
 BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl);
 BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents);
@@ -317,6 +319,7 @@ bool InitHooksCommon()
 		//{(void*)OnReadConsoleInputAx,	"ReadConsoleInputA",	kernel32},
 		{(void*)OnReadConsoleW,			"ReadConsoleW",			kernel32},
 		{(void*)OnReadConsoleA,			"ReadConsoleA",			kernel32},
+		{(void*)OnReadFile,				"ReadFile",				kernel32},
 		{(void*)OnPeekConsoleInputW,	"PeekConsoleInputW",	kernel32},
 		{(void*)OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32},
 		{(void*)OnReadConsoleInputW,	"ReadConsoleInputW",	kernel32},
@@ -976,6 +979,14 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 	if (ghLastAnsiNotCapable && (ghLastAnsiNotCapable == hObject))
 	{
 		ghLastAnsiNotCapable = NULL;
+	}
+	if (ghLastConInHandle && (ghLastConInHandle == hObject))
+	{
+		ghLastConInHandle = NULL;
+	}
+	if (ghLastNotConInHandle && (ghLastNotConInHandle == hObject))
+	{
+		ghLastNotConInHandle = NULL;
 	}
 
 	if (gpAnnotationHeader && (hObject == (HANDLE)gpAnnotationHeader))
@@ -2558,7 +2569,7 @@ void OnReadConsoleEnd(BOOL bSucceeded, BOOL bUnicode, HANDLE hConsoleInput, LPVO
 	}
 }
 
-BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos)
+BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce)
 {
 	if (!gReadConsoleInfo.InReadConsoleTID && !gReadConsoleInfo.LastReadConsoleInputTID)
 		return FALSE;
@@ -2579,7 +2590,7 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos)
 		// Проверить, может программа мышь сама обрабатывает?
 		if (!GetConsoleMode(hConIn, &nConInMode))
 			return FALSE;
-		if ((nConInMode & ENABLE_MOUSE_INPUT) == ENABLE_MOUSE_INPUT)
+		if (!bForce && ((nConInMode & ENABLE_MOUSE_INPUT) == ENABLE_MOUSE_INPUT))
 			return FALSE; // Разрешить обрабатывать самой программе
 	}
 
@@ -2644,6 +2655,50 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos)
 	return lbRc;
 }
 
+BOOL WINAPI OnReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
+{
+	typedef BOOL (WINAPI* OnReadFile_t)(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+	SUPPRESSORIGINALSHOWCALL;
+	ORIGINAL(ReadFile);
+	BOOL lbRc = FALSE;
+
+	bool bConIn = false;
+
+	if (hFile == ghLastConInHandle)
+	{
+		bConIn = true;
+	}
+	else if (hFile != ghLastNotConInHandle)
+	{
+		DWORD nMode = 0;
+		BOOL lbConRc = GetConsoleMode(hFile, &nMode);
+		if (lbConRc
+			&& ((nMode & (ENABLE_LINE_INPUT & ENABLE_ECHO_INPUT)) == (ENABLE_LINE_INPUT & ENABLE_ECHO_INPUT)))
+		{
+			bConIn = true;
+			ghLastConInHandle = hFile;
+		}
+		else
+		{
+			ghLastNotConInHandle = hFile;
+		}
+	}
+
+	if (bConIn)
+		OnReadConsoleStart(FALSE, hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, NULL);
+
+	lbRc = F(ReadFile)(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
+	DWORD nErr = GetLastError();
+
+	if (bConIn)
+	{
+		OnReadConsoleEnd(lbRc, FALSE, hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, NULL);
+		SetLastError(nErr);
+	}
+
+	return lbRc;
+}
+
 BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
 {
 	typedef BOOL (WINAPI* OnReadConsoleA_t)(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl);
@@ -2654,8 +2709,10 @@ BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 	OnReadConsoleStart(FALSE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 
 	lbRc = F(ReadConsoleA)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+	DWORD nErr = GetLastError();
 
 	OnReadConsoleEnd(lbRc, FALSE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+	SetLastError(nErr);
 
 	return lbRc;
 }
@@ -2670,8 +2727,10 @@ BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 	OnReadConsoleStart(TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 
 	lbRc = F(ReadConsoleW)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+	DWORD nErr = GetLastError();
 
 	OnReadConsoleEnd(lbRc, TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+	SetLastError(nErr);
 
 	return lbRc;
 }

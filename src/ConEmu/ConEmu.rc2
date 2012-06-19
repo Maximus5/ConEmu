@@ -198,6 +198,7 @@ BEGIN
     vkCTSVkBlockStart       "Start vertical block selection (like standard console)"
     vkCTSVkText             "Text selection modifier"
     vkCTSVkTextStart        "Start text selection (like text editors)"
+    vkCTSVkPromptClk        "Change prompt text cursor position with left mouse click (cmd, powershell, tcc/le, ...)"
     vkFarGotoEditorVk       "FarGotoEditor modifier (hyperlinks and compiler errors)"
 	vkFindTextDlg           "Find text in active console"
 	vkForceFullScreen       "Enter TEXT fullscreen mode, when available. If not - standard fullscreen and always on top"

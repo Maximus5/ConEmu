@@ -2669,17 +2669,19 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
 		return; // В консоль не пересылать, событие обработал "сам буфер"
 
-	if (messg == WM_LBUTTONDOWN)
+	if ((messg == WM_LBUTTONDOWN) && gpSet->isCTSClickPromptPosition
+		&& gpSet->IsModifierPressed(vkCTSVkPromptClk, true))
 	{
 		DWORD nActivePID = GetActivePID();
 		if (nActivePID && !isFar() && (mp_ABuf->m_Type == rbt_Primary))
 		{
 			mb_WasSendClickToReadCon = false; // сначала - сброс
-			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_MOUSECLICK, sizeof(CESERVER_REQ_HDR)+2*sizeof(WORD));
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_MOUSECLICK, sizeof(CESERVER_REQ_HDR)+3*sizeof(WORD));
 			if (pIn)
 			{
 				pIn->wData[0] = crMouse.X;
 				pIn->wData[1] = crMouse.Y;
+				pIn->wData[2] = (gpSet->isCTSClickPromptPosition == 1);
 
 				CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
 				if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
@@ -7257,7 +7259,10 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 		else if ((hglb = GetClipboardData(CF_UNICODETEXT)) == NULL)
 		{
 			nErrCode = GetLastError();
-			wcscpy_c(szErr, L"Clipboard does not contains text.\nNothing to paste.");
+			//wcscpy_c(szErr, L"Clipboard does not contains text.\nNothing to paste.");
+			szErr[0] = 0;
+			TODO("Сделать статусное сообщение с таймаутом");
+			//this->SetConStatus(L"Clipboard does not contains text. Nothing to paste.");
 		}
 		else if ((lptstr = (LPCWSTR)GlobalLock(hglb)) == NULL)
 		{
@@ -7273,9 +7278,10 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 		// Done
 		CloseClipboard();
 
-		if (!pszBuf && *szErr)
+		if (!pszBuf)
 		{
-			DisplayLastError(szErr, nErrCode);
+			if (*szErr)
+				DisplayLastError(szErr, nErrCode);
 			return;
 		}
 	}

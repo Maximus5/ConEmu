@@ -384,83 +384,8 @@ CSettings::CSettings()
 void CSettings::InitVars_Hotkeys()
 {	
 	// Горячие клавиши
-
-	//TODO("Дополнить системные комбинации");
-	//WARNING("У gpSet->nLDragKey,gpSet->nRDragKey был тип DWORD");
-	//WARNING("ConEmuHotKey: Убрать нафиг все ссылки на переменные, обработка будет прозрачная, а нажатость chk_Modifier можно по DescrLangID определять");
-
-	//ConEmuHotKey HotKeys[] =
-	//{
-	//	// User (Keys, Global)
-	//	{vkMinimizeRestore,chk_Global, NULL, L"MinimizeRestore", &gpSet->vmMinimizeRestore, 'C'|(VK_LWIN<<8), CConEmuCtrl::key_MinimizeRestore},
-	//	// User (Keys)
-	//	{vkMultiNew,       chk_User, &gpSet->isMulti, L"Multi.NewConsole",      &gpSet->vmMultiNew, 'W'|(VK_LWIN<<8), CConEmuCtrl::key_MultiNew},
-	//	{vkMultiNewShift,  chk_User, &gpSet->isMulti, L"Multi.NewConsoleShift", &gpSet->vmMultiNewShift, 0, CConEmuCtrl::key_MultiNewShift},
-	//	{vkMultiNext,      chk_User, &gpSet->isMulti, L"Multi.Next",            &gpSet->vmMultiNext, 0, CConEmuCtrl::key_MultiNext},
-	//	{vkMultiNextShift, chk_User, &gpSet->isMulti, L"Multi.NextShift",       &gpSet->vmMultiNextShift, 0, CConEmuCtrl::key_MultiNextShift},
-	//	{vkMultiRecreate,  chk_User, &gpSet->isMulti, L"Multi.Recreate",        &gpSet->vmMultiRecreate, 0, CConEmuCtrl::key_MultiRecreate},
-	//	{vkMultiBuffer,    chk_User, &gpSet->isMulti, L"Multi.Buffer",          &gpSet->vmMultiBuffer, 0, CConEmuCtrl::key_MultiBuffer},
-	//	{vkMultiClose,     chk_User, &gpSet->isMulti, L"Multi.Close",           &gpSet->vmMultiClose, 0, CConEmuCtrl::key_MultiClose},
-	//	{vkMultiCmd,       chk_User, &gpSet->isMulti, L"Multi.CmdKey",          &gpSet->vmMultiCmd, 0, CConEmuCtrl::key_MultiCmd},
-	//	{vkCTSVkBlockStart,chk_User, NULL,            L"CTS.VkBlockStart",      &gpSet->vmCTSVkBlockStart, 0, CConEmuCtrl::key_CTSVkBlockStart}, // запуск выделения блока
-	//	{vkCTSVkTextStart, chk_User, NULL,            L"CTS.VkTextStart",       &gpSet->vmCTSVkTextStart, 0, CConEmuCtrl::key_CTSVkTextStart},   // запуск выделения текста
-	//	// User (Modifiers)
-	//	{vkCTSVkBlock,     chk_Modifier, (DWORD*)&gpSet->isCTSVkBlock},      // модификатор запуска выделения мышкой
-	//	{vkCTSVkText,      chk_Modifier, (DWORD*)&gpSet->isCTSVkText},       // модификатор запуска выделения мышкой
-	//	{vkCTSVkAct,       chk_Modifier, (DWORD*)&gpSet->isCTSVkAct},        // модификатор разрешения действий правой и средней кнопки мышки
-	//	{vkFarGotoEditorVk,chk_Modifier, (DWORD*)&gpSet->isFarGotoEditorVk}, // модификатор для gpSet->isFarGotoEditor
-	//	{vkLDragKey,       chk_Modifier, (DWORD*)&gpSet->nLDragKey},         // модификатор драга левой кнопкой
-	//	{vkRDragKey,       chk_Modifier, (DWORD*)&gpSet->nRDragKey},         // модификатор драга правой кнопкой
-	//	// System (predefined, fixed)
-	//	{vkWinAltP,        chk_System, NULL, MakeHotKey('P',VK_LWIN,VK_MENU), CConEmuCtrl::key_Settings, true/*OnKeyUp*/}, // Settings
-	//	{vkWinAltSpace,    chk_System, NULL, MakeHotKey(VK_SPACE,VK_LWIN,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
-	//	{vkWinApps,        chk_System, NULL, MakeHotKey(VK_APPS,VK_LWIN), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
-	//	{vkAltF9,          chk_System, NULL, MakeHotKey(VK_F9,VK_MENU), CConEmuCtrl::key_AltF9}, // Maximize window
-	//	{vkCtrlWinAltSpace,chk_System, NULL, MakeHotKey(VK_SPACE,VK_CONTROL,VK_LWIN,VK_MENU), CConEmuCtrl::key_ShowRealConsole}, // Show real console
-	//	{vkAltEnter,       chk_System, NULL, MakeHotKey(VK_RETURN,VK_MENU), CConEmuCtrl::key_AltEnter}, // Full screen
-	//	{vkCtrlWinEnter,   chk_System, NULL, MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL), CConEmuCtrl::key_FullScreen},
-	//	{vkAltSpace,       chk_System, NULL, MakeHotKey(VK_SPACE,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
-	//	{vkCtrlUp,         chk_System, NULL, MakeHotKey(VK_UP,VK_CONTROL), CConEmuCtrl::key_BufferScrollUp}, // Buffer scroll
-	//	{vkCtrlDown,       chk_System, NULL, MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_BufferScrollDown}, // Buffer scroll
-	//	{vkCtrlPgUp,       chk_System, NULL, MakeHotKey(VK_PRIOR,VK_CONTROL), CConEmuCtrl::key_BufferScrollPgUp}, // Buffer scroll
-	//	{vkCtrlPgDn,       chk_System, NULL, MakeHotKey(VK_NEXT,VK_CONTROL), CConEmuCtrl::key_BufferScrollPgDn}, // Buffer scroll
-	//	{vkCtrlTab,        chk_System, NULL, MakeHotKey(VK_TAB,VK_CONTROL), CConEmuCtrl::key_CtrlTab}, // Tab switch
-	//	{vkCtrlShiftTab,   chk_System, NULL, MakeHotKey(VK_TAB,VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_CtrlShiftTab}, // Tab switch
-	//	{vkCtrlTab_Left,   chk_System, NULL, MakeHotKey(VK_LEFT,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Prev}, // Tab switch
-	//	{vkCtrlTab_Up,     chk_System, NULL, MakeHotKey(VK_UP,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Prev}, // Tab switch
-	//	{vkCtrlTab_Right,  chk_System, NULL, MakeHotKey(VK_RIGHT,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Next}, // Tab switch
-	//	{vkCtrlTab_Down,   chk_System, NULL, MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Next}, // Tab switch
-	//	{vkPicViewSlide,   chk_System, NULL, MakeHotKey(VK_PAUSE), CConEmuCtrl::key_PicViewSlideshow, true/*OnKeyUp*/}, // Slideshow in PicView2
-	//	{vkPicViewSlower,  chk_System, NULL, MakeHotKey(0xbd/* -_ */), CConEmuCtrl::key_PicViewSlideshow}, // Slideshow in PicView2
-	//	{vkPicViewFaster,  chk_System, NULL, MakeHotKey(0xbb/* =+ */), CConEmuCtrl::key_PicViewSlideshow}, // Slideshow in PicView2
-	//	// Все что ниже - было привязано к "HostKey"
-	//	// Надо бы дать настроить модификатор, а сами кнопки - не трогать
-	//	{vkWinLeft,    chk_Hostkey, NULL, MakeHotKey(VK_LEFT,0xFF,0xFF,0xFF),  CConEmuCtrl::key_WinWidthDec},  // Decrease window width
-	//	{vkWinRight,   chk_Hostkey, NULL, MakeHotKey(VK_RIGHT,0xFF,0xFF,0xFF), CConEmuCtrl::key_WinWidthInc},  // Increase window width
-	//	{vkWinUp,      chk_Hostkey, NULL, MakeHotKey(VK_UP,0xFF,0xFF,0xFF),    CConEmuCtrl::key_WinHeightDec}, // Decrease window height
-	//	{vkWinDown,    chk_Hostkey, NULL, MakeHotKey(VK_DOWN,0xFF,0xFF,0xFF),  CConEmuCtrl::key_WinHeightDec}, // Increase window height
-	//	// Console activate by number
-	//	{vkConsole_1,  chk_Hostkey, NULL, MakeHotKey('1',0xFF,0xFF,0xFF), CConEmuCtrl::key_ConsoleNum},
-	//	{vkConsole_2,  chk_Hostkey, NULL, MakeHotKey('2',0xFF,0xFF,0xFF), CConEmuCtrl::key_ConsoleNum},
-	//	{vkConsole_3,  chk_Hostkey, NULL, MakeHotKey('3',0xFF,0xFF,0xFF), CConEmuCtrl::key_ConsoleNum},
-	//	{vkConsole_4,  chk_Hostkey, NULL, MakeHotKey('4',0xFF,0xFF,0xFF), CConEmuCtrl::key_ConsoleNum},
-	//	{vkConsole_5,  chk_Hostkey, NULL, MakeHotKey('5',0xFF,0xFF,0xFF), CConEmuCtrl::key_ConsoleNum},
-	//	{vkConsole_6,  chk_Hostkey, NULL, MakeHotKey('6',0xFF,0xFF,0xFF), CConEmuCtrl::key_ConsoleNum},
-	//	{vkConsole_7,  chk_Hostkey, NULL, MakeHotKey('7',0xFF,0xFF,0xFF), CConEmuCtrl::key_ConsoleNum},
-	//	{vkConsole_8,  chk_Hostkey, NULL, MakeHotKey('8',0xFF,0xFF,0xFF), CConEmuCtrl::key_ConsoleNum},
-	//	{vkConsole_9,  chk_Hostkey, NULL, MakeHotKey('9',0xFF,0xFF,0xFF), CConEmuCtrl::key_ConsoleNum},
-	//	{vkConsole_10, chk_Hostkey, NULL, MakeHotKey('0',0xFF,0xFF,0xFF), CConEmuCtrl::key_ConsoleNum},
-	//	{vkConsole_11, chk_Hostkey, NULL, MakeHotKey(VK_F11,0xFF,0xFF,0xFF), CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // Для WinF11 & WinF12 приходят только WM_KEYUP || WM_SYSKEYUP)
-	//	{vkConsole_12, chk_Hostkey, NULL, MakeHotKey(VK_F12,0xFF,0xFF,0xFF), CConEmuCtrl::key_ConsoleNum, true/*OnKeyUp*/}, // Для WinF11 & WinF12 приходят только WM_KEYUP || WM_SYSKEYUP)
-	//	// End
-	//	{},
-	//};
-	//// Чтобы не возникло проблем с инициализацией хуков (для обработки Win+<key>)
-	//_ASSERTE(count(HotKeys)<(HookedKeysMaxCount-1));
-	//WARNING("ConEmuHotKey: VK_F11 & VK_F12 - убрать нафиг. Сделать нормальный выбор по двум цифрам, да и до 99 консолей расширить");
-
 	m_HotKeys = gpSet->AllocateHotkeys();
-	//memmove(m_HotKeys, HotKeys, sizeof(HotKeys));
+
 	mp_ActiveHotKey = NULL;
 }
 
@@ -1797,8 +1722,11 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	//CheckDlgButton(hWnd2, cbConsoleTextSelection, gpSet->isConsoleTextSelection);
 
 	CheckDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
+	SetDlgItemInt(hWnd2, tPadSize, gpSet->nCenterConsolePad, FALSE);
 
 	CheckDlgButton(hWnd2, cbAlwaysShowScrollbar, gpSet->isAlwaysShowScrollbar);
+	SetDlgItemInt(hWnd2, tScrollAppearDelay, gpSet->nScrollBarAppearDelay, FALSE);
+	SetDlgItemInt(hWnd2, tScrollDisappearDelay, gpSet->nScrollBarDisappearDelay, FALSE);
 
 	CheckDlgButton(hWnd2, cbDesktopMode, gpSet->isDesktopMode);
 
@@ -1919,6 +1847,12 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 		SettingsNS::szColorIdx, SettingsNS::nColorIdx, idxFore);
 	FillListBoxItems(GetDlgItem(hWnd2, lbCTSBackIdx), countof(SettingsNS::szColorIdx)-1,
 		SettingsNS::szColorIdx, SettingsNS::nColorIdx, idxBack);
+
+	// Prompt click
+	CheckDlgButton(hWnd2, cbCTSClickPromptPosition, gpSet->isCTSClickPromptPosition);
+	VkMod = gpSet->GetHotkeyById(vkCTSVkPromptClk);
+	FillListBoxByte(hWnd2, lbCTSClickPromptPosition, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+
 	// Не совсем выделение, но в том же диалоге
 	CheckDlgButton(hWnd2, cbFarGotoEditor, gpSet->isFarGotoEditor);
 	VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
@@ -2673,7 +2607,7 @@ LRESULT CSettings::OnInitDialog_Apps(HWND hWnd2, bool abForceReload)
 			SetWindowLongPtr(GetDlgItem(hWnd2, lbAppDistinct), GWL_STYLE, nStyles|LBS_NOTIFY);
 	}
 	
-	pageOpProc_Apps(hWnd2, abForceReload ? WM_INITDIALOG : mn_ActivateTabMsg, 0, 0);
+	pageOpProc_Apps(hWnd2, NULL, abForceReload ? WM_INITDIALOG : mn_ActivateTabMsg, 0, 0);
 
 	if (abForceReload)
 	{
@@ -3941,6 +3875,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCTSTextSelection:
 			gpSet->isCTSSelectText = IsChecked(hWnd2,CB);
 			break;
+		case cbCTSClickPromptPosition:
+			gpSet->isCTSClickPromptPosition = IsChecked(hWnd2,CB);
+			break;
 		case cbClipShiftIns:
 			gpSet->AppStd.isPasteAllLines = IsChecked(hWnd2,CB);
 			break;
@@ -4920,6 +4857,26 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					case tHideCaptionAlwaysDissapear:
 						gpSet->nHideCaptionAlwaysDisappear = nNewVal;
 						break;
+					case tScrollAppearDelay:
+						if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
+							gpSet->nScrollBarAppearDelay = nNewVal;
+						else if (nNewVal > SCROLLBAR_DELAY_MAX)
+							SetDlgItemInt(hWnd2, tScrollAppearDelay, SCROLLBAR_DELAY_MAX, FALSE);
+						break;
+					case tScrollDisappearDelay:
+						if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
+							gpSet->nScrollBarDisappearDelay = nNewVal;
+						else if (nNewVal > SCROLLBAR_DELAY_MAX)
+							SetDlgItemInt(hWnd2, tScrollDisappearDelay, SCROLLBAR_DELAY_MAX, FALSE);
+						break;
+					case tPadSize:
+						if (nNewVal >= CENTERCONSOLEPAD_MIN && nNewVal <= CENTERCONSOLEPAD_MAX)
+							gpSet->nCenterConsolePad = nNewVal;
+						else if (nNewVal > CENTERCONSOLEPAD_MAX)
+							SetDlgItemInt(hWnd2, tPadSize, CENTERCONSOLEPAD_MAX, FALSE);
+						// Update window/console size
+						if (gpSet->isTryToCenter)
+							gpConEmu->OnSize();
 					}
 				}
 			}
@@ -5399,6 +5356,12 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						BYTE VkMod = 0;
 						GetListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 						gpSet->SetHotkeyById(vkCTSVkAct, VkMod);
+					} break;
+				case lbCTSClickPromptPosition:
+					{
+						BYTE VkMod = 0;
+						GetListBoxByte(hWnd2, lbCTSClickPromptPosition, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
+						gpSet->SetHotkeyById(vkCTSVkPromptClk, VkMod);
 					} break;
 				case lbCTSRBtnAction:
 					{
@@ -5992,7 +5955,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 	{
 		// Страничка "App distinct" в некотором смысле особенная.
 		// У многих контролов ИД дублируются с другими вкладками.
-		return gpSetCls->pageOpProc_Apps(hWnd2, messg, wParam, lParam);
+		return gpSetCls->pageOpProc_Apps(hWnd2, NULL, messg, wParam, lParam);
 	}
 	else if (gpSetCls->mh_Tabs[thi_Startup] && (hWnd2 == gpSetCls->mh_Tabs[thi_Startup]))
 	{
@@ -6202,11 +6165,150 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 	return 0;
 }
 
-INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+INT_PTR CSettings::pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	static int nLastScrollPos = 0;
+
+	switch (messg)
+	{
+	case WM_INITDIALOG:
+		nLastScrollPos = 0;
+		return FALSE;
+
+	case WM_MOUSEWHEEL:
+		{
+			SHORT nDir = (SHORT)HIWORD(wParam);
+			if (nDir)
+			{
+				pageOpProc_AppsChild(hWnd2, WM_VSCROLL, (nDir > 0) ? SB_PAGEUP : SB_PAGEDOWN, 0);
+			}
+		}
+		return 0;
+
+	case WM_VSCROLL:
+		{
+			int dx = 0, dy = 0;
+
+			SCROLLINFO si = {sizeof(si)};
+			si.fMask = SIF_POS|SIF_RANGE|SIF_PAGE;
+			GetScrollInfo(hWnd2, SB_VERT, &si);
+
+			int nPos = 0;
+			SHORT nCode = (SHORT)LOWORD(wParam);
+			if ((nCode == SB_THUMBPOSITION) || (nCode == SB_THUMBTRACK))
+			{
+				nPos = (SHORT)HIWORD(wParam);
+			}
+			else
+			{
+				nPos = si.nPos;
+				int nDelta = 16; // Высота CheckBox'a
+				RECT rcChild = {};
+				if (GetWindowRect(GetDlgItem(hWnd2, cbExtendFontsOverride), &rcChild))
+					nDelta = rcChild.bottom - rcChild.top;
+
+				switch (nCode)
+				{
+				case SB_LINEDOWN:
+				case SB_PAGEDOWN:
+					nPos = min(si.nMax,si.nPos+nDelta);
+					break;
+				//case SB_PAGEDOWN:
+				//	nPos = min(si.nMax,si.nPos+si.nPage);
+				//	break;
+				case SB_LINEUP:
+				case SB_PAGEUP:
+					nPos = max(si.nMin,si.nPos-nDelta);
+					break;
+				//case SB_PAGEUP:
+				//	nPos = max(si.nMin,si.nPos-si.nPage);
+				//	break;
+				}
+			}
+
+			dy = nLastScrollPos - nPos;
+			nLastScrollPos = nPos;
+
+			si.fMask = SIF_POS;
+			si.nPos = nPos;
+			SetScrollInfo(hWnd2, SB_VERT, &si, TRUE);
+
+			if (dy)
+			{
+				ScrollWindowEx(hWnd2, dx, dy, NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN|SW_INVALIDATE|SW_ERASE);
+			}
+		}
+		return FALSE;
+	}
+
+	HWND hParent = GetParent(hWnd2);
+	return gpSetCls->pageOpProc_Apps(hParent, hWnd2, messg, wParam, lParam);
+}
+
+INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	INT_PTR iRc = 0;
 	static bool bSkipSelChange = false, bSkipEditChange = false, bSkipEditSet = false;
 	bool bRedraw = false, bRefill = false;
+
+	#define UM_DISTINCT_ENABLE (WM_APP+32)
+
+	static struct StrDistinctControls
+	{
+		WORD nOverrideID;
+		WORD nCtrls[16];
+	} DistinctControls[] = {
+		{0, {rbAppDistinctElevatedOn, rbAppDistinctElevatedOff, rbAppDistinctElevatedIgnore, stAppDistinctName, tAppDistinctName}},
+		{cbExtendFontsOverride, {cbExtendFonts, stExtendFontBoldIdx, lbExtendFontBoldIdx, stExtendFontItalicIdx, lbExtendFontItalicIdx, stExtendFontNormalIdx, lbExtendFontNormalIdx}},
+		{cbCursorOverride, {rCursorV, rCursorH, cbCursorColor, cbCursorBlink, cbBlockInactiveCursor, cbCursorIgnoreSize}},
+		{cbColorsOverride, {lbColorsOverride}},
+		{cbClipboardOverride, {cbClipShiftIns, cbClipCtrlV}},
+		{cbPromptOverride, {cbCTSClickPromptPosition}},
+		{cbBgImageOverride, {cbBgImage, tBgImage, bBgImage}},
+	};
+
+	if (!hChild)
+	{
+		if ((messg == WM_INITDIALOG) || (messg == mn_ActivateTabMsg))
+		{
+			hChild = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
+							MAKEINTRESOURCE(IDD_SPG_APPDISTINCT2), hWnd2, pageOpProc_AppsChild, NULL);
+			if (!hChild)
+			{
+				EnableWindow(hWnd2, FALSE);
+				MBoxAssert(hChild && "CreateDialogParam(IDD_SPG_APPDISTINCT2) failed");
+				return 0;
+			}
+			SetWindowLongPtr(hChild, GWLP_ID, IDD_SPG_APPDISTINCT2);
+
+			HWND hHolder = GetDlgItem(hWnd2, tAppDistinctHolder);
+			RECT rcPos = {}; GetWindowRect(hHolder, &rcPos);
+			MapWindowPoints(NULL, hWnd2, (LPPOINT)&rcPos, 2);
+			POINT ptScroll = {};
+			HWND hEnd = GetDlgItem(hChild,stAppDistinctBottom);
+			MapWindowPoints(hEnd, hChild, &ptScroll, 1);
+			ShowWindow(hEnd, SW_HIDE);
+
+			SCROLLINFO si = {sizeof(si), SIF_ALL};
+			si.nMax = ptScroll.y - (rcPos.bottom - rcPos.top);
+			RECT rcChild = {}; GetWindowRect(GetDlgItem(hChild, DistinctControls[1].nOverrideID), &rcChild);
+			si.nPage = rcChild.bottom - rcChild.top;
+			SetScrollInfo(hChild, SB_VERT, &si, FALSE);
+
+			MoveWindow(hChild, rcPos.left, rcPos.top, rcPos.right-rcPos.left, rcPos.bottom-rcPos.top, FALSE);
+
+			ShowWindow(hHolder, SW_HIDE);
+			ShowWindow(hChild, SW_SHOW);
+		}
+		else
+		{
+			hChild = GetDlgItem(hWnd2, IDD_SPG_APPDISTINCT2);
+		}
+
+		//_ASSERTE(hChild && IsWindow(hChild));
+	}
+
+
 
 	if ((messg == WM_INITDIALOG) || (messg == mn_ActivateTabMsg))
 	{
@@ -6233,24 +6335,24 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 				return 0;
 			}
 
-			SendMessage(GetDlgItem(hWnd2, lbColorsOverride), CB_RESETCONTENT, 0, 0);
-			SendDlgItemMessage(hWnd2, lbColorsOverride, CB_ADDSTRING, 0, (LPARAM)gLastColors.pszName);
+			SendMessage(GetDlgItem(hChild, lbColorsOverride), CB_RESETCONTENT, 0, 0);
+			SendDlgItemMessage(hChild, lbColorsOverride, CB_ADDSTRING, 0, (LPARAM)gLastColors.pszName);
 			for (int i = 0; (pPal = gpSet->PaletteGet(i)) != NULL; i++)
 			{
-				SendDlgItemMessage(hWnd2, lbColorsOverride, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
+				SendDlgItemMessage(hChild, lbColorsOverride, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
 			}
-			SendDlgItemMessage(hWnd2, lbColorsOverride, CB_SETCURSEL, 0/*iCurPalette*/, 0);
+			SendDlgItemMessage(hChild, lbColorsOverride, CB_SETCURSEL, 0/*iCurPalette*/, 0);
 
 
-			SendMessage(GetDlgItem(hWnd2, lbExtendFontBoldIdx), CB_RESETCONTENT, 0, 0);
-			SendMessage(GetDlgItem(hWnd2, lbExtendFontItalicIdx), CB_RESETCONTENT, 0, 0);
-			SendMessage(GetDlgItem(hWnd2, lbExtendFontNormalIdx), CB_RESETCONTENT, 0, 0);
+			SendMessage(GetDlgItem(hChild, lbExtendFontBoldIdx), CB_RESETCONTENT, 0, 0);
+			SendMessage(GetDlgItem(hChild, lbExtendFontItalicIdx), CB_RESETCONTENT, 0, 0);
+			SendMessage(GetDlgItem(hChild, lbExtendFontNormalIdx), CB_RESETCONTENT, 0, 0);
 			for (uint i=0; i < countof(SettingsNS::szColorIdx); i++)
 			{
 				//_wsprintf(temp, SKIPLEN(countof(temp))(i==16) ? L"None" : L"%2i", i);
-				SendDlgItemMessage(hWnd2, lbExtendFontBoldIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
-				SendDlgItemMessage(hWnd2, lbExtendFontItalicIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
-				SendDlgItemMessage(hWnd2, lbExtendFontNormalIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
+				SendDlgItemMessage(hChild, lbExtendFontBoldIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
+				SendDlgItemMessage(hChild, lbExtendFontItalicIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
+				SendDlgItemMessage(hChild, lbExtendFontNormalIdx, CB_ADDSTRING, 0, (LPARAM) SettingsNS::szColorIdx[i]);
 			}
 		}
 
@@ -6284,14 +6386,60 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 
 		if (!bSkipSelChange)
 		{
-			pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
+			pageOpProc_Apps(hWnd2, hChild, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
 		}
 
 	}
 	else switch (messg)
 	{
+	case UM_DISTINCT_ENABLE:
+		if (((HWND)wParam) == hWnd2) // arg check
+		{
+			_ASSERTE(hChild && IsWindow(hChild));
+
+			WORD nID = (WORD)(lParam & 0xFFFF);
+			bool bAllowed = false;
+			
+			const Settings::AppSettings* pApp = NULL;
+			int iCur = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
+			if (iCur >= 0)
+				pApp = gpSet->GetAppSettings(iCur);
+			if (pApp && pApp->AppNames)
+			{
+				bAllowed = true;
+			}
+			
+			for (size_t i = 0; i < countof(DistinctControls); i++)
+			{
+				if (nID && (nID != DistinctControls[i].nOverrideID))
+					continue;
+
+				BOOL bEnabled = bAllowed
+					? (DistinctControls[i].nOverrideID ? IsChecked(hChild, DistinctControls[i].nOverrideID) : TRUE)
+					: FALSE;
+
+				HWND hDlg = DistinctControls[i].nOverrideID ? hChild : hWnd2;
+
+				if (DistinctControls[i].nOverrideID)
+				{
+					EnableWindow(GetDlgItem(hDlg, DistinctControls[i].nOverrideID), bAllowed);
+					if (!bAllowed)
+						CheckDlgButton(hDlg, DistinctControls[i].nOverrideID, BST_UNCHECKED);
+				}
+
+				for (size_t j = 0; j < countof(DistinctControls[i].nCtrls) && DistinctControls[i].nCtrls[j]; j++)
+				{
+					EnableWindow(GetDlgItem(hDlg, DistinctControls[i].nCtrls[j]), bEnabled);
+				}
+			}
+
+			InvalidateRect(hChild, NULL, FALSE);
+		} // UM_DISTINCT_ENABLE
+		break;
 	case WM_COMMAND:
 		{
+			_ASSERTE(hChild && IsWindow(hChild));
+
 			if (HIWORD(wParam) == BN_CLICKED)
 			{
 				BOOL bChecked;
@@ -6317,7 +6465,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 
 						bSkipSelChange = lbOld;
 
-        				pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
+        				pageOpProc_Apps(hWnd2, hChild, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
 					} // cbAppDistinctAdd
 					break;
 
@@ -6343,7 +6491,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
         				int iCount = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0);
 						bSkipSelChange = lbOld;
         				SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
-        				pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
+        				pageOpProc_Apps(hWnd2, hChild, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
 
 					} // cbAppDistinctDel
 					break;
@@ -6386,8 +6534,8 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 				case rbAppDistinctElevatedIgnore:
 					if (pApp)
 					{
-						pApp->Elevated = IsChecked(hWnd2, rbAppDistinctElevatedOn) ? 1
-							: IsChecked(hWnd2, rbAppDistinctElevatedOff) ? 2
+						pApp->Elevated = IsChecked(hChild, rbAppDistinctElevatedOn) ? 1
+							: IsChecked(hChild, rbAppDistinctElevatedOff) ? 2
 							: 0;
 						bRefill = bRedraw = true;
 					}
@@ -6395,8 +6543,9 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 
 
 				case cbColorsOverride:
-					bChecked = IsChecked(hWnd2, CB);
-					EnableWindow(GetDlgItem(hWnd2, lbColorsOverride), bChecked);
+					bChecked = IsChecked(hChild, CB);
+					//EnableWindow(GetDlgItem(hChild, lbColorsOverride), bChecked);
+					pageOpProc_Apps(hWnd2, hChild, UM_DISTINCT_ENABLE, (WPARAM)hWnd2, cbColorsOverride);
 					if (pApp)
 					{
 						pApp->OverridePalette = bChecked;
@@ -6405,13 +6554,14 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 					break;
 
 				case cbCursorOverride:
-					bChecked = IsChecked(hWnd2, CB);
-					EnableWindow(GetDlgItem(hWnd2, rCursorV), bChecked);
-					EnableWindow(GetDlgItem(hWnd2, rCursorH), bChecked);
-					EnableWindow(GetDlgItem(hWnd2, cbCursorColor), bChecked);
-					EnableWindow(GetDlgItem(hWnd2, cbCursorBlink), bChecked);
-					EnableWindow(GetDlgItem(hWnd2, cbBlockInactiveCursor), bChecked);
-					EnableWindow(GetDlgItem(hWnd2, cbCursorIgnoreSize), bChecked);
+					bChecked = IsChecked(hChild, CB);
+					//EnableWindow(GetDlgItem(hWnd2, rCursorV), bChecked);
+					//EnableWindow(GetDlgItem(hWnd2, rCursorH), bChecked);
+					//EnableWindow(GetDlgItem(hWnd2, cbCursorColor), bChecked);
+					//EnableWindow(GetDlgItem(hWnd2, cbCursorBlink), bChecked);
+					//EnableWindow(GetDlgItem(hWnd2, cbBlockInactiveCursor), bChecked);
+					//EnableWindow(GetDlgItem(hWnd2, cbCursorIgnoreSize), bChecked);
+					pageOpProc_Apps(hWnd2, hChild, UM_DISTINCT_ENABLE, (WPARAM)hWnd2, cbCursorOverride);
 					if (pApp)
 					{
 						pApp->OverrideCursor = bChecked;
@@ -6422,21 +6572,21 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 				case rCursorH:
 					if (pApp)
 					{
-						pApp->isCursorV = IsChecked(hWnd2, rCursorV);
+						pApp->isCursorV = IsChecked(hChild, rCursorV);
 						bRedraw = true;
 					}
 					break;
 				case cbCursorColor:
 					if (pApp)
 					{
-						pApp->isCursorColor = IsChecked(hWnd2, CB);
+						pApp->isCursorColor = IsChecked(hChild, CB);
 						bRedraw = true;
 					}
 					break;
 				case cbCursorBlink:
 					if (pApp)
 					{
-						pApp->isCursorBlink = IsChecked(hWnd2, CB);
+						pApp->isCursorBlink = IsChecked(hChild, CB);
 						//if (!gpSet->AppStd.isCursorBlink) // если мигание отключается - то курсор может "замереть" в погашенном состоянии.
 						//	gpConEmu->ActiveCon()->Invalidate();
 						bRedraw = true;
@@ -6445,61 +6595,86 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 				case cbBlockInactiveCursor:
 					if (pApp)
 					{
-						pApp->isCursorBlockInactive = IsChecked(hWnd2, CB);
+						pApp->isCursorBlockInactive = IsChecked(hChild, CB);
 						bRedraw = true;
 					}
 					break;
 				case cbCursorIgnoreSize:
 					if (pApp)
 					{
-						pApp->isCursorIgnoreSize = IsChecked(hWnd2, CB);
+						pApp->isCursorIgnoreSize = IsChecked(hChild, CB);
 						bRedraw = true;
 					}
 					break;
 
 				case cbExtendFontsOverride:
-					bChecked = IsChecked(hWnd2, CB);
-					EnableWindow(GetDlgItem(hWnd2, cbExtendFonts), bChecked);
-					EnableWindow(GetDlgItem(hWnd2, lbExtendFontBoldIdx), bChecked);
-					EnableWindow(GetDlgItem(hWnd2, lbExtendFontItalicIdx), bChecked);
-					EnableWindow(GetDlgItem(hWnd2, lbExtendFontNormalIdx), bChecked);
+					bChecked = IsChecked(hChild, CB);
+					//EnableWindow(GetDlgItem(hWnd2, cbExtendFonts), bChecked);
+					//EnableWindow(GetDlgItem(hWnd2, lbExtendFontBoldIdx), bChecked);
+					//EnableWindow(GetDlgItem(hWnd2, lbExtendFontItalicIdx), bChecked);
+					//EnableWindow(GetDlgItem(hWnd2, lbExtendFontNormalIdx), bChecked);
+					pageOpProc_Apps(hWnd2, hChild, UM_DISTINCT_ENABLE, (WPARAM)hWnd2, cbExtendFontsOverride);
 					if (!bSkipSelChange)
 					{
-						pApp->OverrideExtendFonts = IsChecked(hWnd2, CB);
+						pApp->OverrideExtendFonts = IsChecked(hChild, CB);
 						bRedraw = true;
 					}
 					break;
 				case cbExtendFonts:
 					if (pApp)
 					{
-						pApp->isExtendFonts = IsChecked(hWnd2, CB);
+						pApp->isExtendFonts = IsChecked(hChild, CB);
 						bRedraw = true;
 					}
 					break;
 
 
 				case cbClipboardOverride:
-					bChecked = IsChecked(hWnd2, CB);
-					EnableWindow(GetDlgItem(hWnd2, cbClipShiftIns), bChecked);
-					EnableWindow(GetDlgItem(hWnd2, cbClipCtrlV), bChecked);
+					bChecked = IsChecked(hChild, CB);
+					//EnableWindow(GetDlgItem(hWnd2, cbClipShiftIns), bChecked);
+					//EnableWindow(GetDlgItem(hWnd2, cbClipCtrlV), bChecked);
+					pageOpProc_Apps(hWnd2, hChild, UM_DISTINCT_ENABLE, (WPARAM)hWnd2, cbClipboardOverride);
 					if (!bSkipSelChange)
 					{
-						pApp->OverrideClipboard = IsChecked(hWnd2, CB);
+						pApp->OverrideClipboard = IsChecked(hChild, CB);
 					}
 					break;
 				case cbClipShiftIns:
 					if (pApp)
 					{
-						pApp->isPasteAllLines = IsChecked(hWnd2, CB);
+						pApp->isPasteAllLines = IsChecked(hChild, CB);
 					}
 					break;
 				case cbClipCtrlV:
 					if (pApp)
 					{
-						pApp->isPasteFirstLine = IsChecked(hWnd2, CB);
+						pApp->isPasteFirstLine = IsChecked(hChild, CB);
 					}
 					break;
 
+				case cbPromptOverride:
+					bChecked = IsChecked(hChild, CB);
+					pageOpProc_Apps(hWnd2, hChild, UM_DISTINCT_ENABLE, (WPARAM)hWnd2, cbPromptOverride);
+					if (!bSkipSelChange)
+					{
+						//pApp->OverridePrompt = IsChecked(hChild, CB);
+					}
+					break;
+				case cbCTSClickPromptPosition:
+					break;
+
+				case cbBgImageOverride:
+					bChecked = IsChecked(hChild, CB);
+					pageOpProc_Apps(hWnd2, hChild, UM_DISTINCT_ENABLE, (WPARAM)hWnd2, cbBgImageOverride);
+					if (!bSkipSelChange)
+					{
+						//pApp->OverrideBackground = IsChecked(hChild, CB);
+					}
+					break;
+				case cbBgImage:
+					break;
+				case bBgImage:
+					break;
 				}	
 			} // if (HIWORD(wParam) == BN_CLICKED)
 			else if (HIWORD(wParam) == EN_CHANGE)
@@ -6533,6 +6708,11 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 							}
 						} // tAppDistinctName
 						break;
+					case tBgImage:
+                    	{
+                    		TODO("tBgImage");
+                    	} // tBgImage
+                    	break;
 					}
 				}
 			} // if (HIWORD(wParam) == EN_CHANGE)
@@ -6559,70 +6739,71 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 							SetDlgItemText(hWnd2, tAppDistinctName, pApp->AppNames);
 							bSkipEditChange = lbCur;
 						}
-						EnableWindow(GetDlgItem(hWnd2, tAppDistinctName), TRUE);
-						EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOn), TRUE);
-						EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOff), TRUE);
-						EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedIgnore), TRUE);
+						//EnableWindow(GetDlgItem(hWnd2, tAppDistinctName), TRUE);
+						//EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOn), TRUE);
+						//EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOff), TRUE);
+						//EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedIgnore), TRUE);
 						CheckRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore,
 							(pApp->Elevated == 1) ? rbAppDistinctElevatedOn :
 							(pApp->Elevated == 2) ? rbAppDistinctElevatedOff : rbAppDistinctElevatedIgnore);
 
-						EnableWindow(GetDlgItem(hWnd2, cbExtendFontsOverride), TRUE);
-						EnableWindow(GetDlgItem(hWnd2, cbCursorOverride), TRUE);
-						EnableWindow(GetDlgItem(hWnd2, cbColorsOverride), TRUE);
-						EnableWindow(GetDlgItem(hWnd2, cbClipboardOverride), TRUE);
+						//EnableWindow(GetDlgItem(hWnd2, cbExtendFontsOverride), TRUE);
+						//EnableWindow(GetDlgItem(hWnd2, cbCursorOverride), TRUE);
+						//EnableWindow(GetDlgItem(hWnd2, cbColorsOverride), TRUE);
+						//EnableWindow(GetDlgItem(hWnd2, cbClipboardOverride), TRUE);
 
-						CheckDlgButton(hWnd2, cbExtendFontsOverride, pApp->OverrideExtendFonts);
-						CheckDlgButton(hWnd2, cbExtendFonts, pApp->isExtendFonts);
+						CheckDlgButton(hChild, cbExtendFontsOverride, pApp->OverrideExtendFonts);
+						CheckDlgButton(hChild, cbExtendFonts, pApp->isExtendFonts);
 						_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontBoldColor<16) ? L"%2i" : L"None", pApp->nFontBoldColor);
-						SelectStringExact(hWnd2, lbExtendFontBoldIdx, temp);
+						SelectStringExact(hChild, lbExtendFontBoldIdx, temp);
 						_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontItalicColor<16) ? L"%2i" : L"None", pApp->nFontItalicColor);
-						SelectStringExact(hWnd2, lbExtendFontItalicIdx, temp);
+						SelectStringExact(hChild, lbExtendFontItalicIdx, temp);
 						_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontNormalColor<16) ? L"%2i" : L"None", pApp->nFontNormalColor);
-						SelectStringExact(hWnd2, lbExtendFontNormalIdx, temp);
+						SelectStringExact(hChild, lbExtendFontNormalIdx, temp);
 
-						CheckDlgButton(hWnd2, cbCursorOverride, pApp->OverrideCursor);
-						CheckRadioButton(hWnd2, rCursorV, rCursorH, pApp->isCursorV ? rCursorV : rCursorH);
-						CheckDlgButton(hWnd2, cbCursorColor, pApp->isCursorColor);
-						CheckDlgButton(hWnd2, cbCursorBlink, pApp->isCursorBlink);
-						CheckDlgButton(hWnd2, cbBlockInactiveCursor, pApp->isCursorBlockInactive);
-						CheckDlgButton(hWnd2, cbCursorIgnoreSize, pApp->isCursorIgnoreSize);
+						CheckDlgButton(hChild, cbCursorOverride, pApp->OverrideCursor);
+						CheckRadioButton(hChild, rCursorV, rCursorH, pApp->isCursorV ? rCursorV : rCursorH);
+						CheckDlgButton(hChild, cbCursorColor, pApp->isCursorColor);
+						CheckDlgButton(hChild, cbCursorBlink, pApp->isCursorBlink);
+						CheckDlgButton(hChild, cbBlockInactiveCursor, pApp->isCursorBlockInactive);
+						CheckDlgButton(hChild, cbCursorIgnoreSize, pApp->isCursorIgnoreSize);
 
-						CheckDlgButton(hWnd2, cbColorsOverride, pApp->OverridePalette);
-						SelectStringExact(hWnd2, lbColorsOverride, pApp->szPaletteName);
+						CheckDlgButton(hChild, cbColorsOverride, pApp->OverridePalette);
+						SelectStringExact(hChild, lbColorsOverride, pApp->szPaletteName);
 
-						CheckDlgButton(hWnd2, cbClipboardOverride, pApp->OverrideClipboard);
-						CheckDlgButton(hWnd2, cbClipShiftIns, pApp->isPasteAllLines);
-						CheckDlgButton(hWnd2, cbClipCtrlV, pApp->isPasteFirstLine);
+						CheckDlgButton(hChild, cbClipboardOverride, pApp->OverrideClipboard);
+						CheckDlgButton(hChild, cbClipShiftIns, pApp->isPasteAllLines);
+						CheckDlgButton(hChild, cbClipCtrlV, pApp->isPasteFirstLine);
 					}
 					else
 					{
 						SetDlgItemText(hWnd2, tAppDistinctName, L"");
-						EnableWindow(GetDlgItem(hWnd2, tAppDistinctName), FALSE);
 						CheckRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore, rbAppDistinctElevatedIgnore);
-						EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOn), FALSE);
-						EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOff), FALSE);
-						EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedIgnore), FALSE);
+
+						//EnableWindow(GetDlgItem(hWnd2, tAppDistinctName), FALSE);
+						//EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOn), FALSE);
+						//EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOff), FALSE);
+						//EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedIgnore), FALSE);
 						
-						EnableWindow(GetDlgItem(hWnd2, cbExtendFontsOverride), FALSE);
-						EnableWindow(GetDlgItem(hWnd2, cbCursorOverride), FALSE);
-						EnableWindow(GetDlgItem(hWnd2, cbColorsOverride), FALSE);
-						EnableWindow(GetDlgItem(hWnd2, cbClipboardOverride), FALSE);
+						//EnableWindow(GetDlgItem(hWnd2, cbExtendFontsOverride), FALSE);
+						//EnableWindow(GetDlgItem(hWnd2, cbCursorOverride), FALSE);
+						//EnableWindow(GetDlgItem(hWnd2, cbColorsOverride), FALSE);
+						//EnableWindow(GetDlgItem(hWnd2, cbClipboardOverride), FALSE);
 
-						CheckDlgButton(hWnd2, cbExtendFontsOverride, BST_UNCHECKED);
-						CheckDlgButton(hWnd2, cbCursorOverride, BST_UNCHECKED);
-						CheckDlgButton(hWnd2, cbColorsOverride, BST_UNCHECKED);
-
-						CheckDlgButton(hWnd2, cbClipboardOverride, BST_UNCHECKED);
-						CheckDlgButton(hWnd2, cbClipShiftIns, BST_UNCHECKED);
-						CheckDlgButton(hWnd2, cbClipCtrlV, BST_UNCHECKED);
+						//CheckDlgButton(hWnd2, cbExtendFontsOverride, BST_UNCHECKED);
+						//CheckDlgButton(hWnd2, cbCursorOverride, BST_UNCHECKED);
+						//CheckDlgButton(hWnd2, cbColorsOverride, BST_UNCHECKED);
+						//CheckDlgButton(hWnd2, cbClipboardOverride, BST_UNCHECKED);
+						//CheckDlgButton(hWnd2, cbClipShiftIns, BST_UNCHECKED);
+						//CheckDlgButton(hWnd2, cbClipCtrlV, BST_UNCHECKED);
 					}
 					
 					bool lbOld = bSkipSelChange; bSkipSelChange = true;
-					pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbExtendFontsOverride,BN_CLICKED), 0);
-					pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbCursorOverride,BN_CLICKED), 0);
-					pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbColorsOverride,BN_CLICKED), 0);
-					pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbClipboardOverride,BN_CLICKED), 0);
+					pageOpProc_Apps(hWnd2, hChild, UM_DISTINCT_ENABLE, (WPARAM)hWnd2, 0);
+					//pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbExtendFontsOverride,BN_CLICKED), 0);
+					//pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbCursorOverride,BN_CLICKED), 0);
+					//pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbColorsOverride,BN_CLICKED), 0);
+					//pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbClipboardOverride,BN_CLICKED), 0);
 					bSkipSelChange = lbOld;
 				} // if (CB == lbAppDistinct)
 				else
@@ -6640,11 +6821,11 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 						case lbExtendFontNormalIdx:
 							{
 								if (CB == lbExtendFontNormalIdx)
-									pApp->nFontNormalColor = GetNumber(hWnd2, CB);
+									pApp->nFontNormalColor = GetNumber(hChild, CB);
 								else if (CB == lbExtendFontBoldIdx)
-									pApp->nFontBoldColor = GetNumber(hWnd2, CB);
+									pApp->nFontBoldColor = GetNumber(hChild, CB);
 								else if (CB == lbExtendFontItalicIdx)
-									pApp->nFontItalicColor = GetNumber(hWnd2, CB);
+									pApp->nFontItalicColor = GetNumber(hChild, CB);
 
 								if (pApp->isExtendFonts)
 									bRedraw = true;
@@ -6653,7 +6834,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 
 						case lbColorsOverride:
 							{
-								HWND hList = GetDlgItem(hWnd2, CB);
+								HWND hList = GetDlgItem(hChild, CB);
 								INT_PTR nIdx = SendMessage(hList, CB_GETCURSEL, 0, 0);
 								if (nIdx >= 0)
 								{

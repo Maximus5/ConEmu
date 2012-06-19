@@ -175,6 +175,23 @@ const CONEMUDEFCOLORS DefColors[] =
 		reg->Save(L"PanView." s L".FontName", n.sFontName); \
 		reg->Save(L"PanView." s L".FontHeight", n.nFontHeight); }
 
+template <class T>
+void MinMax(T &a, int v1, int v2)
+{
+	if (a < (T)v1)
+		a = (T)v1;
+	else if (a > (T)v2)
+		a = (T)v2;
+}
+
+template <class T>
+void MinMax(T &a, int v2)
+{
+	if (a > (T)v2)
+		a = (T)v2;
+}
+
+
 
 Settings::Settings()
 {
@@ -295,7 +312,10 @@ void Settings::InitSettings()
 	//wcscpy_c(inFont2, gsLucidaConsole);
 	//mb_Name1Ok = FALSE; mb_Name2Ok = FALSE;
 	isTryToCenter = false;
+	nCenterConsolePad = 0;
 	isAlwaysShowScrollbar = 2;
+	nScrollBarAppearDelay = 1000;
+	nScrollBarDisappearDelay = 1000;
 	isTabFrame = true;
 	//isForceMonospace = false; isProportional = false;
 	
@@ -432,10 +452,11 @@ void Settings::InitSettings()
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
 	isConsoleTextSelection = 1; // Always
-	isCTSAutoCopy = false;
+	isCTSAutoCopy = true;
 	isCTSFreezeBeforeSelect = false;
 	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
 	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
+	isCTSClickPromptPosition = 2; // Кликом мышки позиционировать курсор в Cmd Prompt (cmd.exe, Powershell.exe, ...) + vkCTSVkPromptClk
 	//vmCTSVkBlockStart = 0; // при желании, пользователь может назначить hotkey запуска выделения
 	//vmCTSVkTextStart = 0;  // при желании, пользователь может назначить hotkey запуска выделения
 	isCTSActMode = 2; // BufferOnly
@@ -1887,6 +1908,7 @@ void Settings::LoadSettings()
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
 		//LoadVkMod(reg, L"CTS.VkBlockStart", vmCTSVkBlockStart, vmCTSVkBlockStart);
 		reg->Load(L"CTS.SelectText", isCTSSelectText);
+		reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition); if (isCTSClickPromptPosition > 2) isCTSClickPromptPosition = 2;
 		//reg->Load(L"CTS.VkText", isCTSVkText);
 		//LoadVkMod(reg, L"CTS.VkTextStart", vmCTSVkTextStart, vmCTSVkTextStart);
 
@@ -1903,8 +1925,8 @@ void Settings::LoadSettings()
 		reg->Load(L"ClipboardConfirmEnter", isPasteConfirmEnter);
 		reg->Load(L"ClipboardConfirmLonger", nPasteConfirmLonger);
 		
-		reg->Load(L"FarGotoEditor", isFarGotoEditor);
-		reg->Load(L"FarGotoEditor", &sFarGotoEditor);
+		reg->Load(L"FarGotoEditorOpt", isFarGotoEditor);
+		reg->Load(L"FarGotoEditorPath", &sFarGotoEditor);
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
 
 		if (!reg->Load(L"FixFarBorders", isFixFarBorders))
@@ -2109,8 +2131,11 @@ void Settings::LoadSettings()
 		reg->Load(L"ShowFarWindows", bShowFarWindows);
 		
 		reg->Load(L"TryToCenter", isTryToCenter);
+		reg->Load(L"CenterConsolePad", nCenterConsolePad); MinMax(nCenterConsolePad,CENTERCONSOLEPAD_MIN,CENTERCONSOLEPAD_MAX);
 
-		reg->Load(L"ShowScrollbar", isAlwaysShowScrollbar); if (isAlwaysShowScrollbar > 2) isAlwaysShowScrollbar = 2;
+		reg->Load(L"ShowScrollbar", isAlwaysShowScrollbar); MinMax(isAlwaysShowScrollbar,2);
+		reg->Load(L"ScrollBarAppearDelay", nScrollBarAppearDelay); MinMax(nScrollBarAppearDelay,SCROLLBAR_DELAY_MIN,SCROLLBAR_DELAY_MAX);
+		reg->Load(L"ScrollBarDisappearDelay", nScrollBarDisappearDelay); MinMax(nScrollBarDisappearDelay,SCROLLBAR_DELAY_MIN,SCROLLBAR_DELAY_MAX);
 
 		//reg->Load(L"CreateAppWindow", isCreateAppWindow);
 		//reg->Load(L"AllowDetach", isAllowDetach);
@@ -2697,6 +2722,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		//reg->Save(L"CTS.VkBlock", isCTSVkBlock);
 		//reg->Save(L"CTS.VkBlockStart", vmCTSVkBlockStart);
 		reg->Save(L"CTS.SelectText", isCTSSelectText);
+		reg->Save(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
 		//reg->Save(L"CTS.VkText", isCTSVkText);
 		//reg->Save(L"CTS.VkTextStart", vmCTSVkTextStart);
 		reg->Save(L"CTS.ActMode", isCTSActMode);
@@ -2708,8 +2734,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ClipboardConfirmEnter", isPasteConfirmEnter);
 		reg->Save(L"ClipboardConfirmLonger", nPasteConfirmLonger);
 
-		reg->Save(L"FarGotoEditor", isFarGotoEditor);
-		reg->Save(L"FarGotoEditor", sFarGotoEditor);
+		reg->Save(L"FarGotoEditorOpt", isFarGotoEditor);
+		reg->Save(L"FarGotoEditorPath", sFarGotoEditor);
 		//reg->Save(L"FarGotoEditorVk", isFarGotoEditorVk);
 		
 		reg->Save(L"FixFarBorders", isFixFarBorders);
@@ -2788,7 +2814,10 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		//reg->Save(L"HideDisabledTabs", bHideDisabledTabs);
 		reg->Save(L"ShowFarWindows", bShowFarWindows);
 		reg->Save(L"TryToCenter", isTryToCenter);
+		reg->Save(L"CenterConsolePad", nCenterConsolePad);
 		reg->Save(L"ShowScrollbar", isAlwaysShowScrollbar);
+		reg->Save(L"ScrollBarAppearDelay", nScrollBarAppearDelay);
+		reg->Save(L"ScrollBarDisappearDelay", nScrollBarDisappearDelay);
 		reg->Save(L"IconID", nIconID);
 		//reg->Save(L"Update Console handle", isUpdConHandle);
 		reg->Save(L"ConWnd Width", wndWidth);
@@ -4566,6 +4595,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkCTSVkBlock,     chk_Modifier, NULL, L"CTS.VkBlock",     /*(DWORD*)&isCTSVkBlock,*/ VK_LMENU},      // модификатор запуска выделения мышкой
 		{vkCTSVkText,      chk_Modifier, NULL, L"CTS.VkText",      /*(DWORD*)&isCTSVkText,*/ VK_LSHIFT},       // модификатор запуска выделения мышкой
 		{vkCTSVkAct,       chk_Modifier, NULL, L"CTS.VkAct",       /*(DWORD*)&isCTSVkAct,*/ 0},        // модификатор разрешения действий правой и средней кнопки мышки
+		{vkCTSVkPromptClk, chk_Modifier, NULL, L"CTS.VkPrompt",    0}, // Модификатор позиционирования курсора мышки кликом (cmd.exe prompt)
 		{vkFarGotoEditorVk,chk_Modifier, NULL, L"FarGotoEditorVk", /*(DWORD*)&isFarGotoEditorVk,*/ VK_LCONTROL}, // модификатор для isFarGotoEditor
 		{vkLDragKey,       chk_Modifier, NULL, L"DndLKey",         /*(DWORD*)&nLDragKey,*/ 0},         // модификатор драга левой кнопкой
 		{vkRDragKey,       chk_Modifier, NULL, L"DndRKey",         /*(DWORD*)&nRDragKey,*/ VK_LCONTROL},         // модификатор драга правой кнопкой

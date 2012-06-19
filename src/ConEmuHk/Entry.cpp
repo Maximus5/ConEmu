@@ -30,8 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  Раскомментировать, чтобы сразу после загрузки модуля показать MessageBox, чтобы прицепиться дебаггером
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
-	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"putty.exe"
+//	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
+//	#define SHOW_EXE_MSGBOX_NAME L"putty.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -1311,9 +1311,10 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 	case CECMD_MOUSECLICK:
 		{
 			BOOL bProcessed = FALSE;
-			if (gReadConsoleInfo.InReadConsoleTID || gReadConsoleInfo.LastReadConsoleInputTID)
+			if ((gReadConsoleInfo.InReadConsoleTID || gReadConsoleInfo.LastReadConsoleInputTID)
+				&& (pCmd->DataSize() >= 3*sizeof(WORD)))
 			{
-				bProcessed = OnReadConsoleClick(pCmd->wData[0], pCmd->wData[1]);
+				bProcessed = OnReadConsoleClick(pCmd->wData[0], pCmd->wData[1], (pCmd->wData[2] != 0));
 			}
 
 			lbRc = TRUE;

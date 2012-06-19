@@ -47,13 +47,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define SCROLLHIDE_TIMER_ID 1726
 #define TIMER_SCROLL_SHOW         3201
-#define TIMER_SCROLL_SHOW_DELAY   1000
-#define TIMER_SCROLL_SHOW_DELAY2  500
+#define TIMER_SCROLL_SHOW_DELAY   gpSet->nScrollBarAppearDelay /*1000*/
+#define TIMER_SCROLL_SHOW_DELAY2  (gpSet->nScrollBarAppearDelay/2) /*500*/
 #define TIMER_SCROLL_HIDE         3202
-#define TIMER_SCROLL_HIDE_DELAY   1000
+#define TIMER_SCROLL_HIDE_DELAY   gpSet->nScrollBarDisappearDelay /*1000*/
 #define TIMER_SCROLL_CHECK        3203
 #define TIMER_SCROLL_CHECK_DELAY  250
-#define TIMER_SCROLL_CHECK_DELAY2 1000
+//#define TIMER_SCROLL_CHECK_DELAY2 1000
 #define LOCK_DC_RECT_TIMEOUT      2000
 
 CConEmuChild::CConEmuChild()
@@ -1136,7 +1136,7 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 	{
 		mb_Scroll2Visible = FALSE;
 		bTHide = true;
-		//m_TScrollHide.Start();
+		//m_TScrollHide.Start(TIMER_SCROLL_HIDE_DELAY);
 	}
 
 	#ifndef SKIP_HIDE_TIMER
@@ -1150,7 +1150,7 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 
 	//
 	if (bTHide)
-		m_TScrollHide.Start();
+		m_TScrollHide.Start(TIMER_SCROLL_HIDE_DELAY);
 	else if (m_TScrollHide.IsStarted())
 		m_TScrollHide.Stop();
 }

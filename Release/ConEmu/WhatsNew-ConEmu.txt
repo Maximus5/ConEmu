@@ -10,6 +10,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[*] По умолчанию опция 'Auto copy' включена.
+[%] Не сохранялось значение флажка 'Highlight and goto' и пути 'External editor'.
+[*] Isue 587, Issue 605: При Paste не показывать сообщение об отсутствии текста в буфере обмена.
+[+] Настройка времени появления/скрытия полосы прокрутки.
+[+] Еще про Quake: настройка 'окантовки' вокруг консоли 'Pad size (pix)', работает только при включенном 'Try to center'.
+[+] 'App distinct' settings page redesigned.
+
+
 2012.06.18
 [+] Issue 582: Позиционирование текстового курсора кликом мышки в prompt (cmd, powershell, tcc/le, ...)
 
