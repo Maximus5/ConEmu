@@ -41,7 +41,26 @@ enum TrayIconMsgSource
 class TrayIcon
 {
 	private:
-		NOTIFYICONDATA IconData;
+		struct NOTIFYICONDATA_Win2k
+		{
+			DWORD cbSize;
+			HWND hWnd;
+			UINT uID;
+			UINT uFlags;
+			UINT uCallbackMessage;
+			HICON hIcon;
+			WCHAR  szTip[128];
+			DWORD dwState;
+			DWORD dwStateMask;
+			WCHAR  szInfo[256];
+			union {
+				UINT  uTimeout;
+				UINT  uVersion;  // used with NIM_SETVERSION, values 0, 3 and 4
+			} DUMMYUNIONNAME;
+			WCHAR  szInfoTitle[64];
+			DWORD dwInfoFlags;
+		};
+		NOTIFYICONDATA_Win2k IconData;
 
 		void SetMenuItemText(HMENU hMenu, UINT nID, LPCWSTR pszText);
 

@@ -16,6 +16,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [+] Настройка времени появления/скрытия полосы прокрутки.
 [+] Еще про Quake: настройка 'окантовки' вокруг консоли 'Pad size (pix)', работает только при включенном 'Try to center'.
 [+] 'App distinct' settings page redesigned.
+[*] Теперь могут быть изменены комбинации: Apps+Space, Alt+F9, Alt+Enter, Alt+Space, Ctrl+Up, Ctrl+Down, Ctrl+PgUp, Ctrl+PgDn и PicView.SlideShow.
+[*] Соответственно, убраны флажки из 'Send to console': Alt+F9, Alt+Enter, Alt+Space.
+[%] Win+Down не увеличивал размер консоли (опция «Win+Arrows - resize window»).
 
 
 2012.06.18

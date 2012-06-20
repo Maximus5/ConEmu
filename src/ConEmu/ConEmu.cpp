@@ -10758,6 +10758,7 @@ LRESULT CConEmuMain::OnKeyboardHook(DWORD VkMod)
 void CConEmuMain::OnConsoleKey(WORD vk, LPARAM Mods)
 {
 	// Ќекоторые комбинации обрабатываютс€ в самом ConEmu и сюда приходить по идее не должны
+#if 0
 	if (vk == VK_SPACE && (Mods == (Mods & (MOD_ALT|MOD_LALT|MOD_RALT))))
 	{
 		_ASSERTE(vk != VK_SPACE);
@@ -10776,6 +10777,7 @@ void CConEmuMain::OnConsoleKey(WORD vk, LPARAM Mods)
 			return;
 		}
 	}
+#endif
 
 	// ¬се остальное - обычным образом
 	CRealConsole* pRCon = ActiveCon() ? ActiveCon()->RCon() : NULL;

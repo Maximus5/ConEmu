@@ -152,6 +152,7 @@ struct ConEmuHotKey
 
 	// Internal
 	size_t cchGuiMacroMax;
+	bool   NotChanged;
 
 	bool CanChangeVK() const
 	{
@@ -483,7 +484,7 @@ struct Settings
 			bool FadeInitialized;
 		} **AppColors; // [AppCount]
 
-		void LoadAppSettings(SettingsBase* reg);
+		void LoadAppSettings(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadAppSettings(SettingsBase* reg, AppSettings* pApp, COLORREF* pColors);
 		void SaveAppSettings(SettingsBase* reg, AppSettings* pApp, COLORREF* pColors);
 
@@ -740,10 +741,10 @@ struct Settings
 		LPCWSTR SafeFarCloseMacro();
 		LPCWSTR SafeFarCloseMacroDefault();
 		
-		//reg->Load(L"AltEnter", isSendAltEnter);
-		bool isSendAltEnter;
-		//reg->Load(L"AltSpace", isSendAltSpace);
-		bool isSendAltSpace;
+		////reg->Load(L"AltEnter", isSendAltEnter);
+		//bool isSendAltEnter;
+		////reg->Load(L"AltSpace", isSendAltSpace);
+		//bool isSendAltSpace;
 		//reg->Load(L"SendAltTab", isSendAltTab);
 		bool isSendAltTab;
 		//reg->Load(L"SendAltEsc", isSendAltEsc);
@@ -754,8 +755,8 @@ struct Settings
 		bool isSendPrintScrn;
 		//reg->Load(L"SendCtrlEsc", isSendCtrlEsc);
 		bool isSendCtrlEsc;
-		//reg->Load(L"SendAltF9", isSendAltF9);
-		bool isSendAltF9;
+		////reg->Load(L"SendAltF9", isSendAltF9);
+		//bool isSendAltF9;
 		
 		//reg->Load(L"Min2Tray", isMinToTray);
 		bool isMinToTray;

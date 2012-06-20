@@ -280,7 +280,8 @@ void Settings::InitSettings()
 	nMainTimerInactiveElapse = 1000;
 	nAffinity = 0; // 0 - don't change default affinity
 	isSkipFocusEvents = false;
-	isSendAltEnter = isSendAltSpace = isSendAltTab = isSendAltEsc = isSendAltPrintScrn = isSendPrintScrn = isSendCtrlEsc = isSendAltF9 = false;
+	//isSendAltEnter = isSendAltSpace = isSendAltF9 = false;
+	isSendAltTab = isSendAltEsc = isSendAltPrintScrn = isSendPrintScrn = isSendCtrlEsc = false;
 	isMonitorConsoleLang = 3;
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
 	nCmdOutputCP = 0;
@@ -583,8 +584,26 @@ void Settings::FreeApps(int NewAppCount, AppSettings** NewApps, Settings::CEAppC
 	SafeFree(OldAppColors);
 }
 
-void Settings::LoadAppSettings(SettingsBase* reg)
+void Settings::LoadAppSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 {
+	bool lbDelete = false;
+	if (!reg)
+	{
+		// Если открыто окно настроек - не передергивать
+		if (!abFromOpDlg && ghOpWnd)
+		{
+			return;
+		}
+
+		reg = CreateSettings();
+		if (!reg)
+		{
+			_ASSERTE(reg!=NULL);
+			return;
+		}
+		lbDelete = true;
+	}
+
 	BOOL lbOpened = FALSE;
 	wchar_t szAppKey[MAX_PATH+64];
 	wcscpy_c(szAppKey, gpSetCls->GetConfigPath());
@@ -645,6 +664,9 @@ void Settings::LoadAppSettings(SettingsBase* reg)
 	}
 
 	FreeApps(NewAppCount, NewApps, NewAppColors);
+
+	if (lbDelete)
+		delete reg;
 }
 
 void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, COLORREF* pColors)
@@ -1730,6 +1752,11 @@ void Settings::LoadSettings()
 		IsConfigNew = false;
 	}
 
+
+	// Для совместимости настроек
+	bool bSendAltEnter = false, bSendAltSpace = false, bSendAltF9 = false;
+
+
 	if (lbOpened)
 	{
 		LoadAppSettings(reg, &AppStd, Colors);
@@ -1996,14 +2023,20 @@ void Settings::LoadSettings()
 		reg->Load(L"RightClick opens context menu", isRClickSendKey);
 		if (!reg->Load(L"RightClickMacro2", &sRClickMacro) || (sRClickMacro && !*sRClickMacro)) { SafeFree(sRClickMacro); }
 		
-		reg->Load(L"AltEnter", isSendAltEnter);
-		reg->Load(L"AltSpace", isSendAltSpace); //if (isSendAltSpace > 2) isSendAltSpace = 2; // когда-то был 3state, теперь - bool
+		//reg->Load(L"AltEnter", isSendAltEnter);
+		//reg->Load(L"AltSpace", isSendAltSpace); //if (isSendAltSpace > 2) isSendAltSpace = 2; // когда-то был 3state, теперь - bool
 		reg->Load(L"SendAltTab", isSendAltTab);
 		reg->Load(L"SendAltEsc", isSendAltEsc);
 		reg->Load(L"SendAltPrintScrn", isSendAltPrintScrn);
 		reg->Load(L"SendPrintScrn", isSendPrintScrn);
 		reg->Load(L"SendCtrlEsc", isSendCtrlEsc);
-		reg->Load(L"SendAltF9", isSendAltF9);
+		//reg->Load(L"SendAltF9", isSendAltF9);
+
+		// Для совместимости настроек
+		reg->Load(L"AltEnter", bSendAltEnter);
+		reg->Load(L"AltSpace", bSendAltSpace);
+		reg->Load(L"SendAltF9", bSendAltF9);
+
 		
 		reg->Load(L"Min2Tray", isMinToTray);
 		reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
@@ -2208,6 +2241,26 @@ void Settings::LoadSettings()
 
 		/* Hotkeys */
 		LoadHotkeys(reg);
+		// Для совместимости настроек
+		if (bSendAltSpace || bSendAltEnter || bSendAltF9)
+		{
+			ConEmuHotKey* pHK;
+			// Если раньше был включен флажок "Send Alt+Space to console"
+			if (bSendAltSpace && GetHotkeyById(vkAltSpace, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == MakeHotKey(VK_SPACE,VK_MENU)))
+			{
+				pHK->VkMod = 0; // Сбросить VkMod для vkAltSpace
+			}
+			// Если раньше был включен флажок "Send Alt+Enter to console"
+			if (bSendAltEnter && GetHotkeyById(vkAltEnter, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == MakeHotKey(VK_RETURN,VK_MENU)))
+			{
+				pHK->VkMod = 0; // Сбросить VkMod для vkAltEnter
+			}
+			// Если раньше был включен флажок "Send Alt+F9 to console"
+			if (bSendAltF9 && GetHotkeyById(vkAltF9, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == MakeHotKey(VK_F9,VK_MENU)))
+			{
+				pHK->VkMod = 0; // Сбросить VkMod для vkAltF9
+			}
+		}
 
 		/* Done */
 		reg->CloseKey();
@@ -2753,14 +2806,14 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"PartBrushBlack", isPartBrushBlack);
 		reg->Save(L"RightClick opens context menu", isRClickSendKey);
 		reg->Save(L"RightClickMacro2", sRClickMacro);
-		reg->Save(L"AltEnter", isSendAltEnter);
-		reg->Save(L"AltSpace", isSendAltSpace);
+		//reg->Save(L"AltEnter", isSendAltEnter);
+		//reg->Save(L"AltSpace", isSendAltSpace);
 		reg->Save(L"SendAltTab", isSendAltTab);
 		reg->Save(L"SendAltEsc", isSendAltEsc);
 		reg->Save(L"SendAltPrintScrn", isSendAltPrintScrn);
 		reg->Save(L"SendPrintScrn", isSendPrintScrn);
 		reg->Save(L"SendCtrlEsc", isSendCtrlEsc);
-		reg->Save(L"SendAltF9", isSendAltF9);
+		//reg->Save(L"SendAltF9", isSendAltF9);
 		reg->Save(L"Min2Tray", isMinToTray);
 		reg->Save(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
 		reg->Save(L"SafeFarClose", isSafeFarClose);
@@ -4371,8 +4424,12 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 
 	for (ConEmuHotKey *ppHK = gpSetCls->m_HotKeys; ppHK->DescrLangID; ++ppHK)
 	{
+		ppHK->NotChanged = true;
+
 		if (!*ppHK->Name)
+		{
 			continue;
+		}
 		
 		// Эти модификаторы раньше в настройке не сохранялись, для совместимости - добавляем VK_SHIFT к предыдущей
 		switch (ppHK->DescrLangID)
@@ -4391,7 +4448,11 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 		_ASSERTE(ppHK->HkType != chk_ArrHost);
 		_ASSERTE(ppHK->HkType != chk_System);
 
-		reg->Load(ppHK->Name, ppHK->VkMod);
+		if (reg->Load(ppHK->Name, ppHK->VkMod))
+		{
+			// Чтобы знать, что комбинация уже сохранялась в настройке ранее
+			ppHK->NotChanged = false;
+		}
 
 		if (ppHK->HkType != chk_Modifier)
 		{
@@ -4558,6 +4619,17 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkShowStatusBar,  chk_User,  NULL,    L"ShowStatusBarKey",      MakeHotKey('S',VK_APPS), CConEmuCtrl::key_ShowStatusBar},
 		{vkShowTabBar,     chk_User,  NULL,    L"ShowTabBarKey",         MakeHotKey('T',VK_APPS), CConEmuCtrl::key_ShowTabBar},
 		{vkAlwaysOnTop,    chk_User,  NULL,    L"AlwaysOnTopKey",        0, CConEmuCtrl::key_AlwaysOnTop},
+		{vkAppsSpace,      chk_User,  NULL,    L"Key.TabMenu",           MakeHotKey(VK_SPACE,VK_APPS), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
+		{vkAltF9,          chk_User,  NULL,    L"Key.Maximize",          MakeHotKey(VK_F9,VK_MENU), CConEmuCtrl::key_AltF9}, // Maximize window
+		{vkAltEnter,       chk_User,  NULL,    L"Key.FullScreen",        MakeHotKey(VK_RETURN,VK_MENU), CConEmuCtrl::key_AltEnter}, // Full screen
+		{vkAltSpace,       chk_User,  NULL,    L"Key.SysMenu",           MakeHotKey(VK_SPACE,VK_MENU), CConEmuCtrl::key_AltSpace, true/*OnKeyUp*/}, // System menu
+		{vkCtrlUp,         chk_User,  NULL,    L"Key.BufUp",             MakeHotKey(VK_UP,VK_CONTROL), CConEmuCtrl::key_BufferScrollUp}, // Buffer scroll
+		{vkCtrlDown,       chk_User,  NULL,    L"Key.BufDn",             MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_BufferScrollDown}, // Buffer scroll
+		{vkCtrlPgUp,       chk_User,  NULL,    L"Key.BufPgUp",           MakeHotKey(VK_PRIOR,VK_CONTROL), CConEmuCtrl::key_BufferScrollPgUp}, // Buffer scroll
+		{vkCtrlPgDn,       chk_User,  NULL,    L"Key.BufPgDn",           MakeHotKey(VK_NEXT,VK_CONTROL), CConEmuCtrl::key_BufferScrollPgDn}, // Buffer scroll
+		{vkPicViewSlide,   chk_User,  NULL,    L"Key.PicViewSlide",      MakeHotKey(VK_PAUSE), CConEmuCtrl::key_PicViewSlideshow, true/*OnKeyUp*/}, // Slideshow in PicView2
+		{vkPicViewSlower,  chk_User,  NULL,    L"Key.PicViewSlower",     MakeHotKey(0xbd/* -_ */), CConEmuCtrl::key_PicViewSlideshow}, // Slideshow in PicView2
+		{vkPicViewFaster,  chk_User,  NULL,    L"Key.PicViewFaster",     MakeHotKey(0xbb/* =+ */), CConEmuCtrl::key_PicViewSlideshow}, // Slideshow in PicView2
 		// GUI Macros
 		{vkGuMacro01,      chk_Macro, NULL,    L"KeyMacro01", MakeHotKey(VK_WHEEL_UP,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,2)")},
 		{vkGuMacro02,      chk_Macro, NULL,    L"KeyMacro02", MakeHotKey(VK_WHEEL_DOWN,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,-2)")},
@@ -4603,31 +4675,20 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkWinAltA,        chk_System, NULL, L"", MakeHotKey('A',VK_LWIN,VK_MENU), CConEmuCtrl::key_About, true/*OnKeyUp*/}, // Settings
 		{vkWinAltP,        chk_System, NULL, L"", MakeHotKey('P',VK_LWIN,VK_MENU), CConEmuCtrl::key_Settings, true/*OnKeyUp*/}, // Settings
 		{vkWinAltSpace,    chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_LWIN,VK_MENU), CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/}, // System menu
-		{vkAppsSpace,      chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_APPS), CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/}, // Tab menu
-		{vkAltF9,          chk_System, NULL, L"", MakeHotKey(VK_F9,VK_MENU), CConEmuCtrl::key_AltF9}, // Maximize window
 		{vkCtrlWinAltSpace,chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_CONTROL,VK_LWIN,VK_MENU), CConEmuCtrl::key_ShowRealConsole}, // Show real console
-		{vkAltEnter,       chk_System, NULL, L"", MakeHotKey(VK_RETURN,VK_MENU), CConEmuCtrl::key_AltEnter}, // Full screen
 		{vkCtrlWinEnter,   chk_System, NULL, L"", MakeHotKey(VK_RETURN,VK_LWIN,VK_CONTROL), CConEmuCtrl::key_FullScreen},
-		{vkAltSpace,       chk_System, NULL, L"", MakeHotKey(VK_SPACE,VK_MENU), CConEmuCtrl::key_AltSpace, true/*OnKeyUp*/}, // System menu
-		{vkCtrlUp,         chk_System, NULL, L"", MakeHotKey(VK_UP,VK_CONTROL), CConEmuCtrl::key_BufferScrollUp}, // Buffer scroll
-		{vkCtrlDown,       chk_System, NULL, L"", MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_BufferScrollDown}, // Buffer scroll
-		{vkCtrlPgUp,       chk_System, NULL, L"", MakeHotKey(VK_PRIOR,VK_CONTROL), CConEmuCtrl::key_BufferScrollPgUp}, // Buffer scroll
-		{vkCtrlPgDn,       chk_System, NULL, L"", MakeHotKey(VK_NEXT,VK_CONTROL), CConEmuCtrl::key_BufferScrollPgDn}, // Buffer scroll
 		{vkCtrlTab,        chk_System, NULL, L"", MakeHotKey(VK_TAB,VK_CONTROL), CConEmuCtrl::key_CtrlTab}, // Tab switch
 		{vkCtrlShiftTab,   chk_System, NULL, L"", MakeHotKey(VK_TAB,VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_CtrlShiftTab}, // Tab switch
 		{vkCtrlTab_Left,   chk_System, NULL, L"", MakeHotKey(VK_LEFT,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Prev}, // Tab switch
 		{vkCtrlTab_Up,     chk_System, NULL, L"", MakeHotKey(VK_UP,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Prev}, // Tab switch
 		{vkCtrlTab_Right,  chk_System, NULL, L"", MakeHotKey(VK_RIGHT,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Next}, // Tab switch
 		{vkCtrlTab_Down,   chk_System, NULL, L"", MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_CtrlTab_Next}, // Tab switch
-		{vkPicViewSlide,   chk_System, NULL, L"", MakeHotKey(VK_PAUSE), CConEmuCtrl::key_PicViewSlideshow, true/*OnKeyUp*/}, // Slideshow in PicView2
-		{vkPicViewSlower,  chk_System, NULL, L"", MakeHotKey(0xbd/* -_ */), CConEmuCtrl::key_PicViewSlideshow}, // Slideshow in PicView2
-		{vkPicViewFaster,  chk_System, NULL, L"", MakeHotKey(0xbb/* =+ */), CConEmuCtrl::key_PicViewSlideshow}, // Slideshow in PicView2
 		// Все что ниже - было привязано к "HostKey"
 		// Надо бы дать настроить модификатор, а сами кнопки - не трогать
 		{vkWinLeft,    chk_ArrHost, &isUseWinArrows, L"", VK_LEFT|CEHOTKEY_ARRHOSTKEY,  CConEmuCtrl::key_WinWidthDec},  // Decrease window width
 		{vkWinRight,   chk_ArrHost, &isUseWinArrows, L"", VK_RIGHT|CEHOTKEY_ARRHOSTKEY, CConEmuCtrl::key_WinWidthInc},  // Increase window width
 		{vkWinUp,      chk_ArrHost, &isUseWinArrows, L"", VK_UP|CEHOTKEY_ARRHOSTKEY,    CConEmuCtrl::key_WinHeightDec}, // Decrease window height
-		{vkWinDown,    chk_ArrHost, &isUseWinArrows, L"", VK_DOWN|CEHOTKEY_ARRHOSTKEY,  CConEmuCtrl::key_WinHeightDec}, // Increase window height
+		{vkWinDown,    chk_ArrHost, &isUseWinArrows, L"", VK_DOWN|CEHOTKEY_ARRHOSTKEY,  CConEmuCtrl::key_WinHeightInc}, // Increase window height
 		// Console activate by number
 		{vkConsole_1,  chk_NumHost, &isUseWinNumber, L"", '1'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},
 		{vkConsole_2,  chk_NumHost, &isUseWinNumber, L"", '2'|CEHOTKEY_NUMHOSTKEY, CConEmuCtrl::key_ConsoleNum},

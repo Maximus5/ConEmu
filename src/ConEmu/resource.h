@@ -705,7 +705,6 @@
 #define vkRenameTab                     2335
 #define stNewTabName                    2336
 #define tNewTabName                     2337
-#define stPlacement                     2338
 #define stBgPlacement                   2338
 #define lbBgPlacement                   2339
 #define cbCTSAutoCopy                   2340
@@ -722,6 +721,10 @@
 #define tScrollDisappearDelay           2355
 #define tPadSize                        2356
 #define stAppDistinctBottom             2357
+#define cbCTSDetectLineEOL              2358
+#define cbCTSBashMargin                 2359
+#define cbCTSTrimTrailing               2365
+#define lbCTSClipEOL                    2367
 
 // Next default values for new objects
 // 
@@ -729,7 +732,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        220
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2358
+#define _APS_NEXT_CONTROL_VALUE         2368
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

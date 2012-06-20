@@ -2343,14 +2343,14 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
 	               (gpSet->m_isKeyboardHooks == 1) ? BST_CHECKED :
 	               ((gpSet->m_isKeyboardHooks == 0) ? BST_INDETERMINATE : BST_UNCHECKED));
 	
-	CheckDlgButton(hWnd2, cbSendAltEnter, gpSet->isSendAltEnter);
-	CheckDlgButton(hWnd2, cbSendAltSpace, gpSet->isSendAltSpace);
+	//CheckDlgButton(hWnd2, cbSendAltEnter, gpSet->isSendAltEnter);
+	//CheckDlgButton(hWnd2, cbSendAltSpace, gpSet->isSendAltSpace);
 	CheckDlgButton(hWnd2, cbSendAltTab, gpSet->isSendAltTab);
 	CheckDlgButton(hWnd2, cbSendAltEsc, gpSet->isSendAltEsc);
 	CheckDlgButton(hWnd2, cbSendAltPrintScrn, gpSet->isSendAltPrintScrn);
 	CheckDlgButton(hWnd2, cbSendPrintScrn, gpSet->isSendPrintScrn);
 	CheckDlgButton(hWnd2, cbSendCtrlEsc, gpSet->isSendCtrlEsc);
-	CheckDlgButton(hWnd2, cbSendAltF9, gpSet->isSendAltF9);
+	//CheckDlgButton(hWnd2, cbSendAltF9, gpSet->isSendAltF9);
 
 	BYTE b = 0;
 	FillListBoxByte(hWnd2, lbHotKeyMod1, SettingsNS::szModifiers, SettingsNS::nModifiers, b);
@@ -3541,18 +3541,18 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		//	gpConEmu->UpdateWinHookSettings();
 		//	break;
 
-		case cbSendAltEnter:
-			// хуков не требует
-			gpSet->isSendAltEnter = IsChecked(hWnd2, cbSendAltEnter);
-			break;
-		case cbSendAltSpace:
-			// хуков не требует
-			gpSet->isSendAltSpace = IsChecked(hWnd2, cbSendAltSpace);
-			break;
-		case cbSendAltF9:
-			// хуков не требует
-			gpSet->isSendAltF9 = IsChecked(hWnd2, cbSendAltF9);
-			break;
+		//case cbSendAltEnter:
+		//	// хуков не требует
+		//	gpSet->isSendAltEnter = IsChecked(hWnd2, cbSendAltEnter);
+		//	break;
+		//case cbSendAltSpace:
+		//	// хуков не требует
+		//	gpSet->isSendAltSpace = IsChecked(hWnd2, cbSendAltSpace);
+		//	break;
+		//case cbSendAltF9:
+		//	// хуков не требует
+		//	gpSet->isSendAltF9 = IsChecked(hWnd2, cbSendAltF9);
+		//	break;
 			
 		case cbSendAltTab:
 		case cbSendAltEsc:
@@ -6268,6 +6268,9 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 	};
 
 	if (!hChild)
+		hChild = GetDlgItem(hWnd2, IDD_SPG_APPDISTINCT2);
+
+	if (!hChild)
 	{
 		if ((messg == WM_INITDIALOG) || (messg == mn_ActivateTabMsg))
 		{
@@ -6299,10 +6302,6 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 
 			ShowWindow(hHolder, SW_HIDE);
 			ShowWindow(hChild, SW_SHOW);
-		}
-		else
-		{
-			hChild = GetDlgItem(hWnd2, IDD_SPG_APPDISTINCT2);
 		}
 
 		//_ASSERTE(hChild && IsWindow(hChild));
@@ -6451,6 +6450,19 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 
 				switch (CB)
 				{
+				case cbAppDistinctReload:
+					{
+						if (MessageBox(ghOpWnd, L"Warning! All unsaved changes will be lost!\n\nReload Apps from settings?",
+								gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION) != IDYES)
+							break;
+
+						// Перезагрузить App distinct
+						gpSet->LoadAppSettings(NULL, true);
+
+						// Обновить список на экране
+						OnInitDialog_Apps(hWnd2, true);
+					} // cbAppDistinctReload
+					break;
 				case cbAppDistinctAdd:
 					{
 						int iCount = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0);

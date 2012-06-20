@@ -99,7 +99,7 @@ void TrayIcon::AddTrayIcon()
 	{
 		mb_SecondTimeoutMsg = false; mn_BalloonShowTick = 0;
 		GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
-		Shell_NotifyIcon(NIM_ADD, &IconData);
+		Shell_NotifyIcon(NIM_ADD, (NOTIFYICONDATA*)&IconData);
 		mb_WindowInTray = true;
 	}
 	else
@@ -113,7 +113,7 @@ void TrayIcon::RemoveTrayIcon(bool bForceRemove /*= false*/)
 	if (mb_WindowInTray && (bForceRemove || (m_MsgSource == tsa_Source_None)))
 	{
 		mb_SecondTimeoutMsg = false; mn_BalloonShowTick = 0;
-		Shell_NotifyIcon(NIM_DELETE, &IconData);
+		Shell_NotifyIcon(NIM_DELETE, (NOTIFYICONDATA*)&IconData);
 		mb_WindowInTray = false;
 		mh_Balloon = NULL;
 	}
@@ -134,7 +134,7 @@ void TrayIcon::UpdateTitle()
 		IconData.szInfo[0] = 0;
 		IconData.szInfoTitle[0] = 0;
 		lstrcpyn(IconData.szTip, szTitle, countof(IconData.szTip));
-		Shell_NotifyIcon(NIM_MODIFY, &IconData);
+		Shell_NotifyIcon(NIM_MODIFY, (NOTIFYICONDATA*)&IconData);
 	}
 }
 
@@ -212,7 +212,7 @@ void TrayIcon::RestoreWindowFromTray(BOOL abIconOnly /*= FALSE*/)
 
 void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
 {
-	IconData.cbSize = sizeof(NOTIFYICONDATA);
+	IconData.cbSize = sizeof(IconData);
 	IconData.uID = 1;
 	IconData.hWnd = inWnd;
 	IconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_INFO | NIF_TIP;
