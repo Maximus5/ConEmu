@@ -106,8 +106,8 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 
 //Курсор, его положение, размер консоли, измененный текст, и пр...
 
-#define VCURSORWIDTH 2
-#define HCURSORHEIGHT 2
+#define VCURSORWIDTH 1
+#define HCURSORHEIGHT 1
 
 #define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i", _T(#V), _T(__FILE__), __LINE__); Box(szAMsg); }
 

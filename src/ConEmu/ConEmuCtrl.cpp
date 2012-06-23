@@ -1524,12 +1524,32 @@ void CConEmuCtrl::MakeScreenshot(bool abFullscreen /*= false*/)
 	if (!abFullscreen)
 	{
 		GetWindowRect(hWnd, &rcWnd);
-		if ((hWnd != ghWnd) && (gnOsVer == 0x601) && gpConEmu->IsGlass())
+		bool bDlg = ((GetWindowLongPtr(hWnd, GWL_STYLE) & DS_MODALFRAME) == DS_MODALFRAME);
+		if (gpConEmu->IsGlass())
 		{
-			rcWnd.top -= 5;
-			rcWnd.left -= 5;
-			rcWnd.right += 3;
-			rcWnd.bottom += 5;
+			if (bDlg && (gnOsVer == 0x601))
+			{
+				rcWnd.top -= 5;
+				rcWnd.left -= 5;
+				rcWnd.right += 3;
+				rcWnd.bottom += 5;
+			}
+			else if (gnOsVer >= 0x602)
+			{
+				if (bDlg)
+				{
+					rcWnd.top -= 5;
+					rcWnd.left -= 5;
+					rcWnd.right += 3;
+					rcWnd.bottom += 5;
+				}
+				else
+				{
+					rcWnd.left += 2;
+					rcWnd.right -= 2;
+					rcWnd.bottom -= 2;
+				}
+			}
 		}
 
 		// Отрезать края при Zoomed/Fullscreen

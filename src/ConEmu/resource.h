@@ -30,6 +30,7 @@
 #define IDD_SPG_STARTUP                 160
 #define IDD_SPG_STATUSBAR               161
 #define IDD_SPG_APPDISTINCT2            162
+#define IDD_SPG_CURSOR                  163
 #define IDD_MORE_HIDE                   200
 #define IDD_SPG_SELECTION               204
 #define IDD_SPG_TABS                    206
@@ -714,7 +715,9 @@
 #define cbCTSClickPromptPosition        2344
 #define lbCTSClickPromptPosition        2345
 #define vkCTSVkPromptClk                2346
-#define cbPromptOverride                2348
+#define gbPromptOverride                2347
+#define gbCopyingOverride               2348
+#define gbPastingOverride               2349
 #define cbBgImageOverride               2350
 #define tAppDistinctHolder              2353
 #define tScrollAppearDelay              2354
@@ -724,7 +727,10 @@
 #define cbCTSDetectLineEOL              2358
 #define cbCTSBashMargin                 2359
 #define cbCTSTrimTrailing               2365
-#define lbCTSClipEOL                    2367
+#define stCTSEOL                        2366
+#define lbCTSEOL                        2367
+#define IDC_EDIT1                       2368
+#define tCursorFixedSize                2368
 
 // Next default values for new objects
 // 
@@ -732,7 +738,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        220
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2368
+#define _APS_NEXT_CONTROL_VALUE         2369
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

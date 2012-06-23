@@ -214,7 +214,11 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int 
 
 		OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
 		ofn.lStructSize=sizeof(ofn);
-		ofn.hwndOwner = ghWnd;
+		HWND h = GetForegroundWindow();
+		DWORD nPID = 0;
+		if (h)
+			GetWindowThreadProcessId(h, &nPID);
+		ofn.hwndOwner = (nPID == GetCurrentProcessId()) ? h : ghWnd;
 		#ifdef PNGDUMP
 		ofn.lpstrFilter = L"PNG (*.png)\0*.png\0JPEG (*.jpg)\0*.jpg\0BMP (*.bmp)\0*.bmp\0\0";
 		ofn.lpstrDefExt = L"png";

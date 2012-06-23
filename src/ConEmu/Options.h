@@ -31,6 +31,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define CONEMU_ROOT_KEY L"Software\\ConEmu"
 
+template <class T>
+void MinMax(T &a, int v1, int v2)
+{
+	if (a < (T)v1)
+		a = (T)v1;
+	else if (a > (T)v2)
+		a = (T)v2;
+}
+
+template <class T>
+void MinMax(T &a, int v2)
+{
+	if (a > (T)v2)
+		a = (T)v2;
+}
+
 #define MIN_ALPHA_VALUE 40
 #define DEFAULT_FINDDLG_ALPHA 180
 #define MAX_FONT_STYLES 8  //normal/(bold|italic|underline)
@@ -38,6 +54,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define LONGOUTPUTHEIGHT_MIN 300
 #define LONGOUTPUTHEIGHT_MAX 9999
+
+#define CURSORSIZE_MIN 5
+#define CURSORSIZE_MAX 100
 
 #include <pshpack1.h>
 typedef struct tagMYRGB
@@ -282,14 +301,44 @@ struct Settings
 			//reg->Load(L"CursorIgnoreSize", isCursorIgnoreSize);
 			bool isCursorIgnoreSize;
 			bool CursorIgnoreSize() const { return (OverrideCursor || !AppNames) ? isCursorIgnoreSize : gpSet->AppStd.isCursorIgnoreSize; };
+			//reg->Load(L"CursorFixedSize", nCursorFixedSize);
+			BYTE nCursorFixedSize; // в процентах
+			BYTE CursorFixedSize() const { return (OverrideCursor || !AppNames) ? nCursorFixedSize : gpSet->AppStd.nCursorFixedSize; };
 
 			bool OverrideClipboard;
+			// *** Copying
+			//reg->Load(L"ClipboardDetectLineEOL", isCTSDetectLineEOL);
+			bool isCTSDetectLineEOL; // cbCTSDetectLineEOL
+			bool CTSDetectLineEOL() const { return (OverrideClipboard || !AppNames) ? isCTSDetectLineEOL : gpSet->AppStd.isCTSDetectLineEOL; };
+			//reg->Load(L"ClipboardBashMargin", isCTSBashMargin);
+			bool isCTSBashMargin; // cbCTSBashMargin
+			bool CTSBashMargin() const { return (OverrideClipboard || !AppNames) ? isCTSBashMargin : gpSet->AppStd.isCTSBashMargin; };
+			//reg->Load(L"ClipboardTrimTrailing", isCTSTrimTrailing);
+			bool isCTSTrimTrailing; // cbCTSTrimTrailing
+			bool CTSTrimTrailing() const { return (OverrideClipboard || !AppNames) ? isCTSTrimTrailing : gpSet->AppStd.isCTSTrimTrailing; };
+			//reg->Load(L"ClipboardEOL", isCTSEOL);
+			bool isCTSEOL; // cbCTSEOL
+			bool CTSEOL() const { return (OverrideClipboard || !AppNames) ? isCTSEOL : gpSet->AppStd.isCTSEOL; };
+			// *** Pasting
 			//reg->Load(L"ClipboardAllLines", isPasteAllLines);
 			bool isPasteAllLines;
 			bool PasteAllLines() const { return (OverrideClipboard || !AppNames) ? isPasteAllLines : gpSet->AppStd.isPasteAllLines; };
 			//reg->Load(L"ClipboardFirstLine", isPasteFirstLine);
 			bool isPasteFirstLine;
 			bool PasteFirstLine() const { return (OverrideClipboard || !AppNames) ? isPasteFirstLine : gpSet->AppStd.isPasteFirstLine; };
+			// *** Prompt
+			// cbCTSClickPromptPosition
+			//reg->Load(L"ClipboardClickPromptPosition", isCTSClickPromptPosition);
+			bool isCTSClickPromptPosition; // cbCTSClickPromptPosition
+			bool CTSClickPromptPosition() const { return (OverrideClipboard || !AppNames) ? isCTSClickPromptPosition : gpSet->AppStd.isCTSClickPromptPosition; };
+
+			bool OverrideBgImage;
+			//reg->Load(L"BackGround Image show", isShowBgImage);
+			char isShowBgImage; // cbBgImage
+			char ShowBgImage() const { return (OverrideBgImage || !AppNames) ? isShowBgImage : gpSet->AppStd.isShowBgImage; };
+			//reg->Load(L"BackGround Image", sBgImage, countof(sBgImage));
+			WCHAR sBgImage[MAX_PATH]; // tBgImage
+			LPCWSTR BgImage() const { return (OverrideBgImage || !AppNames) ? sBgImage : gpSet->AppStd.sBgImage; };
 
 
 			void SetNames(LPCWSTR asAppNames)

@@ -175,21 +175,6 @@ const CONEMUDEFCOLORS DefColors[] =
 		reg->Save(L"PanView." s L".FontName", n.sFontName); \
 		reg->Save(L"PanView." s L".FontHeight", n.nFontHeight); }
 
-template <class T>
-void MinMax(T &a, int v1, int v2)
-{
-	if (a < (T)v1)
-		a = (T)v1;
-	else if (a > (T)v2)
-		a = (T)v2;
-}
-
-template <class T>
-void MinMax(T &a, int v2)
-{
-	if (a > (T)v2)
-		a = (T)v2;
-}
 
 
 
@@ -377,6 +362,7 @@ void Settings::InitSettings()
 	AppStd.isCursorColor = true;
 	AppStd.isCursorBlockInactive = true;
 	AppStd.isCursorIgnoreSize = false;
+	AppStd.nCursorFixedSize = 25;
 	AppStd.isPasteAllLines = true;
 	AppStd.isPasteFirstLine = true;
 
@@ -719,6 +705,7 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	reg->Load(L"CursorBlink", pApp->isCursorBlink);
 	reg->Load(L"CursorBlockInactive", pApp->isCursorBlockInactive);
 	reg->Load(L"CursorIgnoreSize", pApp->isCursorIgnoreSize);
+	reg->Load(L"CursorFixedSize", pApp->nCursorFixedSize); MinMax(pApp->nCursorFixedSize, CURSORSIZE_MIN, CURSORSIZE_MAX);
 
 	pApp->OverrideClipboard = bStd;
 	if (!bStd)
@@ -2609,6 +2596,7 @@ void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	reg->Save(L"CursorBlink", pApp->isCursorBlink);
 	reg->Save(L"CursorBlockInactive", pApp->isCursorBlockInactive);
 	reg->Save(L"CursorIgnoreSize", pApp->isCursorIgnoreSize);
+	reg->Save(L"CursorFixedSize", pApp->nCursorFixedSize);
 
 	if (!bStd)
 		reg->Save(L"OverrideClipboard", pApp->OverrideClipboard);

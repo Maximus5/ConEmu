@@ -73,7 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"\r\n" \
 	L"Special Thanks\r\n" \
 	L"––––––––––––––––––––––\r\n" \
-	L"thecybershadow: bdf support\r\n" \
+	L"thecybershadow: bdf support, Documentation\r\n" \
 	L"NightRoman: drawing optimization, BufferHeight and other fixes\r\n" \
 	L"dolzenko_: windows switching via GUI tabs\r\n" \
 	L"alex_itd: Drag'n'Drop, RightClick, AltEnter\r\n" \

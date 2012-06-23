@@ -55,6 +55,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TIMER_SCROLL_CHECK_DELAY  250
 //#define TIMER_SCROLL_CHECK_DELAY2 1000
 #define LOCK_DC_RECT_TIMEOUT      2000
+#define TIMER_AUTOCOPY_DELAY      (GetDoubleClickTime()*10/9)
+#define TIMER_AUTOCOPY            3204
 
 CConEmuChild::CConEmuChild()
 {
@@ -200,6 +202,8 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		LPCREATESTRUCT lp = (LPCREATESTRUCT)lParam;
 		pVCon = (CVirtualConsole*)lp->lpCreateParams;
 		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)pVCon);
+
+		pVCon->m_TAutoCopy.Init(hWnd, TIMER_AUTOCOPY, TIMER_AUTOCOPY_DELAY);
 
 		pVCon->m_TScrollShow.Init(hWnd, TIMER_SCROLL_SHOW, TIMER_SCROLL_SHOW_DELAY);
 		pVCon->m_TScrollHide.Init(hWnd, TIMER_SCROLL_HIDE, TIMER_SCROLL_HIDE_DELAY);
@@ -410,6 +414,14 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 					if (pVCon->m_TScrollHide.IsStarted())
 						pVCon->m_TScrollHide.Stop();
 
+					break;
+
+				case TIMER_AUTOCOPY:
+					pVCon->SetAutoCopyTimer(false);
+					if (!isPressed(VK_LBUTTON))
+					{
+						pVCon->RCon()->AutoCopyTimer();
+					}
 					break;
 				}
 				break;
@@ -1212,4 +1224,12 @@ void CConEmuChild::LockDcRect(bool bLock, RECT* Rect)
 		m_LockDc.bLocked = TRUE;
 		ValidateRect(mh_WndDC, &m_LockDc.rcScreen);
 	}
+}
+
+void CConEmuChild::SetAutoCopyTimer(bool bEnabled)
+{
+	if (bEnabled)
+		m_TAutoCopy.Start(TIMER_AUTOCOPY_DELAY);
+	else
+		m_TAutoCopy.Stop();
 }

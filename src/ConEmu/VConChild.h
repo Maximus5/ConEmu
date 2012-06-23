@@ -64,6 +64,8 @@ class CConEmuChild
 		int IsDcLocked(RECT* CurrentConLockedRect);
 		void LockDcRect(bool bLock, RECT* Rect = NULL);
 
+		void SetAutoCopyTimer(bool bEnabled);
+
 #ifdef _DEBUG
 	public:
 		UINT    mn_MsgCreateDbgDlg;
@@ -95,6 +97,8 @@ class CConEmuChild
 		} Caret;
 		DWORD mn_LastPostRedrawTick;
 		BOOL  mb_IsPendingRedraw, mb_RedrawPosted;
+
+		CTimer m_TAutoCopy;
 
 		BOOL mb_ScrollDisabled, mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup, mb_VTracking;
 		CTimer m_TScrollShow;

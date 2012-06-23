@@ -182,6 +182,8 @@ namespace SettingsNS
 		{csi_ConEmuHWND, cbStatusGuiHwnd}, {csi_ConEmuView, cbStatusViewHwnd}, {csi_Server, cbStatusServer},
 		{csi_ServerHWND, cbStatusRealHwnd}, {csi_Transparency, cbStatusTransparency}
 	};
+	const WCHAR* szCRLF[] = {L"CR+LF", L"LF", L"CR"};
+	const DWORD  nCRLF[] =  {0, 1, 2};
 };
 
 #define FillListBox(hDlg,nDlgID,Items,Values,Value) \
@@ -647,6 +649,7 @@ void CSettings::InitVars_Pages()
 	{
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
 		{IDD_SPG_MAIN,        L"Main",           thi_Main/*,    OnInitDialog_Main*/},
+		{IDD_SPG_CURSOR,      L"Text cursor",    thi_Cursor/*,  OnInitDialog_Cursor*/},
 		{IDD_SPG_STARTUP,     L"Startup",        thi_Startup/*, OnInitDialog_Startup*/},
 		{IDD_SPG_FEATURE,     L"Features",       thi_Ext/*,     OnInitDialog_Ext*/},
 		{IDD_SPG_COMSPEC,     L"ComSpec",        thi_Comspec/*, OnInitDialog_Comspec*/},
@@ -1416,13 +1419,6 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 		(LogFont.lfQuality == CLEARTYPE_NATURAL_QUALITY) ? rCTAA :
 		(LogFont.lfQuality == ANTIALIASED_QUALITY) ? rStandardAA : rNoneAA);
 
-	CheckDlgButton(hWnd2, cbCursorColor, gpSet->AppStd.isCursorColor);
-
-	CheckDlgButton(hWnd2, cbCursorBlink, gpSet->AppStd.isCursorBlink);
-
-	CheckDlgButton(hWnd2, cbBlockInactiveCursor, gpSet->AppStd.isCursorBlockInactive);
-
-	CheckRadioButton(hWnd2, rCursorV, rCursorH, gpSet->AppStd.isCursorV ? rCursorV : rCursorH);
 
 	// 3d state - force center symbols in cells
 	CheckDlgButton(hWnd2, cbMonospace, BST(gpSet->isMonospace));
@@ -1482,6 +1478,25 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 	mn_LastChangingFontCtrlId = 0;
 	RegisterTipsFor(hWnd2);
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Cursor(HWND hWnd2, BOOL abInitial)
+{
+	CheckRadioButton(hWnd2, rCursorV, rCursorH, gpSet->AppStd.isCursorV ? rCursorV : rCursorH);
+
+	CheckDlgButton(hWnd2, cbCursorColor, gpSet->AppStd.isCursorColor);
+
+	CheckDlgButton(hWnd2, cbCursorBlink, gpSet->AppStd.isCursorBlink);
+
+	CheckDlgButton(hWnd2, cbBlockInactiveCursor, gpSet->AppStd.isCursorBlockInactive);
+
+	CheckDlgButton(hWnd2, cbCursorIgnoreSize, gpSet->AppStd.isCursorIgnoreSize);
+
+	SetDlgItemInt(hWnd2, tCursorFixedSize, gpSet->AppStd.nCursorFixedSize, FALSE);
+
+	if (abInitial)
+		RegisterTipsFor(hWnd2);
 	return 0;
 }
 
@@ -1778,8 +1793,6 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
 
-	CheckDlgButton(hWnd2, cbCursorIgnoreSize, gpSet->AppStd.isCursorIgnoreSize);
-
 	RegisterTipsFor(hWnd2);
 	return 0;
 }
@@ -1858,6 +1871,9 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 	VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
 	FillListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 	SetDlgItemText(hWnd2, tGotoEditorCmd, gpSet->sFarGotoEditor);
+
+	BYTE b = gpSet->AppStd.isCTSEOL;
+	FillListBoxByte(hWnd2, lbCTSEOL, SettingsNS::szCRLF, SettingsNS::nCRLF, b);
 
 	CheckDlgButton(hWnd2, cbClipShiftIns, gpSet->AppStd.isPasteAllLines);
 	CheckDlgButton(hWnd2, cbClipCtrlV, gpSet->AppStd.isPasteFirstLine);
@@ -4463,6 +4479,22 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	} //case tDarker:
+
+	case tCursorFixedSize:
+	{
+		BOOL lbOk = FALSE;
+		UINT nNewVal = GetDlgItemInt(hWnd2, tCursorFixedSize, &lbOk, FALSE);
+		if (lbOk)
+		{
+			if ((nNewVal >= CURSORSIZE_MIN) && (nNewVal <= CURSORSIZE_MAX) && (gpSet->AppStd.nCursorFixedSize != nNewVal))
+			{
+				gpSet->AppStd.nCursorFixedSize = nNewVal;
+				gpConEmu->Update(true);
+			}
+		}
+
+		break;
+	} //case tCursorFixedSize:
 	
 	case tLongOutputHeight:
 	{
@@ -5845,6 +5877,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_MAIN:
 			gpSetCls->OnInitDialog_Main(hWnd2);
 			break;
+		case IDD_SPG_CURSOR:
+			gpSetCls->OnInitDialog_Cursor(hWnd2, TRUE);
+			break;
 		case IDD_SPG_STARTUP:
 			gpSetCls->OnInitDialog_Startup(hWnd2, TRUE);
 			break;
@@ -5914,6 +5949,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		switch (((ConEmuSetupPages*)lParam)->PageID)
 		{
 		case IDD_SPG_MAIN:    /*gpSetCls->OnInitDialog_Main(hWnd2);*/   break;
+		case IDD_SPG_CURSOR:
+			gpSetCls->OnInitDialog_Cursor(hWnd2, FALSE);
+			break;
 		case IDD_SPG_STARTUP:
 			gpSetCls->OnInitDialog_Startup(hWnd2, FALSE);
 			break;
@@ -6252,6 +6290,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 	bool bRedraw = false, bRefill = false;
 
 	#define UM_DISTINCT_ENABLE (WM_APP+32)
+	#define UM_FILL_CONTROLS (WM_APP+33)
 
 	static struct StrDistinctControls
 	{
@@ -6262,9 +6301,11 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 		{cbExtendFontsOverride, {cbExtendFonts, stExtendFontBoldIdx, lbExtendFontBoldIdx, stExtendFontItalicIdx, lbExtendFontItalicIdx, stExtendFontNormalIdx, lbExtendFontNormalIdx}},
 		{cbCursorOverride, {rCursorV, rCursorH, cbCursorColor, cbCursorBlink, cbBlockInactiveCursor, cbCursorIgnoreSize}},
 		{cbColorsOverride, {lbColorsOverride}},
-		{cbClipboardOverride, {cbClipShiftIns, cbClipCtrlV}},
-		{cbPromptOverride, {cbCTSClickPromptPosition}},
-		{cbBgImageOverride, {cbBgImage, tBgImage, bBgImage}},
+		{cbClipboardOverride, {
+			gbCopyingOverride, cbCTSDetectLineEOL, cbCTSBashMargin, cbCTSTrimTrailing, stCTSEOL, lbCTSEOL,
+			gbPastingOverride, cbClipShiftIns, cbClipCtrlV,
+			gbPromptOverride, cbCTSClickPromptPosition}},
+		{cbBgImageOverride, {cbBgImage, tBgImage, bBgImage, lbBgPlacement}},
 	};
 
 	if (!hChild)
@@ -6391,6 +6432,49 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 	}
 	else switch (messg)
 	{
+	case UM_FILL_CONTROLS:
+		if ((((HWND)wParam) == hWnd2) && lParam) // arg check
+		{
+			const Settings::AppSettings* pApp = (const Settings::AppSettings*)lParam;
+
+			CheckRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore,
+				(pApp->Elevated == 1) ? rbAppDistinctElevatedOn :
+				(pApp->Elevated == 2) ? rbAppDistinctElevatedOff : rbAppDistinctElevatedIgnore);
+
+
+			wchar_t temp[MAX_PATH];
+
+			CheckDlgButton(hChild, cbExtendFontsOverride, pApp->OverrideExtendFonts);
+			CheckDlgButton(hChild, cbExtendFonts, pApp->isExtendFonts);
+			_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontBoldColor<16) ? L"%2i" : L"None", pApp->nFontBoldColor);
+			SelectStringExact(hChild, lbExtendFontBoldIdx, temp);
+			_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontItalicColor<16) ? L"%2i" : L"None", pApp->nFontItalicColor);
+			SelectStringExact(hChild, lbExtendFontItalicIdx, temp);
+			_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontNormalColor<16) ? L"%2i" : L"None", pApp->nFontNormalColor);
+			SelectStringExact(hChild, lbExtendFontNormalIdx, temp);
+
+			CheckDlgButton(hChild, cbCursorOverride, pApp->OverrideCursor);
+			CheckRadioButton(hChild, rCursorV, rCursorH, pApp->isCursorV ? rCursorV : rCursorH);
+			CheckDlgButton(hChild, cbCursorColor, pApp->isCursorColor);
+			CheckDlgButton(hChild, cbCursorBlink, pApp->isCursorBlink);
+			CheckDlgButton(hChild, cbBlockInactiveCursor, pApp->isCursorBlockInactive);
+			CheckDlgButton(hChild, cbCursorIgnoreSize, pApp->isCursorIgnoreSize);
+
+			CheckDlgButton(hChild, cbColorsOverride, pApp->OverridePalette);
+			SelectStringExact(hChild, lbColorsOverride, pApp->szPaletteName);
+
+			CheckDlgButton(hChild, cbClipboardOverride, pApp->OverrideClipboard);
+			CheckDlgButton(hChild, cbClipShiftIns, pApp->isPasteAllLines);
+			CheckDlgButton(hChild, cbClipCtrlV, pApp->isPasteFirstLine);
+
+			BYTE b = pApp->isCTSEOL;
+			FillListBoxByte(hChild, lbCTSEOL, SettingsNS::szCRLF, SettingsNS::nCRLF, b);
+
+			b = gpSet->bgOperation;
+			FillListBoxByte(hChild, lbBgPlacement, SettingsNS::szBgOper, SettingsNS::nBgOper, b);
+
+		} // UM_FILL_CONTROLS
+		break;
 	case UM_DISTINCT_ENABLE:
 		if (((HWND)wParam) == hWnd2) // arg check
 		{
@@ -6425,6 +6509,8 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 					if (!bAllowed)
 						CheckDlgButton(hDlg, DistinctControls[i].nOverrideID, BST_UNCHECKED);
 				}
+
+				_ASSERTE(DistinctControls[i].nCtrls[countof(DistinctControls[i].nCtrls)-1]==0 && "Overflow check of nCtrls[]")
 
 				for (size_t j = 0; j < countof(DistinctControls[i].nCtrls) && DistinctControls[i].nCtrls[j]; j++)
 				{
@@ -6663,14 +6749,11 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 						pApp->isPasteFirstLine = IsChecked(hChild, CB);
 					}
 					break;
-
-				case cbPromptOverride:
-					bChecked = IsChecked(hChild, CB);
-					pageOpProc_Apps(hWnd2, hChild, UM_DISTINCT_ENABLE, (WPARAM)hWnd2, cbPromptOverride);
-					if (!bSkipSelChange)
-					{
-						//pApp->OverridePrompt = IsChecked(hChild, CB);
-					}
+				case cbCTSDetectLineEOL:
+					break;
+				case cbCTSBashMargin:
+					break;
+				case cbCTSTrimTrailing:
 					break;
 				case cbCTSClickPromptPosition:
 					break;
@@ -6720,6 +6803,23 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 							}
 						} // tAppDistinctName
 						break;
+
+					case tCursorFixedSize:
+						if (pApp)
+						{
+							BOOL lbOk = FALSE;
+							UINT nNewVal = GetDlgItemInt(hChild, tCursorFixedSize, &lbOk, FALSE);
+							if (lbOk)
+							{
+								if ((nNewVal >= CURSORSIZE_MIN) && (nNewVal <= CURSORSIZE_MAX) && (pApp->nCursorFixedSize != nNewVal))
+								{
+									pApp->nCursorFixedSize = nNewVal;
+									bRedraw = true;
+								}
+							}
+						} //case tCursorFixedSize:
+						break;
+
 					case tBgImage:
                     	{
                     		TODO("tBgImage");
@@ -6737,7 +6837,6 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 					if (bSkipSelChange)
 						break; // WM_COMMAND
 
-					wchar_t temp[MAX_PATH];
 					const Settings::AppSettings* pApp = NULL;
 					//while ((pApp = gpSet->GetAppSettings(nApp)) && pApp->AppNames)
 					int iCur = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
@@ -6751,71 +6850,17 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 							SetDlgItemText(hWnd2, tAppDistinctName, pApp->AppNames);
 							bSkipEditChange = lbCur;
 						}
-						//EnableWindow(GetDlgItem(hWnd2, tAppDistinctName), TRUE);
-						//EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOn), TRUE);
-						//EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOff), TRUE);
-						//EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedIgnore), TRUE);
-						CheckRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore,
-							(pApp->Elevated == 1) ? rbAppDistinctElevatedOn :
-							(pApp->Elevated == 2) ? rbAppDistinctElevatedOff : rbAppDistinctElevatedIgnore);
 
-						//EnableWindow(GetDlgItem(hWnd2, cbExtendFontsOverride), TRUE);
-						//EnableWindow(GetDlgItem(hWnd2, cbCursorOverride), TRUE);
-						//EnableWindow(GetDlgItem(hWnd2, cbColorsOverride), TRUE);
-						//EnableWindow(GetDlgItem(hWnd2, cbClipboardOverride), TRUE);
-
-						CheckDlgButton(hChild, cbExtendFontsOverride, pApp->OverrideExtendFonts);
-						CheckDlgButton(hChild, cbExtendFonts, pApp->isExtendFonts);
-						_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontBoldColor<16) ? L"%2i" : L"None", pApp->nFontBoldColor);
-						SelectStringExact(hChild, lbExtendFontBoldIdx, temp);
-						_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontItalicColor<16) ? L"%2i" : L"None", pApp->nFontItalicColor);
-						SelectStringExact(hChild, lbExtendFontItalicIdx, temp);
-						_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontNormalColor<16) ? L"%2i" : L"None", pApp->nFontNormalColor);
-						SelectStringExact(hChild, lbExtendFontNormalIdx, temp);
-
-						CheckDlgButton(hChild, cbCursorOverride, pApp->OverrideCursor);
-						CheckRadioButton(hChild, rCursorV, rCursorH, pApp->isCursorV ? rCursorV : rCursorH);
-						CheckDlgButton(hChild, cbCursorColor, pApp->isCursorColor);
-						CheckDlgButton(hChild, cbCursorBlink, pApp->isCursorBlink);
-						CheckDlgButton(hChild, cbBlockInactiveCursor, pApp->isCursorBlockInactive);
-						CheckDlgButton(hChild, cbCursorIgnoreSize, pApp->isCursorIgnoreSize);
-
-						CheckDlgButton(hChild, cbColorsOverride, pApp->OverridePalette);
-						SelectStringExact(hChild, lbColorsOverride, pApp->szPaletteName);
-
-						CheckDlgButton(hChild, cbClipboardOverride, pApp->OverrideClipboard);
-						CheckDlgButton(hChild, cbClipShiftIns, pApp->isPasteAllLines);
-						CheckDlgButton(hChild, cbClipCtrlV, pApp->isPasteFirstLine);
+						pageOpProc_Apps(hWnd2, hChild, UM_FILL_CONTROLS, (WPARAM)hWnd2, (LPARAM)pApp);
 					}
 					else
 					{
 						SetDlgItemText(hWnd2, tAppDistinctName, L"");
 						CheckRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore, rbAppDistinctElevatedIgnore);
-
-						//EnableWindow(GetDlgItem(hWnd2, tAppDistinctName), FALSE);
-						//EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOn), FALSE);
-						//EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedOff), FALSE);
-						//EnableWindow(GetDlgItem(hWnd2, rbAppDistinctElevatedIgnore), FALSE);
-						
-						//EnableWindow(GetDlgItem(hWnd2, cbExtendFontsOverride), FALSE);
-						//EnableWindow(GetDlgItem(hWnd2, cbCursorOverride), FALSE);
-						//EnableWindow(GetDlgItem(hWnd2, cbColorsOverride), FALSE);
-						//EnableWindow(GetDlgItem(hWnd2, cbClipboardOverride), FALSE);
-
-						//CheckDlgButton(hWnd2, cbExtendFontsOverride, BST_UNCHECKED);
-						//CheckDlgButton(hWnd2, cbCursorOverride, BST_UNCHECKED);
-						//CheckDlgButton(hWnd2, cbColorsOverride, BST_UNCHECKED);
-						//CheckDlgButton(hWnd2, cbClipboardOverride, BST_UNCHECKED);
-						//CheckDlgButton(hWnd2, cbClipShiftIns, BST_UNCHECKED);
-						//CheckDlgButton(hWnd2, cbClipCtrlV, BST_UNCHECKED);
 					}
 					
 					bool lbOld = bSkipSelChange; bSkipSelChange = true;
 					pageOpProc_Apps(hWnd2, hChild, UM_DISTINCT_ENABLE, (WPARAM)hWnd2, 0);
-					//pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbExtendFontsOverride,BN_CLICKED), 0);
-					//pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbCursorOverride,BN_CLICKED), 0);
-					//pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbColorsOverride,BN_CLICKED), 0);
-					//pageOpProc_Apps(hWnd2, WM_COMMAND, MAKELONG(cbClipboardOverride,BN_CLICKED), 0);
 					bSkipSelChange = lbOld;
 				} // if (CB == lbAppDistinct)
 				else
@@ -6841,7 +6886,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 
 								if (pApp->isExtendFonts)
 									bRedraw = true;
-							}
+							} // lbExtendFontBoldIdx, lbExtendFontItalicIdx, lbExtendFontNormalIdx
 							break;
 
 						case lbColorsOverride:
@@ -6876,7 +6921,19 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 										}
 									}
 								}
-							}
+							} // lbColorsOverride
+							break;
+
+						case lbCTSEOL:
+							{
+								TODO("lbCTSEOL");
+							} // lbCTSEOL
+							break;
+
+						case lbBgPlacement:
+							{
+								TODO("lbBgPlacement");
+							} // lbBgPlacement
 							break;
 						}
 					}
@@ -8939,8 +8996,8 @@ int CSettings::IsChecked(HWND hParent, WORD nCtrlId)
 	}
 	else
 	{
-		HWND hChild = GetDlgItem(hParent, nCtrlId);
-		_ASSERTE(hChild!=NULL);
+		HWND hCheckBox = GetDlgItem(hParent, nCtrlId);
+		_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
 	}
 #endif
 	// Аналог IsDlgButtonChecked

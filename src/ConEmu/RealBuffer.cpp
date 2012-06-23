@@ -2690,14 +2690,19 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	}
 	else if ((messg == WM_LBUTTONUP) && gpSet->isCTSAutoCopy && (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION))
 	{
-		if (isSelectionPresent())
+		// Чтобы не подраться с выделением "слов" двойным кликом - "применяем" выделение сейчас
+		// только если оно больше одной ячейки. Иначе - выделение будет "применено" по таймеру (pVCon->RCon()->AutoCopyTimer())
+		if ((con.m_sel.srSelection.Left != con.m_sel.srSelection.Right) || (con.m_sel.srSelection.Top != con.m_sel.srSelection.Bottom))
 		{
-			DoSelectionCopy();
-		}
-		else
-		{
-			_ASSERTE(FALSE && "how it can be?");
-			DoSelectionStop();
+			if (isSelectionPresent())
+			{
+				DoSelectionCopy();
+			}
+			else
+			{
+				_ASSERTE(FALSE && "how it can be?");
+				DoSelectionStop();
+			}
 		}
 	}
 	else if (messg == WM_LBUTTONDBLCLK)
@@ -2933,6 +2938,8 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 		}
 	}
 
+	mp_RCon->VCon()->SetAutoCopyTimer(false);
+
 	WARNING("Доработать для режима с прокруткой - выделение протяжкой, как в обычной консоли");
 	if (anX == -1 && anY == -1)
 	{
@@ -2981,6 +2988,16 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 		if (pcrTo)
 			ExpandSelection(pcrTo->X, pcrTo->Y);
 		con.m_sel.dwFlags |= CONSOLE_DBLCLICK_SELECTION;
+
+		if (gpSet->isCTSAutoCopy)
+		{
+			//DoSelectionFinalize(true);
+			mp_RCon->VCon()->SetAutoCopyTimer(true);
+		}
+	}
+	else if (abByMouse && gpSet->isCTSAutoCopy)
+	{
+		mp_RCon->VCon()->SetAutoCopyTimer(true);
 	}
 }
 
@@ -3332,6 +3349,32 @@ BOOL CRealBuffer::isSelfSelectMode()
 	return (con.m_sel.dwFlags != 0);
 }
 
+// true/false - true-сменился буфер (вернули rbt_Primary)
+bool CRealBuffer::DoSelectionFinalize(bool abCopy, WPARAM wParam)
+{
+	if (abCopy)
+	{
+		DoSelectionCopy();
+	}
+
+	mp_RCon->mn_SelectModeSkipVk = wParam;
+	DoSelectionStop(); // con.m_sel.dwFlags = 0;
+
+	if (m_Type == rbt_Selection)
+	{
+		mp_RCon->SetActiveBuffer(rbt_Primary);
+		// Сразу на выход!
+		return true;
+	}
+	else
+	{
+		//mb_ConsoleSelectMode = false;
+		UpdateSelection(); // обновить на экране
+	}
+
+	return false;
+}
+
 // pszChars may be NULL
 bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars)
 {
@@ -3344,25 +3387,8 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	{
 		if ((wParam == VK_ESCAPE) || (wParam == VK_RETURN))
 		{
-			if (wParam == VK_RETURN)
-			{
-				DoSelectionCopy();
-			}
-
-			mp_RCon->mn_SelectModeSkipVk = wParam;
-			DoSelectionStop(); // con.m_sel.dwFlags = 0;
-
-			if (m_Type == rbt_Selection)
-			{
-				mp_RCon->SetActiveBuffer(rbt_Primary);
-				// Сразу на выход!
+			if (DoSelectionFinalize(wParam == VK_RETURN, wParam))
 				return true;
-			}
-			else
-			{
-				//mb_ConsoleSelectMode = false;
-				UpdateSelection(); // обновить на экране
-			}
 		}
 		else
 		{
@@ -4556,7 +4582,7 @@ void CRealBuffer::ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
 	{
 		const Settings::AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 		if (pApp->CursorIgnoreSize())
-			ci->dwSize = 25;
+			ci->dwSize = pApp->CursorFixedSize();
 	}
 }
 

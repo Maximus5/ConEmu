@@ -379,6 +379,7 @@ class CRealConsole
 		bool isFarKeyBarShown();
 		bool isSelectionAllowed();
 		bool isSelectionPresent();
+		void AutoCopyTimer(); // Чтобы разрулить "Auto Copy" & "Double click - select word"
 		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
 		void ExpandSelection(SHORT anX=-1, SHORT anY=-1);
 		bool DoSelectionCopy();

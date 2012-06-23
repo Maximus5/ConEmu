@@ -125,30 +125,24 @@ BEGIN
     COMBOBOX        tFontFace2,169,70,101,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     CTEXT           "x",IDC_STATIC,275,72,8,8
     COMBOBOX        tFontSizeX2,287,71,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Cursor",IDC_STATIC,216,93,107,64
-    CONTROL         "&Vertical (as GUI)",rCursorV,"Button",BS_AUTORADIOBUTTON | WS_GROUP,223,104,95,8
-    CONTROL         "&Horizontal (as console)",rCursorH,"Button",BS_AUTORADIOBUTTON,223,116,95,8
-    CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,130,33,8
-    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,258,130,40,8
-    CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,142,84,8
     GROUPBOX        "Anti-aliasing",IDC_STATIC,10,57,154,28,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,70,36,8
     CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,57,70,47,8
     CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,110,70,48,8
-    GROUPBOX        "Console size and Window position",IDC_STATIC,3,93,206,64
-    CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,105,38,8
-    EDITTEXT        tWndWidth,89,103,39,12,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tWndHeight,89,117,39,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,7,117,48,8
-    CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,7,130,49,8
-    PUSHBUTTON      "Apply",cbApplyPos,89,131,39,12
-    RTEXT           "Wnd X:",IDC_STATIC,133,105,29,8
-    EDITTEXT        tWndX,164,103,39,12,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tWndY,164,117,39,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,165,133,32,8
-    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,165,144,41,8
+    GROUPBOX        "Console size and Window position",IDC_STATIC,3,96,319,59
+    CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,36,108,38,8
+    EDITTEXT        tWndWidth,35,121,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tWndHeight,115,121,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,79,108,48,8
+    CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,132,108,49,8
+    PUSHBUTTON      "Apply",cbApplyPos,278,137,39,12
+    RTEXT           "X:",IDC_STATIC,201,123,9,8
+    EDITTEXT        tWndX,216,121,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tWndY,278,121,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,240,108,32,8
+    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,276,108,41,8
     CONTROL         "Save window size and position on exit",cbAutoSaveSizePos,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,144,141,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,139,136,10
     GROUPBOX        "",IDC_STATIC,4,161,319,67
     CONTROL         "Back&ground image (bmp, jpg, png):",cbBgImage,"Button",BS_AUTO3STATE | WS_TABSTOP,10,161,128,8
     LTEXT           "Path:",IDC_STATIC,10,175,18,8
@@ -162,9 +156,27 @@ BEGIN
     CONTROL         "Allow plugins",cbBgAllowPlugin,"Button",BS_AUTO3STATE | WS_TABSTOP,141,212,57,10
     RTEXT           "Placement:",stBgPlacement,200,211,50,8
     COMBOBOX        lbBgPlacement,254,209,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Wnd Y:",IDC_STATIC,133,119,29,8
-    RTEXT           "Width:",IDC_STATIC,57,105,29,8
-    RTEXT           "Height",IDC_STATIC,57,119,29,8
+    RTEXT           "Y:",IDC_STATIC,262,123,12,8
+    RTEXT           "Width:",IDC_STATIC,5,123,27,8
+    RTEXT           "Height:",IDC_STATIC,83,123,29,8
+    RTEXT           "Style:",IDC_STATIC,5,108,27,8
+    RTEXT           "Position:",IDC_STATIC,197,108,33,8
+END
+
+IDD_SPG_CURSOR DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Text Cursor",IDC_STATIC,4,1,319,47
+    CONTROL         "&Vertical (as GUI)",rCursorV,"Button",BS_AUTORADIOBUTTON | WS_GROUP,12,15,95,8
+    CONTROL         "&Horizontal (as console)",rCursorH,"Button",BS_AUTORADIOBUTTON,12,29,95,8
+    CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,124,15,33,8
+    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,163,15,50,8
+    CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,124,29,96,8
+    CONTROL         "Fixed cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,15,87,8
+    EDITTEXT        tCursorFixedSize,230,27,40,12,ES_AUTOHSCROLL
+    LTEXT           "(5-100) %",IDC_STATIC,275,29,38,8
 END
 
 IDD_SPG_STARTUP DIALOGEX 0, 0, 328, 235
@@ -399,7 +411,7 @@ BEGIN
     GROUPBOX        "Appearance",gbFeatureAppear,4,94,319,49
     CONTROL         "Enhance progress- and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,105,119,8
-    CONTROL         "Enhance buttons and -boxes",cbEnhanceButtons,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,117,119,8
+    CONTROL         "Enhance buttons and -boxes",cbEnhanceButtons,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,10,117,119,8
     CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,200,117,8
     CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,200,79,8
     CONTROL         "Always show scrollbar",cbAlwaysShowScrollbar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,155,100,8
@@ -407,10 +419,9 @@ BEGIN
     CONTROL         "Center console",cbTryToCenter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,183,89,8
     CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,117,89,8
     CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,105,89,8
-    CONTROL         "Ignore console cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,129,119,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,132,129,89,8
     CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,117,89,8
-    CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,271,83,50,8
+    CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,271,83,50,8
     GROUPBOX        "Caption and border options",gbFeatureCaption,4,171,319,60
     RTEXT           "Frame width:",IDC_STATIC,219,201,54,8
     RTEXT           "Appear delay:",IDC_STATIC,129,216,50,8
@@ -419,7 +430,7 @@ BEGIN
     EDITTEXT        tHideCaptionAlwaysDelay,183,214,40,12,ES_AUTOHSCROLL
     EDITTEXT        tHideCaptionAlwaysDissapear,277,214,40,12,ES_AUTOHSCROLL
     CONTROL         "Confirm close console",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,66,87,8
-    CONTROL         "ANSI X3.64 / 256color",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,129,89,8
+    CONTROL         "ANSI X3.64 / xterm 256color",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,129,119,8
     GROUPBOX        "Mouse options",IDC_STATIC,4,1,319,28
     CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,119,8
     CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTO3STATE | WS_TABSTOP,10,183,117,8
@@ -609,7 +620,7 @@ BEGIN
     CONTROL         "Bash margin",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,59,55,8
     CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,160,59,77,8
     RTEXT           "EOL:",IDC_STATIC,254,59,19,8
-    COMBOBOX        lbCTSClipEOL,277,57,40,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbCTSEOL,277,57,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235
@@ -991,11 +1002,11 @@ BEGIN
     GROUPBOX        "",IDC_STATIC,1,70,291,30
     GROUPBOX        "",IDC_STATIC,1,31,291,35
     GROUPBOX        "",IDC_STATIC,1,0,291,27
-    GROUPBOX        "",IDC_STATIC,1,211,291,25
-    GROUPBOX        "",IDC_STATIC,1,104,291,100
-    GROUPBOX        "Copying text override",IDC_STATIC,7,114,279,26
-    GROUPBOX        "Pasting text override (not in Far or GUI applications)",IDC_STATIC,7,143,279,25
-    GROUPBOX        "Prompt override",IDC_STATIC,7,171,279,25
+    GROUPBOX        "",IDC_STATIC,1,202,291,25
+    GROUPBOX        "",IDC_STATIC,1,104,291,92
+    GROUPBOX        "Copying text override",gbCopyingOverride,7,114,279,26
+    GROUPBOX        "Pasting text override (not in Far or GUI applications)",gbPastingOverride,7,139,279,25
+    GROUPBOX        "Prompt override",gbPromptOverride,7,164,279,25
     CONTROL         "Extend fonts override",cbExtendFontsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,0,86,8
     CONTROL         "Extend",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,12,38,10
     RTEXT           "Bold:",stExtendFontBoldIdx,45,12,19,8
@@ -1007,28 +1018,31 @@ BEGIN
     CONTROL         "Cursor override",cbCursorOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,31,66,8
     CONTROL         "&Vertical (as GUI)",rCursorV,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,42,88,8
     CONTROL         "&Horizontal (as console)",rCursorH,"Button",BS_AUTORADIOBUTTON,7,53,88,8
-    CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,42,40,8
-    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,142,42,63,8
-    CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,186,42,91,8
-    CONTROL         "Ignore console cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,53,104,8
+    CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,42,38,8
+    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,141,42,45,8
+    CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,53,91,8
+    CONTROL         "Fixed cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,196,42,89,8
     CONTROL         "Color palette override",cbColorsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,70,87,8
     COMBOBOX        lbColorsOverride,7,81,279,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Clipboard (Copy/Paste) override",cbClipboardOverride,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,104,123,8
-    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,154,102,8
-    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,124,154,95,8
+    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,150,102,8
+    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,124,150,95,8
     CONTROL         "Change prompt (cmd, powershell, bash) text cursor position with Left Click",cbCTSClickPromptPosition,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,13,182,268,8
-    CONTROL         "Background image override",cbBgImageOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,211,117,8
-    CONTROL         "Background",cbBgImage,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,223,54,8
-    EDITTEXT        tBgImage,63,220,123,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",bBgImage,189,220,16,12
-    CTEXT           "End of scroll area",stAppDistinctBottom,24,244,171,8
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,13,175,268,8
+    CTEXT           "End of scroll area",stAppDistinctBottom,24,235,171,8
     CONTROL         "Detect text line ends",cbCTSDetectLineEOL,"Button",BS_AUTO3STATE | WS_TABSTOP,13,126,88,8
     CONTROL         "Bash",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,101,126,30,8
     CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,136,126,77,8
-    RTEXT           "EOL:",IDC_STATIC,221,126,16,8
-    COMBOBOX        lbCTSClipEOL,241,123,40,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "EOL:",stCTSEOL,221,126,16,8
+    COMBOBOX        lbCTSEOL,241,123,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Background image override",cbBgImageOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,202,117,8
+    CONTROL         "Background",cbBgImage,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,214,54,8
+    EDITTEXT        tBgImage,63,211,138,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",bBgImage,203,211,16,12
+    COMBOBOX        lbBgPlacement,225,211,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        tCursorFixedSize,196,52,40,12,ES_AUTOHSCROLL
+    LTEXT           "(5-100) %",IDC_STATIC,241,54,38,8
 END
 
 IDD_ABOUT DIALOGEX 0, 0, 325, 205

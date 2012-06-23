@@ -303,6 +303,7 @@ class CSettings
 		//HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hCmdTasks, hViews, hInfo, hDebug, hUpdate, hSelection;
 		enum TabHwndIndex {
 			thi_Main = 0,
+			thi_Cursor,
 			thi_Startup,
 			thi_Ext,
 			thi_Comspec,
@@ -412,6 +413,7 @@ class CSettings
 		LRESULT OnInitDialog();
 		// OnInitDialogPage_t: IDD_SPG_MAIN, è ò.ä.
 		LRESULT OnInitDialog_Main(HWND hWnd2);
+		LRESULT OnInitDialog_Cursor(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Startup(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
 		LRESULT OnInitDialog_Comspec(HWND hWnd2);

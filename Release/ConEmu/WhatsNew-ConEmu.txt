@@ -19,6 +19,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [*] Теперь могут быть изменены комбинации: Apps+Space, Alt+F9, Alt+Enter, Alt+Space, Ctrl+Up, Ctrl+Down, Ctrl+PgUp, Ctrl+PgDn и PicView.SlideShow.
 [*] Соответственно, убраны флажки из 'Send to console': Alt+F9, Alt+Enter, Alt+Space.
 [%] Win+Down не увеличивал размер консоли (опция «Win+Arrows - resize window»).
+[%] Issue ???: На Windows XP не появлялось сообщение (тултип) об ошибках в области нотификаций (TSA).
+[*] Настройки текстового курсора перенесены на новую отдельную вкладку 'Text cursor'.
+[+] Issue 612: Option to change cursor size ('Fixed cursor size' & '(5-100) %').
 
 
 2012.06.18

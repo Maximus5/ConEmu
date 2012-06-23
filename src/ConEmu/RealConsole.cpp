@@ -9723,3 +9723,11 @@ void CRealConsole::CtrlWinAltSpace()
 	//MBox(L"CtrlWinAltSpace: Toggle");
 	ShowConsoleOrGuiClient(-1); // Toggle visibility
 }
+
+void CRealConsole::AutoCopyTimer()
+{
+	if (gpSet->isCTSAutoCopy && isSelectionPresent())
+	{
+		mp_ABuf->DoSelectionFinalize(true);
+	}
+}
