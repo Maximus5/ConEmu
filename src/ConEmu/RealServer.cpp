@@ -243,7 +243,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		// -- команда старта альп.сервера должна приходить из главного сервера
 		_ASSERTE(pIn->StartStop.dwPID == nPID && nPID != pIn->hdr.nSrcPID && pIn->hdr.nSrcPID == mp_RCon->mn_MainSrv_PID);
 		// Если процесс запущен под другим логином - передать хэндл (hServerProcessHandle) не получится
-		mp_RCon->InitAltServer(nPID/*, hServerProcessHandle*/);
+		mp_RCon->InitAltServer((nStarted == sst_AltServerStart) ? nPID : 0);
 
 		// В принципе, альт. сервер уже все знает, но вернем...
 		pOut->StartStopRet.hWnd = ghWnd;

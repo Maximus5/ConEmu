@@ -751,7 +751,7 @@ bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw)
 	gpSrv->hAltServer = hAltServer;
 	gpSrv->dwAltServerPID = nPID;
 
-	if (gpSrv->hAltServerChanged)
+	if (gpSrv->hAltServerChanged && (GetCurrentThreadId() != gpSrv->dwRefreshThread))
 	{
 		// В RefreshThread ожидание хоть и небольшое (100мс), но лучше передернуть
 		SetEvent(gpSrv->hAltServerChanged);
@@ -927,6 +927,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 
 	_ASSERTE((ghConEmuWndDC==NULL) || (gpSrv->pColorerMapping!=NULL));
 
+	gpSrv->csAltSrv = new MSection();
 	gpSrv->csProc = new MSection();
 	gpSrv->nMainTimerElapse = 10;
 	gpSrv->nTopVisibleLine = -1; // блокировка прокрутки не включена
@@ -1316,6 +1317,7 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	SafeCloseHandle(gpSrv->hRootProcess);
 	SafeCloseHandle(gpSrv->hRootThread);
 
+	SafeDelete(gpSrv->csAltSrv);
 	SafeDelete(gpSrv->csProc);
 
 	SafeFree(gpSrv->pnProcesses);
@@ -3220,6 +3222,65 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 			if ((nAltWait == (WAIT_OBJECT_0+0)) || (nAltWait == (WAIT_OBJECT_0+1)))
 			{
+				// Если это закрылся AltServer
+				if ((nAltWait == (WAIT_OBJECT_0+0)))
+				{
+					MSectionLock CsAlt; CsAlt.Lock(gpSrv->csAltSrv, TRUE, 10000);
+
+					if (gpSrv->hAltServer)
+					{
+						HANDLE h = gpSrv->hAltServer;
+						gpSrv->hAltServer = NULL;
+						gpSrv->hCloseAltServer = h;
+
+						DWORD nAltServerWasStarted = 0;
+						DWORD nAltServerWasStopped = gpSrv->dwAltServerPID;
+						AltServerInfo info = {};
+						if (gpSrv->dwAltServerPID)
+						{
+							// Поскольку текущий сервер завершается - то сразу сбросим PID (его морозить уже не нужно)
+							gpSrv->dwAltServerPID = 0;
+							// Был "предыдущий" альт.сервер?
+							if (gpSrv->AltServers.Get(nAltServerWasStopped, &info, true/*Remove*/))
+							{
+								// Переключаемся на "старый" (если был)
+								if (info.nPrevPID)
+								{
+									_ASSERTE(info.hPrev!=NULL);
+									// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
+									// Активировать альтернативный сервер (повторно), отпустить его нити чтения
+									nAltServerWasStarted = info.nPrevPID;
+									AltServerWasStarted(info.nPrevPID, info.hPrev, true);
+								}
+							}
+						}
+
+						CsAlt.Unlock();
+
+						// Уведомить ГУЙ
+						CESERVER_REQ *pGuiIn = NULL, *pGuiOut = NULL;
+						int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
+						pGuiIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP, nSize);
+
+						if (!pGuiIn)
+						{
+							_ASSERTE(pGuiIn!=NULL && "Memory allocation failed");
+						}
+						else
+						{
+							pGuiIn->StartStop.dwPID = nAltServerWasStarted ? nAltServerWasStarted : nAltServerWasStopped;
+							pGuiIn->StartStop.hServerProcessHandle = NULL; // для GUI смысла не имеет
+							pGuiIn->StartStop.nStarted = nAltServerWasStarted ? sst_AltServerStart : sst_AltServerStop;
+
+							pGuiOut = ExecuteGuiCmd(ghConWnd, pGuiIn, ghConWnd);
+
+							_ASSERTE(pGuiOut!=NULL && "Can not switch GUI to alt server?"); // успешное выполнение?
+							ExecuteFreeResult(pGuiIn);
+							ExecuteFreeResult(pGuiOut);
+						}
+					}
+				}
+
 				// Смена сервера
 				nAltWait = WAIT_OBJECT_0;
 			}

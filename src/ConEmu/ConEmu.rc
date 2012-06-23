@@ -585,7 +585,7 @@ BEGIN
     RTEXT           "Back:",IDC_STATIC,269,30,22,8
     COMBOBOX        lbCTSBackIdx,293,28,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Mouse button actions",IDC_STATIC,4,80,319,47
-    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,94,11,8
+    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,94,10,8
     COMBOBOX        lbCTSActAlways,22,91,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,76,94,100,8
     RTEXT           "Right:",IDC_STATIC,175,94,24,8

@@ -22,6 +22,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [%] Issue ???: На Windows XP не появлялось сообщение (тултип) об ошибках в области нотификаций (TSA).
 [*] Настройки текстового курсора перенесены на новую отдельную вкладку 'Text cursor'.
 [+] Issue 612: Option to change cursor size ('Fixed cursor size' & '(5-100) %').
+[%] Issue 608: Проблемы с telnet.
+[*] cmd/powershell/tcc: Параметр "-new_console" (для запуска консольных приложений в новом табе) теперь можно использовать в prompt без "ConEmuC.exe".
+    Например, в cmd prompt можно ввести: powershell -new_console
 
 
 2012.06.18

@@ -6120,6 +6120,14 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		gpSrv->nProcessStartTick = GetTickCount();
 	}
+
+	MSectionLock CsAlt;
+	if (((in.StartStop.nStarted == sst_AltServerStop) || (in.StartStop.nStarted == sst_AppStop))
+		&& in.StartStop.dwPID && (in.StartStop.dwPID == gpSrv->dwAltServerPID))
+	{
+		_ASSERTE(GetCurrentThreadId() != gpSrv->dwRefreshThread);
+		CsAlt.Lock(gpSrv->csAltSrv, TRUE, 1000);
+	}
 	
 #ifdef _DEBUG
 	wchar_t szDbg[128];
@@ -6167,7 +6175,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	// Переменные, чтобы позвать функцию AltServerWasStarted после отпускания CS.Unlock()
 	bool AltServerChanged = false;
-	DWORD nAltServerWasStarted = 0;
+	DWORD nAltServerWasStarted = 0, nAltServerWasStopped = 0;
 	DWORD nCurAltServerPID = gpSrv->dwAltServerPID;
 	HANDLE hAltServerWasStarted = NULL;
 	bool ForceThawAltServer = false;
@@ -6203,16 +6211,18 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		DWORD nAltPID = (in.StartStop.nStarted == sst_ComspecStop) ? in.StartStop.nOtherPID : nPID;
 
 		// Если это закрылся AltServer
-		if (nAltPID && gpSrv->AltServers.Get(nAltPID, &info, true/*Remove*/))
+		if (nAltPID)
 		{
+			bool bPrevFound = gpSrv->AltServers.Get(nAltPID, &info, true/*Remove*/);
 			_ASSERTE(in.StartStop.nStarted==sst_ComspecStop || in.StartStop.nOtherPID==info.nPrevPID);
 			// Сначала проверяем, не текущий ли альт.сервер закрывается
 			if (gpSrv->dwAltServerPID && (nAltPID == gpSrv->dwAltServerPID))
 			{
 				// Поскольку текущий сервер завершается - то сразу сбросим PID (его морозить уже не нужно)
+				nAltServerWasStopped = nAltPID;
 				gpSrv->dwAltServerPID = 0;
 				// Переключаемся на "старый" (если был)
-				if (info.nPrevPID)
+				if (bPrevFound && info.nPrevPID)
 				{
 					_ASSERTE(info.hPrev!=NULL);
 					// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
@@ -6234,7 +6244,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			}
 			else
 			{
-				_ASSERTE((nPID == gpSrv->dwAltServerPID) && "Expected active alt.server!");
+				_ASSERTE(((nPID == gpSrv->dwAltServerPID) || (!gpSrv->dwAltServerPID && !bPrevFound)) && "Expected active alt.server!");
             }
 		}
 	}
@@ -6286,7 +6296,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		else
 		{
 			pGuiIn->StartStop = in.StartStop;
-			pGuiIn->StartStop.dwPID = nAltServerWasStarted;
+			pGuiIn->StartStop.dwPID = nAltServerWasStarted ? nAltServerWasStarted : nAltServerWasStopped;
 			pGuiIn->StartStop.hServerProcessHandle = NULL; // для GUI смысла не имеет
 			pGuiIn->StartStop.nStarted = nAltServerWasStarted ? sst_AltServerStart : sst_AltServerStop;
 
@@ -6297,6 +6307,8 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			ExecuteFreeResult(pGuiOut);
 		}
 	}
+
+	CsAlt.Unlock();
 
 	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
 	*out = ExecuteNewCmd(CECMD_CMDSTARTSTOP,nOutSize);

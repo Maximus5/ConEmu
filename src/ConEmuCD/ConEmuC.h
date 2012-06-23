@@ -403,6 +403,7 @@ struct SrvInfo
 	UINT nMaxFPS;
 	//
 	MSection *csProc;
+	MSection *csAltSrv;
 	// —писок процессов нам нужен, чтобы определить, когда консоль уже не нужна.
 	// Ќапример, запустили FAR, он запустил Update, FAR перезапущен...
 	UINT nProcessCount, nMaxProcesses;

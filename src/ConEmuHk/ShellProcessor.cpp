@@ -1401,7 +1401,7 @@ BOOL CShellProc::PrepareExecuteParms(
 		|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хотят GUI прицепить к новуй вкладке в ConEmu, или новую консоль из GUI
 		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
 		|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
-			&& ((aCmd == eShellExecute) 
+			&& (bNewConsoleArg || (aCmd == eShellExecute) 
 				#ifdef _DEBUG
 				|| lbAlwaysAddConEmuC
 				#endif
