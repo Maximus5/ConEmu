@@ -369,19 +369,32 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 	if (aCmd == eCreateProcess)
 	{
+		if (asFile && !*asFile)
+			asFile = NULL;
+
+		//  то-то может додуматьс€ окавычить asFile
+		wchar_t* pszFileUnquote = NULL;
+		if (asFile && (*asFile == L'"'))
+		{
+			pszFileUnquote = lstrdup(asFile+1);
+			asFile = pszFileUnquote;
+			pszFileUnquote = wcschr(pszFileUnquote, L'"');
+			if (pszFileUnquote)
+				*pszFileUnquote = 0;
+		}
+
 		// ƒл€ простоты - сразу откинем asFile если он совпадает с первым аргументом в asParam
-		if (asFile && !*asFile) asFile = NULL;
 		if (asFile && *asFile && asParam && *asParam)
 		{
 			LPCWSTR pszParam = SkipNonPrintable(asParam);
 			if (pszParam && ((*pszParam != L'"') || (pszParam[0] == L'"' && pszParam[1] != L'"')))
 			{
-				BOOL lbSkipEndQuote = FALSE;
-				if (*pszParam == L'"')
-				{
-					pszParam++;
-					lbSkipEndQuote = TRUE;
-				}
+				//BOOL lbSkipEndQuote = FALSE;
+				//if (*pszParam == L'"')
+				//{
+				//	pszParam++;
+				//	lbSkipEndQuote = TRUE;
+				//}
 				int nLen = lstrlen(asFile)+1;
 				int cchMax = max(nLen,(MAX_PATH+1));
 				wchar_t* pszTest = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
@@ -391,7 +404,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 					// —начала пробуем на полное соответствие
 					if (asFile)
 					{
-						_wcscpyn_c(pszTest, nLen, pszParam, nLen); //-V501
+						_wcscpyn_c(pszTest, nLen, (*pszParam == L'"') ? (pszParam+1) : pszParam, nLen); //-V501
 						pszTest[nLen-1] = 0;
 						// —равнить asFile с первым аргументом в asParam
 						if (lstrcmpi(pszTest, asFile) == 0)
@@ -400,55 +413,117 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 							asFile = NULL;
 						}
 					}
-					// ≈сли не сошлось - в asParam может быть только им€ запускаемого файла
+					// ≈сли не сошлось - в asParam может быть только им€ или часть пути запускаемого файла
 					// например CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"mingw32-make.exe makefile",...)
 					// или      CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"mingw32-make makefile",...)
+					// или      CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"\\GCC\\mingw32-make.exe makefile",...)
+					// Ёту часть нужно выкинуть из asParam
 					if (asFile)
 					{
 						LPCWSTR pszFileOnly = PointToName(asFile);
-						if (pszFileOnly && (pszFileOnly != asFile))
-						{
-							// ѕробуем с откидыванием пути
-							nLen = lstrlen(pszFileOnly)+1;
-							_wcscpyn_c(pszTest, nLen, pszParam, nLen); //-V501
-							pszTest[nLen-1] = 0;
-							// —равнить asFile с первым аргументом в asParam
-							if (lstrcmpi(pszTest, pszFileOnly) == 0)
-							{
-								// exe-шник уже указан в asParam, добавл€ть дополнительно Ќ≈ нужно
-								// -- asFile = NULL; -- трогать нельз€, только он содержит полный путь!
-								asParam = pszParam+nLen-(lbSkipEndQuote?0:1);
-								pszFileOnly = NULL;
-							}
-						}
+						
 						if (pszFileOnly)
 						{
-							// а теперь, с откидыванием расширени€
-							wchar_t szTmpFileOnly[MAX_PATH+1]; szTmpFileOnly[0] = 0;
-							_wcscpyn_c(szTmpFileOnly, countof(szTmpFileOnly), pszFileOnly, countof(szTmpFileOnly)); //-V501
-							wchar_t* pszExt = wcsrchr(szTmpFileOnly, L'.');
-							if (pszExt)
+							LPCWSTR pszCopy = pszParam;
+							wchar_t szFirst[MAX_PATH+1];
+							if (NextArg(&pszCopy, szFirst) != 0)
 							{
-								*pszExt = 0;
-								nLen = lstrlen(szTmpFileOnly)+1;
-								_wcscpyn_c(pszTest, nLen, pszParam, nLen); //-V501
-								pszTest[nLen-1] = 0;
+								_ASSERTE(FALSE && "NextArg failed?");
+							}
+							else
+							{
+								LPCWSTR pszFirstName = PointToName(szFirst);
 								// —равнить asFile с первым аргументом в asParam
-								if (lstrcmpi(pszTest, szTmpFileOnly) == 0)
+								if (lstrcmpi(pszFirstName, pszFileOnly) == 0)
 								{
 									// exe-шник уже указан в asParam, добавл€ть дополнительно Ќ≈ нужно
 									// -- asFile = NULL; -- трогать нельз€, только он содержит полный путь!
-									asParam = pszParam+nLen-(lbSkipEndQuote?0:1);
-									pszFileOnly =  NULL;
+									asParam = pszCopy;
+									pszFileOnly = NULL;
+								}
+								else
+								{
+									// ѕробуем asFile без расширени€
+									wchar_t szTmpFileOnly[MAX_PATH+1]; szTmpFileOnly[0] = 0;
+									_wcscpyn_c(szTmpFileOnly, countof(szTmpFileOnly), pszFileOnly, countof(szTmpFileOnly)); //-V501
+									wchar_t* pszExt = wcsrchr(szTmpFileOnly, L'.');
+									if (pszExt)
+									{
+										*pszExt = 0;
+										if (lstrcmpi(pszFirstName, szTmpFileOnly) == 0)
+										{
+											// exe-шник уже указан в asParam, добавл€ть дополнительно Ќ≈ нужно
+											// -- asFile = NULL; -- трогать нельз€, только он содержит полный путь!
+											asParam = pszCopy;
+											pszFileOnly = NULL;
+										}
+										else if ((pszExt = wcsrchr(szFirst, L'.')) != NULL)
+										{
+											if (lstrcmpi(pszFirstName, szTmpFileOnly) == 0)
+											{
+												// exe-шник уже указан в asParam, добавл€ть дополнительно Ќ≈ нужно
+												// -- asFile = NULL; -- трогать нельз€, только он содержит полный путь!
+												asParam = pszCopy;
+												pszFileOnly = NULL;
+											}
+										}
+									}
 								}
 							}
 						}
+
+						//// asFile уже проверен, так что эта ветка выполн€етс€ только если в asFile был указан путь
+						//if (pszFileOnly && (pszFileOnly != asFile))
+						//{
+						//	// ѕробуем с откидыванием пути
+						//	nLen = lstrlen(pszFileOnly)+1;
+						//	_wcscpyn_c(pszTest, nLen, pszParam, nLen); //-V501
+						//	pszTest[nLen-1] = 0;
+						//	// —равнить asFile с первым аргументом в asParam
+						//	if (lstrcmpi(pszTest, pszFileOnly) == 0)
+						//	{
+						//		// exe-шник уже указан в asParam, добавл€ть дополнительно Ќ≈ нужно
+						//		// -- asFile = NULL; -- трогать нельз€, только он содержит полный путь!
+						//		asParam = pszParam+nLen-(lbSkipEndQuote?0:1);
+						//		pszFileOnly = NULL;
+						//	}
+						//}
+
+						//// Last chance
+						//if (pszFileOnly)
+						//{
+						//	// а теперь, с откидыванием расширени€
+						//	wchar_t szTmpFileOnly[MAX_PATH+1]; szTmpFileOnly[0] = 0;
+						//	_wcscpyn_c(szTmpFileOnly, countof(szTmpFileOnly), pszFileOnly, countof(szTmpFileOnly)); //-V501
+						//	wchar_t* pszExt = wcsrchr(szTmpFileOnly, L'.');
+						//	if (pszExt)
+						//	{
+						//		*pszExt = 0;
+						//		nLen = lstrlen(szTmpFileOnly);
+						//		int nParmLen = lstrlen(pszParam);
+						//		if ((nParmLen >= nLen) && ((pszParam[nLen] == 0) || wcschr(L" /\"", pszParam[nLen])))
+						//		{
+						//			_wcscpyn_c(pszTest, nLen+1, pszParam, nLen+1); //-V501
+						//			pszTest[nLen] = 0;
+						//			// —равнить asFile с первым аргументом в asParam
+						//			if (lstrcmpi(pszTest, szTmpFileOnly) == 0)
+						//			{
+						//				// exe-шник уже указан в asParam, добавл€ть дополнительно Ќ≈ нужно
+						//				// -- asFile = NULL; -- трогать нельз€, только он содержит полный путь!
+						//				asParam = pszParam+nLen-(lbSkipEndQuote?0:1);
+						//				pszFileOnly =  NULL;
+						//			}
+						//		}
+						//	}
+						//}
 					}
 
 					free(pszTest);
 				}
 			}
 		}
+
+		SafeFree(pszFileUnquote);
 	}
 
 	//szComspec = (wchar_t*)calloc(cchComspec,sizeof(*szComspec));

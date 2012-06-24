@@ -724,7 +724,7 @@
 #define tScrollDisappearDelay           2355
 #define tPadSize                        2356
 #define stAppDistinctBottom             2357
-#define cbCTSDetectLineEOL              2358
+#define cbCTSDetectLineEnd              2358
 #define cbCTSBashMargin                 2359
 #define cbCTSTrimTrailing               2365
 #define stCTSEOL                        2366

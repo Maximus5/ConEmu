@@ -2669,19 +2669,23 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
 		return; // В консоль не пересылать, событие обработал "сам буфер"
 
-	if ((messg == WM_LBUTTONDOWN) && gpSet->isCTSClickPromptPosition
+	const Settings::AppSettings* pApp = NULL;
+	if ((messg == WM_LBUTTONDOWN) //&& gpSet->isCTSClickPromptPosition
+		&& ((pApp = gpSet->GetAppSettings(GetActiveAppSettingsId())) != NULL)
+		&& pApp->CTSClickPromptPosition()
 		&& gpSet->IsModifierPressed(vkCTSVkPromptClk, true))
 	{
 		DWORD nActivePID = GetActivePID();
 		if (nActivePID && !isFar() && (mp_ABuf->m_Type == rbt_Primary))
 		{
 			mb_WasSendClickToReadCon = false; // сначала - сброс
-			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_MOUSECLICK, sizeof(CESERVER_REQ_HDR)+3*sizeof(WORD));
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_MOUSECLICK, sizeof(CESERVER_REQ_HDR)+4*sizeof(WORD));
 			if (pIn)
 			{
 				pIn->wData[0] = crMouse.X;
 				pIn->wData[1] = crMouse.Y;
-				pIn->wData[2] = (gpSet->isCTSClickPromptPosition == 1);
+				pIn->wData[2] = (pApp->CTSClickPromptPosition() == 1);
+				pIn->wData[3] = pApp->CTSBashMargin();
 
 				CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
 				if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
@@ -4985,7 +4989,7 @@ void CRealConsole::ShowConsoleOrGuiClient(int nMode) // -1 Toggle 0 - Hide 1 - S
 }
 
 
-void CRealConsole::ShowGuiClient(int nMode) // -1 Toggle 0 - Hide 1 - Show
+void CRealConsole::ShowGuiClient(int nMode, BOOL bDetach /*= FALSE*/) // -1 Toggle 0 - Hide 1 - Show
 {
 	if (this == NULL) return;
 
@@ -5002,10 +5006,12 @@ void CRealConsole::ShowGuiClient(int nMode) // -1 Toggle 0 - Hide 1 - Show
 	gpConEmu->SetSkipOnFocus(TRUE);
 
 	// Вынести Gui приложение из вкладки ConEmu (но Detach не делать)	
-	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETGUIEXTERN, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
+	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETGUIEXTERN, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETGUIEXTERN));
 	if (pIn)
 	{
-		pIn->dwData[0] = (nMode == 0) ? FALSE : TRUE;
+		//pIn->dwData[0] = (nMode == 0) ? FALSE : TRUE;
+		pIn->SetGuiExtern.bExtern = (nMode == 0) ? FALSE : TRUE;
+		pIn->SetGuiExtern.bDetach = bDetach;
 
 		CESERVER_REQ *pOut = ExecuteHkCmd(mn_GuiWndPID, pIn, ghWnd);
 		if (pOut && pOut->hdr.cbSize == pIn->hdr.cbSize)
@@ -6069,6 +6075,8 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 void CRealConsole::OnDeactivate(int nNewNum)
 {
 	if (!this) return;
+
+	HWND hFore = GetForegroundWindow();
 	
 	mp_VCon->SavePaneSnapshoot();
 
@@ -6091,7 +6099,10 @@ void CRealConsole::OnDeactivate(int nNewNum)
 	// Чтобы все в одном месте было
 	OnGuiFocused(FALSE);
 
-	gpConEmu->setFocus();
+	if (hFore == ghWnd)
+	{
+		gpConEmu->setFocus();
+	}
 }
 
 void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
@@ -7415,10 +7426,13 @@ bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation)
 	return true;
 }
 
-void CRealConsole::CloseConsoleWindow()
+void CRealConsole::CloseConsoleWindow(bool abConfirm)
 {
-	if (!isCloseConfirmed(hGuiWnd ? gsCloseGui : gsCloseCon))
-		return;
+	if (abConfirm)
+	{
+		if (!isCloseConfirmed(hGuiWnd ? gsCloseGui : gsCloseCon))
+			return;
+	}
 
 	mb_InCloseConsole = TRUE;
 	if (hGuiWnd)
@@ -7597,7 +7611,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 			mp_VCon->SetBackgroundImageData(&BackClear);
 		}
 
-		CloseConsoleWindow();
+		CloseConsoleWindow(false/*NoConfirm - уже*/);
 	}
 	else
 	{
@@ -8694,6 +8708,14 @@ bool CRealConsole::isSelectionPresent()
 	return mp_ABuf->isSelectionPresent();
 }
 
+bool CRealConsole::isMouseSelectionPresent()
+{
+	CONSOLE_SELECTION_INFO sel;
+	if (!GetConsoleSelectionInfo(&sel))
+		return false;
+	return ((sel.dwFlags & CONSOLE_MOUSE_SELECTION) == CONSOLE_MOUSE_SELECTION);
+}
+
 bool CRealConsole::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
 {
 	if (!isSelectionPresent())
@@ -9402,36 +9424,79 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		ShutdownGuiStep(L"PostMacro, done");
 }
 
-bool CRealConsole::Detach()
+void CRealConsole::Detach(bool bPosted /*= false*/)
 {
 	if (!this)
-		return false;
+		return;
 
 	if (hGuiWnd)
 	{
-		if (MessageBox(NULL, L"Detach GUI application from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
-			return false;
+		if (!bPosted)
+		{
+			if (MessageBox(NULL, L"Detach GUI application from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
+				return;
+
+			RECT rcGui = {}; //rcPreGuiWndRect;
+			GetWindowRect(hGuiWnd, &rcGui); // Логичнее все же оставить приложение в том же месте
+			rcPreGuiWndRect = rcGui;
+
+			ShowGuiClient(1, TRUE);
+
+			ShowOtherWindow(hGuiWnd, SW_HIDE, FALSE/*синхронно*/);
+			SetOtherWindowParent(hGuiWnd, NULL);
+			SetOtherWindowPos(hGuiWnd, HWND_NOTOPMOST, rcGui.left, rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top, SWP_SHOWWINDOW);
+
+			mp_VCon->PostDetach();
+			return;
+		}
 
 		//#ifdef _DEBUG
 		//WINDOWPLACEMENT wpl = {sizeof(wpl)};
 		//GetWindowPlacement(hGuiWnd, &wpl); // дает клиентские координаты
 		//#endif
 		
-		RECT rcGui = rcPreGuiWndRect;
-		GetWindowRect(hGuiWnd, &rcGui); // Логичнее все же оставить приложение в том же месте
+		HWND lhGuiWnd = hGuiWnd;
+		//RECT rcGui = rcPreGuiWndRect;
+		//GetWindowRect(hGuiWnd, &rcGui); // Логичнее все же оставить приложение в том же месте
+
+		//ShowGuiClient(1, TRUE);
 	
-		ShowOtherWindow(hGuiWnd, SW_HIDE, FALSE/*синхронно*/);
-		SetOtherWindowParent(hGuiWnd, NULL);
-		SetOtherWindowPos(hGuiWnd, HWND_NOTOPMOST, rcGui.left, rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top, SWP_SHOWWINDOW);
+		//ShowOtherWindow(lhGuiWnd, SW_HIDE, FALSE/*синхронно*/);
+		//SetOtherWindowParent(lhGuiWnd, NULL);
+		//SetOtherWindowPos(lhGuiWnd, HWND_NOTOPMOST, rcGui.left, rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top, SWP_SHOWWINDOW);
+
 		// Сбросить переменные, чтобы гуй закрыть не пыталось
 		hGuiWnd = NULL;
-		// Закрыть консоль
-		CloseConsole(false, false);
+
+		//// Закрыть консоль
+		//CloseConsole(false, false);
+
+		// Уведомить сервер, что нужно закрыться
+		CESERVER_REQ in;
+		ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+		in.dwData[0] = (DWORD)lhGuiWnd;
+		DWORD dwTickStart = timeGetTime();
+		
+		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), &in, ghWnd);
+		
+		gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+		
+		if (pOut)
+			ExecuteFreeResult(pOut);
+
+		// Поднять отцепленное окно "наверх"
+		apiSetForegroundWindow(lhGuiWnd);
 	}
 	else
 	{
-		if (MessageBox(NULL, L"Detach console from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
-			return false;
+		if (!bPosted)
+		{
+			if (MessageBox(NULL, L"Detach console from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
+				return;
+
+			mp_VCon->PostDetach();
+			return;
+		}
 	
 		//ShowConsole(1); -- уберем, чтобы не мигало
 		isShowConsole = TRUE; // просто флажок взведем, чтобы не пытаться ее спрятать
@@ -9444,7 +9509,7 @@ bool CRealConsole::Detach()
 		ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR));
 		DWORD dwTickStart = timeGetTime();
 		
-		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), &in, ghWnd);
 		
 		gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 		
@@ -9462,7 +9527,8 @@ bool CRealConsole::Detach()
 
 	// Чтобы случайно не закрыть RealConsole?
 	m_Args.bDetached = TRUE;
-	return true;
+	
+	gpConEmu->OnVConTerminated(mp_VCon);
 }
 
 // Запустить Elevated копию фара с теми же папками на панелях

@@ -379,6 +379,7 @@ class CRealConsole
 		bool isFarKeyBarShown();
 		bool isSelectionAllowed();
 		bool isSelectionPresent();
+		bool isMouseSelectionPresent();
 		void AutoCopyTimer(); // Чтобы разрулить "Auto Copy" & "Double click - select word"
 		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
 		void ExpandSelection(SHORT anX=-1, SHORT anY=-1);
@@ -389,7 +390,7 @@ class CRealConsole
 		void CtrlWinAltSpace();
 		void ShowConsoleOrGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
-		void ShowGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
+		void ShowGuiClient(int nMode, BOOL bDetach = FALSE); // -1 Toggle, 0 - Hide, 1 - Show
 		BOOL isDetached();
 		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		BOOL RecreateProcess(RConStartArgs *args);
@@ -430,7 +431,7 @@ class CRealConsole
 		DWORD CanActivateFarWindow(int anWndIndex);
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
 		void CloseConsole(bool abForceTerminate, bool abConfirm);
-		void CloseConsoleWindow();
+		void CloseConsoleWindow(bool abConfirm);
 		bool isCloseConfirmed(LPCWSTR asConfirmation);
 		void CloseConfirmReset();
 		BOOL CanCloseTab(BOOL abPluginRequired = FALSE);
@@ -484,7 +485,7 @@ class CRealConsole
 		static wchar_t ms_LastRConStatus[80];
 		void UpdateCursorInfo();
 		bool isNeedCursorDraw();
-		bool Detach();
+		void Detach(bool bPosted = false);
 		void AdminDuplicate();
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
 		bool InCreateRoot();

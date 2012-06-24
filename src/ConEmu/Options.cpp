@@ -363,8 +363,17 @@ void Settings::InitSettings()
 	AppStd.isCursorBlockInactive = true;
 	AppStd.isCursorIgnoreSize = false;
 	AppStd.nCursorFixedSize = 25;
+	AppStd.isCTSDetectLineEnd = true;
+	AppStd.isCTSBashMargin = false;
+	AppStd.isCTSTrimTrailing = 2;
+	AppStd.isCTSEOL = 0;
 	AppStd.isPasteAllLines = true;
 	AppStd.isPasteFirstLine = true;
+	AppStd.isCTSClickPromptPosition = 2; // Кликом мышки позиционировать курсор в Cmd Prompt (cmd.exe, Powershell.exe, ...) + vkCTSVkPromptClk
+	// пока не учитывается
+	AppStd.isShowBgImage = 0;
+	AppStd.sBgImage[0] = 0;
+	AppStd.nBgOperation = eUpLeft;
 
 	//CheckTheming(); -- сейчас - нельзя. нужно дождаться, пока главное окно будет создано
 	//mb_ThemingEnabled = (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1));
@@ -443,7 +452,6 @@ void Settings::InitSettings()
 	isCTSFreezeBeforeSelect = false;
 	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
 	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
-	isCTSClickPromptPosition = 2; // Кликом мышки позиционировать курсор в Cmd Prompt (cmd.exe, Powershell.exe, ...) + vkCTSVkPromptClk
 	//vmCTSVkBlockStart = 0; // при желании, пользователь может назначить hotkey запуска выделения
 	//vmCTSVkTextStart = 0;  // при желании, пользователь может назначить hotkey запуска выделения
 	isCTSActMode = 2; // BufferOnly
@@ -710,8 +718,13 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	pApp->OverrideClipboard = bStd;
 	if (!bStd)
 		reg->Load(L"OverrideClipboard", pApp->OverrideClipboard);
+	reg->Load(L"ClipboardDetectLineEnd", pApp->isCTSDetectLineEnd);
+	reg->Load(L"ClipboardBashMargin", pApp->isCTSBashMargin);
+	reg->Load(L"ClipboardTrimTrailing", pApp->isCTSTrimTrailing);
+	reg->Load(L"ClipboardEOL", pApp->isCTSEOL); MinMax(pApp->isCTSEOL,2);
 	reg->Load(L"ClipboardAllLines", pApp->isPasteAllLines);
 	reg->Load(L"ClipboardFirstLine", pApp->isPasteFirstLine);
+	reg->Load(L"ClipboardClickPromptPosition", pApp->isCTSClickPromptPosition); MinMax(pApp->isCTSClickPromptPosition,2);
 }
 
 void Settings::FreeCmdTasks()
@@ -1922,7 +1935,7 @@ void Settings::LoadSettings()
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
 		//LoadVkMod(reg, L"CTS.VkBlockStart", vmCTSVkBlockStart, vmCTSVkBlockStart);
 		reg->Load(L"CTS.SelectText", isCTSSelectText);
-		reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition); if (isCTSClickPromptPosition > 2) isCTSClickPromptPosition = 2;
+		//reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition); if (isCTSClickPromptPosition > 2) isCTSClickPromptPosition = 2;
 		//reg->Load(L"CTS.VkText", isCTSVkText);
 		//LoadVkMod(reg, L"CTS.VkTextStart", vmCTSVkTextStart, vmCTSVkTextStart);
 
@@ -2600,8 +2613,13 @@ void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 
 	if (!bStd)
 		reg->Save(L"OverrideClipboard", pApp->OverrideClipboard);
+	reg->Save(L"ClipboardDetectLineEnd", pApp->isCTSDetectLineEnd);
+	reg->Save(L"ClipboardBashMargin", pApp->isCTSBashMargin);
+	reg->Save(L"ClipboardTrimTrailing", pApp->isCTSTrimTrailing);
+	reg->Save(L"ClipboardEOL", pApp->isCTSEOL);
 	reg->Save(L"ClipboardAllLines", pApp->isPasteAllLines);
 	reg->Save(L"ClipboardFirstLine", pApp->isPasteFirstLine);
+	reg->Save(L"ClipboardClickPromptPosition", pApp->isCTSClickPromptPosition);
 }
 
 void Settings::SaveStatusSettings(SettingsBase* reg)
@@ -2763,7 +2781,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		//reg->Save(L"CTS.VkBlock", isCTSVkBlock);
 		//reg->Save(L"CTS.VkBlockStart", vmCTSVkBlockStart);
 		reg->Save(L"CTS.SelectText", isCTSSelectText);
-		reg->Save(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
+		//reg->Save(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
 		//reg->Save(L"CTS.VkText", isCTSVkText);
 		//reg->Save(L"CTS.VkTextStart", vmCTSVkTextStart);
 		reg->Save(L"CTS.ActMode", isCTSActMode);

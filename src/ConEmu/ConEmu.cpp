@@ -11446,7 +11446,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	TODO("DoubleView. Хорошо бы колесико мышки перенаправлять в консоль под мышиным курором, а не в активную");
 	RECT conRect = {0}, dcRect = {0};
 	//GetWindowRect('ghWnd DC', &dcRect);
-	CVirtualConsole* pVCon = GetVConFromPoint(ptCurScreen);
+	CVirtualConsole* pVCon = NULL;
+	if ((messg == WM_LBUTTONUP) && mp_VActive && mp_VActive->RCon()->isMouseSelectionPresent())
+		pVCon = mp_VActive;
+	else
+		pVCon = GetVConFromPoint(ptCurScreen);
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
 	HWND hView = pVCon ? pVCon->GetView() : NULL;
 	if (hView)

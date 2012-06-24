@@ -30,8 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  Раскомментировать, чтобы сразу после загрузки модуля показать MessageBox, чтобы прицепиться дебаггером
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
-//	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-//	#define SHOW_EXE_MSGBOX_NAME L"putty.exe"
+	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
+	#define SHOW_EXE_MSGBOX_NAME L"putty.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -1286,13 +1286,21 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 		} // CECMD_CTRLBREAK
 		break;
 	case CECMD_SETGUIEXTERN:
-		if (ghAttachGuiClient)
+		if (ghAttachGuiClient && (pCmd->DataSize() >= sizeof(CESERVER_REQ_SETGUIEXTERN)))
 		{
-			SetGuiExternMode(pCmd->dwData[0] != 0);
+			SetGuiExternMode(pCmd->SetGuiExtern.bExtern, NULL/*pCmd->SetGuiExtern.bDetach ? &pCmd->SetGuiExtern.rcOldPos : NULL*/);
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
 			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize);
 			if (lbRc)
 				ppReply->dwData[0] = gbGuiClientExternMode;
+
+			if (pCmd->SetGuiExtern.bExtern && pCmd->SetGuiExtern.bDetach)
+			{
+				gbAttachGuiClient = gbGuiClientAttached = FALSE;
+				ghAttachGuiClient = ghConEmuWndDC = ghConEmuWnd = NULL;
+				gnServerPID = 0;
+			}
+
 		} // CECMD_SETGUIEXTERN
 		break;
 	case CECMD_LANGCHANGE:
@@ -1312,9 +1320,9 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 		{
 			BOOL bProcessed = FALSE;
 			if ((gReadConsoleInfo.InReadConsoleTID || gReadConsoleInfo.LastReadConsoleInputTID)
-				&& (pCmd->DataSize() >= 3*sizeof(WORD)))
+				&& (pCmd->DataSize() >= 4*sizeof(WORD)))
 			{
-				bProcessed = OnReadConsoleClick(pCmd->wData[0], pCmd->wData[1], (pCmd->wData[2] != 0));
+				bProcessed = OnReadConsoleClick(pCmd->wData[0], pCmd->wData[1], (pCmd->wData[2] != 0), (pCmd->wData[3] != 0));
 			}
 
 			lbRc = TRUE;

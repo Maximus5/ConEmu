@@ -3116,6 +3116,18 @@ bool CRealBuffer::DoSelectionCopy()
 		return false;
 	}
 
+	const Settings::AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
+	if (pApp == NULL)
+	{
+		MBoxAssert(pApp!=NULL);
+		return false;
+	}
+	BYTE nEOL = pApp->CTSEOL();
+	BYTE nTrimTailing = pApp->CTSTrimTrailing();
+	bool bDetectLines = pApp->CTSDetectLineEnd();
+	bool bBash = pApp->CTSBashMargin();
+
+
 	DWORD dwErr = 0;
 	BOOL  lbRc = FALSE;
 	bool  Result = false;
@@ -3192,7 +3204,8 @@ bool CRealBuffer::DoSelectionCopy()
 
 	if (!lbStreamMode)
 	{
-		for(int Y = 0; Y <= nSelHeight; Y++)
+		// Блоковое выделение
+		for (int Y = 0; Y <= nSelHeight; Y++)
 		{
 			LPCWSTR pszCon = NULL;
 
@@ -3210,10 +3223,20 @@ bool CRealBuffer::DoSelectionCopy()
 
 			if (pszCon)
 			{
-				for(int X = 0; X <= nMaxX; X++)
+				wchar_t* pchStart = pch;
+
+				for (int X = 0; X <= nMaxX; X++)
+				{
 					*(pch++) = *(pszCon++);
+				}
+
+				if (nTrimTailing == 1)
+				{
+					while ((pch > pchStart) && (*(pch-1) == L' '))
+						pch--;
+				}
 			}
-			else
+			else if (nTrimTailing != 1)
 			{
 				wmemset(pch, L' ', nSelWidth);
 				pch += nSelWidth;
@@ -3222,12 +3245,21 @@ bool CRealBuffer::DoSelectionCopy()
 			// Добавить перевод строки
 			if (Y < nSelHeight)
 			{
-				*(pch++) = L'\r'; *(pch++) = L'\n';
+				switch (nEOL)
+				{
+				case 1:
+					*(pch++) = L'\n'; break;
+				case 2:
+					*(pch++) = L'\r'; break;
+				default:
+					*(pch++) = L'\r'; *(pch++) = L'\n';
+				}
 			}
 		}
 	}
 	else
 	{
+		// Потоковое (текстовое) выделение
 		int nX1, nX2;
 		//for (nY = rc.Top; nY <= rc.Bottom; nY++) {
 		//	pnDst = pAttr + nWidth*nY;
@@ -3239,29 +3271,80 @@ bool CRealBuffer::DoSelectionCopy()
 		//		pnDst[nX] = lcaSel;
 		//	}
 		//}
-		for(int Y = 0; Y <= nSelHeight; Y++)
+		for (int Y = 0; Y <= nSelHeight; Y++)
 		{
 			nX1 = (Y == 0) ? con.m_sel.srSelection.Left : 0;
 			nX2 = (Y == nSelHeight) ? con.m_sel.srSelection.Right : (con.nTextWidth-1);
 			LPCWSTR pszCon = NULL;
+			LPCWSTR pszNextLine = NULL;
 			
 			if (m_Type == rbt_Primary)
 			{
 				pszCon = con.pConChar + con.nTextWidth*(Y+con.m_sel.srSelection.Top) + nX1;
+				pszNextLine = ((Y + 1) <= nSelHeight) ? (con.pConChar + con.nTextWidth*(Y+1+con.m_sel.srSelection.Top)) : NULL;
 			}
 			else if (pszDataStart && (Y < nTextHeight))
 			{
 				WARNING("Проверить для режима с прокруткой!");
 				pszCon = pszDataStart + dump.crSize.X*(Y+con.m_sel.srSelection.Top) + nX1;
+				pszNextLine = ((Y + 1) <= nSelHeight) ? (pszDataStart + dump.crSize.X*(Y+1+con.m_sel.srSelection.Top)) : NULL;
 			}
 
-			for(int X = nX1; X <= nX2; X++)
-				*(pch++) = *(pszCon++);
+			wchar_t* pchStart = pch;
+
+			if (pszCon)
+			{
+				for (int X = nX1; X <= nX2; X++)
+				{
+					*(pch++) = *(pszCon++);
+				}
+			}
+			else
+			{
+				wmemset(pch, L' ', nSelWidth);
+				pch += nSelWidth;
+			}
 
 			// Добавить перевод строки
 			if (Y < nSelHeight)
 			{
-				*(pch++) = L'\r'; *(pch++) = L'\n';
+				bool bContinue = false;
+
+				if (bDetectLines && pszNextLine && (*pszNextLine != L' '))
+				{
+					// Пытаемся опредлить, новая это строка или просто перенос в Prompt?
+					if ((*(pch - 1) != L' ')
+						|| (((pch - 1) > pchStart) && (*(pch - 2) != L' '))
+						// sh.exe - one cell space pad on right edge
+						|| (bBash && ((pch - 2) > pchStart) && (*(pch - 2) == L' ') && (*(pch - 3) != L' ')))
+					{
+						bContinue = true;
+					}
+
+					if (bBash && (*(pch - 1) != L' '))
+					{
+						*(--pch) = 0;
+					}
+				}
+
+				if (!bContinue)
+				{
+					if (nTrimTailing)
+					{
+						while ((pch > pchStart) && (*(pch-1) == L' '))
+							pch--;
+					}
+
+					switch (nEOL)
+					{
+					case 1:
+						*(pch++) = L'\n'; break;
+					case 2:
+						*(pch++) = L'\r'; break;
+					default:
+						*(pch++) = L'\r'; *(pch++) = L'\n';
+					}
+				}
 			}
 		}
 	}

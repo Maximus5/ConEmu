@@ -66,6 +66,8 @@ class CConEmuChild
 
 		void SetAutoCopyTimer(bool bEnabled);
 
+		void PostDetach();
+
 #ifdef _DEBUG
 	public:
 		UINT    mn_MsgCreateDbgDlg;
@@ -82,6 +84,7 @@ class CConEmuChild
 		UINT mn_MsgTabChanged;
 		UINT mn_MsgPostFullPaint;
 		UINT mn_MsgSavePaneSnapshoot;
+		UINT mn_MsgDetachPosted;
 		BOOL mb_PostFullPaint;
 		BOOL mb_DisableRedraw;
 #ifdef _DEBUG

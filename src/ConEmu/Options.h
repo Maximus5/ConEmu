@@ -307,18 +307,18 @@ struct Settings
 
 			bool OverrideClipboard;
 			// *** Copying
-			//reg->Load(L"ClipboardDetectLineEOL", isCTSDetectLineEOL);
-			bool isCTSDetectLineEOL; // cbCTSDetectLineEOL
-			bool CTSDetectLineEOL() const { return (OverrideClipboard || !AppNames) ? isCTSDetectLineEOL : gpSet->AppStd.isCTSDetectLineEOL; };
+			//reg->Load(L"ClipboardDetectLineEnd", isCTSDetectLineEnd);
+			bool isCTSDetectLineEnd; // cbCTSDetectLineEnd
+			bool CTSDetectLineEnd() const { return (OverrideClipboard || !AppNames) ? isCTSDetectLineEnd : gpSet->AppStd.isCTSDetectLineEnd; };
 			//reg->Load(L"ClipboardBashMargin", isCTSBashMargin);
 			bool isCTSBashMargin; // cbCTSBashMargin
 			bool CTSBashMargin() const { return (OverrideClipboard || !AppNames) ? isCTSBashMargin : gpSet->AppStd.isCTSBashMargin; };
 			//reg->Load(L"ClipboardTrimTrailing", isCTSTrimTrailing);
-			bool isCTSTrimTrailing; // cbCTSTrimTrailing
-			bool CTSTrimTrailing() const { return (OverrideClipboard || !AppNames) ? isCTSTrimTrailing : gpSet->AppStd.isCTSTrimTrailing; };
+			BYTE isCTSTrimTrailing; // cbCTSTrimTrailing: 0 - нет, 1 - да, 2 - только для stream-selection
+			BYTE CTSTrimTrailing() const { return (OverrideClipboard || !AppNames) ? isCTSTrimTrailing : gpSet->AppStd.isCTSTrimTrailing; };
 			//reg->Load(L"ClipboardEOL", isCTSEOL);
-			bool isCTSEOL; // cbCTSEOL
-			bool CTSEOL() const { return (OverrideClipboard || !AppNames) ? isCTSEOL : gpSet->AppStd.isCTSEOL; };
+			BYTE isCTSEOL; // cbCTSEOL: 0="CR+LF", 1="LF", 2="CR"
+			BYTE CTSEOL() const { return (OverrideClipboard || !AppNames) ? isCTSEOL : gpSet->AppStd.isCTSEOL; };
 			// *** Pasting
 			//reg->Load(L"ClipboardAllLines", isPasteAllLines);
 			bool isPasteAllLines;
@@ -329,8 +329,8 @@ struct Settings
 			// *** Prompt
 			// cbCTSClickPromptPosition
 			//reg->Load(L"ClipboardClickPromptPosition", isCTSClickPromptPosition);
-			bool isCTSClickPromptPosition; // cbCTSClickPromptPosition
-			bool CTSClickPromptPosition() const { return (OverrideClipboard || !AppNames) ? isCTSClickPromptPosition : gpSet->AppStd.isCTSClickPromptPosition; };
+			BYTE isCTSClickPromptPosition; // cbCTSClickPromptPosition
+			BYTE CTSClickPromptPosition() const { return (OverrideClipboard || !AppNames) ? isCTSClickPromptPosition : gpSet->AppStd.isCTSClickPromptPosition; };
 
 			bool OverrideBgImage;
 			//reg->Load(L"BackGround Image show", isShowBgImage);
@@ -339,6 +339,9 @@ struct Settings
 			//reg->Load(L"BackGround Image", sBgImage, countof(sBgImage));
 			WCHAR sBgImage[MAX_PATH]; // tBgImage
 			LPCWSTR BgImage() const { return (OverrideBgImage || !AppNames) ? sBgImage : gpSet->AppStd.sBgImage; };
+			//reg->Load(L"bgOperation", nBgOperation);
+			char nBgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
+			char BgOperation() const { return (OverrideBgImage || !AppNames) ? nBgOperation : gpSet->AppStd.nBgOperation; };
 
 
 			void SetNames(LPCWSTR asAppNames)
@@ -704,8 +707,8 @@ struct Settings
 		bool isCTSSelectBlock;
 		//reg->Load(L"CTS.SelectText", isCTSSelectText);
 		bool isCTSSelectText;
-		//reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
-		BYTE isCTSClickPromptPosition; // & vkCTSVkPromptClk
+		////reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
+		//BYTE isCTSClickPromptPosition; // & vkCTSVkPromptClk
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
 		//BYTE isCTSVkBlock; // модификатор запуска выделения мышкой
 		//reg->Load(L"CTS.VkBlockStart", vmCTSVkBlockStart);

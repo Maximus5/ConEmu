@@ -63,6 +63,7 @@ CConEmuChild::CConEmuChild()
 	mn_MsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 	mn_MsgPostFullPaint = RegisterWindowMessage(L"CConEmuChild::PostFullPaint");
 	mn_MsgSavePaneSnapshoot = RegisterWindowMessage(L"CConEmuChild::SavePaneSnapshoot");
+	mn_MsgDetachPosted = RegisterWindowMessage(L"CConEmuChild::Detach");
 #ifdef _DEBUG
 	mn_MsgCreateDbgDlg = RegisterWindowMessage(L"CConEmuChild::MsgCreateDbgDlg");
 	hDlgTest = NULL;
@@ -461,6 +462,10 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			else if (messg == pVCon->mn_MsgSavePaneSnapshoot)
 			{
 				pVCon->SavePaneSnapshoot();
+			}
+			else if (messg == pVCon->mn_MsgDetachPosted)
+			{
+				pVCon->RCon()->Detach(true);
 			}
 			#ifdef _DEBUG
 			else if (messg == pVCon->mn_MsgCreateDbgDlg)
@@ -1232,4 +1237,9 @@ void CConEmuChild::SetAutoCopyTimer(bool bEnabled)
 		m_TAutoCopy.Start(TIMER_AUTOCOPY_DELAY);
 	else
 		m_TAutoCopy.Stop();
+}
+
+void CConEmuChild::PostDetach()
+{
+	PostMessage(mh_WndDC, mn_MsgDetachPosted, 0, 0);
 }

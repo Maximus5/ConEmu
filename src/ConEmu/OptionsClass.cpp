@@ -1851,6 +1851,7 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 	FillListBoxByte(hWnd2, lbCTSTextSelection, SettingsNS::szKeys, SettingsNS::nKeys, VkMod);
 	CheckDlgButton(hWnd2, (gpSet->isCTSActMode==1)?rbCTSActAlways:rbCTSActBufferOnly, BST_CHECKED);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkAct);
+
 	FillListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 	FillListBoxByte(hWnd2, lbCTSRBtnAction, SettingsNS::szClipAct, SettingsNS::nClipAct, gpSet->isCTSRBtnAction);
 	FillListBoxByte(hWnd2, lbCTSMBtnAction, SettingsNS::szClipAct, SettingsNS::nClipAct, gpSet->isCTSMBtnAction);
@@ -1862,7 +1863,7 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 		SettingsNS::szColorIdx, SettingsNS::nColorIdx, idxBack);
 
 	// Prompt click
-	CheckDlgButton(hWnd2, cbCTSClickPromptPosition, gpSet->isCTSClickPromptPosition);
+	CheckDlgButton(hWnd2, cbCTSClickPromptPosition, gpSet->AppStd.isCTSClickPromptPosition);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkPromptClk);
 	FillListBoxByte(hWnd2, lbCTSClickPromptPosition, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 
@@ -1872,6 +1873,9 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 	FillListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 	SetDlgItemText(hWnd2, tGotoEditorCmd, gpSet->sFarGotoEditor);
 
+	CheckDlgButton(hWnd2, cbCTSDetectLineEnd, gpSet->AppStd.isCTSDetectLineEnd);
+	CheckDlgButton(hWnd2, cbCTSBashMargin, gpSet->AppStd.isCTSBashMargin);
+	CheckDlgButton(hWnd2, cbCTSTrimTrailing, gpSet->AppStd.isCTSTrimTrailing);
 	BYTE b = gpSet->AppStd.isCTSEOL;
 	FillListBoxByte(hWnd2, lbCTSEOL, SettingsNS::szCRLF, SettingsNS::nCRLF, b);
 
@@ -3891,8 +3895,17 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCTSTextSelection:
 			gpSet->isCTSSelectText = IsChecked(hWnd2,CB);
 			break;
+		case cbCTSDetectLineEnd:
+			gpSet->AppStd.isCTSDetectLineEnd = IsChecked(hWnd2, CB);
+			break;
+		case cbCTSBashMargin:
+			gpSet->AppStd.isCTSBashMargin = IsChecked(hWnd2, CB);
+			break;
+		case cbCTSTrimTrailing:
+			gpSet->AppStd.isCTSTrimTrailing = IsChecked(hWnd2, CB);
+			break;
 		case cbCTSClickPromptPosition:
-			gpSet->isCTSClickPromptPosition = IsChecked(hWnd2,CB);
+			gpSet->AppStd.isCTSClickPromptPosition = IsChecked(hWnd2,CB);
 			break;
 		case cbClipShiftIns:
 			gpSet->AppStd.isPasteAllLines = IsChecked(hWnd2,CB);
@@ -5389,6 +5402,13 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						GetListBoxByte(hWnd2, lbCTSActAlways, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 						gpSet->SetHotkeyById(vkCTSVkAct, VkMod);
 					} break;
+				case lbCTSEOL:
+					{
+						BYTE eol = 0;
+						GetListBoxByte(hWnd2,lbCTSEOL,SettingsNS::szCRLF,SettingsNS::nCRLF,eol);
+						gpSet->AppStd.isCTSEOL = eol;
+					} // lbCTSEOL
+					break;
 				case lbCTSClickPromptPosition:
 					{
 						BYTE VkMod = 0;
@@ -6302,7 +6322,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 		{cbCursorOverride, {rCursorV, rCursorH, cbCursorColor, cbCursorBlink, cbBlockInactiveCursor, cbCursorIgnoreSize}},
 		{cbColorsOverride, {lbColorsOverride}},
 		{cbClipboardOverride, {
-			gbCopyingOverride, cbCTSDetectLineEOL, cbCTSBashMargin, cbCTSTrimTrailing, stCTSEOL, lbCTSEOL,
+			gbCopyingOverride, cbCTSDetectLineEnd, cbCTSBashMargin, cbCTSTrimTrailing, stCTSEOL, lbCTSEOL,
 			gbPastingOverride, cbClipShiftIns, cbClipCtrlV,
 			gbPromptOverride, cbCTSClickPromptPosition}},
 		{cbBgImageOverride, {cbBgImage, tBgImage, bBgImage, lbBgPlacement}},
@@ -6441,7 +6461,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 				(pApp->Elevated == 1) ? rbAppDistinctElevatedOn :
 				(pApp->Elevated == 2) ? rbAppDistinctElevatedOff : rbAppDistinctElevatedIgnore);
 
-
+			BYTE b;
 			wchar_t temp[MAX_PATH];
 
 			CheckDlgButton(hChild, cbExtendFontsOverride, pApp->OverrideExtendFonts);
@@ -6464,13 +6484,23 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			SelectStringExact(hChild, lbColorsOverride, pApp->szPaletteName);
 
 			CheckDlgButton(hChild, cbClipboardOverride, pApp->OverrideClipboard);
+			//
+			CheckDlgButton(hChild, cbCTSDetectLineEnd, pApp->isCTSDetectLineEnd);
+			CheckDlgButton(hChild, cbCTSBashMargin, pApp->isCTSBashMargin);
+			CheckDlgButton(hChild, cbCTSTrimTrailing, pApp->isCTSTrimTrailing);
+			b = pApp->isCTSEOL;
+			FillListBoxByte(hChild, lbCTSEOL, SettingsNS::szCRLF, SettingsNS::nCRLF, b);
+			//
 			CheckDlgButton(hChild, cbClipShiftIns, pApp->isPasteAllLines);
 			CheckDlgButton(hChild, cbClipCtrlV, pApp->isPasteFirstLine);
+			//
+			CheckDlgButton(hChild, cbCTSClickPromptPosition, pApp->isCTSClickPromptPosition);
 
-			BYTE b = pApp->isCTSEOL;
-			FillListBoxByte(hChild, lbCTSEOL, SettingsNS::szCRLF, SettingsNS::nCRLF, b);
 
-			b = gpSet->bgOperation;
+			CheckDlgButton(hChild, cbBgImageOverride, pApp->OverrideBgImage);
+			CheckDlgButton(hChild, cbBgImage, BST(pApp->isShowBgImage));
+			SetDlgItemText(hChild, tBgImage, pApp->sBgImage);
+			b = pApp->nBgOperation;
 			FillListBoxByte(hChild, lbBgPlacement, SettingsNS::szBgOper, SettingsNS::nBgOper, b);
 
 		} // UM_FILL_CONTROLS
@@ -6749,13 +6779,29 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 						pApp->isPasteFirstLine = IsChecked(hChild, CB);
 					}
 					break;
-				case cbCTSDetectLineEOL:
+				case cbCTSDetectLineEnd:
+					if (pApp)
+					{
+						pApp->isCTSDetectLineEnd = IsChecked(hChild, CB);
+					}
 					break;
 				case cbCTSBashMargin:
+					if (pApp)
+					{
+						pApp->isCTSBashMargin = IsChecked(hChild, CB);
+					}
 					break;
 				case cbCTSTrimTrailing:
+					if (pApp)
+					{
+						pApp->isCTSTrimTrailing = IsChecked(hChild, CB);
+					}
 					break;
 				case cbCTSClickPromptPosition:
+					if (pApp)
+					{
+						pApp->isCTSClickPromptPosition = IsChecked(hChild, CB);
+					}
 					break;
 
 				case cbBgImageOverride:
@@ -6767,8 +6813,57 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 					}
 					break;
 				case cbBgImage:
+					if (pApp)
+					{
+						pApp->isShowBgImage = IsChecked(hChild, CB);
+					}
 					break;
 				case bBgImage:
+					if (pApp)
+					{
+						wchar_t temp[MAX_PATH], edt[MAX_PATH];
+						if (!GetDlgItemText(hChild, tBgImage, edt, countof(edt)))
+							edt[0] = 0;
+						ExpandEnvironmentStrings(edt, temp, countof(temp));
+						OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+						ofn.lStructSize=sizeof(ofn);
+						ofn.hwndOwner = ghOpWnd;
+						ofn.lpstrFilter = L"All images (*.bmp,*.jpg,*.png)\0*.bmp;*.jpg;*.jpe;*.jpeg;*.png\0Bitmap images (*.bmp)\0*.bmp\0JPEG images (*.jpg)\0*.jpg;*.jpe;*.jpeg\0PNG images (*.png)\0*.png\0\0";
+						ofn.nFilterIndex = 1;
+						ofn.lpstrFile = temp;
+						ofn.nMaxFile = countof(temp);
+						ofn.lpstrTitle = L"Choose background image";
+						ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+									| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
+
+						if (GetOpenFileName(&ofn))
+						{
+							TODO("LoadBackgroundFile");
+							//if (LoadBackgroundFile(temp, true))
+							{
+								bool bUseEnvVar = false;
+								size_t nEnvLen = _tcslen(gpConEmu->ms_ConEmuExeDir);
+								if (_tcslen(temp) > nEnvLen && temp[nEnvLen] == L'\\')
+								{
+									temp[nEnvLen] = 0;
+									if (lstrcmpi(temp, gpConEmu->ms_ConEmuExeDir) == 0)
+										bUseEnvVar = true;
+									temp[nEnvLen] = L'\\';
+								}
+								if (bUseEnvVar)
+								{
+									wcscpy_c(pApp->sBgImage, L"%ConEmuDir%");
+									wcscat_c(pApp->sBgImage, temp + _tcslen(gpConEmu->ms_ConEmuExeDir));
+								}
+								else
+								{
+									wcscpy_c(pApp->sBgImage, temp);
+								}
+								SetDlgItemText(hChild, tBgImage, pApp->sBgImage);
+								gpConEmu->Update(true);
+							}
+						}
+					} // bBgImage
 					break;
 				}	
 			} // if (HIWORD(wParam) == BN_CLICKED)
@@ -6821,9 +6916,21 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 						break;
 
 					case tBgImage:
-                    	{
-                    		TODO("tBgImage");
-                    	} // tBgImage
+						if (pApp)
+						{
+							wchar_t temp[MAX_PATH];
+							GetDlgItemText(hChild, tBgImage, temp, countof(temp));
+
+							if (wcscmp(temp, pApp->sBgImage))
+							{
+								TODO("LoadBackgroundFile");
+								//if (LoadBackgroundFile(temp, true))
+								{
+									wcscpy_c(pApp->sBgImage, temp);
+									gpConEmu->Update(true);
+								}
+							}
+						} // tBgImage
                     	break;
 					}
 				}
@@ -6926,13 +7033,20 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 
 						case lbCTSEOL:
 							{
-								TODO("lbCTSEOL");
+								BYTE eol = 0;
+								GetListBoxByte(hChild,lbCTSEOL,SettingsNS::szCRLF,SettingsNS::nCRLF,eol);
+								pApp->isCTSEOL = eol;
 							} // lbCTSEOL
 							break;
 
 						case lbBgPlacement:
 							{
-								TODO("lbBgPlacement");
+								BYTE bg = 0;
+								GetListBoxByte(hChild,lbBgPlacement,SettingsNS::szBgOper,SettingsNS::nBgOper,bg);
+								pApp->nBgOperation = bg;
+								TODO("LoadBackgroundFile");
+								//gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
+								gpConEmu->Update(true);
 							} // lbBgPlacement
 							break;
 						}

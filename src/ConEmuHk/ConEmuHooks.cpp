@@ -2569,7 +2569,8 @@ void OnReadConsoleEnd(BOOL bSucceeded, BOOL bUnicode, HANDLE hConsoleInput, LPVO
 	}
 }
 
-BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce)
+// bBashMargin - sh.exe has pad in one space cell on right edge of window
+BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 {
 	if (!gReadConsoleInfo.InReadConsoleTID && !gReadConsoleInfo.LastReadConsoleInputTID)
 		return FALSE;

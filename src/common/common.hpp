@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    98
+#define CESERVER_REQ_VER    99
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1310,6 +1310,14 @@ struct CESERVER_REQ_GETALLTABS
 	} Tabs[1]; // Variable length
 };
 
+//CECMD_SETGUIEXTERN
+struct CESERVER_REQ_SETGUIEXTERN
+{
+	BOOL bExtern;  // TRUE - вынести приложение наружу из вкладки ConEmu, FALSE - вернуть во вкладку
+	BOOL bDetach;  // Отцепиться и забыть про ConEmu
+	//RECT rcOldPos; // Если bDetach - здесь передается "старое" положение окна
+};
+
 enum StartStopType
 {
 	sst_ServerStart    = 0,
@@ -1641,6 +1649,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_ATTACHGUIAPP AttachGuiApp;
 		CESERVER_REQ_SETFOCUS setFocus;
 		CESERVER_REQ_SETPARENT setParent;
+		CESERVER_REQ_SETGUIEXTERN SetGuiExtern;
 		CESERVER_REQ_START NewServer;
 		CESERVER_REQ_LOCKDC LockDc;
 		CESERVER_REQ_REGEXTCON RegExtCon;

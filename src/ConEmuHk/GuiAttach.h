@@ -3,6 +3,7 @@
 
 extern RECT    grcConEmuClient;   // Для аттача гуевых окон
 extern BOOL    gbAttachGuiClient; // Для аттача гуевых окон
+extern BOOL    gbGuiClientAttached; // Для аттача гуевых окон (успешно подключились)
 extern BOOL    gbGuiClientExternMode; // Если нужно показать Gui-приложение вне вкладки ConEmu
 extern HWND    ghAttachGuiClient; // Чтобы ShowWindow перехватить
 extern DWORD   gnAttachGuiClientFlags; // enum ATTACHGUIAPP_FLAGS
@@ -14,5 +15,5 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach);
 void OnPostShowGuiClientWindow(HWND hWnd, int nCmdShow);
 bool OnSetGuiClientWindowPos(HWND hWnd, HWND hWndInsertAfter, int &X, int &Y, int &cx, int &cy, UINT uFlags);
-void SetGuiExternMode(BOOL abUseExternMode);
+void SetGuiExternMode(BOOL abUseExternMode, LPRECT prcOldPos = NULL);
 void AttachGuiWindow(HWND hOurWindow);

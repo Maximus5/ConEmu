@@ -10,7 +10,8 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
-[*] По умолчанию опция 'Auto copy' включена.
+2012.06.24
+[*] На вкладке 'Mark & Paste' опция 'Auto copy' переименована в 'Copy on LButton up'. По умолчанию включена.
 [%] Не сохранялось значение флажка 'Highlight and goto' и пути 'External editor'.
 [*] Isue 587, Issue 605: При Paste не показывать сообщение об отсутствии текста в буфере обмена.
 [+] Настройка времени появления/скрытия полосы прокрутки.
@@ -19,12 +20,15 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [*] Теперь могут быть изменены комбинации: Apps+Space, Alt+F9, Alt+Enter, Alt+Space, Ctrl+Up, Ctrl+Down, Ctrl+PgUp, Ctrl+PgDn и PicView.SlideShow.
 [*] Соответственно, убраны флажки из 'Send to console': Alt+F9, Alt+Enter, Alt+Space.
 [%] Win+Down не увеличивал размер консоли (опция «Win+Arrows - resize window»).
-[%] Issue ???: На Windows XP не появлялось сообщение (тултип) об ошибках в области нотификаций (TSA).
+[%] Issue 606: На Windows XP не появлялось сообщение (тултип) об ошибках в области нотификаций (TSA).
 [*] Настройки текстового курсора перенесены на новую отдельную вкладку 'Text cursor'.
 [+] Issue 612: Option to change cursor size ('Fixed cursor size' & '(5-100) %').
 [%] Issue 608: Проблемы с telnet.
 [*] cmd/powershell/tcc: Параметр "-new_console" (для запуска консольных приложений в новом табе) теперь можно использовать в prompt без "ConEmuC.exe".
     Например, в cmd prompt можно ввести: powershell -new_console
+[%] Исправлен Detach GUI приложений.
+[+] Issue 607: 'Mark & Paste' and 'App distinct' -> 'Detect text line ends', 'Bash margin', 'Trim trailing spaces', 'EOL'.
+[+] 'Mark & Paste' and 'App distinct' -> 'Change prompt text cursor position with Left Click'.
 
 
 2012.06.18

@@ -603,7 +603,7 @@ BEGIN
     EDITTEXT        tClipConfirmLimit,246,158,40,12,ES_AUTOHSCROLL
     CTEXT           "chars",stClipConfirmLimit,292,159,22,8
     CONTROL         "Freeze console contents (may cause small lag)",cbCTSFreezeBeforeSelect,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,75,45,184,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,45,164,8
     RTEXT           "Find:",IDC_STATIC,269,77,22,8,NOT WS_VISIBLE | WS_DISABLED
     COMBOBOX        lbCTSFindIdx,293,75,24,30,CBS_DROPDOWNLIST | CBS_SORT | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Goto Far editor on compiler errors",IDC_STATIC,4,179,319,45
@@ -612,13 +612,13 @@ BEGIN
     RTEXT           "External editor, when Far not started:",stGotoEditorCmd,158,192,139,8
     EDITTEXT        tGotoEditorCmd,11,205,287,13,ES_AUTOHSCROLL
     PUSHBUTTON      "...",bGotoEditorCmd,301,205,16,12
-    CONTROL         "Auto copy",cbCTSAutoCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,45,59,8
+    CONTROL         "Copy on LButton up",cbCTSAutoCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,45,85,8
     CONTROL         "Change prompt (cmd, powershell) text cursor position with Left Click",cbCTSClickPromptPosition,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,11,110,237,8
     COMBOBOX        lbCTSClickPromptPosition,250,108,67,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Detect text line ends",cbCTSDetectLineEOL,"Button",BS_AUTO3STATE | WS_TABSTOP,11,59,85,8
-    CONTROL         "Bash margin",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,59,55,8
-    CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,160,59,77,8
+    CONTROL         "Detect text line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,11,59,85,8
+    CONTROL         "Bash margin",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,59,55,8
+    CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTO3STATE | WS_TABSTOP,160,59,77,8
     RTEXT           "EOL:",IDC_STATIC,254,59,19,8
     COMBOBOX        lbCTSEOL,277,57,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
@@ -1002,7 +1002,7 @@ BEGIN
     GROUPBOX        "",IDC_STATIC,1,70,291,30
     GROUPBOX        "",IDC_STATIC,1,31,291,35
     GROUPBOX        "",IDC_STATIC,1,0,291,27
-    GROUPBOX        "",IDC_STATIC,1,202,291,25
+    GROUPBOX        "",IDC_STATIC,1,202,291,25,NOT WS_VISIBLE
     GROUPBOX        "",IDC_STATIC,1,104,291,92
     GROUPBOX        "Copying text override",gbCopyingOverride,7,114,279,26
     GROUPBOX        "Pasting text override (not in Far or GUI applications)",gbPastingOverride,7,139,279,25
@@ -1031,16 +1031,16 @@ BEGIN
     CONTROL         "Change prompt (cmd, powershell, bash) text cursor position with Left Click",cbCTSClickPromptPosition,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,13,175,268,8
     CTEXT           "End of scroll area",stAppDistinctBottom,24,235,171,8
-    CONTROL         "Detect text line ends",cbCTSDetectLineEOL,"Button",BS_AUTO3STATE | WS_TABSTOP,13,126,88,8
+    CONTROL         "Detect text line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,13,126,88,8
     CONTROL         "Bash",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,101,126,30,8
-    CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,136,126,77,8
+    CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTO3STATE | WS_TABSTOP,136,126,77,8
     RTEXT           "EOL:",stCTSEOL,221,126,16,8
     COMBOBOX        lbCTSEOL,241,123,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Background image override",cbBgImageOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,202,117,8
-    CONTROL         "Background",cbBgImage,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,214,54,8
-    EDITTEXT        tBgImage,63,211,138,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",bBgImage,203,211,16,12
-    COMBOBOX        lbBgPlacement,225,211,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Background image override",cbBgImageOverride,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,7,202,117,8
+    CONTROL         "Background",cbBgImage,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,7,214,54,8
+    EDITTEXT        tBgImage,63,211,138,12,ES_AUTOHSCROLL | NOT WS_VISIBLE
+    PUSHBUTTON      "...",bBgImage,203,211,16,12,NOT WS_VISIBLE
+    COMBOBOX        lbBgPlacement,225,211,61,30,CBS_DROPDOWNLIST | NOT WS_VISIBLE | WS_VSCROLL | WS_TABSTOP
     EDITTEXT        tCursorFixedSize,196,52,40,12,ES_AUTOHSCROLL
     LTEXT           "(5-100) %",IDC_STATIC,241,54,38,8
 END

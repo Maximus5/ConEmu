@@ -6094,7 +6094,25 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	ghConEmuWndDC = NULL;
 	gpSrv->dwGuiPID = 0;
 	UpdateConsoleMapHeader();
+
+	HWND hGuiApp = NULL;
+	if (in.DataSize() >= sizeof(DWORD))
+	{
+		hGuiApp = (HWND)in.dwData[0];
+		if (hGuiApp && !IsWindow(hGuiApp))
+			hGuiApp = NULL;
+	}
+
+	// Без мелькания консольного окошка почему-то пока не получается
+	// Наверх выносится ConEmu вместо "отцепленного" GUI приложения
 	EmergencyShow(ghConWnd);
+
+	if (hGuiApp != NULL)
+	{
+		//apiShowWindow(ghConWnd, SW_SHOWMINIMIZED);
+		apiSetForegroundWindow(hGuiApp);
+		SetTerminateEvent();
+	}
 
 	int nOutSize = sizeof(CESERVER_REQ_HDR);
 	*out = ExecuteNewCmd(CECMD_DETACHCON,nOutSize);

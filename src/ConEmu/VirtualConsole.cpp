@@ -4737,8 +4737,9 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 			mp_RCon->CloseTab();
 			break;
 		case IDM_DETACH:
-			if (mp_RCon->Detach())
-				gpConEmu->OnVConTerminated(this);
+			mp_RCon->Detach();
+			//if (mp_RCon->Detach())
+			//	gpConEmu->OnVConTerminated(this);
 			break;
 		case IDM_RENAMETAB:
 			mp_RCon->DoRenameTab();

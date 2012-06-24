@@ -675,7 +675,7 @@ bool OnSetGuiClientWindowPos(HWND hWnd, HWND hWndInsertAfter, int &X, int &Y, in
 	return lbChanged;
 }
 
-void SetGuiExternMode(BOOL abUseExternMode)
+void SetGuiExternMode(BOOL abUseExternMode, LPRECT prcOldPos /*= NULL*/)
 {
 	if (gbGuiClientExternMode != abUseExternMode)
 	{
@@ -687,7 +687,11 @@ void SetGuiExternMode(BOOL abUseExternMode)
 		}
 		else
 		{
-			RECT rcGui; GetWindowRect(ghAttachGuiClient, &rcGui);
+			RECT rcGui;
+			if (prcOldPos && (prcOldPos->right > prcOldPos->left && prcOldPos->bottom > prcOldPos->top))
+				rcGui = *prcOldPos;
+			else
+				GetWindowRect(ghAttachGuiClient, &rcGui);
 
 			if (gbAttachGuiClientStyleOk)
 			{
