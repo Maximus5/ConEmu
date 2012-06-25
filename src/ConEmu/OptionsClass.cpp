@@ -1494,6 +1494,7 @@ LRESULT CSettings::OnInitDialog_Cursor(HWND hWnd2, BOOL abInitial)
 	CheckDlgButton(hWnd2, cbCursorIgnoreSize, gpSet->AppStd.isCursorIgnoreSize);
 
 	SetDlgItemInt(hWnd2, tCursorFixedSize, gpSet->AppStd.nCursorFixedSize, FALSE);
+	SetDlgItemInt(hWnd2, tCursorMinSize, gpSet->AppStd.nCursorMinSize, FALSE);
 
 	if (abInitial)
 		RegisterTipsFor(hWnd2);
@@ -4509,6 +4510,22 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		break;
 	} //case tCursorFixedSize:
 	
+	case tCursorMinSize:
+	{
+		BOOL lbOk = FALSE;
+		UINT nNewVal = GetDlgItemInt(hWnd2, tCursorMinSize, &lbOk, FALSE);
+		if (lbOk)
+		{
+			if ((nNewVal >= CURSORSIZEPIX_MIN) && (nNewVal <= CURSORSIZEPIX_MAX) && (gpSet->AppStd.nCursorMinSize != nNewVal))
+			{
+				gpSet->AppStd.nCursorMinSize = nNewVal;
+				gpConEmu->Update(true);
+			}
+		}
+
+		break;
+	} //case tCursorMinSize:
+	
 	case tLongOutputHeight:
 	{
 		BOOL lbOk = FALSE;
@@ -6319,7 +6336,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 	} DistinctControls[] = {
 		{0, {rbAppDistinctElevatedOn, rbAppDistinctElevatedOff, rbAppDistinctElevatedIgnore, stAppDistinctName, tAppDistinctName}},
 		{cbExtendFontsOverride, {cbExtendFonts, stExtendFontBoldIdx, lbExtendFontBoldIdx, stExtendFontItalicIdx, lbExtendFontItalicIdx, stExtendFontNormalIdx, lbExtendFontNormalIdx}},
-		{cbCursorOverride, {rCursorV, rCursorH, cbCursorColor, cbCursorBlink, cbBlockInactiveCursor, cbCursorIgnoreSize}},
+		{cbCursorOverride, {rCursorV, rCursorH, cbCursorColor, cbCursorBlink, cbBlockInactiveCursor, cbCursorIgnoreSize, tCursorFixedSize, stCursorFixedSize, tCursorMinSize, stCursorMinSize}},
 		{cbColorsOverride, {lbColorsOverride}},
 		{cbClipboardOverride, {
 			gbCopyingOverride, cbCTSDetectLineEnd, cbCTSBashMargin, cbCTSTrimTrailing, stCTSEOL, lbCTSEOL,
@@ -6479,6 +6496,8 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			CheckDlgButton(hChild, cbCursorBlink, pApp->isCursorBlink);
 			CheckDlgButton(hChild, cbBlockInactiveCursor, pApp->isCursorBlockInactive);
 			CheckDlgButton(hChild, cbCursorIgnoreSize, pApp->isCursorIgnoreSize);
+			SetDlgItemInt(hChild, tCursorFixedSize, pApp->nCursorFixedSize, FALSE);
+			SetDlgItemInt(hChild, tCursorMinSize, pApp->nCursorMinSize, FALSE);
 
 			CheckDlgButton(hChild, cbColorsOverride, pApp->OverridePalette);
 			SelectStringExact(hChild, lbColorsOverride, pApp->szPaletteName);
@@ -6913,6 +6932,22 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 								}
 							}
 						} //case tCursorFixedSize:
+						break;
+
+					case tCursorMinSize:
+						if (pApp)
+						{
+							BOOL lbOk = FALSE;
+							UINT nNewVal = GetDlgItemInt(hChild, tCursorMinSize, &lbOk, FALSE);
+							if (lbOk)
+							{
+								if ((nNewVal >= CURSORSIZEPIX_MIN) && (nNewVal <= CURSORSIZEPIX_MAX) && (pApp->nCursorMinSize != nNewVal))
+								{
+									pApp->nCursorMinSize = nNewVal;
+									bRedraw = true;
+								}
+							}
+						} //case tCursorMinSize:
 						break;
 
 					case tBgImage:

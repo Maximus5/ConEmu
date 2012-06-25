@@ -51,6 +51,9 @@
 	<?define Guid.FarHereUninstall.cmd = "427F4EE4-3A79-4F1B-97B1-AD12096CFC69" ?>
 	<?define Guid.FarHere.dat = "6B41458E-63AE-4E53-ABAA-D6144BB8A218" ?>
 
+	<?define Guid.ConEmuInside.reg = "DCCA7E45-6FC3-48C4-852F-A178550954A5" ?>
+	<?define Guid.ConEmuInsideUninstall.reg = "03978C0D-C502-40AA-BECF-C7E853252196" ?>
+
 	<?define Guid.CtrlO.fml3 = "F0D7F686-FAAA-458A-820D-C618E7905414" ?>
 	<?define Guid.CtrlShiftT.fml3 = "2227BA9A-1F71-411C-8D43-6D0A64FE98B1" ?>
 	<?define Guid.ShiftEnter.fml3 = "26806B63-88AF-4C68-B01A-C33A004E23B4" ?>

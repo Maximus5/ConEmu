@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    99
+#define CESERVER_REQ_VER    100
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1340,6 +1340,7 @@ struct CESERVER_REQ_STARTSTOP
 	DWORD nImageBits; // 16/32/64
 	BOOL  bRootIsCmdExe;
 	BOOL  bUserIsAdmin;
+	BOOL  bMainServerClosing; // if (nStarted == sst_AltServerStop)
 	// А это приходит из консоли, вдруго консольная программа успела поменять размер буфера
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 	// Максимальный размер консоли на текущем шрифте

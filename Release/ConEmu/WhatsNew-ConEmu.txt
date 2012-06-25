@@ -10,6 +10,17 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.06.25
+[+] Новая опция 'Min cursor size (pix)' на вкладках 'Text cursor' & 'App distinct'.
+[%] Issue 619: В не которых случаях возникал Assertion после закрытия Far Manager.
+[*] Немного поправим 'Detect text line ends', 'Trim trailing spaces', 'Bash margin'.
+[+] Новый ключик для ConEmu.exe - "/inside". Пример использования в "ConEmu\Addons\ConEmu_Inside.reg".
+    Смысл - создать панель в проводнике и запустить в ней, например, powershell.
+    Пока «на поиграться», вроде работает в Windows 7 и Windows 8, в других системах не проверял.
+    Перед вызовом контекстного меню в проводнике нужно либо увеличить высоту нижней области (Windows 7),
+    либо показать панель информации/просмотра (Windows 7 & 8).
+
+
 2012.06.24
 [*] На вкладке 'Mark & Paste' опция 'Auto copy' переименована в 'Copy on LButton up'. По умолчанию включена.
 [%] Не сохранялось значение флажка 'Highlight and goto' и пути 'External editor'.

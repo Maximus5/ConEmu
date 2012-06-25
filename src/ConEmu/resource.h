@@ -729,8 +729,10 @@
 #define cbCTSTrimTrailing               2365
 #define stCTSEOL                        2366
 #define lbCTSEOL                        2367
-#define IDC_EDIT1                       2368
 #define tCursorFixedSize                2368
+#define stCursorFixedSize               2369
+#define tCursorMinSize                  2370
+#define stCursorMinSize                 2371
 
 // Next default values for new objects
 // 
@@ -738,7 +740,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        220
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2369
+#define _APS_NEXT_CONTROL_VALUE         2372
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

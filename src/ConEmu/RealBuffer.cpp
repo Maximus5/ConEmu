@@ -3127,6 +3127,19 @@ bool CRealBuffer::DoSelectionCopy()
 	bool bDetectLines = pApp->CTSDetectLineEnd();
 	bool bBash = pApp->CTSBashMargin();
 
+	wchar_t sPreLineBreak[] =
+		{
+			ucBox25,ucBox50,ucBox75,ucBox100,ucUpScroll,ucDnScroll,ucLeftScroll,ucRightScroll,ucArrowUp,ucArrowDown,
+			ucNoBreakSpace,
+			ucBoxDblVert,ucBoxSinglVert,ucBoxDblDownRight,ucBoxDblDownLeft,ucBoxDblUpRight,ucBoxDblUpLeft,ucBoxSinglDownRight,
+			ucBoxSinglDownLeft,ucBoxSinglUpRight,ucBoxSinglUpLeft,ucBoxSinglDownDblHorz,ucBoxSinglUpDblHorz,ucBoxDblDownDblHorz,
+			ucBoxDblUpDblHorz,ucBoxSinglDownHorz,ucBoxSinglUpHorz,ucBoxDblDownSinglHorz,ucBoxDblUpSinglHorz,ucBoxDblVertRight,
+			ucBoxDblVertLeft,ucBoxDblVertSinglRight,ucBoxDblVertSinglLeft,ucBoxSinglVertRight,ucBoxSinglVertLeft,
+			ucBoxDblHorz,ucBoxSinglHorz,ucBoxDblVertHorz,
+			// End
+			0 /*ASCIIZ!!!*/
+		};
+
 
 	DWORD dwErr = 0;
 	BOOL  lbRc = FALSE;
@@ -3233,7 +3246,7 @@ bool CRealBuffer::DoSelectionCopy()
 				if (nTrimTailing == 1)
 				{
 					while ((pch > pchStart) && (*(pch-1) == L' '))
-						pch--;
+						*(--pch) = 0;
 				}
 			}
 			else if (nTrimTailing != 1)
@@ -3310,7 +3323,9 @@ bool CRealBuffer::DoSelectionCopy()
 			{
 				bool bContinue = false;
 
-				if (bDetectLines && pszNextLine && (*pszNextLine != L' '))
+				if (bDetectLines && pszNextLine && (*pszNextLine != L' ')
+					&& !wcschr(sPreLineBreak, *(pch - 1))
+					&& !wcschr(sPreLineBreak, *pszNextLine))
 				{
 					// Пытаемся опредлить, новая это строка или просто перенос в Prompt?
 					if ((*(pch - 1) != L' ')
@@ -3321,7 +3336,7 @@ bool CRealBuffer::DoSelectionCopy()
 						bContinue = true;
 					}
 
-					if (bBash && (*(pch - 1) != L' '))
+					if (bBash && (*(pch - 1) == L' '))
 					{
 						*(--pch) = 0;
 					}
@@ -3332,7 +3347,7 @@ bool CRealBuffer::DoSelectionCopy()
 					if (nTrimTailing)
 					{
 						while ((pch > pchStart) && (*(pch-1) == L' '))
-							pch--;
+							*(--pch) = 0;
 					}
 
 					switch (nEOL)

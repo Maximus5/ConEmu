@@ -2120,6 +2120,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				gpConEmu->DisableKeybHooks = true;
 			}
+			else if (!klstricmp(curCommand, _T("/inside")))
+			{
+				gpConEmu->mb_InsideIntegration = true;
+			}
 			else if (!klstricmp(curCommand, _T("/icon")) && i + 1 < params)
 			{
 				curCommand += _tcslen(curCommand) + 1; i++;

@@ -162,6 +162,15 @@ class CConEmuMain :
 		HKEY mh_PortableRoot; // Это открытый ключ
 		bool PreparePortableReg();
 		bool mb_UpdateJumpListOnStartup;
+	public:
+		bool  mb_InsideIntegration;
+		HWND  InsideFindParent();
+	private:
+		DWORD mn_InsideParentPID;
+		HWND  mh_InsideParentRoot, mh_InsideParentWND, mh_InsideParentRel;
+		void  InsideUpdatePlacement();
+		static BOOL CALLBACK EnumInsideFindParent(HWND hwnd, LPARAM lParam);
+		bool  InsideFindShellView(HWND hFrom);
 	private:
 		BOOL CheckDosBoxExists();
 		void CheckPortableReg();

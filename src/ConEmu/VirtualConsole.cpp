@@ -106,8 +106,8 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 
 //Курсор, его положение, размер консоли, измененный текст, и пр...
 
-#define VCURSORWIDTH 1
-#define HCURSORHEIGHT 1
+#define VCURSORWIDTH  /*2*/ mp_Set->CursorMinSize()
+#define HCURSORHEIGHT /*2*/ mp_Set->CursorMinSize()
 
 #define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i", _T(#V), _T(__FILE__), __LINE__); Box(szAMsg); }
 
@@ -3441,7 +3441,8 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		{
 			nHeight = MulDiv(nFontHeight, dwSize, 100);
 
-			if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
+			nHeight = min(nFontHeight,max(nHeight,(LONG)HCURSORHEIGHT));
+			//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
 		}
 
 		//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
@@ -3475,9 +3476,12 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 		if (dwSize)
 		{
-			nWidth = MulDiv((nR - rect.left), dwSize, 100);
+			int nMaxWidth = (nR - rect.left);
 
-			if (nWidth < VCURSORWIDTH) nWidth = VCURSORWIDTH;
+			nWidth = MulDiv(nMaxWidth, dwSize, 100);
+
+			nWidth = min(nMaxWidth,max(nWidth,(LONG)VCURSORWIDTH));
+			//if (nWidth < VCURSORWIDTH) nWidth = VCURSORWIDTH;
 		}
 
 		rect.right = min(nR, (rect.left+nWidth));

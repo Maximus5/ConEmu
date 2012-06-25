@@ -82,6 +82,11 @@ Cmd_Autorun.cmd - install or uninstall automatic attach of cmd.exe to ConEmu (an
         <ComponentRef Id="FarHereUninstall.cmd"/>
         <ComponentRef Id="FarHere.dat"/>
       </Feature>
+      <Feature Id="FConEmuAddonsInside" AllowAdvertise="no" Title="ConEmu Inside" Level="1"
+               Description="Reg files for install/uninstall 'ConEmu Inside' explorer popup menu item">
+        <ComponentRef Id="ConEmuInside.reg"/>
+        <ComponentRef Id="ConEmuInsideUninstall.reg"/>
+      </Feature>
       <Feature Id="FConEmuAddonsMacroReg3" AllowAdvertise="no" Title="Far3 macros (*.reg)" Level="1"
                Description="Sample macros (in reg-files), useful with ConEmu">
         <ComponentRef Id="CtrlO.fml3"/>

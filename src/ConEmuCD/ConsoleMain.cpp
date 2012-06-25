@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_ATTACH_MSGBOX
 //  #define SHOW_ROOT_STARTED
 	#define WINE_PRINT_PROC_INFO
+//	#define USE_PIPE_DEBUG_BOXES
 
 //	#define VALIDATE_AND_DELAY_ON_TERMINATE
 
@@ -737,7 +738,9 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	if (gnRunMode == RM_SERVER)
 	{
 		// отладка для Wine
+#ifdef USE_PIPE_DEBUG_BOXES
 		gbPipeDebugBoxes = true;
+#endif
 		if (gbIsWine)
 		{
 			wchar_t szMsg[128];
@@ -6143,6 +6146,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	if (((in.StartStop.nStarted == sst_AltServerStop) || (in.StartStop.nStarted == sst_AppStop))
 		&& in.StartStop.dwPID && (in.StartStop.dwPID == gpSrv->dwAltServerPID))
 	{
+		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 		_ASSERTE(GetCurrentThreadId() != gpSrv->dwRefreshThread);
 		CsAlt.Lock(gpSrv->csAltSrv, TRUE, 1000);
 	}
@@ -6183,11 +6187,14 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(App16Stop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		default:
+			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 			_ASSERTE(in.StartStop.nStarted==sst_ServerStart && "Unknown StartStop code!");
 	}
 
 	DEBUGSTRCMD(szDbg);
 #endif
+
+	// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 	_ASSERTE(in.StartStop.dwPID!=0);
 
 
@@ -6203,6 +6210,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	if (in.StartStop.nStarted == sst_AltServerStart)
 	{
 		// Перевести нить монитора в режим ожидания завершения AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer
+		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 		_ASSERTE(in.StartStop.hServerProcessHandle!=0);
 
 		nAltServerWasStarted = in.StartStop.dwPID;
@@ -6215,6 +6223,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			|| (in.StartStop.nStarted == sst_AppStart))
 	{
 		// Добавить процесс в список
+		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
 		lbChanged = ProcessAdd(nPID, &CS);
 	}
@@ -6223,6 +6232,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			|| (in.StartStop.nStarted == sst_AppStop))
 	{
 		// Удалить процесс из списка
+		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
 		lbChanged = ProcessRemove(nPID, nPrevCount, &CS);
 
@@ -6232,7 +6242,10 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (nAltPID)
 		{
 			bool bPrevFound = gpSrv->AltServers.Get(nAltPID, &info, true/*Remove*/);
+
+			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 			_ASSERTE(in.StartStop.nStarted==sst_ComspecStop || in.StartStop.nOtherPID==info.nPrevPID);
+
 			// Сначала проверяем, не текущий ли альт.сервер закрывается
 			if (gpSrv->dwAltServerPID && (nAltPID == gpSrv->dwAltServerPID))
 			{
@@ -6242,6 +6255,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 				// Переключаемся на "старый" (если был)
 				if (bPrevFound && info.nPrevPID)
 				{
+					// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 					_ASSERTE(info.hPrev!=NULL);
 					// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
 					// Активировать альтернативный сервер (повторно), отпустить его нити чтения
@@ -6253,6 +6267,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 				}
 				else
 				{
+					// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 					_ASSERTE(info.hPrev==NULL);
 					AltServerChanged = true;
 					// Уведомить ГУЙ!
@@ -6262,12 +6277,14 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			}
 			else
 			{
-				_ASSERTE(((nPID == gpSrv->dwAltServerPID) || (!gpSrv->dwAltServerPID && !bPrevFound)) && "Expected active alt.server!");
+				// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+				_ASSERTE(((nPID == gpSrv->dwAltServerPID) || !gpSrv->dwAltServerPID || ((in.StartStop.nStarted != sst_AltServerStop) && (nPID != gpSrv->dwAltServerPID) && !bPrevFound)) && "Expected active alt.server!");
             }
 		}
 	}
 	else
 	{
+		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 		_ASSERTE(in.StartStop.nStarted==sst_AppStart || in.StartStop.nStarted==sst_AppStop || in.StartStop.nStarted==sst_ComspecStart || in.StartStop.nStarted==sst_ComspecStop);
 	}
 	
@@ -6317,6 +6334,12 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			pGuiIn->StartStop.dwPID = nAltServerWasStarted ? nAltServerWasStarted : nAltServerWasStopped;
 			pGuiIn->StartStop.hServerProcessHandle = NULL; // для GUI смысла не имеет
 			pGuiIn->StartStop.nStarted = nAltServerWasStarted ? sst_AltServerStart : sst_AltServerStop;
+			if (pGuiIn->StartStop.nStarted == sst_AltServerStop)
+			{
+				// Если это был последний процесс в консоли, то главный сервер тоже закрывается
+				// Переоткрывать пайпы в ConEmu нельзя
+				pGuiIn->StartStop.bMainServerClosing = gbQuit || (WaitForSingleObject(ghExitQueryEvent,0) == WAIT_OBJECT_0);
+			}
 
 			pGuiOut = ExecuteGuiCmd(ghConWnd, pGuiIn, ghConWnd);
 

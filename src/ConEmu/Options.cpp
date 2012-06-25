@@ -281,8 +281,10 @@ void Settings::InitSettings()
 	//memset(&LogFont2, 0, sizeof(LogFont2));
 	/*LogFont.lfHeight = mn_FontHeight =*/
 	FontSizeY = 16;
-	//Issue 577: Для иероглифов - сделаем "пошире", а то глифы в консоль не влезут...
-	FontSizeX3 = bIsDbcs ? 15 : 0;
+	//-- Issue 577: Для иероглифов - сделаем "пошире", а то глифы в консоль не влезут...
+	//-- пошире не будем. DBCS консоль хитрая, на каждый иероглиф отводится 2 ячейки
+	//-- "не влезть" может только если выполнить "chcp 65001", что врядли, а у если надо - руками пусть ставят
+	FontSizeX3 = 0; // bIsDbcs ? 15 : 0;
 	//LogFont.lfWidth = mn_FontWidth = FontSizeX = mn_BorderFontWidth = 0;
 	//FontSizeX2 = 0; FontSizeX3 = 0;
 	//LogFont.lfEscapement = LogFont.lfOrientation = 0;
@@ -363,6 +365,7 @@ void Settings::InitSettings()
 	AppStd.isCursorBlockInactive = true;
 	AppStd.isCursorIgnoreSize = false;
 	AppStd.nCursorFixedSize = 25;
+	AppStd.nCursorMinSize = 2;
 	AppStd.isCTSDetectLineEnd = true;
 	AppStd.isCTSBashMargin = false;
 	AppStd.isCTSTrimTrailing = 2;
@@ -548,7 +551,7 @@ void Settings::InitSettings()
 // true - не допускать Gaps в Normal режиме. Подгонять размер окна точно под консоль.
 bool Settings::isIntegralSize()
 {
-	if (isQuakeStyle)
+	if (isQuakeStyle || gpConEmu->mb_InsideIntegration)
 		return false;
 
 	#ifdef _DEBUG
@@ -714,6 +717,7 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	reg->Load(L"CursorBlockInactive", pApp->isCursorBlockInactive);
 	reg->Load(L"CursorIgnoreSize", pApp->isCursorIgnoreSize);
 	reg->Load(L"CursorFixedSize", pApp->nCursorFixedSize); MinMax(pApp->nCursorFixedSize, CURSORSIZE_MIN, CURSORSIZE_MAX);
+	reg->Load(L"CursorMinSize", pApp->nCursorMinSize); MinMax(pApp->nCursorMinSize, CURSORSIZEPIX_MIN, CURSORSIZEPIX_MAX);
 
 	pApp->OverrideClipboard = bStd;
 	if (!bStd)
@@ -1726,9 +1730,21 @@ void Settings::LoadSettings()
 	//	CheckConIme();
 	//}
 
-//------------------------------------------------------------------------
-///| Loading from registry |//////////////////////////////////////////////
-//------------------------------------------------------------------------
+//-----------------------------------------------------------------------
+///| Preload settings actions |//////////////////////////////////////////
+//-----------------------------------------------------------------------
+	if (gpConEmu->mb_InsideIntegration && gpConEmu->InsideFindParent())
+	{
+		// Типа, запуститься как панель в Explorer (не в таскбаре, а в проводнике)
+		//isStatusBarShow = false;
+		isTabs = 0;
+		FontSizeY = 10;
+	}
+
+
+//-----------------------------------------------------------------------
+///| Loading from reg/xml |//////////////////////////////////////////////
+//-----------------------------------------------------------------------
 	SettingsBase* reg = CreateSettings();
 	wcscpy_c(Type, reg->Type);
 
@@ -2610,6 +2626,7 @@ void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 	reg->Save(L"CursorBlockInactive", pApp->isCursorBlockInactive);
 	reg->Save(L"CursorIgnoreSize", pApp->isCursorIgnoreSize);
 	reg->Save(L"CursorFixedSize", pApp->nCursorFixedSize);
+	reg->Save(L"CursorMinSize", pApp->nCursorMinSize);
 
 	if (!bStd)
 		reg->Save(L"OverrideClipboard", pApp->OverrideClipboard);

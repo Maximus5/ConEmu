@@ -242,6 +242,26 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		// Перейти в режим AltServer, переоткрыть m_GetDataPipe
 		// -- команда старта альп.сервера должна приходить из главного сервера
 		_ASSERTE(pIn->StartStop.dwPID == nPID && nPID != pIn->hdr.nSrcPID && pIn->hdr.nSrcPID == mp_RCon->mn_MainSrv_PID);
+
+		// При закрытия альт.сервера может также (сразу) закрываться и главный сервер
+		// в этом случае, переоткрывать пайпы смысла не имеет!
+		if ((nStarted == sst_AltServerStop)
+			&& pIn->StartStop.bMainServerClosing)
+		{
+			if (pIn->hdr.nSrcPID == mp_RCon->mn_MainSrv_PID) // должно приходить из главного сервера
+			{
+				mp_RCon->OnServerClosing(mp_RCon->mn_MainSrv_PID);
+			}
+			else
+			{
+				_ASSERTE(pIn->hdr.nSrcPID == mp_RCon->mn_MainSrv_PID && "Must arrive from main server");
+			}
+		}
+		else
+		{
+			_ASSERTE((nStarted == sst_AltServerStop) || !pIn->StartStop.bMainServerClosing);
+		}
+
 		// Если процесс запущен под другим логином - передать хэндл (hServerProcessHandle) не получится
 		mp_RCon->InitAltServer((nStarted == sst_AltServerStart) ? nPID : 0);
 

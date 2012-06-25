@@ -57,6 +57,8 @@ void MinMax(T &a, int v2)
 
 #define CURSORSIZE_MIN 5
 #define CURSORSIZE_MAX 100
+#define CURSORSIZEPIX_MIN 1
+#define CURSORSIZEPIX_MAX 99
 
 #include <pshpack1.h>
 typedef struct tagMYRGB
@@ -304,6 +306,9 @@ struct Settings
 			//reg->Load(L"CursorFixedSize", nCursorFixedSize);
 			BYTE nCursorFixedSize; // в процентах
 			BYTE CursorFixedSize() const { return (OverrideCursor || !AppNames) ? nCursorFixedSize : gpSet->AppStd.nCursorFixedSize; };
+			//reg->Load(L"CursorMinSize", nCursorMinSize);
+			BYTE nCursorMinSize; // в пикселях
+			BYTE CursorMinSize() const { return (OverrideCursor || !AppNames) ? nCursorMinSize : gpSet->AppStd.nCursorMinSize; };
 
 			bool OverrideClipboard;
 			// *** Copying

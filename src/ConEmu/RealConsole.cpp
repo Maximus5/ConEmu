@@ -4256,26 +4256,36 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 	////mh_AltSrv = hAltServer;
 	SetAltSrvPID(nAltServerPID/*, hAltServer*/);
 
-	SetEvent(mh_SwitchActiveServer);
-	mb_SwitchActiveServer = true;
-
-	HANDLE hWait[] = {mh_ActiveServerSwitched, mh_MonitorThread, mh_MainSrv, mh_TermEvent};
-	DWORD nWait = WAIT_TIMEOUT;
-
-	#ifdef _DEBUG
-	nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, 5000);
-	if (nWait == WAIT_TIMEOUT)
+	if (!nAltServerPID && isServerClosing())
 	{
-		_ASSERTE((nWait == WAIT_OBJECT_0) && "Switching Monitor thread to altarnative server takes more than 1000ms");
+		// Переоткрывать пайпы смысла нет, консоль закрывается
+		ResetEvent(mh_SwitchActiveServer);
+		mb_SwitchActiveServer = false;
+		bOk = true;
 	}
-	#endif
+	else
+	{
+		SetEvent(mh_SwitchActiveServer);
+		mb_SwitchActiveServer = true;
 
-	if (nWait == WAIT_TIMEOUT)
-		nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, INFINITE);
+		HANDLE hWait[] = {mh_ActiveServerSwitched, mh_MonitorThread, mh_MainSrv, mh_TermEvent};
+		DWORD nWait = WAIT_TIMEOUT;
 
-	_ASSERTE(mb_SwitchActiveServer==false && "Must be dropped by MonitorThread");
-	mb_SwitchActiveServer = false;
-	bOk = (nWait == WAIT_OBJECT_0);
+		#ifdef _DEBUG
+		nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, 5000);
+		if (nWait == WAIT_TIMEOUT)
+		{
+			_ASSERTE((nWait == WAIT_OBJECT_0) && "Switching Monitor thread to altarnative server takes more than 1000ms");
+		}
+		#endif
+
+		if (nWait == WAIT_TIMEOUT)
+			nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, INFINITE);
+
+		_ASSERTE(mb_SwitchActiveServer==false && "Must be dropped by MonitorThread");
+		mb_SwitchActiveServer = false;
+		bOk = (nWait == WAIT_OBJECT_0);
+	}
 
 	if (isActive())
 		gpConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
@@ -4287,6 +4297,11 @@ bool CRealConsole::ReopenServerPipes()
 {
 	DWORD nSrvPID = mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID;
 	HANDLE hSrvHandle = mh_MainSrv; // (nSrvPID == mn_MainSrv_PID) ? mh_MainSrv : mh_AltSrv;
+
+	if (isServerClosing())
+	{
+		_ASSERTE(FALSE && "ReopenServerPipes was called in MainServerClosing");
+	}
 
 	// переоткрыть event изменений в консоли
 	m_ConDataChanged.InitName(CEDATAREADYEVENT, nSrvPID);

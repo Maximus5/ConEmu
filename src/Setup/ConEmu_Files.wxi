@@ -100,6 +100,12 @@
       <Component Id="FarHere.dat" Guid="$(var.Guid.FarHere.dat)" Win64="$(var.Win64)">
         <File Id="FarHere.dat" Source="..\..\Release\ConEmu\Addons\FarHere.dat"  KeyPath="yes" />
       </Component>
+      <Component Id="ConEmuInside.reg" Guid="$(var.Guid.ConEmuInside.reg)" Win64="$(var.Win64)">
+        <File Id="ConEmuInside.reg" Source="..\..\Release\ConEmu\Addons\ConEmu_Inside.reg"  KeyPath="yes" />
+      </Component>
+      <Component Id="ConEmuInsideUninstall.reg" Guid="$(var.Guid.ConEmuInsideUninstall.reg)" Win64="$(var.Win64)">
+        <File Id="ConEmuInsideUninstall.reg" Source="..\..\Release\ConEmu\Addons\ConEmu_Inside_Delete.reg"  KeyPath="yes" />
+      </Component>
       <Component Id="CallPlugin.txt" Guid="$(var.Guid.CallPlugin.txt)" Win64="$(var.Win64)">
         <File Id="CallPlugin.txt" Source="..\..\Release\ConEmu\Addons\CallPlugin.txt"  KeyPath="yes" />
       </Component>

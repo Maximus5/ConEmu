@@ -163,6 +163,8 @@ CConEmuMain::CConEmuMain()
 	mn_QuakePercent = 0; // 0 - отключен
 	DisableAutoUpdate = false;
 	DisableKeybHooks = false;
+	mb_InsideIntegration = false;
+	mh_InsideParentRoot = mh_InsideParentWND = mh_InsideParentRel = NULL;
 	mb_PassSysCommand = false; change2WindowMode = -1;
 	mb_isFullScreen = false;
 	mb_ExternalHidden = FALSE;
@@ -827,8 +829,38 @@ void CConEmuMain::OnUseDwm(bool abEnableDwm)
 // Вызывается при старте программы, для вычисления mrc_Ideal - размера окна по умолчанию
 RECT CConEmuMain::GetDefaultRect()
 {
-	int nWidth, nHeight;
 	RECT rcWnd;
+
+	if (mb_InsideIntegration)
+	{
+		WindowMode = rNormal;
+		RECT rcParent = {}, rcRelative = {};
+		GetClientRect(mh_InsideParentWND, &rcParent);
+		GetWindowRect(mh_InsideParentRel, &rcRelative);
+		MapWindowPoints(NULL, mh_InsideParentWND, (LPPOINT)&rcRelative, 2);
+		// Windows 7
+		if ((rcParent.bottom - rcRelative.bottom) >= 100)
+		{
+			// Предпочтительно
+			rcWnd = MakeRect(rcParent.left, rcRelative.bottom + 4, rcParent.right, rcParent.bottom);
+		}
+		else if ((rcParent.right - rcRelative.right) >= 200)
+		{
+			rcWnd = MakeRect(rcRelative.right + 4, rcRelative.top, rcParent.right, rcRelative.bottom);
+		}
+		else
+		{
+			TODO("Другие системы и проверки на валидность");
+			rcWnd = MakeRect(rcParent.left, rcParent.bottom - 100, rcParent.right, rcParent.bottom);
+		}
+		gpSet->wndX = rcWnd.left;
+		gpSet->wndY = rcWnd.top;
+		RECT rcCon = CalcRect(CER_CONSOLE, rcWnd, CER_MAIN);
+		gpSet->wndWidth = rcCon.right;
+		gpSet->wndHeight = rcCon.bottom;
+	}
+
+	int nWidth, nHeight;
 	MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
 	COORD conSize; conSize.X=gpSet->wndWidth; conSize.Y=gpSet->wndHeight;
 	//int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
@@ -1076,52 +1108,68 @@ HMENU CConEmuMain::GetSystemMenu(BOOL abInitial /*= FALSE*/)
 DWORD_PTR CConEmuMain::GetWindowStyle()
 {
 	DWORD_PTR style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-	//if (gpSet->isShowOnTaskBar) // ghWndApp
-	//	style |= WS_POPUPWINDOW | WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
-	//else
-	style |= WS_OVERLAPPEDWINDOW;
-	//if (gpSet->isTabsOnTaskBar() && gOSVer.dwMajorVersion <= 5)
-	//{
-	//	style |= WS_POPUP;
-	//}
-#ifndef CHILD_DESK_MODE
 
-	if (gpSet->isDesktopMode)
-		style |= WS_POPUP;
+	if (mb_InsideIntegration)
+	{
+		style |= WS_CHILD;
+	}
+	else
+	{
+		//if (gpSet->isShowOnTaskBar) // ghWndApp
+		//	style |= WS_POPUPWINDOW | WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+		//else
+		style |= WS_OVERLAPPEDWINDOW;
+		//if (gpSet->isTabsOnTaskBar() && gOSVer.dwMajorVersion <= 5)
+		//{
+		//	style |= WS_POPUP;
+		//}
 
-#endif
-	//if (ghWnd) {
-	//	if (gpSet->isHideCaptionAlways)
-	//		style &= ~(WS_CAPTION/*|WS_THICKFRAME*/);
-	//	else
-	//		style |= (WS_CAPTION|/*WS_THICKFRAME|*/WS_MINIMIZEBOX|WS_MAXIMIZEBOX);
-	//}
+		#ifndef CHILD_DESK_MODE
+		if (gpSet->isDesktopMode)
+			style |= WS_POPUP;
+		#endif
+
+		//if (ghWnd) {
+		//	if (gpSet->isHideCaptionAlways)
+		//		style &= ~(WS_CAPTION/*|WS_THICKFRAME*/);
+		//	else
+		//		style |= (WS_CAPTION|/*WS_THICKFRAME|*/WS_MINIMIZEBOX|WS_MAXIMIZEBOX);
+		//}
+	}
 	return style;
 }
 
 // Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE_EX
 DWORD_PTR CConEmuMain::GetWindowStyleEx()
 {
-	DWORD_PTR styleEx = WS_EX_APPWINDOW;
+	DWORD_PTR styleEx = 0;
 
-	if (gpSet->nTransparent < 255 /*&& !gpSet->isDesktopMode*/)
-		styleEx |= WS_EX_LAYERED;
-
-	if (gpSet->isAlwaysOnTop)
-		styleEx |= WS_EX_TOPMOST;
-
-	if (gpSet->isTabsOnTaskBar() && !IsWindows7)
+	if (mb_InsideIntegration)
 	{
-		styleEx &= ~WS_EX_APPWINDOW;
-		//styleEx |= WS_EX_TOOLWINDOW;
+		// ничего вроде не надо
+	}
+	else
+	{
+		styleEx |= WS_EX_APPWINDOW;
+
+		if (gpSet->nTransparent < 255 /*&& !gpSet->isDesktopMode*/)
+			styleEx |= WS_EX_LAYERED;
+
+		if (gpSet->isAlwaysOnTop)
+			styleEx |= WS_EX_TOPMOST;
+
+		if (gpSet->isTabsOnTaskBar() && !IsWindows7)
+		{
+			styleEx &= ~WS_EX_APPWINDOW;
+			//styleEx |= WS_EX_TOOLWINDOW;
+		}
+
+		#ifndef CHILD_DESK_MODE
+		if (gpSet->isDesktopMode)
+			styleEx |= WS_EX_TOOLWINDOW;
+		#endif
 	}
 
-#ifndef CHILD_DESK_MODE
-
-	if (gpSet->isDesktopMode)
-		styleEx |= WS_EX_TOOLWINDOW;
-
-#endif
 	return styleEx;
 }
 
@@ -1147,6 +1195,12 @@ BOOL CConEmuMain::CreateMainWindow()
 	if (!RegisterClassEx(&wc))
 		return -1;
 
+	if (mb_InsideIntegration && !mh_InsideParentWND)
+	{
+		_ASSERTE(!mb_InsideIntegration || mh_InsideParentWND);
+		mb_InsideIntegration = false;
+	}
+
 	DWORD styleEx = GetWindowStyleEx();
 	DWORD style = GetWindowStyle();
 	//	WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
@@ -1163,7 +1217,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
 
 	// Расчет размеров окна в Normal режиме
-	if (gpSet->wndWidth && gpSet->wndHeight)
+	if ((gpSet->wndWidth && gpSet->wndHeight) || mb_InsideIntegration)
 	{
 		MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
 		//COORD conSize; conSize.X=gpSet->wndWidth; conSize.Y=gpSet->wndHeight;
@@ -1187,12 +1241,14 @@ BOOL CConEmuMain::CreateMainWindow()
 		_ASSERTE(gpSet->wndWidth && gpSet->wndHeight);
 	}
 
+	HWND hParent = mb_InsideIntegration ? mh_InsideParentWND : ghWndApp;
+
 	//if (gpConEmu->WindowMode == rMaximized) style |= WS_MAXIMIZE;
 	//style |= WS_VISIBLE;
 	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
 	WARNING("На ноуте вылезает за пределы рабочей области");
 	ghWnd = CreateWindowEx(styleEx, gsClassNameParent, gpSet->GetCmd(), style,
-	                       gpSet->wndX, gpSet->wndY, nWidth, nHeight, ghWndApp, NULL, (HINSTANCE)g_hInstance, NULL);
+	                       gpSet->wndX, gpSet->wndY, nWidth, nHeight, hParent, NULL, (HINSTANCE)g_hInstance, NULL);
 
 	if (!ghWnd)
 	{
@@ -1241,6 +1297,129 @@ void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 	pFont->Italic = gpSetCls->FontItalic();
 	lstrcpy(pFont->sBorderFontName, gpSetCls->BorderFontFaceName());
 	pFont->nBorderFontWidth = gpSetCls->BorderFontWidth();
+}
+
+BOOL CConEmuMain::EnumInsideFindParent(HWND hwnd, LPARAM lParam)
+{
+	DWORD nPID = 0;
+	if (IsWindowVisible(hwnd)
+		&& GetWindowThreadProcessId(hwnd, &nPID)
+		&& (nPID == (DWORD)lParam))
+	{
+		DWORD nNeedStyles = WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX;
+		DWORD nStyles = GetWindowLong(hwnd, GWL_STYLE);
+		if ((nStyles & nNeedStyles) == nNeedStyles)
+		{
+			// Нашли
+			gpConEmu->mn_InsideParentPID = nPID;
+			gpConEmu->mh_InsideParentRoot = hwnd;
+			return FALSE;
+		}
+	}
+
+	// Next window
+	return TRUE;
+}
+
+bool CConEmuMain::InsideFindShellView(HWND hFrom)
+{
+	wchar_t szClass[128];
+	HWND hChild = NULL;
+
+	while ((hChild = FindWindowEx(hFrom, hChild, NULL, NULL)) != NULL)
+	{
+		// Нас интересуют только видимые окна!
+		if (!IsWindowVisible(hChild))
+			continue;
+
+		// Windows 7.
+		GetClassName(hChild, szClass, countof(szClass));
+		if (lstrcmp(szClass, L"SHELLDLL_DefView") == 0)
+		{
+			wchar_t szParent[128];
+			GetClassName(hFrom, szParent, countof(szParent));
+			if (lstrcmp(szParent, L"CtrlNotifySink") == 0)
+			{
+				wchar_t szRoot[128];
+				HWND hParent = GetParent(hFrom);
+				if (hParent)
+				{
+					GetClassName(hParent, szRoot, countof(szRoot));
+					_ASSERTE(lstrcmp(szRoot, L"DirectUIHWND") == 0);
+
+					mh_InsideParentWND = hParent;
+					mh_InsideParentRel = hFrom;
+
+					return true;
+				}
+			}
+		}
+
+		if (InsideFindShellView(hChild))
+			return true;
+	}
+
+	return false;
+}
+
+HWND CConEmuMain::InsideFindParent()
+{
+	//bool  mb_InsideIntegration;
+	//DWORD mn_InsideParentPID;
+	//HWND  mh_InsideParentWND;
+
+	if (!mb_InsideIntegration)
+	{
+		return NULL;
+	}
+
+	if (mh_InsideParentWND)
+	{
+		if (IsWindow(mh_InsideParentWND))
+		{
+			return mh_InsideParentWND;
+		}
+		else
+		{
+			_ASSERTE(IsWindow(mh_InsideParentWND));
+			mh_InsideParentRoot = mh_InsideParentWND = mh_InsideParentRel = NULL;
+		}
+	}
+
+	PROCESSENTRY32 pi = {sizeof(pi)};
+	if (!GetProcessInfo(GetCurrentProcessId(), &pi) || !pi.th32ParentProcessID)
+	{
+		_ASSERTE(FALSE && "GetProcessInfo(GetCurrentProcessId()) failed");
+		mb_InsideIntegration = false;
+		return NULL;
+	}
+
+	EnumWindows(EnumInsideFindParent, pi.th32ParentProcessID);
+	if (!mh_InsideParentRoot)
+	{
+		MessageBox(L"Can't find appropriate parent window!", MB_ICONSTOP);
+		mb_InsideIntegration = false;
+		return NULL;
+	}
+
+	// Теперь нужно найти дочерние окна
+	// 1. в которое будем внедряться
+	// 2. по которому будем позиционироваться
+	InsideFindShellView(mh_InsideParentRoot);
+
+	if (!mh_InsideParentWND || !mh_InsideParentRel)
+	{
+		MessageBox(L"Can't find appropriate shell window!", MB_ICONSTOP);
+		mb_InsideIntegration = false;
+		mh_InsideParentRoot = NULL;
+		return NULL;
+	}
+
+	return mh_InsideParentWND;
+}
+
+void CConEmuMain::InsideUpdatePlacement()
+{
 }
 
 BOOL CConEmuMain::CheckDosBoxExists()
@@ -2234,7 +2413,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* a
 	RECT rc = {};
 
 	// Разница между размером всего окна и клиентской области окна (рамка + заголовок)
-	if (mg & ((DWORD)CEM_FRAME))
+	if ((mg & ((DWORD)CEM_FRAME)) && !mb_InsideIntegration)
 	{
 		// т.к. это первая обработка - можно ставить rc простым приравниванием
 		_ASSERTE(rc.left==0 && rc.top==0 && rc.right==0 && rc.bottom==0);
@@ -8485,7 +8664,9 @@ bool CConEmuMain::isMeForeground(bool abRealAlso)
 			&& (((h == ghWnd) || (h == ghOpWnd)
 				|| (mp_AttachDlg && (mp_AttachDlg->GetHWND() == h)))
 			|| (mp_RecreateDlg && (mp_RecreateDlg->GetHWND() == h)))
-			|| (gpSetCls->mh_FindDlg == h);
+			|| (gpSetCls->mh_FindDlg == h)
+			|| (mb_InsideIntegration && (h == mh_InsideParentRoot))
+			;
 
 		if (h && !isMe && abRealAlso)
 		{
@@ -14418,6 +14599,9 @@ void CConEmuMain::OnGhostCreated(CVirtualConsole* apVCon, HWND ahGhost)
 
 void CConEmuMain::OnAllGhostClosed()
 {
+	if (gpConEmu->mb_InsideIntegration)
+		return;
+
 	DWORD curStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD curStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
 	DWORD style = (curStyle & ~WS_POPUP);

@@ -176,7 +176,9 @@ BEGIN
     CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,124,29,96,8
     CONTROL         "Fixed cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,15,87,8
     EDITTEXT        tCursorFixedSize,230,27,40,12,ES_AUTOHSCROLL
-    LTEXT           "(5-100) %",IDC_STATIC,275,29,38,8
+    LTEXT           "(5-100) %",stCursorFixedSize,275,29,38,8
+    LTEXT           "Min size (pix):",stCursorMinSize,241,64,50,8
+    EDITTEXT        tCursorMinSize,196,62,40,12,ES_AUTOHSCROLL
 END
 
 IDD_SPG_STARTUP DIALOGEX 0, 0, 328, 235
@@ -1042,7 +1044,9 @@ BEGIN
     PUSHBUTTON      "...",bBgImage,203,211,16,12,NOT WS_VISIBLE
     COMBOBOX        lbBgPlacement,225,211,61,30,CBS_DROPDOWNLIST | NOT WS_VISIBLE | WS_VSCROLL | WS_TABSTOP
     EDITTEXT        tCursorFixedSize,196,52,40,12,ES_AUTOHSCROLL
-    LTEXT           "(5-100) %",IDC_STATIC,241,54,38,8
+    LTEXT           "(5-100) %",stCursorFixedSize,241,54,38,8
+    LTEXT           "Min size (pix):",stCursorMinSize,241,64,50,8
+    EDITTEXT        tCursorMinSize,196,62,40,12,ES_AUTOHSCROLL
 END
 
 IDD_ABOUT DIALOGEX 0, 0, 325, 205
