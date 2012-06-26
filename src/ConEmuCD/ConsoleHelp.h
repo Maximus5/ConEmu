@@ -56,6 +56,7 @@ _DBGHLP(L"     /FN=<ConFontName> /FH=<FontHeight> /FW=<FontWidth>\r\n") \
 _DBGHLP(L"     /CINMODE==<hex:gnConsoleModeFlags>\r\n") \
 _DBGHLP(L"     /HIDE -> gbForceHideConWnd=TRUE\r\n") \
 _DBGHLP(L"     /GID=<ConEmu.exe PID>\r\n") \
+_DBGHLP(L"     /GHWND=<ConEmu.exe HWND>\r\n") \
 _DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
 _DBGHLP(L"     /INJECT=PID{10}\r\n") \
 _DBGHLP(L"     /DOSBOX -> use DosBox\r\n") \

@@ -2269,8 +2269,8 @@ BOOL CRealConsole::StartProcess()
 		
 		nCurLen = _tcslen(psCurCmd);
 		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen)
-		          L"/GID=%i /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i",
-		          GetCurrentProcessId(), nWndWidth, nWndHeight, mn_DefaultBufferHeight,
+		          L"/GID=%i /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i",
+		          GetCurrentProcessId(), (DWORD)ghWnd, nWndWidth, nWndHeight, mn_DefaultBufferHeight,
 		          gpSet->ConsoleFont.lfFaceName, gpSet->ConsoleFont.lfWidth, gpSet->ConsoleFont.lfHeight);
 
 		/*if (gpSet->FontFile[0]) { --  РЕГИСТРАЦИЯ ШРИФТА НА КОНСОЛЬ НЕ РАБОТАЕТ!
@@ -7703,7 +7703,17 @@ void CRealConsole::CloseTab()
 		}
 		else
 		{
-			if (!isCloseConfirmed(gsCloseCon))
+			LPCWSTR pszConfirmText = gsCloseCon;
+			if (bCanCloseMacro)
+			{
+				CEFarWindowType tabtype = GetActiveTabType();
+				pszConfirmText =
+					((tabtype & fwt_TypeMask) == fwt_Editor) ? gsCloseEditor :
+					((tabtype & fwt_TypeMask) == fwt_Viewer) ? gsCloseViewer :
+					gsCloseCon;
+			}
+
+			if (!isCloseConfirmed(pszConfirmText))
 			{
 				// Отмена
 				return;
@@ -9439,7 +9449,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		ShutdownGuiStep(L"PostMacro, done");
 }
 
-void CRealConsole::Detach(bool bPosted /*= false*/)
+void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= false*/)
 {
 	if (!this)
 		return;
@@ -9461,7 +9471,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/)
 			SetOtherWindowParent(hGuiWnd, NULL);
 			SetOtherWindowPos(hGuiWnd, HWND_NOTOPMOST, rcGui.left, rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top, SWP_SHOWWINDOW);
 
-			mp_VCon->PostDetach();
+			mp_VCon->PostDetach(bSendCloseConsole);
 			return;
 		}
 
@@ -9488,8 +9498,9 @@ void CRealConsole::Detach(bool bPosted /*= false*/)
 
 		// Уведомить сервер, что нужно закрыться
 		CESERVER_REQ in;
-		ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+		ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
 		in.dwData[0] = (DWORD)lhGuiWnd;
+		in.dwData[1] = bSendCloseConsole;
 		DWORD dwTickStart = timeGetTime();
 		
 		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), &in, ghWnd);
@@ -9509,7 +9520,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/)
 			if (MessageBox(NULL, L"Detach console from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
 				return;
 
-			mp_VCon->PostDetach();
+			mp_VCon->PostDetach(bSendCloseConsole);
 			return;
 		}
 	
@@ -9521,8 +9532,10 @@ void CRealConsole::Detach(bool bPosted /*= false*/)
 
 		// Уведомить сервер, что он больше не наш
 		CESERVER_REQ in;
-		ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR));
+		ExecutePrepareCmd(&in, CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
 		DWORD dwTickStart = timeGetTime();
+		in.dwData[0] = 0;
+		in.dwData[1] = bSendCloseConsole;
 		
 		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), &in, ghWnd);
 		

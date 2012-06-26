@@ -31,6 +31,7 @@
 #define IDD_SPG_STATUSBAR               161
 #define IDD_SPG_APPDISTINCT2            162
 #define IDD_SPG_CURSOR                  163
+#define IDD_SPG_INTEGRATION             164
 #define IDD_MORE_HIDE                   200
 #define IDD_SPG_SELECTION               204
 #define IDD_SPG_TABS                    206
@@ -44,6 +45,7 @@
 #define IDD_FIND                        217
 #define IDD_ABOUT                       218
 #define IDD_RENAMETAB                   219
+#define IDD_CMDPROMPT                   220
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -733,14 +735,21 @@
 #define stCursorFixedSize               2369
 #define tCursorMinSize                  2370
 #define stCursorMinSize                 2371
+#define lbHistoryList                   2372
+#define tHistoryEdit                    2373
+#define stHistoryList                   2374
+#define stHistoryEdit                   2375
+#define cbHistoryDontClose              2376
+#define cbHistoryAutoExecute            2377
+#define cbHistoryTopMost                2378
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        220
+#define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2372
+#define _APS_NEXT_CONTROL_VALUE         2379
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

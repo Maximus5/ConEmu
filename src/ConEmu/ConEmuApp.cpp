@@ -2122,9 +2122,41 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else if (!klstricmp(curCommand, _T("/inside")))
 			{
-				gpConEmu->mb_InsideIntegration = true;
+				gpConEmu->m_InsideIntegration = CConEmuMain::ii_Auto;
+				gpConEmu->m_InsideIntegrationShift = isPressed(VK_SHIFT);
 			}
-			else if (!klstricmp(curCommand, _T("/icon")) && i + 1 < params)
+			else if (!klstricmp(curCommand, _T("/insidepid")) && ((i + 1) < params))
+			{
+				curCommand += _tcslen(curCommand) + 1; i++;
+
+				wchar_t* pszEnd;
+				gpConEmu->mn_InsideParentPID = wcstol(curCommand, &pszEnd, 10);
+				if (gpConEmu->mn_InsideParentPID)
+				{
+					// «десь указываетс€ PID, в который нужно внедритьс€.
+					gpConEmu->m_InsideIntegration = CConEmuMain::ii_Auto;
+					gpConEmu->m_InsideIntegrationShift = isPressed(VK_SHIFT);
+				}
+			}
+			else if (!klstricmp(curCommand, _T("/insidewnd")) && ((i + 1) < params))
+			{
+				curCommand += _tcslen(curCommand) + 1; i++;
+				if (curCommand[0] == L'0' && (curCommand[1] == L'x' || curCommand[1] == L'X'))
+					curCommand += 2;
+				else if (curCommand[0] == L'x' || curCommand[0] == L'X')
+					curCommand ++;
+
+				wchar_t* pszEnd;
+				HWND hParent = (HWND)wcstol(curCommand, &pszEnd, 16);
+				if (hParent && IsWindow(hParent))
+				{
+					// «десь указываетс€ HWND, в котором нужно создаватьс€.
+					gpConEmu->m_InsideIntegration = CConEmuMain::ii_Simple;
+					gpConEmu->mh_InsideParentWND = hParent;
+					gpConEmu->m_InsideIntegrationShift = isPressed(VK_SHIFT);
+				}
+			}
+			else if (!klstricmp(curCommand, _T("/icon")) && ((i + 1) < params))
 			{
 				curCommand += _tcslen(curCommand) + 1; i++;
 

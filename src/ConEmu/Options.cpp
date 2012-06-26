@@ -551,7 +551,7 @@ void Settings::InitSettings()
 // true - не допускать Gaps в Normal режиме. Подгонять размер окна точно под консоль.
 bool Settings::isIntegralSize()
 {
-	if (isQuakeStyle || gpConEmu->mb_InsideIntegration)
+	if (isQuakeStyle || gpConEmu->m_InsideIntegration)
 		return false;
 
 	#ifdef _DEBUG
@@ -1733,7 +1733,7 @@ void Settings::LoadSettings()
 //-----------------------------------------------------------------------
 ///| Preload settings actions |//////////////////////////////////////////
 //-----------------------------------------------------------------------
-	if (gpConEmu->mb_InsideIntegration && gpConEmu->InsideFindParent())
+	if (gpConEmu->m_InsideIntegration && gpConEmu->InsideFindParent())
 	{
 		// Типа, запуститься как панель в Explorer (не в таскбаре, а в проводнике)
 		//isStatusBarShow = false;

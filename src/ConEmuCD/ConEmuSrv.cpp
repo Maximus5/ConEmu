@@ -562,7 +562,7 @@ int ServerInitAttach2Gui()
 	_ASSERTE(gpSrv->dwRefreshThread==0);
 	HWND hDcWnd = NULL;
 
-	while(true)
+	while (true)
 	{
 		hDcWnd = Attach2Gui(ATTACH2GUI_TIMEOUT);
 
@@ -1954,6 +1954,104 @@ void CheckConEmuHwnd()
 	}
 }
 
+bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
+{
+	bool bConnected = false;
+
+	//if (lbNeedSetFont) {
+	//	lbNeedSetFont = FALSE;
+	//
+	//    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
+	//    SetConsoleFontSizeTo(ghConWnd, gpSrv->nConFontHeight, gpSrv->nConFontWidth, gpSrv->szConsoleFont);
+	//    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+	//}
+	// Если GUI запущен не от имени админа - то он обломается при попытке
+	// открыть дескриптор процесса сервера. Нужно будет ему помочь.
+	pIn->StartStop.hServerProcessHandle = NULL;
+
+	if (pIn->StartStop.bUserIsAdmin)
+	{
+		DWORD  nGuiPid = 0;
+
+		if (GetWindowThreadProcessId(hGui, &nGuiPid) && nGuiPid)
+		{
+			HANDLE hGuiHandle = OpenProcess(PROCESS_DUP_HANDLE, FALSE, nGuiPid);
+
+			if (hGuiHandle)
+			{
+				HANDLE hDupHandle = NULL;
+
+				if (DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(),
+				                   hGuiHandle, &hDupHandle, PROCESS_QUERY_INFORMATION|SYNCHRONIZE,
+				                   FALSE, 0)
+				        && hDupHandle)
+				{
+					pIn->StartStop.hServerProcessHandle = (u64)hDupHandle;
+				}
+
+				CloseHandle(hGuiHandle);
+			}
+		}
+	}
+
+	wchar_t szPipe[64];
+	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEGUIPIPENAME, L".", (DWORD)hGui); //-V205
+	CESERVER_REQ *pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, ghConWnd);
+
+	if (!pOut)
+	{
+		_ASSERTE(pOut!=NULL);
+	}
+	else
+	{
+		//ghConEmuWnd = hGui;
+		ghConEmuWnd = pOut->StartStopRet.hWnd;
+		ghConEmuWndDC = hDcWnd = pOut->StartStopRet.hWndDC;
+		gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
+		_ASSERTE(gpSrv->pConsoleMap != NULL); // мэппинг уже должен быть создан,
+		_ASSERTE(gpSrv->pConsole != NULL); // и локальная копия тоже
+		//gpSrv->pConsole->info.nGuiPID = pOut->StartStopRet.dwPID;
+		CESERVER_CONSOLE_MAPPING_HDR *pMap = gpSrv->pConsoleMap->Ptr();
+		if (pMap)
+		{
+			pMap->nGuiPID = pOut->StartStopRet.dwPID;
+			pMap->hConEmuRoot = ghConEmuWnd;
+			pMap->hConEmuWnd = ghConEmuWndDC;
+			_ASSERTE(pMap->hConEmuRoot==NULL || pMap->nGuiPID!=0);
+		}
+
+		//DisableAutoConfirmExit();
+
+		// В принципе, консоль может действительно запуститься видимой. В этом случае ее скрывать не нужно
+		// Но скорее всего, консоль запущенная под Админом в Win7 будет отображена ошибочно
+		// 110807 - Если gbAttachMode, тоже консоль нужно спрятать
+		if (gbForceHideConWnd || gbAttachMode)
+			apiShowWindow(ghConWnd, SW_HIDE);
+
+		// Установить шрифт в консоли
+		if (pOut->StartStopRet.Font.cbSize == sizeof(CESERVER_REQ_SETFONT))
+		{
+			lstrcpy(gpSrv->szConsoleFont, pOut->StartStopRet.Font.sFontName);
+			gpSrv->nConFontHeight = pOut->StartStopRet.Font.inSizeY;
+			gpSrv->nConFontWidth = pOut->StartStopRet.Font.inSizeX;
+			ServerInitFont();
+		}
+
+		COORD crNewSize = {(SHORT)pOut->StartStopRet.nWidth, (SHORT)pOut->StartStopRet.nHeight};
+		//SMALL_RECT rcWnd = {0,pIn->StartStop.sbi.srWindow.Top};
+		SMALL_RECT rcWnd = {0};
+		SetConsoleSize((USHORT)pOut->StartStopRet.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
+		// Установить переменную среды с дескриптором окна
+		SetConEmuEnvVar(ghConEmuWnd);
+		CheckConEmuHwnd();
+		ExecuteFreeResult(pOut);
+		
+		bConnected = true;
+	}
+
+	return bConnected;
+}
+
 HWND Attach2Gui(DWORD nTimeout)
 {
 	// Нить Refresh НЕ должна быть запущена, иначе в мэппинг могут попасть данные из консоли
@@ -1977,7 +2075,23 @@ HWND Attach2Gui(DWORD nTimeout)
 		gpSrv->pConsoleMap->Ptr()->bDataReady = FALSE;
 	}
 
-	hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL);
+	if (gpSrv->dwGuiPID && gpSrv->hGuiWnd)
+	{
+		wchar_t szClass[128];
+		GetClassName(gpSrv->hGuiWnd, szClass, countof(szClass));
+		if (lstrcmp(szClass, VirtualConsoleClassMain) == 0)
+			hGui = gpSrv->hGuiWnd;
+		else
+			gpSrv->hGuiWnd = NULL;
+	}
+	else if (gpSrv->hGuiWnd)
+	{
+		_ASSERTE(gpSrv->hGuiWnd==NULL);
+		gpSrv->hGuiWnd = NULL;
+	}
+
+	if (!hGui)
+		hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL);
 
 	if (!hGui)
 	{
@@ -1994,7 +2108,8 @@ HWND Attach2Gui(DWORD nTimeout)
 				{
 					for(UINT i = 0; i < gpSrv->nProcessCount; i++)
 					{
-						if (lstrcmpiW(prc.szExeFile, L"conemu.exe")==0)
+						if (lstrcmpiW(prc.szExeFile, L"conemu.exe")==0
+							|| lstrcmpiW(prc.szExeFile, L"conemu64.exe")==0)
 						{
 							dwGuiPID = prc.th32ProcessID;
 							break;
@@ -2129,110 +2244,33 @@ HWND Attach2Gui(DWORD nTimeout)
 	// В обычном "серверном" режиме шрифт уже установлен, а при аттаче
 	// другого процесса - шрифт все-равно поменять не получится
 	//BOOL lbNeedSetFont = TRUE;
-	// Нужно сбросить. Могли уже искать...
-	hGui = NULL;
 
 	// Если с первого раза не получится (GUI мог еще не загрузиться) пробуем еще
-	while(!hDcWnd && dwDelta <= nTimeout)
+	while (!hDcWnd && dwDelta <= nTimeout)
 	{
-		while((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL)
+		if (gpSrv->hGuiWnd)
 		{
-			//if (lbNeedSetFont) {
-			//	lbNeedSetFont = FALSE;
-			//
-			//    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
-			//    SetConsoleFontSizeTo(ghConWnd, gpSrv->nConFontHeight, gpSrv->nConFontWidth, gpSrv->szConsoleFont);
-			//    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
-			//}
-			// Если GUI запущен не от имени админа - то он обломается при попытке
-			// открыть дескриптор процесса сервера. Нужно будет ему помочь.
-			pIn->StartStop.hServerProcessHandle = NULL;
+			if (TryConnect2Gui(gpSrv->hGuiWnd, hDcWnd, pIn) && hDcWnd)
+				break; // OK
+		}
+		else
+		{
+			HWND hFindGui = NULL;
 
-			if (pIn->StartStop.bUserIsAdmin)
+			while ((hFindGui = FindWindowEx(NULL, hFindGui, VirtualConsoleClassMain, NULL)) != NULL)
 			{
-				DWORD  nGuiPid = 0;
-
-				if (GetWindowThreadProcessId(hGui, &nGuiPid) && nGuiPid)
-				{
-					HANDLE hGuiHandle = OpenProcess(PROCESS_DUP_HANDLE, FALSE, nGuiPid);
-
-					if (hGuiHandle)
-					{
-						HANDLE hDupHandle = NULL;
-
-						if (DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(),
-						                   hGuiHandle, &hDupHandle, PROCESS_QUERY_INFORMATION|SYNCHRONIZE,
-						                   FALSE, 0)
-						        && hDupHandle)
-						{
-							pIn->StartStop.hServerProcessHandle = (u64)hDupHandle;
-						}
-
-						CloseHandle(hGuiHandle);
-					}
-				}
-			}
-
-			wchar_t szPipe[64];
-			_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEGUIPIPENAME, L".", (DWORD)hGui); //-V205
-			CESERVER_REQ *pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, ghConWnd);
-
-			if (!pOut)
-			{
-				_ASSERTE(pOut!=NULL);
-			}
-			else
-			{
-				//ghConEmuWnd = hGui;
-				ghConEmuWnd = pOut->StartStopRet.hWnd;
-				ghConEmuWndDC = hDcWnd = pOut->StartStopRet.hWndDC;
-				gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
-				_ASSERTE(gpSrv->pConsoleMap != NULL); // мэппинг уже должен быть создан,
-				_ASSERTE(gpSrv->pConsole != NULL); // и локальная копия тоже
-				//gpSrv->pConsole->info.nGuiPID = pOut->StartStopRet.dwPID;
-				CESERVER_CONSOLE_MAPPING_HDR *pMap = gpSrv->pConsoleMap->Ptr();
-				if (pMap)
-				{
-					pMap->nGuiPID = pOut->StartStopRet.dwPID;
-					pMap->hConEmuRoot = ghConEmuWnd;
-					pMap->hConEmuWnd = ghConEmuWndDC;
-					_ASSERTE(pMap->hConEmuRoot==NULL || pMap->nGuiPID!=0);
-				}
-
-				//DisableAutoConfirmExit();
-
-				// В принципе, консоль может действительно запуститься видимой. В этом случае ее скрывать не нужно
-				// Но скорее всего, консоль запущенная под Админом в Win7 будет отображена ошибочно
-				// 110807 - Если gbAttachMode, тоже консоль нужно спрятать
-				if (gbForceHideConWnd || gbAttachMode)
-					apiShowWindow(ghConWnd, SW_HIDE);
-
-				// Установить шрифт в консоли
-				if (pOut->StartStopRet.Font.cbSize == sizeof(CESERVER_REQ_SETFONT))
-				{
-					lstrcpy(gpSrv->szConsoleFont, pOut->StartStopRet.Font.sFontName);
-					gpSrv->nConFontHeight = pOut->StartStopRet.Font.inSizeY;
-					gpSrv->nConFontWidth = pOut->StartStopRet.Font.inSizeX;
-					ServerInitFont();
-				}
-
-				COORD crNewSize = {(SHORT)pOut->StartStopRet.nWidth, (SHORT)pOut->StartStopRet.nHeight};
-				//SMALL_RECT rcWnd = {0,pIn->StartStop.sbi.srWindow.Top};
-				SMALL_RECT rcWnd = {0};
-				SetConsoleSize((USHORT)pOut->StartStopRet.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
-				// Установить переменную среды с дескриптором окна
-				SetConEmuEnvVar(ghConEmuWnd);
-				CheckConEmuHwnd();
-				ExecuteFreeResult(pOut);
-				break;
+				if (TryConnect2Gui(hFindGui, hDcWnd, pIn))
+					break; // OK
 			}
 		}
 
-		if (hDcWnd) break;
+		if (hDcWnd)
+			break;
 
 		dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
 
-		if (dwDelta > nTimeout) break;
+		if (dwDelta > nTimeout)
+			break;
 
 		Sleep(500);
 		dwCur = GetTickCount(); dwDelta = dwCur - dwStart;

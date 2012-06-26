@@ -1347,15 +1347,15 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				if (gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_GUI)
 				{
 					_ASSERTEX(pCmd->NewServer.hAppWnd!=0);
-					_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /GID=%u /GUIATTACH=%08X /PID=%u",
-							pCmd->NewServer.nPID, (DWORD)pCmd->NewServer.hAppWnd, GetCurrentProcessId());
+					_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /GID=%u /GHWND=%08X /GUIATTACH=%08X /PID=%u",
+							pCmd->NewServer.nGuiPID, (DWORD)pCmd->NewServer.hGuiWnd, (DWORD)pCmd->NewServer.hAppWnd, GetCurrentProcessId());
 					gbAttachGuiClient = TRUE;
 				}
 				else
 				{
 					_ASSERTEX(pCmd->NewServer.hAppWnd==0);
-					_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /GID=%u /ATTACH /PID=%u",
-						pCmd->NewServer.nPID, GetCurrentProcessId());
+					_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /GID=%u /GHWND=%08X /ATTACH /PID=%u",
+						pCmd->NewServer.nGuiPID, (DWORD)pCmd->NewServer.hGuiWnd, GetCurrentProcessId());
 				}
 				lbRc = CreateProcess(szSelf, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 				if (lbRc)

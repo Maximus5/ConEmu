@@ -485,7 +485,7 @@ class CRealConsole
 		static wchar_t ms_LastRConStatus[80];
 		void UpdateCursorInfo();
 		bool isNeedCursorDraw();
-		void Detach(bool bPosted = false);
+		void Detach(bool bPosted = false, bool bSendCloseConsole = false);
 		void AdminDuplicate();
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
 		bool InCreateRoot();

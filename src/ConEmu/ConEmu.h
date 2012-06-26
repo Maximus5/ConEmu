@@ -163,11 +163,21 @@ class CConEmuMain :
 		bool PreparePortableReg();
 		bool mb_UpdateJumpListOnStartup;
 	public:
-		bool  mb_InsideIntegration;
+		// Режим интеграции. Запуститься как дочернее окно, например, в области проводника.
+		enum {
+			ii_None = 0,
+			ii_Auto,
+			ii_Explorer,
+			ii_Simple,
+		} m_InsideIntegration;
+		bool  m_InsideIntegrationShift;
+		DWORD mn_InsideParentPID;  // PID "родительского" процесса режима интеграции
+		HWND  mh_InsideParentWND; // Это окно используется как родительское в режиме интеграции
 		HWND  InsideFindParent();
 	private:
-		DWORD mn_InsideParentPID;
-		HWND  mh_InsideParentRoot, mh_InsideParentWND, mh_InsideParentRel;
+		HWND  mh_InsideParentRoot; // Корневое окно режима интеграции (для проверки isMeForeground)
+		HWND  mh_InsideParentRel;  // Может быть NULL (ii_Simple). HWND относительно которого нужно позиционироваться
+		RECT  mrc_InsideParent, mrc_InsideParentRel; // для сравнения, чтоб знать, что подвинуться нада
 		void  InsideUpdatePlacement();
 		static BOOL CALLBACK EnumInsideFindParent(HWND hwnd, LPARAM lParam);
 		bool  InsideFindShellView(HWND hFrom);
@@ -500,7 +510,7 @@ class CConEmuMain :
 		bool isInImeComposition();		
 		bool isLBDown();		
 		bool isMainThread();
-		bool isMeForeground(bool abRealAlso=false);		
+		bool isMeForeground(bool abRealAlso=false, bool abDialogsAlso=true);
 		bool isMouseOverFrame(bool abReal=false);		
 		bool isNtvdm(BOOL abCheckAllConsoles=FALSE);		
 		bool IsOurConsoleWindow(HWND hCon);		

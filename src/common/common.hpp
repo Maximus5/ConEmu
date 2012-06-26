@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    100
+#define CESERVER_REQ_VER    101
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1586,8 +1586,9 @@ struct MyAssertInfo
 // CECMD_STARTSERVER
 struct CESERVER_REQ_START
 {
-	DWORD nPID;    // In-GuiPID, Out-NewServerPID
-	HWND2 hAppWnd; // Hooked application window
+	DWORD nGuiPID; // In-ConEmuGuiPID
+	HWND2 hGuiWnd; // In-ghWnd
+	HWND2 hAppWnd; // Hooked application window (для GUI режима)
 	DWORD nValue;  // Error codes
 };
 

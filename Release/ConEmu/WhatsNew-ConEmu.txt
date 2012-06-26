@@ -10,6 +10,16 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.06.26
+[*] ConEmu inside mode.
+    AutoResize.
+    "As Administrator" supported: use "-cur_console:a" or hold Shift when selecting menu item.
+    For debug purposes: "/insidewnd <HWND>" & "/insidepid <PID>".
+    ConEmu_Inside.reg file updated.
+[+] Right click on leftmost part of status bar pop up system menu (useful in 'ConEmu inside' mode).
+[*] Minor fix in Close Far editor/viewer confirmation.
+
+
 2012.06.25
 [+] Новая опция 'Min cursor size (pix)' на вкладках 'Text cursor' & 'App distinct'.
 [%] Issue 619: В не которых случаях возникал Assertion после закрытия Far Manager.

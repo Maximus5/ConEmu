@@ -66,7 +66,7 @@ class CConEmuChild
 
 		void SetAutoCopyTimer(bool bEnabled);
 
-		void PostDetach();
+		void PostDetach(bool bSendCloseConsole /*= false*/);
 
 #ifdef _DEBUG
 	public:

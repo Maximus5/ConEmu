@@ -389,6 +389,7 @@ struct SrvInfo
 	HWND   hRootProcessGui; // ≈сли работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
 	BOOL   bDebuggerActive, bDebuggerRequestDump; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
 	DWORD  dwGuiPID; // GUI PID (»ƒ процесса графической части ConEmu)
+	HWND   hGuiWnd; // передаетс€ через аргумент "/GHWND=%08X", чтобы окно не искать
 	DWORD  nActiveFarPID; // PID последнего активного Far
 	BOOL   bWasDetached; // ¬ыставл€етс€ в TRUE при получении CECMD_DETACHCON
 	BOOL   bWasReattached; // ≈сли TRUE - то при следующем цикле нужно передернуть ReloadFullConsoleInfo(true)

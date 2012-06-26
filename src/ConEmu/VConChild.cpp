@@ -465,7 +465,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			}
 			else if (messg == pVCon->mn_MsgDetachPosted)
 			{
-				pVCon->RCon()->Detach(true);
+				pVCon->RCon()->Detach(true, (lParam == 1));
 			}
 			#ifdef _DEBUG
 			else if (messg == pVCon->mn_MsgCreateDbgDlg)
@@ -1239,7 +1239,7 @@ void CConEmuChild::SetAutoCopyTimer(bool bEnabled)
 		m_TAutoCopy.Stop();
 }
 
-void CConEmuChild::PostDetach()
+void CConEmuChild::PostDetach(bool bSendCloseConsole /*= false*/)
 {
-	PostMessage(mh_WndDC, mn_MsgDetachPosted, 0, 0);
+	PostMessage(mh_WndDC, mn_MsgDetachPosted, 0, (LPARAM)bSendCloseConsole);
 }

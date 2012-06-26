@@ -163,7 +163,7 @@ CConEmuMain::CConEmuMain()
 	mn_QuakePercent = 0; // 0 - отключен
 	DisableAutoUpdate = false;
 	DisableKeybHooks = false;
-	mb_InsideIntegration = false;
+	m_InsideIntegration = ii_None; m_InsideIntegrationShift = false; mn_InsideParentPID = 0;
 	mh_InsideParentRoot = mh_InsideParentWND = mh_InsideParentRel = NULL;
 	mb_PassSysCommand = false; change2WindowMode = -1;
 	mb_isFullScreen = false;
@@ -831,33 +831,46 @@ RECT CConEmuMain::GetDefaultRect()
 {
 	RECT rcWnd;
 
-	if (mb_InsideIntegration)
+	if (m_InsideIntegration)
 	{
 		WindowMode = rNormal;
 		RECT rcParent = {}, rcRelative = {};
 		GetClientRect(mh_InsideParentWND, &rcParent);
-		GetWindowRect(mh_InsideParentRel, &rcRelative);
-		MapWindowPoints(NULL, mh_InsideParentWND, (LPPOINT)&rcRelative, 2);
-		// Windows 7
-		if ((rcParent.bottom - rcRelative.bottom) >= 100)
+		if (m_InsideIntegration == ii_Simple)
 		{
-			// Предпочтительно
-			rcWnd = MakeRect(rcParent.left, rcRelative.bottom + 4, rcParent.right, rcParent.bottom);
-		}
-		else if ((rcParent.right - rcRelative.right) >= 200)
-		{
-			rcWnd = MakeRect(rcRelative.right + 4, rcRelative.top, rcParent.right, rcRelative.bottom);
+			mrc_InsideParent = rcParent;
+			ZeroStruct(mrc_InsideParentRel);
+			rcWnd = rcParent;
 		}
 		else
 		{
-			TODO("Другие системы и проверки на валидность");
-			rcWnd = MakeRect(rcParent.left, rcParent.bottom - 100, rcParent.right, rcParent.bottom);
+			GetWindowRect(mh_InsideParentRel, &rcRelative);
+			MapWindowPoints(NULL, mh_InsideParentWND, (LPPOINT)&rcRelative, 2);
+			mrc_InsideParent = rcParent;
+			mrc_InsideParentRel = rcRelative;
+			// Windows 7
+			if ((rcParent.bottom - rcRelative.bottom) >= 100)
+			{
+				// Предпочтительно
+				rcWnd = MakeRect(rcParent.left, rcRelative.bottom + 4, rcParent.right, rcParent.bottom);
+			}
+			else if ((rcParent.right - rcRelative.right) >= 200)
+			{
+				rcWnd = MakeRect(rcRelative.right + 4, rcRelative.top, rcParent.right, rcRelative.bottom);
+			}
+			else
+			{
+				TODO("Другие системы и проверки на валидность");
+				rcWnd = MakeRect(rcParent.left, rcParent.bottom - 100, rcParent.right, rcParent.bottom);
+			}
 		}
 		gpSet->wndX = rcWnd.left;
 		gpSet->wndY = rcWnd.top;
 		RECT rcCon = CalcRect(CER_CONSOLE, rcWnd, CER_MAIN);
 		gpSet->wndWidth = rcCon.right;
 		gpSet->wndHeight = rcCon.bottom;
+
+		return rcWnd;
 	}
 
 	int nWidth, nHeight;
@@ -910,7 +923,7 @@ RECT CConEmuMain::GetDefaultRect()
 			gpSet->wndY = rcWnd.top;
 		}
 	}
-	else if (gpSet->wndCascade)
+	else if ( gpSet->wndCascade)
 	{
 		RECT rcScreen = MakeRect(800,600);
 		int nMonitors = GetSystemMetrics(SM_CMONITORS);
@@ -1109,9 +1122,9 @@ DWORD_PTR CConEmuMain::GetWindowStyle()
 {
 	DWORD_PTR style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
 
-	if (mb_InsideIntegration)
+	if (m_InsideIntegration)
 	{
-		style |= WS_CHILD;
+		style |= WS_CHILD|WS_SYSMENU;
 	}
 	else
 	{
@@ -1144,7 +1157,7 @@ DWORD_PTR CConEmuMain::GetWindowStyleEx()
 {
 	DWORD_PTR styleEx = 0;
 
-	if (mb_InsideIntegration)
+	if (m_InsideIntegration)
 	{
 		// ничего вроде не надо
 	}
@@ -1195,10 +1208,24 @@ BOOL CConEmuMain::CreateMainWindow()
 	if (!RegisterClassEx(&wc))
 		return -1;
 
-	if (mb_InsideIntegration && !mh_InsideParentWND)
+	if (m_InsideIntegration)
 	{
-		_ASSERTE(!mb_InsideIntegration || mh_InsideParentWND);
-		mb_InsideIntegration = false;
+		if (!mh_InsideParentWND)
+		{
+			_ASSERTE(!m_InsideIntegration || mh_InsideParentWND);
+			m_InsideIntegration = ii_None;
+		}
+		else
+		{
+			DWORD nParentTID, nParentPID;
+			nParentTID = GetWindowThreadProcessId(mh_InsideParentWND, &nParentPID);
+			_ASSERTE(nParentTID && nParentPID);
+			BOOL bAttach = AttachThreadInput(GetCurrentThreadId(), nParentTID, TRUE);
+			if (!bAttach)
+			{
+				DisplayLastError(L"Inside: AttachThreadInput() failed!");
+			}
+		}
 	}
 
 	DWORD styleEx = GetWindowStyleEx();
@@ -1217,7 +1244,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
 
 	// Расчет размеров окна в Normal режиме
-	if ((gpSet->wndWidth && gpSet->wndHeight) || mb_InsideIntegration)
+	if ((gpSet->wndWidth && gpSet->wndHeight) || m_InsideIntegration)
 	{
 		MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
 		//COORD conSize; conSize.X=gpSet->wndWidth; conSize.Y=gpSet->wndHeight;
@@ -1241,7 +1268,7 @@ BOOL CConEmuMain::CreateMainWindow()
 		_ASSERTE(gpSet->wndWidth && gpSet->wndHeight);
 	}
 
-	HWND hParent = mb_InsideIntegration ? mh_InsideParentWND : ghWndApp;
+	HWND hParent = m_InsideIntegration ? mh_InsideParentWND : ghWndApp;
 
 	//if (gpConEmu->WindowMode == rMaximized) style |= WS_MAXIMIZE;
 	//style |= WS_VISIBLE;
@@ -1349,6 +1376,7 @@ bool CConEmuMain::InsideFindShellView(HWND hFrom)
 
 					mh_InsideParentWND = hParent;
 					mh_InsideParentRel = hFrom;
+					m_InsideIntegration = ii_Explorer;
 
 					return true;
 				}
@@ -1364,11 +1392,11 @@ bool CConEmuMain::InsideFindShellView(HWND hFrom)
 
 HWND CConEmuMain::InsideFindParent()
 {
-	//bool  mb_InsideIntegration;
+	//bool  m_InsideIntegration;
 	//DWORD mn_InsideParentPID;
 	//HWND  mh_InsideParentWND;
 
-	if (!mb_InsideIntegration)
+	if (!m_InsideIntegration)
 	{
 		return NULL;
 	}
@@ -1377,28 +1405,69 @@ HWND CConEmuMain::InsideFindParent()
 	{
 		if (IsWindow(mh_InsideParentWND))
 		{
+			if (m_InsideIntegration == ii_Simple)
+			{
+				if (mh_InsideParentRoot == NULL)
+				{
+					// Если еще не искали "корневое" окно
+					HWND hParent = mh_InsideParentWND;
+					while (hParent)
+					{
+						mh_InsideParentRoot = hParent;
+						hParent = GetParent(hParent);
+					}
+				}
+				// В этом режиме занимаем всю клиентскую область
+				_ASSERTE(mh_InsideParentRel==NULL);
+				mh_InsideParentRel = NULL;
+			}
+
 			return mh_InsideParentWND;
 		}
 		else
 		{
+			if (m_InsideIntegration == ii_Simple)
+			{
+				DisplayLastError(L"Specified window not found");
+				return NULL;
+			}
 			_ASSERTE(IsWindow(mh_InsideParentWND));
 			mh_InsideParentRoot = mh_InsideParentWND = mh_InsideParentRel = NULL;
 		}
 	}
 
-	PROCESSENTRY32 pi = {sizeof(pi)};
-	if (!GetProcessInfo(GetCurrentProcessId(), &pi) || !pi.th32ParentProcessID)
+	_ASSERTE(m_InsideIntegration!=ii_Simple);
+
+	DWORD nParentPID = 0;
+	if (gpConEmu->mn_InsideParentPID)
 	{
-		_ASSERTE(FALSE && "GetProcessInfo(GetCurrentProcessId()) failed");
-		mb_InsideIntegration = false;
-		return NULL;
+		PROCESSENTRY32 pi = {sizeof(pi)};
+		if ((gpConEmu->mn_InsideParentPID == GetCurrentProcessId())
+			|| !GetProcessInfo(gpConEmu->mn_InsideParentPID, &pi))
+		{
+			DisplayLastError(L"Invalid parent process specified");
+			m_InsideIntegration = ii_None;
+			return NULL;
+		}
+		nParentPID = gpConEmu->mn_InsideParentPID;
+	}
+	else
+	{
+		PROCESSENTRY32 pi = {sizeof(pi)};
+		if (!GetProcessInfo(GetCurrentProcessId(), &pi) || !pi.th32ParentProcessID)
+		{
+			DisplayLastError(L"GetProcessInfo(GetCurrentProcessId()) failed");
+			m_InsideIntegration = ii_None;
+			return NULL;
+		}
+		nParentPID = pi.th32ParentProcessID;
 	}
 
-	EnumWindows(EnumInsideFindParent, pi.th32ParentProcessID);
+	EnumWindows(EnumInsideFindParent, nParentPID);
 	if (!mh_InsideParentRoot)
 	{
 		MessageBox(L"Can't find appropriate parent window!", MB_ICONSTOP);
-		mb_InsideIntegration = false;
+		m_InsideIntegration = ii_None;
 		return NULL;
 	}
 
@@ -1410,10 +1479,12 @@ HWND CConEmuMain::InsideFindParent()
 	if (!mh_InsideParentWND || !mh_InsideParentRel)
 	{
 		MessageBox(L"Can't find appropriate shell window!", MB_ICONSTOP);
-		mb_InsideIntegration = false;
+		m_InsideIntegration = ii_None;
 		mh_InsideParentRoot = NULL;
 		return NULL;
 	}
+
+	GetWindowThreadProcessId(mh_InsideParentWND, &gpConEmu->mn_InsideParentPID);
 
 	return mh_InsideParentWND;
 }
@@ -2413,7 +2484,7 @@ RECT CConEmuMain::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* a
 	RECT rc = {};
 
 	// Разница между размером всего окна и клиентской области окна (рамка + заголовок)
-	if ((mg & ((DWORD)CEM_FRAME)) && !mb_InsideIntegration)
+	if ((mg & ((DWORD)CEM_FRAME)) && !m_InsideIntegration)
 	{
 		// т.к. это первая обработка - можно ставить rc простым приравниванием
 		_ASSERTE(rc.left==0 && rc.top==0 && rc.right==0 && rc.bottom==0);
@@ -3602,11 +3673,15 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 			if (mb_MaximizedHideCaption)
 				mb_MaximizedHideCaption = FALSE;
 
-			RECT rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE);
-			//int nWidth = rcNew.right-rcNew.left;
-			//int nHeight = rcNew.bottom-rcNew.top;
-			rcNew.left+=gpSet->wndX; rcNew.top+=gpSet->wndY;
-			rcNew.right+=gpSet->wndX; rcNew.bottom+=gpSet->wndY;
+			RECT rcNew = mrc_Ideal;
+			if (!m_InsideIntegration)
+			{
+				rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE);
+				//int nWidth = rcNew.right-rcNew.left;
+				//int nHeight = rcNew.bottom-rcNew.top;
+				rcNew.left+=gpSet->wndX; rcNew.top+=gpSet->wndY;
+				rcNew.right+=gpSet->wndX; rcNew.bottom+=gpSet->wndY;
+			}
 			// 2010-02-14 Проверку делаем ТОЛЬКО при загрузке настроек и включенном каскаде
 			//// Параметры именно такие, результат - просто подгонка rcNew под рабочую область текущего монитора
 			//rcNew = CalcRect(CER_CORRECTED, rcNew, CER_MAXIMIZED);
@@ -5346,6 +5421,12 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts
 	if (args->pszSpecialCmd)
 		args->ProcessNewConArg();
 
+	if (m_InsideIntegration && m_InsideIntegrationShift)
+	{
+		m_InsideIntegrationShift = false;
+		args->bRunAsAdministrator = true;
+	}
+
 	wchar_t* pszScript = NULL; //, szScript[MAX_PATH];
 
 	if (args->pszSpecialCmd && (*args->pszSpecialCmd == CmdFilePrefix || *args->pszSpecialCmd == TaskBracketLeft))
@@ -6821,8 +6902,8 @@ void CConEmuMain::StartDebugActiveProcess()
 	int H = pRCon->TextHeight();
 	int nBits = GetProcessBits(dwPID);
 	LPCWSTR pszServer = (nBits == 64) ? ms_ConEmuC64Full : ms_ConEmuC32Full;
-	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%i /BW=%i /BH=%i /BZ=%u /ROOT \"%s\" /DEBUGPID=%i ",
-		pszServer, dwSelfPID, W, H, LONGOUTPUTHEIGHT_MAX, pszServer, dwPID);
+	_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%i /GHWND=%08X /BW=%i /BH=%i /BZ=%u /ROOT \"%s\" /DEBUGPID=%i ",
+		pszServer, dwSelfPID, (DWORD)ghWnd, W, H, LONGOUTPUTHEIGHT_MAX, pszServer, dwPID);
 
 	#ifdef _DEBUG
 	if (MessageBox(NULL, szExe, L"StartDebugLogConsole", MB_OKCANCEL|MB_SYSTEMMODAL) != IDOK)
@@ -8650,22 +8731,24 @@ bool CConEmuMain::isMainThread()
 	return dwTID == mn_MainThreadId;
 }
 
-bool CConEmuMain::isMeForeground(bool abRealAlso)
+bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*=true*/)
 {
 	if (!this) return false;
 
 	static HWND hLastFore = NULL;
 	static bool isMe = false;
+	static bool bLastRealAlso, bLastDialogsAlso;
 	HWND h = GetForegroundWindow();
 
-	if (h != hLastFore)
+	if ((h != hLastFore) || (bLastRealAlso != abRealAlso) || (bLastDialogsAlso != abDialogsAlso))
 	{
 		isMe = (h != NULL)
-			&& (((h == ghWnd) || (h == ghOpWnd)
-				|| (mp_AttachDlg && (mp_AttachDlg->GetHWND() == h)))
-			|| (mp_RecreateDlg && (mp_RecreateDlg->GetHWND() == h)))
-			|| (gpSetCls->mh_FindDlg == h)
-			|| (mb_InsideIntegration && (h == mh_InsideParentRoot))
+			&& ((h == ghWnd)
+				|| (abDialogsAlso && ((h == ghOpWnd)
+					|| (mp_AttachDlg && (mp_AttachDlg->GetHWND() == h))
+					|| (mp_RecreateDlg && (mp_RecreateDlg->GetHWND() == h))
+					|| (gpSetCls->mh_FindDlg == h)))
+				|| (m_InsideIntegration && (h == mh_InsideParentRoot)))
 			;
 
 		if (h && !isMe && abRealAlso)
@@ -8683,6 +8766,8 @@ bool CConEmuMain::isMeForeground(bool abRealAlso)
 		}
 
 		hLastFore = h;
+		bLastRealAlso = abRealAlso;
+		bLastDialogsAlso = abDialogsAlso;
 	}
 
 	return isMe;
@@ -9851,6 +9936,19 @@ HWND CConEmuMain::PostCreateView(CConEmuChild* pChild)
 
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
+	// Нужно проверить, вдруг окно закрылось без нашего ведома (InsideIntegration)
+	for (int i = (int)(countof(mp_VCon)-1); i >= 0; i--)
+	{
+		if (mp_VCon[i] && mp_VCon[i]->RCon())
+		{
+			if (!mp_VCon[i]->RCon()->isDetached())
+			{
+				mp_VCon[i]->RCon()->Detach(true, true);
+			}
+		}
+	}
+
+
 	if (mp_AttachDlg)
 	{
 		mp_AttachDlg->Close();
@@ -11622,6 +11720,13 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (!bContinue)
 		return 0;
 
+	if (m_InsideIntegration && ((messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN)))
+	{
+		HWND hFocus = GetFocus();
+		HWND hFore = GetForegroundWindow();
+		SetForegroundWindow(ghWnd);
+		SetFocus(ghWnd);
+	}
 
 
 	TODO("DoubleView. Хорошо бы колесико мышки перенаправлять в консоль под мышиным курором, а не в активную");
@@ -11770,7 +11875,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	//* Если окно ConEmu не в фокусе - не слать к консоль движение мышки,
 	//* иначе получается неприятная реакция пунктов меню и т.п.
 	//* ****************************
-	if (gpSet->isMouseSkipMoving && GetForegroundWindow() != ghWnd)
+	if (gpSet->isMouseSkipMoving && !isMeForeground(false,false))
 	{
 		DEBUGLOGFILE("ConEmu is not foreground window, mouse event skipped");
 		return 0;
@@ -14268,6 +14373,29 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 				}
 			}
 
+			if (m_InsideIntegration)
+			{
+				if (IsWindow(mh_InsideParentWND) && ((m_InsideIntegration == ii_Simple) || IsWindow(mh_InsideParentRel)))
+				{
+					RECT rcParent = {}, rcRelative = {};
+					GetClientRect(mh_InsideParentWND, &rcParent);
+					if (m_InsideIntegration != ii_Simple)
+					{
+						GetWindowRect(mh_InsideParentRel, &rcRelative);
+						MapWindowPoints(NULL, mh_InsideParentWND, (LPPOINT)&rcRelative, 2);
+					}
+
+					if (memcmp(&mrc_InsideParent, &rcParent, sizeof(rcParent))
+						|| ((m_InsideIntegration != ii_Simple) && memcmp(&mrc_InsideParentRel, &rcRelative, sizeof(rcRelative))))
+					{
+						// Расчитать
+						mrc_Ideal = GetDefaultRect();
+						// Подвинуть
+						MoveWindow(ghWnd, mrc_Ideal.left, mrc_Ideal.top, mrc_Ideal.right-mrc_Ideal.left, mrc_Ideal.bottom-mrc_Ideal.top, TRUE);
+					}
+				}
+			}
+
 			//2009-04-22 - вроде не требуется
 			/*if (lbIsPicView && !isPiewUpdate)
 			{
@@ -14599,7 +14727,7 @@ void CConEmuMain::OnGhostCreated(CVirtualConsole* apVCon, HWND ahGhost)
 
 void CConEmuMain::OnAllGhostClosed()
 {
-	if (gpConEmu->mb_InsideIntegration)
+	if (gpConEmu->m_InsideIntegration)
 		return;
 
 	DWORD curStyle = GetWindowLong(ghWnd, GWL_STYLE);
@@ -14698,6 +14826,9 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 			break;
 		}
 	}
+
+	if (mp_VActive == apVCon)
+		mp_VActive = NULL;
 
 	// Теперь перетряхнуть заголовок (табы могут быть отключены и в заголовке отображается количество консолей)
 	UpdateTitle(); // сам перечитает
@@ -15022,7 +15153,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			gpConEmu->mouse.nSkipEvents[1] = 0;
 
 			if (gpConEmu->mouse.bForceSkipActivation  // принудительная активация окна, лежащего на Desktop
-			        || (gpSet->isMouseSkipActivation && LOWORD(lParam) == HTCLIENT && GetForegroundWindow() != ghWnd))
+			        || (gpSet->isMouseSkipActivation && LOWORD(lParam) == HTCLIENT
+					&& !isMeForeground(false,false)))
 			{
 				gpConEmu->mouse.bForceSkipActivation = FALSE; // Однократно
 				POINT ptMouse = {0}; GetCursorPos(&ptMouse);
@@ -15050,6 +15182,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 						gpConEmu->mouse.nReplaceDblClk = WM_MBUTTONDBLCLK;
 					}
 				}
+			}
+
+			if (gpConEmu->m_InsideIntegration)
+			{
+				SetForegroundWindow(ghWnd);
 			}
 
 			result = DefWindowProc(hWnd, messg, wParam, lParam);

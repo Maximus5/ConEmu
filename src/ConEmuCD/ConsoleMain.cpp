@@ -2392,6 +2392,21 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				return CERR_CARGUMENT;
 			}
 		}
+		else if (wcsncmp(szArg, L"/GHWND=", 7)==0)
+		{
+			gnRunMode = RM_SERVER;
+			wchar_t* pszEnd = NULL;
+			gpSrv->hGuiWnd = (HWND)wcstoul(szArg+7, &pszEnd, 16);
+
+			if ((gpSrv->hGuiWnd) == NULL || !IsWindow(gpSrv->hGuiWnd))
+			{
+				_printf("Invalid GUI HWND specified:\n");
+				_wprintf(GetCommandLineW());
+				_printf("\n");
+				_ASSERTE(FALSE);
+				return CERR_CARGUMENT;
+			}
+		}
 		else if (wcsncmp(szArg, L"/DEBUGPID=", 10)==0)
 		{
 			gnRunMode = RM_SERVER;
@@ -2807,184 +2822,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 				DisableAutoConfirmExit();
 				return iNewConRc;
-
-				#if 0
-				gpSrv->bNewConsole = TRUE;
-				//
-				size_t nNewLen = lstrlen(pwszStartCmdLine) + 200;
-				//
-				BOOL lbIsNeedCmd = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot, szExeTest, gbRootIsCmdExe, gbAlwaysConfirmExit, gbAutoDisableConfirmExit);
-				xf_check();
-				//Warning. ParseCommandLine вызывается ДО ComSpecInit, в котором зовется
-				//         CECMD_CMDSTARTSTOP, поэтому высота буфера еще не была установлена.
-				SendStarted();
-				xf_check();
-				// Font, size, etc.
-				CESERVER_REQ *pIn = NULL, *pOut = NULL;
-				wchar_t* pszAddNewConArgs = NULL;
-
-				//
-				if ((pIn = ExecuteNewCmd(CECMD_GETNEWCONPARM, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD))) != NULL)
-				{
-					pIn->dwData[0] = gnSelfPID;
-					pIn->dwData[1] = lbIsNeedCmd;
-					xf_check();
-					PRINT_COMSPEC(L"Retrieve new console add args (begin)\n",0);
-					pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-					PRINT_COMSPEC(L"Retrieve new console add args (begin)\n",0);
-					xf_check();
-
-					if (pOut)
-					{
-						pszAddNewConArgs = (wchar_t*)pOut->Data;
-
-						if (*pszAddNewConArgs == 0)
-						{
-							ExecuteFreeResult(pOut); pOut = NULL; pszAddNewConArgs = NULL;
-							xf_check();
-						}
-						else
-						{
-							nNewLen += lstrlen(pszAddNewConArgs) + 1;
-						}
-					}
-
-					ExecuteFreeResult(pIn); pIn = NULL;
-					xf_check();
-				}
-
-				//
-				size_t nCchNew = nNewLen+1;
-				xf_check();
-				wchar_t* pszNewCmd = (wchar_t*)calloc(nCchNew,2);
-
-				if (!pszNewCmd)
-				{
-					_printf("Can't allocate %i wchars!\n", (DWORD)nNewLen);
-					return CERR_NOTENOUGHMEM1;
-				}
-
-				// Сначала скопировать все, что было ДО /c
-				const wchar_t* pszC = asCmdLine;
-
-				while(*pszC != L'/') pszC --;
-
-				nNewLen = pszC - pwszStartCmdLine;
-				_ASSERTE(nNewLen>0);
-				_wcscpyn_c(pszNewCmd, nCchNew, pwszStartCmdLine, nNewLen);
-				pszNewCmd[nNewLen] = 0; // !!! wcsncpy не ставит завершающий '\0'
-				xf_check();
-
-				// Поправим режимы открытия
-				if (!gbAttachMode)  // Если ключа еще нет в ком.строке - добавим
-					_wcscat_c(pszNewCmd, nCchNew, L" /ATTACH ");
-
-				if (!gbAlwaysConfirmExit)  // Если ключа еще нет в ком.строке - добавим
-					_wcscat_c(pszNewCmd, nCchNew, L" /CONFIRM ");
-
-				xf_check();
-
-				if (pszAddNewConArgs)
-				{
-					_wcscat_c(pszNewCmd, nCchNew, L" ");
-					_wcscat_c(pszNewCmd, nCchNew, pszAddNewConArgs);
-					xf_check();
-				}
-				else
-				{
-					// -new_console вызывается в режиме ComSpec. Хорошо бы сейчас открыть мэппинг консоли на чтение, получить GuiPID и добавить в аргументы
-					MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
-					ConMap.InitName(CECONMAPNAME, (DWORD)ghConWnd);
-					const CESERVER_CONSOLE_MAPPING_HDR* pConMap = ConMap.Open();
-
-					if (pConMap)
-					{
-						if (pConMap->nGuiPID)
-						{
-							int nCurLen = lstrlen(pszNewCmd);
-							_wsprintf(pszNewCmd+nCurLen, SKIPLEN(nCchNew-nCurLen)
-							          L" /GID=%i ", pConMap->nGuiPID);
-						}
-
-						ConMap.CloseMap();
-					}
-
-					xf_check();
-
-					// Размеры должны быть такими-же
-					//2009-08-13 было закомментарено (в режиме ComSpec аргументы /BW /BH /BZ отсутствуют, т.к. запуск идет из FAR)
-					//			 иногда получалось, что требуемый размер (он запрашивается из GUI)
-					//			 не успевал установиться и в некоторых случаях возникал
-					//			 глюк размера (видимой высоты в GUI) в ReadConsoleData
-					if (MyGetConsoleScreenBufferInfo(ghConOut, &gpSrv->sbi))
-					{
-						int nBW = gpSrv->sbi.dwSize.X;
-						int nBH = gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1;
-						int nBZ = gpSrv->sbi.dwSize.Y;
-
-						if (nBZ <= nBH) nBZ = 0;
-
-						int nCurLen = lstrlen(pszNewCmd);
-						_wsprintf(pszNewCmd+nCurLen, SKIPLEN(nCchNew-nCurLen)
-						          L" /BW=%i /BH=%i /BZ=%i ", nBW, nBH, nBZ);
-					}
-
-					xf_check();
-					//lstrcatW(pszNewCmd, L" </BW=9999 /BH=9999 /BZ=9999> ");
-				}
-
-				// Сформировать новую команду
-				// "cmd" потому что пока не хочется обрезать кавычки и думать, реально ли он нужен
-				// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
-				// cmd /c "dir c:\"
-				// и пр.
-				// Попытаться определить необходимость cmd
-				if (lbIsNeedCmd)
-				{
-					CheckUnicodeMode();
-
-					if (gnCmdUnicodeMode == 2)
-						_wcscat_c(pszNewCmd, nCchNew, L" /ROOT cmd /U /C ");
-					else if (gnCmdUnicodeMode == 1)
-						_wcscat_c(pszNewCmd, nCchNew, L" /ROOT cmd /A /C ");
-					else
-						_wcscat_c(pszNewCmd, nCchNew, L" /ROOT cmd /C ");
-
-					xf_check();
-				}
-				else
-				{
-					_wcscat_c(pszNewCmd, nCchNew, L" /ROOT ");
-					xf_check();
-				}
-
-				// убрать из запускаемой команды "-new_console"
-				nNewLen = pwszCopy - asCmdLine;
-				int nCurLen = lstrlen(pszNewCmd);
-				psFilePart = pszNewCmd + nCurLen;
-				xf_check();
-				_wcscpyn_c(psFilePart, nCchNew-nCurLen, asCmdLine, nNewLen);
-				xf_check();
-				psFilePart[nNewLen] = 0; // !!! wcsncpy не ставит завершающий '\0'
-				psFilePart += nNewLen;
-				pwszCopy += nArgLen;
-				xf_check();
-
-				// добавить в команду запуска собственно программу с аргументами
-				if (*pwszCopy)
-					_wcscpy_c(psFilePart, nCchNew-(psFilePart-pszNewCmd), pwszCopy);
-
-				xf_check();
-				//MessageBox(NULL, pszNewCmd, L"CmdLine", 0);
-				//return 200;
-				// Можно запускаться
-				gpszRunCmd = pszNewCmd;
-				// 26.06.2009 Maks - чтобы сразу выйти - вся обработка будет в новой консоли.
-				DisableAutoConfirmExit();
-				xf_check();
-				//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT; //2010-03-06
-				return 0;
-				#endif
 			}
 		}
 
@@ -6106,9 +5943,18 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 			hGuiApp = NULL;
 	}
 
-	// Без мелькания консольного окошка почему-то пока не получается
-	// Наверх выносится ConEmu вместо "отцепленного" GUI приложения
-	EmergencyShow(ghConWnd);
+	if (in.DataSize() >= 2*sizeof(DWORD) && in.dwData[1])
+	{
+		if (hGuiApp)
+			PostMessage(hGuiApp, WM_CLOSE, 0, 0);
+		PostMessage(ghConWnd, WM_CLOSE, 0, 0);
+	}
+	else
+	{
+		// Без мелькания консольного окошка почему-то пока не получается
+		// Наверх выносится ConEmu вместо "отцепленного" GUI приложения
+		EmergencyShow(ghConWnd);
+	}
 
 	if (hGuiApp != NULL)
 	{

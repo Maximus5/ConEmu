@@ -757,13 +757,6 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 void CStatus::ShowStatusSetupMenu()
 {
-	if (isSettingsOpened(IDD_SPG_STATUSBAR))
-		return;
-
-	mb_InPopupMenu = true;
-
-	HMENU hPopup = CreatePopupMenu();
-
 	POINT ptCur = {}; ::GetCursorPos(&ptCur);
 	POINT ptClient = ptCur;
 	MapWindowPoints(NULL, ghWnd, &ptClient, 1);
@@ -779,6 +772,24 @@ void CStatus::ShowStatusSetupMenu()
 			break;
 		}
 	}
+
+	// Если правый клик был на колонке "Info"
+	if ((nClickedID == 0)
+		// и координата не правее середины колонки
+		// (ну так, на всякий случай, чтобы и статусное меню можно было показать)
+		&& (ptClient.x <= min(80,(m_Items[0].rcClient.right/2))))
+	{
+		gpConEmu->ShowSysmenu(ptCur.x, ptCur.y);
+		return;
+	}
+
+
+	if (isSettingsOpened(IDD_SPG_STATUSBAR))
+		return;
+
+	mb_InPopupMenu = true;
+
+	HMENU hPopup = CreatePopupMenu();
 
 	int nBreak = (countof(m_Items) + 1) / 2;
 

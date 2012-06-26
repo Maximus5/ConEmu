@@ -680,7 +680,8 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 DoExecute:
 	// Теперь можно дернуть созданный в удаленном процессе пайп для запуска в той консоли сервера.
 	pIn = ExecuteNewCmd(CECMD_STARTSERVER, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_START));
-	pIn->NewServer.nPID = GetCurrentProcessId();
+	pIn->NewServer.nGuiPID = GetCurrentProcessId();
+	pIn->NewServer.hGuiWnd = ghWnd;
 	if (anType == apt_Gui)
 	{
 		_ASSERTE(ahAttachWnd && IsWindow(ahAttachWnd));

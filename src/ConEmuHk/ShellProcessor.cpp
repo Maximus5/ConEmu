@@ -891,7 +891,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	{
 		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
 		int nCurLen = lstrlen(*psParam);
-		msprintf((*psParam) + nCurLen, nCchSize - nCurLen, L" /ATTACH /GID=%u /ROOT ", m_SrvMapping.nGuiPID);
+		msprintf((*psParam) + nCurLen, nCchSize - nCurLen, L" /ATTACH /GID=%u /GHWND=%08X /ROOT ",
+			m_SrvMapping.nGuiPID, (DWORD)m_SrvMapping.hConEmuRoot);
 		TODO("Наверное, хорошо бы обработать /K|/C? Если консольное запускается из GUI");
 	}
 	else
