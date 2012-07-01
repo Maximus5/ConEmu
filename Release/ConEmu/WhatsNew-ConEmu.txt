@@ -10,6 +10,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[+] Для облегчения отладки и сообщений об ошибках.
+    Создать mini-dump: ConEmuC.exe /DEBUGPID=<PID> /MINI
+    Создать full-dump: ConEmuC.exe /DEBUGPID=<PID> /FULL
+    О соответствии битности беспокоиться не нужно, все сделает сам ConEmuC.exe.
+    Также, добавлен пункт в системном меню ConEmu: Debug -> Active process memory dump.
 [+] Hyperlink drops
 [+] -new_console:d[DIR]
 

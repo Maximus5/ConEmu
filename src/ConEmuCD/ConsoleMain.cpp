@@ -2702,30 +2702,36 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				HANDLE hCon = ghConOut;
 				CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 				GetConsoleScreenBufferInfo(hCon, &csbi);
-				if ((csbi.srWindow.Right - csbi.srWindow.Left + 1) < 120)
+				if (csbi.dwSize.X < 260)
 				{
-					COORD crMax = GetLargestConsoleWindowSize(hCon);
-					if ((crMax.X - 10) > (csbi.srWindow.Right - csbi.srWindow.Left + 1))
-					{
-						COORD crSize = {((int)((crMax.X - 15)/10))*10, min(crMax.Y, (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))};
-						SMALL_RECT srWnd = {0, csbi.srWindow.Top, crSize.X - 1, csbi.srWindow.Bottom};
-						MONITORINFO mi = {sizeof(mi)};
-						GetMonitorInfo(MonitorFromWindow(ghConWnd, MONITOR_DEFAULTTONEAREST), &mi);
-						RECT rcWnd = {}; GetWindowRect(ghConWnd, &rcWnd);
-						SetWindowPos(ghConWnd, NULL, min(rcWnd.left,(mi.rcWork.left+50)), rcWnd.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-						SetConsoleSize(9999, crSize, srWnd, "StartDebugger");
-					}
+					COORD crNewSize = {260, 9999};
+					SetConsoleScreenBufferSize(ghConOut, crNewSize);
 				}
+				//if ((csbi.srWindow.Right - csbi.srWindow.Left + 1) < 120)
+				//{
+				//	COORD crMax = GetLargestConsoleWindowSize(hCon);
+				//	if ((crMax.X - 10) > (csbi.srWindow.Right - csbi.srWindow.Left + 1))
+				//	{
+				//		COORD crSize = {((int)((crMax.X - 15)/10))*10, min(crMax.Y, (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))};
+				//		SMALL_RECT srWnd = {0, csbi.srWindow.Top, crSize.X - 1, csbi.srWindow.Bottom};
+				//		MONITORINFO mi = {sizeof(mi)};
+				//		GetMonitorInfo(MonitorFromWindow(ghConWnd, MONITOR_DEFAULTTONEAREST), &mi);
+				//		RECT rcWnd = {}; GetWindowRect(ghConWnd, &rcWnd);
+				//		SetWindowPos(ghConWnd, NULL, min(rcWnd.left,(mi.rcWork.left+50)), rcWnd.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+				//		SetConsoleSize(9999, crSize, srWnd, "StartDebugger");
+				//	}
+				//}
 			}
 
 			// Вывести в консоль информацию о версии.
 			PrintVersion();
-#ifdef SHOW_DEBUG_STARTED_MSGBOX
+			#ifdef SHOW_DEBUG_STARTED_MSGBOX
 			wchar_t szInfo[128];
 			StringCchPrintf(szInfo, countof(szInfo), L"Attaching debugger...\nConEmuC PID = %u\nDebug PID = %u",
 			                GetCurrentProcessId(), gpSrv->dwRootProcess);
 			MessageBox(GetConEmuHWND(2), szInfo, L"ConEmuC.Debugger", 0);
-#endif
+			#endif
+
 			//if (!DebugActiveProcess(gpSrv->dwRootProcess))
 			//{
 			//	DWORD dwErr = GetLastError();
@@ -2740,6 +2746,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			//	pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/);
 			//gpSrv->bDebuggerActive = TRUE;
 			//PrintDebugInfo();
+
+			int iAttachRc = AttachDebuggingProcess();
+			if (iAttachRc != 0)
+				return iAttachRc;
+
+			_ASSERTE(gpSrv->hRootProcess!=NULL && "Process handle must be opened");
+
 			gpSrv->hDebugReady = CreateEvent(NULL, FALSE, FALSE, NULL);
 			// Перенес обработку отладочных событий в отдельную нить, чтобы случайно не заблокироваться с главной
 			gpSrv->hDebugThread = CreateThread(NULL, 0, DebugThread, NULL, 0, &gpSrv->dwDebugThreadId);
@@ -4690,8 +4703,53 @@ int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD 
 	return TRUE; // ищем следующий фонт
 }
 
+int AttachDebuggingProcess()
+{
+	DWORD dwErr = 0;
+	// Нужно открыть HANDLE корневого процесса
+	DWORD dwFlags = PROCESS_QUERY_INFORMATION|SYNCHRONIZE;
+
+	if (gpSrv->bDebuggerActive)
+		dwFlags |= PROCESS_VM_READ;
+
+	CAdjustProcessToken token;
+	token.Enable(1, SE_DEBUG_NAME);
+
+	// PROCESS_ALL_ACCESS may fails on WinXP!
+	gpSrv->hRootProcess = OpenProcess((STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0xFFF), FALSE, gpSrv->dwRootProcess);
+	if (!gpSrv->hRootProcess)
+		gpSrv->hRootProcess = OpenProcess(dwFlags, FALSE, gpSrv->dwRootProcess);
+
+	token.Release();
+
+	if (!gpSrv->hRootProcess)
+	{
+		dwErr = GetLastError();
+		wchar_t* lpMsgBuf = NULL;
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+		_printf("Can't open process (%i) handle, ErrCode=0x%08X, Description:\n", //-V576
+		        gpSrv->dwRootProcess, dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
+
+		if (lpMsgBuf) LocalFree(lpMsgBuf);
+		SetLastError(dwErr);
+
+		return CERR_CREATEPROCESS;
+	}
+
+	if (gpSrv->bDebuggerActive)
+	{
+		wchar_t szTitle[64];
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Debugging PID=%u, Debugger PID=%u", gpSrv->dwRootProcess, GetCurrentProcessId());
+		SetConsoleTitleW(szTitle);
+	}
+
+	return 0;
+}
+
 DWORD WINAPI DebugThread(LPVOID lpvParam)
 {
+	_ASSERTE(gpSrv->hRootProcess!=NULL && "Process handle must be opened");
+
 	DWORD nWait = WAIT_TIMEOUT;
 	DWORD nExternalExitCode = -1;
 	wchar_t szInfo[1024];
@@ -5145,7 +5203,7 @@ void ProcessDebugEvent()
 				//		(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
 				//}
 				//else
-				switch(evt.u.Exception.ExceptionRecord.ExceptionCode)
+				switch (evt.u.Exception.ExceptionRecord.ExceptionCode)
 				{
 					case EXCEPTION_ACCESS_VIOLATION: // The thread tried to read from or write to a virtual address for which it does not have the appropriate access.
 					{
@@ -7610,6 +7668,7 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 					_printf("ConEmuC: Sending DebugBreak event to process\n");
 					gpSrv->bDebuggerRequestDump = TRUE;
 					DWORD dwErr = 0;
+					_ASSERTE(gpSrv->hRootProcess!=NULL);
 					if (!DebugBreakProcess_f(gpSrv->hRootProcess))
 					{
 						dwErr = GetLastError();

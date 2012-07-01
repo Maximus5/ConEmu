@@ -25,10 +25,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ExtendedConsole", "ConE
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ConEmuBg", "ConEmuBg\ConEmuBg09.vcproj", "{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dmp", "dmp", "{9343C292-0372-4260-82E9-3F7B99FCB8A4}"
-EndProject
-Project("{8BC9CEB9-9B4A-11D0-8D11-00A0C91BC942}") = "444.mdmp", "F:\Temp\444.mdmp", "{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_C|Win32 = Debug_C|Win32
@@ -527,36 +523,9 @@ Global
 		{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}.Release|Win32.Build.0 = Release|Win32
 		{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}.Release|x64.ActiveCfg = Release|x64
 		{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}.Release|x64.Build.0 = Release|x64
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_C|Win32.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_C|x64.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_C0|Win32.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_C0|x64.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_E|Win32.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_E|x64.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_F|Win32.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_F|x64.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_F2|Win32.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_F2|x64.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_F3|Win32.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_F3|x64.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_R|Win32.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug_R|x64.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug|Win32.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Debug|x64.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Instrument|Win32.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Instrument|x64.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Release_C0|Win32.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Release_C0|x64.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Release_PDB|Win32.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Release_PDB|x64.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Release|Win32.ActiveCfg = Debug
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500}.Release|x64.ActiveCfg = Debug
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{2DFBC61A-9CFF-44AA-9EC1-8EA6BF5E4500} = {9343C292-0372-4260-82E9-3F7B99FCB8A4}
 	EndGlobalSection
 	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
 		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}

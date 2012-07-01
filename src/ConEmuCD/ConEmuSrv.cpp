@@ -235,6 +235,8 @@ int AttachRootProcess()
 {
 	DWORD dwErr = 0;
 
+	_ASSERTE(gpSrv->hRootProcess == NULL && "Must not be opened yet");
+
 	if (!gpSrv->bDebuggerActive && !IsWindowVisible(ghConWnd) && !(gpSrv->dwGuiPID || gbAttachFromFar))
 	{
 		PRINT_COMSPEC(L"Console windows is not visible. Attach is unavailable. Exiting...\n", 0);
@@ -399,42 +401,9 @@ int AttachRootProcess()
 	}
 	else
 	{
-		// Нужно открыть HANDLE корневого процесса
-		DWORD dwFlags = PROCESS_QUERY_INFORMATION|SYNCHRONIZE;
-
-		if (gpSrv->bDebuggerActive)
-			dwFlags |= PROCESS_VM_READ;
-
-		CAdjustProcessToken token;
-		token.Enable(1, SE_DEBUG_NAME);
-
-		// PROCESS_ALL_ACCESS may fails on WinXP!
-		gpSrv->hRootProcess = OpenProcess((STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0xFFF), FALSE, gpSrv->dwRootProcess);
-		if (!gpSrv->hRootProcess)
-			gpSrv->hRootProcess = OpenProcess(dwFlags, FALSE, gpSrv->dwRootProcess);
-
-		token.Release();
-
-		if (!gpSrv->hRootProcess)
-		{
-			dwErr = GetLastError();
-			wchar_t* lpMsgBuf = NULL;
-			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
-			_printf("Can't open process (%i) handle, ErrCode=0x%08X, Description:\n", //-V576
-			        gpSrv->dwRootProcess, dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
-
-			if (lpMsgBuf) LocalFree(lpMsgBuf);
-			SetLastError(dwErr);
-
-			return CERR_CREATEPROCESS;
-		}
-
-		if (gpSrv->bDebuggerActive)
-		{
-			wchar_t szTitle[64];
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Debugging PID=%u, Debugger PID=%u", gpSrv->dwRootProcess, GetCurrentProcessId());
-			SetConsoleTitleW(szTitle);
-		}
+		int iAttachRc = AttachDebuggingProcess();
+		if (iAttachRc != 0)
+			return iAttachRc;
 	}
 
 	return 0; // OK
@@ -1003,7 +972,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 
 	// Если "корневой" процесс консоли запущен не нами (аттач или дебаг)
 	// то нужно к нему "подцепиться" (открыть HANDLE процесса)
-	if (gbNoCreateProcess && (gbAttachMode || gpSrv->bDebuggerActive))
+	if (gbNoCreateProcess && (gbAttachMode || (gpSrv->bDebuggerActive && (gpSrv->hRootProcess == NULL))))
 	{
 		iRc = AttachRootProcess();
 		if (iRc != 0)
