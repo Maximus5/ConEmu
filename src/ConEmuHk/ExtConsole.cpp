@@ -972,6 +972,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 	bool bWrap = true, bVirtualWrap = false;;
 	SHORT WrapAtCol = csbi.dwSize.X; // 1-based
+	DWORD Mode = 0;
 
 	if ((Info->Flags & ewtf_WrapAt))
 	{
@@ -983,7 +984,6 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	}
 	else
 	{
-		DWORD Mode = 0;
 		GetConsoleMode(h, &Mode);
 		bWrap = (Mode & ENABLE_WRAP_AT_EOL_OUTPUT) != 0;
 	}

@@ -316,6 +316,58 @@ BOOL UnpackInputRecord(const MSG64::MsgStr* piMsg, INPUT_RECORD* pRec)
 	return TRUE;
 }
 
+void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD* rDown, INPUT_RECORD* rUp)
+{
+	// Может приходить запрос на отсылку даже если текущий буфер НЕ rbt_Primary,
+	// например, при начале выделения и автоматическом переключении на альтернативный буфер
+
+	if (!vkKey && !dwControlState && wch)
+	{
+		USHORT vk = VkKeyScan(wch);
+		if (vk && (vk != 0xFFFF))
+		{
+			vkKey = (vk & 0xFF);
+			vk = vk >> 8;
+			if ((vk & 7) == 6)
+			{
+				// For keyboard layouts that use the right-hand ALT key as a shift
+				// key (for example, the French keyboard layout), the shift state is
+				// represented by the value 6, because the right-hand ALT key is
+				// converted internally into CTRL+ALT.
+				dwControlState |= SHIFT_PRESSED;
+			}
+			else
+			{
+				if (vk & 1)
+					dwControlState |= SHIFT_PRESSED;
+				if (vk & 2)
+					dwControlState |= LEFT_CTRL_PRESSED;
+				if (vk & 4)
+					dwControlState |= LEFT_ALT_PRESSED;
+			}
+		}
+	}
+
+	if (ScanCode == -1)
+		ScanCode = MapVirtualKey(vkKey, 0/*MAPVK_VK_TO_VSC*/);
+
+	INPUT_RECORD r = {KEY_EVENT};
+	r.Event.KeyEvent.bKeyDown = TRUE;
+	r.Event.KeyEvent.wRepeatCount = 1;
+	r.Event.KeyEvent.wVirtualKeyCode = vkKey;
+	r.Event.KeyEvent.wVirtualScanCode = ScanCode;
+	r.Event.KeyEvent.uChar.UnicodeChar = wch;
+	r.Event.KeyEvent.dwControlKeyState = dwControlState;
+	*rDown = r;
+
+	TODO("Может нужно в dwControlKeyState применять модификатор, если он и есть vkKey?");
+
+	r.Event.KeyEvent.bKeyDown = FALSE;
+	r.Event.KeyEvent.dwControlKeyState = dwControlState;
+	*rUp = r;
+}
+
+
 //#ifdef CONEMU_MINIMAL
 //#include "base64.h"
 //#endif

@@ -388,3 +388,25 @@ wrap:
 	_ASSERTE(lstrlenA(lpOut) < (int)cchOutMax);
 	return lpOut;
 }
+
+int lstrcmpni(LPCWSTR asStr1, LPCWSTR asStr2, int cchMax)
+{
+	wchar_t sz1[64], sz2[64];
+
+	int nCmp = 0;
+
+	if (cchMax >= 64)
+	{
+		_ASSERTE(FALSE && "Too long strings");
+		nCmp = wcsncmp(asStr1, asStr2, cchMax);
+	}
+	else
+	{
+		lstrcpyn(sz1, asStr1, cchMax+1);
+		lstrcpyn(sz2, asStr2, cchMax+1);
+
+		nCmp = lstrcmpi(sz1, sz2);
+	}
+
+	return nCmp;
+}

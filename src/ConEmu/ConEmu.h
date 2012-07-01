@@ -170,17 +170,23 @@ class CConEmuMain :
 			ii_Explorer,
 			ii_Simple,
 		} m_InsideIntegration;
-		bool  m_InsideIntegrationShift;
+		bool  mb_InsideIntegrationShift;
+		bool  mb_InsideSynchronizeCurDir;
 		DWORD mn_InsideParentPID;  // PID "родительского" процесса режима интеграции
 		HWND  mh_InsideParentWND; // Это окно используется как родительское в режиме интеграции
+		HWND  mh_InsideParentRoot; // Корневое окно режима интеграции (для проверки isMeForeground)
 		HWND  InsideFindParent();
 	private:
-		HWND  mh_InsideParentRoot; // Корневое окно режима интеграции (для проверки isMeForeground)
 		HWND  mh_InsideParentRel;  // Может быть NULL (ii_Simple). HWND относительно которого нужно позиционироваться
+		HWND  mh_InsideParentPath; // Win7 Text = "Address: D:\MYDOC"
+		HWND  mh_InsideParentCD;   // Edit для смены текущей папки, например -> "C:\USERS"
 		RECT  mrc_InsideParent, mrc_InsideParentRel; // для сравнения, чтоб знать, что подвинуться нада
-		void  InsideUpdatePlacement();
+		wchar_t ms_InsideParentPath[MAX_PATH+1];
 		static BOOL CALLBACK EnumInsideFindParent(HWND hwnd, LPARAM lParam);
 		bool  InsideFindShellView(HWND hFrom);
+		void  InsideParentMonitor();
+		void  InsideUpdateDir();
+		void  InsideUpdatePlacement();
 	private:
 		BOOL CheckDosBoxExists();
 		void CheckPortableReg();
@@ -288,6 +294,8 @@ class CConEmuMain :
 
 		//CProgressBars *ProgressBars;
 		HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_TerminateVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu
+		HMENU mh_InsideSysMenu;
+		DWORD mn_SysMenuOpenTick;
 		TCHAR Title[MAX_TITLE_SIZE+192]; //, TitleCmp[MAX_TITLE_SIZE+192]; //, MultiTitle[MAX_TITLE_SIZE+30];
 		TCHAR TitleTemplate[128];
 		short mn_Progress;
@@ -359,8 +367,14 @@ class CConEmuMain :
 		static LRESULT CALLBACK RightClickingProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		HWND mh_RightClickingWnd;
 		bool PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam, bool& isPrivate);
+		void CheckTopMostState();
 	public:
 		wchar_t* LoadConsoleBatch(LPCWSTR asSource);
+	private:
+		wchar_t* LoadConsoleBatch_File(LPCWSTR asSource);
+		wchar_t* LoadConsoleBatch_Drops(LPCWSTR asSource);
+		wchar_t* LoadConsoleBatch_Task(LPCWSTR asSource);
+	public:
 		void RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon);
 		void RegisterMinRestore(bool abRegister);
 		void RegisterHoooks();
@@ -484,7 +498,7 @@ class CConEmuMain :
 		RECT GetDefaultRect();
 		RECT GetGuiClientRect();
 		RECT GetIdealRect() { return mrc_Ideal; };
-		HMENU GetSystemMenu(BOOL abInitial = FALSE);
+		HMENU GetSysMenu(BOOL abInitial = FALSE);
 		RECT GetVirtualScreenRect(BOOL abFullScreen);
 		DWORD_PTR GetWindowStyle();
 		DWORD_PTR GetWindowStyleEx();
@@ -508,7 +522,7 @@ class CConEmuMain :
 		//bool IsGlass();		
 		bool isIconic();		
 		bool isInImeComposition();		
-		bool isLBDown();		
+		bool isLBDown();
 		bool isMainThread();
 		bool isMeForeground(bool abRealAlso=false, bool abDialogsAlso=true);
 		bool isMouseOverFrame(bool abReal=false);		
@@ -517,12 +531,13 @@ class CConEmuMain :
 		bool isPictureView();		
 		bool isProcessCreated();		
 		bool isRightClickingPaint();		
-		bool isSizing();		
-		bool isValid(CRealConsole* apRCon);		
-		bool isValid(CVirtualConsole* apVCon);		
-		bool isViewer();		
-		bool isVisible(CVirtualConsole* apVCon);		
-		bool isWindowNormal();		
+		bool isSizing();
+		bool isValid(CRealConsole* apRCon);
+		bool isValid(CVirtualConsole* apVCon);
+		bool isVConHWND(HWND hChild, CVirtualConsole** ppVCon = NULL);
+		bool isViewer();
+		bool isVisible(CVirtualConsole* apVCon);
+		bool isWindowNormal();
 		bool isZoomed();
 		void LoadIcons();
 		//bool LoadVersionInfo(wchar_t* pFullPath);
@@ -559,7 +574,7 @@ class CConEmuMain :
 		void ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags);
 		BOOL ShowWindow(int anCmdShow);
 		void ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
-		virtual void ShowSysmenu(int x=-32000, int y=-32000);
+		virtual void ShowSysmenu(int x=-32000, int y=-32000, bool bAlignUp = false);
 		bool SetParent(HWND hNewParent);
 		HMENU CreateDebugMenuPopup();
 		HMENU CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
@@ -569,6 +584,7 @@ class CConEmuMain :
 		void setFocus();
 		void StartDebugLogConsole();
 		void StartDebugActiveProcess();
+		void MemoryDumpActiveProcess();
 		//void StartLogCreateProcess();
 		//void StopLogCreateProcess();
 		//void UpdateLogCreateProcess();
@@ -644,7 +660,7 @@ class CConEmuMain :
 		LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);
 		LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
 		LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
-		void OnTransparent();
+		void OnTransparent(bool abFromFocus = false, bool bSetFocus = true);
 		void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args);
 		LRESULT OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 		void OnAllVConClosed();
@@ -660,7 +676,7 @@ class CConEmuMain :
 		#endif
 
 		// return true - when state was changes
-		bool SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColorKey = false, COLORREF acrColorKey = 0);
+		bool SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColorKey = false, COLORREF acrColorKey = 0, bool abForceLayered = false);
 		GetLayeredWindowAttributes_t _GetLayeredWindowAttributes;
 		#ifdef __GNUC__
 		SetLayeredWindowAttributes_t SetLayeredWindowAttributes;

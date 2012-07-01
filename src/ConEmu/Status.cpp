@@ -62,6 +62,10 @@ static struct StatusColInfo {
 						L"Active VCon",
 						L"ActiveCon/TotalCount, left click to change"},
 
+	{csi_SyncInside,	L"StatusBar.Hide.Sync",
+						L"Synchronize cur dir",
+						L"Synchronize current directory in the 'ConEmu Inside' mode"},
+
 	{csi_CapsLock,		L"StatusBar.Hide.CapsL",
 						L"Caps Lock state",
 						L"Caps Lock state, left click to change"},
@@ -330,6 +334,10 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 			_ASSERTE(nID<countof(gpSet->isStatusColumnHidden));
 			if (gpSet->isStatusColumnHidden[nID])
 				continue; // просили не показывать
+			if ((nID == csi_Transparency) && !gpSet->isTransparentAllowed())
+				continue; // смысла не имеет
+			if ((nID == csi_SyncInside) && !gpConEmu->m_InsideIntegration)
+				continue; // смысла не имеет
 		}
 
 		m_Items[nDrawCount].nID = nID;
@@ -338,7 +346,9 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 		{
 			case csi_Info:
 			{
-				pszTmp = ((mb_InSetupMenu && m_ClickedItemDesc == csi_Info)
+				pszTmp =
+					(m_ClickedItemDesc == csi_Info && !mb_InSetupMenu) ? L"Right click to show System Menu" :
+					((mb_InSetupMenu && m_ClickedItemDesc == csi_Info)
 						|| (m_ClickedItemDesc > csi_Info && m_ClickedItemDesc < csi_Last))
 					? m_Values[m_ClickedItemDesc].sHelp : pRCon ? pRCon->GetConStatus() : NULL;
 				
@@ -378,6 +388,11 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 
 				break;
 			} // csi_Info
+
+			case csi_SyncInside:
+				wcscpy_c(m_Items[nDrawCount].sText, L"Sync");
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"Sync");
+				break;
 
 			case csi_CapsLock:
 				wcscpy_c(m_Items[nDrawCount].sText, L"CAPS");
@@ -531,6 +546,9 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 
 		switch (m_Items[i].nID)
 		{
+		case csi_SyncInside:
+			SetTextColor(mh_MemDC, gpConEmu->mb_InsideSynchronizeCurDir ? crText : crDash);
+			break;
 		case csi_CapsLock:
 			SetTextColor(mh_MemDC, mb_Caps ? crText : crDash);
 			break;
@@ -550,6 +568,7 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 
 		switch (m_Items[i].nID)
 		{
+		case csi_SyncInside:
 		case csi_CapsLock:
 		case csi_NumLock:
 		case csi_ScrollLock:
@@ -646,7 +665,7 @@ void CStatus::SetClickedItemDesc(CEStatusItems anID)
 {
 	if (m_ClickedItemDesc != anID)
 	{
-		if (((anID > csi_Info && anID < csi_Last) || (mb_InSetupMenu && anID == csi_Info))
+		if (((anID >= csi_Info && anID < csi_Last) /*|| (mb_InSetupMenu && anID == csi_Info)*/)
 			&& m_Values[anID].sHelp)
 			m_ClickedItemDesc = anID;
 		else
@@ -688,7 +707,26 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				if (m_Items[i].bShow && PtInRect(&m_Items[i].rcClient, ptCurClient))
 				{
 					bFound = true;
-					SetClickedItemDesc(m_Items[i].nID);
+
+					// правый клик был на колонке "Info"
+					if (i == 0)
+					{
+						// и координата не правее середины колонки
+						// (ну так, на всякий случай, чтобы и статусное меню можно было показать)
+						if (ptCurClient.x <= min(80,(m_Items[0].rcClient.right/2)))
+						{
+							_ASSERTE(m_Items[i].nID == csi_Info);
+							SetClickedItemDesc(csi_Info);
+						}
+						else
+						{
+							SetClickedItemDesc(csi_Last);
+						}
+					}
+					else
+					{
+						SetClickedItemDesc(m_Items[i].nID);
+					}
 					rcClient = m_Items[i].rcClient;
 					break;
 				}
@@ -714,6 +752,9 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				case csi_Transparency:
 					if (uMsg == WM_LBUTTONDOWN)
 						ShowTransparencyMenu(MakePoint(rcClient.right, rcClient.top));
+					break;
+				case csi_SyncInside:
+					gpConEmu->mb_InsideSynchronizeCurDir = !gpConEmu->mb_InsideSynchronizeCurDir;
 					break;
 				case csi_CapsLock:
 					keybd_event(VK_CAPITAL, 0, 0, 0);
@@ -779,7 +820,7 @@ void CStatus::ShowStatusSetupMenu()
 		// (ну так, на всякий случай, чтобы и статусное меню можно было показать)
 		&& (ptClient.x <= min(80,(m_Items[0].rcClient.right/2))))
 	{
-		gpConEmu->ShowSysmenu(ptCur.x, ptCur.y);
+		gpConEmu->ShowSysmenu(ptCur.x, ptCur.y, true);
 		return;
 	}
 

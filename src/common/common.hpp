@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    101
+#define CESERVER_REQ_VER    102
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -272,6 +272,9 @@ const CECMD
 	CECMD_FREEZEALTSRV   = 59, // dwData[0]=1-Freeze, 0-Thaw; dwData[1]=New Alt server PID
 	CECMD_SETFULLSCREEN  = 60, // SetConsoleDisplayMode(CONSOLE_FULLSCREEN_MODE) -> CESERVER_REQ_FULLSCREEN
 	CECMD_MOUSECLICK     = 61, // wData[0]=cr.X, wData[1]=cr.Y - обработка клика, если консоль в ReadConsoleW
+	CECMD_PROMPTCMD      = 62, // wData - это LPCWSTR
+	CECMD_SETTABTITLE    = 63, // wData - это LPCWSTR, посылается в GUI
+	CECMD_SETPROGRESS    = 64, // wData[0]: 0 - remove, 1 - set, 2 - error. Для "1": wData[1] - 0..100%.
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -918,7 +921,8 @@ static const CEFarWindowType
 	fwt_NonModal       = 0x0800, // Аргумент для поиска окна
 	fwt_PluginRequired = 0x1000, // Аргумент для поиска окна
 	fwt_ActivateFound  = 0x2000, // Активировать найденный таб. Аргумент для поиска окна
-	fwt_Disabled       = 0x4000  // Таб заблокирован другим модальным табом (или диалогом?)
+	fwt_Disabled       = 0x4000, // Таб заблокирован другим модальным табом (или диалогом?)
+	fwt_Renamed        = 0x8000  // Таб был принудительно переименован пользователем
 	;
 
 //TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");
@@ -1731,6 +1735,7 @@ int NextArg(const char** asCmdLine, char (&rsArg)[MAX_PATH+1], const char** rsAr
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64::MsgStr* pMsg);
 BOOL UnpackInputRecord(const MSG64::MsgStr* piMsg, INPUT_RECORD* pRec);
+void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD* rDown, INPUT_RECORD* rUp);
 void CommonShutdown();
 
 typedef void(WINAPI* ShutdownConsole_t)();

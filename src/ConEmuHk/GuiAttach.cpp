@@ -243,8 +243,9 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	// нити приводит к "зависанию" приложени€ - например, любые программы,
 	// использующие DDE могут виснуть.
 	wchar_t szModule[MAX_PATH] = {}; GetModuleFileName(ghOurModule, szModule, countof(szModule));
-	const wchar_t* pszSlash = PointToName(szModule);
-	if (lstrcmpi(pszSlash, L"far.exe")==0 || lstrcmpi(szModule, L"far64.exe")==0)
+	//const wchar_t* pszSlash = PointToName(szModule);
+	//if (lstrcmpi(pszSlash, L"far.exe")==0 || lstrcmpi(szModule, L"far64.exe")==0)
+	if (IsFarExe(szModule))
 	{
 		_ASSERTE(dwStyle == 0 && FALSE);
 	}
@@ -374,6 +375,37 @@ void AttachGuiWindow(HWND hOurWindow)
 	}
 }
 
+bool IsDotNetWindow(HWND hWindow)
+{
+	// — приложен€ми .Net - приходитс€ работать как с WS_CHILD,
+	// иначе в них "не нажимаютс€" тулбары и меню
+
+	//Issue 624: mscoree может быть загружен и Ќ≈ в .Net приложение
+	//if (GetModuleHandle(L"mscoree.dll") != NULL) -- некорректно
+
+	wchar_t szClass[255];
+	const wchar_t szWindowsForms[] = L"WindowsForms";
+	int nNeedLen = lstrlen(szWindowsForms);
+
+	// WindowsForms10.Window.8.app.0.378734a
+	int nLen = user->getClassNameW(hWindow, szClass, countof(szClass));
+	if (nLen > nNeedLen)
+	{
+		szClass[nNeedLen] = 0;
+		if (lstrcmpi(szClass, szWindowsForms) == 0)
+		{
+			// Ќу а теперь проверим, что это ".Net"
+			HMODULE hCore = GetModuleHandle(L"mscoree.dll");
+			if (hCore != NULL)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 // ≈сли (anFromShowWindow != -1), значит функу зовут из ShowWindow
 void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asClassW, DWORD anStyle, DWORD anStyleEx, BOOL abStyleHidden, int anFromShowWindow/*=-1*/)
 {
@@ -438,12 +470,16 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	gnAttachGuiClientFlags = agaf_Success;
 	// — приложен€ми .Net - приходитс€ работать как с WS_CHILD,
 	// иначе в них "не нажимаютс€" тулбары и меню
-	if (GetModuleHandle(L"mscoree.dll") != NULL)
+	if (IsDotNetWindow(hWindow))
+	{
 		gnAttachGuiClientFlags |= (agaf_DotNet|agaf_WS_CHILD);
+	}
 	// ≈сли в окне нет меню - работаем с ним как с WS_CHILD
 	// так не возникает проблем с активацией и т.д.
 	else if (user->getMenu(hWindow) == NULL)
+	{
 		gnAttachGuiClientFlags |= (agaf_NoMenu|agaf_WS_CHILD);
+	}
 	pIn->AttachGuiApp.nFlags = gnAttachGuiClientFlags;
 	pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 	pIn->AttachGuiApp.hAppWindow = hWindow;

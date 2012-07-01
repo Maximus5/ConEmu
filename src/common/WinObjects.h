@@ -74,6 +74,7 @@ BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 bool IsModuleValid(HMODULE module);
 typedef struct tagPROCESSENTRY32W PROCESSENTRY32W;
 bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
+bool IsFarExe(LPCWSTR asModuleName);
 
 void RemoveOldComSpecC();
 const wchar_t* PointToName(const wchar_t* asFullPath);
@@ -120,6 +121,7 @@ class MSection
 {
 	protected:
 		CRITICAL_SECTION m_cs;
+		CRITICAL_SECTION m_lock_cs;
 		DWORD mn_TID; // устанавливается только после EnterCriticalSection
 #ifdef _DEBUG
 		DWORD mn_UnlockedExclusiveTID;
@@ -130,6 +132,8 @@ class MSection
 		friend class MSectionLock;
 		DWORD mn_LockedTID[10];
 		int   mn_LockedCount[10];
+		void Process_Lock();
+		void Process_Unlock();
 	public:
 		MSection();
 		~MSection();

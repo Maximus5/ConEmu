@@ -60,7 +60,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRFONT(s) DEBUGSTR(s)
 
 #define COUNTER_REFRESH 5000
-#define BACKGROUND_FILE_POLL 5000
 
 #define RASTER_FONTS_NAME L"Raster Fonts"
 SIZE szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
@@ -659,8 +658,10 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_TABS,        L"Tabs",           thi_Tabs/*,    OnInitDialog_Tabs*/},
 		{IDD_SPG_STATUSBAR,   L"Status bar",     thi_Status,/*  OnInitDialog_Status*/},
 		{IDD_SPG_COLORS,      L"Colors",         thi_Colors/*,  OnInitDialog_Color*/},
+		{IDD_SPG_TRANSPARENT, L"Transparency",   thi_Transparent/*, OnInitDialog_Transparent*/},
 		{IDD_SPG_CMDTASKS,    L"Tasks",          thi_Tasks/*,   OnInitDialog_CmdTasks*/},
 		{IDD_SPG_APPDISTINCT, L"App distinct",   thi_Apps/*,    OnInitDialog_CmdTasks*/},
+		{IDD_SPG_INTEGRATION, L"Integration",    thi_Integr/*,  OnInitDialog_Integr*/},
 		{IDD_SPG_VIEWS,       L"Views",          thi_Views/*,   OnInitDialog_Views*/},
 		{IDD_SPG_DEBUG,       L"Debug",          thi_Debug/*,   OnInitDialog_Debug*/},
 		{IDD_SPG_UPDATE,      L"Update",         thi_Update/*,  OnInitDialog_Update*/},
@@ -2493,8 +2494,6 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 
 	for(uint c = c0; c <= MAX_COLOR_EDT_ID; c++)
 		ColorSetEdit(hWnd2, c);
-	// +Color key
-	ColorSetEdit(hWnd2, c38);
 
 	DWORD nVal = gpSet->AppStd.nExtendColorIdx;
 	FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
@@ -2553,9 +2552,27 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 	EnableWindow(GetDlgItem(hWnd2, cbColorSchemeDelete), bBtnEnabled);
 
 	gbLastColorsOk = TRUE;
+
+	RegisterTipsFor(hWnd2);
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Transparent(HWND hWnd2)
+{
+	// +Color key
+	ColorSetEdit(hWnd2, c38);
+
+	CheckDlgButton(hWnd2, cbTransparent, (gpSet->nTransparent!=255) ? BST_CHECKED : BST_UNCHECKED);
 	SendDlgItemMessage(hWnd2, slTransparent, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_ALPHA_VALUE, 255));
 	SendDlgItemMessage(hWnd2, slTransparent, TBM_SETPOS  , (WPARAM) true, (LPARAM) gpSet->nTransparent);
-	CheckDlgButton(hWnd2, cbTransparent, (gpSet->nTransparent!=255) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(hWnd2, cbTransparentSeparate, gpSet->isTransparentSeparate ? BST_CHECKED : BST_UNCHECKED);
+	//EnableWindow(GetDlgItem(hWnd2, cbTransparentInactive), gpSet->isTransparentSeparate);
+	//CheckDlgButton(hWnd2, cbTransparentInactive, (gpSet->nTransparentInactive!=255) ? BST_CHECKED : BST_UNCHECKED);
+	EnableWindow(GetDlgItem(hWnd2, slTransparentInactive), gpSet->isTransparentSeparate);
+	EnableWindow(GetDlgItem(hWnd2, stTransparentInactive1), gpSet->isTransparentSeparate);
+	EnableWindow(GetDlgItem(hWnd2, stTransparentInactive2), gpSet->isTransparentSeparate);
+	SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_ALPHA_VALUE, 255));
+	SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS  , (WPARAM) true, (LPARAM) gpSet->isTransparentSeparate ? gpSet->nTransparentInactive : gpSet->nTransparent);
 	CheckDlgButton(hWnd2, cbUserScreenTransparent, gpSet->isUserScreenTransparent ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(hWnd2, cbColorKeyTransparent, gpSet->isColorKeyTransparent);
 
@@ -2635,6 +2652,215 @@ LRESULT CSettings::OnInitDialog_Apps(HWND hWnd2, bool abForceReload)
 		RegisterTipsFor(hWnd2);
 	}
 	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Integr(HWND hWnd2, BOOL abInitial)
+{
+	TODO("Настройки!");
+	SetDlgItemText(hWnd2, tInsideName, L"ConEmu Inside");
+	SetDlgItemText(hWnd2, tInsideConfig, L"shell");
+	SetDlgItemText(hWnd2, tInsideShell, L"powershell -cur_console:n");
+	CheckDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mb_InsideSynchronizeCurDir);
+
+	SetDlgItemText(hWnd2, tHereName, L"ConEmu Here");
+	SetDlgItemText(hWnd2, tHereConfig, L"");
+	SetDlgItemText(hWnd2, tHereShell, L"cmd -cur_console:n");
+
+	if (abInitial)
+		RegisterTipsFor(hWnd2);
+	return 0;
+}
+
+void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, LPCWSTR asCmd, LPCWSTR asIcon)
+{
+	if (!asName || !*asName)
+		asName = L"ConEmu";
+
+	if (!asCmd || !*asCmd)
+		asCmd = L"cmd -cur_console:n";
+
+	size_t cchMax = _tcslen(gpConEmu->ms_ConEmuExe)
+		+ (asOpt ? (_tcslen(asOpt) + 1) : 0)
+		+ (asConfig ? (_tcslen(asConfig) + 16) : 0)
+		+ _tcslen(asCmd) + 32;
+	wchar_t* pszCmd = (wchar_t*)malloc(cchMax*sizeof(*pszCmd));
+	if (!pszCmd)
+		return;
+
+	//[HKEY_CURRENT_USER\Software\Classes\*\shell\ConEmu inside]
+	//"Icon"="C:\\Program Files\\ConEmu\\ConEmu.exe,1"
+
+	//[HKEY_CURRENT_USER\Software\Classes\*\shell\ConEmu inside\command]
+	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /cmd powershell -cur_console:n"
+
+	//[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\ConEmu inside]
+	//"Icon"="C:\\Program Files\\ConEmu\\ConEmu.exe,1"
+
+	//[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\ConEmu inside\command]
+	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /cmd powershell -cur_console:n"
+
+	//[HKEY_CURRENT_USER\Software\Classes\Directory\shell\ConEmu inside]
+	//"Icon"="C:\\Program Files\\ConEmu\\ConEmu.exe,1"
+
+	//[HKEY_CURRENT_USER\Software\Classes\Directory\shell\ConEmu inside\command]
+	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /dir \"%1\" /cmd powershell -cur_console:n"
+
+	//[HKEY_CURRENT_USER\Software\Classes\Drive\shell\ConEmu inside]
+	//"Icon"="C:\\Program Files\\ConEmu\\ConEmu.exe,1"
+
+	//[HKEY_CURRENT_USER\Software\Classes\Drive\shell\ConEmu inside\command]
+	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /dir \"%1\" /cmd powershell -cur_console:n"
+
+	int iSucceeded = 0;
+
+	for (int i = 1; i <= 4; i++)
+	{
+		_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\" ", gpConEmu->ms_ConEmuExe);
+		if (asOpt && *asOpt)
+		{
+			_wcscat_c(pszCmd, cchMax, asOpt);
+			_wcscat_c(pszCmd, cchMax, L" ");
+		}
+		if (asConfig && *asConfig)
+		{
+			_wcscat_c(pszCmd, cchMax, L"/config \"");
+			_wcscat_c(pszCmd, cchMax, asConfig);
+			_wcscat_c(pszCmd, cchMax, L"\" ");
+		}
+
+		LPCWSTR pszRoot = NULL;
+		switch (i)
+		{
+		case 1:
+			pszRoot = L"Software\\Classes\\*\\shell";
+			break;
+		case 2:
+			pszRoot = L"Software\\Classes\\Directory\\Background\\shell";
+			break;
+		case 3:
+			pszRoot = L"Software\\Classes\\Directory\\shell";
+			_wcscat_c(pszCmd, cchMax, L"/dir \"%1\" ");
+			break;
+		case 4:
+			pszRoot = L"Software\\Classes\\Drive\\shell";
+			_wcscat_c(pszCmd, cchMax, L"/dir \"%1\" ");
+			break;
+		}
+
+		_wcscat_c(pszCmd, cchMax, L"/cmd ");
+		_wcscat_c(pszCmd, cchMax, asCmd);
+
+		HKEY hkRoot;
+		if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, pszRoot, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkRoot, NULL))
+		{
+			HKEY hkConEmu;
+			if (0 == RegCreateKeyEx(hkRoot, asName, NULL, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConEmu, NULL))
+			{
+				// Если задана "иконка"
+				if (asIcon)
+					RegSetValueEx(hkConEmu, L"Icon", 0, REG_SZ, (LPBYTE)asIcon, (lstrlen(asIcon)+1)*sizeof(*asIcon));
+				else
+					RegDeleteValue(hkConEmu, L"Icon");
+
+				// Команда
+				HKEY hkCmd;
+				if (0 == RegCreateKeyEx(hkConEmu, L"command", NULL, NULL, 0, KEY_ALL_ACCESS, NULL, &hkCmd, NULL))
+				{
+					if (0 == RegSetValueEx(hkCmd, NULL, 0, REG_SZ, (LPBYTE)pszCmd, (lstrlen(pszCmd)+1)*sizeof(*pszCmd)))
+						iSucceeded++;
+					RegCloseKey(hkCmd);
+				}
+
+				RegCloseKey(hkConEmu);
+			}
+			RegCloseKey(hkRoot);
+		}
+	}
+
+	free(pszCmd);
+}
+
+void CSettings::UnregisterShell(LPCWSTR asName)
+{
+	DeleteRegKeyRecursive(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\Background\\shell", asName);
+	DeleteRegKeyRecursive(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell", asName);
+	DeleteRegKeyRecursive(HKEY_CURRENT_USER, L"Software\\Classes\\Drive\\shell", asName);
+	DeleteRegKeyRecursive(HKEY_CURRENT_USER, L"Software\\Classes\\*\\shell", asName);
+}
+
+bool CSettings::DeleteRegKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName)
+{
+	bool lbRc = false;
+	HKEY hParent = NULL;
+	HKEY hKey = NULL;
+
+	if (!asName || !*asName || !hRoot)
+		return false;
+
+	if (asParent && *asParent)
+	{
+		if (0 != RegOpenKeyEx(hRoot, asParent, 0, KEY_ALL_ACCESS, &hParent))
+			return false;
+		hRoot = hParent;
+	}
+
+	if (0 == RegOpenKeyEx(hRoot, asName, 0, KEY_ALL_ACCESS, &hKey))
+	{
+		for (DWORD i = 0; i < 255; i++)
+		{
+			wchar_t szName[MAX_PATH];
+			DWORD nMax = countof(szName);
+			if (0 != RegEnumKeyEx(hKey, 0, szName, &nMax, 0, 0, 0, 0))
+				break;
+
+			if (!DeleteRegKeyRecursive(hKey, NULL, szName))
+				break;
+		}
+
+		RegCloseKey(hKey);
+
+		if (0 == RegDeleteKey(hRoot, asName))
+			lbRc = true;
+	}
+
+	if (hParent)
+		RegCloseKey(hParent);
+
+	return lbRc;
+}
+
+void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bool bEnabled)
+{
+	switch (iMode)
+	{
+	case ShellIntgr_Inside:
+		{
+			wchar_t szName[MAX_PATH] = {};
+			GetDlgItemText(hDlg, tInsideName, szName, countof(szName));
+			if (bEnabled)
+			{
+				wchar_t szConfig[MAX_PATH] = {}, szShell[MAX_PATH] = {};
+				GetDlgItemText(hDlg, tInsideConfig, szConfig, countof(szConfig));
+				GetDlgItemText(hDlg, tInsideShell, szShell, countof(szShell));
+				wchar_t szIcon[MAX_PATH+16];
+				_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,1", gpConEmu->ms_ConEmuExe);
+				RegisterShell(szName, L"/inside", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
+			}
+			else if (szName && *szName)
+			{
+				UnregisterShell(szName);
+			}
+		}
+		break;
+	case ShellIntgr_Here:
+		{
+		}
+		break;
+	case ShellIntgr_CmdAuto:
+		{
+		}
+		break;
+	}
 }
 
 LRESULT CSettings::OnInitDialog_Views(HWND hWnd2)
@@ -3106,7 +3332,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 								  gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION)!=IDNO)
 					{
 						gpSet->bgImageDarker = 0x46;
-						SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
+						SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
 						TCHAR tmp[10];
 						_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%i", gpSet->bgImageDarker);
 						SetDlgItemText(hWnd2, tDarker, tmp);
@@ -3629,6 +3855,23 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpConEmu->ms_ConEmuBaseDir);
 			}
 			break;
+
+		case cbInsideSyncDir:
+			gpConEmu->mb_InsideSynchronizeCurDir = IsChecked(hWnd2, CB);
+			break;
+		case bInsideRegister:
+		case bInsideUnregister:
+			ShellIntegration(hWnd2, ShellIntgr_Inside, CB==bInsideRegister);
+			break;
+		case bHereRegister:
+		case bHereUnregister:
+			ShellIntegration(hWnd2, ShellIntgr_Here, CB==bHereRegister);
+			break;
+		case bCmdAutoRegister:
+		case bCmdAutoUnregister:
+			ShellIntegration(hWnd2, ShellIntgr_CmdAuto, CB==bCmdAutoRegister);
+			break;
+
 		case bApplyViewSettings:
 			gpConEmu->OnPanelViewSettingsChanged();
 			//gpConEmu->UpdateGuiInfoMapping();
@@ -3855,9 +4098,40 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				{
 					gpSet->nTransparent = newV;
 					SendDlgItemMessage(hWnd2, slTransparent, TBM_SETPOS, (WPARAM) true, (LPARAM)gpSet->nTransparent);
+					if (!gpSet->isTransparentSeparate)
+						SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->nTransparent);
 					gpConEmu->OnTransparent();
 				}
 			} break;
+		case cbTransparentSeparate:
+			{
+				gpSet->isTransparentSeparate = IsChecked(hWnd2, cbTransparentSeparate);
+				//EnableWindow(GetDlgItem(hWnd2, cbTransparentInactive), gpSet->isTransparentSeparate);
+				EnableWindow(GetDlgItem(hWnd2, slTransparentInactive), gpSet->isTransparentSeparate);
+				EnableWindow(GetDlgItem(hWnd2, stTransparentInactive1), gpSet->isTransparentSeparate);
+				EnableWindow(GetDlgItem(hWnd2, stTransparentInactive2), gpSet->isTransparentSeparate);
+				//CheckDlgButton(hWnd2, cbTransparentInactive, (gpSet->nTransparentInactive!=255) ? BST_CHECKED : BST_UNCHECKED);
+				SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->isTransparentSeparate ? gpSet->nTransparentInactive : gpSet->nTransparent);
+				gpConEmu->OnTransparent();
+			} break;
+		//case cbTransparentInactive:
+		//	{
+		//		int newV = gpSet->nTransparentInactive;
+		//		if (IsChecked(hWnd2, cbTransparentInactive))
+		//		{
+		//			if (newV == 255) newV = 200;
+		//		}
+		//		else
+		//		{
+		//			newV = 255;
+		//		}
+		//		if (newV != gpSet->nTransparentInactive)
+		//		{
+		//			gpSet->nTransparentInactive = newV;
+		//			SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM)gpSet->nTransparentInactive);
+		//			//gpConEmu->OnTransparent(); -- смысла нет, ConEmu сейчас "активен"
+		//		}
+		//	} break;
 		case cbUserScreenTransparent:
 			{
 				gpSet->isUserScreenTransparent = IsChecked(hWnd2, cbUserScreenTransparent);
@@ -4896,7 +5170,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					}
 				}
 			}
-		} // else if (hWnd2 == mh_Tabs[thi_Colors])
+		} // else if (hWnd2 == mh_Tabs[thi_Status])
 		else if (hWnd2 == mh_Tabs[thi_Ext])
 		{
 			if (HIWORD(wParam) == EN_CHANGE)
@@ -5948,6 +6222,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_COLORS:
 			gpSetCls->OnInitDialog_Color(hWnd2);
 			break;
+		case IDD_SPG_TRANSPARENT:
+			gpSetCls->OnInitDialog_Transparent(hWnd2);
+			break;
 		case IDD_SPG_CMDTASKS:
 			{
 			bool lbOld = bSkipSelChange; bSkipSelChange = true;
@@ -5957,6 +6234,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			break;
 		case IDD_SPG_APPDISTINCT:
 			gpSetCls->OnInitDialog_Apps(hWnd2, true);
+			break;
+		case IDD_SPG_INTEGRATION:
+			gpSetCls->OnInitDialog_Integr(hWnd2, true);
 			break;
 		case IDD_SPG_VIEWS:
 			gpSetCls->OnInitDialog_Views(hWnd2);
@@ -6010,11 +6290,17 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Status(hWnd2, false);
 			break;
 		case IDD_SPG_COLORS:  /*gpSetCls->OnInitDialog_Color(hWnd2);*/  break;
+		case IDD_SPG_TRANSPARENT:
+			gpSetCls->OnInitDialog_Transparent(hWnd2);
+			break;
 		case IDD_SPG_CMDTASKS:
 			gpSetCls->OnInitDialog_Tasks(hWnd2, false);
 			break;
 		case IDD_SPG_APPDISTINCT:
 			gpSetCls->OnInitDialog_Apps(hWnd2, false);
+			break;
+		case IDD_SPG_INTEGRATION:
+			gpSetCls->OnInitDialog_Integr(hWnd2, false);
 			break;
 		case IDD_SPG_VIEWS:   /*gpSetCls->OnInitDialog_Views(hWnd2);*/  break;
 		case IDD_SPG_DEBUG:   /*gpSetCls->OnInitDialog_Debug(hWnd2);*/  break;
@@ -6109,14 +6395,27 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 						gpConEmu->Update(true);
 					}
 				}
-				else if (gpSetCls->mh_Tabs[thi_Colors] && (HWND)lParam == GetDlgItem(gpSetCls->mh_Tabs[thi_Colors], slTransparent))
+				else if (gpSetCls->mh_Tabs[thi_Transparent] && (HWND)lParam == GetDlgItem(gpSetCls->mh_Tabs[thi_Transparent], slTransparent))
 				{
 					int newV = SendDlgItemMessage(hWnd2, slTransparent, TBM_GETPOS, 0, 0);
 
 					if (newV != gpSet->nTransparent)
 					{
-						CheckDlgButton(gpSetCls->mh_Tabs[thi_Colors], cbTransparent, (newV!=255) ? BST_CHECKED : BST_UNCHECKED);
+						CheckDlgButton(gpSetCls->mh_Tabs[thi_Transparent], cbTransparent, (newV!=255) ? BST_CHECKED : BST_UNCHECKED);
 						gpSet->nTransparent = newV;
+						if (!gpSet->isTransparentSeparate)
+							SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->nTransparent);
+						gpConEmu->OnTransparent();
+					}
+				}
+				else if (gpSetCls->mh_Tabs[thi_Transparent] && (HWND)lParam == GetDlgItem(gpSetCls->mh_Tabs[thi_Transparent], slTransparentInactive))
+				{
+					int newV = SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_GETPOS, 0, 0);
+
+					if (gpSet->isTransparentSeparate && (newV != gpSet->nTransparentInactive))
+					{
+						//CheckDlgButton(gpSetCls->mh_Tabs[thi_Transparent], cbTransparentInactive, (newV!=255) ? BST_CHECKED : BST_UNCHECKED);
+						gpSet->nTransparentInactive = newV;
 						gpConEmu->OnTransparent();
 					}
 				}
@@ -10863,6 +11162,7 @@ void CSettings::OnPanelViewAppeared(BOOL abAppear)
 	}
 }
 
+#ifndef APPDISTINCTBACKGROUND
 bool CSettings::PollBackgroundFile()
 {
 	bool lbChanged = false;
@@ -10888,11 +11188,16 @@ bool CSettings::PollBackgroundFile()
 
 	return lbChanged;
 }
+#endif
 
 // Должна вернуть true, если файл изменился
 // Работает ТОЛЬКО с файлом. Данные плагинов обрабатываются в самом CVirtualConsole!
-bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
+bool CSettings::PrepareBackground(CVirtualConsole* apVCon, HDC* phBgDc, COORD* pbgBmpSize)
 {
+	#ifdef APPDISTINCTBACKGROUND
+	PRAGMA_ERROR("Пенесести основной код в CBackgroundFile!");
+	#endif
+
 	bool lbForceUpdate = false;
 	LONG lMaxBgWidth = 0, lMaxBgHeight = 0;
 	bool bIsForeground = gpConEmu->isMeForeground(false);
@@ -11074,6 +11379,7 @@ bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 	}
 }
 
+#ifndef APPDISTINCTBACKGROUND
 bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 {
 	//_ASSERTE(gpConEmu->isMainThread());
@@ -11119,6 +11425,7 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 	
 	return lRes;
 }
+#endif
 
 void CSettings::NeedBackgroundUpdate()
 {

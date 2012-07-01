@@ -215,6 +215,8 @@ BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect);
 BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint);
 BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+//BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName);
+//BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName);
 
 extern HANDLE ghSkipSetThreadContextForThread;
 BOOL WINAPI OnSetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext);
@@ -266,6 +268,7 @@ BOOL WINAPI OnGetCurrentConsoleFont(HANDLE hConsoleOutput, BOOL bMaximumWindow, 
 COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont);
 HWND WINAPI OnGetActiveWindow();
 BOOL WINAPI OnSetMenu(HWND hWnd, HMENU hMenu);
+BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode);
 HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
 BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput);
 BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
@@ -287,9 +290,9 @@ BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT
 BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
 BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
 BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
-#ifdef _DEBUG
-BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode);
-#endif
+//#ifdef _DEBUG
+//BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode);
+//#endif
 //#endif
 DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
 DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
@@ -343,9 +346,7 @@ bool InitHooksCommon()
 		{(void*)OnWriteConsoleOutputCharacterW,
 										"WriteConsoleOutputCharacterW",
 																kernel32},
-		#ifdef _DEBUG
 		{(void*)OnSetConsoleMode,		"SetConsoleMode",  		kernel32},
-		#endif
 		//#endif
 		/* Others console functions */
 		{(void*)OnSetConsoleTextAttribute, "SetConsoleTextAttribute", kernel32},
@@ -359,6 +360,8 @@ bool InitHooksCommon()
 		{(void*)OnUnmapViewOfFile,		"UnmapViewOfFile",		kernel32},
 		{(void*)OnCloseHandle,			"CloseHandle",			kernel32},
 		{(void*)OnSetThreadContext,		"SetThreadContext",		kernel32},
+		//{(void*)OnSetCurrentDirectoryA, "SetCurrentDirectoryA", kernel32},
+		//{(void*)OnSetCurrentDirectoryW, "SetCurrentDirectoryW", kernel32},
 		/* ************************ */
 		#ifndef HOOKS_COMMON_PROCESS_ONLY
 		{(void*)OnGetConsoleAliasesW,	"GetConsoleAliasesW",	kernel32},
@@ -513,8 +516,7 @@ bool InitHooksFar()
 	{
 		if (GetModuleFileName(NULL, pszExe, MAX_PATH))
 		{
-			LPCWSTR pszName = PointToName(pszExe);
-			if (pszName && lstrcmpi(pszName, L"far.exe") == 0)
+			if (IsFarExe(pszExe))
 				lbIsFar = true;
 		}
 		free(pszExe);
@@ -1003,6 +1005,32 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 
 	return lbRc;
 }
+
+#if 0
+BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName)
+{
+	typedef BOOL (WINAPI* OnSetCurrentDirectoryA_t)(LPCSTR lpPathName);
+	ORIGINALFAST(SetCurrentDirectoryA);
+	BOOL bMainThread = FALSE; // поток не важен
+	BOOL lbRc = FALSE;
+
+	lbRc = F(SetCurrentDirectoryA)(lpPathName);
+
+	return lbRc;
+}
+
+BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName)
+{
+	typedef BOOL (WINAPI* OnSetCurrentDirectoryW_t)(LPCWSTR lpPathName);
+	ORIGINALFAST(SetCurrentDirectoryW);
+	BOOL bMainThread = FALSE; // поток не важен
+	BOOL lbRc = FALSE;
+
+	lbRc = F(SetCurrentDirectoryW)(lpPathName);
+
+	return lbRc;
+}
+#endif
 
 BOOL WINAPI OnSetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext)
 {
@@ -2533,6 +2561,11 @@ void OnReadConsoleStart(BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 	if (gReadConsoleInfo.InReadConsoleTID)
 		gReadConsoleInfo.LastReadConsoleTID = gReadConsoleInfo.InReadConsoleTID;
 
+#ifdef _DEBUG
+	wchar_t szCurDir[MAX_PATH+1];
+	GetCurrentDirectory(countof(szCurDir), szCurDir);
+#endif
+
 	bool bCatch = false;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -2651,6 +2684,74 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 				free(pr);
 			}
 		}
+	}
+
+	return lbRc;
+}
+
+BOOL OnExecutePromptCmd(LPCWSTR asCmd)
+{
+	if (!gReadConsoleInfo.InReadConsoleTID && !gReadConsoleInfo.LastReadConsoleInputTID)
+		return FALSE;
+
+	HANDLE hConIn = gReadConsoleInfo.InReadConsoleTID ? gReadConsoleInfo.hConsoleInput : gReadConsoleInfo.hConsoleInput2;
+	if (!hConIn)
+		return FALSE;
+
+	BOOL lbRc = FALSE;
+	INPUT_RECORD r[256];
+	INPUT_RECORD* pr = r;
+	INPUT_RECORD* prEnd = r + countof(r);
+	LPCWSTR pch = asCmd;
+	DWORD nWrite, nWritten;
+	BOOL lbWrite;
+
+	while (*pch)
+	{
+		// Если (\r\n)|(\n) - слать \r
+		if ((*pch == L'\r') || (*pch == L'\n'))
+		{
+			TranslateKeyPress(0, 0, L'\r', -1, pr, pr+1);
+
+			if (*pch == L'\r' && *(pch+1) == L'\n')
+				pch += 2;
+			else
+				pch ++;
+		}
+		else
+		{
+			TranslateKeyPress(0, 0, *pch, -1, pr, pr+1);
+			pch ++;
+		}
+
+		pr += 2;
+		if (pr >= prEnd)
+		{
+			_ASSERTE(pr == prEnd);
+
+			if (pr && (pr > r))
+			{
+				nWrite = (DWORD)(pr - r);
+				lbWrite = WriteConsoleInputW(hConIn, r, nWrite, &nWritten);
+				if (!lbWrite)
+				{
+					pr = NULL;
+					lbRc = FALSE;
+					break;
+				}
+				if (*pch) // Чтобы не было переполнения буфера
+					Sleep(10);
+				lbRc = TRUE;
+			}
+
+			pr = r;
+		}
+	}
+
+	if (pr && (pr > r))
+	{
+		nWrite = (DWORD)(pr - r);
+		lbRc = WriteConsoleInputW(hConIn, r, nWrite, &nWritten);
 	}
 
 	return lbRc;

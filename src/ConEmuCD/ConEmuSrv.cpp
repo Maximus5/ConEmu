@@ -287,7 +287,7 @@ int AttachRootProcess()
 										break;
 								}
 
-								if (!dwFarPID && lstrcmpiW(prc.szExeFile, L"far.exe")==0)
+								if (!dwFarPID && IsFarExe(prc.szExeFile))
 								{
 									dwFarPID = prc.th32ProcessID;
 								}
@@ -820,11 +820,9 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 
 	// Сразу попытаемся поставить окну консоли флаг "OnTop"
-	#ifdef _DEBUG
-	if (!gbIsWine)
-	#endif
+	if (!gbDebugProcess && !gbIsWine)
 	{
-	SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+		SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	}
 
 	gpSrv->osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -886,13 +884,13 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 
 	//2009-08-27 Перенес снизу
-	if (!gpSrv->hConEmuGuiAttached)
+	if (!gpSrv->hConEmuGuiAttached && (!gbDebugProcess || gpSrv->dwGuiPID || gpSrv->hGuiWnd))
 	{
 		wchar_t szTempName[MAX_PATH];
 		_wsprintf(szTempName, SKIPLEN(countof(szTempName)) CEGUIRCONSTARTED, (DWORD)ghConWnd); //-V205
-		//gpSrv->hConEmuGuiAttached = OpenEvent(EVENT_ALL_ACCESS, FALSE, szTempName);
-		//if (gpSrv->hConEmuGuiAttached == NULL)
+
 		gpSrv->hConEmuGuiAttached = CreateEvent(gpLocalSecurity, TRUE, FALSE, szTempName);
+
 		_ASSERTE(gpSrv->hConEmuGuiAttached!=NULL);
 		//if (gpSrv->hConEmuGuiAttached) ResetEvent(gpSrv->hConEmuGuiAttached); -- низя. может уже быть создано/установлено в GUI
 	}

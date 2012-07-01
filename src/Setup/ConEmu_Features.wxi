@@ -50,11 +50,17 @@
     <Feature Id="FConEmuCmdExt" AllowAdvertise="no" Title="Cmd extensions" Level="1"
              Description="Attach.cmd - sample batch for attaching any console window to ConEmu,
 ColorPrompt.cmd - change text color of command prompt,
+RenameTab.cmd - change tab text in ConEmu,
+SetConTitle.cmd - change title of console window,
+SetProgress.cmd - change progress state of console,
 Cmd_Autorun.cmd - install or uninstall automatic attach of cmd.exe to ConEmu (and sample reg-files)">
       <!--<ComponentRef Id="CEExtConsoleDir" />-->
       <ComponentRef Id="Attach.cmd" />
       <ComponentRef Id="Cmd_Autorun.cmd" />
       <ComponentRef Id="ColorPrompt.cmd" />
+      <ComponentRef Id="RenameTab.cmd" />
+      <ComponentRef Id="SetConTitle.cmd" />
+      <ComponentRef Id="SetProgress.cmd" />
       <ComponentRef Id="Command_Processor.reg" />
       <ComponentRef Id="Command_Processor_Off.reg" />
     </Feature>

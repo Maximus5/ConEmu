@@ -72,6 +72,8 @@ class CConEmuMacro
 		static LPWSTR MsgBox(LPWSTR asArgs, CRealConsole* apRCon);
 		// Paste (<Cmd>[,"<Text>"])
 		static LPWSTR Paste(LPWSTR asArgs, CRealConsole* apRCon);
+		// Progress(<Type>[,<Value>])
+		static LPWSTR Progress(LPWSTR asArgs, CRealConsole* apRCon);
 		// Shell (ShellExecute)
 		static LPWSTR Shell(LPWSTR asArgs, CRealConsole* apRCon);
 		// Status

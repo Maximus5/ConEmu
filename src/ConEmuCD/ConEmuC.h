@@ -88,6 +88,7 @@ void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 
 
 void SetTerminateEvent();
 
+BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 
 /*  Global  */
 extern DWORD   gnSelfPID;

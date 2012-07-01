@@ -5537,6 +5537,10 @@ bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LON
 //    }
 //}
 
+
+// вызываетс€ из SetBackgroundImageData
+//   при получении нового Background (CECMD_SETBACKGROUND) из плагина
+//   при очистке (закрытие/рестарт) консоли
 UINT CVirtualConsole::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, bool* rpIsEmf) const
 {
 	if (rpIsEmf)
@@ -5617,7 +5621,8 @@ bool CVirtualConsole::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 		return false;
 	}
 
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(gpConEmu->isMainThread() && "Must be executed in main thread");
+
 	LONG lBgWidth = 0, lBgHeight = 0;
 	BOOL lbVConImage = FALSE;
 
@@ -5630,6 +5635,7 @@ bool CVirtualConsole::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 		}
 	}
 
+	// ≈сли плагин свой фон не подсунул
 	if (!lbVConImage)
 	{
 		if (mp_Bg)
@@ -5638,7 +5644,8 @@ bool CVirtualConsole::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 			mp_Bg = NULL;
 		}
 
-		return gpSetCls->PrepareBackground(phBgDc, pbgBmpSize);
+		// “о работаем на общих основани€х, через настройки (или AppDistinct)
+		return gpSetCls->PrepareBackground(this, phBgDc, pbgBmpSize);
 	}
 
 	bool lbForceUpdate = false;
@@ -5699,7 +5706,8 @@ bool CVirtualConsole::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 	return lbForceUpdate;
 }
 
-// вызываетс€ при получении нового Background
+// вызываетс€ при получении нового Background (CECMD_SETBACKGROUND) из плагина
+// и дл€ очистки при закрытии (рестарте) консоли
 SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData)
 {
 	if (!this) return esbr_Unexpected;
@@ -5716,7 +5724,7 @@ SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACK
 
 	if (!nSize)
 	{
-		_ASSERTE(IsBackgroundValid(apImgData, NULL) != 0);
+		_ASSERTE(FALSE && "!IsBackgroundValid(apImgData, NULL)");
 		return esbr_InvalidArg;
 	}
 

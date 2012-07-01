@@ -296,9 +296,10 @@ class CRealConsole
 		bool PostLeftClickSync(COORD crDC);
 		bool PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount = 1);
 		void ShowKeyBarHint(WORD nID);
+		bool PostPromptCmd(bool CD, LPCWSTR asCmd);
 	private:
 		bool PostString(wchar_t* pszChars, size_t cchCount);
-		void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD& rDown, INPUT_RECORD& rUp);
+		//void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD& rDown, INPUT_RECORD& rUp);
 		void PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend = false);
 	public:
 		BOOL OpenConsoleEventPipe();
@@ -422,6 +423,7 @@ class CRealConsole
 		void UpdateScrollInfo();
 		void SetTabs(ConEmuTab* tabs, int tabsCount);
 		void DoRenameTab();
+		void RenameTab(LPCWSTR asNewTabText = NULL);
 		int GetTabCount(BOOL abVisibleOnly = FALSE);
 		int GetActiveTab();
 		CEFarWindowType GetActiveTabType();
@@ -452,7 +454,8 @@ class CRealConsole
 		LPCWSTR GetCmd();
 		LPCWSTR GetDir();
 		BOOL GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, BOOL* pbRestricted);
-		short GetProgress(BOOL* rpbError);
+		short GetProgress(BOOL* rpbError, BOOL* rpbNotFromTitle = NULL);
+		bool SetProgress(short nState, short nValue);
 		void UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo);
 		void UpdateFarSettings(DWORD anFarPID=0);
 		int CoordInPanel(COORD cr, BOOL abIncludeEdges = FALSE);
@@ -528,6 +531,7 @@ class CRealConsole
 		short mn_Progress, mn_LastShownProgress;
 		short mn_PreWarningProgress; DWORD mn_LastWarnCheckTick;
 		short mn_ConsoleProgress, mn_LastConsoleProgress; DWORD mn_LastConProgrTick;
+		short mn_AppProgressState, mn_AppProgress; // Может быть задан из консоли (Ansi codes, Macro)
 		short CheckProgressInTitle();
 		//short CheckProgressInConsole(const wchar_t* pszCurLine);
 		//void SetProgress(short anProgress); // установить переменную mn_Progress и mn_LastProgressTick

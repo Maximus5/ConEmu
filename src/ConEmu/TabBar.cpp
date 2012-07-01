@@ -2156,8 +2156,22 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 	TCHAR* pszEnd = pTab->Name + countof(pTab->Name) - 1; // в конце еще нужно зарезервировать место для '\0'
 	
 	if (!pszFmt || !*pszFmt)
+	{
 		pszFmt = _T("%s");
+	}
 	*pszDst = 0;
+
+	bool bRenamedTab = false;
+	if (pTab->Type & fwt_Renamed)
+	{
+		if (wcsstr(pszFmt, L"%s") == NULL)
+		{
+			if (wcsstr(pszFmt, L"%n") != NULL)
+				bRenamedTab = true;
+			else
+				pszFmt = _T("%s");
+		}
+	}
 	
 	TCHAR szTmp[64];
 	
@@ -2199,7 +2213,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 					break;
 				case _T('n'): case _T('N'):
 					{
-						pszText = pRCon ? pRCon->GetActiveProcessName() : NULL;
+						pszText = bRenamedTab ? fileName : pRCon ? pRCon->GetActiveProcessName() : NULL;
 						wcscpy_c(szTmp, (pszText && *pszText) ? pszText : L"?");
 						pszText = szTmp;
 					}

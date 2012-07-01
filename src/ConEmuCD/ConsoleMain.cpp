@@ -150,6 +150,8 @@ BOOL    gbAlienMode = FALSE;  // сервер НЕ является владельцем консоли (корневым
 BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
+LPCWSTR gpszCheck4NeedCmd = NULL; // Для отладки
+wchar_t gszComSpec[MAX_PATH+1] = {0};
 BOOL    gbRunInBackgroundTab = FALSE;
 BOOL    gbRunViaCmdExe = FALSE;
 DWORD   gnImageSubsystem = 0, gnImageBits = 32;
@@ -164,6 +166,8 @@ RunMode gnRunMode = RM_UNDEFINED;
 
 BOOL  gbNoCreateProcess = FALSE;
 BOOL  gbDebugProcess = FALSE;
+int   gnDebugDumpProcess = 0; // 1 - ask user, 2 - minidump, 3 - fulldump
+//wchar_t szDebugDumpPath[MAX_PATH] = {}; // Может быть указана папка, в которую нужно складировать дампы
 int   gnCmdUnicodeMode = 0;
 BOOL  gbUseDosBox = FALSE; HANDLE ghDosBoxProcess = NULL; DWORD gnDosBoxPID = 0;
 BOOL  gbRootIsCmdExe = TRUE;
@@ -711,6 +715,13 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	}
 	#endif
 
+	// Перенес сверху, т.к. "дебаггер" активируется в ParseCommandLine
+	// Событие используется для всех режимов
+	ghExitQueryEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
+
+	LPCWSTR pszFullCmdLine = GetCommandLineW();
+	wchar_t szDebugCmdLine[MAX_PATH];
+	lstrcpyn(szDebugCmdLine, pszFullCmdLine ? pszFullCmdLine : L"", countof(szDebugCmdLine));
 
 	if (anWorkMode)
 	{
@@ -729,8 +740,16 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		gpszRunCmd = (wchar_t*)calloc(1,2);
 		CreateColorerHeader();
 	}
-	else if ((iRc = ParseCommandLine(GetCommandLineW()/*, &gpszRunCmd, &gbRunInBackgroundTab*/)) != 0)
+	else if ((iRc = ParseCommandLine(pszFullCmdLine/*, &gpszRunCmd, &gbRunInBackgroundTab*/)) != 0)
 	{
+		goto wrap;
+	}
+
+	if ((gnRunMode == RM_UNDEFINED) && gbDebugProcess)
+	{
+		DWORD nDebugThread = WaitForSingleObject(gpSrv->hDebugThread, INFINITE);
+		_ASSERTE(nDebugThread == WAIT_OBJECT_0); UNREFERENCED_PARAMETER(nDebugThread);
+
 		goto wrap;
 	}
 
@@ -776,8 +795,6 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	/* *** "Общая" инициализация *** */
 	/* ***************************** */
 	nExitPlaceStep = 150;
-	// Событие используется для всех режимов
-	ghExitQueryEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
 
 	if (!ghExitQueryEvent)
 	{
@@ -901,12 +918,12 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	{
 		_ASSERTE(gnRunMode != RM_ALTSERVER);
 		nExitPlaceStep = 350;
-#ifdef _DEBUG
 
+		#ifdef _DEBUG
 		if (ghFarInExecuteEvent && wcsstr(gpszRunCmd,L"far.exe"))
 			ResetEvent(ghFarInExecuteEvent);
+		#endif
 
-#endif
 		LPCWSTR pszCurDir = NULL;
 		wchar_t szSelf[MAX_PATH*2];
 		WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");
@@ -1394,10 +1411,16 @@ wrap:
 	if (!gbInShutdown  // только если юзер не нажал крестик в заголовке окна, или не удался /ATTACH (чтобы в консоль не гадить)
 	        && ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE
 					&& iRc!=CERR_UNICODE_CHK_FAILED && iRc!=CERR_UNICODE_CHK_OKAY
+					&& iRc!=CERR_GUIMACRO_SUCCEEDED && iRc!=CERR_GUIMACRO_FAILED
 					&& !(gnRunMode!=RM_SERVER && iRc==CERR_CREATEPROCESS))
 				|| gbAlwaysConfirmExit)
 	  )
 	{
+		//#ifdef _DEBUG
+		//if (!gbInShutdown)
+		//	MessageBox(0, L"ExitWaitForKey", L"ConEmuC", MB_SYSTEMMODAL);
+		//#endif
+
 		BOOL lbProcessesLeft = FALSE, lbDontShowConsole = FALSE;
 		DWORD nProcesses[10] = {};
 		DWORD nProcCount = -1;
@@ -1565,6 +1588,12 @@ wrap:
 	//	ghHeap = NULL;
 	//}
 
+	// борьба с оптимизатором
+	if (szDebugCmdLine[0] != 0)
+	{
+		int nLen = lstrlen(szDebugCmdLine);
+	}
+
 	// Если режим ComSpec - вернуть код возврата из запущенного процесса
 	if (iRc == 0 && gnRunMode == RM_COMSPEC)
 		iRc = gnExitCode;
@@ -1579,6 +1608,7 @@ wrap:
 	}
 AltServerDone:
 	ShutdownSrvStep(L"Finalizing done");
+	UNREFERENCED_PARAMETER(gpszCheck4NeedCmd);
 	return iRc;
 }
 
@@ -1670,7 +1700,7 @@ wrap:
 void PrintVersion()
 {
 	char szProgInfo[255];
-	_wsprintfA(szProgInfo, SKIPLEN(countof(szProgInfo)) "ConEmuC build %s. " CECOPYRIGHTSTRING_A "\n", CONEMUVERS);
+	_wsprintfA(szProgInfo, SKIPLEN(countof(szProgInfo)) "ConEmuC build %s %s. " CECOPYRIGHTSTRING_A "\n", CONEMUVERS, WIN3264TEST("x86","x64"));
 	_printf(szProgInfo);
 }
 
@@ -2195,7 +2225,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	int iRc = 0;
 	wchar_t szArg[MAX_PATH+1] = {0}, szExeTest[MAX_PATH+1];
 	LPCWSTR pszArgStarts = NULL;
-	wchar_t szComSpec[MAX_PATH+1] = {0};
+	//wchar_t szComSpec[MAX_PATH+1] = {0};
 	LPCWSTR pwszCopy = NULL;
 	wchar_t* psFilePart = NULL;
 	//BOOL bViaCmdExe = TRUE;
@@ -2407,9 +2437,9 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				return CERR_CARGUMENT;
 			}
 		}
-		else if (wcsncmp(szArg, L"/DEBUGPID=", 10)==0)
+		else if (lstrcmpni(szArg, L"/DEBUGPID=", 10)==0)
 		{
-			gnRunMode = RM_SERVER;
+			//gnRunMode = RM_SERVER; -- не будем ставить, RM_UNDEFINED будет признаком того, что просто хотят дамп
 			gbNoCreateProcess = gbDebugProcess = TRUE;
 			wchar_t* pszEnd = NULL;
 			//gpSrv->dwRootProcess = _wtol(szArg+10);
@@ -2423,6 +2453,18 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
 			}
+		}
+		else if (lstrcmpi(szArg, L"/DUMP")==0)
+		{
+			gnDebugDumpProcess = 1;
+		}
+		else if (lstrcmpi(szArg, L"/MINIDUMP")==0 || (gbDebugProcess && lstrcmpi(szArg, L"/MINI")==0))
+		{
+			gnDebugDumpProcess = 2;
+		}
+		else if (lstrcmpi(szArg, L"/FULLDUMP")==0 || (gbDebugProcess && lstrcmpi(szArg, L"/FULL")==0))
+		{
+			gnDebugDumpProcess = 3;
 		}
 		else if (wcscmp(szArg, L"/A")==0 || wcscmp(szArg, L"/a")==0)
 		{
@@ -2650,10 +2692,32 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 	xf_check();
 
-	if (gnRunMode == RM_SERVER)
+	if ((gnRunMode == RM_SERVER) || (gbDebugProcess && (gnRunMode == RM_UNDEFINED)))
 	{
 		if (gbDebugProcess)
 		{
+			// Если это новая консоль - увеличить ее размер, для удобства
+			if (IsWindowVisible(ghConWnd))
+			{
+				HANDLE hCon = ghConOut;
+				CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+				GetConsoleScreenBufferInfo(hCon, &csbi);
+				if ((csbi.srWindow.Right - csbi.srWindow.Left + 1) < 120)
+				{
+					COORD crMax = GetLargestConsoleWindowSize(hCon);
+					if ((crMax.X - 10) > (csbi.srWindow.Right - csbi.srWindow.Left + 1))
+					{
+						COORD crSize = {((int)((crMax.X - 15)/10))*10, min(crMax.Y, (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))};
+						SMALL_RECT srWnd = {0, csbi.srWindow.Top, crSize.X - 1, csbi.srWindow.Bottom};
+						MONITORINFO mi = {sizeof(mi)};
+						GetMonitorInfo(MonitorFromWindow(ghConWnd, MONITOR_DEFAULTTONEAREST), &mi);
+						RECT rcWnd = {}; GetWindowRect(ghConWnd, &rcWnd);
+						SetWindowPos(ghConWnd, NULL, min(rcWnd.left,(mi.rcWork.left+50)), rcWnd.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+						SetConsoleSize(9999, crSize, srWnd, "StartDebugger");
+					}
+				}
+			}
+
 			// Вывести в консоль информацию о версии.
 			PrintVersion();
 #ifdef SHOW_DEBUG_STARTED_MSGBOX
@@ -2862,6 +2926,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	{
 		BOOL bAlwaysConfirmExit = gbAlwaysConfirmExit, bAutoDisableConfirmExit = gbAutoDisableConfirmExit;
 
+		gpszCheck4NeedCmd = asCmdLine; // Для отладки
+
 		gbRunViaCmdExe = IsNeedCmd(asCmdLine, &pszArguments4EnvVar, &lbNeedCutStartEndQuot, szExeTest, 
 			gbRootIsCmdExe, bAlwaysConfirmExit, bAutoDisableConfirmExit);
 
@@ -2923,15 +2989,15 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	{
 		// Если определена ComSpecC - значит ConEmuC переопределил стандартный ComSpec
 		//WARNING("TCC/ComSpec");
-		if (!GetEnvironmentVariable(L"ComSpecC", szComSpec, MAX_PATH) || szComSpec[0] == 0)
-			if (!GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH) || szComSpec[0] == 0)
-				szComSpec[0] = 0;
+		if (!GetEnvironmentVariable(L"ComSpecC", gszComSpec, MAX_PATH) || gszComSpec[0] == 0)
+			if (!GetEnvironmentVariable(L"ComSpec", gszComSpec, MAX_PATH) || gszComSpec[0] == 0)
+				gszComSpec[0] = 0;
 
-		if (szComSpec[0] != 0)
+		if (gszComSpec[0] != 0)
 		{
 			// Только если это (случайно) не conemuc.exe
-			//pwszCopy = wcsrchr(szComSpec, L'\\'); if (!pwszCopy) pwszCopy = szComSpec;
-			pwszCopy = PointToName(szComSpec);
+			//pwszCopy = wcsrchr(gszComSpec, L'\\'); if (!pwszCopy) pwszCopy = gszComSpec;
+			pwszCopy = PointToName(gszComSpec);
 #ifndef __GNUC__
 #pragma warning( push )
 #pragma warning(disable : 6400)
@@ -2939,7 +3005,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 			if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0
 			        /*|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0*/)
-				szComSpec[0] = 0;
+				gszComSpec[0] = 0;
 
 #ifndef __GNUC__
 #pragma warning( pop )
@@ -2947,12 +3013,12 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 
 		// ComSpec/ComSpecC не определен, используем cmd.exe
-		if (szComSpec[0] == 0)
+		if (gszComSpec[0] == 0)
 		{
 			//WARNING("TCC/ComSpec");
-			//if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, szComSpec, &psFilePart))
+			//if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, gszComSpec, &psFilePart))
 
-			LPCWSTR pszFind = GetComspecFromEnvVar(szComSpec, countof(szComSpec));
+			LPCWSTR pszFind = GetComspecFromEnvVar(gszComSpec, countof(gszComSpec));
             if (!pszFind || !wcschr(pszFind, L'\\') || !FileExists(pszFind))
 			{
 				_ASSERTE("cmd.exe not found!");
@@ -2961,10 +3027,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 		}
 
-		nCmdLine += lstrlenW(szComSpec)+15; // "/C", кавычки и возможный "/U"
+		nCmdLine += lstrlenW(gszComSpec)+15; // "/C", кавычки и возможный "/U"
 	}
 
-	size_t nCchLen = nCmdLine+1; // nCmdLine учитывает длинну asCmdLine + szComSpec + еще чуть-чуть на "/C" и прочее
+	size_t nCchLen = nCmdLine+1; // nCmdLine учитывает длинну asCmdLine + gszComSpec + еще чуть-чуть на "/C" и прочее
 	gpszRunCmd = (wchar_t*)calloc(nCchLen,2);
 
 	if (!gpszRunCmd)
@@ -3090,10 +3156,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	{
 		CheckUnicodeMode();
 
-		if (wcschr(szComSpec, L' '))
+		if (wcschr(gszComSpec, L' '))
 		{
 			gpszRunCmd[0] = L'"';
-			_wcscpy_c(gpszRunCmd+1, nCchLen-1, szComSpec);
+			_wcscpy_c(gpszRunCmd+1, nCchLen-1, gszComSpec);
 
 			if (gnCmdUnicodeMode)
 				_wcscat_c(gpszRunCmd, nCchLen, (gnCmdUnicodeMode == 2) ? L" /U" : L" /A");
@@ -3102,7 +3168,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 		else
 		{
-			_wcscpy_c(gpszRunCmd, nCchLen, szComSpec);
+			_wcscpy_c(gpszRunCmd, nCchLen, gszComSpec);
 
 			if (gnCmdUnicodeMode)
 				_wcscat_c(gpszRunCmd, nCchLen, (gnCmdUnicodeMode == 2) ? L" /U" : L" /A");
@@ -3336,7 +3402,7 @@ void ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDon
 	//    if (lbNeedVisible && !IsWindowVisible(ghConWnd)) {
 	//        apiShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
 	//    }
-	while(TRUE)
+	while (TRUE)
 	{
 		if (!PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount))
 			dwCount = 0;
@@ -4139,9 +4205,7 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 							if (prc.th32ProcessID != gnSelfPID
 							        && prc.th32ProcessID == gpSrv->pnProcesses[i])
 							{
-								//if ((lstrcmpiW(prc.szExeFile, L"far.exe") == 0)
-								//	|| (lstrcmpiW(prc.szExeFile, L"far64.exe") == 0)
-								//)
+								//if (IsFarExe(prc.szExeFile))
 								//{
 								//	lbFarExists = TRUE;
 								//	//if (gpSrv->nProcessCount <= 2) // нужно проверить и ntvdm
@@ -4628,27 +4692,84 @@ int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD 
 
 DWORD WINAPI DebugThread(LPVOID lpvParam)
 {
+	DWORD nWait = WAIT_TIMEOUT;
+	DWORD nExternalExitCode = -1;
+	wchar_t szInfo[1024];
+
+	// Битность отладчика должна соответствовать битности приложения!
+	if (IsWindows64())
+	{
+		int nBits = GetProcessBits(gpSrv->dwRootProcess, gpSrv->hRootProcess);
+		if ((nBits == 32 || nBits == 64) && (nBits != WIN3264TEST(32,64)))
+		{
+			wchar_t szExe[MAX_PATH+16];
+			wchar_t szCmdLine[MAX_PATH*2];
+			if (GetModuleFileName(NULL, szExe, countof(szExe)-16))
+			{
+				wchar_t* pszName = (wchar_t*)PointToName(szExe);
+				_wcscpy_c(pszName, 16, (nBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
+				_wsprintf(szCmdLine, SKIPLEN(countof(szCmdLine))
+					L"\"%s\" /DEBUGPID=%u %s", szExe, gpSrv->dwRootProcess,
+					(gnDebugDumpProcess == 1) ? L"/DUMP" :
+					(gnDebugDumpProcess == 2) ? L"/MINIDUMP" :
+					(gnDebugDumpProcess == 3) ? L"/FULLDUMP" : L"");
+
+				STARTUPINFO si = {sizeof(si)};
+				PROCESS_INFORMATION pi = {};
+				if (CreateProcess(NULL, szCmdLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
+				{
+					// Ждать НЕ будем, сразу на выход
+
+					//HANDLE hEvents[2] = {pi.hProcess, ghExitQueryEvent};
+					//nWait = WaitForMultipleObjects(countof(hEvents), hEvents, FALSE, INFINITE);
+					//if (nWait == WAIT_OBJECT_0)
+					//{
+					//	//GetExitCodeProcess(pi.hProcess, &nExternalExitCode);
+					//	nExternalExitCode = 0;
+					//}
+
+					//CloseHandle(pi.hProcess);
+					//CloseHandle(pi.hThread);
+
+					//if (nExternalExitCode == 0)
+					//{
+					//	goto done;
+					//}
+
+					return 0;
+				}
+				else
+				{
+					DWORD dwErr = GetLastError();
+					_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't start external debugger '%s'. ErrCode=0x%08X\n",
+						szCmdLine, dwErr);
+					_wprintf(szInfo);
+					return CERR_CANTSTARTDEBUGGER;
+				}
+			}
+
+
+			wchar_t szProc[64]; szProc[0] = 0;
+			PROCESSENTRY32 pi = {sizeof(pi)};
+			if (GetProcessInfo(gpSrv->dwRootProcess, &pi))
+				_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
+
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Bits are incompatible. Can't debug '%s' PID=%i\n",
+				szProc[0] ? szProc : L"not found", gpSrv->dwRootProcess);
+			_wprintf(szInfo);
+			return CERR_CANTSTARTDEBUGGER;
+		}
+	}
+
 	if (!DebugActiveProcess(gpSrv->dwRootProcess))
 	{
 		DWORD dwErr = GetLastError();
-		wchar_t szInfo[1024];
+
 		wchar_t szProc[64]; szProc[0] = 0;
-		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-		if (hSnap != INVALID_HANDLE_VALUE)
-		{
-			PROCESSENTRY32 pi = {sizeof(pi)};
-			if (Process32First(hSnap, &pi))
-			{
-				while (pi.th32ProcessID != gpSrv->dwRootProcess)
-				{
-					if (!Process32Next(hSnap, &pi))
-						break;
-				}
-				if (pi.th32ProcessID == gpSrv->dwRootProcess)
-					_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
-			}
-			CloseHandle(hSnap);
-		}
+		PROCESSENTRY32 pi = {sizeof(pi)};
+		if (GetProcessInfo(gpSrv->dwRootProcess, &pi))
+			_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
+
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't attach debugger to '%s' PID=%i. ErrCode=0x%08X\n",
 			szProc[0] ? szProc : L"not found", gpSrv->dwRootProcess, dwErr);
 		_wprintf(szInfo);
@@ -4666,9 +4787,9 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	gpSrv->bDebuggerActive = TRUE;
 	PrintDebugInfo();
 	SetEvent(gpSrv->hDebugReady);
-	DWORD nWait = WAIT_TIMEOUT;
+	
 
-	while(nWait == WAIT_TIMEOUT)
+	while (nWait == WAIT_TIMEOUT)
 	{
 		ProcessDebugEvent();
 
@@ -4676,6 +4797,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 			nWait = WaitForSingleObject(ghExitQueryEvent, 0);
 	}
 
+//done:
 	gbRootAliveLess10sec = FALSE;
 	gbInShutdown = TRUE;
 	gbAlwaysConfirmExit = FALSE;
@@ -4697,7 +4819,13 @@ void WriteMiniDump(DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR 
 	wchar_t szTitle[64];
 	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC Debugging PID=%u, Debugger PID=%u", gpSrv->dwRootProcess, GetCurrentProcessId());
 
-	int nBtn = 	MessageBoxA(NULL, asConfirmText ? asConfirmText : "Create minidump (<No> - fulldump)?", szTitleA, MB_YESNOCANCEL|MB_SYSTEMMODAL);
+	int nBtn = 0;
+	
+	if (gnDebugDumpProcess == 2 || gnDebugDumpProcess == 3)
+		nBtn = (gnDebugDumpProcess == 2) ? IDYES : IDNO;
+	else
+		nBtn = MessageBoxA(NULL, asConfirmText ? asConfirmText : "Create minidump (<No> - fulldump)?", szTitleA, MB_YESNOCANCEL|MB_SYSTEMMODAL);
+
 	switch (nBtn)
 	{
 	case IDYES:
@@ -4709,6 +4837,7 @@ void WriteMiniDump(DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR 
 		return;
 	}
 
+	bool bDumpSucceeded = false;
 	HANDLE hDmpFile = NULL;
 	HMODULE hDbghelp = NULL;
 	wchar_t szErrInfo[MAX_PATH*2];
@@ -4818,6 +4947,7 @@ void WriteMiniDump(DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR 
 			else
 			{
 				_printf("\nMiniDumpWriteDump succeeded\n");
+				bDumpSucceeded = true;
 			}
 
 			break;
@@ -4838,6 +4968,30 @@ void WriteMiniDump(DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR 
 	if (hCOMDLG32)
 	{
 		FreeLibrary(hCOMDLG32);
+	}
+
+	// В Win2k еще не было функции "отцепиться от процесса"
+	if (bDumpSucceeded && gnDebugDumpProcess && (gnOsVer >= 0x0501))
+	{
+		// Дело сделали, закрываемся
+		SetTerminateEvent();
+
+		//if (pfnGetConsoleProcessList)
+		//{
+		//	DWORD nCurCount = 0;
+		//	DWORD nConsolePids[128] = {};
+		//	nCurCount = pfnGetConsoleProcessList(nConsolePids, countof(nConsolePids));
+
+		//	// Но только если в консоли кроме нас никого нет
+		//	if (nCurCount == 0)
+		//	{
+		//		PostMessage(ghConWnd, WM_CLOSE, 0, 0);
+		//	}
+		//	else
+		//	{
+		//		SetTerminateEvent();
+		//	}
+		//}
 	}
 }
 
@@ -4860,7 +5014,7 @@ void ProcessDebugEvent()
 	{
 		lbNonContinuable = FALSE;
 
-		switch(evt.dwDebugEventCode)
+		switch (evt.dwDebugEventCode)
 		{
 			case CREATE_PROCESS_DEBUG_EVENT:
 			case CREATE_THREAD_DEBUG_EVENT:
@@ -4884,31 +5038,93 @@ void ProcessDebugEvent()
 				if (!bFirstExitThreadEvent && evt.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT)
 				{
 					bFirstExitThreadEvent = true;
-					_printf("ConEmuC: Press Ctrl-Break to create minidump of debugging process\n");
+					if (gnDebugDumpProcess == 0)
+					{
+						_printf("ConEmuC: Press Ctrl+Break to create minidump of debugging process\n");
+					}
+					else
+					{
+						// Сразу сделать дамп и выйти
+						HandlerRoutine(CTRL_BREAK_EVENT);
+					}
 				}
 				break;
 			}
 			case LOAD_DLL_DEBUG_EVENT:
+			case UNLOAD_DLL_DEBUG_EVENT:
 			{
 				LPCSTR pszName = "Unknown";
+				char szBase[32] = {};
+				char szFile[MAX_PATH+128] = {};
 
-				switch(evt.dwDebugEventCode)
+				struct MY_FILE_NAME_INFO
 				{
-					case LOAD_DLL_DEBUG_EVENT: pszName = "LOAD_DLL_DEBUG_EVENT";
+					DWORD FileNameLength;
+					WCHAR FileName[1];
+				};
+				typedef BOOL (WINAPI* GetFileInformationByHandleEx_t)(HANDLE hFile, int FileInformationClass, LPVOID lpFileInformation, DWORD dwBufferSize);
+				static GetFileInformationByHandleEx_t _GetFileInformationByHandleEx = NULL;
+
+				switch (evt.dwDebugEventCode)
+				{
+					case LOAD_DLL_DEBUG_EVENT:
+						//6 Reports a load-dynamic-link-library (DLL) debugging event. The value of u.LoadDll specifies a LOAD_DLL_DEBUG_INFO structure.
+						pszName = "LOAD_DLL_DEBUG_EVENT";
 
 						if (evt.u.LoadDll.hFile)
 						{
-							//BY_HANDLE_FILE_INFORMATION inf = {0};
-							//if (GetFileInformationByHandle(evt.LoadDll.hFile,
+							if (gnOsVer >= 0x0600)
+							{
+								if (!_GetFileInformationByHandleEx)
+									_GetFileInformationByHandleEx = (GetFileInformationByHandleEx_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetFileInformationByHandleEx");
+
+								if (_GetFileInformationByHandleEx)
+								{
+									DWORD nSize = sizeof(MY_FILE_NAME_INFO)+MAX_PATH*sizeof(wchar_t);
+									MY_FILE_NAME_INFO* pfi = (MY_FILE_NAME_INFO*)calloc(nSize+2,1);
+									if (pfi)
+									{
+										pfi->FileNameLength = MAX_PATH;
+										if (_GetFileInformationByHandleEx(evt.u.LoadDll.hFile, 2/*FileNameInfo*/, pfi, nSize)
+											&& pfi->FileName[0])
+										{
+											wchar_t szFullPath[MAX_PATH+1] = {}, *pszFile;
+											DWORD n = GetFullPathName(pfi->FileName, countof(szFullPath), szFullPath, &pszFile);
+											if (!n || (n >= countof(szFullPath)))
+											{
+												lstrcpyn(szFullPath, pfi->FileName, countof(szFullPath));
+												pszFile = (wchar_t*)PointToName(pfi->FileName);
+											}
+											else if (!pszFile)
+											{
+												pszFile = (wchar_t*)PointToName(szFullPath);
+											}
+											lstrcpyA(szFile, ", ");
+											WideCharToMultiByte(CP_OEMCP, 0, pszFile, -1, szFile+lstrlenA(szFile), 80, 0,0);
+											lstrcatA(szFile, "\n\t");
+											WideCharToMultiByte(CP_OEMCP, 0, szFullPath, -1, szFile+lstrlenA(szFile), MAX_PATH, 0,0);
+										}
+										free(pfi);
+									}
+								}
+							}
+							CloseHandle(evt.u.LoadDll.hFile);
 						}
+						_wsprintfA(szBase, SKIPLEN(countof(szBase))
+						           " at " WIN3264TEST("0x%08X","0x%08X%08X"),
+						           WIN3264WSPRINT((DWORD_PTR)evt.u.LoadDll.lpBaseOfDll));
 
 						break;
-						//6 Reports a load-dynamic-link-library (DLL) debugging event. The value of u.LoadDll specifies a LOAD_DLL_DEBUG_INFO structure.
-					case UNLOAD_DLL_DEBUG_EVENT: pszName = "UNLOAD_DLL_DEBUG_EVENT"; break;
+					case UNLOAD_DLL_DEBUG_EVENT:
 						//7 Reports an unload-DLL debugging event. The value of u.UnloadDll specifies an UNLOAD_DLL_DEBUG_INFO structure.
+						pszName = "UNLOAD_DLL_DEBUG_EVENT";
+						_wsprintfA(szBase, SKIPLEN(countof(szBase))
+						           " at " WIN3264TEST("0x%08X","0x%08X%08X"),
+						           WIN3264WSPRINT((DWORD_PTR)evt.u.UnloadDll.lpBaseOfDll));
+						break;
 				}
 
-				_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText)) "{%i.%i} %s\n", evt.dwProcessId,evt.dwThreadId, pszName);
+				_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText)) "{%i.%i} %s%s%s\n", evt.dwProcessId,evt.dwThreadId, pszName, szBase, szFile);
 				_printf(szDbgText);
 				break;
 			}
@@ -5010,8 +5226,19 @@ void ProcessDebugEvent()
 					gpSrv->bDebuggerRequestDump = FALSE; // один раз
 
 					char szConfirm[2048];
-					_wsprintfA(szConfirm, SKIPLEN(countof(szConfirm)) "Non continuable exception (FC=%u)\n", evt.u.Exception.dwFirstChance);
-					StringCchCatA(szConfirm, countof(szConfirm), szDbgText);
+
+					if (evt.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
+					{
+						if (gnDebugDumpProcess)
+							szConfirm[0] = 0;
+						else
+							lstrcpynA(szConfirm, szDbgText, countof(szConfirm));
+					}
+					else
+					{
+						_wsprintfA(szConfirm, SKIPLEN(countof(szConfirm)) "Non continuable exception (FC=%u)\n", evt.u.Exception.dwFirstChance);
+						StringCchCatA(szConfirm, countof(szConfirm), szDbgText);
+					}
 					StringCchCatA(szConfirm, countof(szConfirm), "\nCreate minidump (<No> - fulldump)?");
 					//typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
 					//        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
@@ -5612,6 +5839,12 @@ BOOL cmd_PostConMsg(CESERVER_REQ& in, CESERVER_REQ** out)
 	BOOL lbRc = FALSE;
 	
 	HWND hSendWnd = (HWND)in.Msg.hWnd;
+
+	if ((in.Msg.nMsg == WM_CLOSE) && (hSendWnd == ghConWnd))
+	{
+		// Чтобы при закрытии не _мелькало_ "Press Enter to Close console"
+		gbInShutdown = TRUE;
+	}
 
 	// Info & Log
 	if (in.Msg.nMsg == WM_INPUTLANGCHANGE || in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST)
@@ -6338,9 +6571,13 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		if (in.AttachGuiApp.hAppWindow && (gbAttachMode || (gpSrv->hRootProcessGui != in.AttachGuiApp.hAppWindow)))
 		{
-			wchar_t szTitle[MAX_PATH];
+			wchar_t szTitle[MAX_PATH] = {};
 			GetWindowText(in.AttachGuiApp.hAppWindow, szTitle, countof(szTitle));
-			_wsprintf(szInfo,  SKIPLEN(countof(szInfo)) L"\nWindow (x%08X) was attached to ConEmu:\n%s\n", (DWORD)in.AttachGuiApp.hAppWindow, szTitle);
+			wchar_t szClass[MAX_PATH] = {};
+			GetClassName(in.AttachGuiApp.hAppWindow, szClass, countof(szClass));
+			_wsprintf(szInfo,  SKIPLEN(countof(szInfo))
+				L"\nWindow (x%08X,Style=x%08X,Ex=x%X,Flags=x%X) was attached to ConEmu:\nTitle: \"%s\"\nClass: \"%s\"\n",
+				(DWORD)in.AttachGuiApp.hAppWindow, in.AttachGuiApp.nStyle, in.AttachGuiApp.nStyleEx, in.AttachGuiApp.nFlags, szTitle, szClass);
 			_wprintf(szInfo);
 		}
 

@@ -1875,9 +1875,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//}
 		// Parse parameters.
 		// Duplicated parameters are permitted, the first value is used.
-		uint i = 0; // ммать... curCommand увеличивался, а i НЕТ
+		uint i = 0;
 
-		while(i < params && curCommand && *curCommand)
+		while (i < params && curCommand && *curCommand)
 		{
 			if (!klstricmp(curCommand, _T("/autosetup")))
 			{
@@ -2123,7 +2123,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			else if (!klstricmp(curCommand, _T("/inside")))
 			{
 				gpConEmu->m_InsideIntegration = CConEmuMain::ii_Auto;
-				gpConEmu->m_InsideIntegrationShift = isPressed(VK_SHIFT);
+				gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
 			}
 			else if (!klstricmp(curCommand, _T("/insidepid")) && ((i + 1) < params))
 			{
@@ -2135,7 +2135,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					// Здесь указывается PID, в который нужно внедриться.
 					gpConEmu->m_InsideIntegration = CConEmuMain::ii_Auto;
-					gpConEmu->m_InsideIntegrationShift = isPressed(VK_SHIFT);
+					gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
 				}
 			}
 			else if (!klstricmp(curCommand, _T("/insidewnd")) && ((i + 1) < params))
@@ -2153,7 +2153,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					// Здесь указывается HWND, в котором нужно создаваться.
 					gpConEmu->m_InsideIntegration = CConEmuMain::ii_Simple;
 					gpConEmu->mh_InsideParentWND = hParent;
-					gpConEmu->m_InsideIntegrationShift = isPressed(VK_SHIFT);
+					gpConEmu->mb_InsideIntegrationShift = isPressed(VK_SHIFT);
 				}
 			}
 			else if (!klstricmp(curCommand, _T("/icon")) && ((i + 1) < params))
@@ -2381,19 +2381,37 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		MCHKHEAP
 		const wchar_t* pszDefCmd = NULL;
 		wchar_t* pszReady = NULL;
-		int nLen = _tcslen(cmdNew)+1;
+		int nLen = _tcslen(cmdNew)+8;
 
 		// params = (uint)-1, если в первый аргумент не начинается с '/'
 		// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe"
-		if (params == (uint)-1)
+		if ((params == (uint)-1)
+			&& (gpSet->nStartType == 0)
+			&& (gpSet->psStartSingleApp && *gpSet->psStartSingleApp))
 		{
-			// В GetCmd() может быть прописан путь к фару.
+			// В psStartSingleApp может быть прописан путь к фару.
 			// Тогда, если в проводнике набросили, например, txt файл
 			// на иконку ConEmu, этот наброшенный путь прилепится
 			// к строке запуска фара.
-			pszDefCmd = gpSet->GetCmd();
-			_ASSERTE(pszDefCmd && *pszDefCmd);
-			nLen += 3 + _tcslen(pszDefCmd);
+			pszDefCmd = gpSet->psStartSingleApp;
+			wchar_t szExe[MAX_PATH+1];
+			if (0 != NextArg(&pszDefCmd, szExe))
+			{
+				_ASSERTE(FALSE && "NextArg failed");
+			}
+			else
+			{
+				// Только если szExe это Far.
+				if (IsFarExe(szExe))
+					pszDefCmd = gpSet->psStartSingleApp;
+				else
+					pszDefCmd = NULL; // Запускать будем только то, что "набросили"
+			}
+
+			if (pszDefCmd)
+			{
+				nLen += 3 + _tcslen(pszDefCmd);
+			}
 		}
 
 		pszReady = (TCHAR*)malloc(nLen*sizeof(TCHAR));
@@ -2408,15 +2426,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			lstrcpy(pszReady, pszDefCmd);
 			lstrcat(pszReady, L" ");
-			lstrcat(pszReady, cmdNew);
+			lstrcat(pszReady, SkipNonPrintable(cmdNew));
+
+			// Запомним в истории!
+			gpSet->HistoryAdd(pszReady);
+		}
+		else if (params == (uint)-1)
+		{
+			*pszReady = DropLnkPrefix; // Признак того, что это передача набрасыванием на ярлык
+			lstrcpy(pszReady+1, SkipNonPrintable(cmdNew));
+
+			// Запомним в истории!
+			gpSet->HistoryAdd(pszReady+1);
 		}
 		else
 		{
-			lstrcpy(pszReady, cmdNew);
-		}
+			lstrcpy(pszReady, SkipNonPrintable(cmdNew));
 
-		// Запомним в истории!
-		gpSet->HistoryAdd(pszReady);
+			// Запомним в истории!
+			gpSet->HistoryAdd(pszReady);
+		}
 
 		MCHKHEAP
 		SafeFree(gpSet->psCurCmd); // могло быть создано в gpSet->GetCmd()

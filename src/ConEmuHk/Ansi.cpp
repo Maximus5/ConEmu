@@ -70,6 +70,7 @@ extern GetConsoleWindow_T gfGetRealConsoleWindow;
 extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
 extern HANDLE ghCurrentOutBuffer;
 extern HANDLE ghStdOutHandle;
+extern wchar_t gsInitConTitle[512];
 /* ************ Globals for SetHook ************ */
 
 HANDLE ghLastAnsiCapable = NULL;
@@ -744,7 +745,8 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 
 						// ConEmu specific
 						// ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
-						// ESC ] 9 ; 2 ; txt ST          Show GUI MessageBox ( txt ) for dubug purposes
+						// ESC ] 9 ; 2 ; "txt" ST        Show GUI MessageBox ( txt ) for dubug purposes
+						// ESC ] 9 ; 3 ; "txt" ST        Set TAB text
 
 						Code.ArgSZ = lpBuffer;
 						Code.cchArgSZ = 0;
@@ -964,14 +966,19 @@ void DumpUnknownEscape(LPCWSTR buf, size_t cchLen)
 #define DumpUnknownEscape(buf,cchLen)
 #endif
 
+static int NextNumber(LPCWSTR& asMS)
+{
+	wchar_t wc;
+	int ms = 0;
+	while (((wc = *(asMS++)) >= L'0') && (wc <= L'9'))
+		ms = (ms * 10) + (int)(wc - L'0');
+	return ms;
+}
+
 // ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
 void DoSleep(LPCWSTR asMS)
 {
-	const wchar_t* psz = asMS;
-	wchar_t wc;
-	int ms = 0;
-	while (((wc = *(psz++)) >= L'0') && (wc <= L'9'))
-		ms = (ms * 10) + (int)(wc - L'0');
+	int ms = NextNumber(asMS);
 	if (!ms)
 		ms = 100;
 	else if (ms > 10000)
@@ -980,29 +987,57 @@ void DoSleep(LPCWSTR asMS)
 	Sleep(ms);
 }
 
+void EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, INT_PTR cchMaxLen)
+{
+	if (!pszDst)
+	{
+		_ASSERTEX(pszDst!=NULL);
+		return;
+	}
+
+	if (cchMaxLen < 0)
+	{
+		_ASSERTE(cchMaxLen >= 0);
+		cchMaxLen = 0;
+	}
+	if (cchMaxLen > 1)
+	{
+		if ((asMsg[0] == L'"') && (asMsg[cchMaxLen-1] == L'"'))
+		{
+			asMsg++;
+			cchMaxLen -= 2;
+		}
+	}
+
+	if (cchMaxLen > 0)
+		wmemmove(pszDst, asMsg, cchMaxLen);
+	pszDst[max(cchMaxLen,0)] = 0;
+}
+
 // ESC ] 9 ; 2 ; "txt" ST          Show GUI MessageBox ( txt ) for dubug purposes
 void DoMessage(LPCWSTR asMsg, INT_PTR cchLen)
 {
-	if (cchLen < 0)
-	{
-		_ASSERTE(cchLen >= 0);
-		cchLen = 0;
-	}
-	if (cchLen > 1)
-	{
-		if ((asMsg[0] == L'"') && (asMsg[cchLen-1] == L'"'))
-		{
-			asMsg++;
-			cchLen -= 2;
-		}
-	}
+	//if (cchLen < 0)
+	//{
+	//	_ASSERTE(cchLen >= 0);
+	//	cchLen = 0;
+	//}
+	//if (cchLen > 1)
+	//{
+	//	if ((asMsg[0] == L'"') && (asMsg[cchLen-1] == L'"'))
+	//	{
+	//		asMsg++;
+	//		cchLen -= 2;
+	//	}
+	//}
 	wchar_t* pszText = (wchar_t*)malloc((cchLen+1)*sizeof(*pszText));
 
 	if (pszText)
 	{
-		if (cchLen > 0)
-			wmemmove(pszText, asMsg, cchLen);
-		pszText[cchLen] = 0;
+		EscCopyCtrlString(pszText, asMsg, cchLen);
+		//if (cchLen > 0)
+		//	wmemmove(pszText, asMsg, cchLen);
+		//pszText[cchLen] = 0;
 
 		wchar_t szExe[MAX_PATH] = {};
 		GetModuleFileName(NULL, szExe, countof(szExe));
@@ -1509,10 +1544,24 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 
 							switch (*Code.ArgSZ)
 							{
+							case L'2':
+								if (Code.ArgSZ[1] == L';' && Code.ArgSZ[2])
+								{
+									wchar_t* pszNewTitle = (wchar_t*)malloc(sizeof(wchar_t)*(Code.cchArgSZ));
+									if (pszNewTitle)
+									{
+										EscCopyCtrlString(pszNewTitle, Code.ArgSZ+2, Code.cchArgSZ-2);
+										SetConsoleTitle(*pszNewTitle ? pszNewTitle : gsInitConTitle);
+										free(pszNewTitle);
+									}
+								}
+								break;
+
 							case L'9':
 								// ConEmu specific
 								// ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
-								// ESC ] 9 ; 2 ; "txt" ST          Show GUI MessageBox ( txt ) for dubug purposes
+								// ESC ] 9 ; 2 ; "txt" ST        Show GUI MessageBox ( txt ) for dubug purposes
+								// ESC ] 9 ; 3 ; "txt" ST        Set TAB text
 								if (Code.ArgSZ[1] == L';')
 								{
 									if (Code.ArgSZ[2] == L'1' && Code.ArgSZ[3] == L';')
@@ -1522,6 +1571,46 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 									else if (Code.ArgSZ[2] == L'2' && Code.ArgSZ[3] == L';')
 									{
 										DoMessage(Code.ArgSZ+4, Code.cchArgSZ - 4);
+									}
+									else if (Code.ArgSZ[2] == L'3' && Code.ArgSZ[3] == L';')
+									{
+										CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETTABTITLE, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t)*(Code.cchArgSZ));
+										if (pIn)
+										{
+											EscCopyCtrlString((wchar_t*)pIn->wData, Code.ArgSZ+4, Code.cchArgSZ-4);
+											CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+											ExecuteFreeResult(pIn);
+											ExecuteFreeResult(pOut);
+										}
+									}
+									else if (Code.ArgSZ[2] == L'4')
+									{
+										CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETPROGRESS, sizeof(CESERVER_REQ_HDR)+sizeof(WORD)*2);
+										if (pIn)
+										{
+											if (Code.ArgSZ[3] == L';')
+											{
+												switch (Code.ArgSZ[4])
+												{
+												case L'0':
+													break;
+												case L'1':
+													pIn->wData[0] = 1;
+													if (Code.ArgSZ[5] == L';')
+													{
+														LPCWSTR pszValue = Code.ArgSZ + 6;
+														pIn->wData[1] = NextNumber(pszValue);
+													}
+													break;
+												case L'2':
+													pIn->wData[0] = 2;
+													break;
+												}
+											}
+											CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+											ExecuteFreeResult(pIn);
+											ExecuteFreeResult(pOut);
+										}
 									}
 								}
 								break;
@@ -1592,7 +1681,6 @@ wrap:
 	return lbRc;
 }
 
-#ifdef _DEBUG
 BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 {
 	typedef BOOL (WINAPI* OnSetConsoleMode_t)(HANDLE hConsoleHandle, DWORD dwMode);
@@ -1611,4 +1699,3 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 
 	return lbRc;
 }
-#endif

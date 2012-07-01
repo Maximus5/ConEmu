@@ -55,6 +55,15 @@
       <Component Id="ColorPrompt.cmd" Guid="$(var.Guid.ColorPrompt.cmd)" Win64="$(var.Win64)">
         <File Id="ColorPrompt.cmd" Source="..\..\Release\ConEmu\ColorPrompt.cmd"  KeyPath="yes" />
       </Component>
+      <Component Id="RenameTab.cmd" Guid="$(var.Guid.RenameTab.cmd)" Win64="$(var.Win64)">
+        <File Id="RenameTab.cmd" Source="..\..\Release\ConEmu\RenameTab.cmd"  KeyPath="yes" />
+      </Component>
+      <Component Id="SetConTitle.cmd" Guid="$(var.Guid.SetConTitle.cmd)" Win64="$(var.Win64)">
+        <File Id="SetConTitle.cmd" Source="..\..\Release\ConEmu\SetConTitle.cmd"  KeyPath="yes" />
+      </Component>
+      <Component Id="SetProgress.cmd" Guid="$(var.Guid.SetProgress.cmd)" Win64="$(var.Win64)">
+        <File Id="SetProgress.cmd" Source="..\..\Release\ConEmu\SetProgress.cmd"  KeyPath="yes" />
+      </Component>
       <Component Id="Command_Processor.reg" Guid="$(var.Guid.Command_Processor.reg)" Win64="$(var.Win64)">
         <File Id="Command_Processor.reg" Source="..\..\Release\ConEmu\Command Processor.reg"  KeyPath="yes" />
       </Component>

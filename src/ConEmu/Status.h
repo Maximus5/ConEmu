@@ -34,6 +34,8 @@ enum CEStatusItems
 
 	csi_ActiveVCon,
 
+	csi_SyncInside,
+
 	csi_CapsLock,
 	csi_NumLock,
 	csi_ScrollLock,

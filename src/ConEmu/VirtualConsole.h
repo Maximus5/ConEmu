@@ -216,7 +216,6 @@ class CVirtualConsole :
 
 	public:
 		// ѕлагин к фару может установить свою "картинку" дл€ панелей (например, нарисовать в фоне букву диска)
-		bool PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height); // ѕоложить в pBack свою картинку
 		//void FreeBackgroundImage(); // ќсвободить (если создан) HBITMAP дл€ mp_BkImgData
 		SetBackgroundResult SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData); // вызываетс€ при получении нового Background
 		bool HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight);
@@ -224,7 +223,6 @@ class CVirtualConsole :
 	protected:
 		bool mb_NeedBgUpdate;
 		bool mb_BgLastFade;
-		bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
 		CBackground* mp_Bg;
 		MSection *mcs_BkImgData;
 		size_t mn_BkImgDataMax;
@@ -239,6 +237,8 @@ class CVirtualConsole :
 		//// ƒл€ проверки, что пришедша€ в основную нить картинка €вл€етс€ актуальной
 		//const CESERVER_REQ_SETBACKGROUND* mp_LastImgData;
 		UINT IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, bool* rpIsEmf) const; // возвращает размер данных, или 0 при ошибке
+		bool PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height); // ѕоложить в pBack свою картинку
+		bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
 //public:
 		//MSection csBkImgData;
 
@@ -312,7 +312,7 @@ class CVirtualConsole :
 		uint TextLen;
 		bool isCursorValid, drawImage, textChanged, attrChanged;
 		DWORD nBgImageColors;
-		COORD bgBmpSize; HDC hBgDc;
+		COORD bgBmpSize; HDC hBgDc; // Ёто только ссылка, дл€ удобства отрисовки
 		void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
 		bool UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock *pSCON);
 		void UpdateText(); //, bool updateText, bool updateCursor);

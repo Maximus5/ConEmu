@@ -156,6 +156,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mb_ForceTitleChanged = FALSE;
 	mn_Progress = mn_PreWarningProgress = mn_LastShownProgress = -1; // Процентов нет
 	mn_ConsoleProgress = mn_LastConsoleProgress = -1;
+	mn_AppProgressState = mn_AppProgress = 0;
 	mn_LastConProgrTick = mn_LastWarnCheckTick = 0;
 	hPictureView = NULL; mb_PicViewWasHidden = FALSE;
 	mh_MonitorThread = NULL; mn_MonitorThreadID = 0;
@@ -933,6 +934,80 @@ void CRealConsole::ShowKeyBarHint(WORD nID)
 		mp_RBuf->ShowKeyBarHint(nID);
 }
 
+bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
+{
+	if (!this || !asCmd || !*asCmd)
+		return false;
+
+	bool lbRc = false;
+	// "\x27 cd /d \"%s\" \x0A"
+	DWORD nActivePID = GetActivePID();
+	if (nActivePID && (mp_ABuf->m_Type == rbt_Primary))
+	{
+		size_t cchMax = _tcslen(asCmd);
+
+		if (CD && isFar(true))
+		{
+			// Передать макросом!
+			cchMax = cchMax*2 + 128;
+			wchar_t* pszMacro = (wchar_t*)malloc(cchMax*sizeof(*pszMacro));
+			if (pszMacro)
+			{
+				_wcscpy_c(pszMacro, cchMax, L"@panel.setpath(0,\"");
+				wchar_t* pszDst = pszMacro+_tcslen(pszMacro);
+				LPCWSTR pszSrc = asCmd;
+				while (*pszSrc)
+				{
+					if (*pszSrc == L'\\')
+						*(pszDst++) = L'\\';
+					*(pszDst++) = *(pszSrc++);
+				}
+				*(pszDst++) = L'"';
+				*(pszDst++) = L')';
+				*(pszDst++) = 0;
+				
+				PostMacro(pszMacro, TRUE/*async*/);
+			}
+		}
+		else
+		{
+			// \e cd /d "%s" \n
+			cchMax += 32;
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_PROMPTCMD, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t)*cchMax);
+			if (pIn)
+			{
+				wchar_t* psz = (wchar_t*)pIn->wData;
+				if (CD)
+				{
+					LPCWSTR pszExe = GetActiveProcessName();
+					if (pszExe && (lstrcmpi(pszExe, L"powershell.exe") == 0))
+					{
+						_wsprintf(psz, SKIPLEN(cchMax) L"%ccd \"%s\"%c", 27, asCmd, L'\n');
+					}
+					else
+					{
+						_wsprintf(psz, SKIPLEN(cchMax) L"%ccd /d \"%s\"%c", 27, asCmd, L'\n');
+					}
+				}
+				else
+				{
+					_wsprintf(psz, SKIPLEN(cchMax) L"%c%s%c", 27, asCmd, L'\n');
+				}
+
+				CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
+				if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
+				{
+					lbRc = (pOut->dwData[0] != 0);
+				}
+				ExecuteFreeResult(pOut);
+				ExecuteFreeResult(pIn);
+			}
+		}
+	}
+
+	return lbRc;
+}
+
 // !!! Функция может менять буфер pszChars! !!! Private !!!
 bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 {
@@ -973,7 +1048,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 			*pch = L'\r'; // буфер наш, что хотим - то и делаем
 		}
 
-		TranslateKeyPress(0, 0, *pch, -1, r[0], r[1]);
+		TranslateKeyPress(0, 0, *pch, -1, r, r+1);
 		PackInputRecord(r, pir);
 		PackInputRecord(r+1, pir+1);
 		cchSucceeded += 2;
@@ -1010,63 +1085,63 @@ bool CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, i
 		return false;
 
 	INPUT_RECORD r[2] = {{KEY_EVENT},{KEY_EVENT}};
-	TranslateKeyPress(vkKey, dwControlState, wch, ScanCode, r[0], r[1]);
+	TranslateKeyPress(vkKey, dwControlState, wch, ScanCode, r, r+1);
 
 	bool lbPress = PostConsoleEvent(r);
 	bool lbDepress = lbPress && PostConsoleEvent(r+1);
 	return (lbPress && lbDepress);
 }
 
-void CRealConsole::TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD& rDown, INPUT_RECORD& rUp)
-{
-	// Может приходить запрос на отсылку даже если текущий буфер НЕ rbt_Primary,
-	// например, при начале выделения и автоматическом переключении на альтернативный буфер
-
-	if (!vkKey && !dwControlState && wch)
-	{
-		USHORT vk = VkKeyScan(wch);
-		if (vk && (vk != 0xFFFF))
-		{
-			vkKey = (vk & 0xFF);
-			vk = vk >> 8;
-			if ((vk & 7) == 6)
-			{
-				// For keyboard layouts that use the right-hand ALT key as a shift
-				// key (for example, the French keyboard layout), the shift state is
-				// represented by the value 6, because the right-hand ALT key is
-				// converted internally into CTRL+ALT.
-				dwControlState |= SHIFT_PRESSED;
-			}
-			else
-			{
-				if (vk & 1)
-					dwControlState |= SHIFT_PRESSED;
-				if (vk & 2)
-					dwControlState |= LEFT_CTRL_PRESSED;
-				if (vk & 4)
-					dwControlState |= LEFT_ALT_PRESSED;
-			}
-		}
-	}
-
-	if (ScanCode == -1)
-		ScanCode = MapVirtualKey(vkKey, 0/*MAPVK_VK_TO_VSC*/);
-
-	INPUT_RECORD r = {KEY_EVENT};
-	r.Event.KeyEvent.bKeyDown = TRUE;
-	r.Event.KeyEvent.wRepeatCount = 1;
-	r.Event.KeyEvent.wVirtualKeyCode = vkKey;
-	r.Event.KeyEvent.wVirtualScanCode = ScanCode;
-	r.Event.KeyEvent.uChar.UnicodeChar = wch;
-	r.Event.KeyEvent.dwControlKeyState = dwControlState;
-	rDown = r;
-
-	TODO("Может нужно в dwControlKeyState применять модификатор, если он и есть vkKey?");
-
-	r.Event.KeyEvent.bKeyDown = FALSE;
-	r.Event.KeyEvent.dwControlKeyState = dwControlState;
-	rUp = r;
-}
+//void CRealConsole::TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD& rDown, INPUT_RECORD& rUp)
+//{
+//	// Может приходить запрос на отсылку даже если текущий буфер НЕ rbt_Primary,
+//	// например, при начале выделения и автоматическом переключении на альтернативный буфер
+//
+//	if (!vkKey && !dwControlState && wch)
+//	{
+//		USHORT vk = VkKeyScan(wch);
+//		if (vk && (vk != 0xFFFF))
+//		{
+//			vkKey = (vk & 0xFF);
+//			vk = vk >> 8;
+//			if ((vk & 7) == 6)
+//			{
+//				// For keyboard layouts that use the right-hand ALT key as a shift
+//				// key (for example, the French keyboard layout), the shift state is
+//				// represented by the value 6, because the right-hand ALT key is
+//				// converted internally into CTRL+ALT.
+//				dwControlState |= SHIFT_PRESSED;
+//			}
+//			else
+//			{
+//				if (vk & 1)
+//					dwControlState |= SHIFT_PRESSED;
+//				if (vk & 2)
+//					dwControlState |= LEFT_CTRL_PRESSED;
+//				if (vk & 4)
+//					dwControlState |= LEFT_ALT_PRESSED;
+//			}
+//		}
+//	}
+//
+//	if (ScanCode == -1)
+//		ScanCode = MapVirtualKey(vkKey, 0/*MAPVK_VK_TO_VSC*/);
+//
+//	INPUT_RECORD r = {KEY_EVENT};
+//	r.Event.KeyEvent.bKeyDown = TRUE;
+//	r.Event.KeyEvent.wRepeatCount = 1;
+//	r.Event.KeyEvent.wVirtualKeyCode = vkKey;
+//	r.Event.KeyEvent.wVirtualScanCode = ScanCode;
+//	r.Event.KeyEvent.uChar.UnicodeChar = wch;
+//	r.Event.KeyEvent.dwControlKeyState = dwControlState;
+//	rDown = r;
+//
+//	TODO("Может нужно в dwControlKeyState применять модификатор, если он и есть vkKey?");
+//
+//	r.Event.KeyEvent.bKeyDown = FALSE;
+//	r.Event.KeyEvent.dwControlKeyState = dwControlState;
+//	rUp = r;
+//}
 
 bool CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode /*= -1*/)
 {
@@ -3347,11 +3422,11 @@ bool CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 	BOOL lbOk = FALSE;
 	bool bNeedCmd = isAdministrator() || (m_Args.pszUserName != NULL);
 
-	if (nMsg == WM_INPUTLANGCHANGE || nMsg == WM_INPUTLANGCHANGEREQUEST)
+	// 120630 - добавил WM_CLOSE, иначе в сервере не успевает выставиться флаг gbInShutdown
+	if (nMsg == WM_INPUTLANGCHANGE || nMsg == WM_INPUTLANGCHANGEREQUEST || nMsg == WM_CLOSE)
 		bNeedCmd = true;
 
-#ifdef _DEBUG
-
+	#ifdef _DEBUG
 	if (nMsg == WM_INPUTLANGCHANGE || nMsg == WM_INPUTLANGCHANGEREQUEST)
 	{
 		wchar_t szDbg[255];
@@ -3361,8 +3436,7 @@ bool CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 		          pszMsgID, (DWORD)wParam, (unsigned __int64)(DWORD_PTR)lParam, pszVia);
 		DEBUGSTRLANG(szDbg);
 	}
-
-#endif
+	#endif
 
 	if (!bNeedCmd)
 	{
@@ -4908,7 +4982,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 	if (nLen>=63) pszSlash[63]=0;
 
 	lstrcpyW(ConPrc.Name, pszSlash);
-	ConPrc.IsFar = lstrcmpi(ConPrc.Name, _T("Far.exe"))==0;
+	ConPrc.IsFar = IsFarExe(ConPrc.Name);
 	ConPrc.IsNtvdm = lstrcmpi(ConPrc.Name, _T("ntvdm.exe"))==0;
 	ConPrc.IsTelnet = lstrcmpi(ConPrc.Name, _T("telnet.exe"))==0;
 	TODO("Тут главное не промахнуться, и не посчитать корневой conemuc, из которого запущен сам FAR, или который запустил плагин, чтобы GUI прицепился к этой консоли");
@@ -6458,7 +6532,7 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 					case IDOK:
 						{
 							wchar_t* pszNew = GetDlgItemText(hDlg, tNewTabName);
-							lstrcpyn(pRCon->ms_RenameFirstTab, pszNew ? pszNew : L"", countof(pRCon->ms_RenameFirstTab));
+							pRCon->RenameTab(pszNew);
 							SafeFree(pszNew);
 							EndDialog(hDlg, IDOK);
 							return TRUE;
@@ -6500,8 +6574,17 @@ void CRealConsole::DoRenameTab()
 	INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RENAMETAB), ghWnd, renameProc, (LPARAM)this);
 	if (iRc == IDOK)
 	{
-		gpConEmu->mp_TabBar->Update();
+		//gpConEmu->mp_TabBar->Update(); -- уже, в RenameTab(...)
 	}
+}
+
+void CRealConsole::RenameTab(LPCWSTR asNewTabText /*= NULL*/)
+{
+	if (!this)
+		return;
+
+	lstrcpyn(ms_RenameFirstTab, asNewTabText ? asNewTabText : L"", countof(ms_RenameFirstTab));
+	gpConEmu->mp_TabBar->Update();
 }
 
 int CRealConsole::GetTabCount(BOOL abVisibleOnly /*= FALSE*/)
@@ -6599,11 +6682,14 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 
 void CRealConsole::UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab)
 {
+	if (ms_RenameFirstTab[0])
+		pTab->Type |= fwt_Renamed;
+
 	if (isAdministrator() && (gpSet->bAdminShield || gpSet->szAdminTitleSuffix[0]))
 	{
 		if (gpSet->bAdminShield)
 		{
-			pTab->Type |= 0x100;
+			pTab->Type |= fwt_Elevated;
 		}
 		else
 		{
@@ -8193,9 +8279,22 @@ BOOL CRealConsole::GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDoma
 	return FALSE;
 }
 
-short CRealConsole::GetProgress(BOOL *rpbError)
+short CRealConsole::GetProgress(BOOL *rpbError, BOOL* rpbNotFromTitle)
 {
-	if (!this) return -1;
+	if (!this)
+		return -1;
+
+	if ((mn_AppProgressState == 1) || (mn_AppProgressState == 2))
+	{
+		if (rpbError)
+			*rpbError = (mn_AppProgressState == 2);
+		if (rpbNotFromTitle)
+			*rpbNotFromTitle = TRUE;
+		return mn_AppProgress;
+	}
+
+	if (rpbNotFromTitle)
+		*rpbNotFromTitle = (mn_ConsoleProgress != -1);
 
 	if (mn_Progress >= 0)
 		return mn_Progress;
@@ -8220,6 +8319,43 @@ short CRealConsole::GetProgress(BOOL *rpbError)
 	}
 
 	return -1;
+}
+
+bool CRealConsole::SetProgress(short nState, short nValue)
+{
+	if (!this)
+		return false;
+
+	bool lbOk = false;
+
+	switch (nState)
+	{
+	case 0:
+		mn_AppProgressState = mn_AppProgress = 0;
+		lbOk = true;
+		break;
+	case 1:
+		mn_AppProgressState = 1;
+        mn_AppProgress = min(max(nValue,0),100);
+        lbOk = true;
+        break;
+    case 2:
+    	mn_AppProgressState = 2;
+    	lbOk = true;
+    	break;
+	}
+
+	if (lbOk)
+	{
+		if (gpConEmu->isActive(mp_VCon))
+			// Для активной консоли - обновляем заголовок. Прогресс обновится там же
+			gpConEmu->UpdateTitle();
+		else
+			// Для НЕ активной консоли - уведомить главное окно, что у нас сменились проценты
+			gpConEmu->UpdateProgress();
+	}
+
+	return lbOk;
 }
 
 //// установить переменную mn_Progress и mn_LastProgressTick
@@ -8539,6 +8675,8 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	In.AttachGuiApp.hConEmuWnd = ghWnd;
 	In.AttachGuiApp.hConEmuWndDC = GetView();
 	In.AttachGuiApp.hAppWindow = ahGuiWnd;
+	In.AttachGuiApp.nStyle = anStyle;
+	In.AttachGuiApp.nStyleEx = anStyleEx;
 	In.AttachGuiApp.nPID = anAppPID;
 	if (asAppFileName)
 		wcscpy_c(In.AttachGuiApp.sAppFileName, asAppFileName);

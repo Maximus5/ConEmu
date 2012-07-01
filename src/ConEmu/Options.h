@@ -95,6 +95,7 @@ class CSettings;
 class CVirtualConsole;
 
 #define CmdFilePrefix     L'@'
+#define DropLnkPrefix     L'?'
 #define TaskBracketLeft   L'{'
 #define TaskBracketRight  L'}'
 #define AutoStartTaskName L"<Startup>"
@@ -258,7 +259,7 @@ struct Settings
 		struct AppSettings
 		{
 			size_t   cchNameMax;
-			wchar_t* AppNames; // "far.exe|far64.exe"
+			wchar_t* AppNames; // "far.exe|far64.exe" è ò.ï.
 			wchar_t* AppNamesLwr; // For internal use
 			BYTE Elevated; // 00 - unimportant, 01 - elevated, 02 - nonelevated
 			
@@ -588,8 +589,13 @@ struct Settings
 		
 
 		/* *** Transparency *** */
+		bool isTransparentAllowed();
 		//reg->Load(L"AlphaValue", nTransparent);
 		u8 nTransparent;
+		//reg->Load(L"AlphaValueSeparate", nTransparentSeparate);
+		bool isTransparentSeparate;
+		//reg->Load(L"AlphaValueInactive", nTransparentInactive);
+		u8 nTransparentInactive;
 		//reg->Load(L"UserScreenTransparent", isUserScreenTransparent);
 		bool isUserScreenTransparent;
 		//reg->Load(L"ColorKeyTransparent", isColorKeyTransparent);

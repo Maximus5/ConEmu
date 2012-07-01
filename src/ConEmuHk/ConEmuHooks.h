@@ -101,3 +101,4 @@ struct ReadConsoleInfo
 };
 extern struct ReadConsoleInfo gReadConsoleInfo;
 BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin);
+BOOL OnExecutePromptCmd(LPCWSTR asCmd);

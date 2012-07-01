@@ -78,5 +78,7 @@ protected:
 	CESERVER_REQ* cmdLockDc(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdGetAllTabs(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdActivateTab(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+	CESERVER_REQ* cmdRenameTab(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+	CESERVER_REQ* cmdSetProgress(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	//CESERVER_REQ* cmdAssert(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 };

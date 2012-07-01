@@ -49,7 +49,14 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 	SkipWhiteSpaces(asMacro);
 
 	if (!asMacro || !*asMacro)
-		return NULL;
+	{
+		return lstrdup(L"Empty Macro");
+	}
+
+	if (*asMacro == L'"')
+	{
+		return lstrdup(L"Invalid Macro (remove quotas)");
+	}
 
 	LPWSTR pszAllResult = NULL;
 
@@ -149,6 +156,8 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 			pszResult = IsConsoleActive(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Paste"))
 			pszResult = Paste(asMacro, apRCon);
+		else if (!lstrcmpi(szFunction, L"Progress"))
+			pszResult = Progress(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Shell") || !lstrcmpi(szFunction, L"ShellExecute"))
 			pszResult = Shell(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"Tab") || !lstrcmpi(szFunction, L"Tabs") || !lstrcmpi(szFunction, L"TabControl"))
@@ -694,6 +703,32 @@ LPWSTR CConEmuMacro::Paste(LPWSTR asArgs, CRealConsole* apRCon)
 		bool bNoConfirm = (nCommand & 2) != 0;
 
 		apRCon->Paste(bFirstLineOnly, pszText, bNoConfirm);
+
+		return lstrdup(L"OK");
+	}
+
+	return lstrdup(L"InvalidArg");
+}
+
+// Progress(<Type>[,<Value>])
+LPWSTR CConEmuMacro::Progress(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	int nType = 0, nValue = 0;
+	LPWSTR pszText = NULL;
+
+	if (!apRCon)
+		return lstrdup(L"InvalidArg");
+
+	if (GetNextInt(asArgs, nType))
+	{
+		if (!(nType == 0 || nType == 1 || nType == 2))
+		{
+			return lstrdup(L"InvalidArg");
+		}
+
+		GetNextInt(asArgs, nValue);
+
+		apRCon->SetProgress(nType, nValue);
 
 		return lstrdup(L"OK");
 	}

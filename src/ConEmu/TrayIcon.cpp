@@ -167,7 +167,7 @@ void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
 	{
 		gpConEmu->ShowWindow(SW_HIDE);
 	}
-	HMENU hMenu = gpConEmu->GetSystemMenu(/*ghWnd, false*/);
+	HMENU hMenu = gpConEmu->GetSysMenu(/*ghWnd, false*/);
 	SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_RESTORE_NAME);
 	mb_InHidingToTray = false;
 	//for (int i = 0; i < countof(mn_SysItemId); i++)
@@ -195,7 +195,7 @@ void TrayIcon::RestoreWindowFromTray(BOOL abIconOnly /*= FALSE*/)
 	if (IsWindowVisible(ghWnd))
 	{
 		//EnableMenuItem(GetSystemMenu(ghWnd, false), ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
-		HMENU hMenu = gpConEmu->GetSystemMenu(/*ghWnd, false*/);
+		HMENU hMenu = gpConEmu->GetSysMenu(/*ghWnd, false*/);
 		SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_HIDE_NAME);
 	}
 

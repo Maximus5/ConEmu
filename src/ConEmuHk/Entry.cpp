@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"putty.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"vim.exe"
 //	#define SHOW_EXE_TIMINGS
 #endif
 //#define SHOW_INJECT_MSGBOX
@@ -163,6 +163,7 @@ BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
 DWORD   gnImageSubsystem = 0;
 DWORD   gnImageBits = WIN3264TEST(32,64); //-V112
+wchar_t gsInitConTitle[512] = {};
 
 HMODULE ghSrvDll = NULL;
 //typedef int (__stdcall* RequestLocalServer_t)(AnnotationHeader** ppAnnotation, HANDLE* ppOutBuffer);
@@ -871,6 +872,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			
 			ghOurModule = (HMODULE)hModule;
 			ghConWnd = GetConsoleWindow();
+			if (ghConWnd)
+				GetConsoleTitle(gsInitConTitle, countof(gsInitConTitle));
 			gnSelfPID = GetCurrentProcessId();
 			ghWorkingModule = (u64)hModule;
 			gfGetRealConsoleWindow = GetConsoleWindow;
@@ -1326,12 +1329,29 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			}
 
 			lbRc = TRUE;
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD);
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
 			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
 			{
 				ppReply->dwData[0] = bProcessed;
 			}
 		} // CECMD_MOUSECLICK
+		break;
+	case CECMD_PROMPTCMD:
+		{
+			BOOL bProcessed = FALSE;
+			if ((gReadConsoleInfo.InReadConsoleTID || gReadConsoleInfo.LastReadConsoleInputTID)
+				&& (pCmd->DataSize() >= 2*sizeof(wchar_t)))
+			{
+				bProcessed = OnExecutePromptCmd((LPCWSTR)pCmd->wData);
+			}
+
+			lbRc = TRUE;
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
+			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
+			{
+				ppReply->dwData[0] = bProcessed;
+			}
+		}
 		break;
 	case CECMD_STARTSERVER:
 		{

@@ -1300,6 +1300,42 @@ CESERVER_REQ* CRealServer::cmdActivateTab(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 	return pOut;
 }
 
+CESERVER_REQ* CRealServer::cmdRenameTab(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	CESERVER_REQ* pOut = NULL;
+
+	DEBUGSTRCMD(L"GUI recieved CECMD_SETTABTITLE\n");
+	
+	LPCWSTR pszNewText = NULL;
+	if (nDataSize >= 2*sizeof(wchar_t))
+		pszNewText = (wchar_t*)pIn->wData;
+
+	mp_RCon->RenameTab(pszNewText);
+	
+	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+	if (pOut)
+		pOut->dwData[0] = TRUE;
+	return pOut;
+}
+
+CESERVER_REQ* CRealServer::cmdSetProgress(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	CESERVER_REQ* pOut = NULL;
+
+	DEBUGSTRCMD(L"GUI recieved CECMD_SETPROGRESS\n");
+	
+	bool lbOk = false;
+	if (nDataSize >= 2*sizeof(pIn->wData[0]))
+	{
+		mp_RCon->SetProgress(pIn->wData[0], pIn->wData[1]);
+	}
+	
+	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+	if (pOut)
+		pOut->dwData[0] = lbOk;
+	return pOut;
+}
+
 //CESERVER_REQ* CRealServer::cmdAssert(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 //{
 //	CESERVER_REQ* pOut = NULL;
@@ -1514,6 +1550,12 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		break;
 	case CECMD_ACTIVATETAB:
 		pOut = pRSrv->cmdActivateTab(pInst, pIn, nDataSize);
+		break;
+	case CECMD_SETTABTITLE:
+		pOut = pRSrv->cmdRenameTab(pInst, pIn, nDataSize);
+		break;
+	case CECMD_SETPROGRESS:
+		pOut = pRSrv->cmdSetProgress(pInst, pIn, nDataSize);
 		break;
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(pInst, pIn, nDataSize);

@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	    L"   or: ConEmuC /ATTACH /NOCMD\r\n" \
 		L"   or: ConEmuC /ATTACH /[FAR]PID=<PID>\r\n" \
 	    L"   or: ConEmuC /GUIMACRO <ConEmu GUI macro command>\r\n" \
-		L"   or: ConEmuC /DEBUGPID=<Debugging PID>\r\n" \
+		L"   or: ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]\r\n" \
 _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n") \
 	    L"   or: ConEmuC /?\r\n" \
 	    L"Switches:\r\n" \
@@ -61,11 +61,12 @@ _DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
 _DBGHLP(L"     /INJECT=PID{10}\r\n") \
 _DBGHLP(L"     /DOSBOX -> use DosBox\r\n") \
 	    L"\r\n" \
-	    L"When you run application from ConEmu console, you may use\r\n" \
-        L"  Switch: -new_console[:abch[N]rx[N]y[N]u[:user:pwd]]\r\n" \
+	    L"When you run application from ConEmu console, you may use one or more\r\n" \
+		L"  Switch: -new_console[:abcd[:dir]h[N]rx[N]y[N]u[:user:pwd]]\r\n" \
         L"     a - RunAs shell verb (as Admin on Vista+, login/passw in Win2k and WinXP)\r\n" \
         L"     b - Create background tab\r\n" \
         L"     c - force enable 'Press Enter or Esc to close console' (default)\r\n" \
+		L"     d - specify working directory, MUST BE LAST OPTION\r\n" \
         L"     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\r\n" \
 _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
         L"     n - disable 'Press Enter or Esc to close console'\r\n" \
@@ -74,7 +75,8 @@ _DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r
         L"     u - ConEmu choose user dialog\r\n" \
         L"     u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST OPTION\r\n" \
         L"  Warning: Option 'Inject ConEmuHk' must be enabled in ConEmu settings!\r\n" \
-        L"  Example: dir \"-new_console:bh9999c\" c:\\ /s\r\n"
+		L"  Example: dir \"-new_console:bh9999c\" \"-new_console:dC:\\\"  c:\\Users /s\r\n" \
+		L"  Note: Some switches may be used in similar \"-cur_console:...\"\r\n"
 
 
 #define pDosBoxHelp \

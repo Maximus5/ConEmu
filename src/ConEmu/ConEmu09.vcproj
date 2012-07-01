@@ -1707,6 +1707,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\ConEmuCD\ConsoleHelp.h"
+				>
+			</File>
+			<File
 				RelativePath=".\CustomFonts.h"
 				>
 			</File>
@@ -2759,6 +2763,10 @@
 		</File>
 		<File
 			RelativePath=".\!ToDo.!Bugs!.txt"
+			>
+		</File>
+		<File
+			RelativePath=".\!ToDo.!ideas!.txt"
 			>
 		</File>
 		<File

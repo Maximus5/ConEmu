@@ -288,7 +288,7 @@ class CSettings
 		FILETIME ftBgModified;
 		DWORD nBgModifiedTick;
 	public:
-		bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
+		bool PrepareBackground(CVirtualConsole* apVCon, HDC* phBgDc, COORD* pbgBmpSize);
 		bool PollBackgroundFile(); // true, если файл изменен
 		bool LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
 		bool IsBackgroundEnabled(CVirtualConsole* apVCon);
@@ -313,8 +313,10 @@ class CSettings
 			thi_Tabs,
 			thi_Status,
 			thi_Colors,
+			thi_Transparent,
 			thi_Tasks,
 			thi_Apps,
+			thi_Integr,
 			thi_Views,
 			thi_Debug,
 			thi_Update,
@@ -372,6 +374,18 @@ class CSettings
 		void RegisterFontsInt(LPCWSTR asFromDir);
 		void ApplyStartupOptions();
 	public:
+		enum ShellIntegrType
+		{
+			ShellIntgr_Inside = 0,
+			ShellIntgr_Here,
+			ShellIntgr_CmdAuto,
+		};
+		void ShellIntegration(HWND hDlg, ShellIntegrType iMode, bool bEnabled);
+	private:
+		void RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, LPCWSTR asCmd, LPCWSTR asIcon);
+		void UnregisterShell(LPCWSTR asName);
+		bool DeleteRegKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName);
+	public:
 		void UnregisterFonts();
 		BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		BOOL GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
@@ -423,8 +437,10 @@ class CSettings
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
 		LRESULT OnInitDialog_Status(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Color(HWND hWnd2);
+		LRESULT OnInitDialog_Transparent(HWND hWnd2);
 		LRESULT OnInitDialog_Tasks(HWND hWnd2, bool abForceReload);
 		LRESULT OnInitDialog_Apps(HWND hWnd2, bool abForceReload);
+		LRESULT OnInitDialog_Integr(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Views(HWND hWnd2);
 		void OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...); // скопировать список шрифтов с вкладки hMain
 		LRESULT OnInitDialog_Debug(HWND hWnd2);

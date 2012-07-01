@@ -391,7 +391,8 @@ void Settings::InitSettings()
 	nBgImageColors = (DWORD)-1; // Получить цвет панелей из фара - иначе "1|2" == BgImageColorsDefaults.
 	bgOperation = eUpLeft;
 	isBgPluginAllowed = 1;
-	nTransparent = 255;
+	nTransparent = nTransparentInactive = 255;
+	isTransparentSeparate = false;
 	//isColorKey = false;
 	//ColorKey = RGB(1,1,1);
 	isUserScreenTransparent = false;
@@ -546,6 +547,21 @@ void Settings::InitSettings()
 	/* *** AutoUpdate *** */
 	_ASSERTE(UpdSet.szUpdateVerLocation==NULL); // Уже должен был быть вызван ReleasePointers
 	UpdSet.ResetToDefaults();
+}
+
+// В Desktop, Inside (и еще может быть когда) Transparent включать нельзя
+bool Settings::isTransparentAllowed()
+{
+	// Окно работает в "Child" режиме, прозрачность не допускается
+	if (isDesktopMode || gpConEmu->m_InsideIntegration)
+		return false;
+
+	// Чтобы не рушилось отображение картинки плагинами
+	if (gpConEmu->isPictureView())
+		return false;
+
+	// Можно, по настройкам
+	return true;
 }
 
 // true - не допускать Gaps в Normal режиме. Подгонять размер окна точно под консоль.
@@ -2080,8 +2096,16 @@ void Settings::LoadSettings()
 		reg->Load(L"bgPluginAllowed", isBgPluginAllowed);
 		if (isBgPluginAllowed!=0 && isBgPluginAllowed!=1 && isBgPluginAllowed!=2) isBgPluginAllowed = 1;
 
-		reg->Load(L"AlphaValue", nTransparent);
-		if (nTransparent < MIN_ALPHA_VALUE) nTransparent = MIN_ALPHA_VALUE;
+		reg->Load(L"AlphaValue", nTransparent); MinMax(nTransparent, MIN_ALPHA_VALUE, 255);
+		reg->Load(L"AlphaValueSeparate", isTransparentSeparate);
+		if (!reg->Load(L"AlphaValueInactive", nTransparentInactive))
+		{	
+			nTransparentInactive = nTransparent;
+		}
+		else
+		{
+			MinMax(nTransparentInactive, MIN_ALPHA_VALUE, 255);
+		}
 
 		//reg->Load(L"UseColorKey", isColorKey);
 		//reg->Load(L"ColorKey", ColorKey);
@@ -2758,16 +2782,18 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		
 		reg->Save(L"Monospace", isMonospace);
 		
-		reg->Save(L"BackGround Image show", isShowBgImage);		
-		reg->Save(L"BackGround Image", sBgImage);		
-		reg->Save(L"bgImageDarker", bgImageDarker);		
-		reg->Save(L"bgImageColors", nBgImageColors);		
-		reg->Save(L"bgOperation", bgOperation);		
-		reg->Save(L"bgPluginAllowed", isBgPluginAllowed);		
-		reg->Save(L"AlphaValue", nTransparent);		
-		//reg->Save(L"UseColorKey", isColorKey);		
-		//reg->Save(L"ColorKey", ColorKey);		
-		reg->Save(L"UserScreenTransparent", isUserScreenTransparent);		
+		reg->Save(L"BackGround Image show", isShowBgImage);
+		reg->Save(L"BackGround Image", sBgImage);
+		reg->Save(L"bgImageDarker", bgImageDarker);
+		reg->Save(L"bgImageColors", nBgImageColors);
+		reg->Save(L"bgOperation", bgOperation);
+		reg->Save(L"bgPluginAllowed", isBgPluginAllowed);
+		reg->Save(L"AlphaValue", nTransparent);
+		reg->Save(L"AlphaValueSeparate", isTransparentSeparate);
+		reg->Save(L"AlphaValueInactive", nTransparentInactive);
+		//reg->Save(L"UseColorKey", isColorKey);
+		//reg->Save(L"ColorKey", ColorKey);
+		reg->Save(L"UserScreenTransparent", isUserScreenTransparent);
 		reg->Save(L"ColorKeyTransparent", isColorKeyTransparent);
 		reg->Save(L"ColorKeyValue", nColorKeyValue);
 		DWORD saveMode = (ghWnd == NULL) 

@@ -26,6 +26,10 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifdef _DEBUG
+#define USE_LOCK_SECTION
+#endif
+
 #define HIDE_USE_EXCEPTION_INFO
 #include <windows.h>
 #include "MAssert.h"
@@ -666,6 +670,20 @@ bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info)
 	return bFound;
 }
 
+bool IsFarExe(LPCWSTR asModuleName)
+{
+	if (asModuleName && *asModuleName)
+	{
+		LPCWSTR pszName = PointToName(asModuleName);
+		if (lstrcmpi(pszName, L"far.exe") == 0 || lstrcmpi(pszName, L"far") == 0
+			|| lstrcmpi(pszName, L"far64.exe") == 0 || lstrcmpi(pszName, L"far64") == 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 // ѕроверить, валиден ли модуль?
 bool IsModuleValid(HMODULE module)
 {
@@ -1053,6 +1071,19 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 	_ASSERTE(asCmdLine && *asCmdLine);
 	rbRootIsCmdExe = TRUE;
 
+#ifdef _DEBUG
+	// Ёто минимальные проверки, собственно к коду - не относ€тс€
+	wchar_t szDbgFirst[MAX_PATH+1];
+	bool bIsBatch = false;
+	{
+		LPCWSTR psz = asCmdLine;
+		NextArg(&psz, szDbgFirst);
+		psz = PointToExt(szDbgFirst);
+		if (lstrcmpi(psz, L".cmd")==0 || lstrcmpi(psz, L".bat")==0)
+			bIsBatch = true;
+	}
+#endif
+
 	memset(szExe, 0, sizeof(szExe));
 
 	if (!asCmdLine || *asCmdLine == 0)
@@ -1316,6 +1347,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 	{
 		rbRootIsCmdExe = TRUE; // уже должен быть выставлен, но проверим
 		rbAlwaysConfirmExit = TRUE; rbAutoDisableConfirmExit = FALSE;
+		_ASSERTE(!bIsBatch);
 		return FALSE; // уже указан командный процессор, cmd.exe в начало добавл€ть не нужно
 	}
 
@@ -1339,12 +1371,14 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 	{
 		rbAutoDisableConfirmExit = TRUE;
 		rbRootIsCmdExe = FALSE; // FAR!
+		_ASSERTE(!bIsBatch);
 		return FALSE; // уже указан командный процессор, cmd.exe в начало добавл€ть не нужно
 	}
 
 	if (IsExecutable(szExe))
 	{
 		rbRootIsCmdExe = FALSE; // ƒл€ других программ - буфер не включаем
+		_ASSERTE(!bIsBatch);
 		return FALSE; // «апускаетс€ конкретна€ консольна€ программа. cmd.exe не требуетс€
 	}
 
@@ -2272,6 +2306,7 @@ MSection::MSection()
 #endif
 	ZeroStruct(mn_LockedTID); ZeroStruct(mn_LockedCount);
 	InitializeCriticalSection(&m_cs);
+	InitializeCriticalSection(&m_lock_cs);
 	mh_ReleaseEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	_ASSERTEX(mh_ReleaseEvent!=NULL);
 
@@ -2280,12 +2315,25 @@ MSection::MSection()
 MSection::~MSection()
 {
 	DeleteCriticalSection(&m_cs);
+	DeleteCriticalSection(&m_lock_cs);
 
 	if (mh_ReleaseEvent)
 	{
 		CloseHandle(mh_ReleaseEvent); mh_ReleaseEvent = NULL;
 	}
 };
+void MSection::Process_Lock()
+{
+	#ifdef USE_LOCK_SECTION
+	EnterCriticalSection(&m_lock_cs);
+	#endif
+}
+void MSection::Process_Unlock()
+{
+	#ifdef USE_LOCK_SECTION
+	LeaveCriticalSection(&m_lock_cs);
+	#endif
+}
 void MSection::ThreadTerminated(DWORD dwTID)
 {
 	for (int i=1; i<countof(mn_LockedTID); i++)
@@ -2305,6 +2353,8 @@ void MSection::ThreadTerminated(DWORD dwTID)
 };
 void MSection::AddRef(DWORD dwTID)
 {
+	Process_Lock();
+
 	#ifdef _DEBUG
 	int dbgCurLockCount = 0;
 	if (mn_Locked == 0)
@@ -2356,9 +2406,13 @@ void MSection::AddRef(DWORD dwTID)
 	{
 		_ASSERTEX(j != -1);
 	}
+
+	Process_Unlock();
 };
 int MSection::ReleaseRef(DWORD dwTID)
 {
+	Process_Lock();
+
 	_ASSERTEX(mn_Locked>0);
 	int nInThreadLeft = 0;
 
@@ -2405,6 +2459,8 @@ int MSection::ReleaseRef(DWORD dwTID)
 		}
 		#endif
 	}
+
+	Process_Unlock();
 
 	return nInThreadLeft;
 };
@@ -2562,19 +2618,20 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 	else // abExclusive
 	{
 		// “ребуетс€ Exclusive Lock
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		if (mb_Exclusive)
 		{
 			// Ётого надо старатьс€ избегать
 			DEBUGSTR(L"!!! Exclusive lock found in other thread\n");
 		}
+        #endif
 
-#endif
 		// ≈сли есть ExclusiveLock (в другой нити) - дождетс€ сама EnterCriticalSection
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		BOOL lbPrev = mb_Exclusive;
 		DWORD nPrevTID = mn_TID;
-#endif
+		#endif
+
 		// —разу установим mb_Exclusive, чтобы в других нит€х случайно не прошел nonexclusive lock
 		// иначе может получитьс€, что nonexclusive lock мешает выполнить exclusive lock (ждут друг друга)
 		mb_Exclusive = TRUE;
@@ -2619,6 +2676,8 @@ void MSection::Unlock(BOOL abExclusive)
 
 	if (abExclusive)
 	{
+		//Process_Lock();
+
 		_ASSERTEX(mn_TID == dwTID && mb_Exclusive);
 		_ASSERTEX(mn_LockedTID[0] == dwTID);
 		#ifdef _DEBUG
@@ -2635,6 +2694,8 @@ void MSection::Unlock(BOOL abExclusive)
 			_ASSERTEX(mn_LockedCount[0]>0);
 		}
 		LeaveCriticalSection(&m_cs);
+
+		//Process_Unlock();
 	}
 	else
 	{
