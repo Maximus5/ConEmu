@@ -10,6 +10,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[+] Hyperlink drops
+[+] -new_console:d[DIR]
+
+
 2012.06.30
 [+] Page 'Transparency', 'Use separate value'.
 [%] После закрытия консоли (не последней) на статусной строке не обновлялось поле 'ActiveCon/TotalCount'.
@@ -22,9 +26,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 	 Type=0: remove progress.
 	 Type=1: set progress value to <Value> (0-100).
 	 Type=2: set error state in progress.
-[+] Hyperlink drops
-[+] -new_console:d[DIR]
-[+] На ярлык ConEmu (или сам ConEmu.exe) можно набросить один или несколько ярлыков программ.
+[+] На ярлык ConEmu (или сам ConEmu.exe в проводнике) можно набросить один или несколько ярлыков программ.
     Каждая запустится в своей вкладке.
     Исключение - если в в настройке ConEmu "Startup" -> "Command line" указан "far.exe". В этом
     случае строка запуска "подклеивается" к "far.exe".
