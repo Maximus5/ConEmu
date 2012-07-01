@@ -41,8 +41,10 @@ private:
 	
 	LPSTR  mpsz_TempRetFile;
 	LPSTR  mpsz_TempRetParam;
+	LPSTR  mpsz_TempRetDir;
 	LPWSTR mpwsz_TempRetFile;
 	LPWSTR mpwsz_TempRetParam;
+	LPWSTR mpwsz_TempRetDir;
 	
 	// Копии для ShellExecuteEx - менять мы можем только свою память
 	LPSHELLEXECUTEINFOA mlp_ExecInfoA, mlp_SaveExecInfoA;
@@ -68,7 +70,7 @@ private:
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd, // или Shell & Create флаги
 				HANDLE* lphStdIn, HANDLE* lphStdOut, HANDLE* lphStdErr,
-				LPWSTR* psFile, LPWSTR* psParam);
+				LPWSTR* psFile, LPWSTR* psParam, LPWSTR* psStartDir);
 	BOOL ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole,
 				LPCWSTR asFile, LPCWSTR asParam, /*LPCWSTR asBaseDir,*/
 				LPCWSTR asExeFile, DWORD& ImageBits, DWORD& ImageSubsystem,
@@ -87,12 +89,12 @@ public:
 	~CShellProc();
 public:
 	// Эти функции возвращают TRUE, если команда обрабатывается (нужно будет делать Inject)
-	BOOL OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asParam, DWORD* anFlags, DWORD* anShowCmd);
-	BOOL OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asParam, DWORD* anFlags, DWORD* anShowCmd);
+	BOOL OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asDir, LPCSTR* asParam, DWORD* anFlags, DWORD* anShowCmd);
+	BOOL OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asDir, LPCWSTR* asParam, DWORD* anFlags, DWORD* anShowCmd);
 	BOOL OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo);
 	BOOL OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo);
-	void OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, DWORD* anCreationFlags, LPSTARTUPINFOA lpSI);
-	void OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, DWORD* anCreationFlags, LPSTARTUPINFOW lpSI);
+	void OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOA lpSI);
+	void OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOW lpSI);
 	// Вызывается после успешного создания процесса
 	void OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI);
 	void OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess);

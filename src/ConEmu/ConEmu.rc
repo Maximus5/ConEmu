@@ -210,22 +210,23 @@ BEGIN
     EDITTEXT        tInsideShell,122,44,195,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Register",bInsideRegister,212,61,50,14
     PUSHBUTTON      "Unregister",bInsideUnregister,267,61,50,14
-    GROUPBOX        "ConEmu Here - Explorer context menu integration",IDC_STATIC,4,84,319,81
-    LTEXT           "Context menu item name:",IDC_STATIC,11,97,101,8
-    EDITTEXT        tHereName,122,95,195,13,ES_AUTOHSCROLL
-    LTEXT           "Separate configuration name:",IDC_STATIC,11,113,101,8
-    EDITTEXT        tHereConfig,122,111,195,13,ES_AUTOHSCROLL
-    LTEXT           "Shell (cmd, powershell, bash):",IDC_STATIC,11,129,101,8
-    EDITTEXT        tHereShell,122,127,195,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Register",bHereRegister,213,143,50,14
-    PUSHBUTTON      "Unregister",bHereUnregister,267,143,50,14
-    GROUPBOX        "Automatic attach of cmd & Tcc/Le to ConEmu (ConEmu will be started if not found)",IDC_STATIC,4,175,319,34
-    LTEXT           "Command:",IDC_STATIC,11,190,35,8
-    EDITTEXT        IDC_EDIT4,50,188,159,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Register",bCmdAutoRegister,213,187,50,14
-    PUSHBUTTON      "Unregister",bCmdAutoUnregister,267,187,50,14
+    GROUPBOX        "ConEmu Here - Explorer context menu integration",IDC_STATIC,4,84,319,81,WS_DISABLED
+    LTEXT           "Context menu item name:",IDC_STATIC,11,97,101,8,WS_DISABLED
+    EDITTEXT        tHereName,122,95,195,13,ES_AUTOHSCROLL | WS_DISABLED
+    LTEXT           "Separate configuration name:",IDC_STATIC,11,113,101,8,WS_DISABLED
+    EDITTEXT        tHereConfig,122,111,195,13,ES_AUTOHSCROLL | WS_DISABLED
+    LTEXT           "Shell (cmd, powershell, bash):",IDC_STATIC,11,129,101,8,WS_DISABLED
+    EDITTEXT        tHereShell,122,127,195,13,ES_AUTOHSCROLL | WS_DISABLED
+    PUSHBUTTON      "Register",bHereRegister,213,143,50,14,WS_DISABLED
+    PUSHBUTTON      "Unregister",bHereUnregister,267,143,50,14,WS_DISABLED
+    GROUPBOX        "Automatic attach of cmd & Tcc/Le to ConEmu (ConEmu will be started if not found)",IDC_STATIC,4,168,319,34,WS_DISABLED
+    LTEXT           "Command:",IDC_STATIC,11,183,35,8,WS_DISABLED
+    EDITTEXT        IDC_EDIT4,51,181,158,13,ES_AUTOHSCROLL | WS_DISABLED
+    PUSHBUTTON      "Register",bCmdAutoRegister,213,180,50,14,WS_DISABLED
+    PUSHBUTTON      "Unregister",bCmdAutoUnregister,267,180,50,14,WS_DISABLED
     CONTROL         "Sync current directory (Explorer -> ConEmu)",cbInsideSyncDir,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,63,159,10
+    LTEXT           "This settings page in under development",IDC_STATIC,5,213,313,8
 END
 
 IDD_SPG_STARTUP DIALOGEX 0, 0, 328, 235
@@ -357,15 +358,15 @@ BEGIN
     CONTROL         "Extend foreground colors with background",cbExtendColors,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,81,161,10
     COMBOBOX        lbExtendIdx,192,79,45,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Graphic enhancement",IDC_STATIC,4,172,319,57
+    GROUPBOX        "Graphic enhancement",IDC_STATIC,4,172,319,29
     LTEXT           "Schemes:",IDC_STATIC,7,159,35,8
     COMBOBOX        lbDefaultColors,47,157,171,59,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "TrueMod (24bit color) support",cbTrueColorer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,189,215,129,8
-    CONTROL         "Fade when inactive",cbFadeInactive,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,215,78,8
-    RTEXT           "Low:",IDC_STATIC,87,215,19,8
-    EDITTEXT        tFadeLow,109,213,22,12,ES_AUTOHSCROLL
-    RTEXT           "High:",IDC_STATIC,136,215,20,8
-    EDITTEXT        tFadeHigh,158,213,20,12,ES_AUTOHSCROLL
+    CONTROL         "TrueMod (24bit color) support",cbTrueColorer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,189,185,129,8
+    CONTROL         "Fade when inactive",cbFadeInactive,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,185,78,8
+    RTEXT           "Low:",IDC_STATIC,87,185,19,8
+    EDITTEXT        tFadeLow,109,183,22,12,ES_AUTOHSCROLL
+    RTEXT           "High:",IDC_STATIC,136,185,20,8
+    EDITTEXT        tFadeHigh,158,183,20,12,ES_AUTOHSCROLL
     PUSHBUTTON      "Save",cbColorSchemeSave,221,156,50,14,WS_DISABLED
     PUSHBUTTON      "Delete...",cbColorSchemeDelete,273,156,50,14,WS_DISABLED
 END
@@ -494,7 +495,7 @@ BEGIN
     EDITTEXT        tHideCaptionAlwaysDelay,183,214,40,12,ES_AUTOHSCROLL
     EDITTEXT        tHideCaptionAlwaysDissapear,277,214,40,12,ES_AUTOHSCROLL
     CONTROL         "Confirm close console",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,66,87,8
-    CONTROL         "ANSI X3.64 / xterm 256color",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,129,119,8
+    CONTROL         "ANSI X3.64 / xterm 256 colors",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,129,119,8
     GROUPBOX        "Mouse options",IDC_STATIC,4,1,319,28
     CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,119,8
     CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTO3STATE | WS_TABSTOP,10,183,117,8

@@ -97,14 +97,18 @@ BOOL RConStartArgs::CheckUserToken(HWND hPwd)
 	return TRUE;
 }
 
-void RConStartArgs::ProcessNewConArg()
+// Returns ">0" - when changes was made
+//  0 - no changes
+// -1 - error
+int RConStartArgs::ProcessNewConArg()
 {
 	if (!pszSpecialCmd || !*pszSpecialCmd)
 	{
 		_ASSERTE(pszSpecialCmd && *pszSpecialCmd);
-		return;
+		return -1;
 	}
 
+	int nChanges = 0;
 	
 	// 120115 - Если первый аргумент - "ConEmu.exe" или "ConEmu64.exe" - не обрабатывать "-cur_console" и "-new_console"
 	{
@@ -118,7 +122,7 @@ void RConStartArgs::ProcessNewConArg()
 				|| lstrcmpi(pszTemp, L"ConEmu64.exe") == 0
 				|| lstrcmpi(pszTemp, L"ConEmu64") == 0)
 			{
-				return;
+				return 0;
 			}
 		}
 	}
@@ -131,7 +135,11 @@ void RConStartArgs::ProcessNewConArg()
 	int nNewConLen = lstrlen(pszNewCon);
 	_ASSERTE(lstrlen(pszCurCon)==nNewConLen);
 	wchar_t* pszFind;
-	while ((pszFind = wcsstr(pszSpecialCmd, pszNewCon)) != NULL || (pszFind = wcsstr(pszSpecialCmd, pszCurCon)) != NULL)
+	bool bStop = false;
+
+	while (!bStop
+		&& ((pszFind = wcsstr(pszSpecialCmd, pszNewCon)) != NULL || (pszFind = wcsstr(pszSpecialCmd, pszCurCon)) != NULL)
+		)
 	{
 		// Проверка валидности
 		_ASSERTE(pszFind > pszSpecialCmd);
@@ -159,12 +167,24 @@ void RConStartArgs::ProcessNewConArg()
 			}
 			else
 			{
+				if (*pszEnd == L':')
+				{
+					pszEnd++;
+				}
+				else
+				{
+					_ASSERTE(*pszEnd == L':');
+				}
+
 				// Обработка доп.параметров -new_console:xxx
 				bool lbReady = false;
 				while (!lbReady && *pszEnd)
 				{
 					switch (*(pszEnd++))
 					{
+					//case L'-':
+					//	bStop = true; // следующие "-new_console" - не трогать!
+					//	break;
 					case L'"':
 					case L' ':
 					case 0:
@@ -206,6 +226,27 @@ void RConStartArgs::ProcessNewConArg()
 					case L'c':
 						// c - принудительно включить "Press Enter or Esc to close console"
 						eConfirmation = eConfAlways;
+						break;
+					case L'd':
+						// d:<StartupDir>. MUST be last options
+						{
+							if (*pszEnd == L':')
+								pszEnd++;
+							const wchar_t* pszDir = pszEnd;
+							while ((*pszEnd) && (*pszEnd != L' ') && (*pszEnd != L'"'))
+								pszEnd++;
+							if (pszEnd > pszDir)
+							{
+								size_t cchLen = pszEnd - pszDir;
+								SafeFree(pszStartupDir);
+								pszStartupDir = (wchar_t*)malloc((cchLen+1)*sizeof(*pszStartupDir));
+								if (pszStartupDir)
+								{
+									wmemmove(pszStartupDir, pszDir, cchLen);
+									pszStartupDir[cchLen] = 0;
+								}
+							}
+						}
 						break;
 					case L'u':
 						// u - ConEmu choose user dialog
@@ -308,12 +349,16 @@ void RConStartArgs::ProcessNewConArg()
 					pszFind--;
 				//wmemset(pszFind, L' ', pszEnd - pszFind);
 				wmemmove(pszFind, pszEnd, (lstrlen(pszEnd)+1));
+				nChanges++;
 			}
 			else
 			{
 				_ASSERTE(pszEnd > pszFind);
 				*pszFind = 0;
+				nChanges++;
 			}
 		}
 	}
+
+	return nChanges;
 }

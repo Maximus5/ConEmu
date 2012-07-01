@@ -58,6 +58,7 @@ $(OBJDIR)\Memory.obj \
 $(OBJDIR)\MSecurity.obj \
 $(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\GuiAttach.obj \
+$(OBJDIR)\RConStartArgs.obj \
 $(OBJDIR)\UserImp.obj
 
 USERLIBS = 
@@ -299,5 +300,7 @@ $(OBJDIR)\MSecurity.obj: ../common/MSecurity.cpp
 $(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
 $(OBJDIR)\GuiAttach.obj: GuiAttach.cpp GuiAttach.h
+
+$(OBJDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
 
 $(OBJDIR)\UserImp.obj: UserImp.cpp UserImp.h

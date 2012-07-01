@@ -244,6 +244,7 @@ BEGIN
     vkPicViewSlide          "PicView Far plugin: Slideshow start"
     vkPicViewSlower         "PicView Far plugin: Slideshow slower"
     vkRDragKey              "RDrag modifier"
+	vkRenameTab             "Rename active tab (for Far Manager only first tab may be renamed)"
     vkScreenshot            "Make screenshot of active window"
     vkScreenshotFull        "Make screenshot of entire desktop"
     vkShowStatusBar         "Show status bar"

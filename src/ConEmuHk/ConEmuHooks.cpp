@@ -800,7 +800,7 @@ BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LP
 	}
 
 	CShellProc* sp = new CShellProc();
-	sp->OnCreateProcessA(&lpApplicationName, (LPCSTR*)&lpCommandLine, &dwCreationFlags, lpStartupInfo);
+	sp->OnCreateProcessA(&lpApplicationName, (LPCSTR*)&lpCommandLine, &lpCurrentDirectory, &dwCreationFlags, lpStartupInfo);
 	if ((dwCreationFlags & CREATE_SUSPENDED) == 0)
 	{
 		DebugString(L"CreateProcessA without CREATE_SUSPENDED Flag!\n");
@@ -843,7 +843,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	}
 
 	CShellProc* sp = new CShellProc();
-	sp->OnCreateProcessW(&lpApplicationName, (LPCWSTR*)&lpCommandLine, &dwCreationFlags, lpStartupInfo);
+	sp->OnCreateProcessW(&lpApplicationName, (LPCWSTR*)&lpCommandLine, &lpCurrentDirectory, &dwCreationFlags, lpStartupInfo);
 	if ((dwCreationFlags & CREATE_SUSPENDED) == 0)
 	{
 		DebugString(L"CreateProcessW without CREATE_SUSPENDED Flag!\n");
@@ -1263,7 +1263,7 @@ HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, L
 	
 	//gbInShellExecuteEx = TRUE;
 	CShellProc* sp = new CShellProc();
-	sp->OnShellExecuteA(&lpOperation, &lpFile, &lpParameters, NULL, (DWORD*)&nShowCmd);
+	sp->OnShellExecuteA(&lpOperation, &lpFile, &lpParameters, &lpDirectory, NULL, (DWORD*)&nShowCmd);
 
 	HINSTANCE lhRc;
 	lhRc = F(ShellExecuteA)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
@@ -1295,7 +1295,7 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 	
 	//gbInShellExecuteEx = TRUE;
 	CShellProc* sp = new CShellProc();
-	sp->OnShellExecuteW(&lpOperation, &lpFile, &lpParameters, NULL, (DWORD*)&nShowCmd);
+	sp->OnShellExecuteW(&lpOperation, &lpFile, &lpParameters, &lpDirectory, NULL, (DWORD*)&nShowCmd);
 
 	HINSTANCE lhRc;
 	lhRc = F(ShellExecuteW)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
@@ -2633,6 +2633,7 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	if (GetConsoleScreenBufferInfo(hConOut, &csbi) && csbi.dwSize.X && csbi.dwSize.Y)
 	{
+		bool bHomeEnd = false;
 		lbRc = TRUE;
 
 		nChars = (csbi.dwSize.X * (yPos - csbi.dwCursorPosition.Y))
@@ -2640,9 +2641,132 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 
 		if (nChars != 0)
 		{
-			int nCount = (nChars < 0) ? (-nChars) : nChars;
-			bool bHomeEnd = false;
-			if (nCount > (csbi.dwSize.X * (csbi.srWindow.Bottom - csbi.srWindow.Top)))
+			char* pszLine = (char*)malloc(csbi.dwSize.X+1);
+			wchar_t* pwszLine = (wchar_t*)malloc((csbi.dwSize.X+1)*sizeof(*pwszLine));
+			if (pszLine && pwszLine)
+			{
+				int nChecked = 0;
+				int iCount;
+				DWORD nRead;
+				COORD cr;
+				SHORT nPrevSpaces = 0, nPrevChars = 0;
+				SHORT nWhole = 0, nPrint = 0;
+				bool bDBCS = false;
+				// Если в консоли выбрана DBCS кодировка - там все не просто
+				DWORD nCP = GetConsoleOutputCP();
+				if (nCP && nCP != CP_UTF7 && nCP != CP_UTF8 && nCP != 1200 && nCP != 1201)
+				{
+					CPINFO cp = {};
+					if (GetCPInfo(nCP, &cp) && (cp.MaxCharSize > 1))
+					{
+						bDBCS = true;
+					}
+				}
+
+				TODO("DBCS!!!");
+				// Ok, теперь нужно проверить, не был ли клик сделан "за пределами строки ввода"
+				
+				SHORT y = csbi.dwCursorPosition.Y;
+				while (true)
+				{
+					cr.Y = y;
+					if (nChars > 0)
+					{
+						cr.X = (y == csbi.dwCursorPosition.Y) ? csbi.dwCursorPosition.X : 0;
+						iCount = (y == yPos) ? (xPos - cr.X) : (csbi.dwSize.X - cr.X);
+						if (iCount < 0)
+							break;
+					}
+					else
+					{
+						cr.X = 0;
+						iCount = ((y == csbi.dwCursorPosition.Y) ? csbi.dwCursorPosition.X : csbi.dwSize.X)
+							- ((y == yPos) ? xPos : 0);
+						if (iCount < 0)
+							break;
+					}
+
+					// Считать строку
+					if (bDBCS)
+					{
+						// На DBCS кодировках "ReadConsoleOutputCharacterW" фигню возвращает
+						if (!ReadConsoleOutputCharacterA(hConOut, pszLine, iCount, cr, &nRead) || !nRead)
+							break;
+						nRead = MultiByteToWideChar(nCP, 0, pszLine, nRead, pwszLine, csbi.dwSize.X);
+						if (((int)nRead) <= 0)
+							break;
+					}
+					else
+					{
+						if (!ReadConsoleOutputCharacterW(hConOut, pwszLine, iCount, cr, &nRead) || !nRead)
+							break;
+					}
+					if (nRead > (DWORD)csbi.dwSize.X)
+					{
+						_ASSERTEX(nRead <= (DWORD)csbi.dwSize.X);
+						break;
+					}
+					pwszLine[nRead] = 0;
+
+					nWhole = nPrint = (SHORT)nRead;
+					// Сначала посмотреть сколько в конце строки пробелов
+					while ((nPrint > 0) && (pwszLine[nPrint-1] == L' '))
+					{
+						nPrint--;
+					}
+
+					// В каком направлении идем
+					if (nChars > 0) // Вниз
+					{
+						// Если знаков (не пробелов) больше 0 - учитываем и концевые пробелы предыдущей строки
+						if (nPrint > 0)
+						{
+							nChecked += nPrevSpaces + nPrint;
+						}
+						else
+						{
+							// Если на предыдущей строке значащих символов не было - завершаем
+							if (nPrevChars <= 0)
+								break;
+						}
+					}
+					else // Вверх
+					{
+						if (nPrint <= 0)
+							break; // На первой же пустой строке мы останавливаемся
+						nChecked += nWhole;
+					}
+					nPrevChars = nPrint;
+					nPrevSpaces = nWhole - nPrint;
+					_ASSERTEX(nPrevSpaces>=0);
+					
+
+					// Цикл + условие
+					if (nChars > 0)
+					{
+						if ((++y) > yPos)
+							break;
+					}
+					else
+					{
+						if ((--y) < yPos)
+							break;
+					}
+				}
+				SafeFree(pszLine);
+				SafeFree(pwszLine);
+
+				// Changed?
+				nChars = (nChars > 0) ? nChecked : -nChecked;
+				//nChars = (csbi.dwSize.X * (yPos - csbi.dwCursorPosition.Y))
+				//	+ (xPos - csbi.dwCursorPosition.X);
+			}
+		}
+
+		if (nChars != 0)
+		{
+			int nCount = bHomeEnd ? 1 : (nChars < 0) ? (-nChars) : nChars;
+			if (!bHomeEnd && (nCount > (csbi.dwSize.X * (csbi.srWindow.Bottom - csbi.srWindow.Top))))
 			{
 				bHomeEnd = true;
 				nCount = 1;

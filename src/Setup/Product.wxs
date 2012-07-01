@@ -139,7 +139,7 @@
             <?include ConEmu_DefaultPathOrder.wxi ?>
 
             <Custom Action="UpdateFeatureState" Before="InstallValidate" />
-            <RemoveExistingProducts After="InstallInitialize"/>
+            <RemoveExistingProducts After="InstallFinalize"/>
         </InstallExecuteSequence>
         <InstallUISequence>
             <?include ConEmu_DefaultPathOrder.wxi ?>

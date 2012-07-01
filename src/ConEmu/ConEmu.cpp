@@ -4958,7 +4958,8 @@ void CConEmuMain::CheckTopMostState()
 	{
 		if (IDYES == MessageBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
 		{
-	        SetWindowLong(ghWnd, GWL_EXSTYLE, (dwStyleEx & ~WS_EX_TOPMOST));
+	        //SetWindowLong(ghWnd, GWL_EXSTYLE, (dwStyleEx & ~WS_EX_TOPMOST));
+			OnAlwaysOnTop();
 		}
 		else
 		{
@@ -5681,7 +5682,7 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, BOOL abAllowScripts
 		}
 
 		// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
-		wchar_t* pszDataW = LoadConsoleBatch(args->pszSpecialCmd);
+		wchar_t* pszDataW = LoadConsoleBatch(args->pszSpecialCmd, &args->pszStartupDir);
 		if (!pszDataW)
 			return NULL;
 
@@ -9872,7 +9873,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	return 0;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource)
+wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/)
 {
 	wchar_t* pszDataW = NULL;
 
@@ -9884,7 +9885,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource)
 	else if ((*asSource == TaskBracketLeft) || (lstrcmp(asSource, AutoStartTaskName) == 0))
 	{
 		// Имя задачи
-		pszDataW = LoadConsoleBatch_Task(asSource);
+		pszDataW = LoadConsoleBatch_Task(asSource, ppszStartupDir);
 	}
 	else if (*asSource == DropLnkPrefix)
 	{
@@ -10106,7 +10107,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 	return pszDataW;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource)
+wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/)
 {
 	wchar_t* pszDataW = NULL;
 
@@ -10122,6 +10123,23 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource)
 			if (lstrcmpi(pGrp->pszName, szName) == 0)
 			{
 				pszDataW = lstrdup(pGrp->pszCommands);
+				if (ppszStartupDir && !*ppszStartupDir && pGrp->pszGuiArgs)
+				{
+					LPCWSTR pszArgs = pGrp->pszGuiArgs;
+					wchar_t szArg[MAX_PATH+1];
+					while (0 == NextArg(&pszArgs, szArg))
+					{
+						if (lstrcmpi(szArg, L"/DIR") == 0)
+						{
+							if (0 == NextArg(&pszArgs, szArg) && *szArg)
+							{
+								_ASSERTE(*ppszStartupDir == NULL); // Если юзер ввел папку сам - не менять
+								*ppszStartupDir = lstrdup(szArg);
+							}
+							break;
+						}
+					}
+				}
 				break;
 			}
 		}

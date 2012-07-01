@@ -63,5 +63,5 @@ struct RConStartArgs
 
 	BOOL CheckUserToken(HWND hPwd);
 
-	void ProcessNewConArg();
+	int ProcessNewConArg();
 };

@@ -3225,7 +3225,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	RConStartArgs args;
 	args.pszSpecialCmd = gpszRunCmd;
 	args.ProcessNewConArg();
-	args.pszSpecialCmd = NULL;
+	args.pszSpecialCmd = NULL; // Чтобы не разрушилась память отведенная в gpszRunCmd
+	// Если указана рабочая папка
+	if (args.pszStartupDir)
+	{
+		SetCurrentDirectory(args.pszStartupDir);
+	}
+	//
 	gbRunInBackgroundTab = args.bBackgroundTab;
 	if (args.bBufHeight)
 	{

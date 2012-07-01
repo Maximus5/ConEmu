@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuHk"
 	ProjectGUID="{525F3223-BC12-479E-8487-5FA4406461F4}"
 	RootNamespace="ConEmuHk"
@@ -1508,6 +1508,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\RConStartArgs.h"
+				>
+			</File>
+			<File
 				RelativePath=".\RegHooks.h"
 				>
 			</File>
@@ -1601,6 +1605,10 @@
 			</File>
 			<File
 				RelativePath="..\common\MStrSafe.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\RConStartArgs.cpp"
 				>
 			</File>
 			<File

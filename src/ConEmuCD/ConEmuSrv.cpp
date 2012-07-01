@@ -235,7 +235,7 @@ int AttachRootProcess()
 {
 	DWORD dwErr = 0;
 
-	_ASSERTE(gpSrv->hRootProcess == NULL && "Must not be opened yet");
+	_ASSERTE((gpSrv->hRootProcess == NULL || gpSrv->hRootProcess == GetCurrentProcess()) && "Must not be opened yet");
 
 	if (!gpSrv->bDebuggerActive && !IsWindowVisible(ghConWnd) && !(gpSrv->dwGuiPID || gbAttachFromFar))
 	{
