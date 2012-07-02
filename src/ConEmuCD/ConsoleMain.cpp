@@ -175,6 +175,8 @@ BOOL  gbAttachFromFar = FALSE;
 BOOL  gbSkipWowChange = FALSE;
 BOOL  gbConsoleModeFlags = TRUE;
 DWORD gnConsoleModeFlags = 0; //(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
+WORD  gnDefTextColors = 0, gnDefPopupColors = 0; // Передаются через "/TA=..."
+BOOL  gbVisibleOnStartup = FALSE;
 OSVERSIONINFO gOSVer;
 WORD gnOsVer = 0x500;
 bool gbIsWine = false;
@@ -653,6 +655,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 	// Хэндл консольного окна
 	ghConWnd = GetConEmuHWND(2);
+	gbVisibleOnStartup = IsWindowVisible(ghConWnd);
 	// здесь действительно может быть NULL при запуска как detached comspec
 	//_ASSERTE(ghConWnd!=NULL);
 	//if (!ghConWnd)
@@ -2436,6 +2439,94 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
 			}
+		}
+		else if (wcsncmp(szArg, L"/TA=", 4)==0)
+		{
+			wchar_t* pszEnd = NULL;
+        	DWORD nColors = wcstoul(szArg+4, &pszEnd, 16);
+        	if (nColors)
+        	{
+        		DWORD nTextIdx = (nColors & 0xFF);
+        		DWORD nBackIdx = ((nColors >> 8) & 0xFF);
+        		DWORD nPopTextIdx = ((nColors >> 16) & 0xFF);
+        		DWORD nPopBackIdx = ((nColors >> 24) & 0xFF);
+
+        		if ((nTextIdx <= 15) && (nBackIdx <= 15) && (nTextIdx != nBackIdx))
+        			gnDefTextColors = (WORD)(nTextIdx | (nBackIdx << 4));
+
+        		if ((nPopTextIdx <= 15) && (nPopBackIdx <= 15) && (nPopTextIdx != nPopBackIdx))
+        			gnDefPopupColors = (WORD)(nPopTextIdx | (nPopBackIdx << 4));
+
+        		if (gnDefTextColors || gnDefPopupColors)
+        		{
+        			HANDLE hConOut = ghConOut;
+        			BOOL bPassed = FALSE;
+
+        			if (gnDefPopupColors && (gnOsVer >= 0x600))
+        			{
+	        			struct MY_CONSOLE_SCREEN_BUFFER_INFOEX
+	        			{
+							ULONG      cbSize;
+							COORD      dwSize;
+							COORD      dwCursorPosition;
+							WORD       wAttributes;
+							SMALL_RECT srWindow;
+							COORD      dwMaximumWindowSize;
+							WORD       wPopupAttributes;
+							BOOL       bFullscreenSupported;
+							COLORREF   ColorTable[16];
+						};
+						HMODULE hKernel = GetModuleHandle(L"Kernel32.dll");
+						if (hKernel)
+						{
+							typedef BOOL (WINAPI* GetConsoleScreenBufferInfoEx_t)(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
+							GetConsoleScreenBufferInfoEx_t _GetConsoleScreenBufferInfoEx = (GetConsoleScreenBufferInfoEx_t)GetProcAddress(hKernel, "GetConsoleScreenBufferInfoEx");
+							typedef BOOL (WINAPI* SetConsoleScreenBufferInfoEx_t)(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
+							SetConsoleScreenBufferInfoEx_t _SetConsoleScreenBufferInfoEx = (SetConsoleScreenBufferInfoEx_t)GetProcAddress(hKernel, "SetConsoleScreenBufferInfoEx");
+
+							CONSOLE_SCREEN_BUFFER_INFO csbi0 = {};
+							GetConsoleScreenBufferInfo(hConOut, &csbi0);
+
+							MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
+							if (_GetConsoleScreenBufferInfoEx && _SetConsoleScreenBufferInfoEx
+								&& _GetConsoleScreenBufferInfoEx(hConOut, &csbi))
+							{
+								if (gnDefTextColors)
+									csbi.wAttributes = gnDefTextColors;
+								if (gnDefPopupColors)
+									csbi.wPopupAttributes = gnDefPopupColors;
+
+								//_ASSERTE(FALSE && "Continue to SetConsoleScreenBufferInfoEx");
+
+								// Vista/Win7. _SetConsoleScreenBufferInfoEx unexpectedly SHOWS console window
+								//if (gnOsVer == 0x0601)
+								{
+									RECT rcGui = {};
+									if (gpSrv->hGuiWnd)
+										GetWindowRect(gpSrv->hGuiWnd, &rcGui);
+									//SetWindowPos(ghConWnd, HWND_BOTTOM, rcGui.left+3, rcGui.top+3, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+									SetWindowPos(ghConWnd, NULL, -30000, -30000, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+									ShowWindow(ghConWnd, SW_SHOWMINNOACTIVE);
+								}
+
+								bPassed = _SetConsoleScreenBufferInfoEx(hConOut, &csbi);
+
+								// Что-то Win7 хулиганит
+								if (!gbVisibleOnStartup)
+								{
+									ShowWindow(ghConWnd, SW_HIDE);
+								}
+							}
+						}
+					}
+
+
+					if (!bPassed && gnDefTextColors)
+					{
+        				SetConsoleTextAttribute(hConOut, gnDefTextColors);
+    				}
+        		}
+        	}
 		}
 		else if (lstrcmpni(szArg, L"/DEBUGPID=", 10)==0)
 		{

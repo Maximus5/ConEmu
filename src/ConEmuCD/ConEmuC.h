@@ -222,7 +222,7 @@ void CheckCursorPos();
 BOOL ReloadFullConsoleInfo(BOOL abForceSend);
 DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
 //BOOL ReadConsoleData(CESERVER_CHAR* pCheck = NULL); //((LPRECT)1) или реальный LPRECT
-void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
+//void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
 int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/); // Создать необходимые события и нити
 void ServerDone(int aiRc, bool abReportShutdown = false);
 int ComspecInit();
@@ -355,6 +355,8 @@ extern BOOL gbRootIsCmdExe;
 extern BOOL gbAttachFromFar;
 extern BOOL gbConsoleModeFlags;
 extern DWORD gnConsoleModeFlags;
+extern WORD  gnDefTextColors, gnDefPopupColors;
+extern BOOL  gbVisibleOnStartup;
 
 #ifdef WIN64
 #ifndef __GNUC__

@@ -260,6 +260,10 @@ class CConEmuMain :
 			UINT nSkipEvents[2]; UINT nReplaceDblClk;
 			// не пропускать следующий клик в консоль!
 			BOOL bForceSkipActivation;
+
+			// таскание окошка за клиентскую область
+			POINT ptWndDragStart;
+			RECT  rcWndDragStart;
 		} mouse;
 		bool isPiewUpdate;
 		bool gbPostUpdateWindowSize;
@@ -499,6 +503,9 @@ class CConEmuMain :
 		RECT GetGuiClientRect();
 		RECT GetIdealRect() { return mrc_Ideal; };
 		HMENU GetSysMenu(BOOL abInitial = FALSE);
+	protected:
+		void UpdateSysMenu(HMENU hSysMenu);
+	public:
 		RECT GetVirtualScreenRect(BOOL abFullScreen);
 		DWORD_PTR GetWindowStyle();
 		DWORD_PTR GetWindowStyleEx();
@@ -654,6 +661,7 @@ class CConEmuMain :
 		LRESULT OnSetCursor(WPARAM wParam=-1, LPARAM lParam=-1);
 		LRESULT OnSize(WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
 		LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
+		LRESULT OnMoving(LPRECT prcWnd = NULL);
 		virtual LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		void OnSizePanels(COORD cr);

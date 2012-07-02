@@ -126,7 +126,7 @@ void ServerInitFont()
 	{
 		if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
 
-		SetConsoleFontSizeTo(ghConWnd, gpSrv->nConFontHeight, gpSrv->nConFontWidth, gpSrv->szConsoleFont);
+		SetConsoleFontSizeTo(ghConWnd, gpSrv->nConFontHeight, gpSrv->nConFontWidth, gpSrv->szConsoleFont, gnDefTextColors, gnDefPopupColors);
 
 		if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
 	}
@@ -788,11 +788,6 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		}
 	}
 
-	// —разу попытаемс€ поставить окну консоли флаг "OnTop"
-	if (!gbDebugProcess && !gbIsWine)
-	{
-		SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
-	}
 
 	gpSrv->osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	GetVersionEx(&gpSrv->osv);
@@ -827,10 +822,57 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		//)
 	{
 		ServerInitFont();
+
+		//bool bMovedBottom = false;
+
+		// Minimized окошко нужно развернуть!
+		// Ќе помню уже зачем, возможно, что-то с мышкой св€зано...
+		if (IsIconic(ghConWnd))
+		{
+			//WINDOWPLACEMENT wplGui = {sizeof(wplGui)};
+			//// ѕо идее, HWND гу€ нам уже должен быть известен (передан аргументом)
+			//if (gpSrv->hGuiWnd)
+			//	GetWindowPlacement(gpSrv->hGuiWnd, &wplGui);
+			//SendMessage(ghConWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+			WINDOWPLACEMENT wplCon = {sizeof(wplCon)};
+			GetWindowPlacement(ghConWnd, &wplCon);
+			//wplCon.showCmd = SW_SHOWNA;
+			////RECT rc = {wplGui.rcNormalPosition.left+3,wplGui.rcNormalPosition.top+3,wplCon.rcNormalPosition.right-wplCon.rcNormalPosition.left,wplCon.rcNormalPosition.bottom-wplCon.rcNormalPosition.top};
+			//// т.к. ниже все равно делаетс€ "SetWindowPos(ghConWnd, NULL, 0, 0, ..." - можем задвинуть подальше
+			//RECT rc = {-30000,-30000,-30000+wplCon.rcNormalPosition.right-wplCon.rcNormalPosition.left,-30000+wplCon.rcNormalPosition.bottom-wplCon.rcNormalPosition.top};
+			//wplCon.rcNormalPosition = rc;
+			////SetWindowPos(ghConWnd, HWND_BOTTOM, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
+			//SetWindowPlacement(ghConWnd, &wplCon);
+			wplCon.showCmd = SW_RESTORE;
+			SetWindowPlacement(ghConWnd, &wplCon);
+			//bMovedBottom = true;
+		}
+
+		if (!gbVisibleOnStartup && IsWindowVisible(ghConWnd))
+		{
+			ShowWindow(ghConWnd, SW_HIDE);
+			//if (bMovedBottom)
+			//{
+			//	SetWindowPos(ghConWnd, HWND_TOP, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
+			//}
+		}
+
 		// -- чтобы на некоторых системах не возникала проблема с позиционированием -> {0,0}
 		// Issue 274: ќкно реальной консоли позиционируетс€ в неудобном месте
 		SetWindowPos(ghConWnd, NULL, 0, 0, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 	}
+
+	// —разу попытаемс€ поставить окну консоли флаг "OnTop"
+	if (!gbDebugProcess && !gbIsWine /*&& !gnDefPopupColors*/)
+	{
+		//if (!gbVisibleOnStartup)
+		//	ShowWindow(ghConWnd, SW_HIDE);
+		SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+	}
+	//if (!gbVisibleOnStartup && IsWindowVisible(ghConWnd))
+	//{
+	//	ShowWindow(ghConWnd, SW_HIDE);
+	//}
 
 	// ѕодготовить буфер дл€ длинного вывода
 	// RM_SERVER - создать и считать текущее содержимое консоли
@@ -994,14 +1036,14 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	// »наче - получить текущие размеры из консольного окна
 	ServerInitConsoleSize();
 
-	// Minimized окошко нужно развернуть!
-	if (IsIconic(ghConWnd))
-	{
-		WINDOWPLACEMENT wplCon = {sizeof(wplCon)};
-		GetWindowPlacement(ghConWnd, &wplCon);
-		wplCon.showCmd = SW_RESTORE;
-		SetWindowPlacement(ghConWnd, &wplCon);
-	}
+	//// Minimized окошко нужно развернуть!
+	//if (IsIconic(ghConWnd))
+	//{
+	//	WINDOWPLACEMENT wplCon = {sizeof(wplCon)};
+	//	GetWindowPlacement(ghConWnd, &wplCon);
+	//	wplCon.showCmd = SW_RESTORE;
+	//	SetWindowPlacement(ghConWnd, &wplCon);
+	//}
 
 	// —разу получить текущее состо€ние консоли
 	ReloadFullConsoleInfo(TRUE);

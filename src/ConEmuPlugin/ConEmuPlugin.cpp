@@ -230,7 +230,7 @@ DWORD GetMainThreadId();
 int gnSynchroCount = 0;
 bool gbSynchroProhibited = false;
 bool gbInputSynchroPending = false;
-void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
+//void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
 
 struct HookModeFar gFarMode = {sizeof(HookModeFar), TRUE/*bFarHookMode*/};
 extern SetFarHookMode_t SetFarHookMode;

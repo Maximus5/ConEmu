@@ -2312,6 +2312,40 @@ BOOL CRealConsole::StartProcess()
 			lpszCmd = gpSet->GetCmd();
 		_ASSERTE(lpszCmd && *lpszCmd);
 
+
+		const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetDefaultAppSettingsId());
+		_ASSERTE(pApp!=NULL);
+
+		BYTE nTextColorIdx = pApp->TextColorIdx(); // 0..15,16
+		BYTE nBackColorIdx = pApp->BackColorIdx(); // 0..15,16
+		if (nTextColorIdx <= 15 || nBackColorIdx <= 15)
+		{
+			if (nTextColorIdx >= 16) nTextColorIdx = 7;
+			if (nBackColorIdx >= 16) nBackColorIdx = 0;
+			if (nTextColorIdx == nBackColorIdx)
+				nBackColorIdx = nTextColorIdx ? 0 : 7;
+		}
+		else
+		{
+			nTextColorIdx = nBackColorIdx = 16;
+		}
+
+		BYTE nPopTextColorIdx = pApp->PopTextColorIdx(); // 0..15,16
+		BYTE nPopBackColorIdx = pApp->PopBackColorIdx(); // 0..15,16
+		if (nPopTextColorIdx <= 15 || nPopBackColorIdx <= 15)
+		{
+			if (nPopTextColorIdx >= 16) nPopTextColorIdx = 5;
+			if (nPopBackColorIdx >= 16) nPopBackColorIdx = 15;
+			if (nPopTextColorIdx == nPopBackColorIdx)
+				nPopBackColorIdx = nPopTextColorIdx ? 0 : 15;
+		}
+		else
+		{
+			nPopTextColorIdx = nPopBackColorIdx = 16;
+		}
+
+		DWORD nColors = (nTextColorIdx) | (nBackColorIdx << 8) | (nPopTextColorIdx << 16) | (nPopBackColorIdx << 24);
+
 		int nCurLen = 0;
 		int nLen = _tcslen(lpszCmd);
 		nLen += _tcslen(gpConEmu->ms_ConEmuExe) + 300 + MAX_PATH;
@@ -2344,9 +2378,10 @@ BOOL CRealConsole::StartProcess()
 		
 		nCurLen = _tcslen(psCurCmd);
 		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen)
-		          L"/GID=%i /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i",
+		          L"/GID=%i /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i /TA=%08X",
 		          GetCurrentProcessId(), (DWORD)ghWnd, nWndWidth, nWndHeight, mn_DefaultBufferHeight,
-		          gpSet->ConsoleFont.lfFaceName, gpSet->ConsoleFont.lfWidth, gpSet->ConsoleFont.lfHeight);
+		          gpSet->ConsoleFont.lfFaceName, gpSet->ConsoleFont.lfWidth, gpSet->ConsoleFont.lfHeight,
+		          nColors);
 
 		/*if (gpSet->FontFile[0]) { --  РЕГИСТРАЦИЯ ШРИФТА НА КОНСОЛЬ НЕ РАБОТАЕТ!
 		    wcscat(psCurCmd, L" \"/FF=");
@@ -4519,6 +4554,50 @@ LPCWSTR CRealConsole::GetActiveProcessName()
 void CRealConsole::ResetActiveAppSettingsId()
 {
 	mn_LastProcessNamePID = 0;
+}
+
+// Вызывается перед запуском процесса
+int CRealConsole::GetDefaultAppSettingsId()
+{
+	if (!this)
+		return -1;
+
+	LPCWSTR lpszCmd = NULL;
+	if (m_Args.pszSpecialCmd)
+		lpszCmd = m_Args.pszSpecialCmd;
+	else
+		lpszCmd = gpSet->GetCmd();
+	if (!lpszCmd || !*lpszCmd)
+		return -1;
+
+	LPCWSTR pszName = NULL;;
+	wchar_t szExe[MAX_PATH+1];
+	wchar_t szName[MAX_PATH+1];
+	LPCWSTR pszTemp = lpszCmd;
+	if (0 == NextArg(&pszTemp, szExe))
+	{
+		pszName = PointToName(szExe);
+		pszTemp = (*lpszCmd == L'"') ? NULL : PointToName(lpszCmd);
+		if (pszTemp && (wcschr(pszName, L'.') == NULL) && (wcschr(pszTemp, L'.') != NULL))
+		{
+			// Если в lpszCmd указан полный путь к запускаемому файлу без параметров и без кавычек
+			if (FileExists(lpszCmd))
+				pszName = pszTemp;
+		}
+	}
+
+	if (!pszName)
+		return -1;
+	if (wcschr(pszName, L'.') == NULL)
+	{
+		// Если расширение не указано - предположим, что это .exe
+		lstrcpyn(szName, pszName, MAX_PATH-4);
+		wcscat_c(szName, L".exe");
+		pszName = szName;
+	}
+
+	int iAppId = gpSet->GetAppSettingsId(pszName, m_Args.bRunAsAdministrator);
+	return iAppId;
 }
 
 int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName/*=NULL*/)

@@ -3705,7 +3705,7 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize)
 
 
 #ifndef CONEMU_MINIMAL
-void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName)
+void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName, WORD anTextColors /*= 0*/, WORD anPopupColors /*= 0*/)
 {
 	OSVERSIONINFO osv = {sizeof(osv)};
 	GetVersionEx(&osv);
@@ -3741,6 +3741,17 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 			gpConsoleInfoStr->Length = sizeof(CONSOLE_INFO);
 		}
 
+		if (!anTextColors)
+		{
+			CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+			GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+			anTextColors = csbi.wAttributes ? csbi.wAttributes : MAKEWORD(0x7, 0x0);
+		}
+		if (!anPopupColors)
+		{
+			anPopupColors = MAKEWORD(0x5, 0xf);
+		}
+
 		int i;
 		// get current size/position settings rather than using defaults..
 		GetConsoleSizeInfo(gpConsoleInfoStr);
@@ -3759,8 +3770,8 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		gpConsoleInfoStr->WindowPosX = rcCon.left;
 		gpConsoleInfoStr->WindowPosY = rcCon.top;
 		gpConsoleInfoStr->InsertMode				= TRUE;
-		gpConsoleInfoStr->ScreenColors				= MAKEWORD(0x7, 0x0);
-		gpConsoleInfoStr->PopupColors				= MAKEWORD(0x5, 0xf);
+		gpConsoleInfoStr->ScreenColors				= anTextColors; //MAKEWORD(0x7, 0x0);
+		gpConsoleInfoStr->PopupColors				= anPopupColors; //MAKEWORD(0x5, 0xf);
 		gpConsoleInfoStr->HistoryNoDup				= FALSE;
 		gpConsoleInfoStr->HistoryBufferSize			= 50;
 		gpConsoleInfoStr->NumberOfHistoryBuffers	= 4; //-V112

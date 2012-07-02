@@ -1747,6 +1747,8 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	CheckDlgButton(hWnd2, cbDesktopMode, gpSet->isDesktopMode);
 
+	CheckDlgButton(hWnd2, cbSnapToDesktopEdges, gpSet->isSnapToDesktopEdges);
+
 	CheckDlgButton(hWnd2, cbAlwaysOnTop, gpSet->isAlwaysOnTop);
 
 	CheckDlgButton(hWnd2, cbSleepInBackground, gpSet->isSleepInBackground);
@@ -2022,6 +2024,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 		case chk_Macro:
 			_wsprintf(szName, SKIPLEN(countof(szName)) L"Macro %02i", ppHK->DescrLangID-vkGuMacro01+1); break;
 		case chk_Modifier:
+		case chk_Modifier2:
 			wcscpy_c(szName, L"Modifier"); break;
 		case chk_NumHost:
 		case chk_ArrHost:
@@ -2125,6 +2128,11 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					VkMod = pk->VkMod;
 					bKeyListEnabled = TRUE;
 					break;
+				case chk_Modifier2:
+					pszLabel = L"Choose modifier:";
+					VkMod = pk->VkMod;
+					bModifiersEnabled = TRUE;
+					break;
 				case chk_NumHost:
 				case chk_ArrHost:
 					pszLabel = L"Choose modifiers:";
@@ -2185,7 +2193,7 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		//if (!mp_ActiveHotKey)
 		//{
 		SetDlgItemText(hWnd2, stHotKeySelect, pszLabel);
-		EnableWindow(GetDlgItem(hWnd2, stHotKeySelect), (bHotKeyEnabled==TRUE)||(bKeyListEnabled==TRUE));
+		EnableWindow(GetDlgItem(hWnd2, stHotKeySelect), (bHotKeyEnabled || bKeyListEnabled || bModifiersEnabled));
 		EnableWindow(GetDlgItem(hWnd2, lbHotKeyList), (bKeyListEnabled==TRUE));
 		EnableWindow(hHk, (bHotKeyEnabled==TRUE));
 		EnableWindow(GetDlgItem(hWnd2, stGuiMacro), (bMacroEnabled==TRUE));
@@ -2491,11 +2499,21 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 #define getB(inColorref) (byte)(inColorref >> 16)
 
 	//wchar_t temp[MAX_PATH];
+	DWORD nVal;
 
 	for(uint c = c0; c <= MAX_COLOR_EDT_ID; c++)
 		ColorSetEdit(hWnd2, c);
 
-	DWORD nVal = gpSet->AppStd.nExtendColorIdx;
+	nVal = gpSet->AppStd.nTextColorIdx;
+	FillListBox(hWnd2, lbConClrText, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	nVal = gpSet->AppStd.nBackColorIdx;
+	FillListBox(hWnd2, lbConClrBack, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	nVal = gpSet->AppStd.nPopTextColorIdx;
+	FillListBox(hWnd2, lbConClrPopText, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+	nVal = gpSet->AppStd.nPopBackColorIdx;
+	FillListBox(hWnd2, lbConClrPopBack, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+
+	nVal = gpSet->AppStd.nExtendColorIdx;
 	FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
 	gpSet->AppStd.nExtendColorIdx = nVal;
 	CheckDlgButton(hWnd2, cbExtendColors, gpSet->AppStd.isExtendColors ? BST_CHECKED : BST_UNCHECKED);
@@ -3716,6 +3734,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbDesktopMode:
 			gpSet->isDesktopMode = IsChecked(hWnd2, cbDesktopMode);
 			gpConEmu->OnDesktopMode();
+			break;
+		case cbSnapToDesktopEdges:
+			gpSet->isSnapToDesktopEdges = IsChecked(hWnd2, cbSnapToDesktopEdges);
+			if (gpSet->isSnapToDesktopEdges)
+				gpConEmu->OnMoving();
 			break;
 		case cbAlwaysOnTop:
 			gpSet->isAlwaysOnTop = IsChecked(hWnd2, cbAlwaysOnTop);
@@ -5597,6 +5620,22 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				gpSet->AppStd.nExtendColorIdx = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
 			}
+			else if (wId == lbConClrText)
+			{
+				gpSet->AppStd.nTextColorIdx = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+			}
+			else if (wId == lbConClrBack)
+			{
+				gpSet->AppStd.nBackColorIdx = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+			}
+			else if (wId == lbConClrPopText)
+			{
+				gpSet->AppStd.nPopTextColorIdx = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+			}
+			else if (wId == lbConClrPopBack)
+			{
+				gpSet->AppStd.nPopBackColorIdx = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+			}
 			else if (wId==lbDefaultColors)
 			{
 				HWND hList = GetDlgItem(hWnd2, lbDefaultColors);
@@ -5657,7 +5696,18 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						InvalidateRect(GetDlgItem(hWnd2, c0+i), 0, 1);
 					}
 
-					DWORD nVal = pPal->nExtendColorIdx;
+					DWORD nVal;
+
+					nVal = pPal->nTextColorIdx;
+					FillListBox(hWnd2, lbConClrText, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+					nVal = pPal->nBackColorIdx;
+					FillListBox(hWnd2, lbConClrBack, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+					nVal = pPal->nPopTextColorIdx;
+					FillListBox(hWnd2, lbConClrPopText, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+					nVal = pPal->nPopBackColorIdx;
+					FillListBox(hWnd2, lbConClrPopBack, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+
+					nVal = pPal->nExtendColorIdx;
 					FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
 					gpSet->AppStd.nExtendColorIdx = nVal;
 					gpSet->AppStd.isExtendColors = pPal->isExtendColors;

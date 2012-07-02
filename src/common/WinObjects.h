@@ -98,7 +98,7 @@ COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput);
 HANDLE DuplicateProcessHandle(DWORD anTargetPID);
 void ChangeScreenBufferSize(CONSOLE_SCREEN_BUFFER_INFO& sbi, SHORT VisibleX, SHORT VisibleY, SHORT BufferX, SHORT BufferY);
 BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int nCurWidth, int nCurHeight, DWORD nCurScroll, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll);
-void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
+void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName, WORD anTextColors = 0, WORD anPopupColors = 0);
 int EvaluateDefaultFontWidth(int inSizeY, const wchar_t *asFontName);
 void EmergencyShow(HWND hConWnd);
 void FindComspec(ConEmuComspec* pOpt); // используется в GUI при загрузке настроек

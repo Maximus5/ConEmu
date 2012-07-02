@@ -883,6 +883,13 @@ bool CConEmuCtrl::key_WinHeightInc(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 	return key_WinSize(VK_DOWN);
 }
 
+// pRCon ignored
+bool CConEmuCtrl::key_WinDragStart(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	// Dummy
+	return true;
+}
+
 
 void CConEmuCtrl::ResetDoubleKeyConsoleNum(CRealConsole* pRCon)
 {

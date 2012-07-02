@@ -757,12 +757,16 @@
 #define tHereShell                      2391
 #define bHereRegister                   2392
 #define bHereUnregister                 2393
-#define IDC_EDIT4                       2394
-#define bHereRegister2                  2395
+#define tCmdAutoAttach                  2394
 #define bCmdAutoRegister                2395
-#define bHereUnregister2                2396
 #define bCmdAutoUnregister              2396
 #define cbInsideSyncDir                 2397
+#define lbConClrText                    2398
+#define lbConClrBack                    2399
+#define lbConClrPopText                 2401
+#define lbConClrPopBack                 2402
+#define cbSnapToDesktopEdges            2403
+#define vkWndDragKey                    2404
 
 // Next default values for new objects
 // 
@@ -770,7 +774,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2398
+#define _APS_NEXT_CONTROL_VALUE         2405
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

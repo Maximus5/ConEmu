@@ -152,6 +152,7 @@ public:
 	static bool WINAPI key_WinHeightDec(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_WinHeightInc(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	static bool WINAPI key_WinSize(BYTE vk);
+	static bool WINAPI key_WinDragStart(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 	// Console activate by number
 	static bool WINAPI key_ConsoleNum(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 };

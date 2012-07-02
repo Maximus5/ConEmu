@@ -113,13 +113,14 @@ class CVirtualConsole;
 
 enum ConEmuHotKeyType
 {
-	chk_User = 0, // обычный настраиваемый hotkey
-	chk_Modifier, // для драга, например
-	chk_NumHost,  // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
-	chk_ArrHost,  // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
-	chk_System,   // predefined hotkeys, ненастраиваемые (пока?)
-	chk_Global,   // globally registered hotkey
-	chk_Macro,    // GUI Macro
+	chk_User = 0,  // обычный настраиваемый hotkey
+	chk_Modifier,  // для драга, например
+	chk_Modifier2, // для драга, например (когда нужно задать более одного модификатора)
+	chk_NumHost,   // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
+	chk_ArrHost,   // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
+	chk_System,    // predefined hotkeys, ненастраиваемые (пока?)
+	chk_Global,    // globally registered hotkey
+	chk_Macro,     // GUI Macro
 };
 
 // Уехал в common.hpp
@@ -244,7 +245,17 @@ struct Settings
 			//reg->Load(L"ExtendColors", isExtendColors);
 			bool isExtendColors;
 			//reg->Load(L"ExtendColorIdx", nExtendColorIdx);
-			char nExtendColorIdx; // 0..15
+			BYTE nExtendColorIdx; // 0..15
+
+			//reg->Load(L"TextColorIdx", nTextColorIdx);
+			BYTE nTextColorIdx; // 0..15,16
+			//reg->Load(L"BackColorIdx", nBackColorIdx);
+			BYTE nBackColorIdx; // 0..15,16
+			//reg->Load(L"PopTextColorIdx", nPopTextColorIdx);
+			BYTE nPopTextColorIdx; // 0..15,16
+			//reg->Load(L"PopBackColorIdx", nPopBackColorIdx);
+			BYTE nPopBackColorIdx; // 0..15,16
+
 
 			COLORREF Colors[0x20];
 
@@ -271,8 +282,18 @@ struct Settings
 			bool isExtendColors;
 			char ExtendColors() const { return (OverridePalette || !AppNames) ? isExtendColors : gpSet->AppStd.isExtendColors; };
 			//reg->Load(L"ExtendColorIdx", nExtendColorIdx);
-			char nExtendColorIdx; // 0..15
-			char ExtendColorIdx() const { return (OverridePalette || !AppNames) ? nExtendColorIdx : gpSet->AppStd.nExtendColorIdx; };
+			BYTE nExtendColorIdx; // 0..15
+			BYTE ExtendColorIdx() const { return (OverridePalette || !AppNames) ? nExtendColorIdx : gpSet->AppStd.nExtendColorIdx; };
+
+			BYTE nTextColorIdx; // 0..15,16
+			BYTE TextColorIdx() const { return (OverridePalette || !AppNames) ? nTextColorIdx : gpSet->AppStd.nTextColorIdx; };
+			BYTE nBackColorIdx; // 0..15,16
+			BYTE BackColorIdx() const { return (OverridePalette || !AppNames) ? nBackColorIdx : gpSet->AppStd.nBackColorIdx; };
+			BYTE nPopTextColorIdx; // 0..15,16
+			BYTE PopTextColorIdx() const { return (OverridePalette || !AppNames) ? nPopTextColorIdx : gpSet->AppStd.nPopTextColorIdx; };
+			BYTE nPopBackColorIdx; // 0..15,16
+			BYTE PopBackColorIdx() const { return (OverridePalette || !AppNames) ? nPopBackColorIdx : gpSet->AppStd.nPopBackColorIdx; };
+
 
 			bool OverrideExtendFonts;
 			//reg->Load(L"ExtendFonts", isExtendFonts);
@@ -689,6 +710,8 @@ struct Settings
 		bool isAlwaysOnTop;
 		//reg->Load(L"DesktopMode", isDesktopMode);
 		bool isDesktopMode;
+		//reg->Load(L"SnapToDesktopEdges", isSnapToDesktopEdges);
+		bool isSnapToDesktopEdges;
 		//reg->Load(L"FixFarBorders", isFixFarBorders)
 		BYTE isFixFarBorders;
 		//reg->Load(L"ExtendUCharMap", isExtendUCharMap);

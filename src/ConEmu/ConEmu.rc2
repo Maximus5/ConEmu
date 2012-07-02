@@ -258,4 +258,5 @@ BEGIN
     vkWinLeft               "Decrease window width (check «Resize with arrows»)"
     vkWinRight              "Increase window width (check «Resize with arrows»)"
     vkWinUp                 "Decrease window height (check «Resize with arrows»)"
+    vkWndDragKey            "Drag ConEmu window by client area"
 END

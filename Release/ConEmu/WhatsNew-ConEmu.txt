@@ -10,6 +10,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.02
+[+] Drag window by any point of client area (configurable modifier, Ctrl+Alt by default).
+[+] «Features» -> «Snap to desktop edges».
+[%] Issue 626: /dir arg is ignored for startup task.
+[+] «Colors» -> Text/Back. The beginning.
+
+
 2012.07.01
 [+] Для облегчения отладки и сообщений об ошибках.
     Создать mini-dump: ConEmuC.exe /DEBUGPID=<PID> /MINI

@@ -357,6 +357,8 @@ void Settings::InitSettings()
 
 	AppStd.isExtendColors = false;
 	AppStd.nExtendColorIdx = 14;
+	AppStd.nTextColorIdx = AppStd.nBackColorIdx = 16; // Auto
+	AppStd.nPopTextColorIdx = AppStd.nPopBackColorIdx = 16; // Auto
 	AppStd.isExtendFonts = false;
 	AppStd.nFontNormalColor = 1; AppStd.nFontBoldColor = 12; AppStd.nFontItalicColor = 13;
 	AppStd.isCursorV = true;
@@ -412,6 +414,7 @@ void Settings::InitSettings()
 	isHideCaption = mb_HideCaptionAlways = isQuakeStyle = false;
 	nHideCaptionAlwaysFrame = 1; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
 	isDesktopMode = false;
+	isSnapToDesktopEdges = false;
 	isAlwaysOnTop = false;
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
 	RECT rcWork = {}; SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
@@ -699,7 +702,16 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 		}
 		reg->Load(L"ExtendColors", pApp->isExtendColors);
 		reg->Load(L"ExtendColorIdx", pApp->nExtendColorIdx);
-		if (pApp->nExtendColorIdx<0 || pApp->nExtendColorIdx>15) pApp->nExtendColorIdx=14;
+		if (pApp->nExtendColorIdx > 15) pApp->nExtendColorIdx=14;
+
+		reg->Load(L"TextColorIdx", pApp->nTextColorIdx);
+		if (pApp->nTextColorIdx > 16) pApp->nTextColorIdx=16;
+		reg->Load(L"BackColorIdx", pApp->nBackColorIdx);
+		if (pApp->nBackColorIdx > 16) pApp->nBackColorIdx=16;
+		reg->Load(L"PopTextColorIdx", pApp->nPopTextColorIdx);
+		if (pApp->nPopTextColorIdx > 16) pApp->nPopTextColorIdx=16;
+		reg->Load(L"PopBackColorIdx", pApp->nPopBackColorIdx);
+		if (pApp->nPopBackColorIdx > 16) pApp->nPopBackColorIdx=16;
 	}
 	else
 	{
@@ -710,6 +722,12 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 		_ASSERTE(pPal!=NULL); // NULL не может быть. Всегда как минимум - стандартная палитра
 		pApp->isExtendColors = pPal->isExtendColors;
 		pApp->nExtendColorIdx = pPal->nExtendColorIdx;
+
+		pApp->nTextColorIdx = pPal->nTextColorIdx;
+		pApp->nBackColorIdx = pPal->nBackColorIdx;
+		pApp->nPopTextColorIdx = pPal->nPopTextColorIdx;
+		pApp->nPopBackColorIdx = pPal->nPopBackColorIdx;
+
 		memmove(pColors, pPal->Colors, sizeof(pPal->Colors));
 	}
 
@@ -1119,6 +1137,8 @@ void Settings::LoadPalettes(SettingsBase* reg)
     	Palettes[n]->bPredefined = true;
 		Palettes[n]->isExtendColors = false;
 		Palettes[n]->nExtendColorIdx = 14;
+		Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = 16; // Auto
+		Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
     	_ASSERTE(countof(Palettes[n]->Colors)==0x20 && countof(DefColors[n].dwDefColors)==0x10);
     	memmove(Palettes[n]->Colors, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
     	// Расширения - инициализируем теми же цветами
@@ -1140,6 +1160,11 @@ void Settings::LoadPalettes(SettingsBase* reg)
 			reg->Load(L"Name", &Palettes[PaletteCount]->pszName);
 			reg->Load(L"ExtendColors", Palettes[PaletteCount]->isExtendColors);
 			reg->Load(L"ExtendColorIdx", Palettes[PaletteCount]->nExtendColorIdx);
+
+			reg->Load(L"TextColorIdx", Palettes[PaletteCount]->nTextColorIdx); MinMax(Palettes[PaletteCount]->nTextColorIdx,16);
+			reg->Load(L"BackColorIdx", Palettes[PaletteCount]->nBackColorIdx); MinMax(Palettes[PaletteCount]->nBackColorIdx,16);
+			reg->Load(L"PopTextColorIdx", Palettes[PaletteCount]->nPopTextColorIdx); MinMax(Palettes[PaletteCount]->nPopTextColorIdx,16);
+			reg->Load(L"PopBackColorIdx", Palettes[PaletteCount]->nPopBackColorIdx); MinMax(Palettes[PaletteCount]->nPopBackColorIdx,16);
 
 			_ASSERTE(countof(Colors) == countof(Palettes[PaletteCount]->Colors));
 			for (size_t k = 0; k < countof(Palettes[PaletteCount]->Colors)/*0x20*/; k++)
@@ -1205,6 +1230,11 @@ void Settings::SavePalettes(SettingsBase* reg)
 			reg->Save(L"ExtendColors", Palettes[i]->isExtendColors);
 			reg->Save(L"ExtendColorIdx", Palettes[i]->nExtendColorIdx);
 
+			reg->Save(L"TextColorIdx", Palettes[PaletteCount]->nTextColorIdx);
+			reg->Save(L"BackColorIdx", Palettes[PaletteCount]->nBackColorIdx);
+			reg->Save(L"PopTextColorIdx", Palettes[PaletteCount]->nPopTextColorIdx);
+			reg->Save(L"PopBackColorIdx", Palettes[PaletteCount]->nPopBackColorIdx);
+
 			_ASSERTE(countof(Colors) == countof(Palettes[i]->Colors));
 			for (size_t k = 0; k < countof(Palettes[i]->Colors)/*0x20*/; k++)
 			{
@@ -1236,6 +1266,12 @@ void Settings::SavePalettes(SettingsBase* reg)
 				AppColors[k]->FadeInitialized = false;
 				Apps[k]->isExtendColors = Palettes[i]->isExtendColors;
 				Apps[k]->nExtendColorIdx = Palettes[i]->nExtendColorIdx;
+
+				Apps[k]->nTextColorIdx = Palettes[i]->nTextColorIdx;
+				Apps[k]->nBackColorIdx = Palettes[i]->nBackColorIdx;
+				Apps[k]->nPopTextColorIdx = Palettes[i]->nPopTextColorIdx;
+				Apps[k]->nPopBackColorIdx = Palettes[i]->nPopBackColorIdx;
+
 				bFound = true;
 				break;
 			}
@@ -1265,8 +1301,15 @@ const Settings::ColorPalette* Settings::PaletteGet(int anIndex)
 		StdPal.bPredefined = false;
 		static wchar_t szCurrentScheme[64] = L"<Current color scheme>";
 		StdPal.pszName = szCurrentScheme;
+		
 		StdPal.isExtendColors = AppStd.isExtendColors;
 		StdPal.nExtendColorIdx = AppStd.nExtendColorIdx;
+		
+		StdPal.nTextColorIdx = AppStd.nTextColorIdx;
+		StdPal.nBackColorIdx = AppStd.nBackColorIdx;
+		StdPal.nPopTextColorIdx = AppStd.nPopTextColorIdx;
+		StdPal.nPopBackColorIdx = AppStd.nPopBackColorIdx;
+
 		_ASSERTE(sizeof(StdPal.Colors) == sizeof(this->Colors));
 		memmove(StdPal.Colors, this->Colors, sizeof(StdPal.Colors));
 		return &StdPal;
@@ -1350,6 +1393,12 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 	Palettes[nIndex]->pszName = lstrdup(asName);
 	Palettes[nIndex]->isExtendColors = AppStd.isExtendColors;
 	Palettes[nIndex]->nExtendColorIdx = AppStd.nExtendColorIdx;
+	
+	Palettes[nIndex]->nTextColorIdx = AppStd.nTextColorIdx;
+	Palettes[nIndex]->nBackColorIdx = AppStd.nBackColorIdx;
+	Palettes[nIndex]->nPopTextColorIdx = AppStd.nPopTextColorIdx;
+	Palettes[nIndex]->nPopBackColorIdx = AppStd.nPopBackColorIdx;
+
 	_ASSERTE(sizeof(Palettes[nIndex]->Colors) == sizeof(this->Colors));
 	memmove(Palettes[nIndex]->Colors, this->Colors, sizeof(Palettes[nIndex]->Colors));
 	_ASSERTE(nIndex < PaletteCount);
@@ -1562,6 +1611,7 @@ LPCWSTR Settings::GetHotkeyName(const ConEmuHotKey* ppHK, wchar_t (&szFull)[128]
 	{
 	case chk_Global:
 	case chk_User:
+	case chk_Modifier2:
 		VkMod = ppHK->VkMod;
 		break;
 	case chk_Macro:
@@ -1606,18 +1656,21 @@ LPCWSTR Settings::GetHotkeyName(const ConEmuHotKey* ppHK, wchar_t (&szFull)[128]
 		}
 	}
 	
-	szName[0] = 0;
-	GetVkKeyName(GetHotkey(VkMod), szName);
-	
-	if (szName[0])
+	if (ppHK->HkType != chk_Modifier2)
 	{
-		if (szFull[0])
-			wcscat_c(szFull, L"+");
-		wcscat_c(szFull, szName);
-	}
-	else
-	{
-		wcscpy_c(szFull, L"<None>");
+		szName[0] = 0;
+		GetVkKeyName(GetHotkey(VkMod), szName);
+		
+		if (szName[0])
+		{
+			if (szFull[0])
+				wcscat_c(szFull, L"+");
+			wcscat_c(szFull, szName);
+		}
+		else
+		{
+			wcscpy_c(szFull, L"<None>");
+		}
 	}
 
 	return szFull;
@@ -2225,6 +2278,7 @@ void Settings::LoadSettings()
 		//reg->Load(L"LangChangeWsPlugin", isLangChangeWsPlugin);
 		reg->Load(L"MonitorConsoleLang", isMonitorConsoleLang);
 		reg->Load(L"DesktopMode", isDesktopMode);
+		reg->Load(L"SnapToDesktopEdges", isSnapToDesktopEdges);
 		reg->Load(L"AlwaysOnTop", isAlwaysOnTop);
 		reg->Load(L"SleepInBackground", isSleepInBackground);
 
@@ -2628,6 +2682,11 @@ void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp, C
 
 		reg->Save(L"ExtendColors", pApp->isExtendColors);
 		reg->Save(L"ExtendColorIdx", pApp->nExtendColorIdx);
+
+		reg->Save(L"TextColorIdx", pApp->nTextColorIdx);
+		reg->Save(L"BackColorIdx", pApp->nBackColorIdx);
+		reg->Save(L"PopTextColorIdx", pApp->nPopTextColorIdx);
+		reg->Save(L"PopBackColorIdx", pApp->nPopBackColorIdx);
 	}
 	else
 	{
@@ -2938,6 +2997,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"SkipFocusEvents", isSkipFocusEvents);
 		reg->Save(L"MonitorConsoleLang", isMonitorConsoleLang);
 		reg->Save(L"DesktopMode", isDesktopMode);
+		reg->Save(L"SnapToDesktopEdges", isSnapToDesktopEdges);
 		reg->Save(L"AlwaysOnTop", isAlwaysOnTop);
 		reg->Save(L"SleepInBackground", isSleepInBackground);
 		reg->Save(L"DisableFarFlashing", isDisableFarFlashing);
@@ -4720,6 +4780,7 @@ ConEmuHotKey* Settings::AllocateHotkeys()
 		{vkFarGotoEditorVk,chk_Modifier, NULL, L"FarGotoEditorVk", /*(DWORD*)&isFarGotoEditorVk,*/ VK_LCONTROL}, // модификатор для isFarGotoEditor
 		{vkLDragKey,       chk_Modifier, NULL, L"DndLKey",         /*(DWORD*)&nLDragKey,*/ 0},         // модификатор драга левой кнопкой
 		{vkRDragKey,       chk_Modifier, NULL, L"DndRKey",         /*(DWORD*)&nRDragKey,*/ VK_LCONTROL},         // модификатор драга правой кнопкой
+		{vkWndDragKey,     chk_Modifier2,NULL, L"WndDragKey",      MakeHotKey(VK_LBUTTON,VK_CONTROL,VK_MENU), CConEmuCtrl::key_WinDragStart}, // модификатор таскания окна мышкой за любое место
 		// System (predefined, fixed)
 		{vkWinAltA,        chk_System, NULL, L"", MakeHotKey('A',VK_LWIN,VK_MENU), CConEmuCtrl::key_About, true/*OnKeyUp*/}, // Settings
 		{vkWinAltP,        chk_System, NULL, L"", MakeHotKey('P',VK_LWIN,VK_MENU), CConEmuCtrl::key_Settings, true/*OnKeyUp*/}, // Settings
