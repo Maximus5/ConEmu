@@ -854,6 +854,7 @@
     <ClInclude Include="ShellProcessor.h" />
     <ClInclude Include="UserImp.h" />
     <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="..\common\RConStartArgs.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuHk.rc" />
@@ -877,6 +878,7 @@
     <ClCompile Include="ShellProcessor.cpp" />
     <ClCompile Include="UserImp.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
+    <ClCompile Include="..\common\RConStartArgs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="export.def" />

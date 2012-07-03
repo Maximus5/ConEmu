@@ -1181,9 +1181,9 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	if (ghExitQueryEvent)
 	{
 		_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
-		if (!nExitQueryPlace) nExitQueryPlace = 10+(nExitPlaceStep+nExitPlaceThread);
+		if (!nExitQueryPlace) nExitQueryPlace = 10+(nExitPlaceStep);
 
-		SetTerminateEvent();
+		SetTerminateEvent(ste_ServerDone);
 	}
 
 	if (ghQuitEvent) SetEvent(ghQuitEvent);

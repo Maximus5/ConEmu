@@ -2513,6 +2513,14 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 	nVal = gpSet->AppStd.nPopBackColorIdx;
 	FillListBox(hWnd2, lbConClrPopBack, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
 
+	WARNING("Отладка...");
+	if (gpSet->AppStd.nPopTextColorIdx <= 15 || gpSet->AppStd.nPopBackColorIdx <= 15
+		|| RELEASEDEBUGTEST(FALSE,TRUE))
+	{
+		EnableWindow(GetDlgItem(hWnd2, lbConClrPopText), TRUE);
+		EnableWindow(GetDlgItem(hWnd2, lbConClrPopBack), TRUE);
+	}
+
 	nVal = gpSet->AppStd.nExtendColorIdx;
 	FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
 	gpSet->AppStd.nExtendColorIdx = nVal;
@@ -7030,8 +7038,8 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 				case rbAppDistinctElevatedIgnore:
 					if (pApp)
 					{
-						pApp->Elevated = IsChecked(hChild, rbAppDistinctElevatedOn) ? 1
-							: IsChecked(hChild, rbAppDistinctElevatedOff) ? 2
+						pApp->Elevated = IsChecked(hWnd2, rbAppDistinctElevatedOn) ? 1
+							: IsChecked(hWnd2, rbAppDistinctElevatedOff) ? 2
 							: 0;
 						bRefill = bRedraw = true;
 					}

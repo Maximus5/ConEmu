@@ -86,7 +86,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 
-void SetTerminateEvent();
+enum SetTerminateEventPlace
+{
+	ste_None = 0,
+	ste_ServerDone,
+	ste_ConsoleMain,
+	ste_ProcessCountChanged,
+	ste_CheckProcessCount,
+	ste_DebugThread,
+	ste_WriteMiniDump,
+	ste_CmdDetachCon,
+	ste_HandlerRoutine,
+};
+extern SetTerminateEventPlace gTerminateEventPlace;
+void SetTerminateEvent(SetTerminateEventPlace eFrom);
 
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 int AttachDebuggingProcess();

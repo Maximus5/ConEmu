@@ -2654,8 +2654,12 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 
 	if (messg == WM_LBUTTONDOWN)
 	{
+		if (!(con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION))
+			con.m_SelClickTick = GetTickCount();
+
 		BOOL lbStreamSelection = FALSE;
 		BYTE vkMod = 0; // Если удерживается модификатор - его нужно "отпустить" в консоль
+		bool bTripleClick = (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION) && ((GetTickCount() - con.m_SelDblClickTick) <= GetDoubleClickTime());
 
 		if (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION))
 		{
@@ -2681,27 +2685,38 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		con.m_sel.dwFlags &= ~CONSOLE_KEYMOD_MASK;
 		con.m_sel.dwFlags |= ((DWORD)vkMod) << 24;
 
+		COORD crTo = cr;
+		if (bTripleClick)
+		{
+			cr.X = 0;
+			crTo.X = GetBufferWidth()-1;
+		}
+
 		// Если дошли сюда - значит или модификатор нажат, или из меню выделение запустили
-		StartSelection(lbStreamSelection, cr.X, cr.Y, TRUE, WM_LBUTTONDOWN);
+		StartSelection(lbStreamSelection, cr.X, cr.Y, TRUE, bTripleClick ? WM_LBUTTONDBLCLK : WM_LBUTTONDOWN, bTripleClick ? &crTo : NULL);
 
 		//WARNING!!! После StartSelection - ничего не делать! Мог смениться буфер!
 
 		return true;
 	}
-	else if ((messg == WM_LBUTTONUP) && gpSet->isCTSAutoCopy && (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION))
+	else if (messg == WM_LBUTTONUP)
 	{
-		// Чтобы не подраться с выделением "слов" двойным кликом - "применяем" выделение сейчас
-		// только если оно больше одной ячейки. Иначе - выделение будет "применено" по таймеру (pVCon->RCon()->AutoCopyTimer())
-		if ((con.m_sel.srSelection.Left != con.m_sel.srSelection.Right) || (con.m_sel.srSelection.Top != con.m_sel.srSelection.Bottom))
+		if (gpSet->isCTSAutoCopy && (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION)
+			&& !(con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION))
 		{
-			if (isSelectionPresent())
+			// Чтобы не подраться с выделением "слов" двойным кликом - "применяем" выделение сейчас
+			// только если оно больше одной ячейки. Иначе - выделение будет "применено" по таймеру (pVCon->RCon()->AutoCopyTimer())
+			if ((con.m_sel.srSelection.Left != con.m_sel.srSelection.Right) || (con.m_sel.srSelection.Top != con.m_sel.srSelection.Bottom))
 			{
-				DoSelectionCopy();
-			}
-			else
-			{
-				_ASSERTE(FALSE && "how it can be?");
-				DoSelectionStop();
+				if (isSelectionPresent())
+				{
+					DoSelectionCopy();
+				}
+				else
+				{
+					_ASSERTE(FALSE && "how it can be?");
+					DoSelectionStop();
+				}
 			}
 		}
 	}
@@ -2715,7 +2730,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		ExpandTextRange(crFrom/*[In/Out]*/, crTo/*[Out]*/, etr_Word);
 		
 		// Выполнить выделение
-		StartSelection(lbStreamSelection, crFrom.X, crFrom.Y, TRUE, WM_LBUTTONDBLCLK, (crTo.X != crFrom.X) ? &crTo : NULL);
+		StartSelection(lbStreamSelection, crFrom.X, crFrom.Y, TRUE, WM_LBUTTONDBLCLK, &crTo);
 
 		//WARNING!!! После StartSelection - ничего не делать! Мог смениться буфер!
 		return true;
@@ -2731,19 +2746,36 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			return false; // Ошибка в координатах
 		}
 
-		if (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)
+		if ((((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION)
+					&& ((GetTickCount() - con.m_SelClickTick) <= GetDoubleClickTime()))
+				|| ((con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)
+					&& ((GetTickCount() - con.m_SelDblClickTick) <= GetDoubleClickTime())))
+			&& ((messg == WM_LBUTTONUP)
+				|| ((messg == WM_MOUSEMOVE)
+					&& (memcmp(&cr,&con.m_sel.srSelection.Left,sizeof(cr)) || memcmp(&cr,&con.m_sel.srSelection.Right,sizeof(cr)))
+					)
+				)
+			)
 		{
-			con.m_sel.dwFlags &= ~CONSOLE_DBLCLICK_SELECTION;
+			// Ignoring due DoubleClickTime
+			int nDbg = 0; UNREFERENCED_PARAMETER(nDbg);
 		}
 		else
 		{
-			ExpandSelection(cr.X, cr.Y);
-		}
+			if (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)
+			{
+				con.m_sel.dwFlags &= ~CONSOLE_DBLCLICK_SELECTION;
+			}
+			else
+			{
+				ExpandSelection(cr.X, cr.Y);
+			}
 
-		if (messg == WM_LBUTTONUP)
-		{
-			con.m_sel.dwFlags &= ~CONSOLE_MOUSE_SELECTION;
-			//ReleaseCapture();
+			if (messg == WM_LBUTTONUP)
+			{
+				con.m_sel.dwFlags &= ~CONSOLE_MOUSE_SELECTION;
+				//ReleaseCapture();
+			}
 		}
 
 		return true;
@@ -2983,11 +3015,14 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
 	UpdateSelection();
 
-	if (anFromMsg == WM_LBUTTONDBLCLK)
+	if ((anFromMsg == WM_LBUTTONDBLCLK) || (pcrTo && (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)))
 	{
 		if (pcrTo)
 			ExpandSelection(pcrTo->X, pcrTo->Y);
 		con.m_sel.dwFlags |= CONSOLE_DBLCLICK_SELECTION;
+
+		if (anFromMsg == WM_LBUTTONDBLCLK)
+			con.m_SelDblClickTick = GetTickCount();
 
 		if (gpSet->isCTSAutoCopy)
 		{
@@ -3361,6 +3396,14 @@ bool CRealBuffer::DoSelectionCopy()
 					}
 				}
 			}
+			else
+			{
+				if (nTrimTailing)
+				{
+					while ((pch > pchStart) && (*(pch-1) == L' '))
+						*(--pch) = 0;
+				}
+			}
 		}
 	}
 
@@ -3612,19 +3655,36 @@ BOOL CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,
 		csData.Lock(&csCON);
 	}
 	
-	// Вернуть данные
-	if (!con.pConChar || !con.pConAttr)
-		return FALSE;
+	_ASSERTE(nLine>=0 && nLine<GetWindowHeight());
 	if (nLine < 0 || nLine >= con.nTextHeight)
+	{
 		return FALSE;
-	
-	if (pChar)
-		*pChar = con.pConChar + (nLine * con.nTextWidth);
-	//if (pAttr)
-	//	*pAttr = con.pConAttr + (nLine * con.nTextWidth);
-	if (pLen)
-		*pLen = con.nTextWidth;
-	
+	}
+
+	if ((m_Type == rbt_DumpScreen) || (m_Type == rbt_Alternative) || (m_Type == rbt_Selection) || (m_Type == rbt_Find))
+	{
+		if (!dump.pszBlock1)
+			return FALSE;
+
+		if (pChar)
+			*pChar = dump.pszBlock1 + ((con.m_sbi.srWindow.Top + nLine) * dump.crSize.X) + con.m_sbi.srWindow.Left;
+		if (pLen)
+			*pLen = dump.crSize.X;
+	}
+	else
+	{
+		// Вернуть данные
+		if (!con.pConChar || !con.pConAttr)
+			return FALSE;
+		
+		if (pChar)
+			*pChar = con.pConChar + (nLine * con.nTextWidth);
+		//if (pAttr)
+		//	*pAttr = con.pConAttr + (nLine * con.nTextWidth);
+		if (pLen)
+			*pLen = con.nTextWidth;
+	}
+
 	return TRUE;
 }
 

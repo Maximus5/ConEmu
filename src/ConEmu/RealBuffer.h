@@ -213,6 +213,7 @@ protected:
 	struct RConInfo
 	{
 		CONSOLE_SELECTION_INFO m_sel;
+		DWORD m_SelClickTick, m_SelDblClickTick;
 		CONSOLE_CURSOR_INFO m_ci;
 		DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
 		CONSOLE_SCREEN_BUFFER_INFO m_sbi;

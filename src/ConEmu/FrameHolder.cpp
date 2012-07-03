@@ -216,12 +216,12 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		if (!lbRc)
 		{
 			if ((wParam == HTSYSMENU && uMsg == WM_NCLBUTTONDOWN)
-				|| (wParam == HTCAPTION && uMsg == WM_NCRBUTTONDOWN))
+				/*|| (wParam == HTCAPTION && uMsg == WM_NCRBUTTONDOWN)*/)
 			{
-				if (uMsg == WM_NCRBUTTONDOWN)
-					gpConEmu->ShowSysmenu((SHORT)LOWORD(lParam),(SHORT)HIWORD(lParam));
-				else
-					gpConEmu->ShowSysmenu();
+				//if (uMsg == WM_NCRBUTTONDOWN)
+				//	gpConEmu->ShowSysmenu((SHORT)LOWORD(lParam),(SHORT)HIWORD(lParam));
+				//else
+				gpConEmu->ShowSysmenu();
 				lResult = 0;
 				lbRc = true;
 			}

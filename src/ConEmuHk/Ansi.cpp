@@ -747,6 +747,8 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 						// ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
 						// ESC ] 9 ; 2 ; "txt" ST        Show GUI MessageBox ( txt ) for dubug purposes
 						// ESC ] 9 ; 3 ; "txt" ST        Set TAB text
+						// ESC ] 9 ; 4 ; st ; pr ST      When _st_ is 0: remove progress. When _st_ is 1: set progress value to _pr_ (number, 0-100). When _st_ is 2: set error state in progress on Windows 7 taskbar
+						// ESC ] 9 ; 5 ST                Wait for ENTER/SPACE/ESC. Set EnvVar "ConEmuWaitKey" to ENTER/SPACE/ESC on exit.
 
 						Code.ArgSZ = lpBuffer;
 						Code.cchArgSZ = 0;
@@ -1365,7 +1367,7 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 										//	  forces a wrap to the beginning of the following line first.
 										//ESC [ = 7 h
 										//    Enables line wrapping 
-										//ESC [ 7 ; _col_ n
+										//ESC [ 7 ; _col_ h
 										//    Our extension. _col_ - wrap at column (1-based), default = 80
 										if ((gDisplayOpt.WrapWasSet = (Code.Action == L'h')))
 										{
@@ -1373,6 +1375,7 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 										}
 										break;
 									case 20:
+										// Ignored for now
 										gDisplayOpt.AutoLfNl = (Code.Action == L'h');
 										break;
 									case 25:
@@ -1562,6 +1565,9 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 								// ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
 								// ESC ] 9 ; 2 ; "txt" ST        Show GUI MessageBox ( txt ) for dubug purposes
 								// ESC ] 9 ; 3 ; "txt" ST        Set TAB text
+								// ESC ] 9 ; 4 ; st ; pr ST      When _st_ is 0: remove progress. When _st_ is 1: set progress value to _pr_ (number, 0-100). When _st_ is 2: set error state in progress on Windows 7 taskbar
+								// ESC ] 9 ; 5 ST                Wait for ENTER/SPACE/ESC. Set EnvVar "ConEmuWaitKey" to ENTER/SPACE/ESC on exit.
+								// -- You may specify timeout _s_ in seconds. - не работает
 								if (Code.ArgSZ[1] == L';')
 								{
 									if (Code.ArgSZ[2] == L'1' && Code.ArgSZ[3] == L';')
@@ -1610,6 +1616,43 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 											CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 											ExecuteFreeResult(pIn);
 											ExecuteFreeResult(pOut);
+										}
+									}
+									else if (Code.ArgSZ[2] == L'5')
+									{
+										//int s = 0;
+										//if (Code.ArgSZ[3] == L';')
+										//	s = NextNumber(Code.ArgSZ+4);
+										BOOL bSucceeded = FALSE;
+										DWORD nRead = 0;
+										INPUT_RECORD r = {};
+										HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+										//DWORD nStartTick = GetTickCount();
+										while ((bSucceeded = ReadConsoleInput(hIn, &r, 1, &nRead)) && nRead)
+										{
+											if ((r.EventType == KEY_EVENT) && r.Event.KeyEvent.bKeyDown)
+											{
+												if ((r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+													|| (r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)
+													|| (r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE))
+												{
+													break;
+												}
+											}
+										}
+										if (bSucceeded && ((r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+													|| (r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)
+													|| (r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE)))
+										{
+											SetEnvironmentVariable(ENV_CONEMUANSI_WAITKEY,
+												(r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) ? L"RETURN" :
+												(r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)  ? L"SPACE" :
+												(r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE) ? L"ESC" :
+												L"???");
+										}
+										else
+										{
+											SetEnvironmentVariable(ENV_CONEMUANSI_WAITKEY, L"");
 										}
 									}
 								}

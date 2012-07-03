@@ -133,7 +133,8 @@ BOOL    gbLogProcess = FALSE;
 BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
 DWORD   gnExitCode = 0;
-HANDLE  ghExitQueryEvent = NULL; int nExitQueryPlace = 0, nExitPlaceStep = 0, nExitPlaceThread = 0;
+HANDLE  ghExitQueryEvent = NULL; int nExitQueryPlace = 0, nExitPlaceStep = 0;
+SetTerminateEventPlace gTerminateEventPlace = ste_None;
 HANDLE  ghQuitEvent = NULL;
 bool    gbQuit = false;
 BOOL	gbInShutdown = FALSE;
@@ -1514,9 +1515,9 @@ wrap:
 	if (ghExitQueryEvent)
 	{
 		_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
-		if (!nExitQueryPlace) nExitQueryPlace = 11+(nExitPlaceStep+nExitPlaceThread);
+		if (!nExitQueryPlace) nExitQueryPlace = 11+(nExitPlaceStep);
 
-		SetTerminateEvent();
+		SetTerminateEvent(ste_ConsoleMain);
 	}
 
 	// Завершение RefreshThread, InputThread, ServerThread
@@ -2496,7 +2497,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 								if (gnDefPopupColors)
 									csbi.wPopupAttributes = gnDefPopupColors;
 
-								//_ASSERTE(FALSE && "Continue to SetConsoleScreenBufferInfoEx");
+								_ASSERTE(FALSE && "Continue to SetConsoleScreenBufferInfoEx");
 
 								// Vista/Win7. _SetConsoleScreenBufferInfoEx unexpectedly SHOWS console window
 								//if (gnOsVer == 0x0601)
@@ -2507,6 +2508,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 									//SetWindowPos(ghConWnd, HWND_BOTTOM, rcGui.left+3, rcGui.top+3, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
 									SetWindowPos(ghConWnd, NULL, -30000, -30000, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
 									ShowWindow(ghConWnd, SW_SHOWMINNOACTIVE);
+									#ifdef _DEBUG
+									ShowWindow(ghConWnd, SW_SHOWNORMAL);
+									ShowWindow(ghConWnd, SW_HIDE);
+									#endif
 								}
 
 								bPassed = _SetConsoleScreenBufferInfoEx(hConOut, &csbi);
@@ -3590,8 +3595,10 @@ DWORD WINAPI SendStartedThreadProc(LPVOID lpParameter)
 }
 
 
-void SetTerminateEvent()
+void SetTerminateEvent(SetTerminateEventPlace eFrom)
 {
+	if (!gTerminateEventPlace)
+		gTerminateEventPlace = eFrom;
 	SetEvent(ghExitQueryEvent);
 }
 
@@ -4427,16 +4434,20 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 
 	WARNING("Если в консоли ДО этого были процессы - все условия вида 'gpSrv->nProcessCount == 1' обломаются");
 
-	// Пример - запускаемся из фара. Количество процессов ИЗНАЧАЛЬНО - 5
-	// cmd вываливается сразу (path not found)
-	// количество процессов ОСТАЕТСЯ 5 и ни одно из ниже условий не проходит
-	if (anPrevCount == 1 && gpSrv->nProcessCount == 1 && gpSrv->nProcessStartTick
+	bool bForcedTo2 = false;
+	// Похоже "пример" не соответствует условию, оставлю пока, для истории
+	// -- Пример - запускаемся из фара. Количество процессов ИЗНАЧАЛЬНО - 5
+	// -- cmd вываливается сразу (path not found)
+	// -- количество процессов ОСТАЕТСЯ 5 и ни одно из ниже условий не проходит
+	if (anPrevCount == 1 && gpSrv->nProcessCount == 1
+		&& gpSrv->nProcessStartTick && gpSrv->dwProcessLastCheckTick
 		&& ((gpSrv->dwProcessLastCheckTick - gpSrv->nProcessStartTick) > CHECK_ROOTSTART_TIMEOUT)
 		&& WaitForSingleObject(ghExitQueryEvent,0) == WAIT_TIMEOUT
 		// выходить можно только если корневой процесс завершился
-		&& gpSrv->hRootProcess && WaitForSingleObject(gpSrv->hRootProcess,0) != WAIT_TIMEOUT)
+		&& gpSrv->hRootProcess && (WaitForSingleObject(gpSrv->hRootProcess,0) == WAIT_TIMEOUT))
 	{
 		anPrevCount = 2; // чтобы сработало следующее условие
+		bForcedTo2 = true;
 		//2010-03-06 - установка флажка должна быть при старте сервера
 		//if (!gbAlwaysConfirmExit) gbAlwaysConfirmExit = TRUE; // чтобы консоль не схлопнулась
 	}
@@ -4449,6 +4460,9 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 		}
 		else
 		{
+			//Issue 623
+			_ASSERTE(FALSE && "Calling SetTerminateEvent");
+
 			// !!! Во время сильной загрузки процессора периодически
 			// !!! случается, что ConEmu отваливается быстрее, чем в
 			// !!! консоли появится фар. Обратить внимание на nPrevProcessedDbg[]
@@ -4470,10 +4484,10 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 			if (gbAlwaysConfirmExit && (gpSrv->dwProcessLastCheckTick - gpSrv->nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT)
 				gbRootAliveLess10sec = TRUE; // корневой процесс проработал менее 10 сек
 
-			if (!nExitQueryPlace) nExitQueryPlace = 2+(nExitPlaceStep+nExitPlaceThread);
+			if (!nExitQueryPlace) nExitQueryPlace = (bForcedTo2?4:2)+(nExitPlaceStep);
 
 			ShutdownSrvStep(L"All processes are terminated, SetEvent(ghExitQueryEvent)");
-			SetTerminateEvent();
+			SetTerminateEvent(ste_ProcessCountChanged);
 		}
 	}
 }
@@ -4653,9 +4667,9 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 				gpSrv->nProcessCount = 1;
 				SetEvent(ghQuitEvent);
 
-				if (!nExitQueryPlace) nExitQueryPlace = 1+(nExitPlaceStep+nExitPlaceThread);
+				if (!nExitQueryPlace) nExitQueryPlace = 1+(nExitPlaceStep);
 
-				SetTerminateEvent();
+				SetTerminateEvent(ste_CheckProcessCount);
 				return TRUE;
 			}
 		}
@@ -4959,9 +4973,9 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 
 	_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
 
-	if (!nExitQueryPlace) nExitQueryPlace = 3+(nExitPlaceStep+nExitPlaceThread);
+	if (!nExitQueryPlace) nExitQueryPlace = 3+(nExitPlaceStep);
 
-	SetTerminateEvent();
+	SetTerminateEvent(ste_DebugThread);
 	return 0;
 }
 
@@ -5129,7 +5143,7 @@ void WriteMiniDump(DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR 
 	if (bDumpSucceeded && gnDebugDumpProcess && (gnOsVer >= 0x0501))
 	{
 		// Дело сделали, закрываемся
-		SetTerminateEvent();
+		SetTerminateEvent(ste_WriteMiniDump);
 
 		//if (pfnGetConsoleProcessList)
 		//{
@@ -6348,7 +6362,7 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		//apiShowWindow(ghConWnd, SW_SHOWMINIMIZED);
 		apiSetForegroundWindow(hGuiApp);
-		SetTerminateEvent();
+		SetTerminateEvent(ste_CmdDetachCon);
 	}
 
 	int nOutSize = sizeof(CESERVER_REQ_HDR);
@@ -7753,7 +7767,7 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 				//if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(gpSrv->dwRootProcess);
 				//gpSrv->bDebuggerActive = FALSE;
 				//gbInShutdown = TRUE;
-				SetTerminateEvent();
+				SetTerminateEvent(ste_HandlerRoutine);
 			}
 			else
 			{

@@ -1086,7 +1086,7 @@ HMENU CConEmuMain::GetSysMenu(BOOL abInitial /*= FALSE*/)
 	}
 	else
 	{
-		hwndMain = ::GetSystemMenu(ghWnd, abInitial);
+		hwndMain = ::GetSystemMenu(ghWnd, FALSE);
 
 		//// "Alt+F4" дл€ пункта "Close" смысла не имеет
 		//mi.fMask = MIIM_STRING; mi.dwTypeData = szText; mi.cch = countof(szText);
@@ -9931,9 +9931,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	//// ”становить переменную среды с дескриптором окна
 	//SetConEmuEnvVar('ghWnd DC');
 
-	// -- > PostCreate
 	// —формировать или обновить системное меню
-	//GetSysMenu(TRUE);
+	GetSysMenu(TRUE);
 
 	//HMENU hwndMain = GetSysMenu(ghWnd, FALSE), hDebug = NULL;
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
@@ -10340,8 +10339,6 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		RegisterMinRestore(true);
 
 		RegisterHotKeys();
-
-		GetSysMenu(TRUE);
 
 		//TODO: ¬озможно, стоит отложить запуск секунд на 5, чтобы не мешать инициализации?
 		if (gpSet->UpdSet.isUpdateCheckOnStartup && !DisableAutoUpdate)
