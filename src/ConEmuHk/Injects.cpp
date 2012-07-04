@@ -410,7 +410,8 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 				}
 				#endif
 				
-				CESERVER_REQ* pIn = ExecuteNewCmdOnCreate(eSrvLoaded,
+				CESERVER_REQ* pIn = ExecuteNewCmdOnCreate(
+					NULL, ghConWnd, eSrvLoaded,
 					L"", szInfo, L"", NULL, NULL, NULL, NULL, 
 					SelfImageBits, ImageSystem, NULL, NULL, NULL);
 				if (pIn)

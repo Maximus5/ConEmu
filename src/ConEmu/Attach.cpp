@@ -167,6 +167,8 @@ void CAttachDlg::OnStartAttach()
 
 	ShowWindow(mh_Dlg, SW_HIDE);
 
+	BOOL bAlternativeMode = (IsDlgButtonChecked(mh_Dlg, IDC_ATTACH_ALT) != 0);
+
 	iSel = ListView_GetNextItem(mh_List, -1, LVNI_SELECTED);
 	if (iSel < 0)
 		goto wrap;
@@ -216,6 +218,7 @@ void CAttachDlg::OnStartAttach()
 	{
 		pParm->hAttachWnd = hAttachWnd;
 		pParm->nPID = nPID; pParm->nBits = nBits; pParm->nType = nType;
+		pParm->bAlternativeMode = bAlternativeMode;
 		hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)StartAttachThread, pParm, 0, &nTID);
 		if (!hThread)
 		{
@@ -475,12 +478,14 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 		case WM_SIZE:
 		{
-			RECT rcDlg, rcBtn, rcList;
+			RECT rcDlg, rcBtn, rcList, rcMode;
 			::GetClientRect(hDlg, &rcDlg);
 			HWND h = GetDlgItem(hDlg, IDC_ATTACHLIST);
 			GetWindowRect(h, &rcList); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcList, 2);
 			HWND hb = GetDlgItem(hDlg, IDOK);
 			GetWindowRect(hb, &rcBtn); MapWindowPoints(NULL, hb, (LPPOINT)&rcBtn, 2);
+			HWND hc = GetDlgItem(hDlg, IDC_ATTACH_ALT);
+			GetWindowRect(hc, &rcMode); MapWindowPoints(NULL, hc, (LPPOINT)&rcMode, 2);
 			BOOL lbRedraw = FALSE;
 			MoveWindow(h,
 				rcList.left, rcList.top, rcDlg.right - 2*rcList.left, rcDlg.bottom - 3*rcList.top - rcBtn.bottom, lbRedraw);
@@ -492,6 +497,8 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 				rcDlg.right - rcList.left - rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, lbRedraw);
 			MoveWindow(GetDlgItem(hDlg, IDOK),
 				rcDlg.right - 2*rcList.left - 2*rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, lbRedraw);
+			MoveWindow(hc,
+				rcDlg.right - 3*rcList.left - 2*rcBtn.right - rcMode.right, rcDlg.bottom - rcList.top - rcBtn.bottom + ((rcBtn.bottom - rcMode.bottom) / 2), rcMode.right, rcMode.bottom, lbRedraw);
 			RedrawWindow(hDlg, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
 			break;
 		}
@@ -500,13 +507,14 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		{
 			MINMAXINFO* p = (MINMAXINFO*)lParam;
 			HWND h;
-			RECT rcBtn = {}, rcList = {};
+			RECT rcBtn = {}, rcList = {}, rcMode = {};
 			GetWindowRect((h = GetDlgItem(hDlg, IDOK)), &rcBtn); MapWindowPoints(NULL, h, (LPPOINT)&rcBtn, 2);
+			GetWindowRect((h = GetDlgItem(hDlg, IDC_ATTACH_ALT)), &rcMode); MapWindowPoints(NULL, h, (LPPOINT)&rcMode, 2);
 			GetWindowRect((h = GetDlgItem(hDlg, IDC_ATTACHLIST)), &rcList); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcList, 2);
 			RECT rcWnd = {}, rcClient = {};
 			GetWindowRect(hDlg, &rcWnd);
 			::GetClientRect(hDlg, &rcClient);
-			p->ptMinTrackSize.x = (rcWnd.right - rcWnd.left - rcClient.right) + 4*rcBtn.right + 6*rcList.left;
+			p->ptMinTrackSize.x = (rcWnd.right - rcWnd.left - rcClient.right) + 4*rcBtn.right + 8*rcList.left + rcMode.right;
 			p->ptMinTrackSize.y = 6*rcBtn.bottom + 3*rcList.top;
 			return 0;
 		}
@@ -575,7 +583,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 	return 0;
 }
 
-bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType)
+bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType, BOOL abAltMode)
 {
 	bool lbRc = false;
 	// Тут нужно получить инфу из списка и дернуть собственно аттач
@@ -588,6 +596,8 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	DWORD nErrCode = 0;
 	bool lbCreate;
 	CESERVER_CONSOLE_MAPPING_HDR srv;
+	DWORD nWrapperWait = -1;
+	DWORD nWrapperResult = -1;
 
 	if (!ahAttachWnd || !anPID || !anBits || !anType)
 	{
@@ -619,10 +629,19 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	}
 
 
-	wchar_t szSrv[MAX_PATH+64], szArgs[64];
+	wchar_t szSrv[MAX_PATH+64], szArgs[128];
 	wcscpy_c(szSrv, gpConEmu->ms_ConEmuBaseDir);
 	wcscat_c(szSrv, (anBits==64) ? L"\\ConEmuC64.exe" : L"\\ConEmuC.exe");
-	_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /INJECT=%u", anPID);
+
+	if (abAltMode && (anType == apt_Console))
+	{
+		_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /ATTACH /CONPID=%u /GID=%u /GHWND=%08X", anPID, GetCurrentProcessId(), (DWORD)ghWnd);
+	}
+	else
+	{
+		_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /INJECT=%u", anPID);
+		abAltMode = FALSE;
+	}
 
 	TODO("Определить, может он уже под админом? Тогда и ConEmuC.exe под админом запускать нужно");
 	si.dwFlags = STARTF_USESHOWWINDOW;
@@ -634,13 +653,14 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	}
 
 	hProcTest = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ, FALSE, anPID);
+
 	if (hProcTest == NULL)
 	{
 		nErrCode = GetLastError();
 		MBoxAssert(hProcTest!=NULL || nErrCode==ERROR_ACCESS_DENIED);
 
 		sei.hwnd = ghWnd;
-		sei.fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NOASYNC;
+		sei.fMask = (abAltMode ? 0 : SEE_MASK_NO_CONSOLE)|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NOASYNC;
 		sei.lpVerb = L"runas";
 		sei.lpFile = szSrv;
 		sei.lpParameters = szArgs;
@@ -656,20 +676,28 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	}
 	else
 	{
-		lbCreate = CreateProcess(szSrv, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+		lbCreate = CreateProcess(szSrv, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|(abAltMode ? CREATE_NO_WINDOW : CREATE_NEW_CONSOLE), NULL, NULL, &si, &pi);
 	}
 
 	if (!lbCreate)
 	{
 		wchar_t szErrMsg[MAX_PATH+255], szTitle[128];
 		DWORD dwErr = GetLastError();
-		_wsprintf(szErrMsg, SKIPLEN(countof(szErrMsg)) L"Can't start injection server\n%s %s", szSrv, szArgs);
+		_wsprintf(szErrMsg, SKIPLEN(countof(szErrMsg)) L"Can't start %s server\n%s %s", abAltMode ? L"injection" : L"console", szSrv, szArgs);
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 		DisplayLastError(szErrMsg, dwErr, 0, szTitle);
 		goto wrap;
 	}
-	DWORD nWrapperWait = WaitForSingleObject(pi.hProcess, INFINITE);
-	DWORD nWrapperResult = -1;
+
+	if (abAltMode)
+	{
+		TODO("Подождать бы завершения процесса, или пока он подцепится к GUI");
+		lbRc = true;
+		goto wrap;
+	}
+
+	nWrapperWait = WaitForSingleObject(pi.hProcess, INFINITE);
+	nWrapperResult = -1;
 	GetExitCodeProcess(pi.hProcess, &nWrapperResult);
 	CloseHandle(pi.hProcess);
 	if (pi.hThread) CloseHandle(pi.hThread);
@@ -721,7 +749,7 @@ DWORD CAttachDlg::StartAttachThread(AttachParm* lpParam)
 		return 100;
 	}
 
-	bool lbRc = StartAttach(lpParam->hAttachWnd, lpParam->nPID, lpParam->nBits, lpParam->nType);
+	bool lbRc = StartAttach(lpParam->hAttachWnd, lpParam->nPID, lpParam->nBits, lpParam->nType, lpParam->bAlternativeMode);
 
 	free(lpParam);
 

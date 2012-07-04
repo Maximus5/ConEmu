@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	    L"Usage: ConEmuC [switches] [/U | /A] /C <command line, passed to %COMSPEC%>\r\n" \
 	    L"   or: ConEmuC [switches] /ROOT <program with arguments, far.exe for example>\r\n" \
 	    L"   or: ConEmuC /ATTACH /NOCMD\r\n" \
-		L"   or: ConEmuC /ATTACH /[FAR]PID=<PID>\r\n" \
+		L"   or: ConEmuC /ATTACH /[FAR|CON]PID=<PID>\r\n" \
 	    L"   or: ConEmuC /GUIMACRO <ConEmu GUI macro command>\r\n" \
 		L"   or: ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]\r\n" \
 _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n") \

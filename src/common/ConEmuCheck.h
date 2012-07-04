@@ -89,7 +89,7 @@ BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping);
 #ifndef CONEMU_MINIMAL
 BOOL LoadGuiMapping(HWND hConEmuWnd, ConEmuGuiMapping& GuiMapping);
 #endif
-CESERVER_REQ* ExecuteNewCmdOnCreate(enum CmdOnCreateType aCmd,
+CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND hConWnd, enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 				int mn_ImageBits, int mn_ImageSubsystem,

@@ -10,8 +10,18 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.04
+[%] FindEditor/FindViewer/FindFarWindow возвращал "NotFound".
+[%] На вкладке Debug создавались «пустые» строки даже при «Shell activity» = «Disabled».
+[*] Issue 623: Continue...
+[%] Issue 629: Crash on saving color palette.
+[+] Alternative nonintrusive attach mode for console windows.
+
+
 2012.07.03
 [+] Now DoubleClick (for «words») and TripleClick (for «lines») both works for text selection.
+[+] Расширены ANSI коды (ESC ] 9 ; ...) - http://code.google.com/p/conemu-maximus5/wiki/AnsiEscapeCodes#ConEmu_specific_OSC.
+[*] Issue 623: Checking...
 
 
 2012.07.02

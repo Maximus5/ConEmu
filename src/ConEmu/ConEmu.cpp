@@ -1560,7 +1560,13 @@ HWND CConEmuMain::InsideFindParent()
 	EnumWindows(EnumInsideFindParent, nParentPID);
 	if (!mh_InsideParentRoot)
 	{
-		MessageBox(L"Can't find appropriate parent window!", MB_ICONSTOP);
+		int nBtn = MessageBox(L"Can't find appropriate parent window!\n\nContinue in normal mode?", MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
+		if (nBtn != IDYES)
+		{
+			mh_InsideParentWND = (HWND)-1;
+			return mh_InsideParentWND; // «акрытьс€!
+		}
+		// ѕродолжить в обычном режиме
 		m_InsideIntegration = ii_None;
 		mh_InsideParentWND = NULL;
 		goto wrap;
@@ -6988,70 +6994,68 @@ LRESULT CConEmuMain::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 	{
 		_ASSERTE(mn_TrackMenuPlace == tmp_System);
 
+		// при всплытии "Help/Debug/..." submenu сюда мы тоже попадаем
+
 		if (bIsSysMenu)
 		{
 			UpdateSysMenu(hMenu);			
-		}
-		else
-		{
-			_ASSERTE(bIsSysMenu);
-		}
 
-		BOOL bSelectionExist = FALSE;
+			BOOL bSelectionExist = FALSE;
 
-		CVirtualConsole* pVCon = ActiveCon();
-		if (pVCon && pVCon->RCon())
-			bSelectionExist = pVCon->RCon()->isSelectionPresent();
+			CVirtualConsole* pVCon = ActiveCon();
+			if (pVCon && pVCon->RCon())
+				bSelectionExist = pVCon->RCon()->isSelectionPresent();
 
-		//EnableMenuItem(hMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
-		if (mh_EditPopup)
-		{
-			TODO("ѕроверить, сработает ли, если mh_EditPopup уже был вставлен в SystemMenu?");
-			CreateEditMenuPopup(pVCon, mh_EditPopup);
+			//EnableMenuItem(hMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
+			if (mh_EditPopup)
+			{
+				TODO("ѕроверить, сработает ли, если mh_EditPopup уже был вставлен в SystemMenu?");
+				CreateEditMenuPopup(pVCon, mh_EditPopup);
+			}
+			else
+			{
+				_ASSERTE(mh_EditPopup!=NULL);
+			}
+			
+			if (mh_VConListPopup)
+			{
+				CreateVConListPopupMenu(mh_VConListPopup, TRUE/*abFirstTabOnly*/);
+			}
+			else
+			{
+				_ASSERTE(mh_VConListPopup!=NULL);
+			}
+			
+			if (mh_ActiveVConPopup)
+			{
+				CreateVConPopupMenu(NULL, mh_ActiveVConPopup, FALSE, mh_TerminateVConPopup);
+			}
+			else
+			{
+				_ASSERTE(mh_ActiveVConPopup!=NULL);
+			}
+			
+			
+			CheckMenuItem(hMenu, ID_DEBUG_SHOWRECTS, MF_BYCOMMAND|(gbDebugShowRects ? MF_CHECKED : MF_UNCHECKED));
+			//#ifdef _DEBUG
+			//		wchar_t szText[128];
+			//		MENUITEMINFO mi = {sizeof(MENUITEMINFO)};
+			//		mi.fMask = MIIM_STRING|MIIM_STATE;
+			//		bool bLogged = false, bAllowed = false;
+			//		CRealConsole* pRCon = mp_VActive ? mp_VActive->RCon() : NULL;
+			//
+			//		if (pRCon)
+			//		{
+			//			bLogged = pRCon->IsLogShellStarted();
+			//			bAllowed = (pRCon->GetFarPID(TRUE) != 0);
+			//		}
+			//
+			//		lstrcpy(szText, bLogged ? _T("Disable &shell log") : _T("Enable &shell log..."));
+			//		mi.dwTypeData = szText;
+			//		mi.fState = bAllowed ? MFS_ENABLED : MFS_GRAYED;
+			//		SetMenuItemInfo(hMenu, ID_MONITOR_SHELLACTIVITY, FALSE, &mi);
+			//#endif
 		}
-		else
-		{
-			_ASSERTE(mh_EditPopup!=NULL);
-		}
-		
-		if (mh_VConListPopup)
-		{
-			CreateVConListPopupMenu(mh_VConListPopup, TRUE/*abFirstTabOnly*/);
-		}
-		else
-		{
-			_ASSERTE(mh_VConListPopup!=NULL);
-		}
-		
-		if (mh_ActiveVConPopup)
-		{
-			CreateVConPopupMenu(NULL, mh_ActiveVConPopup, FALSE, mh_TerminateVConPopup);
-		}
-		else
-		{
-			_ASSERTE(mh_ActiveVConPopup!=NULL);
-		}
-		
-		
-		CheckMenuItem(hMenu, ID_DEBUG_SHOWRECTS, MF_BYCOMMAND|(gbDebugShowRects ? MF_CHECKED : MF_UNCHECKED));
-		//#ifdef _DEBUG
-		//		wchar_t szText[128];
-		//		MENUITEMINFO mi = {sizeof(MENUITEMINFO)};
-		//		mi.fMask = MIIM_STRING|MIIM_STATE;
-		//		bool bLogged = false, bAllowed = false;
-		//		CRealConsole* pRCon = mp_VActive ? mp_VActive->RCon() : NULL;
-		//
-		//		if (pRCon)
-		//		{
-		//			bLogged = pRCon->IsLogShellStarted();
-		//			bAllowed = (pRCon->GetFarPID(TRUE) != 0);
-		//		}
-		//
-		//		lstrcpy(szText, bLogged ? _T("Disable &shell log") : _T("Enable &shell log..."));
-		//		mi.dwTypeData = szText;
-		//		mi.fState = bAllowed ? MFS_ENABLED : MFS_GRAYED;
-		//		SetMenuItemInfo(hMenu, ID_MONITOR_SHELLACTIVITY, FALSE, &mi);
-		//#endif
 	}
 
 	return 0;
@@ -8991,7 +8995,7 @@ bool CConEmuMain::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR as
 	if (rpVCon)
 		*rpVCon = NULL;
 
-	for (INT_PTR i = -1; i < (INT_PTR)countof(mp_VCon); i++)
+	for (INT_PTR i = -1; !bFound && (i < (INT_PTR)countof(mp_VCon)); i++)
 	{
 		if (i == -1)
 			VCon = mp_VActive;

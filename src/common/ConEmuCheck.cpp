@@ -522,12 +522,46 @@ BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping)
 }
 
 
-CESERVER_REQ* ExecuteNewCmdOnCreate(enum CmdOnCreateType aCmd,
+CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND hConWnd, enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 				int mn_ImageBits, int mn_ImageSubsystem,
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr)
 {
+	bool bEnabled = false;
+	if (!pSrvMap)
+	{
+		static bool bWasEnabled = false;
+		static DWORD nLastWasEnabledTick = 0;
+
+		// Чтобы проверки слишком часто не делать
+		if (!nLastWasEnabledTick || ((GetTickCount() - nLastWasEnabledTick) > 1000))
+		{
+			CESERVER_CONSOLE_MAPPING_HDR *Info = (CESERVER_CONSOLE_MAPPING_HDR*)calloc(1,sizeof(*Info));
+			if (Info)
+			{
+				if (::LoadSrvMapping(hConWnd, *Info))
+				{
+					bEnabled = (Info->nLoggingType == glt_Processes);
+				}
+				free(Info);
+			}
+
+			nLastWasEnabledTick = GetTickCount();
+		}
+
+		bWasEnabled = bEnabled;
+	}
+	else
+	{
+		bEnabled = (pSrvMap->nLoggingType == glt_Processes);
+	}
+	// Если логирование не просили
+	if (!bEnabled)
+	{
+		return NULL;
+	}
+
 	//szBaseDir[0] = 0;
 
 	//// Проверим, а надо ли?

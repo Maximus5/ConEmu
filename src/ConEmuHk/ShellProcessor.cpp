@@ -250,7 +250,7 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 	if (m_SrvMapping.nLoggingType != glt_Processes)
 		return NULL;
 
-	return ExecuteNewCmdOnCreate(aCmd,
+	return ExecuteNewCmdOnCreate(&m_SrvMapping, ghConWnd, aCmd,
 				asAction, asFile, asParam,
 				anShellFlags, anCreateFlags, anStartFlags, anShowCmd,
 				mn_ImageBits, mn_ImageSubsystem,

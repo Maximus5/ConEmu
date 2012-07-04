@@ -111,6 +111,7 @@ BEGIN
     CONTROL         "",IDC_ATTACHLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,4,4,310,159
     PUSHBUTTON      "&New",IDC_NEWCONSOLE,4,167,50,14
     PUSHBUTTON      "&Refresh",IDC_REFRESH,57,167,50,14
+    CONTROL         "&Alternative mode",IDC_ATTACH_ALT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,120,177,80,8
 END
 
 IDD_SPG_MAIN DIALOGEX 0, 0, 328, 235
@@ -186,9 +187,9 @@ BEGIN
     GROUPBOX        "Text Cursor",IDC_STATIC,4,1,319,65
     CONTROL         "&Vertical (as GUI)",rCursorV,"Button",BS_AUTORADIOBUTTON | WS_GROUP,12,15,81,8
     CONTROL         "&Horizontal (as console)",rCursorH,"Button",BS_AUTORADIOBUTTON,12,30,95,8
-    CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,108,15,33,8
-    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,15,50,8
-    CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,108,30,96,8
+    CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,108,23,33,8
+    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,23,50,8
+    CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,200,23,96,8
     CONTROL         "Fixed cursor size",cbCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,47,72,8
     EDITTEXT        tCursorFixedSize,107,45,40,12,ES_AUTOHSCROLL
     LTEXT           "(5-100) %",stCursorFixedSize,153,47,38,8

@@ -1230,10 +1230,10 @@ void Settings::SavePalettes(SettingsBase* reg)
 			reg->Save(L"ExtendColors", Palettes[i]->isExtendColors);
 			reg->Save(L"ExtendColorIdx", Palettes[i]->nExtendColorIdx);
 
-			reg->Save(L"TextColorIdx", Palettes[PaletteCount]->nTextColorIdx);
-			reg->Save(L"BackColorIdx", Palettes[PaletteCount]->nBackColorIdx);
-			reg->Save(L"PopTextColorIdx", Palettes[PaletteCount]->nPopTextColorIdx);
-			reg->Save(L"PopBackColorIdx", Palettes[PaletteCount]->nPopBackColorIdx);
+			reg->Save(L"TextColorIdx", Palettes[i]->nTextColorIdx);
+			reg->Save(L"BackColorIdx", Palettes[i]->nBackColorIdx);
+			reg->Save(L"PopTextColorIdx", Palettes[i]->nPopTextColorIdx);
+			reg->Save(L"PopBackColorIdx", Palettes[i]->nPopBackColorIdx);
 
 			_ASSERTE(countof(Colors) == countof(Palettes[i]->Colors));
 			for (size_t k = 0; k < countof(Palettes[i]->Colors)/*0x20*/; k++)
@@ -1802,12 +1802,20 @@ void Settings::LoadSettings()
 //-----------------------------------------------------------------------
 ///| Preload settings actions |//////////////////////////////////////////
 //-----------------------------------------------------------------------
-	if (gpConEmu->m_InsideIntegration && gpConEmu->InsideFindParent())
+	if (gpConEmu->m_InsideIntegration)
 	{
-		// Типа, запуститься как панель в Explorer (не в таскбаре, а в проводнике)
-		//isStatusBarShow = false;
-		isTabs = 0;
-		FontSizeY = 10;
+		HWND hParent = gpConEmu->InsideFindParent();
+		if (hParent == (HWND)-1)
+		{
+			return;
+		}
+		else if (hParent)
+		{
+			// Типа, запуститься как панель в Explorer (не в таскбаре, а в проводнике)
+			//isStatusBarShow = false;
+			isTabs = 0;
+			FontSizeY = 10;
+		}
 	}
 
 

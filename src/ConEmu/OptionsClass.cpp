@@ -7469,6 +7469,12 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 
 void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)
 {
+	if (gpSetCls->m_ActivityLoggingType != glt_Processes)
+	{
+		_ASSERTE(gpSetCls->m_ActivityLoggingType == glt_Processes);
+		return;
+	}
+
 	SYSTEMTIME st; GetLocalTime(&st);
 	wchar_t szTime[128]; _wsprintf(szTime, SKIPLEN(countof(szTime)) L"%02i:%02i:%02i", st.wHour, st.wMinute, st.wSecond);
 	HWND hList = GetDlgItem(hWnd2, lbActivityLog);
@@ -7571,6 +7577,7 @@ void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)
 
 void CSettings::debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile)
 {
+	_ASSERTE(gpSetCls->m_ActivityLoggingType != glt_None);
 	_ASSERTE(pszParamEx!=NULL && asFile && *asFile);
 
 	HANDLE hFile = CreateFile(asFile, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
@@ -7630,6 +7637,12 @@ wrap:
 
 void CSettings::debugLogInfo(HWND hWnd2, CESERVER_REQ_PEEKREADINFO* pInfo)
 {
+	if (gpSetCls->m_ActivityLoggingType != glt_Input)
+	{
+		_ASSERTE(gpSetCls->m_ActivityLoggingType == glt_Input);
+		return;
+	}
+
 	for (UINT nIdx = 0; nIdx < pInfo->nCount; nIdx++)
 	{
 		const INPUT_RECORD *pr = pInfo->Buffer+nIdx;

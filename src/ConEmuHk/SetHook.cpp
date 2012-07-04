@@ -2225,7 +2225,7 @@ void LoadModuleFailed(LPCSTR asModuleA, LPCWSTR asModuleW)
 		szModule[countof(szModule)-1] = 0;
 		asModuleW = szModule;
 	}
-	pIn = ExecuteNewCmdOnCreate(eLoadLibrary, L"Fail", asModuleW, szErrCode, NULL, NULL, NULL, NULL,
+	pIn = ExecuteNewCmdOnCreate(NULL, ghConWnd, eLoadLibrary, L"Fail", asModuleW, szErrCode, NULL, NULL, NULL, NULL,
 		#ifdef _WIN64
 		64
 		#else

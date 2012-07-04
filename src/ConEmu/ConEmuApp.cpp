@@ -2326,6 +2326,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// load settings from registry
 	gpSet->LoadSettings();
 
+	// Если в режиме "Inside" подходящего окна не нашли и юзер отказался от "обычного" режима
+	if (gpConEmu->m_InsideIntegration && (gpConEmu->mh_InsideParentWND == (HWND)-1))
+	{
+		return 100;
+	}
+
 
 	// Проверить наличие необходимых файлов (перенес сверху, чтобы учитывался флажок "Inject ConEmuHk")
 	if (!gpConEmu->CheckRequiredFiles())

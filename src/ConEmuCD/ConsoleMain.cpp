@@ -43,6 +43,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define WINE_PRINT_PROC_INFO
 //	#define USE_PIPE_DEBUG_BOXES
 
+//	#define DEBUG_ISSUE_623
+
 //	#define VALIDATE_AND_DELAY_ON_TERMINATE
 
 #elif defined(__GNUC__)
@@ -173,6 +175,7 @@ int   gnCmdUnicodeMode = 0;
 BOOL  gbUseDosBox = FALSE; HANDLE ghDosBoxProcess = NULL; DWORD gnDosBoxPID = 0;
 BOOL  gbRootIsCmdExe = TRUE;
 BOOL  gbAttachFromFar = FALSE;
+BOOL  gbAlternativeAttach = FALSE;
 BOOL  gbSkipWowChange = FALSE;
 BOOL  gbConsoleModeFlags = TRUE;
 DWORD gnConsoleModeFlags = 0; //(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
@@ -341,7 +344,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 							#else
 							ImageBits = 32;
 							#endif
-							CESERVER_REQ* pIn = ExecuteNewCmdOnCreate(eSrvLoaded,
+							CESERVER_REQ* pIn = ExecuteNewCmdOnCreate(pInfo, ghConWnd, eSrvLoaded,
 								L"", szExeName, szDllName, NULL, NULL, NULL, NULL, 
 								ImageBits, ImageSystem, 
 								GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
@@ -2327,7 +2330,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			gbNoCreateProcess = TRUE;
 			gbAlienMode = TRUE;
 		}
-		else if (wcsncmp(szArg, L"/PID=", 5)==0 || wcsncmp(szArg, L"/FARPID=", 8)==0)
+		else if (wcsncmp(szArg, L"/PID=", 5)==0 || wcsncmp(szArg, L"/FARPID=", 8)==0 || wcsncmp(szArg, L"/CONPID=", 8)==0)
 		{
 			gnRunMode = RM_SERVER;
 			gbNoCreateProcess = TRUE;
@@ -2340,6 +2343,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				gbRootIsCmdExe = FALSE;
 				pszStart = szArg+8;
 			}
+			else if (wcsncmp(szArg, L"/CONPID=", 8)==0)
+			{
+				_ASSERTE(FALSE && "Continue to alternative attach mode");
+				gbAlternativeAttach = TRUE;
+				gbRootIsCmdExe = FALSE;
+				pszStart = szArg+8;
+			}
 			else
 			{
 				pszStart = szArg+5;
@@ -2347,7 +2357,34 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 			gpSrv->dwRootProcess = wcstoul(pszStart, &pszEnd, 10);
 
-			if (gpSrv->dwRootProcess == 0)
+			if (gbAlternativeAttach && gpSrv->dwRootProcess)
+			{
+				// FreeConsole нужно дергать даже если ghConWnd уже NULL. Что-то в винде глючит и
+				// AttachConsole вернет ERROR_ACCESS_DENIED, если FreeConsole не звать...
+				FreeConsole();
+				ghConWnd = NULL;
+
+				BOOL bAttach = AttachConsole(gpSrv->dwRootProcess);
+				if (!bAttach)
+				{
+					DWORD nErr = GetLastError();
+					wchar_t szMsg[255], szTitle[128];
+					_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"AttachConsole(PID=%u) failed, code=%u", gpSrv->dwRootProcess, nErr);
+					_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC: PID=%u", GetCurrentProcessId());
+					MessageBox(NULL, szMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+					gbInShutdown = TRUE;
+					gbAlwaysConfirmExit = FALSE;
+					return CERR_CARGUMENT;
+				}
+
+				ghConWnd = GetConEmuHWND(2);
+				gbVisibleOnStartup = IsWindowVisible(ghConWnd);
+				#ifdef _DEBUG
+				_ASSERTE(ghFarInExecuteEvent==NULL);
+				_ASSERTE(ghConWnd!=NULL);
+				#endif
+			}
+            else if (gpSrv->dwRootProcess == 0)
 			{
 				_printf("Attach to GUI was requested, but invalid PID specified:\n");
 				_wprintf(GetCommandLineW());
@@ -3597,6 +3634,10 @@ DWORD WINAPI SendStartedThreadProc(LPVOID lpParameter)
 
 void SetTerminateEvent(SetTerminateEventPlace eFrom)
 {
+	#ifdef DEBUG_ISSUE_623
+	_ASSERTE((eFrom == ste_ProcessCountChanged) && "Calling SetTerminateEvent");
+	#endif
+
 	if (!gTerminateEventPlace)
 		gTerminateEventPlace = eFrom;
 	SetEvent(ghExitQueryEvent);
@@ -4270,6 +4311,9 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 
 void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 {
+	int nExitPlaceAdd = 2; // 2,3,4,5,6,7,8,9 +(nExitPlaceStep)
+	bool bPrevCount2 = (anPrevCount>1);
+
 	// Заблокировать, если этого еще не сделали
 	MSectionLock CS;
 	if (!pCS)
@@ -4416,8 +4460,8 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 		}
 	}
 
-	// Процессов в консоли не осталось?
-#ifndef WIN64
+	// Только для x86. На x64 ntvdm.exe не бывает.
+	#ifndef WIN64
 	WARNING("gpSrv->bNtvdmActive нигде не устанавливается");
 	if (gpSrv->nProcessCount == 2 && !gpSrv->bNtvdmActive && gpSrv->nNtvdmPID)
 	{
@@ -4430,11 +4474,12 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 			PostMessage(ghConWnd, WM_CLOSE, 0, 0);
 		}
 	}
-#endif
+	#endif
 
 	WARNING("Если в консоли ДО этого были процессы - все условия вида 'gpSrv->nProcessCount == 1' обломаются");
 
 	bool bForcedTo2 = false;
+	DWORD nWaitDbg1 = -1, nWaitDbg2 = -1;
 	// Похоже "пример" не соответствует условию, оставлю пока, для истории
 	// -- Пример - запускаемся из фара. Количество процессов ИЗНАЧАЛЬНО - 5
 	// -- cmd вываливается сразу (path not found)
@@ -4442,9 +4487,9 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 	if (anPrevCount == 1 && gpSrv->nProcessCount == 1
 		&& gpSrv->nProcessStartTick && gpSrv->dwProcessLastCheckTick
 		&& ((gpSrv->dwProcessLastCheckTick - gpSrv->nProcessStartTick) > CHECK_ROOTSTART_TIMEOUT)
-		&& WaitForSingleObject(ghExitQueryEvent,0) == WAIT_TIMEOUT
+		&& (nWaitDbg1 = WaitForSingleObject(ghExitQueryEvent,0)) == WAIT_TIMEOUT
 		// выходить можно только если корневой процесс завершился
-		&& gpSrv->hRootProcess && (WaitForSingleObject(gpSrv->hRootProcess,0) == WAIT_TIMEOUT))
+		&& gpSrv->hRootProcess && ((nWaitDbg2 = WaitForSingleObject(gpSrv->hRootProcess,0)) != WAIT_TIMEOUT))
 	{
 		anPrevCount = 2; // чтобы сработало следующее условие
 		bForcedTo2 = true;
@@ -4460,8 +4505,9 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 		}
 		else
 		{
-			//Issue 623
+			#ifdef DEBUG_ISSUE_623
 			_ASSERTE(FALSE && "Calling SetTerminateEvent");
+			#endif
 
 			// !!! Во время сильной загрузки процессора периодически
 			// !!! случается, что ConEmu отваливается быстрее, чем в
@@ -4484,12 +4530,19 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 			if (gbAlwaysConfirmExit && (gpSrv->dwProcessLastCheckTick - gpSrv->nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT)
 				gbRootAliveLess10sec = TRUE; // корневой процесс проработал менее 10 сек
 
-			if (!nExitQueryPlace) nExitQueryPlace = (bForcedTo2?4:2)+(nExitPlaceStep);
+			if (bForcedTo2)
+				nExitPlaceAdd = bPrevCount2 ? 3 : 4;
+			else if (bPrevCount2)
+				nExitPlaceAdd = 5;
+
+			if (!nExitQueryPlace) nExitQueryPlace = nExitPlaceAdd/*2,3,4,5,6,7,8,9*/+(nExitPlaceStep);
 
 			ShutdownSrvStep(L"All processes are terminated, SetEvent(ghExitQueryEvent)");
 			SetTerminateEvent(ste_ProcessCountChanged);
 		}
 	}
+
+	UNREFERENCED_PARAMETER(nWaitDbg1); UNREFERENCED_PARAMETER(nWaitDbg2); UNREFERENCED_PARAMETER(bForcedTo2);
 }
 
 BOOL ProcessAdd(DWORD nPID, MSectionLock *pCS /*= NULL*/)
@@ -4973,7 +5026,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 
 	_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
 
-	if (!nExitQueryPlace) nExitQueryPlace = 3+(nExitPlaceStep);
+	if (!nExitQueryPlace) nExitQueryPlace = 12+(nExitPlaceStep);
 
 	SetTerminateEvent(ste_DebugThread);
 	return 0;

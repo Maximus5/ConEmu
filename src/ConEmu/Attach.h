@@ -42,6 +42,7 @@ struct AttachParm
 	HWND  hAttachWnd;
 	DWORD nPID, nBits;
 	AttachProcessType nType;
+	BOOL  bAlternativeMode;
 };
 
 class CAttachDlg
@@ -57,7 +58,7 @@ protected:
 	BOOL  mb_IsWin64;
 protected:
 	void OnStartAttach();
-	static bool StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType);
+	static bool StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType, BOOL abAltMode);
 public:
 	static DWORD WINAPI StartAttachThread(AttachParm* lpParam);
 public:
