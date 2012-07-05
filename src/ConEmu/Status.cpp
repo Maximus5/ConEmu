@@ -1374,7 +1374,7 @@ bool CStatus::isSettingsOpened(UINT nOpenPageID)
 
 void CStatus::ShowTransparencyMenu(POINT pt)
 {
-	if (isSettingsOpened(IDD_SPG_COLORS))
+	if (isSettingsOpened(IDD_SPG_TRANSPARENT))
 		return;
 
 	mb_InPopupMenu = true;

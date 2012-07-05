@@ -273,7 +273,7 @@ CConEmuMain::CConEmuMain()
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = 0;
 	//ms_ConEmuCExe[0] = 
 	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
-	ms_ConEmuXml[0] = ms_ConEmuChm[0] = 0;
+	ms_ConEmuXml[0] = ms_ConEmuIni[0] = ms_ConEmuChm[0] = 0;
 	//ms_ConEmuCExeName[0] = 0;
 	wchar_t *pszSlash = NULL;
 
@@ -346,14 +346,8 @@ CConEmuMain::CConEmuMain()
 
 	// Ищем файл портабельных настроек. Сначала пробуем в BaseDir
 	ConEmuXml();
-	//lstrcpy(ms_ConEmuXml, ms_ConEmuBaseDir); lstrcat(ms_ConEmuXml, L"\\ConEmu.xml");
-	//if (!FileExists(ms_ConEmuXml))
-	//{
-	//	if (lstrcmp(ms_ConEmuBaseDir, ms_ConEmuExeDir))
-	//	{
-	//		lstrcpy(ms_ConEmuXml, ms_ConEmuExeDir); lstrcat(ms_ConEmuXml, L"\\ConEmu.xml");
-	//	}
-	//}
+	ConEmuIni();
+
 	// Help-файл. Сначала попробуем в BaseDir
 	wcscpy_c(ms_ConEmuChm, ms_ConEmuBaseDir); lstrcat(ms_ConEmuChm, L"\\ConEmu.chm");
 
@@ -630,13 +624,47 @@ LPWSTR CConEmuMain::ConEmuXml()
 
 	if (!FileExists(ms_ConEmuXml))
 	{
-		if (lstrcmp(ms_ConEmuBaseDir, ms_ConEmuExeDir))
+		if (lstrcmpi(ms_ConEmuBaseDir, ms_ConEmuExeDir))
 		{
-			wcscpy_c(ms_ConEmuXml, ms_ConEmuExeDir); lstrcat(ms_ConEmuXml, L"\\ConEmu.xml");
+			wcscpy_c(ms_ConEmuXml, ms_ConEmuExeDir); wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
+
+			if (!FileExists(ms_ConEmuXml))
+			{
+				// Если _создавать_ новый, то в BaseDir! Чтобы в корне не мусорить
+				wcscpy_c(ms_ConEmuXml, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
+			}
 		}
 	}
 
 	return ms_ConEmuXml;
+}
+
+LPWSTR CConEmuMain::ConEmuIni()
+{
+	if (ms_ConEmuIni[0])
+	{
+		if (FileExists(ms_ConEmuIni))
+			return ms_ConEmuIni;
+	}
+
+	// Ищем файл портабельных настроек. Сначала пробуем в BaseDir
+	wcscpy_c(ms_ConEmuIni, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuIni, L"\\ConEmu.ini");
+
+	if (!FileExists(ms_ConEmuIni))
+	{
+		if (lstrcmpi(ms_ConEmuBaseDir, ms_ConEmuExeDir))
+		{
+			wcscpy_c(ms_ConEmuIni, ms_ConEmuExeDir); wcscat_c(ms_ConEmuIni, L"\\ConEmu.ini");
+
+			if (!FileExists(ms_ConEmuIni))
+			{
+				// Если _создавать_ новый, то в BaseDir! Чтобы в корне не мусорить
+				wcscpy_c(ms_ConEmuIni, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuIni, L"\\ConEmu.ini");
+			}
+		}
+	}
+
+	return ms_ConEmuIni;
 }
 
 LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
@@ -4976,7 +5004,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
-LRESULT CConEmuMain::OnMoving(LPRECT prcWnd /*= NULL*/)
+LRESULT CConEmuMain::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/)
 {
 	if (!gpSet->isSnapToDesktopEdges)
 		return FALSE;
@@ -4985,10 +5013,20 @@ LRESULT CConEmuMain::OnMoving(LPRECT prcWnd /*= NULL*/)
 		return FALSE;
 
 	HMONITOR hMon;
-	if (prcWnd)
+	if (bWmMove && isPressed(VK_LBUTTON))
+	{
+		// Если двигаем мышкой - то дать возможность прыгнуть на монитор под мышкой
+		POINT ptCur = {}; GetCursorPos(&ptCur);
+		hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONEAREST);
+	}
+	else if (prcWnd)
+	{
 		hMon = MonitorFromRect(prcWnd, MONITOR_DEFAULTTONEAREST);
+	}
 	else
+	{
 		hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+	}
 
 	MONITORINFO mi = {sizeof(mi)};
 	if (!GetMonitorInfo(hMon, &mi))
@@ -12370,7 +12408,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			rcNew.right = rcNew.left + (mouse.rcWndDragStart.right - mouse.rcWndDragStart.left);
 			rcNew.bottom = rcNew.top + (mouse.rcWndDragStart.bottom - mouse.rcWndDragStart.top);
 
-			OnMoving(&rcNew);
+			OnMoving(&rcNew, true);
 
 			TODO("Desktop mode?");
 			MoveWindow(ghWnd, rcNew.left, rcNew.top, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top, TRUE);
@@ -15739,7 +15777,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_MOVING {%i-%i}-{%i-%i}\n", pRc->left, pRc->top, pRc->right, pRc->bottom);
 				DEBUGSTRSIZE(szDbg);
 
-				result = gpConEmu->OnMoving(pRc);
+				result = gpConEmu->OnMoving(pRc, true);
 			}
 		} break;
 //#ifdef _DEBUG

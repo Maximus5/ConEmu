@@ -2359,6 +2359,14 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 			if (gbAlternativeAttach && gpSrv->dwRootProcess)
 			{
+				// Если процесс был запущен "с консольным окном"
+				if (ghConWnd)
+				{
+					#ifdef _DEBUG
+					SafeCloseHandle(ghFarInExecuteEvent);
+					#endif
+				}
+
 				// FreeConsole нужно дергать даже если ghConWnd уже NULL. Что-то в винде глючит и
 				// AttachConsole вернет ERROR_ACCESS_DENIED, если FreeConsole не звать...
 				FreeConsole();
@@ -2467,15 +2475,23 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			gnRunMode = RM_SERVER;
 			wchar_t* pszEnd = NULL;
-			gpSrv->hGuiWnd = (HWND)wcstoul(szArg+7, &pszEnd, 16);
-
-			if ((gpSrv->hGuiWnd) == NULL || !IsWindow(gpSrv->hGuiWnd))
+			if (lstrcmpi(szArg+7, L"NEW") == 0)
 			{
-				_printf("Invalid GUI HWND specified:\n");
-				_wprintf(GetCommandLineW());
-				_printf("\n");
-				_ASSERTE(FALSE);
-				return CERR_CARGUMENT;
+				gpSrv->hGuiWnd = NULL;
+				gpSrv->bRequestNewGuiWnd = TRUE;
+			}
+			else
+			{
+				gpSrv->hGuiWnd = (HWND)wcstoul(szArg+7, &pszEnd, 16);
+
+				if ((gpSrv->hGuiWnd) == NULL || !IsWindow(gpSrv->hGuiWnd))
+				{
+					_printf("Invalid GUI HWND specified:\n");
+					_wprintf(GetCommandLineW());
+					_printf("\n");
+					_ASSERTE(FALSE);
+					return CERR_CARGUMENT;
+				}
 			}
 		}
 		else if (wcsncmp(szArg, L"/TA=", 4)==0)
@@ -4703,7 +4719,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		int nCurCountDbg = pfnGetConsoleProcessList(nCurProcessesDbg, countof(nCurProcessesDbg));
 		DUMP_PROC_INFO(L"WinXP mode", nCurCountDbg, nCurProcessesDbg);
 		#endif
-		lbChanged = gpSrv->nProcessCount != nCurCount;
+		lbChanged = (gpSrv->nProcessCount != nCurCount);
 
 		bProcFound = (nCurCount > 0);
 
@@ -6532,10 +6548,14 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			|| (in.StartStop.nStarted == sst_ComspecStop)
 			|| (in.StartStop.nStarted == sst_AppStop))
 	{
-		// Удалить процесс из списка
-		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
-		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
-		lbChanged = ProcessRemove(nPID, nPrevCount, &CS);
+		// Issue 623: Не удалять из списка корневой процесс _сразу_, пусть он "отвалится" обычным образом
+		if (nPID != gpSrv->dwRootProcess)
+		{
+			// Удалить процесс из списка
+			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+			_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
+			lbChanged = ProcessRemove(nPID, nPrevCount, &CS);
+		}
 
 		DWORD nAltPID = (in.StartStop.nStarted == sst_ComspecStop) ? in.StartStop.nOtherPID : nPID;
 

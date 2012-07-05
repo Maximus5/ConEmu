@@ -245,7 +245,12 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 		if (!GetWindowThreadProcessId(hFind, &nPID))
 			nPID = 0;
 
-		bool lbCan = ((nStyle & (WS_VISIBLE|WS_CAPTION|WS_MAXIMIZEBOX)) == (WS_VISIBLE|WS_CAPTION|WS_MAXIMIZEBOX));
+		bool lbCan = ((nStyle & (WS_VISIBLE/*|WS_CAPTION|WS_MAXIMIZEBOX*/)) == (WS_VISIBLE/*|WS_CAPTION|WS_MAXIMIZEBOX*/));
+		if (lbCan)
+		{
+			// Более тщательно стили проверить
+			lbCan = ((nStyle & WS_MAXIMIZEBOX) == WS_MAXIMIZEBOX) || ((nStyle & WS_THICKFRAME) == WS_THICKFRAME);
+		}
 		if (lbCan && nPID == GetCurrentProcessId())
 			lbCan = false;
 		if (lbCan && (nStyle & WS_CHILD))

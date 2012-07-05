@@ -33,6 +33,7 @@
 #define IDD_SPG_CURSOR                  163
 #define IDD_SPG_INTEGRATION             164
 #define IDD_SPG_TRANSPARENT             165
+#define IDD_SPG_CMDOUTPUT               166
 #define IDD_MORE_HIDE                   200
 #define IDD_SPG_SELECTION               204
 #define IDD_SPG_TABS                    206
@@ -747,12 +748,12 @@
 #define cbTransparentSeparate           2381
 #define stTransparentInactive1          2382
 #define stTransparentInactive2          2383
-#define tInsideName                     2384
+#define tInsideIcon                     2384
 #define tInsideConfig                   2385
 #define tInsideShell                    2386
 #define bInsideRegister                 2387
 #define bInsideUnregister               2388
-#define tHereName                       2389
+#define tHereIcon                       2389
 #define tHereConfig                     2390
 #define tHereShell                      2391
 #define bHereRegister                   2392
@@ -768,6 +769,13 @@
 #define cbSnapToDesktopEdges            2403
 #define vkWndDragKey                    2404
 #define IDC_ATTACH_ALT                  2405
+#define cbInsideName                    2406
+#define cbHereItem                      2407
+#define cbHereName                      2407
+#define rbSettingsReg                   2408
+#define rbSettingsXml                   2409
+#define IDC_RADIO3                      2410
+#define rbSettingsIni                   2410
 
 // Next default values for new objects
 // 
@@ -775,7 +783,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2406
+#define _APS_NEXT_CONTROL_VALUE         2411
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

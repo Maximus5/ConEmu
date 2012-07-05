@@ -3877,7 +3877,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				/*if ((con.mcr_FileLineStart.X == con.mcr_FileLineEnd.X)
 					|| (con.mcr_FileLineStart.Y != mcr_LastMousePos.Y)
 					|| (con.mcr_FileLineStart.X > mcr_LastMousePos.X || con.mcr_FileLineEnd.X < mcr_LastMousePos.X))*/
-				if (mp_RCon->mp_ABuf == this)
+				if ((mp_RCon->mp_ABuf == this) && gpConEmu->isMeForeground())
 				{
 					ProcessFarHyperlink();
 				}

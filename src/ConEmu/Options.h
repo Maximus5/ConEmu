@@ -658,12 +658,6 @@ struct Settings
 	public:
 		/* "Active" command line */
 		LPCTSTR GetCmd();
-		/* "Default" command line "far/cmd", based on /BufferHeight switch */
-		//LPCTSTR GetDefaultCmd();
-		///* OUR(!) startup info */
-		//STARTUPINFOW ourSI;
-		/* If Attach to PID requested */
-		//DWORD nAttachPID; HWND hAttachConWnd;
 
 		//reg->Load(L"FontName", inFont, countof(inFont))
 		wchar_t inFont[LF_FACESIZE];

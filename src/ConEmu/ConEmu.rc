@@ -159,7 +159,7 @@ BEGIN
     CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,240,108,32,8
     CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,276,108,41,8
     CONTROL         "Auto save window size and position on exit",cbAutoSaveSizePos,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,139,136,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,139,166,10
     GROUPBOX        "",IDC_STATIC,4,161,319,67
     CONTROL         "Back&ground image (bmp, jpg, png):",cbBgImage,"Button",BS_AUTO3STATE | WS_TABSTOP,10,161,128,8
     LTEXT           "Path:",IDC_STATIC,10,175,18,8
@@ -203,31 +203,35 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "ConEmu Inside - Explorer context menu integration",IDC_STATIC,4,1,319,81
-    LTEXT           "Context menu item name:",IDC_STATIC,11,14,101,8
-    EDITTEXT        tInsideName,122,12,195,13,ES_AUTOHSCROLL
-    LTEXT           "Separate configuration name:",IDC_STATIC,11,30,101,8
-    EDITTEXT        tInsideConfig,122,28,195,13,ES_AUTOHSCROLL
-    LTEXT           "Shell (cmd, powershell, bash):",IDC_STATIC,11,46,101,8
-    EDITTEXT        tInsideShell,122,44,195,13,ES_AUTOHSCROLL
+    LTEXT           "Menu item:",IDC_STATIC,11,14,39,8
+    EDITTEXT        tInsideIcon,54,45,263,13,ES_AUTOHSCROLL
+    RTEXT           "Configuration:",IDC_STATIC,173,14,59,8
+    EDITTEXT        tInsideConfig,238,12,79,13,ES_AUTOHSCROLL
+    LTEXT           "Command:",IDC_STATIC,11,31,39,8
+    EDITTEXT        tInsideShell,54,29,263,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Register",bInsideRegister,212,61,50,14
     PUSHBUTTON      "Unregister",bInsideUnregister,267,61,50,14
-    GROUPBOX        "ConEmu Here - Explorer context menu integration",IDC_STATIC,4,84,319,81,WS_DISABLED
-    LTEXT           "Context menu item name:",IDC_STATIC,11,97,101,8,WS_DISABLED
-    EDITTEXT        tHereName,122,95,195,13,ES_AUTOHSCROLL | WS_DISABLED
-    LTEXT           "Separate configuration name:",IDC_STATIC,11,113,101,8,WS_DISABLED
-    EDITTEXT        tHereConfig,122,111,195,13,ES_AUTOHSCROLL | WS_DISABLED
-    LTEXT           "Shell (cmd, powershell, bash):",IDC_STATIC,11,129,101,8,WS_DISABLED
-    EDITTEXT        tHereShell,122,127,195,13,ES_AUTOHSCROLL | WS_DISABLED
-    PUSHBUTTON      "Register",bHereRegister,213,143,50,14,WS_DISABLED
-    PUSHBUTTON      "Unregister",bHereUnregister,267,143,50,14,WS_DISABLED
-    GROUPBOX        "Automatic attach of cmd & Tcc/Le to ConEmu (ConEmu will be started if not found)",IDC_STATIC,4,168,319,34,WS_DISABLED
-    LTEXT           "Command:",IDC_STATIC,11,183,35,8,WS_DISABLED
-    EDITTEXT        tCmdAutoAttach,51,181,158,13,ES_AUTOHSCROLL | WS_DISABLED
-    PUSHBUTTON      "Register",bCmdAutoRegister,213,180,50,14,WS_DISABLED
-    PUSHBUTTON      "Unregister",bCmdAutoUnregister,267,180,50,14,WS_DISABLED
+    GROUPBOX        "ConEmu Here - Explorer context menu integration",IDC_STATIC,4,84,319,81
+    LTEXT           "Menu item:",IDC_STATIC,11,97,39,8
+    EDITTEXT        tHereIcon,54,129,263,13,ES_AUTOHSCROLL
+    RTEXT           "Configuration:",IDC_STATIC,173,97,59,8
+    EDITTEXT        tHereConfig,238,95,79,13,ES_AUTOHSCROLL
+    LTEXT           "Command:",IDC_STATIC,11,114,39,8
+    EDITTEXT        tHereShell,54,112,263,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Register",bHereRegister,213,145,50,14
+    PUSHBUTTON      "Unregister",bHereUnregister,267,145,50,14
+    GROUPBOX        "Automatic attach of cmd && Tcc/Le to ConEmu (ConEmu will be started if not found)",IDC_STATIC,4,168,319,34
+    LTEXT           "Command:",IDC_STATIC,11,183,39,8
+    EDITTEXT        tCmdAutoAttach,54,181,153,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Register",bCmdAutoRegister,213,180,50,14
+    PUSHBUTTON      "Unregister",bCmdAutoUnregister,267,180,50,14
     CONTROL         "Sync current directory (Explorer -> ConEmu)",cbInsideSyncDir,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,63,159,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,64,159,10
     LTEXT           "This settings page in under development",IDC_STATIC,5,213,313,8
+    COMBOBOX        cbInsideName,54,12,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Icon:",IDC_STATIC,11,47,39,8
+    LTEXT           "Icon:",IDC_STATIC,11,132,39,8
+    COMBOBOX        cbHereName,54,95,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_SPG_STARTUP DIALOGEX 0, 0, 328, 235
@@ -403,17 +407,21 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,116,309,8
 END
 
-IDD_SETTINGS DIALOGEX 0, 0, 405, 260
+IDD_SETTINGS DIALOGEX 0, 0, 425, 260
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Settings..."
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    CONTROL         "List1",tvSetupCategories,"SysTreeView32",TVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,4,4,70,232
-    LTEXT           " ",tSetupPagePlace,75,4,326,234,WS_BORDER
-    DEFPUSHBUTTON   "Save settings",bSaveSettings,331,243,70,14
-    PUSHBUTTON      "Reset",bResetSettings,215,243,51,14
-    PUSHBUTTON      "Reload",bReloadSettings,273,243,51,14
+    CONTROL         "List1",tvSetupCategories,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_SHOWSELALWAYS | WS_BORDER | WS_HSCROLL | WS_TABSTOP,4,4,90,232
+    LTEXT           " ",tSetupPagePlace,95,4,326,234,WS_BORDER
+    DEFPUSHBUTTON   "Save settings",bSaveSettings,351,243,70,14
+    PUSHBUTTON      "Reset",bResetSettings,235,243,51,14
+    PUSHBUTTON      "Reload",bReloadSettings,293,243,51,14
+    GROUPBOX        "Save settings to",IDC_STATIC,4,236,90,22,NOT WS_VISIBLE
+    CONTROL         "reg",rbSettingsReg,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,8,246,27,9
+    CONTROL         "xml",rbSettingsXml,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,36,246,27,9
+    CONTROL         "ini",rbSettingsIni,"Button",BS_AUTORADIOBUTTON | NOT WS_VISIBLE,65,246,23,9
 END
 
 IDD_SPG_INFO DIALOGEX 0, 0, 328, 224
@@ -466,9 +474,11 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Miscellaneous options",gbFeatureMisc,4,31,319,62
+    GROUPBOX        "Mouse options",IDC_STATIC,4,1,319,28
+    CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,119,8
     CONTROL         "Skip click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,14,97,8
     CONTROL         "Skip in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,14,87,8
+    GROUPBOX        "Miscellaneous options",gbFeatureMisc,4,31,319,62
     CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,54,89,8
     CONTROL         "Fix Alt on AltTab/AltF9",cbFixAltOnAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,78,117,8
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,43,89,8
@@ -506,8 +516,6 @@ BEGIN
     EDITTEXT        tHideCaptionAlwaysDissapear,277,214,40,12,ES_AUTOHSCROLL
     CONTROL         "Confirm close console",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,66,87,8
     CONTROL         "ANSI X3.64 / xterm 256 colors",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,129,119,8
-    GROUPBOX        "Mouse options",IDC_STATIC,4,1,319,28
-    CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,119,8
     CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTO3STATE | WS_TABSTOP,10,183,117,8
     GROUPBOX        "Scrollbar",IDC_STATIC,4,144,319,26
     RTEXT           "Appear delay:",IDC_STATIC,129,155,50,8
@@ -523,6 +531,29 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
+    GROUPBOX        "Used command processor",gbComspec,4,1,319,96
+    CONTROL         "Auto (tcc - if installed, %ComSpec% - otherwise)",rbComspecAuto,
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,9,12,178,8
+    CONTROL         "%ComSpec% (env.var.)",rbComspecEnvVar,"Button",BS_AUTORADIOBUTTON,189,12,98,8
+    CONTROL         "cmd",rbComspecCmd,"Button",BS_AUTORADIOBUTTON,290,12,31,8
+    CONTROL         "Explicit executable (env.var. of ConEmu.exe allowed)",rbComspecExplicit,
+                    "Button",BS_AUTORADIOBUTTON,9,25,308,8
+    EDITTEXT        tComspecExplicit,19,36,283,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",cbComspecExplicit,306,36,13,11
+    GROUPBOX        "Choose preferred command processor platform (bits)",gbComspecBits,9,51,252,28
+    CONTROL         "Same as OS",rbComspec_OSbit,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,63,54,8
+    CONTROL         "Same as running application",rbComspec_AppBit,"Button",BS_AUTORADIOBUTTON,80,63,112,8
+    CONTROL         "x32 always",rbComspec_x32,"Button",BS_AUTORADIOBUTTON,196,63,56,8
+    CONTROL         "Set ComSpec environment variable for child processes to 'tcc.exe'",cbComspecUpdateEnv,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,84,309,8
+    PUSHBUTTON      "Test",cbComspecTest,269,60,50,14
+END
+
+IDD_SPG_CMDOUTPUT DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
     GROUPBOX        "Command execution",gbCmdRun,4,1,319,28
     RTEXT           "Cmd output codepage",IDC_STATIC,219,10,43,16
     COMBOBOX        lbCmdOutputCP,265,11,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
@@ -530,22 +561,6 @@ BEGIN
     EDITTEXT        tLongOutputHeight,93,11,29,12,ES_AUTOHSCROLL
     RTEXT           "16bit height:",IDC_STATIC,128,13,44,8
     COMBOBOX        lbNtvdmHeight,175,11,43,30,CBS_DROPDOWNLIST | WS_TABSTOP
-    GROUPBOX        "Used command processor",gbComspec,4,31,319,96
-    CONTROL         "Auto (tcc - if installed, %ComSpec% - otherwise)",rbComspecAuto,
-                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,9,42,178,8
-    CONTROL         "%ComSpec% (env.var.)",rbComspecEnvVar,"Button",BS_AUTORADIOBUTTON,189,42,98,8
-    CONTROL         "cmd",rbComspecCmd,"Button",BS_AUTORADIOBUTTON,290,42,31,8
-    CONTROL         "Explicit executable (env.var. of ConEmu.exe allowed)",rbComspecExplicit,
-                    "Button",BS_AUTORADIOBUTTON,9,55,308,8
-    EDITTEXT        tComspecExplicit,19,66,283,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",cbComspecExplicit,306,66,13,11
-    GROUPBOX        "Choose preferred command processor platform (bits)",gbComspecBits,9,81,252,28
-    CONTROL         "Same as OS",rbComspec_OSbit,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,93,54,8
-    CONTROL         "Same as running application",rbComspec_AppBit,"Button",BS_AUTORADIOBUTTON,80,93,112,8
-    CONTROL         "x32 always",rbComspec_x32,"Button",BS_AUTORADIOBUTTON,196,93,56,8
-    CONTROL         "Set ComSpec environment variable for child processes to 'tcc.exe'",cbComspecUpdateEnv,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,114,309,8
-    PUSHBUTTON      "Test",cbComspecTest,269,90,50,14
 END
 
 IDD_SPG_FEATURE_FAR DIALOGEX 0, 0, 328, 235
@@ -1028,7 +1043,7 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Predefined tasks (command groups)",gbCmdTasks,4,1,319,199
     LISTBOX         lbCmdTasks,9,12,93,165,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
-    LTEXT           "Task name (alias), surrounded by {...}, used in [+] menu, Recreate dialog or '/cmd ' agrument of ConEmu.exe",stCmdGroupName,111,11,207,16
+    LTEXT           "Task name (alias), surrounded by {...}, used in «[+] menu», «Recreate dialog» or «/cmd» agrument of ConEmu.exe",stCmdGroupName,111,11,207,16
     EDITTEXT        tCmdGroupName,109,29,208,12,ES_AUTOHSCROLL
     LTEXT           "Commands (application, arguments, ""-new_console"" params)\nDelimit commands with empty lines\nEach command creates tab in ConEmu when group started\nMark active console tab with '>' sign\nStart console 'As Administrator' with '*' sign",stCmdGroupCommands,111,71,208,41
     EDITTEXT        tCmdGroupCommands,109,113,208,64,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
@@ -1044,7 +1059,7 @@ BEGIN
     CONTROL         "Add commands from history, too",cbCmdTaskbarCommands,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,215,123,8
     PUSHBUTTON      "Update Now!",cbCmdTaskbarUpdate,259,211,58,14
-    LTEXT           "ConEmu arguments for Jump list (/icon ""cmd.exe"" or /dir ""C:\\""):",stCmdGroupGuiArg,111,44,208,8
+    LTEXT           "Task parameters (/dir ""C:\\"" or /icon ""cmd.exe""):",stCmdGroupGuiArg,111,44,208,8
     EDITTEXT        tCmdGroupGuiArg,110,54,208,12,ES_AUTOHSCROLL
 END
 

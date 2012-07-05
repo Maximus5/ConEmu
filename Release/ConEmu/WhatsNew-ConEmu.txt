@@ -10,6 +10,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.05
+[!] Settings tree redesigned.
+[%] Issue 630: «Snap to desktop edges» and multi-monitor layout.
+[+] ConEmuC: "/ATTACH /CONPID=<pid> /GHWND=NEW" - Alternative nonintrusive attach of existing console to the NEW instance of ConEmu.exe.
+[%] Issue 623: Continue...
+
+
 2012.07.04
 [%] FindEditor/FindViewer/FindFarWindow возвращал "NotFound".
 [%] На вкладке Debug создавались «пустые» строки даже при «Shell activity» = «Disabled».

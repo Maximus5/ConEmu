@@ -307,6 +307,7 @@ class CSettings
 			thi_Startup,
 			thi_Ext,
 			thi_Comspec,
+			thi_Output,
 			thi_Selection,
 			thi_Far,
 			thi_Keys,
@@ -431,6 +432,7 @@ class CSettings
 		LRESULT OnInitDialog_Startup(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
 		LRESULT OnInitDialog_Comspec(HWND hWnd2);
+		LRESULT OnInitDialog_Output(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Selection(HWND hWnd2);
 		LRESULT OnInitDialog_Far(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Keys(HWND hWnd2, BOOL abInitial);
@@ -452,6 +454,7 @@ class CSettings
 		bool mb_IgnoreCmdGroupEdit, mb_IgnoreCmdGroupList;
 		//LRESULT OnButtonClicked_Apps(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		//UINT mn_AppsEnableControlsMsg;
+		INT_PTR pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		static INT_PTR CALLBACK pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		INT_PTR pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM wParam, LPARAM lParam);
 		INT_PTR pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -662,12 +665,14 @@ class CSettings
 		};
 		struct ConEmuSetupPages
 		{
-			int              PageID;    // Dialog ID
-			wchar_t          PageName[64];
+			int              PageID;       // Dialog ID
+			int              Level;        // 0, 1
+			wchar_t          PageName[64]; // Label in treeview
 			//HWND     *hPage;
-			TabHwndIndex     PageIndex; // mh_Tabs[...]
+			TabHwndIndex     PageIndex;    // mh_Tabs[...]
 			HTREEITEM        hTI;
 			ConEmuSetupItem* pItems;
 		};
 		ConEmuSetupPages *m_Pages;
+		static void SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost = false);
 };

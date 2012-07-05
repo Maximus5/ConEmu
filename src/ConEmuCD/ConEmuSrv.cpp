@@ -2084,7 +2084,12 @@ HWND Attach2Gui(DWORD nTimeout)
 		gpSrv->pConsoleMap->Ptr()->bDataReady = FALSE;
 	}
 
-	if (gpSrv->dwGuiPID && gpSrv->hGuiWnd)
+	if (gpSrv->bRequestNewGuiWnd && !gpSrv->dwGuiPID && !gpSrv->hGuiWnd)
+	{
+		bNeedStartGui = TRUE;
+		hGui = (HWND)-1;
+	}
+	else if (gpSrv->dwGuiPID && gpSrv->hGuiWnd)
 	{
 		wchar_t szClass[128];
 		GetClassName(gpSrv->hGuiWnd, szClass, countof(szClass));

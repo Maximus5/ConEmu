@@ -407,6 +407,7 @@ struct SrvInfo
 	BOOL   bDebuggerActive, bDebuggerRequestDump; HANDLE hDebugThread, hDebugReady; DWORD dwDebugThreadId;
 	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
 	HWND   hGuiWnd; // передается через аргумент "/GHWND=%08X", чтобы окно не искать
+	BOOL   bRequestNewGuiWnd;
 	DWORD  nActiveFarPID; // PID последнего активного Far
 	BOOL   bWasDetached; // Выставляется в TRUE при получении CECMD_DETACHCON
 	BOOL   bWasReattached; // Если TRUE - то при следующем цикле нужно передернуть ReloadFullConsoleInfo(true)

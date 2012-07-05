@@ -168,11 +168,166 @@ void SettingsRegistry::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, 
 	_ASSERTE(value && nSize);
 	RegSetValueEx(regMy, regName, NULL, nType, (LPBYTE)value, nSize);
 }
-void SettingsRegistry::Save(const wchar_t *regName, const wchar_t *value)
-{
-	if (!value) value = _T("");  // сюда мог придти и NULL
+//void SettingsRegistry::Save(const wchar_t *regName, const wchar_t *value)
+//{
+//	if (!value) value = _T("");  // сюда мог придти и NULL
+//
+//	RegSetValueEx(regMy, regName, NULL, REG_SZ, (LPBYTE)value, (lstrlenW(value)+1) * sizeof(wchar_t));
+//}
 
-	RegSetValueEx(regMy, regName, NULL, REG_SZ, (LPBYTE)value, (lstrlenW(value)+1) * sizeof(wchar_t));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* *************************** */
+
+SettingsINI::SettingsINI()
+{
+	mpsz_Section = NULL;
+	mpsz_IniFile = NULL;
+	lstrcpy(Type, L"[ini]");
+}
+SettingsINI::~SettingsINI()
+{
+	CloseKey();
+}
+
+
+
+bool SettingsINI::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
+{
+	SafeFree(mpsz_Section);
+
+	if (!regPath || !*regPath)
+	{
+		mpsz_IniFile = NULL;
+		return false;
+	}
+
+	mpsz_IniFile = gpConEmu->ConEmuIni();
+
+	if (!mpsz_IniFile || !*mpsz_IniFile)
+	{
+		mpsz_IniFile = NULL;
+		return false;
+	}
+
+	HANDLE hFile = CreateFile(mpsz_IniFile,
+		((access & KEY_WRITE) == KEY_WRITE) ? GENERIC_WRITE : GENERIC_READ,
+		FILE_SHARE_READ,
+		NULL,
+		((access & KEY_WRITE) == KEY_WRITE) ? OPEN_ALWAYS : OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL);
+
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		mpsz_IniFile = NULL;
+		return false;
+	}
+
+	CloseHandle(hFile);
+
+	wchar_t* pszDup = lstrdup(regPath);
+	if (!pszDup)
+	{
+		mpsz_IniFile = NULL;
+		return FALSE;
+	}
+	// Замена символов
+	wchar_t* psz = pszDup;
+	while ((psz = wcspbrk(psz, L" ?")))
+		*psz = L'_';
+	psz = pszDup;
+	while ((psz = wcspbrk(psz, L"/\\")))
+		*psz = L' ';
+
+
+	size_t cchMax = (_tcslen(pszDup)*3)+1;
+	char* pszSectionA = (char*)malloc(cchMax);
+	if (!pszSectionA)
+	{
+		mpsz_IniFile = NULL;
+		SafeFree(pszDup);
+		return false;
+	}
+
+	int nLen = WideCharToMultiByte(CP_UTF8, 0, pszDup, -1, pszSectionA, cchMax, 0,0);
+	mpsz_Section = (wchar_t*)malloc((nLen+1)*sizeof(*mpsz_Section));
+	if (!mpsz_Section)
+	{
+		SafeFree(pszSectionA);
+		SafeFree(pszDup);
+		return false;
+	}
+	MultiByteToWideChar(CP_ACP, 0, pszSectionA, -1, mpsz_Section, nLen+1);
+
+	SafeFree(pszSectionA);
+	SafeFree(pszDup);
+	return true;
+}
+void SettingsINI::CloseKey()
+{
+	SafeFree(mpsz_Section);
+}
+
+
+
+bool SettingsINI::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
+{
+	_ASSERTE(nSize>0);
+
+	return false;
+}
+// эта функция, если значения нет (или тип некорректный) *value НЕ трогает
+bool SettingsINI::Load(const wchar_t *regName, wchar_t **value)
+{
+	DWORD len = 0;
+
+
+	return false;
+}
+// эта функция, если значения нет (или тип некорректный) value НЕ трогает
+bool SettingsINI::Load(const wchar_t *regName, wchar_t *value, int maxLen)
+{
+	_ASSERTE(maxLen>1);
+	DWORD len = 0, dwType = 0;
+
+	return false;
+}
+
+
+
+void SettingsINI::Delete(const wchar_t *regName)
+{
+	if (mpsz_IniFile && *mpsz_IniFile && mpsz_Section && *mpsz_Section && regName && *regName)
+	{
+		//char szName[MAX_PATH*3] = {};
+		//WideCharToMultiByte(CP_UTF8, 0, regName, -1, szName, countof(szName), 0,0);
+		//if (*szName)
+		WritePrivateProfileString(mpsz_Section, regName, NULL, mpsz_IniFile);
+	}
+}
+
+
+
+void SettingsINI::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize)
+{
+	_ASSERTE(value && nSize);
 }
 
 
@@ -1040,9 +1195,9 @@ bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 	{
 		if (!lstrcmpi(bsType, L"string"))
 		{
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			DWORD nLen = _tcslen(bsData) + 1;
-#endif
+			#endif
 			DWORD nMaxLen = nSize / 2;
 			lstrcpyn((wchar_t*)value, bsData, nMaxLen);
 			lbRc = true;
@@ -1176,12 +1331,12 @@ void SettingsXML::Delete(const wchar_t *regName)
 	Save(regName, NULL, REG_MULTI_SZ, 0);
 }
 
-void SettingsXML::Save(const wchar_t *regName, const wchar_t *value)
-{
-	if (!value) value = L"";  // сюда мог придти и NULL
-
-	Save(regName, (LPCBYTE)value, REG_SZ, (_tcslen(value)+1)*sizeof(wchar_t));
-}
+//void SettingsXML::Save(const wchar_t *regName, const wchar_t *value)
+//{
+//	if (!value) value = L"";  // сюда мог придти и NULL
+//
+//	Save(regName, (LPCBYTE)value, REG_SZ, (_tcslen(value)+1)*sizeof(wchar_t));
+//}
 void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize)
 {
 	HRESULT hr = S_OK;

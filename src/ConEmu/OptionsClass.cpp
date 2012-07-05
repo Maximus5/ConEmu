@@ -647,25 +647,26 @@ void CSettings::InitVars_Pages()
 	ConEmuSetupPages Pages[] = 
 	{
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
-		{IDD_SPG_MAIN,        L"Main",           thi_Main/*,    OnInitDialog_Main*/},
-		{IDD_SPG_CURSOR,      L"Text cursor",    thi_Cursor/*,  OnInitDialog_Cursor*/},
-		{IDD_SPG_STARTUP,     L"Startup",        thi_Startup/*, OnInitDialog_Startup*/},
-		{IDD_SPG_FEATURE,     L"Features",       thi_Ext/*,     OnInitDialog_Ext*/},
-		{IDD_SPG_COMSPEC,     L"ComSpec",        thi_Comspec/*, OnInitDialog_Comspec*/},
-		{IDD_SPG_SELECTION,   L"Mark & Paste",   thi_Selection/*OnInitDialog_Selection*/},
-		{IDD_SPG_FEATURE_FAR, L"Far Manager",    thi_Far/*,     OnInitDialog_Ext*/},
-		{IDD_SPG_KEYS,        L"Keys & Macro",   thi_Keys/*,    OnInitDialog_Keys*/},
-		{IDD_SPG_TABS,        L"Tabs",           thi_Tabs/*,    OnInitDialog_Tabs*/},
-		{IDD_SPG_STATUSBAR,   L"Status bar",     thi_Status,/*  OnInitDialog_Status*/},
-		{IDD_SPG_COLORS,      L"Colors",         thi_Colors/*,  OnInitDialog_Color*/},
-		{IDD_SPG_TRANSPARENT, L"Transparency",   thi_Transparent/*, OnInitDialog_Transparent*/},
-		{IDD_SPG_CMDTASKS,    L"Tasks",          thi_Tasks/*,   OnInitDialog_CmdTasks*/},
-		{IDD_SPG_APPDISTINCT, L"App distinct",   thi_Apps/*,    OnInitDialog_CmdTasks*/},
-		{IDD_SPG_INTEGRATION, L"Integration",    thi_Integr/*,  OnInitDialog_Integr*/},
-		{IDD_SPG_VIEWS,       L"Views",          thi_Views/*,   OnInitDialog_Views*/},
-		{IDD_SPG_DEBUG,       L"Debug",          thi_Debug/*,   OnInitDialog_Debug*/},
-		{IDD_SPG_UPDATE,      L"Update",         thi_Update/*,  OnInitDialog_Update*/},
-		{IDD_SPG_INFO,        L"Info",           thi_Info/*,    OnInitDialog_Info*/},
+		{IDD_SPG_MAIN,        0, L"Main",           thi_Main/*,    OnInitDialog_Main*/},
+		{IDD_SPG_UPDATE,      1, L"Update",         thi_Update/*,  OnInitDialog_Update*/},
+		{IDD_SPG_STARTUP,     0, L"Startup",        thi_Startup/*, OnInitDialog_Startup*/},
+		{IDD_SPG_CMDTASKS,    1, L"Tasks",          thi_Tasks/*,   OnInitDialog_CmdTasks*/},
+		{IDD_SPG_COMSPEC,     1, L"ComSpec",        thi_Comspec/*, OnInitDialog_Comspec*/},
+		{IDD_SPG_CMDOUTPUT,   1, L"Output",         thi_Output/*,  OnInitDialog_Output*/},
+		{IDD_SPG_FEATURE,     0, L"Features",       thi_Ext/*,     OnInitDialog_Ext*/},
+		{IDD_SPG_CURSOR,      1, L"Text cursor",    thi_Cursor/*,  OnInitDialog_Cursor*/},
+		{IDD_SPG_COLORS,      1, L"Colors",         thi_Colors/*,  OnInitDialog_Color*/},
+		{IDD_SPG_TRANSPARENT, 1, L"Transparency",   thi_Transparent/*, OnInitDialog_Transparent*/},
+		{IDD_SPG_TABS,        1, L"Tabs",           thi_Tabs/*,    OnInitDialog_Tabs*/},
+		{IDD_SPG_STATUSBAR,   1, L"Status bar",     thi_Status,/*  OnInitDialog_Status*/},
+		{IDD_SPG_INTEGRATION, 1, L"Integration",    thi_Integr/*,  OnInitDialog_Integr*/},
+		{IDD_SPG_APPDISTINCT, 1, L"App distinct",   thi_Apps/*,    OnInitDialog_CmdTasks*/},
+		{IDD_SPG_KEYS,        0, L"Keys & Macro",   thi_Keys/*,    OnInitDialog_Keys*/},
+		{IDD_SPG_SELECTION,   1, L"Mark & Paste",   thi_Selection/*OnInitDialog_Selection*/},
+		{IDD_SPG_FEATURE_FAR, 0, L"Far Manager",    thi_Far/*,     OnInitDialog_Ext*/},
+		{IDD_SPG_VIEWS,       1, L"Views",          thi_Views/*,   OnInitDialog_Views*/},
+		{IDD_SPG_INFO,        0, L"Info",           thi_Info/*,    OnInitDialog_Info*/},
+		{IDD_SPG_DEBUG,       1, L"Debug",          thi_Debug/*,   OnInitDialog_Debug*/},
 		// End
 		{},
 	};
@@ -1177,48 +1178,38 @@ LRESULT CSettings::OnInitDialog()
 	SetWindowText(ghOpWnd, szTitle);
 	MCHKHEAP
 	{
-		#if 0
-		TCITEM tie;
-		wchar_t szTitle[32];
-		HWND _hwndTab = GetDlgItem(ghOpWnd, tabMain);
-		tie.mask = TCIF_TEXT;
-		tie.iImage = -1;
-		tie.pszText = szTitle;
-
-		wcscpy_c(szTitle, L"Main");		TabCtrl_InsertItem(_hwndTab, 0, &tie);
-		wcscpy_c(szTitle, L"Features");	TabCtrl_InsertItem(_hwndTab, 1, &tie);
-		wcscpy_c(szTitle, L"Keys");		TabCtrl_InsertItem(_hwndTab, 2, &tie);
-		wcscpy_c(szTitle, L"Tabs");		TabCtrl_InsertItem(_hwndTab, 3, &tie);
-		wcscpy_c(szTitle, L"Colors");	TabCtrl_InsertItem(_hwndTab, 4, &tie); //-V112
-		wcscpy_c(szTitle, L"Views");	TabCtrl_InsertItem(_hwndTab, 5, &tie);
-		wcscpy_c(szTitle, L"Debug");	TabCtrl_InsertItem(_hwndTab, 6, &tie);
-		wcscpy_c(szTitle, L"Info");		TabCtrl_InsertItem(_hwndTab, 7, &tie);
-
-		HFONT hFont = CreateFont(gpSet->nTabFontHeight/*TAB_FONT_HEIGTH*/, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gpSet->nTabFontCharSet /*ANSI_CHARSET*/, OUT_DEFAULT_PRECIS,
-		CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, /* L"Tahoma" */ gpSet->sTabFontFace);
-		SendMessage(_hwndTab, WM_SETFONT, WPARAM(hFont), TRUE);
-
-		RECT rcClient; GetWindowRect(_hwndTab, &rcClient);
-		MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
-		TabCtrl_AdjustRect(_hwndTab, FALSE, &rcClient);
-
-		#else
 		mb_IgnoreSelPage = true;
 		TVINSERTSTRUCT ti = {TVI_ROOT, TVI_LAST, {{TVIF_TEXT}}};
 		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
+		HTREEITEM hLastRoot = TVI_ROOT;
+		bool bExpanded = false;
 		for (size_t i = 0; m_Pages[i].PageID; i++)
 		{
+			ti.hParent = m_Pages[i].Level ? hLastRoot : TVI_ROOT;
 			ti.item.pszText = m_Pages[i].PageName;
+			
 			m_Pages[i].hTI = TreeView_InsertItem(hTree, &ti);
+			
 			_ASSERTE(mh_Tabs[m_Pages[i].PageIndex]==NULL);
 			mh_Tabs[m_Pages[i].PageIndex] = NULL;
+
+			if (!m_Pages[i].Level)
+			{
+				hLastRoot = m_Pages[i].hTI;
+				bExpanded = false;
+			}
+			else if (!bExpanded)
+			{
+				TreeView_Expand(hTree, hLastRoot, TVE_EXPAND);
+				bExpanded = true;
+			}
 		}
 
 		HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
 		RECT rcClient; GetWindowRect(hPlace, &rcClient);
 		MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 		ShowWindow(hPlace, SW_HIDE);
-		#endif
+
 		mb_IgnoreSelPage = false;
 
 		mh_Tabs[m_Pages[0].PageIndex] = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
@@ -1803,27 +1794,6 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2)
 {
-	CheckDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
-	wchar_t sz[16];
-	TODO("Надо бы увеличить, но нужно сервер допиливать");
-	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
-	SetDlgItemText(hWnd2, tLongOutputHeight, _ltow(gpSet->DefaultBufferHeight, sz, 10));
-	EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
-	// 16bit Height
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"Auto");
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"25 lines");
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"28 lines");
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"43 lines");
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"50 lines");
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_SETCURSEL, !gpSet->ntvdmHeight ? 0 :
-	                   ((gpSet->ntvdmHeight == 25) ? 1 : ((gpSet->ntvdmHeight == 28) ? 2 : ((gpSet->ntvdmHeight == 43) ? 3 : 4))), 0); //-V112
-	// Cmd.exe output cp
-	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Undefined");
-	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Automatic");
-	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Unicode");
-	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM");
-	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_SETCURSEL, gpSet->nCmdOutputCP, 0);
-
 	_ASSERTE((rbComspecAuto+cst_Explicit)==rbComspecExplicit && (rbComspecAuto+cst_Cmd)==rbComspecCmd  && (rbComspecAuto+cst_EnvVar)==rbComspecEnvVar);
 	CheckRadioButton(hWnd2, rbComspecAuto, rbComspecExplicit, rbComspecAuto+gpSet->ComSpec.csType);
 
@@ -1834,6 +1804,41 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2)
 	CheckRadioButton(hWnd2, rbComspec_OSbit, rbComspec_x32, rbComspec_OSbit+gpSet->ComSpec.csBits);
 
 	CheckDlgButton(hWnd2, cbComspecUpdateEnv, gpSet->ComSpec.isUpdateEnv ? BST_CHECKED : BST_UNCHECKED);
+
+	RegisterTipsFor(hWnd2);
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Output(HWND hWnd2, bool abInitial)
+{
+	CheckDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
+	
+	wchar_t sz[16];
+	TODO("Надо бы увеличить, но нужно сервер допиливать");
+	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
+	SetDlgItemText(hWnd2, tLongOutputHeight, _ltow(gpSet->DefaultBufferHeight, sz, 10));
+	EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
+
+	// 16bit Height
+	if (abInitial)
+	{
+		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"Auto");
+		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"25 lines");
+		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"28 lines");
+		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"43 lines");
+		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"50 lines");
+	}
+	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_SETCURSEL, !gpSet->ntvdmHeight ? 0 :
+	                   ((gpSet->ntvdmHeight == 25) ? 1 : ((gpSet->ntvdmHeight == 28) ? 2 : ((gpSet->ntvdmHeight == 43) ? 3 : 4))), 0); //-V112
+	// Cmd.exe output cp
+	if (abInitial)
+	{
+		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Undefined");
+		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Automatic");
+		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Unicode");
+		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM");
+	}
+	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_SETCURSEL, gpSet->nCmdOutputCP, 0);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
@@ -2682,19 +2687,129 @@ LRESULT CSettings::OnInitDialog_Apps(HWND hWnd2, bool abForceReload)
 
 LRESULT CSettings::OnInitDialog_Integr(HWND hWnd2, BOOL abInitial)
 {
-	TODO("Настройки!");
-	SetDlgItemText(hWnd2, tInsideName, L"ConEmu Inside");
-	SetDlgItemText(hWnd2, tInsideConfig, L"shell");
-	SetDlgItemText(hWnd2, tInsideShell, L"powershell -cur_console:n");
-	CheckDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mb_InsideSynchronizeCurDir);
-
-	SetDlgItemText(hWnd2, tHereName, L"ConEmu Here");
-	SetDlgItemText(hWnd2, tHereConfig, L"");
-	SetDlgItemText(hWnd2, tHereShell, L"cmd -cur_console:n");
+	pageOpProc_Integr(hWnd2, WM_INITDIALOG, 0, abInitial);
 
 	if (abInitial)
 		RegisterTipsFor(hWnd2);
 	return 0;
+}
+
+INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	static bool bSkipCbSel = FALSE;
+	INT_PTR iRc = 0;
+
+	switch (messg)
+	{
+	case WM_INITDIALOG:
+		{
+			bSkipCbSel = true;
+
+			SendDlgItemMessage(hWnd2, cbInsideName, CB_RESETCONTENT, 0, 0);
+			SendDlgItemMessage(hWnd2, cbHereName, CB_RESETCONTENT, 0, 0);
+
+			HKEY hkDir = NULL;
+			size_t cchCmdMax = 65535;
+			wchar_t* pszCmd = (wchar_t*)calloc(cchCmdMax,sizeof(*pszCmd));
+
+			if (0 == RegOpenKeyEx(HKEY_CLASSES_ROOT, L"Directory\\shell", 0, KEY_READ, &hkDir))
+			{
+				for (DWORD i = 0; i < 512; i++)
+				{
+					wchar_t szName[MAX_PATH+32] = {};
+					DWORD cchMax = countof(szName) - 32;
+					if (0 != RegEnumKeyEx(hkDir, i, szName, &cchMax, NULL, NULL, NULL, NULL))
+						break;
+					wchar_t* pszSlash = szName + _tcslen(szName);
+					wcscat_c(szName, L"\\command");
+					HKEY hkCmd = NULL;
+					if (0 == RegOpenKeyEx(hkDir, szName, 0, KEY_READ, &hkCmd))
+					{
+						DWORD cbMax = (cchCmdMax-2) * sizeof(*pszCmd);
+						if (0 == RegQueryValueEx(hkCmd, NULL, NULL, NULL, (LPBYTE)pszCmd, &cbMax))
+						{
+							pszCmd[cbMax>>1] = 0;
+							*pszSlash = 0;
+							LPCWSTR pszInside = StrStrI(pszCmd, L"/inside");
+							LPCWSTR pszConEmu = StrStrI(pszCmd, L"conemu");
+							if (pszConEmu)
+							{
+								SendDlgItemMessage(hWnd2,
+									pszInside ? cbInsideName : cbHereName,
+									CB_ADDSTRING, 0, (LPARAM)szName);
+							}
+						}
+						RegCloseKey(hkCmd);
+					}
+				}
+				RegCloseKey(hkDir);
+			}
+
+			*pszCmd = 0;
+			if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &hkDir))
+			{
+				DWORD cbMax = (cchCmdMax-2) * sizeof(*pszCmd);
+				if (0 == RegQueryValueEx(hkDir, L"AutoRun", NULL, NULL, (LPBYTE)pszCmd, &cbMax))
+					pszCmd[cbMax>>1] = 0;
+				else
+					*pszCmd = 0;
+				RegCloseKey(hkDir);
+			}
+			SetDlgItemText(hWnd2, tCmdAutoAttach, pszCmd);
+
+			_wsprintf(pszCmd, SKIPLEN(cchCmdMax) L"%s,1", gpConEmu->ms_ConEmuExe);
+
+			SetDlgItemText(hWnd2, cbInsideName, L"ConEmu Inside");
+			SetDlgItemText(hWnd2, tInsideConfig, L"shell");
+			SetDlgItemText(hWnd2, tInsideShell, L"powershell -cur_console:n");
+			SetDlgItemText(hWnd2, tInsideIcon, pszCmd);
+			CheckDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mb_InsideSynchronizeCurDir);
+
+			SetDlgItemText(hWnd2, cbHereName, L"ConEmu Here");
+			SetDlgItemText(hWnd2, tHereConfig, L"");
+			SetDlgItemText(hWnd2, tHereShell, L"cmd -cur_console:n");
+			SetDlgItemText(hWnd2, tHereIcon, pszCmd);
+
+			SafeFree(pszCmd);
+			bSkipCbSel = false;
+		}
+		break; // WM_INITDIALOG
+
+	case WM_COMMAND:
+		switch (HIWORD(wParam))
+		{
+		case BN_CLICKED:
+			{
+				WORD CB = LOWORD(wParam);
+				switch (CB)
+				{
+				case cbInsideSyncDir:
+					gpConEmu->mb_InsideSynchronizeCurDir = IsChecked(hWnd2, CB);
+					break;
+				case bInsideRegister:
+				case bInsideUnregister:
+					ShellIntegration(hWnd2, ShellIntgr_Inside, CB==bInsideRegister);
+					break;
+				case bHereRegister:
+				case bHereUnregister:
+					ShellIntegration(hWnd2, ShellIntgr_Here, CB==bHereRegister);
+					break;
+				case bCmdAutoRegister:
+				case bCmdAutoUnregister:
+					ShellIntegration(hWnd2, ShellIntgr_CmdAuto, CB==bCmdAutoRegister);
+					break;
+				}
+			}
+			break; // BN_CLICKED
+		case CBN_SELCHANGE:
+			{
+			}
+			break; // CBN_SELCHANGE
+		} // switch (HIWORD(wParam))
+		break; // WM_COMMAND
+	}
+
+	return iRc;
 }
 
 void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, LPCWSTR asCmd, LPCWSTR asIcon)
@@ -2862,14 +2977,14 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 	case ShellIntgr_Inside:
 		{
 			wchar_t szName[MAX_PATH] = {};
-			GetDlgItemText(hDlg, tInsideName, szName, countof(szName));
+			GetDlgItemText(hDlg, cbInsideName, szName, countof(szName));
 			if (bEnabled)
 			{
-				wchar_t szConfig[MAX_PATH] = {}, szShell[MAX_PATH] = {};
+				wchar_t szConfig[MAX_PATH] = {}, szShell[MAX_PATH] = {}, szIcon[MAX_PATH+16];
 				GetDlgItemText(hDlg, tInsideConfig, szConfig, countof(szConfig));
 				GetDlgItemText(hDlg, tInsideShell, szShell, countof(szShell));
-				wchar_t szIcon[MAX_PATH+16];
-				_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,1", gpConEmu->ms_ConEmuExe);
+				//_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,1", gpConEmu->ms_ConEmuExe);
+				GetDlgItemText(hDlg, tInsideIcon, szIcon, countof(szIcon));
 				RegisterShell(szName, L"/inside", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
 			}
 			else if (szName && *szName)
@@ -2880,10 +2995,55 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 		break;
 	case ShellIntgr_Here:
 		{
+			wchar_t szName[MAX_PATH] = {};
+			GetDlgItemText(hDlg, cbHereName, szName, countof(szName));
+			if (bEnabled)
+			{
+				wchar_t szConfig[MAX_PATH] = {}, szShell[MAX_PATH] = {}, szIcon[MAX_PATH+16];
+				GetDlgItemText(hDlg, tHereConfig, szConfig, countof(szConfig));
+				GetDlgItemText(hDlg, tHereShell, szShell, countof(szShell));
+				//_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,1", gpConEmu->ms_ConEmuExe);
+				GetDlgItemText(hDlg, tHereIcon, szIcon, countof(szIcon));
+				RegisterShell(szName, NULL, SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
+			}
+			else if (szName && *szName)
+			{
+				UnregisterShell(szName);
+			}
 		}
 		break;
 	case ShellIntgr_CmdAuto:
 		{
+			size_t cchCmdMax = 65535;
+			wchar_t* pszCmd = (wchar_t*)calloc(cchCmdMax,sizeof(*pszCmd));
+			if (bEnabled)
+				GetDlgItemText(hDlg, tCmdAutoAttach, pszCmd, cchCmdMax);
+
+			HKEY hkCmd = NULL;
+			if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ|KEY_WRITE, &hkCmd))
+			{
+				if (bEnabled)
+				{
+					if (*pszCmd)
+					{
+						RegSetValueEx(hkCmd, L"AutoRun", 0, REG_SZ, (LPBYTE)pszCmd, (lstrlen(pszCmd)+1)*sizeof(*pszCmd));
+					}
+				}
+				else
+				{
+					RegSetValueEx(hkCmd, L"AutoRun", 0, REG_SZ, (LPBYTE)L"", 1*sizeof(wchar_t));
+				}
+
+				DWORD cbMax = (cchCmdMax-2) * sizeof(*pszCmd);
+				if (0 == RegQueryValueEx(hkCmd, L"AutoRun", NULL, NULL, (LPBYTE)pszCmd, &cbMax))
+					pszCmd[cbMax>>1] = 0;
+				else
+					*pszCmd = 0;
+				SetDlgItemText(hDlg, tCmdAutoAttach, pszCmd);
+
+				RegCloseKey(hkCmd);
+			}
+			SetDlgItemText(hDlg, tCmdAutoAttach, pszCmd);
 		}
 		break;
 	}
@@ -3885,22 +4045,6 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						L"2. Create of modify configuration file DOSBox.conf",
 						gpConEmu->ms_ConEmuBaseDir);
 			}
-			break;
-
-		case cbInsideSyncDir:
-			gpConEmu->mb_InsideSynchronizeCurDir = IsChecked(hWnd2, CB);
-			break;
-		case bInsideRegister:
-		case bInsideUnregister:
-			ShellIntegration(hWnd2, ShellIntgr_Inside, CB==bInsideRegister);
-			break;
-		case bHereRegister:
-		case bHereUnregister:
-			ShellIntegration(hWnd2, ShellIntgr_Here, CB==bHereRegister);
-			break;
-		case bCmdAutoRegister:
-		case bCmdAutoUnregister:
-			ShellIntegration(hWnd2, ShellIntgr_CmdAuto, CB==bCmdAutoRegister);
 			break;
 
 		case bApplyViewSettings:
@@ -5801,6 +5945,20 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+void CSettings::SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost /*= false*/)
+{
+	HTREEITEM hParent = TreeView_GetParent(hTree, hItem);
+	if (hParent)
+	{
+		TreeView_Expand(hTree, hParent, TVE_EXPAND);
+	}
+	
+	if (!bPost)
+		TreeView_SelectItem(hTree, hItem);
+	else
+		PostMessage(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hItem);
+}
+
 LRESULT CSettings::OnPage(LPNMHDR phdr)
 {
 	if (gpSetCls->szFontError[0])
@@ -5813,7 +5971,6 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 	if ((LONG_PTR)phdr == 0x101)
 	{
 		// Переключиться на следующий таб
-		#if 1
 		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
 		NMTREEVIEW nm = {{hTree, tvSetupCategories, TVN_SELCHANGED}};
 		nm.itemOld.hItem = TreeView_GetSelection(hTree);
@@ -5824,22 +5981,13 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 			nm.itemNew.hItem = TreeView_GetRoot(hTree);
 		//return OnPage((LPNMHDR)&nm);
 		if (nm.itemNew.hItem)
-			TreeView_SelectItem(hTree, nm.itemNew.hItem);
+		{
+			SelectTreeItem(hTree, nm.itemNew.hItem);
+		}
 		return 0;
-		#else
-		int nCur = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETCURSEL,0,0);
-		int nAll = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETITEMCOUNT,0,0);
-
-		nCur ++; if (nCur>=nAll) nCur = 0;
-
-		SendDlgItemMessage(ghOpWnd, tabMain, TCM_SETCURSEL,nCur,0);
-		NMHDR hdr = {GetDlgItem(ghOpWnd, tabMain),tabMain,TCN_SELCHANGE};
-		return OnPage(&hdr);
-		#endif
 	}
 	else if ((LONG_PTR)phdr == 0x102)
 	{
-		#if 1
 		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
 		NMTREEVIEW nm = {{hTree, tvSetupCategories, TVN_SELCHANGED}};
 		nm.itemOld.hItem = TreeView_GetSelection(hTree);
@@ -5850,19 +5998,10 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 			nm.itemNew.hItem = TreeView_GetRoot(hTree);
 		//return OnPage((LPNMHDR)&nm);
 		if (nm.itemNew.hItem)
-			TreeView_SelectItem(hTree, nm.itemNew.hItem);
+		{
+			SelectTreeItem(hTree, nm.itemNew.hItem);
+		}
 		return 0;
-		#else
-		// Переключиться на предыдущий таб
-		int nCur = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETCURSEL,0,0);
-		int nAll = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETITEMCOUNT,0,0);
-
-		nCur --; if (nCur<0) nCur = nAll - 1;
-
-		SendDlgItemMessage(ghOpWnd, tabMain, TCM_SETCURSEL,nCur,0);
-		NMHDR hdr = {GetDlgItem(ghOpWnd, tabMain),tabMain,TCN_SELCHANGE};
-		return OnPage(&hdr);
-		#endif
 	}
 
 
@@ -5946,7 +6085,8 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 		{
 			if (gpSetCls->m_Pages[i].PageID == IdShowPage)
 			{
-				PostMessage(GetDlgItem(ghOpWnd, tvSetupCategories), TVM_SELECTITEM, TVGN_CARET, (LPARAM)gpSetCls->m_Pages[i].hTI);
+				//PostMessage(GetDlgItem(ghOpWnd, tvSetupCategories), TVM_SELECTITEM, TVGN_CARET, (LPARAM)gpSetCls->m_Pages[i].hTI);
+				SelectTreeItem(GetDlgItem(ghOpWnd, tvSetupCategories), gpSetCls->m_Pages[i].hTI, true);
 				break;
 			}
 		}
@@ -6258,6 +6398,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_COMSPEC:
 			gpSetCls->OnInitDialog_Comspec(hWnd2);
 			break;
+		case IDD_SPG_CMDOUTPUT:
+			gpSetCls->OnInitDialog_Output(hWnd2, true);
+			break;
 		case IDD_SPG_SELECTION:
 			gpSetCls->OnInitDialog_Selection(hWnd2);
 			break;
@@ -6332,6 +6475,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			break;
 		case IDD_SPG_FEATURE: /*gpSetCls->OnInitDialog_Ext(hWnd2);*/    break;
 		case IDD_SPG_COMSPEC: /*gpSetCls->OnInitDialog_Comspec(hWnd2);*/break;
+		case IDD_SPG_CMDOUTPUT:
+			gpSetCls->OnInitDialog_Output(hWnd2, false);
+			break;
 		case IDD_SPG_SELECTION: /*gpSetCls->OnInitDialog_Selection(hWnd2);*/    break;
 		case IDD_SPG_FEATURE_FAR:
 			gpSetCls->OnInitDialog_Far(hWnd2, FALSE);
@@ -6375,6 +6521,10 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		// Страничка "App distinct" в некотором смысле особенная.
 		// У многих контролов ИД дублируются с другими вкладками.
 		return gpSetCls->pageOpProc_Apps(hWnd2, NULL, messg, wParam, lParam);
+	}
+	else if (gpSetCls->mh_Tabs[thi_Integr] && (hWnd2 == gpSetCls->mh_Tabs[thi_Integr]))
+	{
+		return gpSetCls->pageOpProc_Integr(hWnd2, messg, wParam, lParam);
 	}
 	else if (gpSetCls->mh_Tabs[thi_Startup] && (hWnd2 == gpSetCls->mh_Tabs[thi_Startup]))
 	{

@@ -192,8 +192,10 @@ class CConEmuMain :
 		void CheckPortableReg();
 		void FinalizePortableReg();
 		wchar_t ms_ConEmuXml[MAX_PATH+1];       // полный путь к портабельным настройкам
+		wchar_t ms_ConEmuIni[MAX_PATH+1];       // полный путь к портабельным настройкам
 	public:
 		LPWSTR ConEmuXml();
+		LPWSTR ConEmuIni();
 		wchar_t ms_ConEmuChm[MAX_PATH+1];       // полный путь к chm-файлу (help)
 		wchar_t ms_ConEmuC32Full[MAX_PATH+12];  // полный путь к серверу (ConEmuC.exe) с длинными именами
 		wchar_t ms_ConEmuC64Full[MAX_PATH+12];  // полный путь к серверу (ConEmuC64.exe) с длинными именами
@@ -661,7 +663,7 @@ class CConEmuMain :
 		LRESULT OnSetCursor(WPARAM wParam=-1, LPARAM lParam=-1);
 		LRESULT OnSize(WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
 		LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
-		LRESULT OnMoving(LPRECT prcWnd = NULL);
+		LRESULT OnMoving(LPRECT prcWnd = NULL, bool bWmMove = false);
 		virtual LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		void OnSizePanels(COORD cr);
