@@ -1037,6 +1037,42 @@ bool CVirtualConsole::isCharSpace(wchar_t inChar)
 	return isSpace;
 }
 
+bool CVirtualConsole::isCharRTL(wchar_t inChar)
+{
+	bool isRtl =
+	(inChar==0x05BE)||(inChar==0x05C0)||(inChar==0x05C3)||(inChar==0x05C6)||
+	((inChar>=0x05D0)&&(inChar<=0x05F4))||
+	(inChar==0x0608)||(inChar==0x060B)||(inChar==0x060D)||
+	((inChar>=0x061B)&&(inChar<=0x064A))||
+	((inChar>=0x066D)&&(inChar<=0x066F))||
+	((inChar>=0x0671)&&(inChar<=0x06D5))||
+	((inChar>=0x06E5)&&(inChar<=0x06E6))||
+	((inChar>=0x06EE)&&(inChar<=0x06EF))||
+	((inChar>=0x06FA)&&(inChar<=0x0710))||
+	((inChar>=0x0712)&&(inChar<=0x072F))||
+	((inChar>=0x074D)&&(inChar<=0x07A5))||
+	((inChar>=0x07B1)&&(inChar<=0x07EA))||
+	((inChar>=0x07F4)&&(inChar<=0x07F5))||
+	((inChar>=0x07FA)&&(inChar<=0x0815))||
+	(inChar==0x081A)||(inChar==0x0824)||(inChar==0x0828)||
+	((inChar>=0x0830)&&(inChar<=0x0858))||
+	((inChar>=0x085E)&&(inChar<=0x08AC))||
+	(inChar==0x200F)||(inChar==0xFB1D)||
+	((inChar>=0xFB1F)&&(inChar<=0xFB28))||
+	((inChar>=0xFB2A)&&(inChar<=0xFD3D))||
+	((inChar>=0xFD50)&&(inChar<=0xFDFC))||
+	((inChar>=0xFE70)&&(inChar<=0xFEFC))
+	//((inChar>=0x10800)&&(inChar<=0x1091B))||
+	//((inChar>=0x10920)&&(inChar<=0x10A00))||
+	//((inChar>=0x10A10)&&(inChar<=0x10A33))||
+	//((inChar>=0x10A40)&&(inChar<=0x10B35))||
+	//((inChar>=0x10B40)&&(inChar<=0x10C48))||
+	//((inChar>=0x1EE00)&&(inChar<=0x1EEBB))
+	;
+  return isRtl;
+}
+
+
 void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight, COLORREF crBack)
 {
 	#ifdef _DEBUG
@@ -1223,30 +1259,41 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 {
 	BOOL lbCharABCOk;
 
+	WARNING("Не работает с *.bdf?");
+
 	if (!gpSetCls->CharABC[ch].abcB)
 	{
-		if (gpSetCls->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharBorder(ch))
+		if (isCharRTL(ch))
 		{
-			SelectFont(gpSetCls->mh_Font2);
+			WARNING("Поскольку с RTL все достаточно сложно, пока считаем шрифт моноширным");
+			gpSetCls->CharABC[ch].abcA = gpSetCls->CharABC[ch].abcC = 0;
+			gpSetCls->CharABC[ch].abcB = nFontWidth;
 		}
 		else
 		{
-			TODO("Тут надо бы деление по стилям сделать");
-			SelectFont(gpSetCls->mh_Font[0]);
-		}
+			if (gpSetCls->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharBorder(ch))
+			{
+				SelectFont(gpSetCls->mh_Font2);
+			}
+			else
+			{
+				TODO("Тут надо бы деление по стилям сделать");
+				SelectFont(gpSetCls->mh_Font[0]);
+			}
 
-		//This function succeeds only with TrueType fonts
-		lbCharABCOk = GetCharABCWidths(hDC, ch, ch, &gpSetCls->CharABC[ch]);
+			//This function succeeds only with TrueType fonts
+			lbCharABCOk = GetCharABCWidths(hDC, ch, ch, &gpSetCls->CharABC[ch]);
 
-		if (!lbCharABCOk)
-		{
-			// Значит шрифт не TTF/OTF
-			gpSetCls->CharABC[ch].abcB = CharWidth(ch);
-			_ASSERTE(gpSetCls->CharABC[ch].abcB);
+			if (!lbCharABCOk)
+			{
+				// Значит шрифт не TTF/OTF
+				gpSetCls->CharABC[ch].abcB = CharWidth(ch);
+				_ASSERTE(gpSetCls->CharABC[ch].abcB);
 
-			if (!gpSetCls->CharABC[ch].abcB) gpSetCls->CharABC[ch].abcB = 1;
+				if (!gpSetCls->CharABC[ch].abcB) gpSetCls->CharABC[ch].abcB = 1;
 
-			gpSetCls->CharABC[ch].abcA = gpSetCls->CharABC[ch].abcC = 0;
+				gpSetCls->CharABC[ch].abcA = gpSetCls->CharABC[ch].abcC = 0;
+			}
 		}
 	}
 
@@ -2733,7 +2780,7 @@ void CVirtualConsole::UpdateText()
 					//ConCharXLine[j-1] = j * nFontWidth;
 					bool bMayBeFrame = true;
 
-					// Пройти вверх и вних от текущей строки, проверив,
+					// Пройти вверх и вниз от текущей строки, проверив,
 					// есть ли в этой же X-координате вертикальная рамка (или угол)
 					TODO("Хорошо бы для панелей определять границы колонок более корректно, лучше всего - через API?");
 					//if (!bBord && !bFrame)
@@ -2849,6 +2896,7 @@ void CVirtualConsole::UpdateText()
 			ConCharXLine[j] = (j ? ConCharXLine[j-1] : 0)+CharWidth(c);
 			HEAPVAL
 
+			#if 0
 			if (bForceMonospace)
 			{
 				HEAPVAL
@@ -2863,17 +2911,9 @@ void CVirtualConsole::UpdateText()
 
 				RECT rect;
 
-				if (!bProportional)
-					rect = MakeRect(j * nFontWidth, pos, j2 * nFontWidth, pos + nFontHeight);
-				else
-				{
-					rect.left = j ? ConCharXLine[j-1] : 0;
-					rect.top = pos;
-					rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
-					rect.bottom = rect.top + nFontHeight;
-				}
+				rect = MakeRect(j * nFontWidth, pos, j2 * nFontWidth, pos + nFontHeight);
 
-				UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attr.nBackIdx)) ? 0 : ETO_OPAQUE);
+				UINT nFlags = /*ETO_CLIPPED |*/ ((drawImage && ISBGIMGCOLOR(attr.nBackIdx)) ? 0 : ETO_OPAQUE);
 				int nShift = 0;
 				HEAPVAL
 
@@ -2967,6 +3007,7 @@ void CVirtualConsole::UpdateText()
 				HEAPVAL
 			} // end  - if (gpSet->isForceMonospace)
 			else
+			#endif
 			{
 				wchar_t* pszDraw = NULL;
 				int      nDrawLen = -1;
@@ -3000,7 +3041,7 @@ void CVirtualConsole::UpdateText()
 				else if (!isUnicodeOrProgress)
 				{
 					j2 = j + 1; HEAPVAL
-#ifndef DRAWEACHCHAR
+
 					// Если этого не делать - в пропорциональных шрифтах буквы будут наезжать одна на другую
 					wchar_t ch;
 					//int nLastNonSpace = -1;
@@ -3016,7 +3057,6 @@ void CVirtualConsole::UpdateText()
 						j2++;
 					}
 
-#endif
 					TODO("От хвоста - отбросить пробелы (если если есть nLastNonSpace)");
 					SelectFont(hFont);
 					HEAPVAL
@@ -3087,8 +3127,7 @@ void CVirtualConsole::UpdateText()
 								nDrawLen = nCnt;
 								pszDraw = (c==ucBoxDblHorz) ? ms_HorzDbl : ms_HorzSingl;
 							}
-
-#ifdef _DEBUG
+							#ifdef _DEBUG
 							else
 							{
 								//static bool bShowAssert = true;
@@ -3096,8 +3135,7 @@ void CVirtualConsole::UpdateText()
 								_ASSERTE(!bIsHorzBorder || (c==ucBoxDblHorz || c==ucBoxSinglHorz));
 								//}
 							}
-
-#endif
+							#endif
 						}
 
 						//while (j2 < end && ConAttrLine[j2] == attr &&
@@ -3200,30 +3238,125 @@ void CVirtualConsole::UpdateText()
 						WideCharToMultiByte(CP_OEMCP, 0, pszDraw, nDrawLen, tmpOem, TextWidth, 0, 0);
 
 						if (!bProportional)
+						{
 							for(int idx = 0; idx < nDrawLen; idx++)
 							{
 								WARNING("BUGBUG: что именно нужно передавать для получения ширины OEM символа?");
 								nDX[idx] = CharWidth(tmpOem[idx]);
 							}
+						}
 
 						hDC.ExtTextOutA(rect.left, rect.top, nFlags,
 						            &rect, tmpOem, nDrawLen, bProportional ? 0 : nDX);
 					}
 					else
 					{
-						if (nDrawLen == 1)  // support visualizer change
-							hDC.ExtTextOut(rect.left, rect.top, nFlags, &rect,
-							           &c/*ConCharLine + j*/, 1, 0);
-						else
-						{
-							if (!bProportional)
-								for(int idx = 0, n = nDrawLen; n; idx++, n--)
-									nDX[idx] = CharWidth(pszDraw[idx]);
+						int nShift0 = 0, nPrevEdge = 0;
+						ABC abc;
 
-							// nDX это сдвиги до начала следующего символа, с начала предыдущего
-							hDC.ExtTextOut(rect.left, rect.top, nFlags, &rect,
-							           pszDraw, nDrawLen, bProportional ? 0 : nDX);
+						// Для пропорциональных шрифтов - где рисовать каждый символ разбирается GDI
+						if (!bProportional)
+						{
+							if (!bForceMonospace)
+							{
+								// В этом режиме символ отрисовывается в начале своей ячейки
+								for (int idx = 0, n = nDrawLen; n; idx++, n--)
+								{
+									// Информация для GDI. Ширина отрисовки, т.е. сдвиг между текущим и следующим символом.
+									nDX[idx] = nFontWidth; //CharWidth(pszDraw[idx]); -- лишний вызов функции
+								}
+							}
+							else
+							{
+								for (int idx = 0, n = nDrawLen; n; idx++, n--)
+								{
+									WARNING("Для RTL нужно переделать");
+									// GDI учитывает nDX не по порядку следования символов в памяти,
+									// а по порядку отрисовки (что логично), то есть нужно смотреть на строку,
+									// брать кусок RTL и считать nDX для pszDraw в обратном порядке
+
+
+									wchar_t ch = pszDraw[idx];
+									if (isCharSpace(ch) || isCharBorder(ch) || isCharProgress(ch))
+									{
+										abc.abcA = abc.abcC = 0;
+										abc.abcB = nFontWidth;
+									}
+									else
+									{
+										//Для НЕ TrueType вызывается wrapper (CharWidth)
+										CharABC(ch, &abc);
+									}
+
+									int nDrawWidth = abc.abcA + abc.abcB + 1;
+
+									//if (!idx)
+									//	nShift0 = abc.abcA;
+
+									#ifdef _DEBUG
+									if (abc.abcA!=0)
+									{
+										int nDbgA = 0;
+									}
+									if (abc.abcC!=0)
+									{
+										// Для японских иероглифов - "1"
+										int nDbgC = 0;
+									}
+									#endif
+
+									//if (abc.abcA<0)
+									//{
+									//	// иначе символ наверное налезет на предыдущий?
+									//	//nShift = -abc.abcA;
+									//	nDX[idx] = abc.abcA + abc.abcB + abc.abcC;
+									//}
+									//else
+									if (nDrawWidth < nFontWidth)
+									{
+										int nEdge = ((nFontWidth - nDrawWidth) >> 1) - nPrevEdge;
+
+										if (idx)
+										{
+											nDX[idx-1] += nEdge;
+											_ASSERTE(nDX[idx-1]>=-100);
+										}
+										else
+										{
+											nShift0 += nEdge;
+										}
+
+										nPrevEdge += nEdge;
+
+										nDX[idx] = nFontWidth;
+
+										//if (abc.abcA < nEdge)
+										//{
+										//	// символ I, i, и др. очень тонкие - рисуем посередине
+										//	nShift = nEdge - abc.abcA;
+										//}
+									}
+									else
+									{
+										// Ширина отрисовываемой части больше чем знакоместо,
+										// но т.к. юзер хотел режим Monospace - принудительно
+										// выставляем ширину ячейки
+										nDX[idx] = nFontWidth; // abc.abcA + abc.abcB /*+ abc.abcC*/;
+										if (nPrevEdge)
+										{
+											_ASSERTE(idx>0 && "Must be, cause of nPrevEdge");
+											nDX[idx-1] -= nPrevEdge;
+											nPrevEdge = 0;
+										}
+										//_ASSERTE(abc.abcC==0 && "Check what symbols can produce '!=0'");
+									}
+								}
+							}
 						}
+
+						// nDX это сдвиги до начала следующего символа, с начала предыдущего
+						hDC.ExtTextOut(rect.left+nShift0, rect.top, nFlags, &rect,
+						           pszDraw, nDrawLen, bProportional ? 0 : nDX);
 					}
 				}
 

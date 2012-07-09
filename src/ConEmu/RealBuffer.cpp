@@ -2699,28 +2699,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 
 		return true;
 	}
-	else if (messg == WM_LBUTTONUP)
-	{
-		if (gpSet->isCTSAutoCopy && (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION)
-			&& !(con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION))
-		{
-			// Чтобы не подраться с выделением "слов" двойным кликом - "применяем" выделение сейчас
-			// только если оно больше одной ячейки. Иначе - выделение будет "применено" по таймеру (pVCon->RCon()->AutoCopyTimer())
-			if ((con.m_sel.srSelection.Left != con.m_sel.srSelection.Right) || (con.m_sel.srSelection.Top != con.m_sel.srSelection.Bottom))
-			{
-				if (isSelectionPresent())
-				{
-					DoSelectionCopy();
-				}
-				else
-				{
-					_ASSERTE(FALSE && "how it can be?");
-					DoSelectionStop();
-				}
-			}
-		}
-	}
-	else if (messg == WM_LBUTTONDBLCLK)
+	else if ((messg == WM_LBUTTONDBLCLK) && (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)))
 	{
 		// Выделить слово под курсором (как в обычной консоли)
 		BOOL lbStreamSelection = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
@@ -2732,30 +2711,43 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		// Выполнить выделение
 		StartSelection(lbStreamSelection, crFrom.X, crFrom.Y, TRUE, WM_LBUTTONDBLCLK, &crTo);
 
+		// Сейчас кнопка мышки отпущена, сброс
+		con.m_sel.dwFlags &= ~CONSOLE_MOUSE_DOWN;
+
 		//WARNING!!! После StartSelection - ничего не делать! Мог смениться буфер!
 		return true;
 	}
-	else if ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) && (messg == WM_MOUSEMOVE || messg == WM_LBUTTONUP))
+	else if (
+		((messg == WM_MOUSEMOVE) && (con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN))
+		|| ((messg == WM_LBUTTONUP) && (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION))
+		)
 	{
-		_ASSERTE(con.m_sel.dwFlags!=0);
+		// При LBtnUp может быть несколько вариантов
+		// 1. Cick. После WM_LBUTTONUP нужно дождаться таймера и позвать DoSelectionCopy.
+		// 2. DblClick. Генерятся WM_LBUTTONUP WM_LBUTTONDBLCLK. Выделение "Слова".
+		// 3. TripleCLick. Генерятся WM_LBUTTONUP WM_LBUTTONDBLCLK WM_LBUTTONDOWN WM_LBUTTONUP. Выделение "Строки".
 
-		if (cr.X<0 || cr.X>=(int)TextWidth() || cr.Y<0 || cr.Y>=(int)TextHeight())
-		{
-			_ASSERTE(cr.X>=0 && cr.X<(int)TextWidth());
-			_ASSERTE(cr.Y>=0 && cr.Y<(int)TextHeight());
-			return false; // Ошибка в координатах
-		}
+		TODO("Горизонтальная прокрутка?");
+		// Если мыша за пределами окна консоли - скорректировать координаты (MinMax)
+		if (cr.X<0 || cr.X>=(int)TextWidth())
+			cr.X = GetMinMax(cr.X, 0, TextWidth());
+		if (cr.Y<0 || cr.Y>=(int)TextHeight())
+			cr.Y = GetMinMax(cr.Y, 0, TextHeight());
 
-		if ((((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION)
+		// Теперь проверки Double/Triple.
+		if ((messg == WM_LBUTTONUP)
+			&& ((((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION)
 					&& ((GetTickCount() - con.m_SelClickTick) <= GetDoubleClickTime()))
 				|| ((con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)
 					&& ((GetTickCount() - con.m_SelDblClickTick) <= GetDoubleClickTime())))
-			&& ((messg == WM_LBUTTONUP)
-				|| ((messg == WM_MOUSEMOVE)
-					&& (memcmp(&cr,&con.m_sel.srSelection.Left,sizeof(cr)) || memcmp(&cr,&con.m_sel.srSelection.Right,sizeof(cr)))
-					)
 				)
 			)
+			//&& ((messg == WM_LBUTTONUP)
+			//	|| ((messg == WM_MOUSEMOVE)
+			//		&& (memcmp(&cr,&con.m_sel.srSelection.Left,sizeof(cr)) || memcmp(&cr,&con.m_sel.srSelection.Right,sizeof(cr)))
+			//		)
+			//	)
+			//)
 		{
 			// Ignoring due DoubleClickTime
 			int nDbg = 0; UNREFERENCED_PARAMETER(nDbg);
@@ -2771,23 +2763,25 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 				ExpandSelection(cr.X, cr.Y);
 			}
 
-			if (messg == WM_LBUTTONUP)
-			{
-				con.m_sel.dwFlags &= ~CONSOLE_MOUSE_SELECTION;
-				//ReleaseCapture();
-			}
+		}
+
+		if (messg == WM_LBUTTONUP)
+		{
+			con.m_sel.dwFlags &= ~CONSOLE_MOUSE_DOWN;
+			//ReleaseCapture();
+			// Скорректировать отсечку таймера на отпускание
+			mp_RCon->VCon()->SetAutoCopyTimer(true);
 		}
 
 		return true;
 	}
-	else if (con.m_sel.dwFlags && (messg == WM_RBUTTONUP || messg == WM_MBUTTONUP))
+	else if ((messg == WM_RBUTTONUP || messg == WM_MBUTTONUP) && (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)))
 	{
-		BYTE bAction = (messg == WM_RBUTTONUP) ? gpSet->isCTSRBtnAction : gpSet->isCTSMBtnAction;
+		BYTE bAction = (messg == WM_RBUTTONUP) ? gpSet->isCTSRBtnAction : gpSet->isCTSMBtnAction; // 0-off, 1-copy, 2-paste, 3-auto
 
-		if ((bAction == 1) || ((bAction == 3) && isSelectionPresent()))
-			DoSelectionCopy();
-		//else if (bAction == 2) -- ТОЛЬКО Copy. Делать Paste при наличии выделения - глупо
-		//	Paste();
+		// Только Copy. Делать Paste при наличии выделения - глупо. Так что только Copy.
+		BOOL bDoCopy = (bAction == 1) || (bAction == 3);
+		DoSelectionFinalize(bDoCopy);
 
 		return true;
 	}
@@ -3007,7 +3001,7 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	}
 
 	con.m_sel.dwFlags = CONSOLE_SELECTION_IN_PROGRESS
-	                    | (abByMouse ? CONSOLE_MOUSE_SELECTION : 0)
+	                    | (abByMouse ? (CONSOLE_MOUSE_SELECTION|CONSOLE_MOUSE_DOWN) : 0)
 	                    | (abTextMode ? CONSOLE_TEXT_SELECTION : CONSOLE_BLOCK_SELECTION)
 						| (abByMouse ? vkMod : 0);
 	con.m_sel.dwSelectionAnchor = cr;
@@ -3523,12 +3517,13 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	if (con.m_sel.dwFlags && messg == WM_KEYDOWN
 	        && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)
+				|| ((wParam == 'C' || wParam == VK_INSERT) && isPressed(VK_CONTROL))
 	            || (wParam == VK_LEFT) || (wParam == VK_RIGHT) || (wParam == VK_UP) || (wParam == VK_DOWN))
 	  )
 	{
-		if ((wParam == VK_ESCAPE) || (wParam == VK_RETURN))
+		if ((wParam == VK_ESCAPE) || (wParam == VK_RETURN) || (wParam == 'C' || wParam == VK_INSERT))
 		{
-			if (DoSelectionFinalize(wParam == VK_RETURN, wParam))
+			if (DoSelectionFinalize(wParam != VK_ESCAPE, wParam))
 				return true;
 		}
 		else

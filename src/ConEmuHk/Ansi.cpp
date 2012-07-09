@@ -749,6 +749,7 @@ int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, LPCWSTR& lpStart, LPCWSTR& lpNe
 						// ESC ] 9 ; 3 ; "txt" ST        Set TAB text
 						// ESC ] 9 ; 4 ; st ; pr ST      When _st_ is 0: remove progress. When _st_ is 1: set progress value to _pr_ (number, 0-100). When _st_ is 2: set error state in progress on Windows 7 taskbar
 						// ESC ] 9 ; 5 ST                Wait for ENTER/SPACE/ESC. Set EnvVar "ConEmuWaitKey" to ENTER/SPACE/ESC on exit.
+						// ESC ] 9 ; 6 ; "txt" ST        Execute GuiMacro. Set EnvVar "ConEmuMacroResult" on exit.
 
 						Code.ArgSZ = lpBuffer;
 						Code.cchArgSZ = 0;
@@ -1567,6 +1568,7 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 								// ESC ] 9 ; 3 ; "txt" ST        Set TAB text
 								// ESC ] 9 ; 4 ; st ; pr ST      When _st_ is 0: remove progress. When _st_ is 1: set progress value to _pr_ (number, 0-100). When _st_ is 2: set error state in progress on Windows 7 taskbar
 								// ESC ] 9 ; 5 ST                Wait for ENTER/SPACE/ESC. Set EnvVar "ConEmuWaitKey" to ENTER/SPACE/ESC on exit.
+								// ESC ] 9 ; 6 ; "txt" ST        Execute GuiMacro. Set EnvVar "ConEmuMacroResult" on exit.
 								// -- You may specify timeout _s_ in seconds. - не работает
 								if (Code.ArgSZ[1] == L';')
 								{
@@ -1654,6 +1656,23 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 										{
 											SetEnvironmentVariable(ENV_CONEMUANSI_WAITKEY, L"");
 										}
+									}
+									else if (Code.ArgSZ[2] == L'6' && Code.ArgSZ[3] == L';')
+									{
+										CESERVER_REQ* pOut = NULL;
+										CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(sizeof(CESERVER_REQ_GUIMACRO))+sizeof(wchar_t)*(Code.cchArgSZ));
+
+										if (pIn)
+										{
+											EscCopyCtrlString(pIn->GuiMacro.sMacro, Code.ArgSZ+4, Code.cchArgSZ-4);
+											pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+										}
+
+										// EnvVar "ConEmuMacroResult"
+										SetEnvironmentVariable(CEGUIMACRORETENVVAR, pOut && pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : NULL);
+
+										ExecuteFreeResult(pOut);
+										ExecuteFreeResult(pIn);
 									}
 								}
 								break;

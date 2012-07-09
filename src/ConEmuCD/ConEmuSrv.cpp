@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/Execute.h"
+#include "../common/MStrSafe.h"
 #include "TokenHelper.h"
 #include "SrvPipes.h"
 #include "Queue.h"
@@ -352,10 +353,10 @@ int AttachRootProcess()
 
 		gpSrv->dwRootProcess = dwParentPID;
 		// Запустить вторую копию ConEmuC НЕМОДАЛЬНО!
-		wchar_t szSelf[MAX_PATH+100];
-		wchar_t* pszSelf = szSelf+1;
+		wchar_t szSelf[MAX_PATH+1];
+		wchar_t szCommand[MAX_PATH+100];
 
-		if (!GetModuleFileName(NULL, pszSelf, MAX_PATH))
+		if (!GetModuleFileName(NULL, szSelf, countof(szSelf)))
 		{
 			dwErr = GetLastError();
 			_printf("GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
@@ -363,25 +364,25 @@ int AttachRootProcess()
 			return CERR_CREATEPROCESS;
 		}
 
-		if (wcschr(pszSelf, L' '))
-		{
-			*(--pszSelf) = L'"';
-			lstrcatW(pszSelf, L"\"");
-		}
+		//if (wcschr(pszSelf, L' '))
+		//{
+		//	*(--pszSelf) = L'"';
+		//	lstrcatW(pszSelf, L"\"");
+		//}
 
-		wsprintf(pszSelf+lstrlen(pszSelf), L" /ATTACH /PID=%i", dwParentPID);
+		_wsprintf(szCommand, SKIPLEN(countof(szCommand)) L"\"%s\" /ATTACH %s/PID=%u", szSelf, gpSrv->bRequestNewGuiWnd ? L"/GHWND=NEW " : L"", dwParentPID);
 		PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
 		STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
 		PRINT_COMSPEC(L"Starting modeless:\n%s\n", pszSelf);
 		// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
 		// Это запуск нового сервера в этой консоли. В сервер хуки ставить не нужно
-		BOOL lbRc = createProcess(TRUE, NULL, pszSelf, NULL,NULL, TRUE,
+		BOOL lbRc = createProcess(TRUE, NULL, szCommand, NULL,NULL, TRUE,
 		                           NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 		dwErr = GetLastError();
 
 		if (!lbRc)
 		{
-			PrintExecuteError(pszSelf, dwErr);
+			PrintExecuteError(szCommand, dwErr);
 			SetLastError(dwErr);
 			return CERR_CREATEPROCESS;
 		}
@@ -862,8 +863,11 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		SetWindowPos(ghConWnd, NULL, 0, 0, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 	}
 
-	// Сразу попытаемся поставить окну консоли флаг "OnTop"
-	if (!gbDebugProcess && !gbIsWine /*&& !gnDefPopupColors*/)
+	// Не будем, наверное. OnTop попытается поставить сервер,
+	// при показе консоли через Ctrl+Win+Alt+Space
+	// Но вот если консоль уже видима, и это "/root", тогда
+	// попытаемся поставить окну консоли флаг "OnTop"
+	if (!gbNoCreateProcess && !gbDebugProcess && !gbIsWine /*&& !gnDefPopupColors*/)
 	{
 		//if (!gbVisibleOnStartup)
 		//	ShowWindow(ghConWnd, SW_HIDE);
@@ -2063,6 +2067,12 @@ bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
 
 HWND Attach2Gui(DWORD nTimeout)
 {
+	if (isTerminalMode())
+	{
+		_ASSERTE(FALSE && "Attach is not allowed in telnet");
+		return NULL;
+	}
+
 	// Нить Refresh НЕ должна быть запущена, иначе в мэппинг могут попасть данные из консоли
 	// ДО того, как отработает ресайз (тот размер, который указал установить GUI при аттаче)
 	_ASSERTE(gpSrv->dwRefreshThread==0 || gpSrv->bWasDetached);

@@ -421,7 +421,7 @@ class CSettings
 		LPCWSTR CreateConFontError(LPCWSTR asReqFont=NULL, LPCWSTR asGotFont=NULL);
 		TOOLINFO tiConFontBalloon;
 	private:
-		static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout);
+		static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh = false);
 	protected:
 		void OnResetOrReload(BOOL abResetSettings);
 		// IDD_SETTINGS
@@ -471,6 +471,8 @@ class CSettings
 		void FillHotKeysList(HWND hWnd2, BOOL abInitial);
 		LRESULT OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		static int CALLBACK HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+		wchar_t szSelectionModError[512];
+		void CheckSelectionModifiers();
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
 	public:

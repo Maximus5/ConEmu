@@ -1234,9 +1234,14 @@ void CConEmuChild::LockDcRect(bool bLock, RECT* Rect)
 void CConEmuChild::SetAutoCopyTimer(bool bEnabled)
 {
 	if (bEnabled)
-		m_TAutoCopy.Start(TIMER_AUTOCOPY_DELAY);
-	else
+	{
 		m_TAutoCopy.Stop();
+		m_TAutoCopy.Start(TIMER_AUTOCOPY_DELAY);
+	}
+	else
+	{
+		m_TAutoCopy.Stop();
+	}
 }
 
 void CConEmuChild::PostDetach(bool bSendCloseConsole /*= false*/)

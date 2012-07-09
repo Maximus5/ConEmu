@@ -885,7 +885,15 @@ RECT CConEmuMain::GetDefaultRect()
 			if ((rcParent.bottom - rcRelative.bottom) >= 100)
 			{
 				// Предпочтительно
-				rcWnd = MakeRect(rcParent.left, rcRelative.bottom + 4, rcParent.right, rcParent.bottom);
+				// Далее - ветвимся по OS
+				if (gnOsVer <= 0x501)
+				{
+					rcWnd = MakeRect(rcRelative.left, rcRelative.bottom + 4, rcParent.right, rcParent.bottom);
+				}
+				else
+				{
+					rcWnd = MakeRect(rcParent.left, rcRelative.bottom + 4, rcParent.right, rcParent.bottom);
+				}
 			}
 			else if ((rcParent.right - rcRelative.right) >= 200)
 			{
@@ -1446,6 +1454,8 @@ bool CConEmuMain::InsideFindShellView(HWND hFrom)
 	wchar_t szParent[128];
 	wchar_t szRoot[128];
 	HWND hChild = NULL;
+	// Для WinXP
+	HWND hXpView = NULL, hXpPlace = NULL;
 
 	while ((hChild = FindWindowEx(hFrom, hChild, NULL, NULL)) != NULL)
 	{
@@ -1473,9 +1483,30 @@ bool CConEmuMain::InsideFindShellView(HWND hFrom)
 					return true;
 				}
 			}
+			else if ((gnOsVer <= 0x501) && (lstrcmp(szParent, L"ExploreWClass") == 0))
+			{
+				_ASSERTE(mh_InsideParentRoot == hFrom);
+				hXpView = hChild;
+				_ASSERTE(FALSE && "WinXP check need");
+				//mh_InsideParentWND = hFrom;
+				//mh_InsideParentRel = hChild;
+				//m_InsideIntegration = ii_Explorer;
+				//return true;
+			}
+		}
+		else if ((gnOsVer <= 0x501) && (lstrcmp(szClass, L"BaseBar") == 0))
+		{
+			RECT rcBar = {}; GetWindowRect(hChild, &rcBar);
+			MapWindowPoints(NULL, hFrom, (LPPOINT)&rcBar, 2);
+			RECT rcParent = {}; GetClientRect(hFrom, &rcParent);
+			if ((rcBar.right - rcParent.right) <= 10)
+			{
+				// Нас интересует область, прилепленная к правому-нижнему углу
+				hXpPlace = hChild;
+			}
 		}
 		// Путь в этом (hChild) хранится в формате "Address: D:\users\max"
-		else if (lstrcmp(szClass, L"ToolbarWindow32") == 0)
+		else if ((gnOsVer >= 0x600) && lstrcmp(szClass, L"ToolbarWindow32") == 0)
 		{
 			GetClassName(hFrom, szParent, countof(szParent));
 			if (lstrcmp(szParent, L"Breadcrumb Parent") == 0)
@@ -1496,12 +1527,24 @@ bool CConEmuMain::InsideFindShellView(HWND hFrom)
 			}
 		}
 
-		if (InsideFindShellView(hChild))
+		if ((hChild != hXpView) && (hChild != hXpPlace))
 		{
-			if (mh_InsideParentRel && mh_InsideParentPath)
-				return true;
-			else
-				break;
+			if (InsideFindShellView(hChild))
+			{
+				if (mh_InsideParentRel && mh_InsideParentPath)
+					return true;
+				else
+					break;
+			}
+		}
+
+		if (hXpView && hXpPlace)
+		{
+			mh_InsideParentWND = hXpPlace;
+			mh_InsideParentRel = NULL;
+			mh_InsideParentPath = mh_InsideParentRoot;
+			m_InsideIntegration = ii_Simple;
+			return true;
 		}
 	}
 
@@ -1606,9 +1649,15 @@ HWND CConEmuMain::InsideFindParent()
 	// 3. для синхронизации текущего пути
 	InsideFindShellView(mh_InsideParentRoot);
 
-	if (!mh_InsideParentWND || !mh_InsideParentRel)
+	if (!mh_InsideParentWND || (!mh_InsideParentRel && (m_InsideIntegration == ii_Explorer)))
 	{
-		MessageBox(L"Can't find appropriate shell window!", MB_ICONSTOP);
+		//MessageBox(L"Can't find appropriate shell window!", MB_ICONSTOP);
+		int nBtn = MessageBox(L"Can't find appropriate shell window!\nUnrecognized layout of the Explorer.\n\nContinue in normal mode?", MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
+		if (nBtn != IDYES)
+		{
+			mh_InsideParentWND = (HWND)-1;
+			return mh_InsideParentWND; // Закрыться!
+		}
 		m_InsideIntegration = ii_None;
 		mh_InsideParentRoot = NULL;
 		mh_InsideParentWND = NULL;
@@ -1656,6 +1705,16 @@ void CConEmuMain::InsideUpdateDir()
 		DWORD_PTR lRc = 0;
 		if (SendMessageTimeout(mh_InsideParentPath, WM_GETTEXT, countof(szCurText), (LPARAM)szCurText, SMTO_ABORTIFHUNG|SMTO_NORMAL, 300, &lRc))
 		{
+			if (gnOsVer <= 0x501)
+			{
+				// Если в заголовке нет полного пути
+				if (wcschr(szCurText, L'\\') == NULL)
+				{
+					// Сразу выходим
+					return;
+				}
+			}
+
 			LPCWSTR pszPath = NULL;
 			// Если тут уже путь - то префикс не отрезать
             if ((szCurText[0] == L'\\' && szCurText[1] == L'\\' && szCurText[2]) // сетевой путь
@@ -1735,7 +1794,8 @@ void CConEmuMain::InsideUpdatePlacement()
 			// Расчитать
 			mrc_Ideal = GetDefaultRect();
 			// Подвинуть
-			MoveWindow(ghWnd, mrc_Ideal.left, mrc_Ideal.top, mrc_Ideal.right-mrc_Ideal.left, mrc_Ideal.bottom-mrc_Ideal.top, TRUE);
+			SetWindowPos(ghWnd, HWND_TOP, mrc_Ideal.left, mrc_Ideal.top, mrc_Ideal.right-mrc_Ideal.left, mrc_Ideal.bottom-mrc_Ideal.top, 0);
+			//MoveWindow(ghWnd, mrc_Ideal.left, mrc_Ideal.top, mrc_Ideal.right-mrc_Ideal.left, mrc_Ideal.bottom-mrc_Ideal.top, TRUE);
 		}
 	}
 }
@@ -10276,7 +10336,18 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 							if (0 == NextArg(&pszArgs, szArg) && *szArg)
 							{
 								_ASSERTE(*ppszStartupDir == NULL); // Если юзер ввел папку сам - не менять
-								*ppszStartupDir = lstrdup(szArg);
+								
+								wchar_t* pszExpand = NULL;
+								// Например, "%USERPROFILE%"
+								if (wcschr(szArg, L'%'))
+								{
+									pszExpand = ExpandEnvStr(szArg);
+								}
+
+								if (!pszExpand)
+								{
+									*ppszStartupDir = lstrdup(szArg);
+								}
 							}
 							break;
 						}
@@ -10543,7 +10614,13 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 		//SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
 		
 		// Если фокус был у нас - вернуть его (на всякий случай, вдруг RealConsole какая забрала
-		if ((hCurForeground == ghWnd) && !WindowStartMinimized)
+		if (m_InsideIntegration)
+		{
+			if ((hCurForeground == ghWnd) || (hCurForeground != mh_InsideParentRoot))
+				SetForegroundWindow(mh_InsideParentRoot);
+			SetWindowPos(ghWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
+		}
+		else if ((hCurForeground == ghWnd) && !WindowStartMinimized)
 		{
 			apiSetForegroundWindow(ghWnd);
 		}
@@ -11287,7 +11364,7 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	}
 	else if ((ShowHideType == sih_ShowMinimize) || (ShowHideType == sih_ShowHideTSA) || (ShowHideType == sih_HideTSA))
 	{
-		if ((IsWindowVisible(ghWnd) && (bIsForeground || !bIsIconic)) || (ShowHideType == sih_HideTSA))
+		if ((IsWindowVisible(ghWnd) && (bIsForeground && !bIsIconic)) || (ShowHideType == sih_HideTSA))
 		{
 			// если видимо - спрятать
 			cmd = (ShowHideType == sih_HideTSA) ? sih_ShowHideTSA : ShowHideType;

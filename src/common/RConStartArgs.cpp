@@ -244,6 +244,16 @@ int RConStartArgs::ProcessNewConArg()
 								{
 									wmemmove(pszStartupDir, pszDir, cchLen);
 									pszStartupDir[cchLen] = 0;
+									// Например, "%USERPROFILE%"
+									if (wcschr(pszStartupDir, L'%'))
+									{
+										wchar_t* pszExpand = NULL;
+										if (((pszExpand = ExpandEnvStr(pszStartupDir)) != NULL))
+										{
+											SafeFree(pszStartupDir);
+											pszStartupDir = pszExpand;
+										}
+									}
 								}
 							}
 						}

@@ -515,6 +515,14 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText, 
 								*(pszDst++) = L'\t';
 								pszSrc += 2;
 								continue;
+							case L'e':
+								*(pszDst++) = 27; // ESC
+								pszSrc += 2;
+								continue;
+							case L'a':
+								*(pszDst++) = L'\a'; // BELL
+								pszSrc += 2;
+								continue;
 							}
 						}
 						*(pszDst++) = *(pszSrc++);
@@ -573,6 +581,16 @@ BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString, bool bEscapes
 				case L'\t':
 					*(pszDst++) = L'\\';
 					*(pszDst++) = L't';
+					pszSrc++;
+					continue;
+				case 27: //ESC
+					*(pszDst++) = L'\\';
+					*(pszDst++) = L'e';
+					pszSrc++;
+					continue;
+				case L'\a': //BELL
+					*(pszDst++) = L'\\';
+					*(pszDst++) = L'a';
 					pszSrc++;
 					continue;
 			}
@@ -1913,21 +1931,38 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					BOOL bNeedFree = FALSE;
 
-					if (*curCommand!=_T('"') && _tcschr(curCommand, _T(' ')))
-					{
-						TCHAR* psz = (TCHAR*)calloc(_tcslen(curCommand)+3, sizeof(TCHAR));
-						*psz = _T('"');
-						_tcscpy(psz+1, curCommand);
-						_tcscat(psz, _T("\""));
-						curCommand = psz;
-					}
+					//if (*curCommand!=_T('"') && _tcschr(curCommand, _T(' ')))
+					//{
+					//	TCHAR* psz = (TCHAR*)calloc(_tcslen(curCommand)+3, sizeof(TCHAR));
+					//	*psz = _T('"');
+					//	_tcscpy(psz+1, curCommand);
+					//	_tcscat(psz, _T("\""));
+					//	curCommand = psz;
+					//}
 
-					if (0==RegSetValueEx(hk, _T("AutoRun"), NULL, REG_SZ, (LPBYTE)curCommand,
-					                    (DWORD)sizeof(TCHAR)*(_tcslen(curCommand)+1))) //-V220
+					size_t cchMax = _tcslen(curCommand);
+					LPCWSTR pszArg1 = NULL;
+					if ((i + 1) < params)
+					{
+						// Здесь может быть "/GHWND=NEW"
+						pszArg1 = curCommand + cchMax + 1;
+						if (!*pszArg1)
+							pszArg1 = NULL;
+						else
+							cchMax += _tcslen(pszArg1);
+					}
+					cchMax += 16; // + кавычки и пробелы всякие
+
+					wchar_t* pszCmd = (wchar_t*)calloc(cchMax, sizeof(*pszCmd));
+					_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\"%s%s%s", curCommand,
+						pszArg1 ? L" \"" : L"", pszArg1 ? pszArg1 : L"", pszArg1 ? L"\"" : L"");
+					
+
+					if (0 == RegSetValueEx(hk, _T("AutoRun"), NULL, REG_SZ, (LPBYTE)pszCmd,
+					                    (DWORD)sizeof(TCHAR)*(_tcslen(pszCmd)+1))) //-V220
 						nSetupRc = 1;
 
-					if (bNeedFree)
-						free(curCommand);
+					free(pszCmd);
 				}
 				else
 				{
@@ -2172,7 +2207,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 				if (*curCommand)
 				{
-					SetCurrentDirectory(curCommand);
+					// Например, "%USERPROFILE%"
+					wchar_t* pszExpand = NULL;
+					if (wcschr(curCommand, L'%') && ((pszExpand = ExpandEnvStr(curCommand)) != NULL))
+					{
+						SetCurrentDirectory(pszExpand);
+						SafeFree(pszExpand);
+					}
+					else
+					{
+						SetCurrentDirectory(curCommand);
+					}
 					gpConEmu->RefreshConEmuCurDir();
 				}
 			}

@@ -63,6 +63,8 @@ BOOL isWindow(HWND hWnd);
 // Some WinAPI related functions
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
+BOOL DirectoryExists(LPCWSTR asPath);
+BOOL MyCreateDirectory(wchar_t* asPath);
 BOOL IsFilePath(LPCWSTR asFilePath);
 BOOL IsUserAdmin();
 BOOL GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
@@ -74,6 +76,7 @@ BOOL CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 bool IsModuleValid(HMODULE module);
 typedef struct tagPROCESSENTRY32W PROCESSENTRY32W;
 bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
+bool isTerminalMode();
 bool IsFarExe(LPCWSTR asModuleName);
 
 void RemoveOldComSpecC();

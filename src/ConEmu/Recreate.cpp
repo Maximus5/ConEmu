@@ -643,7 +643,13 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 						// StartupDir (может быть передан аргументом)
 						SafeFree(pArgs->pszStartupDir);
-						pArgs->pszStartupDir = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
+						wchar_t* pszDir = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
+						wchar_t* pszExpand = (pszDir && wcschr(pszDir, L'%')) ? ExpandEnvStr(pszDir) : NULL;
+						pArgs->pszStartupDir = pszExpand ? pszExpand : pszDir;
+						if (pszExpand)
+						{
+							SafeFree(pszDir)
+						}
 						// Vista+ (As Admin...)
 						pArgs->bRunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
 						if (pArgs->aRecreate != cra_RecreateTab)

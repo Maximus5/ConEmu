@@ -2782,6 +2782,10 @@
 			>
 		</File>
 		<File
+			RelativePath=".\!ToDo.RTL.txt"
+			>
+		</File>
+		<File
 			RelativePath=".\!Todo.Tablet.txt"
 			>
 		</File>

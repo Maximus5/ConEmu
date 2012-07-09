@@ -2121,9 +2121,6 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 		ShutdownGuiStep(szErrInfo);
 
-		//if (nExitCode >= CERR_FIRSTEXITCODE && nExitCode <= CERR_LASTEXITCODE)
-		//{
-		//}
 		if (nExitCode == 0)
 		{
 			pRCon->SetConStatus(NULL);
@@ -3828,11 +3825,6 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	WARNING("Тут кое-что нехорошо. Некоторые кнопки нужно обрабатывать раньше.");
 	// Например, AltEnter может посылаться в консоль, а может и "менять FullScreen" (в последнем случае его наверное нужно обработать)
 
-	if (mp_ABuf->isSelfSelectMode())
-	{
-		return; // В режиме выделения - в консоль ВООБЩЕ клавиатуру не посылать!
-	}
-
 	// Основная обработка
 	{
 		if (wParam == VK_MENU && (messg == WM_KEYUP || messg == WM_SYSKEYUP) && gpSet->isFixAltOnAltTab)
@@ -3873,6 +3865,21 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				// Сейчас ввод работает на окно IME и не должен попадать в консоль!
 				return;
 			}
+
+			// Завершение выделения по KeyPress?
+			if (mp_ABuf->isSelfSelectMode())
+			{
+				if (gpSet->isCTSEndOnTyping && (pszChars && *pszChars))
+				{
+					// 2 - end only, do not copy
+					mp_ABuf->DoSelectionFinalize((gpSet->isCTSEndOnTyping == 1));
+				}
+				else
+				{
+					return; // В режиме выделения - в консоль ВООБЩЕ клавиатуру не посылать!
+				}
+			}
+
 
 			if (GetActiveBufferType() != rbt_Primary)
 			{

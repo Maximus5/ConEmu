@@ -10,6 +10,31 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.08
+[+] GuiMacro: теперь можно позвать через ANSI коды. Пример в файле «IsConEmu.cmd».
+[+] Вкладка «Keys & Macro»: В поле редактирования GuiMacro можно использовать \e (ESC) и \a (BELL).
+[%] Cmd_Autorun.cmd fixed.
+[+] ConEmuC switches. "/IsConEmu", "/IsTerm", "/IsAnsi". ErrorLevel 1 - ON, ErrorLevel 2 - OFF.
+[%] Issue 633: Cannot specifiy environment variables for startup dir.
+[*] Mark & Copy.
+    Уточнение DoubleClick, TripleClick.
+    Ctrl+C/Ctrl+Ins при наличии выделения выполняют копирование и завершают режим выделения.
+[+] Issue 634: Опция «End selection on typing». 3-е состояние - завершить без копирования.
+[%] Во время выделения текста не работали хоткеи (типа Win+Alt+P).
+[*] Issue 635: На вкладке «Mark & Paste» показываем хинт, если модификаторы Text/Block/Prompt совпадают.
+[%] Issue 631: Italic drawing bug.
+[%] Issue 593: Minimize/Restore hotkey fix. Now activating ConEmu if not focused.
+[+] ConEmu Inside: Добавлена поддержка Windows XP. В проводнике должна быть показана панель «Полезный совет».
+[+] Доработана вкладка «Integration».
+    Группы «ConEmu Inside» и «ConEmu Here» отвечают за регистрацию/удаление пунктов контекстного
+    меню проводника для дисков/папок/файлов. Выпадающие списки «Menu item» показывют текущие
+    пункты меню (то что сейчас зарегистрировано в реестре).
+    Любой пункт можно просмотреть (выбрав его в списке) и отредактировать (нажав кнопку «Register»).
+    Группа «Automatic attach of cmd...» позволяет установить (или просмотреть текущую) команду,
+    выполняемую процессором (cmd и tcc) при старте. Это позволяет автоматически подцепить запущенный
+    cmd/tcc в новую вкладку ConEmu.
+
+
 2012.07.05
 [!] Settings tree redesigned.
 [%] Issue 630: «Snap to desktop edges» and multi-monitor layout.

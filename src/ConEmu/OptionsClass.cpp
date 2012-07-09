@@ -77,6 +77,7 @@ const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed 
 #define FAILED_FONT_TIMERID 101
 #define FAILED_FONT_TIMEOUT 3000
 #define FAILED_CONFONT_TIMEOUT 30000
+#define FAILED_SELMOD_TIMEOUT 5000
 
 //const WORD HostkeyCtrlIds[] = {cbHostWin, cbHostApps, cbHostLCtrl, cbHostRCtrl, cbHostLAlt, cbHostRAlt, cbHostLShift, cbHostRShift};
 //const BYTE HostkeyVkIds[]   = {VK_LWIN,   VK_APPS,    VK_LCONTROL, VK_RCONTROL, VK_LMENU,   VK_RMENU,   VK_LSHIFT,    VK_RSHIFT};
@@ -1851,13 +1852,14 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 		(gpSet->isConsoleTextSelection == 1) ? rbCTSAlways : rbCTSBufferOnly);
 
 	CheckDlgButton(hWnd2, cbCTSAutoCopy, gpSet->isCTSAutoCopy);
+	CheckDlgButton(hWnd2, cbCTSEndOnTyping, gpSet->isCTSEndOnTyping);
 	CheckDlgButton(hWnd2, cbCTSFreezeBeforeSelect, gpSet->isCTSFreezeBeforeSelect);
 	CheckDlgButton(hWnd2, cbCTSBlockSelection, gpSet->isCTSSelectBlock);
 	DWORD VkMod = gpSet->GetHotkeyById(vkCTSVkBlock);
-	FillListBoxByte(hWnd2, lbCTSBlockSelection, SettingsNS::szKeys, SettingsNS::nKeys, VkMod);
+	FillListBoxByte(hWnd2, lbCTSBlockSelection, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 	CheckDlgButton(hWnd2, cbCTSTextSelection, gpSet->isCTSSelectText);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkText);
-	FillListBoxByte(hWnd2, lbCTSTextSelection, SettingsNS::szKeys, SettingsNS::nKeys, VkMod);
+	FillListBoxByte(hWnd2, lbCTSTextSelection, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 	CheckDlgButton(hWnd2, (gpSet->isCTSActMode==1)?rbCTSActAlways:rbCTSActBufferOnly, BST_CHECKED);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkAct);
 
@@ -1894,9 +1896,48 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 	CheckDlgButton(hWnd2, cbClipConfirmLimit, (gpSet->nPasteConfirmLonger!=0));
 	SetDlgItemInt(hWnd2, tClipConfirmLimit, gpSet->nPasteConfirmLonger, FALSE);
 
+	CheckSelectionModifiers();
+
 	// тултипы
 	RegisterTipsFor(hWnd2);
 	return 0;
+}
+
+void CSettings::CheckSelectionModifiers()
+{
+	WORD nCtrlID[] = {lbCTSBlockSelection, lbCTSTextSelection, lbCTSClickPromptPosition};
+	bool bEnabled[] = {gpSet->isCTSSelectBlock, gpSet->isCTSSelectText, gpSet->AppStd.isCTSClickPromptPosition};
+	BYTE Vk[] = {0,0,0};
+	LPCWSTR Descr[] = {L"Block selection", L"Text selection", L"Prompt position"};
+	HWND hDlg = gpSetCls->mh_Tabs[thi_Selection];
+	if (!hDlg)
+		return;
+
+	for (size_t i = 0; i < countof(nCtrlID); i++)
+	{
+		GetListBoxByte(hDlg, nCtrlID[i], SettingsNS::szKeysAct, SettingsNS::nKeysAct, Vk[i]);
+	}
+
+	for (size_t i = 0; i < (countof(nCtrlID)-1); i++)
+	{
+		if (!bEnabled[i])
+			continue;
+
+		for (size_t j = i+1; j < countof(nCtrlID); j++)
+		{
+			if (!bEnabled[j])
+				continue;
+
+			if (Vk[i] == Vk[j])
+			{
+				wchar_t szInfo[255];
+				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"You must set different\nmodifiers for\n<%s> and\n<%s>", Descr[i], Descr[j]);
+				ShowErrorTip(szInfo, hDlg, nCtrlID[j], gpSetCls->szSelectionModError, countof(gpSetCls->szSelectionModError),
+							 gpSetCls->hwndBalloon, &gpSetCls->tiBalloon, gpSetCls->hwndTip, FAILED_SELMOD_TIMEOUT, true);
+				return;
+			}
+		}
+	}
 }
 
 LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
@@ -2698,6 +2739,8 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 {
 	static bool bSkipCbSel = FALSE;
 	INT_PTR iRc = 0;
+	#define UM_RELOAD_HERE_LIST (WM_USER+32)
+	#define UM_RELOAD_AUTORUN   (WM_USER+33)
 
 	switch (messg)
 	{
@@ -2705,12 +2748,156 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 		{
 			bSkipCbSel = true;
 
-			SendDlgItemMessage(hWnd2, cbInsideName, CB_RESETCONTENT, 0, 0);
-			SendDlgItemMessage(hWnd2, cbHereName, CB_RESETCONTENT, 0, 0);
+			pageOpProc_Integr(hWnd2, UM_RELOAD_HERE_LIST, UM_RELOAD_HERE_LIST, 0);
+			pageOpProc_Integr(hWnd2, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
 
+			wchar_t szIcon[MAX_PATH+32];
+			_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,0", gpConEmu->ms_ConEmuExe);
+
+			SetDlgItemText(hWnd2, cbInsideName, L"ConEmu Inside");
+			SetDlgItemText(hWnd2, tInsideConfig, L"shell");
+			SetDlgItemText(hWnd2, tInsideShell, L"powershell -cur_console:n");
+			//SetDlgItemText(hWnd2, tInsideIcon, szIcon);
+			SetDlgItemText(hWnd2, tInsideIcon, L"powershell.exe");
+			CheckDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mb_InsideSynchronizeCurDir);
+
+			SetDlgItemText(hWnd2, cbHereName, L"ConEmu Here");
+			SetDlgItemText(hWnd2, tHereConfig, L"");
+			SetDlgItemText(hWnd2, tHereShell, L"cmd -cur_console:n");
+			SetDlgItemText(hWnd2, tHereIcon, szIcon);
+
+			bSkipCbSel = false;
+		}
+		break; // WM_INITDIALOG
+
+	case WM_COMMAND:
+		switch (HIWORD(wParam))
+		{
+		case BN_CLICKED:
+			{
+				WORD CB = LOWORD(wParam);
+				switch (CB)
+				{
+				case cbInsideSyncDir:
+					gpConEmu->mb_InsideSynchronizeCurDir = IsChecked(hWnd2, CB);
+					break;
+				case bInsideRegister:
+				case bInsideUnregister:
+					ShellIntegration(hWnd2, ShellIntgr_Inside, CB==bInsideRegister);
+					pageOpProc_Integr(hWnd2, UM_RELOAD_HERE_LIST, UM_RELOAD_HERE_LIST, 0);
+					break;
+				case bHereRegister:
+				case bHereUnregister:
+					ShellIntegration(hWnd2, ShellIntgr_Here, CB==bHereRegister);
+					pageOpProc_Integr(hWnd2, UM_RELOAD_HERE_LIST, UM_RELOAD_HERE_LIST, 0);
+					break;
+				case bCmdAutoRegister:
+				case bCmdAutoUnregister:
+					ShellIntegration(hWnd2, ShellIntgr_CmdAuto, CB==bCmdAutoRegister);
+					pageOpProc_Integr(hWnd2, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
+					break;
+				}
+			}
+			break; // BN_CLICKED
+		case CBN_SELCHANGE:
+			{
+				WORD CB = LOWORD(wParam);
+				switch (CB)
+				{
+				case cbInsideName:
+				case cbHereName:
+					if (!bSkipCbSel)
+					{
+						wchar_t *pszCfg = NULL, *pszIco = NULL, *pszFull = NULL;
+						LPCWSTR pszCmd = NULL;
+						INT_PTR iSel = SendDlgItemMessage(hWnd2, CB, CB_GETCURSEL, 0,0);
+						if (iSel >= 0)
+						{
+							INT_PTR iLen = SendDlgItemMessage(hWnd2, CB, CB_GETLBTEXTLEN, iSel, 0);
+							size_t cchMax = iLen+128;
+							wchar_t* pszName = (wchar_t*)calloc(cchMax,sizeof(*pszName));
+							if ((iLen > 0) && pszName)
+							{
+								_wcscpy_c(pszName, cchMax, L"Directory\\shell\\");
+								SendDlgItemMessage(hWnd2, CB, CB_GETLBTEXT, iSel, (LPARAM)(pszName+_tcslen(pszName)));
+
+								HKEY hkShell = NULL;
+								if (0 == RegOpenKeyEx(HKEY_CLASSES_ROOT, pszName, 0, KEY_READ, &hkShell))
+								{
+									DWORD nType;
+									DWORD nSize = MAX_PATH*2*sizeof(wchar_t);
+									pszIco = (wchar_t*)calloc(nSize+2,1);
+									if (0 != RegQueryValueEx(hkShell, L"Icon", NULL, &nType, (LPBYTE)pszIco, &nSize) || nType != REG_SZ)
+										SafeFree(pszIco);
+									HKEY hkCmd = NULL;
+									if (0 == RegOpenKeyEx(hkShell, L"command", 0, KEY_READ, &hkCmd))
+									{
+										DWORD nSize = MAX_PATH*8*sizeof(wchar_t);
+										pszFull = (wchar_t*)calloc(nSize+2,1);
+										if (0 != RegQueryValueEx(hkCmd, NULL, NULL, &nType, (LPBYTE)pszFull, &nSize) || nType != REG_SZ)
+										{
+											SafeFree(pszIco);
+										}
+										else
+										{
+											LPCWSTR psz = pszFull;
+											wchar_t szArg[MAX_PATH+1];
+											while (0 == NextArg(&psz, szArg))
+											{
+												if (lstrcmpi(szArg, L"/config") == 0)
+												{
+													if (0 != NextArg(&psz, szArg))
+														break;
+													pszCfg = lstrdup(szArg);
+												}
+												else if (lstrcmpi(szArg, L"/cmd") == 0)
+												{
+													pszCmd = psz;
+													break;
+												}
+											}
+										}
+										RegCloseKey(hkCmd);
+									}
+									RegCloseKey(hkShell);
+								}
+							}
+						}
+
+						SetDlgItemText(hWnd2, (CB==cbInsideName) ? tInsideConfig : tHereConfig,
+							pszCfg ? pszCfg : L"");
+						SetDlgItemText(hWnd2, (CB==cbInsideName) ? tInsideShell : tHereShell,
+							pszCmd ? pszCmd : L"");
+						SetDlgItemText(hWnd2, (CB==cbInsideName) ? tInsideIcon : tHereIcon,
+							pszIco ? pszIco : L"");
+
+						SafeFree(pszCfg);
+						SafeFree(pszFull);
+						SafeFree(pszIco);
+					}
+					break;
+				}
+			}
+			break; // CBN_SELCHANGE
+		} // switch (HIWORD(wParam))
+		break; // WM_COMMAND
+
+	case UM_RELOAD_HERE_LIST:
+		if (wParam == UM_RELOAD_HERE_LIST)
+		{
 			HKEY hkDir = NULL;
 			size_t cchCmdMax = 65535;
 			wchar_t* pszCmd = (wchar_t*)calloc(cchCmdMax,sizeof(*pszCmd));
+			if (!pszCmd)
+				break;
+
+			wchar_t* pszCurInside = GetDlgItemText(hWnd2, cbInsideName);
+			wchar_t* pszCurHere   = GetDlgItemText(hWnd2, cbHereName);
+
+			bool lbOldSkip = bSkipCbSel; bSkipCbSel = true;
+
+			SendDlgItemMessage(hWnd2, cbInsideName, CB_RESETCONTENT, 0, 0);
+			SendDlgItemMessage(hWnd2, cbHereName, CB_RESETCONTENT, 0, 0);
 
 			if (0 == RegOpenKeyEx(HKEY_CLASSES_ROOT, L"Directory\\shell", 0, KEY_READ, &hkDir))
 			{
@@ -2745,68 +2932,51 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				RegCloseKey(hkDir);
 			}
 
-			*pszCmd = 0;
+			SetDlgItemText(hWnd2, cbInsideName, pszCurInside ? pszCurInside : L"");
+			SetDlgItemText(hWnd2, cbHereName, pszCurHere ? pszCurHere : L"");
+
+			bSkipCbSel = lbOldSkip;
+
+			SafeFree(pszCurInside);
+			SafeFree(pszCurHere);
+
+			free(pszCmd);
+		}
+		break; // UM_RELOAD_HERE_LIST
+
+	case UM_RELOAD_AUTORUN:
+		if (wParam == UM_RELOAD_AUTORUN) // страховка
+		{
+			size_t cchCmdMax = 65535;
+			wchar_t *pszCmd = (wchar_t*)calloc(cchCmdMax,sizeof(*pszCmd));
+			if (!pszCmd)
+				break;
+
+			BOOL bForceNewWnd = IsChecked(hWnd2, cbCmdAutorunNewWnd);
+
+			HKEY hkDir = NULL;
 			if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &hkDir))
 			{
 				DWORD cbMax = (cchCmdMax-2) * sizeof(*pszCmd);
 				if (0 == RegQueryValueEx(hkDir, L"AutoRun", NULL, NULL, (LPBYTE)pszCmd, &cbMax))
+				{
 					pszCmd[cbMax>>1] = 0;
+					if (*pszCmd)
+					{
+						bForceNewWnd = (StrStrI(pszCmd, L"/GHWND=NEW") != NULL);
+					}
+				}
 				else
 					*pszCmd = 0;
 				RegCloseKey(hkDir);
 			}
+			
 			SetDlgItemText(hWnd2, tCmdAutoAttach, pszCmd);
+			CheckDlgButton(hWnd2, cbCmdAutorunNewWnd, bForceNewWnd);
 
-			_wsprintf(pszCmd, SKIPLEN(cchCmdMax) L"%s,1", gpConEmu->ms_ConEmuExe);
-
-			SetDlgItemText(hWnd2, cbInsideName, L"ConEmu Inside");
-			SetDlgItemText(hWnd2, tInsideConfig, L"shell");
-			SetDlgItemText(hWnd2, tInsideShell, L"powershell -cur_console:n");
-			SetDlgItemText(hWnd2, tInsideIcon, pszCmd);
-			CheckDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mb_InsideSynchronizeCurDir);
-
-			SetDlgItemText(hWnd2, cbHereName, L"ConEmu Here");
-			SetDlgItemText(hWnd2, tHereConfig, L"");
-			SetDlgItemText(hWnd2, tHereShell, L"cmd -cur_console:n");
-			SetDlgItemText(hWnd2, tHereIcon, pszCmd);
-
-			SafeFree(pszCmd);
-			bSkipCbSel = false;
+			free(pszCmd);
 		}
-		break; // WM_INITDIALOG
-
-	case WM_COMMAND:
-		switch (HIWORD(wParam))
-		{
-		case BN_CLICKED:
-			{
-				WORD CB = LOWORD(wParam);
-				switch (CB)
-				{
-				case cbInsideSyncDir:
-					gpConEmu->mb_InsideSynchronizeCurDir = IsChecked(hWnd2, CB);
-					break;
-				case bInsideRegister:
-				case bInsideUnregister:
-					ShellIntegration(hWnd2, ShellIntgr_Inside, CB==bInsideRegister);
-					break;
-				case bHereRegister:
-				case bHereUnregister:
-					ShellIntegration(hWnd2, ShellIntgr_Here, CB==bHereRegister);
-					break;
-				case bCmdAutoRegister:
-				case bCmdAutoUnregister:
-					ShellIntegration(hWnd2, ShellIntgr_CmdAuto, CB==bCmdAutoRegister);
-					break;
-				}
-			}
-			break; // BN_CLICKED
-		case CBN_SELCHANGE:
-			{
-			}
-			break; // CBN_SELCHANGE
-		} // switch (HIWORD(wParam))
-		break; // WM_COMMAND
+		break; // UM_RELOAD_AUTORUN
 	}
 
 	return iRc;
@@ -2983,7 +3153,7 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 				wchar_t szConfig[MAX_PATH] = {}, szShell[MAX_PATH] = {}, szIcon[MAX_PATH+16];
 				GetDlgItemText(hDlg, tInsideConfig, szConfig, countof(szConfig));
 				GetDlgItemText(hDlg, tInsideShell, szShell, countof(szShell));
-				//_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,1", gpConEmu->ms_ConEmuExe);
+				//_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,0", gpConEmu->ms_ConEmuExe);
 				GetDlgItemText(hDlg, tInsideIcon, szIcon, countof(szIcon));
 				RegisterShell(szName, L"/inside", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
 			}
@@ -3002,7 +3172,7 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 				wchar_t szConfig[MAX_PATH] = {}, szShell[MAX_PATH] = {}, szIcon[MAX_PATH+16];
 				GetDlgItemText(hDlg, tHereConfig, szConfig, countof(szConfig));
 				GetDlgItemText(hDlg, tHereShell, szShell, countof(szShell));
-				//_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,1", gpConEmu->ms_ConEmuExe);
+				//_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,0", gpConEmu->ms_ConEmuExe);
 				GetDlgItemText(hDlg, tHereIcon, szIcon, countof(szIcon));
 				RegisterShell(szName, NULL, SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
 			}
@@ -3014,19 +3184,27 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 		break;
 	case ShellIntgr_CmdAuto:
 		{
-			size_t cchCmdMax = 65535;
-			wchar_t* pszCmd = (wchar_t*)calloc(cchCmdMax,sizeof(*pszCmd));
-			if (bEnabled)
-				GetDlgItemText(hDlg, tCmdAutoAttach, pszCmd, cchCmdMax);
+			BOOL bForceNewWnd = IsChecked(hDlg, cbCmdAutorunNewWnd);
+				//CheckDlgButton(, (StrStrI(pszCmd, L"/GHWND=NEW") != NULL));
 
 			HKEY hkCmd = NULL;
 			if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ|KEY_WRITE, &hkCmd))
 			{
 				if (bEnabled)
 				{
-					if (*pszCmd)
+					wchar_t szCmd[MAX_PATH+128];
+					_wsprintf(szCmd, SKIPLEN(countof(szCmd)) L"\"%s\\Cmd_Autorun.cmd", gpConEmu->ms_ConEmuBaseDir);
+					if (FileExists(szCmd+1))
 					{
-						RegSetValueEx(hkCmd, L"AutoRun", 0, REG_SZ, (LPBYTE)pszCmd, (lstrlen(pszCmd)+1)*sizeof(*pszCmd));
+						wcscat_c(szCmd, bForceNewWnd ? L"\" \"/GHWND=NEW\"" : L"\"");
+
+						RegSetValueEx(hkCmd, L"AutoRun", 0, REG_SZ, (LPBYTE)szCmd, (lstrlen(szCmd)+1)*sizeof(szCmd[0]));
+					}
+					else
+					{
+						MessageBox(szCmd, MB_ICONSTOP, L"File not found", ghOpWnd);
+
+						RegSetValueEx(hkCmd, L"AutoRun", 0, REG_SZ, (LPBYTE)L"", 1*sizeof(wchar_t));
 					}
 				}
 				else
@@ -3034,16 +3212,8 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 					RegSetValueEx(hkCmd, L"AutoRun", 0, REG_SZ, (LPBYTE)L"", 1*sizeof(wchar_t));
 				}
 
-				DWORD cbMax = (cchCmdMax-2) * sizeof(*pszCmd);
-				if (0 == RegQueryValueEx(hkCmd, L"AutoRun", NULL, NULL, (LPBYTE)pszCmd, &cbMax))
-					pszCmd[cbMax>>1] = 0;
-				else
-					*pszCmd = 0;
-				SetDlgItemText(hDlg, tCmdAutoAttach, pszCmd);
-
 				RegCloseKey(hkCmd);
 			}
-			SetDlgItemText(hDlg, tCmdAutoAttach, pszCmd);
 		}
 		break;
 	}
@@ -4339,11 +4509,16 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCTSAutoCopy:
 			gpSet->isCTSAutoCopy = IsChecked(hWnd2,CB);
 			break;
+		case cbCTSEndOnTyping:
+			gpSet->isCTSEndOnTyping = IsChecked(hWnd2,CB);
+			break;
 		case cbCTSBlockSelection:
 			gpSet->isCTSSelectBlock = IsChecked(hWnd2,CB);
+			CheckSelectionModifiers();
 			break;
 		case cbCTSTextSelection:
 			gpSet->isCTSSelectText = IsChecked(hWnd2,CB);
+			CheckSelectionModifiers();
 			break;
 		case cbCTSDetectLineEnd:
 			gpSet->AppStd.isCTSDetectLineEnd = IsChecked(hWnd2, CB);
@@ -4356,6 +4531,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbCTSClickPromptPosition:
 			gpSet->AppStd.isCTSClickPromptPosition = IsChecked(hWnd2,CB);
+			CheckSelectionModifiers();
 			break;
 		case cbClipShiftIns:
 			gpSet->AppStd.isPasteAllLines = IsChecked(hWnd2,CB);
@@ -5385,6 +5561,12 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 							gpSet->nCenterConsolePad = nNewVal;
 						else if (nNewVal > CENTERCONSOLEPAD_MAX)
 							SetDlgItemInt(hWnd2, tPadSize, CENTERCONSOLEPAD_MAX, FALSE);
+						// Если юзер ставит "бордюр" то нужно сразу включить опцию, чтобы он работал
+						if (gpSet->nCenterConsolePad && !IsChecked(hWnd2, cbTryToCenter))
+						{
+							gpSet->isTryToCenter = true;
+							CheckDlgButton(hWnd2, cbTryToCenter, BST_CHECKED);
+						}
 						// Update window/console size
 						if (gpSet->isTryToCenter)
 							gpConEmu->OnSize();
@@ -5880,14 +6062,16 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				case lbCTSBlockSelection:
 					{
 						BYTE VkMod = 0;
-						GetListBoxByte(hWnd2, lbCTSBlockSelection, SettingsNS::szKeys, SettingsNS::nKeys, VkMod);
+						GetListBoxByte(hWnd2, lbCTSBlockSelection, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 						gpSet->SetHotkeyById(vkCTSVkBlock, VkMod);
+						CheckSelectionModifiers();
 					} break;
 				case lbCTSTextSelection:
 					{
 						BYTE VkMod = 0;
-						GetListBoxByte(hWnd2, lbCTSTextSelection, SettingsNS::szKeys, SettingsNS::nKeys, VkMod);
+						GetListBoxByte(hWnd2, lbCTSTextSelection, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 						gpSet->SetHotkeyById(vkCTSVkText, VkMod);
+						CheckSelectionModifiers();
 					} break;
 				case lbCTSActAlways:
 					{
@@ -5907,6 +6091,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						BYTE VkMod = 0;
 						GetListBoxByte(hWnd2, lbCTSClickPromptPosition, SettingsNS::szKeysAct, SettingsNS::nKeysAct, VkMod);
 						gpSet->SetHotkeyById(vkCTSVkPromptClk, VkMod);
+						CheckSelectionModifiers();
 					} break;
 				case lbCTSRBtnAction:
 					{
@@ -8909,24 +9094,6 @@ void CSettings::ShowFontErrorTip(LPCTSTR asInfo)
 {
 	ShowErrorTip(asInfo, gpSetCls->mh_Tabs[thi_Main], tFontFace, gpSetCls->szFontError, countof(gpSetCls->szFontError),
 	             gpSetCls->hwndBalloon, &gpSetCls->tiBalloon, gpSetCls->hwndTip, FAILED_FONT_TIMEOUT);
-	//if (!asInfo)
-	//	gpSetCls->szFontError[0] = 0;
-	//else if (asInfo != gpSetCls->szFontError)
-	//	lstrcpyn(gpSetCls->szFontError, asInfo, countof(gpSetCls->szFontError));
-	//tiBalloon.lpszText = gpSetCls->szFontError;
-	//if (gpSetCls->szFontError[0]) {
-	//	SendMessage(hwndTip, TTM_ACTIVATE, FALSE, 0);
-	//	SendMessage(hwndBalloon, TTM_UPDATETIPTEXT, 0, (LPARAM)&tiBalloon);
-	//	RECT rcControl; GetWindowRect(GetDlgItem(mh_Tabs[thi_Main], tFontFace), &rcControl);
-	//	int ptx = rcControl.right - 10;
-	//	int pty = (rcControl.top + rcControl.bottom) / 2;
-	//	SendMessage(hwndBalloon, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
-	//	SendMessage(hwndBalloon, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tiBalloon);
-	//	SetTimer(mh_Tabs[thi_Main], FAILED_FONT_TIMERID, FAILED_FONT_TIMEOUT, 0);
-	//} else {
-	//	SendMessage(hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiBalloon);
-	//	SendMessage(hwndTip, TTM_ACTIVATE, TRUE, 0);
-	//}
 }
 
 void CSettings::SaveFontSizes(LOGFONT *pCreated, bool bAuto, bool bSendChanges)
@@ -11654,7 +11821,7 @@ void CSettings::NeedBackgroundUpdate()
 }
 
 // общая функция
-void CSettings::ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout)
+void CSettings::ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh)
 {
 	if (!asInfo)
 		pszBuffer[0] = 0;
@@ -11669,8 +11836,8 @@ void CSettings::ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* ps
 
 		SendMessage(hBall, TTM_UPDATETIPTEXT, 0, (LPARAM)pti);
 		RECT rcControl; GetWindowRect(GetDlgItem(hDlg, nCtrlID), &rcControl);
-		int ptx = rcControl.right - 10;
-		int pty = (rcControl.top + rcControl.bottom) / 2;
+		int ptx = bLeftAligh ? (rcControl.left + 10) : (rcControl.right - 10);
+		int pty = bLeftAligh ? rcControl.bottom : (rcControl.top + rcControl.bottom) / 2;
 		SendMessage(hBall, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
 		SendMessage(hBall, TTM_TRACKACTIVATE, TRUE, (LPARAM)pti);
 		SetTimer(hDlg, FAILED_FONT_TIMERID, nTimeout/*FAILED_FONT_TIMEOUT*/, 0);

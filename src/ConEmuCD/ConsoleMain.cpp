@@ -1707,7 +1707,9 @@ wrap:
 void PrintVersion()
 {
 	char szProgInfo[255];
-	_wsprintfA(szProgInfo, SKIPLEN(countof(szProgInfo)) "ConEmuC build %s %s. " CECOPYRIGHTSTRING_A "\n", CONEMUVERS, WIN3264TEST("x86","x64"));
+	_wsprintfA(szProgInfo, SKIPLEN(countof(szProgInfo))
+		"ConEmuC build %s %s. " CECOPYRIGHTSTRING_A "\n",
+		CONEMUVERS, WIN3264TEST("x86","x64"));
 	_printf(szProgInfo);
 }
 
@@ -2243,6 +2245,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	LPCWSTR pwszStartCmdLine = asCmdLine;
 	BOOL lbNeedCutStartEndQuot = FALSE;
 
+	enum {
+		ec_None = 0,
+		ec_IsConEmu,
+		ec_IsTerm,
+		ec_IsAnsi,
+	} eStateCheck = ec_None;
+
 	if (!asCmdLine || !*asCmdLine)
 	{
 		DWORD dwErr = GetLastError();
@@ -2304,6 +2313,27 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 			gbAttachMode = TRUE;
 			gnRunMode = RM_SERVER;
+		}
+		else if (wcscmp(szArg, L"/AUTOATTACH")==0)
+		{
+			#if defined(SHOW_ATTACH_MSGBOX)
+			if (!IsDebuggerPresent())
+			{
+				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i) /AUTOATTACH", gnSelfPID);
+				const wchar_t* pszCmdLine = GetCommandLineW();
+				MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
+			}
+			#endif
+
+			gnRunMode = RM_SERVER;
+			gbAttachMode = TRUE;
+			gbAlienMode = TRUE;
+			gbNoCreateProcess = TRUE;
+
+			// Еще может быть "/GHWND=NEW" но оно ниже. Там ставится "gpSrv->bRequestNewGuiWnd=TRUE"
+
+			//ConEmu autorun (c) Maximus5
+			//Starting "%ConEmuPath%" in "Attach" mode (NewWnd=%FORCE_NEW_WND%)
 		}
 		else if (wcsncmp(szArg, L"/GUIATTACH=", 11)==0)
 		{
@@ -2623,6 +2653,18 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			gnCmdUnicodeMode = 2;
 		}
+		else if (lstrcmpi(szArg, L"/IsConEmu")==0)
+		{
+			eStateCheck = ec_IsConEmu;
+		}
+		else if (lstrcmpi(szArg, L"/IsTerm")==0)
+		{
+			eStateCheck = ec_IsTerm;
+		}
+		else if (lstrcmpi(szArg, L"/IsAnsi")==0)
+		{
+			eStateCheck = ec_IsAnsi;
+		}
 		// После этих аргументов - идет то, что передается в CreateProcess!
 		else if (wcscmp(szArg, L"/ROOT")==0 || wcscmp(szArg, L"/root")==0)
 		{
@@ -2815,12 +2857,56 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 	}
 
+	if (eStateCheck)
+	{
+		bool bOn = false;
+		HWND hWnd = NULL;
+
+		switch (eStateCheck)
+		{
+		case ec_IsConEmu:
+		case ec_IsAnsi:
+			if (ghConWnd)
+			{
+				CESERVER_CONSOLE_MAPPING_HDR* pInfo = (CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(*pInfo));
+				if (pInfo && LoadSrvMapping(ghConWnd, *pInfo))
+				{
+					hWnd = pInfo->hConEmuWnd;
+					if (hWnd && IsWindow(hWnd))
+					{
+						switch (eStateCheck)
+						{
+						case ec_IsConEmu:
+							bOn = true;
+							break;
+						case ec_IsAnsi:
+							bOn = (pInfo->bProcessAnsi != FALSE);
+							break;
+						}
+					}
+				}
+				SafeFree(pInfo);
+			}
+			break;
+		case ec_IsTerm:
+			bOn = isTerminalMode();
+			break;
+		}
+
+		// И сразу на выход
+		gbInShutdown = TRUE;
+		return bOn ? CERR_CHKSTATE_ON : CERR_CHKSTATE_OFF;
+	}
+
 	// Issue 364, например, идет билд в VS, запускается CustomStep, в этот момент автоаттач нафиг не нужен
 	// Теоретически, в Студии не должно бы быть запуска ConEmuC.exe, но он может оказаться в "COMSPEC", так что проверим.
 	if (gbAttachMode && (gnRunMode == RM_SERVER) && (gpSrv->dwGuiPID == 0))
 	{
+		_ASSERTE(!gbAlternativeAttach && "Alternative mode must be already processed!");
+
 		BOOL lbIsWindowVisible = FALSE;
-		if (!ghConWnd || !(lbIsWindowVisible = IsWindowVisible(ghConWnd)))
+		// Добавим проверку на telnet
+		if (!ghConWnd || !(lbIsWindowVisible = IsWindowVisible(ghConWnd)) || isTerminalMode())
 		{
 			// Но это может быть все-таки наше окошко. Как проверить...
 			// Найдем первый параметр
@@ -2834,8 +2920,18 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			if (pszSlash == NULL)
 			{
 				// Не наше окошко, выходим
+				gbInShutdown = TRUE;
 				return CERR_ATTACH_NO_CONWND;
 			}
+		}
+
+		if (!gbAlternativeAttach && !gpSrv->dwRootProcess)
+		{
+			// Из батника убрал, покажем инфу тут
+			PrintVersion();
+			char szAutoRunMsg[128];
+			_wsprintfA(szAutoRunMsg, SKIPLEN(countof(szAutoRunMsg)) "Starting attach autorun (NewWnd=%s)\n", gpSrv->bRequestNewGuiWnd ? "YES" : "NO");
+			_printf(szAutoRunMsg);
 		}
 	}
 

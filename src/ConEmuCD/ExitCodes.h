@@ -5,6 +5,10 @@
 
 typedef int CERR_EXIT_CODES;
 const CERR_EXIT_CODES
+	// Для проверки ключей "/IsConEmu", "/IsTerm", "/IsAnsi" в ConEmuC.exe
+    CERR_CHKSTATE_ON   = 1,
+	CERR_CHKSTATE_OFF  = 2, // "OFF" > "ON", чтобы при любых ошибках .cmd не подумал, что все хорошо.
+	// Далее - коды "ошибок"
 	CERR_GETCOMMANDLINE = CERR_FIRSTEXITCODE+0,
 	CERR_CARGUMENT = CERR_FIRSTEXITCODE+1,
 	CERR_CMDEXENOTFOUND = CERR_FIRSTEXITCODE+2,

@@ -32,6 +32,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CONEMU_ROOT_KEY L"Software\\ConEmu"
 
 template <class T>
+T GetMinMax(T a, int v1, int v2)
+{
+	if (a < (T)v1)
+		a = (T)v1;
+	else if (a > (T)v2)
+		a = (T)v2;
+	return a;
+}
+
+template <class T>
 void MinMax(T &a, int v1, int v2)
 {
 	if (a < (T)v1)
@@ -729,6 +739,8 @@ struct Settings
 		BYTE isConsoleTextSelection;
 		//reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
 		bool isCTSAutoCopy;
+		//reg->Load(L"CTS.EndOnTyping", isCTSEndOnTyping);
+		BYTE isCTSEndOnTyping;
 		//reg->Load(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		bool isCTSFreezeBeforeSelect;
 		//reg->Load(L"CTS.SelectBlock", isCTSSelectBlock);
@@ -750,9 +762,9 @@ struct Settings
 		//reg->Load(L"CTS.VkAct", isCTSVkAct);
 		//BYTE isCTSVkAct; // режим и модификатор разрешения действий правой и средней кнопки мышки
 		//reg->Load(L"CTS.RBtnAction", isCTSRBtnAction);
-		BYTE isCTSRBtnAction; // 0-off, 1-copy, 2-paste
+		BYTE isCTSRBtnAction; // 0-off, 1-copy, 2-paste, 3-auto
 		//reg->Load(L"CTS.MBtnAction", isCTSMBtnAction);
-		BYTE isCTSMBtnAction; // 0-off, 1-copy, 2-paste
+		BYTE isCTSMBtnAction; // 0-off, 1-copy, 2-paste, 3-auto
 		//reg->Load(L"CTS.ColorIndex", isCTSColorIndex);
 		BYTE isCTSColorIndex;
 		//reg->Load(L"ClipboardConfirmEnter", isPasteConfirmEnter);

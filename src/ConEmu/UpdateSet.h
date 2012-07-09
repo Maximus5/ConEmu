@@ -56,7 +56,7 @@ public:
 	LPCWSTR UpdateArcCmdLine();
 	wchar_t *szUpdatePostUpdateCmd; // ёзер может чего-то свое делать с распакованными файлами
 
-	wchar_t *szUpdateDownloadPath; // "%TEMP%"
+	wchar_t *szUpdateDownloadPath; // "%TEMP%\\ConEmu"
 	bool isUpdateLeavePackages;
 
 	DWORD dwLastUpdateCheck;

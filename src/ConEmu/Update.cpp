@@ -539,7 +539,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 		BOOL bInfoRc;
 		DWORD crc;
 		
-		pszUpdateVerLocation = CreateTempFile(L"%TEMP%", L"ConEmuVersion.ini", hInfo);
+		pszUpdateVerLocation = CreateTempFile(mp_Set->szUpdateDownloadPath/*L"%TEMP%"*/, L"ConEmuVersion.ini", hInfo);
 		if (!pszUpdateVerLocation)
 			goto wrap;
 		bTempUpdateVerLocation = true;
@@ -947,7 +947,7 @@ wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, H
 	wchar_t szName[128];
 	
 	if (!asDir || !*asDir)
-		asDir = L"%TEMP%";
+		asDir = L"%TEMP%\\ConEmu";
 	if (!asFileNameTempl || !*asFileNameTempl)
 		asFileNameTempl = L"ConEmu.tmp";
 	
@@ -964,11 +964,22 @@ wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, H
 	{
 		lstrcpyn(szFile, asDir, MAX_PATH);
 	}
+
+	// Checking %TEMP% for valid path
+	LPCWSTR pszColon1, pszColon2;
+	if ((pszColon1 = wcschr(szFile, L':')) != NULL)
+	{
+		if ((pszColon2 = wcschr(pszColon1+1, L':')) != NULL)
+		{
+			ReportError(L"Invalid download path (%%TEMP%% variable?)\n%s", szFile, 0);
+			return NULL;
+		}
+	}
 	
 	int nLen = lstrlen(szFile);
 	if (nLen <= 0)
 	{
-		ReportError(L"CreateTempFile.asDir(%s) failed", asDir, 0);
+		ReportError(L"CreateTempFile.asDir(%s) failed, path is null", asDir, 0);
 		return NULL;
 	}
 	if (szFile[nLen-1] != L'\\')
@@ -976,6 +987,12 @@ wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, H
 		szFile[nLen++] = L'\\'; szFile[nLen] = 0;
 	}
 	wchar_t* pszFilePart = szFile + nLen;
+
+	if (!MyCreateDirectory(szFile))
+	{
+		ReportError(L"CreateTempFile.asDir(%s) failed", asDir, 0);
+		return NULL;
+	}
 	
 	
 	LPCWSTR pszName = PointToName(asFileNameTempl);
@@ -1018,7 +1035,7 @@ wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, H
 		}
 	}
 	
-	ReportError(L"Cant create temp file(%s), code=%u", szFile, GetLastError());
+	ReportError(L"Can't create temp file(%s), code=%u", szFile, GetLastError());
 	hFile = NULL;
 	return NULL;
 }

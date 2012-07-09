@@ -152,7 +152,7 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	SafeFree(pszArcPath);
 	SafeFree(szUpdateArcCmdLine);
 
-	szUpdateDownloadPath = lstrdup(L"%TEMP%");
+	szUpdateDownloadPath = lstrdup(L"%TEMP%\\ConEmu");
 	isUpdateLeavePackages = false;
 	szUpdatePostUpdateCmd = lstrdup(L"echo Last successful update>ConEmuUpdate.info && date /t>>ConEmuUpdate.info && time /t>>ConEmuUpdate.info"); // ёзер может чего-то свое делать с распакованными файлами
 }

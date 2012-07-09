@@ -204,34 +204,34 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "ConEmu Inside - Explorer context menu integration",IDC_STATIC,4,1,319,81
     LTEXT           "Menu item:",IDC_STATIC,11,14,39,8
-    EDITTEXT        tInsideIcon,54,45,263,13,ES_AUTOHSCROLL
+    COMBOBOX        cbInsideName,54,12,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Configuration:",IDC_STATIC,173,14,59,8
     EDITTEXT        tInsideConfig,238,12,79,13,ES_AUTOHSCROLL
     LTEXT           "Command:",IDC_STATIC,11,31,39,8
     EDITTEXT        tInsideShell,54,29,263,13,ES_AUTOHSCROLL
+    LTEXT           "Icon file:",IDC_STATIC,11,47,39,8
+    EDITTEXT        tInsideIcon,54,45,263,13,ES_AUTOHSCROLL
+    CONTROL         "Sync current directory (Explorer -> ConEmu)",cbInsideSyncDir,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,64,159,10
     PUSHBUTTON      "Register",bInsideRegister,212,61,50,14
     PUSHBUTTON      "Unregister",bInsideUnregister,267,61,50,14
     GROUPBOX        "ConEmu Here - Explorer context menu integration",IDC_STATIC,4,84,319,81
     LTEXT           "Menu item:",IDC_STATIC,11,97,39,8
-    EDITTEXT        tHereIcon,54,129,263,13,ES_AUTOHSCROLL
+    COMBOBOX        cbHereName,54,95,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Configuration:",IDC_STATIC,173,97,59,8
     EDITTEXT        tHereConfig,238,95,79,13,ES_AUTOHSCROLL
     LTEXT           "Command:",IDC_STATIC,11,114,39,8
     EDITTEXT        tHereShell,54,112,263,13,ES_AUTOHSCROLL
+    LTEXT           "Icon file:",IDC_STATIC,11,132,39,8
+    EDITTEXT        tHereIcon,54,129,263,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Register",bHereRegister,213,145,50,14
     PUSHBUTTON      "Unregister",bHereUnregister,267,145,50,14
-    GROUPBOX        "Automatic attach of cmd && Tcc/Le to ConEmu (ConEmu will be started if not found)",IDC_STATIC,4,168,319,34
-    LTEXT           "Command:",IDC_STATIC,11,183,39,8
-    EDITTEXT        tCmdAutoAttach,54,181,153,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Register",bCmdAutoRegister,213,180,50,14
-    PUSHBUTTON      "Unregister",bCmdAutoUnregister,267,180,50,14
-    CONTROL         "Sync current directory (Explorer -> ConEmu)",cbInsideSyncDir,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,64,159,10
-    LTEXT           "This settings page in under development",IDC_STATIC,5,213,313,8
-    COMBOBOX        cbInsideName,54,12,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Icon:",IDC_STATIC,11,47,39,8
-    LTEXT           "Icon:",IDC_STATIC,11,132,39,8
-    COMBOBOX        cbHereName,54,95,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Automatic attach of cmd && Tcc/Le to ConEmu (new window will be started if not found)",IDC_STATIC,4,168,319,65
+    LTEXT           "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\nCurrent command stored in registry «AutoRun»:",IDC_STATIC,11,178,308,16
+    EDITTEXT        tCmdAutoAttach,9,197,308,13,ES_AUTOHSCROLL | ES_READONLY
+    CONTROL         "Force new ConEmu window",cbCmdAutorunNewWnd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,216,150,10
+    PUSHBUTTON      "Register ConEmu autorun",bCmdAutoRegister,163,213,100,14
+    PUSHBUTTON      "Unregister",bCmdAutoUnregister,267,213,50,14
 END
 
 IDD_SPG_STARTUP DIALOGEX 0, 0, 328, 235
@@ -663,7 +663,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Text selection",IDC_STATIC,4,1,319,74
+    GROUPBOX        "Text selection",IDC_STATIC,4,1,319,82
     CONTROL         "Always",rbCTSAlways,"Button",BS_AUTORADIOBUTTON,131,13,38,8
     CONTROL         "Buffer only (cmd.exe)",rbCTSBufferOnly,"Button",BS_AUTORADIOBUTTON,173,13,85,8
     CONTROL         "Block selection",cbCTSBlockSelection,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,30,59,8
@@ -674,43 +674,44 @@ BEGIN
     COMBOBOX        lbCTSForeIdx,293,11,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Back:",IDC_STATIC,269,30,22,8
     COMBOBOX        lbCTSBackIdx,293,28,24,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Mouse button actions",IDC_STATIC,4,80,319,47
-    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,94,10,8
-    COMBOBOX        lbCTSActAlways,22,91,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,76,94,100,8
-    RTEXT           "Right:",IDC_STATIC,175,94,24,8
-    COMBOBOX        lbCTSRBtnAction,201,91,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Middle:",IDC_STATIC,245,94,28,8
-    COMBOBOX        lbCTSMBtnAction,275,91,42,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Mouse button actions",IDC_STATIC,4,88,319,47
+    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,102,10,8
+    COMBOBOX        lbCTSActAlways,22,99,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,76,102,100,8
+    RTEXT           "Right:",IDC_STATIC,175,102,24,8
+    COMBOBOX        lbCTSRBtnAction,201,99,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Middle:",IDC_STATIC,245,102,28,8
+    COMBOBOX        lbCTSMBtnAction,275,99,42,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Never",rbCTSNever,"Button",BS_AUTORADIOBUTTON,90,13,35,8
     GROUPBOX        "Color indexes",IDC_STATIC,263,1,60,47
     LTEXT           "Select text in console:",IDC_STATIC,12,13,72,8
-    GROUPBOX        "Handle pasting text (not in Far Manager or GUI applications)",gbFeatureClipboard,4,133,319,42
-    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,145,117,8
-    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,146,91,8
-    CONTROL         "Confirm <Enter> keypress",cbClipConfirmEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,159,117,8
-    CONTROL         "Confirm pasting more than",cbClipConfirmLimit,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,159,105,8
-    EDITTEXT        tClipConfirmLimit,246,158,40,12,ES_AUTOHSCROLL
-    CTEXT           "chars",stClipConfirmLimit,292,159,22,8
-    CONTROL         "Freeze console contents (may cause small lag)",cbCTSFreezeBeforeSelect,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,45,164,8
-    RTEXT           "Find:",IDC_STATIC,269,77,22,8,NOT WS_VISIBLE | WS_DISABLED
-    COMBOBOX        lbCTSFindIdx,293,75,24,30,CBS_DROPDOWNLIST | CBS_SORT | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Goto Far editor on compiler errors",IDC_STATIC,4,179,319,45
-    CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,191,76,8
-    COMBOBOX        lbFarGotoEditorVk,94,189,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "External editor, when Far not started:",stGotoEditorCmd,158,192,139,8
-    EDITTEXT        tGotoEditorCmd,11,205,287,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",bGotoEditorCmd,301,205,16,12
-    CONTROL         "Copy on LButton up",cbCTSAutoCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,45,85,8
+    GROUPBOX        "Handle pasting text (not in Far Manager or GUI applications)",gbFeatureClipboard,4,141,319,42
+    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,153,117,8
+    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,154,91,8
+    CONTROL         "Confirm <Enter> keypress",cbClipConfirmEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,167,117,8
+    CONTROL         "Confirm pasting more than",cbClipConfirmLimit,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,167,105,8
+    EDITTEXT        tClipConfirmLimit,246,166,40,12,ES_AUTOHSCROLL
+    CTEXT           "chars",stClipConfirmLimit,292,167,22,8
+    CONTROL         "Freeze console contents before selection (may cause small lag)",cbCTSFreezeBeforeSelect,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,45,249,8
+    RTEXT           "Find:",IDC_STATIC,269,85,22,8,NOT WS_VISIBLE | WS_DISABLED
+    COMBOBOX        lbCTSFindIdx,293,83,24,30,CBS_DROPDOWNLIST | CBS_SORT | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Goto editor on compiler errors",IDC_STATIC,4,187,319,45
+    CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,199,76,8
+    COMBOBOX        lbFarGotoEditorVk,94,197,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "External editor, when Far not started:",stGotoEditorCmd,158,200,139,8
+    EDITTEXT        tGotoEditorCmd,11,213,287,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",bGotoEditorCmd,301,213,16,12
+    CONTROL         "Copy on LButton up",cbCTSAutoCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,69,85,8
     CONTROL         "Change prompt (cmd, powershell) text cursor position with Left Click",cbCTSClickPromptPosition,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,11,110,237,8
-    COMBOBOX        lbCTSClickPromptPosition,250,108,67,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Detect text line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,11,59,85,8
-    CONTROL         "Bash margin",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,59,55,8
-    CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTO3STATE | WS_TABSTOP,160,59,77,8
-    RTEXT           "EOL:",IDC_STATIC,254,59,19,8
-    COMBOBOX        lbCTSEOL,277,57,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,11,118,237,8
+    COMBOBOX        lbCTSClickPromptPosition,250,116,67,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Detect text line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,11,57,85,8
+    CONTROL         "Bash margin",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,101,57,55,8
+    CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTO3STATE | WS_TABSTOP,165,57,85,8
+    RTEXT           "EOL:",IDC_STATIC,254,57,19,8
+    COMBOBOX        lbCTSEOL,277,55,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "End selection on typing",cbCTSEndOnTyping,"Button",BS_AUTO3STATE | WS_TABSTOP,101,69,143,8
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235
@@ -1232,6 +1233,11 @@ BEGIN
         RIGHTMARGIN, 319
         TOPMARGIN, 3
         BOTTOMMARGIN, 226
+    END
+
+    IDD_SPG_APPDISTINCT2, DIALOG
+    BEGIN
+        RIGHTMARGIN, 295
     END
 
     IDD_ABOUT, DIALOG
