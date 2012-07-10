@@ -325,6 +325,7 @@ class CConEmuMain :
 		BOOL mb_LockWindowRgn;
 		BOOL mb_CaptionWasRestored; // заголовок восстановлен на время ресайза
 		BOOL mb_ForceShowFrame;     // восстановить заголовок по таймауту
+		void StopForceShowFrame();
 		//wchar_t *mpsz_RecreateCmd;
 		//ITaskbarList3 *mp_TaskBar3;
 		//ITaskbarList2 *mp_TaskBar2;

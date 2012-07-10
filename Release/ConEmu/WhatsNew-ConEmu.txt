@@ -10,6 +10,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.09
+[*] Minimize/Restore учитывает флажок «Always on top».
+[*] Уточнение «Copy on LButton up».
+[*] New hotkey: Minimize/Restore (alternative).
+
+
 2012.07.08
 [+] GuiMacro: теперь можно позвать через ANSI коды. Пример в файле «IsConEmu.cmd».
 [+] Вкладка «Keys & Macro»: В поле редактирования GuiMacro можно использовать \e (ESC) и \a (BELL).

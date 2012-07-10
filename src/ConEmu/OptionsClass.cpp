@@ -1905,10 +1905,10 @@ LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 
 void CSettings::CheckSelectionModifiers()
 {
-	WORD nCtrlID[] = {lbCTSBlockSelection, lbCTSTextSelection, lbCTSClickPromptPosition};
-	bool bEnabled[] = {gpSet->isCTSSelectBlock, gpSet->isCTSSelectText, gpSet->AppStd.isCTSClickPromptPosition};
-	BYTE Vk[] = {0,0,0};
-	LPCWSTR Descr[] = {L"Block selection", L"Text selection", L"Prompt position"};
+	WORD nCtrlID[] = {lbCTSBlockSelection, lbCTSTextSelection, lbCTSClickPromptPosition, lbFarGotoEditorVk};
+	bool bEnabled[] = {gpSet->isCTSSelectBlock, gpSet->isCTSSelectText, gpSet->AppStd.isCTSClickPromptPosition, gpSet->isFarGotoEditor};
+	BYTE Vk[] = {0,0,0,0};
+	LPCWSTR Descr[] = {L"Block selection", L"Text selection", L"Prompt position", L"Highlight and goto"};
 	HWND hDlg = gpSetCls->mh_Tabs[thi_Selection];
 	if (!hDlg)
 		return;
@@ -6297,7 +6297,7 @@ void CSettings::OnClose()
 
 	gpConEmu->OnPanelViewSettingsChanged();
 	//gpConEmu->UpdateGuiInfoMapping();
-	gpConEmu->RegisterMinRestore(gpSet->IsHotkey(vkMinimizeRestore));
+	gpConEmu->RegisterMinRestore(gpSet->IsHotkey(vkMinimizeRestore) || gpSet->IsHotkey(vkMinimizeRestor2));
 
 	if (gpSet->m_isKeyboardHooks == 1)
 		gpConEmu->RegisterHoooks();

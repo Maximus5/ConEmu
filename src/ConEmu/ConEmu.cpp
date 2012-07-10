@@ -132,6 +132,7 @@ static struct RegisteredHotKeys
 }
 gRegisteredHotKeys[] = {
 	{vkMinimizeRestore},
+	{vkMinimizeRestor2},
 	{vkForceFullScreen},
 };
 
@@ -1108,7 +1109,7 @@ HMENU CConEmuMain::GetSysMenu(BOOL abInitial /*= FALSE*/)
 	//wchar_t szText[255];
 
 	
-	if (m_InsideIntegration)
+	if (m_InsideIntegration || gpSet->isQuakeStyle)
 	{
 		if (!mh_InsideSysMenu || abInitial)
 		{
@@ -1165,7 +1166,8 @@ void CConEmuMain::UpdateSysMenu(HMENU hSysMenu)
 	{
 		if (!m_InsideIntegration)
 		{
-			InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
+			if (!gpSet->isQuakeStyle)
+				InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
 		}
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
@@ -4824,7 +4826,8 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 	// Запомнить "идеальный" размер окна, выбранный пользователем
 	if (isSizing() && !mb_isFullScreen && !isZoomed() && !isIconic())
 	{
-		GetWindowRect(ghWnd, &mrc_Ideal);
+		//GetWindowRect(ghWnd, &mrc_Ideal);
+		UpdateIdealRect();
 	}
 
 	if (gpConEmu->mp_TabBar->IsTabsActive())
@@ -4864,7 +4867,8 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 					|| isNtvdm())
 			{
 				rcNewCon.left = (client.right + client.left - (int)pVCon->Width)/2;
-				rcNewCon.top = (client.bottom + client.top - (int)pVCon->Height)/2;
+				if (!gpSet->isQuakeStyle)
+					rcNewCon.top = (client.bottom + client.top - (int)pVCon->Height)/2;
 			}
 
 			if (rcNewCon.left<client.left) rcNewCon.left=client.left;
@@ -6735,6 +6739,7 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 				switch (gRegisteredHotKeys[i].DescrID)
 				{
 				case vkMinimizeRestore:
+				case vkMinimizeRestor2:
 					OnMinimizeRestore();
 					break;
 				case vkForceFullScreen:
@@ -7819,6 +7824,13 @@ void CConEmuMain::UpdateProgress()
 	// Задел на будущее
 	if (ghWndApp)
 		SetWindowText(ghWndApp, psTitle);
+}
+
+void CConEmuMain::StopForceShowFrame()
+{
+	mb_ForceShowFrame = FALSE;
+	KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID);
+	KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
 }
 
 void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth/*=-1*/, int anWndHeight/*=-1*/)
@@ -9253,12 +9265,16 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 
 	if ((h != hLastFore) || (bLastRealAlso != abRealAlso) || (bLastDialogsAlso != abDialogsAlso))
 	{
+		DWORD nForePID = 0;
+		if (h)
+			GetWindowThreadProcessId(h, &nForePID);
 		isMe = (h != NULL)
 			&& ((h == ghWnd)
-				|| (abDialogsAlso && ((h == ghOpWnd)
-					|| (mp_AttachDlg && (mp_AttachDlg->GetHWND() == h))
-					|| (mp_RecreateDlg && (mp_RecreateDlg->GetHWND() == h))
-					|| (gpSetCls->mh_FindDlg == h)))
+				|| (abDialogsAlso && (nForePID == GetCurrentProcessId()))
+					//((h == ghOpWnd)
+					//|| (mp_AttachDlg && (mp_AttachDlg->GetHWND() == h))
+					//|| (mp_RecreateDlg && (mp_RecreateDlg->GetHWND() == h))
+					//|| (gpSetCls->mh_FindDlg == h)))
 				|| (m_InsideIntegration && (h == mh_InsideParentRoot)))
 			;
 
@@ -11012,6 +11028,18 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 	}
 
+	if (!lbSetFocus && !hNewFocus && (isPressed(VK_LBUTTON) || isPressed(VK_RBUTTON)))
+	{
+		// Клик по таскбару, или еще кому...
+		POINT ptCur = {}; GetCursorPos(&ptCur);
+		HWND hUnderMouse = WindowFromPoint(ptCur);
+		DWORD nPID = 0;
+		if (hUnderMouse && GetWindowThreadProcessId(hUnderMouse, &nPID) && (nPID != GetCurrentProcessId()))
+		{
+			hNewFocus = hUnderMouse;
+		}
+	}
+
 	// GUI client?
 	if (!lbSetFocus && hNewFocus)
 	{
@@ -11061,15 +11089,33 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (mp_VActive && mp_VActive->RCon())
 		mp_VActive->RCon()->OnGuiFocused(lbSetFocus, (messg == WM_ACTIVATEAPP));
 
-	if (gpSet->isQuakeStyle == 2)
+	if ((gpSet->isQuakeStyle == 2)
+		&& (!lbSetFocus && !isMeForeground(true,true)) && !isIconic()
+		&& IsWindowVisible(ghWnd))
 	{
-		bool bForeground = lbSetFocus || isMeForeground();
-		if (!bForeground)
+		wchar_t szClassName[255]; szClassName[0] = 0;
+		bool bIsTaskbar = false;
+		HWND h = hNewFocus;
+		while (h)
+		{
+			GetClassName(h, szClassName, countof(szClassName));
+			if (lstrcmpi(szClassName, L"Shell_TrayWnd") == 0)
+			{
+				bIsTaskbar = true;
+				break;
+			}
+			h = GetParent(h);
+		}
+
+		// Если активируется TaskBar - не дергаться.
+		// Иначе получается бред при клике на иконку в TSA.
+		if (!bIsTaskbar)
 		{
 			OnMinimizeRestore(sih_HideTSA);
 		}
 	}
-	else if (gpSet->isFadeInactive)
+	
+	if (gpSet->isFadeInactive)
 	{
 		if (mp_VActive)
 		{
@@ -11337,10 +11383,20 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	static bool bInFunction = false;
 	if (bInFunction)
 		return;
-	bInFunction = true;
 
 	bool bIsForeground = isMeForeground();
 	bool bIsIconic = isIconic();
+	BOOL bVis = IsWindowVisible(ghWnd);
+
+	if (ShowHideType == sih_HideTSA)
+	{
+		if (bIsIconic || !bVis)
+		{
+			return;
+		}
+	}
+
+	bInFunction = true;
 
 	// 1. Функция вызывается при нажатии глобально регистрируемого хоткея
 	//    Win+C  -->  ShowHideType = sih_None
@@ -11364,7 +11420,8 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	}
 	else if ((ShowHideType == sih_ShowMinimize) || (ShowHideType == sih_ShowHideTSA) || (ShowHideType == sih_HideTSA))
 	{
-		if ((IsWindowVisible(ghWnd) && (bIsForeground && !bIsIconic)) || (ShowHideType == sih_HideTSA))
+		if ((bVis && (bIsForeground || gpSet->isAlwaysOnTop) && !bIsIconic)
+			|| (ShowHideType == sih_HideTSA))
 		{
 			// если видимо - спрятать
 			cmd = (ShowHideType == sih_HideTSA) ? sih_ShowHideTSA : ShowHideType;
@@ -11396,8 +11453,11 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	}
 	else if (cmd == sih_Show)
 	{
-		if (gpSet->isQuakeStyle && !isMouseOverFrame())
+		apiSetForegroundWindow(ghWnd);
+
+		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
 		{
+			StopForceShowFrame();
 			mn_QuakePercent = nQuakeMin;
 			UpdateWindowRgn();
 		}
@@ -11412,13 +11472,14 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		}
 		else if (bIsIconic)
 		{
-			PostMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 		}
 
 		apiSetForegroundWindow(ghWnd);
 
-		if (gpSet->isQuakeStyle && !isMouseOverFrame())
+		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
 		{
+			StopForceShowFrame();
 			while (mn_QuakePercent < 100)
 			{
 				mn_QuakePercent += nQuakeShift;
@@ -11437,9 +11498,16 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	else
 	{
 		_ASSERTE(((cmd == sih_ShowHideTSA) || (cmd == sih_ShowMinimize)) && "cmd must be determined!");
+
+		if (bVis && !bIsIconic)
+		{
+			UpdateIdealRect();
+		}
+
 		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
 		{
 			mn_QuakePercent = 100 + nQuakeMin - nQuakeShift;
+			StopForceShowFrame();
 			while (mn_QuakePercent > 0)
 			{
 				UpdateWindowRgn();
@@ -11461,12 +11529,12 @@ void CConEmuMain::OnMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		else if (cmd == sih_ShowMinimize)
 		{
 			// SC_MINIMIZE сам обработает (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
-			PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+			SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 		}
 	}
 
 	bInFunction = false;
-}
+ }
 
 void CConEmuMain::OnForcedFullScreen(bool bSet /*= true*/)
 {
@@ -14807,6 +14875,8 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 		case ID_TOMONITOR:
 		{
+			if (gpSet->isQuakeStyle || gpConEmu->m_InsideIntegration)
+				return 0;
 			if (!IsWindowVisible(ghWnd))
 				Icon.RestoreWindowFromTray();
 			POINT ptCur = {}; GetCursorPos(&ptCur);
@@ -14985,6 +15055,12 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					break;
 				#endif
 
+				if (gpSet->isQuakeStyle)
+				{
+					gpConEmu->OnMinimizeRestore(sih_HideTSA);
+					break;
+				}
+
 				if (!SetWindowMode(isIconic() ? WindowMode : rNormal))
 					result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
 			}
@@ -15007,7 +15083,12 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					apiSetForegroundWindow(ghWnd);
 			}
 
-			if (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
+			if (gpSet->isQuakeStyle)
+			{
+				gpConEmu->OnMinimizeRestore(sih_HideTSA);
+				break;
+			}
+			else if (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
 			{
 				Icon.HideWindowToTray();
 				break;
@@ -15231,8 +15312,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 				{
 					if (mb_ForceShowFrame)
 					{
-						mb_ForceShowFrame = FALSE;
-						KillTimer(ghWnd, TIMER_CAPTION_APPEAR_ID); KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
+						StopForceShowFrame();
 						UpdateWindowRgn();
 					}
 				}

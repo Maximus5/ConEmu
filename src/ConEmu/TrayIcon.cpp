@@ -249,7 +249,24 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			_wsprintf(szMsg, SKIPLEN(countof(szMsg)) (lParam==WM_LBUTTONUP) ? L"TSA: WM_LBUTTONUP(%i,0x%08X)\n" : L"TSA: NIN_BALLOONUSERCLICK(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
 			DEBUGSTRICON(szMsg);
 			#endif
-			Icon.RestoreWindowFromTray();
+			if (gpSet->isQuakeStyle)
+			{
+				SingleInstanceShowHideType sih = sih_ShowHideTSA;
+				if (IsWindowVisible(ghWnd))
+				{
+					if (gpSet->isAlwaysOnTop || (gpSet->isQuakeStyle == 2))
+					{
+						sih = sih_HideTSA;
+					}
+					else
+					{
+						// Хм. Тут проблема. Если поверх ConEmu есть какое-то окно, то ConEmu нужно поднять?
+					}
+				}
+				gpConEmu->OnMinimizeRestore(sih);
+			}
+			else
+				Icon.RestoreWindowFromTray();
 			if (m_MsgSource == tsa_Source_Updater)
 			{
 				m_MsgSource = tsa_Source_None;

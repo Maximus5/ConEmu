@@ -497,7 +497,7 @@ wrap:
 	return lbRc;
 }
 
-// 1 - Last long console output, 2 - current console "image"
+// 1 - Last long console output, 2 - current console "image", 3 - copy of rbt_Primary
 bool CRealBuffer::LoadAlternativeConsole(int iMode /*= 0*/)
 {
 	bool lbRc = false;
@@ -2654,9 +2654,6 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 
 	if (messg == WM_LBUTTONDOWN)
 	{
-		if (!(con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION))
-			con.m_SelClickTick = GetTickCount();
-
 		BOOL lbStreamSelection = FALSE;
 		BYTE vkMod = 0; // Если удерживается модификатор - его нужно "отпустить" в консоль
 		bool bTripleClick = (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION) && ((GetTickCount() - con.m_SelDblClickTick) <= GetDoubleClickTime());
@@ -2768,9 +2765,25 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		if (messg == WM_LBUTTONUP)
 		{
 			con.m_sel.dwFlags &= ~CONSOLE_MOUSE_DOWN;
-			//ReleaseCapture();
-			// Скорректировать отсечку таймера на отпускание
-			mp_RCon->VCon()->SetAutoCopyTimer(true);
+
+			if (gpSet->isCTSAutoCopy)
+			{
+				//if ((con.m_sel.srSelection.Left != con.m_sel.srSelection.Right) || (con.m_sel.srSelection.Top != con.m_sel.srSelection.Bottom))
+				DWORD nPrevTick = (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION) ? con.m_SelDblClickTick : con.m_SelClickTick;
+				if ((GetTickCount() - nPrevTick) > GetDoubleClickTime())
+				{
+					// Если длительность удержания кнопки мышки превышает DblClickTime
+					// то можно (и нужно) сразу выполнить копирование
+					_ASSERTE(nPrevTick!=0);
+					DoSelectionFinalize(true, 0);
+				}
+				else
+				{
+					// Иначе - таймер, чтобы не перекрыть возможность DblClick/TripleClick
+					// Скорректировать отсечку таймера на отпускание
+					mp_RCon->VCon()->SetAutoCopyTimer(true);
+				}
+			}
 		}
 
 		return true;
@@ -3015,8 +3028,9 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 			ExpandSelection(pcrTo->X, pcrTo->Y);
 		con.m_sel.dwFlags |= CONSOLE_DBLCLICK_SELECTION;
 
-		if (anFromMsg == WM_LBUTTONDBLCLK)
-			con.m_SelDblClickTick = GetTickCount();
+		_ASSERTE(anFromMsg == WM_LBUTTONDBLCLK);
+		//if (anFromMsg == WM_LBUTTONDBLCLK)
+		con.m_SelDblClickTick = GetTickCount();
 
 		if (gpSet->isCTSAutoCopy)
 		{
@@ -3024,9 +3038,14 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 			mp_RCon->VCon()->SetAutoCopyTimer(true);
 		}
 	}
-	else if (abByMouse && gpSet->isCTSAutoCopy)
+	else if (abByMouse)
 	{
-		mp_RCon->VCon()->SetAutoCopyTimer(true);
+		con.m_SelClickTick = GetTickCount();
+
+		if (gpSet->isCTSAutoCopy)
+		{
+			mp_RCon->VCon()->SetAutoCopyTimer(true);
+		}
 	}
 }
 

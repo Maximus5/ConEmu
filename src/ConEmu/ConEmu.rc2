@@ -226,6 +226,7 @@ BEGIN
     vkForceFullScreen       "Enter TEXT fullscreen mode, when available. If not - standard fullscreen and always on top"
     vkLDragKey              "LDrag modifier"
     vkMinimizeRestore       "Minimize/Restore"
+	vkMinimizeRestor2       "Minimize/Restore (alternative)"
     vkMultiAltCon           "Show alternative console buffer (last command output)"
     vkMultiBuffer           "Switch bufferheight mode"
     vkMultiClose            "Close active console"
