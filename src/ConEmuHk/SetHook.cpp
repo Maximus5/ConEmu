@@ -59,8 +59,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#pragma comment(lib, "wininet.lib")
 
 #ifdef _DEBUG
-#define DebugString(x) OutputDebugString(x)
-#define DebugStringA(x) OutputDebugStringA(x)
+#define DebugString(x) //OutputDebugString(x)
+#define DebugStringA(x) //OutputDebugStringA(x)
 #else
 #define DebugString(x) //OutputDebugString(x)
 #define DebugStringA(x) //OutputDebugStringA(x)
@@ -1040,6 +1040,8 @@ extern BOOL gbInCommonShutdown;
 
 bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
 {
+	DWORD nCurTID = GetCurrentThreadId();
+
 	//while (nHookMutexWait != WAIT_OBJECT_0)
 	BOOL lbLockHooksSection = FALSE;
 	while (!(lbLockHooksSection = apCS->Lock(gpHookCS, TRUE, 10000)))
@@ -1065,11 +1067,11 @@ bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
 			asAction, szName, nPID, nTID);
 
 		int nBtn = 
-#ifdef CONEMU_MINIMAL
+			#ifdef CONEMU_MINIMAL
 			GuiMessageBox
-#else
+			#else
 			MessageBoxW
-#endif
+			#endif
 			(GetConEmuHWND(TRUE), szTrapMsg, L"ConEmu", MB_RETRYCANCEL|MB_ICONSTOP|MB_SYSTEMMODAL);
 
 		free(szTrapMsg);
@@ -1081,6 +1083,16 @@ bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
 		//nHookMutexWait = WaitForSingleObject(ghHookMutex, 10000);
 		//continue;
 	}
+
+	#ifdef _DEBUG
+	wchar_t szDbg[80];
+	msprintf(szDbg, countof(szDbg), L"ConEmuHk: LockHooks, TID=%u\n", nCurTID);
+	if (nCurTID != gnHookMainThreadId)
+	{
+		int nDbg = 0;
+	}
+	DebugString(szDbg);
+	#endif
 
 	return true;
 }
@@ -1339,47 +1351,6 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 			return false;
 	}
 		
-//	//while (nHookMutexWait != WAIT_OBJECT_0)
-//	while (!CS.Lock(gpHookCS, TRUE, 10000))
-//	{
-//#ifdef _DEBUG
-//
-//		if (!IsDebuggerPresent())
-//		{
-//			_ASSERTE(nHookMutexWait == WAIT_OBJECT_0);
-//		}
-//
-//#endif
-//
-//		if (gbInCommonShutdown)
-//			return false;
-//
-//		wchar_t* szTrapMsg = (wchar_t*)calloc(1024,2);
-//		wchar_t* szName = (wchar_t*)calloc((MAX_PATH+1),2);
-//
-//		if (!GetModuleFileNameW(Module, szName, MAX_PATH+1)) szName[0] = 0;
-//
-//		DWORD nTID = GetCurrentThreadId(); DWORD nPID = GetCurrentProcessId();
-//		msprintf(szTrapMsg, 1024, L"Can't install hooks in module '%s'\nCurrent PID=%u, TID=%i\nCan't lock hook mutex\nPress 'Retry' to repeat locking",
-//		          szName, nPID, nTID);
-//
-//		int nBtn = 
-//			#ifdef CONEMU_MINIMAL
-//				GuiMessageBox
-//			#else
-//				MessageBoxW
-//			#endif
-//			(GetConEmuHWND(TRUE), szTrapMsg, L"ConEmu", MB_RETRYCANCEL|MB_ICONSTOP|MB_SYSTEMMODAL);
-//		
-//		free(szTrapMsg);
-//		free(szName);
-//		
-//		if (nBtn != IDRETRY)
-//			return false;
-//
-//		//nHookMutexWait = WaitForSingleObject(ghHookMutex, 10000);
-//		//continue;
-//	}
 
 	TODO("!!! Сохранять ORDINAL процедур !!!");
 	bool res = false, bHooked = false;
@@ -1393,8 +1364,7 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 	// в отдельной функции, т.к. __try
 	bHooked = SetHookChange(asModule, Module, abForceHooks, bFnNeedHook, p);
 	
-#ifdef _DEBUG
-
+	#ifdef _DEBUG
 	if (bHooked)
 	{
 		wchar_t* szDbg = (wchar_t*)calloc(MAX_PATH*3, 2);
@@ -1407,8 +1377,8 @@ bool SetHook(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 		free(szDbg);
 		free(szModPath);
 	}
+	#endif
 
-#endif
 	//ReleaseMutex(ghHookMutex);
 	CS.Unlock();
 

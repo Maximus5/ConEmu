@@ -27,7 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 //#ifdef _DEBUG
-#define USE_LOCK_SECTION
+//#define USE_LOCK_SECTION
 //#endif
 
 #define HIDE_USE_EXCEPTION_INFO
@@ -54,6 +54,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TTM_TRACKPOSITION       (WM_USER + 18)  // lParam = dwPos
 #define TTM_TRACKACTIVATE       (WM_USER + 17)  // wParam = TRUE/FALSE start end  lparam = LPTOOLINFO
 #endif
+
+
+#ifdef _DEBUG
+#define DebugString(x) //OutputDebugString(x)
+#define DebugStringA(x) //OutputDebugStringA(x)
+#else
+#define DebugString(x) //OutputDebugString(x)
+#define DebugStringA(x) //OutputDebugStringA(x)
+#endif
+
 
 
 #ifdef _DEBUG
@@ -2482,28 +2492,27 @@ MSection::MSection()
 	_ASSERTEX(mh_ReleaseEvent!=NULL);
 
 	if (mh_ReleaseEvent) ResetEvent(mh_ReleaseEvent);
+	mh_ExclusiveThread = NULL;
 };
 MSection::~MSection()
 {
 	DeleteCriticalSection(&m_cs);
 	DeleteCriticalSection(&m_lock_cs);
 
-	if (mh_ReleaseEvent)
-	{
-		CloseHandle(mh_ReleaseEvent); mh_ReleaseEvent = NULL;
-	}
+	SafeCloseHandle(mh_ReleaseEvent);
+	SafeCloseHandle(mh_ExclusiveThread);
 };
 void MSection::Process_Lock()
 {
-	#ifdef USE_LOCK_SECTION
+	//#ifdef USE_LOCK_SECTION
 	EnterCriticalSection(&m_lock_cs);
-	#endif
+	//#endif
 }
 void MSection::Process_Unlock()
 {
-	#ifdef USE_LOCK_SECTION
+	//#ifdef USE_LOCK_SECTION
 	LeaveCriticalSection(&m_lock_cs);
-	#endif
+	//#endif
 }
 void MSection::ThreadTerminated(DWORD dwTID)
 {
@@ -2684,6 +2693,7 @@ void MSection::WaitUnlocked(DWORD dwTID, DWORD anTimeout)
 };
 bool MSection::MyEnterCriticalSection(DWORD anTimeout)
 {
+	DWORD nCurTID = GetCurrentThreadId(), nExclWait = -1;
 	//EnterCriticalSection(&m_cs);
 	// дождаться пока секцию отпустят
 	// НАДА. Т.к. может быть задан nTimeout (для DC)
@@ -2695,6 +2705,48 @@ bool MSection::MyEnterCriticalSection(DWORD anTimeout)
 
 		while (!TryEnterCriticalSection(&m_cs))
 		{
+			if ((mn_TID != nCurTID) && mh_ExclusiveThread)
+			{
+				BOOL lbLocked = FALSE;
+
+				if (mh_ExclusiveThread)
+				{
+					nExclWait = WaitForSingleObject(mh_ExclusiveThread, 0);
+					if (nExclWait != WAIT_TIMEOUT)
+					{
+						// Все, m_cs протух. Его нужно пересоздать
+
+						Process_Lock();
+
+						_ASSERTEX(FALSE && "Exclusively locked thread was abnormally terminated?");
+
+						SafeCloseHandle(mh_ExclusiveThread);
+						CRITICAL_SECTION csNew, csOld;
+						InitializeCriticalSection(&csNew);
+						csOld = m_cs;
+						DeleteCriticalSection(&csOld);
+						lbLocked = TryEnterCriticalSection(&csNew);
+						m_cs = csNew;
+
+						_ASSERTEX(mn_LockedTID[0] = mn_TID);
+						mn_LockedTID[0] = 0;
+						if (mn_LockedCount[0] > 0)
+						{
+							mn_LockedCount[0] --; // на [0] mn_Locked не распространяется
+						}
+
+						mn_TID = nCurTID;
+
+						Process_Unlock();
+					}
+				}
+
+				if (lbLocked)
+				{
+					break;
+				}
+			}
+
 			Sleep(10);
 			DEBUGSTR(L"TryEnterCriticalSection failed!!!\n");
 			dwCurrentTick = GetTickCount();
@@ -2819,8 +2871,14 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 			return FALSE;
 		}
 
-		_ASSERTEX(!(lbPrev && mb_Exclusive)); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
+		// 120710 - добавил "|| (mn_TID==dwTID)". Это в том случае, если предыдущая ExclusiveThread была прибита.
+		_ASSERTEX(!(lbPrev && mb_Exclusive) || (mn_TID==dwTID)); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
 		mn_TID = dwTID; // И запомним, в какой нити это произошло
+
+		HANDLE h = mh_ExclusiveThread;
+		mh_ExclusiveThread = OpenThread(SYNCHRONIZE, FALSE, dwTID);
+		SafeCloseHandle(h);
+
 		mb_Exclusive = TRUE; // Флаг могла сбросить другая нить, выполнившая Leave
 		_ASSERTEX(mn_LockedTID[0] == 0 && mn_LockedCount[0] == 0);
 		mn_LockedTID[0] = dwTID;
@@ -2906,7 +2964,19 @@ MSectionLock::MSectionLock()
 MSectionLock::~MSectionLock()
 {
 	_ASSERTEX((mb_Locked==FALSE || mb_Locked==TRUE) && (mb_Exclusive==FALSE || mb_Exclusive==TRUE));
-	if (mb_Locked) Unlock();
+	if (mb_Locked)
+	{
+		DWORD nCurTID = GetCurrentThreadId();
+
+		Unlock();
+		
+		#ifdef _DEBUG
+		wchar_t szDbg[80];		
+		msprintf(szDbg, countof(szDbg), L"::~MSectionLock, TID=%u\n", nCurTID);
+		DebugString(szDbg);
+		#endif
+		UNREFERENCED_PARAMETER(nCurTID);
+	}
 };
 BOOL MSectionLock::Lock(MSection* apS, BOOL abExclusive/*=FALSE*/, DWORD anTimeout/*=-1*/)
 {
@@ -2941,9 +3011,23 @@ void MSectionLock::Unlock()
 {
 	if (mp_S && mb_Locked)
 	{
+		#ifdef _DEBUG
+		DWORD nCurTID = GetCurrentThreadId();
+		wchar_t szDbg[80];
+		if (mb_Exclusive)
+			msprintf(szDbg, countof(szDbg), L"::Unlock(), TID=%u\n", nCurTID);
+		else
+			szDbg[0] = 0;
+		#endif
+
 		_ASSERTEX(mb_Exclusive || mp_S->mn_Locked>0);
 		mp_S->Unlock(mb_Exclusive);
 		mb_Locked = FALSE;
+
+		#ifdef _DEBUG
+		if (*szDbg)
+			DebugString(szDbg);
+		#endif
 	}
 };
 BOOL MSectionLock::isLocked(BOOL abExclusiveOnly/*=FALSE*/)

@@ -120,6 +120,8 @@ bool isKey(DWORD wp,DWORD vk);
 #endif
 #define ZeroStruct(s) memset(&(s), 0, sizeof(s))
 
+#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
+
 #define isDriveLetter(c) ((c>=L'A' && c<=L'Z') || (c>=L'a' && c<=L'z'))
 #define isDigit(c) (c>=L'0' && c<=L'9')
 

@@ -1207,15 +1207,15 @@ LRESULT CSettings::OnInitDialog()
 		}
 
 		HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
-		RECT rcClient; GetWindowRect(hPlace, &rcClient);
-		MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+		//RECT rcClient; GetWindowRect(hPlace, &rcClient);
+		//MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 		ShowWindow(hPlace, SW_HIDE);
 
 		mb_IgnoreSelPage = false;
 
 		mh_Tabs[m_Pages[0].PageIndex] = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
 			MAKEINTRESOURCE(m_Pages[0].PageID), ghOpWnd, pageOpProc, (LPARAM)&(m_Pages[0]));
-		MoveWindow(mh_Tabs[m_Pages[0].PageIndex], rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+		//MoveWindow(mh_Tabs[m_Pages[0].PageIndex], rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 
 
 		apiShowWindow(mh_Tabs[m_Pages[0].PageIndex], SW_SHOW);
@@ -6211,12 +6211,12 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 					if (mh_Tabs[m_Pages[i].PageIndex] == NULL)
 					{
 						SetCursor(LoadCursor(NULL,IDC_WAIT));
-						HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
-						RECT rcClient; GetWindowRect(hPlace, &rcClient);
-						MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+						//HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
+						//RECT rcClient; GetWindowRect(hPlace, &rcClient);
+						//MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 						mh_Tabs[m_Pages[i].PageIndex] = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
 							MAKEINTRESOURCE(m_Pages[i].PageID), ghOpWnd, pageOpProc, (LPARAM)&(m_Pages[i]));
-						MoveWindow(mh_Tabs[m_Pages[i].PageIndex], rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+						//MoveWindow(mh_Tabs[m_Pages[i].PageIndex], rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 					}
 					else
 					{
@@ -6566,6 +6566,12 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		//_ASSERTE(((ConEmuSetupPages*)lParam)->hPage!=NULL && *((ConEmuSetupPages*)lParam)->hPage==NULL && ((ConEmuSetupPages*)lParam)->PageID!=0);
 		_ASSERTE(p->PageIndex>=0 && p->PageIndex<countof(gpSetCls->mh_Tabs) && gpSetCls->mh_Tabs[p->PageIndex]==NULL);
 		gpSetCls->mh_Tabs[p->PageIndex] = hWnd2;
+
+		HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
+		RECT rcClient; GetWindowRect(hPlace, &rcClient);
+		MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+		MoveWindow(hWnd2, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+
 		switch (((ConEmuSetupPages*)lParam)->PageID)
 		{
 		case IDD_SPG_MAIN:

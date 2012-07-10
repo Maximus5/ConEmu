@@ -552,6 +552,7 @@ class CConEmuMain :
 		void LoadIcons();
 		//bool LoadVersionInfo(wchar_t* pFullPath);
 		RECT MapRect(RECT rFrom, BOOL bFrame2Client);
+		void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
 		//void PaintCon(HDC hPaintDC);
 		void InvalidateGaps();
 		void PaintGaps(HDC hDC);

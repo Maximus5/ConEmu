@@ -374,8 +374,6 @@ void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCo
 
 
 BOOL gbInCommonShutdown = FALSE;
-//HANDLE ghHookMutex = NULL;
-//MSection* gpHookCS = NULL;
 #ifdef _DEBUG
 extern HANDLE ghInMyAssertTrap;
 extern DWORD gnInMyAssertThread;
@@ -393,17 +391,6 @@ void CommonShutdown()
 	if (OnShutdownConsole)
 		OnShutdownConsole();
 
-	//if (ghHookMutex)
-	//{
-	//	CloseHandle(ghHookMutex);
-	//	ghHookMutex = NULL;
-	//}
-	//if (gpHookCS)
-	//{
-	//	MSection *p = gpHookCS;
-	//	gpHookCS = NULL;
-	//	delete p;
-	//}
 
 #ifdef _DEBUG
 	MyAssertShutdown();

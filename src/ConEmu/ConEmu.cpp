@@ -5553,6 +5553,44 @@ BOOL CConEmuMain::Activate(CVirtualConsole* apVCon)
 	return lbRc;
 }
 
+void CConEmuMain::MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward)
+{
+	if (!apVCon)
+		apVCon = mp_VActive;
+
+	bool lbChanged = false;
+
+	for (size_t i = 0; i < countof(mp_VCon); i++)
+	{
+		if (mp_VCon[i] == apVCon)
+		{
+			if (bLeftward)
+			{
+				if (i > 0)
+				{
+					CVirtualConsole* p = mp_VCon[i-1];
+					mp_VCon[i-1] = mp_VCon[i];
+					mp_VCon[i] = p;
+					apVCon->RCon()->OnActivate(i-1, i);
+					lbChanged = true;
+				}
+			}
+			else
+			{
+				if ((i < (countof(mp_VCon))) && mp_VCon[i+1])
+				{
+					CVirtualConsole* p = mp_VCon[i+1];
+					mp_VCon[i+1] = mp_VCon[i];
+					mp_VCon[i] = p;
+					apVCon->RCon()->OnActivate(i+1, i);
+					lbChanged = true;
+				}
+			}
+			break;
+		}
+	}
+}
+
 CVirtualConsole* CConEmuMain::ActiveCon()
 {
 	return mp_VActive;
@@ -6489,11 +6527,18 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 					// -- При одновременном запуске двух копий - велики шансы, что они подерутся
 					// -- наверное вообще не будем показывать ошибку
 					// -- кроме того, isFirstInstance() не работает, если копия ConEmu.exe запущена под другим юзером
-					wchar_t szErr[255]; DWORD dwErr = GetLastError();
-					wchar_t szKey[128]; gpSet->GetHotkeyName(pHk, szKey);
+					wchar_t szErr[512], szKey[128], szName[128];
+					DWORD dwErr = GetLastError();
+
+					gpSet->GetHotkeyName(pHk, szKey);
+
+					if (!LoadString(g_hInstance, gRegisteredHotKeys[i].DescrID, szName, countof(szName)))
+						_wsprintf(szName, SKIPLEN(countof(szName)) L"DescrID=%i", gRegisteredHotKeys[i].DescrID);
+
 					_wsprintf(szErr, SKIPLEN(countof(szErr))
-						L"Can't register Minimize/Restore hotkey\n%s"
-						L"%s, ErrCode=%u", 
+						L"Can't register hotkey for\n%s\n%s"
+						L"%s, ErrCode=%u",
+						szName,
 						(dwErr == 1409) ? L"Hotkey already registered by another App\n" : L"",
 						szKey, dwErr);
 					Icon.ShowTrayIcon(szErr, tsa_Config_Error);

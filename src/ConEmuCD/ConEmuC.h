@@ -211,7 +211,7 @@ extern wchar_t gszDbgModLabel[6];
 #define EVENT_CONSOLE_END_APPLICATION   0x4007
 #endif
 
-#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
+//#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 
 //#undef USE_WINEVENT_SRV
 

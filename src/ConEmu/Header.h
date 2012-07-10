@@ -147,7 +147,7 @@ int MessageBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND hParen
 
 //#define INVALIDATE() InvalidateRect(HDCWND, NULL, FALSE)
 
-#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
+//#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 //#define SafeFree(p) { if ((p)!=NULL) { LPVOID pp = (p); (p) = NULL; free(pp); } }
 
 #ifdef MSGLOGGER

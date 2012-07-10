@@ -10,6 +10,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.10
+[+] Reorder tabs. Новые хоткеи. Win+Alt+Left/Win+Alt+Right сдвинуть таб (точнее все табы консоли) влево/вправо.
+[%] Issue 637: ConEmu recursively runs itself in an endless loop.
+[%] Ошибка при "Download path" = "C:\".
+[%] Changes in hooks.
+
+
 2012.07.09
 [*] Minimize/Restore учитывает флажок «Always on top».
 [*] Уточнение «Copy on LButton up».

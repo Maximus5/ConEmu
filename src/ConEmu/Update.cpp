@@ -988,11 +988,7 @@ wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, H
 	}
 	wchar_t* pszFilePart = szFile + nLen;
 
-	if (!MyCreateDirectory(szFile))
-	{
-		ReportError(L"CreateTempFile.asDir(%s) failed", asDir, 0);
-		return NULL;
-	}
+	wchar_t* pszDirectory = lstrdup(szFile);
 	
 	
 	LPCWSTR pszName = PointToName(asFileNameTempl);
@@ -1015,6 +1011,9 @@ wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, H
 	if (psz)
 		*psz = 0;
 	
+	wchar_t* pszResult = NULL;
+	DWORD dwErr = 0;
+
 	for (UINT i = 0; i < 9999; i++)
 	{
 		_wcscpy_c(pszFilePart, MAX_PATH, szName);
@@ -1023,6 +1022,21 @@ wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, H
 		_wcscat_c(pszFilePart, MAX_PATH, pszExt);
 		
 		hFile = CreateFile(szFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_TEMPORARY, NULL);
+		//ERROR_PATH_NOT_FOUND?
+		if (!hFile || (hFile == INVALID_HANDLE_VALUE))
+		{
+			dwErr = GetLastError();
+			// на первом обломе - попытаться создать директорию, может ее просто нет?
+			if ((dwErr == ERROR_PATH_NOT_FOUND) && (i == 0))
+			{
+				if (!MyCreateDirectory(pszDirectory))
+				{
+					ReportError(L"CreateTempFile.asDir(%s) failed", asDir, 0);
+					goto wrap;
+				}
+			}
+		}
+
 		if (hFile && hFile != INVALID_HANDLE_VALUE)
 		{
 			psz = lstrdup(szFile);
@@ -1031,13 +1045,16 @@ wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, H
 				CloseHandle(hFile); hFile = NULL;
 				ReportError(L"Can't allocate memory (%i bytes)", lstrlen(szFile));
 			}
-			return psz;
+			pszResult = psz;
+			goto wrap;
 		}
 	}
 	
-	ReportError(L"Can't create temp file(%s), code=%u", szFile, GetLastError());
+	ReportError(L"Can't create temp file(%s), code=%u", szFile, dwErr);
 	hFile = NULL;
-	return NULL;
+wrap:
+	SafeFree(pszDirectory);
+	return pszResult;
 }
 
 bool CConEmuUpdate::IsLocalFile(LPCWSTR& asPathOrUrl)

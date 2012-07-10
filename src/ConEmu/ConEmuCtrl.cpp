@@ -1179,6 +1179,26 @@ bool CConEmuCtrl::key_RenameTab(DWORD VkMod, bool TestOnly, const ConEmuHotKey* 
 	return true;
 }
 
+bool CConEmuCtrl::key_MoveTabLeft(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	gpConEmu->MoveActiveTab((pRCon ? pRCon->VCon() : NULL), true);
+
+	return true;
+}
+
+bool CConEmuCtrl::key_MoveTabRight(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	gpConEmu->MoveActiveTab((pRCon ? pRCon->VCon() : NULL), false);
+
+	return true;
+}
+
 bool CConEmuCtrl::key_ShowStatusBar(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)

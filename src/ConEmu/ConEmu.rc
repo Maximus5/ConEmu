@@ -678,10 +678,10 @@ BEGIN
     CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,102,10,8
     COMBOBOX        lbCTSActAlways,22,99,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,76,102,100,8
-    RTEXT           "Right:",IDC_STATIC,175,102,24,8
-    COMBOBOX        lbCTSRBtnAction,201,99,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Right:",IDC_STATIC,177,102,24,8
+    COMBOBOX        lbCTSRBtnAction,201,99,44,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Middle:",IDC_STATIC,245,102,28,8
-    COMBOBOX        lbCTSMBtnAction,275,99,42,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbCTSMBtnAction,273,99,44,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Never",rbCTSNever,"Button",BS_AUTORADIOBUTTON,90,13,35,8
     GROUPBOX        "Color indexes",IDC_STATIC,263,1,60,47
     LTEXT           "Select text in console:",IDC_STATIC,12,13,72,8
@@ -1060,7 +1060,7 @@ BEGIN
     CONTROL         "Add commands from history, too",cbCmdTaskbarCommands,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,215,123,8
     PUSHBUTTON      "Update Now!",cbCmdTaskbarUpdate,259,211,58,14
-    LTEXT           "Task parameters (/dir ""C:\\"" or /icon ""cmd.exe""):",stCmdGroupGuiArg,111,44,208,8
+    LTEXT           "Task parameters. Example: /dir ""C:\\"" /icon ""cmd.exe"" /single",stCmdGroupGuiArg,111,44,208,8
     EDITTEXT        tCmdGroupGuiArg,110,54,208,12,ES_AUTOHSCROLL
 END
 

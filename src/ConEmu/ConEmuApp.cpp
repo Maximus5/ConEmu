@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //	#define SHOW_STARTED_MSGBOX
-//  #define WAIT_STARTED_DEBUGGER
+//	#define WAIT_STARTED_DEBUGGER
 #endif
 
 #define DEBUGSTRMOVE(s) //DEBUGSTR(s)
@@ -111,7 +111,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
 #define WP1(s) case s: lstrcpyA(szWP, #s); break;
 #define WP2(s) case s: lstrcpyA(szWP, #s);
 
-	switch(m)
+	switch (m)
 	{
 			MSG1(WM_NOTIFY);
 			MSG1(WM_PAINT);
@@ -194,7 +194,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
 			MSG1(WM_CREATE);
 			MSG2(WM_SYSCOMMAND);
 			{
-				switch(w)
+				switch (w)
 				{
 						WP1(SC_MAXIMIZE_SECRET);
 						WP2(SC_RESTORE_SECRET);
@@ -1132,8 +1132,11 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 	int nInitLen = _tcslen(pszCmdLine);
 	cmdLine = lstrdup(pszCmdLine);
 	// Имя исполняемого файла (conemu.exe)
-	const wchar_t* pszExeName = wcsrchr(gpConEmu->ms_ConEmuExe, L'\\');
-	if (pszExeName) pszExeName++; else pszExeName = gpConEmu->ms_ConEmuExe;
+	const wchar_t* pszExeName = PointToName(gpConEmu->ms_ConEmuExe);
+	wchar_t* pszExeNameOnly = lstrdup(pszExeName);
+	wchar_t* pszDot = (wchar_t*)PointToExt(pszExeNameOnly);
+	_ASSERTE(pszDot);
+	if (pszDot) *pszDot = 0;
 
 	wchar_t *pszNext = NULL, *pszStart = NULL, chSave = 0;
 
@@ -1174,7 +1177,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 		if (pszFN) pszFN++; else pszFN = pszStart;
 
 		// Если первый параметр - наш conemu.exe или его путь - нужно его выбросить
-		if (!lstrcmpi(pszFN, pszExeName))
+		if (!lstrcmpi(pszFN, pszExeName) || !lstrcmpi(pszFN, pszExeNameOnly))
 		{
 			// Нужно отрезать
 			INT_PTR nCopy = (nInitLen - (pszNext - cmdLine)) * sizeof(wchar_t);
@@ -1215,7 +1218,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 		gpConEmu->mpsz_ConEmuArgs = lstrdup(cmdLine);
 
 		// Теперь проверяем наличие слеша
-		if (*pszStart != L'/')
+		if (*pszStart != L'/' && !wcschr(pszStart, L'/'))
 		{
 			params = (uint)-1;
 			cmdNew = cmdLine;
