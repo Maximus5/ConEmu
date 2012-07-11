@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "header.h"
 #include "Options.h"
 #include "ConEmu.h"
+#include "TabBar.h"
 #include "RealConsole.h"
 #include "VirtualConsole.h"
 #include "Status.h"
@@ -61,6 +62,9 @@ static struct StatusColInfo {
 	{csi_ActiveVCon,	L"StatusBar.Hide.VCon",
 						L"Active VCon",
 						L"ActiveCon/TotalCount, left click to change"},
+	{csi_NewVCon,		L"StatusBar.Hide.New",
+						L"Create new console",
+						L"Show create new console popup menu"},
 
 	{csi_SyncInside,	L"StatusBar.Hide.Sync",
 						L"Synchronize cur dir",
@@ -389,6 +393,11 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 				break;
 			} // csi_Info
 
+			case csi_NewVCon:
+				wcscpy_c(m_Items[nDrawCount].sText, L"[+]");
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"[+]");
+				break;
+
 			case csi_SyncInside:
 				wcscpy_c(m_Items[nDrawCount].sText, L"Sync");
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"Sync");
@@ -699,6 +708,8 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONDBLCLK:
 	case WM_MOUSEMOVE:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
 		{
 			RECT rcClient = {};
 			bool bFound = false;
@@ -749,6 +760,10 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 					if (uMsg == WM_LBUTTONDOWN)
 						ShowVConMenu(MakePoint(rcClient.left, rcClient.top));
 					break;
+				case csi_NewVCon:
+					if (uMsg == WM_LBUTTONDOWN)
+						gpConEmu->mp_TabBar->OnNewConPopup((POINT*)&rcClient, TPM_LEFTALIGN|TPM_BOTTOMALIGN);
+					break;
 				case csi_Transparency:
 					if (uMsg == WM_LBUTTONDOWN)
 						ShowTransparencyMenu(MakePoint(rcClient.right, rcClient.top));
@@ -770,6 +785,28 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 					break;
 				}
 			}
+			else if (uMsg == WM_RBUTTONUP)
+			{
+				MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcClient, 2);
+
+				switch (m_ClickedItemDesc)
+				{
+				case csi_ActiveVCon:
+				case csi_NewVCon:
+					//gpConEmu->mp_TabBar->OnNewConPopup((POINT*)&rcClient, TPM_LEFTALIGN|TPM_BOTTOMALIGN);
+					{
+						CVirtualConsole* pVCon = gpConEmu->ActiveCon();
+						CVConGuard guard(pVCon);
+						if (pVCon)
+						{
+							guard->ShowPopupMenu(MakePoint(rcClient.left,rcClient.top), TPM_LEFTALIGN|TPM_BOTTOMALIGN);
+						}
+					}
+					break;
+				default:
+					ShowStatusSetupMenu();
+				}
+			}
 		}
 		break; // WM_LBUTTONDOWN
 
@@ -787,9 +824,6 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	//	}
 	//	break;
 
-	case WM_RBUTTONUP:
-		ShowStatusSetupMenu();
-		break;
 	}
 
 	// Значит курсор над статусом

@@ -10,6 +10,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[*] Far Manager. Не включать длинный буфер при поиске в архивах через MultiArc.
+[+] StatusBar. Добавлена колонка "[+]" - меню создания новой консоли. Правый клик на "[+]" и на "ActiveCon/TotalCon" отображает меню активного таба.
+[%] DblClick по иконке в заголовке ConEmu не закрывал окно.
+
+
 2012.07.10
 [+] Reorder tabs. Новые хоткеи. Win+Alt+Left/Win+Alt+Right сдвинуть таб (точнее все табы консоли) влево/вправо.
 [%] Issue 637: ConEmu recursively runs itself in an endless loop.

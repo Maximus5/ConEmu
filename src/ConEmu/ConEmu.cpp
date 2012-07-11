@@ -53,7 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "GestureEngine.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
-#include "tabbar.h"
+#include "TabBar.h"
 #include "ConEmuPipe.h"
 #include "version.h"
 #include "Macro.h"
@@ -165,7 +165,7 @@ CConEmuMain::CConEmuMain()
 	mn_QuakePercent = 0; // 0 - отключен
 	DisableAutoUpdate = false;
 	DisableKeybHooks = false;
-	mn_SysMenuOpenTick = 0;
+	mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	m_InsideIntegration = ii_None; mb_InsideIntegrationShift = false; mn_InsideParentPID = 0;
 	mb_InsideSynchronizeCurDir = true;
 	mh_InsideParentRoot = mh_InsideParentWND = mh_InsideParentRel = NULL;
@@ -1450,6 +1450,30 @@ BOOL CConEmuMain::EnumInsideFindParent(HWND hwnd, LPARAM lParam)
 	return TRUE;
 }
 
+HWND  CConEmuMain::InsideFindConEmu(HWND hFrom)
+{
+	wchar_t szClass[128];
+	HWND hChild = NULL, hNext = NULL;
+	HWND hXpView = NULL, hXpPlace = NULL;
+
+	while ((hChild = FindWindowEx(hFrom, hChild, NULL, NULL)) != NULL)
+	{
+		GetClassName(hChild, szClass, countof(szClass));
+		if (lstrcmp(szClass, gsClassNameParent) == 0)
+		{
+			return hChild;
+		}
+
+		hNext = InsideFindConEmu(hChild);
+		if (hNext)
+		{
+			return hNext;
+		}
+	}
+
+	return NULL;
+}
+
 bool CConEmuMain::InsideFindShellView(HWND hFrom)
 {
 	wchar_t szClass[128];
@@ -1644,6 +1668,21 @@ HWND CConEmuMain::InsideFindParent()
 		mh_InsideParentWND = NULL;
 		goto wrap;
 	}
+
+
+    HWND hExistConEmu;
+    if ((hExistConEmu = InsideFindConEmu(mh_InsideParentRoot)) != NULL)
+    {
+    	_ASSERTE(FALSE && "Continue to create tab in existing instance");
+    	// Если в проводнике уже есть ConEmu - открыть в нем новую вкладку
+    	gpSetCls->SingleInstanceShowHide = sih_None;
+    	LPCWSTR pszCmdLine = GetCommandLine();
+    	LPCWSTR pszCmd = StrStrI(pszCmdLine, L" /cmd ");
+    	RunSingleInstance(hExistConEmu, pszCmd ? (pszCmd + 6) : NULL);
+
+		mh_InsideParentWND = (HWND)-1;
+		return mh_InsideParentWND; // Закрыться!
+    }
 
 	// Теперь нужно найти дочерние окна
 	// 1. в которое будем внедряться
@@ -6989,14 +7028,14 @@ int CConEmuMain::RecreateDlg(RConStartArgs* apArg)
 
 
 
-BOOL CConEmuMain::RunSingleInstance()
+BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd /*= NULL*/)
 {
 	BOOL lbAccepted = FALSE;
-	LPCWSTR lpszCmd = gpSet->GetCmd();
+	LPCWSTR lpszCmd = apszCmd ? apszCmd : gpSet->GetCmd();
 
 	if ((lpszCmd && *lpszCmd) || (gpSetCls->SingleInstanceShowHide != sih_None))
 	{
-		HWND ConEmuHwnd = FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
+		HWND ConEmuHwnd = hConEmuWnd ? hConEmuWnd : FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
 
 		if (ConEmuHwnd)
 		{
@@ -7325,10 +7364,33 @@ void CConEmuMain::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
 	SetActiveWindow(ghWnd);
 	//mb_InTrackSysMenu = TRUE;
 	mn_SysMenuOpenTick = GetTickCount();
+	POINT ptCurBefore = {}; GetCursorPos(&ptCurBefore);
+
 	int command = trackPopupMenu(tmp_System, systemMenu,
 		 TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | (bAlignUp ? TPM_BOTTOMALIGN : 0),
 		 x, y, 0, ghWnd, NULL);
 	//mb_InTrackSysMenu = FALSE;
+	if (command == 0)
+	{
+		mn_SysMenuCloseTick = GetTickCount();
+
+		if ((mn_SysMenuCloseTick - gpConEmu->mn_SysMenuOpenTick) < GetDoubleClickTime())
+		{
+			POINT ptCur = {}; GetCursorPos(&ptCur);
+			if (PtDiffTest(ptCur, ptCurBefore.x, ptCurBefore.y, 8))
+			{
+				LRESULT lHitTest = SendMessage(ghWnd, WM_NCHITTEST, 0, MAKELONG(ptCur.x,ptCur.y));
+				if (lHitTest == HTSYSMENU)
+				{
+					command = SC_CLOSE;
+				}
+			}
+		}
+	}
+	else
+	{
+		mn_SysMenuCloseTick = 0;
+	}
 
 	if (Icon.isWindowInTray())
 	{

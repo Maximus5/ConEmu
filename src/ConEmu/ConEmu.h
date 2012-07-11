@@ -183,6 +183,7 @@ class CConEmuMain :
 		RECT  mrc_InsideParent, mrc_InsideParentRel; // для сравнения, чтоб знать, что подвинуться нада
 		wchar_t ms_InsideParentPath[MAX_PATH+1];
 		static BOOL CALLBACK EnumInsideFindParent(HWND hwnd, LPARAM lParam);
+		HWND  InsideFindConEmu(HWND hFrom);
 		bool  InsideFindShellView(HWND hFrom);
 		void  InsideParentMonitor();
 		void  InsideUpdateDir();
@@ -294,6 +295,7 @@ class CConEmuMain :
 		HCURSOR mh_DragCursor;
 		CDragDrop *mp_DragDrop;
 		BOOL mb_SkipOnFocus;
+		DWORD mn_SysMenuOpenTick, mn_SysMenuCloseTick;
 	protected:
 		friend class CGuiServer;
 		CGuiServer m_GuiServer;
@@ -301,7 +303,6 @@ class CConEmuMain :
 		//CProgressBars *ProgressBars;
 		HMENU mh_DebugPopup, mh_EditPopup, mh_ActiveVConPopup, mh_TerminateVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu
 		HMENU mh_InsideSysMenu;
-		DWORD mn_SysMenuOpenTick;
 		TCHAR Title[MAX_TITLE_SIZE+192]; //, TitleCmp[MAX_TITLE_SIZE+192]; //, MultiTitle[MAX_TITLE_SIZE+30];
 		TCHAR TitleTemplate[128];
 		short mn_Progress;
@@ -574,7 +575,7 @@ class CConEmuMain :
 		void RequestExitUpdate();
 		void ReSize(BOOL abCorrect2Ideal = FALSE);
 		//void ResizeChildren();
-		BOOL RunSingleInstance();
+		BOOL RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);
 		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
 		void SetConsoleWindowSize(const COORD& size, bool updateInfo, CVirtualConsole* apVCon);
 		void SetDragCursor(HCURSOR hCur);

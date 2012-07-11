@@ -2678,6 +2678,7 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 {
 	HMENU hPopup = CreatePopupMenu();
 	LPCWSTR pszCurCmd = NULL;
+	bool lbReverse = (nFlags & TPM_BOTTOMALIGN) == TPM_BOTTOMALIGN;
 
 	if (gpConEmu->ActiveCon() && gpConEmu->ActiveCon()->RCon())
 		pszCurCmd = gpConEmu->ActiveCon()->RCon()->GetCmd();
@@ -2720,7 +2721,7 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 			m_CmdPopupMenu[nLastID].szShort[nMaxShort-1] = 0;
 		}
 
-		AppendMenu(hPopup, MF_STRING | MF_ENABLED, m_CmdPopupMenu[nLastID].nCmd, m_CmdPopupMenu[nLastID].szShort);
+		InsertMenu(hPopup, lbReverse ? 0 : -1, MF_BYPOSITION | MF_STRING | MF_ENABLED, m_CmdPopupMenu[nLastID].nCmd, m_CmdPopupMenu[nLastID].szShort);
 		nLastID++; nGroup++;
 		nLastGroupID = nLastID;
 		if (!nFirstGroupID)
@@ -2728,7 +2729,7 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 	}
 
 	nSetupID = ++nLastID;
-	AppendMenu(hPopup, MF_STRING | MF_ENABLED, nSetupID, L"Setup tasks...");
+	InsertMenu(hPopup, lbReverse ? 0 : -1, MF_BYPOSITION | MF_STRING | MF_ENABLED, nSetupID, L"Setup tasks...");
 
 	nFirstID = nLastID+1;
 
@@ -2759,10 +2760,10 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 				if (!bSeparator)
 				{
 					bSeparator = true;
-					AppendMenu(hPopup, MF_SEPARATOR, -1, NULL);
+					InsertMenu(hPopup, lbReverse ? 0 : -1, MF_BYPOSITION | MF_SEPARATOR, -1, NULL);
 				}
 
-				AppendMenu(hPopup, MF_STRING | MF_ENABLED, m_CmdPopupMenu[nLastID].nCmd, m_CmdPopupMenu[nLastID].szShort);
+				InsertMenu(hPopup, lbReverse ? 0 : -1, MF_BYPOSITION | MF_STRING | MF_ENABLED, m_CmdPopupMenu[nLastID].nCmd, m_CmdPopupMenu[nLastID].szShort);
 				nLastID++; nCount++;
 			}
 
@@ -2786,11 +2787,11 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 		{
 			_wcscpyn_c(m_CmdPopupMenu[nLastID].szShort, nMaxShort, pszCurCmd, nMaxShort);
 		}
-		InsertMenu(hPopup, 0, MF_BYPOSITION|MF_ENABLED|MF_STRING, m_CmdPopupMenu[nLastID].nCmd, m_CmdPopupMenu[nLastID].szShort);
+		InsertMenu(hPopup, lbReverse ? -1 : 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
+		InsertMenu(hPopup, lbReverse ? -1 : 0, MF_BYPOSITION|MF_ENABLED|MF_STRING, m_CmdPopupMenu[nLastID].nCmd, m_CmdPopupMenu[nLastID].szShort);
 		nLastID++;
 		nCreateID = ++nLastID;
-		InsertMenu(hPopup, 0, MF_BYPOSITION|MF_ENABLED|MF_STRING, nCreateID, L"New console dialog...");
-		InsertMenu(hPopup, 2, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
+		InsertMenu(hPopup, lbReverse ? -1 : 0, MF_BYPOSITION|MF_ENABLED|MF_STRING, nCreateID, L"New console dialog...");
 	}
 
 	RECT rcBtnRect = {0};
@@ -2798,7 +2799,7 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 
 	if (ptWhere)
 	{
-		rcBtnRect.left = ptWhere->x;
+		rcBtnRect.right = ptWhere->x;
 		rcBtnRect.bottom = ptWhere->y;
 		if (nFlags)
 			nAlign = nFlags;

@@ -33,6 +33,7 @@ enum CEStatusItems
 	csi_Info = 0,
 
 	csi_ActiveVCon,
+	csi_NewVCon,
 
 	csi_SyncInside,
 

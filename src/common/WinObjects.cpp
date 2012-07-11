@@ -1252,7 +1252,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 	_ASSERTE(asCmdLine && *asCmdLine);
 	rbRootIsCmdExe = TRUE;
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	// Ёто минимальные проверки, собственно к коду - не относ€тс€
 	wchar_t szDbgFirst[MAX_PATH+1];
 	bool bIsBatch = false;
@@ -1263,7 +1263,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 		if (lstrcmpi(psz, L".cmd")==0 || lstrcmpi(psz, L".bat")==0)
 			bIsBatch = true;
 	}
-#endif
+	#endif
 
 	memset(szExe, 0, sizeof(szExe));
 
@@ -1548,12 +1548,29 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQ
 	}
 
 
-	if (lstrcmpiW(pwszCopy, L"far")==0 || lstrcmpiW(pwszCopy, L"far.exe")==0)
+	//if (lstrcmpiW(pwszCopy, L"far")==0 || lstrcmpiW(pwszCopy, L"far.exe")==0)
+	if (IsFarExe(pwszCopy))
 	{
-		rbAutoDisableConfirmExit = TRUE;
-		rbRootIsCmdExe = FALSE; // FAR!
-		_ASSERTE(!bIsBatch);
-		return FALSE; // уже указан командный процессор, cmd.exe в начало добавл€ть не нужно
+		bool bFound = (wcschr(pwszCopy, L'.') != NULL);
+		// ≈сли указали при запуске просто "far" - это может быть батник, расположенный в %PATH%
+		if (!bFound)
+		{
+			wchar_t szSearch[MAX_PATH+1], *pszPart = NULL;
+			DWORD n = SearchPath(NULL, pwszCopy, L".exe", countof(szSearch), szSearch, &pszPart);
+			if (n && (n < countof(szSearch)))
+			{
+				if (lstrcmpi(PointToExt(pszPart), L".exe") == 0)
+					bFound = true;
+			}
+		}
+
+		if (bFound)
+		{
+			rbAutoDisableConfirmExit = TRUE;
+			rbRootIsCmdExe = FALSE; // FAR!
+			_ASSERTE(!bIsBatch);
+			return FALSE; // уже указан исполн€емый файл, cmd.exe в начало добавл€ть не нужно
+		}
 	}
 
 	if (IsExecutable(szExe))
@@ -2711,31 +2728,38 @@ bool MSection::MyEnterCriticalSection(DWORD anTimeout)
 
 				if (mh_ExclusiveThread)
 				{
-					nExclWait = WaitForSingleObject(mh_ExclusiveThread, 0);
+					HANDLE h = mh_ExclusiveThread;
+					nExclWait = WaitForSingleObject(h, 0);
 					if (nExclWait != WAIT_TIMEOUT)
 					{
 						// ¬се, m_cs протух. ≈го нужно пересоздать
 
 						Process_Lock();
 
-						_ASSERTEX(FALSE && "Exclusively locked thread was abnormally terminated?");
-
-						SafeCloseHandle(mh_ExclusiveThread);
-						CRITICAL_SECTION csNew, csOld;
-						InitializeCriticalSection(&csNew);
-						csOld = m_cs;
-						DeleteCriticalSection(&csOld);
-						lbLocked = TryEnterCriticalSection(&csNew);
-						m_cs = csNew;
-
-						_ASSERTEX(mn_LockedTID[0] = mn_TID);
-						mn_LockedTID[0] = 0;
-						if (mn_LockedCount[0] > 0)
+						// ѕервым выполнить Process_Lock мог другой поток.
+						// Ќужно проверить хэндл на соответствие, если он другой
+						// то на этом шаге уже не дергатьс€
+						if (h == mh_ExclusiveThread)
 						{
-							mn_LockedCount[0] --; // на [0] mn_Locked не распростран€етс€
-						}
+							_ASSERTEX(FALSE && "Exclusively locked thread was abnormally terminated?");
 
-						mn_TID = nCurTID;
+							SafeCloseHandle(mh_ExclusiveThread);
+							CRITICAL_SECTION csNew, csOld;
+							InitializeCriticalSection(&csNew);
+							csOld = m_cs;
+							DeleteCriticalSection(&csOld);
+							lbLocked = TryEnterCriticalSection(&csNew);
+							m_cs = csNew;
+
+							_ASSERTEX(mn_LockedTID[0] = mn_TID);
+							mn_LockedTID[0] = 0;
+							if (mn_LockedCount[0] > 0)
+							{
+								mn_LockedCount[0] --; // на [0] mn_Locked не распростран€етс€
+							}
+
+							mn_TID = nCurTID;
+						}
 
 						Process_Unlock();
 					}
@@ -3026,7 +3050,9 @@ void MSectionLock::Unlock()
 
 		#ifdef _DEBUG
 		if (*szDbg)
+		{
 			DebugString(szDbg);
+		}
 		#endif
 	}
 };
