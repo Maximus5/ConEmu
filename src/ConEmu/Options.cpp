@@ -3887,6 +3887,11 @@ bool Settings::isHideCaptionAlways()
 	return mb_HideCaptionAlways || (!mb_HideCaptionAlways && isUserScreenTransparent) || isQuakeStyle;
 }
 
+bool Settings::isForcedHideCaptionAlways()
+{
+	return (isUserScreenTransparent || isQuakeStyle);
+}
+
 int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)
 {
 	if (!asExeAppName || !*asExeAppName || !Apps || (AppCount < 1))

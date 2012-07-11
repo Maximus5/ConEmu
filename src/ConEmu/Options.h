@@ -702,6 +702,7 @@ struct Settings
 		bool mb_HideCaptionAlways;
 		public:
 		bool isHideCaptionAlways(); //<<mb_HideCaptionAlways
+		bool isForcedHideCaptionAlways(); // true, если mb_HideCaptionAlways отключать нельзя
 		//reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
 		BYTE nHideCaptionAlwaysFrame;
 		//reg->Load(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);

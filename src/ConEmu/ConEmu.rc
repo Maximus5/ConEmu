@@ -766,7 +766,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "",IDC_STATIC,4,1,319,209
+    GROUPBOX        "",IDC_STATIC,4,1,319,218
     RTEXT           "Name:",IDC_STATIC,14,24,25,8
     COMBOBOX        tStatusFontFace,44,22,115,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     CTEXT           "x",IDC_STATIC,164,24,8,8
@@ -774,10 +774,10 @@ BEGIN
     RTEXT           "Charset:",IDC_STATIC,209,24,36,8
     COMBOBOX        tStatusFontCharset,250,22,60,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Show status bar",cbShowStatusBar,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,1,75,8
-    CONTROL         "Active console / total count",cbStatusActiveVCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,77,123,8
-    CONTROL         "ConEmu window position",cbStatusWindowPos,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,89,123,8
-    CONTROL         "ConEmu window size",cbStatusWindowSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,101,123,8
-    CONTROL         "Active console buffer",cbStatusActiveBuffer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,137,123,8
+    CONTROL         "Active console / Total count",cbStatusActiveVCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,77,123,8
+    CONTROL         "ConEmu window position",cbStatusWindowPos,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,101,123,8
+    CONTROL         "ConEmu window size",cbStatusWindowSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,113,123,8
+    CONTROL         "Active console buffer",cbStatusActiveBuffer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,149,123,8
     CONTROL         "Console visible rectangle",cbStatusConsolePos,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,101,123,8
     CONTROL         "Console visible size",cbStatusConsoleSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,113,123,8
     CONTROL         "Console buffer size",cbStatusBufferSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,125,123,8
@@ -786,7 +786,7 @@ BEGIN
     CONTROL         "Console cursor size / visibility",cbStatusCursorSize,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,161,123,8
     CONTROL         "Console cursor information",cbStatusCursorInfo,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,173,123,8
-    CONTROL         "Console server PID",cbStatusServer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,173,123,8
+    CONTROL         "Console server PID",cbStatusServer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,185,123,8
     RTEXT           "Back:",IDC_STATIC,17,41,22,8
     LTEXT           "",c35,92,40,12,12,SS_NOTIFY | SS_SUNKEN
     EDITTEXT        tc35,44,40,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
@@ -797,19 +797,20 @@ BEGIN
     LTEXT           "",c37,298,40,12,12,SS_NOTIFY | SS_SUNKEN
     EDITTEXT        tc37,250,40,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
     GROUPBOX        "Font and color",IDC_STATIC,9,12,307,46
-    GROUPBOX        "Enabled columns",IDC_STATIC,9,63,307,139
-    CONTROL         "ConEmu window client area",cbStatusWindowClient,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,113,123,8
-    CONTROL         "ConEmu window work area",cbStatusWindowWorkspace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,125,123,8
+    GROUPBOX        "Enabled columns",IDC_STATIC,9,63,307,150
+    CONTROL         "ConEmu window client area",cbStatusWindowClient,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,125,123,8
+    CONTROL         "ConEmu window work area",cbStatusWindowWorkspace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,137,123,8
     CONTROL         "Caps",cbStatusCapsLock,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,77,31,8
     CONTROL         "Transparency",cbStatusTransparency,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,185,123,8
     CONTROL         "Num",cbStatusNumLock,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,185,77,29,8
     CONTROL         "Scroll",cbStatusScrlLock,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,217,77,34,8
     CONTROL         "Current input locale identifier",cbStatusInputLang,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,89,123,8
-    CONTROL         "ConEmu GUI PID",cbStatusGuiPID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,149,123,8
-    CONTROL         "GUI HWND",cbStatusGuiHwnd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,161,49,8
-    CONTROL         "View HWND",cbStatusViewHwnd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,76,161,53,8
-    CONTROL         "Real console HWND",cbStatusRealHwnd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,185,79,8
+    CONTROL         "ConEmu GUI PID",cbStatusGuiPID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,161,123,8
+    CONTROL         "GUI HWND",cbStatusGuiHwnd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,173,49,8
+    CONTROL         "View HWND",cbStatusViewHwnd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,76,173,53,8
+    CONTROL         "Real console HWND",cbStatusRealHwnd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,197,79,8
+    CONTROL         "Create new console popup menu",cbStatusNewVCon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,89,123,8
 END
 
 IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319

@@ -173,7 +173,7 @@ namespace SettingsNS
 	};
 	const struct StatusBarIds { CEStatusItems stItem; UINT nDlgID; } StatusItems[] = 
 	{
-		{csi_ActiveVCon, cbStatusActiveVCon}, {csi_CapsLock, cbStatusCapsLock}, {csi_NumLock, cbStatusNumLock},
+		{csi_ActiveVCon, cbStatusActiveVCon}, {csi_NewVCon, cbStatusNewVCon}, {csi_CapsLock, cbStatusCapsLock}, {csi_NumLock, cbStatusNumLock},
 		{csi_ScrollLock, cbStatusScrlLock}, {csi_InputLocale, cbStatusInputLang}, {csi_WindowPos, cbStatusWindowPos},
 		{csi_WindowSize, cbStatusWindowSize}, {csi_WindowClient, cbStatusWindowClient}, {csi_WindowWork, cbStatusWindowWorkspace},
 		{csi_ActiveBuffer, cbStatusActiveBuffer}, {csi_ConsolePos, cbStatusConsolePos}, {csi_ConsoleSize, cbStatusConsoleSize},
@@ -1784,6 +1784,7 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	CheckDlgButton(hWnd2, cbHideCaption, gpSet->isHideCaption);
 
 	CheckDlgButton(hWnd2, cbHideCaptionAlways, gpSet->isHideCaptionAlways());
+	EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->nHideCaptionAlwaysFrame, FALSE);
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
@@ -3743,8 +3744,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				if (gpSet->isHideCaptionAlways())
 				{
 					CheckDlgButton(hWnd2, cbHideCaptionAlways, BST_CHECKED);
-					TODO("показать тултип, что скрытие обязательно при прозрачности");
 				}
+				EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 
 				if (gpSet->isQuakeStyle)
 				{
@@ -3794,8 +3795,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			if (gpSet->isHideCaptionAlways())
 			{
 				CheckDlgButton(hWnd2, cbHideCaptionAlways, BST_CHECKED);
-				TODO("показать тултип, что скрытие обязательно при прозрачности");
+				//TODO("показать тултип, что скрытие обязательно при прозрачности");
 			}
+			EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 
 			gpConEmu->OnHideCaption();
 			apiSetForegroundWindow(ghOpWnd);
@@ -4482,6 +4484,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				gpSet->isUserScreenTransparent = IsChecked(hWnd2, cbUserScreenTransparent);
 
 				if (hWnd2) CheckDlgButton(hWnd2, cbHideCaptionAlways, gpSet->isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
+				EnableWindow(GetDlgItem(hWnd2, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 
 				gpConEmu->OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
 				gpConEmu->UpdateWindowRgn();
