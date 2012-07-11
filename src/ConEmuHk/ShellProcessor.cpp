@@ -109,6 +109,7 @@ void TestShellProcessor()
 int gnInShellExecuteEx = 0;
 
 extern struct HookModeFar gFarMode;
+extern DWORD  gnHookMainThreadId;
 
 CShellProc::CShellProc()
 {
@@ -1176,6 +1177,7 @@ BOOL CShellProc::PrepareExecuteParms(
 	HANDLE hIn  = lphStdIn  ? *lphStdIn  : NULL;
 	HANDLE hOut = lphStdOut ? *lphStdOut : NULL;
 	HANDLE hErr = lphStdErr ? *lphStdErr : NULL;
+	BOOL bLongConsoleOutput = gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput;
 	
 	bool bNewConsoleArg = false, bForceNewConsole = false, bCurConsoleArg = false;
 	// Service object
@@ -1487,10 +1489,18 @@ BOOL CShellProc::PrepareExecuteParms(
 		goto wrap;
 	}
 
+	if (bLongConsoleOutput)
+	{
+		// MultiArc issue. При поиске нефиг включать длинный буфер. Как отсечь?
+		// Пока по запуску не из главного потока.
+		if (GetCurrentThreadId() != gnHookMainThreadId)
+			bLongConsoleOutput = FALSE;
+	}
+
 	_ASSERTE(mn_ImageBits!=0);
 	// Если это Фар - однозначно вставляем ConEmuC.exe
 	// -- bFarHookMode заменен на bLongConsoleOutput --
-	if ((gFarMode.bLongConsoleOutput)
+	if ((bLongConsoleOutput)
 		|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хотят GUI прицепить к новуй вкладке в ConEmu, или новую консоль из GUI
 		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
 		|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
