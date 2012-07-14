@@ -26,6 +26,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define SHOWDEBUGSTR
+
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include "ConEmu.h"
@@ -36,6 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TabBar.h"
 #include "VirtualConsole.h"
 #include "ScreenDump.h"
+
+#define DEBUGSTRAPPS(s) DEBUGSTR(s)
 
 
 const ConEmuHotKey* ConEmuSkipHotKey = ((ConEmuHotKey*)INVALID_HANDLE_VALUE);
@@ -86,7 +90,7 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, con
 
 			pHotKey->fkey(VkState, false, pHotKey, pRCon);
 
-			if (bApps)
+			if (bApps && !isPressed(VK_APPS))
 				gpConEmu->SkipOneAppsRelease(false);
 		}
 		else
@@ -1471,10 +1475,12 @@ void CConEmuCtrl::SkipOneAppsRelease(bool abSkip)
 			mb_SkipOneAppsRelease = true;
 			if (!mh_SkipOneAppsRelease)
 				mh_SkipOneAppsRelease = SetWindowsHookEx(WH_GETMESSAGE, SkipOneAppsReleaseHook, NULL, GetCurrentThreadId());
+			DEBUGSTRAPPS(mh_SkipOneAppsRelease ? L"CConEmuCtrl::SkipOneAppsRelease set was succeeded\n" : L"CConEmuCtrl::SkipOneAppsRelease FAILED\n");
 		}
 		else
 		{
 			abSkip = false;
+			DEBUGSTRAPPS(L"CConEmuCtrl::SkipOneAppsRelease ignored, VK_APPS not pressed\n");
 		}
 	}
 
@@ -1485,6 +1491,7 @@ void CConEmuCtrl::SkipOneAppsRelease(bool abSkip)
 			UnhookWindowsHookEx(mh_SkipOneAppsRelease);
 			mh_SkipOneAppsRelease = NULL;
 			mb_SkipOneAppsRelease = false;
+			DEBUGSTRAPPS(L"CConEmuCtrl::SkipOneAppsRelease was unhooked\n");
 		}
 	}
 }
@@ -1499,10 +1506,20 @@ LRESULT CConEmuCtrl::SkipOneAppsReleaseHook(int code, WPARAM wParam, LPARAM lPar
 
 			if (pMsg->message == WM_CONTEXTMENU)
 			{
+				DEBUGSTRAPPS(L"SkipOneAppsReleaseHook: WM_CONTEXTMENU was received and blocked\n");
 				pMsg->message = WM_NULL;
 				mb_SkipOneAppsRelease = false;
 				return FALSE; // Skip one Apps
 			}
+			#ifdef _DEBUG
+			else if (pMsg->message == WM_KEYUP)
+			{
+				if (pMsg->wParam == VK_APPS)
+				{
+					DEBUGSTRAPPS(L"SkipOneAppsReleaseHook: WM_KEYUP(VK_APPS) received\n");
+				}
+			}
+			#endif
 		}
 	}
 

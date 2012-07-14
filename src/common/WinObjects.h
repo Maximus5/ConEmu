@@ -60,6 +60,9 @@ typedef BOOL (WINAPI* IsWindow_t)(HWND hWnd);
 extern IsWindow_t Is_Window;
 BOOL isWindow(HWND hWnd);
 
+typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
+
+
 // Some WinAPI related functions
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 BOOL FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);

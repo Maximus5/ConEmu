@@ -878,16 +878,24 @@ RECT CConEmuMain::GetDefaultRect()
 		}
 		else
 		{
-			GetWindowRect(mh_InsideParentRel, &rcRelative);
-			MapWindowPoints(NULL, mh_InsideParentWND, (LPPOINT)&rcRelative, 2);
+			RECT rcChild = {};
+			GetWindowRect(mh_InsideParentRel, &rcChild);
+			MapWindowPoints(NULL, mh_InsideParentWND, (LPPOINT)&rcChild, 2);
 			mrc_InsideParent = rcParent;
-			mrc_InsideParentRel = rcRelative;
+			mrc_InsideParentRel = rcChild;
+			IntersectRect(&rcRelative, &rcParent, &rcChild);
+
+			// WinXP & Win2k3
+			if (gnOsVer < 0x600)
+			{
+				rcWnd = rcRelative;
+			}
 			// Windows 7
-			if ((rcParent.bottom - rcRelative.bottom) >= 100)
+			else if ((rcParent.bottom - rcRelative.bottom) >= 100)
 			{
 				// Предпочтительно
 				// Далее - ветвимся по OS
-				if (gnOsVer <= 0x501)
+				if (gnOsVer < 0x600)
 				{
 					rcWnd = MakeRect(rcRelative.left, rcRelative.bottom + 4, rcParent.right, rcParent.bottom);
 				}
@@ -1509,23 +1517,19 @@ bool CConEmuMain::InsideFindShellView(HWND hFrom)
 					return true;
 				}
 			}
-			else if ((gnOsVer <= 0x501) && (lstrcmp(szParent, L"ExploreWClass") == 0))
+			else if ((gnOsVer < 0x600) && (lstrcmp(szParent, L"ExploreWClass") == 0))
 			{
 				_ASSERTE(mh_InsideParentRoot == hFrom);
 				hXpView = hChild;
-				_ASSERTE(FALSE && "WinXP check need");
-				//mh_InsideParentWND = hFrom;
-				//mh_InsideParentRel = hChild;
-				//m_InsideIntegration = ii_Explorer;
-				//return true;
 			}
 		}
-		else if ((gnOsVer <= 0x501) && (lstrcmp(szClass, L"BaseBar") == 0))
+		else if ((gnOsVer < 0x600) && (lstrcmp(szClass, L"BaseBar") == 0))
 		{
 			RECT rcBar = {}; GetWindowRect(hChild, &rcBar);
 			MapWindowPoints(NULL, hFrom, (LPPOINT)&rcBar, 2);
 			RECT rcParent = {}; GetClientRect(hFrom, &rcParent);
-			if ((rcBar.right - rcParent.right) <= 10)
+			if ((-10 <= (rcBar.right - rcParent.right))
+				&& ((rcBar.right - rcParent.right) <= 10))
 			{
 				// Нас интересует область, прилепленная к правому-нижнему углу
 				hXpPlace = hChild;
@@ -1566,10 +1570,15 @@ bool CConEmuMain::InsideFindShellView(HWND hFrom)
 
 		if (hXpView && hXpPlace)
 		{
+			mh_InsideParentRel = FindWindowEx(hXpPlace, NULL, L"ReBarWindow32", NULL);
+			if (!mh_InsideParentRel)
+			{
+				_ASSERTE(mh_InsideParentRel && L"ReBar must be found on XP & 2k3");
+				return true; // закончить поиск
+			}
 			mh_InsideParentWND = hXpPlace;
-			mh_InsideParentRel = NULL;
 			mh_InsideParentPath = mh_InsideParentRoot;
-			m_InsideIntegration = ii_Simple;
+			m_InsideIntegration = ii_Explorer;
 			return true;
 		}
 	}
@@ -1579,9 +1588,7 @@ bool CConEmuMain::InsideFindShellView(HWND hFrom)
 
 HWND CConEmuMain::InsideFindParent()
 {
-	//bool  m_InsideIntegration;
-	//DWORD mn_InsideParentPID;
-	//HWND  mh_InsideParentWND;
+	bool bFirstStep = true;
 
 	if (!m_InsideIntegration)
 	{
@@ -1690,10 +1697,49 @@ HWND CConEmuMain::InsideFindParent()
 	// 3. для синхронизации текущего пути
 	InsideFindShellView(mh_InsideParentRoot);
 
+RepeatCheck:
 	if (!mh_InsideParentWND || (!mh_InsideParentRel && (m_InsideIntegration == ii_Explorer)))
 	{
+		int nBtn = IDCANCEL;
+		wchar_t szAddMsg[128] = L"", szMsg[1024];
+		if (bFirstStep)
+		{
+			bFirstStep = false;
+			if (gnOsVer < 0x600)
+			{
+				// WinXP, Win2k3
+				nBtn = MessageBox(L"Tip pane is not found in Explorer window!\nThis pane is required for 'ConEmu Inside' mode.\nDo you want to show this pane?", MB_ICONQUESTION|MB_YESNO);
+				if (nBtn == IDYES)
+				{
+					DWORD_PTR nRc;
+					SendMessageTimeout(mh_InsideParentRoot, WM_COMMAND, 41536, 0, SMTO_NOTIMEOUTIFNOTHUNG, 2500, &nRc);
+					// Подготовим сообщение если не удастся
+					wcscpy_c(szAddMsg, L"Forcing Explorer to show Tip pane failed.\nShow pane yourself and recall ConEmu.\n\n");
+				}
+			}
+
+			if (nBtn == IDYES)
+			{
+				// Первая проверка
+				mh_InsideParentWND = mh_InsideParentRel = NULL;
+				m_InsideIntegration = ii_Auto;
+				InsideFindShellView(mh_InsideParentRoot);
+				if (mh_InsideParentWND && mh_InsideParentRel)
+					goto RepeatCheck;
+				// Если не нашли - задержка и повторная проверка
+				Sleep(1500);
+				mh_InsideParentWND = mh_InsideParentRel = NULL;
+				m_InsideIntegration = ii_Auto;
+				InsideFindShellView(mh_InsideParentRoot);
+				if (mh_InsideParentWND && mh_InsideParentRel)
+					goto RepeatCheck;
+			}
+		}
+
 		//MessageBox(L"Can't find appropriate shell window!", MB_ICONSTOP);
-		int nBtn = MessageBox(L"Can't find appropriate shell window!\nUnrecognized layout of the Explorer.\n\nContinue in normal mode?", MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
+		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"%sCan't find appropriate shell window!\nUnrecognized layout of the Explorer.\n\nContinue in normal mode?", szAddMsg);
+		nBtn = MessageBox(szMsg, MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
+
 		if (nBtn != IDYES)
 		{
 			mh_InsideParentWND = (HWND)-1;
@@ -1746,7 +1792,7 @@ void CConEmuMain::InsideUpdateDir()
 		DWORD_PTR lRc = 0;
 		if (SendMessageTimeout(mh_InsideParentPath, WM_GETTEXT, countof(szCurText), (LPARAM)szCurText, SMTO_ABORTIFHUNG|SMTO_NORMAL, 300, &lRc))
 		{
-			if (gnOsVer <= 0x501)
+			if (gnOsVer < 0x600)
 			{
 				// Если в заголовке нет полного пути
 				if (wcschr(szCurText, L'\\') == NULL)
@@ -1759,7 +1805,7 @@ void CConEmuMain::InsideUpdateDir()
 			LPCWSTR pszPath = NULL;
 			// Если тут уже путь - то префикс не отрезать
             if ((szCurText[0] == L'\\' && szCurText[1] == L'\\' && szCurText[2]) // сетевой путь
-            	|| (szCurText[0] && szCurText[1] == L':' && szCurText[2] == L'\\' && szCurText[3])) // Путь через букву диска
+            	|| (szCurText[0] && szCurText[1] == L':' && szCurText[2] == L'\\' /*&& szCurText[3]*/)) // Путь через букву диска
         	{
         		pszPath = szCurText;
         	}
@@ -15250,7 +15296,6 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
-WARNING("Частота хождения таймера в винде оставляет желать... нужно от него избавляться и по возможности переносить все в нити");
 LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;

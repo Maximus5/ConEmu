@@ -539,7 +539,9 @@ class CRealConsole
 		//short CheckProgressInConsole(const wchar_t* pszCurLine);
 		//void SetProgress(short anProgress); // установить переменную mn_Progress и mn_LastProgressTick
 
-		BOOL AttachPID(DWORD dwPID);
+#if 0
+		BOOL AttachPID(DWORD dwPID); //120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
+#endif
 		BOOL StartProcess();
 		BOOL StartMonitorThread();
 		void SetMonitorThreadEvent();

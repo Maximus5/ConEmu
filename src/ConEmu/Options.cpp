@@ -29,6 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // cbFARuseASCIIsort, cbFixAltOnAltTab
 
+#undef USE_PALETTE_POPUP_COLORS
+
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
@@ -88,6 +90,7 @@ struct CONEMUDEFCOLORS
 {
 	const wchar_t* pszTitle;
 	DWORD dwDefColors[0x10];
+	BYTE  nIndexes[4]; // Text/Back/PopupText/PopupBack
 };
 
 const CONEMUDEFCOLORS DefColors[] =
@@ -109,6 +112,12 @@ const CONEMUDEFCOLORS DefColors[] =
 			0x00000000, 0x00aa0000, 0x0000aa00, 0x00aaaa00, 0x000000aa, 0x00aa00aa, 0x000055aa, 0x00aaaaaa,
 			0x00555555, 0x00ff5555, 0x0055ff55, 0x00ffff55, 0x005555ff, 0x00ff55ff, 0x0055ffff, 0x00ffffff
 		}
+	},
+	{
+		L"<PowerShell>", {
+			0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00562401, 0x00F0EDEE, 0x00C0C0C0,
+			0x00808080, 0x00ff0000, 0x0000FF00, 0x00FFFF00, 0x000000FF, 0x00FF00FF, 0x0000FFFF, 0x00FFFFFF
+		}, {6,5,3,15}
 	},
 	{
 		L"<Murena scheme>", {
@@ -478,6 +487,7 @@ void Settings::InitSettings()
 	nStatusBarDark = RGB(160,160,160);
 	wcscpy_c(sStatusFontFace, L"Tahoma"); nStatusFontCharSet = ANSI_CHARSET; nStatusFontHeight = 14;
 	//nHideStatusColumns = ces_CursorInfo;
+	_ASSERTE(countof(isStatusColumnHidden)>csi_Last);
 	memset(isStatusColumnHidden, 0, sizeof(isStatusColumnHidden));
 	// выставим те колонки, которые не нужны "юзеру" по умолчанию
 	isStatusColumnHidden[csi_InputLocale] = true;
@@ -1803,7 +1813,7 @@ void Settings::LoadSettings()
 //-----------------------------------------------------------------------
 ///| Preload settings actions |//////////////////////////////////////////
 //-----------------------------------------------------------------------
-	if (gpConEmu->m_InsideIntegration)
+	if (gpConEmu->m_InsideIntegration == CConEmuMain::ii_Auto)
 	{
 		HWND hParent = gpConEmu->InsideFindParent();
 		if (hParent == (HWND)-1)
@@ -1816,6 +1826,13 @@ void Settings::LoadSettings()
 			//isStatusBarShow = false;
 			isTabs = 0;
 			FontSizeY = 10;
+			// Скрыть колонки, чтобы много слишком не было...
+			isStatusColumnHidden[csi_ConsolePos] = true;
+			isStatusColumnHidden[csi_ConsoleSize] = true;
+			isStatusColumnHidden[csi_CursorX] = true;
+			isStatusColumnHidden[csi_CursorY] = true;
+			isStatusColumnHidden[csi_CursorSize] = true;
+			isStatusColumnHidden[csi_Server] = true;
 		}
 	}
 

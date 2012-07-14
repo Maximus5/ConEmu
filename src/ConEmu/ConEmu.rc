@@ -135,7 +135,7 @@ BEGIN
     CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,45,29,31,8
     CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTO3STATE | WS_TABSTOP,91,29,56,8
     CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,44,57,8
-    COMBOBOX        lbExtendFontBoldIdx,231,42,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontBoldIdx,231,41,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontItalicIdx,261,41,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontNormalIdx,291,41,26,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Change frames font",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,59,84,8
@@ -177,6 +177,31 @@ BEGIN
     RTEXT           "Width:",IDC_STATIC,5,123,27,8
     RTEXT           "Height:",IDC_STATIC,83,123,29,8
     RTEXT           "Position:",IDC_STATIC,197,108,33,8
+END
+
+IDD_SPG_WNDSIZEPOS DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Console size and Window position",IDC_STATIC,3,1,319,128
+    EDITTEXT        tWndWidth,35,26,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tWndHeight,115,26,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,12,13,38,8
+    CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,55,13,48,8
+    CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,108,13,49,8
+    PUSHBUTTON      "Apply",cbApplyPos,276,110,39,12
+    RTEXT           "X:",IDC_STATIC,201,28,9,8
+    EDITTEXT        tWndX,216,26,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tWndY,278,26,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,240,13,32,8
+    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,276,13,41,8
+    CONTROL         "Auto save window size and position on exit",cbAutoSaveSizePos,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,113,166,10
+    RTEXT           "Y:",IDC_STATIC,262,28,12,8
+    RTEXT           "Width:",IDC_STATIC,5,28,27,8
+    RTEXT           "Height:",IDC_STATIC,83,28,29,8
+    RTEXT           "Position:",IDC_STATIC,197,13,33,8
 END
 
 IDD_SPG_CURSOR DIALOGEX 0, 0, 328, 235

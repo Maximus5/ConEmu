@@ -429,7 +429,8 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
 			SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
 			
-			//EnableWindow(GetDlgItem(hDlg,IDOK), FALSE);
+			// В Windows 2000 отсуствует процедура AttachConsole необходимая для этого режима
+			EnableWindow(GetDlgItem(hDlg, IDC_ATTACH_ALT), (gnOsVer >= 0x501));
 
 			HWND hList = GetDlgItem(hDlg, IDC_ATTACHLIST);
 			pDlg->mh_List = hList;

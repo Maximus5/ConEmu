@@ -337,7 +337,10 @@ CSettings::CSettings()
 	ZeroStruct(m_tm);
 	ZeroStruct(m_otm);
 	ResetFontWidth();
+#if 0
+	//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
 	nAttachPID = 0; hAttachConWnd = NULL;
+#endif
 	memset(&ourSI, 0, sizeof(ourSI));
 	ourSI.cb = sizeof(ourSI);
 	szFontError[0] = 0;

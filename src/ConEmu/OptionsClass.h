@@ -215,8 +215,13 @@ class CSettings
 		LPCTSTR GetDefaultCmd();
 		/* OUR(!) startup info */
 		STARTUPINFOW ourSI;
+		
 		/* If Attach to PID requested */
-		DWORD nAttachPID; HWND hAttachConWnd;
+#if 0
+		//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
+		DWORD nAttachPID;
+		HWND hAttachConWnd;
+#endif
 
 		//DWORD FontSizeY;  // высота основного шрифта (загруженная из настроек!)
 		//DWORD FontSizeX;  // ширина основного шрифта

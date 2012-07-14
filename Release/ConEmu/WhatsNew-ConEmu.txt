@@ -10,6 +10,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[%] Issue 638: bincmp fails.
+[%] После Apps+F и открытия диалога выскакивало контекстное меню.
+[+] Добавлена палитра <PowerShell>.
+[+] ConEmu Inside: Windows 2000 and Windows 2003 supported.
+[%] Опять работаем в Windows 2000. Режим Alternative mode attach в Windows 2000 не доступен.
+
+
 2012.07.11
 [*] Far Manager. Не включать длинный буфер при поиске в архивах через MultiArc.
 [+] StatusBar. Добавлена колонка «[+]» - меню создания новой консоли. Правый клик на «[+]» и на «ActiveCon/TotalCon» отображает меню активного таба.

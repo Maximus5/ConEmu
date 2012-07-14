@@ -1850,7 +1850,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool ConfigPrm = false; TCHAR* ConfigVal = NULL;
 	//bool FontFilePrm = false; TCHAR* FontFile = NULL; //ADD fontname; by Mors
 	bool WindowPrm = false; int WindowModeVal = 0;
+#if 0
+	//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
 	bool AttachPrm = false; LONG AttachVal=0;
+#endif
 	bool MultiConPrm = false, MultiConValue = false;
 	bool VisPrm = false, VisValue = false;
 	//bool SingleInstance = false;
@@ -2030,6 +2033,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					SizeVal = klatoi(curCommand);
 				}
 			}
+#if 0
+			//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
 			else if (!klstricmp(curCommand, _T("/attach")) /*&& i + 1 < params*/)
 			{
 				//curCommand += _tcslen(curCommand) + 1; i++;
@@ -2109,6 +2114,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 				}
 			}
+#endif
 			//Start ADD fontname; by Mors
 			else if (!klstricmp(curCommand, _T("/fontfile")) && i + 1 < params)
 			{
@@ -2569,6 +2575,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 	BOOL lbConsoleAllocated = FALSE;
 
+#if 0
+	//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
 	if (AttachPrm)
 	{
 		if (!AttachVal)
@@ -2580,6 +2588,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		gpSetCls->nAttachPID = AttachVal;
 	}
+#endif
 
 //------------------------------------------------------------------------
 ///| Initializing |///////////////////////////////////////////////////////

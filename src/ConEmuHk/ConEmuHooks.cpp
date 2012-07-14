@@ -2890,6 +2890,8 @@ BOOL WINAPI OnReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead
 
 	bool bConIn = false;
 
+	DWORD nPrevErr = GetLastError();
+
 	if (hFile == ghLastConInHandle)
 	{
 		bConIn = true;
@@ -2913,6 +2915,7 @@ BOOL WINAPI OnReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead
 	if (bConIn)
 		OnReadConsoleStart(FALSE, hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, NULL);
 
+	SetLastError(nPrevErr);
 	lbRc = F(ReadFile)(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
 	DWORD nErr = GetLastError();
 

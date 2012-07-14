@@ -34,6 +34,7 @@
 #define IDD_SPG_INTEGRATION             164
 #define IDD_SPG_TRANSPARENT             165
 #define IDD_SPG_CMDOUTPUT               166
+#define IDD_SPG_WNDSIZEPOS              167
 #define IDD_MORE_HIDE                   200
 #define IDD_SPG_SELECTION               204
 #define IDD_SPG_TABS                    206

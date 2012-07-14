@@ -430,16 +430,17 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 
 		m_Args.bDetached = TRUE;
 	}
-	else if (gpSetCls->nAttachPID)
-	{
-		// Attach - only once
-		DWORD dwPID = gpSetCls->nAttachPID; gpSetCls->nAttachPID = 0;
+	//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
+	//else if (gpSetCls->nAttachPID)
+	//{
+	//	// Attach - only once
+	//	DWORD dwPID = gpSetCls->nAttachPID; gpSetCls->nAttachPID = 0;
 
-		if (!AttachPID(dwPID))
-		{
-			return FALSE;
-		}
-	}
+	//	if (!AttachPID(dwPID))
+	//	{
+	//		return FALSE;
+	//	}
+	//}
 	else
 	{
 		mb_NeedStartProcess = TRUE;
@@ -829,15 +830,18 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	return TRUE;
 }
 
+#if 0
+//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
 BOOL CRealConsole::AttachPID(DWORD dwPID)
 {
 	TODO("AttachPID пока работать не будет");
 	return FALSE;
 #ifdef ALLOW_ATTACHPID
-#ifdef MSGLOGGER
+	#ifdef MSGLOGGER
 	TCHAR szMsg[100]; _wsprintf(szMsg, countof(szMsg), _T("Attach to process %i"), (int)dwPID);
 	DEBUGSTRPROC(szMsg);
-#endif
+	#endif
+
 	BOOL lbRc = AttachConsole(dwPID);
 
 	if (!lbRc)
@@ -895,6 +899,7 @@ BOOL CRealConsole::AttachPID(DWORD dwPID)
 	return TRUE;
 #endif
 }
+#endif
 
 //BOOL CRealConsole::FlushInputQueue(DWORD nTimeout /*= 500*/)
 //{

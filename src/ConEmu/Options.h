@@ -925,7 +925,7 @@ struct Settings
 		//reg->Load(L"StatusBar.Color.Dark", nStatusBarDark);
 		DWORD nStatusBarDark;
 		//reg->Load(L"StatusBar.HideColumns", nHideStatusColumns);
-		bool isStatusColumnHidden[64]; // _ASSERTE(countof(isStatusColumnHidden)<csi_Last);
+		bool isStatusColumnHidden[64]; // _ASSERTE(countof(isStatusColumnHidden)>csi_Last);
 		//для информации, чтобы сохранить изменения при выходе
 		bool mb_StatusSettingsWasChanged;
 		

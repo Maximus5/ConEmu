@@ -2913,9 +2913,9 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 			if (pszFrom && bFound)
 				break;
 
-			if (nStepMax)
+			if (!i)
 			{
-				pszFrom = con.pConChar;
+				pszFrom = pszDataStart;
 				pszEnd = pszFrom + (nWidth * nHeight);
 			}
 		}

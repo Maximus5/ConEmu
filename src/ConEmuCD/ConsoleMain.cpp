@@ -2397,12 +2397,21 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 					#endif
 				}
 
-				// FreeConsole нужно дергать даже если ghConWnd уже NULL. Что-то в винде глючит и
-				// AttachConsole вернет ERROR_ACCESS_DENIED, если FreeConsole не звать...
-				FreeConsole();
-				ghConWnd = NULL;
+				BOOL bAttach = FALSE;
 
-				BOOL bAttach = AttachConsole(gpSrv->dwRootProcess);
+				HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+				AttachConsole_t AttachConsole_f = hKernel ? (AttachConsole_t)GetProcAddress(hKernel,"AttachConsole") : NULL;
+
+				if (AttachConsole_f)
+				{
+					// FreeConsole нужно дергать даже если ghConWnd уже NULL. Что-то в винде глючит и
+					// AttachConsole вернет ERROR_ACCESS_DENIED, если FreeConsole не звать...
+					FreeConsole();
+					ghConWnd = NULL;
+
+					bAttach = AttachConsole_f(gpSrv->dwRootProcess);
+				}
+
 				if (!bAttach)
 				{
 					DWORD nErr = GetLastError();
