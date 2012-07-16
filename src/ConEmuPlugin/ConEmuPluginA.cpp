@@ -738,13 +738,21 @@ void   WINAPI _export ExitFAR(void)
 	ShutdownPluginStep(L"ExitFAR - done");
 }
 
+int ShowMessageA(LPCSTR asMsg, int aiButtons, bool bWarning)
+{
+	if (!InfoA || !InfoA->Message)
+		return -1;
+
+	return InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|(bWarning ? FMSG_WARNING : 0), NULL,
+	                      (const char * const *)asMsg, 0, aiButtons);
+}
+
 int ShowMessageA(int aiMsg, int aiButtons)
 {
 	if (!InfoA || !InfoA->Message)
 		return -1;
 
-	return InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING, NULL,
-	                      (const char * const *)InfoA->GetMsg(InfoA->ModuleNumber,aiMsg), 0, aiButtons);
+	return ShowMessageA(InfoA->GetMsg(InfoA->ModuleNumber,aiMsg), aiButtons, true);
 }
 
 //void ReloadMacroA()

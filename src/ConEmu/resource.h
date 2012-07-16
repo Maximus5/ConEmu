@@ -771,19 +771,18 @@
 #define vkWndDragKey                    2404
 #define IDC_ATTACH_ALT                  2405
 #define cbInsideName                    2406
-#define cbHereItem                      2407
 #define cbHereName                      2407
 #define rbSettingsReg                   2408
 #define rbSettingsXml                   2409
 #define rbSettingsIni                   2410
 #define cbCmdAutorunNewWnd              2411
-#define cbCTSCopyOnTyping               2412
 #define cbCTSEndOnTyping                2412
 #define vkMinimizeRestor2               2413
 #define vkMoveTabLeft                   2414
 #define vkMoveTabRight                  2415
-#define IDC_CHECK1                      2416
 #define cbStatusNewVCon                 2416
+#define cbUseCurrentSizePos             2417
+#define cbUseClink                      2418
 
 // Next default values for new objects
 // 
@@ -791,7 +790,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2417
+#define _APS_NEXT_CONTROL_VALUE         2419
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

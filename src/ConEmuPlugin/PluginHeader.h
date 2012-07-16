@@ -171,11 +171,15 @@ BOOL OutDataWrite(LPVOID apData, DWORD anSize);
 
 //void CheckMacro(BOOL abAllowAPI);
 //BOOL IsKeyChanged(BOOL abAllowReload);
+int ShowMessageGui(int aiMsg, int aiButtons);
 int ShowMessage(int aiMsg, int aiButtons);
 int ShowMessageA(int aiMsg, int aiButtons);
-int ShowMessageGui(int aiMsg, int aiButtons);
 int FUNC_X(ShowMessageW)(int aiMsg, int aiButtons);
 int FUNC_Y(ShowMessageW)(int aiMsg, int aiButtons);
+int ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning);
+int ShowMessageA(LPCSTR asMsg, int aiButtons, bool bWarning);
+int FUNC_X(ShowMessageW)(LPCWSTR asMsg, int aiButtons, bool bWarning);
+int FUNC_Y(ShowMessageW)(LPCWSTR asMsg, int aiButtons, bool bWarning);
 //void ReloadMacroA();
 //void FUNC_X(ReloadMacro)();
 //void FUNC_Y(ReloadMacro)();
@@ -218,6 +222,7 @@ BOOL FUNC_X(EditOutputW)(LPCWSTR asFileName, BOOL abView);
 
 BOOL Attach2Gui();
 BOOL StartDebugger();
+void ShowConsoleInfo();
 
 //#define DEFAULT_SYNCHRO_TIMEOUT 10000
 //BOOL FUNC_X(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
@@ -320,9 +325,10 @@ enum PluginCallCommands
 	pcc_SwitchTabCommit = 6,
 	pcc_AttachToConEmu = 7,
 	pcc_StartDebug = 8,
+	pcc_ConsoleInfo = 9,
 	//
 	pcc_First = 1,
-	pcc_Last = pcc_StartDebug,
+	pcc_Last = pcc_ConsoleInfo,
 };
 
 enum PluginMenuCommands
@@ -341,8 +347,9 @@ enum PluginMenuCommands
 	menu_AttachToConEmu,
 	menu_Separator4,
 	menu_StartDebug,
+	menu_ConsoleInfo,
 	//
-	menu_Last = (menu_StartDebug+1)
+	menu_Last = (menu_ConsoleInfo+1)
 };
 
 struct PluginAndMenuCommands

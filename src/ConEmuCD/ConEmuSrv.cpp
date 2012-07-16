@@ -205,6 +205,7 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 			gpSrv->pConsole->hdr.bUseInjects = gpSrv->guiSettings.bUseInjects;
 			gpSrv->pConsole->hdr.bUseTrueColor = gpSrv->guiSettings.bUseTrueColor;
 			gpSrv->pConsole->hdr.bProcessAnsi = gpSrv->guiSettings.bProcessAnsi;
+			gpSrv->pConsole->hdr.bUseClink = gpSrv->guiSettings.bUseClink;
 
 			// Обновить пути к ConEmu
 			wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);

@@ -162,6 +162,8 @@ CConEmuMain::CConEmuMain()
 	mn_MainThreadId = GetCurrentThreadId();
 	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
 	WindowMode = rNormal; WindowStartMinimized = false; ForceMinimizeToTray = false;
+	wndX = gpSet->_wndX; wndY = gpSet->_wndY;
+	wndWidth = gpSet->_wndWidth; wndHeight = gpSet->_wndHeight;
 	mn_QuakePercent = 0; // 0 - отключен
 	DisableAutoUpdate = false;
 	DisableKeybHooks = false;
@@ -914,11 +916,11 @@ RECT CConEmuMain::GetDefaultRect()
 				rcWnd = MakeRect(rcParent.left, rcParent.bottom - 100, rcParent.right, rcParent.bottom);
 			}
 		}
-		gpSet->wndX = rcWnd.left;
-		gpSet->wndY = rcWnd.top;
+		gpConEmu->wndX = rcWnd.left;
+		gpConEmu->wndY = rcWnd.top;
 		RECT rcCon = CalcRect(CER_CONSOLE, rcWnd, CER_MAIN);
-		gpSet->wndWidth = rcCon.right;
-		gpSet->wndHeight = rcCon.bottom;
+		gpConEmu->wndWidth = rcCon.right;
+		gpConEmu->wndHeight = rcCon.bottom;
 
 		OnMoving(&rcWnd);
 
@@ -927,7 +929,7 @@ RECT CConEmuMain::GetDefaultRect()
 
 	int nWidth, nHeight;
 	MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
-	COORD conSize; conSize.X=gpSet->wndWidth; conSize.Y=gpSet->wndHeight;
+	COORD conSize; conSize.X=gpConEmu->wndWidth; conSize.Y=gpConEmu->wndHeight;
 	//int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
 	//int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + (gpSet->isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
 	RECT rcFrameMargin = CalcMargins(CEM_FRAME|CEM_SCROLL|CEM_STATUS);
@@ -938,12 +940,12 @@ RECT CConEmuMain::GetDefaultRect()
 	          + ((gpSet->isTabs == 1) ? (gpSet->rcTabMargins.left+gpSet->rcTabMargins.right) : 0);
 	nHeight = conSize.Y * gpSetCls->FontHeight() + nShiftY
 	          + ((gpSet->isTabs == 1) ? (gpSet->rcTabMargins.top+gpSet->rcTabMargins.bottom) : 0);
-	rcWnd = MakeRect(gpSet->wndX, gpSet->wndY, gpSet->wndX+nWidth, gpSet->wndY+nHeight);
+	rcWnd = MakeRect(gpConEmu->wndX, gpConEmu->wndY, gpConEmu->wndX+nWidth, gpConEmu->wndY+nHeight);
 
 	if (gpSet->isQuakeStyle)
 	{
 		HMONITOR hMon;
-		POINT pt = {gpSet->wndX+2*nShiftX,gpSet->wndY+2*nShiftY};
+		POINT pt = {gpConEmu->wndX+2*nShiftX,gpConEmu->wndY+2*nShiftY};
 		if (ghWnd)
 		{
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
@@ -969,10 +971,10 @@ RECT CConEmuMain::GetDefaultRect()
 
 			RECT rcCon = CalcRect(CER_CONSOLE, rcWnd, CER_MAIN);
 			if (rcCon.right)
-				gpSet->wndWidth = rcCon.right;
+				gpConEmu->wndWidth = rcCon.right;
 
-			gpSet->wndX = rcWnd.left;
-			gpSet->wndY = rcWnd.top;
+			gpConEmu->wndX = rcWnd.left;
+			gpConEmu->wndY = rcWnd.top;
 		}
 	}
 	else if ( gpSet->wndCascade)
@@ -1039,8 +1041,8 @@ RECT CConEmuMain::GetDefaultRect()
 		}
 
 		// Скорректировать X/Y при каскаде
-		gpSet->wndX = rcWnd.left;
-		gpSet->wndY = rcWnd.top;
+		gpConEmu->wndX = rcWnd.left;
+		gpConEmu->wndY = rcWnd.top;
 	}
 
 	OnMoving(&rcWnd);
@@ -1354,7 +1356,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
 
 	// Расчет размеров окна в Normal режиме
-	if ((gpSet->wndWidth && gpSet->wndHeight) || m_InsideIntegration)
+	if ((gpConEmu->wndWidth && gpConEmu->wndHeight) || m_InsideIntegration)
 	{
 		MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
 		//COORD conSize; conSize.X=gpSet->wndWidth; conSize.Y=gpSet->wndHeight;
@@ -1375,7 +1377,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	}
 	else
 	{
-		_ASSERTE(gpSet->wndWidth && gpSet->wndHeight);
+		_ASSERTE(gpConEmu->wndWidth && gpConEmu->wndHeight);
 	}
 
 	HWND hParent = m_InsideIntegration ? mh_InsideParentWND : ghWndApp;
@@ -1385,7 +1387,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
 	WARNING("На ноуте вылезает за пределы рабочей области");
 	ghWnd = CreateWindowEx(styleEx, gsClassNameParent, gpSet->GetCmd(), style,
-	                       gpSet->wndX, gpSet->wndY, nWidth, nHeight, hParent, NULL, (HINSTANCE)g_hInstance, NULL);
+	                       gpConEmu->wndX, gpConEmu->wndY, nWidth, nHeight, hParent, NULL, (HINSTANCE)g_hInstance, NULL);
 
 	if (!ghWnd)
 	{
@@ -2271,9 +2273,10 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.nGuiPID = GetCurrentProcessId();
 	
 	m_GuiInfo.nLoggingType = (ghOpWnd && gpSetCls->mh_Tabs[gpSetCls->thi_Debug]) ? gpSetCls->m_ActivityLoggingType : glt_None;
-	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0);
+	m_GuiInfo.bUseInjects = ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
 	m_GuiInfo.bUseTrueColor = gpSet->isTrueColorer;
 	m_GuiInfo.bProcessAnsi = (gpSet->isProcessAnsi ? 1 : 0);
+	m_GuiInfo.bUseClink = (gpSet->isUseClink() ? 1 : 0);
 
 	mb_DosBoxExists = CheckDosBoxExists();
 	m_GuiInfo.bDosBox = mb_DosBoxExists;
@@ -3310,11 +3313,11 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 				//2010-01-19
 				if (gpSet->isFontAutoSize)
 				{
-					if (gpSet->wndWidth && rc.right > (LONG)gpSet->wndWidth)
-						rc.right = gpSet->wndWidth;
+					if (gpConEmu->wndWidth && rc.right > (LONG)gpConEmu->wndWidth)
+						rc.right = gpConEmu->wndWidth;
 
-					if (gpSet->wndHeight && rc.bottom > (LONG)gpSet->wndHeight)
-						rc.bottom = gpSet->wndHeight;
+					if (gpConEmu->wndHeight && rc.bottom > (LONG)gpConEmu->wndHeight)
+						rc.bottom = gpConEmu->wndHeight;
 				}
 
 #ifdef _DEBUG
@@ -3853,9 +3856,9 @@ void CConEmuMain::AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom)
 		// В 16бит режиме - не заморачиваться пока
 		if (!gpConEmu->isNtvdm())
 		{
-			if (!gpSet->wndWidth || !gpSet->wndHeight)
+			if (!gpConEmu->wndWidth || !gpConEmu->wndHeight)
 			{
-				MBoxAssert(gpSet->wndWidth!=0 && gpSet->wndHeight!=0);
+				MBoxAssert(gpConEmu->wndWidth!=0 && gpConEmu->wndHeight!=0);
 			}
 			else
 			{
@@ -3876,11 +3879,11 @@ void CConEmuMain::AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom)
 				}
 
 				// !!! Для CER_DC размер в rc.right
-				int nFontW = (rc.right - rc.left) / gpSet->wndWidth;
+				int nFontW = (rc.right - rc.left) / gpConEmu->wndWidth;
 
 				if (nFontW < 5) nFontW = 5;
 
-				int nFontH = (rc.bottom - rc.top) / gpSet->wndHeight;
+				int nFontH = (rc.bottom - rc.top) / gpConEmu->wndHeight;
 
 				if (nFontH < 8) nFontH = 8;
 
@@ -3973,7 +3976,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 	mb_PassSysCommand = true;
 	//WindowPlacement -- использовать нельзя, т.к. он работает в координатах Workspace, а не Screen!
 	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
-	RECT consoleSize = MakeRect(gpSet->wndWidth, gpSet->wndHeight);
+	RECT consoleSize = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
 	bool canEditWindowSizes = false;
 	bool lbRc = false;
 	static bool bWasSetFullscreen = false;
@@ -4009,7 +4012,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 			// Расчитать размер по оптимальному WindowRect
 			RECT rcCon = CalcRect(CER_CONSOLE, mrc_Ideal, CER_MAIN, mp_VActive);
 
-			if (!rcCon.right || !rcCon.bottom) { rcCon.right = gpSet->wndWidth; rcCon.bottom = gpSet->wndHeight; }
+			if (!rcCon.right || !rcCon.bottom) { rcCon.right = gpConEmu->wndWidth; rcCon.bottom = gpConEmu->wndHeight; }
 
 			if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right, rcCon.bottom))
 			{
@@ -4075,8 +4078,8 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 				rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE);
 				//int nWidth = rcNew.right-rcNew.left;
 				//int nHeight = rcNew.bottom-rcNew.top;
-				rcNew.left+=gpSet->wndX; rcNew.top+=gpSet->wndY;
-				rcNew.right+=gpSet->wndX; rcNew.bottom+=gpSet->wndY;
+				rcNew.left+=gpConEmu->wndX; rcNew.top+=gpConEmu->wndY;
+				rcNew.right+=gpConEmu->wndX; rcNew.bottom+=gpConEmu->wndY;
 			}
 			// 2010-02-14 Проверку делаем ТОЛЬКО при загрузке настроек и включенном каскаде
 			//// Параметры именно такие, результат - просто подгонка rcNew под рабочую область текущего монитора
@@ -4097,8 +4100,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 			GetWindowPlacement(ghWnd, &wpl);
 			#endif
 
-			if (ghOpWnd)
-				CheckRadioButton(gpSetCls->mh_Tabs[gpSetCls->thi_Main], rNormal, rFullScreen, rNormal);
+			gpSetCls->UpdateWindowMode(rNormal);
 
 			mb_isFullScreen = false;
 
@@ -4182,8 +4184,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 					OnSize(-1); // консоль уже изменила свой размер
 				}
 
-				if (ghOpWnd)
-					CheckRadioButton(gpSetCls->mh_Tabs[gpSetCls->thi_Main], rNormal, rFullScreen, rMaximized);
+				gpSetCls->UpdateWindowMode(rMaximized);
 
 				mb_isFullScreen = false;
 
@@ -4284,8 +4285,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 					                   ptFullScreenSize.x,ptFullScreenSize.y,
 					                   SWP_NOZORDER);
 
-					if (ghOpWnd)
-						CheckRadioButton(gpSetCls->mh_Tabs[gpSetCls->thi_Main], rNormal, rMaximized, rMaximized);
+					gpSetCls->UpdateWindowMode(rMaximized);
 				}
 
 				mb_isFullScreen = false;
@@ -4385,8 +4385,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 				                   ptFullScreenSize.x,ptFullScreenSize.y,
 				                   SWP_NOZORDER);
 
-				if (ghOpWnd)
-					CheckRadioButton(gpSetCls->mh_Tabs[gpSetCls->thi_Main], rNormal, rFullScreen, rFullScreen);
+				gpSetCls->UpdateWindowMode(rFullScreen);
 			}
 
 			if (!IsWindowVisible(ghWnd))

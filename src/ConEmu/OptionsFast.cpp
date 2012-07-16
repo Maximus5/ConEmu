@@ -154,7 +154,6 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 					/* Inject ConEmuHk.dll */
 					gpSet->isUseInjects = IsDlgButtonChecked(hDlg, cbInjectConEmuHkFast);
-					//if (gpSet->isUseInjects > BST_INDETERMINATE) gpSet->isUseInjects = BST_CHECKED;
 
 					/* Auto Update settings */
 					gpSet->UpdSet.isUpdateCheckOnStartup = (IsDlgButtonChecked(hDlg, cbEnableAutoUpdateFast) == BST_CHECKED);

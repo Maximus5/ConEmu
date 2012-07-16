@@ -252,6 +252,7 @@ PluginAndMenuCommands gpPluginMenu[menu_Last] =
 	{CEMenuAttach, menu_AttachToConEmu, pcc_AttachToConEmu},
 	{0, menu_Separator4},
 	{CEMenuDebug, menu_StartDebug, pcc_StartDebug},
+	{CEMenuConInfo, menu_ConsoleInfo, pcc_StartDebug},
 };
 bool pcc_Selected(PluginMenuCommands nMenuID)
 {
@@ -273,6 +274,7 @@ bool pcc_Selected(PluginMenuCommands nMenuID)
 	case menu_SwitchTabCommit:
 	case menu_ConEmuMacro:
 	case menu_StartDebug:
+	case menu_ConsoleInfo:
 		break;
 	}
 	return bSelected;
@@ -299,6 +301,8 @@ bool pcc_Disabled(PluginMenuCommands nMenuID)
 	case menu_ConEmuMacro:
 		if (!ConEmuHwnd || !IsWindow(ConEmuHwnd))
 			bDisabled = true;
+		break;
+	case menu_ConsoleInfo:
 		break;
 	}
 	return bDisabled;
@@ -5237,6 +5241,25 @@ int ShowMessage(int aiMsg, int aiButtons)
 	else
 		return FUNC_X(ShowMessageW)(aiMsg, aiButtons);
 }
+int ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
+{
+	if (!asMsg)
+		return -1;
+
+	if (gFarVersion.dwVerMajor==1)
+	{
+		int nLen = lstrlen(asMsg)+1;
+		char* psz = (char*)malloc(nLen);
+		WideCharToMultiByte(CP_OEMCP, 0, asMsg, nLen, psz, nLen, 0,0);
+		int nBtn = ShowMessageA(psz, aiButtons, bWarning);
+		free(psz);
+		return nBtn;
+	}
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		return FUNC_Y(ShowMessageW)(asMsg, aiButtons, bWarning);
+	else
+		return FUNC_X(ShowMessageW)(asMsg, aiButtons, bWarning);
+}
 int ShowMessageGui(int aiMsg, int aiButtons)
 {
 	wchar_t wszBuf[MAX_PATH];
@@ -5495,6 +5518,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 
 			free(pIn);
 		} break;
+		
 		case menu_SwitchTabVisible: // Показать/спрятать табы
 		case menu_SwitchTabNext:
 		case menu_SwitchTabPrev:
@@ -5520,6 +5544,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 			if (pOut) ExecuteFreeResult(pOut);
 		} break;
+		
 		case menu_ShowTabsList:
 		{
 			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETALLTABS, sizeof(CESERVER_REQ_HDR));
@@ -5603,6 +5628,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			}
 			ExecuteFreeResult(pIn);
 		} break;
+		
 		case menu_ConEmuMacro: // Execute GUI macro (gialog)
 		{
 			if (gFarVersion.dwVerMajor==1)
@@ -5612,6 +5638,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			else
 				FUNC_X(GuiMacroDlgW)();
 		} break;
+		
 		case menu_AttachToConEmu: // Attach to GUI (если FAR был CtrlAltTab)
 		{
 			if (TerminalMode) break;  // низзя
@@ -5620,6 +5647,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 
 			Attach2Gui();
 		} break;
+
 		//#ifdef _DEBUG
 		//case 11: // Start "ConEmuC.exe /DEBUGPID="
 		//#else
@@ -5629,6 +5657,11 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			if (TerminalMode) break;  // низзя
 
 			StartDebugger();
+		} break;
+
+		case menu_ConsoleInfo:
+		{
+			ShowConsoleInfo();
 		} break;
 	}
 }
@@ -6206,6 +6239,45 @@ bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent/*
 	return lbRc;
 }
 
+
+void ShowConsoleInfo()
+{
+	DWORD nConIn = 0, nConOut = 0;
+	HANDLE hConIn = GetStdHandle(STD_INPUT_HANDLE);
+	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	GetConsoleMode(hConIn, &nConIn);
+	GetConsoleMode(hConOut, &nConOut);
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	GetConsoleScreenBufferInfo(hConOut, &csbi);
+	CONSOLE_CURSOR_INFO ci = {};
+	GetConsoleCursorInfo(hConOut, &ci);
+	
+	wchar_t szInfo[1024];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+		L"ConEmu Console information\n"
+		L"TerminalMode=%s\n"
+		L"Console HWND=0x%08X; "
+		L"Virtual HWND=0x%08X; "
+		L"ServerPID=%u\n"
+		L"ConInMode=0x%08X; ConOutMode=0x%08X\n"
+		L"Buffer size=(%u,%u); Rect=(%u,%u)-(%u,%u)\n"
+		L"CursorInfo==(%u,%u,%u%s); MaxWndSize=(%u,%u)\n"
+		L"OutputAttr=0x%02X\n"
+		,
+		TerminalMode ? L"Yes" : L"No",
+		(DWORD)FarHwnd, (DWORD)ConEmuHwnd, gdwServerPID,
+		nConIn, nConOut,
+		csbi.dwSize.X, csbi.dwSize.Y,
+		csbi.srWindow.Left, csbi.srWindow.Top, csbi.srWindow.Right, csbi.srWindow.Bottom,
+		csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, ci.dwSize, ci.bVisible ? L"V" : L"H",
+		csbi.dwMaximumWindowSize.X, csbi.dwMaximumWindowSize.Y,
+		csbi.wAttributes,
+		0
+	);
+
+	ShowMessage(szInfo, 0, false);
+}
 
 
 //// <Name>\0<Value>\0<Name2>\0<Value2>\0\0

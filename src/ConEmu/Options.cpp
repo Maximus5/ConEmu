@@ -415,10 +415,11 @@ void Settings::InitSettings()
 	isExtendUCharMap = true;
 	isDownShowHiddenMessage = false;
 	ParseCharRanges(L"2013-25C4", mpc_FixFarBorderValues);
-	wndHeight = 25;
+	_wndHeight = 25;
 	ntvdmHeight = 0; // Подбирать автоматически
-	wndWidth = 80;
-	WindowMode = rNormal;
+	_wndWidth = 80;
+	_WindowMode = rNormal;
+	isUseCurrentSizePos = true; // Show in settings dialog and save current window size/pos
 	//isFullScreen = false;
 	isHideCaption = mb_HideCaptionAlways = isQuakeStyle = false;
 	nHideCaptionAlwaysFrame = 1; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
@@ -429,17 +430,18 @@ void Settings::InitSettings()
 	RECT rcWork = {}; SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
 	if (gbIsWine)
 	{
-		wndX = max(90,rcWork.left); wndY = max(90,rcWork.top);
+		_wndX = max(90,rcWork.left); _wndY = max(90,rcWork.top);
 	}
 	else
 	{
-		wndX = rcWork.left; wndY = rcWork.top;
+		_wndX = rcWork.left; _wndY = rcWork.top;
 	}
 	wndCascade = true;
 	isAutoSaveSizePos = false; mb_SizePosAutoSaved = false;
 	isConVisible = false; //isLockRealConsolePos = false;
-	isUseInjects = true;
+	isUseInjects = 2;
 	isProcessAnsi = true;
+	mb_UseClink = true;
 	#ifdef USEPORTABLEREGISTRY
 	isPortableReg = true; // включено по умолчанию, DEBUG
 	#else
@@ -1885,11 +1887,11 @@ void Settings::LoadSettings()
 		reg->Load(L"ConInMode", nConInMode);
 		
 		
-		reg->Load(L"UseInjects", isUseInjects);
-		//if (isUseInjects > BST_INDETERMINATE)
-		//	isUseInjects = BST_CHECKED;
+		reg->Load(L"UseInjects", isUseInjects); MinMax(isUseInjects, BST_INDETERMINATE);
 
 		reg->Load(L"ProcessAnsi", isProcessAnsi);
+
+		reg->Load(L"UseClink", mb_UseClink);
 
 		#ifdef USEPORTABLEREGISTRY
 		reg->Load(L"PortableReg", isPortableReg);
@@ -1979,7 +1981,8 @@ void Settings::LoadSettings()
 		reg->Load(L"ConsoleFontWidth", ConsoleFont.lfWidth);
 		reg->Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 		
-		reg->Load(L"WindowMode", WindowMode); if (WindowMode!=rFullScreen && WindowMode!=rMaximized && WindowMode!=rNormal) WindowMode = rNormal;
+		reg->Load(L"UseCurrentSizePos", isUseCurrentSizePos);
+		reg->Load(L"WindowMode", _WindowMode); if (_WindowMode!=rFullScreen && _WindowMode!=rMaximized && _WindowMode!=rNormal) _WindowMode = rNormal;
 		reg->Load(L"QuakeStyle", isQuakeStyle);
 		reg->Load(L"HideCaption", isHideCaption);
 		// грузим именно в mb_HideCaptionAlways, т.к. прозрачность сбивает темы в заголовке, поэтому возврат идет через isHideCaptionAlways()
@@ -1998,14 +2001,14 @@ void Settings::LoadSettings()
 
 		reg->Load(L"DownShowHiddenMessage", isDownShowHiddenMessage);
 
-		reg->Load(L"ConWnd X", wndX); /*if (wndX<-10) wndX = 0;*/
-		reg->Load(L"ConWnd Y", wndY); /*if (wndY<-10) wndY = 0;*/
+		reg->Load(L"ConWnd X", _wndX); /*if (wndX<-10) wndX = 0;*/
+		reg->Load(L"ConWnd Y", _wndY); /*if (wndY<-10) wndY = 0;*/
 		reg->Load(L"AutoSaveSizePos", isAutoSaveSizePos);
 		// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N"
 		// может сменить (умолчательную) команду запуска на "cmd" или "far"
 		reg->Load(L"Cascaded", wndCascade);
-		reg->Load(L"ConWnd Width", wndWidth); if (!wndWidth) wndWidth = 80; else if (wndWidth>1000) wndWidth = 1000;
-		reg->Load(L"ConWnd Height", wndHeight); if (!wndHeight) wndHeight = 25; else if (wndHeight>500) wndHeight = 500;
+		reg->Load(L"ConWnd Width", _wndWidth); if (!_wndWidth) _wndWidth = 80; else if (_wndWidth>1000) _wndWidth = 1000;
+		reg->Load(L"ConWnd Height", _wndHeight); if (!_wndHeight) _wndHeight = 25; else if (_wndHeight>500) _wndHeight = 500;
 
 		//TODO: Эти два параметра не сохраняются
 		reg->Load(L"16bit Height", ntvdmHeight);
@@ -2433,66 +2436,11 @@ void Settings::LoadSettings()
 
 
 	// Стили окна
-	if (!WindowMode)
+	if ((_WindowMode!=rNormal) && (_WindowMode!=rMaximized) && (_WindowMode!=rFullScreen))
 	{
 		// Иначе окно вообще не отображается
-		_ASSERTE(WindowMode!=0);
-		WindowMode = rNormal;
-	}
-
-	if (wndCascade && (ghWnd == NULL))
-	{
-		// Сдвиг при каскаде
-		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
-		// Координаты и размер виртуальной рабочей области
-		RECT rcScreen = MakeRect(800,600);
-		int nMonitors = GetSystemMetrics(SM_CMONITORS);
-
-		if (nMonitors > 1)
-		{
-			// Размер виртуального экрана по всем мониторам
-			rcScreen.left = GetSystemMetrics(SM_XVIRTUALSCREEN); // may be <0
-			rcScreen.top  = GetSystemMetrics(SM_YVIRTUALSCREEN);
-			rcScreen.right = rcScreen.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
-			rcScreen.bottom = rcScreen.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
-			TODO("Хорошо бы исключить из рассмотрения Taskbar...");
-		}
-		else
-		{
-			SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, 0);
-		}
-
-		HWND hPrev = FindWindow(VirtualConsoleClassMain, NULL);
-
-		while(hPrev)
-		{
-			/*if (Is Iconic(hPrev) || Is Zoomed(hPrev)) {
-				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
-				continue;
-			}*/
-			WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)}; // Workspace coordinates!!!
-
-			if (!GetWindowPlacement(hPrev, &wpl))
-			{
-				break;
-			}
-
-			// Screen coordinates!
-			RECT rcWnd; GetWindowRect(hPrev, &rcWnd);
-
-			if (wpl.showCmd == SW_HIDE || !IsWindowVisible(hPrev)
-			        || wpl.showCmd == SW_SHOWMINIMIZED || wpl.showCmd == SW_SHOWMAXIMIZED
-			        /* Max в режиме скрытия заголовка */
-			        || (wpl.rcNormalPosition.left<rcScreen.left || wpl.rcNormalPosition.top<rcScreen.top))
-			{
-				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
-				continue;
-			}
-
-			wndX = rcWnd.left + nShift;
-			wndY = rcWnd.top + nShift;
-			break; // нашли, сдвинулись, выходим
-		}
+		_ASSERTE(_WindowMode!=0);
+		_WindowMode = rNormal;
 	}
 
 	if (rcTabMargins.top > 100) rcTabMargins.top = 100;
@@ -2567,12 +2515,18 @@ void Settings::SaveSizePosOnExit()
 	{
 		if (isAutoSaveSizePos)
 		{
-			reg->Save(L"ConWnd Width", wndWidth);
-			reg->Save(L"ConWnd Height", wndHeight);
-			reg->Save(L"16bit Height", ntvdmHeight);
-			reg->Save(L"ConWnd X", wndX);
-			reg->Save(L"ConWnd Y", wndY);
+			reg->Save(L"UseCurrentSizePos", isUseCurrentSizePos);
+			DWORD saveMode = (isUseCurrentSizePos==false) ? _WindowMode // сохранять будем то, что задано пользователем явно
+					: ( (ghWnd == NULL)  // иначе - текущее состояние
+							? gpConEmu->WindowMode
+							: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal));
+			reg->Save(L"WindowMode", saveMode);
+			reg->Save(L"ConWnd Width", isUseCurrentSizePos ? gpConEmu->wndWidth : _wndWidth);
+			reg->Save(L"ConWnd Height", isUseCurrentSizePos ? gpConEmu->wndHeight : _wndHeight);
 			reg->Save(L"Cascaded", wndCascade);
+			reg->Save(L"ConWnd X", isUseCurrentSizePos ? gpConEmu->wndX : _wndX);
+			reg->Save(L"ConWnd Y", isUseCurrentSizePos ? gpConEmu->wndY : _wndY);
+			reg->Save(L"16bit Height", ntvdmHeight);
 			reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
 		}
 
@@ -2808,6 +2762,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 
 		reg->Save(L"ProcessAnsi", isProcessAnsi);
 
+		reg->Save(L"UseClink", mb_UseClink);
+
 		#ifdef USEPORTABLEREGISTRY
 		reg->Save(L"PortableReg", isPortableReg);
 		#endif
@@ -2882,10 +2838,20 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"UserScreenTransparent", isUserScreenTransparent);
 		reg->Save(L"ColorKeyTransparent", isColorKeyTransparent);
 		reg->Save(L"ColorKeyValue", nColorKeyValue);
-		DWORD saveMode = (ghWnd == NULL) 
-					? gpConEmu->WindowMode
-					: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal);
+		reg->Save(L"UseCurrentSizePos", isUseCurrentSizePos);
+		DWORD saveMode = (isUseCurrentSizePos==false) ? _WindowMode // сохранять будем то, что задано пользователем явно
+				: ( (ghWnd == NULL)  // иначе - текущее состояние
+						? gpConEmu->WindowMode
+						: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal));
 		reg->Save(L"WindowMode", saveMode);
+		reg->Save(L"ConWnd Width", isUseCurrentSizePos ? gpConEmu->wndWidth : _wndWidth);
+		reg->Save(L"ConWnd Height", isUseCurrentSizePos ? gpConEmu->wndHeight : _wndHeight);
+		reg->Save(L"Cascaded", wndCascade);
+		reg->Save(L"ConWnd X", isUseCurrentSizePos ? gpConEmu->wndX : _wndX);
+		reg->Save(L"ConWnd Y", isUseCurrentSizePos ? gpConEmu->wndY : _wndY);
+		reg->Save(L"16bit Height", ntvdmHeight);
+		reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
+		mb_SizePosAutoSaved = false; // Раз было инициированное пользователей сохранение настроек - сбросим флажок
 		reg->Save(L"QuakeStyle", isQuakeStyle);
 		reg->Save(L"HideCaption", isHideCaption);
 		reg->Save(L"HideCaptionAlways", mb_HideCaptionAlways);
@@ -3009,14 +2975,6 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ScrollBarDisappearDelay", nScrollBarDisappearDelay);
 		reg->Save(L"IconID", nIconID);
 		//reg->Save(L"Update Console handle", isUpdConHandle);
-		reg->Save(L"ConWnd Width", wndWidth);
-		reg->Save(L"ConWnd Height", wndHeight);
-		reg->Save(L"16bit Height", ntvdmHeight);
-		reg->Save(L"ConWnd X", wndX);
-		reg->Save(L"ConWnd Y", wndY);
-		reg->Save(L"Cascaded", wndCascade);
-		reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
-		mb_SizePosAutoSaved = false; // Раз было инициированное пользователей сохранение настроек - сбросим флажок
 		/*reg->Save(L"ScrollTitle", isScrollTitle);
 		reg->Save(L"ScrollTitleLen", ScrollTitleLen);*/
 		reg->Save(L"MainTimerElapse", nMainTimerElapse);
@@ -3086,6 +3044,29 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 	// Вроде и показывать не нужно. Объект уже сам ругнулся
 	//MessageBoxA(ghOpWnd, "Failed", "Information", MB_ICONERROR);
 	return lbRc;
+}
+
+bool Settings::isUseClink()
+{
+	if (!mb_UseClink)
+		return false;
+
+	wchar_t szClink32[MAX_PATH+30], szClink64[MAX_PATH+30];
+	wcscpy_c(szClink32, gpConEmu->ms_ConEmuBaseDir);
+	wcscat_c(szClink32, L"\\clink\\clink_dll_x86.dll");
+	wcscpy_c(szClink64, gpConEmu->ms_ConEmuBaseDir);
+	wcscat_c(szClink64, L"\\clink\\clink_dll_x64.dll");
+
+	if (!FileExists(szClink32)
+		#ifdef _WIN64
+		&& !FileExists(szClink64)
+		#endif
+		)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/)

@@ -308,11 +308,12 @@ class CSettings
 		//HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hCmdTasks, hViews, hInfo, hDebug, hUpdate, hSelection;
 		enum TabHwndIndex {
 			thi_Main = 0,
+			thi_SizePos,
 			thi_Cursor,
 			thi_Startup,
 			thi_Ext,
 			thi_Comspec,
-			thi_Output,
+			//thi_Output,
 			thi_Selection,
 			thi_Far,
 			thi_Keys,
@@ -367,7 +368,8 @@ class CSettings
 		static int CALLBACK EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
 		//void UpdateMargins(RECT arcMargins);
 		static void Dialog(int IdShowPage = 0);
-		void UpdatePos(int x, int y);
+		void UpdateWindowMode(WORD WndMode);
+		void UpdatePos(int x, int y, bool bGetRect = false);
 		void UpdateSize(UINT w, UINT h);
 		void UpdateTTF(BOOL bNewTTF);
 		void UpdateFontInfo();
@@ -433,11 +435,12 @@ class CSettings
 		LRESULT OnInitDialog();
 		// OnInitDialogPage_t: IDD_SPG_MAIN, è ò.ä.
 		LRESULT OnInitDialog_Main(HWND hWnd2);
+		LRESULT OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Cursor(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Startup(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
-		LRESULT OnInitDialog_Comspec(HWND hWnd2);
-		LRESULT OnInitDialog_Output(HWND hWnd2, bool abInitial);
+		LRESULT OnInitDialog_Comspec(HWND hWnd2, bool abInitial);
+		//LRESULT OnInitDialog_Output(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Selection(HWND hWnd2);
 		LRESULT OnInitDialog_Far(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Keys(HWND hWnd2, BOOL abInitial);

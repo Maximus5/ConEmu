@@ -970,21 +970,23 @@ struct Settings
 		//reg->Load(L"ToolbarAddSpace", nToolbarAddSpace);
 		int nToolbarAddSpace;
 		//reg->Load(L"ConWnd Width", wndWidth);
-		DWORD wndWidth;
+		DWORD _wndWidth;
 		//reg->Load(L"ConWnd Height", wndHeight);
-		DWORD wndHeight;
+		DWORD _wndHeight;
 		//reg->Load(L"16bit Height", ntvdmHeight);
 		DWORD ntvdmHeight; // в символах
 		//reg->Load(L"ConWnd X", wndX);
-		int wndX; // в пиксел€х
+		int _wndX; // в пиксел€х
 		//reg->Load(L"ConWnd Y", wndY);
-		int wndY; // в пиксел€х
+		int _wndY; // в пиксел€х
 		//reg->Load(L"WindowMode", WindowMode); if (WindowMode!=rFullScreen && WindowMode!=rMaximized && WindowMode!=rNormal) WindowMode = rNormal;
-		DWORD WindowMode;
+		DWORD _WindowMode;
 		//reg->Load(L"Cascaded", wndCascade);
 		bool wndCascade;
 		//reg->Load(L"AutoSaveSizePos", isAutoSaveSizePos);
 		bool isAutoSaveSizePos;
+		//reg->Load(L"UseCurrentSizePos", isUseCurrentSizePos);
+		bool isUseCurrentSizePos; // Show in settings dialog and save current window size/pos
 
 		bool isIntegralSize();
 
@@ -1164,9 +1166,12 @@ struct Settings
 		DWORD nAffinity;
 
 		//reg->Load(L"UseInjects", isUseInjects);
-		bool isUseInjects; // 0 - off, 1 - always. Note, Root process is infiltrated always.
+		BYTE isUseInjects; // 0 - off, 1 - always, 2 - only executable. Note, Root process is infiltrated always.
 		//reg->Load(L"ProcessAnsi", isProcessAnsi);
 		bool isProcessAnsi; // ANSI X3.64 & XTerm-256-colors Support
+		//reg->Load(L"UseClink", mb_UseClink);
+		bool mb_UseClink; // использовать расширение командной строки (ReadConsole)
+		bool isUseClink();
 		//reg->Load(L"PortableReg", isPortableReg);
 		bool isPortableReg;
 

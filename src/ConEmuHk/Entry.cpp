@@ -872,6 +872,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			gfGetRealConsoleWindow = GetConsoleWindow;
 			user = (UserImp*)calloc(1, sizeof(*user));
 			GetMainThreadId(); // Инициализировать gnHookMainThreadId
+			gcchLastWriteConsoleMax = 4096;
+			gpszLastWriteConsole = (wchar_t*)calloc(gcchLastWriteConsoleMax,sizeof(*gpszLastWriteConsole));
 
 			#ifdef _DEBUG
 			gAllowAssertThread = am_Pipe;

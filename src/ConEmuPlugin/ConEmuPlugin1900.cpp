@@ -817,9 +817,9 @@ void ExitFARW1900(void)
 	ShutdownPluginStep(L"ExitFARW1900 - done");
 }
 
-int ShowMessageW1900(int aiMsg, int aiButtons)
+int ShowMessageW1900(LPCWSTR asMsg, int aiButtons, bool bWarning)
 {
-	if (!InfoW1900 || !InfoW1900->Message || !InfoW1900->GetMsg)
+	if (!InfoW1900 || !InfoW1900->Message)
 		return -1;
 
 	GUID lguid_Msg = { /* aba0df6c-163f-4950-9029-a3f595c1c351 */
@@ -828,8 +828,16 @@ int ShowMessageW1900(int aiMsg, int aiButtons)
 	    0x4950,
 	    {0x90, 0x29, 0xa3, 0xf5, 0x95, 0xc1, 0xc3, 0x51}
 	};
-	return InfoW1900->Message(&guid_ConEmu, &lguid_Msg, FMSG_ALLINONE1900|FMSG_MB_OK|FMSG_WARNING, NULL,
-	                         (const wchar_t * const *)InfoW1900->GetMsg(&guid_ConEmu,aiMsg), 0, aiButtons);
+	return InfoW1900->Message(&guid_ConEmu, &lguid_Msg, FMSG_ALLINONE1900|FMSG_MB_OK|(bWarning ? FMSG_WARNING : 0), NULL,
+	                         (const wchar_t * const *)asMsg, 0, aiButtons);
+}
+
+int ShowMessageW1900(int aiMsg, int aiButtons)
+{
+	if (!InfoW1900 || !InfoW1900->Message || !InfoW1900->GetMsg)
+		return -1;
+
+	return ShowMessageW1900(InfoW1900->GetMsg(&guid_ConEmu,aiMsg), aiButtons, true);
 }
 
 LPCWSTR GetMsgW1900(int aiMsg)

@@ -73,6 +73,7 @@ extern HANDLE ghStdOutHandle;
 extern wchar_t gsInitConTitle[512];
 /* ************ Globals for SetHook ************ */
 
+
 HANDLE ghLastAnsiCapable = NULL;
 HANDLE ghLastAnsiNotCapable = NULL;
 
@@ -495,6 +496,14 @@ BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 	BOOL lbRc = FALSE;
 	//ExtWriteTextParm wrt = {sizeof(wrt), ewtf_None, hConsoleOutput};
 	bool bIsConOut = false;
+
+	// Store prompt(?) for clink
+	if (nNumberOfCharsToWrite && lpBuffer && gpszLastWriteConsole && gcchLastWriteConsoleMax)
+	{
+		size_t cchMax = min(gcchLastWriteConsoleMax-1,nNumberOfCharsToWrite);
+		gpszLastWriteConsole[cchMax] = 0;
+		wmemmove(gpszLastWriteConsole, (const wchar_t*)lpBuffer, cchMax);
+	}
 
 	#ifdef DUMP_WRITECONSOLE_LINES
 	wchar_t szDbg[120], *pch;

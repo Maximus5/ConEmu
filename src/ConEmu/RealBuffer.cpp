@@ -1150,7 +1150,7 @@ BOOL CRealBuffer::PreInit()
 	RECT rcCon;
 
 	if (gpConEmu->isIconic())
-		rcCon = MakeRect(gpSet->wndWidth, gpSet->wndHeight);
+		rcCon = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
 	else
 		rcCon = gpConEmu->CalcRect(CER_CONSOLE, mp_RCon->mp_VCon);
 
@@ -3618,6 +3618,18 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					break; // Пока висит диалог поиска - буфер не закрывать!
 				}
 				mp_RCon->SetActiveBuffer(rbt_Primary);
+			}
+		}
+		else if (messg == WM_KEYDOWN)
+		{
+			if ((wParam == VK_NEXT) || (wParam == VK_PRIOR))
+			{
+				gpConEmu->key_BufferScroll(false, wParam, mp_RCon);
+			}
+			else if (((m_Type != rbt_Selection) && (m_Type != rbt_Find)) // в режиме выделения стрелки трогать не будем
+					&& ((wParam == VK_UP) || (wParam == VK_DOWN)))
+			{
+				gpConEmu->key_BufferScroll(false, wParam, mp_RCon);
 			}
 		}
 		break;

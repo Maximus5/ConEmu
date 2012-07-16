@@ -38,6 +38,8 @@
 	<?define Guid.SetProgress.cmd = "EEB001C1-D25F-46D7-95C1-9BF980046B61" ?>
 	<?define Guid.Command_Processor.reg = "24F69FDE-C0DD-48C4-AAFF-ECB2146F6E32" ?>
 	<?define Guid.Command_Processor_Off.reg = "DA4661C7-FD43-4A42-8EF0-1A0FC7CC2978" ?>
+	<!-- clink -->
+	<?define Guid.clink_readme.txt = "5239554A-1D98-43B1-AFD6-1C8384C1D4E3" ?>
 	<!-- DosBox -->
 	<?define Guid.DosBox_Sample.conf = "686C782C-0AC2-4BE8-AFEE-BFA9BDCF845E" ?>
 	<!-- Portable Reg -->

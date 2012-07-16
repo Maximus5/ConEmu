@@ -146,37 +146,19 @@ BEGIN
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,70,36,8
     CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,57,70,47,8
     CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,110,70,48,8
-    GROUPBOX        "Console size and Window position",IDC_STATIC,3,96,319,59
-    EDITTEXT        tWndWidth,35,121,39,12,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tWndHeight,115,121,39,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,12,108,38,8
-    CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,55,108,48,8
-    CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,108,108,49,8
-    PUSHBUTTON      "Apply",cbApplyPos,278,137,39,12
-    RTEXT           "X:",IDC_STATIC,201,123,9,8
-    EDITTEXT        tWndX,216,121,39,12,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tWndY,278,121,39,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,240,108,32,8
-    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,276,108,41,8
-    CONTROL         "Auto save window size and position on exit",cbAutoSaveSizePos,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,139,166,10
-    GROUPBOX        "",IDC_STATIC,4,161,319,67
-    CONTROL         "Back&ground image (bmp, jpg, png):",cbBgImage,"Button",BS_AUTO3STATE | WS_TABSTOP,10,161,128,8
-    LTEXT           "Path:",IDC_STATIC,10,175,18,8
-    EDITTEXT        tBgImage,34,173,261,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",bBgImage,299,173,16,12
-    LTEXT           "Darkening:",IDC_STATIC,10,192,36,8
-    CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,191,228,12
-    EDITTEXT        tDarker,285,191,30,12,ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "Replace color indexes:",IDC_STATIC,10,212,77,8
-    EDITTEXT        tBgImageColors,88,210,43,12,ES_AUTOHSCROLL
-    CONTROL         "Allow plugins",cbBgAllowPlugin,"Button",BS_AUTO3STATE | WS_TABSTOP,141,212,57,10
-    RTEXT           "Placement:",stBgPlacement,200,211,50,8
-    COMBOBOX        lbBgPlacement,254,209,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Y:",IDC_STATIC,262,123,12,8
-    RTEXT           "Width:",IDC_STATIC,5,123,27,8
-    RTEXT           "Height:",IDC_STATIC,83,123,29,8
-    RTEXT           "Position:",IDC_STATIC,197,108,33,8
+    GROUPBOX        "",IDC_STATIC,4,95,319,67
+    CONTROL         "Back&ground image (bmp, jpg, png):",cbBgImage,"Button",BS_AUTO3STATE | WS_TABSTOP,10,95,128,8
+    LTEXT           "Path:",IDC_STATIC,10,109,18,8
+    EDITTEXT        tBgImage,34,107,261,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",bBgImage,299,107,16,12
+    LTEXT           "Darkening:",IDC_STATIC,10,126,36,8
+    CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,125,228,12
+    EDITTEXT        tDarker,285,125,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Replace color indexes:",IDC_STATIC,10,146,77,8
+    EDITTEXT        tBgImageColors,88,144,43,12,ES_AUTOHSCROLL
+    CONTROL         "Allow plugins",cbBgAllowPlugin,"Button",BS_AUTO3STATE | WS_TABSTOP,141,146,57,10
+    RTEXT           "Placement:",stBgPlacement,200,145,50,8
+    COMBOBOX        lbBgPlacement,254,143,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_SPG_WNDSIZEPOS DIALOGEX 0, 0, 328, 235
@@ -184,24 +166,33 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Console size and Window position",IDC_STATIC,3,1,319,128
-    EDITTEXT        tWndWidth,35,26,39,12,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tWndHeight,115,26,39,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,12,13,38,8
-    CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,55,13,48,8
-    CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,108,13,49,8
-    PUSHBUTTON      "Apply",cbApplyPos,276,110,39,12
-    RTEXT           "X:",IDC_STATIC,201,28,9,8
-    EDITTEXT        tWndX,216,26,39,12,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tWndY,278,26,39,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,240,13,32,8
-    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,276,13,41,8
+    GROUPBOX        "Console size and Window position",IDC_STATIC,4,1,319,131
+    EDITTEXT        tWndWidth,42,52,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tWndHeight,122,52,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,39,38,8
+    CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,60,39,48,8
+    CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,113,39,49,8
+    PUSHBUTTON      "Apply",cbApplyPos,275,10,39,12
+    RTEXT           "X:",IDC_STATIC,192,54,9,8
+    EDITTEXT        tWndX,206,52,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tWndY,268,52,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,193,39,32,8
+    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,229,39,41,8
     CONTROL         "Auto save window size and position on exit",cbAutoSaveSizePos,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,113,166,10
-    RTEXT           "Y:",IDC_STATIC,262,28,12,8
-    RTEXT           "Width:",IDC_STATIC,5,28,27,8
-    RTEXT           "Height:",IDC_STATIC,83,28,29,8
-    RTEXT           "Position:",IDC_STATIC,197,13,33,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,115,166,8
+    RTEXT           "Y:",IDC_STATIC,252,54,12,8
+    RTEXT           "Width:",IDC_STATIC,14,54,25,8
+    RTEXT           "Height:",IDC_STATIC,90,54,29,8
+    GROUPBOX        "Window size (cells)",IDC_STATIC,10,26,166,46
+    GROUPBOX        "Window position (pixels)",IDC_STATIC,185,26,130,46
+    GROUPBOX        "Console buffer height",IDC_STATIC,10,75,166,32
+    CONTROL         "Long console output",cbLongOutput,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,89,83,8
+    EDITTEXT        tLongOutputHeight,122,87,39,12,ES_AUTOHSCROLL
+    RTEXT           "16bit height:",IDC_STATIC,217,89,44,8
+    COMBOBOX        lbNtvdmHeight,265,86,43,30,CBS_DROPDOWNLIST | WS_TABSTOP
+    CONTROL         "Show && store current window size and position",cbUseCurrentSizePos,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,13,258,8
+    GROUPBOX        "DOS applications (ntvdm)",IDC_STATIC,185,75,130,32
 END
 
 IDD_SPG_CURSOR DIALOGEX 0, 0, 328, 235
@@ -508,7 +499,7 @@ BEGIN
     CONTROL         "Fix Alt on AltTab/AltF9",cbFixAltOnAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,78,117,8
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,43,89,8
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,54,89,8
-    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,43,89,8
+    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTO3STATE | WS_TABSTOP,132,43,89,8
     CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,66,76,8
     PUSHBUTTON      "...",bDosBoxSettings,90,64,13,11
     CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,43,74,8
@@ -531,7 +522,7 @@ BEGIN
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,132,129,89,8
     CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,117,89,8
     CONTROL         "Snap to desktop edges",cbSnapToDesktopEdges,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,129,89,8
-    CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,271,83,50,8
+    CONTROL         "Tabs in window caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,265,94,50,8
     GROUPBOX        "Caption and border options",gbFeatureCaption,4,171,319,60
     RTEXT           "Frame width:",IDC_STATIC,219,201,54,8
     RTEXT           "Appear delay:",IDC_STATIC,129,216,50,8
@@ -549,6 +540,7 @@ BEGIN
     EDITTEXT        tScrollDisappearDelay,277,153,40,12,ES_AUTOHSCROLL
     RTEXT           "Pad size (pix):",IDC_STATIC,219,183,54,8
     EDITTEXT        tPadSize,277,181,40,12,ES_AUTOHSCROLL
+    CONTROL         "Use Clink in prompt",cbUseClink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,78,87,8
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235
@@ -556,7 +548,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Used command processor",gbComspec,4,1,319,96
+    GROUPBOX        "Used command processor",gbComspec,4,1,319,117
     CONTROL         "Auto (tcc - if installed, %ComSpec% - otherwise)",rbComspecAuto,
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,9,12,178,8
     CONTROL         "%ComSpec% (env.var.)",rbComspecEnvVar,"Button",BS_AUTORADIOBUTTON,189,12,98,8
@@ -572,6 +564,8 @@ BEGIN
     CONTROL         "Set ComSpec environment variable for child processes to 'tcc.exe'",cbComspecUpdateEnv,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,84,309,8
     PUSHBUTTON      "Test",cbComspecTest,269,60,50,14
+    LTEXT           "Cmd.exe output codepage:",IDC_STATIC,11,100,94,8
+    COMBOBOX        lbCmdOutputCP,108,98,81,30,CBS_DROPDOWNLIST | WS_TABSTOP
 END
 
 IDD_SPG_CMDOUTPUT DIALOGEX 0, 0, 328, 235
@@ -1043,7 +1037,7 @@ BEGIN
     LTEXT           "You can change this later on 'Keys' page of Settings dialog later",stUseKeyboardHooksFast2,20,45,292,8,SS_NOPREFIX
     GROUPBOX        "",IDC_STATIC,3,57,316,57
     CONTROL         " Inject ConEmuHk.dll into all processes started in ConEmu tabs",cbInjectConEmuHkFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,64,295,10
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,8,64,295,10
     LTEXT           "Required for some features (-new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (dialogs and menus behind of ConEmu window, chcp hungs, and so on...)",stInjectConEmuHkFast1,20,75,292,25
     LTEXT           "You can change this later on 'Features' page of Settings dialog later",stInjectConEmuHkFast2,20,101,292,8,SS_NOPREFIX
     GROUPBOX        "",IDC_STATIC,3,114,316,35

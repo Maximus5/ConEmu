@@ -18,6 +18,7 @@
 "&~. Execute ConEmu macro"
 "&7. Attach to ConEmu"
 "&8. Start ConEmu debug"
+"&9. Console information"
 "ConEmu GUI Macro"
 "&Macro text:"
 "&Result:"

@@ -301,6 +301,12 @@
       </Component>
     </DirectoryRef>
 
+    <DirectoryRef Id="clink">
+      <Component Id="clink_readme.txt" Guid="$(var.Guid.clink_readme.txt)" Win64="$(var.Win64)">
+        <File Id="clink_readme.txt" Source="..\..\Release\ConEmu\clink\Readme.txt"  KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
     <!--
     <DirectoryRef Id="Portable">
       <Component Id="Portable_Readme.txt" Guid="$(var.Guid.Portable.Readme.txt)" Win64="$(var.Win64)">

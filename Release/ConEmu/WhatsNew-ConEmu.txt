@@ -10,11 +10,26 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.16
+[!] Настройка размера и положения вынесена на отдельную вкладку 'Size & Pos'.
+    Настройка 'Long console output' перенесена на вкладку 'Size & Pos'.
+    Настройка 'Cmd output codepage' перенесена на вкладку 'ComSpec'.
+[+] Добавлена настройка 'Show & store current window size and position'.
+    По умолчанию включена. При отключении флажка значения в полях X/Y/Width/Height
+    не обновляются автоматически (показываются значения сохраненные пользователем).
+[+] Кнопка 'Apply' в режиме 'Normal' не меняла текущее положение окна (X/Y).
 [%] Issue 638: bincmp fails.
 [%] После Apps+F и открытия диалога выскакивало контекстное меню.
 [+] Добавлена палитра <PowerShell>.
 [+] ConEmu Inside: Windows 2000 and Windows 2003 supported.
 [%] Опять работаем в Windows 2000. Режим Alternative mode attach в Windows 2000 не доступен.
+[+] В альтернативном буфере (Win+A) кнопки PgUp/PgDn/Up/Down скроллируют окно (не нужно держать Ctrl).
+[+] На вкладке «Features» добавлен флажок «Use Clink in prompt». Clink - bash style completion.
+    Качать здесь версию 0.1.1: http://clink.googlecode.com
+    Распаковывать сюда: %ConEmuBaseDir%\clink
+    Учтите, что архив clink содержит подпапки. Файлы clink_dll_x86.dll и clink_dll_x64.dll
+    должны лежать в папке ConEmu\clink.
+    Опция экспериментальная, может быть изменена или удалена в следующих версиях ;)
 
 
 2012.07.11

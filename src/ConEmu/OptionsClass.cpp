@@ -652,11 +652,12 @@ void CSettings::InitVars_Pages()
 	{
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
 		{IDD_SPG_MAIN,        0, L"Main",           thi_Main/*,    OnInitDialog_Main*/},
+		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos/*, OnInitDialog_WndPosSize*/},
 		{IDD_SPG_UPDATE,      1, L"Update",         thi_Update/*,  OnInitDialog_Update*/},
 		{IDD_SPG_STARTUP,     0, L"Startup",        thi_Startup/*, OnInitDialog_Startup*/},
 		{IDD_SPG_CMDTASKS,    1, L"Tasks",          thi_Tasks/*,   OnInitDialog_CmdTasks*/},
 		{IDD_SPG_COMSPEC,     1, L"ComSpec",        thi_Comspec/*, OnInitDialog_Comspec*/},
-		{IDD_SPG_CMDOUTPUT,   1, L"Output",         thi_Output/*,  OnInitDialog_Output*/},
+		//{IDD_SPG_CMDOUTPUT, 1, L"Output",         thi_Output/*,  OnInitDialog_Output*/},
 		{IDD_SPG_FEATURE,     0, L"Features",       thi_Ext/*,     OnInitDialog_Ext*/},
 		{IDD_SPG_CURSOR,      1, L"Text cursor",    thi_Cursor/*,  OnInitDialog_Cursor*/},
 		{IDD_SPG_COLORS,      1, L"Colors",         thi_Colors/*,  OnInitDialog_Color*/},
@@ -801,19 +802,79 @@ void CSettings::SettingsLoaded()
 	isMonospaceSelected = gpSet->isMonospace ? gpSet->isMonospace : 1; // запомнить, чтобы выбирать то что нужно при смене шрифта
 
 	// Стили окна
-	if (!gpSet->WindowMode)
-	{
-		// Иначе окно вообще не отображается
-		_ASSERTE(gpSet->WindowMode!=0);
-		gpSet->WindowMode = rNormal;
-	}
+	// Т.к. вызывается из Settings::LoadSettings() то проверка на валидность уже не нужно, оставим только ассерт
+	_ASSERTE(gpSet->_WindowMode == rNormal || gpSet->_WindowMode == rMaximized || gpSet->_WindowMode == rFullScreen);
+
 	if (ghWnd == NULL)
 	{
-		gpConEmu->WindowMode = gpSet->WindowMode;
+		gpConEmu->WindowMode = gpSet->_WindowMode;
 	}
 	else
 	{
-		gpConEmu->SetWindowMode(gpSet->WindowMode);
+		gpConEmu->SetWindowMode(gpSet->_WindowMode);
+	}
+
+	if (ghWnd == NULL)
+	{
+		gpConEmu->wndX = gpSet->_wndX;
+		gpConEmu->wndY = gpSet->_wndY;
+		gpConEmu->wndWidth = gpSet->_wndWidth;
+		gpConEmu->wndHeight = gpSet->_wndHeight;
+	}
+
+	if (gpSet->wndCascade && (ghWnd == NULL))
+	{
+		// Сдвиг при каскаде
+		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
+		// Координаты и размер виртуальной рабочей области
+		RECT rcScreen = MakeRect(800,600);
+		int nMonitors = GetSystemMetrics(SM_CMONITORS);
+
+		if (nMonitors > 1)
+		{
+			// Размер виртуального экрана по всем мониторам
+			rcScreen.left = GetSystemMetrics(SM_XVIRTUALSCREEN); // may be <0
+			rcScreen.top  = GetSystemMetrics(SM_YVIRTUALSCREEN);
+			rcScreen.right = rcScreen.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			rcScreen.bottom = rcScreen.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+			TODO("Хорошо бы исключить из рассмотрения Taskbar...");
+		}
+		else
+		{
+			SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, 0);
+		}
+
+		HWND hPrev = FindWindow(VirtualConsoleClassMain, NULL);
+
+		while (hPrev)
+		{
+			/*if (Is Iconic(hPrev) || Is Zoomed(hPrev)) {
+				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
+				continue;
+			}*/
+			WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)}; // Workspace coordinates!!!
+
+			if (!GetWindowPlacement(hPrev, &wpl))
+			{
+				break;
+			}
+
+			// Screen coordinates!
+			RECT rcWnd; GetWindowRect(hPrev, &rcWnd);
+
+			if (wpl.showCmd == SW_HIDE || !IsWindowVisible(hPrev)
+			        || wpl.showCmd == SW_SHOWMINIMIZED || wpl.showCmd == SW_SHOWMAXIMIZED
+			        /* Max в режиме скрытия заголовка */
+			        || (wpl.rcNormalPosition.left<rcScreen.left || wpl.rcNormalPosition.top<rcScreen.top))
+			{
+				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
+				continue;
+			}
+
+			gpConEmu->wndX = rcWnd.left + nShift;
+			gpConEmu->wndY = rcWnd.top + nShift;
+			break; // нашли, сдвинулись, выходим
+		}
 	}
 
 	MCHKHEAP
@@ -1425,7 +1486,22 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 	CheckDlgButton(hWnd2, cbFixFarBorders, BST(gpSet->isFixFarBorders));
 
-	if (gpConEmu->isFullScreen())
+	mn_LastChangingFontCtrlId = 0;
+	RegisterTipsFor(hWnd2);
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
+{
+	_ASSERTE(mh_Tabs[thi_SizePos] == hWnd2);
+
+	CheckDlgButton(hWnd2, cbAutoSaveSizePos, gpSet->isAutoSaveSizePos);
+
+	CheckDlgButton(hWnd2, cbUseCurrentSizePos, gpSet->isUseCurrentSizePos);
+
+	if (!gpSet->isUseCurrentSizePos)
+		CheckRadioButton(hWnd2, rNormal, rFullScreen, gpSet->_WindowMode);
+	else if (gpConEmu->isFullScreen())
 		CheckRadioButton(hWnd2, rNormal, rFullScreen, rFullScreen);
 	else if (gpConEmu->isZoomed())
 		CheckRadioButton(hWnd2, rNormal, rFullScreen, rMaximized);
@@ -1436,43 +1512,36 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	SendDlgItemMessage(hWnd2, tWndWidth, EM_SETLIMITTEXT, 3, 0);
 	//swprintf_c(temp, L"%i", wndHeight);  SetDlgItemText(hWnd2, tWndHeight, temp);
 	SendDlgItemMessage(hWnd2, tWndHeight, EM_SETLIMITTEXT, 3, 0);
-	UpdateSize(gpSet->wndWidth, gpSet->wndHeight);
+	UpdateSize(gpConEmu->wndWidth, gpConEmu->wndHeight);
 	EnableWindow(GetDlgItem(hWnd2, cbApplyPos), FALSE);
 	SendDlgItemMessage(hWnd2, tWndX, EM_SETLIMITTEXT, 6, 0);
 	SendDlgItemMessage(hWnd2, tWndY, EM_SETLIMITTEXT, 6, 0);
 	MCHKHEAP
 
-	if (!gpConEmu->isFullScreen() && !gpConEmu->isZoomed())
-	{
-		//EnableWindow(GetDlgItem(hWnd2, tWndWidth), true);
-		//EnableWindow(GetDlgItem(hWnd2, tWndHeight), true);
-		//EnableWindow(GetDlgItem(hWnd2, tWndX), true);
-		//EnableWindow(GetDlgItem(hWnd2, tWndY), true);
-		//EnableWindow(GetDlgItem(hWnd2, rFixed), true);
-		//EnableWindow(GetDlgItem(hWnd2, rCascade), true);
+	UpdatePos(gpConEmu->wndX, gpConEmu->wndY, true);
 
-		if (!gpConEmu->isIconic())
-		{
-			RECT rc; GetWindowRect(ghWnd, &rc);
-			gpSet->wndX = rc.left; gpSet->wndY = rc.top;
-		}
-	}
-	//else
-	//{
-	//	EnableWindow(GetDlgItem(hWnd2, tWndWidth), false);
-	//	EnableWindow(GetDlgItem(hWnd2, tWndHeight), false);
-	//	EnableWindow(GetDlgItem(hWnd2, tWndX), false);
-	//	EnableWindow(GetDlgItem(hWnd2, tWndY), false);
-	//	EnableWindow(GetDlgItem(hWnd2, rFixed), false);
-	//	EnableWindow(GetDlgItem(hWnd2, rCascade), false);
-	//}
-
-	UpdatePos(gpSet->wndX, gpSet->wndY);
 	CheckRadioButton(hWnd2, rCascade, rFixed, gpSet->wndCascade ? rCascade : rFixed);
 
-	CheckDlgButton(hWnd2, cbAutoSaveSizePos, gpSet->isAutoSaveSizePos);
 
-	mn_LastChangingFontCtrlId = 0;
+	CheckDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
+	TODO("Надо бы увеличить, но нужно сервер допиливать");
+	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 4, 0);
+	SetDlgItemInt(hWnd2, tLongOutputHeight, gpSet->DefaultBufferHeight, FALSE);
+	//EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
+
+
+	// 16bit Height
+	if (abInitial)
+	{
+		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"Auto");
+		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"25 lines");
+		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"28 lines");
+		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"43 lines");
+		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"50 lines");
+	}
+	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_SETCURSEL, !gpSet->ntvdmHeight ? 0 :
+	                   ((gpSet->ntvdmHeight == 25) ? 1 : ((gpSet->ntvdmHeight == 28) ? 2 : ((gpSet->ntvdmHeight == 43) ? 3 : 4))), 0); //-V112
+
 	RegisterTipsFor(hWnd2);
 	return 0;
 }
@@ -1756,6 +1825,8 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	CheckDlgButton(hWnd2, cbProcessAnsi, gpSet->isProcessAnsi);
 
+	CheckDlgButton(hWnd2, cbUseClink, gpSet->isUseClink());
+
 	CheckDlgButton(hWnd2, cbDosBox, gpConEmu->mb_DosBoxExists);
 	// изменение пока запрещено
 	// или чтобы ругнуться, если DosBox не установлен
@@ -1797,7 +1868,7 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2)
+LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 {
 	_ASSERTE((rbComspecAuto+cst_Explicit)==rbComspecExplicit && (rbComspecAuto+cst_Cmd)==rbComspecCmd  && (rbComspecAuto+cst_EnvVar)==rbComspecEnvVar);
 	CheckRadioButton(hWnd2, rbComspecAuto, rbComspecExplicit, rbComspecAuto+gpSet->ComSpec.csType);
@@ -1810,44 +1881,54 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2)
 
 	CheckDlgButton(hWnd2, cbComspecUpdateEnv, gpSet->ComSpec.isUpdateEnv ? BST_CHECKED : BST_UNCHECKED);
 
-	RegisterTipsFor(hWnd2);
-	return 0;
-}
-
-LRESULT CSettings::OnInitDialog_Output(HWND hWnd2, bool abInitial)
-{
-	CheckDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
-	
-	wchar_t sz[16];
-	TODO("Надо бы увеличить, но нужно сервер допиливать");
-	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
-	SetDlgItemText(hWnd2, tLongOutputHeight, _ltow(gpSet->DefaultBufferHeight, sz, 10));
-	EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
-
-	// 16bit Height
-	if (abInitial)
-	{
-		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"Auto");
-		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"25 lines");
-		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"28 lines");
-		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"43 lines");
-		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"50 lines");
-	}
-	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_SETCURSEL, !gpSet->ntvdmHeight ? 0 :
-	                   ((gpSet->ntvdmHeight == 25) ? 1 : ((gpSet->ntvdmHeight == 28) ? 2 : ((gpSet->ntvdmHeight == 43) ? 3 : 4))), 0); //-V112
 	// Cmd.exe output cp
 	if (abInitial)
 	{
 		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Undefined");
 		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Automatic");
-		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Unicode");
-		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM");
+		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Unicode (/U)");
+		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM (/A)");
 	}
 	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_SETCURSEL, gpSet->nCmdOutputCP, 0);
 
 	RegisterTipsFor(hWnd2);
 	return 0;
 }
+
+//LRESULT CSettings::OnInitDialog_Output(HWND hWnd2, bool abInitial)
+//{
+//	CheckDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
+//	
+//	wchar_t sz[16];
+//	TODO("Надо бы увеличить, но нужно сервер допиливать");
+//	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
+//	SetDlgItemText(hWnd2, tLongOutputHeight, _ltow(gpSet->DefaultBufferHeight, sz, 10));
+//	EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
+//
+//	// 16bit Height
+//	if (abInitial)
+//	{
+//		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"Auto");
+//		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"25 lines");
+//		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"28 lines");
+//		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"43 lines");
+//		SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"50 lines");
+//	}
+//	SendDlgItemMessage(hWnd2, lbNtvdmHeight, CB_SETCURSEL, !gpSet->ntvdmHeight ? 0 :
+//	                   ((gpSet->ntvdmHeight == 25) ? 1 : ((gpSet->ntvdmHeight == 28) ? 2 : ((gpSet->ntvdmHeight == 43) ? 3 : 4))), 0); //-V112
+//	// Cmd.exe output cp
+//	if (abInitial)
+//	{
+//		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Undefined");
+//		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Automatic");
+//		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Unicode");
+//		SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM");
+//	}
+//	SendDlgItemMessage(hWnd2, lbCmdOutputCP, CB_SETCURSEL, gpSet->nCmdOutputCP, 0);
+//
+//	RegisterTipsFor(hWnd2);
+//	return 0;
+//}
 
 LRESULT CSettings::OnInitDialog_Selection(HWND hWnd2)
 {
@@ -3479,8 +3560,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				bool isShiftPressed = isPressed(VK_SHIFT);
 
 				// были изменения в полях размера/положения?
-				if (mh_Tabs[thi_Main] && IsWindowEnabled(GetDlgItem(mh_Tabs[thi_Main], cbApplyPos)))
-					OnButtonClicked(mh_Tabs[thi_Main], cbApplyPos, 0);
+				if (mh_Tabs[thi_SizePos] && IsWindowEnabled(GetDlgItem(mh_Tabs[thi_SizePos], cbApplyPos)))
+					OnButtonClicked(mh_Tabs[thi_SizePos], cbApplyPos, 0);
 
 				if (gpSet->SaveSettings())
 				{
@@ -3510,18 +3591,35 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				if (IsChecked(hWnd2, rNormal) == BST_CHECKED)
 				{
-					DWORD newX, newY;
-					wchar_t temp[MAX_PATH];
-					GetDlgItemText(hWnd2, tWndWidth, temp, countof(temp));  newX = klatoi(temp);
-					GetDlgItemText(hWnd2, tWndHeight, temp, countof(temp)); newY = klatoi(temp);
+					int newX, newY;
+					DWORD newW, newH;
+					//wchar_t temp[MAX_PATH];
+					//GetDlgItemText(hWnd2, tWndWidth, temp, countof(temp));  newW = klatoi(temp);
+					//GetDlgItemText(hWnd2, tWndHeight, temp, countof(temp)); newH = klatoi(temp);
+					BOOL lbOk;
+
+					newW = GetDlgItemInt(hWnd2, tWndWidth, &lbOk, FALSE);
+					if (!lbOk) newW = gpConEmu->wndWidth;
+					newH = GetDlgItemInt(hWnd2, tWndHeight, &lbOk, FALSE);
+					if (!lbOk) newH = gpConEmu->wndHeight;
+
+					newX = (int)GetDlgItemInt(hWnd2, tWndX, &lbOk, TRUE);
+					if (!lbOk) newX = gpConEmu->wndX;
+					newY = (int)GetDlgItemInt(hWnd2, tWndY, &lbOk, TRUE);
+					if (!lbOk) newY = gpConEmu->wndY;
+
 					SetFocus(GetDlgItem(hWnd2, rNormal));
 
 					if (gpConEmu->isZoomed() || gpConEmu->isIconic() || gpConEmu->isFullScreen())
 						gpConEmu->SetWindowMode(rNormal);
 
+					SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+
 					// Установить размер
 					TODO("DoubleView: непонятно что делать. То ли на два делить?");
-					gpConEmu->SetConsoleWindowSize(MakeCoord(newX, newY), true, NULL);
+					gpConEmu->SetConsoleWindowSize(MakeCoord(newW, newH), true, NULL);
+
+					SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 				}
 				else if (IsChecked(hWnd2, rMaximized) == BST_CHECKED)
 				{
@@ -3547,6 +3645,15 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rCascade:
 		case rFixed:
 			gpSet->wndCascade = CB == rCascade;
+			break;
+		case cbUseCurrentSizePos:
+			gpSet->isUseCurrentSizePos = IsChecked(hWnd2, cbUseCurrentSizePos);
+			if (gpSet->isUseCurrentSizePos)
+			{
+				UpdateWindowMode(gpConEmu->WindowMode);
+				UpdatePos(gpConEmu->wndX, gpConEmu->wndY, true);
+				UpdateSize(gpConEmu->wndWidth, gpConEmu->wndHeight);
+			}
 			break;
 		case cbAutoSaveSizePos:
 			gpSet->isAutoSaveSizePos = IsChecked(hWnd2, cbAutoSaveSizePos);
@@ -3761,20 +3868,20 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				if (gpSet->isQuakeStyle && !bPrevStyle)
 				{
 					m_QuakePrevSize.bWasSaved = true;
-					m_QuakePrevSize.wndWidth = gpSet->wndWidth;
-					m_QuakePrevSize.wndHeight = gpSet->wndHeight;
-					m_QuakePrevSize.wndX = gpSet->wndX;
-					m_QuakePrevSize.wndY = gpSet->wndY;
+					m_QuakePrevSize.wndWidth = gpConEmu->wndWidth;
+					m_QuakePrevSize.wndHeight = gpConEmu->wndHeight;
+					m_QuakePrevSize.wndX = gpConEmu->wndX;
+					m_QuakePrevSize.wndY = gpConEmu->wndY;
 					m_QuakePrevSize.nFrame = gpSet->nHideCaptionAlwaysFrame;
 					m_QuakePrevSize.WindowMode = gpConEmu->WindowMode;
 					gpSet->nHideCaptionAlwaysFrame = 0;
 				}
 				else if (!gpSet->isQuakeStyle && m_QuakePrevSize.bWasSaved)
 				{
-					gpSet->wndWidth = m_QuakePrevSize.wndWidth;
-					gpSet->wndHeight = m_QuakePrevSize.wndHeight;
-					gpSet->wndX = m_QuakePrevSize.wndX;
-					gpSet->wndY = m_QuakePrevSize.wndY;
+					gpConEmu->wndWidth = m_QuakePrevSize.wndWidth;
+					gpConEmu->wndHeight = m_QuakePrevSize.wndHeight;
+					gpConEmu->wndX = m_QuakePrevSize.wndX;
+					gpConEmu->wndY = m_QuakePrevSize.wndY;
 					gpSet->nHideCaptionAlwaysFrame = m_QuakePrevSize.nFrame;
 					nNewWindowMode = m_QuakePrevSize.WindowMode;
 				}
@@ -4049,11 +4156,19 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			//	break;
 		case cbUseInjects:
 			gpSet->isUseInjects = IsChecked(hWnd2, cbUseInjects);
-			//if (gpSet->isUseInjects > BST_INDETERMINATE) gpSet->isUseInjects = BST_CHECKED;
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
 		case cbProcessAnsi:
 			gpSet->isProcessAnsi = IsChecked(hWnd2, cbProcessAnsi);
+			gpConEmu->OnGlobalSettingsChanged();
+			break;
+		case cbUseClink:
+			gpSet->mb_UseClink = IsChecked(hWnd2, cbUseClink);
+			if (gpSet->mb_UseClink && !gpSet->isUseClink())
+			{
+				CheckDlgButton(hWnd2, cbUseClink, BST_UNCHECKED);
+				MessageBox(L"Clink was not found in '%ConEmuBaseDir%\\clink'\nDownload and unpack clink files\nhttp://code.google.com/p/clink/", MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
+			}
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
 		case cbPortableRegistry:
@@ -5094,13 +5209,15 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		break;
 	} // case tBgImageColors:
 
+	case tWndX:
+	case tWndY:
 	case tWndWidth:
 	case tWndHeight:
 	{
 		if (IsChecked(hWnd2, rNormal) == BST_CHECKED)
 			EnableWindow(GetDlgItem(hWnd2, cbApplyPos), TRUE);
 		break;
-	} // case tWndWidth: case tWndHeight:
+	} // case tWndX: case tWndY: case tWndWidth: case tWndHeight:
 	
 	case tDarker:
 	{
@@ -6583,6 +6700,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_MAIN:
 			gpSetCls->OnInitDialog_Main(hWnd2);
 			break;
+		case IDD_SPG_WNDSIZEPOS:
+			gpSetCls->OnInitDialog_WndPosSize(hWnd2, true);
+			break;
 		case IDD_SPG_CURSOR:
 			gpSetCls->OnInitDialog_Cursor(hWnd2, TRUE);
 			break;
@@ -6593,11 +6713,11 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Ext(hWnd2);
 			break;
 		case IDD_SPG_COMSPEC:
-			gpSetCls->OnInitDialog_Comspec(hWnd2);
+			gpSetCls->OnInitDialog_Comspec(hWnd2, true);
 			break;
-		case IDD_SPG_CMDOUTPUT:
-			gpSetCls->OnInitDialog_Output(hWnd2, true);
-			break;
+		//case IDD_SPG_CMDOUTPUT:
+		//	gpSetCls->OnInitDialog_Output(hWnd2, true);
+		//	break;
 		case IDD_SPG_SELECTION:
 			gpSetCls->OnInitDialog_Selection(hWnd2);
 			break;
@@ -6664,6 +6784,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		switch (((ConEmuSetupPages*)lParam)->PageID)
 		{
 		case IDD_SPG_MAIN:    /*gpSetCls->OnInitDialog_Main(hWnd2);*/   break;
+		case IDD_SPG_WNDSIZEPOS:
+			gpSetCls->OnInitDialog_WndPosSize(hWnd2, false);
+			break;
 		case IDD_SPG_CURSOR:
 			gpSetCls->OnInitDialog_Cursor(hWnd2, FALSE);
 			break;
@@ -6671,10 +6794,12 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Startup(hWnd2, FALSE);
 			break;
 		case IDD_SPG_FEATURE: /*gpSetCls->OnInitDialog_Ext(hWnd2);*/    break;
-		case IDD_SPG_COMSPEC: /*gpSetCls->OnInitDialog_Comspec(hWnd2);*/break;
-		case IDD_SPG_CMDOUTPUT:
-			gpSetCls->OnInitDialog_Output(hWnd2, false);
+		case IDD_SPG_COMSPEC:
+			gpSetCls->OnInitDialog_Comspec(hWnd2, false);
 			break;
+		//case IDD_SPG_CMDOUTPUT:
+		//	gpSetCls->OnInitDialog_Output(hWnd2, false);
+		//	break;
 		case IDD_SPG_SELECTION: /*gpSetCls->OnInitDialog_Selection(hWnd2);*/    break;
 		case IDD_SPG_FEATURE_FAR:
 			gpSetCls->OnInitDialog_Far(hWnd2, FALSE);
@@ -8330,342 +8455,49 @@ void CSettings::OnSaveActivityLogFile(HWND hListView)
 	CloseHandle(hFile);
 }
 
-//void CSettings::CenterDialog(HWND hWnd2)
-//{
-//	RECT rcParent, rc;
-//	GetWindowRect(ghOpWnd, &rcParent);
-//	GetWindowRect(hWnd2, &rc);
-//	MoveWindow(hWnd2,
-//		(rcParent.left+rcParent.right-rc.right+rc.left)/2,
-//		(rcParent.top+rcParent.bottom-rc.bottom+rc.top)/2,
-//		rc.right - rc.left, rc.bottom - rc.top, TRUE);
-//}
-
-//bool CSettings::isKeyboardHooks()
-//{
-////	#ifndef _DEBUG
-//	// Для WinXP это не было нужно
-//	if (gOSVer.dwMajorVersion < 6)
-//	{
-//		return false;
-//	}
-//
-////	#endif
-//
-//	if (gpSet->m_isKeyboardHooks == 0)
-//	{
-//		// Вопрос пользователю еще не задавали (это на старте, окно еще и не создано)
-//		int nBtn = MessageBox(NULL,
-//		                      L"Do You want to use Win-Number combination for \n"
-//		                      L"switching between consoles (Multi Console feature)? \n\n"
-//		                      L"If You choose 'Yes' - ConEmu will install keyboard hook. \n"
-//		                      L"So, You must allow that in antiviral software (such as AVP). \n\n"
-//		                      L"You can change behavior later via Settings->Features->\n"
-//		                      L"'Install keyboard hooks (Vista & Win7)' check box, or\n"
-//		                      L"'KeyboardHooks' value in ConEmu settings (registry or xml)."
-//		                      , gpConEmu->GetDefaultTitle(), MB_YESNOCANCEL|MB_ICONQUESTION);
-//
-//		if (nBtn == IDCANCEL)
-//		{
-//			gpSet->m_isKeyboardHooks = 2; // NO
-//		}
-//		else
-//		{
-//			gpSet->m_isKeyboardHooks = (nBtn == IDYES) ? 1 : 2;
-//			SettingsBase* reg = CreateSettings();
-//
-//			if (!reg)
-//			{
-//				_ASSERTE(reg!=NULL);
-//			}
-//			else
-//			{
-//				if (reg->OpenKey(ConfigPath, KEY_WRITE))
-//				{
-//					reg->Save(L"KeyboardHooks", gpSet->m_isKeyboardHooks);
-//					reg->CloseKey();
-//				}
-//
-//				delete reg;
-//			}
-//		}
-//	}
-//
-//	return (gpSet->m_isKeyboardHooks == 1);
-//}
-
-//bool CSettings::IsHostkey(WORD vk)
-//{
-//	for(int i=0; i < 15 && mn_HostModOk[i]; i++)
-//		if (mn_HostModOk[i] == vk)
-//			return true;
-//
-//	return false;
-//}
-
-//// Если есть vk - заменить на vkNew
-//void CSettings::ReplaceHostkey(BYTE vk, BYTE vkNew)
-//{
-//	for(int i = 0; i < 15; i++)
-//	{
-//		if (gpSet->mn_HostModOk[i] == vk)
-//		{
-//			gpSet->mn_HostModOk[i] = vkNew;
-//			return;
-//		}
-//	}
-//}
-//
-//void CSettings::AddHostkey(BYTE vk)
-//{
-//	for(int i = 0; i < 15; i++)
-//	{
-//		if (gpSet->mn_HostModOk[i] == vk)
-//			break; // уже есть
-//
-//		if (!gpSet->mn_HostModOk[i])
-//		{
-//			gpSet->mn_HostModOk[i] = vk; // добавить
-//			break;
-//		}
-//	}
-//}
-//
-//BYTE CSettings::CheckHostkeyModifier(BYTE vk)
-//{
-//	// Если передан VK_NULL
-//	if (!vk)
-//		return 0;
-//
-//	switch (vk)
-//	{
-//		case VK_LWIN: case VK_RWIN:
-//
-//			if (gpSet->IsHostkey(VK_RWIN))
-//				ReplaceHostkey(VK_RWIN, VK_LWIN);
-//
-//			vk = VK_LWIN; // Сохраняем только Левый-Win
-//			break;
-//		case VK_APPS:
-//			break; // Это - ок
-//		case VK_LSHIFT:
-//
-//			if (gpSet->IsHostkey(VK_RSHIFT) || gpSet->IsHostkey(VK_SHIFT))
-//			{
-//				vk = VK_SHIFT;
-//				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
-//			}
-//
-//			break;
-//		case VK_RSHIFT:
-//
-//			if (gpSet->IsHostkey(VK_LSHIFT) || gpSet->IsHostkey(VK_SHIFT))
-//			{
-//				vk = VK_SHIFT;
-//				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
-//			}
-//
-//			break;
-//		case VK_SHIFT:
-//
-//			if (gpSet->IsHostkey(VK_LSHIFT))
-//				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
-//			else if (gpSet->IsHostkey(VK_RSHIFT))
-//				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
-//
-//			break;
-//		case VK_LMENU:
-//
-//			if (gpSet->IsHostkey(VK_RMENU) || gpSet->IsHostkey(VK_MENU))
-//			{
-//				vk = VK_MENU;
-//				ReplaceHostkey(VK_RMENU, VK_MENU);
-//			}
-//
-//			break;
-//		case VK_RMENU:
-//
-//			if (gpSet->IsHostkey(VK_LMENU) || gpSet->IsHostkey(VK_MENU))
-//			{
-//				vk = VK_MENU;
-//				ReplaceHostkey(VK_LMENU, VK_MENU);
-//			}
-//
-//			break;
-//		case VK_MENU:
-//
-//			if (gpSet->IsHostkey(VK_LMENU))
-//				ReplaceHostkey(VK_LMENU, VK_MENU);
-//			else if (gpSet->IsHostkey(VK_RMENU))
-//				ReplaceHostkey(VK_RMENU, VK_MENU);
-//
-//			break;
-//		case VK_LCONTROL:
-//
-//			if (gpSet->IsHostkey(VK_RCONTROL) || gpSet->IsHostkey(VK_CONTROL))
-//			{
-//				vk = VK_CONTROL;
-//				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
-//			}
-//
-//			break;
-//		case VK_RCONTROL:
-//
-//			if (gpSet->IsHostkey(VK_LCONTROL) || gpSet->IsHostkey(VK_CONTROL))
-//			{
-//				vk = VK_CONTROL;
-//				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
-//			}
-//
-//			break;
-//		case VK_CONTROL:
-//
-//			if (gpSet->IsHostkey(VK_LCONTROL))
-//				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
-//			else if (gpSet->IsHostkey(VK_RCONTROL))
-//				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
-//
-//			break;
-//	}
-//
-//	// Добавить в список входящих в Host
-//	AddHostkey(vk);
-//	// Вернуть (возможно измененный) VK
-//	return vk;
-//}
-//
-//bool CSettings::TestHostkeyModifiers()
-//{
-//	memset(mn_HostModOk, 0, sizeof(mn_HostModOk));
-//	memset(mn_HostModSkip, 0, sizeof(mn_HostModSkip));
-//
-//	if (!nMultiHotkeyModifier)
-//		nMultiHotkeyModifier = VK_LWIN;
-//
-//	BYTE vk;
-//	vk = (nMultiHotkeyModifier & 0xFF);
-//	CheckHostkeyModifier(vk);
-//	vk = (nMultiHotkeyModifier & 0xFF00) >> 8;
-//	CheckHostkeyModifier(vk);
-//	vk = (nMultiHotkeyModifier & 0xFF0000) >> 16;
-//	CheckHostkeyModifier(vk);
-//	vk = (nMultiHotkeyModifier & 0xFF000000) >> 24;
-//	CheckHostkeyModifier(vk);
-//	// Однако, допустимо не более 3-х клавиш (больше смысла не имеет)
-//	TrimHostkeys();
-//	// Сформировать (возможно скорректированную) маску HostKey
-//	bool lbChanged = MakeHostkeyModifier();
-//	return lbChanged;
-//}
-//
-//bool CSettings::MakeHostkeyModifier()
-//{
-//	bool lbChanged = false;
-//	// Сформировать (возможно скорректированную) маску HostKey
-//	DWORD nNew = 0;
-//
-//	if (gpSet->mn_HostModOk[0])
-//		nNew |= gpSet->mn_HostModOk[0];
-//
-//	if (gpSet->mn_HostModOk[1])
-//		nNew |= ((DWORD)(gpSet->mn_HostModOk[1])) << 8;
-//
-//	if (gpSet->mn_HostModOk[2])
-//		nNew |= ((DWORD)(gpSet->mn_HostModOk[2])) << 16;
-//
-//	if (gpSet->mn_HostModOk[3])
-//		nNew |= ((DWORD)(gpSet->mn_HostModOk[3])) << 24;
-//
-//	TODO("!!! Добавить в mn_HostModSkip те VK, которые отсутствуют в mn_HostModOk");
-//
-//	if (gpSet->nMultiHotkeyModifier != nNew)
-//	{
-//		gpSet->nMultiHotkeyModifier = nNew;
-//		lbChanged = true;
-//	}
-//
-//	return lbChanged;
-//}
-//
-//// Оставить в mn_HostModOk только 3 VK
-//void CSettings::TrimHostkeys()
-//{
-//	if (gpSet->mn_HostModOk[0] == 0)
-//		return;
-//
-//	int i = 0;
-//
-//	while (++i < 15 && gpSet->mn_HostModOk[i])
-//		;
-//
-//	// Если вдруг задали более 3-х модификаторов - обрезать, оставив 3 последних
-//	if (i > 3)
-//	{
-//		if (i >= countof(gpSet->mn_HostModOk))
-//		{
-//			_ASSERTE(i < countof(gpSet->mn_HostModOk));
-//			i = countof(gpSet->mn_HostModOk) - 1;
-//		}
-//		memmove(gpSet->mn_HostModOk, gpSet->mn_HostModOk+i-3, 3); //-V112
-//	}
-//
-//	memset(gpSet->mn_HostModOk+3, 0, sizeof(gpSet->mn_HostModOk)-3);
-//}
-
-//void CSettings::SetupHotkeyChecks(HWND hWnd2)
-//{
-//	bool b;
-//	CheckDlgButton(hWnd2, cbHostWin, gpSet->IsHostkey(VK_LWIN));
-//	CheckDlgButton(hWnd2, cbHostApps, gpSet->IsHostkey(VK_APPS));
-//	b = gpSet->IsHostkey(VK_SHIFT);
-//	CheckDlgButton(hWnd2, cbHostLShift, b || gpSet->IsHostkey(VK_LSHIFT));
-//	CheckDlgButton(hWnd2, cbHostRShift, b || gpSet->IsHostkey(VK_RSHIFT));
-//	b = gpSet->IsHostkey(VK_MENU);
-//	CheckDlgButton(hWnd2, cbHostLAlt, b || gpSet->IsHostkey(VK_LMENU));
-//	CheckDlgButton(hWnd2, cbHostRAlt, b || gpSet->IsHostkey(VK_RMENU));
-//	b = gpSet->IsHostkey(VK_CONTROL);
-//	CheckDlgButton(hWnd2, cbHostLCtrl, b || gpSet->IsHostkey(VK_LCONTROL));
-//	CheckDlgButton(hWnd2, cbHostRCtrl, b || gpSet->IsHostkey(VK_RCONTROL));
-//}
-
-//BYTE CSettings::HostkeyCtrlId2Vk(WORD nID)
-//{
-//	switch (nID)
-//	{
-//		case cbHostWin:
-//			return VK_LWIN;
-//		case cbHostApps:
-//			return VK_APPS;
-//		case cbHostLShift:
-//			return VK_LSHIFT;
-//		case cbHostRShift:
-//			return VK_RSHIFT;
-//		case cbHostLAlt:
-//			return VK_LMENU;
-//		case cbHostRAlt:
-//			return VK_RMENU;
-//		case cbHostLCtrl:
-//			return VK_LCONTROL;
-//		case cbHostRCtrl:
-//			return VK_RCONTROL;
-//	}
-//
-//	return 0;
-//}
-
-void CSettings::UpdatePos(int x, int y)
+void CSettings::UpdateWindowMode(WORD WndMode)
 {
-	TCHAR temp[32];
-	gpSet->wndX = x;
-	gpSet->wndY = y;
+	_ASSERTE(WndMode==rNormal || WndMode==rMaximized || WndMode==rFullScreen);
 
-	if (ghOpWnd)
+	if (gpSet->isUseCurrentSizePos)
+	{
+		gpSet->_WindowMode = WndMode;
+	}
+
+	if (ghOpWnd && mh_Tabs[thi_SizePos] && gpSet->isUseCurrentSizePos)
+	{
+		CheckRadioButton(gpSetCls->mh_Tabs[thi_SizePos], rNormal, rFullScreen, WndMode);
+	}
+}
+
+void CSettings::UpdatePos(int x, int y, bool bGetRect)
+{
+	if (!gpConEmu->isFullScreen() && !gpConEmu->isZoomed())
+	{
+		if (!gpConEmu->isIconic())
+		{
+			RECT rc; GetWindowRect(ghWnd, &rc);
+			x = rc.left; y = rc.top;
+		}
+	}
+
+	if ((gpConEmu->wndX != x) || (gpConEmu->wndY != y))
+	{
+		gpConEmu->wndX = x;
+		gpConEmu->wndY = y;
+	}
+	
+	if (gpSet->isUseCurrentSizePos)
+	{
+		gpSet->_wndX = x;
+		gpSet->_wndY = y;
+	}
+
+	if (ghOpWnd && mh_Tabs[thi_SizePos] && gpSet->isUseCurrentSizePos)
 	{
 		mb_IgnoreEditChanged = TRUE;
-		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->wndX);
-		SetDlgItemText(mh_Tabs[thi_Main], tWndX, temp);
-		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->wndY);
-		SetDlgItemText(mh_Tabs[thi_Main], tWndY, temp);
+		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndX, gpSet->isUseCurrentSizePos ? gpConEmu->wndX : gpSet->_wndX, TRUE);
+		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndY, gpSet->isUseCurrentSizePos ? gpConEmu->wndY : gpSet->_wndY, TRUE);
 		mb_IgnoreEditChanged = FALSE;
 	}
 }
@@ -8677,19 +8509,23 @@ void CSettings::UpdateSize(UINT w, UINT h)
 	if (w<29 || h<9)
 		return;
 
-	if (w!=gpSet->wndWidth || h!=gpSet->wndHeight)
+	if (w!=gpConEmu->wndWidth || h!=gpConEmu->wndHeight)
 	{
-		gpSet->wndWidth = w;
-		gpSet->wndHeight = h;
+		gpConEmu->wndWidth = w;
+		gpConEmu->wndHeight = h;
 	}
 
-	if (ghOpWnd)
+	if (gpSet->isUseCurrentSizePos && (w!=gpSet->_wndWidth || h!=gpSet->_wndHeight))
+	{
+		gpSet->_wndWidth = w;
+		gpSet->_wndHeight = h;
+	}
+
+	if (ghOpWnd && mh_Tabs[thi_SizePos] && gpSet->isUseCurrentSizePos)
 	{
 		mb_IgnoreEditChanged = TRUE;
-		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->wndWidth);
-		SetDlgItemText(mh_Tabs[thi_Main], tWndWidth, temp);
-		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->wndHeight);
-		SetDlgItemText(mh_Tabs[thi_Main], tWndHeight, temp);
+		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndWidth, gpSet->isUseCurrentSizePos ? gpConEmu->wndWidth : gpSet->_wndWidth, FALSE);
+		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndHeight, gpSet->isUseCurrentSizePos ? gpConEmu->wndHeight : gpSet->_wndHeight, FALSE);
 		mb_IgnoreEditChanged = FALSE;
 	}
 }
@@ -9077,20 +8913,6 @@ void CSettings::RecreateFont(WORD wFromID)
 		UpdateFontInfo();
 	
 		ShowFontErrorTip(gpSetCls->szFontError);
-		//tiBalloon.lpszText = gpSetCls->szFontError;
-		//if (gpSetCls->szFontError[0]) {
-		//	SendMessage(hwndTip, TTM_ACTIVATE, FALSE, 0);
-		//	SendMessage(hwndBalloon, TTM_UPDATETIPTEXT, 0, (LPARAM)&tiBalloon);
-		//	RECT rcControl; GetWindowRect(GetDlgItem(mh_Tabs[thi_Main], tFontFace), &rcControl);
-		//	int ptx = rcControl.right - 10;
-		//	int pty = (rcControl.top + rcControl.bottom) / 2;
-		//	SendMessage(hwndBalloon, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
-		//	SendMessage(hwndBalloon, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tiBalloon);
-		//	SetTimer(mh_Tabs[thi_Main], FAILED_FONT_TIMERID, FAILED_FONT_TIMEOUT, 0);
-		//} else {
-		//	SendMessage(hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiBalloon);
-		//	SendMessage(hwndTip, TTM_ACTIVATE, TRUE, 0);
-		//}
 	}
 
 	//if (wFromID == rNoneAA || wFromID == rStandardAA || wFromID == rCTAA)

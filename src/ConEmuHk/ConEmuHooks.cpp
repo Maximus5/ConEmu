@@ -72,6 +72,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UserImp.h"
 #include "GuiAttach.h"
 #include "../common/ConsoleAnnotation.h"
+#include "../common/clink.h"
 
 /* Forward declarations */
 BOOL IsVisibleRectLocked(COORD& crLocked);
@@ -143,12 +144,24 @@ extern HANDLE ghLastAnsiCapable, ghLastAnsiNotCapable;
 HANDLE ghLastConInHandle = NULL, ghLastNotConInHandle = NULL;
 /* ************ Globals for SetHook ************ */
 
+
 /* ************ Globals for Far Hooks ************ */
 struct HookModeFar gFarMode = {sizeof(HookModeFar)};
+/* ************ Globals for Far Hooks ************ */
+
+
+/* ************ Globals for clink ************ */
+size_t   gcchLastWriteConsoleMax = 0;
+wchar_t *gpszLastWriteConsole = NULL;
+HMODULE  ghClinkDll = NULL;
+call_readline_t gpfnClinkReadLine = NULL;
+/* ************ Globals for clink ************ */
+
 
 struct ReadConsoleInfo gReadConsoleInfo = {};
 
 int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
+
 //
 //static BOOL WINAPI OnHttpSendRequestA(LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
 //static BOOL WINAPI OnHttpSendRequestW(LPVOID hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
@@ -2946,17 +2959,92 @@ BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 	return lbRc;
 }
 
+bool InitializeClink(CESERVER_CONSOLE_MAPPING_HDR* pConMap)
+{
+	if (!pConMap || !pConMap->bUseClink)
+		return false;
+
+	if (!ghClinkDll)
+	{
+		wchar_t szClinkModule[MAX_PATH+30];
+		_wsprintf(szClinkModule, SKIPLEN(countof(szClinkModule)) L"%s\\clink\\%s",
+			pConMap->sConEmuBaseDir, WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
+		
+		ghClinkDll = LoadLibrary(szClinkModule);
+		if (!ghClinkDll)
+			return false;
+	}
+
+	if (!gpfnClinkReadLine)
+	{
+		gpfnClinkReadLine = (call_readline_t)GetProcAddress(ghClinkDll, "call_readline");
+		_ASSERTEX(gpfnClinkReadLine!=NULL);
+	}
+
+	return (gpfnClinkReadLine != NULL);
+}
+
 BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
 {
 	typedef BOOL (WINAPI* OnReadConsoleW_t)(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl);
 	SUPPRESSORIGINALSHOWCALL;
 	ORIGINAL(ReadConsoleW);
-	BOOL lbRc = FALSE;
+	BOOL lbRc = FALSE, lbProcessed = FALSE;
+	DWORD nErr = GetLastError();
 
 	OnReadConsoleStart(TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 
-	lbRc = F(ReadConsoleW)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
-	DWORD nErr = GetLastError();
+	if (nNumberOfCharsToRead > 1)
+	{
+		DWORD nConIn = 0;
+		if (GetConsoleMode(hConsoleInput, &nConIn)
+			&& (nConIn & ENABLE_ECHO_INPUT) && (nConIn & ENABLE_LINE_INPUT))
+		{
+			CESERVER_CONSOLE_MAPPING_HDR* pConMap = GetConMap();
+			if (pConMap && pConMap->bUseClink)
+			{
+				if (!gpfnClinkReadLine)
+				{
+					InitializeClink(pConMap);
+				}
+
+				if (gpfnClinkReadLine)
+				{
+					lbProcessed = TRUE;
+					*((wchar_t*)lpBuffer) = 0;
+
+					gpfnClinkReadLine(gpszLastWriteConsole, (wchar_t*)lpBuffer, nNumberOfCharsToRead);
+
+					// Copy from clink_dll.c::hooked_read_console
+					{
+					    // Check for control codes and convert them.
+					    if (((wchar_t*)lpBuffer)[0] == L'\x03')
+					    {
+					        // Fire a Ctrl-C exception. Cmd.exe sets a global variable (CtrlCSeen)
+					        // and ReadConsole() would normally set error code 0x3e3. Sleep() is to
+					        // yield the thread so the global gets set (guess work...).
+					        GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
+					        SetLastError(0x3e3);
+					        Sleep(0);
+
+					        ((wchar_t*)lpBuffer)[0] = '\0';
+					    }
+				    }
+
+					if (lpNumberOfCharsRead)
+						*lpNumberOfCharsRead = lstrlen((wchar_t*)lpBuffer);
+					lbRc = TRUE;
+				}
+			}
+		}
+	}
+
+	// ≈сли не обработано через clink - то стандартно, через API
+	if (!lbProcessed)
+	{
+		lbRc = F(ReadConsoleW)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+		nErr = GetLastError();
+	}
 
 	OnReadConsoleEnd(lbRc, TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 	SetLastError(nErr);

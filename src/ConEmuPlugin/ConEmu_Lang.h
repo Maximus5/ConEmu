@@ -19,6 +19,7 @@ enum {
 	CEMenuGuiMacro,
 	CEMenuAttach,
 	CEMenuDebug,
+	CEMenuConInfo,
 	CEGuiMacroTitle,
 	CEGuiMacroCommand,
 	CEGuiMacroResult,

@@ -16,6 +16,7 @@
           <Directory Id="ConEmuFar3Fml" Name="Far3_fml"/>
           <Directory Id="KeyEventsDir" Name="KeyEvents"/>
           <Directory Id="DosBox" Name="DosBox"/>
+          <Directory Id="clink" Name="clink"/>
           <!--
           <Directory Id="Portable" Name="Portable"/>
           -->

@@ -226,6 +226,8 @@ class CConEmuMain :
 		//DWORD gnLastProcessCount;
 		//uint cBlinkNext;
 		DWORD WindowMode;        // rNormal/rMaximized/rFullScreen
+		DWORD wndWidth, wndHeight;
+		int   wndX, wndY; // в пикселях
 		DWORD change2WindowMode; // -1/rNormal/rMaximized/rFullScreen
 		bool WindowStartMinimized, ForceMinimizeToTray;
 		bool DisableAutoUpdate;

@@ -169,6 +169,10 @@
       </Feature>
       -->
     </Feature>
+    <Feature Id="FClink" AllowAdvertise="no" Title="clink" Level="1"
+             Description="clink - bash style completion readme.txt">
+      <ComponentRef Id="clink_readme.txt"/>
+    </Feature>
     <!-- Troubleshooting -->
     <Feature Id="FSupportTools" AllowAdvertise="no" Title="Tools" Level="1" Display="collapse"
              Description="Troubleshooting utilities">

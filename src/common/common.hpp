@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    102
+#define CESERVER_REQ_VER    103
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -888,9 +888,10 @@ struct ConEmuGuiMapping
 	wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 	wchar_t  sConEmuArgs[MAX_PATH*2];
 
-	DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть (пока не используется) доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
+	DWORD    bUseInjects;   // 0-off, 1-on, 3-exe only. Далее могут быть (пока не используется) доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	BOOL     bUseTrueColor; // включен флажок "TrueMod support"
 	BOOL     bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
+	BOOL     bUseClink;     // использовать расширение командной строки (ReadConsole)
 
 	/* Основной шрифт в GUI */
 	struct ConEmuMainFont MainFont;
@@ -1156,11 +1157,12 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	// DC ConEmu window
 	HWND2 hConEmuWnd;
 
-	DWORD nLoggingType; // enum GuiLoggingType
-	BOOL  bDosBox; // DosBox установлен, можно пользоваться
-	DWORD bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
+	DWORD nLoggingType;  // enum GuiLoggingType
+	BOOL  bDosBox;       // DosBox установлен, можно пользоваться
+	DWORD bUseInjects;   // 0-off, 1-on, 3-exe only. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	BOOL  bUseTrueColor; // включен флажок "TrueMod support"
 	BOOL  bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
+	BOOL  bUseClink;     // использовать расширение командной строки (ReadConsole)
 	
 	// Перехват реестра
 	DWORD   isHookRegistry; // bitmask. 1 - supported, 2 - current

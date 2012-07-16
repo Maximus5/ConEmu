@@ -285,11 +285,11 @@ CVirtualConsole::CVirtualConsole(const RConStartArgs *args) : hDC(NULL)
 	hOldBrush = NULL;
 	hOldFont = NULL;
 
-	if (gpSet->wndWidth)
-		TextWidth = gpSet->wndWidth;
+	if (gpConEmu->wndWidth)
+		TextWidth = gpConEmu->wndWidth;
 
-	if (gpSet->wndHeight)
-		TextHeight = gpSet->wndHeight;
+	if (gpConEmu->wndHeight)
+		TextHeight = gpConEmu->wndHeight;
 
 	DEBUGTEST(mb_DebugDumpDC = false);
 
