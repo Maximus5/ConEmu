@@ -969,21 +969,23 @@ CESERVER_REQ* CRealServer::cmdResources(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		//EnableComSpec(mp_RCon->mn_FarPID_PluginDetected, TRUE);
 		//mp_RCon->UpdateFarSettings(mp_RCon->mn_FarPID_PluginDetected);
 		wchar_t* pszItems[] = {mp_RCon->ms_EditorRus,mp_RCon->ms_ViewerRus,mp_RCon->ms_TempPanelRus/*,ms_NameTitle*/};
+		wchar_t* pszEnd = (wchar_t*)(pIn->Data + nDataSize);
+		_ASSERTE(countof(mp_RCon->ms_EditorRus)>=32 && countof(mp_RCon->ms_ViewerRus)>=32 && countof(mp_RCon->ms_TempPanelRus));
 
-		for (UINT i = 0; i < countof(pszItems); i++)
+		for (UINT i = 0; (i < countof(pszItems)) && (pszRes < pszEnd) && *pszRes; i++)
 		{
-			pszNext = pszRes + _tcslen(pszRes)+1;
+			size_t nLen = _tcslen(pszRes);
+			pszNext = pszRes + nLen + 1;
 
-			if (_tcslen(pszRes)>=30) pszRes[30] = 0;
+			if (nLen>=30)
+				pszRes[30] = 0;
 
 			lstrcpy(pszItems[i], pszRes);
 
-			if (i < 2) lstrcat(pszItems[i], L" ");
+			if (pszItems[i] != mp_RCon->ms_TempPanelRus)
+				lstrcat(pszItems[i], L" ");
 
 			pszRes = pszNext;
-
-			if (*pszRes == 0)
-				break;
 		}
 
 		//pszNext = pszRes + _tcslen(pszRes)+1;

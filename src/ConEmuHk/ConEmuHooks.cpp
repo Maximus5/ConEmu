@@ -2994,7 +2994,9 @@ BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 
 	OnReadConsoleStart(TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 
-	if (nNumberOfCharsToRead > 1)
+	// Запускаемся только в главном потоке
+	// Попытка стартовать в telnet.exe (запущенном без параметров в Win7 x64) привела к зависанию
+	if (bMainThread && (nNumberOfCharsToRead > 1))
 	{
 		DWORD nConIn = 0;
 		if (GetConsoleMode(hConsoleInput, &nConIn)

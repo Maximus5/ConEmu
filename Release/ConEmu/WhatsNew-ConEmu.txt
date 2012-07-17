@@ -10,6 +10,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.17
+[*] Do not run clink in background threads.
+[%] В некоторых случаях ConEmu мог падать при инициализации Far Manager.
+[+] Пункт «Console information» в меню плагина ConEmu для Far Manager.
+
+
 2012.07.16
 [!] Настройка размера и положения вынесена на отдельную вкладку 'Size & Pos'.
     Настройка 'Long console output' перенесена на вкладку 'Size & Pos'.

@@ -1196,7 +1196,16 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 
 		if (mh_Connect == NULL)
 		{
-			mh_Connect = wi->_InternetConnectW(mh_Internet, szServer, INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 1);
+			wchar_t *pszColon = wcsrchr(szServer, L':');
+			INTERNET_PORT nServerPort = INTERNET_DEFAULT_HTTP_PORT;
+			if (pszColon != NULL)
+			{
+				*pszColon = 0;
+				nServerPort = wcstoul(pszColon+1, &pszColon, 10);
+				if (!nServerPort)
+					nServerPort = INTERNET_DEFAULT_HTTP_PORT;
+			}
+			mh_Connect = wi->_InternetConnectW(mh_Internet, szServer, nServerPort, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 1);
 			if (!mh_Connect)
 			{
 				DWORD dwErr = GetLastError();

@@ -6258,15 +6258,16 @@ void ShowConsoleInfo()
 		L"ConEmu Console information\n"
 		L"TerminalMode=%s\n"
 		L"Console HWND=0x%08X; "
-		L"Virtual HWND=0x%08X; "
-		L"ServerPID=%u\n"
+		L"Virtual HWND=0x%08X\n"
+		L"ServerPID=%u; CurrentPID=%u\n"
 		L"ConInMode=0x%08X; ConOutMode=0x%08X\n"
 		L"Buffer size=(%u,%u); Rect=(%u,%u)-(%u,%u)\n"
 		L"CursorInfo==(%u,%u,%u%s); MaxWndSize=(%u,%u)\n"
 		L"OutputAttr=0x%02X\n"
 		,
 		TerminalMode ? L"Yes" : L"No",
-		(DWORD)FarHwnd, (DWORD)ConEmuHwnd, gdwServerPID,
+		(DWORD)FarHwnd, (DWORD)ConEmuHwnd,
+		gdwServerPID, GetCurrentProcessId(),
 		nConIn, nConOut,
 		csbi.dwSize.X, csbi.dwSize.Y,
 		csbi.srWindow.Left, csbi.srWindow.Top, csbi.srWindow.Right, csbi.srWindow.Bottom,

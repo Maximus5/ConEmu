@@ -8504,8 +8504,6 @@ void CSettings::UpdatePos(int x, int y, bool bGetRect)
 
 void CSettings::UpdateSize(UINT w, UINT h)
 {
-	TCHAR temp[32];
-
 	if (w<29 || h<9)
 		return;
 
