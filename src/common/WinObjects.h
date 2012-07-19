@@ -114,6 +114,22 @@ void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue);
 LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits = csb_SameOS);
 wchar_t* GetComspec(const ConEmuComspec* pOpt);
 
+struct MY_CONSOLE_SCREEN_BUFFER_INFOEX
+{
+	ULONG      cbSize;
+	COORD      dwSize;
+	COORD      dwCursorPosition;
+	WORD       wAttributes;
+	SMALL_RECT srWindow;
+	COORD      dwMaximumWindowSize;
+	WORD       wPopupAttributes;
+	BOOL       bFullscreenSupported;
+	COLORREF   ColorTable[16];
+};
+
+BOOL apiGetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
+BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
+
 BOOL apiGetConsoleFontSize(HANDLE hOutput, int &SizeY, int &SizeX, wchar_t (&rsFontName)[LF_FACESIZE]); //Vista+ only!
 BOOL apiSetConsoleFontSize(HANDLE hOutput, int inSizeY, int inSizeX, const wchar_t *asFontName); //Vista+ only!
 BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize);

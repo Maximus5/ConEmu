@@ -42,6 +42,8 @@ UINT_PTR gfnLdrGetDllHandleByName = 0;
 
 HANDLE ghSkipSetThreadContextForThread = NULL;
 
+HANDLE ghInjectsLiteEvent = NULL;
+
 // ѕроверить, что gfnLoadLibrary лежит в пределах модул€ hKernel!
 UINT_PTR GetLoadLibraryAddress()
 {
@@ -433,7 +435,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abForceGui, BOOL abLogProcess)
 	//fnLoadLibrary = (UINT_PTR)fLoadLibrary;
 	//if (!lbInj)
 	//{
-	//	iRc = -1;
+ 	//	iRc = -1;
 	//	goto wrap;
 	//}
 	//WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");

@@ -533,6 +533,7 @@ struct Settings
 		const ColorPalette* PaletteGet(int anIndex); // 0-based, index of Palettes
 		void PaletteSaveAs(LPCWSTR asName); // Save active colors to named palette
 		void PaletteDelete(LPCWSTR asName); // Delete named palette
+		void PaletteSetStdIndexes();
 
 	protected:
 		AppSettings AppStd;

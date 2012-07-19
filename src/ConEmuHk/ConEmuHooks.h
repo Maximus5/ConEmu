@@ -107,3 +107,12 @@ BOOL OnExecutePromptCmd(LPCWSTR asCmd);
 extern size_t   gcchLastWriteConsoleMax;
 extern wchar_t *gpszLastWriteConsole;
 /* ************ Globals for clink ************ */
+
+/* ************ Globals for powershell ************ */
+extern bool gbPowerShellMonitorProgress;
+extern WORD gnConsolePopupColors;
+extern int  gnPowerShellProgressValue;
+/* ************ Globals for powershell ************ */
+
+bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
+void GuiSetProgress(WORD st, WORD pr);

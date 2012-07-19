@@ -1236,10 +1236,16 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 		//if (con.pCmp)
 		//	{ Free(con.pCmp); con.pCmp = NULL; }
 		MCHKHEAP;
-		con.pConChar = (TCHAR*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*con.pConChar));
-		con.pConAttr = (WORD*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*con.pConAttr));
+		int cchCharMax = nNewWidth * nNewHeight * 2;
+		con.pConChar = (TCHAR*)Alloc(cchCharMax, sizeof(*con.pConChar));
+		con.pConAttr = (WORD*)Alloc(cchCharMax, sizeof(*con.pConAttr));
 		con.pDataCmp = (CHAR_INFO*)Alloc((nNewWidth * nNewHeight)*sizeof(CHAR_INFO),1);
 		//con.pCmp = (CESERVER_REQ_CONINFO_DATA*)Alloc((nNewWidth * nNewHeight)*sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA),1);
+
+		BYTE nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
+		wmemset((wchar_t*)con.pConAttr, nDefTextAttr, cchCharMax);
+
+
 		sc.Unlock();
 		_ASSERTE(con.pConChar!=NULL);
 		_ASSERTE(con.pConAttr!=NULL);
@@ -1252,8 +1258,11 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 	{
 		MCHKHEAP
 		MSectionLock sc; sc.Lock(&csCON);
-		memset(con.pConChar, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConChar));
-		memset(con.pConAttr, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConAttr));
+		int cchCharMax = nNewWidth * nNewHeight * 2;
+		memset(con.pConChar, 0, cchCharMax * sizeof(*con.pConChar));
+		//memset(con.pConAttr, 0, cchCharMax * sizeof(*con.pConAttr));
+		BYTE nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
+		wmemset((wchar_t*)con.pConAttr, nDefTextAttr, cchCharMax);
 		memset(con.pDataCmp, 0, (nNewWidth * nNewHeight) * sizeof(CHAR_INFO));
 		//memset(con.pCmp->Buf, 0, (nNewWidth * nNewHeight) * sizeof(CHAR_INFO));
 		sc.Unlock();
@@ -1285,6 +1294,21 @@ BOOL CRealBuffer::InitBuffers(DWORD OneBufferSize)
 
 	//InitDC(false,true);
 	return lbRc;
+}
+
+void CRealBuffer::PreFillBuffers()
+{
+	if (con.pConChar && con.pConAttr)
+	{
+		MSectionLock sc; sc.Lock(&csCON, TRUE);
+
+		size_t cchCharMax = (con.nTextWidth*con.nTextHeight) * 2;
+
+		BYTE nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
+		wmemset((wchar_t*)con.pConAttr, nDefTextAttr, cchCharMax);
+
+		sc.Unlock();
+	}
 }
 
 SHORT CRealBuffer::GetBufferWidth()
@@ -3817,7 +3841,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	HEAPVAL
 	wchar_t wSetChar = L' ';
 	CharAttr lcaDef;
-	lcaDef = lcaTable[7]; // LtGray on Black
+	BYTE nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
+	_ASSERTE(nDefTextAttr<countof(lcaTableOrg));
+	lcaDef = lcaTable[nDefTextAttr]; // LtGray on Black
 	//WORD    wSetAttr = 7;
 	#ifdef _DEBUG
 	wSetChar = (wchar_t)8776; //wSetAttr = 12;

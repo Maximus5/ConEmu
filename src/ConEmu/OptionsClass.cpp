@@ -2618,6 +2618,15 @@ LRESULT CSettings::OnInitDialog_Status(HWND hWnd2, bool abInitial)
 	return 0;
 }
 
+void CSettings::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)
+{
+	// Обновить палитры
+	gpSet->PaletteSetStdIndexes();
+
+	// Обновить консоли
+	gpConEmu->UpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr);
+}
+
 LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 {
 	#if 0
@@ -2644,13 +2653,13 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 	nVal = gpSet->AppStd.nPopBackColorIdx;
 	FillListBox(hWnd2, lbConClrPopBack, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
 
-	WARNING("Отладка...");
-	if (gpSet->AppStd.nPopTextColorIdx <= 15 || gpSet->AppStd.nPopBackColorIdx <= 15
-		|| RELEASEDEBUGTEST(FALSE,TRUE))
-	{
-		EnableWindow(GetDlgItem(hWnd2, lbConClrPopText), TRUE);
-		EnableWindow(GetDlgItem(hWnd2, lbConClrPopBack), TRUE);
-	}
+	//WARNING("Отладка...");
+	//if (gpSet->AppStd.nPopTextColorIdx <= 15 || gpSet->AppStd.nPopBackColorIdx <= 15
+	//	|| RELEASEDEBUGTEST(FALSE,TRUE))
+	//{
+	//	EnableWindow(GetDlgItem(hWnd2, lbConClrPopText), TRUE);
+	//	EnableWindow(GetDlgItem(hWnd2, lbConClrPopBack), TRUE);
+	//}
 
 	nVal = gpSet->AppStd.nExtendColorIdx;
 	FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
@@ -6080,18 +6089,26 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			else if (wId == lbConClrText)
 			{
 				gpSet->AppStd.nTextColorIdx = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+				if (gpSet->AppStd.nTextColorIdx != gpSet->AppStd.nBackColorIdx)
+					UpdateTextColorSettings(TRUE, FALSE);
 			}
 			else if (wId == lbConClrBack)
 			{
 				gpSet->AppStd.nBackColorIdx = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+				if (gpSet->AppStd.nTextColorIdx != gpSet->AppStd.nBackColorIdx)
+					UpdateTextColorSettings(TRUE, FALSE);
 			}
 			else if (wId == lbConClrPopText)
 			{
 				gpSet->AppStd.nPopTextColorIdx = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+				if (gpSet->AppStd.nPopTextColorIdx != gpSet->AppStd.nPopBackColorIdx)
+					UpdateTextColorSettings(FALSE, TRUE);
 			}
 			else if (wId == lbConClrPopBack)
 			{
 				gpSet->AppStd.nPopBackColorIdx = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+				if (gpSet->AppStd.nPopTextColorIdx != gpSet->AppStd.nPopBackColorIdx)
+					UpdateTextColorSettings(FALSE, TRUE);
 			}
 			else if (wId==lbDefaultColors)
 			{
@@ -6163,6 +6180,18 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					FillListBox(hWnd2, lbConClrPopText, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
 					nVal = pPal->nPopBackColorIdx;
 					FillListBox(hWnd2, lbConClrPopBack, SettingsNS::szColorIdxTh, SettingsNS::nColorIdxTh, nVal);
+
+					BOOL bTextChanged = (gpSet->AppStd.nTextColorIdx != pPal->nTextColorIdx) || (gpSet->AppStd.nBackColorIdx != pPal->nBackColorIdx);
+					BOOL bPopupChanged = (gpSet->AppStd.nPopTextColorIdx != pPal->nPopTextColorIdx) || (gpSet->AppStd.nPopBackColorIdx != pPal->nPopBackColorIdx);
+
+					if (bTextChanged || bPopupChanged)
+					{
+						gpSet->AppStd.nTextColorIdx = pPal->nTextColorIdx;
+						gpSet->AppStd.nBackColorIdx = pPal->nBackColorIdx;
+						gpSet->AppStd.nPopTextColorIdx = pPal->nPopTextColorIdx;
+						gpSet->AppStd.nPopBackColorIdx = pPal->nPopBackColorIdx;
+						UpdateTextColorSettings(bTextChanged, bPopupChanged);
+					}
 
 					nVal = pPal->nExtendColorIdx;
 					FillListBox(hWnd2, lbExtendIdx, SettingsNS::szColorIdxSh, SettingsNS::nColorIdxSh, nVal);
@@ -7880,9 +7909,17 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 											if (pPal)
 											{
 												memmove(gpSet->AppColors[iCur]->Colors, pPal->Colors, sizeof(pPal->Colors));
+												BOOL bTextAttr = (pApp->nTextColorIdx != pPal->nTextColorIdx) || (pApp->nBackColorIdx != pPal->nBackColorIdx);
+												pApp->nTextColorIdx = pPal->nTextColorIdx;
+												pApp->nBackColorIdx = pPal->nBackColorIdx;
+												BOOL bPopupAttr = (pApp->nPopTextColorIdx != pPal->nPopTextColorIdx) || (pApp->nPopBackColorIdx != pPal->nPopBackColorIdx);
+												pApp->nPopTextColorIdx = pPal->nPopTextColorIdx;
+												pApp->nPopBackColorIdx = pPal->nPopBackColorIdx;
 												pApp->isExtendColors = pPal->isExtendColors;
 												pApp->nExtendColorIdx = pPal->nExtendColorIdx;
 												gpSet->AppColors[iCur]->FadeInitialized = false;
+												if (bTextAttr || bPopupAttr)
+													gpSetCls->UpdateTextColorSettings(bTextAttr, bPopupAttr);
 												bRedraw = true;
 											}
 											else

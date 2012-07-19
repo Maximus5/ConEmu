@@ -232,7 +232,8 @@ REGEDIT4
 "ConVisible"=hex:00
 
 ;; Check or Uncheck "QuickEdit Mode" and "Insert mode" in real console window properties
-;; FFFFFFFF - Check, 00300000 - Uncheck
+;; HIWORD - mask, LOWORD - flags for SetConsoleMode function
+;; FFFFFFFF - Defaults (Check), 00300000 - Uncheck
 "ConInMode"=dword:FFFFFFFF
 
 ;; Allow injects of ConEmuHk.dll in every process of ConEmu console window

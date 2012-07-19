@@ -6269,6 +6269,22 @@ void CConEmuMain::UpdateIdealRect(BOOL abAllowUseConSize/*=FALSE*/)
 	}
 }
 
+void CConEmuMain::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)
+{
+	for (size_t i = 0; i < countof(mp_VCon); i++)
+	{
+		if (mp_VCon[i] == NULL)
+			continue;
+
+		CRealConsole* pRCon = mp_VCon[i]->RCon();
+
+		if (pRCon)
+		{
+			pRCon->UpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr);
+		}
+	}
+}
+
 void CConEmuMain::DebugStep(LPCWSTR asMsg, BOOL abErrorSeverity/*=FALSE*/)
 {
 	if (ghWnd)

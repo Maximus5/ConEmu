@@ -207,6 +207,9 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	CloseConfirmReset();
 	mb_WasSendClickToReadCon = false;
 	mn_LastSetForegroundPID = 0;
+
+	mn_TextColorIdx = 7; mn_BackColorIdx = 0;
+	mn_PopTextColorIdx = 5; mn_PopBackColorIdx = 15;
 	
 	m_RConServer.Init(this);
 
@@ -420,6 +423,11 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 		mp_RBuf->SetBufferHeightMode(mn_DefaultBufferHeight>0);
 	}
 
+
+	BYTE nTextColorIdx = 7, nBackColorIdx = 0, nPopTextColorIdx = 5, nPopBackColorIdx = 15;
+	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);
+
+
 	if (args->bDetached)
 	{
 		// Пока ничего не делаем - просто создается серверная нить
@@ -444,6 +452,11 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 	else
 	{
 		mb_NeedStartProcess = TRUE;
+	}
+
+	if (mp_RBuf)
+	{
+		mp_RBuf->PreFillBuffers();
 	}
 
 	if (!StartMonitorThread())
@@ -2231,6 +2244,53 @@ BOOL CRealConsole::StartMonitorThread()
 	return lbRc;
 }
 
+void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx, BYTE& nPopTextColorIdx, BYTE& nPopBackColorIdx)
+{
+	// Тут берем именно "GetDefaultAppSettingsId", а не "GetActiveAppSettingsId"
+	// т.к. довольно стремно менять АТРИБУТЫ консоли при выполнении пакетников и пр.
+	const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetDefaultAppSettingsId());
+	_ASSERTE(pApp!=NULL);
+
+	nTextColorIdx = pApp->TextColorIdx(); // 0..15,16
+	nBackColorIdx = pApp->BackColorIdx(); // 0..15,16
+	if (nTextColorIdx <= 15 || nBackColorIdx <= 15)
+	{
+		if (nTextColorIdx >= 16) nTextColorIdx = 7;
+		if (nBackColorIdx >= 16) nBackColorIdx = 0;
+		if (nTextColorIdx == nBackColorIdx)
+			nBackColorIdx = nTextColorIdx ? 0 : 7;
+		//si.dwFlags |= STARTF_USEFILLATTRIBUTE;
+		//si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
+		mn_TextColorIdx = nTextColorIdx;
+		mn_BackColorIdx = nBackColorIdx;
+	}
+	else
+	{
+		nTextColorIdx = nBackColorIdx = 16;
+		//si.dwFlags &= ~STARTF_USEFILLATTRIBUTE;
+		mn_TextColorIdx = 7;
+		mn_BackColorIdx = 0;
+	}
+
+	nPopTextColorIdx = pApp->PopTextColorIdx(); // 0..15,16
+	nPopBackColorIdx = pApp->PopBackColorIdx(); // 0..15,16
+	if (nPopTextColorIdx <= 15 || nPopBackColorIdx <= 15)
+	{
+		if (nPopTextColorIdx >= 16) nPopTextColorIdx = 5;
+		if (nPopBackColorIdx >= 16) nPopBackColorIdx = 15;
+		if (nPopTextColorIdx == nPopBackColorIdx)
+			nPopBackColorIdx = nPopTextColorIdx ? 0 : 15;
+		mn_PopTextColorIdx = nPopTextColorIdx;
+		mn_PopBackColorIdx = nPopBackColorIdx;
+	}
+	else
+	{
+		nPopTextColorIdx = nPopBackColorIdx = 16;
+		mn_PopTextColorIdx = 5;
+		mn_PopBackColorIdx = 15;
+	}
+}
+
 BOOL CRealConsole::StartProcess()
 {
 	if (!this)
@@ -2302,6 +2362,35 @@ BOOL CRealConsole::StartProcess()
 	wchar_t* psCurCmd = NULL;
 	_ASSERTE((m_Args.pszStartupDir == NULL) || (*m_Args.pszStartupDir != 0));
 
+	HKEY hkConsole = NULL;
+	if (0 != RegCreateKeyEx(HKEY_CURRENT_USER, L"Console\\ConEmu", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConsole, NULL))
+		hkConsole = NULL;
+	BYTE nTextColorIdx = 7, nBackColorIdx = 0, nPopTextColorIdx = 5, nPopBackColorIdx = 15;
+	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);
+	if (nTextColorIdx <= 15 || nBackColorIdx <= 15)
+	{
+		si.dwFlags |= STARTF_USEFILLATTRIBUTE;
+		si.dwFillAttribute = (GetDefaultBackColorIdx() << 4) | GetDefaultTextColorIdx();
+		if (hkConsole)
+		{
+			DWORD nColors = si.dwFillAttribute;
+			RegSetValueEx(hkConsole, L"ScreenColors", 0, REG_DWORD, (LPBYTE)&nColors, sizeof(nColors));
+		}
+	}
+	if (nPopTextColorIdx <= 15 || nPopBackColorIdx <= 15)
+	{
+		if (hkConsole)
+		{
+			DWORD nColors = ((mn_PopBackColorIdx & 0xF) << 4) | (mn_PopTextColorIdx & 0xF);
+			RegSetValueEx(hkConsole, L"PopupColors", 0, REG_DWORD, (LPBYTE)&nColors, sizeof(nColors));
+		}
+	}
+	if (hkConsole)
+	{
+		RegCloseKey(hkConsole);
+		hkConsole = NULL;
+	}
+
 	while (nStep <= 2)
 	{
 		MCHKHEAP;
@@ -2314,37 +2403,6 @@ BOOL CRealConsole::StartProcess()
 			lpszCmd = gpSet->GetCmd();
 		_ASSERTE(lpszCmd && *lpszCmd);
 
-
-		const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetDefaultAppSettingsId());
-		_ASSERTE(pApp!=NULL);
-
-		BYTE nTextColorIdx = pApp->TextColorIdx(); // 0..15,16
-		BYTE nBackColorIdx = pApp->BackColorIdx(); // 0..15,16
-		if (nTextColorIdx <= 15 || nBackColorIdx <= 15)
-		{
-			if (nTextColorIdx >= 16) nTextColorIdx = 7;
-			if (nBackColorIdx >= 16) nBackColorIdx = 0;
-			if (nTextColorIdx == nBackColorIdx)
-				nBackColorIdx = nTextColorIdx ? 0 : 7;
-		}
-		else
-		{
-			nTextColorIdx = nBackColorIdx = 16;
-		}
-
-		BYTE nPopTextColorIdx = pApp->PopTextColorIdx(); // 0..15,16
-		BYTE nPopBackColorIdx = pApp->PopBackColorIdx(); // 0..15,16
-		if (nPopTextColorIdx <= 15 || nPopBackColorIdx <= 15)
-		{
-			if (nPopTextColorIdx >= 16) nPopTextColorIdx = 5;
-			if (nPopBackColorIdx >= 16) nPopBackColorIdx = 15;
-			if (nPopTextColorIdx == nPopBackColorIdx)
-				nPopBackColorIdx = nPopTextColorIdx ? 0 : 15;
-		}
-		else
-		{
-			nPopTextColorIdx = nPopBackColorIdx = 16;
-		}
 
 		DWORD nColors = (nTextColorIdx) | (nBackColorIdx << 8) | (nPopTextColorIdx << 16) | (nPopBackColorIdx << 24);
 
@@ -2403,9 +2461,9 @@ BOOL CRealConsole::StartProcess()
 		_wcscat_c(psCurCmd, nLen, lpszCmd);
 		MCHKHEAP;
 		DWORD dwLastError = 0;
-#ifdef MSGLOGGER
+		#ifdef MSGLOGGER
 		DEBUGSTRPROC(psCurCmd); DEBUGSTRPROC(_T("\n"));
-#endif
+		#endif
 
 		SetConEmuEnvVar(GetView());
 
@@ -2600,91 +2658,98 @@ BOOL CRealConsole::StartProcess()
 			DEBUGSTRPROC(_T("AttachPID OK\n"));*/
 			break; // OK, запустили
 		}
-		else
+
+		// ОШИБКА!!
+		if (InRecreate())
 		{
-			if (InRecreate())
+			m_Args.bDetached = TRUE;
+			_ASSERTE(mh_MainSrv==NULL);
+			SafeCloseHandle(mh_MainSrv);
+			_ASSERTE(isDetached());
+			SetConStatus(L"Recreate console failed");
+		}
+
+		//Box("Cannot execute the command.");
+		//DWORD dwLastError = GetLastError();
+		DEBUGSTRPROC(L"CreateProcess failed\n");
+		size_t nErrLen = _tcslen(psCurCmd)+100;
+		TCHAR* pszErr = (TCHAR*)Alloc(nErrLen,sizeof(TCHAR));
+
+		if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		                    NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+		                    pszErr, 1024, NULL))
+		{
+			_wsprintf(pszErr, SKIPLEN(nErrLen) L"Unknown system error: 0x%x", dwLastError);
+		}
+
+		nErrLen += _tcslen(pszErr);
+		TCHAR* psz = (TCHAR*)Alloc(nErrLen+100,sizeof(TCHAR));
+		int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
+		_wcscpy_c(psz, nErrLen, _T("Command execution failed\n\n"));
+		_wcscat_c(psz, nErrLen, psCurCmd); _wcscat_c(psz, nErrLen, _T("\n\n"));
+		_wcscat_c(psz, nErrLen, pszErr);
+
+		if (m_Args.pszSpecialCmd == NULL)
+		{
+			if (psz[_tcslen(psz)-1]!=_T('\n')) _wcscat_c(psz, nErrLen, _T("\n"));
+
+			if (!gpSet->psCurCmd && StrStrI(gpSet->GetCmd(), gpSetCls->GetDefaultCmd())==NULL)
 			{
-				m_Args.bDetached = TRUE;
-				_ASSERTE(mh_MainSrv==NULL);
-				SafeCloseHandle(mh_MainSrv);
-				_ASSERTE(isDetached());
-				SetConStatus(L"Recreate console failed");
+				_wcscat_c(psz, nErrLen, _T("\n\n"));
+				_wcscat_c(psz, nErrLen, _T("Do You want to simply start "));
+				_wcscat_c(psz, nErrLen, gpSetCls->GetDefaultCmd());
+				_wcscat_c(psz, nErrLen, _T("?"));
+				nButtons |= MB_YESNO;
 			}
+		}
 
-			//Box("Cannot execute the command.");
-			//DWORD dwLastError = GetLastError();
-			DEBUGSTRPROC(L"CreateProcess failed\n");
-			size_t nErrLen = _tcslen(psCurCmd)+100;
-			TCHAR* pszErr = (TCHAR*)Alloc(nErrLen,sizeof(TCHAR));
+		MCHKHEAP
+		//Box(psz);
+		int nBrc = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), nButtons);
+		Free(psz); Free(pszErr);
 
-			if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			                    NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-			                    pszErr, 1024, NULL))
+		if (nBrc!=IDYES)
+		{
+			// ??? Может ведь быть НЕСКОЛЬКО консолей. Нельзя так разрушать основное окно!
+			//gpConEmu->Destroy();
+			//SetEvent(mh_CreateRootEvent);
+			if (gpConEmu->isValid(pVCon))
 			{
-				_wsprintf(pszErr, SKIPLEN(nErrLen) L"Unknown system error: 0x%x", dwLastError);
-			}
-
-			nErrLen += _tcslen(pszErr);
-			TCHAR* psz = (TCHAR*)Alloc(nErrLen+100,sizeof(TCHAR));
-			int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
-			_wcscpy_c(psz, nErrLen, _T("Command execution failed\n\n"));
-			_wcscat_c(psz, nErrLen, psCurCmd); _wcscat_c(psz, nErrLen, _T("\n\n"));
-			_wcscat_c(psz, nErrLen, pszErr);
-
-			if (m_Args.pszSpecialCmd == NULL)
-			{
-				if (psz[_tcslen(psz)-1]!=_T('\n')) _wcscat_c(psz, nErrLen, _T("\n"));
-
-				if (!gpSet->psCurCmd && StrStrI(gpSet->GetCmd(), gpSetCls->GetDefaultCmd())==NULL)
+				mb_InCreateRoot = FALSE;
+				if (InRecreate())
 				{
-					_wcscat_c(psz, nErrLen, _T("\n\n"));
-					_wcscat_c(psz, nErrLen, _T("Do You want to simply start "));
-					_wcscat_c(psz, nErrLen, gpSetCls->GetDefaultCmd());
-					_wcscat_c(psz, nErrLen, _T("?"));
-					nButtons |= MB_YESNO;
-				}
-			}
-
-			MCHKHEAP
-			//Box(psz);
-			int nBrc = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), nButtons);
-			Free(psz); Free(pszErr);
-
-			if (nBrc!=IDYES)
-			{
-				// ??? Может ведь быть НЕСКОЛЬКО консолей. Нельзя так разрушать основное окно!
-				//gpConEmu->Destroy();
-				//SetEvent(mh_CreateRootEvent);
-				if (gpConEmu->isValid(pVCon))
-				{
-					mb_InCreateRoot = FALSE;
-					if (InRecreate())
-					{
-						TODO("Поставить флаг Detached?");
-					}
-					else
-					{
-						CloseConsole(false, false);
-					}
+					TODO("Поставить флаг Detached?");
 				}
 				else
 				{
-					_ASSERTE(gpConEmu->isValid(pVCon));
+					CloseConsole(false, false);
 				}
-				return FALSE;
 			}
-
-			// Выполнить стандартную команду...
-			if (m_Args.pszSpecialCmd == NULL)
+			else
 			{
-				_ASSERTE(gpSet->psCurCmd==NULL);
-				gpSet->psCurCmd = lstrdup(gpSetCls->GetDefaultCmd());
+				_ASSERTE(gpConEmu->isValid(pVCon));
 			}
+			return FALSE;
+		}
 
-			nStep ++;
-			MCHKHEAP
+		// Выполнить стандартную команду...
+		if (m_Args.pszSpecialCmd == NULL)
+		{
+			_ASSERTE(gpSet->psCurCmd==NULL);
+			gpSet->psCurCmd = lstrdup(gpSetCls->GetDefaultCmd());
+		}
 
-			if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
+		nStep ++;
+		MCHKHEAP
+
+		if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
+
+		// Изменилась команда, пересчитать настройки
+		PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);
+		if (nTextColorIdx <= 15 || nBackColorIdx <= 15)
+		{
+			si.dwFlags |= STARTF_USEFILLATTRIBUTE;
+			si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
 		}
 	}
 
@@ -4619,7 +4684,9 @@ int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName/*=NULL*/)
 
 	DWORD nPID = GetActivePID();
 	if (!nPID)
-		return -1;
+	{
+		return GetDefaultAppSettingsId();
+	}
 
 	if (nPID == mn_LastProcessNamePID)
 	{
@@ -8590,6 +8657,29 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 
 	//pipe.Execute(CMD_SETENVVAR, szData, 2*(pszName - szData));
 	free(pSetEnvVar); pSetEnvVar = NULL;
+}
+
+void CRealConsole::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)
+{
+	if (!this) return;
+
+	BYTE nTextColorIdx = 7, nBackColorIdx = 0, nPopTextColorIdx = 5, nPopBackColorIdx = 15;
+	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);
+
+	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETCONCOLORS, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETCONSOLORS));
+    if (!pIn)
+    	return;
+
+	pIn->SetConColor.ChangeTextAttr = ChangeTextAttr;
+	pIn->SetConColor.NewTextAttributes = (GetDefaultBackColorIdx() << 4) | GetDefaultTextColorIdx();
+	pIn->SetConColor.ChangePopupAttr = ChangePopupAttr;
+	pIn->SetConColor.NewPopupAttributes = ((mn_PopBackColorIdx & 0xF) << 4) | (mn_PopTextColorIdx & 0xF);
+	pIn->SetConColor.ReFillConsole = !isFar();
+
+	CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
+
+	ExecuteFreeResult(pIn);
+	ExecuteFreeResult(pOut);
 }
 
 HWND CRealConsole::FindPicViewFrom(HWND hFrom)

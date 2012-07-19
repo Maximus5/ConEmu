@@ -84,6 +84,7 @@ public:
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr
 				/*wchar_t (&szBaseDir)[MAX_PATH+2], BOOL& bDosBoxAllowed*/);
 	BOOL LoadGuiMapping();
+	DWORD GetUseInjects();
 public:
 	CShellProc();
 	~CShellProc();

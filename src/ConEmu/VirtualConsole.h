@@ -103,7 +103,7 @@ class CVirtualConsole :
 		CEDC    hDC;
 		HBITMAP hBitmap;
 		HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
-		HBRUSH  CreateBackBrush(bool bGuiVisible, bool& rbNonSystem);
+		HBRUSH  CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COLORREF *pColors = NULL);
 		CEFONT  hSelectedFont, hOldFont;
 		CEFONT  mh_FontByIndex[MAX_FONT_STYLES+1]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
 		HFONT   mh_UCharMapFont; SMALL_RECT mrc_UCharMap;

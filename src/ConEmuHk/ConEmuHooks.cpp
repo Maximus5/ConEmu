@@ -157,6 +157,12 @@ HMODULE  ghClinkDll = NULL;
 call_readline_t gpfnClinkReadLine = NULL;
 /* ************ Globals for clink ************ */
 
+/* ************ Globals for powershell ************ */
+bool gbPowerShellMonitorProgress = false;
+WORD gnConsolePopupColors = 0x003E;
+int  gnPowerShellProgressValue = -1;
+/* ************ Globals for powershell ************ */
+
 
 struct ReadConsoleInfo gReadConsoleInfo = {};
 
@@ -2602,6 +2608,16 @@ void OnReadConsoleStart(BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 	{
 		gReadConsoleInfo.InReadConsoleTID = 0;
 	}
+
+	if (gbPowerShellMonitorProgress)
+	{
+		// При возврате в Prompt - сброс прогресса
+		if (gnPowerShellProgressValue != -1)
+		{
+			gnPowerShellProgressValue = -1;
+			GuiSetProgress(0,0);
+		}
+	}
 }
 
 void OnReadConsoleEnd(BOOL bSucceeded, BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
@@ -3723,6 +3739,50 @@ BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffe
 	return lbRc;
 }
 
+// PowerShell AI для определения прогресса в консоли
+void CheckPowerShellProgress(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
+{
+	_ASSERTE(dwBufferSize.Y >= 5);
+	int nProgress = -1;
+	for (SHORT Y = dwBufferSize.Y - 2; Y > 0; Y--)
+	{
+		const CHAR_INFO* pLine = lpBuffer + dwBufferSize.X * Y;
+
+		// Если удалось узнать атрибуты для Popup - проверяем
+		if (gnConsolePopupColors != 0)
+		{
+			if ((pLine[4].Attributes != gnConsolePopupColors)
+				|| (pLine[dwBufferSize.X - 7].Attributes != gnConsolePopupColors))
+				break; // не оно
+		}
+
+		if ((pLine[4].Char.UnicodeChar == L'[') && (pLine[dwBufferSize.X - 7].Char.UnicodeChar == L']'))
+		{
+			// Считаем проценты
+			SHORT nLen = dwBufferSize.X - 7 - 5;
+			if (nLen > 0)
+			{
+				nProgress = 100;
+				for (SHORT X = 5; X < (dwBufferSize.X - 8); X++)
+				{
+					if (pLine[X].Char.UnicodeChar == L' ')
+					{
+						nProgress = (X - 5) * 100 / nLen;
+						break;
+					}
+				}
+			}
+			break;
+		}
+	}
+
+	if (nProgress != gnPowerShellProgressValue)
+	{
+		gnPowerShellProgressValue = nProgress;
+		GuiSetProgress((nProgress != -1) ? 1 : 0, nProgress);
+	}
+}
+
 
 BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
 {
@@ -3734,6 +3794,19 @@ BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffe
 	{
 		SETARGS5(&lbRc, hConsoleOutput, lpBuffer, &dwBufferSize, &dwBufferCoord, lpWriteRegion);
 		ph->PreCallBack(&args);
+	}
+
+	// PowerShell AI для определения прогресса в консоли
+	if (gbPowerShellMonitorProgress)
+	{
+		// Первичные проверки "прогресс ли это"
+		if ((dwBufferSize.Y >= 5) && !dwBufferCoord.X && !dwBufferCoord.Y
+			&& lpWriteRegion && !lpWriteRegion->Left && (lpWriteRegion->Right == (dwBufferSize.X - 1))
+			&& lpBuffer && (lpBuffer->Char.UnicodeChar == L' ')
+			&& (!gnConsolePopupColors || (lpBuffer->Attributes == gnConsolePopupColors)))
+		{
+			CheckPowerShellProgress(hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
+		}
 	}
 
 	lbRc = F(WriteConsoleOutputW)(hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);

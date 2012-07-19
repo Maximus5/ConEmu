@@ -135,6 +135,7 @@ BOOL    gbLogProcess = FALSE;
 BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
 DWORD   gnExitCode = 0;
+HANDLE  ghRootProcessFlag = NULL;
 HANDLE  ghExitQueryEvent = NULL; int nExitQueryPlace = 0, nExitPlaceStep = 0;
 SetTerminateEventPlace gTerminateEventPlace = ste_None;
 HANDLE  ghQuitEvent = NULL;
@@ -1070,6 +1071,21 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			}
 			else
 			{
+				// Чтобы модуль хуков в корневом процессе знал, что оно корневое
+				_ASSERTE(ghRootProcessFlag==NULL);
+				wchar_t szEvtName[64];
+				msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, pi.dwProcessId);
+				ghRootProcessFlag = CreateEvent(LocalSecurity(), TRUE, TRUE, szEvtName);
+				if (ghRootProcessFlag)
+				{
+					SetEvent(ghRootProcessFlag);
+				}
+				else
+				{
+					_ASSERTE(ghRootProcessFlag!=NULL);
+				}
+
+				// Теперь ставим хуки
 				iHookRc = InjectHooks(pi, FALSE, gbLogProcess);
 			}
 
@@ -1566,6 +1582,8 @@ wrap:
 
 		free(gpszPrevConTitle);
 	}
+
+	SafeCloseHandle(ghRootProcessFlag);
 
 	LogSize(NULL, "Shutdown");
 	//ghConIn.Close();
@@ -2557,32 +2575,18 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
         			if (gnDefPopupColors && (gnOsVer >= 0x600))
         			{
-	        			struct MY_CONSOLE_SCREEN_BUFFER_INFOEX
-	        			{
-							ULONG      cbSize;
-							COORD      dwSize;
-							COORD      dwCursorPosition;
-							WORD       wAttributes;
-							SMALL_RECT srWindow;
-							COORD      dwMaximumWindowSize;
-							WORD       wPopupAttributes;
-							BOOL       bFullscreenSupported;
-							COLORREF   ColorTable[16];
-						};
-						HMODULE hKernel = GetModuleHandle(L"Kernel32.dll");
-						if (hKernel)
+						CONSOLE_SCREEN_BUFFER_INFO csbi0 = {};
+						GetConsoleScreenBufferInfo(hConOut, &csbi0);
+
+						MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
+						if (apiGetConsoleScreenBufferInfoEx(hConOut, &csbi))
 						{
-							typedef BOOL (WINAPI* GetConsoleScreenBufferInfoEx_t)(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
-							GetConsoleScreenBufferInfoEx_t _GetConsoleScreenBufferInfoEx = (GetConsoleScreenBufferInfoEx_t)GetProcAddress(hKernel, "GetConsoleScreenBufferInfoEx");
-							typedef BOOL (WINAPI* SetConsoleScreenBufferInfoEx_t)(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
-							SetConsoleScreenBufferInfoEx_t _SetConsoleScreenBufferInfoEx = (SetConsoleScreenBufferInfoEx_t)GetProcAddress(hKernel, "SetConsoleScreenBufferInfoEx");
-
-							CONSOLE_SCREEN_BUFFER_INFO csbi0 = {};
-							GetConsoleScreenBufferInfo(hConOut, &csbi0);
-
-							MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
-							if (_GetConsoleScreenBufferInfoEx && _SetConsoleScreenBufferInfoEx
-								&& _GetConsoleScreenBufferInfoEx(hConOut, &csbi))
+							if ((!gnDefTextColors || (csbi.wAttributes = gnDefTextColors))
+								&& (!gnDefPopupColors || (csbi.wPopupAttributes = gnDefPopupColors)))
+							{
+								bPassed = TRUE; // Менять не нужно, консоль соответствует
+							}
+							else
 							{
 								if (gnDefTextColors)
 									csbi.wAttributes = gnDefTextColors;
@@ -2593,20 +2597,20 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 								// Vista/Win7. _SetConsoleScreenBufferInfoEx unexpectedly SHOWS console window
 								//if (gnOsVer == 0x0601)
-								{
-									RECT rcGui = {};
-									if (gpSrv->hGuiWnd)
-										GetWindowRect(gpSrv->hGuiWnd, &rcGui);
-									//SetWindowPos(ghConWnd, HWND_BOTTOM, rcGui.left+3, rcGui.top+3, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
-									SetWindowPos(ghConWnd, NULL, -30000, -30000, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
-									ShowWindow(ghConWnd, SW_SHOWMINNOACTIVE);
-									#ifdef _DEBUG
-									ShowWindow(ghConWnd, SW_SHOWNORMAL);
-									ShowWindow(ghConWnd, SW_HIDE);
-									#endif
-								}
+								//{
+								//	RECT rcGui = {};
+								//	if (gpSrv->hGuiWnd)
+								//		GetWindowRect(gpSrv->hGuiWnd, &rcGui);
+								//	//SetWindowPos(ghConWnd, HWND_BOTTOM, rcGui.left+3, rcGui.top+3, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+								//	SetWindowPos(ghConWnd, NULL, -30000, -30000, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+								//	ShowWindow(ghConWnd, SW_SHOWMINNOACTIVE);
+								//	#ifdef _DEBUG
+								//	ShowWindow(ghConWnd, SW_SHOWNORMAL);
+								//	ShowWindow(ghConWnd, SW_HIDE);
+								//	#endif
+								//}
 
-								bPassed = _SetConsoleScreenBufferInfoEx(hConOut, &csbi);
+								bPassed = apiSetConsoleScreenBufferInfoEx(hConOut, &csbi);
 
 								// Что-то Win7 хулиганит
 								if (!gbVisibleOnStartup)
@@ -7135,6 +7139,167 @@ BOOL cmd_SetFullScreen(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_SetConSolors(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = FALSE;
+	//ghConOut
+
+
+	size_t cbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETCONSOLORS);
+	*out = ExecuteNewCmd(CECMD_CONSOLEFULL, cbReplySize);
+
+	if ((*out) != NULL)
+	{
+		BOOL bOk = FALSE, bTextChanged = FALSE, bPopupChanged = FALSE, bNeedRepaint = TRUE;
+		WORD OldText = 0x07, OldPopup = 0x3E;
+
+		CONSOLE_SCREEN_BUFFER_INFO csbi5 = {};
+		BOOL bCsbi5 = GetConsoleScreenBufferInfo(ghConOut, &csbi5);
+
+		if (bCsbi5)
+		{
+			(*out)->SetConColor.ChangeTextAttr = TRUE;
+			(*out)->SetConColor.NewTextAttributes = csbi5.wAttributes;
+		}
+
+		if (gnOsVer >= 0x600)
+		{
+			MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi6 = {sizeof(csbi6)};
+			if (apiGetConsoleScreenBufferInfoEx(ghConOut, &csbi6))
+			{
+				OldText = csbi6.wAttributes;
+				OldPopup = csbi6.wPopupAttributes;
+				bTextChanged = (csbi6.wAttributes != in.SetConColor.NewTextAttributes);
+				bPopupChanged = in.SetConColor.ChangePopupAttr && (csbi6.wPopupAttributes != in.SetConColor.NewPopupAttributes);
+
+				(*out)->SetConColor.ChangePopupAttr = TRUE;
+				(*out)->SetConColor.NewPopupAttributes = OldPopup;
+
+				if (!bTextChanged && !bPopupChanged)
+				{
+					bOk = TRUE;
+				}
+				else
+				{
+					csbi6.wAttributes = in.SetConColor.NewTextAttributes;
+					csbi6.wPopupAttributes = in.SetConColor.NewPopupAttributes;
+					if (bPopupChanged)
+					{
+						BOOL bIsVisible = IsWindowVisible(ghConWnd);
+						bOk = apiSetConsoleScreenBufferInfoEx(ghConOut, &csbi6);
+						bNeedRepaint = FALSE;
+						if (!bIsVisible && IsWindowVisible(ghConWnd))
+						{
+							ShowWindow(ghConWnd, SW_HIDE);
+						}
+						if (bOk)
+						{
+							(*out)->SetConColor.NewTextAttributes = csbi6.wAttributes;
+							(*out)->SetConColor.NewPopupAttributes = csbi6.wPopupAttributes;
+						}
+					}
+					else
+					{
+						bOk = SetConsoleTextAttribute(ghConOut, in.SetConColor.NewTextAttributes);
+						if (bOk)
+						{
+							(*out)->SetConColor.NewTextAttributes = csbi6.wAttributes;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			if (bCsbi5)
+			{
+				OldText = csbi5.wAttributes;
+				bTextChanged = (csbi5.wAttributes != in.SetConColor.NewTextAttributes);
+
+				if (!bTextChanged)
+				{
+					bOk = TRUE;
+				}
+				else
+				{
+					bOk = SetConsoleTextAttribute(ghConOut, in.SetConColor.NewTextAttributes);
+					if (bOk)
+					{
+						(*out)->SetConColor.NewTextAttributes = in.SetConColor.NewTextAttributes;
+					}
+				}
+			}
+		}
+
+		if (bOk && bCsbi5 && bTextChanged && in.SetConColor.ReFillConsole && csbi5.dwSize.X && csbi5.dwSize.Y)
+		{
+			// Считать из консоли текущие атрибуты (построчно/поблочно)
+			// И там, где они совпадают с OldText - заменить на in.SetConColor.NewTextAttributes
+			DWORD nMaxLines = max(1,min((8000 / csbi5.dwSize.X),csbi5.dwSize.Y));
+			WORD* pnAttrs = (WORD*)malloc(nMaxLines*csbi5.dwSize.X*sizeof(*pnAttrs));
+			if (pnAttrs)
+			{
+				WORD NewText = in.SetConColor.NewTextAttributes;
+				COORD crRead = {0,0};
+				while (crRead.Y < csbi5.dwSize.Y)
+				{
+					DWORD nReadLn = min(nMaxLines,(csbi5.dwSize.Y-crRead.Y));
+					DWORD nReady = 0;
+					if (!ReadConsoleOutputAttribute(ghConOut, pnAttrs, nReadLn * csbi5.dwSize.X, crRead, &nReady))
+						break;
+
+					bool bStarted = false;
+					COORD crFrom = crRead;
+					SHORT nLines = nReady / csbi5.dwSize.X;
+					DWORD i = 0, iStarted = 0, iWritten;
+					while (i < nReady)
+					{
+						if (pnAttrs[i] == OldText)
+						{
+							if (!bStarted)
+							{
+								_ASSERT(crRead.X == 0);
+								crFrom.Y = crRead.Y + (i / csbi5.dwSize.X);
+								crFrom.X = i % csbi5.dwSize.X;
+								iStarted = i;
+								bStarted = true;
+							}
+						}
+						else
+						{
+							if (bStarted)
+							{
+								bStarted = false;
+								if (iStarted < i)
+									FillConsoleOutputAttribute(ghConOut, NewText, i - iStarted, crFrom, &iWritten);
+							}
+						}
+						// Next cell checking
+						i++;
+					}
+					// Если хвост остался
+					if (bStarted && (iStarted < i))
+					{
+						FillConsoleOutputAttribute(ghConOut, NewText, i - iStarted, crFrom, &iWritten);
+					}
+
+					// Next block
+					crRead.Y += nReadLn;
+				}
+				free(pnAttrs);
+			}
+		}
+
+		(*out)->SetConColor.ReFillConsole = bOk;
+	}
+	else
+	{
+		lbRc = FALSE;
+	}
+
+	return lbRc;
+}
+
 BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -7274,6 +7439,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_SETFULLSCREEN:
 		{
 			lbRc = cmd_SetFullScreen(in, out);
+		} break;
+		case CECMD_SETCONCOLORS:
+		{
+			lbRc = cmd_SetConSolors(in, out);
 		} break;
 	}
 

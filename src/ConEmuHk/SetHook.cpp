@@ -79,6 +79,8 @@ bool gbSkipSuppressShowCall = false;
 bool gbSkipCheckProcessModules = false;
 #endif
 
+bool gbHookExecutableOnly = false;
+
 
 //!!!WARNING!!! Добавляя в этот список - не забыть добавить и в GetPreloadModules() !!!
 const wchar_t *kernelbase = L"kernelbase.dll",	*kernelbase_noext = L"kernelbase";
@@ -1734,7 +1736,7 @@ DWORD GetMainThreadId()
 	return gnHookMainThreadId;
 }
 
-// Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemu.dll
+// Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemuhk.dll
 // *aszExcludedModules - должны указывать на константные значения (program lifetime)
 bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules /*= NULL*/, BOOL abForceHooks)
 {
@@ -1792,55 +1794,42 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 	}
 
 	// Для исполняемого файла могут быть заданы дополнительные inject-ы (сравнение в FAR)
-	#ifdef _DEBUG
 	HMODULE hExecutable = GetModuleHandle(0);
-	#endif
 	HANDLE snapshot;
 
 	// Найти ID основной нити
 	GetMainThreadId();
 	_ASSERTE(gnHookMainThreadId!=0);
-	//if (!gnHookMainThreadId)
-	//{
-	//	DWORD dwPID = GetCurrentProcessId();
-	//	snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
-	//	if (snapshot != INVALID_HANDLE_VALUE)
-	//	{
-	//		THREADENTRY32 module = {sizeof(THREADENTRY32)};
-	//		if (Thread32First(snapshot, &module))
-	//		{
-	//			while (!gnHookMainThreadId)
-	//			{
-	//				if (module.th32OwnerProcessID == dwPID)
-	//				{
-	//					gnHookMainThreadId = module.th32ThreadID;
-	//					break;
-	//				}
-	//				if (!Thread32Next(snapshot, &module))
-	//					break;
-	//			}
-	//		}
-	//		CloseHandle(snapshot);
-	//	}
-	//}
 
-	// Начались замены во всех загруженных (linked) модулях
-	snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
-
-	if (snapshot != INVALID_HANDLE_VALUE)
+	// Если просили хукать только exe-шник
+	if (gbHookExecutableOnly)
 	{
-		MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
+		wchar_t szExeName[MAX_PATH] = {};
+		GetModuleFileName(NULL, szExeName, countof(szExeName));
+		// Go
+		DebugString(szExeName);
+		SetHook(szExeName, hExecutable, abForceHooks);
+	}
+	else
+	{
+		// Начались замены во всех загруженных (linked) модулях
+		snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
 
-		for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
+		if (snapshot != INVALID_HANDLE_VALUE)
 		{
-			if (module.hModule && !IsModuleExcluded(module.hModule, NULL, module.szModule))
-			{
-				DebugString(module.szModule);
-				SetHook(module.szModule, module.hModule/*, (module.hModule == hExecutable)*/, abForceHooks);
-			}
-		}
+			MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
 
-		CloseHandle(snapshot);
+			for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
+			{
+				if (module.hModule && !IsModuleExcluded(module.hModule, NULL, module.szModule))
+				{
+					DebugString(module.szModule);
+					SetHook(module.szModule, module.hModule/*, (module.hModule == hExecutable)*/, abForceHooks);
+				}
+			}
+
+			CloseHandle(snapshot);
+		}
 	}
 
 	return true;
@@ -2120,34 +2109,41 @@ bool UnsetHook(HMODULE Module)
 
 void __stdcall UnsetAllHooks()
 {
-	#ifdef _DEBUG
 	HMODULE hExecutable = GetModuleHandle(0);
-	#endif
-	//Warning: TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary.
-	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
 
-	WARNING("Убрать перехыват экспортов из Kernel32.dll");
-
-	if (snapshot != INVALID_HANDLE_VALUE)
+	// Если просили хукать только exe-шник
+	if (gbHookExecutableOnly)
 	{
-		MODULEENTRY32 module = {sizeof(module)};
-
-		for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
-		{
-			if (module.hModule && !IsModuleExcluded(module.hModule, NULL, module.szModule))
-			{
-				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
-				DebugString(module.szModule);
-				UnsetHook(module.hModule/*, (module.hModule == hExecutable)*/);
-			}
-		}
-
-		CloseHandle(snapshot);
+		wchar_t szExeName[MAX_PATH] = {};
+		GetModuleFileName(NULL, szExeName, countof(szExeName));
+		// Go
+		DebugString(szExeName);
+		UnsetHook(hExecutable);
 	}
+	else
+	{
+		//Warning: TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary.
+		HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
 
-#ifdef _DEBUG
-	hExecutable = hExecutable;
-#endif
+		WARNING("Убрать перехват экспортов из Kernel32.dll");
+
+		if (snapshot != INVALID_HANDLE_VALUE)
+		{
+			MODULEENTRY32 module = {sizeof(module)};
+
+			for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
+			{
+				if (module.hModule && !IsModuleExcluded(module.hModule, NULL, module.szModule))
+				{
+					//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
+					DebugString(module.szModule);
+					UnsetHook(module.hModule/*, (module.hModule == hExecutable)*/);
+				}
+			}
+
+			CloseHandle(snapshot);
+		}
+	}
 }
 
 
@@ -2345,7 +2341,7 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 			CheckProcessModules(module);
 		}
 
-		if (!IsModuleExcluded(module, asModuleA, asModuleW))
+		if (!gbHookExecutableOnly && !IsModuleExcluded(module, asModuleA, asModuleW))
 		{
 			wchar_t szModule[128] = {};
 			if (asModuleA)
@@ -2378,6 +2374,12 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 // (статически или динамически) и другие библиотеки!
 void CheckProcessModules(HMODULE hFromModule)
 {
+	// Если просили хукать только exe-шник
+	if (gbHookExecutableOnly)
+	{
+		return;
+	}
+
 #ifdef _DEBUG
 	if (gbSkipCheckProcessModules)
 	{

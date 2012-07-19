@@ -132,6 +132,7 @@ extern const wchar_t *user32  ;// = L"user32.dll";
 //extern const wchar_t *shell32 ;// = L"shell32.dll";
 //extern const wchar_t *advapi32;// = L"Advapi32.dll";
 //extern const wchar_t *comdlg32;// = L"comdlg32.dll";
+extern bool gbHookExecutableOnly;
 
 ConEmuHkDllState gnDllState = ds_Undefined;
 int gnDllThreadCount = 0;
@@ -153,6 +154,7 @@ extern HHOOK ghGuiClientRetHook;
 #endif
 
 DWORD   gnSelfPID = 0;
+BOOL    gbSelfIsRootConsoleProcess = FALSE;
 DWORD   gnServerPID = 0;
 DWORD   gnPrevAltServerPID = 0;
 DWORD   gnGuiPID = 0;
@@ -331,12 +333,10 @@ bool gbShowExeMsgBox = false;
 
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
-	#ifdef _DEBUG
-		wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
-		if (!GetModuleFileName(NULL, szModule, MAX_PATH+1))
-			_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
-		const wchar_t* pszName = PointToName(szModule);
-	#endif
+	wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
+	if (!GetModuleFileName(NULL, szModule, MAX_PATH+1))
+		_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
+	const wchar_t* pszName = PointToName(szModule);
 
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
 		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
@@ -387,6 +387,26 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		print_timings(szCpInfo);
 	}
 	#endif
+
+	if ((lstrcmpi(pszName, L"powershell.exe") == 0) || (lstrcmpi(pszName, L"powershell") == 0))
+	{
+		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		if (IsOutputHandle(hStdOut))
+		{
+			gbPowerShellMonitorProgress = true;
+			MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
+			if (apiGetConsoleScreenBufferInfoEx(hStdOut, &csbi))
+			{
+				gnConsolePopupColors = csbi.wPopupAttributes;
+			}
+			else
+			{
+				WARNING("Получить Popup атрибуты из мэппинга");
+				//gnConsolePopupColors = ...;
+				gnConsolePopupColors = 0;
+			}
+		}
+	}
 
 	// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
 	// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
@@ -517,6 +537,16 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				wchar_t *szExeName = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
 				//BOOL lbDosBoxAllowed = FALSE;
 				if (!GetModuleFileName(NULL, szExeName, MAX_PATH+1)) szExeName[0] = 0;
+
+				if (sp->GetUseInjects() == 2)
+				{
+					// Можно ли использовать облегченную версию хуков (только для exe-шника)?
+					if (!gbSelfIsRootConsoleProcess && !IsFarExe(szExeName))
+					{
+						gbHookExecutableOnly = true;
+					}
+				}
+
 				CESERVER_REQ* pIn = sp->NewCmdOnCreate(eInjectingHooks, L"",
 					szExeName, GetCommandLineW(),
 					NULL, NULL, NULL, NULL, // flags
@@ -674,9 +704,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	#ifdef _DEBUG
 	if (!lstrcmpi(pszName, L"mingw32-make.exe"))
 		GuiMessageBox(ghConEmuWnd, L"mingw32-make.exe DllMain finished", L"ConEmuHk", MB_SYSTEMMODAL);
-	free(szModule);
 	#endif
 	*/
+
+	SafeFree(szModule);
 	
 	//if (hStartedEvent)
 	//	SetEvent(hStartedEvent);
@@ -898,8 +929,21 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 
 			//_ASSERTE(ghHeap == NULL);
 			//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
+
+			wchar_t szEvtName[64];
+			msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, gnSelfPID);
+			HANDLE hRootProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+			DWORD nWaitRoot = -1;
+			if (hRootProcessFlag)
+			{
+				nWaitRoot = WaitForSingleObject(hRootProcessFlag, 0);
+				gbSelfIsRootConsoleProcess = (nWaitRoot == WAIT_OBJECT_0);
+			}
+			SafeCloseHandle(hRootProcessFlag);
+
 			
 			#ifdef HOOK_USE_DLLTHREAD
+			_ASSERTEX(FALSE && "Hooks starting in background thread?");
 			//HANDLE hEvents[2];
 			//hEvents[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
 			//hEvents[1] = 
@@ -1490,4 +1534,21 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	}
 wrap:
 	return iRc;
+}
+
+// When _st_ is 0: remove progress.
+// When _st_ is 1: set progress value to _pr_ (number, 0-100).
+// When _st_ is 2: set error state in progress on Windows 7 taskbar
+void GuiSetProgress(WORD st, WORD pr)
+{
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETPROGRESS, sizeof(CESERVER_REQ_HDR)+sizeof(WORD)*2);
+	if (pIn)
+	{
+		pIn->wData[0] = st;
+		pIn->wData[1] = pr;
+
+		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+		ExecuteFreeResult(pIn);
+		ExecuteFreeResult(pOut);
+	}
 }

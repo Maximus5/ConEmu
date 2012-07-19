@@ -91,6 +91,7 @@ struct CONEMUDEFCOLORS
 	const wchar_t* pszTitle;
 	DWORD dwDefColors[0x10];
 	BYTE  nIndexes[4]; // Text/Back/PopupText/PopupBack
+	bool isIndexes() const { return (nIndexes[0] && nIndexes[1] && nIndexes[2] && nIndexes[3]); };
 };
 
 const CONEMUDEFCOLORS DefColors[] =
@@ -1154,6 +1155,18 @@ void Settings::LoadPalettes(SettingsBase* reg)
 		Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
     	_ASSERTE(countof(Palettes[n]->Colors)==0x20 && countof(DefColors[n].dwDefColors)==0x10);
     	memmove(Palettes[n]->Colors, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
+		if (DefColors[n].isIndexes())
+		{
+			Palettes[n]->nTextColorIdx = DefColors[n].nIndexes[0];
+			Palettes[n]->nBackColorIdx = DefColors[n].nIndexes[1];
+			Palettes[n]->nPopTextColorIdx = DefColors[n].nIndexes[2];
+			Palettes[n]->nPopBackColorIdx = DefColors[n].nIndexes[3];
+		}
+		else
+		{
+			Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = 16; // Auto
+			Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
+		}
     	// Расширения - инициализируем теми же цветами
     	memmove(Palettes[n]->Colors+0x10, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
 	}
@@ -1334,6 +1347,24 @@ const Settings::ColorPalette* Settings::PaletteGet(int anIndex)
 	return Palettes[anIndex];
 }
 
+void Settings::PaletteSetStdIndexes()
+{
+	if (!Apps || AppCount < 1)
+		return; // Нету никого
+
+	for (int i = 0; i < AppCount; i++)
+	{
+		int nPalIdx = PaletteGetIndex(Apps[i]->szPaletteName);
+		if (nPalIdx == -1)
+		{
+			Apps[i]->nTextColorIdx = AppStd.nTextColorIdx;
+			Apps[i]->nBackColorIdx = AppStd.nBackColorIdx;
+			Apps[i]->nPopTextColorIdx = AppStd.nPopTextColorIdx;
+			Apps[i]->nPopBackColorIdx = AppStd.nPopBackColorIdx;
+		}
+	}
+}
+
 int Settings::PaletteGetIndex(LPCWSTR asName)
 {
 	if (!Palettes || (PaletteCount < 1) || !asName || !*asName)
@@ -1407,6 +1438,8 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 	Palettes[nIndex]->isExtendColors = AppStd.isExtendColors;
 	Palettes[nIndex]->nExtendColorIdx = AppStd.nExtendColorIdx;
 	
+	BOOL bTextChanged = (Palettes[nIndex]->nTextColorIdx != AppStd.nTextColorIdx) || (Palettes[nIndex]->nBackColorIdx != AppStd.nBackColorIdx);
+	BOOL bPopupChanged = (Palettes[nIndex]->nPopTextColorIdx != AppStd.nPopTextColorIdx) || (Palettes[nIndex]->nPopBackColorIdx != AppStd.nPopBackColorIdx);
 	Palettes[nIndex]->nTextColorIdx = AppStd.nTextColorIdx;
 	Palettes[nIndex]->nBackColorIdx = AppStd.nBackColorIdx;
 	Palettes[nIndex]->nPopTextColorIdx = AppStd.nPopTextColorIdx;
@@ -1418,6 +1451,12 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 
 	// Теперь, собственно, пишем настройки
 	SavePalettes(NULL);
+
+	// Обновить консоли
+	if (bTextChanged || bPopupChanged)
+	{
+		gpSetCls->UpdateTextColorSettings(bTextChanged, bPopupChanged);
+	}
 }
 
 // Delete named palette

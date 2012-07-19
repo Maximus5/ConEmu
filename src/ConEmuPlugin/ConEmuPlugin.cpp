@@ -6262,7 +6262,7 @@ void ShowConsoleInfo()
 		L"ServerPID=%u; CurrentPID=%u\n"
 		L"ConInMode=0x%08X; ConOutMode=0x%08X\n"
 		L"Buffer size=(%u,%u); Rect=(%u,%u)-(%u,%u)\n"
-		L"CursorInfo==(%u,%u,%u%s); MaxWndSize=(%u,%u)\n"
+		L"CursorInfo=(%u,%u,%u%s); MaxWndSize=(%u,%u)\n"
 		L"OutputAttr=0x%02X\n"
 		,
 		TerminalMode ? L"Yes" : L"No",

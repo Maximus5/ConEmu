@@ -3834,7 +3834,7 @@ void CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWid
 	}
 }
 
-HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem)
+HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COLORREF *pColors /*= NULL*/)
 {
 	HBRUSH hBr = NULL;
 	
@@ -3845,13 +3845,16 @@ HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem)
 	}
 	else
 	{
-		COLORREF *pColors = gpSet->GetColors(-1);
+		if (!pColors)
+		{
+			pColors = gpSet->GetColors(mp_RCon->GetActiveAppSettingsId());
+		}
 
 		// Залить цветом 0
-		int nBackColorIdx = 0; // Black
-		#ifdef _DEBUG
-		nBackColorIdx = 2; // Green
-		#endif
+		int nBackColorIdx = mp_RCon->GetDefaultBackColorIdx(); // Black
+		//#ifdef _DEBUG
+		//nBackColorIdx = 2; // Green
+		//#endif
 		
 		hBr = CreateSolidBrush(pColors[nBackColorIdx]);
 		rbNonSystem = (hBr != NULL);
@@ -3911,10 +3914,10 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		// Сброс блокировки, если была
 		LockDcRect(false);
 
-		COLORREF *pColors = gpSet->GetColors(-1);
+		COLORREF *pColors = gpSet->GetColors(mp_RCon->GetActiveAppSettingsId());
 		
 		bool lbDelBrush = false;
-		HBRUSH hBr = CreateBackBrush(lbGuiVisible, lbDelBrush);
+		HBRUSH hBr = CreateBackBrush(lbGuiVisible, lbDelBrush, pColors);
 		
 		//#ifndef SKIP_ALL_FILLRECT
 		FillRect(hPaintDc, &rcClient, hBr);

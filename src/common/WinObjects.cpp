@@ -3843,6 +3843,61 @@ typedef struct _CONSOLE_FONT_INFOEX
 
 
 // Vista+ only
+BOOL apiGetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx)
+{
+	typedef BOOL (WINAPI* GetConsoleScreenBufferInfoEx_t)(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
+	static GetConsoleScreenBufferInfoEx_t GetConsoleScreenBufferInfoEx_f = NULL;
+	static bool bFuncChecked = false;
+
+	if (!bFuncChecked)
+	{
+		HMODULE hKernel32 = GetModuleHandle(L"kernel32.dll");
+		GetConsoleScreenBufferInfoEx_f = (GetConsoleScreenBufferInfoEx_t)GetProcAddress(hKernel32, "GetConsoleScreenBufferInfoEx");
+		bFuncChecked = true;
+	}
+
+	BOOL lbRc = FALSE;
+
+	if (GetConsoleScreenBufferInfoEx_f)
+	{
+		lbRc = GetConsoleScreenBufferInfoEx_f(hConsoleOutput, lpConsoleScreenBufferInfoEx);
+	}
+
+	return lbRc;
+}
+
+// Vista+ only
+// Функция глюкавая. По крайней мере в Win7.
+// 1. После ее вызова слетает видимая область в окне консоли
+// 2. После ее вызова окно консоли безусловно показыватся
+// 1 - поправлено здесь, 2 - озаботиться должен вызывающий
+BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx)
+{
+	typedef BOOL (WINAPI* SetConsoleScreenBufferInfoEx_t)(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
+	static SetConsoleScreenBufferInfoEx_t SetConsoleScreenBufferInfoEx_f = NULL;
+	static bool bFuncChecked = false;
+
+	if (!bFuncChecked)
+	{
+		HMODULE hKernel32 = GetModuleHandle(L"kernel32.dll");
+		SetConsoleScreenBufferInfoEx_f = (SetConsoleScreenBufferInfoEx_t)GetProcAddress(hKernel32, "SetConsoleScreenBufferInfoEx");
+		bFuncChecked = true;
+	}
+
+	BOOL lbRc = FALSE, lbWnd = FALSE;
+
+	if (SetConsoleScreenBufferInfoEx_f)
+	{
+		lbRc = SetConsoleScreenBufferInfoEx_f(hConsoleOutput, lpConsoleScreenBufferInfoEx);
+
+		// Win7 x64 - глюк. после вызова этой функции идет срыв размеров видимой области.
+		lbWnd = SetConsoleWindowInfo(hConsoleOutput, TRUE, &lpConsoleScreenBufferInfoEx->srWindow);
+	}
+
+	return lbRc;
+}
+
+// Vista+ only
 BOOL apiGetConsoleFontSize(HANDLE hOutput, int &SizeY, int &SizeX, wchar_t (&rsFontName)[LF_FACESIZE])
 {
 	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");

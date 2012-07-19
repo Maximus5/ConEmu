@@ -10,6 +10,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.19
+[+] Issue 645: PowerShell cmdlet Write-Progress detection.
+    0..100 | foreach {Write-Progress Test Progress -PercentComplete $_; sleep -m 100}
+[+] Смена «на лету» цвета текста и всплывающих окон в консоли (cmd, powershell, и т.п.)
+    Смена цвета всплывающих окон поддерживается в Vista и выше. Для Win2k и WinXP применяется только при старте новой консоли.
+    При смене цвета всплывающих окон может мелькать окно RealConsole.
+
+
 2012.07.17
 [*] Do not run clink in background threads.
 [%] В некоторых случаях ConEmu мог падать при инициализации Far Manager.

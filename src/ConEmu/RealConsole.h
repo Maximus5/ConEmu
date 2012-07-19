@@ -250,6 +250,8 @@ class CRealConsole
 		DWORD   mn_GuiWndPID;
 		wchar_t ms_GuiWndProcess[MAX_PATH];
 		BYTE    m_ConsoleKeyShortcuts;
+		BYTE    mn_TextColorIdx, mn_BackColorIdx, mn_PopTextColorIdx, mn_PopBackColorIdx;
+		void    PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx, BYTE& nPopTextColorIdx, BYTE& nPopBackColorIdx);
 		//HANDLE  hFileMapping;
 		//CESERVER_REQ_CONINFO* pConsoleData;
 		//void CloseMapping();
@@ -272,6 +274,8 @@ class CRealConsole
 		CVirtualConsole* VCon();
 
 		BYTE GetConsoleKeyShortcuts() { return this ? m_ConsoleKeyShortcuts : 0; };
+		BYTE GetDefaultTextColorIdx() { return this ? (mn_TextColorIdx & 0xF) : 7; };
+		BYTE GetDefaultBackColorIdx() { return this ? (mn_BackColorIdx & 0xF) : 0; };
 
 		BOOL PreInit(BOOL abCreateBuffers=TRUE);
 		void DumpConsole(HANDLE ahFile);
@@ -461,6 +465,7 @@ class CRealConsole
 		bool SetProgress(short nState, short nValue);
 		void UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo);
 		void UpdateFarSettings(DWORD anFarPID=0);
+		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 		int CoordInPanel(COORD cr, BOOL abIncludeEdges = FALSE);
 		BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE, BOOL abIncludeEdges = FALSE);
 		bool isAdministrator();

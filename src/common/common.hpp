@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    103
+#define CESERVER_REQ_VER    104
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -127,6 +127,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEHOOKLOCKMUTEX     L"ConEmuHookMutex.%u"
 //#define CEHOOKDISABLEEVENT  L"ConEmuSkipHooks.%u"
 #define CEGHOSTSKIPACTIVATE L"ConEmuGhostActivate.%u"
+#define CECONEMUROOTPROCESS L"ConEmuRootProcess.%u" // Если Event взведен - значит это корневой процесс, облегченную версию хуков не использовать!
 
 #define CESECURITYNAME       "ConEmuLocalData"
 
@@ -277,6 +278,7 @@ const CECMD
 	CECMD_PROMPTCMD      = 62, // wData - это LPCWSTR
 	CECMD_SETTABTITLE    = 63, // wData - это LPCWSTR, посылается в GUI
 	CECMD_SETPROGRESS    = 64, // wData[0]: 0 - remove, 1 - set, 2 - error. Для "1": wData[1] - 0..100%.
+	CECMD_SETCONCOLORS   = 65, // CESERVER_REQ_SETCONSOLORS
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1621,6 +1623,15 @@ struct CESERVER_REQ_FULLSCREEN
 	COORD crNewSize;
 };
 
+struct CESERVER_REQ_SETCONSOLORS
+{
+	BOOL  ChangeTextAttr;
+	BOOL  ChangePopupAttr;
+	WORD  NewTextAttributes;
+	WORD  NewPopupAttributes;
+	BOOL  ReFillConsole;
+};
+
 struct CESERVER_REQ
 {
 	CESERVER_REQ_HDR hdr;
@@ -1665,6 +1676,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_REGEXTCON RegExtCon;
 		CESERVER_REQ_GETALLTABS GetAllTabs;
 		CESERVER_REQ_FULLSCREEN FullScreenRet;
+		CESERVER_REQ_SETCONSOLORS SetConColor;
 	};
 
 	DWORD DataSize() { return this ? (hdr.cbSize - sizeof(hdr)) : 0; };

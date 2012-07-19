@@ -70,6 +70,7 @@ public:
 	bool LoadAlternativeConsole(int iMode = 0);
 
 	void ReleaseMem();
+	void PreFillBuffers();
 	
 	BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	void SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY);

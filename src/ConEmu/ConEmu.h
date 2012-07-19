@@ -614,6 +614,7 @@ class CConEmuMain :
 		void UpdateActiveGhost(CVirtualConsole* apVCon);
 		void UpdateFarSettings();
 		void UpdateIdealRect(BOOL abAllowUseConSize=FALSE);
+		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 		void UpdateTitle(/*LPCTSTR asNewTitle*/);
 		void UpdateProgress(/*BOOL abUpdateTitle*/);
 		void UpdateWindowRgn(int anX=-1, int anY=-1, int anWndWidth=-1, int anWndHeight=-1);

@@ -218,7 +218,7 @@ void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 }
 
 
-bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL)
+bool IsOutputHandle(HANDLE hFile, DWORD* pMode /*= NULL*/)
 {
 	if (!hFile)
 		return false;
@@ -1602,32 +1602,27 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 									}
 									else if (Code.ArgSZ[2] == L'4')
 									{
-										CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETPROGRESS, sizeof(CESERVER_REQ_HDR)+sizeof(WORD)*2);
-										if (pIn)
+										WORD st = 0, pr = 0;
+										if (Code.ArgSZ[3] == L';')
 										{
-											if (Code.ArgSZ[3] == L';')
+											switch (Code.ArgSZ[4])
 											{
-												switch (Code.ArgSZ[4])
+											case L'0':
+												break;
+											case L'1':
+												st = 1;
+												if (Code.ArgSZ[5] == L';')
 												{
-												case L'0':
-													break;
-												case L'1':
-													pIn->wData[0] = 1;
-													if (Code.ArgSZ[5] == L';')
-													{
-														LPCWSTR pszValue = Code.ArgSZ + 6;
-														pIn->wData[1] = NextNumber(pszValue);
-													}
-													break;
-												case L'2':
-													pIn->wData[0] = 2;
-													break;
+													LPCWSTR pszValue = Code.ArgSZ + 6;
+													pr = NextNumber(pszValue);
 												}
+												break;
+											case L'2':
+												st = 2;
+												break;
 											}
-											CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-											ExecuteFreeResult(pIn);
-											ExecuteFreeResult(pOut);
 										}
+										GuiSetProgress(st,pr);
 									}
 									else if (Code.ArgSZ[2] == L'5')
 									{
