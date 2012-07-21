@@ -10,6 +10,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+[+] Issue 645: PowerShell cmdlet Write-Progress detection.
+[%] Игнорировались настройки Wheel в Control panel.
+[%] В альтернативном буфере скролл стрелками срабатывал дважды на одно нажатие.
+[*] Status bar appearance. Option name "StatusBar.Flags". 1 - top delim, 2 - horz delim, 3 - top & horz delim.
+[%] Правки детектора прогресса в консоли.
+[*] Статус при старте консоли отображается только в строке статуса (если она включена).
+
+
 2012.07.19
 [+] Issue 645: PowerShell cmdlet Write-Progress detection.
     0..100 | foreach {Write-Progress Test Progress -PercentComplete $_; sleep -m 100}

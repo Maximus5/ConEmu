@@ -440,7 +440,7 @@ void Settings::InitSettings()
 	wndCascade = true;
 	isAutoSaveSizePos = false; mb_SizePosAutoSaved = false;
 	isConVisible = false; //isLockRealConsolePos = false;
-	isUseInjects = 2;
+	isUseInjects = true;
 	isProcessAnsi = true;
 	mb_UseClink = true;
 	#ifdef USEPORTABLEREGISTRY
@@ -485,6 +485,7 @@ void Settings::InitSettings()
 	sFarGotoEditor = lstrdup(L"far.exe /e%1:%2 \"%3\"");
 
 	isStatusBarShow = true;
+	isStatusBarFlags = csf_HorzDelim;
 	nStatusBarBack = RGB(64,64,64);
 	nStatusBarLight = RGB(255,255,255);
 	nStatusBarDark = RGB(160,160,160);
@@ -1926,7 +1927,7 @@ void Settings::LoadSettings()
 		reg->Load(L"ConInMode", nConInMode);
 		
 		
-		reg->Load(L"UseInjects", isUseInjects); MinMax(isUseInjects, BST_INDETERMINATE);
+		reg->Load(L"UseInjects", isUseInjects); //MinMax(isUseInjects, BST_INDETERMINATE);
 
 		reg->Load(L"ProcessAnsi", isProcessAnsi);
 
@@ -2264,6 +2265,7 @@ void Settings::LoadSettings()
 
 		mb_StatusSettingsWasChanged = false;
 		reg->Load(L"StatusBar.Show", isStatusBarShow);
+		reg->Load(L"StatusBar.Flags", isStatusBarFlags);
 		reg->Load(L"StatusFontFace", sStatusFontFace, countof(sStatusFontFace));
 		reg->Load(L"StatusFontCharSet", nStatusFontCharSet);
 		reg->Load(L"StatusFontHeight", nStatusFontHeight); nStatusFontHeight = max(4,nStatusFontHeight);
@@ -2746,6 +2748,7 @@ void Settings::SaveStatusSettings(SettingsBase* reg)
 {
 	mb_StatusSettingsWasChanged = false;
 	reg->Save(L"StatusBar.Show", isStatusBarShow);
+	reg->Save(L"StatusBar.Flags", isStatusBarFlags);
 	reg->Save(L"StatusFontFace", sStatusFontFace);
 	reg->Save(L"StatusFontCharSet", nStatusFontCharSet);
 	reg->Save(L"StatusFontHeight", nStatusFontHeight);

@@ -2497,18 +2497,21 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			SHORT nDir = (SHORT)HIWORD(wParam);
 			BOOL lbCtrl = isPressed(VK_CONTROL);
 
+			UINT nCount = gpConEmu->mouse.GetWheelScrollLines();
+
 			if (nDir > 0)
 			{
-				OnScroll(lbCtrl ? SB_PAGEUP : SB_LINEUP);
+				OnScroll(lbCtrl ? SB_PAGEUP : SB_LINEUP, -1, nCount);
 			}
 			else if (nDir < 0)
 			{
-				OnScroll(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN);
+				OnScroll(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN, -1, nCount);
 			}
 		}
 		else if (messg == WM_MOUSEHWHEEL)
 		{
 			TODO("WM_MOUSEHWHEEL - горизонтальная прокрутка");
+			_ASSERTE(FALSE && "Horz scrolling! WM_MOUSEHWHEEL");
 		}
 
 		if (!isConSelectMode())
@@ -3642,6 +3645,7 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					break; // Пока висит диалог поиска - буфер не закрывать!
 				}
 				mp_RCon->SetActiveBuffer(rbt_Primary);
+				return true;
 			}
 		}
 		else if (messg == WM_KEYDOWN)
@@ -3649,11 +3653,13 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			if ((wParam == VK_NEXT) || (wParam == VK_PRIOR))
 			{
 				gpConEmu->key_BufferScroll(false, wParam, mp_RCon);
+				return true;
 			}
 			else if (((m_Type != rbt_Selection) && (m_Type != rbt_Find)) // в режиме выделения стрелки трогать не будем
 					&& ((wParam == VK_UP) || (wParam == VK_DOWN)))
 			{
 				gpConEmu->key_BufferScroll(false, wParam, mp_RCon);
+				return true;
 			}
 		}
 		break;
@@ -5495,6 +5501,37 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 				//i -= 2;
 				i--;
 
+				int j = i, k = -1;
+				while (j > 0 && isDigit(pszCurLine[j-1]))
+					j--;
+
+				// Может быть что-то типа "Progress 25.15%"
+				if (((i - j) <= 2) && (j >= 2) && ((i - j) <= 2) && (pszCurLine[j-1] == L'.'))
+				{
+					k = j - 1;
+					while (k > 0 && isDigit(pszCurLine[k-1]))
+						k--;
+				}
+
+				if (k >= 0)
+				{
+					if (((j - k) <= 3) // 2 цифры + точка
+						|| (((j - k) <= 4) && (pszCurLine[k] == L'1'))) // "100.0%"
+					{
+						nIdx = i = k;
+						bAllowDot = true;
+					}
+				}
+				else
+				{
+					if (((j - i) <= 2) // 2 цифры + точка
+						|| (((j - i) <= 3) && (pszCurLine[j] == L'1'))) // "100%"
+					{
+						nIdx = i = j;
+					}
+				}
+
+				#if 0
 				// Две цифры перед '%'?
 				if (isDigit(pszCurLine[i-1]))
 					i--;
@@ -5509,10 +5546,11 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 				{
 					nIdx = i;
 				}
+				#endif
 
-				// Может ошибочно детектировать прогресс, если его ввести в строке запуска при погашенных панелях
-				// Если в строке есть символ '>' - не прогресс
-				while(i>=0)
+				// Может ошибочно детектировать прогресс, если его ввести в prompt
+				// Допустим, что если в строке есть символ '>' - то это не прогресс
+				while (i>=0)
 				{
 					if (pszCurLine[i] == L'>')
 					{
@@ -5567,11 +5605,17 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 	return nProgress;
 }
 
-LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/)
+LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/, UINT nCount /*= 1*/)
 {
 	if (!this) return 0;
 
 	int nVisible = GetTextHeight();
+
+	if (!nCount)
+	{
+		_ASSERTE(nCount >= 1);
+		nCount = 1;
+	}
 
 	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
 	if (m_Type == rbt_Primary)
@@ -5582,9 +5626,15 @@ LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/)
 			nTrackPos = con.m_sbi.srWindow.Top;
 
 		WPARAM wParm = MAKELONG(nDirection,nTrackPos);
-		WARNING("Переделать в команду пайпа");
+		while (true)
+		{
+			WARNING("Переделать в команду пайпа");
+			mp_RCon->PostConsoleMessage(mp_RCon->hConWnd, WM_VSCROLL, wParm, NULL);
 
-		mp_RCon->PostConsoleMessage(mp_RCon->hConWnd, WM_VSCROLL, wParm, NULL);
+			if ((nCount <= 1) || (nDirection != SB_LINEUP && nDirection != SB_LINEDOWN) || mp_RCon->isFar())
+				break;
+			nCount--;
+		}
 
 		if ((nDirection == SB_THUMBTRACK) || (nDirection == SB_THUMBPOSITION))
 		{
@@ -5614,11 +5664,11 @@ LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/)
 		{
 		case SB_LINEDOWN:
 			if ((nNewTop + nVisible) < con.m_sbi.dwSize.Y)
-				nNewTop++;
+				nNewTop = min((nNewTop+(SHORT)nCount),(con.m_sbi.dwSize.Y-nVisible));
 			break;
 		case SB_LINEUP:
 			if (nNewTop > 0)
-				nNewTop--;
+				nNewTop = max(0,(nNewTop-(SHORT)nCount));
 			break;
 		case SB_PAGEDOWN:
 			nNewTop = min((con.m_sbi.dwSize.Y - nVisible),(con.m_sbi.srWindow.Top + nVisible - 1));

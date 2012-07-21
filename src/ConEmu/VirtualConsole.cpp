@@ -3930,20 +3930,15 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			CEFONT hOldF = cePaintDc.SelectObject(gpSetCls->mh_Font[0]);
 			LPCWSTR pszStarting = L"Initializing ConEmu.";
 			
-			if (gpConEmu->isProcessCreated())
-			{
+			// 120721 - если показана статусная строка - не будем писать в саму консоль?
+			if (gpSet->isStatusBarShow)
+				pszStarting = NULL;
+			else if (gpConEmu->isProcessCreated())
 				pszStarting = L"No consoles";
-			}
+			else if (this && mp_RCon)
+				pszStarting = mp_RCon->GetConStatus();
 			else if (CRealConsole::ms_LastRConStatus[0])
-			{
 				pszStarting = CRealConsole::ms_LastRConStatus;
-			}
-
-			if (this)
-			{
-				if (mp_RCon)
-					pszStarting = mp_RCon->GetConStatus();
-			}
 
 			if (pszStarting != NULL)
 			{

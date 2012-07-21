@@ -269,6 +269,28 @@ class CConEmuMain :
 			// таскание окошка за клиентскую область
 			POINT ptWndDragStart;
 			RECT  rcWndDragStart;
+
+			// настройки скролла мышкой (сколько линий/символов "за клик")
+			UINT nWheelScrollChars, nWheelScrollLines;
+			void  ReloadWheelScroll()
+			{
+				if (!SystemParametersInfo(SPI_GETWHEELSCROLLCHARS, 0, &nWheelScrollChars, 0) || !nWheelScrollChars)
+					nWheelScrollChars = 3;
+				if (!SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &nWheelScrollLines, 0) || !nWheelScrollLines)
+					nWheelScrollLines = 3;
+			};
+			UINT GetWheelScrollChars()
+			{
+				if (!nWheelScrollChars)
+					ReloadWheelScroll();
+				return nWheelScrollChars;
+			};
+			UINT GetWheelScrollLines()
+			{
+				if (!nWheelScrollLines)
+					ReloadWheelScroll();
+				return nWheelScrollLines;
+			};
 		} mouse;
 		bool isPiewUpdate;
 		bool gbPostUpdateWindowSize;

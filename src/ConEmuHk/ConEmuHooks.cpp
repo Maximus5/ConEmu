@@ -3744,15 +3744,17 @@ void CheckPowerShellProgress(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COO
 {
 	_ASSERTE(dwBufferSize.Y >= 5);
 	int nProgress = -1;
+	WORD nNeedAttr = lpBuffer->Attributes;
+
 	for (SHORT Y = dwBufferSize.Y - 2; Y > 0; Y--)
 	{
 		const CHAR_INFO* pLine = lpBuffer + dwBufferSize.X * Y;
 
-		// ≈сли удалось узнать атрибуты дл€ Popup - провер€ем
-		if (gnConsolePopupColors != 0)
+		// 120720 - PS игнорирует PopupColors в консоли. ¬ывод прогресса всегда идет 0x3E
+		if (nNeedAttr/*gnConsolePopupColors*/ != 0)
 		{
-			if ((pLine[4].Attributes != gnConsolePopupColors)
-				|| (pLine[dwBufferSize.X - 7].Attributes != gnConsolePopupColors))
+			if ((pLine[4].Attributes != nNeedAttr/*gnConsolePopupColors*/)
+				|| (pLine[dwBufferSize.X - 7].Attributes != nNeedAttr/*gnConsolePopupColors*/))
 				break; // не оно
 		}
 
@@ -3802,10 +3804,18 @@ BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffe
 		// ѕервичные проверки "прогресс ли это"
 		if ((dwBufferSize.Y >= 5) && !dwBufferCoord.X && !dwBufferCoord.Y
 			&& lpWriteRegion && !lpWriteRegion->Left && (lpWriteRegion->Right == (dwBufferSize.X - 1))
-			&& lpBuffer && (lpBuffer->Char.UnicodeChar == L' ')
-			&& (!gnConsolePopupColors || (lpBuffer->Attributes == gnConsolePopupColors)))
+			&& lpBuffer && (lpBuffer->Char.UnicodeChar == L' '))
 		{
-			CheckPowerShellProgress(hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
+			#ifdef _DEBUG
+			MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi6 = {sizeof(csbi6)};
+			apiGetConsoleScreenBufferInfoEx(hConsoleOutput, &csbi6);
+			#endif
+			// 120720 - PS игнорирует PopupColors в консоли. ¬ывод прогресса всегда идет 0x3E
+			//&& (!gnConsolePopupColors || (lpBuffer->Attributes == gnConsolePopupColors)))
+			if (lpBuffer->Attributes == 0x3E)
+			{
+				CheckPowerShellProgress(hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
+			}
 		}
 	}
 

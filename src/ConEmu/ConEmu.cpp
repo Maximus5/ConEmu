@@ -2273,7 +2273,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.nGuiPID = GetCurrentProcessId();
 	
 	m_GuiInfo.nLoggingType = (ghOpWnd && gpSetCls->mh_Tabs[gpSetCls->thi_Debug]) ? gpSetCls->m_ActivityLoggingType : glt_None;
-	m_GuiInfo.bUseInjects = ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
+	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0) ; // ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
 	m_GuiInfo.bUseTrueColor = gpSet->isTrueColorer;
 	m_GuiInfo.bProcessAnsi = (gpSet->isProcessAnsi ? 1 : 0);
 	m_GuiInfo.bUseClink = (gpSet->isUseClink() ? 1 : 0);
@@ -3899,12 +3899,19 @@ void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
 	if ((change2WindowMode == (DWORD)-1) && !mb_isFullScreen && !isZoomed() && !isIconic())
 	{
+		RECT rcNormal = {};
 		if (prcWnd)
-			mrc_StoredNormalRect = *prcWnd;
+			rcNormal = *prcWnd;
 		else
-			GetWindowRect(ghWnd, &mrc_StoredNormalRect);
+			GetWindowRect(ghWnd, &rcNormal);
 
-		gpSetCls->UpdatePos(mrc_StoredNormalRect.left, mrc_StoredNormalRect.top);
+		gpSetCls->UpdatePos(rcNormal.left, rcNormal.top);
+
+		// 120720 - если окно сейчас тянут мышкой, то пока не обновлять mrc_StoredNormalRect,
+		// иначе, если произошло Maximize при дотягивании до верхнего края экрана - то при
+		// восстановлении окна получаем глюк позиционирования - оно прыгает заголовком за пределы.
+		if (!isSizing())
+			mrc_StoredNormalRect = rcNormal;
 
 		if (mp_VActive)
 		{
@@ -4078,8 +4085,10 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 				rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE);
 				//int nWidth = rcNew.right-rcNew.left;
 				//int nHeight = rcNew.bottom-rcNew.top;
-				rcNew.left+=gpConEmu->wndX; rcNew.top+=gpConEmu->wndY;
-				rcNew.right+=gpConEmu->wndX; rcNew.bottom+=gpConEmu->wndY;
+				//rcNew.left+=gpConEmu->wndX; rcNew.top+=gpConEmu->wndY;
+				//rcNew.right+=gpConEmu->wndX; rcNew.bottom+=gpConEmu->wndY;
+				rcNew.left+=mrc_StoredNormalRect.left; rcNew.top+=mrc_StoredNormalRect.top;
+				rcNew.right+=mrc_StoredNormalRect.left; rcNew.bottom+=mrc_StoredNormalRect.top;
 			}
 			// 2010-02-14 Проверку делаем ТОЛЬКО при загрузке настроек и включенном каскаде
 			//// Параметры именно такие, результат - просто подгонка rcNew под рабочую область текущего монитора
@@ -4202,8 +4211,9 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 				UpdateWindowRgn();
 			} // if (!gpSet->isHideCaption)
 			else
-			{
-				// (gpSet->isHideCaption)
+			{	// Здесь у нас обработка режима "Без заголовка"
+				// (!gpSet->isHideCaption && !gpSet->isHideCaptionAlways())
+
 				if (!isZoomed() || (mb_isFullScreen || isIconic()) || abForce)
 				{
 					mb_MaximizedHideCaption = TRUE;
@@ -4261,7 +4271,10 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 						// Сбросить
 						_ASSERTE(mb_MaximizedHideCaption);
 						mb_IgnoreSizeChange = FALSE;
+						#if 0
+						// 120720 -- вроде не нужен, ведь ниже будет SetWindowPos, а тут размер еще не сменили
 						RePaint();
+						#endif
 					}
 
 					if (mp_TaskBar2)
@@ -5356,10 +5369,12 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 	WINDOWPOS *p = (WINDOWPOS*)lParam;
 
-	#ifdef _DEBUG
+	bool zoomed = ::IsZoomed(ghWnd);
 	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+
+	#ifdef _DEBUG
 	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
-	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X) style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
+	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X) style=0x%08X%s\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle, zoomed ? L" (zoomed)" : L"");
 	DEBUGSTRSIZE(szDbg);
 	static int cx, cy;
 
@@ -5383,21 +5398,21 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE))
 		&& (gpSet->isQuakeStyle ||
 			((change2WindowMode == (DWORD)-1)
-			&& (mb_MaximizedHideCaption))))
+			&& (mb_MaximizedHideCaption || (gpSet->isHideCaptionAlways() && zoomed)))))
 	{
-		if (isZoomed())
-		{
-			// Нужно скорректировать размеры, а то при смене разрешения монитора (в частности при повороте экрана) глюки лезут
-			p->flags |= (SWP_NOSIZE|SWP_NOMOVE);
-			// И обновить размер насильно
-			SetWindowMode(rMaximized, TRUE);
-		}
-		else if (gpSet->isQuakeStyle)
+		if (gpSet->isQuakeStyle)
 		{
 			RECT rc = GetDefaultRect();
 			p->x = rc.left;
 			p->y = rc.top;
 			p->cx = rc.right - rc.left + 1;
+		}
+		else if (zoomed/*isZoomed()*/)
+		{
+			// Нужно скорректировать размеры, а то при смене разрешения монитора (в частности при повороте экрана) глюки лезут
+			p->flags |= (SWP_NOSIZE|SWP_NOMOVE);
+			// И обновить размер насильно
+			SetWindowMode(rMaximized, TRUE);
 		}
 	}
 
@@ -7846,7 +7861,7 @@ void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
 	}
 
 
-	if (pszNewTitle && (pszNewTitle != Title))
+	if (pszNewTitle && (pszNewTitle != Title) && lstrcmpi(Title, pszNewTitle))
 		lstrcpyn(Title, pszNewTitle, countof(Title));
 
 
@@ -11301,6 +11316,9 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		mp_Status->UpdateStatusBar(true);
 	}
+
+	// Может настройки ControlPanel изменились?
+	mouse.ReloadWheelScroll();
 
 	if (lbSetFocus && mp_VActive && gpSet->isTabsOnTaskBar())
 	{
@@ -15457,6 +15475,11 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 			if (!isIconic())
 			{
+				// Был сдвиг окна? Проверка после отпускания кнопки мышки
+				if ((mouse.state & MOUSE_SIZING_BEGIN) && !isSizing())
+				{
+					StoreNormalRect(NULL); // Сама разберется, надо/не надо
+				}
 				//// Было ли реальное изменение размеров?
 				//BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
 

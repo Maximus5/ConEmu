@@ -297,6 +297,12 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 	FillRect(mh_MemDC, &rcFill, hBr);
 
 
+	if (gpSet->isStatusBarFlags & csf_HorzDelim)
+	{
+		MoveToEx(mh_MemDC, rcFill.left, rcFill.top, NULL);
+		LineTo(mh_MemDC, rcFill.right+1, rcFill.top);
+	}
+
 
 	CRealConsole* pRCon = NULL;
 	CVirtualConsole* pVCon = gpConEmu->ActiveCon();
@@ -585,7 +591,7 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 			break;
 		}
 
-		if ((i+1) < nDrawCount)
+		if ((gpSet->isStatusBarFlags & csf_VertDelim) && ((i+1) < nDrawCount))
 		{
 			MoveToEx(mh_MemDC, rcField.right, rcField.top, NULL);
 			LineTo(mh_MemDC, rcField.right, rcField.bottom+1);

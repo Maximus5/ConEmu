@@ -499,7 +499,7 @@ BEGIN
     CONTROL         "Fix Alt on AltTab/AltF9",cbFixAltOnAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,78,117,8
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,43,89,8
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,54,89,8
-    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTO3STATE | WS_TABSTOP,132,43,89,8
+    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,43,89,8
     CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,66,76,8
     PUSHBUTTON      "...",bDosBoxSettings,90,64,13,11
     CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,43,74,8
@@ -1037,7 +1037,7 @@ BEGIN
     LTEXT           "You can change this later on 'Keys' page of Settings dialog later",stUseKeyboardHooksFast2,20,45,292,8,SS_NOPREFIX
     GROUPBOX        "",IDC_STATIC,3,57,316,57
     CONTROL         " Inject ConEmuHk.dll into all processes started in ConEmu tabs",cbInjectConEmuHkFast,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,8,64,295,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,64,295,10
     LTEXT           "Required for some features (-new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (dialogs and menus behind of ConEmu window, chcp hungs, and so on...)",stInjectConEmuHkFast1,20,75,292,25
     LTEXT           "You can change this later on 'Features' page of Settings dialog later",stInjectConEmuHkFast2,20,101,292,8,SS_NOPREFIX
     GROUPBOX        "",IDC_STATIC,3,114,316,35

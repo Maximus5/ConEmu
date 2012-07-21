@@ -2367,10 +2367,14 @@ BOOL CRealConsole::StartProcess()
 		hkConsole = NULL;
 	BYTE nTextColorIdx = 7, nBackColorIdx = 0, nPopTextColorIdx = 5, nPopBackColorIdx = 15;
 	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);
-	if (nTextColorIdx <= 15 || nBackColorIdx <= 15)
+	//if (nTextColorIdx <= 15 || nBackColorIdx <= 15) -- всегда, иначе может снести крышу от старых данных
 	{
+		if (nTextColorIdx > 15)
+			nTextColorIdx = GetDefaultTextColorIdx();
+		if (nBackColorIdx > 15)
+			nBackColorIdx = GetDefaultBackColorIdx();
 		si.dwFlags |= STARTF_USEFILLATTRIBUTE;
-		si.dwFillAttribute = (GetDefaultBackColorIdx() << 4) | GetDefaultTextColorIdx();
+		si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
 		if (hkConsole)
 		{
 			DWORD nColors = si.dwFillAttribute;
@@ -8223,7 +8227,9 @@ void CRealConsole::OnTitleChanged()
 	if (nNewProgress == -1)
 	{
 		// mn_ConsoleProgress обновляется в FindPanels, должен быть уже вызван
-		if (mn_ConsoleProgress != -1)
+		// mn_AppProgress обновляется через Esc-коды, GuiMacro или через команду пайпа
+		short nConProgr = ((mn_AppProgressState == 1) || (mn_AppProgressState == 2)) ? mn_AppProgress : mn_ConsoleProgress;
+		if ((nConProgr >= 0) && (nConProgr <= 100))
 		{
 			// Обработка прогресса NeroCMD и пр. консольных программ
 			// Если курсор находится в видимой области
@@ -8231,14 +8237,14 @@ void CRealConsole::OnTitleChanged()
 			// Если в заголовке нет процентов (они есть только в консоли)
 			// добавить их в наш заголовок
 			wchar_t szPercents[5];
-			_ltow(nNewProgress, szPercents, 10);
+			_ltow(nConProgr, szPercents, 10);
 			lstrcatW(szPercents, L"%");
 
 			if (!wcsstr(TitleCmp, szPercents))
 			{
-				TitleFull[0] = L'{';
-				_ltow(nNewProgress, TitleFull+1, 10);
-				lstrcatW(TitleFull, L"%} ");
+				TitleFull[0] = L'{'; TitleFull[1] = 0;
+				wcscat_c(TitleFull, szPercents);
+				wcscat_c(TitleFull, L"} ");
 			}
 		}
 	}
@@ -8445,14 +8451,27 @@ short CRealConsole::GetProgress(BOOL *rpbError, BOOL* rpbNotFromTitle)
 	if ((mn_AppProgressState == 1) || (mn_AppProgressState == 2))
 	{
 		if (rpbError)
+		{
 			*rpbError = (mn_AppProgressState == 2);
+		}
 		if (rpbNotFromTitle)
-			*rpbNotFromTitle = TRUE;
+		{
+			//-- Если проценты пришли НЕ из заголовка, а из текста
+			//-- консоли - то они "дописываются" в текущий заголовок, для таба
+			////// Если пришло от установки через ESC-коды или GuiMacro
+			//*rpbNotFromTitle = TRUE;
+			*rpbNotFromTitle = FALSE;
+		}
 		return mn_AppProgress;
 	}
 
 	if (rpbNotFromTitle)
-		*rpbNotFromTitle = (mn_ConsoleProgress != -1);
+	{
+		//-- Если проценты пришли НЕ из заголовка, а из текста
+		//-- консоли - то они "дописываются" в текущий заголовок, для таба
+		//*rpbNotFromTitle = (mn_ConsoleProgress != -1);
+		*rpbNotFromTitle = FALSE;
+	}
 
 	if (mn_Progress >= 0)
 		return mn_Progress;
@@ -8505,6 +8524,9 @@ bool CRealConsole::SetProgress(short nState, short nValue)
 
 	if (lbOk)
 	{
+		// Показать прогресс в заголовке
+		mb_ForceTitleChanged = TRUE;
+
 		if (gpConEmu->isActive(mp_VCon))
 			// Для активной консоли - обновляем заголовок. Прогресс обновится там же
 			gpConEmu->UpdateTitle();

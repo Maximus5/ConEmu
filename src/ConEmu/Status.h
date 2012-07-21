@@ -28,6 +28,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+enum CEStatusFlags
+{
+	csf_VertDelim           = 0x00000001,
+	csf_HorzDelim           = 0x00000002,
+};
+
 enum CEStatusItems
 {
 	csi_Info = 0,

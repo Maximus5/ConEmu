@@ -911,6 +911,8 @@ struct Settings
 
 		//reg->Load(L"StatusBar.Show", isStatusBarShow);
 		bool isStatusBarShow;
+		//reg->Load(L"StatusBar.Flags", isStatusBarFlags);
+		DWORD isStatusBarFlags;
 		//reg->Load(L"StatusFontFace", sStatusFontFace, countof(sStatusFontFace));
 		wchar_t sStatusFontFace[LF_FACESIZE];
 		//reg->Load(L"StatusFontCharSet", nStatusFontCharSet);
@@ -1167,7 +1169,7 @@ struct Settings
 		DWORD nAffinity;
 
 		//reg->Load(L"UseInjects", isUseInjects);
-		BYTE isUseInjects; // 0 - off, 1 - always, 2 - only executable. Note, Root process is infiltrated always.
+		bool isUseInjects; // 0 - off, 1 - always /*, 2 - only executable*/. Note, Root process is infiltrated always.
 		//reg->Load(L"ProcessAnsi", isProcessAnsi);
 		bool isProcessAnsi; // ANSI X3.64 & XTerm-256-colors Support
 		//reg->Load(L"UseClink", mb_UseClink);

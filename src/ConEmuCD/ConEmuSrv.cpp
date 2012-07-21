@@ -596,23 +596,40 @@ int ServerInitGuiTab()
 		In.dwData[0] = 1; // запущен сервер
 		In.dwData[1] = (DWORD)ghConWnd; //-V205
 
-		#ifdef _DEBUG
-		DWORD nStartTick = timeGetTime();
-		#endif
+		DWORD nInitTick = timeGetTime();
 
-		lbCallRc = CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, 1000);
-
-		#ifdef _DEBUG
-		DWORD dwErr = GetLastError(), nEndTick = timeGetTime(), nDelta = nEndTick - nStartTick;
-		if (lbCallRc && (nDelta >= EXECUTE_CMD_WARN_TIMEOUT))
+		while (true)
 		{
-			if (!IsDebuggerPresent())
+			#ifdef _DEBUG
+			DWORD nStartTick = timeGetTime();
+			#endif
+
+			lbCallRc = CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, EXECUTE_CONNECT_GUI_CALL_TIMEOUT);
+
+			DWORD dwErr = GetLastError(), nEndTick = timeGetTime();
+			DWORD nConnectDelta = nEndTick - nInitTick;
+
+			#ifdef _DEBUG
+			DWORD nDelta = nEndTick - nStartTick;
+			if (lbCallRc && (nDelta >= EXECUTE_CMD_WARN_TIMEOUT))
 			{
-				//_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT || (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP && nDelta <= EXECUTE_CMD_WARN_TIMEOUT2));
-				_ASSERTEX(nDelta <= EXECUTE_CMD_WARN_TIMEOUT);
+				if (!IsDebuggerPresent())
+				{
+					//_ASSERTE(nDelta <= EXECUTE_CMD_WARN_TIMEOUT || (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP && nDelta <= EXECUTE_CMD_WARN_TIMEOUT2));
+					_ASSERTEX(nDelta <= EXECUTE_CMD_WARN_TIMEOUT);
+				}
+			}
+			#endif
+
+			if (lbCallRc || (nConnectDelta > EXECUTE_CONNECT_GUI_TIMEOUT))
+				break;
+
+			if (!lbCallRc)
+			{
+				_ASSERTE(lbCallRc && (dwErr==ERROR_FILE_NOT_FOUND) && "GUI was not initialized yet?");
+				Sleep(250);
 			}
 		}
-		#endif
 
 
 		if (!lbCallRc || !Out.StartStopRet.hWndDC)
