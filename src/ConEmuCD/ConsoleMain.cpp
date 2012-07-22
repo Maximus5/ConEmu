@@ -7243,14 +7243,14 @@ BOOL cmd_SetConSolors(CESERVER_REQ& in, CESERVER_REQ** out)
 				COORD crRead = {0,0};
 				while (crRead.Y < csbi5.dwSize.Y)
 				{
-					DWORD nReadLn = min(nMaxLines,(csbi5.dwSize.Y-crRead.Y));
+					DWORD nReadLn = min((int)nMaxLines,(csbi5.dwSize.Y-crRead.Y));
 					DWORD nReady = 0;
 					if (!ReadConsoleOutputAttribute(ghConOut, pnAttrs, nReadLn * csbi5.dwSize.X, crRead, &nReady))
 						break;
 
 					bool bStarted = false;
 					COORD crFrom = crRead;
-					SHORT nLines = nReady / csbi5.dwSize.X;
+					SHORT nLines = (SHORT)(nReady / csbi5.dwSize.X);
 					DWORD i = 0, iStarted = 0, iWritten;
 					while (i < nReady)
 					{
@@ -7259,7 +7259,7 @@ BOOL cmd_SetConSolors(CESERVER_REQ& in, CESERVER_REQ** out)
 							if (!bStarted)
 							{
 								_ASSERT(crRead.X == 0);
-								crFrom.Y = crRead.Y + (i / csbi5.dwSize.X);
+								crFrom.Y = (SHORT)(crRead.Y + (i / csbi5.dwSize.X));
 								crFrom.X = i % csbi5.dwSize.X;
 								iStarted = i;
 								bStarted = true;
@@ -7284,7 +7284,7 @@ BOOL cmd_SetConSolors(CESERVER_REQ& in, CESERVER_REQ** out)
 					}
 
 					// Next block
-					crRead.Y += nReadLn;
+					crRead.Y += (USHORT)nReadLn;
 				}
 				free(pnAttrs);
 			}

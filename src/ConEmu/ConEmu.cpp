@@ -250,7 +250,8 @@ CConEmuMain::CConEmuMain()
 	memset(&m_GuiInfo, 0, sizeof(m_GuiInfo));
 	m_GuiInfo.cbSize = sizeof(m_GuiInfo);
 	//mh_RecreatePasswFont = NULL;
-	mb_SkipOnFocus = FALSE;
+	mb_SkipOnFocus = false;
+	mb_LastConEmuFocusState = false;
 	mb_CloseGuiConfirmed = false;
 	mb_UpdateJumpListOnStartup = false;
 
@@ -3895,6 +3896,8 @@ void CConEmuMain::AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom)
 
 void CConEmuMain::StoreNormalRect(RECT* prcWnd)
 {
+	mouse.bCheckNormalRect = false;
+
 	// Обновить коордианты в gpSet, если требуется
 	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
 	if ((change2WindowMode == (DWORD)-1) && !mb_isFullScreen && !isZoomed() && !isIconic())
@@ -4002,7 +4005,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 		}
 	}
 
-	CRealConsole* pRCon = (gpSetCls->isAdvLogging!=0) ? ActiveCon()->RCon() : NULL;
+	CRealConsole* pRCon = (gpSetCls->isAdvLogging!=0) ? (ActiveCon() ? ActiveCon()->RCon() : NULL) : NULL;
 
 	if (pRCon) pRCon->LogString((inMode==rNormal) ? "SetWindowMode(rNormal)" :
 		                           (inMode==rMaximized) ? "SetWindowMode(rMaximized)" :
@@ -4796,7 +4799,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 			char szInfo[160]; wsprintfA(szInfo, "OnConsoleResize: lbSizeChanged=%i, client={{%i,%i},{%i,%i}}, CalcCon={%i,%i}, CurCon={%i,%i}",
 			                            lbSizeChanged, client.left, client.top, client.right, client.bottom,
 			                            c.right, c.bottom, nCurConWidth, nCurConHeight);
-			mp_VActive->RCon()->LogString(szInfo);
+			mp_VActive->RCon()->LogString(szInfo, TRUE);
 		}
 
 		if (!isSizing() &&
@@ -6609,6 +6612,8 @@ bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
 
 void CConEmuMain::RegisterMinRestore(bool abRegister)
 {
+	wchar_t szErr[512];
+
 	if (abRegister && !m_InsideIntegration)
 	{
 		for (size_t i = 0; i < countof(gRegisteredHotKeys); i++)
@@ -6626,37 +6631,56 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 					&& ((gRegisteredHotKeys[i].VK != vk) || (gRegisteredHotKeys[i].MOD != nMOD)))
 			{
 				UnregisterHotKey(ghWnd, gRegisteredHotKeys[i].RegisteredID);
+
+				if (mp_VActive && gpSetCls->isAdvLogging)
+				{
+					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"UnregisterHotKey(ID=%u)", gRegisteredHotKeys[i].RegisteredID);
+					mp_VActive->RCon()->LogString(szErr, TRUE);
+				}
+
 				gRegisteredHotKeys[i].RegisteredID = 0;
 			}
 
 			if (!gRegisteredHotKeys[i].RegisteredID)
 			{
-				if (RegisterHotKey(ghWnd, HOTKEY_GLOBAL_START+i, nMOD, vk))
+				wchar_t szKey[128];
+				gpSet->GetHotkeyName(pHk, szKey);
+
+				BOOL bRegRc = RegisterHotKey(ghWnd, HOTKEY_GLOBAL_START+i, nMOD, vk);
+				DWORD dwErr = bRegRc ? 0 : GetLastError();
+
+				if (mp_VActive && gpSetCls->isAdvLogging)
+				{
+					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"RegisterHotKey(ID=%u, %s, VK=%u, MOD=x%X) - %s, Code=%u", HOTKEY_GLOBAL_START+i, szKey, vk, nMOD, bRegRc ? L"OK" : L"FAILED", dwErr);
+					mp_VActive->RCon()->LogString(szErr, TRUE);
+				}
+
+				if (bRegRc)
 				{
 					gRegisteredHotKeys[i].RegisteredID = HOTKEY_GLOBAL_START+i;
 					gRegisteredHotKeys[i].VK = vk;
 					gRegisteredHotKeys[i].MOD = nMOD;
 				}
-				else if (isFirstInstance())
+				else
 				{
-					// -- При одновременном запуске двух копий - велики шансы, что они подерутся
-					// -- наверное вообще не будем показывать ошибку
-					// -- кроме того, isFirstInstance() не работает, если копия ConEmu.exe запущена под другим юзером
-					wchar_t szErr[512], szKey[128], szName[128];
-					DWORD dwErr = GetLastError();
+					if (isFirstInstance())
+					{
+						// -- При одновременном запуске двух копий - велики шансы, что они подерутся
+						// -- наверное вообще не будем показывать ошибку
+						// -- кроме того, isFirstInstance() не работает, если копия ConEmu.exe запущена под другим юзером
+						wchar_t szName[128];
 
-					gpSet->GetHotkeyName(pHk, szKey);
+						if (!LoadString(g_hInstance, gRegisteredHotKeys[i].DescrID, szName, countof(szName)))
+							_wsprintf(szName, SKIPLEN(countof(szName)) L"DescrID=%i", gRegisteredHotKeys[i].DescrID);
 
-					if (!LoadString(g_hInstance, gRegisteredHotKeys[i].DescrID, szName, countof(szName)))
-						_wsprintf(szName, SKIPLEN(countof(szName)) L"DescrID=%i", gRegisteredHotKeys[i].DescrID);
-
-					_wsprintf(szErr, SKIPLEN(countof(szErr))
-						L"Can't register hotkey for\n%s\n%s"
-						L"%s, ErrCode=%u",
-						szName,
-						(dwErr == 1409) ? L"Hotkey already registered by another App\n" : L"",
-						szKey, dwErr);
-					Icon.ShowTrayIcon(szErr, tsa_Config_Error);
+						_wsprintf(szErr, SKIPLEN(countof(szErr))
+							L"Can't register hotkey for\n%s\n%s"
+							L"%s, ErrCode=%u",
+							szName,
+							(dwErr == 1409) ? L"Hotkey already registered by another App\n" : L"",
+							szKey, dwErr);
+						Icon.ShowTrayIcon(szErr, tsa_Config_Error);
+					}
 				}
 			}
 		}
@@ -6668,6 +6692,13 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 			if (gRegisteredHotKeys[i].RegisteredID)
 			{
 				UnregisterHotKey(ghWnd, gRegisteredHotKeys[i].RegisteredID);
+
+				if (mp_VActive && gpSetCls->isAdvLogging)
+				{
+					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"UnregisterHotKey(ID=%u)", gRegisteredHotKeys[i].RegisteredID);
+					mp_VActive->RCon()->LogString(szErr, TRUE);
+				}
+
 				gRegisteredHotKeys[i].RegisteredID = 0;
 			}
 		}
@@ -6689,7 +6720,17 @@ void CConEmuMain::RegisterHotKeys()
 
 	if (!mb_HotKeyRegistered)
 	{
-		if (RegisterHotKey(ghWnd, HOTKEY_CTRLWINALTSPACE_ID, MOD_CONTROL|MOD_WIN|MOD_ALT, VK_SPACE))
+		BOOL bRegRc = RegisterHotKey(ghWnd, HOTKEY_CTRLWINALTSPACE_ID, MOD_CONTROL|MOD_WIN|MOD_ALT, VK_SPACE);
+		DWORD dwErr = bRegRc ? 0 : GetLastError();
+
+		if (mp_VActive && gpSetCls->isAdvLogging)
+		{
+			char szErr[512];
+			_wsprintfA(szErr, SKIPLEN(countof(szErr)) "RegisterHotKey(ID=%u, %s, VK=%u, MOD=x%X) - %s, Code=%u", HOTKEY_CTRLWINALTSPACE_ID, L"Ctrl+Win+Alt+Space", VK_SPACE, MOD_CONTROL|MOD_WIN|MOD_ALT, bRegRc ? "OK" : "FAILED", dwErr);
+			mp_VActive->RCon()->LogString(szErr, TRUE);
+		}
+
+		if (bRegRc)
 		{
 			mb_HotKeyRegistered = TRUE;
 		}
@@ -6753,7 +6794,13 @@ void CConEmuMain::RegisterHoooks()
 	//if (!gpSet->isUseWinNumber || !gpSet->IsHostkeySingle(VK_LWIN))
 	if (!gpSetCls->HasSingleWinHotkey())
 	{
+		if (mp_VActive && gpSetCls->isAdvLogging)
+		{
+			mp_VActive->RCon()->LogString("CConEmuMain::RegisterHoooks() skipped, cause of !HasSingleWinHotkey()", TRUE);
+		}
+
 		UnRegisterHoooks();
+
 		return;
 	}
 
@@ -6762,7 +6809,14 @@ void CConEmuMain::RegisterHoooks()
 	if (!mh_LLKeyHook)
 	{
 		// Проверяет, разрешил ли пользователь установку хуков.
-		if (gpSet->isKeyboardHooks())
+		if (!gpSet->isKeyboardHooks())
+		{
+			if (mp_VActive && gpSetCls->isAdvLogging)
+			{
+				mp_VActive->RCon()->LogString("CConEmuMain::RegisterHoooks() skipped, cause of !isKeyboardHooks()", TRUE);
+			}
+		}
+		else
 		{
 			if (!mh_LLKeyHookDll)
 				LoadConEmuCD();
@@ -6781,6 +6835,7 @@ void CConEmuMain::RegisterHoooks()
 			//	CloseHandle(hSkipEvent);
 			//}
 			
+			_ASSERTE(mh_LLKeyHook==NULL); // Из другого потока регистрация прошла?
 
 			if (!mh_LLKeyHook && mh_LLKeyHookDll)
 			{
@@ -6806,14 +6861,38 @@ void CConEmuMain::RegisterHoooks()
 					if (!mh_LLKeyHook)
 					{
 						dwErr = GetLastError();
+						if (mp_VActive && gpSetCls->isAdvLogging)
+						{
+							char szErr[128];
+							_wsprintfA(szErr, SKIPLEN(countof(szErr)) "CConEmuMain::RegisterHoooks() failed, Code=%u", dwErr);
+							mp_VActive->RCon()->LogString(szErr, TRUE);
+						}
 						_ASSERTE(mh_LLKeyHook!=NULL);
 					}
 					else
 					{
 						if (pKeyHook) *pKeyHook = mh_LLKeyHook;
+						if (mp_VActive && gpSetCls->isAdvLogging)
+						{
+							mp_VActive->RCon()->LogString("CConEmuMain::RegisterHoooks() succeeded", TRUE);
+						}
 					}
 				}
 			}
+			else
+			{
+				if (mp_VActive && gpSetCls->isAdvLogging)
+				{
+					mp_VActive->RCon()->LogString("CConEmuMain::RegisterHoooks() failed, cause of !mh_LLKeyHookDll", TRUE);
+				}
+			}
+		}
+	}
+	else
+	{
+		if (mp_VActive && gpSetCls->isAdvLogging >= 2)
+		{
+			mp_VActive->RCon()->LogString("CConEmuMain::RegisterHoooks() skipped, already was set", TRUE);
 		}
 	}
 }
@@ -6853,6 +6932,13 @@ void CConEmuMain::UnRegisterHotKeys(BOOL abFinal/*=FALSE*/)
 	{
 		UnregisterHotKey(ghWnd, HOTKEY_CTRLWINALTSPACE_ID);
 		mb_HotKeyRegistered = FALSE;
+
+		if (mp_VActive && gpSetCls->isAdvLogging)
+		{
+			char szErr[128];
+			_wsprintfA(szErr, SKIPLEN(countof(szErr)) "UnregisterHotKey(ID=%u)", HOTKEY_CTRLWINALTSPACE_ID);
+			mp_VActive->RCon()->LogString(szErr, TRUE);
+		}
 	}
 
 	UnRegisterHoooks(abFinal);
@@ -6864,6 +6950,11 @@ void CConEmuMain::UnRegisterHoooks(BOOL abFinal/*=FALSE*/)
 	{
 		UnhookWindowsHookEx(mh_LLKeyHook);
 		mh_LLKeyHook = NULL;
+
+		if (mp_VActive && gpSetCls->isAdvLogging)
+		{
+			mp_VActive->RCon()->LogString("CConEmuMain::UnRegisterHoooks() done", TRUE);
+		}
 	}
 
 	if (abFinal)
@@ -9725,6 +9816,7 @@ bool CConEmuMain::isSizing()
 	if (!isPressed(VK_LBUTTON))
 	{
 		mouse.state &= ~MOUSE_SIZING_BEGIN;
+		mouse.bCheckNormalRect = true;
 		return false;
 	}
 
@@ -11054,12 +11146,12 @@ void CConEmuMain::setFocus()
 	SetFocus(ghWnd);
 }
 
-void CConEmuMain::SetSkipOnFocus(BOOL abSkipOnFocus)
+void CConEmuMain::SetSkipOnFocus(bool abSkipOnFocus)
 {
 	mb_SkipOnFocus = abSkipOnFocus;
 }
 
-LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom /*= NULL*/)
 {
 	// Чтобы избежать лишних вызовов по CtrlWinAltSpace при работе с GUI приложением
 	if (mb_SkipOnFocus)
@@ -11110,7 +11202,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					wchar_t szClass[128];
 
 					// Нужно учесть, что еще могут быть всякие бары, панели, и прочее, лежащие на десктопе
-					while(hFromPoint)
+					while (hFromPoint)
 					{
 						if (GetClassName(hFromPoint, szClass, 127))
 						{
@@ -11168,6 +11260,43 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		pszMsgName = L"WM_KILLFOCUS";
 		hNewFocus = wParam ? (HWND)wParam : GetForegroundWindow();
 	}
+	else
+	{
+		_ASSERTE(messg == 0 && asMsgFrom != NULL);
+		if (asMsgFrom)
+			pszMsgName = asMsgFrom;
+
+		if (gpSet->isDesktopMode)
+		{
+			CheckFocus(pszMsgName);
+		}
+
+		if (gpSet->isDesktopMode || gpConEmu->m_InsideIntegration)
+		{
+			// В этих режимах игнорировать
+			return 0;
+		}
+
+		hNewFocus = GetForegroundWindow();
+		if (hNewFocus == ghWnd)
+			lbSetFocus = true;
+		else if (hNewFocus)
+		{
+			DWORD nForePID; GetWindowThreadProcessId(hNewFocus, &nForePID);
+			lbSetFocus = (nForePID == GetCurrentProcessId());
+		}
+
+		if (!lbSetFocus || mb_LastConEmuFocusState)
+		{
+			// Не дергаться
+			return 0;
+		}
+
+		// Сюда мы доходим, если произошла какая-то ошибка, и ConEmu не получил
+		// информации о том, что его окно было активировано. Нужно уведомить сервер.
+		_ASSERTE(lbSetFocus);
+	}
+
 
 	CheckFocus(pszMsgName);
 
@@ -11246,6 +11375,15 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 		}
 	}
+
+
+
+	/****************************************************************/
+	/******      Done, Processing Activation/Deactivation      ******/
+	/****************************************************************/
+
+	mb_LastConEmuFocusState = lbSetFocus;
+
 
 	// Если для активного и НЕактивного окна назначены разные значения
 	if (gpSet->isTransparentSeparate
@@ -11558,6 +11696,8 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 		return;
 	}
 
+	StoreNormalRect(NULL); // Сама разберется, надо/не надо
+
 	gpConEmu->SetWindowMode((gpConEmu->isZoomed()||(mb_isFullScreen/*&&gpConEmu->isWndNotFSMaximized*/)) ? rNormal : rMaximized);
 }
 
@@ -11829,49 +11969,151 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	DEBUGSTRKEY(szDebug);
 	#endif
 
+
+	if (mp_VActive && gpSetCls->isAdvLogging)
+		mp_VActive->RCon()->LogInput(messg, wParam, lParam);
+
+
 #if 1
 	// Works fine, but need to cache last pressed key, cause of need them in WM_KEYUP (send char to console)
 	wchar_t szTranslatedChars[16] = {0};
 	int nTranslatedChars = 0;
+	MSG msgList[16] = {{hWnd,messg,wParam,lParam}};
+	int iAddMsgList = 0, iDeadMsgIndex = 0;
+	int iProcessDeadChars = 0;
+	//static bool bWasDeadChar = false;
+	//static LPARAM nDeadCharLParam = 0;
 
 	if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN)
 	{
 		_ASSERTE(sizeof(szTranslatedChars) == sizeof(m_TranslatedChars[0].szTranslatedChars));
-		BOOL lbDeadChar = FALSE;
+		//BOOL lbDeadChar = FALSE;
 		MSG msg, msg1;
+		LPARAM lKey1ScanCode = (lParam & 0x00FF0000);
+		LPARAM lKey2ScanCode = 0;
+
+		// 120722 - Spanish (for example) layout. Есть несколько клавиш для ввода
+		// символов с разными Grave/Acute/Circumflex/Tilde/Diaeresis/Ring Above
+		// Например, при вводе "~" и "a" система продуцирует следующую последовательность
+		// WM_KEYDOWN, WM_DEADCHAR (~), WM_KEYUP, WM_KEYDOWN, WM_CHAR ("a" с "~"), WM_KEYUP
+		// Причем только в том случае, если нет задержек в обработке этих сообщений.
+		// При наличии задержки в обработке - получаем просто "a" без тильды.
+
+		TODO("Проверить немецкую раскладку с '^'");
 
 		while (nTranslatedChars < 15  // извлечь из буфера все последующие WM_CHAR & WM_SYSCHAR
 		        && PeekMessage(&msg, 0,0,0, PM_NOREMOVE)
 		      )
 		{
-			if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR || msg.message == WM_DEADCHAR)
-			        || (msg.lParam & 0xFF0000) != (lParam & 0xFF0000) /* совпадение скан-кода */)
+			if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
+					|| msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR
+					|| (iProcessDeadChars == 1 // был WM_DEADCHAR/WM_SYSDEADCHAR, ожидаем WM_KEYUP и WM_KEYDOWN
+						&& ((msg.message == WM_KEYUP && (msg.lParam & 0x00FF0000) == lKey1ScanCode)
+							|| (msg.message == WM_KEYDOWN /* следующая за DeadChar собственно буква */))
+						)
+					|| (iProcessDeadChars == 2 // был WM_DEADCHAR/WM_SYSDEADCHAR, теперь ожидаем WM_CHAR
+						&& (msg.message == WM_CHAR || msg.message == WM_SYSCHAR)
+						)
+					))
+				//|| (msg.lParam & 0xFF0000) != lKey1ScanCode /* совпадение скан-кода */) // 120722 - убрал
+			{
 				break;
+			}
 
 			if (GetMessage(&msg1, 0,0,0))  // убрать из буфера
 			{
 				_ASSERTE(msg1.message == msg.message && msg1.wParam == msg.wParam && msg1.lParam == msg.lParam);
+				msgList[++iAddMsgList] = msg1;
 
-				if (msg.message != WM_DEADCHAR)
+				if (msg.message == WM_CHAR || msg.message == WM_SYSCHAR)
+				{
 					szTranslatedChars[nTranslatedChars ++] = (wchar_t)msg1.wParam;
-				else
-					lbDeadChar = TRUE;
+					if (iProcessDeadChars == 1)
+					{
+						_ASSERTE(iProcessDeadChars == 2); // уже должно было быть выставлено в WM_KEYDOWN
+						iProcessDeadChars = 2;
+					}
+				}
+				else if (msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR)
+				{
+					_ASSERTE(iProcessDeadChars==0 && "Must be first entrance");
+					//lbDeadChar = TRUE;
+					iProcessDeadChars = 1;
+				}
+				else if (msg.message == WM_KEYDOWN)
+				{
+					if (iProcessDeadChars == 1)
+					{
+						iProcessDeadChars = 2;
+						lKey2ScanCode = (msg.lParam & 0x00FF0000);
+						iDeadMsgIndex = iAddMsgList;
+					}
+				}
 
+				// 120722 - Было DispatchMessage вместо TranslateMessage.
 				// Требуется обработать сообщение
-				DispatchMessage(&msg1);
+				TranslateMessage(&msg1);
+				//DispatchMessage(&msg1);
 			}
 		}
 
-		if (lbDeadChar && nTranslatedChars)
-			lbDeadChar = FALSE;
+		if (mp_VActive && gpSetCls->isAdvLogging)
+		{
+			for (int i = 1; i <= iAddMsgList; i++)
+			{
+				mp_VActive->RCon()->LogInput(msgList[i].message, msgList[i].wParam, msgList[i].lParam);
+			}
+		}
+
+		if (iProcessDeadChars == 2)
+		{
+			_ASSERTE(iDeadMsgIndex>0);
+			_ASSERTE(msgList[iDeadMsgIndex].message == messg);
+			wParam = msgList[iDeadMsgIndex].wParam;
+			lParam = msgList[iDeadMsgIndex].lParam;
+			bVK = (WORD)(wParam & 0xFF);
+		}
+
+		//if (lbDeadChar)
+		//{
+		//	bWasDeadChar = true;
+		//	nDeadCharLParam = lParam;
+		//}
+		//else
+		//{
+		//	bWasDeadChar = false;
+		//}
+
+		//if (lbDeadChar && nTranslatedChars)
+		//{
+		//	_ASSERTE(FALSE && "Dead char does not produces szTranslatedChars");
+		//	lbDeadChar = FALSE;
+		//}
 
 		memmove(m_TranslatedChars[bVK].szTranslatedChars, szTranslatedChars, sizeof(szTranslatedChars));
 	}
 	else
 	{
+		_ASSERTE((messg == WM_KEYUP || messg == WM_SYSKEYUP) && "Unexpected msg");
+		//if (messg == WM_KEYUP || messg == WM_SYSKEYUP)
+		//{
+		//	if (bWasDeadChar)
+		//	{
+		//		if ((nDeadCharLParam & 0xFF0000) == (lParam & 0xFF0000))
+		//		{
+		//			//DefWindowProc(hWnd, messg, wParam, lParam);
+		//		}
+		//		bWasDeadChar = false;
+		//	}
+		//}
+		//else
+		//{
+		//	_ASSERTE((messg == WM_KEYUP || messg == WM_SYSKEYUP) && "Unexpected msg");
+		//}
+
 		szTranslatedChars[0] = m_TranslatedChars[bVK].szTranslatedChars[0];
 		szTranslatedChars[1] = 0;
-		nTranslatedChars = (szTranslatedChars[0] == 0) ? 0 : 1;
+		nTranslatedChars = szTranslatedChars[0] ? 1 : 0;
 	}
 
 #endif
@@ -12671,6 +12913,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	// кто его знает, в каких координатах оно пришло...
 	//short winX = GET_X_LPARAM(lParam);
 	//short winY = GET_Y_LPARAM(lParam);
+
+	if (mp_VActive && gpSetCls->isAdvLogging)
+		mp_VActive->RCon()->LogInput(messg, wParam, lParam);
 
 	if (mn_TrackMenuPlace != tmp_None && mp_Tip)
 	{
@@ -14381,6 +14626,7 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 			//}
 		}
 		break;
+
 		case HSHELL_WINDOWCREATED:
 		{
 			if (isMeForeground())
@@ -14399,26 +14645,10 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 					if (IsWindowVisible(hWnd))  // ? оно успело ?
 					{
 						// Получить PID родительского процесса этого окошка
-						HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-
-						if (hSnap != INVALID_HANDLE_VALUE)
+						PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+						if (GetProcessInfo(dwPID, &prc))
 						{
-							PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
-
-							if (Process32First(hSnap, &prc))
-							{
-								do
-								{
-									if (prc.th32ProcessID == dwPID)
-									{
-										dwParentPID = prc.th32ParentProcessID;
-										break;
-									}
-								}
-								while(Process32Next(hSnap, &prc));
-							}
-
-							CloseHandle(hSnap);
+							dwParentPID = prc.th32ParentProcessID;
 						}
 
 						for (size_t i = 0; i < countof(mp_VCon); i++)
@@ -14447,30 +14677,34 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 			}
 		}
 		break;
-#ifdef _DEBUG
+		
+		#ifdef _DEBUG
 		case HSHELL_ACTIVATESHELLWINDOW:
 		{
 			// Не вызывается
-#ifdef _DEBUG
 			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"HSHELL_ACTIVATESHELLWINDOW(lParam=0x%08X)\n", (DWORD)lParam);
 			DEBUGSTRFOREGROUND(szDbg);
-#endif
 		}
 		break;
-#endif
+		#endif
+
 		case HSHELL_WINDOWACTIVATED:
 		{
 			// Приходит позже чем WM_ACTIVATE(WA_INACTIVE), но пригодится, если CE был НЕ в фокусе
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			// Когда активируется Desktop - lParam == 0
 
-			wchar_t szDbg[128], szClass[64]; if (!lParam || !GetClassName((HWND)lParam, szClass, 63)) wcscpy(szClass, L"<NULL>");
+			wchar_t szDbg[128], szClass[64];
+			if (!lParam || !GetClassName((HWND)lParam, szClass, 63))
+				wcscpy(szClass, L"<NULL>");
 
 			BOOL lbLBtn = isPressed(VK_LBUTTON);
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"HSHELL_WINDOWACTIVATED(lParam=0x%08X, %s, %i)\n", (DWORD)lParam, szClass, lbLBtn);
 			DEBUGSTRFOREGROUND(szDbg);
-#endif
-			CheckFocus(L"HSHELL_WINDOWACTIVATED");
+			#endif
+
+			//CheckFocus(L"HSHELL_WINDOWACTIVATED");
+			OnFocus(NULL, 0, 0, 0, L"HSHELL_WINDOWACTIVATED");
 		}
 		break;
 	}
@@ -15476,9 +15710,13 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 			if (!isIconic())
 			{
 				// Был сдвиг окна? Проверка после отпускания кнопки мышки
-				if ((mouse.state & MOUSE_SIZING_BEGIN) && !isSizing())
+				if ((mouse.state & MOUSE_SIZING_BEGIN) || mouse.bCheckNormalRect)
 				{
-					StoreNormalRect(NULL); // Сама разберется, надо/не надо
+					bool bIsSizing = isSizing();
+					if (!bIsSizing)
+					{
+						StoreNormalRect(NULL); // Сама разберется, надо/не надо
+					}
 				}
 				//// Было ли реальное изменение размеров?
 				//BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
@@ -15493,6 +15731,11 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 				// update scrollbar
 				OnUpdateScrollInfo(TRUE);
+			}
+			else
+			{
+				if (mouse.bCheckNormalRect)
+					mouse.bCheckNormalRect = false;
 			}
 
 			// режим полного скрытия заголовка
@@ -15584,7 +15827,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 				}
 			}
 
-			CheckFocus(L"TIMER_MAIN_ID");
+			// -- Замена на OnFocus
+			//CheckFocus(L"TIMER_MAIN_ID");
+			// Проверить, может ConEmu был активирован, а сервер нет?
+			OnFocus(NULL, 0, 0, 0, L"TIMER_MAIN_ID");
 
 			if (!lbIsPicView && gpSet->UpdSet.isUpdateCheckHourly)
 			{
@@ -16208,10 +16454,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_CHAR:
 		case WM_SYSCHAR:
 		case WM_DEADCHAR:
+		case WM_SYSDEADCHAR:
 		{
 			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%s(%i='%c', Scan=%i, lParam=0x%08X)\n",
-			                              (messg == WM_CHAR) ? L"WM_CHAR" : (messg == WM_SYSCHAR) ? L"WM_SYSCHAR" : L"WM_DEADCHAR",
+				(messg == WM_CHAR) ? L"WM_CHAR" : (messg == WM_SYSCHAR) ? L"WM_SYSCHAR" : (messg == WM_SYSDEADCHAR) ? L"WM_DEADCHAR" : L"WM_DEADCHAR",
 			                              (DWORD)wParam, (wchar_t)wParam, ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
+			_ASSERTE(FALSE && "WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard");
 			DEBUGSTRCHAR(szDbg);
 		}
 		break;

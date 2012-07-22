@@ -249,6 +249,7 @@ class CConEmuMain :
 			WORD  state;
 			bool  bSkipRDblClk;
 			bool  bIgnoreMouseMove;
+			bool  bCheckNormalRect;
 
 			COORD LClkDC, LClkCon;
 			POINT LDblClkDC; // заполняется в PatchMouseEvent
@@ -318,7 +319,8 @@ class CConEmuMain :
 		HCURSOR mh_SplitV, mh_SplitH;
 		HCURSOR mh_DragCursor;
 		CDragDrop *mp_DragDrop;
-		BOOL mb_SkipOnFocus;
+		bool mb_SkipOnFocus;
+		bool mb_LastConEmuFocusState;
 		DWORD mn_SysMenuOpenTick, mn_SysMenuCloseTick;
 	protected:
 		friend class CGuiServer;
@@ -603,7 +605,7 @@ class CConEmuMain :
 		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
 		void SetConsoleWindowSize(const COORD& size, bool updateInfo, CVirtualConsole* apVCon);
 		void SetDragCursor(HCURSOR hCur);
-		void SetSkipOnFocus(BOOL abSkipOnFocus);
+		void SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);
 		bool SetWindowMode(uint inMode, BOOL abForce = FALSE, BOOL abFirstShow = FALSE);
 		void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
@@ -662,7 +664,7 @@ class CConEmuMain :
 		void OnDesktopMode();
 		LRESULT OnDestroy(HWND hWnd);
 		LRESULT OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon);
-		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom = NULL);
 		LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 		void OnHideCaption();
 		void OnInfo_About(LPCWSTR asPageName = NULL);

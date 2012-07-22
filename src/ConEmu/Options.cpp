@@ -494,6 +494,7 @@ void Settings::InitSettings()
 	_ASSERTE(countof(isStatusColumnHidden)>csi_Last);
 	memset(isStatusColumnHidden, 0, sizeof(isStatusColumnHidden));
 	// выставим те колонки, которые не нужны "юзеру" по умолчанию
+	isStatusColumnHidden[csi_ConsoleTitle] = true;
 	isStatusColumnHidden[csi_InputLocale] = true;
 	isStatusColumnHidden[csi_WindowPos] = true;
 	isStatusColumnHidden[csi_WindowSize] = true;

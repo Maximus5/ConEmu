@@ -59,6 +59,12 @@ static struct StatusColInfo {
 	{csi_Info,  NULL,   L"Show status bar",
 						L"Hide status bar, you may restore it later from 'Settings...'"},
 	// Далее - по настройкам
+	{csi_ConsoleTitle,	L"StatusBar.Hide.Title",
+						L"Console title",
+						L"Active console title"},
+	{csi_ActiveProcess,	L"StatusBar.Hide.Proc",
+						L"Active process",
+						L"Active process"},
 	{csi_ActiveVCon,	L"StatusBar.Hide.VCon",
 						L"Active VCon",
 						L"ActiveCon/TotalCount, left click to change"},
@@ -224,6 +230,10 @@ CStatus::CStatus()
 
 	// Init some values
 	OnTransparency();
+
+	_ASSERTE(gpConEmu && *gpConEmu->ms_ConEmuBuild);
+	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) _T(" « %s%s"), 
+		gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x86",L"x64"));
 }
 
 CStatus::~CStatus()
@@ -244,6 +254,32 @@ bool CStatus::FillItems()
 	TODO("CStatus::FillItems()");
 
 	return lbChanged;
+}
+
+bool CStatus::LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMax)
+{
+	bool lbRc = false;
+	DWORD nPID = 0;
+
+	if (!pRCon || ((nPID = pRCon->GetActivePID()) == 0))
+	{
+		//lstrcpyn(pszText, gsReady, cchMax);
+	}
+	else
+	{
+		LPCWSTR pszName = pRCon->GetActiveProcessName();
+		TODO("Показать все дерево запущенных процессов");
+		wchar_t* psz = pszText;
+		int nCchLeft = cchMax;
+		lstrcpyn(psz, (pszName && *pszName) ? pszName : L"???", 64);
+		int nCurLen = lstrlen(psz);
+		_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u"), nPID);
+		//_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u « %s%s"), 
+		//	nPID, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x86",L"x64"));
+		lbRc = true;
+	}
+
+	return lbRc;
 }
 
 void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
@@ -331,11 +367,14 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 	int nMinInfoWidth = 80;
 	int nTotalWidth = nGapWidth, nWidth = 0;
 	int iInfoID = -1;
+	SIZE szVerSize = {};
+
+	GetTextExtentPoint32(mh_MemDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &szVerSize);
 
 	//while (nID <= ces_Last)
-	for (int i = csi_Info; i < csi_Last; i++)
+	for (int ii = 0; ii < countof(gStatusCols); ii++)
 	{
-		CEStatusItems nID = (CEStatusItems)i;
+		CEStatusItems nID = gStatusCols[ii].nID;
 		_ASSERTE(nID < countof(m_Values));
 
 		// Info - показываем всегда!
@@ -344,6 +383,8 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 			_ASSERTE(nID<countof(gpSet->isStatusColumnHidden));
 			if (gpSet->isStatusColumnHidden[nID])
 				continue; // просили не показывать
+			if (nID == csi_ConsoleTitle)
+				continue; // если выбрано - то показывается как csi_Info
 			if ((nID == csi_Transparency) && !gpSet->isTransparentAllowed())
 				continue; // смысла не имеет
 			if ((nID == csi_SyncInside) && !gpConEmu->m_InsideIntegration)
@@ -360,7 +401,8 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 					(m_ClickedItemDesc == csi_Info && !mb_InSetupMenu) ? L"Right click to show System Menu" :
 					((mb_InSetupMenu && m_ClickedItemDesc == csi_Info)
 						|| (m_ClickedItemDesc > csi_Info && m_ClickedItemDesc < csi_Last))
-					? m_Values[m_ClickedItemDesc].sHelp : pRCon ? pRCon->GetConStatus() : NULL;
+					? m_Values[m_ClickedItemDesc].sHelp :
+					pRCon ? pRCon->GetConStatus() : NULL;
 				
 				if (pszTmp && *pszTmp)
 				{
@@ -375,20 +417,19 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 				*/
 				else if (pRCon)
 				{
-					DWORD nPID = pRCon->GetActivePID();
-					LPCWSTR pszName = pRCon->GetActiveProcessName();
-					if (nPID)
+					if (!gpSet->isStatusColumnHidden[csi_ConsoleTitle])
 					{
-						TODO("Показать все дерево запущенных процессов");
-						wchar_t* psz = m_Items[nDrawCount].sText;
-						int nCchLeft = countof(m_Items[nDrawCount].sText);
-						lstrcpyn(psz, (pszName && *pszName) ? pszName : L"???", 64);
-						int nCurLen = lstrlen(psz);
-						_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u « %s%s"), 
-							nPID, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x86",L"x64"));
+						lstrcpyn(m_Items[nDrawCount].sText, pRCon->GetTitle(), countof(m_Items[nDrawCount].sText));
+					}
+					else if (!gpSet->isStatusColumnHidden[csi_ActiveProcess])
+					{
+						if (!LoadActiveProcess(pRCon, m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText)))
+							lstrcpyn(m_Items[nDrawCount].sText, gsReady, countof(m_Items[nDrawCount].sText));
 					}
 					else
-						lstrcpyn(m_Items[nDrawCount].sText, gsReady, countof(m_Items[nDrawCount].sText));
+					{
+						lstrcpyn(m_Items[nDrawCount].sText, L"Ready", countof(m_Items[nDrawCount].sText));
+					}
 				}
 				else
 				{
@@ -398,6 +439,17 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 
 				break;
 			} // csi_Info
+
+			case csi_ConsoleTitle:
+				_ASSERTE(FALSE && "Must be processed as first column - csi_Info");
+				break;
+
+			case csi_ActiveProcess:
+				if (gpSet->isStatusColumnHidden[csi_ConsoleTitle])
+					m_Items[nDrawCount].sText[0] = 0; // Уже показано в первой колонке
+				else
+					LoadActiveProcess(pRCon, m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText));
+				break;
 
 			case csi_NewVCon:
 				wcscpy_c(m_Items[nDrawCount].sText, L"[+]");
@@ -458,8 +510,12 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 			m_Items[nDrawCount].TextSize.cx = max(m_Items[nDrawCount].TextSize.cx, szTemp.cx);
 		}
 		
-		if ((nID == csi_Info) && (m_Items[nDrawCount].TextSize.cx < nMinInfoWidth))
-			m_Items[nDrawCount].TextSize.cx = nMinInfoWidth;
+		if (nID == csi_Info)
+		{
+			m_Items[nDrawCount].TextSize.cx += szVerSize.cx; // Информация о версии
+			if (m_Items[nDrawCount].TextSize.cx < nMinInfoWidth)
+				m_Items[nDrawCount].TextSize.cx = nMinInfoWidth;
+		}
 
 		//if (nDrawCount) // перед вторым и далее - добавить разделитель
 		//	nTotalWidth += 2*nGapWidth + nDashWidth;
@@ -576,6 +632,13 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 		}
 
 		RECT rcText = {rcField.left+1, rcField.top+1, rcField.right-1, rcField.bottom-1};
+
+		if (!i && szVerSize.cx > 0)
+		{
+			DrawText(mh_MemDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &rcText, 
+				DT_RIGHT|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS);
+			rcText.right -= szVerSize.cx;
+		}
 
 		DrawText(mh_MemDC, m_Items[i].sText, m_Items[i].nTextLen, &rcText, 
 			((m_Items[i].nID == csi_Info) ? DT_LEFT : DT_CENTER)
@@ -1134,6 +1197,11 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	CEStatusItems Changed[] = {csi_CursorX, csi_CursorY, csi_CursorSize, csi_CursorInfo};
 	OnDataChanged(Changed, countof(Changed));
 }
+
+//void CStatus::OnConsoleTitleChanged(CRealConsole* pRCon)
+//{
+//	lstrcpyn(m_Values[csi_ConsoleTitle]
+//}
 
 void CStatus::OnConsoleBufferChanged(CRealConsole* pRCon)
 {

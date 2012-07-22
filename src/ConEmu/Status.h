@@ -34,14 +34,13 @@ enum CEStatusFlags
 	csf_HorzDelim           = 0x00000002,
 };
 
+
+// Добавлять нужно в конец, чтобы у пользователей не слетали настройки!!!
 enum CEStatusItems
 {
 	csi_Info = 0,
 
 	csi_ActiveVCon,
-	csi_NewVCon,
-
-	csi_SyncInside,
 
 	csi_CapsLock,
 	csi_NumLock,
@@ -67,6 +66,11 @@ enum CEStatusItems
 	csi_Server,
 	csi_ServerHWND,
 	csi_Transparency,
+
+	csi_NewVCon,
+	csi_SyncInside,
+	csi_ActiveProcess,
+	csi_ConsoleTitle,
 
 	//
 	csi_Last
@@ -98,6 +102,8 @@ private:
 		wchar_t szFormat[64];
 	} m_Values[csi_Last];
 
+	wchar_t ms_ConEmuBuild[32];
+
 	RECT mrc_LastStatus;
 
 	SIZE mn_BmpSize;
@@ -124,6 +130,8 @@ private:
 
 	void OnDataChanged(CEStatusItems *ChangedID, size_t Count, bool abForceOnChange = false);
 
+	bool LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMax);
+
 	bool mb_Caps, mb_Num, mb_Scroll;
 	DWORD_PTR mhk_Locale; // CConEmuMain::GetActiveKeyboardLayout()
 	bool IsKeyboardChanged();
@@ -147,6 +155,7 @@ public:
 	void OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CONSOLE_CURSOR_INFO* pci, bool bForceUpdate);
 	void OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, int nMaxX = 0, int nMaxY = 0);
 	void OnConsoleBufferChanged(CRealConsole* pRCon);
+	//void OnConsoleTitleChanged(CRealConsole* pRCon);
 	void OnActiveVConChanged(int nIndex/*0-based*/, CRealConsole* pRCon);
 	void OnServerChanged(DWORD nMainServerPID, DWORD nAltServerPID);
 	void OnKeyboardChanged();

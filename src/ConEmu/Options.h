@@ -912,7 +912,7 @@ struct Settings
 		//reg->Load(L"StatusBar.Show", isStatusBarShow);
 		bool isStatusBarShow;
 		//reg->Load(L"StatusBar.Flags", isStatusBarFlags);
-		DWORD isStatusBarFlags;
+		DWORD isStatusBarFlags; // set of CEStatusFlags
 		//reg->Load(L"StatusFontFace", sStatusFontFace, countof(sStatusFontFace));
 		wchar_t sStatusFontFace[LF_FACESIZE];
 		//reg->Load(L"StatusFontCharSet", nStatusFontCharSet);

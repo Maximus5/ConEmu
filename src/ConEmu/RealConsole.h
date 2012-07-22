@@ -504,6 +504,7 @@ class CRealConsole
 		BOOL GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID);
 		//LPCWSTR GetLngNameTime();
 		void ShowPropertiesDialog();
+		void LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars = NULL);
 
 	protected:
 		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль

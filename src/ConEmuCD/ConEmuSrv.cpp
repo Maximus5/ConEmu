@@ -596,17 +596,17 @@ int ServerInitGuiTab()
 		In.dwData[0] = 1; // запущен сервер
 		In.dwData[1] = (DWORD)ghConWnd; //-V205
 
-		DWORD nInitTick = timeGetTime();
+		DWORD nInitTick = GetTickCount();
 
 		while (true)
 		{
 			#ifdef _DEBUG
-			DWORD nStartTick = timeGetTime();
+			DWORD nStartTick = GetTickCount();
 			#endif
 
 			lbCallRc = CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, EXECUTE_CONNECT_GUI_CALL_TIMEOUT);
 
-			DWORD dwErr = GetLastError(), nEndTick = timeGetTime();
+			DWORD dwErr = GetLastError(), nEndTick = GetTickCount();
 			DWORD nConnectDelta = nEndTick - nInitTick;
 
 			#ifdef _DEBUG
@@ -668,12 +668,12 @@ int ServerInitGuiTab()
 	DWORD nWaitRc = 99;
 	if (gpSrv->hConEmuGuiAttached)
 	{
-		DEBUGTEST(DWORD t1 = timeGetTime());
+		DEBUGTEST(DWORD t1 = GetTickCount());
 
 		nWaitRc = WaitForSingleObject(gpSrv->hConEmuGuiAttached, 500);
 
 		#ifdef _DEBUG
-		DWORD t2 = timeGetTime(), tDur = t2-t1;
+		DWORD t2 = GetTickCount(), tDur = t2-t1;
 		if (tDur > GUIATTACHEVENT_TIMEOUT)
 		{
 			_ASSERTE((tDur <= GUIATTACHEVENT_TIMEOUT) && "GUI tab creation take more than 250ms");

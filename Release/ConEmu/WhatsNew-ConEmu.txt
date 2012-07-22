@@ -10,12 +10,18 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.22
+[%] Issue 348: Maximize errors with Hide caption.
+[+] Issue 641: Show current console title in the status bar. 
 [+] Issue 645: PowerShell cmdlet Write-Progress detection.
-[%] Игнорировались настройки Wheel в Control panel.
+[%] Issue 646: ConEmu eats dead keys.
+[%] Issue 647: Mouse wheel does not respect Control Panel settings.
+[%] Issue 648: Правки детектора прогресса в консоли.
 [%] В альтернативном буфере скролл стрелками срабатывал дважды на одно нажатие.
-[*] Status bar appearance. Option name "StatusBar.Flags". 1 - top delim, 2 - horz delim, 3 - top & horz delim.
-[%] Правки детектора прогресса в консоли.
+[*] Status bar appearance. Options «Vertical separators» and «Horizontal separator».
 [*] Статус при старте консоли отображается только в строке статуса (если она включена).
+[%] Правка «Sleep in background».
+[*] Правка журналирования клавиатуры (ConEmu.exe /log).
 
 
 2012.07.19

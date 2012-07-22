@@ -1410,7 +1410,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 
 		if (PackInputRecord(piRec, msg.msg))
 		{
-			if (m_UseLogs>=2)
+			if (m_UseLogs)
 				LogInput(piRec);
 
 			_ASSERTE(msg.msg[0].message!=0);
@@ -2857,7 +2857,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 		&& gpSet->IsModifierPressed(vkCTSVkPromptClk, true))
 	{
 		DWORD nActivePID = GetActivePID();
-		if (nActivePID && !isFar() && (mp_ABuf->m_Type == rbt_Primary))
+		if (nActivePID && (mp_ABuf->m_Type == rbt_Primary) && !isFar() && !isNtvdm())
 		{
 			mb_WasSendClickToReadCon = false; // сначала - сброс
 			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_MOUSECLICK, sizeof(CESERVER_REQ_HDR)+4*sizeof(WORD));
@@ -4139,8 +4139,8 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 		if (mn_Comspec4Ntvdm == 0)
 		{
 			// mn_Comspec4Ntvdm может быть еще не заполнен, если 16бит вызван из батника
-			WARNING("###: При запуске vc.com - ntvdm.exe запускается в обход ConEmuC.exe, что нехорошо наверное");
-			_ASSERTE(mn_Comspec4Ntvdm != 0);
+			WARNING("###: При запуске vc.com из cmd.exe - ntvdm.exe запускается в обход ConEmuC.exe, что нехорошо наверное");
+			_ASSERTE(mn_Comspec4Ntvdm != 0 || !isFarInStack());
 		}
 
 		if (!(mn_ProgramStatus & CES_NTVDM))
@@ -5520,8 +5520,7 @@ void CRealConsole::OnFocus(BOOL abFocused)
 	        ((mn_Focused == 0) && abFocused) ||
 	        ((mn_Focused == 1) && !abFocused))
 	{
-#ifdef _DEBUG
-
+		#ifdef _DEBUG
 		if (abFocused)
 		{
 			DEBUGSTRINPUT(L"--Get focus\n")
@@ -5530,8 +5529,8 @@ void CRealConsole::OnFocus(BOOL abFocused)
 		{
 			DEBUGSTRINPUT(L"--Loose focus\n")
 		}
+		#endif
 
-#endif
 		// Сразу, иначе по окончании PostConsoleEvent RCon может разрушиться?
 		mn_Focused = abFocused ? 1 : 0;
 		INPUT_RECORD r = {FOCUS_EVENT};
@@ -5582,9 +5581,9 @@ void CRealConsole::LogString(LPCWSTR asText, BOOL abShowTime /*= FALSE*/)
 
 	if (!asText || !mh_LogInput) return;
 
-	char chAnsi[255];
-	WideCharToMultiByte(CP_ACP, 0, asText, -1, chAnsi, 254, 0,0);
-	chAnsi[254] = 0;
+	char chAnsi[512];
+	WideCharToMultiByte(CP_UTF8, 0, asText, -1, chAnsi, countof(chAnsi)-1, 0,0);
+	chAnsi[countof(chAnsi)-1] = 0;
 	LogString(chAnsi, abShowTime);
 }
 
@@ -5621,21 +5620,110 @@ void CRealConsole::LogString(LPCSTR asText, BOOL abShowTime /*= FALSE*/)
 	}
 }
 
-void CRealConsole::LogInput(INPUT_RECORD* pRec)
+void CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars /*= NULL*/)
 {
-	if (!mh_LogInput || m_UseLogs<2) return;
+	// Есть еще вообще-то и WM_UNICHAR, но ввод UTF-32 у нас пока не поддерживается
+	if (!this || !mh_LogInput || !m_UseLogs)
+		return;
+	if (!(uMsg == WM_KEYDOWN || uMsg == WM_KEYUP || uMsg == WM_CHAR
+		|| uMsg == WM_SYSCHAR || uMsg == WM_DEADCHAR || uMsg == WM_SYSDEADCHAR
+		|| uMsg == WM_SYSKEYDOWN || uMsg == WM_SYSKEYUP
+		|| (uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST)))
+		return;
+	if ((uMsg == WM_MOUSEMOVE) && (m_UseLogs < 2))
+		return;
 
 	char szInfo[192] = {0};
 	SYSTEMTIME st; GetLocalTime(&st);
 	_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 	char *pszAdd = szInfo+strlen(szInfo);
 
-	switch(pRec->EventType)
+	if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP || uMsg == WM_CHAR
+		|| uMsg == WM_SYSCHAR || uMsg == WM_SYSDEADCHAR  || uMsg == WM_DEADCHAR
+		|| uMsg == WM_SYSKEYDOWN || uMsg == WM_SYSKEYUP)
+	{
+		char chUtf8[64] = "";
+		if (pszTranslatedChars && (*pszTranslatedChars >= 32))
+		{
+			chUtf8[0] = L'"';
+			WideCharToMultiByte(CP_UTF8, 0, pszTranslatedChars, -1, chUtf8+1, countof(chUtf8)-3, 0,0);
+			lstrcatA(chUtf8, "\"");
+		}
+		else if (uMsg == WM_CHAR || uMsg == WM_SYSCHAR || uMsg == WM_DEADCHAR)
+		{
+			chUtf8[0] = L'"';
+			switch ((WORD)wParam)
+			{
+			case L'\r':
+				chUtf8[1] = L'\\'; chUtf8[2] = L'r';
+				break;
+			case L'\n':
+				chUtf8[1] = L'\\'; chUtf8[2] = L'n';
+				break;
+			case L'\t':
+				chUtf8[1] = L'\\'; chUtf8[2] = L't';
+				break;
+			default:
+				WideCharToMultiByte(CP_UTF8, 0, (wchar_t*)&wParam, 1, chUtf8+1, countof(chUtf8)-3, 0,0);
+			}
+			lstrcatA(chUtf8, "\"");
+		}
+		else
+		{
+			lstrcpynA(chUtf8, "\"\" ", 5);
+		}
+		/* */ _wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo))
+		                 "%s %s wParam=x%08X, lParam=x%08X\r\n",
+						 (uMsg == WM_KEYDOWN) ? "WM_KEYDOWN" :
+						 (uMsg == WM_KEYUP)   ? "WM_KEYUP  " :
+						 (uMsg == WM_CHAR) ? "WM_CHAR" :
+						 (uMsg == WM_SYSCHAR) ? "WM_SYSCHAR" :
+						 (uMsg == WM_DEADCHAR) ? "WM_DEADCHAR" :
+						 (uMsg == WM_SYSDEADCHAR) ? "WM_SYSDEADCHAR" :
+						 (uMsg == WM_SYSKEYDOWN) ? "WM_SYSKEYDOWN" :
+						 (uMsg == WM_SYSKEYUP) ? "WM_SYSKEYUP" : "???",
+						 chUtf8,
+						 (DWORD)wParam, (DWORD)lParam);
+	}
+	else if (uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST)
+	{
+		/* */ _wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo))
+		                 "x%04X (%u) wParam=x%08X, lParam=x%08X\r\n",
+						 uMsg, uMsg,
+						 (DWORD)wParam, (DWORD)lParam);
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Unknown message");
+		return;
+	}
+
+	if (*pszAdd)
+	{
+		DWORD dwLen = 0;
+		WriteFile(mh_LogInput, szInfo, strlen(szInfo), &dwLen, 0);
+		FlushFileBuffers(mh_LogInput);
+	}
+}
+
+void CRealConsole::LogInput(INPUT_RECORD* pRec)
+{
+	if (!this || !mh_LogInput || !m_UseLogs) return;
+
+	char szInfo[192] = {0};
+	SYSTEMTIME st; GetLocalTime(&st);
+	_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+	char *pszAdd = szInfo+strlen(szInfo);
+
+	switch (pRec->EventType)
 	{
 			/*case FOCUS_EVENT: _wsprintfA(pszAdd, countof(szInfo)-(pszAdd-szInfo), "FOCUS_EVENT(%i)\r\n", pRec->Event.FocusEvent.bSetFocus);
 			    break;*/
-		case MOUSE_EVENT: _wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo)) "MOUSE_EVENT\r\n");
+		case MOUSE_EVENT: //_wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo)) "MOUSE_EVENT\r\n");
 			{
+				if ((m_UseLogs < 2) && (pRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED))
+					return; // Движения мышки логировать только при /log2
+
 				_wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo))
 				           "Mouse: {%ix%i} Btns:{", pRec->Event.MouseEvent.dwMousePosition.X, pRec->Event.MouseEvent.dwMousePosition.Y);
 				pszAdd += strlen(pszAdd);
@@ -5674,10 +5762,12 @@ void CRealConsole::LogInput(INPUT_RECORD* pRec)
 			} break;
 		case KEY_EVENT:
 		{
-			char chAcp; WideCharToMultiByte(CP_ACP, 0, &pRec->Event.KeyEvent.uChar.UnicodeChar, 1, &chAcp, 1, 0,0);
+			char chUtf8[4] = " ";
+			if (pRec->Event.KeyEvent.uChar.UnicodeChar >= 32)
+				WideCharToMultiByte(CP_UTF8, 0, &pRec->Event.KeyEvent.uChar.UnicodeChar, 1, chUtf8, countof(chUtf8), 0,0);
 			/* */ _wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo))
-			                 "%c %s count=%i, VK=%i, SC=%i, CH=%i, State=0x%08x %s\r\n",
-			                 chAcp ? chAcp : ' ',
+			                 "%s (\\x%04X) %s count=%i, VK=%i, SC=%i, CH=%i, State=0x%08x %s\r\n",
+			                 chUtf8, pRec->Event.KeyEvent.uChar.UnicodeChar,
 			                 pRec->Event.KeyEvent.bKeyDown ? "Down," : "Up,  ",
 			                 pRec->Event.KeyEvent.wRepeatCount,
 			                 pRec->Event.KeyEvent.wVirtualKeyCode,

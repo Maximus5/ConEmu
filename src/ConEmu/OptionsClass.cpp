@@ -173,6 +173,7 @@ namespace SettingsNS
 	};
 	const struct StatusBarIds { CEStatusItems stItem; UINT nDlgID; } StatusItems[] = 
 	{
+		{csi_ActiveProcess, cbStatusActiveProcess}, {csi_ConsoleTitle, cbStatusConsoleTitle},
 		{csi_ActiveVCon, cbStatusActiveVCon}, {csi_NewVCon, cbStatusNewVCon}, {csi_CapsLock, cbStatusCapsLock}, {csi_NumLock, cbStatusNumLock},
 		{csi_ScrollLock, cbStatusScrlLock}, {csi_InputLocale, cbStatusInputLang}, {csi_WindowPos, cbStatusWindowPos},
 		{csi_WindowSize, cbStatusWindowSize}, {csi_WindowClient, cbStatusWindowClient}, {csi_WindowWork, cbStatusWindowWorkspace},
@@ -2607,6 +2608,8 @@ LRESULT CSettings::OnInitDialog_Status(HWND hWnd2, bool abInitial)
 	for (uint c = c35; c <= c37; c++)
 		ColorSetEdit(hWnd2, c);
 
+	CheckDlgButton(hWnd2, cbStatusVertSep, (gpSet->isStatusBarFlags & csf_VertDelim) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(hWnd2, cbStatusHorzSep, (gpSet->isStatusBarFlags & csf_HorzDelim) ? BST_CHECKED : BST_UNCHECKED);
 
 	CheckDlgButton(hWnd2, cbShowStatusBar, gpSet->isStatusBarShow);
 	for (size_t i = 0; i < countof(SettingsNS::StatusItems); i++)
@@ -4931,6 +4934,22 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				if (CB == cbShowStatusBar)
 				{
 					gpConEmu->StatusCommand(csc_ShowHide, IsChecked(hWnd2,CB) ? 1 : 2);
+				}
+				else if (CB == cbStatusVertSep)
+				{
+					if (IsChecked(hWnd2,CB))
+						gpSet->isStatusBarFlags |= csf_VertDelim;
+					else
+						gpSet->isStatusBarFlags &= ~csf_VertDelim;
+					gpConEmu->mp_Status->UpdateStatusBar(true);
+				}
+				else if (CB == cbStatusHorzSep)
+				{
+					if (IsChecked(hWnd2,CB))
+						gpSet->isStatusBarFlags |= csf_HorzDelim;
+					else
+						gpSet->isStatusBarFlags &= ~csf_HorzDelim;
+					gpConEmu->mp_Status->UpdateStatusBar(true);
 				}
 				else
 				{
