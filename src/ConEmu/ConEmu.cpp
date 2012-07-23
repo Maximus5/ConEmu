@@ -10301,6 +10301,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		GetWindowRect(ghWnd, &mrc_Ideal);
 	}
 
+	StoreNormalRect(NULL);
+
 	Icon.LoadIcon(hWnd, gpSet->nIconID/*IDI_ICON1*/);
 	// Позволяет реагировать на запросы FlashWindow из фара и запуск приложений
 	HMODULE hUser32 = GetModuleHandle(L"user32.dll");

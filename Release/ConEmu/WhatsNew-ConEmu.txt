@@ -10,6 +10,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.22a
+[%] Issue 649: 120722 does not restore window position.
+
+
 2012.07.22
 [%] Issue 348: Maximize errors with Hide caption.
 [+] Issue 641: Show current console title in the status bar. 
