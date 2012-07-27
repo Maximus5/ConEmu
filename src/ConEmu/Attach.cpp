@@ -257,7 +257,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			lbCan = false;
 		if (lbCan && (nStyleEx & WS_EX_TOOLWINDOW))
 			lbCan = false;
-		if (lbCan && gpConEmu->IsOurConsoleWindow(hFind))
+		if (lbCan && gpConEmu->isOurConsoleWindow(hFind))
 			lbCan = false;
 		if (lbCan && gpConEmu->m_InsideIntegration && (hFind == gpConEmu->mh_InsideParentRoot))
 			lbCan = false;

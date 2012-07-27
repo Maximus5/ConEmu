@@ -828,6 +828,7 @@
     <ClInclude Include="..\common\RConStartArgs.h" />
     <ClInclude Include="RegPrepare.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="..\common\InQueue.h" />
     <ClInclude Include="..\common\WinObjects.h" />
     <CustomBuildStep Include="header.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">true</ExcludedFromBuild>
@@ -1137,6 +1138,7 @@
     <ClCompile Include="..\common\RConStartArgs.cpp" />
     <ClCompile Include="RegPrepare.cpp" />
     <ClCompile Include="SrvPipes.cpp" />
+    <ClCompile Include="..\common\InQueue.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
     <ClCompile Include="RE_Config.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">true</ExcludedFromBuild>

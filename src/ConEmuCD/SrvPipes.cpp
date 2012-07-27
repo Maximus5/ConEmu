@@ -124,7 +124,7 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 			// очередь может "не успевать"
 			if (i && !(i & 31))
 			{
-				WriteInputQueue(NULL, TRUE);
+				gpSrv->InputQueue.WriteInputQueue(NULL, TRUE);
 				Sleep(10);
 			}
 
@@ -144,7 +144,7 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 			if (ProcessInputMessage(pCmd->msg[i], r))
 			{
 				//SendConsoleEvent(&r, 1);
-				if (!WriteInputQueue(&r, FALSE))
+				if (!gpSrv->InputQueue.WriteInputQueue(&r, FALSE))
 				{
 					DWORD nErrCode = GetLastError(); UNREFERENCED_PARAMETER(nErrCode);
 					_ASSERTE(FALSE && "Input buffer overflow?");
@@ -162,7 +162,7 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 			MCHKHEAP;
 		}
 
-		WriteInputQueue(NULL, TRUE);
+		gpSrv->InputQueue.WriteInputQueue(NULL, TRUE);
 
 		#ifdef _DEBUG
 		SafeFree(pszPasting);

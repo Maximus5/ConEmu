@@ -59,61 +59,6 @@ class CGestures;
 class CVConGuard;
 class CStatus;
 
-enum ConEmuMargins
-{
-	// –азница между размером всего окна и клиентской области окна (рамка + заголовок)
-	CEM_FRAME = 0x0001,
-	// ¬ысота таба (пока только .top)
-	CEM_TAB = 0x0002,
-	CEM_TABACTIVATE = 0x1002,   // ѕринудительно считать, что таб есть (при включении таба)
-	CEM_TABDEACTIVATE = 0x2002, // ѕринудительно считать, что таба нет (при отключении таба)
-	CEM_TAB_MASK = (CEM_TAB|CEM_TABACTIVATE|CEM_TABDEACTIVATE),
-	CEM_SCROLL = 0x0004, // ≈сли полоса прокрутки всегда (!!!) видна - то ее ширина/высота
-	CEM_STATUS = 0x0008, // ¬ысота строки статуса
-	CEM_PAD = 0x0010, // Ўирина "отступа" от краев
-	// ћаска дл€ получени€ всех отступов
-	CEM_ALL_MARGINS = CEM_FRAME|CEM_TAB|CEM_SCROLL|CEM_STATUS|CEM_PAD,
-	CEM_CLIENT_MARGINS = CEM_TAB|CEM_SCROLL|CEM_STATUS|CEM_PAD,
-};
-
-enum ConEmuRect
-{
-	CER_MAIN = 0,   // ѕолный размер окна
-	// ƒалее все координаты считаютс€ относительно клиенсткой области {0,0}
-	CER_MAINCLIENT, // клиентска€ область главного окна (Ѕ≈« отрезани€ табов, прокруток, DoubleView и прочего. ÷еликом)
-	CER_TAB,        // положение контрола с закладками (всего)
-	CER_WORKSPACE,  // рабоча€ область ConEmu. ¬ ней располагаютс€ VCon/GUI apps. Ќо после DoubleView будет ЅќЋ№Ў≈ чем CER_BACK, т.к. это все видимые VCon.
-	CER_BACK,       // область, отведенна€ под VCon. “ут нужна вс€ область, без отрезани€ прокруток и округлений размеров под знакоместо
-	CER_SCROLL,     // положение полосы прокрутки
-	CER_DC,         // положение окна отрисовки
-	CER_CONSOLE,    // !!! _ размер в символах _ !!!
-	CER_CONSOLE_NTVDMOFF, // same as CER_CONSOLE, но во врем€ отключени€ режима 16бит
-	CER_FULLSCREEN, // полный размер в pix текущего монитора (содержащего ghWnd)
-	CER_MAXIMIZED,  // размер максимизированного окна на текущем мониторе (содержащего ghWnd)
-	CER_RESTORE,    // размер "восстановленного" окна после максимизации (коррекци€ по размеру монитора?)
-	CER_MONITOR,    // полный размер в pix рабочей области текущего монитора (содержащего ghWnd)
-//	CER_CORRECTED   // скорректированное положение (чтобы окно было видно на текущем мониторе)
-};
-
-enum DragPanelBorder
-{
-	DPB_NONE = 0,
-	DPB_SPLIT,    // драг влево/вправо
-	DPB_LEFT,     // высота левой
-	DPB_RIGHT,    // высота правой
-};
-
-enum TrackMenuPlace
-{
-	tmp_None = 0,
-	tmp_System,
-	tmp_VCon,
-	tmp_Cmd,
-	tmp_KeyBar,
-	tmp_TabsList,
-	tmp_PasteCmdLine,
-	tmp_StatusBarCols,
-};
 
 struct MsgSrvStartedArg
 {
@@ -484,9 +429,9 @@ class CConEmuMain :
 		LPCTSTR GetLastTitle(bool abUseDefault=true);
 		LPCTSTR GetVConTitle(int nIdx);
 		void SetTitleTemplate(LPCWSTR asTemplate);
-		int GetActiveVCon();
+		int GetActiveVCon(CVConGuard* pVCon = NULL, int* pAllCount = NULL);
 		CVirtualConsole* GetVCon(int nIdx, bool bFromCycle = false);
-		int IsVConValid(CVirtualConsole* apVCon);
+		int isVConValid(CVirtualConsole* apVCon);
 		CVirtualConsole* GetVConFromPoint(POINT ptScreen);
 		void UpdateCursorInfo(const CONSOLE_SCREEN_BUFFER_INFO* psbi, COORD crCursor, CONSOLE_CURSOR_INFO cInfo);
 		void UpdateProcessDisplay(BOOL abForce);
@@ -507,7 +452,7 @@ class CConEmuMain :
 		BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 		CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
 		void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
-		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, CVirtualConsole* apVCon=NULL);
+		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg /*, CVirtualConsole* apVCon=NULL*/);
 		RECT CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon=NULL);
 		RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 		POINT CalcTabMenuPos(CVirtualConsole* apVCon);
@@ -539,7 +484,7 @@ class CConEmuMain :
 		RECT GetVirtualScreenRect(BOOL abFullScreen);
 		DWORD_PTR GetWindowStyle();
 		DWORD_PTR GetWindowStyleEx();
-		LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync);
+		LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync, CVirtualConsole* apVCon);
 		BOOL Init();
 		void InitInactiveDC(CVirtualConsole* apVCon);
 		void Invalidate(CVirtualConsole* apVCon);
@@ -549,6 +494,7 @@ class CConEmuMain :
 		bool isChildWindow();
 		bool isCloseConfirmed();
 		bool isConSelectMode();
+		bool isConsolePID(DWORD nPID);
 		bool isDragging();
 		bool isEditor();
 		bool isFar(bool abPluginRequired=false);
@@ -564,13 +510,14 @@ class CConEmuMain :
 		bool isMeForeground(bool abRealAlso=false, bool abDialogsAlso=true);
 		bool isMouseOverFrame(bool abReal=false);		
 		bool isNtvdm(BOOL abCheckAllConsoles=FALSE);		
-		bool IsOurConsoleWindow(HWND hCon);		
+		bool isOurConsoleWindow(HWND hCon);		
 		bool isPictureView();		
 		bool isProcessCreated();		
 		bool isRightClickingPaint();		
 		bool isSizing();
 		bool isValid(CRealConsole* apRCon);
 		bool isValid(CVirtualConsole* apVCon);
+		bool isVConExists(int nIdx);
 		bool isVConHWND(HWND hChild, CVirtualConsole** ppVCon = NULL);
 		bool isViewer();
 		bool isVisible(CVirtualConsole* apVCon);
@@ -590,7 +537,7 @@ class CConEmuMain :
 		HWND PostCreateView(CConEmuChild* pChild);
 		void PostMacro(LPCWSTR asMacro);
 		void PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted);
-		void PostDisplayRConError(CRealConsole* mp_VCon, wchar_t* pszErrMsg);
+		void PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg);
 		//void PostSetBackground(CVirtualConsole* apVCon, CESERVER_REQ_SETBACKGROUND* apImgData);
 		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 		void RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, BOOL abRunAs = FALSE);
@@ -691,7 +638,7 @@ class CConEmuMain :
 		//LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
 		virtual void OnPaintClient(HDC hdc, int width, int height);
 		LRESULT OnSetCursor(WPARAM wParam=-1, LPARAM lParam=-1);
-		LRESULT OnSize(WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
+		LRESULT OnSize(bool bResizeRCon=true, WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
 		LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
 		LRESULT OnMoving(LPRECT prcWnd = NULL, bool bWmMove = false);
 		virtual LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -702,7 +649,7 @@ class CConEmuMain :
 		LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 		void OnTransparent(bool abFromFocus = false, bool bSetFocus = true);
 		void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args);
-		LRESULT OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
+		LRESULT OnVConClosed(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 		void OnAllVConClosed();
 		void OnAllGhostClosed();
 		void OnGhostCreated(CVirtualConsole* apVCon, HWND ahGhost);

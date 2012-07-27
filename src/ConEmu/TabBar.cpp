@@ -1276,7 +1276,8 @@ LRESULT TabBarClass::OnNotify(LPNMHDR nmhdr)
 		//if (pDisp->iItem>=1 && pDisp->iItem<=MAX_CONSOLE_COUNT)
 		if (pDisp->iItem == TID_ACTIVE_NUMBER)
 		{
-			if (!pDisp->pszText || !pDisp->cchTextMax) return false;
+			if (!pDisp->pszText || !pDisp->cchTextMax)
+				return false;
 
 			LPCWSTR pszTitle = gpConEmu->ActiveCon()->RCon()->GetTitle();
 
@@ -2203,7 +2204,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab, CVirtualConsole *apVCon)
 					break;
 				case _T('c'): case _T('C'):
 					{
-						int iCon = gpConEmu->IsVConValid(apVCon);
+						int iCon = gpConEmu->isVConValid(apVCon);
 						if (iCon > 0)
 							_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%u"), iCon);
 						else

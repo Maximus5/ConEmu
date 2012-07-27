@@ -158,6 +158,10 @@ LRESULT SENDMESSAGE(HWND h,UINT m,WPARAM w,LPARAM l);
 #define SETCONSOLESCREENBUFFERSIZERET(h,s,r) {MCHKHEAP; DebugLogBufSize(h,s); r=SetConsoleScreenBufferSize(h,s);}
 #define SETCONSOLESCREENBUFFERSIZE(h,s) {BOOL lb; SETCONSOLESCREENBUFFERSIZERET(h,s,lb);}
 #define DEBUGLOGFILE(m) DebugLogFile(m)
+void DebugLogFile(LPCSTR asMessage);
+void DebugLogBufSize(HANDLE h, COORD sz);
+void DebugLogPos(HWND hw, int x, int y, int w, int h, LPCSTR asFunc);
+void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra);
 #else
 #define POSTMESSAGE(h,m,w,l,e) PostMessage(h,m,w,l)
 #define SENDMESSAGE(h,m,w,l) SendMessage(h,m,w,l)
@@ -305,3 +309,60 @@ typedef BOOL (WINAPI* GetLayeredWindowAttributes_t)(HWND hwnd, COLORREF *pcrKey,
 #ifndef DISABLE_MAX_PRIVILEGE
 #define DISABLE_MAX_PRIVILEGE   0x1 
 #endif
+
+
+enum ConEmuMargins
+{
+	// –азница между размером всего окна и клиентской области окна (рамка + заголовок)
+	CEM_FRAME = 0x0001,
+	// ¬ысота таба (пока только .top)
+	CEM_TAB = 0x0002,
+	CEM_TABACTIVATE = 0x1002,   // ѕринудительно считать, что таб есть (при включении таба)
+	CEM_TABDEACTIVATE = 0x2002, // ѕринудительно считать, что таба нет (при отключении таба)
+	CEM_TAB_MASK = (CEM_TAB|CEM_TABACTIVATE|CEM_TABDEACTIVATE),
+	CEM_SCROLL = 0x0004, // ≈сли полоса прокрутки всегда (!!!) видна - то ее ширина/высота
+	CEM_STATUS = 0x0008, // ¬ысота строки статуса
+	CEM_PAD = 0x0010, // Ўирина "отступа" от краев
+	// ћаска дл€ получени€ всех отступов
+	CEM_ALL_MARGINS = CEM_FRAME|CEM_TAB|CEM_SCROLL|CEM_STATUS|CEM_PAD,
+	CEM_CLIENT_MARGINS = CEM_TAB|CEM_SCROLL|CEM_STATUS|CEM_PAD,
+};
+
+enum ConEmuRect
+{
+	CER_MAIN = 0,   // ѕолный размер окна
+	// ƒалее все координаты считаютс€ относительно клиенсткой области {0,0}
+	CER_MAINCLIENT, // клиентска€ область главного окна (Ѕ≈« отрезани€ табов, прокруток, DoubleView и прочего. ÷еликом)
+	CER_TAB,        // положение контрола с закладками (всего)
+	CER_WORKSPACE,  // рабоча€ область ConEmu. ¬ ней располагаютс€ VCon/GUI apps. Ќо после DoubleView будет ЅќЋ№Ў≈ чем CER_BACK, т.к. это все видимые VCon.
+	CER_BACK,       // область, отведенна€ под VCon. “ут нужна вс€ область, без отрезани€ прокруток и округлений размеров под знакоместо
+	CER_SCROLL,     // положение полосы прокрутки
+	CER_DC,         // положение окна отрисовки
+	CER_CONSOLE,    // !!! _ размер в символах _ !!!
+	CER_CONSOLE_NTVDMOFF, // same as CER_CONSOLE, но во врем€ отключени€ режима 16бит
+	CER_FULLSCREEN, // полный размер в pix текущего монитора (содержащего ghWnd)
+	CER_MAXIMIZED,  // размер максимизированного окна на текущем мониторе (содержащего ghWnd)
+	CER_RESTORE,    // размер "восстановленного" окна после максимизации (коррекци€ по размеру монитора?)
+	CER_MONITOR,    // полный размер в pix рабочей области текущего монитора (содержащего ghWnd)
+//	CER_CORRECTED   // скорректированное положение (чтобы окно было видно на текущем мониторе)
+};
+
+enum DragPanelBorder
+{
+	DPB_NONE = 0,
+	DPB_SPLIT,    // драг влево/вправо
+	DPB_LEFT,     // высота левой
+	DPB_RIGHT,    // высота правой
+};
+
+enum TrackMenuPlace
+{
+	tmp_None = 0,
+	tmp_System,
+	tmp_VCon,
+	tmp_Cmd,
+	tmp_KeyBar,
+	tmp_TabsList,
+	tmp_PasteCmdLine,
+	tmp_StatusBarCols,
+};

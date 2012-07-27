@@ -1819,7 +1819,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 	#ifdef _DEBUG
 	if (mp_RCon->mb_DebugLocked)
 		return FALSE;
-	int nConNo = gpConEmu->IsVConValid(mp_RCon->mp_VCon);
+	int nConNo = gpConEmu->isVConValid(mp_RCon->mp_VCon);
 	nConNo = nConNo;
 	#endif
 

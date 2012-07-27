@@ -816,6 +816,7 @@ void CConEmuChild::OnAlwaysShowScrollbar()
 // Должна вернуть TRUE, если события мыши не нужно пропускать в консоль
 BOOL CConEmuChild::TrackMouse()
 {
+	_ASSERTE(this);
 	BOOL lbCapture = FALSE; // По умолчанию - мышь не перехватывать
 	
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
@@ -867,6 +868,7 @@ BOOL CConEmuChild::CheckMouseOverScroll()
 	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 	CVConGuard guard(pVCon);
 
+	// Вроде бы в активной? Или в this?
 	CRealConsole* pRCon = pVCon ? gpConEmu->ActiveCon()->RCon() : NULL;
 
 	if (pRCon)

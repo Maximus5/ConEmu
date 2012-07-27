@@ -775,7 +775,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 				if (gpConEmu->isVisible(this))
 				{
 					MSetter lInConsoleResize(&mb_InConsoleResize);
-					gpConEmu->OnSize(-1);
+					gpConEmu->OnSize(false);
 				}
 			}
 
@@ -2059,7 +2059,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	{
 		// 100627 перенес после InitDC, т.к. циклилось
 		//if (lbSizeChanged)
-		//	gpConEmu->OnConsoleResize(TRUE);
+		//	gpConEmu->OnConsole Resize(TRUE);
 		//if (pSDC && !pSDC->isLocked())  // Если секция еще не заблокирована (отпускает - вызывающая функция)
 		//	pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
 
@@ -2082,7 +2082,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 
 #endif
 		//if (lbSizeChanged) -- попробуем вверх перенести
-		//	gpConEmu->OnConsoleResize();
+		//	gpConEmu->OnConsole Resize();
 	}
 
 	// Требуется полная перерисовка!
@@ -3904,7 +3904,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 #ifdef _DEBUG
 	else
 	{
-		int nConNo = gpConEmu->IsVConValid(this);
+		int nConNo = gpConEmu->isVConValid(this);
 		nConNo = nConNo;
 	}
 #endif
@@ -3995,7 +3995,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		if ((rcFull.right - rcFull.left) < (LONG)Width || (rcFull.bottom - client.top) < (LONG)Height)
 		{
 			WARNING("Зацикливается. Вызывает Paint, который вызывает OnSize. В итоге - 100% загрузки проц.");
-			gpConEmu->OnSize(-1); // Только ресайз дочерних окон
+			gpConEmu->OnSize(false); // Только ресайз дочерних окон
 		}
 	}
 
@@ -4874,7 +4874,7 @@ void CVirtualConsole::ExecPopupMenuCmd(int nCmd)
 		case IDM_DETACH:
 			mp_RCon->Detach();
 			//if (mp_RCon->Detach())
-			//	gpConEmu->OnVConTerminated(this);
+			//	gpConEmu->OnVConClosed(this);
 			break;
 		case IDM_RENAMETAB:
 			mp_RCon->DoRenameTab();

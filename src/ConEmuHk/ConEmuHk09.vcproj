@@ -1532,6 +1532,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\InQueue.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\WinObjects.h"
 				>
 			</File>
@@ -1625,6 +1629,10 @@
 			</File>
 			<File
 				RelativePath=".\UserImp.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\InQueue.cpp"
 				>
 			</File>
 			<File

@@ -53,6 +53,7 @@ $(OBJDIR)\ShellProcessor.obj \
 $(OBJDIR)\WinObjects.obj \
 $(OBJDIR)\ConEmuCheck.obj \
 $(OBJDIR)\Common.obj \
+$(OBJDIR)\InQueue.obj \
 $(OBJDIR)\MAssert.obj \
 $(OBJDIR)\Memory.obj \
 $(OBJDIR)\MSecurity.obj \
@@ -266,6 +267,8 @@ $(OBJDIR)\Entry.obj: Entry.cpp ../common/PipeServer.h
 $(OBJDIR)\Injects.obj: Injects.cpp Console2.h
 
 $(OBJDIR)\Common.obj: ../common/Common.cpp
+
+$(OBJDIR)\InQueue.obj: ../common/InQueue.cpp
 
 $(OBJDIR)\ConEmuHk.obj: ConEmuHk.cpp
 

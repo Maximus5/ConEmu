@@ -34,6 +34,7 @@ $(OBJDIR)\ConEmuSrv.obj \
 $(OBJDIR)\Injects.obj \
 $(OBJDIR)\Infiltrate.obj \
 $(OBJDIR)\InjectRemote.obj \
+$(OBJDIR)\InQueue.obj \
 $(OBJDIR)\Queue.obj \
 $(OBJDIR)\SrvPipes.obj \
 $(OBJDIR)\execute.obj \
@@ -268,7 +269,9 @@ $(OBJDIR)\Infiltrate.obj: Infiltrate.cpp
 
 $(OBJDIR)\InjectRemote.obj: InjectRemote.cpp
 
-$(OBJDIR)\Queue.obj: Queue.cpp ../common/PipeServer.h
+$(OBJDIR)\InQueue.obj: ../common/InQueue.cpp ../common/InQueue.h
+
+$(OBJDIR)\Queue.obj: Queue.cpp ../common/PipeServer.h ../common/InQueue.h
 
 $(OBJDIR)\SrvPipes.obj: SrvPipes.cpp ../common/PipeServer.h
 

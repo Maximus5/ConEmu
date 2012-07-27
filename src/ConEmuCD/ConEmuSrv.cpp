@@ -1005,11 +1005,14 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 
 	SetThreadPriority(gpSrv->hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
-	gpSrv->nMaxInputQueue = CE_MAX_INPUT_QUEUE_BUFFER;
-	gpSrv->pInputQueue = (INPUT_RECORD*)calloc(gpSrv->nMaxInputQueue, sizeof(INPUT_RECORD));
-	gpSrv->pInputQueueEnd = gpSrv->pInputQueue+gpSrv->nMaxInputQueue;
-	gpSrv->pInputQueueWrite = gpSrv->pInputQueue;
-	gpSrv->pInputQueueRead = gpSrv->pInputQueueEnd;
+	
+	gpSrv->InputQueue.Initialize(CE_MAX_INPUT_QUEUE_BUFFER, gpSrv->hInputEvent);
+	//gpSrv->nMaxInputQueue = CE_MAX_INPUT_QUEUE_BUFFER;
+	//gpSrv->pInputQueue = (INPUT_RECORD*)calloc(gpSrv->nMaxInputQueue, sizeof(INPUT_RECORD));
+	//gpSrv->pInputQueueEnd = gpSrv->pInputQueue+gpSrv->nMaxInputQueue;
+	//gpSrv->pInputQueueWrite = gpSrv->pInputQueue;
+	//gpSrv->pInputQueueRead = gpSrv->pInputQueueEnd;
+
 	// Запустить пайп обработки событий (клавиатура, мышь, и пр.)
 	if (!InputServerStart())
 	{
@@ -1357,7 +1360,8 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 
 	SafeFree(gpSrv->pnProcessesCopy);
 
-	SafeFree(gpSrv->pInputQueue);
+	//SafeFree(gpSrv->pInputQueue);
+	gpSrv->InputQueue.Release();
 
 	CloseMapHeader();
 

@@ -63,6 +63,7 @@ extern DWORD   gnServerPID; // PID сервера (инициализируется на старте, при загр
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/WinObjects.h"
+#include "../common/InQueue.h"
 
 //extern MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap;
 //extern CESERVER_CONSOLE_MAPPING_HDR* gpConInfo;
@@ -102,6 +103,10 @@ struct ReadConsoleInfo
 extern struct ReadConsoleInfo gReadConsoleInfo;
 BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin);
 BOOL OnExecutePromptCmd(LPCWSTR asCmd);
+
+/* ************ Globals for Far ************ */
+extern InQueue gInQueue;
+/* ************ Globals for clink ************ */
 
 /* ************ Globals for clink ************ */
 extern size_t   gcchLastWriteConsoleMax;

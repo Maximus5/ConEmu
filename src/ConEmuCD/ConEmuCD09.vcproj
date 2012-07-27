@@ -1512,6 +1512,10 @@
 				RelativePath="..\common\WinObjects.h"
 				>
 			</File>
+			<File
+				RelativePath="..\common\InQueue.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -1624,6 +1628,10 @@
 			</File>
 			<File
 				RelativePath="..\common\WinObjects.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\InQueue.cpp"
 				>
 			</File>
 		</Filter>

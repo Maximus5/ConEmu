@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2012 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,13 +28,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
+#define CE_MAX_INPUT_QUEUE_BUFFER 255
 
-BOOL CreateMainWindow();
-BOOL CheckCreateAppWindow();
+struct InQueue
+{
+	HANDLE hInputEvent;
+	int nInputQueue, nMaxInputQueue;
+	INPUT_RECORD* pInputQueue;
+	INPUT_RECORD* pInputQueueEnd;
+	INPUT_RECORD* pInputQueueRead;
+	INPUT_RECORD* pInputQueueWrite;
 
-void SkipOneShowWindow();
+	BOOL Initialize(int anMaxInputQueue, HANDLE ahInputEvent/*by value*/);
+	void Release();
 
-void UpdateWin7TaskList(bool bForce);
-
-int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine);
+	BOOL WriteInputQueue(const INPUT_RECORD *pr, BOOL bSetEvent = TRUE, DWORD nLength = 1);
+	BOOL IsInputQueueEmpty();
+	BOOL ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount, BOOL bNoRemove = FALSE);
+	BOOL GetNumberOfBufferEvents();
+};

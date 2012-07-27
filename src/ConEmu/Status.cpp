@@ -340,9 +340,9 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 	}
 
 
+	CVConGuard VCon(gpConEmu->ActiveCon());
 	CRealConsole* pRCon = NULL;
-	CVirtualConsole* pVCon = gpConEmu->ActiveCon();
-	CVConGuard guard(pVCon);
+	CVirtualConsole* pVCon = VCon.VCon();
 	if (pVCon)
 		pRCon = pVCon->RCon();
 

@@ -1547,7 +1547,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			gpSetCls->Performance(tPerfInterval, TRUE); // считаетс€ по своему
 
 		#ifdef _DEBUG
-		int nVConNo = gpConEmu->IsVConValid(pRCon->mp_VCon);
+		int nVConNo = gpConEmu->isVConValid(pRCon->mp_VCon);
 		nVConNo = nVConNo;
 		#endif
 
@@ -2035,7 +2035,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			{
 				//2009-01-21 сомнительно, что здесь действительно нужно подресайзивать дочерние окна
 				//if (lbForceUpdate) // размер текущего консольного окна был изменен
-				//	gpConEmu->OnSize(-1); // послать в главную нить запрос на обновление размера
+				//	gpConEmu->OnSize(false); // послать в главную нить запрос на обновление размера
 				bool lbNeedRedraw = false;
 
 				if ((nWait == (WAIT_OBJECT_0+1)) || lbForceUpdate)
@@ -2637,7 +2637,7 @@ BOOL CRealConsole::StartProcess()
 				//mp_sei->nShow = gpSet->isConVisible ? SW_SHOWNORMAL : SW_HIDE;
 				mp_sei->nShow = SW_SHOWMINIMIZED;
 				SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", true);
-				lbRc = gpConEmu->GuiShellExecuteEx(mp_sei, TRUE);
+				lbRc = gpConEmu->GuiShellExecuteEx(mp_sei, TRUE, mp_VCon);
 				// ошибку покажем дальше
 				dwLastError = GetLastError();
 			}
@@ -3599,7 +3599,7 @@ void CRealConsole::StopSignal()
 		// другую вкладку Ё“ќ… консоли
 		mn_tabsCount = 0;
 		// ќчистка массива консолей и обновление вкладок
-		gpConEmu->OnVConTerminated(mp_VCon);
+		gpConEmu->OnVConClosed(mp_VCon);
 	}
 }
 
@@ -5297,11 +5297,13 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
 		isShowConsole = true;
 		//apiShowWindow(hConWnd, SW_SHOWNORMAL);
 		//if (setParent) SetParent(hConWnd, 0);
-		RECT rcCon, rcWnd; GetWindowRect(hConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
-		RECT rcShift = gpConEmu->CalcMargins(CEM_STATUS|CEM_SCROLL|CEM_FRAME,mp_VCon);
-		rcWnd.right -= rcShift.right;
-		rcWnd.bottom -= rcShift.bottom;
-		//if (!IsDebuggerPresent())
+		RECT rcCon, rcWnd; GetWindowRect(hConWnd, &rcCon);
+		GetClientRect(GetView(), &rcWnd);
+		MapWindowPoints(GetView(), NULL, (POINT*)&rcWnd, 2);
+		//GetWindowRect(ghWnd, &rcWnd);
+		//RECT rcShift = gpConEmu->Calc Margins(CEM_STATUS|CEM_SCROLL|CEM_FRAME,mp_VCon);
+		//rcWnd.right -= rcShift.right;
+		//rcWnd.bottom -= rcShift.bottom;
 		TODO("—корректировать позицию так, чтобы не вылезло за экран");
 
 		HWND hInsertAfter = HWND_TOPMOST;
@@ -7725,16 +7727,17 @@ bool CRealConsole::isConsoleClosing()
 		// ¬идимо, сервер повис во врем€ выхода? Ќо проверим, вдруг он все-таки успел завершитьс€?
 		if (WaitForSingleObject(mh_MainSrv, 0))
 		{
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			wchar_t szTitle[128], szText[255];
 			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu, PID=%u", GetCurrentProcessId());
 			_wsprintf(szText, SKIPLEN(countof(szText))
 			          L"This is Debug message.\n\nServer hung. PID=%u\nm_ServerClosing.nServerPID=%u\n\nPress Ok to terminate server",
 			          mn_MainSrv_PID, m_ServerClosing.nServerPID);
-			MessageBox(NULL, szText, szTitle, MB_ICONSTOP);
-#else
+			MessageBox(NULL, szText, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+			#else
 			_ASSERTE(m_ServerClosing.nServerPID==0);
-#endif
+			#endif
+
 			TerminateProcess(mh_MainSrv, 100);
 		}
 
@@ -7971,7 +7974,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 		m_Args.bDetached = FALSE;
 
 		if (mp_VCon)
-			gpConEmu->OnVConTerminated(mp_VCon);
+			gpConEmu->OnVConClosed(mp_VCon);
 	}
 }
 
@@ -9987,7 +9990,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	// „тобы случайно не закрыть RealConsole?
 	m_Args.bDetached = TRUE;
 	
-	gpConEmu->OnVConTerminated(mp_VCon);
+	gpConEmu->OnVConClosed(mp_VCon);
 }
 
 // «апустить Elevated копию фара с теми же папками на панел€х

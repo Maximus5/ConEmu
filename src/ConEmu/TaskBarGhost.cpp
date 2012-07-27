@@ -119,7 +119,7 @@ CTaskBarGhost* CTaskBarGhost::Create(CVirtualConsole* apVCon)
 	{
 		dwStyleEx = WS_EX_NOACTIVATE | WS_EX_APPWINDOW | WS_EX_ACCEPTFILES;
 		dwStyle = WS_OVERLAPPED | WS_BORDER | WS_SYSMENU | WS_CAPTION;
-		if ((gpConEmu->IsVConValid(apVCon) > 0) /*&& (gpConEmu->GetVCon(1) == NULL)*/)
+		if ((gpConEmu->isVConValid(apVCon) > 0) /*&& (gpConEmu->GetVCon(1) == NULL)*/)
 			dwStyle |= WS_VISIBLE;
 	}
 

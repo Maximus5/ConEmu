@@ -437,7 +437,7 @@ LPWSTR CConEmuMacro::FindFarWindowHelper(
 	if (!bFound && VCon.VCon())
 		iFound = -1; // редактор есть, но заблокирован модальным диалогом/другим редактором
 	else if (bFound)
-		iFound = gpConEmu->IsVConValid(VCon.VCon()); //1-based
+		iFound = gpConEmu->isVConValid(VCon.VCon()); //1-based
 
 	//CRealConsole* pRCon, *pActiveRCon = NULL;
 	//CVirtualConsole* pVCon;

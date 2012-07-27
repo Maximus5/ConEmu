@@ -10,6 +10,18 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.27
+[%] Issue 643: Windows from powershell/.net does not appears on screen.
+[+] Issue 652: New predefined palette <Solarized Light>.
+[%] Speedup of ecompl Far Manager plugin.
+[+] В окне настроек в полях цветов теперь допустим ввод следующих форматов: «#RRGGBB» (hex), «0xBBGGRR» (hex), «xBBGGRR» (hex), «RRR,GGG,BBB» (dec), «RRR GGG BBB» (dec).
+[+] Для неактивного окна минимальное значение «прозрачности» установлено в 0. Т.е. теперь при потере фокуса окно может «исчезать» с экрана.
+
+
+2012.07.26
+[+] Создана группа рассылки: http://groups.google.com/group/conemu_ml. Welcome!
+
+
 2012.07.22a
 [%] Issue 649: 120722 does not restore window position.
 

@@ -74,6 +74,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "../common/clink.h"
 
+
+bool USE_INTERNAL_QUEUE = true;
+
+#ifdef _DEBUG
+// для отладки ecompl
+INPUT_RECORD gir_Written[16] = {};
+INPUT_RECORD gir_Real[16] = {};
+INPUT_RECORD gir_Virtual[16] = {};
+#endif
+
+
 /* Forward declarations */
 BOOL IsVisibleRectLocked(COORD& crLocked);
 void PatchDialogParentWnd(HWND& hWndParent);
@@ -147,6 +158,7 @@ HANDLE ghLastConInHandle = NULL, ghLastNotConInHandle = NULL;
 
 /* ************ Globals for Far Hooks ************ */
 struct HookModeFar gFarMode = {sizeof(HookModeFar)};
+InQueue gInQueue = {};
 /* ************ Globals for Far Hooks ************ */
 
 
@@ -1418,6 +1430,7 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 	typedef BOOL (WINAPI* OnShowWindow_t)(HWND hWnd, int nCmdShow);
 	ORIGINALFASTEX(ShowWindow,NULL);
 	BOOL lbRc = FALSE, lbGuiAttach = FALSE;
+	static bool bShowWndCalled = false;
 	
 	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConWnd))
 	{
@@ -1440,7 +1453,19 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 		OnShowGuiClientWindow(hWnd, nCmdShow, lbGuiAttach);
 
 	if (F(ShowWindow))
+	{
 		lbRc = F(ShowWindow)(hWnd, nCmdShow);
+		// Первый вызов может быть обломным, из-за того, что корневой процесс
+		// запускается с wShowCmd=SW_HIDE (чтобы не мелькал)
+		if (!bShowWndCalled)
+		{
+			bShowWndCalled = true;
+			if (!lbRc && nCmdShow && !user->isWindowVisible(hWnd))
+			{
+				F(ShowWindow)(hWnd, nCmdShow);
+			}
+		}
+	}
 	DWORD dwErr = GetLastError();
 
 	if (lbGuiAttach)
@@ -3394,7 +3419,30 @@ BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	//_ASSERTE(nSemaphore<=1);
 	//#endif
 
+	if (gFarMode.bFarHookMode && USE_INTERNAL_QUEUE) // ecompl speed-up
+	{
+		#ifdef _DEBUG
+		DWORD nDbgReadReal = countof(gir_Real), nDbgReadVirtual = countof(gir_Virtual);
+		BOOL bReadReal = F(PeekConsoleInputW)(hConsoleInput, gir_Real, nDbgReadReal, &nDbgReadReal);
+		BOOL bReadVirt = gInQueue.ReadInputQueue(gir_Virtual, &nDbgReadVirtual, TRUE);
+		#endif
+
+		if ((!lbRc || !(lpNumberOfEventsRead && *lpNumberOfEventsRead)) && !gInQueue.IsInputQueueEmpty())
+		{
+			DWORD n = nLength;
+			lbRc = gInQueue.ReadInputQueue(lpBuffer, &n, TRUE);
+			if (lpNumberOfEventsRead)
+				*lpNumberOfEventsRead = lbRc ? n : 0;
+		}
+		else
+		{
+			lbRc = F(PeekConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+		}
+	}
+	else
+	{
 	lbRc = F(PeekConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	}
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
@@ -3487,7 +3535,30 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	//_ASSERTE(nSemaphore<=1);
 	//#endif
 
+	if (gFarMode.bFarHookMode && USE_INTERNAL_QUEUE) // ecompl speed-up
+	{
+		#ifdef _DEBUG
+		DWORD nDbgReadReal = countof(gir_Real), nDbgReadVirtual = countof(gir_Virtual);
+		BOOL bReadReal = PeekConsoleInputW(hConsoleInput, gir_Real, nDbgReadReal, &nDbgReadReal);
+		BOOL bReadVirt = gInQueue.ReadInputQueue(gir_Virtual, &nDbgReadVirtual, TRUE);
+		#endif
+
+		if ((!lbRc || !(lpNumberOfEventsRead && *lpNumberOfEventsRead)) && !gInQueue.IsInputQueueEmpty())
+		{
+			DWORD n = nLength;
+			lbRc = gInQueue.ReadInputQueue(lpBuffer, &n, FALSE);
+			if (lpNumberOfEventsRead)
+				*lpNumberOfEventsRead = lbRc ? n : 0;
+		}
+		else
+		{
+			lbRc = F(ReadConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+		}
+	}
+	else
+	{
 	lbRc = F(ReadConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	}
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
@@ -3556,6 +3627,17 @@ BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuf
 			return lbRc;
 	}
 
+	// ecompl speed-up
+	if (gFarMode.bFarHookMode && USE_INTERNAL_QUEUE
+		&& nLength && lpBuffer && lpBuffer->EventType == KEY_EVENT && lpBuffer->Event.KeyEvent.uChar.UnicodeChar)
+	{
+		#ifdef _DEBUG
+		memset(gir_Written, 0, sizeof(gir_Written));
+		memmove(gir_Written, lpBuffer, min(countof(gir_Written),nLength)*sizeof(*lpBuffer));
+		#endif
+		lbRc = gInQueue.WriteInputQueue(lpBuffer, FALSE, nLength);
+	}
+	else
 	lbRc = F(WriteConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsWritten);
 
 	if (ph && ph->PostCallBack)

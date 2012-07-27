@@ -139,6 +139,12 @@ const CONEMUDEFCOLORS DefColors[] =
 		}
 	},
 	{
+		L"<Solarized Light>", {
+			0x00E3F6FD, 0x00D5E8EE, 0x00756e58, 0x00969483, 0x002f32dc, 0x00c4716c, 0x00164bcb, 0x00423607,
+			0x00586E75, 0x00d28b26, 0x00009985, 0x0098a12a, 0x00837B65, 0x008236d3, 0x000089b5, 0x00362B00
+		}
+	},
+	{
 		L"<Terminal.app>", {
 			0x00000000, 0x00e12e49, 0x0024bc25, 0x00c8bb33, 0x002136c2, 0x00d338d3, 0x0027adad, 0x00cdcccb,
 			0x00838381, 0x00ff3358, 0x0022e731, 0x00f0f014, 0x001f39fc, 0x00f835f9, 0x0023ecea, 0x00ebebe9
@@ -1400,9 +1406,12 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 	if ((nIndex != -1) && Palettes[nIndex]->bPredefined)
 		nIndex = -1;
 
+	bool bNewPalette = false;
+
 	if (nIndex == -1)
 	{
 		// Добавляем новую палитру
+		bNewPalette = true;
 		nIndex = PaletteCount;
 
 		ColorPalette** ppNew = (ColorPalette**)calloc(nIndex+1,sizeof(ColorPalette*));
@@ -1431,6 +1440,8 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 			_ASSERTE(Palettes[nIndex]);
 			return;
 		}
+		_ASSERTE(bNewPalette && "Already must be set");
+		bNewPalette = true;
 	}
 
 
@@ -1440,8 +1451,8 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 	Palettes[nIndex]->isExtendColors = AppStd.isExtendColors;
 	Palettes[nIndex]->nExtendColorIdx = AppStd.nExtendColorIdx;
 	
-	BOOL bTextChanged = (Palettes[nIndex]->nTextColorIdx != AppStd.nTextColorIdx) || (Palettes[nIndex]->nBackColorIdx != AppStd.nBackColorIdx);
-	BOOL bPopupChanged = (Palettes[nIndex]->nPopTextColorIdx != AppStd.nPopTextColorIdx) || (Palettes[nIndex]->nPopBackColorIdx != AppStd.nPopBackColorIdx);
+	BOOL bTextChanged = !bNewPalette && ((Palettes[nIndex]->nTextColorIdx != AppStd.nTextColorIdx) || (Palettes[nIndex]->nBackColorIdx != AppStd.nBackColorIdx));
+	BOOL bPopupChanged = !bNewPalette && ((Palettes[nIndex]->nPopTextColorIdx != AppStd.nPopTextColorIdx) || (Palettes[nIndex]->nPopBackColorIdx != AppStd.nPopBackColorIdx));
 	Palettes[nIndex]->nTextColorIdx = AppStd.nTextColorIdx;
 	Palettes[nIndex]->nBackColorIdx = AppStd.nBackColorIdx;
 	Palettes[nIndex]->nPopTextColorIdx = AppStd.nPopTextColorIdx;
@@ -2228,7 +2239,7 @@ void Settings::LoadSettings()
 		}
 		else
 		{
-			MinMax(nTransparentInactive, MIN_ALPHA_VALUE, 255);
+			MinMax(nTransparentInactive, MIN_INACTIVE_ALPHA_VALUE, 255);
 		}
 
 		//reg->Load(L"UseColorKey", isColorKey);

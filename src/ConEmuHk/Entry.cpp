@@ -905,6 +905,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			GetMainThreadId(); // Инициализировать gnHookMainThreadId
 			gcchLastWriteConsoleMax = 4096;
 			gpszLastWriteConsole = (wchar_t*)calloc(gcchLastWriteConsoleMax,sizeof(*gpszLastWriteConsole));
+			gInQueue.Initialize(512, NULL);
 
 			#ifdef _DEBUG
 			gAllowAssertThread = am_Pipe;

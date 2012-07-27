@@ -142,6 +142,7 @@ extern HANDLE ghFarInExecuteEvent;
 #include "../common/ConEmuCheck.h"
 #include "../common/WinObjects.h"
 #include "../common/ConsoleAnnotation.h"
+#include "../common/InQueue.h"
 
 #ifdef _DEBUG
 extern wchar_t gszDbgModLabel[6];
@@ -446,11 +447,12 @@ struct SrvInfo
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
 	// Input
 	HANDLE hInputThread, hInputEvent; DWORD dwInputThread; BOOL bInputTermination;
-	int nInputQueue, nMaxInputQueue;
-	INPUT_RECORD* pInputQueue;
-	INPUT_RECORD* pInputQueueEnd;
-	INPUT_RECORD* pInputQueueRead;
-	INPUT_RECORD* pInputQueueWrite;
+	//int nInputQueue, nMaxInputQueue;
+	//INPUT_RECORD* pInputQueue;
+	//INPUT_RECORD* pInputQueueEnd;
+	//INPUT_RECORD* pInputQueueRead;
+	//INPUT_RECORD* pInputQueueWrite;
+	InQueue InputQueue;
 	// TrueColorer buffer
 	//HANDLE hColorerMapping;
 	MFileMapping<const AnnotationHeader>* pColorerMapping; // поддержка Colorer TrueMod

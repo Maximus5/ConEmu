@@ -2740,7 +2740,7 @@ LRESULT CSettings::OnInitDialog_Transparent(HWND hWnd2)
 	EnableWindow(GetDlgItem(hWnd2, slTransparentInactive), gpSet->isTransparentSeparate);
 	EnableWindow(GetDlgItem(hWnd2, stTransparentInactive1), gpSet->isTransparentSeparate);
 	EnableWindow(GetDlgItem(hWnd2, stTransparentInactive2), gpSet->isTransparentSeparate);
-	SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_ALPHA_VALUE, 255));
+	SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_INACTIVE_ALPHA_VALUE, 255));
 	SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS  , (WPARAM) true, (LPARAM) gpSet->isTransparentSeparate ? gpSet->nTransparentInactive : gpSet->nTransparent);
 	CheckDlgButton(hWnd2, cbUserScreenTransparent, gpSet->isUserScreenTransparent ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(hWnd2, cbColorKeyTransparent, gpSet->isColorKeyTransparent);
@@ -3954,13 +3954,13 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbTryToCenter:
 			gpSet->isTryToCenter = IsChecked(hWnd2, cbTryToCenter);
-			gpConEmu->OnSize(-1);
+			gpConEmu->OnSize(false);
 			gpConEmu->InvalidateAll();
 			break;
 		case cbAlwaysShowScrollbar:
 			gpSet->isAlwaysShowScrollbar = IsChecked(hWnd2, cbAlwaysShowScrollbar);
 			gpConEmu->OnAlwaysShowScrollbar();
-			gpConEmu->OnSize(-1);
+			gpConEmu->OnSize(false);
 			gpConEmu->InvalidateAll();
 			break;
 		case cbFarHourglass:
@@ -5134,26 +5134,54 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 	return 0;
 }
 
+// Возвращает TRUE, если значение распознано и отличается от старого
 BOOL CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 {
 	BOOL result = FALSE;
-	int r, g, b;
+	int r = 0, g = 0, b = 0;
 	wchar_t temp[MAX_PATH];
-	GetDlgItemText(hDlg, TB, temp, countof(temp));
-	TCHAR *sp1 = wcschr(temp, ' '), *sp2;
+	wchar_t *pch, *pchEnd;
 
-	if (sp1 && *(sp1+1) && *(sp1+1) != ' ')
+	if (!GetDlgItemText(hDlg, TB, temp, countof(temp)) || !*temp)
+		return FALSE;
+
+	if ((temp[0] == L'#') || (temp[0] == L'x' || temp[0] == L'X') || (temp[0] == L'0' && (temp[1] == L'x' || temp[1] == L'X')))
 	{
-		sp2 = wcschr(sp1+1, ' ');
-
-		if (sp2 && *(sp2+1) && *(sp2+1) != ' ')
+		pch = (temp[0] == L'0') ? (temp+2) : (temp+1);
+		// Считаем значение 16-ричным rgb кодом
+		pchEnd = NULL;
+		COLORREF clr = wcstoul(pch, &pchEnd, 16);
+		if (clr && (temp[0] == L'#'))
 		{
-			*sp1 = 0;
-			sp1++;
-			*sp2 = 0;
-			sp2++;
-			r = klatoi(temp); g = klatoi(sp1), b = klatoi(sp2);
+			// "#rrggbb", обменять местами rr и gg, нам нужен COLORREF (bbggrr)
+			clr = ((clr & 0xFF)<<16) | ((clr & 0xFF00)) | ((clr & 0xFF0000)>>16);
+		}
+		// Done
+		if (pchEnd && (pchEnd > (temp+1)) && (clr <= 0xFFFFFF) && (*pCR != clr))
+		{
+			*pCR = clr;
+			result = TRUE;
+		}
+	}
+	else
+	{
+		pch = (wchar_t*)wcspbrk(temp, L"0123456789");
+		pchEnd = NULL;
+		r = pch ? wcstol(pch, &pchEnd, 10) : 0;
+		if (pchEnd && (pchEnd > pch))
+		{
+			pch = (wchar_t*)wcspbrk(pchEnd, L"0123456789");
+			pchEnd = NULL;
+			g = pch ? wcstol(pch, &pchEnd, 10) : 0;
 
+			if (pchEnd && (pchEnd > pch))
+			{
+				pch = (wchar_t*)wcspbrk(pchEnd, L"0123456789");
+				pchEnd = NULL;
+				b = pch ? wcstol(pch, &pchEnd, 10) : 0;
+			}
+
+			// Достаточно ввода одной компоненты
 			if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && *pCR != RGB(r, g, b))
 			{
 				*pCR = RGB(r, g, b);
@@ -5161,6 +5189,28 @@ BOOL CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 			}
 		}
 	}
+
+	//TCHAR *sp1 = wcschr(temp, ' '), *sp2;
+
+	//if (sp1 && *(sp1+1) && *(sp1+1) != ' ')
+	//{
+	//	sp2 = wcschr(sp1+1, ' ');
+
+	//	if (sp2 && *(sp2+1) && *(sp2+1) != ' ')
+	//	{
+	//		*sp1 = 0;
+	//		sp1++;
+	//		*sp2 = 0;
+	//		sp2++;
+	//		r = klatoi(temp); g = klatoi(sp1), b = klatoi(sp2);
+
+	//		if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && *pCR != RGB(r, g, b))
+	//		{
+	//			*pCR = RGB(r, g, b);
+	//			result = TRUE;
+	//		}
+	//	}
+	//}
 
 	return result;
 }
