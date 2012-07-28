@@ -2848,20 +2848,44 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			pageOpProc_Integr(hWnd2, UM_RELOAD_HERE_LIST, UM_RELOAD_HERE_LIST, 0);
 			pageOpProc_Integr(hWnd2, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
 
+			// Возвращает NULL, если строка пустая
+			wchar_t* pszCurInside = GetDlgItemText(hWnd2, cbInsideName);
+			_ASSERTE((pszCurInside==NULL) || (*pszCurInside!=0));
+			wchar_t* pszCurHere   = GetDlgItemText(hWnd2, cbHereName);
+			_ASSERTE((pszCurHere==NULL) || (*pszCurHere!=0));
+
 			wchar_t szIcon[MAX_PATH+32];
 			_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,0", gpConEmu->ms_ConEmuExe);
 
-			SetDlgItemText(hWnd2, cbInsideName, L"ConEmu Inside");
-			SetDlgItemText(hWnd2, tInsideConfig, L"shell");
-			SetDlgItemText(hWnd2, tInsideShell, L"powershell -cur_console:n");
-			//SetDlgItemText(hWnd2, tInsideIcon, szIcon);
-			SetDlgItemText(hWnd2, tInsideIcon, L"powershell.exe");
+			if (pszCurInside)
+			{
+				bSkipCbSel = false;
+				pageOpProc_Integr(hWnd2, WM_COMMAND, MAKELONG(cbInsideName,CBN_SELCHANGE), 0);
+				bSkipCbSel = true;
+			}
+			else
+			{
+				SetDlgItemText(hWnd2, cbInsideName, L"ConEmu Inside");
+				SetDlgItemText(hWnd2, tInsideConfig, L"shell");
+				SetDlgItemText(hWnd2, tInsideShell, L"powershell -cur_console:n");
+				//SetDlgItemText(hWnd2, tInsideIcon, szIcon);
+				SetDlgItemText(hWnd2, tInsideIcon, L"powershell.exe");
+			}
 			CheckDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mb_InsideSynchronizeCurDir);
 
-			SetDlgItemText(hWnd2, cbHereName, L"ConEmu Here");
-			SetDlgItemText(hWnd2, tHereConfig, L"");
-			SetDlgItemText(hWnd2, tHereShell, L"cmd -cur_console:n");
-			SetDlgItemText(hWnd2, tHereIcon, szIcon);
+			if (pszCurHere)
+			{
+				bSkipCbSel = false;
+				pageOpProc_Integr(hWnd2, WM_COMMAND, MAKELONG(cbHereName,CBN_SELCHANGE), 0);
+				bSkipCbSel = true;
+			}
+			else
+			{
+				SetDlgItemText(hWnd2, cbHereName, L"ConEmu Here");
+				SetDlgItemText(hWnd2, tHereConfig, L"");
+				SetDlgItemText(hWnd2, tHereShell, L"cmd -cur_console:n");
+				SetDlgItemText(hWnd2, tHereIcon, szIcon);
+			}
 
 			bSkipCbSel = false;
 		}
@@ -2938,18 +2962,35 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 										else
 										{
 											LPCWSTR psz = pszFull;
+											LPCWSTR pszPrev = pszFull;
 											wchar_t szArg[MAX_PATH+1];
-											while (0 == NextArg(&psz, szArg))
+											while (0 == NextArg(&psz, szArg, &pszPrev))
 											{
-												if (lstrcmpi(szArg, L"/config") == 0)
+												if (*szArg != L'/')
+													continue;
+
+												if (lstrcmpi(szArg, L"/inside") == 0)
+												{
+													//TODO: Sync?
+												}
+												else if (lstrcmpi(szArg, L"/config") == 0)
 												{
 													if (0 != NextArg(&psz, szArg))
 														break;
 													pszCfg = lstrdup(szArg);
 												}
-												else if (lstrcmpi(szArg, L"/cmd") == 0)
+												else if (lstrcmpi(szArg, L"/dir") == 0)
 												{
-													pszCmd = psz;
+													if (0 != NextArg(&psz, szArg))
+														break;
+													_ASSERTE(lstrcmpi(szArg, L"%1")==0);
+												}
+												else //if (lstrcmpi(szArg, L"/cmd") == 0)
+												{
+													if (lstrcmpi(szArg, L"/cmd") == 0)
+														pszCmd = psz;
+													else
+														pszCmd = pszPrev;
 													break;
 												}
 											}
@@ -2988,8 +3029,11 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			if (!pszCmd)
 				break;
 
+			// Возвращает NULL, если строка пустая
 			wchar_t* pszCurInside = GetDlgItemText(hWnd2, cbInsideName);
+			_ASSERTE((pszCurInside==NULL) || (*pszCurInside!=0));
 			wchar_t* pszCurHere   = GetDlgItemText(hWnd2, cbHereName);
+			_ASSERTE((pszCurHere==NULL) || (*pszCurHere!=0));
 
 			bool lbOldSkip = bSkipCbSel; bSkipCbSel = true;
 
@@ -3021,6 +3065,13 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 								SendDlgItemMessage(hWnd2,
 									pszInside ? cbInsideName : cbHereName,
 									CB_ADDSTRING, 0, (LPARAM)szName);
+								if ((pszInside ? pszCurInside : pszCurHere) == NULL)
+								{
+									if (pszInside)
+										pszCurInside = lstrdup(szName);
+									else
+										pszCurHere = lstrdup(szName);
+								}
 							}
 						}
 						RegCloseKey(hkCmd);
@@ -3030,7 +3081,12 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			}
 
 			SetDlgItemText(hWnd2, cbInsideName, pszCurInside ? pszCurInside : L"");
+			if (pszCurInside && *pszCurInside)
+				SelectStringExact(hWnd2, cbInsideName, pszCurInside);
+
 			SetDlgItemText(hWnd2, cbHereName, pszCurHere ? pszCurHere : L"");
+			if (pszCurHere && *pszCurHere)
+				SelectStringExact(hWnd2, cbHereName, pszCurHere);
 
 			bSkipCbSel = lbOldSkip;
 
