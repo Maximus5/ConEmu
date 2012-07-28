@@ -236,7 +236,7 @@ bool IsOutputHandle(HANDLE hFile, DWORD* pMode /*= NULL*/)
 	// Поэтому, добавляем	
 	if (GetConsoleMode(hFile, &Mode))
 	{
-		if (!GetConsoleScreenBufferInfo(hFile, &csbi))
+		if (!GetConsoleScreenBufferInfoCached(hFile, &csbi, TRUE))
 		{
 			nErrCode = GetLastError();
 			_ASSERTE(nErrCode == ERROR_INVALID_HANDLE);
@@ -859,7 +859,7 @@ BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir)
 
 #if 0
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	if (!GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
+	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi, TRUE))
 		return FALSE;
 
 	BOOL lbRc = FALSE;
@@ -1128,7 +1128,7 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 							{
 							case L's':
 								// Save cursor position (can not be nested)
-								if (GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
+								if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 									gDisplayCursor.StoredCursorPos = csbi.dwCursorPosition;
 								break;
 
@@ -1147,7 +1147,7 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 							case L'F': // Moves cursor to beginning of the line n (default 1) lines up.
 							case L'G': // Moves the cursor to column n.
 								// Change cursor position
-								if (GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
+								if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 								{
 									COORD crNewPos = csbi.dwCursorPosition;
 
@@ -1212,7 +1212,7 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 
 							case L'J': // Clears part of the screen
 								// Clears the screen and moves the cursor to the home position (line 0, column 0). 
-								if (GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
+								if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 								{
 									int nCmd = (Code.ArgC > 0) ? Code.ArgV[0] : 0;
 									COORD cr0 = {};
@@ -1262,7 +1262,7 @@ BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPC
 							case L'K': // Erases part of the line
 								// Clears all characters from the cursor position to the end of the line
 								// (including the character at the cursor position).
-								if (GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
+								if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 								{
 									TODO("Need to clear attributes?");
 									int nChars = 0;

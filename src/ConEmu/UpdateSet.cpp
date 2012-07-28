@@ -145,7 +145,9 @@ void ConEmuUpdateSettings::ResetToDefaults()
 			else
 			{
 				_ASSERTE(bWinRar==false);
-				_wsprintf(szUpdateArcCmdLineDef, SKIPLEN(cchMax) L"\"%s\\7zg.exe\" x -y \"%%1\"", pszArcPath);
+				int nLen = lstrlen(pszArcPath);
+				bool bNeedSlash = (*pszArcPath && (pszArcPath[nLen-1] != L'\\')) ? true : false;
+				_wsprintf(szUpdateArcCmdLineDef, SKIPLEN(cchMax) L"\"%s%s7zg.exe\" x -y \"%%1\"", pszArcPath, bNeedSlash ? L"\\" : L"");
 			}
 		}
 	}

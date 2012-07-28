@@ -2409,7 +2409,7 @@ void Settings::LoadSettings()
 		reg->Load(L"Update.Proxy", &UpdSet.szUpdateProxy);
 		reg->Load(L"Update.ProxyUser", &UpdSet.szUpdateProxyUser);
 		reg->Load(L"Update.ProxyPassword", &UpdSet.szUpdateProxyPassword);
-		reg->Load(L"Update.DownloadSetup", UpdSet.isUpdateDownloadSetup); // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+		reg->Load(L"Update.DownloadMode", UpdSet.isUpdateDownloadSetup); // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
 		reg->Load(L"Update.ExeCmdLine", &UpdSet.szUpdateExeCmdLine);
 		reg->Load(L"Update.ArcCmdLine", &UpdSet.szUpdateArcCmdLine);
 		reg->Load(L"Update.DownloadPath", &UpdSet.szUpdateDownloadPath);
@@ -3071,7 +3071,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"Update.Proxy", UpdSet.szUpdateProxy);
 		reg->Save(L"Update.ProxyUser", UpdSet.szUpdateProxyUser);
 		reg->Save(L"Update.ProxyPassword", UpdSet.szUpdateProxyPassword);
-		reg->Save(L"Update.DownloadSetup", UpdSet.isUpdateDownloadSetup); // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+		//reg->Save(L"Update.DownloadSetup", UpdSet.isUpdateDownloadSetup); // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
 		reg->Save(L"Update.ExeCmdLine", UpdSet.szUpdateExeCmdLine);
 		reg->Save(L"Update.ArcCmdLine", UpdSet.szUpdateArcCmdLine);
 		reg->Save(L"Update.DownloadPath", UpdSet.szUpdateDownloadPath);

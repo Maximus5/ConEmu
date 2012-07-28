@@ -10,6 +10,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 *****************
 
 
+2012.07.27a
+[*] В поле «Command» на вкладке «Integration» можно использовать ключи для ConEmu.exe. Например: "/single /cmd powershell.exe".
+[*] Minor hooks optimization.
+[%] Issue 651: Sometimes, ConEmu choose incorrect update method (msi instead 7z and vice versa). Cause of previously saved value "Update.DownloadSetup".
+
+
 2012.07.27
 [%] Issue 643: Windows from powershell/.net does not appears on screen.
 [+] Issue 652: New predefined palette <Solarized Light>.

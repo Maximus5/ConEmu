@@ -51,6 +51,8 @@ extern HWND ghConWnd;      // Console window
 extern HWND ghConEmuWnd;   // Root! window
 extern HWND ghConEmuWndDC; // ConEmu DC window
 
+BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo, BOOL bForced = FALSE);
+BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced = FALSE);
 
 CESERVER_CONSOLE_MAPPING_HDR SrvMapping = {};
 
@@ -100,7 +102,7 @@ static BOOL ExtGetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_
 		h = GetStdHandle(STD_OUTPUT_HANDLE);
 	}
 
-	if (!GetConsoleScreenBufferInfo(h, &csbi))
+	if (!GetConsoleScreenBufferInfoCached(h, &csbi))
 		return FALSE;
 	
 	//if (gbFarBufferMode)
@@ -141,7 +143,7 @@ static BOOL ExtCheckBuffers(HANDLE h)
 	if (!gbInitialized)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-		if (!GetConsoleScreenBufferInfo(h, &csbi))
+		if (!GetConsoleScreenBufferInfoCached(h, &csbi, TRUE))
 		{
 			gnInitializeErrCode = GetLastError();
 		}
@@ -984,7 +986,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	}
 	else
 	{
-		GetConsoleMode(h, &Mode);
+		GetConsoleModeCached(h, &Mode);
 		bWrap = (Mode & ENABLE_WRAP_AT_EOL_OUTPUT) != 0;
 	}
 
@@ -1340,6 +1342,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			int nRows = nMaxCell / nWindowWidth;
 			if (nRows > (-nDir))
 			{
+				WARNING("OPTIMIZE: Ќе нужно двигать заполненную нул€ми пам€ть. Ќет атрибутов в строке - и не дергатьс€.");
 				memmove(pTrueColorStart, pTrueColorStart+(-nDir*nWindowWidth), (nRows * nWindowWidth * sizeof(*pTrueColorStart)));
 				if (Info->Flags & essf_ExtOnly)
 				{
@@ -1388,6 +1391,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			int nRows = nMaxCell / nWindowWidth;
 			if (nRows > nDir)
 			{
+				WARNING("OPTIMIZE: Ќе нужно двигать заполненную нул€ми пам€ть. Ќет атрибутов в строке - и не дергатьс€.");
 				memmove(pTrueColorStart+(nDir*nWindowWidth), pTrueColorStart, (nRows * nWindowWidth * sizeof(*pTrueColorStart)));
 				if (Info->Flags & essf_ExtOnly)
 				{

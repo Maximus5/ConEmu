@@ -3087,6 +3087,8 @@ void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, L
 	if (!asCmd || !*asCmd)
 		asCmd = L"cmd -cur_console:n";
 
+	asCmd = SkipNonPrintable(asCmd);
+
 	size_t cchMax = _tcslen(gpConEmu->ms_ConEmuExe)
 		+ (asOpt ? (_tcslen(asOpt) + 1) : 0)
 		+ (asConfig ? (_tcslen(asConfig) + 16) : 0)
@@ -3155,7 +3157,15 @@ void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, L
 			break;
 		}
 
-		_wcscat_c(pszCmd, cchMax, L"/cmd ");
+		bool bCmdKeyExist = false;
+
+		if (*asCmd == L'/')
+		{
+			bCmdKeyExist = (StrStrI(asCmd, L"/cmd ") != NULL);
+		}
+
+		if (!bCmdKeyExist)
+			_wcscat_c(pszCmd, cchMax, L"/cmd ");
 		_wcscat_c(pszCmd, cchMax, asCmd);
 
 		HKEY hkRoot;
@@ -3521,6 +3531,7 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2)
 	CheckRadioButton(hWnd2, rbUpdateUseExe, rbUpdateUseArc, (p->UpdateDownloadSetup()==1) ? rbUpdateUseExe : rbUpdateUseArc);
 	
 	CheckDlgButton(hWnd2, cbUpdateUseProxy, p->isUpdateUseProxy);
+	OnButtonClicked(hWnd2, cbUpdateUseProxy, 0); // Enable/Disable proxy fields
 	SetDlgItemText(hWnd2, tUpdateProxy, p->szUpdateProxy);
 	SetDlgItemText(hWnd2, tUpdateProxyUser, p->szUpdateProxyUser);
 	SetDlgItemText(hWnd2, tUpdateProxyPassword, p->szUpdateProxyPassword);

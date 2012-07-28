@@ -2654,6 +2654,9 @@ void OnReadConsoleEnd(BOOL bSucceeded, BOOL bUnicode, HANDLE hConsoleInput, LPVO
 
 		TODO("ќтослать в ConEmu считанную строку!");
 	}
+
+	// —брос кешированных значений
+	GetConsoleScreenBufferInfoCached(NULL, NULL);
 }
 
 // bBashMargin - sh.exe has pad in one space cell on right edge of window
@@ -3302,6 +3305,12 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 	gReadConsoleInfo.LastReadConsoleInputTID = nCurrentTID;
 	gReadConsoleInfo.hConsoleInput2 = hConsoleInput;
 
+	if (nRead)
+	{
+		// —брос кешированных значений
+		GetConsoleScreenBufferInfoCached(NULL, NULL);
+	}
+
 	if (!gFarMode.bFarHookMode || !gFarMode.bMonitorConsoleInput || !nRead || !lpBuffer)
 		return;
 		
@@ -3326,6 +3335,8 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 		if (pOut) ExecuteFreeResult(pOut);
 		ExecuteFreeResult(pIn);
 	}
+
+
 }
 
 #ifdef _DEBUG
@@ -4949,4 +4960,121 @@ BOOL WINAPI OnStretchBlt(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nW
 		bRc = F(StretchBlt)(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest, hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc, dwRop);
 
 	return bRc;
+}
+
+BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo, BOOL bForced /*= FALSE*/)
+{
+	BOOL lbRc = FALSE;
+
+	static DWORD s_LastCheckTick = 0;
+	static CONSOLE_SCREEN_BUFFER_INFO s_csbi = {};
+	static HANDLE s_hConOut = NULL;
+	DWORD nTickDelta = 0;
+	const DWORD TickDeltaMax = 250;
+
+	if (hConsoleOutput == NULL)
+	{
+		// —брос
+		s_hConOut = NULL;
+		GetConsoleModeCached(NULL, NULL);
+		return FALSE;
+	}
+	
+	if (!lpConsoleScreenBufferInfo)
+	{
+		_ASSERTEX(lpConsoleScreenBufferInfo!=NULL);
+		return FALSE;
+	}
+
+	if (s_hConOut && (s_hConOut == hConsoleOutput))
+	{
+		nTickDelta = GetTickCount() - s_LastCheckTick;
+		if (nTickDelta <= TickDeltaMax)
+		{
+			if (bForced)
+			{
+				#ifdef _DEBUG
+				lbRc = FALSE;
+				#endif
+			}
+			else
+			{
+				*lpConsoleScreenBufferInfo = s_csbi;
+				lbRc = TRUE;
+			}
+		}
+	}
+
+	if (!lbRc)
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+		lbRc = GetConsoleScreenBufferInfo(hConsoleOutput, &csbi);
+		*lpConsoleScreenBufferInfo = csbi;
+		if (lbRc)
+		{
+			s_csbi = csbi;
+			s_LastCheckTick = GetTickCount();
+			s_hConOut = hConsoleOutput;
+		}
+	}
+
+	return lbRc;
+}
+
+BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced /*= FALSE*/)
+{
+	BOOL lbRc = FALSE;
+
+	static DWORD s_LastCheckTick = 0;
+	static DWORD s_dwMode = 0;
+	static HANDLE s_hConHandle = NULL;
+	DWORD nTickDelta = 0;
+	const DWORD TickDeltaMax = 250;
+
+	if (hConsoleHandle == NULL)
+	{
+		// —брос
+		s_hConHandle = NULL;
+		return FALSE;
+	}
+
+	if (!lpMode)
+	{
+		_ASSERTEX(lpMode!=NULL);
+		return FALSE;
+	}
+	
+	if (s_hConHandle && (s_hConHandle == hConsoleHandle))
+	{
+		nTickDelta = GetTickCount() - s_LastCheckTick;
+		if (nTickDelta <= TickDeltaMax)
+		{
+			if (bForced)
+			{
+				#ifdef _DEBUG
+				lbRc = FALSE;
+				#endif
+			}
+			else
+			{
+				*lpMode = s_dwMode;
+				lbRc = TRUE;
+			}
+		}
+	}
+
+	if (!lbRc)
+	{
+		DWORD dwMode = 0;
+		lbRc = GetConsoleMode(hConsoleHandle, &dwMode);
+		*lpMode = dwMode;
+		if (lbRc)
+		{
+			s_dwMode = dwMode;
+			s_LastCheckTick = GetTickCount();
+			s_hConHandle = hConsoleHandle;
+		}
+	}
+
+	return lbRc;
 }

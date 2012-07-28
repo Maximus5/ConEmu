@@ -121,3 +121,5 @@ extern int  gnPowerShellProgressValue;
 
 bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
 void GuiSetProgress(WORD st, WORD pr);
+BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo, BOOL bForced = FALSE);
+BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced = FALSE);
