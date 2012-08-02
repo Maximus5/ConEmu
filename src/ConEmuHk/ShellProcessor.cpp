@@ -1394,6 +1394,13 @@ BOOL CShellProc::PrepareExecuteParms(
 			if (args.ProcessNewConArg() > 0)
 			{
 				bCurConsoleArg = true;
+				if (args.bForceDosBox && m_SrvMapping.cbSize && m_SrvMapping.bDosBox)
+				{
+					mn_ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
+					mn_ImageSubsystem = 16;
+					bLongConsoleOutput = FALSE;
+					lbGuiApp = FALSE;
+				}
 			}
 		}
 	}

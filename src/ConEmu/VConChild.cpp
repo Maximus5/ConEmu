@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TabBar.h"
 #include "VirtualConsole.h"
 #include "RealConsole.h"
+#include "VConGroup.h"
 
 #if defined(__GNUC__)
 #define EXT_GNUC_LOG
@@ -536,7 +537,7 @@ LRESULT CConEmuChild::OnPaint()
 	mb_PostFullPaint = FALSE;
 
 	if (gpSetCls->isAdvLogging>1)
-		gpConEmu->ActiveCon()->RCon()->LogString("CConEmuChild::OnPaint");
+		CVConGroup::LogString("CConEmuChild::OnPaint");
 
 	gpSetCls->Performance(tPerfBlt, FALSE);
 
@@ -869,7 +870,8 @@ BOOL CConEmuChild::CheckMouseOverScroll()
 	CVConGuard guard(pVCon);
 
 	// ¬роде бы в активной? »ли в this?
-	CRealConsole* pRCon = pVCon ? gpConEmu->ActiveCon()->RCon() : NULL;
+	CVConGuard VCon;
+	CRealConsole* pRCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 
 	if (pRCon)
 	{

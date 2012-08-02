@@ -388,7 +388,7 @@ class CSettings
 			ShellIntgr_Here,
 			ShellIntgr_CmdAuto,
 		};
-		void ShellIntegration(HWND hDlg, ShellIntegrType iMode, bool bEnabled);
+		void ShellIntegration(HWND hDlg, ShellIntegrType iMode, bool bEnabled, bool bForced = false);
 	private:
 		void RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, LPCWSTR asCmd, LPCWSTR asIcon);
 		void UnregisterShell(LPCWSTR asName);

@@ -73,6 +73,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "ConEmuPipe.h"
 #include "TabBar.h"
 #include "TaskBarGhost.h"
+#include "VConGroup.h"
 
 
 #ifdef _DEBUG
@@ -159,46 +160,57 @@ HMENU CVirtualConsole::mh_TerminatePopup = NULL;
 HMENU CVirtualConsole::mh_DebugPopup = NULL;
 HMENU CVirtualConsole::mh_EditPopup = NULL;
 
-CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
-{
-	if (!args)
-	{
-		_ASSERTE(args!=NULL);
-		return NULL;
-	}
+//--> VConGroup
+//CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
+//{
+//	if (!args)
+//	{
+//		_ASSERTE(args!=NULL);
+//		return NULL;
+//	}
+//
+//	if (args->pszSpecialCmd)
+//	{
+//		args->ProcessNewConArg();
+//	}
+//
+//	if (args->bForceUserDialog)
+//	{
+//		_ASSERTE(args->aRecreate!=cra_RecreateTab);
+//		args->aRecreate = cra_CreateTab;
+//
+//		int nRc = gpConEmu->RecreateDlg(args);
+//		if (nRc != IDC_START)
+//			return NULL;
+//	}
+//
+//	CVirtualConsole* pCon = new CVirtualConsole(args);
+//
+//	if (!pCon->mp_RCon->PreCreate(args))
+//	{
+//		delete pCon;
+//		return NULL;
+//	}
+//
+//	return pCon;
+//}
 
-	if (args->pszSpecialCmd)
-	{
-		args->ProcessNewConArg();
-	}
-
-	if (args->bForceUserDialog)
-	{
-		_ASSERTE(args->aRecreate!=cra_RecreateTab);
-		args->aRecreate = cra_CreateTab;
-
-		int nRc = gpConEmu->RecreateDlg(args);
-		if (nRc != IDC_START)
-			return NULL;
-	}
-
-	CVirtualConsole* pCon = new CVirtualConsole(args);
-
-	if (!pCon->mp_RCon->PreCreate(args))
-	{
-		delete pCon;
-		return NULL;
-	}
-
-	return pCon;
-}
-
-CVirtualConsole::CVirtualConsole(const RConStartArgs *args) : hDC(NULL)
+CVirtualConsole::CVirtualConsole()
+	: mp_RCon(NULL)
+	, mp_Ghost(NULL)
+	, mp_Group(NULL)
+	, hDC(NULL)
 {
 	mh_WndDC = NULL;
+}
+
+void CVirtualConsole::Constructor(const RConStartArgs *args)
+{
+	//mh_WndDC = NULL;
 	//CreateView();
-	mp_RCon = NULL; //new CRealConsole(this);
-	mp_Ghost = NULL;
+	//mp_RCon = NULL; //new CRealConsole(this);
+	//mp_Ghost = NULL;
+	//mp_Group = NULL;
 
 	mp_Set = NULL; // указатель на настройки раздел€емые по приложени€м
 
@@ -320,7 +332,9 @@ CVirtualConsole::CVirtualConsole(const RConStartArgs *args) : hDC(NULL)
 	}
 
 	CreateView();
-	mp_RCon = new CRealConsole(this);
+	mp_RCon = new CRealConsole();
+	_ASSERTE(mp_RCon);
+	mp_RCon->Construct(this);
 	
 	//if (gpSet->isTabsOnTaskBar())
 	//{
@@ -405,6 +419,8 @@ CVirtualConsole::~CVirtualConsole()
 		delete mp_RCon;
 		mp_RCon = NULL;
 	}
+
+	CVConGroup::OnVConDestroyed(this);
 
 	//if (mh_PopupMenu) { -- static на все экземпл€ры
 	//	DestroyMenu(mh_PopupMenu); mh_PopupMenu = NULL;
@@ -1544,7 +1560,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	// start timer before "Read Console Output*" calls, they do take time
 	//gpSetCls->Performance(tPerfRead, FALSE);
 	//if (gbNoDblBuffer) isForce = TRUE; // Debug, dblbuffer
-	isForeground = gpConEmu->isMeForeground(false);
+	isForeground = gpConEmu->isMeForeground(false) && gpConEmu->isActive(this);
 
 	if (isFade == isForeground && gpSet->isFadeInactive)
 		isForce = true;
@@ -4396,8 +4412,8 @@ RECT CVirtualConsole::GetRect()
 	{
 		//rc = MakeRect(winSize.X, winSize.Y);
 		//RECT rcWnd; Get ClientRect(ghWnd, &rcWnd);
-		RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, this);
-		RECT rcDC = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE, this);
+		RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, this);
+		RECT rcDC = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE_CUR, this);
 		rc = MakeRect(rcDC.right, rcDC.bottom);
 	}
 	else

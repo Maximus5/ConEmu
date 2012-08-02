@@ -268,7 +268,8 @@ class CRealConsole
 		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
 		void    CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui);
 
-		CRealConsole(CVirtualConsole* apVCon);
+		CRealConsole();
+		void Construct(CVirtualConsole* apVCon);
 		~CRealConsole();
 
 		CVirtualConsole* VCon();

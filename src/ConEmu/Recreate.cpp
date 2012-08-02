@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "Recreate.h"
 #include "VirtualConsole.h"
+#include "VConGroup.h"
 #include "RealConsole.h"
 #include "../common/WinObjects.h"
 
@@ -162,11 +163,16 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			SendMessage(hDlg, UM_FILL_CMDLIST, TRUE, 0);
 			
+			CVConGuard VCon;
+			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+			CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
+			_ASSERTE(pRCon);
+
 			RConStartArgs* pArgs = pDlg->mp_Args;
 			_ASSERTE(pArgs);
 			LPCWSTR pszCmd = pArgs->pszSpecialCmd
 			                 ? pArgs->pszSpecialCmd
-			                 : gpConEmu->ActiveCon()->RCon()->GetCmd();
+			                 : pRCon ? pRCon->GetCmd() : NULL;
 			//int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszCmd);
 			//if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszCmd);
 			LPCWSTR pszSystem = gpSet->GetCmd();
@@ -200,7 +206,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			if (pArgs->aRecreate == cra_RecreateTab)
 			{
 				SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
-				SetDlgItemText(hDlg, IDC_STARTUP_DIR, gpConEmu->ActiveCon()->RCon()->GetDir());
+				SetDlgItemText(hDlg, IDC_STARTUP_DIR, pRCon ? pRCon->GetDir() : L"");
 			}
 			else
 			{
@@ -221,7 +227,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			lstrcpy(szRbCaption, L"Run as current &user: "); lstrcat(szRbCaption, szCurUser);
 			SetDlgItemText(hDlg, rbCurrentUser, szRbCaption);
 
-			if ((pArgs->aRecreate == cra_RecreateTab) && gpConEmu->ActiveCon()->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted))
+			if ((pArgs->aRecreate == cra_RecreateTab) && pVCon && pVCon->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted))
 			{
 				nChecked = rbAnotherUser;
 
@@ -398,12 +404,17 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			RConStartArgs* pArgs = pDlg->mp_Args;
 			_ASSERTE(pArgs);
 
+			CVConGuard VCon;
+			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+			CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
+			_ASSERTE(pRCon);
+
 			LPCWSTR pszCmd = pArgs->pszSpecialCmd
 			                 ? pArgs->pszSpecialCmd
-			                 : gpConEmu->ActiveCon()->RCon()->GetCmd();
+			                 : pRCon ? pRCon->GetCmd() : L"";
 			int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszCmd);
 
-			if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszCmd);
+			if (*pszCmd && (nId < 0)) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszCmd);
 
 			LPCWSTR pszSystem = gpSet->GetCmd();
 

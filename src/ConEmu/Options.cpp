@@ -286,6 +286,7 @@ void Settings::InitSettings()
 	isMonitorConsoleLang = 3;
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
 	nCmdOutputCP = 0;
+	ComSpec.isAddConEmu2Path = TRUE;
 
 	bool bIsDbcs = (GetSystemMetrics(SM_DBCSENABLED) != 0);
 
@@ -2087,11 +2088,14 @@ void Settings::LoadSettings()
 		nVal = ComSpec.isUpdateEnv;
 		reg->Load(L"ComSpec.UpdateEnv", nVal);
 		ComSpec.isUpdateEnv = (nVal != 0);
+		nVal = ComSpec.isAddConEmu2Path;
+		reg->Load(L"ComSpec.EnvAddPath", nVal);
+		ComSpec.isAddConEmu2Path = (nVal != 0);
 		reg->Load(L"ComSpec.Path", ComSpec.ComspecExplicit, countof(ComSpec.ComspecExplicit));
 		//-- wcscpy_c(ComSpec.ComspecInitial, gpConEmu->ms_ComSpecInitial);
 		// ќбработать 32/64 (найти tcc.exe и т.п.)
 		FindComspec(&ComSpec);
-		UpdateComspec(&ComSpec);
+		//UpdateComspec(&ComSpec); --> CSettings::SettingsLoaded
 
 		reg->Load(L"ConsoleTextSelection", isConsoleTextSelection); if (isConsoleTextSelection>2) isConsoleTextSelection = 2;
 
@@ -2922,6 +2926,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"ComSpec.Type", (BYTE)ComSpec.csType);
 		reg->Save(L"ComSpec.Bits", (BYTE)ComSpec.csBits);
 		reg->Save(L"ComSpec.UpdateEnv", (bool)ComSpec.isUpdateEnv);
+		reg->Save(L"ComSpec.EnvAddPath", (bool)ComSpec.isAddConEmu2Path);
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
 		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
 		reg->Save(L"CTS.AutoCopy", isCTSAutoCopy);

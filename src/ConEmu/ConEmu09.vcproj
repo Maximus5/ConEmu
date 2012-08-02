@@ -1645,6 +1645,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\VConGroup.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\VConRelease.cpp"
 				>
 			</File>

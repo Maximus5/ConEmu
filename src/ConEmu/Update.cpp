@@ -1516,13 +1516,15 @@ bool CConEmuUpdate::NeedRunElevation()
 					{
 						szSystem[nLen++] = L'\\'; szSystem[nLen] = 0;
 					}
-					if (lstrcmpi(szTestFile, szSystem) == 0)
+					// наш внутренний lstrcmpni не прокатит - он для коротких строк
+					if (_wcsnicmp(szTestFile, szSystem, nLen) == 0)
 						return true; // Установлены в ProgramFiles
 				}
 			}
 		}
-		// Скорее всего не надо
-		return false;
+		// Issue 651: Проверим возможность создания/изменения файлов в любом случае
+		//// Скорее всего не надо
+		//return false;
 	}
 
 	// XP и ниже

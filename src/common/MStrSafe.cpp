@@ -38,6 +38,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef calloc
 #define calloc "calloc"
 
+#ifdef _DEBUG
+	#ifndef __GNUC__
+		#pragma comment(lib,"strsafe.lib")
+	#endif
+#endif
 
 LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 {

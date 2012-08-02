@@ -4571,6 +4571,50 @@ void UpdateComspec(ConEmuComspec* pOpt)
 			}
 		}
 	}
+
+	if (pOpt->isAddConEmu2Path)
+	{
+		if (pOpt->ConEmuBaseDir[0] == 0)
+		{
+			_ASSERTE(pOpt->ConEmuBaseDir[0] != 0);
+		}
+		else
+		{
+			DWORD cchMax = 32767;
+			wchar_t* pszCur = (wchar_t*)malloc(cchMax*sizeof(*pszCur));
+			wchar_t* pszUpr = (wchar_t*)malloc(cchMax*sizeof(*pszCur));
+			wchar_t* pszDirUpr = (wchar_t*)malloc(MAX_PATH*sizeof(*pszCur));
+
+			if (pszCur && pszUpr && pszDirUpr)
+			{
+				DWORD n = GetEnvironmentVariable(L"PATH", pszCur, cchMax);
+				if (n < cchMax)
+				{
+					if (!n)
+						*pszCur = 0;
+					lstrcpyn(pszUpr, pszCur, cchMax);
+					if (n)
+						CharUpperBuff(pszUpr, n);
+					lstrcpyn(pszDirUpr, pOpt->ConEmuBaseDir, MAX_PATH);
+					CharUpperBuff(pszDirUpr, lstrlen(pszDirUpr));
+					int nDirLen = lstrlen(pszDirUpr);
+					LPCWSTR pszFind = wcsstr(pszUpr, pszDirUpr);
+					if (!(pszFind && (pszFind[nDirLen] == L';' || pszFind[nDirLen] == 0))
+						&& ((n + nDirLen + 1) < cchMax))
+					{
+						lstrcpy(pszUpr, pOpt->ConEmuBaseDir);
+						lstrcat(pszUpr, L";");
+						lstrcat(pszUpr, pszCur);
+						SetEnvironmentVariable(L"PATH", pszUpr);
+					}
+				}
+			}
+
+			SafeFree(pszCur);
+			SafeFree(pszUpr);
+			SafeFree(pszDirUpr);
+		}
+	}
 }
 
 void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue)

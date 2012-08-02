@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "VirtualConsole.h"
 #include "Status.h"
+#include "VConGroup.h"
 
 
 #define STATUS_PAINT_DELAY 500
@@ -340,9 +341,9 @@ void CStatus::PaintStatus(HDC hPaint, RECT rcStatus)
 	}
 
 
-	CVConGuard VCon(gpConEmu->ActiveCon());
+	CVConGuard VCon;
 	CRealConsole* pRCon = NULL;
-	CVirtualConsole* pVCon = VCon.VCon();
+	CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
 	if (pVCon)
 		pRCon = pVCon->RCon();
 
@@ -864,11 +865,10 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				case csi_NewVCon:
 					//gpConEmu->mp_TabBar->OnNewConPopup((POINT*)&rcClient, TPM_LEFTALIGN|TPM_BOTTOMALIGN);
 					{
-						CVirtualConsole* pVCon = gpConEmu->ActiveCon();
-						CVConGuard guard(pVCon);
-						if (pVCon)
+						CVConGuard VCon;
+						if (CVConGroup::GetActiveVCon(&VCon) >= 0)
 						{
-							guard->ShowPopupMenu(MakePoint(rcClient.left,rcClient.top), TPM_LEFTALIGN|TPM_BOTTOMALIGN);
+							VCon->ShowPopupMenu(MakePoint(rcClient.left,rcClient.top), TPM_LEFTALIGN|TPM_BOTTOMALIGN);
 						}
 					}
 					break;

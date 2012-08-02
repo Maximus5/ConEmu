@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CBackground;
 class CTaskBarGhost;
+class CVConGroup;
 
 class CVirtualConsole :
 	public CVConRelease,
@@ -50,9 +51,15 @@ class CVirtualConsole :
 		// RealConsole
 		CRealConsole  *mp_RCon;
 		CTaskBarGhost *mp_Ghost;
+
+	protected:
+		friend class CVConGroup;
+		void* mp_Group; // For internal use of CVConGroup
+	protected:
+		CVirtualConsole();
+		void Constructor(const RConStartArgs *args);
 	public:
-		CVirtualConsole(const RConStartArgs *args);
-		static CVirtualConsole* CreateVCon(RConStartArgs *args);
+		//static CVirtualConsole* CreateVCon(RConStartArgs *args); --> VConGroup
 		void InitGhost();
 	protected:
 		virtual ~CVirtualConsole();

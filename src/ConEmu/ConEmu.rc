@@ -146,19 +146,24 @@ BEGIN
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,70,36,8
     CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,57,70,47,8
     CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,110,70,48,8
-    GROUPBOX        "",IDC_STATIC,4,95,319,67
+    GROUPBOX        "",IDC_STATIC,4,95,319,98
     CONTROL         "Back&ground image (bmp, jpg, png):",cbBgImage,"Button",BS_AUTO3STATE | WS_TABSTOP,10,95,128,8
     LTEXT           "Path:",IDC_STATIC,10,109,18,8
     EDITTEXT        tBgImage,34,107,261,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",bBgImage,299,107,16,12
-    LTEXT           "Darkening:",IDC_STATIC,10,126,36,8
-    CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,125,228,12
-    EDITTEXT        tDarker,285,125,30,12,ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "Replace color indexes:",IDC_STATIC,10,146,77,8
-    EDITTEXT        tBgImageColors,88,144,43,12,ES_AUTOHSCROLL
-    CONTROL         "Allow plugins",cbBgAllowPlugin,"Button",BS_AUTO3STATE | WS_TABSTOP,141,146,57,10
-    RTEXT           "Placement:",stBgPlacement,200,145,50,8
-    COMBOBOX        lbBgPlacement,254,143,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Darkening:",IDC_STATIC,10,144,36,8
+    CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,143,228,12
+    EDITTEXT        tDarker,285,143,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tBgImageColors,160,124,43,12,ES_AUTOHSCROLL
+    CONTROL         "Allow background plugins (Far Manager)",cbBgAllowPlugin,
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,161,144,10
+    RTEXT           "Placement:",stBgPlacement,205,126,45,8
+    COMBOBOX        lbBgPlacement,254,124,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Darkening:",IDC_STATIC,10,175,36,8
+    CONTROL         "",slDarkerPlugin,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,174,228,12
+    EDITTEXT        tDarkerPlugin,285,174,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Transparent",rbBgReplaceTransparent,"Button",BS_AUTORADIOBUTTON | WS_GROUP,10,126,59,8
+    CONTROL         "Replace color indexes",rbBgReplaceIndexes,"Button",BS_AUTORADIOBUTTON,70,126,86,8
 END
 
 IDD_SPG_WNDSIZEPOS DIALOGEX 0, 0, 328, 235
@@ -243,11 +248,12 @@ BEGIN
     PUSHBUTTON      "Register",bHereRegister,213,145,50,14
     PUSHBUTTON      "Unregister",bHereUnregister,267,145,50,14
     GROUPBOX        "Automatic attach of cmd && Tcc/Le to ConEmu (new window will be started if not found)",IDC_STATIC,4,168,319,65
-    LTEXT           "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\nCurrent command stored in registry «AutoRun»:",IDC_STATIC,11,178,308,16
+    LTEXT           "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\nCurrent command stored in registry «AutoRun» (HKLM value is not processed here):",IDC_STATIC,11,178,308,16
     EDITTEXT        tCmdAutoAttach,9,197,308,13,ES_AUTOHSCROLL | ES_READONLY
     CONTROL         "Force new ConEmu window",cbCmdAutorunNewWnd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,216,150,10
-    PUSHBUTTON      "Register ConEmu autorun",bCmdAutoRegister,163,213,100,14
-    PUSHBUTTON      "Unregister",bCmdAutoUnregister,267,213,50,14
+    PUSHBUTTON      "Register ConEmu autorun",bCmdAutoRegister,126,213,100,14
+    PUSHBUTTON      "Unregister",bCmdAutoUnregister,230,213,50,14
+    PUSHBUTTON      "Clear",bCmdAutoClear,283,213,34,14
 END
 
 IDD_SPG_STARTUP DIALOGEX 0, 0, 328, 235
@@ -548,7 +554,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Used command processor",gbComspec,4,1,319,117
+    GROUPBOX        "Used command processor",gbComspec,4,1,319,131
     CONTROL         "Auto (tcc - if installed, %ComSpec% - otherwise)",rbComspecAuto,
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,9,12,178,8
     CONTROL         "%ComSpec% (env.var.)",rbComspecEnvVar,"Button",BS_AUTORADIOBUTTON,189,12,98,8
@@ -566,6 +572,7 @@ BEGIN
     PUSHBUTTON      "Test",cbComspecTest,269,60,50,14
     LTEXT           "Cmd.exe output codepage:",IDC_STATIC,11,100,94,8
     COMBOBOX        lbCmdOutputCP,108,98,81,30,CBS_DROPDOWNLIST | WS_TABSTOP
+    CONTROL         "Add %ConEmuBaseDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,117,309,8
 END
 
 IDD_SPG_CMDOUTPUT DIALOGEX 0, 0, 328, 235

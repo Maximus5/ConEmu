@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "TabBar.h"
 #include "VirtualConsole.h"
+#include "VConGroup.h"
 #include "ScreenDump.h"
 
 #define DEBUGSTRAPPS(s) DEBUGSTR(s)
@@ -805,7 +806,8 @@ bool CConEmuCtrl::key_WinSize(BYTE vk)
 	}
 	else
 	{
-		CVirtualConsole* pVCon = gpConEmu->ActiveCon();
+		CVConGuard VCon;
+		CVirtualConsole* pVCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
 		RECT rcWindow = {};
 		if (GetWindowRect(ghWnd, &rcWindow))
 		{
@@ -1443,9 +1445,10 @@ bool CConEmuCtrl::key_FindTextDlg(DWORD VkMod, bool TestOnly, const ConEmuHotKey
 
 void CConEmuCtrl::DoFindText(int nDirection, CRealConsole* pRCon /*= NULL*/)
 {
+	CVConGuard VCon;
 	if (!pRCon)
 	{
-		pRCon = gpConEmu->ActiveCon() ? gpConEmu->ActiveCon()->RCon() : NULL;
+		pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 		if (!pRCon)
 			return;
 	}
@@ -1455,9 +1458,10 @@ void CConEmuCtrl::DoFindText(int nDirection, CRealConsole* pRCon /*= NULL*/)
 
 void CConEmuCtrl::DoEndFindText(CRealConsole* pRCon /*= NULL*/)
 {
+	CVConGuard VCon;
 	if (!pRCon)
 	{
-		pRCon = gpConEmu->ActiveCon() ? gpConEmu->ActiveCon()->RCon() : NULL;
+		pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 		if (!pRCon)
 			return;
 	}

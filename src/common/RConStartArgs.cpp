@@ -36,9 +36,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "WinObjects.h"
 
+#define DefaultSplitValue 500
+
 RConStartArgs::RConStartArgs()
 {
-	bDetached = bRunAsAdministrator = bRunAsRestricted = bForceUserDialog = bBackgroundTab = FALSE;
+	bDetached = bRunAsAdministrator = bRunAsRestricted = bForceUserDialog = FALSE;
+	bForceDosBox = bBackgroundTab = FALSE;
+	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = /*pszUserPassword =*/ NULL;
 	bBufHeight = FALSE; nBufHeight = 0;
@@ -217,7 +221,7 @@ int RConStartArgs::ProcessNewConArg()
 							{
 								nBufHeight = 0;
 							}
-						}
+						} // L'h':
 						break;
 					case L'n':
 						// n - отключить "Press Enter or Esc to close console"
@@ -227,6 +231,11 @@ int RConStartArgs::ProcessNewConArg()
 						// c - принудительно включить "Press Enter or Esc to close console"
 						eConfirmation = eConfAlways;
 						break;
+					case L'x':
+						// x - Force using dosbox for .bat files
+						bForceDosBox = TRUE;
+						break;
+					// "Long" code blocks below: 'd', 'u', 's' and so on (in future)
 					case L'd':
 						// d:<StartupDir>. MUST be last options
 						{
@@ -256,69 +265,87 @@ int RConStartArgs::ProcessNewConArg()
 									}
 								}
 							}
-						}
+						} // L'd':
 						break;
-					case L'u':
-						// u - ConEmu choose user dialog
-						// u:<user>:<pwd> - specify user/pwd in args. MUST be last option
-						
-						lbReady = true; // последняя опция
-
-						SafeFree(pszUserName);
-						SafeFree(pszDomain);
-						if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
-						
-						if (*pszEnd == L':')
+					case L's':
+						// s[<SplitTab>T][<Percents>](H|V)
+						// Пример: "s3T30H" - разбить 3-ий таб. будет создан новый Pane справа, шириной 30% от 3-го таба.
 						{
-							pszEnd++;
-							
-							wchar_t szUser[MAX_PATH], *p = szUser, *p2 = szUser+countof(szUser)-1;
-							while (*pszEnd && (p < p2))
+							UINT nTab = 0 /*active*/, nValue = /*пополам*/DefaultSplitValue/10;
+							while (*pszEnd)
 							{
-								if ((*pszEnd == 0) || (*pszEnd == L':') || (*pszEnd == L'"'))
+								if (isDigit(*pszEnd))
 								{
-									break;
+									wchar_t* pszDigits = NULL;
+									UINT n = wcstoul(pszEnd, &pszDigits, 10);
+									if (!pszDigits)
+										break;
+									pszEnd = pszDigits;
+									if (*pszDigits == L'T')
+									{
+                                    	nTab = n;
+                                	}
+                                    else if ((*pszDigits == L'H') || (*pszDigits == L'V'))
+                                    {
+                                    	nValue = n;
+                                    	eSplit = (*pszDigits == L'H') ? eSplitHorz : eSplitVert;
+                                    }
+                                    else
+                                    {
+                                    	break;
+                                    }
+                                    pszEnd++;
 								}
-								//else if (*pszEnd == L'"' && *(pszEnd+1) == L'"')
-								//{
-								//	*(p++) = L'"'; pszEnd += 2;
-								//}
-								else if (*pszEnd == L'^')
+								else if (*pszEnd == L'T')
 								{
+									nTab = 0;
 									pszEnd++;
-									*(p++) = *(pszEnd++);
+								}
+								else if ((*pszEnd == L'H') || (*pszEnd == L'V'))
+								{
+	                            	nValue = DefaultSplitValue/10;
+	                            	eSplit = (*pszEnd == L'H') ? eSplitHorz : eSplitVert;
+	                            	pszEnd++;
 								}
 								else
 								{
-									*(p++) = *(pszEnd++);
+									break;
 								}
 							}
-							*p = 0;
+							if (!eSplit)
+								eSplit = eSplitHorz;
+							// Для удобства, пользователь задает размер НОВОЙ части
+							nSplitValue = 1000-max(1,min(nValue*10,999)); // проценты
+							_ASSERTE(nSplitValue>=1 && nSplitValue<1000);
+							nSplitPane = nTab;
+						} // L's'
+						break;
+					case L'u':
+						{
+							// u - ConEmu choose user dialog
+							// u:<user>:<pwd> - specify user/pwd in args. MUST be last option
+							
+							lbReady = true; // последняя опция
 
-							wchar_t* pszSlash = wcschr(szUser, L'\\');
-							if (pszSlash)
-							{
-								*pszSlash = 0;
-								pszDomain = lstrdup(szUser);
-								pszUserName = lstrdup(pszSlash+1);
-							}
-							else
-							{
-								pszUserName = lstrdup(szUser);
-							}
+							SafeFree(pszUserName);
+							SafeFree(pszDomain);
+							if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
 							
 							if (*pszEnd == L':')
 							{
 								pszEnd++;
-								//lstrcpyn(szUserPassword, pszPwd, countof(szUserPassword));
-
-								p = szUserPassword; p2 = szUserPassword+countof(szUserPassword)-1;
+								
+								wchar_t szUser[MAX_PATH], *p = szUser, *p2 = szUser+countof(szUser)-1;
 								while (*pszEnd && (p < p2))
 								{
 									if ((*pszEnd == 0) || (*pszEnd == L':') || (*pszEnd == L'"'))
 									{
 										break;
 									}
+									//else if (*pszEnd == L'"' && *(pszEnd+1) == L'"')
+									//{
+									//	*(p++) = L'"'; pszEnd += 2;
+									//}
 									else if (*pszEnd == L'^')
 									{
 										pszEnd++;
@@ -331,12 +358,49 @@ int RConStartArgs::ProcessNewConArg()
 								}
 								*p = 0;
 
+								wchar_t* pszSlash = wcschr(szUser, L'\\');
+								if (pszSlash)
+								{
+									*pszSlash = 0;
+									pszDomain = lstrdup(szUser);
+									pszUserName = lstrdup(pszSlash+1);
+								}
+								else
+								{
+									pszUserName = lstrdup(szUser);
+								}
+								
+								if (*pszEnd == L':')
+								{
+									pszEnd++;
+									//lstrcpyn(szUserPassword, pszPwd, countof(szUserPassword));
+
+									p = szUserPassword; p2 = szUserPassword+countof(szUserPassword)-1;
+									while (*pszEnd && (p < p2))
+									{
+										if ((*pszEnd == 0) || (*pszEnd == L':') || (*pszEnd == L'"'))
+										{
+											break;
+										}
+										else if (*pszEnd == L'^')
+										{
+											pszEnd++;
+											*(p++) = *(pszEnd++);
+										}
+										else
+										{
+											*(p++) = *(pszEnd++);
+										}
+									}
+									*p = 0;
+
+								}
 							}
-						}
-						else
-						{
-							bForceUserDialog = TRUE;
-						}
+							else
+							{
+								bForceUserDialog = TRUE;
+							}
+						} // L'u'
 						break;
 					}
 				}

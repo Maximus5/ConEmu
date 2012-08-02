@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCtrl.h"
 #include "VConChild.h"
 #include "VirtualConsole.h"
+#include "VConGroup.h"
 #include "RealConsole.h"
 #include "TabBar.h"
 #include "Background.h"
@@ -787,6 +788,9 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 void CSettings::SettingsLoaded()
 {
 	MCHKHEAP
+
+	wcscpy_c(gpSet->ComSpec.ConEmuBaseDir, gpConEmu->ms_ConEmuBaseDir);
+	UpdateComspec(&gpSet->ComSpec);
 	
 	// Инициализация кастомной палитры для диалога выбора цвета
 	memmove(acrCustClr, gpSet->Colors, sizeof(COLORREF)*16);
@@ -1881,6 +1885,7 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 	CheckRadioButton(hWnd2, rbComspec_OSbit, rbComspec_x32, rbComspec_OSbit+gpSet->ComSpec.csBits);
 
 	CheckDlgButton(hWnd2, cbComspecUpdateEnv, gpSet->ComSpec.isUpdateEnv ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(hWnd2, cbAddConEmu2Path, gpSet->ComSpec.isAddConEmu2Path ? BST_CHECKED : BST_UNCHECKED);
 
 	// Cmd.exe output cp
 	if (abInitial)
@@ -2914,7 +2919,8 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 					break;
 				case bCmdAutoRegister:
 				case bCmdAutoUnregister:
-					ShellIntegration(hWnd2, ShellIntgr_CmdAuto, CB==bCmdAutoRegister);
+				case bCmdAutoClear:
+					ShellIntegration(hWnd2, ShellIntgr_CmdAuto, CB==bCmdAutoRegister, CB==bCmdAutoClear);
 					pageOpProc_Integr(hWnd2, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
 					break;
 				}
@@ -3303,7 +3309,7 @@ bool CSettings::DeleteRegKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asNa
 	return lbRc;
 }
 
-void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bool bEnabled)
+void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bool bEnabled, bool bForced /*= false*/)
 {
 	switch (iMode)
 	{
@@ -3372,6 +3378,7 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 				}
 				else
 				{
+					TODO("Если bForced==false - удалить только Cmd_Autorun.cmd, остальное - оставить");
 					RegSetValueEx(hkCmd, L"AutoRun", 0, REG_SZ, (LPBYTE)L"", 1*sizeof(wchar_t));
 				}
 
@@ -3384,8 +3391,10 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 
 LRESULT CSettings::OnInitDialog_Views(HWND hWnd2)
 {
+	CVConGuard VCon;
+	CVConGroup::GetActiveVCon(&VCon);
 	// пока выключим
-	EnableWindow(GetDlgItem(hWnd2, bApplyViewSettings), gpConEmu->ActiveCon()->IsPanelViews());
+	EnableWindow(GetDlgItem(hWnd2, bApplyViewSettings), VCon.VCon() ? VCon->IsPanelViews() : FALSE);
 
 	SetDlgItemText(hWnd2, tThumbsFontName, gpSet->ThSet.Thumbs.sFontName);
 	SetDlgItemText(hWnd2, tTilesFontName, gpSet->ThSet.Tiles.sFontName);
@@ -3605,14 +3614,21 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2)
 
 LRESULT CSettings::OnInitDialog_Info(HWND hWnd2)
 {
+	CVirtualConsole* pVCon = NULL;
+	CVConGuard VCon;
+	if (CVConGroup::GetActiveVCon(&VCon) >= 0)
+		pVCon = VCon.VCon();
+
 	SetDlgItemText(hWnd2, tCurCmdLine, GetCommandLine());
 	// Performance
 	Performance(gbPerformance, TRUE);
 	gpConEmu->UpdateProcessDisplay(TRUE);
 	gpConEmu->UpdateSizes();
-	gpConEmu->ActiveCon()->RCon()->UpdateCursorInfo();
+	if (pVCon)
+		pVCon->RCon()->UpdateCursorInfo();
 	UpdateFontInfo();
-	UpdateConsoleMode(gpConEmu->ActiveCon()->RCon()->GetConsoleStates());
+	if (pVCon)
+		UpdateConsoleMode(pVCon->RCon()->GetConsoleStates());
 	RegisterTipsFor(hWnd2);
 	return 0;
 }
@@ -3695,8 +3711,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 
 					// Установить размер
-					TODO("DoubleView: непонятно что делать. То ли на два делить?");
-					gpConEmu->SetConsoleWindowSize(MakeCoord(newW, newH), true, NULL);
+					gpConEmu->SetAllConsoleWindowsSize(MakeCoord(newW, newH), /*true,*/ true);
 
 					SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 				}
@@ -3771,7 +3786,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case cbCursorBlink:
 			gpSet->AppStd.isCursorBlink = IsChecked(hWnd2,cbCursorBlink);
 			if (!gpSet->AppStd.isCursorBlink) // если мигание отключается - то курсор может "замереть" в погашенном состоянии.
-				gpConEmu->ActiveCon()->Invalidate();
+				CVConGroup::InvalidateAll();
 			break;
 		case cbMultiCon:
 			gpSet->isMulti = IsChecked(hWnd2, cbMultiCon);
@@ -3852,6 +3867,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbComspecUpdateEnv:
 			gpSet->ComSpec.isUpdateEnv = IsChecked(hWnd2, cbComspecUpdateEnv);
+			gpConEmu->OnGlobalSettingsChanged();
+			break;
+		case cbAddConEmu2Path:
+			gpSet->ComSpec.isAddConEmu2Path = IsChecked(hWnd2, cbAddConEmu2Path);
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
 		case cbBold:
@@ -4158,11 +4177,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbBlockInactiveCursor:
 			gpSet->AppStd.isCursorBlockInactive = IsChecked(hWnd2, cbBlockInactiveCursor);
-			gpConEmu->ActiveCon()->Invalidate();
+			CVConGroup::InvalidateAll();
 			break;
 		case cbCursorIgnoreSize:
 			gpSet->AppStd.isCursorIgnoreSize = IsChecked(hWnd2, cbCursorIgnoreSize);
-			gpConEmu->ActiveCon()->Invalidate();
+			CVConGroup::InvalidateAll();
 			break;
 		case bBgImage:
 			{
@@ -4215,12 +4234,14 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			if (gpSet->isConVisible)
 			{
 				// Если показывать - то только текущую (иначе на экране мешанина консолей будет
-				gpConEmu->ActiveCon()->RCon()->ShowConsole(gpSet->isConVisible);
+				CVConGuard VCon;
+				if (CVConGroup::GetActiveVCon(&VCon) >= 0)
+					VCon->RCon()->ShowConsole(gpSet->isConVisible);
 			}
 			else
 			{
 				// А если скрывать - то все сразу
-				for(int i=0; i<MAX_CONSOLE_COUNT; i++)
+				for (int i=0; i<MAX_CONSOLE_COUNT; i++)
 				{
 					CVirtualConsole *pCon = gpConEmu->GetVCon(i);
 
@@ -4283,7 +4304,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbSleepInBackground:
 			gpSet->isSleepInBackground = IsChecked(hWnd2, cbSleepInBackground);
-			gpConEmu->ActiveCon()->RCon()->OnGuiFocused(TRUE);
+			CVConGroup::OnGuiFocused(TRUE);
 			break;
 		case cbDisableFarFlashing:
 			gpSet->isDisableFarFlashing = IsChecked(hWnd2, cbDisableFarFlashing);
@@ -4623,7 +4644,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbFadeInactive:
 			gpSet->isFadeInactive = IsChecked(hWnd2, cbFadeInactive);
-			gpConEmu->ActiveCon()->Invalidate();
+			CVConGroup::InvalidateAll();
 			break;
 		case cbTransparent:
 			{
@@ -8955,7 +8976,7 @@ void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WOR
 	if (isAdvLogging)
 	{
 		char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "MacroFontSetName('%s', H=%i, W=%i)", LF.lfFaceName, LF.lfHeight, LF.lfWidth);
-		gpConEmu->ActiveCon()->RCon()->LogString(szInfo);
+		CVConGroup::LogString(szInfo);
 	}
 
 	CEFONT hf = CreateFontIndirectMy(&LF);
@@ -9048,7 +9069,7 @@ void CSettings::RecreateFont(WORD wFromID)
 		if (isAdvLogging)
 		{
 			char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "AutoRecreateFont(H=%i, W=%i)", LF.lfHeight, LF.lfWidth);
-			gpConEmu->ActiveCon()->RCon()->LogString(szInfo);
+			CVConGroup::LogString(szInfo);
 		}
 	}
 
@@ -9229,7 +9250,7 @@ bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 	if (isAdvLogging)
 	{
 		char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "AutoRecreateFont(H=%i, W=%i)", nFontH, nFontW);
-		gpConEmu->ActiveCon()->RCon()->LogString(szInfo);
+		CVConGroup::LogString(szInfo);
 	}
 
 	// Сразу запомним, какой размер просили в последний раз
@@ -11372,7 +11393,8 @@ INT_PTR CSettings::ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem)
 				}
 				else
 				{
-					const CEFAR_INFO_MAPPING *pfi = gpConEmu->ActiveCon()->RCon()->GetFarInfo();
+					CVConGuard VCon;
+					const CEFAR_INFO_MAPPING *pfi = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon()->GetFarInfo() : NULL;
 
 					if (pfi && pfi->cbSize>=sizeof(CEFAR_INFO_MAPPING))
 					{
@@ -12117,7 +12139,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			gpSetCls->RegisterTipsFor(hWnd2);
 			CenterMoreDlg(hWnd2);
 
-			if (gpConEmu->ActiveCon())
+			if (gpConEmu->isVConExists(0))
 				EnableWindow(GetDlgItem(hWnd2, tConsoleFontConsoleNote), TRUE);
 
 			// Если есть ошибка - показать
@@ -12558,7 +12580,8 @@ void CSettings::FindTextDialog()
 		return;
 	}
 
-	CRealConsole* pRCon = gpConEmu->ActiveCon() ? gpConEmu->ActiveCon()->RCon() : NULL;
+	CVConGuard VCon;
+	CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 
 	// Создаем диалог поиска только для консольных приложений
 	if (!pRCon || (pRCon->GuiWnd() && !pRCon->isBufferHeight()) || !pRCon->GetView())
@@ -12615,7 +12638,8 @@ INT_PTR CSettings::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 				SetWindowPos(hWnd2, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 			#endif
 
-			CRealConsole* pRCon = gpConEmu->ActiveCon() ? gpConEmu->ActiveCon()->RCon() : NULL;
+			CVConGuard VCon;
+			CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 			RECT rcWnd = {}; GetWindowRect(pRCon->GetView(), &rcWnd);
 			SetWindowPos(hWnd2, gpSet->isAlwaysOnTop ? HWND_TOPMOST : HWND_TOP,
 				rcWnd.left+gpSet->FontSizeY, rcWnd.top+gpSet->FontSizeY, 0,0,

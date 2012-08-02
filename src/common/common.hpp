@@ -36,8 +36,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "ConEmuColors.h"
 
-#define MIN_CON_WIDTH 28
-#define MIN_CON_HEIGHT 7
+#ifndef _DEBUG
+//PRAGMA_ERROR("MIN_CON_WIDTH & MIN_CON_HEIGHT - remake for Far Panels")
+#endif
+//#define MIN_CON_WIDTH 28
+//#define MIN_CON_HEIGHT 7
+#define MIN_CON_WIDTH 4
+#define MIN_CON_HEIGHT 2
 #define GUI_ATTACH_TIMEOUT 5000
 
 
@@ -870,10 +875,12 @@ struct ConEmuComspec
 	ComSpecType  csType;
 	ComSpecBits  csBits;
 	BOOL         isUpdateEnv;
+	BOOL         isAddConEmu2Path;
 	wchar_t      ComspecExplicit[MAX_PATH]; // этот - хранится в настройке
 	wchar_t      Comspec32[MAX_PATH]; // развернутые, готовые к использованию
 	wchar_t      Comspec64[MAX_PATH]; // развернутые, готовые к использованию
 	//wchar_t      ComspecInitial[MAX_PATH]; // то, что было до запуска ConEmu
+	wchar_t      ConEmuBaseDir[MAX_PATH]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 };
 
 struct ConEmuGuiMapping

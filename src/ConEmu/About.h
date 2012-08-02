@@ -49,11 +49,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"Command line switches:\r\n" \
 	L"/? - This help screen.\r\n" \
 	L"/config <configname> - Use alternative named configuration.\r\n" \
+	L"/dir <workdir> - Set startup directory for ConEmu and consoles.\r\n" \
 	L"/fs | /max | /min - (Full screen), (Maximized) or (Minimized) mode.\r\n" \
 	L"/tsa - Override (enable) minimize to taskbar status area.\r\n" \
 	L"/icon <file> - Take icon from file (exe, dll, ico).\r\n" \
 	L"/multi | /nomulti - Enable or disable multiconsole features.\r\n" \
 	L"/single - New console will be started in new tab of existing ConEmu.\r\n" \
+	L"/showhide | /showhideTSA - Works like «Minimize/Restore» global hotkey.\r\n" \
 	L"/noupdate - Disable automatic checking for updates on startup\r\n" \
 	L"/ct[0|1] - Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - cleartype.\r\n" \
 	L"/font <fontname> - Specify the font name.\r\n" \

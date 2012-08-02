@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "TrayIcon.h"
 #include "VConChild.h"
+#include "VConGroup.h"
 #include "Status.h"
 
 WARNING("!!! Запустили far, открыли edit, перешли в панель, открыли второй edit, ESC, ни одна вкладка не активна");
@@ -680,7 +681,8 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 			_ASSERTE(TID_ACTIVE_NUMBER==1);
 			if (nIdx == (TID_ACTIVE_NUMBER-1))
 			{
-				CVirtualConsole* pVCon = gpConEmu->ActiveCon(); //GetVCon(nIdx);
+				CVConGuard VCon;
+				CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
 
 				if (!gpConEmu->isActive(pVCon))
 				{
@@ -1279,7 +1281,9 @@ LRESULT TabBarClass::OnNotify(LPNMHDR nmhdr)
 			if (!pDisp->pszText || !pDisp->cchTextMax)
 				return false;
 
-			LPCWSTR pszTitle = gpConEmu->ActiveCon()->RCon()->GetTitle();
+			CVConGuard VCon;
+			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+			LPCWSTR pszTitle = pVCon ? pVCon->RCon()->GetTitle() : NULL;
 
 			if (pszTitle)
 			{
@@ -1416,12 +1420,16 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 	else if (wParam == TID_ALTERNATIVE)
 	{
-		SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_ALTERNATIVE, gpConEmu->ActiveCon()->RCon()->isAlternative());
+		CVConGuard VCon;
+		CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+		SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_ALTERNATIVE, pVCon ? pVCon->RCon()->isAlternative() : false);
 		gpConEmu->AskChangeAlternative();
 	}
 	else if (wParam == TID_SCROLL)
 	{
-		SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_SCROLL, gpConEmu->ActiveCon()->RCon()->isBufferHeight());
+		CVConGuard VCon;
+		CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+		SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_SCROLL, pVCon ? pVCon->RCon()->isBufferHeight() : false);
 		gpConEmu->AskChangeBufferHeight();
 	}
 	else if (wParam == TID_MINIMIZE)
@@ -1715,7 +1723,7 @@ HWND TabBarClass::CreateToolbar()
 	int nActiveCon = gpConEmu->ActiveConNum()+1;
 
 	// Console numbers
-	btn.iBitmap = (gpConEmu->ActiveCon() ? (nFirst + BID_FIST_CON) : BID_DUMMYBTN_IDX);
+	btn.iBitmap = ((nActiveCon >= 0) ? (nFirst + BID_FIST_CON) : BID_DUMMYBTN_IDX);
 	btn.idCommand = TID_ACTIVE_NUMBER;
 	btn.fsStyle = BTNS_DROPDOWN;
 	btn.fsState = TBSTATE_ENABLED;
@@ -2681,8 +2689,10 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 	LPCWSTR pszCurCmd = NULL;
 	bool lbReverse = (nFlags & TPM_BOTTOMALIGN) == TPM_BOTTOMALIGN;
 
-	if (gpConEmu->ActiveCon() && gpConEmu->ActiveCon()->RCon())
-		pszCurCmd = gpConEmu->ActiveCon()->RCon()->GetCmd();
+	CVConGuard VCon;
+
+	if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())
+		pszCurCmd = VCon->RCon()->GetCmd();
 
 	LPCWSTR pszHistory = gpSet->psCmdHistory;
 	int nFirstID = 0, nLastID = 0, nFirstGroupID = 0, nLastGroupID = 0;
@@ -2861,7 +2871,7 @@ void TabBarClass::OnNewConPopup(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/)
 			if (nRc != IDC_START)
 				return;
 
-			gpConEmu->ActiveCon()->Redraw();
+			CVConGroup::Redraw();
 		}
 		else
 		{

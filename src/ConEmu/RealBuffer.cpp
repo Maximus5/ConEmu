@@ -1152,7 +1152,7 @@ BOOL CRealBuffer::PreInit()
 	if (gpConEmu->isIconic())
 		rcCon = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
 	else
-		rcCon = gpConEmu->CalcRect(CER_CONSOLE, mp_RCon->mp_VCon);
+		rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, mp_RCon->mp_VCon);
 
 	_ASSERTE(rcCon.right!=0 && rcCon.bottom!=0);
 
@@ -1394,7 +1394,7 @@ int CRealBuffer::GetTextHeight()
 
 	if (!this) return MIN_CON_HEIGHT;
 	
-	_ASSERTE(con.nTextHeight>=MIN_CON_HEIGHT && con.nTextHeight<=200);
+	_ASSERTE(/*con.nTextHeight>=MIN_CON_HEIGHT &&*/ con.nTextHeight<=200);
 	return con.nTextHeight;
 }
 

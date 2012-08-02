@@ -1008,7 +1008,7 @@ struct Settings
 		//reg->Load(L"CenterConsolePad", nCenterConsolePad);
 		DWORD nCenterConsolePad;
 		//reg->Load(L"ShowScrollbar", isAlwaysShowScrollbar); if (isAlwaysShowScrollbar > 2) isAlwaysShowScrollbar = 2;
-		BYTE isAlwaysShowScrollbar;
+		BYTE isAlwaysShowScrollbar; // 0-не показывать, 1-всегда, 2-автоматически (на откусывает место от консоли)
 		//reg->Load(L"ScrollBarAppearDelay", nScrollBarAppearDelay);
 		DWORD nScrollBarAppearDelay;
 		//reg->Load(L"ScrollBarDisappearDelay", nScrollBarDisappearDelay);

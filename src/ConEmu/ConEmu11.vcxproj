@@ -931,6 +931,7 @@
     <ClCompile Include="Update.cpp" />
     <ClCompile Include="UpdateSet.cpp" />
     <ClCompile Include="VConChild.cpp" />
+    <ClCompile Include="VConGroup.cpp" />
     <ClCompile Include="VConRelease.cpp" />
     <ClCompile Include="VirtualConsole.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
@@ -991,6 +992,7 @@
     <ClInclude Include="Update.h" />
     <ClInclude Include="UpdateSet.h" />
     <ClInclude Include="VConChild.h" />
+    <ClInclude Include="VConGroup.h" />
     <ClInclude Include="VConRelease.h" />
     <ClInclude Include="VirtualConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />

@@ -70,6 +70,7 @@ $(INTDIR)\TrayIcon.obj \
 $(INTDIR)\Update.obj \
 $(INTDIR)\UpdateSet.obj \
 $(INTDIR)\VConChild.obj \
+$(INTDIR)\VConGroup.obj \
 $(INTDIR)\VConRelease.obj \
 $(INTDIR)\VirtualConsole.obj \
 $(INTDIR)\WinObjects.obj
@@ -308,9 +309,11 @@ $(INTDIR)\UpdateSet.obj: UpdateSet.cpp UpdateSet.h Version.h
 
 $(INTDIR)\VConChild.obj: VConChild.cpp VConRelease.h VirtualConsole.h VConChild.h
 
+$(INTDIR)\VConGroup.obj: VConGroup.cpp VConRelease.h VirtualConsole.h VConChild.h VConGroup.h
+
 $(INTDIR)\VConRelease.obj: VConRelease.cpp VConRelease.h VirtualConsole.h VConChild.h
 
-$(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h VConChild.h
+$(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h VConChild.h VConGroup.h
 
 $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
 

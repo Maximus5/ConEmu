@@ -785,9 +785,14 @@
 #define cbUseClink                      2418
 #define cbStatusActiveProcess           2419
 #define cbStatusConsoleTitle            2420
-#define IDC_CHECK3                      2421
 #define cbStatusVertSep                 2421
 #define cbStatusHorzSep                 2422
+#define cbAddConEmu2Path                2423
+#define bCmdAutoClear                   2424
+#define rbBgReplaceTransparent          2425
+#define rbBgReplaceIndexes              2426
+#define tDarkerPlugin                   2427
+#define slDarkerPlugin                  2428
 
 // Next default values for new objects
 // 
@@ -795,7 +800,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2423
+#define _APS_NEXT_CONTROL_VALUE         2429
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

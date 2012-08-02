@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuPipe.h"
 #include "VirtualConsole.h"
+#include "VConGroup.h"
 #include "RealConsole.h"
 //#include "../common/ConEmuCheck.h"
 
@@ -214,6 +215,10 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 // иначе - размер ASCIIZZ путей файлов в БАЙТАХ
 int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar_t** ppszDraggedPath, UINT* pnFilesCount)
 {
+	CVConGuard VCon;
+	if (CVConGroup::GetActiveVCon(&VCon) < 0)
+		return -1;
+
 	int size = -1;
 	UINT nFilesCount = 0;
 	wchar_t *szDraggedPath = NULL;
@@ -232,8 +237,8 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 			COORD crMouse;
 		} DragArg;
 		DragArg.bClickNeed = abClickNeed;
-		DragArg.crMouse = gpConEmu->ActiveCon()->RCon()->ScreenToBuffer(
-		                      gpConEmu->ActiveCon()->ClientToConsole(crMouseDC.X, crMouseDC.Y)
+		DragArg.crMouse = VCon->RCon()->ScreenToBuffer(
+		                      VCon->ClientToConsole(crMouseDC.X, crMouseDC.Y)
 		                  );
 
 		if (pipe.Execute(CMD_DRAGFROM, &DragArg, sizeof(DragArg)))
@@ -967,7 +972,10 @@ void CDragDropData::RetrieveDragToInfo()
 {
 	if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 
-	CVirtualConsole* pVCon = gpConEmu->ActiveCon();
+	CVConGuard VCon;
+	if (CVConGroup::GetActiveVCon(&VCon) < 0)
+		return;
+	CVirtualConsole* pVCon = VCon.VCon();
 	if (!pVCon)
 		return;
 	CRealConsole* pRCon = pVCon->RCon();

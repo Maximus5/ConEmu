@@ -119,11 +119,16 @@ const wchar_t gsCloseViewer[] = L"Confirm closing Far viewer?";
 
 //static bool gbInTransparentAssert = false;
 
-CRealConsole::CRealConsole(CVirtualConsole* apVCon)
+CRealConsole::CRealConsole()
+{
+}
+
+void CRealConsole::Construct(CVirtualConsole* apVCon)
 {
 	MCHKHEAP;
 	SetConStatus(L"Initializing ConEmu..", true, true);
 	mp_VCon = apVCon;
+	//mp_VCon->mp_RCon = this;
 	HWND hView = apVCon->GetView();
 	if (!hView)
 	{
@@ -694,8 +699,8 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	//_ASSERTE(rcClient.right>140 && rcClient.bottom>100);
 	// Посчитать нужный размер консоли
 	gpConEmu->AutoSizeFont(rcClient, CER_MAINCLIENT);
-	RECT newCon = gpConEmu->CalcRect(abNtvdmOff ? CER_CONSOLE_NTVDMOFF : CER_CONSOLE, rcClient, CER_MAINCLIENT, mp_VCon);
-	_ASSERTE(newCon.right>20 && newCon.bottom>6);
+	RECT newCon = gpConEmu->CalcRect(abNtvdmOff ? CER_CONSOLE_NTVDMOFF : CER_CONSOLE_CUR, rcClient, CER_MAINCLIENT, mp_VCon);
+	_ASSERTE(newCon.right>=MIN_CON_WIDTH && newCon.bottom>=MIN_CON_HEIGHT);
 	
 	if (hGuiWnd && !mb_GuiExternMode)
 		SyncGui2Window(&rcClient);
@@ -776,7 +781,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	RECT rcWnd = gpConEmu->GetGuiClientRect();
 	TODO("DoubleView: ?");
 	gpConEmu->AutoSizeFont(rcWnd, CER_MAINCLIENT);
-	RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
+	RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, rcWnd, CER_MAINCLIENT);
 	// Скорректировать sbi на новый, который БУДЕТ установлен после отработки сервером аттача
 	lsbi.dwSize.X = rcCon.right;
 	lsbi.srWindow.Left = 0; lsbi.srWindow.Right = rcCon.right-1;
@@ -1547,8 +1552,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			gpSetCls->Performance(tPerfInterval, TRUE); // считается по своему
 
 		#ifdef _DEBUG
+		// 1-based console index
 		int nVConNo = gpConEmu->isVConValid(pRCon->mp_VCon);
-		nVConNo = nVConNo;
+		UNREFERENCED_PARAMETER(nVConNo);
 		#endif
 
 		// Проверка, вдруг осталась висеть "мертвая" консоль?
@@ -1694,14 +1700,14 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			/*if (foreWnd == hConWnd)
 			    apiSetForegroundWindow(ghWnd);*/
 			bool bMonitorVisibility = true;
-#ifdef _DEBUG
 
+			#ifdef _DEBUG
 			if ((GetKeyState(VK_SCROLL) & 1))
 				bMonitorVisibility = false;
 
 			WARNING("bMonitorVisibility = false - для отлова сброса буфера");
 			bMonitorVisibility = false;
-#endif
+			#endif
 
 			if (bMonitorVisibility && IsWindowVisible(pRCon->hConWnd))
 				pRCon->ShowOtherWindow(pRCon->hConWnd, SW_HIDE);
@@ -2019,6 +2025,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			//}
 
 			bool lbIsActive = pRCon->isActive();
+			bool lbIsVisible = lbIsActive || pRCon->isVisible();
 
 			#ifdef _DEBUG
 			if (pRCon->mb_DebugLocked)
@@ -2026,7 +2033,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			#endif
 
 			TODO("После DoubleView нужно будет заменить на IsVisible");
-			if (!lbIsActive)
+			if (!lbIsVisible)
 			{
 				if (lbForceUpdate)
 					pRCon->mp_VCon->UpdateThumbnail();
@@ -2050,7 +2057,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					if (pRCon->mp_VCon->Update(bForce))
 						lbNeedRedraw = true;
 				}
-				else if (gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId())->CursorBlink()
+				else if (//lbIsActive // мигать курсором только в "активной" консоли
+					gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId())->CursorBlink()
 					&& pRCon->mb_RConStartedSuccess)
 				{
 					// Возможно, настало время мигнуть курсором?
@@ -2103,9 +2111,11 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		if (bException)
 		{
 			bException = FALSE;
-#ifdef _DEBUG
+
+			#ifdef _DEBUG
 			_ASSERTE(FALSE);
-#endif
+			#endif
+
 			pRCon->Box(_T("Exception triggered in CRealConsole::MonitorThread"));
 		}
 
@@ -2121,6 +2131,10 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			nWait = IDEVENT_SERVERPH;
 			break;
 		}
+
+		#ifdef _DEBUG
+		UNREFERENCED_PARAMETER(nVConNo);
+		#endif
 	}
 
 	if (nWait == IDEVENT_SERVERPH)

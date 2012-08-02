@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "ConEmu.h"
 #include "VirtualConsole.h"
+#include "VConGroup.h"
 #include "RealConsole.h"
 
 //#define MAX_OVERLAY_WIDTH    300
@@ -765,7 +766,10 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 	BOOL lbAddEdit = (iQuantity == 1) && isPressed(VK_CONTROL);
 	BOOL lbAddView = (iQuantity == 1) && isPressed(VK_SHIFT);
 
-	CVirtualConsole* pVCon = gpConEmu->ActiveCon();
+	CVConGuard VCon;
+	if (CVConGroup::GetActiveVCon(&VCon) < 0)
+		return S_FALSE;
+	CVirtualConsole* pVCon = VCon.VCon();
 	if (!pVCon)
 		return S_FALSE;
 	CRealConsole* pRCon = pVCon->RCon();
@@ -1037,15 +1041,22 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		return S_OK;
 	}
 
+	CVConGuard VCon;
+	if (CVConGroup::GetActiveVCon(&VCon) < 0)
+	{
+		_ASSERTE(FALSE);
+		return S_FALSE;
+	}
+
 	// Определить, на какую панель бросаем
-	HWND hWndDC = gpConEmu->ActiveCon()->GetView();
+	HWND hWndDC = VCon->GetView();
 	if (!hWndDC)
 	{
 		_ASSERTE(hWndDC!=NULL);
 		return S_OK;
 	}
 	ScreenToClient(hWndDC, (LPPOINT)&pt);
-	COORD cr = gpConEmu->ActiveCon()->ClientToConsole(pt.x, pt.y);
+	COORD cr = VCon->ClientToConsole(pt.x, pt.y);
 	pt.x = cr.X; pt.y = cr.Y;
 	//pt.x/=gpSet->Log Font.lfWidth;
 	//pt.y/=gpSet->Log Font.lfHeight;
@@ -1324,6 +1335,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
 	HRESULT hr = S_OK;
 	DWORD dwAllowed = *pdwEffect;
+	CVConGuard VCon;
 
 	if (!gpSet->isDropEnabled && !gpConEmu->isDragging())
 	{
@@ -1335,6 +1347,12 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 	{
 		*pdwEffect = DROPEFFECT_NONE;
 	}
+	else if (CVConGroup::GetActiveVCon(&VCon) < 0)
+	{
+		*pdwEffect = DROPEFFECT_NONE;
+		gpConEmu->DebugStep(_T("DnD: No Active VCon"));
+		hr = S_FALSE;
+	}
 	else
 	{
 		TODO("Если drop идет ПОД панели - впечатать путь в командную строку");
@@ -1344,7 +1362,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 		GetCursorPos(&ptCur);
 #endif
 		RECT rcDC;
-		HWND hWndDC = gpConEmu->ActiveCon()->GetView();
+		HWND hWndDC = VCon->GetView();
 		if (!hWndDC)
 		{
 			_ASSERTE(hWndDC!=NULL);
@@ -1363,7 +1381,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 			else
 			{
 				ScreenToClient(hWndDC, (LPPOINT)&pt);
-				COORD cr = gpConEmu->ActiveCon()->ClientToConsole(pt.x, pt.y);
+				COORD cr = VCon->ClientToConsole(pt.x, pt.y);
 				pt.x = cr.X; pt.y = cr.Y;
 				//pt.x/=gpSet->Log Font.lfWidth;
 				//pt.y/=gpSet->Log Font.lfHeight;

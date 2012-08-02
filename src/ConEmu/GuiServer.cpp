@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "GuiServer.h"
 #include "RealConsole.h"
+#include "VConGroup.h"
 #include "VirtualConsole.h"
 #include "ConEmu.h"
 #include "../common/PipeServer.h"
@@ -341,14 +342,19 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			{
 				// Процесс сервера завершается
 				CRealConsole* pRCon = NULL;
+				CVConGuard VCon;
 
-				for (size_t i = 0; i < countof(gpConEmu->mp_VCon); i++)
+				for (size_t i = 0;; i++)
 				{
-					if (gpConEmu->mp_VCon[i] && gpConEmu->mp_VCon[i]->RCon() && gpConEmu->mp_VCon[i]->RCon()->GetServerPID() == pIn->hdr.nSrcPID)
+					if (!CVConGroup::GetVCon(i, &VCon))
+						break;
+
+					pRCon = VCon->RCon();
+					if (pRCon && (pRCon->GetServerPID(true) == pIn->hdr.nSrcPID || pRCon->GetServerPID(false) == pIn->hdr.nSrcPID))
 					{
-						pRCon = gpConEmu->mp_VCon[i]->RCon();
 						break;
 					}
+					pRCon = NULL;
 				}
 
 				if (pRCon)

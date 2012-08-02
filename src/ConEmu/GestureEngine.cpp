@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "GestureEngine.h"
 #include "ConEmu.h"
 #include "VirtualConsole.h"
+#include "VConGroup.h"
 #include "RealConsole.h"
 #include "TabBar.h"
 
@@ -319,8 +320,8 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 void CGestures::SendRClick(HWND hWnd, const LONG ldx, const LONG ldy)
 {
-	CVConGuard VCon = gpConEmu->ActiveCon();
-	CRealConsole* pRCon = (VCon.VCon()) ? VCon->RCon() : NULL;
+	CVConGuard VCon;
+	CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 	if (pRCon)
 	{
 		POINT pt = {ldx, ldy};
@@ -382,8 +383,8 @@ bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 
 	if (ldy)
 	{
-		CVConGuard VCon = gpConEmu->ActiveCon();
-		CRealConsole* pRCon = (VCon.VCon()) ? VCon->RCon() : NULL;
+		CVConGuard VCon;
+		CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 		if (pRCon)
 		{
 			TODO("Если можно будет задавать разный шрифт для разных консолей - заменить gpSet->FontSizeY");

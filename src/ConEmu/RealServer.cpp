@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "VConChild.h"
+#include "VConGroup.h"
 #include "ConEmuPipe.h"
 #include "Macro.h"
 
@@ -616,6 +617,8 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 
 			if (lbNeedResizeGui)
 			{
+				_ASSERTE(FALSE && "GUI must not follow console sizes");
+				#if 0
 				RECT rcCon = MakeRect(nNewWidth, nNewHeight);
 				RECT rcNew = gpConEmu->CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
 				RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
@@ -626,6 +629,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 				}
 
 				MOVEWINDOW(ghWnd, rcWnd.left, rcWnd.top, rcNew.right, rcNew.bottom, 1);
+				#endif
 			}
 
 			mp_RCon->mp_RBuf->BuferModeChangeUnlock();
@@ -743,12 +747,15 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 			if (lbCurrentActive != lbNewActive)
 			{
 				enum ConEmuMargins tTabAction = lbNewActive ? CEM_TABACTIVATE : CEM_TABDEACTIVATE;
-				RECT rcConsole = gpConEmu->CalcRect(CER_CONSOLE, gpConEmu->GetIdealRect(), CER_MAIN, NULL, NULL, tTabAction);
+				RECT rcConsole = gpConEmu->CalcRect(CER_CONSOLE_CUR, gpConEmu->GetIdealRect(), CER_MAIN, NULL, NULL, tTabAction);
+
+				_ASSERTE(FALSE && "Must change size of all active group consoles");
 				
 				mp_RCon->mp_RBuf->SetChange2Size(rcConsole.right, rcConsole.bottom);
 
 				TODO("DoubleView: все видимые");
-				gpConEmu->ActiveCon()->SetRedraw(FALSE);
+				//gpConEmu->ActiveCon()->SetRedraw(FALSE);
+				CVConGroup::SetRedraw(FALSE);
 
 				gpConEmu->mp_TabBar->SetRedraw(FALSE);
 				fSuccess = FALSE;
@@ -780,17 +787,20 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 				}
 
 				TODO("DoubleView: все видимые");
-				gpConEmu->ActiveCon()->SetRedraw(TRUE);
+				//gpConEmu->ActiveCon()->SetRedraw(TRUE);
+				CVConGroup::SetRedraw(TRUE);
 			}
 		}
 
 		if (lbCanUpdate)
 		{
 			TODO("DoubleView: все видимые");
-			gpConEmu->ActiveCon()->Invalidate();
+			//gpConEmu->ActiveCon()->Invalidate();
+			CVConGroup::InvalidateAll();
 			mp_RCon->SetTabs(pIn->Tabs.tabs, pIn->Tabs.nTabCount);
 			gpConEmu->mp_TabBar->SetRedraw(TRUE);
-			gpConEmu->ActiveCon()->Redraw();
+			//gpConEmu->ActiveCon()->Redraw();
+			CVConGroup::Redraw();
 		}
 	}
 

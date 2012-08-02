@@ -57,6 +57,7 @@ class CRecreateDlg;
 class CToolTip;
 class CGestures;
 class CVConGuard;
+class CVConGroup;
 class CStatus;
 
 
@@ -251,7 +252,7 @@ class CConEmuMain :
 		POINT cursor, Rcursor;
 		//WPARAM lastMMW;
 		//LPARAM lastMML;
-		COORD m_LastConSize; // console size after last resize (in columns and lines)
+		//COORD m_LastConSize; // console size after last resize (in columns and lines)
 		bool mb_IgnoreSizeChange;
 		//bool mb_IgnoreStoreNormalRect;
 		//TCHAR szConEmuVersion[32];
@@ -268,6 +269,8 @@ class CConEmuMain :
 		bool mb_LastConEmuFocusState;
 		DWORD mn_SysMenuOpenTick, mn_SysMenuCloseTick;
 	protected:
+		friend class CVConGroup;
+
 		friend class CGuiServer;
 		CGuiServer m_GuiServer;
 
@@ -285,11 +288,11 @@ class CConEmuMain :
 		HWINEVENTHOOK mh_WinHook; //, mh_PopupHook;
 		static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 		#endif
-		CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT];
-		CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
+		//CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT];
+		//CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
 		CAttachDlg *mp_AttachDlg;
 		CRecreateDlg *mp_RecreateDlg;
-		bool mb_SkipSyncSize, mb_PassSysCommand, mb_CreatingActive;
+		bool mb_PassSysCommand;
 		BOOL mb_WaitCursor;
 		//BOOL mb_InTrackSysMenu; -> mn_TrackMenuPlace
 		TrackMenuPlace mn_TrackMenuPlace;
@@ -442,7 +445,7 @@ class CConEmuMain :
 		virtual ~CConEmuMain();
 
 	public:
-		CVirtualConsole* ActiveCon();
+		//CVirtualConsole* ActiveCon();
 		BOOL Activate(CVirtualConsole* apVCon);
 		int ActiveConNum(); // 0-based
 		int GetConCount(); // количество открытых консолей
@@ -490,7 +493,7 @@ class CConEmuMain :
 		void Invalidate(CVirtualConsole* apVCon);
 		void InvalidateAll();
 		void UpdateWindowChild(CVirtualConsole* apVCon);
-		bool isActive(CVirtualConsole* apVCon);
+		bool isActive(CVirtualConsole* apVCon, bool abAllowGroup = true);
 		bool isChildWindow();
 		bool isCloseConfirmed();
 		bool isConSelectMode();
@@ -518,7 +521,7 @@ class CConEmuMain :
 		bool isValid(CRealConsole* apRCon);
 		bool isValid(CVirtualConsole* apVCon);
 		bool isVConExists(int nIdx);
-		bool isVConHWND(HWND hChild, CVirtualConsole** ppVCon = NULL);
+		bool isVConHWND(HWND hChild, CVConGuard* pVCon = NULL);
 		bool isViewer();
 		bool isVisible(CVirtualConsole* apVCon);
 		bool isWindowNormal();
@@ -550,7 +553,7 @@ class CConEmuMain :
 		//void ResizeChildren();
 		BOOL RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);
 		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
-		void SetConsoleWindowSize(const COORD& size, bool updateInfo, CVirtualConsole* apVCon);
+		void SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*/ bool bSetRedraw = false);
 		void SetDragCursor(HCURSOR hCur);
 		void SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);

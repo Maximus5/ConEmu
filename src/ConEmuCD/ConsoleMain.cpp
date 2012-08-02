@@ -3497,6 +3497,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		gnBufferHeight = args.nBufHeight;
 		gbParmBufSize = TRUE;
 	}
+	// DosBox?
+	if (args.bForceDosBox)
+	{
+		gbUseDosBox = TRUE;
+	}
 
 #ifdef _DEBUG
 	OutputDebugString(gpszRunCmd); OutputDebugString(L"\n");

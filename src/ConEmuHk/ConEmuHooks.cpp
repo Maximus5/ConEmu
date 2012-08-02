@@ -4986,6 +4986,7 @@ BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUF
 		return FALSE;
 	}
 
+#if 0
 	if (s_hConOut && (s_hConOut == hConsoleOutput))
 	{
 		nTickDelta = GetTickCount() - s_LastCheckTick;
@@ -5004,6 +5005,7 @@ BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUF
 			}
 		}
 	}
+#endif
 
 	if (!lbRc)
 	{

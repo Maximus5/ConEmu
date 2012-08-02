@@ -123,6 +123,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>Windows7.1SDK</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -268,10 +269,10 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">\Far3\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">C:\Temp\CE10\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">\Far3\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">C:\Temp\CE10\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">true</LinkIncremental>
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'" />
@@ -327,6 +328,7 @@
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">$(ProjectName)64</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">
     <ClCompile>
@@ -923,8 +925,8 @@
       <TargetMachine>MachineX64</TargetMachine>
       <KeyFile>
       </KeyFile>
-      <Profile>true</Profile>
-      <MinimumRequiredVersion>5.0</MinimumRequiredVersion>
+      <Profile>false</Profile>
+      <MinimumRequiredVersion>5.10</MinimumRequiredVersion>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -974,6 +976,7 @@
     <ClCompile Include="Update.cpp" />
     <ClCompile Include="UpdateSet.cpp" />
     <ClCompile Include="VConChild.cpp" />
+    <ClCompile Include="VConGroup.cpp" />
     <ClCompile Include="VConRelease.cpp" />
     <ClCompile Include="VirtualConsole.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
@@ -1034,6 +1037,7 @@
     <ClInclude Include="Update.h" />
     <ClInclude Include="UpdateSet.h" />
     <ClInclude Include="VConChild.h" />
+    <ClInclude Include="VConGroup.h" />
     <ClInclude Include="VConRelease.h" />
     <ClInclude Include="VirtualConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />

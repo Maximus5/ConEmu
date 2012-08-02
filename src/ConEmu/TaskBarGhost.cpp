@@ -648,7 +648,10 @@ LRESULT CTaskBarGhost::OnActivate(WPARAM wParam, LPARAM lParam)
 		// Activate tab.
 		// Чтобы при клике по миниатюре табы НЕ итерировались (gpSet->isMultiIterate)
 		// сначала проверяем активный таб
-		if (gpConEmu->ActiveCon() != mp_VCon)
+		CVConGuard guard(mp_VCon);
+		CVConGuard VCon;
+		gpConEmu->GetActiveVCon(&VCon);
+		if (VCon.VCon() != mp_VCon)
 			gpConEmu->Activate(mp_VCon);
 
 		// Forward message
