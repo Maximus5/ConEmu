@@ -553,7 +553,7 @@ class CConEmuMain :
 		//void ResizeChildren();
 		BOOL RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);
 		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
-		void SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*/ bool bSetRedraw = false);
+		//void SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*/ bool bSetRedraw = false);
 		void SetDragCursor(HCURSOR hCur);
 		void SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);

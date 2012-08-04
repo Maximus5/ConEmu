@@ -769,14 +769,13 @@ void TabBarClass::Deactivate()
 
 void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 {
-#ifdef _DEBUG
-
+	#ifdef _DEBUG
 	if (this != gpConEmu->mp_TabBar)
 	{
 		_ASSERTE(this == gpConEmu->mp_TabBar);
 	}
+	#endif
 
-#endif
 	MCHKHEAP
 	/*if (!_active)
 	{
@@ -795,15 +794,15 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	gpConEmu->mp_Status->UpdateStatusBar();
 
 	mb_PostUpdateCalled = FALSE;
-#ifdef _DEBUG
-	_ASSERTE(mn_InUpdate >= 0);
 
+	#ifdef _DEBUG
+	_ASSERTE(mn_InUpdate >= 0);
 	if (mn_InUpdate > 0)
 	{
 		_ASSERTE(mn_InUpdate == 0);
 	}
+	#endif
 
-#endif
 	mn_InUpdate ++;
 	ConEmuTab tab = {0};
 	MCHKHEAP
@@ -814,14 +813,14 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	// ¬ыполн€тьс€ должно только в основной нити, так что CriticalSection не нужна
 	m_Tab2VCon.clear();
 	_ASSERTE(m_Tab2VCon.size()==0);
-#ifdef _DEBUG
 
+	#ifdef _DEBUG
 	if (this != gpConEmu->mp_TabBar)
 	{
 		_ASSERTE(this == gpConEmu->mp_TabBar);
 	}
+	#endif
 
-#endif
 	TODO("ќбработка gpSet->bHideInactiveConsoleTabs дл€ новых табов");
 	MCHKHEAP
 
@@ -880,14 +879,13 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		}
 	}
 
-#ifdef _DEBUG
-
+	#ifdef _DEBUG
 	if (this != gpConEmu->mp_TabBar)
 	{
 		_ASSERTE(this == gpConEmu->mp_TabBar);
 	}
+	#endif
 
-#endif
 	MCHKHEAP
 	_ASSERTE(m_Tab2VCon.size()==0);
 
@@ -1005,18 +1003,20 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 	// удалить лишние закладки (визуально)
 	int nCurCount = GetItemCount();
-#ifdef _DEBUG
+	
+	#ifdef _DEBUG
 	wchar_t szDbg[128];
 	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"TabBarClass::Update.  ItemCount=%i, PrevItemCount=%i\n", tabIdx, nCurCount);
 	DEBUGSTRTABS(szDbg);
-#endif
+	#endif
 
 	for (I = tabIdx; I < nCurCount; I++)
 	{
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"   Deleting tab=%i\n", I+1);
 		DEBUGSTRTABS(szDbg);
-#endif
+		#endif
+
 		DeleteItem(tabIdx);
 	}
 
@@ -1083,9 +1083,10 @@ void TabBarClass::UpdatePosition()
 	RECT client;
 	client = gpConEmu->GetGuiClientRect(); // нас интересует ширина окна
 	DEBUGSTRTABS(_active ? L"TabBarClass::UpdatePosition(activate)\n" : L"TabBarClass::UpdatePosition(DEactivate)\n");
-#ifdef _DEBUG
+
+	#ifdef _DEBUG
 	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
-#endif
+	#endif
 
 	if (_active)
 	{
@@ -1107,15 +1108,16 @@ void TabBarClass::UpdatePosition()
 				MoveWindow(mh_Tabbar, 0, 0, client.right, _tabHeight, 1);
 		}
 
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
-#endif
-		//gpConEmu->SyncConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
+		#endif
+
+		//gpConEmu->Sync ConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
 		gpConEmu->ReSize(TRUE);
 	}
 	else
 	{
-		//gpConEmu->SyncConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
+		//gpConEmu->Sync ConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
 		gpConEmu->ReSize(TRUE);
 
 		// _active уже сбросили, поэтому реально спр€тать можно и позже

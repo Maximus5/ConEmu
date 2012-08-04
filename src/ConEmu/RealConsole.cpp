@@ -683,7 +683,7 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	    return;
 	}
 	*/
-	DEBUGLOGFILE("SyncConsoleToWindow\n");
+	DEBUGLOGFILE("CRealConsole::SyncConsole2Window\n");
 	RECT rcClient;
 
 	if (prcNewWnd == NULL)
@@ -2057,8 +2057,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					if (pRCon->mp_VCon->Update(bForce))
 						lbNeedRedraw = true;
 				}
-				else if (//lbIsActive // мигать курсором только в "активной" консоли
-					gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId())->CursorBlink()
+				else if (lbIsVisible // мигать курсором только в "активной" консоли, в видимых - немигающий
+					&& gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId())->CursorBlink()
 					&& pRCon->mb_RConStartedSuccess)
 				{
 					// Возможно, настало время мигнуть курсором?

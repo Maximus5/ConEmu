@@ -3711,7 +3711,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 
 					// Установить размер
-					gpConEmu->SetAllConsoleWindowsSize(MakeCoord(newW, newH), /*true,*/ true);
+					CVConGroup::SetAllConsoleWindowsSize(MakeCoord(newW, newH), /*true,*/ true, true);
 
 					SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 				}

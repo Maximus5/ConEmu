@@ -3647,14 +3647,14 @@ bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
 //    return rect;
 //}
 
-// size in columns and lines
-// здесь нужно привести размер GUI к "общей" ширине консолей в символах
-// т.е. если по горизонтали есть 2 консоли, и просят размер 80x25
-// то эти две консоли должны стать 40x25 а GUI отресайзиться под 80x25
-void CConEmuMain::SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*/ bool bSetRedraw /*= false*/)
-{
-	CVConGroup::SetAllConsoleWindowsSize(size, /*updateInfo,*/ bSetRedraw);
-}
+//// size in columns and lines
+//// здесь нужно привести размер GUI к "общей" ширине консолей в символах
+//// т.е. если по горизонтали есть 2 консоли, и просят размер 80x25
+//// то эти две консоли должны стать 40x25 а GUI отресайзиться под 80x25
+//void CConEmuMain::SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*/ bool bSetRedraw /*= false*/)
+//{
+//	CVConGroup::SetAllConsoleWindowsSize(size, /*updateInfo,*/ bSetRedraw);
+//}
 
 // Изменить размер консоли по размеру окна (главного)
 void CConEmuMain::SyncConsoleToWindow()
@@ -4239,7 +4239,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce /*= FALSE*/, BOOL abFi
 		EnableWindow(GetDlgItem(ghOpWnd, tWndHeight), canEditWindowSizes);
 	}
 
-	//SyncConsoleToWindow(); 2009-09-10 А это вроде вообще не нужно - ресайз консоли уже сделан
+	//Sync ConsoleToWindow(); 2009-09-10 А это вроде вообще не нужно - ресайз консоли уже сделан
 	mb_PassSysCommand = false;
 	lbRc = true;
 wrap:
@@ -4309,7 +4309,7 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 	//
 	//    if (gpSet->LogFont.lfWidth)
 	//    {
-	//        SyncConsoleToWindow();
+	//        Sync ConsoleToWindow();
 	//    }*/
 	//}
 }
@@ -4738,15 +4738,15 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 			srctWindow = CalcRect(CER_CONSOLE_ALL, wndSizeRect, CER_MAIN);
 
 			// Минимально допустимые размеры консоли
-			if (srctWindow.right<28)
+			if (srctWindow.right < MIN_CON_WIDTH)
 			{
-				srctWindow.right=28;
+				srctWindow.right = MIN_CON_WIDTH;
 				bNeedFixSize = true;
 			}
 
-			if (srctWindow.bottom<9)
+			if (srctWindow.bottom < MIN_CON_HEIGHT)
 			{
-				srctWindow.bottom=9;
+				srctWindow.bottom = MIN_CON_HEIGHT;
 				bNeedFixSize = true;
 			}
 

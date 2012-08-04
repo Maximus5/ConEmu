@@ -1106,6 +1106,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		_printf("CreateEvent(hReqSizeChanged) failed, ErrCode=0x%08X\n", dwErr);
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
+	gpSrv->pReqSizeSection = new MSection();
 
 	if ((gnRunMode == RM_SERVER) && gbAttachMode)
 	{
@@ -1367,6 +1368,9 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 
 	//SafeCloseHandle(gpSrv->hColorerMapping);
 	SafeDelete(gpSrv->pColorerMapping);
+
+	SafeCloseHandle(gpSrv->hReqSizeChanged);
+	SafeDelete(gpSrv->pReqSizeSection);
 }
 
 // Консоль любит глючить, при попытках запроса более определенного количества ячеек.
@@ -1391,7 +1395,17 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 	_ASSERTE(rgn.Top>=0 && rgn.Bottom>=rgn.Top);
 	_ASSERTE(rgn.Left>=0 && rgn.Right>=rgn.Left);
 
+	MSectionLock RCS;
+	if (gpSrv->pReqSizeSection && !RCS.Lock(gpSrv->pReqSizeSection, TRUE, 30000))
+	{
+		_ASSERTE(FALSE);
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+
+	}
+
 	COORD bufCoord = {0,0};
+	DWORD dwErrCode = 0;
 
 	if (!bDBCS && (nCurSize <= MAX_CONREAD_SIZE))
 	{
@@ -1421,6 +1435,12 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 			{
 				rgn.Bottom = rgn.Top;
 				lbRc = ReadConsoleOutputW(hOut, pLine, bufSize, bufCoord, &rgn);
+				if (!lbRc)
+				{
+					dwErrCode = GetLastError();
+					_ASSERTE(FALSE && "ReadConsoleOutputW failed in MyReadConsoleOutput");
+					break;
+				}
 			}
 		}
 		else
@@ -1441,7 +1461,13 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 					lbRc = ReadConsoleOutputCharacterW(hOut, pszChars, nCharsMax, crRead, &nChars)
 						&& ReadConsoleOutputAttribute(hOut, pnAttrs, bufSize.X, crRead, &nAttrs);
 
-					if (lbRc)
+					if (!lbRc)
+					{
+						dwErrCode = GetLastError();
+						_ASSERTE(FALSE && "ReadConsoleOutputAttribute failed in MyReadConsoleOutput");
+						break;
+					}
+					else
 					{
 						CHAR_INFO* p = pLine;
 						wchar_t* psz = pszChars;

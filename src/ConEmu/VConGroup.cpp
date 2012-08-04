@@ -226,6 +226,8 @@ CVConGroup::~CVConGroup()
 	//SafeDelete(mp_Grp1);
 	//SafeDelete(mp_Grp2);
 
+	EnterCriticalSection(&gcs_VGroups);
+
 	if (mp_Parent)
 	{
 		// ≈сли есть родитель - то нужно перекинуть "AnotherPane" в родител€,
@@ -238,22 +240,10 @@ CVConGroup::~CVConGroup()
 		else
 		{
 			p->MoveToParent(mp_Parent);
+			delete p;
 		}
 	}
 
-	//for (size_t i = countof(gp_VCon); i--;)
-	//{
-	//	if (gp_VCon[i] && (gp_VCon[i]->mp_Group == this))
-	//	{
-	//		_ASSERTE(gp_VCon[i] == mp_Item);
-	//		_ASSERTE(FALSE && "Must be destroyed already?");
-	//		CVirtualConsole* p = gp_VCon[i];
-	//		gp_VCon[i] = NULL;
-	//		p->Release();
-	//	}
-	//}
-
-	EnterCriticalSection(&gcs_VGroups);
 	bool bRemoved = false;
 	for (size_t i = 0; i < countof(gp_VGroups); i++)
 	{
@@ -265,6 +255,7 @@ CVConGroup::~CVConGroup()
 		}
 	}
 	_ASSERTE(bRemoved && "Was not pushed in gp_VGroups?");
+
 	LeaveCriticalSection(&gcs_VGroups);
 }
 
@@ -379,6 +370,8 @@ void CVConGroup::MoveToParent(CVConGroup* apParent)
 		mp_Item->mp_Group = apParent;
 		mp_Item = NULL; // ќтв€зываемс€ от VCon, его обработкой теперь занимаетс€ mp_Grp1
 	}
+
+	mp_Parent = NULL;
 }
 
 void CVConGroup::GetAllTextSize(SIZE& sz, bool abMinimal /*= false*/)
@@ -641,7 +634,7 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2)
 	CVConGuard VCon1(mp_Grp1 ? mp_Grp1->mp_Item : NULL);
 	CVConGuard VCon2(mp_Grp2 ? mp_Grp2->mp_Item : NULL);
 
-	if ((m_SplitType == RConStartArgs::eSplitNone) || !VCon1.VCon() || !VCon2.VCon())
+	if ((m_SplitType == RConStartArgs::eSplitNone) || !mp_Grp1 || !mp_Grp2)
 	{
 		_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
 		_ASSERTE((m_SplitType != RConStartArgs::eSplitNone) && "Need no split");
@@ -1820,7 +1813,16 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 	}
 
 	if (gp_VActive == apVCon)
+	{
+		// —юда вообще попадать не должны, но на вс€кий случай, сбрасываем gp_VActive
+		_ASSERTE(gp_VActive == NULL && gp_VCon[0] == NULL);
 		gp_VActive = NULL;
+	}
+
+	if (gp_VActive)
+	{
+		ShowActiveGroup(gp_VActive);
+	}
 }
 
 void CVConGroup::OnUpdateProcessDisplay(HWND hInfo)
@@ -2143,6 +2145,7 @@ void CVConGroup::ShowActiveGroup(CVirtualConsole* pOldActive)
 	CVConGroup* pActiveGroup = GetRootOfVCon(gp_VActive);
 	if (pActiveGroup && pActiveGroup->mb_ResizeFlag)
 	{
+		SyncConsoleToWindow();
 		// ќтресайзить, могла изменитьс€ конфигураци€
 		RECT mainClient = gpConEmu->CalcRect(CER_MAINCLIENT, gp_VActive);
 		CVConGroup::ReSizePanes(mainClient);
@@ -2313,7 +2316,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, BOOL abAllowScripts 
 			pVCon = CVConGroup::CreateVCon(args, gp_VCon[i]);
 			gb_CreatingActive = false;
 
-			BOOL lbInBackground = args->bBackgroundTab && (pOldActive != NULL);
+			BOOL lbInBackground = args->bBackgroundTab && (pOldActive != NULL) && !args->eSplit;
 
 			if (pVCon)
 			{
@@ -2630,7 +2633,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size)
 	CVConGuard VCon1(mp_Grp1 ? mp_Grp1->mp_Item : NULL);
 	CVConGuard VCon2(mp_Grp2 ? mp_Grp2->mp_Item : NULL);
 
-	if ((m_SplitType == RConStartArgs::eSplitNone) || !VCon1.VCon() || !VCon2.VCon())
+	if ((m_SplitType == RConStartArgs::eSplitNone) || !mp_Grp1 || !mp_Grp2)
 	{
 		_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
 
@@ -2638,7 +2641,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size)
 		RECT rcCon = MakeRect(size.X,size.Y);
 		if (VCon.VCon() && VCon->RCon())
 		{
-			if (!VCon->RCon()->SetConsoleSize(size.X,size.Y))
+			if (!VCon->RCon()->SetConsoleSize(size.X,size.Y, 0/*don't change*/, CECMD_SETSIZENOSYNC))
 				rcCon = MakeRect(VCon->TextWidth,VCon->TextHeight);
 		}
 
@@ -2673,7 +2676,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size)
 // т.е. если по горизонтали есть 2 консоли, и прос€т размер 80x25
 // то эти две консоли должны стать 40x25 а GUI отресайзитьс€ под 80x25
 // ¬ принципе, эту функцию можно было бы и в CConEmu оставить, но дл€ общности путь здесь будет
-void CVConGroup::SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*/ bool bSetRedraw /*= false*/)
+void CVConGroup::SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*/ bool bSetRedraw /*= false*/, bool bResizeConEmuWnd /*= false*/)
 {
 	CVConGuard VCon(gp_VActive);
 	CVConGroup* pRoot = GetRootOfVCon(VCon.VCon());
@@ -2742,12 +2745,14 @@ void CVConGroup::SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*
 	//		rcCon = MakeRect(apVCon->TextWidth,apVCon->TextHeight);
 	//}
 
-#if 0
-	/* —читать Ѕ≈«ќ“Ќќ—»“≈Ћ№Ќќ активной консоли */
-	RECT rcWnd = gpConEmu->CalcRect(CER_MAIN, rcCon, CER_CONSOLE_ALL, NULL);
-	RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
-	MOVEWINDOW(ghWnd, wndR.left, wndR.top, rcWnd.right, rcWnd.bottom, 1);
-#endif
+	// ѕри вызове из диалога "Settings..." и нажати€ кнопки "Apply" (Size & Pos)
+	if (bResizeConEmuWnd)
+	{
+		/* —читать Ѕ≈«ќ“Ќќ—»“≈Ћ№Ќќ активной консоли */
+		RECT rcWnd = gpConEmu->CalcRect(CER_MAIN, rcCon, CER_CONSOLE_ALL, NULL);
+		RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
+		MOVEWINDOW(ghWnd, wndR.left, wndR.top, rcWnd.right, rcWnd.bottom, 1);
+	}
 }
 
 void CVConGroup::SyncAllConsoles2Window(RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN*/, bool bSetRedraw /*= false*/)
@@ -2757,25 +2762,38 @@ void CVConGroup::SyncAllConsoles2Window(RECT rcWnd, enum ConEmuRect tFrom /*= CE
 	CVConGuard VCon(gp_VActive);
 	RECT rcAllCon = gpConEmu->CalcRect(CER_CONSOLE_ALL, rcWnd, tFrom, VCon.VCon());
 	COORD crNewAllSize = {rcAllCon.right,rcAllCon.bottom};
-	SetAllConsoleWindowsSize(crNewAllSize, true);
+	SetAllConsoleWindowsSize(crNewAllSize, bSetRedraw);
+}
+
+void CVConGroup::LockSyncConsoleToWindow(bool abLockSync)
+{
+	gb_SkipSyncSize = abLockSync;
 }
 
 // »зменить размер консоли по размеру окна (главного)
 void CVConGroup::SyncConsoleToWindow()
 {
-	if (gb_SkipSyncSize || isNtvdm() || !gp_VActive)
+	if (gb_SkipSyncSize || isNtvdm())
+		return;
+
+	CVConGuard VCon(gp_VActive);
+	if (!VCon.VCon())
 		return;
 
 	_ASSERTE(gpConEmu->mn_InResize <= 1);
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	if (gpConEmu->change2WindowMode!=(DWORD)-1)
 	{
 		_ASSERTE(gpConEmu->change2WindowMode==(DWORD)-1);
 	}
-#endif
+	#endif
 
-	gp_VActive->RCon()->SyncConsole2Window();
+	//gp_VActive->RCon()->SyncConsole2Window();
+
+	RECT rcWnd = gpConEmu->CalcRect(CER_MAINCLIENT, VCon.VCon());
+
+	SyncAllConsoles2Window(rcWnd, CER_MAINCLIENT);
 }
 
 // ”становить размер основного окна по текущему размеру gp_VActive

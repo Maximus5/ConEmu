@@ -600,7 +600,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	CESERVER_REQ* pIn = ExecuteNewCmd(anCmdID, nInSize);
 	CESERVER_REQ* pOut = ExecuteNewCmd(anCmdID, nOutSize);
 	SMALL_RECT rect = {0};
-	_ASSERTE(anCmdID==CECMD_SETSIZESYNC || anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED);
+	_ASSERTE(anCmdID==CECMD_SETSIZESYNC || anCmdID==CECMD_SETSIZENOSYNC || anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED);
 	//ExecutePrepareCmd(&lIn.hdr, anCmdID, lIn.hdr.cbSize);
 	if (!pIn || !pOut)
 	{
@@ -1021,7 +1021,7 @@ void CRealBuffer::SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY)
 	{
 		if (gpSetCls->isAdvLogging>=2)
 		{
-			char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SyncConsoleToWindow(Cols=%i, Rows=%i, Current={%i,%i})", wndSizeX, wndSizeY, con.nTextWidth, con.nTextHeight);
+			char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CRealBuffer::SyncConsole2Window(Cols=%i, Rows=%i, Current={%i,%i})", wndSizeX, wndSizeY, con.nTextWidth, con.nTextHeight);
 			mp_RCon->LogString(szInfo);
 		}
 

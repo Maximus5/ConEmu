@@ -396,7 +396,9 @@ struct AltServerInfo
 
 struct SrvInfo
 {
-	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
+	HANDLE hRootProcess, hRootThread;
+	DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
+	DWORD dwParentFarPID;
 	HANDLE hMainServer; DWORD dwMainServerPID;
 
 	HANDLE hAltServer, hCloseAltServer, hAltServerChanged;
@@ -482,6 +484,7 @@ struct SrvInfo
 	SMALL_RECT rReqSizeNewRect;
 	LPCSTR sReqSizeLabel;
 	HANDLE hReqSizeChanged;
+	MSection* pReqSizeSection;
 	//
 	HANDLE hAllowInputEvent; BOOL bInSyncResize;
 	//

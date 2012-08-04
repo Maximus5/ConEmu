@@ -154,6 +154,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	
 	//
 	DWORD nStarted = pIn->StartStop.nStarted;
+	DWORD nParentFarPid = pIn->StartStop.nParentFarPID;
 	HWND  hWnd     = (HWND)pIn->StartStop.hWnd;
 
 #ifdef _DEBUG
@@ -403,7 +404,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			}
 			else
 			{
-				BOOL bAllowBufferHeight = (gpSet->AutoBufferHeight || mp_RCon->isBufferHeight());
+				BOOL bAllowBufferHeight = (gpSet->AutoBufferHeight || mp_RCon->isBufferHeight()) && (nParentFarPid != 0);
 				if (pIn->StartStop.bForceBufferHeight)
 					bAllowBufferHeight = (pIn->StartStop.nForceBufferHeight != 0);
 				
@@ -494,7 +495,13 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		//Process Delete(nPID);
 
 		// ComSpec stopped
-		if (nStarted == sst_ComspecStop)
+		if ((nStarted == sst_ComspecStop) && (nParentFarPid == 0))
+		{
+			// из cmd.exe была запущена команда с "-new_console"
+			// Сервер она не интересует
+			_ASSERTE(!mp_RCon->isNtvdm() && "Need resize console after NTVDM?");
+		}
+		else if (nStarted == sst_ComspecStop)
 		{
 			BOOL lbNeedResizeWnd = FALSE;
 			BOOL lbNeedResizeGui = FALSE;

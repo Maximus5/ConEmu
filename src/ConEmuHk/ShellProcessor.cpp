@@ -859,6 +859,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
 		nCchSize += 128;
 	}
+
+	if (gFarMode.cbSize && gFarMode.bFarHookMode)
+	{
+		// Добавить /PARENTFARPID=%u
+		nCchSize += 32;
+	}
 	
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
 	// /C или /K в обоих случаях нужно пихать в psParam
@@ -888,18 +894,15 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	if (lbUseDosBox)
 		_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
 
-	// 111211 - "-new_console" передается в GUI
-	#if 0
-	//if (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
-	if (lbNewGuiConsole)
+	if (gFarMode.cbSize && gFarMode.bFarHookMode)
 	{
-		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
-		int nCurLen = lstrlen(*psParam);
-		msprintf((*psParam) + nCurLen, nCchSize - nCurLen, L" /ATTACH /GID=%u /ROOT ", m_SrvMapping.nGuiPID);
-		TODO("Наверное, хорошо бы обработать /K|/C? Если консольное запускается из GUI");
+		// Добавить /PARENTFAR=%u
+		wchar_t szParentFar[64];
+		msprintf(szParentFar, countof(szParentFar), L" /PARENTFARPID=%u", GetCurrentProcessId());
+		_wcscat_c((*psParam), nCchSize, szParentFar);
 	}
-	else
-	#endif
+
+	// 111211 - "-new_console" передается в GUI
 	if (lbNewConsoleFromGui)
 	{
 		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.

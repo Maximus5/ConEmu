@@ -691,7 +691,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 	//}
 	//if (TextHeight == 24)
 	//    TextHeight = 24;
-	_ASSERT(TextHeight >= 5);
+	_ASSERT(TextHeight >= MIN_CON_HEIGHT);
 #endif
 
 	// Буфер пересоздаем только если требуется его увеличение
@@ -3554,7 +3554,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		pix.X = ConCharX[CurChar-1];
 
 	RECT rect;
-	bool bForeground = gpConEmu->isMeForeground();
+	bool bForeground = gpConEmu->isMeForeground() && gpConEmu->isActive(this); // в неактивных консолях - показывать "блок"
 
 	// указатель на настройки разделяемые по приложениям
 	mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
@@ -3715,6 +3715,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	BOOL lbUpdateTick = FALSE;
 	bool bForeground = gpConEmu->isMeForeground();
 	bool bConActive = gpConEmu->isActive(this); // а тут именно Active, т.к. курсор должен мигать в активной консоли
+	bool bConVisible = bConActive || gpConEmu->isVisible(this);
 	bool bIsAlive = mp_RCon ? (mp_RCon->isAlive() || !mp_RCon->isFar(TRUE)) : false; // не мигать, если фар "думает"
 	//if (bConActive) {
 	//	bForeground = gpConEmu->isMeForeground();
@@ -3723,7 +3724,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	// Если курсор (в консоли) видим, и находится в видимой области (при прокрутке)
 	if (cinf.bVisible && isCursorValid)
 	{
-		if (!mp_Set->CursorBlink() || !bForeground)
+		if (!mp_Set->CursorBlink() || !bForeground || !bConActive)
 		{
 			Cursor.isVisible = true; // Видим всегда (даже в неактивной консоли), не мигает
 
@@ -3737,7 +3738,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 			// Смена позиции курсора - его нужно обновить, если окно активно
 			if ((Cursor.x != csbi.dwCursorPosition.X) || (Cursor.y != csbi.dwCursorPosition.Y))
 			{
-				Cursor.isVisible = bConActive;
+				Cursor.isVisible = bConVisible;
 
 				if (Cursor.isVisible) lRes = true;  //force, pos changed
 
@@ -3762,7 +3763,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 					else
 					{
 						WARNING("DoubleView: в неактивной но видимой консоли тоже отрисовать, но блоком");
-						Cursor.isVisible = bConActive && (!Cursor.isVisible || !bIsAlive);
+						Cursor.isVisible = bConVisible && (!Cursor.isVisible || !bIsAlive);
 					}
 
 					lbUpdateTick = TRUE;

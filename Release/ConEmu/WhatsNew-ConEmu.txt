@@ -13,6 +13,12 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+2012.08.03
+[!] Bugfixes and regressions of SplitScreen. Now you can create more than two splits.
+[*] Some changes in «Long console output» (plugin required in Far Manager).
+[*] Minimal console size now is 4 cols 2 lines.
+
+
 2012.08.02
 [!] Experimental: -new_console:s[<SplitTab>T][<Percents>](H|V). Examples.
     "cmd -new_console:s" - split current tab, new tab and old (current) tab become 50% width of current tab.

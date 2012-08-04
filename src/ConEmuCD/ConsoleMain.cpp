@@ -2378,6 +2378,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			gbNoCreateProcess = TRUE;
 			gbAlienMode = TRUE;
 		}
+		else if (wcsncmp(szArg, L"/PARENTFARPID=", 14)==0)
+		{
+			// ƒл€ режима RM_COMSPEC нужно будет сохранить "длинный вывод"
+			wchar_t* pszEnd = NULL, *pszStart;
+			pszStart = szArg+14;
+			gpSrv->dwParentFarPID = wcstoul(pszStart, &pszEnd, 10);
+		}
 		else if (wcsncmp(szArg, L"/PID=", 5)==0 || wcsncmp(szArg, L"/FARPID=", 8)==0 || wcsncmp(szArg, L"/CONPID=", 8)==0)
 		{
 			gnRunMode = RM_SERVER;
@@ -3865,11 +3872,15 @@ void SendStarted()
 		switch (gnRunMode)
 		{
 		case RM_SERVER:
-			pIn->StartStop.nStarted = sst_ServerStart; break;
+			pIn->StartStop.nStarted = sst_ServerStart;
+			break;
 		case RM_ALTSERVER:
-			pIn->StartStop.nStarted = sst_AltServerStart; break;
+			pIn->StartStop.nStarted = sst_AltServerStart;
+			break;
 		case RM_COMSPEC:
-			pIn->StartStop.nStarted = sst_ComspecStart; break;
+			pIn->StartStop.nParentFarPID = gpSrv->dwParentFarPID;
+			pIn->StartStop.nStarted = sst_ComspecStart;
+			break;
 		default:
 			pIn->StartStop.nStarted = sst_AppStart;
 		}
@@ -4234,6 +4245,7 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 		case RM_COMSPEC:
 			pIn->StartStop.nStarted = sst_ComspecStop;
 			pIn->StartStop.nOtherPID = gpSrv->dwRootProcess;
+			pIn->StartStop.nParentFarPID = gpSrv->dwParentFarPID;
 			break;
 		default:
 			pIn->StartStop.nStarted = sst_AppStop;
@@ -7813,11 +7825,13 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		}
 	}
 
-	//CSection cs(NULL,NULL);
-	//MSectionLock CSCS;
-	//if (gnRunMode == RM_SERVER)
-	//	CSCS.Lock(&gpSrv->cChangeSize, TRUE, 10000);
-	//    //cs.Enter(&gpSrv->csChangeSize, &gpSrv->ncsTChangeSize);
+	MSectionLock RCS;
+	if (gpSrv->pReqSizeSection && !RCS.Lock(gpSrv->pReqSizeSection, TRUE, 30000))
+	{
+		_ASSERTE(FALSE);
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 
 	if (ghLogSize) LogSize(&crNewSize, asLabel);
 

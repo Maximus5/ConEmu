@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    104
+#define CESERVER_REQ_VER    105
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -1374,9 +1374,11 @@ struct CESERVER_REQ_STARTSTOP
 	// Для информации и удобства (GetModuleFileName(0))
 	wchar_t sModuleName[MAX_PATH+1];
 	// Reserved
-	DWORD nReserved0[18];
+	DWORD nReserved0[17];
 	// Create background tab, when attaching new console
 	BOOL bRunInBackgroundTab;
+	// При запуске в режиме RM_COMSPEC, сохранение "длинного вывода"
+	DWORD nParentFarPID;
 	// CmdLine
 	wchar_t sCmdLine[1]; // variable length
 };
