@@ -85,6 +85,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEFAULT_FADE_LOW 0
 #define DEFAULT_FADE_HIGH 0xD0
 
+#define MAX_SPLITTER_SIZE 32
+
 
 struct CONEMUDEFCOLORS
 {
@@ -273,6 +275,8 @@ void Settings::InitSettings()
 	//vmMultiCmd = 'X' | (nMultiHotkeyModifier << 8);
 	isMultiAutoCreate = false; isMultiLeaveOnClose = false; isMultiIterate = true;
 	isMultiNewConfirm = true; isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false;
+	nSplitWidth = nSplitHeight = 4;
+	nSplitClr1 = nSplitClr2 = RGB(160,160,160);
 	m_isKeyboardHooks = 0;
 	isFARuseASCIIsort = false; isFixAltOnAltTab = false; isShellNoZoneCheck = false;
 	isFadeInactive = true; mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; mb_FadeInitialized = false;
@@ -2019,6 +2023,10 @@ void Settings::LoadSettings()
 		reg->Load(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
 		reg->Load(L"Multi.Iterate", isMultiIterate);
 		//LoadVkMod(reg, L"MinimizeRestore", vmMinimizeRestore, vmMinimizeRestore);
+		reg->Load(L"Multi.SplitWidth", nSplitWidth); MinMax(nSplitWidth, MAX_SPLITTER_SIZE);
+		reg->Load(L"Multi.SplitHeight", nSplitHeight); MinMax(nSplitHeight, MAX_SPLITTER_SIZE);
+		reg->Load(L"Multi.SplitClr1", nSplitClr1);
+		reg->Load(L"Multi.SplitClr2", nSplitClr2);
 
 		reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 
@@ -2858,6 +2866,11 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/)
 		reg->Save(L"Multi.AutoCreate", isMultiAutoCreate);
 		reg->Save(L"Multi.LeaveOnClose", isMultiLeaveOnClose);
 		reg->Save(L"Multi.Iterate", isMultiIterate);
+		reg->Save(L"Multi.SplitWidth", nSplitWidth);
+		reg->Save(L"Multi.SplitHeight", nSplitHeight);
+		reg->Save(L"Multi.SplitClr1", nSplitClr1);
+		reg->Save(L"Multi.SplitClr2", nSplitClr2);
+
 		//reg->Save(L"MinimizeRestore", vmMinimizeRestore);
 		_ASSERTE(m_isKeyboardHooks!=0);
 		reg->Save(L"KeyboardHooks", m_isKeyboardHooks);

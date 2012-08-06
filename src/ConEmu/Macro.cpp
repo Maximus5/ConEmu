@@ -130,6 +130,8 @@ LPWSTR CConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon)
 		// Поехали
 		if (!lstrcmpi(szFunction, L"IsConEmu"))
 			pszResult = IsConEmu(asMacro, apRCon);
+		else if (!lstrcmpi(szFunction, L"Close"))
+			pszResult = Close(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"FindEditor"))
 			pszResult = FindEditor(asMacro, apRCon);
 		else if (!lstrcmpi(szFunction, L"FindViewer"))
@@ -379,6 +381,32 @@ LPWSTR CConEmuMacro::IsConsoleActive(LPWSTR asArgs, CRealConsole* apRCon)
 		pszResult = lstrdup(L"Yes");
 	else
 		pszResult = lstrdup(L"No");
+
+	return pszResult;
+}
+
+LPWSTR CConEmuMacro::Close(LPWSTR asArgs, CRealConsole* apRCon)
+{
+	LPWSTR pszResult = NULL;
+	int nCmd = 0, nFlags = 0;
+
+	if (GetNextInt(asArgs, nCmd))
+		GetNextInt(asArgs, nFlags);
+
+	switch (nCmd)
+	{
+	case 0:
+	case 1:
+		if (apRCon)
+		{
+			apRCon->CloseConsole(nCmd==1, (nFlags & 1)==0);
+			pszResult = lstrdup(L"OK");
+		}
+		break;
+	}
+
+	if (!pszResult)
+		lstrdup(L"Failed");
 
 	return pszResult;
 }
@@ -741,11 +769,23 @@ LPWSTR CConEmuMacro::Progress(LPWSTR asArgs, CRealConsole* apRCon)
 LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 {
 	LPWSTR pszOper = NULL, pszFile = NULL, pszParm = NULL, pszDir = NULL;
+	LPWSTR pszBuf = NULL;
 	int nShowCmd = SW_SHOWNORMAL;
 	
 	if (GetNextString(asArgs, pszOper))
 	{
-		if (GetNextString(asArgs, pszFile) && *pszFile)
+		CVConGuard VCon(apRCon ? apRCon->VCon() : NULL);
+		if ((!GetNextString(asArgs, pszFile) || !*pszFile) && apRCon)
+		{
+			LPCWSTR pszCmd = apRCon->GetCmd();
+			if (pszCmd && *pszCmd)
+			{
+				pszBuf = lstrdup(pszCmd);
+				pszFile = pszBuf;
+			}
+		}
+
+		if (pszFile && *pszFile)
 		{
 			if (!GetNextString(asArgs, pszParm))
 				pszParm = NULL;
@@ -842,6 +882,8 @@ LPWSTR CConEmuMacro::Shell(LPWSTR asArgs, CRealConsole* apRCon)
 			}
 		}
 	}
+
+	SafeFree(pszBuf);
 
 	return lstrdup(L"InvalidArg");
 }

@@ -82,7 +82,7 @@ CConEmuChild::CConEmuChild()
 
 	ZeroStruct(m_si);
 	m_si.cbSize = sizeof(m_si);
-	m_si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_DISABLENOSCROLL;
+	m_si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE /*| SIF_DISABLENOSCROLL*/;
 	mb_ScrollDisabled = FALSE;
 	m_LastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
 	
@@ -944,8 +944,8 @@ void CConEmuChild::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHei
 	{
 		m_si.nPos = 0;
 		m_si.nPage = 0;
-		m_si.nMax = 0;
-		m_si.fMask |= SIF_DISABLENOSCROLL;
+		m_si.nMax = 0; //(gpSet->isAlwaysShowScrollbar == 1) ? 1 : 0;
+		//m_si.fMask |= SIF_DISABLENOSCROLL;
 	}
 	else
 	{
@@ -975,12 +975,13 @@ void CConEmuChild::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHei
 			}
 			else
 			{
-				SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, TRUE);
-				if (!mb_ScrollDisabled)
-				{
-					EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
-					mb_ScrollDisabled = TRUE;
-				}
+				MySetScrollInfo(TRUE, FALSE);
+				//SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, TRUE);
+				//if (!mb_ScrollDisabled)
+				//{
+				//	EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
+				//	mb_ScrollDisabled = TRUE;
+				//}
 			}
 		}
 		else
@@ -1013,12 +1014,44 @@ void CConEmuChild::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHei
 
 		if (mb_ScrollVisible)
 		{
-			SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, TRUE);
-			if (mb_ScrollDisabled)
-			{
-				EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
-				mb_ScrollDisabled = FALSE;
-			}
+			MySetScrollInfo(TRUE, TRUE);
+			//SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, TRUE);
+			//if (mb_ScrollDisabled)
+			//{
+			//	EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
+			//	mb_ScrollDisabled = FALSE;
+			//}
+		}
+	}
+}
+
+void CConEmuChild::MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue)
+{
+	SCROLLINFO si = m_si;
+
+	if (/*!mb_ScrollVisible &&*/ !m_si.nMax && (gpSet->isAlwaysShowScrollbar == 1))
+	{
+		ShowScrollBar(mh_WndDC, SB_VERT, TRUE);
+		// Прокрутка всегда показывается! Скрывать нельзя!
+		si.nPage = 1;
+		si.nMax = 100;
+	}
+
+	si.fMask |= SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/;
+
+	SetScrollInfo(mh_WndDC, SB_VERT, &si, TRUE);
+
+	if (abSetEnabled)
+	{
+		if (abEnableValue)
+		{
+			EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_ENABLE_BOTH);
+			mb_ScrollDisabled = FALSE;
+		}
+		else
+		{
+			EnableScrollBar(mh_WndDC/*mh_WndScroll*/, SB_VERT, ESB_DISABLE_BOTH);
+			mb_ScrollDisabled = TRUE;
 		}
 	}
 }
@@ -1032,7 +1065,8 @@ void CConEmuChild::ShowScroll(BOOL abImmediate)
 		if (!mb_ScrollVisible && !m_si.nMax)
 		{
 			// Прокрутка всегда показывается! Скрывать нельзя!
-			SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE|SIF_DISABLENOSCROLL, 0, 1, 1};
+			//m_si.nMax = (gpSet->isAlwaysShowScrollbar == 1) ? 1 : 0;
+			SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1};
 			SetScrollInfo(mh_WndDC, SB_VERT, &si, TRUE);
 		}
 
@@ -1044,9 +1078,10 @@ void CConEmuChild::ShowScroll(BOOL abImmediate)
 		#endif
 
 		int nCurPos = -1;
-		if (m_si.nMax)
+		if (m_si.nMax || (gpSet->isAlwaysShowScrollbar == 1))
 		{
-			nCurPos = SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, TRUE); UNREFERENCED_PARAMETER(nCurPos);
+			MySetScrollInfo(FALSE, FALSE);
+			//nCurPos = SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, TRUE); UNREFERENCED_PARAMETER(nCurPos);
 		}
 
 		if (mb_ScrollDisabled && m_si.nMax > 1)
@@ -1120,7 +1155,7 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 	if (gpSet->isAlwaysShowScrollbar == 1)
 	{
 		// Прокрутка всегда показывается! Скрывать нельзя!
-		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE|SIF_DISABLENOSCROLL, 0, 1, 1};
+		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1};
 		SetScrollInfo(mh_WndDC, SB_VERT, &si, TRUE);
 		if (!mb_ScrollDisabled)
 		{

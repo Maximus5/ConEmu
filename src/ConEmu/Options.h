@@ -1062,6 +1062,14 @@ struct Settings
 		bool isUseWinTab;
 		//reg->Load(L"Multi.UseArrows", isUseWinArrows);
 		bool isUseWinArrows;
+		//reg->Load(L"Multi.SplitWidth", nSplitWidth);
+		BYTE nSplitWidth;
+		//reg->Load(L"Multi.SplitHeight", nSplitHeight);
+		BYTE nSplitHeight;
+		//reg->Load(L"Multi.SplitClr1", nSplitClr1);
+		DWORD nSplitClr1;
+		//reg->Load(L"Multi.SplitClr2", nSplitClr2);
+		DWORD nSplitClr2;
 		//reg->Load(L"FARuseASCIIsort", isFARuseASCIIsort);
 		bool isFARuseASCIIsort;
 		//reg->Load(L"FixAltOnAltTab", isFixAltOnAltTab);

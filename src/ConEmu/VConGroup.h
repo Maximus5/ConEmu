@@ -52,6 +52,7 @@ protected:
 	void RepositionVCon(RECT rcNewCon, bool bVisible);
 	void CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2);
 	void CalcSplitRootRect(RECT rcAll, RECT& rcCon, CVConGroup* pTarget = NULL);
+	void CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2);
 	void ShowAllVCon(int nShowCmd);
 	static void ShowActiveGroup(CVirtualConsole* pOldActive);
 

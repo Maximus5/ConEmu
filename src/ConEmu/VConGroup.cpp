@@ -570,6 +570,9 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 	if (m_SplitType == RConStartArgs::eSplitNone)
 	{
 		_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
+
+		//RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
+		//gpConEmu->AddMargins(rcNewCon, rcScroll);
 		
 		HWND hWndDC = mp_Item ? VConI->GetView() : NULL;
 		if (hWndDC)
@@ -604,6 +607,11 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 				}
 			}
 		}
+
+		if (VConI->RCon()->GuiWnd())
+		{
+			VConI->RCon()->SyncGui2Window(NULL);
+		}
 	}
 	else if (mp_Grp1 && mp_Grp2)
 	{
@@ -619,6 +627,7 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 	}
 }
 
+// Разбиение в координатах DC (pixels)
 void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2)
 {
 	rcCon1 = rcNewCon;
@@ -646,11 +655,25 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2)
 	if (m_SplitType == RConStartArgs::eSplitHorz)
 	{
 		UINT nWidth = rcNewCon.right - rcNewCon.left;
+		UINT nPadX = gpSet->nSplitWidth;
+		if (nWidth >= nPadX)
+			nWidth -= nPadX;
+		else
+			nPadX = 0;
+		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
+		_ASSERTE(rcScroll.left==0);
+		if (rcScroll.right)
+		{
+			_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // сюда должны попадать только при включенном постоянно скролле
+			if (nWidth > (UINT)(rcScroll.right * 2))
+				nWidth -= rcScroll.right * 2;
+			else
+				rcScroll.right = 0;
+		}
 		UINT nScreenWidth = (nWidth * nSplit / 1000);
 		LONG nCellWidth = gpSetCls->FontWidth();
 		if (nCellWidth > 0)
 		{
-			_ASSERTE(gpSet->isAlwaysShowScrollbar!=1); // Нужно как-то учитывать размер полосы прокрутки?
 			UINT nTotalCellCountX = nWidth / nCellWidth;
 			UINT nCellCountX = (nScreenWidth + (nCellWidth/2)) / nCellWidth;
 			if ((nTotalCellCountX >= 2) && (nCellCountX >= nTotalCellCountX))
@@ -666,16 +689,30 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2)
 		}
 
 		rcCon1 = MakeRect(rcNewCon.left, rcNewCon.top, rcNewCon.left + nScreenWidth, rcNewCon.bottom);
-		rcCon2 = MakeRect(rcCon1.right, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
+		rcCon2 = MakeRect(rcCon1.right+nPadX+rcScroll.right, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
 	}
 	else
 	{
 		UINT nHeight = rcNewCon.bottom - rcNewCon.top;
+		UINT nPadY = gpSet->nSplitHeight;
+		if (nHeight >= nPadY)
+			nHeight -= nPadY;
+		else
+			nPadY = 0;
+		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
+		_ASSERTE(rcScroll.top==0);
+		if (rcScroll.bottom)
+		{
+			_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // сюда должны попадать только при включенном постоянно скролле
+			if (nHeight > (UINT)(rcScroll.bottom * 2))
+				nHeight -= rcScroll.bottom * 2;
+			else
+				rcScroll.bottom = 0;
+		}
 		UINT nScreenHeight = (nHeight * nSplit / 1000);
 		LONG nCellHeight = gpSetCls->FontHeight();
 		if (nCellHeight > 0)
 		{
-			_ASSERTE(gpSet->isAlwaysShowScrollbar!=1); // Нужно как-то учитывать размер полосы прокрутки?
 			UINT nTotalCellCountY = nHeight / nCellHeight;
 			UINT nCellCountY = (nScreenHeight + (nCellHeight/2)) / nCellHeight;
 			if ((nTotalCellCountY >= 2) && (nCellCountY >= nTotalCellCountY))
@@ -691,7 +728,7 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2)
 		}
 
 		rcCon1 = MakeRect(rcNewCon.left, rcNewCon.top, rcNewCon.right, rcNewCon.top + nScreenHeight);
-		rcCon2 = MakeRect(rcCon1.left, rcCon1.bottom, rcNewCon.right, rcNewCon.bottom);
+		rcCon2 = MakeRect(rcCon1.left, rcCon1.bottom+nPadY+rcScroll.bottom, rcNewCon.right, rcNewCon.bottom);
 	}
 }
 
@@ -2474,7 +2511,9 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			}
 			else if (tFrom == CER_BACK || tFrom == CER_WORKSPACE)
 			{
-				TODO("Расчет для DoubleView");
+				// -- отрезание полосы прокрутки ПОСЛЕ разбиения
+				//rcShift = gpConEmu->CalcMargins(CEM_SCROLL);
+				//CConEmuMain::AddMargins(rc, rcShift);
 			}
 			else
 			{
@@ -2484,7 +2523,15 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 
 			RECT rcAll = rc;
 			if (pGroup && (tWhat != CER_CONSOLE_ALL))
+			{
 				pGroup->CalcSplitRootRect(rcAll, rc);
+			}
+
+			if (tFrom == CER_MAINCLIENT || tFrom == CER_BACK || tFrom == CER_WORKSPACE)
+			{
+				rcShift = gpConEmu->CalcMargins(CEM_SCROLL);
+				CConEmuMain::AddMargins(rc, rcShift);
+			}
 
 			//// Для корректного деления на размер знакоместа...
 			//         if (gpSetCls->FontWidth()==0 || gpSetCls->FontHeight()==0)
@@ -2597,6 +2644,35 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 	return rc;
 }
 
+void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
+{
+	sz1 = size; sz2 = size;
+	int nSplit = max(1,min(mn_SplitPercent10,999));
+
+	//RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
+
+	if (m_SplitType == RConStartArgs::eSplitHorz)
+	{
+		//if (size.X >= gpSet->nSplitWidth)
+		//	size.X -= gpSet->nSplitWidth;
+
+		//_ASSERTE(rcScroll.left==0);
+		//if (size.X > (UINT)(rcScroll.right * 2))
+		//{
+		//	_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // сюда должны попадать только при включенном постоянно скролле
+		//	size.X -= rcScroll.right * 2;
+		//}
+
+		sz1.X = max(((size.X+1) * nSplit / 1000),MIN_CON_WIDTH);
+		sz2.X = max((size.X - sz1.X),MIN_CON_WIDTH);
+	}
+	else
+	{
+		sz1.Y = max(((size.Y+1) * nSplit / 1000),MIN_CON_HEIGHT);
+		sz2.Y = max((size.Y - sz1.Y),MIN_CON_HEIGHT);
+	}
+}
+
 void CVConGroup::SetConsoleSizes(const COORD& size)
 {
 	CVConGuard VCon(mp_Item);
@@ -2653,19 +2729,8 @@ void CVConGroup::SetConsoleSizes(const COORD& size)
 	// Do Split
 
 	COORD sz1 = size, sz2 = size;
-	int nSplit = max(1,min(mn_SplitPercent10,999));
-	UINT nPadSizeX = 0, nPadSizeY = 0;
 
-	if (m_SplitType == RConStartArgs::eSplitHorz)
-	{
-		sz1.X = max(((size.X+1) * nSplit / 1000),MIN_CON_WIDTH);
-		sz2.X = max((size.X - sz1.X),MIN_CON_WIDTH);
-	}
-	else
-	{
-		sz1.Y = max(((size.Y+1) * nSplit / 1000),MIN_CON_HEIGHT);
-		sz2.Y = max((size.Y - sz1.Y),MIN_CON_HEIGHT);
-	}
+	CalcSplitConSize(size, sz1, sz2);
 
 	mp_Grp1->SetConsoleSizes(sz1);
 	mp_Grp2->SetConsoleSizes(sz2);
@@ -2799,9 +2864,7 @@ void CVConGroup::SyncConsoleToWindow()
 // Установить размер основного окна по текущему размеру gp_VActive
 void CVConGroup::SyncWindowToConsole()
 {
-#ifndef _DEBUG
-	PRAGMA_ERROR("Допилить прокрутки, чтобы при изменении размера в КОНСОЛИ ее можно было показать в ConEmu");
-#endif
+	TODO("warning: Допилить прокрутки, чтобы при изменении размера в КОНСОЛИ ее можно было показать в ConEmu");
 
 #if 0
 	_ASSERTE(FALSE && "May be this function must be eliminated!");
@@ -3413,7 +3476,7 @@ void CVConGroup::ReSizePanes(RECT mainClient)
 	RECT rcNewCon = {};
 
 	WARNING("warning: Need to be corrected for release / DoubleView");
-#ifndef _DEBUG
+#if 0
 	PRAGMA_ERROR("Need to be corrected");
 	TODO("DoubleView");
 	RECT dcSize = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, pVCon);

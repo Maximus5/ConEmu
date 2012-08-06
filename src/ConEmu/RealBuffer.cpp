@@ -580,6 +580,9 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	if (!this) return FALSE;
 
 	_ASSERTE(m_Type == rbt_Primary);
+	#ifdef _DEBUG
+	int nVConNo = gpConEmu->isVConValid(mp_RCon->VCon());
+	#endif
 
 	if (!mp_RCon->hConWnd || mp_RCon->ms_ConEmuC_Pipe[0] == 0)
 	{

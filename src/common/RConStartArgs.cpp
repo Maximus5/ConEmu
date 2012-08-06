@@ -242,7 +242,7 @@ int RConStartArgs::ProcessNewConArg()
 							if (*pszEnd == L':')
 								pszEnd++;
 							const wchar_t* pszDir = pszEnd;
-							while ((*pszEnd) && (*pszEnd != L' ') && (*pszEnd != L'"'))
+							while ((*pszEnd) && (lbQuot || *pszEnd != L' ') && (*pszEnd != L'"'))
 								pszEnd++;
 							if (pszEnd > pszDir)
 							{

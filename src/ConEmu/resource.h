@@ -793,6 +793,12 @@
 #define rbBgReplaceIndexes              2426
 #define tDarkerPlugin                   2427
 #define slDarkerPlugin                  2428
+#define vkSplit2Right                   2429
+#define vkSplit2Bottom                  2430
+#define vkSplitUp                       2431
+#define vkSplitDown                     2432
+#define vkSplitLeft                     2433
+#define vkSplitRight                    2434
 
 // Next default values for new objects
 // 
@@ -800,7 +806,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2429
+#define _APS_NEXT_CONTROL_VALUE         2435
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

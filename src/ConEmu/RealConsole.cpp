@@ -634,16 +634,23 @@ void CRealConsole::SyncGui2Window(RECT* prcClient)
 			return;
 		}
 
-		RECT rcClient;
+
+		RECT rcGui = {};
+		RECT rcClient = {};
 		if (prcClient)
+		{
 			rcClient = *prcClient;
+		}
 		else
+		{
 			rcClient = gpConEmu->GetGuiClientRect();
+		}
 
 		// Окошко гуевого приложения нужно разместить поверх области, отведенной под наш VCon.
 		// Но! тут нужна вся область, без отрезания прокруток и округлений размеров под знакоместо
-		RECT rcGui = gpConEmu->CalcRect(CER_BACK, rcClient, CER_MAINCLIENT, mp_VCon);
+		rcGui = gpConEmu->CalcRect(CER_BACK, rcClient, CER_MAINCLIENT, mp_VCon);
 		OffsetRect(&rcGui, -rcGui.left, -rcGui.top);
+
 		DWORD dwExStyle = GetWindowLong(hGuiWnd, GWL_EXSTYLE);
 		DWORD dwStyle = GetWindowLong(hGuiWnd, GWL_STYLE);
 		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui);

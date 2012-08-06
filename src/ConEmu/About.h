@@ -132,6 +132,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"Sort of simple macro language, read more online:\r\n" \
 	L"http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
 	L"––––––––––––––––––––––\r\n" \
+	L"Close(<What>[,<Flags>])\r\n" \
+	L"  - close current console (0), without confirmation (0,1),\r\n" \
+	L"    terminate active process (1), without confirmation (1,1)\r\n" \
 	L"FindEditor(\"<FullEditFileName>\")\r\n" \
 	L"FindViewer(\"<FullViewerFileName>\")\r\n" \
 	L"FindFarWindow(<WindowType>,\"<WindowTitle>\")\r\n" \
@@ -154,7 +157,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"  - Show modal GUI MessageBox, returns clicked button name (\"Ok\", \"Cancel\", \"Retry\", etc.),\r\n" \
 	L"     ButtonType (number) is from Windows SDK.\r\n" \
 	L"Paste(<Cmd>[,\"<Text>\"])\r\n" \
-	L"  - When <Text> is omitted - paste from Windows clipboard, otherwise - paste specified text\r\n" \
+	L"  - When <Text> is omitted - paste from Windows clipboard, otherwise - paste <Text>\r\n" \
 	L"     Cmd==0: paste all lines\r\n" \
 	L"     Cmd==1: paste first line\r\n" \
 	L"     Cmd==2: paste all lines, without confirmations\r\n" \
@@ -170,6 +173,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"        Shell(\"open\",\"cmd.exe\",\"/k\")\r\n" \
 	L"        Shell(\"\",\"\",\"cmd.exe /k -new_console:b\"),\r\n" \
 	L"        Shell(\"new_console:b\",\"\",\"cmd.exe /k\")\r\n" \
+	L"        Shell(\"new_console:sV\")\r\n" \
 	L"Status(0[,<Parm>])\r\n" \
 	L"  - Show/Hide status bar, Parm=1 - Show, Parm=2 - Hide\r\n" \
 	L"Status(1[,\"<Text>\"])\r\n" \

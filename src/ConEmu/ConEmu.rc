@@ -159,10 +159,10 @@ BEGIN
                     "Button",BS_AUTO3STATE | WS_TABSTOP,10,161,144,10
     RTEXT           "Placement:",stBgPlacement,205,126,45,8
     COMBOBOX        lbBgPlacement,254,124,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Darkening:",IDC_STATIC,10,175,36,8
-    CONTROL         "",slDarkerPlugin,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,174,228,12
-    EDITTEXT        tDarkerPlugin,285,174,30,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Transparent",rbBgReplaceTransparent,"Button",BS_AUTORADIOBUTTON | WS_GROUP,10,126,59,8
+    LTEXT           "Darkening:",IDC_STATIC,10,175,36,8,WS_DISABLED
+    CONTROL         "",slDarkerPlugin,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_DISABLED | WS_TABSTOP,52,174,228,12
+    EDITTEXT        tDarkerPlugin,285,174,30,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    CONTROL         "Transparent",rbBgReplaceTransparent,"Button",BS_AUTORADIOBUTTON | WS_DISABLED | WS_GROUP,10,126,59,8
     CONTROL         "Replace color indexes",rbBgReplaceIndexes,"Button",BS_AUTORADIOBUTTON,70,126,86,8
 END
 

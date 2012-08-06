@@ -53,6 +53,8 @@ class CConEmuMacro
 	public:
 		// Теперь - собственно макросы
 
+		// Закрыть/прибить текущую консоль
+		static LPWSTR Close(LPWSTR asArgs, CRealConsole* apRCon);
 		// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
 		static LPWSTR FindEditor(LPWSTR asArgs, CRealConsole* apRCon);
 		static LPWSTR FindViewer(LPWSTR asArgs, CRealConsole* apRCon);

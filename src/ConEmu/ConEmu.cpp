@@ -1057,8 +1057,9 @@ RECT CConEmuMain::GetDefaultRect()
 
 RECT CConEmuMain::GetGuiClientRect()
 {
-	RECT rcClient = {};
-	BOOL lbRc = ::GetClientRect(ghWnd, &rcClient); UNREFERENCED_PARAMETER(lbRc);
+	RECT rcClient = CalcRect(CER_MAINCLIENT);
+	//RECT rcClient = {};
+	//BOOL lbRc = ::GetClientRect(ghWnd, &rcClient); UNREFERENCED_PARAMETER(lbRc);
 	return rcClient;
 }
 
@@ -3238,7 +3239,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		} break;
 		case CER_WORKSPACE: // switch (tWhat)
 		{
-			rcShift = CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
+			rcShift = CalcMargins(tTabAction|CEM_CLIENT_MARGINS/*|CEM_SCROLL*/);
 			AddMargins(rc, rcShift);
 		} break;
 		case CER_BACK: // switch (tWhat)

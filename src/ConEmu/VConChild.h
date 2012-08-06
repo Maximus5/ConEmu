@@ -116,6 +116,7 @@ class CConEmuChild
 		BOOL CheckScrollAutoPopup();
 		void ShowScroll(BOOL abImmediate);
 		void HideScroll(BOOL abImmediate);
+		void MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue);
 		
 		struct LockDcInfo
 		{

@@ -1435,6 +1435,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	SetDlgItemText(hWnd2, tBgImage, gpSet->sBgImage);
 	//CheckDlgButton(hWnd2, rBgSimple, BST_CHECKED);
 
+	CheckDlgButton(mh_Tabs[thi_Main], rbBgReplaceIndexes, BST_CHECKED);
 	FillBgImageColors();
 
 	TCHAR tmp[255];
@@ -4045,8 +4046,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbAlwaysShowScrollbar:
 			gpSet->isAlwaysShowScrollbar = IsChecked(hWnd2, cbAlwaysShowScrollbar);
-			gpConEmu->OnAlwaysShowScrollbar();
-			gpConEmu->OnSize(false);
+			if (!gpSet->isAlwaysShowScrollbar) gpConEmu->OnAlwaysShowScrollbar();
+			CVConGroup::SetAllConsoleWindowsSize(MakeCoord(gpConEmu->wndWidth, gpConEmu->wndHeight), /*true,*/ true, true);
+			if (gpSet->isAlwaysShowScrollbar) gpConEmu->OnAlwaysShowScrollbar();
+			//gpConEmu->OnSize(true);
 			gpConEmu->InvalidateAll();
 			break;
 		case cbFarHourglass:
@@ -8698,7 +8701,7 @@ void CSettings::UpdatePos(int x, int y, bool bGetRect)
 
 void CSettings::UpdateSize(UINT w, UINT h)
 {
-	if (w<29 || h<9)
+	if (w<MIN_CON_WIDTH || h<MIN_CON_HEIGHT)
 		return;
 
 	if (w!=gpConEmu->wndWidth || h!=gpConEmu->wndHeight)
