@@ -785,6 +785,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 			if (ghOpWnd)
 				gpConEmu->UpdateSizes();
 
+			//120807 - уберем лишние ресайзы
+#if 0
 			//if (!lbWasInitialized) // если зовется InitDC значит размер консоли изменился
 			if (!abNoWndResize)
 			{
@@ -794,6 +796,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 					gpConEmu->OnSize(false);
 				}
 			}
+#endif
 
 			if (GetDeviceCaps(hScreenDC, BITSPIXEL) == 32)
 			{
@@ -4004,6 +4007,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 
 	//Get ClientRect('ghWnd DC', &client);
 
+	//120807 - уберем излишние вызовы ресайзов
+#if 0
 	if (!gpConEmu->isNtvdm())
 	{
 		// rcClient не учитывает возможную полосу прокрутки
@@ -4015,6 +4020,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			gpConEmu->OnSize(false); // Только ресайз дочерних окон
 		}
 	}
+#endif
 
 	//MSectionLock S; //&csDC, &ncsTDC);
 	//RECT rcUpdateRect = {0};

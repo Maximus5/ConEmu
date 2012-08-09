@@ -40,8 +40,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RConStartArgs::RConStartArgs()
 {
-	bDetached = bRunAsAdministrator = bRunAsRestricted = bForceUserDialog = FALSE;
-	bForceDosBox = bBackgroundTab = FALSE;
+	bDetached = bRunAsAdministrator = bRunAsRestricted = FALSE;
+	bForceUserDialog = bBackgroundTab = bForceDosBox = FALSE;
 	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = /*pszUserPassword =*/ NULL;
@@ -194,18 +194,22 @@ int RConStartArgs::ProcessNewConArg()
 					case 0:
 						lbReady = true;
 						break;
+						
 					case L'b':
 						// b - background, не активировать таб
 						bBackgroundTab = TRUE;
 						break;
+						
 					case L'a':
 						// a - RunAs shell verb (as admin on Vista+, login/password in WinXP-)
 						bRunAsAdministrator = TRUE;
 						break;
+						
 					case L'r':
 						// r - run as restricted user
 						bRunAsRestricted = TRUE;
 						break;
+						
 					case L'h':
 						// "h0" - отключить буфер, "h9999" - включить буфер в 9999 строк
 						{
@@ -223,18 +227,22 @@ int RConStartArgs::ProcessNewConArg()
 							}
 						} // L'h':
 						break;
+						
 					case L'n':
 						// n - отключить "Press Enter or Esc to close console"
 						eConfirmation = eConfNever;
 						break;
+						
 					case L'c':
 						// c - принудительно включить "Press Enter or Esc to close console"
 						eConfirmation = eConfAlways;
 						break;
+						
 					case L'x':
 						// x - Force using dosbox for .bat files
 						bForceDosBox = TRUE;
 						break;
+						
 					// "Long" code blocks below: 'd', 'u', 's' and so on (in future)
 					case L'd':
 						// d:<StartupDir>. MUST be last options
@@ -267,6 +275,7 @@ int RConStartArgs::ProcessNewConArg()
 							}
 						} // L'd':
 						break;
+						
 					case L's':
 						// s[<SplitTab>T][<Percents>](H|V)
 						// Пример: "s3T30H" - разбить 3-ий таб. будет создан новый Pane справа, шириной 30% от 3-го таба.
@@ -320,6 +329,7 @@ int RConStartArgs::ProcessNewConArg()
 							nSplitPane = nTab;
 						} // L's'
 						break;
+						
 					case L'u':
 						{
 							// u - ConEmu choose user dialog

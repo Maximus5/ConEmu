@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    105
+#define CESERVER_REQ_VER    106
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -63,11 +63,11 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CES_NTVDM 0x10
 #define CEC_INITTITLE       L"ConEmu"
 
-#define VirtualConsoleClass L"VirtualConsoleClass" // окно отрисовки
+#define VirtualConsoleClass L"VirtualConsoleClass" // окна отрисовки
 #define VirtualConsoleClassMain L"VirtualConsoleClass" // главное окно
 #define VirtualConsoleClassApp L"VirtualConsoleClassApp" // специальный Popup (не используется)
-//#define VirtualConsoleClassBack L"VirtualConsoleClassBack"
-//#define VirtualConsoleClassScroll L"VirtualConsoleClassScroll"
+#define VirtualConsoleClassWork L"VirtualConsoleClassWork" // Holder для всех VCon
+#define VirtualConsoleClassBack L"VirtualConsoleClassBack" // Подложка (со скроллерами) для каждого VCon
 #define VirtualConsoleClassGhost L"VirtualConsoleClassGhost"
 #define ConEmuPanelViewClass L"ConEmuPanelView"
 

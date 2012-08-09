@@ -2252,7 +2252,9 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom)
 	COORD crStart = MakeCoord(crFrom.X - con.m_sbi.srWindow.Left, crFrom.Y - con.m_sbi.srWindow.Top);
 	COORD crEnd = crStart;
 	wchar_t szText[MAX_PATH+10];
-	ExpandTextRangeType rc = ExpandTextRange(crStart, crEnd, etr_FileAndLine, szText, countof(szText));
+	ExpandTextRangeType rc = mp_RCon->isActive()
+		? ExpandTextRange(crStart, crEnd, etr_FileAndLine, szText, countof(szText))
+		: etr_None;
 	if (memcmp(&crStart, &con.mcr_FileLineStart, sizeof(crStart)) != 0
 		|| memcmp(&crEnd, &con.mcr_FileLineEnd, sizeof(crStart)) != 0)
 	{

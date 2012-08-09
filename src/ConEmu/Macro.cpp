@@ -403,6 +403,10 @@ LPWSTR CConEmuMacro::Close(LPWSTR asArgs, CRealConsole* apRCon)
 			pszResult = lstrdup(L"OK");
 		}
 		break;
+	case 2:
+		if (gpConEmu->DoClose())
+			pszResult = lstrdup(L"OK");
+		break;
 	}
 
 	if (!pszResult)

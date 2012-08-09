@@ -1518,7 +1518,9 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 	SendDlgItemMessage(hWnd2, tWndWidth, EM_SETLIMITTEXT, 3, 0);
 	//swprintf_c(temp, L"%i", wndHeight);  SetDlgItemText(hWnd2, tWndHeight, temp);
 	SendDlgItemMessage(hWnd2, tWndHeight, EM_SETLIMITTEXT, 3, 0);
+	
 	UpdateSize(gpConEmu->wndWidth, gpConEmu->wndHeight);
+
 	EnableWindow(GetDlgItem(hWnd2, cbApplyPos), FALSE);
 	SendDlgItemMessage(hWnd2, tWndX, EM_SETLIMITTEXT, 6, 0);
 	SendDlgItemMessage(hWnd2, tWndY, EM_SETLIMITTEXT, 6, 0);
@@ -1828,6 +1830,8 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	CheckDlgButton(hWnd2, cbVisible, gpSet->isConVisible);
 
 	CheckDlgButton(hWnd2, cbUseInjects, gpSet->isUseInjects);
+
+	CheckDlgButton(hWnd2, cbShowWasHiddenMsg, gpSet->isDownShowHiddenMessage);
 
 	CheckDlgButton(hWnd2, cbProcessAnsi, gpSet->isProcessAnsi);
 
@@ -4314,6 +4318,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbDisableAllFlashing:
 			gpSet->isDisableAllFlashing = IsChecked(hWnd2, cbDisableAllFlashing);
+			break;
+		case cbShowWasHiddenMsg:
+			gpSet->isDownShowHiddenMessage = IsChecked(hWnd2, cbShowWasHiddenMsg);
 			break;
 		case cbTabsInCaption:
 			gpSet->isTabsInCaption = IsChecked(hWnd2, cbTabsInCaption);
@@ -8690,7 +8697,7 @@ void CSettings::UpdatePos(int x, int y, bool bGetRect)
 		gpSet->_wndY = y;
 	}
 
-	if (ghOpWnd && mh_Tabs[thi_SizePos] && gpSet->isUseCurrentSizePos)
+	if (ghOpWnd && mh_Tabs[thi_SizePos])
 	{
 		mb_IgnoreEditChanged = TRUE;
 		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndX, gpSet->isUseCurrentSizePos ? gpConEmu->wndX : gpSet->_wndX, TRUE);
@@ -8701,22 +8708,22 @@ void CSettings::UpdatePos(int x, int y, bool bGetRect)
 
 void CSettings::UpdateSize(UINT w, UINT h)
 {
-	if (w<MIN_CON_WIDTH || h<MIN_CON_HEIGHT)
-		return;
-
-	if (w!=gpConEmu->wndWidth || h!=gpConEmu->wndHeight)
+	if (w>=MIN_CON_WIDTH && h>=MIN_CON_HEIGHT)
 	{
-		gpConEmu->wndWidth = w;
-		gpConEmu->wndHeight = h;
+		if (w!=gpConEmu->wndWidth || h!=gpConEmu->wndHeight)
+		{
+			gpConEmu->wndWidth = w;
+			gpConEmu->wndHeight = h;
+		}
+
+		if (gpSet->isUseCurrentSizePos && (w!=gpSet->_wndWidth || h!=gpSet->_wndHeight))
+		{
+			gpSet->_wndWidth = w;
+			gpSet->_wndHeight = h;
+		}
 	}
 
-	if (gpSet->isUseCurrentSizePos && (w!=gpSet->_wndWidth || h!=gpSet->_wndHeight))
-	{
-		gpSet->_wndWidth = w;
-		gpSet->_wndHeight = h;
-	}
-
-	if (ghOpWnd && mh_Tabs[thi_SizePos] && gpSet->isUseCurrentSizePos)
+	if (ghOpWnd && mh_Tabs[thi_SizePos])
 	{
 		mb_IgnoreEditChanged = TRUE;
 		SetDlgItemInt(mh_Tabs[thi_SizePos], tWndWidth, gpSet->isUseCurrentSizePos ? gpConEmu->wndWidth : gpSet->_wndWidth, FALSE);

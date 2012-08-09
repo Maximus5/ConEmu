@@ -799,6 +799,7 @@
 #define vkSplitDown                     2432
 #define vkSplitLeft                     2433
 #define vkSplitRight                    2434
+#define cbShowWasHiddenMsg              2435
 
 // Next default values for new objects
 // 
@@ -806,7 +807,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        221
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2435
+#define _APS_NEXT_CONTROL_VALUE         2436
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

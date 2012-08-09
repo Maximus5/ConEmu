@@ -57,7 +57,7 @@ protected:
 	static void ShowActiveGroup(CVirtualConsole* pOldActive);
 
 	void GetAllTextSize(SIZE& sz, bool abMinimal = false);
-	void SetConsoleSizes(const COORD& size);
+	void SetConsoleSizes(const COORD& size, bool abSync);
 	
 protected:
 	//static CVirtualConsole* mp_VCon[MAX_CONSOLE_COUNT];
@@ -155,7 +155,7 @@ public:
 	static void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
 	static void LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars = NULL);
 
-	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
+	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, const RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 	static bool PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom = CER_MAIN, bool bSetRedraw = false);
 	static void SyncWindowToConsole();
 	static void SyncConsoleToWindow();

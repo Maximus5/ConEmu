@@ -70,7 +70,10 @@ wchar_t gszDbgModLabel[6] = {0};
 
 //externs
 HINSTANCE g_hInstance=NULL;
-HWND ghWnd=NULL, /*ghWnd DC=NULL,*/ ghConWnd=NULL, ghWndApp=NULL;
+HWND ghWnd=NULL, ghWndWork=NULL, ghWndApp=NULL;
+#ifdef _DEBUG
+HWND ghConWnd=NULL;
+#endif
 CConEmuMain *gpConEmu = NULL;
 //CVirtualConsole *pVCon=NULL;
 Settings  *gpSet = NULL;
@@ -82,11 +85,11 @@ BOOL gbDebugLogStarted = FALSE;
 BOOL gbDebugShowRects = FALSE;
 
 
-const TCHAR *const gsClassName = VirtualConsoleClass;
-const TCHAR *const gsClassNameParent = VirtualConsoleClassMain;
+const TCHAR *const gsClassName = VirtualConsoleClass; // окна отрисовки
+const TCHAR *const gsClassNameParent = VirtualConsoleClassMain; // главное окно
+const TCHAR *const gsClassNameWork = VirtualConsoleClassWork; // Holder для всех VCon
+const TCHAR *const gsClassNameBack = VirtualConsoleClassBack; // Подложка (со скроллерами) для каждого VCon
 const TCHAR *const gsClassNameApp = VirtualConsoleClassApp;
-//const TCHAR *const szClassNameBack = VirtualConsoleClassBack;
-//const TCHAR *const szClassNameScroll = VirtualConsoleClassScroll;
 
 
 OSVERSIONINFO gOSVer = {};

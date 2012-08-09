@@ -466,7 +466,7 @@ bool CConEmuCtrl::key_TerminateProcess(DWORD VkMod, bool TestOnly, const ConEmuH
 	if (TestOnly)
 		return true;
 
-	pRCon->CloseConsole(true, false);
+	pRCon->CloseConsole(true, true);
 	return true;
 }
 

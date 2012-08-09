@@ -76,6 +76,7 @@ CConEmuChild::CConEmuChild()
 	ZeroStruct(Caret);
 	mb_DisableRedraw = FALSE;
 	mh_WndDC = NULL;
+	mh_WndBack = NULL;
 	mh_LastGuiChild = NULL;
 	mb_ScrollVisible = FALSE; mb_Scroll2Visible = FALSE; /*mb_ScrollTimerSet = FALSE;*/ mb_ScrollAutoPopup = FALSE;
 	mb_VTracking = FALSE;
@@ -96,6 +97,11 @@ CConEmuChild::~CConEmuChild()
 		DestroyWindow(mh_WndDC);
 		mh_WndDC = NULL;
 	}
+	if (mh_WndBack)
+	{
+		DestroyWindow(mh_WndBack);
+		mh_WndBack = NULL;
+	}
 }
 
 HWND CConEmuChild::CreateView()
@@ -105,9 +111,9 @@ HWND CConEmuChild::CreateView()
 		_ASSERTE(this!=NULL);
 		return NULL;
 	}
-	if (mh_WndDC)
+	if (mh_WndDC || mh_WndBack)
 	{
-		_ASSERTE(mh_WndDC == NULL);
+		_ASSERTE(mh_WndDC == NULL && mh_WndBack == NULL);
 		return mh_WndDC;
 	}
 
@@ -124,25 +130,28 @@ HWND CConEmuChild::CreateView()
 	//-- тут консоль только создается, guard не нужен
 	//CVConGuard guard(pVCon);
 
+	TODO("Заменить ghWnd на ghWndWork");
+	HWND hParent = ghWnd;
 	// Имя класса - то же самое, что и у главного окна
 	DWORD style = /*WS_VISIBLE |*/ WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 	DWORD styleEx = 0;
-	//RECT rc = gpConEmu->DCClientRect();
-	//RECT rcMain; Get ClientRect(ghWnd, &rcMain);
+	
+	RECT rcBack = gpConEmu->CalcRect(CER_BACK, pVCon);
 	RECT rc = gpConEmu->CalcRect(CER_DC, pVCon);
 
-	mh_WndDC = CreateWindowEx(styleEx, gsClassName, 0, style,
-		rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, pVCon);
+	mh_WndBack = CreateWindowEx(styleEx, gsClassNameBack, 0, style,
+		rcBack.left, rcBack.top, rcBack.right - rcBack.left, rcBack.bottom - rcBack.top, hParent, NULL, (HINSTANCE)g_hInstance, pVCon);
 
-	if (!mh_WndDC)
+	mh_WndDC = CreateWindowEx(styleEx, gsClassName, 0, style,
+		rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hParent, NULL, (HINSTANCE)g_hInstance, pVCon);
+
+	if (!mh_WndDC || !mh_WndBack)
 	{
-		MBoxA(_T("Can't create DC window!"));
+		DisplayLastError(L"Can't create DC window!");
 		return NULL; //
 	}
 
-	//SetClassLong('ghWnd DC', GCL_HBRBACKGROUND, (LONG)gpConEmu->m_Back->mh_BackBrush);
 	SetWindowPos(mh_WndDC, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
-	//gpConEmu->dcWindowLast = rc; //TODO!!!
 
 	// Установить переменную среды с дескриптором окна
 	SetConEmuEnvVar(mh_WndDC);
@@ -158,6 +167,16 @@ HWND CConEmuChild::GetView()
 		return NULL;
 	}
 	return mh_WndDC;
+}
+
+HWND CConEmuChild::GetBack()
+{
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return NULL;
+	}
+	return mh_WndBack;
 }
 
 BOOL CConEmuChild::ShowView(int nShowCmd)
@@ -185,10 +204,12 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 
 	if ((GetCurrentThreadId() != nTID) || (hChildGUI != NULL))
 	{
+		bRc = ShowWindowAsync(mh_WndBack, nShowCmd);
 		bRc = ShowWindowAsync(mh_WndDC, nShowCmd);
 	}
 	else
 	{
+		bRc = ShowWindow(mh_WndBack, nShowCmd);
 		bRc = ShowWindow(mh_WndDC, nShowCmd);
 	}
 	return bRc;
@@ -224,17 +245,9 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 
 	if (messg == WM_SYSCHAR)
 	{
+		_ASSERTE(FALSE); // по идее, фокуса тут быть не должно
 		// Чтобы не пищало
 		result = TRUE;
-		if (pVCon)
-		{
-			HWND hGuiWnd = pVCon->GuiWnd();
-			if (hGuiWnd)
-			{
-				TODO("Послать Alt+<key> в прилепленное GUI приложение?");
-				// pVCon->RCon()->PostMessage(hGuiWnd, messg, wParam, lParam);
-			}
-		}
 		goto wrap;
 	}
 
@@ -313,10 +326,18 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 						break;
 				}
 
-				POINT pt = {LOWORD(lParam),HIWORD(lParam)};
-				MapWindowPoints(hWnd, ghWnd, &pt, 1);
-				lParam = MAKELONG(pt.x,pt.y);
-				result = gpConEmu->WndProc(ghWnd, messg, wParam, lParam);
+				TODO("Обработка ghWndWork");
+				HWND hParent = ghWnd;
+				_ASSERTE(GetParent(hWnd)==ghWnd);
+
+				if (messg >= WM_MOUSEFIRST && messg <= WM_MOUSELAST)
+				{
+					POINT pt = {LOWORD(lParam),HIWORD(lParam)};
+					MapWindowPoints(hWnd, hParent, &pt, 1);
+					lParam = MAKELONG(pt.x,pt.y);
+				}
+
+				result = gpConEmu->WndProc(hParent, messg, wParam, lParam);
 			}
 			break;
 		case WM_IME_NOTIFY:
@@ -478,6 +499,210 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			{
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 			}
+	}
+
+wrap:
+	return result;
+}
+
+LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 0;
+
+	CVirtualConsole* pVCon = NULL;
+	if (messg == WM_CREATE || messg == WM_NCCREATE)
+	{
+		LPCREATESTRUCT lp = (LPCREATESTRUCT)lParam;
+		pVCon = (CVirtualConsole*)lp->lpCreateParams;
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)pVCon);
+	}
+	else
+	{
+		pVCon = (CVirtualConsole*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	}
+
+	CVConGuard guard(pVCon);
+
+	if (messg == WM_SYSCHAR)
+	{
+		_ASSERTE(FALSE); // по идее, фокуса тут быть не должно
+		// Чтобы не пищало
+		result = TRUE;
+		goto wrap;
+	}
+
+	if (!pVCon)
+	{
+		_ASSERTE(pVCon!=NULL);
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
+		goto wrap;
+	}
+
+	switch (messg)
+	{
+		case WM_SETFOCUS:
+			// Если в консоли работает "GUI" окно (GUI режим), то фокус нужно отдать туда.
+			{
+				// Фокус должен быть в главном окне! За исключением случая работы в GUI режиме.
+				HWND hGuiWnd = pVCon->GuiWnd();
+				SetFocus(hGuiWnd ? hGuiWnd : ghWnd);
+			}
+			return 0;
+		case WM_ERASEBKGND:
+			result = 0;
+			break;
+		case WM_PAINT:
+			{
+				PAINTSTRUCT ps = {};
+				BeginPaint(hWnd, &ps);
+
+				int nAppId = -1;
+				int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
+				if (pVCon->RCon())
+				{
+					nAppId = pVCon->RCon()->GetActiveAppSettingsId();
+					nColorIdx = pVCon->RCon()->GetDefaultBackColorIdx();
+				}
+
+				HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(nAppId, !gpConEmu->isMeForeground())[nColorIdx]);
+				if (hBrush)
+				{
+					FillRect(ps.hdc, &ps.rcPaint, hBrush);
+
+					DeleteObject(hBrush);
+				}
+
+				EndPaint(hWnd, &ps);
+			} // WM_PAINT
+			break;
+		case WM_KEYDOWN:
+		case WM_KEYUP:
+		case WM_SYSKEYDOWN:
+		case WM_SYSKEYUP:
+		case WM_MOUSEWHEEL:
+		case WM_ACTIVATE:
+		case WM_ACTIVATEAPP:
+			//case WM_MOUSEACTIVATE:
+		case WM_KILLFOCUS:
+			//case WM_SETFOCUS:
+		case WM_MOUSEMOVE:
+		case WM_RBUTTONDOWN:
+		case WM_RBUTTONUP:
+		case WM_MBUTTONDOWN:
+		case WM_MBUTTONUP:
+		case WM_LBUTTONDOWN:
+		case WM_LBUTTONUP:
+		case WM_LBUTTONDBLCLK:
+		case WM_MBUTTONDBLCLK:
+		case WM_RBUTTONDBLCLK:
+		case WM_XBUTTONDOWN:
+		case WM_XBUTTONUP:
+		case WM_XBUTTONDBLCLK:
+		case WM_VSCROLL:
+			// Вся обработка в родителе
+			{
+				switch (messg)
+				{
+					case WM_VSCROLL:
+						switch (LOWORD(wParam))
+						{
+						case SB_THUMBTRACK:
+						case SB_THUMBPOSITION:
+							pVCon->mb_VTracking = TRUE;
+							break;
+						case SB_ENDSCROLL:
+							pVCon->mb_VTracking = FALSE;
+							break;
+						}
+						pVCon->RCon()->OnSetScrollPos(wParam);
+						break;
+
+					case WM_LBUTTONUP:
+						pVCon->mb_VTracking = FALSE;
+						break;
+				}
+
+				TODO("Обработка ghWndWork");
+				HWND hParent = ghWnd;
+				_ASSERTE(GetParent(hWnd)==ghWnd);
+
+				if (messg >= WM_MOUSEFIRST && messg <= WM_MOUSELAST)
+				{
+					POINT pt = {LOWORD(lParam),HIWORD(lParam)};
+					MapWindowPoints(hWnd, hParent, &pt, 1);
+					lParam = MAKELONG(pt.x,pt.y);
+				}
+
+				result = gpConEmu->WndProc(hParent, messg, wParam, lParam);
+			}
+			break;
+		case WM_IME_NOTIFY:
+			break;
+		case WM_INPUTLANGCHANGE:
+		case WM_INPUTLANGCHANGEREQUEST:
+			{
+				#ifdef _DEBUG
+				if (IsDebuggerPresent())
+				{
+					WCHAR szMsg[128];
+					_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"InChild %s(CP:%i, HKL:0x%08X)\n",
+							  (messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
+							  (DWORD)wParam, (DWORD)lParam);
+					DEBUGSTRLANG(szMsg);
+				}
+				#endif
+				result = DefWindowProc(hWnd, messg, wParam, lParam);
+			} break;
+
+#ifdef _DEBUG
+		case WM_WINDOWPOSCHANGING:
+			{
+				WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+				result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
+			return result;
+		case WM_WINDOWPOSCHANGED:
+			{
+				WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+				result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
+			break;
+#endif
+		case WM_SETCURSOR:
+			{
+				gpConEmu->WndProc(hWnd, messg, wParam, lParam);
+
+				//if (!result)
+				//	result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
+			// If an application processes this message, it should return TRUE to halt further processing or FALSE to continue.
+			break;
+			
+		case WM_SYSCOMMAND:
+			// -- лишние ограничения, похоже
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			//if (wParam >= SC_SIZE && wParam <= SC_CONTEXTHELP/*0xF180*/)
+			//{
+			//	// Изменение размеров/максимизация/и т.п. окна консоли - запрещена
+			//	_ASSERTE(!(wParam >= SC_SIZE && wParam <= SC_CONTEXTHELP));
+			//}
+			//else
+			//{
+			//	// По идее, сюда ничего приходить больше не должно
+			//	_ASSERTE(FALSE);
+			//}
+			break;
+
+		case WM_GESTURENOTIFY:
+		case WM_GESTURE:
+			{
+				gpConEmu->ProcessGestureMessage(hWnd, messg, wParam, lParam, result);
+				break;
+			} // case WM_GESTURE, WM_GESTURENOTIFY
+
+		default:
+
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
 	}
 
 wrap:
@@ -714,6 +939,33 @@ void CConEmuChild::Redraw()
 	//RedrawWindow(ghWnd, NULL, NULL,
 	//	RDW_INTERNALPAINT|RDW_NOERASE|RDW_UPDATENOW);
 	mb_RedrawPosted = FALSE; // Чтобы другие нити могли сделать еще пост
+}
+
+// Вызывается из VConGroup::RepositionVCon
+void CConEmuChild::SetVConSizePos(RECT arcBack, bool abReSize /*= true*/)
+{
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	RECT rcBack = arcBack;
+	TODO("Оптимизировать");
+	RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, arcBack, CER_BACK, pVCon);
+	RECT rcTmp = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE_CUR, pVCon);
+	RECT rcDC = gpConEmu->CalcRect(CER_DC, arcBack, CER_BACK, pVCon, &rcTmp);
+
+	if (abReSize)
+	{
+		_ASSERTE((rcBack.right > rcBack.left) && (rcBack.bottom > rcBack.top));
+		_ASSERTE((rcDC.right > rcDC.left) && (rcDC.bottom > rcDC.top));
+		// Двигаем/ресайзим окошко DC
+		MoveWindow(mh_WndBack, rcBack.left, rcBack.top, rcBack.right - rcBack.left, rcBack.bottom - rcBack.top, 1);
+		MoveWindow(mh_WndDC, rcDC.left, rcDC.top, rcDC.right - rcDC.left, rcDC.bottom - rcDC.top, 1);
+		Invalidate();
+	}
+	else
+	{
+		// Двигаем окошко DC
+		SetWindowPos(mh_WndBack, NULL, rcBack.left, rcBack.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		SetWindowPos(mh_WndDC, NULL, rcDC.left, rcDC.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+	}
 }
 
 void CConEmuChild::SetRedraw(BOOL abRedrawEnabled)

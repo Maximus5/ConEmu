@@ -40,18 +40,22 @@ class CConEmuChild
 	protected:
 		virtual ~CConEmuChild();
 	public:
-		static LRESULT ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		static LRESULT WINAPI ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		static LRESULT WINAPI BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		LRESULT OnPaint();
 		LRESULT OnSize(WPARAM wParam, LPARAM lParam);
 		HWND CreateView();
 		HWND GetView();
+		HWND GetBack();
 		BOOL ShowView(int nShowCmd);
 		void Invalidate();
 		void Validate();
 		void Redraw();
 
 		void SetRedraw(BOOL abRedrawEnabled);
+
+		void SetVConSizePos(RECT arcBack, bool abReSize = true);
 
 		void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
 		bool InScroll();
@@ -80,6 +84,7 @@ class CConEmuChild
 		virtual void OnDestroy() = 0; // WM_DESTROY
 
 		HWND mh_WndDC;
+		HWND mh_WndBack; // скроллинг и фон
 		HWND mh_LastGuiChild;
 		UINT mn_MsgTabChanged;
 		UINT mn_MsgPostFullPaint;

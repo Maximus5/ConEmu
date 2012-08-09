@@ -457,7 +457,7 @@ class CConEmuMain :
 		void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
 		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg /*, CVirtualConsole* apVCon=NULL*/);
 		RECT CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon=NULL);
-		RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
+		RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, const RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 		POINT CalcTabMenuPos(CVirtualConsole* apVCon);
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
@@ -471,6 +471,7 @@ class CConEmuMain :
 		CVirtualConsole* CreateConGroup(LPCWSTR apszScript, BOOL abForceAsAdmin = FALSE, LPCWSTR asStartupDir = NULL);
 		void CreateGhostVCon(CVirtualConsole* apVCon);
 		BOOL CreateMainWindow();
+		BOOL CreateWorkWindow();
 		HRGN CreateWindowRgn(bool abTestOnly=false);
 		HRGN CreateWindowRgn(bool abTestOnly,bool abRoundTitle,int anX, int anY, int anWndWidth, int anWndHeight);
 		void Destroy();
@@ -487,6 +488,8 @@ class CConEmuMain :
 		RECT GetVirtualScreenRect(BOOL abFullScreen);
 		DWORD_PTR GetWindowStyle();
 		DWORD_PTR GetWindowStyleEx();
+		DWORD_PTR GetWorkWindowStyle();
+		DWORD_PTR GetWorkWindowStyleEx();
 		LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync, CVirtualConsole* apVCon);
 		BOOL Init();
 		void InitInactiveDC(CVirtualConsole* apVCon);
@@ -593,6 +596,7 @@ class CConEmuMain :
 		void UpdateProgress(/*BOOL abUpdateTitle*/);
 		void UpdateWindowRgn(int anX=-1, int anY=-1, int anWndWidth=-1, int anWndHeight=-1);
 		static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+		static LRESULT CALLBACK WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		BOOL isDialogMessage(MSG &Msg);
 		LPCWSTR MenuAccel(int DescrID, LPCWSTR asText);
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -604,7 +608,7 @@ class CConEmuMain :
 		void OnAlwaysOnTop();
 		void OnAlwaysShowScrollbar();
 		void OnBufferHeight();
-		LRESULT OnClose(HWND hWnd);
+		bool DoClose();
 		BOOL OnCloseQuery();
 		//BOOL mb_InConsoleResize;
 		void OnConsoleKey(WORD vk, LPARAM Mods);
@@ -664,6 +668,7 @@ class CConEmuMain :
 		#ifdef __GNUC__
 		AlphaBlend_t GdiAlphaBlend;
 		#endif
+		void OnActiveConWndStore(HWND hConWnd);
 
 		// return true - when state was changes
 		bool SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColorKey = false, COLORREF acrColorKey = 0, bool abForceLayered = false);

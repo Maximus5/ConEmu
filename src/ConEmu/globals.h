@@ -30,9 +30,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern const TCHAR *const gsClassName;
 extern const TCHAR *const gsClassNameParent;
+extern const TCHAR *const gsClassNameWork;
+extern const TCHAR *const gsClassNameBack;
 extern const TCHAR *const gsClassNameApp;
-//extern const TCHAR *const gsClassNameBack;
-//extern const TCHAR *const gsClassNameScroll;
 
 struct Settings;
 class CSettings;
@@ -51,7 +51,11 @@ extern HINSTANCE g_hInstance;
 extern CConEmuMain *gpConEmu;
 //extern TCHAR Title[0x400];
 //extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
-extern HWND ghWnd, ghConWnd, /*ghWnd DC,*/ ghOpWnd, ghWndApp;
+extern HWND ghWnd, ghWndWork, ghWndApp;
+extern HWND ghOpWnd;
+#ifdef _DEBUG
+extern HWND ghConWnd;
+#endif
 extern BOOL gbMessagingStarted, gbDontEnable;
 class DontEnable
 {

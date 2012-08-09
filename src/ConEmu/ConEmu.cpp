@@ -157,7 +157,7 @@ CConEmuMain::CConEmuMain()
 	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L"%02u%02u%02u%s", (MVV_1%100),MVV_2,MVV_3,_T(MVV_4a));
 	wcscpy_c(ms_ConEmuDefTitle, L"ConEmu ");
 	wcscat_c(ms_ConEmuDefTitle, ms_ConEmuBuild);
-	wcscat_c(ms_ConEmuDefTitle, WIN3264TEST(L" x86",L" x64"));
+	wcscat_c(ms_ConEmuDefTitle, WIN3264TEST(L" [32]",L" [64]"));
 
 	mp_TabBar = NULL; /*m_Macro = NULL;*/ mp_Tip = NULL;
 	mp_Status = new CStatus;
@@ -1304,6 +1304,20 @@ DWORD_PTR CConEmuMain::GetWindowStyleEx()
 	return styleEx;
 }
 
+// Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE
+DWORD_PTR CConEmuMain::GetWorkWindowStyle()
+{
+	DWORD_PTR style = WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
+	return style;
+}
+
+// Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE_EX
+DWORD_PTR CConEmuMain::GetWorkWindowStyleEx()
+{
+	DWORD_PTR styleEx = 0;
+	return styleEx;
+}
+
 BOOL CConEmuMain::CreateMainWindow()
 {
 	//if (!Init()) -- вызывается из WinMain
@@ -1323,8 +1337,23 @@ BOOL CConEmuMain::CreateMainWindow()
 	                 NULL, gsClassNameParent, hClassIconSm
 	                };// | CS_DROPSHADOW
 
-	if (!RegisterClassEx(&wc))
+	WNDCLASSEX wcWork = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC/*|CS_SAVEBITS*/, CConEmuMain::WorkWndProc, 0, 16,
+	                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
+	                 NULL /*(HBRUSH)COLOR_BACKGROUND*/,
+	                 NULL, gsClassNameWork, hClassIconSm
+	                };// | CS_DROPSHADOW
+
+	WNDCLASSEX wcBack = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC/*|CS_SAVEBITS*/, CConEmuChild::BackWndProc, 0, 16,
+	                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
+	                 NULL /*(HBRUSH)COLOR_BACKGROUND*/,
+	                 NULL, gsClassNameBack, hClassIconSm
+	                };// | CS_DROPSHADOW
+
+	if (!RegisterClassEx(&wc) || !RegisterClassEx(&wcWork) || !RegisterClassEx(&wcBack))
+	{
+		DisplayLastError(L"Failed to register class names");
 		return -1;
+	}
 
 	if (m_InsideIntegration)
 	{
@@ -1413,6 +1442,27 @@ BOOL CConEmuMain::CreateMainWindow()
 	//if (gpConEmu->WindowMode == rFullScreen || gpConEmu->WindowMode == rMaximized)
 	//	gpConEmu->SetWindowMode(gpConEmu->WindowMode);
 	UpdateGuiInfoMapping();
+	return TRUE;
+}
+
+BOOL CConEmuMain::CreateWorkWindow()
+{
+	HWND  hParent = ghWnd;
+	RECT  rcClient = CalcRect(CER_WORKSPACE);
+	DWORD styleEx = GetWorkWindowStyleEx();
+	DWORD style = GetWorkWindowStyle();
+
+	_ASSERTE(hParent!=NULL);
+
+	ghWndWork = CreateWindowEx(styleEx, gsClassNameWork, L"ConEmu Workspace", style,
+	                       rcClient.left, rcClient.top, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top,
+	                       hParent, NULL, (HINSTANCE)g_hInstance, NULL);
+	if (!ghWndWork)
+	{
+		DisplayLastError(L"Failed to create workspace window");
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
@@ -3053,7 +3103,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 // Для точного расчета размеров - требуется (размер главного окна) и (размер окна отрисовки) для корректировки
 // на x64 возникают какие-то глюки с ",RECT rFrom,". Отладчик показывает мусор в rFrom,
 // но тем не менее, после "RECT rc = rFrom;", rc получает правильные значения >:|
-RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, RECT* prDC/*=NULL*/, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
+RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, const RECT* prDC/*=NULL*/, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
 {
 	_ASSERTE(this!=NULL);
 	RECT rc = rFrom; // инициализация, если уж не получится...
@@ -3158,6 +3208,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					tFromNow = CER_MAINCLIENT;
 				} break;
 				default:
+					_ASSERTE(FALSE && "Unexpected tWhat");
 					break;
 			}
 		}
@@ -4638,6 +4689,11 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 		newClientHeight = rcClient.bottom;
 	}
 
+	RECT mainClient = MakeRect(newClientWidth,newClientHeight);
+	RECT work = CalcRect(CER_WORKSPACE, mainClient, CER_MAINCLIENT);
+	_ASSERTE(ghWndWork && GetParent(ghWndWork)==ghWnd); // пока расчитано на дочерний режим
+	MoveWindow(ghWndWork, work.left, work.top, work.right-work.left, work.bottom-work.top, FALSE);
+
 	// Запомнить "идеальный" размер окна, выбранный пользователем
 	if (isSizing() && !mb_isFullScreen && !isZoomed() && !isIconic())
 	{
@@ -4656,10 +4712,8 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 
 	if (bResizeRCon && change2WindowMode == (DWORD)-1 && mn_InResize <= 1)
 	{
-		SyncConsoleToWindow();
+		CVConGroup::SyncAllConsoles2Window(mainClient, CER_MAINCLIENT, true);
 	}
-
-	RECT mainClient = MakeRect(newClientWidth,newClientHeight);
 
 	if (CVConGroup::isVConExists(0))
 	{
@@ -5080,7 +5134,7 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		{
 			TODO("Доработать, когда будет ресайз PicView на лету");
 			RECT rcWnd = {0,0,p->cx,p->cy};
-			CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN);
+			CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN, true);
 			//CVConGuard VCon;
 			//CVirtualConsole* pVCon = (GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
 
@@ -5275,6 +5329,21 @@ void CConEmuMain::OnSizePanels(COORD cr)
 	System_Routines() {};
 }
 #endif
+
+void CConEmuMain::OnActiveConWndStore(HWND hConWnd)
+{
+	// Для удобства внешних программ, плагинов и прочая
+	// Запоминаем в UserData дескриптор "активного" окна консоли
+	SetWindowLongPtr(ghWnd, GWLP_USERDATA, (LONG_PTR)hConWnd);
+
+	// ghWndWork - планируется как Holder для виртуальных консолей,
+	// причем он может быть как дочерним для ghWnd, так и отдельно
+	// висящим, и делающим вид, что оно дочернее для ghWnd.
+	if (ghWndWork && (ghWndWork != ghWnd))
+	{	
+		SetWindowLongPtr(ghWndWork, GWLP_USERDATA, (LONG_PTR)hConWnd);
+	}
+}
 
 BOOL CConEmuMain::Activate(CVirtualConsole* apVCon)
 {
@@ -8565,23 +8634,23 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 }
 
 
-LRESULT CConEmuMain::OnClose(HWND hWnd)
+bool CConEmuMain::DoClose()
 {
-	TODO("И вообще, похоже это событие не вызывается");
-	_ASSERTE("CConEmuMain::OnClose"==NULL);
+	bool lbProceed = false;
 
-	// Если все-таки вызовется - имитировать SC_CLOSE
-	OnSysCommand(hWnd, SC_CLOSE, 0);
-	//_ASSERTE(FALSE);
-	//Icon.Delete(); - перенес в WM_DESTROY
-	//mb_InClose = TRUE;
-	//if (ghConWnd && IsWindow(ghConWnd)) {
-	//    mp_ VActive->RCon()->CloseConsole(false, false);
-	//} else {
-	//    Destroy();
-	//}
-	//mb_InClose = FALSE;
-	return 0;
+	if (!gpConEmu->OnCloseQuery())
+		return false; // не закрывать
+
+	// Сохраним размер перед закрытием консолей, а то они могут напакостить и "вернуть" старый размер
+	gpSet->SaveSizePosOnExit();
+
+	if (CVConGroup::OnScClose())
+	{
+		Destroy();
+		lbProceed = true;
+	}
+
+	return lbProceed;
 }
 
 bool CConEmuMain::isCloseConfirmed()
@@ -8889,8 +8958,9 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 
 	if (fnRegisterShellHookWindow) fnRegisterShellHookWindow(hWnd);
 
+	_ASSERTE(ghConWnd==NULL && "ConWnd must not be created yet"); // оно еще не должно быть создано
 	// Чтобы можно было найти хэндл окна по хэндлу консоли
-	SetWindowLongPtr(ghWnd, GWLP_USERDATA, (LONG_PTR)ghConWnd); // 31.03.2009 Maximus - только нихрена оно еще не создано!
+	OnActiveConWndStore(NULL); // 31.03.2009 Maximus - только нихрена оно еще не создано!
 	//m_Back->Create();
 
 	//if (!m_Child->Create())
@@ -8905,6 +8975,14 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 
 	// Сформировать или обновить системное меню
 	GetSysMenu(TRUE);
+
+	// Holder
+	_ASSERTE(ghWndWork==NULL); // еще не должен был быть создан
+	if (!ghWndWork && !CreateWorkWindow())
+	{
+		// Ошибка уже показана
+		return -1;
+	}
 
 	//HMENU hwndMain = GetSysMenu(ghWnd, FALSE), hDebug = NULL;
 	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
@@ -11524,7 +11602,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 
 	TODO("DoubleView. Хорошо бы колесико мышки перенаправлять в консоль под мышиным курором, а не в активную");
-	RECT conRect = {0}, dcRect = {0};
+	RECT /*conRect = {0},*/ dcRect = {0};
 	//GetWindowRect('ghWnd DC', &dcRect);
 	CVirtualConsole* pVCon = NULL;
 	CVConGuard VCon;
@@ -11655,8 +11733,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	// Переводим в клиентские (относительно hView) координаты
 	ptCurClient.x -= dcRect.left; ptCurClient.y -= dcRect.top;
-	WARNING("Избавляться от ghConWnd. Должно быть обращение через классы");
-	::GetClientRect(ghConWnd, &conRect);
+	//WARNING("Избавляться от ghConWnd. Должно быть обращение через классы");
+	//::GetClientRect(ghConWnd, &conRect);
 	COORD cr = pVCon->ClientToConsole(ptCurClient.x,ptCurClient.y);
 	short conX = cr.X; //winX/gpSet->Log Font.lfWidth;
 	short conY = cr.Y; //winY/gpSet->Log Font.lfHeight;
@@ -13867,54 +13945,54 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			
 		case ID_CONPROP:
 		{
-			#ifdef MSGLOGGER
+			CVConGuard VCon;
+			if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
 			{
-				HMENU hMenu = ::GetSystemMenu(ghConWnd, FALSE);
-				MENUITEMINFO mii; TCHAR szText[255];
-
-				for(int i=0; i<15; i++)
+				#ifdef MSGLOGGER
 				{
-					memset(&mii, 0, sizeof(mii));
-					mii.cbSize = sizeof(mii); mii.dwTypeData=szText; mii.cch=255;
-					mii.fMask = MIIM_ID|MIIM_STRING|MIIM_SUBMENU;
+					// Для отладки, посмотреть, какие пункты меню есть в RealConsole
+					HMENU hMenu = ::GetSystemMenu(VCon->RCon()->ConWnd(), FALSE);
+					MENUITEMINFO mii; TCHAR szText[255];
 
-					if (GetMenuItemInfo(hMenu, i, TRUE, &mii))
+					for(int i=0; i<15; i++)
 					{
-						mii.cbSize = sizeof(mii);
+						memset(&mii, 0, sizeof(mii));
+						mii.cbSize = sizeof(mii); mii.dwTypeData=szText; mii.cch=255;
+						mii.fMask = MIIM_ID|MIIM_STRING|MIIM_SUBMENU;
 
-						if (mii.hSubMenu)
+						if (GetMenuItemInfo(hMenu, i, TRUE, &mii))
 						{
-							MENUITEMINFO mic;
+							mii.cbSize = sizeof(mii);
 
-							for(int i=0; i<15; i++)
+							if (mii.hSubMenu)
 							{
-								memset(&mic, 0, sizeof(mic));
-								mic.cbSize = sizeof(mic); mic.dwTypeData=szText; mic.cch=255;
-								mic.fMask = MIIM_ID|MIIM_STRING;
+								MENUITEMINFO mic;
 
-								if (GetMenuItemInfo(mii.hSubMenu, i, TRUE, &mic))
+								for(int i=0; i<15; i++)
 								{
-									mic.cbSize = sizeof(mic);
-								}
-								else
-								{
-									break;
+									memset(&mic, 0, sizeof(mic));
+									mic.cbSize = sizeof(mic); mic.dwTypeData=szText; mic.cch=255;
+									mic.fMask = MIIM_ID|MIIM_STRING;
+
+									if (GetMenuItemInfo(mii.hSubMenu, i, TRUE, &mic))
+									{
+										mic.cbSize = sizeof(mic);
+									}
+									else
+									{
+										break;
+									}
 								}
 							}
 						}
+						else
+							break;
 					}
-					else
-						break;
 				}
-			}
-			#endif
-			//POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, SC_PROPERTIES_SECRET/*65527*/, 0, TRUE);
-			{
-				CVConGuard VCon;
-				if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
-				{
-					VCon->RCon()->ShowPropertiesDialog();
-				}
+				#endif
+			
+			    // Go!
+				VCon->RCon()->ShowPropertiesDialog();
 			}
 			return 0;
 		} // case ID_CONPROP:
@@ -13928,49 +14006,8 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			break;
 			
 		case SC_CLOSE:
-		{
-			//Icon.Delete();
-			//SENDMESSAGE(ghConWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
-			//SENDMESSAGE(ghConWnd ? ghConWnd : ghWnd, WM_CLOSE, 0, 0); // ?? фар не ловит сообщение, ExitFAR не вызываются
-
-			//int nEditors = 0, nProgress = 0, i;
-			//for (i=((int)countof(mp_VCon)-1); i>=0; i--) {
-			//	CRealConsole* pRCon = NULL;
-			//	ConEmuTab tab = {0};
-			//	if (mp_VCon[i] && (pRCon = mp_VCon[i]->RCon())!=NULL) {
-			//		// Прогрессы (копирование, удаление, и т.п.)
-			//		if (pRCon->GetProgress(NULL) != -1)
-			//			nProgress ++;
-			//
-			//		// Несохраненные редакторы
-			//		int n = pRCon->GetModifiedEditors();
-			//		if (n)
-			//			nEditors += n;
-			//	}
-			//}
-			//if (nProgress || nEditors) {
-			//	wchar_t szText[255], *pszText;
-			//	lstrcpy(szText, L"Close confirmation.\r\n\r\n"); pszText = szText+_tcslen(szText);
-			//	if (nProgress) { _wsprintf(pszText, SKIPLEN(countof(pszText)) L"Incomplete operations: %i\r\n", nProgress); pszText += _tcslen(pszText); }
-			//	if (nEditors) { _wsprintf(pszText, SKIPLEN(countof(pszText)) L"Unsaved editor windows: %i\r\n", nEditors); pszText += _tcslen(pszText); }
-			//	lstrcpy(pszText, L"\r\nProceed with shutdown?");
-			//	int nBtn = MessageBoxW(ghWnd, szText, GetDefaultTitle(), MB_OKCANCEL|MB_ICONEXCLAMATION);
-			//	if (nBtn != IDOK)
-			//		return 0; // не закрывать
-			//}
-			if (!gpConEmu->OnCloseQuery())
-				return 0; // не закрывать
-
-			// Сохраним размер перед закрытием консолей, а то они могут напакостить и "вернуть" старый размер
-			gpSet->SaveSizePosOnExit();
-
-			if (CVConGroup::OnScClose())
-			{
-				Destroy();
-			}
-
+			DoClose();
 			break;
-		} // case SC_CLOSE:
 		
 		case SC_MAXIMIZE:
 		{
@@ -14067,12 +14104,15 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				DEBUGSTRSYS(szDbg);
 				#endif
 
+				// Зачем вообще SysCommand, полученный в ConEmu, перенаправлять в RealConsole?
+				#if 0
 				// иначе это приводит к потере фокуса и активации невидимой консоли,
 				// перехвате стрелок клавиатуры, и прочей фигни...
 				if (wParam<0xF000)
 				{
 					POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, wParam, lParam, FALSE);
 				}
+				#endif
 
 				if (wParam == SC_SYSMENUPOPUP_SECRET)
 				{
@@ -14203,12 +14243,12 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 				if (dwElapse > gpSet->nSlideShowElapse)
 				{
-					if (IsWindow(hPictureView))
+					if (IsWindow(hPictureView) && pVCon)
 					{
 						//
 						bPicViewSlideShow = false;
-						SendMessage(ghConWnd, WM_KEYDOWN, VK_NEXT, 0x01510001);
-						SendMessage(ghConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
+						SendMessage(pVCon->RCon()->ConWnd(), WM_KEYDOWN, VK_NEXT, 0x01510001);
+						SendMessage(pVCon->RCon()->ConWnd(), WM_KEYUP, VK_NEXT, 0xc1510001);
 						// Окно могло измениться?
 						isPictureView();
 						dwLastSlideShowTick = GetTickCount();
@@ -14710,6 +14750,50 @@ LPCWSTR CConEmuMain::MenuAccel(int DescrID, LPCWSTR asText)
 	return szTemp;
 }
 
+LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 0;
+
+	switch (uMsg)
+	{
+	case WM_CREATE:
+		if (!ghWndWork)
+			ghWndWork = hWnd;
+		_ASSERTE(ghWndWork == hWnd);
+		break;
+
+	case WM_PAINT:
+		{
+			// По идее, видимых частей ghWndWork быть не должно, но если таки есть - зальем
+			PAINTSTRUCT ps = {};
+			BeginPaint(hWnd, &ps);
+
+			int nAppId = -1;
+			CVConGuard VCon;
+			if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())
+			{
+				nAppId = VCon->RCon()->GetActiveAppSettingsId();
+			}
+
+			int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
+			HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(nAppId, !gpConEmu->isMeForeground())[nColorIdx]);
+			if (hBrush)
+			{
+				FillRect(ps.hdc, &ps.rcPaint, hBrush);
+
+				DeleteObject(hBrush);
+			}
+
+			EndPaint(hWnd, &ps);
+		} // WM_PAINT
+		break;
+
+	default:
+		result = DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+	return result;
+}
+
 LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
@@ -15006,7 +15090,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = gpConEmu->OnMouse(hWnd, messg, wParam, lParam);
 			break;
 		case WM_CLOSE:
-			result = gpConEmu->OnClose(hWnd);
+			_ASSERTE(FALSE && "WM_CLOSE is not called in normal behavior");
+			gpConEmu->DoClose();
+			result = 0;
 			break;
 		case WM_SYSCOMMAND:
 			result = gpConEmu->OnSysCommand(hWnd, wParam, lParam);

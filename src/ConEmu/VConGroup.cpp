@@ -594,17 +594,18 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 			// Двигаем/ресайзим
 			if (lbPosChanged)
 			{
-				if (bVisible)
-				{
-					// Двигаем/ресайзим окошко DC
-					MoveWindow(hWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
-					VConI->Invalidate();
-				}
-				else
-				{
-					// Двигаем окошко DC
-					SetWindowPos(hWndDC, NULL, rcNewCon.left, rcNewCon.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-				}
+				VConI->SetVConSizePos(rcNewCon, bVisible);
+				//if (bVisible)
+				//{
+				//	// Двигаем/ресайзим окошко DC
+				//	MoveWindow(hWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
+				//	VConI->Invalidate();
+				//}
+				//else
+				//{
+				//	// Двигаем окошко DC
+				//	SetWindowPos(hWndDC, NULL, rcNewCon.left, rcNewCon.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+				//}
 			}
 		}
 
@@ -2442,7 +2443,7 @@ HRGN CVConGroup::GetExclusionRgn(bool abTestOnly/*=false*/)
 	return hExclusion;
 }
 
-RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, RECT* prDC/*=NULL*/, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
+RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, const RECT* prDC/*=NULL*/, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
 {
 	RECT rc = rFrom;
 	RECT rcShift = MakeRect(0,0);
@@ -2455,14 +2456,19 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 
 	CVConGroup* pGroup = pVCon ? ((CVConGroup*)pVCon->mp_Group) : NULL;
 
-	// Теперь rc должен соответствовать CER_MAINCLIENT
+	// Теперь rc должен соответствовать CER_MAINCLIENT/CER_BACK
 	RECT rcAddShift = MakeRect(0,0);
 
 	if (prDC)
 	{
 		WARNING("warning: DoubleView - тут нужно допиливать");
+		RECT rcCalcDC = rFrom;
+		_ASSERTE(tFrom==CER_BACK);
 		// Если передали реальный размер окна отрисовки - нужно посчитать дополнительные сдвиги
-		RECT rcCalcDC = CalcRect(CER_DC, rFrom, CER_MAINCLIENT, NULL /*prDC*/);
+		if (tFrom != CER_BACK && tFrom != CER_DC)
+		{
+			rcCalcDC = CalcRect(CER_DC, rFrom, tFrom, NULL /*prDC*/);
+		}
 		// расчетный НЕ ДОЛЖЕН быть меньше переданного
 		#ifdef MSGLOGGER
 		_ASSERTE((rcCalcDC.right - rcCalcDC.left)>=(prDC->right - prDC->left));
@@ -2473,13 +2479,13 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		if ((rcCalcDC.right - rcCalcDC.left)!=(prDC->right - prDC->left))
 		{
 			rcAddShift.left = (rcCalcDC.right - rcCalcDC.left - (prDC->right - prDC->left))/2;
-			rcAddShift.right = rcCalcDC.right - rcCalcDC.left - rcAddShift.left;
+			rcAddShift.right = (rcCalcDC.right - rcCalcDC.left - (prDC->right - prDC->left)) - rcAddShift.left;
 		}
 
 		if ((rcCalcDC.bottom - rcCalcDC.top)!=(prDC->bottom - prDC->top))
 		{
 			rcAddShift.top = (rcCalcDC.bottom - rcCalcDC.top - (prDC->bottom - prDC->top))/2;
-			rcAddShift.bottom = rcCalcDC.bottom - rcCalcDC.top - rcAddShift.top;
+			rcAddShift.bottom = (rcCalcDC.bottom - rcCalcDC.top - (prDC->bottom - prDC->top)) - rcAddShift.top;
 		}
 	}
 	
@@ -2522,7 +2528,8 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			}
 
 			RECT rcAll = rc;
-			if (pGroup && (tWhat != CER_CONSOLE_ALL))
+			if (pGroup && (tWhat != CER_CONSOLE_ALL)
+				&& (tFrom == CER_MAINCLIENT || tFrom == CER_WORKSPACE))
 			{
 				pGroup->CalcSplitRootRect(rcAll, rc);
 			}
@@ -2631,6 +2638,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			}
 			else
 			{
+				_ASSERTE(tWhat==CER_DC); // корректировка, центрирование
 				CConEmuMain::AddMargins(rc, rcAddShift);
 			}
 		}
@@ -2647,7 +2655,29 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
 {
 	sz1 = size; sz2 = size;
-	int nSplit = max(1,min(mn_SplitPercent10,999));
+
+	RECT rcCon = MakeRect(size.X, size.Y);
+	RECT rcPixels = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE_CUR, gp_VActive);
+	// в пикселях нужно учитывать разделители и прокрутки
+	_ASSERTE(gpSet->isAlwaysShowScrollbar!=1); // доделать
+	if (m_SplitType == RConStartArgs::eSplitHorz)
+	{
+		if (gpSet->nSplitWidth && (rcPixels.right > (LONG)gpSet->nSplitWidth))
+			rcPixels.right -= gpSet->nSplitWidth;
+	}
+	else
+	{
+		if (gpSet->nSplitHeight && (rcPixels.bottom > (LONG)gpSet->nSplitHeight))
+			rcPixels.bottom -= gpSet->nSplitHeight;
+	}
+
+	RECT rc1 = rcPixels, rc2 = rcPixels;
+	CalcSplitRect(rcPixels, rc1, rc2);
+
+	RECT rcCon1 = CVConGroup::CalcRect(CER_CONSOLE_CUR, rc1, CER_BACK, gp_VActive);
+	RECT rcCon2 = CVConGroup::CalcRect(CER_CONSOLE_CUR, rc2, CER_BACK, gp_VActive);
+
+	//int nSplit = max(1,min(mn_SplitPercent10,999));
 
 	//RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
 
@@ -2663,17 +2693,21 @@ void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
 		//	size.X -= rcScroll.right * 2;
 		//}
 
-		sz1.X = max(((size.X+1) * nSplit / 1000),MIN_CON_WIDTH);
-		sz2.X = max((size.X - sz1.X),MIN_CON_WIDTH);
+		//sz1.X = max(((size.X+1) * nSplit / 1000),MIN_CON_WIDTH);
+		//sz2.X = max((size.X - sz1.X),MIN_CON_WIDTH);
+		sz1.X = max(rcCon1.right,MIN_CON_WIDTH);
+		sz2.X = max(rcCon2.right,MIN_CON_WIDTH);
 	}
 	else
 	{
-		sz1.Y = max(((size.Y+1) * nSplit / 1000),MIN_CON_HEIGHT);
-		sz2.Y = max((size.Y - sz1.Y),MIN_CON_HEIGHT);
+		//sz1.Y = max(((size.Y+1) * nSplit / 1000),MIN_CON_HEIGHT);
+		//sz2.Y = max((size.Y - sz1.Y),MIN_CON_HEIGHT);
+		sz1.Y = max(rcCon1.bottom,MIN_CON_HEIGHT);
+		sz2.Y = max(rcCon2.bottom,MIN_CON_HEIGHT);
 	}
 }
 
-void CVConGroup::SetConsoleSizes(const COORD& size)
+void CVConGroup::SetConsoleSizes(const COORD& size, bool abSync)
 {
 	CVConGuard VCon(mp_Item);
 
@@ -2717,7 +2751,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size)
 		RECT rcCon = MakeRect(size.X,size.Y);
 		if (VCon.VCon() && VCon->RCon())
 		{
-			if (!VCon->RCon()->SetConsoleSize(size.X,size.Y, 0/*don't change*/, CECMD_SETSIZENOSYNC))
+			if (!VCon->RCon()->SetConsoleSize(size.X,size.Y, 0/*don't change*/, abSync ? CECMD_SETSIZESYNC : CECMD_SETSIZENOSYNC))
 				rcCon = MakeRect(VCon->TextWidth,VCon->TextHeight);
 		}
 
@@ -2732,8 +2766,8 @@ void CVConGroup::SetConsoleSizes(const COORD& size)
 
 	CalcSplitConSize(size, sz1, sz2);
 
-	mp_Grp1->SetConsoleSizes(sz1);
-	mp_Grp2->SetConsoleSizes(sz2);
+	mp_Grp1->SetConsoleSizes(sz1, abSync);
+	mp_Grp2->SetConsoleSizes(sz2, abSync);
 }
 
 // size in columns and lines
@@ -2785,7 +2819,7 @@ void CVConGroup::SetAllConsoleWindowsSize(const COORD& size, /*bool updateInfo,*
 
 
 	// Go (size real consoles)
-	pRoot->SetConsoleSizes(size);
+	pRoot->SetConsoleSizes(size, bSetRedraw/*as Sync*/);
 
 
 	if (bSetRedraw /*&& gp_VActive*/)

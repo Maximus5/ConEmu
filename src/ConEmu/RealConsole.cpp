@@ -5527,9 +5527,11 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 
 	if (isActive())
 	{
-		ghConWnd = hConWnd;
+		#ifdef _DEBUG
+		ghConWnd = hConWnd; // на удаление
+		#endif
 		// Чтобы можно было найти хэндл окна по хэндлу консоли
-		SetWindowLongPtr(ghWnd, GWLP_USERDATA, (LONG_PTR)hConWnd);
+		gpConEmu->OnActiveConWndStore(hConWnd);
 		// StatusBar
 		gpConEmu->mp_Status->OnActiveVConChanged(gpConEmu->ActiveConNum(), this);
 	}
@@ -6351,8 +6353,10 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
 	_ASSERTE(isActive());
 	// Чтобы можно было найти хэндл окна по хэндлу консоли
-	SetWindowLongPtr(ghWnd, GWLP_USERDATA, (LONG_PTR)hConWnd);
-	ghConWnd = hConWnd;
+	gpConEmu->OnActiveConWndStore(hConWnd);
+	#ifdef _DEBUG
+	ghConWnd = hConWnd; // на удаление
+	#endif
 	// Проверить
 	mp_VCon->OnAlwaysShowScrollbar();
 	// Чтобы все в одном месте было
@@ -7828,7 +7832,8 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 
 	_ASSERTE(!mb_ProcessRestarted);
 
-	if (abConfirm)
+	// Для Terminate - спрашиваем отдельно
+	if (abConfirm && !abForceTerminate)
 	{
 		if (!isCloseConfirmed(gsCloseAny))
 			return;
@@ -7837,7 +7842,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 	else
 	{
 		// при вызове из RecreateProcess, SC_SYSCLOSE (там уже спросили)
-		abConfirm = abConfirm;
+		UNREFERENCED_PARAMETER(abConfirm);
 	}
 	#endif
 
@@ -7925,19 +7930,14 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm)
 						L"Kill active process '%s' PID=%u?",
 						//hGuiWnd ? L"active program" : L"RealConsole",
 						szActive, nActivePID);
-					int nBtn = 0;
+					int nBtn = abConfirm ? 0 : IDOK;
+					if (abConfirm)
 					{
 						DontEnable de;
-						//nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
-						nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_YESNO);
+						nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_OKCANCEL);
 					}
 
-					//if (nBtn == IDCANCEL)
-					//{
-					//	return;
-					//}
-					//else if (nBtn == IDNO)
-					if (nBtn == IDYES)
+					if (nBtn == IDOK)
 					{
 						//Terminate
 						CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_TERMINATEPID, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
@@ -10147,7 +10147,7 @@ void CRealConsole::ShowPropertiesDialog()
 		}
 	}
 
-	POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, SC_PROPERTIES_SECRET/*65527*/, 0, TRUE);
+	POSTMESSAGE(hConWnd, WM_SYSCOMMAND, SC_PROPERTIES_SECRET/*65527*/, 0, TRUE);
 }
 
 //void CRealConsole::LogShellStartStop()

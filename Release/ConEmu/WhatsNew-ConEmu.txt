@@ -13,6 +13,15 @@ Questions about usablity of "-new_console:s".
 * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+[*] GuiMacro.
+    Close(<What>[,<Flags>])
+      close current console (0), without confirmation (0,1),
+      terminate active process (1), without confirmation (1,1),
+      close ConEmu window (2)
+[*] Internal changes in child windows.
+[%] When «Show & store current window size and position» is off, size and pos was not displayed on «Size & Pos» page.
+
+
 2012.08.06
 [%] Bugfixes and regressions of SplitScreen.
 [%] В настройке не сохранялась высота консоли менее 9 строк.

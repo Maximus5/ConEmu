@@ -234,7 +234,7 @@ CStatus::CStatus()
 
 	_ASSERTE(gpConEmu && *gpConEmu->ms_ConEmuBuild);
 	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) _T(" « %s%s"), 
-		gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x86",L"x64"));
+		gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"[32]",L"[64]"));
 }
 
 CStatus::~CStatus()
