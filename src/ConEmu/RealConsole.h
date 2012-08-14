@@ -238,6 +238,7 @@ class CRealConsole
 		uint TextHeight();
 		uint BufferHeight(uint nNewBufferHeight=0);
 		uint BufferWidth();
+		void OnBufferHeight();
 
 	private:
 		HWND    hConWnd;

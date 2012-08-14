@@ -2990,7 +2990,8 @@ BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
 		// Для 'far /w' нужно оставить высоту буфера!
 		In.SetSize.nBufferHeight = gpFarInfo->bBufferSupport ? -1 : 0;
 		In.SetSize.size.X = nNewWidth; In.SetSize.size.Y = nNewHeight;
-		CESERVER_REQ* pOut = ExecuteSrvCmd(gdwServerPID, &In, GetConEmuHWND(2));
+		DWORD nSrvPID = (gpConMapInfo && gpConMapInfo->nAltServerPID) ? gpConMapInfo->nAltServerPID : gdwServerPID;
+		CESERVER_REQ* pOut = ExecuteSrvCmd(nSrvPID, &In, GetConEmuHWND(2));
 
 		if (pOut)
 		{

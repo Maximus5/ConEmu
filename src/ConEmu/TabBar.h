@@ -146,13 +146,13 @@ class TabBarClass //: public CToolTip
 		bool IsTabsShown();
 		//BOOL IsAllowed();
 		RECT GetMargins();
-		void Activate();
+		void Activate(BOOL abPreSyncConsole=FALSE);
 		HWND CreateToolbar();
 		HWND CreateTabbar();
 		HWND GetTabbar();
 		int GetTabbarHeight();
 		void CreateRebar();
-		void Deactivate();
+		void Deactivate(BOOL abPreSyncConsole=FALSE);
 		void RePaint();
 		//void Update(ConEmuTab* tabs, int tabsCount);
 		bool GetRebarClientRect(RECT* rc);

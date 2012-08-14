@@ -88,7 +88,7 @@ class CConEmuMain :
 	public:
 		//HMODULE mh_Psapi;
 		//FGetModuleFileNameEx GetModuleFileNameEx;
-		wchar_t ms_ConEmuDefTitle[32];          // Название с версией, например "ConEmu 110117"
+		wchar_t ms_ConEmuDefTitle[32];          // Название с версией, например "ConEmu 110117 (32)"
 		wchar_t ms_ConEmuBuild[16];             // номер сборки, например "110117"
 		wchar_t ms_ConEmuExe[MAX_PATH+1];       // полный путь к ConEmu.exe (GUI)
 		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
@@ -580,7 +580,7 @@ class CConEmuMain :
 		//void StopLogCreateProcess();
 		//void UpdateLogCreateProcess();
 		//wchar_t ms_LogCreateProcess[MAX_PATH]; bool mb_CreateProcessLogged;
-		void SyncConsoleToWindow();
+		void SyncConsoleToWindow(LPRECT prcNewWnd=NULL);
 		void SyncNtvdm();
 		void SyncWindowToConsole();
 		void SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout);

@@ -1300,7 +1300,12 @@ void CConEmuCtrl::StatusCommand(ConEmuStatusCommand nStatusCmd, int IntParm, LPC
 			gpSet->isStatusBarShow = false;
 		else
 			gpSet->isStatusBarShow = !gpSet->isStatusBarShow;
-		gpConEmu->OnSize();
+		if (!gpConEmu->isZoomed() && !gpConEmu->isFullScreen())
+		{
+			RECT rcIdeal = gpConEmu->GetIdealRect();
+			gpConEmu->SyncConsoleToWindow(&rcIdeal);
+		}
+		gpConEmu->ReSize(TRUE);
 		gpConEmu->InvalidateGaps();
 		break;
 

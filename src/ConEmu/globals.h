@@ -1,4 +1,5 @@
 
+
 /*
 Copyright (c) 2009-2012 Maximus5
 All rights reserved.
@@ -118,3 +119,5 @@ extern BOOL bBlockDebugLog, bSendToDebugger, bSendToFile;
 //#else
 //    #define MCHKHEAP
 //#endif
+
+HWND getForegroundWindow();

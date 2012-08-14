@@ -20,6 +20,7 @@ Questions about usablity of "-new_console:s".
       close ConEmu window (2)
 [*] Internal changes in child windows.
 [%] When «Show & store current window size and position» is off, size and pos was not displayed on «Size & Pos» page.
+[%] Issue 674: Tab macro function going to console doesn't handle 1-based offsets properly.
 
 
 2012.08.06

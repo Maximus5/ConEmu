@@ -1019,7 +1019,7 @@ LPWSTR CConEmuMacro::Tab(LPWSTR asArgs, CRealConsole* apRCon)
 		case ctc_ActivateConsole: // activate console by number, parm=(one-based console index)
 			if (nParm >= 1 && gpConEmu->GetVCon(nParm-1))
 			{
-				gpConEmu->ConActivate(nParm);
+				gpConEmu->ConActivate(nParm-1);
 				pszResult = lstrdup(L"OK");
 			}
 			break;

@@ -108,6 +108,7 @@ public:
 	BOOL BuferModeChangeLock();
 	void BuferModeChangeUnlock();
 	BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
+	void OnBufferHeight();
 
 	LRESULT OnScroll(int nDirection, short nTrackPos = -1, UINT nCount = 1);
 	LRESULT OnSetScrollPos(WPARAM wParam);
@@ -197,6 +198,8 @@ private:
 	short CheckProgressInConsole(const wchar_t* pszCurLine);
 
 	void PrepareColorTable(bool bExtendFonts, CharAttr (&lcaTableExt)[0x100], CharAttr (&lcaTableOrg)[0x100], const Settings::AppSettings* pApp = NULL);
+
+	void ResetLastMousePos();
 
 protected:
 	CRealConsole* mp_RCon;

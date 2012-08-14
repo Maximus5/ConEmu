@@ -398,7 +398,6 @@ void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int
 #endif
 }
 
-
 /* Используются как extern в ConEmuCheck.cpp */
 /*
 LPVOID _calloc(size_t nCount,size_t nSize) {
@@ -638,6 +637,26 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
 	result = DefWindowProc(hWnd, messg, wParam, lParam);
 	return result;
+}
+
+// z120713 - В потоке CRealConsole::MonitorThread возвращаются 
+// отличные от основного потока HWND. В результате, а также из-за
+// отложенного выполнения, UpdateServerActive передавал Thaw==FALSE
+static HWND ghLastForegroundWindow = NULL;
+HWND getForegroundWindow()
+{
+	HWND h = NULL;
+	if (!ghWnd || gpConEmu->isMainThread())
+	{
+		ghLastForegroundWindow = h = ::GetForegroundWindow();
+	}
+	else
+	{
+		h = ghLastForegroundWindow;
+		if (h && !IsWindow(h))
+			h = NULL;
+	}
+	return h;
 }
 
 BOOL CheckCreateAppWindow()
@@ -1794,12 +1813,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	g_hInstance = hInstance;
 	ghWorkingModule = (u64)hInstance;
 	gpLocalSecurity = LocalSecurity();
-#ifdef _DEBUG
-	gAllowAssertThread = am_Thread;
 
+	#ifdef _DEBUG
+	gAllowAssertThread = am_Thread;
 	//wchar_t szDbg[64];
 	//msprintf(szDbg, countof(szDbg), L"xx=0x%X.", 0);
-#endif
+	#endif
 
 //#ifdef _DEBUG
 //	wchar_t* pszShort = GetShortFileNameEx(L"T:\\VCProject\\FarPlugin\\ConEmu\\Maximus5\\Debug\\Far2x86\\ConEmu\\ConEmu.exe");

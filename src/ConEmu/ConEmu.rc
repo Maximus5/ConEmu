@@ -517,7 +517,7 @@ BEGIN
     GROUPBOX        "Appearance",gbFeatureAppear,4,94,319,49
     CONTROL         "Enhance progress- and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,105,119,8
-    CONTROL         "Show was hidden warning",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,117,119,8
+    CONTROL         "Show «was hidden» warning",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,117,119,8
     CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,200,117,8
     CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,200,79,8
     CONTROL         "Always show scrollbar",cbAlwaysShowScrollbar,"Button",BS_AUTO3STATE | WS_TABSTOP,10,155,100,8

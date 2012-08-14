@@ -1831,7 +1831,7 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	CheckDlgButton(hWnd2, cbUseInjects, gpSet->isUseInjects);
 
-	CheckDlgButton(hWnd2, cbShowWasHiddenMsg, gpSet->isDownShowHiddenMessage);
+	CheckDlgButton(hWnd2, cbShowWasHiddenMsg, gpSet->isDownShowHiddenMessage ? BST_UNCHECKED : BST_CHECKED);
 
 	CheckDlgButton(hWnd2, cbProcessAnsi, gpSet->isProcessAnsi);
 
@@ -4320,7 +4320,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isDisableAllFlashing = IsChecked(hWnd2, cbDisableAllFlashing);
 			break;
 		case cbShowWasHiddenMsg:
-			gpSet->isDownShowHiddenMessage = IsChecked(hWnd2, cbShowWasHiddenMsg);
+			gpSet->isDownShowHiddenMessage = IsChecked(hWnd2, cbShowWasHiddenMsg) ? false : true;
 			break;
 		case cbTabsInCaption:
 			gpSet->isTabsInCaption = IsChecked(hWnd2, cbTabsInCaption);

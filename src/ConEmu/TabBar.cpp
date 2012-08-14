@@ -747,7 +747,7 @@ bool TabBarClass::IsTabsShown()
 	return _active && IsWindowVisible(mh_Tabbar);
 }
 
-void TabBarClass::Activate()
+void TabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 {
 	if (!mh_Rebar)
 	{
@@ -755,15 +755,25 @@ void TabBarClass::Activate()
 	}
 
 	_active = true;
+	if (abPreSyncConsole && !(gpConEmu->isZoomed() || gpConEmu->isFullScreen()))
+	{
+		RECT rcIdeal = gpConEmu->GetIdealRect();
+		gpConEmu->SyncConsoleToWindow(&rcIdeal);
+	}
 	UpdatePosition();
 }
 
-void TabBarClass::Deactivate()
+void TabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 {
 	if (!_active)
 		return;
 
 	_active = false;
+	if (abPreSyncConsole && !(gpConEmu->isZoomed() || gpConEmu->isFullScreen()))
+	{
+		RECT rcIdeal = gpConEmu->GetIdealRect();
+		gpConEmu->SyncConsoleToWindow(&rcIdeal);
+	}
 	UpdatePosition();
 }
 

@@ -2219,20 +2219,41 @@ HWND Attach2Gui(DWORD nTimeout)
 			return NULL;
 		}
 
-		lstrcpyW(pszSlash+1, L"ConEmu.exe");
+		bool bExeFound = false;
 
-		if (!FileExists(pszSelf))
+		for (int s = 0; s <= 1; s++)
 		{
-			// Он может быть на уровень выше
-			*pszSlash = 0;
-			pszSlash = wcsrchr(pszSelf, L'\\');
-			lstrcpyW(pszSlash+1, L"ConEmu.exe");
-
-			if (!FileExists(pszSelf))
+			if (s)
 			{
-				_printf("ConEmu.exe not found!\n");
-				return NULL;
+				// Он может быть на уровень выше
+				*pszSlash = 0;
+				pszSlash = wcsrchr(pszSelf, L'\\');
+				if (!pszSlash)
+					break;
 			}
+
+			if (IsWindows64())
+			{
+				lstrcpyW(pszSlash+1, L"ConEmu64.exe");
+				if (FileExists(pszSelf))
+				{
+					bExeFound = true;
+					break;
+				}
+			}
+
+			lstrcpyW(pszSlash+1, L"ConEmu.exe");
+			if (FileExists(pszSelf))
+			{
+				bExeFound = true;
+				break;
+			}
+		}
+
+		if (!bExeFound)
+		{
+			_printf("ConEmu.exe not found!\n");
+			return NULL;
 		}
 
 		if (wcschr(pszSelf, L' '))
@@ -3528,17 +3549,32 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		WARNING("gpSrv->pConsole->hdr.bConsoleActive и gpSrv->pConsole->hdr.bThawRefreshThread могут быть неактуальными!");
 		//if (gpSrv->pConsole->hdr.bConsoleActive && gpSrv->pConsoleMap)
 		//{
+		BOOL bNewThaw = TRUE;
+
 		if (gpSrv->pConsoleMap->IsValid())
 		{
 			CESERVER_CONSOLE_MAPPING_HDR* p = gpSrv->pConsoleMap->Ptr();
-			bThaw = p->bThawRefreshThread;
+			bNewThaw = p->bThawRefreshThread;
 			bConsoleActive = p->bConsoleActive;
 		}
 		else
 		{
-			bThaw = bConsoleActive = TRUE;
+			bNewThaw = bConsoleActive = TRUE;
 		}
 		//}
+
+		if (bNewThaw != bThaw)
+		{
+			bThaw = bNewThaw;
+
+			if (ghLogSize)
+			{
+				char szInfo[128];
+				_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: RefreshThread: Thaw changed, speed(%s)", bNewThaw ? "high" : "low");
+				LogString(szInfo);
+			}
+		}
+
 
 		// Чтобы не грузить процессор неактивными консолями спим, если
 		// только что не было затребовано изменение размера консоли

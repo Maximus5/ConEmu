@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRALTSRV(s) DEBUGSTR(s)
 #define DEBUGSTRSTOP(s) DEBUGSTR(s)
+#define DEBUGSTRFOCUS(s) LogFocusInfo(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -593,7 +594,7 @@ bool CRealConsole::SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEven
 	if (isActive())
 	{
 		// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
-		gpConEmu->OnBufferHeight();
+		OnBufferHeight();
 	}
 
 	if (mh_MonitorThreadEvent && abTouchMonitorEvent)
@@ -1992,7 +1993,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				if (lbVisible != bGuiVisible)
 				{
 					// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
-					gpConEmu->OnBufferHeight();
+					pRCon->OnBufferHeight();
 					bGuiVisible = lbVisible;
 				}
 			}
@@ -3927,7 +3928,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			// При быстром нажатии Alt-Tab (переключение в другое окно)
 			// в консоль проваливается {press Alt/release Alt}
 			// В результате, может выполниться макрос, повешенный на Alt.
-			if (GetForegroundWindow()!=ghWnd && GetFarPID())
+			if (getForegroundWindow()!=ghWnd && GetFarPID())
 			{
 				if (/*isPressed(VK_MENU) &&*/ !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT))
 				{
@@ -6415,7 +6416,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	gpConEmu->mp_TabBar->OnConsoleActivated(nNewNum/*, isBufferHeight()*/);
 	gpConEmu->mp_TabBar->Update();
 	// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
-	gpConEmu->OnBufferHeight();
+	OnBufferHeight();
 	gpConEmu->UpdateProcessDisplay(TRUE);
 	//gpSet->NeedBackgroundUpdate(); -- 111105 плагиновые подложки теперь в VCon, а файловая - все равно общая, дергать не нужно
 	ShowHideViews(TRUE);
@@ -6477,8 +6478,18 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 {
 	if (!this)
 		return;
+
 	if (mb_InSetFocus)
+	{
+		#ifdef _DEBUG
+		wchar_t szInfo[128];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+			L"CRealConsole::OnGuiFocused(%u) skipped, mb_InSetFocus=1, mb_ThawRefreshThread=%u, mb_LastConEmuFocusState=%u)",
+			abFocus, mb_ThawRefreshThread, gpConEmu->mb_LastConEmuFocusState);
+		DEBUGSTRFOCUS(szInfo);
+		#endif
 		return;
+	}
 
 	mb_InSetFocus = TRUE;
 
@@ -6490,7 +6501,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 		{
 			if (abForceChild)
 			{
-				HWND hFore = GetForegroundWindow();
+				HWND hFore = getForegroundWindow();
 				DWORD nForePID = 0;
 				if (hFore) GetWindowThreadProcessId(hFore, &nForePID);
 				if (mn_GuiWndPID != nForePID /*|| abForceChild*/)
@@ -6506,6 +6517,19 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 		{
 			// -- От этого кода одни проблемы - например, не активируется диалог Settings щелчком по TaskBar-у
 			// gpConEmu->setFocus();
+		}
+	}
+
+	if (!abFocus)
+	{
+		if (gpConEmu->isMeForeground(true, true))
+		{
+			abFocus = TRUE;
+			DEBUGSTRFOCUS(L"CRealConsole::OnGuiFocused - checking foreground, ConEmu in front");
+		}
+		else
+		{
+			DEBUGSTRFOCUS(L"CRealConsole::OnGuiFocused - checking foreground, ConEmu inactive");
 		}
 	}
 
@@ -6552,6 +6576,7 @@ void CRealConsole::UpdateServerActive(BOOL abActive, BOOL abImmediate /*= FALSE*
 	DWORD nTID = GetCurrentThreadId();
 	if (!abImmediate && (mn_MonitorThreadID && (nTID != mn_MonitorThreadID)))
 	{
+		DEBUGSTRFOCUS(L"UpdateServerActive - delayed, event");
 		_ASSERTE(mh_UpdateServerActiveEvent!=NULL);
 		SetEvent(mh_UpdateServerActiveEvent);
 		return;
@@ -6569,16 +6594,41 @@ void CRealConsole::UpdateServerActive(BOOL abActive, BOOL abImmediate /*= FALSE*
 		CESERVER_REQ* pOut = ExecuteNewCmd(CECMD_ONACTIVATION, sizeof(CESERVER_REQ));
 		if (pIn && pOut)
 		{
+			#ifdef _DEBUG
+			wchar_t szInfo[255];
+			bool bFore = gpConEmu->isMeForeground(true, true);
+			HWND hFore = GetForegroundWindow(), hFocus = GetFocus();
+			wchar_t szForeWnd[1024]; getWindowInfo(hFore, szForeWnd); szForeWnd[128] = 0;
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+				L"UpdateServerActive - called(Active=%u, Speed=%s, mb_LastConEmuFocusState=%u, ConEmu=%s, hFore=%s, hFocus=x%08X)",
+				abActive, mb_ThawRefreshThread ? L"high" : L"low", gpConEmu->mb_LastConEmuFocusState, bFore ? L"foreground" : L"inactive",
+				szForeWnd, (DWORD)hFocus);
+			#endif
+
+			bool lbThaw = mb_ThawRefreshThread;
+			if (abActive && !lbThaw && gpConEmu->isMeForeground(true, true))
+			{
+				mb_ThawRefreshThread = lbThaw = true;
+			}
 			pIn->dwData[0] = abActive;
-			pIn->dwData[1] = mb_ThawRefreshThread;
+			pIn->dwData[1] = lbThaw;
+
 			//ExecutePrepareCmd(&lIn.hdr, CECMD_ONACTIVATION, lIn.hdr.cbSize);
 			DWORD dwTickStart = timeGetTime();
 			WARNING("Таймаут, чтобы не зависнуть");
 			fSuccess = CallNamedPipe(ms_MainSrv_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, 500);
 			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_MainSrv_Pipe, pOut);
+
+			#ifdef _DEBUG
+			DEBUGSTRFOCUS(szInfo);
+			#endif
 		}
 		ExecuteFreeResult(pIn);
 		ExecuteFreeResult(pOut);
+	}
+	else
+	{
+		DEBUGSTRFOCUS(L"UpdateServerActive - failed, no Pipe");
 	}
 
 #ifdef _DEBUG
@@ -8117,6 +8167,11 @@ uint CRealConsole::BufferHeight(uint nNewBufferHeight/*=0*/)
 	return mp_ABuf->BufferHeight(nNewBufferHeight);
 }
 
+void CRealConsole::OnBufferHeight()
+{
+	mp_ABuf->OnBufferHeight();
+}
+
 bool CRealConsole::isActive()
 {
 	if (!this) return false;
@@ -8980,7 +9035,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	if (isActive())
 	{
 		// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
-		gpConEmu->OnBufferHeight();
+		OnBufferHeight();
 	}
 	
 	// Уведомить сервер (ConEmuC), что создано GUI подключение

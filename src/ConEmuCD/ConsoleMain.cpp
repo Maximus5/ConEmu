@@ -6364,6 +6364,14 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		gpSrv->pConsole->hdr.bConsoleActive = in.dwData[0];
 		gpSrv->pConsole->hdr.bThawRefreshThread = in.dwData[1];
+
+		if (ghLogSize)
+		{
+			char szInfo[128];
+			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: cmd_OnActivation(active=%u, speed=%s)", in.dwData[0], in.dwData[1] ? "high" : "low");
+			LogString(szInfo);
+		}
+
 		//gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
 		UpdateConsoleMapHeader();
 
